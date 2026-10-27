@@ -1,0 +1,187 @@
+---
+/**
+ * QR table ordering: the table banner (hidden until a table code is active),
+ * the tab drawer (rounds, statuses, running total, how to pay) and the
+ * contact prompt some venues require before the first round. Everything is
+ * filled by `src/scripts/table-ordering.ts`; no guest data is rendered here.
+ */
+import { msg } from '@lingui/core/macro'
+
+const i18n = Astro.locals.i18n
+
+const labels = {
+	tableLabel: i18n._(msg`Table {label}`),
+	tabNumber: i18n._(msg`Tab {number}`),
+	viewTab: i18n._(msg`View tab`),
+	yourTab: i18n._(msg`Your tab`),
+	leaveTable: i18n._(msg`Not at this table?`),
+	sendToKitchen: i18n._(msg`Send to kitchen`),
+	sending: i18n._(msg`Sending…`),
+	sent: i18n._(msg`Sent to the kitchen. Order more any time.`),
+	round: i18n._(msg`Round {number}`),
+	emptyTab: i18n._(msg`Nothing on your tab yet. Add dishes and send them to the kitchen.`),
+	payAtCounter: i18n._(msg`When you are done, show tab {number} at the counter to pay.`),
+	subtotal: i18n._(msg`Subtotal`),
+	tax: i18n._(msg`Tax`),
+	includesTax: i18n._(msg`Includes tax`),
+	total: i18n._(msg`Total`),
+	closed: i18n._(msg`This tab is paid. Thank you!`),
+	cancelled: i18n._(msg`This tab was closed by the staff.`),
+	statusAccepted: i18n._(msg`Received`),
+	statusPreparing: i18n._(msg`Preparing`),
+	statusReady: i18n._(msg`Ready`),
+	statusCompleted: i18n._(msg`Served`),
+	statusCancelled: i18n._(msg`Cancelled`),
+	errorGeneric: i18n._(msg`We could not send your order. Please try again.`),
+	errorTableGone: i18n._(msg`This table code no longer works. Please ask a team member for help.`),
+	errorLocked: i18n._(msg`A team member is settling this tab. Please ask them for help.`),
+	errorClosed: i18n._(msg`Ordering is closed right now.`),
+	errorRateLimited: i18n._(msg`This table has sent many orders. Please ask a team member for help.`),
+	errorUnavailable: i18n._(msg`Ordering at the table is not available right now.`),
+	contactTitle: i18n._(msg`Before we send your order`),
+	contactIntro: i18n._(msg`The restaurant asks for this once per tab.`),
+	name: i18n._(msg`Your name`),
+	phone: i18n._(msg`Phone number`),
+	close: i18n._(msg`Close`),
+	refresh: i18n._(msg`Refresh`),
+}
+---
+
+<div
+	id="table-banner"
+	class="surface mt-4 hidden flex-wrap items-center justify-between gap-3 px-4 py-3"
+	role="region"
+	aria-labelledby="table-banner-label"
+>
+	<div class="flex min-w-0 flex-col">
+		<p id="table-banner-label" class="font-semibold text-foreground">
+			<bdi data-table-label></bdi>
+		</p>
+		<p class="text-sm text-muted-foreground" aria-live="polite" aria-atomic="true">
+			<span data-tab-number></span>
+			<span data-tab-total class="price"></span>
+		</p>
+	</div>
+	<div class="flex flex-wrap items-center gap-2">
+		<button type="button" id="open-tab-btn" class="btn-secondary">
+			{labels.viewTab}
+		</button>
+		<button
+			type="button"
+			id="leave-table-btn"
+			class="text-sm text-muted-foreground underline-offset-4 hover:underline focus-ring rounded-sm px-1 min-h-11"
+		>
+			{labels.leaveTable}
+		</button>
+	</div>
+</div>
+
+<div id="table-notice" class="mt-3 empty:hidden" role="status" aria-live="polite"></div>
+
+<div
+	id="tab-drawer-backdrop"
+	class="site-overlay site-drawer-overlay fixed inset-0 z-50 hidden bg-foreground/40 backdrop-blur-xs dark:bg-background/80"
+>
+	<div
+		id="tab-drawer"
+		class="site-drawer surface-overlay fixed inset-y-0 end-0 flex w-full flex-col rounded-none outline-none sm:max-w-md sm:rounded-s-2xl"
+		role="dialog"
+		aria-modal="true"
+		aria-labelledby="tab-drawer-title"
+		tabindex="-1"
+	>
+		<header class="flex items-center justify-between gap-3 border-b border-border px-5 py-4">
+			<div class="min-w-0">
+				<h2 id="tab-drawer-title" class="text-lg font-bold tracking-tight text-foreground">
+					{labels.yourTab}
+				</h2>
+				<p class="text-sm text-muted-foreground" data-tab-subtitle></p>
+			</div>
+			<button type="button" id="close-tab-btn" class="icon-btn size-9" aria-label={labels.close}>
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					class="size-4"
+					aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg
+				>
+			</button>
+		</header>
+		<div id="tab-rounds" class="flex-1 overflow-y-auto overscroll-contain px-5 py-4" aria-live="polite"></div>
+		<footer class="space-y-3 border-t border-border bg-card px-5 pt-4 pb-safe">
+			<dl class="space-y-2" aria-live="polite" aria-atomic="true">
+				<div class="flex items-baseline justify-between gap-4 text-sm text-muted-foreground">
+					<dt>{labels.subtotal}</dt>
+					<dd id="tab-subtotal" class="price font-medium text-foreground"></dd>
+				</div>
+				<div class="flex items-baseline justify-between gap-4 text-sm text-muted-foreground">
+					<dt id="tab-tax-label">{labels.tax}</dt>
+					<dd id="tab-tax" class="price font-medium text-foreground"></dd>
+				</div>
+				<div class="flex items-baseline justify-between gap-4 border-t border-border pt-3 text-base font-semibold text-foreground">
+					<dt>{labels.total}</dt>
+					<dd id="tab-total" class="price font-heading text-xl"></dd>
+				</div>
+			</dl>
+			<p id="tab-pay-note" class="rounded-lg border tone-neutral px-3 py-2 text-sm"></p>
+			<div id="tab-pay-slot"></div>
+		</footer>
+	</div>
+</div>
+
+<div
+	id="table-contact-backdrop"
+	class="site-overlay site-drawer-overlay fixed inset-0 z-50 hidden bg-foreground/40 backdrop-blur-xs dark:bg-background/80"
+>
+	<form
+		id="table-contact"
+		class="site-drawer surface-overlay fixed inset-x-0 bottom-0 mx-auto flex w-full max-w-md flex-col gap-4 rounded-t-2xl p-5 pb-safe outline-none sm:bottom-auto sm:top-1/2 sm:-translate-y-1/2 sm:rounded-2xl"
+		role="dialog"
+		aria-modal="true"
+		aria-labelledby="table-contact-title"
+		aria-describedby="table-contact-intro"
+		tabindex="-1"
+		novalidate
+	>
+		<div class="flex items-start justify-between gap-3">
+			<div>
+				<h2 id="table-contact-title" class="text-lg font-bold text-foreground">{labels.contactTitle}</h2>
+				<p id="table-contact-intro" class="text-sm text-muted-foreground">{labels.contactIntro}</p>
+			</div>
+			<button type="button" id="table-contact-close" class="icon-btn size-9" aria-label={labels.close}>
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					class="size-4"
+					aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg
+				>
+			</button>
+		</div>
+		<label class="flex flex-col gap-1.5 text-sm font-medium text-foreground" data-contact-name>
+			{labels.name}
+			<input name="name" type="text" autocomplete="name" maxlength="120" class="field" />
+		</label>
+		<label class="flex flex-col gap-1.5 text-sm font-medium text-foreground" data-contact-phone>
+			{labels.phone}
+			<input name="phone" type="tel" autocomplete="tel" inputmode="tel" maxlength="30" class="field" dir="ltr" />
+		</label>
+		<p id="table-contact-error" class="hidden text-sm font-medium text-destructive" role="alert"></p>
+		<button type="submit" class="btn-cta w-full">{labels.sendToKitchen}</button>
+	</form>
+</div>
+
+<script
+	id="table-labels"
+	type="application/json"
+	is:inline
+	set:html={JSON.stringify(labels).replace(/</g, '\\u003c')}
+/>

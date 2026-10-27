@@ -157,6 +157,10 @@ msgstr "طرح واحد متاح للطلب الآن"
 msgid "1 guest"
 msgstr "ضيف واحد"
 
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "A team member is settling this tab. Please ask them for help."
+msgstr "أحد أعضاء الفريق يسوّي هذا الحساب. يُرجى طلب المساعدة منه."
+
 #: src/lib/reservations/labels.ts:243
 msgid "About {count} min"
 msgstr "حوالي {count} دقيقة"
@@ -309,6 +313,10 @@ msgstr "العودة إلى المتجر"
 msgid "Be first when the next drop opens"
 msgstr "كن أول من يعلم عند فتح الطرح القادم"
 
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Before we send your order"
+msgstr "قبل أن نرسل طلبك"
+
 #: src/lib/reservations/labels.ts:65
 msgid "Book {time}"
 msgstr "احجز الساعة {time}"
@@ -392,6 +400,7 @@ msgstr "إلغاء هذا الطلب"
 msgid "Cancel this reservation?"
 msgstr "هل تريد إلغاء هذا الحجز؟"
 
+#: src/components/ordering/TableTab.astro.ts:3
 #: src/lib/reservations/labels.ts:168
 #: src/pages/menu/success.astro.ts:3
 msgid "Cancelled"
@@ -557,6 +566,7 @@ msgstr "مسح العنوان"
 msgid "Clear search"
 msgstr "مسح البحث"
 
+#: src/components/ordering/TableTab.astro.ts:3
 #: src/lib/ordering-labels.ts:70
 #: src/lib/ordering-labels.ts:81
 msgid "Close"
@@ -1046,6 +1056,10 @@ msgstr "أدخل رمز الدولة، مثل {example}."
 msgid "Include your country code, for example +1 415 555 0123."
 msgstr "أدخل رمز بلدك، مثل 0123 555 415 1+."
 
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Includes tax"
+msgstr "يشمل الضريبة"
+
 #: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
@@ -1375,6 +1389,10 @@ msgstr "رسوم عدم الحضور: {amount}."
 msgid "None"
 msgstr "بدون"
 
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Not at this table?"
+msgstr "لست على هذه الطاولة؟"
+
 #: src/lib/ordering-labels.ts:164
 msgid "Not available right now"
 msgstr "غير متاح حاليًا"
@@ -1382,6 +1400,10 @@ msgstr "غير متاح حاليًا"
 #: src/lib/reservations/labels.ts:379
 msgid "Nothing is charged now"
 msgstr "لن يتم تحصيل أي مبلغ الآن"
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Nothing on your tab yet. Add dishes and send them to the kitchen."
+msgstr "لا شيء في حسابك بعد. أضف أطباقًا وأرسلها إلى المطبخ."
 
 #: src/lib/reservations/labels.ts:295
 msgid "Notify me"
@@ -1505,6 +1527,14 @@ msgstr "نوع الطلب"
 #: src/pages/drop/[slug].astro.ts:3
 msgid "Order window"
 msgstr "فترة الطلبات"
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Ordering at the table is not available right now."
+msgstr "الطلب من الطاولة غير متاح الآن."
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Ordering is closed right now."
+msgstr "الطلب مغلق الآن."
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Ordering is currently closed."
@@ -1646,6 +1676,7 @@ msgstr "تم استلام الدفعة"
 msgid "Phone"
 msgstr "الهاتف"
 
+#: src/components/ordering/TableTab.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Phone number"
 msgstr "رقم الجوال"
@@ -1793,6 +1824,7 @@ msgstr "الترتيب في القائمة"
 msgid "Posted {date}"
 msgstr "نُشرت في {date}"
 
+#: src/components/ordering/TableTab.astro.ts:3
 #: src/pages/menu/success.astro.ts:3
 msgid "Preparing"
 msgstr "قيد التحضير"
@@ -1853,6 +1885,7 @@ msgstr "الكمية"
 msgid "Read more"
 msgstr "اقرأ المزيد"
 
+#: src/components/ordering/TableTab.astro.ts:3
 #: src/pages/menu/success.astro.ts:3
 msgid "Ready"
 msgstr "جاهز"
@@ -1873,6 +1906,14 @@ msgstr "الإيصال غير متاح على هذا الجهاز"
 #: src/pages/profile/orders.astro.ts:3
 msgid "Receipts for completed purchases appear here with status and amount."
 msgstr "تظهر إيصالات المشتريات المكتملة هنا مع الحالة والمبلغ."
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Received"
+msgstr "تم الاستلام"
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Refresh"
+msgstr "تحديث"
 
 #: src/lib/reservations/labels.ts:434
 msgid "Refund on its way"
@@ -1915,6 +1956,10 @@ msgstr "راجع تفاصيل طلبك وأدخل بيانات الاتصال ل
 #: src/lib/ordering-labels.ts:53
 msgid "Right"
 msgstr "النصف الأيمن"
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Round {number}"
+msgstr "الجولة {number}"
 
 #: src/lib/ordering-labels.ts:141
 msgid "Save"
@@ -1985,15 +2030,28 @@ msgstr "إرسال الرمز"
 msgid "Send request"
 msgstr "إرسال الطلب"
 
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Send to kitchen"
+msgstr "إرسال إلى المطبخ"
+
 #: src/components/careers/ApplyPanel.astro.ts:3
 #: src/components/drops/DropAlertsSignup.astro.ts:3
 #: src/pages/login.astro.ts:3
 msgid "Sending..."
 msgstr "جارٍ الإرسال..."
 
+#: src/components/ordering/TableTab.astro.ts:3
 #: src/lib/reservations/labels.ts:296
 msgid "Sending…"
 msgstr "جارٍ الإرسال…"
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Sent to the kitchen. Order more any time."
+msgstr "أُرسل إلى المطبخ. اطلب المزيد في أي وقت."
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Served"
+msgstr "تم التقديم"
 
 #: src/components/careers/ShareJob.astro.ts:3
 msgid "Share this job"
@@ -2069,6 +2127,7 @@ msgstr "طلبات خاصة"
 msgid "Submitting..."
 msgstr "جارٍ الإرسال..."
 
+#: src/components/ordering/TableTab.astro.ts:3
 #: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
@@ -2079,6 +2138,14 @@ msgstr "المجموع الفرعي"
 #: src/lib/ordering-labels.ts:114
 msgid "Switch to pickup"
 msgstr "التبديل إلى الاستلام"
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Tab {number}"
+msgstr "الحساب {number}"
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Table {label}"
+msgstr "طاولة {label}"
 
 #: src/lib/reservations/labels.ts:538
 msgid "Table alerts are not available right now. Please call the restaurant."
@@ -2092,6 +2159,7 @@ msgstr "جارٍ نقلك إلى صفحة الدفع الآمنة…"
 msgid "Tasting menus, chef's tables and special events at {name}."
 msgstr "قوائم تذوق وطاولات الشيف وفعاليات خاصة في {name}."
 
+#: src/components/ordering/TableTab.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
 #: src/pages/menu/success.astro.ts:3
 msgid "Tax"
@@ -2208,6 +2276,10 @@ msgstr "الصفحة التي تبحث عنها غير موجودة أو تم ن
 #: src/lib/reservations/labels.ts:408
 msgid "The payment did not go through"
 msgstr "لم تتم عملية الدفع"
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "The restaurant asks for this once per tab."
+msgstr "يطلب المطعم هذا مرة واحدة لكل حساب."
 
 #: src/lib/reservations/labels.ts:57
 msgid "The restaurant is closed on this date."
@@ -2339,6 +2411,22 @@ msgstr "هذا الإيصال متاح فقط على الجهاز الذي أُ�
 msgid "This shop is not available right now."
 msgstr "هذا المتجر غير متاح حاليًا."
 
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "This tab is paid. Thank you!"
+msgstr "تم دفع هذا الحساب. شكرًا لك!"
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "This tab was closed by the staff."
+msgstr "أغلق فريق العمل هذا الحساب."
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "This table code no longer works. Please ask a team member for help."
+msgstr "رمز هذه الطاولة لم يعد يعمل. يُرجى طلب المساعدة من أحد أعضاء الفريق."
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "This table has sent many orders. Please ask a team member for help."
+msgstr "أرسلت هذه الطاولة طلبات كثيرة. يُرجى طلب المساعدة من أحد أعضاء الفريق."
+
 #: src/lib/reservations/labels.ts:38
 msgid "Time"
 msgstr "الوقت"
@@ -2381,6 +2469,7 @@ msgstr "محاولات كثيرة جدًا. حاول مرة أخرى لاحقً�
 msgid "Too many attempts. Please wait a moment and try again."
 msgstr "محاولات كثيرة جدًا. يرجى الانتظار قليلًا ثم المحاولة مرة أخرى."
 
+#: src/components/ordering/TableTab.astro.ts:3
 #: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
@@ -2495,6 +2584,10 @@ msgstr "عرض القائمة"
 msgid "View order"
 msgstr "عرض الطلب"
 
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "View tab"
+msgstr "عرض الحساب"
+
 #: src/pages/menu/checkout.astro.ts:3
 msgid "View your receipt"
 msgstr "عرض الإيصال"
@@ -2559,6 +2652,10 @@ msgstr "تعذّر الوصول إلى الخادم. تحقق من اتصالك 
 #: src/components/careers/ApplyPanel.astro.ts:3
 msgid "We could not send your application right now. Please try again in a moment."
 msgstr "تعذّر إرسال طلبك الآن. يرجى المحاولة بعد قليل."
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "We could not send your order. Please try again."
+msgstr "تعذّر إرسال طلبك. يُرجى المحاولة مرة أخرى."
 
 #: src/lib/ordering-labels.ts:122
 msgid "We couldn't check this address"
@@ -2690,6 +2787,10 @@ msgstr "ما اسمك؟"
 #: src/lib/reservations/labels.ts:158
 msgid "When"
 msgstr "الوقت"
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "When you are done, show tab {number} at the counter to pay."
+msgstr "عند الانتهاء، أظهر الحساب {number} عند الكاونتر للدفع."
 
 #: src/pages/profile/orders.astro.ts:3
 msgid "When you buy something from the shop, your receipts will show up here."
@@ -2833,6 +2934,10 @@ msgstr "انتهت مدة حجز الطاولة"
 msgid "Your hold expired. Please choose a time again."
 msgstr "انتهت مدة حجز الطاولة. يرجى اختيار وقت مرة أخرى."
 
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Your name"
+msgstr "اسمك"
+
 #: src/pages/menu.astro.ts:3
 msgid "Your order"
 msgstr "طلبك"
@@ -2901,6 +3006,10 @@ msgstr "تم تحديث حجزك."
 #: src/lib/ordering-labels.ts:162
 msgid "Your scheduled time is no longer available. Choose a new time."
 msgstr "الوقت المحدد لم يعد متاحًا. اختر وقتًا جديدًا."
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Your tab"
+msgstr "حسابك"
 
 #: src/lib/reservations/labels.ts:69
 msgid "Your table is held"

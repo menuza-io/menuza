@@ -157,6 +157,10 @@ msgstr "1 个限量活动正在接受下单"
 msgid "1 guest"
 msgstr "1 位"
 
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "A team member is settling this tab. Please ask them for help."
+msgstr "工作人员正在为此账单结账，请向工作人员寻求帮助。"
+
 #: src/lib/reservations/labels.ts:243
 msgid "About {count} min"
 msgstr "约 {count} 分钟"
@@ -309,6 +313,10 @@ msgstr "返回商店"
 msgid "Be first when the next drop opens"
 msgstr "下一场限量活动开始时抢先知道"
 
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Before we send your order"
+msgstr "在发送您的订单之前"
+
 #: src/lib/reservations/labels.ts:65
 msgid "Book {time}"
 msgstr "预订 {time}"
@@ -392,6 +400,7 @@ msgstr "取消此请求"
 msgid "Cancel this reservation?"
 msgstr "要取消这个预订吗？"
 
+#: src/components/ordering/TableTab.astro.ts:3
 #: src/lib/reservations/labels.ts:168
 #: src/pages/menu/success.astro.ts:3
 msgid "Cancelled"
@@ -557,6 +566,7 @@ msgstr "清除地址"
 msgid "Clear search"
 msgstr "清除搜索"
 
+#: src/components/ordering/TableTab.astro.ts:3
 #: src/lib/ordering-labels.ts:70
 #: src/lib/ordering-labels.ts:81
 msgid "Close"
@@ -1046,6 +1056,10 @@ msgstr "请包含国家/地区区号，例如 {example}。"
 msgid "Include your country code, for example +1 415 555 0123."
 msgstr "请包含国家区号，例如 +1 415 555 0123。"
 
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Includes tax"
+msgstr "含税"
+
 #: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
@@ -1375,6 +1389,10 @@ msgstr "未到场费用：{amount}。"
 msgid "None"
 msgstr "无"
 
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Not at this table?"
+msgstr "不在这张桌子？"
+
 #: src/lib/ordering-labels.ts:164
 msgid "Not available right now"
 msgstr "目前不可用"
@@ -1382,6 +1400,10 @@ msgstr "目前不可用"
 #: src/lib/reservations/labels.ts:379
 msgid "Nothing is charged now"
 msgstr "现在不会扣款"
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Nothing on your tab yet. Add dishes and send them to the kitchen."
+msgstr "您的账单上还没有内容。添加菜品并发送到厨房。"
 
 #: src/lib/reservations/labels.ts:295
 msgid "Notify me"
@@ -1505,6 +1527,14 @@ msgstr "订单类型"
 #: src/pages/drop/[slug].astro.ts:3
 msgid "Order window"
 msgstr "下单时间窗口"
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Ordering at the table is not available right now."
+msgstr "目前无法在桌边点餐。"
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Ordering is closed right now."
+msgstr "目前暂停点餐。"
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Ordering is currently closed."
@@ -1646,6 +1676,7 @@ msgstr "已收到付款"
 msgid "Phone"
 msgstr "电话"
 
+#: src/components/ordering/TableTab.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Phone number"
 msgstr "电话号码"
@@ -1793,6 +1824,7 @@ msgstr "排队位置"
 msgid "Posted {date}"
 msgstr "发布于 {date}"
 
+#: src/components/ordering/TableTab.astro.ts:3
 #: src/pages/menu/success.astro.ts:3
 msgid "Preparing"
 msgstr "制作中"
@@ -1853,6 +1885,7 @@ msgstr "数量"
 msgid "Read more"
 msgstr "阅读更多"
 
+#: src/components/ordering/TableTab.astro.ts:3
 #: src/pages/menu/success.astro.ts:3
 msgid "Ready"
 msgstr "已备好"
@@ -1873,6 +1906,14 @@ msgstr "此设备无法查看收据"
 #: src/pages/profile/orders.astro.ts:3
 msgid "Receipts for completed purchases appear here with status and amount."
 msgstr "已完成购买的收据将在此显示状态和金额。"
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Received"
+msgstr "已接单"
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Refresh"
+msgstr "刷新"
 
 #: src/lib/reservations/labels.ts:434
 msgid "Refund on its way"
@@ -1915,6 +1956,10 @@ msgstr "请核对订单详情并填写联系信息以完成订单。"
 #: src/lib/ordering-labels.ts:53
 msgid "Right"
 msgstr "右半"
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Round {number}"
+msgstr "第 {number} 轮"
 
 #: src/lib/ordering-labels.ts:141
 msgid "Save"
@@ -1985,15 +2030,28 @@ msgstr "发送验证码"
 msgid "Send request"
 msgstr "发送请求"
 
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Send to kitchen"
+msgstr "发送到厨房"
+
 #: src/components/careers/ApplyPanel.astro.ts:3
 #: src/components/drops/DropAlertsSignup.astro.ts:3
 #: src/pages/login.astro.ts:3
 msgid "Sending..."
 msgstr "发送中..."
 
+#: src/components/ordering/TableTab.astro.ts:3
 #: src/lib/reservations/labels.ts:296
 msgid "Sending…"
 msgstr "正在发送…"
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Sent to the kitchen. Order more any time."
+msgstr "已发送到厨房。随时可以继续点餐。"
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Served"
+msgstr "已上菜"
 
 #: src/components/careers/ShareJob.astro.ts:3
 msgid "Share this job"
@@ -2069,6 +2127,7 @@ msgstr "特殊要求"
 msgid "Submitting..."
 msgstr "正在提交..."
 
+#: src/components/ordering/TableTab.astro.ts:3
 #: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
@@ -2079,6 +2138,14 @@ msgstr "小计"
 #: src/lib/ordering-labels.ts:114
 msgid "Switch to pickup"
 msgstr "改为自取"
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Tab {number}"
+msgstr "账单 {number}"
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Table {label}"
+msgstr "桌号 {label}"
 
 #: src/lib/reservations/labels.ts:538
 msgid "Table alerts are not available right now. Please call the restaurant."
@@ -2092,6 +2159,7 @@ msgstr "正在跳转到安全支付页面…"
 msgid "Tasting menus, chef's tables and special events at {name}."
 msgstr "{name} 的品鉴菜单、主厨餐台和特别活动。"
 
+#: src/components/ordering/TableTab.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
 #: src/pages/menu/success.astro.ts:3
 msgid "Tax"
@@ -2208,6 +2276,10 @@ msgstr "您要查找的页面不存在或已移动。"
 #: src/lib/reservations/labels.ts:408
 msgid "The payment did not go through"
 msgstr "付款未成功"
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "The restaurant asks for this once per tab."
+msgstr "每张账单餐厅只会询问一次。"
 
 #: src/lib/reservations/labels.ts:57
 msgid "The restaurant is closed on this date."
@@ -2339,6 +2411,22 @@ msgstr "此收据仅在下单时使用的设备上可用。"
 msgid "This shop is not available right now."
 msgstr "该商店目前不可用。"
 
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "This tab is paid. Thank you!"
+msgstr "此账单已支付。谢谢！"
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "This tab was closed by the staff."
+msgstr "工作人员已关闭此账单。"
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "This table code no longer works. Please ask a team member for help."
+msgstr "此桌码已失效。请向工作人员寻求帮助。"
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "This table has sent many orders. Please ask a team member for help."
+msgstr "这张桌子已提交很多订单。请向工作人员寻求帮助。"
+
 #: src/lib/reservations/labels.ts:38
 msgid "Time"
 msgstr "时间"
@@ -2381,6 +2469,7 @@ msgstr "尝试次数过多。请稍后重试。"
 msgid "Too many attempts. Please wait a moment and try again."
 msgstr "尝试次数过多，请稍候再试。"
 
+#: src/components/ordering/TableTab.astro.ts:3
 #: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
@@ -2495,6 +2584,10 @@ msgstr "查看菜单"
 msgid "View order"
 msgstr "查看订单"
 
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "View tab"
+msgstr "查看账单"
+
 #: src/pages/menu/checkout.astro.ts:3
 msgid "View your receipt"
 msgstr "查看您的收据"
@@ -2559,6 +2652,10 @@ msgstr "无法连接服务器。请检查网络后重试。"
 #: src/components/careers/ApplyPanel.astro.ts:3
 msgid "We could not send your application right now. Please try again in a moment."
 msgstr "暂时无法提交您的申请，请稍后重试。"
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "We could not send your order. Please try again."
+msgstr "无法发送您的订单。请重试。"
 
 #: src/lib/ordering-labels.ts:122
 msgid "We couldn't check this address"
@@ -2690,6 +2787,10 @@ msgstr "您叫什么名字？"
 #: src/lib/reservations/labels.ts:158
 msgid "When"
 msgstr "时间"
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "When you are done, show tab {number} at the counter to pay."
+msgstr "用餐结束后，请在柜台出示账单 {number} 付款。"
 
 #: src/pages/profile/orders.astro.ts:3
 msgid "When you buy something from the shop, your receipts will show up here."
@@ -2833,6 +2934,10 @@ msgstr "保留已过期"
 msgid "Your hold expired. Please choose a time again."
 msgstr "保留已过期，请重新选择时间。"
 
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Your name"
+msgstr "您的姓名"
+
 #: src/pages/menu.astro.ts:3
 msgid "Your order"
 msgstr "您的订单"
@@ -2901,6 +3006,10 @@ msgstr "您的预订已更新。"
 #: src/lib/ordering-labels.ts:162
 msgid "Your scheduled time is no longer available. Choose a new time."
 msgstr "您预约的时间已不可用，请重新选择。"
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Your tab"
+msgstr "您的账单"
 
 #: src/lib/reservations/labels.ts:69
 msgid "Your table is held"

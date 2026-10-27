@@ -157,6 +157,10 @@ msgstr "1 Aktion jetzt bestellbar"
 msgid "1 guest"
 msgstr "1 Gast"
 
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "A team member is settling this tab. Please ask them for help."
+msgstr "Ein Teammitglied rechnet diese Rechnung gerade ab. Bitte wenden Sie sich an das Team."
+
 #: src/lib/reservations/labels.ts:243
 msgid "About {count} min"
 msgstr "Etwa {count} Min."
@@ -309,6 +313,10 @@ msgstr "Zurück zum Shop"
 msgid "Be first when the next drop opens"
 msgstr "Sei dabei, wenn die nächste Aktion startet"
 
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Before we send your order"
+msgstr "Bevor wir Ihre Bestellung senden"
+
 #: src/lib/reservations/labels.ts:65
 msgid "Book {time}"
 msgstr "Um {time} buchen"
@@ -392,6 +400,7 @@ msgstr "Diese Anfrage stornieren"
 msgid "Cancel this reservation?"
 msgstr "Diese Reservierung stornieren?"
 
+#: src/components/ordering/TableTab.astro.ts:3
 #: src/lib/reservations/labels.ts:168
 #: src/pages/menu/success.astro.ts:3
 msgid "Cancelled"
@@ -557,6 +566,7 @@ msgstr "Adresse löschen"
 msgid "Clear search"
 msgstr "Suche löschen"
 
+#: src/components/ordering/TableTab.astro.ts:3
 #: src/lib/ordering-labels.ts:70
 #: src/lib/ordering-labels.ts:81
 msgid "Close"
@@ -1046,6 +1056,10 @@ msgstr "Gib deine Landesvorwahl an, zum Beispiel {example}."
 msgid "Include your country code, for example +1 415 555 0123."
 msgstr "Mit Ländervorwahl, z. B. +1 415 555 0123."
 
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Includes tax"
+msgstr "Inkl. Steuern"
+
 #: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
@@ -1375,6 +1389,10 @@ msgstr "Gebühr bei Nichterscheinen: {amount}."
 msgid "None"
 msgstr "Keine"
 
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Not at this table?"
+msgstr "Nicht an diesem Tisch?"
+
 #: src/lib/ordering-labels.ts:164
 msgid "Not available right now"
 msgstr "Gerade nicht verfügbar"
@@ -1382,6 +1400,10 @@ msgstr "Gerade nicht verfügbar"
 #: src/lib/reservations/labels.ts:379
 msgid "Nothing is charged now"
 msgstr "Es wird jetzt nichts abgebucht"
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Nothing on your tab yet. Add dishes and send them to the kitchen."
+msgstr "Noch nichts auf Ihrer Rechnung. Wählen Sie Gerichte und senden Sie sie an die Küche."
 
 #: src/lib/reservations/labels.ts:295
 msgid "Notify me"
@@ -1505,6 +1527,14 @@ msgstr "Bestellart"
 #: src/pages/drop/[slug].astro.ts:3
 msgid "Order window"
 msgstr "Bestellfenster"
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Ordering at the table is not available right now."
+msgstr "Bestellen am Tisch ist gerade nicht verfügbar."
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Ordering is closed right now."
+msgstr "Bestellungen sind gerade geschlossen."
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Ordering is currently closed."
@@ -1646,6 +1676,7 @@ msgstr "Zahlung eingegangen"
 msgid "Phone"
 msgstr "Telefon"
 
+#: src/components/ordering/TableTab.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Phone number"
 msgstr "Telefonnummer"
@@ -1793,6 +1824,7 @@ msgstr "Position in der Schlange"
 msgid "Posted {date}"
 msgstr "Veröffentlicht am {date}"
 
+#: src/components/ordering/TableTab.astro.ts:3
 #: src/pages/menu/success.astro.ts:3
 msgid "Preparing"
 msgstr "In Zubereitung"
@@ -1853,6 +1885,7 @@ msgstr "Menge"
 msgid "Read more"
 msgstr "Mehr anzeigen"
 
+#: src/components/ordering/TableTab.astro.ts:3
 #: src/pages/menu/success.astro.ts:3
 msgid "Ready"
 msgstr "Bereit"
@@ -1873,6 +1906,14 @@ msgstr "Beleg auf diesem Gerät nicht verfügbar"
 #: src/pages/profile/orders.astro.ts:3
 msgid "Receipts for completed purchases appear here with status and amount."
 msgstr "Quittungen für abgeschlossene Einkäufe werden hier mit Status und Betrag angezeigt."
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Received"
+msgstr "Eingegangen"
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Refresh"
+msgstr "Aktualisieren"
 
 #: src/lib/reservations/labels.ts:434
 msgid "Refund on its way"
@@ -1915,6 +1956,10 @@ msgstr "Überprüfen Sie Ihre Bestelldetails und geben Sie Ihre Kontaktdaten ein
 #: src/lib/ordering-labels.ts:53
 msgid "Right"
 msgstr "Rechts"
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Round {number}"
+msgstr "Runde {number}"
 
 #: src/lib/ordering-labels.ts:141
 msgid "Save"
@@ -1985,15 +2030,28 @@ msgstr "Code senden"
 msgid "Send request"
 msgstr "Anfrage senden"
 
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Send to kitchen"
+msgstr "An die Küche senden"
+
 #: src/components/careers/ApplyPanel.astro.ts:3
 #: src/components/drops/DropAlertsSignup.astro.ts:3
 #: src/pages/login.astro.ts:3
 msgid "Sending..."
 msgstr "Senden..."
 
+#: src/components/ordering/TableTab.astro.ts:3
 #: src/lib/reservations/labels.ts:296
 msgid "Sending…"
 msgstr "Wird gesendet…"
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Sent to the kitchen. Order more any time."
+msgstr "An die Küche gesendet. Bestellen Sie jederzeit nach."
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Served"
+msgstr "Serviert"
 
 #: src/components/careers/ShareJob.astro.ts:3
 msgid "Share this job"
@@ -2069,6 +2127,7 @@ msgstr "Besondere Wünsche"
 msgid "Submitting..."
 msgstr "Wird gesendet..."
 
+#: src/components/ordering/TableTab.astro.ts:3
 #: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
@@ -2079,6 +2138,14 @@ msgstr "Zwischensumme"
 #: src/lib/ordering-labels.ts:114
 msgid "Switch to pickup"
 msgstr "Zur Abholung wechseln"
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Tab {number}"
+msgstr "Rechnung {number}"
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Table {label}"
+msgstr "Tisch {label}"
 
 #: src/lib/reservations/labels.ts:538
 msgid "Table alerts are not available right now. Please call the restaurant."
@@ -2092,6 +2159,7 @@ msgstr "Weiterleitung zur sicheren Zahlungsseite…"
 msgid "Tasting menus, chef's tables and special events at {name}."
 msgstr "Degustationsmenüs, Chef’s Tables und besondere Events bei {name}."
 
+#: src/components/ordering/TableTab.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
 #: src/pages/menu/success.astro.ts:3
 msgid "Tax"
@@ -2208,6 +2276,10 @@ msgstr "Die gesuchte Seite existiert nicht oder wurde verschoben."
 #: src/lib/reservations/labels.ts:408
 msgid "The payment did not go through"
 msgstr "Die Zahlung ist nicht durchgegangen"
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "The restaurant asks for this once per tab."
+msgstr "Das Restaurant fragt einmal pro Rechnung danach."
 
 #: src/lib/reservations/labels.ts:57
 msgid "The restaurant is closed on this date."
@@ -2339,6 +2411,22 @@ msgstr "Dieser Beleg ist nur auf dem Gerät verfügbar, auf dem die Bestellung a
 msgid "This shop is not available right now."
 msgstr "Dieser Shop ist derzeit nicht verfügbar."
 
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "This tab is paid. Thank you!"
+msgstr "Diese Rechnung ist bezahlt. Vielen Dank!"
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "This tab was closed by the staff."
+msgstr "Das Team hat diese Rechnung geschlossen."
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "This table code no longer works. Please ask a team member for help."
+msgstr "Der Code dieses Tisches funktioniert nicht mehr. Bitte wenden Sie sich an das Team."
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "This table has sent many orders. Please ask a team member for help."
+msgstr "Von diesem Tisch kamen viele Bestellungen. Bitte wenden Sie sich an das Team."
+
 #: src/lib/reservations/labels.ts:38
 msgid "Time"
 msgstr "Uhrzeit"
@@ -2381,6 +2469,7 @@ msgstr "Zu viele Versuche. Bitte versuchen Sie es später erneut."
 msgid "Too many attempts. Please wait a moment and try again."
 msgstr "Zu viele Versuche. Bitte warten Sie einen Moment und versuchen Sie es erneut."
 
+#: src/components/ordering/TableTab.astro.ts:3
 #: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
@@ -2495,6 +2584,10 @@ msgstr "Speisekarte ansehen"
 msgid "View order"
 msgstr "Bestellung ansehen"
 
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "View tab"
+msgstr "Rechnung ansehen"
+
 #: src/pages/menu/checkout.astro.ts:3
 msgid "View your receipt"
 msgstr "Beleg ansehen"
@@ -2559,6 +2652,10 @@ msgstr "Der Server ist nicht erreichbar. Prüfen Sie Ihre Verbindung und versuch
 #: src/components/careers/ApplyPanel.astro.ts:3
 msgid "We could not send your application right now. Please try again in a moment."
 msgstr "Ihre Bewerbung konnte gerade nicht gesendet werden. Bitte versuchen Sie es gleich noch einmal."
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "We could not send your order. Please try again."
+msgstr "Wir konnten Ihre Bestellung nicht senden. Bitte versuchen Sie es erneut."
 
 #: src/lib/ordering-labels.ts:122
 msgid "We couldn't check this address"
@@ -2690,6 +2787,10 @@ msgstr "Wie heißen Sie?"
 #: src/lib/reservations/labels.ts:158
 msgid "When"
 msgstr "Wann"
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "When you are done, show tab {number} at the counter to pay."
+msgstr "Wenn Sie fertig sind, zeigen Sie Rechnung {number} an der Theke, um zu bezahlen."
 
 #: src/pages/profile/orders.astro.ts:3
 msgid "When you buy something from the shop, your receipts will show up here."
@@ -2833,6 +2934,10 @@ msgstr "Ihre Reservierung ist abgelaufen"
 msgid "Your hold expired. Please choose a time again."
 msgstr "Ihre Reservierung ist abgelaufen. Bitte wählen Sie erneut eine Zeit."
 
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Your name"
+msgstr "Ihr Name"
+
 #: src/pages/menu.astro.ts:3
 msgid "Your order"
 msgstr "Ihre Bestellung"
@@ -2901,6 +3006,10 @@ msgstr "Ihre Reservierung wurde aktualisiert."
 #: src/lib/ordering-labels.ts:162
 msgid "Your scheduled time is no longer available. Choose a new time."
 msgstr "Deine geplante Zeit ist nicht mehr verfügbar. Wähle eine neue Zeit."
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Your tab"
+msgstr "Ihre Rechnung"
 
 #: src/lib/reservations/labels.ts:69
 msgid "Your table is held"
