@@ -3,6 +3,7 @@ import { parseWithZod } from '@conform-to/zod'
 import { msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import {
+	defaultPrintCopy,
 	getPrintSize,
 	PRINT_MAX_FEATURED_ITEMS,
 	PRINT_PRODUCTS,
@@ -15,6 +16,16 @@ import {
 } from '@repo/common/print-shop'
 import { getSiteLocaleNativeLabel } from '@repo/common/site-locales'
 import { Alert, AlertDescription, AlertTitle } from '@repo/ui/alert'
+import {
+	AlertDialog,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+	AlertDialogTrigger,
+} from '@repo/ui/alert-dialog'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
 import {
@@ -33,7 +44,7 @@ import { PageHeader } from '@repo/ui/page-header'
 import { RadioGroup, RadioGroupItem } from '@repo/ui/radio-group'
 import { Switch } from '@repo/ui/switch'
 import { Textarea } from '@repo/ui/textarea'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
 	Form,
 	Link,
@@ -70,6 +81,9 @@ import {
 	fetchQrTablesForPrint,
 	isQrDineInOn,
 } from '#app/utils/print/qr-tables.server.ts'
+
+/** Width the proof document renders at (fits the aside on every screen). */
+const PROOF_WIDTH_PX = 320
 
 const localized = (max: number) =>
 	z.record(z.string(), z.string().max(max)).optional().default({})
@@ -196,6 +210,13 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
 	const size = getPrintSize(design.product, design.sizeKey)
 	const pieceCount = approved?.pieces.length ?? null
+	// Pieces the proof stands for (a table set is one card per table).
+	const proofPieces =
+		design.content.qr.kind === 'table'
+			? design.content.qr.tableIds.includes('all')
+				? tables.length
+				: design.content.qr.tableIds.length
+			: 1
 	return {
 		orgSlug: access.organization.slug,
 		canWrite: access.canWrite,
@@ -209,6 +230,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		items,
 		stale,
 		pieceCount,
+		proofPieces,
 		proofAspect: size ? size.heightMm / size.widthMm : 1.4,
 		folded: product.folded === true,
 	}
@@ -231,9 +253,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	const { locales } = orgLocales(access.organization)
 	const content = toContent(submission.value, locales)
 	if (!content.success) {
+		const onQr = content.error.issues.some((issue) => issue.path[0] === 'qr')
 		return {
 			result: submission.reply(),
-			error: content.error.issues[0]?.message ?? 'Check the form',
+			error: onQr ? ('invalid_qr' as const) : ('invalid_content' as const),
 		}
 	}
 	const saved = await savePrintDesign(row, {
@@ -267,6 +290,10 @@ export default function PrintDesignRoute() {
 		content.qr.kind === 'table' ? content.qr.tableIds : ['all']
 	const [allTables, setAllTables] = useState(initialTables.includes('all'))
 
+	// Approving must approve what the proof shows: unsaved edits first.
+	const [dirty, setDirty] = useState(false)
+	useEffect(() => setDirty(false), [design.updatedAt])
+
 	const [form] = useForm({
 		id: `print-${design.id}`,
 		lastResult: actionData?.result,
@@ -284,7 +311,7 @@ export default function PrintDesignRoute() {
 	const proofSrc = `/${orgSlug}/marketing/print/${design.id}/proof?v=${encodeURIComponent(design.updatedAt)}`
 	const proofHeight = Math.round(
 		Math.min(3, data.pieceCount ?? 3) *
-			(380 * data.proofAspect * (data.folded ? 2 : 1) + 24) +
+			(PROOF_WIDTH_PX * data.proofAspect * (data.folded ? 2 : 1) + 24) +
 			24,
 	)
 	const isApproved = design.status === 'approved'
@@ -305,9 +332,15 @@ export default function PrintDesignRoute() {
 			/>
 
 			{actionData?.error ? (
-				<Alert variant="destructive">
+				<Alert variant="destructive" role="alert">
 					<AlertTitle>{_(msg`We could not save this print`)}</AlertTitle>
-					<AlertDescription>{actionData.error}</AlertDescription>
+					<AlertDescription>
+						{actionData.error === 'invalid_qr'
+							? _(
+									msg`Check the QR code: use a page on your own website, like /menu.`,
+								)
+							: _(msg`Check the words and choices, then save again.`)}
+					</AlertDescription>
 				</Alert>
 			) : null}
 
@@ -325,7 +358,12 @@ export default function PrintDesignRoute() {
 			) : null}
 
 			<div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_420px]">
-				<Form method="post" {...getFormProps(form)} className="space-y-6">
+				<Form
+					method="post"
+					{...getFormProps(form)}
+					className="space-y-6"
+					onChange={() => setDirty(true)}
+				>
 					<fieldset disabled={!canWrite} className="space-y-6">
 						<Card>
 							<CardHeader>
@@ -445,6 +483,7 @@ export default function PrintDesignRoute() {
 												id={`headline-${locale}`}
 												name={`headline.${locale}`}
 												defaultValue={content.headline[locale] ?? ''}
+												placeholder={defaultPrintCopy(locale, qrKind).headline}
 												maxLength={PRINT_TEXT_MAX.headline}
 											/>
 										</Field>
@@ -468,6 +507,9 @@ export default function PrintDesignRoute() {
 												id={`cta-${locale}`}
 												name={`callToAction.${locale}`}
 												defaultValue={content.callToAction[locale] ?? ''}
+												placeholder={
+													defaultPrintCopy(locale, qrKind).callToAction
+												}
 												maxLength={PRINT_TEXT_MAX.callToAction}
 											/>
 										</Field>
@@ -525,7 +567,7 @@ export default function PrintDesignRoute() {
 												)}
 											</Label>
 											{!allTables ? (
-												<div className="grid gap-2 sm:grid-cols-3">
+												<div className="grid max-h-80 gap-2 overflow-y-auto sm:grid-cols-3">
 													{data.tables.map((table) => (
 														<Label
 															key={table.id}
@@ -700,11 +742,22 @@ export default function PrintDesignRoute() {
 								type="submit"
 								name="intent"
 								value="approve"
-								disabled={busy}
+								disabled={busy || dirty}
+								aria-describedby={dirty ? 'approve-hint' : undefined}
 							>
 								<Icon name="check" className="size-4" />
 								{_(msg`Approve proof`)}
 							</Button>
+							{dirty ? (
+								<p
+									id="approve-hint"
+									className="text-muted-foreground w-full text-sm"
+								>
+									{_(
+										msg`Save first, so the proof shows your changes before you approve it.`,
+									)}
+								</p>
+							) : null}
 						</div>
 					) : null}
 				</Form>
@@ -727,6 +780,16 @@ export default function PrintDesignRoute() {
 							</CardDescription>
 						</CardHeader>
 						<CardContent>
+							{data.proofPieces > 3 ? (
+								<p className="text-muted-foreground mb-2 text-sm">
+									{(() => {
+										const total = data.proofPieces
+										return _(
+											msg`Showing 3 of ${total} cards. Every card uses the same layout.`,
+										)
+									})()}
+								</p>
+							) : null}
 							<iframe
 								key={proofSrc}
 								title={_(msg`Print proof`)}
@@ -771,17 +834,40 @@ export default function PrintDesignRoute() {
 					) : null}
 
 					{canWrite ? (
-						<Form method="post">
-							<Button
-								type="submit"
-								name="intent"
-								value="archive"
-								variant="ghost"
-								className="text-muted-foreground"
-							>
-								{_(msg`Archive this print`)}
-							</Button>
-						</Form>
+						<AlertDialog>
+							<AlertDialogTrigger
+								render={
+									<Button variant="ghost" className="text-muted-foreground">
+										{_(msg`Archive this print`)}
+									</Button>
+								}
+							/>
+							<AlertDialogContent>
+								<AlertDialogHeader>
+									<AlertDialogTitle>
+										{_(msg`Archive this print?`)}
+									</AlertDialogTitle>
+									<AlertDialogDescription>
+										{_(
+											msg`It leaves the Print shop list. Orders already placed keep printing it.`,
+										)}
+									</AlertDialogDescription>
+								</AlertDialogHeader>
+								<AlertDialogFooter>
+									<AlertDialogCancel>{_(msg`Keep it`)}</AlertDialogCancel>
+									<Form method="post">
+										<Button
+											type="submit"
+											name="intent"
+											value="archive"
+											variant="destructive"
+										>
+											{_(msg`Archive`)}
+										</Button>
+									</Form>
+								</AlertDialogFooter>
+							</AlertDialogContent>
+						</AlertDialog>
 					) : null}
 				</aside>
 			</div>

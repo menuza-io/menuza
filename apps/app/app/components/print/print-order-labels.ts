@@ -29,3 +29,18 @@ export function printOrderStatusTone(
 	if (status === 'failed') return 'destructive'
 	return 'secondary'
 }
+
+/** Messages for the codes `PrintOrderError` and the order actions return. */
+export const PRINT_ORDER_ERROR_LABELS: Record<string, MessageDescriptor> = {
+	design_not_approved: msg`Approve each print before ordering it.`,
+	not_shippable: msg`This print or size cannot be shipped right now.`,
+	quote_unavailable: msg`We could not get a price right now. Try again in a minute.`,
+	not_payable: msg`This order is already paid or closed.`,
+	quote_expired: msg`This price has expired. Get a new price.`,
+	checkout_unavailable: msg`Payment is unavailable right now. Try again in a minute.`,
+	too_late: msg`Production has started, so this order can no longer be cancelled.`,
+	shipping_paused: msg`Shipped prints are paused for a moment. Try again later.`,
+	no_lines: msg`Choose at least one print and how many copies.`,
+}
+
+export const PRINT_ORDER_ERROR_FALLBACK = msg`That did not work. Try again.`

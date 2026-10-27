@@ -14,7 +14,7 @@ const labels = {
 	tabNumber: i18n._(msg`Tab {number}`),
 	viewTab: i18n._(msg`View tab`),
 	yourTab: i18n._(msg`Your tab`),
-	leaveTable: i18n._(msg`Not at this table?`),
+	leaveTable: i18n._(msg`Leave this table`),
 	sendToKitchen: i18n._(msg`Send to kitchen`),
 	sending: i18n._(msg`Sending…`),
 	sent: i18n._(msg`Sent to the kitchen. Order more any time.`),
@@ -56,6 +56,8 @@ const labels = {
 	payUnavailable: i18n._(msg`Paying from the phone is not available right now. Please pay at the counter.`),
 	payCancelled: i18n._(msg`Payment was not finished. Nothing was charged.`),
 	contactMissing: i18n._(msg`Enter your name and phone number.`),
+	leaveConfirm: i18n._(msg`Tap again to leave this table`),
+	stillConfirming: i18n._(msg`We are still confirming your payment. Check your tab again in a minute.`),
 }
 ---
 
@@ -123,7 +125,8 @@ const labels = {
 				>
 			</button>
 		</header>
-		<div id="tab-rounds" class="flex-1 overflow-y-auto overscroll-contain px-5 py-4" aria-live="polite"></div>
+		<div id="tab-rounds" class="flex-1 overflow-y-auto overscroll-contain px-5 py-4"></div>
+		<p id="tab-announcer" class="sr-only" role="status" aria-live="polite"></p>
 		<footer class="space-y-3 border-t border-border bg-card px-5 pt-4 pb-safe">
 			<dl class="space-y-2" aria-live="polite" aria-atomic="true">
 				<div class="flex items-baseline justify-between gap-4 text-sm text-muted-foreground">
@@ -151,7 +154,7 @@ const labels = {
 >
 	<form
 		id="table-contact"
-		class="site-drawer surface-overlay fixed inset-x-0 bottom-0 mx-auto flex w-full max-w-md flex-col gap-4 rounded-t-2xl p-5 pb-safe outline-none sm:bottom-auto sm:top-1/2 sm:-translate-y-1/2 sm:rounded-2xl"
+		class="site-drawer surface-overlay fixed inset-x-0 bottom-0 mx-auto flex max-h-dvh w-full max-w-md flex-col gap-4 overflow-y-auto overscroll-contain rounded-t-2xl p-5 pb-safe outline-none sm:bottom-auto sm:top-1/2 sm:-translate-y-1/2 sm:rounded-2xl"
 		role="dialog"
 		aria-modal="true"
 		aria-labelledby="table-contact-title"
@@ -197,7 +200,7 @@ const labels = {
 >
 	<form
 		id="tab-pay"
-		class="site-drawer surface-overlay fixed inset-x-0 bottom-0 mx-auto flex w-full max-w-md flex-col gap-4 rounded-t-2xl p-5 pb-safe outline-none sm:bottom-auto sm:top-1/2 sm:-translate-y-1/2 sm:rounded-2xl"
+		class="site-drawer surface-overlay fixed inset-x-0 bottom-0 mx-auto flex max-h-dvh w-full max-w-md flex-col gap-4 overflow-y-auto overscroll-contain rounded-t-2xl p-5 pb-safe outline-none sm:bottom-auto sm:top-1/2 sm:-translate-y-1/2 sm:rounded-2xl"
 		role="dialog"
 		aria-modal="true"
 		aria-labelledby="tab-pay-title"

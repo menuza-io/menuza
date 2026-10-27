@@ -1176,6 +1176,10 @@ msgstr "退出候位名单"
 msgid "Leave the waitlist?"
 msgstr "要退出候位名单吗？"
 
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Leave this table"
+msgstr "离开这张桌子"
+
 #: src/lib/ordering-labels.ts:52
 msgid "Left"
 msgstr "左半"
@@ -1398,10 +1402,6 @@ msgstr "未到场费用：{amount}。"
 #: src/lib/ordering-labels.ts:54
 msgid "None"
 msgstr "无"
-
-#: src/components/ordering/TableTab.astro.ts:3
-msgid "Not at this table?"
-msgstr "不在这张桌子？"
 
 #: src/lib/ordering-labels.ts:164
 msgid "Not available right now"
@@ -2190,6 +2190,10 @@ msgstr "暂时无法使用餐位提醒。请致电餐厅。"
 msgid "Taking you to the secure payment page…"
 msgstr "正在跳转到安全支付页面…"
 
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Tap again to leave this table"
+msgstr "再点一次以离开这张桌子"
+
 #: src/lib/reservations/labels.ts:453
 msgid "Tasting menus, chef's tables and special events at {name}."
 msgstr "{name} 的品鉴菜单、主厨餐台和特别活动。"
@@ -2650,6 +2654,10 @@ msgstr "下次想抢先一步？"
 #: src/lib/reservations/labels.ts:236
 msgid "Want to dine today? Join the waitlist and we will tell you when a table is ready."
 msgstr "想今天用餐？加入候位名单，餐位准备好时我们会通知您。"
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "We are still confirming your payment. Check your tab again in a minute."
+msgstr "我们仍在确认您的付款。请一分钟后再查看账单。"
 
 #: src/lib/reservations/labels.ts:389
 msgid "We could not check your payment. Trying again…"

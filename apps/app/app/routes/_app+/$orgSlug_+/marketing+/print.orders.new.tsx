@@ -38,6 +38,10 @@ import {
 import { z } from 'zod'
 import { PRINT_PRODUCT_LABELS } from '#app/components/print/print-labels.ts'
 import {
+	PRINT_ORDER_ERROR_FALLBACK,
+	PRINT_ORDER_ERROR_LABELS,
+} from '#app/components/print/print-order-labels.ts'
+import {
 	isPrintShippingPaused,
 	requirePrintShopAccess,
 } from '#app/utils/print/access.server.ts'
@@ -133,7 +137,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	if (lines.length === 0) {
 		return {
 			result: submission.reply(),
-			error: 'Choose at least one print and how many copies.',
+			error: 'no_lines',
 		}
 	}
 	try {
@@ -147,7 +151,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		)
 	} catch (error) {
 		if (error instanceof PrintOrderError) {
-			return { result: submission.reply(), error: error.message }
+			return { result: submission.reply(), error: error.code }
 		}
 		throw error
 	}
@@ -184,7 +188,7 @@ export default function NewPrintOrderRoute() {
 			<PageHeader
 				title={_(msg`Order prints`)}
 				description={_(
-					msg`Shipped to a US address. You see the full price, with shipping, before you pay.`,
+					msg`Shipped to a US address. You see the price with shipping before you pay; sales tax is added at payment.`,
 				)}
 				actions={
 					<Button
@@ -206,9 +210,18 @@ export default function NewPrintOrderRoute() {
 				</Alert>
 			) : null}
 			{actionData?.error ? (
-				<Alert variant="destructive">
-					<AlertTitle>{_(msg`We could not price this order`)}</AlertTitle>
-					<AlertDescription>{actionData.error}</AlertDescription>
+				<Alert variant="destructive" role="alert">
+					<AlertTitle>
+						{actionData.error === 'no_lines'
+							? _(msg`Nothing to print yet`)
+							: _(msg`We could not price this order`)}
+					</AlertTitle>
+					<AlertDescription>
+						{_(
+							PRINT_ORDER_ERROR_LABELS[actionData.error] ??
+								PRINT_ORDER_ERROR_FALLBACK,
+						)}
+					</AlertDescription>
 				</Alert>
 			) : null}
 

@@ -1,5 +1,16 @@
+import { type MessageDescriptor } from '@lingui/core'
 import { Trans, msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
+import {
+	AlertDialog,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+	AlertDialogTrigger,
+} from '@repo/ui/alert-dialog'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
 import {
@@ -36,6 +47,99 @@ function money(cents: number, locale: string) {
 		style: 'currency',
 		currency: 'USD',
 	}).format(cents / 100)
+}
+
+const PRODUCT_LABELS: Record<string, MessageDescriptor> = {
+	table_card: msg`Table QR cards`,
+	poster: msg`Poster`,
+	flyer: msg`Flyer`,
+}
+
+const STATUS_LABELS: Record<string, MessageDescriptor> = {
+	quote: msg`Price ready`,
+	awaiting_payment: msg`Waiting for payment`,
+	paid: msg`Paid`,
+	submitted: msg`Sent to the printer`,
+	in_production: msg`Printing`,
+	shipped: msg`Shipped`,
+	delivered: msg`Delivered`,
+	held: msg`On hold`,
+	failed: msg`Failed`,
+	cancelled: msg`Cancelled`,
+	refunded: msg`Refunded`,
+}
+
+const HOLD_LABELS: Record<string, MessageDescriptor> = {
+	price_drift: msg`Wholesale price rose past the drift limit`,
+	render_unavailable: msg`The print file could not be made`,
+	vendor_unavailable: msg`The vendor did not answer`,
+	vendor_rejected: msg`The vendor refused the order`,
+	vendor_failed: msg`The vendor failed the order`,
+	vendor_cancelled: msg`The vendor cancelled the order`,
+	cancelled_by_operator: msg`Cancelled by the organization`,
+	refunded_by_admin: msg`Refunded by an admin`,
+	payment_failed: msg`The payment failed`,
+}
+
+/** A fetcher action that asks first: money and catalog changes are not undone. */
+function ConfirmedAction({
+	fetcher,
+	fields,
+	label,
+	accessibleLabel,
+	title,
+	description,
+	confirmLabel,
+	variant = 'ghost',
+	destructive = false,
+}: {
+	fetcher: ReturnType<typeof useFetcher<PrintAdminResult>>
+	fields: Record<string, string>
+	label: string
+	accessibleLabel: string
+	title: string
+	description: string
+	confirmLabel: string
+	variant?: 'ghost' | 'outline' | 'default'
+	destructive?: boolean
+}) {
+	const { _ } = useLingui()
+	return (
+		<AlertDialog>
+			<AlertDialogTrigger
+				render={
+					<Button
+						size="sm"
+						variant={variant}
+						aria-label={accessibleLabel}
+						disabled={fetcher.state !== 'idle'}
+					>
+						{label}
+					</Button>
+				}
+			/>
+			<AlertDialogContent>
+				<AlertDialogHeader>
+					<AlertDialogTitle>{title}</AlertDialogTitle>
+					<AlertDialogDescription>{description}</AlertDialogDescription>
+				</AlertDialogHeader>
+				<AlertDialogFooter>
+					<AlertDialogCancel>{_(msg`Cancel`)}</AlertDialogCancel>
+					<fetcher.Form method="POST">
+						{Object.entries(fields).map(([name, value]) => (
+							<input key={name} type="hidden" name={name} value={value} />
+						))}
+						<Button
+							type="submit"
+							variant={destructive ? 'destructive' : 'default'}
+						>
+							{confirmLabel}
+						</Button>
+					</fetcher.Form>
+				</AlertDialogFooter>
+			</AlertDialogContent>
+		</AlertDialog>
+	)
 }
 
 function Result({ data }: { data: PrintAdminResult | undefined }) {
@@ -197,7 +301,11 @@ function CatalogRow({
 	return (
 		<TableRow>
 			<TableCell>
-				<span className="font-medium">{size.product}</span>{' '}
+				<span className="font-medium">
+					{PRODUCT_LABELS[size.product]
+						? _(PRODUCT_LABELS[size.product]!)
+						: size.product}
+				</span>{' '}
 				<bdi className="text-muted-foreground">{size.label}</bdi>
 				<fetcher.Form id={formId} method="POST">
 					<input type="hidden" name="_action" value="catalog" />
@@ -250,28 +358,47 @@ function CatalogRow({
 					{current ? _(msg`Update`) : _(msg`Enable`)}
 				</Button>
 				{current ? (
-					<fetcher.Form method="POST" className="inline">
-						<input type="hidden" name="_action" value="catalog-remove" />
-						<input type="hidden" name="id" value={current.id} />
-						<Button type="submit" size="sm" variant="ghost">
-							{_(msg`Stop shipping`)}
-						</Button>
-					</fetcher.Form>
+					<ConfirmedAction
+						fetcher={fetcher}
+						fields={{ _action: 'catalog-remove', id: current.id }}
+						label={_(msg`Stop shipping`)}
+						accessibleLabel={(() => {
+							const sizeLabel = size.label
+							return _(msg`Stop shipping ${sizeLabel}`)
+						})()}
+						title={_(msg`Stop shipping this size?`)}
+						description={_(
+							msg`No organization can order it shipped until it is enabled again. Downloads keep working.`,
+						)}
+						confirmLabel={_(msg`Stop shipping`)}
+						destructive
+					/>
 				) : null}
 			</TableCell>
 		</TableRow>
 	)
 }
 
-function OrderActions({ order }: { order: { id: string; status: string } }) {
+function OrderActions({
+	order,
+}: {
+	order: {
+		id: string
+		status: string
+		organization: string
+		totalCents: number
+	}
+}) {
 	const fetcher = useFetcher<PrintAdminResult>()
-	const { _ } = useLingui()
+	const { _, i18n } = useLingui()
 	const refundable = ![
 		'refunded',
 		'cancelled',
 		'quote',
 		'awaiting_payment',
 	].includes(order.status)
+	const organization = order.organization
+	const amount = money(order.totalCents, i18n.locale)
 	return (
 		<div className="flex flex-wrap gap-2">
 			{order.status === 'held' ? (
@@ -279,37 +406,42 @@ function OrderActions({ order }: { order: { id: string; status: string } }) {
 					<fetcher.Form method="POST">
 						<input type="hidden" name="_action" value="retry" />
 						<input type="hidden" name="orderId" value={order.id} />
-						<Button type="submit" size="sm" disabled={fetcher.state !== 'idle'}>
-							{_(msg`Retry`)}
-						</Button>
-					</fetcher.Form>
-					<fetcher.Form method="POST">
-						<input type="hidden" name="_action" value="retry-accept" />
-						<input type="hidden" name="orderId" value={order.id} />
 						<Button
 							type="submit"
 							size="sm"
-							variant="outline"
 							disabled={fetcher.state !== 'idle'}
+							aria-label={_(msg`Retry the order of ${organization}`)}
 						>
-							{_(msg`Accept new price`)}
+							{_(msg`Retry`)}
 						</Button>
 					</fetcher.Form>
+					<ConfirmedAction
+						fetcher={fetcher}
+						fields={{ _action: 'retry-accept', orderId: order.id }}
+						label={_(msg`Accept new price`)}
+						accessibleLabel={_(msg`Accept the new price for ${organization}`)}
+						title={_(msg`Accept the new wholesale price?`)}
+						description={_(
+							msg`The order goes to the vendor at today's price. The organization already paid ${amount}; Menuza absorbs the difference.`,
+						)}
+						confirmLabel={_(msg`Accept and send`)}
+						variant="outline"
+					/>
 				</>
 			) : null}
 			{refundable ? (
-				<fetcher.Form method="POST">
-					<input type="hidden" name="_action" value="refund" />
-					<input type="hidden" name="orderId" value={order.id} />
-					<Button
-						type="submit"
-						size="sm"
-						variant="ghost"
-						disabled={fetcher.state !== 'idle'}
-					>
-						{_(msg`Refund in full`)}
-					</Button>
-				</fetcher.Form>
+				<ConfirmedAction
+					fetcher={fetcher}
+					fields={{ _action: 'refund', orderId: order.id }}
+					label={_(msg`Refund in full`)}
+					accessibleLabel={_(msg`Refund the order of ${organization} in full`)}
+					title={_(msg`Refund ${amount} to ${organization}?`)}
+					description={_(
+						msg`The full amount goes back to the card they paid with, and vendor orders still open are cancelled. This cannot be undone.`,
+					)}
+					confirmLabel={_(msg`Refund in full`)}
+					destructive
+				/>
 			) : null}
 			<Result data={fetcher.data} />
 		</div>
@@ -369,11 +501,19 @@ export default function PrintShopAdminRoute() {
 												order.status === 'held' ? 'warning' : 'secondary'
 											}
 										>
-											{order.status}
+											{STATUS_LABELS[order.status]
+												? _(STATUS_LABELS[order.status]!)
+												: order.status}
 										</Badge>
 										{order.holdReason || order.failureReason ? (
 											<span className="text-muted-foreground block text-xs">
-												{order.holdReason ?? order.failureReason}
+												{(() => {
+													const reason = (order.holdReason ??
+														order.failureReason)!
+													return HOLD_LABELS[reason]
+														? _(HOLD_LABELS[reason]!)
+														: reason
+												})()}
 											</span>
 										) : null}
 									</TableCell>

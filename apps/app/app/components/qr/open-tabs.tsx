@@ -47,6 +47,7 @@ export function OpenTabs({
 	const [failed, setFailed] = useState(false)
 	const [closing, setClosing] = useState<QrTab | null>(null)
 	const [voiding, setVoiding] = useState<QrTab | null>(null)
+	const [locking, setLocking] = useState<QrTab | null>(null)
 
 	const load = useCallback(
 		async (signal?: AbortSignal) => {
@@ -93,7 +94,19 @@ export function OpenTabs({
 		}
 	}
 
-	if (failed && tabs.length === 0) return null
+	if (failed) {
+		return (
+			<div
+				role="alert"
+				className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-4 text-sm"
+			>
+				<span>{_(msg`Open table tabs could not be loaded.`)}</span>
+				<Button size="sm" variant="outline" onClick={() => void load()}>
+					<Trans>Try again</Trans>
+				</Button>
+			</div>
+		)
+	}
 	if (tabs.length === 0) return null
 
 	return (
@@ -164,6 +177,9 @@ export function OpenTabs({
 										size="sm"
 										onClick={() => setClosing(tab)}
 										disabled={tab.paymentStatus === 'pending'}
+										aria-label={_(
+											msg`Close tab ${number} for table ${label} at the counter`,
+										)}
 									>
 										<Trans>Close at counter</Trans>
 									</Button>
@@ -172,6 +188,7 @@ export function OpenTabs({
 										variant="ghost"
 										onClick={() => setVoiding(tab)}
 										disabled={tab.paymentStatus === 'pending'}
+										aria-label={_(msg`Void tab ${number} for table ${label}`)}
 									>
 										<Trans>Void</Trans>
 									</Button>
@@ -179,16 +196,19 @@ export function OpenTabs({
 										<Button
 											size="sm"
 											variant="ghost"
-											onClick={() =>
-												void act(
-													`/tabs/${tab.id}/lock`,
-													{},
-													_(msg`Tab locked. Guests can no longer add to it.`),
-												)
-											}
+											onClick={() => setLocking(tab)}
+											aria-label={_(msg`Lock tab ${number} for table ${label}`)}
 										>
 											<Trans>Lock</Trans>
 										</Button>
+									) : null}
+									{tab.paymentStatus === 'pending' ? (
+										<p className="text-muted-foreground w-full text-xs">
+											<Trans>
+												The guest is paying online. Close and void wait until
+												the payment finishes.
+											</Trans>
+										</p>
 									) : null}
 								</div>
 							) : null}
@@ -214,6 +234,43 @@ export function OpenTabs({
 					}
 				}}
 			/>
+			<AlertDialog
+				open={Boolean(locking)}
+				onOpenChange={(open) => !open && setLocking(null)}
+			>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle>
+							<Trans>Lock this tab?</Trans>
+						</AlertDialogTitle>
+						<AlertDialogDescription>
+							<Trans>
+								No phone can add to it or pay it any more, and scanning the
+								table code is refused too. Close or void it at the counter to
+								finish.
+							</Trans>
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel>
+							<Trans>Cancel</Trans>
+						</AlertDialogCancel>
+						<Button
+							onClick={() => {
+								if (!locking) return
+								const tab = locking
+								void act(
+									`/tabs/${tab.id}/lock`,
+									{},
+									_(msg`Tab locked. Guests can no longer add to it.`),
+								).then(() => setLocking(null))
+							}}
+						>
+							<Trans>Lock tab</Trans>
+						</Button>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
 			<VoidTabDialog
 				tab={voiding}
 				onClose={() => setVoiding(null)}
@@ -248,7 +305,7 @@ function CloseTabDialog({
 	const [tip, setTip] = useState('')
 	const [busy, setBusy] = useState(false)
 	useEffect(() => setTip(''), [tab?.id])
-	const tipCents = Math.max(0, Math.round((Number(tip) || 0) * 100))
+	const tipCents = parseTipCents(tip)
 	const total = tab
 		? formatMoney(
 				tab.totals.totalCents + tipCents,
@@ -279,7 +336,10 @@ function CloseTabDialog({
 				</AlertDialogHeader>
 				<Field>
 					<FieldLabel htmlFor="tab-tip">
-						<Trans>Tip (optional)</Trans>
+						{(() => {
+							const currency = tab?.totals.currency ?? ''
+							return _(msg`Tip in ${currency} (optional)`)
+						})()}
 					</FieldLabel>
 					<Input
 						id="tab-tip"
@@ -291,7 +351,7 @@ function CloseTabDialog({
 					<FieldDescription>
 						{(() => {
 							const amount = total
-							return _(msg`Total paid: ${amount}`)
+							return _(msg`The guest pays ${amount} in total, tip included.`)
 						})()}
 					</FieldDescription>
 				</Field>
@@ -374,4 +434,19 @@ function VoidTabDialog({
 			</AlertDialogContent>
 		</AlertDialog>
 	)
+}
+
+/**
+ * A typed tip in major units: Arabic-Indic digits and a comma decimal ("٥",
+ * "5,50") are accepted; anything unreadable counts as no tip.
+ */
+export function parseTipCents(raw: string): number {
+	const digits = raw
+		.trim()
+		.replace(/[\u0660-\u0669]/g, (d) => String(d.charCodeAt(0) - 0x0660))
+		.replace(/[\u06f0-\u06f9]/g, (d) => String(d.charCodeAt(0) - 0x06f0))
+		.replace(/[\u066b,]/g, '.')
+		.replace(/[^\d.]/g, '')
+	const value = Number.parseFloat(digits)
+	return Number.isFinite(value) && value > 0 ? Math.round(value * 100) : 0
 }

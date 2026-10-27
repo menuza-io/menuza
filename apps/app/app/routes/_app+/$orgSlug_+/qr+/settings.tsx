@@ -33,6 +33,7 @@ export default function QrSettingsRoute() {
 	const [settings, setSettings] = useState<QrSettings | null>(null)
 	const [error, setError] = useState<string | null>(null)
 	const [saving, setSaving] = useState(false)
+	const [limitDraft, setLimitDraft] = useState<string | null>(null)
 
 	useEffect(() => {
 		let active = true
@@ -55,11 +56,22 @@ export default function QrSettingsRoute() {
 	const save = async (event: FormEvent) => {
 		event.preventDefault()
 		if (!settings) return
+		const next =
+			limitDraft === null
+				? settings
+				: {
+						...settings,
+						perTableLimitPerHour: Math.min(
+							QR_PER_TABLE_LIMIT_MAX,
+							Math.max(1, Math.round(Number(limitDraft)) || 1),
+						),
+					}
+		setLimitDraft(null)
 		setSaving(true)
 		try {
 			const body = await request('/settings', {
 				method: 'PATCH',
-				body: JSON.stringify(settings),
+				body: JSON.stringify(next),
 			})
 			setSettings(z.object({ settings: qrSettingsSchema }).parse(body).settings)
 			toast.success(_(msg`Settings saved`))
@@ -162,17 +174,21 @@ export default function QrSettingsRoute() {
 									inputMode="numeric"
 									min={1}
 									max={QR_PER_TABLE_LIMIT_MAX}
-									value={settings.perTableLimitPerHour}
+									value={limitDraft ?? String(settings.perTableLimitPerHour)}
 									disabled={!canWrite}
-									onChange={(event) =>
+									// Typed freely, clamped when the field is left.
+									onChange={(event) => setLimitDraft(event.target.value)}
+									onBlur={() => {
+										if (limitDraft === null) return
 										setSettings({
 											...settings,
 											perTableLimitPerHour: Math.min(
 												QR_PER_TABLE_LIMIT_MAX,
-												Math.max(1, Number(event.target.value) || 1),
+												Math.max(1, Math.round(Number(limitDraft)) || 1),
 											),
 										})
-									}
+										setLimitDraft(null)
+									}}
 									className="w-32"
 								/>
 								<FieldDescription>

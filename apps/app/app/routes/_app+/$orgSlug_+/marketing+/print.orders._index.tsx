@@ -101,16 +101,22 @@ export default function PrintOrdersRoute() {
 						>
 							<ItemContent>
 								<ItemTitle>
+									{(() => {
+										const date = new Date(order.createdAt).toLocaleDateString(
+											i18n.locale,
+											{ dateStyle: 'medium' },
+										)
+										return _(msg`Order of ${date}`)
+									})()}
+								</ItemTitle>
+								<ItemDescription>
 									<bdi>
 										{formatMoney(order.totalCents, order.currency, i18n.locale)}
 									</bdi>
-								</ItemTitle>
-								<ItemDescription>
+									{' · '}
 									<span className="wrap-anywhere">{order.recipient}</span>
 									{' · '}
 									{order.city}
-									{' · '}
-									{new Date(order.createdAt).toLocaleDateString(i18n.locale)}
 								</ItemDescription>
 							</ItemContent>
 							<ItemActions>

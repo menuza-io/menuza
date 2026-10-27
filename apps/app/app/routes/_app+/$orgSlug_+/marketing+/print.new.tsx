@@ -89,12 +89,15 @@ export default function NewPrintRoute() {
 		lastResult: actionData?.result,
 		onValidate: ({ formData }) =>
 			parseWithZod(formData, { schema: NewPrintSchema }),
-		defaultValue: { name: _(PRINT_PRODUCT_LABELS.table_card.name) },
 	})
 
+	const [name, setName] = useState(_(PRINT_PRODUCT_LABELS.table_card.name))
+	const [nameEdited, setNameEdited] = useState(false)
 	const chooseProduct = (next: PrintProductKey) => {
 		setProduct(next)
 		setSizeKey(PRINT_PRODUCTS[next].sizes[0]!.key)
+		// Follow the product until the operator types a name of their own.
+		if (!nameEdited) setName(_(PRINT_PRODUCT_LABELS[next].name))
 	}
 
 	return (
@@ -182,6 +185,11 @@ export default function NewPrintRoute() {
 					<FieldLabel htmlFor={fields.name.id}>{_(msg`Name`)}</FieldLabel>
 					<Input
 						{...getInputProps(fields.name, { type: 'text' })}
+						value={name}
+						onChange={(event) => {
+							setName(event.target.value)
+							setNameEdited(true)
+						}}
 						className="max-w-md"
 					/>
 					<FieldError

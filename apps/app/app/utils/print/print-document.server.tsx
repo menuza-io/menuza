@@ -38,7 +38,7 @@ const HOME_MARGIN_MM = 10
 const HOME_GAP_MM = 8
 const CROP_MARK_MM = 4
 const CROP_OFFSET_MM = 1.5
-const PROOF_WIDTH_PX = 380
+const PROOF_WIDTH_PX = 320
 const MM_TO_PX = 96 / 25.4
 
 const SCRIPT_FONTS = ['Noto Sans Arabic', 'Noto Sans SC']
@@ -162,6 +162,13 @@ ${
 	format === 'proof'
 		? `.proof { display: flex; flex-direction: column; align-items: center; gap: 24px; padding: 24px 0; }
 .proof .sheet { zoom: ${proofZoom}; box-shadow: 0 1px 4px rgba(0,0,0,.18); }
+${[300, 280, 260, 240]
+	.map(
+		// The iframe's own width drives these: narrow phones shrink the proof.
+		(width) =>
+			`@media (max-width: ${width + 16}px) { .proof .sheet { zoom: ${Math.round(proofZoom * (width / PROOF_WIDTH_PX) * 1000) / 1000}; } }`,
+	)
+	.join('\n')}
 .proof .trim { position: absolute; inset: var(--bleed); outline: 1px dashed rgba(220, 38, 38, .7); pointer-events: none; z-index: 2; }
 .proof .bleed-note { position: absolute; inset: 0; border: var(--bleed) solid rgba(220, 38, 38, .12); pointer-events: none; z-index: 2; }`
 		: ''
@@ -183,8 +190,14 @@ ${
 .brand { display: flex; align-items: center; justify-content: center; gap: calc(var(--u) * 2); max-width: 100%; }
 .logo { max-height: calc(var(--u) * 12); max-width: calc(var(--u) * 40); object-fit: contain; }
 .brand-name { font-family: var(--heading); font-weight: 600; font-size: calc(var(--u) * 4.2); letter-spacing: .01em; overflow-wrap: anywhere; }
-.logo + .brand-name { display: none; }
-.message { display: flex; flex-direction: column; gap: calc(var(--u) * 2); }
+.logo + .brand-name { font-size: calc(var(--u) * 3.2); }
+.brand, .qr, .footer, .table-label { flex-shrink: 0; }
+.message { display: flex; flex-direction: column; gap: calc(var(--u) * 2); min-height: 0; overflow: hidden; }
+/* Long copy is clamped so the QR code and footer always stay inside the trim. */
+.headline .text-main, .headline .text-second { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
+.body .text-main, .body .text-second { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4; overflow: hidden; }
+.cta .text-main, .cta .text-second, .featured-name { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.featured { min-height: 0; }
 .headline { margin: 0; font-family: var(--heading); font-weight: 800; font-size: calc(var(--u) * 7.5); line-height: 1.08; text-wrap: balance; color: var(--primary); }
 .body { margin: 0; font-size: calc(var(--u) * 3.6); color: var(--muted); text-wrap: pretty; }
 .text-main, .text-second { display: block; }

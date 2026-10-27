@@ -1176,6 +1176,10 @@ msgstr "Leave the waitlist"
 msgid "Leave the waitlist?"
 msgstr "Leave the waitlist?"
 
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Leave this table"
+msgstr "Leave this table"
+
 #: src/lib/ordering-labels.ts:52
 msgid "Left"
 msgstr "Left"
@@ -1398,10 +1402,6 @@ msgstr "No-show fee: {amount}."
 #: src/lib/ordering-labels.ts:54
 msgid "None"
 msgstr "None"
-
-#: src/components/ordering/TableTab.astro.ts:3
-msgid "Not at this table?"
-msgstr "Not at this table?"
 
 #: src/lib/ordering-labels.ts:164
 msgid "Not available right now"
@@ -2190,6 +2190,10 @@ msgstr "Table alerts are not available right now. Please call the restaurant."
 msgid "Taking you to the secure payment page…"
 msgstr "Taking you to the secure payment page…"
 
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Tap again to leave this table"
+msgstr "Tap again to leave this table"
+
 #: src/lib/reservations/labels.ts:453
 msgid "Tasting menus, chef's tables and special events at {name}."
 msgstr "Tasting menus, chef's tables and special events at {name}."
@@ -2650,6 +2654,10 @@ msgstr "Want first dibs next time?"
 #: src/lib/reservations/labels.ts:236
 msgid "Want to dine today? Join the waitlist and we will tell you when a table is ready."
 msgstr "Want to dine today? Join the waitlist and we will tell you when a table is ready."
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "We are still confirming your payment. Check your tab again in a minute."
+msgstr "We are still confirming your payment. Check your tab again in a minute."
 
 #: src/lib/reservations/labels.ts:389
 msgid "We could not check your payment. Trying again…"

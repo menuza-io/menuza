@@ -1176,6 +1176,10 @@ msgstr "مغادرة قائمة الانتظار"
 msgid "Leave the waitlist?"
 msgstr "مغادرة قائمة الانتظار؟"
 
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Leave this table"
+msgstr "مغادرة هذه الطاولة"
+
 #: src/lib/ordering-labels.ts:52
 msgid "Left"
 msgstr "النصف الأيسر"
@@ -1398,10 +1402,6 @@ msgstr "رسوم عدم الحضور: {amount}."
 #: src/lib/ordering-labels.ts:54
 msgid "None"
 msgstr "بدون"
-
-#: src/components/ordering/TableTab.astro.ts:3
-msgid "Not at this table?"
-msgstr "لست على هذه الطاولة؟"
 
 #: src/lib/ordering-labels.ts:164
 msgid "Not available right now"
@@ -2190,6 +2190,10 @@ msgstr "تنبيهات الطاولات غير متاحة حاليًا. يرجى
 msgid "Taking you to the secure payment page…"
 msgstr "جارٍ نقلك إلى صفحة الدفع الآمنة…"
 
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Tap again to leave this table"
+msgstr "اضغط مرة أخرى لمغادرة هذه الطاولة"
+
 #: src/lib/reservations/labels.ts:453
 msgid "Tasting menus, chef's tables and special events at {name}."
 msgstr "قوائم تذوق وطاولات الشيف وفعاليات خاصة في {name}."
@@ -2650,6 +2654,10 @@ msgstr "تريد الأولوية في المرة القادمة؟"
 #: src/lib/reservations/labels.ts:236
 msgid "Want to dine today? Join the waitlist and we will tell you when a table is ready."
 msgstr "تريد تناول الطعام اليوم؟ انضم إلى قائمة الانتظار وسنخبرك عندما تصبح الطاولة جاهزة."
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "We are still confirming your payment. Check your tab again in a minute."
+msgstr "ما زلنا نؤكد دفعتك. تحقق من حسابك مجددًا بعد دقيقة."
 
 #: src/lib/reservations/labels.ts:389
 msgid "We could not check your payment. Trying again…"

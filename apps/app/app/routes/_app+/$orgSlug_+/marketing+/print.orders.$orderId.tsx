@@ -26,6 +26,7 @@ import {
 	CardTitle,
 } from '@repo/ui/card'
 import { PageHeader } from '@repo/ui/page-header'
+import { useEffect, useState } from 'react'
 import {
 	Form,
 	Link,
@@ -33,12 +34,15 @@ import {
 	useActionData,
 	useLoaderData,
 	useNavigation,
+	useRevalidator,
 	type ActionFunctionArgs,
 	type LoaderFunctionArgs,
 } from 'react-router'
 import { z } from 'zod'
 import { PRINT_PRODUCT_LABELS } from '#app/components/print/print-labels.ts'
 import {
+	PRINT_ORDER_ERROR_FALLBACK,
+	PRINT_ORDER_ERROR_LABELS,
 	PRINT_ORDER_STATUS_LABELS,
 	printOrderStatusTone,
 } from '#app/components/print/print-order-labels.ts'
@@ -118,14 +122,12 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	const intent = IntentSchema.safeParse(
 		(await request.formData()).get('intent'),
 	)
-	if (!intent.success) return { error: 'Unknown action' }
+	if (!intent.success) return { error: 'unknown' }
 	const orderId = params.orderId ?? ''
 	try {
 		if (intent.data === 'pay') {
 			if (isPrintShippingPaused()) {
-				return {
-					error: 'Shipped prints are paused for a moment. Try again later.',
-				}
+				return { error: 'shipping_paused' }
 			}
 			const base = `${new URL(request.url).origin}/${access.organization.slug}/marketing/print/orders/${encodeURIComponent(orderId)}`
 			return redirect(await startPrintCheckout(access, orderId, base))
@@ -133,7 +135,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		await cancelPrintOrder(access, orderId)
 		return { error: null }
 	} catch (error) {
-		if (error instanceof PrintOrderError) return { error: error.message }
+		if (error instanceof PrintOrderError) return { error: error.code }
 		throw error
 	}
 }
@@ -144,6 +146,35 @@ export default function PrintOrderRoute() {
 	const actionData = useActionData<typeof action>()
 	const busy = useNavigation().state !== 'idle'
 	const { order } = data
+	const revalidator = useRevalidator()
+	// Back from Stripe: the webhook confirms the payment a moment later. Reload
+	// the order every few seconds for up to a minute, then leave a Refresh.
+	const waitingForBank = data.justPaid && order.status === 'awaiting_payment'
+	const [pollsLeft, setPollsLeft] = useState(15)
+	useEffect(() => {
+		if (!waitingForBank || pollsLeft <= 0) return
+		const timer = window.setTimeout(() => {
+			setPollsLeft((left) => left - 1)
+			void revalidator.revalidate()
+		}, 4000)
+		return () => window.clearTimeout(timer)
+	}, [waitingForBank, pollsLeft, revalidator])
+	// Formatted in the browser: the server does not know the viewer's clock.
+	const [expiresAt, setExpiresAt] = useState('')
+	useEffect(() => {
+		setExpiresAt(
+			new Date(order.quoteExpiresAt).toLocaleTimeString(i18n.locale, {
+				hour: 'numeric',
+				minute: '2-digit',
+			}),
+		)
+	}, [order.quoteExpiresAt, i18n.locale])
+	const errorMessage = actionData?.error
+		? _(
+				PRINT_ORDER_ERROR_LABELS[actionData.error] ??
+					PRINT_ORDER_ERROR_FALLBACK,
+			)
+		: null
 	const money = (cents: number) =>
 		formatMoney(cents, order.currency, i18n.locale)
 	const expired = new Date(order.quoteExpiresAt).getTime() <= Date.now()
@@ -153,13 +184,6 @@ export default function PrintOrderRoute() {
 		!expired
 	const cancellable =
 		data.canPay && PRINT_SELF_CANCEL_STATUSES.includes(order.status)
-	const expiresAt = new Date(order.quoteExpiresAt).toLocaleTimeString(
-		i18n.locale,
-		{
-			hour: 'numeric',
-			minute: '2-digit',
-		},
-	)
 
 	return (
 		<div className="space-y-8">
@@ -176,12 +200,45 @@ export default function PrintOrderRoute() {
 				}
 			/>
 
-			{data.justPaid && order.status === 'awaiting_payment' ? (
+			{waitingForBank ? (
 				<Alert role="status">
 					<AlertTitle>{_(msg`Payment received`)}</AlertTitle>
 					<AlertDescription>
+						{pollsLeft > 0
+							? _(
+									msg`We are confirming it with the bank. This page updates in a moment.`,
+								)
+							: _(
+									msg`Confirmation is taking longer than usual. Refresh in a minute.`,
+								)}
+					</AlertDescription>
+					{pollsLeft <= 0 ? (
+						<Button
+							variant="outline"
+							size="sm"
+							className="mt-2 w-fit"
+							onClick={() => void revalidator.revalidate()}
+						>
+							{_(msg`Refresh`)}
+						</Button>
+					) : null}
+				</Alert>
+			) : null}
+			{order.status === 'refunded' || order.status === 'failed' ? (
+				<Alert role="status">
+					<AlertTitle>{_(msg`This order was refunded`)}</AlertTitle>
+					<AlertDescription>
 						{_(
-							msg`We are confirming it with the bank. This page updates in a moment.`,
+							msg`It could not be completed or was cancelled, so the full amount went back to the card you paid with. It can take a few days to show.`,
+						)}
+					</AlertDescription>
+				</Alert>
+			) : order.status === 'cancelled' ? (
+				<Alert role="status">
+					<AlertTitle>{_(msg`This order was cancelled`)}</AlertTitle>
+					<AlertDescription>
+						{_(
+							msg`Nothing was charged. Start a new order whenever you are ready.`,
 						)}
 					</AlertDescription>
 				</Alert>
@@ -204,10 +261,10 @@ export default function PrintOrderRoute() {
 					</AlertDescription>
 				</Alert>
 			) : null}
-			{actionData?.error ? (
+			{errorMessage ? (
 				<Alert variant="destructive" role="alert">
 					<AlertTitle>{_(msg`That did not work`)}</AlertTitle>
-					<AlertDescription>{actionData.error}</AlertDescription>
+					<AlertDescription>{errorMessage}</AlertDescription>
 				</Alert>
 			) : null}
 
@@ -272,7 +329,12 @@ export default function PrintOrderRoute() {
 								</dd>
 							</div>
 							<div className="flex justify-between gap-4 border-t pt-2 text-base font-semibold">
-								<dt>{_(msg`Total`)}</dt>
+								<dt>
+									{order.status === 'quote' ||
+									order.status === 'awaiting_payment'
+										? _(msg`Total before sales tax`)
+										: _(msg`Total`)}
+								</dt>
 								<dd className="tabular-nums">
 									<bdi>{money(order.totalCents)}</bdi>
 								</dd>

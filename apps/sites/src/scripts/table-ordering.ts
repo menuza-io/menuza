@@ -67,7 +67,9 @@ type Labels = Record<
 	| 'payLater'
 	| 'payUnavailable'
 	| 'payCancelled'
-	| 'contactMissing',
+	| 'contactMissing'
+	| 'leaveConfirm'
+	| 'stillConfirming',
 	string
 >
 
@@ -112,11 +114,20 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 		rememberPosterVisit(orgId)
 	}
 
-	function say(message: string, tone: 'neutral' | 'danger' = 'neutral') {
+	function say(
+		message: string,
+		tone: 'neutral' | 'success' | 'danger' = 'neutral',
+	) {
 		if (!notice) return
+		const toneClass =
+			tone === 'danger'
+				? 'tone-danger'
+				: tone === 'success'
+					? 'tone-success'
+					: 'tone-neutral'
 		const box = el(
 			'p',
-			`rounded-lg border px-3 py-2 text-sm ${tone === 'danger' ? 'tone-danger' : 'tone-success'}`,
+			`rounded-lg border px-3 py-2 text-sm ${toneClass}`,
 			message,
 		)
 		notice.replaceChildren(box)
@@ -175,9 +186,22 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 		window.location.reload()
 	}
 
-	document
-		.getElementById('leave-table-btn')
-		?.addEventListener('click', leaveTableMode)
+	// Leaving drops this phone's link to the tab, so it takes a second tap.
+	const leaveBtn = document.getElementById('leave-table-btn')
+	let leaveArmed: ReturnType<typeof setTimeout> | undefined
+	leaveBtn?.addEventListener('click', () => {
+		if (leaveArmed) {
+			clearTimeout(leaveArmed)
+			leaveTableMode()
+			return
+		}
+		const original = leaveBtn.textContent
+		leaveBtn.textContent = labels.leaveConfirm
+		leaveArmed = setTimeout(() => {
+			leaveArmed = undefined
+			leaveBtn.textContent = original
+		}, 4000)
+	})
 
 	// ---- Tab drawer ---------------------------------------------------------
 
@@ -201,11 +225,36 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 			expired: labels.statusCancelled,
 		})[status] ?? labels.statusAccepted
 
+	let renderedSignature = ''
+	let announcedStatuses = ''
+
 	function renderTab(tab: QrPublicTab) {
+		// Polls repeat the same tab: rebuild nothing (and announce nothing)
+		// unless something changed, so focus and screen readers stay put.
+		const signature = JSON.stringify([
+			tab,
+			session?.policy.onlineTabPayAvailable,
+		])
+		if (signature === renderedSignature) return
+		renderedSignature = signature
+		const statuses = tab.rounds.map((round) => round.status).join(',')
+		const announcer = document.getElementById('tab-announcer')
+		if (announcer && announcedStatuses && statuses !== announcedStatuses) {
+			announcer.textContent = tab.rounds
+				.map(
+					(round, index) =>
+						`${fill(labels.round, { number: String(index + 1) })}: ${statusText(round.status)}`,
+				)
+				.join('. ')
+		}
+		announcedStatuses = statuses
 		const rounds = document.getElementById('tab-rounds')
 		const subtitle = tabDrawer?.querySelector('[data-tab-subtitle]')
 		if (subtitle) {
-			subtitle.textContent = `${fill(labels.tableLabel, { label: tab.table.label })} · ${fill(labels.tabNumber, { number: tab.tabNumber })}`
+			const table = fill(labels.tableLabel, { label: tab.table.label })
+			subtitle.textContent = tab.tabNumber
+				? `${table} · ${fill(labels.tabNumber, { number: tab.tabNumber })}`
+				: table
 		}
 		if (rounds) {
 			if (tab.rounds.length === 0) {
@@ -264,14 +313,18 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 			tab.totals.taxInclusive ? labels.includesTax : labels.tax,
 		)
 		set('tab-total', money(tab.totals.totalCents))
-		set(
-			'tab-pay-note',
-			tab.status === 'closed'
-				? labels.closed
-				: tab.status === 'cancelled'
-					? labels.cancelled
-					: fill(labels.payAtCounter, { number: tab.tabNumber }),
-		)
+		const payNote = document.getElementById('tab-pay-note')
+		if (payNote) {
+			payNote.textContent =
+				tab.status === 'closed'
+					? labels.closed
+					: tab.status === 'cancelled'
+						? labels.cancelled
+						: tab.tabNumber
+							? fill(labels.payAtCounter, { number: tab.tabNumber })
+							: ''
+			payNote.classList.toggle('hidden', !payNote.textContent)
+		}
 		const slot = document.getElementById('tab-pay-slot')
 		if (slot) {
 			const canPayOnline =
@@ -390,6 +443,7 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 			? createOverlayMotion(contactBackdrop, contactForm)
 			: null
 	let releaseContact: (() => void) | null = null
+	let contactOpener: HTMLElement | null = null
 	let pendingContact:
 		((contact: { name?: string; phone?: string } | null) => void) | null = null
 
@@ -397,6 +451,10 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 		return new Promise<{ name?: string; phone?: string } | null>((resolve) => {
 			if (!contactMotion || !contactForm) return resolve(null)
 			pendingContact = resolve
+			contactOpener =
+				document.activeElement instanceof HTMLElement
+					? document.activeElement
+					: null
 			contactForm
 				.querySelector<HTMLElement>('[data-contact-name]')
 				?.classList.toggle('hidden', !need.name)
@@ -422,6 +480,8 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 		releaseContact?.()
 		releaseContact = null
 		contactMotion?.close()
+		if (contactOpener?.isConnected) contactOpener.focus({ preventScroll: true })
+		contactOpener = null
 		pendingContact?.(value)
 		pendingContact = null
 	}
@@ -442,22 +502,27 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 			'phone',
 		) as HTMLInputElement
 		const error = document.getElementById('table-contact-error')
-		const missing =
-			(nameInput.required && !name) ||
-			(phoneInput.required && !/^\+?[\d\s\-().]{7,25}$/.test(phone))
-		if (missing) {
+		const nameMissing = nameInput.required && !name
+		const phoneMissing =
+			phoneInput.required && !/^\+?[\d\s\-().]{7,25}$/.test(phone)
+		nameInput.toggleAttribute('aria-invalid', nameMissing)
+		phoneInput.toggleAttribute('aria-invalid', phoneMissing)
+		if (nameMissing || phoneMissing) {
 			if (error) {
-				error.textContent = labels.errorGeneric
+				error.textContent = labels.contactMissing
 				error.classList.remove('hidden')
 			}
-			;(nameInput.required && !name ? nameInput : phoneInput).focus()
+			;(nameMissing ? nameInput : phoneInput).focus()
 			return
 		}
 		error?.classList.add('hidden')
 		finishContact({ ...(name ? { name } : {}), ...(phone ? { phone } : {}) })
 	})
 	contactForm?.addEventListener('keydown', (event) => {
-		if (event.key === 'Escape') finishContact(null)
+		if (event.key !== 'Escape') return
+		// Only this sheet closes; the cart drawer underneath stays open.
+		event.stopPropagation()
+		finishContact(null)
 	})
 
 	// ---- Paying from the phone ----------------------------------------------
@@ -510,11 +575,15 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 		releasePay?.()
 		releasePay = null
 		payMotion?.close()
+		// The pay button lives in the tab drawer, which closed: reopen it.
+		openTab()
 	}
 
 	payForm?.addEventListener('change', paintPayAmount)
 	payForm?.addEventListener('keydown', (event) => {
-		if (event.key === 'Escape') closePay()
+		if (event.key !== 'Escape') return
+		event.stopPropagation()
+		closePay()
 	})
 	payBackdrop?.addEventListener('click', (event) => {
 		if (event.target === payBackdrop) closePay()
@@ -534,8 +603,14 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 			payError.textContent = message
 			payError.classList.remove('hidden')
 		}
-		if (!name || !/^\+?[\d\s\-().]{7,25}$/.test(phone)) {
+		const nameField = payForm.elements.namedItem('name') as HTMLInputElement
+		const phoneField = payForm.elements.namedItem('phone') as HTMLInputElement
+		const phoneBad = !/^\+?[\d\s\-().]{7,25}$/.test(phone)
+		nameField.toggleAttribute('aria-invalid', !name)
+		phoneField.toggleAttribute('aria-invalid', phoneBad)
+		if (!name || phoneBad) {
 			showError(labels.contactMissing)
+			;(!name ? nameField : phoneField).focus()
 			return
 		}
 		if (paySubmit) {
@@ -590,9 +665,10 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 		}
 		if (paid) {
 			clearTabPayment(orgId)
-			say(labels.paidThanks)
+			say(labels.paidThanks, 'success')
 		}
-		// Still confirming: the drawer shows the tab's real state either way.
+		if (!paid) say(labels.stillConfirming)
+		// The drawer shows the tab's real state either way.
 		openTab()
 	}
 
@@ -634,7 +710,7 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 			saveTableSession(session)
 			deps.store.clear()
 			deps.cart.close()
-			say(labels.sent)
+			say(labels.sent, 'success')
 			openTab()
 		} catch (error) {
 			const code =

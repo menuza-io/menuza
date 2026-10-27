@@ -216,9 +216,21 @@ msgstr "صورة أو شعار أو لقطة منتج."
 msgid "Accept"
 msgstr "قبول"
 
-#: app/routes/_admin+/print-shop.tsx:243
+#: app/routes/_admin+/print-shop.tsx:427
+msgid "Accept and send"
+msgstr "قبول وإرسال"
+
+#: app/routes/_admin+/print-shop.tsx:421
 msgid "Accept new price"
 msgstr "قبول السعر الجديد"
+
+#: app/routes/_admin+/print-shop.tsx:422
+msgid "Accept the new price for {organization}"
+msgstr "قبول السعر الجديد لـ {organization}"
+
+#: app/routes/_admin+/print-shop.tsx:423
+msgid "Accept the new wholesale price?"
+msgstr "قبول سعر الجملة الجديد؟"
 
 #: app/routes/_admin+/waitlist.tsx:254
 msgid "Access"
@@ -260,8 +272,8 @@ msgstr "فشل الإجراء"
 #: app/routes/_admin+/ip-addresses+/index.tsx:235
 #: app/routes/_admin+/marketing+/automations._index.tsx:219
 #: app/routes/_admin+/phone-numbers.tsx:356
-#: app/routes/_admin+/print-shop.tsx:143
-#: app/routes/_admin+/print-shop.tsx:297
+#: app/routes/_admin+/print-shop.tsx:266
+#: app/routes/_admin+/print-shop.tsx:488
 #: app/routes/_admin+/roles+/index.tsx:412
 #: app/routes/_admin+/roles+/index.tsx:454
 #: app/routes/_admin+/waitlist.tsx:354
@@ -741,8 +753,8 @@ msgstr "أدرج في القائمة السوداء بواسطة"
 msgid "Blacklisted IPs"
 msgstr "عناوين IP المدرجة في القائمة السوداء"
 
-#: app/routes/_admin+/print-shop.tsx:141
-#: app/routes/_admin+/print-shop.tsx:204
+#: app/routes/_admin+/print-shop.tsx:264
+#: app/routes/_admin+/print-shop.tsx:347
 msgid "Bleed (mm)"
 msgstr "هامش القص (مم)"
 
@@ -832,6 +844,7 @@ msgstr "اسم الحملة"
 #: app/components/admin-ban-user-dialog.tsx:166
 #: app/components/admin-cache-confirmation-dialog.tsx:111
 #: app/routes/_admin+/gdpr-requests.tsx:587
+#: app/routes/_admin+/print-shop.tsx:127
 #: app/routes/_admin+/roles+/index.tsx:352
 #: app/routes/_admin+/waitlist.tsx:474
 msgid "Cancel"
@@ -846,8 +859,13 @@ msgid "Cancellations by who"
 msgstr "الإلغاءات حسب الجهة"
 
 #: app/routes/_admin+/gdpr-requests.tsx:365
+#: app/routes/_admin+/print-shop.tsx:68
 msgid "Cancelled"
 msgstr "ملغي"
+
+#: app/routes/_admin+/print-shop.tsx:79
+msgid "Cancelled by the organization"
+msgstr "ألغته المؤسسة"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:94
 msgid "Center"
@@ -1291,6 +1309,10 @@ msgstr "حذف العقدة"
 msgid "Delete role"
 msgstr "حذف الدور"
 
+#: app/routes/_admin+/print-shop.tsx:65
+msgid "Delivered"
+msgstr "تم التسليم"
+
 #: app/routes/_admin+/roles+/index.tsx:319
 msgid "Describe what this role can do..."
 msgstr "وصف ما يمكن لهذا الدور فعله..."
@@ -1381,7 +1403,7 @@ msgstr "مسودة"
 msgid "Drag to reorder"
 msgstr "اسحب لإعادة الترتيب"
 
-#: app/routes/_admin+/print-shop.tsx:85
+#: app/routes/_admin+/print-shop.tsx:196
 msgid "Drift limit (%)"
 msgstr "حد تغيّر السعر (%)"
 
@@ -1441,7 +1463,7 @@ msgstr "مثل: Okta، Azure AD، Auth0"
 msgid "Each day’s published hours and shifts next to the hours worked and the time cards that started, with the difference."
 msgstr "ساعات ومناوبات كل يوم المنشورة بجانب الساعات المعمول بها وبطاقات الوقت التي بدأت، مع الفرق."
 
-#: app/routes/_admin+/print-shop.tsx:127
+#: app/routes/_admin+/print-shop.tsx:250
 msgid "Each shippable product and size prints at one vendor. Changing the vendor here is how orders are rerouted: retrying a held order picks up the new mapping."
 msgstr "يُطبع كل منتج ومقاس قابل للشحن لدى مورّد واحد. تغيير المورّد هنا هو طريقة إعادة توجيه الطلبات: إعادة محاولة طلب معلّق تستخدم الربط الجديد."
 
@@ -1539,7 +1561,7 @@ msgid "Empty subject"
 msgstr "موضوع فارغ"
 
 #: app/components/sso-configuration-overview.tsx:132
-#: app/routes/_admin+/print-shop.tsx:208
+#: app/routes/_admin+/print-shop.tsx:358
 msgid "Enable"
 msgstr "تفعيل"
 
@@ -1690,6 +1712,7 @@ msgstr "تصدير JSON"
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:10
 #: app/routes/_admin+/gdpr-requests.tsx:366
 #: app/routes/_admin+/marketing+/campaigns._index.tsx:26
+#: app/routes/_admin+/print-shop.tsx:67
 msgid "Failed"
 msgstr "فشل"
 
@@ -1799,6 +1822,10 @@ msgstr "المؤشرات للمستخدم: {searchedUserId} (عام)"
 #: app/components/admin/feature-flags.tsx:633
 msgid "Flags for User: {searchedUserId} (Org: {searchedOrgId})"
 msgstr "المؤشرات للمستخدم: {searchedUserId} (المؤسسة: {searchedOrgId})"
+
+#: app/routes/_admin+/print-shop.tsx:55
+msgid "Flyer"
+msgstr "منشور"
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:169
 #~ msgid "Form Identifier / Slug"
@@ -2341,11 +2368,11 @@ msgstr "تشغيل أرشفة السجلات الأقدم من فترة التخ
 msgid "Map OIDC claims to user attributes. Leave empty for default mapping."
 msgstr "تعيين مطالبات OIDC إلى سمات المستخدم. اترك فارغاً للتعيين الافتراضي."
 
-#: app/routes/_admin+/print-shop.tsx:294
+#: app/routes/_admin+/print-shop.tsx:485
 msgid "Margin"
 msgstr "الهامش"
 
-#: app/routes/_admin+/print-shop.tsx:282
+#: app/routes/_admin+/print-shop.tsx:473
 msgid "Margin on the last 100 orders: {total}"
 msgstr "الهامش على آخر 100 طلب: {total}"
 
@@ -2353,7 +2380,7 @@ msgstr "الهامش على آخر 100 طلب: {total}"
 msgid "Marketing"
 msgstr "التسويق"
 
-#: app/routes/_admin+/print-shop.tsx:79
+#: app/routes/_admin+/print-shop.tsx:184
 msgid "Markup (%)"
 msgstr "نسبة الزيادة (%)"
 
@@ -2575,6 +2602,10 @@ msgstr "لم يتم إنشاء ملاحظات"
 msgid "No numbers yet"
 msgstr "لا توجد أرقام بعد"
 
+#: app/routes/_admin+/print-shop.tsx:371
+msgid "No organization can order it shipped until it is enabled again. Downloads keep working."
+msgstr "لن تتمكن أي مؤسسة من طلب شحنه حتى يُفعَّل مجددًا. تستمر التنزيلات في العمل."
+
 #: app/routes/_admin+/feature-flags_.reservations-fees.tsx:192
 msgid "No organization has its own fee."
 msgstr "لا توجد منظمة لها رسوم خاصة بها."
@@ -2721,6 +2752,10 @@ msgstr "إعداد OAuth2"
 msgid "Oldest Log"
 msgstr "أقدم سجل"
 
+#: app/routes/_admin+/print-shop.tsx:66
+msgid "On hold"
+msgstr "معلّق"
+
 #: ../../packages/reports/src/ui/report-labels.ts:56
 msgid "On-time arrival"
 msgstr "الحضور في الوقت المحدد"
@@ -2756,7 +2791,7 @@ msgstr "تمت دعوة المشغّل"
 msgid "Optional"
 msgstr "اختياري"
 
-#: app/routes/_admin+/print-shop.tsx:277
+#: app/routes/_admin+/print-shop.tsx:468
 msgid "Orders"
 msgstr "الطلبات"
 
@@ -2770,7 +2805,7 @@ msgstr "org - موارد المؤسسة"
 #: app/routes/_admin+/feature-flags_.reservations-fees.tsx:121
 #: app/routes/_admin+/feature-flags_.reservations-fees.tsx:199
 #: app/routes/_admin+/phone-numbers.tsx:353
-#: app/routes/_admin+/print-shop.tsx:290
+#: app/routes/_admin+/print-shop.tsx:481
 msgid "Organization"
 msgstr "المؤسسة"
 
@@ -2880,6 +2915,10 @@ msgstr "صفحة {page} من {lastPage}"
 #: app/routes/_admin+/_layout.tsx:92
 msgid "Page Not Found"
 msgstr "الصفحة غير موجودة"
+
+#: app/routes/_admin+/print-shop.tsx:61
+msgid "Paid"
+msgstr "مدفوع"
 
 #: ../../packages/reports/src/ui/report-labels.ts:37
 msgid "Paid hours worked by each person over the last 30 days."
@@ -3001,7 +3040,7 @@ msgstr "اختر منظمة بالاسم أو المعرّف النصي. الح�
 msgid "PKCE Enabled"
 msgstr "PKCE مفعل"
 
-#: app/routes/_admin+/print-shop.tsx:295
+#: app/routes/_admin+/print-shop.tsx:486
 msgid "Placed"
 msgstr "تاريخ الطلب"
 
@@ -3058,20 +3097,32 @@ msgstr "النقاط"
 msgid "Points to add"
 msgstr "النقاط المُضافة"
 
+#: app/routes/_admin+/print-shop.tsx:54
+msgid "Poster"
+msgstr "ملصق"
+
 #: app/routes/_admin+/audit-logs.tsx:437
 #: app/routes/_admin+/gdpr-requests.tsx:716
 #: app/routes/_admin+/waitlist.tsx:580
 #~ msgid "Previous"
 #~ msgstr "السابق"
 
-#: app/routes/_admin+/print-shop.tsx:64
+#: app/routes/_admin+/print-shop.tsx:59
+msgid "Price ready"
+msgstr "السعر جاهز"
+
+#: app/routes/_admin+/print-shop.tsx:169
 msgid "Pricing rules"
 msgstr "قواعد التسعير"
 
 #: app/components/admin-sidebar.tsx:143
-#: app/routes/_admin+/print-shop.tsx:269
+#: app/routes/_admin+/print-shop.tsx:458
 msgid "Print shop"
 msgstr "المطبعة"
+
+#: app/routes/_admin+/print-shop.tsx:63
+msgid "Printing"
+msgstr "قيد الطباعة"
 
 #: ../../packages/marketing-workflow/src/node-palette.tsx:40
 #: ../../packages/marketing/src/components/campaign-form.tsx:77
@@ -3088,7 +3139,7 @@ msgstr "قيد المعالجة"
 msgid "Processing..."
 msgstr "جاري المعالجة..."
 
-#: app/routes/_admin+/print-shop.tsx:138
+#: app/routes/_admin+/print-shop.tsx:261
 msgid "Product and size"
 msgstr "المنتج والمقاس"
 
@@ -3141,7 +3192,7 @@ msgstr "الإجراءات السريعة"
 msgid "Quick apply industry-standard retention policies"
 msgstr "تطبيق سريع لسياسات الاحتفاظ بمعايير الصناعة"
 
-#: app/routes/_admin+/print-shop.tsx:91
+#: app/routes/_admin+/print-shop.tsx:208
 msgid "Quote valid (minutes)"
 msgstr "صلاحية عرض السعر (دقائق)"
 
@@ -3219,9 +3270,26 @@ msgstr "المستلمون"
 msgid "Referrals"
 msgstr "الإحالات"
 
-#: app/routes/_admin+/print-shop.tsx:253
+#: app/routes/_admin+/print-shop.tsx:438
+msgid "Refund {amount} to {organization}?"
+msgstr "استرداد {amount} إلى {organization}؟"
+
+#: app/routes/_admin+/print-shop.tsx:436
+#: app/routes/_admin+/print-shop.tsx:442
 msgid "Refund in full"
 msgstr "استرداد المبلغ كاملًا"
+
+#: app/routes/_admin+/print-shop.tsx:437
+msgid "Refund the order of {organization} in full"
+msgstr "استرداد طلب {organization} بالكامل"
+
+#: app/routes/_admin+/print-shop.tsx:69
+msgid "Refunded"
+msgstr "مُسترد"
+
+#: app/routes/_admin+/print-shop.tsx:80
+msgid "Refunded by an admin"
+msgstr "استرده أحد المسؤولين"
 
 #: app/components/privacy-banner.tsx:48
 msgid "Reject"
@@ -3318,7 +3386,7 @@ msgstr "إعادة تعيين"
 msgid "Resource"
 msgstr "المصدر"
 
-#: app/routes/_admin+/print-shop.tsx:67
+#: app/routes/_admin+/print-shop.tsx:172
 msgid "Retail is the vendor's wholesale price plus the markup; shipping is passed through. A paid order whose wholesale price rose by more than the drift limit is held here."
 msgstr "سعر البيع هو سعر الجملة لدى المورّد مضافًا إليه نسبة الزيادة، ويُمرَّر الشحن كما هو. يُعلَّق هنا الطلب المدفوع إذا ارتفع سعر الجملة بأكثر من حد التغيّر."
 
@@ -3350,9 +3418,13 @@ msgstr "إيقاف {e164} نهائيًا؟ لن يمكن تعيينه مرة أ�
 msgid "Retired"
 msgstr "موقوف نهائيًا"
 
-#: app/routes/_admin+/print-shop.tsx:236
+#: app/routes/_admin+/print-shop.tsx:415
 msgid "Retry"
 msgstr "إعادة المحاولة"
+
+#: app/routes/_admin+/print-shop.tsx:413
+msgid "Retry the order of {organization}"
+msgstr "إعادة محاولة طلب {organization}"
 
 #: app/routes/_admin+/_layout.tsx:103
 #: app/routes/_admin+/cache.tsx:941
@@ -3496,7 +3568,7 @@ msgstr "المبيعات لكل ساعة عمل"
 
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:170
 #: ../../packages/marketing/src/components/email/merge-tag-field.tsx:347
-#: app/routes/_admin+/print-shop.tsx:96
+#: app/routes/_admin+/print-shop.tsx:219
 msgid "Save"
 msgstr "حفظ"
 
@@ -3537,7 +3609,7 @@ msgstr "احفظ الأتمتة أولاً قبل تشغيل محفّزات ال
 msgid "Saved"
 msgstr "تم الحفظ"
 
-#: app/routes/_admin+/print-shop.tsx:44
+#: app/routes/_admin+/print-shop.tsx:149
 msgid "Saved."
 msgstr "تم الحفظ."
 
@@ -3703,6 +3775,10 @@ msgstr "جارٍ الإرسال..."
 msgid "Sent {0}"
 msgstr "أُرسل {0}"
 
+#: app/routes/_admin+/print-shop.tsx:62
+msgid "Sent to the printer"
+msgstr "أُرسل إلى المطبعة"
+
 #: app/components/admin-user-detail.tsx:754
 msgid "Session {sessionId}..."
 msgstr "الجلسة {sessionId}..."
@@ -3724,7 +3800,11 @@ msgstr "عيّن القيم الافتراضية للنظام وتجاوزها �
 msgid "Severity"
 msgstr "مستوى الخطورة"
 
-#: app/routes/_admin+/print-shop.tsx:270
+#: app/routes/_admin+/print-shop.tsx:64
+msgid "Shipped"
+msgstr "تم الشحن"
+
+#: app/routes/_admin+/print-shop.tsx:460
 msgid "Shipped prints across all organizations: pricing, vendors and orders."
 msgstr "المطبوعات المشحونة لكل المؤسسات: التسعير والموردون والطلبات."
 
@@ -3901,7 +3981,7 @@ msgstr "ابدأ بقالب"
 #: app/routes/_admin+/ip-addresses+/$ip.tsx:239
 #: app/routes/_admin+/ip-addresses+/index.tsx:217
 #: app/routes/_admin+/phone-numbers.tsx:350
-#: app/routes/_admin+/print-shop.tsx:291
+#: app/routes/_admin+/print-shop.tsx:482
 #: app/routes/_admin+/waitlist.tsx:351
 msgid "Status"
 msgstr "الحالة"
@@ -3918,9 +3998,22 @@ msgstr "خطوات"
 msgid "Stop Impersonation"
 msgstr "إيقاف انتحال الشخصية"
 
-#: app/routes/_admin+/print-shop.tsx:215
+#: app/routes/_admin+/print-shop.tsx:364
+#: app/routes/_admin+/print-shop.tsx:373
 msgid "Stop shipping"
 msgstr "إيقاف الشحن"
+
+#: app/routes/_admin+/print-shop.tsx:365
+#~ msgid "Stop shipping {0}"
+#~ msgstr ""
+
+#: app/routes/_admin+/print-shop.tsx:367
+msgid "Stop shipping {sizeLabel}"
+msgstr "إيقاف شحن {sizeLabel}"
+
+#: app/routes/_admin+/print-shop.tsx:369
+msgid "Stop shipping this size?"
+msgstr "إيقاف شحن هذا المقاس؟"
 
 #: app/components/admin/feature-flags.tsx:139
 msgid "String"
@@ -4044,6 +4137,10 @@ msgstr "قيمة النظام:"
 msgid "System-wide permissions for this role"
 msgstr "صلاحيات على مستوى النظام لهذا الدور"
 
+#: app/routes/_admin+/print-shop.tsx:53
+msgid "Table QR cards"
+msgstr "بطاقات QR للطاولات"
+
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:28
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:49
 #~ msgid "Tag Added"
@@ -4114,9 +4211,21 @@ msgstr "ذاكرة التخزين المؤقت فارغة"
 msgid "The execution engine will durably sleep for {0} {1} before continuing to the next node."
 msgstr "سينتظر محرك التنفيذ لمدة {0} {1} قبل الانتقال إلى العقدة التالية."
 
+#: app/routes/_admin+/print-shop.tsx:440
+msgid "The full amount goes back to the card they paid with, and vendor orders still open are cancelled. This cannot be undone."
+msgstr "يُعاد المبلغ كاملًا إلى البطاقة التي دُفع بها، وتُلغى طلبات المورّد المفتوحة. لا يمكن التراجع عن ذلك."
+
 #: ../../packages/marketing/src/components/email/block-meta.ts:24
 msgid "The main paragraph copy of your email."
 msgstr "الفقرة الرئيسية في بريدك الإلكتروني."
+
+#: app/routes/_admin+/print-shop.tsx:425
+msgid "The order goes to the vendor at today's price. The organization already paid {amount}; Menuza absorbs the difference."
+msgstr "يُرسل الطلب إلى المورّد بسعر اليوم. دفعت المؤسسة {amount} بالفعل، وتتحمّل Menuza الفرق."
+
+#: app/routes/_admin+/print-shop.tsx:81
+msgid "The payment failed"
+msgstr "فشل الدفع"
 
 #: app/routes/_admin+/organizations+/$organizationId_+/chat-retention.server.ts:94
 msgid "The policy will apply on the next daily chat cleanup."
@@ -4129,6 +4238,10 @@ msgstr "قد تظل المؤسسة السابقة تحوّل خطها إلى ه�
 #: app/routes/_admin+/phone-numbers.tsx:212
 #~ msgid "The previous restaurant may still forward its line to this number, so its callers could reach the new organization's agent."
 #~ msgstr "قد يظل المطعم السابق يحوّل خطه إلى هذا الرقم، لذا قد يصل المتصلون به إلى وكيل المؤسسة الجديدة."
+
+#: app/routes/_admin+/print-shop.tsx:74
+msgid "The print file could not be made"
+msgstr "تعذّر إنشاء ملف الطباعة"
 
 #: ../../packages/reports/src/ui/report-labels.ts:133
 msgid "The share of booked parties that did not show up over the last 30 days."
@@ -4145,6 +4258,22 @@ msgstr "نسبة الإلغاءات التي جاءت بعد انتهاء فتر
 #: app/routes/_admin+/feature-flags_.reservations-fees.tsx:175
 msgid "The share of each Reservations payment kept by the platform, in basis points."
 msgstr "حصة المنصة من كل دفعة حجز، بالنقاط الأساسية."
+
+#: app/routes/_admin+/print-shop.tsx:78
+msgid "The vendor cancelled the order"
+msgstr "ألغى المورّد الطلب"
+
+#: app/routes/_admin+/print-shop.tsx:75
+msgid "The vendor did not answer"
+msgstr "لم يستجب المورّد"
+
+#: app/routes/_admin+/print-shop.tsx:77
+msgid "The vendor failed the order"
+msgstr "أخفق المورّد في الطلب"
+
+#: app/routes/_admin+/print-shop.tsx:76
+msgid "The vendor refused the order"
+msgstr "رفض المورّد الطلب"
 
 #: ../../packages/reports/src/ui/report-labels.ts:121
 msgid "The wait you quoted and the wait parties had before they were seated, by party size, over the last 30 days."
@@ -4202,7 +4331,7 @@ msgstr "رابط الرمز"
 msgid "Top Action"
 msgstr "الإجراء الأعلى"
 
-#: app/routes/_admin+/print-shop.tsx:292
+#: app/routes/_admin+/print-shop.tsx:483
 msgid "Total"
 msgstr "الإجمالي"
 
@@ -4350,7 +4479,7 @@ msgstr "تغييرات غير محفوظة"
 msgid "until"
 msgstr "حتى"
 
-#: app/routes/_admin+/print-shop.tsx:208
+#: app/routes/_admin+/print-shop.tsx:358
 msgid "Update"
 msgstr "تحديث"
 
@@ -4458,17 +4587,17 @@ msgstr "القيمة"
 msgid "Variables"
 msgstr "المتغيرات"
 
-#: app/routes/_admin+/print-shop.tsx:139
-#: app/routes/_admin+/print-shop.tsx:190
+#: app/routes/_admin+/print-shop.tsx:262
+#: app/routes/_admin+/print-shop.tsx:322
 msgid "Vendor"
 msgstr "المورّد"
 
-#: app/routes/_admin+/print-shop.tsx:124
+#: app/routes/_admin+/print-shop.tsx:247
 msgid "Vendor catalog"
 msgstr "كتالوج المورّدين"
 
-#: app/routes/_admin+/print-shop.tsx:140
-#: app/routes/_admin+/print-shop.tsx:201
+#: app/routes/_admin+/print-shop.tsx:263
+#: app/routes/_admin+/print-shop.tsx:337
 msgid "Vendor SKU"
 msgstr "رمز المنتج لدى المورّد"
 
@@ -4538,6 +4667,10 @@ msgstr "انتظر {0} {1}"
 msgid "Wait for a specified duration before next step"
 msgstr "انتظر مدة محددة قبل الخطوة التالية"
 
+#: app/routes/_admin+/print-shop.tsx:60
+msgid "Waiting for payment"
+msgstr "بانتظار الدفع"
+
 #: app/components/admin-sidebar.tsx:56
 msgid "Waitlist"
 msgstr "قائمة الانتظار"
@@ -4602,9 +4735,13 @@ msgstr "من ألغى خلال آخر 30 يومًا: الضيف أو المطع�
 msgid "Who worked overtime over the last 30 days, and how much."
 msgstr "من عمل ساعات إضافية خلال آخر 30 يومًا، وكم عمل."
 
-#: app/routes/_admin+/print-shop.tsx:293
+#: app/routes/_admin+/print-shop.tsx:484
 msgid "Wholesale"
 msgstr "سعر الجملة"
+
+#: app/routes/_admin+/print-shop.tsx:73
+msgid "Wholesale price rose past the drift limit"
+msgstr "ارتفع سعر الجملة فوق حد التغيّر"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:262
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:322

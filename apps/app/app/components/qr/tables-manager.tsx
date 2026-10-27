@@ -75,18 +75,24 @@ export function TablesManager({
 		void load()
 	}, [load])
 
-	const run = async (work: () => Promise<unknown>, done: string) => {
+	/** Resolves true on success, so callers keep the input after a failure. */
+	const run = async (
+		work: () => Promise<unknown>,
+		done: string,
+	): Promise<boolean> => {
 		setBusy(true)
 		try {
 			await work()
 			toast.success(done)
 			await load()
+			return true
 		} catch (cause) {
 			toast.error(
 				cause instanceof OperatorRequestError
 					? cause.message
 					: _(msg`That did not work. Try again.`),
 			)
+			return false
 		} finally {
 			setBusy(false)
 		}
@@ -108,7 +114,7 @@ export function TablesManager({
 					other: 'Added # tables',
 				}),
 			),
-		).then(() => setLabels(''))
+		).then((ok) => ok && setLabels(''))
 	}
 
 	const importFloorPlan = () =>
@@ -154,7 +160,7 @@ export function TablesManager({
 							id="qr-new-tables"
 							value={labels}
 							onChange={(event) => setLabels(event.target.value)}
-							placeholder="T1-T12, Patio 1"
+							placeholder={_(msg`T1-T12, Patio 1`)}
 							maxLength={600}
 						/>
 						<FieldDescription>
@@ -261,9 +267,9 @@ function TableRow({
 	table: QrTable
 	canWrite: boolean
 	busy: boolean
-	onRename: (label: string) => Promise<void>
-	onRegenerate: () => Promise<void>
-	onArchive: () => Promise<void>
+	onRename: (label: string) => Promise<boolean>
+	onRegenerate: () => Promise<boolean>
+	onArchive: () => Promise<boolean>
 }) {
 	const { _ } = useLingui()
 	const [editing, setEditing] = useState(false)
@@ -276,7 +282,7 @@ function TableRow({
 						className="flex items-center gap-2"
 						onSubmit={(event) => {
 							event.preventDefault()
-							void onRename(label.trim()).then(() => setEditing(false))
+							void onRename(label.trim()).then((ok) => ok && setEditing(false))
 						}}
 					>
 						<Input
@@ -350,14 +356,43 @@ function TableRow({
 							</AlertDialogFooter>
 						</AlertDialogContent>
 					</AlertDialog>
-					<Button
-						size="sm"
-						variant="ghost"
-						disabled={busy || Boolean(table.openTabId)}
-						onClick={() => void onArchive()}
-					>
-						{_(msg`Archive`)}
-					</Button>
+					<AlertDialog>
+						<AlertDialogTrigger
+							render={
+								<Button
+									size="sm"
+									variant="ghost"
+									disabled={busy || Boolean(table.openTabId)}
+								>
+									{_(msg`Archive`)}
+								</Button>
+							}
+						/>
+						<AlertDialogContent>
+							<AlertDialogHeader>
+								<AlertDialogTitle>
+									{(() => {
+										const label = table.label
+										return _(msg`Archive table ${label}?`)
+									})()}
+								</AlertDialogTitle>
+								<AlertDialogDescription>
+									{_(
+										msg`Its QR code stops taking orders. Past tabs keep their history.`,
+									)}
+								</AlertDialogDescription>
+							</AlertDialogHeader>
+							<AlertDialogFooter>
+								<AlertDialogCancel>{_(msg`Cancel`)}</AlertDialogCancel>
+								<AlertDialogAction
+									variant="destructive"
+									onClick={() => void onArchive()}
+								>
+									{_(msg`Archive table`)}
+								</AlertDialogAction>
+							</AlertDialogFooter>
+						</AlertDialogContent>
+					</AlertDialog>
 				</div>
 			) : null}
 		</li>
