@@ -159,8 +159,10 @@ rotate it:
 
 1. Set the new `PRINT_WEBHOOK_TOKEN` on the App.
 2. Update the webhook URL in each vendor's dashboard to the new token.
-3. Events sent with the old token in between are refused; the hourly
-   `print-sync` job picks up their status changes.
+3. Events sent with the old token in between are refused. The hourly
+   `print-sync` job picks up status changes of the orders it follows (submitted,
+   in production, and shipped in the last 30 days); an event for an order
+   shipped longer ago is not recovered.
 
 ## Launch checklist (business)
 

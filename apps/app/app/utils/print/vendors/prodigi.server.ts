@@ -76,11 +76,19 @@ async function call(path: string, init: RequestInit = {}) {
 			`Prodigi answered ${response.status}`,
 		)
 	}
-	if (!response.ok || !body) {
+	if (!response.ok) {
 		throw new VendorError(
 			'prodigi',
 			'rejected',
 			`Prodigi refused the request (${response.status})`,
+		)
+	}
+	if (!body) {
+		// A 2xx we could not read may still be an order at Prodigi: hold it.
+		throw new VendorError(
+			'prodigi',
+			'unavailable',
+			`Prodigi answered ${response.status} without a readable body`,
 		)
 	}
 	return body

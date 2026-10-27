@@ -158,6 +158,19 @@ describe('Prodigi adapter', () => {
 		expect(await prodigiVendor.cancel('o1')).toBe('too_late')
 	})
 
+	it('holds a 2xx it cannot read instead of refunding it', async () => {
+		vi.stubEnv('PRODIGI_API_KEY', 'prodigi-test-key')
+		vi.stubGlobal(
+			'fetch',
+			vi.fn(async () => new Response('<html>ok</html>', { status: 200 })),
+		)
+		const error = await prodigiVendor
+			.status('o1')
+			.catch((caught: unknown) => caught)
+		expect(error).toBeInstanceOf(VendorError)
+		expect((error as VendorError).code).toBe('unavailable')
+	})
+
 	it('holds a created order without an id instead of refunding it', async () => {
 		vi.stubEnv('PRODIGI_API_KEY', 'prodigi-test-key')
 		// A 2xx that may still be an order at Prodigi (an unexpected shape).

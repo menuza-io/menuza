@@ -73,6 +73,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	return {
 		orgSlug: access.organization.slug,
 		canPay: access.canPay && !isPrintShippingPaused(),
+		// A pause stops new payments only: cancelling is how an operator leaves
+		// a held order, and the action allows it.
+		canCancel: access.canPay,
 		justPaid: url.searchParams.get('paid') === '1',
 		paymentCancelled: url.searchParams.get('cancelled') === '1',
 		order: {
@@ -195,7 +198,7 @@ export default function PrintOrderRoute() {
 		!waitingForBank
 	// An order the printer may already have is settled by platform support.
 	const cancellable =
-		data.canPay &&
+		data.canCancel &&
 		PRINT_SELF_CANCEL_STATUSES.includes(order.status) &&
 		!(
 			order.status === 'held' &&
