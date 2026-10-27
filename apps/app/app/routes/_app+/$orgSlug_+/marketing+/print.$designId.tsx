@@ -292,6 +292,13 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			if (error instanceof Response && error.status === 422) {
 				return { result: submission.reply(), error: 'no_tables' as const }
 			}
+			// The region holding the table codes is unreachable: saved, not approved.
+			if (error instanceof Response && error.status === 503) {
+				return {
+					result: submission.reply(),
+					error: 'tables_unavailable' as const,
+				}
+			}
 			throw error
 		}
 	}
@@ -368,15 +375,23 @@ export default function PrintDesignRoute() {
 
 			{actionData?.error ? (
 				<Alert variant="destructive" role="alert">
-					<AlertTitle>{_(msg`We could not save this print`)}</AlertTitle>
+					<AlertTitle>
+						{actionData.error === 'tables_unavailable'
+							? _(msg`We could not approve this print`)
+							: _(msg`We could not save this print`)}
+					</AlertTitle>
 					<AlertDescription>
 						{actionData.error === 'no_tables'
 							? _(msg`Choose at least one table for the cards.`)
-							: actionData.error === 'invalid_qr'
+							: actionData.error === 'tables_unavailable'
 								? _(
-										msg`Check the QR code: use a page on your own website, like /menu.`,
+										msg`Your changes are saved, but table codes could not be loaded to approve the proof. Try again in a minute.`,
 									)
-								: _(msg`Check the words and choices, then save again.`)}
+								: actionData.error === 'invalid_qr'
+									? _(
+											msg`Check the QR code: use a page on your own website, like /menu.`,
+										)
+									: _(msg`Check the words and choices, then save again.`)}
 					</AlertDescription>
 				</Alert>
 			) : null}

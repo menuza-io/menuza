@@ -481,21 +481,30 @@ export const PRINT_US_STATES = [
 ] as const
 
 export const printShippingAddressSchema = z.strictObject({
+	// Forms send an empty field as missing: each needs its own message.
 	recipientName: z
-		.string()
+		.string({ required_error: 'Enter who receives the parcel' })
 		.trim()
 		.min(2, 'Enter who receives the parcel')
 		.max(80),
 	recipientPhone: z
-		.string()
+		.string({ required_error: 'Enter a phone number for the carrier' })
 		.trim()
 		.regex(/^\+?[\d\s\-().]{7,25}$/, 'Enter a phone number for the carrier'),
-	line1: z.string().trim().min(3, 'Enter a street address').max(120),
+	line1: z
+		.string({ required_error: 'Enter a street address' })
+		.trim()
+		.min(3, 'Enter a street address')
+		.max(120),
 	line2: z.string().trim().max(120).optional(),
-	city: z.string().trim().min(2, 'Enter a city').max(80),
+	city: z
+		.string({ required_error: 'Enter a city' })
+		.trim()
+		.min(2, 'Enter a city')
+		.max(80),
 	state: z.enum(PRINT_US_STATES, { message: 'Choose a state' }),
 	postalCode: z
-		.string()
+		.string({ required_error: 'Enter a 5-digit ZIP code' })
 		.trim()
 		.regex(/^\d{5}(-\d{4})?$/, 'Enter a 5-digit ZIP code'),
 	country: z.literal('US'),

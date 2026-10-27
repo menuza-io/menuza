@@ -280,6 +280,15 @@ export class ShopCommerce {
 		return this.checkoutClient
 	}
 
+	/**
+	 * The platform account's own client, for charges where the platform is the
+	 * merchant (no connected account). Uses the payments mock transport when
+	 * the mock is on, like every other Stripe call here.
+	 */
+	getPlatformStripe(): Stripe {
+		return this.getStripe()
+	}
+
 	private getStripe() {
 		if (!this.config.stripeSecretKey) {
 			throw new Error('Connect checkout is not configured on this platform.')

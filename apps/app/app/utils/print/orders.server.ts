@@ -32,7 +32,7 @@ import { sendEmail, StaffingAlertEmail } from '@repo/email'
 import { createElement } from 'react'
 import type Stripe from 'stripe'
 import { ENV } from 'varlock/env'
-import { stripe } from '#app/utils/payments.server.ts'
+import { getShopCommerce } from '#app/utils/shop.server.ts'
 import { getPrintFileUrl } from '#app/utils/storage.server.ts'
 import { type PrintShopAccess } from './access.server.ts'
 import { exceedsDrift, retailCents } from './pricing.ts'
@@ -48,6 +48,9 @@ import {
 	type VendorItem,
 	type VendorOrderState,
 } from './vendors/types.ts'
+
+/** Menuza is the merchant: the platform account, mocked under MOCKS. */
+const platformStripe = () => getShopCommerce().getPlatformStripe()
 
 /**
  * Shipped prints. Menuza is the merchant: the operator pays retail (live
@@ -527,7 +530,7 @@ async function ensureStripeCustomer(organizationId: string): Promise<string> {
 		)
 	if (org.stripeCustomerId) return org.stripeCustomerId
 	// The subscription flow reuses this customer if the org upgrades later.
-	const customer = await stripe.customers.create(
+	const customer = await platformStripe().customers.create(
 		{ name: org.name, metadata: { organizationId: org.id } },
 		{ idempotencyKey: `print-customer-${org.id}` },
 	)
@@ -572,8 +575,8 @@ export async function startPrintCheckout(
 	// One live payment per order: re-serve the open session, and never start a
 	// second one for a session that is already paid (its webhook may be late).
 	if (order.stripeCheckoutSessionId) {
-		const existing = await stripe.checkout.sessions
-			.retrieve(order.stripeCheckoutSessionId)
+		const existing = await platformStripe()
+			.checkout.sessions.retrieve(order.stripeCheckoutSessionId)
 			.catch(() => null)
 		if (
 			existing?.payment_status === 'paid' ||
@@ -590,7 +593,7 @@ export async function startPrintCheckout(
 	const customer = await ensureStripeCustomer(access.organization.id)
 	// Stripe Tax uses the customer's shipping address: make it this order's.
 	try {
-		await stripe.customers.update(customer, {
+		await platformStripe().customers.update(customer, {
 			shipping: {
 				name: order.recipientName,
 				phone: order.recipientPhone,
@@ -617,7 +620,7 @@ export async function startPrintCheckout(
 		orderId: order.id,
 		organizationId: access.organization.id,
 	}
-	const session = await stripe.checkout.sessions.create(
+	const session = await platformStripe().checkout.sessions.create(
 		{
 			mode: 'payment',
 			customer,
@@ -751,7 +754,7 @@ export async function handlePrintStripeSession(
 					? session.payment_intent
 					: (session.payment_intent?.id ?? null)
 			if (paymentIntent && session.amount_total) {
-				await stripe.refunds.create(
+				await platformStripe().refunds.create(
 					{
 						payment_intent: paymentIntent,
 						amount: session.amount_total,
@@ -1159,7 +1162,7 @@ export async function syncOpenPrintOrders(limit = 50) {
 async function refundInFull(order: OrderRow) {
 	if (!order.stripePaymentIntentId || order.refundCents >= order.totalCents)
 		return
-	await stripe.refunds.create(
+	await platformStripe().refunds.create(
 		{
 			payment_intent: order.stripePaymentIntentId,
 			amount: order.totalCents - order.refundCents,
@@ -1282,12 +1285,12 @@ export async function cancelPrintOrder(
 		if (order.stripeCheckoutSessionId && order.status === 'awaiting_payment') {
 			// A completed session is paid even if the webhook has not landed yet:
 			// let the paid path take it instead of cancelling paid money.
-			const session = await stripe.checkout.sessions
-				.retrieve(order.stripeCheckoutSessionId)
+			const session = await platformStripe()
+				.checkout.sessions.retrieve(order.stripeCheckoutSessionId)
 				.catch(() => null)
 			if (session?.status === 'complete') throw busyError()
-			await stripe.checkout.sessions
-				.expire(order.stripeCheckoutSessionId)
+			await platformStripe()
+				.checkout.sessions.expire(order.stripeCheckoutSessionId)
 				.catch(() => null)
 		}
 		const cancelled = await db
@@ -1529,7 +1532,7 @@ async function adminPartialRefund(
 		.returning({ id: PrintOrder.id })
 	if (claimed.length === 0) throw busyError()
 	try {
-		await stripe.refunds.create(
+		await platformStripe().refunds.create(
 			{
 				payment_intent: order.stripePaymentIntentId!,
 				amount: amountCents,

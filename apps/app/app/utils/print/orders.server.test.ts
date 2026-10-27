@@ -35,7 +35,9 @@ const stripeMock = vi.hoisted(() => ({
 	refunds: { create: vi.fn(async () => ({ id: 're_1' })) },
 }))
 
-vi.mock('#app/utils/payments.server.ts', () => ({ stripe: stripeMock }))
+vi.mock('#app/utils/shop.server.ts', () => ({
+	getShopCommerce: () => ({ getPlatformStripe: () => stripeMock }),
+}))
 vi.mock('@repo/email', () => ({
 	sendEmail: vi.fn(async () => ({ success: true })),
 	StaffingAlertEmail: () => null,

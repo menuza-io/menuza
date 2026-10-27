@@ -58,8 +58,19 @@ const OrderFormSchema = printShippingAddressSchema
 	.omit({ country: true })
 	.extend({
 		locationId: z.string().max(100).optional(),
+		// Conform does not coerce inside a record: the field text arrives as is.
 		copies: z
-			.record(z.string(), z.number().int().min(0).max(PRINT_MAX_COPIES))
+			.record(
+				z.string(),
+				z.preprocess(
+					(value) => (value === undefined || value === '' ? 0 : value),
+					z.coerce
+						.number({ invalid_type_error: 'Enter a number of copies' })
+						.int('Enter a whole number of copies')
+						.min(0, 'Enter 0 or more copies')
+						.max(PRINT_MAX_COPIES, `Order at most ${PRINT_MAX_COPIES} copies`),
+				),
+			)
 			.optional()
 			.default({}),
 	})
@@ -259,37 +270,53 @@ export default function NewPrintOrderRoute() {
 							</CardDescription>
 						</CardHeader>
 						<CardContent className="flex flex-col gap-4">
-							{data.designs.map((design) => (
-								<Field
-									key={design.id}
-									orientation="horizontal"
-									className="items-center justify-between gap-4"
-								>
-									<FieldLabel
-										htmlFor={`copies-${design.id}`}
-										className="flex flex-col items-start gap-0.5"
-									>
-										<span className="wrap-anywhere">{design.name}</span>
-										<span className="text-muted-foreground text-xs font-normal">
-											{_(
-												PRINT_PRODUCT_LABELS[design.product as PrintProductKey]
-													.name,
-											)}{' '}
-											· <bdi>{design.size}</bdi>
-										</span>
-									</FieldLabel>
-									<Input
-										id={`copies-${design.id}`}
-										name={`copies.${design.id}`}
-										type="number"
-										inputMode="numeric"
-										min={0}
-										max={PRINT_MAX_COPIES}
-										defaultValue={0}
-										className="w-24"
-									/>
-								</Field>
-							))}
+							{data.designs.map((design) => {
+								const copiesErrors = form.allErrors[`copies.${design.id}`]
+								return (
+									<div key={design.id} className="flex flex-col gap-1">
+										<Field
+											orientation="horizontal"
+											className="items-center justify-between gap-4"
+											data-invalid={copiesErrors?.length ? true : undefined}
+										>
+											<FieldLabel
+												htmlFor={`copies-${design.id}`}
+												className="flex flex-col items-start gap-0.5"
+											>
+												<span className="wrap-anywhere">{design.name}</span>
+												<span className="text-muted-foreground text-xs font-normal">
+													{_(
+														PRINT_PRODUCT_LABELS[
+															design.product as PrintProductKey
+														].name,
+													)}{' '}
+													· <bdi>{design.size}</bdi>
+												</span>
+											</FieldLabel>
+											<Input
+												id={`copies-${design.id}`}
+												name={`copies.${design.id}`}
+												type="number"
+												inputMode="numeric"
+												min={0}
+												max={PRINT_MAX_COPIES}
+												defaultValue={0}
+												className="w-24"
+												aria-invalid={copiesErrors?.length ? true : undefined}
+												aria-describedby={
+													copiesErrors?.length
+														? `copies-${design.id}-error`
+														: undefined
+												}
+											/>
+										</Field>
+										<FieldError
+											id={`copies-${design.id}-error`}
+											errors={copiesErrors?.map((message) => ({ message }))}
+										/>
+									</div>
+								)
+							})}
 						</CardContent>
 					</Card>
 

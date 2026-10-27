@@ -61,8 +61,11 @@ export async function fetchQrTablesForPrint(
 		throw new Response('Forbidden', { status: 403 })
 	}
 	if (!(await isQrDineInOn(client.orgId))) return []
-	const response = await client.fetchTenant('/operator/qr/tables')
-	if (!response.ok) {
+	// An unreachable region is the same outage as an error answer.
+	const response = await client
+		.fetchTenant('/operator/qr/tables')
+		.catch(() => null)
+	if (!response?.ok) {
 		throw new Response('Tables are unavailable right now', { status: 503 })
 	}
 	const body = (await response.json()) as { tables?: QrTableView[] }
