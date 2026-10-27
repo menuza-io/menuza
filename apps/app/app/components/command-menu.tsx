@@ -16,6 +16,10 @@ import { useEffect, useState, useCallback } from 'react'
 import { useRouteLoaderData, useFetcher, useNavigate } from 'react-router'
 import { type loader as rootLoader } from '#app/root.tsx'
 import {
+	HIDDEN_PRINT_SHOP_NAV,
+	type PrintShopNavAccess,
+} from '#app/utils/print/nav.ts'
+import {
 	HIDDEN_STAFFING_NAV,
 	type StaffingNavAccess,
 } from '#app/utils/staffing/nav.ts'
@@ -52,10 +56,12 @@ export function getNavigationCommands({
 	orgSlug,
 	permissions,
 	staffingNav,
+	printShopNav = HIDDEN_PRINT_SHOP_NAV,
 }: {
 	orgSlug: string
 	permissions: ReadonlyArray<{ action: string; entity: string }>
 	staffingNav: StaffingNavAccess
+	printShopNav?: PrintShopNavAccess
 }): NavigationCommand[] {
 	const can = (action: string, entity: string) =>
 		permissions.some(
@@ -90,14 +96,20 @@ export function getNavigationCommands({
 			url: `/${orgSlug}/mailbox`,
 			icon: 'mail',
 		},
-		(canReadCampaigns || canReadAutomations) && {
+		(canReadCampaigns || canReadAutomations || printShopNav.visible) && {
 			label: msg`Marketing`,
 			url: `/${orgSlug}/marketing`,
 			icon: 'send',
 			keywords: allowed([
 				[msg`Broadcasts`, canReadCampaigns],
 				[msg`Automations`, canReadAutomations],
+				[msg`Print shop`, printShopNav.visible],
 			]),
+		},
+		printShopNav.visible && {
+			label: msg`Print shop`,
+			url: `/${orgSlug}/marketing/print`,
+			icon: 'printer',
 		},
 		(canReadPhoneAgent || canReadPhoneCalls) && {
 			label: msg`Phone agent`,
@@ -186,6 +198,7 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
 					rootData?.userOrganizations?.currentOrganization?.organizationRole
 						?.permissions ?? [],
 				staffingNav: rootData?.staffingNav ?? HIDDEN_STAFFING_NAV,
+				printShopNav: rootData?.printShopNav ?? HIDDEN_PRINT_SHOP_NAV,
 			})
 		: []
 

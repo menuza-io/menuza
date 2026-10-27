@@ -167,6 +167,11 @@
       "import": "./src/restaurant-orders.ts",
       "default": "./src/restaurant-orders.ts"
     },
+    "./print-shop": {
+      "types": "./src/print-shop.ts",
+      "import": "./src/print-shop.ts",
+      "default": "./src/print-shop.ts"
+    },
     "./qr-ordering": {
       "types": "./src/qr-ordering.ts",
       "import": "./src/qr-ordering.ts",

@@ -66,7 +66,13 @@ export async function getOperatorTenantClient(
 	orgSlug: string,
 	options: {
 		scope?:
-			'mailbox' | 'phone_calls' | 'orders:read' | 'orders:write' | 'people'
+			| 'mailbox'
+			| 'phone_calls'
+			| 'orders:read'
+			| 'orders:write'
+			| 'people'
+			| 'qr:read'
+			| 'qr:write'
 		/** Lets tenant-api accept changes (e.g. completing or tagging calls). */
 		canUpdate?: boolean
 		/** Lets tenant-api accept destructive calls (e.g. deleting call logs). */

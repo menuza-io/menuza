@@ -1,0 +1,837 @@
+import { getFormProps, useForm } from '@conform-to/react'
+import { parseWithZod } from '@conform-to/zod'
+import { msg } from '@lingui/macro'
+import { useLingui } from '@lingui/react'
+import {
+	getPrintSize,
+	PRINT_MAX_FEATURED_ITEMS,
+	PRINT_PRODUCTS,
+	PRINT_TEMPLATE_STYLES,
+	PRINT_TEXT_MAX,
+	printDesignContentSchema,
+	printTargetsFor,
+	type PrintDesignContent,
+	type PrintQrTarget,
+} from '@repo/common/print-shop'
+import { getSiteLocaleNativeLabel } from '@repo/common/site-locales'
+import { Alert, AlertDescription, AlertTitle } from '@repo/ui/alert'
+import { Badge } from '@repo/ui/badge'
+import { Button } from '@repo/ui/button'
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from '@repo/ui/card'
+import { Checkbox } from '@repo/ui/checkbox'
+import { Field, FieldLabel, FieldLegend, FieldSet } from '@repo/ui/field'
+import { Icon } from '@repo/ui/icon'
+import { Input } from '@repo/ui/input'
+import { Label } from '@repo/ui/label'
+import { PageHeader } from '@repo/ui/page-header'
+import { RadioGroup, RadioGroupItem } from '@repo/ui/radio-group'
+import { Switch } from '@repo/ui/switch'
+import { Textarea } from '@repo/ui/textarea'
+import { useState } from 'react'
+import {
+	Form,
+	Link,
+	redirect,
+	useActionData,
+	useLoaderData,
+	useNavigation,
+	type ActionFunctionArgs,
+	type LoaderFunctionArgs,
+} from 'react-router'
+import { z } from 'zod'
+import {
+	PRINT_PRODUCT_LABELS,
+	PRINT_QR_TARGET_LABELS,
+	PRINT_STYLE_LABELS,
+} from '#app/components/print/print-labels.ts'
+import { requirePrintShopAccess } from '#app/utils/print/access.server.ts'
+import {
+	approvedSnapshot,
+	approvePrintDesign,
+	archivePrintDesign,
+	currentSnapshot,
+	requirePrintDesign,
+	savePrintDesign,
+	toDesignView,
+} from '#app/utils/print/designs.server.ts'
+import {
+	listFeaturableItems,
+	listOrgLocations,
+	orgLocales,
+	staleFacts,
+} from '#app/utils/print/print-snapshot.server.ts'
+import {
+	fetchQrTablesForPrint,
+	isQrDineInOn,
+} from '#app/utils/print/qr-tables.server.ts'
+
+const localized = (max: number) =>
+	z.record(z.string(), z.string().max(max)).optional().default({})
+
+const DesignFormSchema = z.object({
+	intent: z.enum(['save', 'approve']),
+	name: z.string().trim().min(1).max(120),
+	sizeKey: z.string().trim().min(1).max(20),
+	style: z.enum(PRINT_TEMPLATE_STYLES),
+	locale1: z.string().min(2).max(10),
+	locale2: z.string().max(10).optional(),
+	headline: localized(PRINT_TEXT_MAX.headline),
+	body: localized(PRINT_TEXT_MAX.body),
+	callToAction: localized(PRINT_TEXT_MAX.callToAction),
+	qrKind: z.enum(['table', 'menu', 'reservations', 'site', 'none']),
+	qrLocationId: z.string().max(100).optional(),
+	qrPath: z.string().max(200).optional(),
+	allTables: z.boolean().optional(),
+	tableIds: z.array(z.string().max(100)).optional().default([]),
+	featuredItemIds: z.array(z.string().max(100)).optional().default([]),
+	locationId: z.string().max(100).optional(),
+	showAddress: z.boolean().optional(),
+	showWebsite: z.boolean().optional(),
+})
+
+type DesignForm = z.infer<typeof DesignFormSchema>
+
+function toContent(form: DesignForm, siteLocales: readonly string[]) {
+	const locales = [form.locale1, form.locale2]
+		.filter((locale): locale is string => Boolean(locale))
+		.filter((locale, index, list) => list.indexOf(locale) === index)
+		.filter((locale) => siteLocales.includes(locale))
+	const pick = (map: Record<string, string>) =>
+		Object.fromEntries(
+			locales.map((locale) => [locale, (map[locale] ?? '').trim()]),
+		)
+	let qr: PrintQrTarget
+	switch (form.qrKind) {
+		case 'table':
+			qr = {
+				kind: 'table',
+				tableIds: form.allTables ? ['all'] : form.tableIds,
+			}
+			break
+		case 'menu':
+			qr = { kind: 'menu', locationId: form.qrLocationId || '' }
+			break
+		case 'reservations':
+			qr = { kind: 'reservations', locationId: form.qrLocationId || null }
+			break
+		case 'site':
+			qr = { kind: 'site', path: form.qrPath?.trim() || '/' }
+			break
+		default:
+			qr = { kind: 'none' }
+	}
+	return printDesignContentSchema.safeParse({
+		locales,
+		headline: pick(form.headline),
+		body: pick(form.body),
+		callToAction: pick(form.callToAction),
+		qr,
+		featuredItemIds: form.featuredItemIds.slice(0, PRINT_MAX_FEATURED_ITEMS),
+		locationId: form.locationId || null,
+		showAddress: form.showAddress === true,
+		showWebsite: form.showWebsite === true,
+	} satisfies Record<keyof PrintDesignContent, unknown>)
+}
+
+export async function loader({ request, params }: LoaderFunctionArgs) {
+	const access = await requirePrintShopAccess(request, params.orgSlug)
+	const row = await requirePrintDesign(access.organization.id, params.designId)
+	const design = toDesignView(row)
+	const product = PRINT_PRODUCTS[design.product]
+	const { locales, defaultLocale } = orgLocales(access.organization)
+	const locations = (await listOrgLocations(access.organization.id)).map(
+		(location) => ({ id: location.id, name: location.name }),
+	)
+	const targets = [...printTargetsFor(design.product)].filter(
+		(target) => target !== 'table',
+	) as Array<PrintQrTarget['kind']>
+	let tables: Array<{ id: string; label: string; locationId: string }> = []
+	if (
+		printTargetsFor(design.product).includes('table') &&
+		(await isQrDineInOn(access.organization.id))
+	) {
+		targets.unshift('table')
+		tables = (
+			await fetchQrTablesForPrint(request, access.organization.slug).catch(
+				() => [],
+			)
+		).map((table) => ({
+			id: table.id,
+			label: table.label,
+			locationId: table.locationId,
+		}))
+	}
+	const items = product.featuredItems
+		? (
+				await listFeaturableItems(
+					access.organization,
+					design.content.locationId,
+				)
+			).items.map((item) => ({
+				id: item.id,
+				name: item.name,
+				hasImage: item.hasImage,
+			}))
+		: []
+
+	// Re-order check: what changed in the menu or tables since approval.
+	let stale: string[] = []
+	const approved = approvedSnapshot(row)
+	if (approved) {
+		try {
+			const live = await currentSnapshot(request, access, row, {
+				skipImages: true,
+			})
+			stale = staleFacts(approved, live)
+		} catch {
+			stale = []
+		}
+	}
+
+	const size = getPrintSize(design.product, design.sizeKey)
+	const pieceCount = approved?.pieces.length ?? null
+	return {
+		orgSlug: access.organization.slug,
+		canWrite: access.canWrite,
+		design,
+		locales,
+		defaultLocale,
+		locations,
+		targets,
+		tables,
+		items,
+		stale,
+		pieceCount,
+		proofAspect: size ? size.heightMm / size.widthMm : 1.4,
+		folded: product.folded === true,
+	}
+}
+
+export async function action({ request, params }: ActionFunctionArgs) {
+	const access = await requirePrintShopAccess(request, params.orgSlug, {
+		write: true,
+	})
+	const row = await requirePrintDesign(access.organization.id, params.designId)
+	const formData = await request.formData()
+	if (formData.get('intent') === 'archive') {
+		await archivePrintDesign(row)
+		return redirect(`/${access.organization.slug}/marketing/print`)
+	}
+	const submission = parseWithZod(formData, { schema: DesignFormSchema })
+	if (submission.status !== 'success') {
+		return { result: submission.reply(), error: null }
+	}
+	const { locales } = orgLocales(access.organization)
+	const content = toContent(submission.value, locales)
+	if (!content.success) {
+		return {
+			result: submission.reply(),
+			error: content.error.issues[0]?.message ?? 'Check the form',
+		}
+	}
+	const saved = await savePrintDesign(row, {
+		name: submission.value.name,
+		sizeKey: submission.value.sizeKey,
+		style: submission.value.style,
+		content: content.data,
+	})
+	if (submission.value.intent === 'approve') {
+		await approvePrintDesign(request, access, saved)
+	}
+	return { result: submission.reply(), error: null }
+}
+
+export default function PrintDesignRoute() {
+	const { _ } = useLingui()
+	const data = useLoaderData<typeof loader>()
+	const actionData = useActionData<typeof action>()
+	const navigation = useNavigation()
+	const busy = navigation.state !== 'idle'
+	const { design, orgSlug, canWrite } = data
+	const content = design.content
+	const product = PRINT_PRODUCTS[design.product]
+
+	const [locale1, setLocale1] = useState(
+		content.locales[0] ?? data.defaultLocale,
+	)
+	const [locale2, setLocale2] = useState(content.locales[1] ?? '')
+	const [qrKind, setQrKind] = useState<PrintQrTarget['kind']>(content.qr.kind)
+	const initialTables =
+		content.qr.kind === 'table' ? content.qr.tableIds : ['all']
+	const [allTables, setAllTables] = useState(initialTables.includes('all'))
+
+	const [form] = useForm({
+		id: `print-${design.id}`,
+		lastResult: actionData?.result,
+		onValidate: ({ formData }) =>
+			parseWithZod(formData, { schema: DesignFormSchema }),
+	})
+
+	const shownLocales = [locale1, locale2].filter(
+		(locale, index, list) => Boolean(locale) && list.indexOf(locale) === index,
+	)
+	const qrLocationId =
+		content.qr.kind === 'menu' || content.qr.kind === 'reservations'
+			? (content.qr.locationId ?? '')
+			: (content.locationId ?? data.locations[0]?.id ?? '')
+	const proofSrc = `/${orgSlug}/marketing/print/${design.id}/proof?v=${encodeURIComponent(design.updatedAt)}`
+	const proofHeight = Math.round(
+		Math.min(3, data.pieceCount ?? 3) *
+			(380 * data.proofAspect * (data.folded ? 2 : 1) + 24) +
+			24,
+	)
+	const isApproved = design.status === 'approved'
+
+	return (
+		<div className="space-y-8">
+			<PageHeader
+				title={design.name}
+				description={`${_(PRINT_PRODUCT_LABELS[design.product].name)} · ${getPrintSize(design.product, design.sizeKey)?.label ?? ''}`}
+				actions={
+					<Button
+						variant="outline"
+						render={<Link to={`/${orgSlug}/marketing/print`} />}
+					>
+						{_(msg`All prints`)}
+					</Button>
+				}
+			/>
+
+			{actionData?.error ? (
+				<Alert variant="destructive">
+					<AlertTitle>{_(msg`We could not save this print`)}</AlertTitle>
+					<AlertDescription>{actionData.error}</AlertDescription>
+				</Alert>
+			) : null}
+
+			{data.stale.length > 0 ? (
+				<Alert>
+					<AlertTitle>
+						{_(msg`Your menu or tables changed since approval`)}
+					</AlertTitle>
+					<AlertDescription>
+						{_(
+							msg`Prices, dish names or table codes on this print are out of date. Approve the proof again to refresh it, or keep printing the approved version.`,
+						)}
+					</AlertDescription>
+				</Alert>
+			) : null}
+
+			<div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_420px]">
+				<Form method="post" {...getFormProps(form)} className="space-y-6">
+					<fieldset disabled={!canWrite} className="space-y-6">
+						<Card>
+							<CardHeader>
+								<CardTitle>{_(msg`Basics`)}</CardTitle>
+							</CardHeader>
+							<CardContent className="space-y-5">
+								<Field>
+									<FieldLabel htmlFor="print-name">{_(msg`Name`)}</FieldLabel>
+									<Input
+										id="print-name"
+										name="name"
+										defaultValue={design.name}
+										maxLength={120}
+										required
+									/>
+								</Field>
+								<FieldSet>
+									<FieldLegend variant="label">{_(msg`Size`)}</FieldLegend>
+									<RadioGroup
+										name="sizeKey"
+										defaultValue={design.sizeKey}
+										className="flex flex-wrap gap-3"
+									>
+										{product.sizes.map((size) => (
+											<Label
+												key={size.key}
+												className="border-border has-[[data-checked]]:border-primary flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border px-4"
+											>
+												<RadioGroupItem value={size.key} />
+												<bdi>{size.label}</bdi>
+											</Label>
+										))}
+									</RadioGroup>
+								</FieldSet>
+								<FieldSet>
+									<FieldLegend variant="label">{_(msg`Style`)}</FieldLegend>
+									<RadioGroup
+										name="style"
+										defaultValue={design.style}
+										className="flex flex-wrap gap-3"
+									>
+										{PRINT_TEMPLATE_STYLES.map((style) => (
+											<Label
+												key={style}
+												className="border-border has-[[data-checked]]:border-primary flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border px-4"
+											>
+												<RadioGroupItem value={style} />
+												{_(PRINT_STYLE_LABELS[style])}
+											</Label>
+										))}
+									</RadioGroup>
+								</FieldSet>
+							</CardContent>
+						</Card>
+
+						<Card>
+							<CardHeader>
+								<CardTitle>{_(msg`Words`)}</CardTitle>
+								<CardDescription>
+									{_(
+										msg`Leave a field empty to use the suggested words. Add a second language for a bilingual print.`,
+									)}
+								</CardDescription>
+							</CardHeader>
+							<CardContent className="space-y-5">
+								<div className="grid gap-4 sm:grid-cols-2">
+									<Field>
+										<FieldLabel htmlFor="print-locale1">
+											{_(msg`Main language`)}
+										</FieldLabel>
+										<select
+											id="print-locale1"
+											name="locale1"
+											value={locale1}
+											onChange={(event) => setLocale1(event.target.value)}
+											className="border-input bg-background h-11 rounded-md border px-3 text-sm"
+										>
+											{data.locales.map((locale) => (
+												<option key={locale} value={locale}>
+													{getSiteLocaleNativeLabel(locale)}
+												</option>
+											))}
+										</select>
+									</Field>
+									<Field>
+										<FieldLabel htmlFor="print-locale2">
+											{_(msg`Second language`)}
+										</FieldLabel>
+										<select
+											id="print-locale2"
+											name="locale2"
+											value={locale2}
+											onChange={(event) => setLocale2(event.target.value)}
+											className="border-input bg-background h-11 rounded-md border px-3 text-sm"
+										>
+											<option value="">{_(msg`None`)}</option>
+											{data.locales
+												.filter((locale) => locale !== locale1)
+												.map((locale) => (
+													<option key={locale} value={locale}>
+														{getSiteLocaleNativeLabel(locale)}
+													</option>
+												))}
+										</select>
+									</Field>
+								</div>
+								{shownLocales.map((locale) => (
+									<FieldSet key={locale} lang={locale}>
+										<FieldLegend variant="label">
+											{getSiteLocaleNativeLabel(locale)}
+										</FieldLegend>
+										<Field>
+											<FieldLabel htmlFor={`headline-${locale}`}>
+												{_(msg`Headline`)}
+											</FieldLabel>
+											<Input
+												id={`headline-${locale}`}
+												name={`headline.${locale}`}
+												defaultValue={content.headline[locale] ?? ''}
+												maxLength={PRINT_TEXT_MAX.headline}
+											/>
+										</Field>
+										<Field>
+											<FieldLabel htmlFor={`body-${locale}`}>
+												{_(msg`Message`)}
+											</FieldLabel>
+											<Textarea
+												id={`body-${locale}`}
+												name={`body.${locale}`}
+												defaultValue={content.body[locale] ?? ''}
+												maxLength={PRINT_TEXT_MAX.body}
+												rows={3}
+											/>
+										</Field>
+										<Field>
+											<FieldLabel htmlFor={`cta-${locale}`}>
+												{_(msg`Call to action`)}
+											</FieldLabel>
+											<Input
+												id={`cta-${locale}`}
+												name={`callToAction.${locale}`}
+												defaultValue={content.callToAction[locale] ?? ''}
+												maxLength={PRINT_TEXT_MAX.callToAction}
+											/>
+										</Field>
+									</FieldSet>
+								))}
+							</CardContent>
+						</Card>
+
+						<Card>
+							<CardHeader>
+								<CardTitle>{_(msg`QR code`)}</CardTitle>
+								<CardDescription>
+									{_(
+										msg`Where a guest lands when they scan. Links point at your own website only.`,
+									)}
+								</CardDescription>
+							</CardHeader>
+							<CardContent className="space-y-5">
+								<RadioGroup
+									name="qrKind"
+									value={qrKind}
+									onValueChange={(value) =>
+										setQrKind(value as PrintQrTarget['kind'])
+									}
+									className="grid gap-2"
+								>
+									{data.targets.map((target) => (
+										<Label
+											key={target}
+											className="flex min-h-11 cursor-pointer items-center gap-3"
+										>
+											<RadioGroupItem value={target} />
+											{_(PRINT_QR_TARGET_LABELS[target])}
+										</Label>
+									))}
+								</RadioGroup>
+
+								{qrKind === 'table' ? (
+									data.tables.length === 0 ? (
+										<p className="text-muted-foreground text-sm">
+											{_(
+												msg`Add tables in QR ordering first. Each table gets its own card.`,
+											)}
+										</p>
+									) : (
+										<FieldSet>
+											<Label className="flex min-h-11 items-center gap-3">
+												<Switch
+													name="allTables"
+													checked={allTables}
+													onCheckedChange={setAllTables}
+												/>
+												{_(
+													msg`Every table (new tables are added when you approve)`,
+												)}
+											</Label>
+											{!allTables ? (
+												<div className="grid gap-2 sm:grid-cols-3">
+													{data.tables.map((table) => (
+														<Label
+															key={table.id}
+															className="flex min-h-11 items-center gap-3"
+														>
+															<Checkbox
+																name="tableIds"
+																value={table.id}
+																defaultChecked={initialTables.includes(
+																	table.id,
+																)}
+															/>
+															<bdi className="wrap-anywhere">{table.label}</bdi>
+														</Label>
+													))}
+												</div>
+											) : null}
+										</FieldSet>
+									)
+								) : null}
+
+								{(qrKind === 'menu' || qrKind === 'reservations') &&
+								data.locations.length > 1 ? (
+									<Field>
+										<FieldLabel htmlFor="qr-location">
+											{_(msg`Location`)}
+										</FieldLabel>
+										<select
+											id="qr-location"
+											name="qrLocationId"
+											defaultValue={qrLocationId}
+											className="border-input bg-background h-11 rounded-md border px-3 text-sm"
+										>
+											{data.locations.map((location) => (
+												<option key={location.id} value={location.id}>
+													{location.name}
+												</option>
+											))}
+										</select>
+									</Field>
+								) : (qrKind === 'menu' || qrKind === 'reservations') &&
+								  data.locations[0] ? (
+									<input
+										type="hidden"
+										name="qrLocationId"
+										value={data.locations[0].id}
+									/>
+								) : null}
+
+								{qrKind === 'site' ? (
+									<Field>
+										<FieldLabel htmlFor="qr-path">{_(msg`Page`)}</FieldLabel>
+										<Input
+											id="qr-path"
+											name="qrPath"
+											dir="ltr"
+											defaultValue={
+												content.qr.kind === 'site' ? content.qr.path : '/'
+											}
+											placeholder="/menu"
+										/>
+									</Field>
+								) : null}
+							</CardContent>
+						</Card>
+
+						{product.featuredItems ? (
+							<Card>
+								<CardHeader>
+									<CardTitle>{_(msg`Featured dishes`)}</CardTitle>
+									<CardDescription>
+										{_(
+											msg`Pick up to 4 dishes. Names, prices and photos come from your menu.`,
+										)}
+									</CardDescription>
+								</CardHeader>
+								<CardContent>
+									{data.items.length === 0 ? (
+										<p className="text-muted-foreground text-sm">
+											{_(msg`Your menu has no dishes to feature yet.`)}
+										</p>
+									) : (
+										<div className="grid max-h-80 gap-2 overflow-y-auto sm:grid-cols-2">
+											{data.items.map((item) => (
+												<Label
+													key={item.id}
+													className="flex min-h-11 items-center gap-3"
+												>
+													<Checkbox
+														name="featuredItemIds"
+														value={item.id}
+														defaultChecked={content.featuredItemIds.includes(
+															item.id,
+														)}
+													/>
+													<span className="wrap-anywhere">{item.name}</span>
+													{item.hasImage ? (
+														<Icon
+															name="image"
+															className="text-muted-foreground size-4"
+															aria-hidden
+														/>
+													) : null}
+												</Label>
+											))}
+										</div>
+									)}
+								</CardContent>
+							</Card>
+						) : null}
+
+						<Card>
+							<CardHeader>
+								<CardTitle>{_(msg`Details`)}</CardTitle>
+							</CardHeader>
+							<CardContent className="space-y-4">
+								{data.locations.length > 1 ? (
+									<Field>
+										<FieldLabel htmlFor="print-location">
+											{_(msg`Address and prices from`)}
+										</FieldLabel>
+										<select
+											id="print-location"
+											name="locationId"
+											defaultValue={content.locationId ?? ''}
+											className="border-input bg-background h-11 rounded-md border px-3 text-sm"
+										>
+											{data.locations.map((location) => (
+												<option key={location.id} value={location.id}>
+													{location.name}
+												</option>
+											))}
+										</select>
+									</Field>
+								) : data.locations[0] ? (
+									<input
+										type="hidden"
+										name="locationId"
+										value={data.locations[0].id}
+									/>
+								) : null}
+								<Label className="flex min-h-11 items-center gap-3">
+									<Switch
+										name="showAddress"
+										defaultChecked={content.showAddress}
+									/>
+									{_(msg`Show the address`)}
+								</Label>
+								<Label className="flex min-h-11 items-center gap-3">
+									<Switch
+										name="showWebsite"
+										defaultChecked={content.showWebsite}
+									/>
+									{_(msg`Show the website`)}
+								</Label>
+							</CardContent>
+						</Card>
+					</fieldset>
+
+					{canWrite ? (
+						<div className="flex flex-wrap gap-3">
+							<Button
+								type="submit"
+								name="intent"
+								value="save"
+								variant="outline"
+								disabled={busy}
+							>
+								{_(msg`Save and update proof`)}
+							</Button>
+							<Button
+								type="submit"
+								name="intent"
+								value="approve"
+								disabled={busy}
+							>
+								<Icon name="check" className="size-4" />
+								{_(msg`Approve proof`)}
+							</Button>
+						</div>
+					) : null}
+				</Form>
+
+				<aside className="space-y-4 lg:sticky lg:top-4 lg:self-start">
+					<Card>
+						<CardHeader>
+							<CardTitle className="flex items-center gap-2">
+								{_(msg`Proof`)}
+								{isApproved ? (
+									<Badge variant="success">{_(msg`Approved`)}</Badge>
+								) : (
+									<Badge variant="secondary">{_(msg`Draft`)}</Badge>
+								)}
+							</CardTitle>
+							<CardDescription>
+								{_(
+									msg`The red dashed line is where the print is cut. Keep words away from the edge.`,
+								)}
+							</CardDescription>
+						</CardHeader>
+						<CardContent>
+							<iframe
+								key={proofSrc}
+								title={_(msg`Print proof`)}
+								src={proofSrc}
+								className="bg-muted w-full rounded-md border"
+								height={proofHeight}
+								sandbox=""
+							/>
+						</CardContent>
+					</Card>
+
+					<DownloadCard
+						orgSlug={orgSlug}
+						designId={design.id}
+						approved={isApproved}
+					/>
+
+					{canWrite ? (
+						<Form method="post">
+							<Button
+								type="submit"
+								name="intent"
+								value="archive"
+								variant="ghost"
+								className="text-muted-foreground"
+							>
+								{_(msg`Archive this print`)}
+							</Button>
+						</Form>
+					) : null}
+				</aside>
+			</div>
+		</div>
+	)
+}
+
+function DownloadCard({
+	orgSlug,
+	designId,
+	approved,
+}: {
+	orgSlug: string
+	designId: string
+	approved: boolean
+}) {
+	const { _ } = useLingui()
+	const base = `/${orgSlug}/marketing/print/${designId}/download`
+	return (
+		<Card>
+			<CardHeader>
+				<CardTitle>{_(msg`Download`)}</CardTitle>
+				<CardDescription>
+					{approved
+						? _(msg`Free PDFs of the approved proof.`)
+						: _(msg`Approve the proof to download it.`)}
+				</CardDescription>
+			</CardHeader>
+			<CardContent className="flex flex-col gap-3">
+				<DownloadLink
+					href={`${base}?format=home&sheet=letter`}
+					disabled={!approved}
+					label={_(msg`Print at home (US Letter)`)}
+				/>
+				<DownloadLink
+					href={`${base}?format=home&sheet=a4`}
+					disabled={!approved}
+					label={_(msg`Print at home (A4)`)}
+				/>
+				<DownloadLink
+					href={`${base}?format=pro`}
+					disabled={!approved}
+					label={_(msg`For a print shop (with bleed)`)}
+				/>
+			</CardContent>
+		</Card>
+	)
+}
+
+function DownloadLink({
+	href,
+	label,
+	disabled,
+}: {
+	href: string
+	label: string
+	disabled: boolean
+}) {
+	if (disabled) {
+		return (
+			<Button variant="outline" disabled className="justify-start gap-2">
+				<Icon name="download" className="size-4" />
+				{label}
+			</Button>
+		)
+	}
+	return (
+		<Button
+			variant="outline"
+			className="justify-start gap-2"
+			render={
+				// A file download or the browser print page: a full navigation.
+				<a href={href} target="_blank" rel="noopener" />
+			}
+		>
+			<Icon name="download" className="size-4" />
+			{label}
+		</Button>
+	)
+}

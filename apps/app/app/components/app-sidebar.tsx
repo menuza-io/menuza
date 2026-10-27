@@ -39,6 +39,10 @@ import { useMailboxUnreadCount } from '#app/hooks/use-mailbox.ts'
 
 import { type loader as rootLoader } from '#app/root.tsx'
 import {
+	HIDDEN_PRINT_SHOP_NAV,
+	type PrintShopNavAccess,
+} from '#app/utils/print/nav.ts'
+import {
 	HIDDEN_RESERVATIONS_NAV,
 	type ReservationsNavAccess,
 } from '#app/utils/reservations/nav.ts'
@@ -262,6 +266,8 @@ function OrganizationSidebar({
 		rootData?.staffingNav ?? HIDDEN_STAFFING_NAV
 	const reservationsNav: ReservationsNavAccess =
 		rootData?.reservationsNav ?? HIDDEN_RESERVATIONS_NAV
+	const printShopNav: PrintShopNavAccess =
+		rootData?.printShopNav ?? HIDDEN_PRINT_SHOP_NAV
 
 	useEffect(() => {
 		if (!extensionId) return
@@ -408,6 +414,11 @@ function OrganizationSidebar({
 					isActive: location.pathname.includes(
 						`/${orgSlug}/marketing/automations`,
 					),
+				},
+				{
+					title: _(msg`Print shop`),
+					url: `/${orgSlug}/marketing/print`,
+					isActive: location.pathname.includes(`/${orgSlug}/marketing/print`),
 				},
 			],
 		},
@@ -657,7 +668,7 @@ function OrganizationSidebar({
 				return canReadWebsite || canReadPhoneCalls
 			}
 			if (item.url === `/${orgSlug}/marketing`) {
-				return canReadCampaigns || canReadAutomations
+				return canReadCampaigns || canReadAutomations || printShopNav.visible
 			}
 			if (item.url === `/${orgSlug}/website`) {
 				return canReadWebsite || canReadAnnouncements
@@ -695,6 +706,9 @@ function OrganizationSidebar({
 						}
 						if (subItem.url.includes('/marketing/automations')) {
 							return canReadAutomations
+						}
+						if (subItem.url.includes('/marketing/print')) {
+							return printShopNav.visible
 						}
 						return true
 					}),
