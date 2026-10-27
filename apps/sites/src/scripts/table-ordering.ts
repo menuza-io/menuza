@@ -68,6 +68,8 @@ type Labels = Record<
 	| 'payUnavailable'
 	| 'payCancelled'
 	| 'contactMissing'
+	| 'nameMissing'
+	| 'phoneInvalid'
 	| 'leaveConfirm'
 	| 'leaveWarning'
 	| 'tabLoadFailed'
@@ -221,22 +223,39 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 	}
 
 	// Leaving drops this phone's link to the tab, so it takes a second tap.
+	// The confirmation waits as long as the guest needs (no timer); moving
+	// away from the button or pressing Escape backs out.
 	const leaveBtn = document.getElementById('leave-table-btn')
-	let leaveArmed: ReturnType<typeof setTimeout> | undefined
+	let leaveOriginal: string | null = null
+	const disarmLeave = () => {
+		if (leaveBtn && leaveOriginal !== null) {
+			leaveBtn.textContent = leaveOriginal
+		}
+		leaveOriginal = null
+	}
 	leaveBtn?.addEventListener('click', () => {
-		if (leaveArmed) {
-			clearTimeout(leaveArmed)
+		if (leaveOriginal !== null) {
 			leaveTableMode()
 			return
 		}
-		const original = leaveBtn.textContent
+		leaveOriginal = leaveBtn.textContent
 		leaveBtn.textContent = labels.leaveConfirm
 		say(labels.leaveWarning)
-		leaveArmed = setTimeout(() => {
-			leaveArmed = undefined
-			leaveBtn.textContent = original
-		}, 4000)
 	})
+	leaveBtn?.addEventListener('blur', disarmLeave)
+	leaveBtn?.addEventListener('keydown', (event) => {
+		if (event.key === 'Escape' && leaveOriginal !== null) {
+			event.stopPropagation()
+			disarmLeave()
+		}
+	})
+
+	const contactError = (nameBad: boolean, phoneBad: boolean) =>
+		nameBad && phoneBad
+			? labels.contactMissing
+			: nameBad
+				? labels.nameMissing
+				: labels.phoneInvalid
 
 	// ---- Tab drawer ---------------------------------------------------------
 
@@ -262,6 +281,7 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 
 	let renderedSignature = ''
 	let announcedStatuses = ''
+	let announcedTabStatus = ''
 
 	function renderTab(tab: QrPublicTab) {
 		// Polls repeat the same tab: rebuild nothing (and announce nothing)
@@ -283,6 +303,18 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 				.join('. ')
 		}
 		announcedStatuses = statuses
+		// A tab settled while the guest waits (paid online or at the counter, or
+		// voided) is announced: the pay button simply disappearing says nothing.
+		if (
+			announcer &&
+			announcedTabStatus &&
+			tab.status !== announcedTabStatus &&
+			(tab.status === 'closed' || tab.status === 'cancelled')
+		) {
+			announcer.textContent =
+				tab.status === 'closed' ? labels.closed : labels.cancelled
+		}
+		announcedTabStatus = tab.status
 		const rounds = document.getElementById('tab-rounds')
 		const subtitle = tabDrawer?.querySelector('[data-tab-subtitle]')
 		if (subtitle) {
@@ -579,7 +611,7 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 		setInvalid(phoneInput, phoneMissing)
 		if (nameMissing || phoneMissing) {
 			if (error) {
-				error.textContent = labels.contactMissing
+				error.textContent = contactError(nameMissing, phoneMissing)
 				error.classList.remove('hidden')
 			}
 			;(nameMissing ? nameInput : phoneInput).focus()
@@ -679,7 +711,7 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 		setInvalid(nameField, !name)
 		setInvalid(phoneField, phoneBad)
 		if (!name || phoneBad) {
-			showError(labels.contactMissing)
+			showError(contactError(!name, phoneBad))
 			;(!name ? nameField : phoneField).focus()
 			return
 		}

@@ -206,7 +206,7 @@ export default function OrdersInbox() {
 														(order.table
 															? (() => {
 																	const label = order.table.label
-																	return _(msg`Table ${label}`)
+																	return <bdi>{_(msg`Table ${label}`)}</bdi>
 																})()
 															: _(msg`Guest`))}
 												</span>
@@ -239,7 +239,7 @@ export default function OrdersInbox() {
 													? order.table
 														? (() => {
 																const label = order.table.label
-																return _(msg`Table ${label}`)
+																return <bdi>{_(msg`Table ${label}`)}</bdi>
 															})()
 														: _(msg`At the table`)
 													: _(msg`Pickup`)}

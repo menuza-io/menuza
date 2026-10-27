@@ -14,7 +14,7 @@ import { Button } from '@repo/ui/button'
 import { Checkbox } from '@repo/ui/checkbox'
 import { Field, FieldDescription, FieldLabel } from '@repo/ui/field'
 import { Input } from '@repo/ui/input'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { z } from 'zod'
 import { OrderStatusLabel } from '#app/components/orders/order-status.tsx'
@@ -46,12 +46,50 @@ export function OpenTabs({
 	const request = useQrClient(orgSlug)
 	const [tabs, setTabs] = useState<QrTab[]>([])
 	const [failed, setFailed] = useState(false)
-	const [closing, setClosing] = useState<QrTab | null>(null)
-	const [voiding, setVoiding] = useState<QrTab | null>(null)
-	const [locking, setLocking] = useState<QrTab | null>(null)
+	// Dialogs hold the tab id, not a copy: the poll keeps the total, the
+	// payment state and the review prompt current while a dialog is open.
+	const [closingId, setClosingId] = useState<string | null>(null)
+	const [voidingId, setVoidingId] = useState<string | null>(null)
+	const [lockingId, setLockingId] = useState<string | null>(null)
 	const [lockBusy, setLockBusy] = useState(false)
-	const [releasing, setReleasing] = useState<QrTab | null>(null)
+	const [releasingId, setReleasingId] = useState<string | null>(null)
 	const [releaseBusy, setReleaseBusy] = useState(false)
+	const find = (id: string | null) =>
+		id ? (tabs.find((tab) => tab.id === id) ?? null) : null
+	const closing = find(closingId)
+	const voiding = find(voidingId)
+	const locking = find(lockingId)
+	const releasing = find(releasingId)
+	const headingRef = useRef<HTMLHeadingElement>(null)
+	// After an action removes the button that opened the dialog, focus lands on
+	// the list heading (or the page heading once no tab is left), not on body.
+	const settledFocus = useRef(false)
+	const finalFocus = () => {
+		if (!settledFocus.current) return true
+		settledFocus.current = false
+		const target =
+			headingRef.current ?? document.querySelector<HTMLElement>('main h1')
+		if (target && !target.hasAttribute('tabindex')) {
+			target.setAttribute('tabindex', '-1')
+		}
+		return target ?? true
+	}
+	const acting = useRef(false)
+
+	// A tab settled elsewhere (another device, the guest's payment) closes its
+	// open dialog with a notice instead of failing on confirm.
+	useEffect(() => {
+		if (acting.current) return
+		const gone = [closingId, voidingId, lockingId, releasingId].some(
+			(id) => id && !tabs.some((tab) => tab.id === id),
+		)
+		if (!gone) return
+		setClosingId(null)
+		setVoidingId(null)
+		setLockingId(null)
+		setReleasingId(null)
+		toast.info(_(msg`That tab was settled on another device or by the guest.`))
+	}, [tabs, closingId, voidingId, lockingId, releasingId, _])
 
 	const load = useCallback(
 		async (signal?: AbortSignal) => {
@@ -83,9 +121,11 @@ export function OpenTabs({
 	}, [load, refreshKey])
 
 	const act = async (path: string, body: unknown, done: string) => {
+		acting.current = true
 		try {
 			await request(path, { method: 'POST', body: JSON.stringify(body) })
 			toast.success(done)
+			settledFocus.current = true
 			await load()
 			return true
 		} catch (cause) {
@@ -95,6 +135,8 @@ export function OpenTabs({
 					: _(msg`That did not work. Try again.`),
 			)
 			return false
+		} finally {
+			acting.current = false
 		}
 	}
 
@@ -119,7 +161,12 @@ export function OpenTabs({
 
 	return (
 		<section aria-labelledby="open-tabs-heading" className="space-y-3">
-			<h2 id="open-tabs-heading" className="text-base font-semibold">
+			<h2
+				id="open-tabs-heading"
+				ref={headingRef}
+				tabIndex={-1}
+				className="text-base font-semibold outline-none"
+			>
 				<Trans>Open tabs</Trans>
 			</h2>
 			{failedBanner}
@@ -191,7 +238,7 @@ export function OpenTabs({
 										key={round.id}
 										className="flex items-center justify-between gap-2"
 									>
-										<span className="min-w-0 truncate">
+										<span className="min-w-0 wrap-anywhere">
 											{round.lines
 												.map(
 													(line) =>
@@ -207,7 +254,7 @@ export function OpenTabs({
 								<div className="flex flex-wrap gap-2">
 									<Button
 										size="sm"
-										onClick={() => setClosing(tab)}
+										onClick={() => setClosingId(tab.id)}
 										disabled={tab.paymentStatus === 'pending'}
 										aria-label={_(
 											msg`Close at counter, tab ${number}, table ${label}`,
@@ -218,7 +265,7 @@ export function OpenTabs({
 									<Button
 										size="sm"
 										variant="ghost"
-										onClick={() => setVoiding(tab)}
+										onClick={() => setVoidingId(tab.id)}
 										disabled={tab.paymentStatus === 'pending'}
 										aria-label={_(msg`Void, tab ${number}, table ${label}`)}
 									>
@@ -228,7 +275,7 @@ export function OpenTabs({
 										<Button
 											size="sm"
 											variant="ghost"
-											onClick={() => setLocking(tab)}
+											onClick={() => setLockingId(tab.id)}
 											aria-label={_(msg`Lock, tab ${number}, table ${label}`)}
 										>
 											<Trans>Lock</Trans>
@@ -238,7 +285,7 @@ export function OpenTabs({
 										<Button
 											size="sm"
 											variant="ghost"
-											onClick={() => setReleasing(tab)}
+											onClick={() => setReleasingId(tab.id)}
 											aria-label={_(
 												msg`Stop online payment, tab ${number}, table ${label}`,
 											)}
@@ -264,7 +311,8 @@ export function OpenTabs({
 
 			<CloseTabDialog
 				tab={closing}
-				onClose={() => setClosing(null)}
+				onClose={() => setClosingId(null)}
+				finalFocus={finalFocus}
 				onConfirm={async (tipCents) => {
 					if (!closing) return
 					const number = closing.tabNumber
@@ -281,15 +329,15 @@ export function OpenTabs({
 							_(msg`Tab ${number} closed`),
 						)
 					) {
-						setClosing(null)
+						setClosingId(null)
 					}
 				}}
 			/>
 			<AlertDialog
 				open={Boolean(locking)}
-				onOpenChange={(open) => !open && setLocking(null)}
+				onOpenChange={(open) => !open && setLockingId(null)}
 			>
-				<AlertDialogContent>
+				<AlertDialogContent finalFocus={finalFocus}>
 					<AlertDialogHeader>
 						<AlertDialogTitle>
 							<Trans>Lock this tab?</Trans>
@@ -318,7 +366,7 @@ export function OpenTabs({
 									_(msg`Tab locked. Guests can no longer add to it.`),
 								)
 									.then((ok) => {
-										if (ok) setLocking(null)
+										if (ok) setLockingId(null)
 									})
 									.finally(() => setLockBusy(false))
 							}}
@@ -330,9 +378,9 @@ export function OpenTabs({
 			</AlertDialog>
 			<AlertDialog
 				open={Boolean(releasing)}
-				onOpenChange={(open) => !open && setReleasing(null)}
+				onOpenChange={(open) => !open && setReleasingId(null)}
 			>
-				<AlertDialogContent>
+				<AlertDialogContent finalFocus={finalFocus}>
 					<AlertDialogHeader>
 						<AlertDialogTitle>
 							<Trans>Stop the online payment?</Trans>
@@ -362,7 +410,7 @@ export function OpenTabs({
 									_(msg`Online payment stopped. You can close the tab now.`),
 								)
 									.then((ok) => {
-										if (ok) setReleasing(null)
+										if (ok) setReleasingId(null)
 									})
 									.finally(() => setReleaseBusy(false))
 							}}
@@ -374,7 +422,8 @@ export function OpenTabs({
 			</AlertDialog>
 			<VoidTabDialog
 				tab={voiding}
-				onClose={() => setVoiding(null)}
+				onClose={() => setVoidingId(null)}
+				finalFocus={finalFocus}
 				onConfirm={async (reason) => {
 					if (!voiding) return
 					const number = voiding.tabNumber
@@ -390,7 +439,7 @@ export function OpenTabs({
 							_(msg`Tab ${number} voided`),
 						)
 					) {
-						setVoiding(null)
+						setVoidingId(null)
 					}
 				}}
 			/>
@@ -398,14 +447,18 @@ export function OpenTabs({
 	)
 }
 
+type FinalFocus = () => HTMLElement | boolean
+
 function CloseTabDialog({
 	tab,
 	onClose,
 	onConfirm,
+	finalFocus,
 }: {
 	tab: QrTab | null
 	onClose: () => void
 	onConfirm: (tipCents: number) => Promise<void>
+	finalFocus: FinalFocus
 }) {
 	const { _, i18n } = useLingui()
 	const [tip, setTip] = useState('')
@@ -429,13 +482,19 @@ function CloseTabDialog({
 			open={Boolean(tab)}
 			onOpenChange={(open) => !open && onClose()}
 		>
-			<AlertDialogContent>
+			<AlertDialogContent finalFocus={finalFocus}>
 				<AlertDialogHeader>
 					<AlertDialogTitle>
 						<Trans>Close this tab at the counter?</Trans>
 					</AlertDialogTitle>
 					<AlertDialogDescription>
-						{tab?.roundsPending ? (
+						{needsReview ? (
+							<Trans>
+								An online payment arrived that does not match this tab. Closing
+								does not refund it: refund or keep it in your payment dashboard,
+								and take only what is still owed at the counter.
+							</Trans>
+						) : tab?.roundsPending ? (
 							<Trans>
 								The kitchen is still working on part of this tab. Close it only
 								when the guest has paid.
@@ -496,10 +555,12 @@ function VoidTabDialog({
 	tab,
 	onClose,
 	onConfirm,
+	finalFocus,
 }: {
 	tab: QrTab | null
 	onClose: () => void
 	onConfirm: (reason: string) => Promise<void>
+	finalFocus: FinalFocus
 }) {
 	const { _ } = useLingui()
 	const [reason, setReason] = useState('')
@@ -515,16 +576,24 @@ function VoidTabDialog({
 			open={Boolean(tab)}
 			onOpenChange={(open) => !open && onClose()}
 		>
-			<AlertDialogContent>
+			<AlertDialogContent finalFocus={finalFocus}>
 				<AlertDialogHeader>
 					<AlertDialogTitle>
 						<Trans>Void this tab?</Trans>
 					</AlertDialogTitle>
 					<AlertDialogDescription>
-						<Trans>
-							Nothing is charged. Orders the kitchen has not finished are
-							cancelled.
-						</Trans>
+						{needsReview ? (
+							<Trans>
+								An online payment arrived for this tab. Voiding does not refund
+								it: refund it in your payment dashboard. Orders the kitchen has
+								not finished are cancelled.
+							</Trans>
+						) : (
+							<Trans>
+								Nothing is charged. Orders the kitchen has not finished are
+								cancelled.
+							</Trans>
+						)}
 					</AlertDialogDescription>
 				</AlertDialogHeader>
 				<Field>

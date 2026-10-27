@@ -150,11 +150,18 @@ function ConfirmedAction({
 	)
 }
 
-function Result({ data }: { data: PrintAdminResult | undefined }) {
+function Result({
+	data,
+	item,
+}: {
+	data: PrintAdminResult | undefined
+	/** Names the row the message belongs to, for screen readers. */
+	item?: string
+}) {
 	if (!data) return null
 	return data.ok ? (
 		<p role="status" className="text-muted-foreground text-sm">
-			<Trans>Saved.</Trans>
+			{item ? <Trans>Saved: {item}</Trans> : <Trans>Saved.</Trans>}
 		</p>
 	) : (
 		<p role="alert" className="text-destructive text-sm">
@@ -306,6 +313,13 @@ function CatalogRow({
 	const fetcher = useFetcher<PrintAdminResult>()
 	const { _ } = useLingui()
 	const formId = `catalog-${size.product}-${size.sizeKey}`
+	// Every control names its row: a screen reader hears "Vendor, Table card
+	// A6", not fifteen identical "Vendor" fields.
+	const item = `${
+		PRODUCT_LABELS[size.product]
+			? _(PRODUCT_LABELS[size.product]!)
+			: size.product
+	} ${size.label}`
 	return (
 		<TableRow>
 			<TableCell>
@@ -320,14 +334,14 @@ function CatalogRow({
 					<input type="hidden" name="product" value={size.product} />
 					<input type="hidden" name="sizeKey" value={size.sizeKey} />
 				</fetcher.Form>
-				<Result data={fetcher.data} />
+				<Result data={fetcher.data} item={item} />
 			</TableCell>
 			<TableCell>
 				<select
 					form={formId}
 					name="vendor"
 					defaultValue={current?.vendor ?? 'gelato'}
-					aria-label={_(msg`Vendor`)}
+					aria-label={_(msg`Vendor, ${item}`)}
 					className="border-input bg-background h-9 rounded-md border px-2 text-sm"
 				>
 					{PRINT_ADMIN_VENDORS.map((vendor) => (
@@ -342,7 +356,7 @@ function CatalogRow({
 					form={formId}
 					name="vendorSku"
 					defaultValue={current?.vendorSku ?? ''}
-					aria-label={_(msg`Vendor SKU`)}
+					aria-label={_(msg`Vendor SKU, ${item}`)}
 					className="min-w-48"
 				/>
 			</TableCell>
@@ -352,7 +366,7 @@ function CatalogRow({
 					name="bleedMm"
 					inputMode="numeric"
 					defaultValue={current?.bleedMm ?? 3}
-					aria-label={_(msg`Bleed (mm)`)}
+					aria-label={_(msg`Bleed in millimetres, ${item}`)}
 					className="w-20"
 				/>
 			</TableCell>
@@ -362,6 +376,7 @@ function CatalogRow({
 					form={formId}
 					size="sm"
 					disabled={fetcher.state !== 'idle'}
+					aria-label={current ? _(msg`Update ${item}`) : _(msg`Enable ${item}`)}
 				>
 					{current ? _(msg`Update`) : _(msg`Enable`)}
 				</Button>
@@ -371,8 +386,7 @@ function CatalogRow({
 						fields={{ _action: 'catalog-remove', id: current.id }}
 						label={_(msg`Stop shipping`)}
 						accessibleLabel={(() => {
-							const sizeLabel = size.label
-							return _(msg`Stop shipping ${sizeLabel}`)
+							return _(msg`Stop shipping ${item}`)
 						})()}
 						title={_(msg`Stop shipping this size?`)}
 						description={_(

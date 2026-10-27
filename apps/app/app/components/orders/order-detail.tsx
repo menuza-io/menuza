@@ -368,13 +368,17 @@ export function OrderDetail({
 											: _(msg`Pickup`)}
 								</p>
 								{order.table ? (
-									<p data-testid="order-table">
-										{(() => {
-											const label = order.table.label
-											return _(msg`Table ${label}`)
-										})()}
+									<p
+										data-testid="order-table"
+										className="flex flex-wrap items-baseline gap-x-2"
+									>
+										<bdi>
+											{(() => {
+												const label = order.table.label
+												return _(msg`Table ${label}`)
+											})()}
+										</bdi>
 										<span className="text-muted-foreground">
-											{' · '}
 											<Trans>Paid when the tab closes</Trans>
 										</span>
 									</p>

@@ -13,7 +13,7 @@ import {
 } from '@repo/ui/alert-dialog'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
-import { Field, FieldDescription, FieldLabel } from '@repo/ui/field'
+import { Field, FieldDescription, FieldError, FieldLabel } from '@repo/ui/field'
 import { Icon } from '@repo/ui/icon'
 import { Input } from '@repo/ui/input'
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
@@ -23,7 +23,7 @@ import { z } from 'zod'
 import { OperatorRequestError } from '#app/hooks/use-operator-client.ts'
 import { useQrClient } from '#app/hooks/use-qr-client.ts'
 import {
-	expandTableLabels,
+	planTableLabels,
 	qrTableSchema,
 	type QrTable,
 } from '#app/utils/qr/qr-model.ts'
@@ -103,9 +103,33 @@ export function TablesManager({
 		}
 	}
 
+	const plan = planTableLabels(labels)
+	const planError =
+		plan.problem === 'reversed_range'
+			? _(msg`A range counts up, like T1-T12.`)
+			: plan.problem === 'range_too_large'
+				? _(msg`A range can add at most 200 tables at once.`)
+				: plan.problem === 'too_many'
+					? _(msg`Add at most 200 tables at once.`)
+					: null
+	const planPreview = (() => {
+		const first = plan.labels[0]
+		const last = plan.labels.at(-1)
+		if (!first || !last) return null
+		const count = plan.labels.length
+		return count === 1
+			? _(msg`Adds table ${first}.`)
+			: _(
+					plural(count, {
+						one: `Adds # table: ${first} to ${last}.`,
+						other: `Adds # tables: ${first} to ${last}.`,
+					}),
+				)
+	})()
+
 	const addTables = (event: FormEvent) => {
 		event.preventDefault()
-		const list = expandTableLabels(labels)
+		const list = plan.labels
 		if (list.length === 0) return
 		void run(
 			() =>
@@ -167,15 +191,24 @@ export function TablesManager({
 							onChange={(event) => setLabels(event.target.value)}
 							placeholder={_(msg`T1-T12, Patio 1`)}
 							maxLength={600}
+							aria-invalid={planError ? true : undefined}
+							aria-describedby={
+								planError ? 'qr-new-tables-error' : 'qr-new-tables-help'
+							}
 						/>
-						<FieldDescription>
-							{_(
-								msg`Type one label, a range like T1-T12, or a list separated by commas.`,
-							)}
-						</FieldDescription>
+						{planError ? (
+							<FieldError id="qr-new-tables-error">{planError}</FieldError>
+						) : (
+							<FieldDescription id="qr-new-tables-help">
+								{planPreview ??
+									_(
+										msg`Type one label, a range like T1-T12, or a list separated by commas.`,
+									)}
+							</FieldDescription>
+						)}
 					</Field>
 					<div className="flex flex-wrap gap-2 sm:pb-7">
-						<Button type="submit" disabled={busy || !labels.trim()}>
+						<Button type="submit" disabled={busy || plan.labels.length === 0}>
 							<Icon name="plus" className="size-4" />
 							{_(msg`Add`)}
 						</Button>
@@ -251,7 +284,11 @@ export function TablesManager({
 											body: JSON.stringify({ archived: true }),
 										}),
 									_(msg`Table archived`),
-								)
+								).then((ok) => {
+									// The row is gone: continue from the add field.
+									if (ok) document.getElementById('qr-new-tables')?.focus()
+									return ok
+								})
 							}
 						/>
 					))}
@@ -387,44 +424,50 @@ function TableRow({
 							</AlertDialogFooter>
 						</AlertDialogContent>
 					</AlertDialog>
-					<AlertDialog>
-						<AlertDialogTrigger
-							render={
-								<Button
-									size="sm"
-									variant="ghost"
-									disabled={busy || Boolean(table.openTabId)}
-									aria-label={_(msg`Archive, table ${tableName}`)}
-								>
-									{_(msg`Archive`)}
-								</Button>
-							}
-						/>
-						<AlertDialogContent>
-							<AlertDialogHeader>
-								<AlertDialogTitle>
-									{(() => {
-										const label = table.label
-										return _(msg`Archive table ${label}?`)
-									})()}
-								</AlertDialogTitle>
-								<AlertDialogDescription>
-									{_(
-										msg`Its QR code stops taking orders. Past tabs keep their history.`,
-									)}
-								</AlertDialogDescription>
-							</AlertDialogHeader>
-							<AlertDialogFooter>
-								<AlertDialogCancel>{_(msg`Cancel`)}</AlertDialogCancel>
-								<AlertDialogAction
-									variant="destructive"
-									onClick={() => void onArchive()}
-								>
-									{_(msg`Archive table`)}
-								</AlertDialogAction>
-							</AlertDialogFooter>
-						</AlertDialogContent>
-					</AlertDialog>
+					{table.openTabId ? (
+						<p className="text-muted-foreground self-center text-xs">
+							{_(msg`Close the open tab before archiving.`)}
+						</p>
+					) : (
+						<AlertDialog>
+							<AlertDialogTrigger
+								render={
+									<Button
+										size="sm"
+										variant="ghost"
+										disabled={busy}
+										aria-label={_(msg`Archive, table ${tableName}`)}
+									>
+										{_(msg`Archive`)}
+									</Button>
+								}
+							/>
+							<AlertDialogContent>
+								<AlertDialogHeader>
+									<AlertDialogTitle>
+										{(() => {
+											const label = table.label
+											return _(msg`Archive table ${label}?`)
+										})()}
+									</AlertDialogTitle>
+									<AlertDialogDescription>
+										{_(
+											msg`Its QR code stops taking orders. Past tabs keep their history.`,
+										)}
+									</AlertDialogDescription>
+								</AlertDialogHeader>
+								<AlertDialogFooter>
+									<AlertDialogCancel>{_(msg`Cancel`)}</AlertDialogCancel>
+									<AlertDialogAction
+										variant="destructive"
+										onClick={() => void onArchive()}
+									>
+										{_(msg`Archive table`)}
+									</AlertDialogAction>
+								</AlertDialogFooter>
+							</AlertDialogContent>
+						</AlertDialog>
+					)}
 				</div>
 			) : null}
 		</li>

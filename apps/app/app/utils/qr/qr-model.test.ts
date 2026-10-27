@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { expandTableLabels } from './qr-model.ts'
+import { expandTableLabels, planTableLabels } from './qr-model.ts'
 
 describe('expandTableLabels', () => {
 	it('expands ranges and keeps plain labels', () => {
@@ -13,5 +13,18 @@ describe('expandTableLabels', () => {
 		])
 		expect(expandTableLabels('T5-T2')).toEqual(['T5-T2'])
 		expect(expandTableLabels('A1-A500')).toHaveLength(1)
+	})
+})
+
+describe('planTableLabels', () => {
+	it('says why an input would not do what it looks like', () => {
+		expect(planTableLabels('T1-T3')).toEqual({
+			labels: ['T1', 'T2', 'T3'],
+			problem: null,
+		})
+		expect(planTableLabels('T20-T5').problem).toBe('reversed_range')
+		expect(planTableLabels('T1-T500').problem).toBe('range_too_large')
+		expect(planTableLabels('A1-A150, B1-B150').problem).toBe('too_many')
+		expect(planTableLabels('A1-A150, B1-B150').labels).toEqual([])
 	})
 })

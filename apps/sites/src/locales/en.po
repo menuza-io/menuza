@@ -827,6 +827,10 @@ msgstr "Enter a phone number with its country code, like {example}."
 msgid "Enter a phone number with its country code, like +1 415 555 0123."
 msgstr "Enter a phone number with its country code, like +1 415 555 0123."
 
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Enter a phone number, like +1 555 123 4567."
+msgstr "Enter a phone number, like +1 555 123 4567."
+
 #: src/components/careers/ApplyPanel.astro.ts:3
 #: src/lib/reservations/labels.ts:122
 msgid "Enter a valid email address."
@@ -835,6 +839,10 @@ msgstr "Enter a valid email address."
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "Enter your name and phone number."
 msgstr "Enter your name and phone number."
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Enter your name."
+msgstr "Enter your name."
 
 #: src/pages/login.astro.ts:3
 msgid "Enter your phone number. We'll send a verification code."
@@ -2459,8 +2467,8 @@ msgid "This tab is paid. Thank you!"
 msgstr "This tab is paid. Thank you!"
 
 #: src/components/ordering/TableTab.astro.ts:3
-msgid "This tab was closed by the staff."
-msgstr "This tab was closed by the staff."
+msgid "This tab was cancelled and nothing was charged. Ask a team member if you have questions."
+msgstr "This tab was cancelled and nothing was charged. Ask a team member if you have questions."
 
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "This table code no longer works. Please ask a team member for help."

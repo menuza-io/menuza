@@ -1,6 +1,6 @@
 import { getFormProps, useForm } from '@conform-to/react'
 import { parseWithZod } from '@conform-to/zod'
-import { msg } from '@lingui/macro'
+import { msg, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import {
 	defaultPrintCopy,
@@ -798,7 +798,7 @@ export default function PrintDesignRoute() {
 							</CardTitle>
 							<CardDescription>
 								{_(
-									msg`The red dashed line is where the print is cut. Keep words away from the edge.`,
+									msg`The dashed line is where the print is cut. Keep words away from the edge.`,
 								)}
 							</CardDescription>
 						</CardHeader>
@@ -968,6 +968,9 @@ function DownloadLink({
 		>
 			<Icon name="download" className="size-4" />
 			{label}
+			<span className="sr-only">
+				<Trans>(opens in a new tab)</Trans>
+			</span>
 		</Button>
 	)
 }

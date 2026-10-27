@@ -36,6 +36,7 @@ import {
 	type LoaderFunctionArgs,
 } from 'react-router'
 import { z } from 'zod'
+import { EmptyState } from '#app/components/empty-state.tsx'
 import { PRINT_PRODUCT_LABELS } from '#app/components/print/print-labels.ts'
 import {
 	PRINT_ORDER_ERROR_FALLBACK,
@@ -93,6 +94,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	return {
 		orgSlug: access.organization.slug,
 		orgName: access.organization.name,
+		canWrite: access.canWrite,
 		paused: isPrintShippingPaused(),
 		designs: designs
 			.filter(
@@ -226,11 +228,21 @@ export default function NewPrintOrderRoute() {
 			) : null}
 
 			{data.designs.length === 0 ? (
-				<p className="text-muted-foreground text-sm">
-					{_(
+				<EmptyState
+					title={_(msg`Nothing to ship yet`)}
+					description={_(
 						msg`Approve a table card, poster or flyer first. Only approved prints in a shippable size can be ordered.`,
 					)}
-				</p>
+					icons={['printer']}
+					action={
+						data.canWrite
+							? {
+									label: _(msg`Create a print`),
+									href: `/${data.orgSlug}/marketing/print/new`,
+								}
+							: undefined
+					}
+				/>
 			) : (
 				<Form
 					method="post"
