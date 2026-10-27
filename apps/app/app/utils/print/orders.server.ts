@@ -1259,7 +1259,26 @@ async function failAndRefund(orderId: string, reason: string) {
 			.where(eq(PrintOrder.id, order.id))
 		return
 	}
-	await refundInFull(order)
+	try {
+		await refundInFull(order)
+	} catch (error) {
+		// Vendors are cancelled but the money did not move: hold it for Admin
+		// to refund. Not rethrown: a caller's own hold (submission_error) would
+		// replace this one, and a retry would then mark the order as sent.
+		console.error(
+			`Print order ${order.id} refund failed after cancelling vendors:`,
+			error instanceof Error ? error.message : error,
+		)
+		await db
+			.update(PrintOrder)
+			.set({
+				status: 'held',
+				holdReason: 'refund_failed',
+				failureReason: reason,
+			})
+			.where(eq(PrintOrder.id, order.id))
+		return
+	}
 	await db
 		.update(PrintOrder)
 		.set({ status: 'refunded', failureReason: reason })

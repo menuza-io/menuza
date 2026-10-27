@@ -26,7 +26,7 @@ import {
 	CardTitle,
 } from '@repo/ui/card'
 import { PageHeader } from '@repo/ui/page-header'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useSyncExternalStore } from 'react'
 import {
 	Form,
 	Link,
@@ -57,6 +57,9 @@ import {
 	PrintOrderError,
 	startPrintCheckout,
 } from '#app/utils/print/orders.server.ts'
+
+/** Hydration never changes after it happened: nothing to subscribe to. */
+const subscribeNever = () => () => {}
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const access = await requirePrintShopAccess(request, params.orgSlug)
@@ -159,20 +162,22 @@ export default function PrintOrderRoute() {
 		}, 4000)
 		return () => window.clearTimeout(timer)
 	}, [waitingForBank, pollsLeft, revalidator])
-	// Formatted in the browser: the server does not know the viewer's clock.
-	const [createdAt, setCreatedAt] = useState('')
-	useEffect(() => {
-		setCreatedAt(new Date(order.createdAt).toLocaleString(i18n.locale))
-	}, [order.createdAt, i18n.locale])
-	const [expiresAt, setExpiresAt] = useState('')
-	useEffect(() => {
-		setExpiresAt(
-			new Date(order.quoteExpiresAt).toLocaleTimeString(i18n.locale, {
+	// Formatted in the browser only: the server does not know the viewer's
+	// clock, so the first (server) render leaves the times empty.
+	const hydrated = useSyncExternalStore(
+		subscribeNever,
+		() => true,
+		() => false,
+	)
+	const createdAt = hydrated
+		? new Date(order.createdAt).toLocaleString(i18n.locale)
+		: ''
+	const expiresAt = hydrated
+		? new Date(order.quoteExpiresAt).toLocaleTimeString(i18n.locale, {
 				hour: 'numeric',
 				minute: '2-digit',
-			}),
-		)
-	}, [order.quoteExpiresAt, i18n.locale])
+			})
+		: ''
 	const errorMessage = actionData?.error
 		? _(
 				PRINT_ORDER_ERROR_LABELS[actionData.error] ??

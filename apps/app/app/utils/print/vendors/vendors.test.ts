@@ -157,6 +157,30 @@ describe('Prodigi adapter', () => {
 		stubFetch({ outcome: 'FailedToCancel' })
 		expect(await prodigiVendor.cancel('o1')).toBe('too_late')
 	})
+
+	it('holds a created order without an id instead of refunding it', async () => {
+		vi.stubEnv('PRODIGI_API_KEY', 'prodigi-test-key')
+		// A 2xx that may still be an order at Prodigi (an unexpected shape).
+		stubFetch({ outcome: 'CreatedWithIssues', order: {} })
+		const error = await prodigiVendor
+			.createOrder({
+				reference: 'po_1',
+				items: [
+					{
+						reference: 'po_1_0',
+						sku: 'GLOBAL-POST',
+						quantity: 1,
+						fileUrl: 'https://files.example/a.pdf',
+					},
+				],
+				address,
+				shippingMethod: 'Standard',
+				callbackUrl: null,
+			})
+			.catch((caught: unknown) => caught)
+		expect(error).toBeInstanceOf(VendorError)
+		expect((error as VendorError).code).toBe('unavailable')
+	})
 })
 
 describe('mock vendor', () => {

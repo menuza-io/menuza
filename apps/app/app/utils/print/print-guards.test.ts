@@ -58,7 +58,7 @@ describe('print shop guards', () => {
 		for (const name of ['loader', 'action'] as const) {
 			const body = exportedFunctionBody(source, name)
 			if (body === null) continue
-			const firstAwait = body.match(/await\s+([A-Za-z_$][\w$]*)\(/)
+			const firstAwait = body.match(/await\s+([A-Za-z_$][\w$.]*)\s*\(/)
 			expect(firstAwait?.[1], `${file} ${name}`).toBe('requirePrintShopAccess')
 			if (name === 'action') {
 				const call = body.slice(body.indexOf('requirePrintShopAccess('))

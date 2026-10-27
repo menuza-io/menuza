@@ -17,6 +17,10 @@ QR codes of its own, featured items and the business's places: see
 | `print_shop.shipping` (org flag)         | Paid shipped orders (needs the master flag)       |
 | `PRINT_SHIPPING_ENABLED=false` (App env) | Pauses new paid orders everywhere (vendor outage) |
 
+`PRINT_SHIPPING_ENABLED` keeps shipping on only when it is unset or an explicit
+on-value (`true`, `1`, `on`, `yes`, `enabled`); any other value pauses it, so a
+typo fails closed.
+
 Permissions: the marketing (campaign) permissions read and edit designs; paying
 for shipped prints also needs the settings (billing) permission.
 
@@ -53,10 +57,15 @@ service, so a printed code keeps working as long as the page exists.
 - **For a print shop:** one piece per page at trim size plus 3 mm bleed.
 
 PDFs are rendered by Cloudflare Browser Rendering (REST `/pdf`, headless
-Chrome), so Arabic, RTL and web fonts match the proof. Output is RGB. Files are
-cached in the platform bucket by a hash of their inputs; the same input is never
-rendered twice, and each organization may render `PRINT_RENDER_LIMIT_PER_HOUR`
-new files per hour (default 30). Without `PRINT_BROWSER_ACCOUNT_ID` and
+Chrome), so Arabic, RTL and web fonts match the proof. Output is RGB. If a
+render fails for a reason other than the account (a font host that is down makes
+it time out), it is rendered once more without web fonts. Files are cached in
+the platform bucket per organization by a hash of their inputs; the same input
+is never rendered twice for an organization. Each organization may render
+`PRINT_RENDER_LIMIT_PER_HOUR` new files per hour for downloads (default 30): the
+render reserves its slot in one statement with the limit check, so concurrent
+requests cannot render past it, and a failed render gives the slot back. Renders
+for paid orders do not count. Without `PRINT_BROWSER_ACCOUNT_ID` and
 `PRINT_BROWSER_API_TOKEN` (local dev) the download opens a print-ready page and
 the browser's print dialog saves it.
 
@@ -105,10 +114,11 @@ the browser's print dialog saves it.
   wired yet: Admin searches the dashboard.
 - **Tracking:** vendor webhooks
   (`/resources/print/webhook/<vendor>?token=PRINT_WEBHOOK_TOKEN`) only trigger a
-  status fetch from the vendor's API; the hourly `print-sync` job in
-  `apps/jobs-cron` is the safety net. It checks orders not yet shipped first
-  (oldest check first) and follows shipped ones for 30 days. Operators get an
-  email and an in-app notification when an order is paid, shipped, or refunded.
+  status fetch from the vendor's API (bodies are capped at 64 KB as read, ids at
+  200 characters); the hourly `print-sync` job in `apps/jobs-cron` is the safety
+  net. It checks orders not yet shipped first (oldest check first) and follows
+  shipped ones for 30 days. Operators get an email and an in-app notification
+  when an order is paid, shipped, or refunded.
 
 ## Admin
 
@@ -139,6 +149,18 @@ App: `PRINT_BROWSER_ACCOUNT_ID`, `PRINT_BROWSER_API_TOKEN`,
 `PRINT_MOCK` (local only: a stateless vendor emulator, ignored unless `BASE_URL`
 is a local host). Admin: `APP_URL`. Stripe webhook events as for the rest of the
 App (`checkout.session.*`).
+
+## Rotating the webhook token
+
+Gelato and Prodigi call a URL, so `PRINT_WEBHOOK_TOKEN` sits in the query string
+and can show in access logs and vendor dashboards. A missing or short token
+(under 32 characters) refuses every vendor event, and the App logs that once. To
+rotate it:
+
+1. Set the new `PRINT_WEBHOOK_TOKEN` on the App.
+2. Update the webhook URL in each vendor's dashboard to the new token.
+3. Events sent with the old token in between are refused; the hourly
+   `print-sync` job picks up their status changes.
 
 ## Launch checklist (business)
 

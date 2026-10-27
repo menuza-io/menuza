@@ -3872,20 +3872,25 @@ export const PrintDesign = sqliteTable(
 export const PrintRender = sqliteTable(
 	'PrintRender',
 	{
-		hash: text().primaryKey().notNull(),
 		organizationId: text()
 			.notNull()
 			.references(() => Organization.id, {
 				onDelete: 'cascade',
 				onUpdate: 'cascade',
 			}),
+		// Hash of the render input; the same input of two orgs is two files.
+		hash: text().notNull(),
 		objectKey: text().notNull(),
-		byteLength: integer().notNull(),
+		// 0 while the render is in progress (the row reserves the slot).
+		byteLength: integer().default(0).notNull(),
+		// Free downloads count against the hourly limit; paid orders do not.
+		countsTowardLimit: integer({ mode: 'boolean' }).default(true).notNull(),
 		createdAt: integer({ mode: 'timestamp_ms' })
 			.$defaultFn(() => new Date())
 			.notNull(),
 	},
 	(table) => [
+		primaryKey({ columns: [table.organizationId, table.hash] }),
 		index('PrintRender_organizationId_createdAt_idx').on(
 			table.organizationId,
 			table.createdAt,

@@ -1,6 +1,6 @@
 import { type ActionFunctionArgs } from 'react-router'
 import { z } from 'zod'
-import { requireInternalCommandAuth } from '#app/utils/internal-command-auth.server.ts'
+import { requirePrintInternalCommand } from '#app/utils/print/internal-command.server.ts'
 import {
 	adminRecordVendorOrder,
 	adminRefundPrintOrder,
@@ -50,14 +50,7 @@ export async function action({ request }: ActionFunctionArgs) {
 	if (request.method !== 'POST') {
 		return new Response('Method Not Allowed', { status: 405 })
 	}
-	try {
-		await requireInternalCommandAuth(request)
-	} catch (error) {
-		if (error instanceof Response && error.status === 302) {
-			return new Response('Forbidden', { status: 403 })
-		}
-		throw error
-	}
+	await requirePrintInternalCommand(request)
 	const parsed = CommandSchema.safeParse(await request.json().catch(() => null))
 	if (!parsed.success) {
 		return Response.json({ error: 'invalid_request' }, { status: 400 })

@@ -1,5 +1,5 @@
 import { type ActionFunctionArgs } from 'react-router'
-import { requireInternalCommandAuth } from '#app/utils/internal-command-auth.server.ts'
+import { requirePrintInternalCommand } from '#app/utils/print/internal-command.server.ts'
 import { syncOpenPrintOrders } from '#app/utils/print/orders.server.ts'
 
 /**
@@ -10,7 +10,7 @@ export async function action({ request }: ActionFunctionArgs) {
 	if (request.method !== 'POST') {
 		return new Response('Method Not Allowed', { status: 405 })
 	}
-	await requireInternalCommandAuth(request)
+	await requirePrintInternalCommand(request)
 	const synced = await syncOpenPrintOrders()
 	return Response.json({
 		success: true,

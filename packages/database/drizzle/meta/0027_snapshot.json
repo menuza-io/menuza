@@ -1,7 +1,7 @@
 {
 	"version": "6",
 	"dialect": "sqlite",
-	"id": "545ebcfc-70d0-47ee-9fc1-6a32f5d0f103",
+	"id": "55bbe2f3-b199-475c-a804-35ed2dc27d72",
 	"prevId": "d19f8cb4-8ae3-42ab-b6b6-896d35c31039",
 	"tables": {
 		"ApiKey": {
@@ -9569,15 +9569,15 @@
 		"PrintRender": {
 			"name": "PrintRender",
 			"columns": {
-				"hash": {
-					"name": "hash",
+				"organizationId": {
+					"name": "organizationId",
 					"type": "text",
-					"primaryKey": true,
+					"primaryKey": false,
 					"notNull": true,
 					"autoincrement": false
 				},
-				"organizationId": {
-					"name": "organizationId",
+				"hash": {
+					"name": "hash",
 					"type": "text",
 					"primaryKey": false,
 					"notNull": true,
@@ -9595,7 +9595,16 @@
 					"type": "integer",
 					"primaryKey": false,
 					"notNull": true,
-					"autoincrement": false
+					"autoincrement": false,
+					"default": 0
+				},
+				"countsTowardLimit": {
+					"name": "countsTowardLimit",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false,
+					"default": true
 				},
 				"createdAt": {
 					"name": "createdAt",
@@ -9623,7 +9632,12 @@
 					"onUpdate": "cascade"
 				}
 			},
-			"compositePrimaryKeys": {},
+			"compositePrimaryKeys": {
+				"PrintRender_organizationId_hash_pk": {
+					"columns": ["organizationId", "hash"],
+					"name": "PrintRender_organizationId_hash_pk"
+				}
+			},
 			"uniqueConstraints": {},
 			"checkConstraints": {}
 		},

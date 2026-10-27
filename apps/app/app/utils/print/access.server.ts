@@ -29,16 +29,23 @@ export async function getPrintShopFeatures(
 	return foldPrintShopFeatures({ enabled, shipping })
 }
 
-const DISABLED_VALUES = new Set(['false', '0', 'off', 'no', 'disabled'])
+const ENABLED_VALUES = new Set(['true', '1', 'on', 'yes', 'enabled'])
 
-/** `PRINT_SHIPPING_ENABLED=false` pauses paid orders (vendor outage). */
+/**
+ * `PRINT_SHIPPING_ENABLED` pauses paid orders (vendor outage). Unset or an
+ * explicit on-value (`true`, `1`, `on`, `yes`, `enabled`) keeps shipping on;
+ * any other value pauses it, so a typo in the kill switch fails closed.
+ */
 export function isPrintShippingPaused(): boolean {
 	const raw =
-		typeof process !== 'undefined' && process.env
-			? process.env.PRINT_SHIPPING_ENABLED
-			: (ENV as { PRINT_SHIPPING_ENABLED?: unknown }).PRINT_SHIPPING_ENABLED
-	if (raw === undefined || raw === null || raw === '') return false
-	return DISABLED_VALUES.has(String(raw).trim().toLowerCase())
+		(typeof process !== 'undefined'
+			? process.env?.PRINT_SHIPPING_ENABLED
+			: undefined) ??
+		(ENV as { PRINT_SHIPPING_ENABLED?: unknown }).PRINT_SHIPPING_ENABLED
+	if (raw === undefined || raw === null || String(raw).trim() === '') {
+		return false
+	}
+	return !ENABLED_VALUES.has(String(raw).trim().toLowerCase())
 }
 
 export async function getPrintShopNavAccess(

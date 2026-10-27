@@ -168,11 +168,13 @@ export const prodigiVendor: PrintVendor = {
 		})
 		const order = body.order as Record<string, unknown> | undefined
 		const id = typeof order?.id === 'string' ? order.id : null
+		// A 2xx without an id (an unexpected shape, an idempotent replay) may
+		// still be an order at Prodigi: hold for a check, never refund blind.
 		if (!id)
 			throw new VendorError(
 				'prodigi',
-				'rejected',
-				'Prodigi did not accept the order',
+				'unavailable',
+				'Prodigi returned no order id',
 			)
 		return { vendorOrderId: id }
 	},

@@ -85,11 +85,13 @@ CREATE TABLE `PrintOrderItem` (
 --> statement-breakpoint
 CREATE INDEX `PrintOrderItem_orderId_idx` ON `PrintOrderItem` (`orderId`);--> statement-breakpoint
 CREATE TABLE `PrintRender` (
-	`hash` text PRIMARY KEY NOT NULL,
 	`organizationId` text NOT NULL,
+	`hash` text NOT NULL,
 	`objectKey` text NOT NULL,
-	`byteLength` integer NOT NULL,
+	`byteLength` integer DEFAULT 0 NOT NULL,
+	`countsTowardLimit` integer DEFAULT true NOT NULL,
 	`createdAt` integer NOT NULL,
+	PRIMARY KEY(`organizationId`, `hash`),
 	FOREIGN KEY (`organizationId`) REFERENCES `Organization`(`id`) ON UPDATE cascade ON DELETE cascade
 );
 --> statement-breakpoint

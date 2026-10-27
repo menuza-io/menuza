@@ -445,6 +445,9 @@ export function createPrintCatalog(
 // Shipped orders (US only in v1)
 // ---------------------------------------------------------------------------
 
+/** Print vendors a product and size can be mapped to (Admin catalog). */
+export const PRINT_VENDOR_NAMES = ['gelato', 'prodigi'] as const
+
 export const PRINT_MAX_ORDER_LINES = 20
 export const PRINT_MAX_COPIES = 500
 

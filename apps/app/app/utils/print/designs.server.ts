@@ -224,6 +224,8 @@ export async function approvePrintDesign(
 	if (snapshot.pieces.length === 0) {
 		throw new Response('Nothing to print yet', { status: 422 })
 	}
+	// Only the version the snapshot was built from: a save in between (another
+	// editor) must not be marked approved with older words.
 	const [updated] = await db
 		.update(PrintDesign)
 		.set({
@@ -233,9 +235,16 @@ export async function approvePrintDesign(
 			approvedAt: new Date(),
 			approvedById: access.userId,
 		})
-		.where(eq(PrintDesign.id, row.id))
+		.where(
+			and(eq(PrintDesign.id, row.id), eq(PrintDesign.updatedAt, row.updatedAt)),
+		)
 		.returning()
-	return updated!
+	if (!updated) {
+		throw new Response('The print changed while it was approved', {
+			status: 409,
+		})
+	}
+	return updated
 }
 
 export function approvedSnapshot(row: PrintDesignRow): PrintSnapshot | null {

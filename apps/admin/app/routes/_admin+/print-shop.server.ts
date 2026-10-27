@@ -1,4 +1,5 @@
 import { requireUserWithRole } from '@repo/auth'
+import { PRINT_VENDOR_NAMES } from '@repo/common/print-shop'
 import { printCatalog } from '@repo/common/print-shop-catalog'
 import {
 	and,
@@ -16,8 +17,6 @@ import {
 import { type ActionFunctionArgs, type LoaderFunctionArgs } from 'react-router'
 import { ENV } from 'varlock/env'
 import { z } from 'zod'
-
-export const PRINT_ADMIN_VENDORS = ['gelato', 'prodigi'] as const
 
 const MARGIN_STATUSES = new Set([
 	'paid',
@@ -153,7 +152,7 @@ const ActionSchema = z.discriminatedUnion('_action', [
 		_action: z.literal('catalog'),
 		product: z.string().refine((key) => printCatalog.isProduct(key)),
 		sizeKey: z.string().trim().min(1).max(20),
-		vendor: z.enum(PRINT_ADMIN_VENDORS),
+		vendor: z.enum(PRINT_VENDOR_NAMES),
 		vendorSku: z.string().trim().min(1).max(200),
 		bleedMm: z.coerce.number().int().min(0).max(10),
 	}),

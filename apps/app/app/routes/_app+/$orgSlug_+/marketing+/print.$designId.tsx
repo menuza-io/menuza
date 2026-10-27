@@ -42,7 +42,7 @@ import { PageHeader } from '@repo/ui/page-header'
 import { RadioGroup, RadioGroupItem } from '@repo/ui/radio-group'
 import { Switch } from '@repo/ui/switch'
 import { Textarea } from '@repo/ui/textarea'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import {
 	Form,
 	Link,
@@ -269,6 +269,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			if (error instanceof Response && error.status === 422) {
 				return { result: submission.reply(), error: 'qr_empty' as const }
 			}
+			// Someone saved between the snapshot and the approval: approve again.
+			if (error instanceof Response && error.status === 409) {
+				return { result: submission.reply(), error: 'changed' as const }
+			}
 			// The codes' source is unreachable: saved, not approved.
 			if (error instanceof Response && error.status === 503) {
 				return {
@@ -303,17 +307,14 @@ export default function PrintDesignRoute() {
 		printShopUi.qrTargets?.[content.qr.kind]?.hidden ??
 		msg`This print carries private QR codes, so only people who may see them can see the proof and download it.`
 
-	// Approving must approve what the proof shows: unsaved edits first.
+	// Approving must approve what the proof shows: unsaved edits first. A new
+	// save (a new `updatedAt`) clears the flag, adjusted during render.
 	const [dirty, setDirty] = useState(false)
-	useEffect(() => setDirty(false), [design.updatedAt])
-	// The download problem is shown once: drop it from the address, so a save
-	// (which posts to this URL) or a reload does not bring it back.
-	useEffect(() => {
-		if (!data.downloadProblem) return
-		const url = new URL(window.location.href)
-		url.searchParams.delete('download')
-		window.history.replaceState(window.history.state, '', url)
-	}, [data.downloadProblem])
+	const [savedAt, setSavedAt] = useState(design.updatedAt)
+	if (savedAt !== design.updatedAt) {
+		setSavedAt(design.updatedAt)
+		setDirty(false)
+	}
 
 	const [form] = useForm({
 		id: `print-${design.id}`,
@@ -351,7 +352,8 @@ export default function PrintDesignRoute() {
 			{actionData?.error ? (
 				<Alert variant="destructive" role="alert">
 					<AlertTitle>
-						{actionData.error === 'qr_unavailable'
+						{actionData.error === 'qr_unavailable' ||
+						actionData.error === 'changed'
 							? _(msg`We could not approve this print`)
 							: _(msg`We could not save this print`)}
 					</AlertTitle>
@@ -365,17 +367,33 @@ export default function PrintDesignRoute() {
 								? _(
 										msg`Your changes are saved, but the QR codes could not be loaded to approve the proof. Try again in a minute.`,
 									)
-								: actionData.error === 'invalid_qr'
+								: actionData.error === 'changed'
 									? _(
-											msg`Check the QR code: use a page on your own website, like /contact.`,
+											msg`Someone else changed this print while you approved it. Check the proof, then approve again.`,
 										)
-									: _(msg`Check the words and choices, then save again.`)}
+									: actionData.error === 'invalid_qr'
+										? _(
+												msg`Check the QR code: use a page on your own website, like /contact.`,
+											)
+										: _(msg`Check the words and choices, then save again.`)}
 					</AlertDescription>
 				</Alert>
 			) : null}
 
 			{data.downloadProblem ? (
-				<Alert variant="destructive" role="alert">
+				<Alert
+					variant="destructive"
+					role="alert"
+					// Shown once: drop it from the address, so a save (which posts to
+					// this URL) or a reload does not bring it back.
+					ref={(node) => {
+						if (!node) return
+						const url = new URL(window.location.href)
+						if (!url.searchParams.has('download')) return
+						url.searchParams.delete('download')
+						window.history.replaceState(window.history.state, '', url)
+					}}
+				>
 					<AlertTitle>{_(msg`The download could not be made`)}</AlertTitle>
 					<AlertDescription>
 						{data.downloadProblem === 'limited'

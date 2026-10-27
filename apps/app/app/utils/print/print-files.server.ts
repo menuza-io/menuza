@@ -5,7 +5,7 @@ import {
 	type PrintHomeSheet,
 	type PrintSnapshot,
 } from '@repo/common/print-shop'
-import { and, count, db, eq, gte, PrintRender } from '@repo/database'
+import { and, db, eq, lt, PrintRender, sql } from '@repo/database'
 import { readPrintFile, uploadPrintFile } from '#app/utils/storage.server.ts'
 import {
 	isPdfRendererConfigured,
@@ -16,10 +16,16 @@ import { renderPrintHtml } from './print-document.server.tsx'
 import { qrSvgsFor, snapshotHash } from './print-snapshot.server.ts'
 
 /**
- * Print files: a PDF is rendered once per distinct input (template version,
- * snapshot, format, sheet, bleed) and kept in object storage; the same input
- * is served from the cache and does not count against the hourly limit.
+ * Print files: a PDF is rendered once per organization and distinct input
+ * (template version, snapshot, format, sheet, bleed) and kept in object
+ * storage; the same input is served from the cache and does not count
+ * against the hourly limit. A render first reserves its `PrintRender` row in
+ * one statement that also checks the limit, so concurrent requests cannot
+ * render past it; a failed render gives the slot back.
  */
+
+/** A reserved slot older than this is a render that died: try again. */
+const RENDER_STALE_MS = 2 * 60_000
 
 export type PrintFileRequest = {
 	organizationId: string
@@ -34,6 +40,8 @@ export type PrintFileResult =
 	/** No renderer configured: a page that opens the browser print dialog. */
 	| { kind: 'html'; html: string; nonce: string }
 	| { kind: 'limited' }
+	/** Another request is rendering the same file right now. */
+	| { kind: 'busy' }
 	| { kind: 'failed' }
 
 export function printFileHash(input: PrintFileRequest): string {
@@ -74,20 +82,37 @@ export async function getPrintFile(
 	options: { skipLimit?: boolean } = {},
 ): Promise<PrintFileResult> {
 	const hash = printFileHash(input)
+	const organizationId = input.organizationId
+	const thisRow = and(
+		eq(PrintRender.organizationId, organizationId),
+		eq(PrintRender.hash, hash),
+	)
 	const [cached] = await db
-		.select({ objectKey: PrintRender.objectKey })
+		.select({
+			objectKey: PrintRender.objectKey,
+			byteLength: PrintRender.byteLength,
+			createdAt: PrintRender.createdAt,
+		})
 		.from(PrintRender)
-		.where(
-			and(
-				eq(PrintRender.hash, hash),
-				eq(PrintRender.organizationId, input.organizationId),
-			),
-		)
+		.where(thisRow)
 		.limit(1)
-	if (cached) {
+	if (cached && cached.byteLength > 0) {
 		const bytes = await readPrintFile(cached.objectKey)
 		if (bytes) return { kind: 'pdf', bytes, objectKey: cached.objectKey }
-		await db.delete(PrintRender).where(eq(PrintRender.hash, hash))
+		await db.delete(PrintRender).where(thisRow)
+	} else if (cached) {
+		if (Date.now() - cached.createdAt.getTime() < RENDER_STALE_MS) {
+			return { kind: 'busy' }
+		}
+		await db
+			.delete(PrintRender)
+			.where(
+				and(
+					thisRow,
+					eq(PrintRender.byteLength, 0),
+					lt(PrintRender.createdAt, new Date(Date.now() - RENDER_STALE_MS)),
+				),
+			)
 	}
 
 	if (!isPdfRendererConfigured()) {
@@ -99,34 +124,46 @@ export async function getPrintFile(
 		}
 	}
 
-	const [recent] = await db
-		.select({ value: count() })
-		.from(PrintRender)
-		.where(
-			and(
-				eq(PrintRender.organizationId, input.organizationId),
-				gte(PrintRender.createdAt, new Date(Date.now() - 3_600_000)),
-			),
+	const objectKey = `print/${organizationId}/${hash}.pdf`
+	const now = new Date()
+	const counts = !options.skipLimit
+	// Reserve the slot: one statement, so the limit holds under concurrency.
+	const reserved = await db
+		.insert(PrintRender)
+		.select(
+			sql`select ${organizationId}, ${hash}, ${objectKey}, 0, ${counts ? 1 : 0}, ${now.getTime()} where ${
+				counts
+					? sql`(select count(*) from ${PrintRender} where ${PrintRender.organizationId} = ${organizationId} and ${PrintRender.countsTowardLimit} = 1 and ${PrintRender.createdAt} >= ${now.getTime() - 3_600_000}) < ${renderLimitPerHour()}`
+					: sql`1 = 1`
+			}`,
 		)
-	if (
-		!options.skipLimit &&
-		Number(recent?.value ?? 0) >= renderLimitPerHour()
-	) {
-		return { kind: 'limited' }
+		.onConflictDoNothing()
+		.returning({ hash: PrintRender.hash })
+	if (reserved.length === 0) {
+		const [taken] = await db
+			.select({ hash: PrintRender.hash })
+			.from(PrintRender)
+			.where(thisRow)
+			.limit(1)
+		return taken ? { kind: 'busy' } : { kind: 'limited' }
 	}
 
-	const rendered = await renderPdf(await printDocumentHtml(input))
-	if (!rendered.ok) return { kind: 'failed' }
-	const objectKey = `print/${input.organizationId}/${hash}.pdf`
-	await uploadPrintFile(objectKey, rendered.bytes, 'application/pdf')
-	await db
-		.insert(PrintRender)
-		.values({
-			hash,
-			organizationId: input.organizationId,
-			objectKey,
-			byteLength: rendered.bytes.byteLength,
-		})
-		.onConflictDoNothing()
-	return { kind: 'pdf', bytes: rendered.bytes, objectKey }
+	const release = () =>
+		db.delete(PrintRender).where(and(thisRow, eq(PrintRender.byteLength, 0)))
+	try {
+		const rendered = await renderPdf(await printDocumentHtml(input))
+		if (!rendered.ok) {
+			await release()
+			return { kind: 'failed' }
+		}
+		await uploadPrintFile(objectKey, rendered.bytes, 'application/pdf')
+		await db
+			.update(PrintRender)
+			.set({ byteLength: rendered.bytes.byteLength })
+			.where(thisRow)
+		return { kind: 'pdf', bytes: rendered.bytes, objectKey }
+	} catch (error) {
+		await release().catch(() => {})
+		throw error
+	}
 }

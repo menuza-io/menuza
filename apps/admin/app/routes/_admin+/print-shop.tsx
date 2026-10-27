@@ -1,7 +1,10 @@
 import { type MessageDescriptor } from '@lingui/core'
 import { Trans, msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import { PRINT_VENDOR_CHECK_HOLDS } from '@repo/common/print-shop'
+import {
+	PRINT_VENDOR_CHECK_HOLDS,
+	PRINT_VENDOR_NAMES,
+} from '@repo/common/print-shop'
 import { brand } from '@repo/config/brand'
 import {
 	AlertDialog,
@@ -33,15 +36,10 @@ import {
 	TableHeader,
 	TableRow,
 } from '@repo/ui/table'
-import { type ReactNode, useEffect, useId, useRef, useState } from 'react'
+import { type ReactNode, useId, useRef, useState } from 'react'
 import { useFetcher, useLoaderData } from 'react-router'
 import { PRINT_VERTICAL_PRODUCT_LABELS } from '#app/components/print/vertical-labels.ts'
-import {
-	action,
-	loader,
-	PRINT_ADMIN_VENDORS,
-	type PrintAdminResult,
-} from './print-shop.server.ts'
+import { action, loader, type PrintAdminResult } from './print-shop.server.ts'
 
 export { action, loader }
 
@@ -112,6 +110,7 @@ function ConfirmedAction({
 	variant = 'ghost',
 	destructive = false,
 	children,
+	onClosed,
 }: {
 	fetcher: ReturnType<typeof useFetcher<PrintAdminResult>>
 	fields: Record<string, string>
@@ -123,25 +122,29 @@ function ConfirmedAction({
 	variant?: 'ghost' | 'outline' | 'default'
 	destructive?: boolean
 	children?: ReactNode
+	/** After the dialog closed (focus may have lost its button). */
+	onClosed?: () => void
 }) {
 	const { _ } = useLingui()
 	const formId = useId()
-	const [open, setOpen] = useState(false)
-	// Several actions share a row's fetcher: only show what this one sent.
-	const [submitted, setSubmitted] = useState(false)
-	useEffect(() => {
-		if (!submitted || fetcher.state !== 'idle' || !fetcher.data) return
-		if (fetcher.data.ok) {
-			setOpen(false)
-			setSubmitted(false)
-		}
-	}, [submitted, fetcher.state, fetcher.data])
+	const [wantsOpen, setWantsOpen] = useState(false)
+	// Several actions share a row's fetcher, which still holds the previous
+	// answer when this one is sent: only an answer after the send counts.
+	const [sentOver, setSentOver] = useState<PrintAdminResult | undefined | null>(
+		null,
+	)
+	const answered =
+		sentOver !== null && fetcher.state === 'idle' && fetcher.data !== sentOver
+	const open = wantsOpen && !(answered && fetcher.data?.ok === true)
 	return (
 		<AlertDialog
 			open={open}
 			onOpenChange={(next) => {
-				setOpen(next)
-				if (!next) setSubmitted(false)
+				setWantsOpen(next)
+				setSentOver(null)
+			}}
+			onOpenChangeComplete={(isOpen) => {
+				if (!isOpen) onClosed?.()
 			}}
 		>
 			<AlertDialogTrigger
@@ -164,14 +167,14 @@ function ConfirmedAction({
 				<fetcher.Form
 					id={formId}
 					method="POST"
-					onSubmit={() => setSubmitted(true)}
+					onSubmit={() => setSentOver(fetcher.data)}
 				>
 					{Object.entries(fields).map(([name, value]) => (
 						<input key={name} type="hidden" name={name} value={value} />
 					))}
 					{children}
 				</fetcher.Form>
-				{submitted && fetcher.state === 'idle' && fetcher.data?.ok === false ? (
+				{answered && fetcher.data?.ok === false ? (
 					<Result data={fetcher.data} />
 				) : null}
 				<AlertDialogFooter>
@@ -425,7 +428,7 @@ function CatalogRow({
 					aria-label={_(msg`Vendor, ${item}`)}
 					className="border-input bg-background h-9 rounded-md border px-2 text-sm"
 				>
-					{PRINT_ADMIN_VENDORS.map((vendor) => (
+					{PRINT_VENDOR_NAMES.map((vendor) => (
 						<option key={vendor} value={vendor}>
 							{vendor}
 						</option>
@@ -519,18 +522,13 @@ function OrderActions({
 	const rowRef = useRef<HTMLDivElement>(null)
 	// A successful action can remove the button (and the dialog) that had
 	// focus: land on this order's actions instead of the top of the page.
-	useEffect(() => {
-		const data = fetcher.data ?? retryFetcher.data
-		if (fetcher.state !== 'idle' || retryFetcher.state !== 'idle') return
-		if (!data?.ok) return
-		const timer = window.setTimeout(() => {
+	const returnFocus = () =>
+		window.requestAnimationFrame(() => {
 			const active = document.activeElement
 			if (!active || active === document.body || !active.isConnected) {
 				rowRef.current?.focus()
 			}
-		}, 200)
-		return () => window.clearTimeout(timer)
-	}, [fetcher.state, fetcher.data, retryFetcher.state, retryFetcher.data])
+		})
 	const { _, i18n } = useLingui()
 	// A vendor may already be printing (or has shipped): refunding in full
 	// then means the platform still pays the vendor, so it is its own action.
@@ -586,6 +584,7 @@ function OrderActions({
 			PRINT_VENDOR_CHECK_HOLDS.includes(order.holdReason ?? '') ? (
 				<ConfirmedAction
 					fetcher={fetcher}
+					onClosed={returnFocus}
 					fields={{ _action: 'retry-checked', orderId: order.id }}
 					label={_(msg`Retry`)}
 					accessibleLabel={_(msg`Retry, ${orderName}`)}
@@ -613,6 +612,7 @@ function OrderActions({
 			pendingReferences.length > 0 ? (
 				<ConfirmedAction
 					fetcher={fetcher}
+					onClosed={returnFocus}
 					fields={{ _action: 'record-vendor-order', orderId: order.id }}
 					label={_(msg`Found it at the vendor`)}
 					accessibleLabel={_(msg`Found it at the vendor, ${orderName}`)}
@@ -637,7 +637,13 @@ function OrderActions({
 			{order.status === 'held' && vendorCheck ? null : order.status ===
 			  'held' ? (
 				<>
-					<retryFetcher.Form method="POST">
+					<retryFetcher.Form
+						method="POST"
+						onSubmit={(event) => {
+							event.preventDefault()
+							void retryFetcher.submit(event.currentTarget).then(returnFocus)
+						}}
+					>
 						<input type="hidden" name="_action" value="retry" />
 						<input type="hidden" name="orderId" value={order.id} />
 						<Button
@@ -653,6 +659,7 @@ function OrderActions({
 					</retryFetcher.Form>
 					<ConfirmedAction
 						fetcher={fetcher}
+						onClosed={returnFocus}
 						fields={{ _action: 'retry-accept', orderId: order.id }}
 						label={_(msg`Accept new price`)}
 						accessibleLabel={_(msg`Accept new price, ${orderName}`)}
@@ -668,6 +675,7 @@ function OrderActions({
 			{refundable ? (
 				<ConfirmedAction
 					fetcher={fetcher}
+					onClosed={returnFocus}
 					fields={{ _action: 'refund', orderId: order.id, ...checkFields }}
 					label={_(msg`Refund in full`)}
 					accessibleLabel={_(msg`Refund in full, ${orderName}`)}
@@ -684,6 +692,7 @@ function OrderActions({
 			{refundable && vendorMayPrint ? (
 				<ConfirmedAction
 					fetcher={fetcher}
+					onClosed={returnFocus}
 					fields={{ _action: 'refund-keep', orderId: order.id, ...checkFields }}
 					label={_(msg`Refund, vendor keeps printing`)}
 					accessibleLabel={_(msg`Refund, vendor keeps printing, ${orderName}`)}
@@ -700,6 +709,7 @@ function OrderActions({
 			{refundable && order.holdReason === 'partial_cancel' ? (
 				<ConfirmedAction
 					fetcher={fetcher}
+					onClosed={returnFocus}
 					fields={{ _action: 'refund-part', orderId: order.id }}
 					label={_(msg`Refund part`)}
 					accessibleLabel={_(msg`Refund part, ${orderName}`)}
@@ -754,7 +764,7 @@ export default function PrintShopAdminRoute() {
 					<CardDescription>
 						{(() => {
 							const total = money(margin, i18n.locale)
-							return _(msg`Margin on the last 100 orders: ${total}`)
+							return _(msg`Margin on the orders below: ${total}`)
 						})()}
 					</CardDescription>
 				</CardHeader>

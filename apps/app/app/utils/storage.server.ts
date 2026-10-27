@@ -583,9 +583,18 @@ export async function readPrintFile(
 	key: string,
 ): Promise<Uint8Array<ArrayBuffer> | null> {
 	const { url, headers } = _getSignedGetRequestInfo(key, DEFAULT_STORAGE_CONFIG)
-	const response = await fetch(url, { headers })
-	if (!response.ok) return null
-	return new Uint8Array(await response.arrayBuffer())
+	try {
+		// A stalled bucket must not hold a download open: treat it as a miss
+		// and let the caller render the file again.
+		const response = await fetch(url, {
+			headers,
+			signal: AbortSignal.timeout(15_000),
+		})
+		if (!response.ok) return null
+		return new Uint8Array(await response.arrayBuffer())
+	} catch {
+		return null
+	}
 }
 
 export function getPrintFileUrl(key: string, expiresInSeconds = 3600) {
