@@ -17,6 +17,11 @@ import {
 	RESTAURANT_ORDER_STATUS_VALUES,
 	RESTAURANT_PAYMENT_STATUS_VALUES,
 } from '@repo/common/restaurant-orders'
+import {
+	QR_ORDER_SOURCE_VALUES,
+	QR_TAB_PAYMENT_STATUS_VALUES,
+	QR_TAB_STATUS_VALUES,
+} from '@repo/common/qr-ordering'
 import { SITE_CONTENT_LOCALES } from '@repo/common/site-locales'
 
 // ==========================================
@@ -730,7 +735,7 @@ export const restaurantOrders = sqliteTable(
 		paymentSessionId: text('payment_session_id'),
 		paymentEventAt: integer('payment_event_at', { mode: 'timestamp' }),
 		fulfillment: text('fulfillment', {
-			enum: ['pickup', 'delivery'],
+			enum: ['pickup', 'delivery', 'dine_in'],
 		}).notNull(),
 		locationId: text('location_id').notNull(),
 		locationName: text('location_name').notNull(),
@@ -763,6 +768,12 @@ export const restaurantOrders = sqliteTable(
 		tipPercent: integer('tip_percent').notNull().default(0),
 		totalCents: integer('total_cents').notNull(),
 		lines: text('lines', { mode: 'json' }).notNull(),
+		// QR ordering: a dine-in round belongs to a tab at a table; the label is
+		// a snapshot so history reads right after a table is renamed.
+		tabId: text('tab_id'),
+		tableId: text('table_id'),
+		tableLabel: text('table_label'),
+		source: text('source', { enum: [...QR_ORDER_SOURCE_VALUES] }),
 		idempotencyKey: text('idempotency_key').notNull(),
 		requestHash: text('request_hash').notNull(),
 		receiptTokenHash: text('receipt_token_hash').notNull(),
@@ -798,6 +809,11 @@ export const restaurantOrders = sqliteTable(
 		index('idx_restaurant_orders_customer').on(table.customerId),
 		index('idx_restaurant_orders_location_created').on(
 			table.locationId,
+			table.createdAt,
+		),
+		index('idx_restaurant_orders_tab').on(table.tabId),
+		index('idx_restaurant_orders_table_created').on(
+			table.tableId,
 			table.createdAt,
 		),
 	],
@@ -5359,6 +5375,160 @@ export const rsvAuditLog = sqliteTable(
 )
 
 // ==========================================
+// 12b. QR ORDERING (tables, open tabs, settings)
+// ==========================================
+
+// Table registry for dine-in QR codes. Table tokens are derived from
+// `token_version` by HMAC and never stored; bumping the version burns every
+// printed code. An imported row remembers its floor-plan table for re-sync.
+export const qrTables = sqliteTable(
+	'qr_tables',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		locationId: text('location_id').notNull(),
+		label: text('label').notNull(),
+		tokenVersion: integer('token_version').notNull().default(1),
+		importedRsvTableId: text('imported_rsv_table_id'),
+		sortOrder: integer('sort_order').notNull().default(0),
+		archivedAt: integer('archived_at'),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+	},
+	(table) => [
+		uniqueIndex('qr_tables_location_label_live')
+			.on(table.locationId, table.label)
+			.where(sql`${table.archivedAt} is null`),
+		uniqueIndex('qr_tables_imported_rsv_live')
+			.on(table.importedRsvTableId)
+			.where(
+				sql`${table.importedRsvTableId} is not null and ${table.archivedAt} is null`,
+			),
+		index('idx_qr_tables_location').on(table.locationId, table.sortOrder),
+	],
+)
+
+// An open tab groups a table's rounds (`restaurant_orders.tab_id`) until the
+// guest pays once. Running totals are computed from rounds; the money columns
+// are the snapshot taken when the tab closes. Guest name and phone are PII
+// (covered by person erasure).
+export const qrTabs = sqliteTable(
+	'qr_tabs',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		tableId: text('table_id')
+			.notNull()
+			.references(() => qrTables.id),
+		locationId: text('location_id').notNull(),
+		tableLabel: text('table_label').notNull(),
+		status: text('status', { enum: [...QR_TAB_STATUS_VALUES] })
+			.notNull()
+			.default('open'),
+		tabNumber: text('tab_number').notNull(),
+		openedDay: text('opened_day').notNull(),
+		tabTokenVersion: integer('tab_token_version').notNull().default(1),
+		guestName: text('guest_name'),
+		guestPhone: text('guest_phone'),
+		currency: text('currency').notNull(),
+		subtotalCents: integer('subtotal_cents').notNull().default(0),
+		taxCents: integer('tax_cents').notNull().default(0),
+		tipCents: integer('tip_cents').notNull().default(0),
+		totalCents: integer('total_cents').notNull().default(0),
+		paymentMethod: text('payment_method', { enum: ['counter', 'online'] }),
+		paymentStatus: text('payment_status', {
+			enum: [...QR_TAB_PAYMENT_STATUS_VALUES],
+		})
+			.notNull()
+			.default('unpaid'),
+		paymentProcessor: text('payment_processor', {
+			enum: ['connect', 'checkout'],
+		}),
+		paymentSessionId: text('payment_session_id'),
+		paymentTokenHash: text('payment_token_hash'),
+		/** Amount the bound online session charges (subtotal + tax + tip). */
+		paymentAmountCents: integer('payment_amount_cents'),
+		paymentTipCents: integer('payment_tip_cents'),
+		paymentEventAt: integer('payment_event_at'),
+		voidReason: text('void_reason'),
+		/** Staff locked the tab: guests can neither add rounds nor pay. */
+		lockedAt: integer('locked_at'),
+		closedBy: text('closed_by'),
+		version: integer('version').notNull().default(1),
+		openedAt: integer('opened_at').notNull().default(nowMs),
+		closedAt: integer('closed_at'),
+		paidAt: integer('paid_at'),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+	},
+	(table) => [
+		uniqueIndex('qr_tabs_one_open_per_table')
+			.on(table.tableId)
+			.where(sql`${table.status} = 'open'`),
+		uniqueIndex('qr_tabs_day_number').on(table.openedDay, table.tabNumber),
+		uniqueIndex('qr_tabs_payment_session_unique').on(table.paymentSessionId),
+		index('idx_qr_tabs_status_opened').on(table.status, table.openedAt),
+		index('idx_qr_tabs_location_status').on(table.locationId, table.status),
+	],
+)
+
+// Online money for a tab that did not settle it (a stopped or replaced
+// session, a changed total, a tab already closed). Append-only: every such
+// payment is kept for staff to refund or keep, never overwritten by the next.
+export const qrTabPayments = sqliteTable(
+	'qr_tab_payments',
+	{
+		id: text('id').primaryKey(),
+		tabId: text('tab_id')
+			.notNull()
+			.references(() => qrTabs.id, { onDelete: 'cascade' }),
+		sessionId: text('session_id').notNull(),
+		processor: text('processor').notNull(),
+		amountCents: integer('amount_cents').notNull(),
+		currency: text('currency').notNull(),
+		receivedAt: integer('received_at').notNull().default(nowMs),
+	},
+	(table) => [
+		uniqueIndex('qr_tab_payments_session_unique').on(
+			table.processor,
+			table.sessionId,
+		),
+		index('idx_qr_tab_payments_tab').on(table.tabId),
+	],
+)
+
+// One row per organization (`id = 'default'`); absent means the defaults in
+// `QR_SETTINGS_DEFAULTS`.
+export const qrSettings = sqliteTable('qr_settings', {
+	id: text('id').primaryKey(),
+	requireGuestName: integer('require_guest_name', { mode: 'boolean' })
+		.notNull()
+		.default(false),
+	requireGuestPhone: integer('require_guest_phone', { mode: 'boolean' })
+		.notNull()
+		.default(false),
+	allowOnlineTabPay: integer('allow_online_tab_pay', { mode: 'boolean' })
+		.notNull()
+		.default(true),
+	perTableLimitPerHour: integer('per_table_limit_per_hour')
+		.notNull()
+		.default(12),
+	updatedAt: integer('updated_at').notNull().default(nowMs),
+})
+
+export const qrTablesRelations = relations(qrTables, ({ many }) => ({
+	tabs: many(qrTabs),
+}))
+
+export const qrTabsRelations = relations(qrTabs, ({ one }) => ({
+	table: one(qrTables, {
+		fields: [qrTabs.tableId],
+		references: [qrTables.id],
+	}),
+}))
+
+// ==========================================
 // 13. INFERRED TYPES
 // ==========================================
 export type Customer = typeof customers.$inferSelect
@@ -5554,3 +5724,8 @@ export type RsvRateCounterRow = typeof rsvRateCounters.$inferSelect
 export type NewRsvRateCounterRow = typeof rsvRateCounters.$inferInsert
 export type RsvAuditLogRow = typeof rsvAuditLog.$inferSelect
 export type NewRsvAuditLogRow = typeof rsvAuditLog.$inferInsert
+export type QrTableRow = typeof qrTables.$inferSelect
+export type NewQrTableRow = typeof qrTables.$inferInsert
+export type QrTabRow = typeof qrTabs.$inferSelect
+export type NewQrTabRow = typeof qrTabs.$inferInsert
+export type QrSettingsRow = typeof qrSettings.$inferSelect

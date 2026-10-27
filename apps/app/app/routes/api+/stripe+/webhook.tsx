@@ -7,6 +7,10 @@ import {
 	handleTrialEnd,
 } from '#app/utils/payments.server.ts'
 import {
+	handlePrintStripeSession,
+	isPrintStripeMetadata,
+} from '#app/utils/print/orders.server.ts'
+import {
 	handleReservationStripeDisputeEvent,
 	handleReservationStripeRefundEvent,
 	handleReservationStripeSessionEvent,
@@ -76,6 +80,19 @@ export async function action({ request }: ActionFunctionArgs) {
 		return new Response('Invalid signature', { status: 400 })
 	}
 
+	// Every checkout session and payment intent this App creates lives on the
+	// platform account (destination charges). The same objects from a
+	// connected account are that account's own, whatever their metadata
+	// claims: never act on them. Connected accounts only report
+	// `account.updated` here.
+	if (
+		event.account &&
+		(event.type.startsWith('checkout.session.') ||
+			event.type.startsWith('payment_intent.'))
+	) {
+		return new Response('Ignored', { status: 200 })
+	}
+
 	try {
 		switch (event.type) {
 			case 'customer.subscription.created':
@@ -132,6 +149,12 @@ export async function action({ request }: ActionFunctionArgs) {
 					await handleReservationStripeSessionEvent(session, event.type)
 					break
 				}
+				if (isPrintStripeMetadata(session.metadata)) {
+					// Print shop orders (platform account): a paid session submits
+					// the order to its vendors.
+					await handlePrintStripeSession(session, event.type)
+					break
+				}
 				if (isRestaurantStripeMetadata(session.metadata)) {
 					// Restaurant orders: forward the non-PII payment facts to the
 					// org's regional tenant service. A regional failure throws so
@@ -150,6 +173,10 @@ export async function action({ request }: ActionFunctionArgs) {
 				if (isReservationStripeMetadata(paymentIntent.metadata)) {
 					// Reservation payments settle on the session (or, for staff fee
 					// charges, synchronously); the intent event adds nothing.
+					break
+				}
+				if (isPrintStripeMetadata(paymentIntent.metadata)) {
+					// Print orders settle on the session event.
 					break
 				}
 				if (isRestaurantStripeMetadata(paymentIntent.metadata)) {

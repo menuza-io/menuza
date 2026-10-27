@@ -55,9 +55,11 @@ const SESSION_PARAMS = {
 			price_data: {
 				currency: true,
 				unit_amount: true,
+				tax_behavior: true,
 				product_data: {
 					name: true,
 					description: true,
+					tax_code: true,
 					images: [true],
 					metadata: ANY,
 				},

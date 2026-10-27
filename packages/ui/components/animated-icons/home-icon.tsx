@@ -1,111 +1,27 @@
 'use client'
 
-import {
-	type Transition,
-	type Variants,
-	motion,
-	useAnimation,
-} from 'motion/react'
-import {
-	type HTMLAttributes,
-	forwardRef,
-	useCallback,
-	useImperativeHandle,
-	useRef,
-} from 'react'
-import { cn } from '@repo/ui'
+import { type Variants, motion } from 'motion/react'
+import { type AnimatedIconHandle, createAnimatedIcon } from './animated-icon'
 
-export interface HomeIconHandle {
-	startAnimation: () => void
-	stopAnimation: () => void
-}
+export type HomeIconHandle = AnimatedIconHandle
 
-interface HomeIconProps extends HTMLAttributes<HTMLDivElement> {
-	size?: number
-}
-
-const defaultTransition: Transition = {
-	duration: 0.6,
-	opacity: { duration: 0.2 },
-}
-
-const pathVariants: Variants = {
-	normal: {
-		pathLength: 1,
-		opacity: 1,
-	},
+const DOOR_VARIANTS: Variants = {
+	normal: { pathLength: 1, opacity: 1 },
 	animate: {
-		opacity: [0, 1],
 		pathLength: [0, 1],
+		opacity: [0, 1],
+		transition: { duration: 0.6, opacity: { duration: 0.2 } },
 	},
 }
 
-const HomeIcon = forwardRef<HomeIconHandle, HomeIconProps>(
-	({ onMouseEnter, onMouseLeave, className, size = 28, ...props }, ref) => {
-		const controls = useAnimation()
-		const isControlledRef = useRef(false)
-
-		useImperativeHandle(ref, () => {
-			isControlledRef.current = true
-			return {
-				startAnimation: () => void controls.start('animate'),
-				stopAnimation: () => void controls.start('normal'),
-			}
-		})
-
-		const handleMouseEnter = useCallback(
-			(e: React.MouseEvent<HTMLDivElement>) => {
-				if (!isControlledRef.current) {
-					void controls.start('animate')
-				} else {
-					onMouseEnter?.(e)
-				}
-			},
-			[controls, onMouseEnter],
-		)
-
-		const handleMouseLeave = useCallback(
-			(e: React.MouseEvent<HTMLDivElement>) => {
-				if (!isControlledRef.current) {
-					void controls.start('normal')
-				} else {
-					onMouseLeave?.(e)
-				}
-			},
-			[controls, onMouseLeave],
-		)
-
-		return (
-			<div
-				className={cn(className)}
-				onMouseEnter={handleMouseEnter}
-				onMouseLeave={handleMouseLeave}
-				{...props}
-			>
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					width={size}
-					height={size}
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					strokeWidth="2"
-					strokeLinecap="round"
-					strokeLinejoin="round"
-				>
-					<path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-					<motion.path
-						d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"
-						variants={pathVariants}
-						transition={defaultTransition}
-						animate={controls}
-					/>
-				</svg>
-			</div>
-		)
-	},
-)
-
-HomeIcon.displayName = 'HomeIcon'
-
-export { HomeIcon }
+/** Hugeicons `home-03`: the door is drawn in. */
+export const HomeIcon = createAnimatedIcon('HomeIcon', (controls) => (
+	<>
+		<path d="M3 11.9896V14.5C3 17.7998 3 19.4497 4.02513 20.4749C5.05025 21.5 6.70017 21.5 10 21.5H14C17.2998 21.5 18.9497 21.5 19.9749 20.4749C21 19.4497 21 17.7998 21 14.5V11.9896C21 10.3083 21 9.46773 20.6441 8.74005C20.2882 8.01237 19.6247 7.49628 18.2976 6.46411L16.2976 4.90855C14.2331 3.30285 13.2009 2.5 12 2.5C10.7991 2.5 9.76689 3.30285 7.70242 4.90855L5.70241 6.46411C4.37533 7.49628 3.71179 8.01237 3.3559 8.74005C3 9.46773 3 10.3083 3 11.9896Z" />
+		<motion.path
+			d="M15 21.5V16.5C15 15.0858 15 14.3787 14.5607 13.9393C14.1213 13.5 13.4142 13.5 12 13.5C10.5858 13.5 9.87868 13.5 9.43934 13.9393C9 14.3787 9 15.0858 9 16.5V21.5"
+			variants={DOOR_VARIANTS}
+			animate={controls}
+		/>
+	</>
+))

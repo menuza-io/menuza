@@ -84,6 +84,14 @@ import './styles/tailwind.css'
 import { getLaunchStatus } from './utils/env.server.ts'
 import { posthogMiddleware } from './utils/posthog.server.ts'
 import {
+	HIDDEN_PRINT_SHOP_NAV,
+	type PrintShopNavAccess,
+} from './utils/print/nav.ts'
+import {
+	HIDDEN_QR_ORDERING_NAV,
+	type QrOrderingNavAccess,
+} from './utils/qr/nav.ts'
+import {
 	HIDDEN_RESERVATIONS_NAV,
 	type ReservationsNavAccess,
 } from './utils/reservations/nav.ts'
@@ -461,6 +469,48 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		)
 	}
 
+	let printShopNav: PrintShopNavAccess = HIDDEN_PRINT_SHOP_NAV
+	if (currentOrgId && userId) {
+		const printAccess = await import('./utils/print/access.server.ts')
+		printShopNav = await time(
+			async () => {
+				try {
+					return await cachified({
+						key: `print-shop-nav:${currentOrgId}:${userId}`,
+						cache,
+						ttl: 1000 * 30,
+						getFreshValue: () =>
+							printAccess.getPrintShopNavAccess(userId, currentOrgId),
+					})
+				} catch {
+					return HIDDEN_PRINT_SHOP_NAV
+				}
+			},
+			{ timings, type: 'print shop nav', desc: 'print shop nav access' },
+		)
+	}
+
+	let qrOrderingNav: QrOrderingNavAccess = HIDDEN_QR_ORDERING_NAV
+	if (currentOrgId && userId) {
+		const qrAccess = await import('./utils/qr/access.server.ts')
+		qrOrderingNav = await time(
+			async () => {
+				try {
+					return await cachified({
+						key: `qr-ordering-nav:${currentOrgId}:${userId}`,
+						cache,
+						ttl: 1000 * 30,
+						getFreshValue: () =>
+							qrAccess.getQrOrderingNavAccess(userId, currentOrgId),
+					})
+				} catch {
+					return HIDDEN_QR_ORDERING_NAV
+				}
+			},
+			{ timings, type: 'qr ordering nav', desc: 'qr ordering nav access' },
+		)
+	}
+
 	const utmHeaders = utmResponse?.headers || {}
 	const hasConfiguredProvider = ({
 		clientId,
@@ -515,6 +565,8 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 			homePageId,
 			staffingNav,
 			reservationsNav,
+			printShopNav,
+			qrOrderingNav,
 			env: {
 				NODE_ENV: ENV.NODE_ENV,
 				ALLOW_INDEXING: ENV.ALLOW_INDEXING,

@@ -1,123 +1,37 @@
-import { motion, useAnimation } from 'motion/react'
-import {
-	type HTMLAttributes,
-	forwardRef,
-	useCallback,
-	useImperativeHandle,
-	useRef,
-} from 'react'
+'use client'
 
-import { cn } from '../../lib/utils'
+import { type Variants, motion } from 'motion/react'
+import { type AnimatedIconHandle, createAnimatedIcon } from './animated-icon'
 
-export interface FlaskIconHandle {
-	startAnimation: () => void
-	stopAnimation: () => void
-}
+export type FlaskIconHandle = AnimatedIconHandle
 
-interface FlaskIconProps extends HTMLAttributes<HTMLDivElement> {
-	size?: number
-}
-
-const FlaskIcon = forwardRef<FlaskIconHandle, FlaskIconProps>(
-	({ onMouseEnter, onMouseLeave, className, size = 28, ...props }, ref) => {
-		const controls = useAnimation()
-		const isControlledRef = useRef(false)
-
-		useImperativeHandle(ref, () => {
-			isControlledRef.current = true
-
-			return {
-				startAnimation: () => void controls.start('animate'),
-				stopAnimation: () => void controls.start('normal'),
-			}
-		})
-
-		const handleMouseEnter = useCallback(
-			(e: React.MouseEvent<HTMLDivElement>) => {
-				if (!isControlledRef.current) {
-					void controls.start('animate')
-				} else {
-					onMouseEnter?.(e)
-				}
-			},
-			[controls, onMouseEnter],
-		)
-
-		const handleMouseLeave = useCallback(
-			(e: React.MouseEvent<HTMLDivElement>) => {
-				if (!isControlledRef.current) {
-					void controls.start('normal')
-				} else {
-					onMouseLeave?.(e)
-				}
-			},
-			[controls, onMouseLeave],
-		)
-
-		return (
-			<div
-				className={cn(className)}
-				onMouseEnter={handleMouseEnter}
-				onMouseLeave={handleMouseLeave}
-				{...props}
-			>
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					width={size}
-					height={size}
-					fill="currentColor"
-					viewBox="0 0 512 512"
-					strokeWidth="5.632"
-					strokeLinecap="round"
-					strokeLinejoin="round"
-				>
-					<motion.g
-						variants={{
-							normal: { rotate: 0, translateY: 0 },
-							animate: {
-								translateY: -12,
-								rotate: [0, 5, -5, 3, -3, 0],
-								transition: {
-									ease: 'linear',
-									rotate: { duration: 0.8 },
-								},
-							},
-						}}
-						animate={controls}
-					>
-						<circle cx="151.273" cy="407.273" r="11.636" />
-						<circle cx="244.364" cy="372.364" r="11.636" />
-						<circle cx="290.909" cy="418.909" r="11.636" />
-						<circle cx="221.091" cy="453.818" r="11.636" />
-						<circle cx="372.364" cy="430.545" r="11.636" />
-					</motion.g>
-					<motion.path
-						d="M456.145,436.364l-79.127-124.509c0-2.327-2.327-4.655-3.491-5.818l-34.909-55.855c-8.146-13.964-12.8-29.091-12.8-44.218 V67.491c13.964-4.655,23.273-17.455,23.273-32.582C349.091,15.127,333.964,0,314.182,0H197.818 c-19.782,0-34.909,15.127-34.909,34.909c0,19.782,15.127,34.909,34.909,34.909h69.818c6.982,0,11.636-4.655,11.636-11.636 s-4.655-11.636-11.636-11.636h-69.818c-6.982,0-11.636-4.655-11.636-11.636c0-6.982,4.655-11.636,11.636-11.636h116.364 c6.982,0,11.636,4.655,11.636,11.636c0,6.982-4.655,11.636-11.636,11.636s-11.636,4.655-11.636,11.636v147.782 c0,19.782,5.818,39.564,16.291,55.855l19.782,31.418c-30.255-5.818-64-2.327-88.436,10.473 c-23.273,11.636-60.509,13.964-87.273,4.655l30.255-46.545c10.473-16.291,16.291-36.073,16.291-55.855V104.727 c0-6.982-4.655-11.636-11.636-11.636s-11.636,4.655-11.636,11.636v101.236c0,15.127-4.655,30.255-12.8,43.055l-34.909,55.855 c-1.164,1.164-2.327,2.327-3.491,3.491c0,1.164,0,1.164-1.164,2.327L55.855,436.364c-5.818,9.309-9.309,19.782-9.309,31.418v9.309 c0,19.782,15.127,34.909,34.909,34.909h349.091c19.782,0,34.909-15.127,34.909-34.909v-9.309 C465.455,456.145,461.964,445.673,456.145,436.364z M443.345,477.091h-1.164c0,6.982-4.655,11.636-11.636,11.636H81.455 c-6.982,0-11.636-4.655-11.636-11.636v-9.309c0-6.982,2.327-12.8,5.818-18.618l75.636-119.855 c15.127,5.818,32.582,8.145,50.036,8.145c22.109,0,43.055-4.655,60.509-12.8c25.6-12.8,68.655-13.964,96.582-1.164l79.127,125.673 c3.491,5.818,5.818,11.636,5.818,18.618V477.091z"
-						variants={{
-							normal: { rotate: 0, scale: 1 },
-							animate: {
-								scale: 0.9,
-								rotate: [0, 6, -6, 3, -3, 0],
-								transition: {
-									duration: 0.8,
-									scale: {
-										duration: 0.3,
-										type: 'spring',
-										bounce: 0.4,
-										stiffness: 150,
-										damping: 10,
-									},
-								},
-							},
-						}}
-						animate={controls}
-					/>
-				</svg>
-			</div>
-		)
+const FLASK_VARIANTS: Variants = {
+	normal: { rotate: 0, originY: '100%' },
+	animate: {
+		rotate: [0, 6, -6, 3, -3, 0],
+		originY: '100%',
+		transition: { duration: 0.8 },
 	},
-)
+}
 
-FlaskIcon.displayName = 'FlaskIcon'
+const LIQUID_VARIANTS: Variants = {
+	normal: { pathLength: 1, opacity: 1 },
+	animate: {
+		pathLength: [0, 1],
+		opacity: [0, 1],
+		transition: { duration: 0.6, delay: 0.2 },
+	},
+}
 
-export { FlaskIcon }
+/** Hugeicons `flask-conical`: the flask sways on its base and refills. */
+export const FlaskIcon = createAnimatedIcon('FlaskIcon', (controls) => (
+	<motion.g variants={FLASK_VARIANTS} animate={controls}>
+		<path d="M14.4973 2V8.25401C14.4973 8.72617 14.7093 9.1734 15.0747 9.47239L15.7421 10.0184C18.4717 12.2518 20.2277 15.4577 20.6397 18.9604C20.8301 20.5784 19.5659 22 17.9368 22H6.05789C4.42876 22 3.16459 20.5784 3.35494 18.9604C3.76702 15.4577 5.52295 12.2518 8.25261 10.0184L8.91998 9.47239C9.28541 9.1734 9.49734 8.72617 9.49734 8.25401V2" />
+		<path d="M7.99707 2H15.9971" />
+		<motion.path
+			d="M5.49707 14.0183C5.74095 14.0063 5.99072 14 6.24707 14C9.99707 14 13.7471 17 17.4971 17C18.2729 17 18.9332 16.9384 19.4971 16.8334"
+			variants={LIQUID_VARIANTS}
+			animate={controls}
+		/>
+	</motion.g>
+))

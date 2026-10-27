@@ -1,112 +1,37 @@
 'use client'
 
-import { type Variants, motion, useAnimation } from 'motion/react'
-import {
-	type HTMLAttributes,
-	forwardRef,
-	useCallback,
-	useImperativeHandle,
-	useRef,
-} from 'react'
-import { cn } from '@repo/ui'
+import { type Variants, motion } from 'motion/react'
+import { type AnimatedIconHandle, createAnimatedIcon } from './animated-icon'
 
-export interface ShieldCheckIconHandle {
-	startAnimation: () => void
-	stopAnimation: () => void
-}
+export type ShieldCheckIconHandle = AnimatedIconHandle
 
-interface ShieldCheckIconProps extends HTMLAttributes<HTMLDivElement> {
-	size?: number
-}
-
-const pathVariants: Variants = {
+const CHECK_VARIANTS: Variants = {
 	normal: {
 		opacity: 1,
 		pathLength: 1,
 		scale: 1,
-		transition: {
-			duration: 0.3,
-			opacity: { duration: 0.1 },
-		},
+		transition: { duration: 0.3, opacity: { duration: 0.1 } },
 	},
 	animate: {
 		opacity: [0, 1],
 		pathLength: [0, 1],
 		scale: [0.5, 1],
-		transition: {
-			duration: 0.4,
-			opacity: { duration: 0.1 },
-		},
+		transition: { duration: 0.4, opacity: { duration: 0.1 } },
 	},
 }
 
-const ShieldCheckIcon = forwardRef<ShieldCheckIconHandle, ShieldCheckIconProps>(
-	({ onMouseEnter, onMouseLeave, className, size = 28, ...props }, ref) => {
-		const controls = useAnimation()
-		const isControlledRef = useRef(false)
-
-		useImperativeHandle(ref, () => {
-			isControlledRef.current = true
-
-			return {
-				startAnimation: () => void controls.start('animate'),
-				stopAnimation: () => void controls.start('normal'),
-			}
-		})
-
-		const handleMouseEnter = useCallback(
-			(e: React.MouseEvent<HTMLDivElement>) => {
-				if (!isControlledRef.current) {
-					void controls.start('animate')
-				} else {
-					onMouseEnter?.(e)
-				}
-			},
-			[controls, onMouseEnter],
-		)
-
-		const handleMouseLeave = useCallback(
-			(e: React.MouseEvent<HTMLDivElement>) => {
-				if (!isControlledRef.current) {
-					void controls.start('normal')
-				} else {
-					onMouseLeave?.(e)
-				}
-			},
-			[controls, onMouseLeave],
-		)
-
-		return (
-			<div
-				className={cn(className)}
-				onMouseEnter={handleMouseEnter}
-				onMouseLeave={handleMouseLeave}
-				{...props}
-			>
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					width={size}
-					height={size}
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					strokeWidth="2"
-					strokeLinecap="round"
-					strokeLinejoin="round"
-				>
-					<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
-					<motion.path
-						variants={pathVariants}
-						initial="normal"
-						animate={controls}
-						d="m9 12 2 2 4-4"
-					/>
-				</svg>
-			</div>
-		)
-	},
+/** Hugeicons `security-check`: the check mark is drawn on the shield. */
+export const ShieldCheckIcon = createAnimatedIcon(
+	'ShieldCheckIcon',
+	(controls) => (
+		<>
+			<path d="M18.7088 3.49534C16.8165 2.55382 14.5009 2 12 2C9.4991 2 7.1835 2.55382 5.29116 3.49534C4.36318 3.95706 3.89919 4.18792 3.4496 4.91378C3 5.63965 3 6.34248 3 7.74814V11.2371C3 16.9205 7.54236 20.0804 10.173 21.4338C10.9067 21.8113 11.2735 22 12 22C12.7265 22 13.0933 21.8113 13.8269 21.4338C16.4576 20.0804 21 16.9205 21 11.2371L21 7.74814C21 6.34249 21 5.63966 20.5504 4.91378C20.1008 4.18791 19.6368 3.95706 18.7088 3.49534Z" />
+			<motion.path
+				d="M9 11.5C9 11.5 10.4079 11.7519 11 13.5C11 13.5 12.5 10.5 15 9.5"
+				initial="normal"
+				variants={CHECK_VARIANTS}
+				animate={controls}
+			/>
+		</>
+	),
 )
-
-ShieldCheckIcon.displayName = 'ShieldCheckIcon'
-
-export { ShieldCheckIcon }

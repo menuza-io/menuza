@@ -676,6 +676,7 @@ const tipOff = 'border-border bg-background text-foreground'
 			resolvePickup,
 		} from '~/lib/ordering/pickup'
 		import { createMoneyFormatter, fillTemplate } from '~/lib/ordering/money'
+		import { posterSource } from '~/lib/ordering/table-session'
 		import {
 			hasValidDeliveryQuote,
 			isQuoteValid,
@@ -1430,6 +1431,8 @@ const tipOff = 'border-border bg-background text-foreground'
 					},
 					...(delivery ? { delivery } : {}),
 					...(scheduledFor ? { scheduledFor } : {}),
+					// Opened from an order-ahead QR poster (attribution only).
+					...(!isDrop && posterSource(orgId) ? { source: 'qr_poster' } : {}),
 					tipPercent,
 					lines: orderLines(cart),
 				}

@@ -54,6 +54,12 @@ export type RestaurantOrderPaymentEvent = {
 	amountCents: number
 	/** Lowercase ISO currency code, e.g. 'usd', 'cad', 'sar'. */
 	currency: string
+	/**
+	 * The provider's id for this one payment. Checkout.com binds the order
+	 * reference as its session, so two payments on one order share it: this
+	 * tells them apart (Stripe sessions are already one payment each).
+	 */
+	paymentId?: string
 }
 
 export function isRestaurantOrderMetadata(
@@ -189,6 +195,7 @@ export function mapCheckoutPaymentToRestaurantOrder(
 		status,
 		amountCents: payment.amountCents,
 		currency: payment.currency.toLowerCase(),
+		...(payment.id ? { paymentId: payment.id } : {}),
 	}
 }
 

@@ -9,6 +9,7 @@ import {
 	marketingMessages,
 	personErasureLog,
 	posOrders,
+	qrTabs,
 	restaurantOrders,
 	rsvAuditLog,
 	rsvDayVersions,
@@ -131,6 +132,8 @@ export type ErasePersonResult = {
 	formSubmissionsRedacted: number
 	/** Present only when a restaurant order was scrubbed. */
 	restaurantOrdersScrubbed?: number
+	/** Present only when a QR table tab was scrubbed. */
+	qrTabsScrubbed?: number
 	posOrdersScrubbed?: number
 	waitlistEntriesScrubbed: number
 	notifyRequestsScrubbed: number
@@ -999,6 +1002,41 @@ export async function erasePerson(
 				)
 				const restaurantOrdersScrubbed = restaurantOrderIds.size
 
+				// QR table tabs keep the guest's name and phone for the table: a
+				// tab goes with its scrubbed rounds, or on its own when its phone
+				// matches. Totals stay for the books; the payment capability goes.
+				const qrTabIds = new Set<string>()
+				const roundTabs = await queryInChunks(
+					[...restaurantOrderIds],
+					(chunk) =>
+						tx
+							.select({ tabId: restaurantOrders.tabId })
+							.from(restaurantOrders)
+							.where(inArray(restaurantOrders.id, chunk)),
+				)
+				for (const row of roundTabs) if (row.tabId) qrTabIds.add(row.tabId)
+				if (phoneForms.length > 0) {
+					const byPhone = await tx
+						.select({ id: qrTabs.id })
+						.from(qrTabs)
+						.where(inJsonList(digitsOnly(qrTabs.guestPhone), phoneForms))
+					for (const row of byPhone) qrTabIds.add(row.id)
+				}
+				await forEachInChunks(
+					[...qrTabIds],
+					(chunk) =>
+						tx
+							.update(qrTabs)
+							.set({
+								guestName: null,
+								guestPhone: null,
+								paymentTokenHash: null,
+							})
+							.where(inArray(qrTabs.id, chunk)),
+					HEAVY_SET_CHUNK,
+				)
+				const qrTabsScrubbed = qrTabIds.size
+
 				// ---- Customer rows and everything keyed by them ----------------------
 				// Deleted explicitly, not only by FK cascade, so a missing foreign-key
 				// pragma can never leave a token, subscription or journey behind.
@@ -1043,6 +1081,7 @@ export async function erasePerson(
 					newlyErasedGuests.length > 0 ||
 					existing.length > 0 ||
 					restaurantOrdersScrubbed > 0 ||
+					qrTabsScrubbed > 0 ||
 					posOrdersScrubbed > 0 ||
 					posHeldScrubbed > 0 ||
 					waitlistIds.length > 0 ||
@@ -1066,6 +1105,7 @@ export async function erasePerson(
 						...(restaurantOrdersScrubbed > 0
 							? { restaurantOrdersScrubbed }
 							: {}),
+						...(qrTabsScrubbed > 0 ? { qrTabsScrubbed } : {}),
 						...(posOrdersScrubbed > 0 ? { posOrdersScrubbed } : {}),
 						...voiceCounts(),
 					}
@@ -1124,6 +1164,7 @@ export async function erasePerson(
 					ordersUnlinked: linkedOrders.length,
 					formSubmissionsRedacted,
 					...(restaurantOrdersScrubbed > 0 ? { restaurantOrdersScrubbed } : {}),
+					...(qrTabsScrubbed > 0 ? { qrTabsScrubbed } : {}),
 					waitlistEntriesScrubbed: waitlistIds.length,
 					notifyRequestsScrubbed: notifyIds.length,
 					voice,

@@ -573,6 +573,68 @@ describe('Station kitchen API', () => {
 		})
 	})
 
+	it('shows a QR table round as a dine-in ticket for its table and stages it forward', async () => {
+		const db = await getTenantDb(ORG_A)
+		const roundId = crypto.randomUUID()
+		await db.insert(restaurantOrders).values({
+			id: roundId,
+			orgId: ORG_A,
+			number: 'WEB-T1',
+			status: 'accepted',
+			paymentMethod: 'handoff',
+			paymentStatus: 'unpaid',
+			fulfillment: 'dine_in',
+			locationId: 'loc-1',
+			locationName: 'Main',
+			contactName: 'Private table guest',
+			contactPhone: '',
+			currency: 'USD',
+			subtotalCents: 800,
+			taxCents: 0,
+			totalCents: 800,
+			lines: [
+				{
+					itemId: 'tea',
+					itemName: 'Tea',
+					quantity: 2,
+					instructions: null,
+					options: [],
+				},
+			],
+			tabId: crypto.randomUUID(),
+			tableId: crypto.randomUUID(),
+			tableLabel: 'Patio 4',
+			source: 'qr_table',
+			idempotencyKey: crypto.randomUUID(),
+			requestHash: 'x',
+			receiptTokenHash: 'y',
+		})
+		const ticket = (await feed()).tickets.find((entry) => entry.id === roundId)!
+		expect(ticket).toMatchObject({
+			source: 'online',
+			channel: 'online',
+			fulfillment: 'dine_in',
+			tableLabel: 'Patio 4',
+		})
+		expect(JSON.stringify(ticket)).not.toMatch(/Private table guest/)
+		const staged = await request('POST', '/command', {
+			source: 'online',
+			orderId: roundId,
+			expectedVersion: ticket.version,
+			action: 'stage',
+			stage: 'preparing',
+		})
+		expect(staged.status).toBe(200)
+		const [round] = await db
+			.select()
+			.from(restaurantOrders)
+			.where(eq(restaurantOrders.id, roundId))
+		expect(round).toMatchObject({
+			status: 'preparing',
+			paymentStatus: 'unpaid',
+		})
+	})
+
 	it('keeps prepared dishes ready when configuration reroutes them', async () => {
 		await stage('ready')
 		const before = (await feed()).tickets[0]!

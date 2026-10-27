@@ -20,6 +20,7 @@ import {
 	OrderStatusLabel,
 	PaymentStatusLabel,
 } from '#app/components/orders/order-status.tsx'
+import { OpenTabs } from '#app/components/qr/open-tabs.tsx'
 import { useOrdersClient } from '#app/hooks/use-orders-client.ts'
 import { requireMenuRead } from '#app/utils/menu/access.server.ts'
 import { getOrderCustomerLinkAccess } from '#app/utils/orders/customer-link.server.ts'
@@ -33,6 +34,7 @@ import { ordersHref } from '#app/utils/orders/orders-link.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { ORG_PERMISSIONS } from '#app/utils/organization/permissions.server.ts'
 import { customersHref } from '#app/utils/people/customers-link.ts'
+import { getQrOrderingFeatures } from '#app/utils/qr/access.server.ts'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const orgSlug = params.orgSlug || ''
@@ -49,10 +51,15 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		ORG_PERMISSIONS.UPDATE_MENU_ANY,
 	)
 	const link = await getOrderCustomerLinkAccess(request, orgSlug)
+	const qr = await getQrOrderingFeatures(organization.id)
 	return data(
 		{
 			orgSlug,
 			canWrite,
+			// Tabs show while QR ordering is on, even with dine-in switched off,
+			// so tabs still open (and payments to check) can be settled. The
+			// list renders nothing when there is nothing to show.
+			showTabs: qr.enabled,
 			// Customers links show only to members who can open Customers.
 			canViewCustomers: link.linkCustomers || link.linkGuests,
 		},
@@ -63,7 +70,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 }
 
 export default function OrdersInbox() {
-	const { orgSlug, canViewCustomers } = useLoaderData<typeof loader>()
+	const { orgSlug, canViewCustomers, canWrite, showTabs } =
+		useLoaderData<typeof loader>()
+	const [refreshKey, setRefreshKey] = useState(0)
 	const navigate = useNavigate()
 	const { _, i18n } = useLingui()
 	const request = useOrdersClient(orgSlug)
@@ -116,7 +125,13 @@ export default function OrdersInbox() {
 						msg`Receive and manage menu and drop orders. Updates refresh every 15 seconds.`,
 					)}
 				/>
-				<Button variant="outline" onClick={() => void refresh()}>
+				<Button
+					variant="outline"
+					onClick={() => {
+						setRefreshKey((key) => key + 1)
+						void refresh()
+					}}
+				>
 					<Trans>Refresh</Trans>
 				</Button>
 			</div>
@@ -124,6 +139,13 @@ export default function OrdersInbox() {
 				<p role="alert" className="text-destructive text-sm">
 					{error}
 				</p>
+			) : null}
+			{showTabs ? (
+				<OpenTabs
+					orgSlug={orgSlug}
+					canWrite={canWrite}
+					refreshKey={refreshKey}
+				/>
 			) : null}
 			{loading ? (
 				<p role="status">
@@ -181,7 +203,15 @@ export default function OrdersInbox() {
 													{order.contact.name}
 												</Link>
 											) : (
-												<span className="truncate">{order.contact.name}</span>
+												<span className="truncate">
+													{order.contact.name ||
+														(order.table
+															? (() => {
+																	const label = order.table.label
+																	return <bdi>{_(msg`Table ${label}`)}</bdi>
+																})()
+															: _(msg`Guest`))}
+												</span>
 											)}
 											{canViewCustomers ? (
 												<Badge
@@ -199,13 +229,22 @@ export default function OrdersInbox() {
 												name={
 													order.fulfillment === 'delivery'
 														? 'route'
-														: 'building'
+														: order.fulfillment === 'dine_in'
+															? 'utensils'
+															: 'building'
 												}
 												className="size-3.5"
 											/>
 											{order.fulfillment === 'delivery'
 												? _(msg`Delivery`)
-												: _(msg`Pickup`)}
+												: order.fulfillment === 'dine_in'
+													? order.table
+														? (() => {
+																const label = order.table.label
+																return <bdi>{_(msg`Table ${label}`)}</bdi>
+															})()
+														: _(msg`At the table`)
+													: _(msg`Pickup`)}
 										</span>
 									</div>
 									<div className="flex items-center justify-between gap-3">

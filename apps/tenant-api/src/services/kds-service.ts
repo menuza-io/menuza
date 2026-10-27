@@ -256,8 +256,14 @@ function onlineSource(row: typeof restaurantOrders.$inferSelect): SourceOrder {
 		source: 'online',
 		number: row.number,
 		channel: 'online',
-		fulfillment: row.fulfillment === 'delivery' ? 'delivery' : 'takeaway',
-		tableLabel: null,
+		// A QR table round is cooked for the table it came from.
+		fulfillment:
+			row.fulfillment === 'delivery'
+				? 'delivery'
+				: row.fulfillment === 'dine_in'
+					? 'dine_in'
+					: 'takeaway',
+		tableLabel: row.fulfillment === 'dine_in' ? (row.tableLabel ?? null) : null,
 		createdAt: row.createdAt?.getTime() ?? 0,
 		updatedAt: row.updatedAt?.getTime() ?? row.createdAt?.getTime() ?? 0,
 		dueAt:

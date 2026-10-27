@@ -1,5 +1,6 @@
 import { Hono, type Context } from 'hono'
 
+import { parseTabOrderRef } from '@repo/common/qr-ordering'
 import {
 	orderPaymentSessionRequestSchema,
 	orderPaymentStatusRequestSchema,
@@ -8,6 +9,7 @@ import {
 import { TENANT_ORG_ID_PATTERN } from '@repo/tenant-db'
 
 import { findActiveOrganizationById } from '../lib/origin.ts'
+import { isQrDineInDisabled } from '../lib/qr-tokens.ts'
 import { getNodeRegion, orgMatchesNodeRegion } from '../lib/region.ts'
 import {
 	getBearerToken,
@@ -19,6 +21,21 @@ import {
 	bindPaymentSession,
 	getOrderQuote,
 } from '../services/order-service.ts'
+import {
+	applyTabPaymentEvent,
+	bindTabPaymentSession,
+	getTabQuote,
+} from '../services/qr-tab-service.ts'
+
+/** `tab:<id>` refs are QR tabs paid from the phone; the kill switch stops them. */
+function tabRef(c: Context, orderId: string) {
+	const tabId = parseTabOrderRef(orderId)
+	if (!tabId) return { tabId: null, denied: null }
+	if (isQrDineInDisabled()) {
+		return { tabId, denied: c.json({ error: 'unavailable' }, 503) }
+	}
+	return { tabId, denied: null }
+}
 
 export const orderSystemRoutes = new Hono()
 
@@ -107,12 +124,21 @@ orderSystemRoutes.post('/quote', async (c) => {
 	const regionDenied = await assertOrgRegion(c, parsed.data.orgId)
 	if (regionDenied) return regionDenied
 
+	const tab = tabRef(c, parsed.data.orderId)
+	if (tab.denied) return tab.denied
+
 	try {
-		const result = await getOrderQuote(
-			parsed.data.orgId,
-			parsed.data.orderId,
-			parsed.data.paymentToken,
-		)
+		const result = tab.tabId
+			? await getTabQuote(
+					parsed.data.orgId,
+					tab.tabId,
+					parsed.data.paymentToken,
+				)
+			: await getOrderQuote(
+					parsed.data.orgId,
+					parsed.data.orderId,
+					parsed.data.paymentToken,
+				)
 		if (!result.ok) return failureResponse(c, result.failure)
 		// Only non-PII fields per contract: amounts, currency, hold, status.
 		return c.json(result.data)
@@ -144,13 +170,23 @@ orderSystemRoutes.post('/payment-session', async (c) => {
 	const regionDenied = await assertOrgRegion(c, parsed.data.orgId)
 	if (regionDenied) return regionDenied
 
+	const tab = tabRef(c, parsed.data.orderId)
+	if (tab.denied) return tab.denied
+
 	try {
-		const result = await bindPaymentSession({
-			orgId: parsed.data.orgId,
-			orderId: parsed.data.orderId,
-			sessionId: parsed.data.sessionId,
-			processor: parsed.data.processor,
-		})
+		const result = tab.tabId
+			? await bindTabPaymentSession({
+					orgId: parsed.data.orgId,
+					tabId: tab.tabId,
+					sessionId: parsed.data.sessionId,
+					processor: parsed.data.processor,
+				})
+			: await bindPaymentSession({
+					orgId: parsed.data.orgId,
+					orderId: parsed.data.orderId,
+					sessionId: parsed.data.sessionId,
+					processor: parsed.data.processor,
+				})
 		if (!result.ok) return failureResponse(c, result.failure)
 		return c.json(result.data)
 	} catch (error) {
@@ -181,16 +217,31 @@ orderSystemRoutes.post('/payment-status', async (c) => {
 	const regionDenied = await assertOrgRegion(c, parsed.data.orgId)
 	if (regionDenied) return regionDenied
 
+	// Payment events are never dropped by the kill switch: money that already
+	// moved must still settle (or land in review).
+	const tabId = parseTabOrderRef(parsed.data.orderId)
+
 	try {
-		const result = await applyPaymentEvent({
-			orgId: parsed.data.orgId,
-			orderId: parsed.data.orderId,
-			sessionId: parsed.data.sessionId,
-			processor: parsed.data.processor,
-			status: parsed.data.status,
-			amountCents: parsed.data.amountCents,
-			currency: parsed.data.currency,
-		})
+		const result = tabId
+			? await applyTabPaymentEvent({
+					orgId: parsed.data.orgId,
+					tabId,
+					sessionId: parsed.data.sessionId,
+					processor: parsed.data.processor,
+					status: parsed.data.status,
+					amountCents: parsed.data.amountCents,
+					currency: parsed.data.currency,
+					paymentId: parsed.data.paymentId,
+				})
+			: await applyPaymentEvent({
+					orgId: parsed.data.orgId,
+					orderId: parsed.data.orderId,
+					sessionId: parsed.data.sessionId,
+					processor: parsed.data.processor,
+					status: parsed.data.status,
+					amountCents: parsed.data.amountCents,
+					currency: parsed.data.currency,
+				})
 		if (!result.ok) return failureResponse(c, result.failure)
 		return c.json({
 			orgId: result.data.orgId,

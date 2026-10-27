@@ -58,6 +58,8 @@ export default defineConfig({
 			BASE_URL: `http://localhost:${PORT}`,
 			NODE_ENV: 'test',
 			MOCKS: 'true',
+			// Print shop vendor emulator; ignored unless BASE_URL is local.
+			PRINT_MOCK: 'true',
 			AUDIT_LOG_SECRET_KEY: 'playwright-only-audit-integrity-key',
 			VITE_DIRECT_DEV: '1',
 			NODE_OPTIONS: process.env.NODE_OPTIONS ?? '--max-old-space-size=6144',

@@ -24,7 +24,9 @@ import {
 	uploadSiteFont as _uploadSiteFont,
 	getSignedGetRequestInfo as _getSignedGetRequestInfo,
 	getSignedHeadRequestInfo as _getSignedHeadRequestInfo,
+	getPresignedGetUrl as _getPresignedGetUrl,
 	testS3Connection as _testS3Connection,
+	uploadToStorage as _uploadToStorage,
 	type StorageConfig,
 	type UploadOptions,
 } from '@repo/storage'
@@ -560,4 +562,41 @@ export async function deleteOrganizationStorageObject(
 		storageScope === 'platform' ? undefined : organizationId,
 	)
 	await deleteFromStorage(objectKey, config)
+}
+
+/**
+ * Print shop files (rendered PDFs) live in the platform bucket, never an
+ * organization's own S3: vendors fetch them through short-lived signed URLs.
+ */
+export async function uploadPrintFile(
+	key: string,
+	bytes: Uint8Array<ArrayBuffer>,
+	contentType: string,
+) {
+	const file = new File([bytes], key.split('/').pop() || 'print.pdf', {
+		type: contentType,
+	})
+	return _uploadToStorage(file, key, DEFAULT_STORAGE_CONFIG)
+}
+
+export async function readPrintFile(
+	key: string,
+): Promise<Uint8Array<ArrayBuffer> | null> {
+	const { url, headers } = _getSignedGetRequestInfo(key, DEFAULT_STORAGE_CONFIG)
+	try {
+		// A stalled bucket must not hold a download open: treat it as a miss
+		// and let the caller render the file again.
+		const response = await fetch(url, {
+			headers,
+			signal: AbortSignal.timeout(15_000),
+		})
+		if (!response.ok) return null
+		return new Uint8Array(await response.arrayBuffer())
+	} catch {
+		return null
+	}
+}
+
+export function getPrintFileUrl(key: string, expiresInSeconds = 3600) {
+	return _getPresignedGetUrl(key, DEFAULT_STORAGE_CONFIG, expiresInSeconds)
 }

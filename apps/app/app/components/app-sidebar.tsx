@@ -7,7 +7,6 @@ import { BuildingIcon } from '@repo/ui/building-icon'
 import { Button } from '@repo/ui/button'
 import { Card, CardContent, CardDescription, CardHeader } from '@repo/ui/card'
 import { CircleHelpIcon } from '@repo/ui/circle-help'
-import { FoldersIcon } from '@repo/ui/folders-icon'
 import { HomeIcon } from '@repo/ui/home-icon'
 import { Icon } from '@repo/ui/icon'
 import { Kbd } from '@repo/ui/kbd'
@@ -39,6 +38,14 @@ import { useMailboxUnreadCount } from '#app/hooks/use-mailbox.ts'
 
 import { type loader as rootLoader } from '#app/root.tsx'
 import {
+	HIDDEN_PRINT_SHOP_NAV,
+	type PrintShopNavAccess,
+} from '#app/utils/print/nav.ts'
+import {
+	HIDDEN_QR_ORDERING_NAV,
+	type QrOrderingNavAccess,
+} from '#app/utils/qr/nav.ts'
+import {
 	HIDDEN_RESERVATIONS_NAV,
 	type ReservationsNavAccess,
 } from '#app/utils/reservations/nav.ts'
@@ -55,6 +62,7 @@ import { ChartPieIcon } from './icons/chart-pie-icon'
 import { ExternalLinkIcon } from './icons/external-link-icon'
 import { GalleryHorizontalEndIcon } from './icons/gallery-horizontal-end-icon'
 import { MailboxIcon } from './icons/mailbox-icon'
+import { NoteIcon } from './icons/note-icon'
 import { PhoneIcon } from './icons/phone-icon'
 import { ReceiptIcon } from './icons/receipt-icon'
 import { SendIcon } from './icons/send-icon'
@@ -262,6 +270,10 @@ function OrganizationSidebar({
 		rootData?.staffingNav ?? HIDDEN_STAFFING_NAV
 	const reservationsNav: ReservationsNavAccess =
 		rootData?.reservationsNav ?? HIDDEN_RESERVATIONS_NAV
+	const printShopNav: PrintShopNavAccess =
+		rootData?.printShopNav ?? HIDDEN_PRINT_SHOP_NAV
+	const qrOrderingNav: QrOrderingNavAccess =
+		rootData?.qrOrderingNav ?? HIDDEN_QR_ORDERING_NAV
 
 	useEffect(() => {
 		if (!extensionId) return
@@ -306,7 +318,7 @@ function OrganizationSidebar({
 			title: _(msg`Notes`),
 			url: `/${orgSlug}/notes`,
 			isActive: location.pathname.includes(`/${orgSlug}/notes`),
-			icon: FoldersIcon,
+			icon: NoteIcon,
 		},
 		{
 			title: _(msg`Media library`),
@@ -408,6 +420,11 @@ function OrganizationSidebar({
 					isActive: location.pathname.includes(
 						`/${orgSlug}/marketing/automations`,
 					),
+				},
+				{
+					title: _(msg`Print shop`),
+					url: `/${orgSlug}/marketing/print`,
+					isActive: location.pathname.includes(`/${orgSlug}/marketing/print`),
 				},
 			],
 		},
@@ -624,6 +641,17 @@ function OrganizationSidebar({
 							},
 						]
 					: []),
+				...(qrOrderingNav.visible
+					? [
+							{
+								title: _(msg`QR tables`),
+								url: `/${orgSlug}/settings/qr-tables`,
+								isActive:
+									location.pathname.startsWith(`/${orgSlug}/settings/qr-`) ||
+									location.pathname.startsWith(`/${orgSlug}/qr/`),
+							},
+						]
+					: []),
 				{
 					title: _(msg`MCP Server`),
 					url: `/${orgSlug}/mcp`,
@@ -657,7 +685,7 @@ function OrganizationSidebar({
 				return canReadWebsite || canReadPhoneCalls
 			}
 			if (item.url === `/${orgSlug}/marketing`) {
-				return canReadCampaigns || canReadAutomations
+				return canReadCampaigns || canReadAutomations || printShopNav.visible
 			}
 			if (item.url === `/${orgSlug}/website`) {
 				return canReadWebsite || canReadAnnouncements
@@ -695,6 +723,9 @@ function OrganizationSidebar({
 						}
 						if (subItem.url.includes('/marketing/automations')) {
 							return canReadAutomations
+						}
+						if (subItem.url.includes('/marketing/print')) {
+							return printShopNav.visible
 						}
 						return true
 					}),

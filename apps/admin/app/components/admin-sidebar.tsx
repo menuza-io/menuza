@@ -140,6 +140,12 @@ export function AdminSidebar({
 			icon: FlaskIcon,
 		},
 		{
+			title: _(msg`Print shop`),
+			url: '/print-shop',
+			isActive: location.pathname.startsWith('/print-shop'),
+			icon: FileTextIcon,
+		},
+		{
 			title: _(msg`Reservations fees`),
 			url: '/feature-flags/reservations-fees',
 			isActive: location.pathname.startsWith(

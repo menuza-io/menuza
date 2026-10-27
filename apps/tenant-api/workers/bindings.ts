@@ -17,6 +17,7 @@ export interface TenantApiWorkerEnv {
 	POS_ORIGINS?: string
 	STAFFING_EMAIL_ENABLED?: string
 	RESERVATIONS_PUBLIC_ENABLED?: string
+	QR_DINE_IN_ENABLED?: string
 	RESERVATIONS_EMAIL_ENABLED?: string
 	RESERVATIONS_SMS_ENABLED?: string
 	TWILIO_ACCOUNT_SID?: string

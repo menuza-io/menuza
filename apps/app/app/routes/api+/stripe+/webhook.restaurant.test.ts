@@ -180,4 +180,37 @@ describe('stripe webhook restaurant order dispatch', () => {
 		}
 		expect(recordShopOrder).not.toHaveBeenCalled()
 	})
+
+	it('ignores sessions and payments from a connected account, whatever their metadata', async () => {
+		for (const object of [RESTAURANT_SESSION, SHOP_SESSION]) {
+			constructEvent.mockReturnValue({
+				id: 'evt_5',
+				type: 'checkout.session.completed',
+				account: 'acct_attacker',
+				data: { object },
+			})
+			const response = await postEvent({
+				id: 'evt_5',
+				type: 'checkout.session.completed',
+				data: { object },
+			})
+			expect(response.status).toBe(200)
+		}
+		expect(restaurantDispatch).not.toHaveBeenCalled()
+		expect(recordShopOrder).not.toHaveBeenCalled()
+
+		// Account updates from connected accounts still count.
+		constructEvent.mockReturnValue({
+			id: 'evt_6',
+			type: 'account.updated',
+			account: 'acct_1',
+			data: { object: { id: 'acct_1' } },
+		})
+		await postEvent({
+			id: 'evt_6',
+			type: 'account.updated',
+			data: { object: { id: 'acct_1' } },
+		})
+		expect(accountUpdated).toHaveBeenCalled()
+	})
 })

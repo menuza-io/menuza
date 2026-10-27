@@ -170,6 +170,35 @@ const htmlClass =
 			}
 		</style>
 		<slot name="head" />
+		{/*
+			A scanned table code (`#table=…`) is a capability: move it out of the
+			address bar before any analytics tag can read the page URL. The menu
+			script picks it up from this tab's session storage.
+		*/}
+		<script is:inline>
+			;(function () {
+				try {
+					var hash = window.location.hash
+					if (hash.indexOf('table=') === -1) return
+					var params = new URLSearchParams(hash.slice(1))
+					var code = params.get('table')
+					if (!code) return
+					params.delete('table')
+					var rest = params.toString()
+					sessionStorage.setItem(
+						'menuza_qr_scan',
+						JSON.stringify({ code: code, at: Date.now() }),
+					)
+					history.replaceState(
+						history.state,
+						'',
+						window.location.pathname +
+							window.location.search +
+							(rest ? '#' + rest : ''),
+					)
+				} catch (error) {}
+			})()
+		</script>
 		<SiteAnalyticsIntegrations
 			facebookPixelId={facebookPixelId}
 			googleTagManagerId={googleTagManagerId}

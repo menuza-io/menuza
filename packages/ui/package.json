@@ -50,6 +50,7 @@
     "./input-group": "./components/ui/input-group.tsx",
     "./kbd": "./components/ui/kbd.tsx",
     "./icon": "./components/icon.tsx",
+    "./animated-icon": "./components/animated-icons/animated-icon.tsx",
     "./arrow-left-icon": "./components/animated-icons/arrow-left-icon.tsx",
     "./building-icon": "./components/animated-icons/building-icon.tsx",
     "./circle-help": "./components/animated-icons/circle-help.tsx",

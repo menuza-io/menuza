@@ -1,72 +1,27 @@
-'use client'
-
-import { cn } from '@repo/ui'
 import { type Variants, motion } from 'motion/react'
-import { type HTMLAttributes, forwardRef } from 'react'
 import {
-	type IconAnimationHandle,
-	useIconAnimation,
-} from './use-icon-animation.tsx'
+	type AnimatedIconHandle,
+	createAnimatedIcon,
+} from '@repo/ui/animated-icon'
 
-export interface ExternalLinkIconHandle extends IconAnimationHandle {}
+export type ExternalLinkIconHandle = AnimatedIconHandle
 
-interface ExternalLinkIconProps extends HTMLAttributes<HTMLDivElement> {
-	size?: number
+const ARROW_VARIANTS: Variants = {
+	normal: { x: 0, y: 0 },
+	animate: { x: [0, 1, 0], y: [0, -1, 0], transition: { duration: 0.4 } },
 }
 
-const arrowVariants: Variants = {
-	animate: {
-		translateX: [0, 1, 0],
-		translateY: [0, -1, 0],
-		transition: {
-			duration: 0.4,
-		},
-	},
-}
-
-const ExternalLinkIcon = forwardRef<
-	ExternalLinkIconHandle,
-	ExternalLinkIconProps
->(({ onMouseEnter, onMouseLeave, className, size = 24, ...props }, ref) => {
-	const { controls, handleMouseEnter, handleMouseLeave } = useIconAnimation(
-		ref,
-		{ onMouseEnter, onMouseLeave },
-	)
-
-	return (
-		<div
-			className={cn(className)}
-			onMouseEnter={handleMouseEnter}
-			onMouseLeave={handleMouseLeave}
-			{...props}
-		>
-			<svg
-				xmlns="http://www.w3.org/2000/svg"
-				width={size}
-				height={size}
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				strokeWidth="2"
-				strokeLinecap="round"
-				strokeLinejoin="round"
-			>
-				<motion.path
-					d="M15 3h6v6"
-					variants={arrowVariants}
-					animate={controls}
-				/>
-				<motion.path
-					d="M10 14 21 3"
-					variants={arrowVariants}
-					animate={controls}
-				/>
-				<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-			</svg>
-		</div>
-	)
-})
-
-ExternalLinkIcon.displayName = 'ExternalLinkIcon'
-
-export { ExternalLinkIcon }
+/** Hugeicons `link-square-02`: the arrow nudges out of the box. */
+export const ExternalLinkIcon = createAnimatedIcon(
+	'ExternalLinkIcon',
+	(controls) => (
+		<>
+			<path d="M11.0991 3.00012C7.45013 3.00669 5.53932 3.09629 4.31817 4.31764C3.00034 5.63568 3.00034 7.75704 3.00034 11.9997C3.00034 16.2424 3.00034 18.3638 4.31817 19.6818C5.63599 20.9999 7.75701 20.9999 11.9991 20.9999C16.241 20.9999 18.3621 20.9999 19.6799 19.6818C20.901 18.4605 20.9906 16.5493 20.9972 12.8998" />
+			<motion.path
+				d="M20.556 3.49612L11.0487 13.0586M20.556 3.49612C20.062 3.00151 16.7343 3.04761 16.0308 3.05762M20.556 3.49612C21.05 3.99074 21.0039 7.32273 20.9939 8.02714"
+				variants={ARROW_VARIANTS}
+				animate={controls}
+			/>
+		</>
+	),
+)

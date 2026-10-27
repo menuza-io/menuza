@@ -7,6 +7,7 @@
  * authoritative for order state; App failures fail closed.
  */
 
+import { parseTabOrderRef } from '@repo/common/qr-ordering'
 import { ENV } from 'varlock/env'
 import { z } from 'zod'
 import { getRegionalTenantApiUrl } from '#app/utils/sites/tenant-api.server.ts'
@@ -247,6 +248,7 @@ export async function notifyRestaurantOrderPaymentStatus(options: {
 	status: 'paid' | 'failed' | 'expired'
 	amountCents: number
 	currency: string
+	paymentId?: string
 }): Promise<void> {
 	await callRegionalOrderCommand({
 		dataRegion: options.dataRegion,
@@ -259,6 +261,11 @@ export async function notifyRestaurantOrderPaymentStatus(options: {
 			status: options.status,
 			amountCents: options.amountCents,
 			currency: options.currency,
+			// Only QR tabs use it, and a region that predates the field refuses
+			// unknown keys: pickup and delivery events never carry it.
+			...(options.paymentId && parseTabOrderRef(options.orderId)
+				? { paymentId: options.paymentId }
+				: {}),
 		},
 	})
 }

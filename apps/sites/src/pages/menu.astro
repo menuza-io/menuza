@@ -20,6 +20,7 @@ import OrderDetailsSheet from '~/components/ordering/OrderDetailsSheet.astro'
 import OrderingLabels from '~/components/ordering/OrderingLabels.astro'
 import PopularRow from '~/components/ordering/PopularRow.astro'
 import StickyCategoryNav from '~/components/ordering/StickyCategoryNav.astro'
+import TableTab from '~/components/ordering/TableTab.astro'
 import { resolveMediaUrl, siteContainer } from '~/lib/media'
 import { summarizeHours } from '~/lib/menu-hours'
 import {
@@ -467,6 +468,9 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 				labels={orderBarLabels}
 			/>
 
+			{/* QR table ordering: shown only when a table code is active. */}
+			<TableTab />
+
 			{!availability.isOpen ? (
 				<div class="tone-warning mt-4 flex items-start gap-2.5 rounded-xl border px-3.5 py-2.5 text-sm leading-6" role="status">
 					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mt-1 size-4 shrink-0" aria-hidden="true" set:html={icons.clock} />
@@ -722,6 +726,7 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 			stripHandoffParam,
 			type HandoffCartItem,
 		} from '../scripts/voice-order-handoff'
+		import { mountTableOrdering } from '../scripts/table-ordering'
 
 		type MenuData = {
 			organizationId: string
@@ -782,7 +787,9 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 				taxRate: data.taxRate || 0,
 				taxInclusive: data.taxInclusive === true,
 				deliveryFee: () => details.delivery?.deliveryFee ?? (data.deliveryFee || 0),
-				mode: () => details.mode,
+				// At a table nothing is delivered: no delivery fee in the cart.
+				mode: () =>
+					document.documentElement.dataset.tableMode === 'true' ? 'pickup' : details.mode,
 			},
 			// A scheduled order can be placed while the store is closed; the
 			// server re-validates the slot.
@@ -910,6 +917,15 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 		})
 		paintOrderBar(false)
 		cartUi.refresh()
+
+		mountTableOrdering({
+			orgId,
+			locationId: data.activeLocationId,
+			locale: data.locale,
+			formatMoney: money,
+			store,
+			cart: cartUi,
+		})
 
 		// Item rows and popular cards open the modal
 		document.addEventListener('click', (event) => {

@@ -327,6 +327,10 @@ changes only that station's items. Use **Save kitchen setup** to apply a draft;
 Cancel leaves the live setup unchanged. Publish and refresh the menu if item
 routing choices are missing.
 
+QR table rounds (see [qr-ordering.md](./qr-ordering.md)) are online orders with
+dine-in fulfillment and the table's label. Each round is its own ticket; a
+table's rounds are not grouped into one ticket.
+
 Scheduled orders stay in **Scheduled** until the configured fire-ahead window.
 Both ordinary scheduled orders and dated drop pickup slots use their stored due
 time and time zone. Age and warning/late thresholds run from firing, not from an
