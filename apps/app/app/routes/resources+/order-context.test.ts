@@ -164,6 +164,8 @@ describe('internal restaurant order context', () => {
 			menu: MENU_PAYLOAD,
 			drop: null,
 			onlinePayment: { enabled: true, processor: 'connect' },
+			// QR flags default off (no ConfigFlag rows): the region fails closed.
+			qrOrdering: { enabled: false, dineIn: false, online: false },
 		})
 
 		// Fresh catalog reads: the builder is called with the resolved org and
