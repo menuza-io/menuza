@@ -340,7 +340,10 @@ export default function NewPrintOrderRoute() {
 									autoComplete="tel"
 									dir="ltr"
 								/>
-								<FieldError errors={errors('recipientPhone')} />
+								<FieldError
+									id={fields.recipientPhone.errorId}
+									errors={errors('recipientPhone')}
+								/>
 							</Field>
 							<AddressField
 								label={_(msg`Street address`)}
@@ -382,6 +385,12 @@ export default function NewPrintOrderRoute() {
 										setAddress({ ...address, state: event.target.value })
 									}
 									autoComplete="address-level1"
+									aria-invalid={fields.state.errors?.length ? true : undefined}
+									aria-describedby={
+										fields.state.errors?.length
+											? fields.state.errorId
+											: undefined
+									}
 									className="border-input bg-background h-11 rounded-md border px-3 text-sm"
 								>
 									<option value="">{_(msg`Choose`)}</option>
@@ -391,7 +400,10 @@ export default function NewPrintOrderRoute() {
 										</option>
 									))}
 								</select>
-								<FieldError errors={errors('state')} />
+								<FieldError
+									id={fields.state.errorId}
+									errors={errors('state')}
+								/>
 							</Field>
 							<AddressField
 								label={_(msg`ZIP code`)}
@@ -427,7 +439,7 @@ function AddressField({
 	wide,
 }: {
 	label: string
-	field: { id: string; name: string; errors?: string[] }
+	field: { id: string; name: string; errorId: string; errors?: string[] }
 	value: string
 	onChange: (value: string) => void
 	errors?: Array<{ message: string }>
@@ -449,8 +461,9 @@ function AddressField({
 				autoComplete={autoComplete}
 				inputMode={inputMode}
 				aria-invalid={field.errors?.length ? true : undefined}
+				aria-describedby={field.errors?.length ? field.errorId : undefined}
 			/>
-			<FieldError errors={errors} />
+			<FieldError id={field.errorId} errors={errors} />
 		</Field>
 	)
 }

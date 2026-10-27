@@ -1180,6 +1180,10 @@ msgstr "Warteliste verlassen?"
 msgid "Leave this table"
 msgstr "Diesen Tisch verlassen"
 
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Leaving removes this tab from this phone. The tab stays open until it is paid."
+msgstr "Beim Verlassen verschwindet diese Rechnung von diesem Handy. Sie bleibt offen, bis sie bezahlt ist."
+
 #: src/lib/ordering-labels.ts:52
 msgid "Left"
 msgstr "Links"
@@ -2520,6 +2524,7 @@ msgstr "Gesamt"
 msgid "Total paid"
 msgstr "Bezahlter Gesamtbetrag"
 
+#: src/components/ordering/TableTab.astro.ts:3
 #: src/lib/ordering-labels.ts:96
 #: src/lib/reservations/labels.ts:281
 #: src/lib/reservations/labels.ts:385
@@ -2682,6 +2687,10 @@ msgstr "Wir konnten Ihren Platz in der Schlange nicht finden. Der Link ist mögl
 #: src/lib/reservations/labels.ts:208
 msgid "We could not load your reservations."
 msgstr "Ihre Reservierungen konnten nicht geladen werden."
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "We could not load your tab. Check your connection."
+msgstr "Wir konnten Ihre Rechnung nicht laden. Prüfen Sie Ihre Verbindung."
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "We could not place your order. Please try again."

@@ -502,6 +502,24 @@ export async function startPrintCheckout(
 			'This price has expired. Get a new price.',
 		)
 	}
+	// One live payment per order: re-serve the open session, and never start a
+	// second one for a session that is already paid (its webhook may be late).
+	if (order.stripeCheckoutSessionId) {
+		const existing = await stripe.checkout.sessions
+			.retrieve(order.stripeCheckoutSessionId)
+			.catch(() => null)
+		if (
+			existing?.payment_status === 'paid' ||
+			existing?.status === 'complete'
+		) {
+			throw new PrintOrderError(
+				409,
+				'payment_processing',
+				'Your payment is being confirmed. This page updates in a moment.',
+			)
+		}
+		if (existing?.status === 'open' && existing.url) return existing.url
+	}
 	const customer = await ensureStripeCustomer(access.organization.id)
 	// Stripe Tax uses the customer's shipping address: make it this order's.
 	try {

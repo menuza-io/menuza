@@ -44,6 +44,7 @@ export const PRINT_ORDER_ERROR_LABELS: Record<string, MessageDescriptor> = {
 	shipping_paused: msg`Shipped prints are paused for a moment. Try again later.`,
 	no_lines: msg`Choose at least one print and how many copies.`,
 	order_busy: msg`This order is changing right now. Refresh and try again.`,
+	payment_processing: msg`Your payment is being confirmed. This page updates in a moment.`,
 }
 
 export const PRINT_ORDER_ERROR_FALLBACK = msg`That did not work. Try again.`

@@ -1180,6 +1180,10 @@ msgstr "مغادرة قائمة الانتظار؟"
 msgid "Leave this table"
 msgstr "مغادرة هذه الطاولة"
 
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Leaving removes this tab from this phone. The tab stays open until it is paid."
+msgstr "المغادرة تزيل هذا الحساب من هذا الهاتف. يبقى الحساب مفتوحًا حتى يُدفع."
+
 #: src/lib/ordering-labels.ts:52
 msgid "Left"
 msgstr "النصف الأيسر"
@@ -2520,6 +2524,7 @@ msgstr "المجموع الإجمالي"
 msgid "Total paid"
 msgstr "إجمالي المدفوع"
 
+#: src/components/ordering/TableTab.astro.ts:3
 #: src/lib/ordering-labels.ts:96
 #: src/lib/reservations/labels.ts:281
 #: src/lib/reservations/labels.ts:385
@@ -2682,6 +2687,10 @@ msgstr "تعذر العثور على دورك في القائمة. ربما ان
 #: src/lib/reservations/labels.ts:208
 msgid "We could not load your reservations."
 msgstr "تعذر تحميل حجوزاتك."
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "We could not load your tab. Check your connection."
+msgstr "تعذّر تحميل حسابك. تحقق من اتصالك."
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "We could not place your order. Please try again."

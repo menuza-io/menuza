@@ -24,6 +24,12 @@ const stripeMock = vi.hoisted(() => ({
 				return { id, url: `https://checkout.example/${id}` }
 			}),
 			expire: vi.fn(async () => ({})),
+			retrieve: vi.fn(async (id: string) => ({
+				id,
+				status: 'open',
+				payment_status: 'unpaid',
+				url: `https://checkout.example/${id}`,
+			})),
 		},
 	},
 	refunds: { create: vi.fn(async () => ({ id: 're_1' })) },

@@ -1180,6 +1180,10 @@ msgstr "要退出候位名单吗？"
 msgid "Leave this table"
 msgstr "离开这张桌子"
 
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Leaving removes this tab from this phone. The tab stays open until it is paid."
+msgstr "离开后，此账单将从这部手机上移除。账单在支付前仍保持打开。"
+
 #: src/lib/ordering-labels.ts:52
 msgid "Left"
 msgstr "左半"
@@ -2520,6 +2524,7 @@ msgstr "总计"
 msgid "Total paid"
 msgstr "实付总额"
 
+#: src/components/ordering/TableTab.astro.ts:3
 #: src/lib/ordering-labels.ts:96
 #: src/lib/reservations/labels.ts:281
 #: src/lib/reservations/labels.ts:385
@@ -2682,6 +2687,10 @@ msgstr "找不到您的排队位置。链接可能已过期。"
 #: src/lib/reservations/labels.ts:208
 msgid "We could not load your reservations."
 msgstr "无法加载您的预订。"
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "We could not load your tab. Check your connection."
+msgstr "无法加载您的账单。请检查网络连接。"
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "We could not place your order. Please try again."

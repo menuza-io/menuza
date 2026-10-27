@@ -57,6 +57,9 @@ const labels = {
 	payCancelled: i18n._(msg`Payment was not finished. Nothing was charged.`),
 	contactMissing: i18n._(msg`Enter your name and phone number.`),
 	leaveConfirm: i18n._(msg`Tap again to leave this table`),
+	leaveWarning: i18n._(msg`Leaving removes this tab from this phone. The tab stays open until it is paid.`),
+	tabLoadFailed: i18n._(msg`We could not load your tab. Check your connection.`),
+	tryAgain: i18n._(msg`Try again`),
 	stillConfirming: i18n._(msg`We are still confirming your payment. Check your tab again in a minute.`),
 }
 ---
@@ -90,7 +93,8 @@ const labels = {
 	</div>
 </div>
 
-<div id="table-notice" class="mt-3 empty:hidden" role="status" aria-live="polite"></div>
+<div id="table-notice" class="not-empty:mt-3" role="status" aria-live="polite"></div>
+<div id="table-alert" class="not-empty:mt-3" role="alert"></div>
 
 <div
 	id="tab-drawer-backdrop"
@@ -142,7 +146,7 @@ const labels = {
 					<dd id="tab-total" class="price font-heading text-xl"></dd>
 				</div>
 			</dl>
-			<p id="tab-pay-note" class="rounded-lg border tone-neutral px-3 py-2 text-sm"></p>
+			<p id="tab-pay-note" class="hidden rounded-lg border tone-neutral px-3 py-2 text-sm"></p>
 			<div id="tab-pay-slot"></div>
 		</footer>
 	</div>
@@ -183,11 +187,11 @@ const labels = {
 		</div>
 		<label class="flex flex-col gap-1.5 text-sm font-medium text-foreground" data-contact-name>
 			{labels.name}
-			<input name="name" type="text" autocomplete="name" maxlength="120" class="field" />
+			<input name="name" type="text" autocomplete="name" maxlength="120" class="field" aria-describedby="table-contact-error" />
 		</label>
 		<label class="flex flex-col gap-1.5 text-sm font-medium text-foreground" data-contact-phone>
 			{labels.phone}
-			<input name="phone" type="tel" autocomplete="tel" inputmode="tel" maxlength="30" class="field" dir="ltr" />
+			<input name="phone" type="tel" autocomplete="tel" inputmode="tel" maxlength="30" class="field" dir="ltr" aria-describedby="table-contact-error" />
 		</label>
 		<p id="table-contact-error" class="hidden text-sm font-medium text-destructive" role="alert"></p>
 		<button type="submit" class="btn-cta w-full">{labels.sendToKitchen}</button>
@@ -240,11 +244,11 @@ const labels = {
 		</fieldset>
 		<label class="flex flex-col gap-1.5 text-sm font-medium text-foreground">
 			{labels.name}
-			<input name="name" type="text" autocomplete="name" maxlength="120" class="field" required />
+			<input name="name" type="text" autocomplete="name" maxlength="120" class="field" required aria-describedby="tab-pay-error" />
 		</label>
 		<label class="flex flex-col gap-1.5 text-sm font-medium text-foreground">
 			{labels.phone}
-			<input name="phone" type="tel" autocomplete="tel" inputmode="tel" maxlength="30" class="field" dir="ltr" required />
+			<input name="phone" type="tel" autocomplete="tel" inputmode="tel" maxlength="30" class="field" dir="ltr" required aria-describedby="tab-pay-error" />
 		</label>
 		<p id="tab-pay-error" class="hidden rounded-lg border tone-danger px-3 py-2 text-sm" role="alert"></p>
 		<button type="submit" id="tab-pay-submit" class="btn-cta w-full"></button>

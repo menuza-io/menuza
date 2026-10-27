@@ -17,6 +17,16 @@ import { z } from 'zod'
 
 export const PRINT_ADMIN_VENDORS = ['gelato', 'prodigi'] as const
 
+const MARGIN_STATUSES = new Set([
+	'paid',
+	'submitting',
+	'submitted',
+	'in_production',
+	'shipped',
+	'delivered',
+	'held',
+])
+
 export async function loader({ request }: LoaderFunctionArgs) {
 	await requireUserWithRole(request, 'admin')
 	const [settings] = await db
@@ -74,10 +84,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
 			...order,
 			createdAt: order.createdAt.toISOString(),
 			// Kept after tax: what Menuza earns over the vendor's wholesale.
-			marginCents:
-				order.status === 'refunded' || order.status === 'cancelled'
-					? 0
-					: order.totalCents - order.taxCents - order.wholesaleCents,
+			// Only money actually collected and kept counts.
+			marginCents: MARGIN_STATUSES.has(order.status)
+				? order.totalCents - order.taxCents - order.wholesaleCents
+				: 0,
 		})),
 	}
 }

@@ -48,6 +48,7 @@ export function OpenTabs({
 	const [closing, setClosing] = useState<QrTab | null>(null)
 	const [voiding, setVoiding] = useState<QrTab | null>(null)
 	const [locking, setLocking] = useState<QrTab | null>(null)
+	const [lockBusy, setLockBusy] = useState(false)
 
 	const load = useCallback(
 		async (signal?: AbortSignal) => {
@@ -94,26 +95,31 @@ export function OpenTabs({
 		}
 	}
 
-	if (failed) {
-		return (
-			<div
-				role="alert"
-				className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-4 text-sm"
-			>
-				<span>{_(msg`Open table tabs could not be loaded.`)}</span>
-				<Button size="sm" variant="outline" onClick={() => void load()}>
-					<Trans>Try again</Trans>
-				</Button>
-			</div>
-		)
-	}
-	if (tabs.length === 0) return null
+	const failedBanner = failed ? (
+		<div
+			role="alert"
+			className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-4 text-sm"
+		>
+			<span>
+				{tabs.length > 0
+					? _(
+							msg`Open table tabs could not be refreshed. This list may be out of date.`,
+						)
+					: _(msg`Open table tabs could not be loaded.`)}
+			</span>
+			<Button size="sm" variant="outline" onClick={() => void load()}>
+				<Trans>Try again</Trans>
+			</Button>
+		</div>
+	) : null
+	if (tabs.length === 0) return failedBanner
 
 	return (
 		<section aria-labelledby="open-tabs-heading" className="space-y-3">
 			<h2 id="open-tabs-heading" className="text-base font-semibold">
 				<Trans>Open tabs</Trans>
 			</h2>
+			{failedBanner}
 			<ul className="grid gap-3 sm:grid-cols-2" data-testid="open-tabs">
 				{tabs.map((tab) => {
 					const label = tab.table.label
@@ -178,7 +184,7 @@ export function OpenTabs({
 										onClick={() => setClosing(tab)}
 										disabled={tab.paymentStatus === 'pending'}
 										aria-label={_(
-											msg`Close tab ${number} for table ${label} at the counter`,
+											msg`Close at counter, tab ${number}, table ${label}`,
 										)}
 									>
 										<Trans>Close at counter</Trans>
@@ -188,7 +194,7 @@ export function OpenTabs({
 										variant="ghost"
 										onClick={() => setVoiding(tab)}
 										disabled={tab.paymentStatus === 'pending'}
-										aria-label={_(msg`Void tab ${number} for table ${label}`)}
+										aria-label={_(msg`Void, tab ${number}, table ${label}`)}
 									>
 										<Trans>Void</Trans>
 									</Button>
@@ -197,7 +203,7 @@ export function OpenTabs({
 											size="sm"
 											variant="ghost"
 											onClick={() => setLocking(tab)}
-											aria-label={_(msg`Lock tab ${number} for table ${label}`)}
+											aria-label={_(msg`Lock, tab ${number}, table ${label}`)}
 										>
 											<Trans>Lock</Trans>
 										</Button>
@@ -256,14 +262,20 @@ export function OpenTabs({
 							<Trans>Cancel</Trans>
 						</AlertDialogCancel>
 						<Button
+							disabled={lockBusy}
 							onClick={() => {
 								if (!locking) return
 								const tab = locking
+								setLockBusy(true)
 								void act(
 									`/tabs/${tab.id}/lock`,
 									{},
 									_(msg`Tab locked. Guests can no longer add to it.`),
-								).then(() => setLocking(null))
+								)
+									.then((ok) => {
+										if (ok) setLocking(null)
+									})
+									.finally(() => setLockBusy(false))
 							}}
 						>
 							<Trans>Lock tab</Trans>

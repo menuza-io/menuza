@@ -1180,6 +1180,10 @@ msgstr "Leave the waitlist?"
 msgid "Leave this table"
 msgstr "Leave this table"
 
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Leaving removes this tab from this phone. The tab stays open until it is paid."
+msgstr "Leaving removes this tab from this phone. The tab stays open until it is paid."
+
 #: src/lib/ordering-labels.ts:52
 msgid "Left"
 msgstr "Left"
@@ -2520,6 +2524,7 @@ msgstr "Total"
 msgid "Total paid"
 msgstr "Total paid"
 
+#: src/components/ordering/TableTab.astro.ts:3
 #: src/lib/ordering-labels.ts:96
 #: src/lib/reservations/labels.ts:281
 #: src/lib/reservations/labels.ts:385
@@ -2682,6 +2687,10 @@ msgstr "We could not find your place in line. The link may have expired."
 #: src/lib/reservations/labels.ts:208
 msgid "We could not load your reservations."
 msgstr "We could not load your reservations."
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "We could not load your tab. Check your connection."
+msgstr "We could not load your tab. Check your connection."
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "We could not place your order. Please try again."

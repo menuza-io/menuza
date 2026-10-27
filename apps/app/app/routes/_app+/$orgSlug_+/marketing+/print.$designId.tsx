@@ -5,6 +5,7 @@ import { useLingui } from '@lingui/react'
 import {
 	defaultPrintCopy,
 	getPrintSize,
+	localeDirection,
 	PRINT_MAX_FEATURED_ITEMS,
 	PRINT_PRODUCTS,
 	PRINT_TEMPLATE_STYLES,
@@ -250,6 +251,13 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	if (submission.status !== 'success') {
 		return { result: submission.reply(), error: null }
 	}
+	if (
+		submission.value.qrKind === 'table' &&
+		!submission.value.allTables &&
+		submission.value.tableIds.length === 0
+	) {
+		return { result: submission.reply(), error: 'no_tables' as const }
+	}
 	const { locales } = orgLocales(access.organization)
 	const content = toContent(submission.value, locales)
 	if (!content.success) {
@@ -266,7 +274,15 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		content: content.data,
 	})
 	if (submission.value.intent === 'approve') {
-		await approvePrintDesign(request, access, saved)
+		try {
+			await approvePrintDesign(request, access, saved)
+		} catch (error) {
+			// Nothing to print (for example a table set with no tables yet).
+			if (error instanceof Response && error.status === 422) {
+				return { result: submission.reply(), error: 'no_tables' as const }
+			}
+			throw error
+		}
 	}
 	return { result: submission.reply(), error: null }
 }
@@ -310,7 +326,7 @@ export default function PrintDesignRoute() {
 			: (content.locationId ?? data.locations[0]?.id ?? '')
 	const proofSrc = `/${orgSlug}/marketing/print/${design.id}/proof?v=${encodeURIComponent(design.updatedAt)}`
 	const proofHeight = Math.round(
-		Math.min(3, data.pieceCount ?? 3) *
+		Math.min(3, Math.max(1, data.proofPieces)) *
 			(PROOF_WIDTH_PX * data.proofAspect * (data.folded ? 2 : 1) + 24) +
 			24,
 	)
@@ -335,11 +351,13 @@ export default function PrintDesignRoute() {
 				<Alert variant="destructive" role="alert">
 					<AlertTitle>{_(msg`We could not save this print`)}</AlertTitle>
 					<AlertDescription>
-						{actionData.error === 'invalid_qr'
-							? _(
-									msg`Check the QR code: use a page on your own website, like /menu.`,
-								)
-							: _(msg`Check the words and choices, then save again.`)}
+						{actionData.error === 'no_tables'
+							? _(msg`Choose at least one table for the cards.`)
+							: actionData.error === 'invalid_qr'
+								? _(
+										msg`Check the QR code: use a page on your own website, like /menu.`,
+									)
+								: _(msg`Check the words and choices, then save again.`)}
 					</AlertDescription>
 				</Alert>
 			) : null}
@@ -482,6 +500,7 @@ export default function PrintDesignRoute() {
 											<Input
 												id={`headline-${locale}`}
 												name={`headline.${locale}`}
+												dir={localeDirection(locale)}
 												defaultValue={content.headline[locale] ?? ''}
 												placeholder={defaultPrintCopy(locale, qrKind).headline}
 												maxLength={PRINT_TEXT_MAX.headline}
@@ -494,6 +513,7 @@ export default function PrintDesignRoute() {
 											<Textarea
 												id={`body-${locale}`}
 												name={`body.${locale}`}
+												dir={localeDirection(locale)}
 												defaultValue={content.body[locale] ?? ''}
 												maxLength={PRINT_TEXT_MAX.body}
 												rows={3}
@@ -506,6 +526,7 @@ export default function PrintDesignRoute() {
 											<Input
 												id={`cta-${locale}`}
 												name={`callToAction.${locale}`}
+												dir={localeDirection(locale)}
 												defaultValue={content.callToAction[locale] ?? ''}
 												placeholder={
 													defaultPrintCopy(locale, qrKind).callToAction

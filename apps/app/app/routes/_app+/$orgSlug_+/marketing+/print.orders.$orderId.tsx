@@ -160,6 +160,10 @@ export default function PrintOrderRoute() {
 		return () => window.clearTimeout(timer)
 	}, [waitingForBank, pollsLeft, revalidator])
 	// Formatted in the browser: the server does not know the viewer's clock.
+	const [createdAt, setCreatedAt] = useState('')
+	useEffect(() => {
+		setCreatedAt(new Date(order.createdAt).toLocaleString(i18n.locale))
+	}, [order.createdAt, i18n.locale])
 	const [expiresAt, setExpiresAt] = useState('')
 	useEffect(() => {
 		setExpiresAt(
@@ -178,10 +182,12 @@ export default function PrintOrderRoute() {
 	const money = (cents: number) =>
 		formatMoney(cents, order.currency, i18n.locale)
 	const expired = new Date(order.quoteExpiresAt).getTime() <= Date.now()
+	// Back from Stripe and still confirming: never offer a second payment.
 	const payable =
 		data.canPay &&
 		(order.status === 'quote' || order.status === 'awaiting_payment') &&
-		!expired
+		!expired &&
+		!waitingForBank
 	const cancellable =
 		data.canPay && PRINT_SELF_CANCEL_STATUSES.includes(order.status)
 
@@ -189,7 +195,7 @@ export default function PrintOrderRoute() {
 		<div className="space-y-8">
 			<PageHeader
 				title={_(msg`Print order`)}
-				description={new Date(order.createdAt).toLocaleString(i18n.locale)}
+				description={createdAt}
 				actions={
 					<Button
 						variant="outline"
@@ -395,6 +401,7 @@ export default function PrintOrderRoute() {
 														name="intent"
 														value="cancel"
 														variant="destructive"
+														disabled={busy}
 													>
 														{_(msg`Cancel order`)}
 													</Button>
@@ -403,7 +410,7 @@ export default function PrintOrderRoute() {
 										</AlertDialogContent>
 									</AlertDialog>
 								) : null}
-								{payable ? (
+								{payable && expiresAt ? (
 									<p className="text-muted-foreground text-sm">
 										{_(msg`This price is held until ${expiresAt}.`)}
 									</p>

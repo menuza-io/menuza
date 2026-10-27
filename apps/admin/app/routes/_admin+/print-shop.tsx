@@ -136,6 +136,7 @@ function ConfirmedAction({
 						<Button
 							type="submit"
 							variant={destructive ? 'destructive' : 'default'}
+							disabled={fetcher.state !== 'idle'}
 						>
 							{confirmLabel}
 						</Button>

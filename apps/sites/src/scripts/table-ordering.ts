@@ -69,6 +69,9 @@ type Labels = Record<
 	| 'payCancelled'
 	| 'contactMissing'
 	| 'leaveConfirm'
+	| 'leaveWarning'
+	| 'tabLoadFailed'
+	| 'tryAgain'
 	| 'stillConfirming',
 	string
 >
@@ -80,6 +83,12 @@ export type TableOrderingDeps = {
 	formatMoney: (amount: number) => string
 	store: CartStore
 	cart: { open(): void; close(): void; refresh(): void }
+}
+
+/** `aria-invalid` must read "true"; an empty attribute counts as false. */
+function setInvalid(input: HTMLElement, invalid: boolean) {
+	if (invalid) input.setAttribute('aria-invalid', 'true')
+	else input.removeAttribute('aria-invalid')
 }
 
 function fill(template: string, values: Record<string, string>) {
@@ -130,7 +139,32 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 			`rounded-lg border px-3 py-2 text-sm ${toneClass}`,
 			message,
 		)
-		notice.replaceChildren(box)
+		// Both regions stay in the page so insertions are announced; errors go
+		// to the assertive one.
+		const alertRegion = document.getElementById('table-alert')
+		if (tone === 'danger' && alertRegion) {
+			notice.replaceChildren()
+			alertRegion.replaceChildren(box)
+		} else {
+			alertRegion?.replaceChildren()
+			notice.replaceChildren(box)
+		}
+	}
+
+	/** An error inside the open cart drawer, where the guest is looking. */
+	function cartError(message: string | null) {
+		const slot = document.getElementById('cart-drawer-header-extra')
+		if (!slot) return
+		slot.querySelector('[data-table-error]')?.remove()
+		if (!message) return
+		const box = el(
+			'p',
+			'rounded-lg border tone-danger px-3 py-2 text-sm',
+			message,
+		)
+		box.dataset.tableError = 'true'
+		box.setAttribute('role', 'alert')
+		slot.appendChild(box)
 	}
 
 	function errorText(code: string) {
@@ -197,6 +231,7 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 		}
 		const original = leaveBtn.textContent
 		leaveBtn.textContent = labels.leaveConfirm
+		say(labels.leaveWarning)
 		leaveArmed = setTimeout(() => {
 			leaveArmed = undefined
 			leaveBtn.textContent = original
@@ -348,7 +383,31 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 		paintBanner(tab.totals.totalCents)
 	}
 
+	// A settled tab stays on screen as the receipt until a new tab begins.
+	let settledTab: QrPublicTab | null = null
+
+	function showTabError() {
+		const rounds = document.getElementById('tab-rounds')
+		if (!rounds) return
+		renderedSignature = ''
+		const box = el(
+			'div',
+			'flex flex-col items-start gap-3 rounded-lg border tone-danger px-3 py-3 text-sm',
+		)
+		box.setAttribute('role', 'alert')
+		box.appendChild(el('p', '', labels.tabLoadFailed))
+		const retry = el('button', 'btn-secondary', labels.tryAgain)
+		retry.type = 'button'
+		retry.addEventListener('click', () => void loadTab())
+		box.appendChild(retry)
+		rounds.replaceChildren(box)
+	}
+
 	async function loadTab() {
+		if (!session?.tabToken && settledTab) {
+			renderTab(settledTab)
+			return
+		}
 		if (!session?.tabToken) {
 			renderTab({
 				id: '',
@@ -375,7 +434,10 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 			const tab = await fetchTab(session.tabToken)
 			renderTab(tab)
 			if (tab.status !== 'open' && session) {
-				// Settled or voided: the next order starts a new tab.
+				// Settled or voided: keep it as the receipt, and stop polling; the
+				// next order starts a new tab.
+				settledTab = tab
+				clearInterval(tabPoll)
 				session = { ...session, tabId: null, tabToken: null, tabNumber: null }
 				saveTableSession(session)
 			}
@@ -387,7 +449,9 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 			) {
 				session = { ...session, tabId: null, tabToken: null, tabNumber: null }
 				saveTableSession(session)
+				return
 			}
+			showTabError()
 		}
 	}
 
@@ -397,10 +461,16 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 
 	function openTab() {
 		if (!tabMotion || !tabDrawer || tabMotion.isOpen()) return
-		tabOpener =
+		// Opened from a sheet or the cart (which are closing): return focus to
+		// the banner's View tab button instead of a hidden element.
+		const active =
 			document.activeElement instanceof HTMLElement
 				? document.activeElement
 				: null
+		tabOpener =
+			active && active !== document.body && !active.closest('.site-overlay')
+				? active
+				: document.getElementById('open-tab-btn')
 		tabMotion.open()
 		const releaseScroll = lockScroll()
 		const releaseTrap = trapFocus(tabDrawer)
@@ -505,8 +575,8 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 		const nameMissing = nameInput.required && !name
 		const phoneMissing =
 			phoneInput.required && !/^\+?[\d\s\-().]{7,25}$/.test(phone)
-		nameInput.toggleAttribute('aria-invalid', nameMissing)
-		phoneInput.toggleAttribute('aria-invalid', phoneMissing)
+		setInvalid(nameInput, nameMissing)
+		setInvalid(phoneInput, phoneMissing)
 		if (nameMissing || phoneMissing) {
 			if (error) {
 				error.textContent = labels.contactMissing
@@ -606,8 +676,8 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 		const nameField = payForm.elements.namedItem('name') as HTMLInputElement
 		const phoneField = payForm.elements.namedItem('phone') as HTMLInputElement
 		const phoneBad = !/^\+?[\d\s\-().]{7,25}$/.test(phone)
-		nameField.toggleAttribute('aria-invalid', !name)
-		phoneField.toggleAttribute('aria-invalid', phoneBad)
+		setInvalid(nameField, !name)
+		setInvalid(phoneField, phoneBad)
 		if (!name || phoneBad) {
 			showError(labels.contactMissing)
 			;(!name ? nameField : phoneField).focus()
@@ -644,6 +714,15 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 				}
 				paintPayAmount()
 			})
+	})
+
+	// Back from the hosted page through the browser's back button: the page
+	// comes back from the back-forward cache with the button still busy.
+	window.addEventListener('pageshow', (event) => {
+		if (!event.persisted || !paySubmit) return
+		paySubmit.removeAttribute('aria-busy')
+		paySubmit.disabled = false
+		paintPayAmount()
 	})
 
 	/** Back from the hosted page: reconcile, then show the tab receipt. */
@@ -708,6 +787,7 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 				tabNumber: created.tab.tabNumber,
 			}
 			saveTableSession(session)
+			cartError(null)
 			deps.store.clear()
 			deps.cart.close()
 			say(labels.sent, 'success')
@@ -735,12 +815,14 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 				saveTableSession(session)
 				sending = false
 				return sendRound(contact)
-			} else {
-				if (isDeadTableError(code)) {
-					clearTableSession(orgId)
-				}
+			} else if (isDeadTableError(code)) {
+				// This table code is over: close the cart and say why on the page.
+				clearTableSession(orgId)
 				say(errorText(code), 'danger')
 				deps.cart.close()
+			} else {
+				// Worth retrying: keep the cart (and its button) and say it there.
+				cartError(errorText(code))
 			}
 		} finally {
 			sending = false

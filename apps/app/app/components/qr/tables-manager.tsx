@@ -16,7 +16,7 @@ import { Button } from '@repo/ui/button'
 import { Field, FieldDescription, FieldLabel } from '@repo/ui/field'
 import { Icon } from '@repo/ui/icon'
 import { Input } from '@repo/ui/input'
-import { useCallback, useEffect, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link } from 'react-router'
 import { toast } from 'sonner'
 import { z } from 'zod'
@@ -53,14 +53,19 @@ export function TablesManager({
 	const [busy, setBusy] = useState(false)
 	const [labels, setLabels] = useState('')
 
+	// Only the latest request may paint: a slow answer for the previous
+	// location must not show under the new one.
+	const requestSeq = useRef(0)
 	const load = useCallback(async () => {
 		if (!locationId) return
+		const seq = ++requestSeq.current
 		try {
 			const payload = z
 				.object({ tables: z.array(qrTableSchema) })
 				.parse(
 					await request(`/tables?locationId=${encodeURIComponent(locationId)}`),
 				)
+			if (seq !== requestSeq.current) return
 			setTables(payload.tables)
 			setError(null)
 		} catch {
@@ -274,6 +279,16 @@ function TableRow({
 	const { _ } = useLingui()
 	const [editing, setEditing] = useState(false)
 	const [label, setLabel] = useState(table.label)
+	const renameButton = useRef<HTMLButtonElement>(null)
+	const [returnFocus, setReturnFocus] = useState(false)
+	useEffect(() => {
+		// Back from the inline editor: focus the Rename button again.
+		if (!editing && returnFocus) {
+			renameButton.current?.focus()
+			setReturnFocus(false)
+		}
+	}, [editing, returnFocus])
+	const tableName = table.label
 	return (
 		<li className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
 			<div className="flex min-w-0 flex-wrap items-center gap-2">
@@ -282,7 +297,11 @@ function TableRow({
 						className="flex items-center gap-2"
 						onSubmit={(event) => {
 							event.preventDefault()
-							void onRename(label.trim()).then((ok) => ok && setEditing(false))
+							void onRename(label.trim()).then((ok) => {
+								if (!ok) return
+								setReturnFocus(true)
+								setEditing(false)
+							})
 						}}
 					>
 						<Input
@@ -302,6 +321,7 @@ function TableRow({
 							variant="ghost"
 							onClick={() => {
 								setLabel(table.label)
+								setReturnFocus(true)
 								setEditing(false)
 							}}
 						>
@@ -322,14 +342,25 @@ function TableRow({
 			</div>
 			{canWrite && !editing ? (
 				<div className="flex flex-wrap gap-2">
-					<Button size="sm" variant="ghost" onClick={() => setEditing(true)}>
+					<Button
+						ref={renameButton}
+						size="sm"
+						variant="ghost"
+						onClick={() => setEditing(true)}
+						aria-label={_(msg`Rename, table ${tableName}`)}
+					>
 						<Icon name="pencil" className="size-4" />
 						{_(msg`Rename`)}
 					</Button>
 					<AlertDialog>
 						<AlertDialogTrigger
 							render={
-								<Button size="sm" variant="ghost" disabled={busy}>
+								<Button
+									size="sm"
+									variant="ghost"
+									disabled={busy}
+									aria-label={_(msg`New QR code, table ${tableName}`)}
+								>
 									{_(msg`New QR code`)}
 								</Button>
 							}
@@ -363,6 +394,7 @@ function TableRow({
 									size="sm"
 									variant="ghost"
 									disabled={busy || Boolean(table.openTabId)}
+									aria-label={_(msg`Archive, table ${tableName}`)}
 								>
 									{_(msg`Archive`)}
 								</Button>
