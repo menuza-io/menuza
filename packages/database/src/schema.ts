@@ -3067,6 +3067,9 @@ export const PrintDesign = sqliteTable(
 		style: text().notNull(), // classic | bold | minimal
 		templateVersion: integer().notNull(),
 		content: text({ mode: 'json' }).notNull(), // PrintDesignContent
+		// `template` (designed here) or `artwork` (a finished file, e.g. Canva).
+		source: text().default('template').notNull(),
+		artwork: text({ mode: 'json' }), // PrintArtwork, for `artwork` designs
 		status: text().default('draft').notNull(), // draft | approved
 		// The frozen PrintSnapshot the operator approved; orders print this.
 		snapshot: text({ mode: 'json' }),
@@ -3331,3 +3334,47 @@ export const PrintVendorEvent = sqliteTable('PrintVendorEvent', {
 		.$defaultFn(() => new Date())
 		.notNull(),
 })
+
+/**
+ * A member's Canva account, for importing designs into the Print shop and
+ * sending prints to Canva. Per organization and user: designs belong to the
+ * person's Canva account. Tokens are encrypted (INTEGRATION_ENCRYPTION_KEY);
+ * Canva refresh tokens are single use, so a refresh replaces both.
+ */
+export const PrintCanvaConnection = sqliteTable(
+	'PrintCanvaConnection',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		userId: text()
+			.notNull()
+			.references(() => User.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
+		canvaUserId: text(),
+		displayName: text(),
+		accessToken: text().notNull(),
+		refreshToken: text().notNull(),
+		expiresAt: integer({ mode: 'timestamp_ms' }).notNull(),
+		scope: text().notNull(),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		uniqueIndex('PrintCanvaConnection_organizationId_userId_key').on(
+			table.organizationId,
+			table.userId,
+		),
+	],
+)

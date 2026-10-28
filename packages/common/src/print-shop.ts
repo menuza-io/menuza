@@ -14,16 +14,27 @@ import { z } from 'zod'
 export const PRINT_SHOP_FLAG_KEYS = {
 	enabled: 'print_shop.enabled',
 	shipping: 'print_shop.shipping',
+	/** Import designs from Canva and send prints to Canva. */
+	canva: 'print_shop.canva',
 } as const
 
-export type PrintShopFeatures = { enabled: boolean; shipping: boolean }
+export type PrintShopFeatures = {
+	enabled: boolean
+	shipping: boolean
+	canva: boolean
+}
 
 export function foldPrintShopFeatures(raw: {
 	enabled?: unknown
 	shipping?: unknown
+	canva?: unknown
 }): PrintShopFeatures {
 	const enabled = raw.enabled === true
-	return { enabled, shipping: enabled && raw.shipping === true }
+	return {
+		enabled,
+		shipping: enabled && raw.shipping === true,
+		canva: enabled && raw.canva === true,
+	}
 }
 
 // ---------------------------------------------------------------------------
@@ -274,10 +285,80 @@ export type PrintSnapshot = {
 	/** The target as designed (re-resolved for the pre-order check). */
 	qr: PrintQrTarget
 	pieces: PrintPiece[]
+	/** An `artwork` design prints this file as it is, not the template. */
+	artwork?: PrintArtwork
 	/** Facts the stale check compares on re-order. */
 	facts: {
 		featured: Array<{ id: string; name: string; price: string }>
 		pieces: PrintPieceFact[]
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Artwork: a finished file made elsewhere (Canva), printed as it is
+// ---------------------------------------------------------------------------
+
+export const PRINT_ARTWORK_PROVIDERS = ['canva'] as const
+export type PrintArtworkProvider = (typeof PRINT_ARTWORK_PROVIDERS)[number]
+
+/** Largest artwork PDF we accept (vendors cap uploads too). */
+export const PRINT_ARTWORK_MAX_BYTES = 40 * 1024 * 1024
+/** How far a page may differ from the product size and still fit. */
+export const PRINT_ARTWORK_TOLERANCE_MM = 2
+/** The most bleed a page may carry around the product size. */
+export const PRINT_ARTWORK_MAX_BLEED_MM = 6
+
+/** Stored on an `artwork` design: the files and where they came from. */
+export const printArtworkSchema = z.strictObject({
+	provider: z.enum(PRINT_ARTWORK_PROVIDERS),
+	/** The design's id at the provider (to update or edit it there). */
+	externalId: z.string().min(1).max(200),
+	title: z.string().max(255),
+	/** Object keys in the platform bucket. */
+	fileKey: z.string().min(1).max(300),
+	previewKey: z.string().min(1).max(300).nullable(),
+	/** SHA-256 of the PDF, so a new import is a new snapshot. */
+	fileHash: z.string().min(1).max(100),
+	pages: z.number().int().min(1).max(100),
+	/** Page size as exported, bleed included. */
+	widthMm: z.number().positive(),
+	heightMm: z.number().positive(),
+	/** Bleed around the product size on each side (0 when none). */
+	bleedMm: z.number().min(0).max(PRINT_ARTWORK_MAX_BLEED_MM),
+	importedAt: z.string(),
+})
+export type PrintArtwork = z.infer<typeof printArtworkSchema>
+
+/**
+ * Whether a page of `widthMm` × `heightMm` prints as `size`: the product
+ * size itself (no bleed) or the size with an even bleed up to
+ * `PRINT_ARTWORK_MAX_BLEED_MM`, within `PRINT_ARTWORK_TOLERANCE_MM`.
+ * Orientation must match: a landscape page is not a portrait poster.
+ */
+export function printArtworkFit(
+	size: Pick<PrintSize, 'widthMm' | 'heightMm'>,
+	page: { widthMm: number; heightMm: number },
+): { fits: true; bleedMm: number } | { fits: false } {
+	const extraWidth = page.widthMm - size.widthMm
+	const extraHeight = page.heightMm - size.heightMm
+	const tolerance = PRINT_ARTWORK_TOLERANCE_MM
+	if (extraWidth < -tolerance || extraHeight < -tolerance)
+		return { fits: false }
+	// The bleed is the same on every side: half of the extra on each axis.
+	const bleedWidth = Math.max(0, extraWidth / 2)
+	const bleedHeight = Math.max(0, extraHeight / 2)
+	if (Math.abs(bleedWidth - bleedHeight) > tolerance / 2) return { fits: false }
+	const bleedMm = (bleedWidth + bleedHeight) / 2
+	// Half a millimetre over the limit is point rounding; the recorded bleed
+	// never exceeds what `printArtworkSchema` accepts.
+	if (bleedMm > PRINT_ARTWORK_MAX_BLEED_MM + 0.5) return { fits: false }
+	// Under a millimetre of extra is rounding, not bleed.
+	return {
+		fits: true,
+		bleedMm:
+			bleedMm < 1
+				? 0
+				: Math.min(PRINT_ARTWORK_MAX_BLEED_MM, Math.round(bleedMm * 10) / 10),
 	}
 }
 
@@ -354,6 +435,11 @@ export type PrintCatalog = {
 	getSize(product: PrintProductKey, sizeKey: string): PrintSize | null
 	/** QR target kinds a product accepts, in editor order. */
 	targetsFor(product: PrintProductKey): readonly string[]
+	/**
+	 * Products a finished file can be printed as: those that may go without a
+	 * QR code (a file cannot carry per-piece codes).
+	 */
+	acceptsArtwork(product: PrintProductKey): boolean
 	qrTargetSchema: z.ZodType<PrintQrTarget>
 	designContentSchema: z.ZodType<PrintDesignContent>
 	defaultCopy(locale: string, kind: string): PrintTargetCopy
@@ -390,6 +476,12 @@ export function createPrintCatalog(
 	const singlePiece = Object.values(targets)
 		.filter((target) => !target.perPiece && target.kind !== 'none')
 		.map((target) => target.kind)
+
+	const targetsFor = (product: PrintProductKey): readonly string[] =>
+		products[product]?.qrTargets?.filter((kind) => targets[kind]) ?? [
+			...singlePiece,
+			'none',
+		]
 
 	const qrTargetSchema = z
 		.object({ kind: z.string().min(1).max(40) })
@@ -429,11 +521,9 @@ export function createPrintCatalog(
 		isProduct: (key) => Object.prototype.hasOwnProperty.call(products, key),
 		getSize: (product, sizeKey) =>
 			products[product]?.sizes.find((size) => size.key === sizeKey) ?? null,
-		targetsFor: (product) =>
-			products[product]?.qrTargets?.filter((kind) => targets[kind]) ?? [
-				...singlePiece,
-				'none',
-			],
+		targetsFor,
+		acceptsArtwork: (product) =>
+			Boolean(products[product]) && targetsFor(product).includes('none'),
 		qrTargetSchema: qrTargetSchema as unknown as z.ZodType<PrintQrTarget>,
 		designContentSchema,
 		defaultCopy: (locale, kind) => (targets[kind] ?? SITE_TARGET).copy(locale),

@@ -598,6 +598,12 @@ git commit --no-verify -m "fix: resolve ESLint warnings (verified manually)"
   `BASE_URL` is local), vendor keys, and the secret in vendor webhook URLs (32+
   characters). Admin needs `APP_URL` for refunds and retries. See
   `docs/print-shop.md`.
+- `CANVA_CLIENT_ID` / `CANVA_CLIENT_SECRET` / `CANVA_MOCK` - App only. Canva
+  Connect integration for Print shop Import from Canva and Send to Canva
+  (redirect URL `<BASE_URL>/resources/print/canva/callback`); empty hides the
+  buttons. `CANVA_MOCK` is a local emulator, ignored unless `BASE_URL` is local.
+  Tokens are encrypted with `INTEGRATION_ENCRYPTION_KEY`. See
+  `docs/print-shop-canva.md`.
 - `STAFFING_EMAIL_ENABLED` - Tenant-api and App, optional (unset or `true` is
   on). Kill switch for staffing email: on tenant-api it drops staff reminders
   and notices (dropped, not held, so re-enabling sends no backlog); in the App
@@ -877,14 +883,21 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
   `components/print/vertical-ui.tsx` and Admin's
   `components/print/vertical-labels.ts`. Keep business-type words out of the
   core (`utils/print/vocabulary.test.ts`). See `docs/print-shop-verticals.md`.
-- Flags `print_shop.enabled` (designs, free PDFs) and `print_shop.shipping`
-  (paid orders). Campaign permissions design; paying also needs
-  `update:settings:any`. Every print route awaits `requirePrintShopAccess` first
-  (`print-guards.test.ts`).
+- Flags `print_shop.enabled` (designs, free PDFs), `print_shop.shipping` (paid
+  orders) and `print_shop.canva` (import from and send to Canva). Campaign
+  permissions design; paying also needs `update:settings:any`. Every print route
+  awaits `requirePrintShopAccess` first (`print-guards.test.ts`).
 - Shipped prints: the platform is the merchant (Stripe Checkout on the platform
   account, metadata `type: 'print_order'`); vendor orders are placed only after
   payment; vendor webhooks only trigger a status fetch. Docs:
   `docs/print-shop.md`.
+- Canva: each member connects their own Canva account (`PrintCanvaConnection`,
+  migration `0021_print_canva`, tokens encrypted). An imported design is an
+  artwork print (`PrintDesign.source = 'artwork'`): its stored PDF prints as it
+  is, so its page 1 must be the product's size (bleed allowed). Prints with a
+  vertical's capability codes are never sent to Canva. Code in
+  `utils/print/canva/` and `utils/print/artwork.server.ts`. Docs:
+  `docs/print-shop-canva.md`.
 
 ## Known issues
 

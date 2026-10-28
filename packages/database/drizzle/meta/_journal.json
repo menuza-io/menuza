@@ -148,6 +148,13 @@
 			"when": 1793122555645,
 			"tag": "0020_print_shop",
 			"breakpoints": true
+		},
+		{
+			"idx": 21,
+			"version": "6",
+			"when": 1793135125121,
+			"tag": "0021_print_canva",
+			"breakpoints": true
 		}
 	]
 }

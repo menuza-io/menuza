@@ -49,6 +49,8 @@ describe('print shop guards', () => {
 				'print.$designId.tsx',
 				'print.$designId.proof.tsx',
 				'print.$designId.download.tsx',
+				'print.canva.tsx',
+				'print.canva.connect.ts',
 			]),
 		)
 	})
@@ -67,5 +69,28 @@ describe('print shop guards', () => {
 				)
 			}
 		}
+	})
+
+	it('the Canva callback checks the hand-off, then access, then calls Canva', () => {
+		const source = fs.readFileSync(
+			path.resolve(
+				import.meta.dirname,
+				'../../routes/resources+/print.canva.callback.ts',
+			),
+			'utf8',
+		)
+		const body = exportedFunctionBody(source, 'loader') ?? ''
+		const at = (needle: string) => {
+			const index = body.indexOf(needle)
+			if (index === -1) throw new Error(`The callback has no ${needle}`)
+			return index
+		}
+		const state = at('sameState(')
+		const access = at('requirePrintShopAccess(')
+		expect(body.slice(access, access + 120)).toMatch(/write:\s*true/)
+		expect(at('saved.userId !== userId')).toBeLessThan(state)
+		expect(state).toBeLessThan(access)
+		expect(access).toBeLessThan(at('access.features.canva'))
+		expect(at('access.features.canva')).toBeLessThan(at('exchangeCanvaCode('))
 	})
 })

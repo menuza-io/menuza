@@ -8,6 +8,7 @@ import {
 	PRINT_TEMPLATE_STYLES,
 	PRINT_TEXT_MAX,
 	printSitePath,
+	type PrintArtwork,
 	type PrintDesignContent,
 	type PrintQrTarget,
 } from '@repo/common/print-shop'
@@ -55,12 +56,23 @@ import {
 } from 'react-router'
 import { z } from 'zod'
 import {
+	PRINT_ARTWORK_ERROR_FALLBACK,
+	PRINT_ARTWORK_ERROR_LABELS,
+} from '#app/components/print/artwork-labels.ts'
+import {
 	PRINT_STYLE_LABELS,
 	printProductLabel,
 	printTargetLabel,
 } from '#app/components/print/print-labels.ts'
 import { printShopUi } from '#app/components/print/vertical-ui.tsx'
 import { requirePrintShopAccess } from '#app/utils/print/access.server.ts'
+import {
+	canvaEditUrl,
+	PrintArtworkError,
+	refreshCanvaArtwork,
+	sendDesignToCanva,
+} from '#app/utils/print/artwork.server.ts'
+import { isCanvaConfigured } from '#app/utils/print/canva/env.server.ts'
 import {
 	approvedSnapshot,
 	approvePrintDesign,
@@ -69,6 +81,7 @@ import {
 	requirePrintDesign,
 	savePrintDesign,
 	toDesignView,
+	updateArtworkDesign,
 } from '#app/utils/print/designs.server.ts'
 import {
 	listFeaturableItems,
@@ -223,8 +236,14 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		stale,
 		pieceCount,
 		proofPieces,
-		proofAspect: size ? size.heightMm / size.widthMm : 1.4,
-		folded: product.folded === true,
+		proofAspect: design.artwork
+			? design.artwork.heightMm / design.artwork.widthMm
+			: size
+				? size.heightMm / size.widthMm
+				: 1.4,
+		folded: design.artwork ? false : product.folded === true,
+		// Import from and send to Canva (the member's own Canva account).
+		canva: access.features.canva && access.canWrite && isCanvaConfigured(),
 	}
 }
 
@@ -234,9 +253,54 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	})
 	const row = await requirePrintDesign(access.organization.id, params.designId)
 	const formData = await request.formData()
-	if (formData.get('intent') === 'archive') {
+	const intent = formData.get('intent')
+	if (intent === 'archive') {
 		await archivePrintDesign(row)
 		return redirect(`/${access.organization.slug}/marketing/print`)
+	}
+	if (
+		intent === 'canva-send' ||
+		intent === 'canva-edit' ||
+		intent === 'canva-refresh'
+	) {
+		if (!access.features.canva || !isCanvaConfigured()) {
+			throw new Response('Not Found', { status: 404 })
+		}
+		try {
+			// Edit and send open Canva (the forms post to a new tab).
+			if (intent === 'canva-send') {
+				return redirect(await sendDesignToCanva(request, access, row))
+			}
+			if (intent === 'canva-edit') {
+				return redirect(await canvaEditUrl(access, row))
+			}
+			await refreshCanvaArtwork(access, row)
+			return { result: undefined, error: null, canva: 'refreshed' as const }
+		} catch (error) {
+			if (error instanceof PrintArtworkError) {
+				return { result: undefined, error: null, canvaError: error.code }
+			}
+			throw error
+		}
+	}
+	if (row.source === 'artwork') {
+		// A finished file: only its name changes here, then approve as usual.
+		const name = String(formData.get('name') ?? '').trim()
+		if (!name || name.length > 120) {
+			return { result: undefined, error: 'invalid_content' as const }
+		}
+		const saved = await updateArtworkDesign(row, { name })
+		if (intent === 'approve') {
+			try {
+				await approvePrintDesign(request, access, saved)
+			} catch (error) {
+				if (error instanceof Response && error.status === 409) {
+					return { result: undefined, error: 'changed' as const }
+				}
+				throw error
+			}
+		}
+		return { result: undefined, error: null }
 	}
 	const submission = parseWithZod(formData, { schema: DesignFormSchema })
 	if (submission.status !== 'success') {
@@ -420,362 +484,398 @@ export default function PrintDesignRoute() {
 				</Alert>
 			) : null}
 
-			<div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_420px]">
-				<Form
-					method="post"
-					{...getFormProps(form)}
-					className="space-y-6"
-					onChange={() => setDirty(true)}
-				>
-					<fieldset disabled={!canWrite} className="space-y-6">
-						<Card>
-							<CardHeader>
-								<CardTitle>{_(msg`Basics`)}</CardTitle>
-							</CardHeader>
-							<CardContent className="space-y-5">
-								<Field>
-									<FieldLabel htmlFor="print-name">{_(msg`Name`)}</FieldLabel>
-									<Input
-										id="print-name"
-										name="name"
-										defaultValue={design.name}
-										maxLength={120}
-										required
-									/>
-								</Field>
-								<FieldSet>
-									<FieldLegend variant="label">{_(msg`Size`)}</FieldLegend>
-									<RadioGroup
-										name="sizeKey"
-										defaultValue={design.sizeKey}
-										className="flex flex-wrap gap-3"
-									>
-										{product.sizes.map((size) => (
-											<Label
-												key={size.key}
-												className="border-border has-[[data-checked]]:border-primary flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border px-4"
-											>
-												<RadioGroupItem value={size.key} />
-												<bdi>{size.label}</bdi>
-											</Label>
-										))}
-									</RadioGroup>
-								</FieldSet>
-								<FieldSet>
-									<FieldLegend variant="label">{_(msg`Style`)}</FieldLegend>
-									<RadioGroup
-										name="style"
-										defaultValue={design.style}
-										className="flex flex-wrap gap-3"
-									>
-										{PRINT_TEMPLATE_STYLES.map((style) => (
-											<Label
-												key={style}
-												className="border-border has-[[data-checked]]:border-primary flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border px-4"
-											>
-												<RadioGroupItem value={style} />
-												{_(PRINT_STYLE_LABELS[style])}
-											</Label>
-										))}
-									</RadioGroup>
-								</FieldSet>
-							</CardContent>
-						</Card>
+			{actionData && 'canvaError' in actionData && actionData.canvaError ? (
+				<Alert variant="destructive" role="alert">
+					<AlertTitle>{_(msg`Canva could not do that`)}</AlertTitle>
+					<AlertDescription>
+						{_(
+							PRINT_ARTWORK_ERROR_LABELS[actionData.canvaError] ??
+								PRINT_ARTWORK_ERROR_FALLBACK,
+						)}
+					</AlertDescription>
+				</Alert>
+			) : actionData && 'canva' in actionData ? (
+				<Alert role="status">
+					<AlertTitle>{_(msg`Updated from Canva`)}</AlertTitle>
+					<AlertDescription>
+						{_(
+							msg`The latest version of the design is in. Approve the proof again to print it.`,
+						)}
+					</AlertDescription>
+				</Alert>
+			) : null}
 
-						<Card>
-							<CardHeader>
-								<CardTitle>{_(msg`Words`)}</CardTitle>
-								<CardDescription>
-									{_(
-										msg`Leave a field empty to use the suggested words. Add a second language for a bilingual print.`,
-									)}
-								</CardDescription>
-							</CardHeader>
-							<CardContent className="space-y-5">
-								<div className="grid gap-4 sm:grid-cols-2">
+			<div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_420px]">
+				{design.artwork ? (
+					<ArtworkDetails
+						name={design.name}
+						artwork={design.artwork}
+						canWrite={canWrite}
+						busy={busy}
+						canva={data.canva}
+					/>
+				) : (
+					<Form
+						method="post"
+						{...getFormProps(form)}
+						className="space-y-6"
+						onChange={() => setDirty(true)}
+					>
+						<fieldset disabled={!canWrite} className="space-y-6">
+							<Card>
+								<CardHeader>
+									<CardTitle>{_(msg`Basics`)}</CardTitle>
+								</CardHeader>
+								<CardContent className="space-y-5">
 									<Field>
-										<FieldLabel htmlFor="print-locale1">
-											{_(msg`Main language`)}
-										</FieldLabel>
-										<select
-											id="print-locale1"
-											name="locale1"
-											value={locale1}
-											onChange={(event) => setLocale1(event.target.value)}
-											className="border-input bg-background h-11 rounded-md border px-3 text-sm"
-										>
-											{data.locales.map((locale) => (
-												<option key={locale} value={locale}>
-													{getSiteLocaleNativeLabel(locale)}
-												</option>
-											))}
-										</select>
+										<FieldLabel htmlFor="print-name">{_(msg`Name`)}</FieldLabel>
+										<Input
+											id="print-name"
+											name="name"
+											defaultValue={design.name}
+											maxLength={120}
+											required
+										/>
 									</Field>
-									<Field>
-										<FieldLabel htmlFor="print-locale2">
-											{_(msg`Second language`)}
-										</FieldLabel>
-										<select
-											id="print-locale2"
-											name="locale2"
-											value={locale2}
-											onChange={(event) => setLocale2(event.target.value)}
-											className="border-input bg-background h-11 rounded-md border px-3 text-sm"
+									<FieldSet>
+										<FieldLegend variant="label">{_(msg`Size`)}</FieldLegend>
+										<RadioGroup
+											name="sizeKey"
+											defaultValue={design.sizeKey}
+											className="flex flex-wrap gap-3"
 										>
-											<option value="">{_(msg`None`)}</option>
-											{data.locales
-												.filter((locale) => locale !== locale1)
-												.map((locale) => (
+											{product.sizes.map((size) => (
+												<Label
+													key={size.key}
+													className="border-border has-[[data-checked]]:border-primary flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border px-4"
+												>
+													<RadioGroupItem value={size.key} />
+													<bdi>{size.label}</bdi>
+												</Label>
+											))}
+										</RadioGroup>
+									</FieldSet>
+									<FieldSet>
+										<FieldLegend variant="label">{_(msg`Style`)}</FieldLegend>
+										<RadioGroup
+											name="style"
+											defaultValue={design.style}
+											className="flex flex-wrap gap-3"
+										>
+											{PRINT_TEMPLATE_STYLES.map((style) => (
+												<Label
+													key={style}
+													className="border-border has-[[data-checked]]:border-primary flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border px-4"
+												>
+													<RadioGroupItem value={style} />
+													{_(PRINT_STYLE_LABELS[style])}
+												</Label>
+											))}
+										</RadioGroup>
+									</FieldSet>
+								</CardContent>
+							</Card>
+
+							<Card>
+								<CardHeader>
+									<CardTitle>{_(msg`Words`)}</CardTitle>
+									<CardDescription>
+										{_(
+											msg`Leave a field empty to use the suggested words. Add a second language for a bilingual print.`,
+										)}
+									</CardDescription>
+								</CardHeader>
+								<CardContent className="space-y-5">
+									<div className="grid gap-4 sm:grid-cols-2">
+										<Field>
+											<FieldLabel htmlFor="print-locale1">
+												{_(msg`Main language`)}
+											</FieldLabel>
+											<select
+												id="print-locale1"
+												name="locale1"
+												value={locale1}
+												onChange={(event) => setLocale1(event.target.value)}
+												className="border-input bg-background h-11 rounded-md border px-3 text-sm"
+											>
+												{data.locales.map((locale) => (
 													<option key={locale} value={locale}>
 														{getSiteLocaleNativeLabel(locale)}
 													</option>
 												))}
-										</select>
-									</Field>
-								</div>
-								{shownLocales.map((locale) => (
-									<FieldSet key={locale} lang={locale}>
-										<FieldLegend variant="label">
-											{getSiteLocaleNativeLabel(locale)}
-										</FieldLegend>
-										<Field>
-											<FieldLabel htmlFor={`headline-${locale}`}>
-												{_(msg`Headline`)}
-											</FieldLabel>
-											<Input
-												id={`headline-${locale}`}
-												name={`headline.${locale}`}
-												dir={localeDirection(locale)}
-												defaultValue={content.headline[locale] ?? ''}
-												placeholder={
-													printCatalog.defaultCopy(locale, qrKind).headline
-												}
-												maxLength={PRINT_TEXT_MAX.headline}
-											/>
+											</select>
 										</Field>
 										<Field>
-											<FieldLabel htmlFor={`body-${locale}`}>
-												{_(msg`Message`)}
+											<FieldLabel htmlFor="print-locale2">
+												{_(msg`Second language`)}
 											</FieldLabel>
-											<Textarea
-												id={`body-${locale}`}
-												name={`body.${locale}`}
-												dir={localeDirection(locale)}
-												defaultValue={content.body[locale] ?? ''}
-												maxLength={PRINT_TEXT_MAX.body}
-												rows={3}
-											/>
+											<select
+												id="print-locale2"
+												name="locale2"
+												value={locale2}
+												onChange={(event) => setLocale2(event.target.value)}
+												className="border-input bg-background h-11 rounded-md border px-3 text-sm"
+											>
+												<option value="">{_(msg`None`)}</option>
+												{data.locales
+													.filter((locale) => locale !== locale1)
+													.map((locale) => (
+														<option key={locale} value={locale}>
+															{getSiteLocaleNativeLabel(locale)}
+														</option>
+													))}
+											</select>
 										</Field>
-										<Field>
-											<FieldLabel htmlFor={`cta-${locale}`}>
-												{_(msg`Call to action`)}
-											</FieldLabel>
-											<Input
-												id={`cta-${locale}`}
-												name={`callToAction.${locale}`}
-												dir={localeDirection(locale)}
-												defaultValue={content.callToAction[locale] ?? ''}
-												placeholder={
-													printCatalog.defaultCopy(locale, qrKind).callToAction
-												}
-												maxLength={PRINT_TEXT_MAX.callToAction}
-											/>
-										</Field>
-									</FieldSet>
-								))}
-							</CardContent>
-						</Card>
-
-						<Card>
-							<CardHeader>
-								<CardTitle>{_(msg`QR code`)}</CardTitle>
-								<CardDescription>
-									{_(
-										msg`Where people land when they scan. Links point at your own website only.`,
-									)}
-								</CardDescription>
-							</CardHeader>
-							<CardContent className="space-y-5">
-								<RadioGroup
-									name="qrKind"
-									value={qrKind}
-									onValueChange={(value) =>
-										setQrKind(value as PrintQrTarget['kind'])
-									}
-									className="grid gap-2"
-								>
-									{data.targets.map((target) => (
-										<Label
-											key={target}
-											className="flex min-h-11 cursor-pointer items-center gap-3"
-										>
-											<RadioGroupItem value={target} />
-											{_(printTargetLabel(target))}
-										</Label>
+									</div>
+									{shownLocales.map((locale) => (
+										<FieldSet key={locale} lang={locale}>
+											<FieldLegend variant="label">
+												{getSiteLocaleNativeLabel(locale)}
+											</FieldLegend>
+											<Field>
+												<FieldLabel htmlFor={`headline-${locale}`}>
+													{_(msg`Headline`)}
+												</FieldLabel>
+												<Input
+													id={`headline-${locale}`}
+													name={`headline.${locale}`}
+													dir={localeDirection(locale)}
+													defaultValue={content.headline[locale] ?? ''}
+													placeholder={
+														printCatalog.defaultCopy(locale, qrKind).headline
+													}
+													maxLength={PRINT_TEXT_MAX.headline}
+												/>
+											</Field>
+											<Field>
+												<FieldLabel htmlFor={`body-${locale}`}>
+													{_(msg`Message`)}
+												</FieldLabel>
+												<Textarea
+													id={`body-${locale}`}
+													name={`body.${locale}`}
+													dir={localeDirection(locale)}
+													defaultValue={content.body[locale] ?? ''}
+													maxLength={PRINT_TEXT_MAX.body}
+													rows={3}
+												/>
+											</Field>
+											<Field>
+												<FieldLabel htmlFor={`cta-${locale}`}>
+													{_(msg`Call to action`)}
+												</FieldLabel>
+												<Input
+													id={`cta-${locale}`}
+													name={`callToAction.${locale}`}
+													dir={localeDirection(locale)}
+													defaultValue={content.callToAction[locale] ?? ''}
+													placeholder={
+														printCatalog.defaultCopy(locale, qrKind)
+															.callToAction
+													}
+													maxLength={PRINT_TEXT_MAX.callToAction}
+												/>
+											</Field>
+										</FieldSet>
 									))}
-								</RadioGroup>
+								</CardContent>
+							</Card>
 
-								{TargetFields ? (
-									<TargetFields
-										key={qrKind}
-										target={
-											content.qr.kind === qrKind ? content.qr : { kind: qrKind }
-										}
-										data={data.targetData[qrKind] ?? null}
-										scopes={data.scopes}
-									/>
-								) : null}
-
-								{qrKind === 'site' ? (
-									<Field>
-										<FieldLabel htmlFor="qr-path">{_(msg`Page`)}</FieldLabel>
-										<Input
-											id="qr-path"
-											name="qrPath"
-											dir="ltr"
-											defaultValue={printSitePath(content.qr) ?? '/'}
-											placeholder="/contact"
-										/>
-									</Field>
-								) : null}
-							</CardContent>
-						</Card>
-
-						{product.featuredItems && data.featuredSource ? (
 							<Card>
 								<CardHeader>
-									<CardTitle>
-										{_(printShopUi.featuredItems?.title ?? msg`Featured items`)}
-									</CardTitle>
+									<CardTitle>{_(msg`QR code`)}</CardTitle>
 									<CardDescription>
 										{_(
-											printShopUi.featuredItems?.description ??
-												msg`Pick up to 4 items. Names, prices and photos come from your catalog.`,
+											msg`Where people land when they scan. Links point at your own website only.`,
 										)}
 									</CardDescription>
 								</CardHeader>
-								<CardContent>
-									{data.items.length === 0 ? (
-										<p className="text-muted-foreground text-sm">
-											{_(
-												printShopUi.featuredItems?.empty ??
-													msg`There are no items to feature yet.`,
-											)}
-										</p>
-									) : (
-										<div className="grid max-h-80 gap-2 overflow-y-auto sm:grid-cols-2">
-											{data.items.map((item) => (
-												<Label
-													key={item.id}
-													className="flex min-h-11 items-center gap-3"
-												>
-													<Checkbox
-														name="featuredItemIds"
-														value={item.id}
-														defaultChecked={content.featuredItemIds.includes(
-															item.id,
-														)}
-													/>
-													<span className="wrap-anywhere">{item.name}</span>
-													{item.hasImage ? (
-														<Icon
-															name="image"
-															className="text-muted-foreground size-4"
-															aria-hidden
-														/>
-													) : null}
-												</Label>
-											))}
-										</div>
-									)}
+								<CardContent className="space-y-5">
+									<RadioGroup
+										name="qrKind"
+										value={qrKind}
+										onValueChange={(value) =>
+											setQrKind(value as PrintQrTarget['kind'])
+										}
+										className="grid gap-2"
+									>
+										{data.targets.map((target) => (
+											<Label
+												key={target}
+												className="flex min-h-11 cursor-pointer items-center gap-3"
+											>
+												<RadioGroupItem value={target} />
+												{_(printTargetLabel(target))}
+											</Label>
+										))}
+									</RadioGroup>
+
+									{TargetFields ? (
+										<TargetFields
+											key={qrKind}
+											target={
+												content.qr.kind === qrKind
+													? content.qr
+													: { kind: qrKind }
+											}
+											data={data.targetData[qrKind] ?? null}
+											scopes={data.scopes}
+										/>
+									) : null}
+
+									{qrKind === 'site' ? (
+										<Field>
+											<FieldLabel htmlFor="qr-path">{_(msg`Page`)}</FieldLabel>
+											<Input
+												id="qr-path"
+												name="qrPath"
+												dir="ltr"
+												defaultValue={printSitePath(content.qr) ?? '/'}
+												placeholder="/contact"
+											/>
+										</Field>
+									) : null}
 								</CardContent>
 							</Card>
-						) : null}
 
-						<Card>
-							<CardHeader>
-								<CardTitle>{_(msg`Details`)}</CardTitle>
-							</CardHeader>
-							<CardContent className="space-y-4">
-								{data.scopes.length > 1 ? (
-									<Field>
-										<FieldLabel htmlFor="print-scope">
-											{_(printShopUi.scope?.source ?? msg`Address from`)}
-										</FieldLabel>
-										<select
-											id="print-scope"
+							{product.featuredItems && data.featuredSource ? (
+								<Card>
+									<CardHeader>
+										<CardTitle>
+											{_(
+												printShopUi.featuredItems?.title ?? msg`Featured items`,
+											)}
+										</CardTitle>
+										<CardDescription>
+											{_(
+												printShopUi.featuredItems?.description ??
+													msg`Pick up to 4 items. Names, prices and photos come from your catalog.`,
+											)}
+										</CardDescription>
+									</CardHeader>
+									<CardContent>
+										{data.items.length === 0 ? (
+											<p className="text-muted-foreground text-sm">
+												{_(
+													printShopUi.featuredItems?.empty ??
+														msg`There are no items to feature yet.`,
+												)}
+											</p>
+										) : (
+											<div className="grid max-h-80 gap-2 overflow-y-auto sm:grid-cols-2">
+												{data.items.map((item) => (
+													<Label
+														key={item.id}
+														className="flex min-h-11 items-center gap-3"
+													>
+														<Checkbox
+															name="featuredItemIds"
+															value={item.id}
+															defaultChecked={content.featuredItemIds.includes(
+																item.id,
+															)}
+														/>
+														<span className="wrap-anywhere">{item.name}</span>
+														{item.hasImage ? (
+															<Icon
+																name="image"
+																className="text-muted-foreground size-4"
+																aria-hidden
+															/>
+														) : null}
+													</Label>
+												))}
+											</div>
+										)}
+									</CardContent>
+								</Card>
+							) : null}
+
+							<Card>
+								<CardHeader>
+									<CardTitle>{_(msg`Details`)}</CardTitle>
+								</CardHeader>
+								<CardContent className="space-y-4">
+									{data.scopes.length > 1 ? (
+										<Field>
+											<FieldLabel htmlFor="print-scope">
+												{_(printShopUi.scope?.source ?? msg`Address from`)}
+											</FieldLabel>
+											<select
+												id="print-scope"
+												name="scopeId"
+												defaultValue={content.scopeId ?? ''}
+												className="border-input bg-background h-11 rounded-md border px-3 text-sm"
+											>
+												{data.scopes.map((scope) => (
+													<option key={scope.id} value={scope.id}>
+														{scope.name}
+													</option>
+												))}
+											</select>
+										</Field>
+									) : data.scopes[0] ? (
+										<input
+											type="hidden"
 											name="scopeId"
-											defaultValue={content.scopeId ?? ''}
-											className="border-input bg-background h-11 rounded-md border px-3 text-sm"
-										>
-											{data.scopes.map((scope) => (
-												<option key={scope.id} value={scope.id}>
-													{scope.name}
-												</option>
-											))}
-										</select>
-									</Field>
-								) : data.scopes[0] ? (
-									<input
-										type="hidden"
-										name="scopeId"
-										value={data.scopes[0].id}
-									/>
-								) : null}
-								{data.scopes.length > 0 ? (
+											value={data.scopes[0].id}
+										/>
+									) : null}
+									{data.scopes.length > 0 ? (
+										<Label className="flex min-h-11 items-center gap-3">
+											<Switch
+												name="showAddress"
+												defaultChecked={content.showAddress}
+											/>
+											{_(msg`Show the address`)}
+										</Label>
+									) : null}
 									<Label className="flex min-h-11 items-center gap-3">
 										<Switch
-											name="showAddress"
-											defaultChecked={content.showAddress}
+											name="showWebsite"
+											defaultChecked={content.showWebsite}
 										/>
-										{_(msg`Show the address`)}
+										{_(msg`Show the website`)}
 									</Label>
-								) : null}
-								<Label className="flex min-h-11 items-center gap-3">
-									<Switch
-										name="showWebsite"
-										defaultChecked={content.showWebsite}
-									/>
-									{_(msg`Show the website`)}
-								</Label>
-							</CardContent>
-						</Card>
-					</fieldset>
+								</CardContent>
+							</Card>
+						</fieldset>
 
-					{canWrite ? (
-						<div className="flex flex-wrap gap-3">
-							<Button
-								type="submit"
-								name="intent"
-								value="save"
-								variant="outline"
-								disabled={busy}
-							>
-								{_(msg`Save and update proof`)}
-							</Button>
-							<Button
-								type="submit"
-								name="intent"
-								value="approve"
-								disabled={busy || dirty}
-								aria-describedby={dirty ? 'approve-hint' : undefined}
-							>
-								<Icon name="check" className="size-4" />
-								{_(msg`Approve proof`)}
-							</Button>
-							{dirty ? (
-								<p
-									id="approve-hint"
-									className="text-muted-foreground w-full text-sm"
+						{canWrite ? (
+							<div className="flex flex-wrap gap-3">
+								<Button
+									type="submit"
+									name="intent"
+									value="save"
+									variant="outline"
+									disabled={busy}
 								>
-									{_(
-										msg`Save first, so the proof shows your changes before you approve it.`,
-									)}
-								</p>
-							) : null}
-						</div>
-					) : null}
-				</Form>
+									{_(msg`Save and update proof`)}
+								</Button>
+								<Button
+									type="submit"
+									name="intent"
+									value="approve"
+									disabled={busy || dirty}
+									aria-describedby={dirty ? 'approve-hint' : undefined}
+								>
+									<Icon name="check" className="size-4" />
+									{_(msg`Approve proof`)}
+								</Button>
+								{dirty ? (
+									<p
+										id="approve-hint"
+										className="text-muted-foreground w-full text-sm"
+									>
+										{_(
+											msg`Save first, so the proof shows your changes before you approve it.`,
+										)}
+									</p>
+								) : null}
+							</div>
+						) : null}
+					</Form>
+				)}
 
 				<aside className="space-y-4 lg:sticky lg:top-4 lg:self-start">
 					<Card>
@@ -829,7 +929,34 @@ export default function PrintDesignRoute() {
 						designId={design.id}
 						approved={isApproved}
 						hidden={data.qrHidden}
+						artwork={Boolean(design.artwork)}
 					/>
+
+					{data.canva && !design.artwork ? (
+						<Card>
+							<CardHeader>
+								<CardTitle>{_(msg`Canva`)}</CardTitle>
+								<CardDescription>
+									{_(
+										msg`Open a copy in Canva to change anything freely. Bring it back with Import from Canva.`,
+									)}
+								</CardDescription>
+							</CardHeader>
+							<CardContent>
+								<Form method="post" reloadDocument target="_blank">
+									<Button
+										type="submit"
+										name="intent"
+										value="canva-send"
+										variant="outline"
+										disabled={busy || data.qrHidden}
+									>
+										{_(msg`Send to Canva`)}
+									</Button>
+								</Form>
+							</CardContent>
+						</Card>
+					) : null}
 
 					{data.canOrder && product.shippable ? (
 						<Card>
@@ -904,10 +1031,13 @@ function DownloadCard({
 	designId,
 	approved,
 	hidden,
+	artwork,
 }: {
 	orgSlug: string
 	designId: string
 	approved: boolean
+	/** A finished file downloads as it is: one PDF, no sheets. */
+	artwork: boolean
 	/** The QR codes on this print are not for this user (vertical's rule). */
 	hidden: boolean
 }) {
@@ -928,21 +1058,31 @@ function DownloadCard({
 				</CardDescription>
 			</CardHeader>
 			<CardContent className="flex flex-col gap-3">
-				<DownloadLink
-					href={`${base}?format=home&sheet=letter`}
-					disabled={!approved || hidden}
-					label={_(msg`Print at home (US Letter)`)}
-				/>
-				<DownloadLink
-					href={`${base}?format=home&sheet=a4`}
-					disabled={!approved || hidden}
-					label={_(msg`Print at home (A4)`)}
-				/>
-				<DownloadLink
-					href={`${base}?format=pro`}
-					disabled={!approved || hidden}
-					label={_(msg`For a print shop (with bleed)`)}
-				/>
+				{artwork ? (
+					<DownloadLink
+						href={`${base}?format=pro`}
+						disabled={!approved || hidden}
+						label={_(msg`Download the PDF`)}
+					/>
+				) : (
+					<>
+						<DownloadLink
+							href={`${base}?format=home&sheet=letter`}
+							disabled={!approved || hidden}
+							label={_(msg`Print at home (US Letter)`)}
+						/>
+						<DownloadLink
+							href={`${base}?format=home&sheet=a4`}
+							disabled={!approved || hidden}
+							label={_(msg`Print at home (A4)`)}
+						/>
+						<DownloadLink
+							href={`${base}?format=pro`}
+							disabled={!approved || hidden}
+							label={_(msg`For a print shop (with bleed)`)}
+						/>
+					</>
+				)}
 			</CardContent>
 		</Card>
 	)
@@ -980,5 +1120,136 @@ function DownloadLink({
 				<Trans>(opens in a new tab)</Trans>
 			</span>
 		</Button>
+	)
+}
+
+/** The left column of a finished-file print: its source and its name. */
+function ArtworkDetails({
+	name,
+	artwork,
+	canWrite,
+	busy,
+	canva,
+}: {
+	name: string
+	artwork: PrintArtwork
+	canWrite: boolean
+	busy: boolean
+	canva: boolean
+}) {
+	const { _ } = useLingui()
+	const [draft, setDraft] = useState(name)
+	const dirty = draft.trim() !== name
+	const size = `${artwork.widthMm} × ${artwork.heightMm} mm`
+	return (
+		<div className="space-y-6">
+			<Form method="post" className="space-y-6">
+				<Card>
+					<CardHeader>
+						<CardTitle>{_(msg`Basics`)}</CardTitle>
+					</CardHeader>
+					<CardContent>
+						<Field>
+							<FieldLabel htmlFor="artwork-name">{_(msg`Name`)}</FieldLabel>
+							<Input
+								id="artwork-name"
+								name="name"
+								value={draft}
+								onChange={(event) => setDraft(event.target.value)}
+								maxLength={120}
+								disabled={!canWrite}
+								required
+							/>
+						</Field>
+					</CardContent>
+				</Card>
+
+				<Card>
+					<CardHeader>
+						<CardTitle>{_(msg`From Canva`)}</CardTitle>
+						<CardDescription>
+							{_(
+								msg`This print is a finished design: it prints exactly as it looks in Canva. Change it there, then update it here.`,
+							)}
+						</CardDescription>
+					</CardHeader>
+					<CardContent className="space-y-2">
+						<p className="text-sm font-medium wrap-anywhere">{artwork.title}</p>
+						<p className="text-muted-foreground text-sm">
+							<bdi dir="ltr">{size}</bdi>
+							{' · '}
+							{artwork.bleedMm > 0
+								? (() => {
+										const bleed = artwork.bleedMm
+										return _(msg`${bleed} mm bleed`)
+									})()
+								: _(msg`No bleed`)}
+						</p>
+						{artwork.bleedMm === 0 ? (
+							<p className="text-muted-foreground text-sm" role="note">
+								{_(
+									msg`Without bleed, color that runs to the edge can show a thin white line after cutting. Add bleed in Canva (File, Settings, Show print bleed) for shipped prints.`,
+								)}
+							</p>
+						) : null}
+						{artwork.pages > 1 ? (
+							<p className="text-muted-foreground text-sm" role="note">
+								{_(msg`The design has more pages: only the first one prints.`)}
+							</p>
+						) : null}
+					</CardContent>
+				</Card>
+
+				{canWrite ? (
+					<div className="flex flex-wrap gap-3">
+						<Button
+							type="submit"
+							name="intent"
+							value="save"
+							variant="outline"
+							disabled={busy || !dirty || !draft.trim()}
+						>
+							{_(msg`Save`)}
+						</Button>
+						<Button
+							type="submit"
+							name="intent"
+							value="approve"
+							disabled={busy || !draft.trim()}
+						>
+							<Icon name="check" className="size-4" />
+							{_(msg`Approve proof`)}
+						</Button>
+					</div>
+				) : null}
+			</Form>
+
+			{canva ? (
+				<div className="flex flex-wrap gap-3">
+					<Form method="post">
+						<Button
+							type="submit"
+							name="intent"
+							value="canva-refresh"
+							variant="outline"
+							disabled={busy}
+						>
+							{_(msg`Update from Canva`)}
+						</Button>
+					</Form>
+					<Form method="post" reloadDocument target="_blank">
+						<Button
+							type="submit"
+							name="intent"
+							value="canva-edit"
+							variant="ghost"
+							disabled={busy}
+						>
+							{_(msg`Edit in Canva`)}
+						</Button>
+					</Form>
+				</div>
+			) : null}
+		</div>
 	)
 }

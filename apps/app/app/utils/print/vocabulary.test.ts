@@ -34,9 +34,9 @@ const REGISTRATION = new Set([
 const WORDS =
 	/\b(restaurants?|menus?|dish(es)?|tables?|locations?|reservations?|diners?|guests?|kitchens?|dine[- ]in|waiters?|seating|menuza)\b/i
 
-/** UI kit table components are layout, not vocabulary. */
+/** UI kit table components are layout, and URL locations are web APIs: not vocabulary. */
 const ALLOWED =
-	/<\/?Table\w*|\bTable(Row|Cell|Head|Body|Header|Footer|Caption)?,|['"]@repo\/ui\/table['"]|window\.location/g
+	/<\/?Table\w*|\bTable(Row|Cell|Head|Body|Header|Footer|Caption)?,|['"]@repo\/ui\/table['"]|window\.location|headers\.get\('[Ll]ocation'\)/g
 
 function files(entry: string): string[] {
 	const full = path.join(ROOT, entry)

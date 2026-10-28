@@ -81,6 +81,14 @@ export async function getPrintFile(
 	/** Paid orders: already bounded by the pieces paid for, so no hourly cap. */
 	options: { skipLimit?: boolean } = {},
 ): Promise<PrintFileResult> {
+	// A finished file prints as it is: nothing to render or to count.
+	if (input.snapshot.artwork) {
+		const fileKey = input.snapshot.artwork.fileKey
+		const bytes = await readPrintFile(fileKey)
+		return bytes
+			? { kind: 'pdf', bytes, objectKey: fileKey }
+			: { kind: 'failed' }
+	}
 	const hash = printFileHash(input)
 	const organizationId = input.organizationId
 	const thisRow = and(

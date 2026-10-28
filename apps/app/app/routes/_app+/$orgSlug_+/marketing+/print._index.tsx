@@ -21,6 +21,7 @@ import {
 } from '#app/components/print/print-labels.ts'
 import { printShopUi } from '#app/components/print/vertical-ui.tsx'
 import { requirePrintShopAccess } from '#app/utils/print/access.server.ts'
+import { isCanvaConfigured } from '#app/utils/print/canva/env.server.ts'
 import { listPrintDesigns } from '#app/utils/print/designs.server.ts'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
@@ -29,13 +30,14 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		orgSlug: access.organization.slug,
 		canWrite: access.canWrite,
 		shipping: access.features.shipping,
+		canva: access.features.canva && access.canWrite && isCanvaConfigured(),
 		designs: await listPrintDesigns(access.organization.id),
 	}
 }
 
 export default function PrintShopIndexRoute() {
 	const { _ } = useLingui()
-	const { orgSlug, canWrite, shipping, designs } =
+	const { orgSlug, canWrite, shipping, canva, designs } =
 		useLoaderData<typeof loader>()
 	return (
 		<div className="space-y-8">
@@ -60,6 +62,14 @@ export default function PrintShopIndexRoute() {
 								render={<Link to={`/${orgSlug}/marketing/print/orders`} />}
 							>
 								{_(msg`Print orders`)}
+							</Button>
+						) : null}
+						{canva ? (
+							<Button
+								variant="outline"
+								render={<Link to={`/${orgSlug}/marketing/print/canva`} />}
+							>
+								{_(msg`Import from Canva`)}
 							</Button>
 						) : null}
 						{canWrite ? (
@@ -111,7 +121,9 @@ export default function PrintShopIndexRoute() {
 										{' · '}
 										<bdi>{size?.label ?? design.sizeKey}</bdi>
 										{' · '}
-										{_(PRINT_STYLE_LABELS[design.style])}
+										{design.source === 'artwork'
+											? _(msg`From Canva`)
+											: _(PRINT_STYLE_LABELS[design.style])}
 									</ItemDescription>
 								</ItemContent>
 								<ItemActions>

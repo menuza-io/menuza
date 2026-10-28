@@ -5,6 +5,9 @@ posters, flyers and window stickers. Every approved print downloads as a free
 PDF; posters and flyers can also be printed and shipped (US addresses in v1),
 with the platform as the merchant.
 
+Designs made in Canva can be imported as finished prints, and template prints
+sent to Canva: see [print-shop-canva.md](./print-shop-canva.md).
+
 The core knows no business type. A print vertical adds products (cards, tents),
 QR codes of its own, featured items and the business's places: see
 [print-shop-verticals.md](./print-shop-verticals.md).
@@ -16,6 +19,7 @@ QR codes of its own, featured items and the business's places: see
 | `print_shop.enabled` (org flag)          | Designs and free PDF downloads                    |
 | `print_shop.shipping` (org flag)         | Paid shipped orders (needs the master flag)       |
 | `PRINT_SHIPPING_ENABLED=false` (App env) | Pauses new paid orders everywhere (vendor outage) |
+| `print_shop.canva` (org flag)            | Import from and send to Canva (needs the master)  |
 
 `PRINT_SHIPPING_ENABLED` keeps shipping on only when it is unset or an explicit
 on-value (`true`, `1`, `on`, `yes`, `enabled`); any other value pauses it, so a
@@ -147,8 +151,9 @@ App: `PRINT_BROWSER_ACCOUNT_ID`, `PRINT_BROWSER_API_TOKEN`,
 `PRINT_RENDER_LIMIT_PER_HOUR`, `PRINT_SHIPPING_ENABLED`, `GELATO_API_KEY`,
 `PRODIGI_API_KEY`, `PRODIGI_SANDBOX`, `PRINT_WEBHOOK_TOKEN` (32+ characters),
 `PRINT_MOCK` (local only: a stateless vendor emulator, ignored unless `BASE_URL`
-is a local host). Admin: `APP_URL`. Stripe webhook events as for the rest of the
-App (`checkout.session.*`).
+is a local host), `CANVA_CLIENT_ID`, `CANVA_CLIENT_SECRET` and `CANVA_MOCK` (see
+[print-shop-canva.md](./print-shop-canva.md)). Admin: `APP_URL`. Stripe webhook
+events as for the rest of the App (`checkout.session.*`).
 
 ## Rotating the webhook token
 

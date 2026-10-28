@@ -22,11 +22,12 @@ export { HIDDEN_PRINT_SHOP_NAV, type PrintShopNavAccess }
 export async function getPrintShopFeatures(
 	organizationId: string,
 ): Promise<PrintShopFeatures> {
-	const [enabled, shipping] = await Promise.all([
+	const [enabled, shipping, canva] = await Promise.all([
 		getFeatureFlag(PRINT_SHOP_FLAG_KEYS.enabled, { organizationId }),
 		getFeatureFlag(PRINT_SHOP_FLAG_KEYS.shipping, { organizationId }),
+		getFeatureFlag(PRINT_SHOP_FLAG_KEYS.canva, { organizationId }),
 	])
-	return foldPrintShopFeatures({ enabled, shipping })
+	return foldPrintShopFeatures({ enabled, shipping, canva })
 }
 
 const ENABLED_VALUES = new Set(['true', '1', 'on', 'yes', 'enabled'])
