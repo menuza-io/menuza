@@ -570,6 +570,16 @@ export const PRINT_SELF_CANCEL_STATUSES: readonly PrintOrderStatus[] = [
  * timed out, a crashed request). Only Admin, after checking the vendor, may
  * retry, refund or record them; the operator cannot cancel them.
  */
+/**
+ * Holds after the prints were made and shipped (a parcel back at the vendor,
+ * a vendor failure after shipping): Admin reships or refunds; sending again
+ * is refused, since nothing is left to send.
+ */
+export const PRINT_AFTER_SHIPPING_HOLDS: readonly string[] = [
+	'vendor_returned',
+	'vendor_after_shipping',
+]
+
 export const PRINT_VENDOR_CHECK_HOLDS: readonly string[] = [
 	'vendor_unknown',
 	'stale_claim',

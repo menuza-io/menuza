@@ -676,7 +676,47 @@ describe('shipped print orders', () => {
 			holdReason: 'vendor_returned',
 		})
 		expect(vendorOrders[0]!.status).toBe('returned')
-		expect(stripeMock.refunds.create).not.toHaveBeenCalled()
+		expect(
+			stripeMock.refunds.create.mock.calls.some(
+				(call) =>
+					(call as unknown as [{ payment_intent: string }])[0]
+						.payment_intent === `pi_${orderId}`,
+			),
+		).toBe(false)
+		// Nothing is left to send: a retry would only mark it sent again.
+		await expect(adminRetryPrintOrder(orderId, false)).rejects.toMatchObject({
+			code: 'shipped_already',
+		})
+	})
+
+	it('says so when an overdue order is partly at a vendor already', async () => {
+		const { orderId } = await paidOrderLater()
+		const [vendorOrder] = await db
+			.select()
+			.from(PrintVendorOrder)
+			.where(eq(PrintVendorOrder.orderId, orderId))
+		await db
+			.update(PrintVendorOrder)
+			.set({ status: 'submitted', vendorOrderId: `mock_${Date.now()}_x` })
+			.where(eq(PrintVendorOrder.id, vendorOrder!.id))
+		await db
+			.update(PrintOrder)
+			.set({ paidAt: new Date(Date.now() - 25 * 60 * 60_000) })
+			.where(eq(PrintOrder.id, orderId))
+		await syncOpenPrintOrders()
+		expect((await getPrintOrderDetail(null, orderId)).order).toMatchObject({
+			status: 'held',
+			holdReason: 'render_unavailable_partial',
+		})
+	})
+
+	it('keeps the sending marker until every vendor is recorded', async () => {
+		const { orderId } = await paidOrderLater()
+		expect(await submitPrintOrder(orderId)).toBe('done')
+		expect((await getPrintOrderDetail(null, orderId)).order).toMatchObject({
+			status: 'submitted',
+			holdReason: null,
+		})
 	})
 
 	it('refunds a vendor failure before shipping, but holds one after it', async () => {
@@ -686,7 +726,12 @@ describe('shipped print orders', () => {
 		expect((await getPrintOrderDetail(null, early.orderId)).order.status).toBe(
 			'refunded',
 		)
-		expect(stripeMock.refunds.create).toHaveBeenCalledTimes(1)
+		const refundedIntents = () =>
+			stripeMock.refunds.create.mock.calls.map(
+				(call) =>
+					(call as unknown as [{ payment_intent: string }])[0].payment_intent,
+			)
+		expect(refundedIntents()).toContain(`pi_${early.orderId}`)
 
 		vendorState.value = null
 		const late = await paidOrder()
@@ -699,7 +744,7 @@ describe('shipped print orders', () => {
 		expect((await getPrintOrderDetail(null, late.orderId)).order).toMatchObject(
 			{ status: 'held', holdReason: 'vendor_after_shipping' },
 		)
-		expect(stripeMock.refunds.create).toHaveBeenCalledTimes(1)
+		expect(refundedIntents()).not.toContain(`pi_${late.orderId}`)
 	})
 
 	it('reuses checkout parameters on a retry and never starts a second session blind', async () => {

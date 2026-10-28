@@ -101,15 +101,19 @@ the browser's print dialog saves it.
   shipped, nothing refunds automatically: a parcel that went back to the vendor
   (`vendor_returned`, often a wrong address) or a vendor failure or cancel after
   shipping (`vendor_after_shipping`) holds the order for Admin, since the prints
-  were made and paid for. Defects after delivery go through Admin (reprint by
-  vendor claim, or refund). An order held while the vendor may already have it
-  (`vendor_unknown`, `stale_claim`, `submission_error`) cannot be cancelled by
-  the operator (`needs_support`): Admin checks the vendor first.
+  were made and paid for; Retry is refused for these holds (nothing is left to
+  send). Defects after delivery go through Admin (reprint by vendor claim, or
+  refund). An order held while the vendor may already have it (`vendor_unknown`,
+  `stale_claim`, `submission_error`) cannot be cancelled by the operator
+  (`needs_support`): Admin checks the vendor first.
 - **Large sets:** a submission renders for at most 20 seconds, then hands the
   order back (`paid`); rendered files are cached, so the next run continues
   where it stopped. The hourly `print-sync` job continues such orders (up to a
   minute each, ten minutes in all), and holds one still not sent a day after
-  payment (`render_unavailable`).
+  payment (`render_unavailable`, or `render_unavailable_partial` when a retried
+  order is already at one of its vendors). Every file is rendered before any
+  vendor is called, so an order handed back has not reached a vendor in that
+  run.
 - **Crash safety:** the hourly `print-sync` job submits paid orders that were
   never sent (after 5 minutes). A submission cut short before any vendor call
   goes back to `paid` and continues; one cut short during a vendor call (the

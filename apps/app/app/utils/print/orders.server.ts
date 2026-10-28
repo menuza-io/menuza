@@ -1,5 +1,6 @@
 import { i18n } from '@lingui/core'
 import {
+	PRINT_AFTER_SHIPPING_HOLDS,
 	PRINT_MAX_PIECES_PER_DESIGN,
 	PRINT_SELF_CANCEL_STATUSES,
 	PRINT_VENDOR_CHECK_HOLDS,
@@ -972,13 +973,19 @@ async function submitClaimedOrder(
 	const pending = vendorOrders.filter(
 		(vendorOrder) => vendorOrder.status === 'pending',
 	)
+	// Phase 1: price and render everything before any vendor is called, so a
+	// run that runs out of time hands back an order no vendor has yet.
+	const ready: Array<{
+		vendorOrder: (typeof pending)[number]
+		vendor: ReturnType<typeof getPrintVendor>
+		files: VendorItem[]
+	}> = []
 	for (const vendorOrder of pending) {
 		const vendor = getPrintVendor(vendorOrder.vendor as PrintVendorName)
 		const mine = items
 			.map((row) => row.item)
 			.filter((item) => item.vendorOrderId === vendorOrder.id)
 		const quoteItems = mine.flatMap((item) => vendorItemsFor(item))
-		let sent = false
 		try {
 			const quote = await vendor.quote(quoteItems, address)
 			const locked =
@@ -1031,13 +1038,27 @@ async function submitClaimedOrder(
 					}),
 				)
 			}
-			sent = true
-			await db
-				.update(PrintOrder)
-				.set({ holdReason: VENDOR_SENDING })
-				.where(
-					and(eq(PrintOrder.id, order.id), eq(PrintOrder.status, 'submitting')),
-				)
+			ready.push({ vendorOrder, vendor, files })
+		} catch {
+			// Nothing reached a vendor in this run: safe to retry.
+			await hold(order.id, 'vendor_unavailable')
+			return 'done'
+		}
+	}
+
+	// Phase 2: send. From the first call on, the order carries the marker
+	// until it is recorded as submitted, so a run cut short anywhere in here
+	// is held for Admin instead of being resumed as if nothing went out.
+	if (ready.length > 0) {
+		await db
+			.update(PrintOrder)
+			.set({ holdReason: VENDOR_SENDING })
+			.where(
+				and(eq(PrintOrder.id, order.id), eq(PrintOrder.status, 'submitting')),
+			)
+	}
+	for (const { vendorOrder, vendor, files } of ready) {
+		try {
 			const { vendorOrderId } = await vendor.createOrder({
 				reference: vendorOrder.id,
 				items: files,
@@ -1054,12 +1075,6 @@ async function submitClaimedOrder(
 					error: null,
 				})
 				.where(eq(PrintVendorOrder.id, vendorOrder.id))
-			await db
-				.update(PrintOrder)
-				.set({ holdReason: null })
-				.where(
-					and(eq(PrintOrder.id, order.id), eq(PrintOrder.status, 'submitting')),
-				)
 		} catch (error) {
 			if (error instanceof VendorError && error.code === 'rejected') {
 				await db
@@ -1069,10 +1084,9 @@ async function submitClaimedOrder(
 				await failAndRefund(order.id, 'vendor_rejected')
 				return 'done'
 			}
-			// Nothing reached the vendor: safe to retry. Once the order was sent,
-			// a timeout or an error after it may hide an order the vendor did
-			// place, so Admin checks the vendor before any retry.
-			await hold(order.id, sent ? 'vendor_unknown' : 'vendor_unavailable')
+			// A timeout or an error after the call may hide an order the vendor
+			// did place, so Admin checks the vendor before any retry.
+			await hold(order.id, 'vendor_unknown')
 			return 'done'
 		}
 	}
@@ -1273,15 +1287,39 @@ async function sweepStalePrintOrders(limit: number) {
 				lt(PrintOrder.updatedAt, staleBefore),
 			),
 		)
-	await db
-		.update(PrintOrder)
-		.set({ status: 'held', holdReason: 'render_unavailable' })
+	const overdue = await db
+		.select({ id: PrintOrder.id })
+		.from(PrintOrder)
 		.where(
 			and(
 				eq(PrintOrder.status, 'paid'),
 				lt(PrintOrder.paidAt, new Date(now - PAID_GIVE_UP_MS)),
 			),
 		)
+		.limit(limit)
+	for (const { id } of overdue) {
+		// A retried order may already be printing at one of its vendors.
+		const partly = await db
+			.select({ id: PrintVendorOrder.id })
+			.from(PrintVendorOrder)
+			.where(
+				and(
+					eq(PrintVendorOrder.orderId, id),
+					ne(PrintVendorOrder.status, 'pending'),
+				),
+			)
+			.limit(1)
+		await db
+			.update(PrintOrder)
+			.set({
+				status: 'held',
+				holdReason:
+					partly.length > 0
+						? 'render_unavailable_partial'
+						: 'render_unavailable',
+			})
+			.where(and(eq(PrintOrder.id, id), eq(PrintOrder.status, 'paid')))
+	}
 	const paid = await db
 		.select({ id: PrintOrder.id, updatedAt: PrintOrder.updatedAt })
 		.from(PrintOrder)
@@ -1874,6 +1912,13 @@ export async function adminRetryPrintOrder(
 			409,
 			'refund_needed',
 			'Vendors were cancelled for this order: refund it instead of retrying.',
+		)
+	}
+	if (PRINT_AFTER_SHIPPING_HOLDS.includes(order.holdReason ?? '')) {
+		throw new PrintOrderError(
+			409,
+			'shipped_already',
+			'The prints were made and shipped: reship through the vendor or refund it.',
 		)
 	}
 	if (
