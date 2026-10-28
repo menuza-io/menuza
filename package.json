@@ -155,7 +155,7 @@
     "@opentelemetry/core": "^2.8.0",
     "ws": "^8.21.1",
     "uuid": "$uuid",
-    "undici": "7.29.1",
+    "undici": "7.30.1",
     "source-map-js": "^1.2.2",
     "@react-email/preview-server": {
       "source-map-js": "^1.2.2"
