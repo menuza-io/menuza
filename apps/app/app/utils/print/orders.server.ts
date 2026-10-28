@@ -979,21 +979,27 @@ async function submitClaimedOrder(
 	const pending = vendorOrders.filter(
 		(vendorOrder) => vendorOrder.status === 'pending',
 	)
-	// Phase 1: price and render everything before any vendor is called, so a
-	// run that runs out of time hands back an order no vendor has yet.
+	// Phase 1: price every vendor, then render everything, before any vendor
+	// is called: a run that runs out of time hands back an order no vendor has
+	// yet, and an accepted new price is stored for every vendor first, so a
+	// resumed run (which no longer knows Admin accepted it) does not hold the
+	// order for the same rise again.
 	const progress = { rendered: 0 }
 	const ready: Array<{
 		vendorOrder: (typeof pending)[number]
 		vendor: ReturnType<typeof getPrintVendor>
 		files: VendorItem[]
 	}> = []
-	for (const vendorOrder of pending) {
-		const vendor = getPrintVendor(vendorOrder.vendor as PrintVendorName)
-		const mine = items
+	const itemsOf = (vendorOrderId: string) =>
+		items
 			.map((row) => row.item)
-			.filter((item) => item.vendorOrderId === vendorOrder.id)
-		const quoteItems = mine.flatMap((item) => vendorItemsFor(item))
-		try {
+			.filter((item) => item.vendorOrderId === vendorOrderId)
+	try {
+		for (const vendorOrder of pending) {
+			const vendor = getPrintVendor(vendorOrder.vendor as PrintVendorName)
+			const quoteItems = itemsOf(vendorOrder.id).flatMap((item) =>
+				vendorItemsFor(item),
+			)
 			const quote = await vendor.quote(quoteItems, address)
 			const locked =
 				vendorOrder.wholesaleItemsCents + vendorOrder.wholesaleShippingCents
@@ -1008,8 +1014,7 @@ async function submitClaimedOrder(
 					await hold(order.id, 'price_drift')
 					return 'done'
 				}
-				// Admin accepted the new price: it becomes the one to compare
-				// with, so a resumed submission does not hold the order again.
+				// Admin accepted the new price: it becomes the one to compare with.
 				await db
 					.update(PrintVendorOrder)
 					.set({
@@ -1018,8 +1023,10 @@ async function submitClaimedOrder(
 					})
 					.where(eq(PrintVendorOrder.id, vendorOrder.id))
 			}
-			const files: VendorItem[] = []
-			for (const item of mine) {
+			ready.push({ vendorOrder, vendor, files: [] })
+		}
+		for (const entry of ready) {
+			for (const item of itemsOf(entry.vendorOrder.id)) {
 				// Each product and size has its own bleed at the vendor.
 				const mapping = await vendorProductFor(item.product, item.sizeKey)
 				const urls = await pieceFileUrls(
@@ -1038,7 +1045,7 @@ async function submitClaimedOrder(
 					return 'done'
 				}
 				urls.forEach((url, index) =>
-					files.push({
+					entry.files.push({
 						reference: `${item.id}_${index}`,
 						sku: item.vendorSku,
 						quantity: item.quantity,
@@ -1046,12 +1053,11 @@ async function submitClaimedOrder(
 					}),
 				)
 			}
-			ready.push({ vendorOrder, vendor, files })
-		} catch {
-			// Nothing reached a vendor in this run: safe to retry.
-			await hold(order.id, 'vendor_unavailable')
-			return 'done'
 		}
+	} catch {
+		// Nothing reached a vendor in this run: safe to retry.
+		await hold(order.id, 'vendor_unavailable')
+		return 'done'
 	}
 
 	// Phase 2: send. From the first call on, the order carries the marker

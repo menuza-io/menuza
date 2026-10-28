@@ -727,6 +727,96 @@ describe('shipped print orders', () => {
 		vi.restoreAllMocks()
 	})
 
+	it('keeps an accepted price for every vendor when a retry is handed back', async () => {
+		const { access, design } = await setup()
+		// A second size printed at another vendor: one order, two vendor orders.
+		await db.insert(PrintVendorProduct).values({
+			product: 'desk_card',
+			sizeKey: '4x6',
+			vendor: 'prodigi',
+			vendorSku: 'cards_4x6_test',
+			bleedMm: 3,
+		})
+		const [other] = await db
+			.insert(PrintDesign)
+			.values({
+				organizationId: access.organization.id,
+				createdById: access.userId,
+				name: 'Desk cards 4x6',
+				product: 'desk_card',
+				sizeKey: '4x6',
+				style: 'classic',
+				templateVersion: 1,
+				content: {},
+				status: 'approved',
+				snapshot: { ...snapshot(), sizeKey: '4x6' },
+				snapshotHash: 'hash-2',
+			})
+			.returning()
+		const request = new Request('https://app.test/')
+		const orderId = await createPrintQuote(request, access, {
+			lines: [
+				{ designId: design.id, quantity: 1 },
+				{ designId: other!.id, quantity: 1 },
+			],
+			address,
+			scopeId: null,
+		})
+		const url = await startPrintCheckout(
+			request,
+			access,
+			orderId,
+			'https://app.test/x',
+		)
+		const detail = await getPrintOrderDetail(null, orderId)
+		expect(detail.vendorOrders).toHaveLength(2)
+		await handlePrintStripeSession(
+			{
+				id: url.split('/').pop()!,
+				metadata: {
+					type: 'print_order',
+					orderId,
+					organizationId: access.organization.id,
+				},
+				payment_status: 'paid',
+				currency: 'usd',
+				amount_total: detail.order.totalCents,
+				total_details: { amount_tax: 0 },
+				payment_intent: `pi_${orderId}`,
+			} as never,
+			'checkout.session.completed',
+			{ later: () => {} },
+		)
+		// Both vendors' prices rose past the drift limit; Admin accepts.
+		await db
+			.update(PrintVendorOrder)
+			.set({ wholesaleItemsCents: 1, wholesaleShippingCents: 1 })
+			.where(eq(PrintVendorOrder.orderId, orderId))
+		await db
+			.update(PrintOrder)
+			.set({ status: 'held', holdReason: 'price_drift' })
+			.where(eq(PrintOrder.id, orderId))
+		let now = Date.now()
+		vi.spyOn(Date, 'now').mockImplementation(() => now)
+		vi.spyOn(printFiles, 'getPrintFile').mockImplementation(async () => {
+			now += 16_000
+			return {
+				kind: 'pdf',
+				bytes: new Uint8Array(new ArrayBuffer(4)),
+				objectKey: 'print/x.pdf',
+				fresh: true,
+			}
+		})
+		expect(await adminRetryPrintOrder(orderId, true)).toBe('deferred')
+		vi.restoreAllMocks()
+		// The continuation does not know Admin accepted: it must not hold again.
+		await continuePrintSubmission(orderId)
+		expect((await getPrintOrderDetail(null, orderId)).order).toMatchObject({
+			status: 'submitted',
+			holdReason: null,
+		})
+	})
+
 	it('hands an order back only after rendering something new', async () => {
 		const { orderId } = await paidOrderLater()
 		let now = Date.now()
