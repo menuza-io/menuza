@@ -78,6 +78,7 @@ function createUploadOptions(): UploadOptions {
 }
 
 type MediaSource =
+	| 'ai-studio'
 	| 'chat'
 	| 'comment'
 	| 'library'
@@ -254,6 +255,7 @@ export async function uploadOrganizationMediaImage(
 	organizationId: string,
 	file: File | FileUpload,
 	createdById?: string,
+	source: Extract<MediaSource, 'library' | 'ai-studio'> = 'library',
 ) {
 	const {
 		key: objectKey,
@@ -272,7 +274,7 @@ export async function uploadOrganizationMediaImage(
 			objectKey,
 			file: validatedFile,
 			storageScope: 'organization',
-			source: 'library',
+			source,
 			createdById,
 			width,
 			height,

@@ -44,6 +44,11 @@ import { toast } from 'sonner'
 import { z } from 'zod'
 import { EmptyState } from '#app/components/empty-state.tsx'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
+import {
+	isPhotoStudioCompatible,
+	PhotoStudioDialog,
+} from '#app/components/media-library/photo-studio-dialog.tsx'
+import { isPhotoStudioConfigured } from '#app/utils/media/photo-studio.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import {
 	deleteOrganizationStorageObject,
@@ -63,6 +68,7 @@ const ALLOWED_IMAGE_TYPES = new Set([
 
 const UploadSchema = z.object({
 	intent: z.literal('upload'),
+	source: z.enum(['library', 'ai-studio']).default('library'),
 	imageFile: z
 		.instanceof(File)
 		.refine((file) => file.size > 0, 'Choose an image to upload.')
@@ -157,6 +163,8 @@ function formatFileSize(bytes: number | null) {
 
 function getSourceLabel(source: string) {
 	switch (source) {
+		case 'ai-studio':
+			return 'AI studio'
 		case 'comment':
 			return 'Comment'
 		case 'note':
@@ -326,6 +334,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		organization,
 		assets: assets.map(serializeAsset),
 		search: normalizedSearch,
+		photoStudioEnabled: isPhotoStudioConfigured(),
 	}
 }
 
@@ -666,6 +675,7 @@ export async function action({ request, params }: Route.ActionArgs) {
 
 	const result = UploadSchema.safeParse({
 		intent: formData.get('intent'),
+		source: formData.get('source') || undefined,
 		imageFile: formData.get('imageFile'),
 	})
 
@@ -681,6 +691,7 @@ export async function action({ request, params }: Route.ActionArgs) {
 			organization.id,
 			result.data.imageFile,
 			userId,
+			result.data.source,
 		)
 		const [asset] = await db
 			.select()
@@ -714,7 +725,11 @@ export default function MediaLibraryRoute({
 	const latestAssetId = useRef<string | null>(null)
 	const [selectedAsset, setSelectedAsset] =
 		useState<SerializedMediaAsset | null>(null)
-	const { assets, search } = loaderData
+	const [studio, setStudio] = useState<{
+		open: boolean
+		assetIds?: string[]
+	}>({ open: false })
+	const { assets, search, organization, photoStudioEnabled } = loaderData
 	const isUploading = uploadFetcher.state !== 'idle'
 
 	useEffect(() => {
@@ -830,6 +845,16 @@ export default function MediaLibraryRoute({
 								event.currentTarget.value = ''
 							}}
 						/>
+						{photoStudioEnabled ? (
+							<Button
+								type="button"
+								variant="outline"
+								onClick={() => setStudio({ open: true })}
+							>
+								<Icon name="sparkles" />
+								<Trans>Enhance with AI</Trans>
+							</Button>
+						) : null}
 						<Button
 							type="button"
 							disabled={isUploading}
@@ -963,10 +988,30 @@ export default function MediaLibraryRoute({
 				onDelete={handleDeleteAsset}
 				onReplace={handleReplaceAsset}
 				onSaveCopy={handleSaveCopy}
+				onEnhance={
+					photoStudioEnabled
+						? (id) => {
+								setSelectedAsset(null)
+								setStudio({ open: true, assetIds: [id] })
+							}
+						: undefined
+				}
 				isUpdating={
 					detailsFetcher.state !== 'idle' || uploadFetcher.state !== 'idle'
 				}
 			/>
+
+			{photoStudioEnabled ? (
+				<PhotoStudioDialog
+					open={studio.open}
+					onOpenChange={(open) =>
+						setStudio((current) => ({ ...current, open }))
+					}
+					orgSlug={organization.slug}
+					assets={assets}
+					initialAssetIds={studio.assetIds}
+				/>
+			) : null}
 		</main>
 	)
 }
@@ -978,10 +1023,12 @@ function MediaDetailsDialog({
 	onDelete,
 	onReplace,
 	onSaveCopy,
+	onEnhance,
 	isUpdating,
 }: {
 	asset: SerializedMediaAsset | null
 	onClose: () => void
+	onEnhance?: (id: string) => void
 	onUpdate: (data: {
 		id: string
 		fileName: string
@@ -1216,6 +1263,8 @@ function MediaDetailsDialog({
 	const isLoadingReferences = referencesFetcher.state !== 'idle'
 	const sourceLabel = (() => {
 		switch (asset.source) {
+			case 'ai-studio':
+				return _(msg`AI studio`)
 			case 'comment':
 				return _(msg`Comment`)
 			case 'note':
@@ -1310,6 +1359,19 @@ function MediaDetailsDialog({
 											>
 												<Icon name="pencil" className="size-3" />
 												<Trans>Edit image</Trans>
+											</Button>
+										) : null}
+										{onEnhance && isPhotoStudioCompatible(asset.mimeType) ? (
+											<Button
+												type="button"
+												variant="default"
+												size="xs"
+												disabled={isUpdating}
+												onClick={() => onEnhance(asset.id)}
+												className="absolute right-2.5 bottom-2.5 shadow-sm"
+											>
+												<Icon name="sparkles" className="size-3" />
+												<Trans>Enhance with AI</Trans>
 											</Button>
 										) : null}
 									</div>
