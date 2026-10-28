@@ -1514,10 +1514,11 @@ export async function cancelPrintOrder(
 	}
 	if (
 		order.status === 'held' &&
-		PRINT_VENDOR_CHECK_HOLDS.includes(order.holdReason ?? '')
+		(PRINT_VENDOR_CHECK_HOLDS.includes(order.holdReason ?? '') ||
+			PRINT_AFTER_SHIPPING_HOLDS.includes(order.holdReason ?? ''))
 	) {
-		// The vendor may hold an order we never recorded: platform support checks
-		// the vendor before anything is refunded.
+		// A vendor may have the order already, including prints made and shipped.
+		// Admin must resolve these holds before anything is refunded.
 		throw new PrintOrderError(
 			409,
 			'needs_support',
@@ -1952,7 +1953,16 @@ export async function adminRetryPrintOrder(
 				.where(eq(PrintVendorOrder.id, vendorOrder.id))
 		}
 	}
-	await submitPrintOrder(order.id, { ignoreDrift: acceptPrice })
+	const retryEnd = Date.now() + SWEEP_TOTAL_BUDGET_MS
+	for (;;) {
+		const left = retryEnd - Date.now()
+		if (left <= 0) return
+		const result = await submitPrintOrder(order.id, {
+			ignoreDrift: acceptPrice,
+			budgetMs: Math.min(SWEEP_ORDER_BUDGET_MS, left),
+		})
+		if (result !== 'deferred') return
+	}
 }
 
 // ---------------------------------------------------------------------------

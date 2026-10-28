@@ -13,6 +13,7 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { insertTestUser } from '#tests/dashboard-utils.ts'
 import { createTestOrganization } from '#tests/test-utils.ts'
+import * as printFiles from './print-files.server.ts'
 import type * as vendorsModule from './vendors/index.server.ts'
 
 const sessionCount = vi.hoisted(() => ({ value: 0 }))
@@ -651,6 +652,75 @@ describe('shipped print orders', () => {
 		expect((await getPrintOrderDetail(null, orderId)).order.status).toBe(
 			'submitted',
 		)
+	})
+
+	it.each(['vendor_returned', 'vendor_after_shipping', 'vendor_unknown'])(
+		'requires Admin to resolve %s without cancelling vendors or refunding',
+		async (holdReason) => {
+			const { access, orderId } = await paidOrderLater()
+			await db
+				.update(PrintOrder)
+				.set({ status: 'held', holdReason })
+				.where(eq(PrintOrder.id, orderId))
+			await expect(cancelPrintOrder(access, orderId)).rejects.toMatchObject({
+				code: 'needs_support',
+			})
+			expect((await getPrintOrderDetail(null, orderId)).order).toMatchObject({
+				status: 'held',
+				holdReason,
+			})
+			expect(stripeMock.refunds.create).not.toHaveBeenCalled()
+		},
+	)
+
+	it('continues an Admin retry after a deferred render despite an old payment', async () => {
+		const { orderId } = await paidOrderLater()
+		const paidAt = new Date(Date.now() - 25 * 60 * 60_000)
+		await db
+			.update(PrintOrder)
+			.set({
+				status: 'held',
+				holdReason: 'render_unavailable',
+				paidAt,
+			})
+			.where(eq(PrintOrder.id, orderId))
+		let now = Date.now()
+		vi.spyOn(Date, 'now').mockImplementation(() => now)
+		vi.spyOn(printFiles, 'getPrintFile').mockImplementationOnce(async () => {
+			now += 61_000
+			return { kind: 'failed' }
+		})
+		await adminRetryPrintOrder(orderId, false)
+		expect((await getPrintOrderDetail(null, orderId)).order).toMatchObject({
+			status: 'submitted',
+			paidAt,
+		})
+	})
+
+	it('bounds deferred Admin retries to the sweep total rendering budget', async () => {
+		const { orderId } = await paidOrderLater()
+		await db
+			.update(PrintOrder)
+			.set({
+				status: 'held',
+				holdReason: 'render_unavailable',
+			})
+			.where(eq(PrintOrder.id, orderId))
+		let now = Date.now()
+		const started = now
+		vi.spyOn(Date, 'now').mockImplementation(() => now)
+		const render = vi
+			.spyOn(printFiles, 'getPrintFile')
+			.mockImplementation(async () => {
+				now += 61_000
+				return { kind: 'failed' }
+			})
+		await adminRetryPrintOrder(orderId, false)
+		expect(now - started).toBe(610_000)
+		expect(render).toHaveBeenCalledTimes(10)
+		expect(
+			(await getPrintOrderDetail(null, orderId)).vendorOrders[0]!.status,
+		).toBe('pending')
 	})
 
 	it('holds a paid order that is still not sent a day later', async () => {

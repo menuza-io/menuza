@@ -3029,8 +3029,8 @@ msgid "Paragraph text"
 msgstr "نص فقرة"
 
 #: app/routes/_admin+/print-shop.tsx:97
-msgid "Part of the order is with the printer; the rest could not be made: retry, or refund what was not sent"
-msgstr "جزء من الطلب لدى المطبعة، وتعذّر إنشاء الباقي: أعد المحاولة، أو استرد ما لم يُرسل"
+msgid "Part of the order is with the printer; the rest could not be made: retry, or refund in full. The vendor may keep printing the portion already sent."
+msgstr "جزء من الطلب لدى المطبعة، وتعذر تجهيز الباقي: أعد المحاولة أو أعد المبلغ بالكامل. قد يواصل المورّد طباعة الجزء الذي أُرسل بالفعل."
 
 #: app/routes/_admin+/print-shop.tsx:224
 msgid "Part of this order was already printing. Refund what was cancelled."

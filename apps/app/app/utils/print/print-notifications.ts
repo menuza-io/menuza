@@ -21,7 +21,7 @@ export const PRINT_ALERT_COPY: Record<
 > = {
 	paid: {
 		subject: msg`**Print order paid**`,
-		body: msg`We sent it to the printer. You can cancel until production starts.`,
+		body: msg`Payment is confirmed. Submission to the printer is pending. You can cancel until production starts.`,
 	},
 	shipped: {
 		subject: msg`**Your prints are on the way**`,
@@ -44,7 +44,7 @@ export const PRINT_EMAIL_COPY: Record<
 > = {
 	paid: {
 		headline: msg`Your print order is paid`,
-		detail: msg`We sent it to the printer. You can cancel it until production starts.`,
+		detail: msg`Payment is confirmed. Submission to the printer is pending. You can cancel until production starts.`,
 	},
 	shipped: {
 		headline: msg`Your prints are on the way`,

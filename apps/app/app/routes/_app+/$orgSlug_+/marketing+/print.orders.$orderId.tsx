@@ -1,6 +1,7 @@
 import { msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import {
+	PRINT_AFTER_SHIPPING_HOLDS,
 	PRINT_SELF_CANCEL_STATUSES,
 	PRINT_VENDOR_CHECK_HOLDS,
 	type PrintOrderStatus,
@@ -199,14 +200,15 @@ export default function PrintOrderRoute() {
 		(order.status === 'quote' || order.status === 'awaiting_payment') &&
 		!expired &&
 		!waitingForBank
-	// An order the printer may already have is settled by platform support.
+	// Holds involving an order already at the printer need Admin to resolve them.
+	const adminOnlyHold =
+		order.status === 'held' &&
+		(PRINT_VENDOR_CHECK_HOLDS.includes(order.holdReason ?? '') ||
+			PRINT_AFTER_SHIPPING_HOLDS.includes(order.holdReason ?? ''))
 	const cancellable =
 		data.canCancel &&
 		PRINT_SELF_CANCEL_STATUSES.includes(order.status) &&
-		!(
-			order.status === 'held' &&
-			PRINT_VENDOR_CHECK_HOLDS.includes(order.holdReason ?? '')
-		)
+		!adminOnlyHold
 
 	return (
 		<div className="space-y-8">
@@ -278,9 +280,13 @@ export default function PrintOrderRoute() {
 				<Alert role="status">
 					<AlertTitle>{_(msg`Your order is on hold`)}</AlertTitle>
 					<AlertDescription>
-						{_(
-							msg`We are checking it with the printer and will update you by email. You can still cancel for a full refund.`,
-						)}
+						{adminOnlyHold
+							? _(
+									msg`Only Admin can resolve this hold with the printer. We will update you by email.`,
+								)
+							: _(
+									msg`We are checking it with the printer and will update you by email. You can still cancel for a full refund.`,
+								)}
 					</AlertDescription>
 				</Alert>
 			) : null}
