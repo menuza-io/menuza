@@ -203,10 +203,16 @@ function dayKeyOf(now: Date): string {
 	return `${year}${month}${day}`
 }
 
+/** Drizzle wraps the driver error ("Failed query: ..."): read the causes too. */
 function isUniqueConstraintError(error: unknown): boolean {
-	return (
-		error instanceof Error && error.message.includes('UNIQUE constraint failed')
-	)
+	for (
+		let current: unknown = error, depth = 0;
+		current instanceof Error && depth < 5;
+		current = (current as { cause?: unknown }).cause, depth += 1
+	) {
+		if (current.message.includes('UNIQUE constraint failed')) return true
+	}
+	return false
 }
 
 /**
@@ -358,7 +364,13 @@ export async function markTabRoundsPaid(
 		)
 }
 
-/** How long a started tab payment freezes the tab without a provider session. */
+/**
+ * How long an unbound pay request keeps its amount and tip. It never blocks
+ * the table: the table code is public, so a pay request that holds rounds
+ * could be repeated to freeze a tab for good. A round placed meanwhile drops
+ * the request (the bridge refuses its amount anyway); only a bound provider
+ * session freezes the tab.
+ */
 export const QR_TAB_PAYMENT_FREEZE_MS = 30 * 60 * 1000
 
 /**
@@ -369,22 +381,35 @@ export const QR_TAB_PAYMENT_FREEZE_MS = 30 * 60 * 1000
 export const QR_TAB_SESSION_HOLD_MS = 45 * 60 * 1000
 
 /**
- * True while a tab payment is in progress: a provider session is bound (until
- * it goes stale), or the guest asked to pay recently (the amount is fixed from
- * that moment).
+ * True while a provider session is bound to the tab (until it goes stale):
+ * the total is frozen, so no round can ride along on an older amount and
+ * staff cannot close or void under a live payment page. Review and paid
+ * states never freeze.
  */
 export function isTabPaymentOpen(
+	tab: Pick<QrTabRow, 'paymentStatus' | 'paymentEventAt'>,
+	now: Date,
+): boolean {
+	if (tab.paymentStatus !== 'pending') return false
+	return now.getTime() - (tab.paymentEventAt ?? 0) < QR_TAB_SESSION_HOLD_MS
+}
+
+/**
+ * True while an unbound pay request is recent: its tip is fixed, so a second
+ * guest asking with another tip is refused instead of re-pricing the payment
+ * the first guest is about to open.
+ */
+export function isTabPayRequestOpen(
 	tab: Pick<
 		QrTabRow,
 		'paymentStatus' | 'paymentAmountCents' | 'paymentEventAt'
 	>,
 	now: Date,
 ): boolean {
-	const age = now.getTime() - (tab.paymentEventAt ?? 0)
-	if (tab.paymentStatus === 'pending') return age < QR_TAB_SESSION_HOLD_MS
 	return (
+		tab.paymentStatus === 'unpaid' &&
 		tab.paymentAmountCents != null &&
 		tab.paymentEventAt != null &&
-		age < QR_TAB_PAYMENT_FREEZE_MS
+		now.getTime() - tab.paymentEventAt < QR_TAB_PAYMENT_FREEZE_MS
 	)
 }

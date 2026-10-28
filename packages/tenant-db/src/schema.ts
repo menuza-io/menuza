@@ -5482,7 +5482,7 @@ export const qrTabPayments = sqliteTable(
 		id: text('id').primaryKey(),
 		tabId: text('tab_id')
 			.notNull()
-			.references(() => qrTabs.id, { onDelete: 'cascade' }),
+			.references(() => qrTabs.id, { onDelete: 'restrict' }),
 		sessionId: text('session_id').notNull(),
 		processor: text('processor').notNull(),
 		amountCents: integer('amount_cents').notNull(),

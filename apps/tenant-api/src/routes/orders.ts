@@ -37,6 +37,7 @@ import {
 } from '../services/order-service.ts'
 import type { DineInCapability } from '../services/qr-dine-in.ts'
 import {
+	checkTabDineInFlag,
 	getPublicTab,
 	getTableContext,
 	prepareTabPayment,
@@ -359,6 +360,13 @@ publicOrderRoutes.get('/tab', async (c) => {
 	try {
 		const result = await getPublicTab(organization.organization.id, tabToken)
 		if (!result.ok) return orderFailureResponse(result.failure)
+		// The QR flags come from the tab location's fresh order context, like
+		// placement: with dine-in off the tab is not served.
+		const flagDenied = await checkTabDineInFlag(
+			organization.organization.id,
+			result.data.table.locationId,
+		)
+		if (flagDenied) return orderFailureResponse(flagDenied)
 		return c.json({ tab: result.data }, 200, noStoreHeaders())
 	} catch (error) {
 		console.error(

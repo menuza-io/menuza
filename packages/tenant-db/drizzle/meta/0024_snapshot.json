@@ -5272,7 +5272,7 @@
 					"tableTo": "qr_tabs",
 					"columnsFrom": ["tab_id"],
 					"columnsTo": ["id"],
-					"onDelete": "cascade",
+					"onDelete": "restrict",
 					"onUpdate": "no action"
 				}
 			},

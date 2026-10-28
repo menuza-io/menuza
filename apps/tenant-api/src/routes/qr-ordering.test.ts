@@ -1013,7 +1013,7 @@ describe('QR ordering: dine-in tabs and the operator surface', () => {
 		).toBe(503)
 	})
 
-	it('freezes the tab from the pay request, so later rounds cannot ride on an older amount', async () => {
+	it('never lets an unbound pay request block the table, and never takes its stale amount', async () => {
 		const table = await createTable()
 		const first = await (
 			await placeRound({ 'X-Table-Token': table.token })
@@ -1021,12 +1021,41 @@ describe('QR ordering: dine-in tabs and the operator surface', () => {
 		await serveAll(first.tab.id)
 		const intent = await (await pay(first.tab.tabToken, 0)).json()
 
-		// Before any provider session: new rounds are refused.
-		const blocked = await placeRound({ 'X-Tab-Token': first.tab.tabToken })
-		expect((await blocked.json()).error).toBe('tab_paying')
+		// The table code is public: a pay request nobody binds must not freeze
+		// the tab (it could be repeated forever). The round is taken...
+		const round = await placeRound({ 'X-Tab-Token': first.tab.tabToken })
+		expect(round.status).toBe(201)
+		const db = await getTenantDb(orgId)
+		const [tab] = await db
+			.select()
+			.from(qrTabs)
+			.where(eq(qrTabs.id, first.tab.id))
+		expect(tab?.paymentAmountCents).toBeNull()
 
-		// A round slipped in any other way changes the total: the bridge refuses
-		// to quote or bind the stale amount.
+		// ...and the old request can no longer be quoted or bound.
+		const quote = await system('/quote', {
+			orgId,
+			orderId: intent.orderRef,
+			paymentToken: intent.tabPaymentToken,
+		})
+		expect(quote.status).toBe(404)
+		const bind = await system('/payment-session', {
+			orgId,
+			orderId: intent.orderRef,
+			sessionId: 'cs_test_stale_request',
+			processor: 'connect',
+		})
+		expect(bind.status).toBe(404)
+	})
+
+	it('refuses to quote or bind an amount the tab no longer costs', async () => {
+		const table = await createTable()
+		const first = await (
+			await placeRound({ 'X-Table-Token': table.token })
+		).json()
+		await serveAll(first.tab.id)
+		const intent = await (await pay(first.tab.tabToken, 0)).json()
+		// A round slipped in any other way changes the total.
 		const db = await getTenantDb(orgId)
 		const [round] = await db
 			.select()
@@ -1045,19 +1074,13 @@ describe('QR ordering: dine-in tabs and the operator surface', () => {
 		})
 		expect(quote.status).toBe(409)
 		expect((await quote.json()).error).toBe('amount_changed')
-
-		// An abandoned pay request stops freezing the tab after 30 minutes.
-		await db
-			.update(qrTabs)
-			.set({ paymentEventAt: Date.now() - 31 * 60_000 })
-			.where(eq(qrTabs.id, first.tab.id))
-		const later = await placeRound({ 'X-Tab-Token': first.tab.tabToken })
-		expect(later.status).toBe(201)
-		const [tab] = await db
-			.select()
-			.from(qrTabs)
-			.where(eq(qrTabs.id, first.tab.id))
-		expect(tab?.paymentAmountCents).toBeNull()
+		const bind = await system('/payment-session', {
+			orgId,
+			orderId: intent.orderRef,
+			sessionId: 'cs_test_changed',
+			processor: 'connect',
+		})
+		expect((await bind.json()).error).toBe('amount_changed')
 	})
 
 	it('keeps a paid event that no longer matches the tab for review', async () => {
@@ -1431,25 +1454,57 @@ describe('QR ordering: dine-in tabs and the operator surface', () => {
 		expect(rows.map((row) => row.sessionId)).toEqual(['pay_two'])
 	})
 
-	it('never restarts the payment freeze when the tip is asked again', async () => {
+	it('never restarts the pay request window when the payment is asked again', async () => {
 		const table = await createTable()
 		const first = await (
 			await placeRound({ 'X-Table-Token': table.token })
 		).json()
 		await serveAll(first.tab.id)
-		await pay(first.tab.tabToken, 0)
+		await pay(first.tab.tabToken, 10)
 		const db = await getTenantDb(orgId)
 		const startedAt = Date.now() - 29 * 60_000
 		await db
 			.update(qrTabs)
 			.set({ paymentEventAt: startedAt })
 			.where(eq(qrTabs.id, first.tab.id))
-		await pay(first.tab.tabToken, 10)
+		expect((await pay(first.tab.tabToken, 10)).status).toBe(200)
 		const [tab] = await db
 			.select()
 			.from(qrTabs)
 			.where(eq(qrTabs.id, first.tab.id))
 		expect(tab?.paymentEventAt).toBe(startedAt)
+	})
+
+	it("never re-prices a guest's unbound payment with another guest's tip", async () => {
+		const table = await createTable()
+		const first = await (
+			await placeRound({ 'X-Table-Token': table.token })
+		).json()
+		await serveAll(first.tab.id)
+		const mine = await (await pay(first.tab.tabToken, 20)).json()
+		const other = await pay(first.tab.tabToken, 10)
+		expect(other.status).toBe(409)
+		expect((await other.json()).error).toBe('tab_paying')
+		// The first guest's checkout still quotes their own amount.
+		const quote = await (
+			await system('/quote', {
+				orgId,
+				orderId: mine.orderRef,
+				paymentToken: mine.tabPaymentToken,
+			})
+		).json()
+		expect(quote.totalCents).toBe(mine.amountCents)
+		// The same payment asked again is served.
+		const same = await pay(first.tab.tabToken, 20)
+		expect(same.status).toBe(200)
+		expect((await same.json()).amountCents).toBe(mine.amountCents)
+		// Once the request window lapses, another tip may start a new one.
+		const db = await getTenantDb(orgId)
+		await db
+			.update(qrTabs)
+			.set({ paymentEventAt: Date.now() - 31 * 60_000 })
+			.where(eq(qrTabs.id, first.tab.id))
+		expect((await pay(first.tab.tabToken, 10)).status).toBe(200)
 	})
 
 	it('burns the open tab code too when a table gets a new QR code', async () => {
@@ -1477,5 +1532,250 @@ describe('QR ordering: dine-in tabs and the operator surface', () => {
 		expect(tables.map((table: { label: string }) => table.label)).toEqual([
 			'T3',
 		])
+	})
+
+	// -----------------------------------------------------------------------
+	// Review fixes (PR #49)
+	// -----------------------------------------------------------------------
+
+	it('replays a round without handing out a tab code the presented code no longer proves', async () => {
+		const table = await createTable()
+		const body = roundBody()
+		const first = await (
+			await request('/orders', {
+				method: 'POST',
+				body,
+				headers: { 'X-Table-Token': table.token },
+			})
+		).json()
+		const replay = (headers: Record<string, string>, replayBody = body) =>
+			request('/orders', { method: 'POST', body: replayBody, headers })
+
+		// Any header at all used to be enough for a fresh tab code.
+		const forged = await replay({ 'X-Table-Token': 'x' })
+		expect(forged.status).toBe(200)
+		const forgedBody = await forged.json()
+		expect(forgedBody.order.id).toBe(first.order.id)
+		expect(forgedBody.tab).toBeUndefined()
+
+		// Regenerating the table code is not undone by an old request.
+		await operator(`/tables/${table.id}`, {
+			method: 'PATCH',
+			body: { regenerateToken: true },
+		})
+		const burned = await replay({ 'X-Table-Token': table.token })
+		expect(burned.status).toBe(200)
+		expect((await burned.json()).tab).toBeUndefined()
+		const burnedTab = await replay({ 'X-Tab-Token': first.tab.tabToken })
+		expect((await burnedTab.json()).tab).toBeUndefined()
+
+		// Nor is a lock.
+		const other = await createTable('T2')
+		const otherBody = roundBody()
+		const opened = await (
+			await request('/orders', {
+				method: 'POST',
+				body: otherBody,
+				headers: { 'X-Table-Token': other.token },
+			})
+		).json()
+		await operator(`/tabs/${opened.tab.id}/lock`, { method: 'POST' })
+		const locked = await replay({ 'X-Table-Token': other.token }, otherBody)
+		expect(locked.status).toBe(200)
+		expect((await locked.json()).tab).toBeUndefined()
+	})
+
+	it('rolls the burned tab code back when a table patch fails', async () => {
+		const table = await createTable('T1')
+		await createTable('T2')
+		const first = await (
+			await placeRound({ 'X-Table-Token': table.token })
+		).json()
+		await serveAll(first.tab.id)
+		await pay(first.tab.tabToken, 0)
+		const patch = await operator(`/tables/${table.id}`, {
+			method: 'PATCH',
+			body: { label: 'T2', regenerateToken: true },
+		})
+		expect(patch.status).toBe(409)
+		expect((await patch.json()).error).toBe('table_label_taken')
+		const db = await getTenantDb(orgId)
+		const [tab] = await db
+			.select()
+			.from(qrTabs)
+			.where(eq(qrTabs.id, first.tab.id))
+		// The pay request and the tab code survive, and so does the table code.
+		expect(tab?.paymentAmountCents).not.toBeNull()
+		expect(
+			(await placeRound({ 'X-Tab-Token': first.tab.tabToken })).status,
+		).toBe(201)
+		expect((await placeRound({ 'X-Table-Token': table.token })).status).toBe(
+			201,
+		)
+	})
+
+	it('lets the table keep ordering once online money is in review', async () => {
+		const { first, intent } = await boundPayment(0, 'cs_test_review_rounds')
+		const db = await getTenantDb(orgId)
+		const [round] = await db
+			.select()
+			.from(restaurantOrders)
+			.where(eq(restaurantOrders.tabId, first.tab.id))
+		await db.insert(restaurantOrders).values({
+			...round!,
+			id: crypto.randomUUID(),
+			number: `${round!.number}-r`,
+			idempotencyKey: crypto.randomUUID(),
+		})
+		const paid = await system('/payment-status', {
+			orgId,
+			orderId: intent.orderRef,
+			sessionId: 'cs_test_review_rounds',
+			processor: 'connect',
+			status: 'paid',
+			amountCents: intent.amountCents,
+			currency: 'usd',
+		})
+		expect((await paid.json()).paymentStatus).toBe('review')
+		// Nobody is paying any more: the next round is taken, not `tab_paying`.
+		const next = await placeRound({ 'X-Tab-Token': first.tab.tabToken })
+		expect(next.status).toBe(201)
+	})
+
+	it('lists settled tabs with the newest review money first, before the limit', async () => {
+		const tables = await Promise.all(
+			['T1', 'T2', 'T3'].map((label) => createTable(label)),
+		)
+		const db = await getTenantDb(orgId)
+		const now = Date.now()
+		const ids = [
+			'ffffffff-0000-4000-8000-000000000001',
+			'eeeeeeee-0000-4000-8000-000000000002',
+			'00000000-0000-4000-8000-000000000003',
+		]
+		const statuses = ['open', 'closed', 'cancelled'] as const
+		await db.insert(qrTabs).values(
+			ids.map((id, index) => ({
+				id,
+				tableId: tables[index]!.id,
+				locationId: 'loc-1',
+				tableLabel: `T${index + 1}`,
+				status: statuses[index]!,
+				tabNumber: `90${index}`,
+				openedDay: '20260101',
+				currency: 'USD',
+				openedAt: now,
+				closedAt: statuses[index] === 'open' ? null : now,
+				updatedAt: now,
+			})),
+		)
+		// The open tab sorts first by id, the closed one has older money.
+		const receivedAt = [now - 1_000, now - 3 * 86_400_000, now - 10]
+		await db.insert(qrTabPayments).values(
+			ids.map((tabId, index) => ({
+				id: crypto.randomUUID(),
+				tabId,
+				sessionId: `cs_test_list_${index}`,
+				processor: 'connect',
+				amountCents: 100,
+				currency: 'USD',
+				receivedAt: receivedAt[index]!,
+			})),
+		)
+		const one = await (await operator('/tabs?status=review&limit=1')).json()
+		expect(one.tabs.map((tab: { id: string }) => tab.id)).toEqual([ids[2]])
+		const two = await (await operator('/tabs?status=review&limit=2')).json()
+		expect(two.tabs.map((tab: { id: string }) => tab.id)).toEqual([
+			ids[2],
+			ids[1],
+		])
+	})
+
+	it('keeps review payments append-only: no delete, and no tab delete under them', async () => {
+		const { first, intent } = await boundPayment(0, 'cs_test_append_only')
+		await operator(`/tabs/${first.tab.id}/release-payment`, { method: 'POST' })
+		await system('/payment-status', {
+			orgId,
+			orderId: intent.orderRef,
+			sessionId: 'cs_test_append_only',
+			processor: 'connect',
+			status: 'paid',
+			amountCents: intent.amountCents,
+			currency: 'usd',
+		})
+		const db = await getTenantDb(orgId)
+		const rows = await db
+			.select()
+			.from(qrTabPayments)
+			.where(eq(qrTabPayments.tabId, first.tab.id))
+		expect(rows).toHaveLength(1)
+		await expect(
+			db.delete(qrTabPayments).where(eq(qrTabPayments.tabId, first.tab.id)),
+		).rejects.toThrow()
+		// Deleting the tab must not cascade the money record away either.
+		await db
+			.delete(restaurantOrders)
+			.where(eq(restaurantOrders.tabId, first.tab.id))
+		await expect(
+			db.delete(qrTabs).where(eq(qrTabs.id, first.tab.id)),
+		).rejects.toThrow()
+		expect(
+			await db
+				.select()
+				.from(qrTabPayments)
+				.where(eq(qrTabPayments.tabId, first.tab.id)),
+		).toHaveLength(1)
+	})
+
+	it('serves the tab only with dine-in on, and the bridge only with online pay on', async () => {
+		const table = await createTable()
+		const first = await (
+			await placeRound({ 'X-Table-Token': table.token })
+		).json()
+		await serveAll(first.tab.id)
+		const intent = await (await pay(first.tab.tabToken, 0)).json()
+
+		activeContext = context({ enabled: true, dineIn: false, online: false })
+		const tab = await request('/orders/tab?slug=test-org', {
+			headers: { 'X-Tab-Token': first.tab.tabToken },
+		})
+		expect(tab.status).toBe(404)
+		expect((await tab.json()).error).toBe('dine_in_unavailable')
+
+		activeContext = context({ enabled: true, dineIn: true, online: false })
+		expect(
+			(
+				await request('/orders/tab?slug=test-org', {
+					headers: { 'X-Tab-Token': first.tab.tabToken },
+				})
+			).status,
+		).toBe(200)
+		const quote = await system('/quote', {
+			orgId,
+			orderId: intent.orderRef,
+			paymentToken: intent.tabPaymentToken,
+		})
+		expect(quote.status).toBe(409)
+		expect((await quote.json()).error).toBe('online_pay_unavailable')
+		const bind = await system('/payment-session', {
+			orgId,
+			orderId: intent.orderRef,
+			sessionId: 'cs_test_flag_off',
+			processor: 'connect',
+		})
+		expect(bind.status).toBe(409)
+		expect((await bind.json()).error).toBe('online_pay_unavailable')
+
+		// Back on: the same request is quoted and bound.
+		activeContext = context()
+		expect(
+			(
+				await system('/quote', {
+					orgId,
+					orderId: intent.orderRef,
+					paymentToken: intent.tabPaymentToken,
+				})
+			).status,
+		).toBe(200)
 	})
 })

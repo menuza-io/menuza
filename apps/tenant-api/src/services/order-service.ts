@@ -379,10 +379,16 @@ async function nextOrderNumber(
 	return candidate
 }
 
+/** Drizzle wraps the driver error ("Failed query: ..."): read the causes too. */
 function isUniqueConstraintError(error: unknown): boolean {
-	return (
-		error instanceof Error && error.message.includes('UNIQUE constraint failed')
-	)
+	for (
+		let current: unknown = error, depth = 0;
+		current instanceof Error && depth < 5;
+		current = (current as { cause?: unknown }).cause, depth += 1
+	) {
+		if (current.message.includes('UNIQUE constraint failed')) return true
+	}
+	return false
 }
 
 // ---------------------------------------------------------------------------
@@ -516,7 +522,7 @@ export async function placeOrder(input: {
 
 	const replayOrConflict = async (
 		existing: RestaurantOrder,
-		reader: Pick<TenantDatabase, 'select'> | OrderTx = db,
+		reader: TenantDatabase | OrderTx = db,
 	): Promise<PlaceOrderResult> => {
 		if (existing.requestHash !== requestHash) {
 			return orderFailure(
@@ -526,13 +532,18 @@ export async function placeOrder(input: {
 			)
 		}
 		let tab: PlaceOrderSuccess['tab'] = null
-		if (existing.tabId) {
-			const [row] = await reader
-				.select()
-				.from(qrTabs)
-				.where(eq(qrTabs.id, existing.tabId))
-				.limit(1)
-			if (row) {
+		if (existing.tabId && dineIn) {
+			// A replay hands out the tab code only to a code that still proves
+			// this tab: a regenerated table code, a lock, a closed tab or a burned
+			// tab code must not be undone by re-sending an old request.
+			const resolved = await resolveDineIn(
+				reader,
+				orgId,
+				dineIn,
+				existing.locationId,
+			)
+			const row = resolved.ok ? resolved.data.tab : null
+			if (row && row.id === existing.tabId) {
 				tab = {
 					id: row.id,
 					tabNumber: row.tabNumber,
@@ -644,9 +655,11 @@ export async function placeOrder(input: {
 						(existingTab.paymentStatus === 'unpaid' ||
 							existingTab.paymentStatus === 'pending')
 					) {
-						// A payment started long ago and never finished: forget it,
-						// binding included, so the table can keep ordering and pay
-						// again. Money that still arrives for it is kept for review.
+						// A pay request nobody bound (this round changes the total, so
+						// the bridge would refuse its amount anyway) or a session past
+						// its hold: forget it, binding included, so the table can keep
+						// ordering and pay again. Money that still arrives for it is
+						// kept for review.
 						const [cleared] = await tx
 							.update(qrTabs)
 							.set({

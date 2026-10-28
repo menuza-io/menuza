@@ -1,5 +1,5 @@
 import crypto from 'node:crypto'
-import { and, asc, desc, eq, gt, inArray, isNull, ne } from 'drizzle-orm'
+import { and, asc, desc, eq, gt, inArray, isNull, max, ne } from 'drizzle-orm'
 
 import {
 	QR_MAX_TABLES_PER_LOCATION,
@@ -40,9 +40,10 @@ import {
 import { inJsonList } from '../lib/chunked-in.ts'
 import { timingSafeEqualString } from '../lib/secrets.ts'
 import { retryOnSqliteBusy } from '../lib/sqlite-retry.ts'
-import { runExclusive } from './order-service.ts'
+import { fetchOrderContext, runExclusive } from './order-service.ts'
 import {
 	isTabPaymentOpen,
+	isTabPayRequestOpen,
 	listTabRounds,
 	markTabRoundsPaid,
 	QR_ROUND_PENDING_STATUSES,
@@ -68,10 +69,26 @@ function fail(status: number, code: string, message: string) {
 	return { ok: false as const, failure: { status, code, message } }
 }
 
+/** Drizzle wraps the driver error ("Failed query: ..."): read the causes too. */
 function isUniqueConstraintError(error: unknown): boolean {
-	return (
-		error instanceof Error && error.message.includes('UNIQUE constraint failed')
-	)
+	for (
+		let current: unknown = error, depth = 0;
+		current instanceof Error && depth < 5;
+		current = (current as { cause?: unknown }).cause, depth += 1
+	) {
+		if (current.message.includes('UNIQUE constraint failed')) return true
+	}
+	return false
+}
+
+/**
+ * Thrown inside `writeTx` to answer with a failure after a write: a returned
+ * failure commits the transaction, a thrown one rolls every write back.
+ */
+class QrRollback extends Error {
+	constructor(readonly result: ReturnType<typeof fail>) {
+		super(result.failure.code)
+	}
 }
 
 async function writeTx<T>(
@@ -84,6 +101,19 @@ async function writeTx<T>(
 	return runExclusive(orgId, () =>
 		retryOnSqliteBusy(() => runTenantTransaction(db, operation)),
 	)
+}
+
+/** `writeTx` for operations that may throw `QrRollback` after a write. */
+async function writeTxOrRollback<T>(
+	orgId: string,
+	operation: Parameters<typeof writeTx<QrResult<T>>>[1],
+): Promise<QrResult<T>> {
+	try {
+		return await writeTx(orgId, operation)
+	} catch (error) {
+		if (error instanceof QrRollback) return error.result
+		throw error
+	}
 }
 
 const iso = (ms: number | null | undefined) =>
@@ -475,7 +505,7 @@ export async function patchQrTable(
 	tableId: string,
 	patch: { label?: string; archived?: boolean; regenerateToken?: true },
 ): Promise<QrResult<QrTableView>> {
-	return writeTx(orgId, async (tx) => {
+	return writeTxOrRollback(orgId, async (tx) => {
 		const [table] = await tx
 			.select()
 			.from(qrTables)
@@ -528,10 +558,14 @@ export async function patchQrTable(
 			}
 		} catch (error) {
 			if (isUniqueConstraintError(error)) {
-				return fail(
-					409,
-					'table_label_taken',
-					'A table with this label already exists at this location.',
+				// Thrown, not returned: the tab code burned above must roll back
+				// with the table update it belongs to.
+				throw new QrRollback(
+					fail(
+						409,
+						'table_label_taken',
+						'A table with this label already exists at this location.',
+					),
 				)
 			}
 			throw error
@@ -700,26 +734,23 @@ async function listSettledTabsWithReview(
 	db: Awaited<ReturnType<typeof getTenantDb>>,
 	limit: number,
 ): Promise<QrTabRow[]> {
-	const recent = await db
-		.selectDistinct({ tabId: qrTabPayments.tabId })
+	// Settled tabs only, newest money first, before the limit: open tabs show
+	// their payments on their own card and must not use up the page.
+	const lastReceivedAt = max(qrTabPayments.receivedAt)
+	const rows = await db
+		.select({ tab: qrTabs, lastReceivedAt })
 		.from(qrTabPayments)
-		.where(gt(qrTabPayments.receivedAt, Date.now() - QR_REVIEW_LIST_MS))
-		.orderBy(desc(qrTabPayments.tabId))
-		.limit(limit)
-	if (recent.length === 0) return []
-	return db
-		.select()
-		.from(qrTabs)
+		.innerJoin(qrTabs, eq(qrTabs.id, qrTabPayments.tabId))
 		.where(
 			and(
-				inJsonList(
-					qrTabs.id,
-					recent.map((row) => row.tabId),
-				),
+				gt(qrTabPayments.receivedAt, Date.now() - QR_REVIEW_LIST_MS),
 				ne(qrTabs.status, 'open'),
 			),
 		)
-		.orderBy(desc(qrTabs.closedAt))
+		.groupBy(qrTabs.id)
+		.orderBy(desc(lastReceivedAt), desc(qrTabs.id))
+		.limit(limit)
+	return rows.map((row) => row.tab)
 }
 
 export async function listOperatorTabs(
@@ -1148,18 +1179,15 @@ export async function prepareTabPayment(
 		}
 		const tabPaymentToken = deriveTabPaymentToken(orgId, tab.id)
 		const now = new Date()
-		const holdOpen = isTabPaymentOpen(tab, now)
+		const askedTip = Math.round((totals.subtotalCents * input.tipPercent) / 100)
 		if (
 			tab.paymentStatus === 'pending' &&
 			tab.paymentSessionId &&
 			tab.paymentAmountCents != null &&
-			holdOpen
+			isTabPaymentOpen(tab, now)
 		) {
 			// A session is live. Re-serve it only to someone asking for the same
 			// payment; a different tip means another guest is paying right now.
-			const askedTip = Math.round(
-				(totals.subtotalCents * input.tipPercent) / 100,
-			)
 			if (askedTip !== (tab.paymentTipCents ?? 0)) {
 				return fail(
 					409,
@@ -1181,15 +1209,24 @@ export async function prepareTabPayment(
 		if (tab.paymentStatus === 'paid' || tab.paymentStatus === 'review') {
 			return fail(409, 'tab_closed', 'This tab is already paid.')
 		}
-		const tipCents = Math.round((totals.subtotalCents * input.tipPercent) / 100)
+		const tipCents = askedTip
 		const amountCents = totals.totalCents + tipCents
-		// The freeze runs from the first ask: a re-ask (or a different tip)
-		// re-prices the payment but never restarts it, so nobody can keep the
-		// table frozen by asking again and again.
+		// A recent pay request nobody has bound yet fixes the tip: the payment
+		// token carries no nonce, so another guest's tip would re-price the page
+		// the first guest is about to open. A request the tab has outgrown
+		// (staff cancelled a round) cannot be paid anyway and is replaced.
 		const sameRequest =
-			holdOpen &&
-			tab.paymentStatus === 'unpaid' &&
-			tab.paymentAmountCents != null
+			isTabPayRequestOpen(tab, now) &&
+			tab.paymentAmountCents === totals.totalCents + (tab.paymentTipCents ?? 0)
+		if (sameRequest && tipCents !== (tab.paymentTipCents ?? 0)) {
+			return fail(
+				409,
+				'tab_paying',
+				'Someone at the table is paying this tab right now. Please wait a moment.',
+			)
+		}
+		// The request window runs from the first ask: asking again never
+		// restarts it. It never blocks rounds; only a bound session does.
 		await tx
 			.update(qrTabs)
 			.set({
@@ -1248,6 +1285,53 @@ async function currentPayableCents(
 ): Promise<number> {
 	const rounds = await listTabRounds(db, [tab.id])
 	return tabTotals(tab, rounds).totalCents + (tab.paymentTipCents ?? 0)
+}
+
+/**
+ * The bridge's quote and bind for a `tab:` id need `qr_ordering.online`, read
+ * from the tab location's fresh order context (fail closed). Payment events
+ * skip this: money that already moved must still settle or land in review.
+ * Answers null when allowed, or when the tab is unknown (the step answers 404).
+ */
+export async function checkTabOnlinePayFlag(
+	orgId: string,
+	tabId: string,
+): Promise<DineInFailure | null> {
+	const tab = await loadPayableTab(await getTenantDb(orgId), tabId)
+	if (!tab) return null
+	const context = await fetchOrderContext(orgId, tab.locationId, null)
+	if (!context.ok) return context.failure
+	const features = readQrOrderingFeatures(
+		(context.data as { qrOrdering?: unknown }).qrOrdering,
+	)
+	if (features.online) return null
+	return {
+		status: 409,
+		code: 'online_pay_unavailable',
+		message:
+			'Paying from the phone is not available. Please pay at the counter.',
+	}
+}
+
+/**
+ * `GET /orders/tab` needs `qr_ordering.dine_in` for the tab's location, read
+ * from its fresh order context (fail closed).
+ */
+export async function checkTabDineInFlag(
+	orgId: string,
+	locationId: string,
+): Promise<DineInFailure | null> {
+	const context = await fetchOrderContext(orgId, locationId, null)
+	if (!context.ok) return context.failure
+	const features = readQrOrderingFeatures(
+		(context.data as { qrOrdering?: unknown }).qrOrdering,
+	)
+	if (features.dineIn) return null
+	return {
+		status: 404,
+		code: 'dine_in_unavailable',
+		message: 'Ordering at the table is not available.',
+	}
 }
 
 /** Hosted session lifetime for a tab: Stripe's 30-minute minimum plus room. */

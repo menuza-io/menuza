@@ -104,15 +104,20 @@ subtotal), enters name and phone and pays on the hosted page of the
 organization's processor (Stripe Connect in the US, Checkout.com anywhere). The
 tab rides the restaurant-order payment bridge as the order `tab:<id>`, with the
 same metadata, idempotency, single bind and provider reconciliation as online
-orders. While a payment is open the tab total is frozen: new rounds and counter
-close or void are refused until the session ends, or for at most 45 minutes (a
-Stripe page expires 40 minutes after the pay request, or 31 minutes after the
-hold when that is later). After the hold, the next pay request or round forgets
-the dead binding (Checkout.com never reports expiry). The freeze runs from the
-first pay request: asking again, even with another tip, re-prices the payment
-but never restarts it; a different tip while a page is live is refused. A Stripe
-session's idempotency key carries its exact expiry, and a cached session that
-has expired is replaced by a new one instead of failing.
+orders. While a provider session is bound the tab total is frozen: new rounds
+and counter close or void are refused until the session ends, or for at most 45
+minutes (a Stripe page expires 40 minutes after the pay request, or 31 minutes
+after the hold when that is later). After the hold, the next pay request or
+round forgets the dead binding (Checkout.com never reports expiry). A pay
+request that has not reached the provider yet never blocks the table (the table
+code is public, so it could be repeated to freeze the tab): a round placed
+meanwhile drops it, and the bridge refuses to quote or bind an amount the tab no
+longer costs. For 30 minutes from the first ask the tip is fixed: asking again
+with the same tip serves the same payment and never restarts that window, and
+another tip is refused (`tab_paying`), as it is while a page is live, so two
+guests are never charged each other's tip. A Stripe session's idempotency key
+carries its exact expiry, and a cached session that has expired is replaced by a
+new one instead of failing.
 
 - Only a verified provider event (or the App's provider lookup) closes a tab; a
   redirect never does.
@@ -128,12 +133,13 @@ has expired is replaced by a new one instead of failing.
 - **Needs review:** money that does not match the tab (a different amount, a
   stopped or replaced session, a tab already settled) never closes it. Each such
   payment is one append-only `qr_tab_payments` row (tenant migration
-  `0024_qr_tab_payments`), so a second payment never hides the first. Stripe
-  rows are keyed by session; Checkout.com binds one reference per tab, so its
-  rows are keyed by the payment id the bridge now forwards (`paymentId`). The
-  tab shows **Paid online, needs review** with the count and sum; close and void
-  then ask staff to confirm they checked the payments
-  (`acknowledgeReview: true`), and the tab keeps `paymentStatus: 'review'`.
+  `0024_qr_tab_payments`; triggers refuse update and delete, and a tab with rows
+  cannot be deleted), so a second payment never hides the first. Stripe rows are
+  keyed by session; Checkout.com binds one reference per tab, so its rows are
+  keyed by the payment id the bridge now forwards (`paymentId`). The tab shows
+  **Paid online, needs review** with the count and sum; close and void then ask
+  staff to confirm they checked the payments (`acknowledgeReview: true`), and
+  the tab keeps `paymentStatus: 'review'`.
 - **Late payment on a settled tab:** counter close and void drop the online
   binding and return it (`releasedSession`, like Stop online payment), so the
   App expires the guest's Stripe page; a tab paid online remembers the payment
@@ -151,7 +157,10 @@ has expired is replaced by a new one instead of failing.
 (`GET /orders/options` with a table code, `GET /orders/tab`), starting a tab
 payment and the bridge's quote and bind for `tab:` ids. Pickup, delivery,
 posters and every operator route keep working, so staff can still close tabs at
-the counter. Payment events for tabs already paying are still applied.
+the counter. Payment events for tabs already paying are still applied. The flags
+are checked the same way: `GET /orders/tab` needs `qr_ordering.dine_in`, and the
+bridge's quote and bind for `tab:` ids need `qr_ordering.online` (both read from
+the tab location's order context); payment events skip the flags too.
 
 ## Known limits
 

@@ -24,16 +24,22 @@ import {
 import {
 	applyTabPaymentEvent,
 	bindTabPaymentSession,
+	checkTabOnlinePayFlag,
 	getTabQuote,
 } from '../services/qr-tab-service.ts'
 
-/** `tab:<id>` refs are QR tabs paid from the phone; the kill switch stops them. */
-function tabRef(c: Context, orderId: string) {
+/**
+ * `tab:<id>` refs are QR tabs paid from the phone; the kill switch and the
+ * `qr_ordering.online` flag stop their quote and bind.
+ */
+async function tabRef(c: Context, orgId: string, orderId: string) {
 	const tabId = parseTabOrderRef(orderId)
 	if (!tabId) return { tabId: null, denied: null }
 	if (isQrDineInDisabled()) {
 		return { tabId, denied: c.json({ error: 'unavailable' }, 503) }
 	}
+	const flagDenied = await checkTabOnlinePayFlag(orgId, tabId)
+	if (flagDenied) return { tabId, denied: failureResponse(c, flagDenied) }
 	return { tabId, denied: null }
 }
 
@@ -124,10 +130,9 @@ orderSystemRoutes.post('/quote', async (c) => {
 	const regionDenied = await assertOrgRegion(c, parsed.data.orgId)
 	if (regionDenied) return regionDenied
 
-	const tab = tabRef(c, parsed.data.orderId)
-	if (tab.denied) return tab.denied
-
 	try {
+		const tab = await tabRef(c, parsed.data.orgId, parsed.data.orderId)
+		if (tab.denied) return tab.denied
 		const result = tab.tabId
 			? await getTabQuote(
 					parsed.data.orgId,
@@ -170,10 +175,9 @@ orderSystemRoutes.post('/payment-session', async (c) => {
 	const regionDenied = await assertOrgRegion(c, parsed.data.orgId)
 	if (regionDenied) return regionDenied
 
-	const tab = tabRef(c, parsed.data.orderId)
-	if (tab.denied) return tab.denied
-
 	try {
+		const tab = await tabRef(c, parsed.data.orgId, parsed.data.orderId)
+		if (tab.denied) return tab.denied
 		const result = tab.tabId
 			? await bindTabPaymentSession({
 					orgId: parsed.data.orgId,
