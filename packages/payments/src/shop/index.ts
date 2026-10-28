@@ -65,6 +65,7 @@ export {
 
 export {
 	ShopCommerce,
+	ShopCheckoutSessionNotOpenError,
 	ShopOrderNotFoundError,
 	createShopCommerce,
 } from './commerce'

@@ -34,6 +34,7 @@ import {
 	mapConnectSessionToRestaurantOrder,
 	RESTAURANT_ORDER_PRODUCT_NAME,
 	restaurantOrderCheckoutReference,
+	ShopCheckoutSessionNotOpenError,
 	type RestaurantOrderPaymentEvent,
 	type RestaurantOrderProcessor,
 } from '@repo/payments'
@@ -476,14 +477,35 @@ export async function createRestaurantOrderHostedCheckout(options: {
 					? billingCountryForCurrency(quote.currency)
 					: null,
 		})
-	let session = await createSession(baseKey)
 	// Stripe replays a cached session for the same key, even one that has
-	// expired since (no URL): chain a new key off the dead session so the
-	// guest gets a live page instead of an error until the hold moves.
-	for (let attempt = 0; !session.url && baseKey && attempt < 2; attempt += 1) {
-		session = await createSession(`${baseKey}:after:${session.id}`)
+	// ended since (no URL). Only an expired one is replaced, by a new key
+	// chained off it, so the guest gets a live page instead of an error until
+	// the hold moves; a completed one was paid, and must never get a second
+	// payment page.
+	const tryCreate = async (idempotencyKey: string | null) => {
+		try {
+			return await createSession(idempotencyKey)
+		} catch (error) {
+			if (error instanceof ShopCheckoutSessionNotOpenError) return error
+			throw error
+		}
 	}
-
+	let created = await tryCreate(baseKey)
+	for (
+		let attempt = 0;
+		created instanceof ShopCheckoutSessionNotOpenError &&
+		created.status === 'expired' &&
+		baseKey &&
+		attempt < 2;
+		attempt += 1
+	) {
+		created = await tryCreate(`${baseKey}:after:${created.sessionId}`)
+	}
+	if (created instanceof ShopCheckoutSessionNotOpenError) {
+		if (created.status === 'complete') throw jsonError(409, 'already_paid')
+		throw jsonError(502, 'checkout_session_unavailable', true)
+	}
+	const session = created
 	if (!session.url) {
 		throw jsonError(502, 'checkout_session_unavailable', true)
 	}

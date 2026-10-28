@@ -110,6 +110,7 @@ export {
 	createShopCommerceConfigFromEnv,
 	createShopCommerce,
 	ShopCommerce,
+	ShopCheckoutSessionNotOpenError,
 	ShopOrderNotFoundError,
 	hostedWebhookHeadersFromRequest,
 	parseHostedShopWebhook,

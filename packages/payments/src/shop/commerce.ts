@@ -86,6 +86,23 @@ export class ShopOrderNotFoundError extends Error {
 	}
 }
 
+/**
+ * Stripe answered a create with a session that has no payment page (an
+ * idempotent replay of a session that expired or completed since). Carries
+ * the session id and status so a caller can tell a dead page (create a new
+ * one) from a paid one (never create a second page).
+ */
+export class ShopCheckoutSessionNotOpenError extends Error {
+	readonly sessionId: string
+	readonly status: string | null
+	constructor(sessionId: string, status: string | null) {
+		super('Unable to create checkout session.')
+		this.name = 'ShopCheckoutSessionNotOpenError'
+		this.sessionId = sessionId
+		this.status = status
+	}
+}
+
 function isProviderNotFoundError(error: unknown) {
 	if (!error || typeof error !== 'object') return false
 	const candidate = error as {
@@ -564,7 +581,10 @@ export class ShopCommerce {
 		)
 
 		if (!session.url) {
-			throw new Error('Unable to create checkout session.')
+			throw new ShopCheckoutSessionNotOpenError(
+				session.id,
+				session.status ?? null,
+			)
 		}
 
 		return {

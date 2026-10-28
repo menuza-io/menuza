@@ -12,8 +12,10 @@ import { RegionalOrderApiError } from './regional-order-api.server.ts'
 // Imported lazily: a static `@repo/payments` import initializes the payments
 // entry (route handlers → @repo/database) before this file's module mocks are
 // wired, which trips vitest's hoisting.
-const { buildRestaurantOrderSessionIdempotencyKey } =
-	await import('@repo/payments')
+const {
+	buildRestaurantOrderSessionIdempotencyKey,
+	ShopCheckoutSessionNotOpenError,
+} = await import('@repo/payments')
 
 const findOrg = vi.hoisted(() => vi.fn())
 const regional = vi.hoisted(() => ({
@@ -186,7 +188,9 @@ describe('restaurant order hosted checkout', () => {
 
 	it('replaces a cached session that expired instead of failing until the hold moves', async () => {
 		commerce.createCheckout
-			.mockResolvedValueOnce({ id: 'cs_dead', url: null, processor: 'connect' })
+			.mockRejectedValueOnce(
+				new ShopCheckoutSessionNotOpenError('cs_dead', 'expired'),
+			)
 			.mockResolvedValueOnce({
 				id: 'cs_live',
 				url: 'https://checkout.stripe.com/c/pay/cs_live',
@@ -200,6 +204,22 @@ describe('restaurant order hosted checkout', () => {
 		expect(second?.idempotencyKey).toBe(
 			`${first?.idempotencyKey}:after:cs_dead`,
 		)
+	})
+
+	it('never opens a second payment page when the cached session completed', async () => {
+		commerce.createCheckout.mockRejectedValueOnce(
+			new ShopCheckoutSessionNotOpenError('cs_paid', 'complete'),
+		)
+		const failure = await createRestaurantOrderHostedCheckout(
+			checkoutOptions(),
+		).catch((error: unknown) => error)
+		expect(failure).toBeInstanceOf(Response)
+		expect((failure as Response).status).toBe(409)
+		expect(await (failure as Response).json()).toMatchObject({
+			error: 'already_paid',
+		})
+		expect(commerce.createCheckout).toHaveBeenCalledTimes(1)
+		expect(regional.bindRestaurantOrderPaymentSession).not.toHaveBeenCalled()
 	})
 
 	it('creates a session from the authoritative regional quote and binds before returning', async () => {
