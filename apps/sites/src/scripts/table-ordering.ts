@@ -1,6 +1,6 @@
 import { type QrPublicTab } from '@repo/common/qr-ordering'
 import { type CartStore } from '~/lib/ordering/cart-store'
-import { el, lockScroll, trapFocus } from '~/lib/ordering/dom'
+import { el, lockScroll, quantityLabel, trapFocus } from '~/lib/ordering/dom'
 import {
 	acceptCheckoutUrl,
 	checkoutAttemptKey,
@@ -12,10 +12,12 @@ import {
 	checkTabPayment,
 	clearTabPayment,
 	clearTableSession,
+	decideTableResume,
 	fetchTab,
 	fetchTableContext,
 	isDeadTableError,
 	loadTableSession,
+	paymentReturnRedirect,
 	readTableFragment,
 	rememberPosterVisit,
 	saveTableSession,
@@ -372,10 +374,10 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 					for (const line of round.lines) {
 						const row = el('li', 'flex items-baseline justify-between gap-3')
 						row.append(
-							el(
-								'span',
+							quantityLabel(
+								line.quantity,
+								localized(line.itemName, deps.locale),
 								'min-w-0 text-foreground',
-								`${line.quantity}× ${localized(line.itemName, deps.locale)}`,
 							),
 							el(
 								'span',
@@ -490,11 +492,14 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 			renderTab(tab)
 			if (tab.status !== 'open' && session) {
 				// Settled or voided: keep it as the receipt, and stop polling; the
-				// next order starts a new tab.
+				// next order starts a new tab. The stored table code goes too:
+				// opening the menu later (from home) must not join the next party.
+				// This page keeps the code, so a guest still at the table can
+				// order again; a reload needs a new scan.
 				settledTab = tab
 				clearInterval(tabPoll)
 				session = { ...session, tabId: null, tabToken: null, tabNumber: null }
-				saveTableSession(session)
+				clearTableSession(orgId)
 			}
 		} catch (error) {
 			if (
@@ -502,8 +507,20 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 				error.status === 404 &&
 				session
 			) {
+				// The tab code no longer works (burned, or dine-in turned off):
+				// drop the stale rounds and pay button, and say why.
 				session = { ...session, tabId: null, tabToken: null, tabNumber: null }
-				saveTableSession(session)
+				saveTableSession(session, { keepSavedAt: true })
+				settledTab = null
+				clearInterval(tabPoll)
+				renderedSignature = ''
+				void loadTab()
+				say(
+					error.code === 'dine_in_unavailable'
+						? labels.errorUnavailable
+						: labels.errorTableGone,
+					'danger',
+				)
 				return
 			}
 			showTabError()
@@ -944,12 +961,27 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 		}
 		const stored = loadTableSession(orgId)
 		const returning = new URL(window.location.href).searchParams.get('tab')
-		if (returning && stored && stored.locationId !== locationId) {
-			// The hosted page returns to the menu: reopen the table's location.
-			const url = new URL(window.location.href)
-			url.searchParams.set('location', stored.locationId)
-			window.location.replace(url.toString())
-			return
+		if (returning && stored && !scanned) {
+			const next = paymentReturnRedirect(
+				window.location.href,
+				stored.locationId,
+				locationId,
+			)
+			if (next.kind === 'redirect') {
+				// The hosted page returns to the menu: reopen the table's location.
+				window.location.replace(next.url)
+				return
+			}
+			if (next.kind === 'gone') {
+				// Asked for it already and the menu fell back: the location is
+				// gone. Say so once instead of reloading forever.
+				const url = new URL(window.location.href)
+				url.searchParams.delete('tab')
+				history.replaceState(history.state, '', url.toString())
+				clearTableSession(orgId)
+				say(labels.errorUnavailable, 'danger')
+				return
+			}
 		}
 		const tableToken =
 			scanned ?? (stored?.locationId === locationId ? stored.tableToken : null)
@@ -961,30 +993,39 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 				say(labels.errorUnavailable, 'danger')
 				return
 			}
-			const sameTable = stored && stored.tableToken === tableToken
+			const resume = decideTableResume({
+				scanned: Boolean(scanned),
+				stored,
+				tableToken,
+				openTabId: context.openTab?.id ?? null,
+				returning,
+			})
+			if (resume === 'forget') {
+				// Only stored, and the tab at the table is not this phone's (it
+				// paid and left, or never ordered): never join another party.
+				clearTableSession(orgId)
+				return
+			}
+			const joined = resume === 'scan' || resume === 'resume'
 			session = {
 				orgId,
 				locationId,
 				tableToken,
 				tableLabel: context.table.label,
-				// A re-scan resumes the table's open tab (any phone at the table).
-				tabId: context.openTab?.id ?? (sameTable ? stored.tabId : null),
-				tabToken: context.openTab?.tabToken ?? null,
-				tabNumber: context.openTab?.tabNumber ?? null,
+				tabId: joined ? (context.openTab?.id ?? null) : null,
+				tabToken: joined ? (context.openTab?.tabToken ?? null) : null,
+				tabNumber: joined ? (context.openTab?.tabNumber ?? null) : null,
 				policy: {
 					requireGuestName: context.dineIn.requireGuestName,
 					requireGuestPhone: context.dineIn.requireGuestPhone,
 					onlineTabPayAvailable: context.dineIn.onlineTabPayAvailable,
 				},
-				savedAt: Date.now(),
+				savedAt:
+					resume === 'scan' ? Date.now() : (stored?.savedAt ?? Date.now()),
 			}
 			// A tab paid a moment ago is no longer open: keep its token for the
 			// receipt drawer until the guest starts a new one.
-			if (
-				!session.tabToken &&
-				stored?.tableToken === tableToken &&
-				returning === 'paid'
-			) {
+			if (resume === 'receipt' && stored) {
 				session = {
 					...session,
 					tabId: stored.tabId,
@@ -992,7 +1033,8 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 					tabNumber: stored.tabNumber,
 				}
 			}
-			saveTableSession(session)
+			// A resume from storage keeps the clock of the scan or the last round.
+			saveTableSession(session, { keepSavedAt: resume !== 'scan' })
 			enterTableMode()
 			paintBanner(context.openTab?.totalCents ?? null)
 			deps.cart.refresh()

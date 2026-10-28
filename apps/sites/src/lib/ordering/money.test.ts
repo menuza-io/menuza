@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { fillTemplate, formatMoney } from './money.ts'
+import { fillTemplate, formatMoney, formatTipPercent } from './money.ts'
 
 describe('formatMoney', () => {
 	it('renders USD and CAD as plain dollars in every locale', () => {
@@ -36,5 +36,18 @@ describe('fillTemplate', () => {
 			}),
 		).toBe('Only 2 left in Loaves')
 		expect(fillTemplate('{a} {b}', { a: 'x' })).toBe('x {b}')
+	})
+})
+
+describe('formatTipPercent', () => {
+	it('formats the tip choice in the guest locale', () => {
+		expect(formatTipPercent(10, 'en')).toBe('10%')
+		expect(formatTipPercent(15, 'ar')).toBe(
+			new Intl.NumberFormat('ar', { style: 'percent' }).format(0.15),
+		)
+		expect(formatTipPercent(15, 'ar')).not.toBe('15%')
+		expect(formatTipPercent(20, 'fr')).toBe(
+			new Intl.NumberFormat('fr', { style: 'percent' }).format(0.2),
+		)
 	})
 })

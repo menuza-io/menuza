@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
 	clearTableSession,
+	decideTableResume,
 	loadTableSession,
+	paymentReturnRedirect,
 	readTableContext,
 	readTableFragment,
 	saveTableSession,
@@ -162,5 +164,93 @@ describe('table sessions', () => {
 			slug: 'cafe',
 		})
 		vi.unstubAllGlobals()
+	})
+})
+
+describe('resuming a table from storage', () => {
+	const stored = { tableToken: token, tabId: 'tab-1', tabToken }
+	const base = {
+		scanned: false,
+		stored,
+		tableToken: token,
+		openTabId: null as string | null,
+		returning: null as string | null,
+	}
+
+	it("never joins another party's tab from a stored code", () => {
+		// Paid and left; the next party opened a tab at the same table.
+		expect(decideTableResume({ ...base, openTabId: 'tab-2' })).toBe('forget')
+		// Scanned once, never ordered; someone else's tab is open now.
+		expect(
+			decideTableResume({
+				...base,
+				stored: { ...stored, tabId: null, tabToken: null },
+				openTabId: 'tab-2',
+			}),
+		).toBe('forget')
+		// This phone's tab ended and nothing brings it back.
+		expect(decideTableResume(base)).toBe('forget')
+	})
+
+	it('resumes only this phone’s own open tab, or a table it never ordered at', () => {
+		expect(decideTableResume({ ...base, openTabId: 'tab-1' })).toBe('resume')
+		expect(
+			decideTableResume({
+				...base,
+				stored: { ...stored, tabId: null, tabToken: null },
+			}),
+		).toBe('fresh')
+	})
+
+	it('a fresh scan joins the open tab, and a payment return shows the receipt', () => {
+		expect(
+			decideTableResume({ ...base, scanned: true, openTabId: 'tab-2' }),
+		).toBe('scan')
+		expect(decideTableResume({ ...base, returning: 'paid' })).toBe('receipt')
+		expect(
+			decideTableResume({ ...base, returning: 'paid', openTabId: 'tab-1' }),
+		).toBe('resume')
+	})
+
+	it('keeps the stored clock on a resume and restarts it on a save', () => {
+		const store = storage()
+		vi.stubGlobal('localStorage', store)
+		const old = Date.now() - 11 * 3_600_000
+		saveTableSession(session({ savedAt: old }), { keepSavedAt: true })
+		expect(loadTableSession('org-1')?.savedAt).toBe(old)
+		// Twelve hours after the scan it is gone, however often it was opened.
+		expect(loadTableSession('org-1', old + 12 * 3_600_000 + 1)).toBeNull()
+		saveTableSession(session({ savedAt: old }))
+		expect(loadTableSession('org-1')!.savedAt).toBeGreaterThan(old)
+		vi.unstubAllGlobals()
+	})
+})
+
+describe('back from the payment page', () => {
+	it('reopens the table location once, then stops instead of looping', () => {
+		const first = paymentReturnRedirect(
+			'https://x.example/menu?tab=paid',
+			'loc-2',
+			'loc-1',
+		)
+		expect(first).toEqual({
+			kind: 'redirect',
+			url: 'https://x.example/menu?tab=paid&location=loc-2',
+		})
+		// The location was unpublished: the menu fell back to the default one.
+		expect(
+			paymentReturnRedirect(
+				'https://x.example/menu?tab=paid&location=loc-2',
+				'loc-2',
+				'loc-1',
+			),
+		).toEqual({ kind: 'gone' })
+		expect(
+			paymentReturnRedirect(
+				'https://x.example/menu?tab=paid',
+				'loc-1',
+				'loc-1',
+			),
+		).toEqual({ kind: 'stay' })
 	})
 })

@@ -49,3 +49,16 @@ export function fillTemplate(
 		key in values ? String(values[key]) : match,
 	)
 }
+
+/** A tip choice in the guest's locale ("10 %", "١٠٪"), never a bare "10%". */
+export function formatTipPercent(percent: number, locale: string): string {
+	try {
+		return new Intl.NumberFormat(locale, { style: 'percent' }).format(
+			percent / 100,
+		)
+	} catch {
+		return new Intl.NumberFormat('en', { style: 'percent' }).format(
+			percent / 100,
+		)
+	}
+}

@@ -160,15 +160,81 @@ export function loadTableSession(
 	}
 }
 
-export function saveTableSession(session: TableSession) {
+/**
+ * Stores the session. A scan or a round restarts its 12-hour life; a resume
+ * from storage alone keeps the old clock (`keepSavedAt`), so a code scanned
+ * once never lives on just because the menu was opened again.
+ */
+export function saveTableSession(
+	session: TableSession,
+	options: { keepSavedAt?: boolean } = {},
+) {
 	try {
 		localStorage.setItem(
 			sessionKey(session.orgId),
-			JSON.stringify({ ...session, savedAt: Date.now() }),
+			JSON.stringify({
+				...session,
+				savedAt: options.keepSavedAt ? session.savedAt : Date.now(),
+			}),
 		)
 	} catch {
 		// Private mode: the table works for this page view only.
 	}
+}
+
+/**
+ * What a page load does with the table code it has.
+ * - `scan`: the code was just scanned: join the table's open tab, if any.
+ * - `resume`: only stored, and the table's open tab is still this phone's.
+ * - `fresh`: only stored, this phone never had a tab and none is open.
+ * - `receipt`: back from paying, and this phone's tab is no longer open.
+ * - `forget`: only stored, and the tab at the table is not (or no longer)
+ *   this phone's: a guest who paid and left must never join the next party.
+ */
+export type TableResume = 'scan' | 'resume' | 'fresh' | 'receipt' | 'forget'
+
+export function decideTableResume(input: {
+	scanned: boolean
+	stored: Pick<TableSession, 'tableToken' | 'tabId' | 'tabToken'> | null
+	tableToken: string
+	openTabId: string | null
+	returning: string | null
+}): TableResume {
+	const { stored, openTabId } = input
+	const sameTable = stored?.tableToken === input.tableToken
+	if (
+		!openTabId &&
+		sameTable &&
+		stored?.tabId &&
+		stored.tabToken &&
+		(input.returning === 'paid' || input.returning === 'cancelled')
+	) {
+		return 'receipt'
+	}
+	if (input.scanned) return 'scan'
+	if (!stored || !sameTable) return 'forget'
+	if (openTabId) return openTabId === stored.tabId ? 'resume' : 'forget'
+	return stored.tabId ? 'forget' : 'fresh'
+}
+
+/**
+ * Back from the payment page while the menu shows another location: reopen
+ * the table's location once. When the page already asked for it (the
+ * location was unpublished, so the menu fell back to another one), stop:
+ * redirecting again would loop forever.
+ */
+export function paymentReturnRedirect(
+	href: string,
+	storedLocationId: string,
+	pageLocationId: string,
+): { kind: 'stay' } | { kind: 'redirect'; url: string } | { kind: 'gone' } {
+	if (storedLocationId === pageLocationId) return { kind: 'stay' }
+	const url = new URL(href)
+	if (url.searchParams.get('location') === storedLocationId) {
+		return { kind: 'gone' }
+	}
+	url.searchParams.set('location', storedLocationId)
+	return { kind: 'redirect', url: url.toString() }
 }
 
 export function clearTableSession(orgId: string) {

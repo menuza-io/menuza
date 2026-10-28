@@ -6,6 +6,7 @@
  * filled by `src/scripts/table-ordering.ts`; no guest data is rendered here.
  */
 import { msg } from '@lingui/core/macro'
+import { formatTipPercent } from '~/lib/ordering/money'
 
 const i18n = Astro.locals.i18n
 
@@ -239,7 +240,7 @@ const labels = {
 				{[0, 10, 15, 20].map((percent) => (
 					<label class="segmented-item min-h-11 flex-1 px-2 text-center">
 						<input type="radio" name="tipPercent" value={percent} class="sr-only peer" checked={percent === 0} />
-						<span>{percent === 0 ? labels.noTip : `${percent}%`}</span>
+						<span>{percent === 0 ? labels.noTip : formatTipPercent(percent, i18n.locale)}</span>
 					</label>
 				))}
 			</div>

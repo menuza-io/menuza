@@ -10,6 +10,20 @@ export function el<K extends keyof HTMLElementTagNameMap>(
 	return node
 }
 
+/**
+ * "2× Dish" with the dish name isolated in a `<bdi>`, so a Latin name in an
+ * Arabic page (or the reverse) never reorders the quantity around it.
+ */
+export function quantityLabel(
+	quantity: number,
+	name: string,
+	className?: string,
+): HTMLSpanElement {
+	const node = el('span', className)
+	node.append(`${quantity}× `, el('bdi', undefined, name))
+	return node
+}
+
 const ICON_PATHS = {
 	plus: ['M5 12h14', 'M12 5v14'],
 	minus: ['M5 12h14'],
