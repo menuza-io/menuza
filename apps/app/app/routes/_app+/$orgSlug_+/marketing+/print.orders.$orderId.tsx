@@ -282,7 +282,7 @@ export default function PrintOrderRoute() {
 					<AlertDescription>
 						{adminOnlyHold
 							? _(
-									msg`Only Admin can resolve this hold with the printer. We will update you by email.`,
+									msg`Our team is sorting this out with the printer, so it cannot be cancelled here. We will update you by email.`,
 								)
 							: _(
 									msg`We are checking it with the printer and will update you by email. You can still cancel for a full refund.`,

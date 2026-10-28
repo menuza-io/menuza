@@ -879,21 +879,24 @@ function webhookUrl(vendor: PrintVendorName) {
 
 /**
  * Renders (or reuses) one print-ready PDF per piece with the vendor's bleed.
- * Past the deadline it stops between pieces ('deferred'); renders are cached
- * by their inputs, so the next run picks up where this one stopped.
+ * Past the deadline it stops between pieces ('deferred'), but only once it
+ * has rendered at least one new file: renders are cached by their inputs, so
+ * every run moves the order forward and the next one picks up from there.
  */
 async function pieceFileUrls(
 	organizationId: string,
 	item: ItemRow,
 	bleedMm: number,
 	deadline: number,
+	/** New files rendered in this run, shared across the order's items. */
+	progress: { rendered: number },
 ): Promise<string[] | null | 'deferred'> {
 	// The snapshot frozen on the item at quote time, never the live design.
 	const snapshot = item.snapshot as PrintSnapshot | null
 	if (!snapshot || snapshot.pieces.length !== item.pieces) return null
 	const urls: string[] = []
 	for (const piece of snapshot.pieces) {
-		if (Date.now() > deadline) return 'deferred'
+		if (progress.rendered > 0 && Date.now() > deadline) return 'deferred'
 		const file = await getPrintFile(
 			{
 				organizationId,
@@ -905,11 +908,14 @@ async function pieceFileUrls(
 		)
 		if (file.kind !== 'pdf') {
 			if (isPrintMock()) {
+				// The local emulator's stand-in counts as a new file.
+				progress.rendered += 1
 				urls.push(`https://example.invalid/mock-print/${item.id}`)
 				continue
 			}
 			return null
 		}
+		if (file.fresh) progress.rendered += 1
 		urls.push(getPrintFileUrl(file.objectKey, 7 * 24 * 3600))
 	}
 	return urls
@@ -975,6 +981,7 @@ async function submitClaimedOrder(
 	)
 	// Phase 1: price and render everything before any vendor is called, so a
 	// run that runs out of time hands back an order no vendor has yet.
+	const progress = { rendered: 0 }
 	const ready: Array<{
 		vendorOrder: (typeof pending)[number]
 		vendor: ReturnType<typeof getPrintVendor>
@@ -1020,6 +1027,7 @@ async function submitClaimedOrder(
 					item,
 					mapping?.bleedMm ?? 3,
 					options.deadline,
+					progress,
 				)
 				if (urls === 'deferred') {
 					await release(order.id)
@@ -1245,11 +1253,11 @@ export async function handlePrintVendorWebhook(
 /** Cron safety net for missed webhooks: open vendor orders, oldest first. */
 const STALE_PAID_MS = 5 * 60_000
 const STALE_CLAIM_MS = 15 * 60_000
-/** A paid order not sent after this long is held for Admin. */
-const PAID_GIVE_UP_MS = 24 * 60 * 60_000
 /** Rendering time the sweep spends per order, and in all. */
 const SWEEP_ORDER_BUDGET_MS = 60_000
 const SWEEP_TOTAL_BUDGET_MS = 10 * 60_000
+/** Rendering time of an Admin retry (its command call times out at 30 s). */
+const ADMIN_RETRY_BUDGET_MS = 15_000
 
 /**
  * Picks up orders a request left behind (cut short, or out of rendering time):
@@ -1257,8 +1265,9 @@ const SWEEP_TOTAL_BUDGET_MS = 10 * 60_000
  *   submitted again, continuing from the cached files;
  * - a claim cut short during a vendor call (or a stuck cancel) is held for
  *   Admin, since that call may or may not have gone through;
- * - paid orders are submitted, and one still not sent a day after payment is
- *   held (`render_unavailable`) instead of being retried forever.
+ * - paid orders are submitted, oldest touched first. Each run renders at
+ *   least one new file or holds on a failed render, so a large set always
+ *   finishes; nothing has to give up on it.
  */
 async function sweepStalePrintOrders(limit: number) {
 	const now = Date.now()
@@ -1287,39 +1296,6 @@ async function sweepStalePrintOrders(limit: number) {
 				lt(PrintOrder.updatedAt, staleBefore),
 			),
 		)
-	const overdue = await db
-		.select({ id: PrintOrder.id })
-		.from(PrintOrder)
-		.where(
-			and(
-				eq(PrintOrder.status, 'paid'),
-				lt(PrintOrder.paidAt, new Date(now - PAID_GIVE_UP_MS)),
-			),
-		)
-		.limit(limit)
-	for (const { id } of overdue) {
-		// A retried order may already be printing at one of its vendors.
-		const partly = await db
-			.select({ id: PrintVendorOrder.id })
-			.from(PrintVendorOrder)
-			.where(
-				and(
-					eq(PrintVendorOrder.orderId, id),
-					ne(PrintVendorOrder.status, 'pending'),
-				),
-			)
-			.limit(1)
-		await db
-			.update(PrintOrder)
-			.set({
-				status: 'held',
-				holdReason:
-					partly.length > 0
-						? 'render_unavailable_partial'
-						: 'render_unavailable',
-			})
-			.where(and(eq(PrintOrder.id, id), eq(PrintOrder.status, 'paid')))
-	}
 	const paid = await db
 		.select({ id: PrintOrder.id, updatedAt: PrintOrder.updatedAt })
 		.from(PrintOrder)
@@ -1893,7 +1869,7 @@ export async function adminRetryPrintOrder(
 	orderId: string,
 	acceptPrice: boolean,
 	options: { checkedVendor?: boolean } = {},
-) {
+): Promise<'done' | 'deferred'> {
 	const { order, vendorOrders, items } = await getPrintOrderDetail(
 		null,
 		orderId,
@@ -1953,16 +1929,12 @@ export async function adminRetryPrintOrder(
 				.where(eq(PrintVendorOrder.id, vendorOrder.id))
 		}
 	}
-	const retryEnd = Date.now() + SWEEP_TOTAL_BUDGET_MS
-	for (;;) {
-		const left = retryEnd - Date.now()
-		if (left <= 0) return
-		const result = await submitPrintOrder(order.id, {
-			ignoreDrift: acceptPrice,
-			budgetMs: Math.min(SWEEP_ORDER_BUDGET_MS, left),
-		})
-		if (result !== 'deferred') return
-	}
+	// One short run fits Admin's command call; a large set that is handed
+	// back continues after the answer (`continueAfter`) and in the sweep.
+	return submitPrintOrder(order.id, {
+		ignoreDrift: acceptPrice,
+		budgetMs: ADMIN_RETRY_BUDGET_MS,
+	})
 }
 
 // ---------------------------------------------------------------------------
@@ -2022,5 +1994,19 @@ export async function notifyPrintOrder(
 			'Print order notification failed:',
 			error instanceof Error ? error.message : error,
 		)
+	}
+}
+
+/**
+ * Keeps submitting an order handed back for lack of time, for about as long
+ * as a Worker may run after its answer; the print-sync sweep does the rest.
+ */
+export async function continuePrintSubmission(orderId: string) {
+	const end = Date.now() + 25_000
+	for (;;) {
+		const left = end - Date.now()
+		if (left <= 0) return
+		const result = await submitPrintOrder(orderId, { budgetMs: left })
+		if (result !== 'deferred') return
 	}
 }

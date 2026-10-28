@@ -85,6 +85,7 @@ const {
 	submitPrintOrder,
 	syncOpenPrintOrders,
 	adminRetryPrintOrder,
+	continuePrintSubmission,
 	adminRefundPrintOrder,
 	adminRecordVendorOrder,
 } = await import('./orders.server.ts')
@@ -673,69 +674,6 @@ describe('shipped print orders', () => {
 		},
 	)
 
-	it('continues an Admin retry after a deferred render despite an old payment', async () => {
-		const { orderId } = await paidOrderLater()
-		const paidAt = new Date(Date.now() - 25 * 60 * 60_000)
-		await db
-			.update(PrintOrder)
-			.set({
-				status: 'held',
-				holdReason: 'render_unavailable',
-				paidAt,
-			})
-			.where(eq(PrintOrder.id, orderId))
-		let now = Date.now()
-		vi.spyOn(Date, 'now').mockImplementation(() => now)
-		vi.spyOn(printFiles, 'getPrintFile').mockImplementationOnce(async () => {
-			now += 61_000
-			return { kind: 'failed' }
-		})
-		await adminRetryPrintOrder(orderId, false)
-		expect((await getPrintOrderDetail(null, orderId)).order).toMatchObject({
-			status: 'submitted',
-			paidAt,
-		})
-	})
-
-	it('bounds deferred Admin retries to the sweep total rendering budget', async () => {
-		const { orderId } = await paidOrderLater()
-		await db
-			.update(PrintOrder)
-			.set({
-				status: 'held',
-				holdReason: 'render_unavailable',
-			})
-			.where(eq(PrintOrder.id, orderId))
-		let now = Date.now()
-		const started = now
-		vi.spyOn(Date, 'now').mockImplementation(() => now)
-		const render = vi
-			.spyOn(printFiles, 'getPrintFile')
-			.mockImplementation(async () => {
-				now += 61_000
-				return { kind: 'failed' }
-			})
-		await adminRetryPrintOrder(orderId, false)
-		expect(now - started).toBe(610_000)
-		expect(render).toHaveBeenCalledTimes(10)
-		expect(
-			(await getPrintOrderDetail(null, orderId)).vendorOrders[0]!.status,
-		).toBe('pending')
-	})
-
-	it('holds a paid order that is still not sent a day later', async () => {
-		const { orderId } = await paidOrderLater()
-		await db
-			.update(PrintOrder)
-			.set({ paidAt: new Date(Date.now() - 25 * 60 * 60_000) })
-			.where(eq(PrintOrder.id, orderId))
-		await syncOpenPrintOrders()
-		expect((await getPrintOrderDetail(null, orderId)).order).toMatchObject({
-			status: 'held',
-			holdReason: 'render_unavailable',
-		})
-	})
-
 	it('holds a returned parcel for Admin instead of refunding it', async () => {
 		const { orderId } = await paidOrder()
 		vendorState.value = 'returned'
@@ -759,25 +697,54 @@ describe('shipped print orders', () => {
 		})
 	})
 
-	it('says so when an overdue order is partly at a vendor already', async () => {
+	it('an Admin retry runs one short submission, and the rest continues', async () => {
 		const { orderId } = await paidOrderLater()
-		const [vendorOrder] = await db
-			.select()
-			.from(PrintVendorOrder)
-			.where(eq(PrintVendorOrder.orderId, orderId))
-		await db
-			.update(PrintVendorOrder)
-			.set({ status: 'submitted', vendorOrderId: `mock_${Date.now()}_x` })
-			.where(eq(PrintVendorOrder.id, vendorOrder!.id))
 		await db
 			.update(PrintOrder)
-			.set({ paidAt: new Date(Date.now() - 25 * 60 * 60_000) })
+			.set({ status: 'held', holdReason: 'render_unavailable' })
 			.where(eq(PrintOrder.id, orderId))
-		await syncOpenPrintOrders()
-		expect((await getPrintOrderDetail(null, orderId)).order).toMatchObject({
-			status: 'held',
-			holdReason: 'render_unavailable_partial',
+		let now = Date.now()
+		vi.spyOn(Date, 'now').mockImplementation(() => now)
+		// Every render takes 16 s: past the 15 s budget after the first one.
+		const render = vi
+			.spyOn(printFiles, 'getPrintFile')
+			.mockImplementation(async () => {
+				now += 16_000
+				return {
+					kind: 'pdf',
+					bytes: new Uint8Array(new ArrayBuffer(4)),
+					objectKey: 'print/x.pdf',
+					fresh: true,
+				}
+			})
+		expect(await adminRetryPrintOrder(orderId, false)).toBe('deferred')
+		expect(render).toHaveBeenCalledTimes(1)
+		expect((await getPrintOrderDetail(null, orderId)).order.status).toBe('paid')
+		await continuePrintSubmission(orderId)
+		expect((await getPrintOrderDetail(null, orderId)).order.status).toBe(
+			'submitted',
+		)
+		vi.restoreAllMocks()
+	})
+
+	it('hands an order back only after rendering something new', async () => {
+		const { orderId } = await paidOrderLater()
+		let now = Date.now()
+		vi.spyOn(Date, 'now').mockImplementation(() => now)
+		// Cached files cost time but are no progress: the run keeps going.
+		vi.spyOn(printFiles, 'getPrintFile').mockImplementation(async () => {
+			now += 30_000
+			return {
+				kind: 'pdf',
+				bytes: new Uint8Array(new ArrayBuffer(4)),
+				objectKey: 'print/x.pdf',
+			}
 		})
+		expect(await submitPrintOrder(orderId, { budgetMs: 1 })).toBe('done')
+		expect((await getPrintOrderDetail(null, orderId)).order.status).toBe(
+			'submitted',
+		)
+		vi.restoreAllMocks()
 	})
 
 	it('keeps the sending marker until every vendor is recorded', async () => {

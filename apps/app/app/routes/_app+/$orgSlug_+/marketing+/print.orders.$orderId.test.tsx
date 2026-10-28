@@ -57,7 +57,7 @@ describe('held print orders', () => {
 				screen.queryByText(/You can still cancel for a full refund/),
 			).toBeNull()
 			expect(
-				screen.getByText(/Only Admin can resolve this hold/),
+				screen.getByText(/Our team is sorting this out with the printer/),
 			).toBeInTheDocument()
 		},
 	)

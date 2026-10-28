@@ -104,15 +104,18 @@ the browser's print dialog saves it.
   were made and paid for; Retry is refused for these holds (nothing is left to
   send). Defects after delivery go through Admin (reprint by vendor claim, or
   refund). An order held while the vendor may already have it (`vendor_unknown`,
-  `stale_claim`, `submission_error`) cannot be cancelled by the operator
+  `stale_claim`, `submission_error`), or held after shipping (`vendor_returned`,
+  `vendor_after_shipping`), cannot be cancelled by the operator
   (`needs_support`): Admin checks the vendor first.
-- **Large sets:** a submission renders for at most 20 seconds, then hands the
-  order back (`paid`); rendered files are cached, so the next run continues
-  where it stopped. The hourly `print-sync` job continues such orders (up to a
-  minute each, ten minutes in all), and holds one still not sent a day after
-  payment (`render_unavailable`, or `render_unavailable_partial` when a retried
-  order is already at one of its vendors). Every file is rendered before any
-  vendor is called, so an order handed back has not reached a vendor in that
+- **Large sets:** a submission renders for at most 20 seconds (an Admin retry
+  15), then hands the order back (`paid`); rendered files are cached, so the
+  next run continues where it stopped. A run hands back only after rendering at
+  least one new file, so every run moves the order forward (a failed render
+  holds it as `render_unavailable`) and a set of up to 200 pieces always
+  finishes. An Admin retry that is handed back keeps going after it answers, and
+  the hourly `print-sync` job continues such orders (up to a minute each, ten
+  minutes in all, least recently touched first). Every file is rendered before
+  any vendor is called, so an order handed back has not reached a vendor in that
   run.
 - **Crash safety:** the hourly `print-sync` job submits paid orders that were
   never sent (after 5 minutes). A submission cut short before any vendor call
