@@ -50,7 +50,7 @@ test.describe('Print shop: table cards', () => {
 		await expect(page.getByRole('radio', { name: 'No QR code' })).toHaveCount(0)
 	})
 
-	test('with no tables yet, a table set cannot be saved or approved', async ({
+	test('when tables cannot be loaded, a table set says so and keeps its choice', async ({
 		page,
 		login,
 	}) => {
@@ -65,21 +65,21 @@ test.describe('Print shop: table cards', () => {
 		await expect(
 			page.getByRole('radio', { name: 'Order at the table' }),
 		).toBeChecked()
+		// No region serves this test organization: an outage, not "no tables".
 		await expect(
 			page.getByText(
-				'You have no QR tables yet. Add them in Settings, then come back: each table gets its own card.',
+				'Your tables could not be loaded right now. Try again in a minute.',
 			),
 		).toBeVisible()
-		// The picker links to where tables are added.
 		await expect(
-			page.getByRole('link', { name: 'Set up QR tables' }),
-		).toHaveAttribute('href', `/${org.slug}/settings/qr-tables`)
+			page.getByText('You have no QR tables yet', { exact: false }),
+		).toHaveCount(0)
+		// Saving other fields keeps "every table" instead of asking for tables.
 		await page.getByRole('button', { name: 'Save and update proof' }).click()
 		await expect(
 			page.getByText('Choose at least one table for the cards.'),
-		).toBeVisible()
-		// No region serves this test organization: the proof says the codes
-		// are unavailable (503) instead of failing with a server error.
+		).toHaveCount(0)
+		// The proof says the codes are unavailable (503), not a server error.
 		const designId = new URL(page.url()).pathname.split('/').at(-1)!
 		const proof = await page.request.get(
 			`${designUrl(org.slug, designId)}/proof`,

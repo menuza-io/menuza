@@ -186,20 +186,29 @@ export const restaurantPrintVertical: PrintShopServerVertical = {
 				(await canSeeTableCodes(access))
 					? { kind: 'table', tableIds: ['all'] }
 					: null,
-			editorData: async (request, access) => ({
+			editorData: async (request, access) => {
 				// Where tables are added (Settings, QR tables): the picker links
 				// there when there are none yet.
-				setupHref: `/${access.organization.slug}/settings/qr-tables`,
-				tables: (
-					await fetchQrTablesForPrint(request, access.organization.slug).catch(
-						() => [],
+				const setupHref = `/${access.organization.slug}/settings/qr-tables`
+				try {
+					const tables = await fetchQrTablesForPrint(
+						request,
+						access.organization.slug,
 					)
-				).map((table) => ({
-					id: table.id,
-					label: table.label,
-					locationId: table.locationId,
-				})),
-			}),
+					return {
+						setupHref,
+						// Ids, labels and places only: codes never reach the browser.
+						tables: tables.map((table) => ({
+							id: table.id,
+							label: table.label,
+							locationId: table.locationId,
+						})),
+					}
+				} catch {
+					// The region did not answer: not the same as "no tables".
+					return { setupHref, tables: [], unavailable: true }
+				}
+			},
 			pieceCount: (target, data) => {
 				if (!isTableTarget(target)) return 1
 				const tables = (data as { tables?: unknown[] } | null)?.tables ?? []

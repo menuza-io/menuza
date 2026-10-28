@@ -437,7 +437,7 @@ test.describe('QR tables: adding tables', () => {
 					? {
 							status: 409,
 							body: {
-								error: 'duplicate_label',
+								error: 'table_label_taken',
 								message: 'A table already has that label.',
 							},
 						}
@@ -448,7 +448,9 @@ test.describe('QR tables: adding tables', () => {
 		await addField(page).fill('T1')
 		await addButton(page).click()
 		await expect(
-			page.getByText('A table already has that label.'),
+			page.getByText(
+				'A table with this label already exists at this location.',
+			),
 		).toBeVisible()
 		await expect(addField(page)).toHaveValue('T1')
 	})
@@ -636,7 +638,9 @@ test.describe('QR tables: changing tables', () => {
 			.getByRole('button', { name: 'Archive table' })
 			.click()
 		await expect(
-			page.getByText('Close the open tab before archiving.'),
+			page.getByText(
+				'Close or void the open tab at this table before archiving it.',
+			),
 		).toBeVisible()
 		await expect(
 			page.getByRole('button', { name: 'Rename, table T1' }),
@@ -853,7 +857,10 @@ test.describe('QR ordering settings', () => {
 				if (request.method === 'PATCH') {
 					return {
 						status: 400,
-						body: { error: 'invalid', message: 'That limit is not allowed.' },
+						body: {
+							error: 'invalid_request',
+							message: 'That limit is not allowed.',
+						},
 					}
 				}
 			},
@@ -866,7 +873,11 @@ test.describe('QR ordering settings', () => {
 		failLoad = false
 		await page.reload()
 		await page.getByRole('button', { name: 'Save', exact: true }).click()
-		await expect(page.getByText('That limit is not allowed.')).toBeVisible()
+		// The App's own words, never the region's message.
+		await expect(
+			page.getByText('Check the details and try again.'),
+		).toBeVisible()
+		await expect(page.getByText('That limit is not allowed.')).toHaveCount(0)
 		await expect(
 			page.getByRole('button', { name: 'Save', exact: true }),
 		).toBeEnabled()

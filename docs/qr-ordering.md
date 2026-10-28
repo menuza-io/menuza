@@ -19,12 +19,21 @@ and the runbook. The browser and region contract is in
   erasure.
 - **Capabilities, not logins.** A table code is an HMAC of the table id and its
   version under the region's `AUTH_HMAC_SECRET`; a tab code works the same way.
-  Nothing is stored. Codes ride in the URL fragment (`/menu?location=…#table=…`,
-  never sent to any server), are moved out of the address bar by an inline head
-  script before any analytics tag loads (into this tab's `sessionStorage`, read
-  once by the menu script), and reach tenant-api only in the `X-Table-Token` /
-  `X-Tab-Token` headers. The tab code is kept in the guest's `localStorage`, so
-  a re-scan or a closed browser resumes the tab.
+  The region stores none (one exception below). Codes ride in the URL fragment
+  (`/menu?location=…#table=…`, never sent to any server), are moved out of the
+  address bar by an inline head script before any analytics tag loads (into this
+  tab's `sessionStorage`, read once by the menu script), and reach tenant-api
+  only in the `X-Table-Token` / `X-Tab-Token` headers. The tab code is kept in
+  the guest's `localStorage`, so a re-scan or a closed browser resumes the tab.
+- **Printed table cards are the exception.** A card must carry its table's code,
+  so an approved Print shop table card keeps each piece's QR link (with
+  `#table=<code>`) in its frozen snapshot (`PrintDesign.snapshot`, and
+  `PrintOrderItem.snapshot` once ordered), and its rendered PDFs (in the
+  platform bucket) show it as a QR image. Only people who may see table codes
+  (menu edit) can open the proof, download or order such a print, whoever
+  approved it. **New QR code** burns every stored copy: the region refuses the
+  old version, and the Print shop asks to approve the card again before ordering
+  it (`requireFreshCodes`). See `docs/print-shop-restaurant.md`.
 - **Prices are the region's.** Every round is repriced from the live menu inside
   the placement transaction, exactly like a pickup order. Tips are only taken
   when the tab is paid online.

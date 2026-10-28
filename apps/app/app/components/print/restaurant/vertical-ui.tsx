@@ -2,7 +2,7 @@ import { msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { isTableTarget } from '@repo/common/print-shop-restaurant'
 import { Checkbox } from '@repo/ui/checkbox'
-import { Field, FieldLabel, FieldSet } from '@repo/ui/field'
+import { Field, FieldLabel, FieldLegend, FieldSet } from '@repo/ui/field'
 import { Label } from '@repo/ui/label'
 import { Switch } from '@repo/ui/switch'
 import { useState } from 'react'
@@ -21,15 +21,42 @@ import {
 
 type TableChoice = { id: string; label: string; locationId: string }
 
-function TableFields({ target, data }: PrintQrTargetFieldsProps) {
+function TableFields({ target, data, scopes }: PrintQrTargetFieldsProps) {
 	const { _ } = useLingui()
 	const editorData = data as {
 		tables?: TableChoice[]
 		setupHref?: string
+		unavailable?: boolean
 	} | null
 	const tables = editorData?.tables ?? []
 	const chosen = isTableTarget(target) ? target.tableIds : ['all']
 	const [allTables, setAllTables] = useState(chosen.includes('all'))
+	// The current choice, kept as it is when it cannot be shown or changed,
+	// so saving other fields neither drops it nor asks for tables.
+	const keepChoice = chosen.includes('all') ? (
+		<input type="hidden" name="allTables" value="on" />
+	) : (
+		chosen.map((id) => (
+			<input key={id} type="hidden" name="tableIds" value={id} />
+		))
+	)
+	// No editor data: this person may not see table codes (menu edit). The
+	// editor already says so next to the proof.
+	if (!editorData) return <>{keepChoice}</>
+	if (editorData.unavailable) {
+		return (
+			<>
+				{keepChoice}
+				<p role="alert" className="text-destructive text-sm">
+					{_(
+						msg`Your tables could not be loaded right now. Try again in a minute.`,
+					)}
+				</p>
+			</>
+		)
+	}
+	// Labels can repeat across locations: group by location when there are several.
+	const groups = groupByLocation(tables, scopes)
 	if (tables.length === 0) {
 		return (
 			<div className="space-y-2">
@@ -51,6 +78,7 @@ function TableFields({ target, data }: PrintQrTargetFieldsProps) {
 	}
 	return (
 		<FieldSet>
+			<FieldLegend>{_(msg`Tables`)}</FieldLegend>
 			<Label className="flex min-h-11 items-center gap-3">
 				<Switch
 					name="allTables"
@@ -60,21 +88,62 @@ function TableFields({ target, data }: PrintQrTargetFieldsProps) {
 				{_(msg`Every table (new tables are added when you approve)`)}
 			</Label>
 			{!allTables ? (
-				<div className="grid max-h-80 gap-2 overflow-y-auto sm:grid-cols-3">
-					{tables.map((table) => (
-						<Label key={table.id} className="flex min-h-11 items-center gap-3">
-							<Checkbox
-								name="tableIds"
-								value={table.id}
-								defaultChecked={chosen.includes(table.id)}
-							/>
-							<bdi className="wrap-anywhere">{table.label}</bdi>
-						</Label>
+				<div className="max-h-80 space-y-4 overflow-y-auto">
+					{groups.map((group) => (
+						<div
+							key={group.id}
+							role={groups.length > 1 ? 'group' : undefined}
+							aria-labelledby={
+								groups.length > 1 ? `tables-${group.id}` : undefined
+							}
+							className="space-y-2"
+						>
+							{groups.length > 1 ? (
+								<p id={`tables-${group.id}`} className="text-sm font-medium">
+									<bdi>{group.name ?? _(msg`Other tables`)}</bdi>
+								</p>
+							) : null}
+							<div className="grid gap-2 sm:grid-cols-3">
+								{group.tables.map((table) => (
+									<Label
+										key={table.id}
+										className="flex min-h-11 items-center gap-3"
+									>
+										<Checkbox
+											name="tableIds"
+											value={table.id}
+											defaultChecked={chosen.includes(table.id)}
+										/>
+										<bdi className="wrap-anywhere">{table.label}</bdi>
+									</Label>
+								))}
+							</div>
+						</div>
 					))}
 				</div>
 			) : null}
 		</FieldSet>
 	)
+}
+
+const TABLE_CODES_HIDDEN = msg`Table cards carry each table's ordering code, so only people who can edit the menu can see the proof and download it.`
+
+/** Tables by location, in the order of the locations; unknown ones last. */
+export function groupByLocation(
+	tables: TableChoice[],
+	scopes: Array<{ id: string; name: string }>,
+): Array<{ id: string; name: string | null; tables: TableChoice[] }> {
+	const groups = scopes
+		.map((scope) => ({
+			id: scope.id,
+			name: scope.name as string | null,
+			tables: tables.filter((table) => table.locationId === scope.id),
+		}))
+		.filter((group) => group.tables.length > 0)
+	const known = new Set(scopes.map((scope) => scope.id))
+	const rest = tables.filter((table) => !known.has(table.locationId))
+	if (rest.length > 0) groups.push({ id: 'other', name: null, tables: rest })
+	return groups
 }
 
 /** Order-ahead and booking codes point at one location. */
@@ -127,7 +196,7 @@ export const restaurantPrintUi: PrintShopUiVertical = {
 		table: {
 			label: msg`Order at the table`,
 			empty: msg`Choose at least one table for the cards.`,
-			hidden: msg`Table cards carry each table's ordering code, so only people who can edit the menu can see the proof and download it.`,
+			hidden: TABLE_CODES_HIDDEN,
 			Fields: TableFields,
 		},
 		menu: { label: msg`Order ahead (menu)`, Fields: LocationFields },

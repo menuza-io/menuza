@@ -24,9 +24,15 @@ table code lets anyone order at that table, so the table target needs QR dine-in
 on for the organization and the menu edit permission (the right that mints table
 codes on the QR tables page), for the proof, the download and the order, whoever
 approved the card. The App server fetches codes from the region with a
-short-lived `qr:write` token that never reaches the browser. **New QR code** on
-a table invalidates its printed cards; renew codes only after shipped cards
+short-lived `qr:write` token that never reaches the browser. The approved card
+keeps the codes it prints (its snapshot and its rendered PDFs, in the control
+plane and the platform bucket): that is the print itself. **New QR code** on a
+table invalidates its printed cards and every stored copy, and the card must be
+approved again before it is ordered; renew codes only after shipped cards
 arrive.
+
+Approval refuses more than 200 pieces, so **Every table** in a large
+organization needs a selection instead.
 
 A table card with no tables yet links to **Settings, QR tables**
 (`/settings/qr-tables`), where tables are added.

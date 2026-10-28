@@ -1016,8 +1016,11 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
   that did not settle a tab is one append-only `qr_tab_payments` row each
   (`0024_qr_tab_payments`). No control-plane tables.
 - Table and tab codes are HMACs of `AUTH_HMAC_SECRET` over the org, the row id
-  and its version: never stored, burned by bumping the version. They ride in the
-  URL fragment and the `X-Table-Token` / `X-Tab-Token` headers only.
+  and its version: never stored by the region, burned by bumping the version.
+  They ride in the URL fragment and the `X-Table-Token` / `X-Tab-Token` headers
+  only. Exception: printed table cards keep the codes in their Print shop
+  snapshot and rendered PDFs, guarded by the menu edit check (see
+  `docs/qr-ordering.md`).
 - Flags `qr_ordering.enabled` / `.dine_in` / `.online` (default off) reach the
   region in the order context (`qrOrdering`, fail closed). App gates nav,
   `qr-token` and every `qr+/` loader with `requireQrOrderingAccess`
