@@ -36,7 +36,13 @@ export type PrintFileRequest = {
 }
 
 export type PrintFileResult =
-	| { kind: 'pdf'; bytes: Uint8Array<ArrayBuffer>; objectKey: string }
+	| {
+			kind: 'pdf'
+			bytes: Uint8Array<ArrayBuffer>
+			objectKey: string
+			/** Rendered by this call (not read from the cache). */
+			fresh?: true
+	  }
 	/** No renderer configured: a page that opens the browser print dialog. */
 	| { kind: 'html'; html: string; nonce: string }
 	| { kind: 'limited' }
@@ -169,7 +175,7 @@ export async function getPrintFile(
 			.update(PrintRender)
 			.set({ byteLength: rendered.bytes.byteLength })
 			.where(thisRow)
-		return { kind: 'pdf', bytes: rendered.bytes, objectKey }
+		return { kind: 'pdf', bytes: rendered.bytes, objectKey, fresh: true }
 	} catch (error) {
 		await release().catch(() => {})
 		throw error

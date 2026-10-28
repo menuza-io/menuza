@@ -17,6 +17,7 @@ import { Link, useLoaderData, type LoaderFunctionArgs } from 'react-router'
 import { EmptyState } from '#app/components/empty-state.tsx'
 import {
 	printProductLabel,
+	printSizeText,
 	PRINT_STYLE_LABELS,
 } from '#app/components/print/print-labels.ts'
 import { printShopUi } from '#app/components/print/vertical-ui.tsx'
@@ -119,7 +120,15 @@ export default function PrintShopIndexRoute() {
 									<ItemDescription>
 										{_(printProductLabel(design.product).name)}
 										{' · '}
-										<bdi>{size?.label ?? design.sizeKey}</bdi>
+										<bdi>
+											{size
+												? printSizeText(
+														_,
+														size.label,
+														printCatalog.products[design.product]?.folded,
+													)
+												: design.sizeKey}
+										</bdi>
 										{' · '}
 										{design.source === 'artwork'
 											? _(msg`From Canva`)

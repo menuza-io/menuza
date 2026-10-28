@@ -7,6 +7,7 @@ import {
 	createRequestHandler,
 	RouterContextProvider,
 } from 'react-router'
+import { executionContext } from '../app/utils/after-response.server.ts'
 import { installDevS3Mock } from './dev-s3-mock.ts'
 import { applyWorkerEnv } from './worker-env.ts'
 
@@ -70,6 +71,7 @@ export default {
 
 		const loadContext = new RouterContextProvider()
 		loadContext.set(cloudflareContext, { env, ctx })
+		loadContext.set(executionContext, ctx)
 
 		return requestHandler(request, loadContext)
 	},

@@ -105,7 +105,7 @@ const STATE: Record<string, VendorOrderState> = {
 	canceled: 'cancelled',
 	cancelled: 'cancelled',
 	failed: 'failed',
-	returned: 'failed',
+	returned: 'returned',
 }
 
 export const gelatoVendor: PrintVendor = {
