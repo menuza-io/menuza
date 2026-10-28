@@ -34,6 +34,7 @@ import { z } from 'zod'
 import { printFormErrors } from '#app/components/print/print-form-errors.ts'
 import {
 	printProductLabel,
+	printSizeText,
 	PRINT_STYLE_LABELS,
 } from '#app/components/print/print-labels.ts'
 import { requirePrintShopAccess } from '#app/utils/print/access.server.ts'
@@ -157,7 +158,13 @@ export default function NewPrintRoute() {
 								className="border-border has-[[data-checked]]:border-primary flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border px-4"
 							>
 								<RadioGroupItem value={size.key} />
-								<bdi>{size.label}</bdi>
+								<bdi>
+									{printSizeText(
+										_,
+										size.label,
+										printCatalog.products[product]!.folded,
+									)}
+								</bdi>
 							</Label>
 						))}
 					</RadioGroup>

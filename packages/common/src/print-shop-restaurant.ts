@@ -117,9 +117,7 @@ export const restaurantPrintCatalog: PrintCatalogExtension = {
 			folded: true,
 			featuredItems: false,
 			qrTargets: TABLE_TARGETS,
-			sizes: [
-				{ key: '4x6', widthMm: 102, heightMm: 152, label: '4 × 6 in (folded)' },
-			],
+			sizes: [{ key: '4x6', widthMm: 102, heightMm: 152, label: '4 × 6 in' }],
 		},
 	],
 	productOrder: [

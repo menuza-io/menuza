@@ -58,6 +58,7 @@ import { z } from 'zod'
 import {
 	PRINT_STYLE_LABELS,
 	printProductLabel,
+	printSizeText,
 	printTargetLabel,
 } from '#app/components/print/print-labels.ts'
 import { printShopUi } from '#app/components/print/vertical-ui.tsx'
@@ -469,7 +470,9 @@ export default function PrintDesignRoute() {
 												className="border-border has-[[data-checked]]:border-primary flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border px-4"
 											>
 												<RadioGroupItem value={size.key} />
-												<bdi>{size.label}</bdi>
+												<bdi>
+													{printSizeText(_, size.label, product.folded)}
+												</bdi>
 											</Label>
 										))}
 									</RadioGroup>
