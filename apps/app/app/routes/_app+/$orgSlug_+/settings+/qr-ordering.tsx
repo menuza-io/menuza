@@ -12,9 +12,9 @@ import { Link, useLoaderData, type LoaderFunctionArgs } from 'react-router'
 import { toast } from 'sonner'
 import { z } from 'zod'
 import { QrSettingsHeader } from '#app/components/qr/qr-settings-header.tsx'
-import { OperatorRequestError } from '#app/hooks/use-operator-client.ts'
 import { useQrClient } from '#app/hooks/use-qr-client.ts'
 import { requireQrOrderingAccess } from '#app/utils/qr/access.server.ts'
+import { qrErrorMessage } from '#app/utils/qr/qr-errors.ts'
 import { qrSettingsSchema, type QrSettings } from '#app/utils/qr/qr-model.ts'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
@@ -76,11 +76,7 @@ export default function QrSettingsRoute() {
 			setSettings(z.object({ settings: qrSettingsSchema }).parse(body).settings)
 			toast.success(_(msg`Settings saved`))
 		} catch (cause) {
-			toast.error(
-				cause instanceof OperatorRequestError
-					? cause.message
-					: _(msg`That did not work. Try again.`),
-			)
+			toast.error(qrErrorMessage(cause, _))
 		} finally {
 			setSaving(false)
 		}

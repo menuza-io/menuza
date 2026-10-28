@@ -20,8 +20,8 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link } from 'react-router'
 import { toast } from 'sonner'
 import { z } from 'zod'
-import { OperatorRequestError } from '#app/hooks/use-operator-client.ts'
 import { useQrClient } from '#app/hooks/use-qr-client.ts'
+import { qrErrorMessage } from '#app/utils/qr/qr-errors.ts'
 import {
 	planTableLabels,
 	qrTableSchema,
@@ -69,9 +69,10 @@ export function TablesManager({
 			setTables(payload.tables)
 			setError(null)
 		} catch {
+			if (seq !== requestSeq.current) return
 			setError(_(msg`Unable to load tables. Try again.`))
 		} finally {
-			setLoading(false)
+			if (seq === requestSeq.current) setLoading(false)
 		}
 	}, [locationId, request, _])
 
@@ -92,11 +93,7 @@ export function TablesManager({
 			await load()
 			return true
 		} catch (cause) {
-			toast.error(
-				cause instanceof OperatorRequestError
-					? cause.message
-					: _(msg`That did not work. Try again.`),
-			)
+			toast.error(qrErrorMessage(cause, _))
 			return false
 		} finally {
 			setBusy(false)

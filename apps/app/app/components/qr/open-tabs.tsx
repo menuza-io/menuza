@@ -1,3 +1,4 @@
+import { type I18n } from '@lingui/core'
 import { msg, plural, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import {
@@ -25,6 +26,7 @@ import {
 	localizedName,
 	relativeTime,
 } from '#app/utils/orders/order-model.ts'
+import { qrErrorMessage } from '#app/utils/qr/qr-errors.ts'
 import { qrTabSchema, type QrTab } from '#app/utils/qr/qr-model.ts'
 
 /**
@@ -77,6 +79,9 @@ export function OpenTabs({
 		return target ?? true
 	}
 	const acting = useRef(false)
+	// Screen readers hear what the poll changed (counts and table labels only).
+	const [announcement, setAnnouncement] = useState('')
+	const previousTabs = useRef<QrTab[] | null>(null)
 
 	// A tab settled elsewhere (another device, the guest's payment) closes its
 	// open dialog with a notice instead of failing on confirm.
@@ -94,7 +99,7 @@ export function OpenTabs({
 	}, [tabs, closingId, voidingId, lockingId, releasingId, _])
 
 	const load = useCallback(
-		async (signal?: AbortSignal) => {
+		async (signal?: AbortSignal, options: { quiet?: boolean } = {}) => {
 			try {
 				const list = z.object({ tabs: z.array(qrTabSchema) })
 				const [open, review] = await Promise.all([
@@ -102,7 +107,16 @@ export function OpenTabs({
 					request('/tabs?status=review', { signal }),
 				])
 				if (!signal?.aborted) {
-					setTabs(list.parse(open).tabs)
+					const next = list.parse(open).tabs
+					// The first load and a reload after this screen's own action
+					// (already confirmed by a toast) stay quiet.
+					const changes =
+						previousTabs.current && !options.quiet
+							? describeTabChanges(previousTabs.current, next, _)
+							: null
+					if (changes) setAnnouncement(changes)
+					previousTabs.current = next
+					setTabs(next)
 					setReviewTabs(list.parse(review).tabs)
 					setFailed(false)
 				}
@@ -110,7 +124,7 @@ export function OpenTabs({
 				if (!signal?.aborted) setFailed(true)
 			}
 		},
-		[request],
+		[request, _],
 	)
 
 	useEffect(() => {
@@ -144,14 +158,10 @@ export function OpenTabs({
 			if (warning) toast.warning(warning)
 			else toast.success(done)
 			settledFocus.current = true
-			await load()
+			await load(undefined, { quiet: true })
 			return true
 		} catch (cause) {
-			toast.error(
-				cause instanceof OperatorRequestError
-					? cause.message
-					: _(msg`That did not work. Try again.`),
-			)
+			toast.error(qrErrorMessage(cause, _))
 			// The tab changed under the open dialog: show the new total.
 			if (cause instanceof OperatorRequestError && cause.code === 'stale_tab') {
 				await load()
@@ -208,17 +218,26 @@ export function OpenTabs({
 	) : null
 	const reviewSection =
 		reviewTabs.length > 0 ? <PaymentsToCheck tabs={reviewTabs} /> : null
+	// Mounted in every state, so a change is announced even from or to an
+	// empty list.
+	const liveRegion = (
+		<p role="status" className="sr-only">
+			{announcement}
+		</p>
+	)
 	if (tabs.length === 0) {
-		return failedBanner || reviewSection ? (
+		return (
 			<>
+				{liveRegion}
 				{failedBanner}
 				{reviewSection}
 			</>
-		) : null
+		)
 	}
 
 	return (
 		<section aria-labelledby="open-tabs-heading" className="space-y-3">
+			{liveRegion}
 			<h2
 				id="open-tabs-heading"
 				ref={headingRef}
@@ -966,6 +985,40 @@ function TotalChanged({
  * A typed tip in major units: Arabic-Indic digits and a comma decimal ("٥",
  * "5,50") are accepted; anything unreadable counts as no tip.
  */
+/**
+ * One polite sentence for what a poll changed: the open tab count, then each
+ * tab that opened, got a new round or left the list. Counts and table labels
+ * only, never guest details. Null when nothing a listener needs changed.
+ */
+export function describeTabChanges(
+	previous: QrTab[],
+	next: QrTab[],
+	translate: I18n['_'],
+): string | null {
+	const before = new Map(previous.map((tab) => [tab.id, tab]))
+	const after = new Set(next.map((tab) => tab.id))
+	const parts: string[] = []
+	for (const tab of next) {
+		const label = tab.table.label
+		const old = before.get(tab.id)
+		if (!old) parts.push(translate(msg`New tab at table ${label}.`))
+		else if (tab.rounds.length > old.rounds.length) {
+			parts.push(translate(msg`New round at table ${label}.`))
+		}
+	}
+	for (const tab of previous) {
+		if (after.has(tab.id)) continue
+		const label = tab.table.label
+		parts.push(translate(msg`Tab at table ${label} is no longer open.`))
+	}
+	if (parts.length === 0) return null
+	const count = next.length
+	return [
+		translate(plural(count, { one: '# open tab.', other: '# open tabs.' })),
+		...parts,
+	].join(' ')
+}
+
 export function parseTipCents(raw: string): number {
 	return parseTip(raw).cents
 }
