@@ -9,10 +9,10 @@ import {
 	type LoaderFunctionArgs,
 } from 'react-router'
 import { SocialPostComposer } from '#app/components/social/post-composer.tsx'
+import { runAfterResponse } from '#app/utils/after-response.server.ts'
 import { requireSocialAccess } from '#app/utils/social/access.server.ts'
 import { listSocialAccounts } from '#app/utils/social/accounts.server.ts'
 import { handleSocialPostForm } from '#app/utils/social/post-form.server.ts'
-import { runAfterResponse } from '#app/utils/after-response.server.ts'
 import { schedulePrefillForDay, dayKey } from '#app/utils/social/time.ts'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {

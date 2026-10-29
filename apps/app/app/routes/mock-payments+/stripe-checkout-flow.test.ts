@@ -1,10 +1,10 @@
-import { RouterContextProvider } from 'react-router'
-import Stripe from 'stripe'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
 	createMockStripeHttpClient,
 	MOCK_STRIPE_SECRET_KEY,
 } from '@repo/payments/mock'
+import { RouterContextProvider } from 'react-router'
+import Stripe from 'stripe'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
 	getPaymentsEmulator,
 	resetPaymentsEmulatorSingleton,

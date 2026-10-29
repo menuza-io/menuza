@@ -182,7 +182,7 @@ msgid "{0, plural, one {# hour has no pay rate, so it has no wage figure.} other
 msgstr "{0, plural, one {# hour has no pay rate, so it has no wage figure.} other {# hours have no pay rate, so they have no wage figure.}}"
 
 #. placeholder {0}: assets.length
-#: app/routes/_app+/$orgSlug_+/media.tsx:874
+#: app/routes/_app+/$orgSlug_+/media.tsx:899
 msgid "{0, plural, one {# image} other {# images}}"
 msgstr "{0, plural, one {# image} other {# images}}"
 
@@ -258,6 +258,11 @@ msgstr "{0, plural, one {# person on the clock} other {# people on the clock}}"
 #: app/components/staff/schedule/week-grid.tsx:493
 msgid "{0, plural, one {# person} other {# people}}"
 msgstr "{0, plural, one {# person} other {# people}}"
+
+#. placeholder {0}: selectedIds.length
+#: app/components/media-library/photo-studio-dialog.tsx:495
+msgid "{0, plural, one {# selected} other {# selected}}"
+msgstr "{0, plural, one {# selected} other {# selected}}"
 
 #. placeholder {0}: result.created
 #. placeholder {0}: result.value.length
@@ -357,6 +362,11 @@ msgstr "{0, plural, one {Approve} other {Approve all}}"
 msgid "{0, plural, one {Emailing # person now.} other {Emailing # people now.}}"
 msgstr "{0, plural, one {Emailing # person now.} other {Emailing # people now.}}"
 
+#. placeholder {0}: results.length
+#: app/components/media-library/photo-studio-dialog.tsx:759
+msgid "{0, plural, one {Enhancing your photo…} other {Enhancing # photos…}}"
+msgstr "{0, plural, one {Enhancing your photo…} other {Enhancing # photos…}}"
+
 #. placeholder {0}: Math.abs(standing.daysLeft ?? 0)
 #: app/components/staff/onboarding/certificates-tab.tsx:228
 msgid "{0, plural, one {Expired # day ago} other {Expired # days ago}}"
@@ -366,6 +376,11 @@ msgstr "{0, plural, one {Expired # day ago} other {Expired # days ago}}"
 #: app/components/staff/onboarding/certificates-tab.tsx:239
 msgid "{0, plural, one {Expires in # day} other {Expires in # days}}"
 msgstr "{0, plural, one {Expires in # day} other {Expires in # days}}"
+
+#. placeholder {0}: selectedAssets.length
+#: app/components/media-library/photo-studio-dialog.tsx:989
+msgid "{0, plural, one {Generate photo} other {Generate # photos}}"
+msgstr "{0, plural, one {Generate photo} other {Generate # photos}}"
 
 #. placeholder {0}: lockable.length
 #: app/components/staff/timesheets/timesheets-page.tsx:774
@@ -402,11 +417,14 @@ msgstr "{0, plural, one {Unlock # card?} other {Unlock # cards?}}"
 msgid "{0, plural, one {We added a new-hire checklist with # task.} other {We added a new-hire checklist with # tasks.}}"
 msgstr "{0, plural, one {We added a new-hire checklist with # task.} other {We added a new-hire checklist with # tasks.}}"
 
-#. placeholder {0}: formatWorkspaceDate(new Date(), { locale, timeZone })
-#. placeholder {1}: organization.name
+#. placeholder {0}: selectedAssets.length
+#: app/components/media-library/photo-studio-dialog.tsx:554
+msgid "{0, plural, one {Your photo} other {Your # photos}}"
+msgstr "{0, plural, one {Your photo} other {Your # photos}}"
+
 #: app/routes/_app+/$orgSlug_+/index.tsx:176
-msgid "{0} · Here's what's happening in {1}"
-msgstr "{0} · Here's what's happening in {1}"
+#~ msgid "{0} · Here's what's happening in {1}"
+#~ msgstr "{0} · Here's what's happening in {1}"
 
 #. placeholder {0}: data.messageText?.length || 0
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:404
@@ -559,6 +577,10 @@ msgstr "{created} imported, {existing} already on your team, {notImported} not i
 #: app/components/phone-agent/phrase-fields.tsx:331
 msgid "{customized} changed"
 msgstr "{customized} changed"
+
+#: app/routes/_app+/$orgSlug_+/index.tsx:179
+msgid "{date} · Here's what's happening in {organizationName}"
+msgstr "{date} · Here's what's happening in {organizationName}"
 
 #: app/components/my-schedule/requests-view.tsx:97
 msgid "{day}: available {hours}"
@@ -906,6 +928,10 @@ msgstr "{pairedName} is ready. People can clock in with their PIN."
 msgid "{people, plural, one {# person} other {# people}}"
 msgstr "{people, plural, one {# person} other {# people}}"
 
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:181
+msgid "{platformName} connected"
+msgstr "{platformName} connected"
+
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:98
 msgid "{positionName} archived."
 msgstr "{positionName} archived."
@@ -951,7 +977,7 @@ msgstr "{readyCount, plural, one {Import # person} other {Import # people}}"
 msgid "{readyCount} ready, {needFix} need a fix. Rows with a problem are skipped."
 msgstr "{readyCount} ready, {needFix} need a fix. Rows with a problem are skipped."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:281
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:291
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:172
 msgid "{recipientCount} recipients"
 msgstr ""
@@ -960,7 +986,7 @@ msgstr ""
 msgid "{redirectCount} redirects"
 msgstr "{redirectCount} redirects"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1487
+#: app/routes/_app+/$orgSlug_+/media.tsx:1549
 msgid "{referenceCount, plural, one {# place} other {# places}}"
 msgstr "{referenceCount, plural, one {# place} other {# places}}"
 
@@ -1055,6 +1081,10 @@ msgstr ""
 #: app/components/chat/chat-view.tsx:374
 msgid "{unread} unread"
 msgstr "{unread} unread"
+
+#: app/components/social/post-composer.tsx:268
+msgid "{used} of {limit} characters"
+msgstr "{used} of {limit} characters"
 
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:568
 msgid "{warningCount} warnings to review"
@@ -1390,6 +1420,10 @@ msgstr "A note was added"
 msgid "A page on your website"
 msgstr "A page on your website"
 
+#: app/components/media-library/photo-studio-dialog.tsx:692
+msgid "A photo whose lighting, background, and colors you like. JPEG, PNG, or WebP, up to 10 MB."
+msgstr "A photo whose lighting, background, and colors you like. JPEG, PNG, or WebP, up to 10 MB."
+
 #: ../../packages/marketing/src/components/email/block-meta.ts:34
 msgid "A picture, logo, or product shot."
 msgstr "A picture, logo, or product shot."
@@ -1549,6 +1583,14 @@ msgstr ""
 msgid "Account Suspended"
 msgstr ""
 
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:118
+msgid "Accounts"
+msgstr "Accounts"
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:162
+msgid "Accounts connected here are shared with everyone in the organization who can manage marketing."
+msgstr "Accounts connected here are shared with everyone in the organization who can manage marketing."
+
 #: app/components/staff/onboarding/onboarding-labels.ts:20
 msgid "Acknowledge a policy"
 msgstr "Acknowledge a policy"
@@ -1561,8 +1603,8 @@ msgstr ""
 msgid "Acme Inc."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:213
-#: app/routes/_app+/$orgSlug_+/index.tsx:239
+#: app/routes/_app+/$orgSlug_+/index.tsx:217
+#: app/routes/_app+/$orgSlug_+/index.tsx:243
 msgid "Across your organization"
 msgstr "Across your organization"
 
@@ -1601,6 +1643,7 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:60
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:259
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:138
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:312
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:996
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:983
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:248
@@ -1608,7 +1651,7 @@ msgstr ""
 msgid "Active"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:690
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:689
 msgid "Activity"
 msgstr ""
 
@@ -1622,12 +1665,12 @@ msgstr ""
 msgid "Add"
 msgstr ""
 
-#. placeholder {0}: member.label
 #: app/components/chat/chat-group-settings-dialog.tsx:137
-msgid "Add {0}"
-msgstr ""
+#~ msgid "Add {0}"
+#~ msgstr ""
 
 #: ../../packages/marketing-workflow/src/node-palette.tsx:52
+#: app/components/chat/chat-group-settings-dialog.tsx:137
 #: app/components/phone-agent/flow-editor/node-palette.tsx:80
 msgid "Add {label}"
 msgstr "Add {label}"
@@ -1899,6 +1942,10 @@ msgstr "Add field"
 msgid "Add hours across all workplaces"
 msgstr "Add hours across all workplaces"
 
+#: app/components/social/post-composer.tsx:317
+msgid "Add image"
+msgstr "Add image"
+
 #: app/components/note/comment-image-upload.tsx:78
 #: app/components/note/comment-image-upload.tsx:92
 #: app/components/note/comment-image-upload.tsx:93
@@ -1914,7 +1961,7 @@ msgstr ""
 msgid "Add meal break"
 msgstr "Add meal break"
 
-#: app/components/app-sidebar.tsx:634
+#: app/components/app-sidebar.tsx:644
 msgid "Add members"
 msgstr ""
 
@@ -1943,7 +1990,7 @@ msgstr ""
 msgid "Add note"
 msgstr "Add note"
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:853
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:852
 msgid "Add notes, links, or media to capture what matters."
 msgstr "Add notes, links, or media to capture what matters."
 
@@ -1959,6 +2006,10 @@ msgstr "Add one in your business settings first."
 #: app/components/phone-agent/flow-editor/node-inspector.tsx:304
 msgid "Add option"
 msgstr "Add option"
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:278
+msgid "Add or refresh accounts"
+msgstr "Add or refresh accounts"
 
 #: app/components/team-switcher.tsx:206
 #: app/routes/_app+/organizations.tsx:217
@@ -2303,7 +2354,7 @@ msgid "AI assistant"
 msgstr "AI assistant"
 
 #: app/components/ai/global-ai-panel.tsx:341
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:691
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:690
 msgid "AI Assistant"
 msgstr ""
 
@@ -2326,6 +2377,14 @@ msgstr "AI phone agent"
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:276
 msgid "AI phone calls are only available for organizations that keep customer data in the US."
 msgstr "AI phone calls are only available for organizations that keep customer data in the US."
+
+#: app/components/media-library/photo-studio-dialog.tsx:197
+msgid "AI photos are not set up for this workspace."
+msgstr "AI photos are not set up for this workspace."
+
+#: app/routes/_app+/$orgSlug_+/media.tsx:1267
+msgid "AI studio"
+msgstr "AI studio"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2552
 msgid "Aim for one or two sentences that make someone click."
@@ -2364,6 +2423,7 @@ msgstr "Alignment"
 #: app/components/staff/timesheets/review-queue.tsx:166
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:258
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:66
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:207
 msgid "All"
 msgstr ""
 
@@ -2471,6 +2531,10 @@ msgstr "All workplaces (default)"
 msgid "Allocation"
 msgstr "Allocation"
 
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:199
+msgid "Allow at least one Page you manage when Facebook asks."
+msgstr "Allow at least one Page you manage when Facebook asks."
+
 #: app/components/staff/labor-policy-editor.tsx:647
 msgid "Allow clock-in without a scheduled shift"
 msgstr "Allow clock-in without a scheduled shift"
@@ -2512,7 +2576,7 @@ msgstr "Already working then"
 msgid "Alt text"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1439
+#: app/routes/_app+/$orgSlug_+/media.tsx:1501
 msgid "Alt Text"
 msgstr "Alt Text"
 
@@ -2528,6 +2592,10 @@ msgstr "Amount"
 #: app/utils/staffing/labor-errors.ts:41
 msgid "Amounts can have at most two decimal places."
 msgstr "Amounts can have at most two decimal places."
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:151
+msgid "An account needs to be reconnected"
+msgstr "An account needs to be reconnected"
 
 #: app/components/phone-agent/settings-nav.tsx:70
 msgid "An AI agent that answers your business's calls, answers common questions, and texts callers helpful links."
@@ -2561,7 +2629,7 @@ msgstr "An interview was updated"
 msgid "An organization is a workspace where teams collect, organize, and work together."
 msgstr ""
 
-#: app/components/app-sidebar.tsx:437
+#: app/components/app-sidebar.tsx:444
 #: app/components/workspace-breadcrumb.tsx:58
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:38
 msgid "Analytics"
@@ -2575,7 +2643,7 @@ msgstr "Analytics and tracking"
 msgid "Announcement actions"
 msgstr "Announcement actions"
 
-#: app/components/app-sidebar.tsx:453
+#: app/components/app-sidebar.tsx:460
 #: app/components/command-menu.tsx:149
 #: app/components/workspace-breadcrumb.tsx:59
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:49
@@ -2678,7 +2746,7 @@ msgstr ""
 msgid "API Keys"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:661
+#: app/components/app-sidebar.tsx:671
 msgid "App header"
 msgstr "App header"
 
@@ -2757,7 +2825,7 @@ msgstr "Applied"
 msgid "Apply automatically"
 msgstr "Apply automatically"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1956
+#: app/routes/_app+/$orgSlug_+/media.tsx:2018
 msgid "Applying…"
 msgstr "Applying…"
 
@@ -2873,7 +2941,7 @@ msgstr "Are you sure you want to delete “{roleNameToDelete}”? This action ca
 msgid "Are you sure you want to delete this comment?"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:764
+#: app/routes/_app+/$orgSlug_+/media.tsx:779
 msgid "Are you sure you want to remove this media asset?"
 msgstr "Are you sure you want to remove this media asset?"
 
@@ -2970,6 +3038,10 @@ msgstr "Assistant instructions"
 #: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:91
 #~ msgid "Assistant paused"
 #~ msgstr "Assistant paused"
+
+#: app/components/social/social-labels.ts:93
+msgid "Attach at most {SOCIAL_MAX_MEDIA} images."
+msgstr "Attach at most {SOCIAL_MAX_MEDIA} images."
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:414
 msgid "Attempt: {attempt} • Executed: {executedAtLabel}"
@@ -3104,7 +3176,7 @@ msgstr "Available then"
 msgid "Available Tools"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:216
+#: app/routes/_app+/$orgSlug_+/index.tsx:220
 msgid "Avg per day"
 msgstr "Avg per day"
 
@@ -3112,7 +3184,7 @@ msgstr "Avg per day"
 msgid "Avg/day"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1239
+#: app/routes/_app+/$orgSlug_+/media.tsx:1288
 msgid "B&W"
 msgstr "B&W"
 
@@ -3120,6 +3192,7 @@ msgstr "B&W"
 #: app/components/kiosk/kiosk-screens.tsx:264
 #: app/components/kiosk/kiosk-screens.tsx:495
 #: app/components/kiosk/kiosk-screens.tsx:571
+#: app/components/media-library/photo-studio-dialog.tsx:979
 #: app/components/website/create-page-dialog.tsx:198
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.terminate.tsx:205
 #: app/routes/_app+/$orgSlug_+/staff+/team.bulk.tsx:192
@@ -3158,7 +3231,7 @@ msgstr "Back to calls"
 msgid "Back to channels"
 msgstr "Back to channels"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1916
+#: app/routes/_app+/$orgSlug_+/media.tsx:1978
 msgid "Back to details"
 msgstr "Back to details"
 
@@ -3243,7 +3316,7 @@ msgstr ""
 msgid "Billed monthly"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:527
+#: app/components/app-sidebar.tsx:534
 #: app/components/command-menu.tsx:366
 #: app/components/workspace-breadcrumb.tsx:67
 msgid "Billing"
@@ -3294,11 +3367,15 @@ msgstr "Body text"
 msgid "Bold"
 msgstr "Bold"
 
+#: app/utils/media/photo-studio.ts:83
+msgid "Bold color"
+msgstr "Bold color"
+
 #: app/components/phone-agent/flow-editor/flow-meta.ts:42
 msgid "Branch on whether you're open right now."
 msgstr "Branch on whether you're open right now."
 
-#: app/components/app-sidebar.tsx:444
+#: app/components/app-sidebar.tsx:451
 #: app/components/website/branding-panel.tsx:244
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5133
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5134
@@ -3375,8 +3452,12 @@ msgstr "Breaks overlap"
 msgid "Breaks: {before} to {after}"
 msgstr "Breaks: {before} to {after}"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1815
-#: app/routes/_app+/$orgSlug_+/media.tsx:1830
+#: app/utils/media/photo-studio.ts:128
+msgid "Bright & airy"
+msgstr "Bright & airy"
+
+#: app/routes/_app+/$orgSlug_+/media.tsx:1877
+#: app/routes/_app+/$orgSlug_+/media.tsx:1892
 msgid "Brightness"
 msgstr "Brightness"
 
@@ -3413,7 +3494,7 @@ msgstr ""
 msgid "Broadcasts & automations"
 msgstr "Broadcasts & automations"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:177
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:187
 msgid "Broadcasts, automations, and performance at a glance."
 msgstr ""
 
@@ -3554,6 +3635,12 @@ msgstr "By position percentage"
 msgid "by the time clock"
 msgstr "by the time clock"
 
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:223
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:237
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:170
+msgid "Calendar"
+msgstr "Calendar"
+
 #: app/components/phone-agent/test-call-phone.tsx:186
 msgid "Call {number}"
 msgstr "Call {number}"
@@ -3658,7 +3745,7 @@ msgstr "Callers hear each step in order. A keypad menu waits for them to press a
 msgid "Calling…"
 msgstr "Calling…"
 
-#: app/components/app-sidebar.tsx:369
+#: app/components/app-sidebar.tsx:376
 #: app/components/command-menu.tsx:122
 #: app/components/workspace-breadcrumb.tsx:46
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:47
@@ -3739,6 +3826,8 @@ msgstr "Can't text that number"
 #: app/components/hiring/job-editor.tsx:910
 #: app/components/kiosk/kiosk-screens.tsx:631
 #: app/components/media-library/media-library-picker.tsx:342
+#: app/components/media-library/photo-studio-dialog.tsx:950
+#: app/components/media-library/photo-studio-dialog.tsx:977
 #: app/components/my-schedule/availability-sheet.tsx:200
 #: app/components/my-schedule/requests-view.tsx:261
 #: app/components/my-schedule/shift-change-sheet.tsx:257
@@ -3764,6 +3853,7 @@ msgstr "Can't text that number"
 #: app/components/settings/password-form.tsx:188
 #: app/components/settings/two-factor-form.tsx:123
 #: app/components/settings/two-factor-form.tsx:261
+#: app/components/social/post-composer.tsx:423
 #: app/components/staff/access-tab.tsx:259
 #: app/components/staff/access-tab.tsx:396
 #: app/components/staff/kiosk-manager.tsx:371
@@ -3799,10 +3889,10 @@ msgstr "Can't text that number"
 #: app/routes/_app+/$orgSlug_+/marketing+/print.new.tsx:213
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:470
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1093
-#: app/routes/_app+/$orgSlug_+/media.tsx:1603
+#: app/routes/_app+/$orgSlug_+/media.tsx:1665
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:866
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:922
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1100
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1099
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:428
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:486
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:455
@@ -3914,7 +4004,7 @@ msgstr "Canva was not connected"
 msgid "Canva's file could not be read. Try again, or open the design in Canva and save it again."
 msgstr "Canva's file could not be read. Try again, or open the design in Canva and save it again."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1464
+#: app/routes/_app+/$orgSlug_+/media.tsx:1526
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3969
 msgid "Caption"
 msgstr ""
@@ -4140,7 +4230,7 @@ msgstr "Charges enabled"
 msgid "Chat"
 msgstr "Chat"
 
-#: app/components/app-sidebar.tsx:496
+#: app/components/app-sidebar.tsx:503
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:79
 msgid "Chat channels"
 msgstr "Chat channels"
@@ -4202,6 +4292,7 @@ msgid "Check this card"
 msgstr "Check this card"
 
 #: app/components/print/print-form-errors.ts:26
+#: app/components/social/social-labels.ts:97
 #: app/components/staff/details-tab.tsx:372
 msgid "Check this field."
 msgstr "Check this field."
@@ -4223,7 +4314,7 @@ msgstr "Checked every few minutes while people are clocked in, and at least once
 msgid "Checking for staff records…"
 msgstr "Checking for staff records…"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1502
+#: app/routes/_app+/$orgSlug_+/media.tsx:1564
 msgid "Checking references…"
 msgstr "Checking references…"
 
@@ -4279,6 +4370,10 @@ msgstr "Choose a CSV file"
 #: app/components/staff/schedule/date-range-field.tsx:79
 msgid "Choose a date"
 msgstr "Choose a date"
+
+#: app/components/social/social-labels.ts:89
+msgid "Choose a date and time."
+msgstr "Choose a date and time."
 
 #: app/components/hiring/job-editor.tsx:453
 msgid "Choose a date that is not in the past."
@@ -4366,6 +4461,14 @@ msgstr "Choose a teammate to start a conversation."
 msgid "Choose a template"
 msgstr ""
 
+#: app/components/social/social-labels.ts:90
+msgid "Choose a time at least a minute from now."
+msgstr "Choose a time at least a minute from now."
+
+#: app/components/social/social-labels.ts:91
+msgid "Choose a time within the next year."
+msgstr "Choose a time within the next year."
+
 #: app/components/phone-agent/settings-page.tsx:141
 msgid "Choose a valid value."
 msgstr "Choose a valid value."
@@ -4383,9 +4486,17 @@ msgstr "Choose a workplace"
 msgid "Choose a workplace."
 msgstr "Choose a workplace."
 
+#: app/components/social/post-composer.tsx:355
+msgid "Choose an account to preview"
+msgstr "Choose an account to preview"
+
 #: app/components/dashboard/share-dashboard-dialog.tsx:67
 msgid "Choose an active member of this organization."
 msgstr "Choose an active member of this organization."
+
+#: app/components/social/social-labels.ts:88
+msgid "Choose at least one account."
+msgstr "Choose at least one account."
 
 #: app/components/staff/schedule/shift-editor-sheet.tsx:110
 msgid "Choose at least one day."
@@ -4455,6 +4566,10 @@ msgstr "Choose the members who also work here. You review the list next."
 #: app/utils/kiosk/kiosk-messages.ts:91
 msgid "Choose the role you are working."
 msgstr "Choose the role you are working."
+
+#: app/components/media-library/photo-studio-dialog.tsx:492
+msgid "Choose up to {PHOTO_STUDIO_MAX_PHOTOS} photos"
+msgstr "Choose up to {PHOTO_STUDIO_MAX_PHOTOS} photos"
 
 #: app/components/dashboard/share-dashboard-dialog.tsx:69
 msgid "Choose View or Edit access."
@@ -4535,6 +4650,10 @@ msgstr "Classic"
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:788
 msgid "Claude Desktop Setup"
 msgstr ""
+
+#: app/utils/media/photo-studio.ts:65
+msgid "Clean white"
+msgstr "Clean white"
 
 #: app/components/staff/schedule/schedule-page.tsx:566
 #: app/components/staff/timesheets/bulk-bar.tsx:103
@@ -4833,7 +4952,7 @@ msgid "Columns"
 msgstr ""
 
 #: app/components/note/comment-input.tsx:196
-#: app/routes/_app+/$orgSlug_+/media.tsx:1220
+#: app/routes/_app+/$orgSlug_+/media.tsx:1269
 msgid "Comment"
 msgstr ""
 
@@ -4841,7 +4960,7 @@ msgstr ""
 msgid "Comment actions"
 msgstr "Comment actions"
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:689
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:688
 msgid "Comments"
 msgstr ""
 
@@ -4860,6 +4979,10 @@ msgstr "Communication"
 #: app/routes/_auth+/waitlist.tsx:425
 msgid "Community"
 msgstr "Community"
+
+#: app/components/media-library/before-after-slider.tsx:93
+msgid "Compare before and after"
+msgstr "Compare before and after"
 
 #: ../../packages/reports/src/ui/report-labels.ts:29
 msgid "Compare wages as a share of sales across your workplaces."
@@ -5008,9 +5131,26 @@ msgstr "Confirmation is taking longer than usual. Refresh in a minute."
 msgid "Connect"
 msgstr ""
 
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:279
+msgid "Connect {platformName}"
+msgstr "Connect {platformName}"
+
+#: app/components/social/post-composer.tsx:196
+msgid "Connect a Facebook Page or an Instagram account to publish. You can still save a draft."
+msgstr "Connect a Facebook Page or an Instagram account to publish. You can still save a draft."
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:137
+msgid "Connect a Facebook Page or an Instagram professional account to start publishing."
+msgstr "Connect a Facebook Page or an Instagram professional account to start publishing."
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:296
 msgid "Connect a phone number"
 msgstr "Connect a phone number"
+
+#: app/components/social/post-composer.tsx:203
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:144
+msgid "Connect accounts"
+msgstr "Connect accounts"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:260
 msgid "Connect Canva"
@@ -5036,6 +5176,10 @@ msgstr "Connect the analytics platforms you use on your public website. Leave an
 msgid "Connect the caller to a person, such as a manager."
 msgstr "Connect the caller to a person, such as a manager."
 
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:133
+msgid "Connect your accounts"
+msgstr "Connect your accounts"
+
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1360
 msgid "Connect your AI assistants to {organizationName} data using the Model Context Protocol"
 msgstr ""
@@ -5051,6 +5195,10 @@ msgstr ""
 #: app/components/staff/kiosk-manager.tsx:718
 msgid "Connected"
 msgstr "Connected"
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:304
+msgid "Connected {date}"
+msgstr "Connected {date}"
 
 #: app/routes/mock-payments+/stripe.connect.onboard.$linkId.tsx:73
 msgid "Connected account"
@@ -5083,6 +5231,14 @@ msgstr "Connected to Canva as {who}."
 #: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:273
 msgid "Connected to Canva."
 msgstr "Connected to Canva."
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:224
+msgid "Connecting accounts is not available yet"
+msgstr "Connecting accounts is not available yet"
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:237
+msgid "Connecting adds a sample account and nothing is really posted. A post containing #fail is refused, to try the retry path."
+msgstr "Connecting adds a sample account and nothing is really posted. A post containing #fail is refused, to try the retry path."
 
 #: app/components/chat/chat-view.tsx:985
 msgid "Connecting to team chat…"
@@ -5126,6 +5282,7 @@ msgid "Contains (Partial Match)"
 msgstr ""
 
 #: app/components/settings/cards/organization/announcement-sheet.tsx:435
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:364
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:627
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3292
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3482
@@ -5174,12 +5331,12 @@ msgstr "Contract"
 msgid "Contractor"
 msgstr "Contractor"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1837
-#: app/routes/_app+/$orgSlug_+/media.tsx:1852
+#: app/routes/_app+/$orgSlug_+/media.tsx:1899
+#: app/routes/_app+/$orgSlug_+/media.tsx:1914
 msgid "Contrast"
 msgstr "Contrast"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:237
+#: app/routes/_app+/$orgSlug_+/index.tsx:241
 msgid "Contributors"
 msgstr "Contributors"
 
@@ -5191,7 +5348,7 @@ msgstr ""
 msgid "Conversation"
 msgstr "Conversation"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1242
+#: app/routes/_app+/$orgSlug_+/media.tsx:1291
 msgid "Cool"
 msgstr "Cool"
 
@@ -5211,6 +5368,10 @@ msgstr "Copied shift ready to paste"
 #: app/components/staff/schedule/copy-week-dialog.tsx:163
 msgid "Copied shifts arrive as drafts. Nothing reaches your team until you publish."
 msgstr "Copied shifts arrive as drafts. Nothing reaches your team until you publish."
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:128
+msgid "Copied to a new draft."
+msgstr "Copied to a new draft."
 
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:314
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:572
@@ -5265,7 +5426,7 @@ msgstr "Copy into this week"
 
 #: app/components/hiring/job-share-panel.tsx:87
 #: app/components/staff/kiosk-manager.tsx:782
-#: app/routes/_app+/$orgSlug_+/media.tsx:919
+#: app/routes/_app+/$orgSlug_+/media.tsx:944
 #: app/routes/_app+/$orgSlug_+/notes-cards.tsx:220
 msgid "Copy link"
 msgstr ""
@@ -5286,7 +5447,11 @@ msgstr "Copy this week elsewhere"
 msgid "Copy to"
 msgstr "Copy to"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1385
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:353
+msgid "Copy to new draft"
+msgstr "Copy to new draft"
+
+#: app/routes/_app+/$orgSlug_+/media.tsx:1447
 msgid "Copy URL"
 msgstr "Copy URL"
 
@@ -5662,7 +5827,7 @@ msgstr "Create role"
 msgid "Create your first API key to get started"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:257
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:267
 msgid "Create your first broadcast"
 msgstr ""
 
@@ -5939,6 +6104,10 @@ msgstr ""
 msgid "Dark"
 msgstr ""
 
+#: app/utils/media/photo-studio.ts:92
+msgid "Dark & dramatic"
+msgstr "Dark & dramatic"
+
 #: app/components/nav-user.tsx:90
 msgid "Dark mode"
 msgstr ""
@@ -6120,6 +6289,10 @@ msgstr "Deduct an unpaid break"
 msgid "Deduct an unpaid break when none was recorded"
 msgstr "Deduct an unpaid break when none was recorded"
 
+#: app/utils/media/photo-studio.ts:93
+msgid "Deep black background, moody rim light"
+msgstr "Deep black background, moody rim light"
+
 #: app/components/website/link-inspector.tsx:612
 #: app/components/website/link-inspector.tsx:628
 msgid "Default"
@@ -6169,9 +6342,10 @@ msgstr ""
 #: app/components/staff/notes-tab.tsx:207
 #: app/components/staff/schedule/templates-dialog.tsx:250
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:469
-#: app/routes/_app+/$orgSlug_+/media.tsx:1591
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1053
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1112
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:171
+#: app/routes/_app+/$orgSlug_+/media.tsx:1653
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1052
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1111
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:167
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:490
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:527
@@ -6300,7 +6474,7 @@ msgstr "Delete message?"
 msgid "Delete node"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1089
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1088
 msgid "Delete note?"
 msgstr "Delete note?"
 
@@ -6320,6 +6494,10 @@ msgstr "Delete own notes"
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:487
 msgid "Delete page?"
 msgstr ""
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:147
+msgid "Delete post"
+msgstr "Delete post"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3650
 msgid "Delete question"
@@ -6368,6 +6546,10 @@ msgstr "Delete this job?"
 #: app/components/staff/notes-tab.tsx:181
 msgid "Delete this note?"
 msgstr "Delete this note?"
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:153
+msgid "Delete this post?"
+msgstr "Delete this post?"
 
 #: app/components/staff/timesheets/card-sheet.tsx:429
 msgid "Delete this time card?"
@@ -6421,8 +6603,8 @@ msgstr ""
 msgid "Describe the role, the pay and what you want to ask."
 msgstr "Describe the role, the pay and what you want to ask."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1442
-#: app/routes/_app+/$orgSlug_+/media.tsx:1455
+#: app/routes/_app+/$orgSlug_+/media.tsx:1504
+#: app/routes/_app+/$orgSlug_+/media.tsx:1517
 msgid "Describe this image for accessibility"
 msgstr "Describe this image for accessibility"
 
@@ -6535,7 +6717,7 @@ msgstr "Didn't catch that"
 msgid "Didn't receive the email? Check your spam folder, or try again with a different email address."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1332
+#: app/routes/_app+/$orgSlug_+/media.tsx:1394
 msgid "Dimensions:"
 msgstr "Dimensions:"
 
@@ -6581,8 +6763,14 @@ msgstr "Discard unsaved changes?"
 
 #: app/components/settings/cards/organization/integrations-card.tsx:225
 #: app/components/settings/connections.tsx:89
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:319
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:348
 msgid "Disconnect"
 msgstr ""
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:326
+msgid "Disconnect {accountName}?"
+msgstr "Disconnect {accountName}?"
 
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1077
 msgid "Disconnect any active MCP connections"
@@ -6707,6 +6895,7 @@ msgstr "Down"
 msgid "Down by {absTrend}% this period"
 msgstr ""
 
+#: app/components/media-library/photo-studio-dialog.tsx:872
 #: app/components/settings/backup-codes-display.tsx:99
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1065
 msgid "Download"
@@ -6744,6 +6933,7 @@ msgstr ""
 #: app/components/hiring/job-labels.ts:49
 #: app/components/phone-agent/test-call-panel.tsx:490
 #: app/components/phone-agent/test-call-panel.tsx:551
+#: app/components/social/social-labels.ts:22
 #: app/components/staff/schedule/shift-block.tsx:33
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:59
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:260
@@ -6789,6 +6979,10 @@ msgstr "Draft saved · not published yet"
 msgid "Draft saved · v{publishedVersion} is live"
 msgstr "Draft saved · v{publishedVersion} is live"
 
+#: app/utils/social/post-form.server.ts:110
+msgid "Draft saved."
+msgstr "Draft saved."
+
 #: ../../packages/ai/src/components/ai-chat.tsx:432
 msgid "Draft something for me"
 msgstr "Draft something for me"
@@ -6810,6 +7004,10 @@ msgstr "Drafting..."
 msgid "Drafting…"
 msgstr "Drafting…"
 
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:257
+msgid "Drafts without a date"
+msgstr "Drafts without a date"
+
 #: app/components/staff/schedule/day-timeline.tsx:558
 msgid "Drag a shift sideways to change its time, up or down to give it to someone else, or drag an end to resize it."
 msgstr "Drag a shift sideways to change its time, up or down to give it to someone else, or drag an end to resize it."
@@ -6817,6 +7015,10 @@ msgstr "Drag a shift sideways to change its time, up or down to give it to someo
 #: app/components/phone-agent/flow-editor/node-palette.tsx:93
 msgid "Drag a step onto the canvas, or select + to add it."
 msgstr "Drag a step onto the canvas, or select + to add it."
+
+#: app/components/media-library/photo-studio-dialog.tsx:849
+msgid "Drag the slider to compare."
+msgstr "Drag the slider to compare."
 
 #: app/components/dashboard/dashboard-block-frame.tsx:41
 msgid "Drag to move"
@@ -6889,6 +7091,10 @@ msgstr ""
 msgid "e.g. about-us"
 msgstr ""
 
+#: app/components/media-library/photo-studio-dialog.tsx:744
+msgid "e.g. Add a few fresh flowers in the background"
+msgstr "e.g. Add a few fresh flowers in the background"
+
 #: app/components/website/link-inspector.tsx:473
 msgid "e.g. bob@gmail.com"
 msgstr ""
@@ -6900,6 +7106,10 @@ msgstr ""
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:391
 msgid "e.g. cust_123"
 msgstr ""
+
+#: app/components/media-library/photo-studio-dialog.tsx:899
+msgid "e.g. Make the background a little darker"
+msgstr "e.g. Make the background a little darker"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:797
 msgid "e.g. product or brand names"
@@ -6988,7 +7198,7 @@ msgstr "Early out"
 #: app/components/staff/timesheets/review-queue.tsx:439
 #: app/components/workspace-breadcrumb.tsx:23
 #: app/routes/_app+/$orgSlug_+/notes-table.tsx:92
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:996
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:995
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:159
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:240
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:483
@@ -7042,8 +7252,8 @@ msgstr "Edit dates of birth, home addresses, and emergency contacts. Includes Vi
 msgid "Edit design"
 msgstr "Edit design"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1312
-#: app/routes/_app+/$orgSlug_+/media.tsx:1630
+#: app/routes/_app+/$orgSlug_+/media.tsx:1361
+#: app/routes/_app+/$orgSlug_+/media.tsx:1692
 msgid "Edit image"
 msgstr "Edit image"
 
@@ -7060,7 +7270,7 @@ msgstr "Edit layout"
 msgid "Edit message"
 msgstr "Edit message"
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:867
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:866
 msgid "Edit note"
 msgstr "Edit note"
 
@@ -7075,6 +7285,10 @@ msgstr "Edit own notes"
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:375
 msgid "Edit position"
 msgstr "Edit position"
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:226
+msgid "Edit post"
+msgstr "Edit post"
 
 #: app/components/roles/tenant-role-access-manager.tsx:296
 msgid "Edit private details"
@@ -7127,7 +7341,7 @@ msgstr "Edited"
 msgid "Edited, not published"
 msgstr "Edited, not published"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1799
+#: app/routes/_app+/$orgSlug_+/media.tsx:1861
 msgid "Editor preview"
 msgstr "Editor preview"
 
@@ -7330,6 +7544,16 @@ msgstr "Ends the next day."
 #: app/components/phone-agent/voice-picker.tsx:58
 msgid "English"
 msgstr ""
+
+#: app/components/media-library/photo-studio-dialog.tsx:447
+#: app/routes/_app+/$orgSlug_+/media.tsx:855
+#: app/routes/_app+/$orgSlug_+/media.tsx:1374
+msgid "Enhance with AI"
+msgstr "Enhance with AI"
+
+#: app/components/media-library/photo-studio-dialog.tsx:842
+msgid "Enhanced"
+msgstr "Enhanced"
 
 #: app/components/print/print-form-errors.ts:19
 msgid "Enter 0 or more copies"
@@ -7844,9 +8068,33 @@ msgstr "Exported {count} rows."
 msgid "Exported {exportedCount} people."
 msgstr "Exported {exportedCount} people."
 
+#: app/components/media-library/photo-studio-dialog.tsx:737
+msgid "Extra direction (optional)"
+msgstr "Extra direction (optional)"
+
+#: app/components/social/social-labels.ts:14
+msgid "Facebook"
+msgstr "Facebook"
+
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:121
+msgid "Facebook and Instagram posts"
+msgstr "Facebook and Instagram posts"
+
+#: app/components/social/social-labels.ts:51
+msgid "Facebook needs an image."
+msgstr "Facebook needs an image."
+
+#: app/components/social/social-labels.ts:49
+msgid "Facebook needs text or an image."
+msgstr "Facebook needs text or an image."
+
 #: app/components/settings/cards/organization/site-analytics-card.tsx:102
 msgid "Facebook Pixel ID"
 msgstr "Facebook Pixel ID"
+
+#: app/components/social/social-labels.ts:52
+msgid "Facebook takes at most {SOCIAL_MAX_MEDIA} images."
+msgstr "Facebook takes at most {SOCIAL_MAX_MEDIA} images."
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3391
 msgid "Fade up"
@@ -7859,6 +8107,8 @@ msgstr "Fail authentication"
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:10
 #: app/components/phone-agent/call-data.ts:136
 #: app/components/print/print-order-labels.ts:19
+#: app/components/social/social-labels.ts:27
+#: app/components/social/social-labels.ts:37
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:146
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:69
 msgid "Failed"
@@ -7896,11 +8146,11 @@ msgstr ""
 msgid "Failed to duplicate journey"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1151
+#: app/routes/_app+/$orgSlug_+/media.tsx:1198
 msgid "Failed to export edited image."
 msgstr "Failed to export edited image."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1167
+#: app/routes/_app+/$orgSlug_+/media.tsx:1214
 msgid "Failed to export image copy."
 msgstr "Failed to export image copy."
 
@@ -7916,7 +8166,7 @@ msgstr ""
 msgid "Failed to format graph for validation"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:905
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:904
 msgid "Failed to load AI Assistant"
 msgstr ""
 
@@ -7932,7 +8182,7 @@ msgstr ""
 msgid "Failed to load journeys from regional tenant storage."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:160
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:170
 msgid "Failed to load marketing metrics"
 msgstr ""
 
@@ -8035,12 +8285,12 @@ msgstr "Figures changed"
 msgid "File"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1402
+#: app/routes/_app+/$orgSlug_+/media.tsx:1464
 msgid "File name of the media asset"
 msgstr "File name of the media asset"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1400
-#: app/routes/_app+/$orgSlug_+/media.tsx:1413
+#: app/routes/_app+/$orgSlug_+/media.tsx:1462
+#: app/routes/_app+/$orgSlug_+/media.tsx:1475
 msgid "Filename"
 msgstr "Filename"
 
@@ -8094,7 +8344,7 @@ msgstr "Filter by tag"
 msgid "Filter by workplace"
 msgstr "Filter by workplace"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:808
+#: app/routes/_app+/$orgSlug_+/media.tsx:823
 msgid "Find and reuse images uploaded across notes, comments, your website, and organization settings."
 msgstr "Find and reuse images uploaded across notes, comments, your website, and organization settings."
 
@@ -8172,11 +8422,11 @@ msgstr "Flag long shifts for review"
 msgid "Flag shifts longer than"
 msgstr "Flag shifts longer than"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1701
+#: app/routes/_app+/$orgSlug_+/media.tsx:1763
 msgid "Flip horizontally"
 msgstr "Flip horizontally"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1731
+#: app/routes/_app+/$orgSlug_+/media.tsx:1793
 msgid "Flip vertically"
 msgstr "Flip vertically"
 
@@ -8265,7 +8515,7 @@ msgstr "Form submissions"
 msgid "Form submissions are redacted on a best-effort basis: only ones that contain the exact phone number or email address are found. Backups are not changed."
 msgstr "Form submissions are redacted on a best-effort basis: only ones that contain the exact phone number or email address are found. Backups are not changed."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1355
+#: app/routes/_app+/$orgSlug_+/media.tsx:1417
 msgid "Format:"
 msgstr "Format:"
 
@@ -8277,7 +8527,7 @@ msgstr "Formatting"
 msgid "Former member"
 msgstr "Former member"
 
-#: app/components/app-sidebar.tsx:432
+#: app/components/app-sidebar.tsx:439
 #: app/components/command-menu.tsx:148
 #: app/components/workspace-breadcrumb.tsx:57
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:46
@@ -8376,7 +8626,7 @@ msgstr "Full time"
 msgid "Full width"
 msgstr "Full width"
 
-#: app/components/app-sidebar.tsx:475
+#: app/components/app-sidebar.tsx:482
 #: app/components/phone-agent/vertical-labels.ts:27
 #: app/components/phone-agent/vertical-labels.ts:39
 #: app/components/workspace-breadcrumb.tsx:62
@@ -8387,7 +8637,7 @@ msgstr ""
 msgid "General manager"
 msgstr "General manager"
 
-#: app/components/app-sidebar.tsx:422
+#: app/components/app-sidebar.tsx:429
 #: app/components/settings/cards/organization/general-settings-card.tsx:65
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:21
 msgid "General Settings"
@@ -8419,16 +8669,20 @@ msgstr ""
 msgid "Generating..."
 msgstr ""
 
+#: app/components/media-library/photo-studio-dialog.tsx:919
+msgid "Generating…"
+msgstr "Generating…"
+
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:452
 msgid "Get a new price"
 msgstr "Get a new price"
 
-#: app/components/app-sidebar.tsx:626
+#: app/components/app-sidebar.tsx:636
 msgid "Get chrome extension"
 msgstr ""
 
 #: app/components/app-sidebar.tsx:166
-#: app/components/app-sidebar.tsx:641
+#: app/components/app-sidebar.tsx:651
 msgid "Get help"
 msgstr ""
 
@@ -8456,7 +8710,7 @@ msgid "Give away {when}"
 msgstr "Give away {when}"
 
 #: app/components/app-sidebar.tsx:174
-#: app/components/app-sidebar.tsx:649
+#: app/components/app-sidebar.tsx:659
 #: app/components/core/feedback-modal.tsx:69
 msgid "Give feedback"
 msgstr ""
@@ -8514,15 +8768,19 @@ msgstr ""
 #~ msgid "Go-live checklist"
 #~ msgstr "Go-live checklist"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:170
+#: app/utils/media/photo-studio.ts:120
+msgid "Golden light, rich textures"
+msgstr "Golden light, rich textures"
+
+#: app/routes/_app+/$orgSlug_+/index.tsx:171
 msgid "Good afternoon, {userName}"
 msgstr "Good afternoon, {userName}"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:171
+#: app/routes/_app+/$orgSlug_+/index.tsx:172
 msgid "Good evening, {userName}"
 msgstr "Good evening, {userName}"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:169
+#: app/routes/_app+/$orgSlug_+/index.tsx:170
 msgid "Good morning, {userName}"
 msgstr "Good morning, {userName}"
 
@@ -8555,8 +8813,8 @@ msgstr ""
 msgid "Gray color"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1881
-#: app/routes/_app+/$orgSlug_+/media.tsx:1896
+#: app/routes/_app+/$orgSlug_+/media.tsx:1943
+#: app/routes/_app+/$orgSlug_+/media.tsx:1958
 msgid "Grayscale"
 msgstr "Grayscale"
 
@@ -8813,7 +9071,7 @@ msgid "Hired."
 msgstr "Hired."
 
 #: ../../packages/reports/src/ui/report-labels.ts:83
-#: app/components/app-sidebar.tsx:409
+#: app/components/app-sidebar.tsx:416
 #: app/components/command-menu.tsx:137
 #: app/components/roles/tenant-role-access-manager.tsx:364
 #: app/components/workspace-breadcrumb.tsx:37
@@ -9079,19 +9337,24 @@ msgstr "If you moved from an older website or changed page URLs, create redirect
 msgid "Image"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:724
+#: app/routes/_app+/$orgSlug_+/media.tsx:739
 msgid "Image added to your media library"
 msgstr "Image added to your media library"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:915
+#: app/routes/_app+/$orgSlug_+/media.tsx:940
 msgid "Image link copied"
 msgstr "Image link copied"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:735
+#: app/components/social/social-calendar.tsx:181
+#: app/components/social/social-calendar.tsx:231
+msgid "Image post"
+msgstr "Image post"
+
+#: app/routes/_app+/$orgSlug_+/media.tsx:750
 msgid "Image removed from media library"
 msgstr "Image removed from media library"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:732
+#: app/routes/_app+/$orgSlug_+/media.tsx:747
 msgid "Image replaced successfully"
 msgstr "Image replaced successfully"
 
@@ -9103,6 +9366,10 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4055
 msgid "Image URL"
 msgstr ""
+
+#: app/components/social/post-composer.tsx:276
+msgid "Images"
+msgstr "Images"
 
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1074
 msgid "Immediately invalidate all tokens for this client"
@@ -9250,6 +9517,46 @@ msgstr "Insert field here"
 msgid "Inspect"
 msgstr "Inspect"
 
+#: app/components/social/social-labels.ts:15
+msgid "Instagram"
+msgstr "Instagram"
+
+#: app/components/social/social-labels.ts:60
+msgid "Instagram allows at most {instagramMaxHashtags} hashtags."
+msgstr "Instagram allows at most {instagramMaxHashtags} hashtags."
+
+#: app/components/social/social-labels.ts:57
+msgid "Instagram captions are at most {instagramMaxText} characters."
+msgstr "Instagram captions are at most {instagramMaxText} characters."
+
+#: app/components/social/social-labels.ts:72
+msgid "Instagram could not process the image. Use an aspect ratio between 4:5 and 1.91:1."
+msgstr "Instagram could not process the image. Use an aspect ratio between 4:5 and 1.91:1."
+
+#: app/components/social/social-labels.ts:56
+msgid "Instagram needs an image."
+msgstr "Instagram needs an image."
+
+#: app/components/social/social-labels.ts:58
+msgid "Instagram needs at least one image."
+msgstr "Instagram needs at least one image."
+
+#: app/components/social/post-composer.tsx:279
+msgid "Instagram needs at least one image. Several images become a carousel."
+msgstr "Instagram needs at least one image. Several images become a carousel."
+
+#: app/components/social/social-labels.ts:71
+msgid "Instagram posts need an image."
+msgstr "Instagram posts need an image."
+
+#: app/components/social/social-labels.ts:59
+msgid "Instagram takes at most {SOCIAL_MAX_MEDIA} images."
+msgstr "Instagram takes at most {SOCIAL_MAX_MEDIA} images."
+
+#: app/components/social/social-labels.ts:73
+msgid "Instagram took too long to process the image. Try again."
+msgstr "Instagram took too long to process the image. Try again."
+
 #: app/components/settings/cards/organization/mock-payments-panel.tsx:55
 msgid "Instantly enable Checkout.com (mock)"
 msgstr "Instantly enable Checkout.com (mock)"
@@ -9258,10 +9565,10 @@ msgstr "Instantly enable Checkout.com (mock)"
 msgid "Instantly enable Stripe (mock)"
 msgstr "Instantly enable Stripe (mock)"
 
-#: app/components/app-sidebar.tsx:503
+#: app/components/app-sidebar.tsx:510
 #: app/components/settings/cards/organization/integrations-card.tsx:101
 #: app/components/workspace-breadcrumb.tsx:65
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1035
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1034
 msgid "Integrations"
 msgstr ""
 
@@ -9458,6 +9765,10 @@ msgstr "It is taken off their profile. This is recorded in the staff log."
 msgid "It is too early to clock in for your shift."
 msgstr "It is too early to clock in for your shift."
 
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:157
+msgid "It leaves the calendar here. What is already on Facebook or Instagram stays there: delete it on the platform if needed."
+msgstr "It leaves the calendar here. What is already on Facebook or Instagram stays there: delete it on the platform if needed."
+
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1019
 msgid "It leaves the Print shop list. Orders already placed keep printing it."
 msgstr "It leaves the Print shop list. Orders already placed keep printing it."
@@ -9469,6 +9780,10 @@ msgstr "It starts answering on the next call."
 #: app/components/staff/schedule/time-off-sheet.tsx:152
 msgid "It was entered on short notice."
 msgstr "It was entered on short notice."
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:159
+msgid "It will not be published."
+msgstr "It will not be published."
 
 #: app/components/hiring/description-editor.tsx:109
 msgid "Italic"
@@ -9569,6 +9884,10 @@ msgstr "Keep"
 msgid "Keep current region"
 msgstr ""
 
+#: app/utils/media/photo-studio.test.ts:20
+msgid "Keep dishware"
+msgstr "Keep dishware"
+
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:202
 #: app/components/staff/labor-policy-editor.tsx:291
 msgid "Keep editing"
@@ -9577,6 +9896,8 @@ msgstr "Keep editing"
 #: app/components/staff/kiosk-manager.tsx:970
 #: app/components/staff/schedule/shift-editor-sheet.tsx:737
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1024
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:163
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:335
 msgid "Keep it"
 msgstr "Keep it"
 
@@ -9584,13 +9905,25 @@ msgstr "Keep it"
 msgid "Keep recordings for"
 msgstr "Keep recordings for"
 
+#: app/utils/media/photo-studio.ts:138
+msgid "Keep the camera angle"
+msgstr "Keep the camera angle"
+
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:419
 msgid "Keep the order"
 msgstr "Keep the order"
 
+#: app/utils/media/photo-studio.test.ts:21
+msgid "Keep the plate from your photo"
+msgstr "Keep the plate from your photo"
+
 #: app/components/hiring/applicant-labels.ts:79
 msgid "Keep their details on file"
 msgstr "Keep their details on file"
+
+#: app/components/media-library/photo-studio-dialog.tsx:999
+msgid "Keep this window open until it finishes."
+msgstr "Keep this window open until it finishes."
 
 #: app/components/staff/onboarding/certificates-tab.tsx:132
 msgid "Keep track of licences and certificates, and get a reminder before one expires."
@@ -9686,7 +10019,7 @@ msgid "Label calls to find them later. With automatic tagging on, the agent appl
 msgstr "Label calls to find them later. With automatic tagging on, the agent applies the tag when the description fits the call."
 
 #: ../../packages/reports/src/ui/report-labels.ts:82
-#: app/components/app-sidebar.tsx:404
+#: app/components/app-sidebar.tsx:411
 #: app/components/command-menu.tsx:136
 #: app/components/staff/labor/labor-page.tsx:211
 #: app/components/staff/labor/labor-page.tsx:240
@@ -9761,16 +10094,16 @@ msgstr ""
 msgid "Large orders can arrive in more than one parcel."
 msgstr "Large orders can arrive in more than one parcel."
 
-#. placeholder {0}: notes.daysShown
 #: app/routes/_app+/$orgSlug_+/index.tsx:220
-msgid "Last {0} days"
-msgstr "Last {0} days"
+#~ msgid "Last {0} days"
+#~ msgstr "Last {0} days"
 
 #: app/components/staff/labor/labor-page.tsx:330
 msgid "Last {days} days"
 msgstr "Last {days} days"
 
 #: app/components/notes-chart.tsx:63
+#: app/routes/_app+/$orgSlug_+/index.tsx:224
 msgid "Last {daysShown} days"
 msgstr ""
 
@@ -9995,6 +10328,10 @@ msgstr "Let the agent transfer calls"
 msgid "Licences and cards, and when they expire."
 msgstr "Licences and cards, and when they expire."
 
+#: app/utils/media/photo-studio.ts:59
+msgid "Lifestyle"
+msgstr "Lifestyle"
+
 #: app/components/settings/cards/organization/site-theme-card.tsx:737
 msgid "Light"
 msgstr ""
@@ -10002,6 +10339,10 @@ msgstr ""
 #: app/components/nav-user.tsx:89
 msgid "Light mode"
 msgstr ""
+
+#: app/utils/media/photo-studio.ts:129
+msgid "Light pastel tones, lots of space"
+msgstr "Light pastel tones, lots of space"
 
 #: app/utils/organization/role-label.ts:22
 msgid "Limited access for temporary collaborators"
@@ -10070,6 +10411,7 @@ msgid "Links sent"
 msgstr "Links sent"
 
 #: app/components/hiring/applicants-page.tsx:344
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:226
 msgid "List"
 msgstr "List"
 
@@ -10113,7 +10455,7 @@ msgstr "Load older messages"
 msgid "Loading"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:929
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:928
 msgid "Loading AI Assistant..."
 msgstr ""
 
@@ -10260,7 +10602,11 @@ msgstr "Loading who is on the clock"
 msgid "Loading…"
 msgstr "Loading…"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1419
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:234
+msgid "Local emulator"
+msgstr "Local emulator"
+
+#: app/routes/_app+/$orgSlug_+/media.tsx:1481
 msgid "Location"
 msgstr "Location"
 
@@ -10407,7 +10753,7 @@ msgstr "Mailbox sources"
 msgid "Main language"
 msgstr "Main language"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1234
+#: app/routes/_app+/$orgSlug_+/media.tsx:1283
 msgid "Main library"
 msgstr "Main library"
 
@@ -10576,6 +10922,10 @@ msgstr "Many answers differ"
 msgid "Many wrong PINs"
 msgstr "Many wrong PINs"
 
+#: app/utils/media/photo-studio.ts:110
+msgid "Marble"
+msgstr "Marble"
+
 #: app/components/staff/timesheets/review-queue.tsx:190
 msgid "Mark {reviewableCount} as reviewed"
 msgstr "Mark {reviewableCount} as reviewed"
@@ -10637,7 +10987,7 @@ msgstr "Marked unavailable"
 #: app/components/command-menu.tsx:100
 #: app/components/roles/tenant-role-access-manager.tsx:182
 #: app/components/workspace-breadcrumb.tsx:14
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:175
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:185
 msgid "Marketing"
 msgstr ""
 
@@ -10673,7 +11023,7 @@ msgstr ""
 msgid "MCP server"
 msgstr "MCP server"
 
-#: app/components/app-sidebar.tsx:513
+#: app/components/app-sidebar.tsx:520
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1359
 msgid "MCP Server"
 msgstr ""
@@ -10690,11 +11040,11 @@ msgstr "Meal break"
 msgid "Media"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1254
+#: app/routes/_app+/$orgSlug_+/media.tsx:1303
 msgid "Media details"
 msgstr "Media details"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:729
+#: app/routes/_app+/$orgSlug_+/media.tsx:744
 msgid "Media details saved"
 msgstr "Media details saved"
 
@@ -10702,7 +11052,7 @@ msgstr "Media details saved"
 #: app/components/command-menu.tsx:91
 #: app/components/media-library/media-library-picker.tsx:229
 #: app/components/workspace-breadcrumb.tsx:20
-#: app/routes/_app+/$orgSlug_+/media.tsx:806
+#: app/routes/_app+/$orgSlug_+/media.tsx:821
 msgid "Media library"
 msgstr "Media library"
 
@@ -10733,7 +11083,7 @@ msgstr ""
 msgid "members"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:480
+#: app/components/app-sidebar.tsx:487
 #: app/components/chat/chat-group-settings-dialog.tsx:83
 #: app/components/organization-members.tsx:169
 #: app/components/roles/tenant-role-access-manager.tsx:1112
@@ -10803,6 +11153,22 @@ msgstr "Messages"
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2524
 msgid "Meta description"
 msgstr ""
+
+#: app/components/social/social-labels.ts:70
+msgid "Meta did not answer. Try again in a few minutes."
+msgstr "Meta did not answer. Try again in a few minutes."
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:216
+msgid "Meta did not complete the connection. Try again."
+msgstr "Meta did not complete the connection. Try again."
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:155
+msgid "Meta no longer accepts its access. Posts to it will fail until you connect it again."
+msgstr "Meta no longer accepts its access. Posts to it will fail until you connect it again."
+
+#: app/components/social/social-labels.ts:67
+msgid "Meta no longer accepts this account’s access. Connect it again, then retry."
+msgstr "Meta no longer accepts this account’s access. Connect it again, then retry."
 
 #: app/components/phone-agent/test-call-errors.ts:18
 msgid "Microphone access is needed for a test call. Allow it in your browser and try again."
@@ -11118,6 +11484,10 @@ msgstr "Name, contact and payroll information."
 msgid "Name, plus a phone number or an email. They do not need a login."
 msgstr "Name, plus a phone number or an email. They do not need a login."
 
+#: app/utils/media/photo-studio.ts:101
+msgid "Natural daylight"
+msgstr "Natural daylight"
+
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:871
 msgid "Navigate to Features → MCP Servers"
 msgstr ""
@@ -11187,6 +11557,10 @@ msgstr "Neutral"
 #: app/components/core/feedback-modal.tsx:32
 msgid "Neutral feedback"
 msgstr ""
+
+#: app/utils/media/photo-studio.ts:75
+msgid "Neutral gray gradient, gentle shadows"
+msgstr "Neutral gray gradient, gentle shadows"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1420
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1436
@@ -11312,6 +11686,15 @@ msgstr "New PIN"
 msgid "New PIN for {scopeName}"
 msgstr "New PIN for {scopeName}"
 
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:123
+#: app/routes/_app+/$orgSlug_+/marketing+/social.new.tsx:59
+msgid "New post"
+msgstr "New post"
+
+#: app/components/social/social-calendar.tsx:147
+msgid "New post on {label}"
+msgstr "New post on {label}"
+
 #: app/routes/_app+/$orgSlug_+/marketing+/print._index.tsx:82
 #: app/routes/_app+/$orgSlug_+/marketing+/print.new.tsx:111
 msgid "New print"
@@ -11363,6 +11746,7 @@ msgid "Next day"
 msgstr "Next day"
 
 #: app/components/staff/schedule/schedule-toolbar.tsx:114
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:182
 msgid "Next month"
 msgstr "Next month"
 
@@ -11377,6 +11761,10 @@ msgstr "Next shift: {upcomingDay}, <0>{upcomingRange}</0>"
 #: app/components/staff/schedule/schedule-toolbar.tsx:111
 msgid "Next week"
 msgstr "Next week"
+
+#: app/components/media-library/photo-studio-dialog.tsx:958
+msgid "Next: choose style"
+msgstr "Next: choose style"
 
 #: ../../packages/marketing-workflow/src/nodes/condition-node.tsx:71
 #: app/components/hiring/candidate-parts.tsx:114
@@ -11397,6 +11785,14 @@ msgstr "No 404 errors recorded"
 msgid "No access"
 msgstr "No access"
 
+#: app/components/social/post-composer.tsx:192
+msgid "No accounts connected"
+msgstr "No accounts connected"
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:287
+msgid "No accounts connected."
+msgstr "No accounts connected."
+
 #: app/components/organization-invitations.tsx:199
 msgid "No active invite link"
 msgstr ""
@@ -11410,7 +11806,7 @@ msgid "No active subscription"
 msgstr ""
 
 #: app/components/note/activity-log.tsx:207
-#: app/routes/_app+/$orgSlug_+/index.tsx:221
+#: app/routes/_app+/$orgSlug_+/index.tsx:225
 msgid "No activity yet"
 msgstr ""
 
@@ -11483,7 +11879,7 @@ msgstr "No calls need follow-up"
 msgid "No calls yet"
 msgstr "No calls yet"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:250
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:260
 msgid "No campaigns yet."
 msgstr ""
 
@@ -11548,13 +11944,17 @@ msgstr ""
 msgid "No contacts yet."
 msgstr "No contacts yet."
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:850
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:849
 msgid "No content yet"
 msgstr "No content yet"
 
 #: app/components/roles/tenant-role-access-manager.tsx:1092
 msgid "No custom roles created yet."
 msgstr "No custom roles created yet."
+
+#: app/components/social/social-calendar.tsx:237
+msgid "No date"
+msgstr "No date"
 
 #: ../../packages/marketing/src/components/campaign-detail.tsx:129
 msgid "No delivery records yet."
@@ -11571,6 +11971,10 @@ msgstr "No description yet."
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:380
 msgid "No discrete action step dispatches recorded for this run."
 msgstr ""
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:263
+msgid "No drafts."
+msgstr "No drafts."
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2844
 msgid "No editor available for this block type."
@@ -11596,6 +12000,10 @@ msgstr "No events yet."
 msgid "No execution runs recorded yet for this automation."
 msgstr ""
 
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:191
+msgid "No Facebook Page found"
+msgstr "No Facebook Page found"
+
 #: app/components/website/form-builder-sidebar.tsx:878
 msgid "No fields yet"
 msgstr "No fields yet"
@@ -11615,6 +12023,10 @@ msgstr "No hours or sales in this range"
 #: app/components/phone-agent/business-details-section.tsx:158
 msgid "No hours set, so the agent treats you as open."
 msgstr "No hours set, so the agent treats you as open."
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:190
+msgid "No Instagram professional account found"
+msgstr "No Instagram professional account found"
 
 #: app/components/hiring/candidate-parts.tsx:180
 msgid "No interviews yet."
@@ -11677,7 +12089,7 @@ msgstr "no longer working here"
 msgid "No matching calls"
 msgstr "No matching calls"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:945
+#: app/routes/_app+/$orgSlug_+/media.tsx:970
 msgid "No matching images"
 msgstr "No matching images"
 
@@ -11743,7 +12155,7 @@ msgstr "No names to show. Ask a manager to set up your PIN."
 
 #: app/routes/_app+/$orgSlug_+/__org-note-editor.tsx:396
 #: app/routes/_app+/$orgSlug_+/notes.$noteId_.edit.tsx:149
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1198
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1197
 msgid "No note with the id \"{noteId}\" exists"
 msgstr ""
 
@@ -11889,6 +12301,10 @@ msgstr "No position yet"
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:166
 msgid "No positions yet"
 msgstr "No positions yet"
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:251
+msgid "No posts this month."
+msgstr "No posts this month."
 
 #: app/components/my-schedule/availability-sheet.tsx:68
 #: app/components/staff/schedule/availability-sheet.tsx:38
@@ -12153,7 +12569,7 @@ msgstr "none"
 msgid "None"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1238
+#: app/routes/_app+/$orgSlug_+/media.tsx:1287
 msgid "Normal"
 msgstr "Normal"
 
@@ -12235,6 +12651,10 @@ msgstr "Not opened yet"
 msgid "Not opened yet."
 msgstr "Not opened yet."
 
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:215
+msgid "Not published yet."
+msgstr "Not published yet."
+
 #: app/components/staff/kiosk-manager.tsx:442
 msgid "Not seen yet"
 msgstr "Not seen yet"
@@ -12259,7 +12679,7 @@ msgstr "Not shown"
 msgid "Not the right fit"
 msgstr "Not the right fit"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1507
+#: app/routes/_app+/$orgSlug_+/media.tsx:1569
 msgid "Not used in any notes, comments, or pages"
 msgstr "Not used in any notes, comments, or pages"
 
@@ -12282,11 +12702,11 @@ msgstr ""
 #: app/components/staff/schedule/time-off-sheet.tsx:232
 #: app/components/staff/timesheets/card-fields.tsx:210
 #: app/components/workspace-breadcrumb.tsx:78
-#: app/routes/_app+/$orgSlug_+/media.tsx:1222
+#: app/routes/_app+/$orgSlug_+/media.tsx:1271
 msgid "Note"
 msgstr "Note"
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1006
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1005
 msgid "Note actions"
 msgstr "Note actions"
 
@@ -12481,6 +12901,14 @@ msgstr "Nothing was charged. Start a new order whenever you are ready."
 msgid "Nothing was charged. You can pay again below."
 msgstr "Nothing was charged. You can pay again below."
 
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:206
+msgid "Nothing was connected"
+msgstr "Nothing was connected"
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:214
+msgid "Nothing was published."
+msgstr "Nothing was published."
+
 #: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:79
 msgid "Nothing yet."
 msgstr "Nothing yet."
@@ -12489,7 +12917,7 @@ msgstr "Nothing yet."
 msgid "Notification Preferences"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:518
+#: app/components/app-sidebar.tsx:525
 #: app/components/workspace-breadcrumb.tsx:66
 msgid "Notifications"
 msgstr ""
@@ -12924,7 +13352,7 @@ msgstr "Open question"
 msgid "Open rate"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1564
+#: app/routes/_app+/$orgSlug_+/media.tsx:1626
 msgid "Open reference"
 msgstr "Open reference"
 
@@ -13048,7 +13476,7 @@ msgstr ""
 msgid "Option {nextKey}"
 msgstr "Option {nextKey}"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1470
+#: app/routes/_app+/$orgSlug_+/media.tsx:1532
 msgid "Optional caption for display"
 msgstr "Optional caption for display"
 
@@ -13067,6 +13495,10 @@ msgstr ""
 #: app/routes/_auth+/login.tsx:317
 msgid "Or continue with email or username"
 msgstr ""
+
+#: app/components/media-library/photo-studio-dialog.tsx:638
+msgid "Or match your own style"
+msgstr "Or match your own style"
 
 #: app/components/staff/labor/sales-import-dialog.tsx:150
 msgid "or paste it below"
@@ -13120,7 +13552,7 @@ msgstr ""
 msgid "Organization details and configuration."
 msgstr "Organization details and configuration."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1224
+#: app/routes/_app+/$orgSlug_+/media.tsx:1273
 msgid "Organization logo"
 msgstr "Organization logo"
 
@@ -13158,6 +13590,18 @@ msgstr ""
 #: app/routes/_app+/index.tsx:35
 msgid "Organizations are used to group your projects."
 msgstr ""
+
+#: app/components/media-library/photo-studio-dialog.tsx:841
+msgid "Original"
+msgstr "Original"
+
+#: app/components/media-library/photo-studio-dialog.tsx:178
+msgid "Original image replaced"
+msgstr "Original image replaced"
+
+#: app/components/media-library/photo-studio-dialog.tsx:1021
+msgid "Original replaced"
+msgstr "Original replaced"
 
 #: app/components/staff/timesheets/payroll-summary.tsx:364
 msgid "OT"
@@ -13282,7 +13726,7 @@ msgstr "Overtime rules used to estimate hours and cost. Leave them off if you do
 
 #: app/components/app-sidebar.tsx:335
 #: app/components/staff/labor/labor-page.tsx:196
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:688
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:687
 msgid "Overview"
 msgstr ""
 
@@ -13312,7 +13756,7 @@ msgstr ""
 msgid "Page URL"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:427
+#: app/components/app-sidebar.tsx:434
 #: app/components/command-menu.tsx:147
 #: app/components/workspace-breadcrumb.tsx:56
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:28
@@ -13423,6 +13867,10 @@ msgstr "Part of this order was already printing. Our team will refund what was c
 #: app/components/hiring/job-labels.ts:20
 msgid "Part time"
 msgstr "Part time"
+
+#: app/components/social/social-labels.ts:26
+msgid "Partly published"
+msgstr "Partly published"
 
 #: app/components/settings/passkey-manager.tsx:185
 msgid "passkeys"
@@ -13698,7 +14146,7 @@ msgstr "Per week"
 msgid "Per year"
 msgstr "Per year"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:209
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:219
 msgid "Performance metrics"
 msgstr ""
 
@@ -13773,7 +14221,7 @@ msgstr ""
 msgid "Phone"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:363
+#: app/components/app-sidebar.tsx:370
 #: app/components/command-menu.tsx:115
 #: app/components/phone-agent/settings-nav.tsx:68
 #: app/components/workspace-breadcrumb.tsx:15
@@ -13828,6 +14276,7 @@ msgstr ""
 msgid "Phone Verified (OTP Success)"
 msgstr ""
 
+#: app/components/media-library/photo-studio-dialog.tsx:514
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3352
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3532
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3934
@@ -13854,6 +14303,10 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3553
 msgid "Photo side"
 msgstr ""
+
+#: app/components/media-library/photo-studio-dialog.tsx:427
+msgid "Photos"
+msgstr "Photos"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3869
 msgid "Photos and videos"
@@ -13918,6 +14371,10 @@ msgstr "Pick a layout, then customize the blocks."
 #: app/components/staff/labor-core-rules.tsx:108
 msgid "Pick a starting point, then adjust anything below."
 msgstr "Pick a starting point, then adjust anything below."
+
+#: app/components/media-library/photo-studio-dialog.tsx:575
+msgid "Pick a style"
+msgstr "Pick a style"
 
 #: app/routes/_app+/$orgSlug_+/website+/forms.new.tsx:121
 msgid "Pick a template, then customize every field in the builder."
@@ -14267,6 +14724,10 @@ msgstr "Positive"
 msgid "Positive feedback"
 msgstr ""
 
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:226
+msgid "Post"
+msgstr "Post"
+
 #: app/routes/_app+/$orgSlug_+/staff+/hiring._index.tsx:92
 #: app/routes/_app+/$orgSlug_+/staff+/hiring._index.tsx:135
 msgid "Post a job"
@@ -14276,9 +14737,33 @@ msgstr "Post a job"
 msgid "Post a job to get a careers page you can share, or keep a general application open for anyone who wants to work with you."
 msgstr "Post a job to get a careers page you can share, or keep a general application open for anyone who wants to work with you."
 
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:100
+msgid "Post deleted."
+msgstr "Post deleted."
+
 #: app/routes/_app+/$orgSlug_+/staff+/hiring.tsx:44
 msgid "Post jobs, review applicants and get new hires started."
 msgstr "Post jobs, review applicants and get new hires started."
+
+#: app/utils/social/post-form.server.ts:112
+msgid "Post scheduled."
+msgstr "Post scheduled."
+
+#: app/utils/social/post-form.server.ts:113
+msgid "Post sent. See each account below."
+msgstr "Post sent. See each account below."
+
+#: app/components/social/post-composer.tsx:188
+msgid "Post to"
+msgstr "Post to"
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:139
+msgid "Post to Instagram professional accounts (business or creator) linked to a Facebook Page."
+msgstr "Post to Instagram professional accounts (business or creator) linked to a Facebook Page."
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:138
+msgid "Post to the Facebook Pages you manage."
+msgstr "Post to the Facebook Pages you manage."
 
 #: app/components/staff/details-tab.tsx:413
 msgid "Postal code"
@@ -14287,6 +14772,10 @@ msgstr "Postal code"
 #: app/components/print/print-labels.ts:11
 msgid "Poster"
 msgstr "Poster"
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:330
+msgid "Posts already sent stay on {platformName}. Scheduled posts will fail for this account."
+msgstr "Posts already sent stay on {platformName}. Scheduled posts will fail for this account."
 
 #: app/components/website/link-inspector.tsx:613
 #: app/components/website/link-inspector.tsx:630
@@ -14306,7 +14795,7 @@ msgstr "Preparing backup…"
 msgid "Prerender"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1756
+#: app/routes/_app+/$orgSlug_+/media.tsx:1818
 msgid "Presets"
 msgstr "Presets"
 
@@ -14334,6 +14823,7 @@ msgstr "Pressing 0 won't reach anyone until you set a staff phone number above."
 #~ msgid "Pressing 0 won't reach anyone until you set a staff phone number in Setup."
 #~ msgstr "Pressing 0 won't reach anyone until you set a staff phone number in Setup."
 
+#: app/components/social/post-composer.tsx:347
 #: app/components/staff/schedule/recommend-dialog.tsx:241
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:548
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5949
@@ -14354,6 +14844,7 @@ msgid "Previous day"
 msgstr "Previous day"
 
 #: app/components/staff/schedule/schedule-toolbar.tsx:108
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:174
 msgid "Previous month"
 msgstr "Previous month"
 
@@ -14427,7 +14918,7 @@ msgstr "Print orders"
 msgid "Print proof"
 msgstr "Print proof"
 
-#: app/components/app-sidebar.tsx:356
+#: app/components/app-sidebar.tsx:363
 #: app/components/command-menu.tsx:106
 #: app/components/command-menu.tsx:110
 #: app/routes/_app+/$orgSlug_+/marketing+/print._index.tsx:46
@@ -14471,7 +14962,7 @@ msgstr "Privacy"
 msgid "Privacy & Data Rights"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:713
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:712
 msgid "Private"
 msgstr ""
 
@@ -14485,7 +14976,7 @@ msgstr ""
 msgid "Processing"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1940
+#: app/routes/_app+/$orgSlug_+/media.tsx:2002
 msgid "Processing…"
 msgstr "Processing…"
 
@@ -14516,6 +15007,10 @@ msgstr ""
 #: app/routes/_app+/profile.tsx:114
 msgid "Profile Settings"
 msgstr ""
+
+#: app/components/media-library/photo-studio-dialog.tsx:773
+msgid "Progress"
+msgstr "Progress"
 
 #: app/components/settings/cards/organization/integrations-card.tsx:22
 msgid "Project management"
@@ -14583,6 +15078,10 @@ msgstr "Publish history"
 msgid "Publish history…"
 msgstr "Publish history…"
 
+#: app/components/social/post-composer.tsx:401
+msgid "Publish now"
+msgstr "Publish now"
+
 #: app/components/staff/schedule/publish-dialog.tsx:244
 msgid "Publish quietly, for example to fix a typo."
 msgstr "Publish quietly, for example to fix a typo."
@@ -14602,6 +15101,8 @@ msgstr ""
 
 #: app/components/phone-agent/test-call-panel.tsx:489
 #: app/components/phone-agent/test-call-panel.tsx:548
+#: app/components/social/social-labels.ts:25
+#: app/components/social/social-labels.ts:36
 #: app/components/staff/schedule/publish-dialog.tsx:325
 #: app/components/staff/schedule/shift-block.tsx:38
 #: app/components/website/form-builder-sidebar.tsx:721
@@ -14611,6 +15112,10 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5849
 msgid "Published"
 msgstr ""
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:207
+msgid "Published {date}"
+msgstr "Published {date}"
 
 #: app/components/phone-agent/agent-details.tsx:270
 msgid "Published call flow version {version}"
@@ -14632,6 +15137,11 @@ msgstr "Published v{publishedVersion}"
 msgid "Published version {version}"
 msgstr "Published version {version}"
 
+#: app/components/social/social-labels.ts:24
+#: app/components/social/social-labels.ts:35
+msgid "Publishing"
+msgstr "Publishing"
+
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:328
 msgid "Publishing and activating automation..."
 msgstr ""
@@ -14640,12 +15150,21 @@ msgstr ""
 msgid "Publishing new journey..."
 msgstr ""
 
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:213
+msgid "Publishing now…"
+msgstr "Publishing now…"
+
+#: app/components/social/social-labels.ts:68
+msgid "Publishing was interrupted. Check the account before retrying: the post may already be live."
+msgstr "Publishing was interrupted. Check the account before retrying: the post may already be live."
+
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:213
 #: app/components/hiring/job-editor.tsx:423
 msgid "Publishing..."
 msgstr ""
 
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:494
+#: app/components/social/post-composer.tsx:400
 #: app/components/staff/schedule/publish-dialog.tsx:271
 msgid "Publishing…"
 msgstr "Publishing…"
@@ -14812,7 +15331,7 @@ msgstr "Reason: {reason}"
 msgid "Receives tips"
 msgstr "Receives tips"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:231
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:241
 msgid "Recent campaigns"
 msgstr ""
 
@@ -14848,6 +15367,14 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1356
 msgid "Recommended for SEO"
 msgstr "Recommended for SEO"
+
+#: app/components/social/post-composer.tsx:238
+msgid "Reconnect"
+msgstr "Reconnect"
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:310
+msgid "Reconnect needed"
+msgstr "Reconnect needed"
 
 #: app/components/phone-agent/flow-editor/flow-meta.ts:70
 msgid "Record a message for your team to follow up."
@@ -14919,7 +15446,7 @@ msgstr "Redirect type"
 msgid "Redirected"
 msgstr "Redirected"
 
-#: app/components/app-sidebar.tsx:460
+#: app/components/app-sidebar.tsx:467
 #: app/components/command-menu.tsx:150
 #: app/components/workspace-breadcrumb.tsx:60
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:60
@@ -15029,7 +15556,7 @@ msgid "Reload"
 msgstr "Reload"
 
 #: app/components/chat/chat-unavailable.tsx:58
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:913
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:912
 msgid "Reload page"
 msgstr ""
 
@@ -15170,6 +15697,7 @@ msgstr "Remove from workplace"
 #: app/components/note/comment-image-preview.tsx:81
 #: app/components/note/comment-input.tsx:340
 #: app/components/note/comment-input.tsx:456
+#: app/components/social/post-composer.tsx:304
 #: app/components/ui/multi-image-upload.tsx:281
 msgid "Remove image"
 msgstr ""
@@ -15214,6 +15742,10 @@ msgstr "Remove question"
 #: app/components/hiring/screener-editor.tsx:142
 msgid "Remove question {number}"
 msgstr "Remove question {number}"
+
+#: app/components/media-library/photo-studio-dialog.tsx:673
+msgid "Remove style reference"
+msgstr "Remove style reference"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1518
 msgid "Remove tag"
@@ -15346,9 +15878,13 @@ msgstr ""
 msgid "Replace Asset..."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1301
+#: app/routes/_app+/$orgSlug_+/media.tsx:1350
 msgid "Replace image"
 msgstr "Replace image"
+
+#: app/components/media-library/photo-studio-dialog.tsx:1033
+msgid "Replace original"
+msgstr "Replace original"
 
 #: app/components/staff/schedule/availability-sheet.tsx:279
 msgid "Replace their weekly pattern"
@@ -15469,11 +16005,11 @@ msgstr "Resend to people not yet reached"
 
 #: app/components/dashboard/dashboard-edit-toolbar.tsx:50
 #: app/components/organization-invitations.tsx:247
-#: app/routes/_app+/$orgSlug_+/media.tsx:1789
+#: app/routes/_app+/$orgSlug_+/media.tsx:1851
 msgid "Reset"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1928
+#: app/routes/_app+/$orgSlug_+/media.tsx:1990
 msgid "Reset adjustments"
 msgstr "Reset adjustments"
 
@@ -15582,9 +16118,17 @@ msgstr "Restricted channels are visible only to the roles and people you choose.
 msgid "Result"
 msgstr ""
 
+#: app/components/media-library/photo-studio-dialog.tsx:429
+msgid "Results"
+msgstr "Results"
+
 #: ../../packages/ai/src/components/ai-elements/prompt-input.tsx:171
 msgid "Retry"
 msgstr ""
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:340
+msgid "Retry failed accounts"
+msgstr "Retry failed accounts"
 
 #: app/components/staff/schedule/templates-dialog.tsx:83
 msgid "Reuse a pattern of shifts week after week."
@@ -15594,6 +16138,10 @@ msgstr "Reuse a pattern of shifts week after week."
 #: app/hooks/use-staff-attention.ts:117
 msgid "Review"
 msgstr "Review"
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:162
+msgid "Review accounts"
+msgstr "Review accounts"
 
 #: app/routes/_app+/$orgSlug_+/staff+/team.bulk.tsx:179
 msgid "Review before adding"
@@ -15683,16 +16231,16 @@ msgstr "Role name"
 msgid "Roles"
 msgstr "Roles"
 
-#: app/components/app-sidebar.tsx:487
+#: app/components/app-sidebar.tsx:494
 #: app/components/workspace-breadcrumb.tsx:64
 msgid "Roles & access"
 msgstr "Roles & access"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1654
+#: app/routes/_app+/$orgSlug_+/media.tsx:1716
 msgid "Rotate left"
 msgstr "Rotate left"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1675
+#: app/routes/_app+/$orgSlug_+/media.tsx:1737
 msgid "Rotate right"
 msgstr "Rotate right"
 
@@ -15892,8 +16440,12 @@ msgstr "Same phone or email as an earlier row."
 msgid "Sans"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1859
-#: app/routes/_app+/$orgSlug_+/media.tsx:1874
+#: app/utils/media/photo-studio.ts:84
+msgid "Saturated backdrop that makes it pop"
+msgstr "Saturated backdrop that makes it pop"
+
+#: app/routes/_app+/$orgSlug_+/media.tsx:1921
+#: app/routes/_app+/$orgSlug_+/media.tsx:1936
 msgid "Saturation"
 msgstr "Saturation"
 
@@ -15924,7 +16476,7 @@ msgstr ""
 #: app/components/staff/timesheets/pay-period-dialog.tsx:199
 #: app/components/ui/photo-crop-form.tsx:236
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1228
-#: app/routes/_app+/$orgSlug_+/media.tsx:1619
+#: app/routes/_app+/$orgSlug_+/media.tsx:1681
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:863
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:458
 msgid "Save"
@@ -15951,7 +16503,8 @@ msgstr "Save and update proof"
 #~ msgid "Save answers"
 #~ msgstr "Save answers"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1942
+#: app/components/media-library/photo-studio-dialog.tsx:1045
+#: app/routes/_app+/$orgSlug_+/media.tsx:2004
 msgid "Save as copy"
 msgstr "Save as copy"
 
@@ -15975,7 +16528,7 @@ msgstr "Save card for later charges"
 #: app/components/phone-agent/training-rules-section.tsx:645
 #: app/components/settings/cards/organization/announcement-sheet.tsx:551
 #: app/components/staff/timesheets/card-sheet.tsx:310
-#: app/routes/_app+/$orgSlug_+/media.tsx:1958
+#: app/routes/_app+/$orgSlug_+/media.tsx:2020
 #: app/routes/_app+/$orgSlug_+/notes-cards.tsx:446
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:432
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1460
@@ -15985,6 +16538,7 @@ msgstr ""
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:193
 #: app/components/hiring/job-editor.tsx:411
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:695
+#: app/components/social/post-composer.tsx:420
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:478
 msgid "Save draft"
 msgstr ""
@@ -16071,6 +16625,10 @@ msgstr "Save your changes before closing."
 msgid "Saved"
 msgstr "Saved"
 
+#: app/components/media-library/photo-studio-dialog.tsx:1019
+msgid "Saved as a copy"
+msgstr "Saved as a copy"
+
 #: app/components/staff/timesheets/issue-copy.ts:38
 msgid "Saved offline and sent more than 12 hours later. Check the times."
 msgstr "Saved offline and sent more than 12 hours later. Check the times."
@@ -16083,6 +16641,10 @@ msgstr "Saved on this tablet. It will be recorded when the connection is back."
 msgid "Saved reports"
 msgstr "Saved reports"
 
+#: app/components/media-library/photo-studio-dialog.tsx:177
+msgid "Saved to your media library"
+msgstr "Saved to your media library"
+
 #: app/components/phone-agent/agent-details.tsx:283
 msgid "Saved training rule \"{title}\""
 msgstr "Saved training rule \"{title}\""
@@ -16091,7 +16653,7 @@ msgstr "Saved training rule \"{title}\""
 msgid "Saved."
 msgstr "Saved."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1163
+#: app/routes/_app+/$orgSlug_+/media.tsx:1210
 msgid "Saving as new copy…"
 msgstr "Saving as new copy…"
 
@@ -16099,7 +16661,7 @@ msgstr "Saving as new copy…"
 msgid "Saving automation draft..."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1147
+#: app/routes/_app+/$orgSlug_+/media.tsx:1194
 msgid "Saving edited image…"
 msgstr "Saving edited image…"
 
@@ -16130,7 +16692,7 @@ msgstr ""
 #: app/components/staff/timesheets/pay-period-dialog.tsx:199
 #: app/components/staff/timesheets/review-queue.tsx:403
 #: app/components/staff/timesheets/review-queue.tsx:428
-#: app/routes/_app+/$orgSlug_+/media.tsx:1619
+#: app/routes/_app+/$orgSlug_+/media.tsx:1681
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:458
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:476
 msgid "Saving…"
@@ -16185,10 +16747,11 @@ msgstr "Scan the code with the tablet's camera, or open the link below in its br
 msgid "Scan the code with this tablet's camera, or paste the link below."
 msgstr "Scan the code with this tablet's camera, or paste the link below."
 
-#: app/components/app-sidebar.tsx:399
+#: app/components/app-sidebar.tsx:406
 #: app/components/command-menu.tsx:135
 #: app/components/hiring/interview-dialog.tsx:287
 #: app/components/my-schedule/my-schedule-page.tsx:187
+#: app/components/social/post-composer.tsx:411
 #: app/components/workspace-breadcrumb.tsx:33
 #: app/routes/_app+/$orgSlug_+/staff+/schedule.tsx:38
 #: app/routes/_app+/$orgSlug_+/staff+/schedule.tsx:46
@@ -16224,6 +16787,10 @@ msgstr "Schedule controls"
 msgid "Schedule enforcement"
 msgstr "Schedule enforcement"
 
+#: app/components/social/post-composer.tsx:327
+msgid "Schedule for"
+msgstr "Schedule for"
+
 #: app/components/staff/schedule/week-grid.tsx:668
 msgid "Schedule for {name}, {range}"
 msgstr "Schedule for {name}, {range}"
@@ -16242,8 +16809,13 @@ msgstr "Schedule: a week was published"
 
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:7
 #: app/components/hiring/applicant-labels.ts:40
+#: app/components/social/social-labels.ts:23
 msgid "Scheduled"
 msgstr ""
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:211
+msgid "Scheduled for {date}"
+msgstr "Scheduled for {date}"
 
 #: app/components/staff/schedule/publish-dialog.tsx:144
 msgid "Scheduled hours"
@@ -16264,6 +16836,10 @@ msgstr "Scheduled vs actual hours and clock-ins"
 #: app/components/hiring/applicant-labels.ts:23
 msgid "Screening"
 msgstr "Screening"
+
+#: app/utils/media/photo-studio.ts:66
+msgid "Seamless white backdrop, soft even light"
+msgstr "Seamless white backdrop, soft even light"
 
 #: app/components/app-sidebar.tsx:231
 #: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:300
@@ -16299,12 +16875,12 @@ msgid "Search for users in your organization"
 msgstr ""
 
 #: app/components/media-library/media-library-picker.tsx:248
-#: app/routes/_app+/$orgSlug_+/media.tsx:868
+#: app/routes/_app+/$orgSlug_+/media.tsx:893
 msgid "Search media"
 msgstr "Search media"
 
 #: app/components/media-library/media-library-picker.tsx:249
-#: app/routes/_app+/$orgSlug_+/media.tsx:869
+#: app/routes/_app+/$orgSlug_+/media.tsx:894
 msgid "Search media library"
 msgstr "Search media library"
 
@@ -16406,7 +16982,7 @@ msgstr "Search your Canva designs"
 msgid "Search..."
 msgstr ""
 
-#: app/components/app-sidebar.tsx:700
+#: app/components/app-sidebar.tsx:710
 msgid "Search…"
 msgstr "Search…"
 
@@ -16788,6 +17364,10 @@ msgstr ""
 msgid "sent again"
 msgstr "sent again"
 
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:110
+msgid "Sent again. See each account below."
+msgstr "Sent again. See each account below."
+
 #: app/components/staff/labor-policy-editor.tsx:813
 msgid "Sent by email to people who have an address on file."
 msgstr "Sent by email to people who have an address on file."
@@ -16901,10 +17481,11 @@ msgstr "Set up their clock-in PIN"
 msgid "Set up this tablet"
 msgstr "Set up this tablet"
 
-#: app/components/app-sidebar.tsx:374
-#: app/components/app-sidebar.tsx:467
+#: app/components/app-sidebar.tsx:381
+#: app/components/app-sidebar.tsx:474
 #: app/components/command-menu.tsx:345
 #: app/components/command-menu.tsx:378
+#: app/components/media-library/photo-studio-dialog.tsx:705
 #: app/components/phone-agent/agent-details.tsx:315
 #: app/components/staff/labor/labor-page.tsx:199
 #: app/components/workspace-breadcrumb.tsx:12
@@ -16940,7 +17521,7 @@ msgstr "Several people are typing…"
 #: app/components/note/share-note-button.tsx:186
 #: app/components/staff/labor/labor-overview.tsx:571
 #: app/components/staff/labor/labor-tips.tsx:256
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1030
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1029
 msgid "Share"
 msgstr ""
 
@@ -17089,7 +17670,7 @@ msgstr "Shipped to a US address. You see the price with shipping before you pay;
 msgid "Shipping"
 msgstr "Shipping"
 
-#: app/components/app-sidebar.tsx:508
+#: app/components/app-sidebar.tsx:515
 #: app/components/workspace-breadcrumb.tsx:68
 msgid "Shop"
 msgstr ""
@@ -17175,6 +17756,10 @@ msgstr "Show replies ({replyCount})"
 #: app/components/staff/schedule/time-off-page.tsx:198
 msgid "Show requests"
 msgstr "Show requests"
+
+#: app/components/media-library/photo-studio-dialog.tsx:817
+msgid "Show result {position}"
+msgstr "Show result {position}"
 
 #: ../../packages/ai/src/components/ai-chat.tsx:475
 msgid "Show specific examples"
@@ -17304,7 +17889,7 @@ msgid "Single sign-on, custom SLA, private support channel, and more."
 msgstr ""
 
 #: app/components/settings/cards/organization/site-icon-card.tsx:132
-#: app/routes/_app+/$orgSlug_+/media.tsx:1226
+#: app/routes/_app+/$orgSlug_+/media.tsx:1275
 msgid "Site icon"
 msgstr ""
 
@@ -17320,7 +17905,7 @@ msgstr ""
 msgid "Size"
 msgstr "Size"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1323
+#: app/routes/_app+/$orgSlug_+/media.tsx:1385
 msgid "Size:"
 msgstr "Size:"
 
@@ -17370,9 +17955,23 @@ msgstr ""
 msgid "SMS messages over 160 characters will be segmented according to standard GSM telecommunication protocols."
 msgstr ""
 
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:160
+msgid "Social accounts"
+msgstr "Social accounts"
+
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4482
 msgid "Social links"
 msgstr ""
+
+#: app/components/app-sidebar.tsx:356
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:120
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:107
+msgid "Social media"
+msgstr "Social media"
+
+#: app/utils/media/photo-studio.ts:74
+msgid "Soft gray"
+msgstr "Soft gray"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:102
 msgid "Solid"
@@ -17451,6 +18050,10 @@ msgstr "Something went wrong making the file. Try again shortly."
 msgid "Something went wrong on our side. Try again in a moment."
 msgstr "Something went wrong on our side. Try again in a moment."
 
+#: app/components/social/social-labels.ts:69
+msgid "Something went wrong while publishing."
+msgstr "Something went wrong while publishing."
+
 #: app/components/chat/chat-view.tsx:243
 msgid "Something went wrong."
 msgstr "Something went wrong."
@@ -17511,7 +18114,7 @@ msgstr "Split shift"
 msgid "Square"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:383
+#: app/components/app-sidebar.tsx:390
 #: app/components/command-menu.tsx:129
 #: app/components/roles/tenant-role-access-manager.tsx:261
 #: app/components/workspace-breadcrumb.tsx:16
@@ -17614,7 +18217,7 @@ msgstr "Standard system role."
 msgid "Standing application"
 msgstr "Standing application"
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1026
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1025
 msgid "Star"
 msgstr "Star"
 
@@ -17858,8 +18461,13 @@ msgstr "Strong match"
 msgid "Structural checks for triggers, connections, and node configuration."
 msgstr ""
 
+#: app/utils/media/photo-studio.ts:58
+msgid "Studio"
+msgstr "Studio"
+
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:311
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:313
+#: app/components/media-library/photo-studio-dialog.tsx:428
 #: app/components/website/link-inspector.tsx:381
 #: app/components/website/link-inspector.tsx:383
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:575
@@ -17995,6 +18603,10 @@ msgstr "Swap, cover and drop requests"
 msgid "Swaps are not offered at this workplace. Ask your manager."
 msgstr "Swaps are not offered at this workplace. Ask your manager."
 
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:196
+msgid "Switch the Instagram account to a business or creator account, link it to a Facebook Page, and allow that Page when Facebook asks."
+msgstr "Switch the Instagram account to a business or creator account, link it to a Facebook Page, and allow that Page when Facebook asks."
+
 #: app/components/settings/cards/organization/site-card.tsx:295
 msgid "Switching from {currentRegionLabel} to {pendingRegionLabel} permanently deletes every visitor account in the current region — names, phone numbers, emails, and login sessions. This cannot be undone. New sign-ins will start from an empty database in the new region."
 msgstr ""
@@ -18121,7 +18733,7 @@ msgid "Teal"
 msgstr "Teal"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:93
-#: app/components/app-sidebar.tsx:389
+#: app/components/app-sidebar.tsx:396
 #: app/components/command-menu.tsx:133
 #: app/components/staff/schedule/day-timeline.tsx:475
 #: app/components/staff/schedule/week-grid.tsx:359
@@ -18333,6 +18945,7 @@ msgstr "Test this draft"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:161
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:193
+#: app/components/social/post-composer.tsx:252
 #: app/components/website/link-inspector.tsx:644
 msgid "Text"
 msgstr ""
@@ -18668,6 +19281,10 @@ msgstr "The AI assistant step hands the call to your AI. It answers questions us
 #~ msgid "The AI assistant step hands the call to your AI. It answers questions using your business details, Setup, and Training rules until the call ends."
 #~ msgstr "The AI assistant step hands the call to your AI. It answers questions using your business details, Setup, and Training rules until the call ends."
 
+#: app/components/media-library/photo-studio-dialog.tsx:663
+msgid "The AI matches its lighting, background, and colors."
+msgstr "The AI matches its lighting, background, and colors."
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_layout.tsx:71
 msgid "The AI phone agent runs on US infrastructure, so it's only available to businesses whose customer data is stored in the US. You can set it up, but calls won't connect."
 msgstr "The AI phone agent runs on US infrastructure, so it's only available to businesses whose customer data is stored in the US. You can set it up, but calls won't connect."
@@ -18731,6 +19348,14 @@ msgstr "The closing date has passed. Choose a new one."
 #: app/components/kiosk/kiosk-pair.tsx:141
 msgid "The code works once and expires after ten minutes."
 msgstr "The code works once and expires after ten minutes."
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:214
+msgid "The connection failed"
+msgstr "The connection failed"
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:208
+msgid "The connection was cancelled in Facebook."
+msgstr "The connection was cancelled in Facebook."
 
 #: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:223
 msgid "The connection was not allowed in Canva."
@@ -18963,6 +19588,10 @@ msgstr ""
 msgid "The message ends when the caller presses pound, stops talking, or hangs up. It shows up under Calls as a callback request."
 msgstr "The message ends when the caller presses pound, stops talking, or hangs up. It shows up under Calls as a callback request."
 
+#: app/components/social/social-labels.ts:74
+msgid "The Meta emulator refused this post (it contains #fail)."
+msgstr "The Meta emulator refused this post (it contains #fail)."
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:632
 msgid "The name the agent uses when it introduces itself."
 msgstr "The name the agent uses when it introduces itself."
@@ -19016,6 +19645,10 @@ msgstr "The people who work here: roster, pay, and private details. Only applies
 #: app/components/staff/labor/tip-settings-dialog.tsx:125
 msgid "The percentages need to add up to 100."
 msgstr "The percentages need to add up to 100."
+
+#: app/components/media-library/photo-studio-dialog.tsx:201
+msgid "The photo could not be generated. Try again."
+msgstr "The photo could not be generated. Try again."
 
 #: app/components/print/artwork-labels.ts:18
 msgid "The print file could not be made. Try again shortly."
@@ -19092,6 +19725,14 @@ msgstr "The tablet stops working right away and people can no longer clock in on
 #: app/components/staff/onboarding/template-editor.tsx:77
 msgid "The tasks a new hire starts with. Due dates count from the day they are hired."
 msgstr "The tasks a new hire starts with. Due dates count from the day they are hired."
+
+#: app/components/social/social-labels.ts:50
+msgid "The text is too long for Facebook."
+msgstr "The text is too long for Facebook."
+
+#: app/components/social/social-labels.ts:92
+msgid "The text is too long."
+msgstr "The text is too long."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:190
 #~ msgid "The time-limit notice, the rating question, and the goodbye."
@@ -19350,6 +19991,10 @@ msgstr "Thinking…"
 msgid "This account can look but not change jobs."
 msgstr "This account can look but not change jobs."
 
+#: app/components/social/social-labels.ts:66
+msgid "This account is no longer connected. Connect it again, then retry."
+msgstr "This account is no longer connected. Connect it again, then retry."
+
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:490
 msgid "This action cannot be undone. Are you sure you want to delete \"{pageTitle}\"?"
 msgstr ""
@@ -19358,7 +20003,7 @@ msgstr ""
 msgid "This action cannot be undone. Are you sure you want to delete this announcement?"
 msgstr "This action cannot be undone. Are you sure you want to delete this announcement?"
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1092
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1091
 msgid "This action cannot be undone. The note and its comments will be permanently removed."
 msgstr "This action cannot be undone. The note and its comments will be permanently removed."
 
@@ -19671,6 +20316,18 @@ msgstr "This person is not set up for that position here. You can still schedule
 msgid "This PIN is paused for a few minutes. Ask a manager."
 msgstr "This PIN is paused for a few minutes. Ask a manager."
 
+#: app/components/social/post-composer.tsx:172
+msgid "This post can’t be sent yet"
+msgstr "This post can’t be sent yet"
+
+#: app/components/social/social-labels.ts:94
+msgid "This post has started publishing and can no longer be edited."
+msgstr "This post has started publishing and can no longer be edited."
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:244
+msgid "This post is publishing right now. Try again in a moment."
+msgstr "This post is publishing right now. Try again in a moment."
+
 #: app/components/phone-agent/voice-picker.tsx:494
 #: app/components/phone-agent/voice-picker.tsx:643
 msgid "This preview couldn't play."
@@ -19761,6 +20418,10 @@ msgstr "This row has a different number of columns than the header."
 msgid "This schedule is no longer available"
 msgstr "This schedule is no longer available"
 
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:227
+msgid "This server has no Meta app configured. Ask your platform administrator."
+msgstr "This server has no Meta app configured. Ask your platform administrator."
+
 #: app/utils/staffing/schedule-errors.ts:31
 msgid "This shift changed after the request was made. Ask the person to request again."
 msgstr "This shift changed after the request was made. Ask the person to request again."
@@ -19812,6 +20473,10 @@ msgstr "This tablet is not ready yet. Ask a manager."
 #: app/components/kiosk/kiosk-pair.tsx:28
 msgid "This tablet was disconnected"
 msgstr "This tablet was disconnected"
+
+#: app/components/media-library/photo-studio-dialog.tsx:766
+msgid "This usually takes 10 to 30 seconds per photo."
+msgstr "This usually takes 10 to 30 seconds per photo."
 
 #: app/components/staff/labor-policy-editor.tsx:344
 msgid "This value is outside the allowed range."
@@ -19937,7 +20602,7 @@ msgstr "Time cards (CSV)"
 msgid "Time cards: {timeCardCount} (not included in the backup)"
 msgstr "Time cards: {timeCardCount} (not included in the backup)"
 
-#: app/components/app-sidebar.tsx:394
+#: app/components/app-sidebar.tsx:401
 #: app/components/command-menu.tsx:134
 #: app/components/workspace-breadcrumb.tsx:29
 #: app/routes/_app+/$orgSlug_+/staff+/timeclock.tsx:54
@@ -20009,6 +20674,10 @@ msgstr "Time zone"
 #: app/components/staff/time-zone-card.tsx:47
 msgid "Time zone saved."
 msgstr "Time zone saved."
+
+#: app/components/social/post-composer.tsx:338
+msgid "Times are in {timeZone}."
+msgstr "Times are in {timeZone}."
 
 #: app/components/staff/timesheets/card-fields.tsx:135
 msgid "Times are in the workplace's time zone, {timeZone}."
@@ -20122,6 +20791,7 @@ msgstr "To: {recipient}"
 #: app/components/staff/schedule/day-timeline.tsx:441
 #: app/components/staff/schedule/schedule-toolbar.tsx:119
 #: app/components/staff/timesheets/period-nav.tsx:150
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:195
 #: app/routes/_app+/$orgSlug_+/staff+/timeclock.tsx:43
 msgid "Today"
 msgstr "Today"
@@ -20145,6 +20815,10 @@ msgstr ""
 #: app/components/staff/schedule/publication-history.tsx:168
 msgid "Told"
 msgstr "Told"
+
+#: app/components/social/social-labels.ts:53
+msgid "Too many hashtags for Facebook."
+msgstr "Too many hashtags for Facebook."
 
 #: app/routes/_auth+/forgot-password.tsx:196
 msgid "Too Many Requests"
@@ -20197,7 +20871,7 @@ msgstr "Total {totalText} of 100"
 msgid "Total before sales tax"
 msgstr "Total before sales tax"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:211
+#: app/routes/_app+/$orgSlug_+/index.tsx:215
 msgid "Total notes"
 msgstr "Total notes"
 
@@ -20301,7 +20975,7 @@ msgstr "Transfers search rank"
 msgid "Transfers unavailable"
 msgstr "Transfers unavailable"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1645
+#: app/routes/_app+/$orgSlug_+/media.tsx:1707
 msgid "Transform"
 msgstr "Transform"
 
@@ -20322,7 +20996,7 @@ msgstr ""
 msgid "Transport"
 msgstr "Transport"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:225
+#: app/routes/_app+/$orgSlug_+/index.tsx:229
 msgid "Trend"
 msgstr "Trend"
 
@@ -20399,7 +21073,7 @@ msgstr "Try a different search or clear the filters."
 msgid "Try a different search term or clear the search."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:950
+#: app/routes/_app+/$orgSlug_+/media.tsx:975
 msgid "Try a different search term."
 msgstr "Try a different search term."
 
@@ -20414,6 +21088,7 @@ msgstr ""
 #: app/components/hiring/applicants-page.tsx:397
 #: app/components/hiring/candidate-sheet.tsx:113
 #: app/components/mailbox/calls-tab.tsx:289
+#: app/components/media-library/photo-studio-dialog.tsx:933
 #: app/components/phone-agent/call-detail-sheet.tsx:367
 #: app/components/phone-agent/call-recording-player.tsx:154
 #: app/components/phone-agent/voice-picker.tsx:456
@@ -20456,6 +21131,10 @@ msgstr "Try another name, email, or message."
 msgid "Try another search or clear the filters."
 msgstr "Try another search or clear the filters."
 
+#: app/components/media-library/photo-studio-dialog.tsx:1012
+msgid "Try another style"
+msgstr "Try another style"
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:566
 msgid "Try different filters."
 msgstr "Try different filters."
@@ -20463,6 +21142,10 @@ msgstr "Try different filters."
 #: app/components/phone-agent/business-details-section.tsx:25
 msgid "Tuesday"
 msgstr "Tuesday"
+
+#: app/components/media-library/photo-studio-dialog.tsx:450
+msgid "Turn everyday photos into professional shots."
+msgstr "Turn everyday photos into professional shots."
 
 #: app/components/staff/schedule-link-section.tsx:151
 msgid "Turn off"
@@ -20626,6 +21309,10 @@ msgstr "Unavailable all day"
 msgid "Unavailable during…"
 msgstr "Unavailable during…"
 
+#: app/components/media-library/photo-studio-dialog.tsx:862
+msgid "Undo"
+msgstr "Undo"
+
 #: app/components/staff/schedule/shift-editor-sheet.tsx:674
 msgid "Undo changes"
 msgstr "Undo changes"
@@ -20749,7 +21436,7 @@ msgid "Unscheduled"
 msgstr "Unscheduled"
 
 #: app/components/favorite-notes.tsx:142
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1026
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1025
 msgid "Unstar"
 msgstr ""
 
@@ -20760,13 +21447,13 @@ msgstr ""
 msgid "Until"
 msgstr "Until"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:882
-#: app/routes/_app+/$orgSlug_+/media.tsx:1257
-#: app/routes/_app+/$orgSlug_+/media.tsx:1633
+#: app/routes/_app+/$orgSlug_+/media.tsx:907
+#: app/routes/_app+/$orgSlug_+/media.tsx:1306
+#: app/routes/_app+/$orgSlug_+/media.tsx:1695
 msgid "Untitled image"
 msgstr "Untitled image"
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:701
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:700
 msgid "Untitled Note"
 msgstr ""
 
@@ -20798,6 +21485,7 @@ msgstr "Up to 5 addresses."
 msgid "Upcoming"
 msgstr "Upcoming"
 
+#: app/components/media-library/photo-studio-dialog.tsx:912
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5967
 msgid "Update"
 msgstr ""
@@ -20840,7 +21528,7 @@ msgstr ""
 msgid "Updated"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:706
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:705
 msgid "Updated {timeAgo} ago"
 msgstr ""
 
@@ -20864,6 +21552,10 @@ msgstr "Updates as you edit"
 msgid "Updating section"
 msgstr "Updating section"
 
+#: app/components/media-library/photo-studio-dialog.tsx:912
+msgid "Updating…"
+msgstr "Updating…"
+
 #: app/components/app-sidebar.tsx:102
 #: app/components/settings/cards/organization/billing-card.tsx:506
 msgid "Upgrade"
@@ -20872,6 +21564,10 @@ msgstr ""
 #: app/components/settings/cards/organization/site-theme-card.tsx:313
 msgid "Upload a font"
 msgstr ""
+
+#: app/components/media-library/photo-studio-dialog.tsx:541
+msgid "Upload a JPEG, PNG, or WebP photo to your media library first."
+msgstr "Upload a JPEG, PNG, or WebP photo to your media library first."
 
 #: app/components/website/branding-panel.tsx:338
 msgid "Upload a logo"
@@ -20885,11 +21581,15 @@ msgstr ""
 msgid "Upload a site icon"
 msgstr ""
 
+#: app/components/media-library/photo-studio-dialog.tsx:689
+msgid "Upload a style reference"
+msgstr "Upload a style reference"
+
 #: app/components/chat/chat-composer.tsx:126
 msgid "Upload already in progress."
 msgstr "Upload already in progress."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:952
+#: app/routes/_app+/$orgSlug_+/media.tsx:977
 msgid "Upload an image here, or add one to a note, comment, website page, or your organization settings."
 msgstr "Upload an image here, or add one to a note, comment, website page, or your organization settings."
 
@@ -20905,7 +21605,7 @@ msgstr "Upload failed. Please try again."
 msgid "Upload file"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:845
+#: app/routes/_app+/$orgSlug_+/media.tsx:870
 msgid "Upload image"
 msgstr "Upload image"
 
@@ -20925,13 +21625,13 @@ msgstr ""
 msgid "Uploaded"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1346
+#: app/routes/_app+/$orgSlug_+/media.tsx:1408
 msgid "Uploaded:"
 msgstr "Uploaded:"
 
 #: app/components/chat/chat-composer.tsx:335
 #: app/components/website/link-inspector.tsx:542
-#: app/routes/_app+/$orgSlug_+/media.tsx:843
+#: app/routes/_app+/$orgSlug_+/media.tsx:868
 msgid "Uploading…"
 msgstr ""
 
@@ -20941,7 +21641,7 @@ msgstr ""
 msgid "URL"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1383
+#: app/routes/_app+/$orgSlug_+/media.tsx:1445
 msgid "URL copied to clipboard"
 msgstr "URL copied to clipboard"
 
@@ -20949,7 +21649,7 @@ msgstr "URL copied to clipboard"
 msgid "URL Redirects"
 msgstr "URL Redirects"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1368
+#: app/routes/_app+/$orgSlug_+/media.tsx:1430
 msgid "URL:"
 msgstr "URL:"
 
@@ -21021,6 +21721,11 @@ msgstr "Use a CSV file with a Date column and a Net sales column. Days you have 
 msgid "Use a full link that starts with https://"
 msgstr "Use a full link that starts with https://"
 
+#: app/components/media-library/photo-studio-dialog.tsx:199
+#: app/components/media-library/photo-studio-dialog.tsx:415
+msgid "Use a JPEG, PNG, or WebP photo up to 10 MB."
+msgstr "Use a JPEG, PNG, or WebP photo up to 10 MB."
+
 #: app/components/hiring/job-editor.tsx:450
 msgid "Use a number like 18 or 18.50."
 msgstr "Use a number like 18 or 18.50."
@@ -21084,6 +21789,10 @@ msgstr ""
 msgid "Use selected"
 msgstr "Use selected"
 
+#: app/utils/media/photo-studio.ts:139
+msgid "Use the angle and framing of your photo instead of the style's"
+msgstr "Use the angle and framing of your photo instead of the style's"
+
 #: app/components/staff/review-rows.tsx:19
 msgid "Use the country code, like +14155550123."
 msgstr "Use the country code, like +14155550123."
@@ -21112,7 +21821,7 @@ msgstr ""
 msgid "Used by a transfer case"
 msgstr "Used by a transfer case"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1480
+#: app/routes/_app+/$orgSlug_+/media.tsx:1542
 msgid "Used in"
 msgstr "Used in"
 
@@ -21222,6 +21931,10 @@ msgstr ""
 msgid "Version {flowVersion}, published {publishedOn}"
 msgstr "Version {flowVersion}, published {publishedOn}"
 
+#: app/components/media-library/photo-studio-dialog.tsx:847
+msgid "Version {versionCount}"
+msgstr "Version {versionCount}"
+
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3353
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3935
 msgid "Video"
@@ -21231,7 +21944,7 @@ msgstr ""
 msgid "Video call"
 msgstr "Video call"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1228
+#: app/routes/_app+/$orgSlug_+/media.tsx:1277
 msgid "Video thumbnail"
 msgstr "Video thumbnail"
 
@@ -21242,7 +21955,7 @@ msgstr "Video thumbnail"
 msgid "View"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:237
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:247
 msgid "View all"
 msgstr ""
 
@@ -21293,6 +22006,10 @@ msgstr ""
 #: app/routes/mcp+/authorize.tsx:394
 msgid "View notes from users you have access to"
 msgstr ""
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:318
+msgid "View on {platformName}"
+msgstr "View on {platformName}"
 
 #: app/components/dashboard/access-labels.ts:10
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:539
@@ -21372,7 +22089,7 @@ msgstr "Violet"
 msgid "Visitor names, phone numbers, and emails are stored in this region. Changing it after customers have signed in permanently deletes that data — it is not moved."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1240
+#: app/routes/_app+/$orgSlug_+/media.tsx:1289
 msgid "Vivid"
 msgstr "Vivid"
 
@@ -21414,7 +22131,7 @@ msgstr "Voicemail saved"
 msgid "Voicemails, callback requests, missed transfers, complaints, and low ratings stay open on the Calls page until someone marks them complete."
 msgstr "Voicemails, callback requests, missed transfers, complaints, and low ratings stay open on the Calls page until someone marks them complete."
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:234
+#: app/routes/_app+/$orgSlug_+/index.tsx:238
 msgid "Vs prior period"
 msgstr "Vs prior period"
 
@@ -21457,6 +22174,7 @@ msgstr ""
 msgid "Wait for a specified duration before next step"
 msgstr ""
 
+#: app/components/social/social-labels.ts:34
 #: app/components/staff/schedule/availability-page.tsx:148
 #: app/components/staff/schedule/time-off-page.tsx:181
 msgid "Waiting"
@@ -21482,6 +22200,10 @@ msgstr "Waiting to be paired"
 msgid "Waiting to send"
 msgstr "Waiting to send"
 
+#: app/components/media-library/photo-studio-dialog.tsx:885
+msgid "Want changes?"
+msgstr "Want changes?"
+
 #: app/routes/_auth+/waitlist.tsx:268
 msgid "Want to go to the top of the waitlist?"
 msgstr ""
@@ -21502,9 +22224,13 @@ msgstr "Wanted: Yes"
 msgid "Wanted: Yes. This one matters for the job."
 msgstr "Wanted: Yes. This one matters for the job."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1241
+#: app/routes/_app+/$orgSlug_+/media.tsx:1290
 msgid "Warm"
 msgstr "Warm"
+
+#: app/utils/media/photo-studio.ts:119
+msgid "Warm & cozy"
+msgstr "Warm & cozy"
 
 #: app/components/staff/labor-policy-editor.tsx:844
 msgid "Warn managers about overtime"
@@ -21761,10 +22487,10 @@ msgstr "Web"
 msgid "Webhooks: {webhookMode}"
 msgstr "Webhooks: {webhookMode}"
 
-#: app/components/app-sidebar.tsx:416
+#: app/components/app-sidebar.tsx:423
 #: app/components/command-menu.tsx:141
 #: app/components/workspace-breadcrumb.tsx:13
-#: app/routes/_app+/$orgSlug_+/media.tsx:1230
+#: app/routes/_app+/$orgSlug_+/media.tsx:1279
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:82
 msgid "Website"
 msgstr ""
@@ -21777,7 +22503,7 @@ msgstr "Website & Publishing"
 msgid "Website editor, announcements, and public pages."
 msgstr "Website editor, announcements, and public pages."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1232
+#: app/routes/_app+/$orgSlug_+/media.tsx:1281
 msgid "Website SEO"
 msgstr "Website SEO"
 
@@ -21951,6 +22677,10 @@ msgstr "What would you like to collect?"
 msgid "What would you like to know?"
 msgstr ""
 
+#: app/components/social/post-composer.tsx:259
+msgid "What would you like to share?"
+msgstr "What would you like to share?"
+
 #: app/components/staff/labor/labor-page.tsx:242
 msgid "What your hours cost against your sales, the sales you enter, and how tips divide."
 msgstr "What your hours cost against your sales, the sales you enter, and how tips divide."
@@ -22059,6 +22789,10 @@ msgstr "Where applicants found the job."
 msgid "Where every call begins."
 msgstr "Where every call begins."
 
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:277
+msgid "Where it went"
+msgstr "Where it went"
+
 #: app/components/staff/timesheets/pay-period-dialog.tsx:59
 msgid "Where one period ends and the next begins. Timesheets and the payroll summary are cut on these lines."
 msgstr "Where one period ends and the next begins. Timesheets and the payroll summary are cut on these lines."
@@ -22098,6 +22832,10 @@ msgstr "While closed"
 #: app/components/phone-agent/call-follow-up.tsx:194
 msgid "While open"
 msgstr "While open"
+
+#: app/utils/media/photo-studio.ts:111
+msgid "White marble surface, bright and premium"
+msgstr "White marble surface, bright and premium"
 
 #: app/components/staff/schedule/availability-sheet.tsx:213
 #: app/components/staff/schedule/time-off-sheet.tsx:186
@@ -22199,6 +22937,10 @@ msgstr "within target"
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1207
 msgid "Without bleed, color that runs to the edge can show a thin white line after cutting. Add bleed in Canva (File, Settings, Show print bleed) for shipped prints."
 msgstr "Without bleed, color that runs to the edge can show a thin white line after cutting. Add bleed in Canva (File, Settings, Show print bleed) for shipped prints."
+
+#: app/utils/media/photo-studio.ts:102
+msgid "Wooden table by a sunny window"
+msgstr "Wooden table by a sunny window"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:709
 msgid "Word"
@@ -22304,6 +23046,10 @@ msgstr "Write a policy. You record when they have read and accepted it."
 msgid "Write it the way you'd explain it to a new staff member."
 msgstr "Write it the way you'd explain it to a new staff member."
 
+#: app/routes/_app+/$orgSlug_+/marketing+/social.new.tsx:61
+msgid "Write once, then publish now, schedule it, or keep it as a draft."
+msgstr "Write once, then publish now, schedule it, or keep it as a draft."
+
 #: app/components/settings/cards/organization/announcement-sheet.tsx:335
 msgid "Write the banner in the default language, then switch locales to translate. Enabled banners appear at the top of your public site."
 msgstr ""
@@ -22338,6 +23084,10 @@ msgstr "Write your reply…"
 #: ../../packages/marketing/src/components/campaign-form.tsx:136
 msgid "Write your text message"
 msgstr "Write your text message"
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:109
+msgid "Write, schedule and track posts on Facebook and Instagram."
+msgstr "Write, schedule and track posts on Facebook and Instagram."
 
 #: app/components/hiring/localized-fields.tsx:35
 msgid "Writing the {language} version. Anything you leave blank is shown in {fallback}."
@@ -22515,7 +23265,7 @@ msgstr "You do not have access to that workplace."
 msgid "You do not have permission to do that."
 msgstr "You do not have permission to do that."
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1191
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1190
 msgid "You do not have permission to view this note"
 msgstr ""
 
@@ -22594,6 +23344,10 @@ msgstr "You need pay access to change tips or rates."
 #: app/components/chat/chat-view.tsx:978
 msgid "You no longer have access to this chat. Reload the page to check your channels."
 msgstr "You no longer have access to this chat. Reload the page to check your channels."
+
+#: app/components/media-library/photo-studio-dialog.tsx:195
+msgid "You reached the hourly limit for AI photos. Try again later."
+msgstr "You reached the hourly limit for AI photos. Try again later."
 
 #: app/components/settings/cards/organization/shop-card.tsx:439
 msgid "You receive"
@@ -22747,7 +23501,7 @@ msgstr "Your hours, phone, and address. The agent quotes them and uses the hours
 msgid "Your MCP Server URL"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:946
+#: app/routes/_app+/$orgSlug_+/media.tsx:971
 msgid "Your media library is empty"
 msgstr "Your media library is empty"
 

@@ -160,6 +160,7 @@ export default function HomeDashboard({ loaderData }: Route.ComponentProps) {
 	const rootData = useRouteLoaderData<typeof rootLoader>('root')
 	const userName = rootData?.user?.name || _(msg`User`)
 	const notes = blockData.notes
+	const daysShown = notes?.daysShown ?? 0
 	// The request's locale and time zone, so the server render matches the
 	// browser's.
 	const locale = rootData?.locale ?? 'en'
@@ -170,13 +171,11 @@ export default function HomeDashboard({ loaderData }: Route.ComponentProps) {
 		if (part === 'afternoon') return _(msg`Good afternoon, ${userName}`)
 		return _(msg`Good evening, ${userName}`)
 	}, [_, timeZone, userName])
-	const todayLine = useMemo(
-		() =>
-			_(
-				msg`${formatWorkspaceDate(new Date(), { locale, timeZone })} · Here's what's happening in ${organization.name}`,
-			),
-		[_, locale, organization.name, timeZone],
-	)
+	const todayLine = useMemo(() => {
+		const date = formatWorkspaceDate(new Date(), { locale, timeZone })
+		const organizationName = organization.name
+		return _(msg`${date} · Here's what's happening in ${organizationName}`)
+	}, [_, locale, organization.name, timeZone])
 	useCelebration()
 
 	const renderBlock = useCallback(
@@ -216,9 +215,7 @@ export default function HomeDashboard({ loaderData }: Route.ComponentProps) {
 					label={_(msg`Avg per day`)}
 					value={notes?.avgPerDay ?? 0}
 					hint={
-						notes
-							? _(msg`Last ${notes.daysShown} days`)
-							: _(msg`No activity yet`)
+						notes ? _(msg`Last ${daysShown} days`) : _(msg`No activity yet`)
 					}
 				/>
 				<WorkspaceMetric

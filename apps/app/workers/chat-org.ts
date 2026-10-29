@@ -1,3 +1,4 @@
+import { type ChatMessage } from '@repo/common/chat'
 import { DurableObject } from 'cloudflare:workers'
 import {
 	ChatEngine,
@@ -67,10 +68,7 @@ export class ChatOrg extends DurableObject<Env> {
 		})
 	}
 
-	private async notifyAppMessage(
-		authorId: string,
-		message: import('@repo/common/chat').ChatMessage,
-	) {
+	private async notifyAppMessage(authorId: string, message: ChatMessage) {
 		const base = this.env.BASE_URL
 		const token = this.env.INTERNAL_COMMAND_TOKEN
 		if (!base || !token || !this.orgId) return

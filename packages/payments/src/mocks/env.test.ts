@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import {
 	getStripeWebhookSecrets,
 	isLocalDeployment,
@@ -15,6 +15,12 @@ const localBase = { BASE_URL: 'http://localhost:3001' }
 const placeholders = {
 	STRIPE_SECRET_KEY: 'sk_test_***',
 	CHECKOUT_SECRET_KEY: '',
+}
+
+/** Stubs an env var; leaving the test's scope restores every stub. */
+function stubEnv(name: string, value: string) {
+	vi.stubEnv(name, value)
+	return { [Symbol.dispose]: () => vi.unstubAllEnvs() }
 }
 
 describe('paymentsMockMode', () => {
@@ -63,10 +69,6 @@ describe('paymentsMockMode', () => {
 	})
 
 	describe('runtime deployment gate', () => {
-		afterEach(() => {
-			vi.unstubAllEnvs()
-		})
-
 		it.each([{ MOCKS: 'true', ...localBase }, { PAYMENTS_MOCK: 'true' }])(
 			'refuses %o on a real origin even with no key variables set',
 			(switchOn) => {
@@ -128,7 +130,7 @@ describe('paymentsMockMode', () => {
 			'https://app.menu.test:2999',
 			'http://app.localhost:3001',
 		])('allows %s even when NODE_ENV=production (start:mocks, CI)', (url) => {
-			vi.stubEnv('NODE_ENV', 'production')
+			using ignoredEnv = stubEnv('NODE_ENV', 'production')
 			expect(
 				paymentsMockMode({
 					MOCKS: 'true',

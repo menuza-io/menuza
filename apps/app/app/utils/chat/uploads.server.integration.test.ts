@@ -1,5 +1,7 @@
 import { db, eq, OrganizationMediaAsset } from '@repo/database'
+import type * as StorageModule from '@repo/storage'
 import { describe, expect, it, vi } from 'vitest'
+import { uploadChatImage } from '#app/utils/storage.server.ts'
 import { createTestOrganization, createTestUser } from '#tests/test-utils.ts'
 
 const { mockKey } = vi.hoisted(() => ({
@@ -7,7 +9,7 @@ const { mockKey } = vi.hoisted(() => ({
 }))
 
 vi.mock('@repo/storage', async (importOriginal) => {
-	const actual = await importOriginal<typeof import('@repo/storage')>()
+	const actual = await importOriginal<typeof StorageModule>()
 	return {
 		...actual,
 		uploadOrganizationMediaImage: vi.fn().mockResolvedValue({
@@ -20,8 +22,6 @@ vi.mock('@repo/storage', async (importOriginal) => {
 		}),
 	}
 })
-
-import { uploadChatImage } from '#app/utils/storage.server.ts'
 
 describe('uploadChatImage (integration)', () => {
 	it('registers media so /resources/images can authorize the object key', async () => {

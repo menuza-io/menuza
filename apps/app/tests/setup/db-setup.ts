@@ -1,6 +1,6 @@
 import path from 'node:path'
-import fsExtra from 'fs-extra'
 import { forget } from '@epic-web/remember'
+import fsExtra from 'fs-extra'
 import { afterAll, beforeAll } from 'vitest'
 import { BASE_DATABASE_PATH } from './database-paths.ts'
 

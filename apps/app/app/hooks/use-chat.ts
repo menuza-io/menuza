@@ -9,12 +9,12 @@ import {
 	type ChatUnread,
 } from '@repo/common/chat'
 import { useCallback, useEffect, useReducer, useRef } from 'react'
+import { notifyChatActivity } from '#app/hooks/use-chat-unread.ts'
 import {
 	chatReducer,
 	initialChatState,
 	type ChatState,
 } from '#app/modules/chat/chat-state.ts'
-import { notifyChatActivity } from '#app/hooks/use-chat-unread.ts'
 
 const REQUEST_TIMEOUT_MS = 10_000
 const PING_INTERVAL_MS = 25_000

@@ -180,7 +180,7 @@ msgid "{0, plural, one {# hour has no pay rate, so it has no wage figure.} other
 msgstr "{0, plural, one {ساعة واحدة بلا أجر محدد، لذا لا يوجد رقم أجور لها.} two {ساعتان بلا أجر محدد، لذا لا يوجد رقم أجور لهما.} few {# ساعات بلا أجر محدد، لذا لا يوجد رقم أجور لها.} many {# ساعة بلا أجر محدد، لذا لا يوجد رقم أجور لها.} other {# ساعة بلا أجر محدد، لذا لا يوجد رقم أجور لها.}}"
 
 #. placeholder {0}: assets.length
-#: app/routes/_app+/$orgSlug_+/media.tsx:874
+#: app/routes/_app+/$orgSlug_+/media.tsx:899
 msgid "{0, plural, one {# image} other {# images}}"
 msgstr "{0, plural, zero {لا توجد صور} one {صورة واحدة} two {صورتان} few {# صور} many {# صورة} other {# صورة}}"
 
@@ -256,6 +256,11 @@ msgstr "{0, plural, one {# شخص على الساعة} two {# شخصان على 
 #: app/components/staff/schedule/week-grid.tsx:493
 msgid "{0, plural, one {# person} other {# people}}"
 msgstr "{0, plural, one {شخص واحد} two {شخصان} few {# أشخاص} many {# شخصًا} other {# شخصًا}}"
+
+#. placeholder {0}: selectedIds.length
+#: app/components/media-library/photo-studio-dialog.tsx:495
+msgid "{0, plural, one {# selected} other {# selected}}"
+msgstr "{0, plural, one {تم تحديد صورة واحدة} two {تم تحديد صورتين} few {تم تحديد # صور} many {تم تحديد # صورة} other {تم تحديد # صورة}}"
 
 #. placeholder {0}: result.created
 #. placeholder {0}: result.value.length
@@ -355,6 +360,11 @@ msgstr "{0, plural, one {موافقة} two {موافقة على الاثنين} 
 msgid "{0, plural, one {Emailing # person now.} other {Emailing # people now.}}"
 msgstr "{0, plural, one {يجري إرسال بريد إلى شخص واحد الآن.} two {يجري إرسال بريد إلى شخصين الآن.} few {يجري إرسال بريد إلى # أشخاص الآن.} many {يجري إرسال بريد إلى # شخصًا الآن.} other {يجري إرسال بريد إلى # شخص الآن.}}"
 
+#. placeholder {0}: results.length
+#: app/components/media-library/photo-studio-dialog.tsx:759
+msgid "{0, plural, one {Enhancing your photo…} other {Enhancing # photos…}}"
+msgstr "{0, plural, one {جارٍ تحسين صورتك…} two {جارٍ تحسين صورتيك…} few {جارٍ تحسين # صور…} many {جارٍ تحسين # صورة…} other {جارٍ تحسين # صورة…}}"
+
 #. placeholder {0}: Math.abs(standing.daysLeft ?? 0)
 #: app/components/staff/onboarding/certificates-tab.tsx:228
 msgid "{0, plural, one {Expired # day ago} other {Expired # days ago}}"
@@ -364,6 +374,11 @@ msgstr "{0, plural, one {انتهت منذ يوم} two {انتهت منذ يوم
 #: app/components/staff/onboarding/certificates-tab.tsx:239
 msgid "{0, plural, one {Expires in # day} other {Expires in # days}}"
 msgstr "{0, plural, one {تنتهي خلال يوم} two {تنتهي خلال يومين} few {تنتهي خلال # أيام} many {تنتهي خلال # يومًا} other {تنتهي خلال # يوم}}"
+
+#. placeholder {0}: selectedAssets.length
+#: app/components/media-library/photo-studio-dialog.tsx:989
+msgid "{0, plural, one {Generate photo} other {Generate # photos}}"
+msgstr "{0, plural, one {إنشاء صورة} two {إنشاء صورتين} few {إنشاء # صور} many {إنشاء # صورة} other {إنشاء # صورة}}"
 
 #. placeholder {0}: lockable.length
 #: app/components/staff/timesheets/timesheets-page.tsx:774
@@ -400,11 +415,14 @@ msgstr "{0, plural, one {فتح قفل بطاقة واحدة؟} two {فتح قف
 msgid "{0, plural, one {We added a new-hire checklist with # task.} other {We added a new-hire checklist with # tasks.}}"
 msgstr "{0, plural, one {أضفنا قائمة مهام للموظف الجديد فيها مهمة واحدة.} two {أضفنا قائمة مهام للموظف الجديد فيها مهمتان.} few {أضفنا قائمة مهام للموظف الجديد فيها # مهام.} many {أضفنا قائمة مهام للموظف الجديد فيها # مهمة.} other {أضفنا قائمة مهام للموظف الجديد فيها # مهمة.}}"
 
-#. placeholder {0}: formatWorkspaceDate(new Date(), { locale, timeZone })
-#. placeholder {1}: organization.name
+#. placeholder {0}: selectedAssets.length
+#: app/components/media-library/photo-studio-dialog.tsx:554
+msgid "{0, plural, one {Your photo} other {Your # photos}}"
+msgstr "{0, plural, one {صورتك} two {صورتاك} few {صورك الـ #} many {صورك الـ #} other {صورك الـ #}}"
+
 #: app/routes/_app+/$orgSlug_+/index.tsx:176
-msgid "{0} · Here's what's happening in {1}"
-msgstr "{0} · إليك ما يحدث في {1}"
+#~ msgid "{0} · Here's what's happening in {1}"
+#~ msgstr "{0} · إليك ما يحدث في {1}"
 
 #. placeholder {0}: data.messageText?.length || 0
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:404
@@ -557,6 +575,10 @@ msgstr "تم استيراد {created}، و{existing} موجودون في فري�
 #: app/components/phone-agent/phrase-fields.tsx:331
 msgid "{customized} changed"
 msgstr "تم تغيير {customized}"
+
+#: app/routes/_app+/$orgSlug_+/index.tsx:179
+msgid "{date} · Here's what's happening in {organizationName}"
+msgstr "{date} · إليك ما يحدث في {organizationName}"
 
 #: app/components/my-schedule/requests-view.tsx:97
 msgid "{day}: available {hours}"
@@ -904,6 +926,10 @@ msgstr "{pairedName} جاهز. يمكن للموظفين تسجيل الحضور
 msgid "{people, plural, one {# person} other {# people}}"
 msgstr "{people, plural, one {شخص واحد} two {شخصان} few {# أشخاص} many {# شخصًا} other {# شخصًا}}"
 
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:181
+msgid "{platformName} connected"
+msgstr "تم ربط {platformName}"
+
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:98
 msgid "{positionName} archived."
 msgstr "تمت أرشفة {positionName}."
@@ -949,7 +975,7 @@ msgstr "{readyCount, plural, zero {استيراد 0 أشخاص} one {استير�
 msgid "{readyCount} ready, {needFix} need a fix. Rows with a problem are skipped."
 msgstr "{readyCount} جاهزة، و{needFix} تحتاج إلى تصحيح. يتم تخطي الصفوف التي بها مشكلة."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:281
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:291
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:172
 msgid "{recipientCount} recipients"
 msgstr "{recipientCount} مستلم"
@@ -958,7 +984,7 @@ msgstr "{recipientCount} مستلم"
 msgid "{redirectCount} redirects"
 msgstr "{redirectCount} عمليات إعادة توجيه"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1487
+#: app/routes/_app+/$orgSlug_+/media.tsx:1549
 msgid "{referenceCount, plural, one {# place} other {# places}}"
 msgstr "{referenceCount, plural, zero {لا أماكن} one {مكان واحد} two {مكانان} few {# أماكن} many {# مكانًا} other {# مكان}}"
 
@@ -1053,6 +1079,10 @@ msgstr "{unit}"
 #: app/components/chat/chat-view.tsx:374
 msgid "{unread} unread"
 msgstr "{unread} غير مقروءة"
+
+#: app/components/social/post-composer.tsx:268
+msgid "{used} of {limit} characters"
+msgstr "{used} من {limit} حرفًا"
 
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:568
 msgid "{warningCount} warnings to review"
@@ -1388,6 +1418,10 @@ msgstr "أُضيفت ملاحظة"
 msgid "A page on your website"
 msgstr "صفحة على موقعك"
 
+#: app/components/media-library/photo-studio-dialog.tsx:692
+msgid "A photo whose lighting, background, and colors you like. JPEG, PNG, or WebP, up to 10 MB."
+msgstr "صورة تعجبك إضاءتها وخلفيتها وألوانها. بصيغة JPEG أو PNG أو WebP وبحجم يصل إلى 10 ميغابايت."
+
 #: ../../packages/marketing/src/components/email/block-meta.ts:34
 msgid "A picture, logo, or product shot."
 msgstr "صورة أو شعار أو لقطة منتج."
@@ -1547,6 +1581,14 @@ msgstr "إعدادات الحساب"
 msgid "Account Suspended"
 msgstr "الحساب معلق"
 
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:118
+msgid "Accounts"
+msgstr "الحسابات"
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:162
+msgid "Accounts connected here are shared with everyone in the organization who can manage marketing."
+msgstr "الحسابات المرتبطة هنا مشتركة مع كل من في المؤسسة ممن يمكنهم إدارة التسويق."
+
 #: app/components/staff/onboarding/onboarding-labels.ts:20
 msgid "Acknowledge a policy"
 msgstr "الإقرار بسياسة"
@@ -1559,8 +1601,8 @@ msgstr "acme"
 msgid "Acme Inc."
 msgstr "شركة Acme"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:213
-#: app/routes/_app+/$orgSlug_+/index.tsx:239
+#: app/routes/_app+/$orgSlug_+/index.tsx:217
+#: app/routes/_app+/$orgSlug_+/index.tsx:243
 msgid "Across your organization"
 msgstr "على مستوى مؤسستك"
 
@@ -1599,6 +1641,7 @@ msgstr "نشط"
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:60
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:259
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:138
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:312
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:996
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:983
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:248
@@ -1606,7 +1649,7 @@ msgstr "نشط"
 msgid "Active"
 msgstr "نشط"
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:690
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:689
 msgid "Activity"
 msgstr "النشاط"
 
@@ -1620,12 +1663,12 @@ msgstr "النشاط"
 msgid "Add"
 msgstr "إضافة"
 
-#. placeholder {0}: member.label
 #: app/components/chat/chat-group-settings-dialog.tsx:137
-msgid "Add {0}"
-msgstr "إضافة {0}"
+#~ msgid "Add {0}"
+#~ msgstr "إضافة {0}"
 
 #: ../../packages/marketing-workflow/src/node-palette.tsx:52
+#: app/components/chat/chat-group-settings-dialog.tsx:137
 #: app/components/phone-agent/flow-editor/node-palette.tsx:80
 msgid "Add {label}"
 msgstr "إضافة {label}"
@@ -1897,6 +1940,10 @@ msgstr "إضافة حقل"
 msgid "Add hours across all workplaces"
 msgstr "احتساب الساعات في جميع أماكن العمل"
 
+#: app/components/social/post-composer.tsx:317
+msgid "Add image"
+msgstr "إضافة صورة"
+
 #: app/components/note/comment-image-upload.tsx:78
 #: app/components/note/comment-image-upload.tsx:92
 #: app/components/note/comment-image-upload.tsx:93
@@ -1912,7 +1959,7 @@ msgstr "إضافة رابط"
 msgid "Add meal break"
 msgstr "إضافة استراحة وجبة"
 
-#: app/components/app-sidebar.tsx:634
+#: app/components/app-sidebar.tsx:644
 msgid "Add members"
 msgstr "إضافة أعضاء"
 
@@ -1941,7 +1988,7 @@ msgstr "إضافة الخطوات التالية"
 msgid "Add note"
 msgstr "إضافة ملاحظة"
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:853
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:852
 msgid "Add notes, links, or media to capture what matters."
 msgstr "أضف ملاحظات أو روابط أو وسائط لتوثيق ما يهمك."
 
@@ -1957,6 +2004,10 @@ msgstr "أضف واحدًا في إعدادات نشاطك التجاري أول
 #: app/components/phone-agent/flow-editor/node-inspector.tsx:304
 msgid "Add option"
 msgstr "إضافة خيار"
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:278
+msgid "Add or refresh accounts"
+msgstr "إضافة الحسابات أو تحديثها"
 
 #: app/components/team-switcher.tsx:206
 #: app/routes/_app+/organizations.tsx:217
@@ -2301,7 +2352,7 @@ msgid "AI assistant"
 msgstr "المساعد الذكي"
 
 #: app/components/ai/global-ai-panel.tsx:341
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:691
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:690
 msgid "AI Assistant"
 msgstr "مساعد الذكاء الاصطناعي"
 
@@ -2324,6 +2375,14 @@ msgstr "وكيل الهاتف الذكي"
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:276
 msgid "AI phone calls are only available for organizations that keep customer data in the US."
 msgstr "مكالمات الهاتف بالذكاء الاصطناعي متاحة فقط للمؤسسات التي تحفظ بيانات عملائها في الولايات المتحدة."
+
+#: app/components/media-library/photo-studio-dialog.tsx:197
+msgid "AI photos are not set up for this workspace."
+msgstr "لم يتم إعداد صور الذكاء الاصطناعي لمساحة العمل هذه."
+
+#: app/routes/_app+/$orgSlug_+/media.tsx:1267
+msgid "AI studio"
+msgstr "استوديو الذكاء الاصطناعي"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2552
 msgid "Aim for one or two sentences that make someone click."
@@ -2362,6 +2421,7 @@ msgstr "المحاذاة"
 #: app/components/staff/timesheets/review-queue.tsx:166
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:258
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:66
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:207
 msgid "All"
 msgstr "الكل"
 
@@ -2469,6 +2529,10 @@ msgstr "جميع أماكن العمل (افتراضي)"
 msgid "Allocation"
 msgstr "التخصيص"
 
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:199
+msgid "Allow at least one Page you manage when Facebook asks."
+msgstr "اسمح بصفحة واحدة على الأقل من الصفحات التي تديرها عندما يطلب فيسبوك ذلك."
+
 #: app/components/staff/labor-policy-editor.tsx:647
 msgid "Allow clock-in without a scheduled shift"
 msgstr "السماح بتسجيل الحضور دون وردية مجدولة"
@@ -2510,7 +2574,7 @@ msgstr "يعمل في ذلك الوقت"
 msgid "Alt text"
 msgstr "النص البديل"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1439
+#: app/routes/_app+/$orgSlug_+/media.tsx:1501
 msgid "Alt Text"
 msgstr "النص البديل"
 
@@ -2526,6 +2590,10 @@ msgstr "المبلغ"
 #: app/utils/staffing/labor-errors.ts:41
 msgid "Amounts can have at most two decimal places."
 msgstr "يمكن أن تحتوي المبالغ على خانتين عشريتين كحد أقصى."
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:151
+msgid "An account needs to be reconnected"
+msgstr "يجب إعادة ربط أحد الحسابات"
 
 #: app/components/phone-agent/settings-nav.tsx:70
 msgid "An AI agent that answers your business's calls, answers common questions, and texts callers helpful links."
@@ -2559,7 +2627,7 @@ msgstr "تم تحديث مقابلة"
 msgid "An organization is a workspace where teams collect, organize, and work together."
 msgstr "المنظمة هي مساحة عمل حيث تجمع الفرق وتنظم وتعمل معًا."
 
-#: app/components/app-sidebar.tsx:437
+#: app/components/app-sidebar.tsx:444
 #: app/components/workspace-breadcrumb.tsx:58
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:38
 msgid "Analytics"
@@ -2573,7 +2641,7 @@ msgstr "التحليلات والتتبع"
 msgid "Announcement actions"
 msgstr "إجراءات الإعلان"
 
-#: app/components/app-sidebar.tsx:453
+#: app/components/app-sidebar.tsx:460
 #: app/components/command-menu.tsx:149
 #: app/components/workspace-breadcrumb.tsx:59
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:49
@@ -2676,7 +2744,7 @@ msgstr "تم إنشاء مفتاح API"
 msgid "API Keys"
 msgstr "مفاتيح API"
 
-#: app/components/app-sidebar.tsx:661
+#: app/components/app-sidebar.tsx:671
 msgid "App header"
 msgstr "ترويسة التطبيق"
 
@@ -2755,7 +2823,7 @@ msgstr "تاريخ التقديم"
 msgid "Apply automatically"
 msgstr "تطبيق تلقائي"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1956
+#: app/routes/_app+/$orgSlug_+/media.tsx:2018
 msgid "Applying…"
 msgstr "جارٍ التطبيق…"
 
@@ -2871,7 +2939,7 @@ msgstr "هل أنت متأكد أنك تريد حذف «{roleNameToDelete}»؟ �
 msgid "Are you sure you want to delete this comment?"
 msgstr "هل أنت متأكد أنك تريد حذف هذا التعليق؟"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:764
+#: app/routes/_app+/$orgSlug_+/media.tsx:779
 msgid "Are you sure you want to remove this media asset?"
 msgstr "هل أنت متأكد أنك تريد إزالة عنصر الوسائط هذا؟"
 
@@ -2968,6 +3036,10 @@ msgstr "تعليمات المساعد"
 #: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:91
 #~ msgid "Assistant paused"
 #~ msgstr "المساعد متوقف مؤقتًا"
+
+#: app/components/social/social-labels.ts:93
+msgid "Attach at most {SOCIAL_MAX_MEDIA} images."
+msgstr "أرفق {SOCIAL_MAX_MEDIA} صور كحد أقصى."
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:414
 msgid "Attempt: {attempt} • Executed: {executedAtLabel}"
@@ -3102,7 +3174,7 @@ msgstr "متاح في ذلك الوقت"
 msgid "Available Tools"
 msgstr "الأدوات المتاحة"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:216
+#: app/routes/_app+/$orgSlug_+/index.tsx:220
 msgid "Avg per day"
 msgstr "المتوسط اليومي"
 
@@ -3110,7 +3182,7 @@ msgstr "المتوسط اليومي"
 msgid "Avg/day"
 msgstr "المتوسط/يوم"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1239
+#: app/routes/_app+/$orgSlug_+/media.tsx:1288
 msgid "B&W"
 msgstr "أبيض وأسود"
 
@@ -3118,6 +3190,7 @@ msgstr "أبيض وأسود"
 #: app/components/kiosk/kiosk-screens.tsx:264
 #: app/components/kiosk/kiosk-screens.tsx:495
 #: app/components/kiosk/kiosk-screens.tsx:571
+#: app/components/media-library/photo-studio-dialog.tsx:979
 #: app/components/website/create-page-dialog.tsx:198
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.terminate.tsx:205
 #: app/routes/_app+/$orgSlug_+/staff+/team.bulk.tsx:192
@@ -3156,7 +3229,7 @@ msgstr "العودة إلى المكالمات"
 msgid "Back to channels"
 msgstr "العودة إلى القنوات"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1916
+#: app/routes/_app+/$orgSlug_+/media.tsx:1978
 msgid "Back to details"
 msgstr "العودة إلى التفاصيل"
 
@@ -3241,7 +3314,7 @@ msgstr "الوصول التجريبي"
 msgid "Billed monthly"
 msgstr "الفوترة الشهرية"
 
-#: app/components/app-sidebar.tsx:527
+#: app/components/app-sidebar.tsx:534
 #: app/components/command-menu.tsx:366
 #: app/components/workspace-breadcrumb.tsx:67
 msgid "Billing"
@@ -3292,11 +3365,15 @@ msgstr "نص المحتوى"
 msgid "Bold"
 msgstr "غامق"
 
+#: app/utils/media/photo-studio.ts:83
+msgid "Bold color"
+msgstr "ألوان جريئة"
+
 #: app/components/phone-agent/flow-editor/flow-meta.ts:42
 msgid "Branch on whether you're open right now."
 msgstr "التفرع حسب ما إذا كنت مفتوحًا الآن."
 
-#: app/components/app-sidebar.tsx:444
+#: app/components/app-sidebar.tsx:451
 #: app/components/website/branding-panel.tsx:244
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5133
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5134
@@ -3373,8 +3450,12 @@ msgstr "استراحات متداخلة"
 msgid "Breaks: {before} to {after}"
 msgstr "الاستراحات: من {before} إلى {after}"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1815
-#: app/routes/_app+/$orgSlug_+/media.tsx:1830
+#: app/utils/media/photo-studio.ts:128
+msgid "Bright & airy"
+msgstr "مشرق وهادئ"
+
+#: app/routes/_app+/$orgSlug_+/media.tsx:1877
+#: app/routes/_app+/$orgSlug_+/media.tsx:1892
 msgid "Brightness"
 msgstr "السطوع"
 
@@ -3411,7 +3492,7 @@ msgstr "البثّات"
 msgid "Broadcasts & automations"
 msgstr "البثّات والأتمتة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:177
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:187
 msgid "Broadcasts, automations, and performance at a glance."
 msgstr "البثّات والأتمتة والأداء في لمحة واحدة."
 
@@ -3552,6 +3633,12 @@ msgstr "حسب نسبة كل وظيفة"
 msgid "by the time clock"
 msgstr "بواسطة ساعة الدوام"
 
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:223
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:237
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:170
+msgid "Calendar"
+msgstr "التقويم"
+
 #: app/components/phone-agent/test-call-phone.tsx:186
 msgid "Call {number}"
 msgstr "اتصل بـ {number}"
@@ -3656,7 +3743,7 @@ msgstr "يسمع المتصلون كل خطوة بالترتيب. تنتظر ق�
 msgid "Calling…"
 msgstr "جارٍ الاتصال…"
 
-#: app/components/app-sidebar.tsx:369
+#: app/components/app-sidebar.tsx:376
 #: app/components/command-menu.tsx:122
 #: app/components/workspace-breadcrumb.tsx:46
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:47
@@ -3737,6 +3824,8 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/components/hiring/job-editor.tsx:910
 #: app/components/kiosk/kiosk-screens.tsx:631
 #: app/components/media-library/media-library-picker.tsx:342
+#: app/components/media-library/photo-studio-dialog.tsx:950
+#: app/components/media-library/photo-studio-dialog.tsx:977
 #: app/components/my-schedule/availability-sheet.tsx:200
 #: app/components/my-schedule/requests-view.tsx:261
 #: app/components/my-schedule/shift-change-sheet.tsx:257
@@ -3762,6 +3851,7 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/components/settings/password-form.tsx:188
 #: app/components/settings/two-factor-form.tsx:123
 #: app/components/settings/two-factor-form.tsx:261
+#: app/components/social/post-composer.tsx:423
 #: app/components/staff/access-tab.tsx:259
 #: app/components/staff/access-tab.tsx:396
 #: app/components/staff/kiosk-manager.tsx:371
@@ -3797,10 +3887,10 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/routes/_app+/$orgSlug_+/marketing+/print.new.tsx:213
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:470
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1093
-#: app/routes/_app+/$orgSlug_+/media.tsx:1603
+#: app/routes/_app+/$orgSlug_+/media.tsx:1665
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:866
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:922
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1100
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1099
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:428
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:486
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:455
@@ -3912,7 +4002,7 @@ msgstr "لم يتم ربط Canva"
 msgid "Canva's file could not be read. Try again, or open the design in Canva and save it again."
 msgstr "تعذّرت قراءة ملف Canva. حاول مرة أخرى، أو افتح التصميم في Canva واحفظه من جديد."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1464
+#: app/routes/_app+/$orgSlug_+/media.tsx:1526
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3969
 msgid "Caption"
 msgstr "التسمية التوضيحية"
@@ -4138,7 +4228,7 @@ msgstr "المعاملات مفعلة"
 msgid "Chat"
 msgstr "الدردشة"
 
-#: app/components/app-sidebar.tsx:496
+#: app/components/app-sidebar.tsx:503
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:79
 msgid "Chat channels"
 msgstr "قنوات الدردشة"
@@ -4200,6 +4290,7 @@ msgid "Check this card"
 msgstr "راجع هذه البطاقة"
 
 #: app/components/print/print-form-errors.ts:26
+#: app/components/social/social-labels.ts:97
 #: app/components/staff/details-tab.tsx:372
 msgid "Check this field."
 msgstr "راجع هذا الحقل."
@@ -4221,7 +4312,7 @@ msgstr "يجري الفحص كل بضع دقائق أثناء وجود أشخا�
 msgid "Checking for staff records…"
 msgstr "جارٍ التحقق من سجلات الموظفين…"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1502
+#: app/routes/_app+/$orgSlug_+/media.tsx:1564
 msgid "Checking references…"
 msgstr "جارٍ التحقق من المراجع…"
 
@@ -4277,6 +4368,10 @@ msgstr "اختيار ملف CSV"
 #: app/components/staff/schedule/date-range-field.tsx:79
 msgid "Choose a date"
 msgstr "اختر تاريخًا"
+
+#: app/components/social/social-labels.ts:89
+msgid "Choose a date and time."
+msgstr "اختر تاريخًا ووقتًا."
 
 #: app/components/hiring/job-editor.tsx:453
 msgid "Choose a date that is not in the past."
@@ -4364,6 +4459,14 @@ msgstr "اختر زميلًا في الفريق لبدء محادثة."
 msgid "Choose a template"
 msgstr "اختر قالباً"
 
+#: app/components/social/social-labels.ts:90
+msgid "Choose a time at least a minute from now."
+msgstr "اختر وقتًا بعد دقيقة واحدة على الأقل من الآن."
+
+#: app/components/social/social-labels.ts:91
+msgid "Choose a time within the next year."
+msgstr "اختر وقتًا خلال العام القادم."
+
 #: app/components/phone-agent/settings-page.tsx:141
 msgid "Choose a valid value."
 msgstr "اختر قيمة صالحة."
@@ -4381,9 +4484,17 @@ msgstr "اختر مكان العمل"
 msgid "Choose a workplace."
 msgstr "اختر مكان العمل."
 
+#: app/components/social/post-composer.tsx:355
+msgid "Choose an account to preview"
+msgstr "اختر حسابًا للمعاينة"
+
 #: app/components/dashboard/share-dashboard-dialog.tsx:67
 msgid "Choose an active member of this organization."
 msgstr "اختر عضوًا نشطًا في هذه المؤسسة."
+
+#: app/components/social/social-labels.ts:88
+msgid "Choose at least one account."
+msgstr "اختر حسابًا واحدًا على الأقل."
 
 #: app/components/staff/schedule/shift-editor-sheet.tsx:110
 msgid "Choose at least one day."
@@ -4453,6 +4564,10 @@ msgstr "اختر الأعضاء الذين يعملون هنا أيضًا. ست�
 #: app/utils/kiosk/kiosk-messages.ts:91
 msgid "Choose the role you are working."
 msgstr "اختر الدور الذي تعمل فيه."
+
+#: app/components/media-library/photo-studio-dialog.tsx:492
+msgid "Choose up to {PHOTO_STUDIO_MAX_PHOTOS} photos"
+msgstr "اختر حتى {PHOTO_STUDIO_MAX_PHOTOS} صور"
 
 #: app/components/dashboard/share-dashboard-dialog.tsx:69
 msgid "Choose View or Edit access."
@@ -4533,6 +4648,10 @@ msgstr "كلاسيكي"
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:788
 msgid "Claude Desktop Setup"
 msgstr "إعداد Claude Desktop"
+
+#: app/utils/media/photo-studio.ts:65
+msgid "Clean white"
+msgstr "أبيض نظيف"
 
 #: app/components/staff/schedule/schedule-page.tsx:566
 #: app/components/staff/timesheets/bulk-bar.tsx:103
@@ -4831,7 +4950,7 @@ msgid "Columns"
 msgstr "الأعمدة"
 
 #: app/components/note/comment-input.tsx:196
-#: app/routes/_app+/$orgSlug_+/media.tsx:1220
+#: app/routes/_app+/$orgSlug_+/media.tsx:1269
 msgid "Comment"
 msgstr "تعليق"
 
@@ -4839,7 +4958,7 @@ msgstr "تعليق"
 msgid "Comment actions"
 msgstr "إجراءات التعليق"
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:689
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:688
 msgid "Comments"
 msgstr "التعليقات"
 
@@ -4858,6 +4977,10 @@ msgstr "التواصل"
 #: app/routes/_auth+/waitlist.tsx:425
 msgid "Community"
 msgstr "المجتمع"
+
+#: app/components/media-library/before-after-slider.tsx:93
+msgid "Compare before and after"
+msgstr "مقارنة قبل وبعد"
 
 #: ../../packages/reports/src/ui/report-labels.ts:29
 msgid "Compare wages as a share of sales across your workplaces."
@@ -5006,9 +5129,26 @@ msgstr "يستغرق التأكيد وقتًا أطول من المعتاد. ح�
 msgid "Connect"
 msgstr "اتصال"
 
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:279
+msgid "Connect {platformName}"
+msgstr "ربط {platformName}"
+
+#: app/components/social/post-composer.tsx:196
+msgid "Connect a Facebook Page or an Instagram account to publish. You can still save a draft."
+msgstr "اربط صفحة فيسبوك أو حساب إنستغرام للنشر. لا يزال بإمكانك حفظ مسودة."
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:137
+msgid "Connect a Facebook Page or an Instagram professional account to start publishing."
+msgstr "اربط صفحة فيسبوك أو حساب إنستغرام احترافيًا لبدء النشر."
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:296
 msgid "Connect a phone number"
 msgstr "ربط رقم هاتف"
+
+#: app/components/social/post-composer.tsx:203
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:144
+msgid "Connect accounts"
+msgstr "ربط الحسابات"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:260
 msgid "Connect Canva"
@@ -5034,6 +5174,10 @@ msgstr "اربط منصات التحليلات التي تستخدمها على 
 msgid "Connect the caller to a person, such as a manager."
 msgstr "تحويل المتصل إلى شخص، مثل المدير."
 
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:133
+msgid "Connect your accounts"
+msgstr "اربط حساباتك"
+
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1360
 msgid "Connect your AI assistants to {organizationName} data using the Model Context Protocol"
 msgstr "ربط مساعدي الذكاء الاصطناعي ببيانات {organizationName} باستخدام بروتوكول سياق النموذج"
@@ -5049,6 +5193,10 @@ msgstr "اربط عميل الذكاء الاصطناعي المفضل لديك 
 #: app/components/staff/kiosk-manager.tsx:718
 msgid "Connected"
 msgstr "متصل"
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:304
+msgid "Connected {date}"
+msgstr "تم الربط في {date}"
 
 #: app/routes/mock-payments+/stripe.connect.onboard.$linkId.tsx:73
 msgid "Connected account"
@@ -5081,6 +5229,14 @@ msgstr "تم الربط بـ Canva باسم {who}."
 #: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:273
 msgid "Connected to Canva."
 msgstr "تم الربط بـ Canva."
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:224
+msgid "Connecting accounts is not available yet"
+msgstr "ربط الحسابات غير متاح بعد"
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:237
+msgid "Connecting adds a sample account and nothing is really posted. A post containing #fail is refused, to try the retry path."
+msgstr "يؤدي الربط إلى إضافة حساب تجريبي ولا يُنشر أي شيء فعليًا. يتم رفض أي منشور يحتوي على #fail لتجربة مسار إعادة المحاولة."
 
 #: app/components/chat/chat-view.tsx:985
 msgid "Connecting to team chat…"
@@ -5124,6 +5280,7 @@ msgid "Contains (Partial Match)"
 msgstr "يحتوي (تطابق جزئي)"
 
 #: app/components/settings/cards/organization/announcement-sheet.tsx:435
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:364
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:627
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3292
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3482
@@ -5172,12 +5329,12 @@ msgstr "عقد"
 msgid "Contractor"
 msgstr "متعاقد"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1837
-#: app/routes/_app+/$orgSlug_+/media.tsx:1852
+#: app/routes/_app+/$orgSlug_+/media.tsx:1899
+#: app/routes/_app+/$orgSlug_+/media.tsx:1914
 msgid "Contrast"
 msgstr "التباين"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:237
+#: app/routes/_app+/$orgSlug_+/index.tsx:241
 msgid "Contributors"
 msgstr "المساهمون"
 
@@ -5189,7 +5346,7 @@ msgstr "التحكم في من يمكنه الوصول إلى هذه الملا�
 msgid "Conversation"
 msgstr "محادثة"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1242
+#: app/routes/_app+/$orgSlug_+/media.tsx:1291
 msgid "Cool"
 msgstr "بارد"
 
@@ -5209,6 +5366,10 @@ msgstr "وردية منسوخة جاهزة للصق"
 #: app/components/staff/schedule/copy-week-dialog.tsx:163
 msgid "Copied shifts arrive as drafts. Nothing reaches your team until you publish."
 msgstr "تصل الورديات المنسوخة كمسودات. لا يصل شيء إلى فريقك حتى تنشر."
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:128
+msgid "Copied to a new draft."
+msgstr "تم النسخ إلى مسودة جديدة."
 
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:314
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:572
@@ -5263,7 +5424,7 @@ msgstr "نسخ إلى هذا الأسبوع"
 
 #: app/components/hiring/job-share-panel.tsx:87
 #: app/components/staff/kiosk-manager.tsx:782
-#: app/routes/_app+/$orgSlug_+/media.tsx:919
+#: app/routes/_app+/$orgSlug_+/media.tsx:944
 #: app/routes/_app+/$orgSlug_+/notes-cards.tsx:220
 msgid "Copy link"
 msgstr "نسخ الرابط"
@@ -5284,7 +5445,11 @@ msgstr "نسخ هذا الأسبوع إلى مكان آخر"
 msgid "Copy to"
 msgstr "النسخ إلى"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1385
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:353
+msgid "Copy to new draft"
+msgstr "نسخ إلى مسودة جديدة"
+
+#: app/routes/_app+/$orgSlug_+/media.tsx:1447
 msgid "Copy URL"
 msgstr "نسخ الرابط"
 
@@ -5660,7 +5825,7 @@ msgstr "إنشاء دور"
 msgid "Create your first API key to get started"
 msgstr "أنشئ مفتاح API الأول للبدء"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:257
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:267
 msgid "Create your first broadcast"
 msgstr "أنشئ أول بث لك"
 
@@ -5937,6 +6102,10 @@ msgstr "خطر"
 msgid "Dark"
 msgstr "داكن"
 
+#: app/utils/media/photo-studio.ts:92
+msgid "Dark & dramatic"
+msgstr "داكن ودرامي"
+
 #: app/components/nav-user.tsx:90
 msgid "Dark mode"
 msgstr "الوضع الداكن"
@@ -6118,6 +6287,10 @@ msgstr "خصم استراحة غير مدفوعة"
 msgid "Deduct an unpaid break when none was recorded"
 msgstr "خصم استراحة غير مدفوعة عند عدم تسجيل أي استراحة"
 
+#: app/utils/media/photo-studio.ts:93
+msgid "Deep black background, moody rim light"
+msgstr "خلفية سوداء عميقة وإضاءة جانبية موحية"
+
 #: app/components/website/link-inspector.tsx:612
 #: app/components/website/link-inspector.tsx:628
 msgid "Default"
@@ -6167,9 +6340,10 @@ msgstr "وحدة التأخير مطلوبة."
 #: app/components/staff/notes-tab.tsx:207
 #: app/components/staff/schedule/templates-dialog.tsx:250
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:469
-#: app/routes/_app+/$orgSlug_+/media.tsx:1591
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1053
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1112
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:171
+#: app/routes/_app+/$orgSlug_+/media.tsx:1653
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1052
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1111
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:167
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:490
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:527
@@ -6298,7 +6472,7 @@ msgstr "حذف الرسالة؟"
 msgid "Delete node"
 msgstr "حذف العقدة"
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1089
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1088
 msgid "Delete note?"
 msgstr "هل تريد حذف الملاحظة؟"
 
@@ -6318,6 +6492,10 @@ msgstr "حذف الملاحظات الخاصة"
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:487
 msgid "Delete page?"
 msgstr "حذف الصفحة؟"
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:147
+msgid "Delete post"
+msgstr "حذف المنشور"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3650
 msgid "Delete question"
@@ -6366,6 +6544,10 @@ msgstr "حذف هذه الوظيفة؟"
 #: app/components/staff/notes-tab.tsx:181
 msgid "Delete this note?"
 msgstr "حذف هذه الملاحظة؟"
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:153
+msgid "Delete this post?"
+msgstr "هل تريد حذف هذا المنشور؟"
 
 #: app/components/staff/timesheets/card-sheet.tsx:429
 msgid "Delete this time card?"
@@ -6419,8 +6601,8 @@ msgstr "رفض"
 msgid "Describe the role, the pay and what you want to ask."
 msgstr "صف الدور والأجر وما تريد أن تسأل عنه."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1442
-#: app/routes/_app+/$orgSlug_+/media.tsx:1455
+#: app/routes/_app+/$orgSlug_+/media.tsx:1504
+#: app/routes/_app+/$orgSlug_+/media.tsx:1517
 msgid "Describe this image for accessibility"
 msgstr "صِف هذه الصورة لتحسين إمكانية الوصول"
 
@@ -6533,7 +6715,7 @@ msgstr "لم أفهم ذلك"
 msgid "Didn't receive the email? Check your spam folder, or try again with a different email address."
 msgstr "لم تستلم البريد الإلكتروني؟ تحقق من مجلد البريد العشوائي، أو حاول مرة أخرى بعنوان بريد إلكتروني مختلف."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1332
+#: app/routes/_app+/$orgSlug_+/media.tsx:1394
 msgid "Dimensions:"
 msgstr "الأبعاد:"
 
@@ -6579,8 +6761,14 @@ msgstr "تجاهل التغييرات غير المحفوظة؟"
 
 #: app/components/settings/cards/organization/integrations-card.tsx:225
 #: app/components/settings/connections.tsx:89
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:319
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:348
 msgid "Disconnect"
 msgstr "قطع الاتصال"
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:326
+msgid "Disconnect {accountName}?"
+msgstr "هل تريد فصل {accountName}؟"
 
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1077
 msgid "Disconnect any active MCP connections"
@@ -6705,6 +6893,7 @@ msgstr "للأسفل"
 msgid "Down by {absTrend}% this period"
 msgstr "انخفض بنسبة {absTrend}٪ في هذه الفترة"
 
+#: app/components/media-library/photo-studio-dialog.tsx:872
 #: app/components/settings/backup-codes-display.tsx:99
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1065
 msgid "Download"
@@ -6742,6 +6931,7 @@ msgstr "مسودة"
 #: app/components/hiring/job-labels.ts:49
 #: app/components/phone-agent/test-call-panel.tsx:490
 #: app/components/phone-agent/test-call-panel.tsx:551
+#: app/components/social/social-labels.ts:22
 #: app/components/staff/schedule/shift-block.tsx:33
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:59
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:260
@@ -6787,6 +6977,10 @@ msgstr "تم حفظ المسودة · لم تُنشر بعد"
 msgid "Draft saved · v{publishedVersion} is live"
 msgstr "تم حفظ المسودة · الإصدار v{publishedVersion} منشور"
 
+#: app/utils/social/post-form.server.ts:110
+msgid "Draft saved."
+msgstr "تم حفظ المسودة."
+
 #: ../../packages/ai/src/components/ai-chat.tsx:432
 msgid "Draft something for me"
 msgstr "اكتب مسودة لي"
@@ -6808,6 +7002,10 @@ msgstr "جارٍ كتابة المسودة..."
 msgid "Drafting…"
 msgstr "جارٍ إعداد المسودة…"
 
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:257
+msgid "Drafts without a date"
+msgstr "مسودات بلا تاريخ"
+
 #: app/components/staff/schedule/day-timeline.tsx:558
 msgid "Drag a shift sideways to change its time, up or down to give it to someone else, or drag an end to resize it."
 msgstr "اسحب الوردية جانبيًا لتغيير وقتها، أو للأعلى أو الأسفل لإعطائها لشخص آخر، أو اسحب أحد طرفيها لتغيير مدتها."
@@ -6815,6 +7013,10 @@ msgstr "اسحب الوردية جانبيًا لتغيير وقتها، أو ل
 #: app/components/phone-agent/flow-editor/node-palette.tsx:93
 msgid "Drag a step onto the canvas, or select + to add it."
 msgstr "اسحب خطوة إلى اللوحة، أو اختر + لإضافتها."
+
+#: app/components/media-library/photo-studio-dialog.tsx:849
+msgid "Drag the slider to compare."
+msgstr "اسحب المؤشر للمقارنة."
 
 #: app/components/dashboard/dashboard-block-frame.tsx:41
 msgid "Drag to move"
@@ -6887,6 +7089,10 @@ msgstr "مثل: من نحن"
 msgid "e.g. about-us"
 msgstr "مثل: about-us"
 
+#: app/components/media-library/photo-studio-dialog.tsx:744
+msgid "e.g. Add a few fresh flowers in the background"
+msgstr "مثال: أضف بعض الزهور الطازجة في الخلفية"
+
 #: app/components/website/link-inspector.tsx:473
 msgid "e.g. bob@gmail.com"
 msgstr "مثل: bob@gmail.com"
@@ -6898,6 +7104,10 @@ msgstr "مثال: checkout_abandoned, tier_upgraded"
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:391
 msgid "e.g. cust_123"
 msgstr "مثال: cust_123"
+
+#: app/components/media-library/photo-studio-dialog.tsx:899
+msgid "e.g. Make the background a little darker"
+msgstr "مثال: اجعل الخلفية أغمق قليلًا"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:797
 msgid "e.g. product or brand names"
@@ -6986,7 +7196,7 @@ msgstr "انصراف مبكر"
 #: app/components/staff/timesheets/review-queue.tsx:439
 #: app/components/workspace-breadcrumb.tsx:23
 #: app/routes/_app+/$orgSlug_+/notes-table.tsx:92
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:996
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:995
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:159
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:240
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:483
@@ -7040,8 +7250,8 @@ msgstr "تعديل تواريخ الميلاد وعناوين السكن وجه�
 msgid "Edit design"
 msgstr "تعديل التصميم"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1312
-#: app/routes/_app+/$orgSlug_+/media.tsx:1630
+#: app/routes/_app+/$orgSlug_+/media.tsx:1361
+#: app/routes/_app+/$orgSlug_+/media.tsx:1692
 msgid "Edit image"
 msgstr "تعديل الصورة"
 
@@ -7058,7 +7268,7 @@ msgstr "تعديل التخطيط"
 msgid "Edit message"
 msgstr "تعديل الرسالة"
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:867
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:866
 msgid "Edit note"
 msgstr "تعديل الملاحظة"
 
@@ -7073,6 +7283,10 @@ msgstr "تعديل الملاحظات الخاصة"
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:375
 msgid "Edit position"
 msgstr "تعديل المنصب"
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:226
+msgid "Edit post"
+msgstr "تعديل المنشور"
 
 #: app/components/roles/tenant-role-access-manager.tsx:296
 msgid "Edit private details"
@@ -7125,7 +7339,7 @@ msgstr "معدّلة"
 msgid "Edited, not published"
 msgstr "معدّلة وغير منشورة"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1799
+#: app/routes/_app+/$orgSlug_+/media.tsx:1861
 msgid "Editor preview"
 msgstr "معاينة المحرر"
 
@@ -7328,6 +7542,16 @@ msgstr "تنتهي في اليوم التالي."
 #: app/components/phone-agent/voice-picker.tsx:58
 msgid "English"
 msgstr "الإنجليزية"
+
+#: app/components/media-library/photo-studio-dialog.tsx:447
+#: app/routes/_app+/$orgSlug_+/media.tsx:855
+#: app/routes/_app+/$orgSlug_+/media.tsx:1374
+msgid "Enhance with AI"
+msgstr "تحسين بالذكاء الاصطناعي"
+
+#: app/components/media-library/photo-studio-dialog.tsx:842
+msgid "Enhanced"
+msgstr "بعد التحسين"
 
 #: app/components/print/print-form-errors.ts:19
 msgid "Enter 0 or more copies"
@@ -7842,9 +8066,33 @@ msgstr "تم تصدير {count} صفًا."
 msgid "Exported {exportedCount} people."
 msgstr "تم تصدير {exportedCount} شخصًا."
 
+#: app/components/media-library/photo-studio-dialog.tsx:737
+msgid "Extra direction (optional)"
+msgstr "توجيه إضافي (اختياري)"
+
+#: app/components/social/social-labels.ts:14
+msgid "Facebook"
+msgstr "فيسبوك"
+
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:121
+msgid "Facebook and Instagram posts"
+msgstr "منشورات فيسبوك وإنستغرام"
+
+#: app/components/social/social-labels.ts:51
+msgid "Facebook needs an image."
+msgstr "يتطلب فيسبوك صورة."
+
+#: app/components/social/social-labels.ts:49
+msgid "Facebook needs text or an image."
+msgstr "يتطلب فيسبوك نصًا أو صورة."
+
 #: app/components/settings/cards/organization/site-analytics-card.tsx:102
 msgid "Facebook Pixel ID"
 msgstr "معرّف بكسل Facebook"
+
+#: app/components/social/social-labels.ts:52
+msgid "Facebook takes at most {SOCIAL_MAX_MEDIA} images."
+msgstr "يقبل فيسبوك {SOCIAL_MAX_MEDIA} صور كحد أقصى."
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3391
 msgid "Fade up"
@@ -7857,6 +8105,8 @@ msgstr "فشل المصادقة"
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:10
 #: app/components/phone-agent/call-data.ts:136
 #: app/components/print/print-order-labels.ts:19
+#: app/components/social/social-labels.ts:27
+#: app/components/social/social-labels.ts:37
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:146
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:69
 msgid "Failed"
@@ -7894,11 +8144,11 @@ msgstr "فشل حذف الرحلة"
 msgid "Failed to duplicate journey"
 msgstr "فشل تكرار الرحلة"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1151
+#: app/routes/_app+/$orgSlug_+/media.tsx:1198
 msgid "Failed to export edited image."
 msgstr "تعذر تصدير الصورة المعدّلة."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1167
+#: app/routes/_app+/$orgSlug_+/media.tsx:1214
 msgid "Failed to export image copy."
 msgstr "تعذر تصدير نسخة الصورة."
 
@@ -7914,7 +8164,7 @@ msgstr "فشل العثور على الرحلة الأصلية"
 msgid "Failed to format graph for validation"
 msgstr "فشل تنسيق الرسم البياني للتحقق"
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:905
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:904
 msgid "Failed to load AI Assistant"
 msgstr "فشل تحميل مساعد الذكاء الاصطناعي"
 
@@ -7930,7 +8180,7 @@ msgstr "فشل تحميل الحملات"
 msgid "Failed to load journeys from regional tenant storage."
 msgstr "فشل تحميل الرحلات من تخزين المستأجر الإقليمي."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:160
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:170
 msgid "Failed to load marketing metrics"
 msgstr "فشل تحميل مقاييس التسويق"
 
@@ -8033,12 +8283,12 @@ msgstr "تغيّرت الأرقام"
 msgid "File"
 msgstr "ملف"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1402
+#: app/routes/_app+/$orgSlug_+/media.tsx:1464
 msgid "File name of the media asset"
 msgstr "اسم ملف عنصر الوسائط"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1400
-#: app/routes/_app+/$orgSlug_+/media.tsx:1413
+#: app/routes/_app+/$orgSlug_+/media.tsx:1462
+#: app/routes/_app+/$orgSlug_+/media.tsx:1475
 msgid "Filename"
 msgstr "اسم الملف"
 
@@ -8092,7 +8342,7 @@ msgstr "التصفية حسب الوسم"
 msgid "Filter by workplace"
 msgstr "تصفية حسب مكان العمل"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:808
+#: app/routes/_app+/$orgSlug_+/media.tsx:823
 msgid "Find and reuse images uploaded across notes, comments, your website, and organization settings."
 msgstr "البحث عن الصور وإعادة استخدامها عبر الملاحظات والتعليقات وموقع الويب وإعدادات المؤسسة."
 
@@ -8170,11 +8420,11 @@ msgstr "تمييز الورديات الطويلة للمراجعة"
 msgid "Flag shifts longer than"
 msgstr "تعليم الورديات الأطول من"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1701
+#: app/routes/_app+/$orgSlug_+/media.tsx:1763
 msgid "Flip horizontally"
 msgstr "قلب أفقيًا"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1731
+#: app/routes/_app+/$orgSlug_+/media.tsx:1793
 msgid "Flip vertically"
 msgstr "قلب عموديًا"
 
@@ -8263,7 +8513,7 @@ msgstr "ردود النماذج"
 msgid "Form submissions are redacted on a best-effort basis: only ones that contain the exact phone number or email address are found. Backups are not changed."
 msgstr "يتم حجب بيانات نماذج الإرسال بأفضل جهد ممكن: لا يتم العثور إلا على ما يحتوي على رقم الهاتف أو البريد الإلكتروني نفسه تمامًا. لا تتغير النسخ الاحتياطية."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1355
+#: app/routes/_app+/$orgSlug_+/media.tsx:1417
 msgid "Format:"
 msgstr "التنسيق:"
 
@@ -8275,7 +8525,7 @@ msgstr "التنسيق"
 msgid "Former member"
 msgstr "عضو سابق"
 
-#: app/components/app-sidebar.tsx:432
+#: app/components/app-sidebar.tsx:439
 #: app/components/command-menu.tsx:148
 #: app/components/workspace-breadcrumb.tsx:57
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:46
@@ -8374,7 +8624,7 @@ msgstr "دوام كامل"
 msgid "Full width"
 msgstr "عرض كامل"
 
-#: app/components/app-sidebar.tsx:475
+#: app/components/app-sidebar.tsx:482
 #: app/components/phone-agent/vertical-labels.ts:27
 #: app/components/phone-agent/vertical-labels.ts:39
 #: app/components/workspace-breadcrumb.tsx:62
@@ -8385,7 +8635,7 @@ msgstr "عام"
 msgid "General manager"
 msgstr "المدير العام"
 
-#: app/components/app-sidebar.tsx:422
+#: app/components/app-sidebar.tsx:429
 #: app/components/settings/cards/organization/general-settings-card.tsx:65
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:21
 msgid "General Settings"
@@ -8417,16 +8667,20 @@ msgstr "جارٍ إنشاء متغيرات الأيقونة. قد يستغرق �
 msgid "Generating..."
 msgstr "جاري الإنشاء..."
 
+#: app/components/media-library/photo-studio-dialog.tsx:919
+msgid "Generating…"
+msgstr "جارٍ الإنشاء…"
+
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:452
 msgid "Get a new price"
 msgstr "الحصول على سعر جديد"
 
-#: app/components/app-sidebar.tsx:626
+#: app/components/app-sidebar.tsx:636
 msgid "Get chrome extension"
 msgstr "احصل على إضافة كروم"
 
 #: app/components/app-sidebar.tsx:166
-#: app/components/app-sidebar.tsx:641
+#: app/components/app-sidebar.tsx:651
 msgid "Get help"
 msgstr "احصل على المساعدة"
 
@@ -8454,7 +8708,7 @@ msgid "Give away {when}"
 msgstr "التخلي عن {when}"
 
 #: app/components/app-sidebar.tsx:174
-#: app/components/app-sidebar.tsx:649
+#: app/components/app-sidebar.tsx:659
 #: app/components/core/feedback-modal.tsx:69
 msgid "Give feedback"
 msgstr "إرسال ملاحظات"
@@ -8512,15 +8766,19 @@ msgstr "الذهاب إلى الصفحة الرئيسية"
 #~ msgid "Go-live checklist"
 #~ msgstr "قائمة التحقق قبل الإطلاق"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:170
+#: app/utils/media/photo-studio.ts:120
+msgid "Golden light, rich textures"
+msgstr "إضاءة ذهبية وملمس غني"
+
+#: app/routes/_app+/$orgSlug_+/index.tsx:171
 msgid "Good afternoon, {userName}"
 msgstr "مساء الخير، {userName}"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:171
+#: app/routes/_app+/$orgSlug_+/index.tsx:172
 msgid "Good evening, {userName}"
 msgstr "مساء الخير، {userName}"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:169
+#: app/routes/_app+/$orgSlug_+/index.tsx:170
 msgid "Good morning, {userName}"
 msgstr "صباح الخير، {userName}"
 
@@ -8553,8 +8811,8 @@ msgstr "بيانات الرسم البياني مفقودة"
 msgid "Gray color"
 msgstr "اللون الرمادي"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1881
-#: app/routes/_app+/$orgSlug_+/media.tsx:1896
+#: app/routes/_app+/$orgSlug_+/media.tsx:1943
+#: app/routes/_app+/$orgSlug_+/media.tsx:1958
 msgid "Grayscale"
 msgstr "تدرج الرمادي"
 
@@ -8811,7 +9069,7 @@ msgid "Hired."
 msgstr "تم التوظيف."
 
 #: ../../packages/reports/src/ui/report-labels.ts:83
-#: app/components/app-sidebar.tsx:409
+#: app/components/app-sidebar.tsx:416
 #: app/components/command-menu.tsx:137
 #: app/components/roles/tenant-role-access-manager.tsx:364
 #: app/components/workspace-breadcrumb.tsx:37
@@ -9077,19 +9335,24 @@ msgstr "إذا انتقلت من موقع ويب أقدم أو غيّرت عنا
 msgid "Image"
 msgstr "صورة"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:724
+#: app/routes/_app+/$orgSlug_+/media.tsx:739
 msgid "Image added to your media library"
 msgstr "تمت إضافة الصورة إلى مكتبة الوسائط"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:915
+#: app/routes/_app+/$orgSlug_+/media.tsx:940
 msgid "Image link copied"
 msgstr "تم نسخ رابط الصورة"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:735
+#: app/components/social/social-calendar.tsx:181
+#: app/components/social/social-calendar.tsx:231
+msgid "Image post"
+msgstr "منشور بصورة"
+
+#: app/routes/_app+/$orgSlug_+/media.tsx:750
 msgid "Image removed from media library"
 msgstr "تمت إزالة الصورة من مكتبة الوسائط"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:732
+#: app/routes/_app+/$orgSlug_+/media.tsx:747
 msgid "Image replaced successfully"
 msgstr "تم استبدال الصورة بنجاح"
 
@@ -9101,6 +9364,10 @@ msgstr "صورة للقص"
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4055
 msgid "Image URL"
 msgstr "رابط الصورة"
+
+#: app/components/social/post-composer.tsx:276
+msgid "Images"
+msgstr "الصور"
 
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1074
 msgid "Immediately invalidate all tokens for this client"
@@ -9248,6 +9515,46 @@ msgstr "إدراج حقل هنا"
 msgid "Inspect"
 msgstr "استعراض"
 
+#: app/components/social/social-labels.ts:15
+msgid "Instagram"
+msgstr "إنستغرام"
+
+#: app/components/social/social-labels.ts:60
+msgid "Instagram allows at most {instagramMaxHashtags} hashtags."
+msgstr "يسمح إنستغرام بحد أقصى {instagramMaxHashtags} وسمًا."
+
+#: app/components/social/social-labels.ts:57
+msgid "Instagram captions are at most {instagramMaxText} characters."
+msgstr "تصل التعليقات على إنستغرام إلى {instagramMaxText} حرفًا كحد أقصى."
+
+#: app/components/social/social-labels.ts:72
+msgid "Instagram could not process the image. Use an aspect ratio between 4:5 and 1.91:1."
+msgstr "تعذّرت معالجة الصورة على إنستغرام. استخدم نسبة أبعاد بين 4:5 و1.91:1."
+
+#: app/components/social/social-labels.ts:56
+msgid "Instagram needs an image."
+msgstr "يتطلب إنستغرام صورة."
+
+#: app/components/social/social-labels.ts:58
+msgid "Instagram needs at least one image."
+msgstr "يتطلب إنستغرام صورة واحدة على الأقل."
+
+#: app/components/social/post-composer.tsx:279
+msgid "Instagram needs at least one image. Several images become a carousel."
+msgstr "يتطلب إنستغرام صورة واحدة على الأقل. تتحول الصور المتعددة إلى شريط صور متحرك."
+
+#: app/components/social/social-labels.ts:71
+msgid "Instagram posts need an image."
+msgstr "تتطلب منشورات إنستغرام صورة."
+
+#: app/components/social/social-labels.ts:59
+msgid "Instagram takes at most {SOCIAL_MAX_MEDIA} images."
+msgstr "يقبل إنستغرام {SOCIAL_MAX_MEDIA} صور كحد أقصى."
+
+#: app/components/social/social-labels.ts:73
+msgid "Instagram took too long to process the image. Try again."
+msgstr "استغرقت معالجة الصورة على إنستغرام وقتًا طويلًا. حاول مرة أخرى."
+
 #: app/components/settings/cards/organization/mock-payments-panel.tsx:55
 msgid "Instantly enable Checkout.com (mock)"
 msgstr "تفعيل Checkout.com فورًا (محاكاة)"
@@ -9256,10 +9563,10 @@ msgstr "تفعيل Checkout.com فورًا (محاكاة)"
 msgid "Instantly enable Stripe (mock)"
 msgstr "تفعيل Stripe فورًا (محاكاة)"
 
-#: app/components/app-sidebar.tsx:503
+#: app/components/app-sidebar.tsx:510
 #: app/components/settings/cards/organization/integrations-card.tsx:101
 #: app/components/workspace-breadcrumb.tsx:65
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1035
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1034
 msgid "Integrations"
 msgstr "التكاملات"
 
@@ -9456,6 +9763,10 @@ msgstr "ستُزال من ملفهم. يُسجَّل ذلك في سجل المو
 msgid "It is too early to clock in for your shift."
 msgstr "الوقت مبكر جدًا لتسجيل الحضور لورديتك."
 
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:157
+msgid "It leaves the calendar here. What is already on Facebook or Instagram stays there: delete it on the platform if needed."
+msgstr "سيُزال من التقويم هنا. ما نُشر بالفعل على فيسبوك أو إنستغرام يبقى هناك: احذفه من المنصة إذا لزم الأمر."
+
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1019
 msgid "It leaves the Print shop list. Orders already placed keep printing it."
 msgstr "ستُزال من قائمة المطبعة. الطلبات المقدّمة مسبقًا تواصل طباعتها."
@@ -9467,6 +9778,10 @@ msgstr "يبدأ الرد من المكالمة التالية."
 #: app/components/staff/schedule/time-off-sheet.tsx:152
 msgid "It was entered on short notice."
 msgstr "أُدخلت قبل وقت قصير."
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:159
+msgid "It will not be published."
+msgstr "لن يتم نشره."
 
 #: app/components/hiring/description-editor.tsx:109
 msgid "Italic"
@@ -9567,6 +9882,10 @@ msgstr "إبقاء"
 msgid "Keep current region"
 msgstr "الإبقاء على المنطقة الحالية"
 
+#: app/utils/media/photo-studio.test.ts:20
+msgid "Keep dishware"
+msgstr "الاحتفاظ بالأواني"
+
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:202
 #: app/components/staff/labor-policy-editor.tsx:291
 msgid "Keep editing"
@@ -9575,6 +9894,8 @@ msgstr "متابعة التعديل"
 #: app/components/staff/kiosk-manager.tsx:970
 #: app/components/staff/schedule/shift-editor-sheet.tsx:737
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1024
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:163
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:335
 msgid "Keep it"
 msgstr "إبقاؤه"
 
@@ -9582,13 +9903,25 @@ msgstr "إبقاؤه"
 msgid "Keep recordings for"
 msgstr "الاحتفاظ بالتسجيلات لمدة"
 
+#: app/utils/media/photo-studio.ts:138
+msgid "Keep the camera angle"
+msgstr "الاحتفاظ بزاوية الكاميرا"
+
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:419
 msgid "Keep the order"
 msgstr "الإبقاء على الطلب"
 
+#: app/utils/media/photo-studio.test.ts:21
+msgid "Keep the plate from your photo"
+msgstr "الاحتفاظ بالطبق من صورتك"
+
 #: app/components/hiring/applicant-labels.ts:79
 msgid "Keep their details on file"
 msgstr "الاحتفاظ ببياناتهم"
+
+#: app/components/media-library/photo-studio-dialog.tsx:999
+msgid "Keep this window open until it finishes."
+msgstr "أبقِ هذه النافذة مفتوحة حتى تنتهي العملية."
 
 #: app/components/staff/onboarding/certificates-tab.tsx:132
 msgid "Keep track of licences and certificates, and get a reminder before one expires."
@@ -9684,7 +10017,7 @@ msgid "Label calls to find them later. With automatic tagging on, the agent appl
 msgstr "صنّف المكالمات بوسوم لتجدها لاحقًا. عند تفعيل الوسم التلقائي، يطبّق الوكيل الوسم عندما يتطابق الوصف مع المكالمة."
 
 #: ../../packages/reports/src/ui/report-labels.ts:82
-#: app/components/app-sidebar.tsx:404
+#: app/components/app-sidebar.tsx:411
 #: app/components/command-menu.tsx:136
 #: app/components/staff/labor/labor-page.tsx:211
 #: app/components/staff/labor/labor-page.tsx:240
@@ -9759,16 +10092,16 @@ msgstr "كبير"
 msgid "Large orders can arrive in more than one parcel."
 msgstr "قد تصل الطلبات الكبيرة في أكثر من طرد."
 
-#. placeholder {0}: notes.daysShown
 #: app/routes/_app+/$orgSlug_+/index.tsx:220
-msgid "Last {0} days"
-msgstr "آخر {0} يومًا"
+#~ msgid "Last {0} days"
+#~ msgstr "آخر {0} يومًا"
 
 #: app/components/staff/labor/labor-page.tsx:330
 msgid "Last {days} days"
 msgstr "آخر {days} يوم"
 
 #: app/components/notes-chart.tsx:63
+#: app/routes/_app+/$orgSlug_+/index.tsx:224
 msgid "Last {daysShown} days"
 msgstr "آخر {daysShown} يوم"
 
@@ -9993,6 +10326,10 @@ msgstr "السماح للوكيل بتحويل المكالمات"
 msgid "Licences and cards, and when they expire."
 msgstr "التراخيص والبطاقات وتواريخ انتهائها."
 
+#: app/utils/media/photo-studio.ts:59
+msgid "Lifestyle"
+msgstr "نمط الحياة"
+
 #: app/components/settings/cards/organization/site-theme-card.tsx:737
 msgid "Light"
 msgstr "فاتح"
@@ -10000,6 +10337,10 @@ msgstr "فاتح"
 #: app/components/nav-user.tsx:89
 msgid "Light mode"
 msgstr "الوضع الفاتح"
+
+#: app/utils/media/photo-studio.ts:129
+msgid "Light pastel tones, lots of space"
+msgstr "ألوان باستيل فاتحة ومساحة واسعة"
 
 #: app/utils/organization/role-label.ts:22
 msgid "Limited access for temporary collaborators"
@@ -10068,6 +10409,7 @@ msgid "Links sent"
 msgstr "الروابط المرسلة"
 
 #: app/components/hiring/applicants-page.tsx:344
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:226
 msgid "List"
 msgstr "قائمة"
 
@@ -10111,7 +10453,7 @@ msgstr "تحميل الرسائل الأقدم"
 msgid "Loading"
 msgstr "جاري التحميل"
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:929
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:928
 msgid "Loading AI Assistant..."
 msgstr "جاري تحميل مساعد الذكاء الاصطناعي..."
 
@@ -10258,7 +10600,11 @@ msgstr "جارٍ تحميل من هم على الساعة"
 msgid "Loading…"
 msgstr "جارٍ التحميل…"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1419
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:234
+msgid "Local emulator"
+msgstr "محاكي محلي"
+
+#: app/routes/_app+/$orgSlug_+/media.tsx:1481
 msgid "Location"
 msgstr "الموقع"
 
@@ -10405,7 +10751,7 @@ msgstr "مصادر صندوق الوارد"
 msgid "Main language"
 msgstr "اللغة الرئيسية"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1234
+#: app/routes/_app+/$orgSlug_+/media.tsx:1283
 msgid "Main library"
 msgstr "المكتبة الرئيسية"
 
@@ -10574,6 +10920,10 @@ msgstr "إجابات كثيرة مختلفة"
 msgid "Many wrong PINs"
 msgstr "أرقام سرية خاطئة كثيرة"
 
+#: app/utils/media/photo-studio.ts:110
+msgid "Marble"
+msgstr "رخام"
+
 #: app/components/staff/timesheets/review-queue.tsx:190
 msgid "Mark {reviewableCount} as reviewed"
 msgstr "تحديد {reviewableCount} كمراجَعة"
@@ -10635,7 +10985,7 @@ msgstr "محدد كغير متاح"
 #: app/components/command-menu.tsx:100
 #: app/components/roles/tenant-role-access-manager.tsx:182
 #: app/components/workspace-breadcrumb.tsx:14
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:175
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:185
 msgid "Marketing"
 msgstr "التسويق"
 
@@ -10671,7 +11021,7 @@ msgstr "تعليمات إعداد MCP OAuth"
 msgid "MCP server"
 msgstr "خادم MCP"
 
-#: app/components/app-sidebar.tsx:513
+#: app/components/app-sidebar.tsx:520
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1359
 msgid "MCP Server"
 msgstr "خادم MCP"
@@ -10688,11 +11038,11 @@ msgstr "استراحة وجبة"
 msgid "Media"
 msgstr "الوسائط"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1254
+#: app/routes/_app+/$orgSlug_+/media.tsx:1303
 msgid "Media details"
 msgstr "تفاصيل الوسائط"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:729
+#: app/routes/_app+/$orgSlug_+/media.tsx:744
 msgid "Media details saved"
 msgstr "تم حفظ تفاصيل الوسائط"
 
@@ -10700,7 +11050,7 @@ msgstr "تم حفظ تفاصيل الوسائط"
 #: app/components/command-menu.tsx:91
 #: app/components/media-library/media-library-picker.tsx:229
 #: app/components/workspace-breadcrumb.tsx:20
-#: app/routes/_app+/$orgSlug_+/media.tsx:806
+#: app/routes/_app+/$orgSlug_+/media.tsx:821
 msgid "Media library"
 msgstr "مكتبة الوسائط"
 
@@ -10731,7 +11081,7 @@ msgstr "عضو"
 msgid "members"
 msgstr "أعضاء"
 
-#: app/components/app-sidebar.tsx:480
+#: app/components/app-sidebar.tsx:487
 #: app/components/chat/chat-group-settings-dialog.tsx:83
 #: app/components/organization-members.tsx:169
 #: app/components/roles/tenant-role-access-manager.tsx:1112
@@ -10801,6 +11151,22 @@ msgstr "الرسائل"
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2524
 msgid "Meta description"
 msgstr "وصف الميتا"
+
+#: app/components/social/social-labels.ts:70
+msgid "Meta did not answer. Try again in a few minutes."
+msgstr "لم تستجب Meta. حاول مرة أخرى بعد بضع دقائق."
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:216
+msgid "Meta did not complete the connection. Try again."
+msgstr "لم تكمل Meta عملية الربط. حاول مرة أخرى."
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:155
+msgid "Meta no longer accepts its access. Posts to it will fail until you connect it again."
+msgstr "لم تعد Meta تقبل صلاحية الوصول الخاصة به. ستفشل المنشورات المرسلة إليه إلى أن تعيد ربطه."
+
+#: app/components/social/social-labels.ts:67
+msgid "Meta no longer accepts this account’s access. Connect it again, then retry."
+msgstr "لم تعد Meta تقبل صلاحية الوصول لهذا الحساب. أعد ربطه ثم حاول مرة أخرى."
 
 #: app/components/phone-agent/test-call-errors.ts:18
 msgid "Microphone access is needed for a test call. Allow it in your browser and try again."
@@ -11116,6 +11482,10 @@ msgstr "الاسم ومعلومات التواصل والرواتب."
 msgid "Name, plus a phone number or an email. They do not need a login."
 msgstr "الاسم، مع رقم هاتف أو بريد إلكتروني. لا يحتاجون إلى تسجيل دخول."
 
+#: app/utils/media/photo-studio.ts:101
+msgid "Natural daylight"
+msgstr "ضوء النهار الطبيعي"
+
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:871
 msgid "Navigate to Features → MCP Servers"
 msgstr "انتقل إلى الميزات → خوادم MCP"
@@ -11185,6 +11555,10 @@ msgstr "محايد"
 #: app/components/core/feedback-modal.tsx:32
 msgid "Neutral feedback"
 msgstr "ملاحظات محايدة"
+
+#: app/utils/media/photo-studio.ts:75
+msgid "Neutral gray gradient, gentle shadows"
+msgstr "تدرج رمادي محايد وظلال ناعمة"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1420
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1436
@@ -11310,6 +11684,15 @@ msgstr "رمز PIN جديد"
 msgid "New PIN for {scopeName}"
 msgstr "رمز سري جديد لـ {scopeName}"
 
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:123
+#: app/routes/_app+/$orgSlug_+/marketing+/social.new.tsx:59
+msgid "New post"
+msgstr "منشور جديد"
+
+#: app/components/social/social-calendar.tsx:147
+msgid "New post on {label}"
+msgstr "منشور جديد في {label}"
+
 #: app/routes/_app+/$orgSlug_+/marketing+/print._index.tsx:82
 #: app/routes/_app+/$orgSlug_+/marketing+/print.new.tsx:111
 msgid "New print"
@@ -11361,6 +11744,7 @@ msgid "Next day"
 msgstr "اليوم التالي"
 
 #: app/components/staff/schedule/schedule-toolbar.tsx:114
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:182
 msgid "Next month"
 msgstr "الشهر التالي"
 
@@ -11375,6 +11759,10 @@ msgstr "الوردية القادمة: {upcomingDay}، <0>{upcomingRange}</0>"
 #: app/components/staff/schedule/schedule-toolbar.tsx:111
 msgid "Next week"
 msgstr "الأسبوع التالي"
+
+#: app/components/media-library/photo-studio-dialog.tsx:958
+msgid "Next: choose style"
+msgstr "التالي: اختيار النمط"
 
 #: ../../packages/marketing-workflow/src/nodes/condition-node.tsx:71
 #: app/components/hiring/candidate-parts.tsx:114
@@ -11395,6 +11783,14 @@ msgstr "لم تُسجَّل أي أخطاء 404"
 msgid "No access"
 msgstr "لا تملك صلاحية الوصول"
 
+#: app/components/social/post-composer.tsx:192
+msgid "No accounts connected"
+msgstr "لا توجد حسابات مرتبطة"
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:287
+msgid "No accounts connected."
+msgstr "لا توجد حسابات مرتبطة."
+
 #: app/components/organization-invitations.tsx:199
 msgid "No active invite link"
 msgstr "لا يوجد رابط دعوة نشط"
@@ -11408,7 +11804,7 @@ msgid "No active subscription"
 msgstr "لا يوجد اشتراك نشط"
 
 #: app/components/note/activity-log.tsx:207
-#: app/routes/_app+/$orgSlug_+/index.tsx:221
+#: app/routes/_app+/$orgSlug_+/index.tsx:225
 msgid "No activity yet"
 msgstr "لا يوجد نشاط بعد"
 
@@ -11481,7 +11877,7 @@ msgstr "لا توجد مكالمات تحتاج إلى متابعة"
 msgid "No calls yet"
 msgstr "لا توجد مكالمات بعد"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:250
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:260
 msgid "No campaigns yet."
 msgstr "لا توجد حملات بعد."
 
@@ -11546,13 +11942,17 @@ msgstr "لا يوجد جهة اتصال مسجّلة"
 msgid "No contacts yet."
 msgstr "لا توجد جهات اتصال بعد."
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:850
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:849
 msgid "No content yet"
 msgstr "لا يوجد محتوى بعد"
 
 #: app/components/roles/tenant-role-access-manager.tsx:1092
 msgid "No custom roles created yet."
 msgstr "لم يتم إنشاء أدوار مخصصة بعد."
+
+#: app/components/social/social-calendar.tsx:237
+msgid "No date"
+msgstr "بلا تاريخ"
 
 #: ../../packages/marketing/src/components/campaign-detail.tsx:129
 msgid "No delivery records yet."
@@ -11569,6 +11969,10 @@ msgstr "لا يوجد وصف بعد."
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:380
 msgid "No discrete action step dispatches recorded for this run."
 msgstr "لم تُسجَّل إرسالات خطوات إجراء منفصلة لهذا التشغيل."
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:263
+msgid "No drafts."
+msgstr "لا توجد مسودات."
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2844
 msgid "No editor available for this block type."
@@ -11594,6 +11998,10 @@ msgstr "لا توجد أحداث بعد."
 msgid "No execution runs recorded yet for this automation."
 msgstr "لم تُسجَّل عمليات تنفيذ بعد لهذه الأتمتة."
 
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:191
+msgid "No Facebook Page found"
+msgstr "لم يتم العثور على صفحة فيسبوك"
+
 #: app/components/website/form-builder-sidebar.tsx:878
 msgid "No fields yet"
 msgstr "لا توجد حقول بعد"
@@ -11613,6 +12021,10 @@ msgstr "لا ساعات أو مبيعات في هذه الفترة"
 #: app/components/phone-agent/business-details-section.tsx:158
 msgid "No hours set, so the agent treats you as open."
 msgstr "لم تُحدد ساعات عمل، لذا يعتبرك الوكيل مفتوحًا."
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:190
+msgid "No Instagram professional account found"
+msgstr "لم يتم العثور على حساب إنستغرام احترافي"
 
 #: app/components/hiring/candidate-parts.tsx:180
 msgid "No interviews yet."
@@ -11675,7 +12087,7 @@ msgstr "لم يعد يعمل هنا"
 msgid "No matching calls"
 msgstr "لا توجد مكالمات مطابقة"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:945
+#: app/routes/_app+/$orgSlug_+/media.tsx:970
 msgid "No matching images"
 msgstr "لا توجد صور مطابقة"
 
@@ -11741,7 +12153,7 @@ msgstr "لا توجد أسماء لعرضها. اطلب من مدير إعداد
 
 #: app/routes/_app+/$orgSlug_+/__org-note-editor.tsx:396
 #: app/routes/_app+/$orgSlug_+/notes.$noteId_.edit.tsx:149
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1198
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1197
 msgid "No note with the id \"{noteId}\" exists"
 msgstr "لا توجد ملاحظة بالمعرف \"{noteId}\""
 
@@ -11887,6 +12299,10 @@ msgstr "بلا منصب بعد"
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:166
 msgid "No positions yet"
 msgstr "لا توجد مناصب بعد"
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:251
+msgid "No posts this month."
+msgstr "لا توجد منشورات هذا الشهر."
 
 #: app/components/my-schedule/availability-sheet.tsx:68
 #: app/components/staff/schedule/availability-sheet.tsx:38
@@ -12151,7 +12567,7 @@ msgstr "لا شيء"
 msgid "None"
 msgstr "بلا"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1238
+#: app/routes/_app+/$orgSlug_+/media.tsx:1287
 msgid "Normal"
 msgstr "عادي"
 
@@ -12233,6 +12649,10 @@ msgstr "لم يُفتح بعد"
 msgid "Not opened yet."
 msgstr "لم يُفتح بعد."
 
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:215
+msgid "Not published yet."
+msgstr "لم يُنشر بعد."
+
 #: app/components/staff/kiosk-manager.tsx:442
 msgid "Not seen yet"
 msgstr "لم يُرَ بعد"
@@ -12257,7 +12677,7 @@ msgstr "غير معروض"
 msgid "Not the right fit"
 msgstr "غير مناسب"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1507
+#: app/routes/_app+/$orgSlug_+/media.tsx:1569
 msgid "Not used in any notes, comments, or pages"
 msgstr "غير مستخدم في أي ملاحظات أو تعليقات أو صفحات"
 
@@ -12280,11 +12700,11 @@ msgstr "ملاحظة"
 #: app/components/staff/schedule/time-off-sheet.tsx:232
 #: app/components/staff/timesheets/card-fields.tsx:210
 #: app/components/workspace-breadcrumb.tsx:78
-#: app/routes/_app+/$orgSlug_+/media.tsx:1222
+#: app/routes/_app+/$orgSlug_+/media.tsx:1271
 msgid "Note"
 msgstr "ملاحظة"
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1006
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1005
 msgid "Note actions"
 msgstr "إجراءات الملاحظة"
 
@@ -12479,6 +12899,14 @@ msgstr "لم يُحصَّل أي مبلغ. ابدأ طلبًا جديدًا مت
 msgid "Nothing was charged. You can pay again below."
 msgstr "لم يُحصَّل أي مبلغ. يمكنك الدفع مجددًا أدناه."
 
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:206
+msgid "Nothing was connected"
+msgstr "لم يتم ربط أي شيء"
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:214
+msgid "Nothing was published."
+msgstr "لم يتم نشر أي شيء."
+
 #: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:79
 msgid "Nothing yet."
 msgstr "لا شيء بعد."
@@ -12487,7 +12915,7 @@ msgstr "لا شيء بعد."
 msgid "Notification Preferences"
 msgstr "تفضيلات الإشعارات"
 
-#: app/components/app-sidebar.tsx:518
+#: app/components/app-sidebar.tsx:525
 #: app/components/workspace-breadcrumb.tsx:66
 msgid "Notifications"
 msgstr "الإشعارات"
@@ -12922,7 +13350,7 @@ msgstr "سؤال مفتوح"
 msgid "Open rate"
 msgstr "معدل الفتح"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1564
+#: app/routes/_app+/$orgSlug_+/media.tsx:1626
 msgid "Open reference"
 msgstr "فتح المرجع"
 
@@ -13046,7 +13474,7 @@ msgstr "تمت دعوة المشغّل"
 msgid "Option {nextKey}"
 msgstr "الخيار {nextKey}"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1470
+#: app/routes/_app+/$orgSlug_+/media.tsx:1532
 msgid "Optional caption for display"
 msgstr "تعليق توضيحي اختياري للعرض"
 
@@ -13065,6 +13493,10 @@ msgstr "أو تابع باستخدام"
 #: app/routes/_auth+/login.tsx:317
 msgid "Or continue with email or username"
 msgstr "أو تابع باستخدام البريد الإلكتروني أو اسم المستخدم"
+
+#: app/components/media-library/photo-studio-dialog.tsx:638
+msgid "Or match your own style"
+msgstr "أو طابق نمطك الخاص"
 
 #: app/components/staff/labor/sales-import-dialog.tsx:150
 msgid "or paste it below"
@@ -13118,7 +13550,7 @@ msgstr "تم إنشاء المنظمة"
 msgid "Organization details and configuration."
 msgstr "تفاصيل المنظمة وإعداداتها."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1224
+#: app/routes/_app+/$orgSlug_+/media.tsx:1273
 msgid "Organization logo"
 msgstr "شعار المؤسسة"
 
@@ -13156,6 +13588,18 @@ msgstr "المنظمات"
 #: app/routes/_app+/index.tsx:35
 msgid "Organizations are used to group your projects."
 msgstr "تُستخدم المنظمات لتجميع مشاريعك."
+
+#: app/components/media-library/photo-studio-dialog.tsx:841
+msgid "Original"
+msgstr "الأصلية"
+
+#: app/components/media-library/photo-studio-dialog.tsx:178
+msgid "Original image replaced"
+msgstr "تم استبدال الصورة الأصلية"
+
+#: app/components/media-library/photo-studio-dialog.tsx:1021
+msgid "Original replaced"
+msgstr "تم استبدال الأصلية"
 
 #: app/components/staff/timesheets/payroll-summary.tsx:364
 msgid "OT"
@@ -13280,7 +13724,7 @@ msgstr "قواعد العمل الإضافي المستخدمة لتقدير ا�
 
 #: app/components/app-sidebar.tsx:335
 #: app/components/staff/labor/labor-page.tsx:196
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:688
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:687
 msgid "Overview"
 msgstr "نظرة عامة"
 
@@ -13310,7 +13754,7 @@ msgstr "عنوان الصفحة"
 msgid "Page URL"
 msgstr "رابط الصفحة"
 
-#: app/components/app-sidebar.tsx:427
+#: app/components/app-sidebar.tsx:434
 #: app/components/command-menu.tsx:147
 #: app/components/workspace-breadcrumb.tsx:56
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:28
@@ -13421,6 +13865,10 @@ msgstr "كان جزء من هذا الطلب قيد الطباعة بالفعل.
 #: app/components/hiring/job-labels.ts:20
 msgid "Part time"
 msgstr "دوام جزئي"
+
+#: app/components/social/social-labels.ts:26
+msgid "Partly published"
+msgstr "نُشر جزئيًا"
 
 #: app/components/settings/passkey-manager.tsx:185
 msgid "passkeys"
@@ -13696,7 +14144,7 @@ msgstr "في الأسبوع"
 msgid "Per year"
 msgstr "في السنة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:209
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:219
 msgid "Performance metrics"
 msgstr "مقاييس الأداء"
 
@@ -13771,7 +14219,7 @@ msgstr "رابط الدعوة الشخصي"
 msgid "Phone"
 msgstr "الهاتف"
 
-#: app/components/app-sidebar.tsx:363
+#: app/components/app-sidebar.tsx:370
 #: app/components/command-menu.tsx:115
 #: app/components/phone-agent/settings-nav.tsx:68
 #: app/components/workspace-breadcrumb.tsx:15
@@ -13826,6 +14274,7 @@ msgstr "الهاتف موثّق"
 msgid "Phone Verified (OTP Success)"
 msgstr "الهاتف موثّق (نجاح OTP)"
 
+#: app/components/media-library/photo-studio-dialog.tsx:514
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3352
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3532
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3934
@@ -13852,6 +14301,10 @@ msgstr "شكل الصورة"
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3553
 msgid "Photo side"
 msgstr "جانب الصورة"
+
+#: app/components/media-library/photo-studio-dialog.tsx:427
+msgid "Photos"
+msgstr "الصور"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3869
 msgid "Photos and videos"
@@ -13916,6 +14369,10 @@ msgstr "اختر تخطيطًا ثم خصّص الكتل."
 #: app/components/staff/labor-core-rules.tsx:108
 msgid "Pick a starting point, then adjust anything below."
 msgstr "اختر نقطة بداية، ثم عدّل أي شيء أدناه."
+
+#: app/components/media-library/photo-studio-dialog.tsx:575
+msgid "Pick a style"
+msgstr "اختر نمطًا"
 
 #: app/routes/_app+/$orgSlug_+/website+/forms.new.tsx:121
 msgid "Pick a template, then customize every field in the builder."
@@ -14265,6 +14722,10 @@ msgstr "إيجابي"
 msgid "Positive feedback"
 msgstr "ملاحظات إيجابية"
 
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:226
+msgid "Post"
+msgstr "منشور"
+
 #: app/routes/_app+/$orgSlug_+/staff+/hiring._index.tsx:92
 #: app/routes/_app+/$orgSlug_+/staff+/hiring._index.tsx:135
 msgid "Post a job"
@@ -14274,9 +14735,33 @@ msgstr "نشر وظيفة"
 msgid "Post a job to get a careers page you can share, or keep a general application open for anyone who wants to work with you."
 msgstr "انشر وظيفة لتحصل على صفحة توظيف يمكنك مشاركتها، أو أبقِ طلبًا عامًا مفتوحًا لكل من يرغب في العمل معك."
 
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:100
+msgid "Post deleted."
+msgstr "تم حذف المنشور."
+
 #: app/routes/_app+/$orgSlug_+/staff+/hiring.tsx:44
 msgid "Post jobs, review applicants and get new hires started."
 msgstr "انشر الوظائف وراجع المتقدمين وابدأ تهيئة الموظفين الجدد."
+
+#: app/utils/social/post-form.server.ts:112
+msgid "Post scheduled."
+msgstr "تمت جدولة المنشور."
+
+#: app/utils/social/post-form.server.ts:113
+msgid "Post sent. See each account below."
+msgstr "تم إرسال المنشور. شاهد كل حساب أدناه."
+
+#: app/components/social/post-composer.tsx:188
+msgid "Post to"
+msgstr "النشر على"
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:139
+msgid "Post to Instagram professional accounts (business or creator) linked to a Facebook Page."
+msgstr "انشر على حسابات إنستغرام الاحترافية (التجارية أو حسابات صانعي المحتوى) المرتبطة بصفحة فيسبوك."
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:138
+msgid "Post to the Facebook Pages you manage."
+msgstr "انشر على صفحات فيسبوك التي تديرها."
 
 #: app/components/staff/details-tab.tsx:413
 msgid "Postal code"
@@ -14285,6 +14770,10 @@ msgstr "الرمز البريدي"
 #: app/components/print/print-labels.ts:11
 msgid "Poster"
 msgstr "ملصق"
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:330
+msgid "Posts already sent stay on {platformName}. Scheduled posts will fail for this account."
+msgstr "تبقى المنشورات المرسلة بالفعل على {platformName}. ستفشل المنشورات المجدولة لهذا الحساب."
 
 #: app/components/website/link-inspector.tsx:613
 #: app/components/website/link-inspector.tsx:630
@@ -14304,7 +14793,7 @@ msgstr "جارٍ إعداد النسخة الاحتياطية…"
 msgid "Prerender"
 msgstr "التصيير المسبق"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1756
+#: app/routes/_app+/$orgSlug_+/media.tsx:1818
 msgid "Presets"
 msgstr "الإعدادات المسبقة"
 
@@ -14332,6 +14821,7 @@ msgstr "الضغط على 0 لن يصل إلى أي أحد حتى تضبط رق�
 #~ msgid "Pressing 0 won't reach anyone until you set a staff phone number in Setup."
 #~ msgstr "الضغط على 0 لن يصل إلى أي أحد حتى تضبط رقم هاتف الفريق في الإعداد."
 
+#: app/components/social/post-composer.tsx:347
 #: app/components/staff/schedule/recommend-dialog.tsx:241
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:548
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5949
@@ -14352,6 +14842,7 @@ msgid "Previous day"
 msgstr "اليوم السابق"
 
 #: app/components/staff/schedule/schedule-toolbar.tsx:108
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:174
 msgid "Previous month"
 msgstr "الشهر السابق"
 
@@ -14425,7 +14916,7 @@ msgstr "طلبات الطباعة"
 msgid "Print proof"
 msgstr "بروفة الطباعة"
 
-#: app/components/app-sidebar.tsx:356
+#: app/components/app-sidebar.tsx:363
 #: app/components/command-menu.tsx:106
 #: app/components/command-menu.tsx:110
 #: app/routes/_app+/$orgSlug_+/marketing+/print._index.tsx:46
@@ -14469,7 +14960,7 @@ msgstr "الخصوصية"
 msgid "Privacy & Data Rights"
 msgstr "الخصوصية وحقوق البيانات"
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:713
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:712
 msgid "Private"
 msgstr "خاص"
 
@@ -14483,7 +14974,7 @@ msgstr "احترافي"
 msgid "Processing"
 msgstr "قيد المعالجة"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1940
+#: app/routes/_app+/$orgSlug_+/media.tsx:2002
 msgid "Processing…"
 msgstr "جارٍ المعالجة…"
 
@@ -14514,6 +15005,10 @@ msgstr "اكتمل الملف الشخصي (الاسم/البريد)"
 #: app/routes/_app+/profile.tsx:114
 msgid "Profile Settings"
 msgstr "إعدادات الملف الشخصي"
+
+#: app/components/media-library/photo-studio-dialog.tsx:773
+msgid "Progress"
+msgstr "التقدم"
 
 #: app/components/settings/cards/organization/integrations-card.tsx:22
 msgid "Project management"
@@ -14581,6 +15076,10 @@ msgstr "سجل النشر"
 msgid "Publish history…"
 msgstr "سجل النشر…"
 
+#: app/components/social/post-composer.tsx:401
+msgid "Publish now"
+msgstr "النشر الآن"
+
 #: app/components/staff/schedule/publish-dialog.tsx:244
 msgid "Publish quietly, for example to fix a typo."
 msgstr "انشر بهدوء، مثلًا لتصحيح خطأ مطبعي."
@@ -14600,6 +15099,8 @@ msgstr "انشر موقعك قبل مشاركة رابط المتجر مع ال�
 
 #: app/components/phone-agent/test-call-panel.tsx:489
 #: app/components/phone-agent/test-call-panel.tsx:548
+#: app/components/social/social-labels.ts:25
+#: app/components/social/social-labels.ts:36
 #: app/components/staff/schedule/publish-dialog.tsx:325
 #: app/components/staff/schedule/shift-block.tsx:38
 #: app/components/website/form-builder-sidebar.tsx:721
@@ -14609,6 +15110,10 @@ msgstr "انشر موقعك قبل مشاركة رابط المتجر مع ال�
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5849
 msgid "Published"
 msgstr "منشور"
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:207
+msgid "Published {date}"
+msgstr "نُشر في {date}"
 
 #: app/components/phone-agent/agent-details.tsx:270
 msgid "Published call flow version {version}"
@@ -14630,6 +15135,11 @@ msgstr "الإصدار المنشور v{publishedVersion}"
 msgid "Published version {version}"
 msgstr "تم نشر الإصدار {version}"
 
+#: app/components/social/social-labels.ts:24
+#: app/components/social/social-labels.ts:35
+msgid "Publishing"
+msgstr "جارٍ النشر"
+
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:328
 msgid "Publishing and activating automation..."
 msgstr "جارٍ نشر وتفعيل الأتمتة..."
@@ -14638,12 +15148,21 @@ msgstr "جارٍ نشر وتفعيل الأتمتة..."
 msgid "Publishing new journey..."
 msgstr "جارٍ نشر الرحلة الجديدة..."
 
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:213
+msgid "Publishing now…"
+msgstr "جارٍ النشر الآن…"
+
+#: app/components/social/social-labels.ts:68
+msgid "Publishing was interrupted. Check the account before retrying: the post may already be live."
+msgstr "توقّف النشر. تحقق من الحساب قبل إعادة المحاولة: فقد يكون المنشور منشورًا بالفعل."
+
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:213
 #: app/components/hiring/job-editor.tsx:423
 msgid "Publishing..."
 msgstr "جارٍ النشر..."
 
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:494
+#: app/components/social/post-composer.tsx:400
 #: app/components/staff/schedule/publish-dialog.tsx:271
 msgid "Publishing…"
 msgstr "جارٍ النشر…"
@@ -14810,7 +15329,7 @@ msgstr "السبب: {reason}"
 msgid "Receives tips"
 msgstr "يتلقى الإكراميات"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:231
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:241
 msgid "Recent campaigns"
 msgstr "الحملات الأخيرة"
 
@@ -14846,6 +15365,14 @@ msgstr "موصى به لـ"
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1356
 msgid "Recommended for SEO"
 msgstr "موصى به لتحسين محركات البحث"
+
+#: app/components/social/post-composer.tsx:238
+msgid "Reconnect"
+msgstr "إعادة الربط"
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:310
+msgid "Reconnect needed"
+msgstr "يلزم إعادة الربط"
 
 #: app/components/phone-agent/flow-editor/flow-meta.ts:70
 msgid "Record a message for your team to follow up."
@@ -14917,7 +15444,7 @@ msgstr "نوع إعادة التوجيه"
 msgid "Redirected"
 msgstr "تمت إعادة التوجيه"
 
-#: app/components/app-sidebar.tsx:460
+#: app/components/app-sidebar.tsx:467
 #: app/components/command-menu.tsx:150
 #: app/components/workspace-breadcrumb.tsx:60
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:60
@@ -15027,7 +15554,7 @@ msgid "Reload"
 msgstr "إعادة التحميل"
 
 #: app/components/chat/chat-unavailable.tsx:58
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:913
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:912
 msgid "Reload page"
 msgstr "إعادة تحميل الصفحة"
 
@@ -15168,6 +15695,7 @@ msgstr "إزالة من مكان العمل"
 #: app/components/note/comment-image-preview.tsx:81
 #: app/components/note/comment-input.tsx:340
 #: app/components/note/comment-input.tsx:456
+#: app/components/social/post-composer.tsx:304
 #: app/components/ui/multi-image-upload.tsx:281
 msgid "Remove image"
 msgstr "إزالة الصورة"
@@ -15212,6 +15740,10 @@ msgstr "إزالة السؤال"
 #: app/components/hiring/screener-editor.tsx:142
 msgid "Remove question {number}"
 msgstr "حذف السؤال {number}"
+
+#: app/components/media-library/photo-studio-dialog.tsx:673
+msgid "Remove style reference"
+msgstr "إزالة مرجع النمط"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1518
 msgid "Remove tag"
@@ -15344,9 +15876,13 @@ msgstr "استبدال"
 msgid "Replace Asset..."
 msgstr "استبدال الملف..."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1301
+#: app/routes/_app+/$orgSlug_+/media.tsx:1350
 msgid "Replace image"
 msgstr "استبدال الصورة"
+
+#: app/components/media-library/photo-studio-dialog.tsx:1033
+msgid "Replace original"
+msgstr "استبدال الأصلية"
 
 #: app/components/staff/schedule/availability-sheet.tsx:279
 msgid "Replace their weekly pattern"
@@ -15467,11 +16003,11 @@ msgstr "إعادة الإرسال إلى من لم تصلهم الرسالة"
 
 #: app/components/dashboard/dashboard-edit-toolbar.tsx:50
 #: app/components/organization-invitations.tsx:247
-#: app/routes/_app+/$orgSlug_+/media.tsx:1789
+#: app/routes/_app+/$orgSlug_+/media.tsx:1851
 msgid "Reset"
 msgstr "إعادة تعيين"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1928
+#: app/routes/_app+/$orgSlug_+/media.tsx:1990
 msgid "Reset adjustments"
 msgstr "إعادة تعيين التعديلات"
 
@@ -15580,9 +16116,17 @@ msgstr "القنوات المقيّدة مرئية فقط للأدوار وال�
 msgid "Result"
 msgstr "النتيجة"
 
+#: app/components/media-library/photo-studio-dialog.tsx:429
+msgid "Results"
+msgstr "النتائج"
+
 #: ../../packages/ai/src/components/ai-elements/prompt-input.tsx:171
 msgid "Retry"
 msgstr "إعادة المحاولة"
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:340
+msgid "Retry failed accounts"
+msgstr "إعادة المحاولة للحسابات الفاشلة"
 
 #: app/components/staff/schedule/templates-dialog.tsx:83
 msgid "Reuse a pattern of shifts week after week."
@@ -15592,6 +16136,10 @@ msgstr "أعد استخدام نمط من الورديات أسبوعًا بعد
 #: app/hooks/use-staff-attention.ts:117
 msgid "Review"
 msgstr "التقييم"
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:162
+msgid "Review accounts"
+msgstr "مراجعة الحسابات"
 
 #: app/routes/_app+/$orgSlug_+/staff+/team.bulk.tsx:179
 msgid "Review before adding"
@@ -15681,16 +16229,16 @@ msgstr "اسم الدور"
 msgid "Roles"
 msgstr "الأدوار"
 
-#: app/components/app-sidebar.tsx:487
+#: app/components/app-sidebar.tsx:494
 #: app/components/workspace-breadcrumb.tsx:64
 msgid "Roles & access"
 msgstr "الأدوار والصلاحيات"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1654
+#: app/routes/_app+/$orgSlug_+/media.tsx:1716
 msgid "Rotate left"
 msgstr "تدوير لليسار"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1675
+#: app/routes/_app+/$orgSlug_+/media.tsx:1737
 msgid "Rotate right"
 msgstr "تدوير لليمين"
 
@@ -15890,8 +16438,12 @@ msgstr "نفس الهاتف أو البريد الإلكتروني لصف ساب
 msgid "Sans"
 msgstr "بدون زوائد"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1859
-#: app/routes/_app+/$orgSlug_+/media.tsx:1874
+#: app/utils/media/photo-studio.ts:84
+msgid "Saturated backdrop that makes it pop"
+msgstr "خلفية مشبعة تجعله يبرز"
+
+#: app/routes/_app+/$orgSlug_+/media.tsx:1921
+#: app/routes/_app+/$orgSlug_+/media.tsx:1936
 msgid "Saturation"
 msgstr "التشبع"
 
@@ -15922,7 +16474,7 @@ msgstr "المملكة العربية السعودية (KSA)"
 #: app/components/staff/timesheets/pay-period-dialog.tsx:199
 #: app/components/ui/photo-crop-form.tsx:236
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1228
-#: app/routes/_app+/$orgSlug_+/media.tsx:1619
+#: app/routes/_app+/$orgSlug_+/media.tsx:1681
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:863
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:458
 msgid "Save"
@@ -15949,7 +16501,8 @@ msgstr "حفظ وتحديث البروفة"
 #~ msgid "Save answers"
 #~ msgstr "حفظ الإجابات"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1942
+#: app/components/media-library/photo-studio-dialog.tsx:1045
+#: app/routes/_app+/$orgSlug_+/media.tsx:2004
 msgid "Save as copy"
 msgstr "حفظ كنسخة"
 
@@ -15973,7 +16526,7 @@ msgstr "حفظ البطاقة للمعاملات اللاحقة"
 #: app/components/phone-agent/training-rules-section.tsx:645
 #: app/components/settings/cards/organization/announcement-sheet.tsx:551
 #: app/components/staff/timesheets/card-sheet.tsx:310
-#: app/routes/_app+/$orgSlug_+/media.tsx:1958
+#: app/routes/_app+/$orgSlug_+/media.tsx:2020
 #: app/routes/_app+/$orgSlug_+/notes-cards.tsx:446
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:432
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1460
@@ -15983,6 +16536,7 @@ msgstr "حفظ التغييرات"
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:193
 #: app/components/hiring/job-editor.tsx:411
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:695
+#: app/components/social/post-composer.tsx:420
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:478
 msgid "Save draft"
 msgstr "حفظ المسودة"
@@ -16069,6 +16623,10 @@ msgstr "احفظ تغييراتك قبل الإغلاق."
 msgid "Saved"
 msgstr "تم الحفظ"
 
+#: app/components/media-library/photo-studio-dialog.tsx:1019
+msgid "Saved as a copy"
+msgstr "تم الحفظ كنسخة"
+
 #: app/components/staff/timesheets/issue-copy.ts:38
 msgid "Saved offline and sent more than 12 hours later. Check the times."
 msgstr "حُفظ دون اتصال وأُرسل بعد أكثر من 12 ساعة. راجع الأوقات."
@@ -16081,6 +16639,10 @@ msgstr "تم الحفظ على هذا الجهاز. سيُسجَّل عند عو
 msgid "Saved reports"
 msgstr "التقارير المحفوظة"
 
+#: app/components/media-library/photo-studio-dialog.tsx:177
+msgid "Saved to your media library"
+msgstr "تم الحفظ في مكتبة الوسائط"
+
 #: app/components/phone-agent/agent-details.tsx:283
 msgid "Saved training rule \"{title}\""
 msgstr "تم حفظ قاعدة التدريب \"{title}\""
@@ -16089,7 +16651,7 @@ msgstr "تم حفظ قاعدة التدريب \"{title}\""
 msgid "Saved."
 msgstr "تم الحفظ."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1163
+#: app/routes/_app+/$orgSlug_+/media.tsx:1210
 msgid "Saving as new copy…"
 msgstr "جارٍ الحفظ كنسخة جديدة…"
 
@@ -16097,7 +16659,7 @@ msgstr "جارٍ الحفظ كنسخة جديدة…"
 msgid "Saving automation draft..."
 msgstr "جارٍ حفظ مسودة الأتمتة..."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1147
+#: app/routes/_app+/$orgSlug_+/media.tsx:1194
 msgid "Saving edited image…"
 msgstr "جارٍ حفظ الصورة المعدّلة…"
 
@@ -16128,7 +16690,7 @@ msgstr "جارٍ الحفظ..."
 #: app/components/staff/timesheets/pay-period-dialog.tsx:199
 #: app/components/staff/timesheets/review-queue.tsx:403
 #: app/components/staff/timesheets/review-queue.tsx:428
-#: app/routes/_app+/$orgSlug_+/media.tsx:1619
+#: app/routes/_app+/$orgSlug_+/media.tsx:1681
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:458
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:476
 msgid "Saving…"
@@ -16183,10 +16745,11 @@ msgstr "امسح الرمز بكاميرا الجهاز اللوحي، أو اف
 msgid "Scan the code with this tablet's camera, or paste the link below."
 msgstr "امسح الرمز بكاميرا هذا الجهاز اللوحي، أو الصق الرابط أدناه."
 
-#: app/components/app-sidebar.tsx:399
+#: app/components/app-sidebar.tsx:406
 #: app/components/command-menu.tsx:135
 #: app/components/hiring/interview-dialog.tsx:287
 #: app/components/my-schedule/my-schedule-page.tsx:187
+#: app/components/social/post-composer.tsx:411
 #: app/components/workspace-breadcrumb.tsx:33
 #: app/routes/_app+/$orgSlug_+/staff+/schedule.tsx:38
 #: app/routes/_app+/$orgSlug_+/staff+/schedule.tsx:46
@@ -16222,6 +16785,10 @@ msgstr "عناصر تحكم الجدول"
 msgid "Schedule enforcement"
 msgstr "الالتزام بالجدول"
 
+#: app/components/social/post-composer.tsx:327
+msgid "Schedule for"
+msgstr "الجدولة في"
+
 #: app/components/staff/schedule/week-grid.tsx:668
 msgid "Schedule for {name}, {range}"
 msgstr "الجدول لـ {name}، {range}"
@@ -16240,8 +16807,13 @@ msgstr "الجدول: نُشر أسبوع"
 
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:7
 #: app/components/hiring/applicant-labels.ts:40
+#: app/components/social/social-labels.ts:23
 msgid "Scheduled"
 msgstr "مجدول"
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:211
+msgid "Scheduled for {date}"
+msgstr "مجدول في {date}"
 
 #: app/components/staff/schedule/publish-dialog.tsx:144
 msgid "Scheduled hours"
@@ -16262,6 +16834,10 @@ msgstr "الساعات المجدولة مقابل الفعلية وتسجيلا
 #: app/components/hiring/applicant-labels.ts:23
 msgid "Screening"
 msgstr "الفرز"
+
+#: app/utils/media/photo-studio.ts:66
+msgid "Seamless white backdrop, soft even light"
+msgstr "خلفية بيضاء سلسة وإضاءة ناعمة متساوية"
 
 #: app/components/app-sidebar.tsx:231
 #: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:300
@@ -16297,12 +16873,12 @@ msgid "Search for users in your organization"
 msgstr "البحث عن المستخدمين في منظمتك"
 
 #: app/components/media-library/media-library-picker.tsx:248
-#: app/routes/_app+/$orgSlug_+/media.tsx:868
+#: app/routes/_app+/$orgSlug_+/media.tsx:893
 msgid "Search media"
 msgstr "البحث في الوسائط"
 
 #: app/components/media-library/media-library-picker.tsx:249
-#: app/routes/_app+/$orgSlug_+/media.tsx:869
+#: app/routes/_app+/$orgSlug_+/media.tsx:894
 msgid "Search media library"
 msgstr "البحث في مكتبة الوسائط"
 
@@ -16404,7 +16980,7 @@ msgstr "ابحث في تصاميمك على Canva"
 msgid "Search..."
 msgstr "البحث..."
 
-#: app/components/app-sidebar.tsx:700
+#: app/components/app-sidebar.tsx:710
 msgid "Search…"
 msgstr "بحث…"
 
@@ -16786,6 +17362,10 @@ msgstr "أُرسل {0}"
 msgid "sent again"
 msgstr "أُعيد إرسالها"
 
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:110
+msgid "Sent again. See each account below."
+msgstr "تمت إعادة الإرسال. شاهد كل حساب أدناه."
+
 #: app/components/staff/labor-policy-editor.tsx:813
 msgid "Sent by email to people who have an address on file."
 msgstr "يُرسل بالبريد الإلكتروني إلى من لديهم عنوان بريد محفوظ."
@@ -16899,10 +17479,11 @@ msgstr "إعداد رمز الحضور الخاص بهم"
 msgid "Set up this tablet"
 msgstr "إعداد هذا الجهاز اللوحي"
 
-#: app/components/app-sidebar.tsx:374
-#: app/components/app-sidebar.tsx:467
+#: app/components/app-sidebar.tsx:381
+#: app/components/app-sidebar.tsx:474
 #: app/components/command-menu.tsx:345
 #: app/components/command-menu.tsx:378
+#: app/components/media-library/photo-studio-dialog.tsx:705
 #: app/components/phone-agent/agent-details.tsx:315
 #: app/components/staff/labor/labor-page.tsx:199
 #: app/components/workspace-breadcrumb.tsx:12
@@ -16938,7 +17519,7 @@ msgstr "عدة أشخاص يكتبون…"
 #: app/components/note/share-note-button.tsx:186
 #: app/components/staff/labor/labor-overview.tsx:571
 #: app/components/staff/labor/labor-tips.tsx:256
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1030
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1029
 msgid "Share"
 msgstr "مشاركة"
 
@@ -17087,7 +17668,7 @@ msgstr "تُشحن إلى عنوان في الولايات المتحدة. تر�
 msgid "Shipping"
 msgstr "الشحن"
 
-#: app/components/app-sidebar.tsx:508
+#: app/components/app-sidebar.tsx:515
 #: app/components/workspace-breadcrumb.tsx:68
 msgid "Shop"
 msgstr "المتجر"
@@ -17173,6 +17754,10 @@ msgstr "إظهار الردود ({replyCount})"
 #: app/components/staff/schedule/time-off-page.tsx:198
 msgid "Show requests"
 msgstr "عرض الطلبات"
+
+#: app/components/media-library/photo-studio-dialog.tsx:817
+msgid "Show result {position}"
+msgstr "عرض النتيجة {position}"
 
 #: ../../packages/ai/src/components/ai-chat.tsx:475
 msgid "Show specific examples"
@@ -17302,7 +17887,7 @@ msgid "Single sign-on, custom SLA, private support channel, and more."
 msgstr "تسجيل دخول موحد، اتفاقية مستوى خدمة مخصصة، قناة دعم خاصة، والمزيد."
 
 #: app/components/settings/cards/organization/site-icon-card.tsx:132
-#: app/routes/_app+/$orgSlug_+/media.tsx:1226
+#: app/routes/_app+/$orgSlug_+/media.tsx:1275
 msgid "Site icon"
 msgstr "أيقونة الموقع"
 
@@ -17318,7 +17903,7 @@ msgstr "متجر الموقع"
 msgid "Size"
 msgstr "الحجم"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1323
+#: app/routes/_app+/$orgSlug_+/media.tsx:1385
 msgid "Size:"
 msgstr "الحجم:"
 
@@ -17368,9 +17953,23 @@ msgstr "نص الرسالة النصية مطلوب."
 msgid "SMS messages over 160 characters will be segmented according to standard GSM telecommunication protocols."
 msgstr "ستُقسَّم الرسائل النصية التي تتجاوز 160 حرفاً وفق بروتوكولات GSM الاتصالية القياسية."
 
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:160
+msgid "Social accounts"
+msgstr "حسابات التواصل الاجتماعي"
+
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4482
 msgid "Social links"
 msgstr "روابط التواصل الاجتماعي"
+
+#: app/components/app-sidebar.tsx:356
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:120
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:107
+msgid "Social media"
+msgstr "وسائل التواصل الاجتماعي"
+
+#: app/utils/media/photo-studio.ts:74
+msgid "Soft gray"
+msgstr "رمادي ناعم"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:102
 msgid "Solid"
@@ -17449,6 +18048,10 @@ msgstr "حدث خطأ أثناء إنشاء الملف. حاول مرة أخرى
 msgid "Something went wrong on our side. Try again in a moment."
 msgstr "حدث خطأ من جانبنا. حاول مرة أخرى بعد قليل."
 
+#: app/components/social/social-labels.ts:69
+msgid "Something went wrong while publishing."
+msgstr "حدث خطأ أثناء النشر."
+
 #: app/components/chat/chat-view.tsx:243
 msgid "Something went wrong."
 msgstr "حدث خطأ ما."
@@ -17509,7 +18112,7 @@ msgstr "وردية مقسّمة"
 msgid "Square"
 msgstr "مربع"
 
-#: app/components/app-sidebar.tsx:383
+#: app/components/app-sidebar.tsx:390
 #: app/components/command-menu.tsx:129
 #: app/components/roles/tenant-role-access-manager.tsx:261
 #: app/components/workspace-breadcrumb.tsx:16
@@ -17612,7 +18215,7 @@ msgstr "دور نظام قياسي."
 msgid "Standing application"
 msgstr "طلب توظيف دائم"
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1026
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1025
 msgid "Star"
 msgstr "تمييز بنجمة"
 
@@ -17856,8 +18459,13 @@ msgstr "مطابقة قوية"
 msgid "Structural checks for triggers, connections, and node configuration."
 msgstr "فحوصات هيكلية للمحفّزات والاتصالات وإعداد العُقد."
 
+#: app/utils/media/photo-studio.ts:58
+msgid "Studio"
+msgstr "استوديو"
+
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:311
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:313
+#: app/components/media-library/photo-studio-dialog.tsx:428
 #: app/components/website/link-inspector.tsx:381
 #: app/components/website/link-inspector.tsx:383
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:575
@@ -17993,6 +18601,10 @@ msgstr "طلبات التبديل والتغطية والإسقاط"
 msgid "Swaps are not offered at this workplace. Ask your manager."
 msgstr "التبديل غير متاح في مكان العمل هذا. اسأل مديرك."
 
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:196
+msgid "Switch the Instagram account to a business or creator account, link it to a Facebook Page, and allow that Page when Facebook asks."
+msgstr "حوّل حساب إنستغرام إلى حساب تجاري أو حساب صانع محتوى، واربطه بصفحة فيسبوك، واسمح لتلك الصفحة عندما يطلب فيسبوك ذلك."
+
 #: app/components/settings/cards/organization/site-card.tsx:295
 msgid "Switching from {currentRegionLabel} to {pendingRegionLabel} permanently deletes every visitor account in the current region — names, phone numbers, emails, and login sessions. This cannot be undone. New sign-ins will start from an empty database in the new region."
 msgstr "التبديل من {currentRegionLabel} إلى {pendingRegionLabel} يحذف نهائياً كل حساب زائر في المنطقة الحالية — الأسماء وأرقام الهواتف والبريد الإلكتروني وجلسات تسجيل الدخول. لا يمكن التراجع عن هذا الإجراء. ستبدأ عمليات تسجيل الدخول الجديدة من قاعدة بيانات فارغة في المنطقة الجديدة."
@@ -18119,7 +18731,7 @@ msgid "Teal"
 msgstr "فيروزي"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:93
-#: app/components/app-sidebar.tsx:389
+#: app/components/app-sidebar.tsx:396
 #: app/components/command-menu.tsx:133
 #: app/components/staff/schedule/day-timeline.tsx:475
 #: app/components/staff/schedule/week-grid.tsx:359
@@ -18331,6 +18943,7 @@ msgstr "اختبار هذه المسودة"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:161
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:193
+#: app/components/social/post-composer.tsx:252
 #: app/components/website/link-inspector.tsx:644
 msgid "Text"
 msgstr "نص"
@@ -18666,6 +19279,10 @@ msgstr "تسلّم خطوة مساعد الذكاء الاصطناعي المك�
 #~ msgid "The AI assistant step hands the call to your AI. It answers questions using your business details, Setup, and Training rules until the call ends."
 #~ msgstr "تسلّم خطوة مساعد الذكاء الاصطناعي المكالمة إلى الذكاء الاصطناعي. يجيب عن الأسئلة باستخدام تفاصيل نشاطك التجاري والإعدادات وقواعد التدريب حتى تنتهي المكالمة."
 
+#: app/components/media-library/photo-studio-dialog.tsx:663
+msgid "The AI matches its lighting, background, and colors."
+msgstr "يطابق الذكاء الاصطناعي إضاءتها وخلفيتها وألوانها."
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_layout.tsx:71
 msgid "The AI phone agent runs on US infrastructure, so it's only available to businesses whose customer data is stored in the US. You can set it up, but calls won't connect."
 msgstr "يعمل وكيل الهاتف بالذكاء الاصطناعي على بنية تحتية في الولايات المتحدة، لذا فهو متاح فقط للأنشطة التجارية التي تُخزَّن بيانات عملائها في الولايات المتحدة. يمكنك إعداده، لكن المكالمات لن تتصل."
@@ -18729,6 +19346,14 @@ msgstr "انقضى تاريخ الإغلاق. اختر تاريخًا جديدً
 #: app/components/kiosk/kiosk-pair.tsx:141
 msgid "The code works once and expires after ten minutes."
 msgstr "يعمل الرمز مرة واحدة وتنتهي صلاحيته بعد عشر دقائق."
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:214
+msgid "The connection failed"
+msgstr "فشل الربط"
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:208
+msgid "The connection was cancelled in Facebook."
+msgstr "تم إلغاء الربط في فيسبوك."
 
 #: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:223
 msgid "The connection was not allowed in Canva."
@@ -18961,6 +19586,10 @@ msgstr "سيتمكن عميل MCP من الوصول فقط إلى بيانات �
 msgid "The message ends when the caller presses pound, stops talking, or hangs up. It shows up under Calls as a callback request."
 msgstr "تنتهي الرسالة عندما يضغط المتصل مفتاح # أو يتوقف عن الكلام أو يُغلق الخط. وتظهر ضمن المكالمات كطلب معاودة اتصال."
 
+#: app/components/social/social-labels.ts:74
+msgid "The Meta emulator refused this post (it contains #fail)."
+msgstr "رفض محاكي Meta هذا المنشور (يحتوي على #fail)."
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:632
 msgid "The name the agent uses when it introduces itself."
 msgstr "الاسم الذي يستخدمه الوكيل عند تقديم نفسه."
@@ -19014,6 +19643,10 @@ msgstr "الأشخاص الذين يعملون هنا: قائمة الموظفي
 #: app/components/staff/labor/tip-settings-dialog.tsx:125
 msgid "The percentages need to add up to 100."
 msgstr "يجب أن يكون مجموع النسب 100."
+
+#: app/components/media-library/photo-studio-dialog.tsx:201
+msgid "The photo could not be generated. Try again."
+msgstr "تعذّر إنشاء الصورة. حاول مرة أخرى."
 
 #: app/components/print/artwork-labels.ts:18
 msgid "The print file could not be made. Try again shortly."
@@ -19090,6 +19723,14 @@ msgstr "يتوقف الجهاز اللوحي عن العمل فورًا ولا �
 #: app/components/staff/onboarding/template-editor.tsx:77
 msgid "The tasks a new hire starts with. Due dates count from the day they are hired."
 msgstr "المهام التي يبدأ بها الموظف الجديد. تُحسب تواريخ الاستحقاق من يوم توظيفه."
+
+#: app/components/social/social-labels.ts:50
+msgid "The text is too long for Facebook."
+msgstr "النص طويل جدًا لفيسبوك."
+
+#: app/components/social/social-labels.ts:92
+msgid "The text is too long."
+msgstr "النص طويل جدًا."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:190
 #~ msgid "The time-limit notice, the rating question, and the goodbye."
@@ -19348,6 +19989,10 @@ msgstr "جارٍ التفكير…"
 msgid "This account can look but not change jobs."
 msgstr "يمكن لهذا الحساب الاطلاع على الوظائف دون تغييرها."
 
+#: app/components/social/social-labels.ts:66
+msgid "This account is no longer connected. Connect it again, then retry."
+msgstr "لم يعد هذا الحساب مرتبطًا. أعد ربطه ثم حاول مرة أخرى."
+
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:490
 msgid "This action cannot be undone. Are you sure you want to delete \"{pageTitle}\"?"
 msgstr "لا يمكن التراجع عن هذا الإجراء. هل أنت متأكد من رغبتك في حذف \"{pageTitle}\"؟"
@@ -19356,7 +20001,7 @@ msgstr "لا يمكن التراجع عن هذا الإجراء. هل أنت م�
 msgid "This action cannot be undone. Are you sure you want to delete this announcement?"
 msgstr "لا يمكن التراجع عن هذا الإجراء. هل أنت متأكد من رغبتك في حذف هذا الإعلان؟"
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1092
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1091
 msgid "This action cannot be undone. The note and its comments will be permanently removed."
 msgstr "لا يمكن التراجع عن هذا الإجراء. سيتم حذف الملاحظة وتعليقاتها نهائياً."
 
@@ -19669,6 +20314,18 @@ msgstr "هذا الشخص غير مهيأ لهذا المنصب هنا. ما ز�
 msgid "This PIN is paused for a few minutes. Ask a manager."
 msgstr "هذا الرقم السري متوقف مؤقتًا لبضع دقائق. اسأل مديرًا."
 
+#: app/components/social/post-composer.tsx:172
+msgid "This post can’t be sent yet"
+msgstr "لا يمكن إرسال هذا المنشور بعد"
+
+#: app/components/social/social-labels.ts:94
+msgid "This post has started publishing and can no longer be edited."
+msgstr "بدأ نشر هذا المنشور ولم يعد من الممكن تعديله."
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:244
+msgid "This post is publishing right now. Try again in a moment."
+msgstr "هذا المنشور قيد النشر الآن. حاول مرة أخرى بعد قليل."
+
 #: app/components/phone-agent/voice-picker.tsx:494
 #: app/components/phone-agent/voice-picker.tsx:643
 msgid "This preview couldn't play."
@@ -19759,6 +20416,10 @@ msgstr "عدد أعمدة هذا الصف يختلف عن عدد أعمدة ال
 msgid "This schedule is no longer available"
 msgstr "هذا الجدول لم يعد متاحًا"
 
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:227
+msgid "This server has no Meta app configured. Ask your platform administrator."
+msgstr "لم يتم إعداد تطبيق Meta على هذا الخادم. اسأل مسؤول المنصة."
+
 #: app/utils/staffing/schedule-errors.ts:31
 msgid "This shift changed after the request was made. Ask the person to request again."
 msgstr "تغيّرت هذه الوردية بعد تقديم الطلب. اطلب من الشخص تقديم الطلب مرة أخرى."
@@ -19810,6 +20471,10 @@ msgstr "هذا الجهاز اللوحي غير جاهز بعد. اسأل مدي
 #: app/components/kiosk/kiosk-pair.tsx:28
 msgid "This tablet was disconnected"
 msgstr "تم فصل هذا الجهاز اللوحي"
+
+#: app/components/media-library/photo-studio-dialog.tsx:766
+msgid "This usually takes 10 to 30 seconds per photo."
+msgstr "يستغرق هذا عادةً من 10 إلى 30 ثانية لكل صورة."
 
 #: app/components/staff/labor-policy-editor.tsx:344
 msgid "This value is outside the allowed range."
@@ -19935,7 +20600,7 @@ msgstr "بطاقات الدوام (CSV)"
 msgid "Time cards: {timeCardCount} (not included in the backup)"
 msgstr "بطاقات الدوام: {timeCardCount} (غير مشمولة في النسخة الاحتياطية)"
 
-#: app/components/app-sidebar.tsx:394
+#: app/components/app-sidebar.tsx:401
 #: app/components/command-menu.tsx:134
 #: app/components/workspace-breadcrumb.tsx:29
 #: app/routes/_app+/$orgSlug_+/staff+/timeclock.tsx:54
@@ -20007,6 +20672,10 @@ msgstr "المنطقة الزمنية"
 #: app/components/staff/time-zone-card.tsx:47
 msgid "Time zone saved."
 msgstr "تم حفظ المنطقة الزمنية."
+
+#: app/components/social/post-composer.tsx:338
+msgid "Times are in {timeZone}."
+msgstr "الأوقات بتوقيت {timeZone}."
 
 #: app/components/staff/timesheets/card-fields.tsx:135
 msgid "Times are in the workplace's time zone, {timeZone}."
@@ -20120,6 +20789,7 @@ msgstr "إلى: {recipient}"
 #: app/components/staff/schedule/day-timeline.tsx:441
 #: app/components/staff/schedule/schedule-toolbar.tsx:119
 #: app/components/staff/timesheets/period-nav.tsx:150
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:195
 #: app/routes/_app+/$orgSlug_+/staff+/timeclock.tsx:43
 msgid "Today"
 msgstr "اليوم"
@@ -20143,6 +20813,10 @@ msgstr "تنتهي صلاحية الرموز المميزة تلقائياً ب�
 #: app/components/staff/schedule/publication-history.tsx:168
 msgid "Told"
 msgstr "أُبلغوا"
+
+#: app/components/social/social-labels.ts:53
+msgid "Too many hashtags for Facebook."
+msgstr "عدد الوسوم كبير جدًا لفيسبوك."
 
 #: app/routes/_auth+/forgot-password.tsx:196
 msgid "Too Many Requests"
@@ -20195,7 +20869,7 @@ msgstr "المجموع {totalText} من 100"
 msgid "Total before sales tax"
 msgstr "الإجمالي قبل ضريبة المبيعات"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:211
+#: app/routes/_app+/$orgSlug_+/index.tsx:215
 msgid "Total notes"
 msgstr "إجمالي الملاحظات"
 
@@ -20299,7 +20973,7 @@ msgstr "ينقل ترتيب البحث"
 msgid "Transfers unavailable"
 msgstr "التحويلات غير متاحة"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1645
+#: app/routes/_app+/$orgSlug_+/media.tsx:1707
 msgid "Transform"
 msgstr "تحويل"
 
@@ -20320,7 +20994,7 @@ msgstr "ترجمة الكل"
 msgid "Transport"
 msgstr "المواصلات"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:225
+#: app/routes/_app+/$orgSlug_+/index.tsx:229
 msgid "Trend"
 msgstr "الاتجاه"
 
@@ -20397,7 +21071,7 @@ msgstr "جرّب بحثًا مختلفًا أو امسح عوامل التصفي
 msgid "Try a different search term or clear the search."
 msgstr "جرّب مصطلح بحث مختلفاً أو امسح البحث."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:950
+#: app/routes/_app+/$orgSlug_+/media.tsx:975
 msgid "Try a different search term."
 msgstr "جرّب مصطلح بحث مختلفًا."
 
@@ -20412,6 +21086,7 @@ msgstr "جرّب تعديل البحث أو الفلتر."
 #: app/components/hiring/applicants-page.tsx:397
 #: app/components/hiring/candidate-sheet.tsx:113
 #: app/components/mailbox/calls-tab.tsx:289
+#: app/components/media-library/photo-studio-dialog.tsx:933
 #: app/components/phone-agent/call-detail-sheet.tsx:367
 #: app/components/phone-agent/call-recording-player.tsx:154
 #: app/components/phone-agent/voice-picker.tsx:456
@@ -20454,6 +21129,10 @@ msgstr "جرّب اسمًا أو بريدًا إلكترونيًا أو رسال
 msgid "Try another search or clear the filters."
 msgstr "جرّب بحثًا آخر أو امسح عوامل التصفية."
 
+#: app/components/media-library/photo-studio-dialog.tsx:1012
+msgid "Try another style"
+msgstr "جرّب نمطًا آخر"
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:566
 msgid "Try different filters."
 msgstr "جرّب عوامل تصفية مختلفة."
@@ -20461,6 +21140,10 @@ msgstr "جرّب عوامل تصفية مختلفة."
 #: app/components/phone-agent/business-details-section.tsx:25
 msgid "Tuesday"
 msgstr "الثلاثاء"
+
+#: app/components/media-library/photo-studio-dialog.tsx:450
+msgid "Turn everyday photos into professional shots."
+msgstr "حوّل صورك اليومية إلى لقطات احترافية."
 
 #: app/components/staff/schedule-link-section.tsx:151
 msgid "Turn off"
@@ -20624,6 +21307,10 @@ msgstr "غير متاح طوال اليوم"
 msgid "Unavailable during…"
 msgstr "غير متاح خلال…"
 
+#: app/components/media-library/photo-studio-dialog.tsx:862
+msgid "Undo"
+msgstr "تراجع"
+
 #: app/components/staff/schedule/shift-editor-sheet.tsx:674
 msgid "Undo changes"
 msgstr "التراجع عن التغييرات"
@@ -20747,7 +21434,7 @@ msgid "Unscheduled"
 msgstr "غير مجدولة"
 
 #: app/components/favorite-notes.tsx:142
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1026
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1025
 msgid "Unstar"
 msgstr "إلغاء التفضيل"
 
@@ -20758,13 +21445,13 @@ msgstr "إلغاء التفضيل"
 msgid "Until"
 msgstr "حتى"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:882
-#: app/routes/_app+/$orgSlug_+/media.tsx:1257
-#: app/routes/_app+/$orgSlug_+/media.tsx:1633
+#: app/routes/_app+/$orgSlug_+/media.tsx:907
+#: app/routes/_app+/$orgSlug_+/media.tsx:1306
+#: app/routes/_app+/$orgSlug_+/media.tsx:1695
 msgid "Untitled image"
 msgstr "صورة بلا عنوان"
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:701
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:700
 msgid "Untitled Note"
 msgstr "ملاحظة بدون عنوان"
 
@@ -20796,6 +21483,7 @@ msgstr "حتى 5 عناوين."
 msgid "Upcoming"
 msgstr "القادمة"
 
+#: app/components/media-library/photo-studio-dialog.tsx:912
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5967
 msgid "Update"
 msgstr "تحديث"
@@ -20838,7 +21526,7 @@ msgstr "قم بتحديث صورتك وبياناتك الشخصية هنا."
 msgid "Updated"
 msgstr "تم التحديث"
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:706
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:705
 msgid "Updated {timeAgo} ago"
 msgstr "تم التحديث منذ {timeAgo}"
 
@@ -20862,6 +21550,10 @@ msgstr "يتحدّث أثناء التعديل"
 msgid "Updating section"
 msgstr "تحديث القسم"
 
+#: app/components/media-library/photo-studio-dialog.tsx:912
+msgid "Updating…"
+msgstr "جارٍ التحديث…"
+
 #: app/components/app-sidebar.tsx:102
 #: app/components/settings/cards/organization/billing-card.tsx:506
 msgid "Upgrade"
@@ -20870,6 +21562,10 @@ msgstr "ترقية"
 #: app/components/settings/cards/organization/site-theme-card.tsx:313
 msgid "Upload a font"
 msgstr "رفع خط"
+
+#: app/components/media-library/photo-studio-dialog.tsx:541
+msgid "Upload a JPEG, PNG, or WebP photo to your media library first."
+msgstr "ارفع صورة بصيغة JPEG أو PNG أو WebP إلى مكتبة الوسائط أولًا."
 
 #: app/components/website/branding-panel.tsx:338
 msgid "Upload a logo"
@@ -20883,11 +21579,15 @@ msgstr "ارفع أيقونة PNG لموقعك العام. سنقوم تلقائ
 msgid "Upload a site icon"
 msgstr "رفع أيقونة الموقع"
 
+#: app/components/media-library/photo-studio-dialog.tsx:689
+msgid "Upload a style reference"
+msgstr "رفع مرجع للنمط"
+
 #: app/components/chat/chat-composer.tsx:126
 msgid "Upload already in progress."
 msgstr "الرفع قيد التنفيذ بالفعل."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:952
+#: app/routes/_app+/$orgSlug_+/media.tsx:977
 msgid "Upload an image here, or add one to a note, comment, website page, or your organization settings."
 msgstr "حمّل صورة هنا، أو أضف صورة إلى ملاحظة أو تعليق أو صفحة موقع أو إعدادات مؤسستك."
 
@@ -20903,7 +21603,7 @@ msgstr "فشل الرفع. يرجى المحاولة مرة أخرى."
 msgid "Upload file"
 msgstr "رفع ملف"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:845
+#: app/routes/_app+/$orgSlug_+/media.tsx:870
 msgid "Upload image"
 msgstr "تحميل صورة"
 
@@ -20923,13 +21623,13 @@ msgstr "تحميل شعارك"
 msgid "Uploaded"
 msgstr "تم الرفع"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1346
+#: app/routes/_app+/$orgSlug_+/media.tsx:1408
 msgid "Uploaded:"
 msgstr "تاريخ الرفع:"
 
 #: app/components/chat/chat-composer.tsx:335
 #: app/components/website/link-inspector.tsx:542
-#: app/routes/_app+/$orgSlug_+/media.tsx:843
+#: app/routes/_app+/$orgSlug_+/media.tsx:868
 msgid "Uploading…"
 msgstr "جارٍ الرفع…"
 
@@ -20939,7 +21639,7 @@ msgstr "جارٍ الرفع…"
 msgid "URL"
 msgstr "الرابط"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1383
+#: app/routes/_app+/$orgSlug_+/media.tsx:1445
 msgid "URL copied to clipboard"
 msgstr "تم نسخ الرابط إلى الحافظة"
 
@@ -20947,7 +21647,7 @@ msgstr "تم نسخ الرابط إلى الحافظة"
 msgid "URL Redirects"
 msgstr "عمليات إعادة توجيه عناوين URL"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1368
+#: app/routes/_app+/$orgSlug_+/media.tsx:1430
 msgid "URL:"
 msgstr "الرابط:"
 
@@ -21019,6 +21719,11 @@ msgstr "استخدم ملف CSV فيه عمود للتاريخ وعمود لصا
 msgid "Use a full link that starts with https://"
 msgstr "استخدم رابطًا كاملًا يبدأ بـ https://"
 
+#: app/components/media-library/photo-studio-dialog.tsx:199
+#: app/components/media-library/photo-studio-dialog.tsx:415
+msgid "Use a JPEG, PNG, or WebP photo up to 10 MB."
+msgstr "استخدم صورة بصيغة JPEG أو PNG أو WebP بحجم يصل إلى 10 ميغابايت."
+
 #: app/components/hiring/job-editor.tsx:450
 msgid "Use a number like 18 or 18.50."
 msgstr "استخدم رقمًا مثل 18 أو 18.50."
@@ -21082,6 +21787,10 @@ msgstr "استخدم كلمة المرور بدلاً من ذلك"
 msgid "Use selected"
 msgstr "استخدام المحدد"
 
+#: app/utils/media/photo-studio.ts:139
+msgid "Use the angle and framing of your photo instead of the style's"
+msgstr "استخدم زاوية صورتك وتأطيرها بدلًا من زاوية النمط وتأطيره"
+
 #: app/components/staff/review-rows.tsx:19
 msgid "Use the country code, like +14155550123."
 msgstr "استخدم رمز الدولة، مثل ‎+14155550123."
@@ -21110,7 +21819,7 @@ msgstr "استخدم تخزين S3 المتوافق الخاص بك بدلاً �
 msgid "Used by a transfer case"
 msgstr "مستخدم في حالة تحويل"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1480
+#: app/routes/_app+/$orgSlug_+/media.tsx:1542
 msgid "Used in"
 msgstr "مستخدم في"
 
@@ -21220,6 +21929,10 @@ msgstr "جاري التحقق من مفتاح المرور"
 msgid "Version {flowVersion}, published {publishedOn}"
 msgstr "الإصدار {flowVersion}، نُشر في {publishedOn}"
 
+#: app/components/media-library/photo-studio-dialog.tsx:847
+msgid "Version {versionCount}"
+msgstr "الإصدار {versionCount}"
+
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3353
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3935
 msgid "Video"
@@ -21229,7 +21942,7 @@ msgstr "فيديو"
 msgid "Video call"
 msgstr "مكالمة فيديو"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1228
+#: app/routes/_app+/$orgSlug_+/media.tsx:1277
 msgid "Video thumbnail"
 msgstr "صورة مصغرة للفيديو"
 
@@ -21240,7 +21953,7 @@ msgstr "صورة مصغرة للفيديو"
 msgid "View"
 msgstr "عرض"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:237
+#: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:247
 msgid "View all"
 msgstr "عرض الكل"
 
@@ -21291,6 +22004,10 @@ msgstr "عرض الموقع المباشر"
 #: app/routes/mcp+/authorize.tsx:394
 msgid "View notes from users you have access to"
 msgstr "عرض الملاحظات من المستخدمين الذين لديك وصول إليهم"
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:318
+msgid "View on {platformName}"
+msgstr "عرض على {platformName}"
 
 #: app/components/dashboard/access-labels.ts:10
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:539
@@ -21370,7 +22087,7 @@ msgstr "بنفسجي"
 msgid "Visitor names, phone numbers, and emails are stored in this region. Changing it after customers have signed in permanently deletes that data — it is not moved."
 msgstr "يتم تخزين أسماء الزوار وأرقام هواتفهم وبريدهم الإلكتروني في هذه المنطقة. تغييرها بعد تسجيل دخول العملاء يحذف تلك البيانات نهائياً — فهي لا تُنقل."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1240
+#: app/routes/_app+/$orgSlug_+/media.tsx:1289
 msgid "Vivid"
 msgstr "زاهٍ"
 
@@ -21412,7 +22129,7 @@ msgstr "تم حفظ البريد الصوتي"
 msgid "Voicemails, callback requests, missed transfers, complaints, and low ratings stay open on the Calls page until someone marks them complete."
 msgstr "تبقى رسائل البريد الصوتي وطلبات معاودة الاتصال والتحويلات الفائتة والشكاوى والتقييمات المنخفضة مفتوحة في صفحة المكالمات حتى يضع أحدهم علامة عليها بأنها مكتملة."
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:234
+#: app/routes/_app+/$orgSlug_+/index.tsx:238
 msgid "Vs prior period"
 msgstr "مقارنة بالفترة السابقة"
 
@@ -21455,6 +22172,7 @@ msgstr "انتظر {0} {1}"
 msgid "Wait for a specified duration before next step"
 msgstr "انتظر مدة محددة قبل الخطوة التالية"
 
+#: app/components/social/social-labels.ts:34
 #: app/components/staff/schedule/availability-page.tsx:148
 #: app/components/staff/schedule/time-off-page.tsx:181
 msgid "Waiting"
@@ -21480,6 +22198,10 @@ msgstr "بانتظار الربط"
 msgid "Waiting to send"
 msgstr "بانتظار الإرسال"
 
+#: app/components/media-library/photo-studio-dialog.tsx:885
+msgid "Want changes?"
+msgstr "هل تريد تعديلات؟"
+
 #: app/routes/_auth+/waitlist.tsx:268
 msgid "Want to go to the top of the waitlist?"
 msgstr "تريد الذهاب إلى أعلى قائمة الانتظار?"
@@ -21500,9 +22222,13 @@ msgstr "المطلوب: نعم"
 msgid "Wanted: Yes. This one matters for the job."
 msgstr "المطلوب: نعم. هذا مهم للوظيفة."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1241
+#: app/routes/_app+/$orgSlug_+/media.tsx:1290
 msgid "Warm"
 msgstr "دافئ"
+
+#: app/utils/media/photo-studio.ts:119
+msgid "Warm & cozy"
+msgstr "دافئ ومريح"
 
 #: app/components/staff/labor-policy-editor.tsx:844
 msgid "Warn managers about overtime"
@@ -21759,10 +22485,10 @@ msgstr "الويب"
 msgid "Webhooks: {webhookMode}"
 msgstr "الويب هوك: {webhookMode}"
 
-#: app/components/app-sidebar.tsx:416
+#: app/components/app-sidebar.tsx:423
 #: app/components/command-menu.tsx:141
 #: app/components/workspace-breadcrumb.tsx:13
-#: app/routes/_app+/$orgSlug_+/media.tsx:1230
+#: app/routes/_app+/$orgSlug_+/media.tsx:1279
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:82
 msgid "Website"
 msgstr "الموقع الإلكتروني"
@@ -21775,7 +22501,7 @@ msgstr "الموقع والنشر"
 msgid "Website editor, announcements, and public pages."
 msgstr "محرر الموقع والإعلانات والصفحات العامة."
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1232
+#: app/routes/_app+/$orgSlug_+/media.tsx:1281
 msgid "Website SEO"
 msgstr "تحسين محركات البحث للموقع"
 
@@ -21949,6 +22675,10 @@ msgstr "ما الذي ترغب في جمعه؟"
 msgid "What would you like to know?"
 msgstr "ماذا تريد أن تعرف؟"
 
+#: app/components/social/post-composer.tsx:259
+msgid "What would you like to share?"
+msgstr "ماذا تريد أن تشارك؟"
+
 #: app/components/staff/labor/labor-page.tsx:242
 msgid "What your hours cost against your sales, the sales you enter, and how tips divide."
 msgstr "كم تكلّفك ساعات العمل مقابل مبيعاتك، والمبيعات التي تُدخلها، وكيف تُقسَّم الإكراميات."
@@ -22057,6 +22787,10 @@ msgstr "أين عثر المتقدمون على الوظيفة."
 msgid "Where every call begins."
 msgstr "حيث تبدأ كل مكالمة."
 
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:277
+msgid "Where it went"
+msgstr "أين نُشر"
+
 #: app/components/staff/timesheets/pay-period-dialog.tsx:59
 msgid "Where one period ends and the next begins. Timesheets and the payroll summary are cut on these lines."
 msgstr "أين تنتهي فترة وتبدأ التالية. تُقسَّم سجلات الدوام وملخص الرواتب على هذه الحدود."
@@ -22096,6 +22830,10 @@ msgstr "أثناء الإغلاق"
 #: app/components/phone-agent/call-follow-up.tsx:194
 msgid "While open"
 msgstr "أثناء ساعات العمل"
+
+#: app/utils/media/photo-studio.ts:111
+msgid "White marble surface, bright and premium"
+msgstr "سطح رخام أبيض مشرق وفاخر"
 
 #: app/components/staff/schedule/availability-sheet.tsx:213
 #: app/components/staff/schedule/time-off-sheet.tsx:186
@@ -22197,6 +22935,10 @@ msgstr "ضمن الهدف"
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1207
 msgid "Without bleed, color that runs to the edge can show a thin white line after cutting. Add bleed in Canva (File, Settings, Show print bleed) for shipped prints."
 msgstr "بدون هامش قص، قد يظهر خط أبيض رفيع بعد القص في الألوان الممتدة حتى الحافة. أضف هامش القص في Canva (ملف، الإعدادات، إظهار هامش القص) للمطبوعات المشحونة."
+
+#: app/utils/media/photo-studio.ts:102
+msgid "Wooden table by a sunny window"
+msgstr "طاولة خشبية بجانب نافذة مشمسة"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:709
 msgid "Word"
@@ -22302,6 +23044,10 @@ msgstr "اكتب سياسة. أنت تسجّل متى قرأوها ووافقو�
 msgid "Write it the way you'd explain it to a new staff member."
 msgstr "اكتبها بالطريقة التي تشرحها بها لموظف جديد."
 
+#: app/routes/_app+/$orgSlug_+/marketing+/social.new.tsx:61
+msgid "Write once, then publish now, schedule it, or keep it as a draft."
+msgstr "اكتب مرة واحدة، ثم انشر الآن أو جدول النشر أو احتفظ به كمسودة."
+
 #: app/components/settings/cards/organization/announcement-sheet.tsx:335
 msgid "Write the banner in the default language, then switch locales to translate. Enabled banners appear at the top of your public site."
 msgstr "اكتب الشريط باللغة الافتراضية، ثم بدّل اللغات للترجمة. تظهر الإعلانات الشريطية المفعّلة أعلى موقعك العام."
@@ -22336,6 +23082,10 @@ msgstr "اكتب ردك…"
 #: ../../packages/marketing/src/components/campaign-form.tsx:136
 msgid "Write your text message"
 msgstr "اكتب رسالتك النصية"
+
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:109
+msgid "Write, schedule and track posts on Facebook and Instagram."
+msgstr "اكتب المنشورات على فيسبوك وإنستغرام وجدولها وتتبعها."
 
 #: app/components/hiring/localized-fields.tsx:35
 msgid "Writing the {language} version. Anything you leave blank is shown in {fallback}."
@@ -22513,7 +23263,7 @@ msgstr "لا تملك صلاحية الوصول إلى مكان العمل ذل�
 msgid "You do not have permission to do that."
 msgstr "ليست لديك صلاحية لتنفيذ ذلك."
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1191
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1190
 msgid "You do not have permission to view this note"
 msgstr "ليس لديك إذن لعرض هذه الملاحظة"
 
@@ -22592,6 +23342,10 @@ msgstr "تحتاج إلى صلاحية الأجور لتغيير الإكرام�
 #: app/components/chat/chat-view.tsx:978
 msgid "You no longer have access to this chat. Reload the page to check your channels."
 msgstr "لم يعد لديك حق الوصول إلى هذه الدردشة. أعد تحميل الصفحة للتحقق من قنواتك."
+
+#: app/components/media-library/photo-studio-dialog.tsx:195
+msgid "You reached the hourly limit for AI photos. Try again later."
+msgstr "وصلت إلى الحد الساعي لصور الذكاء الاصطناعي. حاول مرة أخرى لاحقًا."
 
 #: app/components/settings/cards/organization/shop-card.tsx:439
 msgid "You receive"
@@ -22745,7 +23499,7 @@ msgstr "ساعات العمل والهاتف والعنوان. يذكرها ال
 msgid "Your MCP Server URL"
 msgstr "رابط خادم MCP الخاص بك"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:946
+#: app/routes/_app+/$orgSlug_+/media.tsx:971
 msgid "Your media library is empty"
 msgstr "مكتبة الوسائط فارغة"
 

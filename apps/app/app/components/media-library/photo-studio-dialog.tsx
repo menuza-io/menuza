@@ -112,9 +112,7 @@ export function PhotoStudioDialog({
 	const referenceInputRef = useRef<HTMLInputElement>(null)
 	const objectUrls = useRef<string[]>([])
 	const generationRef = useRef(0)
-	const pendingSave = useRef<{ index: number; kind: 'copy' | 'replace' }>(
-		null,
-	)
+	const pendingSave = useRef<{ index: number; kind: 'copy' | 'replace' }>(null)
 
 	const [step, setStep] = useState<Step>('photos')
 	const [selectedIds, setSelectedIds] = useState<string[]>([])
@@ -187,11 +185,14 @@ export function PhotoStudioDialog({
 	const doneCount = results.filter((r) => r.status !== 'pending').length
 	const active = results[activeIndex]
 	const activeImage = active?.versions.at(-1)
+	const versionCount = active?.versions.length ?? 0
 
 	function errorMessage(code: string | undefined) {
 		switch (code) {
 			case 'rate_limited':
-				return _(msg`You reached the hourly limit for AI photos. Try again later.`)
+				return _(
+					msg`You reached the hourly limit for AI photos. Try again later.`,
+				)
 			case 'not_configured':
 				return _(msg`AI photos are not set up for this workspace.`)
 			case 'unsupported_image':
@@ -263,9 +264,7 @@ export function PhotoStudioDialog({
 					setResults((current) =>
 						gen === generationRef.current
 							? current.map((r, i) =>
-									i === index
-										? { ...r, status: 'done', versions: [image] }
-										: r,
+									i === index ? { ...r, status: 'done', versions: [image] } : r,
 								)
 							: current,
 					)
@@ -740,7 +739,9 @@ export function PhotoStudioDialog({
 									value={instructions}
 									maxLength={PHOTO_STUDIO_INSTRUCTIONS_MAX}
 									onChange={(event) => setInstructions(event.target.value)}
-									placeholder={_(msg`e.g. Add a few fresh flowers in the background`)}
+									placeholder={_(
+										msg`e.g. Add a few fresh flowers in the background`,
+									)}
 									rows={2}
 									className="resize-none"
 								/>
@@ -802,7 +803,9 @@ export function PhotoStudioDialog({
 							{results.length > 1 ? (
 								<div className="flex flex-wrap gap-2">
 									{results.map((result, index) => {
-										const thumb = result.versions.at(-1)?.url ?? result.asset.url
+										const thumb =
+											result.versions.at(-1)?.url ?? result.asset.url
+										const position = index + 1
 										return (
 											<button
 												key={result.asset.id}
@@ -812,14 +815,18 @@ export function PhotoStudioDialog({
 													setRefineText('')
 												}}
 												aria-pressed={index === activeIndex}
-												aria-label={_(msg`Show result ${index + 1}`)}
+												aria-label={_(msg`Show result ${position}`)}
 												className={cn(
 													'focus-visible:ring-ring/50 relative size-14 overflow-hidden rounded-lg border outline-none focus-visible:ring-2',
 													index === activeIndex &&
 														'border-primary ring-primary/20 ring-2',
 												)}
 											>
-												<img src={thumb} alt="" className="size-full object-cover" />
+												<img
+													src={thumb}
+													alt=""
+													className="size-full object-cover"
+												/>
 												{result.status === 'error' ? (
 													<span className="bg-destructive/60 text-background absolute inset-0 flex items-center justify-center">
 														<Icon name="alert-triangle" className="size-4" />
@@ -841,8 +848,8 @@ export function PhotoStudioDialog({
 									/>
 									<div className="flex flex-wrap items-center justify-between gap-2">
 										<p className="text-muted-foreground text-xs">
-											{active.versions.length > 1 ? (
-												<Trans>Version {active.versions.length}</Trans>
+											{versionCount > 1 ? (
+												<Trans>Version {versionCount}</Trans>
 											) : (
 												<Trans>Drag the slider to compare.</Trans>
 											)}
@@ -894,7 +901,9 @@ export function PhotoStudioDialog({
 														void refine()
 													}
 												}}
-												placeholder={_(msg`e.g. Make the background a little darker`)}
+												placeholder={_(
+													msg`e.g. Make the background a little darker`,
+												)}
 												rows={1}
 												className="resize-none"
 											/>
@@ -907,7 +916,11 @@ export function PhotoStudioDialog({
 												name={refining ? 'loader' : 'send'}
 												className={cn(refining && 'animate-spin')}
 											/>
-											{refining ? <Trans>Updating…</Trans> : <Trans>Update</Trans>}
+											{refining ? (
+												<Trans>Updating…</Trans>
+											) : (
+												<Trans>Update</Trans>
+											)}
 										</Button>
 									</form>
 								</>
