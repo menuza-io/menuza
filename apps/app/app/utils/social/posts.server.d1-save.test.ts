@@ -1,3 +1,4 @@
+import type * as DatabaseModule from '@repo/database'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const FIXED_NOW = new Date('2026-10-28T12:00:00.000Z')
@@ -18,7 +19,7 @@ const isD1Mock = vi.hoisted(() => vi.fn(() => true))
 const selectCall = vi.hoisted(() => ({ n: 0 }))
 
 vi.mock('@repo/database', async (importOriginal) => {
-	const actual = await importOriginal<typeof import('@repo/database')>()
+	const actual = await importOriginal<typeof DatabaseModule>()
 	const selectMock = vi.fn(() => ({
 		from: () => ({
 			where: () => {
@@ -33,9 +34,7 @@ vi.mock('@repo/database', async (importOriginal) => {
 						},
 					])
 				}
-				return Promise.resolve([
-					{ status: 'draft', updatedAt: FIXED_NOW },
-				])
+				return Promise.resolve([{ status: 'draft', updatedAt: FIXED_NOW }])
 			},
 		}),
 	}))

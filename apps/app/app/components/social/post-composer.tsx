@@ -24,8 +24,6 @@ import {
 	MediaLibraryPicker,
 	type MediaLibraryAsset,
 } from '#app/components/media-library/media-library-picker.tsx'
-import { isScheduleLocalValid } from '#app/utils/social/time.ts'
-import { SocialPostFormSchema } from '#app/utils/social/post-schema.ts'
 import {
 	SOCIAL_MAX_MEDIA,
 	SOCIAL_PLATFORM_RULES,
@@ -33,10 +31,9 @@ import {
 	type SocialPlatform,
 	type SocialPostMedia,
 } from '#app/utils/social/platforms.ts'
-import {
-	SOCIAL_PROBLEM_LABELS,
-	socialFormErrors,
-} from './social-labels.ts'
+import { SocialPostFormSchema } from '#app/utils/social/post-schema.ts'
+import { isScheduleLocalValid } from '#app/utils/social/time.ts'
+import { SOCIAL_PROBLEM_LABELS, socialFormErrors } from './social-labels.ts'
 import { SocialPlatformIcon } from './social-ui.tsx'
 
 export type ComposerAccount = {
@@ -260,7 +257,9 @@ export function SocialPostComposer({
 						/>
 						<FieldDescription>
 							<span
-								className={textLength > textLimit ? 'text-destructive' : undefined}
+								className={
+									textLength > textLimit ? 'text-destructive' : undefined
+								}
 							>
 								{(() => {
 									const used = textLength.toLocaleString()
@@ -379,7 +378,10 @@ export function SocialPostComposer({
 						<ul className="text-warning space-y-1 text-sm">
 							{problems.map(({ platform, problem }) => (
 								<li key={`${platform}:${problem}`} className="flex gap-2">
-									<Icon name="alert-triangle" className="mt-0.5 size-4 shrink-0" />
+									<Icon
+										name="alert-triangle"
+										className="mt-0.5 size-4 shrink-0"
+									/>
 									{_(SOCIAL_PROBLEM_LABELS[platform][problem])}
 								</li>
 							))}

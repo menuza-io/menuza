@@ -1,3 +1,4 @@
+import type * as AuthModule from '@repo/auth'
 import { userHasOrganizationPermission } from '@repo/auth'
 import { type FilterCondition } from '@repo/ui/filters'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -6,7 +7,7 @@ import { getOperatorTenantClient } from '#app/utils/tenant-api.server.ts'
 import { isActiveCustomerCondition, loader } from './customers.tsx'
 
 vi.mock('@repo/auth', async (importOriginal) => ({
-	...(await importOriginal<typeof import('@repo/auth')>()),
+	...(await importOriginal<typeof AuthModule>()),
 	userHasOrganizationPermission: vi.fn(),
 }))
 vi.mock('#app/utils/organization/loader.server.ts', () => ({

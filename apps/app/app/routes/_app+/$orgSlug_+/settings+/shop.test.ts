@@ -1,4 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
+import { listOrganizationShopOrders } from '#app/utils/shop.server.ts'
 import { loader } from './shop.tsx'
 
 vi.mock('#app/utils/organization/loader.server.ts', () => ({
@@ -11,9 +13,6 @@ vi.mock('#app/utils/shop.server.ts', () => ({
 	syncConnectAccountStatus: vi.fn(),
 	syncCheckoutSubEntityStatus: vi.fn(),
 }))
-
-import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
-import { listOrganizationShopOrders } from '#app/utils/shop.server.ts'
 
 describe('settings+/shop loader', () => {
 	beforeEach(() => {

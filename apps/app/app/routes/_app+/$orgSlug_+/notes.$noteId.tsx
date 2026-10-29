@@ -56,7 +56,6 @@ import {
 import sanitizeHtml from 'sanitize-html'
 import { ENV } from 'varlock/env'
 import { z } from 'zod'
-import { type BreadcrumbHandle } from '#app/utils/breadcrumb.ts'
 
 export const handle: BreadcrumbHandle<Awaited<ReturnType<typeof loader>>> = {
 	breadcrumb: (data) => data.note.title,
@@ -101,7 +100,7 @@ import {
 	CanDeleteNote,
 } from '#app/components/permissions/permission-guard.tsx'
 import { VideoPoster } from '#app/components/ui/video-poster.tsx'
-
+import { type BreadcrumbHandle } from '#app/utils/breadcrumb.ts'
 import { enrichNoteUploadsWithImageSrc } from '#app/utils/note-upload-url.server.ts'
 import {
 	requireUserWithOrganizationPermission,
