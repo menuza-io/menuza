@@ -3378,3 +3378,136 @@ export const PrintCanvaConnection = sqliteTable(
 		),
 	],
 )
+
+/**
+ * A social media account the organization publishes to: a Facebook Page or an
+ * Instagram professional account (both through Meta). Shared by the
+ * organization's members. The Page access token is encrypted
+ * (INTEGRATION_ENCRYPTION_KEY) and never reaches the browser.
+ */
+export const SocialAccount = sqliteTable(
+	'SocialAccount',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		platform: text().notNull(), // facebook | instagram
+		// The Page id (Facebook) or Instagram user id.
+		externalId: text().notNull(),
+		name: text().notNull(),
+		username: text(),
+		accessToken: text().notNull(),
+		// active | needs_reauth (Meta refused the token; connect again)
+		status: text().default('active').notNull(),
+		connectedById: text().references(() => User.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		uniqueIndex('SocialAccount_organizationId_platform_externalId_key').on(
+			table.organizationId,
+			table.platform,
+			table.externalId,
+		),
+	],
+)
+
+export const SocialPost = sqliteTable(
+	'SocialPost',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		createdById: text().references(() => User.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		body: text().default('').notNull(),
+		media: text({ mode: 'json' }).notNull(), // SocialPostMedia[]
+		// draft | scheduled | publishing | published | partial | failed
+		status: text().default('draft').notNull(),
+		scheduledAt: integer({ mode: 'timestamp_ms' }),
+		publishedAt: integer({ mode: 'timestamp_ms' }),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('SocialPost_organizationId_scheduledAt_idx').on(
+			table.organizationId,
+			table.scheduledAt,
+		),
+		index('SocialPost_status_scheduledAt_idx').on(
+			table.status,
+			table.scheduledAt,
+		),
+	],
+)
+
+// One row per account a post goes to. The platform and account name are
+// copied so the history stays readable after the account is disconnected.
+export const SocialPostTarget = sqliteTable(
+	'SocialPostTarget',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		postId: text()
+			.notNull()
+			.references(() => SocialPost.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		socialAccountId: text().references(() => SocialAccount.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		platform: text().notNull(),
+		accountName: text().notNull(),
+		// pending | publishing | published | failed
+		status: text().default('pending').notNull(),
+		externalPostId: text(),
+		permalink: text(),
+		error: text(),
+		attempts: integer().default(0).notNull(),
+		publishedAt: integer({ mode: 'timestamp_ms' }),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('SocialPostTarget_postId_idx').on(table.postId),
+		index('SocialPostTarget_socialAccountId_idx').on(table.socialAccountId),
+	],
+)

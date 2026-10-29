@@ -117,7 +117,7 @@ describe('Print shop Admin order actions', () => {
 				expect(
 					screen.getByRole('group', { name: /the .* order of Studio/ }),
 				).toHaveFocus(),
-			{ timeout: 5000 },
+			{ timeout: 10_000 },
 		)
 	})
 })

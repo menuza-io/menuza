@@ -38,7 +38,10 @@ as the Admin cache route).
 
 The hourly `0 * * * *` trigger fans out to every regional tenant-api node: the
 tenant engagement sync and the staff tick (below). The two are independent
-requests, so one failing never blocks the other. The Workers free plan allows
+requests, so one failing never blocks the other. The same trigger runs two App
+jobs: `/resources/jobs/print-sync` and `/resources/jobs/social-publish`, a sweep
+behind the per-post `SocialPostWorkflow` that wakes the App when a scheduled
+social post is due (see `docs/social-media.md`). The Workers free plan allows
 five cron triggers per Worker, so new daily jobs share an existing trigger (each
 job is still its own request with its own error logging).
 

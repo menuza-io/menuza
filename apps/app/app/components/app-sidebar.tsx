@@ -353,6 +353,13 @@ function OrganizationSidebar({
 					),
 				},
 				{
+					title: _(msg`Social media`),
+					url: `/${orgSlug}/marketing/social`,
+					isActive: location.pathname.includes(
+						`/${orgSlug}/marketing/social`,
+					),
+				},
+				{
 					title: _(msg`Print shop`),
 					url: `/${orgSlug}/marketing/print`,
 					isActive: location.pathname.includes(`/${orgSlug}/marketing/print`),
@@ -566,6 +573,9 @@ function OrganizationSidebar({
 						}
 						if (subItem.url.includes('/marketing/automations')) {
 							return canReadAutomations
+						}
+						if (subItem.url.includes('/marketing/social')) {
+							return canReadCampaigns
 						}
 						if (subItem.url.includes('/marketing/print')) {
 							return printShopNav.visible

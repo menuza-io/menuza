@@ -604,6 +604,13 @@ git commit --no-verify -m "fix: resolve ESLint warnings (verified manually)"
   buttons. `CANVA_MOCK` is a local emulator, ignored unless `BASE_URL` is local.
   Tokens are encrypted with `INTEGRATION_ENCRYPTION_KEY`. See
   `docs/print-shop-canva.md`.
+- `META_APP_ID` / `META_APP_SECRET` / `SOCIAL_MOCK` - App only. Meta app for
+  Marketing, Social media (Facebook Pages and Instagram professional accounts;
+  redirect URL `<BASE_URL>/resources/social/meta/callback`); empty means
+  accounts cannot be connected. `SOCIAL_MOCK` is a local emulator, ignored
+  unless `BASE_URL` is local. Page tokens are encrypted with
+  `INTEGRATION_ENCRYPTION_KEY`. Scheduled posts are woken by jobs-cron's
+  `SocialPostWorkflow`. See `docs/social-media.md`.
 - `STAFFING_EMAIL_ENABLED` - Tenant-api and App, optional (unset or `true` is
   on). Kill switch for staffing email: on tenant-api it drops staff reminders
   and notices (dropped, not held, so re-enabling sends no backlog); in the App

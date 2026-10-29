@@ -541,10 +541,11 @@ function OrderActions({
 				rowRef.current?.focus()
 			}
 		}
-		// Once now, and once after a closing dialog has handed focus back
-		// (possibly to a button the reload removed).
+		// Dialog close and fetcher reload can hand focus back slowly on CI.
 		window.requestAnimationFrame(check)
-		window.setTimeout(check, 300)
+		for (const delay of [100, 300, 750]) {
+			window.setTimeout(check, delay)
+		}
 	}
 	const { _, i18n } = useLingui()
 	// A vendor may already be printing (or has shipped): refunding in full
