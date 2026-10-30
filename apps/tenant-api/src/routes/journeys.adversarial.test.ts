@@ -269,7 +269,7 @@ describe('Adversarial Stress Testing: Journey Service, Step Execution, Auth & PI
 				body: JSON.stringify({
 					orgId,
 					journeyId: journey.id,
-					runId: '00000000-0000-0000-0000-000000000001',
+					runId: '00000000-0000-4000-8000-000000000001',
 					customerId: nonExistentCustomerId,
 					nodeId: 'node-1',
 					nodeType: 'action_email',
@@ -303,7 +303,7 @@ describe('Adversarial Stress Testing: Journey Service, Step Execution, Auth & PI
 					.returning()
 			)[0]!
 
-			const nonExistentRunId = '00000000-0000-0000-0000-000000000002'
+			const nonExistentRunId = '00000000-0000-4000-8000-000000000002'
 			const res = await app.request('/api/journeys/execute-step', {
 				method: 'POST',
 				headers: {

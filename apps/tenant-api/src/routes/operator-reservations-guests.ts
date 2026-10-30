@@ -662,7 +662,7 @@ const eraseGuestBodySchema = z
 	.object({
 		locationId: z.string().trim().min(1).max(128).optional(),
 	})
-	.passthrough()
+	.loose()
 
 operatorReservationsGuestsRoutes.post(
 	'/:id/erase',

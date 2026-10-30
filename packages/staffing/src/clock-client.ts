@@ -92,7 +92,7 @@ const errorBodySchema = z
 		error: z.string().optional(),
 		retryAfterSeconds: z.number().optional(),
 	})
-	.passthrough()
+	.loose()
 
 export type ClockRequestOptions = {
 	/** `https://node.example/kiosk` or `https://node.example/pos/timeclock`. */

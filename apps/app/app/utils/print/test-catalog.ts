@@ -29,9 +29,7 @@ export const testPrintCatalogExtension: PrintCatalogExtension = {
 			folded: true,
 			featuredItems: false,
 			qrTargets: ['desk', 'site'],
-			sizes: [
-				{ key: '4x6', widthMm: 102, heightMm: 152, label: '4 × 6 in (folded)' },
-			],
+			sizes: [{ key: '4x6', widthMm: 102, heightMm: 152, label: '4 × 6 in' }],
 		},
 	],
 	qrTargets: [

@@ -1,5 +1,4 @@
 import cloudflare from '@astrojs/cloudflare'
-import partytown from '@astrojs/partytown'
 import react from '@astrojs/react'
 import sitemap from '@astrojs/sitemap'
 import { d1, r2 } from '@emdash-cms/cloudflare'
@@ -117,20 +116,6 @@ export default defineConfig({
 			changefreq: 'weekly',
 			priority: 0.7,
 			lastmod: new Date(),
-		}),
-		partytown({
-			config: {
-				forward: [
-					'dataLayer.push',
-					'gtag',
-					'posthog.capture',
-					'posthog.captureException',
-					'posthog.identify',
-					'posthog.logger.error',
-					'posthog.logger.info',
-					'posthog.logger.warn',
-				],
-			},
 		}),
 	],
 

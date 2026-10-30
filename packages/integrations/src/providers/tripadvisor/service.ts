@@ -34,7 +34,7 @@ const tripAdvisorLocationSchema = z
 		num_reviews: z.string().optional(),
 		phone: z.string().optional(),
 	})
-	.passthrough()
+	.loose()
 
 export type TripAdvisorLocation = z.infer<typeof tripAdvisorLocationSchema>
 
@@ -72,7 +72,7 @@ export const tripAdvisorReviewSchema = z
 			.object({ comment: z.string(), updateTime: z.string().optional() })
 			.optional(),
 	})
-	.passthrough()
+	.loose()
 
 export type TripAdvisorReview = z.infer<typeof tripAdvisorReviewSchema> & {
 	locationId: string
@@ -143,7 +143,7 @@ const MOCK_TRIPADVISOR_REVIEWS: z.infer<typeof tripAdvisorReviewSchema>[] = [
 function parseIntegrationConfig(rawConfig: string | null | undefined) {
 	try {
 		return z
-			.record(z.unknown())
+			.record(z.string(), z.unknown())
 			.catch({})
 			.parse(JSON.parse(rawConfig ?? '{}'))
 	} catch {
@@ -311,6 +311,7 @@ export async function listTripAdvisorReviews(
 			const config = parseIntegrationConfig(integration.config)
 			const storedReplies = z
 				.record(
+					z.string(),
 					z.object({
 						comment: z.string(),
 						updateTime: z.string().optional(),
@@ -378,6 +379,7 @@ export async function replyToTripAdvisorReview(
 	const rawConfig = parseIntegrationConfig(integration.config)
 	const parsedReplies = z
 		.record(
+			z.string(),
 			z.object({ comment: z.string(), updateTime: z.string().optional() }),
 		)
 		.catch({})

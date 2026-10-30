@@ -1,5 +1,5 @@
 import { type Submission } from '@conform-to/react'
-import { parseWithZod } from '@conform-to/zod'
+import { parseWithZod } from '@conform-to/zod/v4'
 import { invariant } from '@epic-web/invariant'
 import {
 	generateTOTP,

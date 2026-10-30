@@ -5,8 +5,8 @@ import { I18nProvider } from '@lingui/react'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { type OrganizationRoleOption } from './organization-members'
 import { OrganizationInvitations } from './organization-invitations'
+import { type OrganizationRoleOption } from './organization-members'
 
 const MEMBER_ROLE: OrganizationRoleOption = {
 	id: 'org_role_member',
@@ -63,7 +63,7 @@ describe('OrganizationInvitations', () => {
 		expect(email.getAttribute('aria-invalid')).toBe('true')
 		expectDescribedBy(email, message)
 		// Focus lands on the invalid field, so screen readers read the message.
-		expect(document.activeElement).toBe(email)
+		expect(email).toHaveFocus()
 	})
 
 	it('explains a malformed email and clears the error once it is valid', async () => {

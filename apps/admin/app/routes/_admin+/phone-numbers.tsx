@@ -317,6 +317,7 @@ function NumberActions({ number }: { number: PlatformNumber }) {
 export default function AdminPhoneNumbersPage() {
 	const { _ } = useLingui()
 	const { numbers } = useLoaderData<typeof loader>()
+	const numberCount = numbers.length
 
 	return (
 		<div className="space-y-8">
@@ -397,7 +398,7 @@ export default function AdminPhoneNumbersPage() {
 									{numbers.length === 1 ? (
 										<Trans>1 number</Trans>
 									) : (
-										<Trans>{numbers.length} numbers</Trans>
+										<Trans>{numberCount} numbers</Trans>
 									)}
 								</TableCell>
 							</TableRow>

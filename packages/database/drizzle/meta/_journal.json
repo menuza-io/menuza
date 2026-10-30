@@ -197,6 +197,20 @@
 			"when": 1793076101727,
 			"tag": "0027_print_shop",
 			"breakpoints": true
+		},
+		{
+			"idx": 28,
+			"version": "6",
+			"when": 1793135125121,
+			"tag": "0028_print_canva",
+			"breakpoints": true
+		},
+		{
+			"idx": 29,
+			"version": "6",
+			"when": 1793281185817,
+			"tag": "0029_social_media",
+			"breakpoints": true
 		}
 	]
 }

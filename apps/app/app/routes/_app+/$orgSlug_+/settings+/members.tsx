@@ -1,4 +1,4 @@
-import { parseWithZod } from '@conform-to/zod'
+import { parseWithZod } from '@conform-to/zod/v4'
 import { auditService, AuditAction } from '@repo/audit'
 import { requireUserId } from '@repo/auth'
 import { invalidateUserOrganizationsCache } from '@repo/cache'
@@ -188,7 +188,7 @@ const InviteSchema = z.object({
 			z
 				.object({
 					email: z
-						.string({ required_error: 'Enter an email address' })
+						.string({ error: 'Enter an email address' })
 						.email('Invalid email address'),
 					roleId: z.string().min(1).optional(),
 					// Accept legacy callers while all current forms submit roleId.

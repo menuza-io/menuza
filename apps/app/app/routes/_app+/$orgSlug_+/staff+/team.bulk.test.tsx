@@ -136,7 +136,7 @@ describe('bulk add', () => {
 	it('reports rows the service rejected by name', async () => {
 		const request = vi.fn().mockResolvedValue({
 			results: [
-				{ index: 0, status: 'invalid', error: 'phone: invalid_string' },
+				{ index: 0, status: 'invalid', error: 'phone: invalid_format' },
 			],
 			summary: { created: 0, existing: 0, invalid: 1, conflict: 0 },
 		})

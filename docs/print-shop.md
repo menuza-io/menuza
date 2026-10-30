@@ -5,6 +5,9 @@ posters, flyers and window stickers. Every approved print downloads as a free
 PDF; posters and flyers can also be printed and shipped (US addresses in v1),
 with the platform as the merchant.
 
+Designs made in Canva can be imported as finished prints, and template prints
+sent to Canva: see [print-shop-canva.md](./print-shop-canva.md).
+
 The core knows no business type. A print vertical adds products (cards, tents),
 QR codes of its own, featured items and the business's places: see
 [print-shop-verticals.md](./print-shop-verticals.md).
@@ -16,6 +19,7 @@ QR codes of its own, featured items and the business's places: see
 | `print_shop.enabled` (org flag)          | Designs and free PDF downloads                    |
 | `print_shop.shipping` (org flag)         | Paid shipped orders (needs the master flag)       |
 | `PRINT_SHIPPING_ENABLED=false` (App env) | Pauses new paid orders everywhere (vendor outage) |
+| `print_shop.canva` (org flag)            | Import from and send to Canva (needs the master)  |
 
 `PRINT_SHIPPING_ENABLED` keeps shipping on only when it is unset or an explicit
 on-value (`true`, `1`, `on`, `yes`, `enabled`); any other value pauses it, so a
@@ -76,7 +80,15 @@ the browser's print dialog saves it.
   price is held for the quote window (default 30 minutes).
 - **Payment:** a one-off Stripe Checkout on the organization's Stripe customer
   (created on the first order and reused by subscriptions). The order goes to
-  the vendor only after Stripe confirms payment.
+  the vendor only after Stripe confirms payment. The Stripe webhook only records
+  the payment: the vendor submission runs after it answers (Workers
+  `waitUntil`), so rendering a large set never holds Stripe's request. A
+  checkout retry reuses the same parameters (the session's expiry comes from the
+  quote); when Stripe cannot say what became of the last session, no second one
+  is started.
+- **Pieces:** a print has at most `PRINT_MAX_PIECES_PER_DESIGN` (200) pieces:
+  approval refuses a larger set (a vertical's "every one" target included), and
+  so does the price.
 - **Vendors:** each product and size prints at one vendor (Gelato or Prodigi),
   set in Admin. A cart with products at both vendors becomes one vendor order
   each, with its own tracking. Each piece is sent as its own PDF with the
@@ -89,20 +101,37 @@ the browser's print dialog saves it.
   started; if production starts mid-cancel, the order is held (`partial_cancel`)
   for Admin to refund what was cancelled. A vendor refusal or a vendor-side
   cancellation refunds in full automatically. A payment that lands after a
-  cancel is refunded automatically (`late_payment`). Defects after delivery go
-  through Admin (reprint by vendor claim, or refund). An order held while the
-  vendor may already have it (`vendor_unknown`, `stale_claim`,
-  `submission_error`) cannot be cancelled by the operator (`needs_support`):
-  Admin checks the vendor first.
+  cancel is refunded automatically (`late_payment`). Once a vendor order has
+  shipped, nothing refunds automatically: a parcel that went back to the vendor
+  (`vendor_returned`, often a wrong address) or a vendor failure or cancel after
+  shipping (`vendor_after_shipping`) holds the order for Admin, since the prints
+  were made and paid for; Retry is refused for these holds (nothing is left to
+  send). Defects after delivery go through Admin (reprint by vendor claim, or
+  refund). An order held while the vendor may already have it (`vendor_unknown`,
+  `stale_claim`, `submission_error`), or held after shipping (`vendor_returned`,
+  `vendor_after_shipping`), cannot be cancelled by the operator
+  (`needs_support`): Admin checks the vendor first.
+- **Large sets:** a submission renders for at most 20 seconds (an Admin retry
+  15), then hands the order back (`paid`); rendered files are cached, so the
+  next run continues where it stopped. A run hands back only after rendering at
+  least one new file, so every run moves the order forward (a failed render
+  holds it as `render_unavailable`) and a set of up to 200 pieces always
+  finishes. An Admin retry that is handed back keeps going after it answers, and
+  the hourly `print-sync` job continues such orders (up to a minute each, ten
+  minutes in all, least recently touched first). Every file is rendered before
+  any vendor is called, so an order handed back has not reached a vendor in that
+  run.
 - **Crash safety:** the hourly `print-sync` job submits paid orders that were
-  never sent (after 5 minutes) and holds orders stuck sending or cancelling for
-  15 minutes (`stale_claim`), since a vendor call may have gone through. A
-  timeout or an error once the order was sent holds it as `vendor_unknown`. For
-  these (and `submission_error`) Admin's **Retry** and refunds show the vendor
-  references and ask to search the vendor first; **Found it at the vendor**
-  records the vendor's order id instead of sending again (the id is checked at
-  the vendor first, and only for these holds). Prodigi also gets an idempotency
-  key. A cancel that fails after another vendor was cancelled holds the order as
+  never sent (after 5 minutes). A submission cut short before any vendor call
+  goes back to `paid` and continues; one cut short during a vendor call (the
+  order carries `vendor_sending` meanwhile), or a cancel stuck for 15 minutes,
+  is held (`stale_claim`), since that call may have gone through. A timeout or
+  an error once the order was sent holds it as `vendor_unknown`. For these (and
+  `submission_error`) Admin's **Retry** and refunds show the vendor references
+  and ask to search the vendor first; **Found it at the vendor** records the
+  vendor's order id instead of sending again (the id is checked at the vendor
+  first, and only for these holds). Prodigi also gets an idempotency key. A
+  cancel that fails after another vendor was cancelled holds the order as
   `partial_cancel`; a refund that fails after vendors were cancelled holds it as
   `refund_failed`. Held refund cases (`refund_failed`, `partial_cancel`) can
   only be refunded. Paid orders are not counted against the hourly render limit.
@@ -147,8 +176,9 @@ App: `PRINT_BROWSER_ACCOUNT_ID`, `PRINT_BROWSER_API_TOKEN`,
 `PRINT_RENDER_LIMIT_PER_HOUR`, `PRINT_SHIPPING_ENABLED`, `GELATO_API_KEY`,
 `PRODIGI_API_KEY`, `PRODIGI_SANDBOX`, `PRINT_WEBHOOK_TOKEN` (32+ characters),
 `PRINT_MOCK` (local only: a stateless vendor emulator, ignored unless `BASE_URL`
-is a local host). Admin: `APP_URL`. Stripe webhook events as for the rest of the
-App (`checkout.session.*`).
+is a local host), `CANVA_CLIENT_ID`, `CANVA_CLIENT_SECRET` and `CANVA_MOCK` (see
+[print-shop-canva.md](./print-shop-canva.md)). Admin: `APP_URL`. Stripe webhook
+events as for the rest of the App (`checkout.session.*`).
 
 ## Rotating the webhook token
 

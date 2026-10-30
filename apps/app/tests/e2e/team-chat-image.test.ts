@@ -57,14 +57,15 @@ test.describe('Team chat image attachments', () => {
 			{ timeout: 20_000, errorMessage: 'Chat did not become ready' },
 		)
 
+		// eslint-disable-next-line playwright/no-raw-locators -- the file input is hidden and has no role or label
 		const fileInput = page.locator('input[type="file"][accept="image/*"]')
 		await fileInput.setInputFiles(CHAT_IMAGE_FIXTURE)
 
 		await page.getByRole('button', { name: /send message/i }).click()
 
-		const messageImage = page
-			.locator(`a[href*="/resources/images?objectKey="] img`)
-			.last()
+		const messageImageSelector = 'a[href*="/resources/images?objectKey="] img'
+
+		const messageImage = page.locator(messageImageSelector).last()
 		await expect(messageImage).toBeVisible({ timeout: 20_000 })
 
 		const loaded = await messageImage.evaluate(

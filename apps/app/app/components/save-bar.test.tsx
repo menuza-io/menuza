@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { getFormProps, getInputProps, useForm } from '@conform-to/react'
-import { getZodConstraint, parseWithZod } from '@conform-to/zod'
+import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { i18n } from '@lingui/core'
 import { I18nProvider } from '@lingui/react'
 import { render, screen, waitFor } from '@testing-library/react'

@@ -7,7 +7,7 @@ import {
 	type FieldMetadata,
 	FormProvider,
 } from '@conform-to/react'
-import { getZodConstraint, parseWithZod } from '@conform-to/zod'
+import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { type MessageDescriptor } from '@lingui/core'
 import { Trans, msg, t } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
@@ -68,10 +68,10 @@ function createInviteSchema(
 			.array(
 				z.object({
 					email: z
-						.string({ required_error: translate(msg`Enter an email address`) })
+						.string({ error: translate(msg`Enter an email address`) })
 						.email(translate(msg`Invalid email address`)),
 					roleId: z
-						.string({ required_error: translate(msg`A role is required`) })
+						.string({ error: translate(msg`A role is required`) })
 						.min(1, translate(msg`A role is required`)),
 				}),
 			)

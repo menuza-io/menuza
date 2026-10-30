@@ -7,7 +7,7 @@ import { z } from 'zod'
 
 export { MARKETING_EMAIL_PLATFORM_SCOPE } from '@repo/config/marketing-email'
 
-const resendTagsSchema = z.record(z.string())
+const resendTagsSchema = z.record(z.string(), z.string())
 
 const resendEngagementEventSchema = z.object({
 	type: z.enum(['email.opened', 'email.clicked']),

@@ -21,6 +21,7 @@ import { operatorSharedCookieDomain } from '@repo/common/cookie-domain'
 import { pipeHeaders } from '@repo/common/headers'
 import { getSidebarState } from '@repo/common/sidebar-cookie'
 import { getToast } from '@repo/common/toast'
+import { installRequiredMessage } from '@repo/common/zod-defaults'
 import { brand, getErrorTitle } from '@repo/config/brand'
 import {
 	and,
@@ -101,6 +102,8 @@ import {
 	type StaffingNavAccess,
 } from './utils/staffing/nav.ts'
 import { type Theme, getTheme } from './utils/theme.server.ts'
+
+installRequiredMessage()
 
 export const links: Route.LinksFunction = () => {
 	return [

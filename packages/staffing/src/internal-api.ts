@@ -139,7 +139,7 @@ export const staffExportFileSchema = z
 		orgId: z.string(),
 		region: z.string(),
 		includes: z.object({ pay: z.boolean(), private: z.boolean() }),
-		staff: z.array(z.record(z.unknown())),
+		staff: z.array(z.record(z.string(), z.unknown())),
 	})
-	.passthrough()
+	.loose()
 export type StaffExportFile = z.infer<typeof staffExportFileSchema>

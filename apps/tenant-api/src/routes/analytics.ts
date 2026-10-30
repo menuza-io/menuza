@@ -297,7 +297,7 @@ analyticsRoutes.post('/query', async (c) => {
 		return c.json(
 			{
 				error: 'invalid_definition',
-				message: parsed.error.errors[0]?.message || 'Invalid report definition',
+				message: parsed.error.issues[0]?.message || 'Invalid report definition',
 			},
 			400,
 		)

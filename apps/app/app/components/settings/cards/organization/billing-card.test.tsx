@@ -76,7 +76,7 @@ describe('BillingCard', () => {
 		expect(plans).not.toBeNull()
 
 		fireEvent.click(subscribe)
-		expect(document.activeElement).toBe(plans)
+		expect(plans).toHaveFocus()
 	})
 
 	it('shows the support address for people without a mail app', () => {

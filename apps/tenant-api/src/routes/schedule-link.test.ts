@@ -656,9 +656,11 @@ describe('my schedule link', () => {
 					after: { clockInAt: mine.clockInAt, clockOutAt: mine.clockOutAt },
 				}),
 			])
+			// Money as a JSON number: a random id or a timestamp may contain the digits.
+			for (const amount of [4321, 777]) {
+				expect(view.raw).not.toMatch(new RegExp(`[:\\[,]${amount}[,\\]}]`))
+			}
 			for (const leak of [
-				'4321',
-				'777',
 				'internal',
 				'manager-user-77',
 				'ben private',

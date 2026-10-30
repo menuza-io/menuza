@@ -21,6 +21,11 @@
 			"binding": "MARKETING_JOURNEY_WORKFLOW",
 			"class_name": "MarketingJourneyWorkflow",
 		},
+		{
+			"name": "social-post",
+			"binding": "SOCIAL_POST_WORKFLOW",
+			"class_name": "SocialPostWorkflow",
+		},
 	],
 	// APP_BASE_URL / TENANT_API_URL* patched at deploy — set INTERNAL_COMMAND_TOKEN via wrangler secret put.
 	"vars": {},

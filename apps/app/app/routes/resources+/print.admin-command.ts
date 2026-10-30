@@ -1,10 +1,12 @@
 import { type ActionFunctionArgs } from 'react-router'
 import { z } from 'zod'
+import { runAfterResponse } from '#app/utils/after-response.server.ts'
 import { requirePrintInternalCommand } from '#app/utils/print/internal-command.server.ts'
 import {
 	adminRecordVendorOrder,
 	adminRefundPrintOrder,
 	adminRetryPrintOrder,
+	continuePrintSubmission,
 	PrintOrderError,
 } from '#app/utils/print/orders.server.ts'
 
@@ -46,7 +48,7 @@ const CommandSchema = z.discriminatedUnion('action', [
  * console; Stripe and the vendors are called from here so the keys live in one
  * app. Machine-to-machine only (INTERNAL_COMMAND_TOKEN).
  */
-export async function action({ request }: ActionFunctionArgs) {
+export async function action({ request, context }: ActionFunctionArgs) {
 	if (request.method !== 'POST') {
 		return new Response('Method Not Allowed', { status: 405 })
 	}
@@ -68,9 +70,17 @@ export async function action({ request }: ActionFunctionArgs) {
 				parsed.data.vendorOrders,
 			)
 		} else {
-			await adminRetryPrintOrder(parsed.data.orderId, parsed.data.acceptPrice, {
-				checkedVendor: parsed.data.checkedVendor,
-			})
+			const result = await adminRetryPrintOrder(
+				parsed.data.orderId,
+				parsed.data.acceptPrice,
+				{ checkedVendor: parsed.data.checkedVendor },
+			)
+			// A large set was handed back for lack of time: keep going after
+			// the answer; the print-sync sweep finishes whatever is left.
+			if (result === 'deferred') {
+				const orderId = parsed.data.orderId
+				runAfterResponse(context, () => continuePrintSubmission(orderId))
+			}
 		}
 		return Response.json({ ok: true })
 	} catch (error) {

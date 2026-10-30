@@ -1,5 +1,5 @@
 import { getFormProps, getInputProps, useForm } from '@conform-to/react'
-import { parseWithZod } from '@conform-to/zod'
+import { parseWithZod } from '@conform-to/zod/v4'
 import { msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import {
@@ -34,6 +34,7 @@ import {
 } from 'react-router'
 import { z } from 'zod'
 import { EmptyState } from '#app/components/empty-state.tsx'
+import { printFormErrors } from '#app/components/print/print-form-errors.ts'
 import { printProductLabel } from '#app/components/print/print-labels.ts'
 import {
 	PRINT_ORDER_ERROR_FALLBACK,
@@ -62,11 +63,12 @@ const OrderFormSchema = printShippingAddressSchema
 				z.string(),
 				z.preprocess(
 					(value) => (value === undefined || value === '' ? 0 : value),
+					// Codes, translated by `printFormErrors`.
 					z.coerce
-						.number({ invalid_type_error: 'Enter a number of copies' })
-						.int('Enter a whole number of copies')
-						.min(0, 'Enter 0 or more copies')
-						.max(PRINT_MAX_COPIES, `Order at most ${PRINT_MAX_COPIES} copies`),
+						.number({ error: 'copies_number' })
+						.int('copies_whole')
+						.min(0, 'copies_min')
+						.max(PRINT_MAX_COPIES, 'copies_max'),
 				),
 			)
 			.optional()
@@ -176,7 +178,7 @@ export default function NewPrintOrderRoute() {
 			parseWithZod(formData, { schema: OrderFormSchema }),
 	})
 	const errors = (name: keyof typeof fields) =>
-		fields[name].errors?.map((message) => ({ message }))
+		printFormErrors(_, fields[name].errors)
 
 	return (
 		<div className="space-y-8">
@@ -291,7 +293,7 @@ export default function NewPrintOrderRoute() {
 										</Field>
 										<FieldError
 											id={`copies-${design.id}-error`}
-											errors={copiesErrors?.map((message) => ({ message }))}
+											errors={printFormErrors(_, copiesErrors)}
 										/>
 									</div>
 								)

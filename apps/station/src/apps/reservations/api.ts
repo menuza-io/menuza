@@ -111,7 +111,7 @@ export class HostApiError extends Error {
 
 const errorBody = z
 	.object({ error: z.string().optional(), message: z.string().optional() })
-	.passthrough()
+	.loose()
 
 const tokenSchema = z.object({
 	token: z.string().min(20),
@@ -138,7 +138,7 @@ const serversSchema = z.object({
 			}),
 		)
 		.default([]),
-}) satisfies z.ZodType<PosServersResponse, z.ZodTypeDef, unknown>
+}) satisfies z.ZodType<PosServersResponse, unknown>
 
 /** Who works which section in a service: a person on the staff, a typed name, or nobody (left out). */
 export type SectionAssignmentInput = {

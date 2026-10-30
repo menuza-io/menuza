@@ -50,6 +50,7 @@ export const PRINT_ORDER_ERROR_LABELS: Record<string, MessageDescriptor> = {
 	qr_unavailable: msg`The QR codes could not be checked right now. Try again in a minute.`,
 	qr_forbidden: msg`Ordering this print also needs permission to see its QR codes.`,
 	needs_support: msg`Our team is checking this order with the printer. It cannot be cancelled here right now.`,
+	too_many_pieces: msg`This print has more pieces than one order can take. Approve a smaller set, then order.`,
 }
 
 export const PRINT_ORDER_ERROR_FALLBACK = msg`That did not work. Try again.`

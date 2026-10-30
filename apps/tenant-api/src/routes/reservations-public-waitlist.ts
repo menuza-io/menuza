@@ -319,7 +319,7 @@ export function registerPublicWaitlistRoutes(
 		guarded(async (c) => {
 			const resolved = await resolveEntryMutation(c)
 			if (!resolved.ok) return resolved.response
-			const body = await readOptionalBody(c, z.object({}).passthrough())
+			const body = await readOptionalBody(c, z.object({}).loose())
 			if ('error' in body) return body.error
 			await setWaitlistEntryStatus({
 				orgId: resolved.g.org.id,
@@ -336,7 +336,7 @@ export function registerPublicWaitlistRoutes(
 		guarded(async (c) => {
 			const resolved = await resolveEntryMutation(c)
 			if (!resolved.ok) return resolved.response
-			const body = await readOptionalBody(c, z.object({}).passthrough())
+			const body = await readOptionalBody(c, z.object({}).loose())
 			if ('error' in body) return body.error
 			await setWaitlistEntryStatus({
 				orgId: resolved.g.org.id,

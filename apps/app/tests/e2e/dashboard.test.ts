@@ -47,6 +47,7 @@ function homeGreeting(page: Page) {
 
 /** A KPI tile above the Home grid, found by its label. */
 function homeMetric(page: Page, label: string) {
+	// eslint-disable-next-line playwright/no-raw-locators -- the tile has no role; `..` is the label's wrapper
 	return page.getByRole('main').getByText(label, { exact: true }).locator('..')
 }
 

@@ -47,6 +47,18 @@ const CORE_TARGET_LABELS: Record<string, MessageDescriptor> = {
 	none: msg`No QR code`,
 }
 
+/**
+ * A size as shown to operators: catalog labels are measurements (the same in
+ * every language); a folded product adds a translated "(folded)".
+ */
+export function printSizeText(
+	translate: (descriptor: MessageDescriptor) => string,
+	label: string,
+	folded: boolean | undefined,
+): string {
+	return folded ? `${label} ${translate(msg`(folded)`)}` : label
+}
+
 export function printTargetLabel(kind: string): MessageDescriptor {
 	return (
 		printShopUi.qrTargets?.[kind]?.label ??

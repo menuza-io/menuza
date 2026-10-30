@@ -102,7 +102,7 @@ type Tool = VerticalTool<
 	RestaurantCallState
 >
 
-function tool<TParams extends z.AnyZodObject>(
+function tool<TParams extends z.ZodObject>(
 	definition: Parameters<
 		typeof defineVerticalTool<
 			TParams,
@@ -361,7 +361,7 @@ const actionData = z
 		holdMinutes: z.number().optional(),
 		resumeFragment: z.string().optional(),
 	})
-	.passthrough()
+	.loose()
 
 const checkTableAvailability = tool({
 	name: 'check_table_availability',

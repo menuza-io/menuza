@@ -49,6 +49,7 @@ describe('Challenger 2 — Adversarial Zero-PII & API Security Verification', ()
 				create: mockJourneyWorkflowCreate,
 				get: mockJourneyWorkflowGet,
 			} as any,
+			SOCIAL_POST_WORKFLOW: { create: vi.fn(), get: vi.fn() } as any,
 		}
 
 		workflowEnv = {

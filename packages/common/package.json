@@ -11,6 +11,7 @@
     "./mailbox": "./src/mailbox.ts",
     "./phone": "./src/phone.ts",
     "./chat": "./src/chat.ts",
+    "./zod-defaults": "./src/zod-defaults.ts",
     "./chat-markdown": "./src/chat-markdown.ts",
     ".": {
       "types": "./index.ts",
@@ -229,7 +230,7 @@
     "react": "^19.1.1",
     "react-router": "^8.3.0",
     "spin-delay": "^2.0.1",
-    "zod": "^3.25.76"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@faker-js/faker": "^10.6.0",

@@ -118,8 +118,8 @@ export function ChatGroupSettingsDialog({
 									<Trans>No one else to add.</Trans>
 								</li>
 							) : (
-								addable.map((member) => (
-									<li key={member.id}>
+								addable.map(({ id, label }) => (
+									<li key={id}>
 										<Button
 											type="button"
 											variant="outline"
@@ -130,11 +130,11 @@ export function ChatGroupSettingsDialog({
 												submit({
 													intent: 'addGroupMembers',
 													channelId,
-													memberIds: [member.id],
+													memberIds: [id],
 												})
 											}
 										>
-											<Trans>Add {member.label}</Trans>
+											<Trans>Add {label}</Trans>
 										</Button>
 									</li>
 								))

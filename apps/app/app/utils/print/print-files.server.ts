@@ -36,7 +36,13 @@ export type PrintFileRequest = {
 }
 
 export type PrintFileResult =
-	| { kind: 'pdf'; bytes: Uint8Array<ArrayBuffer>; objectKey: string }
+	| {
+			kind: 'pdf'
+			bytes: Uint8Array<ArrayBuffer>
+			objectKey: string
+			/** Rendered by this call (not read from the cache). */
+			fresh?: true
+	  }
 	/** No renderer configured: a page that opens the browser print dialog. */
 	| { kind: 'html'; html: string; nonce: string }
 	| { kind: 'limited' }
@@ -81,6 +87,14 @@ export async function getPrintFile(
 	/** Paid orders: already bounded by the pieces paid for, so no hourly cap. */
 	options: { skipLimit?: boolean } = {},
 ): Promise<PrintFileResult> {
+	// A finished file prints as it is: nothing to render or to count.
+	if (input.snapshot.artwork) {
+		const fileKey = input.snapshot.artwork.fileKey
+		const bytes = await readPrintFile(fileKey)
+		return bytes
+			? { kind: 'pdf', bytes, objectKey: fileKey }
+			: { kind: 'failed' }
+	}
 	const hash = printFileHash(input)
 	const organizationId = input.organizationId
 	const thisRow = and(
@@ -161,7 +175,7 @@ export async function getPrintFile(
 			.update(PrintRender)
 			.set({ byteLength: rendered.bytes.byteLength })
 			.where(thisRow)
-		return { kind: 'pdf', bytes: rendered.bytes, objectKey }
+		return { kind: 'pdf', bytes: rendered.bytes, objectKey, fresh: true }
 	} catch (error) {
 		await release().catch(() => {})
 		throw error
