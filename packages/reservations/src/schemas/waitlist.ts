@@ -205,7 +205,7 @@ export const waitlistSeatMoveSchema = z.object({
 
 export const waitlistSeatResponseSchema = z.object({
 	entry: waitlistEntrySchema,
-	reservation: z.object({ id: z.string() }).passthrough().nullable(),
+	reservation: z.object({ id: z.string() }).loose().nullable(),
 	moves: z.array(waitlistSeatMoveSchema).default([]),
 })
 

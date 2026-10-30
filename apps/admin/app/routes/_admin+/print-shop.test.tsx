@@ -110,10 +110,14 @@ describe('Print shop Admin order actions', () => {
 				0,
 			),
 		)
-		await waitFor(() =>
-			expect(
-				screen.getByRole('group', { name: /the .* order of Studio/ }),
-			).toHaveFocus(),
+		// Focus returns once the dialog has closed, which takes a while on a
+		// busy CI runner.
+		await waitFor(
+			() =>
+				expect(
+					screen.getByRole('group', { name: /the .* order of Studio/ }),
+				).toHaveFocus(),
+			{ timeout: 10_000 },
 		)
 	})
 })

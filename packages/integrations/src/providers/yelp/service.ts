@@ -35,7 +35,7 @@ const yelpLocationSchema = z
 		rating: z.number().optional(),
 		review_count: z.number().optional(),
 	})
-	.passthrough()
+	.loose()
 
 export type YelpBusinessLocation = z.infer<typeof yelpLocationSchema>
 
@@ -58,7 +58,7 @@ export const yelpReviewSchema = z
 			.object({ comment: z.string(), updateTime: z.string().optional() })
 			.optional(),
 	})
-	.passthrough()
+	.loose()
 
 export type YelpReview = z.infer<typeof yelpReviewSchema> & {
 	locationId: string
@@ -127,7 +127,7 @@ const MOCK_YELP_REVIEWS: z.infer<typeof yelpReviewSchema>[] = [
 function parseIntegrationConfig(rawConfig: string | null | undefined) {
 	try {
 		return z
-			.record(z.unknown())
+			.record(z.string(), z.unknown())
 			.catch({})
 			.parse(JSON.parse(rawConfig ?? '{}'))
 	} catch {
@@ -317,6 +317,7 @@ export async function listYelpReviews(
 			const config = parseIntegrationConfig(integration.config)
 			const storedReplies = z
 				.record(
+					z.string(),
 					z.object({
 						comment: z.string(),
 						updateTime: z.string().optional(),
@@ -406,6 +407,7 @@ export async function replyToYelpReview(
 	const rawConfig = parseIntegrationConfig(integration.config)
 	const parsedReplies = z
 		.record(
+			z.string(),
 			z.object({ comment: z.string(), updateTime: z.string().optional() }),
 		)
 		.catch({})

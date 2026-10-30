@@ -1,5 +1,5 @@
 import { getFormProps, getInputProps, useForm } from '@conform-to/react'
-import { getZodConstraint, parseWithZod } from '@conform-to/zod'
+import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { t, Trans } from '@lingui/macro'
 import { getOrgSiteUrl } from '@repo/common/url'
 import { staffSummarySchema, type StaffSummary } from '@repo/staffing'

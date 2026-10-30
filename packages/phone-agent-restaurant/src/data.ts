@@ -31,8 +31,8 @@ export type RestaurantVerticalData = {
 export const RestaurantVerticalDataSchema = z.object({
 	location: z
 		.object({ id: z.string().min(1), name: z.string(), timezone: z.string() })
-		.passthrough(),
-	menus: z.array(z.object({ id: z.string() }).passthrough()),
+		.loose(),
+	menus: z.array(z.object({ id: z.string() }).loose()),
 	orderingOpen: z.boolean(),
 	reservations: z.object({ available: z.boolean() }).optional(),
 })

@@ -112,6 +112,16 @@ export default function MarketingOverview() {
 					},
 				]
 			: []),
+		...(canReadCampaigns
+			? [
+					{
+						to: 'social',
+						icon: 'share-2' as const,
+						title: _(msg`Social media`),
+						description: _(msg`Facebook and Instagram posts`),
+					},
+				]
+			: []),
 	]
 
 	useEffect(() => {

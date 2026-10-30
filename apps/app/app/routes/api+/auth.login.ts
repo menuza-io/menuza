@@ -1,4 +1,4 @@
-import { parseWithZod } from '@conform-to/zod'
+import { parseWithZod } from '@conform-to/zod/v4'
 import { auditService, AuditAction } from '@repo/audit'
 import { and, db, eq, Verification } from '@repo/database'
 import { checkHoneypot } from '@repo/security'

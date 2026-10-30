@@ -236,7 +236,7 @@ const errorBodySchema = z
 		error: z.string().optional(),
 		retryAfterSeconds: z.number().optional(),
 	})
-	.passthrough()
+	.loose()
 
 export type MyScheduleApiOptions = {
 	tenantApiUrl: string

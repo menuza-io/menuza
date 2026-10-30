@@ -1,4 +1,4 @@
-import { parseWithZod } from '@conform-to/zod'
+import { parseWithZod } from '@conform-to/zod/v4'
 import { invalidateUserCache } from '@repo/cache'
 import { db, eq, User, UserImage } from '@repo/database'
 import { NameSchema, UsernameSchema } from '@repo/validation'

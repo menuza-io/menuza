@@ -27,7 +27,7 @@ const SETTINGS_KEYS = Object.keys(PhoneAgentSettingsSchema.shape)
 const SETTINGS_KEY_SET = new Set(SETTINGS_KEYS)
 const EDITABLE_PHRASE_KEY_SET = new Set<string>(EDITABLE_PHRASE_KEYS)
 
-const VersionsSchema = z.record(z.string().max(32))
+const VersionsSchema = z.record(z.string(), z.string().max(32))
 
 type ScopedPhrasePatch = {
 	keys: ReadonlySet<PhraseKey>
@@ -36,9 +36,7 @@ type ScopedPhrasePatch = {
 	phrases: unknown[]
 }
 
-const ScopedPhraseKeysSchema = z.array(
-	z.object({ key: z.string() }).passthrough(),
-)
+const ScopedPhraseKeysSchema = z.array(z.object({ key: z.string() }).loose())
 
 function parseScopedPhrasePatch(
 	raw: unknown,
@@ -121,29 +119,31 @@ const PHONE_FORMAT_MESSAGE = 'Use international format'
 /** A settings error code for one Zod issue (see settings-errors.ts). */
 function issueCode(issue: z.ZodIssue): string {
 	switch (issue.code) {
-		case z.ZodIssueCode.too_small: {
+		case 'too_small': {
 			const minimum = Number(issue.minimum)
-			if (issue.type === 'string') {
+			if (issue.origin === 'string') {
 				return minimum <= 1
 					? settingsError('required')
 					: settingsError('too_short', minimum)
 			}
-			if (issue.type === 'array') return settingsError('too_few', minimum)
+			if (issue.origin === 'array') return settingsError('too_few', minimum)
 			return settingsError('too_small', minimum)
 		}
-		case z.ZodIssueCode.too_big: {
+		case 'too_big': {
 			const maximum = Number(issue.maximum)
-			if (issue.type === 'string') return settingsError('too_long', maximum)
-			if (issue.type === 'array') return settingsError('too_many', maximum)
+			if (issue.origin === 'string') return settingsError('too_long', maximum)
+			if (issue.origin === 'array') return settingsError('too_many', maximum)
 			return settingsError('too_big', maximum)
 		}
-		case z.ZodIssueCode.invalid_string:
-			if (issue.validation === 'email') return settingsError('email')
+		case 'invalid_format':
+			if (issue.format === 'email') return settingsError('email')
 			return issue.message.startsWith(PHONE_FORMAT_MESSAGE)
 				? settingsError('phone')
 				: settingsError('format')
-		case z.ZodIssueCode.invalid_type:
-			return issue.received === 'undefined' || issue.received === 'null'
+		case 'invalid_type':
+			// Zod 4 leaves the rejected value off an issue unless the parse asked
+			// for it (`PARSE_WITH_INPUT`), so a missing value reads as `undefined`.
+			return issue.input === undefined || issue.input === null
 				? settingsError('required')
 				: settingsError('invalid')
 		default:
@@ -151,7 +151,16 @@ function issueCode(issue: z.ZodIssue): string {
 	}
 }
 
-/** First error code per field path, e.g. `{ 'contacts.0.phone': 'phone' }`. */
+/**
+ * Parse option the callers of `toFieldErrors` pass so a type issue still says
+ * whether the value was missing (`required`) or just the wrong type.
+ */
+export const PARSE_WITH_INPUT = { reportInput: true } as const
+
+/**
+ * First error code per field path, e.g. `{ 'contacts.0.phone': 'phone' }`.
+ * Parse with `PARSE_WITH_INPUT` so missing values map to `required`.
+ */
 export function toFieldErrors(error: z.ZodError) {
 	const fieldErrors: Record<string, string> = {}
 	for (const issue of error.issues) {
@@ -296,7 +305,7 @@ export function parseVerticalSettings(
 	| { ok: false; fieldErrors: Record<string, string> } {
 	const schema = phoneAgentVertical.settings?.schema
 	if (!schema) return { ok: true, value: {} }
-	const parsed = schema.safeParse(value ?? {})
+	const parsed = schema.safeParse(value ?? {}, PARSE_WITH_INPUT)
 	if (!parsed.success) {
 		return {
 			ok: false,
@@ -387,10 +396,13 @@ export async function patchPhoneAgentSettings(input: {
 		const effectivePatch = phraseScope
 			? { ...patch, phrases: [...otherPhrases, ...phraseScope.phrases] }
 			: patch
-		const parsed = PhoneAgentSettingsSchema.safeParse({
-			...agent.settings,
-			...effectivePatch,
-		})
+		const parsed = PhoneAgentSettingsSchema.safeParse(
+			{
+				...agent.settings,
+				...effectivePatch,
+			},
+			PARSE_WITH_INPUT,
+		)
 		if (!parsed.success) {
 			const fieldErrors = toFieldErrors(parsed.error)
 			return {

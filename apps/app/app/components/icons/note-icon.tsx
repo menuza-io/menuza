@@ -1,8 +1,8 @@
-import { type Variants, motion } from 'motion/react'
 import {
 	type AnimatedIconHandle,
 	createAnimatedIcon,
 } from '@repo/ui/animated-icon'
+import { type Variants, motion } from 'motion/react'
 
 export type NoteIconHandle = AnimatedIconHandle
 

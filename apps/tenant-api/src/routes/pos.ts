@@ -288,7 +288,7 @@ function looseIdentity(raw: unknown) {
 			id: z.string().uuid().optional(),
 			revision: z.number().int().optional(),
 		})
-		.passthrough()
+		.loose()
 		.safeParse(raw)
 	return {
 		orderId: shape.success ? (shape.data.id ?? null) : null,

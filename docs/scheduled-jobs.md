@@ -41,9 +41,12 @@ The hourly `0 * * * *` trigger fans out to every regional tenant-api node: the
 tenant engagement sync, the staff tick, the reservations tick and the loyalty
 tick (below), and also calls the App job that reconciles reservation payments
 (below). They are independent requests, so one failing never blocks the others.
-The Workers free plan allows five cron triggers per Worker, so new daily jobs
-share an existing trigger (each job is still its own request with its own error
-logging).
+The same trigger runs two more App jobs: `/resources/jobs/print-sync` and
+`/resources/jobs/social-publish`, a sweep behind the per-post
+`SocialPostWorkflow` that wakes the App when a scheduled social post is due (see
+`docs/social-media.md`). The Workers free plan allows five cron triggers per
+Worker, so new daily jobs share an existing trigger (each job is still its own
+request with its own error logging).
 
 ### Shared organization alarm (staffing and reservations)
 

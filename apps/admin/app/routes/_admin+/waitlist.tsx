@@ -231,6 +231,20 @@ type LoaderData = {
 	launchStatus: 'CLOSED_BETA' | 'PUBLIC_BETA' | 'LAUNCHED'
 }
 
+function AddPointsDescription({
+	name,
+	points,
+}: {
+	name: string
+	points: number
+}) {
+	return (
+		<Trans>
+			Add points to {name}'s current total of {points}.
+		</Trans>
+	)
+}
+
 export default function AdminWaitlistPage() {
 	const { _ } = useLingui()
 	const data = useLoaderData() as LoaderData
@@ -429,11 +443,10 @@ export default function AdminWaitlistPage() {
 																<Trans>Add waitlist points</Trans>
 															</DialogTitle>
 															<DialogDescription>
-																<Trans>
-																	Add points to{' '}
-																	{entry.user.name ?? entry.user.username}'s
-																	current total of {entry.points}.
-																</Trans>
+																<AddPointsDescription
+																	name={entry.user.name ?? entry.user.username}
+																	points={entry.points}
+																/>
 															</DialogDescription>
 														</DialogHeader>
 														<Form method="post" className="space-y-4">

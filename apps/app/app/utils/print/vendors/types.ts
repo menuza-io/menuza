@@ -43,6 +43,8 @@ export type VendorOrderState =
 	| 'delivered'
 	| 'cancelled'
 	| 'failed'
+	/** Printed and sent, then back at the vendor (bad address, refused). */
+	| 'returned'
 
 export type VendorStatus = {
 	state: VendorOrderState

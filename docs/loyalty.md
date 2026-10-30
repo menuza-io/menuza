@@ -142,7 +142,7 @@ flowchart LR
 ## Flags, permissions, and the kill switch
 
 Org flags (`ConfigFlag`, seeded system-false by control-plane migration
-`0028_loyalty`). There is no marketing flag: the audience filters are not built,
+`0030_loyalty`). There is no marketing flag: the audience filters are not built,
 and their flag will be added together with them.
 
 | Flag                 | Gates                                                     |
@@ -552,7 +552,7 @@ off). Both are documented in `apps/tenant-api/.env.schema` and `.env.example`.
 
 | Plane                     | Migration      | Contents                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | ------------------------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Control plane (D1/LibSQL) | `0028_loyalty` | Five loyalty permissions granted to `org_role_admin` only, and the two `loyalty.*` flags (`loyalty.enabled`, `loyalty.redemption`) as system-level `false`.                                                                                                                                                                                                                                                                                                                              |
+| Control plane (D1/LibSQL) | `0030_loyalty` | Five loyalty permissions granted to `org_role_admin` only, and the two `loyalty.*` flags (`loyalty.enabled`, `loyalty.redemption`) as system-level `false`.                                                                                                                                                                                                                                                                                                                              |
 | Tenant SQLite             | `0025_loyalty` | The `loyalty_*` tables (including the outbox and its lease column; `loyalty_members` carries `created_at` and no enrolled channel or terms fields, and program versions carry no terms version), unique source and event keys, the append-only `restaurant_order_refunds` table, `restaurant_orders.loyalty_discount_cents` and `refunded_cents`, `qr_tabs.loyalty_discount_cents` and `rung_up_on_station`, and every append-only, state-transition and refund-total trigger and index. |
 
 Both are additive, and each plane has exactly one migration for this release.

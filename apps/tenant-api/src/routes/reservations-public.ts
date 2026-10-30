@@ -277,7 +277,7 @@ const modifySchema = z.object({
 
 const lateSchema = z.object({ minutes: z.number().int().min(1).max(180) })
 
-const emptyBodySchema = z.object({}).passthrough()
+const emptyBodySchema = z.object({}).loose()
 
 function bookingInputFrom(
 	data: z.infer<typeof bookSchema | typeof requestSchema>,

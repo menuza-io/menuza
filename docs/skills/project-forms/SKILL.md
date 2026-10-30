@@ -19,7 +19,7 @@ when the server and client genuinely have the same contract; server validation
 always remains authoritative.
 
 ```typescript
-import { parseWithZod } from '@conform-to/zod'
+import { parseWithZod } from '@conform-to/zod/v4'
 import { z } from 'zod'
 
 const NoteSchema = z.object({

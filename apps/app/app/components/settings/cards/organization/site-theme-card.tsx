@@ -55,7 +55,7 @@ export const SiteThemeSchema = z.object({
 			} catch {
 				return value
 			}
-		}, z.record(z.string()).nullable().optional())
+		}, z.record(z.string(), z.string()).nullable().optional())
 		.optional(),
 	organizationId: z.string(),
 })

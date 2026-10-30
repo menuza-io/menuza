@@ -1,5 +1,6 @@
 import { type LoaderFunctionArgs } from 'react-router'
 import { requirePrintShopAccess } from '#app/utils/print/access.server.ts'
+import { artworkPreviewDataUri } from '#app/utils/print/artwork.server.ts'
 import {
 	approvedSnapshot,
 	currentSnapshot,
@@ -7,6 +8,7 @@ import {
 } from '#app/utils/print/designs.server.ts'
 import {
 	printDocumentCsp,
+	renderArtworkProofHtml,
 	renderPrintHtml,
 } from '#app/utils/print/print-document.server.tsx'
 import { qrSvgsFor } from '#app/utils/print/print-snapshot.server.ts'
@@ -26,12 +28,18 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		(wantsApproved ? approvedSnapshot(row) : null) ??
 		(await currentSnapshot(request, access, row))
 	await requireQrCodeAccess(access, snapshot)
-	const html = renderPrintHtml({
-		snapshot,
-		format: 'proof',
-		qrSvgs: await qrSvgsFor(snapshot),
-		proofLimit: 3,
-	})
+	const html = snapshot.artwork
+		? renderArtworkProofHtml({
+				snapshot,
+				title: row.name,
+				previewDataUri: await artworkPreviewDataUri(snapshot.artwork),
+			})
+		: renderPrintHtml({
+				snapshot,
+				format: 'proof',
+				qrSvgs: await qrSvgsFor(snapshot),
+				proofLimit: 3,
+			})
 	return new Response(html, {
 		headers: {
 			'Content-Type': 'text/html; charset=utf-8',

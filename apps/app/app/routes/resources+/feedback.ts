@@ -14,7 +14,7 @@ export async function action({ request }: { request: Request }) {
 
 	if (!result.success) {
 		return Response.json(
-			{ status: 'error', errors: result.error.flatten() },
+			{ status: 'error', errors: z.flattenError(result.error) },
 			{ status: 400 },
 		)
 	}

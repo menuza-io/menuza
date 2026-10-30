@@ -1,9 +1,8 @@
-import { eq, Organization } from '@repo/database'
-import { db } from '@repo/database'
+import { eq, Organization, db } from '@repo/database'
 import { type ActionFunctionArgs } from 'react-router'
 import { z } from 'zod'
-import { chatMessageSchema } from '#app/utils/chat/notify-schemas.server.ts'
 import { notifyChatMessage } from '#app/utils/chat/notifications.server.ts'
+import { chatMessageSchema } from '#app/utils/chat/notify-schemas.server.ts'
 import { requireInternalCommandAuth } from '#app/utils/internal-command-auth.server.ts'
 
 const bodySchema = z.object({

@@ -460,7 +460,7 @@ authRoutes.post(
 
 		if (!parsed.success) {
 			return c.json(
-				{ error: parsed.error.errors[0]?.message || 'Invalid payload' },
+				{ error: parsed.error.issues[0]?.message || 'Invalid payload' },
 				400,
 			)
 		}
@@ -560,7 +560,7 @@ authRoutes.post(
 
 		if (!parsed.success) {
 			return c.json(
-				{ error: parsed.error.errors[0]?.message || 'Invalid payload' },
+				{ error: parsed.error.issues[0]?.message || 'Invalid payload' },
 				400,
 			)
 		}
@@ -1040,7 +1040,7 @@ authRoutes.post(
 
 		if (!parsed.success) {
 			return c.json(
-				{ error: parsed.error.errors[0]?.message || 'Invalid payload' },
+				{ error: parsed.error.issues[0]?.message || 'Invalid payload' },
 				400,
 			)
 		}

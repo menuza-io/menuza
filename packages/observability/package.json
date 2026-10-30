@@ -29,7 +29,7 @@
     "pino": "^10.1.0",
     "pino-pretty": "^13.1.2",
     "react-router": "^8.3.0",
-    "zod": "^3.25.76"
+    "zod": "^4.6.7"
   },
   "peerDependencies": {
     "react": "^19.1.1"

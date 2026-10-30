@@ -29,7 +29,7 @@ const addressSchema = z
 		postalCode: z.string().optional(),
 		regionCode: z.string().optional(),
 	})
-	.passthrough()
+	.loose()
 const periodSchema = z.object({
 	openDay: z.string(),
 	closeDay: z.string(),
@@ -63,7 +63,7 @@ const locationSchema = z
 			.optional(),
 		openInfo: z.unknown().optional(),
 	})
-	.passthrough()
+	.loose()
 export type GoogleBusinessLocation = z.infer<typeof locationSchema>
 
 const READ_MASK =
@@ -87,7 +87,7 @@ const googleReviewSchema = z
 			.object({ comment: z.string(), updateTime: z.string().optional() })
 			.optional(),
 	})
-	.passthrough()
+	.loose()
 
 const MOCK_GOOGLE_ACCOUNT_NAME = 'accounts/mock-menuza'
 const MOCK_GOOGLE_LOCATIONS: GoogleBusinessLocation[] = [
@@ -156,7 +156,7 @@ const MOCK_GOOGLE_REVIEWS: z.infer<typeof googleReviewSchema>[] = [
 function parseIntegrationConfig(rawConfig: string | null | undefined) {
 	try {
 		return z
-			.record(z.unknown())
+			.record(z.string(), z.unknown())
 			.catch({})
 			.parse(JSON.parse(rawConfig ?? '{}'))
 	} catch {
@@ -243,7 +243,7 @@ async function getScopedReviewConnection(
 				.regex(/^accounts\/[A-Za-z0-9_-]+$/)
 				.optional(),
 		})
-		.passthrough()
+		.loose()
 		.safeParse(rawConfig)
 	if (!config.success)
 		throw new Error(
@@ -314,6 +314,7 @@ export async function listGoogleBusinessReviews(
 				const config = parseIntegrationConfig(connection.integration.config)
 				const storedReplies = z
 					.record(
+						z.string(),
 						z.object({
 							comment: z.string(),
 							updateTime: z.string().optional(),
@@ -413,6 +414,7 @@ export async function replyToGoogleBusinessReview(
 		const rawConfig = parseIntegrationConfig(connection.integration.config)
 		const parsedReplies = z
 			.record(
+				z.string(),
 				z.object({ comment: z.string(), updateTime: z.string().optional() }),
 			)
 			.catch({})

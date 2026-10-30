@@ -578,7 +578,7 @@ const locationOverrideSchema = z
 		price: z.number().nullable().optional(),
 		availabilityStatus: z.string().nullable().optional(),
 	})
-	.passthrough()
+	.loose()
 
 export type LocationOverride = z.infer<typeof locationOverrideSchema>
 
@@ -628,7 +628,7 @@ const publicMenuOptionContextSchema: z.ZodType<PublicMenuOptionContext> =
 					.array(publicModifierGroupContextSchema)
 					.optional(),
 			})
-			.passthrough(),
+			.loose(),
 	)
 
 const publicModifierGroupContextSchema: z.ZodType<PublicModifierGroupContext> =
@@ -643,7 +643,7 @@ const publicModifierGroupContextSchema: z.ZodType<PublicModifierGroupContext> =
 				availabilityStatus: availabilityStatusSchema,
 				options: z.array(publicMenuOptionContextSchema).optional(),
 			})
-			.passthrough(),
+			.loose(),
 	)
 
 export type PublicMenuItemContext = {
@@ -703,7 +703,7 @@ const publicMenuItemContextSchema: z.ZodType<PublicMenuItemContext> = z.lazy(
 					.optional(),
 				modifierGroups: z.array(publicModifierGroupContextSchema).optional(),
 			})
-			.passthrough(),
+			.loose(),
 )
 
 export type PublicMenuCategoryContext = {
@@ -725,7 +725,7 @@ const publicMenuCategoryContextSchema: z.ZodType<PublicMenuCategoryContext> =
 				items: z.array(publicMenuItemContextSchema).optional(),
 				subcategories: z.array(publicMenuCategoryContextSchema).optional(),
 			})
-			.passthrough(),
+			.loose(),
 	)
 
 export type PublicMenuContext = {
@@ -748,7 +748,7 @@ const publicMenuContextSchema: z.ZodType<PublicMenuContext> = z.lazy(() =>
 			availabilityStatus: availabilityStatusSchema,
 			categories: z.array(publicMenuCategoryContextSchema).optional(),
 		})
-		.passthrough(),
+		.loose(),
 )
 
 const weeklyScheduleContextSchema = z.array(
@@ -829,7 +829,7 @@ export const publicLocationContextSchema = z
 				dineIn: z.boolean().default(true),
 				curbside: z.boolean().default(false),
 			})
-			.passthrough()
+			.loose()
 			.default({ pickup: true, delivery: true, dineIn: true, curbside: false }),
 		inHouseTips: z
 			.object({
@@ -837,7 +837,7 @@ export const publicLocationContextSchema = z
 				deliveryTips: z.boolean().default(true),
 				dineInTips: z.boolean().default(true),
 			})
-			.passthrough()
+			.loose()
 			.default({
 				pickupTips: true,
 				deliveryTips: true,
@@ -848,7 +848,7 @@ export const publicLocationContextSchema = z
 				scheduledOrdersEnabled: z.boolean().default(true),
 				advanceOrderDays: z.number().int().min(1).max(90).default(7),
 			})
-			.passthrough()
+			.loose()
 			.optional(),
 		deliveryConfig: z
 			.object({
@@ -858,7 +858,7 @@ export const publicLocationContextSchema = z
 				estimatedDeliveryTimeMin: z.number().min(0),
 				estimatedDeliveryTimeMax: z.number().min(0),
 			})
-			.passthrough()
+			.loose()
 			.optional(),
 		deliveryZones: z.array(deliveryZoneContextSchema).default([]),
 		address: z
@@ -871,14 +871,14 @@ export const publicLocationContextSchema = z
 				lat: z.number().nullable().optional(),
 				lng: z.number().nullable().optional(),
 			})
-			.passthrough()
+			.loose()
 			.nullable()
 			.optional(),
 		onlineHours: weeklyScheduleContextSchema.nullable().optional(),
 		storeHours: weeklyScheduleContextSchema.nullable().optional(),
 		specialHours: specialHoursContextSchema.optional(),
 	})
-	.passthrough()
+	.loose()
 
 export type PublicLocationContext = z.infer<typeof publicLocationContextSchema>
 
@@ -897,14 +897,14 @@ export const restaurantOrderContextSchema = z
 						defaultLocale: z.string().optional(),
 						locales: z.array(z.string()).optional(),
 					})
-					.passthrough(),
+					.loose(),
 				locations: z.array(publicLocationContextSchema).default([]),
 				menus: z.array(publicMenuContextSchema).default([]),
 				locationOverrides: z
 					.record(z.string(), z.array(locationOverrideSchema))
 					.optional(),
 			})
-			.passthrough(),
+			.loose(),
 		drop: z
 			.object({
 				organization: z
@@ -914,7 +914,7 @@ export const restaurantOrderContextSchema = z
 						slug: z.string(),
 						currency: z.string().min(3).max(3),
 					})
-					.passthrough(),
+					.loose(),
 				drop: z
 					.object({
 						id: z.string().min(1),
@@ -934,9 +934,9 @@ export const restaurantOrderContextSchema = z
 								displayName: z.string().optional(),
 								specialInstructions: z.boolean().default(true),
 							})
-							.passthrough(),
+							.loose(),
 					})
-					.passthrough(),
+					.loose(),
 				pickupWindows: z
 					.array(
 						z
@@ -950,7 +950,7 @@ export const restaurantOrderContextSchema = z
 										phone: z.string().nullable().optional(),
 										timezone: z.string().optional(),
 									})
-									.passthrough()
+									.loose()
 									.nullable()
 									.optional(),
 								date: z.string().regex(ISO_DATE_REGEX),
@@ -968,7 +968,7 @@ export const restaurantOrderContextSchema = z
 									)
 									.default([]),
 							})
-							.passthrough(),
+							.loose(),
 					)
 					.default([]),
 				inventoryOverrides: z
@@ -982,19 +982,19 @@ export const restaurantOrderContextSchema = z
 								maxPerOrder: z.number().int().min(1).nullable().optional(),
 								maxPerPickupSlot: z.number().int().min(1).nullable().optional(),
 							})
-							.passthrough(),
+							.loose(),
 					)
 					.default([]),
 				categories: z.array(publicMenuCategoryContextSchema).default([]),
 			})
-			.passthrough()
+			.loose()
 			.nullable(),
 		onlinePayment: z.object({
 			enabled: z.boolean(),
 			processor: z.enum(['connect', 'checkout']).nullable(),
 		}),
 	})
-	.passthrough()
+	.loose()
 
 export type RestaurantOrderContext = z.infer<
 	typeof restaurantOrderContextSchema

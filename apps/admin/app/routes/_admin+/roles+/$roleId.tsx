@@ -1,4 +1,4 @@
-import { parseWithZod } from '@conform-to/zod'
+import { parseWithZod } from '@conform-to/zod/v4'
 import { invariant } from '@epic-web/invariant'
 import { Trans, msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'

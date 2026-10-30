@@ -21,10 +21,8 @@ export function json(
  * `unrecognized_keys`, the key names the caller chose).
  */
 export const ECHOING_CODES = new Set([
-	'invalid_enum_value',
-	'invalid_literal',
+	'invalid_value',
 	'invalid_union',
-	'invalid_union_discriminator',
 	'unrecognized_keys',
 ])
 

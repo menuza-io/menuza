@@ -1,6 +1,7 @@
 import { type Context, Hono } from 'hono'
 import { bodyLimit } from 'hono/body-limit'
 import { logger as honoLogger } from 'hono/logger'
+import { installRequiredMessage } from '@repo/common/zod-defaults'
 import { logger } from '@repo/observability'
 import { errorLogFields } from './lib/error-log.ts'
 import { isAllowedAnalyticsOrigin, isPosOrigin } from './lib/origin.ts'
@@ -63,6 +64,10 @@ import { operatorLoyaltyRoutes } from './routes/operator-loyalty.ts'
 import { posLoyaltyRoutes } from './routes/pos-loyalty.ts'
 
 import { rateLimit } from './lib/rate-limit.ts'
+
+// Routes return Zod's first issue message to the browser, so a missing field
+// says "Required" here as it does in App and Admin.
+installRequiredMessage()
 
 function healthHandler(c: Context) {
 	return c.json({

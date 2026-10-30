@@ -1,4 +1,9 @@
 import { invariant } from '@epic-web/invariant'
+import { type ChatMessage } from '@repo/common/chat'
+import {
+	chatBodyPreview,
+	extractChatMentionUserIds,
+} from '@repo/common/chat-markdown'
 import {
 	and,
 	db,
@@ -9,11 +14,6 @@ import {
 	User,
 	UserOrganization,
 } from '@repo/database'
-import {
-	chatBodyPreview,
-	extractChatMentionUserIds,
-} from '@repo/common/chat-markdown'
-import { type ChatMessage } from '@repo/common/chat'
 import { resolveMentionsToUserIds } from '@repo/notifications'
 import { resolveChannelAudiences } from '#app/utils/chat/audience.server.ts'
 import { sanitizeTextContent } from '#app/utils/content-sanitization.server.ts'

@@ -4,7 +4,6 @@ import {
 	type ChatChannelInput,
 	type ChatChannelSummary,
 } from '@repo/common/chat'
-import { decorateChannelSummaries } from './conversations.server.ts'
 import {
 	and,
 	asc,
@@ -20,6 +19,7 @@ import {
 	UserOrganization,
 } from '@repo/database'
 import { BUILT_IN_ORG_ROLE_IDS } from '#app/routes/_app+/$orgSlug_+/settings+/roles.server.ts'
+import { decorateChannelSummaries } from './conversations.server.ts'
 
 /** Rows inserted per statement; D1 allows 100 bound parameters. */
 const INSERT_CHUNK = 40

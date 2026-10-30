@@ -31,8 +31,8 @@ import {
 } from '@tanstack/react-table'
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { UrlFilters } from '#app/components/data-table/url-filters.tsx'
 import { TablePagination } from '#app/components/data-table/table-pagination.tsx'
+import { UrlFilters } from '#app/components/data-table/url-filters.tsx'
 import { EmptyState } from '#app/components/empty-state.tsx'
 
 export interface AdminUser {

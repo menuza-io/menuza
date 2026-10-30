@@ -1,4 +1,7 @@
+import { i18n } from '@lingui/core'
 import {
+	PRINT_AFTER_SHIPPING_HOLDS,
+	PRINT_MAX_PIECES_PER_DESIGN,
 	PRINT_SELF_CANCEL_STATUSES,
 	PRINT_VENDOR_CHECK_HOLDS,
 	type PrintOrderStatus,
@@ -16,8 +19,11 @@ import {
 	eq,
 	gt,
 	inArray,
+	isNull,
 	lt,
+	ne,
 	Notification,
+	or,
 	Organization,
 	PrintDesign,
 	PrintOrder,
@@ -29,14 +35,21 @@ import {
 	User,
 } from '@repo/database'
 import { sendEmail, StaffingAlertEmail } from '@repo/email'
+import { logger } from '@repo/observability'
 import { createElement } from 'react'
 import type Stripe from 'stripe'
 import { ENV } from 'varlock/env'
+import { loadCatalog } from '#app/modules/lingui/lingui.ts'
 import { getShopCommerce } from '#app/utils/shop.server.ts'
 import { getPrintFileUrl } from '#app/utils/storage.server.ts'
 import { type PrintShopAccess } from './access.server.ts'
 import { exceedsDrift, retailCents } from './pricing.ts'
 import { getPrintFile } from './print-files.server.ts'
+import {
+	PRINT_EMAIL_ACTION,
+	PRINT_EMAIL_COPY,
+	PRINT_EMAIL_EYEBROW,
+} from './print-notifications.ts'
 import { resolvePrintPieces, staleFacts } from './print-snapshot.server.ts'
 import { canViewQrCodes } from './qr-access.server.ts'
 import { getPrintVendor, isPrintMock } from './vendors/index.server.ts'
@@ -285,6 +298,16 @@ export async function createPrintQuote(
 				422,
 				'design_not_approved',
 				'Approve each print before ordering it.',
+			)
+		}
+		// Approval refuses larger sets; this holds for prints approved before.
+		const snapshotPieces =
+			(design.snapshot as PrintSnapshot).pieces?.length ?? 0
+		if (snapshotPieces > PRINT_MAX_PIECES_PER_DESIGN) {
+			throw new PrintOrderError(
+				422,
+				'too_many_pieces',
+				'This print has too many pieces to order at once.',
 			)
 		}
 		const product = design.product
@@ -591,10 +614,19 @@ export async function startPrintCheckout(
 	}
 	// One live payment per order: re-serve the open session, and never start a
 	// second one for a session that is already paid (its webhook may be late).
+	let previousSession: string | null = null
 	if (order.stripeCheckoutSessionId) {
+		// Unknown is not "gone": starting another session now could leave two
+		// open payments for one order.
 		const existing = await platformStripe()
 			.checkout.sessions.retrieve(order.stripeCheckoutSessionId)
-			.catch(() => null)
+			.catch(() => {
+				throw new PrintOrderError(
+					503,
+					'checkout_unavailable',
+					'Payment is unavailable.',
+				)
+			})
 		if (
 			existing?.payment_status === 'paid' ||
 			existing?.status === 'complete'
@@ -606,6 +638,7 @@ export async function startPrintCheckout(
 			)
 		}
 		if (existing?.status === 'open' && existing.url) return existing.url
+		previousSession = existing.id
 	}
 	const customer = await ensureStripeCustomer(access.organization.id)
 	// Stripe Tax uses the customer's shipping address: make it this order's.
@@ -627,11 +660,9 @@ export async function startPrintCheckout(
 	} catch (error) {
 		if (!isPrintMock()) throw error
 	}
-	// Stripe needs at least 30 minutes; the quote lock is the shorter of both.
-	const expiresAt = Math.max(
-		Math.floor(order.quoteExpiresAt.getTime() / 1000),
-		Math.floor(Date.now() / 1000) + 31 * 60,
-	)
+	// Stripe needs at least 30 minutes. Derived from the quote, not the clock,
+	// so a retry sends the same parameters under the same idempotency key.
+	const expiresAt = Math.floor(order.quoteExpiresAt.getTime() / 1000) + 31 * 60
 	const metadata = {
 		type: PRINT_STRIPE_METADATA_TYPE,
 		orderId: order.id,
@@ -670,7 +701,8 @@ export async function startPrintCheckout(
 			cancel_url: `${returnBase}?cancelled=1`,
 		},
 		{
-			idempotencyKey: `print-checkout-${order.id}-${order.quoteExpiresAt.getTime()}`,
+			// A new key after an expired session; the same one for a retry.
+			idempotencyKey: `print-checkout-${order.id}-${order.quoteExpiresAt.getTime()}-${previousSession ?? 'first'}`,
 		},
 	)
 	await db
@@ -694,6 +726,11 @@ export async function startPrintCheckout(
 export async function handlePrintStripeSession(
 	session: Stripe.Checkout.Session,
 	eventType: string,
+	/**
+	 * Runs the vendor submission after the webhook answers (Workers
+	 * `waitUntil`). Without it the submission runs inline (tests, scripts).
+	 */
+	options: { later?: (task: () => Promise<unknown>) => void } = {},
 ) {
 	if (!isPrintStripeMetadata(session.metadata)) return
 	const [order] = await db
@@ -801,7 +838,20 @@ export async function handlePrintStripeSession(
 		return
 	}
 	await notifyPrintOrder(order.id, 'paid')
-	await submitPrintOrder(order.id)
+	if (options.later) {
+		// Stripe already has its answer, so it never retries a failure here.
+		// An order that never got claimed stays `paid` and the print-sync sweep
+		// submits it; one that failed after its claim is `held`
+		// (`submission_error`) and waits in Admin's print queue.
+		options.later(() =>
+			submitPrintOrder(order.id).catch((error: unknown) => {
+				logger.error(
+					{ orderId: order.id, err: error },
+					'Print order submission after the webhook failed',
+				)
+			}),
+		)
+	} else await submitPrintOrder(order.id)
 }
 
 // ---------------------------------------------------------------------------
@@ -815,6 +865,41 @@ async function hold(orderId: string, reason: string) {
 		.where(and(eq(PrintOrder.id, orderId), eq(PrintOrder.status, 'submitting')))
 }
 
+function isVendorRejection(error: unknown): error is VendorError {
+	return error instanceof VendorError && error.code === 'rejected'
+}
+
+/** A vendor refused the order (re-quote or submit): cancel the rest, refund in full. */
+async function refuseAndRefund(
+	orderId: string,
+	vendorOrderId: string,
+	error: VendorError,
+) {
+	await db
+		.update(PrintVendorOrder)
+		.set({ status: 'failed', error: error.message })
+		.where(eq(PrintVendorOrder.id, vendorOrderId))
+	await failAndRefund(orderId, 'vendor_rejected')
+}
+
+/**
+ * Set on a `submitting` order just before a vendor is called, and cleared once
+ * its answer is recorded: a claim left behind with it may have reached the
+ * vendor (Admin checks), one without it never did (safe to submit again).
+ */
+const VENDOR_SENDING = 'vendor_sending'
+
+/** Rendering ran out of time: give the claim back, files rendered so far stay cached. */
+async function release(orderId: string) {
+	await db
+		.update(PrintOrder)
+		.set({ status: 'paid', holdReason: null })
+		.where(and(eq(PrintOrder.id, orderId), eq(PrintOrder.status, 'submitting')))
+}
+
+/** Rendering time one submission may spend before it hands over. */
+const SUBMIT_RENDER_BUDGET_MS = 20_000
+
 function webhookUrl(vendor: PrintVendorName) {
 	const token = ENV.PRINT_WEBHOOK_TOKEN?.trim()
 	const base = ENV.BASE_URL?.replace(/\/$/, '')
@@ -822,17 +907,26 @@ function webhookUrl(vendor: PrintVendorName) {
 	return `${base}/resources/print/webhook/${vendor}?token=${encodeURIComponent(token)}`
 }
 
-/** Renders (or reuses) one print-ready PDF per piece with the vendor's bleed. */
+/**
+ * Renders (or reuses) one print-ready PDF per piece with the vendor's bleed.
+ * Past the deadline it stops between pieces ('deferred'), but only once it
+ * has rendered at least one new file: renders are cached by their inputs, so
+ * every run moves the order forward and the next one picks up from there.
+ */
 async function pieceFileUrls(
 	organizationId: string,
 	item: ItemRow,
 	bleedMm: number,
-): Promise<string[] | null> {
+	deadline: number,
+	/** New files rendered in this run, shared across the order's items. */
+	progress: { rendered: number },
+): Promise<string[] | null | 'deferred'> {
 	// The snapshot frozen on the item at quote time, never the live design.
 	const snapshot = item.snapshot as PrintSnapshot | null
 	if (!snapshot || snapshot.pieces.length !== item.pieces) return null
 	const urls: string[] = []
 	for (const piece of snapshot.pieces) {
+		if (progress.rendered > 0 && Date.now() > deadline) return 'deferred'
 		const file = await getPrintFile(
 			{
 				organizationId,
@@ -844,11 +938,14 @@ async function pieceFileUrls(
 		)
 		if (file.kind !== 'pdf') {
 			if (isPrintMock()) {
+				// The local emulator's stand-in counts as a new file.
+				progress.rendered += 1
 				urls.push(`https://example.invalid/mock-print/${item.id}`)
 				continue
 			}
 			return null
 		}
+		if (file.fresh) progress.rendered += 1
 		urls.push(getPrintFileUrl(file.objectKey, 7 * 24 * 3600))
 	}
 	return urls
@@ -858,11 +955,15 @@ async function pieceFileUrls(
  * Sends a paid order to its vendors. Each vendor is re-quoted first: a rise
  * above the drift limit holds the order for Admin instead of selling at a
  * loss. A vendor that refuses the order cancels the rest and refunds in full.
+ *
+ * Rendering a large set can take minutes, so a run renders for at most
+ * `budgetMs` and then hands the order back ('deferred', status `paid`); the
+ * print-sync sweep continues it from the cached files.
  */
 export async function submitPrintOrder(
 	orderId: string,
-	options: { ignoreDrift?: boolean } = {},
-) {
+	options: { ignoreDrift?: boolean; budgetMs?: number } = {},
+): Promise<'done' | 'deferred'> {
 	// Claim the order first: only one submission runs, and a cancel or refund
 	// cannot slip between the vendor call and the status write.
 	const claimed = await db
@@ -875,9 +976,12 @@ export async function submitPrintOrder(
 			),
 		)
 		.returning({ id: PrintOrder.id })
-	if (claimed.length === 0) return
+	if (claimed.length === 0) return 'done'
 	try {
-		await submitClaimedOrder(orderId, options)
+		return await submitClaimedOrder(orderId, {
+			ignoreDrift: options.ignoreDrift,
+			deadline: Date.now() + (options.budgetMs ?? SUBMIT_RENDER_BUDGET_MS),
+		})
 	} catch (error) {
 		await hold(orderId, 'submission_error')
 		throw error
@@ -886,8 +990,8 @@ export async function submitPrintOrder(
 
 async function submitClaimedOrder(
 	orderId: string,
-	options: { ignoreDrift?: boolean },
-) {
+	options: { ignoreDrift?: boolean; deadline: number },
+): Promise<'done' | 'deferred'> {
 	const { order, vendorOrders, items } = await getPrintOrderDetail(
 		null,
 		orderId,
@@ -905,44 +1009,76 @@ async function submitClaimedOrder(
 	const pending = vendorOrders.filter(
 		(vendorOrder) => vendorOrder.status === 'pending',
 	)
-	for (const vendorOrder of pending) {
-		const vendor = getPrintVendor(vendorOrder.vendor as PrintVendorName)
-		const mine = items
+	// Phase 1: price every vendor, then render everything, before any vendor
+	// is called: a run that runs out of time hands back an order no vendor has
+	// yet, and an accepted new price is stored for every vendor first, so a
+	// resumed run (which no longer knows Admin accepted it) does not hold the
+	// order for the same rise again.
+	const progress = { rendered: 0 }
+	const ready: Array<{
+		vendorOrder: (typeof pending)[number]
+		vendor: ReturnType<typeof getPrintVendor>
+		files: VendorItem[]
+	}> = []
+	const itemsOf = (vendorOrderId: string) =>
+		items
 			.map((row) => row.item)
-			.filter((item) => item.vendorOrderId === vendorOrder.id)
-		const quoteItems = mine.flatMap((item) => vendorItemsFor(item))
-		let sent = false
-		try {
-			if (!options.ignoreDrift) {
-				const quote = await vendor.quote(quoteItems, address)
-				const locked =
-					vendorOrder.wholesaleItemsCents + vendorOrder.wholesaleShippingCents
-				if (
-					exceedsDrift(
-						locked,
-						quote.itemsCents + quote.shippingCents,
-						settings.driftHoldBp,
-					)
-				) {
+			.filter((item) => item.vendorOrderId === vendorOrderId)
+	let quoting: (typeof pending)[number] | null = null
+	try {
+		for (const vendorOrder of pending) {
+			quoting = vendorOrder
+			const vendor = getPrintVendor(vendorOrder.vendor as PrintVendorName)
+			const quoteItems = itemsOf(vendorOrder.id).flatMap((item) =>
+				vendorItemsFor(item),
+			)
+			const quote = await vendor.quote(quoteItems, address)
+			const locked =
+				vendorOrder.wholesaleItemsCents + vendorOrder.wholesaleShippingCents
+			if (
+				exceedsDrift(
+					locked,
+					quote.itemsCents + quote.shippingCents,
+					settings.driftHoldBp,
+				)
+			) {
+				if (!options.ignoreDrift) {
 					await hold(order.id, 'price_drift')
-					return
+					return 'done'
 				}
+				// Admin accepted the new price: it becomes the one to compare with.
+				await db
+					.update(PrintVendorOrder)
+					.set({
+						wholesaleItemsCents: quote.itemsCents,
+						wholesaleShippingCents: quote.shippingCents,
+					})
+					.where(eq(PrintVendorOrder.id, vendorOrder.id))
 			}
-			const files: VendorItem[] = []
-			for (const item of mine) {
+			ready.push({ vendorOrder, vendor, files: [] })
+		}
+		quoting = null
+		for (const entry of ready) {
+			for (const item of itemsOf(entry.vendorOrder.id)) {
 				// Each product and size has its own bleed at the vendor.
 				const mapping = await vendorProductFor(item.product, item.sizeKey)
 				const urls = await pieceFileUrls(
 					order.organizationId,
 					item,
 					mapping?.bleedMm ?? 3,
+					options.deadline,
+					progress,
 				)
+				if (urls === 'deferred') {
+					await release(order.id)
+					return 'deferred'
+				}
 				if (!urls) {
 					await hold(order.id, 'render_unavailable')
-					return
+					return 'done'
 				}
 				urls.forEach((url, index) =>
-					files.push({
+					entry.files.push({
 						reference: `${item.id}_${index}`,
 						sku: item.vendorSku,
 						quantity: item.quantity,
@@ -950,7 +1086,34 @@ async function submitClaimedOrder(
 					}),
 				)
 			}
-			sent = true
+		}
+	} catch (error) {
+		if (quoting && isVendorRejection(error)) {
+			await refuseAndRefund(order.id, quoting.id, error)
+			return 'done'
+		}
+		// Nothing reached a vendor in this run: safe to retry.
+		logger.error(
+			{ orderId: order.id, err: error },
+			'Print order held: a vendor quote failed',
+		)
+		await hold(order.id, 'vendor_unavailable')
+		return 'done'
+	}
+
+	// Phase 2: send. From the first call on, the order carries the marker
+	// until it is recorded as submitted, so a run cut short anywhere in here
+	// is held for Admin instead of being resumed as if nothing went out.
+	if (ready.length > 0) {
+		await db
+			.update(PrintOrder)
+			.set({ holdReason: VENDOR_SENDING })
+			.where(
+				and(eq(PrintOrder.id, order.id), eq(PrintOrder.status, 'submitting')),
+			)
+	}
+	for (const { vendorOrder, vendor, files } of ready) {
+		try {
 			const { vendorOrderId } = await vendor.createOrder({
 				reference: vendorOrder.id,
 				items: files,
@@ -968,19 +1131,14 @@ async function submitClaimedOrder(
 				})
 				.where(eq(PrintVendorOrder.id, vendorOrder.id))
 		} catch (error) {
-			if (error instanceof VendorError && error.code === 'rejected') {
-				await db
-					.update(PrintVendorOrder)
-					.set({ status: 'failed', error: error.message })
-					.where(eq(PrintVendorOrder.id, vendorOrder.id))
-				await failAndRefund(order.id, 'vendor_rejected')
-				return
+			if (isVendorRejection(error)) {
+				await refuseAndRefund(order.id, vendorOrder.id, error)
+				return 'done'
 			}
-			// Nothing reached the vendor: safe to retry. Once the order was sent,
-			// a timeout or an error after it may hide an order the vendor did
-			// place, so Admin checks the vendor before any retry.
-			await hold(order.id, sent ? 'vendor_unknown' : 'vendor_unavailable')
-			return
+			// A timeout or an error after the call may hide an order the vendor
+			// did place, so Admin checks the vendor before any retry.
+			await hold(order.id, 'vendor_unknown')
+			return 'done'
 		}
 	}
 	await db
@@ -989,6 +1147,7 @@ async function submitClaimedOrder(
 		.where(
 			and(eq(PrintOrder.id, order.id), eq(PrintOrder.status, 'submitting')),
 		)
+	return 'done'
 }
 
 // ---------------------------------------------------------------------------
@@ -1008,7 +1167,10 @@ async function rollUp(orderId: string) {
 	// Vendor orders cancelled after a partial cancel no longer count.
 	const states = vendorOrders
 		.map((vendorOrder) => vendorOrder.status as VendorOrderState)
-		.filter((state) => state !== 'cancelled' && state !== 'failed')
+		.filter(
+			(state) =>
+				state !== 'cancelled' && state !== 'failed' && state !== 'returned',
+		)
 	if (states.length === 0) return
 	const least = states.reduce((min, state) =>
 		ROLLUP_ORDER.indexOf(state) < ROLLUP_ORDER.indexOf(min) ? state : min,
@@ -1027,7 +1189,13 @@ async function rollUp(orderId: string) {
 
 export async function syncPrintVendorOrder(vendorOrder: VendorOrderRow) {
 	if (!vendorOrder.vendorOrderId) return
-	if (['cancelled', 'failed', 'delivered'].includes(vendorOrder.status)) return
+	if (
+		['cancelled', 'failed', 'delivered', 'returned'].includes(
+			vendorOrder.status,
+		)
+	) {
+		return
+	}
 	const status = await getPrintVendor(
 		vendorOrder.vendor as PrintVendorName,
 	).status(vendorOrder.vendorOrderId)
@@ -1046,8 +1214,40 @@ export async function syncPrintVendorOrder(vendorOrder: VendorOrderRow) {
 			...(status.state === 'delivered' ? { deliveredAt: now } : {}),
 		})
 		.where(eq(PrintVendorOrder.id, vendorOrder.id))
+	const leftVendor =
+		Boolean(vendorOrder.shippedAt) ||
+		['shipped', 'delivered'].includes(vendorOrder.status)
+	if (
+		status.state === 'returned' ||
+		(leftVendor && (status.state === 'failed' || status.state === 'cancelled'))
+	) {
+		// Printed and sent, so the vendor has been paid: a parcel that came back
+		// (often a wrong address) is Admin's call (reship, part or full refund),
+		// never an automatic full refund.
+		await db
+			.update(PrintOrder)
+			.set({
+				status: 'held',
+				holdReason:
+					status.state === 'returned'
+						? 'vendor_returned'
+						: 'vendor_after_shipping',
+			})
+			.where(
+				and(
+					eq(PrintOrder.id, vendorOrder.orderId),
+					inArray(PrintOrder.status, [
+						'submitted',
+						'in_production',
+						'shipped',
+						'delivered',
+					]),
+				),
+			)
+		return
+	}
 	if (status.state === 'failed' || status.state === 'cancelled') {
-		// The vendor dropped a paid order: refund it in full.
+		// The vendor dropped a paid order before it shipped: refund in full.
 		await failAndRefund(vendorOrder.orderId, `vendor_${status.state}`)
 		return
 	}
@@ -1096,37 +1296,70 @@ export async function handlePrintVendorWebhook(
 /** Cron safety net for missed webhooks: open vendor orders, oldest first. */
 const STALE_PAID_MS = 5 * 60_000
 const STALE_CLAIM_MS = 15 * 60_000
+/** Rendering time the sweep spends per order, and in all. */
+const SWEEP_ORDER_BUDGET_MS = 60_000
+const SWEEP_TOTAL_BUDGET_MS = 10 * 60_000
+/** Rendering time of an Admin retry (its command call times out at 30 s). */
+const ADMIN_RETRY_BUDGET_MS = 15_000
 
 /**
- * Picks up orders a crashed request left behind: a paid order whose submission
- * never started is submitted now, and a claim (`submitting` / `cancelling`)
- * older than any request is held for Admin, since a vendor call may or may not
- * have gone through.
+ * Picks up orders a request left behind (cut short, or out of rendering time):
+ * - a submission claim that never called a vendor goes back to `paid` and is
+ *   submitted again, continuing from the cached files;
+ * - a claim cut short during a vendor call (or a stuck cancel) is held for
+ *   Admin, since that call may or may not have gone through;
+ * - paid orders are submitted, oldest touched first. Each run renders at
+ *   least one new file or holds on a failed render, so a large set always
+ *   finishes; nothing has to give up on it.
  */
 async function sweepStalePrintOrders(limit: number) {
 	const now = Date.now()
-	const stalePaid = await db
-		.select({ id: PrintOrder.id })
-		.from(PrintOrder)
+	const staleBefore = new Date(now - STALE_CLAIM_MS)
+	const resumed = await db
+		.update(PrintOrder)
+		.set({ status: 'paid', holdReason: null })
 		.where(
 			and(
-				eq(PrintOrder.status, 'paid'),
-				lt(PrintOrder.updatedAt, new Date(now - STALE_PAID_MS)),
+				eq(PrintOrder.status, 'submitting'),
+				or(
+					isNull(PrintOrder.holdReason),
+					ne(PrintOrder.holdReason, VENDOR_SENDING),
+				),
+				lt(PrintOrder.updatedAt, staleBefore),
 			),
 		)
-		.limit(limit)
-	for (const { id } of stalePaid) {
-		await submitPrintOrder(id).catch(() => null)
-	}
+		.returning({ id: PrintOrder.id })
+	const resumedIds = new Set(resumed.map((row) => row.id))
 	await db
 		.update(PrintOrder)
 		.set({ status: 'held', holdReason: 'stale_claim' })
 		.where(
 			and(
 				inArray(PrintOrder.status, ['submitting', 'cancelling']),
-				lt(PrintOrder.updatedAt, new Date(now - STALE_CLAIM_MS)),
+				lt(PrintOrder.updatedAt, staleBefore),
 			),
 		)
+	const paid = await db
+		.select({ id: PrintOrder.id, updatedAt: PrintOrder.updatedAt })
+		.from(PrintOrder)
+		.where(eq(PrintOrder.status, 'paid'))
+		.orderBy(asc(PrintOrder.updatedAt))
+		.limit(limit)
+	const sweepEnd = now + SWEEP_TOTAL_BUDGET_MS
+	for (const { id, updatedAt } of paid) {
+		// A webhook may still be submitting a fresh one in the background.
+		const fresh = updatedAt.getTime() > now - STALE_PAID_MS
+		if (fresh && !resumedIds.has(id)) continue
+		// Keep going on one large set while there is time left.
+		for (;;) {
+			const left = sweepEnd - Date.now()
+			if (left <= 0) return
+			const result = await submitPrintOrder(id, {
+				budgetMs: Math.min(SWEEP_ORDER_BUDGET_MS, left),
+			}).catch(() => 'done' as const)
+			if (result !== 'deferred') break
+		}
+	}
 }
 
 const SHIPPED_FOLLOW_MS = 30 * 24 * 60 * 60_000
@@ -1300,10 +1533,11 @@ export async function cancelPrintOrder(
 	}
 	if (
 		order.status === 'held' &&
-		PRINT_VENDOR_CHECK_HOLDS.includes(order.holdReason ?? '')
+		(PRINT_VENDOR_CHECK_HOLDS.includes(order.holdReason ?? '') ||
+			PRINT_AFTER_SHIPPING_HOLDS.includes(order.holdReason ?? ''))
 	) {
-		// The vendor may hold an order we never recorded: platform support checks
-		// the vendor before anything is refunded.
+		// A vendor may have the order already, including prints made and shipped.
+		// Admin must resolve these holds before anything is refunded.
 		throw new PrintOrderError(
 			409,
 			'needs_support',
@@ -1678,7 +1912,7 @@ export async function adminRetryPrintOrder(
 	orderId: string,
 	acceptPrice: boolean,
 	options: { checkedVendor?: boolean } = {},
-) {
+): Promise<'done' | 'deferred'> {
 	const { order, vendorOrders, items } = await getPrintOrderDetail(
 		null,
 		orderId,
@@ -1698,6 +1932,13 @@ export async function adminRetryPrintOrder(
 			409,
 			'refund_needed',
 			'Vendors were cancelled for this order: refund it instead of retrying.',
+		)
+	}
+	if (PRINT_AFTER_SHIPPING_HOLDS.includes(order.holdReason ?? '')) {
+		throw new PrintOrderError(
+			409,
+			'shipped_already',
+			'The prints were made and shipped: reship through the vendor or refund it.',
 		)
 	}
 	if (
@@ -1731,7 +1972,12 @@ export async function adminRetryPrintOrder(
 				.where(eq(PrintVendorOrder.id, vendorOrder.id))
 		}
 	}
-	await submitPrintOrder(order.id, { ignoreDrift: acceptPrice })
+	// One short run fits Admin's command call; a large set that is handed
+	// back continues after the answer (`continueAfter`) and in the sweep.
+	return submitPrintOrder(order.id, {
+		ignoreDrift: acceptPrice,
+		budgetMs: ADMIN_RETRY_BUDGET_MS,
+	})
 }
 
 // ---------------------------------------------------------------------------
@@ -1739,25 +1985,6 @@ export async function adminRetryPrintOrder(
 // ---------------------------------------------------------------------------
 
 export type PrintNotificationKind = 'paid' | 'shipped' | 'failed'
-
-const COPY: Record<
-	PrintNotificationKind,
-	{ headline: string; detail: string }
-> = {
-	paid: {
-		headline: 'Your print order is paid',
-		detail:
-			'We sent it to the printer. You can cancel it until production starts.',
-	},
-	shipped: {
-		headline: 'Your prints are on the way',
-		detail: 'The parcel has shipped. Tracking is on the order page.',
-	},
-	failed: {
-		headline: 'Your print order was refunded',
-		detail: 'The order could not be completed, so we refunded it in full.',
-	},
-}
 
 export async function notifyPrintOrder(
 	orderId: string,
@@ -1789,15 +2016,18 @@ export async function notifyPrintOrder(
 			})
 			.onConflictDoNothing()
 		if (row.email) {
-			const copy = COPY[kind]
+			// Webhooks and jobs run without a request language: use the source.
+			if (!i18n.locale) await loadCatalog('en')
+			const copy = PRINT_EMAIL_COPY[kind]
+			const headline = i18n._(copy.headline)
 			await sendEmail({
 				to: row.email,
-				subject: copy.headline,
+				subject: headline,
 				react: createElement(StaffingAlertEmail, {
-					eyebrow: 'Print shop',
-					headline: copy.headline,
-					detail: copy.detail,
-					actionLabel: 'Open the order',
+					eyebrow: i18n._(PRINT_EMAIL_EYEBROW),
+					headline,
+					detail: i18n._(copy.detail),
+					actionLabel: i18n._(PRINT_EMAIL_ACTION),
 					actionUrl: url,
 				}),
 			})
@@ -1807,5 +2037,19 @@ export async function notifyPrintOrder(
 			'Print order notification failed:',
 			error instanceof Error ? error.message : error,
 		)
+	}
+}
+
+/**
+ * Keeps submitting an order handed back for lack of time, for about as long
+ * as a Worker may run after its answer; the print-sync sweep does the rest.
+ */
+export async function continuePrintSubmission(orderId: string) {
+	const end = Date.now() + 25_000
+	for (;;) {
+		const left = end - Date.now()
+		if (left <= 0) return
+		const result = await submitPrintOrder(orderId, { budgetMs: left })
+		if (result !== 'deferred') return
 	}
 }

@@ -49,7 +49,7 @@
     "lru-cache": "^11.5.2",
     "tsx": "^4.19.3",
     "varlock": "^1.18.0",
-    "zod": "^3.25.76"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250811.0",

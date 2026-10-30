@@ -4,10 +4,13 @@ import 'varlock/auto-load'
 import '#app/utils/env.server.ts'
 // we need these to be imported first 👆
 
+import { installRequiredMessage } from '@repo/common/zod-defaults'
 import { cleanup, configure } from '@testing-library/react'
 import { afterEach, beforeEach, vi, type MockInstance } from 'vitest'
 import { server } from '#tests/mocks/index.ts'
 import './custom-matchers.ts'
+
+installRequiredMessage()
 
 // Async queries (`findBy*`, `waitFor`) poll for up to 1s by default, which is
 // too tight when the whole workspace's suites run in parallel on a busy machine.

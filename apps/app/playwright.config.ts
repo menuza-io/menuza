@@ -60,6 +60,10 @@ export default defineConfig({
 			MOCKS: 'true',
 			// Print shop vendor emulator; ignored unless BASE_URL is local.
 			PRINT_MOCK: 'true',
+			// Canva emulator for the Print shop import; also local only.
+			CANVA_MOCK: 'true',
+			// Meta emulator for Marketing, Social media; also local only.
+			SOCIAL_MOCK: 'true',
 			AUDIT_LOG_SECRET_KEY: 'playwright-only-audit-integrity-key',
 			VITE_DIRECT_DEV: '1',
 			NODE_OPTIONS: process.env.NODE_OPTIONS ?? '--max-old-space-size=6144',

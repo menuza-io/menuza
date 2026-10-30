@@ -201,8 +201,22 @@
 		{
 			"idx": 28,
 			"version": "6",
-			"when": 1793167862371,
-			"tag": "0028_loyalty",
+			"when": 1793135125121,
+			"tag": "0028_print_canva",
+			"breakpoints": true
+		},
+		{
+			"idx": 29,
+			"version": "6",
+			"when": 1793281185817,
+			"tag": "0029_social_media",
+			"breakpoints": true
+		},
+		{
+			"idx": 30,
+			"version": "6",
+			"when": 1793364111349,
+			"tag": "0030_loyalty",
 			"breakpoints": true
 		}
 	]
