@@ -16,6 +16,9 @@ function packageDir(name) {
 module.exports = {
 	preset: 'jest-expo',
 	setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+	// The shell tests render the whole app; under coverage on a cold CI runner
+	// the first one alone can take longer than Jest's 5 seconds.
+	testTimeout: 30_000,
 	testPathIgnorePatterns: [
 		'/node_modules/',
 		'<rootDir>/dist/',
