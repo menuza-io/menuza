@@ -1,5 +1,8 @@
 import {
+	PRINT_MAX_PIECES_PER_DESIGN,
 	PRINT_TEMPLATE_VERSION,
+	printArtworkSchema,
+	type PrintArtwork,
 	type PrintDesignContent,
 	type PrintProductKey,
 	type PrintQrTarget,
@@ -27,7 +30,10 @@ export type PrintDesignView = {
 	sizeKey: string
 	style: PrintTemplateStyle
 	status: 'draft' | 'approved'
+	/** `template`: designed here. `artwork`: a finished file (Canva). */
+	source: 'template' | 'artwork'
 	content: PrintDesignContent
+	artwork: PrintArtwork | null
 	hasApprovedSnapshot: boolean
 	approvedAt: string | null
 	updatedAt: string
@@ -35,6 +41,7 @@ export type PrintDesignView = {
 
 export function toDesignView(row: PrintDesignRow): PrintDesignView {
 	const content = printCatalog.designContentSchema.safeParse(row.content)
+	const artwork = row.artwork ? printArtworkSchema.safeParse(row.artwork) : null
 	return {
 		id: row.id,
 		name: row.name,
@@ -42,6 +49,8 @@ export function toDesignView(row: PrintDesignRow): PrintDesignView {
 		sizeKey: row.sizeKey,
 		style: row.style as PrintTemplateStyle,
 		status: row.status === 'approved' ? 'approved' : 'draft',
+		source: row.source === 'artwork' ? 'artwork' : 'template',
+		artwork: artwork?.success ? artwork.data : null,
 		content: content.success
 			? content.data
 			: (row.content as PrintDesignContent),
@@ -163,6 +172,11 @@ export async function savePrintDesign(
 		content: PrintDesignContent
 	},
 ) {
+	if (row.source === 'artwork') {
+		throw new Response('A finished file is edited where it was made', {
+			status: 400,
+		})
+	}
 	const product = row.product
 	if (!printCatalog.getSize(product, input.sizeKey)) {
 		throw new Response('Unknown size', { status: 400 })
@@ -206,8 +220,66 @@ export async function currentSnapshot(
 			sizeKey: view.sizeKey,
 			style: view.style,
 			content: view.content,
+			artwork: view.source === 'artwork' ? view.artwork : null,
 		},
 	})
+}
+
+/**
+ * A print made from a finished file (Canva): it has the default content (no
+ * words, no QR code) and prints its artwork as it is.
+ */
+export async function createArtworkDesign(
+	access: PrintShopAccess,
+	input: {
+		name: string
+		product: PrintProductKey
+		sizeKey: string
+		artwork: PrintArtwork
+	},
+) {
+	if (
+		!printCatalog.acceptsArtwork(input.product) ||
+		!printCatalog.getSize(input.product, input.sizeKey)
+	) {
+		throw new Response('This print cannot be a finished file', { status: 400 })
+	}
+	const content = await defaultContent(access, input.product)
+	const [row] = await db
+		.insert(PrintDesign)
+		.values({
+			organizationId: access.organization.id,
+			createdById: access.userId,
+			name: input.name,
+			product: input.product,
+			sizeKey: input.sizeKey,
+			style: 'classic',
+			templateVersion: PRINT_TEMPLATE_VERSION,
+			content: { ...content, qr: { kind: 'none' }, featuredItemIds: [] },
+			source: 'artwork',
+			artwork: input.artwork,
+			status: 'draft',
+		})
+		.returning()
+	return row!
+}
+
+/** A new version of the file (or a new name): back to draft, like a save. */
+export async function updateArtworkDesign(
+	row: PrintDesignRow,
+	input: { name: string; artwork?: PrintArtwork },
+) {
+	const [updated] = await db
+		.update(PrintDesign)
+		.set({
+			name: input.name,
+			...(input.artwork ? { artwork: input.artwork } : {}),
+			status: 'draft',
+		})
+		.where(and(eq(PrintDesign.id, row.id), eq(PrintDesign.source, 'artwork')))
+		.returning()
+	if (!updated) throw new Response('Not Found', { status: 404 })
+	return updated
 }
 
 /**
@@ -223,6 +295,11 @@ export async function approvePrintDesign(
 	const snapshot = await currentSnapshot(request, access, row)
 	if (snapshot.pieces.length === 0) {
 		throw new Response('Nothing to print yet', { status: 422 })
+	}
+	// One file and one price per piece: a vertical's "every one" target must
+	// not grow a set past the cap (downloads and orders print the snapshot).
+	if (snapshot.pieces.length > PRINT_MAX_PIECES_PER_DESIGN) {
+		throw new Response('Too many pieces', { status: 413 })
 	}
 	// Only the version the snapshot was built from: a save in between (another
 	// editor) must not be marked approved with older words.

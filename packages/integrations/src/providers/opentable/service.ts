@@ -36,7 +36,7 @@ const openTableLocationSchema = z
 		overall_rating: z.number().optional(),
 		review_count: z.number().optional(),
 	})
-	.passthrough()
+	.loose()
 
 export type OpenTableLocation = z.infer<typeof openTableLocationSchema>
 
@@ -56,7 +56,7 @@ export const openTableReviewSchema = z
 			.object({ comment: z.string(), updateTime: z.string().optional() })
 			.optional(),
 	})
-	.passthrough()
+	.loose()
 
 export type OpenTableReview = z.infer<typeof openTableReviewSchema> & {
 	locationId: string
@@ -126,7 +126,7 @@ const MOCK_OPENTABLE_REVIEWS: z.infer<typeof openTableReviewSchema>[] = [
 function parseIntegrationConfig(rawConfig: string | null | undefined) {
 	try {
 		return z
-			.record(z.unknown())
+			.record(z.string(), z.unknown())
 			.catch({})
 			.parse(JSON.parse(rawConfig ?? '{}'))
 	} catch {
@@ -290,6 +290,7 @@ export async function listOpenTableReviews(
 			const config = parseIntegrationConfig(integration.config)
 			const storedReplies = z
 				.record(
+					z.string(),
 					z.object({
 						comment: z.string(),
 						updateTime: z.string().optional(),
@@ -349,6 +350,7 @@ export async function replyToOpenTableReview(
 	const rawConfig = parseIntegrationConfig(integration.config)
 	const parsedReplies = z
 		.record(
+			z.string(),
 			z.object({ comment: z.string(), updateTime: z.string().optional() }),
 		)
 		.catch({})

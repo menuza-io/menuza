@@ -32,7 +32,7 @@ const deliverooLocationSchema = z
 		status: z.string().optional(),
 		rating: z.number().optional(),
 	})
-	.passthrough()
+	.loose()
 
 export type DeliverooLocation = z.infer<typeof deliverooLocationSchema>
 
@@ -49,7 +49,7 @@ export const deliverooReviewSchema = z
 			.object({ comment: z.string(), updateTime: z.string().optional() })
 			.optional(),
 	})
-	.passthrough()
+	.loose()
 
 export type DeliverooReview = z.infer<typeof deliverooReviewSchema> & {
 	locationId: string
@@ -111,7 +111,7 @@ const MOCK_DELIVEROO_REVIEWS: z.infer<typeof deliverooReviewSchema>[] = [
 function parseIntegrationConfig(rawConfig: string | null | undefined) {
 	try {
 		return z
-			.record(z.unknown())
+			.record(z.string(), z.unknown())
 			.catch({})
 			.parse(JSON.parse(rawConfig ?? '{}'))
 	} catch {
@@ -273,6 +273,7 @@ export async function listDeliverooReviews(
 			const config = parseIntegrationConfig(integration.config)
 			const storedReplies = z
 				.record(
+					z.string(),
 					z.object({
 						comment: z.string(),
 						updateTime: z.string().optional(),
@@ -338,6 +339,7 @@ export async function replyToDeliverooReview(
 	const rawConfig = parseIntegrationConfig(integration.config)
 	const parsedReplies = z
 		.record(
+			z.string(),
 			z.object({ comment: z.string(), updateTime: z.string().optional() }),
 		)
 		.catch({})

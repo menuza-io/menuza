@@ -36,7 +36,7 @@ const resyVenueSchema = z
 		rating: z.number().optional(),
 		review_count: z.number().optional(),
 	})
-	.passthrough()
+	.loose()
 
 export type ResyVenue = z.infer<typeof resyVenueSchema>
 
@@ -55,7 +55,7 @@ export const resyReviewSchema = z
 			.object({ comment: z.string(), updateTime: z.string().optional() })
 			.optional(),
 	})
-	.passthrough()
+	.loose()
 
 export type ResyReview = z.infer<typeof resyReviewSchema> & {
 	locationId: string
@@ -124,7 +124,7 @@ const MOCK_RESY_REVIEWS: z.infer<typeof resyReviewSchema>[] = [
 function parseIntegrationConfig(rawConfig: string | null | undefined) {
 	try {
 		return z
-			.record(z.unknown())
+			.record(z.string(), z.unknown())
 			.catch({})
 			.parse(JSON.parse(rawConfig ?? '{}'))
 	} catch {
@@ -284,6 +284,7 @@ export async function listResyReviews(
 			const config = parseIntegrationConfig(integration.config)
 			const storedReplies = z
 				.record(
+					z.string(),
 					z.object({
 						comment: z.string(),
 						updateTime: z.string().optional(),
@@ -343,6 +344,7 @@ export async function replyToResyReview(
 	const rawConfig = parseIntegrationConfig(integration.config)
 	const parsedReplies = z
 		.record(
+			z.string(),
 			z.object({ comment: z.string(), updateTime: z.string().optional() }),
 		)
 		.catch({})

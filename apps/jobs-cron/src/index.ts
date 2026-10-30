@@ -1,4 +1,9 @@
 import { MarketingJourneyWorkflow } from './marketing-journey-workflow'
+import {
+	SOCIAL_PUBLISH_PATH,
+	SocialPostWorkflow,
+	type SocialPostWorkflowParams,
+} from './social-post-workflow'
 import { StorageMigrationWorkflow } from './storage-migration-workflow'
 import type { MarketingJourneyWorkflowParams } from './types'
 
@@ -9,6 +14,7 @@ export interface Env {
 	TENANT_API_URL_KSA?: string
 	STORAGE_MIGRATION_WORKFLOW: Workflow<{ migrationId: string }>
 	MARKETING_JOURNEY_WORKFLOW: Workflow<MarketingJourneyWorkflowParams>
+	SOCIAL_POST_WORKFLOW: Workflow<SocialPostWorkflowParams>
 }
 
 // The Workers free plan allows five cron triggers per Worker, so daily jobs
@@ -43,6 +49,10 @@ const RESERVATION_PAYMENTS_RECONCILE_PATH =
 // Hourly App job: fetches the status of shipped print orders whose vendor
 // webhook may have been missed.
 const PRINT_SYNC_PATH = '/resources/jobs/print-sync'
+// Workflows sleep at most 365 days; a day of margin covers clock skew between
+// the App and this Worker. A post due later is left to the hourly
+// social-publish sweep (the App logs the refused wake-up and carries on).
+const SOCIAL_POST_MAX_LEAD_MS = 364 * 24 * 60 * 60_000
 
 async function safeCompareAsync(
 	a: string | null | undefined,
@@ -306,6 +316,60 @@ export default {
 		}
 
 		// =========================================================================
+		// Social Post Workflow: wake the App when a scheduled post is due
+		// POST /workflows/social-post/start  { postId, runAt }
+		// =========================================================================
+		if (
+			(pathname === '/workflows/social-post/start' ||
+				pathname === '/api/workflows/social-post/start') &&
+			request.method === 'POST'
+		) {
+			const unauthorized = await requireInternalAuth(request, env)
+			if (unauthorized) return unauthorized
+
+			const body = ((await request.json().catch(() => ({}))) || {}) as {
+				postId?: unknown
+				runAt?: unknown
+			}
+			const postId = typeof body.postId === 'string' ? body.postId : ''
+			const runAt =
+				typeof body.runAt === 'string' ? new Date(body.runAt) : new Date('')
+			if (!/^[a-z0-9]{8,64}$/i.test(postId) || Number.isNaN(runAt.getTime())) {
+				return Response.json(
+					{ error: 'postId and runAt are required' },
+					{ status: 400 },
+				)
+			}
+
+			if (runAt.getTime() - Date.now() > SOCIAL_POST_MAX_LEAD_MS) {
+				return Response.json(
+					{ error: 'runAt is too far ahead to wait for' },
+					{ status: 400 },
+				)
+			}
+
+			// One instance per post and time: starting it twice is harmless.
+			// A runAt already past publishes at once.
+			const instanceId = `social-${postId}-${runAt.getTime()}`
+			try {
+				const instance = await env.SOCIAL_POST_WORKFLOW.create({
+					id: instanceId,
+					params: { postId, runAt: runAt.toISOString() },
+				})
+				return Response.json({ success: true, instanceId: instance.id })
+			} catch (err) {
+				const message = err instanceof Error ? err.message : String(err)
+				if (/already[ _]exists/i.test(message)) {
+					return Response.json({ success: true, instanceId })
+				}
+				return Response.json(
+					{ error: 'Failed to start social post workflow', message },
+					{ status: 500 },
+				)
+			}
+		}
+
+		// =========================================================================
 		// 3. Marketing Journey Workflow: Cancel / Terminate
 		// POST /api/workflows/marketing-journey/:instanceId/cancel
 		// POST /workflows/marketing-journey/:instanceId/cancel
@@ -398,6 +462,12 @@ export default {
 					'Print order sync',
 					(jobEnv: Env) => invokeJob(jobEnv, PRINT_SYNC_PATH),
 				],
+				// Scheduled social posts are woken on time by SocialPostWorkflow;
+				// this sweep only catches a wake-up that could not be started.
+				[
+					'Social post sweep',
+					(jobEnv: Env) => invokeJob(jobEnv, SOCIAL_PUBLISH_PATH),
+				],
 			] as const) {
 				ctx.waitUntil(
 					run(env).catch((error) => {
@@ -433,4 +503,8 @@ export default {
 	},
 }
 
-export { StorageMigrationWorkflow, MarketingJourneyWorkflow }
+export {
+	StorageMigrationWorkflow,
+	MarketingJourneyWorkflow,
+	SocialPostWorkflow,
+}

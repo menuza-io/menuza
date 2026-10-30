@@ -151,7 +151,9 @@ export const laborSettingsUpdateSchema = z
 		 * whole set (positions left out have no standard); a unit left out keeps
 		 * what it has. `orders` here wins over `ordersPerLaborHour`.
 		 */
-		demandPerLaborHour: z.record(demandUnitSchema, standardsSchema).optional(),
+		demandPerLaborHour: z
+			.partialRecord(demandUnitSchema, standardsSchema)
+			.optional(),
 	})
 	.strict()
 	.refine(

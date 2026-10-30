@@ -85,12 +85,7 @@ function json(body: unknown, status: 200 | 201 = 200) {
 }
 
 /** Zod messages for these codes would echo the rejected value back. */
-const ECHOING_CODES = new Set([
-	'invalid_enum_value',
-	'invalid_literal',
-	'invalid_union',
-	'invalid_union_discriminator',
-])
+const ECHOING_CODES = new Set(['invalid_value', 'invalid_union'])
 
 function validationError(error: z.ZodError) {
 	return staffError(400, 'Invalid request', {
@@ -511,7 +506,7 @@ staffOperatorRoutes.delete(
 		const date = c.req.query('effectiveDate')
 		if (date !== undefined && !localDateSchema.safeParse(date).success) {
 			return staffError(400, 'Invalid request', {
-				issues: [{ path: 'effectiveDate', code: 'invalid_string' }],
+				issues: [{ path: 'effectiveDate', code: 'invalid_format' }],
 			})
 		}
 		return respond(

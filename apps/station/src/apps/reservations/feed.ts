@@ -23,7 +23,7 @@ const guestTagSchema = z
 		category: z.string().nullable().optional(),
 		sensitive: z.boolean().optional(),
 	})
-	.passthrough()
+	.loose()
 
 export type GuestTag = z.infer<typeof guestTagSchema>
 
@@ -50,10 +50,10 @@ const guestSchema = z
 		 * guest-details grant (the server sends an empty list without it).
 		 */
 		pinnedNotes: z
-			.array(z.object({ id: z.string(), body: z.string() }).passthrough())
+			.array(z.object({ id: z.string(), body: z.string() }).loose())
 			.default([]),
 	})
-	.passthrough()
+	.loose()
 
 export const reservationSchema = z
 	.object({
@@ -111,7 +111,7 @@ export const reservationSchema = z
 		canUndo: z.boolean().optional(),
 		guest: guestSchema.nullable().default(null),
 	})
-	.passthrough()
+	.loose()
 
 export type DayReservation = z.infer<typeof reservationSchema>
 
@@ -141,7 +141,7 @@ const tableSchema = z
 			.transform((minutes) => Math.max(0, Math.round(minutes ?? 0))),
 		archivedAt: epoch,
 	})
-	.passthrough()
+	.loose()
 
 export type DayTable = z.infer<typeof tableSchema>
 
@@ -155,7 +155,7 @@ const comboSchema = z
 		tableIds: z.array(z.string()).default([]),
 		archivedAt: epoch,
 	})
-	.passthrough()
+	.loose()
 
 export type DayCombo = z.infer<typeof comboSchema>
 
@@ -168,7 +168,7 @@ const areaSchema = z
 		canvasH: z.number().default(800),
 		archivedAt: epoch,
 	})
-	.passthrough()
+	.loose()
 
 export type DayArea = z.infer<typeof areaSchema>
 
@@ -184,7 +184,7 @@ const elementSchema = z
 		h: z.number().default(20),
 		rotation: z.number().default(0),
 	})
-	.passthrough()
+	.loose()
 
 export type DayElement = z.infer<typeof elementSchema>
 
@@ -197,7 +197,7 @@ const blockSchema = z
 		endAt: z.number(),
 		reason: z.string().nullable().optional(),
 	})
-	.passthrough()
+	.loose()
 
 /** A service of the day (Lunch, Dinner): when it seats and when it ends, in minutes after local midnight. */
 const serviceSchema = z
@@ -212,7 +212,7 @@ const serviceSchema = z
 		/** The sections the floor is split into for this service, by default. */
 		sectionLayoutId: z.string().nullable().optional(),
 	})
-	.passthrough()
+	.loose()
 
 export type DayService = z.infer<typeof serviceSchema>
 
@@ -232,11 +232,11 @@ const sectionLayoutSchema = z
 						sort: z.number().default(0),
 						tableIds: z.array(z.string()).default([]),
 					})
-					.passthrough(),
+					.loose(),
 			)
 			.default([]),
 	})
-	.passthrough()
+	.loose()
 
 export type DaySectionLayout = z.infer<typeof sectionLayoutSchema>
 
@@ -248,7 +248,7 @@ const sectionAssignmentSchema = z
 		staffId: z.string().nullable().optional(),
 		serverLabel: z.string().nullable().optional(),
 	})
-	.passthrough()
+	.loose()
 
 export type DaySectionAssignment = z.infer<typeof sectionAssignmentSchema>
 
@@ -263,7 +263,7 @@ const pacingSchema = z
 		/** Set by a server that marks a cap as its own default (none does yet). */
 		maxCoversIsDefault: z.boolean().nullable().optional(),
 	})
-	.passthrough()
+	.loose()
 
 export type DayPacing = z.infer<typeof pacingSchema>
 
@@ -276,7 +276,7 @@ export const dayFeedSchema = z
 		/** The location's own time zone: every time on the stand is shown in it. */
 		settings: z
 			.object({ timeZone: z.string().nullable().optional() })
-			.passthrough()
+			.loose()
 			.nullable()
 			.optional(),
 		closedLabel: z.string().nullable().optional(),
@@ -300,7 +300,7 @@ export const dayFeedSchema = z
 			.nullish()
 			.transform((rows) => rows ?? []),
 	})
-	.passthrough()
+	.loose()
 
 export type DayFeed = z.infer<typeof dayFeedSchema>
 
@@ -317,11 +317,11 @@ export const availabilitySchema = z
 						available: z.boolean(),
 						suggestedTableIds: z.array(z.string()).default([]),
 					})
-					.passthrough(),
+					.loose(),
 			)
 			.default([]),
 	})
-	.passthrough()
+	.loose()
 
 export type Availability = z.infer<typeof availabilitySchema>
 

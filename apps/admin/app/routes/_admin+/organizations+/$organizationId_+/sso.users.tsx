@@ -1,4 +1,4 @@
-import { parseWithZod } from '@conform-to/zod'
+import { parseWithZod } from '@conform-to/zod/v4'
 import { invariant } from '@epic-web/invariant'
 import { Trans } from '@lingui/macro'
 import { requireUserWithRole } from '@repo/auth'

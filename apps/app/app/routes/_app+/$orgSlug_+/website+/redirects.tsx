@@ -281,7 +281,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
 		if (!parsed.success) {
 			return Response.json(
-				{ status: 'error', errors: parsed.error.flatten().fieldErrors },
+				{ status: 'error', errors: z.flattenError(parsed.error).fieldErrors },
 				{ status: 400 },
 			)
 		}
@@ -379,7 +379,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
 		if (!parsed.success) {
 			return Response.json(
-				{ status: 'error', errors: parsed.error.flatten().fieldErrors },
+				{ status: 'error', errors: z.flattenError(parsed.error).fieldErrors },
 				{ status: 400 },
 			)
 		}
@@ -1322,7 +1322,9 @@ export default function WebsiteRedirectsRoute() {
 											}}
 											required
 											aria-invalid={toPathError ? true : undefined}
-											aria-describedby={toPathError ? 'toPath-error' : undefined}
+											aria-describedby={
+												toPathError ? 'toPath-error' : undefined
+											}
 											className="font-mono text-sm"
 										/>
 										<p className="text-muted-foreground text-xs">

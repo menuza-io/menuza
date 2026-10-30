@@ -259,6 +259,38 @@ export function printDocumentCsp(nonce?: string) {
 	].join('; ')
 }
 
+/**
+ * The proof of a finished file: its page 1 preview, with the cut line drawn
+ * inside the bleed. The preview is an image the provider exported, inlined
+ * as a data URI (the proof frame loads nothing else).
+ */
+export function renderArtworkProofHtml(input: {
+	snapshot: PrintSnapshot
+	previewDataUri: string | null
+	title: string
+}): string {
+	const artwork = input.snapshot.artwork
+	if (!artwork) throw new Error('Not an artwork snapshot')
+	const inset = (bleed: number, total: number) =>
+		total > 0 ? ((bleed / total) * 100).toFixed(3) : '0'
+	const x = inset(artwork.bleedMm, artwork.widthMm)
+	const y = inset(artwork.bleedMm, artwork.heightMm)
+	const ratio = (artwork.heightMm / artwork.widthMm).toFixed(5)
+	const css = `
+html, body { margin: 0; background: #f4f4f5; }
+.sheet { position: relative; width: 100%; padding-top: calc(${ratio} * 100%); background: #fff; }
+.sheet img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; }
+.cut { position: absolute; inset: ${y}% ${x}%; border: 1px dashed rgba(220, 38, 38, .8); pointer-events: none; }
+.empty { position: absolute; inset: 0; display: grid; place-items: center; font: 14px system-ui, sans-serif; color: #52525b; }
+`
+	const image = input.previewDataUri
+		? `<img src="${escapeHtml(input.previewDataUri)}" alt="${escapeHtml(input.title)}">`
+		: `<div class="empty">${escapeHtml(input.title)}</div>`
+	const cut =
+		artwork.bleedMm > 0 ? '<div class="cut" aria-hidden="true"></div>' : ''
+	return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escapeHtml(input.title)}</title><style>${css}</style></head><body><div class="sheet">${image}${cut}</div></body></html>`
+}
+
 export function renderPrintHtml(input: PrintDocumentInput): string {
 	const { snapshot, format } = input
 	const piece = pieceBox(snapshot)

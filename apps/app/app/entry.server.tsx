@@ -128,7 +128,7 @@ export function applyContentSecurity(
 					],
 					'font-src': ["'self'"],
 					'frame-src': sitePreviewFrameSrc(ENV, requestHost),
-					'img-src': ["'self'", 'data:'],
+					'img-src': ["'self'", 'data:', 'blob:'],
 					// Voice previews are same-origin; call recordings play from the bucket.
 					'media-src': ["'self'", ...recordingMediaSrc(ENV)],
 					'script-src': builderMode

@@ -139,7 +139,7 @@ const upsertHandler = wrap(async (c) => {
 			locationId: z.string().trim().min(1).max(128),
 			policyId: z.string().trim().min(1).max(128).optional(),
 		})
-		.passthrough()
+		.loose()
 		.safeParse(raw)
 	if (!envelope.success) return json({ error: 'Invalid request' }, 400)
 	const { locationId, policyId, ...rest } = envelope.data

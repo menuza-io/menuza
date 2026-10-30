@@ -2,6 +2,7 @@ import { type MessageDescriptor } from '@lingui/core'
 import { Trans, msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import {
+	PRINT_AFTER_SHIPPING_HOLDS,
 	PRINT_VENDOR_CHECK_HOLDS,
 	PRINT_VENDOR_NAMES,
 } from '@repo/common/print-shop'
@@ -74,6 +75,7 @@ const STATUS_LABELS: Record<string, MessageDescriptor> = {
 	failed: msg`Failed`,
 	cancelled: msg`Cancelled`,
 	refunded: msg`Refunded`,
+	returned: msg`Returned`,
 }
 
 const HOLD_LABELS: Record<string, MessageDescriptor> = {
@@ -92,6 +94,8 @@ const HOLD_LABELS: Record<string, MessageDescriptor> = {
 	partial_cancel: msg`Some vendor orders were cancelled and others are printing: refund what was cancelled`,
 	stale_claim: msg`A submission or cancellation stopped halfway: check the vendor before retrying`,
 	late_payment: msg`Paid after it was cancelled, refunded automatically`,
+	vendor_returned: msg`The parcel went back to the vendor: reship or refund (the prints were made)`,
+	vendor_after_shipping: msg`The vendor cancelled or failed the order after it shipped: check before refunding`,
 }
 
 /**
@@ -537,10 +541,11 @@ function OrderActions({
 				rowRef.current?.focus()
 			}
 		}
-		// Once now, and once after a closing dialog has handed focus back
-		// (possibly to a button the reload removed).
+		// Dialog close and fetcher reload can hand focus back slowly on CI.
 		window.requestAnimationFrame(check)
-		window.setTimeout(check, 300)
+		for (const delay of [100, 300, 750]) {
+			window.setTimeout(check, delay)
+		}
 	}
 	const { _, i18n } = useLingui()
 	// A vendor may already be printing (or has shipped): refunding in full
@@ -647,8 +652,11 @@ function OrderActions({
 					</div>
 				</ConfirmedAction>
 			) : null}
-			{order.status === 'held' && vendorCheck ? null : order.status ===
-			  'held' ? (
+			{order.status === 'held' &&
+			(vendorCheck ||
+				PRINT_AFTER_SHIPPING_HOLDS.includes(
+					order.holdReason ?? '',
+				)) ? null : order.status === 'held' ? (
 				<>
 					<retryFetcher.Form
 						method="POST"

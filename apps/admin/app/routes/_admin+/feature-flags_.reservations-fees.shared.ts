@@ -15,7 +15,7 @@ export const PlatformFeeBpSchema = z.preprocess(
 			? Number(raw.trim())
 			: Number.NaN,
 	z
-		.number({ invalid_type_error: PLATFORM_FEE_BP_ERROR })
+		.number({ error: PLATFORM_FEE_BP_ERROR })
 		.int(PLATFORM_FEE_BP_ERROR)
 		.min(0, PLATFORM_FEE_BP_ERROR)
 		.max(10_000, PLATFORM_FEE_BP_ERROR),

@@ -33,7 +33,7 @@ import {
 } from '#app/utils/staffing/staff-types.ts'
 import { TextAreaField } from './controls.tsx'
 
-const addedSchema = z.object({ note: noteSchema.optional() }).passthrough()
+const addedSchema = z.object({ note: noteSchema.optional() }).loose()
 
 /** Notes only managers with staff access can read. Never shown to the person. */
 export function NotesTab({ staffId }: { staffId: string }) {

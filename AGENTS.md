@@ -251,7 +251,16 @@ test data to LibSQL.
 
 - Strict mode enabled
 - Path aliases: `#app/*` (app code), `#tests/*` (tests), `@repo/*` (packages)
-- Use Zod for all validation schemas
+- Use Zod for all validation schemas. The repo is on Zod 4: import
+  `parseWithZod` / `getZodConstraint` from `@conform-to/zod/v4` (the bare
+  `@conform-to/zod` entry is the Zod 3 adapter), set messages with `error`
+  (`required_error`, `invalid_type_error` and `errorMap` are gone), give
+  `z.record` two arguments, and read `ZodError.issues` (there is no `.errors`).
+  A `z.any()` / `z.unknown()` object key is required unless you add
+  `.optional()`. Issues carry no rejected value unless you parse with
+  `{ reportInput: true }`. App and Admin call `installRequiredMessage()` (from
+  `@repo/common/zod-defaults`) in `root.tsx` so a missing value still reads
+  "Required"; every other default message is Zod 4's
 - React Router 8 loaders and actions with single fetch: client data requests go
   to `<path>.data` (see `apps/app/AGENTS.md`)
 
@@ -651,16 +660,19 @@ git commit --no-verify -m "fix: resolve ESLint warnings (verified manually)"
   optional. Seconds between in-process reservation ticks (default 120, minimum
   60, `0` off). The hourly cron fan-out always runs; the Workers runtime uses
   Durable Object alarms. See `docs/scheduled-jobs.md#reservations-tick`.
-- `DEV_EMAIL_CAPTURE_DIR` - Tenant-api, development only: folder (relative to
-  `apps/tenant-api`) that receives one JSON file per email the node would only
-  log. Ignored in production or when OCI email is configured.
-- `STRIPE_CONNECT_WEBHOOK_SECRET` - App only, optional: second Stripe webhook
-  secret for Connect events (the Stripe webhook route accepts either secret).
-- `PAYMENTS_MOCK` / `PAYMENTS_MOCK_ORIGIN` / `PAYMENTS_MOCK_WEBHOOKS` /
-  `PAYMENTS_MOCK_WEBHOOKS_HTTP` / `PAYMENTS_MOCK_CKO_SESSION_ID` - App only:
-  local Stripe and Checkout.com emulators (`MOCKS=true` also turns them on).
-  Startup refuses live keys; mock routes are stripped from Worker builds. See
-  `docs/payments-mock.md`.
+- `CANVA_CLIENT_ID` / `CANVA_CLIENT_SECRET` / `CANVA_MOCK` - App only. Canva
+  Connect integration for Print shop Import from Canva and Send to Canva
+  (redirect URL `<BASE_URL>/resources/print/canva/callback`); empty hides the
+  buttons. `CANVA_MOCK` is a local emulator, ignored unless `BASE_URL` is local.
+  Tokens are encrypted with `INTEGRATION_ENCRYPTION_KEY`. See
+  `docs/print-shop-canva.md`.
+- `META_APP_ID` / `META_APP_SECRET` / `SOCIAL_MOCK` - App only. Meta app for
+  Marketing, Social media (Facebook Pages and Instagram professional accounts;
+  redirect URL `<BASE_URL>/resources/social/meta/callback`); empty means
+  accounts cannot be connected. `SOCIAL_MOCK` is a local emulator, ignored
+  unless `BASE_URL` is local. Page tokens are encrypted with
+  `INTEGRATION_ENCRYPTION_KEY`. Scheduled posts are woken by jobs-cron's
+  `SocialPostWorkflow`. See `docs/social-media.md`.
 - `STAFFING_TICK_INTERVAL_SECONDS` - Tenant-api Node (OCI) runtime only,
   optional. Seconds between in-process staff ticks (default 300, minimum 60, `0`
   off). The hourly cron fan-out always runs; the Workers runtime uses Durable
@@ -1046,10 +1058,10 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
   Admin's `components/print/vertical-labels.ts`. Keep restaurant words out of
   the core (`utils/print/vocabulary.test.ts`). Docs:
   `docs/print-shop-verticals.md`, `docs/print-shop-restaurant.md`.
-- Flags `print_shop.enabled` (designs, free PDFs) and `print_shop.shipping`
-  (paid orders). Campaign permissions design; paying also needs
-  `update:settings:any`. Every print route awaits `requirePrintShopAccess` first
-  (`print-guards.test.ts`).
+- Flags `print_shop.enabled` (designs, free PDFs), `print_shop.shipping` (paid
+  orders) and `print_shop.canva` (import from and send to Canva). Campaign
+  permissions design; paying also needs `update:settings:any`. Every print route
+  awaits `requirePrintShopAccess` first (`print-guards.test.ts`).
 - Table cards fetch table codes server-side with a short-lived `qr:write` token
   that never reaches the browser; the vertical's `canView` (menu edit) guards
   proofs, downloads and orders of prints with table codes.
@@ -1057,6 +1069,13 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
   account, metadata `type: 'print_order'`); vendor orders are placed only after
   payment; vendor webhooks only trigger a status fetch. Docs:
   `docs/print-shop.md`.
+- Canva: each member connects their own Canva account (`PrintCanvaConnection`,
+  migration `0028_print_canva`, upstream's `0021_print_canva`; tokens
+  encrypted). An imported design is an artwork print
+  (`PrintDesign.source = 'artwork'`): its stored PDF prints as it is, so its
+  page 1 must be the product's size (bleed allowed). Prints with a vertical's
+  capability codes are never sent to Canva. Code in `utils/print/canva/` and
+  `utils/print/artwork.server.ts`. Docs: `docs/print-shop-canva.md`.
 
 ## Known issues
 

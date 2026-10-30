@@ -5,6 +5,7 @@ import {
 	PRINT_TEMPLATE_VERSION,
 	printSitePath,
 	printUtmParams,
+	type PrintArtwork,
 	type PrintDesignContent,
 	type PrintFeaturedItem,
 	type PrintPiece,
@@ -185,6 +186,8 @@ export async function buildPrintSnapshot(input: {
 		sizeKey: string
 		style: PrintTemplateStyle
 		content: PrintDesignContent
+		/** A finished file: printed as it is instead of the template. */
+		artwork?: PrintArtwork | null
 	}
 	/** Facts only (stale check): no logo or photo downloads. */
 	skipImages?: boolean
@@ -201,6 +204,37 @@ export async function buildPrintSnapshot(input: {
 			mode: 'light',
 		}),
 	)
+	const brand = {
+		name: org.name,
+		logoDataUri: null,
+		background: theme.background,
+		foreground: theme.foreground,
+		muted: theme.mutedForeground,
+		primary: theme.primary,
+		primaryForeground: theme.primaryForeground,
+		accent: theme.accent,
+		accentForeground: theme.accentForeground,
+		headingFont: theme.headingFont,
+		bodyFont: theme.bodyFont,
+	}
+	if (design.artwork) {
+		// One piece, no template parts: the file is the print.
+		return {
+			product: design.product,
+			sizeKey: design.sizeKey,
+			style: design.style,
+			templateVersion: PRINT_TEMPLATE_VERSION,
+			brand,
+			copy: [],
+			featured: [],
+			address: null,
+			website: null,
+			qr: { kind: 'none' },
+			pieces: [{ label: null, qrUrl: null }],
+			facts: { featured: [], pieces: [] },
+			artwork: design.artwork,
+		}
+	}
 	const logoDataUri =
 		withImages && org.siteIconKey
 			? await storageDataUri(org.siteIconKey, org.id)
@@ -272,19 +306,7 @@ export async function buildPrintSnapshot(input: {
 		sizeKey: design.sizeKey,
 		style: design.style,
 		templateVersion: PRINT_TEMPLATE_VERSION,
-		brand: {
-			name: org.name,
-			logoDataUri,
-			background: theme.background,
-			foreground: theme.foreground,
-			muted: theme.mutedForeground,
-			primary: theme.primary,
-			primaryForeground: theme.primaryForeground,
-			accent: theme.accent,
-			accentForeground: theme.accentForeground,
-			headingFont: theme.headingFont,
-			bodyFont: theme.bodyFont,
-		},
+		brand: { ...brand, logoDataUri },
 		copy,
 		featured,
 		address: content.showAddress ? (scope?.address ?? null) : null,

@@ -7,6 +7,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 	let mockStorageWorkflowCreate: any
 	let mockJourneyWorkflowCreate: any
 	let mockJourneyWorkflowGet: any
+	let mockSocialWorkflowCreate: any
 	let env: Env
 
 	beforeEach(() => {
@@ -24,6 +25,10 @@ describe('Jobs-Cron Worker Endpoints', () => {
 			terminate: vi.fn().mockResolvedValue(undefined),
 		}))
 
+		mockSocialWorkflowCreate = vi
+			.fn()
+			.mockImplementation(({ id }) => Promise.resolve({ id }))
+
 		env = {
 			APP_BASE_URL: 'https://app.example.com',
 			INTERNAL_COMMAND_TOKEN: mockInternalToken,
@@ -37,7 +42,75 @@ describe('Jobs-Cron Worker Endpoints', () => {
 				create: mockJourneyWorkflowCreate,
 				get: mockJourneyWorkflowGet,
 			} as any,
+			SOCIAL_POST_WORKFLOW: {
+				create: mockSocialWorkflowCreate,
+				get: vi.fn(),
+			} as any,
 		}
+	})
+
+	describe('POST /workflows/social-post/start', () => {
+		const start = (body: unknown, token = mockInternalToken) =>
+			worker.fetch(
+				new Request('http://localhost/workflows/social-post/start', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						Authorization: `Bearer ${token}`,
+					},
+					body: JSON.stringify(body),
+				}),
+				env,
+			)
+
+		it('rejects a caller without the internal token', async () => {
+			const res = await start(
+				{ postId: 'abcdefgh1234', runAt: '2026-11-01T09:00:00.000Z' },
+				'wrong-token',
+			)
+			expect(res.status).toBe(401)
+			expect(mockSocialWorkflowCreate).not.toHaveBeenCalled()
+		})
+
+		it('starts one instance per post and time', async () => {
+			const res = await start({
+				postId: 'abcdefgh1234',
+				runAt: '2026-11-01T09:00:00.000Z',
+			})
+			expect(res.status).toBe(200)
+			expect(mockSocialWorkflowCreate).toHaveBeenCalledWith({
+				id: `social-abcdefgh1234-${Date.parse('2026-11-01T09:00:00.000Z')}`,
+				params: { postId: 'abcdefgh1234', runAt: '2026-11-01T09:00:00.000Z' },
+			})
+		})
+
+		it('treats an instance that already exists as started', async () => {
+			mockSocialWorkflowCreate.mockRejectedValueOnce(
+				new Error('instance.already_exists'),
+			)
+			const res = await start({
+				postId: 'abcdefgh1234',
+				runAt: '2026-11-01T09:00:00.000Z',
+			})
+			expect(res.status).toBe(200)
+		})
+
+		it('refuses a time further ahead than a workflow can sleep', async () => {
+			const runAt = new Date(Date.now() + 366 * 24 * 60 * 60_000).toISOString()
+			expect((await start({ postId: 'abcdefgh1234', runAt })).status).toBe(400)
+			expect(mockSocialWorkflowCreate).not.toHaveBeenCalled()
+		})
+
+		it('starts a post that is already due, so it publishes at once', async () => {
+			const runAt = new Date(Date.now() - 60_000).toISOString()
+			expect((await start({ postId: 'abcdefgh1234', runAt })).status).toBe(200)
+			expect(mockSocialWorkflowCreate).toHaveBeenCalledTimes(1)
+		})
+
+		it('refuses a malformed post id or time', async () => {
+			expect((await start({ postId: '../x', runAt: 'soon' })).status).toBe(400)
+			expect(mockSocialWorkflowCreate).not.toHaveBeenCalled()
+		})
 	})
 
 	describe('Authentication Guard', () => {
@@ -515,6 +588,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
+					'fulfilled',
 				])
 				const calls = fetchMock.mock.calls.map(([url, init]: any) => [
 					url,
@@ -556,9 +630,14 @@ describe('Jobs-Cron Worker Endpoints', () => {
 							'POST',
 							token,
 						],
+						[
+							'https://app.example.com/resources/jobs/social-publish',
+							'POST',
+							token,
+						],
 					]),
 				)
-				expect(calls).toHaveLength(8)
+				expect(calls).toHaveLength(9)
 			})
 
 			it('posts the payments reconcile to the App once, with the internal token and no tenant node involved', async () => {
@@ -600,6 +679,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'fulfilled',
 					'fulfilled',
 					'rejected',
+					'fulfilled',
 					'fulfilled',
 				])
 				expect(String((results[3] as PromiseRejectedResult).reason)).toContain(
@@ -682,6 +762,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
+					'fulfilled',
 				])
 				// The healthy node still ran its tick.
 				expect(fetchMock.mock.calls.map(([url]) => url)).toContain(
@@ -711,6 +792,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'rejected',
 					'fulfilled',
 					'fulfilled',
+					'fulfilled',
 				])
 				expect(String((results[2] as PromiseRejectedResult).reason)).toContain(
 					'Tenant reservations tick failed for https://tenant-us.example.com',
@@ -734,6 +816,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 				expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
 					'https://app.example.com/resources/jobs/reservation-payments-reconcile',
 					'https://app.example.com/resources/jobs/print-sync',
+					'https://app.example.com/resources/jobs/social-publish',
 				])
 			})
 		})

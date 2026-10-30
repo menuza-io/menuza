@@ -185,7 +185,7 @@ describe('createStaffClient', () => {
 					Response.json(
 						{
 							error: 'Invalid request',
-							issues: [{ path: 'phone', code: 'invalid_string' }],
+							issues: [{ path: 'phone', code: 'invalid_format' }],
 						},
 						{ status: 400 },
 					),
@@ -203,7 +203,7 @@ describe('createStaffClient', () => {
 		expect(error).toMatchObject({
 			status: 400,
 			code: 'Invalid request',
-			issues: [{ path: 'phone', code: 'invalid_string' }],
+			issues: [{ path: 'phone', code: 'invalid_format' }],
 		})
 	})
 

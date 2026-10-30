@@ -1,5 +1,5 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest'
 import type * as DatabaseModule from '@repo/database'
+import { describe, expect, it, vi, beforeEach } from 'vitest'
 import {
 	mockDb,
 	mockSelectResults,

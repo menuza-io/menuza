@@ -1,4 +1,4 @@
-import { parseWithZod } from '@conform-to/zod'
+import { parseWithZod } from '@conform-to/zod/v4'
 import { invariantResponse } from '@epic-web/invariant'
 import { createId } from '@paralleldrive/cuid2'
 import { logNoteActivity } from '@repo/audit'

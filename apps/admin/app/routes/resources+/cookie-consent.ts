@@ -1,8 +1,8 @@
-import { operatorSharedCookieDomain } from '@repo/common/cookie-domain'
 import {
 	setCookieConsentState,
 	verifyCookieConsentRequestOrigin,
 } from '@repo/common/cookie-consent'
+import { operatorSharedCookieDomain } from '@repo/common/cookie-domain'
 import { type ActionFunctionArgs } from 'react-router'
 
 export async function action({ request }: ActionFunctionArgs) {

@@ -288,13 +288,16 @@ export const setupSpecialDayInputSchema = z.object({
 	kind: z.enum(SPECIAL_DAY_TYPES).optional(),
 	type: z.enum(SPECIAL_DAY_TYPES).optional(),
 	serviceId: z.string().min(1).max(64).nullable().optional(),
-	patch: z.record(z.unknown()).nullable().optional(),
+	patch: z.record(z.string(), z.unknown()).nullable().optional(),
 	name: z.string().trim().min(1).max(120).nullable().optional(),
 	label: z.string().trim().min(1).max(120).nullable().optional(),
 	publicNoteI18n: localizedTextSchema(2000).nullable().optional(),
 	note: z.string().trim().max(500).nullable().optional(),
-	services: z.array(z.record(z.unknown())).nullable().optional(),
-	customServices: z.array(z.record(z.unknown())).nullable().optional(),
+	services: z.array(z.record(z.string(), z.unknown())).nullable().optional(),
+	customServices: z
+		.array(z.record(z.string(), z.unknown()))
+		.nullable()
+		.optional(),
 })
 
 export const setupBlockInputSchema = z.object({

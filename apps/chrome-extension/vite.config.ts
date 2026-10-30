@@ -60,11 +60,18 @@ export default defineConfig(() => {
 		build: {
 			emptyOutDir: true,
 			outDir: `build/${BROWSER}`,
+			// MV3 only runs in modern browsers. Vite 6's default (es2020,
+			// safari14) asks esbuild 0.28 to lower destructuring it cannot.
+			target: 'es2022',
 			rollupOptions: {
 				output: {
 					chunkFileNames: 'assets/chunk-[hash].js',
 				},
 			},
+		},
+		// Dev prebundling uses the same default targets, so raise them too.
+		optimizeDeps: {
+			esbuildOptions: { target: 'es2022' },
 		},
 		server: {
 			port: 5173,

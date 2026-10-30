@@ -31,7 +31,7 @@ const justEatLocationSchema = z
 		ratingStars: z.number().optional(),
 		numberOfRatings: z.number().optional(),
 	})
-	.passthrough()
+	.loose()
 
 export type JustEatLocation = z.infer<typeof justEatLocationSchema>
 
@@ -48,7 +48,7 @@ export const justEatReviewSchema = z
 			.object({ comment: z.string(), updateTime: z.string().optional() })
 			.optional(),
 	})
-	.passthrough()
+	.loose()
 
 export type JustEatReview = z.infer<typeof justEatReviewSchema> & {
 	locationId: string
@@ -109,7 +109,7 @@ const MOCK_JUST_EAT_REVIEWS: z.infer<typeof justEatReviewSchema>[] = [
 function parseIntegrationConfig(rawConfig: string | null | undefined) {
 	try {
 		return z
-			.record(z.unknown())
+			.record(z.string(), z.unknown())
 			.catch({})
 			.parse(JSON.parse(rawConfig ?? '{}'))
 	} catch {
@@ -268,6 +268,7 @@ export async function listJustEatReviews(
 			const config = parseIntegrationConfig(integration.config)
 			const storedReplies = z
 				.record(
+					z.string(),
 					z.object({
 						comment: z.string(),
 						updateTime: z.string().optional(),
@@ -327,6 +328,7 @@ export async function replyToJustEatReview(
 	const rawConfig = parseIntegrationConfig(integration.config)
 	const parsedReplies = z
 		.record(
+			z.string(),
 			z.object({ comment: z.string(), updateTime: z.string().optional() }),
 		)
 		.catch({})
