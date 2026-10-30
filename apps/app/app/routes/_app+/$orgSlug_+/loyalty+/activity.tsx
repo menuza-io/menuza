@@ -1,5 +1,5 @@
 import { getFormProps, useForm } from '@conform-to/react'
-import { parseWithZod } from '@conform-to/zod'
+import { parseWithZod } from '@conform-to/zod/v4'
 import { type MessageDescriptor } from '@lingui/core'
 import { msg } from '@lingui/core/macro'
 import { Plural, Trans, useLingui } from '@lingui/react/macro'
@@ -657,7 +657,7 @@ function ResolveDialog({
 					.trim()
 					.min(3, t`Add a short note explaining the decision.`)
 					.max(280, t`Keep the note under 280 characters.`)
-					.default(''),
+					.prefault(''),
 			}),
 		[t],
 	)

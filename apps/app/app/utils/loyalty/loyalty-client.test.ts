@@ -373,7 +373,13 @@ describe('createLoyaltyClient', () => {
 			phoneLast4: '0123',
 			status: 'active',
 			createdAt: 1_700_000_000_000,
-			balance: { points: 40, reserved: 0, available: 40 },
+			balance: {
+				points: 40,
+				reserved: 0,
+				available: 40,
+				lifetimeEarned: 40,
+				lifetimeRedeemed: 0,
+			},
 			lastPurchaseAt: null,
 		}
 		const { pool, calls } = fakePool({

@@ -221,7 +221,7 @@ export default function VerifyCodeScreen() {
 
 						<View className="mt-6 items-center gap-4">
 							<Button
-								onPress={handleSubmit(onSubmit)}
+								onPress={() => handleSubmit(onSubmit)()}
 								disabled={isLoading || !codeValue || codeValue.length !== 6}
 								className="w-full"
 							>

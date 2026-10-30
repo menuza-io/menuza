@@ -1,6 +1,6 @@
 import { useLingui } from '@lingui/react/macro'
-import { useState } from 'react'
-import { View } from 'react-native'
+import { useEffect, useState } from 'react'
+import { BackHandler, View } from 'react-native'
 import { useAppSnapshot, useAppStore } from '../../lib/app/use-app'
 import {
 	isCompleteOtp,
@@ -22,6 +22,18 @@ export function VerifyScreen() {
 	const verify = () => {
 		if (canVerify) void store.verify(code)
 	}
+	// Android back returns to the phone step, as "Use a different number" does,
+	// instead of leaving the app. Mid-check it waits, like the buttons.
+	useEffect(() => {
+		const subscription = BackHandler.addEventListener(
+			'hardwareBackPress',
+			() => {
+				if (!isBusy) store.cancelVerification()
+				return true
+			},
+		)
+		return () => subscription.remove()
+	}, [isBusy, store])
 	return (
 		<FormCard
 			title={t`Enter your code`}

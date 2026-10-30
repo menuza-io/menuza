@@ -43,8 +43,8 @@ export function isEmptyReservationTokens(
 }
 
 const storedTokensSchema = z.object({
-	manage: z.record(z.string()).catch({}),
-	waitlist: z.record(z.string()).catch({}),
+	manage: z.record(z.string(), z.string()).catch({}),
+	waitlist: z.record(z.string(), z.string()).catch({}),
 	payment: z.string().optional().catch(undefined),
 })
 

@@ -8,7 +8,7 @@ import {
 	Text,
 	ScrollView,
 	TouchableOpacity,
-	type TextInput,
+	type TextInputInstance,
 } from 'react-native'
 import { z } from 'zod'
 import {
@@ -71,10 +71,10 @@ export default function OnboardingScreen() {
 	const [showSuccess, setShowSuccess] = useState(false)
 
 	// Input refs for focus management
-	const usernameRef = useRef<TextInput>(null)
-	const nameRef = useRef<TextInput>(null)
-	const passwordRef = useRef<TextInput>(null)
-	const confirmPasswordRef = useRef<TextInput>(null)
+	const usernameRef = useRef<TextInputInstance>(null)
+	const nameRef = useRef<TextInputInstance>(null)
+	const passwordRef = useRef<TextInputInstance>(null)
+	const confirmPasswordRef = useRef<TextInputInstance>(null)
 
 	const {
 		control,
@@ -328,7 +328,7 @@ export default function OnboardingScreen() {
 						)}
 
 						<Button
-							onPress={handleSubmit(onSubmit)}
+							onPress={() => handleSubmit(onSubmit)()}
 							disabled={!isValid || isLoading}
 							className="mt-2"
 						>

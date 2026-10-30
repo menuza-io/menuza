@@ -1,5 +1,5 @@
 import { getFormProps, useForm, useInputControl } from '@conform-to/react'
-import { parseWithZod } from '@conform-to/zod'
+import { parseWithZod } from '@conform-to/zod/v4'
 import { type MessageDescriptor } from '@lingui/core'
 import { plural } from '@lingui/core/macro'
 import { Trans, useLingui } from '@lingui/react/macro'
@@ -155,7 +155,7 @@ export function ProgramForm({
 					.trim()
 					.min(1, t`Enter a program name.`)
 					.max(80, t`Keep the name under 80 characters.`)
-					.default(''),
+					.prefault(''),
 				unitLabel: z.enum(['points', 'stars']),
 				currency: z
 					.string()
@@ -165,7 +165,7 @@ export function ProgramForm({
 						/^[A-Z]{3}$/,
 						t`Use a three-letter currency code, like USD or SAR.`,
 					)
-					.default(''),
+					.prefault(''),
 				timeZone: z
 					.string()
 					.trim()
@@ -174,8 +174,8 @@ export function ProgramForm({
 						isUsableTimeZone,
 						t`Enter a valid IANA time zone, like America/New_York.`,
 					)
-					.default(''),
-				minimumSpend: z.string().trim().default(''),
+					.prefault(''),
+				minimumSpend: z.string().trim().prefault(''),
 				earningMethod: z.enum(['spend', 'visit', 'items', 'categories']),
 				earnPoints: z
 					.string()
@@ -188,15 +188,15 @@ export function ProgramForm({
 							}) !== null,
 						t`Enter a whole number of points, at least 1.`,
 					)
-					.default(''),
-				earnPer: z.string().trim().default(''),
-				earnItemIds: z.string().default(''),
-				earnCategoryIds: z.string().default(''),
+					.prefault(''),
+				earnPer: z.string().trim().prefault(''),
+				earnItemIds: z.string().prefault(''),
+				earnCategoryIds: z.string().prefault(''),
 				terms: z
 					.string()
 					.trim()
 					.max(4000, t`Keep the terms under 4000 characters.`)
-					.default(''),
+					.prefault(''),
 			})
 			.superRefine((value, ctx) => {
 				const currency = value.currency

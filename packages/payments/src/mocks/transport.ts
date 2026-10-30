@@ -5,7 +5,7 @@ import { MOCK_CHECKOUT_HOST } from './env'
 /** A Stripe HTTP client whose "network" is the in-process emulator. */
 export function createMockStripeHttpClient(emulator: PaymentsEmulator) {
 	return Stripe.createFetchHttpClient(
-		(url: RequestInfo | URL, init?: RequestInit) =>
+		(url: string | URL | Request, init?: RequestInit) =>
 			emulator.stripe.fetch(new Request(url as string, init)),
 	)
 }

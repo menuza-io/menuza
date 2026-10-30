@@ -6,7 +6,7 @@ import {
 	waitFor,
 } from '@testing-library/react-native'
 import * as Linking from 'expo-linking'
-import { Text } from 'react-native'
+import { BackHandler, Text } from 'react-native'
 import { LayoutDirection } from 'uniwind'
 import { announcementKind, announcementLink } from './announcement-banner'
 import { AppRoot } from './app-root'
@@ -203,6 +203,42 @@ describe('AppShell', () => {
 			screen.getByRole('button', { name: 'Use a different number' }),
 		)
 		await screen.findByText('Sign in')
+	})
+
+	it('goes back to the phone step on Android back from the code step', async () => {
+		const handlers: Parameters<typeof BackHandler.addEventListener>[1][] = []
+		const listen = jest
+			.spyOn(BackHandler, 'addEventListener')
+			.mockImplementation((_event, handler) => {
+				handlers.push(handler)
+				return {
+					remove: () => {
+						handlers.splice(handlers.indexOf(handler), 1)
+					},
+				}
+			})
+		try {
+			renderShell({
+				'/resources/sites': { json: ORGANIZATION },
+				'/auth/send-code': { json: { success: true } },
+			})
+			await screen.findByText('Sign in')
+			fireEvent.changeText(
+				screen.getByLabelText('Phone number'),
+				'+15550001111',
+			)
+			fireEvent.press(screen.getByRole('button', { name: 'Send code' }))
+			await screen.findByText('Enter your code')
+
+			let handled: boolean | null | undefined
+			act(() => {
+				handled = handlers.at(-1)?.(undefined as never)
+			})
+			expect(handled).toBe(true)
+			await screen.findByText('Sign in')
+		} finally {
+			listen.mockRestore()
+		}
 	})
 
 	it('shows the server error for a wrong code', async () => {

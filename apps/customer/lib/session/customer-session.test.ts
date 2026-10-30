@@ -602,6 +602,50 @@ describe('CustomerSession', () => {
 		})
 	})
 
+	it('takes back a session the customer abandons while it is being saved', async () => {
+		const transport = new StubTransport([
+			{
+				json: {
+					success: true,
+					accessToken: makeAccessToken(),
+					refreshToken: 'r-saving',
+				},
+			},
+			{ json: { success: true } },
+		])
+		const storage = createMemoryTokenStorage()
+		let releaseSave: () => void = () => {}
+		const saved = new Promise<void>((resolve) => {
+			releaseSave = resolve
+		})
+		const save = storage.save.bind(storage)
+		storage.save = async (tokens) => {
+			if (tokens) await saved
+			return save(tokens)
+		}
+		const session = new CustomerSession(
+			new TenantApiClient(makeConfiguration(), transport.send),
+			storage,
+		)
+
+		const verification = session.verify('+15550001111', '123456')
+		for (let attempt = 0; attempt < 50 && !session.isSignedIn; attempt += 1) {
+			await sleep(1)
+		}
+		expect(session.isSignedIn).toBe(true)
+		session.abandonPendingVerification()
+		releaseSave()
+		await verification
+
+		expect(storage.current).toBeNull()
+		expect(session.isSignedIn).toBe(false)
+		expect(transport.paths).toEqual(['/auth/verify', '/auth/logout'])
+		expect(transport.lastRequest?.body).toEqual({
+			refreshToken: 'r-saving',
+			orgId: 'org_1',
+		})
+	})
+
 	it('keeps a signed-in session when no verification is pending', async () => {
 		const rotated = makeAccessToken({ name: 'Ada Byron' })
 		const transport = new StubTransport([

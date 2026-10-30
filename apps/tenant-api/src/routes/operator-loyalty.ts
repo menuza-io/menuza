@@ -24,7 +24,6 @@ import {
 	loyaltyIdempotency,
 } from '../lib/loyalty-http.ts'
 import { requireLoyaltyLocation } from '../lib/loyalty-auth.ts'
-import { enforceLoyaltyLimit } from '../lib/loyalty-rate-limit.ts'
 import { withLoyaltyWrite } from '../lib/loyalty-write.ts'
 import {
 	getLoyaltyReviewQueue,

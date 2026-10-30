@@ -34,7 +34,7 @@ export default function DashboardLayout() {
 					),
 					headerTitle: () => null,
 					tabBarIcon: ({ color, size }) => (
-						<Ionicons name="home-outline" size={size} color={color} />
+						<Ionicons name="home-outline" size={size} color={color as string} />
 					),
 				}}
 			/>
@@ -43,7 +43,11 @@ export default function DashboardLayout() {
 				options={{
 					title: 'Organizations',
 					tabBarIcon: ({ color, size }) => (
-						<Ionicons name="business-outline" size={size} color={color} />
+						<Ionicons
+							name="business-outline"
+							size={size}
+							color={color as string}
+						/>
 					),
 				}}
 			/>
@@ -53,7 +57,11 @@ export default function DashboardLayout() {
 					title: 'Settings',
 					headerShown: false,
 					tabBarIcon: ({ color, size }) => (
-						<Ionicons name="settings-outline" size={size} color={color} />
+						<Ionicons
+							name="settings-outline"
+							size={size}
+							color={color as string}
+						/>
 					),
 				}}
 			/>

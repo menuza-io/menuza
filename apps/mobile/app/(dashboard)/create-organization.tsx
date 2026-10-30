@@ -5,10 +5,10 @@ import {
 	View,
 	Text,
 	ScrollView,
-	type TextInput,
 	Alert,
 	KeyboardAvoidingView,
 	Platform,
+	type TextInputInstance,
 } from 'react-native'
 import {
 	Screen,
@@ -41,8 +41,8 @@ export default function CreateOrganizationScreen() {
 	const [description, setDescription] = useState('')
 	const [slugManuallyEdited, setSlugManuallyEdited] = useState(false)
 
-	const slugRef = useRef<TextInput>(null)
-	const descriptionRef = useRef<TextInput>(null)
+	const slugRef = useRef<TextInputInstance>(null)
+	const descriptionRef = useRef<TextInputInstance>(null)
 
 	// Auto-generate slug from name unless manually edited
 	useEffect(() => {

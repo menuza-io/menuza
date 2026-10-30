@@ -1,5 +1,5 @@
 import { getFormProps, useForm } from '@conform-to/react'
-import { parseWithZod } from '@conform-to/zod'
+import { parseWithZod } from '@conform-to/zod/v4'
 import { msg } from '@lingui/core/macro'
 import { Trans, useLingui } from '@lingui/react/macro'
 import {
@@ -145,14 +145,14 @@ function AdjustForm({
 						Math.abs(parseDelta(value) ?? 0) <= LOYALTY_MAX_ADJUSTMENT_DELTA,
 					t`Adjust at most ${most} points at a time.`,
 				)
-				.default(''),
+				.prefault(''),
 			reason: z.enum(LOYALTY_ADJUSTMENT_REASONS),
 			note: z
 				.string()
 				.trim()
 				.min(3, t`Add a short note explaining the adjustment.`)
 				.max(280, t`Keep the note under 280 characters.`)
-				.default(''),
+				.prefault(''),
 		})
 	}, [t, i18n.locale])
 

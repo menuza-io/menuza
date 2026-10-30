@@ -2,3 +2,5 @@
 declare module '@formatjs/intl-locale/polyfill-force.js'
 declare module '@formatjs/intl-pluralrules/polyfill-force.js'
 declare module '@formatjs/intl-pluralrules/locale-data/*'
+declare module '@formatjs/intl-locale/polyfill-force'
+declare module '@formatjs/intl-pluralrules/polyfill-force'

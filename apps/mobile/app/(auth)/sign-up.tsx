@@ -11,7 +11,7 @@ import {
 	ScrollView,
 	Alert,
 	TouchableOpacity,
-	type TextInput,
+	type TextInputInstance,
 } from 'react-native'
 import { type z } from 'zod'
 import {
@@ -50,7 +50,7 @@ export default function SignUpScreen() {
 	const [showSuccess, setShowSuccess] = useState(false)
 
 	// Input ref for focus management
-	const emailRef = useRef<TextInput>(null)
+	const emailRef = useRef<TextInputInstance>(null)
 
 	const {
 		control,
@@ -236,7 +236,7 @@ export default function SignUpScreen() {
 
 						{/* Submit Button */}
 						<Button
-							onPress={handleSubmit(onSubmit)}
+							onPress={() => handleSubmit(onSubmit)()}
 							disabled={!isValid || isLoading}
 							loading={isSignupLoading}
 							className="mt-2"

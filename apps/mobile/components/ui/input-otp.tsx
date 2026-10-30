@@ -3,8 +3,8 @@ import {
 	View,
 	TextInput,
 	type ViewStyle,
-	type NativeSyntheticEvent,
-	type TextInputKeyPressEventData,
+	type TextInputKeyPressEvent,
+	type TextInputInstance,
 } from 'react-native'
 
 interface InputOTPProps {
@@ -77,7 +77,7 @@ export function InputOTPGroup({ children, className }: InputOTPGroupProps) {
 
 export function InputOTPSlot({ index, className }: InputOTPSlotProps) {
 	const context = React.useContext(InputOTPContext)
-	const inputRef = useRef<TextInput>(null)
+	const inputRef = useRef<TextInputInstance>(null)
 
 	if (!context) {
 		throw new Error('InputOTPSlot must be used within InputOTP')
@@ -137,7 +137,7 @@ export function InputOTPSlot({ index, className }: InputOTPSlotProps) {
 
 	const handleKeyPress = ({
 		nativeEvent,
-	}: NativeSyntheticEvent<TextInputKeyPressEventData>) => {
+	}: TextInputKeyPressEvent) => {
 		if (nativeEvent.key === 'Backspace') {
 			if (currentValue) {
 				const newValueArray = Array(maxLength).fill('')

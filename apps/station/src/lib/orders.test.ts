@@ -389,6 +389,9 @@ describe("the business day is the restaurant's, not the device's", () => {
 		const order = await createOrder({
 			...draft,
 			timeZone: 'Pacific/Kiritimati',
+			// A midnight day start keeps the business date on the calendar date
+			// the expectation reads, whatever the time of day.
+			dayStartMinutes: 0,
 		}) // UTC+14: ahead of nearly everywhere
 		expect(order.businessDate).toBe(
 			localDate(new Date(order.createdAt), 'Pacific/Kiritimati'),

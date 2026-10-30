@@ -1,5 +1,5 @@
 import { getFormProps, useForm, useInputControl } from '@conform-to/react'
-import { parseWithZod } from '@conform-to/zod'
+import { parseWithZod } from '@conform-to/zod/v4'
 import { msg } from '@lingui/core/macro'
 import { Trans, useLingui } from '@lingui/react/macro'
 import {
@@ -196,12 +196,12 @@ function RewardForm({
 						.trim()
 						.min(1, t`Enter a reward name.`)
 						.max(80, t`Keep the name under 80 characters.`)
-						.default(''),
+						.prefault(''),
 					description: z
 						.string()
 						.trim()
 						.max(280, t`Keep the description under 280 characters.`)
-						.default(''),
+						.prefault(''),
 					pointsCost: z
 						.string()
 						.trim()
@@ -213,15 +213,15 @@ function RewardForm({
 								}) !== null,
 							t`Enter a whole number of points, at least 1.`,
 						)
-						.default(''),
+						.prefault(''),
 					kind: z.enum(['order', 'categories', 'items', 'free_item']),
 					discountType: z.enum(['fixed', 'percent']),
-					amount: z.string().trim().default(''),
-					percent: z.string().trim().default(''),
-					maxDiscount: z.string().trim().default(''),
-					itemIds: z.string().default(''),
-					categoryIds: z.string().default(''),
-					freeItemId: z.string().trim().default(''),
+					amount: z.string().trim().prefault(''),
+					percent: z.string().trim().prefault(''),
+					maxDiscount: z.string().trim().prefault(''),
+					itemIds: z.string().prefault(''),
+					categoryIds: z.string().prefault(''),
+					freeItemId: z.string().trim().prefault(''),
 				})
 				.superRefine((value, ctx) => {
 					const needsDiscount = value.kind !== 'free_item'

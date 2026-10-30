@@ -1,5 +1,5 @@
 import { getFormProps, useForm } from '@conform-to/react'
-import { parseWithZod } from '@conform-to/zod'
+import { parseWithZod } from '@conform-to/zod/v4'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { Alert, AlertDescription } from '@repo/ui/alert'
 import { Button } from '@repo/ui/button'
@@ -85,7 +85,7 @@ export function RecordOrderRefundDialog({
 						.trim()
 						.min(3, t`Add a short note, such as how the money went back.`)
 						.max(280, t`Keep the note under 280 characters.`)
-						.default(''),
+						.prefault(''),
 				})
 				.superRefine((value, ctx) => {
 					if (value.kind !== 'partial') return

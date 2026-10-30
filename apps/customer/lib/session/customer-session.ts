@@ -28,6 +28,8 @@ export class CustomerSession {
 	#nextRefreshId = 0
 	/** Bumped on sign-out, so a refresh already in flight cannot restore the ended session. */
 	#generation = 0
+	/** Verifications whose answer has not been stored yet. */
+	#verifying = 0
 	/** Storage writes in call order, so a late write never resurrects cleared tokens. */
 	#writes: Promise<unknown> = Promise.resolve()
 	readonly #listeners = new Set<() => void>()
@@ -83,24 +85,37 @@ export class CustomerSession {
 
 	async verify(phone: string, code: string): Promise<VerifyResult> {
 		const generation = this.#generation
-		const result = await this.client.verify(normalizePhone(phone), code.trim())
-		if (result.accessToken && result.refreshToken) {
-			const tokens = {
-				accessToken: result.accessToken,
-				refreshToken: result.refreshToken,
+		this.#verifying += 1
+		try {
+			const result = await this.client.verify(
+				normalizePhone(phone),
+				code.trim(),
+			)
+			if (result.accessToken && result.refreshToken) {
+				const tokens = {
+					accessToken: result.accessToken,
+					refreshToken: result.refreshToken,
+				}
+				if (!(await this.#store(tokens, generation))) {
+					// The sign-in was abandoned while the code was checked: revoke the
+					// tokens instead of keeping them for the next launch.
+					this.#revoke(tokens)
+				} else if (generation !== this.#generation) {
+					// Abandoned while the tokens were being saved: take them back out
+					// of memory and storage, unless a newer sign-in replaced them.
+					if (this.#tokens === tokens) await this.#clear()
+					this.#revoke(tokens)
+				}
 			}
-			if (!(await this.#store(tokens, generation))) {
-				// The sign-in was abandoned while the code was checked: revoke the
-				// tokens instead of keeping them for the next launch.
-				this.#revoke(tokens)
-			}
+			return result
+		} finally {
+			this.#verifying -= 1
 		}
-		return result
 	}
 
 	/** A verification still in flight will not sign the customer in. */
 	abandonPendingVerification(): void {
-		if (!this.#tokens) this.#generation += 1
+		if (!this.#tokens || this.#verifying > 0) this.#generation += 1
 	}
 
 	/**
