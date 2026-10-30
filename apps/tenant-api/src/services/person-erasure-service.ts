@@ -10,6 +10,7 @@ import {
 	personErasureLog,
 	posOrders,
 	qrTabs,
+	restaurantOrderRefunds,
 	restaurantOrders,
 	rsvAuditLog,
 	rsvDayVersions,
@@ -34,6 +35,7 @@ import {
 	and,
 	eq,
 	inArray,
+	isNotNull,
 	or,
 	sql,
 	type AnyColumn,
@@ -47,7 +49,9 @@ import {
 } from '../lib/chunked-in.ts'
 import { HttpError, notFound } from '../lib/http.ts'
 import { legacyPhoneForms } from '../lib/phone.ts'
+import { type LoyaltyTx } from '../lib/loyalty-write.ts'
 import { withSetupWrite } from '../lib/reservations-write.ts'
+import { eraseLoyaltyMembersInTx } from './loyalty-erasure.ts'
 import { erasePosHeldUploads } from './pos-service.ts'
 import { handleCancellationPayments } from './rsv-payment-refunds.ts'
 import {
@@ -135,6 +139,8 @@ export type ErasePersonResult = {
 	/** Present only when a QR table tab was scrubbed. */
 	qrTabsScrubbed?: number
 	posOrdersScrubbed?: number
+	/** Present only when a loyalty member was erased with the person. */
+	loyaltyMembersErased?: number
 	waitlistEntriesScrubbed: number
 	notifyRequestsScrubbed: number
 	voice: {
@@ -1000,6 +1006,19 @@ export async function erasePerson(
 							.where(inArray(restaurantOrders.id, chunk)),
 					HEAVY_SET_CHUNK,
 				)
+				// A refund's amount stays for the books; the operator's note may
+				// describe the person (the only update its trigger allows).
+				await forEachInChunks([...restaurantOrderIds], (chunk) =>
+					tx
+						.update(restaurantOrderRefunds)
+						.set({ note: null })
+						.where(
+							and(
+								inArray(restaurantOrderRefunds.orderId, chunk),
+								isNotNull(restaurantOrderRefunds.note),
+							),
+						),
+				)
 				const restaurantOrdersScrubbed = restaurantOrderIds.size
 
 				// QR table tabs keep the guest's name and phone for the table: a
@@ -1036,6 +1055,17 @@ export async function erasePerson(
 					HEAVY_SET_CHUNK,
 				)
 				const qrTabsScrubbed = qrTabIds.size
+
+				// ---- Loyalty members ---------------------------------------------------
+				// Erased before the customer rows go: the member row stays as the
+				// anonymous owner of its ledger, but every code, binding, pending
+				// approval and unbound hold is closed and the operator notes go.
+				// (withSetupWrite types its transaction handle as TenantDatabase; at
+				// runtime it is the one regional transaction, which LoyaltyTx wants.)
+				const loyalty = await eraseLoyaltyMembersInTx(
+					tx as unknown as LoyaltyTx,
+					{ customerIds, now },
+				)
 
 				// ---- Customer rows and everything keyed by them ----------------------
 				// Deleted explicitly, not only by FK cascade, so a missing foreign-key
@@ -1107,6 +1137,9 @@ export async function erasePerson(
 							: {}),
 						...(qrTabsScrubbed > 0 ? { qrTabsScrubbed } : {}),
 						...(posOrdersScrubbed > 0 ? { posOrdersScrubbed } : {}),
+						...(loyalty.membersErased > 0
+							? { loyaltyMembersErased: loyalty.membersErased }
+							: {}),
 						...voiceCounts(),
 					}
 					if (logId) {
@@ -1165,6 +1198,9 @@ export async function erasePerson(
 					formSubmissionsRedacted,
 					...(restaurantOrdersScrubbed > 0 ? { restaurantOrdersScrubbed } : {}),
 					...(qrTabsScrubbed > 0 ? { qrTabsScrubbed } : {}),
+					...(loyalty.membersErased > 0
+						? { loyaltyMembersErased: loyalty.membersErased }
+						: {}),
 					waitlistEntriesScrubbed: waitlistIds.length,
 					notifyRequestsScrubbed: notifyIds.length,
 					voice,

@@ -2,6 +2,7 @@ import { type Context, Hono } from 'hono'
 import { bodyLimit } from 'hono/body-limit'
 import { logger as honoLogger } from 'hono/logger'
 import { logger } from '@repo/observability'
+import { errorLogFields } from './lib/error-log.ts'
 import { isAllowedAnalyticsOrigin, isPosOrigin } from './lib/origin.ts'
 import { requestLoggingMiddleware } from './lib/request-logging.ts'
 import { getNodeRegion } from './lib/region.ts'
@@ -56,6 +57,10 @@ import {
 import { reservationsOperatorRoutes } from './routes/reservations-operator.ts'
 import { reservationsPaymentsInternalRoutes } from './routes/reservations-payments-internal.ts'
 import { reservationsPublicRoutes } from './routes/reservations-public.ts'
+import { loyaltyTickRoutes } from './routes/loyalty-tick.ts'
+import { loyaltyRoutes } from './routes/loyalty.ts'
+import { operatorLoyaltyRoutes } from './routes/operator-loyalty.ts'
+import { posLoyaltyRoutes } from './routes/pos-loyalty.ts'
 
 import { rateLimit } from './lib/rate-limit.ts'
 
@@ -249,6 +254,25 @@ export function createTenantApiApp() {
 		}),
 	)
 
+	// Customer loyalty calls need a customer token, so this is only a burst
+	// ceiling. Guests at one restaurant share its network, so it is generous;
+	// writes (quotes, member codes, approval decisions) get less, and
+	// each also has a durable per-customer limit (`enforceLoyaltyLimit`).
+	const loyaltyReadRateLimit = rateLimit('loyalty-reads', {
+		windowMs: 60 * 1000,
+		maxRequests: 240,
+	})
+	const loyaltyWriteRateLimit = rateLimit('loyalty-writes', {
+		windowMs: 60 * 1000,
+		maxRequests: 120,
+	})
+	// Every method but POST is a read (HEAD included), so none skips the limit.
+	app.use('/loyalty/*', (c, next) =>
+		c.req.method === 'POST'
+			? loyaltyWriteRateLimit(c, next)
+			: loyaltyReadRateLimit(c, next),
+	)
+
 	app.get('/health', healthHandler)
 	app.get('/api/health', healthHandler)
 
@@ -294,6 +318,10 @@ export function createTenantApiApp() {
 	app.route('/internal/reservations', reservationsInternalRoutes)
 	app.route('/api/reservations/payments', reservationsPaymentsInternalRoutes)
 	app.route('/api/reservations', reservationsTickRoutes)
+	app.route('/api/loyalty', loyaltyTickRoutes)
+	app.route('/loyalty', loyaltyRoutes)
+	app.route('/operator/loyalty', operatorLoyaltyRoutes)
+	app.route('/pos/loyalty', posLoyaltyRoutes)
 	app.route('/api/voice/actions', reservationsVoiceActionRoutes)
 
 	app.notFound((c) => {
@@ -303,7 +331,7 @@ export function createTenantApiApp() {
 	app.onError((err, c) => {
 		logger.error(
 			{
-				err,
+				...errorLogFields(err),
 				requestId: c.res.headers.get('x-request-id'),
 				method: c.req.method,
 				path: c.req.path,

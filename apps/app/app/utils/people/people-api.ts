@@ -490,6 +490,8 @@ export type PersonOrder = {
 	fulfillment: string
 	currency: string
 	totalCents: number
+	/** Recorded as returned; the payment status stays `paid`. */
+	refundedCents: number
 	itemCount: number
 	createdAt: string | null
 	/** `customer`: bound at checkout. `phone`: matched by the verified phone. */

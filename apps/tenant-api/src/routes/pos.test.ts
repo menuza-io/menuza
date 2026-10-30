@@ -23,6 +23,7 @@ import {
 	destroyTenantDb,
 	customers,
 	getTenantDb,
+	loyaltyPurchases,
 	posDevices,
 	posManagers,
 	staffMembers,
@@ -45,8 +46,29 @@ import { Hono } from 'hono'
 import { SignJWT } from 'jose'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import {
+	invalidateLoyaltyContext,
+	seedLoyaltyContextForTest,
+} from '../lib/loyalty-context.ts'
 import { findActiveOrganizationById } from '../lib/origin.ts'
 import { pinLookupFor } from '../services/kiosk-pin-service.ts'
+import {
+	identifyMemberByCode,
+	issueMemberCode,
+} from '../services/loyalty-code-service.ts'
+import {
+	activateProgram,
+	balanceOf,
+	cartLine,
+	givePoints,
+	insertCustomer,
+	loyaltyCart,
+	makeMember,
+	makeReward,
+	programConfig,
+	reserveReward,
+	rewardDefinition,
+} from '../services/loyalty-test-fixture.ts'
 import { fiscalChainGaps, purgePosGuestNames } from '../services/pos-service.ts'
 import { eraseLinkedUser } from '../services/staff-internal-service.ts'
 import { erasePerson } from '../services/person-erasure-service.ts'
@@ -4061,6 +4083,133 @@ describe('POS terminals: pairing, upload and sync', () => {
 				})
 				expect(await reviewOf(r2)).toBeNull()
 			})
+
+			/** A sale discounted by a `loyalty` line worth 60% of its subtotal. */
+			function loyaltyLabelled(o: ReturnType<typeof wireOrder>) {
+				const amount = Math.ceil(o.totals.subtotalCents * 0.6)
+				return {
+					amount,
+					order: {
+						...o,
+						adjustments: [
+							{
+								id: 'adj-1',
+								kind: 'loyalty' as const,
+								label: 'Reward',
+								amountCents: amount,
+							},
+						],
+						totals: {
+							...o.totals,
+							adjustmentCents: amount,
+							totalCents: o.totals.totalCents - amount,
+						},
+					},
+				}
+			}
+
+			it('flags a large manual discount labelled as a loyalty reward', async () => {
+				const { deviceSecret } = await pair()
+				const { order } = loyaltyLabelled(wireOrder())
+				expect(await reviewOf(await upload(deviceSecret, order))).toBe(
+					'large_discount',
+				)
+			})
+
+			it('does not flag a large loyalty reward the member approved on this sale', async () => {
+				const { deviceSecret, device } = await pair()
+				const o = wireOrder()
+				const { amount, order } = loyaltyLabelled(o)
+				await activateProgram(ORG_A, programConfig(), Date.now() - 60 * 60_000)
+				await insertCustomer(ORG_A, {
+					id: 'cust_reward',
+					phone: '+15550003333',
+				})
+				const memberId = await makeMember(ORG_A, { customerId: 'cust_reward' })
+				await givePoints(ORG_A, memberId, 50)
+				const reward = await makeReward(
+					ORG_A,
+					rewardDefinition({
+						discount: { type: 'fixed', amountMinor: amount },
+					}),
+				)
+				const redemption = await reserveReward(ORG_A, {
+					memberId,
+					rewardId: reward.id,
+					cart: loyaltyCart([
+						cartLine({
+							unitBaseMinor: o.totals.subtotalCents,
+							unitMinor: o.totals.subtotalCents,
+						}),
+					]),
+					source: { type: 'pos_order', id: o.id },
+					channel: 'pos',
+					deviceId: device.id,
+				})
+				expect(redemption.discountMinor).toBe(amount)
+				expect(await reviewOf(await upload(deviceSecret, order))).toBeNull()
+			})
+
+			it('still flags the part of a loyalty line the approved reward does not cover', async () => {
+				const { deviceSecret, device } = await pair()
+				const o = wireOrder()
+				const { amount, order } = loyaltyLabelled(o)
+				await activateProgram(ORG_A, programConfig(), Date.now() - 60 * 60_000)
+				await insertCustomer(ORG_A, {
+					id: 'cust_reward',
+					phone: '+15550003333',
+				})
+				const memberId = await makeMember(ORG_A, { customerId: 'cust_reward' })
+				await givePoints(ORG_A, memberId, 50)
+				// A 0.50 reward approved, a 60% "loyalty" line sent.
+				const reward = await makeReward(
+					ORG_A,
+					rewardDefinition({ discount: { type: 'fixed', amountMinor: 50 } }),
+				)
+				await reserveReward(ORG_A, {
+					memberId,
+					rewardId: reward.id,
+					cart: loyaltyCart([
+						cartLine({
+							unitBaseMinor: o.totals.subtotalCents,
+							unitMinor: o.totals.subtotalCents,
+						}),
+					]),
+					source: { type: 'pos_order', id: o.id },
+					channel: 'pos',
+					deviceId: device.id,
+				})
+				expect(amount).toBeGreaterThan(50)
+				expect(await reviewOf(await upload(deviceSecret, order))).toBe(
+					'large_discount',
+				)
+			})
+
+			it('stores the holding reason when a large discount and an unknown staff both flag', async () => {
+				const { deviceSecret } = await pair()
+				const o = wireOrder({
+					staff: { id: 'someone-invented', name: 'Eve X.' },
+					signIn: 'offline',
+				})
+				const discount = Math.ceil(o.totals.subtotalCents * 0.6)
+				const r = await upload(deviceSecret, {
+					...o,
+					adjustments: [
+						{
+							id: 'adj-3',
+							kind: 'discount',
+							label: 'Comp',
+							amountCents: discount,
+						},
+					],
+					totals: {
+						...o.totals,
+						adjustmentCents: discount,
+						totalCents: o.totals.totalCents - discount,
+					},
+				})
+				expect(await reviewOf(r)).toBe('unknown_staff')
+			})
 		})
 
 		it('holds the same revision sent again with different contents', async () => {
@@ -4191,6 +4340,95 @@ describe('POS terminals: pairing, upload and sync', () => {
 				.where(eq(posZatcaUnits.deviceId, device.id))
 			expect(unit).toMatchObject({ status: 'revoked' })
 			expect(unit!.revokedAt).toEqual(expect.any(Number))
+		})
+	})
+
+	describe('loyalty on an upload', () => {
+		const FLAGS_ON = { enabled: true, redemption: true }
+
+		/** A member the till identified by their code: the binding it keeps. */
+		async function identifiedMember(deviceId: string) {
+			const since = Date.now() - 60 * 60_000
+			await activateProgram(ORG_A, programConfig(), since)
+			await insertCustomer(ORG_A, { id: 'cust_till', phone: '+15550002222' })
+			const memberId = await makeMember(ORG_A, {
+				customerId: 'cust_till',
+				now: since,
+			})
+			const { code } = await issueMemberCode(ORG_A, {
+				customerId: 'cust_till',
+				features: FLAGS_ON,
+			})
+			const till = await identifyMemberByCode(ORG_A, {
+				code,
+				device: { id: deviceId, locationId: null },
+				features: FLAGS_ON,
+			})
+			return { memberId, binding: till.member.binding }
+		}
+
+		const paidSale = (binding: string, number = 'T1-0001') => ({
+			...wireOrder({ number, payments: [{ amountCents: 1083 }] }),
+			// A newer till may send fields this server does not know yet.
+			loyalty: { binding, lines: [], tier: 'gold' },
+		})
+
+		afterEach(() => invalidateLoyaltyContext())
+
+		it('credits the member while App cannot be asked for the flags, asking App once', async () => {
+			const { deviceSecret, device } = await pair()
+			const { memberId, binding } = await identifiedMember(device.id)
+			invalidateLoyaltyContext(ORG_A)
+			let flagReads = 0
+			fetchMock.mockImplementation(async (input: RequestInfo | URL) => {
+				const url = new URL(
+					typeof input === 'string' ? input : input.toString(),
+				)
+				if (url.pathname.endsWith('/resources/order-context')) {
+					return Response.json(contextFor(url.searchParams.get('orgId') ?? ''))
+				}
+				if (url.pathname.endsWith('/resources/loyalty/context')) {
+					flagReads += 1
+					throw new TypeError('fetch failed')
+				}
+				return new Response('not found', { status: 404 })
+			})
+			const errors = vi.spyOn(console, 'error').mockImplementation(() => {})
+			try {
+				for (const number of ['T1-0001', 'T1-0002']) {
+					expect(
+						(await upload(deviceSecret, paidSale(binding, number))).status,
+					).toBe(201)
+				}
+				expect(flagReads).toBe(1)
+				expect(errors).toHaveBeenCalledWith('Loyalty flags could not be read', {
+					orgId: ORG_A,
+					reason: 'unreachable',
+					status: 'unknown',
+					stale: false,
+				})
+			} finally {
+				errors.mockRestore()
+			}
+			const db = await getTenantDb(ORG_A)
+			const purchases = await db.select().from(loyaltyPurchases).all()
+			expect(purchases).toHaveLength(2)
+			expect(purchases.every((row) => row.memberId === memberId)).toBe(true)
+			// Each paid sale earned 10 points on 10.00 before tax.
+			expect((await balanceOf(ORG_A, memberId)).points).toBe(20)
+		})
+
+		it('credits nobody when App says loyalty is off', async () => {
+			const { deviceSecret, device } = await pair()
+			const { memberId, binding } = await identifiedMember(device.id)
+			seedLoyaltyContextForTest(ORG_A, {
+				enabled: false,
+				redemption: false,
+			})
+			expect((await upload(deviceSecret, paidSale(binding))).status).toBe(201)
+			const db = await getTenantDb(ORG_A)
+			expect(await db.select().from(loyaltyPurchases).all()).toHaveLength(0)
+			expect((await balanceOf(ORG_A, memberId)).points).toBe(0)
 		})
 	})
 })

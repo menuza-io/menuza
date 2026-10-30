@@ -29,11 +29,20 @@ import {
 } from '../services/order-service.ts'
 import { publicOrderRoutes } from './orders.ts'
 
-vi.mock('../lib/origin.ts', () => ({
-	findActiveOrganizationById: vi.fn(),
-	resolveOrganizationForBrowserAuth: vi.fn(),
-	resolvePublishedOrganization: vi.fn(async () => null),
-}))
+vi.mock('../lib/origin.ts', () => {
+	const findActiveOrganizationById = vi.fn()
+	return {
+		findActiveOrganizationById,
+		lookupActiveOrganization: vi.fn(async (id: string) => {
+			const organization = await findActiveOrganizationById(id)
+			return organization
+				? { status: 'found', organization }
+				: { status: 'missing' }
+		}),
+		resolveOrganizationForBrowserAuth: vi.fn(),
+		resolvePublishedOrganization: vi.fn(async () => null),
+	}
+})
 
 // ---------------------------------------------------------------------------
 // Harness
@@ -1021,6 +1030,51 @@ describe('Adversarial: restaurant ordering (public browser surface)', () => {
 			currency: 'USD',
 		})
 		expect(regress.ok).toBe(false)
+	})
+
+	it('compares the payment currency without regard to case', async () => {
+		// Stripe and the App forward lowercase ISO codes ("usd"); orders store
+		// the catalog's uppercase code.
+		const placed = await placeOrder({
+			organization: ORG as never,
+			request: parsedRequest(orderBody({ paymentMethod: 'online' })),
+			customerId: null,
+		})
+		expect(placed.ok).toBe(true)
+		if (!placed.ok) return
+		const orderId = placed.data.order.id
+		const total = placed.data.order.totalCents
+		await bindPaymentSession({
+			orgId,
+			orderId,
+			sessionId: 'sess_lowercase_currency',
+			processor: 'connect',
+		})
+
+		const otherCurrency = await applyPaymentEvent({
+			orgId,
+			orderId,
+			sessionId: 'sess_lowercase_currency',
+			processor: 'connect',
+			status: 'paid',
+			amountCents: total,
+			currency: 'sar',
+		})
+		expect(otherCurrency.ok).toBe(false)
+		if (!otherCurrency.ok)
+			expect(otherCurrency.failure.code).toBe('currency_mismatch')
+
+		const paid = await applyPaymentEvent({
+			orgId,
+			orderId,
+			sessionId: 'sess_lowercase_currency',
+			processor: 'connect',
+			status: 'paid',
+			amountCents: total,
+			currency: 'usd',
+		})
+		expect(paid.ok).toBe(true)
+		if (paid.ok) expect(paid.data.paymentStatus).toBe('paid')
 	})
 
 	it('a failed payment cancels the order and releases its capacity', async () => {

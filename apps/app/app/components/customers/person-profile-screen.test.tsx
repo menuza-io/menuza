@@ -2,6 +2,7 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { PersonProfileScreen } from '#app/components/customers/person-profile-screen.tsx'
+import { type LoyaltyCapabilities } from '#app/utils/loyalty/capabilities.ts'
 import { type PeopleAccess } from '#app/utils/people/people-access.ts'
 import {
 	PeopleApiError,
@@ -9,6 +10,19 @@ import {
 	type PersonProfile,
 } from '#app/utils/people/people-api.ts'
 import { renderStaff } from '#tests/staff-render.tsx'
+
+// The panel talks to the regional API on its own (covered by its own test);
+// here only whether and for whom the profile mounts it matters.
+vi.mock('#app/components/loyalty/customer-loyalty-panel.tsx', () => ({
+	CustomerLoyaltyPanel: ({
+		capabilities,
+	}: {
+		capabilities: { enabled: boolean; canRead: boolean }
+	}) =>
+		capabilities.enabled && capabilities.canRead ? (
+			<div data-testid="customer-loyalty" />
+		) : null,
+}))
 
 const FULL: PeopleAccess = {
 	customers: true,
@@ -84,6 +98,7 @@ function profile(over: Partial<PersonProfile> = {}): PersonProfile {
 function render(
 	p: PersonProfile,
 	extra?: (path: string, options?: { method?: string }) => unknown,
+	loyalty?: LoyaltyCapabilities,
 ) {
 	const request = vi.fn(async (path: string, options?: { method?: string }) => {
 		if (extra) {
@@ -98,10 +113,47 @@ function render(
 			client={{ request } as unknown as PeopleClient}
 			orgSlug="acme"
 			personKey="c_1"
+			loyalty={loyalty}
 		/>,
 	)
 	return request
 }
+
+describe('PersonProfileScreen: loyalty', () => {
+	const ON: LoyaltyCapabilities = {
+		enabled: true,
+		canRead: true,
+		canAdjust: false,
+		canReconcile: false,
+	}
+
+	it('mounts the Loyalty panel for a customer when the user may read it', async () => {
+		render(profile(), undefined, ON)
+		expect(await screen.findByTestId('customer-loyalty')).toBeInTheDocument()
+	})
+
+	it('leaves the panel out without the flag, the grant, or a customer record', async () => {
+		render(profile())
+		await screen.findByTestId('person-profile-name')
+		expect(screen.queryByTestId('customer-loyalty')).toBeNull()
+	})
+
+	it('leaves the panel out for a guest with no customer', async () => {
+		render(
+			profile({
+				key: 'g_1',
+				canonicalKey: 'g_1',
+				kind: 'guest',
+				customer: null,
+				customerLinked: false,
+			}),
+			undefined,
+			ON,
+		)
+		await screen.findByTestId('person-profile-name')
+		expect(screen.queryByTestId('customer-loyalty')).toBeNull()
+	})
+})
 
 describe('PersonProfileScreen', () => {
 	it('shows contact, dining, notes, history, marketing consent and data sections', async () => {

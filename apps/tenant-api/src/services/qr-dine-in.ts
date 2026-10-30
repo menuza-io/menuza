@@ -29,7 +29,13 @@ import { readTableToken, readTabToken } from '../lib/qr-tokens.ts'
 
 type Db = TenantDatabase | TenantTransaction
 
-export type DineInFailure = { status: number; code: string; message: string }
+export type DineInFailure = {
+	status: number
+	code: string
+	message: string
+	/** Machine-readable extras for the client (e.g. the corrected discount). */
+	details?: Record<string, unknown>
+}
 
 function failure(status: number, code: string, message: string): DineInFailure {
 	return { status, code, message }
@@ -284,7 +290,9 @@ export async function listTabRounds(
 
 /**
  * Running totals from the rounds that still count. A VAT-inclusive round
- * carries tax inside its subtotal, so the total never adds it again.
+ * carries tax inside its subtotal, so the total never adds it again. A
+ * closed tab answers its settled snapshot (with the reward it was paid with);
+ * an open one always reads at full price, the price staff charge.
  */
 export function tabTotals(
 	tab: Pick<
@@ -295,6 +303,7 @@ export function tabTotals(
 		| 'taxCents'
 		| 'tipCents'
 		| 'totalCents'
+		| 'loyaltyDiscountCents'
 	>,
 	rounds: RestaurantOrder[],
 	options: { useSnapshot?: boolean } = {},
@@ -316,6 +325,7 @@ export function tabTotals(
 			taxCents: tab.taxCents,
 			taxInclusive,
 			tipCents: tab.tipCents,
+			loyaltyDiscountCents: tab.loyaltyDiscountCents,
 			totalCents: tab.totalCents,
 		}
 	}
@@ -331,6 +341,7 @@ export function tabTotals(
 		taxCents,
 		taxInclusive,
 		tipCents: 0,
+		loyaltyDiscountCents: 0,
 		totalCents,
 	}
 }

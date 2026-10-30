@@ -67,11 +67,11 @@ a sample project's corner treatment into another deployment.
 
 Web operator interfaces use the primitives and variants in `packages/ui`;
 callers should not restyle their internals. The marketing site uses its Astro
-section and block components; organization sites render published blocks. Expo,
-SwiftUI, and Android use their own platform components rather than importing web
-styling. Email uses `packages/email` components and an email-safe theme. Keep
-focus, disabled, loading, error, and empty states part of each component's
-design.
+section and block components; organization sites render published blocks. The
+Expo apps (operator companion and customer app) use their own React Native
+components rather than importing web styling. Email uses `packages/email`
+components and an email-safe theme. Keep focus, disabled, loading, error, and
+empty states part of each component's design.
 
 ## Do's and Don'ts
 

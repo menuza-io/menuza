@@ -1,0 +1,28 @@
+{
+  "name": "@repo/loyalty",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Shared loyalty domain code: flags, permissions, operator token claims, program and reward schemas, earning, discount and refund math, ledger and redemption rules, API contracts and fixtures. No UI strings, no I/O.",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@repo/zoned-time": "*",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@repo/config": "*",
+    "fast-check": "^4.3.0",
+    "typescript": "^5.8.3",
+    "vitest": "^4.1.10"
+  }
+}

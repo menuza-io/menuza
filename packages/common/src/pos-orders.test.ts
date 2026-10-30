@@ -307,6 +307,122 @@ describe('posOrderRequestSchema', () => {
 	})
 })
 
+describe('contract v5: loyalty', () => {
+	const binding = `lmb1.${'a'.repeat(43)}`
+	const loyaltySale = () => ({
+		...base(),
+		status: 'paid' as const,
+		lines: [{ ...line, id: 'line-1' }],
+		adjustments: [
+			{ id: 'r1', kind: 'loyalty', label: 'Free fries', amountCents: 300 },
+		],
+		totals: {
+			subtotalCents: 2300,
+			adjustmentCents: 300,
+			taxCents: 200,
+			tipCents: 0,
+			totalCents: 2200,
+		},
+		payments: [pay({ amountCents: 2200, tenderedCents: 2200 })],
+	})
+
+	it('reads a version 4 upload without loyalty', () => {
+		expect(posOrderRequestSchema.parse(base()).loyalty).toBeNull()
+		expect(
+			posOrderRequestSchema.parse({ ...base(), loyalty: null }).loyalty,
+		).toBeNull()
+	})
+
+	it('reads the member binding and each line’s categories', () => {
+		const parsed = posOrderRequestSchema.parse({
+			...loyaltySale(),
+			loyalty: {
+				binding,
+				lines: [{ id: 'line-1', categoryIds: ['cat-burgers'] }],
+			},
+		})
+		expect(parsed.loyalty).toEqual({
+			binding,
+			lines: [{ id: 'line-1', categoryIds: ['cat-burgers'] }],
+		})
+		expect(
+			posOrderRequestSchema.parse({ ...loyaltySale(), loyalty: {} }).loyalty,
+		).toEqual({ binding: null, lines: [] })
+	})
+
+	it('keeps the member binding when another part of loyalty cannot be read', () => {
+		const cases: Array<[unknown, unknown]> = [
+			[
+				{ binding, phone: '+15551234567' },
+				{ binding, lines: [] },
+			],
+			[{ binding: 42 }, { binding: null, lines: [] }],
+			[{ binding: 'x'.repeat(201) }, { binding: null, lines: [] }],
+			[
+				{ binding, lines: [{ id: 'line-1', categoryIds: 'cat' }] },
+				{ binding, lines: [] },
+			],
+			[
+				{
+					binding,
+					lines: [
+						{
+							id: 'line-1',
+							categoryIds: Array.from({ length: 51 }, (_, i) => `c${i}`),
+						},
+					],
+				},
+				{ binding, lines: [] },
+			],
+			[
+				{
+					binding,
+					lines: [
+						{ id: 'line-1', categoryIds: ['cat-burgers'], weight: 2 },
+						{ id: '', categoryIds: [] },
+					],
+				},
+				{ binding, lines: [{ id: 'line-1', categoryIds: ['cat-burgers'] }] },
+			],
+			[
+				{
+					binding,
+					lines: Array.from({ length: 51 }, (_, i) => ({
+						id: `line-${i}`,
+						categoryIds: [],
+					})),
+				},
+				{ binding, lines: [] },
+			],
+		]
+		for (const [sent, kept] of cases) {
+			const parsed = parse({ ...loyaltySale(), loyalty: sent })
+			expect(parsed.success).toBe(true)
+			expect(parsed.success && parsed.data.loyalty).toEqual(kept)
+			// A field this server does not know is never stored.
+			expect(JSON.stringify(parsed.data)).not.toContain('5551234567')
+		}
+	})
+
+	it('drops loyalty that is not an object and keeps the sale', () => {
+		for (const bad of ['lmb1.token', 42, [binding]]) {
+			const parsed = parse({ ...loyaltySale(), loyalty: bad })
+			expect(parsed.success).toBe(true)
+			expect(parsed.success && parsed.data.loyalty).toBeNull()
+		}
+	})
+
+	it('still checks the bill: loyalty never changes the arithmetic', () => {
+		expect(
+			message({
+				...loyaltySale(),
+				loyalty: { binding },
+				totals: { ...loyaltySale().totals, adjustmentCents: 0 },
+			}),
+		).toMatch(/adjustments/)
+	})
+})
+
 describe('text that is signed into ZATCA documents', () => {
 	it('stores item names and variant labels without characters XML does not allow', () => {
 		const r = parse({

@@ -2,7 +2,7 @@ import {
 	SHOP_HOSTED_EMBED_SDK_URL,
 	SHOP_INLINE_CARD_SDK_URL,
 } from '@repo/payments/shop/client'
-import { getAccessToken, tenantFetch } from '~/lib/client-auth'
+import { getAccessToken, tenantFetchResponse } from '~/lib/client-auth'
 
 type ShopCheckoutRoot = HTMLElement & {
 	dataset: DOMStringMap & {
@@ -257,7 +257,7 @@ async function loadSavedPaymentMethods(): Promise<SavedPaymentMethod[]> {
 	if (!getAccessToken()) return []
 
 	try {
-		const response = await tenantFetch('/shop/payment-methods')
+		const response = await tenantFetchResponse('/shop/payment-methods')
 		if (!response.ok) return []
 		const data = await response.json()
 		if (!Array.isArray(data.paymentMethods)) return []

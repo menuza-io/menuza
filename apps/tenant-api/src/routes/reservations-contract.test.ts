@@ -1,4 +1,3 @@
-import { createHash } from 'node:crypto'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
@@ -45,19 +44,19 @@ import {
 import { reservationsPublicRoutes } from './reservations-public.ts'
 
 /**
- * The public reservations contract, as the native apps consume it.
+ * The public reservations contract, as the customer app (`apps/customer`) consumes it.
  *
  * The canonical fixtures live in `packages/reservations/contract-fixtures`.
  * This suite drives the real public routes in process with the same headers
- * the native apps send (`Origin`, `X-Client`, customer Bearer token, no
+ * the customer app sends (`Origin`, `X-Client`, customer Bearer token, no
  * Turnstile token) and
  *
  *   1. checks every canonical fixture parses with the public response schemas,
  *   2. checks the live responses have exactly the fixture's key structure, so
  *      a server change that adds, removes or retypes a field fails here until
  *      the fixtures are re-recorded,
- *   3. checks the iOS and Android copies are byte-identical to the canonical
- *      files (same file names, no extras).
+ *   3. checks the customer app's tests import every canonical file (they
+ *      read this folder directly; there are no copies).
  *
  * Re-record with `npm run fixtures:reservations -w tenant-api`. Recording uses
  * only the seeded demo data below and normalizes every volatile value
@@ -73,15 +72,28 @@ const CANONICAL_DIR = path.join(
 	REPO_ROOT,
 	'packages/reservations/contract-fixtures',
 )
-const NATIVE_COPIES = [
-	path.join(REPO_ROOT, 'apps/ios/Tests/TenantKitTests/Fixtures/Reservations'),
-	path.join(REPO_ROOT, 'apps/android/app/src/test/resources/reservations'),
-]
+const CUSTOMER_APP_FIXTURES = path.join(
+	REPO_ROOT,
+	'apps/customer/test/reservations/fixtures.ts',
+)
+/** Hand-written answers with values a newer region may send; never recorded. */
+const FUTURE_DIR = path.join(REPO_ROOT, 'packages/reservations/future-fixtures')
+const FUTURE_SCHEMAS: Record<string, ZodTypeAny> = {
+	'availability-closed': publicAvailabilityResponseSchema,
+	'availability-new-status': publicAvailabilityResponseSchema,
+	calendar: publicCalendarResponseSchema,
+}
 
 const orgs = vi.hoisted(() => new Map<string, PublishedOrganization>())
 vi.mock('../lib/origin.ts', async (importOriginal) => ({
 	...(await importOriginal<typeof import('../lib/origin.ts')>()),
 	findActiveOrganizationById: vi.fn(async (id: string) => orgs.get(id) ?? null),
+	lookupActiveOrganization: vi.fn(async (id: string) => {
+		const organization = orgs.get(id)
+		return organization
+			? { status: 'found' as const, organization }
+			: { status: 'missing' as const }
+	}),
 	resolveOrganizationForPublicOrigin: vi.fn(async (origin?: string) =>
 		origin === 'http://acme.menuza.test:3008'
 			? (orgs.get('org_contract_us') ?? null)
@@ -304,7 +316,7 @@ function sameKeys(a: unknown, b: unknown, trail = ''): string[] {
 }
 
 // ---------------------------------------------------------------------------
-// The scenario: seeded acme demo data, driven like the native apps do.
+// The scenario: seeded acme demo data, driven like the customer app does.
 // ---------------------------------------------------------------------------
 
 type Recorded = { name: string; schema: ZodTypeAny; value: unknown }
@@ -651,25 +663,15 @@ function listJson(dir: string) {
 }
 
 describe('reservations contract fixtures', () => {
-	it.runIf(RECORD)(
-		'records the canonical fixtures and native copies',
-		async () => {
-			const recorded = await runScenario()
-			fs.rmSync(CANONICAL_DIR, { recursive: true, force: true })
-			fs.mkdirSync(CANONICAL_DIR, { recursive: true })
-			for (const dir of NATIVE_COPIES) {
-				fs.rmSync(dir, { recursive: true, force: true })
-				fs.mkdirSync(dir, { recursive: true })
-			}
-			for (const { name, value } of recorded) {
-				const text = `${JSON.stringify(value, null, '\t')}\n`
-				fs.writeFileSync(path.join(CANONICAL_DIR, `${name}.json`), text)
-				for (const dir of NATIVE_COPIES) {
-					fs.writeFileSync(path.join(dir, `${name}.json`), text)
-				}
-			}
-		},
-	)
+	it.runIf(RECORD)('records the canonical fixtures', async () => {
+		const recorded = await runScenario()
+		fs.rmSync(CANONICAL_DIR, { recursive: true, force: true })
+		fs.mkdirSync(CANONICAL_DIR, { recursive: true })
+		for (const { name, value } of recorded) {
+			const text = `${JSON.stringify(value, null, '\t')}\n`
+			fs.writeFileSync(path.join(CANONICAL_DIR, `${name}.json`), text)
+		}
+	})
 
 	it.skipIf(RECORD)(
 		'parses every canonical fixture with the public response schemas',
@@ -709,20 +711,40 @@ describe('reservations contract fixtures', () => {
 		},
 	)
 
+	it.skipIf(RECORD)('is read file by file by the customer app tests', () => {
+		const canonical = listJson(CANONICAL_DIR)
+		expect(canonical.length).toBeGreaterThan(0)
+		const source = fs.readFileSync(CUSTOMER_APP_FIXTURES, 'utf8')
+		const imported = [
+			...source.matchAll(
+				/from '(?:\.\.\/)+packages\/reservations\/contract-fixtures\/([^']+\.json)'/g,
+			),
+		]
+			.map((match) => match[1])
+			.sort()
+		expect(imported).toEqual(canonical)
+	})
+
 	it.skipIf(RECORD)(
-		'keeps the iOS and Android copies byte-identical to the canonical fixtures',
+		'decodes the future-value fixtures, which recording never deletes',
 		() => {
-			const canonical = listJson(CANONICAL_DIR)
-			expect(canonical.length).toBeGreaterThan(0)
-			const digest = (file: string) =>
-				createHash('sha256').update(fs.readFileSync(file)).digest('hex')
-			for (const dir of NATIVE_COPIES) {
-				expect(listJson(dir), dir).toEqual(canonical)
-				for (const file of canonical) {
-					expect(digest(path.join(dir, file)), `${dir}/${file}`).toBe(
-						digest(path.join(CANONICAL_DIR, file)),
-					)
-				}
+			expect(path.relative(CANONICAL_DIR, FUTURE_DIR).startsWith('..')).toBe(
+				true,
+			)
+			expect(listJson(FUTURE_DIR)).toEqual(
+				Object.keys(FUTURE_SCHEMAS)
+					.map((name) => `${name}.json`)
+					.sort(),
+			)
+			for (const [name, schema] of Object.entries(FUTURE_SCHEMAS)) {
+				const fixture = JSON.parse(
+					fs.readFileSync(path.join(FUTURE_DIR, `${name}.json`), 'utf8'),
+				)
+				const parsed = schema.safeParse(fixture)
+				expect(
+					parsed.success,
+					`${name}: ${JSON.stringify(parsed.error?.issues)}`,
+				).toBe(true)
 			}
 		},
 	)

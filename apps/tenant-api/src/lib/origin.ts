@@ -190,6 +190,17 @@ function parseOrigin(origin: string): URL | null {
 	}
 }
 
+/**
+ * Only an explicit `NODE_ENV` of `development` or `test` is a local runtime.
+ * An unset or unknown value is production, so a misconfigured node never
+ * accepts plain http, localhost, or a client-supplied slug hint. Read live: the
+ * varlock snapshot defaults an unset value to `development`.
+ */
+function isLocalRuntime() {
+	const nodeEnv = liveEnv('NODE_ENV')
+	return nodeEnv === 'development' || nodeEnv === 'test'
+}
+
 function isLocalDevHost(hostname: string) {
 	return (
 		hostname === 'localhost' ||
@@ -211,7 +222,7 @@ export function resolveOriginBinding(
 	const url = parseOrigin(origin)
 	if (!url) return { kind: 'none' }
 
-	const isProd = ENV.NODE_ENV === 'production'
+	const isProd = !isLocalRuntime()
 	if (isProd && url.protocol !== 'https:') return { kind: 'none' }
 	if (!isProd && url.protocol !== 'http:' && url.protocol !== 'https:') {
 		return { kind: 'none' }
@@ -392,8 +403,7 @@ export async function resolveOrganizationForBrowserAuth(
 		return fromOrigin
 	}
 
-	const isProd = ENV.NODE_ENV === 'production'
-	if (!isProd && (body.slug || body.host)) {
+	if (isLocalRuntime() && (body.slug || body.host)) {
 		return resolvePublishedOrganization(body)
 	}
 
@@ -426,7 +436,7 @@ export async function resolveOrganizationForPublicOrigin(
 		}
 		return organization
 	}
-	if (ENV.NODE_ENV === 'production') return null
+	if (!isLocalRuntime()) return null
 	if (!hint.slug && !hint.host) return null
 	return resolvePublishedOrganization(
 		hint.slug ? { slug: hint.slug } : { host: hint.host },
@@ -438,7 +448,7 @@ export async function isAllowedBrowserOrigin(origin: string): Promise<boolean> {
 	if (cached !== undefined) return cached
 
 	const url = parseOrigin(origin)
-	const isProd = ENV.NODE_ENV === 'production'
+	const isProd = !isLocalRuntime()
 	const appHostname = `app.${brandDomain()}`
 	const appUrl = parseOrigin(appBaseUrl())
 	const isAppOrigin = Boolean(
@@ -460,7 +470,7 @@ export async function isAllowedBrowserOrigin(origin: string): Promise<boolean> {
 	let allowed = false
 
 	if (binding.kind === 'local-unbound') {
-		allowed = ENV.NODE_ENV !== 'production'
+		allowed = isLocalRuntime()
 	} else if (binding.kind === 'slug' || binding.kind === 'custom') {
 		const organization = await resolveOrganizationFromBinding(binding)
 		allowed = Boolean(
@@ -475,7 +485,7 @@ export async function isAllowedBrowserOrigin(origin: string): Promise<boolean> {
 export function isOperatorControlPlaneOrigin(origin: string) {
 	const url = parseOrigin(origin)
 	if (!url) return false
-	const isProd = ENV.NODE_ENV === 'production'
+	const isProd = !isLocalRuntime()
 	if (isProd && url.protocol !== 'https:') return false
 	if (!isProd && url.protocol !== 'http:' && url.protocol !== 'https:') {
 		return false
@@ -511,10 +521,7 @@ function liveEnv(name: string): string | undefined {
 export function isPosOrigin(origin: string) {
 	const url = parseOrigin(origin)
 	if (!url) return false
-	// Only an explicit development or test NODE_ENV is local: an unset one is
-	// production, so a misconfigured node never allows localhost or plain http.
-	const nodeEnv = liveEnv('NODE_ENV')
-	const isProd = nodeEnv !== 'development' && nodeEnv !== 'test'
+	const isProd = !isLocalRuntime()
 	if (isProd && url.protocol !== 'https:') return false
 	const listed = String(liveEnv('POS_ORIGINS') ?? '')
 		.split(',')

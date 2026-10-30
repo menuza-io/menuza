@@ -112,7 +112,51 @@ async function invokeTenantNodes(
 				)
 			}
 
-			return response.json()
+			const body = (await response.json()) as Record<string, unknown> | null
+
+			// A fan-out route answers 200 even when individual organizations
+			// failed inside it; the failure lives in the body. Treat a reported
+			// failure the same as an HTTP error so the run (and the logs) surface
+			// it instead of passing silently. Sources parked and till sales sent to
+			// review for a missing upload fail the run that found them; the
+			// standing totals (still waiting from earlier runs) are logged instead,
+			// so one undecided item does not fail every later run and hide new
+			// failures behind it.
+			if (body && typeof body === 'object') {
+				const reported = {
+					success: body.success,
+					errors: body.errors,
+					outboxParked: body.outboxParked,
+					outboxParkedTotal: body.outboxParkedTotal,
+					uploadsMissing: body.uploadsMissing,
+					uploadsMissingTotal: body.uploadsMissingTotal,
+					orgsDeferred: body.orgsDeferred,
+				}
+				const positive = (value: unknown) =>
+					typeof value === 'number' && value > 0
+				if (
+					reported.success === false ||
+					positive(reported.errors) ||
+					positive(reported.outboxParked) ||
+					positive(reported.uploadsMissing)
+				) {
+					throw new Error(
+						`${options.label} reported failures for ${baseUrl}: ${JSON.stringify(reported)}`,
+					)
+				}
+				if (
+					positive(reported.outboxParkedTotal) ||
+					positive(reported.uploadsMissingTotal)
+				) {
+					console.warn(`${options.label}: items waiting for an operator`, {
+						node: baseUrl.replace(/\/$/, ''),
+						outboxParkedTotal: reported.outboxParkedTotal,
+						uploadsMissingTotal: reported.uploadsMissingTotal,
+					})
+				}
+			}
+
+			return body
 		}),
 	)
 
@@ -168,6 +212,19 @@ async function invokeTenantReservationsTick(env: Env) {
 		path: '/api/reservations/tick',
 		body: {},
 		label: 'Tenant reservations tick',
+	})
+}
+
+/**
+ * The loyalty tick: expired reward holds and till approvals, reconciliation
+ * retries for queued purchases, till sales that never uploaded, and purges.
+ * The hourly safety net for the Durable Object alarms and the OCI interval.
+ */
+async function invokeTenantLoyaltyTick(env: Env) {
+	return invokeTenantNodes(env, {
+		path: '/api/loyalty/tick',
+		body: {},
+		label: 'Tenant loyalty tick',
 	})
 }
 
@@ -389,6 +446,7 @@ export default {
 				['Tenant engagement sync', invokeTenantEngagementSync],
 				['Tenant staff tick', invokeTenantStaffTick],
 				['Tenant reservations tick', invokeTenantReservationsTick],
+				['Tenant loyalty tick', invokeTenantLoyaltyTick],
 				[
 					'Reservation payments reconcile',
 					(jobEnv: Env) =>

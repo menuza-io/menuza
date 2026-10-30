@@ -5,7 +5,7 @@ functionality integrated with the Epic Stack backend.
 
 ## Features
 
-- React Native with Expo SDK 54+
+- React Native with Expo SDK 58 (React Native 0.88, React 19.3)
 - Expo Router for file-based navigation
 - TypeScript configuration
 - Landing pages for new users
@@ -119,20 +119,10 @@ The mobile app integrates with the existing Epic Stack backend:
 
 ## Package Compatibility
 
-The project uses Expo SDK 54 compatible package versions:
-
-- `expo-router@~6.0.0` (updated from 4.0.x for compatibility)
-- `expo-secure-store@~15.0.6` (updated from 14.0.x)
-- `expo-auth-session@~7.0.7` (updated from 6.0.x)
-- `expo-crypto@~15.0.6` (updated from 14.0.x)
-- `expo-linking@~8.0.7` (updated from 7.0.x)
-- `expo-constants@~18.0.8` (updated from 17.0.x)
-- `react-native-safe-area-context@~5.6.0` (updated from 4.14.0)
-- `react-native-screens@~4.16.0` (updated from 4.4.0)
-- `jest-expo@~54.0.10` (updated from 52.0.x)
-
-These versions ensure compatibility with Expo SDK 54 and prevent version
-mismatch warnings.
+The project tracks **Expo SDK 58** (`expo ~58`, React Native 0.88, React 19.3).
+Run `npx expo install --fix` in `apps/mobile` after changing the SDK. Use
+`npx expo-doctor` to catch config drift. Physical-device Expo Go requires the
+store build that matches SDK 58.
 
 ## Next Steps
 

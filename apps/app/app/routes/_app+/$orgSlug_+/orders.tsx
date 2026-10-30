@@ -22,12 +22,14 @@ import {
 } from '#app/components/orders/order-status.tsx'
 import { OpenTabs } from '#app/components/qr/open-tabs.tsx'
 import { useOrdersClient } from '#app/hooks/use-orders-client.ts'
+import { isLoyaltyFeatureEnabled } from '#app/utils/loyalty/access.server.ts'
 import { requireMenuRead } from '#app/utils/menu/access.server.ts'
 import { getOrderCustomerLinkAccess } from '#app/utils/orders/customer-link.server.ts'
 import {
 	formatMoney,
 	type Order,
 	orderSchema,
+	paymentDisplayStatus,
 	relativeTime,
 } from '#app/utils/orders/order-model.ts'
 import { ordersHref } from '#app/utils/orders/orders-link.ts'
@@ -52,10 +54,14 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	)
 	const link = await getOrderCustomerLinkAccess(request, orgSlug)
 	const qr = await getQrOrderingFeatures(organization.id)
+	const loyaltyEnabled = qr.enabled
+		? await isLoyaltyFeatureEnabled(organization.id)
+		: false
 	return data(
 		{
 			orgSlug,
 			canWrite,
+			loyaltyEnabled,
 			// Tabs show while QR ordering is on, even with dine-in switched off,
 			// so tabs still open (and payments to check) can be settled. The
 			// list renders nothing when there is nothing to show.
@@ -70,7 +76,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 }
 
 export default function OrdersInbox() {
-	const { orgSlug, canViewCustomers, canWrite, showTabs } =
+	const { orgSlug, canViewCustomers, canWrite, showTabs, loyaltyEnabled } =
 		useLoaderData<typeof loader>()
 	const [refreshKey, setRefreshKey] = useState(0)
 	const navigate = useNavigate()
@@ -145,6 +151,7 @@ export default function OrdersInbox() {
 					orgSlug={orgSlug}
 					canWrite={canWrite}
 					refreshKey={refreshKey}
+					loyaltyEnabled={loyaltyEnabled}
 				/>
 			) : null}
 			{loading ? (
@@ -250,7 +257,9 @@ export default function OrdersInbox() {
 									<div className="flex items-center justify-between gap-3">
 										<span className="flex flex-wrap items-center gap-x-3 gap-y-1">
 											<OrderStatusLabel status={order.status} />
-											<PaymentStatusLabel status={order.paymentStatus} />
+											<PaymentStatusLabel
+												status={paymentDisplayStatus(order)}
+											/>
 										</span>
 										<span className="text-muted-foreground text-xs">{ago}</span>
 									</div>

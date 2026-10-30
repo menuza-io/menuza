@@ -1,0 +1,14 @@
+{
+	"approvals": [
+		{
+			"id": "00000000-0000-4000-8000-000000000008",
+			"status": "pending",
+			"rewardName": "Five off your order",
+			"pointsCost": 100,
+			"discountMinor": 500,
+			"currency": "USD",
+			"createdAt": 1907683221000,
+			"expiresAt": 1907683401000
+		}
+	]
+}

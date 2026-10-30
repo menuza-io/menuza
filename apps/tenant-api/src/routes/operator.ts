@@ -18,6 +18,7 @@ import {
 	marketingMessages,
 } from '@repo/tenant-db'
 import { z } from 'zod'
+import { errorLogFields } from '../lib/error-log.ts'
 import { checkGlobalSendCap } from '../lib/rate-limit.ts'
 import { getBearerToken, getOperatorToken } from '../lib/secrets.ts'
 import { sendTenantEmail } from '../lib/tenant-email.ts'
@@ -255,7 +256,7 @@ operatorRoutes.post('/customers/:customerId/erase', async (c) => {
 				error.status as 400 | 502,
 			)
 		}
-		console.error('Error erasing customer:', error)
+		console.error('Error erasing customer:', errorLogFields(error))
 		return c.json({ error: 'Tenant Database unavailable' }, 500)
 	}
 })

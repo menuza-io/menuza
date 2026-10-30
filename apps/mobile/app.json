@@ -1,61 +1,67 @@
 {
-	"expo": {
-		"name": "Menuza Mobile",
-		"slug": "menuza-mobile",
-		"version": "1.0.0",
-		"orientation": "portrait",
-		"icon": "./assets/icon.png",
-		"userInterfaceStyle": "light",
-		"newArchEnabled": true,
-		"scheme": "menuza",
-		"splash": {
-			"image": "./assets/splash-icon.png",
-			"resizeMode": "contain",
-			"backgroundColor": "#ffffff"
-		},
-		"ios": {
-			"supportsTablet": true,
-			"bundleIdentifier": "com.menuza.mobile"
-		},
+  "expo": {
+    "name": "Menuza Mobile",
+    "slug": "menuza-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "scheme": "menuza",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.menuza.mobile"
+    },
 		"android": {
 			"adaptiveIcon": {
 				"foregroundImage": "./assets/adaptive-icon.png",
 				"backgroundColor": "#ffffff"
 			},
-			"edgeToEdgeEnabled": true,
 			"predictiveBackGestureEnabled": false,
 			"package": "com.menuza.mobile"
 		},
-		"web": {
-			"favicon": "./assets/favicon.png",
-			"bundler": "metro"
-		},
-		"plugins": ["expo-router", "expo-localization"],
-		"experiments": {
-			"typedRoutes": true,
-			"reactCanary": true
-		},
-		"linking": {
-			"prefixes": ["menuza://", "https://menuza.io"],
-			"config": {
-				"screens": {
-					"index": "",
-					"(auth)": {
-						"screens": {
-							"sign-in": "sign-in",
-							"sign-up": "sign-up",
-							"forgot-password": "forgot-password",
-							"verify-email": "verify-email"
-						}
-					},
-					"(dashboard)": {
-						"screens": {
-							"index": "dashboard"
-						}
-					},
-					"auth/callback": "auth/callback"
-				}
-			}
-		}
-	}
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-localization",
+      "expo-secure-store",
+      "expo-status-bar",
+      "expo-web-browser"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "linking": {
+      "prefixes": [
+        "menuza://",
+        "https://menuza.io"
+      ],
+      "config": {
+        "screens": {
+          "index": "",
+          "(auth)": {
+            "screens": {
+              "sign-in": "sign-in",
+              "sign-up": "sign-up",
+              "forgot-password": "forgot-password",
+              "verify-email": "verify-email"
+            }
+          },
+          "(dashboard)": {
+            "screens": {
+              "index": "dashboard"
+            }
+          },
+          "auth/callback": "auth/callback"
+        }
+      }
+    }
+  }
 }

@@ -66,6 +66,7 @@ const estTimeLabel = i18n._(msg`Estimated time`)
 const pickupTimeLabel = i18n._(msg`Pickup time`)
 const receiptTitle = i18n._(msg`Receipt`)
 const subtotalText = i18n._(msg`Subtotal`)
+const rewardDiscountText = i18n._(msg`Reward`)
 const taxText = i18n._(msg`Tax`)
 const includesTaxText = i18n._(msg`Includes VAT`)
 const vatNumberText = i18n._(msg`VAT number`)
@@ -377,6 +378,10 @@ const valueClass = 'price font-medium text-foreground'
 								<dt>{subtotalText}</dt>
 								<dd id="order-subtotal" class={valueClass}>{price(0)}</dd>
 							</div>
+							<div id="order-discount-row" class:list={[rowClass, 'hidden']}>
+								<dt>{rewardDiscountText}</dt>
+								<dd id="order-discount" class={valueClass}></dd>
+							</div>
 							<div class={rowClass}>
 								<dt
 									id="order-tax-label"
@@ -486,6 +491,8 @@ const valueClass = 'price font-medium text-foreground'
 			paymentStatus: string
 			currency: string
 			subtotalCents: number
+			/** A loyalty reward's saving. */
+			loyaltyDiscountCents: number
 			taxCents: number
 			deliveryFeeCents: number
 			tipCents: number
@@ -753,12 +760,18 @@ const valueClass = 'price font-medium text-foreground'
 			}
 
 			if (subtotalEl) subtotalEl.textContent = formatCents(order.subtotalCents)
+			const discountCents = Math.max(0, order.loyaltyDiscountCents)
+			const discountRow = document.getElementById('order-discount-row')
+			const discountEl = document.getElementById('order-discount')
+			discountRow?.classList.toggle('hidden', discountCents === 0)
+			if (discountEl) discountEl.textContent = discountCents > 0 ? formatCents(-discountCents) : ''
 			if (taxEl) taxEl.textContent = formatCents(order.taxCents)
 			// Tax-inclusive (VAT) prices: the tax is contained in the subtotal and
 			// the total does not add it, which the receipt's own amounts show.
 			const taxIncluded =
 				order.taxCents > 0 &&
-				order.totalCents === order.subtotalCents + order.deliveryFeeCents + order.tipCents
+				order.totalCents ===
+					order.subtotalCents - discountCents + order.deliveryFeeCents + order.tipCents
 			const taxLabelEl = document.getElementById('order-tax-label')
 			const taxLabelText = taxIncluded
 				? taxLabelEl?.dataset.inclusiveLabel

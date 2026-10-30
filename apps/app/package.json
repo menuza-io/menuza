@@ -94,6 +94,7 @@
     "@repo/geo": "*",
     "@repo/i18n": "*",
     "@repo/integrations": "*",
+    "@repo/loyalty": "*",
     "@repo/marketing": "*",
     "@repo/marketing-workflow": "*",
     "@repo/notifications": "*",

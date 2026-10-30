@@ -28,17 +28,23 @@ routes accept opaque references, never customer contact fields or customer JWTs.
     instructions?: string
     options: Array<{ groupId: string; optionId: string; half?: 'whole' | 'left' | 'right'; quantity?: number }>
   }>
+  // Optional loyalty reward picked by a signed-in member (customer token)
+  loyalty?: { rewardId: string; rewardVersion: number; expectedDiscountMinor: number; targetLineId: string | null }
 }
 ```
 
-No browser prices are accepted. Successful response:
+No browser prices are accepted. A `loyalty` selection is re-quoted in the region
+and bound in the placement transaction; a changed reward, balance or cart is
+refused with the loyalty error code, never applied silently
+([loyalty.md](./loyalty.md#redemption)). Successful response:
 
 ```ts
 {
   order: { id: string; number: string; status: string; paymentStatus: string;
     currency: string; subtotalCents: number; taxCents: number;
-    deliveryFeeCents: number; tipCents: number; totalCents: number;
-    holdExpiresAt: string | null }
+    deliveryFeeCents: number; tipCents: number;
+    loyaltyDiscountCents: number; // a reward's discount, off the subtotal before tax
+    totalCents: number; holdExpiresAt: string | null }
   receiptToken: string
   paymentToken?: string // online only; capability to request an opaque quote
 }
@@ -158,6 +164,20 @@ provisioned organization, and uses `private, no-store`.
   then verified phone, never name or email.
 - `PATCH /operator/orders/:id`:
   `{ status: 'accepted' | 'preparing' | 'ready' | 'completed' | 'cancelled', markPaid?: boolean }`.
+- `POST /operator/orders/:id/refunds` (`orders:write`, `Idempotency-Key`
+  required): `{ amountCents, note }` or `{ full: true, note }` (note 3 to 280
+  characters) records money returned for a paid online order. A record only: the
+  refund itself happens in the provider's dashboard and the region never calls a
+  provider. Answers 201 `{ order, refund, replayed: false }` (200 and
+  `replayed: true` for the same key and body), 422 `refund_exceeds_payment` with
+  `refundableCents`, and 409 `refund_complete`, `refund_not_online`,
+  `refund_not_paid` or `idempotency_conflict`. Refunds are append-only
+  `restaurant_order_refunds` rows; `refundedCents` on the order only grows and
+  never passes `totalCents`, and `paymentStatus` stays `paid`. Operator order
+  reads carry `refundedCents`, and `GET /operator/orders/:id` adds `refunds`
+  (`{ id, amountCents, currency, full, note, actorId, createdAt }`, oldest
+  first). Loyalty takes earned points back from `refundedCents`
+  ([loyalty.md](./loyalty.md#refunds)).
 
 Money remains integer cents. Orders with handoff payment hold capacity durably
 immediately. Online orders reserve capacity until their configured hold expiry;
@@ -189,10 +209,13 @@ pickup and delivery requests are unchanged.
   (`@repo/common/qr-ordering`): rounds with their statuses and lines, totals,
   `roundsPending`. No contact fields.
 - `POST /orders/tab/pay` with `X-Tab-Token` and
-  `{ slug?, host?, tipPercent, contact: { name, phone } }` returns
-  `{ orderRef: 'tab:<id>', tabPaymentToken, amountCents, tipCents, currency }`.
+  `{ slug?, host?, tipPercent, contact: { name, phone }, loyalty? }` returns
+  `{ orderRef: 'tab:<id>', tabPaymentToken, amountCents, tipCents, loyaltyDiscountCents, currency }`.
   The browser then uses the hosted-payment calls below with `orderId = orderRef`
-  and `paymentToken = tabPaymentToken`.
+  and `paymentToken = tabPaymentToken`. `loyalty` (the same selection as
+  `POST /orders`, customer token required) spends one reward on the tab; asking
+  again gives an earlier reward back first. Rewards on a tab are priced with
+  `POST /loyalty/tab/quote` ([loyalty.md](./loyalty.md#earning)).
 
 Errors: `table_not_found` (404), `table_archived` (410),
 `table_location_mismatch` (422), `tab_closed` (409), `tab_locked` (423),
@@ -216,9 +239,13 @@ tab payment returns to `/menu?tab=paid|cancelled`.
 `/:orgSlug/qr-token`; `canImportFloorPlan` is a separate fail-closed claim):
 `GET|POST /tables`, `POST /tables/bulk`, `PATCH /tables/:id`
 (`{ label?, archived?, regenerateToken? }`), `POST /tables/import-floor-plan`,
-`GET|PATCH /settings`, `GET /tabs?status=open|closed|cancelled|recent`,
-`GET /tabs/:id`, `POST /tabs/:id/close`
-(`{ paymentMethod: 'counter', tipCents? }`), `POST /tabs/:id/void`
-(`{ reason }`), `POST /tabs/:id/lock`. `GET /operator/orders` rows add `table`,
-`tabId` and `source`; `markPaid` on a tab round answers
-`tab_settlement_required`.
+`GET|PATCH /settings`,
+`GET /tabs?status=open|closed|cancelled|recent|review|station` (`station`:
+counter closes marked `rungUpOnStation` in the last 24 hours, newest close
+first), `GET /tabs/:id`, `POST /tabs/:id/close`
+(`{ paymentMethod: 'counter', tipCents?, acknowledgeReview?, expectedTotalCents?, rungUpOnStation? }`;
+`rungUpOnStation: true` means the till sale earns loyalty points, so the tab
+does not), `POST /tabs/:id/clear-station-flag` (undoes a mistaken mark; the tab
+earns), `POST /tabs/:id/void` (`{ reason }`), `POST /tabs/:id/lock`.
+`GET /operator/orders` rows add `table`, `tabId` and `source`; `markPaid` on a
+tab round answers `tab_settlement_required`.

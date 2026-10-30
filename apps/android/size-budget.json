@@ -1,5 +1,0 @@
-{
-	"$comment": "Shipped-size budget for the tenant Android app, enforced by `npm run android:size -w android`. The numbers are deliberately tight: this app's whole point is a sub-200 KB download. If a change needs more room, change this file in the same PR and say why. Reservations booking (iOS parity: client, state machine, 9 screens, 6 locales of 81 strings, Keystore token storage) raised the release AAB budget from 220000 to 255000 bytes (measured 248389); the release APK stays under its 160000 budget (measured 154504, was 88676).",
-	"app/build/outputs/apk/release/app-release-unsigned.apk": 160000,
-	"app/build/outputs/bundle/release/app-release.aab": 255000
-}

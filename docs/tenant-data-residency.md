@@ -139,14 +139,13 @@ purged.
 
 **Regional tenant SQLite, reservations tables** (Reservations module, see
 [ADR 048](./decisions/048-reservations-data-residency.md) and the
-[guide](./reservations.md)): 41 `rsv_*` tables (migration
-`0019_reservations`): guests
-(`rsv_guests`, tags, notes, merges), reservations and their events, holds, table
-occupancies, waitlist entries, notify-me requests, messages, payments, outbox,
-location settings, floor plan, services, policies, experiences and the audit
-log. **Guest data is guest PII:** names, phones, emails, dietary and allergy
-notes, occasions, private staff notes, visit and no-show history and payment
-references exist **only** in the regional database, and the rules are:
+[guide](./reservations.md)): 41 `rsv_*` tables (migration `0019_reservations`):
+guests (`rsv_guests`, tags, notes, merges), reservations and their events,
+holds, table occupancies, waitlist entries, notify-me requests, messages,
+payments, outbox, location settings, floor plan, services, policies, experiences
+and the audit log. **Guest data is guest PII:** names, phones, emails, dietary
+and allergy notes, occasions, private staff notes, visit and no-show history and
+payment references exist **only** in the regional database, and the rules are:
 
 - Never in the control plane, logs, cross-plane payloads, Sites SSR or App
   loaders. The US control plane keeps the `reservations.*` flags, the eight
@@ -175,6 +174,21 @@ references exist **only** in the regional database, and the rules are:
   and notify contact data, voice data, pending messages) and redacts event and
   audit payloads. `customer_subscriptions` is the only marketing consent store,
   and a guest links to a customer only through a verified phone.
+
+**Regional tenant SQLite, loyalty tables** (Loyalty Rewards, see the
+[guide](./loyalty.md)): 17 `loyalty_*` tables (migration `0025_loyalty`):
+programs and rewards with their version history, points accounts, balances, the
+append-only ledger, purchase snapshots, redemptions, refunds, member codes, till
+bindings, approvals, outbox, idempotency keys, rate counters and the audit log.
+Operator-recorded order refunds are `restaurant_order_refunds` (same migration).
+Points accounts, balances, points history and codes exist only here. A customer
+is the member: the account is opened automatically at sign-in, and operators
+reach it from the Customer profile. The US control plane keeps the `loyalty.*`
+flags and the loyalty permissions and mints short-lived `lty+jwt` operator
+tokens; it never loads, stores or proxies an account, a balance or a code. The
+region reads the flags from `GET /resources/loyalty/context` (internal token,
+flags only). Customers reach `/loyalty/*` browser-direct with their regional
+customer token, and tills reach `/pos/loyalty/*` with the device secret.
 
 ## Code map
 
@@ -381,6 +395,10 @@ node’s `DATA_REGION` (slug subdomain or published custom domain).
 | ANY    | `/operator/people/*`                                                                                            | Operator (`people` token) | Customers screen, browser-direct: customers and reservation guests as one list, profile, edit, merge, erase. One token carries both facets as claims; locked by `operator-people.test.ts`.                 |
 | POST   | `/internal/reservations/*`, `/api/reservations/*`                                                               | App, cron                 | `INTERNAL_COMMAND_TOKEN`: context-changed, erase-customer (complete erase), link-customers, summary, tick, payments bridge. Counts and ids only.                                                           |
 | POST   | `/api/voice/actions/:name`                                                                                      | Voice agent               | `VOICE_AGENT_TOKEN`; US organizations only.                                                                                                                                                                |
+| ANY    | `/loyalty/*`                                                                                                    | Browser, native           | Public program; wallet (opens the account), history, member code, approvals and checkout or tab quotes with the customer token. Organization from `Origin`. See [loyalty](loyalty.md#surfaces).            |
+| ANY    | `/operator/loyalty/*`                                                                                           | Operator (`lty+jwt`)      | Browser-direct, minted by the App after the flag and permission checks. Locked by `loyalty-security.test.ts`.                                                                                              |
+| ANY    | `/pos/loyalty/*`                                                                                                | Paired till               | Member-code lookup, quotes, approvals, one-time codes. Device secret, plus a staff session when the terminal requires sign-in. Off per node with `LOYALTY_ENABLED=false`.                                  |
+| POST   | `/api/loyalty/tick`                                                                                             | Cron fan-out, alarms      | Bearer `INTERNAL_COMMAND_TOKEN`. Counts only. See [Loyalty tick](scheduled-jobs.md#loyalty-tick).                                                                                                          |
 
 Access tokens last 15 minutes. Refresh tokens last 30 days (stored hashed with
 `AUTH_HMAC_SECRET`).
@@ -570,9 +588,14 @@ erases one customer from the regional database in a single transaction: the
 `customers` row, login sessions, subscriptions (the marketing consent record),
 saved cards, journey runs and their messages, and the voice calls, call requests
 and texts that carry the customer id or phone. Orders keep their totals for the
-books and lose the link to the person. Website form submissions are redacted
-when a field holds the customer's phone or email as a whole token (best effort:
-they are free text). `al@x.com` does not match inside `sal@x.com` or
+books and lose the link to the person; their recorded refunds keep the amounts
+and lose the note. A loyalty points account is closed in the same transaction:
+codes and till bindings are deleted, pending approvals cancelled, the account
+row is marked erased and unlinked from the customer, ledger and refund notes are
+cleared and its audit rows redacted. Balances, ledger entries, purchases and
+redemptions stay as the anonymous financial trail. Website form submissions are
+redacted when a field holds the customer's phone or email as a whole token (best
+effort: they are free text). `al@x.com` does not match inside `sal@x.com` or
 `al@x.com.au`, and a number in another format (spaces, another country form) is
 not recognised, so check for leftovers by hand when it matters. Every customer
 row that shares the phone (a stale duplicate) is erased too. Call recordings are

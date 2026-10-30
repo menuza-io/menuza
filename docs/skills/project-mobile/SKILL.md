@@ -1,8 +1,8 @@
 ---
 name: project-mobile
 description:
-  Guide Expo operator mobile, white-label iOS/Android tenant apps, secure
-  sessions, regional API use, native testing, and release tooling in this
+  Guide the Expo operator app, the white-label Expo customer app, secure
+  sessions, regional API use, mobile testing, and release tooling in this
   project.
 ---
 
@@ -10,79 +10,82 @@ description:
 
 ## When to use this skill
 
-Use this skill when changing `apps/mobile`, `apps/ios`, `apps/android`, native
-authentication, tenant branding/configuration, deep links, native storage,
+Use this skill when changing `apps/mobile` or `apps/customer`, mobile
+authentication, tenant branding/configuration, deep links, secure storage,
 mobile localization, or mobile build/release automation.
 
-## Distinguish the three clients
+## Distinguish the two clients
 
 - `apps/mobile` is the Expo/React Native operator client with Expo Router, App
   auth APIs, `expo-secure-store`, React Hook Form, and Lingui.
-- `apps/ios` is a small native white-label tenant customer app. Its reusable
-  `TenantKit` layer is platform-independent and Linux-testable; the SwiftUI
-  shell lives in `Sources/TenantApp`.
-- `apps/android` is the size-constrained native white-label tenant customer app.
-  It uses Kotlin framework Views, `HttpURLConnection`, `org.json`, Android
-  Keystore AES-GCM, and no AndroidX/Compose/OkHttp/coroutines.
+- `apps/customer` is the Expo/React Native white-label tenant customer app:
+  branded shell, connect-to-site or a bound tenant, phone OTP, profile and
+  language, table booking, and the Loyalty Rewards wallet. Platform-free logic
+  (API clients, stores, session, theme) lives in `lib/` and is tested with Jest
+  without a simulator; screens live in `app/` and `components/`.
 
-Do not import an operator App session model into the tenant iOS/Android apps.
-Native tenant apps use the same customer phone-OTP/regional tenant-api contract
-as Sites, with device-secure token storage: Keychain on iOS and Keystore on
-Android.
+Do not import an operator App session model into the customer app. It uses the
+same customer phone-OTP/regional tenant-api contract as Sites, with the session
+in `expo-secure-store` (Keychain on iOS, Keystore on Android) and excluded from
+device backups.
 
 ## Tenant client boundary
 
-Branding comes from the public App payload; customer auth/profile traffic goes
-to the org’s regional tenant-api. A native client has no browser Origin, so
-HTTPS white-label builds send the configured public site origin as the Origin
-header. Local HTTP development follows the documented slug/host binding.
+Branding comes from the public App payload (`/resources/sites`, the
+organization's published `theme`); customer auth/profile, booking and loyalty
+traffic goes to the org’s regional tenant-api. A native client has no browser
+Origin, so HTTPS white-label builds send the configured public site origin as
+the Origin header. Local HTTP development follows the documented slug/host
+binding.
 
 Keep access tokens short-lived and refresh through the tenant API. Store refresh
 credentials only in the platform secure store, clear them on logout/invalid
 refresh, and never put tenant secrets or a JWT signing secret in a mobile
-bundle. The US control plane must not receive customer PII from a native app.
+bundle. The US control plane must not receive customer PII from a mobile app.
 
 ## Expo conventions
 
-Use Expo Router route groups (`app/(auth)`, `app/(dashboard)`), the existing
-auth reducer/context, API clients, error categorizer, secure-storage/session
-manager, and shared `@repo/validation`/`@repo/types` contracts. Keep API errors
-actionable and distinguish validation, auth expiry, offline, retryable, and
-server failures. Do not duplicate server business rules in the client.
+Operator app: use Expo Router route groups (`app/(auth)`, `app/(dashboard)`),
+the existing auth reducer/context, API clients, error categorizer,
+secure-storage/session manager, and shared `@repo/validation`/`@repo/types`
+contracts.
 
-When adding a screen, cover loading, retry, keyboard/safe-area behavior,
-offline/failure state, accessibility labels, and both narrow and large device
-layouts. Keep secrets out of logs and telemetry.
+Customer app: use the UI kit in `components/ui` (colors come from the tenant
+theme through `useThemePalette`), the app store hooks (`useAppStore`,
+`useLoyalty`, `useReservations`), and the domain packages (`@repo/loyalty`,
+`@repo/reservations`, `@repo/zoned-time`) instead of re-implementing rules.
+Contract tests read `packages/*/contract-fixtures` in place.
 
-## Native constraints and commands
+Keep API errors actionable and distinguish validation, auth expiry, offline,
+retryable, and server failures. When adding a screen, cover loading, retry,
+keyboard/safe-area behavior, offline/failure and empty states, accessibility
+labels and roles, right-to-left layout, and both narrow and large devices. Keep
+secrets out of logs and telemetry.
 
-The iOS and Android packages intentionally expose opt-in scripts so normal Turbo
-build/test/typecheck stays green without Xcode or the Android SDK:
+## Commands
 
 ```sh
-npm run ios:test -w ios
-npm run ios:sim -w ios
-npm run android:test -w android
-npm run android:run -w android
-npm run android:size -w android
+npm run test -w customer        # Jest (normal CI runs it)
+npm run typecheck -w customer
+npm run lint -w customer
+npm run lingui:extract -w customer
+npm run tenant -w customer -- --tenant <slug>   # white-label icons
+CUSTOMER_TENANT=<slug> npx expo prebuild        # white-label native project
 ```
 
-For tenant builds, use `npm run ios:tenant -w ios -- ...` or
-`npm run android:tenant -w android -- --tenant <slug>` and review generated
-config/icons before a release. Preserve Android’s `size-budget.json`, its
-framework-only dependency constraint, and the iOS `TenantKit`/`TenantApp`
-separation.
+Simulator and device builds need Xcode or the Android SDK. Review the generated
+config and icons before a release.
 
 ## Localization and release
 
-Use Lingui in Expo and the six tenant locales (`en`, `ar`, `de`, `es`, `fr`,
-`zh`) in the native apps. Arabic must switch layout direction and locale-aware
-dates/numbers. Test deep links, TLS/cleartext rules, emulator host mapping,
-tenant binding, version/bundle identifiers, and store metadata before release.
+Use Lingui in both Expo apps. The customer app ships the six tenant locales
+(`en`, `ar`, `de`, `es`, `fr`, `zh`); Arabic switches layout direction per
+screen tree, and dates/numbers are locale-aware. Test deep links, TLS/cleartext
+rules, emulator host mapping, tenant binding, version/bundle identifiers, and
+store metadata before release.
 
 ## References
 
-- [Expo app](../../../apps/mobile/README.md)
-- [iOS tenant app](../../../apps/ios/README.md)
-- [Android tenant app](../../../apps/android/README.md)
+- [Operator app](../../../apps/mobile/README.md)
+- [Customer app](../../../apps/customer/README.md)
 - [Tenant data skill](../project-tenant-data/SKILL.md)

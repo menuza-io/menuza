@@ -17,6 +17,7 @@ import { TENANT_ORG_ID_PATTERN } from '@repo/tenant-db'
 
 import { getBearerToken, getOperatorToken } from '../lib/secrets.ts'
 import {
+	clearStationFlag,
 	closeTabAtCounter,
 	createQrTables,
 	getOperatorTab,
@@ -290,7 +291,9 @@ operatorQrRoutes.patch('/settings', async (c) => {
 // ---------------------------------------------------------------------------
 
 const tabListQuery = z.object({
-	status: z.enum([...QR_TAB_STATUS_VALUES, 'recent', 'review']).optional(),
+	status: z
+		.enum([...QR_TAB_STATUS_VALUES, 'recent', 'review', 'station'])
+		.optional(),
 	limit: z.coerce.number().int().min(1).max(200).optional(),
 })
 
@@ -334,7 +337,20 @@ operatorQrRoutes.post('/tabs/:id/close', async (c) => {
 				closedBy: auth.auth.userId,
 				acknowledgeReview: parsed.data.acknowledgeReview,
 				expectedTotalCents: parsed.data.expectedTotalCents,
+				rungUpOnStation: parsed.data.rungUpOnStation,
 			}),
+		),
+	)
+})
+
+operatorQrRoutes.post('/tabs/:id/clear-station-flag', async (c) => {
+	const auth = await guard(c, 'qr:write')
+	if ('error' in auth) return auth.error
+	return safely(c, auth.auth.orgId, async () =>
+		respond(
+			c,
+			await clearStationFlag(auth.auth.orgId, c.req.param('id')),
+			'tab',
 		),
 	)
 })

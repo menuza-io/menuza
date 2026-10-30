@@ -13,6 +13,10 @@ import {
 	type LocationOrderingAvailability,
 } from './location-availability.ts'
 import { generatePickupSlots, getDropDisplayStatus } from './menu-types.ts'
+import {
+	orderLoyaltySelectionSchema,
+	type OrderLoyaltySelection,
+} from './order-loyalty.ts'
 
 /**
  * Regional restaurant ordering: shared, PII-free contracts and the pure
@@ -196,148 +200,199 @@ export const restaurantOrderLineSchema = z.strictObject({
 		.default([]),
 })
 
-export const restaurantOrderRequestSchema = z
-	.strictObject({
-		slug: z.string().trim().min(1).max(100).optional(),
-		host: z.string().trim().min(1).max(253).optional(),
-		idempotencyKey: z
-			.string()
-			.regex(UUID_REGEX, 'idempotencyKey must be a UUID'),
-		locale: z.string().trim().min(2).max(10).default('en'),
-		locationId: z.string().min(1).max(100),
-		dropSlug: z.string().trim().min(1).max(120).optional(),
-		pickup: z
-			.strictObject({
-				windowId: z.string().min(1).max(100),
-				time: z.string().regex(HH_MM_REGEX, 'Pickup time must be HH:MM'),
-			})
-			.optional(),
-		/**
-		 * `dine_in` is a QR table round: it needs an `X-Table-Token` or
-		 * `X-Tab-Token` header, pays at tab close, and carries contact only as
-		 * the organization's QR settings require.
-		 */
-		fulfillment: z.enum(['pickup', 'delivery', 'dine_in']),
-		paymentMethod: z.enum(['handoff', 'online']),
-		contact: z.strictObject({
-			name: z.string().trim().min(1).max(120).optional(),
-			phone: phoneSchema.optional(),
-			email: z.string().trim().email().max(254).optional(),
-		}),
-		/** Set by Sites when the menu was opened from an order-ahead QR poster. */
-		source: z.enum(['qr_poster']).nullable().optional(),
-		delivery: z
-			.strictObject({
-				// Free-text address + city are required only without a quote
-				// token; with one, the signed coordinates/address are authoritative.
-				address: z.string().trim().max(200).optional(),
-				city: z.string().trim().max(100).optional(),
-				unit: z.string().trim().max(50).optional(),
-				notes: z.string().trim().max(200).optional(),
-				quoteToken: z.string().min(16).max(4096).optional(),
-			})
-			.optional(),
-		/** ISO-8601 instant; null/absent = ASAP. */
-		scheduledFor: z
-			.string()
-			.datetime({ offset: true })
-			.max(40)
-			.nullable()
-			.optional(),
-		tipPercent: z
-			.number()
-			.int()
-			.min(RESTAURANT_TIP_MIN_PERCENT)
-			.max(RESTAURANT_TIP_MAX_PERCENT)
-			.default(0),
-		lines: z.array(restaurantOrderLineSchema).min(1).max(RESTAURANT_MAX_LINES),
-		turnstileToken: z.string().min(1).max(2048).optional(),
-	})
-	.superRefine((value, context) => {
-		if (value.fulfillment === 'dine_in') {
-			refineDineInRequest(value, context)
-		} else {
-			if (!value.contact.name) {
-				context.addIssue({
-					code: z.ZodIssueCode.custom,
-					path: ['contact', 'name'],
-					message: 'Enter your name',
-				})
-			}
-			if (!value.contact.phone) {
-				context.addIssue({
-					code: z.ZodIssueCode.custom,
-					path: ['contact', 'phone'],
-					message: 'Enter a valid phone number',
-				})
-			}
-		}
-		if (value.fulfillment === 'delivery' && !value.delivery) {
+export { orderLoyaltySelectionSchema, type OrderLoyaltySelection }
+
+const restaurantOrderContactSchema = z.strictObject({
+	name: z.string().trim().min(1).max(120).optional(),
+	phone: phoneSchema.optional(),
+	email: z.string().trim().email().max(254).optional(),
+})
+
+/** Every field an order request can carry, before cross-field rules. */
+const restaurantOrderObjectSchema = z.strictObject({
+	slug: z.string().trim().min(1).max(100).optional(),
+	host: z.string().trim().min(1).max(253).optional(),
+	idempotencyKey: z.string().regex(UUID_REGEX, 'idempotencyKey must be a UUID'),
+	locale: z.string().trim().min(2).max(10).default('en'),
+	locationId: z.string().min(1).max(100),
+	dropSlug: z.string().trim().min(1).max(120).optional(),
+	pickup: z
+		.strictObject({
+			windowId: z.string().min(1).max(100),
+			time: z.string().regex(HH_MM_REGEX, 'Pickup time must be HH:MM'),
+		})
+		.optional(),
+	/**
+	 * `dine_in` is a QR table round: it needs an `X-Table-Token` or
+	 * `X-Tab-Token` header, pays at tab close, and carries contact only as
+	 * the organization's QR settings require.
+	 */
+	fulfillment: z.enum(['pickup', 'delivery', 'dine_in']),
+	paymentMethod: z.enum(['handoff', 'online']),
+	contact: restaurantOrderContactSchema,
+	/** Set by Sites when the menu was opened from an order-ahead QR poster. */
+	source: z.enum(['qr_poster']).nullable().optional(),
+	/**
+	 * The loyalty reward the customer picked; re-quoted server-side and
+	 * refused when it no longer matches. The schema accepts it on a dine-in
+	 * round so the order service can refuse it with its own code (422
+	 * `loyalty_on_tab`): a tab's reward is chosen when the tab is paid.
+	 */
+	loyalty: orderLoyaltySelectionSchema.optional(),
+	delivery: z
+		.strictObject({
+			// Free-text address + city are required only without a quote
+			// token; with one, the signed coordinates/address are authoritative.
+			address: z.string().trim().max(200).optional(),
+			city: z.string().trim().max(100).optional(),
+			unit: z.string().trim().max(50).optional(),
+			notes: z.string().trim().max(200).optional(),
+			quoteToken: z.string().min(16).max(4096).optional(),
+		})
+		.optional(),
+	/** ISO-8601 instant; null/absent = ASAP. */
+	scheduledFor: z
+		.string()
+		.datetime({ offset: true })
+		.max(40)
+		.nullable()
+		.optional(),
+	tipPercent: z
+		.number()
+		.int()
+		.min(RESTAURANT_TIP_MIN_PERCENT)
+		.max(RESTAURANT_TIP_MAX_PERCENT)
+		.default(0),
+	lines: z.array(restaurantOrderLineSchema).min(1).max(RESTAURANT_MAX_LINES),
+	turnstileToken: z.string().min(1).max(2048).optional(),
+})
+
+/** The cross-field shape the refinement sees (a quote may drop contact). */
+type OrderRefinementValue = {
+	contact?: { name?: string; phone?: string }
+	fulfillment: 'pickup' | 'delivery' | 'dine_in'
+	paymentMethod: 'handoff' | 'online'
+	tipPercent: number
+	dropSlug?: string
+	pickup?: unknown
+	delivery?: { address?: string; city?: string; quoteToken?: string }
+	scheduledFor?: string | null
+	source?: 'qr_poster' | null
+	lines: Array<{ quantity: number }>
+}
+
+function refineOrderRequest(
+	value: OrderRefinementValue,
+	context: z.RefinementCtx,
+	options: { requireContact: boolean },
+) {
+	if (value.fulfillment === 'dine_in') {
+		refineDineInRequest(value, context)
+	} else if (options.requireContact) {
+		if (!value.contact?.name) {
 			context.addIssue({
 				code: z.ZodIssueCode.custom,
-				path: ['delivery'],
-				message: 'A delivery address is required',
+				path: ['contact', 'name'],
+				message: 'Enter your name',
 			})
 		}
-		if (value.delivery && !value.delivery.quoteToken) {
-			if ((value.delivery.address ?? '').length < 5) {
-				context.addIssue({
-					code: z.ZodIssueCode.custom,
-					path: ['delivery', 'address'],
-					message: 'Enter a delivery address',
-				})
-			}
-			if (!value.delivery.city) {
-				context.addIssue({
-					code: z.ZodIssueCode.custom,
-					path: ['delivery', 'city'],
-					message: 'Enter a delivery city',
-				})
-			}
-		}
-		if (value.dropSlug && value.scheduledFor) {
+		if (!value.contact?.phone) {
 			context.addIssue({
 				code: z.ZodIssueCode.custom,
-				path: ['scheduledFor'],
-				message: 'Drops use pickup windows instead of scheduled times',
+				path: ['contact', 'phone'],
+				message: 'Enter a valid phone number',
 			})
 		}
-		if (value.fulfillment === 'pickup' && value.delivery) {
+	}
+	if (value.fulfillment === 'delivery' && !value.delivery) {
+		context.addIssue({
+			code: z.ZodIssueCode.custom,
+			path: ['delivery'],
+			message: 'A delivery address is required',
+		})
+	}
+	if (value.delivery && !value.delivery.quoteToken) {
+		if ((value.delivery.address ?? '').length < 5) {
 			context.addIssue({
 				code: z.ZodIssueCode.custom,
-				path: ['delivery'],
-				message: 'Delivery details are not valid for pickup orders',
+				path: ['delivery', 'address'],
+				message: 'Enter a delivery address',
 			})
 		}
-		if (value.dropSlug && !value.pickup) {
+		if (!value.delivery.city) {
 			context.addIssue({
 				code: z.ZodIssueCode.custom,
-				path: ['pickup'],
-				message: 'Choose a pickup time',
+				path: ['delivery', 'city'],
+				message: 'Enter a delivery city',
 			})
 		}
-		if (!value.dropSlug && value.pickup) {
-			context.addIssue({
-				code: z.ZodIssueCode.custom,
-				path: ['pickup'],
-				message: 'Pickup windows are only available for drops',
-			})
-		}
-		const totalQuantity = value.lines.reduce(
-			(sum, line) => sum + line.quantity,
-			0,
-		)
-		if (totalQuantity > RESTAURANT_MAX_TOTAL_QUANTITY) {
-			context.addIssue({
-				code: z.ZodIssueCode.custom,
-				path: ['lines'],
-				message: 'This order is too large',
-			})
-		}
-	})
+	}
+	if (value.dropSlug && value.scheduledFor) {
+		context.addIssue({
+			code: z.ZodIssueCode.custom,
+			path: ['scheduledFor'],
+			message: 'Drops use pickup windows instead of scheduled times',
+		})
+	}
+	if (value.fulfillment === 'pickup' && value.delivery) {
+		context.addIssue({
+			code: z.ZodIssueCode.custom,
+			path: ['delivery'],
+			message: 'Delivery details are not valid for pickup orders',
+		})
+	}
+	if (value.dropSlug && !value.pickup) {
+		context.addIssue({
+			code: z.ZodIssueCode.custom,
+			path: ['pickup'],
+			message: 'Choose a pickup time',
+		})
+	}
+	if (!value.dropSlug && value.pickup) {
+		context.addIssue({
+			code: z.ZodIssueCode.custom,
+			path: ['pickup'],
+			message: 'Pickup windows are only available for drops',
+		})
+	}
+	const totalQuantity = value.lines.reduce(
+		(sum, line) => sum + line.quantity,
+		0,
+	)
+	if (totalQuantity > RESTAURANT_MAX_TOTAL_QUANTITY) {
+		context.addIssue({
+			code: z.ZodIssueCode.custom,
+			path: ['lines'],
+			message: 'This order is too large',
+		})
+	}
+}
+
+export const restaurantOrderRequestSchema =
+	restaurantOrderObjectSchema.superRefine((value, context) =>
+		refineOrderRequest(value, context, { requireContact: true }),
+	)
 
 export type RestaurantOrderRequest = z.infer<
 	typeof restaurantOrderRequestSchema
+>
+
+/**
+ * A loyalty checkout quote: priced exactly like a placement, but a read — no
+ * idempotency key, no contact, and no reward pick inside the order (the pick
+ * rides as the quote body's `selection`). Not strict: a placement-shaped
+ * body still parses, its idempotency key and contact are simply dropped.
+ */
+export const restaurantOrderQuoteSchema = z
+	.object({ ...restaurantOrderObjectSchema.shape })
+	.omit({ idempotencyKey: true, loyalty: true })
+	.extend({ contact: restaurantOrderContactSchema.optional() })
+	.superRefine((value, context) =>
+		refineOrderRequest(value, context, { requireContact: false }),
+	)
+
+export type RestaurantOrderQuoteRequest = z.infer<
+	typeof restaurantOrderQuoteSchema
 >
 
 /**
@@ -419,6 +474,41 @@ export const operatorOrderPatchSchema = z.strictObject({
 
 export type OperatorOrderPatch = z.infer<typeof operatorOrderPatchSchema>
 
+const refundNoteSchema = z.string().trim().min(3).max(280)
+
+/**
+ * Money an operator records as returned for a paid online order
+ * (POST /operator/orders/:id/refunds, with an `Idempotency-Key`). It is a
+ * record only: the region never calls a payment provider. Either an amount,
+ * or `full` for everything not refunded yet.
+ */
+export const operatorOrderRefundRequestSchema = z.union([
+	z.strictObject({
+		amountCents: z.number().int().min(1).max(100_000_000),
+		note: refundNoteSchema,
+	}),
+	z.strictObject({
+		full: z.literal(true),
+		note: refundNoteSchema,
+	}),
+])
+
+export type OperatorOrderRefundRequest = z.infer<
+	typeof operatorOrderRefundRequestSchema
+>
+
+export type OrderRefundState = 'none' | 'partial' | 'full'
+
+/** How much of what the customer paid came back. */
+export function orderRefundState(order: {
+	totalCents: number
+	refundedCents: number
+}): OrderRefundState {
+	const refunded = order.refundedCents
+	if (refunded <= 0) return 'none'
+	return refunded >= order.totalCents ? 'full' : 'partial'
+}
+
 /**
  * Canonical, PII-scrubbing-free fingerprint of the order semantics. The same
  * checkout attempt retried with the same idempotency key produces the same
@@ -443,6 +533,7 @@ export function canonicalOrderRequest(request: RestaurantOrderRequest): string {
 		},
 		// Only when present, so hashes of requests without it never change.
 		...(request.source ? { source: request.source } : {}),
+		...(request.loyalty ? { loyalty: request.loyalty } : {}),
 		delivery: request.delivery
 			? {
 					address: request.delivery.address ?? null,
@@ -941,6 +1032,13 @@ export type PricedOrderLine = {
 	taxableCents: number
 	instructions: string | null
 	options: PricedOptionLine[]
+	/**
+	 * One unit of the chosen variant without modifiers, and every menu category
+	 * the item was in, when the order was priced. Loyalty reads them (free-item
+	 * rewards, category earning).
+	 */
+	baseUnitCents: number
+	categoryIds: string[]
 }
 
 export type OrderCapacityEntitySpec = {
@@ -971,6 +1069,8 @@ export type PricedRestaurantOrder = {
 	taxCents: number
 	/** True when menu prices include tax (VAT-inclusive pricing). */
 	taxInclusive: boolean
+	/** The location tax rate (percent) `taxCents` was computed with. */
+	taxRatePercent: number
 	tipCents: number
 	tipPercent: number
 	deliveryFeeCents: number
@@ -1809,7 +1909,7 @@ function orderError(
  */
 export function priceRestaurantOrder(
 	context: RestaurantOrderContext,
-	request: RestaurantOrderRequest,
+	request: RestaurantOrderQuoteRequest,
 	options: {
 		now: Date
 		/** Verified signed delivery quote (tenant-api checks signature/expiry). */
@@ -2264,6 +2364,8 @@ export function priceRestaurantOrder(
 			taxableCents: lineTaxable,
 			instructions: line.instructions ? line.instructions : null,
 			options: modifierResult.options,
+			baseUnitCents: baseCents,
+			categoryIds: [...entry.categoryIds],
 		})
 
 		itemQuantityTotals.set(
@@ -2450,6 +2552,7 @@ export function priceRestaurantOrder(
 			subtotalCents,
 			taxCents,
 			taxInclusive,
+			taxRatePercent,
 			tipCents,
 			tipPercent: request.tipPercent,
 			deliveryFeeCents,

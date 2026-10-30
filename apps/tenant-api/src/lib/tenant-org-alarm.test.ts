@@ -3,6 +3,7 @@ import { ORG_ALARM_LEGACY_ORG_KEY, ORG_ALARM_ORG_KEY } from './org-alarm.ts'
 
 const rsvTick = vi.hoisted(() => vi.fn())
 const staffTick = vi.hoisted(() => vi.fn())
+const loyaltyTick = vi.hoisted(() => vi.fn())
 const appFetch = vi.hoisted(() => vi.fn())
 const migrate = vi.hoisted(() => vi.fn(async () => {}))
 
@@ -33,6 +34,12 @@ vi.mock('../services/staff-tick-service.ts', async (importOriginal) => ({
 		typeof import('../services/staff-tick-service.ts')
 	>()),
 	runStaffTickForOrg: staffTick,
+}))
+vi.mock('../services/loyalty-tick-service.ts', async (importOriginal) => ({
+	...(await importOriginal<
+		typeof import('../services/loyalty-tick-service.ts')
+	>()),
+	runLoyaltyTickForOrg: loyaltyTick,
 }))
 
 const { TenantOrg, TENANT_ORG_HEADER } =
@@ -95,11 +102,13 @@ describe('TenantOrg alarm wiring', () => {
 		vi.setSystemTime(NOW)
 		rsvTick.mockReset()
 		staffTick.mockReset()
+		loyaltyTick.mockReset()
 		appFetch.mockReset()
 		migrate.mockClear()
 		appFetch.mockImplementation(async () => Response.json({ ok: true }))
 		rsvTick.mockResolvedValue({ needsFollowUp: false, nextDueAt: null })
 		staffTick.mockResolvedValue({ needsFollowUp: false, nextDueAt: null })
+		loyaltyTick.mockResolvedValue({ needsFollowUp: false, nextDueAt: null })
 	})
 	afterEach(() => {
 		vi.useRealTimers()
@@ -121,6 +130,35 @@ describe('TenantOrg alarm wiring', () => {
 			expect(res.status).toBe(200)
 			expect(state.alarm).toBe(NOW + 2 * 60 * 1000)
 			expect(kv.get(ORG_ALARM_ORG_KEY)).toBe(ORG)
+		})
+
+		it('arms the alarm at the loyalty interval after a successful loyalty request', async () => {
+			for (const path of [
+				'/loyalty/wallet',
+				'/pos/loyalty/identify',
+				'/operator/loyalty/members',
+			]) {
+				const { org, state } = makeOrg()
+				await org.fetch(req(path))
+				expect(state.alarm).toBe(NOW + 2 * 60 * 1000)
+			}
+		})
+
+		it('does not arm for order traffic alone', async () => {
+			const { org, state } = makeOrg()
+			await org.fetch(req('/orders', ORG, 'POST'))
+			expect(state.alarm).toBeNull()
+		})
+
+		it('arms for a loyalty tick that reports a follow-up', async () => {
+			appFetch.mockResolvedValue(
+				Response.json({
+					result: { needsFollowUp: true, nextDueAt: NOW + 7 * 60 * 1000 },
+				}),
+			)
+			const { org, state } = makeOrg()
+			await org.fetch(req('/api/loyalty/tick', ORG, 'POST'))
+			expect(state.alarm).toBe(NOW + 7 * 60 * 1000)
 		})
 
 		it('does not arm for an unrelated request', async () => {
@@ -201,9 +239,10 @@ describe('TenantOrg alarm wiring', () => {
 			await org.alarm()
 			expect(rsvTick).not.toHaveBeenCalled()
 			expect(staffTick).not.toHaveBeenCalled()
+			expect(loyaltyTick).not.toHaveBeenCalled()
 		})
 
-		it('runs both registered modules for the stored organization with the current time', async () => {
+		it('runs every registered module for the stored organization with the current time', async () => {
 			const { org } = makeOrg({ [ORG_ALARM_ORG_KEY]: ORG })
 			await org.alarm()
 			expect(rsvTick).toHaveBeenCalledTimes(1)
@@ -213,6 +252,7 @@ describe('TenantOrg alarm wiring', () => {
 			const deps = rsvTick.mock.calls[0]![1] as { deps: { now: () => number } }
 			expect(deps.deps.now()).toBe(NOW)
 			expect(staffTick).toHaveBeenCalledWith(ORG)
+			expect(loyaltyTick).toHaveBeenCalledWith(ORG, { now: NOW })
 		})
 
 		it('still reads an organization stored under the legacy staffing key', async () => {
@@ -233,6 +273,16 @@ describe('TenantOrg alarm wiring', () => {
 			const { org, state } = makeOrg({ [ORG_ALARM_ORG_KEY]: ORG })
 			await org.alarm()
 			expect(state.alarm).toBe(NOW + 4 * 60 * 1000)
+		})
+
+		it('re-arms for the loyalty module alone when only it has work', async () => {
+			loyaltyTick.mockResolvedValue({
+				needsFollowUp: true,
+				nextDueAt: NOW + 3 * 60 * 1000,
+			})
+			const { org, state } = makeOrg({ [ORG_ALARM_ORG_KEY]: ORG })
+			await org.alarm()
+			expect(state.alarm).toBe(NOW + 3 * 60 * 1000)
 		})
 
 		it('does not re-arm when nothing needs a follow-up', async () => {

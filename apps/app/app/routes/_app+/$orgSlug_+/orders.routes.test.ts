@@ -16,6 +16,9 @@ vi.mock('#app/utils/menu/access.server.ts', () => ({
 vi.mock('#app/utils/orders/customer-link.server.ts', () => ({
 	getOrderCustomerLinkAccess: access.getOrderCustomerLinkAccess,
 }))
+vi.mock('#app/utils/loyalty/access.server.ts', () => ({
+	isLoyaltyFeatureEnabled: vi.fn().mockResolvedValue(false),
+}))
 vi.mock('@repo/auth', () => ({
 	userHasOrganizationPermission: access.userHasOrganizationPermission,
 }))
@@ -75,10 +78,27 @@ describe('orders routes', () => {
 		)) as {
 			data: { orderId: string; canWrite: boolean; canViewCustomers: boolean }
 		}
-		expect(result.data).toMatchObject({
+		expect(result.data).toEqual({
+			orgSlug: 'acme',
 			orderId: 'o1',
 			canWrite: true,
 			canViewCustomers: true,
 		})
+	})
+
+	it('refunds follow order write access, whatever the loyalty flags say', async () => {
+		access.userHasOrganizationPermission.mockResolvedValue(false)
+		const result = (await detailLoader(
+			args('https://app.test/acme/orders/o1', {
+				orgSlug: 'acme',
+				orderId: 'o1',
+			}),
+		)) as { data: { canWrite: boolean } }
+		expect(result.data.canWrite).toBe(false)
+		expect(access.userHasOrganizationPermission).toHaveBeenCalledWith(
+			'u1',
+			'org1',
+			'update:menu:any',
+		)
 	})
 })

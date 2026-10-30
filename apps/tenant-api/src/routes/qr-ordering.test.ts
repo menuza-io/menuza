@@ -734,6 +734,11 @@ describe('QR ordering: dine-in tabs and the operator surface', () => {
 				body: { reason: 'x' },
 			},
 			{ method: 'POST', path: '/tabs/t1/lock', write: true },
+			{
+				method: 'POST',
+				path: '/tabs/t1/clear-station-flag',
+				write: true,
+			},
 		]
 
 		it.each(routes)('$method $path', async (route) => {

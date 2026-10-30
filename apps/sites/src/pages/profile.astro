@@ -1,5 +1,6 @@
 ---
 import { msg } from '@lingui/core/macro'
+import { getLocaleHref } from '@repo/common/site-locales'
 import SitePage from '~/components/SitePage.astro'
 import DropAlertsSignup from '~/components/drops/DropAlertsSignup.astro'
 import UpcomingReservations from '~/components/reservations/UpcomingReservations.astro'
@@ -28,6 +29,15 @@ const paymentMethodsHint = i18n._(
 )
 const noPaymentMethods = i18n._(msg`No saved payment methods yet.`)
 const expires = i18n._(msg`Expires`)
+const rewardsTitle = i18n._(msg`Rewards`)
+const rewardsHint = i18n._(msg`Your points, rewards, code and history.`)
+const viewRewards = i18n._(msg`View your rewards`)
+const rewardsHref = getLocaleHref(
+	'/profile/rewards',
+	Astro.locals.requestedLocale,
+	Astro.locals.requestedLocale,
+	Astro.locals.defaultLocale,
+)
 
 if (!organization) {
 	return new Response('Not Found', { status: 404, statusText: 'Not Found' })
@@ -110,7 +120,8 @@ const reservationsGate = await fetchPublishedReservations({
 						readonly
 						disabled
 						placeholder="+1234567890"
-						class="flex h-10 w-full rounded-md border border-input bg-muted/50 px-3 py-2 text-sm text-muted-foreground ring-offset-background cursor-not-allowed opacity-75"
+						dir="ltr"
+						class="flex h-10 w-full rounded-md border border-input bg-muted/50 px-3 py-2 text-start text-sm text-muted-foreground ring-offset-background cursor-not-allowed opacity-75 rtl:text-end"
 					/>
 					<p class="text-xs text-muted-foreground">
 						{phoneCannotChange}
@@ -128,6 +139,24 @@ const reservationsGate = await fetchPublishedReservations({
 					{saveChanges}
 				</button>
 			</form>
+		</div>
+
+		{/* Shown by the browser once the region says this site runs a program. */}
+		<div
+			class="w-full rounded-xl border border-border bg-card p-6 shadow-sm sm:p-8"
+			data-loyalty-link
+			hidden
+		>
+			<div class="space-y-1">
+				<h2 class="font-heading text-lg text-foreground">{rewardsTitle}</h2>
+				<p class="text-sm text-muted-foreground">{rewardsHint}</p>
+			</div>
+			<a
+				href={rewardsHref}
+				class="mt-4 inline-flex text-sm font-medium text-primary hover:underline"
+			>
+				{viewRewards}
+			</a>
 		</div>
 
 		<DropAlertsSignup source="profile" layout="toggle" class="w-full" />
@@ -163,5 +192,8 @@ const reservationsGate = await fetchPublishedReservations({
 
 	<script>
 		import '../scripts/profile-page.ts'
+		import { revealLoyaltyLinks } from '~/lib/loyalty/availability'
+
+		void revealLoyaltyLinks()
 	</script>
 </SitePage>

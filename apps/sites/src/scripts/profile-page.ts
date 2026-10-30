@@ -1,5 +1,8 @@
-import { setSessionTokens, tenantFetch } from '~/lib/client-auth'
-import { browserLocaleHref } from '~/lib/locale'
+import {
+	redirectToLogin,
+	setSessionTokens,
+	tenantFetch,
+} from '~/lib/client-auth'
 
 type ShopOrderRow = {
 	productName?: string
@@ -108,23 +111,26 @@ async function loadShopAccountData(options: {
 	} = options
 
 	try {
-		const [ordersRes, methodsRes] = await Promise.all([
+		const [orders, methods] = await Promise.all([
 			tenantFetch('/shop/orders'),
 			tenantFetch('/shop/payment-methods'),
 		])
 
-		if (ordersRes.status === 401 || methodsRes.status === 401) {
-			window.location.replace(browserLocaleHref('/login'))
+		if (orders.session === 'signed_out' || methods.session === 'signed_out') {
+			redirectToLogin()
 			return
 		}
+		// A session that could not be checked for now leaves a list as it is.
+		const ordersRes = orders.session === 'ok' ? orders.response : null
+		const methodsRes = methods.session === 'ok' ? methods.response : null
 
-		if (ordersRes.ok && orderHistory) {
+		if (ordersRes?.ok && orderHistory) {
 			const data = (await ordersRes.json()) as { orders?: ShopOrderRow[] }
 			const orders = Array.isArray(data.orders) ? data.orders : []
 			renderOrderHistory(orderHistory, noOrders, orders)
 		}
 
-		if (methodsRes.ok && paymentMethodsList) {
+		if (methodsRes?.ok && paymentMethodsList) {
 			const data = (await methodsRes.json()) as {
 				paymentMethods?: SavedPaymentMethodRow[]
 			}
@@ -147,13 +153,18 @@ async function loadProfile(options: {
 	nameInput: HTMLElement | null
 	emailInput: HTMLElement | null
 	phoneInput: HTMLElement | null
+	onTransient: () => void
 }) {
-	const { nameInput, emailInput, phoneInput } = options
+	const { nameInput, emailInput, phoneInput, onTransient } = options
 
 	try {
-		const res = await tenantFetch('/auth/me')
-		if (res.status === 401) {
-			window.location.replace(browserLocaleHref('/login'))
+		const { session, response: res } = await tenantFetch('/auth/me')
+		if (session === 'signed_out') {
+			redirectToLogin()
+			return
+		}
+		if (session === 'transient') {
+			onTransient()
 			return
 		}
 		if (res.ok) {
@@ -199,7 +210,18 @@ export function initProfilePage() {
 	const networkLabel =
 		form?.dataset.network || 'Network error. Please try again.'
 
-	void loadProfile({ nameInput, emailInput, phoneInput })
+	const showError = (message: string) => {
+		if (!errorMessage) return
+		errorMessage.textContent = message
+		errorMessage.classList.remove('hidden')
+	}
+
+	void loadProfile({
+		nameInput,
+		emailInput,
+		phoneInput,
+		onTransient: () => showError(networkLabel),
+	})
 	void loadShopAccountData({
 		orderHistory,
 		paymentMethodsList,
@@ -228,12 +250,16 @@ export function initProfilePage() {
 		submitButton.textContent = savingLabel
 
 		try {
-			const res = await tenantFetch('/auth/profile', {
+			const { session, response: res } = await tenantFetch('/auth/profile', {
 				method: 'POST',
 				body: JSON.stringify({ name, email }),
 			})
-			if (res.status === 401) {
-				window.location.replace(browserLocaleHref('/login'))
+			if (session === 'signed_out') {
+				redirectToLogin()
+				return
+			}
+			if (session === 'transient') {
+				showError(networkLabel)
 				return
 			}
 			const data = (await res.json()) as {
@@ -252,15 +278,11 @@ export function initProfilePage() {
 							: undefined,
 				})
 				successMessage?.classList.remove('hidden')
-			} else if (errorMessage) {
-				errorMessage.textContent = data.error || errorLabel
-				errorMessage.classList.remove('hidden')
+			} else {
+				showError(data.error || errorLabel)
 			}
 		} catch {
-			if (errorMessage) {
-				errorMessage.textContent = networkLabel
-				errorMessage.classList.remove('hidden')
-			}
+			showError(networkLabel)
 		} finally {
 			submitButton.disabled = false
 			submitButton.textContent = saveLabel

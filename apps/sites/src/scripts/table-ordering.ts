@@ -1,4 +1,8 @@
-import { type QrPublicTab } from '@repo/common/qr-ordering'
+import {
+	type QrPublicTab,
+	type QrTabPayRequest,
+} from '@repo/common/qr-ordering'
+import { getAccessToken } from '~/lib/client-auth'
 import { type CartStore } from '~/lib/ordering/cart-store'
 import { el, lockScroll, trapFocus } from '~/lib/ordering/dom'
 import {
@@ -57,11 +61,13 @@ type Labels = Record<
 	| 'errorGeneric'
 	| 'errorTableGone'
 	| 'errorLocked'
+	| 'errorTabPaying'
 	| 'errorClosed'
 	| 'errorRateLimited'
 	| 'errorUnavailable'
 	| 'payNow'
 	| 'payAmount'
+	| 'payAmountChanged'
 	| 'paying'
 	| 'checkingPayment'
 	| 'paidThanks'
@@ -75,9 +81,26 @@ type Labels = Record<
 	| 'leaveWarning'
 	| 'tabLoadFailed'
 	| 'tryAgain'
-	| 'stillConfirming',
+	| 'stillConfirming'
+	| 'payPending',
 	string
 >
+
+/**
+ * The pay sheet's reward picker (`~/lib/loyalty/tab-rewards`), imported on
+ * first use by a signed-in guest so the loyalty code stays out of the menu
+ * bundle. Declared here because even an inline type import would load the
+ * module (`verbatimModuleSyntax` keeps the import statement).
+ */
+type TabRewards = {
+	open(tab: QrPublicTab, tabToken: string): void
+	amountMinor(totalMinor: number, tipMinor: number): number | null
+	placement(): Promise<
+		| { ok: true; loyalty: QrTabPayRequest['loyalty'] | null }
+		| { ok: false; message: string }
+	>
+	refused(code: string, sentPick: boolean): string | null
+}
 
 export type TableOrderingDeps = {
 	orgId: string
@@ -86,6 +109,8 @@ export type TableOrderingDeps = {
 	formatMoney: (amount: number) => string
 	store: CartStore
 	cart: { open(): void; close(): void; refresh(): void }
+	/** Leaves for the hosted payment page (`location.assign` by default). */
+	navigate?: (url: string) => void
 }
 
 /** `aria-invalid` must read "true"; an empty attribute counts as false. */
@@ -135,6 +160,8 @@ function readLabels(): Labels {
 export function mountTableOrdering(deps: TableOrderingDeps) {
 	const labels = readLabels()
 	const { orgId, locationId } = deps
+	const navigate =
+		deps.navigate ?? ((url: string) => window.location.assign(url))
 	const banner = document.getElementById('table-banner')
 	const notice = document.getElementById('table-notice')
 	const checkoutBtn = document.getElementById('drawer-checkout-btn')
@@ -199,6 +226,7 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 				: labels.errorTableGone
 		}
 		if (code === 'tab_locked') return labels.errorLocked
+		if (code === 'tab_paying') return labels.errorTabPaying
 		if (code === 'ordering_closed') return labels.errorClosed
 		if (code === 'table_rate_limited' || code === 'rate_limit_exceeded') {
 			return labels.errorRateLimited
@@ -397,6 +425,16 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 			if (node) node.textContent = text
 		}
 		set('tab-subtotal', money(tab.totals.subtotalCents))
+		// A paid tab's receipt: the reward and the tip it was paid with.
+		const { loyaltyDiscountCents: discount, tipCents: tip } = tab.totals
+		document
+			.getElementById('tab-discount-row')
+			?.classList.toggle('hidden', !(discount > 0))
+		set('tab-discount', discount > 0 ? money(-discount) : '')
+		document
+			.getElementById('tab-tip-row')
+			?.classList.toggle('hidden', !(tip > 0))
+		set('tab-tip', tip > 0 ? money(tip) : '')
 		set('tab-tax', money(tab.totals.taxCents))
 		set(
 			'tab-tax-label',
@@ -479,6 +517,7 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 					taxCents: 0,
 					taxInclusive: false,
 					tipCents: 0,
+					loyaltyDiscountCents: 0,
 					totalCents: 0,
 				},
 				roundsPending: false,
@@ -499,7 +538,7 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 		} catch (error) {
 			if (
 				error instanceof TableRequestError &&
-				error.status === 404 &&
+				(error.status === 404 || error.code === 'tab_not_found') &&
 				session
 			) {
 				session = { ...session, tabId: null, tabToken: null, tabNumber: null }
@@ -665,8 +704,27 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 		'tab-pay-submit',
 	) as HTMLButtonElement | null
 	const payError = document.getElementById('tab-pay-error')
+	const payChanged = document.getElementById('tab-pay-changed')
 	let releasePay: (() => void) | null = null
 	let payTab: QrPublicTab | null = null
+	let paying = false
+	// Bumped when the guest backs out while the reward is being confirmed,
+	// so that attempt stops before anything is sent.
+	let payAttempt = 0
+	// The payment start is on its way: the region fixes the amount and the
+	// hosted page follows, so the sheet stays until the region answers.
+	let paymentSent = false
+	// The region priced the payment differently from what the button showed:
+	// its hosted page opens only once the guest has seen the new amount and
+	// pays again.
+	let confirmUrl: string | null = null
+	// The region may hold a payment session with the tip and reward that went
+	// out (it answered, or the answer was lost). It re-serves that session only
+	// for the same tip and reward and refuses any other as "someone else is
+	// paying", so they stay locked until the region refuses for good.
+	let choiceHeld = false
+	let rewards: TabRewards | null = null
+	let rewardsLoading: Promise<TabRewards | null> | null = null
 
 	function tipPercent(): number {
 		const checked = payForm?.querySelector<HTMLInputElement>(
@@ -675,12 +733,59 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 		return Number(checked?.value ?? 0) || 0
 	}
 
+	function tipMinor(): number {
+		if (!payTab) return 0
+		return Math.round((payTab.totals.subtotalCents * tipPercent()) / 100)
+	}
+
+	/** The tab plus the tip, less a priced reward; null while it is priced. */
+	function estimatedMinor(): number | null {
+		if (!payTab) return null
+		const tip = tipMinor()
+		return rewards
+			? rewards.amountMinor(payTab.totals.totalCents, tip)
+			: payTab.totals.totalCents + tip
+	}
+
 	function paintPayAmount() {
-		if (!payTab || !paySubmit) return
-		const tip = Math.round((payTab.totals.subtotalCents * tipPercent()) / 100)
-		paySubmit.textContent = fill(labels.payAmount, {
-			amount: deps.formatMoney((payTab.totals.totalCents + tip) / 100),
-		})
+		// While the payment starts, or waits on a new amount, the button keeps
+		// saying so.
+		if (!payTab || !paySubmit || paying || confirmUrl) return
+		const amount = estimatedMinor()
+		// A picked reward is still being priced: no amount until it is.
+		paySubmit.textContent =
+			amount === null
+				? labels.payNow
+				: fill(labels.payAmount, { amount: deps.formatMoney(amount / 100) })
+	}
+
+	/** The reward picker, for a signed-in guest; null for anyone else. */
+	function loadRewards(): Promise<TabRewards | null> {
+		if (rewards || !getAccessToken()) return Promise.resolve(rewards)
+		rewardsLoading ??= import('~/lib/loyalty/tab-rewards')
+			.then(({ mountTabRewards }) => {
+				const section = document.getElementById('tab-rewards')
+				const options = document.getElementById('tab-rewards-options')
+				if (!section || !options) return null
+				rewards = mountTabRewards({
+					section,
+					options,
+					balance: document.getElementById('tab-rewards-balance'),
+					notice: document.getElementById('tab-rewards-notice'),
+					locale: deps.locale,
+					formatMoney: (minor) => deps.formatMoney(minor / 100),
+					tipPercent,
+					tipMinor,
+					onChange: paintPayAmount,
+				})
+				return rewards
+			})
+			// Offline or a newer deploy: pay without rewards this time.
+			.catch(() => null)
+			.finally(() => {
+				rewardsLoading = null
+			})
+		return rewardsLoading
 	}
 
 	function openPay(tab: QrPublicTab) {
@@ -697,6 +802,7 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 				'tab-pay-error',
 			)
 		}
+		if (choiceHeld && payChanged) showAlert(payChanged, labels.payPending)
 		paintPayAmount()
 		closeTab()
 		payMotion.open()
@@ -709,9 +815,24 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 		;(payForm.elements.namedItem('name') as HTMLInputElement).focus({
 			preventScroll: true,
 		})
+		const tabToken = session?.tabToken
+		if (tabToken) {
+			void loadRewards().then((picker) => {
+				// The guest may have closed the sheet while the picker loaded.
+				if (picker && payTab === tab && payMotion.isOpen()) {
+					picker.open(tab, tabToken)
+				}
+			})
+		}
 	}
 
 	function closePay() {
+		if (paymentSent) return
+		if (paying || confirmUrl) {
+			payAttempt += 1
+			idlePay()
+			paintPayAmount()
+		}
 		releasePay?.()
 		releasePay = null
 		payMotion?.close()
@@ -731,7 +852,11 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 	document.getElementById('tab-pay-close')?.addEventListener('click', closePay)
 	payForm?.addEventListener('submit', (event) => {
 		event.preventDefault()
-		if (!session || !payForm) return
+		if (!session || !payForm || paying) return
+		if (confirmUrl) {
+			openCheckout(confirmUrl)
+			return
+		}
 		const name = (
 			payForm.elements.namedItem('name') as HTMLInputElement
 		).value.trim()
@@ -751,45 +876,155 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 			;(!name ? nameField : phoneField).focus()
 			return
 		}
+		void pay(session, { name, phone })
+	})
+
+	/** While the payment starts, tip, reward and contact cannot change. */
+	function lockPay(locked: boolean) {
+		if (!payForm) return
+		for (const field of ['name', 'phone']) {
+			const input = payForm.elements.namedItem(field)
+			if (input instanceof HTMLInputElement) input.disabled = locked
+		}
+		lockChoice(locked || choiceHeld)
+	}
+
+	function lockChoice(locked: boolean) {
+		if (!payForm) return
+		const tip = payForm.querySelector('fieldset')
+		if (tip instanceof HTMLFieldSetElement) tip.disabled = locked
+		// inert covers reward radios the picker rebuilds mid-payment.
+		const rewardOptions = document.getElementById('tab-rewards-options')
+		if (rewardOptions) rewardOptions.inert = locked
+	}
+
+	async function pay(
+		current: TableSession,
+		contact: { name: string; phone: string },
+	) {
+		payAttempt += 1
+		const attempt = payAttempt
+		const shownMinor = estimatedMinor()
+		paying = true
+		lockPay(true)
+		payError?.classList.add('hidden')
 		if (paySubmit) {
 			paySubmit.textContent = labels.paying
 			paySubmit.setAttribute('aria-busy', 'true')
 			paySubmit.disabled = true
 		}
-		void startTabPayment(orgId, session, {
-			tipPercent: tipPercent(),
-			contact: { name, phone },
-			locale: deps.locale,
-		})
-			.then((url) => {
-				window.location.assign(acceptCheckoutUrl(url))
+		// A reward goes out only as the latest quote priced it.
+		const reward = (await rewards?.placement()) ?? {
+			ok: true as const,
+			loyalty: null,
+		}
+		// The guest closed the sheet while the reward was being confirmed.
+		if (attempt !== payAttempt) return
+		if (!reward.ok) {
+			stopPaying(reward.message)
+			return
+		}
+		paymentSent = true
+		let regionAnswered = false
+		try {
+			const started = await startTabPayment(orgId, current, {
+				tipPercent: tipPercent(),
+				contact,
+				locale: deps.locale,
+				loyalty: reward.loyalty,
 			})
-			.catch((error: unknown) => {
-				const code =
-					error instanceof TableRequestError
-						? error.code
-						: 'payment_unavailable'
-				showError(
-					code === 'rounds_pending'
+			regionAnswered = true
+			choiceHeld = true
+			const url = acceptCheckoutUrl(started.url)
+			// The region fixed the amount. The guest sees it before paying
+			// whenever it is not what the button showed.
+			if (started.amountCents !== shownMinor) {
+				askToConfirm(url, started.amountCents)
+				return
+			}
+			openCheckout(url)
+		} catch (error) {
+			const code =
+				error instanceof TableRequestError ? error.code : 'payment_unavailable'
+			if (regionAnswered || code === 'network') choiceHeld = true
+			else if (code !== 'tab_paying') choiceHeld = false
+			// A refused sign-in answers 401 with plain text instead of a code.
+			const rewardMessage = rewards?.refused(
+				error instanceof TableRequestError && error.status === 401
+					? 'unauthorized'
+					: code,
+				Boolean(reward.loyalty),
+			)
+			stopPaying(
+				rewardMessage ??
+					(code === 'rounds_pending'
 						? labels.payLater
 						: code === 'online_pay_unavailable'
 							? labels.payUnavailable
-							: errorText(code),
-				)
-				if (paySubmit) {
-					paySubmit.removeAttribute('aria-busy')
-					paySubmit.disabled = false
-				}
-				paintPayAmount()
-			})
-	})
+							: code === 'tab_paying' && choiceHeld
+								? labels.payPending
+								: errorText(code)),
+			)
+		}
+	}
+
+	function openCheckout(url: string) {
+		confirmUrl = null
+		paying = true
+		paymentSent = true
+		payChanged?.classList.add('hidden')
+		if (paySubmit) {
+			paySubmit.textContent = labels.paying
+			paySubmit.setAttribute('aria-busy', 'true')
+			paySubmit.disabled = true
+		}
+		navigate(url)
+	}
+
+	/**
+	 * Shows the amount the region fixed and waits for the guest to pay again.
+	 * The tip, reward and contact stay locked: the hosted page charges them.
+	 */
+	function askToConfirm(url: string, amountMinor: number) {
+		confirmUrl = url
+		paying = false
+		paymentSent = false
+		const amount = deps.formatMoney(amountMinor / 100)
+		if (paySubmit) {
+			paySubmit.textContent = fill(labels.payAmount, { amount })
+			paySubmit.removeAttribute('aria-busy')
+			paySubmit.disabled = false
+			paySubmit.focus({ preventScroll: true })
+		}
+		if (payChanged) {
+			showAlert(payChanged, fill(labels.payAmountChanged, { amount }))
+		}
+	}
+
+	/** Ready for a new payment: fields unlocked, the button idle. */
+	function idlePay() {
+		paying = false
+		paymentSent = false
+		confirmUrl = null
+		payChanged?.classList.add('hidden')
+		lockPay(false)
+		if (paySubmit) {
+			paySubmit.removeAttribute('aria-busy')
+			paySubmit.disabled = false
+		}
+	}
+
+	function stopPaying(message: string) {
+		idlePay()
+		if (payError) showAlert(payError, message)
+		paintPayAmount()
+	}
 
 	// Back from the hosted page through the browser's back button: the page
 	// comes back from the back-forward cache with the button still busy.
 	window.addEventListener('pageshow', (event) => {
 		if (!event.persisted || !paySubmit) return
-		paySubmit.removeAttribute('aria-busy')
-		paySubmit.disabled = false
+		idlePay()
 		paintPayAmount()
 	})
 

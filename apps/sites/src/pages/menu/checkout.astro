@@ -2,8 +2,10 @@
 import { msg } from '@lingui/core/macro'
 import { getLocalizedMenuValue } from '@repo/common/menu-types'
 import { getLocaleHref } from '@repo/common/site-locales'
+import LoyaltyLabels from '~/components/loyalty/LoyaltyLabels.astro'
 import OrderDetailsSheet from '~/components/ordering/OrderDetailsSheet.astro'
 import SitePage from '~/components/SitePage.astro'
+import { buildLoyaltyLabels } from '~/lib/loyalty/labels'
 import { siteContainer } from '~/lib/media'
 import { buildOrderDetailsLabels, translate } from '~/lib/ordering-labels'
 import { formatMoney } from '~/lib/ordering/money'
@@ -103,6 +105,7 @@ if (fulfillmentOptions.pickup !== false) allowedModes.push('pickup')
 if (fulfillmentOptions.delivery !== false) allowedModes.push('delivery')
 if (!allowedModes.length) allowedModes.push('pickup')
 const odLabels = buildOrderDetailsLabels(i18n)
+const loyaltyLabels = buildLoyaltyLabels(i18n)
 
 const menuHref = getLocaleHref('/menu', requestedLocale, defaultLocale)
 const successHref = getLocaleHref('/menu/success', requestedLocale, defaultLocale)
@@ -491,6 +494,19 @@ const tipOff = 'border-border bg-background text-foreground'
 						</div>
 					</section>
 
+					{/* Rewards: signed-in customers only, shown once the region has priced
+					    the cart with every reward. The region re-checks the pick when
+					    the order is placed. */}
+					<section id="loyalty-rewards-card" class:list={[sectionClass, 'hidden']} aria-labelledby="co-step-rewards">
+						<div class={sectionHeadClass}>
+							<span class={stepMarkerClass} aria-hidden="true"></span>
+							<h2 id="co-step-rewards" class={sectionTitleClass}>{loyaltyLabels.rewardsHeading}</h2>
+						</div>
+						<p id="loyalty-balance" class="bidi-isolate mb-3 text-sm text-muted-foreground"></p>
+						<div id="loyalty-options" class="grid grid-cols-1 gap-3" aria-labelledby="co-step-rewards"></div>
+						<p class="mt-3 text-xs text-muted-foreground">{loyaltyLabels.oneRewardPerOrder}</p>
+					</section>
+
 					{/* Payment */}
 					<section class={sectionClass} id="payment-method-card" aria-labelledby="co-step-payment">
 						<div class={sectionHeadClass}>
@@ -539,6 +555,10 @@ const tipOff = 'border-border bg-background text-foreground'
 							<dt>{subtotalText}</dt>
 							<dd id="co-subtotal" class={valueClass}>{price(0)}</dd>
 						</div>
+						<div id="co-discount-row" class:list={[rowClass, 'hidden']}>
+							<dt id="co-discount-label" dir="auto" class="min-w-0 truncate">{loyaltyLabels.pickerDiscount}</dt>
+							<dd id="co-discount" class={valueClass}></dd>
+						</div>
 						<div class={rowClass}>
 							<dt
 								id="co-tax-label"
@@ -562,6 +582,7 @@ const tipOff = 'border-border bg-background text-foreground'
 							<dd id="co-total" class="price font-heading text-xl">{price(0)}</dd>
 						</div>
 					</dl>
+					<p id="co-loyalty-notice" class="text-sm text-muted-foreground not-empty:mt-3" role="status"></p>
 
 					<div id="place-order-block" class:list={[noticeClass, 'tone-warning hidden mt-5']} role="status">
 						<svg xmlns="http://www.w3.org/2000/svg" class="mt-0.5 size-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
@@ -619,6 +640,8 @@ const tipOff = 'border-border bg-background text-foreground'
 		/>
 	) : null}
 
+	<LoyaltyLabels />
+
 	<script
 		id="checkout-meta"
 		type="application/json"
@@ -655,7 +678,17 @@ const tipOff = 'border-border bg-background text-foreground'
 			formatDropTime,
 			zonedTimeToUtc,
 		} from '~/lib/drops/format'
+		import { getAccessToken } from '~/lib/client-auth'
+		import { createLoyaltyClient } from '~/lib/loyalty-client'
+		import { readLoyaltyLabels } from '~/lib/loyalty/read-labels'
+		import { orderLineName } from '~/lib/loyalty/reward-picker'
+		import {
+			createRewardQuotes,
+			spendableRewards,
+			type RewardQuotes,
+		} from '~/lib/loyalty/reward-quotes'
 		import { formatRemaining, startCountdown } from '~/lib/ordering/countdown'
+		import { checkoutOrderPayload } from '~/lib/ordering/checkout-payload'
 		import { orderErrorMessage } from '~/lib/ordering/order-errors'
 		import { estimateTax } from '~/lib/ordering/tax'
 		import {
@@ -791,6 +824,9 @@ const tipOff = 'border-border bg-background text-foreground'
 		let tipPercent = 15
 		let paymentMethod: 'handoff' | 'online' = 'handoff'
 		let orderingOpen = true
+		// Rewards for signed-in customers; set up once the cart is known.
+		const loyaltyLabels = readLoyaltyLabels()
+		let loyalty: RewardQuotes | null = null
 
 		// Location-derived values resolved server-side (same source as the menu page).
 		// Drop orders tax at the pickup location chosen on the drop page.
@@ -829,19 +865,33 @@ const tipOff = 'border-border bg-background text-foreground'
 			return node
 		}
 
-		// The on-page summary is an estimate; the server re-prices everything and
-		// the authoritative totals render on the success page from the receipt.
+		// The on-page summary is an estimate unless the region priced this exact
+		// order for a member's rewards; the server re-prices everything and the
+		// authoritative totals render on the success page from the receipt.
 		function computeTotals() {
+			const quoted = loyalty?.freshQuote()?.totals
+			if (quoted) {
+				return {
+					subtotal: quoted.subtotalMinor / 100,
+					tax: quoted.taxMinor / 100,
+					deliveryFee: quoted.deliveryFeeMinor / 100,
+					tip: quoted.tipMinor / 100,
+					discount: quoted.discountMinor / 100,
+					total: quoted.totalMinor / 100,
+				}
+			}
 			const subtotal = cart.reduce((acc, it) => acc + it.unitPrice * it.quantity, 0)
-			const { tax, added } = estimateTax(subtotal, taxRate(), taxInclusive())
+			// While a re-price is on its way, keep the saving the guest picked.
+			const discount = Math.min(subtotal, (loyalty?.displayDiscountMinor() ?? 0) / 100)
+			const { tax, added } = estimateTax(subtotal - discount, taxRate(), taxInclusive())
 			const fee = mode === 'delivery' ? (validDelivery()?.deliveryFee ?? 0) : 0
 			const tip = (subtotal * tipPercent) / 100
-			const total = subtotal + added + fee + tip
-			return { subtotal, tax, deliveryFee: fee, tip, total }
+			const total = subtotal - discount + added + fee + tip
+			return { subtotal, tax, deliveryFee: fee, tip, discount, total }
 		}
 
 		function renderCheckout() {
-			const { subtotal, tax, deliveryFee, tip, total } = computeTotals()
+			const { subtotal, tax, deliveryFee, tip, discount, total } = computeTotals()
 
 			// Render items
 			const list = document.getElementById('checkout-items-list')
@@ -888,6 +938,14 @@ const tipOff = 'border-border bg-background text-foreground'
 			const coTotal = document.getElementById('co-total')
 
 			if (coSubtotal) coSubtotal.textContent = formatCurrency(subtotal)
+			const discountRow = document.getElementById('co-discount-row')
+			const discountValue = document.getElementById('co-discount')
+			const discountLabel = document.getElementById('co-discount-label')
+			discountRow?.classList.toggle('hidden', !(discount > 0))
+			if (discountValue) discountValue.textContent = discount > 0 ? formatCurrency(-discount) : ''
+			if (discountLabel) {
+				discountLabel.textContent = loyalty?.rewardName() || loyaltyLabels.pickerDiscount
+			}
 			if (coTax) coTax.textContent = formatCurrency(tax)
 			const coTaxLabel = document.getElementById('co-tax-label')
 			const coTaxLabelText = taxInclusive()
@@ -923,6 +981,7 @@ const tipOff = 'border-border bg-background text-foreground'
 			renderDeliveryDetails()
 			renderWhen()
 			renderBlockReason()
+			loyalty?.sync()
 		}
 
 		const minutesRange = (eta: { min: number; max: number }) =>
@@ -1009,6 +1068,10 @@ const tipOff = 'border-border bg-background text-foreground'
 
 		/** Why the order cannot be placed yet (delivery address / minimum / time). */
 		function blockReason(): string | null {
+			// A reward that leaves nothing to pay cannot go through online payment.
+			if (cart.length > 0 && paymentMethod === 'online' && loyalty?.coversTotal()) {
+				return loyaltyLabels.pickerCoversOrder
+			}
 			if (isDrop || cart.length === 0) return null
 			if (mode === 'delivery') {
 				const delivery = validDelivery()
@@ -1227,6 +1290,7 @@ const tipOff = 'border-border bg-background text-foreground'
 						paymentMethod = radio.value === 'online' ? 'online' : 'handoff'
 					}
 					updateHoldNote()
+					renderCheckout()
 				})
 			})
 
@@ -1317,6 +1381,79 @@ const tipOff = 'border-border bg-background text-foreground'
 			}))
 		}
 
+		/** The drop pickup chosen on the drop page, while it is still offered. */
+		function dropPickupChoice(): {
+			pickup: { windowId: string; time: string }
+			locationId: string
+		} | null {
+			if (!drop) return null
+			const selection = loadPickupSelection(drop.id)
+			if (!selection || !resolvePickup(buildPickupOptions(dropPickupWindows()), selection)) {
+				return null
+			}
+			const match = drop.windows.find(
+				(candidate) =>
+					candidate.locationId === selection.locationId &&
+					candidate.date === selection.date &&
+					(candidate.slots ?? []).some((slot) => slot.time === selection.slotStart),
+			)
+			if (!match) return null
+			return {
+				pickup: { windowId: match.id, time: selection.slotStart },
+				locationId: selection.locationId,
+			}
+		}
+
+		type VerifiedDelivery = NonNullable<ReturnType<typeof validDelivery>>
+
+		// The address, city and unit are signed into the quote token; the
+		// region re-resolves the zone from it. City is only sent when the
+		// geocoder returned one (an empty city used to fail validation).
+		function deliveryFields(verified: VerifiedDelivery, notes = ''): Record<string, string> {
+			const delivery: Record<string, string> = {
+				address: verified.line1.trim().length >= 5 ? verified.line1.trim() : verified.formatted,
+				quoteToken: verified.quoteToken,
+			}
+			if (verified.city.trim()) delivery.city = verified.city.trim()
+			if (verified.unit?.trim()) delivery.unit = verified.unit.trim()
+			if (notes.trim()) delivery.notes = notes.trim()
+			return delivery
+		}
+
+		/**
+		 * The order as it would be placed now, without contact or notes: what a
+		 * reward quote prices. Null while it cannot be priced (no verified
+		 * address, no pickup time), when placing is blocked anyway.
+		 */
+		function pricingPayload(): Record<string, unknown> | null {
+			if (cart.length === 0 || !orderingOpen) return null
+			let pickup: { windowId: string; time: string } | null = null
+			let locationId: string | null = meta.locationId ?? null
+			if (isDrop && drop) {
+				const chosen = dropPickupChoice()
+				if (!chosen) return null
+				pickup = chosen.pickup
+				locationId = chosen.locationId
+			}
+			const fulfillment: 'pickup' | 'delivery' = isDrop ? 'pickup' : mode
+			const verified = fulfillment === 'delivery' ? validDelivery() : null
+			if (fulfillment === 'delivery' && !verified) return null
+			const scheduled = isDrop ? null : currentSchedule()
+			if (scheduled === false) return null
+			return {
+				locale: meta.locale,
+				locationId,
+				...(isDrop && drop ? { dropSlug: drop.slug, pickup } : {}),
+				fulfillment,
+				paymentMethod,
+				...(verified ? { delivery: deliveryFields(verified) } : {}),
+				...(scheduled ? { scheduledFor: scheduled } : {}),
+				...(!isDrop && posterSource(orgId) ? { source: 'qr_poster' } : {}),
+				tipPercent,
+				lines: orderLines(cart),
+			}
+		}
+
 		// Place order button
 		const placeBtn = document.getElementById('place-order-btn') as HTMLButtonElement | null
 
@@ -1340,27 +1477,9 @@ const tipOff = 'border-border bg-background text-foreground'
 
 			// Drop orders revalidate the pickup chosen on the drop page: the slot
 			// can sell out or fall inside the lead time while checkout sits open.
-			let pickup: { windowId: string; time: string } | null = null
-			let orderLocationId: string | null = meta.locationId ?? null
-			if (isDrop && drop) {
-				const selection = loadPickupSelection(drop.id)
-				const resolved = resolvePickup(buildPickupOptions(dropPickupWindows()), selection)
-				if (!resolved) {
-					showPickupMissing()
-					return
-				}
-				const window = drop.windows.find(
-					(candidate) =>
-						candidate.locationId === selection!.locationId &&
-						candidate.date === selection!.date &&
-						(candidate.slots ?? []).some((slot) => slot.time === selection!.slotStart),
-				)
-				if (!window) {
-					showPickupMissing()
-					return
-				}
-				pickup = { windowId: window.id, time: selection!.slotStart }
-				orderLocationId = selection!.locationId
+			if (isDrop && drop && !dropPickupChoice()) {
+				showPickupMissing()
+				return
 			}
 
 			const nameInput = document.getElementById('cust-name') as HTMLInputElement
@@ -1387,55 +1506,74 @@ const tipOff = 'border-border bg-background text-foreground'
 				return
 			}
 
-			const fulfillment: 'pickup' | 'delivery' = isDrop ? 'pickup' : mode
-			// Re-read: the quote may have expired while checkout sat open.
-			if (!isDrop) details = loadOrderDetails(orgId, { locationId: meta.locationId ?? '', allowedModes })
-			const blocked = blockReason()
-			if (blocked) {
-				renderCheckout()
-				showCheckoutError(blocked)
-				if (fulfillment === 'delivery' && !validDelivery()) openOrderDetails('delivery')
-				else if (currentSchedule() === false) openOrderDetails('time')
-				return
-			}
-			let delivery: Record<string, string> | undefined
-			if (fulfillment === 'delivery') {
-				const verified = validDelivery()!
-				// The address, city and unit are signed into the quote token; the
-				// region re-resolves the zone from it. City is only sent when the
-				// geocoder returned one (an empty city used to fail validation).
-				delivery = {
-					address: verified.line1.trim().length >= 5 ? verified.line1.trim() : verified.formatted,
-					quoteToken: verified.quoteToken,
+			/**
+			 * Reads the order as it would be placed now: null after showing why it
+			 * cannot be placed. It runs again after the reward wait; the order that
+			 * is sent is built from that second read alone (`pricingPayload`, the
+			 * same function the reward quote prices), so the order and the quote the
+			 * pick was confirmed against cannot differ.
+			 */
+			function readPricedOrder() {
+				const fulfillment: 'pickup' | 'delivery' = isDrop ? 'pickup' : mode
+				// Re-read: the quote may have expired while checkout sat open.
+				if (!isDrop) details = loadOrderDetails(orgId, { locationId: meta.locationId ?? '', allowedModes })
+				const blocked = blockReason()
+				if (blocked) {
+					renderCheckout()
+					showCheckoutError(blocked)
+					if (fulfillment === 'delivery' && !validDelivery()) openOrderDetails('delivery')
+					else if (currentSchedule() === false) openOrderDetails('time')
+					return null
 				}
-				if (verified.city.trim()) delivery.city = verified.city.trim()
-				if (verified.unit?.trim()) delivery.unit = verified.unit.trim()
-				if (notesInput?.value.trim()) delivery.notes = notesInput.value.trim()
+				if (isDrop && drop && !dropPickupChoice()) {
+					showPickupMissing()
+					return null
+				}
+				const priced = pricingPayload()
+				if (!priced) {
+					renderCheckout()
+					showCheckoutError(orderErrorMessage('order_failed', labels.errors))
+				}
+				return priced
 			}
-			const scheduledFor = isDrop ? null : currentSchedule() || null
+
+			if (!readPricedOrder()) return
 
 			const successUrl = `${meta.successUrl || '/menu/success'}?order=`
 
 			setBusy(true)
+			// A reward goes out only as the latest quote priced it: wait a few
+			// seconds at most for a re-price still on its way, and stop when it
+			// did not confirm the pick.
+			const reward = (await loyalty?.placement()) ?? { ok: true as const, selection: null }
+			if (!reward.ok || (paymentMethod === 'online' && loyalty?.coversTotal())) {
+				setBusy(false)
+				renderCheckout()
+				showCheckoutError(reward.ok ? loyaltyLabels.pickerCoversOrder : reward.message)
+				return
+			}
+			const sentReward = reward.selection
+			// The guest may have changed the order during the wait: read all of it
+			// again now, in this same turn as the confirmation, and send only that.
+			const priced = readPricedOrder()
+			if (!priced || (sentReward && !loyalty?.placementPick().ok)) {
+				setBusy(false)
+				if (priced) {
+					renderCheckout()
+					showCheckoutError(loyaltyLabels.pickerUnconfirmed)
+				}
+				return
+			}
 			try {
-				const corePayload: Record<string, unknown> = {
-					locale: meta.locale,
-					locationId: orderLocationId,
-					...(isDrop && drop ? { dropSlug: drop.slug, pickup } : {}),
-					fulfillment,
-					paymentMethod,
+				const corePayload = checkoutOrderPayload(priced, {
 					contact: {
 						name: nameInput.value.trim(),
 						phone: phoneInput.value.trim(),
 						email: emailInput.value.trim(),
 					},
-					...(delivery ? { delivery } : {}),
-					...(scheduledFor ? { scheduledFor } : {}),
-					// Opened from an order-ahead QR poster (attribution only).
-					...(!isDrop && posterSource(orgId) ? { source: 'qr_poster' } : {}),
-					tipPercent,
-					lines: orderLines(cart),
-				}
+					deliveryNotes: notesInput?.value,
+					reward: sentReward,
+				})
 				const idempotencyKey = await checkoutAttemptKey(orgId, corePayload)
 				const created = await submitRegionalOrder({
 					...corePayload,
@@ -1476,7 +1614,11 @@ const tipOff = 'border-border bg-background text-foreground'
 					error instanceof OrderRequestError ? error.code : 'order_failed'
 				// Same key, different payload: the next attempt must mint a new key.
 				if (code === 'idempotency_conflict') clearCheckoutAttempt(orgId)
-				if (code === 'delivery_quote_expired') {
+				const rewardMessage = loyalty?.refused(code, sentReward !== null) ?? null
+				if (rewardMessage) {
+					renderCheckout()
+					showCheckoutError(rewardMessage)
+				} else if (code === 'delivery_quote_expired') {
 					details = updateOrderDetails(orgId, details, { delivery: undefined })
 					renderCheckout()
 					showCheckoutError(odLabels.quoteExpired)
@@ -1518,6 +1660,42 @@ const tipOff = 'border-border bg-background text-foreground'
 					() => showOrderingClosedNotice(labels.errors.dropClosed),
 				)
 			}
+		}
+
+		// Rewards: only a signed-in customer's browser asks the region, with the
+		// customer token; Sites never sees the balance or the pick.
+		const loyaltySection = document.getElementById('loyalty-rewards-card')
+		const loyaltyOptions = document.getElementById('loyalty-options')
+		if (loyaltySection && loyaltyOptions && cart.length > 0) {
+			const loyaltyClient = createLoyaltyClient()
+			loyalty = createRewardQuotes({
+				section: loyaltySection,
+				options: loyaltyOptions,
+				balance: document.getElementById('loyalty-balance'),
+				notice: document.getElementById('co-loyalty-notice'),
+				labels: loyaltyLabels,
+				locale: meta.locale || 'en',
+				formatMoney: (minor) => formatCurrency(minor / 100),
+				lineName: (lineId) =>
+					orderLineName(
+						cart.map((line) => line.name),
+						lineId,
+					),
+				signedIn: () => Boolean(getAccessToken()),
+				loadRewards: () => spendableRewards(loyaltyClient),
+				pricingKey() {
+					const payload = pricingPayload()
+					return payload ? JSON.stringify(payload) : null
+				},
+				fetchQuote(selection, signal) {
+					const order = pricingPayload()
+					// Not priceable any more: the quotes retry on the bill as it is.
+					if (!order) throw new Error('order_unpriceable')
+					return loyaltyClient.checkoutQuote({ order, selection, signal })
+				},
+				onChange: () => renderCheckout(),
+				coversTotalMessage: loyaltyLabels.pickerCoversOrder,
+			})
 		}
 
 		renderCheckout()

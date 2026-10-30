@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { minorToMajor, minorToMajorText } from '#app/utils/money-input.ts'
 
 /** Mirrors operatorOrder() in apps/tenant-api/src/services/order-service.ts. */
 export const orderSchema = z.object({
@@ -15,7 +16,22 @@ export const orderSchema = z.object({
 	deliveryFeeCents: z.number().int().optional(),
 	tipCents: z.number().int().optional(),
 	tipPercent: z.number().nullable().optional(),
+	/** A loyalty reward's discount, taken off the subtotal before tax. */
+	loyaltyDiscountCents: z.number().int(),
 	totalCents: z.number().int(),
+	/** Recorded by an operator as returned; the payment status stays `paid`. */
+	refundedCents: z.number().int(),
+	/** Each recorded refund, oldest first (the order's own page only). */
+	refunds: z
+		.array(
+			z.object({
+				id: z.string(),
+				amountCents: z.number().int(),
+				note: z.string().nullable(),
+				createdAt: z.string(),
+			}),
+		)
+		.optional(),
 	currency: z.string(),
 	createdAt: z.string().nullable(),
 	paidAt: z.string().nullable().optional(),
@@ -69,6 +85,35 @@ export const orderSchema = z.object({
 })
 export type Order = z.infer<typeof orderSchema>
 
+/** Body of `POST /operator/orders/:id/refunds`: an amount, or everything left. */
+export type OrderRefundBody =
+	{ full: true; note: string } | { amountCents: number; note: string }
+
+/** What a paid order can still give back, in cents. */
+export function refundableCents(order: {
+	totalCents: number
+	refundedCents: number
+}): number {
+	return Math.max(0, order.totalCents - order.refundedCents)
+}
+
+/**
+ * The payment word for lists and headers. A paid order whose money came back
+ * reads Refunded or Partly refunded; the stored status stays `paid`. Mirrors
+ * `orderRefundState()` in `@repo/common/restaurant-orders`.
+ */
+export function paymentDisplayStatus(order: {
+	paymentStatus: string
+	totalCents: number
+	refundedCents: number
+}): string {
+	const refunded = order.refundedCents
+	if (order.paymentStatus !== 'paid' || refunded <= 0) {
+		return order.paymentStatus
+	}
+	return refunded >= order.totalCents ? 'refunded' : 'partly_refunded'
+}
+
 /**
  * Receipt lines preserve every catalog locale as a JSON map string
  * (`{"en":"…","ar":"…"}`). Operators read them in their own locale.
@@ -101,9 +146,9 @@ export function formatMoney(
 		return new Intl.NumberFormat(locale, {
 			style: 'currency',
 			currency,
-		}).format(cents / 100)
+		}).format(minorToMajor(cents, currency))
 	} catch {
-		return `${(cents / 100).toFixed(2)} ${currency.toUpperCase()}`
+		return `${minorToMajorText(cents, currency)} ${currency.toUpperCase()}`
 	}
 }
 

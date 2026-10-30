@@ -69,6 +69,8 @@ export type PersonOrderRow = {
 	fulfillment: string
 	currency: string
 	totalCents: number
+	/** Recorded as returned; the payment status stays `paid`. */
+	refundedCents: number
 	itemCount: number
 	createdAt: string | null
 	/** `customer`: bound at checkout. `phone`: matched by the verified phone. */
@@ -172,6 +174,7 @@ export async function listPersonOrders(
 			fulfillment: order.fulfillment,
 			currency: order.currency,
 			totalCents: order.totalCents,
+			refundedCents: order.refundedCents,
 			itemCount: itemCount(order.lines),
 			createdAt: order.createdAt ? order.createdAt.toISOString() : null,
 			matchedBy: order.customerId === customer.id ? 'customer' : 'phone',

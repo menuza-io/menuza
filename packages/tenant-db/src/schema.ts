@@ -767,6 +767,15 @@ export const restaurantOrders = sqliteTable(
 		tipCents: integer('tip_cents').notNull().default(0),
 		tipPercent: integer('tip_percent').notNull().default(0),
 		totalCents: integer('total_cents').notNull(),
+		// A loyalty reward's discount, taken off the subtotal before tax. The
+		// redemption (`loyalty_redemptions`, source `restaurant_order`) holds how
+		// it splits over the lines.
+		loyaltyDiscountCents: integer('loyalty_discount_cents')
+			.notNull()
+			.default(0),
+		// Money an operator recorded as returned (`restaurant_order_refunds`
+		// adds up to it). The payment status stays `paid`.
+		refundedCents: integer('refunded_cents').notNull().default(0),
 		lines: text('lines', { mode: 'json' }).notNull(),
 		// QR ordering: a dine-in round belongs to a tab at a table; the label is
 		// a snapshot so history reads right after a table is renamed.
@@ -848,6 +857,44 @@ export const restaurantOrderReservations = sqliteTable(
 			table.slotTime,
 		),
 		index('idx_restaurant_reservations_order').on(table.orderId),
+	],
+)
+
+// Money an operator recorded as returned for a paid online order. No provider
+// refund event reaches the region and the region never calls a provider, so
+// this is the record. Append-only; erasure may clear the note.
+export const restaurantOrderRefunds = sqliteTable(
+	'restaurant_order_refunds',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		orderId: text('order_id')
+			.notNull()
+			.references(() => restaurantOrders.id),
+		amountCents: integer('amount_cents').notNull(),
+		currency: text('currency').notNull(),
+		// This refund brought the refunded total up to the order total.
+		full: integer('full', { mode: 'boolean' }).notNull().default(false),
+		note: text('note'),
+		actorId: text('actor_id').notNull(),
+		idempotencyKey: text('idempotency_key').notNull(),
+		requestHash: text('request_hash').notNull(),
+		createdAt: integer('created_at')
+			.notNull()
+			.default(sql`(cast(strftime('%s', 'now') as integer) * 1000)`),
+	},
+	(table) => [
+		uniqueIndex('restaurant_order_refunds_idempotency_unique').on(
+			table.orderId,
+			table.idempotencyKey,
+		),
+		index('idx_restaurant_order_refunds_order').on(
+			table.orderId,
+			table.createdAt,
+		),
+		index('idx_restaurant_order_refunds_created').on(table.createdAt),
+		check('chk_restaurant_order_refunds_amount', sql`${table.amountCents} > 0`),
 	],
 )
 
@@ -5437,6 +5484,14 @@ export const qrTabs = sqliteTable(
 		taxCents: integer('tax_cents').notNull().default(0),
 		tipCents: integer('tip_cents').notNull().default(0),
 		totalCents: integer('total_cents').notNull().default(0),
+		// A loyalty reward's discount on a tab paid from the phone (before tax).
+		loyaltyDiscountCents: integer('loyalty_discount_cents')
+			.notNull()
+			.default(0),
+		// Closed at the counter and rung up on a till: the till sale earns, not the tab.
+		rungUpOnStation: integer('rung_up_on_station', { mode: 'boolean' })
+			.notNull()
+			.default(false),
 		paymentMethod: text('payment_method', { enum: ['counter', 'online'] }),
 		paymentStatus: text('payment_status', {
 			enum: [...QR_TAB_PAYMENT_STATUS_VALUES],
@@ -5529,6 +5584,835 @@ export const qrTabsRelations = relations(qrTabs, ({ one }) => ({
 }))
 
 // ==========================================
+// 12c. LOYALTY (one program per organization: points, rewards, members)
+// ==========================================
+// The value lists mirror `@repo/loyalty` (a tenant-api test keeps them in
+// step). One program row (`id = 'default'`). Every program or reward change is
+// a new immutable version row, and purchases and redemptions keep the version
+// they used. The ledger is append-only; a balance row is a projection updated
+// in the same transaction as each entry and can be rebuilt from the ledger plus
+// the redemptions still holding points. Member codes, till bindings and
+// one-time codes are stored as HMACs only. Person erasure nulls the member's
+// customer link, marks the member erased, deletes its codes, bindings and
+// stored idempotent responses, cancels its pending approvals and clears the
+// operator notes about it; the anonymous ledger, purchases, redemptions and
+// approvals remain as the financial trail. Money is integer minor units with a
+// currency.
+//
+// Append-only and fixed-fact guarantees are triggers in the migration. SQLite
+// does not fire DELETE triggers for `INSERT OR REPLACE` (unless
+// `recursive_triggers` is on), so never write these tables with it: use
+// `onConflictDoNothing` or an explicit update.
+
+export const LOYALTY_PROGRAM_STATUS_VALUES = [
+	'draft',
+	'active',
+	'paused',
+] as const
+export const LOYALTY_EARNING_METHOD_VALUES = [
+	'spend',
+	'visit',
+	'items',
+	'categories',
+] as const
+export const LOYALTY_REWARD_KIND_VALUES = [
+	'order',
+	'categories',
+	'items',
+	'free_item',
+] as const
+export const LOYALTY_REWARD_STATUS_VALUES = ['active', 'archived'] as const
+export const LOYALTY_MEMBER_STATUS_VALUES = [
+	'active',
+	'suspended',
+	'erased',
+] as const
+export const LOYALTY_LEDGER_TYPE_VALUES = [
+	'earn',
+	'earn_reversal',
+	'redeem',
+	'redeem_restore',
+	'adjust',
+] as const
+export const LOYALTY_ADJUSTMENT_REASON_VALUES = [
+	'goodwill',
+	'correction',
+	'service_recovery',
+	'fraud',
+	'other',
+] as const
+export const LOYALTY_ACTOR_KIND_VALUES = [
+	'system',
+	'operator',
+	'customer',
+	'station',
+] as const
+export const LOYALTY_CHANNEL_VALUES = ['web', 'pos', 'qr', 'native'] as const
+export const LOYALTY_SOURCE_TYPE_VALUES = [
+	'restaurant_order',
+	'qr_tab',
+	'pos_order',
+] as const
+export const LOYALTY_PURCHASE_STATE_VALUES = [
+	'open',
+	'completed',
+	'review',
+	'excluded',
+] as const
+export const LOYALTY_REDEMPTION_STATE_VALUES = [
+	'reserved',
+	'bound',
+	'consumed',
+	'released',
+	'review',
+	'restored',
+] as const
+export const LOYALTY_APPROVAL_STATUS_VALUES = [
+	'pending',
+	'approved',
+	'declined',
+	'expired',
+	'cancelled',
+] as const
+export const LOYALTY_APPROVAL_METHOD_VALUES = ['wallet', 'otp'] as const
+export const LOYALTY_OUTBOX_STATUS_VALUES = [
+	'pending',
+	'done',
+	'failed',
+] as const
+
+// Drizzle's `enum` is a TypeScript type only. These checks put the same values
+// in SQL, so a write that bypasses Drizzle cannot store an unknown one. NULL
+// passes a check, so a nullable enum column stays nullable.
+const oneOf = (column: AnySQLiteColumn, values: readonly string[]) =>
+	sql`${column} in (${sql.raw(values.map((value) => `'${value}'`).join(', '))})`
+
+export type LoyaltyAllocationLine = {
+	lineId: string
+	discountMinor: number
+	rewardUnits: number
+}
+
+export const loyaltyPrograms = sqliteTable(
+	'loyalty_programs',
+	{
+		id: text('id').primaryKey(),
+		status: text('status', { enum: LOYALTY_PROGRAM_STATUS_VALUES })
+			.notNull()
+			.default('draft'),
+		// Optimistic concurrency: every save or status change bumps it.
+		version: integer('version').notNull().default(1),
+		// The program version in force now (`loyalty_program_versions.version`).
+		currentVersion: integer('current_version').notNull(),
+		currency: text('currency').notNull(),
+		// First activation. From then on the currency cannot change (trigger).
+		activatedAt: integer('activated_at'),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+	},
+	(table) => [
+		check('chk_loyalty_programs_singleton', sql`${table.id} = 'default'`),
+		check(
+			'chk_loyalty_programs_status',
+			oneOf(table.status, LOYALTY_PROGRAM_STATUS_VALUES),
+		),
+	],
+)
+
+export const loyaltyProgramVersions = sqliteTable(
+	'loyalty_program_versions',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		programId: text('program_id')
+			.notNull()
+			.references(() => loyaltyPrograms.id),
+		version: integer('version').notNull(),
+		status: text('status', { enum: LOYALTY_PROGRAM_STATUS_VALUES }).notNull(),
+		method: text('method', { enum: LOYALTY_EARNING_METHOD_VALUES }).notNull(),
+		currency: text('currency').notNull(),
+		// `LoyaltyProgramConfig` as saved: rule, minimum spend, time zone, terms.
+		config: text('config', { mode: 'json' })
+			.$type<Record<string, unknown>>()
+			.notNull(),
+		// Sales finishing at or after this instant earn under this version.
+		effectiveAt: integer('effective_at').notNull(),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		createdBy: text('created_by'),
+	},
+	(table) => [
+		uniqueIndex('loyalty_program_versions_version').on(
+			table.programId,
+			table.version,
+		),
+		index('idx_loyalty_program_versions_effective').on(
+			table.programId,
+			table.effectiveAt,
+		),
+		check(
+			'chk_loyalty_program_versions_status',
+			oneOf(table.status, LOYALTY_PROGRAM_STATUS_VALUES),
+		),
+		check(
+			'chk_loyalty_program_versions_method',
+			oneOf(table.method, LOYALTY_EARNING_METHOD_VALUES),
+		),
+	],
+)
+
+export const loyaltyRewards = sqliteTable(
+	'loyalty_rewards',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		status: text('status', { enum: LOYALTY_REWARD_STATUS_VALUES })
+			.notNull()
+			.default('active'),
+		// The version in force now; doubles as the optimistic concurrency version.
+		version: integer('version').notNull().default(1),
+		kind: text('kind', { enum: LOYALTY_REWARD_KIND_VALUES }).notNull(),
+		name: text('name').notNull(),
+		pointsCost: integer('points_cost').notNull(),
+		currency: text('currency').notNull(),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+	},
+	(table) => [
+		index('idx_loyalty_rewards_status_cost').on(table.status, table.pointsCost),
+		check('chk_loyalty_rewards_cost', sql`${table.pointsCost} >= 1`),
+		check(
+			'chk_loyalty_rewards_status',
+			oneOf(table.status, LOYALTY_REWARD_STATUS_VALUES),
+		),
+		check(
+			'chk_loyalty_rewards_kind',
+			oneOf(table.kind, LOYALTY_REWARD_KIND_VALUES),
+		),
+	],
+)
+
+export const loyaltyRewardVersions = sqliteTable(
+	'loyalty_reward_versions',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		rewardId: text('reward_id')
+			.notNull()
+			.references(() => loyaltyRewards.id),
+		version: integer('version').notNull(),
+		status: text('status', { enum: LOYALTY_REWARD_STATUS_VALUES }).notNull(),
+		currency: text('currency').notNull(),
+		// `LoyaltyRewardDefinition` as saved.
+		definition: text('definition', { mode: 'json' })
+			.$type<Record<string, unknown>>()
+			.notNull(),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		createdBy: text('created_by'),
+	},
+	(table) => [
+		uniqueIndex('loyalty_reward_versions_version').on(
+			table.rewardId,
+			table.version,
+		),
+		check(
+			'chk_loyalty_reward_versions_status',
+			oneOf(table.status, LOYALTY_REWARD_STATUS_VALUES),
+		),
+	],
+)
+
+export const loyaltyMembers = sqliteTable(
+	'loyalty_members',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		// Null once the person is erased. The row stays as the anonymous owner of
+		// the ledger and can never be used again (trigger).
+		customerId: text('customer_id').references(() => customers.id, {
+			onDelete: 'set null',
+		}),
+		status: text('status', { enum: LOYALTY_MEMBER_STATUS_VALUES })
+			.notNull()
+			.default('active'),
+		// The day the points account was opened (automatically, when a verified
+		// customer is first linked to the program).
+		createdAt: integer('created_at').notNull().default(nowMs),
+		lastPurchaseAt: integer('last_purchase_at'),
+		suspendedAt: integer('suspended_at'),
+		erasedAt: integer('erased_at'),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+	},
+	(table) => [
+		uniqueIndex('loyalty_members_customer_unique')
+			.on(table.customerId)
+			.where(sql`${table.customerId} is not null`),
+		index('idx_loyalty_members_last_purchase').on(table.lastPurchaseAt),
+		check(
+			'chk_loyalty_members_status',
+			oneOf(table.status, LOYALTY_MEMBER_STATUS_VALUES),
+		),
+	],
+)
+
+export const loyaltyBalances = sqliteTable(
+	'loyalty_balances',
+	{
+		memberId: text('member_id')
+			.primaryKey()
+			.references(() => loyaltyMembers.id),
+		// Sum of the member's ledger deltas; negative while the member owes points.
+		points: integer('points').notNull().default(0),
+		// Points held by redemptions that are reserved, bound or in review.
+		reserved: integer('reserved').notNull().default(0),
+		lifetimeEarned: integer('lifetime_earned').notNull().default(0),
+		lifetimeRedeemed: integer('lifetime_redeemed').notNull().default(0),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+	},
+	(table) => [
+		check('chk_loyalty_balances_reserved', sql`${table.reserved} >= 0`),
+	],
+)
+
+// One row per order, QR tab or till sale a member is credited for. The source
+// pair is unique, so a sale can never earn twice; a tab's rounds are never
+// purchases of their own.
+export const loyaltyPurchases = sqliteTable(
+	'loyalty_purchases',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		memberId: text('member_id')
+			.notNull()
+			.references(() => loyaltyMembers.id),
+		sourceType: text('source_type', {
+			enum: LOYALTY_SOURCE_TYPE_VALUES,
+		}).notNull(),
+		sourceId: text('source_id').notNull(),
+		channel: text('channel', { enum: LOYALTY_CHANNEL_VALUES }).notNull(),
+		locationId: text('location_id'),
+		currency: text('currency').notNull(),
+		state: text('state', { enum: LOYALTY_PURCHASE_STATE_VALUES })
+			.notNull()
+			.default('open'),
+		reviewReason: text('review_reason'),
+		excludedReason: text('excluded_reason'),
+		skipReason: text('skip_reason'),
+		// The program version in force at `occurred_at`.
+		programVersion: integer('program_version'),
+		// When the sale finished (paid and complete).
+		occurredAt: integer('occurred_at'),
+		// Organization-local day of `occurred_at`, for one visit award per day.
+		visitDate: text('visit_date'),
+		visitAwarded: integer('visit_awarded', { mode: 'boolean' })
+			.notNull()
+			.default(false),
+		// `LoyaltyPurchaseSnapshot`: lines with their catalog facts and net
+		// merchandise, and what was paid. Catalog ids and amounts only.
+		snapshot: text('snapshot', { mode: 'json' }).$type<
+			Record<string, unknown>
+		>(),
+		eligibleMinor: integer('eligible_minor').notNull().default(0),
+		totalPaidMinor: integer('total_paid_minor').notNull().default(0),
+		awardedPoints: integer('awarded_points').notNull().default(0),
+		reversedPoints: integer('reversed_points').notNull().default(0),
+		// Cumulative money returned; each refund recomputes from the total.
+		refundedMinor: integer('refunded_minor').notNull().default(0),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+	},
+	(table) => [
+		uniqueIndex('loyalty_purchases_source_unique').on(
+			table.sourceType,
+			table.sourceId,
+		),
+		uniqueIndex('loyalty_purchases_one_visit_per_day')
+			.on(table.memberId, table.visitDate)
+			.where(sql`${table.visitAwarded} = 1`),
+		index('idx_loyalty_purchases_member_occurred').on(
+			table.memberId,
+			table.occurredAt,
+		),
+		index('idx_loyalty_purchases_state_updated').on(
+			table.state,
+			table.updatedAt,
+		),
+		index('idx_loyalty_purchases_occurred').on(table.occurredAt),
+		index('idx_loyalty_purchases_state_occurred').on(
+			table.state,
+			table.occurredAt,
+		),
+		check(
+			'chk_loyalty_purchases_points',
+			sql`${table.awardedPoints} >= 0 AND ${table.reversedPoints} >= 0 AND ${table.reversedPoints} <= ${table.awardedPoints}`,
+		),
+		check(
+			'chk_loyalty_purchases_money',
+			sql`${table.eligibleMinor} >= 0 AND ${table.totalPaidMinor} >= 0 AND ${table.refundedMinor} >= 0`,
+		),
+		// The one-visit-per-day index ignores a NULL date, so a visit award
+		// must carry the day it was awarded for.
+		check(
+			'chk_loyalty_purchases_visit_date',
+			sql`${table.visitAwarded} = 0 or ${table.visitDate} is not null`,
+		),
+		check(
+			'chk_loyalty_purchases_source_type',
+			oneOf(table.sourceType, LOYALTY_SOURCE_TYPE_VALUES),
+		),
+		check(
+			'chk_loyalty_purchases_channel',
+			oneOf(table.channel, LOYALTY_CHANNEL_VALUES),
+		),
+		check(
+			'chk_loyalty_purchases_state',
+			oneOf(table.state, LOYALTY_PURCHASE_STATE_VALUES),
+		),
+	],
+)
+
+// A reward being spent. Points are held (balance `reserved`) while reserved,
+// bound or in review; consuming posts the `redeem` entry, a confirmed full
+// refund posts `redeem_restore`. Transitions and the bound facts are enforced
+// by triggers.
+export const loyaltyRedemptions = sqliteTable(
+	'loyalty_redemptions',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		memberId: text('member_id')
+			.notNull()
+			.references(() => loyaltyMembers.id),
+		rewardId: text('reward_id')
+			.notNull()
+			.references(() => loyaltyRewards.id),
+		rewardVersion: integer('reward_version').notNull(),
+		rewardName: text('reward_name').notNull(),
+		// `LoyaltyRewardSnapshot` of the version used; never rewritten.
+		rewardSnapshot: text('reward_snapshot', { mode: 'json' })
+			.$type<Record<string, unknown>>()
+			.notNull(),
+		points: integer('points').notNull(),
+		state: text('state', { enum: LOYALTY_REDEMPTION_STATE_VALUES })
+			.notNull()
+			.default('reserved'),
+		reviewReason: text('review_reason'),
+		releaseReason: text('release_reason'),
+		channel: text('channel', { enum: LOYALTY_CHANNEL_VALUES }).notNull(),
+		sourceType: text('source_type', { enum: LOYALTY_SOURCE_TYPE_VALUES }),
+		sourceId: text('source_id'),
+		locationId: text('location_id'),
+		deviceId: text('device_id'),
+		approvalId: text('approval_id'),
+		currency: text('currency').notNull(),
+		cartHash: text('cart_hash').notNull(),
+		discountMinor: integer('discount_minor').notNull(),
+		// How the discount splits over the cart lines (largest remainder).
+		allocation: text('allocation', { mode: 'json' })
+			.$type<LoyaltyAllocationLine[]>()
+			.notNull(),
+		targetLineId: text('target_line_id'),
+		// An unbound hold may be released after this.
+		expiresAt: integer('expires_at'),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		boundAt: integer('bound_at'),
+		consumedAt: integer('consumed_at'),
+		releasedAt: integer('released_at'),
+		restoredAt: integer('restored_at'),
+		reviewAt: integer('review_at'),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+	},
+	(table) => [
+		// One reward per order, tab or sale.
+		uniqueIndex('loyalty_redemptions_one_per_source')
+			.on(table.sourceType, table.sourceId)
+			.where(
+				sql`${table.sourceId} is not null and ${table.state} <> 'released'`,
+			),
+		uniqueIndex('loyalty_redemptions_approval_unique')
+			.on(table.approvalId)
+			.where(sql`${table.approvalId} is not null`),
+		index('idx_loyalty_redemptions_member_state').on(
+			table.memberId,
+			table.state,
+		),
+		index('idx_loyalty_redemptions_state_updated').on(
+			table.state,
+			table.updatedAt,
+		),
+		index('idx_loyalty_redemptions_state_expires').on(
+			table.state,
+			table.expiresAt,
+		),
+		index('idx_loyalty_redemptions_state_consumed').on(
+			table.state,
+			table.consumedAt,
+		),
+		index('idx_loyalty_redemptions_state_restored').on(
+			table.state,
+			table.restoredAt,
+		),
+		index('idx_loyalty_redemptions_state_released').on(
+			table.state,
+			table.releasedAt,
+		),
+		// Lookups by source that include released rows, which the partial
+		// unique index above cannot serve.
+		index('idx_loyalty_redemptions_source').on(
+			table.sourceType,
+			table.sourceId,
+		),
+		check('chk_loyalty_redemptions_points', sql`${table.points} >= 1`),
+		check('chk_loyalty_redemptions_discount', sql`${table.discountMinor} >= 0`),
+		check(
+			'chk_loyalty_redemptions_bound_source',
+			sql`${table.state} in ('reserved', 'released') or ${table.sourceId} is not null`,
+		),
+		check(
+			'chk_loyalty_redemptions_state',
+			oneOf(table.state, LOYALTY_REDEMPTION_STATE_VALUES),
+		),
+		check(
+			'chk_loyalty_redemptions_channel',
+			oneOf(table.channel, LOYALTY_CHANNEL_VALUES),
+		),
+		check(
+			'chk_loyalty_redemptions_source_type',
+			oneOf(table.sourceType, LOYALTY_SOURCE_TYPE_VALUES),
+		),
+	],
+)
+
+// The signed point deltas. Append-only (triggers): the only change allowed
+// is erasure clearing an operator note.
+export const loyaltyLedger = sqliteTable(
+	'loyalty_ledger',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		memberId: text('member_id')
+			.notNull()
+			.references(() => loyaltyMembers.id),
+		type: text('type', { enum: LOYALTY_LEDGER_TYPE_VALUES }).notNull(),
+		delta: integer('delta').notNull(),
+		// One fact, one entry: `earn:<purchase>`, `reverse:<purchase>:<refunded>`,
+		// `redeem:<redemption>`, `restore:<redemption>`, `adjust:<member>:<key>`.
+		eventKey: text('event_key').notNull(),
+		purchaseId: text('purchase_id').references(() => loyaltyPurchases.id),
+		redemptionId: text('redemption_id').references(() => loyaltyRedemptions.id),
+		channel: text('channel', { enum: LOYALTY_CHANNEL_VALUES }),
+		locationId: text('location_id'),
+		programVersion: integer('program_version'),
+		reason: text('reason', { enum: LOYALTY_ADJUSTMENT_REASON_VALUES }),
+		note: text('note'),
+		actorKind: text('actor_kind', {
+			enum: LOYALTY_ACTOR_KIND_VALUES,
+		}).notNull(),
+		actorId: text('actor_id'),
+		at: integer('at').notNull().default(nowMs),
+	},
+	(table) => [
+		uniqueIndex('loyalty_ledger_event_key_unique').on(table.eventKey),
+		index('idx_loyalty_ledger_member_at').on(table.memberId, table.at),
+		index('idx_loyalty_ledger_at').on(table.at),
+		index('idx_loyalty_ledger_purchase').on(table.purchaseId),
+		index('idx_loyalty_ledger_redemption').on(table.redemptionId),
+		index('idx_loyalty_ledger_location_at').on(table.locationId, table.at),
+		check(
+			'chk_loyalty_ledger_delta_sign',
+			sql`(${table.type} in ('earn', 'redeem_restore') and ${table.delta} > 0) or (${table.type} in ('earn_reversal', 'redeem') and ${table.delta} < 0) or (${table.type} = 'adjust' and ${table.delta} <> 0)`,
+		),
+		check(
+			'chk_loyalty_ledger_adjust_reason',
+			sql`${table.type} <> 'adjust' or ${table.reason} is not null`,
+		),
+		check(
+			'chk_loyalty_ledger_type',
+			oneOf(table.type, LOYALTY_LEDGER_TYPE_VALUES),
+		),
+		check(
+			'chk_loyalty_ledger_channel',
+			oneOf(table.channel, LOYALTY_CHANNEL_VALUES),
+		),
+		check(
+			'chk_loyalty_ledger_reason',
+			oneOf(table.reason, LOYALTY_ADJUSTMENT_REASON_VALUES),
+		),
+		check(
+			'chk_loyalty_ledger_actor_kind',
+			oneOf(table.actorKind, LOYALTY_ACTOR_KIND_VALUES),
+		),
+	],
+)
+
+// Money an operator recorded as returned for a QR tab paid from the phone (no
+// provider refund event reaches the region; an online order's refunds are
+// `restaurant_order_refunds`). Append-only; erasure may clear the note.
+export const loyaltyRefunds = sqliteTable(
+	'loyalty_refunds',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		sourceType: text('source_type', {
+			enum: ['restaurant_order', 'qr_tab'],
+		}).notNull(),
+		sourceId: text('source_id').notNull(),
+		purchaseId: text('purchase_id').references(() => loyaltyPurchases.id),
+		amountMinor: integer('amount_minor').notNull(),
+		currency: text('currency').notNull(),
+		full: integer('full', { mode: 'boolean' }).notNull().default(false),
+		note: text('note'),
+		actorId: text('actor_id'),
+		idempotencyKey: text('idempotency_key').notNull(),
+		createdAt: integer('created_at').notNull().default(nowMs),
+	},
+	(table) => [
+		uniqueIndex('loyalty_refunds_idempotency_unique').on(table.idempotencyKey),
+		index('idx_loyalty_refunds_source').on(table.sourceType, table.sourceId),
+		index('idx_loyalty_refunds_created').on(table.createdAt),
+		check('chk_loyalty_refunds_amount', sql`${table.amountMinor} >= 0`),
+		check(
+			'chk_loyalty_refunds_source_type',
+			oneOf(table.sourceType, ['restaurant_order', 'qr_tab']),
+		),
+	],
+)
+
+// A short-lived, single-use code a signed-in member shows at the till. It
+// identifies the member and never authorizes spending.
+export const loyaltyMemberCodes = sqliteTable(
+	'loyalty_member_codes',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		memberId: text('member_id')
+			.notNull()
+			.references(() => loyaltyMembers.id),
+		codeHash: text('code_hash').notNull(),
+		expiresAt: integer('expires_at').notNull(),
+		usedAt: integer('used_at'),
+		usedByDeviceId: text('used_by_device_id'),
+		createdAt: integer('created_at').notNull().default(nowMs),
+	},
+	(table) => [
+		uniqueIndex('loyalty_member_codes_hash_unique').on(table.codeHash),
+		index('idx_loyalty_member_codes_member').on(table.memberId),
+		index('idx_loyalty_member_codes_expires').on(table.expiresAt),
+	],
+)
+
+// What a till keeps after identifying a member online, so a sale it finishes
+// offline later can still be credited. Opaque, one terminal, expires.
+export const loyaltyMemberBindings = sqliteTable(
+	'loyalty_member_bindings',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		memberId: text('member_id')
+			.notNull()
+			.references(() => loyaltyMembers.id),
+		deviceId: text('device_id').notNull(),
+		tokenHash: text('token_hash').notNull(),
+		expiresAt: integer('expires_at').notNull(),
+		revokedAt: integer('revoked_at'),
+		createdAt: integer('created_at').notNull().default(nowMs),
+	},
+	(table) => [
+		uniqueIndex('loyalty_member_bindings_hash_unique').on(table.tokenHash),
+		index('idx_loyalty_member_bindings_member').on(table.memberId),
+		index('idx_loyalty_member_bindings_device').on(
+			table.deviceId,
+			table.expiresAt,
+		),
+	],
+)
+
+// A till's request to spend a member's points on one sale. Approved in the
+// member's signed-in wallet or with a one-time code sent to their verified
+// phone; approving reserves the points and binds them to the sale.
+export const loyaltyApprovals = sqliteTable(
+	'loyalty_approvals',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		memberId: text('member_id')
+			.notNull()
+			.references(() => loyaltyMembers.id),
+		deviceId: text('device_id').notNull(),
+		locationId: text('location_id'),
+		// The till's order id the discount will be recorded on.
+		saleId: text('sale_id').notNull(),
+		rewardId: text('reward_id').notNull(),
+		rewardVersion: integer('reward_version').notNull(),
+		rewardName: text('reward_name').notNull(),
+		pointsCost: integer('points_cost').notNull(),
+		currency: text('currency').notNull(),
+		discountMinor: integer('discount_minor').notNull(),
+		allocation: text('allocation', { mode: 'json' })
+			.$type<LoyaltyAllocationLine[]>()
+			.notNull(),
+		// The `LoyaltyCart` the till sent; the redemption binds to its hash.
+		cart: text('cart', { mode: 'json' })
+			.$type<Record<string, unknown>>()
+			.notNull(),
+		cartHash: text('cart_hash').notNull(),
+		targetLineId: text('target_line_id'),
+		status: text('status', { enum: LOYALTY_APPROVAL_STATUS_VALUES })
+			.notNull()
+			.default('pending'),
+		method: text('method', { enum: LOYALTY_APPROVAL_METHOD_VALUES }),
+		otpHash: text('otp_hash'),
+		otpSentAt: integer('otp_sent_at'),
+		otpAttempts: integer('otp_attempts').notNull().default(0),
+		redemptionId: text('redemption_id'),
+		expiresAt: integer('expires_at').notNull(),
+		decidedAt: integer('decided_at'),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+	},
+	(table) => [
+		uniqueIndex('loyalty_approvals_one_pending_per_sale')
+			.on(table.saleId)
+			.where(sql`${table.status} = 'pending'`),
+		index('idx_loyalty_approvals_member_status').on(
+			table.memberId,
+			table.status,
+		),
+		index('idx_loyalty_approvals_expires').on(table.expiresAt),
+		index('idx_loyalty_approvals_sale').on(table.saleId),
+		index('idx_loyalty_approvals_status_updated').on(
+			table.status,
+			table.updatedAt,
+		),
+		check('chk_loyalty_approvals_points', sql`${table.pointsCost} >= 1`),
+		check('chk_loyalty_approvals_discount', sql`${table.discountMinor} >= 0`),
+		check(
+			'chk_loyalty_approvals_status',
+			oneOf(table.status, LOYALTY_APPROVAL_STATUS_VALUES),
+		),
+		check(
+			'chk_loyalty_approvals_method',
+			oneOf(table.method, LOYALTY_APPROVAL_METHOD_VALUES),
+		),
+	],
+)
+
+// Sources (orders, tabs, till sales) waiting to be reconciled. One row per
+// source: queueing again resets it to pending, and the worker always reads
+// the authoritative source, so repeated or out-of-order events coalesce.
+export const loyaltyOutbox = sqliteTable(
+	'loyalty_outbox',
+	{
+		sourceType: text('source_type', {
+			enum: LOYALTY_SOURCE_TYPE_VALUES,
+		}).notNull(),
+		sourceId: text('source_id').notNull(),
+		status: text('status', { enum: LOYALTY_OUTBOX_STATUS_VALUES })
+			.notNull()
+			.default('pending'),
+		attempts: integer('attempts').notNull().default(0),
+		nextAttemptAt: integer('next_attempt_at').notNull().default(nowMs),
+		// An error code only, never a payload.
+		lastError: text('last_error'),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+		doneAt: integer('done_at'),
+		// A driver (tick, alarm, settle) reconciling the row holds it until
+		// then, so overlapping drivers neither repeat the work nor both count
+		// one failure.
+		claimedUntil: integer('claimed_until'),
+	},
+	(table) => [
+		primaryKey({ columns: [table.sourceType, table.sourceId] }),
+		index('idx_loyalty_outbox_due').on(table.status, table.nextAttemptAt),
+		check(
+			'chk_loyalty_outbox_source_type',
+			oneOf(table.sourceType, LOYALTY_SOURCE_TYPE_VALUES),
+		),
+		check(
+			'chk_loyalty_outbox_status',
+			oneOf(table.status, LOYALTY_OUTBOX_STATUS_VALUES),
+		),
+	],
+)
+
+export const loyaltyIdempotencyKeys = sqliteTable(
+	'loyalty_idempotency_keys',
+	{
+		scope: text('scope').notNull(),
+		key: text('key').notNull(),
+		requestHash: text('request_hash').notNull(),
+		statusCode: integer('status_code').notNull(),
+		responseJson: text('response_json').notNull(),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		expiresAt: integer('expires_at').notNull(),
+		// The member the stored response is about (it can hold their name, phone
+		// digits or an operator note); erasing the member deletes the row.
+		memberId: text('member_id'),
+	},
+	(table) => [
+		primaryKey({ columns: [table.scope, table.key] }),
+		index('idx_loyalty_idempotency_keys_expires').on(table.expiresAt),
+		index('idx_loyalty_idempotency_keys_member').on(table.memberId),
+	],
+)
+
+export const loyaltyRateCounters = sqliteTable(
+	'loyalty_rate_counters',
+	{
+		bucket: text('bucket').notNull(),
+		subjectHash: text('subject_hash').notNull(),
+		windowStart: integer('window_start').notNull(),
+		count: integer('count').notNull().default(1),
+	},
+	(table) => [
+		primaryKey({
+			columns: [table.bucket, table.subjectHash, table.windowStart],
+		}),
+		index('idx_loyalty_rate_counters_window').on(table.windowStart),
+	],
+)
+
+// Operator and system actions on the program (saves, reward changes, refunds,
+// review decisions, member status). Ids and amounts, never customer data.
+// Append-only; erasure may redact `changes`.
+export const loyaltyAuditLog = sqliteTable(
+	'loyalty_audit_log',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		at: integer('at').notNull().default(nowMs),
+		actorKind: text('actor_kind', {
+			enum: LOYALTY_ACTOR_KIND_VALUES,
+		}).notNull(),
+		actorId: text('actor_id'),
+		locationId: text('location_id'),
+		action: text('action').notNull(),
+		entityType: text('entity_type').notNull(),
+		entityId: text('entity_id').notNull(),
+		changes: text('changes', { mode: 'json' }).$type<Record<string, unknown>>(),
+	},
+	(table) => [
+		index('idx_loyalty_audit_log_at').on(table.at),
+		index('idx_loyalty_audit_log_entity').on(table.entityType, table.entityId),
+		check(
+			'chk_loyalty_audit_log_actor_kind',
+			oneOf(table.actorKind, LOYALTY_ACTOR_KIND_VALUES),
+		),
+	],
+)
+// ==========================================
 // 13. INFERRED TYPES
 // ==========================================
 export type Customer = typeof customers.$inferSelect
@@ -5563,6 +6447,7 @@ export type WebsiteFormSubmission = typeof websiteFormSubmissions.$inferSelect
 
 export type RestaurantOrder = typeof restaurantOrders.$inferSelect
 export type NewRestaurantOrder = typeof restaurantOrders.$inferInsert
+export type RestaurantOrderRefund = typeof restaurantOrderRefunds.$inferSelect
 export type RestaurantOrderReservation =
 	typeof restaurantOrderReservations.$inferSelect
 export type NewRestaurantOrderReservation =
@@ -5729,3 +6614,23 @@ export type NewQrTableRow = typeof qrTables.$inferInsert
 export type QrTabRow = typeof qrTabs.$inferSelect
 export type NewQrTabRow = typeof qrTabs.$inferInsert
 export type QrSettingsRow = typeof qrSettings.$inferSelect
+
+export type LoyaltyProgramRow = typeof loyaltyPrograms.$inferSelect
+export type LoyaltyProgramVersionRow =
+	typeof loyaltyProgramVersions.$inferSelect
+export type LoyaltyRewardRow = typeof loyaltyRewards.$inferSelect
+export type LoyaltyRewardVersionRow = typeof loyaltyRewardVersions.$inferSelect
+export type LoyaltyMemberRow = typeof loyaltyMembers.$inferSelect
+export type LoyaltyBalanceRow = typeof loyaltyBalances.$inferSelect
+export type LoyaltyPurchaseRow = typeof loyaltyPurchases.$inferSelect
+export type NewLoyaltyPurchaseRow = typeof loyaltyPurchases.$inferInsert
+export type LoyaltyRedemptionRow = typeof loyaltyRedemptions.$inferSelect
+export type NewLoyaltyRedemptionRow = typeof loyaltyRedemptions.$inferInsert
+export type LoyaltyLedgerRow = typeof loyaltyLedger.$inferSelect
+export type NewLoyaltyLedgerRow = typeof loyaltyLedger.$inferInsert
+export type LoyaltyRefundRow = typeof loyaltyRefunds.$inferSelect
+export type LoyaltyMemberCodeRow = typeof loyaltyMemberCodes.$inferSelect
+export type LoyaltyMemberBindingRow = typeof loyaltyMemberBindings.$inferSelect
+export type LoyaltyApprovalRow = typeof loyaltyApprovals.$inferSelect
+export type LoyaltyOutboxRow = typeof loyaltyOutbox.$inferSelect
+export type LoyaltyAuditLogRow = typeof loyaltyAuditLog.$inferSelect

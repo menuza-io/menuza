@@ -49,7 +49,11 @@ const MAX_ORDER_BODY_BYTES = 200_000
 
 function orderFailureResponse(failure: OrderServiceFailure) {
 	return Response.json(
-		{ error: failure.code, message: failure.message },
+		{
+			error: failure.code,
+			message: failure.message,
+			...(failure.details ? { details: failure.details } : {}),
+		},
 		{ status: failure.status, headers: { 'Cache-Control': 'no-store' } },
 	)
 }
@@ -350,9 +354,11 @@ publicOrderRoutes.get('/tab', async (c) => {
 
 	const tabToken = c.req.header(QR_TAB_TOKEN_HEADER)?.trim()
 	if (!tabToken) {
+		// Not a 401: that status means the customer's token was refused (Sites
+		// signs the customer out on it). A missing tab code reads like a wrong one.
 		return c.json(
-			{ error: 'unauthorized', message: 'A tab code is required.' },
-			401,
+			{ error: 'tab_not_found', message: 'A tab code is required.' },
+			404,
 			noStoreHeaders(),
 		)
 	}
@@ -399,12 +405,18 @@ publicOrderRoutes.post('/tab/pay', async (c) => {
 	if ('error' in organization) return organization.error
 	const tabToken = c.req.header(QR_TAB_TOKEN_HEADER)?.trim()
 	if (!tabToken) {
+		// Not a 401: that status means the customer's token was refused (Sites
+		// signs the customer out on it). A missing tab code reads like a wrong one.
 		return c.json(
-			{ error: 'unauthorized', message: 'A tab code is required.' },
-			401,
+			{ error: 'tab_not_found', message: 'A tab code is required.' },
+			404,
 			noStoreHeaders(),
 		)
 	}
+	// A customer token is optional here: a signed-in member collects the
+	// tab's points, and only a signed-in member may spend a reward on it.
+	const customer = await optionalCustomerId(c, organization.organization)
+	if ('error' in customer) return customer.error
 	const orgId = organization.organization.id
 	try {
 		// The tab's own location decides whether online payment is on.
@@ -424,6 +436,8 @@ publicOrderRoutes.post('/tab/pay', async (c) => {
 			contact: parsed.data.contact,
 			features,
 			onlinePayment: context.data.onlinePayment,
+			customerId: customer.customerId,
+			loyalty: parsed.data.loyalty ?? null,
 		})
 		if (!result.ok) return orderFailureResponse(result.failure)
 		return c.json(result.data, 200, noStoreHeaders())

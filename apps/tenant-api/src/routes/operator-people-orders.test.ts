@@ -116,7 +116,12 @@ beforeEach(async () => {
 	const base = 1_700_000_000
 	await db.insert(restaurantOrders).values([
 		// Vera: bound, two bound in the same second (tie-break), one by phone.
-		order({ customerId: 'cus_v', at: base + 10, totalCents: 2000 }),
+		order({
+			customerId: 'cus_v',
+			at: base + 10,
+			totalCents: 2000,
+			refundedCents: 500,
+		}),
 		order({ customerId: 'cus_v', at: base + 10, totalCents: 500 }),
 		order({
 			customerId: 'cus_v',
@@ -145,7 +150,12 @@ afterEach(async () => {
 })
 
 type OrdersBody = {
-	orders: Array<{ id: string; matchedBy: string; itemCount: number }>
+	orders: Array<{
+		id: string
+		matchedBy: string
+		itemCount: number
+		refundedCents: number
+	}>
 	nextCursor: string | null
 	totals: { count: number; spend: Array<{ currency: string; cents: number }> }
 }
@@ -168,6 +178,8 @@ describe('GET /operator/people/:key/orders', () => {
 			'phone',
 		])
 		expect(body.orders[0]!.itemCount).toBe(3)
+		// What came back stays visible; the payment status stays `paid`.
+		expect(body.orders.map((o) => o.refundedCents)).toEqual([0, 500, 0, 0])
 		expect(body.nextCursor).toBeNull()
 		expect(body.totals.count).toBe(4)
 		// 2000 + 500 + 700; the cancelled order is not spend.

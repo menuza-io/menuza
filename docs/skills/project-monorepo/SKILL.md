@@ -16,11 +16,11 @@ feature belongs.
 ## Repository shape
 
 `apps/*` are deployable or runnable products: App/Admin operator surfaces, Astro
-web/sites, regional tenant-api, jobs-cron, docs/studio, Expo mobile, native
-iOS/Android tenant apps, email, and the browser extension. `packages/*` contain
-shared contracts and services such as auth, database, tenant-db, cache,
-security, storage, email, marketing, payments, integrations, SSO, UI, i18n,
-observability, and test utilities.
+web/sites, regional tenant-api, jobs-cron, docs/studio, the Expo operator and
+customer apps, email, and the browser extension. `packages/*` contain shared
+contracts and services such as auth, database, tenant-db, cache, security,
+storage, email, marketing, payments, integrations, SSO, UI, i18n, observability,
+and test utilities.
 
 Put reusable, runtime-appropriate behavior in a package only when it has a real
 consumer beyond one route. Keep server-only code out of browser/mobile packages
@@ -58,9 +58,9 @@ npx --no-install turbo run test --filter=@repo/security
 npm run validate
 ```
 
-Build dependencies and cache behavior are defined in `turbo.json`. Native iOS
-and Android tasks are intentionally opt-in and do not provide normal Turbo
-build/test/typecheck tasks. Do not add a root dependency or script merely to
+Build dependencies and cache behavior are defined in `turbo.json`. Simulator and
+device builds of the Expo apps are intentionally opt-in and are not part of the
+normal Turbo build/test graph. Do not add a root dependency or script merely to
 make one app convenient if it breaks platform-independent CI.
 
 ## Conventions and generated files

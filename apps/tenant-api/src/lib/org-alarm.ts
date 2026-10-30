@@ -38,7 +38,7 @@ export type OrgTickOutcome = {
 }
 
 export type OrgTickModule = {
-	name: 'staff' | 'reservations'
+	name: 'staff' | 'reservations' | 'loyalty'
 	tickPath: string
 	/** How long an idle module waits between alarms while it has work. */
 	intervalMs?: number

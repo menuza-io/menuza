@@ -1,0 +1,68 @@
+@import 'tailwindcss';
+@import 'uniwind';
+
+@source '../components';
+@source '../lib';
+
+/*
+ * Semantic tokens. These are the neutral defaults the app shows before an
+ * organization's branding loads (and for any token its theme leaves out).
+ * lib/theme/apply-theme.ts replaces every value at runtime with the
+ * organization's published Sites theme, so components only ever use these
+ * names, never a palette color.
+ */
+@layer theme {
+	:root {
+		@variant light {
+			--color-background: #ffffff;
+			--color-foreground: #0a0a0a;
+			--color-card: #ffffff;
+			--color-card-foreground: #0a0a0a;
+			--color-popover: #ffffff;
+			--color-popover-foreground: #0a0a0a;
+			--color-primary: #171717;
+			--color-primary-foreground: #fafafa;
+			--color-secondary: #f5f5f5;
+			--color-secondary-foreground: #171717;
+			--color-muted: #f5f5f5;
+			--color-muted-foreground: #737373;
+			--color-accent: #f5f5f5;
+			--color-accent-foreground: #171717;
+			--color-destructive: #e7000b;
+			--color-destructive-foreground: #ffffff;
+			--color-border: #e5e5e5;
+			--color-input: #e5e5e5;
+			--color-ring: #a1a1a1;
+		}
+
+		@variant dark {
+			--color-background: #0a0a0a;
+			--color-foreground: #fafafa;
+			--color-card: #171717;
+			--color-card-foreground: #fafafa;
+			--color-popover: #171717;
+			--color-popover-foreground: #fafafa;
+			--color-primary: #e5e5e5;
+			--color-primary-foreground: #171717;
+			--color-secondary: #262626;
+			--color-secondary-foreground: #fafafa;
+			--color-muted: #262626;
+			--color-muted-foreground: #a1a1a1;
+			--color-accent: #404040;
+			--color-accent-foreground: #fafafa;
+			--color-destructive: #ff6467;
+			--color-destructive-foreground: #ffffff;
+			--color-border: #ffffff1a;
+			--color-input: #ffffff26;
+			--color-ring: #737373;
+		}
+	}
+}
+
+@theme {
+	/* Corner radii follow the organization's `--radius` (0.625rem = 10px by default). */
+	--radius-sm: 6px;
+	--radius-md: 8px;
+	--radius-lg: 10px;
+	--radius-xl: 14px;
+}

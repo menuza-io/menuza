@@ -30,6 +30,10 @@ import {
 	reservationsPublicNotFound,
 	resolveOrgId,
 } from './org-router.ts'
+import {
+	fanOutLoyaltyTick,
+	type LoyaltyTickResult,
+} from '../src/services/loyalty-tick-service.ts'
 import { fanOutReservationsTick } from '../src/services/rsv-tick-fanout.ts'
 import type { ReservationsTickResult } from '../src/services/rsv-tick-service.ts'
 import { fanOutStaffTick } from '../src/services/staff-tick-fanout.ts'
@@ -169,15 +173,15 @@ async function handleProvision(
 const tickBodySchema = z.object({ orgId: z.unknown().optional() })
 
 /**
- * The hourly tick on the Workers runtime, for staffing and for reservations.
- * The cron posts here without an organization; each organization's data lives
- * in its own Durable Object, so the edge asks every one of them to run its own
- * tick (which lands back in the module's `/api/<module>/tick` route inside the
- * object, behind the same token check) and folds the answers into counts.
- * Organizations without the module cost the object one local query and no
- * outbound call.
+ * The hourly tick on the Workers runtime, for staffing, reservations and
+ * loyalty. The cron posts here without an organization; each organization's
+ * data lives in its own Durable Object, so the edge asks every one of them to
+ * run its own tick (which lands back in the module's `/api/<module>/tick`
+ * route inside the object, behind the same token check) and folds the answers
+ * into counts. Organizations without the module cost the object one local
+ * query and no outbound call.
  */
-type TickModuleName = 'staff' | 'reservations'
+type TickModuleName = 'staff' | 'reservations' | 'loyalty'
 
 async function handleTickFanOut(
 	request: Request,
@@ -206,6 +210,14 @@ async function handleTickFanOut(
 	const orgIds = await registryStub(env).list()
 	const tickUrl = new URL(`/api/${module}/tick`, request.url)
 	const runOne = async <T>(orgId: string): Promise<T | null> => {
+		const failed = (detail: unknown): null => {
+			console.error(
+				`Tick fan-out (${module}) failed for organization`,
+				orgId,
+				detail,
+			)
+			return null
+		}
 		try {
 			const forwarded = new Request(tickUrl, {
 				method: 'POST',
@@ -216,17 +228,13 @@ async function handleTickFanOut(
 				body: JSON.stringify({ orgId }),
 			})
 			const response = await forwardToOrg(forwarded, env, orgId)
-			if (!response.ok) return null
+			if (!response.ok) return failed(response.status)
 			const answer = (await response.json().catch(() => null)) as {
 				result?: T
 			} | null
-			return answer?.result ?? null
+			return answer?.result ?? failed('no result')
 		} catch (error) {
-			console.error(
-				`Tick fan-out (${module}) failed for an organization`,
-				error,
-			)
-			return null
+			return failed(error)
 		}
 	}
 	const totals =
@@ -235,10 +243,15 @@ async function handleTickFanOut(
 					orgIds,
 					run: (orgId) => runOne<TickResult>(orgId),
 				})
-			: await fanOutReservationsTick({
-					orgIds,
-					run: (orgId) => runOne<ReservationsTickResult>(orgId),
-				})
+			: module === 'reservations'
+				? await fanOutReservationsTick({
+						orgIds,
+						run: (orgId) => runOne<ReservationsTickResult>(orgId),
+					})
+				: await fanOutLoyaltyTick({
+						orgIds,
+						run: (orgId) => runOne<LoyaltyTickResult>(orgId),
+					})
 	return Response.json({ success: totals.errors === 0, ...totals })
 }
 
@@ -351,7 +364,9 @@ async function handle(
 				? 'staff'
 				: url.pathname === '/api/reservations/tick'
 					? 'reservations'
-					: null
+					: url.pathname === '/api/loyalty/tick'
+						? 'loyalty'
+						: null
 	if (tickModule) {
 		const tickOrgId = await resolveOrgId(request, env)
 		if (tickOrgId) {

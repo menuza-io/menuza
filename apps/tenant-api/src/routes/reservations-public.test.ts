@@ -65,6 +65,12 @@ const originToOrg = vi.hoisted(
 vi.mock('../lib/origin.ts', async (importOriginal) => ({
 	...(await importOriginal<typeof import('../lib/origin.ts')>()),
 	findActiveOrganizationById: vi.fn(async (id: string) => orgs.get(id) ?? null),
+	lookupActiveOrganization: vi.fn(async (id: string) => {
+		const organization = orgs.get(id)
+		return organization
+			? { status: 'found', organization }
+			: { status: 'missing' }
+	}),
 	resolveOrganizationForPublicOrigin: vi.fn(async (origin?: string) => {
 		const id = origin ? originToOrg.get(origin) : undefined
 		return id ? (orgs.get(id) ?? null) : null
@@ -536,7 +542,9 @@ describe('GET /reservations/availability', () => {
 	})
 
 	it('applies min notice, same-day cutoff, horizon and release time (VAL-ONLINE-005)', async () => {
-		await setSettings({ horizonDays: 14 })
+		// The test reads "today" as the UTC date; a midnight day start keeps the
+		// location's business date on it between 00:00 and 04:00 UTC too.
+		await setSettings({ horizonDays: 14, dayStartMin: 0 })
 		const beyond = await availability(2, dateAhead(15))
 		expect(beyond.body.slots).toEqual([])
 		expect(beyond.body.status).toBe('beyond_horizon')

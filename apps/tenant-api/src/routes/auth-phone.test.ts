@@ -20,11 +20,20 @@ const orgId = 'clw9x0a12000008l00test08'
 vi.mock('@repo/sms', () => ({
 	sendSms: vi.fn().mockResolvedValue({ success: true }),
 }))
-vi.mock('../lib/origin.ts', () => ({
-	findActiveOrganizationById: vi.fn(),
-	resolveOrganizationForBrowserAuth: vi.fn(),
-	resolvePublishedOrganization: vi.fn(),
-}))
+vi.mock('../lib/origin.ts', () => {
+	const findActiveOrganizationById = vi.fn()
+	return {
+		findActiveOrganizationById,
+		lookupActiveOrganization: vi.fn(async (id: string) => {
+			const organization = await findActiveOrganizationById(id)
+			return organization
+				? { status: 'found', organization }
+				: { status: 'missing' }
+		}),
+		resolveOrganizationForBrowserAuth: vi.fn(),
+		resolvePublishedOrganization: vi.fn(),
+	}
+})
 vi.mock('../services/journey-service.ts', () => ({
 	evaluateAndSpawnTriggers: vi.fn().mockResolvedValue(undefined),
 }))

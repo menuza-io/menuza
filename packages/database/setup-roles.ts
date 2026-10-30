@@ -497,6 +497,50 @@ const ORG_PERMISSIONS = [
 		description:
 			'Charge cancellation or no-show fees and request reservation refunds',
 	},
+	// Loyalty. Keep in sync with LOYALTY_PERMISSIONS in @repo/loyalty and the
+	// control-plane migration that seeds these rows.
+	{
+		id: 'org_perm_read_loyalty_any',
+		action: 'read',
+		entity: 'loyalty',
+		access: 'any',
+		context: 'organization',
+		description:
+			'View loyalty members, balances, point activity, and redemptions',
+	},
+	{
+		id: 'org_perm_update_loyalty_program_any',
+		action: 'update',
+		entity: 'loyalty_program',
+		access: 'any',
+		context: 'organization',
+		description: 'Edit the loyalty program and its rewards',
+	},
+	{
+		id: 'org_perm_update_loyalty_points_any',
+		action: 'update',
+		entity: 'loyalty_points',
+		access: 'any',
+		context: 'organization',
+		description: 'Adjust member points with a recorded reason',
+	},
+	{
+		id: 'org_perm_update_loyalty_redemption_any',
+		action: 'update',
+		entity: 'loyalty_redemption',
+		access: 'any',
+		context: 'organization',
+		description:
+			'Resolve redemptions and purchases waiting for review, record refunds, and repair balances',
+	},
+	{
+		id: 'org_perm_read_loyalty_report_any',
+		action: 'read',
+		entity: 'loyalty_report',
+		access: 'any',
+		context: 'organization',
+		description: 'View loyalty reports and analytics',
+	},
 ] as const
 
 const SYSTEM_PERMISSIONS = [

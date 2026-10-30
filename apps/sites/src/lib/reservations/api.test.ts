@@ -28,6 +28,25 @@ function lastCall(fetchImpl: ReturnType<typeof setup>['fetchImpl']) {
 }
 
 describe('reservations api', () => {
+	it('reads the regional address for each call, so a page without one fails only when it calls', async () => {
+		const fetchImpl = vi.fn(async (_url: string) => jsonResponse({}))
+		let base: string | null = null
+		const api = createReservationsApi({
+			baseUrl: () => {
+				if (!base) throw new Error('no region')
+				return base
+			},
+			fetchImpl: fetchImpl as unknown as typeof fetch,
+		})
+		await expect(api.config('en')).rejects.toThrow()
+		expect(fetchImpl).not.toHaveBeenCalled()
+		base = 'https://regional.example/'
+		await api.config('en')
+		expect(fetchImpl.mock.calls[0]?.[0]).toBe(
+			'https://regional.example/reservations/config?locale=en',
+		)
+	})
+
 	it('marks every call as the web client and never names an organization', async () => {
 		const { api, fetchImpl } = setup()
 		await api.config('ar')
@@ -172,6 +191,26 @@ describe('reservations api', () => {
 		expect(authedFetch).toHaveBeenCalledTimes(1)
 		expect(clearSession).toHaveBeenCalledTimes(1)
 		expect(fetchImpl).toHaveBeenCalledTimes(1)
+	})
+
+	it('neither forgets the customer nor books as a guest when the session cannot be checked', async () => {
+		const authedFetch = vi.fn(async (_path: string, _init: RequestInit) => {
+			throw new Error('session_unavailable')
+		})
+		const clearSession = vi.fn()
+		const fetchImpl = vi.fn()
+		const api = createReservationsApi({
+			baseUrl: 'http://localhost:3007',
+			fetchImpl: fetchImpl as unknown as typeof fetch,
+			authedFetch,
+			isSignedIn: () => true,
+			clearSession,
+		})
+		await expect(api.book({ holdToken: 'h' })).rejects.toThrow(
+			'session_unavailable',
+		)
+		expect(clearSession).not.toHaveBeenCalled()
+		expect(fetchImpl).not.toHaveBeenCalled()
 	})
 
 	it('keeps a refusal that is not about the customer token', async () => {

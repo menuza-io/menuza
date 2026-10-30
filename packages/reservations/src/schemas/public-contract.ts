@@ -9,10 +9,30 @@ import { isoTimestampSchema, partySizeSchema } from './common.ts'
  * `docs/reservations-contract.md`.
  *
  * Objects are non-strict on purpose: a new optional field must not break an
- * older app, but a removed or retyped field fails the fixture test.
+ * older app, but a removed or retyped field fails the fixture test. The day
+ * status and closed source decode a value added later as `'unknown'`, which
+ * the apps hide rather than read as a known one.
  */
 
 const nullableIso = isoTimestampSchema.nullable()
+
+/** What an answer carries in place of a value this client does not know. */
+export const PUBLIC_UNKNOWN_VALUE = 'unknown'
+export type PublicUnknownValue = typeof PUBLIC_UNKNOWN_VALUE
+
+function openEnum<const Values extends readonly [string, ...string[]]>(
+	values: Values,
+) {
+	return z
+		.string()
+		.transform((value): Values[number] | PublicUnknownValue =>
+			(values as readonly string[]).includes(value)
+				? (value as Values[number])
+				: PUBLIC_UNKNOWN_VALUE,
+		)
+}
+
+const currencyCodeSchema = z.string().regex(/^[A-Z]{3}$/)
 
 export const PUBLIC_DAY_STATUSES = [
 	'available',
@@ -21,6 +41,12 @@ export const PUBLIC_DAY_STATUSES = [
 	'online_closed',
 	'beyond_horizon',
 	'large_party',
+] as const
+
+/** Who closed a day: the location hours or a reservations special day. */
+export const PUBLIC_CLOSED_SOURCES = [
+	'location_hours',
+	'reservation_special_day',
 ] as const
 
 export const PUBLIC_RESERVATION_STATUSES = [
@@ -119,7 +145,7 @@ export const publicAvailabilityResponseSchema = z.object({
 	locationId: z.string(),
 	date: z.string(),
 	partySize: partySizeSchema,
-	status: z.enum(PUBLIC_DAY_STATUSES),
+	status: openEnum(PUBLIC_DAY_STATUSES),
 	slots: z.array(publicSlotSchema),
 	alternatives: publicAlternativesSchema,
 	largeParty: largePartyBlockSchema.optional(),
@@ -128,8 +154,7 @@ export const publicAvailabilityResponseSchema = z.object({
 			reason: z.string().nullable(),
 			note: z.string().nullable(),
 			name: z.string().nullable(),
-			/** Who closed the day: the location hours or a reservations special day. */
-			source: z.enum(['location_hours', 'reservation_special_day']).optional(),
+			source: openEnum(PUBLIC_CLOSED_SOURCES).optional(),
 		})
 		.optional(),
 	onlineClosed: z
@@ -148,11 +173,9 @@ export const publicCalendarResponseSchema = z.object({
 		z.object({
 			date: z.string(),
 			hasAvailability: z.boolean(),
-			status: z.enum(PUBLIC_DAY_STATUSES),
+			status: openEnum(PUBLIC_DAY_STATUSES),
 			closed: z.boolean(),
-			closedSource: z
-				.enum(['location_hours', 'reservation_special_day'])
-				.optional(),
+			closedSource: openEnum(PUBLIC_CLOSED_SOURCES).optional(),
 			slotCount: z.number().int(),
 			firstLocalMin: z.number().int().nullable(),
 			lastLocalMin: z.number().int().nullable(),
@@ -168,7 +191,7 @@ export const publicPolicyViewSchema = z.object({
 	amountMinor: z.number().int(),
 	totalAmountMinor: z.number().int(),
 	perCover: z.boolean(),
-	currency: z.string(),
+	currency: currencyCodeSchema,
 	freeCancelUntilMin: z.number().int(),
 	lateCancelFeeMinor: z.number().int(),
 	noShowFeeMinor: z.number().int(),
@@ -211,7 +234,7 @@ export const publicPaymentBlockSchema = z.object({
 	paymentToken: z.string(),
 	purpose: z.string(),
 	amountMinor: z.number().int(),
-	currency: z.string(),
+	currency: currencyCodeSchema,
 	expiresAt: isoTimestampSchema,
 	payUrl: z.string().url(),
 })
@@ -256,7 +279,7 @@ export const publicManageViewSchema = z.object({
 			kind: z.string(),
 			terms: z.string().nullable(),
 			freeCancelUntilMin: z.number().int(),
-			currency: z.string(),
+			currency: currencyCodeSchema,
 		})
 		.nullable(),
 	paymentStatus: z.enum(PUBLIC_PAYMENT_STATUSES),

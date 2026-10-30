@@ -1,4 +1,10 @@
+import { isImpersonating } from '@repo/auth'
+import { LOYALTY_PERMISSIONS } from '@repo/loyalty'
 import { data, type LoaderFunctionArgs } from 'react-router'
+import {
+	getUserLoyaltyGrants,
+	resolveLoyaltyLocationIds,
+} from '#app/utils/loyalty/access.server.ts'
 import {
 	requireMenuRead,
 	requireMenuWrite,
@@ -18,8 +24,10 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		new URL(request.url).searchParams.get('write') === '1'
 			? 'orders:write'
 			: 'orders:read'
-	if (scope === 'orders:write') await requireMenuWrite(request, organization.id)
-	else await requireMenuRead(request, organization.id)
+	const userId =
+		scope === 'orders:write'
+			? await requireMenuWrite(request, organization.id)
+			: await requireMenuRead(request, organization.id)
 	// Signed claims say which person pages this member may open, so the
 	// regional API returns a `customerKey` only when the link will work.
 	const link = await getOrderCustomerLinkAccess(request, params.orgSlug || '')
@@ -29,19 +37,31 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		scope === 'orders:write'
 			? await getStationAppGrants(request, organization.id)
 			: null
+	const [locationIds, impersonated] = await Promise.all([
+		resolveLoyaltyLocationIds(userId, organization.id),
+		isImpersonating(request),
+	])
+	// A refund on an order loyalty tracks takes points back and restores
+	// rewards, so it also needs the loyalty redemption grant.
+	const refundLoyalty =
+		scope === 'orders:write' &&
+		!impersonated &&
+		(await getUserLoyaltyGrants(userId, organization.id)).includes(
+			LOYALTY_PERMISSIONS.UPDATE_LOYALTY_REDEMPTION,
+		)
 	const claims = {
 		...(link.linkCustomers || link.linkGuests ? link : {}),
 		...(stationApps && (stationApps.timeclock || stationApps.reservations)
 			? { stationApps }
 			: {}),
+		locationIds,
+		...(impersonated ? { impersonated: true } : {}),
+		...(refundLoyalty ? { refundLoyalty: true } : {}),
 	}
 	const { jwt, tenantApiUrl } = await getOperatorTenantClient(
 		request,
 		params.orgSlug || '',
-		{
-			scope,
-			...(Object.keys(claims).length > 0 ? { claims } : {}),
-		},
+		{ scope, claims },
 	)
 	return data(
 		{ jwt, tenantApiUrl },

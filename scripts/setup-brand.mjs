@@ -12,7 +12,6 @@ import {
 	existsSync,
 	mkdirSync,
 	readdirSync,
-	renameSync,
 } from 'fs'
 import { join, dirname, resolve, extname, relative } from 'path'
 import { fileURLToPath } from 'url'
@@ -344,8 +343,8 @@ const THIRD_PARTY_EPIC_RE = /@?epic-web|epicweb|epicreact|EpicWeb|EpicReact/g
  * the slug (`epic-startup`), the compact id (`epicstartup`), the snake and
  * title-hyphen forms (`epic_startup`, `Epic-Startup`), the env/key prefixes
  * (`EPIC_`, `epic_`, `epic-`), the domains, and the PascalCase identifiers built
- * from the bare brand (`EpicToaster`, `EpicProgress`). The native apps' dotted
- * `epic.` preference names are handled by `nativeAppTokenPairs`.
+ * from the bare brand (`EpicToaster`, `EpicProgress`). The customer app's
+ * display name is handled by `nativeAppDisplayNamePairs`.
  *
  * The rules are applied in a single pass, longest token first. A replacement is
  * written straight to the output, so brand text that itself contains a template
@@ -818,52 +817,34 @@ function updateStaticBrandFiles(brandInfo) {
 	}
 }
 
-// ---------------------------------------------------------------- native apps --
-// The mobile apps carry brand identifiers the generic token pass cannot derive:
-// a reverse-DNS bundle/package id (`com.epicstartup.tenant`), the Xcode
-// project/product name (`EpicTenantApp`), the xcconfig + Info.plist key
-// prefixes (`EPIC_*`, `Epic*`), and the preference/Keystore names (`epic.*`).
-// Renaming them — including the Kotlin package directory — is what leaves a
-// fresh clone that ran `npm run setup` with no trace of the template's brand.
+// ------------------------------------------------------------- customer app --
+// The Expo customer app (`apps/customer`) carries brand identifiers the
+// generic token pass covers (the reverse-DNS bundle/package id
+// `com.epicstartup.tenant`, the domains), plus the un-branded build's display
+// name, which follows the brand here. White-label builds take their name and
+// ids from `apps/customer/tenants/<slug>.json` instead.
 
-const NATIVE_APP_DIRS = ['apps/ios', 'apps/android']
-const NATIVE_APP_EXTRA_FILES = [
-	'.github/workflows/ios.yml',
-	'.github/workflows/android.yml',
-]
+const NATIVE_APP_DIRS = ['apps/customer']
 // Non-global on purpose: `test()` on a global regex is stateful.
 const NATIVE_APP_TOKEN_RE =
-	/epicstartup|EPIC_|EpicTenantApp|Epic-Startup|\bEpic(?=[A-Z])|\bepic\./
-
-function nativeAppTokenPairs(brandInfo) {
-	// The other native identifier shapes (bundle ids, `EPIC_*`, `Epic*`,
-	// `EpicTenantApp`) are covered by the global pass; only the dotted
-	// preference/Keystore names are native-specific.
-	return [{ pattern: /\bepic\./g, replacement: () => `${brandInfo.slug}.` }]
-}
+	/epicstartup|EPIC_|EpicTenantApp|Epic-Startup|\bEpic(?=[A-Z])/
 
 function nativeAppDisplayNamePairs(brandInfo) {
 	// Functions, not templates: a brand name may contain `$`.
 	return [
 		{
-			pattern: /^([A-Z][A-Z0-9_]*_APP_DISPLAY_NAME = )Tenant$/m,
-			replacement: (_match, prefix) => `${prefix}${brandInfo.name}`,
-		},
-		{
-			pattern: /tenantValue\("appName", "Tenant"\)/,
-			replacement: () =>
-				`tenantValue("appName", ${kotlinString(brandInfo.name)})`,
+			pattern: /(name: tenant \? text\(tenant\.displayName\) : )'Tenant'/,
+			replacement: (_match, prefix) => `${prefix}${jsSingleQuoted(brandInfo.name)}`,
 		},
 	]
 }
 
-/**
- * A Kotlin string literal for `value`: `JSON.stringify` covers quotes,
- * backslashes and control characters, and `$` is escaped because it would
- * otherwise start a template expression in the generated `build.gradle.kts`.
- */
-function kotlinString(value) {
-	return JSON.stringify(String(value)).replace(/\$/g, () => '\\$')
+/** A single-quoted JavaScript string literal for `value`. */
+function jsSingleQuoted(value) {
+	return `'${String(value)
+		.replace(/\\/g, '\\\\')
+		.replace(/'/g, "\\'")
+		.replace(/\n/g, '\\n')}'`
 }
 
 function listNativeAppFiles() {
@@ -871,45 +852,11 @@ function listNativeAppFiles() {
 	for (const dir of NATIVE_APP_DIRS) {
 		listRewritableFiles(join(rootDir, dir), files)
 	}
-	for (const file of NATIVE_APP_EXTRA_FILES) {
-		if (existsSync(join(rootDir, file))) files.push(file)
-	}
 	return files
 }
 
-/** Renames the Kotlin package directories and the Swift app entry point. */
-function renameNativeAppPaths(brandInfo) {
-	const brandId = toBrandId(brandInfo.slug)
-	const brandPascal = toBrandPascal(brandInfo.name)
-	const moves = [
-		[
-			'apps/android/app/src/main/kotlin/com/epicstartup',
-			`apps/android/app/src/main/kotlin/com/${brandId}`,
-		],
-		[
-			'apps/android/app/src/test/kotlin/com/epicstartup',
-			`apps/android/app/src/test/kotlin/com/${brandId}`,
-		],
-		[
-			'apps/ios/Sources/TenantApp/EpicTenantApp.swift',
-			`apps/ios/Sources/TenantApp/${brandPascal}TenantApp.swift`,
-		],
-	]
-
-	const moved = []
-	for (const [fromRel, toRel] of moves) {
-		const from = join(rootDir, fromRel)
-		const to = join(rootDir, toRel)
-		if (!existsSync(from) || existsSync(to)) continue
-		mkdirSync(dirname(to), { recursive: true })
-		renameSync(from, to)
-		moved.push(toRel)
-	}
-	return moved
-}
-
 function updateNativeAppConfigs(brandInfo) {
-	log('\n📱 Renaming the native app identity (iOS + Android)', 'bright')
+	log('\n📱 Renaming the customer app identity (apps/customer)', 'bright')
 
 	if (
 		brandInfo.name === DEFAULT_BRAND_NAME &&
@@ -919,10 +866,7 @@ function updateNativeAppConfigs(brandInfo) {
 		return
 	}
 
-	const pairs = [
-		...nativeAppDisplayNamePairs(brandInfo),
-		...nativeAppTokenPairs(brandInfo),
-	]
+	const pairs = nativeAppDisplayNamePairs(brandInfo)
 	const updated = []
 
 	for (const relPath of listNativeAppFiles()) {
@@ -944,14 +888,8 @@ function updateNativeAppConfigs(brandInfo) {
 		updated.push(relPath)
 	}
 
-	const moved = renameNativeAppPaths(brandInfo)
-
 	log(`✅ Renamed brand identifiers in ${updated.length} files`, 'green')
 	for (const file of updated.slice(0, 12)) log(`   - ${file}`, 'gray')
-	if (updated.length > 12) {
-		log(`   - …and ${updated.length - 12} more`, 'gray')
-	}
-	for (const path of moved) log(`   ↳ moved ${path}`, 'gray')
 
 	const leftovers = listNativeAppFiles().filter((relPath) => {
 		try {
@@ -965,16 +903,16 @@ function updateNativeAppConfigs(brandInfo) {
 
 	if (leftovers.length > 0) {
 		log(
-			`\n⚠️  ${leftovers.length} native app files still mention the template brand:`,
+			`\n⚠️  ${leftovers.length} customer app files still mention the template brand:`,
 			'yellow',
 		)
 		for (const file of leftovers.slice(0, 20)) log(`   - ${file}`, 'gray')
 	} else {
-		log('✅ No template brand left in the native apps', 'green')
+		log('✅ No template brand left in the customer app', 'green')
 	}
 
 	log(
-		'💡 Per-tenant configs are generated: npm run ios:tenant -w ios / npm run android:tenant -w android',
+		'💡 White-label builds: npm run tenant -w customer -- --tenant <slug>, then CUSTOMER_TENANT=<slug> expo prebuild',
 		'blue',
 	)
 }
@@ -1198,9 +1136,10 @@ function copyFavicon(faviconPath) {
 }
 
 /**
- * The native apps embed these values as identifiers — a Kotlin package
- * (`com.<brandId>.tenant`), a reverse-DNS bundle id, a Swift type name — so a
- * brand that cannot produce valid ones is rejected before any file is written.
+ * The apps embed these values as identifiers — the customer app's reverse-DNS
+ * bundle and Android package id (`com.<brandId>.tenant`), PascalCase code
+ * identifiers — so a brand that cannot produce valid ones is rejected before
+ * any file is written.
  */
 function assertBrandIdentifiers({ name, slug }) {
 	const brandId = toBrandId(slug)
@@ -1217,7 +1156,7 @@ function assertBrandIdentifiers({ name, slug }) {
 	}
 	if (!/^[A-Za-z][A-Za-z0-9]*$/.test(pascalName)) {
 		throw new Error(
-			`The brand name "${name}" cannot form a Swift type name ("${pascalName}").`,
+			`The brand name "${name}" cannot form a type name ("${pascalName}").`,
 		)
 	}
 }

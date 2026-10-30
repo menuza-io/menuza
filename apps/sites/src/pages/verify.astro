@@ -29,7 +29,7 @@ if (!organization) {
 					{checkYourPhone}
 				</h1>
 				<p class="text-sm text-muted-foreground">
-					{codeSentPrefix} <strong id="display-phone" class="text-foreground"></strong>
+					{codeSentPrefix} <strong id="display-phone" class="text-foreground" dir="ltr"></strong>
 				</p>
 			</div>
 
@@ -61,7 +61,7 @@ if (!organization) {
 					/>
 				</div>
 
-				<div id="error-message" class="hidden text-sm font-medium text-destructive"></div>
+				<div id="error-message" role="alert" class="hidden text-sm font-medium text-destructive"></div>
 
 				<button
 					type="submit"
@@ -91,6 +91,7 @@ if (!organization) {
 	const submitButton = form.querySelector('button[type="submit"]') as HTMLButtonElement
 	const displayPhone = document.getElementById('display-phone')!
 	const phoneInput = document.getElementById('phone-input') as HTMLInputElement
+	const codeField = document.getElementById('code') as HTMLInputElement
 	const verifyLabel = form.dataset.verify || 'Verify'
 	const verifyingLabel = form.dataset.verifying || 'Verifying...'
 	const invalidLabel = form.dataset.invalid || 'Invalid verification code.'
@@ -105,9 +106,21 @@ if (!organization) {
 		phoneInput.value = phone
 	}
 
+	function showError(message: string) {
+		errorMessage.textContent = message
+		errorMessage.classList.remove('hidden')
+		codeField.setAttribute('aria-invalid', 'true')
+		codeField.setAttribute('aria-describedby', 'error-message')
+		// Disabling the button while verifying dropped focus.
+		codeField.focus()
+		codeField.select()
+	}
+
 	form.addEventListener('submit', async (e) => {
 		e.preventDefault()
 		errorMessage.classList.add('hidden')
+		codeField.removeAttribute('aria-invalid')
+		codeField.removeAttribute('aria-describedby')
 		submitButton.disabled = true
 		submitButton.textContent = verifyingLabel
 
@@ -134,12 +147,10 @@ if (!organization) {
 						? browserLocaleHref('/complete-name')
 						: browserLocaleHref('/')
 			} else {
-				errorMessage.textContent = tenantErrorMessage(data, invalidLabel)
-				errorMessage.classList.remove('hidden')
+				showError(tenantErrorMessage(data, invalidLabel))
 			}
 		} catch {
-			errorMessage.textContent = networkLabel
-			errorMessage.classList.remove('hidden')
+			showError(networkLabel)
 		} finally {
 			submitButton.disabled = false
 			submitButton.textContent = verifyLabel

@@ -94,7 +94,18 @@ a name and phone number.
 - **A new party at the table:** close or void the previous tab first; the table
   code then opens a new tab.
 - **Station till:** if you ring a QR tab on the till, the till sale is the money
-  record; then close the QR tab at the counter so the table frees up.
+  record; then close the QR tab at the counter so the table frees up. While
+  loyalty is on, tick **Rung up on a Station till** in the close dialog
+  (`rungUpOnStation: true`): the till sale collects the loyalty points, so the
+  tab does not. Ticked by mistake? Under the open tabs on Orders, open the list
+  of tabs rung up on a Station till in the last 24 hours and choose **Remove the
+  mark** (`POST /operator/qr/tabs/:id/clear-station-flag`): the closed tab then
+  earns its points. The list is `GET /operator/qr/tabs?status=station`; the
+  endpoint itself has no time limit.
+- **Loyalty:** a tab is one purchase however many rounds it had. The first
+  signed-in member to order a round or pay from the phone collects its points
+  when it settles, and a reward applies only when the tab is paid from the
+  phone. See [loyalty.md](./loyalty.md#earning).
 
 ## Paying from the phone
 
@@ -159,5 +170,5 @@ the counter. Payment events for tabs already paying are still applied.
   Station till sales are. Settle on the till when a fiscal invoice is needed.
 - One kitchen ticket per round; grouping a table's rounds into one ticket, table
   transfers and split bills are not supported yet.
-- Native iOS and Android apps do not offer table ordering yet; the contract
-  changes are additive.
+- The customer app (`apps/customer`) does not offer table ordering yet; the
+  contract changes are additive.

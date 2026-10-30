@@ -90,14 +90,13 @@ export const posPairingCodeHashMessage = (code: string) => `pos-pair:${code}`
 
 /**
  * Version of the order upload contract the till speaks, sent as the
- * `Pos-Contract` header. A server that cannot read an upload (an older or newer
- * contract, a till and a regional node deployed at different times) holds it
- * for review instead of refusing it, so a paid sale is never stranded on a
- * tablet. Every field added since version 1 has a default, so version 1 tills
- * keep working. Version 4 adds each line's id and when it was sent (both
- * optional): deploy the regional API first, as a version 3 node holds them.
+ * `Pos-Contract` header. A server that cannot read an upload holds it for
+ * review instead of refusing it, so a paid sale is never stranded on a tablet.
+ * Every field added since version 1 has a default. Version 4 added each line's
+ * id and when it was sent (both optional). Version 5 added the sale's loyalty
+ * (optional, see `posOrderLoyaltySchema`).
  */
-export const POS_CONTRACT_VERSION = 4
+export const POS_CONTRACT_VERSION = 5
 export const POS_CONTRACT_HEADER = 'Pos-Contract'
 
 export const POS_ORDER_STATUS_VALUES = [
@@ -339,6 +338,46 @@ export const posLineTotalCents = (line: PosOrderLine): number =>
 		line.options.reduce((sum, o) => sum + o.unitCents * o.quantity, 0)) *
 	line.quantity
 
+/** The part of a line that is taxed: the base always, an option when it says so. */
+export const posLineTaxableCents = (line: PosOrderLine): number =>
+	(line.baseCents +
+		line.options.reduce(
+			(sum, o) => sum + (o.taxable ? o.unitCents * o.quantity : 0),
+			0,
+		)) *
+	line.quantity
+
+const posOrderLoyaltyLineSchema = z.object({
+	id: z.string().min(1).max(100),
+	categoryIds: z.array(z.string().min(1).max(100)).max(50),
+})
+type PosOrderLoyaltyLine = z.infer<typeof posOrderLoyaltyLineSchema>
+
+/**
+ * Loyalty on a till sale (contract 5). `binding` is the opaque token the till
+ * got when it identified the member, never a phone number: once the upload is
+ * accepted the sale earns for that member. `lines` are the till menu's
+ * categories of each line (by line id), for category earning. A reward the
+ * sale carries is the `loyalty` adjustment the member approved; it is matched
+ * to the sale id, not sent here. Nothing in it changes the bill.
+ *
+ * Each part is read on its own, so a part this server cannot read costs only
+ * that part, never the member's credit for the sale: fields it does not know
+ * are dropped unstored, a binding that does not parse is ignored, and a line
+ * that does not parse loses only its categories.
+ */
+export const posOrderLoyaltySchema = z.object({
+	binding: z.string().min(1).max(200).nullable().default(null).catch(null),
+	lines: z
+		.array(posOrderLoyaltyLineSchema.nullable().catch(null))
+		.max(50)
+		.catch([])
+		.transform((lines) =>
+			lines.filter((line): line is PosOrderLoyaltyLine => line !== null),
+		),
+})
+export type PosOrderLoyalty = z.infer<typeof posOrderLoyaltySchema>
+
 export const posOrderRequestSchema = z
 	.strictObject({
 		id: uuid,
@@ -397,6 +436,11 @@ export const posOrderRequestSchema = z
 			.array(posFiscalDocumentSchema)
 			.max(POS_MAX_REFUNDS + 1)
 			.default([]),
+		/**
+		 * Contract 5. What does not parse is dropped rather than holding the
+		 * sale: loyalty never stands between a paid sale and the server.
+		 */
+		loyalty: posOrderLoyaltySchema.nullable().default(null).catch(null),
 	})
 	.superRefine((order, ctx) => {
 		const issue = (message: string, path: (string | number)[] = []) =>

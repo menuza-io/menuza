@@ -28,8 +28,8 @@ The repository uses:
 - MSW and existing test mocks for external providers and services.
 - Sites and tenant-api have their own Vitest suites; tenant-api tests exercise
   both route contracts and regional/security edge cases.
-- `apps/mobile` uses Jest; iOS Swift tests and Android JVM tests are opt-in and
-  intentionally outside the default Turbo test graph.
+- `apps/mobile` and `apps/customer` use Jest (`npm run test -w customer`); the
+  customer app's platform-free logic in `lib/` is tested without a simulator.
 
 ## Unit and component tests
 
@@ -100,8 +100,8 @@ records through the established fixtures.
 
 Useful targeted commands include `npm run test -w tenant-api`,
 `npm run test -w sites`, `npm run test -w @repo/integrations`,
-`npm run test -w @repo/security`, `npm run testing -w mobile`,
-`npm run ios:test -w ios`, and `npm run android:test -w android`.
+`npm run test -w @repo/security`, `npm run testing -w mobile`, and
+`npm run test -w customer`.
 
 When changing a shared package, run its tests plus at least one consuming app;
 Turbo’s cache is an optimization, not evidence that a runtime boundary was

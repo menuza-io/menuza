@@ -21,8 +21,10 @@ import {
 	readAlarmOrgId,
 	registerOrgTickModule,
 } from '../src/lib/org-alarm.ts'
+import { createLoyaltyTickModule } from '../src/lib/loyalty-alarm.ts'
 import { createReservationsTickModule } from '../src/lib/reservations-alarm.ts'
 import { createStaffTickModule } from '../src/lib/staff-alarm.ts'
+import { runLoyaltyTickForOrg } from '../src/services/loyalty-tick-service.ts'
 import { runReservationsTickForOrg } from '../src/services/rsv-tick-service.ts'
 import { runStaffTickForOrg } from '../src/services/staff-tick-service.ts'
 import type { TenantApiWorkerEnv } from './bindings.ts'
@@ -36,6 +38,9 @@ registerOrgTickModule(
 	createReservationsTickModule((orgId, now) =>
 		runReservationsTickForOrg(orgId, { deps: { now: () => now } }),
 	),
+)
+registerOrgTickModule(
+	createLoyaltyTickModule((orgId, now) => runLoyaltyTickForOrg(orgId, { now })),
 )
 
 export class TenantOrg extends DurableObject<TenantApiWorkerEnv> {
@@ -131,7 +136,9 @@ export class TenantOrg extends DurableObject<TenantApiWorkerEnv> {
 			if (response.status >= 400) return
 			const { pathname } = new URL(request.url)
 			const isTick =
-				pathname === '/api/staff/tick' || pathname === '/api/reservations/tick'
+				pathname === '/api/staff/tick' ||
+				pathname === '/api/reservations/tick' ||
+				pathname === '/api/loyalty/tick'
 			const body = isTick
 				? ((await response
 						.clone()

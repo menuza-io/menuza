@@ -38,27 +38,29 @@ as the Admin cache route).
 | `0 * * * *` | `/resources/jobs/reservation-payments-reconcile` | Re-check lingering reservation payments         |
 
 The hourly `0 * * * *` trigger fans out to every regional tenant-api node: the
-tenant engagement sync, the staff tick and the reservations tick (below), and
-also calls the App job that reconciles reservation payments (below). They are
-independent requests, so one failing never blocks the others. The Workers free
-plan allows five cron triggers per Worker, so new daily jobs share an existing
-trigger (each job is still its own request with its own error logging).
+tenant engagement sync, the staff tick, the reservations tick and the loyalty
+tick (below), and also calls the App job that reconciles reservation payments
+(below). They are independent requests, so one failing never blocks the others.
+The Workers free plan allows five cron triggers per Worker, so new daily jobs
+share an existing trigger (each job is still its own request with its own error
+logging).
 
 ### Shared organization alarm (staffing and reservations)
 
 A Durable Object has a single storage alarm slot, so the US Worker cannot arm
 one alarm per module. `apps/tenant-api/src/lib/org-alarm.ts` is the generic
-scheduler: a module (`staff`, `reservations`) registers its tick path, an
-activity matcher and a `run` that reports whether it needs a follow-up and when
-its next work is due. A request that shows a module is in use arms the alarm;
-the shared `alarm()` handler runs the modules and re-arms the single alarm for
-the earliest due time (clamped between 30 seconds and one hour) only while some
-module still has something to watch, and a module stops re-arming after six
-failed alarms in a row. An idle organization goes quiet and costs nothing; the
-hourly cron or the next request wakes it again. The Node (OCI) runtime drives
-the same modules from its interval loops (`STAFFING_TICK_INTERVAL_SECONDS`,
-`RESERVATIONS_TICK_INTERVAL_SECONDS`). Arming or firing one module therefore
-never clobbers a pending alarm of the other.
+scheduler: a module (`staff`, `reservations`, `loyalty`) registers its tick
+path, an activity matcher and a `run` that reports whether it needs a follow-up
+and when its next work is due. A request that shows a module is in use arms the
+alarm; the shared `alarm()` handler runs the modules and re-arms the single
+alarm for the earliest due time (clamped between 30 seconds and one hour) only
+while some module still has something to watch, and a module stops re-arming
+after six failed alarms in a row. An idle organization goes quiet and costs
+nothing; the hourly cron or the next request wakes it again. The Node (OCI)
+runtime drives the same modules from its interval loops
+(`STAFFING_TICK_INTERVAL_SECONDS`, `RESERVATIONS_TICK_INTERVAL_SECONDS`,
+`LOYALTY_TICK_INTERVAL_SECONDS`). Arming or firing one module therefore never
+clobbers a pending alarm of another.
 
 ### Staff tick
 
@@ -136,6 +138,35 @@ regional node posts `{ orgId, eventId, kind, locationId, count }` with the
 internal token). The App turns each into one in-app notification per eligible
 member, plus an email unless `RESERVATIONS_EMAIL_ENABLED=false` (the switch also
 stops guest email on a tenant-api node; in-app notifications are unaffected).
+
+### Loyalty tick
+
+`POST /api/loyalty/tick` on each tenant-api node (token:
+`INTERNAL_COMMAND_TOKEN`, empty body `{}`) finishes loyalty work that already
+started, for every organization on that node: expired reward holds give their
+points back, till approvals expire, queued purchases and redemptions are
+reconciled again (the loyalty outbox, with backoff, parked for an operator after
+12 attempts), a till redemption whose sale has not uploaded a day later goes to
+the review queue, and spent codes, till bindings, idempotency records, finished
+outbox rows and rate counters are purged. It adds **no cron slot**: it is the
+fourth request in the hourly fan-out (`Tenant loyalty tick`), after the
+reservations tick. The response is counts only. The run fails while any
+organization has a source parked for an operator (`outboxParkedTotal`) or a till
+redemption in review because its sale never uploaded (`uploadsMissingTotal`),
+not only in the hour it happened.
+
+The tick reads no flags and ignores the `LOYALTY_ENABLED` kill switch, so
+turning loyalty off never strands a hold or a reconciliation. It skips an
+organization that never saved a program. A body of `{ "orgId": "..." }` ticks
+one organization; an empty body fans out over every organization on the node
+with a 50-second budget, and what is not reached is reported as `orgsDeferred`.
+
+Hourly is the safety net. The US Workers node registers a `loyalty` module on
+the shared organization alarm (2 minutes, armed by customer, till and operator
+loyalty calls), and the Node (OCI) node runs an in-process interval
+(`LOYALTY_TICK_INTERVAL_SECONDS`, default 120, minimum 60, `0` turns it off).
+Every task is idempotent, so the drivers may overlap. Details:
+[loyalty operations](loyalty.md#operations).
 
 ### Reservation payments reconcile
 

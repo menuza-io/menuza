@@ -4,10 +4,16 @@
  * the tab drawer (rounds, statuses, running total, how to pay) and the
  * contact prompt some venues require before the first round. Everything is
  * filled by `src/scripts/table-ordering.ts`; no guest data is rendered here.
+ * The pay sheet's reward picker (signed-in customers only) is filled by
+ * `~/lib/loyalty/tab-rewards` with the strings from `LoyaltyLabels`.
  */
 import { msg } from '@lingui/core/macro'
+import LoyaltyLabels from '~/components/loyalty/LoyaltyLabels.astro'
+import { buildLoyaltyLabels } from '~/lib/loyalty/labels'
 
 const i18n = Astro.locals.i18n
+const loyaltyLabels = buildLoyaltyLabels(i18n)
+const tipPaid = i18n._(msg`Tip`)
 
 const labels = {
 	tableLabel: i18n._(msg`Table {label}`),
@@ -35,6 +41,7 @@ const labels = {
 	errorGeneric: i18n._(msg`We could not send your order. Please try again.`),
 	errorTableGone: i18n._(msg`This table code no longer works. Please ask a team member for help.`),
 	errorLocked: i18n._(msg`A team member is settling this tab. Please ask them for help.`),
+	errorTabPaying: i18n._(msg`A payment for this tab is already on its way. Wait a moment, then check your tab.`),
 	errorClosed: i18n._(msg`Ordering is closed right now.`),
 	errorRateLimited: i18n._(msg`This table has sent many orders. Please ask a team member for help.`),
 	errorUnavailable: i18n._(msg`Ordering at the table is not available right now.`),
@@ -49,6 +56,7 @@ const labels = {
 	tip: i18n._(msg`Add a tip`),
 	noTip: i18n._(msg`No tip`),
 	payAmount: i18n._(msg`Pay {amount}`),
+	payAmountChanged: i18n._(msg`The total is now {amount}. Check it, then pay to continue.`),
 	paying: i18n._(msg`Opening secure payment…`),
 	checkingPayment: i18n._(msg`Checking your payment…`),
 	paidThanks: i18n._(msg`Paid. Thank you!`),
@@ -63,6 +71,7 @@ const labels = {
 	tabLoadFailed: i18n._(msg`We could not load your tab. Check your connection.`),
 	tryAgain: i18n._(msg`Try again`),
 	stillConfirming: i18n._(msg`We are still confirming your payment. Check your tab again in a minute.`),
+	payPending: i18n._(msg`Your payment has already started, so the tip and reward stay as you chose them. Pay to continue.`),
 }
 ---
 
@@ -139,9 +148,17 @@ const labels = {
 					<dt>{labels.subtotal}</dt>
 					<dd id="tab-subtotal" class="price font-medium text-foreground"></dd>
 				</div>
+				<div id="tab-discount-row" class="hidden items-baseline justify-between gap-4 text-sm text-muted-foreground [&:not(.hidden)]:flex">
+					<dt>{loyaltyLabels.pickerDiscount}</dt>
+					<dd id="tab-discount" class="price font-medium text-foreground"></dd>
+				</div>
 				<div class="flex items-baseline justify-between gap-4 text-sm text-muted-foreground">
 					<dt id="tab-tax-label">{labels.tax}</dt>
 					<dd id="tab-tax" class="price font-medium text-foreground"></dd>
+				</div>
+				<div id="tab-tip-row" class="hidden items-baseline justify-between gap-4 text-sm text-muted-foreground [&:not(.hidden)]:flex">
+					<dt>{tipPaid}</dt>
+					<dd id="tab-tip" class="price font-medium text-foreground"></dd>
 				</div>
 				<div class="flex items-baseline justify-between gap-4 border-t border-border pt-3 text-base font-semibold text-foreground">
 					<dt>{labels.total}</dt>
@@ -233,17 +250,27 @@ const labels = {
 				>
 			</button>
 		</div>
-		<fieldset class="flex flex-col gap-2">
-			<legend class="mb-2 text-sm font-medium text-foreground">{labels.tip}</legend>
-			<div class="segmented w-full flex-wrap">
-				{[0, 10, 15, 20].map((percent) => (
-					<label class="segmented-item min-h-11 flex-1 px-2 text-center">
-						<input type="radio" name="tipPercent" value={percent} class="sr-only peer" checked={percent === 0} />
-						<span>{percent === 0 ? labels.noTip : `${percent}%`}</span>
-					</label>
-				))}
+		<div>
+			<fieldset class="flex flex-col gap-2">
+				<legend class="mb-2 text-sm font-medium text-foreground">{labels.tip}</legend>
+				<div class="segmented w-full flex-wrap">
+					{[0, 10, 15, 20].map((percent) => (
+						<label class="segmented-item min-h-11 flex-1 px-2 text-center">
+							<input type="radio" name="tipPercent" value={percent} class="sr-only peer" checked={percent === 0} />
+							<span>{percent === 0 ? labels.noTip : `${percent}%`}</span>
+						</label>
+					))}
+				</div>
+			</fieldset>
+			{/* Rewards: shown once the region has priced the tab with every reward. */}
+			<div id="tab-rewards" class="mt-4 hidden">
+				<h3 id="tab-rewards-title" class="mb-2 text-sm font-medium text-foreground">{loyaltyLabels.rewardsHeading}</h3>
+				<p id="tab-rewards-balance" class="bidi-isolate mb-2 text-sm text-muted-foreground"></p>
+				<div id="tab-rewards-options" class="grid grid-cols-1 gap-2" aria-labelledby="tab-rewards-title"></div>
+				<p class="mt-2 text-xs text-muted-foreground">{loyaltyLabels.oneRewardPerTab}</p>
 			</div>
-		</fieldset>
+			<p id="tab-rewards-notice" class="text-sm text-muted-foreground not-empty:mt-3" role="status"></p>
+		</div>
 		<label class="flex flex-col gap-1.5 text-sm font-medium text-foreground">
 			{labels.name}
 			<input name="name" type="text" autocomplete="name" maxlength="120" class="field" required />
@@ -253,6 +280,7 @@ const labels = {
 			<input name="phone" type="tel" autocomplete="tel" inputmode="tel" maxlength="30" class="field" dir="ltr" required />
 		</label>
 		<p id="tab-pay-error" class="hidden rounded-lg border tone-danger px-3 py-2 text-sm" role="alert"></p>
+		<p id="tab-pay-changed" class="hidden rounded-lg border tone-neutral px-3 py-2 text-sm" role="status"></p>
 		<button type="submit" id="tab-pay-submit" class="btn-cta w-full"></button>
 	</form>
 </div>
@@ -263,3 +291,4 @@ const labels = {
 	is:inline
 	set:html={JSON.stringify(labels).replace(/</g, '\\u003c')}
 />
+<LoyaltyLabels />

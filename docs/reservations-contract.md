@@ -1,9 +1,9 @@
 # Reservations API Contract
 
 This document defines the HTTP and token contract between `apps/app`,
-`apps/sites`, `apps/ios`, `apps/android`, `apps/voice-agent`, `apps/jobs-cron`,
-and the regional `apps/tenant-api` for the Reservations module. Where an older
-plan and the code disagree, this page follows the code.
+`apps/sites`, `apps/customer`, `apps/voice-agent`, `apps/jobs-cron`, and the
+regional `apps/tenant-api` for the Reservations module. Where an older plan and
+the code disagree, this page follows the code.
 
 Shared Zod schemas live in `@repo/reservations`: request and operator schemas in
 `packages/reservations/src/schemas/`, the public response shapes in
@@ -387,8 +387,8 @@ experience names also require the default-language entry (400
 
 ## 9. Native clients and contract fixtures
 
-The iOS and Android apps call the public routes above directly and follow these
-rules:
+The customer app (`apps/customer`, Expo, iOS and Android) calls the public
+routes above directly and follows these rules:
 
 - Send `Origin` (https site origin) and, for non-https local origins, the `slug`
   or `host` query parameter, on **every** reservations call; send
@@ -399,28 +399,29 @@ rules:
 - Every mutation is `POST`. Generate an `Idempotency-Key` per booking attempt
   and **reuse the same key on a retry** after a network error, so a lost
   response replays instead of double-booking.
-- Manage tokens live in the Keychain (iOS) and the Keystore-backed storage
-  (Android), never in preferences, logs or URLs (the `.ics` download is the only
-  exception, and the apps open it without logging).
+- Manage tokens live in `expo-secure-store` (Keychain on iOS, Keystore on
+  Android), never in preferences, logs or URLs (the `.ics` download is the only
+  exception, and the app opens it without logging).
 - The hold countdown uses `expiresAt` and the server `now` offset, never the
   device clock alone. Handle `409 slot_unavailable` by showing `alternatives`,
   `410 hold_expired` by returning to the slot choice, `400 policy_required` by
   asking for consent, `429 rate_limited` by backing off.
-- Payments: open `payment.payUrl` in the system browser (no deep links), poll
+- Payments: open `payment.payUrl` in an in-app browser (`expo-web-browser`:
+  Safari View Controller or a Custom Tab; no deep links), poll
   `GET /manage/payment` when the app returns to the foreground, and treat
-  `pending_payment`, review states and expiry as in section 5.
-- Code: `apps/ios/Sources/TenantKit/Reservations/` (`ReservationsClient.swift`,
-  `ReservationModels.swift`, `BookingFlow.swift`) with SwiftUI screens in
-  `apps/ios/Sources/TenantApp/Reservations/`; `core/reservations/` and
-  `ui/reservations/` under
-  `apps/android/app/src/main/kotlin/com/epicstartup/tenant/`.
+  `pending_payment`, review states and expiry as in section 5. A payment still
+  open when the app is killed resumes polling on the next launch.
+- Code: `apps/customer/lib/reservations/` (`reservations-client.ts`,
+  `models.ts`, `booking-flow.ts`, `reservations-store.ts`, `token-store.ts`)
+  with screens in `apps/customer/components/reservations/` and the routes in
+  `apps/customer/app/(tabs)/reservations/`.
 
 **Fixtures.** `packages/reservations/contract-fixtures/*.json` are recorded from
 the real public routes with seeded demo data (volatile ids, tokens and times are
-normalized). `apps/ios/Tests/TenantKitTests/Fixtures/Reservations/` and
-`apps/android/app/src/test/resources/reservations/` hold byte-identical copies.
-Re-record with `npm run fixtures:reservations -w tenant-api`. Fixtures:
-`config`, `availability`, `availability-preferred-taken`, `calendar`, `hold`,
+normalized). The customer app's tests (`apps/customer/test/reservations/`) read
+them in place, so there are no copies to keep in sync. Re-record with
+`npm run fixtures:reservations -w tenant-api`. Fixtures: `config`,
+`availability`, `availability-preferred-taken`, `calendar`, `hold`,
 `hold-requires-payment`, `booking`, `booking-pending-payment`, `request`,
 `manage`, `mine`, `payment-status-none`, `payment-status-pending`,
 `waitlist-join`, `waitlist-status`, and the errors `error-hold-expired`,

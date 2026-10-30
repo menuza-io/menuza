@@ -16,12 +16,16 @@ export function json(
 	return Response.json(body, { status, headers: NO_STORE })
 }
 
-/** Zod messages for these codes would echo the rejected value back. */
+/**
+ * Zod messages for these codes would echo the rejected value back (for
+ * `unrecognized_keys`, the key names the caller chose).
+ */
 export const ECHOING_CODES = new Set([
 	'invalid_enum_value',
 	'invalid_literal',
 	'invalid_union',
 	'invalid_union_discriminator',
+	'unrecognized_keys',
 ])
 
 export function validationBody(error: z.ZodError) {

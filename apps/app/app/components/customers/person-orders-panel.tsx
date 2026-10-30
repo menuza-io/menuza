@@ -24,6 +24,7 @@ import {
 	OrderStatusLabel,
 	PaymentStatusLabel,
 } from '#app/components/orders/order-status.tsx'
+import { paymentDisplayStatus } from '#app/utils/orders/order-model.ts'
 import { ordersHref } from '#app/utils/orders/orders-link.ts'
 import {
 	fetchPersonOrders,
@@ -201,7 +202,9 @@ export function PersonOrdersPanel({
 										<TableCell>
 											<span className="flex flex-col gap-1">
 												<OrderStatusLabel status={order.status} />
-												<PaymentStatusLabel status={order.paymentStatus} />
+												<PaymentStatusLabel
+													status={paymentDisplayStatus(order)}
+												/>
 											</span>
 										</TableCell>
 										<TableCell>

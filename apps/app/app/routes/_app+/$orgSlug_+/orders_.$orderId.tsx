@@ -17,7 +17,11 @@ import { OrderDetail } from '#app/components/orders/order-detail.tsx'
 import { useOrdersClient } from '#app/hooks/use-orders-client.ts'
 import { requireMenuRead } from '#app/utils/menu/access.server.ts'
 import { getOrderCustomerLinkAccess } from '#app/utils/orders/customer-link.server.ts'
-import { type Order, orderSchema } from '#app/utils/orders/order-model.ts'
+import {
+	type Order,
+	type OrderRefundBody,
+	orderSchema,
+} from '#app/utils/orders/order-model.ts'
 import { ordersHref } from '#app/utils/orders/orders-link.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { ORG_PERMISSIONS } from '#app/utils/organization/permissions.server.ts'
@@ -107,6 +111,22 @@ export default function OrderPage() {
 		}
 	}
 
+	/**
+	 * A record only: the money goes back in the payment provider. The region
+	 * answers with the order, so its refunded total shows at once.
+	 */
+	const recordRefund = async (
+		body: OrderRefundBody,
+		idempotencyKey: string,
+	) => {
+		const response = await request(`/${encodeURIComponent(orderId)}/refunds`, {
+			method: 'POST',
+			body: JSON.stringify(body),
+			headers: { 'Idempotency-Key': idempotencyKey },
+		})
+		setOrder(z.object({ order: orderSchema }).parse(response).order)
+	}
+
 	const shell = 'mx-auto w-full max-w-5xl py-8 md:px-6 lg:px-8'
 	const backHref = ordersHref(orgSlug)
 
@@ -175,6 +195,8 @@ export default function OrderPage() {
 				canViewCustomers={canViewCustomers}
 				busy={busy}
 				onUpdate={(status, markPaid) => void update(status, markPaid)}
+				onRecordRefund={canWrite ? recordRefund : undefined}
+				onReload={() => void load()}
 				backHref={backHref}
 			/>
 		</div>

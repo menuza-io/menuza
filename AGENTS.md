@@ -637,6 +637,12 @@ git commit --no-verify -m "fix: resolve ESLint warnings (verified manually)"
   payment and the bridge's quote and bind for `tab:` ids. Pickup, delivery and
   operator routes are unaffected; payment events still apply. See
   `docs/qr-ordering.md`.
+- `LOYALTY_ENABLED` - Tenant-api only, optional (unset or `true` is on). Kill
+  switch for new loyalty work on a node: `false` (also `0`, `off`, `no`,
+  `disabled`) answers 503 `loyalty_unavailable` on customer and till loyalty
+  routes and on operator writes that start something new, and new orders neither
+  earn nor take a reward. The tick, reconciliation, review decisions and refunds
+  keep going, and operators can still read. See `docs/loyalty.md`.
 - `PRINT_BROWSER_ACCOUNT_ID` / `PRINT_BROWSER_API_TOKEN` - App only. Cloudflare
   Browser Rendering (REST `/pdf`) for Print shop PDFs. Empty in dev: downloads
   open a print-ready page instead. `PRINT_RENDER_LIMIT_PER_HOUR` caps new
@@ -651,6 +657,10 @@ git commit --no-verify -m "fix: resolve ESLint warnings (verified manually)"
   optional. Seconds between in-process reservation ticks (default 120, minimum
   60, `0` off). The hourly cron fan-out always runs; the Workers runtime uses
   Durable Object alarms. See `docs/scheduled-jobs.md#reservations-tick`.
+- `LOYALTY_TICK_INTERVAL_SECONDS` - Tenant-api Node (OCI) runtime only,
+  optional. Seconds between in-process loyalty ticks (default 120, minimum 60,
+  `0` off). The hourly cron fan-out always runs; the Workers runtime uses
+  Durable Object alarms. See `docs/scheduled-jobs.md#loyalty-tick`.
 - `DEV_EMAIL_CAPTURE_DIR` - Tenant-api, development only: folder (relative to
   `apps/tenant-api`) that receives one JSON file per email the node would only
   log. Ignored in production or when OCI email is configured.
@@ -850,6 +860,10 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
   table assignment, policy and message math, request and response Zod schemas
   (including `schemas/public-contract.ts`), error codes. No UI strings, no I/O.
   `@repo/zoned-time` holds the DST-safe time math.
+- `@repo/loyalty` - Loyalty Rewards domain code shared by App, tenant-api and
+  Sites: Zod schemas for every loyalty route, earning and discount math, the
+  operator token contract, permissions and `loyalty.*` flag keys, error codes,
+  and the frozen acceptance examples. No UI strings, no I/O.
 - `@repo/staffing` - Staff module domain code shared by App and tenant-api: Zod
   schemas, permission and `staffing.*` flag keys, PIN rules, formula-safe CSV
   export, time math (`computeTimecard` / `computeWeek`), clock state machine,
@@ -884,18 +898,14 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
   `POS_CONTRACT_VERSION`)
 - `apps/voice-agent` - LiveKit worker that answers phone-agent calls (US only);
   loads config from App and logs calls through tenant-api
-- `apps/ios` - Tenant customer iOS app (SwiftUI + `TenantKit` Swift package):
-  branded shell, phone-OTP sign-in, and profile, reusing the published org
-  branding and the regional tenant-api, plus table booking
-  (`Sources/TenantKit/Reservations/`, SwiftUI in
-  `Sources/TenantApp/Reservations/`). Keychain session; no PII proxy. Swift
-  tasks are opt-in (`npm run ios:test -w ios`) so Linux CI stays green
-- `apps/android` - Tenant customer Android app (Kotlin, framework views only: no
-  AndroidX/Compose/OkHttp — see its README for the size budget): same branded
-  shell, phone-OTP sign-in, and profile as iOS, with the session in the Android
-  Keystore, plus table booking (`core/reservations/`, `ui/reservations/`).
-  Opt-in via `npm run android:* -w android`; the Android toolchain is installed
-  by `.agents/setup`
+- `apps/customer` - Tenant customer app (Expo, iOS and Android): branded shell
+  from the published org theme, connect-to-site or white-label binding, phone
+  OTP sign-in, profile and language, table booking and the Loyalty Rewards
+  wallet, all browser-direct to the regional tenant-api (no PII proxy). Session
+  in `expo-secure-store`, excluded from backups. Jest tests run in normal CI;
+  white-label builds come from `tenants/<slug>.json`
+  (`npm run tenant -w customer -- --tenant <slug>`). `apps/mobile` is the
+  separate operator app
 
 **Staff module (hiring, scheduling, staff management, time clock):**
 
@@ -973,10 +983,10 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
   browser `Origin` only (never a client `orgId`, never a customer token) and
   answers a uniform 404 otherwise. Capability tokens (`X-Reservation-Token`) are
   derived by HMAC from `AUTH_HMAC_SECRET`, not stored. Mutations are POST with
-  an `Idempotency-Key`. A verified customer token replaces Turnstile; native
-  apps send `X-Client: ios | android` (channel `native`). Sites never proxies
-  guest data; the only Sites-to-App call is the payment hand-off, authenticated
-  with `SITES_RESERVATION_PAYMENT_TOKEN`.
+  an `Idempotency-Key`. A verified customer token replaces Turnstile; the
+  customer app sends `X-Client: ios | android` (channel `native`). Sites never
+  proxies guest data; the only Sites-to-App call is the payment hand-off,
+  authenticated with `SITES_RESERVATION_PAYMENT_TOKEN`.
 - Writes: every reservation write and setup mutation goes through
   `withReservationWrite` (`apps/tenant-api/src/lib/reservations-write.ts`),
   which runs a real transaction through `runTenantTransaction` (the Durable
@@ -996,9 +1006,9 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
   loader and action awaits `requireReservationsAccess` first). A new route must
   pass both.
 - Public API fixtures: `npm run fixtures:reservations -w tenant-api` re-records
-  `packages/reservations/contract-fixtures` and the iOS and Android copies;
-  `reservations-contract.test.ts` (tenant-api and `@repo/reservations`) fails on
-  drift.
+  `packages/reservations/contract-fixtures`, which the customer app's tests read
+  in place; `reservations-contract.test.ts` (tenant-api and
+  `@repo/reservations`) fails on drift.
 - Local dev: App at `https://app.menuza.test:2999` through the root dev proxy
   (this file still mentions the older `epic-startup.test` host in places). Mock
   payments need no keys (`docs/payments-mock.md`). Demo data:
@@ -1029,6 +1039,49 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
 - Tests: `apps/tenant-api/src/routes/qr-ordering.test.ts` (guest flow, codes,
   flags, kill switch, tabs, payment bridge and the `/operator/qr` sweep). Demo
   data: `npm run seed:qr -w tenant-api -- acme`. Docs: `docs/qr-ordering.md`.
+
+**Loyalty Rewards (points, rewards, member codes):**
+
+- One program and one balance per organization, integer points. A customer is
+  the member: one points account per customer (the `loyalty_members` row), no
+  member space, list or search. Regional data only: `loyalty_*` tables
+  (tenant-db `0025_loyalty`, the one tenant migration) with an append-only
+  ledger, purchases, redemptions and refunds; operator-recorded order refunds
+  are `restaurant_order_refunds` (same migration). The control plane keeps the
+  flags `loyalty.enabled` / `.redemption` (default off) and five permissions
+  (`0028_loyalty`), never an account or a balance.
+- Operators: the App mints a short-lived `lty+jwt`
+  (`GET /<orgSlug>/loyalty/token?scope=`) and the browser calls
+  `/operator/loyalty/*` directly. Every App loyalty loader and action awaits
+  `requireLoyaltyAccess` first (`apps/app/app/utils/loyalty/access.server.ts`;
+  404 while the flag is off).
+- Customers call `/loyalty/*` with their regional customer token (organization
+  from `Origin`); tills call `/pos/loyalty/*` with the device secret. A member
+  code only identifies: spending needs the member's wallet approval or a
+  one-time code.
+- Enrollment is automatic, with no enroll route and no terms gate: tenant-api
+  opens the points account after a phone-OTP verify (fire-and-forget, only while
+  the loyalty features are on) and lazily on the first wallet read, quote, claim
+  or member code. Only verified-phone customers are linked (never a POS-only
+  contact), and a suspended or erased account is never recreated. Terms are
+  display text (config `terms`). Operators use the Loyalty panel on the Customer
+  profile (`read:loyalty:any`), not a Members page. Opening an account never
+  sets marketing consent.
+- Writes go through `withLoyaltyWrite`
+  (`apps/tenant-api/src/lib/loyalty-write.ts`). Order, QR tab and till changes
+  queue the source in their own transaction and settle after commit; a paid sale
+  is never refused because loyalty is unresolved, it goes to the review queue.
+  Recording a refund is an Orders action (`POST /operator/orders/:id/refunds`,
+  `orders:write`) and takes points back whatever the flags say; on an order
+  loyalty tracks it also needs the token's `refundLoyalty` claim (minted only
+  for `update:loyalty_redemption:any`, never when impersonating). The orders
+  token carries `locationIds` and the region enforces them.
+- Tests: `apps/tenant-api/src/routes/loyalty-security.test.ts` (every operator,
+  customer and till route), the `loyalty-*.test.ts` service suites, and
+  `apps/app/app/utils/loyalty/loyalty-guards.test.ts`. Docs: `docs/loyalty.md`.
+- Customer API fixtures: `npm run fixtures:loyalty -w tenant-api` re-records
+  `packages/loyalty/contract-fixtures`; `loyalty-contract.test.ts` (tenant-api
+  and `@repo/loyalty`) fails on drift.
 
 **Print shop (Marketing, Print shop):**
 

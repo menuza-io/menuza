@@ -1,9 +1,0 @@
-{
-	"error": "invalid",
-	"issues": [
-		{
-			"path": "Idempotency-Key",
-			"code": "required"
-		}
-	]
-}

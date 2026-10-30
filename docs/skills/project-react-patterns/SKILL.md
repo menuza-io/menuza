@@ -11,8 +11,8 @@ description:
 
 Use this skill when building React components, route modules, data fetching,
 loading/error states, client interactions, bundle boundaries, or performance
-optimizations in App/Admin, the extension, or Expo mobile. Astro/Svelte-style
-site rendering and native Swift/Kotlin UI should follow their app-specific
+optimizations in App/Admin, the extension, or the Expo apps (mobile and
+customer). Astro/Svelte-style site rendering should follow its app-specific
 patterns instead.
 
 ## Prefer the router data model

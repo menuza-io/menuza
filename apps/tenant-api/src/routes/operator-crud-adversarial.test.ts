@@ -49,6 +49,16 @@ vi.mock('../lib/origin.ts', () => ({
 			hasProvisionedDb: true,
 			dataRegion: 'us',
 		})),
+	lookupActiveOrganization: vi.fn().mockImplementation(async (id: string) => ({
+		status: 'found',
+		organization: {
+			id,
+			slug: id === orgId2 ? 'org2' : 'test-org',
+			customDomain: null,
+			hasProvisionedDb: true,
+			dataRegion: 'us',
+		},
+	})),
 	resolvePublishedOrganization: vi
 		.fn()
 		.mockImplementation(async ({ slug }: { slug?: string }) => {

@@ -12,11 +12,20 @@ import {
 	type PricedRestaurantOrder,
 	type PublicOrderingOptions,
 	type RestaurantOrderContext,
+	type OrderLoyaltySelection,
 	type RestaurantOrderError,
 	type RestaurantOrderRequest,
 	type VerifiedDeliveryQuote,
 } from '@repo/common/restaurant-orders'
 import { readQrOrderingFeatures } from '@repo/common/qr-ordering'
+import {
+	hashLoyaltyCart,
+	LoyaltyDomainError,
+	sameCurrency,
+	type LoyaltyCart,
+	type LoyaltyErrorCode,
+	type LoyaltyRewardQuote,
+} from '@repo/loyalty'
 import {
 	getTenantDb,
 	qrTabs,
@@ -39,7 +48,42 @@ import {
 } from '../lib/secrets.ts'
 import { deriveTabToken } from '../lib/qr-tokens.ts'
 import { retryOnSqliteBusy } from '../lib/sqlite-retry.ts'
+import { createOrgLock } from '../lib/concurrency.ts'
 import { insertRowsInChunks, inJsonList } from '../lib/chunked-in.ts'
+import {
+	getLoyaltyFlagState,
+	loyaltyCreditsSales,
+	rewardRefusal,
+} from '../lib/loyalty-context.ts'
+import { type LoyaltyTx } from '../lib/loyalty-write.ts'
+import {
+	applyLoyaltyDiscountToTotals,
+	loyaltyCartForPricedOrder,
+	type LoyaltyDiscountedTotals,
+} from '../restaurant/loyalty-checkout.ts'
+import { qrTabPayableUntil } from '../restaurant/loyalty-sources.ts'
+import { readBalanceViewInTx } from './loyalty-ledger.ts'
+import {
+	ensureMemberForCustomerInTx,
+	memberForCustomerInTx,
+	type MemberRow,
+} from './loyalty-member-service.ts'
+import {
+	readProgramInTx,
+	readRewardInTx,
+	type CurrentReward,
+} from './loyalty-program-service.ts'
+import {
+	claimPurchaseIfUnclaimedInTx,
+	claimPurchaseInTx,
+	loyaltySettleQueue,
+	type LoyaltySettleQueue,
+} from './loyalty-purchase-service.ts'
+import {
+	quoteReward,
+	reserveRedemptionInTx,
+	setAsideSourceRedemptionInTx,
+} from './loyalty-redemption-service.ts'
 import {
 	isTabPaymentOpen,
 	openTab,
@@ -61,6 +105,8 @@ export type OrderServiceFailure = {
 	status: number
 	code: string
 	message: string
+	/** Machine-readable extras for the client (e.g. the corrected discount). */
+	details?: Record<string, unknown>
 }
 
 export type OrderServiceResult<T> =
@@ -79,10 +125,114 @@ function fromEngineError(error: RestaurantOrderError): OrderServiceFailure {
 }
 
 // ---------------------------------------------------------------------------
+// Loyalty at placement
+// ---------------------------------------------------------------------------
+
+/** Fixed messages: a failure never echoes reward names or balances. */
+const LOYALTY_PLACEMENT_MESSAGES: Partial<Record<LoyaltyErrorCode, string>> = {
+	loyalty_unavailable:
+		'Rewards are not available right now. Please try again in a moment.',
+	loyalty_disabled: 'Loyalty is not available.',
+	redemption_disabled: 'Redeeming rewards is not available.',
+	member_not_found: 'Join the loyalty program to use rewards.',
+	member_inactive: 'This loyalty membership is not active.',
+	program_inactive: 'The loyalty program is not active.',
+	reward_not_found: 'That reward is no longer available.',
+	stale_version: 'That reward changed. Review the new offer and try again.',
+	currency_mismatch: 'That reward is not valid for this menu.',
+	reward_not_applicable: 'That reward does not apply to this order.',
+	zero_value: 'That reward does not apply to this order.',
+	insufficient_points: 'Not enough points for that reward.',
+	cart_changed: 'Your order changed. Review the new total and try again.',
+	one_reward_per_order: 'This order already has a reward.',
+	already_claimed: 'Another member is collecting the points for this tab.',
+}
+
+/** An order failure for a loyalty error: mapped status, fixed message. */
+export function loyaltyFailure(error: LoyaltyDomainError): OrderServiceFailure {
+	return {
+		status: error.status,
+		code: error.code,
+		message:
+			LOYALTY_PLACEMENT_MESSAGES[error.code] ??
+			'The reward could not be applied.',
+		...(error.details ? { details: error.details } : {}),
+	}
+}
+
+/**
+ * Re-quotes the reward the customer picked against the priced cart and the
+ * member's balance now. Throws a loyalty error when it cannot be used as
+ * shown: the order is then refused, never placed without it.
+ */
+export async function quotePlacementReward(
+	tx: LoyaltyTx,
+	input: {
+		member: MemberRow | null
+		selection: OrderLoyaltySelection
+		cart: LoyaltyCart
+		currency: string
+	},
+): Promise<{ reward: CurrentReward; quote: LoyaltyRewardQuote }> {
+	const { member, selection, cart, currency } = input
+	if (!member) throw new LoyaltyDomainError('member_not_found')
+	if (member.status !== 'active') {
+		throw new LoyaltyDomainError('member_inactive')
+	}
+	const program = await readProgramInTx(tx)
+	if (!program || program.current.status !== 'active') {
+		throw new LoyaltyDomainError('program_inactive')
+	}
+	if (!sameCurrency(program.current.currency, currency)) {
+		throw new LoyaltyDomainError('currency_mismatch')
+	}
+	const reward = await readRewardInTx(tx, selection.rewardId)
+	if (!reward || reward.status !== 'active') {
+		throw new LoyaltyDomainError('reward_not_found')
+	}
+	if (reward.snapshot.version !== selection.rewardVersion) {
+		throw new LoyaltyDomainError('stale_version', {
+			rewardVersion: reward.snapshot.version,
+		})
+	}
+	if (!sameCurrency(reward.snapshot.currency, currency)) {
+		throw new LoyaltyDomainError('currency_mismatch')
+	}
+	const balance = await readBalanceViewInTx(tx, member.id)
+	const quote = quoteReward(
+		reward.snapshot,
+		cart,
+		balance.available,
+		selection.targetLineId,
+	)
+	if (!quote.applicable) {
+		throw new LoyaltyDomainError(quote.code ?? 'reward_not_applicable')
+	}
+	if (!quote.affordable) {
+		throw new LoyaltyDomainError('insufficient_points', {
+			available: balance.available,
+			pointsCost: quote.pointsCost,
+		})
+	}
+	if (quote.discountMinor !== selection.expectedDiscountMinor) {
+		throw new LoyaltyDomainError('cart_changed', {
+			discountMinor: quote.discountMinor,
+		})
+	}
+	return { reward, quote }
+}
+
+function loyaltyTx(tx: OrderTx): LoyaltyTx {
+	return tx as unknown as LoyaltyTx
+}
+
+// ---------------------------------------------------------------------------
 // Per-org serialization
 // ---------------------------------------------------------------------------
 
-const orgLocks = new Map<string, Promise<unknown>>()
+// Its own lock, separate from `lib/concurrency.ts`'s: orders, QR tabs and
+// loyalty share this one. Re-entering it throws (`OrgLockReentryError`).
+const orderLock = createOrgLock()
 
 /**
  * Serializes write operations for one org inside this process. Durable Object
@@ -94,14 +244,7 @@ export async function runExclusive<T>(
 	orgId: string,
 	operation: () => Promise<T>,
 ): Promise<T> {
-	const previous = orgLocks.get(orgId) ?? Promise.resolve()
-	const run = previous.then(operation, operation)
-	const tail = run.catch(() => {})
-	orgLocks.set(orgId, tail)
-	void tail.then(() => {
-		if (orgLocks.get(orgId) === tail) orgLocks.delete(orgId)
-	})
-	return run
+	return orderLock(orgId, operation)
 }
 
 // ---------------------------------------------------------------------------
@@ -218,8 +361,12 @@ export async function fetchOrderContext(
 // Runs inside the same transaction as capacity counting.
 // ---------------------------------------------------------------------------
 
-async function expireHolds(db: OrderTx, now: Date): Promise<void> {
-	await db
+async function expireHolds(
+	db: OrderTx,
+	now: Date,
+	loyalty: LoyaltySettleQueue,
+): Promise<void> {
+	const expired = await db
 		.update(restaurantOrders)
 		.set({
 			status: 'expired',
@@ -234,6 +381,16 @@ async function expireHolds(db: OrderTx, now: Date): Promise<void> {
 				lt(restaurantOrders.holdExpiresAt, now),
 			),
 		)
+		.returning({ id: restaurantOrders.id })
+	// Loyalty hears about every hold that actually lapsed (a no-op for orders
+	// loyalty does not track).
+	for (const row of expired) {
+		await loyalty.queue(
+			loyaltyTx(db),
+			{ type: 'restaurant_order', id: row.id },
+			now.getTime(),
+		)
+	}
 }
 
 /**
@@ -242,11 +399,13 @@ async function expireHolds(db: OrderTx, now: Date): Promise<void> {
  */
 export async function sweepExpiredHolds(orgId: string, now = new Date()) {
 	const db = await getTenantDb(orgId)
-	return runExclusive(orgId, () =>
+	const loyalty = loyaltySettleQueue()
+	await runExclusive(orgId, () =>
 		retryOnSqliteBusy(() =>
-			runTenantTransaction(db, async (tx) => expireHolds(tx, now)),
+			runTenantTransaction(db, async (tx) => expireHolds(tx, now, loyalty)),
 		),
 	)
+	await loyalty.settle(orgId, { now: now.getTime() })
 }
 
 // ---------------------------------------------------------------------------
@@ -505,13 +664,6 @@ export async function placeOrder(input: {
 	const result: PricedRestaurantOrder = priced.result
 
 	const requestHash = sha256Hex(canonicalOrderRequest(request))
-	const orderId = crypto.randomUUID()
-	const receiptToken = deriveReceiptToken(orgId, orderId)
-	const paymentToken =
-		request.paymentMethod === 'online'
-			? derivePaymentToken(orgId, orderId)
-			: null
-
 	const db = await getTenantDb(orgId)
 
 	const replayOrConflict = async (
@@ -555,12 +707,60 @@ export async function placeOrder(input: {
 		}
 	}
 
+	// The replay answer comes before every pre-check that can change after
+	// the first attempt: a retried checkout must see the order it placed,
+	// not a refusal (a member suspended in between, a price that moved).
 	const [existing] = await db
 		.select()
 		.from(restaurantOrders)
 		.where(eq(restaurantOrders.idempotencyKey, request.idempotencyKey))
 		.limit(1)
 	if (existing) return replayOrConflict(existing)
+
+	// Loyalty pre-checks, before the org lock: a reward on a tab round, a
+	// guest, or an organization without loyalty never reaches the transaction.
+	const loyaltyFlags =
+		customerId || request.loyalty ? await getLoyaltyFlagState(orgId) : null
+	if (request.loyalty) {
+		if (isDineIn) {
+			return orderFailure(
+				422,
+				'loyalty_on_tab',
+				'Rewards are chosen when the tab is paid, not per round.',
+			)
+		}
+		if (!customerId || !loyaltyFlags) {
+			return orderFailure(401, 'unauthorized', 'Sign in to use rewards.')
+		}
+		const refusal = rewardRefusal(loyaltyFlags)
+		if (refusal) {
+			return {
+				ok: false,
+				failure: loyaltyFailure(new LoyaltyDomainError(refusal)),
+			}
+		}
+	}
+
+	// Signed-in pickup and delivery orders earn; a tab round never does (the
+	// tab is the purchase), but a signed-in member's round claims the tab's
+	// points when nobody has yet. The cart a reward is quoted on is hashed
+	// here, outside the lock, because hashing is async.
+	const loyaltyCredits = Boolean(
+		customerId && loyaltyFlags && loyaltyCreditsSales(loyaltyFlags),
+	)
+	const loyaltyEarning = loyaltyCredits && !isDineIn
+	const loyaltyTabClaim = loyaltyCredits && isDineIn
+	const loyaltyCart = request.loyalty ? loyaltyCartForPricedOrder(result) : null
+	const loyaltyCartHash = loyaltyCart
+		? await hashLoyaltyCart(loyaltyCart)
+		: null
+
+	const orderId = crypto.randomUUID()
+	const receiptToken = deriveReceiptToken(orgId, orderId)
+	const paymentToken =
+		request.paymentMethod === 'online'
+			? derivePaymentToken(orgId, orderId)
+			: null
 
 	// Fail fast on a bad table code before taking the org lock; the same
 	// checks run again inside the transaction against fresh rows.
@@ -569,263 +769,382 @@ export async function placeOrder(input: {
 		if (!precheck.ok) return { ok: false, failure: precheck.failure }
 	}
 
-	return runExclusive(orgId, () =>
-		retryOnSqliteBusy(() =>
-			runTenantTransaction(db, async (tx) => {
-				const [existingInTx] = await tx
-					.select()
-					.from(restaurantOrders)
-					.where(eq(restaurantOrders.idempotencyKey, request.idempotencyKey))
-					.limit(1)
-				if (existingInTx) return replayOrConflict(existingInTx, tx)
+	const loyalty = loyaltySettleQueue()
+	try {
+		const placed: PlaceOrderResult = await runExclusive(orgId, () =>
+			retryOnSqliteBusy(() =>
+				runTenantTransaction(db, async (tx) => {
+					const [existingInTx] = await tx
+						.select()
+						.from(restaurantOrders)
+						.where(eq(restaurantOrders.idempotencyKey, request.idempotencyKey))
+						.limit(1)
+					if (existingInTx) return replayOrConflict(existingInTx, tx)
 
-				await expireHolds(tx, now)
+					await expireHolds(tx, now, loyalty)
 
-				let tabRow: typeof qrTabs.$inferSelect | null = null
-				let tableRow: { id: string; label: string } | null = null
-				if (isDineIn) {
-					const resolved = await resolveDineIn(
-						tx,
-						orgId,
-						dineIn!,
-						request.locationId,
-					)
-					if (!resolved.ok) return { ok: false, failure: resolved.failure }
-					const settings = await readQrSettings(tx)
-					const existingTab = resolved.data.tab
-					if (
-						settings.requireGuestName &&
-						!request.contact.name &&
-						!existingTab?.guestName
-					) {
-						return orderFailure(
-							422,
-							'contact_name_required',
-							'Enter your name to order at the table.',
+					let tabRow: typeof qrTabs.$inferSelect | null = null
+					let tableRow: { id: string; label: string } | null = null
+					if (isDineIn) {
+						const resolved = await resolveDineIn(
+							tx,
+							orgId,
+							dineIn!,
+							request.locationId,
 						)
-					}
-					if (
-						settings.requireGuestPhone &&
-						!request.contact.phone &&
-						!existingTab?.guestPhone
-					) {
-						return orderFailure(
-							422,
-							'contact_phone_required',
-							'Enter your phone number to order at the table.',
-						)
-					}
-					const recent = await tableRoundsInLastHour(
-						tx,
-						resolved.data.table.id,
-						now,
-					)
-					if (recent >= settings.perTableLimitPerHour) {
-						return orderFailure(
-							429,
-							'table_rate_limited',
-							'This table has sent many orders. Please ask a team member for help.',
-						)
-					}
-					tableRow = resolved.data.table
-					if (existingTab && isTabPaymentOpen(existingTab, now)) {
-						// A payment was started: the total is frozen until it ends, so
-						// a round can never ride along on an older, smaller amount.
-						return orderFailure(
-							409,
-							'tab_paying',
-							'This tab is being paid. Order again after payment, or ask a team member.',
-						)
-					}
-					let openTabRow = existingTab
-					if (
-						existingTab &&
-						existingTab.paymentAmountCents != null &&
-						(existingTab.paymentStatus === 'unpaid' ||
-							existingTab.paymentStatus === 'pending')
-					) {
-						// A payment started long ago and never finished: forget it,
-						// binding included, so the table can keep ordering and pay
-						// again. Money that still arrives for it is kept for review.
-						const [cleared] = await tx
-							.update(qrTabs)
-							.set({
-								paymentStatus: 'unpaid',
-								paymentSessionId: null,
-								paymentProcessor: null,
-								paymentAmountCents: null,
-								paymentTipCents: null,
-								paymentTokenHash: null,
-								updatedAt: now.getTime(),
-							})
-							.where(eq(qrTabs.id, existingTab.id))
-							.returning()
-						openTabRow = cleared ?? existingTab
-					}
-					if (openTabRow) {
-						const existingTab = openTabRow
-						tabRow = existingTab
-						const fill: Partial<typeof qrTabs.$inferInsert> = {}
-						if (!existingTab.guestName && request.contact.name) {
-							fill.guestName = request.contact.name
-						}
-						if (!existingTab.guestPhone && request.contact.phone) {
-							fill.guestPhone = request.contact.phone
-						}
-						if (Object.keys(fill).length > 0) {
-							const [updated] = await tx
-								.update(qrTabs)
-								.set({ ...fill, updatedAt: now.getTime() })
-								.where(eq(qrTabs.id, existingTab.id))
-								.returning()
-							tabRow = updated ?? existingTab
-						}
-					} else {
-						tabRow = await openTab(tx, {
-							table: resolved.data.table,
-							currency: result.currency,
-							guestName: request.contact.name ?? null,
-							guestPhone: request.contact.phone ?? null,
-							now,
-						})
-						if (!tabRow) {
+						if (!resolved.ok) return { ok: false, failure: resolved.failure }
+						const settings = await readQrSettings(tx)
+						const existingTab = resolved.data.tab
+						if (
+							settings.requireGuestName &&
+							!request.contact.name &&
+							!existingTab?.guestName
+						) {
 							return orderFailure(
-								409,
-								'tab_conflict',
-								'Another order at this table just opened the tab. Please try again.',
+								422,
+								'contact_name_required',
+								'Enter your name to order at the table.',
 							)
 						}
-					}
-				}
-
-				if (result.capacity) {
-					const slotFailure = await assertSlotCapacity(tx, result.capacity)
-					if (slotFailure) return { ok: false, failure: slotFailure }
-					const entityFailure = await assertEntityCapacity(tx, result.capacity)
-					if (entityFailure) return { ok: false, failure: entityFailure }
-				}
-
-				const usedNumbers = new Set<string>()
-				let inserted: RestaurantOrder | null = null
-				for (let attempt = 0; attempt < 5 && !inserted; attempt += 1) {
-					const number = await nextOrderNumber(tx, now, usedNumbers)
-					const holdExpiresAt =
-						request.paymentMethod === 'online'
-							? new Date(now.getTime() + result.holdMinutes * 60 * 1000)
-							: null
-					try {
-						const [row] = await tx
-							.insert(restaurantOrders)
-							.values({
-								id: orderId,
-								orgId,
-								customerId,
-								number,
-								locale: request.locale,
-								status: 'accepted',
-								paymentMethod: request.paymentMethod,
-								paymentStatus:
-									request.paymentMethod === 'online' ? 'pending' : 'unpaid',
-								paymentProcessor:
-									request.paymentMethod === 'online'
-										? (context.onlinePayment.processor ?? null)
-										: null,
-								fulfillment: request.fulfillment,
-								locationId: request.locationId,
-								locationName: result.location.name,
-								dropId: result.drop?.id ?? null,
-								dropSlug: result.drop?.slug ?? null,
-								pickupWindowId: result.pickup?.windowId ?? null,
-								pickupDate: result.pickup?.date ?? null,
-								pickupTime: result.pickup?.time ?? null,
-								pickupTimezone: result.pickup?.timezone ?? null,
-								// Only what this placer typed: another guest's name or phone on
-								// the tab must never reach this round's receipt.
-								contactName: request.contact.name ?? '',
-								contactPhone: request.contact.phone ?? '',
-								contactEmail: request.contact.email ?? null,
-								tabId: tabRow?.id ?? null,
-								tableId: tableRow?.id ?? null,
-								tableLabel: tableRow?.label ?? null,
-								source: orderSource,
-								deliveryAddress: result.delivery?.address ?? null,
-								deliveryCity: result.delivery?.city ?? null,
-								deliveryUnit: result.delivery?.unit ?? null,
-								deliveryNotes: result.delivery?.notes ?? null,
-								deliveryZoneId: result.delivery?.zoneId ?? null,
-								deliveryPostalCode: result.delivery?.postalCode ?? null,
-								deliveryLat: result.delivery?.lat ?? null,
-								deliveryLng: result.delivery?.lng ?? null,
-								scheduledFor: result.scheduledFor
-									? new Date(result.scheduledFor)
-									: null,
+						if (
+							settings.requireGuestPhone &&
+							!request.contact.phone &&
+							!existingTab?.guestPhone
+						) {
+							return orderFailure(
+								422,
+								'contact_phone_required',
+								'Enter your phone number to order at the table.',
+							)
+						}
+						const recent = await tableRoundsInLastHour(
+							tx,
+							resolved.data.table.id,
+							now,
+						)
+						if (recent >= settings.perTableLimitPerHour) {
+							return orderFailure(
+								429,
+								'table_rate_limited',
+								'This table has sent many orders. Please ask a team member for help.',
+							)
+						}
+						tableRow = resolved.data.table
+						if (existingTab && isTabPaymentOpen(existingTab, now)) {
+							// A payment was started: the total is frozen until it ends, so
+							// a round can never ride along on an older, smaller amount.
+							return orderFailure(
+								409,
+								'tab_paying',
+								'This tab is being paid. Order again after payment, or ask a team member.',
+							)
+						}
+						let openTabRow = existingTab
+						if (
+							existingTab &&
+							existingTab.paymentAmountCents != null &&
+							(existingTab.paymentStatus === 'unpaid' ||
+								existingTab.paymentStatus === 'pending')
+						) {
+							// A payment started long ago and never finished: forget it,
+							// binding and reward included, so the table can keep ordering
+							// and pay again. Money that still arrives for it is kept for
+							// review, and so is the reward while its page can still be
+							// paid.
+							await setAsideSourceRedemptionInTx(
+								loyaltyTx(tx),
+								{ type: 'qr_tab', id: existingTab.id },
+								{
+									reason: 'tab_changed',
+									at: now.getTime(),
+									payableUntil:
+										existingTab.loyaltyDiscountCents > 0
+											? qrTabPayableUntil(existingTab)
+											: null,
+								},
+							)
+							const [cleared] = await tx
+								.update(qrTabs)
+								.set({
+									paymentStatus: 'unpaid',
+									paymentSessionId: null,
+									paymentProcessor: null,
+									paymentAmountCents: null,
+									paymentTipCents: null,
+									paymentTokenHash: null,
+									loyaltyDiscountCents: 0,
+									updatedAt: now.getTime(),
+								})
+								.where(eq(qrTabs.id, existingTab.id))
+								.returning()
+							openTabRow = cleared ?? existingTab
+						}
+						if (openTabRow) {
+							const existingTab = openTabRow
+							tabRow = existingTab
+							const fill: Partial<typeof qrTabs.$inferInsert> = {}
+							if (!existingTab.guestName && request.contact.name) {
+								fill.guestName = request.contact.name
+							}
+							if (!existingTab.guestPhone && request.contact.phone) {
+								fill.guestPhone = request.contact.phone
+							}
+							if (Object.keys(fill).length > 0) {
+								const [updated] = await tx
+									.update(qrTabs)
+									.set({ ...fill, updatedAt: now.getTime() })
+									.where(eq(qrTabs.id, existingTab.id))
+									.returning()
+								tabRow = updated ?? existingTab
+							}
+						} else {
+							tabRow = await openTab(tx, {
+								table: resolved.data.table,
 								currency: result.currency,
-								subtotalCents: result.subtotalCents,
-								taxCents: result.taxCents,
-								deliveryFeeCents: result.deliveryFeeCents,
-								tipCents: result.tipCents,
-								tipPercent: result.tipPercent,
-								totalCents: result.totalCents,
-								lines: result.lines,
-								idempotencyKey: request.idempotencyKey,
-								requestHash,
-								receiptTokenHash: sha256Hex(receiptToken),
-								paymentTokenHash: paymentToken ? sha256Hex(paymentToken) : null,
-								holdExpiresAt,
+								guestName: request.contact.name ?? null,
+								guestPhone: request.contact.phone ?? null,
+								now,
 							})
-							.returning()
-						inserted = row ?? null
-					} catch (error) {
-						if (isUniqueConstraintError(error) && attempt < 4) continue
-						throw error
+							if (!tabRow) {
+								return orderFailure(
+									409,
+									'tab_conflict',
+									'Another order at this table just opened the tab. Please try again.',
+								)
+							}
+						}
 					}
-				}
-				if (!inserted) {
-					return orderFailure(
-						500,
-						'order_number_conflict',
-						'We could not place this order. Please try again.',
-					)
-				}
 
-				if (result.capacity && result.capacity.entities.length > 0) {
-					await insertRowsInChunks(
-						restaurantOrderReservations,
-						result.capacity.entities.map((entity) => ({
-							orderId: inserted!.id,
-							kind: entity.kind,
-							entityId: entity.entityId,
-							windowId: result.capacity!.windowId,
-							slotTime: result.capacity!.slotTime,
-							quantity: entity.quantity,
-						})),
-						(chunk) => tx.insert(restaurantOrderReservations).values(chunk),
-					)
-				}
+					if (result.capacity) {
+						const slotFailure = await assertSlotCapacity(tx, result.capacity)
+						if (slotFailure) return { ok: false, failure: slotFailure }
+						const entityFailure = await assertEntityCapacity(
+							tx,
+							result.capacity,
+						)
+						if (entityFailure) return { ok: false, failure: entityFailure }
+					}
 
-				return {
-					ok: true,
-					data: {
-						status: 201,
-						order: inserted,
-						receiptToken,
-						paymentToken,
-						tab: tabRow
-							? {
-									id: tabRow.id,
-									tabNumber: tabRow.tabNumber,
-									tabToken: deriveTabToken(
-										orgId,
-										tabRow.id,
-										tabRow.tabTokenVersion,
-									),
-								}
-							: null,
-					},
-				}
-			}),
-		),
-	)
+					const at = now.getTime()
+					const member =
+						(loyaltyEarning || loyaltyTabClaim) && customerId
+							? loyaltyFlags?.status === 'on'
+								? // A verified customer who signed in before the program went
+									// live has no account yet: open it here so this order earns.
+									await ensureMemberForCustomerInTx(
+										loyaltyTx(tx),
+										customerId,
+										at,
+									)
+								: await memberForCustomerInTx(loyaltyTx(tx), customerId)
+							: null
+					const selected =
+						request.loyalty && loyaltyCart
+							? await quotePlacementReward(loyaltyTx(tx), {
+									member,
+									selection: request.loyalty,
+									cart: loyaltyCart,
+									currency: result.currency,
+								})
+							: null
+					const totals: LoyaltyDiscountedTotals = selected
+						? applyLoyaltyDiscountToTotals(
+								result,
+								selected.quote.lines,
+								selected.quote.discountMinor,
+							)
+						: {
+								loyaltyDiscountCents: 0,
+								taxCents: result.taxCents,
+								totalCents: result.totalCents,
+							}
+					if (
+						selected &&
+						request.paymentMethod === 'online' &&
+						totals.totalCents <= 0
+					) {
+						return orderFailure(
+							422,
+							'reward_covers_total',
+							'This reward covers the whole order. Choose pay at handoff.',
+						)
+					}
+
+					const usedNumbers = new Set<string>()
+					let inserted: RestaurantOrder | null = null
+					for (let attempt = 0; attempt < 5 && !inserted; attempt += 1) {
+						const number = await nextOrderNumber(tx, now, usedNumbers)
+						const holdExpiresAt =
+							request.paymentMethod === 'online'
+								? new Date(now.getTime() + result.holdMinutes * 60 * 1000)
+								: null
+						try {
+							const [row] = await tx
+								.insert(restaurantOrders)
+								.values({
+									id: orderId,
+									orgId,
+									customerId,
+									number,
+									locale: request.locale,
+									status: 'accepted',
+									paymentMethod: request.paymentMethod,
+									paymentStatus:
+										request.paymentMethod === 'online' ? 'pending' : 'unpaid',
+									paymentProcessor:
+										request.paymentMethod === 'online'
+											? (context.onlinePayment.processor ?? null)
+											: null,
+									fulfillment: request.fulfillment,
+									locationId: request.locationId,
+									locationName: result.location.name,
+									dropId: result.drop?.id ?? null,
+									dropSlug: result.drop?.slug ?? null,
+									pickupWindowId: result.pickup?.windowId ?? null,
+									pickupDate: result.pickup?.date ?? null,
+									pickupTime: result.pickup?.time ?? null,
+									pickupTimezone: result.pickup?.timezone ?? null,
+									// Only what this placer typed: another guest's name or phone on
+									// the tab must never reach this round's receipt.
+									contactName: request.contact.name ?? '',
+									contactPhone: request.contact.phone ?? '',
+									contactEmail: request.contact.email ?? null,
+									tabId: tabRow?.id ?? null,
+									tableId: tableRow?.id ?? null,
+									tableLabel: tableRow?.label ?? null,
+									source: orderSource,
+									deliveryAddress: result.delivery?.address ?? null,
+									deliveryCity: result.delivery?.city ?? null,
+									deliveryUnit: result.delivery?.unit ?? null,
+									deliveryNotes: result.delivery?.notes ?? null,
+									deliveryZoneId: result.delivery?.zoneId ?? null,
+									deliveryPostalCode: result.delivery?.postalCode ?? null,
+									deliveryLat: result.delivery?.lat ?? null,
+									deliveryLng: result.delivery?.lng ?? null,
+									scheduledFor: result.scheduledFor
+										? new Date(result.scheduledFor)
+										: null,
+									currency: result.currency,
+									subtotalCents: result.subtotalCents,
+									taxCents: totals.taxCents,
+									deliveryFeeCents: result.deliveryFeeCents,
+									tipCents: result.tipCents,
+									tipPercent: result.tipPercent,
+									totalCents: totals.totalCents,
+									loyaltyDiscountCents: totals.loyaltyDiscountCents,
+									lines: result.lines,
+									idempotencyKey: request.idempotencyKey,
+									requestHash,
+									receiptTokenHash: sha256Hex(receiptToken),
+									paymentTokenHash: paymentToken
+										? sha256Hex(paymentToken)
+										: null,
+									holdExpiresAt,
+								})
+								.returning()
+							inserted = row ?? null
+						} catch (error) {
+							if (isUniqueConstraintError(error) && attempt < 4) continue
+							throw error
+						}
+					}
+					if (!inserted) {
+						return orderFailure(
+							500,
+							'order_number_conflict',
+							'We could not place this order. Please try again.',
+						)
+					}
+
+					if (result.capacity && result.capacity.entities.length > 0) {
+						await insertRowsInChunks(
+							restaurantOrderReservations,
+							result.capacity.entities.map((entity) => ({
+								orderId: inserted!.id,
+								kind: entity.kind,
+								entityId: entity.entityId,
+								windowId: result.capacity!.windowId,
+								slotTime: result.capacity!.slotTime,
+								quantity: entity.quantity,
+							})),
+							(chunk) => tx.insert(restaurantOrderReservations).values(chunk),
+						)
+					}
+
+					const source = { type: 'restaurant_order' as const, id: inserted.id }
+					if (selected && member && loyaltyCart && loyaltyCartHash) {
+						// Holds the points and binds the reward to this order. It throws
+						// (rolling the order back) when the member can no longer spend.
+						const redemption = await reserveRedemptionInTx(loyaltyTx(tx), {
+							member,
+							reward: selected.reward.snapshot,
+							cart: loyaltyCart,
+							cartHash: loyaltyCartHash,
+							targetLineId: request.loyalty?.targetLineId ?? null,
+							expectedDiscountMinor: selected.quote.discountMinor,
+							channel: 'web',
+							source,
+							locationId: request.locationId,
+							at,
+						})
+						if (redemption.discountMinor !== totals.loyaltyDiscountCents) {
+							throw new LoyaltyDomainError('cart_changed', {
+								discountMinor: redemption.discountMinor,
+							})
+						}
+					}
+					if (member?.status === 'active' && !isDineIn) {
+						await claimPurchaseInTx(loyaltyTx(tx), {
+							member,
+							source,
+							locationId: request.locationId,
+							currency: result.currency,
+							at,
+						})
+					} else if (member?.status === 'active' && tabRow) {
+						await claimPurchaseIfUnclaimedInTx(loyaltyTx(tx), {
+							member,
+							source: { type: 'qr_tab', id: tabRow.id },
+							locationId: tabRow.locationId,
+							currency: tabRow.currency,
+							at,
+						})
+					}
+
+					return {
+						ok: true,
+						data: {
+							status: 201,
+							order: inserted,
+							receiptToken,
+							paymentToken,
+							tab: tabRow
+								? {
+										id: tabRow.id,
+										tabNumber: tabRow.tabNumber,
+										tabToken: deriveTabToken(
+											orgId,
+											tabRow.id,
+											tabRow.tabTokenVersion,
+										),
+									}
+								: null,
+						},
+					}
+				}),
+			),
+		)
+		await loyalty.settle(orgId)
+		return placed
+	} catch (error) {
+		// `runTenantTransaction` commits whatever its callback returns and rolls
+		// back only on a throw, so a refused reward throws out of the
+		// transaction and becomes the order failure here.
+		if (error instanceof LoyaltyDomainError) {
+			return { ok: false, failure: loyaltyFailure(error) }
+		}
+		throw error
+	}
 }
 
 // ---------------------------------------------------------------------------
@@ -946,65 +1265,88 @@ export async function bindPaymentSession(input: {
 }): Promise<OrderServiceResult<PaymentSessionResult>> {
 	const { orgId, orderId, sessionId, processor } = input
 	const db = await getTenantDb(orgId)
+	const loyalty = loyaltySettleQueue()
 
-	return runExclusive(orgId, () =>
-		retryOnSqliteBusy(() =>
-			runTenantTransaction(db, async (tx) => {
-				await expireHolds(tx, new Date())
-				const [order] = await tx
-					.select()
-					.from(restaurantOrders)
-					.where(
-						and(
-							eq(restaurantOrders.id, orderId),
-							eq(restaurantOrders.orgId, orgId),
-						),
-					)
-					.limit(1)
-				if (!order) {
-					return orderFailure(404, 'order_not_found', 'Order not found.')
-				}
-				if (order.paymentMethod !== 'online') {
-					return orderFailure(
-						409,
-						'not_online_order',
-						'Payment sessions are only valid for online orders.',
-					)
-				}
-				if (order.status === 'expired') {
-					return orderFailure(
-						409,
-						'hold_expired',
-						'The checkout hold for this order has expired.',
-					)
-				}
-				if (
-					order.paymentStatus === 'paid' ||
-					order.paymentStatus === 'failed' ||
-					order.paymentStatus === 'expired' ||
-					order.paymentStatus === 'review'
-				) {
-					return orderFailure(
-						409,
-						'payment_terminal',
-						'This order already has a terminal payment state.',
-					)
-				}
-				if (order.paymentProcessor && order.paymentProcessor !== processor) {
-					return orderFailure(
-						409,
-						'processor_mismatch',
-						'This order is bound to a different payment processor.',
-					)
-				}
-				if (order.paymentSessionId && order.paymentSessionId !== sessionId) {
-					return orderFailure(
-						409,
-						'session_conflict',
-						'This order already has a bound payment session.',
-					)
-				}
-				if (order.paymentSessionId === sessionId) {
+	const result: OrderServiceResult<PaymentSessionResult> = await runExclusive(
+		orgId,
+		() =>
+			retryOnSqliteBusy(() =>
+				runTenantTransaction(db, async (tx) => {
+					await expireHolds(tx, new Date(), loyalty)
+					const [order] = await tx
+						.select()
+						.from(restaurantOrders)
+						.where(
+							and(
+								eq(restaurantOrders.id, orderId),
+								eq(restaurantOrders.orgId, orgId),
+							),
+						)
+						.limit(1)
+					if (!order) {
+						return orderFailure(404, 'order_not_found', 'Order not found.')
+					}
+					if (order.paymentMethod !== 'online') {
+						return orderFailure(
+							409,
+							'not_online_order',
+							'Payment sessions are only valid for online orders.',
+						)
+					}
+					if (order.status === 'expired') {
+						return orderFailure(
+							409,
+							'hold_expired',
+							'The checkout hold for this order has expired.',
+						)
+					}
+					if (
+						order.paymentStatus === 'paid' ||
+						order.paymentStatus === 'failed' ||
+						order.paymentStatus === 'expired' ||
+						order.paymentStatus === 'review'
+					) {
+						return orderFailure(
+							409,
+							'payment_terminal',
+							'This order already has a terminal payment state.',
+						)
+					}
+					if (order.paymentProcessor && order.paymentProcessor !== processor) {
+						return orderFailure(
+							409,
+							'processor_mismatch',
+							'This order is bound to a different payment processor.',
+						)
+					}
+					if (order.paymentSessionId && order.paymentSessionId !== sessionId) {
+						return orderFailure(
+							409,
+							'session_conflict',
+							'This order already has a bound payment session.',
+						)
+					}
+					if (order.paymentSessionId === sessionId) {
+						return {
+							ok: true,
+							data: {
+								orgId,
+								orderId: order.id,
+								sessionId,
+								status: order.status,
+								paymentStatus: order.paymentStatus,
+							},
+						}
+					}
+					await tx
+						.update(restaurantOrders)
+						.set({
+							paymentSessionId: sessionId,
+							paymentProcessor: processor,
+							paymentEventAt: new Date(),
+							updatedAt: new Date(),
+						})
+						.where(eq(restaurantOrders.id, order.id))
 					return {
 						ok: true,
 						data: {
@@ -1015,29 +1357,11 @@ export async function bindPaymentSession(input: {
 							paymentStatus: order.paymentStatus,
 						},
 					}
-				}
-				await tx
-					.update(restaurantOrders)
-					.set({
-						paymentSessionId: sessionId,
-						paymentProcessor: processor,
-						paymentEventAt: new Date(),
-						updatedAt: new Date(),
-					})
-					.where(eq(restaurantOrders.id, order.id))
-				return {
-					ok: true,
-					data: {
-						orgId,
-						orderId: order.id,
-						sessionId,
-						status: order.status,
-						paymentStatus: order.paymentStatus,
-					},
-				}
-			}),
-		),
+				}),
+			),
 	)
+	await loyalty.settle(orgId)
+	return result
 }
 
 export type PaymentEventResult = {
@@ -1067,74 +1391,180 @@ export async function applyPaymentEvent(input: {
 		currency,
 	} = input
 	const db = await getTenantDb(orgId)
+	const loyalty = loyaltySettleQueue()
 
-	return runExclusive(orgId, () =>
-		retryOnSqliteBusy(() =>
-			runTenantTransaction(db, async (tx) => {
-				await expireHolds(tx, new Date())
-				const [order] = await tx
-					.select()
-					.from(restaurantOrders)
-					.where(
-						and(
-							eq(restaurantOrders.id, orderId),
-							eq(restaurantOrders.orgId, orgId),
-						),
-					)
-					.limit(1)
-				if (!order) {
-					return orderFailure(404, 'order_not_found', 'Order not found.')
-				}
-				if (order.paymentMethod !== 'online') {
-					return orderFailure(
-						409,
-						'not_online_order',
-						'Payment events are only valid for online orders.',
-					)
-				}
-				if (!order.paymentSessionId || order.paymentSessionId !== sessionId) {
-					return orderFailure(
-						403,
-						'session_mismatch',
-						'This payment event does not match the bound payment session.',
-					)
-				}
-				if (order.paymentProcessor !== processor) {
-					return orderFailure(
-						409,
-						'processor_mismatch',
-						'This payment event does not match the bound payment processor.',
-					)
-				}
-				if (order.totalCents !== amountCents) {
-					return orderFailure(
-						422,
-						'amount_mismatch',
-						'The payment amount does not match this order.',
-					)
-				}
-				if (order.currency !== currency) {
-					return orderFailure(
-						422,
-						'currency_mismatch',
-						'The payment currency does not match this order.',
-					)
-				}
+	const result: OrderServiceResult<PaymentEventResult> = await runExclusive(
+		orgId,
+		() =>
+			retryOnSqliteBusy(() =>
+				runTenantTransaction(db, async (tx) => {
+					await expireHolds(tx, new Date(), loyalty)
+					const [order] = await tx
+						.select()
+						.from(restaurantOrders)
+						.where(
+							and(
+								eq(restaurantOrders.id, orderId),
+								eq(restaurantOrders.orgId, orgId),
+							),
+						)
+						.limit(1)
+					if (!order) {
+						return orderFailure(404, 'order_not_found', 'Order not found.')
+					}
+					if (order.paymentMethod !== 'online') {
+						return orderFailure(
+							409,
+							'not_online_order',
+							'Payment events are only valid for online orders.',
+						)
+					}
+					if (!order.paymentSessionId || order.paymentSessionId !== sessionId) {
+						return orderFailure(
+							403,
+							'session_mismatch',
+							'This payment event does not match the bound payment session.',
+						)
+					}
+					if (order.paymentProcessor !== processor) {
+						return orderFailure(
+							409,
+							'processor_mismatch',
+							'This payment event does not match the bound payment processor.',
+						)
+					}
+					if (order.totalCents !== amountCents) {
+						return orderFailure(
+							422,
+							'amount_mismatch',
+							'The payment amount does not match this order.',
+						)
+					}
+					if (order.currency.toLowerCase() !== currency.toLowerCase()) {
+						return orderFailure(
+							422,
+							'currency_mismatch',
+							'The payment currency does not match this order.',
+						)
+					}
 
-				const now = new Date()
-				const idempotent: PaymentEventResult = {
-					orgId,
-					orderId: order.id,
-					sessionId,
-					status: order.status,
-					paymentStatus: order.paymentStatus,
-				}
+					const now = new Date()
+					// Loyalty settles or releases from the new state (a no-op for
+					// orders it does not track).
+					const queueLoyalty = () =>
+						loyalty.queue(
+							loyaltyTx(tx),
+							{ type: 'restaurant_order', id: order.id },
+							now.getTime(),
+						)
+					const idempotent: PaymentEventResult = {
+						orgId,
+						orderId: order.id,
+						sessionId,
+						status: order.status,
+						paymentStatus: order.paymentStatus,
+					}
 
-				if (status === 'paid') {
-					if (order.paymentStatus === 'paid')
+					if (status === 'paid') {
+						if (order.paymentStatus === 'paid')
+							return { ok: true, data: idempotent }
+						const lateArrival =
+							order.status === 'expired' || order.status === 'cancelled'
+						if (
+							order.status === 'accepted' &&
+							order.paymentStatus === 'pending'
+						) {
+							await tx
+								.update(restaurantOrders)
+								.set({
+									paymentStatus: 'paid',
+									paidAt: now,
+									paymentEventAt: now,
+									updatedAt: now,
+								})
+								.where(eq(restaurantOrders.id, order.id))
+							await queueLoyalty()
+							return {
+								ok: true,
+								data: {
+									...idempotent,
+									status: order.status,
+									paymentStatus: 'paid',
+								},
+							}
+						}
+						if (
+							lateArrival &&
+							(order.paymentStatus === 'pending' ||
+								order.paymentStatus === 'expired' ||
+								order.paymentStatus === 'failed')
+						) {
+							// Money arrived after the hold lapsed: never resurrect the
+							// reservation. Surface payment_review for the operator.
+							await tx
+								.update(restaurantOrders)
+								.set({
+									status: 'payment_review',
+									paymentStatus: 'paid',
+									paidAt: now,
+									paymentEventAt: now,
+									updatedAt: now,
+								})
+								.where(eq(restaurantOrders.id, order.id))
+							await queueLoyalty()
+							return {
+								ok: true,
+								data: {
+									...idempotent,
+									status: 'payment_review',
+									paymentStatus: 'paid',
+								},
+							}
+						}
+						return orderFailure(
+							409,
+							'payment_state_conflict',
+							'This order cannot transition to paid.',
+						)
+					}
+
+					if (status === 'failed') {
+						if (order.paymentStatus === 'failed')
+							return { ok: true, data: idempotent }
+						if (
+							order.status === 'accepted' &&
+							order.paymentStatus === 'pending'
+						) {
+							await tx
+								.update(restaurantOrders)
+								.set({
+									status: 'cancelled',
+									paymentStatus: 'failed',
+									cancelledAt: now,
+									paymentEventAt: now,
+									updatedAt: now,
+								})
+								.where(eq(restaurantOrders.id, order.id))
+							await queueLoyalty()
+							return {
+								ok: true,
+								data: {
+									...idempotent,
+									status: 'cancelled',
+									paymentStatus: 'failed',
+								},
+							}
+						}
+						return orderFailure(
+							409,
+							'payment_state_conflict',
+							'This order cannot transition to failed.',
+						)
+					}
+
+					// provider session expired without payment
+					if (order.paymentStatus === 'expired')
 						return { ok: true, data: idempotent }
-					const lateArrival =
-						order.status === 'expired' || order.status === 'cancelled'
 					if (
 						order.status === 'accepted' &&
 						order.paymentStatus === 'pending'
@@ -1142,118 +1572,32 @@ export async function applyPaymentEvent(input: {
 						await tx
 							.update(restaurantOrders)
 							.set({
-								paymentStatus: 'paid',
-								paidAt: now,
+								status: 'expired',
+								paymentStatus: 'expired',
 								paymentEventAt: now,
 								updatedAt: now,
 							})
 							.where(eq(restaurantOrders.id, order.id))
+						await queueLoyalty()
 						return {
 							ok: true,
 							data: {
 								...idempotent,
-								status: order.status,
-								paymentStatus: 'paid',
-							},
-						}
-					}
-					if (
-						lateArrival &&
-						(order.paymentStatus === 'pending' ||
-							order.paymentStatus === 'expired' ||
-							order.paymentStatus === 'failed')
-					) {
-						// Money arrived after the hold lapsed: never resurrect the
-						// reservation. Surface payment_review for the operator.
-						await tx
-							.update(restaurantOrders)
-							.set({
-								status: 'payment_review',
-								paymentStatus: 'paid',
-								paidAt: now,
-								paymentEventAt: now,
-								updatedAt: now,
-							})
-							.where(eq(restaurantOrders.id, order.id))
-						return {
-							ok: true,
-							data: {
-								...idempotent,
-								status: 'payment_review',
-								paymentStatus: 'paid',
+								status: 'expired',
+								paymentStatus: 'expired',
 							},
 						}
 					}
 					return orderFailure(
 						409,
 						'payment_state_conflict',
-						'This order cannot transition to paid.',
+						'This order cannot transition to expired.',
 					)
-				}
-
-				if (status === 'failed') {
-					if (order.paymentStatus === 'failed')
-						return { ok: true, data: idempotent }
-					if (
-						order.status === 'accepted' &&
-						order.paymentStatus === 'pending'
-					) {
-						await tx
-							.update(restaurantOrders)
-							.set({
-								status: 'cancelled',
-								paymentStatus: 'failed',
-								cancelledAt: now,
-								paymentEventAt: now,
-								updatedAt: now,
-							})
-							.where(eq(restaurantOrders.id, order.id))
-						return {
-							ok: true,
-							data: {
-								...idempotent,
-								status: 'cancelled',
-								paymentStatus: 'failed',
-							},
-						}
-					}
-					return orderFailure(
-						409,
-						'payment_state_conflict',
-						'This order cannot transition to failed.',
-					)
-				}
-
-				// provider session expired without payment
-				if (order.paymentStatus === 'expired')
-					return { ok: true, data: idempotent }
-				if (order.status === 'accepted' && order.paymentStatus === 'pending') {
-					await tx
-						.update(restaurantOrders)
-						.set({
-							status: 'expired',
-							paymentStatus: 'expired',
-							paymentEventAt: now,
-							updatedAt: now,
-						})
-						.where(eq(restaurantOrders.id, order.id))
-					return {
-						ok: true,
-						data: {
-							...idempotent,
-							status: 'expired',
-							paymentStatus: 'expired',
-						},
-					}
-				}
-				return orderFailure(
-					409,
-					'payment_state_conflict',
-					'This order cannot transition to expired.',
-				)
-			}),
-		),
+				}),
+			),
 	)
+	await loyalty.settle(orgId)
+	return result
 }
 
 // ---------------------------------------------------------------------------
@@ -1282,96 +1626,116 @@ export async function updateOperatorOrder(
 	input: OperatorPatchInput,
 ): Promise<OrderServiceResult<RestaurantOrder>> {
 	const db = await getTenantDb(orgId)
+	const loyalty = loyaltySettleQueue()
 
-	return runExclusive(orgId, () =>
-		retryOnSqliteBusy(() =>
-			runTenantTransaction(db, async (tx) => {
-				await expireHolds(tx, new Date())
-				const [order] = await tx
-					.select()
-					.from(restaurantOrders)
-					.where(
-						and(
-							eq(restaurantOrders.id, orderId),
-							eq(restaurantOrders.orgId, orgId),
-						),
-					)
-					.limit(1)
-				if (!order) {
-					return orderFailure(404, 'order_not_found', 'Order not found.')
-				}
-
-				const now = new Date()
-				const patch: Partial<RestaurantOrder> = {}
-
-				if (input.status !== order.status) {
-					const allowed = OPERATOR_STATUS_TRANSITIONS[order.status] ?? []
-					if (!allowed.includes(input.status)) {
-						return orderFailure(
-							422,
-							'invalid_transition',
-							`An order that is ${order.status} cannot move to ${input.status}.`,
+	const result: OrderServiceResult<RestaurantOrder> = await runExclusive(
+		orgId,
+		() =>
+			retryOnSqliteBusy(() =>
+				runTenantTransaction(db, async (tx) => {
+					await expireHolds(tx, new Date(), loyalty)
+					const [order] = await tx
+						.select()
+						.from(restaurantOrders)
+						.where(
+							and(
+								eq(restaurantOrders.id, orderId),
+								eq(restaurantOrders.orgId, orgId),
+							),
 						)
+						.limit(1)
+					if (!order) {
+						return orderFailure(404, 'order_not_found', 'Order not found.')
 					}
-					patch.status = input.status
-					if (input.status === 'completed') patch.completedAt = now
-					if (input.status === 'cancelled') patch.cancelledAt = now
-				}
 
-				if (input.markPaid) {
-					// A tab is paid once, at close: settling one round alone would
-					// leave the tab total and the rounds disagreeing.
-					if (order.tabId) {
-						return orderFailure(
-							409,
-							'tab_settlement_required',
-							'This order is on a table tab. Close the tab to take payment.',
-						)
-					}
-					if (order.paymentMethod !== 'online') {
-						if (
-							order.paymentStatus !== 'unpaid' &&
-							order.paymentStatus !== 'paid'
-						) {
+					const now = new Date()
+					const patch: Partial<RestaurantOrder> = {}
+
+					if (input.status !== order.status) {
+						const allowed = OPERATOR_STATUS_TRANSITIONS[order.status] ?? []
+						if (!allowed.includes(input.status)) {
 							return orderFailure(
-								409,
-								'payment_state_conflict',
-								'This order cannot be marked paid.',
+								422,
+								'invalid_transition',
+								`An order that is ${order.status} cannot move to ${input.status}.`,
 							)
 						}
-						patch.paymentStatus = 'paid'
-						patch.paidAt = now
-					} else {
-						return orderFailure(
-							409,
-							'payment_not_markable',
-							'Online order payment status is controlled by payment events.',
-						)
+						patch.status = input.status
+						if (input.status === 'completed') patch.completedAt = now
+						if (input.status === 'cancelled') patch.cancelledAt = now
 					}
-				}
 
-				if (Object.keys(patch).length === 0) {
-					return { ok: true, data: order }
-				}
+					if (input.markPaid) {
+						// A tab is paid once, at close: settling one round alone would
+						// leave the tab total and the rounds disagreeing.
+						if (order.tabId) {
+							return orderFailure(
+								409,
+								'tab_settlement_required',
+								'This order is on a table tab. Close the tab to take payment.',
+							)
+						}
+						if (order.paymentMethod !== 'online') {
+							if (
+								order.paymentStatus !== 'unpaid' &&
+								order.paymentStatus !== 'paid'
+							) {
+								return orderFailure(
+									409,
+									'payment_state_conflict',
+									'This order cannot be marked paid.',
+								)
+							}
+							patch.paymentStatus = 'paid'
+							patch.paidAt = now
+						} else {
+							return orderFailure(
+								409,
+								'payment_not_markable',
+								'Online order payment status is controlled by payment events.',
+							)
+						}
+					}
 
-				const [updated] = await tx
-					.update(restaurantOrders)
-					.set({ ...patch, updatedAt: now })
-					.where(eq(restaurantOrders.id, order.id))
-					.returning()
-				return { ok: true, data: updated ?? order }
-			}),
-		),
+					if (Object.keys(patch).length === 0) {
+						return { ok: true, data: order }
+					}
+
+					const [updated] = await tx
+						.update(restaurantOrders)
+						.set({ ...patch, updatedAt: now })
+						.where(eq(restaurantOrders.id, order.id))
+						.returning()
+					await loyalty.queue(
+						loyaltyTx(tx),
+						{ type: 'restaurant_order', id: order.id },
+						now.getTime(),
+					)
+					return { ok: true, data: updated ?? order }
+				}),
+			),
 	)
+	await loyalty.settle(orgId)
+	return result
 }
 
 export async function listOperatorOrders(
 	orgId: string,
-	options: { limit: number; status?: string },
+	options: {
+		limit: number
+		status?: string
+		/** A location-scoped operator's locations; null or absent is all. */
+		locationIds?: readonly string[] | null
+	},
 ): Promise<RestaurantOrder[]> {
 	const db = await getTenantDb(orgId)
 	await sweepExpiredHolds(orgId)
 	const conditions = [eq(restaurantOrders.orgId, orgId)]
+	if (options.locationIds) {
+		conditions.push(
+			inJsonList(restaurantOrders.locationId, options.locationIds),
+		)
+	}
 	if (options.status) {
 		conditions.push(
 			eq(restaurantOrders.status, options.status as RestaurantOrder['status']),
@@ -1537,6 +1901,8 @@ export function publicOrderSummary(order: RestaurantOrder) {
 		taxCents: order.taxCents,
 		deliveryFeeCents: order.deliveryFeeCents,
 		tipCents: order.tipCents,
+		/** A loyalty reward's discount, taken off the subtotal before tax. */
+		loyaltyDiscountCents: order.loyaltyDiscountCents,
 		totalCents: order.totalCents,
 		holdExpiresAt: order.holdExpiresAt
 			? order.holdExpiresAt.toISOString()
@@ -1603,6 +1969,8 @@ export function operatorOrder(
 		paymentMethod: order.paymentMethod,
 		paymentProcessor: order.paymentProcessor,
 		paymentSessionId: order.paymentSessionId,
+		/** Recorded as returned; the payment status stays `paid`. */
+		refundedCents: order.refundedCents,
 		dropId: order.dropId,
 		deliveryZoneId: order.deliveryZoneId,
 		deliveryPoint:

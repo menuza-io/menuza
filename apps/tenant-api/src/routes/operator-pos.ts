@@ -32,6 +32,7 @@ import {
 	setManager,
 	updateDeviceSettings,
 } from '../services/pos-service.ts'
+import { requeueTillSaleLoyalty } from '../services/pos-loyalty-service.ts'
 import { getStaffingFeatures, hasScope } from '../lib/scope-context.ts'
 import { writeOperatorAudit } from '../services/staff-audit.ts'
 import {
@@ -240,8 +241,15 @@ operatorPosRoutes.get('/held', async (c) => {
 operatorPosRoutes.post('/held/:id/resolve', async (c) => {
 	const g = await guard(c, 'orders:write', { keepWorkingWhenDisabled: true })
 	if ('error' in g) return g.error
-	if (!(await resolveHeldUpload(g.db, c.req.param('id'), g.auth.userId)))
-		return posError(404, 'not_found')
+	const resolved = await resolveHeldUpload(
+		g.db,
+		c.req.param('id'),
+		g.auth.userId,
+	)
+	if (!resolved) return posError(404, 'not_found')
+	// Loyalty waited on this upload: it goes on from the sale as stored.
+	if (resolved.orderId)
+		await requeueTillSaleLoyalty(g.auth.orgId, resolved.orderId)
 	return c.json({ ok: true }, 200, noStore)
 })
 
