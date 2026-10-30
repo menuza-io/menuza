@@ -153,7 +153,36 @@ jobs:
         run: npm rebuild sharp libsql rolldown @astrojs/compiler-binding
 
       - name: 🛠 Setup Database
-        run: npm run db:migrate:deploy && npm run db:generate
+        run: npm run db:migrate:deploy
+
+      # drizzle-kit generate writes a migration when schema.ts and the latest
+      # snapshot disagree; a fork that renumbers upstream migrations relies on
+      # this. A clean tree alone is not enough: drizzle-kit also exits 0 when it
+      # could not compare (a snapshot collision), so require its "No schema
+      # changes" verdict. No TTY: a rename prompt fails instead of waiting.
+      - name: 🧭 Schemas match their migrations
+        run: |
+          status=0
+          for pkg in database tenant-db; do
+            if ! out=$(timeout 120 npm run db:generate -w "@repo/$pkg" < /dev/null 2>&1); then
+              echo "$out"
+              echo "::error::packages/$pkg: drizzle-kit generate failed or timed out."
+              status=1
+              continue
+            fi
+            echo "$out"
+            if ! grep -q "No schema changes" <<< "$out"; then
+              echo "::error::packages/$pkg: drizzle-kit did not confirm that schema.ts matches the latest snapshot."
+              status=1
+            fi
+            drift=$(git status --porcelain -- "packages/$pkg/drizzle")
+            if [ -n "$drift" ]; then
+              echo "::error::packages/$pkg: schema.ts differs from the latest migration snapshot. Generate and commit a migration."
+              echo "$drift"
+              status=1
+            fi
+          done
+          exit $status
 
       - name: 🔐 Write CI app env files
         run: node scripts/write-ci-app-env.mjs

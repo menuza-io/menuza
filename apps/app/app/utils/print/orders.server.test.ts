@@ -644,6 +644,22 @@ describe('shipped print orders', () => {
 		)
 	})
 
+	it('leaves a fresh paid order to its background submission, and the sweep submits it once stale', async () => {
+		// The webhook answered and its background submission never ran.
+		const { orderId } = await paidOrderLater()
+		await syncOpenPrintOrders()
+		expect((await getPrintOrderDetail(null, orderId)).order.status).toBe('paid')
+
+		await db
+			.update(PrintOrder)
+			.set({ updatedAt: new Date(Date.now() - 10 * 60_000) })
+			.where(eq(PrintOrder.id, orderId))
+		await syncOpenPrintOrders()
+		expect((await getPrintOrderDetail(null, orderId)).order.status).toBe(
+			'submitted',
+		)
+	})
+
 	it('hands a large set back when its rendering time runs out, and the sweep finishes it', async () => {
 		const { orderId } = await paidOrderLater()
 		expect(await submitPrintOrder(orderId, { budgetMs: -1 })).toBe('deferred')

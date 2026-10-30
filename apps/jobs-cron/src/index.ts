@@ -41,8 +41,10 @@ const TENANT_HOURLY_CRON = '0 * * * *'
 // Hourly App job: fetches the status of shipped print orders whose vendor
 // webhook may have been missed.
 const PRINT_SYNC_PATH = '/resources/jobs/print-sync'
-// Scheduled social posts are woken on time by SocialPostWorkflow; the hourly
-// sweep only catches a wake-up that could not be started.
+// Workflows sleep at most 365 days; a day of margin covers clock skew between
+// the App and this Worker. A post due later is left to the hourly
+// social-publish sweep (the App logs the refused wake-up and carries on).
+const SOCIAL_POST_MAX_LEAD_MS = 364 * 24 * 60 * 60_000
 
 async function safeCompareAsync(
 	a: string | null | undefined,
@@ -316,7 +318,15 @@ export default {
 				)
 			}
 
+			if (runAt.getTime() - Date.now() > SOCIAL_POST_MAX_LEAD_MS) {
+				return Response.json(
+					{ error: 'runAt is too far ahead to wait for' },
+					{ status: 400 },
+				)
+			}
+
 			// One instance per post and time: starting it twice is harmless.
+			// A runAt already past publishes at once.
 			const instanceId = `social-${postId}-${runAt.getTime()}`
 			try {
 				const instance = await env.SOCIAL_POST_WORKFLOW.create({
@@ -423,6 +433,8 @@ export default {
 					'Print order sync',
 					(jobEnv: Env) => invokeJob(jobEnv, PRINT_SYNC_PATH),
 				],
+				// Scheduled social posts are woken on time by SocialPostWorkflow;
+				// this sweep only catches a wake-up that could not be started.
 				[
 					'Social post sweep',
 					(jobEnv: Env) => invokeJob(jobEnv, SOCIAL_PUBLISH_PATH),
@@ -462,4 +474,8 @@ export default {
 	},
 }
 
-export { StorageMigrationWorkflow, MarketingJourneyWorkflow, SocialPostWorkflow }
+export {
+	StorageMigrationWorkflow,
+	MarketingJourneyWorkflow,
+	SocialPostWorkflow,
+}

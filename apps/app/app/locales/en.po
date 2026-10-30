@@ -260,7 +260,7 @@ msgid "{0, plural, one {# person} other {# people}}"
 msgstr "{0, plural, one {# person} other {# people}}"
 
 #. placeholder {0}: selectedIds.length
-#: app/components/media-library/photo-studio-dialog.tsx:495
+#: app/components/media-library/photo-studio-dialog.tsx:493
 msgid "{0, plural, one {# selected} other {# selected}}"
 msgstr "{0, plural, one {# selected} other {# selected}}"
 
@@ -378,7 +378,7 @@ msgid "{0, plural, one {Expires in # day} other {Expires in # days}}"
 msgstr "{0, plural, one {Expires in # day} other {Expires in # days}}"
 
 #. placeholder {0}: selectedAssets.length
-#: app/components/media-library/photo-studio-dialog.tsx:989
+#: app/components/media-library/photo-studio-dialog.tsx:1000
 msgid "{0, plural, one {Generate photo} other {Generate # photos}}"
 msgstr "{0, plural, one {Generate photo} other {Generate # photos}}"
 
@@ -418,7 +418,7 @@ msgid "{0, plural, one {We added a new-hire checklist with # task.} other {We ad
 msgstr "{0, plural, one {We added a new-hire checklist with # task.} other {We added a new-hire checklist with # tasks.}}"
 
 #. placeholder {0}: selectedAssets.length
-#: app/components/media-library/photo-studio-dialog.tsx:554
+#: app/components/media-library/photo-studio-dialog.tsx:552
 msgid "{0, plural, one {Your photo} other {Your # photos}}"
 msgstr "{0, plural, one {Your photo} other {Your # photos}}"
 
@@ -481,6 +481,10 @@ msgstr ""
 #: app/routes/organizations+/create.tsx:1413
 msgid "{basePriceLabel} billed annually"
 msgstr ""
+
+#: app/components/media-library/before-after-slider.tsx:81
+msgid "{before}% before, {after}% after"
+msgstr "{before}% before, {after}% after"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1200
 msgid "{bleed} mm bleed"
@@ -578,7 +582,7 @@ msgstr "{created} imported, {existing} already on your team, {notImported} not i
 msgid "{customized} changed"
 msgstr "{customized} changed"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:179
+#: app/routes/_app+/$orgSlug_+/index.tsx:177
 msgid "{date} · Here's what's happening in {organizationName}"
 msgstr "{date} · Here's what's happening in {organizationName}"
 
@@ -1042,6 +1046,14 @@ msgstr "{selectedRoleCount} roles and {selectedMemberCount} people selected"
 msgid "{status}"
 msgstr ""
 
+#: app/components/social/social-calendar.tsx:130
+msgid "{status}, {at}, {platforms}: {text}"
+msgstr "{status}, {at}, {platforms}: {text}"
+
+#: app/components/social/social-calendar.tsx:128
+msgid "{status}, {platforms}: {text}"
+msgstr "{status}, {platforms}: {text}"
+
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:362
 msgid "{stepCount} steps"
 msgstr ""
@@ -1082,7 +1094,7 @@ msgstr ""
 msgid "{unread} unread"
 msgstr "{unread} unread"
 
-#: app/components/social/post-composer.tsx:268
+#: app/components/social/post-composer.tsx:267
 msgid "{used} of {limit} characters"
 msgstr "{used} of {limit} characters"
 
@@ -1420,7 +1432,7 @@ msgstr "A note was added"
 msgid "A page on your website"
 msgstr "A page on your website"
 
-#: app/components/media-library/photo-studio-dialog.tsx:692
+#: app/components/media-library/photo-studio-dialog.tsx:690
 msgid "A photo whose lighting, background, and colors you like. JPEG, PNG, or WebP, up to 10 MB."
 msgstr "A photo whose lighting, background, and colors you like. JPEG, PNG, or WebP, up to 10 MB."
 
@@ -1603,8 +1615,8 @@ msgstr ""
 msgid "Acme Inc."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:217
-#: app/routes/_app+/$orgSlug_+/index.tsx:243
+#: app/routes/_app+/$orgSlug_+/index.tsx:212
+#: app/routes/_app+/$orgSlug_+/index.tsx:236
 msgid "Across your organization"
 msgstr "Across your organization"
 
@@ -1942,7 +1954,7 @@ msgstr "Add field"
 msgid "Add hours across all workplaces"
 msgstr "Add hours across all workplaces"
 
-#: app/components/social/post-composer.tsx:317
+#: app/components/social/post-composer.tsx:316
 msgid "Add image"
 msgstr "Add image"
 
@@ -3176,7 +3188,7 @@ msgstr "Available then"
 msgid "Available Tools"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:220
+#: app/routes/_app+/$orgSlug_+/index.tsx:215
 msgid "Avg per day"
 msgstr "Avg per day"
 
@@ -3192,7 +3204,7 @@ msgstr "B&W"
 #: app/components/kiosk/kiosk-screens.tsx:264
 #: app/components/kiosk/kiosk-screens.tsx:495
 #: app/components/kiosk/kiosk-screens.tsx:571
-#: app/components/media-library/photo-studio-dialog.tsx:979
+#: app/components/media-library/photo-studio-dialog.tsx:990
 #: app/components/website/create-page-dialog.tsx:198
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.terminate.tsx:205
 #: app/routes/_app+/$orgSlug_+/staff+/team.bulk.tsx:192
@@ -3826,8 +3838,8 @@ msgstr "Can't text that number"
 #: app/components/hiring/job-editor.tsx:910
 #: app/components/kiosk/kiosk-screens.tsx:631
 #: app/components/media-library/media-library-picker.tsx:342
-#: app/components/media-library/photo-studio-dialog.tsx:950
-#: app/components/media-library/photo-studio-dialog.tsx:977
+#: app/components/media-library/photo-studio-dialog.tsx:961
+#: app/components/media-library/photo-studio-dialog.tsx:988
 #: app/components/my-schedule/availability-sheet.tsx:200
 #: app/components/my-schedule/requests-view.tsx:261
 #: app/components/my-schedule/shift-change-sheet.tsx:257
@@ -3853,7 +3865,7 @@ msgstr "Can't text that number"
 #: app/components/settings/password-form.tsx:188
 #: app/components/settings/two-factor-form.tsx:123
 #: app/components/settings/two-factor-form.tsx:261
-#: app/components/social/post-composer.tsx:423
+#: app/components/social/post-composer.tsx:425
 #: app/components/staff/access-tab.tsx:259
 #: app/components/staff/access-tab.tsx:396
 #: app/components/staff/kiosk-manager.tsx:371
@@ -3904,10 +3916,10 @@ msgstr "Can't text that number"
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:513
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:498
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:1772
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1457
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1495
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1541
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1579
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1459
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1497
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1543
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1581
 #: app/routes/organizations+/create.tsx:819
 #: app/routes/organizations+/create.tsx:954
 msgid "Cancel"
@@ -4486,7 +4498,7 @@ msgstr "Choose a workplace"
 msgid "Choose a workplace."
 msgstr "Choose a workplace."
 
-#: app/components/social/post-composer.tsx:355
+#: app/components/social/post-composer.tsx:354
 msgid "Choose an account to preview"
 msgstr "Choose an account to preview"
 
@@ -4567,7 +4579,7 @@ msgstr "Choose the members who also work here. You review the list next."
 msgid "Choose the role you are working."
 msgstr "Choose the role you are working."
 
-#: app/components/media-library/photo-studio-dialog.tsx:492
+#: app/components/media-library/photo-studio-dialog.tsx:490
 msgid "Choose up to {PHOTO_STUDIO_MAX_PHOTOS} photos"
 msgstr "Choose up to {PHOTO_STUDIO_MAX_PHOTOS} photos"
 
@@ -4660,7 +4672,7 @@ msgstr "Clean white"
 msgid "Clear"
 msgstr "Clear"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1568
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1570
 msgid "Clear all 404 history?"
 msgstr "Clear all 404 history?"
 
@@ -4680,7 +4692,7 @@ msgstr "Clear filters"
 msgid "Clear history"
 msgstr "Clear history"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1590
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1592
 msgid "Clear History"
 msgstr "Clear History"
 
@@ -4980,7 +4992,7 @@ msgstr "Communication"
 msgid "Community"
 msgstr "Community"
 
-#: app/components/media-library/before-after-slider.tsx:93
+#: app/components/media-library/before-after-slider.tsx:80
 msgid "Compare before and after"
 msgstr "Compare before and after"
 
@@ -5135,7 +5147,7 @@ msgstr ""
 msgid "Connect {platformName}"
 msgstr "Connect {platformName}"
 
-#: app/components/social/post-composer.tsx:196
+#: app/components/social/post-composer.tsx:193
 msgid "Connect a Facebook Page or an Instagram account to publish. You can still save a draft."
 msgstr "Connect a Facebook Page or an Instagram account to publish. You can still save a draft."
 
@@ -5147,7 +5159,7 @@ msgstr "Connect a Facebook Page or an Instagram professional account to start pu
 msgid "Connect a phone number"
 msgstr "Connect a phone number"
 
-#: app/components/social/post-composer.tsx:203
+#: app/components/social/post-composer.tsx:200
 #: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:144
 msgid "Connect accounts"
 msgstr "Connect accounts"
@@ -5336,7 +5348,7 @@ msgstr "Contractor"
 msgid "Contrast"
 msgstr "Contrast"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:241
+#: app/routes/_app+/$orgSlug_+/index.tsx:234
 msgid "Contributors"
 msgstr "Contributors"
 
@@ -5809,7 +5821,7 @@ msgid "Create PIN"
 msgstr "Create PIN"
 
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1104
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1460
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1462
 msgid "Create redirect"
 msgstr "Create redirect"
 
@@ -6352,8 +6364,8 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:473
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:512
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:991
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1511
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1557
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1513
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1559
 msgid "Delete"
 msgstr ""
 
@@ -6377,7 +6389,7 @@ msgstr "Delete {channelName}?"
 msgid "Delete {name}'s application?"
 msgstr "Delete {name}'s application?"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1527
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1529
 msgid "Delete 404 log entry?"
 msgstr "Delete 404 log entry?"
 
@@ -6503,7 +6515,7 @@ msgstr "Delete post"
 msgid "Delete question"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1477
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1479
 msgid "Delete redirect rule?"
 msgstr "Delete redirect rule?"
 
@@ -6895,7 +6907,7 @@ msgstr "Down"
 msgid "Down by {absTrend}% this period"
 msgstr ""
 
-#: app/components/media-library/photo-studio-dialog.tsx:872
+#: app/components/media-library/photo-studio-dialog.tsx:877
 #: app/components/settings/backup-codes-display.tsx:99
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1065
 msgid "Download"
@@ -7016,7 +7028,7 @@ msgstr "Drag a shift sideways to change its time, up or down to give it to someo
 msgid "Drag a step onto the canvas, or select + to add it."
 msgstr "Drag a step onto the canvas, or select + to add it."
 
-#: app/components/media-library/photo-studio-dialog.tsx:849
+#: app/components/media-library/photo-studio-dialog.tsx:854
 msgid "Drag the slider to compare."
 msgstr "Drag the slider to compare."
 
@@ -7091,7 +7103,7 @@ msgstr ""
 msgid "e.g. about-us"
 msgstr ""
 
-#: app/components/media-library/photo-studio-dialog.tsx:744
+#: app/components/media-library/photo-studio-dialog.tsx:743
 msgid "e.g. Add a few fresh flowers in the background"
 msgstr "e.g. Add a few fresh flowers in the background"
 
@@ -7107,7 +7119,7 @@ msgstr ""
 msgid "e.g. cust_123"
 msgstr ""
 
-#: app/components/media-library/photo-studio-dialog.tsx:899
+#: app/components/media-library/photo-studio-dialog.tsx:905
 msgid "e.g. Make the background a little darker"
 msgstr "e.g. Make the background a little darker"
 
@@ -7474,7 +7486,7 @@ msgstr ""
 msgid "Enable hosted checkout"
 msgstr "Enable hosted checkout"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1428
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1430
 msgid "Enable redirect immediately"
 msgstr "Enable redirect immediately"
 
@@ -7545,13 +7557,13 @@ msgstr "Ends the next day."
 msgid "English"
 msgstr ""
 
-#: app/components/media-library/photo-studio-dialog.tsx:447
+#: app/components/media-library/photo-studio-dialog.tsx:445
 #: app/routes/_app+/$orgSlug_+/media.tsx:855
 #: app/routes/_app+/$orgSlug_+/media.tsx:1374
 msgid "Enhance with AI"
 msgstr "Enhance with AI"
 
-#: app/components/media-library/photo-studio-dialog.tsx:842
+#: app/components/media-library/photo-studio-dialog.tsx:847
 msgid "Enhanced"
 msgstr "Enhanced"
 
@@ -7663,7 +7675,7 @@ msgstr "Enter an amount like 15.50."
 msgid "Enter an email address"
 msgstr "Enter an email address"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1329
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1331
 msgid "Enter an internal path (e.g. /new-page) or full external URL."
 msgstr "Enter an internal path (e.g. /new-page) or full external URL."
 
@@ -8068,7 +8080,7 @@ msgstr "Exported {count} rows."
 msgid "Exported {exportedCount} people."
 msgstr "Exported {exportedCount} people."
 
-#: app/components/media-library/photo-studio-dialog.tsx:737
+#: app/components/media-library/photo-studio-dialog.tsx:735
 msgid "Extra direction (optional)"
 msgstr "Extra direction (optional)"
 
@@ -8669,7 +8681,7 @@ msgstr ""
 msgid "Generating..."
 msgstr ""
 
-#: app/components/media-library/photo-studio-dialog.tsx:919
+#: app/components/media-library/photo-studio-dialog.tsx:930
 msgid "Generating…"
 msgstr "Generating…"
 
@@ -9345,8 +9357,9 @@ msgstr "Image added to your media library"
 msgid "Image link copied"
 msgstr "Image link copied"
 
-#: app/components/social/social-calendar.tsx:181
-#: app/components/social/social-calendar.tsx:231
+#: app/components/social/social-calendar.tsx:124
+#: app/components/social/social-calendar.tsx:213
+#: app/components/social/social-calendar.tsx:263
 msgid "Image post"
 msgstr "Image post"
 
@@ -9367,7 +9380,7 @@ msgstr ""
 msgid "Image URL"
 msgstr ""
 
-#: app/components/social/post-composer.tsx:276
+#: app/components/social/post-composer.tsx:275
 msgid "Images"
 msgstr "Images"
 
@@ -9541,7 +9554,7 @@ msgstr "Instagram needs an image."
 msgid "Instagram needs at least one image."
 msgstr "Instagram needs at least one image."
 
-#: app/components/social/post-composer.tsx:279
+#: app/components/social/post-composer.tsx:278
 msgid "Instagram needs at least one image. Several images become a carousel."
 msgstr "Instagram needs at least one image. Several images become a carousel."
 
@@ -9921,7 +9934,7 @@ msgstr "Keep the plate from your photo"
 msgid "Keep their details on file"
 msgstr "Keep their details on file"
 
-#: app/components/media-library/photo-studio-dialog.tsx:999
+#: app/components/media-library/photo-studio-dialog.tsx:1010
 msgid "Keep this window open until it finishes."
 msgstr "Keep this window open until it finishes."
 
@@ -9943,7 +9956,7 @@ msgstr "Keep waiting"
 msgid "Keep who works each shift"
 msgstr "Keep who works each shift"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1394
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1396
 msgid "Keeps original indexing"
 msgstr "Keeps original indexing"
 
@@ -10103,7 +10116,7 @@ msgid "Last {days} days"
 msgstr "Last {days} days"
 
 #: app/components/notes-chart.tsx:63
-#: app/routes/_app+/$orgSlug_+/index.tsx:224
+#: app/routes/_app+/$orgSlug_+/index.tsx:218
 msgid "Last {daysShown} days"
 msgstr ""
 
@@ -11691,7 +11704,7 @@ msgstr "New PIN for {scopeName}"
 msgid "New post"
 msgstr "New post"
 
-#: app/components/social/social-calendar.tsx:147
+#: app/components/social/social-calendar.tsx:177
 msgid "New post on {label}"
 msgstr "New post on {label}"
 
@@ -11762,7 +11775,7 @@ msgstr "Next shift: {upcomingDay}, <0>{upcomingRange}</0>"
 msgid "Next week"
 msgstr "Next week"
 
-#: app/components/media-library/photo-studio-dialog.tsx:958
+#: app/components/media-library/photo-studio-dialog.tsx:969
 msgid "Next: choose style"
 msgstr "Next: choose style"
 
@@ -11785,7 +11798,7 @@ msgstr "No 404 errors recorded"
 msgid "No access"
 msgstr "No access"
 
-#: app/components/social/post-composer.tsx:192
+#: app/components/social/post-composer.tsx:189
 msgid "No accounts connected"
 msgstr "No accounts connected"
 
@@ -11806,7 +11819,7 @@ msgid "No active subscription"
 msgstr ""
 
 #: app/components/note/activity-log.tsx:207
-#: app/routes/_app+/$orgSlug_+/index.tsx:225
+#: app/routes/_app+/$orgSlug_+/index.tsx:218
 msgid "No activity yet"
 msgstr ""
 
@@ -11952,7 +11965,7 @@ msgstr "No content yet"
 msgid "No custom roles created yet."
 msgstr "No custom roles created yet."
 
-#: app/components/social/social-calendar.tsx:237
+#: app/components/social/social-calendar.tsx:269
 msgid "No date"
 msgstr "No date"
 
@@ -13496,7 +13509,7 @@ msgstr ""
 msgid "Or continue with email or username"
 msgstr ""
 
-#: app/components/media-library/photo-studio-dialog.tsx:638
+#: app/components/media-library/photo-studio-dialog.tsx:636
 msgid "Or match your own style"
 msgstr "Or match your own style"
 
@@ -13591,15 +13604,15 @@ msgstr ""
 msgid "Organizations are used to group your projects."
 msgstr ""
 
-#: app/components/media-library/photo-studio-dialog.tsx:841
+#: app/components/media-library/photo-studio-dialog.tsx:846
 msgid "Original"
 msgstr "Original"
 
-#: app/components/media-library/photo-studio-dialog.tsx:178
+#: app/components/media-library/photo-studio-dialog.tsx:176
 msgid "Original image replaced"
 msgstr "Original image replaced"
 
-#: app/components/media-library/photo-studio-dialog.tsx:1021
+#: app/components/media-library/photo-studio-dialog.tsx:1032
 msgid "Original replaced"
 msgstr "Original replaced"
 
@@ -14150,7 +14163,7 @@ msgstr "Per year"
 msgid "Performance metrics"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1406
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1408
 msgid "Permanent (301) tells search engines (like Google) that the page has moved permanently, passing ranking and backlinks."
 msgstr "Permanent (301) tells search engines (like Google) that the page has moved permanently, passing ranking and backlinks."
 
@@ -14276,7 +14289,7 @@ msgstr ""
 msgid "Phone Verified (OTP Success)"
 msgstr ""
 
-#: app/components/media-library/photo-studio-dialog.tsx:514
+#: app/components/media-library/photo-studio-dialog.tsx:512
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3352
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3532
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3934
@@ -14304,7 +14317,7 @@ msgstr ""
 msgid "Photo side"
 msgstr ""
 
-#: app/components/media-library/photo-studio-dialog.tsx:427
+#: app/components/media-library/photo-studio-dialog.tsx:425
 msgid "Photos"
 msgstr "Photos"
 
@@ -14372,7 +14385,7 @@ msgstr "Pick a layout, then customize the blocks."
 msgid "Pick a starting point, then adjust anything below."
 msgstr "Pick a starting point, then adjust anything below."
 
-#: app/components/media-library/photo-studio-dialog.tsx:575
+#: app/components/media-library/photo-studio-dialog.tsx:573
 msgid "Pick a style"
 msgstr "Pick a style"
 
@@ -14753,7 +14766,7 @@ msgstr "Post scheduled."
 msgid "Post sent. See each account below."
 msgstr "Post sent. See each account below."
 
-#: app/components/social/post-composer.tsx:188
+#: app/components/social/post-composer.tsx:185
 msgid "Post to"
 msgstr "Post to"
 
@@ -14823,7 +14836,7 @@ msgstr "Pressing 0 won't reach anyone until you set a staff phone number above."
 #~ msgid "Pressing 0 won't reach anyone until you set a staff phone number in Setup."
 #~ msgstr "Pressing 0 won't reach anyone until you set a staff phone number in Setup."
 
-#: app/components/social/post-composer.tsx:347
+#: app/components/social/post-composer.tsx:346
 #: app/components/staff/schedule/recommend-dialog.tsx:241
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:548
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5949
@@ -15078,7 +15091,7 @@ msgstr "Publish history"
 msgid "Publish history…"
 msgstr "Publish history…"
 
-#: app/components/social/post-composer.tsx:401
+#: app/components/social/post-composer.tsx:403
 msgid "Publish now"
 msgstr "Publish now"
 
@@ -15164,7 +15177,7 @@ msgid "Publishing..."
 msgstr ""
 
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:494
-#: app/components/social/post-composer.tsx:400
+#: app/components/social/post-composer.tsx:402
 #: app/components/staff/schedule/publish-dialog.tsx:271
 msgid "Publishing…"
 msgstr "Publishing…"
@@ -15364,11 +15377,11 @@ msgstr "Recommended"
 msgid "Recommended for"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1356
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1358
 msgid "Recommended for SEO"
 msgstr "Recommended for SEO"
 
-#: app/components/social/post-composer.tsx:238
+#: app/components/social/post-composer.tsx:235
 msgid "Reconnect"
 msgstr "Reconnect"
 
@@ -15438,7 +15451,7 @@ msgstr "Redeliver"
 msgid "Redirect actions"
 msgstr "Redirect actions"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1351
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1353
 msgid "Redirect type"
 msgstr "Redirect type"
 
@@ -15697,7 +15710,7 @@ msgstr "Remove from workplace"
 #: app/components/note/comment-image-preview.tsx:81
 #: app/components/note/comment-input.tsx:340
 #: app/components/note/comment-input.tsx:456
-#: app/components/social/post-composer.tsx:304
+#: app/components/social/post-composer.tsx:303
 #: app/components/ui/multi-image-upload.tsx:281
 msgid "Remove image"
 msgstr ""
@@ -15743,7 +15756,7 @@ msgstr "Remove question"
 msgid "Remove question {number}"
 msgstr "Remove question {number}"
 
-#: app/components/media-library/photo-studio-dialog.tsx:673
+#: app/components/media-library/photo-studio-dialog.tsx:671
 msgid "Remove style reference"
 msgstr "Remove style reference"
 
@@ -15882,7 +15895,7 @@ msgstr ""
 msgid "Replace image"
 msgstr "Replace image"
 
-#: app/components/media-library/photo-studio-dialog.tsx:1033
+#: app/components/media-library/photo-studio-dialog.tsx:1044
 msgid "Replace original"
 msgstr "Replace original"
 
@@ -16118,7 +16131,7 @@ msgstr "Restricted channels are visible only to the roles and people you choose.
 msgid "Result"
 msgstr ""
 
-#: app/components/media-library/photo-studio-dialog.tsx:429
+#: app/components/media-library/photo-studio-dialog.tsx:427
 msgid "Results"
 msgstr "Results"
 
@@ -16503,7 +16516,7 @@ msgstr "Save and update proof"
 #~ msgid "Save answers"
 #~ msgstr "Save answers"
 
-#: app/components/media-library/photo-studio-dialog.tsx:1045
+#: app/components/media-library/photo-studio-dialog.tsx:1056
 #: app/routes/_app+/$orgSlug_+/media.tsx:2004
 msgid "Save as copy"
 msgstr "Save as copy"
@@ -16531,14 +16544,14 @@ msgstr "Save card for later charges"
 #: app/routes/_app+/$orgSlug_+/media.tsx:2020
 #: app/routes/_app+/$orgSlug_+/notes-cards.tsx:446
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:432
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1460
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1462
 msgid "Save changes"
 msgstr ""
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:193
 #: app/components/hiring/job-editor.tsx:411
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:695
-#: app/components/social/post-composer.tsx:420
+#: app/components/social/post-composer.tsx:422
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:478
 msgid "Save draft"
 msgstr ""
@@ -16625,7 +16638,7 @@ msgstr "Save your changes before closing."
 msgid "Saved"
 msgstr "Saved"
 
-#: app/components/media-library/photo-studio-dialog.tsx:1019
+#: app/components/media-library/photo-studio-dialog.tsx:1030
 msgid "Saved as a copy"
 msgstr "Saved as a copy"
 
@@ -16641,7 +16654,7 @@ msgstr "Saved on this tablet. It will be recorded when the connection is back."
 msgid "Saved reports"
 msgstr "Saved reports"
 
-#: app/components/media-library/photo-studio-dialog.tsx:177
+#: app/components/media-library/photo-studio-dialog.tsx:175
 msgid "Saved to your media library"
 msgstr "Saved to your media library"
 
@@ -16751,7 +16764,7 @@ msgstr "Scan the code with this tablet's camera, or paste the link below."
 #: app/components/command-menu.tsx:135
 #: app/components/hiring/interview-dialog.tsx:287
 #: app/components/my-schedule/my-schedule-page.tsx:187
-#: app/components/social/post-composer.tsx:411
+#: app/components/social/post-composer.tsx:413
 #: app/components/workspace-breadcrumb.tsx:33
 #: app/routes/_app+/$orgSlug_+/staff+/schedule.tsx:38
 #: app/routes/_app+/$orgSlug_+/staff+/schedule.tsx:46
@@ -16787,7 +16800,7 @@ msgstr "Schedule controls"
 msgid "Schedule enforcement"
 msgstr "Schedule enforcement"
 
-#: app/components/social/post-composer.tsx:327
+#: app/components/social/post-composer.tsx:326
 msgid "Schedule for"
 msgstr "Schedule for"
 
@@ -17485,7 +17498,7 @@ msgstr "Set up this tablet"
 #: app/components/app-sidebar.tsx:474
 #: app/components/command-menu.tsx:345
 #: app/components/command-menu.tsx:378
-#: app/components/media-library/photo-studio-dialog.tsx:705
+#: app/components/media-library/photo-studio-dialog.tsx:703
 #: app/components/phone-agent/agent-details.tsx:315
 #: app/components/staff/labor/labor-page.tsx:199
 #: app/components/workspace-breadcrumb.tsx:12
@@ -17757,7 +17770,7 @@ msgstr "Show replies ({replyCount})"
 msgid "Show requests"
 msgstr "Show requests"
 
-#: app/components/media-library/photo-studio-dialog.tsx:817
+#: app/components/media-library/photo-studio-dialog.tsx:818
 msgid "Show result {position}"
 msgstr "Show result {position}"
 
@@ -18467,7 +18480,7 @@ msgstr "Studio"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:311
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:313
-#: app/components/media-library/photo-studio-dialog.tsx:428
+#: app/components/media-library/photo-studio-dialog.tsx:426
 #: app/components/website/link-inspector.tsx:381
 #: app/components/website/link-inspector.tsx:383
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:575
@@ -18863,11 +18876,11 @@ msgstr "Templates…"
 msgid "Temporary"
 msgstr "Temporary"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1412
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1414
 msgid "Temporary (302) keeps original search indexing. Best for short-term promotions, maintenance, or seasonal campaigns."
 msgstr "Temporary (302) keeps original search indexing. Best for short-term promotions, maintenance, or seasonal campaigns."
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1360
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1362
 msgid "Temporary forward"
 msgstr "Temporary forward"
 
@@ -18945,7 +18958,7 @@ msgstr "Test this draft"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:161
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:193
-#: app/components/social/post-composer.tsx:252
+#: app/components/social/post-composer.tsx:249
 #: app/components/website/link-inspector.tsx:644
 msgid "Text"
 msgstr ""
@@ -19281,7 +19294,7 @@ msgstr "The AI assistant step hands the call to your AI. It answers questions us
 #~ msgid "The AI assistant step hands the call to your AI. It answers questions using your business details, Setup, and Training rules until the call ends."
 #~ msgstr "The AI assistant step hands the call to your AI. It answers questions using your business details, Setup, and Training rules until the call ends."
 
-#: app/components/media-library/photo-studio-dialog.tsx:663
+#: app/components/media-library/photo-studio-dialog.tsx:661
 msgid "The AI matches its lighting, background, and colors."
 msgstr "The AI matches its lighting, background, and colors."
 
@@ -20316,7 +20329,7 @@ msgstr "This person is not set up for that position here. You can still schedule
 msgid "This PIN is paused for a few minutes. Ask a manager."
 msgstr "This PIN is paused for a few minutes. Ask a manager."
 
-#: app/components/social/post-composer.tsx:172
+#: app/components/social/post-composer.tsx:169
 msgid "This post can’t be sent yet"
 msgstr "This post can’t be sent yet"
 
@@ -20506,15 +20519,15 @@ msgstr "This week has not been published yet."
 msgid "This will be the URL path for this page."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1530
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1532
 msgid "This will delete the 404 record for <0>{deleteLogPath}</0> from your history."
 msgstr "This will delete the 404 record for <0>{deleteLogPath}</0> from your history."
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1571
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1573
 msgid "This will permanently delete all recorded 404 errors for your organization website. This action cannot be undone."
 msgstr "This will permanently delete all recorded 404 errors for your organization website. This action cannot be undone."
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1480
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1482
 msgid "This will permanently delete the redirect from <0>{deleteRedirectFrom}</0> to <1>{deleteRedirectTo}</1>. Visitors requesting this old URL will no longer be forwarded."
 msgstr "This will permanently delete the redirect from <0>{deleteRedirectFrom}</0> to <1>{deleteRedirectTo}</1>. Visitors requesting this old URL will no longer be forwarded."
 
@@ -20675,7 +20688,7 @@ msgstr "Time zone"
 msgid "Time zone saved."
 msgstr "Time zone saved."
 
-#: app/components/social/post-composer.tsx:338
+#: app/components/social/post-composer.tsx:337
 msgid "Times are in {timeZone}."
 msgstr "Times are in {timeZone}."
 
@@ -20871,7 +20884,7 @@ msgstr "Total {totalText} of 100"
 msgid "Total before sales tax"
 msgstr "Total before sales tax"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:215
+#: app/routes/_app+/$orgSlug_+/index.tsx:210
 msgid "Total notes"
 msgstr "Total notes"
 
@@ -20967,7 +20980,7 @@ msgstr "Transfers"
 #~ msgid "Transfers are paused"
 #~ msgstr "Transfers are paused"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1379
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1381
 msgid "Transfers search rank"
 msgstr "Transfers search rank"
 
@@ -20996,7 +21009,7 @@ msgstr ""
 msgid "Transport"
 msgstr "Transport"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:229
+#: app/routes/_app+/$orgSlug_+/index.tsx:222
 msgid "Trend"
 msgstr "Trend"
 
@@ -21088,7 +21101,7 @@ msgstr ""
 #: app/components/hiring/applicants-page.tsx:397
 #: app/components/hiring/candidate-sheet.tsx:113
 #: app/components/mailbox/calls-tab.tsx:289
-#: app/components/media-library/photo-studio-dialog.tsx:933
+#: app/components/media-library/photo-studio-dialog.tsx:944
 #: app/components/phone-agent/call-detail-sheet.tsx:367
 #: app/components/phone-agent/call-recording-player.tsx:154
 #: app/components/phone-agent/voice-picker.tsx:456
@@ -21131,7 +21144,7 @@ msgstr "Try another name, email, or message."
 msgid "Try another search or clear the filters."
 msgstr "Try another search or clear the filters."
 
-#: app/components/media-library/photo-studio-dialog.tsx:1012
+#: app/components/media-library/photo-studio-dialog.tsx:1023
 msgid "Try another style"
 msgstr "Try another style"
 
@@ -21143,7 +21156,7 @@ msgstr "Try different filters."
 msgid "Tuesday"
 msgstr "Tuesday"
 
-#: app/components/media-library/photo-studio-dialog.tsx:450
+#: app/components/media-library/photo-studio-dialog.tsx:448
 msgid "Turn everyday photos into professional shots."
 msgstr "Turn everyday photos into professional shots."
 
@@ -21309,7 +21322,7 @@ msgstr "Unavailable all day"
 msgid "Unavailable during…"
 msgstr "Unavailable during…"
 
-#: app/components/media-library/photo-studio-dialog.tsx:862
+#: app/components/media-library/photo-studio-dialog.tsx:867
 msgid "Undo"
 msgstr "Undo"
 
@@ -21485,7 +21498,7 @@ msgstr "Up to 5 addresses."
 msgid "Upcoming"
 msgstr "Upcoming"
 
-#: app/components/media-library/photo-studio-dialog.tsx:912
+#: app/components/media-library/photo-studio-dialog.tsx:922
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5967
 msgid "Update"
 msgstr ""
@@ -21552,7 +21565,7 @@ msgstr "Updates as you edit"
 msgid "Updating section"
 msgstr "Updating section"
 
-#: app/components/media-library/photo-studio-dialog.tsx:912
+#: app/components/media-library/photo-studio-dialog.tsx:920
 msgid "Updating…"
 msgstr "Updating…"
 
@@ -21565,7 +21578,7 @@ msgstr ""
 msgid "Upload a font"
 msgstr ""
 
-#: app/components/media-library/photo-studio-dialog.tsx:541
+#: app/components/media-library/photo-studio-dialog.tsx:539
 msgid "Upload a JPEG, PNG, or WebP photo to your media library first."
 msgstr "Upload a JPEG, PNG, or WebP photo to your media library first."
 
@@ -21581,7 +21594,7 @@ msgstr ""
 msgid "Upload a site icon"
 msgstr ""
 
-#: app/components/media-library/photo-studio-dialog.tsx:689
+#: app/components/media-library/photo-studio-dialog.tsx:687
 msgid "Upload a style reference"
 msgstr "Upload a style reference"
 
@@ -21722,7 +21735,7 @@ msgid "Use a full link that starts with https://"
 msgstr "Use a full link that starts with https://"
 
 #: app/components/media-library/photo-studio-dialog.tsx:199
-#: app/components/media-library/photo-studio-dialog.tsx:415
+#: app/components/media-library/photo-studio-dialog.tsx:413
 msgid "Use a JPEG, PNG, or WebP photo up to 10 MB."
 msgstr "Use a JPEG, PNG, or WebP photo up to 10 MB."
 
@@ -21931,7 +21944,7 @@ msgstr ""
 msgid "Version {flowVersion}, published {publishedOn}"
 msgstr "Version {flowVersion}, published {publishedOn}"
 
-#: app/components/media-library/photo-studio-dialog.tsx:847
+#: app/components/media-library/photo-studio-dialog.tsx:852
 msgid "Version {versionCount}"
 msgstr "Version {versionCount}"
 
@@ -22131,7 +22144,7 @@ msgstr "Voicemail saved"
 msgid "Voicemails, callback requests, missed transfers, complaints, and low ratings stay open on the Calls page until someone marks them complete."
 msgstr "Voicemails, callback requests, missed transfers, complaints, and low ratings stay open on the Calls page until someone marks them complete."
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:238
+#: app/routes/_app+/$orgSlug_+/index.tsx:231
 msgid "Vs prior period"
 msgstr "Vs prior period"
 
@@ -22200,7 +22213,7 @@ msgstr "Waiting to be paired"
 msgid "Waiting to send"
 msgstr "Waiting to send"
 
-#: app/components/media-library/photo-studio-dialog.tsx:885
+#: app/components/media-library/photo-studio-dialog.tsx:890
 msgid "Want changes?"
 msgstr "Want changes?"
 
@@ -22677,7 +22690,7 @@ msgstr "What would you like to collect?"
 msgid "What would you like to know?"
 msgstr ""
 
-#: app/components/social/post-composer.tsx:259
+#: app/components/social/post-composer.tsx:256
 msgid "What would you like to share?"
 msgstr "What would you like to share?"
 
@@ -22701,7 +22714,7 @@ msgstr "When a call connects"
 msgid "When a caller asks for a callback, leaves a message, or needs help your agent couldn’t give, the call appears here."
 msgstr "When a caller asks for a callback, leaves a message, or needs help your agent couldn’t give, the call appears here."
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1431
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1433
 msgid "When active, visitors requesting the old URL will be forwarded right away."
 msgstr "When active, visitors requesting the old URL will be forwarded right away."
 
@@ -23345,7 +23358,7 @@ msgstr "You need pay access to change tips or rates."
 msgid "You no longer have access to this chat. Reload the page to check your channels."
 msgstr "You no longer have access to this chat. Reload the page to check your channels."
 
-#: app/components/media-library/photo-studio-dialog.tsx:195
+#: app/components/media-library/photo-studio-dialog.tsx:194
 msgid "You reached the hourly limit for AI photos. Try again later."
 msgstr "You reached the hourly limit for AI photos. Try again later."
 

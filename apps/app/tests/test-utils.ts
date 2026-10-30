@@ -132,11 +132,18 @@ export async function createTestOrganization(
 	role: 'admin' | 'member' | 'viewer' | 'guest' = 'admin',
 ) {
 	const name = faker.company.name()
+	// A valid slug whatever the name: "Bins - Bernier" must not become
+	// "bins---bernier", which the settings form refuses to save.
+	const base =
+		name
+			.toLowerCase()
+			.replace(/[^a-z0-9]+/g, '-')
+			.replace(/^-+|-+$/g, '') || 'org'
 	const [organization] = await db
 		.insert(Organization)
 		.values({
 			name,
-			slug: `${faker.helpers.slugify(name).toLowerCase()}-${Date.now()}-${faker.string.alphanumeric(4).toLowerCase()}`,
+			slug: `${base}-${Date.now()}-${faker.string.alphanumeric(4).toLowerCase()}`,
 			description: faker.company.catchPhrase(),
 		})
 		.returning()
