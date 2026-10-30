@@ -45,6 +45,12 @@ server.listen({
 	onUnhandledRequest(request, print) {
 		const url = request.url
 
+		// Staff and regional API tests stub `fetch` with these hosts; afterEach
+		// restores MSW's fetch while React may still flush one in-flight call.
+		if (url.includes('.tenant.test')) {
+			return
+		}
+
 		// Check if this request should be bypassed entirely
 		if (bypassUrls.some((pattern) => url.includes(pattern))) {
 			if (url.includes('api.stripe.com')) {
