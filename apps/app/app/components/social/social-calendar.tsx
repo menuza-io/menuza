@@ -1,7 +1,7 @@
 import { msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { cn } from '@repo/ui'
-import { Icon } from '@repo/ui/icon'
+import { Icon, type IconName } from '@repo/ui/icon'
 import {
 	Item,
 	ItemActions,
@@ -17,7 +17,10 @@ import {
 	type SocialPostStatus,
 } from '#app/utils/social/platforms.ts'
 import { dayKey, monthGrid } from '#app/utils/social/time.ts'
-import { SOCIAL_POST_STATUS_LABELS } from './social-labels.ts'
+import {
+	SOCIAL_PLATFORM_LABELS,
+	SOCIAL_POST_STATUS_LABELS,
+} from './social-labels.ts'
 import { SocialPlatformIcon, SocialPostStatusBadge } from './social-ui.tsx'
 
 export type CalendarPost = {
@@ -31,21 +34,32 @@ export type CalendarPost = {
 	imageUrl: string | null
 }
 
-const STATUS_DOT: Record<SocialPostStatus, string> = {
-	draft: 'bg-muted-foreground',
-	scheduled: 'bg-primary',
-	publishing: 'bg-primary animate-pulse',
-	published: 'bg-success',
-	partial: 'bg-warning',
-	failed: 'bg-destructive',
+// Each status has its own shape as well as its colour, so it never depends on
+// telling colours apart.
+const STATUS_ICON: Record<
+	SocialPostStatus,
+	{ icon: IconName; className: string }
+> = {
+	draft: { icon: 'pencil', className: 'text-muted-foreground' },
+	scheduled: { icon: 'clock', className: 'text-primary' },
+	publishing: {
+		icon: 'loader',
+		className: 'text-primary motion-safe:animate-spin',
+	},
+	published: { icon: 'check', className: 'text-success' },
+	partial: { icon: 'alert-triangle', className: 'text-warning' },
+	failed: { icon: 'circle-x', className: 'text-destructive' },
 }
 
+/** How much of a post's text its calendar link name carries. */
+const LABEL_TEXT_MAX = 80
+
 function StatusDot({ status }: { status: SocialPostStatus }) {
+	const { icon, className } = STATUS_ICON[status]
 	return (
-		<span
-			aria-hidden
-			className={cn('size-2 shrink-0 rounded-full', STATUS_DOT[status])}
-		/>
+		<span aria-hidden className={cn('inline-flex shrink-0', className)}>
+			<Icon name={icon} className="size-3" />
+		</span>
 	)
 }
 
@@ -53,7 +67,7 @@ export function SocialStatusLegend() {
 	const { _ } = useLingui()
 	return (
 		<ul className="text-muted-foreground flex flex-wrap gap-x-4 gap-y-1 text-xs">
-			{(Object.keys(STATUS_DOT) as SocialPostStatus[]).map((status) => (
+			{(Object.keys(STATUS_ICON) as SocialPostStatus[]).map((status) => (
 				<li key={status} className="flex items-center gap-1.5">
 					<StatusDot status={status} />
 					{_(SOCIAL_POST_STATUS_LABELS[status])}
@@ -99,6 +113,22 @@ export function SocialCalendar({
 		minute: '2-digit',
 		timeZone,
 	})
+	function postLabel(post: CalendarPost) {
+		const status = _(SOCIAL_POST_STATUS_LABELS[post.status])
+		const platforms = post.platforms
+			.map((platform) => _(SOCIAL_PLATFORM_LABELS[platform]))
+			.join(', ')
+		// The full text stays in the link's title; the name keeps it short.
+		const body = post.body.trim()
+		const text = !body
+			? _(msg`Image post`)
+			: body.length > LABEL_TEXT_MAX
+				? `${body.slice(0, LABEL_TEXT_MAX).trimEnd()}…`
+				: body
+		if (!post.at) return _(msg`${status}, ${platforms}: ${text}`)
+		const at = time.format(new Date(post.at))
+		return _(msg`${status}, ${at}, ${platforms}: ${text}`)
+	}
 
 	return (
 		<div className="border-border overflow-hidden rounded-lg border">
@@ -157,17 +187,19 @@ export function SocialCalendar({
 											to={`/${orgSlug}/marketing/social/${post.id}`}
 											className="hover:bg-muted flex min-w-0 items-center gap-1 rounded px-1 py-0.5 text-xs"
 											title={post.body}
+											// The time and text are hidden on small screens, so the
+											// name carries them at every width.
+											aria-label={postLabel(post)}
 										>
 											<StatusDot status={post.status} />
-											<span className="sr-only">
-												{_(SOCIAL_POST_STATUS_LABELS[post.status])}
-											</span>
-											<time
-												dateTime={post.at ?? undefined}
-												className="hidden tabular-nums md:inline"
-											>
-												{time.format(new Date(post.at!))}
-											</time>
+											{post.at ? (
+												<time
+													dateTime={post.at}
+													className="hidden tabular-nums md:inline"
+												>
+													{time.format(new Date(post.at))}
+												</time>
+											) : null}
 											<span className="flex shrink-0 gap-0.5">
 												{post.platforms.map((platform) => (
 													<SocialPlatformIcon

@@ -638,6 +638,10 @@ msgstr "{baseAriaLabel}, {statusLabel}, {attention}"
 msgid "{basePriceLabel} billed annually"
 msgstr ""
 
+#: app/components/media-library/before-after-slider.tsx:81
+msgid "{before}% before, {after}% after"
+msgstr "{before}% before, {after}% after"
+
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1200
 msgid "{bleed} mm bleed"
 msgstr "{bleed} mm bleed"
@@ -1433,7 +1437,7 @@ msgstr "{people, plural, one {# person} other {# people}}"
 msgid "{photoCount}/5 photos"
 msgstr "{photoCount}/5 photos"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:181
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:184
 msgid "{platformName} connected"
 msgstr "{platformName} connected"
 
@@ -1585,6 +1589,14 @@ msgstr "{slotCount} pickup slots"
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:341
 msgid "{status}"
 msgstr ""
+
+#: app/components/social/social-calendar.tsx:130
+msgid "{status}, {at}, {platforms}: {text}"
+msgstr "{status}, {at}, {platforms}: {text}"
+
+#: app/components/social/social-calendar.tsx:128
+msgid "{status}, {platforms}: {text}"
+msgstr "{status}, {platforms}: {text}"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:362
 msgid "{stepCount} steps"
@@ -2561,11 +2573,11 @@ msgstr ""
 msgid "Account Suspended"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:118
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:129
 msgid "Accounts"
 msgstr "Accounts"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:162
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:165
 msgid "Accounts connected here are shared with everyone in the organization who can manage marketing."
 msgstr "Accounts connected here are shared with everyone in the organization who can manage marketing."
 
@@ -2648,7 +2660,7 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:60
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:259
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:138
-#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:312
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:326
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:996
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:983
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:707
@@ -3159,7 +3171,7 @@ msgstr "Add Location"
 msgid "Add meal break"
 msgstr "Add meal break"
 
-#: app/components/app-sidebar.tsx:818
+#: app/components/app-sidebar.tsx:816
 msgid "Add members"
 msgstr ""
 
@@ -3228,7 +3240,7 @@ msgstr "Add Option"
 msgid "Add options to this group first."
 msgstr "Add options to this group first."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:278
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:286
 msgid "Add or refresh accounts"
 msgstr "Add or refresh accounts"
 
@@ -3850,7 +3862,7 @@ msgstr "Alignment"
 #: app/components/staff/timesheets/review-queue.tsx:166
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:258
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:66
-#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:207
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:218
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:233
 #: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1468
 msgid "All"
@@ -4074,7 +4086,7 @@ msgstr "Allergy: {allergyName}"
 msgid "Allocation"
 msgstr "Allocation"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:199
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:201
 msgid "Allow at least one Page you manage when Facebook asks."
 msgstr "Allow at least one Page you manage when Facebook asks."
 
@@ -4196,7 +4208,7 @@ msgstr "Amount to refund"
 msgid "Amounts can have at most two decimal places."
 msgstr "Amounts can have at most two decimal places."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:151
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:162
 msgid "An account needs to be reconnected"
 msgstr "An account needs to be reconnected"
 
@@ -4247,7 +4259,7 @@ msgstr "An online payment arrived that does not match this tab. Closing does not
 #~ msgid "An organization is a workspace where teams collect, organize, and work together."
 #~ msgstr ""
 
-#: app/components/app-sidebar.tsx:559
+#: app/components/app-sidebar.tsx:557
 #: app/components/workspace-breadcrumb.tsx:59
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:38
 msgid "Analytics"
@@ -4271,7 +4283,7 @@ msgstr "Anniversary"
 msgid "Announcement actions"
 msgstr "Announcement actions"
 
-#: app/components/app-sidebar.tsx:575
+#: app/components/app-sidebar.tsx:573
 #: app/components/command-menu.tsx:160
 #: app/components/workspace-breadcrumb.tsx:60
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:49
@@ -4411,7 +4423,7 @@ msgstr ""
 msgid "API Keys"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:845
+#: app/components/app-sidebar.tsx:843
 msgid "App header"
 msgstr "App header"
 
@@ -4968,7 +4980,7 @@ msgstr "At slot time"
 msgid "At the table"
 msgstr "At the table"
 
-#: app/components/social/social-labels.ts:93
+#: app/components/social/social-labels.ts:92
 msgid "Attach at most {SOCIAL_MAX_MEDIA} images."
 msgstr "Attach at most {SOCIAL_MAX_MEDIA} images."
 
@@ -5435,7 +5447,7 @@ msgstr ""
 msgid "Billed monthly"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:677
+#: app/components/app-sidebar.tsx:675
 #: app/components/command-menu.tsx:378
 #: app/components/workspace-breadcrumb.tsx:68
 msgid "Billing"
@@ -5717,7 +5729,7 @@ msgstr "Branch name"
 msgid "Branch on whether you're open right now."
 msgstr "Branch on whether you're open right now."
 
-#: app/components/app-sidebar.tsx:566
+#: app/components/app-sidebar.tsx:564
 #: app/components/website/branding-panel.tsx:244
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5304
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5305
@@ -6032,13 +6044,13 @@ msgstr "By position percentage"
 msgid "by the time clock"
 msgstr "by the time clock"
 
-#: app/components/app-sidebar.tsx:475
+#: app/components/app-sidebar.tsx:473
 #: app/components/reservations/reservations-chrome.tsx:82
 #: app/components/reservations/reservations-chrome.tsx:135
 #: app/components/workspace-breadcrumb.tsx:80
-#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:223
-#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:237
-#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:170
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:234
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:239
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:173
 msgid "Calendar"
 msgstr "Calendar"
 
@@ -6146,7 +6158,7 @@ msgstr "Callers hear each step in order. A keypad menu waits for them to press a
 msgid "Calling…"
 msgstr "Calling…"
 
-#: app/components/app-sidebar.tsx:445
+#: app/components/app-sidebar.tsx:443
 #: app/components/command-menu.tsx:133
 #: app/components/workspace-breadcrumb.tsx:47
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:49
@@ -6947,7 +6959,7 @@ msgstr "Charging"
 msgid "Chat"
 msgstr "Chat"
 
-#: app/components/app-sidebar.tsx:625
+#: app/components/app-sidebar.tsx:623
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:79
 msgid "Chat channels"
 msgstr "Chat channels"
@@ -7043,7 +7055,7 @@ msgid "Check this card"
 msgstr "Check this card"
 
 #: app/components/print/print-form-errors.ts:26
-#: app/components/social/social-labels.ts:97
+#: app/components/social/social-labels.ts:96
 #: app/components/staff/details-tab.tsx:372
 msgid "Check this field."
 msgstr "Check this field."
@@ -7156,7 +7168,7 @@ msgstr "Choose a CSV file"
 msgid "Choose a date"
 msgstr "Choose a date"
 
-#: app/components/social/social-labels.ts:89
+#: app/components/social/social-labels.ts:88
 msgid "Choose a date and time."
 msgstr "Choose a date and time."
 
@@ -7267,11 +7279,11 @@ msgstr "Choose a teammate to start a conversation."
 msgid "Choose a template"
 msgstr ""
 
-#: app/components/social/social-labels.ts:90
+#: app/components/social/social-labels.ts:89
 msgid "Choose a time at least a minute from now."
 msgstr "Choose a time at least a minute from now."
 
-#: app/components/social/social-labels.ts:91
+#: app/components/social/social-labels.ts:90
 msgid "Choose a time within the next year."
 msgstr "Choose a time within the next year."
 
@@ -7305,7 +7317,7 @@ msgstr "Choose an active member of this organization."
 msgid "Choose an existing menu..."
 msgstr "Choose an existing menu..."
 
-#: app/components/social/social-labels.ts:88
+#: app/components/social/social-labels.ts:87
 msgid "Choose at least one account."
 msgstr "Choose at least one account."
 
@@ -8051,7 +8063,7 @@ msgstr "Communication"
 msgid "Community"
 msgstr "Community"
 
-#: app/components/media-library/before-after-slider.tsx:93
+#: app/components/media-library/before-after-slider.tsx:80
 msgid "Compare before and after"
 msgstr "Compare before and after"
 
@@ -8345,7 +8357,7 @@ msgstr "Connect {displayName}"
 msgid "Connect {label} to ZATCA"
 msgstr "Connect {label} to ZATCA"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:279
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:287
 msgid "Connect {platformName}"
 msgstr "Connect {platformName}"
 
@@ -8353,7 +8365,7 @@ msgstr "Connect {platformName}"
 msgid "Connect a Facebook Page or an Instagram account to publish. You can still save a draft."
 msgstr "Connect a Facebook Page or an Instagram account to publish. You can still save a draft."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:137
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:148
 msgid "Connect a Facebook Page or an Instagram professional account to start publishing."
 msgstr "Connect a Facebook Page or an Instagram professional account to start publishing."
 
@@ -8366,7 +8378,7 @@ msgid "Connect a point of sale or delivery platform to keep your menu in sync. Y
 msgstr "Connect a point of sale or delivery platform to keep your menu in sync. You can also do this later from Settings."
 
 #: app/components/social/post-composer.tsx:200
-#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:144
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:155
 msgid "Connect accounts"
 msgstr "Connect accounts"
 
@@ -8398,7 +8410,7 @@ msgstr "Connect the analytics platforms you use on your public website. Leave an
 msgid "Connect the caller to a person, such as a manager."
 msgstr "Connect the caller to a person, such as a manager."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:133
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:144
 msgid "Connect your accounts"
 msgstr "Connect your accounts"
 
@@ -8426,7 +8438,7 @@ msgstr "Connect your POS"
 msgid "Connected"
 msgstr "Connected"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:304
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:316
 msgid "Connected {date}"
 msgstr "Connected {date}"
 
@@ -8466,11 +8478,11 @@ msgstr "Connected to Canva."
 msgid "Connected to ZATCA. The terminal picks up its certificate the next time it connects."
 msgstr "Connected to ZATCA. The terminal picks up its certificate the next time it connects."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:224
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:226
 msgid "Connecting accounts is not available yet"
 msgstr "Connecting accounts is not available yet"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:237
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:240
 msgid "Connecting adds a sample account and nothing is really posted. A post containing #fail is refused, to try the retry path."
 msgstr "Connecting adds a sample account and nothing is really posted. A post containing #fail is refused, to try the retry path."
 
@@ -8529,7 +8541,7 @@ msgid "Contains (Partial Match)"
 msgstr ""
 
 #: app/components/settings/cards/organization/announcement-sheet.tsx:435
-#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:364
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:369
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:627
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3362
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3552
@@ -8753,7 +8765,7 @@ msgstr "Copy this week elsewhere"
 msgid "Copy to"
 msgstr "Copy to"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:353
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:358
 msgid "Copy to new draft"
 msgstr "Copy to new draft"
 
@@ -11158,12 +11170,12 @@ msgstr "Disclose any allergens present to inform guest dietary and safety filter
 #: app/components/settings/cards/organization/pos-integrations-card.tsx:243
 #: app/components/settings/cards/organization/review-integrations-card.tsx:139
 #: app/components/settings/connections.tsx:89
-#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:319
-#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:348
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:333
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:364
 msgid "Disconnect"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:326
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:340
 msgid "Disconnect {accountName}?"
 msgstr "Disconnect {accountName}?"
 
@@ -11459,7 +11471,7 @@ msgstr "Drafting..."
 msgid "Drafting…"
 msgstr "Drafting…"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:257
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:268
 msgid "Drafts without a date"
 msgstr "Drafts without a date"
 
@@ -12016,7 +12028,7 @@ msgstr "Edit policy"
 msgid "Edit position"
 msgstr "Edit position"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:226
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:228
 msgid "Edit post"
 msgstr "Edit post"
 
@@ -13165,7 +13177,7 @@ msgstr "Experience published."
 msgid "Experience saved."
 msgstr "Experience saved."
 
-#: app/components/app-sidebar.tsx:489
+#: app/components/app-sidebar.tsx:487
 #: app/components/reservations/experiences/experience-editor.tsx:236
 #: app/components/reservations/experiences/experience-editor.tsx:483
 #: app/components/reservations/reservations-chrome.tsx:94
@@ -13287,11 +13299,11 @@ msgstr "Facebook"
 msgid "Facebook and Instagram posts"
 msgstr "Facebook and Instagram posts"
 
-#: app/components/social/social-labels.ts:51
+#: app/components/social/social-labels.ts:50
 msgid "Facebook needs an image."
 msgstr "Facebook needs an image."
 
-#: app/components/social/social-labels.ts:49
+#: app/components/social/social-labels.ts:48
 msgid "Facebook needs text or an image."
 msgstr "Facebook needs text or an image."
 
@@ -13299,7 +13311,7 @@ msgstr "Facebook needs text or an image."
 msgid "Facebook Pixel ID"
 msgstr "Facebook Pixel ID"
 
-#: app/components/social/social-labels.ts:52
+#: app/components/social/social-labels.ts:51
 msgid "Facebook takes at most {SOCIAL_MAX_MEDIA} images."
 msgstr "Facebook takes at most {SOCIAL_MAX_MEDIA} images."
 
@@ -14179,7 +14191,7 @@ msgstr "Formatting"
 msgid "Former member"
 msgstr "Former member"
 
-#: app/components/app-sidebar.tsx:554
+#: app/components/app-sidebar.tsx:552
 #: app/components/command-menu.tsx:159
 #: app/components/workspace-breadcrumb.tsx:58
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:47
@@ -14370,7 +14382,7 @@ msgstr "Full width"
 msgid "Future reservations affected by table capacity reductions, archived tables, shortened service windows, or closed special days."
 msgstr "Future reservations affected by table capacity reductions, archived tables, shortened service windows, or closed special days."
 
-#: app/components/app-sidebar.tsx:597
+#: app/components/app-sidebar.tsx:595
 #: app/components/phone-agent/vertical-labels.ts:27
 #: app/components/phone-agent/vertical-labels.ts:39
 #: app/components/workspace-breadcrumb.tsx:63
@@ -14388,7 +14400,7 @@ msgstr "General manager"
 msgid "General reservation settings saved."
 msgstr "General reservation settings saved."
 
-#: app/components/app-sidebar.tsx:544
+#: app/components/app-sidebar.tsx:542
 #: app/components/settings/cards/organization/general-settings-card.tsx:65
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:21
 msgid "General Settings"
@@ -14431,12 +14443,12 @@ msgstr "Generating…"
 msgid "Get a new price"
 msgstr "Get a new price"
 
-#: app/components/app-sidebar.tsx:810
+#: app/components/app-sidebar.tsx:808
 msgid "Get chrome extension"
 msgstr ""
 
 #: app/components/app-sidebar.tsx:177
-#: app/components/app-sidebar.tsx:825
+#: app/components/app-sidebar.tsx:823
 msgid "Get help"
 msgstr ""
 
@@ -14468,7 +14480,7 @@ msgid "Give away {when}"
 msgstr "Give away {when}"
 
 #: app/components/app-sidebar.tsx:185
-#: app/components/app-sidebar.tsx:833
+#: app/components/app-sidebar.tsx:831
 #: app/components/core/feedback-modal.tsx:69
 msgid "Give feedback"
 msgstr ""
@@ -15243,7 +15255,7 @@ msgid "Hired."
 msgstr "Hired."
 
 #: ../../packages/reports/src/ui/report-labels.ts:147
-#: app/components/app-sidebar.tsx:531
+#: app/components/app-sidebar.tsx:529
 #: app/components/command-menu.tsx:148
 #: app/components/roles/tenant-role-access-manager.tsx:366
 #: app/components/workspace-breadcrumb.tsx:38
@@ -15648,8 +15660,9 @@ msgstr "Image link"
 msgid "Image link copied"
 msgstr "Image link copied"
 
-#: app/components/social/social-calendar.tsx:181
-#: app/components/social/social-calendar.tsx:231
+#: app/components/social/social-calendar.tsx:124
+#: app/components/social/social-calendar.tsx:213
+#: app/components/social/social-calendar.tsx:263
 msgid "Image post"
 msgstr "Image post"
 
@@ -15915,23 +15928,23 @@ msgstr "Inspect"
 msgid "Instagram"
 msgstr "Instagram"
 
-#: app/components/social/social-labels.ts:60
+#: app/components/social/social-labels.ts:59
 msgid "Instagram allows at most {instagramMaxHashtags} hashtags."
 msgstr "Instagram allows at most {instagramMaxHashtags} hashtags."
 
-#: app/components/social/social-labels.ts:57
+#: app/components/social/social-labels.ts:56
 msgid "Instagram captions are at most {instagramMaxText} characters."
 msgstr "Instagram captions are at most {instagramMaxText} characters."
 
-#: app/components/social/social-labels.ts:72
+#: app/components/social/social-labels.ts:71
 msgid "Instagram could not process the image. Use an aspect ratio between 4:5 and 1.91:1."
 msgstr "Instagram could not process the image. Use an aspect ratio between 4:5 and 1.91:1."
 
-#: app/components/social/social-labels.ts:56
+#: app/components/social/social-labels.ts:55
 msgid "Instagram needs an image."
 msgstr "Instagram needs an image."
 
-#: app/components/social/social-labels.ts:58
+#: app/components/social/social-labels.ts:57
 msgid "Instagram needs at least one image."
 msgstr "Instagram needs at least one image."
 
@@ -15939,15 +15952,15 @@ msgstr "Instagram needs at least one image."
 msgid "Instagram needs at least one image. Several images become a carousel."
 msgstr "Instagram needs at least one image. Several images become a carousel."
 
-#: app/components/social/social-labels.ts:71
+#: app/components/social/social-labels.ts:70
 msgid "Instagram posts need an image."
 msgstr "Instagram posts need an image."
 
-#: app/components/social/social-labels.ts:59
+#: app/components/social/social-labels.ts:58
 msgid "Instagram takes at most {SOCIAL_MAX_MEDIA} images."
 msgstr "Instagram takes at most {SOCIAL_MAX_MEDIA} images."
 
-#: app/components/social/social-labels.ts:73
+#: app/components/social/social-labels.ts:72
 msgid "Instagram took too long to process the image. Try again."
 msgstr "Instagram took too long to process the image. Try again."
 
@@ -15959,7 +15972,7 @@ msgstr "Instantly enable Checkout.com (mock)"
 msgid "Instantly enable Stripe (mock)"
 msgstr "Instantly enable Stripe (mock)"
 
-#: app/components/app-sidebar.tsx:632
+#: app/components/app-sidebar.tsx:630
 #: app/components/settings/cards/organization/integrations-card.tsx:181
 #: app/components/workspace-breadcrumb.tsx:66
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1034
@@ -16424,7 +16437,7 @@ msgstr "Keep editing"
 #: app/components/staff/schedule/shift-editor-sheet.tsx:737
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1024
 #: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:163
-#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:335
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:350
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:835
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:1426
 msgid "Keep it"
@@ -16596,7 +16609,7 @@ msgid "Label calls to find them later. With automatic tagging on, the agent appl
 msgstr "Label calls to find them later. With automatic tagging on, the agent applies the tag when the description fits the call."
 
 #: ../../packages/reports/src/ui/report-labels.ts:146
-#: app/components/app-sidebar.tsx:526
+#: app/components/app-sidebar.tsx:524
 #: app/components/command-menu.tsx:147
 #: app/components/staff/labor/labor-page.tsx:211
 #: app/components/staff/labor/labor-page.tsx:240
@@ -17256,7 +17269,7 @@ msgstr "Links sent"
 #: app/components/reservations/host-subnav.tsx:124
 #: app/components/reservations/reservations-chrome.tsx:123
 #: app/components/workspace-breadcrumb.tsx:77
-#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:226
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:237
 msgid "List"
 msgstr "List"
 
@@ -17574,7 +17587,7 @@ msgstr "Loading who is on the clock"
 msgid "Loading…"
 msgstr "Loading…"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:234
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:237
 msgid "Local emulator"
 msgstr "Local emulator"
 
@@ -17642,7 +17655,7 @@ msgstr "Location time zone is used to compute reservation seating slots. Changin
 msgid "Location: {locationName}"
 msgstr "Location: {locationName}"
 
-#: app/components/app-sidebar.tsx:602
+#: app/components/app-sidebar.tsx:600
 #: app/components/member-location-scope.tsx:160
 #: app/components/team-switcher.tsx:182
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:548
@@ -18359,7 +18372,7 @@ msgstr ""
 msgid "MCP server"
 msgstr "MCP server"
 
-#: app/components/app-sidebar.tsx:663
+#: app/components/app-sidebar.tsx:661
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1359
 msgid "MCP Server"
 msgstr ""
@@ -18425,7 +18438,7 @@ msgstr ""
 msgid "members"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:609
+#: app/components/app-sidebar.tsx:607
 #: app/components/chat/chat-group-settings-dialog.tsx:83
 #: app/components/organization-members.tsx:182
 #: app/components/roles/tenant-role-access-manager.tsx:1285
@@ -18615,19 +18628,19 @@ msgstr "Messages to send"
 msgid "Meta description"
 msgstr ""
 
-#: app/components/social/social-labels.ts:70
+#: app/components/social/social-labels.ts:69
 msgid "Meta did not answer. Try again in a few minutes."
 msgstr "Meta did not answer. Try again in a few minutes."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:216
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:217
 msgid "Meta did not complete the connection. Try again."
 msgstr "Meta did not complete the connection. Try again."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:155
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:166
 msgid "Meta no longer accepts its access. Posts to it will fail until you connect it again."
 msgstr "Meta no longer accepts its access. Posts to it will fail until you connect it again."
 
-#: app/components/social/social-labels.ts:67
+#: app/components/social/social-labels.ts:66
 msgid "Meta no longer accepts this account’s access. Connect it again, then retry."
 msgstr "Meta no longer accepts this account’s access. Connect it again, then retry."
 
@@ -19525,12 +19538,12 @@ msgstr "New PIN for {scopeName}"
 msgid "New policy"
 msgstr "New policy"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:123
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:134
 #: app/routes/_app+/$orgSlug_+/marketing+/social.new.tsx:59
 msgid "New post"
 msgstr "New post"
 
-#: app/components/social/social-calendar.tsx:147
+#: app/components/social/social-calendar.tsx:177
 msgid "New post on {label}"
 msgstr "New post on {label}"
 
@@ -19648,7 +19661,7 @@ msgid "Next day"
 msgstr "Next day"
 
 #: app/components/staff/schedule/schedule-toolbar.tsx:114
-#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:182
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:193
 msgid "Next month"
 msgstr "Next month"
 
@@ -19703,7 +19716,7 @@ msgstr "No access"
 msgid "No accounts connected"
 msgstr "No accounts connected"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:287
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:295
 msgid "No accounts connected."
 msgstr "No accounts connected."
 
@@ -19971,7 +19984,7 @@ msgstr "No customers match your search"
 msgid "No customers yet"
 msgstr "No customers yet"
 
-#: app/components/social/social-calendar.tsx:237
+#: app/components/social/social-calendar.tsx:269
 msgid "No date"
 msgstr "No date"
 
@@ -20010,7 +20023,7 @@ msgstr "No dining times yet. Until you add them, the default time is used."
 msgid "No discrete action step dispatches recorded for this run."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:263
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:274
 msgid "No drafts."
 msgstr "No drafts."
 
@@ -20050,7 +20063,7 @@ msgstr ""
 msgid "No experiences configured yet"
 msgstr "No experiences configured yet"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:191
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:194
 msgid "No Facebook Page found"
 msgstr "No Facebook Page found"
 
@@ -20093,7 +20106,7 @@ msgstr "No hours or sales in this range"
 msgid "No hours set, so the agent treats you as open."
 msgstr "No hours set, so the agent treats you as open."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:190
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:193
 msgid "No Instagram professional account found"
 msgstr "No Instagram professional account found"
 
@@ -20601,7 +20614,7 @@ msgstr "No position yet"
 msgid "No positions yet"
 msgstr "No positions yet"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:251
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:262
 msgid "No posts this month."
 msgstr "No posts this month."
 
@@ -21246,7 +21259,7 @@ msgstr "Not opened yet"
 msgid "Not opened yet."
 msgstr "Not opened yet."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:215
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:217
 msgid "Not published yet."
 msgstr "Not published yet."
 
@@ -21549,11 +21562,11 @@ msgstr "Nothing was charged. Start a new order whenever you are ready."
 msgid "Nothing was charged. You can pay again below."
 msgstr "Nothing was charged. You can pay again below."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:206
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:207
 msgid "Nothing was connected"
 msgstr "Nothing was connected"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:214
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:216
 msgid "Nothing was published."
 msgstr "Nothing was published."
 
@@ -21569,7 +21582,7 @@ msgstr "Notification Message"
 msgid "Notification Preferences"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:668
+#: app/components/app-sidebar.tsx:666
 #: app/components/workspace-breadcrumb.tsx:67
 msgid "Notifications"
 msgstr ""
@@ -23128,7 +23141,7 @@ msgstr ""
 msgid "Page URL"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:549
+#: app/components/app-sidebar.tsx:547
 #: app/components/command-menu.tsx:158
 #: app/components/workspace-breadcrumb.tsx:57
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:28
@@ -23868,7 +23881,7 @@ msgstr ""
 #~ msgid "Phone (Optional)"
 #~ msgstr "Phone (Optional)"
 
-#: app/components/app-sidebar.tsx:439
+#: app/components/app-sidebar.tsx:437
 #: app/components/command-menu.tsx:126
 #: app/components/phone-agent/settings-nav.tsx:68
 #: app/components/workspace-breadcrumb.tsx:16
@@ -24594,7 +24607,7 @@ msgstr "Positive"
 msgid "Positive feedback"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:226
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:228
 msgid "Post"
 msgstr "Post"
 
@@ -24631,11 +24644,11 @@ msgstr "Post sent. See each account below."
 msgid "Post to"
 msgstr "Post to"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:139
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:142
 msgid "Post to Instagram professional accounts (business or creator) linked to a Facebook Page."
 msgstr "Post to Instagram professional accounts (business or creator) linked to a Facebook Page."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:138
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:141
 msgid "Post to the Facebook Pages you manage."
 msgstr "Post to the Facebook Pages you manage."
 
@@ -24657,7 +24670,7 @@ msgstr "Posted {selectedReplyDate}"
 msgid "Poster"
 msgstr "Poster"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:330
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:344
 msgid "Posts already sent stay on {platformName}. Scheduled posts will fail for this account."
 msgstr "Posts already sent stay on {platformName}. Scheduled posts will fail for this account."
 
@@ -24787,7 +24800,7 @@ msgid "Previous day"
 msgstr "Previous day"
 
 #: app/components/staff/schedule/schedule-toolbar.tsx:108
-#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:174
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:185
 msgid "Previous month"
 msgstr "Previous month"
 
@@ -24919,7 +24932,7 @@ msgstr "Print orders"
 msgid "Print proof"
 msgstr "Print proof"
 
-#: app/components/app-sidebar.tsx:432
+#: app/components/app-sidebar.tsx:430
 #: app/components/command-menu.tsx:112
 #: app/components/command-menu.tsx:121
 #: app/routes/_app+/$orgSlug_+/marketing+/print._index.tsx:46
@@ -25180,7 +25193,7 @@ msgstr ""
 msgid "Published"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:207
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:209
 msgid "Published {date}"
 msgstr "Published {date}"
 
@@ -25217,11 +25230,11 @@ msgstr ""
 msgid "Publishing new journey..."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:213
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:215
 msgid "Publishing now…"
 msgstr "Publishing now…"
 
-#: app/components/social/social-labels.ts:68
+#: app/components/social/social-labels.ts:67
 msgid "Publishing was interrupted. Check the account before retrying: the post may already be live."
 msgstr "Publishing was interrupted. Check the account before retrying: the post may already be live."
 
@@ -25279,7 +25292,7 @@ msgstr "QR codes or labels changed since this print was approved. Approve the pr
 msgid "QR ordering settings"
 msgstr "QR ordering settings"
 
-#: app/components/app-sidebar.tsx:654
+#: app/components/app-sidebar.tsx:652
 #: app/components/command-menu.tsx:116
 #: app/routes/_app+/$orgSlug_+/settings+/qr-ordering.tsx:109
 #: app/routes/_app+/$orgSlug_+/settings+/qr-tables.tsx:53
@@ -25635,7 +25648,7 @@ msgstr "Reconfirmation request"
 msgid "Reconnect"
 msgstr "Reconnect"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:310
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:323
 msgid "Reconnect needed"
 msgstr "Reconnect needed"
 
@@ -25717,7 +25730,7 @@ msgstr "Redirect type"
 msgid "Redirected"
 msgstr "Redirected"
 
-#: app/components/app-sidebar.tsx:582
+#: app/components/app-sidebar.tsx:580
 #: app/components/command-menu.tsx:161
 #: app/components/workspace-breadcrumb.tsx:61
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:60
@@ -26613,7 +26626,7 @@ msgid "Reservation records will be deleted too"
 msgstr "Reservation records will be deleted too"
 
 #: ../../packages/reports/src/ui/report-labels.ts:148
-#: app/components/app-sidebar.tsx:459
+#: app/components/app-sidebar.tsx:457
 #: app/components/customers/person-profile-screen.tsx:114
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:40
 #: app/components/pos/terminals-manager.tsx:1530
@@ -26918,7 +26931,7 @@ msgstr ""
 msgid "Retry charge"
 msgstr "Retry charge"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:340
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:345
 msgid "Retry failed accounts"
 msgstr "Retry failed accounts"
 
@@ -26946,7 +26959,7 @@ msgctxt "Open the pending requests"
 msgid "Review"
 msgstr "Review"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:162
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:173
 msgid "Review accounts"
 msgstr "Review accounts"
 
@@ -27055,7 +27068,7 @@ msgstr "Role name"
 msgid "Roles"
 msgstr "Roles"
 
-#: app/components/app-sidebar.tsx:616
+#: app/components/app-sidebar.tsx:614
 #: app/components/workspace-breadcrumb.tsx:65
 msgid "Roles & access"
 msgstr "Roles & access"
@@ -27808,7 +27821,7 @@ msgstr "Scan the code with the tablet's camera, or open the link below in its br
 msgid "Scan the code with this tablet's camera, or paste the link below."
 msgstr "Scan the code with this tablet's camera, or paste the link below."
 
-#: app/components/app-sidebar.tsx:521
+#: app/components/app-sidebar.tsx:519
 #: app/components/command-menu.tsx:146
 #: app/components/hiring/interview-dialog.tsx:287
 #: app/components/my-schedule/my-schedule-page.tsx:187
@@ -27893,7 +27906,7 @@ msgstr "Schedule: a week was published"
 msgid "Scheduled"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:211
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:213
 msgid "Scheduled for {date}"
 msgstr "Scheduled for {date}"
 
@@ -28127,7 +28140,7 @@ msgstr "Search your Canva designs"
 msgid "Search..."
 msgstr ""
 
-#: app/components/app-sidebar.tsx:884
+#: app/components/app-sidebar.tsx:882
 msgid "Search…"
 msgstr "Search…"
 
@@ -29250,9 +29263,9 @@ msgstr "Set when online ordering, pickup, and delivery are accepted for this loc
 #~ msgid "Setting a limit helps you sell out"
 #~ msgstr "Setting a limit helps you sell out"
 
-#: app/components/app-sidebar.tsx:450
-#: app/components/app-sidebar.tsx:496
-#: app/components/app-sidebar.tsx:589
+#: app/components/app-sidebar.tsx:448
+#: app/components/app-sidebar.tsx:494
+#: app/components/app-sidebar.tsx:587
 #: app/components/command-menu.tsx:357
 #: app/components/command-menu.tsx:390
 #: app/components/media-library/photo-studio-dialog.tsx:703
@@ -29490,7 +29503,7 @@ msgstr "Shipped to a US address. You see the price with shipping before you pay;
 msgid "Shipping"
 msgstr "Shipping"
 
-#: app/components/app-sidebar.tsx:637
+#: app/components/app-sidebar.tsx:635
 #: app/components/workspace-breadcrumb.tsx:69
 msgid "Shop"
 msgstr ""
@@ -29903,7 +29916,7 @@ msgstr ""
 #~ msgid "SMS Sent"
 #~ msgstr "SMS Sent"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:160
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:163
 msgid "Social accounts"
 msgstr "Social accounts"
 
@@ -29913,7 +29926,7 @@ msgstr ""
 
 #: app/components/app-sidebar.tsx:425
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:120
-#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:107
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:118
 msgid "Social media"
 msgstr "Social media"
 
@@ -30049,7 +30062,7 @@ msgstr "Something went wrong making the file. Try again shortly."
 msgid "Something went wrong on our side. Try again in a moment."
 msgstr "Something went wrong on our side. Try again in a moment."
 
-#: app/components/social/social-labels.ts:69
+#: app/components/social/social-labels.ts:68
 msgid "Something went wrong while publishing."
 msgstr "Something went wrong while publishing."
 
@@ -30190,7 +30203,7 @@ msgstr "Split your tables into colored sections, one per server. Hosts see them 
 msgid "Square"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:505
+#: app/components/app-sidebar.tsx:503
 #: app/components/command-menu.tsx:140
 #: app/components/roles/tenant-role-access-manager.tsx:263
 #: app/components/workspace-breadcrumb.tsx:17
@@ -30955,7 +30968,7 @@ msgstr "Swaps are not offered at this workplace. Ask your manager."
 msgid "Switch off any message you do not want guests to receive. Payment messages follow the payment flow and are not listed here."
 msgstr "Switch off any message you do not want guests to receive. Payment messages follow the payment flow and are not listed here."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:196
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:199
 msgid "Switch the Instagram account to a business or creator account, link it to a Facebook Page, and allow that Page when Facebook asks."
 msgstr "Switch the Instagram account to a business or creator account, link it to a Facebook Page, and allow that Page when Facebook asks."
 
@@ -31422,7 +31435,7 @@ msgid "Teal"
 msgstr "Teal"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:115
-#: app/components/app-sidebar.tsx:511
+#: app/components/app-sidebar.tsx:509
 #: app/components/command-menu.tsx:144
 #: app/components/staff/schedule/day-timeline.tsx:475
 #: app/components/staff/schedule/week-grid.tsx:363
@@ -31590,7 +31603,7 @@ msgstr "Terminal code"
 msgid "Terminal paired"
 msgstr "Terminal paired"
 
-#: app/components/app-sidebar.tsx:644
+#: app/components/app-sidebar.tsx:642
 #: app/components/workspace-breadcrumb.tsx:70
 msgid "Terminals"
 msgstr "Terminals"
@@ -32264,11 +32277,11 @@ msgstr "The confirmation could not be sent."
 msgid "The confirmations and reminders guests receive."
 msgstr "The confirmations and reminders guests receive."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:214
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:215
 msgid "The connection failed"
 msgstr "The connection failed"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:208
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:209
 msgid "The connection was cancelled in Facebook."
 msgstr "The connection was cancelled in Facebook."
 
@@ -32696,7 +32709,7 @@ msgstr "The meal periods guests can book, such as lunch or dinner. Each one has 
 msgid "The message ends when the caller presses pound, stops talking, or hangs up. It shows up under Calls as a callback request."
 msgstr "The message ends when the caller presses pound, stops talking, or hangs up. It shows up under Calls as a callback request."
 
-#: app/components/social/social-labels.ts:74
+#: app/components/social/social-labels.ts:73
 msgid "The Meta emulator refused this post (it contains #fail)."
 msgstr "The Meta emulator refused this post (it contains #fail)."
 
@@ -33074,11 +33087,11 @@ msgstr "The terminal locks when idle and each order records who took it. Staff n
 msgid "The terminal's app may be out of date"
 msgstr "The terminal's app may be out of date"
 
-#: app/components/social/social-labels.ts:50
+#: app/components/social/social-labels.ts:49
 msgid "The text is too long for Facebook."
 msgstr "The text is too long for Facebook."
 
-#: app/components/social/social-labels.ts:92
+#: app/components/social/social-labels.ts:91
 msgid "The text is too long."
 msgstr "The text is too long."
 
@@ -33394,7 +33407,7 @@ msgstr "Thinking…"
 msgid "This account can look but not change jobs."
 msgstr "This account can look but not change jobs."
 
-#: app/components/social/social-labels.ts:66
+#: app/components/social/social-labels.ts:65
 msgid "This account is no longer connected. Connect it again, then retry."
 msgstr "This account is no longer connected. Connect it again, then retry."
 
@@ -33866,11 +33879,11 @@ msgstr "This policy no longer exists. The list has been reloaded."
 msgid "This post can’t be sent yet"
 msgstr "This post can’t be sent yet"
 
-#: app/components/social/social-labels.ts:94
+#: app/components/social/social-labels.ts:93
 msgid "This post has started publishing and can no longer be edited."
 msgstr "This post has started publishing and can no longer be edited."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:244
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:246
 msgid "This post is publishing right now. Try again in a moment."
 msgstr "This post is publishing right now. Try again in a moment."
 
@@ -33972,7 +33985,7 @@ msgstr "This rule stops applying right away. You can add it again later."
 msgid "This schedule is no longer available"
 msgstr "This schedule is no longer available"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:227
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:230
 msgid "This server has no Meta app configured. Ask your platform administrator."
 msgstr "This server has no Meta app configured. Ask your platform administrator."
 
@@ -34233,7 +34246,7 @@ msgstr "Time cards (CSV)"
 msgid "Time cards: {timeCardCount} (not included in the backup)"
 msgstr "Time cards: {timeCardCount} (not included in the backup)"
 
-#: app/components/app-sidebar.tsx:516
+#: app/components/app-sidebar.tsx:514
 #: app/components/command-menu.tsx:145
 #: app/components/pos/terminals-manager.tsx:1498
 #: app/components/workspace-breadcrumb.tsx:30
@@ -34497,7 +34510,7 @@ msgstr "To the nearest"
 msgid "To: {recipient}"
 msgstr "To: {recipient}"
 
-#: app/components/app-sidebar.tsx:467
+#: app/components/app-sidebar.tsx:465
 #: app/components/chat/chat-view.tsx:932
 #: app/components/my-schedule/shifts-view.tsx:123
 #: app/components/my-schedule/shifts-view.tsx:178
@@ -34509,7 +34522,7 @@ msgstr "To: {recipient}"
 #: app/components/staff/schedule/schedule-toolbar.tsx:119
 #: app/components/staff/timesheets/period-nav.tsx:150
 #: app/components/workspace-breadcrumb.tsx:76
-#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:195
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:206
 #: app/routes/_app+/$orgSlug_+/staff+/timeclock.tsx:43
 msgid "Today"
 msgstr "Today"
@@ -34546,7 +34559,7 @@ msgstr ""
 msgid "Told"
 msgstr "Told"
 
-#: app/components/social/social-labels.ts:53
+#: app/components/social/social-labels.ts:52
 msgid "Too many hashtags for Facebook."
 msgstr "Too many hashtags for Facebook."
 
@@ -36328,7 +36341,7 @@ msgstr ""
 msgid "View notes from users you have access to"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:318
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:323
 msgid "View on {platformName}"
 msgstr "View on {platformName}"
 
@@ -36635,7 +36648,7 @@ msgstr "Waiting to be paired"
 msgid "Waiting to send"
 msgstr "Waiting to send"
 
-#: app/components/app-sidebar.tsx:482
+#: app/components/app-sidebar.tsx:480
 #: app/components/reservations/reservations-chrome.tsx:88
 #: app/components/reservations/reservations-chrome.tsx:143
 #: app/components/reservations/waitlist/floor-waitlist-panel.tsx:77
@@ -37022,7 +37035,7 @@ msgstr "Web"
 msgid "Webhooks: {webhookMode}"
 msgstr "Webhooks: {webhookMode}"
 
-#: app/components/app-sidebar.tsx:538
+#: app/components/app-sidebar.tsx:536
 #: app/components/command-menu.tsx:152
 #: app/components/workspace-breadcrumb.tsx:14
 #: app/routes/_app+/$orgSlug_+/media.tsx:1279
@@ -37436,7 +37449,7 @@ msgstr "Where each service can seat"
 msgid "Where every call begins."
 msgstr "Where every call begins."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:277
+#: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:282
 msgid "Where it went"
 msgstr "Where it went"
 
@@ -37836,7 +37849,7 @@ msgstr "Write your reply…"
 msgid "Write your text message"
 msgstr "Write your text message"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:109
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:120
 msgid "Write, schedule and track posts on Facebook and Instagram."
 msgstr "Write, schedule and track posts on Facebook and Instagram."
 

@@ -95,6 +95,18 @@ describe('Jobs-Cron Worker Endpoints', () => {
 			expect(res.status).toBe(200)
 		})
 
+		it('refuses a time further ahead than a workflow can sleep', async () => {
+			const runAt = new Date(Date.now() + 366 * 24 * 60 * 60_000).toISOString()
+			expect((await start({ postId: 'abcdefgh1234', runAt })).status).toBe(400)
+			expect(mockSocialWorkflowCreate).not.toHaveBeenCalled()
+		})
+
+		it('starts a post that is already due, so it publishes at once', async () => {
+			const runAt = new Date(Date.now() - 60_000).toISOString()
+			expect((await start({ postId: 'abcdefgh1234', runAt })).status).toBe(200)
+			expect(mockSocialWorkflowCreate).toHaveBeenCalledTimes(1)
+		})
+
 		it('refuses a malformed post id or time', async () => {
 			expect((await start({ postId: '../x', runAt: 'soon' })).status).toBe(400)
 			expect(mockSocialWorkflowCreate).not.toHaveBeenCalled()
