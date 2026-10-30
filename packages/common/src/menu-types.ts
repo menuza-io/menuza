@@ -180,6 +180,8 @@ export const MenuVariationSchema = z
 		valueIds: z.array(z.string()).min(1).max(3),
 		price: z.number().finite().min(0, 'Variation price must be positive'),
 		imageKey: z.string().nullable().default(null),
+		// Never receives any discount (Square "discount eligibility").
+		excludeFromDiscounts: z.boolean().default(false),
 		availabilityStatus: z
 			.enum(['available', 'unavailable_until', 'unavailable'])
 			.default('available'),

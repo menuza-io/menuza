@@ -541,6 +541,23 @@ const ORG_PERMISSIONS = [
 		context: 'organization',
 		description: 'View loyalty reports and analytics',
 	},
+	// Discounts. Keep in sync with the control-plane migration that seeds these rows.
+	{
+		id: 'org_perm_read_discount_any',
+		action: 'read',
+		entity: 'discount',
+		access: 'any',
+		context: 'organization',
+		description: 'View discounts and coupons and how often they were used',
+	},
+	{
+		id: 'org_perm_update_discount_any',
+		action: 'update',
+		entity: 'discount',
+		access: 'any',
+		context: 'organization',
+		description: 'Create, edit, pause and archive discounts and coupons',
+	},
 ] as const
 
 const SYSTEM_PERMISSIONS = [
