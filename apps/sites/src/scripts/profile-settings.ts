@@ -1,6 +1,9 @@
 import { loadPaymentMethods } from './profile-shop-data'
-import { setSessionTokens, tenantFetch } from '~/lib/client-auth'
-import { browserLocaleHref } from '~/lib/locale'
+import {
+	redirectToLogin,
+	setSessionTokens,
+	tenantFetch,
+} from '~/lib/client-auth'
 
 async function loadProfile(options: {
 	nameInput: HTMLElement | null
@@ -8,13 +11,18 @@ async function loadProfile(options: {
 	phoneInput: HTMLElement | null
 	profileLoading: HTMLElement | null
 	form: HTMLElement | null
+	onTransient: () => void
 }) {
 	const { nameInput, emailInput, phoneInput, profileLoading, form } = options
 
 	try {
-		const res = await tenantFetch('/auth/me')
-		if (res.status === 401) {
-			window.location.replace(browserLocaleHref('/login'))
+		const { session, response: res } = await tenantFetch('/auth/me')
+		if (session === 'signed_out') {
+			redirectToLogin()
+			return
+		}
+		if (session === 'transient') {
+			options.onTransient()
 			return
 		}
 		if (res.ok) {
@@ -66,12 +74,20 @@ export function initProfileSettingsPage() {
 	const networkLabel =
 		form?.dataset.network || 'Network error. Please try again.'
 
+	const showError = (text: string) => {
+		if (!errorMessage) return
+		const message = errorMessage.querySelector('p')
+		if (message) message.textContent = text
+		errorMessage.classList.remove('hidden')
+	}
+
 	void loadProfile({
 		nameInput,
 		emailInput,
 		phoneInput,
 		profileLoading,
 		form,
+		onTransient: () => showError(networkLabel),
 	})
 	void loadPaymentMethods({
 		paymentMethodsList,
@@ -101,12 +117,16 @@ export function initProfileSettingsPage() {
 		submitButton.textContent = savingLabel
 
 		try {
-			const res = await tenantFetch('/auth/profile', {
+			const { session, response: res } = await tenantFetch('/auth/profile', {
 				method: 'POST',
 				body: JSON.stringify({ name, email }),
 			})
-			if (res.status === 401) {
-				window.location.replace(browserLocaleHref('/login'))
+			if (session === 'signed_out') {
+				redirectToLogin()
+				return
+			}
+			if (session === 'transient') {
+				showError(networkLabel)
 				return
 			}
 			const data = (await res.json()) as {
@@ -125,21 +145,11 @@ export function initProfileSettingsPage() {
 							: undefined,
 				})
 				successMessage?.classList.remove('hidden')
-			} else if (errorMessage) {
-				const message = errorMessage.querySelector('p')
-				if (message) {
-					message.textContent = data.error || errorLabel
-				}
-				errorMessage.classList.remove('hidden')
+			} else {
+				showError(data.error || errorLabel)
 			}
 		} catch {
-			if (errorMessage) {
-				const message = errorMessage.querySelector('p')
-				if (message) {
-					message.textContent = networkLabel
-				}
-				errorMessage.classList.remove('hidden')
-			}
+			showError(networkLabel)
 		} finally {
 			submitButton.disabled = false
 			submitButton.textContent = saveLabel

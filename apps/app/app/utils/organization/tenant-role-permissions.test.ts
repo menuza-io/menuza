@@ -1,5 +1,10 @@
 import { ORG_PERMISSIONS } from '@repo/auth'
 import {
+	LOYALTY_IMPLIED_READ,
+	LOYALTY_PERMISSION_LIST,
+	LOYALTY_PERMISSIONS,
+} from '@repo/loyalty'
+import {
 	RESERVATIONS_PERMISSION_LIST,
 	RESERVATIONS_PERMISSIONS,
 } from '@repo/reservations'
@@ -8,9 +13,11 @@ import { STAFFING_PERMISSION_LIST, STAFFING_PERMISSIONS } from '@repo/staffing'
 import { describe, expect, it } from 'vitest'
 import {
 	hasOnlyTenantRolePermissions,
+	LOYALTY_IMPLIED_PERMISSION_IDS,
 	RESERVATIONS_IMPLIED_PERMISSION_IDS,
 	STAFFING_IMPLIED_PERMISSION_IDS,
 	TENANT_ROLE_PERMISSION_IDS,
+	withImpliedLoyaltyPermissions,
 	withImpliedReservationsPermissions,
 	withImpliedStaffingPermissions,
 	withImpliedTenantRolePermissions,
@@ -193,5 +200,65 @@ describe('reservations permission lists and implied permissions', () => {
 		expect(RESERVATIONS_PERMISSIONS.READ_RESERVATION).toBe(
 			'read:reservation:any',
 		)
+	})
+})
+
+const LOYALTY_IDS = LOYALTY_PERMISSION_LIST.map(permissionId)
+
+describe('loyalty permission lists and implied permissions', () => {
+	it('lets custom roles be granted exactly the 5 loyalty permissions', () => {
+		const granted = TENANT_ROLE_PERMISSION_IDS.filter((id) =>
+			LOYALTY_IDS.includes(id),
+		)
+		expect([...granted].sort()).toEqual([...LOYALTY_IDS].sort())
+		expect(hasOnlyTenantRolePermissions(LOYALTY_IDS)).toBe(true)
+	})
+
+	it('expands implied read grants for every loyalty update grant', () => {
+		for (const update of [
+			'org_perm_update_loyalty_program_any',
+			'org_perm_update_loyalty_points_any',
+			'org_perm_update_loyalty_redemption_any',
+		] as const) {
+			expect(withImpliedLoyaltyPermissions([update]).sort()).toEqual(
+				['org_perm_read_loyalty_any', update].sort(),
+			)
+		}
+		// The report grant stands alone, like the operator token's reports scope.
+		expect(
+			withImpliedLoyaltyPermissions(['org_perm_read_loyalty_report_any']),
+		).toEqual(['org_perm_read_loyalty_report_any'])
+	})
+
+	it('withImpliedTenantRolePermissions folds loyalty in with the other modules', () => {
+		expect(
+			withImpliedTenantRolePermissions([
+				'org_perm_update_loyalty_redemption_any',
+				'org_perm_update_reservation_payment_any',
+			]).sort(),
+		).toEqual([
+			'org_perm_read_loyalty_any',
+			'org_perm_read_reservation_any',
+			'org_perm_read_reservation_report_any',
+			'org_perm_update_loyalty_redemption_any',
+			'org_perm_update_reservation_payment_any',
+		])
+	})
+
+	it('mirrors LOYALTY_IMPLIED_READ from @repo/loyalty, mapped to row ids', () => {
+		const expected = Object.fromEntries(
+			Object.entries(LOYALTY_IMPLIED_READ).map(([grant, implied]) => [
+				permissionId(grant),
+				[permissionId(implied)],
+			]),
+		)
+		expect(LOYALTY_IMPLIED_PERMISSION_IDS).toEqual(expected)
+		for (const [grant, implied] of Object.entries(
+			LOYALTY_IMPLIED_PERMISSION_IDS,
+		)) {
+			expect(LOYALTY_IDS).toContain(grant)
+			for (const id of implied) expect(LOYALTY_IDS).toContain(id)
+		}
+		expect(LOYALTY_PERMISSIONS.READ_LOYALTY).toBe('read:loyalty:any')
 	})
 })

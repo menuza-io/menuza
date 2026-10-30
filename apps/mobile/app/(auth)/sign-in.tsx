@@ -11,7 +11,7 @@ import {
 	TouchableOpacity,
 	ScrollView,
 	Pressable,
-	type TextInput,
+	type TextInputInstance,
 } from 'react-native'
 import { type z } from 'zod'
 import {
@@ -53,8 +53,8 @@ export default function SignInScreen() {
 	const [showSuccess, setShowSuccess] = useState(false)
 
 	// Input refs for focus management
-	const usernameRef = useRef<TextInput>(null)
-	const passwordRef = useRef<TextInput>(null)
+	const usernameRef = useRef<TextInputInstance>(null)
+	const passwordRef = useRef<TextInputInstance>(null)
 
 	const {
 		control,
@@ -312,7 +312,7 @@ export default function SignInScreen() {
 
 						{/* Submit Button */}
 						<Button
-							onPress={handleSubmit(onSubmit)}
+							onPress={() => handleSubmit(onSubmit)()}
 							disabled={!isValid || isLoading || isBanned}
 							loading={isLoginLoading}
 							className="mt-2"

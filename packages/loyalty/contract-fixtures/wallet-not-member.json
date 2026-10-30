@@ -1,0 +1,92 @@
+{
+	"wallet": {
+		"program": {
+			"name": "Acme Rewards",
+			"unitLabel": "points",
+			"currency": "USD",
+			"status": "active",
+			"earning": {
+				"method": "spend",
+				"points": 1,
+				"perMinor": 100
+			},
+			"minimumSpendMinor": 500,
+			"labels": {
+				"items": {},
+				"categories": {}
+			},
+			"terms": "Earn 1 point for every $1 you spend. Points have no cash value.",
+			"rewards": [
+				{
+					"id": "00000000-0000-4000-8000-000000000001",
+					"version": 1,
+					"name": "Five off your order",
+					"description": "Any order, any time.",
+					"pointsCost": 100,
+					"kind": "order",
+					"discount": {
+						"type": "fixed",
+						"amountMinor": 500
+					},
+					"itemIds": [],
+					"categoryIds": [],
+					"freeItemId": null,
+					"labels": {
+						"items": {},
+						"categories": {}
+					},
+					"currency": "USD"
+				},
+				{
+					"id": "00000000-0000-4000-8000-000000000002",
+					"version": 1,
+					"name": "Free latte",
+					"description": null,
+					"pointsCost": 150,
+					"kind": "free_item",
+					"discount": null,
+					"itemIds": [],
+					"categoryIds": [],
+					"freeItemId": "item_latte",
+					"labels": {
+						"items": {
+							"item_latte": "Latte"
+						},
+						"categories": {}
+					},
+					"currency": "USD"
+				},
+				{
+					"id": "00000000-0000-4000-8000-000000000003",
+					"version": 1,
+					"name": "20% off pastries",
+					"description": "Up to $4 off.",
+					"pointsCost": 400,
+					"kind": "categories",
+					"discount": {
+						"type": "percent",
+						"percentBp": 2000,
+						"maxDiscountMinor": 400
+					},
+					"itemIds": [],
+					"categoryIds": [
+						"cat_pastry"
+					],
+					"freeItemId": null,
+					"labels": {
+						"items": {},
+						"categories": {
+							"cat_pastry": "Pastries"
+						}
+					},
+					"currency": "USD"
+				}
+			],
+			"redemptionEnabled": true
+		},
+		"member": null,
+		"balance": null,
+		"nextReward": null,
+		"pendingApprovals": 0
+	}
+}

@@ -72,8 +72,25 @@ Kill switches: `RESERVATIONS_PUBLIC_ENABLED` (503 on public routes),
 Dev email capture: set `DEV_EMAIL_CAPTURE_DIR` (the dev scripts use
 `.dev-mail/us` and `.dev-mail/ksa`) and every email the node would only log is
 written there as JSON. It is ignored in production and whenever OCI email is
-configured. Demo data:
-`npm run seed:reservations -w tenant-api -- <org-slug>`. Re-record the public
-API fixtures with `npm run fixtures:reservations -w tenant-api`. Docs:
+configured. Demo data: `npm run seed:reservations -w tenant-api -- <org-slug>`.
+Re-record the public API fixtures with
+`npm run fixtures:reservations -w tenant-api`. Docs:
 [reservations guide](../../docs/reservations.md),
 [contract](../../docs/reservations-contract.md).
+
+## Loyalty routes
+
+| Mount                 | Auth                                                          | Purpose                                                                                                                                               |
+| --------------------- | ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/loyalty/*`          | `Origin` (organization), customer token                       | Program, wallet (opens the points account), history, member code, approvals, checkout and tab quotes (browser-direct and native)                      |
+| `/operator/loyalty/*` | `lty+jwt` minted by the App                                   | Program and rewards, accounts and adjustments, activity and review queue, QR tab refunds, requeue, balance check and repair, reports (browser-direct) |
+| `/pos/loyalty/*`      | paired device secret, plus a staff session when sign-in is on | Station till: member-code lookup, quotes, approvals, one-time codes                                                                                   |
+| `/api/loyalty/tick`   | `INTERNAL_COMMAND_TOKEN`                                      | Regional tick                                                                                                                                         |
+
+Kill switch: `LOYALTY_ENABLED` (503 on new loyalty work; the tick,
+reconciliation, review decisions and refunds keep going); interval
+`LOYALTY_TICK_INTERVAL_SECONDS`. Order refunds are an Orders route,
+`POST /operator/orders/:id/refunds` (operator JWT, `orders:write`); loyalty
+takes earned points back from them. Locked by
+`src/routes/loyalty-security.test.ts`. Docs:
+[loyalty guide](../../docs/loyalty.md).

@@ -179,6 +179,9 @@ describe('Guestbook and Bookings today', () => {
 		await db.insert(rsvLocationSettings).values({
 			locationId: LOC,
 			timeZone: 'UTC',
+			// Tests read "today" as the UTC date; a midnight day start keeps the
+			// business date on it between 00:00 and 04:00 UTC too.
+			dayStartMin: 0,
 			enabled: true,
 			version: 1,
 		})

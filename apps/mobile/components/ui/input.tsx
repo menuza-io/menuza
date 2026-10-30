@@ -6,6 +6,7 @@ import {
 	View,
 	Text,
 	TouchableOpacity,
+	type TextInputInstance,
 } from 'react-native'
 import { getKeyboardConfig, type InputType } from '../../lib/keyboard'
 
@@ -19,10 +20,10 @@ export interface InputProps extends Omit<TextInputProps, 'style'> {
 	className?: string
 	inputType?: InputType
 	onSubmitEditing?: () => void
-	nextInputRef?: React.RefObject<TextInput | null>
+	nextInputRef?: React.RefObject<TextInputInstance | null>
 }
 
-const Input = forwardRef<TextInput, InputProps>(
+const Input = forwardRef<TextInputInstance, InputProps>(
 	(
 		{
 			label,

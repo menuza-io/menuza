@@ -63,12 +63,17 @@ import { PersonMergeDialog } from '#app/components/customers/person-merge-dialog
 import { PersonNotesPanel } from '#app/components/customers/person-notes-panel.tsx'
 import { PersonOrdersPanel } from '#app/components/customers/person-orders-panel.tsx'
 import { PersonTagBadge } from '#app/components/customers/person-tag-badge.tsx'
+import { CustomerLoyaltyPanel } from '#app/components/loyalty/customer-loyalty-panel.tsx'
 import { StatusLabel } from '#app/components/reservations/status-style.tsx'
 import {
 	SelectField,
 	TextAreaField,
 	TextField,
 } from '#app/components/staff/controls.tsx'
+import {
+	type LoyaltyCapabilities,
+	NO_LOYALTY_CAPABILITIES,
+} from '#app/utils/loyalty/capabilities.ts'
 import { customersHref } from '#app/utils/people/customers-link.ts'
 import {
 	addPersonNote,
@@ -149,10 +154,13 @@ export function PersonProfileScreen({
 	client,
 	orgSlug,
 	personKey,
+	loyalty = NO_LOYALTY_CAPABILITIES,
 }: {
 	client: PeopleClient
 	orgSlug: string
 	personKey: string
+	/** Loyalty flag and grants for the signed-in user; never any points. */
+	loyalty?: LoyaltyCapabilities
 }) {
 	const { _, i18n } = useLingui()
 	const navigate = useNavigate()
@@ -462,6 +470,14 @@ export function PersonProfileScreen({
 						client={client}
 						orgSlug={orgSlug}
 						personKey={profile.canonicalKey}
+					/>
+				) : null}
+
+				{customer && profile.canonicalKey.startsWith('c_') ? (
+					<CustomerLoyaltyPanel
+						orgSlug={orgSlug}
+						customerId={customer.id}
+						capabilities={loyalty}
 					/>
 				) : null}
 

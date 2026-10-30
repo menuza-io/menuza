@@ -3,8 +3,14 @@ import {
 	QR_TAB_TOKEN_HEADER,
 	QR_TABLE_TOKEN_HEADER,
 	type QrPublicTab,
+	type QrTabPayRequest,
 } from '@repo/common/qr-ordering'
-import { getOrgBinding } from '~/lib/client-auth'
+import {
+	clearSessionTokens,
+	getAccessToken,
+	getOrgBinding,
+	tenantFetch,
+} from '~/lib/client-auth'
 
 /**
  * QR table ordering in the guest's browser. The table code arrives in the URL
@@ -238,6 +244,88 @@ async function readJson(response: Response): Promise<unknown> {
 	return value
 }
 
+/** A call to the region that has not answered after this fails as 'network'. */
+export const TABLE_REQUEST_TIMEOUT_MS = 15_000
+
+/**
+ * Bounds one call: a black-holed connection must not leave the guest on a
+ * spinning pay button. The race holds even where the signal is ignored.
+ */
+async function withTimeout(
+	run: (signal: AbortSignal) => Promise<Response>,
+): Promise<Response> {
+	const controller = new AbortController()
+	let timer: ReturnType<typeof setTimeout> | undefined
+	try {
+		return await Promise.race([
+			run(controller.signal),
+			new Promise<never>((_resolve, reject) => {
+				timer = setTimeout(() => {
+					controller.abort()
+					reject(new TableRequestError('network', 0))
+				}, TABLE_REQUEST_TIMEOUT_MS)
+			}),
+		])
+	} finally {
+		clearTimeout(timer)
+	}
+}
+
+/**
+ * A refusal about the table or tab code the call carried (a code the region
+ * no longer knows), as opposed to the customer's own token. Whatever status
+ * the region answers it with, it must neither end the customer's session nor
+ * be retried as a guest: the guest would be refused the same way.
+ */
+function isCapabilityRefusal(body: unknown): boolean {
+	if (!isRecord(body)) return false
+	const code = typeof body.code === 'string' ? body.code : body.error
+	return (
+		typeof code === 'string' &&
+		(code === 'tab_not_found' || isDeadTableError(code))
+	)
+}
+
+/**
+ * Calls the region as the signed-in customer when there is one, so a
+ * member's round or payment collects the tab's points. A token the region
+ * refuses (expired for good, or another site's) must not stop a guest from
+ * ordering: unless the call needs the member, it goes again without one. A
+ * token refused for good is also forgotten, so later calls go as a guest at
+ * once. A session that cannot be checked for now is kept, so the call fails
+ * like the network instead of going on as a guest. Only the customer's own
+ * token can end the session: a refused table or tab code cannot.
+ */
+async function sendAsCustomer(
+	path: string,
+	init: RequestInit,
+	options: { memberOnly?: boolean } = {},
+): Promise<Response> {
+	const url = `${regionalUrl()}${path}`
+	return withTimeout(async (signal) => {
+		const bounded = { ...init, signal }
+		if (!getAccessToken()) return fetch(url, bounded)
+		const { session, response } = await tenantFetch(path, bounded, {
+			isNotSessionRefusal: isCapabilityRefusal,
+		})
+		if (session === 'transient') throw new TableRequestError('network', 0)
+		// A half session (no refresh token) is signed out but still stored.
+		if (session === 'signed_out') clearSessionTokens()
+		if (
+			options.memberOnly ||
+			(response.status !== 401 && response.status !== 403)
+		) {
+			return response
+		}
+		const body: unknown = await response
+			.clone()
+			.json()
+			.catch(() => null)
+		if (isCapabilityRefusal(body)) return response
+		return fetch(url, bounded)
+	})
+}
+
 /** Header for the session: the tab once there is one, else the table. */
 export function tableHeaders(
 	session: Pick<TableSession, 'tableToken' | 'tabToken'>,
@@ -307,12 +395,12 @@ export async function fetchTableContext(input: {
 }): Promise<TableContext> {
 	const params = new URLSearchParams(getOrgBinding())
 	params.set('locationId', input.locationId)
-	const response = await fetch(
-		`${regionalUrl()}/orders/options?${params.toString()}`,
-		{
+	const response = await withTimeout((signal) =>
+		fetch(`${regionalUrl()}/orders/options?${params.toString()}`, {
 			cache: 'no-store',
 			headers: { [QR_TABLE_TOKEN_HEADER]: input.tableToken },
-		},
+			signal,
+		}),
 	)
 	const context = readTableContext(await readJson(response))
 	if (!context) throw new TableRequestError('options_unavailable', 502)
@@ -323,12 +411,15 @@ export type CreatedRound = ReturnType<typeof createdOrderSchema.parse> & {
 	tab: { id: string; tabNumber: string; tabToken: string }
 }
 
-/** Sends one round to the kitchen (prices are set by the region). */
+/**
+ * Sends one round to the kitchen (prices are set by the region). A signed-in
+ * member's round claims the tab's points when nobody has yet.
+ */
 export async function submitTableRound(
 	session: TableSession,
 	body: Record<string, unknown>,
 ): Promise<CreatedRound> {
-	const response = await fetch(`${regionalUrl()}/orders`, {
+	const response = await sendAsCustomer('/orders', {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json', ...tableHeaders(session) },
 		body: JSON.stringify({ ...body, ...getOrgBinding() }),
@@ -354,9 +445,12 @@ export async function submitTableRound(
 /** The tab with every round and the running total (no contact fields). */
 export async function fetchTab(tabToken: string): Promise<QrPublicTab> {
 	const params = new URLSearchParams(getOrgBinding())
-	const response = await fetch(
-		`${regionalUrl()}/orders/tab?${params.toString()}`,
-		{ cache: 'no-store', headers: { [QR_TAB_TOKEN_HEADER]: tabToken } },
+	const response = await withTimeout((signal) =>
+		fetch(`${regionalUrl()}/orders/tab?${params.toString()}`, {
+			cache: 'no-store',
+			headers: { [QR_TAB_TOKEN_HEADER]: tabToken },
+			signal,
+		}),
 	)
 	const value = await readJson(response)
 	if (!value || typeof value !== 'object' || !('tab' in value)) {
@@ -411,9 +505,20 @@ export function clearTabPayment(orgId: string) {
 
 /**
  * Starts the hosted checkout for the tab: the region fixes the amount (tab
- * total plus tip) and hands back a payment capability, which only travels to
- * the Sites payment broker as an opaque reference.
+ * total plus tip, less a member's reward) and hands back a payment
+ * capability, which only travels to the Sites payment broker as an opaque
+ * reference. A reward needs the member's token, so it is never sent as a
+ * guest.
  */
+export type TabPaymentStart = {
+	url: string
+	/** What the region fixed for the hosted page. */
+	amountCents: number
+	tipCents: number
+	loyaltyDiscountCents: number
+	currency: string
+}
+
 export async function startTabPayment(
 	orgId: string,
 	session: TableSession,
@@ -421,26 +526,45 @@ export async function startTabPayment(
 		tipPercent: number
 		contact: { name: string; phone: string }
 		locale: string
+		loyalty?: QrTabPayRequest['loyalty'] | null
 	},
-): Promise<string> {
+): Promise<TabPaymentStart> {
 	if (!session.tabToken) throw new TableRequestError('tab_not_found', 404)
-	const response = await fetch(`${regionalUrl()}/orders/tab/pay`, {
-		method: 'POST',
-		headers: {
-			'Content-Type': 'application/json',
-			[QR_TAB_TOKEN_HEADER]: session.tabToken,
+	const response = await sendAsCustomer(
+		'/orders/tab/pay',
+		{
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				[QR_TAB_TOKEN_HEADER]: session.tabToken,
+			},
+			body: JSON.stringify({
+				...getOrgBinding(),
+				tipPercent: input.tipPercent,
+				contact: input.contact,
+				...(input.loyalty ? { loyalty: input.loyalty } : {}),
+			}),
 		},
-		body: JSON.stringify({
-			...getOrgBinding(),
-			tipPercent: input.tipPercent,
-			contact: input.contact,
-		}),
-	})
+		{ memberOnly: Boolean(input.loyalty) },
+	)
 	const value = await readJson(response)
+	const amount = (key: string) =>
+		isRecord(value) &&
+		typeof value[key] === 'number' &&
+		Number.isFinite(value[key])
+			? (value[key] as number)
+			: null
+	const amountCents = amount('amountCents')
+	const tipCents = amount('tipCents')
+	const loyaltyDiscountCents = amount('loyaltyDiscountCents')
 	if (
 		!isRecord(value) ||
 		!isText(value.orderRef) ||
-		!isText(value.tabPaymentToken)
+		!isText(value.tabPaymentToken) ||
+		!isText(value.currency) ||
+		amountCents === null ||
+		tipCents === null ||
+		loyaltyDiscountCents === null
 	) {
 		throw new TableRequestError('payment_unavailable', 502)
 	}
@@ -453,21 +577,32 @@ export async function startTabPayment(
 	} catch {
 		// The receipt still shows from the tab itself.
 	}
-	const checkout = await fetch('/api/orders/payment', {
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify({
-			...getOrgBinding(),
-			orderId: payment.orderRef,
-			paymentToken: payment.paymentToken,
-			locale: input.locale,
+	const checkout = await withTimeout((signal) =>
+		fetch('/api/orders/payment', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				...getOrgBinding(),
+				orderId: payment.orderRef,
+				paymentToken: payment.paymentToken,
+				locale: input.locale,
+			}),
+			signal,
 		}),
-	})
+	)
 	const result = await readJson(checkout)
 	if (!isRecord(result) || !isText(result.checkoutUrl)) {
 		throw new TableRequestError('payment_unavailable', 502)
 	}
-	return result.checkoutUrl
+	// The region's amounts are what the hosted page charges; show those,
+	// never the amount this page estimated.
+	return {
+		url: result.checkoutUrl,
+		amountCents,
+		tipCents,
+		loyaltyDiscountCents,
+		currency: value.currency,
+	}
 }
 
 /**
@@ -477,15 +612,18 @@ export async function startTabPayment(
 export async function checkTabPayment(orgId: string): Promise<string | null> {
 	const payment = loadTabPayment(orgId)
 	if (!payment) return null
-	const response = await fetch('/api/orders/payment-status', {
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify({
-			...getOrgBinding(),
-			orderId: payment.orderRef,
-			paymentToken: payment.paymentToken,
+	const response = await withTimeout((signal) =>
+		fetch('/api/orders/payment-status', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				...getOrgBinding(),
+				orderId: payment.orderRef,
+				paymentToken: payment.paymentToken,
+			}),
+			signal,
 		}),
-	})
+	)
 	const value = await response.json().catch(() => null)
 	return isRecord(value) && isText(value.status) ? value.status : null
 }

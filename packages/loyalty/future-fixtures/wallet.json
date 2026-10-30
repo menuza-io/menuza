@@ -1,0 +1,132 @@
+{
+	"wallet": {
+		"program": {
+			"name": "Acme Rewards",
+			"unitLabel": "gems",
+			"currency": "USD",
+			"status": "active",
+			"earning": {
+				"method": "streak",
+				"points": 5,
+				"days": 3
+			},
+			"minimumSpendMinor": 500,
+			"labels": {
+				"items": {
+					"item_latte": "Latte"
+				},
+				"categories": {
+					"cat_pastry": "Pastries"
+				},
+				"modifiers": {
+					"mod_oat": "Oat milk"
+				}
+			},
+			"terms": "Earn 1 point for every $1 you spend. Points have no cash value.",
+			"rewards": [
+				{
+					"id": "00000000-0000-4000-8000-000000000001",
+					"version": 1,
+					"name": "Five off your order",
+					"description": "Any order, any time.",
+					"pointsCost": 100,
+					"kind": "order",
+					"discount": {
+						"type": "fixed",
+						"amountMinor": 500,
+						"roundingMode": "down"
+					},
+					"itemIds": [],
+					"categoryIds": [],
+					"freeItemId": null,
+					"labels": {
+						"items": {},
+						"categories": {}
+					},
+					"currency": "USD",
+					"stackable": true
+				},
+				{
+					"id": "00000000-0000-4000-8000-000000000101",
+					"version": 1,
+					"name": "Coffee bundle",
+					"description": null,
+					"pointsCost": 150,
+					"kind": "bundle",
+					"discount": null,
+					"itemIds": [],
+					"categoryIds": [],
+					"freeItemId": null,
+					"labels": {
+						"items": {
+							"item_latte": "Latte"
+						},
+						"categories": {}
+					},
+					"currency": "USD",
+					"bundleItemIds": ["item_latte"]
+				},
+				{
+					"id": "00000000-0000-4000-8000-000000000102",
+					"version": 1,
+					"name": "Buy one get one",
+					"description": "Up to $4 off.",
+					"pointsCost": 400,
+					"kind": "items",
+					"discount": {
+						"type": "bogo",
+						"buy": 1,
+						"get": 1
+					},
+					"itemIds": ["item_latte"],
+					"categoryIds": [],
+					"freeItemId": null,
+					"labels": {
+						"items": {},
+						"categories": {
+							"cat_pastry": "Pastries"
+						}
+					},
+					"currency": "USD"
+				},
+				{
+					"id": "00000000-0000-4000-8000-000000000002",
+					"version": 1,
+					"name": "Free latte",
+					"description": null,
+					"pointsCost": 150,
+					"kind": "free_item",
+					"discount": null,
+					"itemIds": [],
+					"categoryIds": [],
+					"freeItemId": "item_latte",
+					"labels": {
+						"items": {
+							"item_latte": "Latte"
+						},
+						"categories": {}
+					},
+					"currency": "USD"
+				}
+			],
+			"redemptionEnabled": true
+		},
+		"member": {
+			"id": "00000000-0000-4000-8000-000000000004",
+			"status": "active"
+		},
+		"balance": {
+			"points": 332,
+			"reserved": 0,
+			"available": 332
+		},
+		"nextReward": {
+			"rewardId": "00000000-0000-4000-8000-000000000102",
+			"pointsNeeded": 68
+		},
+		"pendingApprovals": 1,
+		"tier": {
+			"name": "Gold"
+		}
+	}
+}

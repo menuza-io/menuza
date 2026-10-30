@@ -1,5 +1,20 @@
-function isSqliteBusyError(error: unknown) {
-	return error instanceof Error && error.message.includes('SQLITE_BUSY')
+const MAX_CAUSE_DEPTH = 5
+
+/** Busy errors arrive bare from the driver or wrapped (drizzle sets `cause`). */
+export function isSqliteBusyError(error: unknown): boolean {
+	let current: unknown = error
+	for (let depth = 0; depth < MAX_CAUSE_DEPTH; depth++) {
+		if (!(current instanceof Error)) return false
+		if (current.message.includes('SQLITE_BUSY')) return true
+		const code = (current as { code?: unknown }).code
+		if (typeof code === 'string' && code.startsWith('SQLITE_BUSY')) {
+			return true
+		}
+		const cause: unknown = (current as { cause?: unknown }).cause
+		if (cause === current) return false
+		current = cause
+	}
+	return false
 }
 
 export async function retryOnSqliteBusy<T>(

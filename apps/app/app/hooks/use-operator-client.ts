@@ -64,15 +64,17 @@ export function useOperatorClient(
 				response = await send()
 			}
 			if (!response.ok) {
+				const body: unknown = await response.json().catch(() => null)
 				const error = z
 					.object({ error: z.string(), message: z.string().optional() })
-					.safeParse(await response.json().catch(() => null))
+					.safeParse(body)
 				throw new OperatorRequestError(
 					error.success
 						? (error.data.message ?? error.data.error)
 						: 'The request failed.',
 					error.success ? error.data.error : 'request_failed',
 					response.status,
+					error.success ? (body as Record<string, unknown>) : null,
 				)
 			}
 			return response.json() as Promise<unknown>
@@ -94,6 +96,8 @@ export class OperatorRequestError extends Error {
 		message: string,
 		readonly code: string,
 		readonly status: number,
+		/** The whole error body, for details such as `refundableCents`. */
+		readonly body: Record<string, unknown> | null = null,
 	) {
 		super(message)
 	}

@@ -1,5 +1,4 @@
-import { tenantFetch } from '~/lib/client-auth'
-import { browserLocaleHref } from '~/lib/locale'
+import { redirectToLogin, tenantFetch } from '~/lib/client-auth'
 
 export type ShopOrderRow = {
 	productName?: string
@@ -241,12 +240,14 @@ export async function loadPaymentMethods(options: {
 	if (!paymentMethodsList) return
 
 	try {
-		const methodsRes = await tenantFetch('/shop/payment-methods')
-		if (methodsRes.status === 401) {
-			window.location.replace(browserLocaleHref('/login'))
+		const { session, response: methodsRes } = await tenantFetch(
+			'/shop/payment-methods',
+		)
+		if (session === 'signed_out') {
+			redirectToLogin()
 			return
 		}
-		if (methodsRes.ok) {
+		if (session === 'ok' && methodsRes.ok) {
 			const data = (await methodsRes.json()) as {
 				paymentMethods?: SavedPaymentMethodRow[]
 			}
@@ -297,12 +298,12 @@ export async function loadOrders(options: {
 	if (!orderHistory) return
 
 	try {
-		const ordersRes = await tenantFetch('/shop/orders')
-		if (ordersRes.status === 401) {
-			window.location.replace(browserLocaleHref('/login'))
+		const { session, response: ordersRes } = await tenantFetch('/shop/orders')
+		if (session === 'signed_out') {
+			redirectToLogin()
 			return
 		}
-		if (ordersRes.ok) {
+		if (session === 'ok' && ordersRes.ok) {
 			const data = (await ordersRes.json()) as { orders?: ShopOrderRow[] }
 			const orders = Array.isArray(data.orders) ? data.orders : []
 			renderOrderHistory(

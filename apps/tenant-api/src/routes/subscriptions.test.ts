@@ -22,15 +22,22 @@ import { RESEND_INTERVAL_MS, subscriptionRoutes } from './subscriptions.ts'
 const orgId = 'clw9x0a12000008l00test07'
 const jwtSecret = 'test-jwt-secret-123456789'
 
-vi.mock('../lib/origin.ts', () => ({
-	findActiveOrganizationById: vi.fn().mockResolvedValue({
+vi.mock('../lib/origin.ts', () => {
+	const organization = {
 		id: 'clw9x0a12000008l00test07',
 		slug: 'subs-test',
 		customDomain: null,
 		hasProvisionedDb: true,
 		dataRegion: 'us',
-	}),
-}))
+	}
+	return {
+		findActiveOrganizationById: vi.fn().mockResolvedValue(organization),
+		lookupActiveOrganization: vi.fn().mockResolvedValue({
+			status: 'found',
+			organization,
+		}),
+	}
+})
 
 vi.mock('../lib/tenant-email.ts', () => ({
 	sendTenantEmail: vi.fn().mockResolvedValue({ status: 'success' }),

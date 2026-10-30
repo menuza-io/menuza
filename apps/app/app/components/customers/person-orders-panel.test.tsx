@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { fireEvent, screen, waitFor } from '@testing-library/react'
+import { fireEvent, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { PersonOrdersPanel } from '#app/components/customers/person-orders-panel.tsx'
 import {
@@ -17,6 +17,7 @@ function order(id: string, over: Partial<PersonOrder> = {}): PersonOrder {
 		fulfillment: 'pickup',
 		currency: 'usd',
 		totalCents: 1250,
+		refundedCents: 0,
 		itemCount: 3,
 		createdAt: '2026-03-04T10:00:00.000Z',
 		matchedBy: 'customer',
@@ -71,6 +72,27 @@ describe('PersonOrdersPanel', () => {
 				query: expect.objectContaining({ cursor: 'next' }),
 			}),
 		)
+	})
+
+	it('marks orders whose money came back', async () => {
+		render(
+			vi.fn().mockResolvedValue({
+				orders: [
+					order('1', { refundedCents: 1250 }),
+					order('2', { refundedCents: 250 }),
+					order('3'),
+				],
+				nextCursor: null,
+				totals: { count: 3, spend: [{ currency: 'usd', cents: 3750 }] },
+			}),
+		)
+		expect(await screen.findByTestId('person-order-1')).toHaveTextContent(
+			/Refunded/,
+		)
+		expect(screen.getByTestId('person-order-2')).toHaveTextContent(
+			'Partly refunded',
+		)
+		expect(screen.getByTestId('person-order-3')).toHaveTextContent('Paid')
 	})
 
 	it('shows an empty state', async () => {

@@ -56,6 +56,8 @@ export const qrTabSchema = z.object({
 	onlineAmountCents: z.number().int().nullable().optional(),
 	/** How many such payments arrived. */
 	reviewPaymentCount: z.number().int().optional(),
+	/** Closed at the counter as rung up on a Station till: it earns no points. */
+	rungUpOnStation: z.boolean(),
 	rounds: z.array(roundSchema),
 	roundsPending: z.boolean(),
 	totals: z.object({

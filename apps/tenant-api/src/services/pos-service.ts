@@ -67,6 +67,7 @@ import {
 } from '@repo/tenant-db'
 import { chunkIds, inJsonList } from '../lib/chunked-in.ts'
 import { pinLookupFor, pinShapeOk } from './kiosk-pin-service.ts'
+import { cancelPendingTillApprovalsInTx } from './loyalty-code-service.ts'
 import { fetchOrderContext } from './order-service.ts'
 import { hashPosSecret, posStaffScopeId } from '../lib/pos-auth.ts'
 import { hmacHash } from '../lib/secrets.ts'
@@ -476,7 +477,8 @@ export async function revokePendingCode(
 
 /**
  * Removes a terminal. Its ZATCA unit is revoked in the same transaction, so a
- * removed till's signing key and certificate are never served or used again.
+ * removed till's signing key and certificate are never served or used again,
+ * and its loyalty requests still waiting for a member are withdrawn.
  */
 export async function revokeDevice(
 	db: TenantDatabase,
@@ -493,6 +495,7 @@ export async function revokeDevice(
 				.returning({ id: posDevices.id })
 			if (result.length !== 1) return false
 			await revokeZatcaUnitsForDevice(tx, id, now)
+			await cancelPendingTillApprovalsInTx(tx, { deviceId: id, at: now })
 			return true
 		}),
 	)
@@ -1147,20 +1150,63 @@ export const POS_LARGE_DISCOUNT_SHARE = 0.5
 /**
  * Discounts carry no approver on the wire, so a large one (more than half the
  * bill) is flagged `large_discount` for a person to look at. The sale is kept.
+ * A `loyalty` adjustment is not discretionary only while a reward approved for
+ * this sale backs it: `rewardBackedCents` is the discount of the approved or
+ * bound redemption on the sale id (0 when there is none), and only that much
+ * of the loyalty lines is left out of the share. A till can label any manual
+ * discount `loyalty`, so the rest counts like a discount. Unattributed totals
+ * from a till that sent no adjustment lines count in full.
  */
 export function withDiscountCheck(
 	review: PosReview,
 	order: PosOrderRequest,
+	rewardBackedCents = 0,
 ): PosReview {
 	if (review.reviewReason) return review
 	const { subtotalCents, adjustmentCents } = order.totals
+	let discountCents = adjustmentCents
+	if (order.adjustments.length > 0) {
+		let manual = 0
+		let loyalty = 0
+		for (const adjustment of order.adjustments) {
+			if (adjustment.kind === 'loyalty') loyalty += adjustment.amountCents
+			else manual += adjustment.amountCents
+		}
+		discountCents = manual + Math.max(0, loyalty - rewardBackedCents)
+	}
 	if (
-		adjustmentCents > 0 &&
-		adjustmentCents > subtotalCents * POS_LARGE_DISCOUNT_SHARE
+		discountCents > 0 &&
+		discountCents > subtotalCents * POS_LARGE_DISCOUNT_SHARE
 	) {
 		return { ...review, reviewReason: 'large_discount' }
 	}
 	return review
+}
+
+/**
+ * Till review reasons that question the sale itself (when it happened, or who
+ * it names), not just its prices. When several checks flag one upload, the
+ * stored reason is the first of these: a benign price or discount flag must
+ * never mask a sale that has to wait for a manager.
+ */
+export const POS_HOLDING_REVIEW_REASONS: readonly string[] = [
+	'clock_skew',
+	'missing_staff',
+	'unknown_staff',
+	'inactive_staff',
+	'approver_not_manager',
+]
+
+/** The first holding reason wins; otherwise the first reason at all. */
+export function prioritizePosReviewReasons(
+	reasons: ReadonlyArray<string | null>,
+): string | null {
+	const present = reasons.filter((reason): reason is string => reason !== null)
+	return (
+		present.find((reason) => POS_HOLDING_REVIEW_REASONS.includes(reason)) ??
+		present[0] ??
+		null
+	)
 }
 
 /** The sale is kept; nobody could check it against the menu yet, so a person is asked to look. */
@@ -1286,14 +1332,16 @@ const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b)
 
 /**
  * A revision as sold: without each line's kitchen keys (its id and when it was
- * sent, contract 4). A till updated between sending a revision and hearing back
- * resends it with them, and that is the same sale, not a conflict.
+ * sent, contract 4) or the sale's loyalty (contract 5). A till updated between
+ * sending a revision and hearing back resends it with them, and that is the
+ * same sale, not a conflict.
  */
 function saleOf(snapshot: unknown) {
-	const body = snapshot as { lines?: unknown } | null
+	const body = snapshot as { lines?: unknown; loyalty?: unknown } | null
 	if (!body || !Array.isArray(body.lines)) return snapshot
+	const { loyalty: ignoredLoyalty, ...sold } = body
 	return {
-		...body,
+		...sold,
 		lines: body.lines.map((line) => {
 			if (!line || typeof line !== 'object') return line
 			const {
@@ -1319,13 +1367,17 @@ export function canonicalJson(value: unknown): string {
 	)
 }
 
-/** Ids only for people, and no guest name: revision history is kept forever and holds no personal data. */
+/**
+ * Ids only for people, no guest name and no member binding: revision history
+ * is kept forever and holds no personal data or credential.
+ */
 export function revisionSnapshot(order: PosOrderRequest) {
 	const ref = (who: PosStaff | null) => (who ? { id: who.id } : null)
 	return {
 		...order,
 		customerName: null,
 		customerPhone: null,
+		loyalty: order.loyalty ? { ...order.loyalty, binding: null } : null,
 		staff: ref(order.staff),
 		voidedBy: ref(order.voidedBy),
 		voidApprovedBy: ref(order.voidApprovedBy),
@@ -1621,6 +1673,14 @@ export async function upsertPosOrder(
 	order: PosOrderRequest,
 	review: PosReview,
 	now = Date.now(),
+	options: {
+		/**
+		 * Runs in the upload's transaction once a new revision is stored (never
+		 * for a replay), for work that must commit with the sale. It must not
+		 * throw: nothing it does may refuse the sale.
+		 */
+		onStored?: (tx: Tx, sale: PosOrderRow) => Promise<void>
+	} = {},
 ): Promise<PosResult<UpsertOutcome>> {
 	if (
 		device.locationId &&
@@ -2016,6 +2076,7 @@ export async function upsertPosOrder(
 						.select()
 						.from(posPayments)
 						.where(eq(posPayments.orderId, order.id))
+					await options.onStored?.(tx, saved!)
 					return ok({
 						kind: existing ? 'updated' : 'created',
 						order: saved!,
@@ -2432,12 +2493,16 @@ const HELD_STAFF_KEYS = new Set([
 	'openedBy',
 	'closedBy',
 ])
-/** Keys a cashier types a guest into: never kept in held payloads. */
+/**
+ * Keys a cashier types a guest into, and a loyalty member's binding (a
+ * credential for that member at this till): never kept in held payloads.
+ */
 const HELD_GUEST_KEYS = new Set([
 	'customerName',
 	'customerPhone',
 	'guestName',
 	'tableLabel',
+	'binding',
 ])
 
 function stripPeople(value: unknown): unknown {
@@ -2709,19 +2774,22 @@ export async function countHeldUploads(db: TenantDatabase) {
 	return row?.n ?? 0
 }
 
-/** A person settled a held upload (entered the sale by hand, or confirmed it is a duplicate). */
+/**
+ * A person settled a held upload (entered the sale by hand, or confirmed it is
+ * a duplicate). Null when there was no such upload waiting.
+ */
 export async function resolveHeldUpload(
 	db: TenantDatabase,
 	id: string,
 	by: string,
 	now = Date.now(),
-) {
-	const updated = await db
+): Promise<{ orderId: string | null } | null> {
+	const [updated] = await db
 		.update(posHeldUploads)
 		.set({ resolvedAt: now, resolvedBy: by })
 		.where(and(eq(posHeldUploads.id, id), isNull(posHeldUploads.resolvedAt)))
-		.returning({ id: posHeldUploads.id })
-	return updated.length === 1
+		.returning({ orderId: posHeldUploads.orderId })
+	return updated ?? null
 }
 
 // ---------------------------------------------------------------------------

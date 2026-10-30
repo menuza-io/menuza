@@ -38,6 +38,10 @@ import { useMailboxUnreadCount } from '#app/hooks/use-mailbox.ts'
 
 import { type loader as rootLoader } from '#app/root.tsx'
 import {
+	HIDDEN_LOYALTY_NAV,
+	type LoyaltyNavAccess,
+} from '#app/utils/loyalty/nav.ts'
+import {
 	HIDDEN_PRINT_SHOP_NAV,
 	type PrintShopNavAccess,
 } from '#app/utils/print/nav.ts'
@@ -66,6 +70,7 @@ import { NoteIcon } from './icons/note-icon'
 import { PhoneIcon } from './icons/phone-icon'
 import { ReceiptIcon } from './icons/receipt-icon'
 import { SendIcon } from './icons/send-icon'
+import { StarIcon } from './icons/star-icon'
 import { UserRoundGroupIcon } from './icons/user-round-group-icon'
 import { UsersRoundIcon } from './icons/users-round-icon'
 import { UtensilsIcon } from './icons/utensils-icon'
@@ -270,6 +275,8 @@ function OrganizationSidebar({
 		rootData?.staffingNav ?? HIDDEN_STAFFING_NAV
 	const reservationsNav: ReservationsNavAccess =
 		rootData?.reservationsNav ?? HIDDEN_RESERVATIONS_NAV
+	const loyaltyNav: LoyaltyNavAccess =
+		rootData?.loyaltyNav ?? HIDDEN_LOYALTY_NAV
 	const printShopNav: PrintShopNavAccess =
 		rootData?.printShopNav ?? HIDDEN_PRINT_SHOP_NAV
 	const qrOrderingNav: QrOrderingNavAccess =
@@ -500,6 +507,34 @@ function OrganizationSidebar({
 			],
 		},
 		{
+			title: _(msg`Loyalty`),
+			url: `/${orgSlug}/loyalty`,
+			isActive: location.pathname.includes(`/${orgSlug}/loyalty`),
+			icon: StarIcon,
+			items: [
+				{
+					title: _(msg`Overview`),
+					url: `/${orgSlug}/loyalty/overview`,
+					isActive: location.pathname.includes(`/${orgSlug}/loyalty/overview`),
+				},
+				{
+					title: _(msg`Program`),
+					url: `/${orgSlug}/loyalty/program`,
+					isActive: location.pathname.includes(`/${orgSlug}/loyalty/program`),
+				},
+				{
+					title: _(msg`Rewards`),
+					url: `/${orgSlug}/loyalty/rewards`,
+					isActive: location.pathname.includes(`/${orgSlug}/loyalty/rewards`),
+				},
+				{
+					title: _(msg`Activity`),
+					url: `/${orgSlug}/loyalty/activity`,
+					isActive: location.pathname.includes(`/${orgSlug}/loyalty/activity`),
+				},
+			],
+		},
+		{
 			title: _(msg`Staff`),
 			url: `/${orgSlug}/staff`,
 			isActive: location.pathname.includes(`/${orgSlug}/staff`),
@@ -707,6 +742,9 @@ function OrganizationSidebar({
 			if (item.url === `/${orgSlug}/reservations`) {
 				return reservationsNav.visible
 			}
+			if (item.url === `/${orgSlug}/loyalty`) {
+				return loyaltyNav.visible
+			}
 			// Customers is the one people screen: contact data (settings read) or
 			// the reservation guest grant opens it.
 			if (item.url === `/${orgSlug}/customers`) {
@@ -757,6 +795,22 @@ function OrganizationSidebar({
 					[`/${orgSlug}/reservations/waitlist`]: reservationsNav.waitlist,
 					[`/${orgSlug}/reservations/experiences`]: reservationsNav.experiences,
 					[`/${orgSlug}/reservations/settings`]: reservationsNav.settings,
+				}
+				const visibleItems = item.items.filter(
+					(subItem) => allowedByUrl[subItem.url] === true,
+				)
+				return {
+					...item,
+					url: visibleItems[0]?.url ?? item.url,
+					items: visibleItems,
+				}
+			}
+			if (item.url === `/${orgSlug}/loyalty`) {
+				const allowedByUrl: Record<string, boolean> = {
+					[`/${orgSlug}/loyalty/overview`]: loyaltyNav.overview,
+					[`/${orgSlug}/loyalty/program`]: loyaltyNav.program,
+					[`/${orgSlug}/loyalty/rewards`]: loyaltyNav.rewards,
+					[`/${orgSlug}/loyalty/activity`]: loyaltyNav.activity,
 				}
 				const visibleItems = item.items.filter(
 					(subItem) => allowedByUrl[subItem.url] === true,

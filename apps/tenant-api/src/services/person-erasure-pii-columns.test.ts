@@ -96,6 +96,14 @@ const COVERED: Record<string, string> = {
 	'qr_tabs.guest_phone':
 		'nulled with the scrubbed rounds of the tab, or by normalised phone',
 	'qr_tabs.payment_token_hash': 'nulled with the tab guest',
+	'loyalty_ledger.note':
+		'operator note on a manual adjustment, nulled with the member by the erasure (the only update the append-only trigger allows)',
+	'loyalty_refunds.note':
+		'operator note on a recorded refund, nulled with the member by the erasure (the only update the append-only trigger allows)',
+	'restaurant_order_refunds.note':
+		'operator note on an order refund, nulled with the scrubbed order (the only update the append-only trigger allows)',
+	'loyalty_member_bindings.token_hash':
+		'till binding deleted with the member by the erasure',
 }
 
 /** Whole domains that are not a customer's data, with the reason. */
@@ -111,6 +119,7 @@ const staffAtTheTill =
 
 /** Single columns that look like PII but are not a customer's data. */
 const ALLOWED_COLUMNS: Record<string, string> = {
+	'loyalty_rewards.name': 'reward title written by the operator',
 	'marketing_campaigns.name': 'campaign title written by the operator',
 	'marketing_journeys.name': 'journey title written by the operator',
 	'website_forms.name': 'form title written by the operator',
@@ -222,6 +231,7 @@ describe('person erasure covers every PII column of the tenant schema', () => {
 			'customer_subscriptions',
 			'customer_payment_methods',
 			'journey_runs',
+			'loyalty_members',
 			'journey_step_executions',
 			'marketing_messages',
 			'restaurant_orders',

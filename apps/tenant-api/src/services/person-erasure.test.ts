@@ -15,6 +15,7 @@ import {
 	marketingMessages,
 	personErasureLog,
 	provisionTenantDb,
+	restaurantOrderRefunds,
 	restaurantOrders,
 	shopOrders,
 	voiceCallRequests,
@@ -478,6 +479,85 @@ describe('person erasure', () => {
 		})
 	})
 
+	it('clears refund notes on scrubbed orders and keeps the amounts', async () => {
+		const id = await seedPerson(a, { name: NAME, phone: PHONE, email: EMAIL })
+		const base = {
+			orgId: orgA,
+			locationId: 'loc_1',
+			locationName: 'Main',
+			currency: 'USD',
+			subtotalCents: 1000,
+			taxCents: 0,
+			totalCents: 1000,
+			refundedCents: 300,
+			lines: [],
+			requestHash: 'h',
+			paymentMethod: 'online',
+			paymentStatus: 'paid',
+			fulfillment: 'pickup',
+		}
+		await a.insert(restaurantOrders).values([
+			{
+				...base,
+				id: 'ord_mine',
+				number: 'R-1',
+				customerId: id,
+				idempotencyKey: 'k1',
+				receiptTokenHash: 'r1',
+				contactName: NAME,
+				contactPhone: PHONE,
+			},
+			{
+				...base,
+				id: 'ord_other',
+				number: 'R-3',
+				idempotencyKey: 'k3',
+				receiptTokenHash: 'r3',
+				contactName: 'Someone Else',
+				contactPhone: OTHER_PHONE,
+			},
+		] as never)
+		const refund = {
+			amountCents: 300,
+			currency: 'USD',
+			actorId: 'user_1',
+			requestHash: 'h',
+		}
+		await a.insert(restaurantOrderRefunds).values([
+			{
+				...refund,
+				id: 'rf_mine',
+				orderId: 'ord_mine',
+				note: `${NAME} said the food was cold`,
+				idempotencyKey: 'rk1',
+			},
+			{
+				...refund,
+				id: 'rf_other',
+				orderId: 'ord_other',
+				note: 'Late delivery',
+				idempotencyKey: 'rk3',
+			},
+		])
+
+		const result = await erasePerson(
+			a,
+			{ customerId: id },
+			{ actorId: 'user_1' },
+		)
+		expect(result).toMatchObject({ restaurantOrdersScrubbed: 1 })
+		expect(await tablesContaining(a, [PHONE, EMAIL, NAME])).toEqual([])
+		const refunds = await a
+			.select()
+			.from(restaurantOrderRefunds)
+			.orderBy(restaurantOrderRefunds.id)
+		expect(refunds.map((row) => [row.id, row.note, row.amountCents])).toEqual([
+			['rf_mine', null, 300],
+			['rf_other', 'Late delivery', 300],
+		])
+		const orders = await a.select().from(restaurantOrders)
+		expect(orders.map((row) => row.refundedCents)).toEqual([300, 300])
+	})
 	describe('guest restaurant orders stored in another format', () => {
 		const base = {
 			orgId: orgA,

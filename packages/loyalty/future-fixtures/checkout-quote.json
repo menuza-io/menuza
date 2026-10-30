@@ -1,0 +1,34 @@
+{
+	"currency": "USD",
+	"unitLabel": "gems",
+	"balance": {
+		"points": 150,
+		"reserved": 0,
+		"available": 150
+	},
+	"rewards": [
+		{
+			"rewardId": "00000000-0000-4000-8000-000000000001",
+			"rewardVersion": 1,
+			"applicable": true,
+			"code": null,
+			"discountMinor": 500,
+			"pointsCost": 100,
+			"affordable": true,
+			"eligibleLineIds": [],
+			"lines": [],
+			"targetLineId": null
+		}
+	],
+	"totals": {
+		"subtotalMinor": 2000,
+		"discountMinor": 0,
+		"taxMinor": 165,
+		"taxInclusive": false,
+		"tipMinor": 0,
+		"deliveryFeeMinor": 0,
+		"totalMinor": 2165
+	},
+	"selectedRewardId": null,
+	"availableAfter": 150
+}

@@ -1,0 +1,15 @@
+{
+	"slug": "acme",
+	"displayName": "Acme Coffee",
+	"bundleId": "com.acmecoffee.app",
+	"marketingVersion": "1.0.0",
+	"appUrl": "app.epic-startup.com",
+	"brandDomain": "epic-startup.com",
+	"tenantApiUs": "tenant-us.epic-startup.com",
+	"tenantApiKsa": "tenant-ksa.epic-startup.com",
+	"iconBackground": "#0F172A",
+	"site": {
+		"slug": "acme",
+		"origin": "https://acme.epic-startup.com"
+	}
+}

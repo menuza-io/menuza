@@ -243,6 +243,16 @@ export const ORG_PERMISSIONS = {
 	UPDATE_RESERVATION_GUEST_ANY: 'update:reservation_guest:any' as const,
 	READ_RESERVATION_REPORT_ANY: 'read:reservation_report:any' as const,
 	UPDATE_RESERVATION_PAYMENT_ANY: 'update:reservation_payment:any' as const,
+
+	// Loyalty: program setup, members and points, redemptions, reports. Every
+	// loyalty surface is also behind the org-level loyalty.* feature flags (see
+	// apps/app utils/loyalty/access.server.ts). Keep in sync with
+	// LOYALTY_PERMISSIONS in @repo/loyalty.
+	READ_LOYALTY_ANY: 'read:loyalty:any' as const,
+	UPDATE_LOYALTY_PROGRAM_ANY: 'update:loyalty_program:any' as const,
+	UPDATE_LOYALTY_POINTS_ANY: 'update:loyalty_points:any' as const,
+	UPDATE_LOYALTY_REDEMPTION_ANY: 'update:loyalty_redemption:any' as const,
+	READ_LOYALTY_REPORT_ANY: 'read:loyalty_report:any' as const,
 } as const
 
 /**

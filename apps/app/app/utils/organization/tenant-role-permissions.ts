@@ -59,6 +59,11 @@ export const TENANT_ROLE_PERMISSION_IDS = [
 	'org_perm_update_reservation_guest_any',
 	'org_perm_read_reservation_report_any',
 	'org_perm_update_reservation_payment_any',
+	'org_perm_read_loyalty_any',
+	'org_perm_update_loyalty_program_any',
+	'org_perm_update_loyalty_points_any',
+	'org_perm_update_loyalty_redemption_any',
+	'org_perm_read_loyalty_report_any',
 ] as const
 
 export type TenantRolePermissionId = (typeof TENANT_ROLE_PERMISSION_IDS)[number]
@@ -111,9 +116,23 @@ export const RESERVATIONS_IMPLIED_PERMISSION_IDS: Record<
 	],
 }
 
+/**
+ * Loyalty grants where an update grant implies the member read grant, matching
+ * the operator token scopes (`setup`, `members` and `reconcile` all carry
+ * `read:loyalty:any`). `read:loyalty_report:any` stands alone, like the
+ * `reports` scope.
+ */
+export const LOYALTY_IMPLIED_PERMISSION_IDS: Record<string, readonly string[]> =
+	{
+		org_perm_update_loyalty_program_any: ['org_perm_read_loyalty_any'],
+		org_perm_update_loyalty_points_any: ['org_perm_read_loyalty_any'],
+		org_perm_update_loyalty_redemption_any: ['org_perm_read_loyalty_any'],
+	}
+
 export const IMPLIED_PERMISSION_IDS: Record<string, readonly string[]> = {
 	...STAFFING_IMPLIED_PERMISSION_IDS,
 	...RESERVATIONS_IMPLIED_PERMISSION_IDS,
+	...LOYALTY_IMPLIED_PERMISSION_IDS,
 }
 
 /**
@@ -150,13 +169,31 @@ export function withImpliedReservationsPermissions(
 }
 
 /**
- * Add every read grant implied by any staffing or reservations update/approve
- * grant.
+ * Add every read grant implied by a loyalty update grant. Returns a
+ * de-duplicated list; permission ids outside the loyalty set are untouched.
+ */
+export function withImpliedLoyaltyPermissions(
+	permissionIds: readonly string[],
+): string[] {
+	const result = new Set(permissionIds)
+	for (const id of permissionIds) {
+		for (const implied of LOYALTY_IMPLIED_PERMISSION_IDS[id] ?? []) {
+			result.add(implied)
+		}
+	}
+	return [...result]
+}
+
+/**
+ * Add every read grant implied by any staffing, reservations or loyalty
+ * update/approve grant.
  */
 export function withImpliedTenantRolePermissions(
 	permissionIds: readonly string[],
 ): string[] {
-	return withImpliedReservationsPermissions(
-		withImpliedStaffingPermissions(permissionIds),
+	return withImpliedLoyaltyPermissions(
+		withImpliedReservationsPermissions(
+			withImpliedStaffingPermissions(permissionIds),
+		),
 	)
 }

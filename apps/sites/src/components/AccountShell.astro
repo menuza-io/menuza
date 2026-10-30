@@ -3,7 +3,7 @@ import { msg } from '@lingui/core/macro'
 import { getLocaleHref } from '@repo/common/site-locales'
 
 interface Props {
-	current: 'account' | 'orders'
+	current: 'account' | 'orders' | 'rewards'
 	title: string
 	description?: string
 }
@@ -15,6 +15,7 @@ const defaultLocale = Astro.locals.defaultLocale
 
 const accountNav = i18n._(msg`Account`)
 const ordersNav = i18n._(msg`Orders`)
+const rewardsNav = i18n._(msg`Rewards`)
 const accountSettings = i18n._(msg`Account settings`)
 
 const accountHref = getLocaleHref(
@@ -30,9 +31,17 @@ const ordersHref = getLocaleHref(
 	defaultLocale,
 )
 
+const rewardsHref = getLocaleHref(
+	'/profile/rewards',
+	requestedLocale,
+	requestedLocale,
+	defaultLocale,
+)
+
 const navItems = [
 	{ id: 'account' as const, label: accountNav, href: accountHref },
 	{ id: 'orders' as const, label: ordersNav, href: ordersHref },
+	{ id: 'rewards' as const, label: rewardsNav, href: rewardsHref },
 ]
 
 function navClass(active: boolean) {
@@ -66,7 +75,11 @@ function navClass(active: boolean) {
 				role="list"
 			>
 				{navItems.map((item) => (
-					<li class="shrink-0 lg:shrink">
+					<li
+						class="shrink-0 lg:shrink"
+						data-loyalty-link={item.id === 'rewards' ? '' : undefined}
+						hidden={item.id === 'rewards' && current !== 'rewards'}
+					>
 						<a
 							href={item.href}
 							class={navClass(current === item.id)}
@@ -86,6 +99,23 @@ function navClass(active: boolean) {
 								>
 									<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
 									<circle cx="12" cy="7" r="4" />
+								</svg>
+							) : item.id === 'rewards' ? (
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="1.75"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									class="size-4 shrink-0 opacity-70"
+									aria-hidden="true"
+								>
+									<rect x="3" y="8" width="18" height="4" rx="1" />
+									<path d="M12 8v13" />
+									<path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7" />
+									<path d="M7.5 8a2.5 2.5 0 0 1 0-5C10 3 12 8 12 8s2-5 4.5-5a2.5 2.5 0 0 1 0 5" />
 								</svg>
 							) : (
 								<svg
@@ -116,3 +146,10 @@ function navClass(active: boolean) {
 		</div>
 	</div>
 </div>
+
+<script>
+	import { revealLoyaltyLinks } from '~/lib/loyalty/availability'
+
+	// The Rewards link shows only when the region says this site runs a program.
+	void revealLoyaltyLinks()
+</script>

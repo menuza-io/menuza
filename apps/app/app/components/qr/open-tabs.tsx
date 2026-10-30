@@ -12,7 +12,13 @@ import {
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
 import { Checkbox } from '@repo/ui/checkbox'
+import {
+	Collapsible,
+	CollapsibleContent,
+	CollapsibleTrigger,
+} from '@repo/ui/collapsible'
 import { Field, FieldDescription, FieldError, FieldLabel } from '@repo/ui/field'
+import { Icon } from '@repo/ui/icon'
 import { Input } from '@repo/ui/input'
 import { type RefObject, useCallback, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
@@ -36,11 +42,14 @@ export function OpenTabs({
 	orgSlug,
 	canWrite,
 	refreshKey,
+	loyaltyEnabled,
 }: {
 	orgSlug: string
 	canWrite: boolean
 	/** Bumped by the inbox refresh so both lists move together. */
 	refreshKey: number
+	/** Loyalty is on: a counter close can say the till sale earns instead. */
+	loyaltyEnabled: boolean
 }) {
 	const { _, i18n } = useLingui()
 	const request = useQrClient(orgSlug)
@@ -56,6 +65,13 @@ export function OpenTabs({
 	const [lockBusy, setLockBusy] = useState(false)
 	const [releasingId, setReleasingId] = useState<string | null>(null)
 	const [releaseBusy, setReleaseBusy] = useState(false)
+	// Counter closes marked as rung up on a till, while loyalty is on.
+	const [markedTabs, setMarkedTabs] = useState<QrTab[]>([])
+	const [unmarkingId, setUnmarkingId] = useState<string | null>(null)
+	const [unmarkBusy, setUnmarkBusy] = useState(false)
+	const unmarking = unmarkingId
+		? (markedTabs.find((tab) => tab.id === unmarkingId) ?? null)
+		: null
 	const find = (id: string | null) =>
 		id ? (tabs.find((tab) => tab.id === id) ?? null) : null
 	const closing = find(closingId)
@@ -75,6 +91,13 @@ export function OpenTabs({
 			target.setAttribute('tabindex', '-1')
 		}
 		return target ?? true
+	}
+	// A removed mark returns focus to its own list while marks are left.
+	const unmarkFinalFocus = () => {
+		const heading = document.getElementById('station-marks-heading')
+		if (!settledFocus.current || !heading) return finalFocus()
+		settledFocus.current = false
+		return heading
 	}
 	const acting = useRef(false)
 
@@ -125,6 +148,41 @@ export function OpenTabs({
 		}
 	}, [load, refreshKey])
 
+	// Not polled: the mark changes only when a tab is closed or the mark is
+	// removed. Both reload this list when done here; Refresh picks up other
+	// devices.
+	const loadMarked = useCallback(
+		async (signal?: AbortSignal) => {
+			if (!loyaltyEnabled) {
+				setMarkedTabs([])
+				return
+			}
+			try {
+				const marked = z
+					.object({ tabs: z.array(qrTabSchema) })
+					.parse(await request('/tabs?status=station&limit=200', { signal }))
+				if (!signal?.aborted) setMarkedTabs(marked.tabs)
+			} catch {
+				// The open tabs report their own failure; this list keeps its last state.
+			}
+		},
+		[request, loyaltyEnabled],
+	)
+
+	useEffect(() => {
+		const controller = new AbortController()
+		void loadMarked(controller.signal)
+		return () => controller.abort()
+	}, [loadMarked, refreshKey])
+
+	// The mark went away (removed on another device): the dialog has nothing
+	// left to do.
+	useEffect(() => {
+		if (unmarkingId && !markedTabs.some((tab) => tab.id === unmarkingId)) {
+			setUnmarkingId(null)
+		}
+	}, [markedTabs, unmarkingId])
+
 	const act = async (
 		path: string,
 		body: unknown,
@@ -144,7 +202,7 @@ export function OpenTabs({
 			if (warning) toast.warning(warning)
 			else toast.success(done)
 			settledFocus.current = true
-			await load()
+			await Promise.all([load(), loadMarked()])
 			return true
 		} catch (cause) {
 			toast.error(
@@ -152,9 +210,12 @@ export function OpenTabs({
 					? cause.message
 					: _(msg`That did not work. Try again.`),
 			)
-			// The tab changed under the open dialog: show the new total.
-			if (cause instanceof OperatorRequestError && cause.code === 'stale_tab') {
-				await load()
+			// The tab changed under the open dialog: show it as it is now.
+			if (
+				cause instanceof OperatorRequestError &&
+				(cause.code === 'stale_tab' || cause.code === 'station_flag_not_set')
+			) {
+				await Promise.all([load(), loadMarked()])
 			}
 			return false
 		} finally {
@@ -208,13 +269,78 @@ export function OpenTabs({
 	) : null
 	const reviewSection =
 		reviewTabs.length > 0 ? <PaymentsToCheck tabs={reviewTabs} /> : null
+	const markedSection =
+		markedTabs.length > 0 ? (
+			<MarkedOnStation
+				tabs={markedTabs}
+				canWrite={canWrite}
+				onUnmark={setUnmarkingId}
+			/>
+		) : null
+	const unmarkDialog = (
+		<AlertDialog
+			open={Boolean(unmarking)}
+			onOpenChange={(open) => !open && setUnmarkingId(null)}
+		>
+			<AlertDialogContent finalFocus={unmarkFinalFocus}>
+				<AlertDialogHeader>
+					<AlertDialogTitle>
+						{(() => {
+							const number = unmarking?.tabNumber ?? ''
+							const label = unmarking?.table.label ?? ''
+							return _(
+								msg`Remove the till mark from tab ${number} (table ${label})?`,
+							)
+						})()}
+					</AlertDialogTitle>
+					<AlertDialogDescription>
+						<Trans>
+							The tab then earns loyalty points like any other tab. Do this only
+							if it was not rung up on a Station till, or the guest could earn
+							twice.
+						</Trans>
+					</AlertDialogDescription>
+				</AlertDialogHeader>
+				<AlertDialogFooter>
+					<AlertDialogCancel>
+						<Trans>Cancel</Trans>
+					</AlertDialogCancel>
+					<Button
+						disabled={unmarkBusy}
+						onClick={() => {
+							if (!unmarking) return
+							const tab = unmarking
+							const number = tab.tabNumber
+							setUnmarkBusy(true)
+							void act(
+								`/tabs/${tab.id}/clear-station-flag`,
+								{},
+								_(
+									msg`Mark removed from tab ${number}. It now earns loyalty points like any other tab.`,
+								),
+							)
+								.then((ok) => {
+									if (ok) setUnmarkingId(null)
+								})
+								.finally(() => setUnmarkBusy(false))
+						}}
+					>
+						<Trans>Remove the mark</Trans>
+					</Button>
+				</AlertDialogFooter>
+			</AlertDialogContent>
+		</AlertDialog>
+	)
 	if (tabs.length === 0) {
-		return failedBanner || reviewSection ? (
+		// The dialog stays mounted when its list empties, so it closes normally.
+		return (
 			<>
 				{failedBanner}
 				{reviewSection}
+				{markedSection}
+				{unmarkDialog}
 			</>
-		) : null
+		)
 	}
 
 	return (
@@ -380,12 +506,15 @@ export function OpenTabs({
 				})}
 			</ul>
 			{reviewSection}
+			{markedSection}
+			{unmarkDialog}
 
 			<CloseTabDialog
 				tab={closing}
 				onClose={() => setClosingId(null)}
 				finalFocus={finalFocus}
-				onConfirm={async (tipCents, expectedTotalCents) => {
+				loyaltyEnabled={loyaltyEnabled}
+				onConfirm={async (tipCents, expectedTotalCents, rungUpOnStation) => {
 					if (!closing) return
 					const number = closing.tabNumber
 					const tabId = closing.id
@@ -401,6 +530,8 @@ export function OpenTabs({
 								...(closing.paymentStatus === 'review'
 									? { acknowledgeReview: true }
 									: {}),
+								// The till sale earns the loyalty points, so the tab never does.
+								...(rungUpOnStation ? { rungUpOnStation: true } : {}),
 							},
 							_(msg`Tab ${number} closed`),
 							(response) =>
@@ -566,11 +697,17 @@ function CloseTabDialog({
 	onClose,
 	onConfirm,
 	finalFocus,
+	loyaltyEnabled,
 }: {
 	tab: QrTab | null
 	onClose: () => void
-	onConfirm: (tipCents: number, expectedTotalCents: number) => Promise<void>
+	onConfirm: (
+		tipCents: number,
+		expectedTotalCents: number,
+		rungUpOnStation: boolean,
+	) => Promise<void>
 	finalFocus: FinalFocus
+	loyaltyEnabled: boolean
 }) {
 	const { _, i18n } = useLingui()
 	const seenTotal = useSeenTotal(tab)
@@ -578,9 +715,11 @@ function CloseTabDialog({
 	const [tip, setTip] = useState('')
 	const [busy, setBusy] = useState(false)
 	const [acknowledged, setAcknowledged] = useState(false)
+	const [rungUpOnStation, setRungUpOnStation] = useState(false)
 	useEffect(() => {
 		setTip('')
 		setAcknowledged(false)
+		setRungUpOnStation(false)
 	}, [tab?.id])
 	const needsReview = tab?.paymentStatus === 'review'
 	const parsedTip = parseTip(tip)
@@ -668,6 +807,50 @@ function CloseTabDialog({
 						</FieldError>
 					)}
 				</Field>
+				{loyaltyEnabled ? (
+					<label
+						htmlFor="tab-close-station"
+						className="flex min-h-11 items-start gap-2.5 text-sm md:min-h-8"
+					>
+						{/* The label also wraps the help and warning: name it by the title. */}
+						<Checkbox
+							id="tab-close-station"
+							checked={rungUpOnStation}
+							onCheckedChange={setRungUpOnStation}
+							aria-labelledby="tab-close-station-title"
+							aria-describedby={
+								rungUpOnStation
+									? 'tab-close-station-help tab-close-station-warning'
+									: 'tab-close-station-help'
+							}
+						/>
+						<span className="flex flex-col gap-0.5">
+							<span id="tab-close-station-title">
+								<Trans>Rung up on a Station till</Trans>
+							</span>
+							<span
+								id="tab-close-station-help"
+								className="text-muted-foreground"
+							>
+								<Trans>
+									The till sale collects the loyalty points, so this tab does
+									not.
+								</Trans>
+							</span>
+							{rungUpOnStation ? (
+								<span
+									id="tab-close-station-warning"
+									className="text-destructive"
+								>
+									<Trans>
+										The guest earns no points on this tab. If this is a mistake,
+										you can remove the mark on this page for the next 24 hours.
+									</Trans>
+								</span>
+							) : null}
+						</span>
+					</label>
+				) : null}
 				{needsReview ? (
 					<ReviewAcknowledgement
 						id="tab-close-review"
@@ -688,9 +871,11 @@ function CloseTabDialog({
 						}
 						onClick={() => {
 							setBusy(true)
-							void onConfirm(tipCents, seenTotal.seen).finally(() =>
-								setBusy(false),
-							)
+							void onConfirm(
+								tipCents,
+								seenTotal.seen,
+								loyaltyEnabled && rungUpOnStation,
+							).finally(() => setBusy(false))
 						}}
 					>
 						<Trans>Close tab</Trans>
@@ -889,6 +1074,114 @@ function PaymentsToCheck({ tabs }: { tabs: QrTab[] }) {
 				})}
 			</ul>
 		</section>
+	)
+}
+
+/**
+ * Tabs closed at the counter in the last 24 hours as rung up on a Station
+ * till: the till sale earns their points, so they do not. A mark set by
+ * mistake is removed here and the tab earns. Collapsed, because where every
+ * tab goes through a till the list is long and rarely needed.
+ */
+function MarkedOnStation({
+	tabs,
+	canWrite,
+	onUnmark,
+}: {
+	tabs: QrTab[]
+	canWrite: boolean
+	onUnmark: (tabId: string) => void
+}) {
+	const { _, i18n } = useLingui()
+	const [open, setOpen] = useState(false)
+	const count = tabs.length
+	return (
+		<Collapsible
+			open={open}
+			onOpenChange={setOpen}
+			render={<section aria-labelledby="station-marks-heading" />}
+		>
+			<div className="flex flex-wrap items-center justify-between gap-2">
+				<h3
+					id="station-marks-heading"
+					tabIndex={-1}
+					className="text-sm font-semibold outline-none"
+				>
+					{_(
+						plural(count, {
+							one: '# tab rung up on a Station till in the last 24 hours',
+							other: '# tabs rung up on a Station till in the last 24 hours',
+						}),
+					)}
+				</h3>
+				<CollapsibleTrigger
+					render={<Button type="button" variant="outline" size="sm" />}
+					aria-label={
+						open
+							? _(msg`Hide the tabs rung up on a Station till`)
+							: _(msg`Show the tabs rung up on a Station till`)
+					}
+				>
+					{open ? <Trans>Hide</Trans> : <Trans>Show</Trans>}
+					<Icon name={open ? 'chevron-up' : 'chevron-down'} />
+				</CollapsibleTrigger>
+			</div>
+			<CollapsibleContent>
+				<div className="space-y-2 pt-2">
+					<p className="text-muted-foreground text-sm">
+						<Trans>
+							These tabs earn no loyalty points, because the till sale does. If
+							one was not rung up on a till, remove its mark so it earns.
+						</Trans>
+					</p>
+					<ul className="divide-border divide-y rounded-lg border text-sm">
+						{tabs.map((tab) => {
+							const label = tab.table.label
+							const number = tab.tabNumber
+							return (
+								<li
+									key={tab.id}
+									className="flex flex-wrap items-center justify-between gap-2 p-3"
+								>
+									<span>
+										<bdi>{_(msg`Table ${label}`)}</bdi>
+										<span className="text-muted-foreground ms-2 tabular-nums">
+											{_(msg`Tab ${number}`)}
+										</span>
+										<span className="text-muted-foreground ms-2">
+											{relativeTime(tab.closedAt, i18n.locale)}
+										</span>
+									</span>
+									<span className="flex items-center gap-3">
+										<span className="tabular-nums">
+											<bdi>
+												{formatMoney(
+													tab.totals.totalCents,
+													tab.totals.currency,
+													i18n.locale,
+												)}
+											</bdi>
+										</span>
+										{canWrite ? (
+											<Button
+												size="sm"
+												variant="outline"
+												onClick={() => onUnmark(tab.id)}
+												aria-label={_(
+													msg`Remove the mark, tab ${number}, table ${label}`,
+												)}
+											>
+												<Trans>Remove the mark</Trans>
+											</Button>
+										) : null}
+									</span>
+								</li>
+							)
+						})}
+					</ul>
+				</div>
+			</CollapsibleContent>
+		</Collapsible>
 	)
 }
 

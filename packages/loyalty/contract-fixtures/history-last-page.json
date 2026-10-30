@@ -1,0 +1,14 @@
+{
+	"entries": [
+		{
+			"id": "00000000-0000-4000-8000-000000000007",
+			"at": 1907683213000,
+			"type": "earn",
+			"delta": 12,
+			"channel": "web",
+			"rewardName": null,
+			"reason": null
+		}
+	],
+	"nextCursor": null
+}

@@ -27,6 +27,7 @@ import { Icon } from '@repo/ui/icon'
 import { Separator } from '@repo/ui/separator'
 import { type ReactNode, useState } from 'react'
 import { Link } from 'react-router'
+import { useSettledFocus } from '#app/hooks/use-settled-focus.ts'
 import {
 	CLOSED_ORDER_STATUSES,
 	formatDateTime,
@@ -35,10 +36,14 @@ import {
 	localizedName,
 	nextOrderStatus,
 	type Order,
+	type OrderRefundBody,
+	paymentDisplayStatus,
+	refundableCents,
 	relativeTime,
 } from '#app/utils/orders/order-model.ts'
 import { customersHref } from '#app/utils/people/customers-link.ts'
 import { OrderStatusLabel, PaymentStatusLabel } from './order-status.tsx'
+import { RecordOrderRefundDialog } from './record-order-refund-dialog.tsx'
 
 function CopyButton({ value, label }: { value: string; label: string }) {
 	const [copied, setCopied] = useState(false)
@@ -67,14 +72,18 @@ function Section({
 	title,
 	children,
 	testId,
+	headingId,
 }: {
 	title: ReactNode
 	children: ReactNode
 	testId?: string
+	headingId?: string
 }) {
 	return (
 		<section className="flex flex-col gap-3" data-testid={testId}>
-			<h2 className="text-sm font-semibold">{title}</h2>
+			<h2 id={headingId} className="text-sm font-semibold">
+				{title}
+			</h2>
 			{children}
 		</section>
 	)
@@ -97,7 +106,8 @@ function pickupDate(date: string, locale: string): string {
 /**
  * One order, read top to bottom: what it is and where it stands, who it is
  * for, how it gets to them, what is in it, what it costs, how it was paid.
- * Actions sit in a footer that stays in reach.
+ * Actions sit in a footer that stays in reach; recording a refund sits with
+ * the payment, because a closed order can still give money back.
  */
 export function OrderDetail({
 	order,
@@ -106,6 +116,8 @@ export function OrderDetail({
 	canViewCustomers,
 	busy,
 	onUpdate,
+	onRecordRefund,
+	onReload,
 	backHref,
 }: {
 	order: Order
@@ -114,12 +126,23 @@ export function OrderDetail({
 	canViewCustomers: boolean
 	busy: boolean
 	onUpdate: (status: string, markPaid: boolean) => void
+	/** Records money returned outside Menuza; omit to hide the action. */
+	onRecordRefund?: (
+		body: OrderRefundBody,
+		idempotencyKey: string,
+	) => Promise<void>
+	/** Loads the order again, when a refund answer shows it changed. */
+	onReload?: () => void
 	backHref: string
 }) {
 	const { _, i18n } = useLingui()
 	const locale = i18n.locale
 	const [markPaid, setMarkPaid] = useState(false)
 	const [cancelOpen, setCancelOpen] = useState(false)
+	const [refundOpen, setRefundOpen] = useState(false)
+	const [refundNotice, setRefundNotice] = useState<string | null>(null)
+	// A full refund removes the Record a refund button.
+	const refundFocus = useSettledFocus('order-payment-heading')
 	const money = (cents: number) => formatMoney(cents, order.currency, locale)
 	const totalMoney = money(order.totalCents)
 	const tipPercent = order.tipPercent ?? 0
@@ -132,6 +155,15 @@ export function OrderDetail({
 	const onTab = Boolean(order.tabId)
 	const needsHandoffPayment =
 		!onTab && order.paymentMethod === 'handoff' && !paid && next === 'completed'
+	const paidOnline = paid && order.paymentMethod === 'online'
+	const refundedCents = order.refundedCents ?? 0
+	const refundedMoney = money(refundedCents)
+	const canRecordRefund =
+		canWrite &&
+		Boolean(onRecordRefund) &&
+		paidOnline &&
+		!onTab &&
+		refundableCents(order) > 0
 	const created = formatDateTime(order.createdAt, locale)
 	const createdAgo = relativeTime(order.createdAt, locale)
 	const profileHref = order.customerKey
@@ -143,14 +175,19 @@ export function OrderDetail({
 		order.status === 'payment_review'
 			? paid
 				? _(
-						msg`Payment arrived after the hold on this order ran out, so it was not confirmed automatically. The money was received: start preparing to honor the order, or cancel it and refund through your payment processor.`,
+						msg`Payment arrived after the hold on this order ran out, so it was not confirmed automatically. The money was received: start preparing to honor the order, or cancel it, refund it through your payment processor and record the refund on this order.`,
 					)
 				: _(
 						msg`This order needs a manual check before it goes ahead. Start preparing to accept it, or cancel it.`,
 					)
 			: null
 
-	const timeline: Array<{ key: string; label: string; at: string | null }> = [
+	const timeline: Array<{
+		key: string
+		label: string
+		at: string | null
+		detail?: string | null
+	}> = [
 		{ key: 'placed', label: _(msg`Placed`), at: order.createdAt },
 		{ key: 'paid', label: _(msg`Payment received`), at: order.paidAt ?? null },
 		{
@@ -163,8 +200,21 @@ export function OrderDetail({
 			label: _(msg`Cancelled`),
 			at: order.cancelledAt ?? null,
 		},
+		...(order.refunds ?? []).map((refund) => {
+			const amount = money(refund.amountCents)
+			return {
+				key: `refund:${refund.id}`,
+				label: _(msg`Refund recorded: ${amount}`),
+				at: refund.createdAt,
+				detail: refund.note,
+			}
+		}),
 	]
-	const events = timeline.filter((event) => event.at)
+	const events = timeline
+		.filter((event) => event.at)
+		.sort(
+			(a, b) => (Date.parse(a.at ?? '') || 0) - (Date.parse(b.at ?? '') || 0),
+		)
 	const placedAt = order.createdAt
 	const showUpdated =
 		order.updatedAt &&
@@ -182,6 +232,7 @@ export function OrderDetail({
 
 	const hasTotalsBreakdown =
 		order.subtotalCents != null ||
+		!!order.loyaltyDiscountCents ||
 		!!order.taxCents ||
 		!!order.tipCents ||
 		!!order.deliveryFeeCents
@@ -245,7 +296,7 @@ export function OrderDetail({
 							</dt>
 							<dd>
 								<PaymentStatusLabel
-									status={order.paymentStatus}
+									status={paymentDisplayStatus(order)}
 									className="text-sm"
 									testId="order-payment-status"
 								/>
@@ -495,6 +546,11 @@ export function OrderDetail({
 													{money(order.subtotalCents)}
 												</TotalRow>
 											) : null}
+											{order.loyaltyDiscountCents ? (
+												<TotalRow label={<Trans>Loyalty reward</Trans>}>
+													{money(-order.loyaltyDiscountCents)}
+												</TotalRow>
+											) : null}
 											{order.deliveryFeeCents ? (
 												<TotalRow label={<Trans>Delivery fee</Trans>}>
 													{money(order.deliveryFeeCents)}
@@ -543,7 +599,11 @@ export function OrderDetail({
 						</Section>
 						<Separator variant="dashed" />
 
-						<Section title={<Trans>Payment</Trans>} testId="order-payment">
+						<Section
+							title={<Trans>Payment</Trans>}
+							testId="order-payment"
+							headingId="order-payment-heading"
+						>
 							<dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
 								<dt className="text-muted-foreground">
 									<Trans>Method</Trans>
@@ -575,21 +635,64 @@ export function OrderDetail({
 										<dd>{formatDateTime(order.paidAt, locale)}</dd>
 									</>
 								) : null}
+								{refundedCents > 0 ? (
+									<>
+										<dt className="text-muted-foreground">
+											<Trans>Refunded</Trans>
+										</dt>
+										<dd data-testid="order-refunded">
+											<bdi>{_(msg`${refundedMoney} of ${totalMoney}`)}</bdi>
+										</dd>
+									</>
+								) : null}
 							</dl>
+							{canRecordRefund ? (
+								<div className="flex flex-col items-start gap-1.5">
+									<Button
+										type="button"
+										variant="outline"
+										size="sm"
+										onClick={() => {
+											setRefundNotice(null)
+											setRefundOpen(true)
+										}}
+										data-testid="order-refund-open"
+									>
+										<Trans>Record a refund</Trans>
+									</Button>
+									<p className="text-muted-foreground text-xs">
+										<Trans>
+											Return the money in your payment provider first, then
+											record it here.
+										</Trans>
+									</p>
+								</div>
+							) : null}
+							<p
+								aria-live="polite"
+								className="text-sm empty:hidden"
+								data-testid="order-refund-notice"
+							>
+								{refundNotice}
+							</p>
 						</Section>
 						<Separator variant="dashed" />
 
 						<Section title={<Trans>Activity</Trans>} testId="order-timeline">
 							<ol className="flex flex-col gap-2 text-sm">
 								{events.map((event) => (
-									<li
-										key={event.key}
-										className="flex items-baseline justify-between gap-3"
-									>
-										<span>{event.label}</span>
-										<span className="text-muted-foreground text-xs tabular-nums">
-											{formatDateTime(event.at, locale)}
-										</span>
+									<li key={event.key} className="flex flex-col gap-0.5">
+										<div className="flex items-baseline justify-between gap-3">
+											<span>{event.label}</span>
+											<span className="text-muted-foreground text-xs tabular-nums">
+												{formatDateTime(event.at, locale)}
+											</span>
+										</div>
+										{event.detail ? (
+											<p className="text-muted-foreground text-xs wrap-anywhere">
+												{event.detail}
+											</p>
+										) : null}
 									</li>
 								))}
 								{showUpdated ? (
@@ -653,13 +756,17 @@ export function OrderDetail({
 							{_(msg`Cancel order ${orderNumber}?`)}
 						</AlertDialogTitle>
 						<AlertDialogDescription>
-							{paid
+							{paidOnline
 								? _(
-										msg`${totalMoney} was received for this order. Cancelling does not refund it: refund it separately with your payment processor.`,
+										msg`${totalMoney} was received for this order. Cancelling does not refund it: refund it with your payment processor, then record the refund on this order.`,
 									)
-								: _(
-										msg`No payment has been received, so there is nothing to refund. The order moves to Cancelled and cannot be reopened.`,
-									)}
+								: paid
+									? _(
+											msg`${totalMoney} was received for this order. Cancelling does not refund it: refund it separately with your payment processor.`,
+										)
+									: _(
+											msg`No payment has been received, so there is nothing to refund. The order moves to Cancelled and cannot be reopened.`,
+										)}
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					<AlertDialogFooter>
@@ -679,6 +786,24 @@ export function OrderDetail({
 					</AlertDialogFooter>
 				</AlertDialogContent>
 			</AlertDialog>
+
+			{/* Stays open after a reload makes the order fully refunded, so the
+			    answer that caused the reload is still on screen. */}
+			{canWrite && refundOpen && onRecordRefund ? (
+				<RecordOrderRefundDialog
+					order={order}
+					open
+					onOpenChange={setRefundOpen}
+					onSubmit={onRecordRefund}
+					onStale={onReload}
+					finalFocus={refundFocus.finalFocus}
+					onRecorded={() => {
+						refundFocus.settle()
+						setRefundOpen(false)
+						setRefundNotice(_(msg`Refund recorded.`))
+					}}
+				/>
+			) : null}
 		</div>
 	)
 }

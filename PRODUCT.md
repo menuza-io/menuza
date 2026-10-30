@@ -52,15 +52,14 @@ region destroys the old tenant database instead of migrating it across borders.
 - Monorepo: npm workspaces + Turborepo. Node 22.18.0 and npm 10.9.0, pinned with
   Volta. macOS and Linux, arm64 and x64.
 - Surfaces: operator app, admin console, marketing site, tenant storefronts,
-  documentation site, operator mobile companion, native customer apps (iOS and
+  documentation site, operator mobile companion, Expo customer app (iOS and
   Android), regional customer-data API, scheduled-jobs worker, email template
   preview, database studio, browser extension.
 - One command (`npm run dev`) starts every service behind a local HTTPS proxy on
   `{brand-slug}.test` hostnames, including both regional data nodes.
 - Setup applies the downstream brand and renames the template's identity,
-  including native app bundle ids, package ids, configuration prefixes, and
-  Keychain/Keystore service names, so a fresh clone carries no trace of the
-  template brand.
+  including the customer app's bundle and package ids, domains, and display
+  name, so a fresh clone carries no trace of the template brand.
 - Deploy targets: Cloudflare Workers with D1, KV, R2, and Durable Objects
   (operator app, admin, marketing site, storefronts, and jobs worker). The US
   tenant API runs on a Worker with one SQLite-backed Durable Object per
@@ -122,8 +121,9 @@ Hard constraints (durable):
   locale-prefixed storefronts in six locales with right-to-left support, and
   literal-hex colors in email (email clients render neither oklch nor CSS
   variables).
-- The native customer apps have a committed byte budget; the Android app stays
-  framework-only to keep it.
+- The Expo customer app (`apps/customer`) keeps its session in
+  `expo-secure-store` and talks only browser-direct to the regional tenant API;
+  it never proxies customer data through the US App.
 
 ## Brand Commitments
 

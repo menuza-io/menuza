@@ -1,0 +1,16 @@
+---
+import { buildLoyaltyLabels } from '~/lib/loyalty/labels'
+
+/**
+ * Emits the translated interface strings for the loyalty client modules.
+ * Read with `readLoyaltyLabels()` from `~/lib/loyalty/read-labels`.
+ */
+const labels = buildLoyaltyLabels(Astro.locals.i18n)
+---
+
+<script
+	id="loyalty-labels"
+	type="application/json"
+	is:inline
+	set:html={JSON.stringify(labels).replace(/</g, '\\u003c')}
+/>

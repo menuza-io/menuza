@@ -22,12 +22,18 @@ import { mintPosStaffSession } from '../lib/pos-staff-session.ts'
 import { fetchOrderContext } from '../services/order-service.ts'
 import { deviceApps } from '../services/pos-apps-service.ts'
 import {
+	requeueTillSaleLoyalty,
+	tillLoyaltyUpload,
+	tillRewardBackedCents,
+} from '../services/pos-loyalty-service.ts'
+import {
 	billUnchanged,
 	claimTab,
 	fiscalChainHeads,
 	holdUpload,
 	listTransferableTabs,
 	peekOrder,
+	prioritizePosReviewReasons,
 	recentTransfersAway,
 	redeemPairingCode,
 	reviewAgainstMenu,
@@ -316,8 +322,9 @@ posRoutes.post('/orders', async (c) => {
 		message: string | null,
 		extra: Record<string, unknown> = {},
 	) => {
+		const identity = looseIdentity(raw)
 		const kept = await holdUpload(pos.db, pos.device, {
-			...looseIdentity(raw),
+			...identity,
 			error,
 			message,
 			contractVersion,
@@ -327,6 +334,9 @@ posRoutes.post('/orders', async (c) => {
 			return posError(429, 'held_limit', {
 				message: 'Too many uploads are waiting for review.',
 			})
+		// The sale's loyalty waits for the person who settles this upload.
+		if (identity.orderId)
+			await requeueTillSaleLoyalty(pos.orgId, identity.orderId)
 		return c.json(
 			{ result: 'held', error, ...(message ? { message } : {}), ...extra },
 			202,
@@ -370,15 +380,42 @@ posRoutes.post('/orders', async (c) => {
 			? reviewAgainstMenu(context, order, new Date())
 			: unverifiedReview()
 	}
-	review = await withStaffCheck(
-		pos.db,
-		pos.device,
-		order,
-		withDiscountCheck(withClockCheck(review, order), order),
+	// Each check runs on its own so one flag cannot mask another (a large
+	// discount must not hide a wrong clock); the stored reason is the most
+	// serious, holding reasons first.
+	const cleanReview = { ...review, reviewReason: null }
+	// Only a reward approved for this sale takes its loyalty lines out of the
+	// large-discount share; the lookup is skipped when there is none to back.
+	const rewardBackedCents = order.adjustments.some(
+		(adjustment) => adjustment.kind === 'loyalty',
 	)
+		? await tillRewardBackedCents(pos.db, order.id)
+		: 0
+	review = {
+		...review,
+		reviewReason: prioritizePosReviewReasons([
+			review.reviewReason,
+			withClockCheck(cleanReview, order).reviewReason,
+			withDiscountCheck(cleanReview, order, rewardBackedCents).reviewReason,
+			(await withStaffCheck(pos.db, pos.device, order, cleanReview))
+				.reviewReason,
+		]),
+	}
+	// Loyalty commits with the sale but can never refuse it (see the service).
+	const loyalty = await tillLoyaltyUpload(pos.orgId, {
+		deviceId: pos.device.id,
+		order,
+	})
 
 	try {
-		const result = await upsertPosOrder(pos.db, pos.device, order, review)
+		const result = await upsertPosOrder(
+			pos.db,
+			pos.device,
+			order,
+			review,
+			undefined,
+			{ onStored: loyalty.inTx },
+		)
 		if (!result.ok) {
 			// The till renumbers and resends; nothing has been stored yet.
 			if (result.error === 'number_conflict') {
@@ -390,6 +427,7 @@ posRoutes.post('/orders', async (c) => {
 			return hold(result.error, result.message ?? null, result.extra)
 		}
 		await touchDevice(pos.db, pos.device)
+		await loyalty.settle()
 		// Signed ZATCA documents are reported in the background; the hourly tick catches up.
 		if ((await queueZatcaDocuments(pos.db, pos.device, order)) > 0)
 			inBackground(c, reportDueZatca(pos.db))

@@ -7,7 +7,12 @@ import {
 } from '@repo/common/order-receipt'
 import { type PublicOrderingOptions } from '@repo/common/restaurant-orders'
 import { type CartItem } from './types.ts'
-import { getAccessToken, getOrgBinding } from '~/lib/client-auth'
+import {
+	clearSessionTokens,
+	getAccessToken,
+	getOrgBinding,
+	tenantFetch,
+} from '~/lib/client-auth'
 
 export class OrderRequestError extends Error {
 	constructor(
@@ -191,20 +196,35 @@ export async function fetchOrderingOptions(input: {
 	return value as PublicOrderingOptions
 }
 
+/**
+ * A signed-in customer's order goes with their token, refreshed once when it
+ * has expired, so the order and any reward on it stay theirs. The region
+ * answers a refused token with text rather than a code: a sign-in refused for
+ * good becomes `unauthorized` and is forgotten, so the next try goes as a
+ * guest; a refresh that failed for now keeps the session and the reward.
+ */
 export async function submitRegionalOrder(
 	body: Record<string, unknown>,
 ): Promise<CreatedOrder> {
-	const accessToken = getAccessToken()
-	const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-	if (accessToken) headers.Authorization = `Bearer ${accessToken}`
-	const response = await fetch(`${regionalUrl()}/orders`, {
+	const url = `${regionalUrl()}/orders`
+	const init: RequestInit = {
 		method: 'POST',
-		headers,
+		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify({ ...body, ...getOrgBinding() }),
-	})
+	}
+	if (!getAccessToken()) {
+		return createdOrderSchema.parse(await responseJson(await fetch(url, init)))
+	}
+	const { session, response } = await tenantFetch('/orders', init)
+	if (session === 'transient') {
+		throw new OrderRequestError('order_failed', response.status)
+	}
+	if (session === 'signed_out') {
+		clearSessionTokens()
+		throw new OrderRequestError('unauthorized', 401)
+	}
 	return createdOrderSchema.parse(await responseJson(response))
 }
-
 /** Receipt capability is sent to the region only, never to App or Sites SSR. */
 export async function fetchOrderReceipt(
 	orgId: string,

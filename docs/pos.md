@@ -34,15 +34,18 @@ to **flag** differences (`review_reason`), and never refuses a sale the till
 already took money for.
 
 - **Review reasons** stick: the first reason found stays on the order; every
-  revision's own verdict is on `pos_order_revisions`. `stale_price`, `stale_tax`
-  and `stale_catalog:*` mean the till's menu was over 10 minutes old at the
-  sale, or the upload arrived over 10 minutes after it: probably a menu change,
-  not a wrong charge. `price_mismatch`, `tax_mismatch` and `catalog:*` mean the
-  till had a fresh menu. Other reasons: `unverified` (menu unreachable),
-  `clock_skew`, `missing_staff`, `unknown_staff`, `inactive_staff`,
-  `approver_not_manager`, `large_discount` (a discount over half the subtotal),
-  `fiscal:*`. A later revision reuses the previous menu check only when its
-  lines, adjustments and totals are all unchanged; otherwise it is checked
+  revision's own verdict is on `pos_order_revisions`. When several checks flag
+  one upload the stored reason is the most serious: `clock_skew`,
+  `missing_staff`, `unknown_staff`, `inactive_staff` and `approver_not_manager`
+  (the sale itself is in doubt) always win over price, catalog and discount
+  flags (only the charge is). `stale_price`, `stale_tax` and `stale_catalog:*`
+  mean the till's menu was over 10 minutes old at the sale, or the upload
+  arrived over 10 minutes after it: probably a menu change, not a wrong charge.
+  `price_mismatch`, `tax_mismatch` and `catalog:*` mean the till had a fresh
+  menu. Other reasons: `unverified` (menu unreachable), `large_discount` (a
+  discretionary discount over half the subtotal; a loyalty reward does not
+  count), `fiscal:*`. A later revision reuses the previous menu check only when
+  its lines, adjustments and totals are all unchanged; otherwise it is checked
   again.
 - **Held uploads.** An upload the server cannot apply is stored in
   `pos_held_uploads` and answered `202 { result: 'held' }`. This covers an

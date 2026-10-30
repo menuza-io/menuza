@@ -1,25 +1,25 @@
 import { useRef, useCallback } from 'react'
-import { type TextInput } from 'react-native'
+import { type TextInputInstance } from 'react-native'
 import { dismissKeyboard } from '../lib/keyboard'
 
 export interface UseFocusManagerReturn {
-	refs: React.RefObject<(TextInput | null)[]>
+	refs: React.RefObject<(TextInputInstance | null)[]>
 	focusNext: (currentIndex: number) => void
 	focusPrevious: (currentIndex: number) => void
 	dismissKeyboard: () => void
-	setRef: (index: number) => (ref: TextInput | null) => void
+	setRef: (index: number) => (ref: TextInputInstance | null) => void
 }
 
 /**
  * Hook for managing focus between multiple input fields
  */
 export const useFocusManager = (inputCount: number): UseFocusManagerReturn => {
-	const refs = useRef<(TextInput | null)[]>(
+	const refs = useRef<(TextInputInstance | null)[]>(
 		Array.from({ length: inputCount }, () => null),
 	)
 
 	const setRef = useCallback(
-		(index: number) => (ref: TextInput | null) => {
+		(index: number) => (ref: TextInputInstance | null) => {
 			refs.current[index] = ref
 		},
 		[],

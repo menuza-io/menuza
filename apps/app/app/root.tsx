@@ -83,6 +83,10 @@ import '@fontsource-variable/geist/wght.css'
 import '@fontsource-variable/geist-mono/wght.css'
 import './styles/tailwind.css'
 import { getLaunchStatus } from './utils/env.server.ts'
+import {
+	HIDDEN_LOYALTY_NAV,
+	type LoyaltyNavAccess,
+} from './utils/loyalty/nav.ts'
 import { posthogMiddleware } from './utils/posthog.server.ts'
 import {
 	HIDDEN_PRINT_SHOP_NAV,
@@ -472,6 +476,32 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		)
 	}
 
+	let loyaltyNav: LoyaltyNavAccess = HIDDEN_LOYALTY_NAV
+	if (currentOrgId && userId) {
+		const loyaltyAccess = await import('./utils/loyalty/access.server.ts')
+		loyaltyNav = await time(
+			async () => {
+				try {
+					return await cachified({
+						key: `loyalty-nav:${currentOrgId}:${userId}`,
+						cache,
+						ttl: 1000 * 30,
+						getFreshValue: () =>
+							loyaltyAccess.getLoyaltyNavAccess(userId, currentOrgId),
+					})
+				} catch (error) {
+					// Hide the section rather than fail every page, but leave a trace.
+					console.error(
+						'Loyalty nav access failed',
+						error instanceof Error ? error.message : 'unknown error',
+					)
+					return HIDDEN_LOYALTY_NAV
+				}
+			},
+			{ timings, type: 'loyalty nav', desc: 'loyalty nav access' },
+		)
+	}
+
 	let printShopNav: PrintShopNavAccess = HIDDEN_PRINT_SHOP_NAV
 	if (currentOrgId && userId) {
 		const printAccess = await import('./utils/print/access.server.ts')
@@ -568,6 +598,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 			homePageId,
 			staffingNav,
 			reservationsNav,
+			loyaltyNav,
 			printShopNav,
 			qrOrderingNav,
 			env: {

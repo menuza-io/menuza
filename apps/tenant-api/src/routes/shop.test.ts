@@ -18,15 +18,22 @@ import { syncEnvFromProcess } from '../lib/secrets.ts'
 const orgId = 'clw9x0a12000008l00test05'
 const jwtSecret = 'test-jwt-secret-123456789'
 
-vi.mock('../lib/origin.ts', () => ({
-	findActiveOrganizationById: vi.fn().mockResolvedValue({
+vi.mock('../lib/origin.ts', () => {
+	const organization = {
 		id: 'clw9x0a12000008l00test05',
 		slug: 'shop-test',
 		customDomain: null,
 		hasProvisionedDb: true,
 		dataRegion: 'us',
-	}),
-}))
+	}
+	return {
+		findActiveOrganizationById: vi.fn().mockResolvedValue(organization),
+		lookupActiveOrganization: vi.fn().mockResolvedValue({
+			status: 'found',
+			organization,
+		}),
+	}
+})
 
 describe('tenant shop routes', () => {
 	let app: Hono

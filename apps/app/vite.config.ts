@@ -18,6 +18,8 @@ const isCloudflare = process.env.DEPLOY_TARGET === 'cloudflare'
 /** Playwright and curl hit :3001 without the TLS proxy; use WS HMR on localhost. */
 const directWorkersDev =
 	isCloudflare && MODE === 'development' && process.env.VITE_DIRECT_DEV === '1'
+/** Physical devices reach App by LAN IP; bind all interfaces and allow any Host. */
+const devLan = process.env.DEV_LAN === '1'
 const hasPostHogSourceMapCredentials = Boolean(
 	process.env.POSTHOG_PERSONAL_API_KEY && process.env.POSTHOG_PROJECT_ID,
 )
@@ -162,10 +164,11 @@ export default defineConfig((config) => ({
 					port: Number(process.env.PORT ?? 3001),
 					// Fail fast if Node `dev` still holds :3001 (proxy targets 3001 by default).
 					strictPort: true,
+					...(devLan ? { host: '0.0.0.0' as const } : {}),
 				}
 			: {}),
 		// Amp orbs expose dev servers through generated portal hostnames.
-		allowedHosts: process.env.AMP_ORB ? true : [domain, 'localhost'],
+		allowedHosts: devLan || process.env.AMP_ORB ? true : [domain, 'localhost'],
 		watch: {
 			ignored: ['**/playwright-report/**', '**/node_modules/.vite-temp/**'],
 		},

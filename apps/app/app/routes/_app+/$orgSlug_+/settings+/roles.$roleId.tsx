@@ -1,6 +1,7 @@
 import { type LoaderFunctionArgs, useLoaderData } from 'react-router'
 import { ReadOnlyRoleView } from '#app/components/roles/tenant-role-access-manager.tsx'
 import { type BreadcrumbHandle } from '#app/utils/breadcrumb.ts'
+import { isLoyaltyFeatureEnabled } from '#app/utils/loyalty/access.server.ts'
 import { isReservationsFeatureEnabled } from '#app/utils/reservations/access.server.ts'
 import { isStaffingFeatureEnabled } from '#app/utils/staffing/access.server.ts'
 import {
@@ -27,10 +28,12 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	const role = await getRoleWithPermissions(roleId, organization.organizationId)
 	if (!role) throw new Response('Role not found', { status: 404 })
 
-	const [staffingEnabled, reservationsEnabled] = await Promise.all([
-		isStaffingFeatureEnabled(organization.organizationId),
-		isReservationsFeatureEnabled(organization.organizationId),
-	])
+	const [staffingEnabled, reservationsEnabled, loyaltyEnabled] =
+		await Promise.all([
+			isStaffingFeatureEnabled(organization.organizationId),
+			isReservationsFeatureEnabled(organization.organizationId),
+			isLoyaltyFeatureEnabled(organization.organizationId),
+		])
 
 	return {
 		organization: {
@@ -42,12 +45,19 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		canEdit: isAdmin && !role.isBuiltIn,
 		staffingEnabled,
 		reservationsEnabled,
+		loyaltyEnabled,
 	}
 }
 
 export default function ViewRoleRoute() {
-	const { organization, role, canEdit, staffingEnabled, reservationsEnabled } =
-		useLoaderData<typeof loader>()
+	const {
+		organization,
+		role,
+		canEdit,
+		staffingEnabled,
+		reservationsEnabled,
+		loyaltyEnabled,
+	} = useLoaderData<typeof loader>()
 	const basePath = `/${organization.slug}/settings/roles`
 
 	return (
@@ -57,6 +67,7 @@ export default function ViewRoleRoute() {
 			editHref={canEdit ? `${basePath}/${role.id}/edit` : undefined}
 			staffingEnabled={staffingEnabled}
 			reservationsEnabled={reservationsEnabled}
+			loyaltyEnabled={loyaltyEnabled}
 		/>
 	)
 }

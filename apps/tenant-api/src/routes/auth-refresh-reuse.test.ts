@@ -12,22 +12,38 @@ import {
 	getTenantDb,
 	provisionTenantDb,
 } from '@repo/tenant-db'
-import { authRoutes } from './auth.ts'
+import { authRoutes, REFRESH_ROTATION_GRACE_MS } from './auth.ts'
 import { hmacHash } from '../lib/secrets.ts'
 
 const orgId = 'clw9x0a12000008l00test06'
 
-vi.mock('../lib/origin.ts', () => ({
-	findActiveOrganizationById: vi.fn().mockResolvedValue({
+vi.mock('../lib/origin.ts', () => {
+	const organization = {
 		id: 'clw9x0a12000008l00test06',
 		slug: 'refresh-test',
 		customDomain: null,
 		hasProvisionedDb: true,
 		dataRegion: 'us',
-	}),
-	resolveOrganizationForBrowserAuth: vi.fn(),
-	resolvePublishedOrganization: vi.fn(),
-}))
+	}
+	return {
+		findActiveOrganizationById: vi.fn().mockResolvedValue(organization),
+		lookupActiveOrganization: vi
+			.fn()
+			.mockResolvedValue({ status: 'found', organization }),
+		resolveOrganizationForBrowserAuth: vi.fn(),
+		resolvePublishedOrganization: vi.fn(),
+	}
+})
+
+/** Moves a rotation out of the grace window, where a replay counts as reuse. */
+async function rotatedLongAgo(rawToken: string) {
+	const db = await getTenantDb(orgId)
+	await db
+		.update(customerRefreshTokens)
+		.set({ rotatedAt: new Date(Date.now() - REFRESH_ROTATION_GRACE_MS - 5_000) })
+		.where(eq(customerRefreshTokens.tokenHash, hmacHash(rawToken)))
+		.run()
+}
 
 describe('refresh token rotation', () => {
 	let app: Hono
@@ -78,6 +94,7 @@ describe('refresh token rotation', () => {
 		})
 		expect(firstRotation.status).toBe(200)
 		const currentToken = (await firstRotation.json()).refreshToken as string
+		await rotatedLongAgo(firstToken)
 
 		const replay = await app.request('/auth/refresh', {
 			method: 'POST',
@@ -114,31 +131,44 @@ describe('refresh token rotation', () => {
 		expect(legacyRefresh.status).toBe(200)
 		const firstToken = (await legacyRefresh.json()).refreshToken as string
 
-		const [firstAttempt, replayAttempt] = await Promise.all([
-			app.request('/auth/refresh', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ refreshToken: firstToken, orgId }),
-			}),
-			app.request('/auth/refresh', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ refreshToken: firstToken, orgId }),
-			}),
-		])
-		expect([firstAttempt.status, replayAttempt.status].sort()).toEqual([
-			200, 401,
-		])
-
-		const successfulRotation =
-			firstAttempt.status === 200 ? firstAttempt : replayAttempt
-		const currentToken = (await successfulRotation.json())
-			.refreshToken as string
-		const currentSession = await app.request('/auth/refresh', {
+		const rotation = await app.request('/auth/refresh', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ refreshToken: currentToken, orgId }),
+			body: JSON.stringify({ refreshToken: firstToken, orgId }),
 		})
-		expect(currentSession.status).toBe(401)
+		expect(rotation.status).toBe(200)
+		const secondToken = (await rotation.json()).refreshToken as string
+		await rotatedLongAgo(firstToken)
+
+		// The current token and a replay of the old one race.
+		const [currentAttempt, replayAttempt] = await Promise.all([
+			app.request('/auth/refresh', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ refreshToken: secondToken, orgId }),
+			}),
+			app.request('/auth/refresh', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ refreshToken: firstToken, orgId }),
+			}),
+		])
+		expect(replayAttempt.status).toBe(401)
+
+		if (currentAttempt.status === 200) {
+			const currentToken = (await currentAttempt.json())
+				.refreshToken as string
+			const currentSession = await app.request('/auth/refresh', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ refreshToken: currentToken, orgId }),
+			})
+			expect(currentSession.status).toBe(401)
+		} else {
+			expect(currentAttempt.status).toBe(401)
+		}
+		const db = await getTenantDb(orgId)
+		const tokens = await db.select().from(customerRefreshTokens).all()
+		expect(tokens.every((token) => token.revokedAt)).toBe(true)
 	})
 })

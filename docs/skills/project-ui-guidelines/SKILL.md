@@ -11,9 +11,9 @@ description:
 
 Use this skill when creating or reviewing App/Admin UI, shared components,
 forms, dialogs, responsive layouts, loading states, keyboard interactions,
-localization, or accessibility behavior. For Expo/iOS/Android UI, combine this
-guidance with [project-mobile](../project-mobile/SKILL.md) and the platform
-constraints.
+localization, or accessibility behavior. For Expo UI (operator or customer app),
+combine this guidance with [project-mobile](../project-mobile/SKILL.md) and the
+platform constraints.
 
 ## Use the design system
 

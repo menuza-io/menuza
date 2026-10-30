@@ -36,9 +36,14 @@ export class ReservationsApiError extends Error {
 }
 
 export type ReservationsApiDeps = {
-	baseUrl: string
+	/** Read for each call, so a page without a region fails only when it calls. */
+	baseUrl: string | (() => string)
 	fetchImpl?: typeof fetch
-	/** Sends the signed-in customer's token (refreshing it when it lapsed). */
+	/**
+	 * Sends the signed-in customer's token (refreshing it when it lapsed).
+	 * Rejects when the session cannot be checked for now, so the call fails
+	 * like the network instead of booking as a guest.
+	 */
 	authedFetch?: (path: string, init: RequestInit) => Promise<Response>
 	isSignedIn?: () => boolean
 	/** Drops a customer session the server no longer accepts. */
@@ -61,7 +66,11 @@ function defaultKey() {
 
 export function createReservationsApi(deps: ReservationsApiDeps) {
 	const fetchImpl = deps.fetchImpl ?? ((...args) => fetch(...args))
-	const baseUrl = deps.baseUrl.replace(/\/$/, '')
+	const baseUrl = () =>
+		(typeof deps.baseUrl === 'function' ? deps.baseUrl() : deps.baseUrl).replace(
+			/\/$/,
+			'',
+		)
 	const newKey = deps.newKey ?? defaultKey
 
 	function buildInit(options: RequestOptions): RequestInit {
@@ -98,9 +107,9 @@ export function createReservationsApi(deps: ReservationsApiDeps) {
 				return res
 			}
 			deps.clearSession?.()
-			return fetchImpl(`${baseUrl}${path}`, buildInit(options))
+			return fetchImpl(`${baseUrl()}${path}`, buildInit(options))
 		}
-		return fetchImpl(`${baseUrl}${path}`, init)
+		return fetchImpl(`${baseUrl()}${path}`, init)
 	}
 
 	async function call<T>(

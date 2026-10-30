@@ -1113,8 +1113,15 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 			if (readSession(guardKey)) return
 			writeSession(guardKey, '1')
 
+			let tenantApiUrl: string
+			try {
+				tenantApiUrl = getBrowserTenantApiUrl()
+			} catch {
+				showVoiceOrderNotice('error')
+				return
+			}
 			const result = await fetchVoiceOrderHandoff({
-				tenantApiUrl: getBrowserTenantApiUrl(),
+				tenantApiUrl,
 				token,
 				binding: getOrgBinding(),
 			})

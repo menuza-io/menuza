@@ -23,7 +23,8 @@
     "seed:reservations": "node scripts/seed-reservations.mjs",
     "seed:qr": "../../node_modules/.bin/varlock run -- tsx scripts/seed-qr.ts",
     "seed:demo-people": "../../node_modules/.bin/varlock run -- tsx scripts/seed-demo-people-orders.ts",
-    "fixtures:reservations": "RECORD_RESERVATIONS_FIXTURES=1 CI=true ../../node_modules/.bin/varlock run -- vitest run src/routes/reservations-contract.test.ts"
+    "fixtures:reservations": "RECORD_RESERVATIONS_FIXTURES=1 CI=true ../../node_modules/.bin/varlock run -- vitest run src/routes/reservations-contract.test.ts",
+    "fixtures:loyalty": "RECORD_LOYALTY_FIXTURES=1 CI=true ../../node_modules/.bin/varlock run -- vitest run src/routes/loyalty-contract.test.ts"
   },
   "dependencies": {
     "@hono/node-server": "^2.1.0",
@@ -32,6 +33,7 @@
     "@repo/database": "^0.0.0",
     "@repo/email": "*",
     "@repo/geo": "*",
+    "@repo/loyalty": "*",
     "@repo/observability": "*",
     "@repo/phone-agent": "*",
     "@repo/reports": "*",

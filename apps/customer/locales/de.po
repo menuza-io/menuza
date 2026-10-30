@@ -1,0 +1,1088 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-01-22 00:00+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: de\n"
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Plural-Forms: \n"
+
+#: lib/loyalty/labels.ts:35
+msgid "{amount} held for an order in progress"
+msgstr "{amount} für eine laufende Bestellung reserviert"
+
+#: lib/loyalty/labels.ts:68
+msgid "{amount} more needed"
+msgstr "Noch {amount} nötig"
+
+#: lib/loyalty/labels.ts:37
+msgid "{amount} more to unlock {reward}"
+msgstr "Noch {amount} bis {reward}"
+
+#: lib/loyalty/labels.ts:56
+msgid "{amount} off"
+msgstr "{amount} Rabatt"
+
+#: lib/reservations/messages.ts:29
+msgid "{count, plural, one {# guest} other {# guests}}"
+msgstr "{count, plural, one {# Gast} other {# Gäste}}"
+
+#: lib/reservations/messages.ts:63
+msgid "{count, plural, one {Free cancellation until # hour before.} other {Free cancellation until # hours before.}}"
+msgstr "{count, plural, one {Kostenlos stornierbar bis # Stunde vorher.} other {Kostenlos stornierbar bis # Stunden vorher.}}"
+
+#: lib/reservations/messages.ts:94
+msgid "{count} min"
+msgstr "{count} Min."
+
+#: lib/loyalty/labels.ts:16
+msgid "{n, plural, one {{count} point} other {{count} points}}"
+msgstr "{n, plural, one {{count} Punkt} other {{count} Punkte}}"
+
+#: lib/loyalty/labels.ts:17
+msgid "{n, plural, one {{count} star} other {{count} stars}}"
+msgstr "{n, plural, one {{count} Stern} other {{count} Sterne}}"
+
+#: lib/loyalty/labels.ts:57
+msgid "{percent} off"
+msgstr "{percent} Rabatt"
+
+#: lib/loyalty/labels.ts:45
+msgid "{points} for each {items}"
+msgstr "{points} pro {items}"
+
+#: lib/loyalty/labels.ts:46
+msgid "{points} for each eligible item"
+msgstr "{points} für jeden teilnehmenden Artikel"
+
+#: lib/loyalty/labels.ts:47
+msgid "{points} for each item from {categories}"
+msgstr "{points} für jeden Artikel aus {categories}"
+
+#: lib/loyalty/labels.ts:48
+msgid "{points} for each item from eligible categories"
+msgstr "{points} für jeden Artikel aus teilnehmenden Kategorien"
+
+#: lib/loyalty/labels.ts:44
+msgid "{points} for each visit (once a day)"
+msgstr "{points} pro Besuch (einmal am Tag)"
+
+#: lib/loyalty/labels.ts:43
+msgid "{points} for every {amount} you spend"
+msgstr "{points} für je {amount}, die Sie ausgeben"
+
+#: components/auth/login-screen.tsx:25
+msgid "+1 555 000 0000"
+msgstr "+1 555 000 0000"
+
+#: lib/reservations/messages.ts:62
+msgid "A card is needed to guarantee this booking."
+msgstr "Zur Absicherung dieser Reservierung wird eine Karte benötigt."
+
+#: lib/reservations/messages.ts:61
+msgid "A deposit of {amount} is due to confirm this booking."
+msgstr "Zur Bestätigung ist eine Anzahlung von {amount} fällig."
+
+#: lib/loyalty/labels.ts:65
+msgid "A free item"
+msgstr "Ein Gratisartikel"
+
+#: lib/reservations/messages.ts:114
+msgid "About {count} min"
+msgstr "Etwa {count} Min."
+
+#: components/auth/connect-site-screen.tsx:24
+msgid "acme or acme.example.com"
+msgstr "acme oder acme.example.com"
+
+#: lib/loyalty/labels.ts:113
+msgid "Adjusted by staff"
+msgstr "Vom Team angepasst"
+
+#: lib/reservations/messages.ts:69
+msgid "Amount due"
+msgstr "Fälliger Betrag"
+
+#: lib/reservations/messages.ts:68
+msgid "Amount due: {amount}"
+msgstr "Fälliger Betrag: {amount}"
+
+#: lib/loyalty/labels.ts:117
+msgid "App"
+msgstr "App"
+
+#: lib/loyalty/labels.ts:62
+msgid "Applies to {categories}"
+msgstr "Gilt für {categories}"
+
+#: lib/loyalty/labels.ts:60
+msgid "Applies to {items}"
+msgstr "Gilt für {items}"
+
+#: lib/loyalty/labels.ts:63
+msgid "Applies to selected categories"
+msgstr "Gilt für ausgewählte Kategorien"
+
+#: lib/loyalty/labels.ts:61
+msgid "Applies to selected items"
+msgstr "Gilt für ausgewählte Artikel"
+
+#: lib/loyalty/labels.ts:59
+msgid "Applies to your whole order"
+msgstr "Gilt für Ihre gesamte Bestellung"
+
+#: lib/loyalty/labels.ts:93
+msgid "Approve"
+msgstr "Bestätigen"
+
+#: lib/loyalty/labels.ts:95
+msgid "Approve {reward}"
+msgstr "{reward} bestätigen"
+
+#: lib/loyalty/labels.ts:97
+msgid "Approved: {reward}."
+msgstr "Bestätigt: {reward}."
+
+#: lib/reservations/messages.ts:102
+msgid "Arrived"
+msgstr "Eingetroffen"
+
+#: lib/reservations/messages.ts:31
+msgid "Available times"
+msgstr "Verfügbare Zeiten"
+
+#: lib/reservations/messages.ts:99
+msgid "Awaiting payment"
+msgstr "Zahlung ausstehend"
+
+#: components/reservations/parts.tsx:83
+msgid "Back"
+msgstr "Zurück"
+
+#: lib/reservations/messages.ts:18
+msgid "Book a table"
+msgstr "Tisch reservieren"
+
+#: lib/reservations/messages.ts:100
+msgid "Booked"
+msgstr "Gebucht"
+
+#: lib/reservations/messages.ts:96
+msgid "Call the restaurant"
+msgstr "Restaurant anrufen"
+
+#: lib/reservations/messages.ts:90
+msgid "Cancel reservation"
+msgstr "Reservierung stornieren"
+
+#: lib/reservations/messages.ts:91
+msgid "Cancel this reservation?"
+msgstr "Diese Reservierung stornieren?"
+
+#: lib/reservations/messages.ts:105
+msgid "Cancelled"
+msgstr "Storniert"
+
+#: lib/reservations/messages.ts:89
+msgid "Change time"
+msgstr "Zeit ändern"
+
+#: lib/loyalty/labels.ts:89
+msgid "Check for requests"
+msgstr "Nach Anfragen suchen"
+
+#: lib/reservations/messages.ts:72
+msgid "Checking your payment…"
+msgstr "Zahlung wird geprüft …"
+
+#: lib/reservations/messages.ts:26
+msgid "Choose a location"
+msgstr "Standort wählen"
+
+#: lib/reservations/messages.ts:67
+msgid "Complete your payment"
+msgstr "Zahlung abschließen"
+
+#: lib/reservations/messages.ts:57
+msgid "Confirm booking"
+msgstr "Reservierung bestätigen"
+
+#: lib/reservations/messages.ts:82
+msgid "Confirmation code"
+msgstr "Bestätigungscode"
+
+#: lib/reservations/messages.ts:101
+msgid "Confirmed"
+msgstr "Bestätigt"
+
+#: components/auth/connect-site-screen.tsx:37
+msgid "Connect"
+msgstr "Verbinden"
+
+#: components/auth/connect-site-screen.tsx:19
+msgid "Connect to your site"
+msgstr "Mit Ihrer Website verbinden"
+
+#: components/auth/complete-name-screen.tsx:38
+msgid "Continue"
+msgstr "Weiter"
+
+#: lib/reservations/messages.ts:58
+msgid "Continue to payment"
+msgstr "Weiter zur Zahlung"
+
+#: lib/loyalty/labels.ts:55
+msgid "Cost"
+msgstr "Kosten"
+
+#: lib/reservations/messages.ts:30
+msgid "Date"
+msgstr "Datum"
+
+#: lib/loyalty/labels.ts:94
+msgid "Decline"
+msgstr "Ablehnen"
+
+#: lib/loyalty/labels.ts:96
+msgid "Decline {reward}"
+msgstr "{reward} ablehnen"
+
+#: lib/reservations/messages.ts:107
+msgid "Declined"
+msgstr "Abgelehnt"
+
+#: lib/loyalty/labels.ts:98
+msgid "Declined: {reward}."
+msgstr "Abgelehnt: {reward}."
+
+#: lib/reservations/messages.ts:49
+msgid "Dietary needs"
+msgstr "Ernährungswünsche"
+
+#: components/loyalty/notice-line.tsx:32
+msgid "Dismiss"
+msgstr "Ausblenden"
+
+#: lib/reservations/messages.ts:84
+msgid "Done"
+msgstr "Fertig"
+
+#: lib/loyalty/labels.ts:108
+msgid "Earned"
+msgstr "Gesammelt"
+
+#: lib/reservations/messages.ts:59
+msgid "Edit details"
+msgstr "Angaben ändern"
+
+#: components/profile/profile-screen.tsx:91
+msgid "Email"
+msgstr "E-Mail"
+
+#: lib/reservations/messages.ts:46
+msgid "Email (optional)"
+msgstr "E-Mail (optional)"
+
+#: lib/reservations/messages.ts:119
+msgid "Enjoy your meal!"
+msgstr "Guten Appetit!"
+
+#: lib/i18n/app-error-message.ts:27
+msgid "Enter a valid email address."
+msgstr "Geben Sie eine gültige E-Mail-Adresse ein."
+
+#: lib/i18n/app-error-message.ts:19
+msgid "Enter a valid phone number."
+msgstr "Geben Sie eine gültige Telefonnummer ein."
+
+#: components/auth/verify-screen.tsx:27
+msgid "Enter your code"
+msgstr "Code eingeben"
+
+#: lib/i18n/app-error-message.ts:23
+msgid "Enter your name."
+msgstr "Geben Sie Ihren Namen ein."
+
+#: components/auth/login-screen.tsx:21
+msgid "Enter your phone number. We'll send a verification code."
+msgstr "Geben Sie Ihre Telefonnummer ein. Wir senden Ihnen einen Bestätigungscode."
+
+#: components/auth/connect-site-screen.tsx:20
+msgid "Enter your site address to load its branding."
+msgstr "Geben Sie die Adresse Ihrer Website ein, um ihr Branding zu laden."
+
+#: lib/reservations/messages.ts:108
+msgid "Expired"
+msgstr "Abgelaufen"
+
+#: lib/loyalty/labels.ts:81
+#: lib/loyalty/labels.ts:92
+msgid "Expires in {time}"
+msgstr "Läuft ab in {time}"
+
+#: components/reservations/parts.tsx:204
+msgid "Fewer guests"
+msgstr "Weniger Gäste"
+
+#: lib/reservations/messages.ts:27
+msgid "Find a table"
+msgstr "Tisch finden"
+
+#: lib/reservations/messages.ts:104
+msgid "Finished"
+msgstr "Abgeschlossen"
+
+#: lib/reservations/messages.ts:44
+msgid "First name"
+msgstr "Vorname"
+
+#: lib/reservations/messages.ts:37
+msgid "For a group this size, please call {phone}."
+msgstr "Für eine Gruppe dieser Größe rufen Sie bitte {phone} an."
+
+#: lib/loyalty/labels.ts:64
+msgid "Free {item}"
+msgstr "{item} gratis"
+
+#: lib/reservations/messages.ts:97
+msgid "Free to change until {time}"
+msgstr "Kostenlos änderbar bis {time}"
+
+#: lib/loyalty/labels.ts:78
+msgid "Get a new code"
+msgstr "Neuen Code anfordern"
+
+#: lib/loyalty/labels.ts:79
+msgid "Getting your code…"
+msgstr "Ihr Code wird abgerufen …"
+
+#: lib/loyalty/labels.ts:104
+msgid "History"
+msgstr "Verlauf"
+
+#: lib/loyalty/labels.ts:42
+msgid "How you earn"
+msgstr "So sammeln Sie"
+
+#: lib/reservations/messages.ts:66
+msgid "I accept the booking terms."
+msgstr "Ich akzeptiere die Reservierungsbedingungen."
+
+#: lib/reservations/messages.ts:116
+msgid "I'm on my way"
+msgstr "Ich bin unterwegs"
+
+#: lib/reservations/messages.ts:74
+msgid "I've paid, check again"
+msgstr "Ich habe bezahlt, erneut prüfen"
+
+#: lib/loyalty/labels.ts:115
+msgid "In store"
+msgstr "Vor Ort"
+
+#: components/auth/complete-name-screen.tsx:26
+#: components/profile/profile-screen.tsx:83
+msgid "Jane Doe"
+msgstr "Erika Mustermann"
+
+#: lib/reservations/messages.ts:111
+msgid "Join"
+msgstr "Beitreten"
+
+#: lib/reservations/messages.ts:22
+#: lib/reservations/messages.ts:41
+msgid "Join the waitlist"
+msgstr "Auf die Warteliste"
+
+#: lib/reservations/messages.ts:92
+msgid "Keep it"
+msgstr "Behalten"
+
+#: components/profile/profile-screen.tsx:149
+msgid "Language"
+msgstr "Sprache"
+
+#: lib/reservations/messages.ts:36
+msgid "Larger groups send a request, and the restaurant confirms it."
+msgstr "Größere Gruppen senden eine Anfrage, das Restaurant bestätigt sie."
+
+#: lib/reservations/messages.ts:45
+msgid "Last name"
+msgstr "Nachname"
+
+#: lib/reservations/messages.ts:64
+msgid "Late cancellation fee: {amount}"
+msgstr "Gebühr bei später Stornierung: {amount}"
+
+#: components/shell/announcement-banner.tsx:40
+msgid "Learn more"
+msgstr "Mehr erfahren"
+
+#: lib/reservations/messages.ts:117
+msgid "Leave the waitlist"
+msgstr "Warteliste verlassen"
+
+#: components/profile/profile-screen.tsx:63
+msgid "Loading your profile…"
+msgstr "Ihr Profil wird geladen…"
+
+#: lib/loyalty/labels.ts:20
+msgid "Loading your rewards…"
+msgstr "Ihre Prämien werden geladen …"
+
+#: components/shell/app-gate.tsx:23
+#: lib/loyalty/labels.ts:107
+#: lib/reservations/messages.ts:14
+msgid "Loading…"
+msgstr "Wird geladen …"
+
+#: components/reservations/parts.tsx:205
+msgid "More guests"
+msgstr "Mehr Gäste"
+
+#: lib/reservations/messages.ts:19
+msgid "My reservations"
+msgstr "Meine Reservierungen"
+
+#: components/auth/complete-name-screen.tsx:25
+#: components/profile/profile-screen.tsx:82
+#: lib/reservations/messages.ts:60
+#: lib/reservations/messages.ts:112
+msgid "Name"
+msgstr "Name"
+
+#: lib/loyalty/labels.ts:120
+msgid "Network error. Check your connection and try again."
+msgstr "Netzwerkfehler. Bitte prüfen Sie Ihre Verbindung und versuchen Sie es erneut."
+
+#: lib/i18n/app-error-message.ts:33
+msgid "Network error. Please try again."
+msgstr "Netzwerkfehler. Bitte versuchen Sie es erneut."
+
+#: lib/loyalty/labels.ts:105
+msgid "No activity yet. Your purchases will show up here."
+msgstr "Noch keine Aktivität. Ihre Einkäufe erscheinen hier."
+
+#: lib/reservations/messages.ts:136
+msgid "No connection. Please try again."
+msgstr "Keine Verbindung. Bitte erneut versuchen."
+
+#: lib/reservations/messages.ts:52
+msgid "No preference"
+msgstr "Keine Präferenz"
+
+#: lib/loyalty/labels.ts:88
+msgid "No requests right now."
+msgstr "Derzeit keine Anfragen."
+
+#: lib/loyalty/labels.ts:54
+msgid "No rewards are available yet."
+msgstr "Noch keine Prämien verfügbar."
+
+#: lib/reservations/messages.ts:32
+msgid "No tables left for this day."
+msgstr "Für diesen Tag sind keine Tische mehr frei."
+
+#: lib/reservations/messages.ts:20
+msgid "No upcoming reservations."
+msgstr "Keine anstehenden Reservierungen."
+
+#: lib/reservations/messages.ts:106
+msgid "No-show"
+msgstr "Nicht erschienen"
+
+#: lib/reservations/messages.ts:65
+msgid "No-show fee: {amount}"
+msgstr "Gebühr bei Nichterscheinen: {amount}"
+
+#: lib/reservations/messages.ts:48
+msgid "None"
+msgstr "Keiner"
+
+#: lib/reservations/messages.ts:35
+msgid "Not taking online reservations on this day."
+msgstr "An diesem Tag gibt es keine Online-Reservierungen."
+
+#: lib/reservations/messages.ts:47
+msgid "Occasion"
+msgstr "Anlass"
+
+#: lib/reservations/messages.ts:25
+msgid "OK"
+msgstr "OK"
+
+#: lib/loyalty/labels.ts:66
+msgid "One item. Paid extras are still charged."
+msgstr "Ein Artikel. Kostenpflichtige Extras werden weiterhin berechnet."
+
+#: lib/loyalty/labels.ts:71
+msgid "One reward per order."
+msgstr "Eine Prämie pro Bestellung."
+
+#: lib/loyalty/labels.ts:114
+msgid "Online"
+msgstr "Online"
+
+#: lib/reservations/messages.ts:134
+msgid "Online booking is paused. Please try again later."
+msgstr "Online-Buchung ist pausiert. Bitte versuchen Sie es später erneut."
+
+#: lib/reservations/messages.ts:24
+msgid "Online reservations aren't available right now."
+msgstr "Online-Reservierungen sind derzeit nicht verfügbar."
+
+#: components/loyalty/program-sections.tsx:132
+msgid "Opens in your browser. Your points and rewards apply when you order there."
+msgstr "Öffnet sich in Ihrem Browser. Ihre Punkte und Prämien gelten, wenn Sie dort bestellen."
+
+#: components/loyalty/program-sections.tsx:129
+msgid "Order on the website"
+msgstr "Auf der Website bestellen"
+
+#: lib/reservations/messages.ts:34
+msgid "Other days with tables"
+msgstr "Andere Tage mit freien Tischen"
+
+#: lib/reservations/messages.ts:88
+msgid "Party"
+msgstr "Gruppe"
+
+#: lib/reservations/messages.ts:28
+msgid "Party size"
+msgstr "Personenzahl"
+
+#: lib/reservations/messages.ts:21
+msgid "Past"
+msgstr "Vergangene"
+
+#: lib/reservations/messages.ts:70
+msgid "Pay now"
+msgstr "Jetzt bezahlen"
+
+#: lib/reservations/messages.ts:73
+msgid "Pay within {time} to keep your table."
+msgstr "Zahlen Sie innerhalb von {time}, um den Tisch zu behalten."
+
+#: lib/reservations/messages.ts:125
+msgid "Payments aren't available right now."
+msgstr "Zahlungen sind derzeit nicht verfügbar."
+
+#: components/auth/login-screen.tsx:24
+#: components/profile/profile-screen.tsx:102
+#: lib/reservations/messages.ts:16
+msgid "Phone number"
+msgstr "Telefonnummer"
+
+#: lib/reservations/messages.ts:124
+msgid "Please accept the booking terms."
+msgstr "Bitte akzeptieren Sie die Reservierungsbedingungen."
+
+#: lib/reservations/messages.ts:131
+msgid "Please check your details."
+msgstr "Bitte prüfen Sie Ihre Angaben."
+
+#: lib/reservations/messages.ts:128
+msgid "Please sign in again."
+msgstr "Bitte melden Sie sich erneut an."
+
+#: lib/reservations/messages.ts:38
+msgid "Preferred time"
+msgstr "Wunschzeit"
+
+#: app/(tabs)/_layout.tsx:59
+#: lib/reservations/messages.ts:23
+msgid "Profile"
+msgstr "Profil"
+
+#: components/profile/profile-screen.tsx:110
+msgid "Profile saved."
+msgstr "Profil gespeichert."
+
+#: lib/loyalty/labels.ts:31
+msgid "Program terms"
+msgstr "Programmbedingungen"
+
+#: lib/loyalty/labels.ts:38
+msgid "Progress to {reward}"
+msgstr "Fortschritt bis {reward}"
+
+#: lib/loyalty/labels.ts:49
+msgid "Purchases of at least {amount} qualify."
+msgstr "Einkäufe ab {amount} zählen."
+
+#: lib/loyalty/labels.ts:110
+msgid "Redeemed {reward}"
+msgstr "{reward} eingelöst"
+
+#: lib/loyalty/labels.ts:111
+msgid "Redeemed a reward"
+msgstr "Prämie eingelöst"
+
+#: lib/loyalty/labels.ts:109
+msgid "Refund adjustment"
+msgstr "Korrektur nach Erstattung"
+
+#: lib/reservations/messages.ts:80
+msgid "Request sent"
+msgstr "Anfrage gesendet"
+
+#: lib/reservations/messages.ts:98
+msgid "Requested"
+msgstr "Angefragt"
+
+#: lib/loyalty/labels.ts:86
+msgid "Requests to use your rewards"
+msgstr "Anfragen zur Nutzung Ihrer Prämien"
+
+#: lib/reservations/messages.ts:85
+msgid "Reservation"
+msgstr "Reservierung"
+
+#: app/(tabs)/_layout.tsx:40
+#: lib/reservations/messages.ts:17
+msgid "Reservations"
+msgstr "Reservierungen"
+
+#: lib/reservations/messages.ts:55
+msgid "Review"
+msgstr "Prüfen"
+
+#: lib/reservations/messages.ts:56
+msgid "Review your booking"
+msgstr "Reservierung prüfen"
+
+#: lib/loyalty/labels.ts:112
+msgid "Reward returned"
+msgstr "Prämie zurückgebucht"
+
+#: app/(tabs)/_layout.tsx:49
+#: lib/loyalty/labels.ts:53
+msgid "Rewards"
+msgstr "Prämien"
+
+#: lib/loyalty/labels.ts:21
+msgid "Rewards are not available right now"
+msgstr "Prämien sind derzeit nicht verfügbar"
+
+#: lib/loyalty/labels.ts:123
+msgid "Rewards are not available right now."
+msgstr "Prämien sind derzeit nicht verfügbar."
+
+#: lib/loyalty/labels.ts:122
+msgid "Rewards are temporarily unavailable. Please try again later."
+msgstr "Prämien sind vorübergehend nicht verfügbar. Bitte versuchen Sie es später erneut."
+
+#: lib/loyalty/labels.ts:70
+msgid "Rewards cannot be used right now."
+msgstr "Prämien können derzeit nicht eingelöst werden."
+
+#: lib/reservations/messages.ts:93
+msgid "Running late"
+msgstr "Ich verspäte mich"
+
+#: components/profile/profile-screen.tsx:114
+msgid "Save changes"
+msgstr "Änderungen speichern"
+
+#: lib/reservations/messages.ts:103
+msgid "Seated"
+msgstr "Platziert"
+
+#: lib/reservations/messages.ts:51
+msgid "Seating area"
+msgstr "Sitzbereich"
+
+#: components/auth/verify-screen.tsx:59
+msgid "Send a new code"
+msgstr "Neuen Code senden"
+
+#: lib/reservations/messages.ts:39
+msgid "Send a request"
+msgstr "Anfrage senden"
+
+#: components/auth/login-screen.tsx:37
+msgid "Send code"
+msgstr "Code senden"
+
+#: lib/loyalty/labels.ts:106
+msgid "Show more"
+msgstr "Mehr anzeigen"
+
+#: lib/loyalty/labels.ts:77
+msgid "Show my code"
+msgstr "Meinen Code anzeigen"
+
+#: lib/loyalty/labels.ts:75
+msgid "Show this code at the counter so staff can find your points."
+msgstr "Zeigen Sie diesen Code an der Theke, damit das Team Ihre Punkte findet."
+
+#: lib/loyalty/labels.ts:76
+msgid "Showing your code does not spend any points. You approve every reward yourself."
+msgstr "Das Vorzeigen des Codes kostet keine Punkte. Jede Prämie bestätigen Sie selbst."
+
+#: components/auth/login-screen.tsx:20
+#: lib/loyalty/labels.ts:26
+msgid "Sign in"
+msgstr "Anmelden"
+
+#: lib/loyalty/labels.ts:24
+msgid "Sign in to see your rewards"
+msgstr "Melden Sie sich an, um Ihre Prämien zu sehen"
+
+#: lib/loyalty/labels.ts:25
+msgid "Sign in with your phone number to see your points and use your rewards."
+msgstr "Melden Sie sich mit Ihrer Telefonnummer an, um Ihre Punkte zu sehen und Prämien einzulösen."
+
+#: components/profile/profile-screen.tsx:121
+msgid "Sign out"
+msgstr "Abmelden"
+
+#: components/auth/connect-site-screen.tsx:23
+msgid "Site address"
+msgstr "Website-Adresse"
+
+#: lib/i18n/app-error-message.ts:41
+#: lib/loyalty/labels.ts:130
+#: lib/reservations/messages.ts:137
+msgid "Something went wrong. Please try again."
+msgstr "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
+
+#: lib/reservations/messages.ts:50
+msgid "Special requests"
+msgstr "Besondere Wünsche"
+
+#: lib/loyalty/labels.ts:91
+msgid "Spends {points} for {amount} off"
+msgstr "Löst {points} für {amount} Rabatt ein"
+
+#: components/profile/profile-screen.tsx:139
+msgid "System default"
+msgstr "Systemstandard"
+
+#: lib/loyalty/labels.ts:116
+msgid "Table order"
+msgstr "Tischbestellung"
+
+#: lib/loyalty/labels.ts:50
+msgid "Tax, tips and delivery fees do not count toward earning."
+msgstr "Steuern, Trinkgelder und Liefergebühren werden beim Sammeln nicht berücksichtigt."
+
+#: components/auth/complete-name-screen.tsx:23
+msgid "Tell us what to call you."
+msgstr "Sagen Sie uns, wie wir Sie nennen sollen."
+
+#: lib/reservations/messages.ts:53
+msgid "Text me reminders"
+msgstr "SMS-Erinnerungen senden"
+
+#: lib/i18n/app-error-message.ts:21
+msgid "That code isn't right or has expired. Try again."
+msgstr "Der Code ist falsch oder abgelaufen. Versuchen Sie es erneut."
+
+#: lib/i18n/app-error-message.ts:25
+msgid "That name is too long."
+msgstr "Der Name ist zu lang."
+
+#: lib/reservations/messages.ts:130
+msgid "That party size isn't available online."
+msgstr "Diese Personenzahl ist online nicht buchbar."
+
+#: lib/loyalty/labels.ts:99
+msgid "That request has expired."
+msgstr "Diese Anfrage ist abgelaufen."
+
+#: lib/loyalty/labels.ts:100
+msgid "That request was already handled."
+msgstr "Diese Anfrage wurde bereits bearbeitet."
+
+#: lib/reservations/messages.ts:122
+msgid "That time was just taken. Pick another."
+msgstr "Diese Zeit wurde gerade vergeben. Bitte wählen Sie eine andere."
+
+#: lib/reservations/messages.ts:77
+msgid "The payment didn't go through."
+msgstr "Die Zahlung ist fehlgeschlagen."
+
+#: lib/reservations/messages.ts:76
+msgid "The payment window ended and the table was released."
+msgstr "Die Zahlungsfrist ist abgelaufen, der Tisch wurde freigegeben."
+
+#: lib/loyalty/labels.ts:125
+msgid "The program is paused right now."
+msgstr "Das Programm ist derzeit pausiert."
+
+#: lib/reservations/messages.ts:133
+msgid "The restaurant isn't taking requests online."
+msgstr "Das Restaurant nimmt online keine Anfragen an."
+
+#: lib/reservations/messages.ts:81
+msgid "The restaurant will confirm your request soon."
+msgstr "Das Restaurant bestätigt Ihre Anfrage in Kürze."
+
+#: lib/loyalty/labels.ts:23
+msgid "The rewards program is paused. Your balance is safe, but you cannot earn or redeem right now."
+msgstr "Das Prämienprogramm ist pausiert. Ihr Guthaben bleibt erhalten, aber Sie können derzeit weder sammeln noch einlösen."
+
+#: lib/i18n/app-error-message.ts:36
+msgid "The service is unavailable right now. Please try again later."
+msgstr "Der Dienst ist gerade nicht verfügbar. Bitte versuchen Sie es später erneut."
+
+#: lib/reservations/messages.ts:139
+msgid "The waitlist is full right now."
+msgstr "Die Warteliste ist derzeit voll."
+
+#: lib/loyalty/labels.ts:22
+msgid "This business is not running a rewards program at the moment."
+msgstr "Dieses Unternehmen bietet derzeit kein Prämienprogramm an."
+
+#: lib/loyalty/labels.ts:82
+msgid "This code has expired. Get a new one."
+msgstr "Dieser Code ist abgelaufen. Fordern Sie einen neuen an."
+
+#: lib/reservations/messages.ts:132
+msgid "This party size needs a request."
+msgstr "Für diese Gruppengröße ist eine Anfrage nötig."
+
+#: lib/reservations/messages.ts:78
+msgid "This payment was refunded."
+msgstr "Diese Zahlung wurde erstattet."
+
+#: lib/loyalty/labels.ts:127
+msgid "This reward is no longer available."
+msgstr "Diese Prämie ist nicht mehr verfügbar."
+
+#: lib/i18n/app-error-message.ts:17
+msgid "This site isn't available in this app yet."
+msgstr "Diese Website ist in dieser App noch nicht verfügbar."
+
+#: lib/reservations/messages.ts:120
+msgid "This waitlist link no longer works."
+msgstr "Dieser Wartelisten-Link funktioniert nicht mehr."
+
+#: lib/reservations/messages.ts:126
+msgid "Too many attempts. Please try again in a few minutes."
+msgstr "Zu viele Versuche. Bitte versuchen Sie es in einigen Minuten erneut."
+
+#: lib/i18n/app-error-message.ts:31
+msgid "Too many attempts. Please try again later."
+msgstr "Zu viele Versuche. Bitte versuchen Sie es später erneut."
+
+#: lib/loyalty/labels.ts:121
+msgid "Too many attempts. Please wait a moment and try again."
+msgstr "Zu viele Versuche. Bitte warten Sie einen Moment und versuchen Sie es erneut."
+
+#: components/auth/site-unavailable-screen.tsx:26
+#: components/ui/error-message.tsx:28
+#: lib/loyalty/labels.ts:28
+#: lib/reservations/messages.ts:15
+#: lib/reservations/messages.ts:40
+msgid "Try again"
+msgstr "Erneut versuchen"
+
+#: lib/reservations/messages.ts:33
+msgid "Try one of these times instead"
+msgstr "Probieren Sie stattdessen eine dieser Zeiten"
+
+#: lib/loyalty/labels.ts:58
+msgid "Up to {amount} off"
+msgstr "Bis zu {amount} Rabatt"
+
+#: components/profile/profile-screen.tsx:79
+msgid "Update your basic details below."
+msgstr "Aktualisieren Sie unten Ihre Basisdaten."
+
+#: lib/reservations/messages.ts:109
+msgid "Updated"
+msgstr "Aktualisiert"
+
+#: lib/loyalty/labels.ts:90
+msgid "Use {reward}?"
+msgstr "{reward} einlösen?"
+
+#: components/auth/verify-screen.tsx:67
+msgid "Use a different number"
+msgstr "Andere Nummer verwenden"
+
+#: components/auth/site-unavailable-screen.tsx:34
+#: components/profile/profile-screen.tsx:125
+msgid "Use a different site"
+msgstr "Eine andere Website verwenden"
+
+#: lib/loyalty/labels.ts:69
+msgid "Use a reward when you order, or show your code at the counter."
+msgstr "Lösen Sie eine Prämie bei der Bestellung ein oder zeigen Sie Ihren Code an der Theke."
+
+#: components/auth/verify-screen.tsx:31
+msgid "Verification code"
+msgstr "Bestätigungscode"
+
+#: components/auth/verify-screen.tsx:49
+msgid "Verify"
+msgstr "Bestätigen"
+
+#: lib/reservations/messages.ts:83
+msgid "View reservation"
+msgstr "Reservierung ansehen"
+
+#: lib/reservations/messages.ts:110
+msgid "Waitlist"
+msgstr "Warteliste"
+
+#: lib/i18n/app-error-message.ts:14
+msgid "We couldn't find that site. Check the address and try again."
+msgstr "Wir konnten diese Website nicht finden. Prüfen Sie die Adresse und versuchen Sie es erneut."
+
+#: lib/reservations/messages.ts:135
+msgid "We couldn't find that."
+msgstr "Das konnten wir nicht finden."
+
+#: lib/reservations/messages.ts:121
+msgid "We couldn't update your place in line. We'll keep trying."
+msgstr "Wir konnten Ihren Platz in der Warteschlange nicht aktualisieren. Wir versuchen es weiter."
+
+#: components/auth/verify-screen.tsx:28
+msgid "We sent a 6-digit code to {phone}."
+msgstr "Wir haben einen 6-stelligen Code an {phone} gesendet."
+
+#: components/auth/verify-screen.tsx:45
+msgid "We sent you a new code."
+msgstr "Wir haben Ihnen einen neuen Code gesendet."
+
+#: lib/reservations/messages.ts:95
+msgid "We told the restaurant."
+msgstr "Wir haben das Restaurant informiert."
+
+#: lib/reservations/messages.ts:54
+msgid "We'll use {phone} from your account."
+msgstr "Wir verwenden {phone} aus Ihrem Konto."
+
+#: lib/reservations/messages.ts:43
+msgid "We're holding your table for {time}"
+msgstr "Wir halten Ihren Tisch noch {time}"
+
+#: lib/reservations/messages.ts:86
+msgid "When"
+msgstr "Wann"
+
+#: lib/loyalty/labels.ts:87
+msgid "When staff ask to use a reward on your purchase, approve it here."
+msgstr "Wenn das Team eine Prämie für Ihren Einkauf einlösen möchte, bestätigen Sie das hier."
+
+#: lib/reservations/messages.ts:87
+msgid "Where"
+msgstr "Wo"
+
+#: lib/reservations/messages.ts:129
+msgid "You already have a reservation around this time."
+msgstr "Sie haben um diese Zeit bereits eine Reservierung."
+
+#: lib/reservations/messages.ts:127
+msgid "You already have the maximum number of upcoming reservations."
+msgstr "Sie haben bereits die maximale Anzahl anstehender Reservierungen."
+
+#: lib/loyalty/labels.ts:129
+msgid "You are signed in to a different site. Please sign in again here."
+msgstr "Sie sind bei einer anderen Website angemeldet. Bitte melden Sie sich hier erneut an."
+
+#: lib/loyalty/labels.ts:101
+msgid "You have a new request to use a reward."
+msgstr "Sie haben eine neue Anfrage zur Nutzung einer Prämie."
+
+#: lib/loyalty/labels.ts:39
+msgid "You have enough for every reward."
+msgstr "Sie haben genug für jede Prämie."
+
+#: lib/loyalty/labels.ts:67
+msgid "You have enough for this reward"
+msgstr "Sie haben genug für diese Prämie"
+
+#: lib/reservations/messages.ts:118
+msgid "You left the waitlist."
+msgstr "Sie haben die Warteliste verlassen."
+
+#: lib/reservations/messages.ts:71
+msgid "You'll finish paying in your browser, then come back here."
+msgstr "Sie bezahlen im Browser und kehren danach hierher zurück."
+
+#: lib/reservations/messages.ts:138
+msgid "You're already on the waitlist."
+msgstr "Sie stehen bereits auf der Warteliste."
+
+#: lib/reservations/messages.ts:79
+msgid "You're booked"
+msgstr "Reservierung bestätigt"
+
+#: lib/reservations/messages.ts:113
+msgid "You're number {position} in line"
+msgstr "Sie sind Nummer {position} in der Schlange"
+
+#: lib/loyalty/labels.ts:36
+msgid "Your balance is below zero because of a refund. New purchases will bring it back up."
+msgstr "Ihr Guthaben liegt wegen einer Erstattung unter null. Neue Einkäufe gleichen es wieder aus."
+
+#: lib/loyalty/labels.ts:126
+msgid "Your balance is too low for this reward."
+msgstr "Ihr Guthaben reicht für diese Prämie nicht aus."
+
+#: lib/loyalty/labels.ts:74
+msgid "Your code"
+msgstr "Ihr Code"
+
+#: lib/loyalty/labels.ts:80
+msgid "Your code at the counter"
+msgstr "Ihr Code an der Theke"
+
+#: lib/reservations/messages.ts:42
+msgid "Your details"
+msgstr "Ihre Angaben"
+
+#: lib/reservations/messages.ts:123
+msgid "Your hold ran out. Pick a time again."
+msgstr "Die Reservierung ist abgelaufen. Bitte wählen Sie die Zeit erneut."
+
+#: components/auth/complete-name-screen.tsx:23
+msgid "Your name"
+msgstr "Ihr Name"
+
+#: lib/loyalty/labels.ts:83
+msgid "Your new code is ready."
+msgstr "Ihr neuer Code ist bereit."
+
+#: lib/reservations/messages.ts:75
+msgid "Your payment is being checked. We'll confirm shortly."
+msgstr "Ihre Zahlung wird geprüft. Wir bestätigen in Kürze."
+
+#: components/profile/profile-screen.tsx:105
+msgid "Your phone number can't be changed here."
+msgstr "Ihre Telefonnummer kann hier nicht geändert werden."
+
+#: lib/loyalty/labels.ts:34
+msgid "Your points"
+msgstr "Ihre Punkte"
+
+#: components/profile/profile-screen.tsx:77
+msgid "Your profile"
+msgstr "Ihr Profil"
+
+#: lib/loyalty/labels.ts:124
+msgid "Your rewards account is on hold."
+msgstr "Ihr Prämienkonto ist pausiert."
+
+#: lib/loyalty/labels.ts:27
+msgid "Your rewards account is on hold. Please contact the business for help."
+msgstr "Ihr Prämienkonto ist pausiert. Bitte wenden Sie sich an das Unternehmen."
+
+#: lib/i18n/app-error-message.ts:29
+#: lib/loyalty/labels.ts:128
+msgid "Your session ended. Please sign in again."
+msgstr "Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an."
+
+#: lib/reservations/messages.ts:115
+msgid "Your table is ready"
+msgstr "Ihr Tisch ist bereit"

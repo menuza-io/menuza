@@ -1,0 +1,1088 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-01-22 00:00+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: zh\n"
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Plural-Forms: \n"
+
+#: lib/loyalty/labels.ts:35
+msgid "{amount} held for an order in progress"
+msgstr "已为进行中的订单预留 {amount}"
+
+#: lib/loyalty/labels.ts:68
+msgid "{amount} more needed"
+msgstr "还差 {amount}"
+
+#: lib/loyalty/labels.ts:37
+msgid "{amount} more to unlock {reward}"
+msgstr "再获得 {amount} 即可兑换 {reward}"
+
+#: lib/loyalty/labels.ts:56
+msgid "{amount} off"
+msgstr "立减 {amount}"
+
+#: lib/reservations/messages.ts:29
+msgid "{count, plural, one {# guest} other {# guests}}"
+msgstr "{count, plural, other {# 位}}"
+
+#: lib/reservations/messages.ts:63
+msgid "{count, plural, one {Free cancellation until # hour before.} other {Free cancellation until # hours before.}}"
+msgstr "{count, plural, other {可在预订前 # 小时免费取消。}}"
+
+#: lib/reservations/messages.ts:94
+msgid "{count} min"
+msgstr "{count} 分钟"
+
+#: lib/loyalty/labels.ts:16
+msgid "{n, plural, one {{count} point} other {{count} points}}"
+msgstr "{n, plural, other {{count} 积分}}"
+
+#: lib/loyalty/labels.ts:17
+msgid "{n, plural, one {{count} star} other {{count} stars}}"
+msgstr "{n, plural, other {{count} 颗星}}"
+
+#: lib/loyalty/labels.ts:57
+msgid "{percent} off"
+msgstr "优惠 {percent}"
+
+#: lib/loyalty/labels.ts:45
+msgid "{points} for each {items}"
+msgstr "每份 {items} 可获得 {points}"
+
+#: lib/loyalty/labels.ts:46
+msgid "{points} for each eligible item"
+msgstr "每件指定商品可获得 {points}"
+
+#: lib/loyalty/labels.ts:47
+msgid "{points} for each item from {categories}"
+msgstr "{categories} 中的每件商品可获得 {points}"
+
+#: lib/loyalty/labels.ts:48
+msgid "{points} for each item from eligible categories"
+msgstr "指定类别中的每件商品可获得 {points}"
+
+#: lib/loyalty/labels.ts:44
+msgid "{points} for each visit (once a day)"
+msgstr "每次光临可获得 {points}（每天限一次）"
+
+#: lib/loyalty/labels.ts:43
+msgid "{points} for every {amount} you spend"
+msgstr "每消费 {amount} 可获得 {points}"
+
+#: components/auth/login-screen.tsx:25
+msgid "+1 555 000 0000"
+msgstr "+1 555 000 0000"
+
+#: lib/reservations/messages.ts:62
+msgid "A card is needed to guarantee this booking."
+msgstr "需要银行卡来担保此预订。"
+
+#: lib/reservations/messages.ts:61
+msgid "A deposit of {amount} is due to confirm this booking."
+msgstr "需支付 {amount} 订金以确认此预订。"
+
+#: lib/loyalty/labels.ts:65
+msgid "A free item"
+msgstr "一件免费商品"
+
+#: lib/reservations/messages.ts:114
+msgid "About {count} min"
+msgstr "约 {count} 分钟"
+
+#: components/auth/connect-site-screen.tsx:24
+msgid "acme or acme.example.com"
+msgstr "acme 或 acme.example.com"
+
+#: lib/loyalty/labels.ts:113
+msgid "Adjusted by staff"
+msgstr "工作人员调整"
+
+#: lib/reservations/messages.ts:69
+msgid "Amount due"
+msgstr "应付金额"
+
+#: lib/reservations/messages.ts:68
+msgid "Amount due: {amount}"
+msgstr "应付金额：{amount}"
+
+#: lib/loyalty/labels.ts:117
+msgid "App"
+msgstr "应用"
+
+#: lib/loyalty/labels.ts:62
+msgid "Applies to {categories}"
+msgstr "适用于 {categories}"
+
+#: lib/loyalty/labels.ts:60
+msgid "Applies to {items}"
+msgstr "适用于 {items}"
+
+#: lib/loyalty/labels.ts:63
+msgid "Applies to selected categories"
+msgstr "适用于指定类别"
+
+#: lib/loyalty/labels.ts:61
+msgid "Applies to selected items"
+msgstr "适用于指定商品"
+
+#: lib/loyalty/labels.ts:59
+msgid "Applies to your whole order"
+msgstr "适用于整笔订单"
+
+#: lib/loyalty/labels.ts:93
+msgid "Approve"
+msgstr "同意"
+
+#: lib/loyalty/labels.ts:95
+msgid "Approve {reward}"
+msgstr "同意使用 {reward}"
+
+#: lib/loyalty/labels.ts:97
+msgid "Approved: {reward}."
+msgstr "已同意：{reward}。"
+
+#: lib/reservations/messages.ts:102
+msgid "Arrived"
+msgstr "已到店"
+
+#: lib/reservations/messages.ts:31
+msgid "Available times"
+msgstr "可预订时间"
+
+#: lib/reservations/messages.ts:99
+msgid "Awaiting payment"
+msgstr "待付款"
+
+#: components/reservations/parts.tsx:83
+msgid "Back"
+msgstr "返回"
+
+#: lib/reservations/messages.ts:18
+msgid "Book a table"
+msgstr "预订餐桌"
+
+#: lib/reservations/messages.ts:100
+msgid "Booked"
+msgstr "已预订"
+
+#: lib/reservations/messages.ts:96
+msgid "Call the restaurant"
+msgstr "致电餐厅"
+
+#: lib/reservations/messages.ts:90
+msgid "Cancel reservation"
+msgstr "取消预订"
+
+#: lib/reservations/messages.ts:91
+msgid "Cancel this reservation?"
+msgstr "要取消此预订吗？"
+
+#: lib/reservations/messages.ts:105
+msgid "Cancelled"
+msgstr "已取消"
+
+#: lib/reservations/messages.ts:89
+msgid "Change time"
+msgstr "修改时间"
+
+#: lib/loyalty/labels.ts:89
+msgid "Check for requests"
+msgstr "查看请求"
+
+#: lib/reservations/messages.ts:72
+msgid "Checking your payment…"
+msgstr "正在确认付款…"
+
+#: lib/reservations/messages.ts:26
+msgid "Choose a location"
+msgstr "选择门店"
+
+#: lib/reservations/messages.ts:67
+msgid "Complete your payment"
+msgstr "完成付款"
+
+#: lib/reservations/messages.ts:57
+msgid "Confirm booking"
+msgstr "确认预订"
+
+#: lib/reservations/messages.ts:82
+msgid "Confirmation code"
+msgstr "确认码"
+
+#: lib/reservations/messages.ts:101
+msgid "Confirmed"
+msgstr "已确认"
+
+#: components/auth/connect-site-screen.tsx:37
+msgid "Connect"
+msgstr "连接"
+
+#: components/auth/connect-site-screen.tsx:19
+msgid "Connect to your site"
+msgstr "连接到您的网站"
+
+#: components/auth/complete-name-screen.tsx:38
+msgid "Continue"
+msgstr "继续"
+
+#: lib/reservations/messages.ts:58
+msgid "Continue to payment"
+msgstr "继续付款"
+
+#: lib/loyalty/labels.ts:55
+msgid "Cost"
+msgstr "所需"
+
+#: lib/reservations/messages.ts:30
+msgid "Date"
+msgstr "日期"
+
+#: lib/loyalty/labels.ts:94
+msgid "Decline"
+msgstr "拒绝"
+
+#: lib/loyalty/labels.ts:96
+msgid "Decline {reward}"
+msgstr "拒绝使用 {reward}"
+
+#: lib/reservations/messages.ts:107
+msgid "Declined"
+msgstr "已拒绝"
+
+#: lib/loyalty/labels.ts:98
+msgid "Declined: {reward}."
+msgstr "已拒绝：{reward}。"
+
+#: lib/reservations/messages.ts:49
+msgid "Dietary needs"
+msgstr "饮食需求"
+
+#: components/loyalty/notice-line.tsx:32
+msgid "Dismiss"
+msgstr "关闭"
+
+#: lib/reservations/messages.ts:84
+msgid "Done"
+msgstr "完成"
+
+#: lib/loyalty/labels.ts:108
+msgid "Earned"
+msgstr "获得"
+
+#: lib/reservations/messages.ts:59
+msgid "Edit details"
+msgstr "修改信息"
+
+#: components/profile/profile-screen.tsx:91
+msgid "Email"
+msgstr "电子邮件"
+
+#: lib/reservations/messages.ts:46
+msgid "Email (optional)"
+msgstr "电子邮件（选填）"
+
+#: lib/reservations/messages.ts:119
+msgid "Enjoy your meal!"
+msgstr "祝您用餐愉快！"
+
+#: lib/i18n/app-error-message.ts:27
+msgid "Enter a valid email address."
+msgstr "请输入有效的电子邮件地址。"
+
+#: lib/i18n/app-error-message.ts:19
+msgid "Enter a valid phone number."
+msgstr "请输入有效的电话号码。"
+
+#: components/auth/verify-screen.tsx:27
+msgid "Enter your code"
+msgstr "输入验证码"
+
+#: lib/i18n/app-error-message.ts:23
+msgid "Enter your name."
+msgstr "请输入您的姓名。"
+
+#: components/auth/login-screen.tsx:21
+msgid "Enter your phone number. We'll send a verification code."
+msgstr "请输入您的电话号码，我们将发送验证码。"
+
+#: components/auth/connect-site-screen.tsx:20
+msgid "Enter your site address to load its branding."
+msgstr "输入您的网站地址以加载其品牌样式。"
+
+#: lib/reservations/messages.ts:108
+msgid "Expired"
+msgstr "已过期"
+
+#: lib/loyalty/labels.ts:81
+#: lib/loyalty/labels.ts:92
+msgid "Expires in {time}"
+msgstr "{time} 后过期"
+
+#: components/reservations/parts.tsx:204
+msgid "Fewer guests"
+msgstr "减少人数"
+
+#: lib/reservations/messages.ts:27
+msgid "Find a table"
+msgstr "查找餐桌"
+
+#: lib/reservations/messages.ts:104
+msgid "Finished"
+msgstr "已完成"
+
+#: lib/reservations/messages.ts:44
+msgid "First name"
+msgstr "名"
+
+#: lib/reservations/messages.ts:37
+msgid "For a group this size, please call {phone}."
+msgstr "如此人数的团体，请致电 {phone}。"
+
+#: lib/loyalty/labels.ts:64
+msgid "Free {item}"
+msgstr "免费 {item}"
+
+#: lib/reservations/messages.ts:97
+msgid "Free to change until {time}"
+msgstr "{time} 前可免费修改"
+
+#: lib/loyalty/labels.ts:78
+msgid "Get a new code"
+msgstr "获取新会员码"
+
+#: lib/loyalty/labels.ts:79
+msgid "Getting your code…"
+msgstr "正在获取您的会员码…"
+
+#: lib/loyalty/labels.ts:104
+msgid "History"
+msgstr "记录"
+
+#: lib/loyalty/labels.ts:42
+msgid "How you earn"
+msgstr "如何累积"
+
+#: lib/reservations/messages.ts:66
+msgid "I accept the booking terms."
+msgstr "我接受预订条款。"
+
+#: lib/reservations/messages.ts:116
+msgid "I'm on my way"
+msgstr "我正在赶来"
+
+#: lib/reservations/messages.ts:74
+msgid "I've paid, check again"
+msgstr "我已付款，重新确认"
+
+#: lib/loyalty/labels.ts:115
+msgid "In store"
+msgstr "到店"
+
+#: components/auth/complete-name-screen.tsx:26
+#: components/profile/profile-screen.tsx:83
+msgid "Jane Doe"
+msgstr "张三"
+
+#: lib/reservations/messages.ts:111
+msgid "Join"
+msgstr "加入"
+
+#: lib/reservations/messages.ts:22
+#: lib/reservations/messages.ts:41
+msgid "Join the waitlist"
+msgstr "加入候位"
+
+#: lib/reservations/messages.ts:92
+msgid "Keep it"
+msgstr "保留"
+
+#: components/profile/profile-screen.tsx:149
+msgid "Language"
+msgstr "语言"
+
+#: lib/reservations/messages.ts:36
+msgid "Larger groups send a request, and the restaurant confirms it."
+msgstr "大型团体需提交申请，由餐厅确认。"
+
+#: lib/reservations/messages.ts:45
+msgid "Last name"
+msgstr "姓"
+
+#: lib/reservations/messages.ts:64
+msgid "Late cancellation fee: {amount}"
+msgstr "逾期取消费用：{amount}"
+
+#: components/shell/announcement-banner.tsx:40
+msgid "Learn more"
+msgstr "了解更多"
+
+#: lib/reservations/messages.ts:117
+msgid "Leave the waitlist"
+msgstr "退出候位"
+
+#: components/profile/profile-screen.tsx:63
+msgid "Loading your profile…"
+msgstr "正在加载您的个人资料…"
+
+#: lib/loyalty/labels.ts:20
+msgid "Loading your rewards…"
+msgstr "正在加载您的奖励…"
+
+#: components/shell/app-gate.tsx:23
+#: lib/loyalty/labels.ts:107
+#: lib/reservations/messages.ts:14
+msgid "Loading…"
+msgstr "加载中…"
+
+#: components/reservations/parts.tsx:205
+msgid "More guests"
+msgstr "增加人数"
+
+#: lib/reservations/messages.ts:19
+msgid "My reservations"
+msgstr "我的预订"
+
+#: components/auth/complete-name-screen.tsx:25
+#: components/profile/profile-screen.tsx:82
+#: lib/reservations/messages.ts:60
+#: lib/reservations/messages.ts:112
+msgid "Name"
+msgstr "姓名"
+
+#: lib/loyalty/labels.ts:120
+msgid "Network error. Check your connection and try again."
+msgstr "网络错误。请检查网络连接后重试。"
+
+#: lib/i18n/app-error-message.ts:33
+msgid "Network error. Please try again."
+msgstr "网络错误，请重试。"
+
+#: lib/loyalty/labels.ts:105
+msgid "No activity yet. Your purchases will show up here."
+msgstr "暂无记录。您的消费将显示在这里。"
+
+#: lib/reservations/messages.ts:136
+msgid "No connection. Please try again."
+msgstr "无网络连接，请重试。"
+
+#: lib/reservations/messages.ts:52
+msgid "No preference"
+msgstr "不限"
+
+#: lib/loyalty/labels.ts:88
+msgid "No requests right now."
+msgstr "目前没有请求。"
+
+#: lib/loyalty/labels.ts:54
+msgid "No rewards are available yet."
+msgstr "暂无可用奖励。"
+
+#: lib/reservations/messages.ts:32
+msgid "No tables left for this day."
+msgstr "当天已无空桌。"
+
+#: lib/reservations/messages.ts:20
+msgid "No upcoming reservations."
+msgstr "暂无即将到来的预订。"
+
+#: lib/reservations/messages.ts:106
+msgid "No-show"
+msgstr "未到店"
+
+#: lib/reservations/messages.ts:65
+msgid "No-show fee: {amount}"
+msgstr "未到店费用：{amount}"
+
+#: lib/reservations/messages.ts:48
+msgid "None"
+msgstr "无"
+
+#: lib/reservations/messages.ts:35
+msgid "Not taking online reservations on this day."
+msgstr "当天不接受在线预订。"
+
+#: lib/reservations/messages.ts:47
+msgid "Occasion"
+msgstr "场合"
+
+#: lib/reservations/messages.ts:25
+msgid "OK"
+msgstr "好"
+
+#: lib/loyalty/labels.ts:66
+msgid "One item. Paid extras are still charged."
+msgstr "限一件。付费附加项仍需付款。"
+
+#: lib/loyalty/labels.ts:71
+msgid "One reward per order."
+msgstr "每笔订单限用一个奖励。"
+
+#: lib/loyalty/labels.ts:114
+msgid "Online"
+msgstr "线上"
+
+#: lib/reservations/messages.ts:134
+msgid "Online booking is paused. Please try again later."
+msgstr "在线预订已暂停，请稍后再试。"
+
+#: lib/reservations/messages.ts:24
+msgid "Online reservations aren't available right now."
+msgstr "暂时无法在线预订。"
+
+#: components/loyalty/program-sections.tsx:132
+msgid "Opens in your browser. Your points and rewards apply when you order there."
+msgstr "将在浏览器中打开。在那里下单时可使用您的积分和奖励。"
+
+#: components/loyalty/program-sections.tsx:129
+msgid "Order on the website"
+msgstr "在网站上下单"
+
+#: lib/reservations/messages.ts:34
+msgid "Other days with tables"
+msgstr "其他有空桌的日期"
+
+#: lib/reservations/messages.ts:88
+msgid "Party"
+msgstr "人数"
+
+#: lib/reservations/messages.ts:28
+msgid "Party size"
+msgstr "人数"
+
+#: lib/reservations/messages.ts:21
+msgid "Past"
+msgstr "过往"
+
+#: lib/reservations/messages.ts:70
+msgid "Pay now"
+msgstr "立即付款"
+
+#: lib/reservations/messages.ts:73
+msgid "Pay within {time} to keep your table."
+msgstr "请在 {time} 内付款以保留餐桌。"
+
+#: lib/reservations/messages.ts:125
+msgid "Payments aren't available right now."
+msgstr "暂时无法付款。"
+
+#: components/auth/login-screen.tsx:24
+#: components/profile/profile-screen.tsx:102
+#: lib/reservations/messages.ts:16
+msgid "Phone number"
+msgstr "手机号码"
+
+#: lib/reservations/messages.ts:124
+msgid "Please accept the booking terms."
+msgstr "请接受预订条款。"
+
+#: lib/reservations/messages.ts:131
+msgid "Please check your details."
+msgstr "请检查您的信息。"
+
+#: lib/reservations/messages.ts:128
+msgid "Please sign in again."
+msgstr "请重新登录。"
+
+#: lib/reservations/messages.ts:38
+msgid "Preferred time"
+msgstr "期望时间"
+
+#: app/(tabs)/_layout.tsx:59
+#: lib/reservations/messages.ts:23
+msgid "Profile"
+msgstr "个人资料"
+
+#: components/profile/profile-screen.tsx:110
+msgid "Profile saved."
+msgstr "个人资料已保存。"
+
+#: lib/loyalty/labels.ts:31
+msgid "Program terms"
+msgstr "计划条款"
+
+#: lib/loyalty/labels.ts:38
+msgid "Progress to {reward}"
+msgstr "兑换 {reward} 的进度"
+
+#: lib/loyalty/labels.ts:49
+msgid "Purchases of at least {amount} qualify."
+msgstr "消费满 {amount} 即可累积。"
+
+#: lib/loyalty/labels.ts:110
+msgid "Redeemed {reward}"
+msgstr "兑换 {reward}"
+
+#: lib/loyalty/labels.ts:111
+msgid "Redeemed a reward"
+msgstr "兑换奖励"
+
+#: lib/loyalty/labels.ts:109
+msgid "Refund adjustment"
+msgstr "退款调整"
+
+#: lib/reservations/messages.ts:80
+msgid "Request sent"
+msgstr "申请已提交"
+
+#: lib/reservations/messages.ts:98
+msgid "Requested"
+msgstr "待确认"
+
+#: lib/loyalty/labels.ts:86
+msgid "Requests to use your rewards"
+msgstr "奖励使用请求"
+
+#: lib/reservations/messages.ts:85
+msgid "Reservation"
+msgstr "预订详情"
+
+#: app/(tabs)/_layout.tsx:40
+#: lib/reservations/messages.ts:17
+msgid "Reservations"
+msgstr "预订"
+
+#: lib/reservations/messages.ts:55
+msgid "Review"
+msgstr "查看确认"
+
+#: lib/reservations/messages.ts:56
+msgid "Review your booking"
+msgstr "确认您的预订"
+
+#: lib/loyalty/labels.ts:112
+msgid "Reward returned"
+msgstr "奖励退回"
+
+#: app/(tabs)/_layout.tsx:49
+#: lib/loyalty/labels.ts:53
+msgid "Rewards"
+msgstr "奖励"
+
+#: lib/loyalty/labels.ts:21
+msgid "Rewards are not available right now"
+msgstr "奖励暂不可用"
+
+#: lib/loyalty/labels.ts:123
+msgid "Rewards are not available right now."
+msgstr "奖励暂不可用。"
+
+#: lib/loyalty/labels.ts:122
+msgid "Rewards are temporarily unavailable. Please try again later."
+msgstr "奖励暂时不可用，请稍后重试。"
+
+#: lib/loyalty/labels.ts:70
+msgid "Rewards cannot be used right now."
+msgstr "目前无法使用奖励。"
+
+#: lib/reservations/messages.ts:93
+msgid "Running late"
+msgstr "我会迟到"
+
+#: components/profile/profile-screen.tsx:114
+msgid "Save changes"
+msgstr "保存更改"
+
+#: lib/reservations/messages.ts:103
+msgid "Seated"
+msgstr "已入座"
+
+#: lib/reservations/messages.ts:51
+msgid "Seating area"
+msgstr "就座区域"
+
+#: components/auth/verify-screen.tsx:59
+msgid "Send a new code"
+msgstr "发送新验证码"
+
+#: lib/reservations/messages.ts:39
+msgid "Send a request"
+msgstr "提交申请"
+
+#: components/auth/login-screen.tsx:37
+msgid "Send code"
+msgstr "发送验证码"
+
+#: lib/loyalty/labels.ts:106
+msgid "Show more"
+msgstr "显示更多"
+
+#: lib/loyalty/labels.ts:77
+msgid "Show my code"
+msgstr "显示我的会员码"
+
+#: lib/loyalty/labels.ts:75
+msgid "Show this code at the counter so staff can find your points."
+msgstr "在柜台出示此码，工作人员即可找到您的积分。"
+
+#: lib/loyalty/labels.ts:76
+msgid "Showing your code does not spend any points. You approve every reward yourself."
+msgstr "出示会员码不会消耗积分。每次使用奖励都需您本人同意。"
+
+#: components/auth/login-screen.tsx:20
+#: lib/loyalty/labels.ts:26
+msgid "Sign in"
+msgstr "登录"
+
+#: lib/loyalty/labels.ts:24
+msgid "Sign in to see your rewards"
+msgstr "登录以查看您的奖励"
+
+#: lib/loyalty/labels.ts:25
+msgid "Sign in with your phone number to see your points and use your rewards."
+msgstr "使用手机号码登录，即可查看积分并使用奖励。"
+
+#: components/profile/profile-screen.tsx:121
+msgid "Sign out"
+msgstr "退出登录"
+
+#: components/auth/connect-site-screen.tsx:23
+msgid "Site address"
+msgstr "网站地址"
+
+#: lib/i18n/app-error-message.ts:41
+#: lib/loyalty/labels.ts:130
+#: lib/reservations/messages.ts:137
+msgid "Something went wrong. Please try again."
+msgstr "出了点问题，请重试。"
+
+#: lib/reservations/messages.ts:50
+msgid "Special requests"
+msgstr "特殊要求"
+
+#: lib/loyalty/labels.ts:91
+msgid "Spends {points} for {amount} off"
+msgstr "使用 {points} 抵扣 {amount}"
+
+#: components/profile/profile-screen.tsx:139
+msgid "System default"
+msgstr "系统默认"
+
+#: lib/loyalty/labels.ts:116
+msgid "Table order"
+msgstr "桌台点餐"
+
+#: lib/loyalty/labels.ts:50
+msgid "Tax, tips and delivery fees do not count toward earning."
+msgstr "税费、小费和配送费不计入累积。"
+
+#: components/auth/complete-name-screen.tsx:23
+msgid "Tell us what to call you."
+msgstr "告诉我们如何称呼您。"
+
+#: lib/reservations/messages.ts:53
+msgid "Text me reminders"
+msgstr "发送短信提醒"
+
+#: lib/i18n/app-error-message.ts:21
+msgid "That code isn't right or has expired. Try again."
+msgstr "验证码不正确或已过期，请重试。"
+
+#: lib/i18n/app-error-message.ts:25
+msgid "That name is too long."
+msgstr "姓名过长。"
+
+#: lib/reservations/messages.ts:130
+msgid "That party size isn't available online."
+msgstr "该人数无法在线预订。"
+
+#: lib/loyalty/labels.ts:99
+msgid "That request has expired."
+msgstr "该请求已过期。"
+
+#: lib/loyalty/labels.ts:100
+msgid "That request was already handled."
+msgstr "该请求已处理。"
+
+#: lib/reservations/messages.ts:122
+msgid "That time was just taken. Pick another."
+msgstr "该时间刚被订走，请选择其他时间。"
+
+#: lib/reservations/messages.ts:77
+msgid "The payment didn't go through."
+msgstr "付款未成功。"
+
+#: lib/reservations/messages.ts:76
+msgid "The payment window ended and the table was released."
+msgstr "付款时间已过，餐桌已释放。"
+
+#: lib/loyalty/labels.ts:125
+msgid "The program is paused right now."
+msgstr "该计划目前已暂停。"
+
+#: lib/reservations/messages.ts:133
+msgid "The restaurant isn't taking requests online."
+msgstr "餐厅暂不接受在线申请。"
+
+#: lib/reservations/messages.ts:81
+msgid "The restaurant will confirm your request soon."
+msgstr "餐厅将尽快确认您的申请。"
+
+#: lib/loyalty/labels.ts:23
+msgid "The rewards program is paused. Your balance is safe, but you cannot earn or redeem right now."
+msgstr "奖励计划已暂停。您的余额不受影响，但目前无法累积或兑换。"
+
+#: lib/i18n/app-error-message.ts:36
+msgid "The service is unavailable right now. Please try again later."
+msgstr "服务暂时不可用，请稍后重试。"
+
+#: lib/reservations/messages.ts:139
+msgid "The waitlist is full right now."
+msgstr "候位名单已满。"
+
+#: lib/loyalty/labels.ts:22
+msgid "This business is not running a rewards program at the moment."
+msgstr "该商家目前没有奖励计划。"
+
+#: lib/loyalty/labels.ts:82
+msgid "This code has expired. Get a new one."
+msgstr "此会员码已过期。请获取新码。"
+
+#: lib/reservations/messages.ts:132
+msgid "This party size needs a request."
+msgstr "此人数需要提交申请。"
+
+#: lib/reservations/messages.ts:78
+msgid "This payment was refunded."
+msgstr "此笔付款已退款。"
+
+#: lib/loyalty/labels.ts:127
+msgid "This reward is no longer available."
+msgstr "此奖励已不可用。"
+
+#: lib/i18n/app-error-message.ts:17
+msgid "This site isn't available in this app yet."
+msgstr "此网站暂不支持在本应用中使用。"
+
+#: lib/reservations/messages.ts:120
+msgid "This waitlist link no longer works."
+msgstr "此候位链接已失效。"
+
+#: lib/reservations/messages.ts:126
+msgid "Too many attempts. Please try again in a few minutes."
+msgstr "尝试次数过多，请几分钟后再试。"
+
+#: lib/i18n/app-error-message.ts:31
+msgid "Too many attempts. Please try again later."
+msgstr "尝试次数过多，请稍后重试。"
+
+#: lib/loyalty/labels.ts:121
+msgid "Too many attempts. Please wait a moment and try again."
+msgstr "尝试次数过多，请稍候再试。"
+
+#: components/auth/site-unavailable-screen.tsx:26
+#: components/ui/error-message.tsx:28
+#: lib/loyalty/labels.ts:28
+#: lib/reservations/messages.ts:15
+#: lib/reservations/messages.ts:40
+msgid "Try again"
+msgstr "重试"
+
+#: lib/reservations/messages.ts:33
+msgid "Try one of these times instead"
+msgstr "试试这些时间"
+
+#: lib/loyalty/labels.ts:58
+msgid "Up to {amount} off"
+msgstr "最多优惠 {amount}"
+
+#: components/profile/profile-screen.tsx:79
+msgid "Update your basic details below."
+msgstr "在下方更新您的基本信息。"
+
+#: lib/reservations/messages.ts:109
+msgid "Updated"
+msgstr "已更新"
+
+#: lib/loyalty/labels.ts:90
+msgid "Use {reward}?"
+msgstr "使用 {reward}？"
+
+#: components/auth/verify-screen.tsx:67
+msgid "Use a different number"
+msgstr "使用其他号码"
+
+#: components/auth/site-unavailable-screen.tsx:34
+#: components/profile/profile-screen.tsx:125
+msgid "Use a different site"
+msgstr "使用其他网站"
+
+#: lib/loyalty/labels.ts:69
+msgid "Use a reward when you order, or show your code at the counter."
+msgstr "下单时即可使用奖励，也可在柜台出示您的码。"
+
+#: components/auth/verify-screen.tsx:31
+msgid "Verification code"
+msgstr "验证码"
+
+#: components/auth/verify-screen.tsx:49
+msgid "Verify"
+msgstr "验证"
+
+#: lib/reservations/messages.ts:83
+msgid "View reservation"
+msgstr "查看预订"
+
+#: lib/reservations/messages.ts:110
+msgid "Waitlist"
+msgstr "候位"
+
+#: lib/i18n/app-error-message.ts:14
+msgid "We couldn't find that site. Check the address and try again."
+msgstr "找不到该网站，请检查地址后重试。"
+
+#: lib/reservations/messages.ts:135
+msgid "We couldn't find that."
+msgstr "未找到相关内容。"
+
+#: lib/reservations/messages.ts:121
+msgid "We couldn't update your place in line. We'll keep trying."
+msgstr "无法更新您的排队位置。我们会继续尝试。"
+
+#: components/auth/verify-screen.tsx:28
+msgid "We sent a 6-digit code to {phone}."
+msgstr "我们已向 {phone} 发送了 6 位验证码。"
+
+#: components/auth/verify-screen.tsx:45
+msgid "We sent you a new code."
+msgstr "我们已向您发送了新验证码。"
+
+#: lib/reservations/messages.ts:95
+msgid "We told the restaurant."
+msgstr "已通知餐厅。"
+
+#: lib/reservations/messages.ts:54
+msgid "We'll use {phone} from your account."
+msgstr "将使用您账户中的号码 {phone}。"
+
+#: lib/reservations/messages.ts:43
+msgid "We're holding your table for {time}"
+msgstr "已为您保留餐桌 {time}"
+
+#: lib/reservations/messages.ts:86
+msgid "When"
+msgstr "时间"
+
+#: lib/loyalty/labels.ts:87
+msgid "When staff ask to use a reward on your purchase, approve it here."
+msgstr "当工作人员请求在您的消费中使用奖励时，请在此同意。"
+
+#: lib/reservations/messages.ts:87
+msgid "Where"
+msgstr "地点"
+
+#: lib/reservations/messages.ts:129
+msgid "You already have a reservation around this time."
+msgstr "您在该时段已有预订。"
+
+#: lib/reservations/messages.ts:127
+msgid "You already have the maximum number of upcoming reservations."
+msgstr "您已达到即将到来的预订数量上限。"
+
+#: lib/loyalty/labels.ts:129
+msgid "You are signed in to a different site. Please sign in again here."
+msgstr "您已登录其他网站。请在此重新登录。"
+
+#: lib/loyalty/labels.ts:101
+msgid "You have a new request to use a reward."
+msgstr "您有一条新的奖励使用请求。"
+
+#: lib/loyalty/labels.ts:39
+msgid "You have enough for every reward."
+msgstr "您的余额足以兑换所有奖励。"
+
+#: lib/loyalty/labels.ts:67
+msgid "You have enough for this reward"
+msgstr "您的余额足以兑换此奖励"
+
+#: lib/reservations/messages.ts:118
+msgid "You left the waitlist."
+msgstr "您已退出候位。"
+
+#: lib/reservations/messages.ts:71
+msgid "You'll finish paying in your browser, then come back here."
+msgstr "请在浏览器中完成付款，然后返回此处。"
+
+#: lib/reservations/messages.ts:138
+msgid "You're already on the waitlist."
+msgstr "您已在候位名单中。"
+
+#: lib/reservations/messages.ts:79
+msgid "You're booked"
+msgstr "预订成功"
+
+#: lib/reservations/messages.ts:113
+msgid "You're number {position} in line"
+msgstr "您排在第 {position} 位"
+
+#: lib/loyalty/labels.ts:36
+msgid "Your balance is below zero because of a refund. New purchases will bring it back up."
+msgstr "由于退款，您的余额低于零。新的消费会让余额回升。"
+
+#: lib/loyalty/labels.ts:126
+msgid "Your balance is too low for this reward."
+msgstr "您的余额不足以兑换此奖励。"
+
+#: lib/loyalty/labels.ts:74
+msgid "Your code"
+msgstr "您的码"
+
+#: lib/loyalty/labels.ts:80
+msgid "Your code at the counter"
+msgstr "您在柜台使用的码"
+
+#: lib/reservations/messages.ts:42
+msgid "Your details"
+msgstr "您的信息"
+
+#: lib/reservations/messages.ts:123
+msgid "Your hold ran out. Pick a time again."
+msgstr "保留时间已过，请重新选择时间。"
+
+#: components/auth/complete-name-screen.tsx:23
+msgid "Your name"
+msgstr "您的姓名"
+
+#: lib/loyalty/labels.ts:83
+msgid "Your new code is ready."
+msgstr "您的新码已就绪。"
+
+#: lib/reservations/messages.ts:75
+msgid "Your payment is being checked. We'll confirm shortly."
+msgstr "您的付款正在审核，稍后确认。"
+
+#: components/profile/profile-screen.tsx:105
+msgid "Your phone number can't be changed here."
+msgstr "无法在此更改您的电话号码。"
+
+#: lib/loyalty/labels.ts:34
+msgid "Your points"
+msgstr "您的积分"
+
+#: components/profile/profile-screen.tsx:77
+msgid "Your profile"
+msgstr "您的个人资料"
+
+#: lib/loyalty/labels.ts:124
+msgid "Your rewards account is on hold."
+msgstr "您的奖励账户已暂停。"
+
+#: lib/loyalty/labels.ts:27
+msgid "Your rewards account is on hold. Please contact the business for help."
+msgstr "您的奖励账户已暂停。如需帮助，请联系商家。"
+
+#: lib/i18n/app-error-message.ts:29
+#: lib/loyalty/labels.ts:128
+msgid "Your session ended. Please sign in again."
+msgstr "您的会话已结束。请重新登录。"
+
+#: lib/reservations/messages.ts:115
+msgid "Your table is ready"
+msgstr "您的餐桌已就绪"

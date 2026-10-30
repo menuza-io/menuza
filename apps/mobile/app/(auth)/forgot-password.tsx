@@ -93,7 +93,7 @@ export default function ForgotPasswordScreen() {
 						</View>
 
 						<Button
-							onPress={handleSubmit(onSubmit)}
+							onPress={() => handleSubmit(onSubmit)()}
 							disabled={!isValid}
 							className="mt-2"
 						>

@@ -62,9 +62,9 @@ Customer login is browser-to-regional-API:
 4. Browser tokens stay in `localStorage` on the tenant origin. They are never
    read by Sites SSR or sent to App on navigation.
 
-Native clients have no browser Origin. The iOS/Android tenant builds send the
-published site origin for HTTPS builds; local HTTP development may use the
-documented slug/host binding. Preserve this distinction when changing origin
+Native clients have no browser Origin. The customer app's white-label builds
+send the published site origin for HTTPS builds; local HTTP development may use
+the documented slug/host binding. Preserve this distinction when changing origin
 resolution.
 
 ## Provisioning and region changes

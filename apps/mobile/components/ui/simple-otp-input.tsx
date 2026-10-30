@@ -2,8 +2,8 @@ import React, { useState, useRef, useEffect } from 'react'
 import {
 	View,
 	TextInput,
-	type NativeSyntheticEvent,
-	type TextInputKeyPressEventData,
+	type TextInputKeyPressEvent,
+	type TextInputInstance,
 } from 'react-native'
 
 interface SimpleOTPInputProps {
@@ -22,7 +22,7 @@ export function SimpleOTPInput({
 	className,
 }: SimpleOTPInputProps) {
 	const [focusedIndex, setFocusedIndex] = useState(0)
-	const inputRefs = useRef<(TextInput | null)[]>([])
+	const inputRefs = useRef<(TextInputInstance | null)[]>([])
 
 	useEffect(() => {
 		inputRefs.current = inputRefs.current.slice(0, length)
@@ -52,7 +52,7 @@ export function SimpleOTPInput({
 	}
 
 	const handleKeyPress = (
-		event: NativeSyntheticEvent<TextInputKeyPressEventData>,
+		event: TextInputKeyPressEvent,
 		index: number,
 	) => {
 		if (event.nativeEvent.key === 'Backspace') {

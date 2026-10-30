@@ -1,3 +1,5 @@
+import { AsyncLocalStorage } from 'node:async_hooks'
+
 export type BudgetedRun = {
 	/** Items whose task was started (and has settled). */
 	started: number
@@ -35,7 +37,65 @@ export async function forEachWithBudget<T>(
 	return { started, skipped: items.length - started }
 }
 
-const orgLocks = new Map<string, Promise<unknown>>()
+/**
+ * Thrown when code that holds an organization's lock asks for the same lock
+ * again. The lock is not re-entrant: waiting would deadlock forever, so the
+ * nested call fails at once instead.
+ */
+export class OrgLockReentryError extends Error {
+	constructor(orgId: string) {
+		super(`Organization lock re-entered for ${orgId}`)
+		this.name = 'OrgLockReentryError'
+	}
+}
+
+export type OrgLock = <T>(
+	orgId: string,
+	operation: () => Promise<T>,
+) => Promise<T>
+
+type LockHolder = { orgId: string; done: boolean }
+
+/**
+ * A per-process lock per organization. The holder is recorded in
+ * AsyncLocalStorage so a nested request for the same organization throws
+ * instead of queueing behind itself. Work started inside the operation but
+ * still running after it settles (a background promise) inherits the record;
+ * the holder is marked done when the operation settles, so that work queues
+ * normally.
+ */
+export function createOrgLock(): OrgLock {
+	const locks = new Map<string, Promise<unknown>>()
+	const holders = new AsyncLocalStorage<readonly LockHolder[]>()
+	return async function runLocked<T>(
+		orgId: string,
+		operation: () => Promise<T>,
+	): Promise<T> {
+		const held = (holders.getStore() ?? []).filter((holder) => !holder.done)
+		if (held.some((holder) => holder.orgId === orgId)) {
+			throw new OrgLockReentryError(orgId)
+		}
+		const holder: LockHolder = { orgId, done: false }
+		const guarded = () =>
+			holders.run([...held, holder], async () => {
+				try {
+					return await operation()
+				} finally {
+					holder.done = true
+				}
+			})
+		const previous = locks.get(orgId) ?? Promise.resolve()
+		const run = previous.then(guarded, guarded)
+		const tail = run.catch(() => {})
+		locks.set(orgId, tail)
+		void tail.then(() => {
+			if (locks.get(orgId) === tail) locks.delete(orgId)
+		})
+		return run
+	}
+}
+
+const sharedLock = createOrgLock()
 
 /**
  * Serializes write operations for one org inside this process. Durable Object
@@ -47,12 +107,5 @@ export async function runExclusive<T>(
 	orgId: string,
 	operation: () => Promise<T>,
 ): Promise<T> {
-	const previous = orgLocks.get(orgId) ?? Promise.resolve()
-	const run = previous.then(operation, operation)
-	const tail = run.catch(() => {})
-	orgLocks.set(orgId, tail)
-	void tail.then(() => {
-		if (orgLocks.get(orgId) === tail) orgLocks.delete(orgId)
-	})
-	return run
+	return sharedLock(orgId, operation)
 }

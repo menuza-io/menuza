@@ -24,6 +24,7 @@
     "@lingui/core": "^5.8.0",
     "@lingui/message-utils": "^5.8.0",
     "@repo/common": "*",
+    "@repo/loyalty": "*",
     "@repo/payments": "*",
     "@tailwindcss/vite": "^4.1.5",
     "@varlock/astro-integration": "^0.1.0",

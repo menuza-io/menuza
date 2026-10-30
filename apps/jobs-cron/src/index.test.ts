@@ -572,7 +572,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 				return { ctx, promises }
 			}
 
-			it('runs the engagement sync, the staff tick and the reservations tick on every regional node, plus the payments reconcile on the App', async () => {
+			it('runs the engagement sync and the staff, reservations and loyalty ticks on every regional node, plus the payments reconcile on the App', async () => {
 				const fetchMock = vi.fn(
 					async () => new Response(JSON.stringify({ success: true })),
 				)
@@ -583,6 +583,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 				const results = await Promise.allSettled(promises)
 
 				expect(results.map((r) => r.status)).toEqual([
+					'fulfilled',
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
@@ -610,6 +611,8 @@ describe('Jobs-Cron Worker Endpoints', () => {
 							'POST',
 							token,
 						],
+						['https://tenant-us.example.com/api/loyalty/tick', 'POST', token],
+						['https://tenant-ksa.example.com/api/loyalty/tick', 'POST', token],
 						[
 							'https://tenant-us.example.com/api/marketing/sync-engagement',
 							'POST',
@@ -637,7 +640,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 						],
 					]),
 				)
-				expect(calls).toHaveLength(9)
+				expect(calls).toHaveLength(11)
 			})
 
 			it('posts the payments reconcile to the App once, with the internal token and no tenant node involved', async () => {
@@ -678,11 +681,12 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
+					'fulfilled',
 					'rejected',
 					'fulfilled',
 					'fulfilled',
 				])
-				expect(String((results[3] as PromiseRejectedResult).reason)).toContain(
+				expect(String((results[4] as PromiseRejectedResult).reason)).toContain(
 					'Job /resources/jobs/reservation-payments-reconcile failed: 502',
 				)
 				expect(errorSpy).toHaveBeenCalledWith(
@@ -726,6 +730,234 @@ describe('Jobs-Cron Worker Endpoints', () => {
 				)
 			})
 
+			it('sends the loyalty tick an empty body on every node, after the reservations tick', async () => {
+				const fetchMock = vi.fn(
+					async () => new Response(JSON.stringify({ success: true })),
+				)
+				globalThis.fetch = fetchMock as any
+				const { ctx, promises } = waited()
+				await worker.scheduled({ cron: '0 * * * *' } as any, regionalEnv(), ctx)
+				await Promise.allSettled(promises)
+				const ticks = fetchMock.mock.calls.filter(([url]: any) =>
+					String(url).endsWith('/api/loyalty/tick'),
+				) as any[]
+				expect(ticks).toHaveLength(2)
+				for (const [, init] of ticks) {
+					expect(JSON.parse(init.body)).toEqual({})
+					expect(init.headers['Content-Type']).toBe('application/json')
+				}
+				const paths = fetchMock.mock.calls.map(
+					([url]: any) => new URL(String(url)).pathname,
+				)
+				expect(paths.indexOf('/api/loyalty/tick')).toBeGreaterThan(
+					paths.indexOf('/api/reservations/tick'),
+				)
+			})
+
+			it('keeps the other hourly jobs running when the loyalty tick fails, and names it', async () => {
+				const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+				const fetchMock = vi.fn(async (url: string) =>
+					url.startsWith('https://tenant-ksa') &&
+					url.endsWith('/api/loyalty/tick')
+						? new Response('down', { status: 503, statusText: 'Unavailable' })
+						: new Response(JSON.stringify({ success: true })),
+				)
+				globalThis.fetch = fetchMock as any
+				const { ctx, promises } = waited()
+				await worker.scheduled({ cron: '0 * * * *' } as any, regionalEnv(), ctx)
+				const results = await Promise.allSettled(promises)
+				expect(results.map((r) => r.status)).toEqual([
+					'fulfilled',
+					'fulfilled',
+					'fulfilled',
+					'rejected',
+					'fulfilled',
+					'fulfilled',
+					'fulfilled',
+				])
+				expect(String((results[3] as PromiseRejectedResult).reason)).toContain(
+					'Tenant loyalty tick failed for https://tenant-ksa.example.com',
+				)
+				errorSpy.mockRestore()
+			})
+
+			it('fails the loyalty tick when a node reports per-organization errors in a 200 body', async () => {
+				const fetchMock = vi.fn(async (url: string) =>
+					url.startsWith('https://tenant-ksa') &&
+					url.endsWith('/api/loyalty/tick')
+						? new Response(
+								JSON.stringify({ success: false, errors: 1, orgs: 4 }),
+							)
+						: new Response(JSON.stringify({ success: true })),
+				)
+				globalThis.fetch = fetchMock as any
+				const { ctx, promises } = waited()
+				await worker.scheduled({ cron: '0 * * * *' } as any, regionalEnv(), ctx)
+				const results = await Promise.allSettled(promises)
+				expect(results.map((r) => r.status)).toEqual([
+					'fulfilled',
+					'fulfilled',
+					'fulfilled',
+					'rejected',
+					'fulfilled',
+					'fulfilled',
+					'fulfilled',
+				])
+				const reason = String((results[3] as PromiseRejectedResult).reason)
+				expect(reason).toContain(
+					'Tenant loyalty tick reported failures for https://tenant-ksa.example.com',
+				)
+				expect(reason).toContain('"errors":1')
+			})
+
+			it.each([
+				[
+					'sources parked in an earlier run',
+					{ outboxParked: 0, outboxParkedTotal: 3 },
+				],
+				[
+					'a till sale that never uploaded, still waiting from an earlier run',
+					{ uploadsMissing: 0, uploadsMissingTotal: 2 },
+				],
+			])(
+				'reports %s as a standing total without failing the run',
+				async (_label, counts) => {
+					const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+					const fetchMock = vi.fn(async (url: string) =>
+						url.startsWith('https://tenant-us') &&
+						url.endsWith('/api/loyalty/tick')
+							? new Response(
+									JSON.stringify({
+										success: true,
+										errors: 0,
+										outboxParked: 0,
+										outboxParkedTotal: 0,
+										uploadsMissing: 0,
+										uploadsMissingTotal: 0,
+										...counts,
+									}),
+								)
+							: new Response(JSON.stringify({ success: true })),
+					)
+					globalThis.fetch = fetchMock as any
+					const { ctx, promises } = waited()
+					await worker.scheduled(
+						{ cron: '0 * * * *' } as any,
+						regionalEnv(),
+						ctx,
+					)
+					const results = await Promise.allSettled(promises)
+					expect(results.map((r) => r.status)).toEqual([
+						'fulfilled',
+						'fulfilled',
+						'fulfilled',
+						'fulfilled',
+						'fulfilled',
+						'fulfilled',
+						'fulfilled',
+					])
+					expect(warnSpy).toHaveBeenCalledWith(
+						'Tenant loyalty tick: items waiting for an operator',
+						expect.objectContaining({
+							node: 'https://tenant-us.example.com',
+							...Object.fromEntries(
+								Object.entries(counts).filter(([key]) => key.endsWith('Total')),
+							),
+						}),
+					)
+					warnSpy.mockRestore()
+				},
+			)
+
+			it.each([
+				[
+					'a source parked in this run',
+					{ outboxParked: 1, outboxParkedTotal: 1 },
+					'"outboxParked":1',
+				],
+				[
+					'a till sale this run sent to review because it never uploaded',
+					{ uploadsMissing: 1, uploadsMissingTotal: 1 },
+					'"uploadsMissing":1',
+				],
+			])('fails the loyalty tick for %s', async (_label, counts, expected) => {
+				const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+				const fetchMock = vi.fn(async (url: string) =>
+					url.startsWith('https://tenant-us') &&
+					url.endsWith('/api/loyalty/tick')
+						? new Response(
+								JSON.stringify({
+									success: true,
+									errors: 0,
+									outboxParked: 0,
+									outboxParkedTotal: 0,
+									uploadsMissing: 0,
+									uploadsMissingTotal: 0,
+									...counts,
+								}),
+							)
+						: new Response(JSON.stringify({ success: true })),
+				)
+				globalThis.fetch = fetchMock as any
+				const { ctx, promises } = waited()
+				await worker.scheduled({ cron: '0 * * * *' } as any, regionalEnv(), ctx)
+				const results = await Promise.allSettled(promises)
+				expect(results.map((r) => r.status)).toEqual([
+					'fulfilled',
+					'fulfilled',
+					'fulfilled',
+					'rejected',
+					'fulfilled',
+					'fulfilled',
+					'fulfilled',
+				])
+				const reason = String((results[3] as PromiseRejectedResult).reason)
+				expect(reason).toContain(
+					'Tenant loyalty tick reported failures for https://tenant-us.example.com',
+				)
+				expect(reason).toContain(expected)
+				errorSpy.mockRestore()
+			})
+
+			it('fails the staff tick when a node reports failed tasks in a 200 body', async () => {
+				// The staff aggregate's own shape: it has no outbox counts.
+				const fetchMock = vi.fn(async (url: string) =>
+					url.startsWith('https://tenant-us') && url.endsWith('/api/staff/tick')
+						? new Response(
+								JSON.stringify({
+									success: false,
+									orgsRan: 3,
+									orgsSkipped: 0,
+									orgsDeferred: 0,
+									queued: 4,
+									closed: 0,
+									staffEmailSent: 1,
+									managerAlertsSent: 0,
+									errors: 2,
+								}),
+							)
+						: new Response(JSON.stringify({ success: true })),
+				)
+				globalThis.fetch = fetchMock as any
+				const { ctx, promises } = waited()
+				await worker.scheduled({ cron: '0 * * * *' } as any, regionalEnv(), ctx)
+				const results = await Promise.allSettled(promises)
+				expect(results.map((r) => r.status)).toEqual([
+					'fulfilled',
+					'rejected',
+					'fulfilled',
+					'fulfilled',
+					'fulfilled',
+					'fulfilled',
+					'fulfilled',
+				])
+				const reason = String((results[1] as PromiseRejectedResult).reason)
+				expect(reason).toContain(
+					'Tenant staff tick reported failures for https://tenant-us.example.com/',
+				)
+				expect(reason).toContain('"errors":2')
+			})
+
 			it('sends the staff tick an empty body so each node runs every organization', async () => {
 				const fetchMock = vi.fn(
 					async () => new Response(JSON.stringify({ success: true })),
@@ -754,11 +986,12 @@ describe('Jobs-Cron Worker Endpoints', () => {
 				await worker.scheduled({ cron: '0 * * * *' } as any, regionalEnv(), ctx)
 				const results = await Promise.allSettled(promises)
 
-				// Engagement sync, reservations tick and payments reconcile fulfilled;
-				// the staff tick failed on one node.
+				// Engagement sync, reservations and loyalty ticks and payments
+				// reconcile fulfilled; the staff tick failed on one node.
 				expect(results.map((r) => r.status)).toEqual([
 					'fulfilled',
 					'rejected',
+					'fulfilled',
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
@@ -790,6 +1023,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'fulfilled',
 					'fulfilled',
 					'rejected',
+					'fulfilled',
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',

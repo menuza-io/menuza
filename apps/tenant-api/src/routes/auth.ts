@@ -1,5 +1,5 @@
 import crypto from 'node:crypto'
-import { and, eq, inArray, isNull } from 'drizzle-orm'
+import { and, desc, eq, gt, gte, inArray, isNull } from 'drizzle-orm'
 import { Hono, type Context } from 'hono'
 import { SignJWT, jwtVerify } from 'jose'
 import { ENV } from 'varlock/env'
@@ -15,7 +15,7 @@ import {
 	runTenantTransaction,
 } from '@repo/tenant-db'
 import {
-	findActiveOrganizationById,
+	lookupActiveOrganization,
 	resolveOrganizationForBrowserAuth,
 	resolvePublishedOrganization,
 	type PublishedOrganization,
@@ -29,6 +29,7 @@ import { isValidPhone, legacyPhoneForms, normalizePhone } from '../lib/phone.ts'
 import { orgMatchesNodeRegion } from '../lib/region.ts'
 import { getBearerToken, hmacHash } from '../lib/secrets.ts'
 import { evaluateAndSpawnTriggers } from '../services/journey-service.ts'
+import { openPointsAccountOnSignIn } from '../services/loyalty-member-service.ts'
 import { linkVerifiedCustomerToGuest } from '../services/rsv-customer-link.ts'
 
 export const authRoutes = new Hono()
@@ -94,6 +95,75 @@ function getJwtSecret(): string {
 const ACCESS_TOKEN_EXPIRY = '15m'
 const REFRESH_TOKEN_EXPIRY_DAYS = 30
 const REFRESH_TOKEN_EXPIRY_MS = REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000
+
+/**
+ * A refresh token presented again this soon after its rotation is a lost
+ * answer (a timeout, a closed tab) or two tabs racing, not a stolen copy: it
+ * gets a fresh pair in the same session instead of revoking every token.
+ * Later than this it is treated as reuse.
+ */
+export const REFRESH_ROTATION_GRACE_MS = 60_000
+
+/**
+ * The customer-session contract clients rely on: only a 401, or a 403 with
+ * this code, means the session is over. Every other answer is transient.
+ */
+const ORGANIZATION_INACTIVE = {
+	error: 'Organization is no longer active',
+	code: 'organization_inactive',
+} as const
+const ORGANIZATION_LOOKUP_UNAVAILABLE = {
+	error: 'Service temporarily unavailable. Please try again.',
+	code: 'temporarily_unavailable',
+} as const
+const LOOKUP_RETRY_AFTER_SECONDS = '30'
+
+type CustomerOrganization =
+	| {
+			status: 'found'
+			organization: {
+				id: string
+				slug: string
+				customDomain: string | null
+				dataRegion: string
+			}
+	  }
+	| { status: 'inactive' }
+	| { status: 'unavailable' }
+
+/**
+ * The organization a customer token belongs to. "We could not ask the control
+ * plane" stays apart from "the organization is gone": only the second may end
+ * a session, so an outage never signs every customer out.
+ */
+async function resolveCustomerOrganization(
+	orgId: string,
+	orgSlug?: string,
+): Promise<CustomerOrganization> {
+	const lookup = await lookupActiveOrganization(orgId)
+	let organization = lookup.status === 'found' ? lookup.organization : null
+	if (!organization && orgSlug) {
+		const bySlug = await resolvePublishedOrganization({ slug: orgSlug })
+		if (bySlug && bySlug.id === orgId) organization = bySlug
+	}
+	if (organization) {
+		return orgMatchesNodeRegion(organization.dataRegion)
+			? { status: 'found', organization }
+			: { status: 'inactive' }
+	}
+	return lookup.status === 'unavailable'
+		? { status: 'unavailable' }
+		: { status: 'inactive' }
+}
+
+function organizationRefusal(c: Context, status: 'inactive' | 'unavailable') {
+	if (status === 'unavailable') {
+		return c.json(ORGANIZATION_LOOKUP_UNAVAILABLE, 503, {
+			'Retry-After': LOOKUP_RETRY_AFTER_SECONDS,
+		})
+	}
+	return c.json(ORGANIZATION_INACTIVE, 403)
+}
 
 function customerNeedsName(name: string | null | undefined) {
 	return !name || name.trim().length < 2
@@ -214,6 +284,7 @@ async function issueSessionTokens(
 	db: TenantDb,
 	customer: { id: string; name: string },
 	organization: PublishedOrganization,
+	options: { revokeExisting?: boolean } = {},
 ) {
 	const accessToken = await issueAccessToken({
 		customerId: customer.id,
@@ -222,7 +293,9 @@ async function issueSessionTokens(
 		orgSlug: organization.slug,
 		customDomain: organization.customDomain,
 	})
-	const refreshToken = await issueRefreshToken(db, customer.id)
+	const refreshToken = await issueRefreshToken(db, customer.id, {
+		revokeExisting: options.revokeExisting,
+	})
 	return { accessToken, refreshToken }
 }
 
@@ -358,19 +431,17 @@ export async function authenticateCustomer(c: Context) {
 		throw c.json({ error: 'Invalid token payload' }, 401)
 	}
 
-	let organization = await findActiveOrganizationById(orgId)
-	if (!organization && typeof decoded.orgSlug === 'string' && decoded.orgSlug) {
-		organization = await resolvePublishedOrganization({ slug: decoded.orgSlug })
-		if (organization && organization.id !== orgId) {
-			organization = null
-		}
-	}
-
 	// Fail closed: a deactivated org, an org that moved regions, or an outage of
 	// the control plane must never keep customer tokens alive from stale claims.
-	if (!organization || !orgMatchesNodeRegion(organization.dataRegion)) {
-		throw c.json({ error: 'Organization is no longer active' }, 403)
+	// An outage answers 503 so clients keep the session and try again.
+	const resolved = await resolveCustomerOrganization(
+		orgId,
+		typeof decoded.orgSlug === 'string' ? decoded.orgSlug : undefined,
+	)
+	if (resolved.status !== 'found') {
+		throw organizationRefusal(c, resolved.status)
 	}
+	const { organization } = resolved
 
 	const db = await openTenantDb(orgId)
 	if (!db) {
@@ -576,6 +647,7 @@ authRoutes.post(
 			db,
 			customer,
 			organization,
+			{ revokeExisting: false },
 		)
 
 		// Fire-and-forget: evaluate active marketing journey triggers
@@ -586,6 +658,11 @@ authRoutes.post(
 		).catch((err) => {
 			console.error('Failed to evaluate phone_verified journey triggers:', err)
 		})
+
+		// Fire-and-forget: a verified customer is linked to the points system
+		// without any step of their own (no terms, no enrollment). It never
+		// delays or fails sign-in; the wallet and the first order cover a miss.
+		void openPointsAccountOnSignIn(organization.id, customer.id)
 
 		return c.json({
 			success: true,
@@ -609,11 +686,11 @@ authRoutes.post(
 
 		const { refreshToken, orgId } = parsed.data
 
-		const organization = await findActiveOrganizationById(orgId)
-
-		if (!organization || !orgMatchesNodeRegion(organization.dataRegion)) {
-			return c.json({ error: 'Organization is no longer active' }, 403)
+		const resolved = await resolveCustomerOrganization(orgId)
+		if (resolved.status !== 'found') {
+			return organizationRefusal(c, resolved.status)
 		}
+		const { organization } = resolved
 
 		const db = await openTenantDb(orgId)
 		if (!db) {
@@ -674,6 +751,63 @@ authRoutes.post(
 						new Date() > tokenRecord.expiresAt
 					) {
 						return { kind: 'invalid' as const, reason: 'expired' as const }
+					}
+
+					if (tokenRecord.rotatedAt && !tokenRecord.revokedAt) {
+						const now = new Date()
+						const sinceRotation =
+							now.getTime() - tokenRecord.rotatedAt.getTime()
+						if (
+							sinceRotation >= 0 &&
+							sinceRotation <= REFRESH_ROTATION_GRACE_MS
+						) {
+							// Rotate the session's live token (the successor the client
+							// never received) so the session keeps exactly one.
+							const successor = await tx
+								.select({ id: customerRefreshTokens.id })
+								.from(customerRefreshTokens)
+								.where(
+									and(
+										eq(customerRefreshTokens.customerId, customer.id),
+										isNull(customerRefreshTokens.rotatedAt),
+										isNull(customerRefreshTokens.revokedAt),
+										gt(customerRefreshTokens.expiresAt, now),
+										gte(customerRefreshTokens.createdAt, tokenRecord.rotatedAt),
+									),
+								)
+								.orderBy(desc(customerRefreshTokens.createdAt))
+								.get()
+							const [retired] = successor
+								? await tx
+										.update(customerRefreshTokens)
+										.set({ rotatedAt: now })
+										.where(
+											and(
+												eq(customerRefreshTokens.id, successor.id),
+												isNull(customerRefreshTokens.rotatedAt),
+												isNull(customerRefreshTokens.revokedAt),
+											),
+										)
+										.returning({ id: customerRefreshTokens.id })
+								: []
+							if (retired) {
+								await tx.insert(customerRefreshTokens).values({
+									customerId: customer.id,
+									tokenHash: newRefreshTokenHash,
+									expiresAt: newRefreshTokenExpiresAt,
+								})
+								await tx
+									.update(customers)
+									.set({
+										refreshTokenHash: newRefreshTokenHash,
+										refreshTokenExpiresAt: newRefreshTokenExpiresAt,
+										updatedAt: now,
+									})
+									.where(eq(customers.id, customer.id))
+									.run()
+								return { kind: 'rotated' as const, customer }
+							}
+						}
 					}
 
 					if (tokenRecord.rotatedAt || tokenRecord.revokedAt) {
@@ -818,19 +952,67 @@ authRoutes.post(
 				const tokenHash = hmacHash(parsed.data.refreshToken)
 
 				const token = await db
-					.select({ customerId: customerRefreshTokens.customerId })
+					.select({
+						id: customerRefreshTokens.id,
+						customerId: customerRefreshTokens.customerId,
+					})
 					.from(customerRefreshTokens)
 					.where(eq(customerRefreshTokens.tokenHash, tokenHash))
 					.get()
+				const now = new Date()
 				if (token) {
-					await revokeCustomerRefreshTokens(db, token.customerId)
+					await db
+						.update(customerRefreshTokens)
+						.set({ revokedAt: now })
+						.where(
+							and(
+								eq(customerRefreshTokens.id, token.id),
+								isNull(customerRefreshTokens.revokedAt),
+							),
+						)
+						.run()
+					const successor = await db
+						.select({
+							tokenHash: customerRefreshTokens.tokenHash,
+							expiresAt: customerRefreshTokens.expiresAt,
+						})
+						.from(customerRefreshTokens)
+						.where(
+							and(
+								eq(customerRefreshTokens.customerId, token.customerId),
+								isNull(customerRefreshTokens.rotatedAt),
+								isNull(customerRefreshTokens.revokedAt),
+								gt(customerRefreshTokens.expiresAt, now),
+							),
+						)
+						.orderBy(desc(customerRefreshTokens.createdAt))
+						.get()
+					await db
+						.update(customers)
+						.set({
+							refreshTokenHash: successor?.tokenHash ?? null,
+							refreshTokenExpiresAt: successor?.expiresAt ?? null,
+							updatedAt: now,
+						})
+						.where(eq(customers.id, token.customerId))
+						.run()
 				} else {
 					const customer = await db
 						.select({ id: customers.id })
 						.from(customers)
 						.where(eq(customers.refreshTokenHash, tokenHash))
 						.get()
-					if (customer) await revokeCustomerRefreshTokens(db, customer.id)
+					if (customer) {
+						await db
+							.update(customers)
+							.set({
+								refreshTokenHash: null,
+								refreshTokenExpiresAt: null,
+								updatedAt: now,
+							})
+							.where(eq(customers.id, customer.id))
+							.run()
+					}
 				}
 			} catch (error) {
 				console.error('Error invalidating refresh token:', error)

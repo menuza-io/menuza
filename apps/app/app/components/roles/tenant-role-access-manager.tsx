@@ -66,6 +66,8 @@ export type PermissionGroup = {
 	staffing?: boolean
 	/** Reservations module group: shown only when the organization has Reservations turned on. */
 	reservations?: boolean
+	/** Loyalty module group: shown only when the organization has Loyalty turned on. */
+	loyalty?: boolean
 }
 
 export function getPermissionGroups(): PermissionGroup[] {
@@ -432,6 +434,41 @@ export function getPermissionGroups(): PermissionGroup[] {
 				},
 			],
 		},
+		{
+			title: t`Loyalty`,
+			loyalty: true,
+			description: t`Loyalty program, members and points, redemptions waiting for review, and loyalty reports. Only applies when Loyalty is turned on for your organization.`,
+			permissions: [
+				{
+					id: 'org_perm_read_loyalty_any',
+					label: t`View loyalty members`,
+					description: t`See loyalty members, balances, point activity, and redemptions.`,
+				},
+				{
+					id: 'org_perm_update_loyalty_program_any',
+					label: t`Manage loyalty program`,
+					description: t`Edit the loyalty program and its rewards. Includes View loyalty members.`,
+					warning: t`Changes what customers earn`,
+				},
+				{
+					id: 'org_perm_update_loyalty_points_any',
+					label: t`Adjust loyalty points`,
+					description: t`Adjust member points with a recorded reason. Includes View loyalty members.`,
+					warning: t`Moves customer points`,
+				},
+				{
+					id: 'org_perm_update_loyalty_redemption_any',
+					label: t`Resolve loyalty reviews & refunds`,
+					description: t`Resolve redemptions and purchases waiting for review, record loyalty refunds, and repair balances. Includes View loyalty members.`,
+					warning: t`Moves customer points`,
+				},
+				{
+					id: 'org_perm_read_loyalty_report_any',
+					label: t`View loyalty reports`,
+					description: t`See loyalty reports and analytics.`,
+				},
+			],
+		},
 	]
 }
 
@@ -628,6 +665,7 @@ export function RoleAccessForm({
 	errors,
 	staffingEnabled = false,
 	reservationsEnabled = false,
+	loyaltyEnabled = false,
 }: {
 	role?: TenantRole
 	cancelHref: string
@@ -638,6 +676,8 @@ export function RoleAccessForm({
 	staffingEnabled?: boolean
 	/** Whether the Reservations module is turned on for this organization. */
 	reservationsEnabled?: boolean
+	/** Whether Loyalty is turned on for this organization. */
+	loyaltyEnabled?: boolean
 }) {
 	const navigation = useNavigation()
 	// Editing saves through a fetcher so the save bar's redirect to the list is
@@ -666,7 +706,8 @@ export function RoleAccessForm({
 	const permissionGroups = getPermissionGroups().filter(
 		(group) =>
 			(staffingEnabled || !group.staffing) &&
-			(reservationsEnabled || !group.reservations),
+			(reservationsEnabled || !group.reservations) &&
+			(loyaltyEnabled || !group.loyalty),
 	)
 	const rawPresets = getPresets().filter(
 		(preset) =>
@@ -694,7 +735,8 @@ export function RoleAccessForm({
 			.filter(
 				(group) =>
 					(group.staffing && !staffingEnabled) ||
-					(group.reservations && !reservationsEnabled),
+					(group.reservations && !reservationsEnabled) ||
+					(group.loyalty && !loyaltyEnabled),
 			)
 			.flatMap((group) => group.permissions.map((p) => p.id)),
 	)
@@ -1033,6 +1075,7 @@ export function ReadOnlyRoleView({
 	editHref,
 	staffingEnabled = false,
 	reservationsEnabled = false,
+	loyaltyEnabled = false,
 }: {
 	role: TenantRole
 	editHref?: string
@@ -1041,12 +1084,15 @@ export function ReadOnlyRoleView({
 	staffingEnabled?: boolean
 	/** Whether the Reservations module is turned on for this organization. */
 	reservationsEnabled?: boolean
+	/** Whether Loyalty is turned on for this organization. */
+	loyaltyEnabled?: boolean
 }) {
 	const { roleName, roleDescription } = useRoleLabels()
 	const permissionGroups = getPermissionGroups().filter(
 		(group) =>
 			(staffingEnabled || !group.staffing) &&
-			(reservationsEnabled || !group.reservations),
+			(reservationsEnabled || !group.reservations) &&
+			(loyaltyEnabled || !group.loyalty),
 	)
 	const visibleIds = new Set(
 		permissionGroups.flatMap((group) => group.permissions.map((p) => p.id)),

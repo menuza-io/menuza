@@ -1,0 +1,54 @@
+---
+import { msg } from '@lingui/core/macro'
+import { getLocaleHref } from '@repo/common/site-locales'
+import AccountShell from '~/components/AccountShell.astro'
+import LoyaltyLabels from '~/components/loyalty/LoyaltyLabels.astro'
+import SitePage from '~/components/SitePage.astro'
+import { siteCardClass } from '~/lib/form-classes'
+
+const organization = Astro.locals.organization
+const i18n = Astro.locals.i18n
+const requestedLocale = Astro.locals.requestedLocale
+const defaultLocale = Astro.locals.defaultLocale
+
+const rewardsTitle = i18n._(msg`Rewards`)
+const rewardsDescription = i18n._(
+	msg`Your points, rewards, code and history.`,
+)
+const loading = i18n._(msg`Loading your rewards…`)
+
+const loginHref = getLocaleHref('/login', requestedLocale, requestedLocale, defaultLocale)
+
+// The wallet is filled in by the browser from the regional tenant-api; this
+// page renders nothing about the member (docs/tenant-data-residency.md).
+
+if (!organization) {
+	return new Response('Not Found', { status: 404, statusText: 'Not Found' })
+}
+---
+
+<SitePage
+	organization={organization}
+	page={{ id: 'profile-rewards', title: rewardsTitle, slug: 'profile/rewards', isHomePage: false, sections: [] }}
+	title={`${rewardsTitle} - ${organization.name}`}
+>
+	<AccountShell current="rewards" title={rewardsTitle} description={rewardsDescription}>
+		<LoyaltyLabels />
+		<div
+			id="loyalty-wallet-root"
+			class="flex flex-col gap-6"
+			data-login-href={loginHref}
+		>
+			<p class="sr-only" role="status" data-loyalty-loading>{loading}</p>
+			<div class={`${siteCardClass} flex flex-col gap-3`} aria-hidden="true">
+				<div class="h-5 w-32 animate-pulse rounded-md bg-muted/60 motion-reduce:animate-none"></div>
+				<div class="h-10 w-40 animate-pulse rounded-md bg-muted/60 motion-reduce:animate-none"></div>
+				<div class="h-2 w-full animate-pulse rounded-full bg-muted/60 motion-reduce:animate-none"></div>
+			</div>
+		</div>
+	</AccountShell>
+
+	<script>
+		import '../../scripts/profile-rewards.ts'
+	</script>
+</SitePage>

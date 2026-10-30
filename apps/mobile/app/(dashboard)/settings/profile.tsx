@@ -5,10 +5,10 @@ import {
 	View,
 	Text,
 	ScrollView,
-	type TextInput,
 	Alert,
 	KeyboardAvoidingView,
 	Platform,
+	type TextInputInstance,
 } from 'react-native'
 import {
 	Screen,
@@ -30,7 +30,7 @@ export default function ProfileEditScreen() {
 	const [username, setUsername] = useState(user?.username || '')
 	const [hasChanges, setHasChanges] = useState(false)
 
-	const usernameRef = useRef<TextInput>(null)
+	const usernameRef = useRef<TextInputInstance>(null)
 
 	useEffect(() => {
 		const nameChanged = name !== (user?.name || '')

@@ -4,6 +4,7 @@ import {
 	parsePosPairingCode,
 } from '@repo/common/pos-orders'
 import { z } from 'zod'
+import { LOYALTY_TOKEN_AUDIENCE } from '@repo/loyalty'
 import { RESERVATIONS_TOKEN_AUDIENCE } from '@repo/reservations'
 import {
 	parseKioskDeviceSecret,
@@ -68,6 +69,7 @@ async function orgIdFromOperatorJwt(
 				'tenant-api-operator',
 				STAFFING_TOKEN_AUDIENCE,
 				RESERVATIONS_TOKEN_AUDIENCE,
+				LOYALTY_TOKEN_AUDIENCE,
 			],
 			issuer: brand.shortName,
 			algorithms: ['HS256'],
@@ -271,6 +273,11 @@ export async function resolveOrgId(
 		return orgIdFromJsonBody(request)
 	}
 
+	// Loyalty tick: same shape as the staff tick.
+	if (pathname === '/api/loyalty/tick') {
+		return orgIdFromJsonBody(request)
+	}
+
 	// App -> regional staff commands (link, unlink, erase, summary, export): body
 	// orgId, authenticated by INTERNAL_COMMAND_TOKEN inside the route handler.
 	if (pathname.startsWith('/internal/staff/')) {
@@ -293,6 +300,21 @@ export async function resolveOrgId(
 	// never by a client-supplied query or body orgId.
 	if (pathname.startsWith('/operator/reservations')) {
 		return orgIdFromOperatorJwt(request, env)
+	}
+
+	// Operator loyalty routes: same rule (the `lty+jwt` shares the operator
+	// audience list above; the route handler re-verifies typ, audience, scope).
+	if (pathname.startsWith('/operator/loyalty')) {
+		return orgIdFromOperatorJwt(request, env)
+	}
+
+	// Customer loyalty routes: a customer access token is a valid signal (the
+	// handler re-checks it against the origin-bound org); otherwise resolve
+	// origin + slug/host, never a client-supplied orgId.
+	if (pathname === '/loyalty' || pathname.startsWith('/loyalty/')) {
+		const fromJwt = await orgIdFromCustomerJwt(request, env)
+		if (fromJwt) return fromJwt
+		return orgIdFromOrderIdentity(request, url)
 	}
 
 	// Public/guest reservations routes: the organization is the one the

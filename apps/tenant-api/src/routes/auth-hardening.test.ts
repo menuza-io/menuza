@@ -24,11 +24,20 @@ const organization = {
 	dataRegion: 'us',
 }
 
-vi.mock('../lib/origin.ts', () => ({
-	findActiveOrganizationById: vi.fn(),
-	resolveOrganizationForBrowserAuth: vi.fn(),
-	resolvePublishedOrganization: vi.fn(),
-}))
+vi.mock('../lib/origin.ts', () => {
+	const findActiveOrganizationById = vi.fn()
+	return {
+		findActiveOrganizationById,
+		lookupActiveOrganization: vi.fn(async (id: string) => {
+			const organization = await findActiveOrganizationById(id)
+			return organization
+				? { status: 'found', organization }
+				: { status: 'missing' }
+		}),
+		resolveOrganizationForBrowserAuth: vi.fn(),
+		resolvePublishedOrganization: vi.fn(),
+	}
+})
 vi.mock('../services/journey-service.ts', () => ({
 	evaluateAndSpawnTriggers: vi.fn().mockResolvedValue(undefined),
 }))
@@ -134,6 +143,37 @@ describe('customer auth hardening', () => {
 		expect(live.status).toBe(200)
 	})
 
+	it('keeps earlier device sessions when the customer signs in again', async () => {
+		const db = await getTenantDb(orgId)
+		await db.insert(customers).values({
+			name: 'Multi Device',
+			phone,
+			phoneVerificationCode: hmacHash('246810'),
+			phoneVerificationExpiresAt: new Date(Date.now() + 60_000),
+		})
+		const first = await post(app, '/auth/verify', { phone, code: '246810' })
+		const firstTokens = (await first.json()) as { refreshToken: string }
+		expect(first.status).toBe(200)
+
+		await db
+			.update(customers)
+			.set({
+				phoneVerificationCode: hmacHash('135790'),
+				phoneVerificationExpiresAt: new Date(Date.now() + 60_000),
+			})
+			.where(eq(customers.phone, phone))
+			.run()
+
+		const second = await post(app, '/auth/verify', { phone, code: '135790' })
+		expect(second.status).toBe(200)
+
+		const stillLive = await post(app, '/auth/refresh', {
+			refreshToken: firstTokens.refreshToken,
+			orgId,
+		})
+		expect(stillLive.status).toBe(200)
+	})
+
 	it('keeps the existing refresh token valid when the profile is updated', async () => {
 		const db = await getTenantDb(orgId)
 		await db.insert(customers).values({
@@ -187,5 +227,6 @@ describe('customer auth hardening', () => {
 			headers: { Authorization: `Bearer ${accessToken}` },
 		})
 		expect(me.status).toBe(403)
+		expect(await me.json()).toMatchObject({ code: 'organization_inactive' })
 	})
 })

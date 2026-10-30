@@ -17,6 +17,7 @@ import {
 	useLoaderData,
 } from 'react-router'
 import { RoleAccessForm } from '#app/components/roles/tenant-role-access-manager.tsx'
+import { isLoyaltyFeatureEnabled } from '#app/utils/loyalty/access.server.ts'
 import {
 	hasOnlyTenantRolePermissions,
 	withImpliedTenantRolePermissions,
@@ -34,10 +35,12 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		request,
 		params.orgSlug,
 	)
-	const [staffingEnabled, reservationsEnabled] = await Promise.all([
-		isStaffingFeatureEnabled(organization.organizationId),
-		isReservationsFeatureEnabled(organization.organizationId),
-	])
+	const [staffingEnabled, reservationsEnabled, loyaltyEnabled] =
+		await Promise.all([
+			isStaffingFeatureEnabled(organization.organizationId),
+			isReservationsFeatureEnabled(organization.organizationId),
+			isLoyaltyFeatureEnabled(organization.organizationId),
+		])
 
 	return {
 		organization: {
@@ -47,6 +50,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		},
 		staffingEnabled,
 		reservationsEnabled,
+		loyaltyEnabled,
 	}
 }
 
@@ -150,6 +154,7 @@ export default function CreateRoleRoute() {
 			errors={actionData}
 			staffingEnabled={data.staffingEnabled}
 			reservationsEnabled={data.reservationsEnabled}
+			loyaltyEnabled={data.loyaltyEnabled}
 		/>
 	)
 }

@@ -3,7 +3,7 @@ import {
 	getOrgBinding,
 	setSessionTokens,
 	tenantErrorMessage,
-	tenantFetch,
+	tenantFetchResponse,
 	tenantJson,
 } from '~/lib/client-auth'
 
@@ -27,7 +27,7 @@ export function isVisibleInState(
 
 export async function fetchDropAlertsSubscribed(): Promise<boolean | null> {
 	try {
-		const res = await tenantFetch('/subscriptions')
+		const res = await tenantFetchResponse('/subscriptions')
 		if (!res.ok) return null
 		const data = (await res.json()) as {
 			subscriptions?: { topic: string; channel: string; subscribed: boolean }[]
@@ -46,7 +46,7 @@ export async function setDropAlertsSubscribed(
 	subscribed: boolean,
 	source: string,
 ): Promise<{ ok: boolean; data: Record<string, unknown> }> {
-	const res = await tenantFetch('/subscriptions/drops/sms', {
+	const res = await tenantFetchResponse('/subscriptions/drops/sms', {
 		method: 'PUT',
 		body: JSON.stringify({ subscribed, source }),
 	})
@@ -217,7 +217,8 @@ export function mountDropAlerts(root: HTMLElement) {
 	}
 	void fetchDropAlertsSubscribed().then((subscribed) => {
 		if (subscribed) return hide()
-		// `null`: the session didn't survive a refresh, so treat as signed out.
+		// `null`: the session didn't survive a refresh or could not be checked
+		// for now, so offer the phone form.
 		setState(subscribed === false ? 'signed-in' : 'phone')
 		ready()
 	})

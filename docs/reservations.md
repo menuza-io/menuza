@@ -45,9 +45,9 @@ tenant-api mints from the terminal and the signed-in session. See
 [Station apps](./pos.md#station-apps-time-clock-and-host-stand).
 
 Guest-facing surfaces: the Sites `/reserve` pages (book, `/reserve/manage`,
-`/reserve/waitlist`, `/reserve/pay`), the native iOS and Android booking flows
-(`apps/ios`, `apps/android`, see the contract) and the AI phone agent actions
-(`reservations.availability`, `reservations.hold`, `reservations.book`).
+`/reserve/waitlist`, `/reserve/pay`), the customer app's booking flow
+(`apps/customer`, iOS and Android, see the contract) and the AI phone agent
+actions (`reservations.availability`, `reservations.hold`, `reservations.book`).
 
 Also in the module: marketing journeys (`reservation_booked`,
 `reservation_completed`, `reservation_no_show`, `reservation_cancelled`), the
@@ -422,8 +422,8 @@ data region (the script refuses on a mismatch instead of rewriting it).
 ## Contract fixtures
 
 `npm run fixtures:reservations -w tenant-api` re-records the public API fixtures
-in `packages/reservations/contract-fixtures` and the iOS and Android copies from
-the in-process routes with seeded demo data. See the
+in `packages/reservations/contract-fixtures` (the customer app's tests read them
+in place) from the in-process routes with seeded demo data. See the
 [contract](./reservations-contract.md#9-native-clients-and-contract-fixtures).
 
 ## CI security checks

@@ -22,6 +22,7 @@ import {
 } from 'react-router'
 import { RoleAccessForm } from '#app/components/roles/tenant-role-access-manager.tsx'
 import { type BreadcrumbHandle } from '#app/utils/breadcrumb.ts'
+import { isLoyaltyFeatureEnabled } from '#app/utils/loyalty/access.server.ts'
 import {
 	hasOnlyTenantRolePermissions,
 	TENANT_ROLE_PERMISSION_IDS,
@@ -100,6 +101,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		reservationsEnabled: await isReservationsFeatureEnabled(
 			organization.organizationId,
 		),
+		loyaltyEnabled: await isLoyaltyFeatureEnabled(organization.organizationId),
 	}
 }
 
@@ -214,6 +216,7 @@ export default function EditRoleRoute() {
 			errors={actionData}
 			staffingEnabled={data.staffingEnabled}
 			reservationsEnabled={data.reservationsEnabled}
+			loyaltyEnabled={data.loyaltyEnabled}
 		/>
 	)
 }

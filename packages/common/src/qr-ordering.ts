@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { orderLoyaltySelectionSchema } from './order-loyalty.ts'
 
 /**
  * QR ordering: dine-in table ordering with open tabs, and order-ahead QR
@@ -175,6 +176,11 @@ export const QR_MAX_TABLES_PER_LOCATION = 500
 export const QR_PER_TABLE_LIMIT_DEFAULT = 12
 export const QR_PER_TABLE_LIMIT_MAX = 120
 export const QR_VOID_REASON_MAX = 200
+/**
+ * How long a counter close marked as rung up on a Station till stays listed
+ * (`GET /operator/qr/tabs?status=station`), so a mistaken mark can be removed.
+ */
+export const QR_STATION_MARK_LISTED_MS = 24 * 60 * 60 * 1000
 export const QR_TAB_STATUS_VALUES = ['open', 'closed', 'cancelled'] as const
 export type QrTabStatus = (typeof QR_TAB_STATUS_VALUES)[number]
 export const QR_TAB_PAYMENT_STATUS_VALUES = [
@@ -241,6 +247,11 @@ export const qrTabCloseSchema = z.strictObject({
 	acknowledgeReview: z.literal(true).optional(),
 	/** The total staff saw (before tip): a changed tab answers 409 `stale_tab`. */
 	expectedTotalCents: z.number().int().min(0).max(100_000_000).optional(),
+	/**
+	 * Staff rang the tab up on a Station till: the till sale earns loyalty
+	 * points, so the tab itself never does (a purchase counts once).
+	 */
+	rungUpOnStation: z.boolean().optional(),
 })
 
 export const qrTabVoidSchema = z.strictObject({
@@ -299,6 +310,11 @@ export type QrTabTotals = {
 	/** Tax already contained in the subtotal (VAT-inclusive menus). */
 	taxInclusive: boolean
 	tipCents: number
+	/**
+	 * A loyalty reward taken off before tax. Only a tab paid from the phone
+	 * carries one (a counter close never does), so it is 0 while the tab is open.
+	 */
+	loyaltyDiscountCents: number
 	totalCents: number
 }
 
@@ -355,5 +371,11 @@ export const qrTabPayRequestSchema = z.strictObject({
 				message: 'Enter a valid phone number',
 			}),
 	}),
+	/**
+	 * A reward the signed-in member spends on the tab (customer token
+	 * required). The region re-quotes it on the tab's rounds and takes it off
+	 * before tax; a changed reward or cart is refused.
+	 */
+	loyalty: orderLoyaltySelectionSchema.optional(),
 })
 export type QrTabPayRequest = z.infer<typeof qrTabPayRequestSchema>

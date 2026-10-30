@@ -1,6 +1,7 @@
 {
 	"$schema": "https://turbo.build/schema.json",
 	"globalDependencies": ["**/.env.*local", "packages/**/.env.schema"],
+	"globalPassThroughEnv": ["DEV_LAN"],
 	"tasks": {
 		"//#generate:icons": {
 			"inputs": [
@@ -94,7 +95,13 @@
 			"dependsOn": ["@repo/observability#build", "//#generate:icons"],
 			"cache": false,
 			"persistent": true,
-			"passThroughEnv": ["DEPLOY_TARGET", "PORT", "MOCKS", "DEV_PROXY_PORT"]
+			"passThroughEnv": [
+				"DEPLOY_TARGET",
+				"PORT",
+				"MOCKS",
+				"DEV_PROXY_PORT",
+				"DEV_LAN"
+			]
 		},
 		"admin#dev": {
 			"dependsOn": ["@repo/observability#build", "//#generate:icons"],

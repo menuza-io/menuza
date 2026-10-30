@@ -4,14 +4,14 @@ import {
 	clearSessionTokens,
 	getAccessToken,
 	getBrowserTenantApiUrl,
-	tenantFetch,
+	tenantFetchResponse,
 } from '~/lib/client-auth'
 
 /** The reservations client for this page: browser-direct to the regional tenant-api. */
 export function createBrowserReservationsApi() {
 	return createReservationsApi({
-		baseUrl: getBrowserTenantApiUrl(),
-		authedFetch: tenantFetch,
+		baseUrl: getBrowserTenantApiUrl,
+		authedFetch: tenantFetchResponse,
 		isSignedIn: () => Boolean(getAccessToken()),
 		clearSession: clearSessionTokens,
 	})
@@ -34,7 +34,7 @@ export async function loadCustomerPrefill(): Promise<{
 } | null> {
 	if (!getAccessToken()) return null
 	try {
-		const res = await tenantFetch('/auth/me')
+		const res = await tenantFetchResponse('/auth/me')
 		if (!res.ok) return null
 		const data = (await res.json()) as {
 			customer?: { name?: string; email?: string; phone?: string }

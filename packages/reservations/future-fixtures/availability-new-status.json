@@ -1,0 +1,17 @@
+{
+	"dayVersion": 0,
+	"settingsVersion": 1,
+	"timeZone": "UTC",
+	"now": "2030-06-14T16:00:00.000Z",
+	"locationId": "loc_pub_main",
+	"date": "2030-06-24",
+	"partySize": 2,
+	"status": "paused",
+	"slots": [],
+	"alternatives": {
+		"sameDay": [],
+		"otherDates": []
+	},
+	"notifyMe": true,
+	"waitlist": true
+}

@@ -54,11 +54,12 @@ if (!organization) {
 						placeholder="+1 (555) 000-0000"
 						required
 						autocomplete="tel"
-						class="field"
+						dir="ltr"
+						class="field text-start rtl:text-end"
 					/>
 				</div>
 
-				<div id="error-message" class="hidden text-sm font-medium text-destructive"></div>
+				<div id="error-message" role="alert" class="hidden text-sm font-medium text-destructive"></div>
 
 				<button
 					type="submit"
@@ -73,6 +74,9 @@ if (!organization) {
 
 <script>
 	import {
+		clearSessionTokens,
+		getAccessToken,
+		getRefreshToken,
 		getOrgBinding,
 		redirectHomeIfSignedIn,
 		tenantErrorMessage,
@@ -80,19 +84,34 @@ if (!organization) {
 	} from '~/lib/client-auth'
 	import { browserLocaleHref } from '~/lib/locale'
 
+	// Half a session (an access token whose refresh token is gone) can never
+	// refresh: forget it so the form works instead of bouncing home.
+	if (getAccessToken() && !getRefreshToken()) clearSessionTokens()
 	redirectHomeIfSignedIn()
 
 	const form = document.getElementById('login-form') as HTMLFormElement
 	const errorMessage = document.getElementById('error-message')!
+	const phoneField = document.getElementById('phone') as HTMLInputElement
 	const submitButton = form.querySelector('button[type="submit"]') as HTMLButtonElement
 	const sendLabel = form.dataset.sendCode || 'Send Code'
 	const sendingLabel = form.dataset.sending || 'Sending...'
 	const networkLabel = form.dataset.network || 'Network error. Please try again.'
 	const errorLabel = form.dataset.error || 'Something went wrong.'
 
+	function showError(message: string) {
+		errorMessage.textContent = message
+		errorMessage.classList.remove('hidden')
+		phoneField.setAttribute('aria-invalid', 'true')
+		phoneField.setAttribute('aria-describedby', 'error-message')
+		// Disabling the button while sending dropped focus.
+		phoneField.focus()
+	}
+
 	form.addEventListener('submit', async (e) => {
 		e.preventDefault()
 		errorMessage.classList.add('hidden')
+		phoneField.removeAttribute('aria-invalid')
+		phoneField.removeAttribute('aria-describedby')
 		submitButton.disabled = true
 		submitButton.textContent = sendingLabel
 
@@ -110,12 +129,10 @@ if (!organization) {
 				sessionStorage.setItem('pending_phone', phone)
 				window.location.href = browserLocaleHref('/verify')
 			} else {
-				errorMessage.textContent = tenantErrorMessage(data, errorLabel)
-				errorMessage.classList.remove('hidden')
+				showError(tenantErrorMessage(data, errorLabel))
 			}
 		} catch {
-			errorMessage.textContent = networkLabel
-			errorMessage.classList.remove('hidden')
+			showError(networkLabel)
 		} finally {
 			submitButton.disabled = false
 			submitButton.textContent = sendLabel

@@ -23,8 +23,8 @@ environment variables, health checks, or rollback procedures.
 - `apps/tenant-api` runs regionally: US on the Cloudflare Worker/Durable Object
   path (or optional OCI Ashburn deployment), KSA on OCI Riyadh with a block
   volume.
-- `apps/mobile` is Expo and `apps/ios`/`apps/android` have opt-in native build
-  and release scripts; they are not normal server deployments.
+- `apps/mobile` (operator) and `apps/customer` (tenant customer) are Expo apps
+  built per store release; they are not normal server deployments.
 - The control-plane D1 database is US-only. Customer PII is in regional per-org
   SQLite and must not cross the residency boundary.
 

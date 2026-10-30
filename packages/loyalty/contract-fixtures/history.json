@@ -1,0 +1,23 @@
+{
+	"entries": [
+		{
+			"id": "00000000-0000-4000-8000-000000000005",
+			"at": 1907683216000,
+			"type": "earn",
+			"delta": 20,
+			"channel": "web",
+			"rewardName": null,
+			"reason": null
+		},
+		{
+			"id": "00000000-0000-4000-8000-000000000006",
+			"at": 1907683214000,
+			"type": "adjust",
+			"delta": 300,
+			"channel": null,
+			"rewardName": null,
+			"reason": "goodwill"
+		}
+	],
+	"nextCursor": "WzE5MDc2ODMyMTQwMDAsIjAwMDAwMDAwLTAwMDAtNDAwMC04MDAwLTAwMDAwMDAwMDAwNiJd"
+}

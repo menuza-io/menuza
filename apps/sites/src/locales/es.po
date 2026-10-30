@@ -19,6 +19,26 @@ msgstr ""
 msgid "(optional)"
 msgstr "(opcional)"
 
+#: src/lib/loyalty/labels.ts:84
+msgid "{amount} held for an order in progress"
+msgstr "Reservado para un pedido en curso: {amount}"
+
+#: src/lib/loyalty/labels.ts:169
+msgid "{amount} left after this reward"
+msgstr "Te quedarán {amount} después de esta recompensa"
+
+#: src/lib/loyalty/labels.ts:154
+msgid "{amount} more needed"
+msgstr "Te faltan {amount}"
+
+#: src/lib/loyalty/labels.ts:92
+msgid "{amount} more to unlock {reward}"
+msgstr "Te faltan {amount} para {reward}"
+
+#: src/lib/loyalty/labels.ts:138
+msgid "{amount} off"
+msgstr "{amount} de descuento"
+
 #: src/lib/careers/labels.ts:66
 msgid "{amount} per {unit}"
 msgstr "{amount} por {unit}"
@@ -68,6 +88,14 @@ msgstr "{min}–{max} cal"
 msgid "{min}–{max} min"
 msgstr "{min}–{max} min"
 
+#: src/lib/loyalty/labels.ts:51
+msgid "{n, plural, one {{count} point} other {{count} points}}"
+msgstr "{n, plural, one {{count} punto} other {{count} puntos}}"
+
+#: src/lib/loyalty/labels.ts:55
+msgid "{n, plural, one {{count} star} other {{count} stars}}"
+msgstr "{n, plural, one {{count} estrella} other {{count} estrellas}}"
+
 #: src/components/drops/DropCard.astro.ts:3
 #: src/pages/drop/[slug].astro.ts:3
 msgid "{n} days"
@@ -97,6 +125,34 @@ msgstr "{party} el {date}"
 #: src/lib/reservations/labels.ts:73
 msgid "{party}, {date} at {time}"
 msgstr "{party}, {date} a las {time}"
+
+#: src/lib/loyalty/labels.ts:139
+msgid "{percent} off"
+msgstr "{percent} de descuento"
+
+#: src/lib/loyalty/labels.ts:108
+msgid "{points} for each {items}"
+msgstr "{points} por cada {items}"
+
+#: src/lib/loyalty/labels.ts:111
+msgid "{points} for each eligible item"
+msgstr "{points} por cada artículo participante"
+
+#: src/lib/loyalty/labels.ts:116
+msgid "{points} for each item from {categories}"
+msgstr "{points} por cada artículo de {categories}"
+
+#: src/lib/loyalty/labels.ts:122
+msgid "{points} for each item from eligible categories"
+msgstr "{points} por cada artículo de las categorías participantes"
+
+#: src/lib/loyalty/labels.ts:107
+msgid "{points} for each visit (once a day)"
+msgstr "{points} por cada visita (una vez al día)"
+
+#: src/lib/loyalty/labels.ts:103
+msgid "{points} for every {amount} you spend"
+msgstr "{points} por cada {amount} que gastes"
 
 #: src/lib/reservations/labels.ts:460
 msgid "{price} per booking"
@@ -157,6 +213,14 @@ msgstr "1 lanzamiento con pedidos abiertos"
 msgid "1 guest"
 msgstr "1 persona"
 
+#: src/lib/loyalty/labels.ts:151
+msgid "A free item"
+msgstr "Un artículo gratis"
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "A payment for this tab is already on its way. Wait a moment, then check your tab."
+msgstr "Ya hay un pago en curso para esta cuenta. Espera un momento y revisa tu cuenta."
+
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "A team member is settling this tab. Please ask them for help."
 msgstr "Un miembro del equipo está cerrando esta cuenta. Pídele ayuda."
@@ -209,6 +273,10 @@ msgstr "Añadir al pedido"
 msgid "Address suggestions"
 msgstr "Sugerencias de direcciones"
 
+#: src/lib/loyalty/labels.ts:249
+msgid "Adjusted by staff"
+msgstr "Ajuste del equipo"
+
 #: src/lib/ordering-labels.ts:160
 msgid "After address"
 msgstr "Tras la dirección"
@@ -246,10 +314,38 @@ msgstr "Todas las horas están en la zona horaria del restaurante: {zone}."
 msgid "Amount due now"
 msgstr "Importe a pagar ahora"
 
+#: src/lib/loyalty/labels.ts:188
+msgid "Another guest has already claimed rewards for this tab."
+msgstr "Otro cliente ya ha reclamado las recompensas de esta cuenta."
+
 #: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3
 msgid "Any dietary preferences, sauce on the side, etc."
 msgstr "Preferencias alimentarias, salsa aparte, etc."
+
+#: src/lib/loyalty/labels.ts:253
+msgid "App"
+msgstr "App"
+
+#: src/lib/loyalty/labels.ts:146
+msgid "Applies to {categories}"
+msgstr "Válido para {categories}"
+
+#: src/lib/loyalty/labels.ts:142
+msgid "Applies to {items}"
+msgstr "Válido para {items}"
+
+#: src/lib/loyalty/labels.ts:149
+msgid "Applies to selected categories"
+msgstr "Válido para categorías seleccionadas"
+
+#: src/lib/loyalty/labels.ts:143
+msgid "Applies to selected items"
+msgstr "Válido para artículos seleccionados"
+
+#: src/lib/loyalty/labels.ts:141
+msgid "Applies to your whole order"
+msgstr "Válido para todo tu pedido"
 
 #: src/components/careers/ApplyPanel.astro.ts:3
 msgid "Apply"
@@ -262,6 +358,18 @@ msgstr "Postularse antes del {date}"
 #: src/pages/careers/[slug].astro.ts:3
 msgid "Apply now"
 msgstr "Postularme ahora"
+
+#: src/lib/loyalty/labels.ts:229
+msgid "Approve"
+msgstr "Aprobar"
+
+#: src/lib/loyalty/labels.ts:231
+msgid "Approve {reward}"
+msgstr "Aprobar {reward}"
+
+#: src/lib/loyalty/labels.ts:233
+msgid "Approved: {reward}."
+msgstr "Aprobado: {reward}."
 
 #: src/lib/ordering-labels.ts:97
 msgid "Apt, suite or floor"
@@ -465,6 +573,10 @@ msgstr "Vuelve pronto o reserva una mesa normal."
 #: src/pages/careers/index.astro.ts:3
 msgid "Check back soon."
 msgstr "Vuelve pronto."
+
+#: src/lib/loyalty/labels.ts:220
+msgid "Check for requests"
+msgstr "Buscar solicitudes"
 
 #: src/pages/drops.astro.ts:3
 msgid "Check the menu for what we are serving today."
@@ -672,6 +784,10 @@ msgstr "Por contrato"
 msgid "Copy link"
 msgstr "Copiar enlace"
 
+#: src/lib/loyalty/labels.ts:137
+msgid "Cost"
+msgstr "Coste"
+
 #: src/lib/ordering-labels.ts:71
 msgid "Customize item"
 msgstr "Personalizar artículo"
@@ -685,9 +801,21 @@ msgstr "CVC"
 msgid "Date"
 msgstr "Fecha"
 
+#: src/lib/loyalty/labels.ts:230
+msgid "Decline"
+msgstr "Rechazar"
+
+#: src/lib/loyalty/labels.ts:232
+msgid "Decline {reward}"
+msgstr "Rechazar {reward}"
+
 #: src/lib/reservations/labels.ts:169
 msgid "Declined"
 msgstr "Rechazada"
+
+#: src/lib/loyalty/labels.ts:234
+msgid "Declined: {reward}."
+msgstr "Rechazado: {reward}."
 
 #: src/lib/ordering-labels.ts:57
 msgid "Decrease quantity"
@@ -783,6 +911,10 @@ msgstr "Lanzamientos"
 #: src/lib/reservations/labels.ts:292
 msgid "Earliest time"
 msgstr "Hora más temprana"
+
+#: src/lib/loyalty/labels.ts:244
+msgid "Earned"
+msgstr "Acumulado"
 
 #: src/components/careers/ApplyPanel.astro.ts:3
 #: src/lib/reservations/labels.ts:92
@@ -893,6 +1025,11 @@ msgstr "Caducada"
 msgid "Expires"
 msgstr "Vence"
 
+#: src/lib/loyalty/labels.ts:210
+#: src/lib/loyalty/labels.ts:228
+msgid "Expires in {time}"
+msgstr "Caduca en {time}"
+
 #: src/pages/shop.astro.ts:3
 msgid "Expiry"
 msgstr "Vencimiento"
@@ -945,6 +1082,10 @@ msgstr "Para grupos más grandes, ponte en contacto directamente con el restaura
 msgid "Free"
 msgstr "Gratis"
 
+#: src/lib/loyalty/labels.ts:150
+msgid "Free {item}"
+msgstr "{item} gratis"
+
 #: src/lib/reservations/labels.ts:344
 msgid "Free cancellation until your booking time."
 msgstr "Cancelación gratuita hasta la hora de tu reserva."
@@ -983,6 +1124,10 @@ msgstr "Tiempo completo"
 msgid "Gate code, buzzer, or where to leave it"
 msgstr "Código del portal, timbre o dónde dejarlo"
 
+#: src/lib/loyalty/labels.ts:207
+msgid "Get a new code"
+msgstr "Obtener un código nuevo"
+
 #: src/components/drops/DropAlertsSignup.astro.ts:3
 msgid "Get a text when new drops open, before they sell out."
 msgstr "Recibe un SMS cuando abran nuevos lanzamientos, antes de que se agoten."
@@ -998,6 +1143,10 @@ msgstr "Recibe un SMS cuando abra el próximo lanzamiento, antes de que se agote
 #: src/lib/reservations/labels.ts:288
 msgid "Get notified when a table opens"
 msgstr "Recibe un aviso cuando se libere una mesa"
+
+#: src/lib/loyalty/labels.ts:208
+msgid "Getting your code…"
+msgstr "Obteniendo tu código…"
 
 #: src/lib/reservations/labels.ts:294
 msgid "Give a phone number, an email address, or both."
@@ -1036,9 +1185,17 @@ msgstr "Reservada durante {time}"
 msgid "Hello, {name}"
 msgstr "Hola, {name}"
 
+#: src/lib/loyalty/labels.ts:240
+msgid "History"
+msgstr "Historial"
+
 #: src/lib/careers/labels.ts:31
 msgid "hour"
 msgstr "hora"
+
+#: src/lib/loyalty/labels.ts:100
+msgid "How you earn"
+msgstr "Cómo acumular"
 
 #: src/lib/reservations/labels.ts:367
 msgid "I accept these terms and the payment or card hold described above."
@@ -1064,6 +1221,10 @@ msgstr "Si se libera una mesa, nos pondremos en contacto contigo. Puedes cancela
 #: src/pages/drop/[slug].astro.ts:3
 msgid "in {t}"
 msgstr "en {t}"
+
+#: src/lib/loyalty/labels.ts:251
+msgid "In store"
+msgstr "En el local"
 
 #: src/lib/reservations/labels.ts:89
 msgid "Include your country code, for example {example}."
@@ -1222,8 +1383,14 @@ msgstr "Enlace copiado"
 msgid "Loading your receipt…"
 msgstr "Cargando tu recibo…"
 
+#: src/lib/loyalty/labels.ts:59
+#: src/pages/profile/rewards.astro.ts:3
+msgid "Loading your rewards…"
+msgstr "Cargando tus recompensas…"
+
 #: src/components/reservations/PayShell.astro.ts:3
 #: src/components/reservations/UpcomingReservations.astro.ts:3
+#: src/lib/loyalty/labels.ts:243
 #: src/lib/reservations/labels.ts:24
 #: src/pages/reserve/index.astro.ts:3
 #: src/pages/reserve/manage.astro.ts:3
@@ -1309,6 +1476,10 @@ msgstr "Nombre"
 msgid "name@example.com"
 msgstr "nombre@ejemplo.com"
 
+#: src/lib/loyalty/labels.ts:256
+msgid "Network error. Check your connection and try again."
+msgstr "Error de red. Comprueba tu conexión e inténtalo de nuevo."
+
 #: src/components/drops/DropAlertsSignup.astro.ts:3
 #: src/pages/complete-name.astro.ts:3
 #: src/pages/login.astro.ts:3
@@ -1332,6 +1503,10 @@ msgstr "Próximos turnos"
 #: src/components/careers/ApplyPanel.astro.ts:3
 msgid "No"
 msgstr "No"
+
+#: src/lib/loyalty/labels.ts:241
+msgid "No activity yet. Your purchases will show up here."
+msgstr "Aún no hay actividad. Tus compras aparecerán aquí."
 
 #: src/pages/menu.astro.ts:3
 msgid "No dishes match"
@@ -1378,6 +1553,18 @@ msgstr "Ahora mismo no hay horarios de recogida disponibles."
 msgid "No preference"
 msgstr "Sin preferencia"
 
+#: src/lib/loyalty/labels.ts:219
+msgid "No requests right now."
+msgstr "No hay solicitudes por ahora."
+
+#: src/lib/loyalty/labels.ts:164
+msgid "No reward"
+msgstr "Sin recompensa"
+
+#: src/lib/loyalty/labels.ts:136
+msgid "No rewards are available yet."
+msgstr "Aún no hay recompensas disponibles."
+
 #: src/pages/profile.astro.ts:3
 msgid "No saved payment methods yet."
 msgstr "Aún no hay métodos de pago guardados."
@@ -1415,6 +1602,10 @@ msgstr "Cargo por no presentarse: {amount}."
 msgid "None"
 msgstr "Ninguno"
 
+#: src/lib/loyalty/labels.ts:172
+msgid "Not available for this order"
+msgstr "No disponible para este pedido"
+
 #: src/lib/ordering-labels.ts:164
 msgid "Not available right now"
 msgstr "No disponible ahora"
@@ -1436,9 +1627,25 @@ msgstr "Avísame"
 msgid "Occasion"
 msgstr "Ocasión"
 
+#: src/lib/loyalty/labels.ts:152
+msgid "One item. Paid extras are still charged."
+msgstr "Un artículo. Los extras de pago se cobran igualmente."
+
 #: src/lib/reservations/labels.ts:372
 msgid "One more step: payment"
 msgstr "Un paso más: el pago"
+
+#: src/lib/loyalty/labels.ts:159
+msgid "One reward per order."
+msgstr "Una recompensa por pedido."
+
+#: src/lib/loyalty/labels.ts:160
+msgid "One reward per tab."
+msgstr "Una recompensa por cuenta."
+
+#: src/lib/loyalty/labels.ts:250
+msgid "Online"
+msgstr "En línea"
 
 #: src/components/careers/ApplyPanel.astro.ts:3
 msgid "Online applications are not available right now. Ask a team member."
@@ -1916,6 +2123,14 @@ msgstr "Perfil"
 msgid "Profile updated successfully!"
 msgstr "Perfil actualizado correctamente."
 
+#: src/lib/loyalty/labels.ts:78
+msgid "Program terms"
+msgstr "Condiciones del programa"
+
+#: src/lib/loyalty/labels.ts:96
+msgid "Progress to {reward}"
+msgstr "Progreso hacia {reward}"
+
 #: src/pages/profile/orders.astro.ts:3
 msgid "Purchases from the shop while signed in to this account."
 msgstr "Compras en la tienda mientras ha iniciado sesión en esta cuenta."
@@ -1923,6 +2138,10 @@ msgstr "Compras en la tienda mientras ha iniciado sesión en esta cuenta."
 #: src/pages/profile.astro.ts:3
 msgid "Purchases from the shop while signed in."
 msgstr "Compras de la tienda mientras iniciaste sesión."
+
+#: src/lib/loyalty/labels.ts:127
+msgid "Purchases of at least {amount} qualify."
+msgstr "Cuentan las compras desde {amount}."
 
 #: src/components/careers/ShareJob.astro.ts:3
 msgid "QR code for {title}"
@@ -1962,6 +2181,18 @@ msgstr "Los recibos de las compras completadas aparecen aquí con el estado y el
 msgid "Received"
 msgstr "Recibido"
 
+#: src/lib/loyalty/labels.ts:246
+msgid "Redeemed {reward}"
+msgstr "Canjeado: {reward}"
+
+#: src/lib/loyalty/labels.ts:247
+msgid "Redeemed a reward"
+msgstr "Recompensa canjeada"
+
+#: src/lib/loyalty/labels.ts:245
+msgid "Refund adjustment"
+msgstr "Ajuste por reembolso"
+
 #: src/lib/reservations/labels.ts:434
 msgid "Refund on its way"
 msgstr "Reembolso en camino"
@@ -1982,6 +2213,10 @@ msgstr "Solicitar una mesa para más de {count} personas"
 msgid "Request received"
 msgstr "Solicitud recibida"
 
+#: src/lib/loyalty/labels.ts:215
+msgid "Requests to use your rewards"
+msgstr "Solicitudes para usar tus recompensas"
+
 #: src/lib/ordering-labels.ts:34
 msgid "Required"
 msgstr "Obligatorio"
@@ -1999,6 +2234,42 @@ msgstr "Volver a la página de inicio"
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Review your order details and enter your contact information to complete your order."
 msgstr "Revisa los detalles de tu pedido e introduce tu información de contacto para completarlo."
+
+#: src/lib/loyalty/labels.ts:196
+#: src/pages/menu/success.astro.ts:3
+msgid "Reward"
+msgstr "Recompensa"
+
+#: src/lib/loyalty/labels.ts:176
+msgid "Reward applied: {amount} off. New total: {total}"
+msgstr "Recompensa aplicada: {amount} de descuento. Nuevo total: {total}"
+
+#: src/lib/loyalty/labels.ts:248
+msgid "Reward returned"
+msgstr "Recompensa devuelta"
+
+#: src/components/AccountShell.astro.ts:3
+#: src/lib/loyalty/labels.ts:135
+#: src/pages/profile.astro.ts:3
+#: src/pages/profile/rewards.astro.ts:3
+msgid "Rewards"
+msgstr "Recompensas"
+
+#: src/lib/loyalty/labels.ts:60
+msgid "Rewards are not available right now"
+msgstr "Las recompensas no están disponibles ahora"
+
+#: src/lib/loyalty/labels.ts:263
+msgid "Rewards are not available right now."
+msgstr "Las recompensas no están disponibles ahora."
+
+#: src/lib/loyalty/labels.ts:261
+msgid "Rewards are temporarily unavailable. Please try again later."
+msgstr "Las recompensas no están disponibles temporalmente. Inténtalo de nuevo más tarde."
+
+#: src/lib/loyalty/labels.ts:158
+msgid "Rewards cannot be used right now."
+msgstr "Ahora no se pueden usar recompensas."
 
 #: src/lib/ordering-labels.ts:53
 msgid "Right"
@@ -2112,14 +2383,39 @@ msgstr "Tienda"
 msgid "Show less"
 msgstr "Mostrar menos"
 
+#: src/lib/loyalty/labels.ts:242
+msgid "Show more"
+msgstr "Ver más"
+
+#: src/lib/loyalty/labels.ts:206
+msgid "Show my code"
+msgstr "Mostrar mi código"
+
 #: src/components/drops/DropSummaryCard.astro.ts:3
 msgid "Show pickup locations"
 msgstr "Mostrar lugares de recogida"
 
+#: src/lib/loyalty/labels.ts:201
+msgid "Show this code at the counter so staff can find your points."
+msgstr "Muestra este código en el mostrador para que el equipo encuentre tus puntos."
+
+#: src/lib/loyalty/labels.ts:204
+msgid "Showing your code does not spend any points. You approve every reward yourself."
+msgstr "Mostrar tu código no gasta puntos. Tú apruebas cada recompensa."
+
 #: src/components/SiteHeader.astro.ts:3
+#: src/lib/loyalty/labels.ts:71
 #: src/pages/login.astro.ts:3
 msgid "Sign in"
 msgstr "Iniciar sesión"
+
+#: src/lib/loyalty/labels.ts:67
+msgid "Sign in to see your rewards"
+msgstr "Inicia sesión para ver tus recompensas"
+
+#: src/lib/loyalty/labels.ts:69
+msgid "Sign in with your phone number to see your points and use your rewards."
+msgstr "Inicia sesión con tu número de teléfono para ver tus puntos y usar tus recompensas."
 
 #: src/lib/ordering-labels.ts:32
 #: src/lib/reservations/labels.ts:471
@@ -2153,6 +2449,7 @@ msgstr "Algunos precios cambiaron desde su llamada. Su carrito muestra los preci
 msgid "Something went wrong."
 msgstr "Algo salió mal."
 
+#: src/lib/loyalty/labels.ts:272
 #: src/lib/reservations/labels.ts:550
 msgid "Something went wrong. Please try again."
 msgstr "Algo salió mal. Inténtalo de nuevo."
@@ -2169,6 +2466,10 @@ msgstr "Instrucciones especiales"
 #: src/lib/reservations/labels.ts:201
 msgid "Special requests"
 msgstr "Peticiones especiales"
+
+#: src/lib/loyalty/labels.ts:224
+msgid "Spends {points} for {amount} off"
+msgstr "Usa {points} para {amount} de descuento"
 
 #: src/components/blocks/FormBlock.astro.ts:3
 msgid "Submitting..."
@@ -2198,6 +2499,10 @@ msgstr "Mesa {label}"
 msgid "Table alerts are not available right now. Please call the restaurant."
 msgstr "Los avisos de mesa no están disponibles ahora. Llama al restaurante."
 
+#: src/lib/loyalty/labels.ts:252
+msgid "Table order"
+msgstr "Pedido en mesa"
+
 #: src/lib/reservations/labels.ts:386
 msgid "Taking you to the secure payment page…"
 msgstr "Te llevamos a la página de pago segura…"
@@ -2215,6 +2520,10 @@ msgstr "Menús degustación, mesas del chef y eventos especiales en {name}."
 #: src/pages/menu/success.astro.ts:3
 msgid "Tax"
 msgstr "Impuesto"
+
+#: src/lib/loyalty/labels.ts:131
+msgid "Tax, tips and delivery fees do not count toward earning."
+msgstr "Los impuestos, las propinas y los gastos de envío no cuentan para acumular."
 
 #: src/components/careers/ApplyPanel.astro.ts:3
 msgid "Tell us a little about yourself. It takes a couple of minutes."
@@ -2296,6 +2605,26 @@ msgstr "Ese horario de recogida se acaba de llenar. Elige otra hora."
 msgid "That pickup time is no longer available. Please choose a different time."
 msgstr "Esa hora de recogida ya no está disponible. Elige otra hora."
 
+#: src/lib/loyalty/labels.ts:235
+msgid "That request has expired."
+msgstr "Esa solicitud ha caducado."
+
+#: src/lib/loyalty/labels.ts:236
+msgid "That request was already handled."
+msgstr "Esa solicitud ya se ha gestionado."
+
+#: src/lib/loyalty/labels.ts:182
+msgid "That reward could not be used. Your rewards have been updated. Pick again or continue without one."
+msgstr "No se pudo usar esa recompensa. Tus recompensas se han actualizado. Elige otra vez o continúa sin ninguna."
+
+#: src/lib/loyalty/labels.ts:173
+msgid "That reward no longer applies, so it was removed."
+msgstr "Esa recompensa ya no se aplica, así que se ha quitado."
+
+#: src/lib/loyalty/labels.ts:191
+msgid "That reward would cover the whole tab, so it cannot be used when paying from your phone. Pick another reward or pay without one."
+msgstr "Esa recompensa cubriría toda la cuenta, así que no se puede usar al pagar desde el móvil. Elige otra recompensa o paga sin ninguna."
+
 #: src/lib/reservations/labels.ts:487
 msgid "That time was just taken. Please choose another time."
 msgstr "Esa hora se acaba de ocupar. Elige otra."
@@ -2328,6 +2657,10 @@ msgstr "La página que buscas no existe o se ha movido."
 msgid "The payment did not go through"
 msgstr "El pago no se ha completado"
 
+#: src/lib/loyalty/labels.ts:265
+msgid "The program is paused right now."
+msgstr "El programa está en pausa ahora."
+
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "The restaurant asks for this once per tab."
 msgstr "El restaurante lo pide una vez por cuenta."
@@ -2348,6 +2681,10 @@ msgstr "El restaurante revisa las solicitudes de grupos grandes y responde para 
 msgid "The restaurant will contact you if anything else is needed."
 msgstr "El restaurante te contactará si necesita algo más."
 
+#: src/lib/loyalty/labels.ts:65
+msgid "The rewards program is paused. Your balance is safe, but you cannot earn or redeem right now."
+msgstr "El programa de recompensas está en pausa. Tu saldo está a salvo, pero ahora no puedes acumular ni canjear."
+
 #: src/lib/reservations/labels.ts:377
 msgid "The time to pay ran out and the table was released."
 msgstr "Se agotó el tiempo para pagar y la mesa se ha liberado."
@@ -2355,6 +2692,10 @@ msgstr "Se agotó el tiempo para pagar y la mesa se ha liberado."
 #: src/lib/reservations/labels.ts:414
 msgid "The time to pay ran out, or the booking was cancelled, and the table was released. You can book again."
 msgstr "Se agotó el tiempo para pagar o la reserva se canceló, y la mesa se ha liberado. Puedes reservar de nuevo."
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "The total is now {amount}. Check it, then pay to continue."
+msgstr "El total ahora es {amount}. Revísalo y paga para continuar."
 
 #: src/components/careers/ApplyPanel.astro.ts:3
 #: src/lib/reservations/labels.ts:494
@@ -2384,6 +2725,14 @@ msgstr "Esta reserva incluye un pago, por lo que el número de personas no se pu
 #: src/components/careers/ApplyPanel.astro.ts:3
 msgid "this business"
 msgstr "este negocio"
+
+#: src/lib/loyalty/labels.ts:62
+msgid "This business is not running a rewards program at the moment."
+msgstr "Este negocio no tiene un programa de recompensas en este momento."
+
+#: src/lib/loyalty/labels.ts:211
+msgid "This code has expired. Get a new one."
+msgstr "Este código ha caducado. Obtén uno nuevo."
 
 #: src/lib/ordering-labels.ts:49
 msgid "This combination is sold out. Choose another combination."
@@ -2458,6 +2807,14 @@ msgstr "Este número de teléfono ya está en la lista de espera hoy."
 msgid "This receipt is only available on the device used to place the order."
 msgstr "Este recibo solo está disponible en el dispositivo utilizado para realizar el pedido."
 
+#: src/lib/loyalty/labels.ts:194
+msgid "This reward covers your whole order. Choose to pay when you receive it."
+msgstr "Esta recompensa cubre todo tu pedido. Elige pagar al recibirlo."
+
+#: src/lib/loyalty/labels.ts:267
+msgid "This reward is no longer available."
+msgstr "Esta recompensa ya no está disponible."
+
 #: src/pages/shop.astro.ts:3
 msgid "This shop is not available right now."
 msgstr "Esta tienda no está disponible en este momento."
@@ -2487,6 +2844,7 @@ msgstr "Hora"
 msgid "Time remaining"
 msgstr "Tiempo restante"
 
+#: src/components/ordering/TableTab.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
 #: src/pages/menu/success.astro.ts:3
 msgid "Tip"
@@ -2516,6 +2874,7 @@ msgstr "Se enviaron demasiadas solicitudes desde aquí. Inténtalo más tarde."
 msgid "Too many attempts. Please try again later."
 msgstr "Demasiados intentos. Inténtalo de nuevo más tarde."
 
+#: src/lib/loyalty/labels.ts:258
 #: src/lib/reservations/labels.ts:491
 msgid "Too many attempts. Please wait a moment and try again."
 msgstr "Demasiados intentos. Espera un momento e inténtalo de nuevo."
@@ -2533,6 +2892,7 @@ msgid "Total paid"
 msgstr "Total pagado"
 
 #: src/components/ordering/TableTab.astro.ts:3
+#: src/lib/loyalty/labels.ts:75
 #: src/lib/ordering-labels.ts:96
 #: src/lib/reservations/labels.ts:281
 #: src/lib/reservations/labels.ts:385
@@ -2564,6 +2924,10 @@ msgstr "No se pudo enviar el formulario. Inténtalo de nuevo."
 msgid "Under review"
 msgstr "En revisión"
 
+#: src/lib/loyalty/labels.ts:140
+msgid "Up to {amount} off"
+msgstr "Hasta {amount} de descuento"
+
 #: src/lib/ordering-labels.ts:41
 msgid "Up to {count}"
 msgstr "Hasta {count}"
@@ -2581,9 +2945,21 @@ msgstr "Actualiza tus datos básicos a continuación."
 msgid "Use “{query}”"
 msgstr "Usar «{query}»"
 
+#: src/lib/loyalty/labels.ts:221
+msgid "Use {reward}?"
+msgstr "¿Usar {reward}?"
+
 #: src/pages/shop.astro.ts:3
 msgid "Use a new card"
 msgstr "Usar una tarjeta nueva"
+
+#: src/lib/loyalty/labels.ts:156
+msgid "Use a reward when you order, or show your code at the counter."
+msgstr "Usa una recompensa al hacer tu pedido o muestra tu código en el mostrador."
+
+#: src/lib/loyalty/labels.ts:166
+msgid "Used on {items}"
+msgstr "Se aplica a {items}"
 
 #: src/pages/menu/success.astro.ts:3
 msgid "VAT number"
@@ -2648,6 +3024,10 @@ msgstr "Ver tu recibo"
 msgid "View your reservation"
 msgstr "Ver tu reserva"
 
+#: src/pages/profile.astro.ts:3
+msgid "View your rewards"
+msgstr "Ver tus recompensas"
+
 #: src/lib/reservations/labels.ts:433
 msgid "Waiting for payment"
 msgstr "Esperando el pago"
@@ -2680,6 +3060,10 @@ msgstr "No hemos podido comprobar tu pago. Reintentando…"
 msgid "We could not confirm this order."
 msgstr "No pudimos confirmar este pedido."
 
+#: src/lib/loyalty/labels.ts:185
+msgid "We could not confirm your reward. Try again, or continue without it."
+msgstr "No pudimos confirmar tu recompensa. Inténtalo de nuevo o continúa sin ella."
+
 #: src/lib/reservations/labels.ts:500
 msgid "We could not find that reservation. The link may have expired."
 msgstr "No pudimos encontrar esa reserva. Puede que el enlace haya caducado."
@@ -2708,6 +3092,10 @@ msgstr "No pudimos realizar tu pedido. Inténtalo de nuevo."
 #: src/lib/reservations/labels.ts:548
 msgid "We could not reach the server. Check your connection and try again."
 msgstr "No pudimos conectar con el servidor. Comprueba tu conexión e inténtalo de nuevo."
+
+#: src/lib/loyalty/labels.ts:180
+msgid "We could not refresh your rewards. Trying again…"
+msgstr "No pudimos actualizar tus recompensas. Reintentando…"
 
 #: src/components/careers/ApplyPanel.astro.ts:3
 msgid "We could not send your application right now. Please try again in a moment."
@@ -2848,6 +3236,10 @@ msgstr "¿Cómo te llamas?"
 msgid "When"
 msgstr "Cuándo"
 
+#: src/lib/loyalty/labels.ts:217
+msgid "When staff ask to use a reward on your purchase, approve it here."
+msgstr "Cuando el equipo pida usar una recompensa en tu compra, apruébala aquí."
+
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "When you are done, show tab {number} at the counter to pay."
 msgstr "Cuando termines, muestra la cuenta {number} en el mostrador para pagar."
@@ -2901,6 +3293,10 @@ msgstr "Tu reserva está hecha"
 msgid "You are on the waitlist"
 msgstr "Estás en la lista de espera"
 
+#: src/lib/loyalty/labels.ts:270
+msgid "You are signed in to a different site. Please sign in again here."
+msgstr "Has iniciado sesión en otro sitio. Vuelve a iniciar sesión aquí."
+
 #: src/lib/reservations/labels.ts:188
 msgid "You can cancel until {time}."
 msgstr "Puedes cancelar hasta {time}."
@@ -2913,9 +3309,25 @@ msgstr "Puedes volver a unirte en cualquier momento."
 msgid "You can still order for pickup."
 msgstr "Aún puedes pedir para recoger."
 
+#: src/lib/loyalty/labels.ts:163
+msgid "You have {amount}"
+msgstr "Tienes {amount}"
+
+#: src/lib/loyalty/labels.ts:237
+msgid "You have a new request to use a reward."
+msgstr "Tienes una nueva solicitud para usar una recompensa."
+
 #: src/lib/reservations/labels.ts:261
 msgid "You have been seated"
 msgstr "Ya estás sentado"
+
+#: src/lib/loyalty/labels.ts:97
+msgid "You have enough for every reward."
+msgstr "Tienes suficiente para todas las recompensas."
+
+#: src/lib/loyalty/labels.ts:153
+msgid "You have enough for this reward"
+msgstr "Tienes suficiente para esta recompensa"
 
 #: src/lib/reservations/labels.ts:207
 msgid "You have no upcoming reservations."
@@ -2928,6 +3340,10 @@ msgstr "Has salido de la lista de espera"
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "You pay on a secure payment page. Your receipt shows here when you come back."
 msgstr "Pagas en una página de pago segura. Tu recibo aparece aquí cuando vuelvas."
+
+#: src/lib/loyalty/labels.ts:165
+msgid "You save {amount}"
+msgstr "Ahorras {amount}"
 
 #: src/lib/reservations/labels.ts:196
 msgid "You told us you are about {count} minutes late."
@@ -2961,6 +3377,18 @@ msgstr "Pagarás en la página segura del proveedor de pagos."
 msgid "You're on the list. We'll text you when the next drop opens."
 msgstr "Ya estás en la lista. Te avisaremos cuando abra el próximo lanzamiento."
 
+#: src/lib/loyalty/labels.ts:81
+msgid "Your balance"
+msgstr "Tu saldo"
+
+#: src/lib/loyalty/labels.ts:88
+msgid "Your balance is below zero because of a refund. New purchases will bring it back up."
+msgstr "Tu saldo es negativo por un reembolso. Las nuevas compras lo irán recuperando."
+
+#: src/lib/loyalty/labels.ts:266
+msgid "Your balance is too low for this reward."
+msgstr "Tu saldo no alcanza para esta recompensa."
+
 #: src/lib/reservations/labels.ts:445
 msgid "Your cancellation is recorded. The refund is being processed and should reach your card soon."
 msgstr "Tu cancelación está registrada. El reembolso se está procesando y llegará pronto a tu tarjeta."
@@ -2980,6 +3408,11 @@ msgstr "Tu tarjeta fue rechazada o necesitó una verificación adicional. Intén
 #: src/lib/ordering-labels.ts:68
 msgid "Your cart is empty"
 msgstr "Tu carrito está vacío"
+
+#: src/lib/loyalty/labels.ts:199
+#: src/lib/loyalty/labels.ts:209
+msgid "Your code"
+msgstr "Tu código"
 
 #: src/lib/ordering-labels.ts:166
 msgid "Your delivery check expired. Confirm your address again."
@@ -3001,6 +3434,10 @@ msgstr "Tu reserva temporal ha caducado. Elige una hora de nuevo."
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "Your name"
 msgstr "Tu nombre"
+
+#: src/lib/loyalty/labels.ts:212
+msgid "Your new code is ready."
+msgstr "Tu nuevo código está listo."
 
 #: src/pages/menu.astro.ts:3
 msgid "Your order"
@@ -3030,6 +3467,10 @@ msgstr "Tu pedido se realizó, pero no pudimos iniciar el pago en línea. Puedes
 msgid "Your payment didn't go through. Your order is held for a short time — you can try again."
 msgstr "Tu pago no se procesó. Tu pedido se reserva durante un breve tiempo; puedes intentarlo de nuevo."
 
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Your payment has already started, so the tip and reward stay as you chose them. Pay to continue."
+msgstr "Tu pago ya se ha iniciado, así que la propina y la recompensa se mantienen como las elegiste. Paga para continuar."
+
 #: src/lib/reservations/labels.ts:422
 msgid "Your payment is being reviewed"
 msgstr "Tu pago está en revisión"
@@ -3045,6 +3486,11 @@ msgstr "Tu ventana de pago expiró"
 #: src/lib/reservations/labels.ts:240
 msgid "Your place in line"
 msgstr "Tu lugar en la fila"
+
+#: src/pages/profile.astro.ts:3
+#: src/pages/profile/rewards.astro.ts:3
+msgid "Your points, rewards, code and history."
+msgstr "Tus puntos, recompensas, código e historial."
 
 #: src/pages/profile.astro.ts:3
 msgid "Your Profile"
@@ -3067,9 +3513,21 @@ msgstr "Tu reserva ha sido cancelada."
 msgid "Your reservation was updated."
 msgstr "Tu reserva se ha actualizado."
 
+#: src/lib/loyalty/labels.ts:264
+msgid "Your rewards account is on hold."
+msgstr "Tu cuenta de recompensas está en pausa."
+
+#: src/lib/loyalty/labels.ts:73
+msgid "Your rewards account is on hold. Please contact the business for help."
+msgstr "Tu cuenta de recompensas está en pausa. Contacta con el negocio para obtener ayuda."
+
 #: src/lib/ordering-labels.ts:162
 msgid "Your scheduled time is no longer available. Choose a new time."
 msgstr "La hora programada ya no está disponible. Elige otra."
+
+#: src/lib/loyalty/labels.ts:268
+msgid "Your session ended. Please sign in again."
+msgstr "Tu sesión ha terminado. Vuelve a iniciar sesión."
 
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "Your tab"

@@ -33,6 +33,16 @@ vi.mock('../lib/origin.ts', () => ({
 		hasProvisionedDb: true,
 		dataRegion: 'us',
 	}),
+	lookupActiveOrganization: vi.fn().mockResolvedValue({
+		status: 'found',
+		organization: {
+			id: 'clw9x0a12000008l00test03',
+			slug: 'test-org',
+			customDomain: null,
+			hasProvisionedDb: true,
+			dataRegion: 'us',
+		},
+	}),
 	resolvePublishedOrganization: vi.fn().mockResolvedValue({
 		id: 'clw9x0a12000008l00test03',
 		slug: 'test-org',

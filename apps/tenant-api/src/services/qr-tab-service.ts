@@ -1,8 +1,9 @@
 import crypto from 'node:crypto'
-import { and, asc, desc, eq, gt, inArray, isNull, ne } from 'drizzle-orm'
+import { and, asc, desc, eq, gt, gte, inArray, isNull, ne } from 'drizzle-orm'
 
 import {
 	QR_MAX_TABLES_PER_LOCATION,
+	QR_STATION_MARK_LISTED_MS,
 	readQrOrderingFeatures,
 	tabOrderRef,
 	type QrPublicTab,
@@ -14,9 +15,11 @@ import {
 	type QrTabTotals,
 } from '@repo/common/qr-ordering'
 import {
+	type OrderLoyaltySelection,
 	type PricedOrderLine,
 	type RestaurantOrderContext,
 } from '@repo/common/restaurant-orders'
+import { canonicalLoyaltyCart, LoyaltyDomainError } from '@repo/loyalty'
 import {
 	getTenantDb,
 	qrSettings,
@@ -38,9 +41,41 @@ import {
 	readTabToken,
 } from '../lib/qr-tokens.ts'
 import { inJsonList } from '../lib/chunked-in.ts'
+import {
+	getLoyaltyFlagState,
+	loyaltyCreditsSales,
+	rewardRefusal,
+} from '../lib/loyalty-context.ts'
 import { timingSafeEqualString } from '../lib/secrets.ts'
 import { retryOnSqliteBusy } from '../lib/sqlite-retry.ts'
-import { runExclusive } from './order-service.ts'
+import {
+	discountedTabTotals,
+	type DiscountedTabTotals,
+} from '../restaurant/loyalty-checkout.ts'
+import {
+	qrTabPayableUntil,
+	tabLoyaltyCart,
+} from '../restaurant/loyalty-sources.ts'
+import {
+	ensureMemberForCustomerInTx,
+	memberForCustomerInTx,
+} from './loyalty-member-service.ts'
+import {
+	claimPurchaseIfUnclaimedInTx,
+	loyaltySettleQueue,
+	purchaseForSourceInTx,
+} from './loyalty-purchase-service.ts'
+import {
+	activeRedemptionForSourceInTx,
+	releaseSourceRedemptionInTx,
+	reserveRedemptionInTx,
+	setAsideSourceRedemptionInTx,
+} from './loyalty-redemption-service.ts'
+import {
+	loyaltyFailure,
+	quotePlacementReward,
+	runExclusive,
+} from './order-service.ts'
 import {
 	isTabPaymentOpen,
 	listTabRounds,
@@ -141,6 +176,8 @@ export type OperatorQrTab = QrPublicTab & {
 	paymentMethod: 'counter' | 'online' | null
 	voidReason: string | null
 	lockedAt: string | null
+	/** Closed at the counter as rung up on a till: the tab earns no points. */
+	rungUpOnStation: boolean
 	/** Online money received that did not settle the tab (needs review). */
 	onlineAmountCents: number | null
 	/** How many such payments arrived (each needs a refund or a note). */
@@ -196,6 +233,7 @@ function operatorTabView(
 		paymentMethod: tab.paymentMethod,
 		voidReason: tab.voidReason,
 		lockedAt: iso(tab.lockedAt),
+		rungUpOnStation: tab.rungUpOnStation,
 		onlineAmountCents:
 			reviewPayments.length > 0
 				? reviewPayments.reduce((sum, payment) => sum + payment.amountCents, 0)
@@ -724,24 +762,44 @@ async function listSettledTabsWithReview(
 
 export async function listOperatorTabs(
 	orgId: string,
-	options: { status: QrTabStatus | 'recent' | 'review'; limit: number },
+	options: {
+		status: QrTabStatus | 'recent' | 'review' | 'station'
+		limit: number
+	},
+	now = Date.now(),
 ): Promise<OperatorQrTab[]> {
 	const db = await getTenantDb(orgId)
 	const tabs =
 		options.status === 'review'
 			? await listSettledTabsWithReview(db, options.limit)
-			: options.status === 'recent'
-				? await db
+			: options.status === 'station'
+				? // Counter closes marked as rung up on a till, recent closes first:
+					// the ones whose mark can still be removed from the App.
+					await db
 						.select()
 						.from(qrTabs)
-						.orderBy(desc(qrTabs.openedAt))
+						.where(
+							and(
+								eq(qrTabs.status, 'closed'),
+								eq(qrTabs.paymentMethod, 'counter'),
+								eq(qrTabs.rungUpOnStation, true),
+								gte(qrTabs.closedAt, now - QR_STATION_MARK_LISTED_MS),
+							),
+						)
+						.orderBy(desc(qrTabs.closedAt))
 						.limit(options.limit)
-				: await db
-						.select()
-						.from(qrTabs)
-						.where(eq(qrTabs.status, options.status))
-						.orderBy(desc(qrTabs.openedAt))
-						.limit(options.limit)
+				: options.status === 'recent'
+					? await db
+							.select()
+							.from(qrTabs)
+							.orderBy(desc(qrTabs.openedAt))
+							.limit(options.limit)
+					: await db
+							.select()
+							.from(qrTabs)
+							.where(eq(qrTabs.status, options.status))
+							.orderBy(desc(qrTabs.openedAt))
+							.limit(options.limit)
 	const rounds = await listTabRounds(
 		db,
 		tabs.map((tab) => tab.id),
@@ -793,6 +851,9 @@ const UNBIND = {
 	paymentTipCents: null,
 	paymentTokenHash: null,
 } as const
+
+/** The tab as loyalty sees it: one purchase, however many rounds it had. */
+const tabSource = (tabId: string) => ({ type: 'qr_tab' as const, id: tabId })
 
 async function loadOpenTab(
 	tx: Parameters<Parameters<typeof runTenantTransaction>[1]>[0],
@@ -851,53 +912,124 @@ export async function closeTabAtCounter(
 		closedBy: string
 		acknowledgeReview?: boolean
 		expectedTotalCents?: number
+		/**
+		 * Staff rang the tab up on a Station till: the till sale earns the
+		 * loyalty points, so the tab never does.
+		 */
+		rungUpOnStation?: boolean
 	},
 ): Promise<QrResult<ReleasedTabPayment>> {
-	return writeTx(orgId, async (tx) => {
-		const loaded = await loadOpenTab(tx, tabId, {
-			acknowledgeReview: input.acknowledgeReview,
-			expectedTotalCents: input.expectedTotalCents,
-		})
-		if (!loaded.ok) return loaded
-		const tab = loaded.data
-		const rounds = await listTabRounds(tx, [tab.id])
-		const totals: QrTabTotals = tabTotals(tab, rounds)
-		const tipCents = input.tipCents ?? 0
+	const loyalty = loyaltySettleQueue()
+	const result: QrResult<ReleasedTabPayment> = await writeTx(
+		orgId,
+		async (tx) => {
+			const loaded = await loadOpenTab(tx, tabId, {
+				acknowledgeReview: input.acknowledgeReview,
+				expectedTotalCents: input.expectedTotalCents,
+			})
+			if (!loaded.ok) return loaded
+			const tab = loaded.data
+			const rounds = await listTabRounds(tx, [tab.id])
+			const totals: QrTabTotals = tabTotals(tab, rounds)
+			const tipCents = input.tipCents ?? 0
+			const now = new Date()
+			await markTabRoundsPaid(tx, tab.id, now)
+			// A reward only rides on a tab paid from the phone: closing at the
+			// counter gives back one that an unfinished phone payment held.
+			await releaseSourceRedemptionInTx(tx, tabSource(tab.id), {
+				reason: 'counter_close',
+				at: now.getTime(),
+			})
+			const [updated] = await tx
+				.update(qrTabs)
+				.set({
+					status: 'closed',
+					paymentMethod: 'counter',
+					// An online payment under review stays flagged: it still needs a
+					// refund or a note, and must never be overwritten.
+					paymentStatus: tab.paymentStatus === 'review' ? 'review' : 'paid',
+					// Paid at the counter: drop any online binding, so money that still
+					// arrives on an old payment page is kept for review, never taken
+					// for a replay of a payment that settled this tab.
+					...UNBIND,
+					subtotalCents: totals.subtotalCents,
+					taxCents: totals.taxCents,
+					tipCents,
+					loyaltyDiscountCents: 0,
+					totalCents: totals.totalCents + tipCents,
+					rungUpOnStation: input.rungUpOnStation === true,
+					closedBy: input.closedBy,
+					closedAt: now.getTime(),
+					paidAt: now.getTime(),
+					version: tab.version + 1,
+					updatedAt: now.getTime(),
+				})
+				.where(eq(qrTabs.id, tab.id))
+				.returning()
+			// The tab earns once, now (unless a till sale earns instead).
+			await loyalty.queue(tx, tabSource(tab.id), now.getTime())
+			return {
+				ok: true as const,
+				data: {
+					tab: await loadOperatorView(tx, updated ?? tab),
+					// The page this close or void unbound, for the App to expire.
+					releasedSession: releasedSessionOf(tab),
+				},
+			}
+		},
+	)
+	await loyalty.settle(orgId)
+	return result
+}
+
+/**
+ * The "rung up on a Station till" mark was a mistake: clear it. Only a tab
+ * closed at the counter can carry the mark. The tab's loyalty is re-queued,
+ * so it earns after all (the mark had excluded it, and that exclusion
+ * reopens).
+ */
+export async function clearStationFlag(
+	orgId: string,
+	tabId: string,
+): Promise<QrResult<OperatorQrTab>> {
+	const loyalty = loyaltySettleQueue()
+	const result: QrResult<OperatorQrTab> = await writeTx(orgId, async (tx) => {
+		const [tab] = await tx
+			.select()
+			.from(qrTabs)
+			.where(eq(qrTabs.id, tabId))
+			.limit(1)
+		if (!tab) return fail(404, 'tab_not_found', 'Tab not found.')
+		if (
+			!tab.rungUpOnStation ||
+			tab.status !== 'closed' ||
+			tab.paymentMethod !== 'counter'
+		) {
+			return fail(
+				409,
+				'station_flag_not_set',
+				'This tab is not marked as rung up on a Station till.',
+			)
+		}
 		const now = new Date()
-		await markTabRoundsPaid(tx, tab.id, now)
 		const [updated] = await tx
 			.update(qrTabs)
 			.set({
-				status: 'closed',
-				paymentMethod: 'counter',
-				// An online payment under review stays flagged: it still needs a
-				// refund or a note, and must never be overwritten.
-				paymentStatus: tab.paymentStatus === 'review' ? 'review' : 'paid',
-				// Paid at the counter: drop any online binding, so money that still
-				// arrives on an old payment page is kept for review, never taken
-				// for a replay of a payment that settled this tab.
-				...UNBIND,
-				subtotalCents: totals.subtotalCents,
-				taxCents: totals.taxCents,
-				tipCents,
-				totalCents: totals.totalCents + tipCents,
-				closedBy: input.closedBy,
-				closedAt: now.getTime(),
-				paidAt: now.getTime(),
+				rungUpOnStation: false,
 				version: tab.version + 1,
 				updatedAt: now.getTime(),
 			})
 			.where(eq(qrTabs.id, tab.id))
 			.returning()
+		// No till sale stands in for the tab after all: it earns now.
+		await loyalty.queue(tx, tabSource(tab.id), now.getTime())
 		return {
 			ok: true as const,
-			data: {
-				tab: await loadOperatorView(tx, updated ?? tab),
-				// The page this close or void unbound, for the App to expire.
-				releasedSession: releasedSessionOf(tab),
-			},
+			data: await loadOperatorView(tx, updated ?? tab),
 		}
 	})
+	await loyalty.settle(orgId)
+	return result
 }
 
 /**
@@ -914,45 +1046,58 @@ export async function voidTab(
 		expectedTotalCents?: number
 	},
 ): Promise<QrResult<ReleasedTabPayment>> {
-	return writeTx(orgId, async (tx) => {
-		const loaded = await loadOpenTab(tx, tabId, {
-			acknowledgeReview: input.acknowledgeReview,
-			expectedTotalCents: input.expectedTotalCents,
-		})
-		if (!loaded.ok) return loaded
-		const tab = loaded.data
-		const now = new Date()
-		await tx
-			.update(restaurantOrders)
-			.set({ status: 'cancelled', cancelledAt: now, updatedAt: now })
-			.where(
-				and(
-					eq(restaurantOrders.tabId, tab.id),
-					inArray(restaurantOrders.status, [...QR_ROUND_PENDING_STATUSES]),
-				),
-			)
-		const [updated] = await tx
-			.update(qrTabs)
-			.set({
-				status: 'cancelled',
-				voidReason: input.reason,
-				...UNBIND,
-				closedBy: input.closedBy,
-				closedAt: now.getTime(),
-				version: tab.version + 1,
-				updatedAt: now.getTime(),
+	const loyalty = loyaltySettleQueue()
+	const result: QrResult<ReleasedTabPayment> = await writeTx(
+		orgId,
+		async (tx) => {
+			const loaded = await loadOpenTab(tx, tabId, {
+				acknowledgeReview: input.acknowledgeReview,
+				expectedTotalCents: input.expectedTotalCents,
 			})
-			.where(eq(qrTabs.id, tab.id))
-			.returning()
-		return {
-			ok: true as const,
-			data: {
-				tab: await loadOperatorView(tx, updated ?? tab),
-				// The page this close or void unbound, for the App to expire.
-				releasedSession: releasedSessionOf(tab),
-			},
-		}
-	})
+			if (!loaded.ok) return loaded
+			const tab = loaded.data
+			const now = new Date()
+			// Nothing was charged: a reward a phone payment held comes back.
+			await releaseSourceRedemptionInTx(tx, tabSource(tab.id), {
+				reason: 'tab_voided',
+				at: now.getTime(),
+			})
+			await tx
+				.update(restaurantOrders)
+				.set({ status: 'cancelled', cancelledAt: now, updatedAt: now })
+				.where(
+					and(
+						eq(restaurantOrders.tabId, tab.id),
+						inArray(restaurantOrders.status, [...QR_ROUND_PENDING_STATUSES]),
+					),
+				)
+			const [updated] = await tx
+				.update(qrTabs)
+				.set({
+					status: 'cancelled',
+					voidReason: input.reason,
+					...UNBIND,
+					loyaltyDiscountCents: 0,
+					closedBy: input.closedBy,
+					closedAt: now.getTime(),
+					version: tab.version + 1,
+					updatedAt: now.getTime(),
+				})
+				.where(eq(qrTabs.id, tab.id))
+				.returning()
+			await loyalty.queue(tx, tabSource(tab.id), now.getTime())
+			return {
+				ok: true as const,
+				data: {
+					tab: await loadOperatorView(tx, updated ?? tab),
+					// The page this close or void unbound, for the App to expire.
+					releasedSession: releasedSessionOf(tab),
+				},
+			}
+		},
+	)
+	await loyalty.settle(orgId)
+	return result
 }
 
 /**
@@ -992,6 +1137,11 @@ export async function releaseTabPayment(
 			)
 		}
 		const now = Date.now()
+		// The stopped payment's reward comes back; asking to pay again re-picks.
+		await releaseSourceRedemptionInTx(tx, tabSource(tab.id), {
+			reason: 'payment_stopped',
+			at: now,
+		})
 		const [updated] = await tx
 			.update(qrTabs)
 			.set({
@@ -1001,6 +1151,7 @@ export async function releaseTabPayment(
 				paymentAmountCents: null,
 				paymentTipCents: null,
 				paymentTokenHash: null,
+				loyaltyDiscountCents: 0,
 				paymentEventAt: now,
 				version: tab.version + 1,
 				updatedAt: now,
@@ -1037,17 +1188,25 @@ export async function lockTab(
 			return fail(409, 'tab_closed', 'This tab is already closed.')
 		}
 		const now = Date.now()
+		if (tab.paymentStatus === 'unpaid') {
+			await releaseSourceRedemptionInTx(tx, tabSource(tab.id), {
+				reason: 'tab_locked',
+				at: now,
+			})
+		}
 		const [updated] = await tx
 			.update(qrTabs)
 			.set({
 				tabTokenVersion: tab.tabTokenVersion + 1,
 				lockedAt: tab.lockedAt ?? now,
-				// A pay request that has not reached the provider dies with the lock.
+				// A pay request that has not reached the provider dies with the
+				// lock, and so does the reward it held.
 				...(tab.paymentStatus === 'unpaid'
 					? {
 							paymentAmountCents: null,
 							paymentTipCents: null,
 							paymentTokenHash: null,
+							loyaltyDiscountCents: 0,
 						}
 					: {}),
 				version: tab.version + 1,
@@ -1076,6 +1235,8 @@ export type TabPayIntent = {
 	tabPaymentToken: string
 	amountCents: number
 	tipCents: number
+	/** The reward taken off before tax; 0 without one. */
+	loyaltyDiscountCents: number
 	currency: string
 }
 
@@ -1083,6 +1244,11 @@ export type TabPayIntent = {
  * The guest asks to pay: the venue must allow it, every round must have left
  * the kitchen's queue, and name and phone are required. The tip is a share of
  * the subtotal. While a payment session is bound the amount is frozen.
+ *
+ * A signed-in member claims the tab's points when nobody has yet, and may
+ * spend one reward on it: the region re-quotes the reward on the tab's
+ * rounds, holds the points, binds the reward to the tab and takes the
+ * discount off before tax. Asking again gives an earlier reward back first.
  */
 export async function prepareTabPayment(
 	orgId: string,
@@ -1092,6 +1258,10 @@ export async function prepareTabPayment(
 		contact: { name: string; phone: string }
 		features: { online: boolean }
 		onlinePayment: { enabled: boolean; processor: string | null }
+		/** The verified customer behind the request's customer token. */
+		customerId?: string | null
+		/** The reward the signed-in member picked, as they saw it. */
+		loyalty?: OrderLoyaltySelection | null
 	},
 ): Promise<QrResult<TabPayIntent>> {
 	const parsed = readTabToken(orgId, tabToken)
@@ -1108,119 +1278,259 @@ export async function prepareTabPayment(
 			'Paying from the phone is not available. Please pay at the counter.',
 		)
 	}
-	return writeTx(orgId, async (tx) => {
-		const [tab] = await tx
-			.select()
-			.from(qrTabs)
-			.where(eq(qrTabs.id, parsed.id))
-			.limit(1)
-		if (!tab || tab.tabTokenVersion !== parsed.version) {
-			return fail(404, 'tab_not_found', 'This tab is no longer available.')
+	const customerId = input.customerId ?? null
+	const selection = input.loyalty ?? null
+	const loyaltyFlags =
+		customerId || selection ? await getLoyaltyFlagState(orgId) : null
+	if (selection) {
+		if (!customerId || !loyaltyFlags) {
+			return fail(401, 'unauthorized', 'Sign in to use rewards.')
 		}
-		if (tab.status !== 'open')
-			return fail(409, 'tab_closed', 'This tab is already closed.')
-		if (tab.lockedAt != null) {
-			return fail(
-				423,
-				'tab_locked',
-				'A team member is settling this tab. Please ask them for help.',
-			)
+		const refusal = rewardRefusal(loyaltyFlags)
+		if (refusal) {
+			return {
+				ok: false,
+				failure: loyaltyFailure(new LoyaltyDomainError(refusal)),
+			}
 		}
-		const settings = await readQrSettings(tx)
-		if (!settings.allowOnlineTabPay) {
-			return fail(
-				409,
-				'online_pay_unavailable',
-				'Paying from the phone is not available. Please pay at the counter.',
-			)
-		}
-		const rounds = await listTabRounds(tx, [tab.id])
-		if (roundsPending(rounds)) {
-			return fail(
-				409,
-				'rounds_pending',
-				'Part of your order is still being prepared. You can pay once it has been served.',
-			)
-		}
-		const totals = tabTotals(tab, rounds)
-		if (totals.totalCents <= 0) {
-			return fail(409, 'tab_empty', 'There is nothing to pay on this tab yet.')
-		}
-		const tabPaymentToken = deriveTabPaymentToken(orgId, tab.id)
-		const now = new Date()
-		const holdOpen = isTabPaymentOpen(tab, now)
-		if (
-			tab.paymentStatus === 'pending' &&
-			tab.paymentSessionId &&
-			tab.paymentAmountCents != null &&
-			holdOpen
-		) {
-			// A session is live. Re-serve it only to someone asking for the same
-			// payment; a different tip means another guest is paying right now.
-			const askedTip = Math.round(
-				(totals.subtotalCents * input.tipPercent) / 100,
-			)
-			if (askedTip !== (tab.paymentTipCents ?? 0)) {
+	}
+	const loyaltyOn = Boolean(
+		customerId && loyaltyFlags && loyaltyCreditsSales(loyaltyFlags),
+	)
+	try {
+		return await writeTx(orgId, async (tx) => {
+			const [tab] = await tx
+				.select()
+				.from(qrTabs)
+				.where(eq(qrTabs.id, parsed.id))
+				.limit(1)
+			if (!tab || tab.tabTokenVersion !== parsed.version) {
+				return fail(404, 'tab_not_found', 'This tab is no longer available.')
+			}
+			if (tab.status !== 'open')
+				return fail(409, 'tab_closed', 'This tab is already closed.')
+			if (tab.lockedAt != null) {
 				return fail(
-					409,
-					'tab_paying',
-					'Someone at the table is paying this tab right now. Please wait a moment.',
+					423,
+					'tab_locked',
+					'A team member is settling this tab. Please ask them for help.',
 				)
 			}
+			const settings = await readQrSettings(tx)
+			if (!settings.allowOnlineTabPay) {
+				return fail(
+					409,
+					'online_pay_unavailable',
+					'Paying from the phone is not available. Please pay at the counter.',
+				)
+			}
+			const rounds = await listTabRounds(tx, [tab.id])
+			if (roundsPending(rounds)) {
+				return fail(
+					409,
+					'rounds_pending',
+					'Part of your order is still being prepared. You can pay once it has been served.',
+				)
+			}
+			const totals = tabTotals(tab, rounds)
+			if (totals.totalCents <= 0) {
+				return fail(
+					409,
+					'tab_empty',
+					'There is nothing to pay on this tab yet.',
+				)
+			}
+			const tabPaymentToken = deriveTabPaymentToken(orgId, tab.id)
+			const now = new Date()
+			const at = now.getTime()
+			const holdOpen = isTabPaymentOpen(tab, now)
+			const source = tabSource(tab.id)
+			const member =
+				loyaltyOn && customerId
+					? loyaltyFlags?.status === 'on'
+						? await ensureMemberForCustomerInTx(tx, customerId, at)
+						: await memberForCustomerInTx(tx, customerId)
+					: null
+			const held = await activeRedemptionForSourceInTx(tx, 'qr_tab', tab.id)
+			if (
+				tab.paymentStatus === 'pending' &&
+				tab.paymentSessionId &&
+				tab.paymentAmountCents != null &&
+				holdOpen
+			) {
+				// A session is live. Re-serve it only to someone asking for the
+				// same payment; a different tip or reward means another guest is
+				// paying right now.
+				const askedTip = Math.round(
+					(totals.subtotalCents * input.tipPercent) / 100,
+				)
+				const liveReward = tab.loyaltyDiscountCents > 0 ? held : null
+				const sameReward = selection
+					? liveReward !== null &&
+						liveReward.memberId === member?.id &&
+						liveReward.rewardId === selection.rewardId &&
+						liveReward.rewardVersion === selection.rewardVersion
+					: liveReward === null
+				if (askedTip !== (tab.paymentTipCents ?? 0) || !sameReward) {
+					return fail(
+						409,
+						'tab_paying',
+						'Someone at the table is paying this tab right now. Please wait a moment.',
+					)
+				}
+				return {
+					ok: true as const,
+					data: {
+						orderRef: tabOrderRef(tab.id),
+						tabPaymentToken,
+						amountCents: tab.paymentAmountCents,
+						tipCents: tab.paymentTipCents ?? 0,
+						loyaltyDiscountCents: tab.loyaltyDiscountCents,
+						currency: tab.currency,
+					},
+				}
+			}
+			if (tab.paymentStatus === 'paid' || tab.paymentStatus === 'review') {
+				return fail(409, 'tab_closed', 'This tab is already paid.')
+			}
+
+			// The reward is checked in full before anything is written; a
+			// refusal throws, so the request leaves nothing behind.
+			const cart = selection ? tabLoyaltyCart(tab, rounds) : null
+			const selected =
+				selection && cart
+					? await quotePlacementReward(tx, {
+							member,
+							selection,
+							cart,
+							currency: tab.currency,
+						})
+					: null
+			if (selected && member) {
+				// One member collects a shared tab: the first to order or pay.
+				const claimed = await purchaseForSourceInTx(tx, source)
+				if (claimed && claimed.memberId !== member.id) {
+					throw new LoyaltyDomainError('already_claimed')
+				}
+			}
+			const rewarded: DiscountedTabTotals | null = selected
+				? discountedTabTotals(rounds, selected.quote.lines)
+				: null
+			if (
+				selected &&
+				rewarded?.loyaltyDiscountCents !== selected.quote.discountMinor
+			) {
+				throw new LoyaltyDomainError('cart_changed', {
+					discountMinor: selected.quote.discountMinor,
+				})
+			}
+			if (rewarded && rewarded.totalCents <= 0) {
+				return fail(
+					422,
+					'reward_covers_total',
+					'This reward covers the whole tab, so it cannot be paid online. Please ask a team member.',
+				)
+			}
+			const tipCents = Math.round(
+				(totals.subtotalCents * input.tipPercent) / 100,
+			)
+			const loyaltyDiscountCents = rewarded?.loyaltyDiscountCents ?? 0
+			const amountCents = (rewarded?.totalCents ?? totals.totalCents) + tipCents
+			// The freeze runs from the first ask: a re-ask (or a different tip)
+			// re-prices the payment but never restarts it, so nobody can keep the
+			// table frozen by asking again and again.
+			const sameRequest =
+				holdOpen &&
+				tab.paymentStatus === 'unpaid' &&
+				tab.paymentAmountCents != null
+			const cartHash = cart ? sha256Hex(canonicalLoyaltyCart(cart)) : null
+			const keepHeld =
+				selected !== null &&
+				held !== null &&
+				held.state === 'bound' &&
+				held.memberId === member?.id &&
+				held.rewardId === selected.reward.snapshot.rewardId &&
+				held.rewardVersion === selected.reward.snapshot.version &&
+				held.cartHash === cartHash &&
+				held.targetLineId === selected.quote.targetLineId &&
+				held.discountMinor === selected.quote.discountMinor
+			if (!keepHeld) {
+				// One reward per tab: what an earlier ask held is given back first,
+				// or kept for review while its lapsed page can still be paid.
+				await setAsideSourceRedemptionInTx(tx, source, {
+					reason: 'payment_restarted',
+					at,
+					payableUntil:
+						tab.loyaltyDiscountCents > 0 ? qrTabPayableUntil(tab) : null,
+				})
+				if (selected && member && cart && cartHash) {
+					const redemption = await reserveRedemptionInTx(tx, {
+						member,
+						reward: selected.reward.snapshot,
+						cart,
+						cartHash,
+						targetLineId: selection?.targetLineId ?? null,
+						expectedDiscountMinor: selected.quote.discountMinor,
+						channel: 'qr',
+						source,
+						locationId: tab.locationId,
+						at,
+					})
+					if (redemption.discountMinor !== loyaltyDiscountCents) {
+						throw new LoyaltyDomainError('cart_changed', {
+							discountMinor: redemption.discountMinor,
+						})
+					}
+				}
+			}
+			if (member) {
+				await claimPurchaseIfUnclaimedInTx(tx, {
+					member,
+					source,
+					locationId: tab.locationId,
+					currency: tab.currency,
+					at,
+				})
+			}
+			await tx
+				.update(qrTabs)
+				.set({
+					// The guest who opened the tab keeps their details on it.
+					guestName: tab.guestName ?? input.contact.name,
+					guestPhone: tab.guestPhone ?? input.contact.phone,
+					// A lapsed binding (a payment page abandoned past the hold, e.g.
+					// Checkout.com, which never reports expiry) is forgotten here.
+					paymentStatus: 'unpaid',
+					paymentSessionId: null,
+					paymentProcessor: null,
+					paymentTipCents: tipCents,
+					paymentEventAt: sameRequest ? (tab.paymentEventAt ?? at) : at,
+					paymentAmountCents: amountCents,
+					paymentTokenHash: sha256Hex(tabPaymentToken),
+					loyaltyDiscountCents,
+					updatedAt: at,
+				})
+				.where(eq(qrTabs.id, tab.id))
 			return {
 				ok: true as const,
 				data: {
 					orderRef: tabOrderRef(tab.id),
 					tabPaymentToken,
-					amountCents: tab.paymentAmountCents,
-					tipCents: tab.paymentTipCents ?? 0,
+					amountCents,
+					tipCents,
+					loyaltyDiscountCents,
 					currency: tab.currency,
 				},
 			}
+		})
+	} catch (error) {
+		// A refused reward throws out of the transaction (rolling it back)
+		// and becomes the request's failure here.
+		if (error instanceof LoyaltyDomainError) {
+			return { ok: false, failure: loyaltyFailure(error) }
 		}
-		if (tab.paymentStatus === 'paid' || tab.paymentStatus === 'review') {
-			return fail(409, 'tab_closed', 'This tab is already paid.')
-		}
-		const tipCents = Math.round((totals.subtotalCents * input.tipPercent) / 100)
-		const amountCents = totals.totalCents + tipCents
-		// The freeze runs from the first ask: a re-ask (or a different tip)
-		// re-prices the payment but never restarts it, so nobody can keep the
-		// table frozen by asking again and again.
-		const sameRequest =
-			holdOpen &&
-			tab.paymentStatus === 'unpaid' &&
-			tab.paymentAmountCents != null
-		await tx
-			.update(qrTabs)
-			.set({
-				// The guest who opened the tab keeps their details on it.
-				guestName: tab.guestName ?? input.contact.name,
-				guestPhone: tab.guestPhone ?? input.contact.phone,
-				// A lapsed binding (a payment page abandoned past the hold, e.g.
-				// Checkout.com, which never reports expiry) is forgotten here.
-				paymentStatus: 'unpaid',
-				paymentSessionId: null,
-				paymentProcessor: null,
-				paymentTipCents: tipCents,
-				paymentEventAt: sameRequest
-					? (tab.paymentEventAt ?? now.getTime())
-					: now.getTime(),
-				paymentAmountCents: amountCents,
-				paymentTokenHash: sha256Hex(tabPaymentToken),
-				updatedAt: now.getTime(),
-			})
-			.where(eq(qrTabs.id, tab.id))
-		return {
-			ok: true as const,
-			data: {
-				orderRef: tabOrderRef(tab.id),
-				tabPaymentToken,
-				amountCents,
-				tipCents,
-				currency: tab.currency,
-			},
-		}
-	})
+		throw error
+	}
 }
 
 async function loadPayableTab(
@@ -1238,18 +1548,48 @@ async function loadPayableTab(
 }
 
 /**
- * What the tab costs right now (rounds that count, plus the tip fixed at the
- * pay request). Every bridge step compares it with the stored amount, so a
- * round added after the pay request can never be settled by an older payment.
+ * The tab's totals with the reward its pay request bound. Null when that
+ * reward was given back or no longer fits the rounds (one was cancelled):
+ * the stored amount is stale then, and no payment may settle it.
+ */
+async function boundRewardTotals(
+	db: Parameters<typeof loadPayableTab>[0],
+	tab: QrTabRow,
+	rounds: RestaurantOrder[],
+): Promise<DiscountedTabTotals | null> {
+	const redemption = await activeRedemptionForSourceInTx(db, 'qr_tab', tab.id)
+	if (
+		!redemption ||
+		redemption.state !== 'bound' ||
+		redemption.discountMinor !== tab.loyaltyDiscountCents
+	) {
+		return null
+	}
+	const totals = discountedTabTotals(rounds, redemption.allocation)
+	return totals?.loyaltyDiscountCents === tab.loyaltyDiscountCents
+		? totals
+		: null
+}
+
+/**
+ * What the tab costs right now: the rounds that count, less the reward the
+ * pay request bound, plus the tip fixed then. Every bridge step compares it
+ * with the stored amount, so a round added (or cancelled) after the pay
+ * request can never be settled by an older payment. Null when the bound
+ * reward no longer fits: then no amount matches.
  */
 async function currentPayableCents(
 	db: Parameters<typeof loadPayableTab>[0],
 	tab: QrTabRow,
-): Promise<number> {
+): Promise<number | null> {
 	const rounds = await listTabRounds(db, [tab.id])
-	return tabTotals(tab, rounds).totalCents + (tab.paymentTipCents ?? 0)
+	const tipCents = tab.paymentTipCents ?? 0
+	if (tab.loyaltyDiscountCents <= 0) {
+		return tabTotals(tab, rounds).totalCents + tipCents
+	}
+	const rewarded = await boundRewardTotals(db, tab, rounds)
+	return rewarded ? rewarded.totalCents + tipCents : null
 }
-
 /** Hosted session lifetime for a tab: Stripe's 30-minute minimum plus room. */
 const QR_TAB_HOSTED_SESSION_MS = 40 * 60 * 1000
 
@@ -1407,7 +1747,8 @@ export async function applyTabPaymentEvent(input: {
 	/** One payment's provider id, when the session id is shared (Checkout.com). */
 	paymentId?: string
 }) {
-	return writeTx(input.orgId, async (tx) => {
+	const loyalty = loyaltySettleQueue()
+	const outcome = await writeTx(input.orgId, async (tx) => {
 		const tab = await loadPayableTab(tx, input.tabId)
 		if (!tab) return fail(404, 'order_not_found', 'Order not found.')
 		if (
@@ -1515,6 +1856,12 @@ export async function applyTabPaymentEvent(input: {
 			}
 			const rounds = await listTabRounds(tx, [tab.id])
 			const totals = tabTotals(tab, rounds)
+			// The amount matched above, so a reward the pay request bound still
+			// fits the rounds: the snapshot carries its discounted tax.
+			const rewarded =
+				tab.loyaltyDiscountCents > 0
+					? await boundRewardTotals(tx, tab, rounds)
+					: null
 			const tipCents = tab.paymentTipCents ?? 0
 			await markTabRoundsPaid(tx, tab.id, now)
 			await tx
@@ -1527,7 +1874,8 @@ export async function applyTabPaymentEvent(input: {
 					// treated as one (Checkout.com shares the session per tab).
 					paymentSessionId: input.paymentId ?? input.sessionId,
 					subtotalCents: totals.subtotalCents,
-					taxCents: totals.taxCents,
+					taxCents: rewarded?.taxCents ?? totals.taxCents,
+					loyaltyDiscountCents: rewarded?.loyaltyDiscountCents ?? 0,
 					tipCents,
 					totalCents: input.amountCents,
 					closedBy: 'guest',
@@ -1538,6 +1886,8 @@ export async function applyTabPaymentEvent(input: {
 					updatedAt: now.getTime(),
 				})
 				.where(eq(qrTabs.id, tab.id))
+			// Settled from the phone: the tab earns, and spends its reward.
+			await loyalty.queue(tx, tabSource(tab.id), now.getTime())
 			return result('paid')
 		}
 		if (tab.paymentStatus === 'paid' || tab.paymentStatus === 'review') {
@@ -1548,6 +1898,12 @@ export async function applyTabPaymentEvent(input: {
 			// page: keep the binding (and the frozen amount) until it expires.
 			return result('pending')
 		}
+		// The guest can try again (and pick a reward again) or pay at the
+		// counter: the reward this payment held comes back.
+		await releaseSourceRedemptionInTx(tx, tabSource(tab.id), {
+			reason: input.status === 'failed' ? 'payment_failed' : 'payment_expired',
+			at: now.getTime(),
+		})
 		await tx
 			.update(qrTabs)
 			.set({
@@ -1556,10 +1912,13 @@ export async function applyTabPaymentEvent(input: {
 				paymentProcessor: null,
 				paymentAmountCents: null,
 				paymentTipCents: null,
+				loyaltyDiscountCents: 0,
 				paymentEventAt: now.getTime(),
 				updatedAt: now.getTime(),
 			})
 			.where(eq(qrTabs.id, tab.id))
 		return result(input.status === 'failed' ? 'failed' : 'expired')
 	})
+	await loyalty.settle(input.orgId)
+	return outcome
 }

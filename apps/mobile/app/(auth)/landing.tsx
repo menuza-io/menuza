@@ -10,6 +10,7 @@ import {
 	StatusBar,
 	type NativeSyntheticEvent,
 	type NativeScrollEvent,
+	type ScrollViewInstance,
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
@@ -51,7 +52,7 @@ export default function LandingScreen() {
 	]
 	const router = useRouter()
 	const [currentIndex, setCurrentIndex] = useState(0)
-	const scrollViewRef = useRef<ScrollView>(null)
+	const scrollViewRef = useRef<ScrollViewInstance>(null)
 	const insets = useSafeAreaInsets()
 
 	const handleGetStarted = () => {
@@ -70,11 +71,7 @@ export default function LandingScreen() {
 
 	return (
 		<View className="bg-background flex-1">
-			<StatusBar
-				barStyle="light-content"
-				backgroundColor="transparent"
-				translucent
-			/>
+			<StatusBar barStyle="light-content" />
 
 			{/* Header */}
 			<View

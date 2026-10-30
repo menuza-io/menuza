@@ -15,6 +15,7 @@ import { assertDataRegion, getNodeRegion } from './lib/region.ts'
 import { assertTenantApiSecrets } from './lib/secrets.ts'
 import { setTenantEmailDevCapture } from './lib/tenant-email.ts'
 import { assertZatcaSealKey } from './lib/zatca-seal.ts'
+import { startLoyaltyTickInterval } from './lib/loyalty-tick-interval.ts'
 import { startReservationsTickInterval } from './lib/reservations-tick-interval.ts'
 import { startStaffTickInterval } from './lib/staff-tick-interval.ts'
 
@@ -56,3 +57,6 @@ startStaffTickInterval()
 
 // Sub-hourly reservations tick (messages, expiry, waitlist) on this node.
 startReservationsTickInterval()
+
+// Sub-hourly loyalty tick (expired holds, approvals, reconciliation retries).
+startLoyaltyTickInterval()

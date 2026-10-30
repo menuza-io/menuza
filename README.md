@@ -34,13 +34,12 @@ Local HTTPS uses the automatically derived `{brand.slug}.test` domain (for
 example, `app.acme.test:2999`). The configured brand domain remains reserved for
 production and staging deployment URLs.
 
-Brand setup also renames the **native app identity**, so a fresh clone carries
-no trace of the template's brand: the iOS bundle id and Xcode project
-(`EpicTenantApp` → `<Brand>TenantApp`), the Android application id and Kotlin
-package (`com.epicstartup.tenant` → `com.<brandid>.tenant`), the
-xcconfig/Info.plist key prefixes (`EPIC_*` → `<BRAND>_*`), and the
-Keychain/Keystore service names. Per-tenant app configs are generated after
-setup (`npm run ios:tenant -w ios`, `npm run android:tenant -w android`).
+Brand setup also renames the **customer app identity**, so a fresh clone carries
+no trace of the template's brand: the bundle and Android package id
+(`com.epicstartup.tenant` → `com.<brandid>.tenant`), the domains, and the
+un-branded build's display name in `apps/customer/app.config.ts`. White-label
+builds read their own ids from `apps/customer/tenants/<slug>.json`
+(`npm run tenant -w customer -- --tenant <slug>` fetches the tenant's icon).
 
 ## Repository layout
 
@@ -61,12 +60,10 @@ management.
   port `3008`.
 - `apps/tenant-api` — regional Hono service for customer phone OTP, auth, and
   per-organization tenant databases.
-- `apps/mobile` — Expo and React Native mobile application.
-- `apps/ios` — tenant customer iOS app (SwiftUI + `TenantKit`); white-label and
-  un-branded builds per organization, released through the App Store pipeline.
-- `apps/android` — tenant customer Android app (Kotlin, framework-only views);
-  the same feature set at a fraction of the download size, released through
-  Google Play.
+- `apps/mobile` — Expo operator app for organization staff.
+- `apps/customer` — Expo customer app for one organization's guests (iOS and
+  Android): branded shell, phone sign-in, profile, table booking and Loyalty
+  Rewards; white-label and un-branded builds per organization.
 - `apps/chrome-extension` — Vite-powered Chrome and Firefox extension.
 - `apps/docs` — Mint documentation site for the project docs.
 - `apps/studio` — Drizzle Studio entry point for the local control-plane
