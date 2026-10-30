@@ -120,7 +120,7 @@ export type VerticalTool<
 	name: string
 	description: string
 	/** Omitted for tools without arguments. */
-	parameters?: z.AnyZodObject
+	parameters?: z.ZodObject
 	/** Refuse a second call while one is still running. */
 	rejectDuplicates?: boolean
 	/** Refuse while a transfer rings, like the worker's other call-changing tools. */
@@ -133,7 +133,7 @@ export type VerticalTool<
 
 /** Types `execute`'s arguments from `parameters`. */
 export function defineVerticalTool<
-	TParams extends z.AnyZodObject,
+	TParams extends z.ZodObject,
 	TData = unknown,
 	TSettings = unknown,
 	TState = unknown,
@@ -238,7 +238,7 @@ export type PhoneAgentVertical<
 
 	/** Settings stored under `settings.vertical`. */
 	settings?: {
-		schema: z.ZodType<TSettings, z.ZodTypeDef, unknown>
+		schema: z.ZodType<TSettings, unknown>
 		defaults: TSettings
 	}
 	/** Core settings a new organization of this vertical starts with. */

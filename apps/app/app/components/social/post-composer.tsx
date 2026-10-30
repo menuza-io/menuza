@@ -1,5 +1,5 @@
 import { getFormProps, useForm, type SubmissionResult } from '@conform-to/react'
-import { getZodConstraint, parseWithZod } from '@conform-to/zod'
+import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { Alert, AlertDescription, AlertTitle } from '@repo/ui/alert'

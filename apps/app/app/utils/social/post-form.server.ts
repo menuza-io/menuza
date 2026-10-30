@@ -1,4 +1,4 @@
-import { parseWithZod } from '@conform-to/zod'
+import { parseWithZod } from '@conform-to/zod/v4'
 import { i18n } from '@lingui/core'
 import { t } from '@lingui/macro'
 import { redirectWithToast } from '@repo/common/toast'

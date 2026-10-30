@@ -431,7 +431,7 @@ const DASHBOARD_NAME_ERRORS: Record<DashboardNameErrorCode, string> = {
 }
 
 export const dashboardNameSchema = z
-	.string({ required_error: DASHBOARD_NAME_ERRORS['name-required'] })
+	.string({ error: DASHBOARD_NAME_ERRORS['name-required'] })
 	.trim()
 	.min(1, DASHBOARD_NAME_ERRORS['name-required'])
 	.max(DASHBOARD_NAME_MAX_LENGTH, DASHBOARD_NAME_ERRORS['name-too-long'])

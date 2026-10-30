@@ -93,7 +93,7 @@ subscriptionRoutes.put(
 		const parsed = updateSchema.safeParse(await c.req.json().catch(() => ({})))
 		if (!parsed.success) {
 			return c.json(
-				{ error: parsed.error.errors[0]?.message || 'Invalid payload' },
+				{ error: parsed.error.issues[0]?.message || 'Invalid payload' },
 				400,
 			)
 		}

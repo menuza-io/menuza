@@ -28,7 +28,7 @@ export async function action({ request, params }: Route.ActionArgs) {
 		return data(
 			{
 				error: 'invalid_definition' as const,
-				message: parsed.error.errors[0]?.message || 'Invalid report definition',
+				message: parsed.error.issues[0]?.message || 'Invalid report definition',
 			},
 			{ status: 400 },
 		)

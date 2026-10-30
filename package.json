@@ -124,7 +124,7 @@
     "varlock": "^1.18.0",
     "ws": "^8.21.1",
     "sanitize-html": "^2.18.0",
-    "zod": "^3.25.76"
+    "zod": "^4.6.7"
   },
   "optionalDependencies": {
     "@astrojs/compiler-binding-darwin-arm64": "^0.3.2",
@@ -169,7 +169,13 @@
     "esbuild": "^0.28.1",
     "fast-uri": "^3.1.6",
     "qs": "^6.16.0",
-    "emdash": "1.3.1",
-    "@emdash-cms/cloudflare": "1.3.1"
+    "emdash": {
+      ".": "1.3.1",
+      "zod": "^4.6.7"
+    },
+    "@emdash-cms/cloudflare": "1.3.1",
+    "postcss-selector-parser": "^6.1.5",
+    "image-size": "^1.2.1",
+    "katex": "^0.19.1"
   }
 }

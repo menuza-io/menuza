@@ -31,7 +31,7 @@
     "@repo/security": "*",
     "lru-cache": "^11.1.0",
     "react-router": "^8.3.0",
-    "zod": "^3.25.76"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^4.0.1",

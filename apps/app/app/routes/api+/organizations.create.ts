@@ -1,4 +1,4 @@
-import { parseWithZod } from '@conform-to/zod'
+import { parseWithZod } from '@conform-to/zod/v4'
 import { invalidateUserOrganizationsCache } from '@repo/cache'
 import { organizationSlugSchema } from '@repo/common'
 import { db, eq, Organization } from '@repo/database'

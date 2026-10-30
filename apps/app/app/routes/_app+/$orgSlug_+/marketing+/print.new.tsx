@@ -1,5 +1,5 @@
 import { getFormProps, getInputProps, useForm } from '@conform-to/react'
-import { parseWithZod } from '@conform-to/zod'
+import { parseWithZod } from '@conform-to/zod/v4'
 import { msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import {
@@ -42,9 +42,9 @@ import { createPrintDesign } from '#app/utils/print/designs.server.ts'
 
 const NewPrintSchema = z.object({
 	// Codes, translated by `printFormErrors`.
-	name: z.string({ required_error: 'name' }).trim().min(1, 'name').max(120),
+	name: z.string({ error: 'name' }).trim().min(1, 'name').max(120),
 	product: z
-		.string({ required_error: 'product' })
+		.string({ error: 'product' })
 		.refine((key) => printCatalog.isProduct(key), 'product'),
 	sizeKey: z.string().trim().min(1).max(20),
 	style: z.enum(PRINT_TEMPLATE_STYLES),

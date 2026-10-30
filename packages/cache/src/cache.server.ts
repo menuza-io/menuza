@@ -216,7 +216,7 @@ const cacheEntrySchema = z.object({
 		ttl: z.number().nullable().optional(),
 		swr: z.number().nullable().optional(),
 	}),
-	value: z.unknown(),
+	value: z.unknown().optional(),
 })
 const cacheQueryResultSchema = z.object({
 	metadata: z.string(),

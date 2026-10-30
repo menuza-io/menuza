@@ -19,10 +19,10 @@ export const SignupSchema = z.object({
 // Mobile-compatible versions with simplified validation for better UX
 export const MobileLoginFormSchema = z.object({
 	username: z
-		.string({ required_error: 'Username is required' })
+		.string({ error: 'Username is required' })
 		.min(1, { message: 'Username is required' }),
 	password: z
-		.string({ required_error: 'Password is required' })
+		.string({ error: 'Password is required' })
 		.min(1, { message: 'Password is required' }),
 	redirectTo: z.string().optional(),
 	remember: z.boolean().optional(),
@@ -30,7 +30,7 @@ export const MobileLoginFormSchema = z.object({
 
 export const MobileSignupSchema = z.object({
 	email: z
-		.string({ required_error: 'Email is required' })
+		.string({ error: 'Email is required' })
 		.email({ message: 'Please enter a valid email address' })
 		.min(1, { message: 'Email is required' }),
 })

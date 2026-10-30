@@ -216,9 +216,7 @@ export function checkTaskRules(task: TaskRules): [string, string] | null {
 	return null
 }
 
-function withTaskRules<T extends z.ZodType<TaskRules, z.ZodTypeDef, unknown>>(
-	schema: T,
-): z.ZodEffects<T, z.output<T>, z.input<T>> {
+function withTaskRules<T extends z.ZodType<TaskRules, unknown>>(schema: T): T {
 	return schema.superRefine((value, ctx) => {
 		const problem = checkTaskRules(value)
 		if (problem) {
@@ -228,7 +226,7 @@ function withTaskRules<T extends z.ZodType<TaskRules, z.ZodTypeDef, unknown>>(
 				message: problem[1],
 			})
 		}
-	}) as unknown as z.ZodEffects<T, z.output<T>, z.input<T>>
+	})
 }
 
 // ---------------------------------------------------------------------------

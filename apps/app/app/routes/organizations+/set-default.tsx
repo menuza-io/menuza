@@ -19,7 +19,10 @@ export async function action({ request }: ActionFunctionArgs) {
 	)
 
 	if (!result.success) {
-		return Response.json({ errors: result.error.flatten() }, { status: 400 })
+		return Response.json(
+			{ errors: z.flattenError(result.error) },
+			{ status: 400 },
+		)
 	}
 
 	const { organizationId } = result.data

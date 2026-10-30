@@ -25,7 +25,7 @@ export async function action({ request }: Route.ActionArgs) {
 					success: false,
 					error: 'validation_error',
 					message: 'Invalid organization ID',
-					errors: result.error.flatten(),
+					errors: z.flattenError(result.error),
 				},
 				{ status: 400 },
 			)

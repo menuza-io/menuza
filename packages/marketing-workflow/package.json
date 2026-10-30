@@ -26,7 +26,7 @@
     "@repo/ui": "*",
     "@xyflow/react": "^12.6.0",
     "react": "^19.1.1",
-    "zod": "^3.25.76"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@repo/config": "*",

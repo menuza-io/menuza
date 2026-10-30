@@ -1,5 +1,5 @@
 import { getFormProps, getInputProps, useForm } from '@conform-to/react'
-import { parseWithZod } from '@conform-to/zod'
+import { parseWithZod } from '@conform-to/zod/v4'
 import { msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import {
@@ -65,7 +65,7 @@ const OrderFormSchema = printShippingAddressSchema
 					(value) => (value === undefined || value === '' ? 0 : value),
 					// Codes, translated by `printFormErrors`.
 					z.coerce
-						.number({ invalid_type_error: 'copies_number' })
+						.number({ error: 'copies_number' })
 						.int('copies_whole')
 						.min(0, 'copies_min')
 						.max(PRINT_MAX_COPIES, 'copies_max'),

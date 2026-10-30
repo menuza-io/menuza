@@ -1,5 +1,5 @@
 import { getFormProps, useForm } from '@conform-to/react'
-import { parseWithZod } from '@conform-to/zod'
+import { parseWithZod } from '@conform-to/zod/v4'
 import { msg, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import {

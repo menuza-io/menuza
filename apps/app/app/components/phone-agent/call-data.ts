@@ -105,7 +105,7 @@ const transcriptTurnSchema = z.object({
 export const callHandoffSchema = z.object({
 	id: z.string(),
 	path: z.string().catch('/'),
-	payload: z.unknown(),
+	payload: z.unknown().optional(),
 	createdAt: z.string().nullable().optional().catch(null),
 	expiresAt: z.string().nullable().catch(null),
 	sentToPhone: z.string().nullable().optional().catch(null),

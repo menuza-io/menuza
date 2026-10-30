@@ -82,7 +82,7 @@ const errorBodySchema = z
 			)
 			.optional(),
 	})
-	.passthrough()
+	.loose()
 
 export type StaffRequestInit = Omit<RequestInit, 'body'> & {
 	/** Serialized as JSON with the right content type. */

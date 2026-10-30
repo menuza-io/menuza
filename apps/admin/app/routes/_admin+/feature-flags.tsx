@@ -59,7 +59,7 @@ export async function action({ request }: ActionFunctionArgs) {
 		const result = deleteSchema.safeParse({ id: formData.get('id') })
 		if (!result.success) {
 			return Response.json(
-				{ errors: result.error.flatten().fieldErrors },
+				{ errors: z.flattenError(result.error).fieldErrors },
 				{ status: 400 },
 			)
 		}
@@ -71,7 +71,7 @@ export async function action({ request }: ActionFunctionArgs) {
 	const result = createUpdateSchema.safeParse(values)
 	if (!result.success) {
 		return Response.json(
-			{ errors: result.error.flatten().fieldErrors },
+			{ errors: z.flattenError(result.error).fieldErrors },
 			{ status: 400 },
 		)
 	}

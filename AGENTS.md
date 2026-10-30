@@ -241,7 +241,16 @@ test data to LibSQL.
 
 - Strict mode enabled
 - Path aliases: `#app/*` (app code), `#tests/*` (tests), `@repo/*` (packages)
-- Use Zod for all validation schemas
+- Use Zod for all validation schemas. The repo is on Zod 4: import
+  `parseWithZod` / `getZodConstraint` from `@conform-to/zod/v4` (the bare
+  `@conform-to/zod` entry is the Zod 3 adapter), set messages with `error`
+  (`required_error`, `invalid_type_error` and `errorMap` are gone), give
+  `z.record` two arguments, and read `ZodError.issues` (there is no `.errors`).
+  A `z.any()` / `z.unknown()` object key is required unless you add
+  `.optional()`. Issues carry no rejected value unless you parse with
+  `{ reportInput: true }`. App and Admin call `installRequiredMessage()` (from
+  `@repo/common/zod-defaults`) in `root.tsx` so a missing value still reads
+  "Required"; every other default message is Zod 4's
 - React Router 8 loaders and actions with single fetch: client data requests go
   to `<path>.data` (see `apps/app/AGENTS.md`)
 

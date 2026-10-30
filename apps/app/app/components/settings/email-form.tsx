@@ -1,5 +1,5 @@
 import { getFormProps, getInputProps, useForm } from '@conform-to/react'
-import { getZodConstraint, parseWithZod } from '@conform-to/zod'
+import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { Trans } from '@lingui/macro'
 import { Button } from '@repo/ui/button'
 import { Field, FieldLabel, FieldError, FieldGroup } from '@repo/ui/field'

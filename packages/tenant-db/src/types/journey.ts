@@ -78,7 +78,7 @@ export const conditionOperatorSchema = z.enum(CONDITION_OPERATORS)
 
 export const triggerNodeDataSchema = z.object({
 	triggerType: journeyTriggerTypeSchema.default('phone_verified'),
-	config: z.record(z.unknown()).optional().default({}),
+	config: z.record(z.string(), z.unknown()).optional().default({}),
 })
 export type TriggerNodeData = z.infer<typeof triggerNodeDataSchema>
 
@@ -205,7 +205,7 @@ export const genericNodeSchema = z.object({
 	id: z.string().min(1),
 	type: nodeTypeSchema,
 	position: nodePositionSchema.optional(),
-	data: z.record(z.unknown()),
+	data: z.record(z.string(), z.unknown()),
 })
 export type GenericNode = z.infer<typeof genericNodeSchema>
 
@@ -247,9 +247,9 @@ export const createJourneySchema = z.object({
 	name: z.string().min(1, 'Journey name is required').max(200),
 	description: z.string().max(1000).optional(),
 	triggerType: journeyTriggerTypeSchema.optional().default('phone_verified'),
-	triggerConfig: z.record(z.unknown()).optional().default({}),
-	nodes: z.array(z.record(z.unknown())).optional().default([]),
-	edges: z.array(z.record(z.unknown())).optional().default([]),
+	triggerConfig: z.record(z.string(), z.unknown()).optional().default({}),
+	nodes: z.array(z.record(z.string(), z.unknown())).optional().default([]),
+	edges: z.array(z.record(z.string(), z.unknown())).optional().default([]),
 	graphJson: z.string().optional(),
 })
 export type CreateJourneyInput = z.infer<typeof createJourneySchema>
@@ -259,9 +259,9 @@ export const updateJourneySchema = z.object({
 	description: z.string().max(1000).nullish(),
 	status: journeyStatusSchema.optional(),
 	triggerType: journeyTriggerTypeSchema.optional(),
-	triggerConfig: z.record(z.unknown()).optional(),
-	nodes: z.array(z.record(z.unknown())).optional(),
-	edges: z.array(z.record(z.unknown())).optional(),
+	triggerConfig: z.record(z.string(), z.unknown()).optional(),
+	nodes: z.array(z.record(z.string(), z.unknown())).optional(),
+	edges: z.array(z.record(z.string(), z.unknown())).optional(),
 	graphJson: z.string().optional(),
 })
 export type UpdateJourneyInput = z.infer<typeof updateJourneySchema>
@@ -273,7 +273,7 @@ export const executeStepPayloadSchema = z.object({
 	customerId: z.string().min(1),
 	nodeId: z.string().min(1),
 	nodeType: z.enum(['action_email', 'action_sms', 'email', 'sms']),
-	config: z.record(z.unknown()),
+	config: z.record(z.string(), z.unknown()),
 })
 export type ExecuteStepPayload = z.infer<typeof executeStepPayloadSchema>
 

@@ -13,12 +13,7 @@ export function json(body: unknown, status: 200 | 201 = 200) {
 }
 
 /** Zod messages for these codes would echo the rejected value back. */
-const ECHOING_CODES = new Set([
-	'invalid_enum_value',
-	'invalid_literal',
-	'invalid_union',
-	'invalid_union_discriminator',
-])
+const ECHOING_CODES = new Set(['invalid_value', 'invalid_union'])
 
 export function validationBody(error: z.ZodError) {
 	return {

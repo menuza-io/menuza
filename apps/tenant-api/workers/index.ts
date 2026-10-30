@@ -84,7 +84,7 @@ async function handleProvision(
 	const parsed = provisionBodySchema.safeParse(body)
 	if (!parsed.success) {
 		return Response.json(
-			{ error: parsed.error.errors[0]?.message || 'Invalid payload' },
+			{ error: parsed.error.issues[0]?.message || 'Invalid payload' },
 			{ status: 400 },
 		)
 	}

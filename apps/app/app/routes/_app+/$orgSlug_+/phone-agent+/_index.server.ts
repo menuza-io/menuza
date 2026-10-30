@@ -25,6 +25,7 @@ import {
 } from '#app/utils/phone-agent/phone-agent.server.ts'
 import { settingsError } from '#app/utils/phone-agent/settings-errors.ts'
 import {
+	PARSE_WITH_INPUT,
 	patchPhoneAgentSettings,
 	settingsVersions,
 	toFieldErrors,
@@ -46,10 +47,13 @@ const NumberId = z.string().min(1).max(64)
 const intentSchema = z.discriminatedUnion('intent', [
 	z.object({
 		intent: z.literal('save-settings'),
-		patch: z.unknown(),
-		versions: z.unknown(),
+		patch: z.unknown().optional(),
+		versions: z.unknown().optional(),
 	}),
-	z.object({ intent: z.literal('add-number'), number: z.unknown() }),
+	z.object({
+		intent: z.literal('add-number'),
+		number: z.unknown().optional(),
+	}),
 	z.object({ intent: z.literal('remove-number'), id: NumberId }),
 	z.object({
 		intent: z.literal('send-line-code'),
@@ -137,7 +141,10 @@ export async function action({
 	}
 
 	if (input.intent === 'add-number') {
-		const parsed = PhoneNumberInputSchema.safeParse(input.number)
+		const parsed = PhoneNumberInputSchema.safeParse(
+			input.number,
+			PARSE_WITH_INPUT,
+		)
 		if (!parsed.success) {
 			const fieldErrors = toFieldErrors(parsed.error)
 			// The schema's only custom check: forwarding needs the business line.

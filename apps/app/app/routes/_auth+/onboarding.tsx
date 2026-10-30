@@ -1,5 +1,5 @@
 import { getFormProps, getInputProps, useForm } from '@conform-to/react'
-import { getZodConstraint, parseWithZod } from '@conform-to/zod'
+import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { t, Trans } from '@lingui/macro'
 import {
 	authSessionStorage,
@@ -95,7 +95,7 @@ export async function action({ request }: Route.ActionArgs) {
 			username: UsernameSchema,
 			name: NameSchema,
 			agreeToTermsOfServiceAndPrivacyPolicy: z.boolean({
-				required_error: t`You must agree to the terms of service and privacy policy`,
+				error: t`You must agree to the terms of service and privacy policy`,
 			}),
 			remember: z.boolean().optional(),
 			redirectTo: z.string().optional(),
@@ -371,7 +371,7 @@ export default function OnboardingRoute({
 			username: UsernameSchema,
 			name: NameSchema,
 			agreeToTermsOfServiceAndPrivacyPolicy: z.boolean({
-				required_error: t`You must agree to the terms of service and privacy policy`,
+				error: t`You must agree to the terms of service and privacy policy`,
 			}),
 			remember: z.boolean().optional(),
 			redirectTo: z.string().optional(),

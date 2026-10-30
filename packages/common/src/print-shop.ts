@@ -485,7 +485,7 @@ export function createPrintCatalog(
 
 	const qrTargetSchema = z
 		.object({ kind: z.string().min(1).max(40) })
-		.passthrough()
+		.loose()
 		.superRefine((value, ctx) => {
 			const spec = targets[value.kind]
 			const parsed = spec?.schema.safeParse(value)
@@ -599,24 +599,20 @@ export const printShippingAddressSchema = z.strictObject({
 	// Forms send an empty field as missing: each needs its own message. The
 	// messages are codes the App translates (`print-form-errors.ts`).
 	recipientName: z
-		.string({ required_error: 'recipient_name' })
+		.string({ error: 'recipient_name' })
 		.trim()
 		.min(2, 'recipient_name')
 		.max(80),
 	recipientPhone: z
-		.string({ required_error: 'recipient_phone' })
+		.string({ error: 'recipient_phone' })
 		.trim()
 		.regex(/^\+?[\d\s\-().]{7,25}$/, 'recipient_phone'),
-	line1: z
-		.string({ required_error: 'street' })
-		.trim()
-		.min(3, 'street')
-		.max(120),
+	line1: z.string({ error: 'street' }).trim().min(3, 'street').max(120),
 	line2: z.string().trim().max(120).optional(),
-	city: z.string({ required_error: 'city' }).trim().min(2, 'city').max(80),
+	city: z.string({ error: 'city' }).trim().min(2, 'city').max(80),
 	state: z.enum(PRINT_US_STATES, { message: 'state' }),
 	postalCode: z
-		.string({ required_error: 'postal_code' })
+		.string({ error: 'postal_code' })
 		.trim()
 		.regex(/^\d{5}(-\d{4})?$/, 'postal_code'),
 	country: z.literal('US'),

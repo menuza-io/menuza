@@ -66,7 +66,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
 		if (!parsed.success) {
 			return Response.json(
-				{ error: 'Invalid input', details: parsed.error.flatten() },
+				{ error: 'Invalid input', details: z.flattenError(parsed.error) },
 				{ status: 400 },
 			)
 		}

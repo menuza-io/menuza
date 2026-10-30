@@ -1,4 +1,4 @@
-import { parseWithZod } from '@conform-to/zod'
+import { parseWithZod } from '@conform-to/zod/v4'
 import { requireUserId } from '@repo/auth'
 import { redirectWithToast } from '@repo/common/toast'
 import { db, eq, User as UserTable } from '@repo/database'

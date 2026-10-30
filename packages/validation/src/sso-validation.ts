@@ -55,7 +55,7 @@ export const ScopesSchema = z
 
 // Role validation
 export const RoleSchema = z.enum(['admin', 'member', 'viewer'], {
-	errorMap: () => ({ message: 'Role must be admin, member, or viewer' }),
+	error: 'Role must be admin, member, or viewer',
 })
 
 // Attribute mapping validation
