@@ -250,7 +250,9 @@ export default defineConfig((config) => ({
 		},
 		envFile: '../../.env',
 		restoreMocks: true,
-		testTimeout: 15000,
+		// Integration tests (DB + payment emulator) can exceed 15s when CI runs
+		// the full monorepo suite under load; local runs stay tight.
+		testTimeout: process.env.CI ? 30_000 : 15_000,
 		// Forked workers get isolated process.env + SQLite files (threads shared one DB).
 		pool: 'forks',
 		maxWorkers: process.env.CI ? 2 : undefined,
