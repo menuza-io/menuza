@@ -12,6 +12,7 @@ import {
 } from '#app/utils/rate-limit.server.ts'
 import {
 	getCachedSiteData,
+	getMenuCacheGeneration,
 	getSiteKvKey,
 	setCachedSiteData,
 } from '#app/utils/sites/kv-cache.server.ts'
@@ -162,7 +163,14 @@ export const loader = withPublicCors(async function loader({
 
 	const orgId = org.id
 	const queryHash = locationId || 'all'
-	const cacheKey = getSiteKvKey('page', orgId, `menu-${queryHash}`)
+	// The generation lets one bump rebuild every organization's menu (a
+	// system-level discount flag changes all of them; `bumpMenuCacheGeneration`).
+	const generation = await getMenuCacheGeneration()
+	const cacheKey = getSiteKvKey(
+		'page',
+		orgId,
+		`menu-g${generation}-${queryHash}`,
+	)
 
 	// Check KV Cache
 	if (!isPreview) {

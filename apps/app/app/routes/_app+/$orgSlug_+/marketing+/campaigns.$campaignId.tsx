@@ -20,7 +20,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	const campaignId = params.campaignId || ''
 	const { orgId, fetchTenant } = await getOperatorTenantClient(request, orgSlug)
 
-	await requireUserWithOrganizationPermission(
+	const userId = await requireUserWithOrganizationPermission(
 		request,
 		orgId,
 		ORG_PERMISSIONS.READ_CAMPAIGN_ANY,
@@ -49,7 +49,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		orgSlug,
 		campaign: {
 			...campaign,
-			coupon: await describeCampaignCoupon(orgId, discountOffer),
+			coupon: await describeCampaignCoupon(orgId, discountOffer, { userId }),
 		} satisfies CampaignDetail,
 		error: null,
 	}

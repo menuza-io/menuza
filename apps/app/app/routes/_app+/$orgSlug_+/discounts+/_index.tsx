@@ -28,7 +28,6 @@ import { ArchiveDiscountButton } from '#app/components/discounts/archive-discoun
 import { LimitNotice } from '#app/components/discounts/fields.tsx'
 import { EmptyState } from '#app/components/empty-state.tsx'
 import { requireDiscountsAccess } from '#app/utils/discounts/access.server.ts'
-import { discountVisibleInScope } from '#app/utils/discounts/location-scope.server.ts'
 import {
 	type DiscountListEntry,
 	listDiscounts,
@@ -52,6 +51,10 @@ import {
 	zonedNowText,
 } from '#app/utils/discounts/labels.ts'
 import { type DiscountLimit } from '#app/utils/discounts/limits.ts'
+import {
+	discountEditableInScope,
+	discountVisibleInScope,
+} from '#app/utils/discounts/location-scope.server.ts'
 import { saveDiscountEditor } from '#app/utils/discounts/save.server.ts'
 import { createDiscountUsageClient } from '#app/utils/discounts/usage-client.ts'
 
@@ -69,11 +72,21 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			.from(OrganizationLocation)
 			.where(eq(OrganizationLocation.organizationId, access.organization.id)),
 	])
-	const discounts = listed.filter((entry) =>
-		entry.definition
-			? discountVisibleInScope(entry.definition.locationIds, access.locationIds)
-			: true,
-	)
+	// A row that no longer parses has no location list to check: `undefined`
+	// shows it only to members with every location (it fails closed). A
+	// discount shared with locations outside the member's own is read-only.
+	const discounts = listed.flatMap((entry) => {
+		const locationIds = entry.definition
+			? entry.definition.locationIds
+			: undefined
+		if (!discountVisibleInScope(locationIds, access.locationIds)) return []
+		return [
+			{
+				...entry,
+				editable: discountEditableInScope(locationIds, access.locationIds),
+			},
+		]
+	})
 	return {
 		orgSlug: access.organization.slug,
 		currency: access.currency,
@@ -394,6 +407,11 @@ export default function DiscountsIndexRoute() {
 	)
 }
 
+type DiscountRowEntry = DiscountListEntry & {
+	/** False when the discount also runs at locations outside the member's. */
+	editable: boolean
+}
+
 function DiscountRow({
 	discount,
 	orgSlug,
@@ -409,7 +427,7 @@ function DiscountRow({
 	onStatusRequested,
 	onLimit,
 }: {
-	discount: DiscountListEntry
+	discount: DiscountRowEntry
 	orgSlug: string
 	currency: string
 	locale: string
@@ -565,7 +583,12 @@ function DiscountRow({
 				)}
 			</TableCell>
 			<TableCell>
-				{canWrite ? (
+				{canWrite && !discount.editable ? (
+					<p className="text-muted-foreground text-end text-xs">
+						<Trans>Shared with other locations. View only.</Trans>
+					</p>
+				) : null}
+				{canWrite && discount.editable ? (
 					<fetcher.Form
 						method="post"
 						className="flex flex-col items-end gap-1"
@@ -581,6 +604,14 @@ function DiscountRow({
 						{fetcher.data && 'stale' in fetcher.data && fetcher.data.stale ? (
 							<p role="alert" className="text-destructive text-xs">
 								<Trans>Reload the page, then try again.</Trans>
+							</p>
+						) : null}
+						{fetcher.data && 'scope' in fetcher.data && fetcher.data.scope ? (
+							<p role="alert" className="text-destructive text-xs">
+								<Trans>
+									It now also runs at locations outside yours, so you can't
+									change it.
+								</Trans>
 							</p>
 						) : null}
 						<div className="flex justify-end gap-2">

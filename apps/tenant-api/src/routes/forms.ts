@@ -19,6 +19,7 @@ import {
 import { ENV } from 'varlock/env'
 import { z } from 'zod'
 
+import { clientAddress } from '../lib/client-ip.ts'
 import {
 	findActiveOrganizationById,
 	resolveOrganizationForBrowserAuth,
@@ -64,8 +65,7 @@ const retentionPurgeSchema = z.object({
 const TURNSTILE_FORM_ACTION = 'website-form'
 
 function submissionClientIp(c: Context) {
-	const cfConnectingIp = c.req.header('cf-connecting-ip')?.trim()
-	return cfConnectingIp || undefined
+	return clientAddress(c) ?? undefined
 }
 
 async function verifyFormTurnstile(c: Context, token: unknown) {

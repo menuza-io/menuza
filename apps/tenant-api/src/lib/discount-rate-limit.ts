@@ -26,14 +26,21 @@ export const DISCOUNT_RATE_LIMITS = {
 	 * enough for a venue where every table shares one Wi-Fi address.
 	 */
 	quoteIp: { max: 120, windowMs: 60_000, sliding: false },
-	/** Refused codes from one guest address. A re-quote of a code that applied does not count. */
+	/**
+	 * Refused codes from one address (an IPv6 client by its /64), guests and
+	 * signed-in customers alike, so many accounts behind one address share it.
+	 * A re-quote of a code that applied does not count.
+	 */
 	codeIp: { max: 20, windowMs: 10 * 60_000, sliding: true },
 	/** Refused codes from one signed-in (verified) customer, wherever they are. */
 	codeCustomer: { max: 20, windowMs: 10 * 60_000, sliding: true },
 	/**
 	 * Refused codes from guests for the whole organization. High enough that a
-	 * busy venue cannot turn coupons off; a flood of guesses still stops.
-	 * Signed-in customers never count toward it and are never refused by it.
+	 * busy venue never reaches it; a flood of guesses from many addresses still
+	 * stops. Once it is spent, guests are asked to sign in to use a code (their
+	 * code is not checked and nothing is counted) rather than refused: a flood
+	 * cannot turn coupons off. Signed-in customers never count toward it and
+	 * are never refused by it.
 	 */
 	codeOrg: { max: 10_000, windowMs: 10 * 60_000, sliding: true },
 } as const satisfies Record<string, Limit>
@@ -255,17 +262,24 @@ export type CouponGuessCharge = {
 
 export type CouponGuessResult =
 	| { ok: true; charge: CouponGuessCharge | null }
-	| { ok: false; retryAfterSeconds: number }
+	| { ok: false; retryAfterSeconds: number; bucket: DiscountRateBucket }
 
 /**
- * Who is guessing. A signed-in customer (a verified customer token) is
- * limited per customer and never by the organization's shared budget, so a
- * flood of guesses from fresh addresses cannot lock them out. A guest is
- * limited per address (`null`: every guest without one shares a bucket) and
- * by the organization's budget.
+ * Who is guessing.
+ *
+ * - A signed-in customer (a verified customer token) is limited per customer
+ *   and per address, never by the organization's shared budget: a flood of
+ *   guesses from elsewhere cannot lock them out, and many accounts behind one
+ *   address share that address's budget.
+ * - A guest is limited per address and by the organization's budget.
+ *
+ * `address` is the rate-limit bucket (`addressBucket`), null only where the
+ * node has no client address at all (local runs and tests; production refuses
+ * a guest code without one, see `orders.ts`). Guests without one share the
+ * `unknown` bucket.
  */
 export type CouponGuessSubject =
-	| { kind: 'customer'; customerId: string }
+	| { kind: 'customer'; customerId: string; address: string | null }
 	| { kind: 'guest'; address: string | null }
 
 function bucketsFor(
@@ -275,12 +289,34 @@ function bucketsFor(
 	if (subject.kind === 'customer') {
 		return [
 			{ bucket: 'codeCustomer', subject: `${orgId}:${subject.customerId}` },
+			...(subject.address
+				? [
+						{
+							bucket: 'codeIp' as const,
+							subject: `${orgId}:${subject.address}`,
+						},
+					]
+				: []),
 		]
 	}
 	return [
 		{ bucket: 'codeIp', subject: `${orgId}:${subject.address ?? 'unknown'}` },
 		{ bucket: 'codeOrg', subject: orgId },
 	]
+}
+
+function markerSubjectOf(subject: CouponGuessSubject): string {
+	return subject.kind === 'customer'
+		? `c:${subject.customerId}`
+		: `a:${subject.address ?? 'unknown'}`
+}
+
+/** Gives back what one attempt counted, in the given buckets. */
+async function giveBackAll(
+	db: TenantDatabase | TenantTransaction,
+	refs: readonly DiscountLimitRef[],
+) {
+	for (const ref of refs) await giveBack(db, ref)
 }
 
 /**
@@ -290,7 +326,11 @@ function bucketsFor(
  *
  * A subject already over a budget is refused before anything is written: no
  * marker and no count, so a refused flood neither grows the table nor spends
- * the organization's budget.
+ * the organization's budget. An attempt that loses a race at a limit gives
+ * back everything it counted, so the counts stay the number of attempts that
+ * were answered. `bucket` says which budget refused: `codeOrg` means the
+ * organization's guest budget is spent (the caller asks the guest to sign in),
+ * anything else is this subject's own limit.
  *
  * `fingerprint` names the cart and code (the caller hashes whatever makes
  * two requests the same question). A second attempt with the same fingerprint
@@ -298,9 +338,8 @@ function bucketsFor(
  * change that did not touch the code; it is not counted again. `charge` is
  * null in that case.
  *
- * When the code turns out to apply (or the request fails for another reason),
- * the caller hands `charge` to `refundCouponGuess`: only wrong guesses use up
- * the budget.
+ * Once the answer is known the caller hands `charge` to `settleCouponGuess`:
+ * only wrong guesses use up the budget.
  */
 export async function chargeCouponGuess(
 	db: TenantDatabase | TenantTransaction,
@@ -315,16 +354,12 @@ export async function chargeCouponGuess(
 	const buckets = bucketsFor(input.orgId, input.subject)
 	for (const entry of buckets) {
 		const open = await discountLimitOpen(db, entry.bucket, entry.subject, now)
-		if (!open.ok) return open
+		if (!open.ok) return { ...open, bucket: entry.bucket }
 	}
-	const markerSubject =
-		input.subject.kind === 'customer'
-			? `c:${input.subject.customerId}`
-			: `a:${input.subject.address ?? 'unknown'}`
 	const markerRef: DiscountLimitRef = {
 		bucket: 'codeSeen',
 		subjectHash: hmacHash(
-			`discount-rate:codeSeen:${input.orgId}:${markerSubject}:${input.fingerprint}`,
+			`discount-rate:codeSeen:${input.orgId}:${markerSubjectOf(input.subject)}:${input.fingerprint}`,
 		),
 		windowStart: windowStartOf(DISCOUNT_RATE_LIMITS.codeIp.windowMs, now),
 	}
@@ -341,11 +376,16 @@ export async function chargeCouponGuess(
 		const counted = await incrementLimit(db, entry.bucket, entry.subject, now)
 		counters.push(counted.ref)
 		if (!counted.ok) {
-			// Lost a race at the limit. The marker goes, so it does not linger
-			// for a question that was never answered. Later buckets (the
-			// organization's) are not touched.
+			// Lost a race at the limit: this attempt is not answered, so what it
+			// counted goes back and the marker goes, so it does not linger for a
+			// question that was never answered. Later buckets are not touched.
+			await giveBackAll(db, counters)
 			await deleteRow(db, markerRef)
-			return { ok: false, retryAfterSeconds: counted.retryAfterSeconds }
+			return {
+				ok: false,
+				retryAfterSeconds: counted.retryAfterSeconds,
+				bucket: entry.bucket,
+			}
 		}
 	}
 	return { ok: true, charge: { counters, marker: markerRef } }
@@ -357,7 +397,132 @@ export async function refundCouponGuess(
 	charge: CouponGuessCharge | null,
 ): Promise<void> {
 	if (!charge) return
-	for (const ref of charge.counters) await giveBack(db, ref)
+	await giveBackAll(db, charge.counters)
 	// The same cart and code is a fresh question again if it is refused later.
 	await deleteRow(db, charge.marker)
+}
+
+/**
+ * What a counted coupon attempt turned out to be.
+ *
+ * - `wrong`: refused as not a working code here (unknown, expired, used up,
+ *   sign-in or membership needed, beaten by an automatic discount). It stays
+ *   counted.
+ * - `fixable`: a real code the cart does not meet yet (minimum spend or
+ *   quantity). A signed-in customer gets the attempt back. A guest is counted
+ *   once per code and window whatever the cart, so the reason never confirms a
+ *   code for free, and that count is given back when the code applies.
+ * - `applied`: the code applied. The attempt is given back, and so is a
+ *   guest's earlier `fixable` count for the same code.
+ * - `none`: the answer said nothing about the code (an error, or a refusal
+ *   for another reason). Given back.
+ */
+export type CouponGuessOutcome = 'wrong' | 'fixable' | 'applied' | 'none'
+
+/** The "this guest's fixable attempt at this code was counted" row of one window. */
+function heldRef(
+	orgId: string,
+	subject: CouponGuessSubject,
+	normalizedCode: string,
+	windowStart: number,
+): DiscountLimitRef {
+	return {
+		bucket: 'codeHeld',
+		subjectHash: hmacHash(
+			`discount-rate:codeHeld:${orgId}:${markerSubjectOf(subject)}:${normalizedCode}`,
+		),
+		windowStart,
+	}
+}
+
+/** The held rows of this window and the one before it (both still weigh). */
+function heldRefs(
+	orgId: string,
+	subject: CouponGuessSubject,
+	normalizedCode: string,
+	now: number,
+): DiscountLimitRef[] {
+	const windowMs = DISCOUNT_RATE_LIMITS.codeIp.windowMs
+	const current = windowStartOf(windowMs, now)
+	return [current, current - windowMs].map((windowStart) =>
+		heldRef(orgId, subject, normalizedCode, windowStart),
+	)
+}
+
+async function existingHeld(
+	db: TenantDatabase | TenantTransaction,
+	refs: readonly DiscountLimitRef[],
+): Promise<DiscountLimitRef[]> {
+	const found: DiscountLimitRef[] = []
+	for (const ref of refs) {
+		const row = await db
+			.select({ count: discountCodeAttempts.count })
+			.from(discountCodeAttempts)
+			.where(
+				and(
+					eq(discountCodeAttempts.bucket, ref.bucket),
+					eq(discountCodeAttempts.subjectHash, ref.subjectHash),
+					eq(discountCodeAttempts.windowStart, ref.windowStart),
+				),
+			)
+			.get()
+		if (row) found.push(ref)
+	}
+	return found
+}
+
+/**
+ * Settles a counted attempt once the answer is known (see
+ * `CouponGuessOutcome`). `normalizedCode` is the code as the region compares
+ * it, so a guest's fixable count is kept per code, not per cart.
+ */
+export async function settleCouponGuess(
+	db: TenantDatabase | TenantTransaction,
+	input: {
+		orgId: string
+		subject: CouponGuessSubject
+		normalizedCode: string
+	},
+	charge: CouponGuessCharge | null,
+	outcome: CouponGuessOutcome,
+	now = Date.now(),
+): Promise<void> {
+	if (outcome === 'wrong') return
+	if (outcome === 'fixable' && input.subject.kind === 'guest') {
+		const refs = heldRefs(input.orgId, input.subject, input.normalizedCode, now)
+		if ((await existingHeld(db, refs)).length > 0) {
+			// This code already cost this guest one guess: the cart changed, the
+			// question did not. The counts go back; the marker stays, so the
+			// same cart asked again is not counted either.
+			if (charge) await giveBackAll(db, charge.counters)
+			return
+		}
+		// The first time: it stays counted, once, until the code applies.
+		if (charge) {
+			await db
+				.insert(discountCodeAttempts)
+				.values({ ...refs[0]!, count: 1 })
+				.onConflictDoNothing()
+		}
+		return
+	}
+	await refundCouponGuess(db, charge)
+	if (outcome !== 'applied') return
+	// A guest who met the minimum gets back the count the code took earlier.
+	const subject = input.subject
+	const held = await existingHeld(
+		db,
+		heldRefs(input.orgId, subject, input.normalizedCode, now),
+	)
+	for (const ref of held) {
+		await giveBackAll(
+			db,
+			bucketsFor(input.orgId, subject).map((entry) => ({
+				bucket: entry.bucket,
+				subjectHash: subjectHashOf(entry.bucket, entry.subject),
+				windowStart: ref.windowStart,
+			})),
+		)
+		await deleteRow(db, ref)
+	}
 }

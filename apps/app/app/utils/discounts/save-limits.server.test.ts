@@ -47,6 +47,13 @@ function request(fields: Record<string, string>, state?: object) {
 	return new Request('http://localhost/x', { method: 'POST', body: form })
 }
 
+/** A stored discount at every location: in scope for the unscoped `access`. */
+const STORED_ORG_WIDE = {
+	application: 'automatic',
+	currency: 'USD',
+	locationIds: null,
+}
+
 function result(value: unknown) {
 	return value as { data: Record<string, unknown>; init: { status: number } }
 }
@@ -98,6 +105,7 @@ describe('organization limits', () => {
 	})
 
 	it('answers a refused duplicate with the limit alone', async () => {
+		mocks.getDiscountApplication.mockResolvedValue(STORED_ORG_WIDE)
 		for (const reason of ['too_many_discounts', 'too_many_codes'] as const) {
 			mocks.duplicateDiscount.mockResolvedValueOnce({ ok: false, reason })
 			const saved = result(
@@ -115,6 +123,7 @@ describe('organization limits', () => {
 	})
 
 	it('answers a refused restore with the limit alone', async () => {
+		mocks.getDiscountApplication.mockResolvedValue(STORED_ORG_WIDE)
 		mocks.setDiscountStatus.mockResolvedValueOnce({
 			ok: false,
 			reason: 'too_many_discounts',

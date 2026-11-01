@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { parseDecimal } from './ManualDiscount.tsx'
+import { parseDecimal, readManualValue } from './ManualDiscount.tsx'
 
 describe('parseDecimal', () => {
 	it('reads Latin digits with a point or a comma', () => {
@@ -22,5 +22,54 @@ describe('parseDecimal', () => {
 		expect(parseDecimal('')).toBeNull()
 		expect(parseDecimal('abc')).toBeNull()
 		expect(parseDecimal('1.2.3')).toBeNull()
+	})
+})
+
+describe('readManualValue', () => {
+	it('turns what was typed into cents or basis points', () => {
+		expect(readManualValue('4', 'variable_amount')).toEqual({
+			ok: true,
+			amountMinor: 400,
+		})
+		expect(readManualValue('0.01', 'variable_amount')).toEqual({
+			ok: true,
+			amountMinor: 1,
+		})
+		expect(readManualValue('12,5', 'variable_percent')).toEqual({
+			ok: true,
+			percentBp: 1250,
+		})
+		expect(readManualValue('0.01', 'variable_percent')).toEqual({
+			ok: true,
+			percentBp: 1,
+		})
+	})
+
+	it('refuses a value that rounds to nothing, before any PIN is asked for', () => {
+		for (const raw of ['0', '0.004', '٠٫٠٠٤']) {
+			expect(readManualValue(raw, 'variable_amount')).toEqual({
+				ok: false,
+				reason: 'value_required',
+			})
+			expect(readManualValue(raw, 'variable_percent')).toEqual({
+				ok: false,
+				reason: 'value_required',
+			})
+		}
+	})
+
+	it('refuses what is not a number, and more than 100 percent', () => {
+		expect(readManualValue('ten', 'variable_amount')).toEqual({
+			ok: false,
+			reason: 'not_a_number',
+		})
+		expect(readManualValue('100.01', 'variable_percent')).toEqual({
+			ok: false,
+			reason: 'over_100',
+		})
+		expect(readManualValue('100', 'variable_percent')).toEqual({
+			ok: true,
+			percentBp: 10_000,
+		})
 	})
 })

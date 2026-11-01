@@ -625,7 +625,7 @@ describe('combining', () => {
 		expect(worse.applied.map((d) => d.discountId)).toEqual(['a1'])
 	})
 
-	it('prefers the typed code on a tie', () => {
+	it('keeps the automatic discount on a tie, so the code is not spent for nothing', () => {
 		const result = evaluateDiscounts(
 			makeInput({
 				discounts: [auto10, coupon({ percentBp: 1000 })],
@@ -633,7 +633,24 @@ describe('combining', () => {
 				code: 'save10',
 			}),
 		)
-		expect(result.code).toEqual({ status: 'applied', discountId: 'c1' })
+		expect(result.code).toEqual({
+			status: 'replaced',
+			reason: 'replaced_by_better_discount',
+			discountId: 'c1',
+		})
+		expect(result.applied.map((d) => d.discountId)).toEqual(['a2'])
+		expect(result.totalDiscountMinor).toBe(100)
+		// One cent more and the code wins.
+		const more = evaluateDiscounts(
+			makeInput({
+				discounts: [auto10, coupon({ percentBp: 1001 })],
+				codes: [codeRecord],
+				code: 'save10',
+				lines: [makeLine({ unitMinor: 10_000 })],
+			}),
+		)
+		expect(more.code).toEqual({ status: 'applied', discountId: 'c1' })
+		expect(more.applied.map((d) => d.discountId)).toEqual(['c1'])
 	})
 
 	it('breaks ties on priority, then age', () => {
@@ -906,6 +923,8 @@ describe('a fixed amount for the whole selection', () => {
 				makeLine({ lineId: 'b', itemId: 'fries', unitMinor: 300 }),
 			],
 			amountMinor: 500,
+			currency: 'USD',
+			context: makeContext({ channel: 'pos' }),
 		})
 		expect(quote).toEqual({ ok: true, amountMinor: 500 })
 	})
@@ -922,6 +941,8 @@ describe('a fixed amount for the whole selection', () => {
 		const quote = quoteManualDiscount({
 			discount: manual,
 			lines: [makeLine({ unitMinor: 1000, quantity: 4 })],
+			currency: 'USD',
+			context: makeContext({ channel: 'pos' }),
 		})
 		expect(quote).toEqual({ ok: true, amountMinor: 400 })
 	})

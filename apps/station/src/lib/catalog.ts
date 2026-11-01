@@ -19,6 +19,9 @@ const FETCH_TIMEOUT_MS = 10_000
  * Till rules come from the paired terminal's regional API. A failure keeps
  * the rules already on the device, with the stamp of when they were fetched, so
  * the till can stop applying them once they are too old (`TILL_RULES_MAX_AGE_MS`).
+ * The stamp is never made newer: not here, and not by the new catalog's own
+ * fetch time (see `refreshCatalog`). A stamp from the future (the clock moved
+ * back since) stays as it is, and `tillRulesStatus` treats it as expired.
  * An unpaired till has none.
  */
 async function loadTillRules(
@@ -100,7 +103,11 @@ export async function refreshCatalog(
 			menu: {
 				...publicMenu,
 				discountRules: till.rules,
-				...(till.fetchedAt ? { discountRulesAt: till.fetchedAt } : {}),
+				// Always the rules' own stamp: without one, carried rules would take
+				// this catalog's fetch time and look fresh.
+				...(till.fetchedAt !== undefined
+					? { discountRulesAt: till.fetchedAt }
+					: {}),
 			},
 		}
 		await db.catalog.put(snapshot)

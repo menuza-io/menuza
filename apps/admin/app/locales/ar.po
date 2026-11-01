@@ -37,7 +37,7 @@ msgstr "{0} كتل · مُعرَّضة بعلامة موقعك التجارية"
 
 #. placeholder {0}: campaign.recipients.length
 #. placeholder {1}: campaign.targetAudienceCount
-#: ../../packages/marketing/src/components/campaign-detail.tsx:138
+#: ../../packages/marketing/src/components/campaign-detail.tsx:141
 msgid "{0} of {1} targeted"
 msgstr "{0} من {1} مستهدف"
 
@@ -223,8 +223,8 @@ msgstr "صورة أو شعار أو لقطة منتج."
 msgid "A submission or cancellation stopped halfway: check the vendor before retrying"
 msgstr "توقف الإرسال أو الإلغاء في منتصفه: تحقق لدى المورد قبل إعادة المحاولة"
 
-#: ../../packages/marketing/src/components/coupon-offer-field.tsx:158
-#: ../../packages/marketing/src/components/coupon-offer-field.tsx:164
+#: ../../packages/marketing/src/components/coupon-offer-field.tsx:174
+#: ../../packages/marketing/src/components/coupon-offer-field.tsx:180
 msgid "A unique code for each customer"
 msgstr "رمز فريد لكل عميل"
 
@@ -831,7 +831,7 @@ msgstr "منطقي"
 msgid "Broadcast not found"
 msgstr "لم يتم العثور على البث"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:110
+#: ../../packages/marketing/src/components/campaign-detail.tsx:113
 msgid "Broadcast preview"
 msgstr "معاينة البث"
 
@@ -959,7 +959,7 @@ msgid "Click rate"
 msgstr "معدل النقر"
 
 #. placeholder {0}: new Date(recipient.clickedAt).toLocaleString()
-#: ../../packages/marketing/src/components/campaign-detail.tsx:62
+#: ../../packages/marketing/src/components/campaign-detail.tsx:65
 msgid "Clicked {0}"
 msgstr "نُقِر {0}"
 
@@ -983,7 +983,7 @@ msgstr "إغلاق"
 msgid "Close email design"
 msgstr "إغلاق تصميم البريد"
 
-#: ../../packages/marketing/src/components/coupon-offer-field.tsx:149
+#: ../../packages/marketing/src/components/coupon-offer-field.tsx:165
 msgid "Code"
 msgstr "الرمز"
 
@@ -1110,8 +1110,8 @@ msgstr "يحتوي (تطابق جزئي)"
 msgid "Core System Role"
 msgstr "دور النظام الأساسي"
 
-#: ../../packages/marketing/src/components/coupon-offer-field.tsx:75
-#: ../../packages/marketing/src/components/coupon-offer-field.tsx:121
+#: ../../packages/marketing/src/components/coupon-offer-field.tsx:90
+#: ../../packages/marketing/src/components/coupon-offer-field.tsx:137
 msgid "Coupon"
 msgstr "القسيمة"
 
@@ -1119,14 +1119,21 @@ msgstr "القسيمة"
 msgid "Coupon card"
 msgstr "بطاقة كوبون"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:48
+#: ../../packages/marketing/src/components/campaign-detail.tsx:51
 msgid "Coupon: {name}, with a single-use code for each recipient, valid for {days} days."
 msgstr "القسيمة: {name}، برمز للاستخدام مرة واحدة لكل مستلم، صالح لمدة {days} يومًا."
 
-#. placeholder {0}: coupon.code
+#: ../../packages/marketing/src/components/campaign-detail.tsx:47
+msgid "Coupon: {name}, with one shared code for everyone."
+msgstr "القسيمة: {name}، برمز واحد مشترك للجميع."
+
 #: ../../packages/marketing/src/components/campaign-detail.tsx:44
-msgid "Coupon: {name}, with the code {0} for everyone."
-msgstr "القسيمة: {name}، بالرمز {0} للجميع."
+#~ msgid "Coupon: {name}, with the code {0} for everyone."
+#~ msgstr "القسيمة: {name}، بالرمز {0} للجميع."
+
+#: ../../packages/marketing/src/components/campaign-detail.tsx:46
+msgid "Coupon: {name}, with the code {code} for everyone."
+msgstr "القسيمة: {name}، بالرمز {code} للجميع."
 
 #: ../../packages/reports/src/ui/report-labels.ts:81
 msgid "Covers booked for each service day over the last 7 days, not counting cancelled, declined or expired bookings."
@@ -1450,7 +1457,7 @@ msgstr "تجاهل التغييرات غير المحفوظة؟"
 msgid "Discord"
 msgstr "Discord"
 
-#: ../../packages/marketing/src/components/coupon-offer-field.tsx:130
+#: ../../packages/marketing/src/components/coupon-offer-field.tsx:146
 msgid "Discount no longer available"
 msgstr "الخصم لم يعد متاحًا"
 
@@ -1769,7 +1776,7 @@ msgstr "سير عمل قائم على الأحداث لدورة حياة مشغ�
 msgid "Every no-show over the last 30 days with its date, service, party size and source. No guest details."
 msgstr "كل حالات عدم الحضور خلال آخر 30 يومًا مع التاريخ والخدمة وحجم المجموعة والمصدر. دون تفاصيل الضيوف."
 
-#: ../../packages/marketing/src/components/coupon-offer-field.tsx:115
+#: ../../packages/marketing/src/components/coupon-offer-field.tsx:131
 msgid "Everyone gets {code}"
 msgstr "يحصل الجميع على {code}"
 
@@ -1955,6 +1962,10 @@ msgstr "وجدته لدى المورد، {orderName}"
 #: app/routes/_admin+/audit-logs.tsx:134
 msgid "from"
 msgstr "من"
+
+#: ../../packages/marketing/src/components/coupon-offer-field.tsx:296
+msgid "From {min} to {max} days."
+msgstr "من {min} إلى {max} يومًا."
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:309
 msgid "From Name (Optional)"
@@ -2525,7 +2536,7 @@ msgstr "فريق Menuza"
 #~ msgid "Merge tags are replaced per recipient when the email is sent."
 #~ msgstr "تُستبدل وسوم الدمج بقيم خاصة بكل مستلم عند إرسال البريد الإلكتروني."
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:102
+#: ../../packages/marketing/src/components/campaign-detail.tsx:105
 #: ../../packages/marketing/src/components/campaign-form.tsx:124
 msgid "Message"
 msgstr "الرسالة"
@@ -2684,16 +2695,16 @@ msgstr "لا توجد حملات بعد."
 msgid "No connected accounts"
 msgstr "لا توجد حسابات متصلة"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:55
+#: ../../packages/marketing/src/components/campaign-detail.tsx:58
 msgid "No contact on file"
 msgstr "لا يوجد جهة اتصال مسجّلة"
 
-#: ../../packages/marketing/src/components/coupon-offer-field.tsx:131
-#: ../../packages/marketing/src/components/coupon-offer-field.tsx:135
+#: ../../packages/marketing/src/components/coupon-offer-field.tsx:147
+#: ../../packages/marketing/src/components/coupon-offer-field.tsx:151
 msgid "No coupon"
 msgstr "بدون قسيمة"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:146
+#: ../../packages/marketing/src/components/campaign-detail.tsx:149
 msgid "No delivery records yet."
 msgstr "لا توجد سجلات تسليم بعد."
 
@@ -2914,7 +2925,7 @@ msgid "Open rate"
 msgstr "معدل الفتح"
 
 #. placeholder {0}: new Date(recipient.openedAt).toLocaleString()
-#: ../../packages/marketing/src/components/campaign-detail.tsx:65
+#: ../../packages/marketing/src/components/campaign-detail.tsx:68
 msgid "Opened {0}"
 msgstr "فُتِح {0}"
 
@@ -3254,7 +3265,7 @@ msgstr "النقاط المُضافة"
 msgid "Poster"
 msgstr "ملصق"
 
-#: ../../packages/marketing/src/components/coupon-offer-field.tsx:179
+#: ../../packages/marketing/src/components/coupon-offer-field.tsx:195
 msgid "Prefix (optional)"
 msgstr "البادئة (اختياري)"
 
@@ -3341,11 +3352,11 @@ msgstr "جارٍ نشر الأتمتة الجديدة..."
 msgid "Publishing..."
 msgstr "جارٍ النشر..."
 
-#: ../../packages/marketing/src/components/coupon-offer-field.tsx:227
+#: ../../packages/marketing/src/components/coupon-offer-field.tsx:228
 msgid "Put {TAG} in your message where the code should go. Each customer gets their own code. It works once and expires after the days you set."
 msgstr "ضع {TAG} في رسالتك حيث يجب أن يظهر الرمز. يحصل كل عميل على رمزه الخاص، ويعمل مرة واحدة وينتهي بعد عدد الأيام الذي تحدده."
 
-#: ../../packages/marketing/src/components/coupon-offer-field.tsx:230
+#: ../../packages/marketing/src/components/coupon-offer-field.tsx:231
 msgid "Put {TAG} in your message where the code should go. The code follows the discount's own limits."
 msgstr "ضع {TAG} في رسالتك حيث يجب أن يظهر الرمز. يخضع الرمز لحدود الخصم نفسه."
 
@@ -3427,7 +3438,7 @@ msgstr "أُعيد مؤخرًا"
 msgid "recipients"
 msgstr "مستلمين"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:134
+#: ../../packages/marketing/src/components/campaign-detail.tsx:137
 msgid "Recipients"
 msgstr "المستلمون"
 
@@ -4040,8 +4051,8 @@ msgstr "جارٍ الإرسال..."
 
 #. placeholder {0}: new Date(campaign.createdAt).toLocaleString()
 #. placeholder {0}: new Date(recipient.sentAt).toLocaleString()
-#: ../../packages/marketing/src/components/campaign-detail.tsx:93
-#: ../../packages/marketing/src/components/campaign-detail.tsx:162
+#: ../../packages/marketing/src/components/campaign-detail.tsx:96
+#: ../../packages/marketing/src/components/campaign-detail.tsx:165
 msgid "Sent {0}"
 msgstr "أُرسل {0}"
 
@@ -4681,7 +4692,7 @@ msgstr "صندوق البقشيش: البقشيش حسب اليوم"
 msgid "Tips on online orders that count toward sales, by business day. How a pool is split between people is set on the Labor page."
 msgstr "البقشيش على الطلبات عبر الإنترنت المحتسبة ضمن المبيعات، حسب يوم العمل. تُحدَّد طريقة توزيع الصندوق بين الأشخاص في صفحة العمالة."
 
-#: ../../packages/marketing/src/components/coupon-offer-field.tsx:78
+#: ../../packages/marketing/src/components/coupon-offer-field.tsx:94
 msgid "To send a coupon, first create a discount that customers apply with a code."
 msgstr "لإرسال قسيمة، أنشئ أولًا خصمًا يطبّقه العملاء برمز."
 
@@ -4829,7 +4840,7 @@ msgstr "الوحدة"
 msgid "Unknown"
 msgstr "غير معروف"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:157
+#: ../../packages/marketing/src/components/campaign-detail.tsx:160
 msgid "Unnamed recipient"
 msgstr "مستلم بدون اسم"
 
@@ -4945,7 +4956,7 @@ msgstr "المستخدمون الذين تحققوا من خلال SSO"
 msgid "Users will appear here once they sign up."
 msgstr "سيظهر المستخدمون هنا بمجرد تسجيلهم."
 
-#: ../../packages/marketing/src/components/coupon-offer-field.tsx:201
+#: ../../packages/marketing/src/components/coupon-offer-field.tsx:273
 msgid "Valid for (days)"
 msgstr "صالحة لمدة (أيام)"
 
@@ -5107,7 +5118,7 @@ msgstr "أسابيع"
 msgid "Weeks"
 msgstr "أسابيع"
 
-#: ../../packages/marketing/src/components/coupon-offer-field.tsx:185
+#: ../../packages/marketing/src/components/coupon-offer-field.tsx:201
 msgid "WELCOME"
 msgstr "WELCOME"
 

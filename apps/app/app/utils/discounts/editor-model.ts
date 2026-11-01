@@ -377,6 +377,19 @@ export function tiersApply(
 	)
 }
 
+/**
+ * Promote on menu shows the offer to every visitor, and the menu can't say who
+ * qualifies. So only a discount everyone can use is promoted: one for signed-in
+ * customers, new customers or loyalty members would be a promise most visitors
+ * are then refused. A manager approval at the till has no effect online, so it
+ * does not stop a promotion.
+ */
+export function promoteOnMenuAllowed(
+	state: Pick<EditorState, 'eligibility'>,
+): boolean {
+	return state.eligibility === 'everyone'
+}
+
 export function newSlot(quantity = '1'): SlotState {
 	keyCounter += 1
 	return { ...emptyGroup(quantity), key: `slot-${keyCounter}` }
@@ -1188,7 +1201,7 @@ export function stateToDefinition(
 		...(tiers ? { tiers } : {}),
 		...(maxDeliveryFeeMinor !== null ? { maxDeliveryFeeMinor } : {}),
 		priority: priority ?? 0,
-		promoteOnMenu: state.promoteOnMenu,
+		promoteOnMenu: state.promoteOnMenu && promoteOnMenuAllowed(state),
 		requireApproval: state.requireApproval,
 	}
 	// The discount holds money but its locations use several currencies, so no

@@ -10,6 +10,7 @@ import {
 	inArray,
 	isNull,
 	ne,
+	sql,
 	User,
 } from '@repo/database'
 import {
@@ -20,6 +21,7 @@ import {
 	normalizeDiscountCode,
 } from '@repo/discounts'
 import { type CodeInput, type StoredCode } from './editor-model.ts'
+import { type StoredDiscountLocations } from './location-scope.server.ts'
 
 /**
  * Control-plane reads and writes for discounts. Definitions live in D1 as one
@@ -595,6 +597,15 @@ export async function createDiscount(input: {
 		})
 		.returning({ id: Discount.id })
 	if (!row) throw new Error('The discount was not saved.')
+	// Two creates can both pass the count above before either inserts. Count
+	// again now that this row is in: past the cap, it comes back out, so the
+	// cap holds even under a race (both racers may then be refused).
+	if (
+		(await countLiveDiscounts(input.organizationId)) > MAX_DISCOUNTS_PER_ORG
+	) {
+		await db.delete(Discount).where(eq(Discount.id, row.id))
+		return { ok: false, reason: 'too_many_discounts' }
+	}
 	try {
 		await syncCodes(input.organizationId, row.id, input.codes)
 	} catch (error) {
@@ -689,21 +700,22 @@ export async function updateDiscount(input: {
 	return { ok: true, id: input.discountId, version: nextVersion }
 }
 
-/** The way a stored discount applies, or null when it does not exist. */
+/**
+ * The way a stored discount applies, or null when it does not exist. The
+ * locations are read from the whole validated row, like the editor and the
+ * list read them: a row that no longer parses has `undefined` locations, which
+ * only a member with every location may see or change (it fails closed).
+ */
 export async function getDiscountApplication(
 	organizationId: string,
 	discountId: string,
 ): Promise<{
 	application: string
 	currency: string | null
-	locationIds: string[] | null
+	locationIds: StoredDiscountLocations
 } | null> {
 	const [row] = await db
-		.select({
-			application: Discount.application,
-			currency: Discount.currency,
-			locationIds: Discount.locationIds,
-		})
+		.select()
 		.from(Discount)
 		.where(
 			and(
@@ -713,10 +725,11 @@ export async function getDiscountApplication(
 		)
 		.limit(1)
 	if (!row) return null
+	const definition = definitionFromRow(row)
 	return {
 		application: row.application,
 		currency: row.currency,
-		locationIds: parseJson(row.locationIds) as string[] | null,
+		locationIds: definition ? definition.locationIds : undefined,
 	}
 }
 
@@ -795,9 +808,10 @@ export async function setDiscountStatus(input: {
 			if (!code) return { ok: false, reason: 'no_codes' }
 		}
 	}
-	const updated = await db
+	const nextVersion = input.expectedVersion + 1
+	const updateStatus = db
 		.update(Discount)
-		.set({ status: input.status, version: input.expectedVersion + 1 })
+		.set({ status: input.status, version: nextVersion })
 		.where(
 			and(
 				eq(Discount.id, input.discountId),
@@ -806,6 +820,28 @@ export async function setDiscountStatus(input: {
 			),
 		)
 		.returning({ id: Discount.id })
+	let updated: Array<{ id: string }>
+	if (input.status === 'archived') {
+		// Archived discounts free their codes for reuse. One batch (a single
+		// transaction on D1 and libsql), so a Worker that stops between the two
+		// never leaves an archived discount with live codes holding the unique
+		// index. The codes go only if this archive won the version compare.
+		const archiveCodes = db
+			.update(DiscountCode)
+			.set({ archivedAt: new Date() })
+			.where(
+				and(
+					eq(DiscountCode.discountId, input.discountId),
+					eq(DiscountCode.organizationId, input.organizationId),
+					isNull(DiscountCode.archivedAt),
+					sql`exists (select 1 from ${Discount} as d where d.id = ${input.discountId} and d."organizationId" = ${input.organizationId} and d.version = ${nextVersion} and d.status = 'archived')`,
+				),
+			)
+		const [statusRows] = await db.batch([updateStatus, archiveCodes])
+		updated = statusRows
+	} else {
+		updated = await updateStatus
+	}
 	if (updated.length === 0) {
 		const [exists] = await db
 			.select({ id: Discount.id })
@@ -819,17 +855,5 @@ export async function setDiscountStatus(input: {
 			.limit(1)
 		return { ok: false, reason: exists ? 'stale' : 'not_found' }
 	}
-	if (input.status === 'archived') {
-		// Archived discounts free their codes for reuse.
-		await db
-			.update(DiscountCode)
-			.set({ archivedAt: new Date() })
-			.where(
-				and(
-					eq(DiscountCode.discountId, input.discountId),
-					isNull(DiscountCode.archivedAt),
-				),
-			)
-	}
-	return { ok: true, id: input.discountId, version: input.expectedVersion + 1 }
+	return { ok: true, id: input.discountId, version: nextVersion }
 }

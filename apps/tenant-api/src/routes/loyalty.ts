@@ -241,8 +241,9 @@ loyaltyRoutes.post('/checkout/quote', async (c) => {
 				(result.ok && result.couponCountsAsGuess === true)
 		} finally {
 			// A wrong code stays counted; an applied code, or any other
-			// answer or error, gives the attempt back.
-			await couponGuard.settle({ refused })
+			// answer or error, gives the attempt back. The loyalty quote is
+			// always a signed-in customer, whose fixable codes are free anyway.
+			await couponGuard.settle(refused ? 'wrong' : 'none')
 		}
 		if (!result.ok) {
 			const { status, code, message } = result.failure

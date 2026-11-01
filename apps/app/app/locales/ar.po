@@ -568,7 +568,7 @@ msgstr "{0} مجموعات إضافات"
 
 #. placeholder {0}: campaign.recipients.length
 #. placeholder {1}: campaign.targetAudienceCount
-#: ../../packages/marketing/src/components/campaign-detail.tsx:138
+#: ../../packages/marketing/src/components/campaign-detail.tsx:141
 msgid "{0} of {1} targeted"
 msgstr "{0} من {1} مستهدف"
 
@@ -1276,7 +1276,7 @@ msgstr "تمت إزالة {label}."
 msgid "{label}, {total} unread"
 msgstr "{label}، {total} غير مقروءة"
 
-#: app/components/discounts/discount-form.tsx:498
+#: app/components/discounts/discount-form.tsx:511
 msgid "{label}: {message}"
 msgstr "{label}: {message}"
 
@@ -1439,7 +1439,7 @@ msgstr "{n, plural, one {سُجّل انصراف شخص واحد تلقائيً�
 msgid "{n, plural, one {A schedule was published} other {# schedules were published}}"
 msgstr "{n, plural, one {تم نشر جدول} two {تم نشر جدولين} few {تم نشر # جداول} many {تم نشر # جدولًا} other {تم نشر # جدول}}"
 
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:214
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:224
 msgid "{name} archived."
 msgstr "تمت أرشفة {name}."
 
@@ -1475,15 +1475,15 @@ msgstr "{name} فوق الترتيب {place} من {total}."
 msgid "{name} moved to position {position} of {total}."
 msgstr "تم نقل {name} إلى المركز {position} من {total}."
 
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:219
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:229
 msgid "{name} paused."
 msgstr "تم إيقاف {name} مؤقتًا."
 
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:218
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:228
 msgid "{name} restored. It is paused."
 msgstr "تمت استعادة {name}. وهو متوقف مؤقتًا."
 
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:216
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:226
 msgid "{name} resumed."
 msgstr "تم استئناف {name}."
 
@@ -1741,7 +1741,7 @@ msgstr "{referenceCount, plural, zero {لا أماكن} one {مكان واحد} 
 msgid "{referralCount, plural, one {# person joined using your link!} other {# people joined using your link!}}"
 msgstr "{referralCount, plural, one {شخص واحد انضم باستخدام رابطك!} other {# أشخاص انضموا باستخدام رابطك!}}"
 
-#: app/components/orders/order-detail.tsx:730
+#: app/components/orders/order-detail.tsx:732
 msgid "{refundedMoney} of {totalMoney}"
 msgstr "{refundedMoney} من {totalMoney}"
 
@@ -1919,11 +1919,11 @@ msgstr "عدد الردود: {total}"
 msgid "{totalLimit, plural, one {Up to # use} other {Up to # uses}}"
 msgstr "{totalLimit, plural, zero {حتى # استخدامات} one {حتى استخدام واحد} two {حتى استخدامين} few {حتى # استخدامات} many {حتى # استخدامًا} other {حتى # استخدام}}"
 
-#: app/components/orders/order-detail.tsx:856
+#: app/components/orders/order-detail.tsx:858
 msgid "{totalMoney} was received for this order. Cancelling does not refund it: refund it separately with your payment processor."
 msgstr "تم استلام {totalMoney} لهذا الطلب. إلغاء الطلب لا يسترد المبلغ: استرده بشكل منفصل عبر معالج الدفع."
 
-#: app/components/orders/order-detail.tsx:852
+#: app/components/orders/order-detail.tsx:854
 msgid "{totalMoney} was received for this order. Cancelling does not refund it: refund it with your payment processor, then record the refund on this order."
 msgstr "تم استلام {totalMoney} لهذا الطلب. إلغاء الطلب لا يسترد المبلغ: استرده عبر معالج الدفع، ثم سجّل الاسترداد في هذا الطلب."
 
@@ -2863,8 +2863,8 @@ msgstr "لا يمكن أن تتجاوز بطاقة الدوام 48 ساعة."
 msgid "A typical day shift."
 msgstr "وردية نهارية معتادة."
 
-#: ../../packages/marketing/src/components/coupon-offer-field.tsx:158
-#: ../../packages/marketing/src/components/coupon-offer-field.tsx:164
+#: ../../packages/marketing/src/components/coupon-offer-field.tsx:174
+#: ../../packages/marketing/src/components/coupon-offer-field.tsx:180
 msgid "A unique code for each customer"
 msgstr "رمز فريد لكل عميل"
 
@@ -2873,7 +2873,7 @@ msgstr "رمز فريد لكل عميل"
 msgid "A user already exists with this username"
 msgstr "يوجد مستخدم بالفعل بهذا اسم المستخدم"
 
-#: app/components/discounts/discount-form.tsx:1504
+#: app/components/discounts/discount-form.tsx:1529
 msgid "A window that ends earlier than it starts runs past midnight."
 msgstr "الفترة التي تنتهي قبل أن تبدأ تمتد إلى ما بعد منتصف الليل."
 
@@ -2987,7 +2987,7 @@ msgstr "على مستوى مؤسستك"
 #: app/components/reservations/experiences/experience-editor.tsx:898
 #: app/components/reservations/policies/policies-screen.tsx:370
 #: app/components/roles/tenant-role-access-manager.tsx:1354
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:366
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:376
 #: app/routes/_app+/$orgSlug_+/loyalty+/rewards.tsx:271
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:966
 #: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:505
@@ -3046,7 +3046,7 @@ msgstr "نشط"
 #: app/components/settings/cards/sessions-card.tsx:249
 #: app/components/staff/details-tab.tsx:265
 #: app/components/staff/staff-status.tsx:12
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:329
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:339
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:89
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:60
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:259
@@ -3065,7 +3065,7 @@ msgstr "نشط"
 msgid "Active"
 msgstr "نشط"
 
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:328
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:338
 msgid "Active and paused"
 msgstr "النشطة والمتوقفة مؤقتًا"
 
@@ -3086,7 +3086,7 @@ msgstr "فرع نشط"
 
 #: app/components/app-sidebar.tsx:544
 #: app/components/loyalty/loyalty-chrome.tsx:62
-#: app/components/orders/order-detail.tsx:767
+#: app/components/orders/order-detail.tsx:769
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:689
 msgid "Activity"
 msgstr "النشاط"
@@ -3165,8 +3165,8 @@ msgstr "أضف سجل CNAME لنطاقك (أو نطاقك الفرعي) يشير
 msgid "Add a code"
 msgstr "أضف رمزًا"
 
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:581
-#: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:160
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:601
+#: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:169
 msgid "Add a code before turning this discount on."
 msgstr "أضف رمزًا قبل تشغيل هذا الخصم."
 
@@ -4438,7 +4438,7 @@ msgstr "كل الأيام"
 msgid "All jobs"
 msgstr "كل الوظائف"
 
-#: app/components/discounts/discount-form.tsx:1527
+#: app/components/discounts/discount-form.tsx:1552
 #: app/components/hiring/job-summary.tsx:55
 #: app/components/hiring/location-picker.tsx:85
 #: app/components/member-location-scope.tsx:86
@@ -4515,7 +4515,7 @@ msgstr "جميع الفترات"
 msgid "All sources"
 msgstr "كل المصادر"
 
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:332
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:342
 msgid "All statuses"
 msgstr "كل الحالات"
 
@@ -4532,7 +4532,7 @@ msgstr "جميع الطاولات والمناطق متاحة للحجز في س
 msgid "All tags"
 msgstr "كل الوسوم"
 
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:288
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:298
 msgid "All types"
 msgstr "كل الأنواع"
 
@@ -4720,19 +4720,19 @@ msgstr "المبلغ ({currency})"
 msgid "Amount entered at the till"
 msgstr "مبلغ يُدخله أمين الصندوق"
 
-#: app/components/discounts/discount-form.tsx:245
+#: app/components/discounts/discount-form.tsx:252
 msgid "Amount in <0>{currency}</0>. Each choice costs this price."
 msgstr "المبلغ بعملة <0>{currency}</0>. يكلّف كل خيار هذا السعر."
 
-#: app/components/discounts/discount-form.tsx:230
+#: app/components/discounts/discount-form.tsx:237
 msgid "Amount in <0>{currency}</0>. Each deal costs this price."
 msgstr "المبلغ بعملة <0>{currency}</0>. يكلّف كل عرض هذا السعر."
 
-#: app/components/discounts/discount-form.tsx:237
+#: app/components/discounts/discount-form.tsx:244
 msgid "Amount in <0>{currency}</0>. Each item the customer gets costs this price."
 msgstr "المبلغ بعملة <0>{currency}</0>. يكلّف كل عنصر يحصل عليه العميل هذا السعر."
 
-#: app/components/discounts/discount-form.tsx:251
+#: app/components/discounts/discount-form.tsx:258
 msgid "Amount in <0>{currency}</0>. Each matching item costs this price."
 msgstr "المبلغ بعملة <0>{currency}</0>. يكلّف كل عنصر مطابق هذا السعر."
 
@@ -4740,39 +4740,39 @@ msgstr "المبلغ بعملة <0>{currency}</0>. يكلّف كل عنصر مط
 msgid "Amount in <0>{currency}</0>. Every time this much is spent, the customer gets the discount again."
 msgstr "المبلغ بعملة <0>{currency}</0>. في كل مرة يُنفق فيها هذا المبلغ، يحصل العميل على الخصم من جديد."
 
-#: app/components/discounts/discount-form.tsx:265
+#: app/components/discounts/discount-form.tsx:272
 msgid "Amount in <0>{currency}</0>. Taken off each deal."
 msgstr "المبلغ بعملة <0>{currency}</0>. يُخصم من كل عرض."
 
-#: app/components/discounts/discount-form.tsx:258
+#: app/components/discounts/discount-form.tsx:265
 msgid "Amount in <0>{currency}</0>. Taken off each item the customer gets."
 msgstr "المبلغ بعملة <0>{currency}</0>. يُخصم من كل عنصر يحصل عليه العميل."
 
-#: app/components/discounts/discount-form.tsx:272
+#: app/components/discounts/discount-form.tsx:279
 msgid "Amount in <0>{currency}</0>. Taken off each matching choice."
 msgstr "المبلغ بعملة <0>{currency}</0>. يُخصم من كل خيار مطابق."
 
-#: app/components/discounts/discount-form.tsx:276
+#: app/components/discounts/discount-form.tsx:283
 msgid "Amount in <0>{currency}</0>. Taken off each matching item."
 msgstr "المبلغ بعملة <0>{currency}</0>. يُخصم من كل عنصر مطابق."
 
-#: app/components/discounts/discount-form.tsx:282
+#: app/components/discounts/discount-form.tsx:289
 msgid "Amount in <0>{currency}</0>. Taken off the order once."
 msgstr "المبلغ بعملة <0>{currency}</0>. يُخصم من الطلب مرة واحدة."
 
-#: app/components/discounts/discount-form.tsx:418
-#: app/components/discounts/discount-form.tsx:949
+#: app/components/discounts/discount-form.tsx:431
+#: app/components/discounts/discount-form.tsx:974
 #: app/components/discounts/tier-steps.tsx:152
 #: app/components/loyalty/reward-dialog.tsx:498
 #: app/utils/discounts/labels.ts:134
 msgid "Amount off"
 msgstr "مبلغ الخصم"
 
-#: app/components/discounts/discount-form.tsx:944
+#: app/components/discounts/discount-form.tsx:969
 msgid "Amount off each choice"
 msgstr "مبلغ الخصم على كل خيار"
 
-#: app/components/discounts/discount-form.tsx:946
+#: app/components/discounts/discount-form.tsx:971
 msgid "Amount off each item"
 msgstr "مبلغ الخصم على كل عنصر"
 
@@ -5120,13 +5120,13 @@ msgstr "الطلبات حسب المصدر"
 msgid "Applied"
 msgstr "تاريخ التقديم"
 
-#: app/components/discounts/discount-form.tsx:803
+#: app/components/discounts/discount-form.tsx:828
 msgid "Applies by itself when an order qualifies."
 msgstr "يُطبَّق من تلقاء نفسه عندما يتأهل الطلب."
 
-#: app/components/discounts/discount-form.tsx:424
-#: app/components/discounts/discount-form.tsx:1043
+#: app/components/discounts/discount-form.tsx:437
 #: app/components/discounts/discount-form.tsx:1068
+#: app/components/discounts/discount-form.tsx:1093
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:649
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:961
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1019
@@ -5138,7 +5138,7 @@ msgstr "ينطبق على"
 msgid "Applies to a"
 msgstr "ينطبق على"
 
-#: app/components/discounts/discount-form.tsx:813
+#: app/components/discounts/discount-form.tsx:838
 msgid "Applies when a customer enters a code."
 msgstr "يُطبَّق عندما يُدخل العميل رمزًا."
 
@@ -5251,13 +5251,13 @@ msgstr "العربية"
 #~ msgid "Arabic service name"
 #~ msgstr "مثال: العشاء"
 
-#: app/components/discounts/archive-discount-button.tsx:51
-#: app/components/discounts/archive-discount-button.tsx:85
+#: app/components/discounts/archive-discount-button.tsx:54
+#: app/components/discounts/archive-discount-button.tsx:88
 #: app/components/qr/tables-manager.tsx:465
 #: app/components/reservations/experiences/experience-editor.tsx:536
 #: app/components/reservations/experiences/experience-editor.tsx:1040
 #: app/components/reservations/policies/policies-screen.tsx:558
-#: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:133
+#: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:142
 #: app/routes/_app+/$orgSlug_+/loyalty+/rewards.tsx:345
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1058
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:254
@@ -5267,11 +5267,11 @@ msgstr "أرشفة"
 #~ msgid "Archive {areaLabel}?"
 #~ msgstr "أرشفة {areaLabel}؟"
 
-#: app/components/discounts/archive-discount-button.tsx:48
+#: app/components/discounts/archive-discount-button.tsx:51
 msgid "Archive {name}"
 msgstr "أرشفة {name}"
 
-#: app/components/discounts/archive-discount-button.tsx:57
+#: app/components/discounts/archive-discount-button.tsx:60
 msgid "Archive {name}?"
 msgstr "أرشفة {name}؟"
 
@@ -5321,7 +5321,7 @@ msgid "archived"
 msgstr "مؤرشف"
 
 #: app/components/discounts/discount-history.tsx:52
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:331
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:341
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:62
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:140
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:204
@@ -5612,7 +5612,7 @@ msgstr "تعليمات المساعد"
 #~ msgid "Assistant paused"
 #~ msgstr "المساعد متوقف مؤقتًا"
 
-#: app/components/discounts/discount-form.tsx:139
+#: app/components/discounts/discount-form.tsx:146
 msgid "At least a quantity"
 msgstr "حد أدنى من الكمية"
 
@@ -5632,13 +5632,13 @@ msgstr "يمكن استرداد {most} كحد أقصى."
 msgid "At slot time"
 msgstr "عند وقت الموعد"
 
-#: app/components/orders/order-detail.tsx:458
+#: app/components/orders/order-detail.tsx:460
 #: app/routes/_app+/$orgSlug_+/orders.tsx:253
 msgid "At the table"
 msgstr "على الطاولة"
 
-#: app/components/discounts/discount-form.tsx:821
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:291
+#: app/components/discounts/discount-form.tsx:846
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:301
 #: app/utils/discounts/labels.ts:126
 msgid "At the till"
 msgstr "عند الصندوق"
@@ -5730,13 +5730,13 @@ msgstr "إشعار المساعد الآلي"
 msgid "Automated lifecycle journey created via visual builder."
 msgstr "رحلة دورة حياة مؤتمتة أُنشئت عبر المُنشئ المرئي."
 
-#: app/components/discounts/discount-form.tsx:801
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:289
+#: app/components/discounts/discount-form.tsx:826
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:299
 #: app/utils/discounts/labels.ts:124
 msgid "Automatic"
 msgstr "تلقائي"
 
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:248
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:258
 msgid "Automatic discounts and coupon codes. Loyalty rewards apply after these, on what is left."
 msgstr "خصومات تلقائية ورموز قسائم. تُطبَّق مكافآت الولاء بعدها، على المبلغ المتبقي."
 
@@ -5960,7 +5960,7 @@ msgstr "العودة إلى العملاء"
 msgid "Back to details"
 msgstr "العودة إلى التفاصيل"
 
-#: app/components/discounts/discount-form.tsx:543
+#: app/components/discounts/discount-form.tsx:556
 msgid "Back to discounts"
 msgstr "العودة إلى الخصومات"
 
@@ -6097,7 +6097,7 @@ msgstr "فرق السعر الأساسي ($)"
 msgid "Basic identifiers, URL slug, and regional settings."
 msgstr "المعرّفات الأساسية والرابط والإعدادات الإقليمية."
 
-#: app/components/discounts/discount-form.tsx:701
+#: app/components/discounts/discount-form.tsx:726
 #: app/components/loyalty/program-form.tsx:390
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:556
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1191
@@ -6532,7 +6532,7 @@ msgstr "بثّ"
 msgid "Broadcast not found"
 msgstr "لم يتم العثور على البث"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:110
+#: ../../packages/marketing/src/components/campaign-detail.tsx:113
 msgid "Broadcast preview"
 msgstr "معاينة البث"
 
@@ -6696,7 +6696,7 @@ msgstr "نص الزر"
 msgid "Buttons"
 msgstr "الأزرار"
 
-#: app/components/discounts/discount-form.tsx:1393
+#: app/components/discounts/discount-form.tsx:1418
 msgid "Buy"
 msgstr "اشترِ"
 
@@ -6712,7 +6712,7 @@ msgstr "اشترِ {buy} واحصل على خصم على {get}"
 msgid "Buy {buyQuantity}, get {getQuantity} from another group"
 msgstr "اشترِ {buyQuantity} واحصل على {getQuantity} من مجموعة أخرى"
 
-#: app/components/discounts/discount-form.tsx:189
+#: app/components/discounts/discount-form.tsx:196
 msgid "Buy a burger, get fries free."
 msgstr "اشترِ برجر واحصل على بطاطس مجانًا."
 
@@ -6720,19 +6720,19 @@ msgstr "اشترِ برجر واحصل على بطاطس مجانًا."
 msgid "Buy at least"
 msgstr "اشترِ على الأقل"
 
-#: app/components/discounts/discount-form.tsx:183
+#: app/components/discounts/discount-form.tsx:190
 msgid "Buy one group, discount another"
 msgstr "اشترِ مجموعة واحصل على خصم على أخرى"
 
-#: app/components/discounts/discount-form.tsx:451
+#: app/components/discounts/discount-form.tsx:464
 msgid "Buy quantity"
 msgstr "كمية الشراء"
 
-#: app/components/discounts/discount-form.tsx:175
+#: app/components/discounts/discount-form.tsx:182
 msgid "Buy some of the matching items, then discount the next ones."
 msgstr "اشترِ بعض العناصر المطابقة، ثم احصل على خصم على التالية."
 
-#: app/components/discounts/discount-form.tsx:165
+#: app/components/discounts/discount-form.tsx:172
 msgid "Buy some, discount some"
 msgstr "اشترِ كمية واحصل على خصم على كمية"
 
@@ -6976,8 +6976,8 @@ msgstr "قابلة للدمج"
 msgid "Can be combined with other tables"
 msgstr "يمكن دمجها مع طاولات أخرى"
 
-#: app/components/discounts/discount-form.tsx:461
-#: app/components/discounts/discount-form.tsx:1740
+#: app/components/discounts/discount-form.tsx:474
+#: app/components/discounts/discount-form.tsx:1765
 msgid "Can combine with"
 msgstr "يمكن دمجه مع"
 
@@ -7181,7 +7181,7 @@ msgstr "إلغاء التعديل"
 msgid "Cancel interview"
 msgstr "إلغاء المقابلة"
 
-#: app/components/orders/order-detail.tsx:821
+#: app/components/orders/order-detail.tsx:823
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:399
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:429
 msgid "Cancel order"
@@ -7190,7 +7190,7 @@ msgstr "إلغاء الطلب"
 #~ msgid "Cancel order {0}?"
 #~ msgstr "إلغاء الطلب {0}؟"
 
-#: app/components/orders/order-detail.tsx:847
+#: app/components/orders/order-detail.tsx:849
 msgid "Cancel order {orderNumber}?"
 msgstr "إلغاء الطلب {orderNumber}؟"
 
@@ -7448,7 +7448,7 @@ msgstr "تصنيفات"
 
 #: app/components/app-sidebar.tsx:368
 #: app/components/discounts/deal-groups.tsx:138
-#: app/components/discounts/discount-form.tsx:1141
+#: app/components/discounts/discount-form.tsx:1166
 #: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:44
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:243
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:318
@@ -7690,8 +7690,8 @@ msgstr "القناة"
 
 #: app/components/chat/chat-view.tsx:387
 #: app/components/chat/chat-view.tsx:490
-#: app/components/discounts/discount-form.tsx:479
-#: app/components/discounts/discount-form.tsx:1565
+#: app/components/discounts/discount-form.tsx:492
+#: app/components/discounts/discount-form.tsx:1590
 msgid "Channels"
 msgstr "القنوات"
 
@@ -7962,8 +7962,8 @@ msgstr "Checkout.com: حقيقي"
 msgid "Choices"
 msgstr "الخيارات"
 
-#: app/components/discounts/discount-form.tsx:449
-#: app/components/discounts/discount-form.tsx:1381
+#: app/components/discounts/discount-form.tsx:462
+#: app/components/discounts/discount-form.tsx:1406
 msgid "Choices per item"
 msgstr "الخيارات لكل عنصر"
 
@@ -8311,7 +8311,7 @@ msgstr "اختر موقع الجهاز لاستخدام الحجوزات."
 msgid "Choose the terminal's location to use the time clock."
 msgstr "اختر موقع الجهاز لاستخدام ساعة الدوام."
 
-#: app/components/discounts/discount-form.tsx:1050
+#: app/components/discounts/discount-form.tsx:1075
 msgid "Choose the whole order, items, categories or modifier choices."
 msgstr "اختر الطلب كاملًا أو العناصر أو التصنيفات أو خيارات الإضافات."
 
@@ -8532,7 +8532,7 @@ msgid "Click to choose a cover image"
 msgstr "انقر لاختيار صورة الغلاف"
 
 #. placeholder {0}: new Date(recipient.clickedAt).toLocaleString()
-#: ../../packages/marketing/src/components/campaign-detail.tsx:62
+#: ../../packages/marketing/src/components/campaign-detail.tsx:65
 msgid "Clicked {0}"
 msgstr "نُقِر {0}"
 
@@ -8800,7 +8800,7 @@ msgstr "يجب أن يكون وقت الإغلاق بعد وقت الفتح."
 msgid "Cloudflare is not configured in this environment. Domain is stored for local testing; SSL automation requires CLOUDFLARE_API_TOKEN and CLOUDFLARE_ZONE_ID."
 msgstr "لم يتم تكوين Cloudflare في هذه البيئة. يتم تخزين النطاق للاختبار المحلي؛ تتطلب أتمتة SSL كلاً من CLOUDFLARE_API_TOKEN و CLOUDFLARE_ZONE_ID."
 
-#: ../../packages/marketing/src/components/coupon-offer-field.tsx:149
+#: ../../packages/marketing/src/components/coupon-offer-field.tsx:165
 #: app/components/discounts/codes-editor.tsx:109
 msgid "Code"
 msgstr "الرمز"
@@ -8829,8 +8829,8 @@ msgstr "تم إرسال الرمز. تنتهي صلاحيته خلال 10 دقا
 msgid "Code to print"
 msgstr "الرمز المراد طباعته"
 
-#: app/components/discounts/discount-form.tsx:475
-#: app/components/discounts/discount-form.tsx:1718
+#: app/components/discounts/discount-form.tsx:488
+#: app/components/discounts/discount-form.tsx:1743
 msgid "Codes"
 msgstr "الرموز"
 
@@ -9144,7 +9144,7 @@ msgstr "اضبط تفاصيل فرع مطعمك الجديد وساعات الع
 msgid "Confirm"
 msgstr "تأكيد"
 
-#: app/components/orders/order-detail.tsx:875
+#: app/components/orders/order-detail.tsx:877
 msgid "Confirm cancellation"
 msgstr "تأكيد الإلغاء"
 
@@ -9601,7 +9601,7 @@ msgstr "عدد النسخ من كل مطبوعة. تُطبع كل بطاقة ف�
 #~ msgid "Copies of each print. A table-card set prints every table this many times."
 #~ msgstr "عدد النسخ من كل مطبوعة. تُطبع بطاقة كل طاولة بهذا العدد."
 
-#: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:156
+#: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:165
 msgid "copy"
 msgstr "نسخة"
 
@@ -9643,7 +9643,7 @@ msgstr "نسخ الكل"
 msgid "Copy code"
 msgstr "نسخ الكود"
 
-#: app/components/orders/order-detail.tsx:415
+#: app/components/orders/order-detail.tsx:417
 msgid "Copy email address"
 msgstr "نسخ البريد الإلكتروني"
 
@@ -9667,7 +9667,7 @@ msgstr "نسخ الرابط"
 msgid "Copy order number"
 msgstr "نسخ رقم الطلب"
 
-#: app/components/orders/order-detail.tsx:401
+#: app/components/orders/order-detail.tsx:403
 msgid "Copy phone number"
 msgstr "نسخ رقم الهاتف"
 
@@ -10060,8 +10060,8 @@ msgstr "يُحتسب على مدى كل الأوقات"
 msgid "Counts bookings from"
 msgstr "يحتسب الحجوزات من"
 
-#: ../../packages/marketing/src/components/coupon-offer-field.tsx:75
-#: ../../packages/marketing/src/components/coupon-offer-field.tsx:121
+#: ../../packages/marketing/src/components/coupon-offer-field.tsx:90
+#: ../../packages/marketing/src/components/coupon-offer-field.tsx:137
 msgid "Coupon"
 msgstr "القسيمة"
 
@@ -10069,12 +10069,12 @@ msgstr "القسيمة"
 msgid "Coupon card"
 msgstr "بطاقة كوبون"
 
-#: app/components/discounts/discount-form.tsx:811
+#: app/components/discounts/discount-form.tsx:836
 #: app/utils/discounts/labels.ts:125
 msgid "Coupon code"
 msgstr "رمز القسيمة"
 
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:290
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:300
 msgid "Coupon codes"
 msgstr "رموز القسائم"
 
@@ -10082,14 +10082,21 @@ msgstr "رموز القسائم"
 msgid "Coupon prints carry a discount code, so only people who can view discounts can see the proof and download it."
 msgstr "تحمل مطبوعات الكوبونات رمز خصم، لذا لا يستطيع رؤية المعاينة وتنزيلها إلا من يملك صلاحية عرض الخصومات."
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:48
+#: ../../packages/marketing/src/components/campaign-detail.tsx:51
 msgid "Coupon: {name}, with a single-use code for each recipient, valid for {days} days."
 msgstr "القسيمة: {name}، برمز للاستخدام مرة واحدة لكل مستلم، صالح لمدة {days} يومًا."
 
-#. placeholder {0}: coupon.code
+#: ../../packages/marketing/src/components/campaign-detail.tsx:47
+msgid "Coupon: {name}, with one shared code for everyone."
+msgstr "القسيمة: {name}، برمز واحد مشترك للجميع."
+
 #: ../../packages/marketing/src/components/campaign-detail.tsx:44
-msgid "Coupon: {name}, with the code {0} for everyone."
-msgstr "القسيمة: {name}، بالرمز {0} للجميع."
+#~ msgid "Coupon: {name}, with the code {0} for everyone."
+#~ msgstr "القسيمة: {name}، بالرمز {0} للجميع."
+
+#: ../../packages/marketing/src/components/campaign-detail.tsx:46
+msgid "Coupon: {name}, with the code {code} for everyone."
+msgstr "القسيمة: {name}، بالرمز {code} للجميع."
 
 #: app/utils/reservations/labels.ts:189
 msgid "Course changed"
@@ -10303,7 +10310,7 @@ msgstr "إنشاء عناصر العمل"
 msgid "Create an account"
 msgstr "إنشاء حساب"
 
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:268
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:278
 msgid "Create an automatic discount or a coupon code. Customers see it at checkout when their order qualifies."
 msgstr "أنشئ خصمًا تلقائيًا أو رمز قسيمة. يراه العملاء عند الدفع عندما يتأهل طلبهم."
 
@@ -10397,7 +10404,7 @@ msgstr "إنشاء دور مخصص"
 msgid "Create dashboard"
 msgstr "إنشاء لوحة تحكم"
 
-#: app/components/discounts/discount-form.tsx:545
+#: app/components/discounts/discount-form.tsx:558
 msgid "Create discount"
 msgstr "إنشاء خصم"
 
@@ -10616,7 +10623,7 @@ msgid "Created By"
 msgstr "أنشأه"
 
 #. placeholder {0}: createdBy.name
-#: app/components/discounts/discount-form.tsx:570
+#: app/components/discounts/discount-form.tsx:583
 msgid "Created by {0}"
 msgstr "أنشأه {0}"
 
@@ -10734,7 +10741,7 @@ msgstr "الوقت الحالي {time}، {date}"
 msgid "Cursor Setup"
 msgstr "إعداد Cursor"
 
-#: app/components/discounts/discount-form.tsx:1645
+#: app/components/discounts/discount-form.tsx:1670
 #: app/components/roles/tenant-role-access-manager.tsx:1133
 msgid "Custom"
 msgstr "مخصص"
@@ -10772,8 +10779,8 @@ msgstr "نموذج مخصص"
 msgid "Custom Hours"
 msgstr "ساعات مخصصة"
 
-#: app/components/discounts/discount-form.tsx:485
-#: app/components/discounts/discount-form.tsx:1656
+#: app/components/discounts/discount-form.tsx:498
+#: app/components/discounts/discount-form.tsx:1681
 msgid "Custom maximum"
 msgstr "حد أقصى مخصص"
 
@@ -10818,8 +10825,8 @@ msgstr "مخصص: ما لديك الآن"
 msgid "customer"
 msgstr "عميل"
 
-#: app/components/orders/order-detail.tsx:361
-#: app/components/orders/order-detail.tsx:385
+#: app/components/orders/order-detail.tsx:363
+#: app/components/orders/order-detail.tsx:387
 #: app/components/workspace-breadcrumb.tsx:96
 #: app/routes/_app+/$orgSlug_+/orders.tsx:229
 msgid "Customer"
@@ -10839,7 +10846,7 @@ msgid "Customer Attribute"
 msgstr "سمة العميل"
 
 #: app/components/discounts/deal-groups.tsx:195
-#: app/components/discounts/discount-form.tsx:463
+#: app/components/discounts/discount-form.tsx:476
 msgid "Customer buys"
 msgstr "يشتري العميل"
 
@@ -10856,7 +10863,7 @@ msgid "Customer erased."
 msgstr "تم مسح العميل."
 
 #: app/components/discounts/deal-groups.tsx:221
-#: app/components/discounts/discount-form.tsx:465
+#: app/components/discounts/discount-form.tsx:478
 msgid "Customer gets"
 msgstr "يحصل العميل على"
 
@@ -10904,7 +10911,7 @@ msgstr "معرّف العميل مطلوب"
 #: app/components/app-sidebar.tsx:344
 #: app/components/command-menu.tsx:98
 #: app/components/customers/people-list-screen.tsx:192
-#: app/components/discounts/discount-form.tsx:1603
+#: app/components/discounts/discount-form.tsx:1628
 #: app/components/workspace-breadcrumb.tsx:11
 #: app/routes/_app+/$orgSlug_+/loyalty+/overview.tsx:431
 msgid "Customers"
@@ -10936,7 +10943,7 @@ msgstr "يدفع العملاء هذا المبلغ. تستلم {orgSharePercent
 msgid "Customers pick up orders in-store."
 msgstr "يستلم العملاء الطلبات من المطعم."
 
-#: app/components/discounts/discount-form.tsx:1720
+#: app/components/discounts/discount-form.tsx:1745
 msgid "Customers type one of these at checkout. Letters and numbers, 3 to 24 characters."
 msgstr "يكتب العملاء أحد هذه الرموز عند الدفع. أحرف وأرقام، من 3 إلى 24 حرفًا."
 
@@ -11068,7 +11075,7 @@ msgstr "تاريخ الميلاد والعنوان وجهة اتصال الطو�
 msgid "Dates"
 msgstr "التواريخ"
 
-#: app/components/discounts/discount-form.tsx:1471
+#: app/components/discounts/discount-form.tsx:1496
 msgid "Dates and weekly hours use each location's own time zone."
 msgstr "التواريخ وساعات الأسبوع تتبع المنطقة الزمنية لكل فرع."
 
@@ -11748,7 +11755,7 @@ msgstr "Deliveroo"
 
 #: app/components/customers/person-orders-panel.tsx:221
 #: app/components/locations/location-form.tsx:732
-#: app/components/orders/order-detail.tsx:456
+#: app/components/orders/order-detail.tsx:458
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:26
 #: app/components/reservations/messages/message-settings.tsx:530
 #: app/components/settings/cards/organization/pos-integrations-card.tsx:131
@@ -11771,8 +11778,8 @@ msgstr "التوصيل مسموح"
 msgid "Delivery areas, fees, and pickup alternatives."
 msgstr "مناطق التوصيل والرسوم وبدائل الاستلام."
 
-#: app/components/orders/order-detail.tsx:622
-#: app/components/orders/order-detail.tsx:913
+#: app/components/orders/order-detail.tsx:624
+#: app/components/orders/order-detail.tsx:915
 msgid "Delivery discount"
 msgstr "خصم التوصيل"
 
@@ -11780,7 +11787,7 @@ msgstr "خصم التوصيل"
 msgid "Delivery discounts"
 msgstr "خصومات التوصيل"
 
-#: app/components/orders/order-detail.tsx:639
+#: app/components/orders/order-detail.tsx:641
 #: app/utils/discounts/labels.ts:345
 #: app/utils/discounts/summary.ts:184
 msgid "Delivery fee"
@@ -11794,7 +11801,7 @@ msgstr "حد رسوم التوصيل"
 msgid "Delivery is blocked or disallowed for this specific zone"
 msgstr "التوصيل محظور أو غير مسموح في هذه المنطقة تحديدًا"
 
-#: app/components/orders/order-detail.tsx:507
+#: app/components/orders/order-detail.tsx:509
 msgid "Delivery notes:"
 msgstr "ملاحظات التوصيل:"
 
@@ -11871,8 +11878,8 @@ msgstr "صِف هذه الصورة لتحسين إمكانية الوصول"
 msgid "Describe when the agent should transfer to a specific contact. For example: \"Questions about large group bookings\"."
 msgstr "صف متى يجب على الوكيل التحويل إلى جهة اتصال معينة. على سبيل المثال: \"أسئلة حول حجوزات المجموعات الكبيرة\"."
 
-#: app/components/discounts/discount-form.tsx:410
-#: app/components/discounts/discount-form.tsx:733
+#: app/components/discounts/discount-form.tsx:423
+#: app/components/discounts/discount-form.tsx:758
 #: app/components/hiring/job-editor.tsx:670
 #: app/components/loyalty/reward-dialog.tsx:444
 #: app/components/roles/tenant-role-access-manager.tsx:864
@@ -12261,15 +12268,15 @@ msgstr "قطع أي اتصالات MCP نشطة"
 msgid "Disconnect Canva"
 msgstr "إلغاء ربط Canva"
 
-#: app/components/discounts/discount-form.tsx:414
-#: app/components/discounts/discount-form.tsx:539
-#: app/components/discounts/discount-form.tsx:838
-#: app/components/discounts/discount-form.tsx:1401
+#: app/components/discounts/discount-form.tsx:427
+#: app/components/discounts/discount-form.tsx:552
+#: app/components/discounts/discount-form.tsx:863
+#: app/components/discounts/discount-form.tsx:1426
 #: app/components/loyalty/reward-dialog.tsx:482
-#: app/components/orders/order-detail.tsx:614
-#: app/components/orders/order-detail.tsx:915
+#: app/components/orders/order-detail.tsx:616
+#: app/components/orders/order-detail.tsx:917
 #: app/components/print/restaurant/vertical-ui.tsx:143
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:356
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:366
 msgid "Discount"
 msgstr "الخصم"
 
@@ -12277,7 +12284,7 @@ msgstr "الخصم"
 msgid "Discount cost"
 msgstr "تكلفة الخصم"
 
-#: ../../packages/marketing/src/components/coupon-offer-field.tsx:130
+#: ../../packages/marketing/src/components/coupon-offer-field.tsx:146
 msgid "Discount no longer available"
 msgstr "الخصم لم يعد متاحًا"
 
@@ -12293,13 +12300,13 @@ msgstr "التصنيفات المشمولة بالخصم"
 msgid "Discounted items"
 msgstr "العناصر المشمولة بالخصم"
 
-#: app/components/discounts/discount-form.tsx:453
+#: app/components/discounts/discount-form.tsx:466
 msgid "Discounted quantity"
 msgstr "الكمية المخفَّضة"
 
 #: app/components/app-sidebar.tsx:401
 #: app/components/roles/tenant-role-access-manager.tsx:473
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:246
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:256
 msgid "Discounts"
 msgstr "الخصومات"
 
@@ -12691,7 +12698,7 @@ msgstr "طلبات الطروحات"
 msgid "Drop orders are left out of this discount."
 msgstr "طلبات الطروحات مستثناة من هذا الخصم."
 
-#: app/components/discounts/discount-form.tsx:1590
+#: app/components/discounts/discount-form.tsx:1615
 msgid "Drop orders skip discounts unless this is on."
 msgstr "طلبات الطروحات لا تحصل على الخصم إلا عند تفعيل هذا."
 
@@ -12715,7 +12722,7 @@ msgstr "عنوان الطرح"
 #~ msgid "Drop visibility"
 #~ msgstr "ظهور الطرح"
 
-#: app/components/orders/order-detail.tsx:514
+#: app/components/orders/order-detail.tsx:516
 msgid "Drop:"
 msgstr "الإطلاق:"
 
@@ -12759,7 +12766,7 @@ msgstr "الاستحقاق بعد التوظيف"
 msgid "Due today"
 msgstr "مستحقة اليوم"
 
-#: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:230
+#: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:246
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:449
 msgid "Duplicate"
 msgstr "تكرار"
@@ -12941,7 +12948,7 @@ msgstr "كل يوم على حدة"
 msgid "Each day’s published hours and shifts next to the hours worked and the time cards that started, with the difference."
 msgstr "ساعات ومناوبات كل يوم المنشورة بجانب الساعات المعمول بها وبطاقات الوقت التي بدأت، مع الفرق."
 
-#: app/components/discounts/discount-form.tsx:159
+#: app/components/discounts/discount-form.tsx:166
 msgid "Each full group of a set size, such as every pair."
 msgstr "كل مجموعة كاملة بحجم محدد، مثل كل زوج."
 
@@ -13564,8 +13571,8 @@ msgstr "انتهت"
 msgid "Ending"
 msgstr "تنتهي"
 
-#: app/components/discounts/discount-form.tsx:473
-#: app/components/discounts/discount-form.tsx:1488
+#: app/components/discounts/discount-form.tsx:486
+#: app/components/discounts/discount-form.tsx:1513
 #: app/components/staff/schedule/shift-editor-sheet.tsx:471
 msgid "Ends"
 msgstr "تنتهي"
@@ -14283,11 +14290,11 @@ msgstr "كل مكالمة أجاب عنها وكيلك، مع الملخصات �
 msgid "Every card is approved. This period is ready for payroll."
 msgstr "تمت الموافقة على كل البطاقات. هذه الفترة جاهزة للرواتب."
 
-#: app/components/discounts/discount-form.tsx:1177
+#: app/components/discounts/discount-form.tsx:1202
 msgid "Every choice in these groups is covered."
 msgstr "يشمل الخصم كل خيار في هذه المجموعات."
 
-#: app/components/discounts/discount-form.tsx:111
+#: app/components/discounts/discount-form.tsx:118
 msgid "Every choice you picked gets the discount."
 msgstr "يحصل كل خيار اخترته على الخصم."
 
@@ -14311,15 +14318,15 @@ msgstr "كل بضع دقائق"
 msgid "Every group of {quantity}"
 msgstr "كل مجموعة من {quantity}"
 
-#: app/components/discounts/discount-form.tsx:1105
+#: app/components/discounts/discount-form.tsx:1130
 msgid "Every item in the categories you pick."
 msgstr "كل عنصر في التصنيفات التي تختارها."
 
-#: app/components/discounts/discount-form.tsx:110
+#: app/components/discounts/discount-form.tsx:117
 msgid "Every matching choice"
 msgstr "كل خيار مطابق"
 
-#: app/components/discounts/discount-form.tsx:135
+#: app/components/discounts/discount-form.tsx:142
 msgid "Every matching item gets the discount."
 msgstr "يحصل كل عنصر مطابق على الخصم."
 
@@ -14335,7 +14342,7 @@ msgstr "كل حركة نقاط، بالإضافة إلى قائمة عمليات
 msgid "Every printed card for this table stops working right away, including cards you ordered. Print the new card before you replace the old one."
 msgstr "تتوقف كل البطاقات المطبوعة لهذه الطاولة عن العمل فورًا، بما فيها البطاقات التي طلبتها. اطبع البطاقة الجديدة قبل استبدال القديمة."
 
-#: app/components/discounts/discount-form.tsx:134
+#: app/components/discounts/discount-form.tsx:141
 msgid "Every qualifying item"
 msgstr "كل عنصر مؤهل"
 
@@ -14374,7 +14381,7 @@ msgstr "الجميع"
 msgid "Everyone else won't see that it exists."
 msgstr "لن يرى الآخرون أن القناة موجودة."
 
-#: ../../packages/marketing/src/components/coupon-offer-field.tsx:115
+#: ../../packages/marketing/src/components/coupon-offer-field.tsx:131
 msgid "Everyone gets {code}"
 msgstr "يحصل الجميع على {code}"
 
@@ -14420,7 +14427,7 @@ msgstr "الكل"
 msgid "Everything available is already assigned."
 msgstr "كل المتاح مُسند بالفعل."
 
-#: app/components/discounts/discount-form.tsx:1092
+#: app/components/discounts/discount-form.tsx:1117
 msgid "Everything in the cart."
 msgstr "كل ما في السلة."
 
@@ -14459,8 +14466,8 @@ msgstr "استبعاد"
 msgid "Exclude {name} from discounts"
 msgstr "استثناء {name} من الخصومات"
 
-#: app/components/discounts/discount-form.tsx:437
-#: app/components/discounts/discount-form.tsx:1279
+#: app/components/discounts/discount-form.tsx:450
+#: app/components/discounts/discount-form.tsx:1304
 msgid "Exclude categories"
 msgstr "استثناء تصنيفات"
 
@@ -14476,8 +14483,8 @@ msgstr "استثناء من الخصومات. لا يحصل على خصم أبد
 msgid "Exclude from Throttling"
 msgstr "استثناء من تنظيم الطلبات"
 
-#: app/components/discounts/discount-form.tsx:435
-#: app/components/discounts/discount-form.tsx:1263
+#: app/components/discounts/discount-form.tsx:448
+#: app/components/discounts/discount-form.tsx:1288
 msgid "Exclude items"
 msgstr "استثناء عناصر"
 
@@ -15387,7 +15394,7 @@ msgstr "أصلح المشكلات في مسار المكالمة قبل النش
 #~ msgid "Fix the issues in the phone menu before publishing."
 #~ msgstr "أصلح المشكلات في قائمة الهاتف قبل النشر."
 
-#: app/components/discounts/discount-form.tsx:678
+#: app/components/discounts/discount-form.tsx:703
 msgid "Fix these before saving."
 msgstr "أصلح الأخطاء التالية قبل الحفظ."
 
@@ -15673,7 +15680,7 @@ msgstr "توصيل مجاني"
 msgid "Free delivery needs the Delivery order type."
 msgstr "التوصيل المجاني يحتاج نوع الطلب «التوصيل»."
 
-#: app/components/discounts/discount-form.tsx:1046
+#: app/components/discounts/discount-form.tsx:1071
 msgid "Free delivery takes the delivery fee off the order."
 msgstr "التوصيل المجاني يخصم رسوم التوصيل من الطلب."
 
@@ -15740,6 +15747,10 @@ msgstr "ابتداءً من"
 msgid "From {from}"
 msgstr "من {from}"
 
+#: ../../packages/marketing/src/components/coupon-offer-field.tsx:296
+msgid "From {min} to {max} days."
+msgstr "من {min} إلى {max} يومًا."
+
 #: app/components/staff/labor/labor-sales.tsx:210
 msgid "From a file"
 msgstr "من ملف"
@@ -15777,7 +15788,7 @@ msgid "Front of house, Warehouse…"
 msgstr "صالة الطعام، المستودع…"
 
 #: app/components/customers/person-orders-panel.tsx:169
-#: app/components/orders/order-detail.tsx:444
+#: app/components/orders/order-detail.tsx:446
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:620
 msgid "Fulfillment"
 msgstr "التنفيذ"
@@ -16160,7 +16171,7 @@ msgstr "تجميع الجدول"
 msgid "Groups"
 msgstr "مجموعات"
 
-#: app/components/discounts/discount-form.tsx:153
+#: app/components/discounts/discount-form.tsx:160
 msgid "Groups of a quantity"
 msgstr "مجموعات من كمية"
 
@@ -16176,7 +16187,7 @@ msgstr "مجموعات من كمية"
 msgid "Guest"
 msgstr "ضيف"
 
-#: app/components/orders/order-detail.tsx:386
+#: app/components/orders/order-detail.tsx:388
 #: app/components/settings/cards/organization/shop-card.tsx:436
 #: app/routes/_app+/$orgSlug_+/orders.tsx:230
 msgid "Guest checkout"
@@ -16358,7 +16369,7 @@ msgstr "يمكن للعملاء تخطي هذا الاختيار."
 msgid "Guests can't use it."
 msgstr "لا يمكن للزوار غير المسجّلين استخدامه."
 
-#: app/components/discounts/discount-form.tsx:1679
+#: app/components/discounts/discount-form.tsx:1704
 msgid "Guests can't use this discount: customers have to be signed in so their uses can be counted."
 msgstr "لا يمكن للزوار غير المسجّلين استخدام هذا الخصم: يجب أن يسجّل العملاء الدخول حتى يمكن احتساب استخداماتهم."
 
@@ -16991,8 +17002,8 @@ msgstr "الفاصل بين الأوقات التي يمكن للضيوف اخت
 #~ msgid "How far in advance customers must order before a pickup slot."
 #~ msgstr "كم يجب على العملاء الطلب مسبقًا قبل فترة الاستلام."
 
-#: app/components/discounts/discount-form.tsx:412
-#: app/components/discounts/discount-form.tsx:765
+#: app/components/discounts/discount-form.tsx:425
+#: app/components/discounts/discount-form.tsx:790
 #: app/utils/discounts/summary.ts:165
 msgid "How it applies"
 msgstr "طريقة التطبيق"
@@ -17033,7 +17044,7 @@ msgstr "مدة بقاء المجموعات من كل حجم، من الجلوس 
 msgid "How long waitlist parties waited before they were seated over the last 7 days."
 msgstr "مدة انتظار مجموعات قائمة الانتظار قبل جلوسها خلال آخر 7 أيام."
 
-#: app/components/discounts/discount-form.tsx:1351
+#: app/components/discounts/discount-form.tsx:1376
 msgid "How many of the matching items receive the discount."
 msgstr "كم من العناصر المطابقة يحصل على الخصم."
 
@@ -17069,7 +17080,7 @@ msgstr "مدى التزام الساعة بالجدول المنشور. تبدأ
 msgid "How the call flow works"
 msgstr "كيف يعمل مسار المكالمة"
 
-#: app/components/discounts/discount-form.tsx:1699
+#: app/components/discounts/discount-form.tsx:1724
 msgid "How the limit is counted"
 msgstr "كيف يُحتسب الحد"
 
@@ -17106,7 +17117,7 @@ msgstr "لا أستطيع العمل فيها"
 msgid "I checked the online payment for this tab in the payment dashboard and will refund or keep it."
 msgstr "تحققت من الدفعة الإلكترونية لهذا الحساب في لوحة المدفوعات، وسأستردها أو أحتفظ بها."
 
-#: app/components/orders/order-detail.tsx:811
+#: app/components/orders/order-detail.tsx:813
 msgid "I have received payment at handoff"
 msgstr "لقد استلمت الدفع عند التسليم"
 
@@ -17376,7 +17387,7 @@ msgstr "غير نشط"
 msgid "Include a link to the call"
 msgstr "تضمين رابط إلى المكالمة"
 
-#: app/components/discounts/discount-form.tsx:1588
+#: app/components/discounts/discount-form.tsx:1613
 msgid "Include drop orders"
 msgstr "تضمين طلبات الطروحات"
 
@@ -17518,8 +17529,8 @@ msgstr "قنوات داخلية لفريقك."
 msgid "Internal Host Notes"
 msgstr "ملاحظات المضيف الداخلية"
 
-#: app/components/discounts/discount-form.tsx:408
-#: app/components/discounts/discount-form.tsx:719
+#: app/components/discounts/discount-form.tsx:421
+#: app/components/discounts/discount-form.tsx:744
 msgid "Internal name"
 msgstr "الاسم الداخلي"
 
@@ -17785,15 +17796,19 @@ msgstr "سيُزال من التقويم هنا. ما نُشر بالفعل عل
 msgid "It leaves the Print shop list. Orders already placed keep printing it."
 msgstr "ستُزال من قائمة المطبعة. الطلبات المقدّمة مسبقًا تواصل طباعتها."
 
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:611
+msgid "It now also runs at locations outside yours, so you can't change it."
+msgstr "أصبح يعمل الآن أيضًا في فروع خارج فروعك، لذا لا يمكنك تغييره."
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:359
 msgid "It starts answering on the next call."
 msgstr "يبدأ الرد من المكالمة التالية."
 
-#: app/components/discounts/archive-discount-button.tsx:61
+#: app/components/discounts/archive-discount-button.tsx:64
 msgid "It stops applying everywhere and its codes stop working. If you restore it later, its codes are not brought back and their use counts start again."
 msgstr "يتوقف تطبيقه في كل مكان وتتوقف رموزه عن العمل. إذا استعدته لاحقًا فلن تعود رموزه وستبدأ أعداد استخدامها من جديد."
 
-#: app/components/discounts/archive-discount-button.tsx:67
+#: app/components/discounts/archive-discount-button.tsx:70
 msgid "It stops applying everywhere. You can restore it later."
 msgstr "يتوقف تطبيقه في كل مكان. يمكنك استعادته لاحقًا."
 
@@ -17813,7 +17828,7 @@ msgstr "مائل"
 msgid "item"
 msgstr "عنصر"
 
-#: app/components/orders/order-detail.tsx:537
+#: app/components/orders/order-detail.tsx:539
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:312
 msgid "Item"
 msgstr "العنصر"
@@ -17851,8 +17866,8 @@ msgstr "عناصر"
 #: app/components/app-sidebar.tsx:373
 #: app/components/customers/person-orders-panel.tsx:172
 #: app/components/discounts/deal-groups.tsx:127
-#: app/components/discounts/discount-form.tsx:1128
-#: app/components/orders/order-detail.tsx:523
+#: app/components/discounts/discount-form.tsx:1153
+#: app/components/orders/order-detail.tsx:525
 #: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:51
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:301
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:262
@@ -17863,8 +17878,8 @@ msgstr "العناصر"
 msgid "Items bought"
 msgstr "العناصر المشتراة"
 
-#: app/components/discounts/discount-form.tsx:455
-#: app/components/discounts/discount-form.tsx:1433
+#: app/components/discounts/discount-form.tsx:468
+#: app/components/discounts/discount-form.tsx:1458
 #: app/utils/discounts/summary.ts:305
 msgid "Items discounted per use"
 msgstr "العناصر المخفَّضة في كل استخدام"
@@ -17877,7 +17892,7 @@ msgstr "لن تضيف عناصر هذا التصنيف تأخيرًا في ال�
 msgid "Items listed directly in a chosen category earn. Choose subcategories separately."
 msgstr "تكسب العناصر المدرجة مباشرة في التصنيف المختار. اختر التصنيفات الفرعية بشكل منفصل."
 
-#: app/components/discounts/discount-form.tsx:201
+#: app/components/discounts/discount-form.tsx:208
 msgid "Items sold together, such as a pizza, a side and a drink."
 msgstr "عناصر تُباع معًا، مثل بيتزا وطبق جانبي ومشروب."
 
@@ -17893,7 +17908,7 @@ msgstr "العناصر التي تكسب نقاطًا"
 msgid "Items that offer this modifier group."
 msgstr "العناصر التي تقدّم مجموعة الإضافات هذه."
 
-#: app/components/discounts/discount-form.tsx:625
+#: app/components/discounts/discount-form.tsx:638
 msgid "Its coupon codes are not brought back: add new ones before you turn it on."
 msgstr "لا تعود رموز القسائم الخاصة به: أضف رموزًا جديدة قبل تشغيله."
 
@@ -18035,7 +18050,7 @@ msgstr "متابعة التعديل"
 #~ msgid "Keep forever"
 #~ msgstr "الاحتفاظ دائمًا"
 
-#: app/components/discounts/archive-discount-button.tsx:75
+#: app/components/discounts/archive-discount-button.tsx:78
 #: app/components/pos/terminals-manager.tsx:846
 #: app/components/reservations/experiences/experience-editor.tsx:1031
 #: app/components/staff/kiosk-manager.tsx:970
@@ -18048,7 +18063,7 @@ msgstr "متابعة التعديل"
 msgid "Keep it"
 msgstr "إبقاؤه"
 
-#: app/components/orders/order-detail.tsx:865
+#: app/components/orders/order-detail.tsx:867
 msgid "Keep order"
 msgstr "الاحتفاظ بالطلب"
 
@@ -18371,8 +18386,8 @@ msgstr "تظهر هنا طلبات المجموعات الكبيرة من موق
 msgid "Larger parties can still be booked by your team at the host stand."
 msgstr "يمكن لفريقك حجز المجموعات الأكبر من عند منصة الاستقبال."
 
-#: app/components/discounts/discount-form.tsx:459
-#: app/components/discounts/discount-form.tsx:968
+#: app/components/discounts/discount-form.tsx:472
+#: app/components/discounts/discount-form.tsx:993
 msgid "Largest fee to waive"
 msgstr "أكبر رسوم يُعفى منها"
 
@@ -18457,7 +18472,7 @@ msgstr "آخر طلب"
 msgid "Last seating"
 msgstr "آخر جلوس"
 
-#: app/components/orders/order-detail.tsx:787
+#: app/components/orders/order-detail.tsx:789
 msgid "Last updated"
 msgstr "آخر تحديث"
 
@@ -18833,11 +18848,11 @@ msgstr "ليموني"
 msgid "Limit reached"
 msgstr "بلغ الحد"
 
-#: app/components/discounts/discount-form.tsx:1502
+#: app/components/discounts/discount-form.tsx:1527
 msgid "Limit to weekly hours"
 msgstr "تقييد بساعات الأسبوع"
 
-#: app/components/discounts/discount-form.tsx:1677
+#: app/components/discounts/discount-form.tsx:1702
 msgid "Limit uses per customer"
 msgstr "تقييد مرات الاستخدام لكل عميل"
 
@@ -19347,8 +19362,8 @@ msgid "Location: {locationName}"
 msgstr "الموقع: {locationName}"
 
 #: app/components/app-sidebar.tsx:648
-#: app/components/discounts/discount-form.tsx:477
-#: app/components/discounts/discount-form.tsx:1534
+#: app/components/discounts/discount-form.tsx:490
+#: app/components/discounts/discount-form.tsx:1559
 #: app/components/member-location-scope.tsx:160
 #: app/components/team-switcher.tsx:182
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:548
@@ -19516,7 +19531,7 @@ msgstr "تقييم منخفض"
 msgid "Low ratings"
 msgstr "التقييمات المنخفضة"
 
-#: app/components/discounts/discount-form.tsx:1762
+#: app/components/discounts/discount-form.tsx:1787
 msgid "Lower numbers are considered first. 0 is the default."
 msgstr "الأرقام الأصغر تُؤخذ أولًا. 0 هو الافتراضي."
 
@@ -19556,7 +19571,7 @@ msgstr "برنامج الولاء"
 msgid "Loyalty program, members and points, redemptions waiting for review, and loyalty reports. Only applies when Loyalty is turned on for your organization."
 msgstr "برنامج الولاء والأعضاء والنقاط وعمليات الاستبدال بانتظار المراجعة وتقارير الولاء. ينطبق فقط عند تفعيل الولاء لمؤسستك."
 
-#: app/components/orders/order-detail.tsx:634
+#: app/components/orders/order-detail.tsx:636
 msgid "Loyalty reward"
 msgstr "مكافأة الولاء"
 
@@ -20120,8 +20135,8 @@ msgstr "الحد الأقصى لمدة المكالمة (بالدقائق)"
 msgid "Maximum discount"
 msgstr "الحد الأقصى للخصم"
 
-#: app/components/discounts/discount-form.tsx:420
-#: app/components/discounts/discount-form.tsx:922
+#: app/components/discounts/discount-form.tsx:433
+#: app/components/discounts/discount-form.tsx:947
 #: app/utils/discounts/summary.ts:293
 msgid "Maximum off"
 msgstr "الحد الأقصى للخصم"
@@ -20131,8 +20146,8 @@ msgstr "الحد الأقصى للخصم"
 msgid "Maximum Selections (Optional)"
 msgstr "الحد الأقصى للاختيارات (اختياري)"
 
-#: app/components/discounts/discount-form.tsx:483
-#: app/components/discounts/discount-form.tsx:1620
+#: app/components/discounts/discount-form.tsx:496
+#: app/components/discounts/discount-form.tsx:1645
 msgid "Maximum uses"
 msgstr "الحد الأقصى للاستخدام"
 
@@ -20161,11 +20176,11 @@ msgstr "وجبة (غير مدفوعة)"
 msgid "Meal break"
 msgstr "استراحة وجبة"
 
-#: app/components/discounts/discount-form.tsx:195
+#: app/components/discounts/discount-form.tsx:202
 msgid "Meal deal"
 msgstr "عرض وجبة"
 
-#: app/components/discounts/discount-form.tsx:467
+#: app/components/discounts/discount-form.tsx:480
 msgid "Meal deal groups"
 msgstr "مجموعات عرض الوجبة"
 
@@ -20353,7 +20368,7 @@ msgstr "دمج المكرر"
 #~ msgid "Merge tags are replaced per recipient when the email is sent."
 #~ msgstr "تُستبدل وسوم الدمج بقيم خاصة بكل مستلم عند إرسال البريد الإلكتروني."
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:102
+#: ../../packages/marketing/src/components/campaign-detail.tsx:105
 #: ../../packages/marketing/src/components/campaign-form.tsx:124
 #: app/components/phone-agent/flow-editor/node-inspector.tsx:415
 #: app/components/reservations/messages/message-settings.tsx:689
@@ -20432,7 +20447,7 @@ msgstr "لم تعد Meta تقبل صلاحية الوصول الخاصة به. �
 msgid "Meta no longer accepts this account’s access. Connect it again, then retry."
 msgstr "لم تعد Meta تقبل صلاحية الوصول لهذا الحساب. أعد ربطه ثم حاول مرة أخرى."
 
-#: app/components/orders/order-detail.tsx:693
+#: app/components/orders/order-detail.tsx:695
 msgid "Method"
 msgstr "الطريقة"
 
@@ -20491,8 +20506,8 @@ msgstr "الحد الأدنى للإنفاق المؤهل"
 msgid "Minimum Selections"
 msgstr "الحد الأدنى للاختيارات"
 
-#: app/components/discounts/discount-form.tsx:422
-#: app/components/discounts/discount-form.tsx:1665
+#: app/components/discounts/discount-form.tsx:435
+#: app/components/discounts/discount-form.tsx:1690
 msgid "Minimum spend"
 msgstr "الحد الأدنى للإنفاق"
 
@@ -20618,7 +20633,7 @@ msgstr "الوضع"
 msgid "Modified hours (patch service)"
 msgstr "ساعات معدلة (تعديل فترة خدمة)"
 
-#: app/components/discounts/discount-form.tsx:1111
+#: app/components/discounts/discount-form.tsx:1136
 msgid "Modifier choices"
 msgstr "خيارات الإضافات"
 
@@ -20638,7 +20653,7 @@ msgstr "معلومات مجموعة الإضافات"
 msgid "Modifier Group Name"
 msgstr "اسم مجموعة الإضافات"
 
-#: app/components/discounts/discount-form.tsx:1175
+#: app/components/discounts/discount-form.tsx:1200
 msgid "Modifier groups"
 msgstr "مجموعات الإضافات"
 
@@ -20649,8 +20664,8 @@ msgstr "مجموعات الإضافات"
 msgid "Modifier Groups"
 msgstr "مجموعات الإضافات"
 
-#: app/components/discounts/discount-form.tsx:429
-#: app/components/discounts/discount-form.tsx:1194
+#: app/components/discounts/discount-form.tsx:442
+#: app/components/discounts/discount-form.tsx:1219
 msgid "Modifier options"
 msgstr "خيارات إضافة محددة"
 
@@ -20958,8 +20973,8 @@ msgstr "رابط جدولي"
 #: app/components/customers/people-list-screen.tsx:391
 #: app/components/customers/person-profile-screen.tsx:1129
 #: app/components/dashboard/dashboard-name-dialog.tsx:124
-#: app/components/discounts/discount-form.tsx:406
-#: app/components/discounts/discount-form.tsx:710
+#: app/components/discounts/discount-form.tsx:419
+#: app/components/discounts/discount-form.tsx:735
 #: app/components/loyalty/reward-dialog.tsx:435
 #: app/components/pos/terminals-manager.tsx:1390
 #: app/components/reservations/policies/policy-sheet.tsx:217
@@ -21120,7 +21135,7 @@ msgstr "يحتاج إلى رد"
 msgid "Needs review"
 msgstr "يحتاج إلى مراجعة"
 
-#: app/components/discounts/discount-form.tsx:171
+#: app/components/discounts/discount-form.tsx:178
 msgid "Needs specific items or categories. Choose them under Applies to."
 msgstr "يحتاج إلى عناصر أو تصنيفات محددة. اخترها ضمن «ينطبق على»."
 
@@ -21266,9 +21281,9 @@ msgstr "الوجهة الجديدة"
 msgid "New dining area"
 msgstr "منطقة جلوس جديدة"
 
-#: app/components/discounts/discount-form.tsx:537
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:257
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:273
+#: app/components/discounts/discount-form.tsx:550
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:267
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:283
 msgid "New discount"
 msgstr "خصم جديد"
 
@@ -21752,10 +21767,10 @@ msgid "No categories yet"
 msgstr "لا توجد تصنيفات بعد"
 
 #: app/components/discounts/deal-groups.tsx:143
-#: app/components/discounts/discount-form.tsx:1146
-#: app/components/discounts/discount-form.tsx:1234
-#: app/components/discounts/discount-form.tsx:1284
-#: app/components/discounts/discount-form.tsx:1335
+#: app/components/discounts/discount-form.tsx:1171
+#: app/components/discounts/discount-form.tsx:1259
+#: app/components/discounts/discount-form.tsx:1309
+#: app/components/discounts/discount-form.tsx:1360
 msgid "No categories yet."
 msgstr "لا توجد تصنيفات بعد."
 
@@ -21827,7 +21842,7 @@ msgstr "لا يوجد اتصال. تحقق من الإنترنت وحاول مر
 msgid "No contact details"
 msgstr "لا توجد بيانات تواصل"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:55
+#: ../../packages/marketing/src/components/campaign-detail.tsx:58
 msgid "No contact on file"
 msgstr "لا يوجد جهة اتصال مسجّلة"
 
@@ -21839,8 +21854,8 @@ msgstr "لا توجد جهات اتصال بعد."
 msgid "No content yet"
 msgstr "لا يوجد محتوى بعد"
 
-#: ../../packages/marketing/src/components/coupon-offer-field.tsx:131
-#: ../../packages/marketing/src/components/coupon-offer-field.tsx:135
+#: ../../packages/marketing/src/components/coupon-offer-field.tsx:147
+#: ../../packages/marketing/src/components/coupon-offer-field.tsx:151
 msgid "No coupon"
 msgstr "بدون قسيمة"
 
@@ -21852,7 +21867,7 @@ msgstr "لا توجد ملاحظة مخصصة. هذا هو النص الافتر
 msgid "No custom roles created yet."
 msgstr "لم يتم إنشاء أدوار مخصصة بعد."
 
-#: app/components/orders/order-detail.tsx:434
+#: app/components/orders/order-detail.tsx:436
 msgid "No customer profile"
 msgstr "لا يوجد ملف عميل"
 
@@ -21868,7 +21883,7 @@ msgstr "لا يوجد عملاء بعد"
 msgid "No date"
 msgstr "بلا تاريخ"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:146
+#: ../../packages/marketing/src/components/campaign-detail.tsx:149
 msgid "No delivery records yet."
 msgstr "لا توجد سجلات تسليم بعد."
 
@@ -21899,11 +21914,11 @@ msgstr "لا توجد مناطق جلوس بعد"
 msgid "No dining times yet. Until you add them, the default time is used."
 msgstr "لا توجد مدد جلوس بعد. حتى تضيفها سيتم استخدام المدة الافتراضية."
 
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:346
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:356
 msgid "No discounts match these filters"
 msgstr "لا توجد خصومات تطابق هذه التصفيات"
 
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:267
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:277
 msgid "No discounts yet"
 msgstr "لا توجد خصومات بعد"
 
@@ -22048,10 +22063,10 @@ msgid "No items yet"
 msgstr "لا توجد عناصر بعد"
 
 #: app/components/discounts/deal-groups.tsx:132
-#: app/components/discounts/discount-form.tsx:1133
-#: app/components/discounts/discount-form.tsx:1223
-#: app/components/discounts/discount-form.tsx:1273
-#: app/components/discounts/discount-form.tsx:1319
+#: app/components/discounts/discount-form.tsx:1158
+#: app/components/discounts/discount-form.tsx:1248
+#: app/components/discounts/discount-form.tsx:1298
+#: app/components/discounts/discount-form.tsx:1344
 msgid "No items yet."
 msgstr "لا توجد عناصر بعد."
 
@@ -22235,11 +22250,11 @@ msgstr "لا توجد مجموعات إضافات مطابقة لهذه الفل
 msgid "No modifier groups yet"
 msgstr "لا توجد مجموعات إضافات بعد"
 
-#: app/components/discounts/discount-form.tsx:1185
+#: app/components/discounts/discount-form.tsx:1210
 msgid "No modifier groups yet."
 msgstr "لا توجد مجموعات إضافات بعد."
 
-#: app/components/discounts/discount-form.tsx:1205
+#: app/components/discounts/discount-form.tsx:1230
 msgid "No modifier options yet."
 msgstr "لا توجد خيارات إضافات بعد."
 
@@ -22454,11 +22469,11 @@ msgstr "لم يتم تحديد أي أجر بعد."
 msgid "No payment"
 msgstr "بدون دفع"
 
-#: app/components/orders/order-detail.tsx:859
+#: app/components/orders/order-detail.tsx:861
 msgid "No payment has been received, so there is nothing to refund. The order moves to Cancelled and cannot be reopened."
 msgstr "لم يتم استلام أي دفعة، لذا لا يوجد ما يُسترد. سيصبح الطلب ملغى ولا يمكن إعادة فتحه."
 
-#: app/components/orders/order-detail.tsx:709
+#: app/components/orders/order-detail.tsx:711
 #: app/components/orders/order-status.tsx:36
 msgid "No payment needed"
 msgstr "لا حاجة للدفع"
@@ -22738,8 +22753,8 @@ msgid "No single table seats {partySize}. The largest seats {largestSeating}, so
 msgstr "لا توجد طاولة واحدة تتسع لـ {partySize}. أكبر طاولة تتسع لـ {largestSeating}، لذا يلزم دمج الطاولات."
 
 #: app/components/discounts/deal-groups.tsx:159
-#: app/components/discounts/discount-form.tsx:1167
-#: app/components/discounts/discount-form.tsx:1251
+#: app/components/discounts/discount-form.tsx:1192
+#: app/components/discounts/discount-form.tsx:1276
 msgid "No sizes yet."
 msgstr "لا توجد أحجام بعد."
 
@@ -23136,8 +23151,8 @@ msgstr "غير متاح"
 msgid "Not available"
 msgstr "غير متاح"
 
-#: app/components/discounts/discount-form.tsx:185
-#: app/components/discounts/discount-form.tsx:197
+#: app/components/discounts/discount-form.tsx:192
+#: app/components/discounts/discount-form.tsx:204
 msgid "Not available at the till."
 msgstr "غير متاح عند الصندوق."
 
@@ -23149,18 +23164,18 @@ msgstr "غير متاح في منطقة بياناتك بعد"
 msgid "Not available when we need them"
 msgstr "غير متاح عندما نحتاج إليه"
 
-#: app/components/discounts/discount-form.tsx:127
+#: app/components/discounts/discount-form.tsx:134
 msgid "Not available with a set price."
 msgstr "غير متاح مع السعر الثابت."
 
-#: app/components/discounts/discount-form.tsx:129
-#: app/components/discounts/discount-form.tsx:823
-#: app/components/discounts/discount-form.tsx:880
-#: app/components/discounts/discount-form.tsx:1113
+#: app/components/discounts/discount-form.tsx:136
+#: app/components/discounts/discount-form.tsx:848
+#: app/components/discounts/discount-form.tsx:905
+#: app/components/discounts/discount-form.tsx:1138
 msgid "Not available with tiers. Turn tiers off first."
 msgstr "غير متاح مع المستويات. أوقف المستويات أولًا."
 
-#: app/components/discounts/discount-form.tsx:874
+#: app/components/discounts/discount-form.tsx:899
 msgid "Not available yet for <0>{currency}</0>. Use a percentage."
 msgstr "غير متاح بعد بعملة <0>{currency}</0>. استخدم نسبة مئوية."
 
@@ -23895,7 +23910,7 @@ msgstr "رابط كلمة المرور لمرة واحدة"
 
 #: app/components/chat/chat-view.tsx:609
 #: app/components/kiosk/kiosk-chrome.tsx:126
-#: app/components/orders/order-detail.tsx:700
+#: app/components/orders/order-detail.tsx:702
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:864
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:803
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:982
@@ -23907,7 +23922,7 @@ msgstr "متصل"
 #~ msgid "Online ({0})"
 #~ msgstr "عبر الإنترنت ({0})"
 
-#: app/components/orders/order-detail.tsx:699
+#: app/components/orders/order-detail.tsx:701
 msgid "Online ({processor})"
 msgstr "عبر الإنترنت ({processor})"
 
@@ -24065,9 +24080,13 @@ msgstr "خلال الخدمة فقط"
 msgid "Only for a customer's first order."
 msgstr "لأول طلب للعميل فقط."
 
-#: app/components/discounts/discount-form.tsx:1455
+#: app/components/discounts/discount-form.tsx:1480
 msgid "Only for a discount on items or categories."
 msgstr "لخصم على عناصر أو تصنيفات فقط."
+
+#: app/components/discounts/discount-form.tsx:1802
+msgid "Only for discounts everyone can use: the menu can't say who qualifies. Set Customers to Everyone to promote it."
+msgstr "متاح فقط للخصومات التي يمكن للجميع استخدامها: لا تستطيع القائمة أن توضح من يستحقها. اضبط العملاء على «الجميع» للترويج له."
 
 #: app/utils/discounts/labels.ts:205
 msgid "Only for loyalty members."
@@ -24077,13 +24096,13 @@ msgstr "لأعضاء الولاء فقط."
 msgid "Only for parties of at least"
 msgstr "للمجموعات التي لا يقل حجمها عن"
 
-#: app/components/discounts/discount-form.tsx:433
-#: app/components/discounts/discount-form.tsx:1229
+#: app/components/discounts/discount-form.tsx:446
+#: app/components/discounts/discount-form.tsx:1254
 msgid "Only in these categories"
 msgstr "في هذه التصنيفات فقط"
 
-#: app/components/discounts/discount-form.tsx:431
-#: app/components/discounts/discount-form.tsx:1213
+#: app/components/discounts/discount-form.tsx:444
+#: app/components/discounts/discount-form.tsx:1238
 msgid "Only on these items"
 msgstr "على هذه العناصر فقط"
 
@@ -24152,7 +24171,7 @@ msgstr "يُرسَل معرّف العميل فقط. يحلّ tenant-api الإ�
 msgid "Only the first {IMPORT_MAX_ROWS} rows were read. Add the rest in a second batch."
 msgstr "تمت قراءة أول {IMPORT_MAX_ROWS} صف فقط. أضف الباقي في دفعة ثانية."
 
-#: app/components/discounts/discount-form.tsx:1098
+#: app/components/discounts/discount-form.tsx:1123
 msgid "Only the items you pick."
 msgstr "فقط العناصر التي تختارها."
 
@@ -24164,9 +24183,9 @@ msgstr "يمكن للمالك فقط إعادة تسمية لوحة التحكم
 msgid "Only the owner can share this dashboard."
 msgstr "يمكن للمالك فقط مشاركة لوحة التحكم هذه."
 
-#: app/components/discounts/discount-form.tsx:427
-#: app/components/discounts/discount-form.tsx:1156
-#: app/components/discounts/discount-form.tsx:1240
+#: app/components/discounts/discount-form.tsx:440
+#: app/components/discounts/discount-form.tsx:1181
+#: app/components/discounts/discount-form.tsx:1265
 msgid "Only these sizes"
 msgstr "هذه الأحجام فقط"
 
@@ -24178,7 +24197,7 @@ msgstr "يُستخدم فقط ما تكتبه هنا واسم نشاطك الت�
 msgid "Only when the fee is {amount} or less"
 msgstr "فقط عندما تكون الرسوم {amount} أو أقل"
 
-#: app/components/discounts/discount-form.tsx:145
+#: app/components/discounts/discount-form.tsx:152
 msgid "Only when the order has at least this many matching items."
 msgstr "فقط عندما يحتوي الطلب على هذا العدد على الأقل من العناصر المطابقة."
 
@@ -24515,7 +24534,7 @@ msgid "Open your schedule from your email"
 msgstr "افتح جدولك من بريدك الإلكتروني"
 
 #. placeholder {0}: new Date(recipient.openedAt).toLocaleString()
-#: ../../packages/marketing/src/components/campaign-detail.tsx:65
+#: ../../packages/marketing/src/components/campaign-detail.tsx:68
 msgid "Opened {0}"
 msgstr "فُتِح {0}"
 
@@ -24608,7 +24627,7 @@ msgstr "اختياري"
 msgid "Optional • Up to {maxSelections}"
 msgstr "اختياري • حتى {maxSelections}"
 
-#: app/components/discounts/discount-form.tsx:924
+#: app/components/discounts/discount-form.tsx:949
 msgid "Optional cap for one order, in <0>{currency}</0>."
 msgstr "اختياري. حد أقصى لطلب واحد، بعملة <0>{currency}</0>."
 
@@ -24640,7 +24659,7 @@ msgstr "ملاحظة اختيارية"
 msgid "Optional server name"
 msgstr "اسم النادل (اختياري)"
 
-#: app/components/discounts/discount-form.tsx:1480
+#: app/components/discounts/discount-form.tsx:1505
 msgid "Optional."
 msgstr "اختياري."
 
@@ -24648,7 +24667,7 @@ msgstr "اختياري."
 #~ msgid "Optional. {currency}. Free delivery only applies when the delivery fee is this much or less."
 #~ msgstr "اختياري. {currency}. يُطبَّق التوصيل المجاني فقط عندما تكون رسوم التوصيل بهذا المبلغ أو أقل."
 
-#: app/components/discounts/discount-form.tsx:970
+#: app/components/discounts/discount-form.tsx:995
 msgid "Optional. Amount in <0>{currency}</0>. Free delivery only applies when the delivery fee is this much or less."
 msgstr "اختياري. المبلغ بعملة <0>{currency}</0>. ينطبق التوصيل المجاني فقط عندما تكون رسوم التوصيل بهذا المبلغ أو أقل."
 
@@ -24656,7 +24675,7 @@ msgstr "اختياري. المبلغ بعملة <0>{currency}</0>. ينطبق ا
 msgid "Optional. By default every area and table is open to every service. Add an override to keep a place staff-only, walk-in only or closed during one service."
 msgstr "اختياري. افتراضيًا كل منطقة وطاولة متاحة لكل خدمة. أضف استثناءً لجعل مكان للموظفين فقط أو للزبائن بدون حجز أو مغلقًا خلال خدمة معينة."
 
-#: app/components/discounts/discount-form.tsx:1667
+#: app/components/discounts/discount-form.tsx:1692
 msgid "Optional. Checked on the subtotal before discounts."
 msgstr "اختياري. يُفحص على المجموع الفرعي قبل الخصومات."
 
@@ -24668,7 +24687,7 @@ msgstr "اختياري. يُفحص على المجموع الفرعي قبل ا�
 msgid "Optional. Leave empty to count every size."
 msgstr "اختياري. اتركه فارغًا ليشمل كل حجم."
 
-#: app/components/discounts/discount-form.tsx:1215
+#: app/components/discounts/discount-form.tsx:1240
 msgid "Optional. Leave empty to cover every item."
 msgstr "اختياري. اتركه فارغًا ليشمل كل عنصر."
 
@@ -24676,16 +24695,16 @@ msgstr "اختياري. اتركه فارغًا ليشمل كل عنصر."
 msgid "Optional. Limit how many guests or parties can be seated in the same time window, so the kitchen is never swamped."
 msgstr "اختياري. حدّد عدد الضيوف أو المجموعات الذين يمكن إجلاسهم في نفس الفترة الزمنية حتى لا يُرهق المطبخ."
 
-#: app/components/discounts/discount-form.tsx:1158
-#: app/components/discounts/discount-form.tsx:1242
+#: app/components/discounts/discount-form.tsx:1183
+#: app/components/discounts/discount-form.tsx:1267
 msgid "Optional. Matches the size name, such as Large, on every item."
 msgstr "اختياري. يطابق اسم الحجم، مثل كبير، على كل عنصر."
 
-#: app/components/discounts/discount-form.tsx:721
+#: app/components/discounts/discount-form.tsx:746
 msgid "Optional. Shown to your team instead of the customer name."
 msgstr "اختياري. يظهر لفريقك بدل اسم العميل."
 
-#: app/components/discounts/discount-form.tsx:1196
+#: app/components/discounts/discount-form.tsx:1221
 msgid "Optional. Single choices, whichever group they sit in."
 msgstr "اختياري. خيارات فردية، في أي مجموعة كانت."
 
@@ -24693,7 +24712,7 @@ msgstr "اختياري. خيارات فردية، في أي مجموعة كان�
 msgid "Optional. The AI always introduces itself as an AI assistant first. Leave empty to ask how it can help."
 msgstr "اختياري. يعرّف الذكاء الاصطناعي نفسه دائمًا كمساعد ذكي أولًا. اتركه فارغًا ليسأل كيف يمكنه المساعدة."
 
-#: app/components/discounts/discount-form.tsx:1490
+#: app/components/discounts/discount-form.tsx:1515
 msgid "Optional. The discount stops at this time. Leave blank to keep it open."
 msgstr "اختياري. يتوقف الخصم عند هذا الوقت. اتركه فارغًا لإبقائه مفتوحًا."
 
@@ -24701,28 +24720,28 @@ msgstr "اختياري. يتوقف الخصم عند هذا الوقت. اترك
 #~ msgid "Optional. The most choices discounted in one order, dearest first."
 #~ msgstr "اختياري. أقصى عدد من الخيارات المخفَّضة في طلب واحد، الأغلى أولًا."
 
-#: app/components/discounts/discount-form.tsx:1445
+#: app/components/discounts/discount-form.tsx:1470
 msgid "Optional. The most choices discounted in one order, most expensive first."
 msgstr "اختياري. أقصى عدد من الخيارات المخفَّضة في طلب واحد، بدءًا من الأعلى سعرًا."
 
-#: app/components/discounts/discount-form.tsx:1450
+#: app/components/discounts/discount-form.tsx:1475
 msgid "Optional. The most expensive matching items are discounted first."
 msgstr "اختياري. تُخفَّض العناصر المطابقة الأعلى سعرًا أولًا."
 
-#: app/components/discounts/discount-form.tsx:1440
+#: app/components/discounts/discount-form.tsx:1465
 msgid "Optional. The most items deals cover in one order, such as 4 for two deals of 2."
 msgstr "اختياري. أقصى عدد من العناصر التي تشملها العروض في طلب واحد، مثل 4 لعرضين من عنصرين."
 
-#: app/components/discounts/discount-form.tsx:1436
+#: app/components/discounts/discount-form.tsx:1461
 msgid "Optional. The most items discounted in one order."
 msgstr "اختياري. أقصى عدد من العناصر المخفَّضة في طلب واحد."
 
-#: app/components/discounts/discount-form.tsx:1265
+#: app/components/discounts/discount-form.tsx:1290
 msgid "Optional. These items never receive this discount."
 msgstr "اختياري. هذه العناصر لا تحصل على هذا الخصم أبدًا."
 
 #: app/components/app-sidebar.tsx:383
-#: app/components/discounts/discount-form.tsx:1736
+#: app/components/discounts/discount-form.tsx:1761
 #: app/components/phone-agent/flow-editor/node-inspector.tsx:259
 #: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:65
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:350
@@ -24818,8 +24837,8 @@ msgstr "اطلب مطبوعات"
 #~ msgid "Order type"
 #~ msgstr "نوع الطلب"
 
-#: app/components/discounts/discount-form.tsx:481
-#: app/components/discounts/discount-form.tsx:1576
+#: app/components/discounts/discount-form.tsx:494
+#: app/components/discounts/discount-form.tsx:1601
 msgid "Order types"
 msgstr "أنواع الطلب"
 
@@ -25322,7 +25341,7 @@ msgstr "مدفوع"
 #~ msgid "Paid {0}"
 #~ msgstr "تم دفع {0}"
 
-#: app/components/orders/order-detail.tsx:707
+#: app/components/orders/order-detail.tsx:709
 msgid "Paid {totalMoney}"
 msgstr "تم دفع {totalMoney}"
 
@@ -25330,7 +25349,7 @@ msgstr "تم دفع {totalMoney}"
 msgid "Paid <0>{paid}</0>"
 msgstr "مدفوع <0>{paid}</0>"
 
-#: app/components/orders/order-detail.tsx:719
+#: app/components/orders/order-detail.tsx:721
 msgid "Paid at"
 msgstr "تاريخ الدفع"
 
@@ -25377,7 +25396,7 @@ msgstr "الوقت المدفوع <0>{totalLabel}</0>"
 msgid "Paid time off"
 msgstr "إجازة مدفوعة"
 
-#: app/components/orders/order-detail.tsx:473
+#: app/components/orders/order-detail.tsx:475
 msgid "Paid when the tab closes"
 msgstr "يُدفع عند إغلاق الحساب"
 
@@ -25628,13 +25647,13 @@ msgid "Patio"
 msgstr "الفناء"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:198
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:449
-#: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:216
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:464
+#: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:232
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:437
 msgid "Pause"
 msgstr "إيقاف مؤقت"
 
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:458
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:473
 msgid "Pause {name}"
 msgstr "إيقاف {name} مؤقتًا"
 
@@ -25654,7 +25673,7 @@ msgstr "متوقف مؤقتاً"
 
 #: app/components/discounts/discount-history.tsx:50
 #: app/components/phone-agent/phone-number-dialogs.tsx:136
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:330
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:340
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:61
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:261
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:139
@@ -25681,7 +25700,7 @@ msgstr "الأجر"
 msgid "Pay and rates"
 msgstr "الأجر والمعدلات"
 
-#: app/components/orders/order-detail.tsx:697
+#: app/components/orders/order-detail.tsx:699
 msgid "Pay at handoff"
 msgstr "الدفع عند التسليم"
 
@@ -25735,7 +25754,7 @@ msgid "Paying online"
 msgstr "يدفع إلكترونيًا"
 
 #: app/components/orders/order-detail.tsx:329
-#: app/components/orders/order-detail.tsx:687
+#: app/components/orders/order-detail.tsx:689
 #: app/routes/mock-payments+/checkout-com.dashboard.tsx:219
 msgid "Payment"
 msgstr "الدفعة"
@@ -25760,7 +25779,7 @@ msgstr "انتهت صلاحية الدفع"
 msgid "Payment failed"
 msgstr "فشل الدفع"
 
-#: app/components/orders/order-detail.tsx:711
+#: app/components/orders/order-detail.tsx:713
 msgid "Payment failed. Nothing was charged."
 msgstr "فشل الدفع. لم يتم خصم أي مبلغ."
 
@@ -25791,7 +25810,7 @@ msgstr "الدفع يحتاج إلى مراجعة"
 msgid "Payment not finished"
 msgstr "لم يكتمل الدفع"
 
-#: app/components/orders/order-detail.tsx:714
+#: app/components/orders/order-detail.tsx:716
 msgid "Payment not yet received"
 msgstr "لم يُستلم الدفع بعد"
 
@@ -25825,7 +25844,7 @@ msgstr "الدفع غير مؤكد"
 msgid "Payment under review"
 msgstr "الدفع قيد المراجعة"
 
-#: app/components/orders/order-detail.tsx:713
+#: app/components/orders/order-detail.tsx:715
 msgid "Payment window expired before it was paid."
 msgstr "انتهت مهلة الدفع قبل إتمامه."
 
@@ -26004,8 +26023,8 @@ msgstr "تم حفظ استثناء التوفر لفترة الخدمة."
 #~ msgid "Per-Service Table & Area Availability"
 #~ msgstr "توفر الطاولات والمناطق حسب فترة الخدمة"
 
-#: app/components/discounts/discount-form.tsx:416
-#: app/components/discounts/discount-form.tsx:912
+#: app/components/discounts/discount-form.tsx:429
+#: app/components/discounts/discount-form.tsx:937
 #: app/components/discounts/tier-steps.tsx:150
 #: app/components/loyalty/reward-dialog.tsx:511
 msgid "Percent off"
@@ -26388,7 +26407,7 @@ msgid "Picked up the shift {range}."
 msgstr "تم رفع الوردية {range}."
 
 #: app/components/customers/person-orders-panel.tsx:222
-#: app/components/orders/order-detail.tsx:459
+#: app/components/orders/order-detail.tsx:461
 #: app/routes/_app+/$orgSlug_+/orders.tsx:254
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:675
 #: app/utils/discounts/labels.ts:165
@@ -26969,7 +26988,7 @@ msgstr "التفضيل:"
 msgid "Prefetch"
 msgstr "الجلب المسبق"
 
-#: ../../packages/marketing/src/components/coupon-offer-field.tsx:179
+#: ../../packages/marketing/src/components/coupon-offer-field.tsx:195
 msgid "Prefix (optional)"
 msgstr "البادئة (اختياري)"
 
@@ -27103,7 +27122,7 @@ msgid "Previous week"
 msgstr "الأسبوع السابق"
 
 #: app/components/menu/location-overrides-card.tsx:145
-#: app/components/orders/order-detail.tsx:540
+#: app/components/orders/order-detail.tsx:542
 #: app/components/reservations/experiences/experiences-screen.tsx:295
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:315
 msgid "Price"
@@ -27203,7 +27222,7 @@ msgstr "الطباعة في المنزل (A4)"
 msgid "Print at home (US Letter)"
 msgstr "الطباعة في المنزل (US Letter)"
 
-#: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:199
+#: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:215
 msgid "Print coupons"
 msgstr "اطبع كوبونات"
 
@@ -27262,8 +27281,8 @@ msgstr "المطبوعات"
 msgid "Prioritize these tasks"
 msgstr "تحديد أولوية هذه المهام"
 
-#: app/components/discounts/discount-form.tsx:489
-#: app/components/discounts/discount-form.tsx:1760
+#: app/components/discounts/discount-form.tsx:502
+#: app/components/discounts/discount-form.tsx:1785
 #: app/components/phone-agent/training-rules-section.tsx:564
 msgid "Priority"
 msgstr "الأولوية"
@@ -27376,7 +27395,7 @@ msgstr "إدارة المشاريع"
 msgid "Promote as Upsell"
 msgstr "الترويج كبيع إضافي"
 
-#: app/components/discounts/discount-form.tsx:1772
+#: app/components/discounts/discount-form.tsx:1797
 msgid "Promote on your menu"
 msgstr "الترويج في قائمتك"
 
@@ -27590,11 +27609,11 @@ msgstr "المشتريات"
 msgid "Push two or more combinable tables together to seat larger parties. The same set of tables can only be saved once."
 msgstr "اجمع طاولتين أو أكثر قابلتين للدمج لاستيعاب مجموعات أكبر. يمكن حفظ المجموعة نفسها من الطاولات مرة واحدة فقط."
 
-#: ../../packages/marketing/src/components/coupon-offer-field.tsx:227
+#: ../../packages/marketing/src/components/coupon-offer-field.tsx:228
 msgid "Put {TAG} in your message where the code should go. Each customer gets their own code. It works once and expires after the days you set."
 msgstr "ضع {TAG} في رسالتك حيث يجب أن يظهر الرمز. يحصل كل عميل على رمزه الخاص، ويعمل مرة واحدة وينتهي بعد عدد الأيام الذي تحدده."
 
-#: ../../packages/marketing/src/components/coupon-offer-field.tsx:230
+#: ../../packages/marketing/src/components/coupon-offer-field.tsx:231
 msgid "Put {TAG} in your message where the code should go. The code follows the discount's own limits."
 msgstr "ضع {TAG} في رسالتك حيث يجب أن يظهر الرمز. يخضع الرمز لحدود الخصم نفسه."
 
@@ -27645,14 +27664,14 @@ msgstr "حساب QR"
 msgid "QR tables"
 msgstr "طاولات QR"
 
-#: app/components/orders/order-detail.tsx:531
+#: app/components/orders/order-detail.tsx:533
 msgid "Qty"
 msgstr "الكمية"
 
 #: app/components/discounts/deal-groups.tsx:117
-#: app/components/discounts/discount-form.tsx:447
-#: app/components/discounts/discount-form.tsx:1349
-#: app/components/discounts/discount-form.tsx:1371
+#: app/components/discounts/discount-form.tsx:460
+#: app/components/discounts/discount-form.tsx:1374
+#: app/components/discounts/discount-form.tsx:1396
 #: app/components/menu/option-form.tsx:788
 #: app/utils/discounts/summary.ts:252
 msgid "Quantity"
@@ -27662,13 +27681,13 @@ msgstr "الكمية"
 msgid "Quantity Counter (+/-)"
 msgstr "عدّاد الكمية (+/-)"
 
-#: app/components/discounts/discount-form.tsx:439
-#: app/components/discounts/discount-form.tsx:1304
+#: app/components/discounts/discount-form.tsx:452
+#: app/components/discounts/discount-form.tsx:1329
 msgid "Quantity required"
 msgstr "الكمية المطلوبة"
 
-#: app/components/discounts/discount-form.tsx:445
-#: app/components/discounts/discount-form.tsx:1358
+#: app/components/discounts/discount-form.tsx:458
+#: app/components/discounts/discount-form.tsx:1383
 msgid "Quantity rule"
 msgstr "قاعدة الكمية"
 
@@ -27981,7 +28000,7 @@ msgstr "المستلم"
 msgid "recipients"
 msgstr "مستلمين"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:134
+#: ../../packages/marketing/src/components/campaign-detail.tsx:137
 msgid "Recipients"
 msgstr "المستلمون"
 
@@ -28035,7 +28054,7 @@ msgid "Record a message for your team to follow up."
 msgstr "تسجيل رسالة ليتابعها فريقك."
 
 #: app/components/loyalty/record-refund-dialog.tsx:205
-#: app/components/orders/order-detail.tsx:747
+#: app/components/orders/order-detail.tsx:749
 #: app/components/orders/record-order-refund-dialog.tsx:212
 msgid "Record a refund"
 msgstr "تسجيل استرداد"
@@ -28246,7 +28265,7 @@ msgstr "استرداد في قائمة الانتظار"
 msgid "Refund recorded: {amount}"
 msgstr "تم تسجيل استرداد: {amount}"
 
-#: app/components/orders/order-detail.tsx:894
+#: app/components/orders/order-detail.tsx:896
 msgid "Refund recorded."
 msgstr "تم تسجيل الاسترداد."
 
@@ -28262,7 +28281,7 @@ msgstr "تم تسجيل الاسترداد. النقاط المسحوبة: {take
 msgid "Refund this booking?"
 msgstr "استرداد هذا الحجز؟"
 
-#: app/components/orders/order-detail.tsx:727
+#: app/components/orders/order-detail.tsx:729
 #: app/components/orders/order-status.tsx:38
 #: app/components/print/print-order-labels.ts:21
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:373
@@ -28409,7 +28428,7 @@ msgstr "إعادة تحميل الصفحة"
 msgid "Reload the page to try again."
 msgstr "أعد تحميل الصفحة للمحاولة مرة أخرى."
 
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:586
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:606
 msgid "Reload the page, then try again."
 msgstr "أعد تحميل الصفحة، ثم حاول مرة أخرى."
 
@@ -29042,7 +29061,7 @@ msgstr "الطلبات"
 msgid "Require a cash drawer shift before {label} sells"
 msgstr "اشتراط وردية درج نقد قبل أن تبيع {label}"
 
-#: app/components/discounts/discount-form.tsx:1780
+#: app/components/discounts/discount-form.tsx:1813
 msgid "Require a manager at the till"
 msgstr "يتطلب مديرًا عند الصندوق"
 
@@ -29059,7 +29078,7 @@ msgstr "يتطلب إعادة التفويض لإعادة الاتصال"
 msgid "Require shifts"
 msgstr "اشتراط الورديات"
 
-#: app/components/discounts/discount-form.tsx:1290
+#: app/components/discounts/discount-form.tsx:1315
 msgid "Require specific items or categories"
 msgstr "اشتراط عناصر أو تصنيفات محددة"
 
@@ -29083,13 +29102,13 @@ msgstr "مطلوب • اختر {minSelections}"
 msgid "Required • Pick {minSelections}{maxSelectionsSuffix}"
 msgstr "مطلوب • اختر {minSelections}{maxSelectionsSuffix}"
 
-#: app/components/discounts/discount-form.tsx:443
-#: app/components/discounts/discount-form.tsx:1330
+#: app/components/discounts/discount-form.tsx:456
+#: app/components/discounts/discount-form.tsx:1355
 msgid "Required categories"
 msgstr "التصنيفات المطلوبة"
 
-#: app/components/discounts/discount-form.tsx:441
-#: app/components/discounts/discount-form.tsx:1314
+#: app/components/discounts/discount-form.tsx:454
+#: app/components/discounts/discount-form.tsx:1339
 msgid "Required items"
 msgstr "العناصر المطلوبة"
 
@@ -29431,13 +29450,13 @@ msgstr "المطاعم"
 msgid "Restaurants are used to manage your locations, menus, and orders."
 msgstr "تُستخدم المطاعم لإدارة فروعك وقوائمك وطلباتك."
 
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:451
-#: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:218
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:466
+#: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:234
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:252
 msgid "Restore"
 msgstr "استعادة"
 
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:460
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:475
 msgid "Restore {name}"
 msgstr "استعادة {name}"
 
@@ -29477,12 +29496,12 @@ msgstr "النتيجة"
 msgid "Results"
 msgstr "النتائج"
 
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:453
-#: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:219
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:468
+#: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:235
 msgid "Resume"
 msgstr "استئناف"
 
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:461
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:476
 msgid "Resume {name}"
 msgstr "استئناف {name}"
 
@@ -29519,7 +29538,7 @@ msgstr "إعادة محاولة التحصيل"
 msgid "Retry failed accounts"
 msgstr "إعادة المحاولة للحسابات الفاشلة"
 
-#: app/components/orders/order-detail.tsx:750
+#: app/components/orders/order-detail.tsx:752
 msgid "Return the money in your payment provider first, then record it here."
 msgstr "أعِد المبلغ أولًا عبر مزوّد الدفع، ثم سجّله هنا."
 
@@ -30151,7 +30170,7 @@ msgstr "حفظ التغييرات"
 msgid "Save Changes"
 msgstr "حفظ التغييرات"
 
-#: app/components/discounts/discount-form.tsx:545
+#: app/components/discounts/discount-form.tsx:558
 msgid "Save discount"
 msgstr "حفظ الخصم"
 
@@ -30197,8 +30216,8 @@ msgstr "حفظ الخيار"
 #: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:212
 #: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:227
 #: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:241
-msgid "Save or discard your changes first."
-msgstr "احفظ تغييراتك أو تجاهلها أولًا."
+#~ msgid "Save or discard your changes first."
+#~ msgstr "احفظ تغييراتك أو تجاهلها أولًا."
 
 #: app/components/locations/special-hours-picker.tsx:228
 msgid "Save override"
@@ -30356,7 +30375,7 @@ msgstr "يُحفظ مع الحجز للمدير."
 msgid "Saved with the refund, along with who recorded it."
 msgstr "تُحفظ مع الاسترداد ومع هوية من سجّله."
 
-#: app/components/discounts/discount-form.tsx:591
+#: app/components/discounts/discount-form.tsx:604
 #: app/components/hiring/job-editor.tsx:162
 #: app/components/reservations/policies/policies-screen.tsx:209
 msgid "Saved."
@@ -30682,13 +30701,13 @@ msgid "Search campaigns..."
 msgstr "البحث في الحملات..."
 
 #: app/components/discounts/deal-groups.tsx:142
-#: app/components/discounts/discount-form.tsx:1145
-#: app/components/discounts/discount-form.tsx:1233
-#: app/components/discounts/discount-form.tsx:1334
+#: app/components/discounts/discount-form.tsx:1170
+#: app/components/discounts/discount-form.tsx:1258
+#: app/components/discounts/discount-form.tsx:1359
 msgid "Search categories"
 msgstr "البحث في التصنيفات"
 
-#: app/components/discounts/discount-form.tsx:1283
+#: app/components/discounts/discount-form.tsx:1308
 msgid "Search categories to exclude"
 msgstr "البحث في تصنيفات للاستثناء"
 
@@ -30712,13 +30731,13 @@ msgstr "ابحث عن ضيف، هاتف، رمز، طاولة..."
 #~ msgstr "البحث في الضيوف"
 
 #: app/components/discounts/deal-groups.tsx:131
-#: app/components/discounts/discount-form.tsx:1132
-#: app/components/discounts/discount-form.tsx:1222
-#: app/components/discounts/discount-form.tsx:1318
+#: app/components/discounts/discount-form.tsx:1157
+#: app/components/discounts/discount-form.tsx:1247
+#: app/components/discounts/discount-form.tsx:1343
 msgid "Search items"
 msgstr "البحث في العناصر"
 
-#: app/components/discounts/discount-form.tsx:1272
+#: app/components/discounts/discount-form.tsx:1297
 msgid "Search items to exclude"
 msgstr "البحث في عناصر للاستثناء"
 
@@ -30744,11 +30763,11 @@ msgstr "ابحث في الرسائل"
 msgid "Search missing URLs..."
 msgstr "ابحث في عناوين URL المفقودة..."
 
-#: app/components/discounts/discount-form.tsx:1184
+#: app/components/discounts/discount-form.tsx:1209
 msgid "Search modifier groups"
 msgstr "ابحث في مجموعات الإضافات"
 
-#: app/components/discounts/discount-form.tsx:1204
+#: app/components/discounts/discount-form.tsx:1229
 msgid "Search modifier options"
 msgstr "ابحث في خيارات الإضافات"
 
@@ -30813,8 +30832,8 @@ msgstr "نتائج البحث"
 #~ msgstr "ابحث عن الضيوف السابقين، وتحقق من توفر الأوقات مباشرة، واحجز مع خيارات تجاوز المشغل."
 
 #: app/components/discounts/deal-groups.tsx:158
-#: app/components/discounts/discount-form.tsx:1166
-#: app/components/discounts/discount-form.tsx:1250
+#: app/components/discounts/discount-form.tsx:1191
+#: app/components/discounts/discount-form.tsx:1275
 msgid "Search sizes"
 msgstr "ابحث في الأحجام"
 
@@ -31682,8 +31701,8 @@ msgstr "أُرسلت"
 
 #. placeholder {0}: new Date(campaign.createdAt).toLocaleString()
 #. placeholder {0}: new Date(recipient.sentAt).toLocaleString()
-#: ../../packages/marketing/src/components/campaign-detail.tsx:93
-#: ../../packages/marketing/src/components/campaign-detail.tsx:162
+#: ../../packages/marketing/src/components/campaign-detail.tsx:96
+#: ../../packages/marketing/src/components/campaign-detail.tsx:165
 msgid "Sent {0}"
 msgstr "أُرسل {0}"
 
@@ -31946,8 +31965,8 @@ msgstr "تحديد الساعات"
 msgid "Set it in Labor settings"
 msgstr "اضبطه في إعدادات العمالة"
 
-#: app/components/discounts/discount-form.tsx:418
-#: app/components/discounts/discount-form.tsx:941
+#: app/components/discounts/discount-form.tsx:431
+#: app/components/discounts/discount-form.tsx:966
 #: app/utils/discounts/labels.ts:136
 msgid "Set price"
 msgstr "سعر ثابت"
@@ -32161,6 +32180,10 @@ msgstr "رابط مشارَك"
 #: app/components/dashboard/dashboard-switcher.tsx:111
 msgid "Shared with me"
 msgstr "تمت مشاركتها معي"
+
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:588
+msgid "Shared with other locations. View only."
+msgstr "مشترك مع فروع أخرى. عرض فقط."
 
 #: app/components/reservations/booking-sheet.tsx:66
 #: app/utils/reservations/labels.ts:107
@@ -32490,7 +32513,7 @@ msgstr "تظهر للضيوف الذين تتجاوز مجموعتهم الحد 
 msgid "Shown to recipients who have no value for this field."
 msgstr "يُعرض للمستلمين الذين لا يملكون قيمة لهذا الحقل."
 
-#: app/components/discounts/discount-form.tsx:1774
+#: app/components/discounts/discount-form.tsx:1800
 msgid "Shows it as an offer on your online menu."
 msgstr "يعرضه كعرض في قائمتك على الإنترنت."
 
@@ -32787,7 +32810,7 @@ msgstr "غيّر شخص آخر هذا العميل أولًا. أُعيد تحم
 msgid "Someone else changed this dining area. Reload to see the latest version, then make your change again."
 msgstr "قام شخص آخر بتغيير منطقة الجلوس هذه. أعد التحميل لرؤية أحدث نسخة ثم كرّر تغييرك."
 
-#: app/components/discounts/discount-form.tsx:603
+#: app/components/discounts/discount-form.tsx:616
 msgid "Someone else changed this discount. This page now shows their version. Try again."
 msgstr "شخص آخر غيّر هذا الخصم. تعرض هذه الصفحة الآن إصداره. حاول مرة أخرى."
 
@@ -32843,7 +32866,7 @@ msgstr "قام شخص آخر بحفظ مخطط أحدث منذ فتحته. لم 
 msgid "Someone else saved changes first. Reload to see the latest version, then try again."
 msgstr "حفظ شخص آخر تغييرات أولًا. أعد التحميل لرؤية أحدث إصدار، ثم حاول مرة أخرى."
 
-#: app/components/discounts/discount-form.tsx:597
+#: app/components/discounts/discount-form.tsx:610
 msgid "Someone else saved this discount while you were editing. Your changes are still here. Saving again replaces their version."
 msgstr "حفظ شخص آخر هذا الخصم أثناء تعديلك. تغييراتك ما زالت هنا. الحفظ مرة أخرى سيستبدل إصداره."
 
@@ -32966,11 +32989,11 @@ msgstr "المناسبات الخاصة"
 msgid "Special Occasions"
 msgstr "المناسبات الخاصة"
 
-#: app/components/discounts/discount-form.tsx:1103
+#: app/components/discounts/discount-form.tsx:1128
 msgid "Specific categories"
 msgstr "تصنيفات محددة"
 
-#: app/components/discounts/discount-form.tsx:1097
+#: app/components/discounts/discount-form.tsx:1122
 msgid "Specific items"
 msgstr "عناصر محددة"
 
@@ -33348,8 +33371,8 @@ msgstr "نقطة البداية"
 msgid "Starting…"
 msgstr "جارٍ البدء…"
 
-#: app/components/discounts/discount-form.tsx:471
-#: app/components/discounts/discount-form.tsx:1479
+#: app/components/discounts/discount-form.tsx:484
+#: app/components/discounts/discount-form.tsx:1504
 #: app/components/staff/schedule/shift-editor-sheet.tsx:465
 msgid "Starts"
 msgstr "تبدأ"
@@ -33402,7 +33425,7 @@ msgstr "الإحصائيات"
 #: app/components/customers/person-orders-panel.tsx:166
 #: app/components/customers/person-profile-screen.tsx:772
 #: app/components/customers/person-profile-screen.tsx:997
-#: app/components/orders/order-detail.tsx:703
+#: app/components/orders/order-detail.tsx:705
 #: app/components/reservations/experiences/experiences-screen.tsx:292
 #: app/components/roles/tenant-role-access-manager.tsx:1189
 #: app/components/settings/cards/sessions-card.tsx:239
@@ -33411,8 +33434,8 @@ msgstr "الإحصائيات"
 #: app/components/staff/timesheets/timesheet-table.tsx:232
 #: app/components/workspace-breadcrumb.tsx:73
 #: app/components/workspace-breadcrumb.tsx:98
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:324
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:359
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:334
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:369
 #: app/routes/_app+/$orgSlug_+/loyalty+/program.tsx:249
 #: app/routes/_app+/$orgSlug_+/loyalty+/rewards.tsx:266
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:270
@@ -33554,7 +33577,7 @@ msgstr "الاستلام من المطعم"
 #~ msgid "Stored for later. The menu does not show it yet."
 #~ msgstr "يُحفظ لوقت لاحق. القائمة لا تعرضه بعد."
 
-#: app/components/discounts/discount-form.tsx:1782
+#: app/components/discounts/discount-form.tsx:1815
 msgid "Stored for the in-store till. It has no effect online."
 msgstr "يُحفظ لصندوق المتجر. لا أثر له على الإنترنت."
 
@@ -33706,7 +33729,7 @@ msgstr "الاشتراك غير نشط"
 msgid "Subscription Started"
 msgstr "بدأ الاشتراك"
 
-#: app/components/orders/order-detail.tsx:586
+#: app/components/orders/order-detail.tsx:588
 msgid "Subtotal"
 msgstr "المجموع الفرعي"
 
@@ -33847,12 +33870,12 @@ msgstr "أوقف أي رسالة لا تريد أن يتلقاها الضيوف.
 msgid "Switch the Instagram account to a business or creator account, link it to a Facebook Page, and allow that Page when Facebook asks."
 msgstr "حوّل حساب إنستغرام إلى حساب تجاري أو حساب صانع محتوى، واربطه بصفحة فيسبوك، واسمح لتلك الصفحة عندما يطلب فيسبوك ذلك."
 
-#: app/components/discounts/discount-form.tsx:805
-#: app/components/discounts/discount-form.tsx:815
+#: app/components/discounts/discount-form.tsx:830
+#: app/components/discounts/discount-form.tsx:840
 msgid "Switched off for your organization."
 msgstr "غير مفعّل لمؤسستك."
 
-#: app/components/discounts/discount-form.tsx:777
+#: app/components/discounts/discount-form.tsx:802
 msgid "Switching away from Coupon code archives every code when you save, and the discount applies automatically to qualifying orders. Continue?"
 msgstr "سيؤدي التحويل من رمز الكوبون إلى أرشفة كل الرموز عند الحفظ، وسيُطبَّق الخصم تلقائيًا على الطلبات المؤهلة. هل تريد المتابعة؟"
 
@@ -33951,7 +33974,7 @@ msgstr "الطاولة {0} مشغولة بواسطة {1} ({2} أشخاص)"
 msgid "Table {createdTableLabel} created."
 msgstr "تم إنشاء الطاولة {createdTableLabel}."
 
-#: app/components/orders/order-detail.tsx:469
+#: app/components/orders/order-detail.tsx:471
 #: app/components/qr/open-tabs.tsx:369
 #: app/components/qr/open-tabs.tsx:1059
 #: app/components/qr/open-tabs.tsx:1147
@@ -34248,15 +34271,15 @@ msgstr "تلقي بريد صوتي"
 msgid "Take me to settings"
 msgstr "الانتقال إلى الإعدادات"
 
-#: app/components/discounts/discount-form.tsx:84
+#: app/components/discounts/discount-form.tsx:91
 msgid "Takes a fixed amount off."
 msgstr "يخصم مبلغًا ثابتًا."
 
-#: app/components/discounts/discount-form.tsx:82
+#: app/components/discounts/discount-form.tsx:89
 msgid "Takes a percentage off."
 msgstr "يخصم نسبة مئوية."
 
-#: app/components/discounts/discount-form.tsx:88
+#: app/components/discounts/discount-form.tsx:95
 msgid "Takes the delivery fee off."
 msgstr "يخصم رسوم التوصيل."
 
@@ -34323,7 +34346,7 @@ msgstr "المهام"
 msgid "Tasks to finish when someone joins."
 msgstr "مهام يجب إنجازها عند انضمام شخص جديد."
 
-#: app/components/orders/order-detail.tsx:644
+#: app/components/orders/order-detail.tsx:646
 #: app/components/pos/pos-day-report.tsx:206
 msgid "Tax"
 msgstr "الضريبة"
@@ -35205,15 +35228,15 @@ msgstr "السلة لا تحتوي على ما يكفي من العناصر ال
 msgid "The cart does not have the required items."
 msgstr "السلة لا تحتوي على العناصر المطلوبة."
 
-#: app/components/discounts/discount-form.tsx:827
+#: app/components/discounts/discount-form.tsx:852
 msgid "The cashier applies it on the register. A variable discount asks them for the amount or percent."
 msgstr "يطبّقه أمين الصندوق على الجهاز. الخصم المتغير يطلب منه المبلغ أو النسبة."
 
-#: app/components/discounts/discount-form.tsx:901
+#: app/components/discounts/discount-form.tsx:926
 msgid "The cashier types the amount at the till."
 msgstr "يكتب أمين الصندوق المبلغ عند الصندوق."
 
-#: app/components/discounts/discount-form.tsx:899
+#: app/components/discounts/discount-form.tsx:924
 msgid "The cashier types the percent at the till."
 msgstr "يكتب أمين الصندوق النسبة عند الصندوق."
 
@@ -35269,7 +35292,7 @@ msgstr "خصم القسيمة لم يعد نشطًا أو لم يعد يقبل �
 msgid "The currency does not match the program's currency."
 msgstr "العملة لا تطابق عملة البرنامج."
 
-#: app/components/discounts/discount-form.tsx:377
+#: app/components/discounts/discount-form.tsx:390
 msgid "the currency of your locations"
 msgstr "عملة فروعك"
 
@@ -35375,11 +35398,11 @@ msgstr "حجم ملف PDF للتصميم أكبر من 40 ميغابايت."
 msgid "The details could not be saved. Try again."
 msgstr "تعذّر حفظ التفاصيل. حاول مرة أخرى."
 
-#: app/components/discounts/discount-form.tsx:1033
+#: app/components/discounts/discount-form.tsx:1058
 msgid "The discount applies to each full deal as a whole."
 msgstr "ينطبق الخصم على كل عرض كامل."
 
-#: app/components/discounts/discount-form.tsx:1029
+#: app/components/discounts/discount-form.tsx:1054
 msgid "The discount applies to each item the customer gets."
 msgstr "ينطبق الخصم على كل عنصر يحصل عليه العميل."
 
@@ -35387,7 +35410,7 @@ msgstr "ينطبق الخصم على كل عنصر يحصل عليه العمي�
 msgid "The discount applies to items listed directly in these categories."
 msgstr "يُطبَّق الخصم على العناصر المدرجة مباشرة في هذه التصنيفات."
 
-#: app/components/discounts/discount-form.tsx:1020
+#: app/components/discounts/discount-form.tsx:1045
 msgid "The discount applies to the price of each choice, not the item itself."
 msgstr "ينطبق الخصم على سعر كل خيار، لا على العنصر نفسه."
 
@@ -35507,7 +35530,7 @@ msgstr "الملف كبير جدًا. قسّمه إلى ملفات أصغر."
 msgid "The first {perItem} on each item, most expensive first"
 msgstr "أول {perItem} على كل عنصر، بدءًا من الأعلى سعرًا"
 
-#: app/components/discounts/discount-form.tsx:115
+#: app/components/discounts/discount-form.tsx:122
 msgid "The first few on each item"
 msgstr "أول بضعة خيارات في كل عنصر"
 
@@ -35637,7 +35660,7 @@ msgstr "تعذّر إرسال دعوة المقابلة"
 msgid "The invitation was not sent. Try again."
 msgstr "لم يتم إرسال الدعوة. حاول مرة أخرى."
 
-#: app/components/discounts/discount-form.tsx:86
+#: app/components/discounts/discount-form.tsx:93
 msgid "The items cost a flat price instead."
 msgstr "تُباع العناصر بسعر ثابت بدلًا من ذلك."
 
@@ -35769,11 +35792,11 @@ msgstr "تستخدم الرسالة {tag}. اختر قسيمة أو احذف ا�
 msgid "The Meta emulator refused this post (it contains #fail)."
 msgstr "رفض محاكي Meta هذا المنشور (يحتوي على #fail)."
 
-#: app/components/discounts/discount-form.tsx:987
+#: app/components/discounts/discount-form.tsx:1012
 msgid "The more the customer spends or buys, the bigger the discount."
 msgstr "كلما أنفق العميل أو اشترى أكثر، زاد الخصم."
 
-#: app/components/discounts/discount-form.tsx:117
+#: app/components/discounts/discount-form.tsx:124
 msgid "The most expensive choices on each item, such as 2 toppings free."
 msgstr "الخيارات الأعلى سعرًا في كل عنصر، مثل إضافتين مجانًا."
 
@@ -35785,7 +35808,7 @@ msgstr "أقصى مبلغ يمكن تحصيله من حجز واحد كرسوم.
 msgid "The name and units customers see."
 msgstr "الاسم والوحدات التي يراها العملاء."
 
-#: app/components/discounts/discount-form.tsx:703
+#: app/components/discounts/discount-form.tsx:728
 msgid "The name customers see, and how the discount is taken off."
 msgstr "الاسم الذي يراه العملاء، وكيف يُخصم المبلغ."
 
@@ -35829,7 +35852,7 @@ msgstr "تعذّر إكمال الطلب، لذلك استرددنا المبل�
 msgid "The order is below the minimum spend."
 msgstr "الطلب أقل من الحد الأدنى للإنفاق."
 
-#: app/components/discounts/discount-form.tsx:1292
+#: app/components/discounts/discount-form.tsx:1317
 msgid "The order must already include them before the discount applies."
 msgstr "يجب أن يتضمن الطلب هذه العناصر قبل تطبيق الخصم."
 
@@ -36763,7 +36786,7 @@ msgstr "لا تحتوي لوحة التحكم هذه على كتل بعد"
 msgid "This date appears more than once in the file."
 msgstr "يظهر هذا التاريخ أكثر من مرة في الملف."
 
-#: app/components/discounts/discount-form.tsx:1059
+#: app/components/discounts/discount-form.tsx:1084
 msgid "This deal chooses its own items under Quantity. The exclusions below still apply."
 msgstr "يختار هذا العرض عناصره بنفسه ضمن الكمية. وتظل الاستثناءات أدناه سارية."
 
@@ -36782,6 +36805,14 @@ msgstr "هذا الجهاز"
 #~ msgid "This dining area was modified by another operator. Reloading latest data."
 #~ msgstr "تم تعديل منطقة الطعام هذه بواسطة مشغل آخر. جارٍ إعادة تحميل أحدث البيانات."
 
+#: app/components/discounts/discount-form.tsx:677
+msgid "This discount also runs at locations outside yours, so you can look at it but not change it. Ask someone who manages every location."
+msgstr "يعمل هذا الخصم أيضًا في فروع خارج فروعك، لذا يمكنك الاطلاع عليه دون تغييره. اطلب ذلك من شخص يدير جميع الفروع."
+
+#: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:174
+msgid "This discount also runs at locations outside yours, so you can't change it."
+msgstr "يعمل هذا الخصم أيضًا في فروع خارج فروعك، لذا لا يمكنك تغييره."
+
 #: app/components/print/restaurant/vertical-ui.tsx:152
 #~ msgid "This discount applies by itself, so the card just opens your menu where the offer shows."
 #~ msgstr "يُطبَّق هذا الخصم تلقائيًا، لذا تفتح البطاقة قائمتك حيث يظهر العرض."
@@ -36790,19 +36821,19 @@ msgstr "هذا الجهاز"
 msgid "This discount applies by itself, so the code opens your menu where the offer shows."
 msgstr "يُطبَّق هذا الخصم تلقائيًا، لذا يفتح الرمز قائمتك حيث يظهر العرض."
 
-#: app/components/discounts/discount-form.tsx:651
+#: app/components/discounts/discount-form.tsx:668
 msgid "This discount could not be saved. Check the fields and try again."
 msgstr "تعذر حفظ هذا الخصم. راجع الحقول وحاول مرة أخرى."
 
-#: app/components/discounts/discount-form.tsx:620
+#: app/components/discounts/discount-form.tsx:633
 msgid "This discount is archived, so it can't be edited. Restore it to change it. It comes back paused."
 msgstr "هذا الخصم مؤرشف، لذلك لا يمكن تعديله. استعده لتغييره. يعود متوقفًا مؤقتًا."
 
-#: app/components/discounts/discount-form.tsx:612
+#: app/components/discounts/discount-form.tsx:625
 msgid "This discount is paused. Customers can't get it until you resume it."
 msgstr "هذا الخصم متوقف مؤقتًا. لا يحصل عليه العملاء حتى تستأنفه."
 
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:537
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:552
 msgid "This discount needs a fix before it can apply."
 msgstr "يحتاج هذا الخصم إلى إصلاح قبل أن يُطبَّق."
 
@@ -36810,7 +36841,7 @@ msgstr "يحتاج هذا الخصم إلى إصلاح قبل أن يُطبَّ�
 #~ msgid "This discount uses a rule this editor can't change yet. The items it names stay as they are when you save."
 #~ msgstr "يستخدم هذا الخصم قاعدة لا يمكن لهذا المحرر تغييرها بعد. تبقى العناصر المذكورة فيها كما هي عند الحفظ."
 
-#: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:119
+#: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:128
 msgid "This discount was saved in a form the editor can't open. Archive it, then create it again."
 msgstr "حُفظ هذا الخصم بصيغة لا يستطيع المحرر فتحها. أرشفْه، ثم أنشئه من جديد."
 
@@ -37498,7 +37529,7 @@ msgstr "المستوى {number}: أنفق على الأقل"
 msgid "Tiered discount"
 msgstr "خصم متدرّج"
 
-#: app/components/discounts/discount-form.tsx:457
+#: app/components/discounts/discount-form.tsx:470
 #: app/utils/discounts/summary.ts:288
 msgid "Tiers"
 msgstr "المستويات"
@@ -37507,7 +37538,7 @@ msgstr "المستويات"
 msgid "Tiers go up by"
 msgstr "ترتفع المستويات حسب"
 
-#: app/components/discounts/discount-form.tsx:992
+#: app/components/discounts/discount-form.tsx:1017
 msgid "Tiers go with a plain item or order discount. They are not available at the till, with a quantity rule, a meal deal or modifier choices."
 msgstr "تعمل المستويات مع خصم عادي على العناصر أو الطلب. وهي غير متاحة عند الصندوق، ولا مع قاعدة كمية أو عرض وجبة أو خيارات الإضافات."
 
@@ -37720,14 +37751,14 @@ msgstr "المنطقة الزمنية"
 msgid "Timing and notes"
 msgstr "التوقيت والملاحظات"
 
-#: app/components/orders/order-detail.tsx:653
+#: app/components/orders/order-detail.tsx:655
 msgid "Tip"
 msgstr "البقشيش"
 
 #~ msgid "Tip ({0}%)"
 #~ msgstr "البقشيش ({0}%)"
 
-#: app/components/orders/order-detail.tsx:652
+#: app/components/orders/order-detail.tsx:654
 msgid "Tip ({tipPercent}%)"
 msgstr "البقشيش ({tipPercent}%)"
 
@@ -37836,7 +37867,7 @@ msgstr "لإعادة ترتيب هذه المجموعة، اضغط مفتاح ا
 msgid "To see coverage against the orders you usually get, set how many orders one person handles in an hour."
 msgstr "لعرض التغطية مقابل الطلبات التي تصلك عادة، حدّد عدد الطلبات التي يتولاها شخص واحد في الساعة."
 
-#: ../../packages/marketing/src/components/coupon-offer-field.tsx:78
+#: ../../packages/marketing/src/components/coupon-offer-field.tsx:94
 msgid "To send a coupon, first create a discount that customers apply with a code."
 msgstr "لإرسال قسيمة، أنشئ أولًا خصمًا يطبّقه العملاء برمز."
 
@@ -37950,13 +37981,13 @@ msgstr "الموضوع"
 msgid "Topping"
 msgstr "إضافة"
 
-#: app/components/discounts/discount-form.tsx:1117
+#: app/components/discounts/discount-form.tsx:1142
 msgid "Toppings, sauces and other choices on an item."
 msgstr "الإضافات والصلصات وخيارات أخرى على العنصر."
 
 #: app/components/customers/person-orders-panel.tsx:175
 #: app/components/notes-chart.tsx:69
-#: app/components/orders/order-detail.tsx:672
+#: app/components/orders/order-detail.tsx:674
 #: app/components/staff/labor/labor-overview.tsx:219
 #: app/components/staff/labor/labor-tips.tsx:276
 #: app/components/staff/timesheets/payroll-summary.tsx:426
@@ -38342,7 +38373,7 @@ msgstr "جرّب بحثًا آخر أو امسح عوامل التصفية."
 msgid "Try another style"
 msgstr "جرّب نمطًا آخر"
 
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:347
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:357
 msgid "Try another type or status."
 msgstr "جرّب نوعًا أو حالة أخرى."
 
@@ -38497,7 +38528,7 @@ msgstr "قاعدتا استراحة تبدآن عند النقطة نفسها م
 msgid "Two breaks overlap. Fix their times."
 msgstr "استراحتان متداخلتان. صحّح أوقاتهما."
 
-#: app/components/discounts/discount-form.tsx:1742
+#: app/components/discounts/discount-form.tsx:1767
 msgid "Two discounts combine only if each allows the other's kind. With none ticked, this discount stands alone: the customer gets it or the others, whichever saves more."
 msgstr "لا يجتمع خصمان إلا إذا سمح كل منهما بنوع الآخر. وإذا لم تحدد شيئًا، يعمل هذا الخصم بمفرده: يحصل العميل عليه أو على غيره، أيهما يوفّر أكثر."
 
@@ -38524,7 +38555,7 @@ msgstr "المصادقة الثنائية مفعّلة حالياً. تعطيل�
 #: app/components/website/create-form-dialog.tsx:198
 #: app/components/website/form-builder-sidebar.tsx:521
 #: app/components/website/link-inspector.tsx:341
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:284
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:294
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:303
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:347
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1356
@@ -38812,7 +38843,7 @@ msgid "Unknown terminal"
 msgstr "نقطة بيع غير معروفة"
 
 #: app/components/discounts/codes-editor.tsx:143
-#: app/components/discounts/discount-form.tsx:1639
+#: app/components/discounts/discount-form.tsx:1664
 #: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:632
 #: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:653
 msgid "Unlimited"
@@ -38856,7 +38887,7 @@ msgstr "فُتح قفلها"
 msgid "Unmute microphone"
 msgstr "إلغاء كتم الميكروفون"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:157
+#: ../../packages/marketing/src/components/campaign-detail.tsx:160
 msgid "Unnamed recipient"
 msgstr "مستلم بدون اسم"
 
@@ -39260,7 +39291,7 @@ msgstr "الرابط:"
 msgid "Usage"
 msgstr "الاستخدام"
 
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:337
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:347
 msgid "Usage counts are unavailable right now."
 msgstr "أعداد الاستخدام غير متاحة الآن."
 
@@ -39491,7 +39522,7 @@ msgstr "استخدام هذا الصوت"
 msgid "Use this when the guest gave up on the payment page or it is stuck. You can then close the tab at the counter. Card pages are closed where the payment provider allows it; if money still arrives, the tab is marked for review."
 msgstr "استخدم هذا عندما يتخلى الضيف عن صفحة الدفع أو تتعطل. يمكنك بعدها إغلاق الحساب عند الكاونتر. تُغلق صفحات البطاقة حيث يسمح مزود الدفع بذلك؛ وإذا وصل المال رغم ذلك، يُعلَّم الحساب للمراجعة."
 
-#: app/components/discounts/discount-form.tsx:984
+#: app/components/discounts/discount-form.tsx:1009
 msgid "Use tiers"
 msgstr "استخدم المستويات"
 
@@ -39560,16 +39591,16 @@ msgstr "اسم المستخدم أو البريد الإلكتروني"
 msgid "Username or email is required"
 msgstr "اسم المستخدم أو البريد الإلكتروني مطلوب"
 
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:362
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:372
 msgid "Uses"
 msgstr "الاستخدامات"
 
-#: app/components/discounts/discount-form.tsx:487
-#: app/components/discounts/discount-form.tsx:1691
+#: app/components/discounts/discount-form.tsx:500
+#: app/components/discounts/discount-form.tsx:1716
 msgid "Uses allowed"
 msgstr "عدد الاستخدامات المسموح بها"
 
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:298
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:308
 msgid "Uses from"
 msgstr "الاستخدامات من"
 
@@ -39577,7 +39608,7 @@ msgstr "الاستخدامات من"
 msgid "Uses tables"
 msgstr "يستخدم الطاولات"
 
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:313
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:323
 msgid "Uses to"
 msgstr "الاستخدامات إلى"
 
@@ -39593,7 +39624,7 @@ msgstr "يستخدم مسار مكالمة مخصصًا"
 msgid "Using the standard call flow"
 msgstr "يستخدم مسار المكالمة القياسي"
 
-#: ../../packages/marketing/src/components/coupon-offer-field.tsx:201
+#: ../../packages/marketing/src/components/coupon-offer-field.tsx:273
 msgid "Valid for (days)"
 msgstr "صالحة لمدة (أيام)"
 
@@ -39725,7 +39756,7 @@ msgstr "عرض"
 msgid "View all"
 msgstr "عرض الكل"
 
-#: app/components/orders/order-detail.tsx:427
+#: app/components/orders/order-detail.tsx:429
 msgid "View all orders"
 msgstr "عرض كل الطلبات"
 
@@ -40557,7 +40588,7 @@ msgstr "يبدأ الأسبوع يوم"
 msgid "Weekdays"
 msgstr "أيام الأسبوع"
 
-#: app/components/discounts/discount-form.tsx:469
+#: app/components/discounts/discount-form.tsx:482
 msgid "Weekly hours"
 msgstr "ساعات الأسبوع"
 
@@ -40584,7 +40615,7 @@ msgstr "أسابيع"
 msgid "Welcome"
 msgstr "مرحباً"
 
-#: ../../packages/marketing/src/components/coupon-offer-field.tsx:185
+#: ../../packages/marketing/src/components/coupon-offer-field.tsx:201
 msgid "WELCOME"
 msgstr "WELCOME"
 
@@ -40796,7 +40827,7 @@ msgstr "ما الذي ينقص؟"
 msgid "Wheelchair accessible"
 msgstr "ملائم للكراسي المتحركة"
 
-#: app/components/discounts/discount-form.tsx:1469
+#: app/components/discounts/discount-form.tsx:1494
 #: app/components/reservations/booking-sheet.tsx:617
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:927
 #: app/utils/discounts/summary.ts:340
@@ -40936,7 +40967,7 @@ msgstr "عند وصول الإشعارات، ستظهر هنا."
 msgid "When you're closed"
 msgstr "عندما تكون مغلقًا"
 
-#: app/components/discounts/discount-form.tsx:1524
+#: app/components/discounts/discount-form.tsx:1549
 #: app/components/hiring/interview-dialog.tsx:168
 #: app/components/hiring/job-summary.tsx:53
 #: app/components/hiring/location-picker.tsx:68
@@ -41055,7 +41086,7 @@ msgstr "من يمكنه الحجز عبر الإنترنت، وإلى أي مد�
 msgid "Who can manage terminals"
 msgstr "من يمكنه إدارة الأجهزة"
 
-#: app/components/discounts/discount-form.tsx:1599
+#: app/components/discounts/discount-form.tsx:1624
 #: app/utils/discounts/summary.ts:421
 msgid "Who can use it"
 msgstr "من يمكنه استخدامه"
@@ -41125,7 +41156,7 @@ msgstr "تسعير الكاملة/النصف مفعّل لأن هذا الخيا
 msgid "Whole / Left or right"
 msgstr "كاملة / يسار أو يمين"
 
-#: app/components/discounts/discount-form.tsx:1091
+#: app/components/discounts/discount-form.tsx:1116
 #: app/utils/discounts/labels.ts:347
 #: app/utils/discounts/summary.ts:208
 msgid "Whole order"
@@ -41576,7 +41607,7 @@ msgstr "يمكنك الاطلاع على هذه الإعدادات لكن لا �
 msgid "You can look at this card but not change it."
 msgstr "يمكنك الاطلاع على هذه البطاقة لكن لا يمكنك تغييرها."
 
-#: app/components/discounts/discount-form.tsx:659
+#: app/components/discounts/discount-form.tsx:683
 msgid "You can look at this discount. You don't have permission to change it."
 msgstr "يمكنك الاطلاع على هذا الخصم. ليست لديك صلاحية تغييره."
 
@@ -41799,9 +41830,13 @@ msgstr "لديك تغييرات غير محفوظة في هذه التجربة. 
 msgid "You have unsaved changes. Leave this page and lose them?"
 msgstr "لديك تغييرات غير محفوظة. هل تريد مغادرة هذه الصفحة وفقدانها؟"
 
+#: app/components/discounts/discount-form.tsx:651
+msgid "You have unsaved changes. Save or discard them first: Pause, Restore, Archive, Duplicate and Print coupons use the saved discount."
+msgstr "لديك تغييرات غير محفوظة. احفظها أو تجاهلها أولًا: الإيقاف المؤقت والاستعادة والأرشفة والتكرار وطباعة الكوبونات تستخدم الخصم المحفوظ."
+
 #: app/components/discounts/discount-form.tsx:634
-msgid "You have unsaved changes. Save them first: Pause, Restore, Archive and Duplicate act on the saved discount and would drop them."
-msgstr "لديك تغييرات غير محفوظة. احفظها أولًا: الإيقاف المؤقت والاستعادة والأرشفة والتكرار تعمل على الخصم المحفوظ وستُسقط تغييراتك."
+#~ msgid "You have unsaved changes. Save them first: Pause, Restore, Archive and Duplicate act on the saved discount and would drop them."
+#~ msgstr "لديك تغييرات غير محفوظة. احفظها أولًا: الإيقاف المؤقت والاستعادة والأرشفة والتكرار تعمل على الخصم المحفوظ وستُسقط تغييراتك."
 
 #: app/components/reservations/settings/setup-list-chrome.tsx:209
 msgid "You have unsaved edits. If you close now they are lost and nothing is saved."
@@ -42003,7 +42038,7 @@ msgstr "لم يتم نشر مسار المكالمة بعد، لذا اختبر 
 msgid "Your hours, phone, and address. The agent quotes them and uses the hours to tell when you're open."
 msgstr "ساعات العمل والهاتف والعنوان. يذكرها الوكيل ويستخدم الساعات لمعرفة متى تكون مفتوحًا."
 
-#: app/components/discounts/discount-form.tsx:1557
+#: app/components/discounts/discount-form.tsx:1582
 #: app/components/discounts/fields.tsx:406
 msgid "Your locations use different currencies. Choose locations that share one currency to set an amount."
 msgstr "تستخدم فروعك عملات مختلفة. اختر فروعًا تشترك في عملة واحدة لتحديد مبلغ."

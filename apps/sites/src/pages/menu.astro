@@ -948,7 +948,9 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 			isTerminalRefusal,
 			adoptCouponFromUrl,
 			loadStoredCode,
+			rememberDroppedCode,
 			saveStoredCode,
+			stripCouponFromAddress,
 			type DiscountQuotes,
 		} from '~/lib/ordering/discount-quote'
 		import {
@@ -1036,8 +1038,11 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 		const data = readJson<MenuData>('menu-data')
 		const labels = readJson<OrderingLabels>('ordering-labels')
 		const orgId = data.organizationId || 'default'
-		// A printed coupon's QR: keep its code like a typed one, and say so.
+		// A printed coupon's QR: keep its code like a typed one, and say so. A code
+		// this tab already let go of (removed, or refused for good) stays gone, and
+		// the link leaves the address bar so a reload does not send it again.
 		const adoptedCoupon = adoptCouponFromUrl(sessionStorage, orgId, window.location.search)
+		stripCouponFromAddress(window)
 		const couponSaved = document.querySelector<HTMLElement>('#menu-coupon-saved p')
 		if (adoptedCoupon && couponSaved && labels.couponSaved) {
 			couponSaved.textContent = fillTemplate(labels.couponSaved, { code: adoptedCoupon })
@@ -1127,6 +1132,7 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 					if (outcome.reason === 'not_found' && contextKey) {
 						triedCoupons.add(attemptKey(stored, contextKey))
 					}
+					rememberDroppedCode(sessionStorage, orgId, stored)
 					saveStoredCode(sessionStorage, orgId, null)
 					return
 				}

@@ -28,25 +28,107 @@ import {
  */
 export const TILL_RULES_MAX_AGE_MS = 24 * 60 * 60 * 1000
 
+/**
+ * How far the tablet's clock may move back, or a rules stamp sit in the
+ * future, before the rules' age counts as unknown. Above a tablet's normal
+ * drift and a network time correction's usual size.
+ */
+export const TILL_CLOCK_SKEW_MS = 5 * 60 * 1000
+
 export type TillRulesStatus =
 	| { state: 'none' }
 	| { state: 'fresh'; fetchedAt: number }
-	| { state: 'expired'; fetchedAt: number }
+	/** `age`: older than the limit. `clock`: the tablet's clock moved back since they came (or was ahead then), so their age is unknown. */
+	| { state: 'expired'; fetchedAt: number; cause: 'age' | 'clock' }
+
+/** Where the latest time seen with the current rules is kept across reloads. */
+export const TILL_CLOCK_KEY = 'station_till_rules_clock'
+const CLOCK_PERSIST_MS = 60_000
+
+type ClockRecord = { stamp: number; seen: number }
+let clockRecord: ClockRecord | null | undefined
+let clockPersistedAt = 0
+
+function readClockRecord(): ClockRecord | null {
+	try {
+		const raw = globalThis.localStorage?.getItem(TILL_CLOCK_KEY)
+		if (!raw) return null
+		const parsed = JSON.parse(raw) as Partial<ClockRecord> | null
+		return typeof parsed?.stamp === 'number' &&
+			typeof parsed.seen === 'number' &&
+			Number.isFinite(parsed.stamp) &&
+			Number.isFinite(parsed.seen)
+			? { stamp: parsed.stamp, seen: parsed.seen }
+			: null
+	} catch {
+		return null
+	}
+}
+
+function writeClockRecord(record: ClockRecord, now: number) {
+	clockPersistedAt = now
+	try {
+		globalThis.localStorage?.setItem(TILL_CLOCK_KEY, JSON.stringify(record))
+	} catch {
+		// Storage full or blocked: the record lives for this page only.
+	}
+}
 
 /**
- * Whether the rules on this device may still be applied. A catalog stored before
- * rules carried a stamp uses the catalog's own fetch time.
+ * The latest time this tablet has seen while holding the rules stamped
+ * `stamp`, noting `now` first. New rules (another stamp) start again from
+ * their own time, so a clock that was wrong once does not keep good rules
+ * off. Kept in localStorage (written at most once a minute) so a reload
+ * remembers it.
+ */
+export function noteTillClock(stamp: number, now = Date.now()): number {
+	if (clockRecord === undefined) clockRecord = readClockRecord()
+	if (!clockRecord || clockRecord.stamp !== stamp) {
+		clockRecord = { stamp, seen: Math.max(stamp, now) }
+		writeClockRecord(clockRecord, now)
+	} else if (now > clockRecord.seen) {
+		clockRecord = { stamp, seen: now }
+		if (Math.abs(now - clockPersistedAt) >= CLOCK_PERSIST_MS)
+			writeClockRecord(clockRecord, now)
+	}
+	return clockRecord.seen
+}
+
+/** Forgets the in-memory copy, so the next check reads storage again (tests, a reset till). */
+export function reloadTillClock(): void {
+	clockRecord = undefined
+	clockPersistedAt = 0
+}
+
+/**
+ * Whether the rules on this device may still be applied. A catalog stored
+ * before rules carried a stamp uses the catalog's own fetch time.
+ *
+ * Their age is measured on the tablet's clock, so a clock moved back must not
+ * make them younger: rules stamped in the future, or held while the clock went
+ * back more than `TILL_CLOCK_SKEW_MS` below the latest time seen with them, are
+ * expired until the till fetches rules again. Together that bounds how long
+ * rules apply to about `TILL_RULES_MAX_AGE_MS` of the clock moving forward.
+ *
+ * With no `now`, the tablet's clock and its stored latest time are used. A
+ * given `now` (tests, what-ifs) is taken as is, as is `latestSeen`.
  */
 export function tillRulesStatus(
 	snapshot: Pick<CatalogSnapshot, 'fetchedAt' | 'menu'> | null | undefined,
-	now = Date.now(),
+	now?: number,
+	latestSeen?: number,
 ): TillRulesStatus {
 	const rules = snapshot?.menu.discountRules
 	if (!snapshot || !Array.isArray(rules) || rules.length === 0)
 		return { state: 'none' }
 	const fetchedAt = snapshot.menu.discountRulesAt ?? snapshot.fetchedAt
-	return now - fetchedAt > TILL_RULES_MAX_AGE_MS
-		? { state: 'expired', fetchedAt }
+	const wall = now ?? Date.now()
+	const seen =
+		latestSeen ?? (now === undefined ? noteTillClock(fetchedAt, wall) : wall)
+	if (fetchedAt > wall + TILL_CLOCK_SKEW_MS || wall < seen - TILL_CLOCK_SKEW_MS)
+		return { state: 'expired', fetchedAt, cause: 'clock' }
+	return wall - fetchedAt > TILL_RULES_MAX_AGE_MS
+		? { state: 'expired', fetchedAt, cause: 'age' }
 		: { state: 'fresh', fetchedAt }
 }
 

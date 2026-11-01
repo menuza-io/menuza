@@ -78,10 +78,11 @@ export type DiscountNotice =
 	  }
 	| { kind: 'replaced'; names: string[] }
 	/**
-	 * The rules on this till are too old to apply, and these automatic discounts
-	 * would have applied to the cart. Raised once per set of skipped discounts.
+	 * The rules on this till are too old to apply (or the clock moved back since
+	 * they came: `cause`), and these automatic discounts would have applied to
+	 * the cart. Raised once per set of skipped discounts.
 	 */
-	| { kind: 'rules_old'; names: string[] }
+	| { kind: 'rules_old'; names: string[]; cause: 'age' | 'clock' }
 	/**
 	 * Sent rounds on this tab hold automatic discounts the rules on this till no
 	 * longer offer. The guest keeps them. Raised once per set of such discounts.
@@ -465,7 +466,8 @@ function withAutomaticDiscounts(
 	// which would have applied. Once per set of skipped discounts: a cart edit
 	// keeps the notice that is up, and brings none back after it was dismissed.
 	let skipped: string[] = []
-	if (tillRulesStatus(state.snapshot).state === 'expired') {
+	const rulesStatus = tillRulesStatus(state.snapshot)
+	if (rulesStatus.state === 'expired') {
 		try {
 			skipped = settleCart(state, lines, null, true).automatic.map(
 				(row) => row.label,
@@ -479,7 +481,11 @@ function withAutomaticDiscounts(
 		staleKey === null
 			? null
 			: staleKey !== state.staleRulesNoticeKey
-				? { kind: 'rules_old', names: skipped }
+				? {
+						kind: 'rules_old',
+						names: skipped,
+						cause: rulesStatus.state === 'expired' ? rulesStatus.cause : 'age',
+					}
 				: state.discountNotice?.kind === 'rules_old'
 					? state.discountNotice
 					: null
@@ -601,7 +607,13 @@ export const usePos = create<PosState>((set, get) => ({
 	async refreshIfStale(maxAgeMs) {
 		const { snapshot, online, refreshing } = get()
 		if (!online || refreshing) return
-		if (snapshot && Date.now() - snapshot.fetchedAt < maxAgeMs) return
+		if (snapshot) {
+			const age = Date.now() - snapshot.fetchedAt
+			// A clock moved back makes the age negative: refresh then too, or the
+			// menu and the discount rules (now off, see `tillRulesStatus`) would
+			// wait until the clock caught up again.
+			if (age >= 0 && age < maxAgeMs) return
+		}
 		await get().refresh()
 	},
 

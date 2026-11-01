@@ -20,7 +20,7 @@ export function ArchiveDiscountButton({
 	name,
 	hasCodes,
 	disabled,
-	title,
+	describedBy,
 	variant = 'ghost',
 	size = 'sm',
 	onConfirm,
@@ -28,8 +28,11 @@ export function ArchiveDiscountButton({
 	name: string
 	hasCodes: boolean
 	disabled?: boolean
-	/** Why the button is off, shown on hover. */
-	title?: string
+	/**
+	 * The id of visible text that says why the button is off. A tooltip alone
+	 * can't be reached by keyboard or touch.
+	 */
+	describedBy?: string
 	variant?: 'ghost' | 'outline'
 	size?: 'sm' | 'default'
 	onConfirm: () => void
@@ -43,7 +46,7 @@ export function ArchiveDiscountButton({
 				variant={variant}
 				size={size}
 				disabled={disabled}
-				title={title}
+				aria-describedby={describedBy}
 				// The same button sits on every row, so it says which discount.
 				aria-label={t`Archive ${name}`}
 				onClick={() => setOpen(true)}

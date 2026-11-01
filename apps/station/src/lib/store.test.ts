@@ -492,7 +492,11 @@ describe('discounts on the cart', () => {
 		usePos.getState().addLine(dish)
 		expect(usePos.getState().adjustments).toEqual([])
 		const notice = usePos.getState().discountNotice
-		expect(notice).toEqual({ kind: 'rules_old', names: ['Happy hour'] })
+		expect(notice).toEqual({
+			kind: 'rules_old',
+			names: ['Happy hour'],
+			cause: 'age',
+		})
 		// Another edit keeps the same notice (nothing new to announce).
 		usePos.getState().addLine(dish)
 		expect(usePos.getState().discountNotice).toBe(notice)
@@ -509,6 +513,25 @@ describe('discounts on the cart', () => {
 		usePos.getState().addLine(dish)
 		expect(usePos.getState().discountNotice).toMatchObject({
 			kind: 'rules_old',
+		})
+	})
+
+	it('turns the rules off after the clock moved back since they came, and says so', () => {
+		// Stamped ten minutes ahead of this clock: it was set back since the fetch.
+		withRules(
+			[rule({}), rule({ id: 'm1', application: 'manual', percentBp: 1000 })],
+			Date.now() + 10 * 60 * 1000,
+		)
+		usePos.getState().addLine(dish)
+		expect(usePos.getState().adjustments).toEqual([])
+		expect(usePos.getState().discountNotice).toEqual({
+			kind: 'rules_old',
+			names: ['Happy hour'],
+			cause: 'clock',
+		})
+		expect(usePos.getState().applyManualDiscount('m1')).toEqual({
+			ok: false,
+			reason: 'rules_stale',
 		})
 	})
 
@@ -665,5 +688,27 @@ describe('discounts on the cart', () => {
 				)
 			expect(taken).toBe(1000)
 		})
+	})
+})
+
+describe('refreshing the menu while online', () => {
+	const catalogFetchedAt = (fetchedAt: number) =>
+		({ key: 'catalog', fetchedAt, organization: {}, menu: {} }) as never
+
+	it('waits while the last fetch is recent, and refreshes after a clock moved back', async () => {
+		const original = usePos.getState().refresh
+		const refresh = vi.fn(async () => {})
+		usePos.setState({ online: true, refreshing: false, refresh })
+		try {
+			usePos.setState({ snapshot: catalogFetchedAt(Date.now() - 60_000) })
+			await usePos.getState().refreshIfStale(5 * 60_000)
+			expect(refresh).not.toHaveBeenCalled()
+			// The last fetch is an hour ahead of this clock: its age is unknown.
+			usePos.setState({ snapshot: catalogFetchedAt(Date.now() + 60 * 60_000) })
+			await usePos.getState().refreshIfStale(5 * 60_000)
+			expect(refresh).toHaveBeenCalledTimes(1)
+		} finally {
+			usePos.setState({ refresh: original, snapshot: null })
+		}
 	})
 })

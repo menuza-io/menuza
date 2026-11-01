@@ -41,7 +41,10 @@ export function CampaignDetailView({
 		const name =
 			coupon.discountName ?? _(msg`a discount that is no longer listed`)
 		if (coupon.mode === 'shared') {
-			return _(msg`Coupon: ${name}, with the code ${coupon.code} for everyone.`)
+			const code = coupon.code
+			return code
+				? _(msg`Coupon: ${name}, with the code ${code} for everyone.`)
+				: _(msg`Coupon: ${name}, with one shared code for everyone.`)
 		}
 		const days = coupon.validDays
 		return _(

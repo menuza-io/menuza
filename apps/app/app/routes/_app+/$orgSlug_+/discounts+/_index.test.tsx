@@ -42,7 +42,10 @@ afterEach(() => {
 	Element.prototype.scrollIntoView = originalScrollIntoView
 })
 
-function renderList(actionResult: unknown) {
+function renderList(
+	actionResult: unknown,
+	options: { editable?: boolean } = {},
+) {
 	i18n.load('en', {})
 	i18n.activate('en')
 	const Stub = createRoutesStub([
@@ -65,6 +68,7 @@ function renderList(actionResult: unknown) {
 						application: 'automatic',
 						updatedAt: '2026-10-01T00:00:00.000Z',
 						codes: [],
+						editable: options.editable ?? true,
 					},
 				],
 			}),
@@ -102,5 +106,26 @@ describe('discounts list', () => {
 				'You have reached the limit of 2,000 coupon codes across all discounts.',
 			),
 		).toBeTruthy()
+	})
+
+	it('shows a discount shared with other locations as view only', async () => {
+		renderList({ ok: true }, { editable: false })
+		expect(
+			await screen.findByText('Shared with other locations. View only.'),
+		).toBeTruthy()
+		expect(
+			screen.queryByRole('button', { name: 'Restore Old lunch' }),
+		).toBeNull()
+	})
+
+	it('says so when a status change is refused because the discount is shared', async () => {
+		renderList({ scope: true })
+		await userEvent.click(
+			await screen.findByRole('button', { name: 'Restore Old lunch' }),
+		)
+		const alert = await screen.findByText(
+			"It now also runs at locations outside yours, so you can't change it.",
+		)
+		expect(alert.getAttribute('role')).toBe('alert')
 	})
 })

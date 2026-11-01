@@ -251,4 +251,82 @@ describe('till discount rules in the stored catalog', () => {
 			await db.catalog.clear()
 		}
 	})
+
+	/** A refresh whose menu answers but whose rules fetch fails, over a stored catalog. */
+	async function refreshKeepingRules(stored: {
+		rules: unknown[]
+		rulesAt: number
+	}) {
+		const demo = demoCatalog()
+		await db.catalog.put({
+			...demo,
+			fetchedAt: stored.rulesAt,
+			menu: {
+				...demo.menu,
+				discountRules: stored.rules,
+				discountRulesAt: stored.rulesAt,
+			},
+		})
+		vi.stubGlobal(
+			'fetch',
+			vi.fn(async (url: string | URL) => {
+				const path = String(url)
+				if (path.includes('/pos/discount-rules')) {
+					return new Response('{}', { status: 503 })
+				}
+				const body = path.includes('/resources/sites/menu')
+					? demo.menu
+					: demo.organization
+				return new Response(JSON.stringify(body), { status: 200 })
+			}),
+		)
+		try {
+			return await refreshCatalog({
+				...loadSettings(),
+				demo: false,
+				appUrl: 'https://app.test',
+				slug: 'acme',
+				tenantApiUrl: 'https://region.test',
+				deviceToken: 'device',
+			})
+		} finally {
+			vi.unstubAllGlobals()
+			await db.catalog.clear()
+		}
+	}
+
+	it('keeps the old rules with their own stamp when the rules fetch fails', async () => {
+		const rulesAt = Date.now() - 25 * 60 * 60 * 1000
+		const result = await refreshKeepingRules({ rules: [{ id: 'd1' }], rulesAt })
+		expect(result.ok).toBe(true)
+		if (!result.ok) return
+		// The new catalog is fresh; its rules are as old as when they came.
+		expect(result.snapshot.menu.discountRulesAt).toBe(rulesAt)
+		expect(tillRulesStatus(result.snapshot)).toMatchObject({
+			state: 'expired',
+			cause: 'age',
+		})
+	})
+
+	it('never lets carried rules take the new catalog time, even with a zero stamp', async () => {
+		const result = await refreshKeepingRules({
+			rules: [{ id: 'd1' }],
+			rulesAt: 0,
+		})
+		if (!result.ok) throw new Error('refresh failed')
+		expect(result.snapshot.menu.discountRulesAt).toBe(0)
+		expect(tillRulesStatus(result.snapshot).state).toBe('expired')
+	})
+
+	it('keeps carried rules from the future off: the clock moved back since', async () => {
+		const result = await refreshKeepingRules({
+			rules: [{ id: 'd1' }],
+			rulesAt: Date.now() + 60 * 60 * 1000,
+		})
+		if (!result.ok) throw new Error('refresh failed')
+		expect(tillRulesStatus(result.snapshot)).toMatchObject({
+			state: 'expired',
+			cause: 'clock',
+		})
+	})
 })

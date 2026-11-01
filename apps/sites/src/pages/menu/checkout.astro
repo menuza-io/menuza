@@ -831,16 +831,22 @@ const tipOff = 'border-border bg-background text-foreground'
 		import { checkoutOrderPayload } from '~/lib/ordering/checkout-payload'
 		import { orderErrorMessage } from '~/lib/ordering/order-errors'
 		import {
+			adoptCouponFromUrl,
 			cleanTypedCode,
 			createDiscountQuotes,
+			forgetDroppedCode,
 			isPlausibleCode,
 			isTerminalRefusal,
 			loadStoredCode,
 			parseDiscountOrderRefusal,
+			rememberDroppedCode,
+			sameCouponCode,
 			saveStoredCode,
+			stripCouponFromAddress,
 			type DiscountOrderRefusal,
 			type DiscountQuotes,
 		} from '~/lib/ordering/discount-quote'
+		import { isActionEnter } from '~/lib/ordering/dom'
 		import {
 			appliedAnnouncement,
 			couponView,
@@ -1004,12 +1010,14 @@ const tipOff = 'border-border bg-background text-foreground'
 		// a code refused for good, kept on screen with its message until edited.
 		const discountLabels = labels.discounts
 		let discounts: DiscountQuotes | null = null
-		const linkCode = cleanTypedCode(
-			new URLSearchParams(location.search).get('coupon') ?? '',
-		)
-		const couponFromLink =
-			linkCode && isPlausibleCode(linkCode) ? linkCode : null
-		let couponCode: string | null = couponFromLink || loadStoredCode(sessionStorage, orgId)
+		// A coupon link (`?coupon=`) is kept like a typed code, unless this tab
+		// already let that code go (removed, replaced or refused for good). It
+		// then leaves the address bar, so a reload does not send it again.
+		adoptCouponFromUrl(sessionStorage, orgId, location.search)
+		stripCouponFromAddress(window)
+		let couponCode: string | null = loadStoredCode(sessionStorage, orgId)
+		/** This tab lets go of a code: a coupon link does not bring it back. */
+		const dropCode = (code: string | null) => rememberDroppedCode(sessionStorage, orgId, code)
 		let heldRefusal: HeldCoupon | null = null
 		// Codes sent again after a refusal the region words as "not found" (see
 		// `coupon-retry.ts`): once per code and order context.
@@ -1840,6 +1848,7 @@ const tipOff = 'border-border bg-background text-foreground'
 			const outcome = quote.coupon
 			if (couponCode && outcome?.status === 'refused' && isTerminalRefusal(outcome.reason)) {
 				holdFromRegion(couponCode, outcome.reason)
+				dropCode(couponCode)
 				couponCode = null
 				saveStoredCode(sessionStorage, orgId, null)
 				pendingAnnounce = null
@@ -1973,6 +1982,7 @@ const tipOff = 'border-border bg-background text-foreground'
 			}
 			if (!typed) {
 				// Clearing the field and pressing Apply must not resend the old code.
+				dropCode(couponCode)
 				couponCode = null
 				heldRefusal = null
 				saveStoredCode(sessionStorage, orgId, null)
@@ -1985,12 +1995,16 @@ const tipOff = 'border-border bg-background text-foreground'
 			if (!isPlausibleCode(typed)) {
 				// Not a code the region could ever accept: say so without asking.
 				heldRefusal = { code: typed, reason: 'not_found' }
+				dropCode(couponCode)
 				couponCode = null
 				saveStoredCode(sessionStorage, orgId, null)
 				renderCoupon()
 				couponInput.focus()
 				return
 			}
+			// Typing a code takes it back; the one it replaces is let go.
+			if (couponCode && !sameCouponCode(couponCode, typed)) dropCode(couponCode)
+			forgetDroppedCode(sessionStorage, orgId, typed)
 			couponCode = typed
 			couponInput.value = typed
 			saveStoredCode(sessionStorage, orgId, typed)
@@ -2002,6 +2016,7 @@ const tipOff = 'border-border bg-background text-foreground'
 		}
 
 		function removeCoupon() {
+			dropCode(couponCode)
 			couponCode = null
 			heldRefusal = null
 			localMessage = null
@@ -2024,7 +2039,9 @@ const tipOff = 'border-border bg-background text-foreground'
 		couponRemove?.addEventListener('click', removeCoupon)
 		couponClear?.addEventListener('click', removeCoupon)
 		couponInput?.addEventListener('keydown', (event) => {
-			if (event.key === 'Enter') {
+			// An Enter that confirms an input-method candidate is not "apply":
+			// the code is not finished, and a partial one spends an attempt.
+			if (isActionEnter(event)) {
 				event.preventDefault()
 				applyCoupon()
 			}
@@ -2060,6 +2077,7 @@ const tipOff = 'border-border bg-background text-foreground'
 				const reason = refusal.reason
 				if (reason && isTerminalRefusal(reason) && couponCode) {
 					holdFromRegion(couponCode, reason)
+					dropCode(couponCode)
 					couponCode = null
 					saveStoredCode(sessionStorage, orgId, null)
 				}
@@ -2073,6 +2091,7 @@ const tipOff = 'border-border bg-background text-foreground'
 			}
 			// Discounts went off (or cannot be used here): drop the code and show
 			// the plain total; the customer places the order again knowing that.
+			dropCode(couponCode)
 			couponCode = null
 			heldRefusal = null
 			saveStoredCode(sessionStorage, orgId, null)

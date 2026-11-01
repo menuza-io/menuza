@@ -572,12 +572,13 @@ function eligibleUnits(discount: DiscountRecord, state: State): Unit[] {
 	if (discount.valueType !== 'fixed_price') return eligible.sort(byValueDesc)
 	// A set price takes from the base only, so units worth the same in all can
 	// still differ in base: the one with the bigger base goes first, or the
-	// result would depend on which line the guest added first.
+	// result would depend on which line the guest added first. Each base is
+	// worked out once, not on every comparison.
+	const bases = new Map<Unit, number>()
+	for (const unit of eligible) bases.set(unit, priceBasis(unit, state))
 	return eligible.sort(
 		(a, b) =>
-			b.value - a.value ||
-			priceBasis(b, state) - priceBasis(a, state) ||
-			byUnitKey(a, b),
+			b.value - a.value || bases.get(b)! - bases.get(a)! || byUnitKey(a, b),
 	)
 }
 
@@ -620,13 +621,26 @@ function pairBySpend(
 	if (maxUnits !== null) {
 		repetitions = Math.min(repetitions, Math.floor(maxUnits / getQuantity))
 	}
+	if (repetitions < 1) return null
+	// Discounting more units only lowers what counts towards the spend, so the
+	// first count that is earned, from the top, is the largest. `overlap[k]` is
+	// the value of the first k get units that also sit in the buy group: one
+	// pass, instead of re-adding the buy group for every count.
+	const inBuy = new Set(buyPool)
+	const buyTotal = sumMinor(buyPool.map((unit) => unit.value))
+	const picks = repetitions * getQuantity
+	const overlap = new Array<number>(picks + 1)
+	overlap[0] = 0
+	for (let index = 0; index < picks; index += 1) {
+		const unit = getPool[index]!
+		overlap[index + 1] = overlap[index]! + (inBuy.has(unit) ? unit.value : 0)
+	}
 	for (; repetitions >= 1; repetitions -= 1) {
-		const picked = getPool.slice(0, repetitions * getQuantity)
-		const taken = new Set(picked)
-		const spent = sumMinor(
-			buyPool.filter((unit) => !taken.has(unit)).map((unit) => unit.value),
-		)
-		if (Math.floor(spent / spendMinor) >= repetitions) return picked
+		const spent = buyTotal - overlap[repetitions * getQuantity]!
+		// Whole numbers compared as such: no division to round.
+		if (spent >= repetitions * spendMinor) {
+			return getPool.slice(0, repetitions * getQuantity)
+		}
 	}
 	return null
 }
@@ -647,8 +661,12 @@ function pairBuyGet(
 	lines: readonly WorkingLine[],
 	maxUnits: number | null,
 ): Unit[] | null {
-	const inBuy = (unit: Unit) => lineInSet(rule.buy, lines[unit.lineIndex]!)
-	const inGet = (unit: Unit) => lineInSet(rule.get, lines[unit.lineIndex]!)
+	// Group membership is a property of the line: worked out once per line,
+	// not once per unit.
+	const buyLines = lines.map((line) => lineInSet(rule.buy, line))
+	const getLines = lines.map((line) => lineInSet(rule.get, line))
+	const inBuy = (unit: Unit) => buyLines[unit.lineIndex]!
+	const inGet = (unit: Unit) => getLines[unit.lineIndex]!
 	if (rule.buy.quantity === undefined) {
 		return pairBySpend(
 			rule.buy.spendMinor ?? Number.POSITIVE_INFINITY,
@@ -683,10 +701,18 @@ function pairBuyGet(
 
 /**
  * Fill as many bundles as the cart allows and return them, each a list of
- * units. The guest gets the best price: slots take the dearest units, and the
- * dearest units go into the first bundle. Slots are filled scarcest first, so
- * a slot with few candidates isn't starved by one that overlaps it.
- * `units` is sorted dearest first.
+ * units. `units` is sorted dearest first.
+ *
+ * The count is exact, however much the slots overlap. A unit fills one slot
+ * of the slots its line belongs to, so by Hall's theorem N bundles fit exactly
+ * when every group of slots together has at least N times as many candidate
+ * units as it asks for. With at most 8 slots there are at most 255 groups to
+ * check, whatever the size of the cart.
+ *
+ * The guest gets the best price: the units are the dearest set that can fill
+ * every slot (taken dearest first, each kept only if the slots can still all
+ * be filled, which is optimal because sets that fit form a matroid), and the
+ * dearest units of each slot go into the first bundle.
  */
 function formBundles(
 	rule: Extract<DiscountRecord['quantityRule'], { kind: 'bundle' }>,
@@ -694,49 +720,149 @@ function formBundles(
 	lines: readonly WorkingLine[],
 	maxUnits: number | null,
 ): Unit[][] | null {
-	const candidates = rule.slots.map((slot) =>
-		units.filter((unit) => lineInSet(slot, lines[unit.lineIndex]!)),
-	)
-	const bundleSize = rule.slots.reduce((sum, slot) => sum + slot.quantity, 0)
-	let repetitions = Math.min(
-		...rule.slots.map((slot, index) =>
-			Math.floor(candidates[index]!.length / slot.quantity),
+	const { slots } = rule
+	const slotCount = slots.length
+	const all = (1 << slotCount) - 1
+	// The slots each line can fill, as a bit set: a unit's "kind".
+	const lineKinds = lines.map((line) =>
+		slots.reduce(
+			(kind, slot, index) =>
+				lineInSet(slot, line) ? kind | (1 << index) : kind,
+			0,
 		),
-		Math.floor(units.length / bundleSize),
 	)
+	const kindOf = (unit: Unit) => lineKinds[unit.lineIndex]!
+	const pool = units.filter((unit) => kindOf(unit) !== 0)
+	const perKind = new Array<number>(all + 1).fill(0)
+	for (const unit of pool) perKind[kindOf(unit)]! += 1
+	const bundleSize = slots.reduce((sum, slot) => sum + slot.quantity, 0)
+	// `need[S]`: the units the slots in group S ask for, per bundle.
+	const need = new Array<number>(all + 1).fill(0)
+	for (let group = 1; group <= all; group += 1) {
+		const lowest = group & -group
+		need[group] =
+			need[group ^ lowest]! + slots[31 - Math.clz32(lowest)]!.quantity
+	}
+	let repetitions = Math.floor(pool.length / bundleSize)
+	for (let group = 1; group <= all; group += 1) {
+		let reach = 0
+		for (let kind = 1; kind <= all; kind += 1) {
+			if (kind & group) reach += perKind[kind]!
+		}
+		repetitions = Math.min(repetitions, Math.floor(reach / need[group]!))
+	}
 	if (maxUnits !== null) {
 		repetitions = Math.min(repetitions, Math.floor(maxUnits / bundleSize))
 	}
-	const scarcest = rule.slots
-		.map((_, index) => index)
-		.sort((a, b) => candidates[a]!.length - candidates[b]!.length || a - b)
-	for (; repetitions >= 1; repetitions--) {
-		const taken = new Set<Unit>()
-		const bySlot: Unit[][] = []
-		let filled = true
-		for (const index of scarcest) {
-			const need = repetitions * rule.slots[index]!.quantity
-			const picked = candidates[index]!.filter(
-				(unit) => !taken.has(unit),
-			).slice(0, need)
-			if (picked.length < need) {
-				filled = false
+	if (repetitions < 1) return null
+
+	// Choose the dearest units that can still fill every slot. Chosen units fit
+	// when, for every group of slots, those that can only go into the group are
+	// no more than it holds: `inside[S]` counts chosen units whose slots all lie
+	// in S, so a unit is checked against the groups that contain its slots.
+	const capacity = need.map((count) => count * repetitions)
+	const inside = new Array<number>(all + 1).fill(0)
+	const chosen: Unit[] = []
+	const wanted = repetitions * bundleSize
+	for (const unit of pool) {
+		if (chosen.length === wanted) break
+		const kind = kindOf(unit)
+		let fits = true
+		for (let group = kind; group <= all; group = (group + 1) | kind) {
+			if (inside[group]! >= capacity[group]!) {
+				fits = false
 				break
 			}
-			for (const unit of picked) taken.add(unit)
-			bySlot[index] = picked
 		}
-		if (!filled) continue
-		return Array.from({ length: repetitions }, (_, bundle) =>
-			rule.slots.flatMap((slot, index) =>
-				bySlot[index]!.slice(
-					bundle * slot.quantity,
-					(bundle + 1) * slot.quantity,
-				),
-			),
-		)
+		if (!fits) continue
+		for (let group = kind; group <= all; group = (group + 1) | kind) {
+			inside[group]! += 1
+		}
+		chosen.push(unit)
 	}
-	return null
+	if (chosen.length < wanted) return null
+
+	// Put each chosen unit in a slot, by counts per (kind, slot). When every
+	// slot a unit fits is full, an earlier unit moves along a chain of slots to
+	// one with room; for units that fit, such a chain always exists.
+	const kinds = [...new Set(chosen.map(kindOf))]
+	const placed = new Array<number>((all + 1) * slotCount).fill(0)
+	const room = slots.map((slot) => slot.quantity * repetitions)
+	for (const unit of chosen) {
+		const kind = kindOf(unit)
+		const from = new Array<number>(slotCount).fill(-1)
+		const moved = new Array<number>(slotCount).fill(0)
+		const seen = new Array<boolean>(slotCount).fill(false)
+		const queue: number[] = []
+		for (let slot = 0; slot < slotCount; slot += 1) {
+			if (kind & (1 << slot)) {
+				seen[slot] = true
+				queue.push(slot)
+			}
+		}
+		let open = -1
+		for (let head = 0; head < queue.length; head += 1) {
+			const slot = queue[head]!
+			if (room[slot]! > 0) {
+				open = slot
+				break
+			}
+			for (const other of kinds) {
+				if (placed[other * slotCount + slot]! === 0) continue
+				for (let next = 0; next < slotCount; next += 1) {
+					if (seen[next] || !(other & (1 << next))) continue
+					seen[next] = true
+					from[next] = slot
+					moved[next] = other
+					queue.push(next)
+				}
+			}
+		}
+		if (open < 0) return null
+		room[open]! -= 1
+		let slot = open
+		while (from[slot]! >= 0) {
+			const previous = from[slot]!
+			placed[moved[slot]! * slotCount + previous]! -= 1
+			placed[moved[slot]! * slotCount + slot]! += 1
+			slot = previous
+		}
+		placed[kind * slotCount + slot]! += 1
+	}
+
+	// Units of one kind are interchangeable: hand them out by those counts,
+	// then keep each slot dearest first so the first bundle gets the dearest.
+	const order = new Map<Unit, number>()
+	pool.forEach((unit, index) => order.set(unit, index))
+	const byKind = new Map<number, Unit[]>()
+	for (const unit of chosen) {
+		const list = byKind.get(kindOf(unit))
+		if (list) list.push(unit)
+		else byKind.set(kindOf(unit), [unit])
+	}
+	const bySlot: Unit[][] = slots.map(() => [])
+	for (const [kind, list] of byKind) {
+		let next = 0
+		for (let slot = 0; slot < slotCount; slot += 1) {
+			for (
+				let count = placed[kind * slotCount + slot]!;
+				count > 0;
+				count -= 1
+			) {
+				bySlot[slot]!.push(list[next]!)
+				next += 1
+			}
+		}
+	}
+	for (const list of bySlot) list.sort((a, b) => order.get(a)! - order.get(b)!)
+	return Array.from({ length: repetitions }, (_, bundle) =>
+		slots.flatMap((slot, index) =>
+			bySlot[index]!.slice(
+				bundle * slot.quantity,
+				(bundle + 1) * slot.quantity,
+			),
+		),
+	)
 }
 
 /**
@@ -803,9 +929,15 @@ function firstPerItem(units: readonly Unit[], perItem: number): Unit[] {
  * every pizza", "sauces 50% off". The value applies to each chosen choice, so
  * a percentage takes that share of the choice's price and a set price is what
  * each one costs. `maxDiscountedUnits` caps choices across the order, dearest
- * first.
+ * first. With `fixedAsTotal` (an amount the cashier types) the amount is one
+ * total for all the chosen choices, spread over them in proportion, never an
+ * amount off each.
  */
-function applyModifiers(discount: DiscountRecord, state: State): ApplyResult {
+function applyModifiers(
+	discount: DiscountRecord,
+	state: State,
+	fixedAsTotal = false,
+): ApplyResult {
 	let units = modifierUnits(discount, state)
 	if (units.length === 0) return { ok: false, reason: 'not_applicable' }
 	const rule = discount.quantityRule
@@ -824,6 +956,8 @@ function applyModifiers(discount: DiscountRecord, state: State): ApplyResult {
 		)
 	} else if (discount.valueType === 'fixed_price') {
 		shares = values.map((value) => Math.max(0, value - price))
+	} else if (fixedAsTotal) {
+		shares = allocateProportionally(Math.min(price, valueMinor), values)
 	} else {
 		shares = values.map((value) => Math.min(price, value))
 	}
@@ -1047,7 +1181,7 @@ function applyDiscount(
 		return { ok: false, reason: 'requirement_not_met' }
 	}
 	if (discount.target.scope === 'modifiers') {
-		return applyModifiers(discount, state)
+		return applyModifiers(discount, state, fixedAsTotal)
 	}
 	const rule = discount.quantityRule
 	if (rule.kind === 'buy_get' || rule.kind === 'bundle') {
@@ -1161,17 +1295,50 @@ type Plan = {
 	lead: DiscountRecord | null
 }
 
-function runPlan(candidates: readonly Candidate[], from: State): Plan {
-	const state = cloneState(from)
-	const applied: AppliedDiscount[] = []
-	let lead: DiscountRecord | null = null
-	for (const { discount, code } of candidates) {
-		const result = applyDiscount(discount, state)
-		if (!result.ok) continue
-		lead ??= discount
-		applied.push(toApplied(discount, code, result))
+/**
+ * Plans already worked out, by the candidates they applied in order ("0,3").
+ * Plans that start the same way share the work: the pair (0, 3) continues from
+ * the plan of 0 alone. A plan's state is never changed once stored.
+ */
+type PlanMemo = Map<string, Plan>
+
+function emptyPlan(from: State): Plan {
+	return { applied: [], state: from, totalMinor: 0, lead: null }
+}
+
+/** `plan` with one more candidate tried on top of it. */
+function extendPlan(plan: Plan, { discount, code }: Candidate): Plan {
+	const state = cloneState(plan.state)
+	const result = applyDiscount(discount, state)
+	if (!result.ok) return plan
+	const applied = [...plan.applied, toApplied(discount, code, result)]
+	return {
+		applied,
+		state,
+		totalMinor: planTotal(applied),
+		lead: plan.lead ?? discount,
 	}
-	return { applied, state, totalMinor: planTotal(applied), lead }
+}
+
+/** Apply the candidates at `group` (indices into `candidates`) in order. */
+function runPlan(
+	candidates: readonly Candidate[],
+	group: readonly number[],
+	from: State,
+	memo: PlanMemo,
+): Plan {
+	let done = group.length
+	let plan: Plan | undefined
+	for (; done > 0; done -= 1) {
+		plan = memo.get(group.slice(0, done).join(','))
+		if (plan) break
+	}
+	plan ??= emptyPlan(from)
+	for (let index = done; index < group.length; index += 1) {
+		plan = extendPlan(plan, candidates[group[index]!]!)
+		memo.set(group.slice(0, index + 1).join(','), plan)
+	}
+	return plan
 }
 
 function toApplied(
@@ -1199,10 +1366,12 @@ function planTotal(applied: readonly AppliedDiscount[]): number {
 
 /**
  * Automatic discounts that compete in one cart. More than this is not
- * expected; the first by `byPriority` (lowest priority number, then older, then
- * id) compete and the rest are ignored. The planner is exponential
- * in this number, so it is kept small: crafted configurations cost far less
- * than they did at 24. Documented in docs/discounts-plan.md.
+ * expected; of those that can take something off this cart, the first by
+ * `byPriority` (lowest priority number, then older, then id) compete and the
+ * rest are ignored. A discount that can't apply to the cart never takes a
+ * place. The planner is exponential in this number, so it is kept small:
+ * crafted configurations cost far less than they did at 24. Documented in
+ * docs/discounts-plan.md.
  */
 const MAX_COMPETING_AUTOMATIC = 12
 
@@ -1252,17 +1421,24 @@ function maximalCliques(adjacent: readonly (readonly boolean[])[]): number[][] {
 }
 
 /**
- * One plan for each largest group of candidates that may stack together, each
- * applied in order (the candidates' order, so a code, last). With `mustInclude`
- * only groups holding that candidate. No candidates is one plan that applies
- * nothing.
+ * The plans that compete, each applied in the candidates' order (priority
+ * order, a code last). With `mustInclude` only plans holding that candidate.
+ * No candidates is one plan that applies nothing.
+ *
+ * What the search guarantees: the winner is the best of (a) every largest
+ * group of candidates that may all stack together, (b) every single candidate
+ * and (c) every compatible pair, each applied in priority order. It is not an
+ * exhaustive search: a smaller group of three or more inside a largest group,
+ * or another order of the same discounts, is never tried, even when rounding
+ * or a cap would make it worth a little more.
  */
 function stackPlans(
 	candidates: readonly Candidate[],
 	from: State,
 	mustInclude: number | null,
+	memo: PlanMemo,
 ): Plan[] {
-	if (candidates.length === 0) return [runPlan([], from)]
+	if (candidates.length === 0) return [emptyPlan(from)]
 	const adjacent = candidates.map((a, row) =>
 		candidates.map(
 			(b, column) => row !== column && compatible(a.discount, b.discount),
@@ -1283,12 +1459,16 @@ function stackPlans(
 	}
 	return groups
 		.filter((group) => mustInclude === null || group.includes(mustInclude))
-		.map((group) =>
-			runPlan(
-				group.map((index) => candidates[index]!),
-				from,
-			),
-		)
+		.map((group) => runPlan(candidates, group, from, memo))
+}
+
+/**
+ * Whether a discount can take anything off this cart on its own. Discounts
+ * only ever lower what is left, so one that takes nothing from the full cart
+ * takes nothing in any plan either.
+ */
+function appliesToCart(discount: DiscountRecord, from: State): boolean {
+	return applyDiscount(discount, cloneState(from)).ok
 }
 
 function bestPlan(plans: readonly Plan[]): Plan {
@@ -1337,14 +1517,20 @@ export function evaluateDiscounts(
 		currency: input.currency,
 	}
 
-	const automatic = input.discounts
-		.filter((discount) => discount.application === 'automatic')
-		.filter((discount) => refusalFor(discount, input) === null)
-		.sort(byPriority)
-		.slice(0, MAX_COMPETING_AUTOMATIC)
-		.map((discount): Candidate => ({ discount, code: null }))
+	// The cap counts discounts that can take something off this cart: one that
+	// can't (another category, a quantity not reached) never uses up a place a
+	// discount that applies could have had.
+	const automatic: Candidate[] = []
+	for (const discount of input.discounts
+		.filter((entry) => entry.application === 'automatic')
+		.filter((entry) => refusalFor(entry, input) === null)
+		.sort(byPriority)) {
+		if (automatic.length === MAX_COMPETING_AUTOMATIC) break
+		if (appliesToCart(discount, start)) automatic.push({ discount, code: null })
+	}
 
-	let best = bestPlan(stackPlans(automatic, start, null))
+	const memo: PlanMemo = new Map()
+	let best = bestPlan(stackPlans(automatic, start, null, memo))
 
 	let outcome: DiscountCodeOutcome | null = null
 	const typed = input.code ? normalizeDiscountCode(input.code) : ''
@@ -1378,11 +1564,15 @@ export function evaluateDiscounts(
 					candidates,
 					start,
 					candidates.length - 1,
+					memo,
 				).filter((plan) =>
 					plan.applied.some((entry) => entry.discountId === discount.id),
 				)
 				const stacked = withCode.length > 0 ? bestPlan(withCode) : null
-				if (stacked && stacked.totalMinor >= best.totalMinor) {
+				// Only a code that gives the guest more is used. On an equal total
+				// the automatic discounts stay, so a code with a use limit is not
+				// spent for nothing; the guest hears it was replaced.
+				if (stacked && stacked.totalMinor > best.totalMinor) {
 					best = stacked
 					outcome = { status: 'applied', discountId: discount.id }
 				} else {
@@ -1416,15 +1606,19 @@ export function evaluateDiscounts(
  * Price one manual discount the cashier picked. A variable discount uses the
  * amount or percentage they typed; a fixed one uses the definition. The cap
  * on a variable discount is `maxDiscountMinor`.
+ *
+ * The same checks as any discount run first, always: status, currency, dates,
+ * weekly hours, location, channel, fulfillment, who it is for and minimum
+ * spend. So `currency` and `context` are required, and a till that cannot say
+ * where and when it is cannot price a manual discount.
  */
 export function quoteManualDiscount(input: {
 	discount: DiscountRecord
 	lines: readonly DiscountCartLine[]
 	amountMinor?: number | null
 	percentBp?: number | null
-	/** When set, dates, location, channel and currency are checked first. */
-	currency?: string
-	context?: DiscountContext
+	currency: string
+	context: DiscountContext
 }):
 	| { ok: true; amountMinor: number }
 	| { ok: false; reason: DiscountRefusalReason } {
@@ -1432,18 +1626,16 @@ export function quoteManualDiscount(input: {
 		return { ok: false, reason: 'not_applicable' }
 	}
 	assertCart(input.lines)
-	if (input.context && input.currency) {
-		const refusal = refusalFor(input.discount, {
-			currency: input.currency,
-			lines: input.lines,
-			context: input.context,
-			discounts: [],
-			codes: [],
-			usage: {},
-			codeUsage: {},
-		})
-		if (refusal) return { ok: false, reason: refusal }
-	}
+	const refusal = refusalFor(input.discount, {
+		currency: input.currency,
+		lines: input.lines,
+		context: input.context,
+		discounts: [],
+		codes: [],
+		usage: {},
+		codeUsage: {},
+	})
+	if (refusal) return { ok: false, reason: refusal }
 	let priced = input.discount
 	if (
 		input.discount.valueType === 'variable_percent' ||

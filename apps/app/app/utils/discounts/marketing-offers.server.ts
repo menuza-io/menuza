@@ -18,6 +18,11 @@ import {
 } from '@repo/discounts'
 import { ORG_PERMISSIONS } from '#app/utils/organization/permissions.server.ts'
 import { getDiscountsFeatures } from './access.server.ts'
+import { definitionFromRow } from './discounts.server.ts'
+import {
+	discountVisibleInScope,
+	resolveDiscountLocationIds,
+} from './location-scope.server.ts'
 import { type MarketingOfferError } from './marketing-offer-labels.ts'
 
 /**
@@ -38,7 +43,12 @@ export type CouponDiscountOption = {
 	codes: string[]
 }
 
-/** The picker's choices, or null when this user cannot attach coupons. */
+/**
+ * The picker's choices, or null when this user cannot attach coupons. A member
+ * scoped to some locations sees only the discounts the Discounts page shows
+ * them (`discountVisibleInScope`), so the picker never hands them the codes of
+ * a discount for other locations.
+ */
 export async function loadCouponDiscountOptions(
 	userId: string,
 	organizationId: string,
@@ -49,21 +59,25 @@ export async function loadCouponDiscountOptions(
 		ORG_PERMISSIONS.READ_DISCOUNT_ANY,
 	)
 	if (!canRead) return null
-	return loadCodeDiscounts(organizationId)
+	const locationIds = await resolveDiscountLocationIds(userId, organizationId)
+	return loadCodeDiscounts(organizationId, locationIds)
 }
 
 /**
- * Active discounts applied with a code, with their unarchived codes. Null
- * while the organization's discounts or coupons are off.
+ * Active discounts applied with a code, with their unarchived codes, that a
+ * member with these locations may see (`null`: every location). Null while
+ * the organization's discounts or coupons are off. A row that no longer
+ * parses is left out: checkout skips it too.
  */
 async function loadCodeDiscounts(
 	organizationId: string,
+	operatorLocationIds: readonly string[] | null,
 ): Promise<CouponDiscountOption[] | null> {
 	const features = await getDiscountsFeatures(organizationId)
 	if (!features.enabled || !features.coupons) return null
 
-	const discounts = await db
-		.select({ id: Discount.id, name: Discount.name })
+	const rows = await db
+		.select()
 		.from(Discount)
 		.where(
 			and(
@@ -73,6 +87,16 @@ async function loadCodeDiscounts(
 			),
 		)
 		.orderBy(asc(Discount.name), asc(Discount.id))
+	const discounts = rows.flatMap((row) => {
+		const definition = definitionFromRow(row)
+		if (
+			!definition ||
+			!discountVisibleInScope(definition.locationIds, operatorLocationIds)
+		) {
+			return []
+		}
+		return [{ id: row.id, name: row.name }]
+	})
 	if (discounts.length === 0) return []
 
 	const codes = await db
@@ -156,7 +180,7 @@ export async function checkMarketingOffer(input: {
 	let options: OfferOptions
 	if (input.unchanged) {
 		if (cache.all === undefined) {
-			cache.all = await loadCodeDiscounts(input.organizationId)
+			cache.all = await loadCodeDiscounts(input.organizationId, null)
 		}
 		options = cache.all
 	} else {
@@ -251,18 +275,29 @@ export async function checkJourneyOffers(input: {
 
 /**
  * What the broadcast page says about its coupon. The discount's name is read
- * from this organization only; a deleted or foreign id shows no name.
+ * from this organization only; a deleted or foreign id shows no name. A shared
+ * code is shown only to members with `read:discount:any`, the permission that
+ * lets them attach it: anyone who may view the broadcast sees that it carried
+ * one, not the code itself (`code: null`).
  */
 export async function describeCampaignCoupon(
 	organizationId: string,
 	raw: unknown,
+	viewer: { userId: string },
 ): Promise<
-	| { mode: 'shared'; discountName: string | null; code: string }
+	| { mode: 'shared'; discountName: string | null; code: string | null }
 	| { mode: 'unique'; discountName: string | null; validDays: number }
 	| null
 > {
 	const offer = parseMarketingOffer(raw)
 	if (!offer) return null
+	const canSeeCode =
+		offer.mode === 'shared' &&
+		(await userHasOrganizationPermission(
+			viewer.userId,
+			organizationId,
+			ORG_PERMISSIONS.READ_DISCOUNT_ANY,
+		))
 	const [row] = await db
 		.select({ name: Discount.name })
 		.from(Discount)
@@ -275,6 +310,6 @@ export async function describeCampaignCoupon(
 		.limit(1)
 	const discountName = row?.name ?? null
 	return offer.mode === 'shared'
-		? { mode: 'shared', discountName, code: offer.code }
+		? { mode: 'shared', discountName, code: canSeeCode ? offer.code : null }
 		: { mode: 'unique', discountName, validDays: offer.validDays }
 }

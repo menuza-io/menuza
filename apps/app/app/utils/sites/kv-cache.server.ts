@@ -71,6 +71,52 @@ export async function purgeOrganizationSiteCache(
 	}
 }
 
+/**
+ * Every organization's cached public menu carries this generation in its key
+ * (see `resources+/sites.menu.ts`). A change that can alter all menus at once,
+ * such as a system-level discount flag, bumps it: each menu is then rebuilt on
+ * its next request, with no list-and-delete over every organization's keys
+ * (which a Worker request could not finish for many organizations). It lives
+ * outside every `org:` prefix, so an organization purge never drops it.
+ */
+const MENU_GENERATION_KEY = 'sites:menu-generation'
+/** Edge cache for the generation read: a bump shows within about a minute. */
+const MENU_GENERATION_CACHE_TTL_SECONDS = 60
+const MENU_GENERATION_PATTERN = /^[a-z0-9]{1,16}$/
+
+/** The current menu generation, or `'0'` before the first bump or without KV. */
+export async function getMenuCacheGeneration(): Promise<string> {
+	if (!siteDataKv) return '0'
+	try {
+		const value = await siteDataKv.get(MENU_GENERATION_KEY, {
+			cacheTtl: MENU_GENERATION_CACHE_TTL_SECONDS,
+		})
+		return value && MENU_GENERATION_PATTERN.test(value) ? value : '0'
+	} catch {
+		return '0'
+	}
+}
+
+/**
+ * Starts a new menu generation, so every organization's cached menu is
+ * rebuilt. Never throws; false when KV is missing or the write failed.
+ */
+export async function bumpMenuCacheGeneration(
+	now: number = Date.now(),
+): Promise<boolean> {
+	if (!siteDataKv) return false
+	try {
+		await siteDataKv.put(MENU_GENERATION_KEY, now.toString(36))
+		return true
+	} catch (error) {
+		console.error(
+			'Failed to start a new menu cache generation',
+			error instanceof Error ? error.message : 'unknown error',
+		)
+		return false
+	}
+}
+
 export async function getCachedSiteData(key: string) {
 	if (!siteDataKv) return null
 	try {

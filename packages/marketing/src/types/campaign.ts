@@ -66,7 +66,8 @@ export interface CampaignDetail {
 }
 
 export type CampaignCoupon =
-	| { mode: 'shared'; discountName: string | null; code: string }
+	/** `code` is null when the viewer may not see discount codes. */
+	| { mode: 'shared'; discountName: string | null; code: string | null }
 	| { mode: 'unique'; discountName: string | null; validDays: number }
 
 export interface MarketingMetrics {

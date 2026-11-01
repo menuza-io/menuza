@@ -128,11 +128,13 @@ function menuContext(extra: Record<string, unknown> = {}) {
 			features: { automatic: true, coupons: true },
 			discounts: [
 				makeDiscount({ id: 'disc_auto', name: 'Ten percent' }),
+				// Fifteen percent, so the code beats the automatic ten percent: a
+				// code that only ties keeps the automatic discount.
 				makeDiscount({
 					id: 'disc_code',
 					name: 'Welcome',
 					application: 'code',
-					percentBp: 1000,
+					percentBp: 1500,
 				}),
 			],
 			codes: [
@@ -320,11 +322,11 @@ describe('discounts on orders', () => {
 		const welcome = await post(
 			'/orders',
 			orderBody({
-				discounts: { code: 'save10', expectedDiscountMinor: 200 },
+				discounts: { code: 'save10', expectedDiscountMinor: 300 },
 			}),
 		)
 		expect(welcome.status).toBe(201)
-		expect((await welcome.json()).order.discountCents).toBe(200)
+		expect((await welcome.json()).order.discountCents).toBe(300)
 	})
 
 	it('lets only one order take the last use', async () => {
@@ -432,7 +434,7 @@ describe('discounts on orders', () => {
 		})
 		expect(tab.ok).toBe(true)
 		if (tab.ok) {
-			expect(tab.quote?.discountCents).toBe(200)
+			expect(tab.quote?.discountCents).toBe(300)
 			expect(tab.quote?.prepared.evaluation.applied[0]?.discountId).toBe(
 				'disc_code',
 			)
@@ -482,7 +484,7 @@ describe('discounts on orders', () => {
 		const key = crypto.randomUUID()
 		const body = orderBody({
 			idempotencyKey: key,
-			discounts: { code: 'SAVE10', expectedDiscountMinor: 200 },
+			discounts: { code: 'SAVE10', expectedDiscountMinor: 300 },
 		})
 		const first = await post('/orders', body)
 		expect(first.status).toBe(201)
@@ -492,7 +494,7 @@ describe('discounts on orders', () => {
 
 		const changed = await post('/orders', {
 			...body,
-			discounts: { code: 'OTHER', expectedDiscountMinor: 200 },
+			discounts: { code: 'OTHER', expectedDiscountMinor: 300 },
 		})
 		expect(changed.status).toBe(409)
 		expect(await changed.json()).toMatchObject({

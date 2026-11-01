@@ -10,7 +10,10 @@ import {
 	useNavigation,
 } from 'react-router'
 import { ArchiveDiscountButton } from '#app/components/discounts/archive-discount-button.tsx'
-import { DiscountForm } from '#app/components/discounts/discount-form.tsx'
+import {
+	DiscountForm,
+	UNSAVED_CHANGES_NOTE_ID,
+} from '#app/components/discounts/discount-form.tsx'
 import { requireDiscountsAccess } from '#app/utils/discounts/access.server.ts'
 import {
 	getDiscount,
@@ -19,7 +22,10 @@ import {
 import { loadDiscountEditorData } from '#app/utils/discounts/editor-data.server.ts'
 import { stateFromDefinition } from '#app/utils/discounts/editor-model.ts'
 import { listDiscountHistory } from '#app/utils/discounts/history.server.ts'
-import { discountVisibleInScope } from '#app/utils/discounts/location-scope.server.ts'
+import {
+	discountEditableInScope,
+	discountVisibleInScope,
+} from '#app/utils/discounts/location-scope.server.ts'
 import {
 	type DiscountEditorActionData,
 	saveDiscountEditor,
@@ -31,31 +37,36 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	const discountId = params.discountId
 	if (!discountId) throw new Response('Not Found', { status: 404 })
 	const loaded = await getDiscount(access.organization.id, discountId)
-	if (
-		!loaded?.stored ||
-		!discountVisibleInScope(
-			loaded.stored.definition.locationIds,
-			access.locationIds,
-		)
-	) {
+	if (!loaded) throw new Response('Not Found', { status: 404 })
+	// A row that no longer parses has no location list to check, so only a
+	// member with every location sees it (to archive it); `undefined` fails
+	// closed in both checks.
+	const locationIds = loaded.stored
+		? loaded.stored.definition.locationIds
+		: undefined
+	if (!discountVisibleInScope(locationIds, access.locationIds)) {
 		throw new Response('Not Found', { status: 404 })
 	}
+	const editableHere = discountEditableInScope(locationIds, access.locationIds)
 	const editor = await loadDiscountEditorData(access.organization.id)
 	const status = asStatus(loaded.row.status)
 	const storedCurrency = loaded.row.currency ?? access.currency
+	const stored = loaded.stored
 	const [createdBy, history, printHref] = await Promise.all([
 		getDiscountCreatedBy(loaded.row.createdById),
 		listDiscountHistory(access.organization.id, discountId),
-		couponPrintHref({
-			userId: access.userId,
-			organization: access.organization,
-			discount: {
-				id: discountId,
-				status: loaded.row.status,
-				definition: loaded.stored.definition,
-				codeCount: loaded.codes.length,
-			},
-		}),
+		stored
+			? couponPrintHref({
+					userId: access.userId,
+					organization: access.organization,
+					discount: {
+						id: discountId,
+						status: loaded.row.status,
+						definition: stored.definition,
+						codeCount: loaded.codes.length,
+					},
+				})
+			: null,
 	])
 	return {
 		orgSlug: access.organization.slug,
@@ -63,7 +74,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		// organization without locations (see the action).
 		currency: storedCurrency,
 		features: access.features,
-		canWrite: access.canWrite,
+		canWrite: access.canWrite && editableHere,
+		// May change discounts, but this one is shared with other locations.
+		sharedWithOtherLocations: access.canWrite && !editableHere,
 		// A coupon card for this discount, when the Print shop can make one.
 		printHref,
 		editor,
@@ -74,12 +87,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		createdBy,
 		history,
 		createdAt: loaded.row.createdAt.toISOString(),
-		initial: loaded.stored
-			? stateFromDefinition(
-					loaded.stored.definition,
-					loaded.codes,
-					storedCurrency,
-				)
+		initial: stored
+			? stateFromDefinition(stored.definition, loaded.codes, storedCurrency)
 			: null,
 	}
 }
@@ -160,6 +169,14 @@ export default function EditDiscountRoute() {
 					<Trans>Add a code before turning this discount on.</Trans>
 				</p>
 			) : null}
+			{actionData?.scope ? (
+				<p role="alert" className="text-destructive px-4 pt-4 text-sm md:px-6">
+					<Trans>
+						This discount also runs at locations outside yours, so you can't
+						change it.
+					</Trans>
+				</p>
+			) : null}
 			<DiscountForm
 				key={`${data.discountId}:${mount.generation}`}
 				mode="edit"
@@ -184,6 +201,7 @@ export default function EditDiscountRoute() {
 				createdBy={data.createdBy}
 				history={data.history}
 				createdAt={data.createdAt}
+				sharedWithOtherLocations={data.sharedWithOtherLocations}
 				statusActions={({ dirty }) =>
 					data.canWrite || data.printHref ? (
 						<>
@@ -191,9 +209,7 @@ export default function EditDiscountRoute() {
 								<Button
 									variant="outline"
 									disabled={dirty}
-									title={
-										dirty ? t`Save or discard your changes first.` : undefined
-									}
+									aria-describedby={dirty ? UNSAVED_CHANGES_NOTE_ID : undefined}
 									render={<Link to={data.printHref} />}
 								>
 									<Trans>Print coupons</Trans>
@@ -208,8 +224,8 @@ export default function EditDiscountRoute() {
 										value={data.status === 'archived' ? 'paused' : nextStatus}
 										variant="outline"
 										disabled={dirty}
-										title={
-											dirty ? t`Save or discard your changes first.` : undefined
+										aria-describedby={
+											dirty ? UNSAVED_CHANGES_NOTE_ID : undefined
 										}
 									>
 										{data.status === 'active'
@@ -223,8 +239,8 @@ export default function EditDiscountRoute() {
 										form="discount-duplicate"
 										variant="outline"
 										disabled={dirty}
-										title={
-											dirty ? t`Save or discard your changes first.` : undefined
+										aria-describedby={
+											dirty ? UNSAVED_CHANGES_NOTE_ID : undefined
 										}
 									>
 										<Trans>Duplicate</Trans>
@@ -236,11 +252,7 @@ export default function EditDiscountRoute() {
 											variant="outline"
 											size="default"
 											disabled={dirty}
-											title={
-												dirty
-													? t`Save or discard your changes first.`
-													: undefined
-											}
+											describedBy={dirty ? UNSAVED_CHANGES_NOTE_ID : undefined}
 											onConfirm={() => {
 												const form = document.getElementById(
 													'discount-status',

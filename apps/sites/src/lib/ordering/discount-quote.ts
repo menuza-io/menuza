@@ -2,6 +2,7 @@ import {
 	DISCOUNT_REFUSAL_REASONS,
 	discountCodeInputSchema,
 	discountQuoteSchema,
+	normalizeDiscountCode,
 	type DiscountQuote,
 	type DiscountRefusalReason,
 	type OrderDiscountsRequest,
@@ -428,14 +429,91 @@ export function saveStoredCode(
 	}
 }
 
+/** Whether two typed codes are the same code to the region (case, spaces, dashes). */
+export function sameCouponCode(a: string, b: string): boolean {
+	return normalizeDiscountCode(a) === normalizeDiscountCode(b)
+}
+
+const droppedKey = (orgId: string) => `menuza_coupon_dropped_${orgId}`
+const MAX_DROPPED_CODES = 20
+
+function loadDroppedCodes(
+	storage: Pick<Storage, 'getItem'>,
+	orgId: string,
+): string[] {
+	try {
+		const parsed: unknown = JSON.parse(
+			storage.getItem(droppedKey(orgId)) ?? '[]',
+		)
+		return Array.isArray(parsed)
+			? parsed
+					.filter((value): value is string => typeof value === 'string')
+					.slice(-MAX_DROPPED_CODES)
+			: []
+	} catch {
+		return []
+	}
+}
+
+function saveDroppedCodes(
+	storage: Pick<Storage, 'setItem' | 'removeItem'>,
+	orgId: string,
+	codes: string[],
+): void {
+	try {
+		if (codes.length === 0) storage.removeItem(droppedKey(orgId))
+		else
+			storage.setItem(
+				droppedKey(orgId),
+				JSON.stringify(codes.slice(-MAX_DROPPED_CODES)),
+			)
+	} catch {
+		// Storage unavailable: a coupon link may bring the code back.
+	}
+}
+
+/**
+ * Remembers that this tab let go of a code: the guest removed or replaced it,
+ * or the region refused it for good. The coupon link it may have come from
+ * then no longer brings it back (`adoptCouponFromUrl`); typing it again does
+ * (`forgetDroppedCode`). Kept for the tab, like the code itself.
+ */
+export function rememberDroppedCode(
+	storage: Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>,
+	orgId: string,
+	code: string | null | undefined,
+): void {
+	if (!code) return
+	const normalized = normalizeDiscountCode(code)
+	if (!normalized) return
+	const codes = loadDroppedCodes(storage, orgId).filter(
+		(value) => value !== normalized,
+	)
+	saveDroppedCodes(storage, orgId, [...codes, normalized])
+}
+
+/** The guest typed this code again: a link to it may bring it back once more. */
+export function forgetDroppedCode(
+	storage: Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>,
+	orgId: string,
+	code: string,
+): void {
+	const normalized = normalizeDiscountCode(code)
+	const codes = loadDroppedCodes(storage, orgId)
+	const kept = codes.filter((value) => value !== normalized)
+	if (kept.length !== codes.length) saveDroppedCodes(storage, orgId, kept)
+}
+
 /**
  * A printed coupon's QR opens `/menu?coupon=CODE`. A plausible code is kept
  * like a typed one, so the cart prices it and checkout carries it. Anything
- * that could never be a code is ignored, and an existing stored code is
- * replaced only by a different, valid one. Returns the adopted code.
+ * that could never be a code is ignored, an existing stored code is replaced
+ * only by a different, valid one, and a code this tab already let go of
+ * (removed, replaced or refused for good) is not taken back. Returns the code
+ * kept from the link, or null.
  */
 export function adoptCouponFromUrl(
-	storage: Pick<Storage, 'setItem' | 'removeItem'>,
+	storage: Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>,
 	orgId: string,
 	search: string,
 ): string | null {
@@ -443,8 +521,45 @@ export function adoptCouponFromUrl(
 	if (!raw || raw.length > 60) return null
 	const code = cleanTypedCode(raw)
 	if (!isPlausibleCode(code)) return null
+	if (loadDroppedCodes(storage, orgId).includes(normalizeDiscountCode(code)))
+		return null
+	const stored = loadStoredCode(storage, orgId)
+	if (stored && sameCouponCode(stored, code)) return stored
 	saveStoredCode(storage, orgId, code)
 	return code
+}
+
+/**
+ * The page address without its `coupon` parameter, or null when it has none.
+ * Everything else, the fragment included (table codes ride there), is kept.
+ */
+export function addressWithoutCoupon(href: string): string | null {
+	let url: URL
+	try {
+		url = new URL(href)
+	} catch {
+		return null
+	}
+	if (!url.searchParams.has('coupon')) return null
+	url.searchParams.delete('coupon')
+	return `${url.pathname}${url.search}${url.hash}`
+}
+
+/**
+ * Takes `coupon` out of the address bar once the page has read it, so a reload
+ * does not apply the code again after the guest removed it or it was refused.
+ */
+export function stripCouponFromAddress(win: {
+	location: Pick<Location, 'href'>
+	history: Pick<History, 'replaceState' | 'state'>
+}): void {
+	const next = addressWithoutCoupon(win.location.href)
+	if (next === null) return
+	try {
+		win.history.replaceState(win.history.state, '', next)
+	} catch {
+		// A sandboxed frame may refuse; the dropped-code list still holds.
+	}
 }
 
 // ---------- refusals ----------

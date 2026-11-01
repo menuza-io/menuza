@@ -153,7 +153,6 @@ const RETRY_CODES = new Set<string>([
 	'reward_not_applicable',
 	'zero_value',
 	'insufficient_points',
-	'stacking_not_allowed',
 	'one_reward_per_order',
 	'cart_changed',
 	'stale_version',

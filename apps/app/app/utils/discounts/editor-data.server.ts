@@ -10,6 +10,7 @@ import {
 	eq,
 	Organization,
 	OrganizationLocation,
+	OrganizationMenuCategory,
 	OrganizationMenuItem,
 	OrganizationMenuModifierGroup,
 	OrganizationMenuModifierGroupOptionAssignment,
@@ -21,6 +22,7 @@ import {
 	type DiscountChoiceCatalog,
 	type DiscountLocationChoice,
 } from './editor-model.ts'
+import { type OrganizationDiscountIds } from './editor-state-schema.ts'
 
 export type DiscountEditorData = {
 	catalog: LoyaltyCatalog
@@ -63,6 +65,48 @@ export async function loadDiscountLocations(
 				: getLocationCurrency(row.address),
 		active: row.isActive,
 	}))
+}
+
+/**
+ * Every id a discount of this organization may name: its locations, menu
+ * items, categories, modifier groups and options, archived ones included (a
+ * discount may still name an item that is hidden today). The save keeps only
+ * these (`keepOrganizationIds`).
+ */
+export async function loadOrganizationDiscountIds(
+	organizationId: string,
+): Promise<OrganizationDiscountIds> {
+	const [locations, items, categories, groups, options] = await Promise.all([
+		db
+			.select({ id: OrganizationLocation.id })
+			.from(OrganizationLocation)
+			.where(eq(OrganizationLocation.organizationId, organizationId)),
+		db
+			.select({ id: OrganizationMenuItem.id })
+			.from(OrganizationMenuItem)
+			.where(eq(OrganizationMenuItem.organizationId, organizationId)),
+		db
+			.select({ id: OrganizationMenuCategory.id })
+			.from(OrganizationMenuCategory)
+			.where(eq(OrganizationMenuCategory.organizationId, organizationId)),
+		db
+			.select({ id: OrganizationMenuModifierGroup.id })
+			.from(OrganizationMenuModifierGroup)
+			.where(eq(OrganizationMenuModifierGroup.organizationId, organizationId)),
+		db
+			.select({ id: OrganizationMenuOption.id })
+			.from(OrganizationMenuOption)
+			.where(eq(OrganizationMenuOption.organizationId, organizationId)),
+	])
+	const ids = (rows: ReadonlyArray<{ id: string }>) =>
+		new Set(rows.map((row) => row.id))
+	return {
+		locationIds: ids(locations),
+		itemIds: ids(items),
+		categoryIds: ids(categories),
+		modifierGroupIds: ids(groups),
+		modifierOptionIds: ids(options),
+	}
 }
 
 /**

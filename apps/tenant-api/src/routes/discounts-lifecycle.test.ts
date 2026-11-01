@@ -17,6 +17,7 @@ import { Hono } from 'hono'
 import { SignJWT } from 'jose'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { makeDiscount } from '../../../../packages/discounts/src/test-fixtures.ts'
+import { DISCOUNT_RATE_LIMITS } from '../lib/discount-rate-limit.ts'
 import {
 	findActiveOrganizationById,
 	resolveOrganizationForBrowserAuth,
@@ -143,11 +144,13 @@ function autoDiscounts(overrides: Record<string, unknown> = {}) {
 		features: { automatic: true, coupons: true },
 		discounts: [
 			makeDiscount({ id: 'disc_auto', name: 'Ten percent', ...overrides }),
+			// Fifteen percent, so the code beats the automatic ten percent: a
+			// code that only ties keeps the automatic discount.
 			makeDiscount({
 				id: 'disc_code',
 				name: 'Welcome',
 				application: 'code',
-				percentBp: 1000,
+				percentBp: 1500,
 			}),
 		],
 		codes: [
@@ -914,12 +917,14 @@ describe('discount lifecycle', () => {
 		}
 
 		it('stops parallel wrong guesses at the limit instead of letting them all through', async () => {
-			const codes = Array.from({ length: 30 }, (_, index) => `NOPE${index}`)
+			const codes = Array.from({ length: 50 }, (_, index) => `NOPE${index}`)
 			const responses = await Promise.all(codes.map((code) => quote(code)))
 			const statuses = responses.map((response) => response.status)
 			// 20 wrong guesses per address per window, whatever the order they land.
 			expect(statuses.filter((status) => status === 200)).toHaveLength(20)
-			expect(statuses.filter((status) => status === 429)).toHaveLength(10)
+			expect(statuses.filter((status) => status === 429)).toHaveLength(30)
+			// Attempts that lost the race gave back what they counted.
+			expect(await counted('codeIp')).toBe(20)
 			const limited = responses.find((response) => response.status === 429)!
 			expect((await limited.json()).error).toBe('rate_limit_exceeded')
 		})
@@ -967,7 +972,66 @@ describe('discount lifecycle', () => {
 			expect((await other.json()).coupon).toMatchObject({ status: 'applied' })
 		})
 
-		it('does not count a code the customer can still make work', async () => {
+		it('asks guests to sign in once the organization guest budget is spent, counting nothing', async () => {
+			const orgLimit = DISCOUNT_RATE_LIMITS.codeOrg as { max: number }
+			const max = orgLimit.max
+			orgLimit.max = 3
+			try {
+				for (const [index, address] of [
+					'203.0.113.21',
+					'203.0.113.22',
+					'203.0.113.23',
+				].entries()) {
+					const response = await post(
+						'/orders/quote',
+						orderBody({
+							idempotencyKey: undefined,
+							contact: undefined,
+							discounts: { code: `WRONG${index}` },
+						}),
+						{ 'cf-connecting-ip': address },
+					)
+					expect(response.status).toBe(200)
+				}
+				// A fresh address, even with a valid code, is asked to sign in
+				// (where the customer's own budget applies) instead of locked out.
+				const blocked = await post(
+					'/orders/quote',
+					orderBody({
+						idempotencyKey: undefined,
+						contact: undefined,
+						discounts: { code: 'SAVE10' },
+					}),
+					{ 'cf-connecting-ip': '203.0.113.24' },
+				)
+				expect(blocked.status).toBe(409)
+				expect(await blocked.json()).toMatchObject({
+					error: 'coupon_refused',
+					reason: 'sign_in_required',
+				})
+				expect(await counted('codeOrg')).toBe(3)
+				expect(await counted('codeIp')).toBe(3)
+			} finally {
+				orgLimit.max = max
+			}
+		})
+
+		it('refuses a guest code with no client address outside local runs', async () => {
+			vi.stubEnv('NODE_ENV', 'production')
+			const response = await post(
+				'/orders/quote',
+				orderBody({
+					idempotencyKey: undefined,
+					contact: undefined,
+					discounts: { code: 'SAVE10' },
+				}),
+			)
+			expect(response.status).toBe(429)
+			expect((await response.json()).message).toMatch(/coupon attempts/)
+			expect(await counted('codeIp')).toBe(0)
+		})
+
+		it('counts a code the cart does not meet yet once, and gives it back when it applies', async () => {
 			activeContext = menuContext({
 				features: { automatic: true, coupons: true },
 				discounts: [
@@ -996,6 +1060,13 @@ describe('discount lifecycle', () => {
 					reason: 'minimum_not_met',
 				})
 			}
+			// "Minimum not met" confirms the code exists, so a guest pays one
+			// guess for it, once per code however often the cart changes.
+			expect(await counted('codeIp')).toBe(1)
+			expect(await counted('codeOrg')).toBe(1)
+			// Meeting the minimum ($500 of $10 burgers) gives that guess back.
+			const met = await quote('BIGSPEND', 50)
+			expect((await met.json()).coupon).toMatchObject({ status: 'applied' })
 			expect(await counted('codeIp')).toBe(0)
 			expect(await counted('codeOrg')).toBe(0)
 		})

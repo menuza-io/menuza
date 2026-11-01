@@ -28,6 +28,35 @@ export function parseDecimal(raw: string): number | null {
 	return Number.isFinite(value) ? value : null
 }
 
+export type ManualValue =
+	| { ok: true; amountMinor: number }
+	| { ok: true; percentBp: number }
+	| { ok: false; reason: 'not_a_number' | 'value_required' | 'over_100' }
+
+/**
+ * What the cashier typed for a variable discount, checked before a manager
+ * PIN is asked for, so a typo costs no approval. A value that rounds to
+ * nothing (0.004 is 0 cents and 0 basis points) counts as no value: the till
+ * would refuse it after the approval was used up.
+ */
+export function readManualValue(
+	raw: string,
+	valueType: 'variable_amount' | 'variable_percent',
+): ManualValue {
+	const amount = parseDecimal(raw)
+	if (amount === null) return { ok: false, reason: 'not_a_number' }
+	if (valueType === 'variable_amount') {
+		const amountMinor = toCents(amount)
+		return amountMinor >= 1
+			? { ok: true, amountMinor }
+			: { ok: false, reason: 'value_required' }
+	}
+	const percentBp = Math.round(amount * 100)
+	if (percentBp < 1) return { ok: false, reason: 'value_required' }
+	if (percentBp > 10_000) return { ok: false, reason: 'over_100' }
+	return { ok: true, percentBp }
+}
+
 /** Names as the till's language lists them ("A, B and C"). */
 function listText(names: readonly string[], locale: string): string {
 	try {
@@ -53,6 +82,10 @@ export function ManualDiscount({
 	const { _, i18n } = useLingui()
 	const ruleSource = usePos((state) => state.snapshot?.menu.discountRules)
 	const rulesState = usePos((state) => tillRulesStatus(state.snapshot).state)
+	const rulesCause = usePos((state) => {
+		const status = tillRulesStatus(state.snapshot)
+		return status.state === 'expired' ? status.cause : null
+	})
 	const limitedCount = useMemo(
 		() => limitedAutomaticRules(ruleSource).length,
 		[ruleSource],
@@ -173,25 +206,22 @@ export function ManualDiscount({
 		// Check what was typed before asking for a PIN, so a typo costs no approval.
 		let amountMinor: number | undefined
 		let percentBp: number | undefined
-		if (variable) {
-			const amount = parseDecimal(value)
-			if (amount === null) {
-				setMessage(_(t`Enter a number, such as 10 or 10.5.`), 'value')
+		if (
+			selected.valueType === 'variable_amount' ||
+			selected.valueType === 'variable_percent'
+		) {
+			const read = readManualValue(value, selected.valueType)
+			if (!read.ok) {
+				setMessage(
+					read.reason === 'not_a_number'
+						? _(t`Enter a number, such as 10 or 10.5.`)
+						: reasonText(read.reason),
+					'value',
+				)
 				return
 			}
-			if (amount <= 0) {
-				setMessage(reasonText('value_required'), 'value')
-				return
-			}
-			if (selected.valueType === 'variable_amount') {
-				amountMinor = toCents(amount)
-			} else {
-				percentBp = Math.round(amount * 100)
-				if (percentBp > 10_000) {
-					setMessage(reasonText('over_100'), 'value')
-					return
-				}
-			}
+			if ('amountMinor' in read) amountMinor = read.amountMinor
+			else percentBp = read.percentBp
 		}
 		let approvedByStaffId: string | undefined
 		if (selected.requireApproval) {
@@ -251,9 +281,13 @@ export function ManualDiscount({
 					role="status"
 					className="notice-warning rounded-md px-3 py-2 text-sm"
 				>
-					{_(
-						t`Discounts are off: this till has not refreshed its discount rules in over ${staleHours} hours. Connect to the internet and they come back.`,
-					)}
+					{rulesCause === 'clock'
+						? _(
+								t`Discounts are off: this till’s clock moved back since it got its discount rules, so it cannot tell how old they are. Connect to the internet and they come back.`,
+							)
+						: _(
+								t`Discounts are off: this till has not refreshed its discount rules in over ${staleHours} hours. Connect to the internet and they come back.`,
+							)}
 				</p>
 			) : null}
 			{rules.length > 0 ? (
@@ -408,9 +442,13 @@ export function ManualDiscount({
 				) : null}
 				{notice?.kind === 'rules_old' ? (
 					<p className="text-sm">
-						{_(
-							t`Not applied: ${skippedNames}. This till’s discount rules are over ${staleHours} hours old. Go online to refresh them.`,
-						)}
+						{notice.cause === 'clock'
+							? _(
+									t`Not applied: ${skippedNames}. This till’s clock moved back since it got its discount rules. Go online to refresh them.`,
+								)
+							: _(
+									t`Not applied: ${skippedNames}. This till’s discount rules are over ${staleHours} hours old. Go online to refresh them.`,
+								)}
 					</p>
 				) : null}
 				{notice?.kind === 'kept' ? (

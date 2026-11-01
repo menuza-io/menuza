@@ -23,9 +23,15 @@ import crypto from 'node:crypto'
 import { z } from 'zod'
 
 import {
+	addressBucket,
+	clientAddress,
+	isLocalRuntime,
+} from '../lib/client-ip.ts'
+import {
 	chargeCouponGuess,
 	enforceDiscountLimit,
-	refundCouponGuess,
+	settleCouponGuess,
+	type CouponGuessOutcome,
 	type CouponGuessSubject,
 } from '../lib/discount-rate-limit.ts'
 import {
@@ -90,31 +96,28 @@ function dineInUnavailable() {
 	)
 }
 
-function clientIp(c: Context) {
-	const cfConnectingIp = c.req.header('cf-connecting-ip')?.trim()
-	if (cfConnectingIp) return cfConnectingIp
-	// The last entry is the one our proxy appended. The first is client-supplied.
-	const forwardedFor = c.req.header('x-forwarded-for')
-	const last = forwardedFor?.split(',').at(-1)?.trim()
-	return last || undefined
+/**
+ * The rate-limit bucket of the client's address, or null when the node has
+ * none. `clientAddress` believes forwarding headers only from Cloudflare or a
+ * proxy on our own network; an IPv6 client counts by its /64.
+ */
+function clientBucket(c: Context): string | null {
+	const address = clientAddress(c)
+	return address ? addressBucket(address) : null
 }
 
-function couponGuestSubject(c: Context): string | null {
-	const ip = clientIp(c)
-	if (ip) return ip
-	const sessionToken =
-		c.req.header('x-session-id') ??
-		c.req.header('authorization')?.slice(-16) ??
-		null
-	return sessionToken ? `s:${sessionToken}` : null
-}
-
+/**
+ * Who is guessing a coupon code. Never a value the client chooses (a session
+ * id, the tail of a token): a fresh one on every request would be a fresh
+ * budget every time.
+ */
 function couponSubject(
 	c: Context,
 	customerId: string | null | undefined,
 ): CouponGuessSubject {
-	if (customerId) return { kind: 'customer', customerId }
-	return { kind: 'guest', address: couponGuestSubject(c) }
+	const address = clientBucket(c)
+	if (customerId) return { kind: 'customer', customerId, address }
+	return { kind: 'guest', address }
 }
 
 function couponLimitedResponse(retryAfterSeconds: number) {
@@ -146,38 +149,52 @@ export function couponFingerprint(code: string, ...parts: unknown[]): string {
 		.digest('hex')
 }
 
-/** Refusals the customer can fix by changing the cart, so they are not probes. */
+/** Refusals the customer can fix by changing the cart (see `CouponGuessOutcome`). */
 const FIXABLE_COUPON_REASONS = new Set(['minimum_not_met', 'quantity_not_met'])
 
 /**
- * Whether a failed placement, quote or tab payment counts as a wrong coupon
- * guess. A code the customer can still make work (minimum or quantity not met)
- * is not a guess. A valid code beaten by an automatic discount (`replaced`)
- * is one: it proves the code exists, so a probe is never free.
+ * What a failed placement, quote or tab payment says about the typed code. A
+ * code the cart does not meet yet is `fixable`. A valid code beaten by an
+ * automatic discount (`replaced`) is `wrong`: it proves the code exists, so a
+ * probe is never free. Any other failure says nothing about the code.
  */
+export function couponOutcomeOfFailure(failure: {
+	code: string
+	reason?: string | undefined
+}): CouponGuessOutcome {
+	if (failure.code === 'coupon_refused') {
+		return FIXABLE_COUPON_REASONS.has(failure.reason ?? '')
+			? 'fixable'
+			: 'wrong'
+	}
+	if (
+		failure.code === 'discount_changed' &&
+		failure.reason === 'replaced_by_better_discount'
+	) {
+		return 'wrong'
+	}
+	return 'none'
+}
+
+/** Whether a failure is a wrong guess (a fixable code is not). */
 export function failureCountsAsCouponGuess(failure: {
 	code: string
 	reason?: string | undefined
 }): boolean {
-	if (failure.code === 'coupon_refused') {
-		return !FIXABLE_COUPON_REASONS.has(failure.reason ?? '')
-	}
-	return (
-		failure.code === 'discount_changed' &&
-		failure.reason === 'replaced_by_better_discount'
-	)
+	return couponOutcomeOfFailure(failure) === 'wrong'
 }
 
-/** The same rule for the `coupon` field of a quote answer. */
-export function couponStatusCountsAsGuess(
+/** The same reading of the `coupon` field of a quote answer. */
+export function couponOutcomeOfQuote(
 	coupon: { status: string; reason?: string | undefined } | null | undefined,
-): boolean {
-	if (!coupon) return false
-	if (coupon.status === 'replaced') return true
-	return (
-		coupon.status === 'refused' &&
-		!FIXABLE_COUPON_REASONS.has(coupon.reason ?? '')
-	)
+): CouponGuessOutcome {
+	if (!coupon) return 'none'
+	if (coupon.status === 'applied') return 'applied'
+	if (coupon.status === 'replaced') return 'wrong'
+	if (coupon.status === 'refused') {
+		return FIXABLE_COUPON_REASONS.has(coupon.reason ?? '') ? 'fixable' : 'wrong'
+	}
+	return 'none'
 }
 
 export type CouponGuard =
@@ -185,19 +202,38 @@ export type CouponGuard =
 	| {
 			blocked: null
 			/**
-			 * Call once the answer is known. A code that was refused as not a
-			 * working code stays counted (`refused: true`); anything else gives
-			 * the attempt back, so only wrong guesses use up the budget.
+			 * Call once the answer is known (`settleCouponGuess`). A wrong code
+			 * stays counted. A code the cart does not meet yet costs a guest one
+			 * guess per code, given back when it applies. An applied code, or any
+			 * other answer, gives the attempt back.
 			 */
-			settle: (outcome: { refused: boolean }) => Promise<void>
+			settle: (outcome: CouponGuessOutcome) => Promise<void>
 	  }
 
+/** The organization's guest budget is spent: a guest signs in to use a code. */
+function couponSignInResponse() {
+	return Response.json(
+		{
+			error: 'coupon_refused',
+			message: 'Sign in to use this code.',
+			reason: 'sign_in_required',
+		},
+		{ status: 409, headers: noStoreHeaders() },
+	)
+}
+
 /**
- * Counts a coupon attempt before the code is checked, for the address and for
- * the organization, and answers 429 when either is over its budget. The count
- * is taken first and given back when the code applies, so parallel requests
- * cannot all slip under the limit the way a read-then-charge check lets them.
- * No code, no count.
+ * Counts a coupon attempt before the code is checked, for the address (and
+ * the customer, when signed in) and, for a guest, the organization, so
+ * parallel requests cannot all slip under a limit the way a read-then-charge
+ * check lets them. No code, no count.
+ *
+ * Over the subject's own budget: 429. Over the organization's guest budget (a
+ * flood of guesses from many addresses): the guest is asked to sign in, where
+ * their own budget applies, so a flood cannot take codes away from everyone.
+ * A guest with no address at all is refused outside local runs: production
+ * always knows it (Cloudflare on the Worker, the socket on Node), and guests
+ * without one would share a single bucket.
  */
 export async function guardCouponGuess(
 	orgId: string,
@@ -207,20 +243,34 @@ export async function guardCouponGuess(
 	customerId?: string | null,
 ): Promise<CouponGuard> {
 	if (!code) return { blocked: null, settle: async () => {} }
+	const subject = couponSubject(c, customerId)
+	if (
+		subject.kind === 'guest' &&
+		subject.address === null &&
+		!isLocalRuntime()
+	) {
+		return { blocked: couponLimitedResponse(60) }
+	}
 	const db = await getTenantDb(orgId)
 	const result = await chargeCouponGuess(db, {
 		orgId,
-		subject: couponSubject(c, customerId),
+		subject,
 		fingerprint: couponFingerprint(code, ...fingerprintParts),
 	})
 	if (!result.ok) {
+		if (result.bucket === 'codeOrg') return { blocked: couponSignInResponse() }
 		return { blocked: couponLimitedResponse(result.retryAfterSeconds) }
 	}
+	const normalizedCode = normalizeDiscountCode(code)
 	return {
 		blocked: null,
-		settle: async ({ refused }) => {
-			if (!refused) await refundCouponGuess(db, result.charge)
-		},
+		settle: (outcome) =>
+			settleCouponGuess(
+				db,
+				{ orgId, subject, normalizedCode },
+				result.charge,
+				outcome,
+			),
 	}
 }
 
@@ -244,7 +294,7 @@ async function verifyOrderTurnstile(
 	const result = await verifyTurnstileToken({
 		secret,
 		token,
-		remoteIp: clientIp(c),
+		remoteIp: clientAddress(c) ?? undefined,
 		expectedAction: RESTAURANT_TURNSTILE_ACTION,
 		expectedHostnames: parseTurnstileHostnames(ENV.TURNSTILE_HOSTNAMES),
 	})
@@ -388,7 +438,7 @@ publicOrderRoutes.post('/', async (c) => {
 			})
 		: { limited: false as const, retryAfter: 0 }
 	if (phoneLimit.limited) {
-		await couponGuard.settle({ refused: false })
+		await couponGuard.settle('none')
 		return c.json(
 			{
 				error: 'rate_limit_exceeded',
@@ -410,9 +460,9 @@ publicOrderRoutes.post('/', async (c) => {
 			customerId: customer.customerId,
 			dineIn,
 		})
-		await couponGuard.settle({
-			refused: !result.ok && failureCountsAsCouponGuess(result.failure),
-		})
+		await couponGuard.settle(
+			result.ok ? 'applied' : couponOutcomeOfFailure(result.failure),
+		)
 		if (!result.ok) return orderFailureResponse(result.failure)
 
 		const body = {
@@ -425,7 +475,7 @@ publicOrderRoutes.post('/', async (c) => {
 		}
 		return c.json(body, result.data.status, noStoreHeaders())
 	} catch (error) {
-		await couponGuard.settle({ refused: false }).catch(() => {})
+		await couponGuard.settle('none').catch(() => {})
 		console.error(
 			`Failed to place order for org ${organization.organization.id}:`,
 			error instanceof Error ? error.message : error,
@@ -472,7 +522,7 @@ publicOrderRoutes.post('/quote', async (c) => {
 	if ('error' in customer) return customer.error
 
 	const db = await getTenantDb(organization.organization.id)
-	const ip = clientIp(c) ?? 'unknown'
+	const ip = clientBucket(c) ?? 'unknown'
 	const quoteLimit = await enforceDiscountLimit(
 		db,
 		'quoteIp',
@@ -512,17 +562,15 @@ publicOrderRoutes.post('/quote', async (c) => {
 			request,
 			customerId: customer.customerId,
 		})
-		// A refused code stays counted; a code that applied, or any other
-		// answer, gives the attempt back.
-		await couponGuard.settle({
-			refused: result.ok
-				? couponStatusCountsAsGuess(result.data.coupon)
-				: failureCountsAsCouponGuess(result.failure),
-		})
+		await couponGuard.settle(
+			result.ok
+				? couponOutcomeOfQuote(result.data.coupon)
+				: couponOutcomeOfFailure(result.failure),
+		)
 		if (!result.ok) return orderFailureResponse(result.failure)
 		return c.json(result.data, 200, noStoreHeaders())
 	} catch (error) {
-		await couponGuard.settle({ refused: false }).catch(() => {})
+		await couponGuard.settle('none').catch(() => {})
 		console.error(
 			`Failed to quote an order for org ${organization.organization.id}:`,
 			error instanceof Error ? error.message : error,
@@ -718,7 +766,7 @@ publicOrderRoutes.post('/tab/pay', async (c) => {
 		// The tab's own location decides whether online payment is on.
 		const tab = await getPublicTab(orgId, tabToken)
 		if (!tab.ok) {
-			await couponGuard.settle({ refused: false })
+			await couponGuard.settle('none')
 			return orderFailureResponse(tab.failure)
 		}
 		const context = await fetchOrderContext(
@@ -727,7 +775,7 @@ publicOrderRoutes.post('/tab/pay', async (c) => {
 			null,
 		)
 		if (!context.ok) {
-			await couponGuard.settle({ refused: false })
+			await couponGuard.settle('none')
 			return orderFailureResponse(context.failure)
 		}
 		const features = readQrOrderingFeatures(
@@ -743,13 +791,13 @@ publicOrderRoutes.post('/tab/pay', async (c) => {
 			context: context.data,
 			discounts: parsed.data.discounts ?? null,
 		})
-		await couponGuard.settle({
-			refused: !result.ok && failureCountsAsCouponGuess(result.failure),
-		})
+		await couponGuard.settle(
+			result.ok ? 'applied' : couponOutcomeOfFailure(result.failure),
+		)
 		if (!result.ok) return orderFailureResponse(result.failure)
 		return c.json(result.data, 200, noStoreHeaders())
 	} catch (error) {
-		await couponGuard.settle({ refused: false }).catch(() => {})
+		await couponGuard.settle('none').catch(() => {})
 		console.error(
 			`Failed to start tab payment for org ${orgId}:`,
 			error instanceof Error ? error.message : error,

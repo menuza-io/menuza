@@ -9,7 +9,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@repo/ui/select'
-import { useId } from 'react'
+import { useId, useState } from 'react'
 
 /** A discount customers apply with a code, as the coupon picker lists it. */
 export type CouponDiscountOption = {
@@ -28,6 +28,19 @@ export type CouponOfferValue =
 	| { mode: 'unique'; discountId: string; prefix: string; validDays: number }
 
 export const COUPON_VALID_DAYS_DEFAULT = 30
+export const COUPON_VALID_DAYS_MIN = 1
+export const COUPON_VALID_DAYS_MAX = 365
+
+/**
+ * The days a single-use code stays valid, from what was typed: a whole number
+ * clamped to 1-365, or null when nothing usable was typed (the field then
+ * keeps the last good value).
+ */
+export function parseCouponValidDays(text: string): number | null {
+	const days = Number.parseInt(text.trim(), 10)
+	if (!Number.isFinite(days)) return null
+	return Math.min(COUPON_VALID_DAYS_MAX, Math.max(COUPON_VALID_DAYS_MIN, days))
+}
 /** Passed as a value: Lingui reads literal braces as a placeholder. */
 const TAG = '{{couponCode}}'
 const UNIQUE = '__unique__'
@@ -70,9 +83,12 @@ export function CouponOfferField({
 	) : null
 
 	if (options.length === 0 && !value) {
+		// Nothing to choose, so no control for a label to name: a plain heading.
 		return (
 			<div className="space-y-1.5">
-				<Label className={labelClass}>{_(msg`Coupon`)}</Label>
+				<p className={labelClass ?? 'text-sm leading-none font-medium'}>
+					{_(msg`Coupon`)}
+				</p>
 				<p className={hintClass}>
 					{_(
 						msg`To send a coupon, first create a discount that customers apply with a code.`,
@@ -196,28 +212,13 @@ export function CouponOfferField({
 									}
 								/>
 							</div>
-							<div className="space-y-1.5">
-								<Label htmlFor={`${id}-days`} className={labelClass}>
-									{_(msg`Valid for (days)`)}
-								</Label>
-								<Input
-									id={`${id}-days`}
-									type="number"
-									inputMode="numeric"
-									min={1}
-									max={365}
-									value={String(value.validDays)}
-									onChange={(event) => {
-										const days = Number.parseInt(event.target.value, 10)
-										onChange({
-											...value,
-											validDays: Number.isFinite(days)
-												? Math.min(365, Math.max(1, days))
-												: COUPON_VALID_DAYS_DEFAULT,
-										})
-									}}
-								/>
-							</div>
+							<ValidDaysInput
+								id={`${id}-days`}
+								labelClass={labelClass}
+								hintClass={hintClass}
+								days={value.validDays}
+								onDaysChange={(validDays) => onChange({ ...value, validDays })}
+							/>
 						</div>
 					) : null}
 
@@ -233,6 +234,67 @@ export function CouponOfferField({
 				</>
 			) : null}
 			{hidden}
+		</div>
+	)
+}
+
+/**
+ * The days field keeps what is typed, so it can be cleared and retyped. A
+ * usable number is passed on as it is typed; leaving the field clamps it to
+ * 1-365, or puts back the last good value when it was left empty.
+ */
+function ValidDaysInput({
+	id,
+	labelClass,
+	hintClass,
+	days,
+	onDaysChange,
+}: {
+	id: string
+	labelClass: string | undefined
+	hintClass: string
+	days: number
+	onDaysChange: (days: number) => void
+}) {
+	const { _ } = useLingui()
+	const [draft, setDraft] = useState(() => String(days))
+	const [shown, setShown] = useState(days)
+	// A new value from outside (another discount chosen) replaces the draft.
+	if (shown !== days) {
+		setShown(days)
+		if (parseCouponValidDays(draft) !== days) setDraft(String(days))
+	}
+	const hintId = `${id}-hint`
+	const min = COUPON_VALID_DAYS_MIN
+	const max = COUPON_VALID_DAYS_MAX
+	return (
+		<div className="space-y-1.5">
+			<Label htmlFor={id} className={labelClass}>
+				{_(msg`Valid for (days)`)}
+			</Label>
+			<Input
+				id={id}
+				type="number"
+				inputMode="numeric"
+				min={min}
+				max={max}
+				aria-describedby={hintId}
+				value={draft}
+				onChange={(event) => {
+					const text = event.target.value
+					setDraft(text)
+					const parsed = parseCouponValidDays(text)
+					if (parsed !== null && parsed !== days) onDaysChange(parsed)
+				}}
+				onBlur={() => {
+					const parsed = parseCouponValidDays(draft) ?? days
+					setDraft(String(parsed))
+					if (parsed !== days) onDaysChange(parsed)
+				}}
+			/>
+			<p id={hintId} className={hintClass}>
+				{_(msg`From ${min} to ${max} days.`)}
+			</p>
 		</div>
 	)
 }

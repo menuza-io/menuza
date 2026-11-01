@@ -538,7 +538,7 @@ msgstr "{rejected, plural, one {# order needs attention} other {# orders need at
 msgid "{rejectedShifts, plural, one {# shift needs attention} other {# shifts need attention}}"
 msgstr "{rejectedShifts, plural, one {# shift needs attention} other {# shifts need attention}}"
 
-#: src/screens/ManualDiscount.tsx:412
+#: src/screens/ManualDiscount.tsx:464
 msgid "{replacedCount, plural, one {This discount does not combine with {replacedNames}, so it replaced it.} other {This discount does not combine with {replacedNames}, so it replaced them.}}"
 msgstr "{replacedCount, plural, one {This discount does not combine with {replacedNames}, so it replaced it.} other {This discount does not combine with {replacedNames}, so it replaced them.}}"
 
@@ -816,11 +816,11 @@ msgstr "A bill can take at most {MAX_REFUNDS} refunds"
 #~ msgid "A confirmation text was sent."
 #~ msgstr "A confirmation text was sent."
 
-#: src/screens/ManualDiscount.tsx:441
+#: src/screens/ManualDiscount.tsx:493
 msgid "A coupon code needs a connection. Automatic discounts still apply."
 msgstr "A coupon code needs a connection. Automatic discounts still apply."
 
-#: src/screens/ManualDiscount.tsx:391
+#: src/screens/ManualDiscount.tsx:439
 msgid "A discount no longer applies to this order."
 msgstr "A discount no longer applies to this order."
 
@@ -865,7 +865,7 @@ msgstr "A manager turns them on in the app, under Settings, Terminals. The termi
 msgid "A no-show cannot be reopened from a till. Seat them as a walk-in instead."
 msgstr "A no-show cannot be reopened from a till. Seat them as a walk-in instead."
 
-#: src/screens/ManualDiscount.tsx:66
+#: src/screens/ManualDiscount.tsx:99
 msgid "A percentage cannot be more than 100."
 msgstr "A percentage cannot be more than 100."
 
@@ -1039,7 +1039,7 @@ msgid "Already booked? Seat their booking."
 msgstr "Already booked? Seat their booking."
 
 #: src/screens/Checkout.tsx:459
-#: src/screens/ManualDiscount.tsx:292
+#: src/screens/ManualDiscount.tsx:335
 #: src/screens/ShiftSheet.tsx:216
 msgid "Amount"
 msgstr "Amount"
@@ -1084,7 +1084,7 @@ msgstr "App"
 msgid "App URL"
 msgstr "App URL"
 
-#: src/screens/ManualDiscount.tsx:351
+#: src/screens/ManualDiscount.tsx:399
 msgid "Apply discount"
 msgstr "Apply discount"
 
@@ -1753,7 +1753,7 @@ msgstr "Confirmed"
 #~ msgid "Confirmed by phone"
 #~ msgstr "Confirmed by phone"
 
-#: src/lib/store.ts:770
+#: src/lib/store.ts:782
 msgid "Connect to the internet to see other terminals’ tabs."
 msgstr "Connect to the internet to see other terminals’ tabs."
 
@@ -1806,7 +1806,7 @@ msgstr "Could not open this day."
 msgid "Could not pair this terminal. Try again."
 msgstr "Could not pair this terminal. Try again."
 
-#: src/lib/store.ts:782
+#: src/lib/store.ts:794
 msgid "Could not reach the server."
 msgstr "Could not reach the server."
 
@@ -1814,7 +1814,7 @@ msgstr "Could not reach the server."
 msgid "Could not reach the server. Check the connection and try again."
 msgstr "Could not reach the server. Check the connection and try again."
 
-#: src/lib/store.ts:820
+#: src/lib/store.ts:832
 msgid "Could not reach the server. The tab stays where it is."
 msgstr "Could not reach the server. The tab stays where it is."
 
@@ -2001,20 +2001,20 @@ msgstr "Discard this entry?"
 msgid "Discard this walk-in?"
 msgstr "Discard this walk-in?"
 
-#: src/screens/ManualDiscount.tsx:261
-#: src/screens/ManualDiscount.tsx:268
+#: src/screens/ManualDiscount.tsx:302
+#: src/screens/ManualDiscount.tsx:309
 msgid "Discount"
 msgstr "Discount"
 
-#: src/screens/ManualDiscount.tsx:222
+#: src/screens/ManualDiscount.tsx:259
 msgid "Discount applied"
 msgstr "Discount applied"
 
-#: src/screens/ManualDiscount.tsx:221
+#: src/screens/ManualDiscount.tsx:258
 msgid "Discount applied. It replaced {replaced}."
 msgstr "Discount applied. It replaced {replaced}."
 
-#: src/screens/ManualDiscount.tsx:373
+#: src/screens/ManualDiscount.tsx:421
 msgid "Discount removed"
 msgstr "Discount removed"
 
@@ -2023,20 +2023,24 @@ msgstr "Discount removed"
 msgid "Discounts"
 msgstr "Discounts"
 
-#: src/screens/ManualDiscount.tsx:77
+#: src/screens/ManualDiscount.tsx:110
 msgid "Discounts are off until this till refreshes its rules. Connect to the internet."
 msgstr "Discounts are off until this till refreshes its rules. Connect to the internet."
 
-#: src/screens/ManualDiscount.tsx:248
+#: src/screens/ManualDiscount.tsx:289
 msgid "Discounts are off: this till has not refreshed its discount rules in over {staleHours} hours. Connect to the internet and they come back."
 msgstr "Discounts are off: this till has not refreshed its discount rules in over {staleHours} hours. Connect to the internet and they come back."
 
-#: src/screens/ManualDiscount.tsx:434
+#: src/screens/ManualDiscount.tsx:286
+msgid "Discounts are off: this till’s clock moved back since it got its discount rules, so it cannot tell how old they are. Connect to the internet and they come back."
+msgstr "Discounts are off: this till’s clock moved back since it got its discount rules, so it cannot tell how old they are. Connect to the internet and they come back."
+
+#: src/screens/ManualDiscount.tsx:486
 msgid "Discounts with a use limit do not apply at the till by themselves, because it cannot count uses offline."
 msgstr "Discounts with a use limit do not apply at the till by themselves, because it cannot count uses offline."
 
 #: src/apps/reservations/FreeTableBanner.tsx:58
-#: src/screens/ManualDiscount.tsx:428
+#: src/screens/ManualDiscount.tsx:480
 #: src/ui/motion.tsx:222
 msgid "Dismiss"
 msgstr "Dismiss"
@@ -2117,15 +2121,15 @@ msgstr "End break"
 msgid "Enter a customer name for this phone order"
 msgstr "Enter a customer name for this phone order"
 
-#: src/screens/ManualDiscount.tsx:195
+#: src/screens/ManualDiscount.tsx:234
 msgid "Enter a manager PIN to apply this discount."
 msgstr "Enter a manager PIN to apply this discount."
 
-#: src/screens/ManualDiscount.tsx:175
+#: src/screens/ManualDiscount.tsx:217
 msgid "Enter a number, such as 10 or 10.5."
 msgstr "Enter a number, such as 10 or 10.5."
 
-#: src/screens/ManualDiscount.tsx:199
+#: src/screens/ManualDiscount.tsx:229
 msgid "Enter a reason for this discount."
 msgstr "Enter a reason for this discount."
 
@@ -2146,7 +2150,7 @@ msgstr "Enter an amount to refund"
 msgid "Enter an amount."
 msgstr "Enter an amount."
 
-#: src/screens/ManualDiscount.tsx:74
+#: src/screens/ManualDiscount.tsx:107
 msgid "Enter how much to take off, an amount or a percentage."
 msgstr "Enter how much to take off, an amount or a percentage."
 
@@ -2663,7 +2667,7 @@ msgstr "Locked. Enter your PIN."
 msgid "longest first"
 msgstr "longest first"
 
-#: src/screens/ManualDiscount.tsx:311
+#: src/screens/ManualDiscount.tsx:356
 #: src/ui/ManagerPinPad.tsx:79
 msgid "Manager PIN"
 msgstr "Manager PIN"
@@ -3065,7 +3069,7 @@ msgid "Nobody is waiting."
 msgstr "Nobody is waiting."
 
 #: src/screens/Checkout.tsx:406
-#: src/screens/ManualDiscount.tsx:275
+#: src/screens/ManualDiscount.tsx:318
 msgid "None"
 msgstr "None"
 
@@ -3074,7 +3078,11 @@ msgstr "None"
 msgid "Not a no-show"
 msgstr "Not a no-show"
 
-#: src/screens/ManualDiscount.tsx:398
+#: src/screens/ManualDiscount.tsx:447
+msgid "Not applied: {skippedNames}. This till’s clock moved back since it got its discount rules. Go online to refresh them."
+msgstr "Not applied: {skippedNames}. This till’s clock moved back since it got its discount rules. Go online to refresh them."
+
+#: src/screens/ManualDiscount.tsx:450
 msgid "Not applied: {skippedNames}. This till’s discount rules are over {staleHours} hours old. Go online to refresh them."
 msgstr "Not applied: {skippedNames}. This till’s discount rules are over {staleHours} hours old. Go online to refresh them."
 
@@ -3222,7 +3230,7 @@ msgstr "Online orders"
 msgid "Only a paid order can be refunded"
 msgstr "Only a paid order can be refunded"
 
-#: src/screens/ManualDiscount.tsx:357
+#: src/screens/ManualDiscount.tsx:405
 msgid "Only one discount can be applied. This replaces {currentName}."
 msgstr "Only one discount can be applied. This replaces {currentName}."
 
@@ -3565,7 +3573,7 @@ msgstr "Payments"
 msgid "peanuts"
 msgstr "peanuts"
 
-#: src/screens/ManualDiscount.tsx:291
+#: src/screens/ManualDiscount.tsx:334
 msgid "Percent"
 msgstr "Percent"
 
@@ -3761,7 +3769,7 @@ msgstr "Ready"
 msgid "Ready for the pass"
 msgstr "Ready for the pass"
 
-#: src/screens/ManualDiscount.tsx:328
+#: src/screens/ManualDiscount.tsx:375
 msgid "Reason"
 msgstr "Reason"
 
@@ -3853,7 +3861,7 @@ msgstr "Remove"
 msgid "Remove {0}"
 msgstr "Remove {0}"
 
-#: src/screens/ManualDiscount.tsx:376
+#: src/screens/ManualDiscount.tsx:424
 msgid "Remove discount"
 msgstr "Remove discount"
 
@@ -4344,7 +4352,7 @@ msgstr "Sold out, not added: {names}"
 msgid "Some are here"
 msgstr "Some are here"
 
-#: src/screens/ManualDiscount.tsx:405
+#: src/screens/ManualDiscount.tsx:457
 msgid "Some discounts on this tab are no longer offered; the guest keeps them."
 msgstr "Some discounts on this tab are no longer offered; the guest keeps them."
 
@@ -4855,23 +4863,23 @@ msgstr "That code has expired or was already used. Ask a manager for a new one."
 msgid "That did not go through. Try again."
 msgstr "That did not go through. Try again."
 
-#: src/screens/ManualDiscount.tsx:88
+#: src/screens/ManualDiscount.tsx:121
 msgid "That discount does not apply to this kind of order."
 msgstr "That discount does not apply to this kind of order."
 
-#: src/screens/ManualDiscount.tsx:95
+#: src/screens/ManualDiscount.tsx:128
 msgid "That discount does not apply to this order."
 msgstr "That discount does not apply to this order."
 
-#: src/screens/ManualDiscount.tsx:80
+#: src/screens/ManualDiscount.tsx:113
 msgid "That discount is no longer available."
 msgstr "That discount is no longer available."
 
-#: src/screens/ManualDiscount.tsx:86
+#: src/screens/ManualDiscount.tsx:119
 msgid "That discount is not available right now."
 msgstr "That discount is not available right now."
 
-#: src/lib/store.ts:885
+#: src/lib/store.ts:897
 msgid "That does not look like a pairing code or link."
 msgstr "That does not look like a pairing code or link."
 
@@ -4887,7 +4895,7 @@ msgstr "That is done in the app, not at a till."
 msgid "That is more than can be refunded (up to {upTo})."
 msgstr "That is more than can be refunded (up to {upTo})."
 
-#: src/screens/ManualDiscount.tsx:69
+#: src/screens/ManualDiscount.tsx:102
 msgid "That is more than this order can take off. The most is {most}."
 msgstr "That is more than this order can take off. The most is {most}."
 
@@ -4958,7 +4966,7 @@ msgstr "That time is no longer available. Choose another."
 msgid "That time overlaps another shift. Ask a manager to fix it."
 msgstr "That time overlaps another shift. Ask a manager to fix it."
 
-#: src/screens/ManualDiscount.tsx:390
+#: src/screens/ManualDiscount.tsx:438
 msgid "The {stoppedName} discount was taken off this order."
 msgstr "The {stoppedName} discount was taken off this order."
 
@@ -5031,7 +5039,7 @@ msgid "the server already had this order closed"
 msgstr "the server already had this order closed"
 
 #. placeholder {0}: response.status
-#: src/lib/store.ts:778
+#: src/lib/store.ts:790
 msgid "The server answered {0}."
 msgstr "The server answered {0}."
 
@@ -5040,7 +5048,7 @@ msgstr "The server answered {0}."
 msgid "The server answered {0}. Try again."
 msgstr "The server answered {0}. Try again."
 
-#: src/lib/store.ts:817
+#: src/lib/store.ts:829
 msgid "The server answered {status}."
 msgstr "The server answered {status}."
 
@@ -5076,7 +5084,7 @@ msgstr "The server’s answer was not a pairing. Check the link and try again."
 msgid "The tab is kept, marked cancelled, with who cancelled it and why."
 msgstr "The tab is kept, marked cancelled, with who cancelled it and why."
 
-#: src/lib/store.ts:828
+#: src/lib/store.ts:840
 msgid "The tab was taken over but could not be saved on this device."
 msgstr "The tab was taken over but could not be saved on this device."
 
@@ -5230,7 +5238,7 @@ msgstr "This device will stop sending orders until it is paired again."
 #~ msgid "This discount does not combine with {replacedNames}, so it replaced them."
 #~ msgstr "This discount does not combine with {replacedNames}, so it replaced them."
 
-#: src/screens/ManualDiscount.tsx:72
+#: src/screens/ManualDiscount.tsx:105
 msgid "This discount is limited to {most} at most."
 msgstr "This discount is limited to {most} at most."
 
@@ -5242,7 +5250,7 @@ msgstr "This discount is limited to {most} at most."
 msgid "this location"
 msgstr "this location"
 
-#: src/screens/ManualDiscount.tsx:93
+#: src/screens/ManualDiscount.tsx:126
 msgid "This order does not have the items that discount needs."
 msgstr "This order does not have the items that discount needs."
 
@@ -5260,7 +5268,7 @@ msgstr "This order has more than {MAX_ORDER_LINES} lines and cannot be saved. Ta
 msgid "This order is already closed"
 msgstr "This order is already closed"
 
-#: src/screens/ManualDiscount.tsx:90
+#: src/screens/ManualDiscount.tsx:123
 msgid "This order is below the minimum spend for that discount."
 msgstr "This order is below the minimum spend for that discount."
 
@@ -5305,7 +5313,7 @@ msgid "This shift is closed."
 msgstr "This shift is closed."
 
 #: src/lib/orders.ts:761
-#: src/lib/store.ts:792
+#: src/lib/store.ts:804
 msgid "This tab has no tax rate on the server, so it cannot be billed here. Settle it on the terminal that opened it."
 msgstr "This tab has no tax rate on the server, so it cannot be billed here. Settle it on the terminal that opened it."
 
@@ -5360,8 +5368,8 @@ msgstr "This terminal cannot save punches without a connection. Try again when i
 msgid "This terminal is no longer paired. Ask a manager to pair it again."
 msgstr "This terminal is no longer paired. Ask a manager to pair it again."
 
-#: src/lib/store.ts:764
-#: src/lib/store.ts:789
+#: src/lib/store.ts:776
+#: src/lib/store.ts:801
 msgid "This terminal is not paired with a restaurant."
 msgstr "This terminal is not paired with a restaurant."
 

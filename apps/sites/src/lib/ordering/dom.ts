@@ -47,6 +47,25 @@ export function icon(name: IconName, className = 'size-4'): SVGSVGElement {
 	return svg
 }
 
+/**
+ * True while a key press belongs to an input method (Chinese, Japanese, Korean
+ * and some Arabic keyboards): Enter or an arrow then picks a candidate, and the
+ * text is not final yet. Safari sends the Enter that ends a composition after
+ * `compositionend`, with `isComposing` false but key code 229, so both count.
+ */
+export function isComposingKey(
+	event: Pick<KeyboardEvent, 'isComposing' | 'keyCode'>,
+): boolean {
+	return event.isComposing || event.keyCode === 229
+}
+
+/** Enter that should act (apply, choose), not one that confirms an input-method candidate. */
+export function isActionEnter(
+	event: Pick<KeyboardEvent, 'key' | 'isComposing' | 'keyCode'>,
+): boolean {
+	return event.key === 'Enter' && !isComposingKey(event)
+}
+
 export function prefersReducedMotion(): boolean {
 	return (
 		typeof matchMedia === 'function' &&

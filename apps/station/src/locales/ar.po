@@ -538,7 +538,7 @@ msgstr "{rejected, plural, zero {لا طلبات تحتاج إلى مراجعة}
 msgid "{rejectedShifts, plural, one {# shift needs attention} other {# shifts need attention}}"
 msgstr "{rejectedShifts, plural, zero {لا ورديات تحتاج إلى مراجعة} one {وردية واحدة تحتاج إلى مراجعة} two {ورديتان تحتاجان إلى مراجعة} few {# ورديات تحتاج إلى مراجعة} many {# وردية تحتاج إلى مراجعة} other {# وردية تحتاج إلى مراجعة}}"
 
-#: src/screens/ManualDiscount.tsx:412
+#: src/screens/ManualDiscount.tsx:464
 msgid "{replacedCount, plural, one {This discount does not combine with {replacedNames}, so it replaced it.} other {This discount does not combine with {replacedNames}, so it replaced them.}}"
 msgstr "{replacedCount, plural, zero {هذا الخصم لا يجتمع مع {replacedNames}، لذلك حلّ محلّها.} one {هذا الخصم لا يجتمع مع {replacedNames}، لذلك حلّ محلّه.} two {هذا الخصم لا يجتمع مع {replacedNames}، لذلك حلّ محلّهما.} few {هذا الخصم لا يجتمع مع {replacedNames}، لذلك حلّ محلّها.} many {هذا الخصم لا يجتمع مع {replacedNames}، لذلك حلّ محلّها.} other {هذا الخصم لا يجتمع مع {replacedNames}، لذلك حلّ محلّها.}}"
 
@@ -816,11 +816,11 @@ msgstr "يمكن أن تقبل الفاتورة {MAX_REFUNDS} استردادًا
 #~ msgid "A confirmation text was sent."
 #~ msgstr "أُرسلت رسالة تأكيد."
 
-#: src/screens/ManualDiscount.tsx:441
+#: src/screens/ManualDiscount.tsx:493
 msgid "A coupon code needs a connection. Automatic discounts still apply."
 msgstr "يحتاج رمز القسيمة إلى اتصال. الخصومات التلقائية تُطبَّق مع ذلك."
 
-#: src/screens/ManualDiscount.tsx:391
+#: src/screens/ManualDiscount.tsx:439
 msgid "A discount no longer applies to this order."
 msgstr "لم يعد الخصم ينطبق على هذا الطلب."
 
@@ -865,7 +865,7 @@ msgstr "يفعّلها المدير من التطبيق، في الإعدادا�
 msgid "A no-show cannot be reopened from a till. Seat them as a walk-in instead."
 msgstr "لا يمكن إعادة فتح حالة عدم الحضور من الكاشير. أجلسهم كضيوف بدون حجز بدلًا من ذلك."
 
-#: src/screens/ManualDiscount.tsx:66
+#: src/screens/ManualDiscount.tsx:99
 msgid "A percentage cannot be more than 100."
 msgstr "لا يمكن أن تتجاوز النسبة المئوية 100."
 
@@ -1039,7 +1039,7 @@ msgid "Already booked? Seat their booking."
 msgstr "هل لديهم حجز؟ أجلس حجزهم."
 
 #: src/screens/Checkout.tsx:459
-#: src/screens/ManualDiscount.tsx:292
+#: src/screens/ManualDiscount.tsx:335
 #: src/screens/ShiftSheet.tsx:216
 msgid "Amount"
 msgstr "مبلغ"
@@ -1084,7 +1084,7 @@ msgstr "التطبيق"
 msgid "App URL"
 msgstr "رابط التطبيق"
 
-#: src/screens/ManualDiscount.tsx:351
+#: src/screens/ManualDiscount.tsx:399
 msgid "Apply discount"
 msgstr "تطبيق الخصم"
 
@@ -1753,7 +1753,7 @@ msgstr "مؤكد"
 #~ msgid "Confirmed by phone"
 #~ msgstr "تم التأكيد هاتفيًا"
 
-#: src/lib/store.ts:770
+#: src/lib/store.ts:782
 msgid "Connect to the internet to see other terminals’ tabs."
 msgstr "اتصل بالإنترنت لرؤية حسابات نقاط البيع الأخرى."
 
@@ -1806,7 +1806,7 @@ msgstr "تعذّر فتح هذا اليوم."
 msgid "Could not pair this terminal. Try again."
 msgstr "تعذّر ربط هذا الجهاز. حاول مرة أخرى."
 
-#: src/lib/store.ts:782
+#: src/lib/store.ts:794
 msgid "Could not reach the server."
 msgstr "تعذّر الوصول إلى الخادم."
 
@@ -1814,7 +1814,7 @@ msgstr "تعذّر الوصول إلى الخادم."
 msgid "Could not reach the server. Check the connection and try again."
 msgstr "تعذّر الوصول إلى الخادم. تحقق من الاتصال وحاول مرة أخرى."
 
-#: src/lib/store.ts:820
+#: src/lib/store.ts:832
 msgid "Could not reach the server. The tab stays where it is."
 msgstr "تعذّر الوصول إلى الخادم. يبقى الحساب حيث هو."
 
@@ -2001,20 +2001,20 @@ msgstr "تجاهل هذا الإدخال؟"
 msgid "Discard this walk-in?"
 msgstr "تجاهل هذا الزبون بلا حجز؟"
 
-#: src/screens/ManualDiscount.tsx:261
-#: src/screens/ManualDiscount.tsx:268
+#: src/screens/ManualDiscount.tsx:302
+#: src/screens/ManualDiscount.tsx:309
 msgid "Discount"
 msgstr "خصم"
 
-#: src/screens/ManualDiscount.tsx:222
+#: src/screens/ManualDiscount.tsx:259
 msgid "Discount applied"
 msgstr "تم تطبيق الخصم"
 
-#: src/screens/ManualDiscount.tsx:221
+#: src/screens/ManualDiscount.tsx:258
 msgid "Discount applied. It replaced {replaced}."
 msgstr "تم تطبيق الخصم، وقد حلّ محل {replaced}."
 
-#: src/screens/ManualDiscount.tsx:373
+#: src/screens/ManualDiscount.tsx:421
 msgid "Discount removed"
 msgstr "تمت إزالة الخصم"
 
@@ -2023,20 +2023,24 @@ msgstr "تمت إزالة الخصم"
 msgid "Discounts"
 msgstr "الخصومات"
 
-#: src/screens/ManualDiscount.tsx:77
+#: src/screens/ManualDiscount.tsx:110
 msgid "Discounts are off until this till refreshes its rules. Connect to the internet."
 msgstr "الخصومات متوقفة إلى أن تحدّث نقطة البيع هذه قواعدها. اتصل بالإنترنت."
 
-#: src/screens/ManualDiscount.tsx:248
+#: src/screens/ManualDiscount.tsx:289
 msgid "Discounts are off: this till has not refreshed its discount rules in over {staleHours} hours. Connect to the internet and they come back."
 msgstr "الخصومات متوقفة: لم تحدّث نقطة البيع هذه قواعد الخصم منذ أكثر من {staleHours} ساعة. اتصل بالإنترنت لتعود."
 
-#: src/screens/ManualDiscount.tsx:434
+#: src/screens/ManualDiscount.tsx:286
+msgid "Discounts are off: this till’s clock moved back since it got its discount rules, so it cannot tell how old they are. Connect to the internet and they come back."
+msgstr "الخصومات متوقفة: رجعت ساعة نقطة البيع هذه إلى الوراء منذ أن حصلت على قواعد الخصم، فلا يمكنها معرفة عمر هذه القواعد. اتصل بالإنترنت لتعود."
+
+#: src/screens/ManualDiscount.tsx:486
 msgid "Discounts with a use limit do not apply at the till by themselves, because it cannot count uses offline."
 msgstr "الخصومات ذات حد الاستخدام لا تُطبَّق تلقائيًا في نقطة البيع، لأنها لا تستطيع عدّ الاستخدامات دون اتصال."
 
 #: src/apps/reservations/FreeTableBanner.tsx:58
-#: src/screens/ManualDiscount.tsx:428
+#: src/screens/ManualDiscount.tsx:480
 #: src/ui/motion.tsx:222
 msgid "Dismiss"
 msgstr "إغلاق"
@@ -2117,15 +2121,15 @@ msgstr "إنهاء الاستراحة"
 msgid "Enter a customer name for this phone order"
 msgstr "أدخل اسم العميل لهذا الطلب الهاتفي"
 
-#: src/screens/ManualDiscount.tsx:195
+#: src/screens/ManualDiscount.tsx:234
 msgid "Enter a manager PIN to apply this discount."
 msgstr "أدخل رمز المدير لتطبيق هذا الخصم."
 
-#: src/screens/ManualDiscount.tsx:175
+#: src/screens/ManualDiscount.tsx:217
 msgid "Enter a number, such as 10 or 10.5."
 msgstr "أدخل رقمًا، مثل 10 أو 10.5."
 
-#: src/screens/ManualDiscount.tsx:199
+#: src/screens/ManualDiscount.tsx:229
 msgid "Enter a reason for this discount."
 msgstr "أدخل سببًا لهذا الخصم."
 
@@ -2146,7 +2150,7 @@ msgstr "أدخل مبلغ الاسترداد"
 msgid "Enter an amount."
 msgstr "أدخل مبلغًا."
 
-#: src/screens/ManualDiscount.tsx:74
+#: src/screens/ManualDiscount.tsx:107
 msgid "Enter how much to take off, an amount or a percentage."
 msgstr "أدخل مقدار الخصم، مبلغًا أو نسبة مئوية."
 
@@ -2663,7 +2667,7 @@ msgstr "مقفلة. أدخل رمزك السري."
 msgid "longest first"
 msgstr "الأقدم جلوسًا أولًا"
 
-#: src/screens/ManualDiscount.tsx:311
+#: src/screens/ManualDiscount.tsx:356
 #: src/ui/ManagerPinPad.tsx:79
 msgid "Manager PIN"
 msgstr "رمز المدير"
@@ -3065,7 +3069,7 @@ msgid "Nobody is waiting."
 msgstr "لا يوجد أحد بالانتظار."
 
 #: src/screens/Checkout.tsx:406
-#: src/screens/ManualDiscount.tsx:275
+#: src/screens/ManualDiscount.tsx:318
 msgid "None"
 msgstr "بدون"
 
@@ -3074,7 +3078,11 @@ msgstr "بدون"
 msgid "Not a no-show"
 msgstr "ليس عدم حضور"
 
-#: src/screens/ManualDiscount.tsx:398
+#: src/screens/ManualDiscount.tsx:447
+msgid "Not applied: {skippedNames}. This till’s clock moved back since it got its discount rules. Go online to refresh them."
+msgstr "لم يُطبَّق: {skippedNames}. رجعت ساعة هذا الكاشير إلى الوراء منذ أن حصل على قواعد الخصم. اتصل بالإنترنت لتحديثها."
+
+#: src/screens/ManualDiscount.tsx:450
 msgid "Not applied: {skippedNames}. This till’s discount rules are over {staleHours} hours old. Go online to refresh them."
 msgstr "لم يُطبَّق: {skippedNames}. مرّ على قواعد الخصم في هذا الكاشير أكثر من {staleHours} ساعة. اتصل بالإنترنت لتحديثها."
 
@@ -3222,7 +3230,7 @@ msgstr "الطلبات الإلكترونية"
 msgid "Only a paid order can be refunded"
 msgstr "لا يمكن استرداد إلا طلب مدفوع"
 
-#: src/screens/ManualDiscount.tsx:357
+#: src/screens/ManualDiscount.tsx:405
 msgid "Only one discount can be applied. This replaces {currentName}."
 msgstr "يمكن تطبيق خصم واحد فقط. هذا الخصم سيحلّ محل {currentName}."
 
@@ -3565,7 +3573,7 @@ msgstr "المدفوعات"
 msgid "peanuts"
 msgstr "الفول السوداني"
 
-#: src/screens/ManualDiscount.tsx:291
+#: src/screens/ManualDiscount.tsx:334
 msgid "Percent"
 msgstr "النسبة"
 
@@ -3761,7 +3769,7 @@ msgstr "جاهز"
 msgid "Ready for the pass"
 msgstr "جاهز للتسليم"
 
-#: src/screens/ManualDiscount.tsx:328
+#: src/screens/ManualDiscount.tsx:375
 msgid "Reason"
 msgstr "السبب"
 
@@ -3853,7 +3861,7 @@ msgstr "إزالة"
 msgid "Remove {0}"
 msgstr "إزالة {0}"
 
-#: src/screens/ManualDiscount.tsx:376
+#: src/screens/ManualDiscount.tsx:424
 msgid "Remove discount"
 msgstr "إزالة الخصم"
 
@@ -4344,7 +4352,7 @@ msgstr "نفد، لم يُضف: {names}"
 msgid "Some are here"
 msgstr "بعضهم وصل"
 
-#: src/screens/ManualDiscount.tsx:405
+#: src/screens/ManualDiscount.tsx:457
 msgid "Some discounts on this tab are no longer offered; the guest keeps them."
 msgstr "بعض الخصومات على هذه الفاتورة لم تعد متاحة؛ يحتفظ الضيف بها."
 
@@ -4855,23 +4863,23 @@ msgstr "انتهت صلاحية هذا الرمز أو تم استخدامه. ا
 msgid "That did not go through. Try again."
 msgstr "لم تتم العملية. حاول مرة أخرى."
 
-#: src/screens/ManualDiscount.tsx:88
+#: src/screens/ManualDiscount.tsx:121
 msgid "That discount does not apply to this kind of order."
 msgstr "هذا الخصم لا ينطبق على هذا النوع من الطلبات."
 
-#: src/screens/ManualDiscount.tsx:95
+#: src/screens/ManualDiscount.tsx:128
 msgid "That discount does not apply to this order."
 msgstr "لا ينطبق هذا الخصم على هذا الطلب."
 
-#: src/screens/ManualDiscount.tsx:80
+#: src/screens/ManualDiscount.tsx:113
 msgid "That discount is no longer available."
 msgstr "هذا الخصم لم يعد متاحًا."
 
-#: src/screens/ManualDiscount.tsx:86
+#: src/screens/ManualDiscount.tsx:119
 msgid "That discount is not available right now."
 msgstr "هذا الخصم غير متاح الآن."
 
-#: src/lib/store.ts:885
+#: src/lib/store.ts:897
 msgid "That does not look like a pairing code or link."
 msgstr "لا يبدو هذا رمز ربط أو رابطًا."
 
@@ -4887,7 +4895,7 @@ msgstr "يتم ذلك من التطبيق، لا من جهاز الكاشير."
 msgid "That is more than can be refunded (up to {upTo})."
 msgstr "هذا أكثر مما يمكن استرداده (حتى {upTo})."
 
-#: src/screens/ManualDiscount.tsx:69
+#: src/screens/ManualDiscount.tsx:102
 msgid "That is more than this order can take off. The most is {most}."
 msgstr "هذا أكثر مما يمكن خصمه من هذا الطلب. الحد الأقصى هو {most}."
 
@@ -4958,7 +4966,7 @@ msgstr "هذا الوقت لم يعد متاحًا. اختر وقتًا آخر."
 msgid "That time overlaps another shift. Ask a manager to fix it."
 msgstr "هذا الوقت يتداخل مع وردية أخرى. اطلب من المدير تصحيحه."
 
-#: src/screens/ManualDiscount.tsx:390
+#: src/screens/ManualDiscount.tsx:438
 msgid "The {stoppedName} discount was taken off this order."
 msgstr "أُزيل خصم {stoppedName} من هذا الطلب."
 
@@ -5031,7 +5039,7 @@ msgid "the server already had this order closed"
 msgstr "كان الطلب مغلقًا لدى الخادم"
 
 #. placeholder {0}: response.status
-#: src/lib/store.ts:778
+#: src/lib/store.ts:790
 msgid "The server answered {0}."
 msgstr "ردّ الخادم بـ {0}."
 
@@ -5040,7 +5048,7 @@ msgstr "ردّ الخادم بـ {0}."
 msgid "The server answered {0}. Try again."
 msgstr "ردّ الخادم بـ {0}. حاول مرة أخرى."
 
-#: src/lib/store.ts:817
+#: src/lib/store.ts:829
 msgid "The server answered {status}."
 msgstr "ردّ الخادم بـ {status}."
 
@@ -5076,7 +5084,7 @@ msgstr "ردّ الخادم ليس ردّ ربط. تحقّق من الرابط �
 msgid "The tab is kept, marked cancelled, with who cancelled it and why."
 msgstr "يُحتفظ بالحساب مُعلَّمًا كملغى، مع من ألغاه ولماذا."
 
-#: src/lib/store.ts:828
+#: src/lib/store.ts:840
 msgid "The tab was taken over but could not be saved on this device."
 msgstr "نُقلت الفاتورة المفتوحة إلى هنا لكن تعذّر حفظها على هذا الجهاز."
 
@@ -5230,7 +5238,7 @@ msgstr "سيتوقف هذا الجهاز عن إرسال الطلبات حتى �
 #~ msgid "This discount does not combine with {replacedNames}, so it replaced them."
 #~ msgstr "هذا الخصم لا يجتمع مع {replacedNames}، لذلك حلّ محلها."
 
-#: src/screens/ManualDiscount.tsx:72
+#: src/screens/ManualDiscount.tsx:105
 msgid "This discount is limited to {most} at most."
 msgstr "هذا الخصم محدود بحد أقصى {most}."
 
@@ -5242,7 +5250,7 @@ msgstr "هذا الخصم محدود بحد أقصى {most}."
 msgid "this location"
 msgstr "هذا الفرع"
 
-#: src/screens/ManualDiscount.tsx:93
+#: src/screens/ManualDiscount.tsx:126
 msgid "This order does not have the items that discount needs."
 msgstr "لا يحتوي هذا الطلب على الأصناف التي يحتاجها ذلك الخصم."
 
@@ -5260,7 +5268,7 @@ msgstr "يحتوي هذا الطلب على أكثر من {MAX_ORDER_LINES} سط
 msgid "This order is already closed"
 msgstr "هذا الطلب مغلق بالفعل"
 
-#: src/screens/ManualDiscount.tsx:90
+#: src/screens/ManualDiscount.tsx:123
 msgid "This order is below the minimum spend for that discount."
 msgstr "قيمة هذا الطلب أقل من الحد الأدنى للإنفاق لذلك الخصم."
 
@@ -5305,7 +5313,7 @@ msgid "This shift is closed."
 msgstr "هذه الوردية مغلقة."
 
 #: src/lib/orders.ts:761
-#: src/lib/store.ts:792
+#: src/lib/store.ts:804
 msgid "This tab has no tax rate on the server, so it cannot be billed here. Settle it on the terminal that opened it."
 msgstr "لا توجد نسبة ضريبة لهذه الفاتورة المفتوحة على الخادم، لذا لا يمكن تحصيلها هنا. سوّها على الجهاز الذي فتحها."
 
@@ -5360,8 +5368,8 @@ msgstr "لا يمكن لهذا الجهاز حفظ البصمات دون اتص�
 msgid "This terminal is no longer paired. Ask a manager to pair it again."
 msgstr "لم يعد هذا الجهاز مقترنًا. اطلب من المدير إقرانه مجددًا."
 
-#: src/lib/store.ts:764
-#: src/lib/store.ts:789
+#: src/lib/store.ts:776
+#: src/lib/store.ts:801
 msgid "This terminal is not paired with a restaurant."
 msgstr "نقطة البيع هذه غير مرتبطة بمطعم."
 

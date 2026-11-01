@@ -26,10 +26,12 @@ import {
 	type EditorState,
 	type DiscountLocationChoice,
 	amountsSupported,
+	promoteOnMenuAllowed,
 	resolveDiscountCurrency,
 	stateUsesAmounts,
 	tiersApply,
 } from '#app/utils/discounts/editor-model.ts'
+import { type DiscountHistoryEntry } from '#app/utils/discounts/history.server.ts'
 import {
 	DISCOUNT_CHANNEL_LABELS,
 	DISCOUNT_COMBINE_LABELS,
@@ -39,13 +41,12 @@ import {
 	DISCOUNT_STATUS_LABELS,
 	DISCOUNT_VALUE_TYPE_LABELS,
 } from '#app/utils/discounts/labels.ts'
-import { type DiscountHistoryEntry } from '#app/utils/discounts/history.server.ts'
 import { type DiscountLimit } from '#app/utils/discounts/limits.ts'
 import { type LoyaltyCatalog } from '#app/utils/loyalty/catalog.ts'
 import { formatInstantDate } from '#app/utils/people/people-view.ts'
 import { CodesEditor } from './codes-editor.tsx'
-import { DiscountHistory } from './discount-history.tsx'
 import { BuyGetGroups, DealSlots } from './deal-groups.tsx'
+import { DiscountHistory } from './discount-history.tsx'
 import { DiscountSummary } from './discount-summary.tsx'
 import {
 	type Choice,
@@ -70,6 +71,12 @@ const DESCRIPTION_MAX = 75
 /** The values that are an amount of money. */
 const AMOUNT_VALUE_TYPES: ReadonlySet<DiscountValueType> =
 	new Set<DiscountValueType>(['fixed', 'fixed_price', 'variable_amount'])
+
+/**
+ * The line that says why the status buttons are off while there are unsaved
+ * edits. The buttons point at it with `aria-describedby`.
+ */
+export const UNSAVED_CHANGES_NOTE_ID = 'discount-unsaved-note'
 
 export function DiscountForm(props: ComponentProps<typeof DiscountFormBody>) {
 	return <DiscountFormBody {...props} />
@@ -307,6 +314,7 @@ function DiscountFormBody({
 	createdBy = null,
 	history = [],
 	createdAt = null,
+	sharedWithOtherLocations = false,
 }: {
 	orgSlug: string
 	mode: 'new' | 'edit'
@@ -333,6 +341,11 @@ function DiscountFormBody({
 	createdBy?: { name: string } | null
 	history?: readonly DiscountHistoryEntry[]
 	createdAt?: string | null
+	/**
+	 * The member may change discounts but this one also runs at locations
+	 * outside theirs, so it is read-only for them (`discountEditableInScope`).
+	 */
+	sharedWithOtherLocations?: boolean
 }) {
 	const { t, i18n } = useLingui()
 	const [state, setState] = useState(initial)
@@ -630,11 +643,15 @@ function DiscountFormBody({
 							</p>
 						) : null}
 						{editable && dirty && statusActions ? (
-							<p role="status" className="text-muted-foreground text-sm">
+							<p
+								id={UNSAVED_CHANGES_NOTE_ID}
+								role="status"
+								className="text-muted-foreground text-sm"
+							>
 								<Trans>
-									You have unsaved changes. Save them first: Pause, Restore,
-									Archive and Duplicate act on the saved discount and would drop
-									them.
+									You have unsaved changes. Save or discard them first: Pause,
+									Restore, Archive, Duplicate and Print coupons use the saved
+									discount.
 								</Trans>
 							</p>
 						) : null}
@@ -656,10 +673,18 @@ function DiscountFormBody({
 						) : null}
 						{!canWrite ? (
 							<p className="text-muted-foreground text-sm">
-								<Trans>
-									You can look at this discount. You don't have permission to
-									change it.
-								</Trans>
+								{sharedWithOtherLocations ? (
+									<Trans>
+										This discount also runs at locations outside yours, so you
+										can look at it but not change it. Ask someone who manages
+										every location.
+									</Trans>
+								) : (
+									<Trans>
+										You can look at this discount. You don't have permission to
+										change it.
+									</Trans>
+								)}
 							</p>
 						) : null}
 						{hasErrors ? (
@@ -1771,9 +1796,17 @@ function DiscountFormBody({
 							<SwitchRow
 								label={<Trans>Promote on your menu</Trans>}
 								description={
-									<Trans>Shows it as an offer on your online menu.</Trans>
+									promoteOnMenuAllowed(state) ? (
+										<Trans>Shows it as an offer on your online menu.</Trans>
+									) : (
+										<Trans>
+											Only for discounts everyone can use: the menu can't say
+											who qualifies. Set Customers to Everyone to promote it.
+										</Trans>
+									)
 								}
-								checked={state.promoteOnMenu}
+								checked={state.promoteOnMenu && promoteOnMenuAllowed(state)}
+								disabled={!promoteOnMenuAllowed(state)}
 								onCheckedChange={(promoteOnMenu) => patch({ promoteOnMenu })}
 							/>
 							<SwitchRow

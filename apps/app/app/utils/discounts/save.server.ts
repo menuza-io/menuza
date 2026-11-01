@@ -4,10 +4,6 @@ import { z } from 'zod'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 import { type DiscountsAccess } from './access.server.ts'
 import {
-	discountLocationsAllowedInScope,
-	discountVisibleInScope,
-} from './location-scope.server.ts'
-import {
 	createDiscount,
 	duplicateDiscount,
 	getDiscount,
@@ -15,13 +11,19 @@ import {
 	setDiscountStatus,
 	updateDiscount,
 } from './discounts.server.ts'
-import { loadDiscountLocations } from './editor-data.server.ts'
+import {
+	loadDiscountLocations,
+	loadOrganizationDiscountIds,
+} from './editor-data.server.ts'
 import {
 	type EditorErrors,
-	type EditorState,
 	resolveDiscountCurrency,
 	stateToDefinition,
 } from './editor-model.ts'
+import {
+	keepOrganizationIds,
+	parseEditorStateField,
+} from './editor-state-schema.ts'
 import {
 	changedDiscountKeys,
 	recordDiscountCreated,
@@ -29,9 +31,16 @@ import {
 	recordDiscountUpdated,
 } from './history.server.ts'
 import { type DiscountLimit } from './limits.ts'
+import {
+	discountEditableInScope,
+	discountLocationsAllowedInScope,
+	discountVisibleInScope,
+} from './location-scope.server.ts'
 
 const statusSchema = z.enum(['active', 'paused', 'archived'])
 const saveStatusSchema = z.enum(['active', 'paused'])
+/** Versions start at 1, so an empty or missing field is refused. */
+const expectedVersionSchema = z.coerce.number().int().min(1)
 
 /** The word added to a copy's name when the form sends none. */
 const DEFAULT_COPY_WORD = 'copy'
@@ -58,6 +67,26 @@ export async function saveDiscountEditor({
 		(intent === 'set-status' || intent === 'duplicate'
 			? String(form.get('discountId') ?? '')
 			: undefined)
+
+	// Every change to a stored discount checks the member's locations first,
+	// whatever the intent: out of sight is not found, and a discount shared
+	// with locations outside theirs is read-only (`discountEditableInScope`).
+	let stored: Awaited<ReturnType<typeof getDiscountApplication>> = null
+	if (discountId !== undefined) {
+		if (!discountId) {
+			return data({ formError: 'missing' as const }, { status: 400 })
+		}
+		stored = await getDiscountApplication(access.organization.id, discountId)
+		if (
+			!stored ||
+			!discountVisibleInScope(stored.locationIds, access.locationIds)
+		) {
+			throw new Response('Not Found', { status: 404 })
+		}
+		if (!discountEditableInScope(stored.locationIds, access.locationIds)) {
+			return data({ scope: true as const }, { status: 403 })
+		}
+	}
 
 	if (intent === 'duplicate') {
 		if (!discountId) {
@@ -92,14 +121,16 @@ export async function saveDiscountEditor({
 			return data({ formError: 'missing' as const }, { status: 400 })
 		}
 		const status = statusSchema.safeParse(form.get('status'))
-		const expectedVersion = Number(form.get('expectedVersion'))
-		if (!status.success || !Number.isInteger(expectedVersion)) {
+		const expectedVersion = expectedVersionSchema.safeParse(
+			form.get('expectedVersion'),
+		)
+		if (!status.success || !expectedVersion.success) {
 			return data({ formError: 'invalid' as const }, { status: 400 })
 		}
 		const saved = await setDiscountStatus({
 			organizationId: access.organization.id,
 			discountId,
-			expectedVersion,
+			expectedVersion: expectedVersion.data,
 			status: status.data,
 		})
 		if (!saved.ok) {
@@ -127,31 +158,21 @@ export async function saveDiscountEditor({
 	}
 
 	const status = saveStatusSchema.safeParse(form.get('status'))
-	let state: EditorState
-	try {
-		state = JSON.parse(String(form.get('state') ?? '')) as EditorState
-	} catch {
+	const posted = parseEditorStateField(form.get('state'))
+	if (!posted || !status.success) {
 		return data({ formError: 'invalid' as const }, { status: 400 })
 	}
-	if (!state || typeof state !== 'object' || !status.success) {
-		return data({ formError: 'invalid' as const }, { status: 400 })
-	}
+	// Ids from another organization, or deleted since the editor opened, are
+	// dropped before anything reads them (`keepOrganizationIds`).
+	const state = keepOrganizationIds(
+		posted,
+		await loadOrganizationDiscountIds(access.organization.id),
+	)
 
 	// Amounts are in the currency of the locations the discount applies to
 	// (orders price in their location's currency and the engine never converts).
 	// A discount with no location to read one from (an organization without
 	// locations) keeps the currency it was entered in, or takes the region's.
-	const stored = discountId
-		? await getDiscountApplication(access.organization.id, discountId)
-		: null
-	if (discountId && !stored) throw new Response('Not Found', { status: 404 })
-	if (
-		stored &&
-		!discountVisibleInScope(stored.locationIds, access.locationIds)
-	) {
-		throw new Response('Not Found', { status: 404 })
-	}
-
 	const locations = await loadDiscountLocations(access.organization.id)
 	let built: ReturnType<typeof stateToDefinition>
 	try {
@@ -193,15 +214,17 @@ export async function saveDiscountEditor({
 	}
 
 	if (discountId) {
-		const expectedVersion = Number(form.get('expectedVersion'))
-		if (!Number.isInteger(expectedVersion)) {
+		const expectedVersion = expectedVersionSchema.safeParse(
+			form.get('expectedVersion'),
+		)
+		if (!expectedVersion.success) {
 			return data({ formError: 'invalid' as const }, { status: 400 })
 		}
 		const before = await getDiscount(access.organization.id, discountId)
 		const saved = await updateDiscount({
 			organizationId: access.organization.id,
 			discountId,
-			expectedVersion,
+			expectedVersion: expectedVersion.data,
 			definition: built.definition,
 			codes: built.codes,
 		})
@@ -330,4 +353,9 @@ export type DiscountEditorActionData = {
 	/** The organization is at its cap of discounts or of codes (see `MAX_*_PER_ORG`). */
 	limit?: DiscountLimit
 	formError?: 'invalid' | 'missing'
+	/**
+	 * The discount also runs at locations outside the member's own, so they
+	 * can view it but not change it (`discountEditableInScope`).
+	 */
+	scope?: true
 }

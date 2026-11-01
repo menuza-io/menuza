@@ -570,7 +570,7 @@ msgstr "{0} modifier groups"
 
 #. placeholder {0}: campaign.recipients.length
 #. placeholder {1}: campaign.targetAudienceCount
-#: ../../packages/marketing/src/components/campaign-detail.tsx:138
+#: ../../packages/marketing/src/components/campaign-detail.tsx:141
 msgid "{0} of {1} targeted"
 msgstr ""
 
@@ -1278,7 +1278,7 @@ msgstr "{label} was removed."
 msgid "{label}, {total} unread"
 msgstr "{label}, {total} unread"
 
-#: app/components/discounts/discount-form.tsx:498
+#: app/components/discounts/discount-form.tsx:511
 msgid "{label}: {message}"
 msgstr "{label}: {message}"
 
@@ -1441,7 +1441,7 @@ msgstr "{n, plural, one {# person was clocked out automatically} other {# people
 msgid "{n, plural, one {A schedule was published} other {# schedules were published}}"
 msgstr "{n, plural, one {A schedule was published} other {# schedules were published}}"
 
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:214
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:224
 msgid "{name} archived."
 msgstr "{name} archived."
 
@@ -1477,15 +1477,15 @@ msgstr "{name} is over position {place} of {total}."
 msgid "{name} moved to position {position} of {total}."
 msgstr "{name} moved to position {position} of {total}."
 
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:219
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:229
 msgid "{name} paused."
 msgstr "{name} paused."
 
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:218
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:228
 msgid "{name} restored. It is paused."
 msgstr "{name} restored. It is paused."
 
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:216
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:226
 msgid "{name} resumed."
 msgstr "{name} resumed."
 
@@ -1743,7 +1743,7 @@ msgstr "{referenceCount, plural, one {# place} other {# places}}"
 msgid "{referralCount, plural, one {# person joined using your link!} other {# people joined using your link!}}"
 msgstr ""
 
-#: app/components/orders/order-detail.tsx:730
+#: app/components/orders/order-detail.tsx:732
 msgid "{refundedMoney} of {totalMoney}"
 msgstr "{refundedMoney} of {totalMoney}"
 
@@ -1921,11 +1921,11 @@ msgstr "{total} submissions"
 msgid "{totalLimit, plural, one {Up to # use} other {Up to # uses}}"
 msgstr "{totalLimit, plural, one {Up to # use} other {Up to # uses}}"
 
-#: app/components/orders/order-detail.tsx:856
+#: app/components/orders/order-detail.tsx:858
 msgid "{totalMoney} was received for this order. Cancelling does not refund it: refund it separately with your payment processor."
 msgstr "{totalMoney} was received for this order. Cancelling does not refund it: refund it separately with your payment processor."
 
-#: app/components/orders/order-detail.tsx:852
+#: app/components/orders/order-detail.tsx:854
 msgid "{totalMoney} was received for this order. Cancelling does not refund it: refund it with your payment processor, then record the refund on this order."
 msgstr "{totalMoney} was received for this order. Cancelling does not refund it: refund it with your payment processor, then record the refund on this order."
 
@@ -2868,8 +2868,8 @@ msgstr "A time card cannot be longer than 48 hours."
 msgid "A typical day shift."
 msgstr "A typical day shift."
 
-#: ../../packages/marketing/src/components/coupon-offer-field.tsx:158
-#: ../../packages/marketing/src/components/coupon-offer-field.tsx:164
+#: ../../packages/marketing/src/components/coupon-offer-field.tsx:174
+#: ../../packages/marketing/src/components/coupon-offer-field.tsx:180
 msgid "A unique code for each customer"
 msgstr "A unique code for each customer"
 
@@ -2878,7 +2878,7 @@ msgstr "A unique code for each customer"
 msgid "A user already exists with this username"
 msgstr ""
 
-#: app/components/discounts/discount-form.tsx:1504
+#: app/components/discounts/discount-form.tsx:1529
 msgid "A window that ends earlier than it starts runs past midnight."
 msgstr "A window that ends earlier than it starts runs past midnight."
 
@@ -2992,7 +2992,7 @@ msgstr "Across your organization"
 #: app/components/reservations/experiences/experience-editor.tsx:898
 #: app/components/reservations/policies/policies-screen.tsx:370
 #: app/components/roles/tenant-role-access-manager.tsx:1354
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:366
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:376
 #: app/routes/_app+/$orgSlug_+/loyalty+/rewards.tsx:271
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:966
 #: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:505
@@ -3051,7 +3051,7 @@ msgstr ""
 #: app/components/settings/cards/sessions-card.tsx:249
 #: app/components/staff/details-tab.tsx:265
 #: app/components/staff/staff-status.tsx:12
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:329
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:339
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:89
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:60
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:259
@@ -3070,7 +3070,7 @@ msgstr ""
 msgid "Active"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:328
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:338
 msgid "Active and paused"
 msgstr "Active and paused"
 
@@ -3091,7 +3091,7 @@ msgstr "Active Location"
 
 #: app/components/app-sidebar.tsx:544
 #: app/components/loyalty/loyalty-chrome.tsx:62
-#: app/components/orders/order-detail.tsx:767
+#: app/components/orders/order-detail.tsx:769
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:689
 msgid "Activity"
 msgstr ""
@@ -3170,8 +3170,8 @@ msgstr ""
 msgid "Add a code"
 msgstr "Add a code"
 
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:581
-#: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:160
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:601
+#: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:169
 msgid "Add a code before turning this discount on."
 msgstr "Add a code before turning this discount on."
 
@@ -4443,7 +4443,7 @@ msgstr "All days"
 msgid "All jobs"
 msgstr "All jobs"
 
-#: app/components/discounts/discount-form.tsx:1527
+#: app/components/discounts/discount-form.tsx:1552
 #: app/components/hiring/job-summary.tsx:55
 #: app/components/hiring/location-picker.tsx:85
 #: app/components/member-location-scope.tsx:86
@@ -4520,7 +4520,7 @@ msgstr "All services"
 msgid "All sources"
 msgstr "All sources"
 
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:332
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:342
 msgid "All statuses"
 msgstr "All statuses"
 
@@ -4537,7 +4537,7 @@ msgstr "All tables and areas are open for booking in their regular hours."
 msgid "All tags"
 msgstr "All tags"
 
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:288
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:298
 msgid "All types"
 msgstr "All types"
 
@@ -4725,19 +4725,19 @@ msgstr "Amount ({currency})"
 msgid "Amount entered at the till"
 msgstr "Amount entered at the till"
 
-#: app/components/discounts/discount-form.tsx:245
+#: app/components/discounts/discount-form.tsx:252
 msgid "Amount in <0>{currency}</0>. Each choice costs this price."
 msgstr "Amount in <0>{currency}</0>. Each choice costs this price."
 
-#: app/components/discounts/discount-form.tsx:230
+#: app/components/discounts/discount-form.tsx:237
 msgid "Amount in <0>{currency}</0>. Each deal costs this price."
 msgstr "Amount in <0>{currency}</0>. Each deal costs this price."
 
-#: app/components/discounts/discount-form.tsx:237
+#: app/components/discounts/discount-form.tsx:244
 msgid "Amount in <0>{currency}</0>. Each item the customer gets costs this price."
 msgstr "Amount in <0>{currency}</0>. Each item the customer gets costs this price."
 
-#: app/components/discounts/discount-form.tsx:251
+#: app/components/discounts/discount-form.tsx:258
 msgid "Amount in <0>{currency}</0>. Each matching item costs this price."
 msgstr "Amount in <0>{currency}</0>. Each matching item costs this price."
 
@@ -4745,39 +4745,39 @@ msgstr "Amount in <0>{currency}</0>. Each matching item costs this price."
 msgid "Amount in <0>{currency}</0>. Every time this much is spent, the customer gets the discount again."
 msgstr "Amount in <0>{currency}</0>. Every time this much is spent, the customer gets the discount again."
 
-#: app/components/discounts/discount-form.tsx:265
+#: app/components/discounts/discount-form.tsx:272
 msgid "Amount in <0>{currency}</0>. Taken off each deal."
 msgstr "Amount in <0>{currency}</0>. Taken off each deal."
 
-#: app/components/discounts/discount-form.tsx:258
+#: app/components/discounts/discount-form.tsx:265
 msgid "Amount in <0>{currency}</0>. Taken off each item the customer gets."
 msgstr "Amount in <0>{currency}</0>. Taken off each item the customer gets."
 
-#: app/components/discounts/discount-form.tsx:272
+#: app/components/discounts/discount-form.tsx:279
 msgid "Amount in <0>{currency}</0>. Taken off each matching choice."
 msgstr "Amount in <0>{currency}</0>. Taken off each matching choice."
 
-#: app/components/discounts/discount-form.tsx:276
+#: app/components/discounts/discount-form.tsx:283
 msgid "Amount in <0>{currency}</0>. Taken off each matching item."
 msgstr "Amount in <0>{currency}</0>. Taken off each matching item."
 
-#: app/components/discounts/discount-form.tsx:282
+#: app/components/discounts/discount-form.tsx:289
 msgid "Amount in <0>{currency}</0>. Taken off the order once."
 msgstr "Amount in <0>{currency}</0>. Taken off the order once."
 
-#: app/components/discounts/discount-form.tsx:418
-#: app/components/discounts/discount-form.tsx:949
+#: app/components/discounts/discount-form.tsx:431
+#: app/components/discounts/discount-form.tsx:974
 #: app/components/discounts/tier-steps.tsx:152
 #: app/components/loyalty/reward-dialog.tsx:498
 #: app/utils/discounts/labels.ts:134
 msgid "Amount off"
 msgstr "Amount off"
 
-#: app/components/discounts/discount-form.tsx:944
+#: app/components/discounts/discount-form.tsx:969
 msgid "Amount off each choice"
 msgstr "Amount off each choice"
 
-#: app/components/discounts/discount-form.tsx:946
+#: app/components/discounts/discount-form.tsx:971
 msgid "Amount off each item"
 msgstr "Amount off each item"
 
@@ -5125,13 +5125,13 @@ msgstr "Applications by source"
 msgid "Applied"
 msgstr "Applied"
 
-#: app/components/discounts/discount-form.tsx:803
+#: app/components/discounts/discount-form.tsx:828
 msgid "Applies by itself when an order qualifies."
 msgstr "Applies by itself when an order qualifies."
 
-#: app/components/discounts/discount-form.tsx:424
-#: app/components/discounts/discount-form.tsx:1043
+#: app/components/discounts/discount-form.tsx:437
 #: app/components/discounts/discount-form.tsx:1068
+#: app/components/discounts/discount-form.tsx:1093
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:649
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:961
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1019
@@ -5143,7 +5143,7 @@ msgstr "Applies to"
 msgid "Applies to a"
 msgstr "Applies to a"
 
-#: app/components/discounts/discount-form.tsx:813
+#: app/components/discounts/discount-form.tsx:838
 msgid "Applies when a customer enters a code."
 msgstr "Applies when a customer enters a code."
 
@@ -5256,13 +5256,13 @@ msgstr ""
 #~ msgid "Arabic service name"
 #~ msgstr "Arabic service name"
 
-#: app/components/discounts/archive-discount-button.tsx:51
-#: app/components/discounts/archive-discount-button.tsx:85
+#: app/components/discounts/archive-discount-button.tsx:54
+#: app/components/discounts/archive-discount-button.tsx:88
 #: app/components/qr/tables-manager.tsx:465
 #: app/components/reservations/experiences/experience-editor.tsx:536
 #: app/components/reservations/experiences/experience-editor.tsx:1040
 #: app/components/reservations/policies/policies-screen.tsx:558
-#: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:133
+#: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:142
 #: app/routes/_app+/$orgSlug_+/loyalty+/rewards.tsx:345
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1058
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:254
@@ -5272,11 +5272,11 @@ msgstr "Archive"
 #~ msgid "Archive {areaLabel}?"
 #~ msgstr "Archive {areaLabel}?"
 
-#: app/components/discounts/archive-discount-button.tsx:48
+#: app/components/discounts/archive-discount-button.tsx:51
 msgid "Archive {name}"
 msgstr "Archive {name}"
 
-#: app/components/discounts/archive-discount-button.tsx:57
+#: app/components/discounts/archive-discount-button.tsx:60
 msgid "Archive {name}?"
 msgstr "Archive {name}?"
 
@@ -5326,7 +5326,7 @@ msgid "archived"
 msgstr ""
 
 #: app/components/discounts/discount-history.tsx:52
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:331
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:341
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:62
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:140
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:204
@@ -5617,7 +5617,7 @@ msgstr "Assistant instructions"
 #~ msgid "Assistant paused"
 #~ msgstr "Assistant paused"
 
-#: app/components/discounts/discount-form.tsx:139
+#: app/components/discounts/discount-form.tsx:146
 msgid "At least a quantity"
 msgstr "At least a quantity"
 
@@ -5637,13 +5637,13 @@ msgstr "At most {most} can still be refunded."
 msgid "At slot time"
 msgstr "At slot time"
 
-#: app/components/orders/order-detail.tsx:458
+#: app/components/orders/order-detail.tsx:460
 #: app/routes/_app+/$orgSlug_+/orders.tsx:253
 msgid "At the table"
 msgstr "At the table"
 
-#: app/components/discounts/discount-form.tsx:821
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:291
+#: app/components/discounts/discount-form.tsx:846
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:301
 #: app/utils/discounts/labels.ts:126
 msgid "At the till"
 msgstr "At the till"
@@ -5735,13 +5735,13 @@ msgstr "Automated assistant notice"
 msgid "Automated lifecycle journey created via visual builder."
 msgstr ""
 
-#: app/components/discounts/discount-form.tsx:801
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:289
+#: app/components/discounts/discount-form.tsx:826
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:299
 #: app/utils/discounts/labels.ts:124
 msgid "Automatic"
 msgstr "Automatic"
 
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:248
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:258
 msgid "Automatic discounts and coupon codes. Loyalty rewards apply after these, on what is left."
 msgstr "Automatic discounts and coupon codes. Loyalty rewards apply after these, on what is left."
 
@@ -5965,7 +5965,7 @@ msgstr "Back to customers"
 msgid "Back to details"
 msgstr "Back to details"
 
-#: app/components/discounts/discount-form.tsx:543
+#: app/components/discounts/discount-form.tsx:556
 msgid "Back to discounts"
 msgstr "Back to discounts"
 
@@ -6102,7 +6102,7 @@ msgstr "Base Price Delta ($)"
 msgid "Basic identifiers, URL slug, and regional settings."
 msgstr "Basic identifiers, URL slug, and regional settings."
 
-#: app/components/discounts/discount-form.tsx:701
+#: app/components/discounts/discount-form.tsx:726
 #: app/components/loyalty/program-form.tsx:390
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:556
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1191
@@ -6537,7 +6537,7 @@ msgstr "Broadcast"
 msgid "Broadcast not found"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:110
+#: ../../packages/marketing/src/components/campaign-detail.tsx:113
 msgid "Broadcast preview"
 msgstr "Broadcast preview"
 
@@ -6701,7 +6701,7 @@ msgstr "Button label"
 msgid "Buttons"
 msgstr ""
 
-#: app/components/discounts/discount-form.tsx:1393
+#: app/components/discounts/discount-form.tsx:1418
 msgid "Buy"
 msgstr "Buy"
 
@@ -6717,7 +6717,7 @@ msgstr "Buy {buy}, get {get} discounted"
 msgid "Buy {buyQuantity}, get {getQuantity} from another group"
 msgstr "Buy {buyQuantity}, get {getQuantity} from another group"
 
-#: app/components/discounts/discount-form.tsx:189
+#: app/components/discounts/discount-form.tsx:196
 msgid "Buy a burger, get fries free."
 msgstr "Buy a burger, get fries free."
 
@@ -6725,19 +6725,19 @@ msgstr "Buy a burger, get fries free."
 msgid "Buy at least"
 msgstr "Buy at least"
 
-#: app/components/discounts/discount-form.tsx:183
+#: app/components/discounts/discount-form.tsx:190
 msgid "Buy one group, discount another"
 msgstr "Buy one group, discount another"
 
-#: app/components/discounts/discount-form.tsx:451
+#: app/components/discounts/discount-form.tsx:464
 msgid "Buy quantity"
 msgstr "Buy quantity"
 
-#: app/components/discounts/discount-form.tsx:175
+#: app/components/discounts/discount-form.tsx:182
 msgid "Buy some of the matching items, then discount the next ones."
 msgstr "Buy some of the matching items, then discount the next ones."
 
-#: app/components/discounts/discount-form.tsx:165
+#: app/components/discounts/discount-form.tsx:172
 msgid "Buy some, discount some"
 msgstr "Buy some, discount some"
 
@@ -6981,8 +6981,8 @@ msgstr "Can be combined"
 msgid "Can be combined with other tables"
 msgstr "Can be combined with other tables"
 
-#: app/components/discounts/discount-form.tsx:461
-#: app/components/discounts/discount-form.tsx:1740
+#: app/components/discounts/discount-form.tsx:474
+#: app/components/discounts/discount-form.tsx:1765
 msgid "Can combine with"
 msgstr "Can combine with"
 
@@ -7186,7 +7186,7 @@ msgstr ""
 msgid "Cancel interview"
 msgstr "Cancel interview"
 
-#: app/components/orders/order-detail.tsx:821
+#: app/components/orders/order-detail.tsx:823
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:399
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:429
 msgid "Cancel order"
@@ -7195,7 +7195,7 @@ msgstr "Cancel order"
 #~ msgid "Cancel order {0}?"
 #~ msgstr "Cancel order {0}?"
 
-#: app/components/orders/order-detail.tsx:847
+#: app/components/orders/order-detail.tsx:849
 msgid "Cancel order {orderNumber}?"
 msgstr "Cancel order {orderNumber}?"
 
@@ -7453,7 +7453,7 @@ msgstr "categories"
 
 #: app/components/app-sidebar.tsx:368
 #: app/components/discounts/deal-groups.tsx:138
-#: app/components/discounts/discount-form.tsx:1141
+#: app/components/discounts/discount-form.tsx:1166
 #: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:44
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:243
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:318
@@ -7695,8 +7695,8 @@ msgstr ""
 
 #: app/components/chat/chat-view.tsx:387
 #: app/components/chat/chat-view.tsx:490
-#: app/components/discounts/discount-form.tsx:479
-#: app/components/discounts/discount-form.tsx:1565
+#: app/components/discounts/discount-form.tsx:492
+#: app/components/discounts/discount-form.tsx:1590
 msgid "Channels"
 msgstr "Channels"
 
@@ -7967,8 +7967,8 @@ msgstr "Checkout.com: real"
 msgid "Choices"
 msgstr "Choices"
 
-#: app/components/discounts/discount-form.tsx:449
-#: app/components/discounts/discount-form.tsx:1381
+#: app/components/discounts/discount-form.tsx:462
+#: app/components/discounts/discount-form.tsx:1406
 msgid "Choices per item"
 msgstr "Choices per item"
 
@@ -8316,7 +8316,7 @@ msgstr "Choose the terminal's location to use reservations."
 msgid "Choose the terminal's location to use the time clock."
 msgstr "Choose the terminal's location to use the time clock."
 
-#: app/components/discounts/discount-form.tsx:1050
+#: app/components/discounts/discount-form.tsx:1075
 msgid "Choose the whole order, items, categories or modifier choices."
 msgstr "Choose the whole order, items, categories or modifier choices."
 
@@ -8537,7 +8537,7 @@ msgid "Click to choose a cover image"
 msgstr "Click to choose a cover image"
 
 #. placeholder {0}: new Date(recipient.clickedAt).toLocaleString()
-#: ../../packages/marketing/src/components/campaign-detail.tsx:62
+#: ../../packages/marketing/src/components/campaign-detail.tsx:65
 msgid "Clicked {0}"
 msgstr ""
 
@@ -8808,7 +8808,7 @@ msgstr "Closing time must be after opening time."
 msgid "Cloudflare is not configured in this environment. Domain is stored for local testing; SSL automation requires CLOUDFLARE_API_TOKEN and CLOUDFLARE_ZONE_ID."
 msgstr ""
 
-#: ../../packages/marketing/src/components/coupon-offer-field.tsx:149
+#: ../../packages/marketing/src/components/coupon-offer-field.tsx:165
 #: app/components/discounts/codes-editor.tsx:109
 msgid "Code"
 msgstr "Code"
@@ -8837,8 +8837,8 @@ msgstr "Code sent. It expires in 10 minutes."
 msgid "Code to print"
 msgstr "Code to print"
 
-#: app/components/discounts/discount-form.tsx:475
-#: app/components/discounts/discount-form.tsx:1718
+#: app/components/discounts/discount-form.tsx:488
+#: app/components/discounts/discount-form.tsx:1743
 msgid "Codes"
 msgstr "Codes"
 
@@ -9152,7 +9152,7 @@ msgstr "Configure your new restaurant location details, operating hours, and del
 msgid "Confirm"
 msgstr ""
 
-#: app/components/orders/order-detail.tsx:875
+#: app/components/orders/order-detail.tsx:877
 msgid "Confirm cancellation"
 msgstr "Confirm cancellation"
 
@@ -9609,7 +9609,7 @@ msgstr "Copies of each print. A set of cards prints every card this many times."
 #~ msgid "Copies of each print. A table-card set prints every table this many times."
 #~ msgstr "Copies of each print. A table-card set prints every table this many times."
 
-#: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:156
+#: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:165
 msgid "copy"
 msgstr "copy"
 
@@ -9651,7 +9651,7 @@ msgstr ""
 msgid "Copy code"
 msgstr ""
 
-#: app/components/orders/order-detail.tsx:415
+#: app/components/orders/order-detail.tsx:417
 msgid "Copy email address"
 msgstr "Copy email address"
 
@@ -9675,7 +9675,7 @@ msgstr ""
 msgid "Copy order number"
 msgstr "Copy order number"
 
-#: app/components/orders/order-detail.tsx:401
+#: app/components/orders/order-detail.tsx:403
 msgid "Copy phone number"
 msgstr "Copy phone number"
 
@@ -10068,8 +10068,8 @@ msgstr "Counts across all time"
 msgid "Counts bookings from"
 msgstr "Counts bookings from"
 
-#: ../../packages/marketing/src/components/coupon-offer-field.tsx:75
-#: ../../packages/marketing/src/components/coupon-offer-field.tsx:121
+#: ../../packages/marketing/src/components/coupon-offer-field.tsx:90
+#: ../../packages/marketing/src/components/coupon-offer-field.tsx:137
 msgid "Coupon"
 msgstr "Coupon"
 
@@ -10077,12 +10077,12 @@ msgstr "Coupon"
 msgid "Coupon card"
 msgstr "Coupon card"
 
-#: app/components/discounts/discount-form.tsx:811
+#: app/components/discounts/discount-form.tsx:836
 #: app/utils/discounts/labels.ts:125
 msgid "Coupon code"
 msgstr "Coupon code"
 
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:290
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:300
 msgid "Coupon codes"
 msgstr "Coupon codes"
 
@@ -10090,14 +10090,21 @@ msgstr "Coupon codes"
 msgid "Coupon prints carry a discount code, so only people who can view discounts can see the proof and download it."
 msgstr "Coupon prints carry a discount code, so only people who can view discounts can see the proof and download it."
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:48
+#: ../../packages/marketing/src/components/campaign-detail.tsx:51
 msgid "Coupon: {name}, with a single-use code for each recipient, valid for {days} days."
 msgstr "Coupon: {name}, with a single-use code for each recipient, valid for {days} days."
 
-#. placeholder {0}: coupon.code
+#: ../../packages/marketing/src/components/campaign-detail.tsx:47
+msgid "Coupon: {name}, with one shared code for everyone."
+msgstr "Coupon: {name}, with one shared code for everyone."
+
 #: ../../packages/marketing/src/components/campaign-detail.tsx:44
-msgid "Coupon: {name}, with the code {0} for everyone."
-msgstr "Coupon: {name}, with the code {0} for everyone."
+#~ msgid "Coupon: {name}, with the code {0} for everyone."
+#~ msgstr "Coupon: {name}, with the code {0} for everyone."
+
+#: ../../packages/marketing/src/components/campaign-detail.tsx:46
+msgid "Coupon: {name}, with the code {code} for everyone."
+msgstr "Coupon: {name}, with the code {code} for everyone."
 
 #: app/utils/reservations/labels.ts:189
 msgid "Course changed"
@@ -10311,7 +10318,7 @@ msgstr ""
 msgid "Create an account"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:268
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:278
 msgid "Create an automatic discount or a coupon code. Customers see it at checkout when their order qualifies."
 msgstr "Create an automatic discount or a coupon code. Customers see it at checkout when their order qualifies."
 
@@ -10405,7 +10412,7 @@ msgstr "Create Custom Role"
 msgid "Create dashboard"
 msgstr "Create dashboard"
 
-#: app/components/discounts/discount-form.tsx:545
+#: app/components/discounts/discount-form.tsx:558
 msgid "Create discount"
 msgstr "Create discount"
 
@@ -10624,7 +10631,7 @@ msgid "Created By"
 msgstr ""
 
 #. placeholder {0}: createdBy.name
-#: app/components/discounts/discount-form.tsx:570
+#: app/components/discounts/discount-form.tsx:583
 msgid "Created by {0}"
 msgstr "Created by {0}"
 
@@ -10742,7 +10749,7 @@ msgstr "Current time {time}, {date}"
 msgid "Cursor Setup"
 msgstr ""
 
-#: app/components/discounts/discount-form.tsx:1645
+#: app/components/discounts/discount-form.tsx:1670
 #: app/components/roles/tenant-role-access-manager.tsx:1133
 msgid "Custom"
 msgstr "Custom"
@@ -10780,8 +10787,8 @@ msgstr "Custom form"
 msgid "Custom Hours"
 msgstr "Custom Hours"
 
-#: app/components/discounts/discount-form.tsx:485
-#: app/components/discounts/discount-form.tsx:1656
+#: app/components/discounts/discount-form.tsx:498
+#: app/components/discounts/discount-form.tsx:1681
 msgid "Custom maximum"
 msgstr "Custom maximum"
 
@@ -10826,8 +10833,8 @@ msgstr "Custom: what you have now"
 msgid "customer"
 msgstr ""
 
-#: app/components/orders/order-detail.tsx:361
-#: app/components/orders/order-detail.tsx:385
+#: app/components/orders/order-detail.tsx:363
+#: app/components/orders/order-detail.tsx:387
 #: app/components/workspace-breadcrumb.tsx:96
 #: app/routes/_app+/$orgSlug_+/orders.tsx:229
 msgid "Customer"
@@ -10847,7 +10854,7 @@ msgid "Customer Attribute"
 msgstr ""
 
 #: app/components/discounts/deal-groups.tsx:195
-#: app/components/discounts/discount-form.tsx:463
+#: app/components/discounts/discount-form.tsx:476
 msgid "Customer buys"
 msgstr "Customer buys"
 
@@ -10864,7 +10871,7 @@ msgid "Customer erased."
 msgstr "Customer erased."
 
 #: app/components/discounts/deal-groups.tsx:221
-#: app/components/discounts/discount-form.tsx:465
+#: app/components/discounts/discount-form.tsx:478
 msgid "Customer gets"
 msgstr "Customer gets"
 
@@ -10912,7 +10919,7 @@ msgstr ""
 #: app/components/app-sidebar.tsx:344
 #: app/components/command-menu.tsx:98
 #: app/components/customers/people-list-screen.tsx:192
-#: app/components/discounts/discount-form.tsx:1603
+#: app/components/discounts/discount-form.tsx:1628
 #: app/components/workspace-breadcrumb.tsx:11
 #: app/routes/_app+/$orgSlug_+/loyalty+/overview.tsx:431
 msgid "Customers"
@@ -10944,7 +10951,7 @@ msgstr ""
 msgid "Customers pick up orders in-store."
 msgstr "Customers pick up orders in-store."
 
-#: app/components/discounts/discount-form.tsx:1720
+#: app/components/discounts/discount-form.tsx:1745
 msgid "Customers type one of these at checkout. Letters and numbers, 3 to 24 characters."
 msgstr "Customers type one of these at checkout. Letters and numbers, 3 to 24 characters."
 
@@ -11076,7 +11083,7 @@ msgstr "Date of birth, address and emergency contact. Each time you view these, 
 msgid "Dates"
 msgstr "Dates"
 
-#: app/components/discounts/discount-form.tsx:1471
+#: app/components/discounts/discount-form.tsx:1496
 msgid "Dates and weekly hours use each location's own time zone."
 msgstr "Dates and weekly hours use each location's own time zone."
 
@@ -11756,7 +11763,7 @@ msgstr "Deliveroo"
 
 #: app/components/customers/person-orders-panel.tsx:221
 #: app/components/locations/location-form.tsx:732
-#: app/components/orders/order-detail.tsx:456
+#: app/components/orders/order-detail.tsx:458
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:26
 #: app/components/reservations/messages/message-settings.tsx:530
 #: app/components/settings/cards/organization/pos-integrations-card.tsx:131
@@ -11779,8 +11786,8 @@ msgstr "Delivery Allowed"
 msgid "Delivery areas, fees, and pickup alternatives."
 msgstr "Delivery areas, fees, and pickup alternatives."
 
-#: app/components/orders/order-detail.tsx:622
-#: app/components/orders/order-detail.tsx:913
+#: app/components/orders/order-detail.tsx:624
+#: app/components/orders/order-detail.tsx:915
 msgid "Delivery discount"
 msgstr "Delivery discount"
 
@@ -11788,7 +11795,7 @@ msgstr "Delivery discount"
 msgid "Delivery discounts"
 msgstr "Delivery discounts"
 
-#: app/components/orders/order-detail.tsx:639
+#: app/components/orders/order-detail.tsx:641
 #: app/utils/discounts/labels.ts:345
 #: app/utils/discounts/summary.ts:184
 msgid "Delivery fee"
@@ -11802,7 +11809,7 @@ msgstr "Delivery fee limit"
 msgid "Delivery is blocked or disallowed for this specific zone"
 msgstr "Delivery is blocked or disallowed for this specific zone"
 
-#: app/components/orders/order-detail.tsx:507
+#: app/components/orders/order-detail.tsx:509
 msgid "Delivery notes:"
 msgstr "Delivery notes:"
 
@@ -11879,8 +11886,8 @@ msgstr "Describe this image for accessibility"
 msgid "Describe when the agent should transfer to a specific contact. For example: \"Questions about large group bookings\"."
 msgstr "Describe when the agent should transfer to a specific contact. For example: \"Questions about large group bookings\"."
 
-#: app/components/discounts/discount-form.tsx:410
-#: app/components/discounts/discount-form.tsx:733
+#: app/components/discounts/discount-form.tsx:423
+#: app/components/discounts/discount-form.tsx:758
 #: app/components/hiring/job-editor.tsx:670
 #: app/components/loyalty/reward-dialog.tsx:444
 #: app/components/roles/tenant-role-access-manager.tsx:864
@@ -12269,15 +12276,15 @@ msgstr ""
 msgid "Disconnect Canva"
 msgstr "Disconnect Canva"
 
-#: app/components/discounts/discount-form.tsx:414
-#: app/components/discounts/discount-form.tsx:539
-#: app/components/discounts/discount-form.tsx:838
-#: app/components/discounts/discount-form.tsx:1401
+#: app/components/discounts/discount-form.tsx:427
+#: app/components/discounts/discount-form.tsx:552
+#: app/components/discounts/discount-form.tsx:863
+#: app/components/discounts/discount-form.tsx:1426
 #: app/components/loyalty/reward-dialog.tsx:482
-#: app/components/orders/order-detail.tsx:614
-#: app/components/orders/order-detail.tsx:915
+#: app/components/orders/order-detail.tsx:616
+#: app/components/orders/order-detail.tsx:917
 #: app/components/print/restaurant/vertical-ui.tsx:143
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:356
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:366
 msgid "Discount"
 msgstr "Discount"
 
@@ -12285,7 +12292,7 @@ msgstr "Discount"
 msgid "Discount cost"
 msgstr "Discount cost"
 
-#: ../../packages/marketing/src/components/coupon-offer-field.tsx:130
+#: ../../packages/marketing/src/components/coupon-offer-field.tsx:146
 msgid "Discount no longer available"
 msgstr "Discount no longer available"
 
@@ -12301,13 +12308,13 @@ msgstr "Discounted categories"
 msgid "Discounted items"
 msgstr "Discounted items"
 
-#: app/components/discounts/discount-form.tsx:453
+#: app/components/discounts/discount-form.tsx:466
 msgid "Discounted quantity"
 msgstr "Discounted quantity"
 
 #: app/components/app-sidebar.tsx:401
 #: app/components/roles/tenant-role-access-manager.tsx:473
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:246
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:256
 msgid "Discounts"
 msgstr "Discounts"
 
@@ -12699,7 +12706,7 @@ msgstr "Drop orders"
 msgid "Drop orders are left out of this discount."
 msgstr "Drop orders are left out of this discount."
 
-#: app/components/discounts/discount-form.tsx:1590
+#: app/components/discounts/discount-form.tsx:1615
 msgid "Drop orders skip discounts unless this is on."
 msgstr "Drop orders skip discounts unless this is on."
 
@@ -12723,7 +12730,7 @@ msgstr "Drop title"
 #~ msgid "Drop visibility"
 #~ msgstr "Drop visibility"
 
-#: app/components/orders/order-detail.tsx:514
+#: app/components/orders/order-detail.tsx:516
 msgid "Drop:"
 msgstr "Drop:"
 
@@ -12767,7 +12774,7 @@ msgstr "Due after hire"
 msgid "Due today"
 msgstr "Due today"
 
-#: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:230
+#: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:246
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:449
 msgid "Duplicate"
 msgstr ""
@@ -12949,7 +12956,7 @@ msgstr "Each day on its own"
 msgid "Each day’s published hours and shifts next to the hours worked and the time cards that started, with the difference."
 msgstr "Each day’s published hours and shifts next to the hours worked and the time cards that started, with the difference."
 
-#: app/components/discounts/discount-form.tsx:159
+#: app/components/discounts/discount-form.tsx:166
 msgid "Each full group of a set size, such as every pair."
 msgstr "Each full group of a set size, such as every pair."
 
@@ -13572,8 +13579,8 @@ msgstr "Ended"
 msgid "Ending"
 msgstr "Ending"
 
-#: app/components/discounts/discount-form.tsx:473
-#: app/components/discounts/discount-form.tsx:1488
+#: app/components/discounts/discount-form.tsx:486
+#: app/components/discounts/discount-form.tsx:1513
 #: app/components/staff/schedule/shift-editor-sheet.tsx:471
 msgid "Ends"
 msgstr "Ends"
@@ -14291,11 +14298,11 @@ msgstr "Every call your agent answered, with summaries, transcripts, and follow-
 msgid "Every card is approved. This period is ready for payroll."
 msgstr "Every card is approved. This period is ready for payroll."
 
-#: app/components/discounts/discount-form.tsx:1177
+#: app/components/discounts/discount-form.tsx:1202
 msgid "Every choice in these groups is covered."
 msgstr "Every choice in these groups is covered."
 
-#: app/components/discounts/discount-form.tsx:111
+#: app/components/discounts/discount-form.tsx:118
 msgid "Every choice you picked gets the discount."
 msgstr "Every choice you picked gets the discount."
 
@@ -14319,15 +14326,15 @@ msgstr "Every few minutes"
 msgid "Every group of {quantity}"
 msgstr "Every group of {quantity}"
 
-#: app/components/discounts/discount-form.tsx:1105
+#: app/components/discounts/discount-form.tsx:1130
 msgid "Every item in the categories you pick."
 msgstr "Every item in the categories you pick."
 
-#: app/components/discounts/discount-form.tsx:110
+#: app/components/discounts/discount-form.tsx:117
 msgid "Every matching choice"
 msgstr "Every matching choice"
 
-#: app/components/discounts/discount-form.tsx:135
+#: app/components/discounts/discount-form.tsx:142
 msgid "Every matching item gets the discount."
 msgstr "Every matching item gets the discount."
 
@@ -14343,7 +14350,7 @@ msgstr "Every point movement, plus the queue of redemptions and sales waiting fo
 msgid "Every printed card for this table stops working right away, including cards you ordered. Print the new card before you replace the old one."
 msgstr "Every printed card for this table stops working right away, including cards you ordered. Print the new card before you replace the old one."
 
-#: app/components/discounts/discount-form.tsx:134
+#: app/components/discounts/discount-form.tsx:141
 msgid "Every qualifying item"
 msgstr "Every qualifying item"
 
@@ -14382,7 +14389,7 @@ msgstr "Everyone"
 msgid "Everyone else won't see that it exists."
 msgstr "Everyone else won't see that it exists."
 
-#: ../../packages/marketing/src/components/coupon-offer-field.tsx:115
+#: ../../packages/marketing/src/components/coupon-offer-field.tsx:131
 msgid "Everyone gets {code}"
 msgstr "Everyone gets {code}"
 
@@ -14428,7 +14435,7 @@ msgstr "Everything"
 msgid "Everything available is already assigned."
 msgstr "Everything available is already assigned."
 
-#: app/components/discounts/discount-form.tsx:1092
+#: app/components/discounts/discount-form.tsx:1117
 msgid "Everything in the cart."
 msgstr "Everything in the cart."
 
@@ -14467,8 +14474,8 @@ msgstr "Exclude"
 msgid "Exclude {name} from discounts"
 msgstr "Exclude {name} from discounts"
 
-#: app/components/discounts/discount-form.tsx:437
-#: app/components/discounts/discount-form.tsx:1279
+#: app/components/discounts/discount-form.tsx:450
+#: app/components/discounts/discount-form.tsx:1304
 msgid "Exclude categories"
 msgstr "Exclude categories"
 
@@ -14484,8 +14491,8 @@ msgstr "Exclude from discounts. Never receives a discount, for example gift card
 msgid "Exclude from Throttling"
 msgstr "Exclude from Throttling"
 
-#: app/components/discounts/discount-form.tsx:435
-#: app/components/discounts/discount-form.tsx:1263
+#: app/components/discounts/discount-form.tsx:448
+#: app/components/discounts/discount-form.tsx:1288
 msgid "Exclude items"
 msgstr "Exclude items"
 
@@ -15395,7 +15402,7 @@ msgstr "Fix the issues in the call flow before publishing."
 #~ msgid "Fix the issues in the phone menu before publishing."
 #~ msgstr "Fix the issues in the phone menu before publishing."
 
-#: app/components/discounts/discount-form.tsx:678
+#: app/components/discounts/discount-form.tsx:703
 msgid "Fix these before saving."
 msgstr "Fix these before saving."
 
@@ -15681,7 +15688,7 @@ msgstr "Free delivery"
 msgid "Free delivery needs the Delivery order type."
 msgstr "Free delivery needs the Delivery order type."
 
-#: app/components/discounts/discount-form.tsx:1046
+#: app/components/discounts/discount-form.tsx:1071
 msgid "Free delivery takes the delivery fee off the order."
 msgstr "Free delivery takes the delivery fee off the order."
 
@@ -15748,6 +15755,10 @@ msgstr "From"
 msgid "From {from}"
 msgstr "From {from}"
 
+#: ../../packages/marketing/src/components/coupon-offer-field.tsx:296
+msgid "From {min} to {max} days."
+msgstr "From {min} to {max} days."
+
 #: app/components/staff/labor/labor-sales.tsx:210
 msgid "From a file"
 msgstr "From a file"
@@ -15785,7 +15796,7 @@ msgid "Front of house, Warehouse…"
 msgstr "Front of house, Warehouse…"
 
 #: app/components/customers/person-orders-panel.tsx:169
-#: app/components/orders/order-detail.tsx:444
+#: app/components/orders/order-detail.tsx:446
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:620
 msgid "Fulfillment"
 msgstr "Fulfillment"
@@ -16168,7 +16179,7 @@ msgstr "Group the schedule"
 msgid "Groups"
 msgstr "Groups"
 
-#: app/components/discounts/discount-form.tsx:153
+#: app/components/discounts/discount-form.tsx:160
 msgid "Groups of a quantity"
 msgstr "Groups of a quantity"
 
@@ -16184,7 +16195,7 @@ msgstr "Groups of a quantity"
 msgid "Guest"
 msgstr "Guest"
 
-#: app/components/orders/order-detail.tsx:386
+#: app/components/orders/order-detail.tsx:388
 #: app/components/settings/cards/organization/shop-card.tsx:436
 #: app/routes/_app+/$orgSlug_+/orders.tsx:230
 msgid "Guest checkout"
@@ -16366,7 +16377,7 @@ msgstr "Guests can skip this selection."
 msgid "Guests can't use it."
 msgstr "Guests can't use it."
 
-#: app/components/discounts/discount-form.tsx:1679
+#: app/components/discounts/discount-form.tsx:1704
 msgid "Guests can't use this discount: customers have to be signed in so their uses can be counted."
 msgstr "Guests can't use this discount: customers have to be signed in so their uses can be counted."
 
@@ -16999,8 +17010,8 @@ msgstr "How far apart the times guests can pick are, for example 18:00, 18:15, 1
 #~ msgid "How far in advance customers must order before a pickup slot."
 #~ msgstr "How far in advance customers must order before a pickup slot."
 
-#: app/components/discounts/discount-form.tsx:412
-#: app/components/discounts/discount-form.tsx:765
+#: app/components/discounts/discount-form.tsx:425
+#: app/components/discounts/discount-form.tsx:790
 #: app/utils/discounts/summary.ts:165
 msgid "How it applies"
 msgstr "How it applies"
@@ -17041,7 +17052,7 @@ msgstr "How long parties of each size stayed, from seated to finished, over the 
 msgid "How long waitlist parties waited before they were seated over the last 7 days."
 msgstr "How long waitlist parties waited before they were seated over the last 7 days."
 
-#: app/components/discounts/discount-form.tsx:1351
+#: app/components/discounts/discount-form.tsx:1376
 msgid "How many of the matching items receive the discount."
 msgstr "How many of the matching items receive the discount."
 
@@ -17077,7 +17088,7 @@ msgstr "How strict the clock is about the published schedule. These checks start
 msgid "How the call flow works"
 msgstr "How the call flow works"
 
-#: app/components/discounts/discount-form.tsx:1699
+#: app/components/discounts/discount-form.tsx:1724
 msgid "How the limit is counted"
 msgstr "How the limit is counted"
 
@@ -17114,7 +17125,7 @@ msgstr "I cannot work it"
 msgid "I checked the online payment for this tab in the payment dashboard and will refund or keep it."
 msgstr "I checked the online payment for this tab in the payment dashboard and will refund or keep it."
 
-#: app/components/orders/order-detail.tsx:811
+#: app/components/orders/order-detail.tsx:813
 msgid "I have received payment at handoff"
 msgstr "I have received payment at handoff"
 
@@ -17384,7 +17395,7 @@ msgstr "Inactive"
 msgid "Include a link to the call"
 msgstr "Include a link to the call"
 
-#: app/components/discounts/discount-form.tsx:1588
+#: app/components/discounts/discount-form.tsx:1613
 msgid "Include drop orders"
 msgstr "Include drop orders"
 
@@ -17526,8 +17537,8 @@ msgstr "Internal channels for your team."
 msgid "Internal Host Notes"
 msgstr "Internal Host Notes"
 
-#: app/components/discounts/discount-form.tsx:408
-#: app/components/discounts/discount-form.tsx:719
+#: app/components/discounts/discount-form.tsx:421
+#: app/components/discounts/discount-form.tsx:744
 msgid "Internal name"
 msgstr "Internal name"
 
@@ -17793,15 +17804,19 @@ msgstr "It leaves the calendar here. What is already on Facebook or Instagram st
 msgid "It leaves the Print shop list. Orders already placed keep printing it."
 msgstr "It leaves the Print shop list. Orders already placed keep printing it."
 
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:611
+msgid "It now also runs at locations outside yours, so you can't change it."
+msgstr "It now also runs at locations outside yours, so you can't change it."
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:359
 msgid "It starts answering on the next call."
 msgstr "It starts answering on the next call."
 
-#: app/components/discounts/archive-discount-button.tsx:61
+#: app/components/discounts/archive-discount-button.tsx:64
 msgid "It stops applying everywhere and its codes stop working. If you restore it later, its codes are not brought back and their use counts start again."
 msgstr "It stops applying everywhere and its codes stop working. If you restore it later, its codes are not brought back and their use counts start again."
 
-#: app/components/discounts/archive-discount-button.tsx:67
+#: app/components/discounts/archive-discount-button.tsx:70
 msgid "It stops applying everywhere. You can restore it later."
 msgstr "It stops applying everywhere. You can restore it later."
 
@@ -17821,7 +17836,7 @@ msgstr "Italic"
 msgid "item"
 msgstr "item"
 
-#: app/components/orders/order-detail.tsx:537
+#: app/components/orders/order-detail.tsx:539
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:312
 msgid "Item"
 msgstr "Item"
@@ -17859,8 +17874,8 @@ msgstr "items"
 #: app/components/app-sidebar.tsx:373
 #: app/components/customers/person-orders-panel.tsx:172
 #: app/components/discounts/deal-groups.tsx:127
-#: app/components/discounts/discount-form.tsx:1128
-#: app/components/orders/order-detail.tsx:523
+#: app/components/discounts/discount-form.tsx:1153
+#: app/components/orders/order-detail.tsx:525
 #: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:51
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:301
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:262
@@ -17871,8 +17886,8 @@ msgstr "Items"
 msgid "Items bought"
 msgstr "Items bought"
 
-#: app/components/discounts/discount-form.tsx:455
-#: app/components/discounts/discount-form.tsx:1433
+#: app/components/discounts/discount-form.tsx:468
+#: app/components/discounts/discount-form.tsx:1458
 #: app/utils/discounts/summary.ts:305
 msgid "Items discounted per use"
 msgstr "Items discounted per use"
@@ -17885,7 +17900,7 @@ msgstr "Items in this category will not add preparation delay to orders."
 msgid "Items listed directly in a chosen category earn. Choose subcategories separately."
 msgstr "Items listed directly in a chosen category earn. Choose subcategories separately."
 
-#: app/components/discounts/discount-form.tsx:201
+#: app/components/discounts/discount-form.tsx:208
 msgid "Items sold together, such as a pizza, a side and a drink."
 msgstr "Items sold together, such as a pizza, a side and a drink."
 
@@ -17901,7 +17916,7 @@ msgstr "Items that earn"
 msgid "Items that offer this modifier group."
 msgstr "Items that offer this modifier group."
 
-#: app/components/discounts/discount-form.tsx:625
+#: app/components/discounts/discount-form.tsx:638
 msgid "Its coupon codes are not brought back: add new ones before you turn it on."
 msgstr "Its coupon codes are not brought back: add new ones before you turn it on."
 
@@ -18043,7 +18058,7 @@ msgstr "Keep editing"
 #~ msgid "Keep forever"
 #~ msgstr "Keep forever"
 
-#: app/components/discounts/archive-discount-button.tsx:75
+#: app/components/discounts/archive-discount-button.tsx:78
 #: app/components/pos/terminals-manager.tsx:846
 #: app/components/reservations/experiences/experience-editor.tsx:1031
 #: app/components/staff/kiosk-manager.tsx:970
@@ -18056,7 +18071,7 @@ msgstr "Keep editing"
 msgid "Keep it"
 msgstr "Keep it"
 
-#: app/components/orders/order-detail.tsx:865
+#: app/components/orders/order-detail.tsx:867
 msgid "Keep order"
 msgstr "Keep order"
 
@@ -18379,8 +18394,8 @@ msgstr "Large-party requests from your website appear here for you to approve or
 msgid "Larger parties can still be booked by your team at the host stand."
 msgstr "Larger parties can still be booked by your team at the host stand."
 
-#: app/components/discounts/discount-form.tsx:459
-#: app/components/discounts/discount-form.tsx:968
+#: app/components/discounts/discount-form.tsx:472
+#: app/components/discounts/discount-form.tsx:993
 msgid "Largest fee to waive"
 msgstr "Largest fee to waive"
 
@@ -18465,7 +18480,7 @@ msgstr "Last order"
 msgid "Last seating"
 msgstr "Last seating"
 
-#: app/components/orders/order-detail.tsx:787
+#: app/components/orders/order-detail.tsx:789
 msgid "Last updated"
 msgstr "Last updated"
 
@@ -18841,11 +18856,11 @@ msgstr "Lime"
 msgid "Limit reached"
 msgstr "Limit reached"
 
-#: app/components/discounts/discount-form.tsx:1502
+#: app/components/discounts/discount-form.tsx:1527
 msgid "Limit to weekly hours"
 msgstr "Limit to weekly hours"
 
-#: app/components/discounts/discount-form.tsx:1677
+#: app/components/discounts/discount-form.tsx:1702
 msgid "Limit uses per customer"
 msgstr "Limit uses per customer"
 
@@ -19355,8 +19370,8 @@ msgid "Location: {locationName}"
 msgstr "Location: {locationName}"
 
 #: app/components/app-sidebar.tsx:648
-#: app/components/discounts/discount-form.tsx:477
-#: app/components/discounts/discount-form.tsx:1534
+#: app/components/discounts/discount-form.tsx:490
+#: app/components/discounts/discount-form.tsx:1559
 #: app/components/member-location-scope.tsx:160
 #: app/components/team-switcher.tsx:182
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:548
@@ -19524,7 +19539,7 @@ msgstr "Low rating"
 msgid "Low ratings"
 msgstr "Low ratings"
 
-#: app/components/discounts/discount-form.tsx:1762
+#: app/components/discounts/discount-form.tsx:1787
 msgid "Lower numbers are considered first. 0 is the default."
 msgstr "Lower numbers are considered first. 0 is the default."
 
@@ -19564,7 +19579,7 @@ msgstr "Loyalty program"
 msgid "Loyalty program, members and points, redemptions waiting for review, and loyalty reports. Only applies when Loyalty is turned on for your organization."
 msgstr "Loyalty program, members and points, redemptions waiting for review, and loyalty reports. Only applies when Loyalty is turned on for your organization."
 
-#: app/components/orders/order-detail.tsx:634
+#: app/components/orders/order-detail.tsx:636
 msgid "Loyalty reward"
 msgstr "Loyalty reward"
 
@@ -20128,8 +20143,8 @@ msgstr "Maximum call length (minutes)"
 msgid "Maximum discount"
 msgstr "Maximum discount"
 
-#: app/components/discounts/discount-form.tsx:420
-#: app/components/discounts/discount-form.tsx:922
+#: app/components/discounts/discount-form.tsx:433
+#: app/components/discounts/discount-form.tsx:947
 #: app/utils/discounts/summary.ts:293
 msgid "Maximum off"
 msgstr "Maximum off"
@@ -20139,8 +20154,8 @@ msgstr "Maximum off"
 msgid "Maximum Selections (Optional)"
 msgstr "Maximum Selections (Optional)"
 
-#: app/components/discounts/discount-form.tsx:483
-#: app/components/discounts/discount-form.tsx:1620
+#: app/components/discounts/discount-form.tsx:496
+#: app/components/discounts/discount-form.tsx:1645
 msgid "Maximum uses"
 msgstr "Maximum uses"
 
@@ -20169,11 +20184,11 @@ msgstr "Meal (unpaid)"
 msgid "Meal break"
 msgstr "Meal break"
 
-#: app/components/discounts/discount-form.tsx:195
+#: app/components/discounts/discount-form.tsx:202
 msgid "Meal deal"
 msgstr "Meal deal"
 
-#: app/components/discounts/discount-form.tsx:467
+#: app/components/discounts/discount-form.tsx:480
 msgid "Meal deal groups"
 msgstr "Meal deal groups"
 
@@ -20361,7 +20376,7 @@ msgstr "Merge duplicate"
 #~ msgid "Merge tags are replaced per recipient when the email is sent."
 #~ msgstr "Merge tags are replaced per recipient when the email is sent."
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:102
+#: ../../packages/marketing/src/components/campaign-detail.tsx:105
 #: ../../packages/marketing/src/components/campaign-form.tsx:124
 #: app/components/phone-agent/flow-editor/node-inspector.tsx:415
 #: app/components/reservations/messages/message-settings.tsx:689
@@ -20440,7 +20455,7 @@ msgstr "Meta no longer accepts its access. Posts to it will fail until you conne
 msgid "Meta no longer accepts this account’s access. Connect it again, then retry."
 msgstr "Meta no longer accepts this account’s access. Connect it again, then retry."
 
-#: app/components/orders/order-detail.tsx:693
+#: app/components/orders/order-detail.tsx:695
 msgid "Method"
 msgstr "Method"
 
@@ -20499,8 +20514,8 @@ msgstr "Minimum qualifying spend"
 msgid "Minimum Selections"
 msgstr "Minimum Selections"
 
-#: app/components/discounts/discount-form.tsx:422
-#: app/components/discounts/discount-form.tsx:1665
+#: app/components/discounts/discount-form.tsx:435
+#: app/components/discounts/discount-form.tsx:1690
 msgid "Minimum spend"
 msgstr "Minimum spend"
 
@@ -20626,7 +20641,7 @@ msgstr "Mode"
 msgid "Modified hours (patch service)"
 msgstr "Modified hours (patch service)"
 
-#: app/components/discounts/discount-form.tsx:1111
+#: app/components/discounts/discount-form.tsx:1136
 msgid "Modifier choices"
 msgstr "Modifier choices"
 
@@ -20646,7 +20661,7 @@ msgstr "Modifier Group Information"
 msgid "Modifier Group Name"
 msgstr "Modifier Group Name"
 
-#: app/components/discounts/discount-form.tsx:1175
+#: app/components/discounts/discount-form.tsx:1200
 msgid "Modifier groups"
 msgstr "Modifier groups"
 
@@ -20657,8 +20672,8 @@ msgstr "Modifier groups"
 msgid "Modifier Groups"
 msgstr "Modifier Groups"
 
-#: app/components/discounts/discount-form.tsx:429
-#: app/components/discounts/discount-form.tsx:1194
+#: app/components/discounts/discount-form.tsx:442
+#: app/components/discounts/discount-form.tsx:1219
 msgid "Modifier options"
 msgstr "Modifier options"
 
@@ -20966,8 +20981,8 @@ msgstr "My schedule link"
 #: app/components/customers/people-list-screen.tsx:391
 #: app/components/customers/person-profile-screen.tsx:1129
 #: app/components/dashboard/dashboard-name-dialog.tsx:124
-#: app/components/discounts/discount-form.tsx:406
-#: app/components/discounts/discount-form.tsx:710
+#: app/components/discounts/discount-form.tsx:419
+#: app/components/discounts/discount-form.tsx:735
 #: app/components/loyalty/reward-dialog.tsx:435
 #: app/components/pos/terminals-manager.tsx:1390
 #: app/components/reservations/policies/policy-sheet.tsx:217
@@ -21128,7 +21143,7 @@ msgstr "Needs reply"
 msgid "Needs review"
 msgstr "Needs review"
 
-#: app/components/discounts/discount-form.tsx:171
+#: app/components/discounts/discount-form.tsx:178
 msgid "Needs specific items or categories. Choose them under Applies to."
 msgstr "Needs specific items or categories. Choose them under Applies to."
 
@@ -21274,9 +21289,9 @@ msgstr "New Destination"
 msgid "New dining area"
 msgstr "New dining area"
 
-#: app/components/discounts/discount-form.tsx:537
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:257
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:273
+#: app/components/discounts/discount-form.tsx:550
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:267
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:283
 msgid "New discount"
 msgstr "New discount"
 
@@ -21760,10 +21775,10 @@ msgid "No categories yet"
 msgstr "No categories yet"
 
 #: app/components/discounts/deal-groups.tsx:143
-#: app/components/discounts/discount-form.tsx:1146
-#: app/components/discounts/discount-form.tsx:1234
-#: app/components/discounts/discount-form.tsx:1284
-#: app/components/discounts/discount-form.tsx:1335
+#: app/components/discounts/discount-form.tsx:1171
+#: app/components/discounts/discount-form.tsx:1259
+#: app/components/discounts/discount-form.tsx:1309
+#: app/components/discounts/discount-form.tsx:1360
 msgid "No categories yet."
 msgstr "No categories yet."
 
@@ -21835,7 +21850,7 @@ msgstr "No connection. Check your internet and try again."
 msgid "No contact details"
 msgstr "No contact details"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:55
+#: ../../packages/marketing/src/components/campaign-detail.tsx:58
 msgid "No contact on file"
 msgstr ""
 
@@ -21847,8 +21862,8 @@ msgstr "No contacts yet."
 msgid "No content yet"
 msgstr "No content yet"
 
-#: ../../packages/marketing/src/components/coupon-offer-field.tsx:131
-#: ../../packages/marketing/src/components/coupon-offer-field.tsx:135
+#: ../../packages/marketing/src/components/coupon-offer-field.tsx:147
+#: ../../packages/marketing/src/components/coupon-offer-field.tsx:151
 msgid "No coupon"
 msgstr "No coupon"
 
@@ -21860,7 +21875,7 @@ msgstr "No custom note. This is the default text with sample guest details."
 msgid "No custom roles created yet."
 msgstr "No custom roles created yet."
 
-#: app/components/orders/order-detail.tsx:434
+#: app/components/orders/order-detail.tsx:436
 msgid "No customer profile"
 msgstr "No customer profile"
 
@@ -21876,7 +21891,7 @@ msgstr "No customers yet"
 msgid "No date"
 msgstr "No date"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:146
+#: ../../packages/marketing/src/components/campaign-detail.tsx:149
 msgid "No delivery records yet."
 msgstr ""
 
@@ -21907,11 +21922,11 @@ msgstr "No dining areas yet"
 msgid "No dining times yet. Until you add them, the default time is used."
 msgstr "No dining times yet. Until you add them, the default time is used."
 
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:346
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:356
 msgid "No discounts match these filters"
 msgstr "No discounts match these filters"
 
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:267
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:277
 msgid "No discounts yet"
 msgstr "No discounts yet"
 
@@ -22056,10 +22071,10 @@ msgid "No items yet"
 msgstr "No items yet"
 
 #: app/components/discounts/deal-groups.tsx:132
-#: app/components/discounts/discount-form.tsx:1133
-#: app/components/discounts/discount-form.tsx:1223
-#: app/components/discounts/discount-form.tsx:1273
-#: app/components/discounts/discount-form.tsx:1319
+#: app/components/discounts/discount-form.tsx:1158
+#: app/components/discounts/discount-form.tsx:1248
+#: app/components/discounts/discount-form.tsx:1298
+#: app/components/discounts/discount-form.tsx:1344
 msgid "No items yet."
 msgstr "No items yet."
 
@@ -22243,11 +22258,11 @@ msgstr "No modifier groups match these filters"
 msgid "No modifier groups yet"
 msgstr "No modifier groups yet"
 
-#: app/components/discounts/discount-form.tsx:1185
+#: app/components/discounts/discount-form.tsx:1210
 msgid "No modifier groups yet."
 msgstr "No modifier groups yet."
 
-#: app/components/discounts/discount-form.tsx:1205
+#: app/components/discounts/discount-form.tsx:1230
 msgid "No modifier options yet."
 msgstr "No modifier options yet."
 
@@ -22462,11 +22477,11 @@ msgstr "No pay is set yet."
 msgid "No payment"
 msgstr "No payment"
 
-#: app/components/orders/order-detail.tsx:859
+#: app/components/orders/order-detail.tsx:861
 msgid "No payment has been received, so there is nothing to refund. The order moves to Cancelled and cannot be reopened."
 msgstr "No payment has been received, so there is nothing to refund. The order moves to Cancelled and cannot be reopened."
 
-#: app/components/orders/order-detail.tsx:709
+#: app/components/orders/order-detail.tsx:711
 #: app/components/orders/order-status.tsx:36
 msgid "No payment needed"
 msgstr "No payment needed"
@@ -22746,8 +22761,8 @@ msgid "No single table seats {partySize}. The largest seats {largestSeating}, so
 msgstr "No single table seats {partySize}. The largest seats {largestSeating}, so tables need to be combined."
 
 #: app/components/discounts/deal-groups.tsx:159
-#: app/components/discounts/discount-form.tsx:1167
-#: app/components/discounts/discount-form.tsx:1251
+#: app/components/discounts/discount-form.tsx:1192
+#: app/components/discounts/discount-form.tsx:1276
 msgid "No sizes yet."
 msgstr "No sizes yet."
 
@@ -23144,8 +23159,8 @@ msgstr "not available"
 msgid "Not available"
 msgstr "Not available"
 
-#: app/components/discounts/discount-form.tsx:185
-#: app/components/discounts/discount-form.tsx:197
+#: app/components/discounts/discount-form.tsx:192
+#: app/components/discounts/discount-form.tsx:204
 msgid "Not available at the till."
 msgstr "Not available at the till."
 
@@ -23157,18 +23172,18 @@ msgstr "Not available in your data region yet"
 msgid "Not available when we need them"
 msgstr "Not available when we need them"
 
-#: app/components/discounts/discount-form.tsx:127
+#: app/components/discounts/discount-form.tsx:134
 msgid "Not available with a set price."
 msgstr "Not available with a set price."
 
-#: app/components/discounts/discount-form.tsx:129
-#: app/components/discounts/discount-form.tsx:823
-#: app/components/discounts/discount-form.tsx:880
-#: app/components/discounts/discount-form.tsx:1113
+#: app/components/discounts/discount-form.tsx:136
+#: app/components/discounts/discount-form.tsx:848
+#: app/components/discounts/discount-form.tsx:905
+#: app/components/discounts/discount-form.tsx:1138
 msgid "Not available with tiers. Turn tiers off first."
 msgstr "Not available with tiers. Turn tiers off first."
 
-#: app/components/discounts/discount-form.tsx:874
+#: app/components/discounts/discount-form.tsx:899
 msgid "Not available yet for <0>{currency}</0>. Use a percentage."
 msgstr "Not available yet for <0>{currency}</0>. Use a percentage."
 
@@ -23903,7 +23918,7 @@ msgstr ""
 
 #: app/components/chat/chat-view.tsx:609
 #: app/components/kiosk/kiosk-chrome.tsx:126
-#: app/components/orders/order-detail.tsx:700
+#: app/components/orders/order-detail.tsx:702
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:864
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:803
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:982
@@ -23915,7 +23930,7 @@ msgstr "Online"
 #~ msgid "Online ({0})"
 #~ msgstr "Online ({0})"
 
-#: app/components/orders/order-detail.tsx:699
+#: app/components/orders/order-detail.tsx:701
 msgid "Online ({processor})"
 msgstr "Online ({processor})"
 
@@ -24073,9 +24088,13 @@ msgstr "Only during service"
 msgid "Only for a customer's first order."
 msgstr "Only for a customer's first order."
 
-#: app/components/discounts/discount-form.tsx:1455
+#: app/components/discounts/discount-form.tsx:1480
 msgid "Only for a discount on items or categories."
 msgstr "Only for a discount on items or categories."
+
+#: app/components/discounts/discount-form.tsx:1802
+msgid "Only for discounts everyone can use: the menu can't say who qualifies. Set Customers to Everyone to promote it."
+msgstr "Only for discounts everyone can use: the menu can't say who qualifies. Set Customers to Everyone to promote it."
 
 #: app/utils/discounts/labels.ts:205
 msgid "Only for loyalty members."
@@ -24085,13 +24104,13 @@ msgstr "Only for loyalty members."
 msgid "Only for parties of at least"
 msgstr "Only for parties of at least"
 
-#: app/components/discounts/discount-form.tsx:433
-#: app/components/discounts/discount-form.tsx:1229
+#: app/components/discounts/discount-form.tsx:446
+#: app/components/discounts/discount-form.tsx:1254
 msgid "Only in these categories"
 msgstr "Only in these categories"
 
-#: app/components/discounts/discount-form.tsx:431
-#: app/components/discounts/discount-form.tsx:1213
+#: app/components/discounts/discount-form.tsx:444
+#: app/components/discounts/discount-form.tsx:1238
 msgid "Only on these items"
 msgstr "Only on these items"
 
@@ -24160,7 +24179,7 @@ msgstr ""
 msgid "Only the first {IMPORT_MAX_ROWS} rows were read. Add the rest in a second batch."
 msgstr "Only the first {IMPORT_MAX_ROWS} rows were read. Add the rest in a second batch."
 
-#: app/components/discounts/discount-form.tsx:1098
+#: app/components/discounts/discount-form.tsx:1123
 msgid "Only the items you pick."
 msgstr "Only the items you pick."
 
@@ -24172,9 +24191,9 @@ msgstr "Only the owner can rename this dashboard."
 msgid "Only the owner can share this dashboard."
 msgstr "Only the owner can share this dashboard."
 
-#: app/components/discounts/discount-form.tsx:427
-#: app/components/discounts/discount-form.tsx:1156
-#: app/components/discounts/discount-form.tsx:1240
+#: app/components/discounts/discount-form.tsx:440
+#: app/components/discounts/discount-form.tsx:1181
+#: app/components/discounts/discount-form.tsx:1265
 msgid "Only these sizes"
 msgstr "Only these sizes"
 
@@ -24186,7 +24205,7 @@ msgstr "Only what you type here and your business name are used. Nothing is save
 msgid "Only when the fee is {amount} or less"
 msgstr "Only when the fee is {amount} or less"
 
-#: app/components/discounts/discount-form.tsx:145
+#: app/components/discounts/discount-form.tsx:152
 msgid "Only when the order has at least this many matching items."
 msgstr "Only when the order has at least this many matching items."
 
@@ -24523,7 +24542,7 @@ msgid "Open your schedule from your email"
 msgstr "Open your schedule from your email"
 
 #. placeholder {0}: new Date(recipient.openedAt).toLocaleString()
-#: ../../packages/marketing/src/components/campaign-detail.tsx:65
+#: ../../packages/marketing/src/components/campaign-detail.tsx:68
 msgid "Opened {0}"
 msgstr ""
 
@@ -24616,7 +24635,7 @@ msgstr "Optional"
 msgid "Optional • Up to {maxSelections}"
 msgstr "Optional • Up to {maxSelections}"
 
-#: app/components/discounts/discount-form.tsx:924
+#: app/components/discounts/discount-form.tsx:949
 msgid "Optional cap for one order, in <0>{currency}</0>."
 msgstr "Optional cap for one order, in <0>{currency}</0>."
 
@@ -24648,7 +24667,7 @@ msgstr "Optional note"
 msgid "Optional server name"
 msgstr "Optional server name"
 
-#: app/components/discounts/discount-form.tsx:1480
+#: app/components/discounts/discount-form.tsx:1505
 msgid "Optional."
 msgstr "Optional."
 
@@ -24656,7 +24675,7 @@ msgstr "Optional."
 #~ msgid "Optional. {currency}. Free delivery only applies when the delivery fee is this much or less."
 #~ msgstr "Optional. {currency}. Free delivery only applies when the delivery fee is this much or less."
 
-#: app/components/discounts/discount-form.tsx:970
+#: app/components/discounts/discount-form.tsx:995
 msgid "Optional. Amount in <0>{currency}</0>. Free delivery only applies when the delivery fee is this much or less."
 msgstr "Optional. Amount in <0>{currency}</0>. Free delivery only applies when the delivery fee is this much or less."
 
@@ -24664,7 +24683,7 @@ msgstr "Optional. Amount in <0>{currency}</0>. Free delivery only applies when t
 msgid "Optional. By default every area and table is open to every service. Add an override to keep a place staff-only, walk-in only or closed during one service."
 msgstr "Optional. By default every area and table is open to every service. Add an override to keep a place staff-only, walk-in only or closed during one service."
 
-#: app/components/discounts/discount-form.tsx:1667
+#: app/components/discounts/discount-form.tsx:1692
 msgid "Optional. Checked on the subtotal before discounts."
 msgstr "Optional. Checked on the subtotal before discounts."
 
@@ -24676,7 +24695,7 @@ msgstr "Optional. Checked on the subtotal before discounts."
 msgid "Optional. Leave empty to count every size."
 msgstr "Optional. Leave empty to count every size."
 
-#: app/components/discounts/discount-form.tsx:1215
+#: app/components/discounts/discount-form.tsx:1240
 msgid "Optional. Leave empty to cover every item."
 msgstr "Optional. Leave empty to cover every item."
 
@@ -24684,16 +24703,16 @@ msgstr "Optional. Leave empty to cover every item."
 msgid "Optional. Limit how many guests or parties can be seated in the same time window, so the kitchen is never swamped."
 msgstr "Optional. Limit how many guests or parties can be seated in the same time window, so the kitchen is never swamped."
 
-#: app/components/discounts/discount-form.tsx:1158
-#: app/components/discounts/discount-form.tsx:1242
+#: app/components/discounts/discount-form.tsx:1183
+#: app/components/discounts/discount-form.tsx:1267
 msgid "Optional. Matches the size name, such as Large, on every item."
 msgstr "Optional. Matches the size name, such as Large, on every item."
 
-#: app/components/discounts/discount-form.tsx:721
+#: app/components/discounts/discount-form.tsx:746
 msgid "Optional. Shown to your team instead of the customer name."
 msgstr "Optional. Shown to your team instead of the customer name."
 
-#: app/components/discounts/discount-form.tsx:1196
+#: app/components/discounts/discount-form.tsx:1221
 msgid "Optional. Single choices, whichever group they sit in."
 msgstr "Optional. Single choices, whichever group they sit in."
 
@@ -24701,7 +24720,7 @@ msgstr "Optional. Single choices, whichever group they sit in."
 msgid "Optional. The AI always introduces itself as an AI assistant first. Leave empty to ask how it can help."
 msgstr "Optional. The AI always introduces itself as an AI assistant first. Leave empty to ask how it can help."
 
-#: app/components/discounts/discount-form.tsx:1490
+#: app/components/discounts/discount-form.tsx:1515
 msgid "Optional. The discount stops at this time. Leave blank to keep it open."
 msgstr "Optional. The discount stops at this time. Leave blank to keep it open."
 
@@ -24709,28 +24728,28 @@ msgstr "Optional. The discount stops at this time. Leave blank to keep it open."
 #~ msgid "Optional. The most choices discounted in one order, dearest first."
 #~ msgstr "Optional. The most choices discounted in one order, dearest first."
 
-#: app/components/discounts/discount-form.tsx:1445
+#: app/components/discounts/discount-form.tsx:1470
 msgid "Optional. The most choices discounted in one order, most expensive first."
 msgstr "Optional. The most choices discounted in one order, most expensive first."
 
-#: app/components/discounts/discount-form.tsx:1450
+#: app/components/discounts/discount-form.tsx:1475
 msgid "Optional. The most expensive matching items are discounted first."
 msgstr "Optional. The most expensive matching items are discounted first."
 
-#: app/components/discounts/discount-form.tsx:1440
+#: app/components/discounts/discount-form.tsx:1465
 msgid "Optional. The most items deals cover in one order, such as 4 for two deals of 2."
 msgstr "Optional. The most items deals cover in one order, such as 4 for two deals of 2."
 
-#: app/components/discounts/discount-form.tsx:1436
+#: app/components/discounts/discount-form.tsx:1461
 msgid "Optional. The most items discounted in one order."
 msgstr "Optional. The most items discounted in one order."
 
-#: app/components/discounts/discount-form.tsx:1265
+#: app/components/discounts/discount-form.tsx:1290
 msgid "Optional. These items never receive this discount."
 msgstr "Optional. These items never receive this discount."
 
 #: app/components/app-sidebar.tsx:383
-#: app/components/discounts/discount-form.tsx:1736
+#: app/components/discounts/discount-form.tsx:1761
 #: app/components/phone-agent/flow-editor/node-inspector.tsx:259
 #: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:65
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:350
@@ -24826,8 +24845,8 @@ msgstr "Order prints"
 #~ msgid "Order type"
 #~ msgstr "Order type"
 
-#: app/components/discounts/discount-form.tsx:481
-#: app/components/discounts/discount-form.tsx:1576
+#: app/components/discounts/discount-form.tsx:494
+#: app/components/discounts/discount-form.tsx:1601
 msgid "Order types"
 msgstr "Order types"
 
@@ -25330,7 +25349,7 @@ msgstr "Paid"
 #~ msgid "Paid {0}"
 #~ msgstr "Paid {0}"
 
-#: app/components/orders/order-detail.tsx:707
+#: app/components/orders/order-detail.tsx:709
 msgid "Paid {totalMoney}"
 msgstr "Paid {totalMoney}"
 
@@ -25338,7 +25357,7 @@ msgstr "Paid {totalMoney}"
 msgid "Paid <0>{paid}</0>"
 msgstr "Paid <0>{paid}</0>"
 
-#: app/components/orders/order-detail.tsx:719
+#: app/components/orders/order-detail.tsx:721
 msgid "Paid at"
 msgstr "Paid at"
 
@@ -25385,7 +25404,7 @@ msgstr "Paid time <0>{totalLabel}</0>"
 msgid "Paid time off"
 msgstr "Paid time off"
 
-#: app/components/orders/order-detail.tsx:473
+#: app/components/orders/order-detail.tsx:475
 msgid "Paid when the tab closes"
 msgstr "Paid when the tab closes"
 
@@ -25636,13 +25655,13 @@ msgid "Patio"
 msgstr "Patio"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:198
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:449
-#: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:216
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:464
+#: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:232
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:437
 msgid "Pause"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:458
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:473
 msgid "Pause {name}"
 msgstr "Pause {name}"
 
@@ -25662,7 +25681,7 @@ msgstr ""
 
 #: app/components/discounts/discount-history.tsx:50
 #: app/components/phone-agent/phone-number-dialogs.tsx:136
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:330
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:340
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:61
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:261
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:139
@@ -25689,7 +25708,7 @@ msgstr "Pay"
 msgid "Pay and rates"
 msgstr "Pay and rates"
 
-#: app/components/orders/order-detail.tsx:697
+#: app/components/orders/order-detail.tsx:699
 msgid "Pay at handoff"
 msgstr "Pay at handoff"
 
@@ -25743,7 +25762,7 @@ msgid "Paying online"
 msgstr "Paying online"
 
 #: app/components/orders/order-detail.tsx:329
-#: app/components/orders/order-detail.tsx:687
+#: app/components/orders/order-detail.tsx:689
 #: app/routes/mock-payments+/checkout-com.dashboard.tsx:219
 msgid "Payment"
 msgstr "Payment"
@@ -25768,7 +25787,7 @@ msgstr "Payment expired"
 msgid "Payment failed"
 msgstr "Payment failed"
 
-#: app/components/orders/order-detail.tsx:711
+#: app/components/orders/order-detail.tsx:713
 msgid "Payment failed. Nothing was charged."
 msgstr "Payment failed. Nothing was charged."
 
@@ -25799,7 +25818,7 @@ msgstr "Payment needs review"
 msgid "Payment not finished"
 msgstr "Payment not finished"
 
-#: app/components/orders/order-detail.tsx:714
+#: app/components/orders/order-detail.tsx:716
 msgid "Payment not yet received"
 msgstr "Payment not yet received"
 
@@ -25833,7 +25852,7 @@ msgstr "Payment uncertain"
 msgid "Payment under review"
 msgstr "Payment under review"
 
-#: app/components/orders/order-detail.tsx:713
+#: app/components/orders/order-detail.tsx:715
 msgid "Payment window expired before it was paid."
 msgstr "Payment window expired before it was paid."
 
@@ -26012,8 +26031,8 @@ msgstr "Per-service availability override saved."
 #~ msgid "Per-Service Table & Area Availability"
 #~ msgstr "Per-Service Table & Area Availability"
 
-#: app/components/discounts/discount-form.tsx:416
-#: app/components/discounts/discount-form.tsx:912
+#: app/components/discounts/discount-form.tsx:429
+#: app/components/discounts/discount-form.tsx:937
 #: app/components/discounts/tier-steps.tsx:150
 #: app/components/loyalty/reward-dialog.tsx:511
 msgid "Percent off"
@@ -26396,7 +26415,7 @@ msgid "Picked up the shift {range}."
 msgstr "Picked up the shift {range}."
 
 #: app/components/customers/person-orders-panel.tsx:222
-#: app/components/orders/order-detail.tsx:459
+#: app/components/orders/order-detail.tsx:461
 #: app/routes/_app+/$orgSlug_+/orders.tsx:254
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:675
 #: app/utils/discounts/labels.ts:165
@@ -26977,7 +26996,7 @@ msgstr "Preference:"
 msgid "Prefetch"
 msgstr ""
 
-#: ../../packages/marketing/src/components/coupon-offer-field.tsx:179
+#: ../../packages/marketing/src/components/coupon-offer-field.tsx:195
 msgid "Prefix (optional)"
 msgstr "Prefix (optional)"
 
@@ -27111,7 +27130,7 @@ msgid "Previous week"
 msgstr "Previous week"
 
 #: app/components/menu/location-overrides-card.tsx:145
-#: app/components/orders/order-detail.tsx:540
+#: app/components/orders/order-detail.tsx:542
 #: app/components/reservations/experiences/experiences-screen.tsx:295
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:315
 msgid "Price"
@@ -27211,7 +27230,7 @@ msgstr "Print at home (A4)"
 msgid "Print at home (US Letter)"
 msgstr "Print at home (US Letter)"
 
-#: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:199
+#: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:215
 msgid "Print coupons"
 msgstr "Print coupons"
 
@@ -27270,8 +27289,8 @@ msgstr "Prints"
 msgid "Prioritize these tasks"
 msgstr ""
 
-#: app/components/discounts/discount-form.tsx:489
-#: app/components/discounts/discount-form.tsx:1760
+#: app/components/discounts/discount-form.tsx:502
+#: app/components/discounts/discount-form.tsx:1785
 #: app/components/phone-agent/training-rules-section.tsx:564
 msgid "Priority"
 msgstr "Priority"
@@ -27384,7 +27403,7 @@ msgstr "Project management"
 msgid "Promote as Upsell"
 msgstr "Promote as Upsell"
 
-#: app/components/discounts/discount-form.tsx:1772
+#: app/components/discounts/discount-form.tsx:1797
 msgid "Promote on your menu"
 msgstr "Promote on your menu"
 
@@ -27598,11 +27617,11 @@ msgstr "Purchases"
 msgid "Push two or more combinable tables together to seat larger parties. The same set of tables can only be saved once."
 msgstr "Push two or more combinable tables together to seat larger parties. The same set of tables can only be saved once."
 
-#: ../../packages/marketing/src/components/coupon-offer-field.tsx:227
+#: ../../packages/marketing/src/components/coupon-offer-field.tsx:228
 msgid "Put {TAG} in your message where the code should go. Each customer gets their own code. It works once and expires after the days you set."
 msgstr "Put {TAG} in your message where the code should go. Each customer gets their own code. It works once and expires after the days you set."
 
-#: ../../packages/marketing/src/components/coupon-offer-field.tsx:230
+#: ../../packages/marketing/src/components/coupon-offer-field.tsx:231
 msgid "Put {TAG} in your message where the code should go. The code follows the discount's own limits."
 msgstr "Put {TAG} in your message where the code should go. The code follows the discount's own limits."
 
@@ -27653,14 +27672,14 @@ msgstr "QR tab"
 msgid "QR tables"
 msgstr "QR tables"
 
-#: app/components/orders/order-detail.tsx:531
+#: app/components/orders/order-detail.tsx:533
 msgid "Qty"
 msgstr "Qty"
 
 #: app/components/discounts/deal-groups.tsx:117
-#: app/components/discounts/discount-form.tsx:447
-#: app/components/discounts/discount-form.tsx:1349
-#: app/components/discounts/discount-form.tsx:1371
+#: app/components/discounts/discount-form.tsx:460
+#: app/components/discounts/discount-form.tsx:1374
+#: app/components/discounts/discount-form.tsx:1396
 #: app/components/menu/option-form.tsx:788
 #: app/utils/discounts/summary.ts:252
 msgid "Quantity"
@@ -27670,13 +27689,13 @@ msgstr "Quantity"
 msgid "Quantity Counter (+/-)"
 msgstr "Quantity Counter (+/-)"
 
-#: app/components/discounts/discount-form.tsx:439
-#: app/components/discounts/discount-form.tsx:1304
+#: app/components/discounts/discount-form.tsx:452
+#: app/components/discounts/discount-form.tsx:1329
 msgid "Quantity required"
 msgstr "Quantity required"
 
-#: app/components/discounts/discount-form.tsx:445
-#: app/components/discounts/discount-form.tsx:1358
+#: app/components/discounts/discount-form.tsx:458
+#: app/components/discounts/discount-form.tsx:1383
 msgid "Quantity rule"
 msgstr "Quantity rule"
 
@@ -27989,7 +28008,7 @@ msgstr "Recipient"
 msgid "recipients"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:134
+#: ../../packages/marketing/src/components/campaign-detail.tsx:137
 msgid "Recipients"
 msgstr ""
 
@@ -28043,7 +28062,7 @@ msgid "Record a message for your team to follow up."
 msgstr "Record a message for your team to follow up."
 
 #: app/components/loyalty/record-refund-dialog.tsx:205
-#: app/components/orders/order-detail.tsx:747
+#: app/components/orders/order-detail.tsx:749
 #: app/components/orders/record-order-refund-dialog.tsx:212
 msgid "Record a refund"
 msgstr "Record a refund"
@@ -28254,7 +28273,7 @@ msgstr "Refund queued"
 msgid "Refund recorded: {amount}"
 msgstr "Refund recorded: {amount}"
 
-#: app/components/orders/order-detail.tsx:894
+#: app/components/orders/order-detail.tsx:896
 msgid "Refund recorded."
 msgstr "Refund recorded."
 
@@ -28270,7 +28289,7 @@ msgstr "Refund recorded. Points taken back: {taken}."
 msgid "Refund this booking?"
 msgstr "Refund this booking?"
 
-#: app/components/orders/order-detail.tsx:727
+#: app/components/orders/order-detail.tsx:729
 #: app/components/orders/order-status.tsx:38
 #: app/components/print/print-order-labels.ts:21
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:373
@@ -28417,7 +28436,7 @@ msgstr ""
 msgid "Reload the page to try again."
 msgstr "Reload the page to try again."
 
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:586
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:606
 msgid "Reload the page, then try again."
 msgstr "Reload the page, then try again."
 
@@ -29050,7 +29069,7 @@ msgstr "Requests"
 msgid "Require a cash drawer shift before {label} sells"
 msgstr "Require a cash drawer shift before {label} sells"
 
-#: app/components/discounts/discount-form.tsx:1780
+#: app/components/discounts/discount-form.tsx:1813
 msgid "Require a manager at the till"
 msgstr "Require a manager at the till"
 
@@ -29067,7 +29086,7 @@ msgstr ""
 msgid "Require shifts"
 msgstr "Require shifts"
 
-#: app/components/discounts/discount-form.tsx:1290
+#: app/components/discounts/discount-form.tsx:1315
 msgid "Require specific items or categories"
 msgstr "Require specific items or categories"
 
@@ -29091,13 +29110,13 @@ msgstr "Required • Pick {minSelections}"
 msgid "Required • Pick {minSelections}{maxSelectionsSuffix}"
 msgstr "Required • Pick {minSelections}{maxSelectionsSuffix}"
 
-#: app/components/discounts/discount-form.tsx:443
-#: app/components/discounts/discount-form.tsx:1330
+#: app/components/discounts/discount-form.tsx:456
+#: app/components/discounts/discount-form.tsx:1355
 msgid "Required categories"
 msgstr "Required categories"
 
-#: app/components/discounts/discount-form.tsx:441
-#: app/components/discounts/discount-form.tsx:1314
+#: app/components/discounts/discount-form.tsx:454
+#: app/components/discounts/discount-form.tsx:1339
 msgid "Required items"
 msgstr "Required items"
 
@@ -29439,13 +29458,13 @@ msgstr "Restaurants"
 msgid "Restaurants are used to manage your locations, menus, and orders."
 msgstr "Restaurants are used to manage your locations, menus, and orders."
 
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:451
-#: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:218
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:466
+#: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:234
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:252
 msgid "Restore"
 msgstr "Restore"
 
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:460
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:475
 msgid "Restore {name}"
 msgstr "Restore {name}"
 
@@ -29485,12 +29504,12 @@ msgstr ""
 msgid "Results"
 msgstr "Results"
 
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:453
-#: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:219
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:468
+#: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:235
 msgid "Resume"
 msgstr "Resume"
 
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:461
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:476
 msgid "Resume {name}"
 msgstr "Resume {name}"
 
@@ -29527,7 +29546,7 @@ msgstr "Retry charge"
 msgid "Retry failed accounts"
 msgstr "Retry failed accounts"
 
-#: app/components/orders/order-detail.tsx:750
+#: app/components/orders/order-detail.tsx:752
 msgid "Return the money in your payment provider first, then record it here."
 msgstr "Return the money in your payment provider first, then record it here."
 
@@ -30159,7 +30178,7 @@ msgstr ""
 msgid "Save Changes"
 msgstr "Save Changes"
 
-#: app/components/discounts/discount-form.tsx:545
+#: app/components/discounts/discount-form.tsx:558
 msgid "Save discount"
 msgstr "Save discount"
 
@@ -30205,8 +30224,8 @@ msgstr "Save Option"
 #: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:212
 #: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:227
 #: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:241
-msgid "Save or discard your changes first."
-msgstr "Save or discard your changes first."
+#~ msgid "Save or discard your changes first."
+#~ msgstr "Save or discard your changes first."
 
 #: app/components/locations/special-hours-picker.tsx:228
 msgid "Save override"
@@ -30364,7 +30383,7 @@ msgstr "Saved with the booking for the manager."
 msgid "Saved with the refund, along with who recorded it."
 msgstr "Saved with the refund, along with who recorded it."
 
-#: app/components/discounts/discount-form.tsx:591
+#: app/components/discounts/discount-form.tsx:604
 #: app/components/hiring/job-editor.tsx:162
 #: app/components/reservations/policies/policies-screen.tsx:209
 msgid "Saved."
@@ -30690,13 +30709,13 @@ msgid "Search campaigns..."
 msgstr ""
 
 #: app/components/discounts/deal-groups.tsx:142
-#: app/components/discounts/discount-form.tsx:1145
-#: app/components/discounts/discount-form.tsx:1233
-#: app/components/discounts/discount-form.tsx:1334
+#: app/components/discounts/discount-form.tsx:1170
+#: app/components/discounts/discount-form.tsx:1258
+#: app/components/discounts/discount-form.tsx:1359
 msgid "Search categories"
 msgstr "Search categories"
 
-#: app/components/discounts/discount-form.tsx:1283
+#: app/components/discounts/discount-form.tsx:1308
 msgid "Search categories to exclude"
 msgstr "Search categories to exclude"
 
@@ -30720,13 +30739,13 @@ msgstr "Search guest, phone, code, table..."
 #~ msgstr "Search guests"
 
 #: app/components/discounts/deal-groups.tsx:131
-#: app/components/discounts/discount-form.tsx:1132
-#: app/components/discounts/discount-form.tsx:1222
-#: app/components/discounts/discount-form.tsx:1318
+#: app/components/discounts/discount-form.tsx:1157
+#: app/components/discounts/discount-form.tsx:1247
+#: app/components/discounts/discount-form.tsx:1343
 msgid "Search items"
 msgstr "Search items"
 
-#: app/components/discounts/discount-form.tsx:1272
+#: app/components/discounts/discount-form.tsx:1297
 msgid "Search items to exclude"
 msgstr "Search items to exclude"
 
@@ -30752,11 +30771,11 @@ msgstr "Search messages"
 msgid "Search missing URLs..."
 msgstr "Search missing URLs..."
 
-#: app/components/discounts/discount-form.tsx:1184
+#: app/components/discounts/discount-form.tsx:1209
 msgid "Search modifier groups"
 msgstr "Search modifier groups"
 
-#: app/components/discounts/discount-form.tsx:1204
+#: app/components/discounts/discount-form.tsx:1229
 msgid "Search modifier options"
 msgstr "Search modifier options"
 
@@ -30821,8 +30840,8 @@ msgstr "Search results"
 #~ msgstr "Search returning guests, check live slot availability, and book with optional operator overrides."
 
 #: app/components/discounts/deal-groups.tsx:158
-#: app/components/discounts/discount-form.tsx:1166
-#: app/components/discounts/discount-form.tsx:1250
+#: app/components/discounts/discount-form.tsx:1191
+#: app/components/discounts/discount-form.tsx:1275
 msgid "Search sizes"
 msgstr "Search sizes"
 
@@ -31690,8 +31709,8 @@ msgstr "Sent"
 
 #. placeholder {0}: new Date(campaign.createdAt).toLocaleString()
 #. placeholder {0}: new Date(recipient.sentAt).toLocaleString()
-#: ../../packages/marketing/src/components/campaign-detail.tsx:93
-#: ../../packages/marketing/src/components/campaign-detail.tsx:162
+#: ../../packages/marketing/src/components/campaign-detail.tsx:96
+#: ../../packages/marketing/src/components/campaign-detail.tsx:165
 msgid "Sent {0}"
 msgstr ""
 
@@ -31954,8 +31973,8 @@ msgstr "Set hours"
 msgid "Set it in Labor settings"
 msgstr "Set it in Labor settings"
 
-#: app/components/discounts/discount-form.tsx:418
-#: app/components/discounts/discount-form.tsx:941
+#: app/components/discounts/discount-form.tsx:431
+#: app/components/discounts/discount-form.tsx:966
 #: app/utils/discounts/labels.ts:136
 msgid "Set price"
 msgstr "Set price"
@@ -32169,6 +32188,10 @@ msgstr "Shared link"
 #: app/components/dashboard/dashboard-switcher.tsx:111
 msgid "Shared with me"
 msgstr "Shared with me"
+
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:588
+msgid "Shared with other locations. View only."
+msgstr "Shared with other locations. View only."
 
 #: app/components/reservations/booking-sheet.tsx:66
 #: app/utils/reservations/labels.ts:107
@@ -32498,7 +32521,7 @@ msgstr "Shown to guests whose party is larger than you take online."
 msgid "Shown to recipients who have no value for this field."
 msgstr "Shown to recipients who have no value for this field."
 
-#: app/components/discounts/discount-form.tsx:1774
+#: app/components/discounts/discount-form.tsx:1800
 msgid "Shows it as an offer on your online menu."
 msgstr "Shows it as an offer on your online menu."
 
@@ -32795,7 +32818,7 @@ msgstr "Someone else changed this customer first. The profile has been reloaded,
 msgid "Someone else changed this dining area. Reload to see the latest version, then make your change again."
 msgstr "Someone else changed this dining area. Reload to see the latest version, then make your change again."
 
-#: app/components/discounts/discount-form.tsx:603
+#: app/components/discounts/discount-form.tsx:616
 msgid "Someone else changed this discount. This page now shows their version. Try again."
 msgstr "Someone else changed this discount. This page now shows their version. Try again."
 
@@ -32851,7 +32874,7 @@ msgstr "Someone else saved a newer floor plan since you opened it. Your changes 
 msgid "Someone else saved changes first. Reload to see the latest version, then try again."
 msgstr "Someone else saved changes first. Reload to see the latest version, then try again."
 
-#: app/components/discounts/discount-form.tsx:597
+#: app/components/discounts/discount-form.tsx:610
 msgid "Someone else saved this discount while you were editing. Your changes are still here. Saving again replaces their version."
 msgstr "Someone else saved this discount while you were editing. Your changes are still here. Saving again replaces their version."
 
@@ -32974,11 +32997,11 @@ msgstr "Special occasions"
 msgid "Special Occasions"
 msgstr "Special Occasions"
 
-#: app/components/discounts/discount-form.tsx:1103
+#: app/components/discounts/discount-form.tsx:1128
 msgid "Specific categories"
 msgstr "Specific categories"
 
-#: app/components/discounts/discount-form.tsx:1097
+#: app/components/discounts/discount-form.tsx:1122
 msgid "Specific items"
 msgstr "Specific items"
 
@@ -33356,8 +33379,8 @@ msgstr "Starting point"
 msgid "Starting…"
 msgstr "Starting…"
 
-#: app/components/discounts/discount-form.tsx:471
-#: app/components/discounts/discount-form.tsx:1479
+#: app/components/discounts/discount-form.tsx:484
+#: app/components/discounts/discount-form.tsx:1504
 #: app/components/staff/schedule/shift-editor-sheet.tsx:465
 msgid "Starts"
 msgstr "Starts"
@@ -33410,7 +33433,7 @@ msgstr "Stats"
 #: app/components/customers/person-orders-panel.tsx:166
 #: app/components/customers/person-profile-screen.tsx:772
 #: app/components/customers/person-profile-screen.tsx:997
-#: app/components/orders/order-detail.tsx:703
+#: app/components/orders/order-detail.tsx:705
 #: app/components/reservations/experiences/experiences-screen.tsx:292
 #: app/components/roles/tenant-role-access-manager.tsx:1189
 #: app/components/settings/cards/sessions-card.tsx:239
@@ -33419,8 +33442,8 @@ msgstr "Stats"
 #: app/components/staff/timesheets/timesheet-table.tsx:232
 #: app/components/workspace-breadcrumb.tsx:73
 #: app/components/workspace-breadcrumb.tsx:98
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:324
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:359
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:334
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:369
 #: app/routes/_app+/$orgSlug_+/loyalty+/program.tsx:249
 #: app/routes/_app+/$orgSlug_+/loyalty+/rewards.tsx:266
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:270
@@ -33562,7 +33585,7 @@ msgstr "Store Pickup"
 #~ msgid "Stored for later. The menu does not show it yet."
 #~ msgstr "Stored for later. The menu does not show it yet."
 
-#: app/components/discounts/discount-form.tsx:1782
+#: app/components/discounts/discount-form.tsx:1815
 msgid "Stored for the in-store till. It has no effect online."
 msgstr "Stored for the in-store till. It has no effect online."
 
@@ -33714,7 +33737,7 @@ msgstr ""
 msgid "Subscription Started"
 msgstr ""
 
-#: app/components/orders/order-detail.tsx:586
+#: app/components/orders/order-detail.tsx:588
 msgid "Subtotal"
 msgstr "Subtotal"
 
@@ -33855,12 +33878,12 @@ msgstr "Switch off any message you do not want guests to receive. Payment messag
 msgid "Switch the Instagram account to a business or creator account, link it to a Facebook Page, and allow that Page when Facebook asks."
 msgstr "Switch the Instagram account to a business or creator account, link it to a Facebook Page, and allow that Page when Facebook asks."
 
-#: app/components/discounts/discount-form.tsx:805
-#: app/components/discounts/discount-form.tsx:815
+#: app/components/discounts/discount-form.tsx:830
+#: app/components/discounts/discount-form.tsx:840
 msgid "Switched off for your organization."
 msgstr "Switched off for your organization."
 
-#: app/components/discounts/discount-form.tsx:777
+#: app/components/discounts/discount-form.tsx:802
 msgid "Switching away from Coupon code archives every code when you save, and the discount applies automatically to qualifying orders. Continue?"
 msgstr "Switching away from Coupon code archives every code when you save, and the discount applies automatically to qualifying orders. Continue?"
 
@@ -33959,7 +33982,7 @@ msgstr "Table {0} is occupied by {1} ({2}p)"
 msgid "Table {createdTableLabel} created."
 msgstr "Table {createdTableLabel} created."
 
-#: app/components/orders/order-detail.tsx:469
+#: app/components/orders/order-detail.tsx:471
 #: app/components/qr/open-tabs.tsx:369
 #: app/components/qr/open-tabs.tsx:1059
 #: app/components/qr/open-tabs.tsx:1147
@@ -34256,15 +34279,15 @@ msgstr "Take a voicemail"
 msgid "Take me to settings"
 msgstr "Take me to settings"
 
-#: app/components/discounts/discount-form.tsx:84
+#: app/components/discounts/discount-form.tsx:91
 msgid "Takes a fixed amount off."
 msgstr "Takes a fixed amount off."
 
-#: app/components/discounts/discount-form.tsx:82
+#: app/components/discounts/discount-form.tsx:89
 msgid "Takes a percentage off."
 msgstr "Takes a percentage off."
 
-#: app/components/discounts/discount-form.tsx:88
+#: app/components/discounts/discount-form.tsx:95
 msgid "Takes the delivery fee off."
 msgstr "Takes the delivery fee off."
 
@@ -34331,7 +34354,7 @@ msgstr "Tasks"
 msgid "Tasks to finish when someone joins."
 msgstr "Tasks to finish when someone joins."
 
-#: app/components/orders/order-detail.tsx:644
+#: app/components/orders/order-detail.tsx:646
 #: app/components/pos/pos-day-report.tsx:206
 msgid "Tax"
 msgstr "Tax"
@@ -35213,15 +35236,15 @@ msgstr "The cart does not have enough of the chosen items."
 msgid "The cart does not have the required items."
 msgstr "The cart does not have the required items."
 
-#: app/components/discounts/discount-form.tsx:827
+#: app/components/discounts/discount-form.tsx:852
 msgid "The cashier applies it on the register. A variable discount asks them for the amount or percent."
 msgstr "The cashier applies it on the register. A variable discount asks them for the amount or percent."
 
-#: app/components/discounts/discount-form.tsx:901
+#: app/components/discounts/discount-form.tsx:926
 msgid "The cashier types the amount at the till."
 msgstr "The cashier types the amount at the till."
 
-#: app/components/discounts/discount-form.tsx:899
+#: app/components/discounts/discount-form.tsx:924
 msgid "The cashier types the percent at the till."
 msgstr "The cashier types the percent at the till."
 
@@ -35277,7 +35300,7 @@ msgstr "The coupon's discount is no longer active or no longer takes codes. Choo
 msgid "The currency does not match the program's currency."
 msgstr "The currency does not match the program's currency."
 
-#: app/components/discounts/discount-form.tsx:377
+#: app/components/discounts/discount-form.tsx:390
 msgid "the currency of your locations"
 msgstr "the currency of your locations"
 
@@ -35383,11 +35406,11 @@ msgstr "The design's PDF is larger than 40 MB."
 msgid "The details could not be saved. Try again."
 msgstr "The details could not be saved. Try again."
 
-#: app/components/discounts/discount-form.tsx:1033
+#: app/components/discounts/discount-form.tsx:1058
 msgid "The discount applies to each full deal as a whole."
 msgstr "The discount applies to each full deal as a whole."
 
-#: app/components/discounts/discount-form.tsx:1029
+#: app/components/discounts/discount-form.tsx:1054
 msgid "The discount applies to each item the customer gets."
 msgstr "The discount applies to each item the customer gets."
 
@@ -35395,7 +35418,7 @@ msgstr "The discount applies to each item the customer gets."
 msgid "The discount applies to items listed directly in these categories."
 msgstr "The discount applies to items listed directly in these categories."
 
-#: app/components/discounts/discount-form.tsx:1020
+#: app/components/discounts/discount-form.tsx:1045
 msgid "The discount applies to the price of each choice, not the item itself."
 msgstr "The discount applies to the price of each choice, not the item itself."
 
@@ -35515,7 +35538,7 @@ msgstr "The file is too large. Split it into smaller files."
 msgid "The first {perItem} on each item, most expensive first"
 msgstr "The first {perItem} on each item, most expensive first"
 
-#: app/components/discounts/discount-form.tsx:115
+#: app/components/discounts/discount-form.tsx:122
 msgid "The first few on each item"
 msgstr "The first few on each item"
 
@@ -35645,7 +35668,7 @@ msgstr "The interview invitation could not be sent"
 msgid "The invitation was not sent. Try again."
 msgstr "The invitation was not sent. Try again."
 
-#: app/components/discounts/discount-form.tsx:86
+#: app/components/discounts/discount-form.tsx:93
 msgid "The items cost a flat price instead."
 msgstr "The items cost a flat price instead."
 
@@ -35777,11 +35800,11 @@ msgstr "The message uses {tag}. Choose a coupon, or remove the tag."
 msgid "The Meta emulator refused this post (it contains #fail)."
 msgstr "The Meta emulator refused this post (it contains #fail)."
 
-#: app/components/discounts/discount-form.tsx:987
+#: app/components/discounts/discount-form.tsx:1012
 msgid "The more the customer spends or buys, the bigger the discount."
 msgstr "The more the customer spends or buys, the bigger the discount."
 
-#: app/components/discounts/discount-form.tsx:117
+#: app/components/discounts/discount-form.tsx:124
 msgid "The most expensive choices on each item, such as 2 toppings free."
 msgstr "The most expensive choices on each item, such as 2 toppings free."
 
@@ -35793,7 +35816,7 @@ msgstr "The most one booking can be charged in fees."
 msgid "The name and units customers see."
 msgstr "The name and units customers see."
 
-#: app/components/discounts/discount-form.tsx:703
+#: app/components/discounts/discount-form.tsx:728
 msgid "The name customers see, and how the discount is taken off."
 msgstr "The name customers see, and how the discount is taken off."
 
@@ -35837,7 +35860,7 @@ msgstr "The order could not be completed, so we refunded it in full."
 msgid "The order is below the minimum spend."
 msgstr "The order is below the minimum spend."
 
-#: app/components/discounts/discount-form.tsx:1292
+#: app/components/discounts/discount-form.tsx:1317
 msgid "The order must already include them before the discount applies."
 msgstr "The order must already include them before the discount applies."
 
@@ -36771,7 +36794,7 @@ msgstr "This dashboard has no blocks yet"
 msgid "This date appears more than once in the file."
 msgstr "This date appears more than once in the file."
 
-#: app/components/discounts/discount-form.tsx:1059
+#: app/components/discounts/discount-form.tsx:1084
 msgid "This deal chooses its own items under Quantity. The exclusions below still apply."
 msgstr "This deal chooses its own items under Quantity. The exclusions below still apply."
 
@@ -36790,6 +36813,14 @@ msgstr ""
 #~ msgid "This dining area was modified by another operator. Reloading latest data."
 #~ msgstr "This dining area was modified by another operator. Reloading latest data."
 
+#: app/components/discounts/discount-form.tsx:677
+msgid "This discount also runs at locations outside yours, so you can look at it but not change it. Ask someone who manages every location."
+msgstr "This discount also runs at locations outside yours, so you can look at it but not change it. Ask someone who manages every location."
+
+#: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:174
+msgid "This discount also runs at locations outside yours, so you can't change it."
+msgstr "This discount also runs at locations outside yours, so you can't change it."
+
 #: app/components/print/restaurant/vertical-ui.tsx:152
 #~ msgid "This discount applies by itself, so the card just opens your menu where the offer shows."
 #~ msgstr "This discount applies by itself, so the card just opens your menu where the offer shows."
@@ -36798,19 +36829,19 @@ msgstr ""
 msgid "This discount applies by itself, so the code opens your menu where the offer shows."
 msgstr "This discount applies by itself, so the code opens your menu where the offer shows."
 
-#: app/components/discounts/discount-form.tsx:651
+#: app/components/discounts/discount-form.tsx:668
 msgid "This discount could not be saved. Check the fields and try again."
 msgstr "This discount could not be saved. Check the fields and try again."
 
-#: app/components/discounts/discount-form.tsx:620
+#: app/components/discounts/discount-form.tsx:633
 msgid "This discount is archived, so it can't be edited. Restore it to change it. It comes back paused."
 msgstr "This discount is archived, so it can't be edited. Restore it to change it. It comes back paused."
 
-#: app/components/discounts/discount-form.tsx:612
+#: app/components/discounts/discount-form.tsx:625
 msgid "This discount is paused. Customers can't get it until you resume it."
 msgstr "This discount is paused. Customers can't get it until you resume it."
 
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:537
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:552
 msgid "This discount needs a fix before it can apply."
 msgstr "This discount needs a fix before it can apply."
 
@@ -36818,7 +36849,7 @@ msgstr "This discount needs a fix before it can apply."
 #~ msgid "This discount uses a rule this editor can't change yet. The items it names stay as they are when you save."
 #~ msgstr "This discount uses a rule this editor can't change yet. The items it names stay as they are when you save."
 
-#: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:119
+#: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:128
 msgid "This discount was saved in a form the editor can't open. Archive it, then create it again."
 msgstr "This discount was saved in a form the editor can't open. Archive it, then create it again."
 
@@ -37506,7 +37537,7 @@ msgstr "Tier {number}: spend at least"
 msgid "Tiered discount"
 msgstr "Tiered discount"
 
-#: app/components/discounts/discount-form.tsx:457
+#: app/components/discounts/discount-form.tsx:470
 #: app/utils/discounts/summary.ts:288
 msgid "Tiers"
 msgstr "Tiers"
@@ -37515,7 +37546,7 @@ msgstr "Tiers"
 msgid "Tiers go up by"
 msgstr "Tiers go up by"
 
-#: app/components/discounts/discount-form.tsx:992
+#: app/components/discounts/discount-form.tsx:1017
 msgid "Tiers go with a plain item or order discount. They are not available at the till, with a quantity rule, a meal deal or modifier choices."
 msgstr "Tiers go with a plain item or order discount. They are not available at the till, with a quantity rule, a meal deal or modifier choices."
 
@@ -37728,14 +37759,14 @@ msgstr "Timezone"
 msgid "Timing and notes"
 msgstr "Timing and notes"
 
-#: app/components/orders/order-detail.tsx:653
+#: app/components/orders/order-detail.tsx:655
 msgid "Tip"
 msgstr "Tip"
 
 #~ msgid "Tip ({0}%)"
 #~ msgstr "Tip ({0}%)"
 
-#: app/components/orders/order-detail.tsx:652
+#: app/components/orders/order-detail.tsx:654
 msgid "Tip ({tipPercent}%)"
 msgstr "Tip ({tipPercent}%)"
 
@@ -37844,7 +37875,7 @@ msgstr "To reorder this party, press Space to pick it up, use the up and down ar
 msgid "To see coverage against the orders you usually get, set how many orders one person handles in an hour."
 msgstr "To see coverage against the orders you usually get, set how many orders one person handles in an hour."
 
-#: ../../packages/marketing/src/components/coupon-offer-field.tsx:78
+#: ../../packages/marketing/src/components/coupon-offer-field.tsx:94
 msgid "To send a coupon, first create a discount that customers apply with a code."
 msgstr "To send a coupon, first create a discount that customers apply with a code."
 
@@ -37958,13 +37989,13 @@ msgstr "Topic"
 msgid "Topping"
 msgstr "Topping"
 
-#: app/components/discounts/discount-form.tsx:1117
+#: app/components/discounts/discount-form.tsx:1142
 msgid "Toppings, sauces and other choices on an item."
 msgstr "Toppings, sauces and other choices on an item."
 
 #: app/components/customers/person-orders-panel.tsx:175
 #: app/components/notes-chart.tsx:69
-#: app/components/orders/order-detail.tsx:672
+#: app/components/orders/order-detail.tsx:674
 #: app/components/staff/labor/labor-overview.tsx:219
 #: app/components/staff/labor/labor-tips.tsx:276
 #: app/components/staff/timesheets/payroll-summary.tsx:426
@@ -38350,7 +38381,7 @@ msgstr "Try another search or clear the filters."
 msgid "Try another style"
 msgstr "Try another style"
 
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:347
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:357
 msgid "Try another type or status."
 msgstr "Try another type or status."
 
@@ -38505,7 +38536,7 @@ msgstr "Two break rules start at the same point in the shift."
 msgid "Two breaks overlap. Fix their times."
 msgstr "Two breaks overlap. Fix their times."
 
-#: app/components/discounts/discount-form.tsx:1742
+#: app/components/discounts/discount-form.tsx:1767
 msgid "Two discounts combine only if each allows the other's kind. With none ticked, this discount stands alone: the customer gets it or the others, whichever saves more."
 msgstr "Two discounts combine only if each allows the other's kind. With none ticked, this discount stands alone: the customer gets it or the others, whichever saves more."
 
@@ -38532,7 +38563,7 @@ msgstr ""
 #: app/components/website/create-form-dialog.tsx:198
 #: app/components/website/form-builder-sidebar.tsx:521
 #: app/components/website/link-inspector.tsx:341
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:284
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:294
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:303
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:347
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1356
@@ -38820,7 +38851,7 @@ msgid "Unknown terminal"
 msgstr "Unknown terminal"
 
 #: app/components/discounts/codes-editor.tsx:143
-#: app/components/discounts/discount-form.tsx:1639
+#: app/components/discounts/discount-form.tsx:1664
 #: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:632
 #: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:653
 msgid "Unlimited"
@@ -38864,7 +38895,7 @@ msgstr "Unlocked"
 msgid "Unmute microphone"
 msgstr "Unmute microphone"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:157
+#: ../../packages/marketing/src/components/campaign-detail.tsx:160
 msgid "Unnamed recipient"
 msgstr ""
 
@@ -39268,7 +39299,7 @@ msgstr "URL:"
 msgid "Usage"
 msgstr "Usage"
 
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:337
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:347
 msgid "Usage counts are unavailable right now."
 msgstr "Usage counts are unavailable right now."
 
@@ -39499,7 +39530,7 @@ msgstr "Use this voice"
 msgid "Use this when the guest gave up on the payment page or it is stuck. You can then close the tab at the counter. Card pages are closed where the payment provider allows it; if money still arrives, the tab is marked for review."
 msgstr "Use this when the guest gave up on the payment page or it is stuck. You can then close the tab at the counter. Card pages are closed where the payment provider allows it; if money still arrives, the tab is marked for review."
 
-#: app/components/discounts/discount-form.tsx:984
+#: app/components/discounts/discount-form.tsx:1009
 msgid "Use tiers"
 msgstr "Use tiers"
 
@@ -39568,16 +39599,16 @@ msgstr ""
 msgid "Username or email is required"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:362
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:372
 msgid "Uses"
 msgstr "Uses"
 
-#: app/components/discounts/discount-form.tsx:487
-#: app/components/discounts/discount-form.tsx:1691
+#: app/components/discounts/discount-form.tsx:500
+#: app/components/discounts/discount-form.tsx:1716
 msgid "Uses allowed"
 msgstr "Uses allowed"
 
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:298
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:308
 msgid "Uses from"
 msgstr "Uses from"
 
@@ -39585,7 +39616,7 @@ msgstr "Uses from"
 msgid "Uses tables"
 msgstr "Uses tables"
 
-#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:313
+#: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:323
 msgid "Uses to"
 msgstr "Uses to"
 
@@ -39601,7 +39632,7 @@ msgstr "Using a custom call flow"
 msgid "Using the standard call flow"
 msgstr "Using the standard call flow"
 
-#: ../../packages/marketing/src/components/coupon-offer-field.tsx:201
+#: ../../packages/marketing/src/components/coupon-offer-field.tsx:273
 msgid "Valid for (days)"
 msgstr "Valid for (days)"
 
@@ -39733,7 +39764,7 @@ msgstr ""
 msgid "View all"
 msgstr ""
 
-#: app/components/orders/order-detail.tsx:427
+#: app/components/orders/order-detail.tsx:429
 msgid "View all orders"
 msgstr "View all orders"
 
@@ -40565,7 +40596,7 @@ msgstr "Week starts on"
 msgid "Weekdays"
 msgstr "Weekdays"
 
-#: app/components/discounts/discount-form.tsx:469
+#: app/components/discounts/discount-form.tsx:482
 msgid "Weekly hours"
 msgstr "Weekly hours"
 
@@ -40592,7 +40623,7 @@ msgstr ""
 msgid "Welcome"
 msgstr ""
 
-#: ../../packages/marketing/src/components/coupon-offer-field.tsx:185
+#: ../../packages/marketing/src/components/coupon-offer-field.tsx:201
 msgid "WELCOME"
 msgstr "WELCOME"
 
@@ -40804,7 +40835,7 @@ msgstr ""
 msgid "Wheelchair accessible"
 msgstr "Wheelchair accessible"
 
-#: app/components/discounts/discount-form.tsx:1469
+#: app/components/discounts/discount-form.tsx:1494
 #: app/components/reservations/booking-sheet.tsx:617
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:927
 #: app/utils/discounts/summary.ts:340
@@ -40944,7 +40975,7 @@ msgstr ""
 msgid "When you're closed"
 msgstr "When you're closed"
 
-#: app/components/discounts/discount-form.tsx:1524
+#: app/components/discounts/discount-form.tsx:1549
 #: app/components/hiring/interview-dialog.tsx:168
 #: app/components/hiring/job-summary.tsx:53
 #: app/components/hiring/location-picker.tsx:68
@@ -41063,7 +41094,7 @@ msgstr "Who can book online, how far ahead, and how bookings are confirmed."
 msgid "Who can manage terminals"
 msgstr "Who can manage terminals"
 
-#: app/components/discounts/discount-form.tsx:1599
+#: app/components/discounts/discount-form.tsx:1624
 #: app/utils/discounts/summary.ts:421
 msgid "Who can use it"
 msgstr "Who can use it"
@@ -41133,7 +41164,7 @@ msgstr "Whole / half pricing is on because this option is assigned to a pizza-st
 msgid "Whole / Left or right"
 msgstr "Whole / Left or right"
 
-#: app/components/discounts/discount-form.tsx:1091
+#: app/components/discounts/discount-form.tsx:1116
 #: app/utils/discounts/labels.ts:347
 #: app/utils/discounts/summary.ts:208
 msgid "Whole order"
@@ -41584,7 +41615,7 @@ msgstr "You can look at these settings but not change them."
 msgid "You can look at this card but not change it."
 msgstr "You can look at this card but not change it."
 
-#: app/components/discounts/discount-form.tsx:659
+#: app/components/discounts/discount-form.tsx:683
 msgid "You can look at this discount. You don't have permission to change it."
 msgstr "You can look at this discount. You don't have permission to change it."
 
@@ -41807,9 +41838,13 @@ msgstr "You have unsaved changes to this experience. Leave without saving?"
 msgid "You have unsaved changes. Leave this page and lose them?"
 msgstr "You have unsaved changes. Leave this page and lose them?"
 
+#: app/components/discounts/discount-form.tsx:651
+msgid "You have unsaved changes. Save or discard them first: Pause, Restore, Archive, Duplicate and Print coupons use the saved discount."
+msgstr "You have unsaved changes. Save or discard them first: Pause, Restore, Archive, Duplicate and Print coupons use the saved discount."
+
 #: app/components/discounts/discount-form.tsx:634
-msgid "You have unsaved changes. Save them first: Pause, Restore, Archive and Duplicate act on the saved discount and would drop them."
-msgstr "You have unsaved changes. Save them first: Pause, Restore, Archive and Duplicate act on the saved discount and would drop them."
+#~ msgid "You have unsaved changes. Save them first: Pause, Restore, Archive and Duplicate act on the saved discount and would drop them."
+#~ msgstr "You have unsaved changes. Save them first: Pause, Restore, Archive and Duplicate act on the saved discount and would drop them."
 
 #: app/components/reservations/settings/setup-list-chrome.tsx:209
 msgid "You have unsaved edits. If you close now they are lost and nothing is saved."
@@ -42011,7 +42046,7 @@ msgstr "Your flow isn't published yet, so test the draft."
 msgid "Your hours, phone, and address. The agent quotes them and uses the hours to tell when you're open."
 msgstr "Your hours, phone, and address. The agent quotes them and uses the hours to tell when you're open."
 
-#: app/components/discounts/discount-form.tsx:1557
+#: app/components/discounts/discount-form.tsx:1582
 #: app/components/discounts/fields.tsx:406
 msgid "Your locations use different currencies. Choose locations that share one currency to set an amount."
 msgstr "Your locations use different currencies. Choose locations that share one currency to set an amount."

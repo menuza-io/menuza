@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { type Adjustment, type CartLine } from './pricing.ts'
 import {
 	automaticTillAdjustments,
@@ -7,7 +7,11 @@ import {
 	parseTillRules,
 	quoteTillManualDiscount,
 	settleTillDiscounts,
+	noteTillClock,
+	reloadTillClock,
 	tillRulesStatus,
+	TILL_CLOCK_KEY,
+	TILL_CLOCK_SKEW_MS,
 	TILL_RULES_MAX_AGE_MS,
 } from './till-discounts.ts'
 import {
@@ -476,6 +480,120 @@ describe('till discount rules', () => {
 			tillRulesStatus(snapshot({}, 0), 99 * TILL_RULES_MAX_AGE_MS).state,
 		).toBe('none')
 		expect(tillRulesStatus(null).state).toBe('none')
+	})
+
+	it('says why they stopped: age', () => {
+		const at = 1_000_000
+		expect(
+			tillRulesStatus(
+				snapshot({ discountRules: [rule()], discountRulesAt: at }, at),
+				at + TILL_RULES_MAX_AGE_MS + 1,
+			),
+		).toEqual({ state: 'expired', fetchedAt: at, cause: 'age' })
+	})
+})
+
+describe('till discount rules and a clock moved back', () => {
+	const snapshot = (rulesAt: number) =>
+		({
+			key: 'catalog',
+			fetchedAt: rulesAt,
+			menu: { discountRules: [rule()], discountRulesAt: rulesAt },
+		}) as unknown as CatalogSnapshot
+	const at = 2_000_000_000_000
+	const minutes = (count: number) => count * 60_000
+
+	afterEach(() => {
+		vi.useRealTimers()
+		vi.unstubAllGlobals()
+		reloadTillClock()
+	})
+
+	it('are off when stamped in the future, beyond normal drift', () => {
+		expect(tillRulesStatus(snapshot(at), at - TILL_CLOCK_SKEW_MS).state).toBe(
+			'fresh',
+		)
+		expect(tillRulesStatus(snapshot(at), at - TILL_CLOCK_SKEW_MS - 1)).toEqual({
+			state: 'expired',
+			fetchedAt: at,
+			cause: 'clock',
+		})
+	})
+
+	it('are off while the clock is behind the latest time seen with them', () => {
+		const seen = at + minutes(60)
+		expect(tillRulesStatus(snapshot(at), seen - minutes(4), seen).state).toBe(
+			'fresh',
+		)
+		expect(
+			tillRulesStatus(snapshot(at), seen - minutes(6), seen),
+		).toMatchObject({
+			state: 'expired',
+			cause: 'clock',
+		})
+	})
+
+	it('cannot be made younger by setting the clock back', () => {
+		vi.useFakeTimers({ toFake: ['Date'] })
+		vi.setSystemTime(at + minutes(60))
+		expect(tillRulesStatus(snapshot(at)).state).toBe('fresh')
+		// Back 20 hours: without the latest time seen, they would have 20 more hours.
+		vi.setSystemTime(at + minutes(60) - minutes(20 * 60))
+		expect(tillRulesStatus(snapshot(at))).toMatchObject({
+			state: 'expired',
+			cause: 'clock',
+		})
+		// Forward again: the age is the clock's own, and the limit still holds.
+		vi.setSystemTime(at + minutes(90))
+		expect(tillRulesStatus(snapshot(at)).state).toBe('fresh')
+		vi.setSystemTime(at + TILL_RULES_MAX_AGE_MS + 1)
+		expect(tillRulesStatus(snapshot(at))).toMatchObject({
+			state: 'expired',
+			cause: 'age',
+		})
+	})
+
+	it('start again with rules fetched later, so a clock fixed once does not keep them off', () => {
+		vi.useFakeTimers({ toFake: ['Date'] })
+		// The clock ran a week ahead when the rules came, then was put right.
+		const ahead = at + minutes(7 * 24 * 60)
+		vi.setSystemTime(ahead)
+		expect(tillRulesStatus(snapshot(ahead)).state).toBe('fresh')
+		vi.setSystemTime(at + minutes(10))
+		expect(tillRulesStatus(snapshot(ahead))).toMatchObject({
+			state: 'expired',
+			cause: 'clock',
+		})
+		// The next fetch stamps the rules with the right time: they apply, although
+		// the latest time seen before was a week ahead.
+		expect(tillRulesStatus(snapshot(at + minutes(10))).state).toBe('fresh')
+	})
+
+	it('remember the latest time across a reload', () => {
+		const memory = new Map<string, string>()
+		vi.stubGlobal('localStorage', {
+			getItem: (key: string) => memory.get(key) ?? null,
+			setItem: (key: string, value: string) => void memory.set(key, value),
+		})
+		reloadTillClock()
+		expect(noteTillClock(at, at + minutes(1))).toBe(at + minutes(1))
+		expect(noteTillClock(at, at + minutes(120))).toBe(at + minutes(120))
+		expect(JSON.parse(memory.get(TILL_CLOCK_KEY)!)).toEqual({
+			stamp: at,
+			seen: at + minutes(120),
+		})
+		// A reload with the clock set back still knows how far it had gone.
+		reloadTillClock()
+		expect(noteTillClock(at, at + minutes(5))).toBe(at + minutes(120))
+	})
+
+	it('ignore a stored record that is not what the till wrote', () => {
+		vi.stubGlobal('localStorage', {
+			getItem: () => '{"stamp":"x"}',
+			setItem: () => undefined,
+		})
+		reloadTillClock()
+		expect(noteTillClock(at, at + minutes(1))).toBe(at + minutes(1))
 	})
 })
 
