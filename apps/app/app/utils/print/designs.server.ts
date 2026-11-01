@@ -95,24 +95,42 @@ export async function requirePrintDesign(
 	return row
 }
 
+/** Where a print was started from: a target kind and the id it points at. */
+export type PrintStart = { kind: string; ref: string }
+
+/** Parses `?start=<kind>:<ref>`; anything else is ignored. */
+export function parsePrintStart(value: unknown): PrintStart | null {
+	if (typeof value !== 'string') return null
+	const match = /^([a-z_]{1,30}):([A-Za-z0-9_-]{1,100})$/.exec(value)
+	return match ? { kind: match[1]!, ref: match[2]! } : null
+}
+
 async function defaultContent(
 	access: PrintShopAccess,
 	product: PrintProductKey,
+	start: PrintStart | null = null,
 ): Promise<PrintDesignContent> {
 	const { defaultLocale } = orgLocales(access.organization)
 	const scope = pickScope(await listPrintScopes(access.organization.id), null)
 	// The first target (in the product's order) the vertical can start with.
 	let qr: PrintQrTarget = { kind: 'site', path: '/' }
 	const spec = printCatalog.products[product]
-	for (const kind of printCatalog.targetsFor(product)) {
-		const start = spec
+	const kinds = printCatalog.targetsFor(product)
+	// The target the print was started from goes first, when it fits.
+	const ordered =
+		start && kinds.includes(start.kind)
+			? [start.kind, ...kinds.filter((kind) => kind !== start.kind)]
+			: kinds
+	for (const kind of ordered) {
+		const first = spec
 			? await printVertical.qrTargets?.[kind]?.defaultFor?.(access, {
 					product: spec,
 					scope,
+					ref: start?.kind === kind ? start.ref : null,
 				})
 			: null
-		if (start) {
-			qr = start
+		if (first) {
+			qr = first
 			break
 		}
 	}
@@ -136,6 +154,7 @@ export async function createPrintDesign(
 		product: PrintProductKey
 		sizeKey: string
 		style: PrintTemplateStyle
+		start?: PrintStart | null
 	},
 ) {
 	if (!printCatalog.getSize(input.product, input.sizeKey)) {
@@ -151,7 +170,7 @@ export async function createPrintDesign(
 			sizeKey: input.sizeKey,
 			style: input.style,
 			templateVersion: PRINT_TEMPLATE_VERSION,
-			content: await defaultContent(access, input.product),
+			content: await defaultContent(access, input.product, input.start ?? null),
 			status: 'draft',
 		})
 		.returning()

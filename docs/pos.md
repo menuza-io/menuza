@@ -42,11 +42,43 @@ already took money for.
   mean the till's menu was over 10 minutes old at the sale, or the upload
   arrived over 10 minutes after it: probably a menu change, not a wrong charge.
   `price_mismatch`, `tax_mismatch` and `catalog:*` mean the till had a fresh
-  menu. Other reasons: `unverified` (menu unreachable), `large_discount` (a
+  menu. On a sale with discounts, `tax_mismatch` compares the till's VAT with
+  the VAT the live menu implies after the discounts, by the same rule as
+  `applyOrderDiscounts` (`discountedTaxableCents`): an adjustment's
+  `lineAmounts` shrink those lines' taxable amounts, a discount without them
+  (manual, loyalty) is spread in proportion. It tolerates one minor unit per
+  line, and the stored `serverTotalCents` is the expected total without the tip.
+  Other reasons: `unverified` (menu unreachable), `large_discount` (a
   discretionary discount over half the subtotal; a loyalty reward does not
-  count), `fiscal:*`. A later revision reuses the previous menu check only when
-  its lines, adjustments and totals are all unchanged; otherwise it is checked
-  again.
+  count), `unknown_discount` (the discount id is not a published rule),
+  `discount_approval_missing` (an approval-required discount has no approver)
+  `discount_stale` (the rule's `version` differs from the published one),
+  `discount_unexplained` (a `discount` adjustment with no `discountApplications`
+  row of the same amount: the till took money off and named no rule) and
+  `discount_amount_mismatch` (an application above the rule's
+  `maxDiscountMinor`, above the rule's percentage of the subtotal, or above the
+  subtotal), `fiscal:*`. Discount flags never hold or refuse the sale, and a
+  flagged sale still earns loyalty points. They run once per bill: the rule
+  checks need App, so `unknown_discount`, `discount_approval_missing`,
+  `discount_stale` and the rule-based amount checks are skipped when it cannot
+  be reached (`discount_unexplained` and the subtotal bound still run). A later
+  revision reuses the previous menu check only when its lines, adjustments and
+  totals are all unchanged, but the discount checks run again on any revision
+  whose `discountApplications` differ from the previous revision's (for example
+  applications added when the sale is paid).
+- **Contract 6.** `POS_CONTRACT_VERSION` is 6. A sale may include
+  `discountApplications` (optional; omitted uploads still parse as none, so a
+  contract 5 till keeps working). An adjustment may carry `lineAmounts` (the
+  discount taken from each local line id) so tax shrinks per line as it does
+  online, and a discount application may carry the rule's `version`; both are
+  optional, so deploy tenant-api before Station. Each row is a discount id, the
+  name shown on the till, and the amount. A manual discount that needed a
+  manager also sends `approvedByStaffId` and an optional `reason`. Ids use an
+  `auto:` or `manual:` prefix on the till; the id sent is the part after the
+  first colon. A variable manual discount keeps the typed value in the till id
+  (`manual:<id>:bp:<percentBp>` or `manual:<id>:amt:<amountMinor>`). Deploy
+  tenant-api before Station when this contract changes: an older node holds a
+  sale it cannot read.
 - **Held uploads.** An upload the server cannot apply is stored in
   `pos_held_uploads` and answered `202 { result: 'held' }`. This covers an
   unreadable contract (an out-of-date till or node), a change to a closed bill,
@@ -139,7 +171,12 @@ person counting is shown the expected figure only after confirming.
   `@repo/common/pos-reports`). The till prints it at the close. On the server it
   covers one shift (`GET /operator/pos/shifts/:id`) or one business day across
   terminals (`GET /operator/pos/reports/day`), and the day report is on the
-  Terminals page.
+  Terminals page. `grossSalesCents` is closed sales as charged, so net of
+  discounts. The server's summary also carries, additively and optionally,
+  `discountCents` (sum of the closed sales' adjustments, loyalty rewards
+  included), `grossBeforeDiscountsCents` (`grossSalesCents + discountCents`) and
+  `subtotalCents` (items before discounts); the till's own summary should add
+  the same three.
 - **Append-only.** Shifts can't be deleted and cash movements can't be changed
   (triggers). A closed shift never changes.
 

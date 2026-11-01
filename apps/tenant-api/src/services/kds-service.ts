@@ -28,6 +28,7 @@ import { queryInChunks } from '../lib/chunked-in.ts'
 import { runExclusive } from '../lib/concurrency.ts'
 import { HttpError } from '../lib/http.ts'
 import { retryOnSqliteBusy } from '../lib/sqlite-retry.ts'
+import { payableOrderCondition } from './order-payable.ts'
 
 const hash = (value: unknown) =>
 	createHash('sha256').update(JSON.stringify(value)).digest('hex')
@@ -44,6 +45,8 @@ const sourceLineSchema = z.object({
 	name: z.string().optional(),
 	itemName: z.string().optional(),
 	variantLabel: z.string().nullable().optional(),
+	/** The variant's value names ("Large"), on lines priced by the website. */
+	variantNames: z.array(z.string()).optional(),
 	variantId: z.string().nullable().optional(),
 	quantity: z.number().int().positive(),
 	instructions: z.string().nullable().optional(),
@@ -78,7 +81,12 @@ function lineContent(line: SourceLine, index: number) {
 		key: line.id ?? String(index),
 		itemId: line.itemId,
 		name: line.name ?? line.itemName ?? '',
-		variant: line.variantLabel ?? line.variantId ?? null,
+		// A web order has no label, only the names; an id means nothing to a cook.
+		variant:
+			line.variantLabel ??
+			(line.variantNames?.length ? line.variantNames.join(' · ') : null) ??
+			line.variantId ??
+			null,
 		quantity: line.quantity,
 		instructions: line.instructions ?? '',
 		options: line.options,
@@ -222,10 +230,7 @@ async function loadSource(
 					eq(restaurantOrders.orgId, orgId),
 					eq(restaurantOrders.locationId, locationId),
 					inArray(restaurantOrders.status, ['accepted', 'preparing', 'ready']),
-					or(
-						eq(restaurantOrders.paymentMethod, 'handoff'),
-						eq(restaurantOrders.paymentStatus, 'paid'),
-					),
+					payableOrderCondition(),
 				),
 			)
 			.limit(1)
@@ -397,10 +402,7 @@ export async function kitchenFeed(
 							gte(restaurantOrders.cancelledAt, new Date(now - 30 * 60_000)),
 						),
 					),
-					or(
-						eq(restaurantOrders.paymentMethod, 'handoff'),
-						eq(restaurantOrders.paymentStatus, 'paid'),
-					),
+					payableOrderCondition(),
 					or(
 						isNull(kdsTickets.completedAt),
 						gte(kdsTickets.completedAt, now - 4 * 3_600_000),

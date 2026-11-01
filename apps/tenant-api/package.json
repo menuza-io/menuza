@@ -31,6 +31,7 @@
     "@repo/common": "*",
     "@repo/config": "*",
     "@repo/database": "^0.0.0",
+    "@repo/discounts": "*",
     "@repo/email": "*",
     "@repo/geo": "*",
     "@repo/loyalty": "*",

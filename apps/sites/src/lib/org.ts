@@ -488,6 +488,7 @@ export type PublicMenuItemData = {
 	calorieMax: number | null
 	isPopular: boolean
 	isUpsell: boolean
+	excludeFromDiscounts?: boolean
 	availabilityStatus: string
 	position: number
 	modifierGroups: PublicModifierGroupData[]
@@ -518,6 +519,42 @@ export type PublicMenuData = {
 	categories: PublicMenuCategoryData[]
 }
 
+export type PublicMenuPromotion = {
+	id: string
+	name: string
+	description: string | null
+	valueType: 'percent' | 'fixed' | 'fixed_price' | 'free_delivery'
+	percentBp: number | null
+	amountMinor: number | null
+	currency: string | null
+	/** `order` badges every item; otherwise the ids below decide. */
+	scope: 'order' | 'items' | 'categories'
+	itemIds: string[]
+	categoryIds: string[]
+	/** Show the discount's own name: it has no single value to put on a badge. */
+	showName?: boolean
+	/** `false`: banner only, no badge on items. Missing (older App): badge as before. */
+	itemBadges?: boolean
+	/** A plain percent or per-item amount off: the menu may show was/now prices. */
+	itemPrice?: boolean
+	/** Null or missing: every location. */
+	locationIds?: string[] | null
+	/** Order types the offer works for; missing: all. */
+	fulfillments?: Array<'pickup' | 'delivery' | 'dine_in'>
+	/** Local wall-clock ("2026-11-01T09:00") in the location's time zone. */
+	startsAt?: string | null
+	endsAt?: string | null
+	schedule?: readonly {
+		day: number
+		start: string
+		end: string
+	}[]
+	/** A promoted code discount's code, shown in the banner as "Use code X". */
+	code?: string | null
+	excludeItemIds?: string[]
+	excludeCategoryIds?: string[]
+}
+
 export type PublicSiteMenuPayload = {
 	organization: {
 		id: string
@@ -529,6 +566,7 @@ export type PublicSiteMenuPayload = {
 	}
 	locations: PublicLocationData[]
 	menus: PublicMenuData[]
+	promotions?: PublicMenuPromotion[]
 }
 
 export async function fetchPublishedSiteMenu(options: {

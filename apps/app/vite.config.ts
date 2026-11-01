@@ -56,7 +56,9 @@ function stubCacheServerPlugin(): Plugin {
 		name: 'stub-cache-server',
 		enforce: 'pre',
 		resolveId(id) {
-			if (MODE === 'test' && id.includes('cache.server')) {
+			// `cache.server` only: `sites/kv-cache.server.ts` is a different module
+			// and must load for real.
+			if (MODE === 'test' && /(^|\/)cache\.server(\.[cm]?[jt]s)?$/.test(id)) {
 				return '\0virtual:cache-server-stub'
 			}
 		},
@@ -248,7 +250,9 @@ export default defineConfig((config) => ({
 		},
 		envFile: '../../.env',
 		restoreMocks: true,
-		testTimeout: 15000,
+		// Integration tests (DB + payment emulator) can exceed 15s when CI runs
+		// the full monorepo suite under load; local runs stay tight.
+		testTimeout: process.env.CI ? 30_000 : 15_000,
 		// Forked workers get isolated process.env + SQLite files (threads shared one DB).
 		pool: 'forks',
 		maxWorkers: process.env.CI ? 2 : undefined,

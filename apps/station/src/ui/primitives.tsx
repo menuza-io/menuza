@@ -526,11 +526,13 @@ export function Chip({
 				size === 'lg' ? 'h-11 px-4' : 'h-11 px-3.5 text-sm',
 				look === 'filled'
 					? selected
-						? 'border-primary bg-primary text-primary-foreground hover:bg-primary font-semibold shadow-sm'
+						? // `dark:` too: the outline variant sets its own dark background,
+							// which would leave this text the same colour as what is behind it.
+							'border-primary bg-primary text-primary-foreground hover:bg-primary dark:bg-primary dark:hover:bg-primary active:bg-primary font-semibold shadow-sm'
 						: 'border-border bg-card text-foreground hover:bg-accent font-semibold'
 					: look === 'outlined'
 						? selected
-							? 'border-primary bg-primary/5 text-foreground'
+							? 'border-primary bg-primary/5 text-foreground dark:bg-primary/5'
 							: 'text-foreground'
 						: selected
 							? 'bg-secondary text-secondary-foreground'

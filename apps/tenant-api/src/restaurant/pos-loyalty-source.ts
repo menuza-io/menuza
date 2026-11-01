@@ -4,6 +4,7 @@ import {
 	type PosOrderLine,
 } from '@repo/common/pos-orders'
 import {
+	allocateProportionally,
 	buildPurchaseSnapshot,
 	computeRewardDiscount,
 	loyaltyRewardSnapshotSchema,
@@ -49,6 +50,15 @@ const EARNING_FLAGS = new Set([
 	'tax_mismatch',
 	'stale_price',
 	'stale_tax',
+	// A discount the rules no longer name, or that lacks its approval note: the
+	// charge is in doubt, not who rang it up or when.
+	'unknown_discount',
+	'discount_approval_missing',
+	'discount_stale',
+	// A discount no application explains, or one bigger than its rule allows:
+	// the charge is in doubt, so a person looks, but the sale still earns.
+	'discount_unexplained',
+	'discount_amount_mismatch',
 ])
 const EARNING_FLAG_PREFIXES = ['catalog:', 'stale_catalog:']
 
@@ -113,23 +123,108 @@ export function tillLoyaltyCart(
 	sale: PosOrderRow,
 	categories: ReadonlyMap<string, readonly string[]>,
 ): LoyaltyCart {
+	const lines = storedLines(sale).map((line, index) => {
+		const lineId = tillLineId(line, index)
+		return {
+			lineId,
+			itemId: line.itemId,
+			variantId: line.variantId ?? null,
+			categoryIds: [...(categories.get(lineId) ?? [])],
+			quantity: line.quantity,
+			unitBaseMinor: line.baseCents,
+			unitMinor:
+				line.baseCents +
+				line.options.reduce((sum, o) => sum + o.unitCents * o.quantity, 0),
+		}
+	})
+	// A till discount that says which line took what is allocated that way (an
+	// engine discount knows its lines). The rest is on the whole sale: a reward
+	// applies to what is left after it, spread over the lines in proportion to
+	// their value.
+	const totals = lines.map((line) => line.unitMinor * line.quantity)
+	const perLine = tillLineDiscounts(sale, lines, totals)
+	const saleDiscount = adjustmentTotal(sale, 'discount')
+	const taken = perLine.reduce((sum, value) => sum + value, 0)
+	const rest = Math.max(0, saleDiscount - taken)
+	const left = totals.map((total, index) => total - perLine[index]!)
+	const leftTotal = left.reduce((sum, value) => sum + value, 0)
+	const shares =
+		rest > 0 && lines.length > 0
+			? allocateProportionally(Math.min(rest, leftTotal), left)
+			: lines.map(() => 0)
 	return {
 		currency: sale.currency,
-		otherDiscountMinor: adjustmentTotal(sale, 'discount'),
-		lines: storedLines(sale).map((line, index) => {
-			const lineId = tillLineId(line, index)
-			return {
-				lineId,
-				itemId: line.itemId,
-				variantId: line.variantId ?? null,
-				categoryIds: [...(categories.get(lineId) ?? [])],
-				quantity: line.quantity,
-				unitBaseMinor: line.baseCents,
-				unitMinor:
-					line.baseCents +
-					line.options.reduce((sum, o) => sum + o.unitCents * o.quantity, 0),
-			}
-		}),
+		lines: lines.map((line, index) => ({
+			...line,
+			discountedMinor: perLine[index]! + shares[index]!,
+		})),
+	}
+}
+
+/**
+ * What each line lost to the discounts that carry `lineAmounts` (keyed by the
+ * line's id), never more than the line cost. Amounts for lines the sale does
+ * not have are ignored, and a discount that does not say is left to the
+ * proportional spread.
+ */
+function tillLineDiscounts(
+	sale: PosOrderRow,
+	lines: ReadonlyArray<{ lineId: string }>,
+	totals: readonly number[],
+): number[] {
+	const adjustments = Array.isArray(sale.adjustments)
+		? (sale.adjustments as Array<{
+				kind?: unknown
+				lineAmounts?: unknown
+			}>)
+		: []
+	const byId = new Map<string, number>()
+	for (const adjustment of adjustments) {
+		if (adjustment.kind !== 'discount') continue
+		if (!adjustment.lineAmounts || typeof adjustment.lineAmounts !== 'object')
+			continue
+		for (const [lineId, amount] of Object.entries(adjustment.lineAmounts)) {
+			if (
+				typeof amount === 'number' &&
+				Number.isSafeInteger(amount) &&
+				amount > 0
+			)
+				byId.set(lineId, (byId.get(lineId) ?? 0) + amount)
+		}
+	}
+	return lines.map((line, index) =>
+		Math.min(byId.get(line.lineId) ?? 0, totals[index] ?? 0),
+	)
+}
+
+/**
+ * The till's `discount` adjustments as the purchase snapshot takes them. A
+ * discount that names its lines (`lineAmounts`) comes off those lines, as an
+ * online order's engine discount does, so an earning rule on one category sees
+ * what that category really cost. Only what no line claims is spread over the
+ * whole sale.
+ */
+export function tillPurchaseDiscounts(
+	sale: PosOrderRow,
+	lines: readonly SnapshotSourceLine[],
+): {
+	lineDiscounts: { lineId: string; discountMinor: number }[]
+	unattributedMinor: number
+} {
+	const perLine = tillLineDiscounts(
+		sale,
+		lines,
+		lines.map((line) => line.grossMinor),
+	)
+	const taken = perLine.reduce((sum, value) => sum + value, 0)
+	return {
+		lineDiscounts: lines
+			.map((line, index) => ({
+				lineId: line.lineId,
+				discountMinor: perLine[index]!,
+			}))
+			.filter((entry) => entry.discountMinor > 0),
+		unattributedMinor: Math.max(0, adjustmentTotal(sale, 'discount') - taken),
 	}
 }
 
@@ -341,6 +436,7 @@ export async function posOrderVerdict(
 	const categories = await tillLineCategories(db, sale.id)
 	const lines = tillSnapshotLines(storedLines(sale), categories)
 	const split = tillDiscountSplit(loyaltyDiscount, redemption, lines)
+	const tillDiscounts = tillPurchaseDiscounts(sale, lines)
 	const cartMatches =
 		split.fits && redemption !== null && loyaltyDiscount > 0
 			? discountMatchesUpload(sale, redemption, categories)
@@ -356,9 +452,10 @@ export async function posOrderVerdict(
 			taxMinor: sale.taxCents,
 			taxInclusive: sale.taxInclusive,
 			lines,
+			lineDiscounts: tillDiscounts.lineDiscounts,
 			allocation: split.allocation,
 			otherDiscountMinor:
-				split.otherDiscountMinor + adjustmentTotal(sale, 'discount'),
+				split.otherDiscountMinor + tillDiscounts.unattributedMinor,
 		}),
 		loyaltyDiscountMinor: loyaltyDiscount,
 		// Closed without the reward it was approved for: the member keeps the points.

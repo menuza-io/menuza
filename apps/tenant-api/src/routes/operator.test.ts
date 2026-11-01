@@ -5,6 +5,7 @@ import {
 	customers,
 	customerSubscriptions,
 	destroyTenantDb,
+	discountIssuedCodes,
 	getTenantDb,
 	marketingCampaigns,
 	marketingMessages,
@@ -330,6 +331,156 @@ describe('Operator Routes', () => {
 			o: testOrgId,
 			c: subscribed!.id,
 			t: 'marketing',
+		})
+	})
+
+	describe('broadcast coupons', () => {
+		async function subscribedCustomers(emails: string[]) {
+			const db = await getTenantDb(testOrgId)
+			const created = await db
+				.insert(customers)
+				.values(emails.map((email) => ({ name: 'Guest', email })))
+				.returning()
+			await db.insert(customerSubscriptions).values(
+				created.map((customer) => ({
+					customerId: customer.id,
+					topic: 'marketing',
+					channel: 'email' as const,
+					source: 'signup',
+					subscribedAt: new Date(),
+					confirmedEmailHash: emailConsentHash(customer.email!),
+				})),
+			)
+			return created
+		}
+
+		function createCampaign(body: Record<string, unknown>) {
+			return app.request('/operator/marketing/campaigns', {
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${validToken}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					name: 'Coupon promo',
+					channel: 'email',
+					subject: 'A treat for you',
+					audience: 'all',
+					...body,
+				}),
+			})
+		}
+
+		async function waitForCompleted(campaignId: string) {
+			const db = await getTenantDb(testOrgId)
+			await vi.waitFor(
+				async () => {
+					const [camp] = await db
+						.select()
+						.from(marketingCampaigns)
+						.where(eq(marketingCampaigns.id, campaignId))
+					expect(camp?.status).toBe('Completed')
+				},
+				{ timeout: 3000, interval: 50 },
+			)
+		}
+
+		it('sends each recipient their own single-use code', async () => {
+			vi.mocked(sendTenantEmail).mockClear()
+			const recipients = await subscribedCustomers([
+				'a@example.com',
+				'b@example.com',
+			])
+			const res = await createCampaign({
+				content: 'Use {{couponCode}} for 10% off.',
+				contentHtml: '<p>Use <b>{{couponCode}}</b> for 10% off.</p>',
+				discountOffer: {
+					mode: 'unique',
+					discountId: 'disc_welcome',
+					prefix: 'hello',
+					validDays: 14,
+				},
+			})
+			expect(res.status).toBe(200)
+			const { campaignId } = await res.json()
+			await waitForCompleted(campaignId)
+
+			const db = await getTenantDb(testOrgId)
+			const issued = await db.select().from(discountIssuedCodes)
+			expect(issued).toHaveLength(2)
+			expect(new Set(issued.map((row) => row.customerId))).toEqual(
+				new Set(recipients.map((customer) => customer.id)),
+			)
+			for (const row of issued) {
+				expect(row).toMatchObject({
+					discountId: 'disc_welcome',
+					sourceType: 'campaign',
+					sourceId: campaignId,
+				})
+				expect(row.code).toMatch(/^HELLO-[A-HJ-NP-Z2-9]{8}$/)
+				expect(row.expiresAt - row.createdAt).toBe(14 * 24 * 60 * 60 * 1000)
+			}
+
+			const sent = vi.mocked(sendTenantEmail).mock.calls.map(([input]) => input)
+			expect(sent).toHaveLength(2)
+			for (const input of sent) {
+				const own = issued.find(
+					(row) =>
+						row.customerId ===
+						recipients.find((customer) => customer.email === input.to)?.id,
+				)!
+				expect(input.text).toContain(`Use ${own.code} for 10% off.`)
+				expect(input.html).toContain(`<b>${own.code}</b>`)
+			}
+
+			const detail = await app.request(
+				`/operator/marketing/campaigns/${campaignId}`,
+				{ headers: { Authorization: `Bearer ${validToken}` } },
+			)
+			expect((await detail.json()).campaign.discountOffer).toMatchObject({
+				mode: 'unique',
+				discountId: 'disc_welcome',
+				prefix: 'HELLO',
+			})
+		})
+
+		it('sends everyone the same code for a shared coupon', async () => {
+			vi.mocked(sendTenantEmail).mockClear()
+			await subscribedCustomers(['a@example.com', 'b@example.com'])
+			const res = await createCampaign({
+				subject: 'Code {{couponCode}} inside',
+				content: 'Hello',
+				discountOffer: {
+					mode: 'shared',
+					discountId: 'disc_welcome',
+					code: 'save-10',
+				},
+			})
+			expect(res.status).toBe(200)
+			await waitForCompleted((await res.json()).campaignId)
+			const subjects = vi
+				.mocked(sendTenantEmail)
+				.mock.calls.map(([input]) => input.subject)
+			expect(subjects).toEqual(['Code SAVE-10 inside', 'Code SAVE-10 inside'])
+			const db = await getTenantDb(testOrgId)
+			expect(await db.select().from(discountIssuedCodes)).toHaveLength(0)
+		})
+
+		it('refuses the tag without a coupon, and a coupon without the tag', async () => {
+			const withoutOffer = await createCampaign({
+				content: 'Use {{couponCode}} today',
+			})
+			expect(withoutOffer.status).toBe(400)
+			const withoutTag = await createCampaign({
+				content: 'Nothing to see',
+				discountOffer: {
+					mode: 'unique',
+					discountId: 'disc_welcome',
+				},
+			})
+			expect(withoutTag.status).toBe(400)
+			const db = await getTenantDb(testOrgId)
+			expect(await db.select().from(marketingCampaigns)).toHaveLength(0)
 		})
 	})
 

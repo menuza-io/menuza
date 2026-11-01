@@ -1,7 +1,12 @@
 import { msg, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { type EmailBlock } from '@repo/common/email-blocks'
-import { EmailDesignOverlay, MergeTagField } from '@repo/marketing'
+import {
+	CouponOfferField,
+	type CouponOfferValue,
+	EmailDesignOverlay,
+	MergeTagField,
+} from '@repo/marketing'
 import { cn } from '@repo/ui'
 import { Button } from '@repo/ui/button'
 import { Icon } from '@repo/ui/icon'
@@ -21,6 +26,10 @@ import { useState, type ReactNode } from 'react'
 import { type DelayUnit } from './types.ts'
 import { useWorkflowConfig } from './workflow-config.tsx'
 import { useWorkflowUiLabels } from './workflow-labels.ts'
+
+/** Merge tags are passed as values: Lingui reads literal braces as a placeholder. */
+const FIRST_NAME_TAG = '{{firstName}}'
+const NAME_TAG = '{{name}}'
 
 interface NodeInspectorProps {
 	node: Node | null
@@ -60,7 +69,8 @@ export function NodeInspector({
 	className,
 }: NodeInspectorProps) {
 	const { _ } = useLingui()
-	const { triggerOptions, hiddenTriggerTypes } = useWorkflowConfig()
+	const { triggerOptions, hiddenTriggerTypes, couponOptions } =
+		useWorkflowConfig()
 	const { conditionFieldLabel, delayUnitLabel } = useWorkflowUiLabels()
 	const [designerOpen, setDesignerOpen] = useState(false)
 
@@ -90,6 +100,19 @@ export function NodeInspector({
 	}
 
 	const nodeTypeLabel = node.type?.replaceAll('_', ' ') ?? ''
+
+	// A saved coupon stays visible even when the picker is hidden for this
+	// user, so it is never dropped by accident.
+	const couponValue = (data.discountOffer ?? null) as CouponOfferValue | null
+	const couponField =
+		couponOptions || couponValue ? (
+			<CouponOfferField
+				compact
+				options={couponOptions ?? []}
+				value={couponValue}
+				onChange={(offer) => handleChange('discountOffer', offer ?? undefined)}
+			/>
+		) : null
 
 	return (
 		<div
@@ -275,7 +298,7 @@ export function NodeInspector({
 								</Label>
 								<MergeTagField
 									id="subject"
-									placeholder={_(msg`e.g. Welcome {{firstName}}!`)}
+									placeholder={_(msg`e.g. Welcome ${FIRST_NAME_TAG}!`)}
 									value={data.subject || ''}
 									onChange={(subject) => handleChange('subject', subject)}
 								/>
@@ -352,7 +375,7 @@ export function NodeInspector({
 											id="bodyHtml"
 											rows={6}
 											placeholder={_(
-												msg`<p>Hi {{name}},</p><p>Welcome to our service!</p>`,
+												msg`<p>Hi ${NAME_TAG},</p><p>Welcome to our service!</p>`,
 											)}
 											value={data.bodyHtml || ''}
 											onChange={(e) => handleChange('bodyHtml', e.target.value)}
@@ -367,7 +390,9 @@ export function NodeInspector({
 										<Textarea
 											id="bodyText"
 											rows={3}
-											placeholder={_(msg`Hi {{name}}, Welcome to our service!`)}
+											placeholder={_(
+												msg`Hi ${NAME_TAG}, Welcome to our service!`,
+											)}
 											value={data.bodyText || ''}
 											onChange={(e) => handleChange('bodyText', e.target.value)}
 											className="text-xs"
@@ -375,6 +400,8 @@ export function NodeInspector({
 									</div>
 								</>
 							) : null}
+
+							{couponField}
 
 							<EmailDesignOverlay
 								open={designerOpen}
@@ -415,7 +442,7 @@ export function NodeInspector({
 									multiline
 									rows={5}
 									placeholder={_(
-										msg`Hi {{name}}, your order has been confirmed!`,
+										msg`Hi ${NAME_TAG}, your order has been confirmed!`,
 									)}
 									value={data.messageText || ''}
 									onChange={(value) =>
@@ -433,6 +460,7 @@ export function NodeInspector({
 									</Trans>
 								</p>
 							</div>
+							{couponField}
 						</div>
 					)}
 

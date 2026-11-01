@@ -7,6 +7,7 @@ import {
 	AvailabilityStatusSchema,
 	MODIFIER_SELECTION_TYPES,
 	MenuItemInputSchema,
+	MenuVariationSchema,
 	MenuVariationsSchema,
 	MenuInputSchema,
 	MenuCategoryInputSchema,
@@ -73,6 +74,26 @@ describe('menu-types', () => {
 				'en',
 			),
 		).toBe('Pizza Margherita')
+	})
+
+	it('defaults excludeFromDiscounts to false and keeps it on variants', () => {
+		const base = { displayName: 'Gift card', price: 25 }
+		expect(MenuItemInputSchema.parse(base).excludeFromDiscounts).toBe(false)
+		expect(
+			MenuItemInputSchema.parse({ ...base, excludeFromDiscounts: true })
+				.excludeFromDiscounts,
+		).toBe(true)
+		const variant = MenuVariationSchema.parse({
+			id: 'v1',
+			valueIds: ['a'],
+			price: 1,
+			excludeFromDiscounts: true,
+		})
+		expect(variant.excludeFromDiscounts).toBe(true)
+		expect(
+			MenuVariationSchema.parse({ id: 'v2', valueIds: ['a'], price: 1 })
+				.excludeFromDiscounts,
+		).toBe(false)
 	})
 
 	it('validates MenuItemInputSchema with calories and allergens', () => {
@@ -247,6 +268,7 @@ describe('menu-types', () => {
 				valueIds: ['large', 'black'],
 				price: 10,
 				imageKey: null,
+				excludeFromDiscounts: false,
 				availabilityStatus: 'available',
 				unavailableUntil: null,
 			},

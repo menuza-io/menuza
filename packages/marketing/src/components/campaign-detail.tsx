@@ -14,7 +14,7 @@ import {
 import { Link } from 'react-router'
 import { useCampaignLabels } from '../i18n/campaign-labels.ts'
 import { CampaignStatusBadge } from './campaign-list.tsx'
-import { type CampaignDetail } from '../types/campaign.ts'
+import { type CampaignCoupon, type CampaignDetail } from '../types/campaign.ts'
 
 export function CampaignDetailView({
 	campaign,
@@ -35,6 +35,21 @@ export function CampaignDetailView({
 		return audience
 			.replaceAll('_', ' ')
 			.replace(/\b\w/g, (char) => char.toUpperCase())
+	}
+
+	function couponSummary(coupon: CampaignCoupon) {
+		const name =
+			coupon.discountName ?? _(msg`a discount that is no longer listed`)
+		if (coupon.mode === 'shared') {
+			const code = coupon.code
+			return code
+				? _(msg`Coupon: ${name}, with the code ${code} for everyone.`)
+				: _(msg`Coupon: ${name}, with one shared code for everyone.`)
+		}
+		const days = coupon.validDays
+		return _(
+			msg`Coupon: ${name}, with a single-use code for each recipient, valid for ${days} days.`,
+		)
 	}
 
 	function recipientContact(recipient: CampaignDetail['recipients'][number]) {
@@ -106,6 +121,11 @@ export function CampaignDetailView({
 						</p>
 					)}
 				</div>
+				{campaign.coupon ? (
+					<p className="text-muted-foreground text-sm">
+						{couponSummary(campaign.coupon)}
+					</p>
+				) : null}
 			</section>
 
 			<section

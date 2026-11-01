@@ -26,9 +26,10 @@ on designs, orders and vendor mappings: keep them stable once used.
 per desk) and `pieceWord` (the word printed before a piece's label). The server
 half (`PrintQrTargetServer`) says whether the target is offered to a user
 (`available`), who may see its codes (`canView`), the starting target of a new
-design (`defaultFor`), editor data, how the form is read back (`fromForm`), and
-how a target resolves into pieces with code URLs and versioned facts
-(`resolve`).
+design (`defaultFor`), editor data, how the form is read back (`fromForm`), the
+words empty fields print (`defaultCopy`, for example an offer written from what
+the code points at), and how a target resolves into pieces with code URLs and
+versioned facts (`resolve`).
 
 **Pieces and facts.** A snapshot holds one piece per printed item (`label`,
 `qrUrl`) and the facts behind them (`id`, `label`, `version`). The core compares
@@ -43,6 +44,11 @@ none, and the editor hides the address.
 **Featured items.** Things the business sells (`PrintItemChoice`: name, price in
 cents, photo key) that pages can show, priced for a scope. Without an item
 source the editor hides the section.
+
+**Starting from another page.** `print/new?product=<key>&start=<kind>:<ref>`
+creates a design whose QR target starts as that kind, with `ref` passed to its
+`defaultFor` (untrusted: the target checks it). The coupon target uses it for
+**Print coupons** on a discount.
 
 ## Registering a vertical
 

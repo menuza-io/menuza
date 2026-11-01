@@ -120,6 +120,27 @@ describe('restaurant order source', () => {
 		).toEqual([])
 	})
 
+	it('counts sales net of item discounts and loyalty, not delivery discounts', async () => {
+		await insert({
+			subtotalCents: 2000,
+			discountCents: 300,
+			loyaltyDiscountCents: 200,
+			deliveryDiscountCents: 400,
+			fulfillment: 'delivery',
+		})
+		// A discount bigger than the subtotal never makes sales negative.
+		await insert({
+			subtotalCents: 500,
+			discountCents: 500,
+			loyaltyDiscountCents: 100,
+			fulfillment: 'delivery',
+		})
+		const rows = await restaurantOrderSource.loadBuckets(db, LOC_A, window)
+		expect(rows).toEqual([
+			expect.objectContaining({ orders: 2, subtotalMinor: 1500 }),
+		])
+	})
+
 	it('counts booked orders by local hour for a scheduled window', async () => {
 		const scheduled = new Date((NOON + 1800) * 1000)
 		await insert({ scheduledFor: scheduled })

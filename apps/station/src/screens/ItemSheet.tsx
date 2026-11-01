@@ -250,9 +250,11 @@ function ItemSheetBody({
 							<div className="grid grid-cols-[repeat(auto-fill,minmax(11rem,1fr))] gap-2">
 								{availableOptions(group).map((option) => {
 									const qty = selections[group.id]?.[option.id] ?? 0
+									// What is charged: a whole choice costs `priceWhole ?? price`.
+									const wholePrice = option.priceWhole ?? option.price
 									const price =
-										option.price > 0
-											? `+${money(toCents(option.price))}`
+										wholePrice > 0
+											? `+${money(toCents(wholePrice))}`
 											: undefined
 									if (group.selectionType === 'quantity') {
 										return (

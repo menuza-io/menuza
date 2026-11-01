@@ -19,6 +19,10 @@ import {
 	type PricedOrderLine,
 	type RestaurantOrderContext,
 } from '@repo/common/restaurant-orders'
+import {
+	normalizeDiscountCode,
+	type OrderDiscountsRequest,
+} from '@repo/discounts'
 import { canonicalLoyaltyCart, LoyaltyDomainError } from '@repo/loyalty'
 import {
 	getTenantDb,
@@ -52,6 +56,18 @@ import {
 	discountedTabTotals,
 	type DiscountedTabTotals,
 } from '../restaurant/loyalty-checkout.ts'
+import { reserveOrderDiscounts } from './discount-apply.ts'
+import {
+	consumeTabDiscounts,
+	evaluateTabDiscounts,
+	releaseTabDiscounts,
+	tabDiscountAllocation,
+	tabDiscountAmounts,
+	tabDiscountSourceId,
+	tabPricedWithDiscounts,
+	tabReservedCode,
+	type TabDiscountQuote,
+} from './discount-tab.ts'
 import {
 	qrTabPayableUntil,
 	tabLoyaltyCart,
@@ -72,6 +88,7 @@ import {
 	setAsideSourceRedemptionInTx,
 } from './loyalty-redemption-service.ts'
 import {
+	fetchOrderContext,
 	loyaltyFailure,
 	quotePlacementReward,
 	runExclusive,
@@ -900,9 +917,193 @@ async function loadOpenTab(
 }
 
 /**
+ * The order context a tab's discounts are priced with, for the tab's
+ * location. Views reuse one for a few seconds (the tab drawer and the Orders
+ * page poll); a close or a payment always asks fresh. Null when the App
+ * cannot be reached: a tab then shows and closes without discounts, never
+ * blocks on them.
+ */
+const VIEW_CONTEXT_TTL_MS = 10_000
+const viewContexts = new Map<
+	string,
+	{ at: number; context: RestaurantOrderContext }
+>()
+
+/** Test hook: forget every cached order context. */
+export function resetTabViewContextCache() {
+	viewContexts.clear()
+}
+
+async function tabContext(
+	orgId: string,
+	locationId: string,
+	options: { fresh: boolean },
+): Promise<RestaurantOrderContext | null> {
+	const key = `${orgId}:${locationId}`
+	if (!options.fresh) {
+		const hit = viewContexts.get(key)
+		if (hit && Date.now() - hit.at < VIEW_CONTEXT_TTL_MS) return hit.context
+	}
+	const result = await fetchOrderContext(orgId, locationId, null)
+	if (!result.ok) return null
+	if (viewContexts.size > 500) viewContexts.clear()
+	viewContexts.set(key, { at: Date.now(), context: result.data })
+	return result.data
+}
+
+async function tabLocationId(orgId: string, tabId: string) {
+	const db = await getTenantDb(orgId)
+	const [row] = await db
+		.select({ locationId: qrTabs.locationId })
+		.from(qrTabs)
+		.where(eq(qrTabs.id, tabId))
+		.limit(1)
+	return row?.locationId ?? null
+}
+
+type TabDiscountPricing = {
+	quote: TabDiscountQuote
+	priced: { discountCents: number; taxCents: number; billCents: number }
+}
+
+/**
+ * What a tab's automatic discounts take off right now: the same evaluation a
+ * phone payment makes when the guest asks for discounts, so the view, the
+ * counter close and the pay request agree. Null with no context, no
+ * discounts, or a discount that no longer fits the rounds.
+ */
+async function priceTabDiscounts(
+	db: Parameters<typeof evaluateTabDiscounts>[0],
+	input: {
+		tab: Pick<QrTabRow, 'id' | 'locationId'>
+		rounds: RestaurantOrder[]
+		context: RestaurantOrderContext | null
+		customerId: string | null
+		now: Date
+	},
+): Promise<TabDiscountPricing | null> {
+	if (!input.context) return null
+	const evaluated = await evaluateTabDiscounts(db, {
+		context: input.context,
+		rounds: input.rounds,
+		locationId: input.tab.locationId,
+		customerId: input.customerId,
+		discounts: {},
+		now: input.now,
+		tabId: input.tab.id,
+	})
+	if (!evaluated.ok || !evaluated.quote) return null
+	const priced = tabPricedWithDiscounts(
+		input.rounds,
+		evaluated.quote.allocation,
+	)
+	return priced ? { quote: evaluated.quote, priced } : null
+}
+
+/**
+ * Shows what a tab's discounts take off: an open tab with a payment in
+ * progress carries the discounts that payment bound, any other open tab what
+ * its automatic discounts would take off now (what a counter close or a phone
+ * payment applies), and a settled tab what it was settled with. The total and
+ * tax are the discounted ones, so what the guest reads is what the counter
+ * charges. A tab with no discount comes back as it was.
+ */
+export async function withTabDiscounts<T extends QrPublicTab>(
+	orgId: string,
+	tabs: readonly T[],
+	options: { customerId?: string | null } = {},
+): Promise<T[]> {
+	if (tabs.length === 0) return [...tabs]
+	const db = await getTenantDb(orgId)
+	const now = new Date()
+	const ids = tabs.map((tab) => tab.id)
+	const [rows, bound] = await Promise.all([
+		db.select().from(qrTabs).where(inJsonList(qrTabs.id, ids)),
+		tabDiscountAmounts(db, ids),
+	])
+	const rowOf = new Map(rows.map((row) => [row.id, row]))
+	const openIds = tabs
+		.filter((tab) => tab.status === 'open')
+		.map((tab) => tab.id)
+	const rounds = openIds.length > 0 ? await listTabRounds(db, openIds) : []
+	const roundsOf = new Map<string, RestaurantOrder[]>()
+	for (const round of rounds) {
+		if (!round.tabId) continue
+		const list = roundsOf.get(round.tabId) ?? []
+		list.push(round)
+		roundsOf.set(round.tabId, list)
+	}
+	const result: T[] = []
+	for (const view of tabs) {
+		const row = rowOf.get(view.id)
+		if (!row) {
+			result.push(view)
+			continue
+		}
+		if (view.status !== 'open') {
+			const settled = bound.get(view.id) ?? 0
+			result.push(
+				settled > 0
+					? { ...view, totals: { ...view.totals, discountCents: settled } }
+					: view,
+			)
+			continue
+		}
+		const tabRounds = roundsOf.get(view.id) ?? []
+		let discount: {
+			discountCents: number
+			taxCents: number
+			billCents: number
+		} | null = null
+		if (isTabPaymentOpen(row, now) && (bound.get(view.id) ?? 0) > 0) {
+			// Frozen for the payment in progress: the discounts it reserved.
+			const lines = await tabDiscountAllocation(db, view.id)
+			discount = tabPricedWithDiscounts(tabRounds, lines)
+		} else if (tabRounds.length > 0) {
+			const context = await tabContext(orgId, row.locationId, { fresh: false })
+			discount =
+				(
+					await priceTabDiscounts(db, {
+						tab: row,
+						rounds: tabRounds,
+						context,
+						customerId: options.customerId ?? null,
+						now,
+					})
+				)?.priced ?? null
+		}
+		result.push(
+			discount && discount.discountCents > 0
+				? {
+						...view,
+						totals: {
+							...view.totals,
+							discountCents: discount.discountCents,
+							taxCents: discount.taxCents,
+							totalCents: discount.billCents,
+						},
+					}
+				: view,
+		)
+	}
+	return result
+}
+
+/** Thrown inside a close's transaction so a refused close writes nothing. */
+class StaleTabClose extends Error {}
+
+/**
  * Counter close: the operator took the money. Every round that still counts
  * is marked paid and the totals are snapshotted on the tab. Pending kitchen
  * work does not block a counter close (operator judgment).
+ *
+ * The tab's discounts are priced and recorded the way a phone payment does
+ * (automatic ones, no coupon; one `reserved` use per discount, then
+ * `consumed`), and the closed tab's tax and total are the discounted ones.
+ * `expectedTotalCents` is the total the dialog showed, which the tab view
+ * already gives net of those discounts, so the charge matches what staff and
+ * guest read. A tab rung up on a Station till records no discount here: the
+ * till sale carries its own.
  */
 export async function closeTabAtCounter(
 	orgId: string,
@@ -917,15 +1118,28 @@ export async function closeTabAtCounter(
 		 * loyalty points, so the tab never does.
 		 */
 		rungUpOnStation?: boolean
+		/**
+		 * The order context for the tab's location. Left out, it is fetched;
+		 * `null` closes without pricing discounts.
+		 */
+		context?: RestaurantOrderContext | null
 	},
 ): Promise<QrResult<ReleasedTabPayment>> {
 	const loyalty = loyaltySettleQueue()
-	const result: QrResult<ReleasedTabPayment> = await writeTx(
-		orgId,
-		async (tx) => {
+	// Never inside the transaction: the App is a network call.
+	const locationId =
+		input.context === undefined ? await tabLocationId(orgId, tabId) : null
+	const context =
+		input.context !== undefined
+			? input.context
+			: locationId
+				? await tabContext(orgId, locationId, { fresh: true })
+				: null
+	let result: QrResult<ReleasedTabPayment>
+	try {
+		result = await writeTx(orgId, async (tx) => {
 			const loaded = await loadOpenTab(tx, tabId, {
 				acknowledgeReview: input.acknowledgeReview,
-				expectedTotalCents: input.expectedTotalCents,
 			})
 			if (!loaded.ok) return loaded
 			const tab = loaded.data
@@ -933,6 +1147,22 @@ export async function closeTabAtCounter(
 			const totals: QrTabTotals = tabTotals(tab, rounds)
 			const tipCents = input.tipCents ?? 0
 			const now = new Date()
+			const pricing = await priceTabDiscounts(tx, {
+				tab,
+				rounds,
+				context,
+				customerId: null,
+				now,
+			})
+			const billCents = pricing?.priced.billCents ?? totals.totalCents
+			if (
+				input.expectedTotalCents !== undefined &&
+				input.expectedTotalCents !== billCents
+			) {
+				// Staff confirm what they saw: a round (or a discount) that
+				// changed after the dialog opened must never be charged unseen.
+				throw new StaleTabClose()
+			}
 			await markTabRoundsPaid(tx, tab.id, now)
 			// A reward only rides on a tab paid from the phone: closing at the
 			// counter gives back one that an unfinished phone payment held.
@@ -940,6 +1170,20 @@ export async function closeTabAtCounter(
 				reason: 'counter_close',
 				at: now.getTime(),
 			})
+			// An unfinished phone payment's discounts come back, then this
+			// close's own are recorded: reserved, then consumed, like a payment.
+			await releaseTabDiscounts(tx, tab.id)
+			const discounted =
+				pricing && input.rungUpOnStation !== true ? pricing : null
+			if (discounted) {
+				await reserveOrderDiscounts(tx, {
+					orderId: tabDiscountSourceId(tab.id, now.getTime()),
+					customerId: null,
+					prepared: discounted.quote.prepared,
+					sourceType: 'tab',
+				})
+				await consumeTabDiscounts(tx, tab.id)
+			}
 			const [updated] = await tx
 				.update(qrTabs)
 				.set({
@@ -953,10 +1197,11 @@ export async function closeTabAtCounter(
 					// for a replay of a payment that settled this tab.
 					...UNBIND,
 					subtotalCents: totals.subtotalCents,
-					taxCents: totals.taxCents,
+					taxCents: discounted?.priced.taxCents ?? totals.taxCents,
 					tipCents,
 					loyaltyDiscountCents: 0,
-					totalCents: totals.totalCents + tipCents,
+					totalCents:
+						(discounted?.priced.billCents ?? totals.totalCents) + tipCents,
 					rungUpOnStation: input.rungUpOnStation === true,
 					closedBy: input.closedBy,
 					closedAt: now.getTime(),
@@ -976,8 +1221,17 @@ export async function closeTabAtCounter(
 					releasedSession: releasedSessionOf(tab),
 				},
 			}
-		},
-	)
+		})
+	} catch (error) {
+		if (error instanceof StaleTabClose) {
+			return fail(
+				409,
+				'stale_tab',
+				'This tab changed since you opened it. Check the new total.',
+			)
+		}
+		throw error
+	}
 	await loyalty.settle(orgId)
 	return result
 }
@@ -1044,24 +1298,57 @@ export async function voidTab(
 		closedBy: string
 		acknowledgeReview?: boolean
 		expectedTotalCents?: number
+		/** The order context for the tab's location; left out, it is fetched. */
+		context?: RestaurantOrderContext | null
 	},
 ): Promise<QrResult<ReleasedTabPayment>> {
 	const loyalty = loyaltySettleQueue()
-	const result: QrResult<ReleasedTabPayment> = await writeTx(
-		orgId,
-		async (tx) => {
+	// The dialog shows the total net of discounts. Only when staff sent a total
+	// is there anything to compare, and the App is never called in the lock.
+	const locationId =
+		input.expectedTotalCents !== undefined && input.context === undefined
+			? await tabLocationId(orgId, tabId)
+			: null
+	const context =
+		input.context !== undefined
+			? input.context
+			: locationId
+				? await tabContext(orgId, locationId, { fresh: true })
+				: null
+	let result: QrResult<ReleasedTabPayment>
+	try {
+		result = await writeTx(orgId, async (tx) => {
 			const loaded = await loadOpenTab(tx, tabId, {
 				acknowledgeReview: input.acknowledgeReview,
-				expectedTotalCents: input.expectedTotalCents,
 			})
 			if (!loaded.ok) return loaded
 			const tab = loaded.data
 			const now = new Date()
+			if (input.expectedTotalCents !== undefined) {
+				// Staff confirm what they saw: a round that landed after the dialog
+				// opened must never be cancelled unseen. The total shown is the
+				// plain one, or the one net of the tab's discounts.
+				const rounds = await listTabRounds(tx, [tab.id])
+				const pricing = await priceTabDiscounts(tx, {
+					tab,
+					rounds,
+					context,
+					customerId: null,
+					now,
+				})
+				if (
+					input.expectedTotalCents !== tabTotals(tab, rounds).totalCents &&
+					input.expectedTotalCents !== pricing?.priced.billCents
+				) {
+					throw new StaleTabClose()
+				}
+			}
 			// Nothing was charged: a reward a phone payment held comes back.
 			await releaseSourceRedemptionInTx(tx, tabSource(tab.id), {
 				reason: 'tab_voided',
 				at: now.getTime(),
 			})
+			await releaseTabDiscounts(tx, tab.id)
 			await tx
 				.update(restaurantOrders)
 				.set({ status: 'cancelled', cancelledAt: now, updatedAt: now })
@@ -1094,8 +1381,17 @@ export async function voidTab(
 					releasedSession: releasedSessionOf(tab),
 				},
 			}
-		},
-	)
+		})
+	} catch (error) {
+		if (error instanceof StaleTabClose) {
+			return fail(
+				409,
+				'stale_tab',
+				'This tab changed since you opened it. Check the new total.',
+			)
+		}
+		throw error
+	}
 	await loyalty.settle(orgId)
 	return result
 }
@@ -1142,6 +1438,7 @@ export async function releaseTabPayment(
 			reason: 'payment_stopped',
 			at: now,
 		})
+		await releaseTabDiscounts(tx, tab.id)
 		const [updated] = await tx
 			.update(qrTabs)
 			.set({
@@ -1193,6 +1490,7 @@ export async function lockTab(
 				reason: 'tab_locked',
 				at: now,
 			})
+			await releaseTabDiscounts(tx, tab.id)
 		}
 		const [updated] = await tx
 			.update(qrTabs)
@@ -1262,6 +1560,10 @@ export async function prepareTabPayment(
 		customerId?: string | null
 		/** The reward the signed-in member picked, as they saw it. */
 		loyalty?: OrderLoyaltySelection | null
+		/** The order context already loaded for this tab's location. */
+		context: RestaurantOrderContext
+		/** Coupon and the discount total the guest was shown. */
+		discounts?: OrderDiscountsRequest | null
 	},
 ): Promise<QrResult<TabPayIntent>> {
 	const parsed = readTabToken(orgId, tabToken)
@@ -1364,6 +1666,10 @@ export async function prepareTabPayment(
 				const askedTip = Math.round(
 					(totals.subtotalCents * input.tipPercent) / 100,
 				)
+				const askedCode = input.discounts?.code
+					? normalizeDiscountCode(input.discounts.code)
+					: null
+				const heldCode = await tabReservedCode(tx, tab.id)
 				const liveReward = tab.loyaltyDiscountCents > 0 ? held : null
 				const sameReward = selection
 					? liveReward !== null &&
@@ -1371,7 +1677,11 @@ export async function prepareTabPayment(
 						liveReward.rewardId === selection.rewardId &&
 						liveReward.rewardVersion === selection.rewardVersion
 					: liveReward === null
-				if (askedTip !== (tab.paymentTipCents ?? 0) || !sameReward) {
+				if (
+					askedTip !== (tab.paymentTipCents ?? 0) ||
+					!sameReward ||
+					askedCode !== heldCode
+				) {
 					return fail(
 						409,
 						'tab_paying',
@@ -1394,9 +1704,49 @@ export async function prepareTabPayment(
 				return fail(409, 'tab_closed', 'This tab is already paid.')
 			}
 
-			// The reward is checked in full before anything is written; a
-			// refusal throws, so the request leaves nothing behind.
-			const cart = selection ? tabLoyaltyCart(tab, rounds) : null
+			// Discounts first, then a reward on what they left. A refusal throws
+			// or returns before anything is written. Earlier reservations stay
+			// until a new one is written (`releaseTabDiscounts` below).
+			const pricedDiscounts = await evaluateTabDiscounts(tx, {
+				context: input.context,
+				rounds,
+				locationId: tab.locationId,
+				customerId,
+				discounts: input.discounts ?? undefined,
+				now,
+				tabId: tab.id,
+			})
+			if (!pricedDiscounts.ok) {
+				return fail(
+					pricedDiscounts.failure.status,
+					pricedDiscounts.failure.code,
+					pricedDiscounts.failure.message,
+				)
+			}
+			const discountQuote = pricedDiscounts.quote
+			const lineDiscounts =
+				discountQuote?.prepared.evaluation.lineDiscounts ?? {}
+			// As on an order: a client that sent `discounts` is checked against
+			// the total it was shown, a missing total reading as 0. One that sent
+			// no field asked for nothing and got nothing (evaluated above).
+			if (
+				input.discounts &&
+				(input.discounts.expectedDiscountMinor ?? 0) !==
+					(discountQuote?.discountCents ?? 0)
+			) {
+				return {
+					ok: false as const,
+					failure: {
+						status: 409,
+						code: 'discount_changed',
+						message:
+							'Your discount changed. Review the new total and place the order again.',
+						// What the region priced, so the page can show and ask again.
+						details: { discountMinor: discountQuote?.discountCents ?? 0 },
+					},
+				}
+			}
+			const cart = selection ? tabLoyaltyCart(tab, rounds, lineDiscounts) : null
 			const selected =
 				selection && cart
 					? await quotePlacementReward(tx, {
@@ -1424,7 +1774,7 @@ export async function prepareTabPayment(
 					discountMinor: selected.quote.discountMinor,
 				})
 			}
-			if (rewarded && rewarded.totalCents <= 0) {
+			if (rewarded && !discountQuote && rewarded.totalCents <= 0) {
 				return fail(
 					422,
 					'reward_covers_total',
@@ -1435,7 +1785,30 @@ export async function prepareTabPayment(
 				(totals.subtotalCents * input.tipPercent) / 100,
 			)
 			const loyaltyDiscountCents = rewarded?.loyaltyDiscountCents ?? 0
-			const amountCents = (rewarded?.totalCents ?? totals.totalCents) + tipCents
+			const combined = discountQuote
+				? discountedTabTotals(rounds, [
+						...discountQuote.allocation,
+						...(selected?.quote.lines ?? []),
+					])
+				: null
+			if (discountQuote && !combined) {
+				return fail(
+					409,
+					'discount_changed',
+					'Your discount changed. Review the new total and place the order again.',
+				)
+			}
+			const billCents = combined
+				? combined.totalCents
+				: (rewarded?.totalCents ?? totals.totalCents)
+			if (billCents <= 0) {
+				return fail(
+					422,
+					'reward_covers_total',
+					'This discount covers the whole tab, so it cannot be paid online. Please ask a team member.',
+				)
+			}
+			const amountCents = billCents + tipCents
 			// The freeze runs from the first ask: a re-ask (or a different tip)
 			// re-prices the payment but never restarts it, so nobody can keep the
 			// table frozen by asking again and again.
@@ -1490,6 +1863,15 @@ export async function prepareTabPayment(
 					locationId: tab.locationId,
 					currency: tab.currency,
 					at,
+				})
+			}
+			await releaseTabDiscounts(tx, tab.id)
+			if (discountQuote) {
+				await reserveOrderDiscounts(tx, {
+					orderId: tabDiscountSourceId(tab.id, at),
+					customerId,
+					prepared: discountQuote.prepared,
+					sourceType: 'tab',
 				})
 			}
 			await tx
@@ -1584,11 +1966,45 @@ async function currentPayableCents(
 ): Promise<number | null> {
 	const rounds = await listTabRounds(db, [tab.id])
 	const tipCents = tab.paymentTipCents ?? 0
-	if (tab.loyaltyDiscountCents <= 0) {
-		return tabTotals(tab, rounds).totalCents + tipCents
+	const bound = await boundTabTotals(db, tab, rounds)
+	// Nothing bound: the plain total. Stale (a bound line is gone): no amount
+	// matches.
+	if (bound === undefined) return tabTotals(tab, rounds).totalCents + tipCents
+	return bound ? bound.totalCents + tipCents : null
+}
+
+/**
+ * The tab's totals with everything its pay request bound: the discounts it
+ * reserved and the reward it held. `undefined` when nothing is bound, null
+ * when what was bound no longer fits the rounds (a round was cancelled, or a
+ * reward was given back).
+ */
+async function boundTabTotals(
+	db: Parameters<typeof loadPayableTab>[0],
+	tab: QrTabRow,
+	rounds: RestaurantOrder[],
+): Promise<DiscountedTabTotals | null | undefined> {
+	const discountLines = await tabDiscountAllocation(db, tab.id)
+	if (discountLines.length === 0 && tab.loyaltyDiscountCents <= 0) {
+		return undefined
 	}
-	const rewarded = await boundRewardTotals(db, tab, rounds)
-	return rewarded ? rewarded.totalCents + tipCents : null
+	if (discountLines.length === 0) return boundRewardTotals(db, tab, rounds)
+	let loyaltyLines: { lineId: string; discountMinor: number }[] = []
+	if (tab.loyaltyDiscountCents > 0) {
+		const redemption = await activeRedemptionForSourceInTx(db, 'qr_tab', tab.id)
+		if (
+			!redemption ||
+			redemption.state !== 'bound' ||
+			redemption.discountMinor !== tab.loyaltyDiscountCents
+		) {
+			return null
+		}
+		loyaltyLines = redemption.allocation.map((line) => ({
+			lineId: line.lineId,
+			discountMinor: line.discountMinor,
+		}))
+	}
+	return discountedTabTotals(rounds, [...discountLines, ...loyaltyLines])
 }
 /** Hosted session lifetime for a tab: Stripe's 30-minute minimum plus room. */
 const QR_TAB_HOSTED_SESSION_MS = 40 * 60 * 1000
@@ -1856,12 +2272,10 @@ export async function applyTabPaymentEvent(input: {
 			}
 			const rounds = await listTabRounds(tx, [tab.id])
 			const totals = tabTotals(tab, rounds)
-			// The amount matched above, so a reward the pay request bound still
-			// fits the rounds: the snapshot carries its discounted tax.
-			const rewarded =
-				tab.loyaltyDiscountCents > 0
-					? await boundRewardTotals(tx, tab, rounds)
-					: null
+			// The amount matched above, so the discounts and reward the pay
+			// request bound still fit the rounds: the snapshot carries their
+			// discounted tax.
+			const bound = await boundTabTotals(tx, tab, rounds)
 			const tipCents = tab.paymentTipCents ?? 0
 			await markTabRoundsPaid(tx, tab.id, now)
 			await tx
@@ -1874,8 +2288,9 @@ export async function applyTabPaymentEvent(input: {
 					// treated as one (Checkout.com shares the session per tab).
 					paymentSessionId: input.paymentId ?? input.sessionId,
 					subtotalCents: totals.subtotalCents,
-					taxCents: rewarded?.taxCents ?? totals.taxCents,
-					loyaltyDiscountCents: rewarded?.loyaltyDiscountCents ?? 0,
+					taxCents: bound?.taxCents ?? totals.taxCents,
+					// Only the reward: the discounts are on their redemption rows.
+					loyaltyDiscountCents: bound ? tab.loyaltyDiscountCents : 0,
 					tipCents,
 					totalCents: input.amountCents,
 					closedBy: 'guest',
@@ -1886,7 +2301,9 @@ export async function applyTabPaymentEvent(input: {
 					updatedAt: now.getTime(),
 				})
 				.where(eq(qrTabs.id, tab.id))
-			// Settled from the phone: the tab earns, and spends its reward.
+			// Settled from the phone: the tab earns, spends its reward, and keeps
+			// the discount that was priced into this payment.
+			await consumeTabDiscounts(tx, tab.id)
 			await loyalty.queue(tx, tabSource(tab.id), now.getTime())
 			return result('paid')
 		}
@@ -1904,6 +2321,7 @@ export async function applyTabPaymentEvent(input: {
 			reason: input.status === 'failed' ? 'payment_failed' : 'payment_expired',
 			at: now.getTime(),
 		})
+		await releaseTabDiscounts(tx, tab.id)
 		await tx
 			.update(qrTabs)
 			.set({

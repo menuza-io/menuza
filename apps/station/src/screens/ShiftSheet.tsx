@@ -470,6 +470,16 @@ function SummaryTable({
 		{
 			title: null,
 			rows: [
+				// Sales is what was charged, discounts already off: show them apart.
+				...((summary.discountCents ?? 0) > 0
+					? ([
+							[
+								_(t`Items before discounts`),
+								summary.grossBeforeDiscountsCents ?? 0,
+							],
+							[_(t`Discounts`), -(summary.discountCents ?? 0)],
+						] as Row[])
+					: []),
 				[_(t`Sales`), summary.grossSalesCents],
 				[_(t`Refunds`), -summary.refundsCents],
 				[_(t`Net sales`), summary.netSalesCents, true],
@@ -576,6 +586,18 @@ function ZReport({
 				label={<Trans>Paid orders</Trans>}
 				value={String(summary.orders.paid + summary.orders.refunded)}
 			/>
+			{(summary.discountCents ?? 0) > 0 ? (
+				<>
+					<Line
+						label={<Trans>Items before discounts</Trans>}
+						value={money(summary.grossBeforeDiscountsCents ?? 0)}
+					/>
+					<Line
+						label={<Trans>Discounts</Trans>}
+						value={`-${money(summary.discountCents ?? 0)}`}
+					/>
+				</>
+			) : null}
 			<Line
 				label={<Trans>Sales</Trans>}
 				value={money(summary.grossSalesCents)}

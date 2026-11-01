@@ -5,6 +5,10 @@ import {
 	toAsciiDigits,
 	type CoverageFailureReason,
 } from '@repo/geo'
+import {
+	orderContextDiscountsTolerantSchema,
+	orderDiscountsRequestSchema,
+} from '@repo/discounts'
 import { z } from 'zod'
 import { DAYS_OF_WEEK, DEFAULT_SCHEDULING } from './location-types.ts'
 import {
@@ -13,6 +17,7 @@ import {
 	type LocationOrderingAvailability,
 } from './location-availability.ts'
 import { generatePickupSlots, getDropDisplayStatus } from './menu-types.ts'
+import { discountedTaxableCents } from './pos-discount-base.ts'
 import {
 	orderLoyaltySelectionSchema,
 	type OrderLoyaltySelection,
@@ -62,6 +67,8 @@ export const RESTAURANT_PAYMENT_STATUS_VALUES = [
 	'failed',
 	'expired',
 	'review',
+	/** A free order (total 0 after discounts): accepted with no payment step. */
+	'not_required',
 ] as const
 export type RestaurantPaymentStatus =
 	(typeof RESTAURANT_PAYMENT_STATUS_VALUES)[number]
@@ -239,6 +246,12 @@ const restaurantOrderObjectSchema = z.strictObject({
 	 * `loyalty_on_tab`): a tab's reward is chosen when the tab is paid.
 	 */
 	loyalty: orderLoyaltySelectionSchema.optional(),
+	/**
+	 * A coupon code and the total discount the customer was shown. The region
+	 * re-evaluates every discount; `expectedDiscountMinor` is only compared
+	 * (409 `discount_changed`), never trusted.
+	 */
+	discounts: orderDiscountsRequestSchema.optional(),
 	delivery: z
 		.strictObject({
 			// Free-text address + city are required only without a quote
@@ -396,6 +409,24 @@ export type RestaurantOrderQuoteRequest = z.infer<
 >
 
 /**
+ * The public `POST /orders/quote` body: a placement without the idempotency
+ * key and contact, with the same `discounts` (coupon code) and optional
+ * `loyalty` pick, so the quoted total is the one placement will re-check.
+ * Not strict, like the loyalty quote: a placement-shaped body still parses.
+ */
+export const restaurantOrderDiscountQuoteSchema = z
+	.object({ ...restaurantOrderObjectSchema.shape })
+	.omit({ idempotencyKey: true })
+	.extend({ contact: restaurantOrderContactSchema.optional() })
+	.superRefine((value, context) =>
+		refineOrderRequest(value, context, { requireContact: false }),
+	)
+
+export type RestaurantOrderDiscountQuoteRequest = z.infer<
+	typeof restaurantOrderDiscountQuoteSchema
+>
+
+/**
  * A dine-in round: the table (or the open tab) is proven by a header token,
  * so the body carries only what the guest ordered. Drops, pickup windows,
  * delivery, scheduling, tips and online prepay belong to other flows: the tab
@@ -534,6 +565,7 @@ export function canonicalOrderRequest(request: RestaurantOrderRequest): string {
 		// Only when present, so hashes of requests without it never change.
 		...(request.source ? { source: request.source } : {}),
 		...(request.loyalty ? { loyalty: request.loyalty } : {}),
+		...(request.discounts ? { discounts: request.discounts } : {}),
 		delivery: request.delivery
 			? {
 					address: request.delivery.address ?? null,
@@ -651,6 +683,10 @@ export type PublicMenuItemContext = {
 	displayName: string
 	price: number
 	availabilityStatus: string
+	/** False: the item's own price is not taxed (options have their own flag). Missing reads as true. */
+	applySalesTax?: boolean
+	/** True: the item never receives a discount. Missing reads as false. */
+	excludeFromDiscounts?: boolean
 	variations?: {
 		groups?: Array<{
 			id: string
@@ -662,6 +698,8 @@ export type PublicMenuItemContext = {
 			valueIds?: string[]
 			price: number
 			availabilityStatus: string
+			/** True: this variant never receives a discount. */
+			excludeFromDiscounts?: boolean
 		}>
 	}
 	modifierGroups?: PublicModifierGroupContext[]
@@ -676,6 +714,8 @@ const publicMenuItemContextSchema: z.ZodType<PublicMenuItemContext> = z.lazy(
 				displayName: z.string(),
 				price: z.number().finite().min(0),
 				availabilityStatus: availabilityStatusSchema,
+				applySalesTax: z.boolean().optional(),
+				excludeFromDiscounts: z.boolean().optional(),
 				variations: z
 					.object({
 						groups: z
@@ -696,6 +736,7 @@ const publicMenuItemContextSchema: z.ZodType<PublicMenuItemContext> = z.lazy(
 									valueIds: z.array(z.string()).optional(),
 									price: z.number().finite().min(0),
 									availabilityStatus: availabilityStatusSchema,
+									excludeFromDiscounts: z.boolean().optional(),
 								}),
 							)
 							.optional(),
@@ -993,6 +1034,13 @@ export const restaurantOrderContextSchema = z
 			enabled: z.boolean(),
 			processor: z.enum(['connect', 'checkout']).nullable(),
 		}),
+		/**
+		 * Active discount definitions and codes. Read one record at a time: a
+		 * discount or code row that does not parse is dropped (and logged by id),
+		 * the valid ones stay. A missing or unusable field reads as off. A bad
+		 * discount payload never blocks ordering.
+		 */
+		discounts: orderContextDiscountsTolerantSchema.optional(),
 	})
 	.loose()
 
@@ -1039,6 +1087,14 @@ export type PricedOrderLine = {
 	 */
 	baseUnitCents: number
 	categoryIds: string[]
+	/** Set (true) only when the item or variant never receives a discount. */
+	excludeFromDiscounts?: boolean
+	/**
+	 * The names of the variant chosen ("Large", "Thin"), so a discount can
+	 * target a size across items. Missing on a line with no variant and on
+	 * orders priced before this field existed.
+	 */
+	variantNames?: string[]
 }
 
 export type OrderCapacityEntitySpec = {
@@ -2350,8 +2406,12 @@ export function priceRestaurantOrder(
 		const baseCents = dollarsToCents(variant ? variant.price : entry.item.price)
 		const unitCents = baseCents + modifierResult.optionCents
 		const lineTotal = unitCents * line.quantity
+		// The item's own price is taxed unless the item says otherwise (options
+		// carry their own flag); a missing flag reads as taxed.
+		const taxableBaseCents = entry.item.applySalesTax === false ? 0 : baseCents
 		const lineTaxable =
-			baseCents * line.quantity + modifierResult.taxableCents * line.quantity
+			taxableBaseCents * line.quantity +
+			modifierResult.taxableCents * line.quantity
 
 		pricedLines.push({
 			itemId: entry.item.id,
@@ -2359,13 +2419,27 @@ export function priceRestaurantOrder(
 			variantId: variant ? variant.id : null,
 			quantity: line.quantity,
 			unitPriceCents: unitCents,
-			taxableUnitCents: baseCents + modifierResult.taxableCents,
+			taxableUnitCents: taxableBaseCents + modifierResult.taxableCents,
 			totalCents: lineTotal,
 			taxableCents: lineTaxable,
 			instructions: line.instructions ? line.instructions : null,
 			options: modifierResult.options,
 			baseUnitCents: baseCents,
 			categoryIds: [...entry.categoryIds],
+			...(variant
+				? {
+						variantNames: (entry.item.variations?.groups ?? []).flatMap(
+							(group) =>
+								(group.values ?? [])
+									.filter((value) => variant.valueIds?.includes(value.id))
+									.map((value) => value.name),
+						),
+					}
+				: {}),
+			...(entry.item.excludeFromDiscounts === true ||
+			variant?.excludeFromDiscounts === true
+				? { excludeFromDiscounts: true }
+				: {}),
 		})
 
 		itemQuantityTotals.set(
@@ -2583,6 +2657,70 @@ export function inclusiveTaxCents(
 	const rate = Math.max(0, Math.min(100, taxRatePercent || 0))
 	if (!(rate > 0) || !(taxInclusiveCents > 0)) return 0
 	return Math.round((taxInclusiveCents * rate) / (100 + rate))
+}
+
+export type OrderDiscountTotals = {
+	/** Sum of the line discounts, each capped at its line's total. */
+	discountCents: number
+	/** The delivery fee taken off, capped at the fee. */
+	deliveryDiscountCents: number
+	taxCents: number
+	/** Customer total: tip stays on the pre-discount subtotal. */
+	totalCents: number
+}
+
+/**
+ * Totals after discounts (coupons, automatic discounts, loyalty), applied line
+ * by line before tax. `lineDiscounts` maps a line id (`String(index)` of
+ * `priced.lines`) to its total discount; ids that match no line are ignored.
+ * Each line's taxable amount drops by its own discount, floored at 0 (a
+ * discount on an untaxed line never lowers the tax), tax is recomputed once on
+ * the sum, inclusive or exclusive like the original pricing, and the tip keeps
+ * the pre-discount subtotal:
+ * `total = subtotal - discounts + tax (exclusive only) + tip + (delivery - delivery discount)`.
+ */
+export function applyOrderDiscounts(
+	priced: Pick<
+		PricedRestaurantOrder,
+		| 'lines'
+		| 'subtotalCents'
+		| 'taxInclusive'
+		| 'taxRatePercent'
+		| 'tipCents'
+		| 'deliveryFeeCents'
+	>,
+	lineDiscounts: Readonly<Record<string, number>>,
+	deliveryDiscountMinor = 0,
+): OrderDiscountTotals {
+	// One shared calculation with the till and the ZATCA invoice. The discount
+	// comes off the taxed and untaxed parts of a line in proportion, and a
+	// discount on an untaxed line never lowers the tax.
+	const base = discountedTaxableCents({
+		lines: priced.lines.map((line, index) => ({
+			totalCents: line.totalCents,
+			taxableCents: line.taxableCents,
+			offCents: lineDiscounts[String(index)],
+		})),
+	})
+	const discountCents = base.lineOffCents
+	const taxableAfter = base.taxableAfterCents
+	// A non-finite amount (NaN from a bad parse) is no discount, never NaN totals.
+	const deliveryDiscountCents = Math.min(
+		Number.isFinite(deliveryDiscountMinor)
+			? Math.max(0, Math.trunc(deliveryDiscountMinor))
+			: 0,
+		Math.max(0, priced.deliveryFeeCents),
+	)
+	const taxCents = priced.taxInclusive
+		? inclusiveTaxCents(taxableAfter, priced.taxRatePercent)
+		: Math.round((taxableAfter * priced.taxRatePercent) / 100)
+	const totalCents =
+		priced.subtotalCents -
+		discountCents +
+		(priced.taxInclusive ? 0 : taxCents) +
+		priced.tipCents +
+		(priced.deliveryFeeCents - deliveryDiscountCents)
+	return { discountCents, deliveryDiscountCents, taxCents, totalCents }
 }
 
 function zoneMinimumOrderCents(

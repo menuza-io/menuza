@@ -15,9 +15,45 @@ import {
 
 const FETCH_TIMEOUT_MS = 10_000
 
-async function getJson<T>(url: string): Promise<T> {
+/**
+ * Till rules come from the paired terminal's regional API. A failure keeps
+ * the rules already on the device, with the stamp of when they were fetched, so
+ * the till can stop applying them once they are too old (`TILL_RULES_MAX_AGE_MS`).
+ * The stamp is never made newer: not here, and not by the new catalog's own
+ * fetch time (see `refreshCatalog`). A stamp from the future (the clock moved
+ * back since) stays as it is, and `tillRulesStatus` treats it as expired.
+ * An unpaired till has none.
+ */
+async function loadTillRules(
+	settings: PosSettings,
+): Promise<{ rules: unknown; fetchedAt?: number }> {
+	if (!settings.deviceToken || !settings.tenantApiUrl)
+		return { rules: undefined }
+	const base = settings.tenantApiUrl.replace(/\/+$/, '')
+	try {
+		const body = await getJson<{ discountRules?: unknown }>(
+			`${base}/pos/discount-rules`,
+			{ Authorization: `Bearer ${settings.deviceToken}` },
+		)
+		return { rules: body.discountRules, fetchedAt: Date.now() }
+	} catch {
+		const cached = await loadCachedCatalog()
+		return {
+			rules: cached?.menu.discountRules,
+			// A catalog saved before the stamp existed has the rules of its own fetch.
+			fetchedAt: cached
+				? (cached.menu.discountRulesAt ?? cached.fetchedAt)
+				: undefined,
+		}
+	}
+}
+
+async function getJson<T>(
+	url: string,
+	headers: Record<string, string> = {},
+): Promise<T> {
 	const response = await fetch(url, {
-		headers: { Accept: 'application/json' },
+		headers: { Accept: 'application/json', ...headers },
 		signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
 	})
 	if (!response.ok)
@@ -56,11 +92,23 @@ export async function refreshCatalog(
 		])
 		if (!organization?.id || !menu?.menus)
 			throw new Error('Unexpected catalog response')
+		const publicMenu: MenuPayload = { ...menu }
+		delete publicMenu.discountRules
+		delete publicMenu.discountRulesAt
+		const till = await loadTillRules(settings)
 		const snapshot: CatalogSnapshot = {
 			key: 'catalog',
 			fetchedAt: Date.now(),
 			organization,
-			menu,
+			menu: {
+				...publicMenu,
+				discountRules: till.rules,
+				// Always the rules' own stamp: without one, carried rules would take
+				// this catalog's fetch time and look fresh.
+				...(till.fetchedAt !== undefined
+					? { discountRulesAt: till.fetchedAt }
+					: {}),
+			},
 		}
 		await db.catalog.put(snapshot)
 		return { ok: true, snapshot }

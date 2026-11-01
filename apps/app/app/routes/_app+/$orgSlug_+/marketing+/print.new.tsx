@@ -38,7 +38,10 @@ import {
 	PRINT_STYLE_LABELS,
 } from '#app/components/print/print-labels.ts'
 import { requirePrintShopAccess } from '#app/utils/print/access.server.ts'
-import { createPrintDesign } from '#app/utils/print/designs.server.ts'
+import {
+	createPrintDesign,
+	parsePrintStart,
+} from '#app/utils/print/designs.server.ts'
 
 const NewPrintSchema = z.object({
 	// Codes, translated by `printFormErrors`.
@@ -48,15 +51,23 @@ const NewPrintSchema = z.object({
 		.refine((key) => printCatalog.isProduct(key), 'product'),
 	sizeKey: z.string().trim().min(1).max(20),
 	style: z.enum(PRINT_TEMPLATE_STYLES),
+	start: z.string().max(140).optional(),
 })
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const access = await requirePrintShopAccess(request, params.orgSlug, {
 		write: true,
 	})
+	// Opened from another page ("Print" on a discount): the product to start
+	// with and what its QR code points at.
+	const url = new URL(request.url)
+	const product = url.searchParams.get('product')
+	const start = parsePrintStart(url.searchParams.get('start'))
 	return {
 		orgSlug: access.organization.slug,
 		shipping: access.features.shipping,
+		product: product && printCatalog.isProduct(product) ? product : null,
+		start: start ? `${start.kind}:${start.ref}` : null,
 	}
 }
 
@@ -76,15 +87,23 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			result: submission.reply({ fieldErrors: { sizeKey: ['size'] } }),
 		}
 	}
-	const design = await createPrintDesign(access, submission.value)
+	const design = await createPrintDesign(access, {
+		...submission.value,
+		start: parsePrintStart(submission.value.start),
+	})
 	return redirect(`/${access.organization.slug}/marketing/print/${design.id}`)
 }
 
 export default function NewPrintRoute() {
 	const { _ } = useLingui()
-	const { orgSlug, shipping } = useLoaderData<typeof loader>()
+	const {
+		orgSlug,
+		shipping,
+		product: startProduct,
+		start,
+	} = useLoaderData<typeof loader>()
 	const actionData = useActionData<typeof action>()
-	const firstProduct = printCatalog.productKeys[0]!
+	const firstProduct = startProduct ?? printCatalog.productKeys[0]!
 	const [product, setProduct] = useState<PrintProductKey>(firstProduct)
 	const [sizeKey, setSizeKey] = useState(
 		printCatalog.products[firstProduct]!.sizes[0]!.key,
@@ -114,6 +133,7 @@ export default function NewPrintRoute() {
 				)}
 			/>
 			<Form method="post" {...getFormProps(form)} className="space-y-8">
+				{start ? <input type="hidden" name="start" value={start} /> : null}
 				<FieldSet>
 					<FieldLegend>{_(msg`What to print`)}</FieldLegend>
 					<RadioGroup

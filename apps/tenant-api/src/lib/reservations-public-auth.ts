@@ -31,6 +31,7 @@ import {
 	syncEnvFromProcess,
 	timingSafeEqualString,
 } from './secrets.ts'
+import { clientAddress } from './client-ip.ts'
 import { resolveClientIp } from './rate-limit.ts'
 import { retryOnSqliteBusy } from './sqlite-retry.ts'
 
@@ -581,11 +582,10 @@ export async function verifyPublicChallenge(
 	const presented =
 		typeof token === 'string' && token.trim() ? token : headerToken
 	if (!presented) return false
-	const ip = c.req.header('cf-connecting-ip')?.trim()
 	const result = await verifyTurnstileToken({
 		secret,
 		token: presented,
-		remoteIp: ip || undefined,
+		remoteIp: clientAddress(c) ?? undefined,
 		expectedAction: RESERVATIONS_TURNSTILE_ACTION,
 		expectedHostnames: parseTurnstileHostnames(ENV.TURNSTILE_HOSTNAMES),
 	})

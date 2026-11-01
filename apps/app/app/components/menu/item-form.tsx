@@ -57,6 +57,7 @@ export interface ItemFormData {
 	calorieMax?: number | null
 	applySalesTax: boolean
 	excludeFromOverride: boolean
+	excludeFromDiscounts?: boolean
 	isPopular: boolean
 	isUpsell: boolean
 	availabilityStatus:
@@ -154,6 +155,9 @@ export function ItemForm({
 	)
 	const [applySalesTax, setApplySalesTax] = useState(
 		initialData?.applySalesTax ?? true,
+	)
+	const [excludeFromDiscounts, setExcludeFromDiscounts] = useState(
+		initialData?.excludeFromDiscounts ?? false,
 	)
 	const [excludeFromOverride, setExcludeFromOverride] = useState(
 		initialData?.excludeFromOverride ?? false,
@@ -292,6 +296,11 @@ export function ItemForm({
 						type="hidden"
 						name="excludeFromOverride"
 						value={String(excludeFromOverride)}
+					/>
+					<input
+						type="hidden"
+						name="excludeFromDiscounts"
+						value={String(excludeFromDiscounts)}
 					/>
 					<input type="hidden" name="isPopular" value={String(isPopular)} />
 					<input type="hidden" name="isUpsell" value={String(isUpsell)} />
@@ -777,6 +786,26 @@ export function ItemForm({
 											id="throttle-switch"
 											checked={excludeFromOverride}
 											onCheckedChange={setExcludeFromOverride}
+										/>
+									</FramePanel>
+									<FramePanel className="flex items-center justify-between px-5 py-3.5">
+										<Label
+											htmlFor="discounts-switch"
+											className="block min-w-0 cursor-pointer space-y-0.5 pr-4 font-normal"
+										>
+											<div className="text-foreground text-sm">
+												<Trans>Exclude from discounts</Trans>
+											</div>
+											<p className="text-muted-foreground text-xs">
+												<Trans>
+													Never receives a discount, for example gift cards.
+												</Trans>
+											</p>
+										</Label>
+										<Switch
+											id="discounts-switch"
+											checked={excludeFromDiscounts}
+											onCheckedChange={setExcludeFromDiscounts}
 										/>
 									</FramePanel>
 								</Frame>

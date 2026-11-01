@@ -13,6 +13,7 @@ import { countedOrderCondition } from '../services/report-records.ts'
  * organization location, so `scopeId` is the order's `locationId`. It returns
  * counts and money only, never a customer. An order counts when it is open or
  * completed and payable (handoff right away, online after payment succeeds).
+ * Its sales are net of item discounts and loyalty rewards (see `loadBuckets`).
  */
 export const restaurantOrderSource: OrderSource = {
 	async loadBuckets(db, scopeId, window) {
@@ -23,7 +24,11 @@ export const restaurantOrderSource: OrderSource = {
 				currency: restaurantOrders.currency,
 				fulfillment: restaurantOrders.fulfillment,
 				orders: sql<number>`count(*)`,
-				subtotalMinor: sql<number>`coalesce(sum(${restaurantOrders.subtotalCents}), 0)`,
+				// Net item sales: the subtotal less what discounts and a loyalty
+				// reward took off the items. A delivery discount comes off the
+				// delivery fee, which was never in the subtotal, so it is not taken
+				// off. Labor percentages are judged on what the items earned.
+				subtotalMinor: sql<number>`coalesce(sum(max(0, ${restaurantOrders.subtotalCents} - ${restaurantOrders.discountCents} - coalesce(${restaurantOrders.loyaltyDiscountCents}, 0))), 0)`,
 				tipMinor: sql<number>`coalesce(sum(${restaurantOrders.tipCents}), 0)`,
 			})
 			.from(restaurantOrders)

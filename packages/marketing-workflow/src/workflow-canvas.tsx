@@ -6,6 +6,7 @@ import {
 	readFlowDragData,
 	useFlowColorMode,
 } from '@repo/flow-editor'
+import { type CouponDiscountOption } from '@repo/marketing'
 import { RESERVATION_JOURNEY_TRIGGER_TYPES } from '@repo/tenant-db/types/journey'
 import { cn } from '@repo/ui'
 import {
@@ -62,6 +63,8 @@ interface WorkflowCanvasProps {
 	workflowConfig?: WorkflowConfig
 	/** Offer the `reservation_*` triggers (the Reservations module is on). */
 	reservationTriggers?: boolean
+	/** Coupon discounts for email and text steps; undefined hides the picker. */
+	couponOptions?: CouponDiscountOption[]
 	initialGraph?: WorkflowGraph | string
 	journeyName: string
 	journeyStatus: JourneyStatus
@@ -93,7 +96,7 @@ function WorkflowCanvasInner({
 	onViewRuns,
 	isSaving,
 	isPublishing,
-}: Omit<WorkflowCanvasProps, 'workflowConfig'>) {
+}: Omit<WorkflowCanvasProps, 'workflowConfig' | 'couponOptions'>) {
 	const { _ } = useLingui()
 	const reactFlowWrapper = useRef<HTMLDivElement>(null)
 	const { screenToFlowPosition, fitView } = useReactFlow()
@@ -367,6 +370,7 @@ function resolveLocalizedWorkflowConfig(
 export function WorkflowCanvas({
 	workflowConfig: workflowConfigProp,
 	reservationTriggers = false,
+	couponOptions,
 	...props
 }: WorkflowCanvasProps) {
 	const localizedTenant = useLocalizedTenantWorkflowConfig()
@@ -378,11 +382,17 @@ export function WorkflowCanvas({
 			localizedTenant,
 			localizedPlatform,
 		)
-		if (resolved.audience !== 'tenant' || reservationTriggers) return resolved
+		const withCoupons =
+			resolved.audience === 'tenant' && couponOptions
+				? { ...resolved, couponOptions }
+				: resolved
+		if (withCoupons.audience !== 'tenant' || reservationTriggers) {
+			return withCoupons
+		}
 		return {
-			...resolved,
+			...withCoupons,
 			hiddenTriggerTypes: [
-				...(resolved.hiddenTriggerTypes ?? []),
+				...(withCoupons.hiddenTriggerTypes ?? []),
 				...RESERVATION_JOURNEY_TRIGGER_TYPES,
 			],
 		}
@@ -391,6 +401,7 @@ export function WorkflowCanvas({
 		localizedTenant,
 		localizedPlatform,
 		reservationTriggers,
+		couponOptions,
 	])
 
 	return (

@@ -108,7 +108,7 @@ function quote(
 		currency: string
 		holdExpiresAt: string | null
 		status: string
-		paymentStatus: 'paid' | 'pending' | 'failed' | 'unknown'
+		paymentStatus: 'paid' | 'pending' | 'failed' | 'not_required' | 'unknown'
 		boundSession: {
 			sessionId: string
 			processor: 'connect' | 'checkout'
@@ -430,6 +430,22 @@ describe('restaurant order hosted checkout', () => {
 		expect(commerce.createCheckout).not.toHaveBeenCalled()
 	})
 
+	it('refuses a payment session for an order that needs no payment', async () => {
+		regional.fetchRestaurantOrderQuote.mockResolvedValue(
+			quote({ totalCents: 0, paymentStatus: 'not_required' }),
+		)
+
+		const response = await createRestaurantOrderHostedCheckout(
+			checkoutOptions(),
+		).catch((error: unknown) => error as Response)
+		expect(response).toMatchObject({ status: 409 })
+		expect(await (response as Response).json()).toEqual({
+			error: 'payment_not_required',
+			retryable: false,
+		})
+		expect(commerce.createCheckout).not.toHaveBeenCalled()
+	})
+
 	it('recovers an already-bound live Stripe session instead of creating a second one', async () => {
 		regional.fetchRestaurantOrderQuote.mockResolvedValue(
 			quote({
@@ -654,6 +670,16 @@ describe('restaurant order payment status poll', () => {
 			holdExpiresAt: quote().holdExpiresAt,
 			processor: null,
 		})
+		expect(commerce.retrieveConnectCheckoutSession).not.toHaveBeenCalled()
+		expect(regional.notifyRestaurantOrderPaymentStatus).not.toHaveBeenCalled()
+	})
+
+	it('reports a free order (payment not required) as paid so Sites stops polling', async () => {
+		regional.fetchRestaurantOrderQuote.mockResolvedValue(
+			quote({ totalCents: 0, paymentStatus: 'not_required' }),
+		)
+		const result = await getRestaurantOrderPaymentStatus(checkoutOptions())
+		expect(result.paymentStatus).toBe('paid')
 		expect(commerce.retrieveConnectCheckoutSession).not.toHaveBeenCalled()
 		expect(regional.notifyRestaurantOrderPaymentStatus).not.toHaveBeenCalled()
 	})

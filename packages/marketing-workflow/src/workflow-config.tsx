@@ -1,3 +1,4 @@
+import { type CouponDiscountOption } from '@repo/marketing'
 import {
 	type WorkflowGraph,
 	type JourneyTriggerType,
@@ -27,6 +28,11 @@ export interface WorkflowConfig {
 	defaultGraph: () => WorkflowGraph
 	mergeTagHint: string
 	subjectEntityLabel: string
+	/**
+	 * Coupon discounts email and text steps may carry for `{{couponCode}}`.
+	 * Undefined hides the coupon picker (discounts off, or no permission).
+	 */
+	couponOptions?: CouponDiscountOption[]
 }
 
 const TENANT_TRIGGER_LABELS: Record<string, { label: string; desc: string }> = {

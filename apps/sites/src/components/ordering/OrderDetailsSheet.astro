@@ -324,7 +324,7 @@ const truckIcon =
 		type PlacePrediction,
 		type PlacesSearchState,
 	} from '~/lib/ordering/delivery-client'
-	import { el, lockScroll } from '~/lib/ordering/dom'
+	import { el, isComposingKey, lockScroll } from '~/lib/ordering/dom'
 	import { createMoneyFormatter, fillTemplate } from '~/lib/ordering/money'
 	import { fetchOrderingOptions } from '~/lib/ordering/order-client'
 	import {
@@ -952,6 +952,9 @@ const truckIcon =
 		})
 
 		addressInput.addEventListener('keydown', (event) => {
+			// Enter and the arrows pick an input-method candidate while composing
+			// (a Chinese address, for one): leave them to the input method.
+			if (isComposingKey(event)) return
 			const expanded = addressInput.getAttribute('aria-expanded') === 'true'
 			if (event.key === 'ArrowDown') {
 				event.preventDefault()

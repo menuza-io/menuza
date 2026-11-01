@@ -1,5 +1,13 @@
-import { describe, expect, it } from 'vitest'
-import { buildCategories, categoryItems, isSoldOut } from './catalog.ts'
+import 'fake-indexeddb/auto'
+import { describe, expect, it, vi } from 'vitest'
+import {
+	buildCategories,
+	categoryItems,
+	refreshCatalog,
+	isSoldOut,
+} from './catalog.ts'
+import { loadSettings } from './config.ts'
+import { db } from './db.ts'
 import { demoCatalog } from './demo-catalog.ts'
 import {
 	availableOptions,
@@ -8,6 +16,7 @@ import {
 	defaultSelections,
 	defaultVariantPicks,
 } from './item-config.ts'
+import { tillRulesStatus } from './till-discounts.ts'
 import { type MenuPayload } from './types.ts'
 
 const menu = (): MenuPayload => structuredClone(demoCatalog().menu)
@@ -204,5 +213,120 @@ describe('availability and overrides match what the server enforces', () => {
 		)!.items.find((i) => i.id === 'i-chicken')!
 		delete (item as { availabilityStatus?: string }).availabilityStatus
 		expect(isSoldOut(find(m, 'i-chicken')!)).toBe(false)
+	})
+})
+
+describe('till discount rules in the stored catalog', () => {
+	it('stores the fetched rules as a list, with the time they were fetched', async () => {
+		const demo = demoCatalog()
+		const rules = [{ id: 'd1', name: 'Ten off' }]
+		const fetchMock = vi.fn(async (url: string | URL) => {
+			const path = String(url)
+			const json = (body: unknown) =>
+				new Response(JSON.stringify(body), { status: 200 })
+			if (path.includes('/pos/discount-rules')) {
+				return json({ discountRules: rules })
+			}
+			if (path.includes('/resources/sites/menu')) return json(demo.menu)
+			return json(demo.organization)
+		})
+		vi.stubGlobal('fetch', fetchMock)
+		try {
+			const settings = {
+				...loadSettings(),
+				demo: false,
+				appUrl: 'https://app.test',
+				slug: 'acme',
+				tenantApiUrl: 'https://region.test',
+				deviceToken: 'device',
+			}
+			const result = await refreshCatalog(settings)
+			expect(result.ok).toBe(true)
+			if (!result.ok) return
+			expect(Array.isArray(result.snapshot.menu.discountRules)).toBe(true)
+			expect(result.snapshot.menu.discountRulesAt).toBeTypeOf('number')
+			expect(tillRulesStatus(result.snapshot).state).toBe('fresh')
+		} finally {
+			vi.unstubAllGlobals()
+			await db.catalog.clear()
+		}
+	})
+
+	/** A refresh whose menu answers but whose rules fetch fails, over a stored catalog. */
+	async function refreshKeepingRules(stored: {
+		rules: unknown[]
+		rulesAt: number
+	}) {
+		const demo = demoCatalog()
+		await db.catalog.put({
+			...demo,
+			fetchedAt: stored.rulesAt,
+			menu: {
+				...demo.menu,
+				discountRules: stored.rules,
+				discountRulesAt: stored.rulesAt,
+			},
+		})
+		vi.stubGlobal(
+			'fetch',
+			vi.fn(async (url: string | URL) => {
+				const path = String(url)
+				if (path.includes('/pos/discount-rules')) {
+					return new Response('{}', { status: 503 })
+				}
+				const body = path.includes('/resources/sites/menu')
+					? demo.menu
+					: demo.organization
+				return new Response(JSON.stringify(body), { status: 200 })
+			}),
+		)
+		try {
+			return await refreshCatalog({
+				...loadSettings(),
+				demo: false,
+				appUrl: 'https://app.test',
+				slug: 'acme',
+				tenantApiUrl: 'https://region.test',
+				deviceToken: 'device',
+			})
+		} finally {
+			vi.unstubAllGlobals()
+			await db.catalog.clear()
+		}
+	}
+
+	it('keeps the old rules with their own stamp when the rules fetch fails', async () => {
+		const rulesAt = Date.now() - 25 * 60 * 60 * 1000
+		const result = await refreshKeepingRules({ rules: [{ id: 'd1' }], rulesAt })
+		expect(result.ok).toBe(true)
+		if (!result.ok) return
+		// The new catalog is fresh; its rules are as old as when they came.
+		expect(result.snapshot.menu.discountRulesAt).toBe(rulesAt)
+		expect(tillRulesStatus(result.snapshot)).toMatchObject({
+			state: 'expired',
+			cause: 'age',
+		})
+	})
+
+	it('never lets carried rules take the new catalog time, even with a zero stamp', async () => {
+		const result = await refreshKeepingRules({
+			rules: [{ id: 'd1' }],
+			rulesAt: 0,
+		})
+		if (!result.ok) throw new Error('refresh failed')
+		expect(result.snapshot.menu.discountRulesAt).toBe(0)
+		expect(tillRulesStatus(result.snapshot).state).toBe('expired')
+	})
+
+	it('keeps carried rules from the future off: the clock moved back since', async () => {
+		const result = await refreshKeepingRules({
+			rules: [{ id: 'd1' }],
+			rulesAt: Date.now() + 60 * 60 * 1000,
+		})
+		if (!result.ok) throw new Error('refresh failed')
+		expect(tillRulesStatus(result.snapshot)).toMatchObject({
+			state: 'expired',
+			cause: 'clock',
+		})
 	})
 })

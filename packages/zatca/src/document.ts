@@ -88,6 +88,13 @@ export type ZatcaDocumentInput = {
 	allowanceCents?: number
 	/** Document-level discount on amounts outside the scope of VAT. */
 	outOfScopeAllowanceCents?: number
+	/**
+	 * Named standard-rated allowances. Used only when their cents add up to
+	 * the document's standard allowance; otherwise one "Discount" charge is
+	 * written, which is what every existing document does.
+	 */
+	standardAllowances?: Array<{ reason: string; cents: number }>
+	outOfScopeAllowances?: Array<{ reason: string; cents: number }>
 	/** Document-level charge on standard-rated amounts (net). */
 	chargeCents?: number
 	/**
@@ -409,22 +416,40 @@ function parts(input: ZatcaDocumentInput) {
 				]
 			: []),
 	]
-	const allowanceOf = (category: 'S' | 'O', cents: number) =>
+	const allowanceOf = (
+		category: 'S' | 'O',
+		cents: number,
+		reason = 'Discount',
+	) =>
 		el(
 			'cac:AllowanceCharge',
 			null,
 			text('cbc:ChargeIndicator', 'false'),
-			text('cbc:AllowanceChargeReason', 'Discount'),
+			text('cbc:AllowanceChargeReason', reason),
 			money('cbc:Amount', cents, cur),
 			taxCategory(category, rate),
 		)
+	const named = (
+		category: 'S' | 'O',
+		requested: Array<{ reason: string; cents: number }> | undefined,
+		total: number,
+	) => {
+		if (total <= 0) return []
+		const rows = (requested ?? [])
+			.map((row) => ({
+				reason: row.reason.trim().slice(0, 80) || 'Discount',
+				cents: Math.round(row.cents),
+			}))
+			.filter((row) => row.cents > 0)
+		const sum = rows.reduce((totalCents, row) => totalCents + row.cents, 0)
+		if (rows.length === 0 || sum !== total) {
+			return [allowanceOf(category, total)]
+		}
+		return rows.map((row) => allowanceOf(category, row.cents, row.reason))
+	}
 	const documentLevel = [
-		...(f.standardAllowanceCents > 0
-			? [allowanceOf('S', f.standardAllowanceCents)]
-			: []),
-		...(f.outOfScopeAllowanceCents > 0
-			? [allowanceOf('O', f.outOfScopeAllowanceCents)]
-			: []),
+		...named('S', input.standardAllowances, f.standardAllowanceCents),
+		...named('O', input.outOfScopeAllowances, f.outOfScopeAllowanceCents),
 		...((input.chargeCents ?? 0) > 0
 			? [
 					el(

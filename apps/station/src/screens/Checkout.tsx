@@ -358,11 +358,7 @@ export function Checkout({
 					<dl className="tnum text-muted-foreground space-y-2 text-sm">
 						<Row label={_(t`Subtotal`)} value={money(totals.subtotalCents)} />
 						{(current?.adjustments ?? draft.adjustments).map((a) => (
-							<Row
-								key={a.id}
-								label={a.label}
-								value={`-${money(a.amountCents)}`}
-							/>
+							<Row key={a.id} label={a.label} value={money(-a.amountCents)} />
 						))}
 						<Row
 							label={draft.taxInclusive ? _(t`Includes tax`) : _(t`Tax`)}
@@ -378,7 +374,7 @@ export function Checkout({
 							<Row
 								key={p.id}
 								label={`${_(t`Paid`)} · ${_(METHOD_LABEL[p.method])}`}
-								value={`-${money(p.amountCents)}`}
+								value={money(-p.amountCents)}
 								tone="success"
 							/>
 						))}

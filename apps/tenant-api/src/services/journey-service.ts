@@ -23,10 +23,12 @@ import {
 	type EvaluateConditionPayload,
 	runTenantTransaction,
 } from '@repo/tenant-db'
+import { parseMarketingOffer } from '@repo/discounts'
 import { sendSms } from '@repo/sms'
 import { getNodeRegion } from '../lib/region.ts'
 import { syncEnvFromProcess } from '../lib/secrets.ts'
 import { sendTenantEmail } from '../lib/tenant-email.ts'
+import { couponCodeForRecipient } from './discount-marketing-codes.ts'
 
 export const JOURNEY_PROCESSING_LEASE_MS = 5 * 60 * 1000
 export const JOURNEY_LIST_LIMIT = 100
@@ -430,6 +432,45 @@ export async function executeJourneyStep(
 	}
 
 	const config = payload.config || {}
+
+	// A step with a coupon fills `{{couponCode}}`: one shared code, or a
+	// single-use code minted once for this run's step (a retry reuses it).
+	const offerValue = (config as { discountOffer?: unknown }).discountOffer
+	if (offerValue) {
+		const offer = parseMarketingOffer(offerValue)
+		let couponCode: string | null = null
+		let couponError = 'Invalid coupon configuration'
+		if (offer) {
+			try {
+				couponCode = await couponCodeForRecipient(db, offer, {
+					sourceType: 'journey',
+					sourceId: `${payload.runId}:${payload.nodeId}`,
+					customerId: customer.id,
+				})
+			} catch (error) {
+				couponError =
+					error instanceof Error ? error.message : 'Coupon could not be issued'
+			}
+		}
+		if (!couponCode) {
+			await db
+				.update(journeyStepExecutions)
+				.set({
+					status: 'failed',
+					errorMessage: couponError,
+					completedAt: new Date(),
+				})
+				.where(eq(journeyStepExecutions.id, stepExecutionId))
+			return {
+				success: false,
+				executionId: stepExecutionId,
+				status: 'failed',
+				error: couponError,
+				statusCode: offer ? 500 : 422,
+			}
+		}
+		contextData = { ...contextData, couponCode }
+	}
 
 	// 4. Execute channel-specific dispatch
 	if (stepType === 'email') {

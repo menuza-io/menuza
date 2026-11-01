@@ -1,4 +1,5 @@
 import {
+	cartLineRemainingMinor,
 	cartLineTotalMinor,
 	type LoyaltyCart,
 	type LoyaltyCartLine,
@@ -13,7 +14,8 @@ import {
 import { type LoyaltyRewardDefinition } from './rewards.ts'
 
 /**
- * What a reward takes off a cart. Discounts are capped at the eligible
+ * What a reward takes off a cart. It applies after discounts and coupons, to
+ * what each line has left. Rewards are capped at the eligible
  * merchandise value, percentages round down, and the amount is spread over the
  * eligible lines by largest remainder (ties to the earlier line) so tax
  * allocation, receipts and refunds all see the same split.
@@ -27,10 +29,7 @@ export type RewardDiscountLine = {
 }
 
 export type RewardDiscountFailure =
-	| 'currency_mismatch'
-	| 'stacking_not_allowed'
-	| 'reward_not_applicable'
-	| 'zero_value'
+	'currency_mismatch' | 'reward_not_applicable' | 'zero_value'
 
 export type RewardDiscountResult =
 	| {
@@ -51,24 +50,40 @@ export function rewardEligibleLines(
 ): LoyaltyCartLine[] {
 	switch (definition.kind) {
 		case 'order':
-			return lines.filter((line) => cartLineTotalMinor(line) > 0)
+			return lines.filter((line) => cartLineRemainingMinor(line) > 0)
 		case 'categories': {
 			const wanted = new Set(definition.categoryIds)
 			return lines.filter(
 				(line) =>
-					cartLineTotalMinor(line) > 0 &&
+					cartLineRemainingMinor(line) > 0 &&
 					line.categoryIds.some((categoryId) => wanted.has(categoryId)),
 			)
 		}
 		case 'items': {
 			const wanted = new Set(definition.itemIds)
 			return lines.filter(
-				(line) => cartLineTotalMinor(line) > 0 && wanted.has(line.itemId),
+				(line) => cartLineRemainingMinor(line) > 0 && wanted.has(line.itemId),
 			)
 		}
 		case 'free_item':
 			return lines.filter((line) => line.itemId === definition.itemId)
 	}
+}
+
+/**
+ * What a free-item reward takes off a line: one unit of the variant, but never
+ * more than a unit's share of what the line has left after discounts.
+ *
+ * The cart carries only the line's total discount, not which units it came
+ * from, so the share is the line's remainder over its quantity, rounded up.
+ * When a discount took whole units (buy one get one on 2 x $10 leaves one $10
+ * unit) this under-values the reward ($5 rather than $10): the guest is never
+ * given more than the line has left, at the cost of sometimes less. Valuing
+ * the dearest unit exactly needs per-unit remainders on the cart line.
+ */
+function freeItemValue(line: LoyaltyCartLine): number {
+	const unitLeft = Math.ceil(cartLineRemainingMinor(line) / line.quantity)
+	return Math.min(line.unitBaseMinor, unitLeft)
 }
 
 export function computeRewardDiscount(
@@ -79,13 +94,10 @@ export function computeRewardDiscount(
 	if (!sameCurrency(reward.currency, cart.currency)) {
 		return { ok: false, code: 'currency_mismatch' }
 	}
-	if (cart.otherDiscountMinor > 0) {
-		return { ok: false, code: 'stacking_not_allowed' }
-	}
 	const { definition } = reward
 	const eligible = rewardEligibleLines(definition, cart.lines)
 	if (eligible.length === 0) return { ok: false, code: 'reward_not_applicable' }
-	const eligibleMinor = sumMinor(eligible.map(cartLineTotalMinor))
+	const eligibleMinor = sumMinor(eligible.map(cartLineRemainingMinor))
 	const eligibleLineIds = eligible.map((line) => line.lineId)
 
 	if (definition.kind === 'free_item') {
@@ -94,12 +106,14 @@ export function computeRewardDiscount(
 			target = eligible.find((line) => line.lineId === options.targetLineId)
 			if (!target) return { ok: false, code: 'reward_not_applicable' }
 		} else {
-			// The dearest variant on the bill, first one on a tie.
+			// The dearest unit left on the bill, first one on a tie.
 			for (const line of eligible) {
-				if (!target || line.unitBaseMinor > target.unitBaseMinor) target = line
+				if (!target || freeItemValue(line) > freeItemValue(target)) {
+					target = line
+				}
 			}
 		}
-		const discountMinor = target!.unitBaseMinor
+		const discountMinor = freeItemValue(target!)
 		if (discountMinor <= 0) return { ok: false, code: 'zero_value' }
 		return {
 			ok: true,
@@ -125,7 +139,7 @@ export function computeRewardDiscount(
 	if (discountMinor <= 0) return { ok: false, code: 'zero_value' }
 	const shares = allocateProportionally(
 		discountMinor,
-		eligible.map(cartLineTotalMinor),
+		eligible.map(cartLineRemainingMinor),
 	)
 	return {
 		ok: true,
@@ -138,57 +152,5 @@ export function computeRewardDiscount(
 			rewardUnits: 0,
 		})),
 		targetLineId: null,
-	}
-}
-
-/**
- * Order totals with a discount taken off before tax, the way the till already
- * prices adjustments: the taxable base shrinks in proportion to the subtotal,
- * inclusive tax is reported rather than added, and a percentage tip applies to
- * the discounted subtotal.
- */
-export function totalsWithDiscount(input: {
-	subtotalMinor: number
-	taxableMinor: number
-	taxRatePercent: number
-	taxInclusive: boolean
-	discountMinor: number
-	tipPercent?: number
-	tipMinor?: number
-	feesMinor?: number
-}): {
-	subtotalMinor: number
-	discountMinor: number
-	taxMinor: number
-	tipMinor: number
-	feesMinor: number
-	totalMinor: number
-} {
-	const subtotal = input.subtotalMinor
-	const discount = Math.max(0, Math.min(subtotal, input.discountMinor))
-	const taxBase =
-		subtotal > 0
-			? Math.round(input.taxableMinor * (1 - discount / subtotal))
-			: 0
-	const rate = Math.max(0, Math.min(100, input.taxRatePercent || 0))
-	const taxMinor = input.taxInclusive
-		? Math.round((taxBase * rate) / (100 + rate))
-		: Math.round((taxBase * rate) / 100)
-	const tipMinor =
-		input.tipMinor ??
-		Math.round(((subtotal - discount) * (input.tipPercent ?? 0)) / 100)
-	const feesMinor = input.feesMinor ?? 0
-	return {
-		subtotalMinor: subtotal,
-		discountMinor: discount,
-		taxMinor,
-		tipMinor,
-		feesMinor,
-		totalMinor:
-			subtotal -
-			discount +
-			(input.taxInclusive ? 0 : taxMinor) +
-			tipMinor +
-			feesMinor,
 	}
 }

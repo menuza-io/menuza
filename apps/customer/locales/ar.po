@@ -25,6 +25,7 @@ msgstr "تحتاج إلى {amount} إضافية"
 msgid "{amount} more to unlock {reward}"
 msgstr "{amount} إضافية للحصول على {reward}"
 
+#: components/ordering/menu-screen.tsx:332
 #: lib/loyalty/labels.ts:56
 msgid "{amount} off"
 msgstr "خصم {amount}"
@@ -53,6 +54,10 @@ msgstr "{n, plural, zero {{count} نجمة} one {نجمة واحدة} two {نج�
 msgid "{percent} off"
 msgstr "خصم {percent}"
 
+#: components/ordering/menu-screen.tsx:324
+msgid "{percentText} off"
+msgstr "خصم {percentText}"
+
 #: lib/loyalty/labels.ts:45
 msgid "{points} for each {items}"
 msgstr "{points} لكل {items}"
@@ -76,6 +81,10 @@ msgstr "{points} لكل زيارة (مرة واحدة يوميًا)"
 #: lib/loyalty/labels.ts:43
 msgid "{points} for every {amount} you spend"
 msgstr "{points} مقابل كل {amount} تنفقها"
+
+#: components/ordering/menu-screen.tsx:261
+msgid "{price}, was {originalPrice}"
+msgstr "{price}، كان {originalPrice}"
 
 #: components/auth/login-screen.tsx:25
 msgid "+1 555 000 0000"
@@ -193,17 +202,34 @@ msgstr "ملغاة"
 msgid "Change time"
 msgstr "تغيير الوقت"
 
+#: components/ordering/menu-screen.tsx:161
+msgid "Check back later, or open the website menu."
+msgstr "عُد لاحقًا، أو افتح قائمة الموقع."
+
 #: lib/loyalty/labels.ts:89
 msgid "Check for requests"
 msgstr "التحقق من وجود طلبات"
+
+#: components/ordering/drops-screen.tsx:161
+msgid "Check the menu for what we are serving today."
+msgstr "تصفّح القائمة لمعرفة ما نقدّمه اليوم."
 
 #: lib/reservations/messages.ts:72
 msgid "Checking your payment…"
 msgstr "جارٍ التحقق من الدفع…"
 
+#: components/ordering/site-checkout.tsx:25
+msgid "Checkout"
+msgstr "إتمام الطلب"
+
 #: lib/reservations/messages.ts:26
 msgid "Choose a location"
 msgstr "اختر الفرع"
+
+#: components/ordering/drops-screen.tsx:136
+#: components/ordering/drops-screen.tsx:215
+msgid "Coming up"
+msgstr "قريبًا"
 
 #: lib/reservations/messages.ts:67
 msgid "Complete your payment"
@@ -273,6 +299,15 @@ msgstr "إغلاق"
 msgid "Done"
 msgstr "تم"
 
+#: app/(tabs)/_layout.tsx:58
+#: components/ordering/drops-screen.tsx:153
+msgid "Drops"
+msgstr "الطروحات"
+
+#: components/ordering/drops-screen.tsx:115
+msgid "Drops could not be loaded."
+msgstr "تعذر تحميل الطروحات."
+
 #: lib/loyalty/labels.ts:108
 msgid "Earned"
 msgstr "اكتساب"
@@ -301,7 +336,7 @@ msgstr "أدخل عنوان بريد إلكتروني صالحًا."
 msgid "Enter a valid phone number."
 msgstr "أدخل رقم هاتف صالحًا."
 
-#: components/auth/verify-screen.tsx:27
+#: components/auth/verify-screen.tsx:39
 msgid "Enter your code"
 msgstr "أدخل الرمز"
 
@@ -349,6 +384,10 @@ msgstr "لهذا العدد من الأشخاص، يرجى الاتصال على
 #: lib/loyalty/labels.ts:64
 msgid "Free {item}"
 msgstr "{item} مجانًا"
+
+#: components/ordering/menu-screen.tsx:342
+msgid "Free delivery"
+msgstr "توصيل مجاني"
 
 #: lib/reservations/messages.ts:97
 msgid "Free to change until {time}"
@@ -428,6 +467,18 @@ msgstr "اعرف المزيد"
 msgid "Leave the waitlist"
 msgstr "مغادرة قائمة الانتظار"
 
+#: components/ordering/drops-screen.tsx:155
+msgid "Limited menus you pre-order for a pickup window."
+msgstr "قوائم محدودة تطلبها مسبقًا لاستلامها في وقت محدد."
+
+#: components/ordering/drops-screen.tsx:109
+msgid "Loading drops"
+msgstr "جارٍ تحميل الطروحات"
+
+#: components/ordering/menu-screen.tsx:106
+msgid "Loading the menu"
+msgstr "جارٍ تحميل القائمة"
+
 #: components/profile/profile-screen.tsx:63
 msgid "Loading your profile…"
 msgstr "جارٍ تحميل ملفك الشخصي…"
@@ -441,6 +492,11 @@ msgstr "جارٍ تحميل مكافآتك…"
 #: lib/reservations/messages.ts:14
 msgid "Loading…"
 msgstr "جارٍ التحميل…"
+
+#: app/(tabs)/_layout.tsx:45
+#: components/ordering/menu-screen.tsx:141
+msgid "Menu"
+msgstr "القائمة"
 
 #: components/reservations/parts.tsx:205
 msgid "More guests"
@@ -472,6 +528,10 @@ msgstr "لا يوجد نشاط بعد. ستظهر مشترياتك هنا."
 #: lib/reservations/messages.ts:136
 msgid "No connection. Please try again."
 msgstr "لا يوجد اتصال. حاول مرة أخرى."
+
+#: components/ordering/drops-screen.tsx:160
+msgid "No drops right now."
+msgstr "لا توجد طروحات حاليًا."
 
 #: lib/reservations/messages.ts:52
 msgid "No preference"
@@ -509,6 +569,10 @@ msgstr "بدون"
 msgid "Not taking online reservations on this day."
 msgstr "لا يوجد حجز عبر الإنترنت في هذا اليوم."
 
+#: components/ordering/menu-screen.tsx:160
+msgid "Nothing on the menu right now."
+msgstr "لا يوجد شيء في القائمة حاليًا."
+
 #: lib/reservations/messages.ts:47
 msgid "Occasion"
 msgstr "المناسبة"
@@ -541,9 +605,27 @@ msgstr "الحجز عبر الإنترنت غير متاح حاليًا."
 msgid "Opens in your browser. Your points and rewards apply when you order there."
 msgstr "يفتح في متصفحك. تُطبَّق نقاطك ومكافآتك عند الطلب هناك."
 
+#: components/ordering/drops-screen.tsx:246
+#: components/ordering/menu-screen.tsx:299
+msgid "Opens the website"
+msgstr "يفتح الموقع"
+
+#: components/ordering/site-checkout.tsx:38
+msgid "Opens the website. Add items on the menu, then check out there. Coupons and rewards apply at checkout."
+msgstr "يفتح الموقع. أضف الأصناف من القائمة، ثم أتمم الطلب هناك. تُطبَّق القسائم والمكافآت عند إتمام الطلب."
+
+#: components/ordering/site-checkout.tsx:34
+msgid "Order on the menu"
+msgstr "اطلب من القائمة"
+
 #: components/loyalty/program-sections.tsx:129
 msgid "Order on the website"
 msgstr "اطلب عبر الموقع"
+
+#: components/ordering/drops-screen.tsx:133
+#: components/ordering/drops-screen.tsx:213
+msgid "Ordering now"
+msgstr "الطلبات متاحة الآن"
 
 #: lib/reservations/messages.ts:34
 msgid "Other days with tables"
@@ -560,6 +642,14 @@ msgstr "عدد الأشخاص"
 #: lib/reservations/messages.ts:21
 msgid "Past"
 msgstr "السابقة"
+
+#: components/ordering/drops-screen.tsx:216
+msgid "Past drop"
+msgstr "طرح سابق"
+
+#: components/ordering/drops-screen.tsx:139
+msgid "Past drops"
+msgstr "الطروحات السابقة"
 
 #: lib/reservations/messages.ts:70
 msgid "Pay now"
@@ -595,7 +685,7 @@ msgstr "يرجى تسجيل الدخول مرة أخرى."
 msgid "Preferred time"
 msgstr "الوقت المفضل"
 
-#: app/(tabs)/_layout.tsx:59
+#: app/(tabs)/_layout.tsx:98
 #: lib/reservations/messages.ts:23
 msgid "Profile"
 msgstr "الملف الشخصي"
@@ -644,7 +734,7 @@ msgstr "طلبات استخدام مكافآتك"
 msgid "Reservation"
 msgstr "الحجز"
 
-#: app/(tabs)/_layout.tsx:40
+#: app/(tabs)/_layout.tsx:71
 #: lib/reservations/messages.ts:17
 msgid "Reservations"
 msgstr "الحجوزات"
@@ -661,7 +751,7 @@ msgstr "راجع حجزك"
 msgid "Reward returned"
 msgstr "إرجاع المكافأة"
 
-#: app/(tabs)/_layout.tsx:49
+#: app/(tabs)/_layout.tsx:84
 #: lib/loyalty/labels.ts:53
 msgid "Rewards"
 msgstr "المكافآت"
@@ -698,7 +788,7 @@ msgstr "جالسة"
 msgid "Seating area"
 msgstr "منطقة الجلوس"
 
-#: components/auth/verify-screen.tsx:59
+#: components/auth/verify-screen.tsx:71
 msgid "Send a new code"
 msgstr "إرسال رمز جديد"
 
@@ -709,6 +799,10 @@ msgstr "أرسل طلبًا"
 #: components/auth/login-screen.tsx:37
 msgid "Send code"
 msgstr "إرسال الرمز"
+
+#: components/ordering/menu-screen.tsx:340
+msgid "Set price {amount}"
+msgstr "سعر ثابت {amount}"
 
 #: lib/loyalty/labels.ts:106
 msgid "Show more"
@@ -746,6 +840,10 @@ msgstr "تسجيل الخروج"
 #: components/auth/connect-site-screen.tsx:23
 msgid "Site address"
 msgstr "عنوان الموقع"
+
+#: components/ordering/menu-screen.tsx:274
+msgid "Sold out"
+msgstr "نفد المخزون"
 
 #: lib/i18n/app-error-message.ts:41
 #: lib/loyalty/labels.ts:130
@@ -804,6 +902,10 @@ msgstr "تمت معالجة هذا الطلب بالفعل."
 #: lib/reservations/messages.ts:122
 msgid "That time was just taken. Pick another."
 msgstr "تم حجز هذا الوقت للتو. اختر وقتًا آخر."
+
+#: components/ordering/menu-screen.tsx:112
+msgid "The menu could not be loaded."
+msgstr "تعذر تحميل القائمة."
 
 #: lib/reservations/messages.ts:77
 msgid "The payment didn't go through."
@@ -878,6 +980,8 @@ msgid "Too many attempts. Please wait a moment and try again."
 msgstr "محاولات كثيرة جدًا. يرجى الانتظار قليلًا ثم المحاولة مرة أخرى."
 
 #: components/auth/site-unavailable-screen.tsx:26
+#: components/ordering/drops-screen.tsx:117
+#: components/ordering/menu-screen.tsx:114
 #: components/ui/error-message.tsx:28
 #: lib/loyalty/labels.ts:28
 #: lib/reservations/messages.ts:15
@@ -905,7 +1009,7 @@ msgstr "محدّثة"
 msgid "Use {reward}?"
 msgstr "استخدام {reward}؟"
 
-#: components/auth/verify-screen.tsx:67
+#: components/auth/verify-screen.tsx:79
 msgid "Use a different number"
 msgstr "استخدم رقمًا آخر"
 
@@ -918,11 +1022,15 @@ msgstr "استخدم موقعًا آخر"
 msgid "Use a reward when you order, or show your code at the counter."
 msgstr "استخدم مكافأة عند الطلب، أو أظهر رمزك عند الكاونتر."
 
-#: components/auth/verify-screen.tsx:31
+#: components/ordering/menu-screen.tsx:213
+msgid "Use code {code}"
+msgstr "استخدم الرمز {code}"
+
+#: components/auth/verify-screen.tsx:43
 msgid "Verification code"
 msgstr "رمز التحقق"
 
-#: components/auth/verify-screen.tsx:49
+#: components/auth/verify-screen.tsx:61
 msgid "Verify"
 msgstr "تحقق"
 
@@ -946,11 +1054,11 @@ msgstr "لم نعثر على ذلك."
 msgid "We couldn't update your place in line. We'll keep trying."
 msgstr "تعذّر تحديث مكانك في الصف. سنواصل المحاولة."
 
-#: components/auth/verify-screen.tsx:28
+#: components/auth/verify-screen.tsx:40
 msgid "We sent a 6-digit code to {phone}."
 msgstr "أرسلنا رمزًا من 6 أرقام إلى {phone}."
 
-#: components/auth/verify-screen.tsx:45
+#: components/auth/verify-screen.tsx:57
 msgid "We sent you a new code."
 msgstr "أرسلنا إليك رمزًا جديدًا."
 
@@ -965,6 +1073,10 @@ msgstr "سنستخدم الرقم {phone} من حسابك."
 #: lib/reservations/messages.ts:43
 msgid "We're holding your table for {time}"
 msgstr "نحجز طاولتك لمدة {time}"
+
+#: components/ordering/menu-screen.tsx:143
+msgid "What is on the menu today. Checkout is on the website."
+msgstr "ما هو موجود في القائمة اليوم. إتمام الطلب يتم على الموقع."
 
 #: lib/reservations/messages.ts:86
 msgid "When"

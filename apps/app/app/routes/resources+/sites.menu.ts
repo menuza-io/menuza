@@ -12,6 +12,7 @@ import {
 } from '#app/utils/rate-limit.server.ts'
 import {
 	getCachedSiteData,
+	getMenuCacheGeneration,
 	getSiteKvKey,
 	setCachedSiteData,
 } from '#app/utils/sites/kv-cache.server.ts'
@@ -26,6 +27,17 @@ export type {
 } from '#app/utils/menu/public-serializers.server.ts'
 
 export type { PublicSiteMenuPayload } from '#app/utils/menu/public-menu-context.server.ts'
+
+/** Till rules are not public, including copies still sitting in the site cache. */
+function withoutTillRules(payload: unknown): unknown {
+	if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+		return payload
+	}
+	if (!('discountRules' in payload)) return payload
+	const copy = { ...(payload as Record<string, unknown>) }
+	delete copy.discountRules
+	return copy
+}
 
 /**
  * Public endpoint for fetching an organization's restaurant menus, active locations,
@@ -151,13 +163,20 @@ export const loader = withPublicCors(async function loader({
 
 	const orgId = org.id
 	const queryHash = locationId || 'all'
-	const cacheKey = getSiteKvKey('page', orgId, `menu-${queryHash}`)
+	// The generation lets one bump rebuild every organization's menu (a
+	// system-level discount flag changes all of them; `bumpMenuCacheGeneration`).
+	const generation = await getMenuCacheGeneration()
+	const cacheKey = getSiteKvKey(
+		'page',
+		orgId,
+		`menu-g${generation}-${queryHash}`,
+	)
 
 	// Check KV Cache
 	if (!isPreview) {
 		const cached = await getCachedSiteData(cacheKey)
 		if (cached) {
-			return Response.json(cached, {
+			return Response.json(withoutTillRules(cached), {
 				headers: {
 					'Cache-Control': 'public, max-age=60, stale-while-revalidate=300',
 					Vary: 'Accept-Language',
@@ -195,7 +214,7 @@ export const loader = withPublicCors(async function loader({
 			? `public, max-age=${Math.max(1, secondsUntilVariationReturn)}`
 			: 'public, max-age=60, stale-while-revalidate=300'
 
-	return Response.json(payload, {
+	return Response.json(withoutTillRules(payload), {
 		headers: {
 			'Cache-Control': cacheControl,
 			Vary: 'Accept-Language',

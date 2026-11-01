@@ -41,6 +41,12 @@ export type OrderErrorLabels = {
 	idempotencyConflict: string
 	/** rate_limit_exceeded */
 	rateLimited: string
+	/** discount_changed: the page shows its own message with the new total. */
+	discountChanged: string
+	/** coupon_refused: the page shows the reason; this is the fallback. */
+	couponRefused: string
+	/** discounts_disabled, discounts_on_tab */
+	discountsUnavailable: string
 	/** anything else */
 	generic: string
 }
@@ -88,6 +94,10 @@ const CODE_TO_LABEL: Record<string, OrderErrorLabelKey> = {
 	location_not_found: 'locationUnavailable',
 	idempotency_conflict: 'idempotencyConflict',
 	rate_limit_exceeded: 'rateLimited',
+	discount_changed: 'discountChanged',
+	coupon_refused: 'couponRefused',
+	discounts_disabled: 'discountsUnavailable',
+	discounts_on_tab: 'discountsUnavailable',
 }
 
 export function orderErrorLabelKey(

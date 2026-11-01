@@ -175,7 +175,9 @@ export function buildLine(
 				optionId: option.id,
 				optionName: option.displayName,
 				quantity: qty,
-				unitCents: toCents(option.price),
+				// The server prices a whole choice with `priceWhole ?? price` (the base
+				// being the location override), so the till does too.
+				unitCents: toCents(option.priceWhole ?? option.price),
 				taxable: option.applySalesTax !== false,
 			})
 		}
@@ -198,9 +200,13 @@ export const itemNeedsChoices = (item: MenuItem): boolean =>
 		(g) => isAvailable(g.availabilityStatus) && availableOptions(g).length > 0,
 	)
 
-/** True when nothing must be chosen, so a single tap can add the item. */
+/**
+ * True when the item has nothing to choose, so a single tap can add it. An item
+ * with any choice the cashier can make, required or not (toppings, add-ons, a
+ * size), opens its sheet instead: an optional topping that can't be reached
+ * from the register is a topping the guest can't order.
+ */
 export const canQuickAdd = (item: MenuItem): boolean =>
+	!itemNeedsChoices(item) &&
 	validateConfig(item, defaultVariantPicks(item), defaultSelections(item)) ===
-		null &&
-	item.variations.groups.length === 0 &&
-	!item.modifierGroups.some((g) => g.minSelections > 0)
+		null

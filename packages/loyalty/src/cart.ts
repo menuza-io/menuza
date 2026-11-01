@@ -20,11 +20,20 @@ export const loyaltyCartLineSchema = z
 		unitBaseMinor: minorSchema,
 		/** One unit including its modifiers. */
 		unitMinor: minorSchema,
+		/**
+		 * What discounts and coupons already took off the whole line (all its
+		 * units). A reward applies to the value that is left.
+		 */
+		discountedMinor: minorSchema.default(0),
 	})
 	.strict()
 	.refine((line) => line.unitBaseMinor <= line.unitMinor, {
 		message: 'The base price cannot exceed the unit price',
 		path: ['unitBaseMinor'],
+	})
+	.refine((line) => line.discountedMinor <= line.unitMinor * line.quantity, {
+		message: 'The line cannot be discounted below zero',
+		path: ['discountedMinor'],
 	})
 export type LoyaltyCartLine = z.infer<typeof loyaltyCartLineSchema>
 
@@ -32,8 +41,6 @@ export const loyaltyCartSchema = z
 	.object({
 		currency: currencySchema,
 		lines: z.array(loyaltyCartLineSchema).min(1).max(200),
-		/** Discretionary discounts already on the bill; loyalty does not stack with them. */
-		otherDiscountMinor: minorSchema.default(0),
 	})
 	.strict()
 	.refine(
@@ -62,6 +69,11 @@ export function cartLineTotalMinor(line: LoyaltyCartLine): number {
 	return line.unitMinor * line.quantity
 }
 
+/** What is left of a line after discounts that came before the reward. */
+export function cartLineRemainingMinor(line: LoyaltyCartLine): number {
+	return Math.max(0, cartLineTotalMinor(line) - line.discountedMinor)
+}
+
 export function cartSubtotalMinor(cart: Pick<LoyaltyCart, 'lines'>): number {
 	return cart.lines.reduce((sum, line) => sum + cartLineTotalMinor(line), 0)
 }
@@ -73,7 +85,6 @@ export function cartSubtotalMinor(cart: Pick<LoyaltyCart, 'lines'>): number {
 export function canonicalLoyaltyCart(cart: LoyaltyCart): string {
 	return JSON.stringify([
 		cart.currency,
-		cart.otherDiscountMinor,
 		cart.lines.map((line) => [
 			line.lineId,
 			line.itemId,
@@ -82,6 +93,7 @@ export function canonicalLoyaltyCart(cart: LoyaltyCart): string {
 			line.quantity,
 			line.unitBaseMinor,
 			line.unitMinor,
+			line.discountedMinor,
 		]),
 	])
 }

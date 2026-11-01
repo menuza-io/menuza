@@ -17,6 +17,7 @@ export interface MenuFormHeaderProps {
 	showCancel?: boolean
 	submitName?: string
 	submitValue?: string
+	saveDisabled?: boolean
 }
 
 export function MenuFormHeader({
@@ -31,6 +32,7 @@ export function MenuFormHeader({
 	showCancel = true,
 	submitName,
 	submitValue,
+	saveDisabled = false,
 }: MenuFormHeaderProps) {
 	return (
 		<header className="border-border bg-background/95 sticky top-0 z-20 w-full border-b backdrop-blur-sm">
@@ -81,7 +83,7 @@ export function MenuFormHeader({
 						type="submit"
 						name={submitName}
 						value={submitValue}
-						disabled={isSubmitting}
+						disabled={isSubmitting || saveDisabled}
 						className={secondaryAction ? 'order-2' : undefined}
 					>
 						{isSubmitting ? (

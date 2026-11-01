@@ -13,6 +13,21 @@ export type PosTender = 'cash' | 'card' | 'other'
 export type PosSummaryOrder = {
 	status: 'open' | 'paid' | 'void' | 'refunded'
 	totals: { taxCents: number; tipCents: number; totalCents: number }
+	/**
+	 * Optional. What the sale's items came to before any discount or loyalty
+	 * reward, at menu prices (tax and tip excluded; a tax-inclusive menu's
+	 * prices already hold their tax): the sale's `totals.subtotalCents`.
+	 * Without it, or without `discountCents`, the summary leaves its discount
+	 * figures out rather than report a false zero.
+	 */
+	subtotalCents?: number
+	/**
+	 * Optional. What the sale's discounts took off: its `discount` adjustments
+	 * only, never a loyalty reward (that is `loyaltyDiscountCents`).
+	 */
+	discountCents?: number
+	/** Optional. What a loyalty reward took off (its `loyalty` adjustments); missing reads as 0. */
+	loyaltyDiscountCents?: number
 	lineVoids: Array<{ quantity: number; unitCents: number }>
 }
 
@@ -31,8 +46,26 @@ export type PosTenderTotals = {
 
 export type PosSalesSummary = {
 	orders: { paid: number; refunded: number; cancelled: number; open: number }
-	/** Closed sales at their full value, tax and tips included. */
+	/**
+	 * Closed sales at their full value, tax and tips included. Discounts are
+	 * already off it: it is not a figure before discounts (see
+	 * `grossBeforeDiscountsCents`).
+	 */
 	grossSalesCents: number
+	/**
+	 * Optional (left out when a closed sale did not say). What the items of
+	 * closed sales came to before any discount or loyalty reward: the sum of
+	 * their `subtotalCents`, tax and tips excluded. Not `grossSalesCents` plus
+	 * discounts: that would hold tax and tips.
+	 */
+	grossBeforeDiscountsCents?: number
+	/**
+	 * Optional, like `grossBeforeDiscountsCents`: what discounts (automatic,
+	 * manual and coupons) took off closed sales. Loyalty rewards are not in it.
+	 */
+	discountCents?: number
+	/** Optional, like `grossBeforeDiscountsCents`: what loyalty rewards took off closed sales. */
+	loyaltyDiscountCents?: number
 	refundsCents: number
 	/** Gross sales less refunds. */
 	netSalesCents: number
@@ -79,6 +112,10 @@ export function posSalesSummary(input: {
 
 	const orders = { paid: 0, refunded: 0, cancelled: 0, open: 0 }
 	let grossSalesCents = 0
+	let grossBeforeDiscountsCents = 0
+	let discountCents = 0
+	let loyaltyDiscountCents = 0
+	let discountsKnown = true
 	let taxCents = 0
 	let tipsCents = 0
 	const voids = {
@@ -98,6 +135,15 @@ export function posSalesSummary(input: {
 			if (order.status === 'paid') orders.paid++
 			else orders.refunded++
 			grossSalesCents += order.totals.totalCents
+			if (
+				Number.isFinite(order.subtotalCents) &&
+				Number.isFinite(order.discountCents)
+			) {
+				grossBeforeDiscountsCents += order.subtotalCents!
+				discountCents += order.discountCents!
+				const loyalty = order.loyaltyDiscountCents ?? 0
+				if (Number.isFinite(loyalty)) loyaltyDiscountCents += loyalty
+			} else discountsKnown = false
 			taxCents += order.totals.taxCents
 			tipsCents += order.totals.tipCents
 		}
@@ -120,6 +166,9 @@ export function posSalesSummary(input: {
 	return {
 		orders,
 		grossSalesCents,
+		...(discountsKnown
+			? { grossBeforeDiscountsCents, discountCents, loyaltyDiscountCents }
+			: {}),
 		refundsCents,
 		netSalesCents: grossSalesCents - refundsCents,
 		taxCents,

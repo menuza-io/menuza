@@ -19,9 +19,11 @@ import {
 	type QrOrderingFeatures,
 } from '@repo/common/qr-ordering'
 import { and, db, eq, Organization } from '@repo/database'
+import { type OrderContextDiscounts } from '@repo/discounts'
 import { TENANT_ORG_ID_PATTERN } from '@repo/tenant-db'
 import { type LoaderFunctionArgs } from 'react-router'
 import { z } from 'zod'
+import { buildOrderContextDiscounts } from '#app/utils/discounts/order-context.server.ts'
 import { requireInternalCommandAuth } from '#app/utils/internal-command-auth.server.ts'
 import {
 	buildPublicSiteDropPayload,
@@ -50,6 +52,12 @@ export type OrderContextResponse = {
 	onlinePayment: RestaurantOnlinePayment
 	/** QR ordering flags; the region treats anything missing as off. */
 	qrOrdering: QrOrderingFeatures
+	/**
+	 * Active discounts and their codes. `menu` items and variants carry
+	 * `excludeFromDiscounts` (`menu.categories[].items[]` and `.variations.variants[]`
+	 * as built by `serializePublicMenuItem`). The region reads a missing field as off.
+	 */
+	discounts: OrderContextDiscounts
 }
 
 async function readQrOrderingFeatures(
@@ -149,6 +157,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		drop,
 		onlinePayment: resolveRestaurantOnlinePayment(org),
 		qrOrdering: await readQrOrderingFeatures(org.id),
+		discounts: await buildOrderContextDiscounts(org.id),
 	}
 
 	return Response.json(response, {

@@ -230,7 +230,7 @@ describe('applyLoyaltyDiscountToTotals', () => {
 })
 
 describe('loyaltyCartForPricedOrder', () => {
-	it('builds the neutral cart with positional line ids and no other discounts', () => {
+	it('builds the neutral cart with positional line ids and no prior discounts', () => {
 		const order = priced({
 			lines: [
 				line({
@@ -249,7 +249,6 @@ describe('loyaltyCartForPricedOrder', () => {
 		})
 		const cart = loyaltyCartForPricedOrder(order)
 		expect(cart.currency).toBe('USD')
-		expect(cart.otherDiscountMinor).toBe(0)
 		expect(cart.lines).toEqual([
 			{
 				lineId: '0',
@@ -259,6 +258,7 @@ describe('loyaltyCartForPricedOrder', () => {
 				quantity: 2,
 				unitBaseMinor: 800,
 				unitMinor: 1000,
+				discountedMinor: 0,
 			},
 			{
 				lineId: '1',
@@ -268,8 +268,86 @@ describe('loyaltyCartForPricedOrder', () => {
 				quantity: 1,
 				unitBaseMinor: 500,
 				unitMinor: 500,
+				discountedMinor: 0,
 			},
 		])
+	})
+
+	it('carries what discounts already took off each line', () => {
+		const order = priced({
+			lines: [line({ unitPriceCents: 1000 }), line({ itemId: 'item_2' })],
+		})
+		const cart = loyaltyCartForPricedOrder(order, { '0': 300, '9': 50 })
+		expect(cart.lines.map((entry) => entry.discountedMinor)).toEqual([300, 0])
+	})
+})
+
+describe('applyLoyaltyDiscountToTotals with discounts and coupons', () => {
+	it('applies a coupon and a reward together, tax on what is left', () => {
+		const order = priced({
+			lines: [line({ unitPriceCents: 2000, taxableUnitCents: 2000 })],
+			tipCents: 200,
+		})
+		// A coupon took 500 off, then the reward took 300 of the remaining 1500.
+		const result = applyLoyaltyDiscountToTotals(
+			order,
+			[{ lineId: '0', discountMinor: 300 }],
+			300,
+			{ lineDiscounts: { '0': 500 } },
+		)
+		expect(result).toEqual({
+			loyaltyDiscountCents: 300,
+			taxCents: 120, // 1200 * 10%
+			totalCents: 2000 - 800 + 120 + 200,
+		})
+	})
+
+	it('takes a delivery discount off the fee', () => {
+		const order = priced({
+			lines: [line({ unitPriceCents: 1000, taxableUnitCents: 1000 })],
+			deliveryFeeCents: 400,
+		})
+		const result = applyLoyaltyDiscountToTotals(order, [], 0, {
+			deliveryDiscountMinor: 400,
+		})
+		expect(result.totalCents).toBe(1000 + 100)
+	})
+})
+
+describe('a tab discount on a part-taxed line', () => {
+	it('removes the discount from the taxable part in proportion, like the web and the till', () => {
+		// One 10.00 line of which only 4.00 is taxed (an untaxed option part).
+		const part = line({ unitPriceCents: 1000, taxableUnitCents: 400 })
+		const order = priced({ lines: [part] })
+		expect(order.taxCents).toBe(40)
+		const round = {
+			id: 'r1',
+			status: 'confirmed',
+			lines: [part],
+			subtotalCents: 1000,
+			taxCents: 40,
+			tipCents: 0,
+			deliveryFeeCents: 0,
+			totalCents: 1040,
+		} as unknown as RestaurantOrder
+		const tab = discountedTabTotals(
+			[round],
+			[{ lineId: 'r1:0', discountMinor: 500 }],
+		)
+		// 500 off a line that is 40% taxed takes 200 off the taxed part: 200 left.
+		expect(tab).toEqual({
+			loyaltyDiscountCents: 500,
+			subtotalCents: 1000,
+			taxCents: 20,
+			totalCents: 520,
+		})
+		// The web and till rule gives the same answer for the same cart.
+		const web = applyLoyaltyDiscountToTotals(
+			order,
+			[{ lineId: '0', discountMinor: 500 }],
+			500,
+		)
+		expect(web).toMatchObject({ taxCents: 20, totalCents: 520 })
 	})
 })
 

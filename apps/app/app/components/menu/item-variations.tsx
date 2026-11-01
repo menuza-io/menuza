@@ -25,6 +25,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@repo/ui/select'
+import { Switch } from '@repo/ui/switch'
 import { useRef, useState } from 'react'
 import {
 	MediaLibraryPicker,
@@ -390,6 +391,27 @@ export function ItemVariations({
 											location={primaryLocation}
 											onChange={(changes) => updateVariant(variant.id, changes)}
 										/>
+									</div>
+									<div className="flex items-center gap-2 sm:col-span-3">
+										<Switch
+											id={`variation-discounts-${variant.id}`}
+											aria-label={_(msg`Exclude ${name} from discounts`)}
+											checked={variant.excludeFromDiscounts}
+											onCheckedChange={(checked) =>
+												updateVariant(variant.id, {
+													excludeFromDiscounts: checked,
+												})
+											}
+										/>
+										<Label
+											htmlFor={`variation-discounts-${variant.id}`}
+											className="text-muted-foreground cursor-pointer text-xs font-normal"
+										>
+											<Trans>
+												Exclude from discounts. Never receives a discount, for
+												example gift cards.
+											</Trans>
+										</Label>
 									</div>
 								</div>
 							)

@@ -17,6 +17,10 @@ interface Props {
 		description?: string | null
 		priceLabel: string
 		fromLabel?: string | null
+		/** The regular price, struck through, when one plain offer sets the price. */
+		originalPriceLabel?: string | null
+		originalPriceSrLabel?: string
+		salePriceSrLabel?: string
 		imageUrl?: string | null
 		soldOut: boolean
 	}>
@@ -103,7 +107,14 @@ const cardBase =
 								) : (
 									<span class="inline-flex items-baseline gap-1.5">
 										{card.fromLabel ? <span class="text-sm text-muted-foreground">{card.fromLabel}</span> : null}
-										<span class="price font-heading text-lg leading-none text-foreground">{card.priceLabel}</span>
+										<del class="js-price-was bidi-isolate text-sm text-muted-foreground" hidden={!card.originalPriceLabel}>
+											<span class="sr-only">{card.originalPriceSrLabel}</span>
+											<span class="js-price-was-text">{card.originalPriceLabel}</span>
+										</del>
+										<span class="price font-heading text-lg leading-none text-foreground">
+											<span class="js-price-now-sr sr-only" hidden={!card.originalPriceLabel}>{card.salePriceSrLabel}</span>
+											<span class="js-price-now">{card.priceLabel}</span>
+										</span>
 									</span>
 								)}
 								{card.soldOut ? null : (

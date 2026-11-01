@@ -93,6 +93,10 @@ import {
 	type PrintShopNavAccess,
 } from './utils/print/nav.ts'
 import {
+	HIDDEN_DISCOUNTS_NAV,
+	type DiscountsNavAccess,
+} from './utils/discounts/nav.ts'
+import {
 	HIDDEN_QR_ORDERING_NAV,
 	type QrOrderingNavAccess,
 } from './utils/qr/nav.ts'
@@ -544,6 +548,27 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		)
 	}
 
+	let discountsNav: DiscountsNavAccess = HIDDEN_DISCOUNTS_NAV
+	if (currentOrgId && userId) {
+		const discountsAccess = await import('./utils/discounts/access.server.ts')
+		discountsNav = await time(
+			async () => {
+				try {
+					return await cachified({
+						key: `discounts-nav:${currentOrgId}:${userId}`,
+						cache,
+						ttl: 1000 * 30,
+						getFreshValue: () =>
+							discountsAccess.getDiscountsNavAccess(userId, currentOrgId),
+					})
+				} catch {
+					return HIDDEN_DISCOUNTS_NAV
+				}
+			},
+			{ timings, type: 'discounts nav', desc: 'discounts nav access' },
+		)
+	}
+
 	const utmHeaders = utmResponse?.headers || {}
 	const hasConfiguredProvider = ({
 		clientId,
@@ -601,6 +626,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 			loyaltyNav,
 			printShopNav,
 			qrOrderingNav,
+			discountsNav,
 			env: {
 				NODE_ENV: ENV.NODE_ENV,
 				ALLOW_INDEXING: ENV.ALLOW_INDEXING,

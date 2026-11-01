@@ -64,6 +64,8 @@ export const TENANT_ROLE_PERMISSION_IDS = [
 	'org_perm_update_loyalty_points_any',
 	'org_perm_update_loyalty_redemption_any',
 	'org_perm_read_loyalty_report_any',
+	'org_perm_read_discount_any',
+	'org_perm_update_discount_any',
 ] as const
 
 export type TenantRolePermissionId = (typeof TENANT_ROLE_PERMISSION_IDS)[number]
@@ -129,10 +131,19 @@ export const LOYALTY_IMPLIED_PERMISSION_IDS: Record<string, readonly string[]> =
 		org_perm_update_loyalty_redemption_any: ['org_perm_read_loyalty_any'],
 	}
 
+/** Editing discounts implies seeing them and their usage. */
+export const DISCOUNT_IMPLIED_PERMISSION_IDS: Record<
+	string,
+	readonly string[]
+> = {
+	org_perm_update_discount_any: ['org_perm_read_discount_any'],
+}
+
 export const IMPLIED_PERMISSION_IDS: Record<string, readonly string[]> = {
 	...STAFFING_IMPLIED_PERMISSION_IDS,
 	...RESERVATIONS_IMPLIED_PERMISSION_IDS,
 	...LOYALTY_IMPLIED_PERMISSION_IDS,
+	...DISCOUNT_IMPLIED_PERMISSION_IDS,
 }
 
 /**
@@ -184,16 +195,31 @@ export function withImpliedLoyaltyPermissions(
 	return [...result]
 }
 
+/** Add the read grant implied by a discount update grant. */
+export function withImpliedDiscountPermissions(
+	permissionIds: readonly string[],
+): string[] {
+	const result = new Set(permissionIds)
+	for (const id of permissionIds) {
+		for (const implied of DISCOUNT_IMPLIED_PERMISSION_IDS[id] ?? []) {
+			result.add(implied)
+		}
+	}
+	return [...result]
+}
+
 /**
- * Add every read grant implied by any staffing, reservations or loyalty
- * update/approve grant.
+ * Add every read grant implied by any staffing, reservations, loyalty or
+ * discount update/approve grant.
  */
 export function withImpliedTenantRolePermissions(
 	permissionIds: readonly string[],
 ): string[] {
-	return withImpliedLoyaltyPermissions(
-		withImpliedReservationsPermissions(
-			withImpliedStaffingPermissions(permissionIds),
+	return withImpliedDiscountPermissions(
+		withImpliedLoyaltyPermissions(
+			withImpliedReservationsPermissions(
+				withImpliedStaffingPermissions(permissionIds),
+			),
 		),
 	)
 }

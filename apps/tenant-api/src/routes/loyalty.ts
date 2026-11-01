@@ -35,7 +35,11 @@ import {
 import { quoteCheckout, quoteTab } from '../services/loyalty-checkout-quote.ts'
 import { getPublicProgram } from '../services/loyalty-program-service.ts'
 import { authenticateCustomer } from './auth.ts'
-import { resolveOrderingOrganization } from './orders.ts'
+import {
+	failureCountsAsCouponGuess,
+	guardCouponGuess,
+	resolveOrderingOrganization,
+} from './orders.ts'
 
 /**
  * Customer loyalty routes (`/loyalty/*`), called browser-direct from the
@@ -210,12 +214,37 @@ loyaltyRoutes.post('/checkout/quote', async (c) => {
 			'quote',
 			auth.customer.customerId,
 		)
-		const result = await quoteCheckout({
-			orgId: auth.customer.orgId,
-			customerId: auth.customer.customerId,
-			request: order.data,
-			selection: body.data.selection,
-		})
+		const couponGuard = await guardCouponGuess(
+			auth.customer.orgId,
+			c,
+			order.data.discounts?.code,
+			[
+				order.data.locationId,
+				order.data.fulfillment,
+				order.data.dropSlug ?? null,
+				order.data.lines,
+			],
+			auth.customer.customerId,
+		)
+		if (couponGuard.blocked) return couponGuard.blocked
+		let refused = false
+		let result: Awaited<ReturnType<typeof quoteCheckout>>
+		try {
+			result = await quoteCheckout({
+				orgId: auth.customer.orgId,
+				customerId: auth.customer.customerId,
+				request: order.data,
+				selection: body.data.selection,
+			})
+			refused =
+				(!result.ok && failureCountsAsCouponGuess(result.failure)) ||
+				(result.ok && result.couponCountsAsGuess === true)
+		} finally {
+			// A wrong code stays counted; an applied code, or any other
+			// answer or error, gives the attempt back. The loyalty quote is
+			// always a signed-in customer, whose fixable codes are free anyway.
+			await couponGuard.settle(refused ? 'wrong' : 'none')
+		}
 		if (!result.ok) {
 			const { status, code, message } = result.failure
 			return Response.json(

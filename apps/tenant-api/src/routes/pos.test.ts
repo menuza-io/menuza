@@ -10,6 +10,7 @@ import {
 	posRefundTaxCents,
 } from '@repo/common/pos-fiscal'
 import { formatPosPairingCode, randomPosToken } from '@repo/common/pos-orders'
+import { makeDiscount } from '../../../../packages/discounts/src/test-fixtures.ts'
 import { brand } from '@repo/config/brand'
 import {
 	fromHex,
@@ -28,6 +29,7 @@ import {
 	posManagers,
 	staffMembers,
 	staffScopeAssignments,
+	discountRedemptions,
 	posCashMovements,
 	posFiscalDocuments,
 	posHeldUploads,
@@ -69,7 +71,11 @@ import {
 	reserveReward,
 	rewardDefinition,
 } from '../services/loyalty-test-fixture.ts'
-import { fiscalChainGaps, purgePosGuestNames } from '../services/pos-service.ts'
+import {
+	discountRuleReason,
+	fiscalChainGaps,
+	purgePosGuestNames,
+} from '../services/pos-service.ts'
 import { eraseLinkedUser } from '../services/staff-internal-service.ts'
 import { erasePerson } from '../services/person-erasure-service.ts'
 import { runStaffTickForOrg } from '../services/staff-tick-service.ts'
@@ -370,12 +376,34 @@ function wireOrder(
 	}
 }
 
+/**
+ * Totals of a bill whose discount is spread in proportion over taxable lines
+ * (no line data), the way the till and the server work out the VAT.
+ */
+function discountedTotals(
+	totals: ReturnType<typeof wireOrder>['totals'],
+	amountCents: number,
+) {
+	const taxableAfter = Math.round(
+		totals.subtotalCents * (1 - amountCents / totals.subtotalCents),
+	)
+	const taxCents = Math.round((taxableAfter * TAX) / 100)
+	return {
+		...totals,
+		adjustmentCents: amountCents,
+		taxCents,
+		totalCents: totals.subtotalCents - amountCents + taxCents + totals.tipCents,
+	}
+}
+
 describe('POS terminals: pairing, upload and sync', () => {
 	let directory: string
 	let app: Hono
 	let contextFor: (orgId: string) => unknown
 	let fetchMock: ReturnType<typeof vi.fn>
 	let contextStatus = 200
+	/** What App's `discount-rules` answers; null is App being unreachable. */
+	let tillRules: unknown[] | null = null
 
 	const mintOperator = (
 		scope: 'orders:read' | 'orders:write' | 'mailbox' = 'orders:write',
@@ -655,6 +683,7 @@ describe('POS terminals: pairing, upload and sync', () => {
 
 		clearPosMenuCache()
 		contextStatus = 200
+		tillRules = null
 		contextFor = (orgId) => menuContext(orgId)
 		fetchMock = vi.fn(async (input: RequestInfo | URL) => {
 			const url = new URL(typeof input === 'string' ? input : input.toString())
@@ -662,6 +691,10 @@ describe('POS terminals: pairing, upload and sync', () => {
 				if (contextStatus !== 200)
 					return new Response('down', { status: contextStatus })
 				return Response.json(contextFor(url.searchParams.get('orgId') ?? ''))
+			}
+			if (url.pathname.endsWith('/resources/discount-rules')) {
+				if (tillRules === null) return new Response('down', { status: 503 })
+				return Response.json({ discountRules: tillRules })
 			}
 			return new Response('not found', { status: 404 })
 		})
@@ -1417,7 +1450,7 @@ describe('POS terminals: pairing, upload and sync', () => {
 			).toBe(201)
 		})
 
-		it('an order with adjustments is stored without a comparable server total and no false tax flag', async () => {
+		it('an order with adjustments gets the expected total and no false tax flag', async () => {
 			const { deviceSecret } = await pair()
 			const order = wireOrder()
 			const adjustment = 230
@@ -1433,6 +1466,9 @@ describe('POS terminals: pairing, upload and sync', () => {
 						amountCents: adjustment,
 					},
 				],
+				discountApplications: [
+					{ discountId: 'd1', name: '10% off', amountCents: adjustment },
+				],
 				totals: {
 					...order.totals,
 					adjustmentCents: adjustment,
@@ -1445,8 +1481,127 @@ describe('POS terminals: pairing, upload and sync', () => {
 			const body = (await r.json()) as {
 				order: { serverTotalCents: number | null; reviewReason: string | null }
 			}
-			expect(body.order.serverTotalCents).toBeNull()
+			// What the live menu expects after the discount, tip left out.
+			expect(body.order.serverTotalCents).toBe(subtotal - adjustment + taxCents)
 			expect(body.order.reviewReason).toBeNull()
+		})
+
+		describe('VAT on a discounted sale', () => {
+			// 5 burgers with an untaxed 1.00 donation each (5500, 5000 taxable) and 20
+			// fries (8000 taxable): the per-line and the proportional rule differ,
+			// and the discount stays under half the bill.
+			const DONATION = {
+				groupId: 'grp-top',
+				optionId: 'opt-donate',
+				optionName: 'Donation',
+				unitCents: 100,
+				taxable: false,
+			}
+			const burgerWithDonation: LineSpec = {
+				...BURGER,
+				quantity: 5,
+				options: [...BURGER.options!, DONATION],
+			}
+			const fries: LineSpec = { ...FRIES, quantity: 20 }
+			const burgerOff = 5500
+
+			function discountedSale(input: {
+				taxCents: number
+				lineAmounts?: Record<string, number>
+				withLineIds?: boolean
+			}) {
+				const order = wireOrder({ lines: [burgerWithDonation, fries] })
+				const subtotal = order.totals.subtotalCents
+				const lines = order.lines.map((line, index) => ({
+					...line,
+					...(input.withLineIds === false ? {} : { id: `line-${index}` }),
+				}))
+				return {
+					...order,
+					lines,
+					adjustments: [
+						{
+							id: 'manual:1',
+							kind: 'discount' as const,
+							label: 'Burgers on the house',
+							amountCents: burgerOff,
+							...(input.lineAmounts ? { lineAmounts: input.lineAmounts } : {}),
+						},
+					],
+					discountApplications: [
+						{
+							discountId: 'manual:1',
+							name: 'Burgers on the house',
+							amountCents: burgerOff,
+						},
+					],
+					totals: {
+						...order.totals,
+						adjustmentCents: burgerOff,
+						taxCents: input.taxCents,
+						totalCents: subtotal - burgerOff + input.taxCents,
+					},
+				}
+			}
+			const reasonOf = async (sale: ReturnType<typeof discountedSale>) => {
+				const { deviceSecret } = await pair()
+				const r = await upload(deviceSecret, sale)
+				expect(r.status).toBe(201)
+				return (
+					(await r.json()) as {
+						order: { reviewReason: string | null; serverTotalCents: number }
+					}
+				).order
+			}
+
+			it('flags a till that understates the VAT of a discounted sale', async () => {
+				const order = await reasonOf(
+					discountedSale({
+						taxCents: 100,
+						lineAmounts: { 'line-0': burgerOff },
+					}),
+				)
+				expect(order.reviewReason).toBe('tax_mismatch')
+				// The total the menu expects: 13500 - 5500 + 660.
+				expect(order.serverTotalCents).toBe(8660)
+			})
+
+			it('does not flag an honest per-line sale', async () => {
+				const order = await reasonOf(
+					discountedSale({
+						taxCents: 660,
+						lineAmounts: { 'line-0': burgerOff },
+					}),
+				)
+				expect(order.reviewReason).toBeNull()
+				expect(order.serverTotalCents).toBe(8660)
+			})
+
+			it('does not flag a manual discount without line data, spread in proportion', async () => {
+				// round(13000 * (1 - 5500 / 13500)) = 7704 taxable, 636 tax
+				const order = await reasonOf(
+					discountedSale({ taxCents: 636, withLineIds: false }),
+				)
+				expect(order.reviewReason).toBeNull()
+				expect(order.serverTotalCents).toBe(8636)
+			})
+
+			it('flags the per-line figure when the till sent no line data for it', async () => {
+				const order = await reasonOf(
+					discountedSale({ taxCents: 660, withLineIds: false }),
+				)
+				expect(order.reviewReason).toBe('tax_mismatch')
+			})
+
+			it('tolerates rounding of one minor unit per line', async () => {
+				const order = await reasonOf(
+					discountedSale({
+						taxCents: 662,
+						lineAmounts: { 'line-0': burgerOff },
+					}),
+				)
+				expect(order.reviewReason).toBeNull()
+			})
 		})
 
 		it('an order cannot be renumbered or moved to another day by a later revision', async () => {
@@ -3077,6 +3232,71 @@ describe('POS terminals: pairing, upload and sync', () => {
 			await expect(db.delete(posCashMovements)).rejects.toThrow()
 		})
 
+		it('a day report names the discounts given and the gross before them', async () => {
+			const { deviceSecret } = await pair({ terminalCode: 'T1' })
+			const plain = wireOrder({ number: 'T1-0001' })
+			const base = wireOrder({ number: 'T1-0002' })
+			const amount = 230
+			const totals = discountedTotals(base.totals, amount)
+			await upload(
+				deviceSecret,
+				wireOrder({
+					number: 'T1-0001',
+					payments: [{ amountCents: plain.totals.totalCents }],
+				}),
+			)
+			await upload(deviceSecret, {
+				...base,
+				status: 'paid',
+				adjustments: [
+					{
+						id: 'd1',
+						kind: 'discount' as const,
+						label: '10% off',
+						amountCents: amount,
+					},
+				],
+				discountApplications: [
+					{ discountId: 'd1', name: '10% off', amountCents: amount },
+				],
+				totals,
+				payments: [
+					{
+						id: crypto.randomUUID(),
+						method: 'cash' as const,
+						amountCents: totals.totalCents,
+						tenderedCents: totals.totalCents,
+						at: new Date().toISOString(),
+						staff: null,
+					},
+				],
+			})
+			const day = (await (
+				await operator('GET', '/reports/day?businessDate=2026-10-21', {
+					scope: 'orders:read',
+				})
+			).json()) as {
+				summary: {
+					grossSalesCents: number
+					discountCents?: number
+					loyaltyDiscountCents?: number
+					grossBeforeDiscountsCents?: number
+				}
+				byTerminal: Array<{ summary: { discountCents?: number } }>
+			}
+			expect(day.summary.grossSalesCents).toBe(
+				plain.totals.totalCents + totals.totalCents,
+			)
+			expect(day.summary.discountCents).toBe(amount)
+			expect(day.summary.loyaltyDiscountCents).toBe(0)
+			// Items before any discount: tax and tips are not in it.
+			expect(day.summary.grossBeforeDiscountsCents).toBe(
+				plain.totals.subtotalCents + base.totals.subtotalCents,
+			)
+			expect(day.summary).not.toHaveProperty('subtotalCents')
+			expect(day.byTerminal[0]!.summary.discountCents).toBe(amount)
+		})
+
 		it('a day report covers every terminal and the day’s shifts', async () => {
 			const t1 = await pair({ terminalCode: 'T1' })
 			const t2 = await pair({ terminalCode: 'T2' })
@@ -3698,6 +3918,627 @@ describe('POS terminals: pairing, upload and sync', () => {
 		const remove = (deviceId: string) =>
 			operator('DELETE', `/terminals/${deviceId}`)
 
+		describe('discounts the till applied', () => {
+			const ten = makeDiscount({
+				id: 'disc_ten',
+				name: 'Happy hour',
+				version: 3,
+			})
+			const manager = makeDiscount({
+				id: 'disc_manual',
+				name: 'Manager special',
+				application: 'manual',
+				requireApproval: true,
+				version: 1,
+			})
+			/** A burger sale with a 100 cent discount, open or paid. */
+			const discounted = (
+				applications: unknown[],
+				input: {
+					id?: string
+					status?: 'open' | 'paid'
+					amountCents?: number
+				} = {},
+			) => {
+				const o = wireOrder({ id: input.id, status: 'open' })
+				const amountCents = input.amountCents ?? 100
+				const totalCents = discountedTotals(o.totals, amountCents).totalCents
+				return {
+					...o,
+					status: input.status ?? 'paid',
+					adjustments: [
+						{
+							id: 'auto:disc_ten',
+							kind: 'discount' as const,
+							label: 'Happy hour',
+							amountCents,
+						},
+					],
+					discountApplications: applications,
+					totals: discountedTotals(o.totals, amountCents),
+					payments:
+						(input.status ?? 'paid') === 'paid'
+							? [
+									{
+										id: crypto.randomUUID(),
+										method: 'cash' as const,
+										amountCents: totalCents,
+										tenderedCents: totalCents,
+										at: new Date().toISOString(),
+										staff: null,
+									},
+								]
+							: [],
+				}
+			}
+			const application = (over: Record<string, unknown> = {}) => ({
+				discountId: 'disc_ten',
+				name: 'Happy hour',
+				amountCents: 100,
+				version: 3,
+				...over,
+			})
+			const redemptions = async (orderId: string) =>
+				(await getTenantDb(ORG_A))
+					.select()
+					.from(discountRedemptions)
+					.where(eq(discountRedemptions.sourceId, orderId))
+
+			it('records a use for a paid sale and flags nothing', async () => {
+				tillRules = [ten, manager]
+				const { deviceSecret } = await pair()
+				const id = crypto.randomUUID()
+				const r = await upload(
+					deviceSecret,
+					discounted([application()], { id }),
+				)
+				expect(await reviewOf(r)).toBeNull()
+				expect(await redemptions(id)).toMatchObject([
+					{
+						discountId: 'disc_ten',
+						discountVersion: 3,
+						sourceType: 'pos',
+						state: 'consumed',
+					},
+				])
+			})
+
+			it('does not count an open tab as a use until it is paid', async () => {
+				tillRules = [ten]
+				const { deviceSecret } = await pair()
+				const id = crypto.randomUUID()
+				await upload(
+					deviceSecret,
+					discounted([application()], { id, status: 'open' }),
+				)
+				expect(await redemptions(id)).toEqual([])
+			})
+
+			it('flags a discount that is not a till rule any more, and counts no use', async () => {
+				tillRules = [ten]
+				const { deviceSecret } = await pair()
+				const id = crypto.randomUUID()
+				const r = await upload(
+					deviceSecret,
+					discounted(
+						[application({ discountId: 'disc_gone', version: undefined })],
+						{
+							id,
+						},
+					),
+				)
+				expect(r.status).toBe(201)
+				expect(await reviewOf(r)).toBe('unknown_discount')
+				expect(await redemptions(id)).toEqual([])
+			})
+
+			it('flags a rule that needs a manager when no approver is named', async () => {
+				tillRules = [ten, manager]
+				const { deviceSecret } = await pair()
+				const id = crypto.randomUUID()
+				const r = await upload(
+					deviceSecret,
+					discounted([application({ discountId: 'disc_manual', version: 1 })], {
+						id,
+					}),
+				)
+				expect(await reviewOf(r)).toBe('discount_approval_missing')
+				expect(await redemptions(id)).toEqual([])
+			})
+
+			it('flags a discount applied from an older version of the rule', async () => {
+				tillRules = [ten]
+				const { deviceSecret } = await pair()
+				const id = crypto.randomUUID()
+				const r = await upload(
+					deviceSecret,
+					discounted([application({ version: 2 })], { id }),
+				)
+				expect(await reviewOf(r)).toBe('discount_stale')
+				// The sale is kept and the use still counts: it did happen.
+				expect(await redemptions(id)).toHaveLength(1)
+			})
+
+			it('flags a discount adjustment that no application explains', async () => {
+				tillRules = [ten]
+				const { deviceSecret } = await pair()
+				const id = crypto.randomUUID()
+				const r = await upload(deviceSecret, discounted([], { id }))
+				expect(r.status).toBe(201)
+				expect(await reviewOf(r)).toBe('discount_unexplained')
+			})
+
+			it('flags that even when App cannot be reached for the rules', async () => {
+				tillRules = null
+				const { deviceSecret } = await pair()
+				const r = await upload(deviceSecret, discounted([]))
+				expect(await reviewOf(r)).toBe('discount_unexplained')
+			})
+
+			it('flags an application above the rule percentage of the subtotal', async () => {
+				tillRules = [ten]
+				const { deviceSecret } = await pair()
+				const o = wireOrder({ status: 'open' })
+				// Ten percent rule, thirty percent taken: the sale is kept, flagged.
+				const amountCents = Math.floor(o.totals.subtotalCents * 0.3)
+				const id = crypto.randomUUID()
+				const r = await upload(
+					deviceSecret,
+					discounted([application({ amountCents })], { id, amountCents }),
+				)
+				expect(r.status).toBe(201)
+				expect(await reviewOf(r)).toBe('discount_amount_mismatch')
+				// The use still counts: the sale happened.
+				expect(await redemptions(id)).toHaveLength(1)
+			})
+
+			it('flags an application above the rule maximum', async () => {
+				tillRules = [
+					makeDiscount({
+						id: 'disc_ten',
+						name: 'Happy hour',
+						version: 3,
+						percentBp: 5000,
+						maxDiscountMinor: 50,
+						currency: 'USD',
+					}),
+				]
+				const { deviceSecret } = await pair()
+				const r = await upload(deviceSecret, discounted([application()]))
+				expect(await reviewOf(r)).toBe('discount_amount_mismatch')
+			})
+
+			it('caps a laddered percent rule at its top step', () => {
+				const base = wireOrder({ status: 'open' })
+				const subtotal = 100_000
+				const o = {
+					...base,
+					totals: { ...base.totals, subtotalCents: subtotal },
+				}
+				const rule = {
+					id: 'x',
+					version: 1,
+					requireApproval: false,
+					valueType: 'percent',
+					percentBp: 500,
+					tiers: {
+						basis: 'spend',
+						steps: [
+							{ at: 100, percentBp: 500, amountMinor: null },
+							{ at: 1000, percentBp: 1000, amountMinor: null },
+						],
+					},
+				}
+				const sale = (amountCents: number) => ({
+					...o,
+					adjustments: [
+						{
+							id: 'auto:x',
+							kind: 'discount' as const,
+							label: 'X',
+							amountCents,
+						},
+					],
+					discountApplications: [{ discountId: 'x', name: 'X', amountCents }],
+				})
+				const top = Math.ceil((subtotal * 1000) / 10_000) + o.lines.length
+				expect(discountRuleReason(sale(top), [rule])).toBeNull()
+				expect(discountRuleReason(sale(top + 1), [rule])).toBe(
+					'discount_amount_mismatch',
+				)
+			})
+
+			it('caps a fixed order-wide rule at its amount', () => {
+				const o = wireOrder({ status: 'open' })
+				const rule = {
+					id: 'five',
+					version: 1,
+					requireApproval: false,
+					valueType: 'fixed',
+					amountMinor: 500,
+					target: { scope: 'order' },
+				}
+				const sale = (amountCents: number) => ({
+					...o,
+					adjustments: [
+						{
+							id: 'auto:five',
+							kind: 'discount' as const,
+							label: 'Five off',
+							amountCents,
+						},
+					],
+					discountApplications: [
+						{ discountId: 'five', name: 'Five off', amountCents },
+					],
+				})
+				expect(discountRuleReason(sale(500), [rule])).toBeNull()
+				expect(discountRuleReason(sale(500 + o.lines.length + 1), [rule])).toBe(
+					'discount_amount_mismatch',
+				)
+			})
+
+			it('flags an application above the subtotal even without the rules', () => {
+				const o = wireOrder({ status: 'open' })
+				const subtotal = o.totals.subtotalCents
+				const sale = (amountCents: number) => ({
+					...o,
+					adjustments: [
+						{
+							id: 'auto:x',
+							kind: 'discount' as const,
+							label: 'X',
+							amountCents,
+						},
+					],
+					discountApplications: [{ discountId: 'x', name: 'X', amountCents }],
+				})
+				expect(discountRuleReason(sale(subtotal), null)).toBeNull()
+				expect(discountRuleReason(sale(subtotal + 1), null)).toBe(
+					'discount_amount_mismatch',
+				)
+			})
+
+			it('checks the rules again when a later paid revision adds applications', async () => {
+				tillRules = [ten]
+				const { deviceSecret } = await pair()
+				const id = crypto.randomUUID()
+				// Open tab: a valid application, nothing to flag.
+				const first = await upload(
+					deviceSecret,
+					discounted([application()], { id, status: 'open' }),
+				)
+				expect(await reviewOf(first)).toBeNull()
+				// Paid, same bill, but the till now names a rule that is not published.
+				const second = await upload(deviceSecret, {
+					...discounted(
+						[application({ discountId: 'disc_gone', version: undefined })],
+						{ id, status: 'paid' },
+					),
+					revision: 2,
+				})
+				expect(second.status).toBe(200)
+				expect(await reviewOf(second)).toBe('unknown_discount')
+				const db = await getTenantDb(ORG_A)
+				const [revision] = await db
+					.select()
+					.from(posOrderRevisions)
+					.where(eq(posOrderRevisions.revision, 2))
+				expect(revision!.reviewReason).toBe('unknown_discount')
+			})
+
+			it('does not run the rules again for a replay of the same revision', async () => {
+				tillRules = [ten]
+				const { deviceSecret } = await pair()
+				const id = crypto.randomUUID()
+				const sale = discounted([application()], { id })
+				expect(await reviewOf(await upload(deviceSecret, sale))).toBeNull()
+				// The rule is edited afterwards; the same upload again is not flagged.
+				tillRules = [{ ...ten, version: 4 }]
+				expect(await reviewOf(await upload(deviceSecret, sale))).toBeNull()
+			})
+
+			it('flags a discount approved by someone who is not a manager', async () => {
+				tillRules = [ten, manager]
+				const { deviceSecret } = await pair()
+				const cashier = await addStaff({ pin: '1111' })
+				const id = crypto.randomUUID()
+				const r = await upload(deviceSecret, {
+					...discounted(
+						[
+							application({
+								discountId: 'disc_manual',
+								version: 1,
+								approvedByStaffId: cashier,
+								reason: 'Regular',
+							}),
+						],
+						{ id },
+					),
+					staff: { id: cashier, name: 'Ana Karim' },
+				})
+				expect(await reviewOf(r)).toBe('approver_not_manager')
+			})
+
+			it('accepts a discount approved by a manager', async () => {
+				tillRules = [ten, manager]
+				const { deviceSecret } = await pair()
+				const boss = await addStaff({ pin: '2222', manager: true })
+				const id = crypto.randomUUID()
+				const r = await upload(deviceSecret, {
+					...discounted(
+						[
+							application({
+								discountId: 'disc_manual',
+								version: 1,
+								approvedByStaffId: boss,
+								reason: 'Regular',
+							}),
+						],
+						{ id },
+					),
+					staff: { id: boss, name: 'Ana Karim' },
+				})
+				expect(await reviewOf(r)).toBeNull()
+				expect(await redemptions(id)).toHaveLength(1)
+			})
+
+			it('flags an approver nobody has heard of', async () => {
+				tillRules = [ten, manager]
+				const { deviceSecret } = await pair()
+				const r = await upload(
+					deviceSecret,
+					discounted([
+						application({
+							discountId: 'disc_manual',
+							version: 1,
+							approvedByStaffId: crypto.randomUUID(),
+						}),
+					]),
+				)
+				expect(await reviewOf(r)).toBe('unknown_staff')
+			})
+
+			it('says nothing about the rules when App cannot be reached', async () => {
+				tillRules = null
+				const { deviceSecret } = await pair()
+				const r = await upload(
+					deviceSecret,
+					discounted([application({ discountId: 'disc_gone' })]),
+				)
+				expect(r.status).toBe(201)
+				expect(await reviewOf(r)).toBeNull()
+			})
+
+			it('stops counting a use when the sale is refunded in full', async () => {
+				tillRules = [ten]
+				const { deviceSecret } = await pair()
+				const id = crypto.randomUUID()
+				const base = discounted([application()], { id })
+				const issued = issuePosFiscalDocument(
+					newPosFiscalChain(crypto.randomUUID()),
+					{
+						kind: 'invoice',
+						docId: id,
+						orderId: id,
+						at: new Date().toISOString(),
+						currency: 'USD',
+						totalCents: base.totals.totalCents,
+						taxCents: base.totals.taxCents,
+					},
+				)
+				const paid = { ...base, fiscal: [issued.document] }
+				expect((await upload(deviceSecret, paid)).status).toBe(201)
+				expect((await redemptions(id))[0]!.state).toBe('consumed')
+				const refund = {
+					id: crypto.randomUUID(),
+					paymentId: paid.payments[0]!.id,
+					method: paid.payments[0]!.method,
+					amountCents: paid.totals.totalCents,
+					at: new Date().toISOString(),
+					by: null,
+					approvedBy: null,
+					reason: 'wrong_charge' as const,
+					reference: null,
+				}
+				const credit = issuePosFiscalDocument(issued.head, {
+					kind: 'credit_note',
+					docId: refund.id,
+					orderId: id,
+					at: refund.at,
+					currency: 'USD',
+					totalCents: refund.amountCents,
+					taxCents: posRefundTaxCents(paid.totals, refund.amountCents),
+				})
+				const response = await upload(deviceSecret, {
+					...paid,
+					revision: 2,
+					status: 'refunded',
+					refunds: [refund],
+					fiscal: [paid.fiscal[0], credit.document],
+				})
+				expect(response.status).toBe(200)
+				expect((await redemptions(id))[0]!.state).toBe('refunded')
+			})
+
+			it('a partial refund keeps the use', async () => {
+				tillRules = [ten]
+				const { deviceSecret } = await pair()
+				const id = crypto.randomUUID()
+				const base = discounted([application()], { id })
+				const issued = issuePosFiscalDocument(
+					newPosFiscalChain(crypto.randomUUID()),
+					{
+						kind: 'invoice',
+						docId: id,
+						orderId: id,
+						at: new Date().toISOString(),
+						currency: 'USD',
+						totalCents: base.totals.totalCents,
+						taxCents: base.totals.taxCents,
+					},
+				)
+				const paid = { ...base, fiscal: [issued.document] }
+				await upload(deviceSecret, paid)
+				const refund = {
+					id: crypto.randomUUID(),
+					paymentId: paid.payments[0]!.id,
+					method: paid.payments[0]!.method,
+					amountCents: 100,
+					at: new Date().toISOString(),
+					by: null,
+					approvedBy: null,
+					reason: 'wrong_charge' as const,
+					reference: null,
+				}
+				const credit = issuePosFiscalDocument(issued.head, {
+					kind: 'credit_note',
+					docId: refund.id,
+					orderId: id,
+					at: refund.at,
+					currency: 'USD',
+					totalCents: 100,
+					taxCents: posRefundTaxCents(paid.totals, 100),
+				})
+				const response = await upload(deviceSecret, {
+					...paid,
+					revision: 2,
+					refunds: [refund],
+					fiscal: [paid.fiscal[0], credit.document],
+				})
+				expect(response.status).toBe(200)
+				expect((await redemptions(id))[0]!.state).toBe('consumed')
+			})
+
+			it('keeps the first verdict on a bill that does not change', async () => {
+				tillRules = [ten]
+				const { deviceSecret } = await pair()
+				const id = crypto.randomUUID()
+				const open = discounted([application()], { id, status: 'open' })
+				expect(await reviewOf(await upload(deviceSecret, open))).toBeNull()
+				// The rule is edited after the sale; paying the same bill flags nothing.
+				tillRules = [{ ...ten, version: 4 }]
+				clearPosMenuCache()
+				const paid = discounted([application()], { id })
+				const again = await upload(deviceSecret, {
+					...open,
+					revision: 2,
+					status: 'paid',
+					payments: paid.payments,
+				})
+				expect(await reviewOf(again)).toBeNull()
+			})
+
+			describe('with the DISCOUNTS_ENABLED kill switch off', () => {
+				beforeEach(() => {
+					vi.stubEnv('DISCOUNTS_ENABLED', 'false')
+				})
+
+				it('answers an empty rule list without asking App, not an error', async () => {
+					tillRules = [ten, manager]
+					const { deviceSecret } = await pair()
+					const response = await app.request('/pos/discount-rules', {
+						headers: { authorization: `Bearer ${deviceSecret}` },
+					})
+					expect(response.status).toBe(200)
+					expect(await response.json()).toEqual({ discountRules: [] })
+					const asked = fetchMock.mock.calls.some(([input]) =>
+						String(input).includes('/resources/discount-rules'),
+					)
+					expect(asked).toBe(false)
+				})
+
+				it('still answers the rules when the switch is on', async () => {
+					vi.stubEnv('DISCOUNTS_ENABLED', 'true')
+					tillRules = [ten]
+					const { deviceSecret } = await pair()
+					const response = await app.request('/pos/discount-rules', {
+						headers: { authorization: `Bearer ${deviceSecret}` },
+					})
+					expect(response.status).toBe(200)
+					const body = (await response.json()) as { discountRules: unknown[] }
+					expect(body.discountRules).toHaveLength(1)
+				})
+
+				it('keeps the sale but flags nothing and records no use', async () => {
+					// A rule that no longer exists would flag the sale with the switch on.
+					tillRules = [ten]
+					const { deviceSecret } = await pair()
+					const id = crypto.randomUUID()
+					const r = await upload(
+						deviceSecret,
+						discounted(
+							[application({ discountId: 'disc_gone', version: undefined })],
+							{ id },
+						),
+					)
+					expect(r.status).toBe(201)
+					expect(await reviewOf(r)).toBeNull()
+					expect(await redemptions(id)).toEqual([])
+				})
+
+				it('does not flag an adjustment no application explains', async () => {
+					const { deviceSecret } = await pair()
+					const r = await upload(deviceSecret, discounted([]))
+					expect(r.status).toBe(201)
+					expect(await reviewOf(r)).toBeNull()
+				})
+
+				it('still releases a use reserved before the switch went off', async () => {
+					vi.stubEnv('DISCOUNTS_ENABLED', 'true')
+					tillRules = [ten]
+					const { deviceSecret } = await pair()
+					const id = crypto.randomUUID()
+					const base = discounted([application()], { id })
+					const issued = issuePosFiscalDocument(
+						newPosFiscalChain(crypto.randomUUID()),
+						{
+							kind: 'invoice',
+							docId: id,
+							orderId: id,
+							at: new Date().toISOString(),
+							currency: 'USD',
+							totalCents: base.totals.totalCents,
+							taxCents: base.totals.taxCents,
+						},
+					)
+					const paid = { ...base, fiscal: [issued.document] }
+					expect((await upload(deviceSecret, paid)).status).toBe(201)
+					expect((await redemptions(id))[0]!.state).toBe('consumed')
+					vi.stubEnv('DISCOUNTS_ENABLED', 'false')
+					const refund = {
+						id: crypto.randomUUID(),
+						paymentId: paid.payments[0]!.id,
+						method: paid.payments[0]!.method,
+						amountCents: paid.totals.totalCents,
+						at: new Date().toISOString(),
+						by: null,
+						approvedBy: null,
+						reason: 'wrong_charge' as const,
+						reference: null,
+					}
+					const credit = issuePosFiscalDocument(issued.head, {
+						kind: 'credit_note',
+						docId: refund.id,
+						orderId: id,
+						at: refund.at,
+						currency: 'USD',
+						totalCents: refund.amountCents,
+						taxCents: posRefundTaxCents(paid.totals, refund.amountCents),
+					})
+					const response = await upload(deviceSecret, {
+						...paid,
+						revision: 2,
+						status: 'refunded',
+						refunds: [refund],
+						fiscal: [paid.fiscal[0], credit.document],
+					})
+					expect(response.status).toBe(200)
+					expect((await redemptions(id))[0]!.state).toBe('refunded')
+				})
+			})
+		})
+
 		describe("a removed terminal's tabs", () => {
 			it('are continued by the same terminal paired again, with a transfer on record', async () => {
 				const first = await pair({ terminalCode: 'T1' })
@@ -4062,11 +4903,10 @@ describe('POS terminals: pairing, upload and sync', () => {
 							amountCents: discount,
 						},
 					],
-					totals: {
-						...o.totals,
-						adjustmentCents: discount,
-						totalCents: o.totals.totalCents - discount,
-					},
+					discountApplications: [
+						{ discountId: 'adj-1', name: 'Comp', amountCents: discount },
+					],
+					totals: discountedTotals(o.totals, discount),
 				})
 				expect(await reviewOf(r)).toBe('large_discount')
 				const small = wireOrder({ number: 'T1-0002' })
@@ -4075,11 +4915,10 @@ describe('POS terminals: pairing, upload and sync', () => {
 					adjustments: [
 						{ id: 'adj-2', kind: 'discount', label: 'Promo', amountCents: 100 },
 					],
-					totals: {
-						...small.totals,
-						adjustmentCents: 100,
-						totalCents: small.totals.totalCents - 100,
-					},
+					discountApplications: [
+						{ discountId: 'adj-2', name: 'Promo', amountCents: 100 },
+					],
+					totals: discountedTotals(small.totals, 100),
 				})
 				expect(await reviewOf(r2)).toBeNull()
 			})
@@ -4099,11 +4938,7 @@ describe('POS terminals: pairing, upload and sync', () => {
 								amountCents: amount,
 							},
 						],
-						totals: {
-							...o.totals,
-							adjustmentCents: amount,
-							totalCents: o.totals.totalCents - amount,
-						},
+						totals: discountedTotals(o.totals, amount),
 					},
 				}
 			}
@@ -4202,11 +5037,7 @@ describe('POS terminals: pairing, upload and sync', () => {
 							amountCents: discount,
 						},
 					],
-					totals: {
-						...o.totals,
-						adjustmentCents: discount,
-						totalCents: o.totals.totalCents - discount,
-					},
+					totals: discountedTotals(o.totals, discount),
 				})
 				expect(await reviewOf(r)).toBe('unknown_staff')
 			})

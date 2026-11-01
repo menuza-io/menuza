@@ -67,6 +67,12 @@ const pickupTimeLabel = i18n._(msg`Pickup time`)
 const receiptTitle = i18n._(msg`Receipt`)
 const subtotalText = i18n._(msg`Subtotal`)
 const rewardDiscountText = i18n._(msg`Reward`)
+const discountText = i18n._(msg`Discount`)
+const deliveryDiscountText = i18n._(msg`Delivery discount`)
+const deliveryDiscountTemplate = translate(i18n, msg`{name} (delivery)`, {
+	name: '{name}',
+})
+const freeOrderText = i18n._(msg`No payment needed`)
 const taxText = i18n._(msg`Tax`)
 const includesTaxText = i18n._(msg`Includes VAT`)
 const vatNumberText = i18n._(msg`VAT number`)
@@ -141,6 +147,10 @@ const successLabels = {
 	holdAnnounce: translate(i18n, msg`{time} left to complete payment.`, { time: '{time}' }),
 	total: totalText,
 	totalPaid: totalPaidText,
+	discount: discountText,
+	deliveryDiscount: deliveryDiscountTemplate,
+	deliveryDiscountPlain: deliveryDiscountText,
+	freeOrder: freeOrderText,
 	statuses: {
 		pending: i18n._(msg`Order received`),
 		accepted: i18n._(msg`Accepted`),
@@ -378,6 +388,7 @@ const valueClass = 'price font-medium text-foreground'
 								<dt>{subtotalText}</dt>
 								<dd id="order-subtotal" class={valueClass}>{price(0)}</dd>
 							</div>
+							<div id="order-discount-lines" class="contents hidden"></div>
 							<div id="order-discount-row" class:list={[rowClass, 'hidden']}>
 								<dt>{rewardDiscountText}</dt>
 								<dd id="order-discount" class={valueClass}></dd>
@@ -409,6 +420,7 @@ const valueClass = 'price font-medium text-foreground'
 								<dd id="order-vat-number" class="bidi-isolate font-medium text-foreground"></dd>
 							</div>
 						</dl>
+						<p id="order-free-note" class="mt-2 hidden text-sm text-muted-foreground"></p>
 					</div>
 				</section>
 
@@ -460,6 +472,7 @@ const valueClass = 'price font-medium text-foreground'
 			liveHoldRemainingMs,
 			minutesLeft,
 		} from '~/lib/ordering/hold-timer'
+		import { receiptDiscounts } from '~/lib/ordering/discount-view'
 		import { formatPickupAddress, formatSlot } from '~/lib/ordering/pickup'
 		import { zonedTimeToUtc } from '~/lib/drops/format'
 		import { getOrgBinding } from '~/lib/client-auth'
@@ -472,6 +485,8 @@ const valueClass = 'price font-medium text-foreground'
 			unitPriceCents: number
 			totalCents: number
 			instructions: string | null
+			/** The size or other variant chosen ("Large"). */
+			variantNames?: string[]
 			options: Array<{
 				groupId: string
 				groupName: string
@@ -493,6 +508,17 @@ const valueClass = 'price font-medium text-foreground'
 			subtotalCents: number
 			/** A loyalty reward's saving. */
 			loyaltyDiscountCents: number
+			/** Coupons and automatic discounts on the items. */
+			discountCents?: number
+			/** Delivery fee taken off by a discount. */
+			deliveryDiscountCents?: number
+			discounts?: Array<{
+				discountId?: string
+				name?: string
+				code?: string | null
+				amountMinor?: number
+				deliveryAmountMinor?: number
+			}>
 			taxCents: number
 			deliveryFeeCents: number
 			tipCents: number
@@ -731,17 +757,19 @@ const valueClass = 'price font-medium text-foreground'
 					info.appendChild(
 						createEl('p', 'text-sm font-semibold leading-snug text-foreground', localize(line.itemName)),
 					)
-					if (line.options && line.options.length > 0) {
+					const choices = [
+						...(line.variantNames ?? []).map((name) => localize(name)),
+						...(line.options ?? []).map((o) => {
+							const name = localize(o.optionName)
+							return o.quantity > 1 ? `${o.quantity}x ${name}` : name
+						}),
+					]
+					if (choices.length > 0) {
 						info.appendChild(
 							createEl(
 								'p',
 								'mt-0.5 text-xs leading-relaxed text-muted-foreground',
-								line.options
-									.map((o) => {
-										const name = localize(o.optionName)
-										return o.quantity > 1 ? `${o.quantity}x ${name}` : name
-									})
-									.join(', '),
+								choices.join(', '),
 							),
 						)
 					}
@@ -760,18 +788,55 @@ const valueClass = 'price font-medium text-foreground'
 			}
 
 			if (subtotalEl) subtotalEl.textContent = formatCents(order.subtotalCents)
-			const discountCents = Math.max(0, order.loyaltyDiscountCents)
+			const savings = receiptDiscounts(order, {
+				discount: labels.discount || 'Discount',
+				deliveryDiscount: labels.deliveryDiscount || '{name} (delivery)',
+				deliveryDiscountPlain: labels.deliveryDiscountPlain || 'Delivery discount',
+			})
+			const discountLinesEl = document.getElementById('order-discount-lines')
+			if (discountLinesEl) {
+				const rowClassName =
+					'flex items-baseline justify-between gap-4 text-sm text-muted-foreground'
+				const valueClassName = 'price font-medium text-foreground'
+				discountLinesEl.replaceChildren(
+					...savings.lines.map((line) => {
+						const row = createEl('div', rowClassName)
+						// The code is isolated so it keeps its order inside right-to-left text.
+						const label = line.code ? `${line.label} (\u2066${line.code}\u2069)` : line.label
+						row.appendChild(createEl('dt', undefined, label))
+						row.appendChild(
+							createEl('dd', valueClassName, formatCents(-line.amountMinor)),
+						)
+						return row
+					}),
+				)
+				discountLinesEl.classList.toggle('hidden', savings.lines.length === 0)
+			}
+			const loyaltyCents = Math.max(0, order.loyaltyDiscountCents)
 			const discountRow = document.getElementById('order-discount-row')
 			const discountEl = document.getElementById('order-discount')
-			discountRow?.classList.toggle('hidden', discountCents === 0)
-			if (discountEl) discountEl.textContent = discountCents > 0 ? formatCents(-discountCents) : ''
+			discountRow?.classList.toggle('hidden', loyaltyCents === 0)
+			if (discountEl) discountEl.textContent = loyaltyCents > 0 ? formatCents(-loyaltyCents) : ''
+			const freeNote = document.getElementById('order-free-note')
+			if (freeNote) {
+				freeNote.textContent = labels.freeOrder || 'No payment needed'
+				freeNote.classList.toggle('hidden', !savings.free)
+			}
 			if (taxEl) taxEl.textContent = formatCents(order.taxCents)
 			// Tax-inclusive (VAT) prices: the tax is contained in the subtotal and
 			// the total does not add it, which the receipt's own amounts show.
+			const netDelivery = Math.max(
+				0,
+				order.deliveryFeeCents - savings.deliveryCents,
+			)
 			const taxIncluded =
 				order.taxCents > 0 &&
 				order.totalCents ===
-					order.subtotalCents - discountCents + order.deliveryFeeCents + order.tipCents
+					order.subtotalCents -
+						savings.itemsCents -
+						loyaltyCents +
+						netDelivery +
+						order.tipCents
 			const taxLabelEl = document.getElementById('order-tax-label')
 			const taxLabelText = taxIncluded
 				? taxLabelEl?.dataset.inclusiveLabel

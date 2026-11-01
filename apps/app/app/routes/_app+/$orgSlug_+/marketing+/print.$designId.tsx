@@ -182,6 +182,20 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		const editorData = printVertical.qrTargets?.[kind]?.editorData
 		if (editorData) targetData[kind] = await editorData(request, access)
 	}
+	// What empty headline and message fields print for the saved target
+	// (written from a discount, for instance).
+	const copyDefaults: Record<
+		string,
+		{ headline?: string; body?: string; callToAction?: string }
+	> = {}
+	const defaultCopy =
+		printVertical.qrTargets?.[design.content.qr.kind]?.defaultCopy
+	if (defaultCopy) {
+		for (const locale of locales) {
+			const words = await defaultCopy(design.content.qr, locale, access)
+			if (words) copyDefaults[locale] = words
+		}
+	}
 	const featuredSource = Boolean(printVertical.featuredItems)
 	const items =
 		product.featuredItems && featuredSource
@@ -233,6 +247,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		scopes,
 		targets,
 		targetData,
+		copyDefaults,
 		featuredSource,
 		items,
 		stale,
@@ -658,6 +673,9 @@ export default function PrintDesignRoute() {
 													dir={localeDirection(locale)}
 													defaultValue={content.headline[locale] ?? ''}
 													placeholder={
+														(qrKind === data.design.content.qr.kind
+															? data.copyDefaults[locale]?.headline
+															: undefined) ??
 														printCatalog.defaultCopy(locale, qrKind).headline
 													}
 													maxLength={PRINT_TEXT_MAX.headline}
@@ -672,6 +690,11 @@ export default function PrintDesignRoute() {
 													name={`body.${locale}`}
 													dir={localeDirection(locale)}
 													defaultValue={content.body[locale] ?? ''}
+													placeholder={
+														qrKind === data.design.content.qr.kind
+															? data.copyDefaults[locale]?.body
+															: undefined
+													}
 													maxLength={PRINT_TEXT_MAX.body}
 													rows={3}
 												/>
@@ -686,6 +709,9 @@ export default function PrintDesignRoute() {
 													dir={localeDirection(locale)}
 													defaultValue={content.callToAction[locale] ?? ''}
 													placeholder={
+														(qrKind === data.design.content.qr.kind
+															? data.copyDefaults[locale]?.callToAction
+															: undefined) ??
 														printCatalog.defaultCopy(locale, qrKind)
 															.callToAction
 													}

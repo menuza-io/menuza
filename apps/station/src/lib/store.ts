@@ -48,6 +48,15 @@ import {
 } from './signin.ts'
 import { applyTheme } from './theme.ts'
 import {
+	manualRequestFromRow,
+	parseTillRules,
+	keptButNotOffered,
+	settleTillDiscounts,
+	tillRulesStatus,
+	type ManualRefusal,
+	type ManualRequest,
+} from './till-discounts.ts'
+import {
 	type CatalogSnapshot,
 	type MenuCategory,
 	type MenuItem,
@@ -57,6 +66,28 @@ import {
 import { forgetZatcaUnit, syncZatcaUnit } from './zatca.ts'
 
 type CatalogStatus = 'loading' | 'ready' | 'empty' | 'error'
+
+export type DiscountNotice =
+	| null
+	| {
+			kind: 'stopped'
+			/** The discount that stopped, and why when the engine said. */
+			name?: string
+			reason?: string
+			maxMinor?: number
+	  }
+	| { kind: 'replaced'; names: string[] }
+	/**
+	 * The rules on this till are too old to apply (or the clock moved back since
+	 * they came: `cause`), and these automatic discounts would have applied to
+	 * the cart. Raised once per set of skipped discounts.
+	 */
+	| { kind: 'rules_old'; names: string[]; cause: 'age' | 'clock' }
+	/**
+	 * Sent rounds on this tab hold automatic discounts the rules on this till no
+	 * longer offer. The guest keeps them. Raised once per set of such discounts.
+	 */
+	| { kind: 'kept'; names: string[] }
 
 export type PosState = {
 	settings: PosSettings
@@ -132,6 +163,37 @@ export type PosState = {
 	setQuantity: (lineId: string, quantity: number) => void
 	replaceLine: (lineId: string, line: Omit<CartLine, 'id'>) => void
 	removeLine: (lineId: string) => void
+	/**
+	 * Why the discounts on the cart are not what the rules alone would give: a
+	 * manual discount stopped applying after the cart changed, or it replaced
+	 * automatic discounts it does not stack with.
+	 */
+	discountNotice: DiscountNotice
+	/**
+	 * Which skipped automatic discounts the cashier was already told about (see
+	 * `rules_old`), so a cart edit does not raise the notice again after it was
+	 * dismissed. Null when nothing is being skipped.
+	 */
+	staleRulesNoticeKey: string | null
+	/** Same for the `kept` notice: which kept discounts the cashier was told about. */
+	keptNoticeKey: string | null
+	clearDiscountNotice: () => void
+	/**
+	 * Applies a manual till discount. The till takes one at a time: a new one
+	 * replaces the one on the cart. A variable discount needs the typed value.
+	 */
+	applyManualDiscount: (
+		discountId: string,
+		input?: {
+			amountMinor?: number
+			percentBp?: number
+			approvedByStaffId?: string
+			reason?: string
+		},
+	) =>
+		| { ok: true; amountMinor: number; replacedManual?: string }
+		| { ok: false; reason: ManualRefusal; maxMinor?: number }
+	removeManualDiscount: (discountId: string) => void
 	loadTab: (order: PosOrder) => void
 	clearOrder: () => void
 	/**
@@ -301,6 +363,179 @@ function moreOfSent(
 		: restored
 }
 
+type DiscountState = Pick<
+	PosState,
+	| 'adjustments'
+	| 'categories'
+	| 'recordItems'
+	| 'location'
+	| 'snapshot'
+	| 'orderType'
+	| 'staleRulesNoticeKey'
+	| 'keptNoticeKey'
+	| 'discountNotice'
+>
+
+/** The discounts for a cart, from the rules on this device (see `settleTillDiscounts`). */
+function settleCart(
+	state: DiscountState,
+	lines: CartLine[],
+	manual: ManualRequest | null,
+	/** False: rules too old to trust. Pass true to ask what they would have given. */
+	rulesUsable = tillRulesStatus(state.snapshot).state !== 'expired',
+) {
+	const rules = state.snapshot?.menu.discountRules
+	return settleTillDiscounts({
+		lines,
+		rules,
+		// Rules older than the limit are not applied, whatever they say.
+		rulesUsable,
+		manual,
+		categories: state.categories,
+		items: state.recordItems,
+		timeZone: state.location?.timezone ?? 'UTC',
+		currency:
+			state.location?.currency ??
+			state.snapshot?.menu.organization.currency ??
+			'USD',
+		locationId: state.location?.id ?? null,
+		fulfillment: state.orderType === 'dine_in' ? 'dine_in' : 'pickup',
+		// Sent rounds keep the automatic discounts they already carry.
+		kept: state.adjustments.filter((row) => row.id.startsWith('auto:')),
+	})
+}
+
+/** Rows that are neither automatic nor manual (a loyalty reward) are not this module's to change. */
+const isOtherAdjustment = (row: Adjustment) =>
+	!row.id.startsWith('auto:') && !row.id.startsWith('manual:')
+
+/**
+ * The sent-round discounts this tab keeps that the rules no longer offer, or
+ * null when there are none (or the rules are too old to say: `rules_old` speaks
+ * then).
+ */
+function keptNoticeFor(
+	state: DiscountState,
+	lines: CartLine[],
+	automatic: Adjustment[],
+): { ids: string[]; names: string[] } | null {
+	if (tillRulesStatus(state.snapshot).state === 'expired') return null
+	const found = keptButNotOffered({
+		rules: state.snapshot?.menu.discountRules,
+		lines,
+		adjustments: automatic,
+	})
+	return found.ids.length > 0 ? found : null
+}
+
+function withAutomaticDiscounts(
+	state: DiscountState,
+	lines: CartLine[],
+	extra: Record<string, unknown> = {},
+) {
+	const others = state.adjustments.filter(isOtherAdjustment)
+	const manualRow = state.adjustments.find((row) =>
+		row.id.startsWith('manual:'),
+	)
+	if (lines.length === 0) {
+		// Nothing to discount: a manual one stays for the next item, quietly.
+		return {
+			...extra,
+			lines,
+			adjustments: [...others, ...(manualRow ? [manualRow] : [])],
+			discountNotice: null,
+			staleRulesNoticeKey: null,
+		}
+	}
+	let settled: ReturnType<typeof settleCart>
+	try {
+		settled = settleCart(
+			state,
+			lines,
+			manualRow ? manualRequestFromRow(manualRow) : null,
+		)
+	} catch {
+		// A bad rule must not stop the till from ringing up the item.
+		settled = {
+			automatic: [],
+			manual: manualRow ? { ok: false, reason: 'error' } : null,
+			replaced: [],
+		}
+	}
+	// Rules too old to apply drop the automatic discounts without a word, so say
+	// which would have applied. Once per set of skipped discounts: a cart edit
+	// keeps the notice that is up, and brings none back after it was dismissed.
+	let skipped: string[] = []
+	const rulesStatus = tillRulesStatus(state.snapshot)
+	if (rulesStatus.state === 'expired') {
+		try {
+			skipped = settleCart(state, lines, null, true).automatic.map(
+				(row) => row.label,
+			)
+		} catch {
+			skipped = []
+		}
+	}
+	const staleKey = skipped.length > 0 ? JSON.stringify(skipped) : null
+	const staleNotice: DiscountNotice =
+		staleKey === null
+			? null
+			: staleKey !== state.staleRulesNoticeKey
+				? {
+						kind: 'rules_old',
+						names: skipped,
+						cause: rulesStatus.state === 'expired' ? rulesStatus.cause : 'age',
+					}
+				: state.discountNotice?.kind === 'rules_old'
+					? state.discountNotice
+					: null
+	// Sent rounds keep discounts the rules no longer offer: say so once.
+	const keptNames = keptNoticeFor(state, lines, settled.automatic)
+	const keptKey = keptNames === null ? null : JSON.stringify(keptNames.ids)
+	const keptNotice: DiscountNotice =
+		keptNames === null
+			? null
+			: keptKey !== state.keptNoticeKey
+				? { kind: 'kept', names: keptNames.names }
+				: state.discountNotice?.kind === 'kept'
+					? state.discountNotice
+					: null
+	const notice: DiscountNotice =
+		settled.manual && !settled.manual.ok
+			? {
+					kind: 'stopped',
+					...(manualRow?.label ? { name: manualRow.label } : {}),
+					reason: settled.manual.reason,
+					...(settled.manual.maxMinor !== undefined
+						? { maxMinor: settled.manual.maxMinor }
+						: {}),
+				}
+			: (staleNotice ??
+				(settled.replaced.length > 0
+					? { kind: 'replaced', names: settled.replaced }
+					: keptNotice))
+	// A kept notice that something else outranked stays unannounced, so it
+	// comes up with a later edit; one already announced is not raised again.
+	const keptKeyOut =
+		keptKey === null
+			? null
+			: notice?.kind === 'kept' || keptKey === state.keptNoticeKey
+				? keptKey
+				: state.keptNoticeKey
+	return {
+		...extra,
+		lines,
+		adjustments: [
+			...settled.automatic,
+			...(settled.manual?.ok ? [settled.manual.adjustment] : []),
+			...others,
+		],
+		discountNotice: notice,
+		staleRulesNoticeKey: staleKey,
+		keptNoticeKey: keptKeyOut,
+	}
+}
+
 export const usePos = create<PosState>((set, get) => ({
 	settings: withDemoApps(loadSettings()),
 	snapshot: null,
@@ -313,6 +548,9 @@ export const usePos = create<PosState>((set, get) => ({
 	refreshing: false,
 	online: typeof navigator === 'undefined' ? true : navigator.onLine,
 	pairingLost: false,
+	discountNotice: null,
+	staleRulesNoticeKey: null,
+	keptNoticeKey: null,
 	session: null,
 	unrecognisedStrikes: 0,
 	locationMissing: false,
@@ -369,7 +607,13 @@ export const usePos = create<PosState>((set, get) => ({
 	async refreshIfStale(maxAgeMs) {
 		const { snapshot, online, refreshing } = get()
 		if (!online || refreshing) return
-		if (snapshot && Date.now() - snapshot.fetchedAt < maxAgeMs) return
+		if (snapshot) {
+			const age = Date.now() - snapshot.fetchedAt
+			// A clock moved back makes the age negative: refresh then too, or the
+			// menu and the discount rules (now off, see `tillRulesStatus`) would
+			// wait until the clock caught up again.
+			if (age >= 0 && age < maxAgeMs) return
+		}
 		await get().refresh()
 	},
 
@@ -668,6 +912,9 @@ export const usePos = create<PosState>((set, get) => ({
 		const next = withPairing(settings, result)
 		await get().updateSettings({ ...next })
 		set({ pairingLost: false })
+		// Till rules are not on the public menu. Load them once this device can
+		// authenticate, not at the next catalog timer.
+		void get().refresh()
 		// Learn which Station apps this terminal offers now, not at the next check.
 		void get().verifyPairing()
 		// Anything saved while unpaired goes out now, not after a retry timer.
@@ -697,9 +944,12 @@ export const usePos = create<PosState>((set, get) => ({
 	},
 
 	setOrderType: (orderType) =>
-		set((s) => ({
-			orderType: s.orderSource === 'phone' ? 'takeaway' : orderType,
-		})),
+		set((s) => {
+			const nextType = s.orderSource === 'phone' ? 'takeaway' : orderType
+			return withAutomaticDiscounts({ ...s, orderType: nextType }, s.lines, {
+				orderType: nextType,
+			})
+		}),
 	setPhoneOrder: (details) =>
 		set({
 			...details,
@@ -719,13 +969,12 @@ export const usePos = create<PosState>((set, get) => ({
 	setTableLabel: (tableLabel) => set({ tableLabel }),
 
 	addLine(added) {
-		set((s) => ({
-			// One language of record for every line, whichever till rings it up.
-			lines: withUnsent(
-				s.lines,
-				renameLine(added, s.recordItems.get(added.itemId)),
+		set((s) =>
+			withAutomaticDiscounts(
+				s,
+				withUnsent(s.lines, renameLine(added, s.recordItems.get(added.itemId))),
 			),
-		}))
+		)
 	},
 	setQuantity(lineId, quantity) {
 		set((s) => {
@@ -733,17 +982,15 @@ export const usePos = create<PosState>((set, get) => ({
 			// More of a dish already sent: back up to what the kitchen has, and
 			// anything beyond is a new line (the kitchen's ticket stays as it was).
 			if (line?.sentAt && quantity > line.quantity)
-				return { lines: moreOfSent(s.lines, line, quantity) }
-			return {
-				lines:
-					quantity <= 0
-						? s.lines.filter((l) => l.id !== lineId)
-						: s.lines.map((l) =>
-								l.id === lineId
-									? { ...l, quantity: Math.min(50, quantity) }
-									: l,
-							),
-			}
+				return withAutomaticDiscounts(s, moreOfSent(s.lines, line, quantity))
+			return withAutomaticDiscounts(
+				s,
+				quantity <= 0
+					? s.lines.filter((l) => l.id !== lineId)
+					: s.lines.map((l) =>
+							l.id === lineId ? { ...l, quantity: Math.min(50, quantity) } : l,
+						),
+			)
 		})
 	},
 	replaceLine(lineId, line) {
@@ -754,9 +1001,13 @@ export const usePos = create<PosState>((set, get) => ({
 			const same = lineSignature(next) === lineSignature(old)
 			// A sent dish asked for more: it stays as sent, and the extra goes as a new round.
 			if (old.sentAt && same && next.quantity > old.quantity)
-				return { lines: moreOfSent(s.lines, old, next.quantity) }
-			return {
-				lines: s.lines.map((l) =>
+				return withAutomaticDiscounts(
+					s,
+					moreOfSent(s.lines, old, next.quantity),
+				)
+			return withAutomaticDiscounts(
+				s,
+				s.lines.map((l) =>
 					l.id === lineId
 						? {
 								...unsent(next),
@@ -773,34 +1024,117 @@ export const usePos = create<PosState>((set, get) => ({
 							}
 						: l,
 				),
-			}
+			)
 		})
 	},
 	removeLine: (lineId) =>
-		set((s) => ({ lines: s.lines.filter((l) => l.id !== lineId) })),
-	loadTab: (order) =>
+		set((s) =>
+			withAutomaticDiscounts(
+				s,
+				s.lines.filter((l) => l.id !== lineId),
+			),
+		),
+	clearDiscountNotice: () => set({ discountNotice: null }),
+	applyManualDiscount(discountId, input) {
+		const state = get()
+		const discount = parseTillRules(state.snapshot?.menu.discountRules).find(
+			(rule) => rule.id === discountId && rule.application === 'manual',
+		)
+		if (!discount) return { ok: false, reason: 'not_found' }
+		if (tillRulesStatus(state.snapshot).state === 'expired')
+			return { ok: false, reason: 'rules_stale' }
+		if (
+			discount.requireApproval &&
+			state.settings.signInRequired &&
+			!input?.approvedByStaffId
+		) {
+			return { ok: false, reason: 'approval_required' }
+		}
+		const previous = state.adjustments.find((row) =>
+			row.id.startsWith('manual:'),
+		)
+		let settled: ReturnType<typeof settleCart>
+		try {
+			settled = settleCart(state, state.lines, {
+				discountId: discount.id,
+				amountMinor: input?.amountMinor ?? null,
+				percentBp: input?.percentBp ?? null,
+				...(input?.approvedByStaffId
+					? { approvedByStaffId: input.approvedByStaffId }
+					: {}),
+				...(input?.reason ? { reason: input.reason } : {}),
+			})
+		} catch {
+			return { ok: false, reason: 'not_applicable' }
+		}
+		// A refused discount changes nothing: the one on the cart stays.
+		if (!settled.manual || !settled.manual.ok)
+			return settled.manual ?? { ok: false, reason: 'not_applicable' }
+		const { adjustment } = settled.manual
 		set({
-			activeOrderId: order.id,
-			activeTax: {
-				taxRatePercent: order.taxRatePercent,
-				taxInclusive: order.taxInclusive,
-			},
-			orderType: order.orderType,
-			orderSource: order.orderSource ?? 'counter',
-			customerPhone: order.customerPhone ?? '',
-			pickupAt: order.pickupAt ?? null,
-			pickupTimeZone: order.pickupTimeZone ?? null,
-			customerName: order.customerName,
-			tableLabel: order.tableLabel,
-			// A tab opened before (or on a till in another language) continues in
-			// the language of record, so its documents read one language.
-			lines: order.lines.map((line) => ({
+			discountNotice:
+				settled.replaced.length > 0
+					? { kind: 'replaced', names: settled.replaced }
+					: null,
+			adjustments: [
+				...settled.automatic,
+				adjustment,
+				...state.adjustments.filter(isOtherAdjustment),
+			],
+		})
+		return {
+			ok: true,
+			amountMinor: adjustment.amountCents,
+			...(previous && previous.id !== adjustment.id
+				? { replacedManual: previous.label }
+				: {}),
+		}
+	},
+	removeManualDiscount(discountId) {
+		const prefix = `manual:${discountId}`
+		set((state) => {
+			const lines = state.lines
+			const rest = state.adjustments.filter(
+				(row) => row.id !== prefix && !row.id.startsWith(`${prefix}:`),
+			)
+			// The automatic discounts it had replaced come back.
+			return withAutomaticDiscounts({ ...state, adjustments: rest }, lines)
+		})
+	},
+	loadTab: (order) =>
+		set((s) => {
+			const lines = order.lines.map((line) => ({
 				...renameLine(decodedLine(line), get().recordItems.get(line.itemId)),
 				// Saved before lines carried their time: they were sent when the tab was opened.
 				sentAt: line.sentAt ?? order.createdAt,
 				sentQuantity: line.quantity,
-			})),
-			adjustments: order.adjustments,
+			}))
+			// A tab opened with discounts the rules no longer offer says so, once.
+			const kept = keptNoticeFor(s, lines, order.adjustments)
+			return {
+				activeOrderId: order.id,
+				activeTax: {
+					taxRatePercent: order.taxRatePercent,
+					taxInclusive: order.taxInclusive,
+				},
+				orderType: order.orderType,
+				orderSource: order.orderSource ?? 'counter',
+				customerPhone: order.customerPhone ?? '',
+				pickupAt: order.pickupAt ?? null,
+				pickupTimeZone: order.pickupTimeZone ?? null,
+				customerName: order.customerName,
+				tableLabel: order.tableLabel,
+				// A tab opened before (or on a till in another language) continues in
+				// the language of record, so its documents read one language.
+				lines,
+				adjustments: order.adjustments,
+				discountNotice: kept
+					? ({ kind: 'kept', names: kept.names } as const)
+					: s.discountNotice?.kind === 'kept'
+						? null
+						: s.discountNotice,
+				keptNoticeKey: kept ? JSON.stringify(kept.ids) : null,
+			}
 		}),
 	releaseTab: () =>
 		set((s) => ({
@@ -821,6 +1155,9 @@ export const usePos = create<PosState>((set, get) => ({
 			customerName: '',
 			tableLabel: '',
 			adjustments: [],
+			discountNotice: null,
+			staleRulesNoticeKey: null,
+			keptNoticeKey: null,
 			activeOrderId: null,
 			activeTax: null,
 		}),

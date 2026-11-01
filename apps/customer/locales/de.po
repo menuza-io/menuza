@@ -25,6 +25,7 @@ msgstr "Noch {amount} nötig"
 msgid "{amount} more to unlock {reward}"
 msgstr "Noch {amount} bis {reward}"
 
+#: components/ordering/menu-screen.tsx:332
 #: lib/loyalty/labels.ts:56
 msgid "{amount} off"
 msgstr "{amount} Rabatt"
@@ -53,6 +54,10 @@ msgstr "{n, plural, one {{count} Stern} other {{count} Sterne}}"
 msgid "{percent} off"
 msgstr "{percent} Rabatt"
 
+#: components/ordering/menu-screen.tsx:324
+msgid "{percentText} off"
+msgstr "{percentText} Rabatt"
+
 #: lib/loyalty/labels.ts:45
 msgid "{points} for each {items}"
 msgstr "{points} pro {items}"
@@ -76,6 +81,10 @@ msgstr "{points} pro Besuch (einmal am Tag)"
 #: lib/loyalty/labels.ts:43
 msgid "{points} for every {amount} you spend"
 msgstr "{points} für je {amount}, die Sie ausgeben"
+
+#: components/ordering/menu-screen.tsx:261
+msgid "{price}, was {originalPrice}"
+msgstr "{price}, vorher {originalPrice}"
 
 #: components/auth/login-screen.tsx:25
 msgid "+1 555 000 0000"
@@ -193,17 +202,34 @@ msgstr "Storniert"
 msgid "Change time"
 msgstr "Zeit ändern"
 
+#: components/ordering/menu-screen.tsx:161
+msgid "Check back later, or open the website menu."
+msgstr "Schau später noch einmal vorbei, oder öffne die Speisekarte auf der Website."
+
 #: lib/loyalty/labels.ts:89
 msgid "Check for requests"
 msgstr "Nach Anfragen suchen"
+
+#: components/ordering/drops-screen.tsx:161
+msgid "Check the menu for what we are serving today."
+msgstr "Schau in die Speisekarte, was wir heute servieren."
 
 #: lib/reservations/messages.ts:72
 msgid "Checking your payment…"
 msgstr "Zahlung wird geprüft …"
 
+#: components/ordering/site-checkout.tsx:25
+msgid "Checkout"
+msgstr "Zur Kasse"
+
 #: lib/reservations/messages.ts:26
 msgid "Choose a location"
 msgstr "Standort wählen"
+
+#: components/ordering/drops-screen.tsx:136
+#: components/ordering/drops-screen.tsx:215
+msgid "Coming up"
+msgstr "Demnächst"
 
 #: lib/reservations/messages.ts:67
 msgid "Complete your payment"
@@ -273,6 +299,15 @@ msgstr "Ausblenden"
 msgid "Done"
 msgstr "Fertig"
 
+#: app/(tabs)/_layout.tsx:58
+#: components/ordering/drops-screen.tsx:153
+msgid "Drops"
+msgstr "Aktionen"
+
+#: components/ordering/drops-screen.tsx:115
+msgid "Drops could not be loaded."
+msgstr "Aktionen konnten nicht geladen werden."
+
 #: lib/loyalty/labels.ts:108
 msgid "Earned"
 msgstr "Gesammelt"
@@ -301,7 +336,7 @@ msgstr "Geben Sie eine gültige E-Mail-Adresse ein."
 msgid "Enter a valid phone number."
 msgstr "Geben Sie eine gültige Telefonnummer ein."
 
-#: components/auth/verify-screen.tsx:27
+#: components/auth/verify-screen.tsx:39
 msgid "Enter your code"
 msgstr "Code eingeben"
 
@@ -349,6 +384,10 @@ msgstr "Für eine Gruppe dieser Größe rufen Sie bitte {phone} an."
 #: lib/loyalty/labels.ts:64
 msgid "Free {item}"
 msgstr "{item} gratis"
+
+#: components/ordering/menu-screen.tsx:342
+msgid "Free delivery"
+msgstr "Kostenlose Lieferung"
 
 #: lib/reservations/messages.ts:97
 msgid "Free to change until {time}"
@@ -428,6 +467,18 @@ msgstr "Mehr erfahren"
 msgid "Leave the waitlist"
 msgstr "Warteliste verlassen"
 
+#: components/ordering/drops-screen.tsx:155
+msgid "Limited menus you pre-order for a pickup window."
+msgstr "Limitierte Menüs, die du für ein Abholfenster vorbestellst."
+
+#: components/ordering/drops-screen.tsx:109
+msgid "Loading drops"
+msgstr "Aktionen werden geladen"
+
+#: components/ordering/menu-screen.tsx:106
+msgid "Loading the menu"
+msgstr "Menü wird geladen"
+
 #: components/profile/profile-screen.tsx:63
 msgid "Loading your profile…"
 msgstr "Ihr Profil wird geladen…"
@@ -441,6 +492,11 @@ msgstr "Ihre Prämien werden geladen …"
 #: lib/reservations/messages.ts:14
 msgid "Loading…"
 msgstr "Wird geladen …"
+
+#: app/(tabs)/_layout.tsx:45
+#: components/ordering/menu-screen.tsx:141
+msgid "Menu"
+msgstr "Menü"
 
 #: components/reservations/parts.tsx:205
 msgid "More guests"
@@ -472,6 +528,10 @@ msgstr "Noch keine Aktivität. Ihre Einkäufe erscheinen hier."
 #: lib/reservations/messages.ts:136
 msgid "No connection. Please try again."
 msgstr "Keine Verbindung. Bitte erneut versuchen."
+
+#: components/ordering/drops-screen.tsx:160
+msgid "No drops right now."
+msgstr "Derzeit keine Aktionen."
 
 #: lib/reservations/messages.ts:52
 msgid "No preference"
@@ -509,6 +569,10 @@ msgstr "Keiner"
 msgid "Not taking online reservations on this day."
 msgstr "An diesem Tag gibt es keine Online-Reservierungen."
 
+#: components/ordering/menu-screen.tsx:160
+msgid "Nothing on the menu right now."
+msgstr "Gerade nichts auf der Speisekarte."
+
 #: lib/reservations/messages.ts:47
 msgid "Occasion"
 msgstr "Anlass"
@@ -541,9 +605,27 @@ msgstr "Online-Reservierungen sind derzeit nicht verfügbar."
 msgid "Opens in your browser. Your points and rewards apply when you order there."
 msgstr "Öffnet sich in Ihrem Browser. Ihre Punkte und Prämien gelten, wenn Sie dort bestellen."
 
+#: components/ordering/drops-screen.tsx:246
+#: components/ordering/menu-screen.tsx:299
+msgid "Opens the website"
+msgstr "Öffnet die Website"
+
+#: components/ordering/site-checkout.tsx:38
+msgid "Opens the website. Add items on the menu, then check out there. Coupons and rewards apply at checkout."
+msgstr "Öffnet die Website. Lege dort Gerichte in den Warenkorb und gehe dann zur Kasse. Gutscheine und Prämien gelten an der Kasse."
+
+#: components/ordering/site-checkout.tsx:34
+msgid "Order on the menu"
+msgstr "Auf der Speisekarte bestellen"
+
 #: components/loyalty/program-sections.tsx:129
 msgid "Order on the website"
 msgstr "Auf der Website bestellen"
+
+#: components/ordering/drops-screen.tsx:133
+#: components/ordering/drops-screen.tsx:213
+msgid "Ordering now"
+msgstr "Jetzt bestellen"
 
 #: lib/reservations/messages.ts:34
 msgid "Other days with tables"
@@ -560,6 +642,14 @@ msgstr "Personenzahl"
 #: lib/reservations/messages.ts:21
 msgid "Past"
 msgstr "Vergangene"
+
+#: components/ordering/drops-screen.tsx:216
+msgid "Past drop"
+msgstr "Vergangene Aktion"
+
+#: components/ordering/drops-screen.tsx:139
+msgid "Past drops"
+msgstr "Vergangene Aktionen"
 
 #: lib/reservations/messages.ts:70
 msgid "Pay now"
@@ -595,7 +685,7 @@ msgstr "Bitte melden Sie sich erneut an."
 msgid "Preferred time"
 msgstr "Wunschzeit"
 
-#: app/(tabs)/_layout.tsx:59
+#: app/(tabs)/_layout.tsx:98
 #: lib/reservations/messages.ts:23
 msgid "Profile"
 msgstr "Profil"
@@ -644,7 +734,7 @@ msgstr "Anfragen zur Nutzung Ihrer Prämien"
 msgid "Reservation"
 msgstr "Reservierung"
 
-#: app/(tabs)/_layout.tsx:40
+#: app/(tabs)/_layout.tsx:71
 #: lib/reservations/messages.ts:17
 msgid "Reservations"
 msgstr "Reservierungen"
@@ -661,7 +751,7 @@ msgstr "Reservierung prüfen"
 msgid "Reward returned"
 msgstr "Prämie zurückgebucht"
 
-#: app/(tabs)/_layout.tsx:49
+#: app/(tabs)/_layout.tsx:84
 #: lib/loyalty/labels.ts:53
 msgid "Rewards"
 msgstr "Prämien"
@@ -698,7 +788,7 @@ msgstr "Platziert"
 msgid "Seating area"
 msgstr "Sitzbereich"
 
-#: components/auth/verify-screen.tsx:59
+#: components/auth/verify-screen.tsx:71
 msgid "Send a new code"
 msgstr "Neuen Code senden"
 
@@ -709,6 +799,10 @@ msgstr "Anfrage senden"
 #: components/auth/login-screen.tsx:37
 msgid "Send code"
 msgstr "Code senden"
+
+#: components/ordering/menu-screen.tsx:340
+msgid "Set price {amount}"
+msgstr "Festpreis {amount}"
 
 #: lib/loyalty/labels.ts:106
 msgid "Show more"
@@ -746,6 +840,10 @@ msgstr "Abmelden"
 #: components/auth/connect-site-screen.tsx:23
 msgid "Site address"
 msgstr "Website-Adresse"
+
+#: components/ordering/menu-screen.tsx:274
+msgid "Sold out"
+msgstr "Ausverkauft"
 
 #: lib/i18n/app-error-message.ts:41
 #: lib/loyalty/labels.ts:130
@@ -804,6 +902,10 @@ msgstr "Diese Anfrage wurde bereits bearbeitet."
 #: lib/reservations/messages.ts:122
 msgid "That time was just taken. Pick another."
 msgstr "Diese Zeit wurde gerade vergeben. Bitte wählen Sie eine andere."
+
+#: components/ordering/menu-screen.tsx:112
+msgid "The menu could not be loaded."
+msgstr "Das Menü konnte nicht geladen werden."
 
 #: lib/reservations/messages.ts:77
 msgid "The payment didn't go through."
@@ -878,6 +980,8 @@ msgid "Too many attempts. Please wait a moment and try again."
 msgstr "Zu viele Versuche. Bitte warten Sie einen Moment und versuchen Sie es erneut."
 
 #: components/auth/site-unavailable-screen.tsx:26
+#: components/ordering/drops-screen.tsx:117
+#: components/ordering/menu-screen.tsx:114
 #: components/ui/error-message.tsx:28
 #: lib/loyalty/labels.ts:28
 #: lib/reservations/messages.ts:15
@@ -905,7 +1009,7 @@ msgstr "Aktualisiert"
 msgid "Use {reward}?"
 msgstr "{reward} einlösen?"
 
-#: components/auth/verify-screen.tsx:67
+#: components/auth/verify-screen.tsx:79
 msgid "Use a different number"
 msgstr "Andere Nummer verwenden"
 
@@ -918,11 +1022,15 @@ msgstr "Eine andere Website verwenden"
 msgid "Use a reward when you order, or show your code at the counter."
 msgstr "Lösen Sie eine Prämie bei der Bestellung ein oder zeigen Sie Ihren Code an der Theke."
 
-#: components/auth/verify-screen.tsx:31
+#: components/ordering/menu-screen.tsx:213
+msgid "Use code {code}"
+msgstr "Code {code} verwenden"
+
+#: components/auth/verify-screen.tsx:43
 msgid "Verification code"
 msgstr "Bestätigungscode"
 
-#: components/auth/verify-screen.tsx:49
+#: components/auth/verify-screen.tsx:61
 msgid "Verify"
 msgstr "Bestätigen"
 
@@ -946,11 +1054,11 @@ msgstr "Das konnten wir nicht finden."
 msgid "We couldn't update your place in line. We'll keep trying."
 msgstr "Wir konnten Ihren Platz in der Warteschlange nicht aktualisieren. Wir versuchen es weiter."
 
-#: components/auth/verify-screen.tsx:28
+#: components/auth/verify-screen.tsx:40
 msgid "We sent a 6-digit code to {phone}."
 msgstr "Wir haben einen 6-stelligen Code an {phone} gesendet."
 
-#: components/auth/verify-screen.tsx:45
+#: components/auth/verify-screen.tsx:57
 msgid "We sent you a new code."
 msgstr "Wir haben Ihnen einen neuen Code gesendet."
 
@@ -965,6 +1073,10 @@ msgstr "Wir verwenden {phone} aus Ihrem Konto."
 #: lib/reservations/messages.ts:43
 msgid "We're holding your table for {time}"
 msgstr "Wir halten Ihren Tisch noch {time}"
+
+#: components/ordering/menu-screen.tsx:143
+msgid "What is on the menu today. Checkout is on the website."
+msgstr "Das steht heute auf der Speisekarte. Die Kasse ist auf der Website."
 
 #: lib/reservations/messages.ts:86
 msgid "When"

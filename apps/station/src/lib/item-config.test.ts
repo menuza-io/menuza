@@ -20,6 +20,96 @@ describe('item configuration', () => {
 		expect(canQuickAdd(get('i-marg'))).toBe(false)
 	})
 
+	it('charges a whole topping what the server does: priceWhole when it has one', () => {
+		const group = (price: number, priceWhole?: number | null) => ({
+			id: 'g-top',
+			name: 'Toppings',
+			selectionType: 'pizza' as const,
+			minSelections: 0,
+			maxSelections: null,
+			availabilityStatus: 'available',
+			position: 0,
+			options: [
+				{
+					id: 'o-olive',
+					displayName: 'Olives',
+					price,
+					priceWhole,
+					minSelections: 0,
+					maxSelections: null,
+					isDefault: false,
+					applySalesTax: true,
+					availabilityStatus: 'available',
+					position: 0,
+				},
+			],
+		})
+		const priced = (g: ReturnType<typeof group>) => {
+			const item: MenuItem = { ...get('i-fries'), modifierGroups: [g] }
+			return buildLine(
+				item,
+				defaultVariantPicks(item),
+				{ 'g-top': { 'o-olive': 1 } },
+				1,
+				'',
+			).options[0]!.unitCents
+		}
+		expect(priced(group(2, 3.5))).toBe(350)
+		expect(priced(group(2, null))).toBe(200)
+		expect(priced(group(2))).toBe(200)
+		// A free whole topping is free, even when the half price is not.
+		expect(priced(group(2, 0))).toBe(0)
+	})
+
+	it('opens the sheet for an item whose only choices are optional', () => {
+		// Pineapple pizza with optional toppings: nothing is required, but the
+		// guest has to be able to order a topping.
+		const optional: MenuItem = {
+			...get('i-fries'),
+			modifierGroups: [
+				{
+					id: 'g-top',
+					name: 'Toppings',
+					selectionType: 'pizza',
+					minSelections: 0,
+					maxSelections: null,
+					availabilityStatus: 'available',
+					position: 0,
+					options: [
+						{
+							id: 'o-olive',
+							displayName: 'Olives',
+							price: 2,
+							minSelections: 0,
+							maxSelections: null,
+							isDefault: false,
+							applySalesTax: true,
+							availabilityStatus: 'available',
+							position: 0,
+						},
+					],
+				},
+			],
+		}
+		expect(canQuickAdd(optional)).toBe(false)
+		// Take the only option away and there is nothing to choose again.
+		const soldOut: MenuItem = {
+			...optional,
+			modifierGroups: [
+				{
+					...optional.modifierGroups[0]!,
+					options: [
+						{
+							...optional.modifierGroups[0]!.options[0]!,
+							availabilityStatus: 'unavailable',
+						},
+					],
+				},
+			],
+		}
+		expect(canQuickAdd(soldOut)).toBe(true)
+	})
+
 	it('pre-selects the default option and passes validation', () => {
 		const burger = get('i-burger')
 		const sel = defaultSelections(burger)
@@ -119,7 +209,8 @@ describe('item configuration', () => {
 				},
 			],
 		}
-		expect(canQuickAdd(item)).toBe(true)
+		// It has choices, so the sheet opens; the defaults still fill the line.
+		expect(canQuickAdd(item)).toBe(false)
 		const line = buildLine(
 			item,
 			defaultVariantPicks(item),

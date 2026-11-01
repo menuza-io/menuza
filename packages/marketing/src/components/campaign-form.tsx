@@ -11,6 +11,9 @@ import { Link } from 'react-router'
 import { useCampaignLabels } from '../i18n/campaign-labels.ts'
 import { type CampaignChannel } from '../types/campaign.ts'
 
+/** Merge tags are passed as values: Lingui reads literal braces as a placeholder. */
+const NAME_TAG = '{{name}}'
+
 export interface CampaignFormProps {
 	error?: string | null
 	isSubmitting?: boolean
@@ -19,6 +22,8 @@ export interface CampaignFormProps {
 	audienceField?: ReactNode
 	/** Replaces the message textarea when the email channel is selected. */
 	emailDesigner?: ReactNode
+	/** Optional coupon picker, shown under the message (`{{couponCode}}`). */
+	couponField?: ReactNode
 	submitLabel?: string
 	submittingLabel?: string
 }
@@ -30,6 +35,7 @@ export function CampaignForm({
 	showSmsProBadge = true,
 	audienceField,
 	emailDesigner,
+	couponField,
 	submitLabel,
 	submittingLabel,
 }: CampaignFormProps) {
@@ -144,7 +150,7 @@ export function CampaignForm({
 								value={emailContent}
 								onChange={(e) => setEmailContent(e.target.value)}
 								placeholder={_(
-									msg`Write your email. Use {{name}} to personalize.`,
+									msg`Write your email. Use ${NAME_TAG} to personalize.`,
 								)}
 								className="min-h-45 resize-y"
 								required
@@ -152,6 +158,8 @@ export function CampaignForm({
 						)}
 					</div>
 				)}
+
+				{couponField}
 			</div>
 
 			<div className="flex items-center justify-between gap-3">

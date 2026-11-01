@@ -141,6 +141,15 @@ export function summarize(
 		orders: rungUp.map((o) => ({
 			status: o.status,
 			totals: o.totals,
+			// Items before discounts, and what discounts (not loyalty rewards)
+			// took off, capped at what the sale could lose.
+			subtotalCents: o.totals.subtotalCents,
+			discountCents: Math.min(
+				o.totals.adjustmentCents,
+				(o.adjustments ?? [])
+					.filter((a) => a.kind === 'discount')
+					.reduce((sum, a) => sum + a.amountCents, 0),
+			),
 			lineVoids: o.lineVoids ?? [],
 		})),
 		payments: payments.map((p) => ({

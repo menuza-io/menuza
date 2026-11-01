@@ -27,6 +27,14 @@ export type ItemModalOptions = {
 	/** Current cart lines, used to cap the quantity stepper. */
 	cartLines?: () => CartLine[]
 	onAdd: (line: CartItem) => void
+	/**
+	 * A was/now headline price (major units) for the item and chosen variant,
+	 * or null for the regular price. Display only: checkout quotes the order.
+	 */
+	salePrice?: (
+		item: OrderingItem,
+		variant: Variant | null,
+	) => { original: number; sale: number } | null
 	/** Mirror the open item into `?item=<id>` (default true). */
 	syncUrl?: boolean
 }
@@ -219,9 +227,30 @@ export function createItemModal(options: ItemModalOptions): ItemModal {
 			unavailableEl.textContent = labels.combinationUnavailable
 			unavailableEl.classList.toggle('hidden', !blocked)
 		}
-		if (priceEl) priceEl.textContent = formatMoney(variant?.price ?? item.price)
+		renderHeadlinePrice()
 		renderMedia(variant?.imageUrl || item.imageUrl)
 		updateAddButton()
+	}
+
+	function renderHeadlinePrice() {
+		if (!priceEl || !item) return
+		const regular = variant?.price ?? item.price
+		const sale = options.salePrice?.(item, variant) ?? null
+		if (!sale) {
+			priceEl.textContent = formatMoney(regular)
+			return
+		}
+		const was = el('del', 'me-2 text-sm text-muted-foreground bidi-isolate')
+		was.append(
+			el('span', 'sr-only', labels.originalPrice),
+			document.createTextNode(formatMoney(sale.original)),
+		)
+		const now = el('span')
+		now.append(
+			el('span', 'sr-only', labels.salePrice),
+			document.createTextNode(formatMoney(sale.sale)),
+		)
+		priceEl.replaceChildren(was, now)
 	}
 
 	function renderMedia(src: string | null | undefined) {

@@ -6,7 +6,12 @@ import {
 	buildEmailTemplateBlocks,
 	type EmailBlock,
 } from '@repo/common/email-blocks'
-import { CampaignForm, EmailBlockEditor } from '@repo/marketing'
+import {
+	CampaignForm,
+	CouponOfferField,
+	type CouponOfferValue,
+	EmailBlockEditor,
+} from '@repo/marketing'
 import {
 	normalizeEmailBlocks,
 	renderMarketingEmail,
@@ -26,6 +31,12 @@ import {
 	MediaLibraryPicker,
 	type MediaLibraryAsset,
 } from '#app/components/media-library/media-library-picker.tsx'
+import { MARKETING_OFFER_ERROR_MESSAGES } from '#app/utils/discounts/marketing-offer-labels.ts'
+import {
+	checkMarketingOffer,
+	loadCouponDiscountOptions,
+	readOfferField,
+} from '#app/utils/discounts/marketing-offers.server.ts'
 import { resolveEmailBrandingForOrg } from '#app/utils/email-branding.server.ts'
 import {
 	ORG_PERMISSIONS,
@@ -91,20 +102,23 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	const orgSlug = params.orgSlug || ''
 	const { orgId } = await getOperatorTenantClient(request, orgSlug)
 
-	await requireUserWithOrganizationPermission(
+	const userId = await requireUserWithOrganizationPermission(
 		request,
 		orgId,
 		ORG_PERMISSIONS.UPDATE_CAMPAIGN_ANY,
 	)
 
-	return { orgSlug }
+	return {
+		orgSlug,
+		couponOptions: await loadCouponDiscountOptions(userId, orgId),
+	}
 }
 
 export async function action({ request, params }: ActionFunctionArgs) {
 	const orgSlug = params.orgSlug || ''
 	const { orgId, fetchTenant } = await getOperatorTenantClient(request, orgSlug)
 
-	await requireUserWithOrganizationPermission(
+	const userId = await requireUserWithOrganizationPermission(
 		request,
 		orgId,
 		ORG_PERMISSIONS.UPDATE_CAMPAIGN_ANY,
@@ -190,6 +204,23 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		return { error: i18n._(t`Message content is required`) }
 	}
 
+	const offerCheck = await checkMarketingOffer({
+		userId,
+		organizationId: orgId,
+		raw: readOfferField(formData.get('discountOffer')),
+		texts:
+			channel === 'email'
+				? [
+						typeof subject === 'string' ? subject : '',
+						resolvedContent,
+						contentHtml,
+					]
+				: [resolvedContent],
+	})
+	if (!offerCheck.ok) {
+		return { error: i18n._(MARKETING_OFFER_ERROR_MESSAGES[offerCheck.error]) }
+	}
+
 	const createRes = await fetchTenant('/operator/marketing/campaigns', {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
@@ -200,6 +231,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			content: resolvedContent,
 			contentHtml,
 			contentBlocks,
+			discountOffer: offerCheck.offer,
 		}),
 	})
 
@@ -217,10 +249,11 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
 export default function NewCampaignRoute() {
 	const { _ } = useLingui()
-	const { orgSlug } = useLoaderData<typeof loader>()
+	const { orgSlug, couponOptions } = useLoaderData<typeof loader>()
 	const actionData = useActionData<typeof action>()
 	const navigation = useNavigation()
 	const isSubmitting = navigation.state === 'submitting'
+	const [offer, setOffer] = useState<CouponOfferValue | null>(null)
 
 	return (
 		<div className="flex flex-col gap-6">
@@ -235,6 +268,16 @@ export default function NewCampaignRoute() {
 					isSubmitting={isSubmitting}
 					cancelTo=".."
 					emailDesigner={<EmailDesignerField orgSlug={orgSlug} />}
+					couponField={
+						couponOptions ? (
+							<CouponOfferField
+								name="discountOffer"
+								options={couponOptions}
+								value={offer}
+								onChange={setOffer}
+							/>
+						) : null
+					}
 				/>
 			</Form>
 		</div>

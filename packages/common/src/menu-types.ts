@@ -180,6 +180,8 @@ export const MenuVariationSchema = z
 		valueIds: z.array(z.string()).min(1).max(3),
 		price: z.number().finite().min(0, 'Variation price must be positive'),
 		imageKey: z.string().nullable().default(null),
+		// Never receives any discount (Square "discount eligibility").
+		excludeFromDiscounts: z.boolean().default(false),
 		availabilityStatus: z
 			.enum(['available', 'unavailable_until', 'unavailable'])
 			.default('available'),
@@ -330,6 +332,7 @@ export function reconcileMenuVariations(
 				valueIds,
 				price: inherited?.price ?? defaultPrice,
 				imageKey: inherited?.imageKey ?? null,
+				excludeFromDiscounts: inherited?.excludeFromDiscounts ?? false,
 				availabilityStatus: 'available',
 				unavailableUntil: null,
 			}
@@ -468,6 +471,7 @@ export const MenuItemInputSchema = z.object({
 	calorieMax: OptionalCountInputSchema,
 	applySalesTax: z.boolean().default(true),
 	excludeFromOverride: z.boolean().default(false),
+	excludeFromDiscounts: z.boolean().default(false),
 	isPopular: z.boolean().default(false),
 	isUpsell: z.boolean().default(false),
 	availabilityStatus: AvailabilityStatusSchema.default('available'),

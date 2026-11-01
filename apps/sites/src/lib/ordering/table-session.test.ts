@@ -540,9 +540,58 @@ describe('signed-in members at the table', () => {
 					tipPercent: 10,
 					contact: { name: 'Sam', phone: '+15555550100' },
 					loyalty: reward,
+					// Always asks for discounts; the shown total is 0 here.
+					discounts: { expectedDiscountMinor: 0 },
 				},
 			},
 		])
+	})
+
+	it('asks again with the discount the region priced when it differs from the tab', async () => {
+		signIn()
+		const fetchMock = vi
+			.fn()
+			.mockResolvedValueOnce(
+				Response.json(
+					{
+						error: 'discount_changed',
+						details: { discountMinor: 300 },
+					},
+					{ status: 409 },
+				),
+			)
+			.mockResolvedValueOnce(
+				Response.json({
+					orderRef: 'tab:tab-1',
+					tabPaymentToken: 'pay-1',
+					amountCents: 2_150,
+					tipCents: 0,
+					loyaltyDiscountCents: 0,
+					currency: 'USD',
+				}),
+			)
+			.mockResolvedValueOnce(
+				Response.json({ checkoutUrl: 'https://pay.example/c' }),
+			)
+		vi.stubGlobal('fetch', fetchMock)
+		const started = await startTabPayment('org-1', session({ tabToken }), {
+			tipPercent: 0,
+			contact: { name: 'Sam', phone: '+15555550100' },
+			locale: 'en',
+			coupon: 'SAVE10',
+			expectedDiscountMinor: 0,
+		})
+		expect(started.amountCents).toBe(2_150)
+		const bodies = calls(fetchMock)
+			.filter((call) => call.url.endsWith('/orders/tab/pay'))
+			.map((call) => call.body)
+		expect(bodies).toHaveLength(2)
+		expect(bodies[0]).toMatchObject({
+			discounts: { code: 'SAVE10', expectedDiscountMinor: 0 },
+		})
+		expect(bodies[1]).toMatchObject({
+			discounts: { code: 'SAVE10', expectedDiscountMinor: 300 },
+		})
 	})
 
 	it('pays without a reward as a guest when the token is refused', async () => {

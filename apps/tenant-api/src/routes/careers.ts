@@ -12,6 +12,7 @@ import {
 	careersApplySchema,
 } from '@repo/staffing'
 import { getTenantDb } from '@repo/tenant-db'
+import { clientAddress } from '../lib/client-ip.ts'
 import { getLivePosting } from '../lib/job-posting-context.ts'
 import {
 	resolveOrganizationForBrowserAuth,
@@ -61,11 +62,10 @@ async function verifyChallenge(c: Context, token: unknown): Promise<boolean> {
 	// No secret configured (local development): the challenge is off.
 	if (!isTurnstileConfigured(secret)) return true
 	if (typeof token !== 'string' || !token.trim()) return false
-	const ip = c.req.header('cf-connecting-ip')?.trim()
 	const result = await verifyTurnstileToken({
 		secret,
 		token,
-		remoteIp: ip || undefined,
+		remoteIp: clientAddress(c) ?? undefined,
 		expectedAction: TURNSTILE_ACTION,
 		expectedHostnames: parseTurnstileHostnames(ENV.TURNSTILE_HOSTNAMES),
 	})

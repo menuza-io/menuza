@@ -10,6 +10,7 @@ import { Icon } from '@repo/ui/icon'
 import { Item, ItemContent, ItemActions, ItemFooter } from '@repo/ui/item'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { DishStatusBadge, RoundHeading } from './KitchenRounds.tsx'
+import { ManualDiscount } from './ManualDiscount.tsx'
 import { PhoneOrderSheet } from './PhoneOrderSheet.tsx'
 import { PhonePickupDetails } from './PhonePickupDetails.tsx'
 import { type OrderType } from '~/lib/db.ts'
@@ -156,7 +157,7 @@ export function Cart({
 	return (
 		<section
 			aria-label={_(t`Current order`)}
-			className="bg-card @container flex min-h-0 flex-1 flex-col"
+			className="bg-card @container flex min-h-0 flex-1 flex-col overflow-y-auto"
 		>
 			<div className="border-border shrink-0 space-y-2 border-b px-4 py-3">
 				{showHeading ? (
@@ -279,7 +280,7 @@ export function Cart({
 					/>
 				</button>
 			) : null}
-			<div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+			<div className="min-h-40 flex-1 overflow-y-auto overscroll-contain">
 				{lines.length === 0 ? (
 					<Empty>
 						<EmptyHeader>
@@ -341,7 +342,8 @@ export function Cart({
 							)}
 				</p>
 			) : null}
-			<div className="border-border bg-card shrink-0 space-y-4 border-t p-4">
+			<div className="border-border bg-card sticky bottom-0 z-10 shrink-0 space-y-3 border-t p-4">
+				<ManualDiscount disabled={lines.length === 0} money={money} />
 				<dl className="tnum space-y-1 text-sm">
 					<Row
 						label={_(
@@ -356,7 +358,7 @@ export function Cart({
 						<Row
 							key={a.id}
 							label={a.label}
-							value={`-${money(a.amountCents)}`}
+							value={money(-a.amountCents)}
 							tone="success"
 						/>
 					))}
@@ -367,7 +369,7 @@ export function Cart({
 						{error}
 					</p>
 				</Reveal>
-				<div className="grid grid-cols-1 gap-2 @sm:grid-cols-[auto_minmax(0,1fr)]">
+				<div className="grid grid-cols-[auto_minmax(0,1fr)] gap-2">
 					<Button
 						variant="outline"
 						size="xl"
@@ -386,7 +388,7 @@ export function Cart({
 					<Button
 						variant="primary"
 						size="xl"
-						className="order-first justify-between px-4 @sm:order-none"
+						className="justify-between px-4"
 						disabled={lines.length === 0}
 						onClick={onCharge}
 					>

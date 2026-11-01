@@ -8,6 +8,10 @@ import {
 	type WorkflowConfig,
 } from './workflow-config.tsx'
 
+/** Merge tags are passed as values: Lingui reads literal braces as a placeholder. */
+const NAME_TAG = '{{name}}'
+const ORGANIZATION_NAME_TAG = '{{organizationName}}'
+
 const TENANT_TRIGGER_MSGS: Record<
 	string,
 	{ label: ReturnType<typeof msg>; desc: ReturnType<typeof msg> }
@@ -110,21 +114,21 @@ const PALETTE_MSGS = {
 
 const TENANT_EMAIL_DEFAULTS = {
 	subject: msg`Your Exclusive Update`,
-	bodyHtml: msg`<p>Hi {{name}},</p><p>Check out our latest update.</p>`,
-	bodyText: msg`Hi {{name}}, Check out our latest update.`,
+	bodyHtml: msg`<p>Hi ${NAME_TAG},</p><p>Check out our latest update.</p>`,
+	bodyText: msg`Hi ${NAME_TAG}, Check out our latest update.`,
 	fromName: msg`Team`,
 }
 
-const TENANT_SMS_DEFAULT = msg`Hi {{name}}, your account update is ready!`
+const TENANT_SMS_DEFAULT = msg`Hi ${NAME_TAG}, your account update is ready!`
 
 const PLATFORM_EMAIL_DEFAULTS = {
-	subject: msg`Welcome to Menuza, {{organizationName}}`,
-	bodyHtml: msg`<p>Hi {{name}},</p><p>Your organization {{organizationName}} is ready.</p>`,
-	bodyText: msg`Hi {{name}}, Your organization {{organizationName}} is ready.`,
+	subject: msg`Welcome to Menuza, ${ORGANIZATION_NAME_TAG}`,
+	bodyHtml: msg`<p>Hi ${NAME_TAG},</p><p>Your organization ${ORGANIZATION_NAME_TAG} is ready.</p>`,
+	bodyText: msg`Hi ${NAME_TAG}, Your organization ${ORGANIZATION_NAME_TAG} is ready.`,
 	fromName: msg`Menuza Team`,
 }
 
-const PLATFORM_SMS_DEFAULT = msg`Hi {{name}}, your Menuza account is ready.`
+const PLATFORM_SMS_DEFAULT = msg`Hi ${NAME_TAG}, your Menuza account is ready.`
 
 function buildPaletteItems(
 	_: (descriptor: ReturnType<typeof msg>) => string,

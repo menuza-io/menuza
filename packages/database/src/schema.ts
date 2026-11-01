@@ -2926,6 +2926,8 @@ export const OrganizationMenuItem = sqliteTable(
 		calorieMax: integer(),
 		applySalesTax: integer({ mode: 'boolean' }).default(true).notNull(),
 		excludeFromOverride: integer({ mode: 'boolean' }).default(false).notNull(),
+		// Never receives any discount (gift cards, consignment goods).
+		excludeFromDiscounts: integer({ mode: 'boolean' }).default(false).notNull(),
 		isPopular: integer({ mode: 'boolean' }).default(false).notNull(),
 		isUpsell: integer({ mode: 'boolean' }).default(false).notNull(),
 		availabilityStatus: text().default('available').notNull(),
@@ -4282,5 +4284,123 @@ export const SocialPostTarget = sqliteTable(
 	(table) => [
 		index('SocialPostTarget_postId_idx').on(table.postId),
 		index('SocialPostTarget_socialAccountId_idx').on(table.socialAccountId),
+	],
+)
+
+// Discounts and coupons (docs/discounts-plan.md). Definitions hold menu ids and
+// rules only, never customer data; usage is counted in the regional tenant DB.
+// The nested JSON columns are validated by `discountDefinitionSchema` in
+// `@repo/discounts`, which is the single source of their shape.
+export const Discount = sqliteTable(
+	'Discount',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		name: text().notNull(),
+		internalName: text(),
+		description: text(),
+		// active | paused | archived. Never deleted: redemptions reference it.
+		status: text().default('active').notNull(),
+		// automatic | code | manual
+		application: text().notNull(),
+		// percent | fixed | free_delivery
+		valueType: text().notNull(),
+		percentBp: integer(),
+		amountMinor: integer(),
+		currency: text(),
+		maxDiscountMinor: integer(),
+		target: text().notNull(),
+		requirement: text(),
+		quantityRule: text().default('{"kind":"none"}').notNull(),
+		maxDiscountedUnits: integer(),
+		minSubtotalMinor: integer(),
+		// JSON array of location ids; null means every location.
+		locationIds: text(),
+		channels: text().default('["web","qr","pos","app"]').notNull(),
+		fulfillments: text().default('["pickup","delivery","dine_in"]').notNull(),
+		includeDrops: integer({ mode: 'boolean' }).default(false).notNull(),
+		schedule: text(),
+		// Local date-times (YYYY-MM-DDTHH:MM) in each location's time zone.
+		startsAt: text(),
+		endsAt: text(),
+		eligibility: text().default('everyone').notNull(),
+		totalLimit: integer(),
+		perCustomerLimit: text(),
+		combinable: integer({ mode: 'boolean' }).default(false).notNull(),
+		// JSON array of the kinds it may stack with (item, order, delivery). Null:
+		// `combinable` decides (all kinds, or none).
+		combinesWith: text(),
+		// JSON spend or quantity ladder; null means none.
+		tiers: text(),
+		// Free delivery only: the largest delivery fee it waives.
+		maxDeliveryFeeMinor: integer(),
+		priority: integer().default(0).notNull(),
+		promoteOnMenu: integer({ mode: 'boolean' }).default(false).notNull(),
+		requireApproval: integer({ mode: 'boolean' }).default(false).notNull(),
+		// Bumped on every save; a redemption freezes the version it used.
+		version: integer().default(1).notNull(),
+		createdById: text().references(() => User.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('Discount_organizationId_status_idx').on(
+			table.organizationId,
+			table.status,
+		),
+	],
+)
+
+export const DiscountCode = sqliteTable(
+	'DiscountCode',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		discountId: text()
+			.notNull()
+			.references(() => Discount.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		// As the operator typed it.
+		code: text().notNull(),
+		// Upper case, no spaces or dashes: what is compared and rate limited.
+		normalizedCode: text().notNull(),
+		maxUses: integer(),
+		archivedAt: integer({ mode: 'timestamp_ms' }),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('DiscountCode_discountId_idx').on(table.discountId),
+		// A code is unique per organization among the unarchived ones.
+		uniqueIndex('DiscountCode_organizationId_normalizedCode_active_key')
+			.on(table.organizationId, table.normalizedCode)
+			.where(sql`${table.archivedAt} IS NULL`),
 	],
 )

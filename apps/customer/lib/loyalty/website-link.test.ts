@@ -1,4 +1,4 @@
-import { websiteOrderUrl } from './website-link'
+import { websiteOrderUrl, websitePageUrl } from './website-link'
 
 const organization = { slug: 'acme', customDomain: null as string | null }
 const brandDomain = 'menuza.com'
@@ -74,6 +74,45 @@ describe('websiteOrderUrl', () => {
 	it('returns null when nothing usable remains', () => {
 		expect(link({ slug: 'not a slug!' })).toBeNull()
 		expect(link({ brandDomain: '' })).toBeNull()
+	})
+
+	it('opens checkout, drops, and one drop on the same origin', () => {
+		const input = {
+			organization,
+			siteAddress: {
+				slug: organization.slug,
+				host: null,
+				origin: 'https://acme.menuza.com',
+			},
+			brandDomain,
+		}
+		expect(websitePageUrl({ ...input, page: 'menu' })).toBe(
+			'https://acme.menuza.com/menu',
+		)
+		expect(websitePageUrl({ ...input, page: 'checkout' })).toBe(
+			'https://acme.menuza.com/menu/checkout',
+		)
+		expect(websitePageUrl({ ...input, page: 'drops' })).toBe(
+			'https://acme.menuza.com/drops',
+		)
+		expect(
+			websitePageUrl({ ...input, page: 'drop', slug: 'Friday-Lunch' }),
+		).toBe('https://acme.menuza.com/drop/friday-lunch')
+	})
+
+	it('refuses a drop slug that is not a path segment', () => {
+		const input = {
+			organization,
+			siteAddress: { slug: organization.slug, host: null, origin: null },
+			brandDomain,
+		}
+		expect(
+			websitePageUrl({ ...input, page: 'drop', slug: '../menu' }),
+		).toBeNull()
+		expect(websitePageUrl({ ...input, page: 'drop', slug: 'a b' })).toBeNull()
+		expect(
+			websitePageUrl({ ...input, page: 'drop', slug: 'ok?coupon=1' }),
+		).toBeNull()
 	})
 
 	it('never carries a query or fragment', () => {

@@ -18,6 +18,8 @@ export class OrderRequestError extends Error {
 	constructor(
 		readonly code: string,
 		readonly status: number,
+		/** The region's JSON answer, for refusals that carry data (a fresh quote). */
+		readonly body: unknown = null,
 	) {
 		super(code)
 		this.name = 'OrderRequestError'
@@ -60,7 +62,7 @@ async function responseJson(response: Response): Promise<unknown> {
 			typeof value.error === 'string'
 				? value.error
 				: 'order_failed'
-		throw new OrderRequestError(code, response.status)
+		throw new OrderRequestError(code, response.status, value)
 	}
 	return value
 }
@@ -225,6 +227,44 @@ export async function submitRegionalOrder(
 	}
 	return createdOrderSchema.parse(await responseJson(response))
 }
+/**
+ * The discount quote for the order a checkout would place
+ * (`POST /orders/quote`). Guests are allowed; a signed-in customer's token
+ * rides along so member-only discounts can be priced. Answers with the
+ * status and parsed body for the quote client to judge; it throws only when
+ * the region cannot be reached.
+ */
+export async function postDiscountQuote(
+	body: Record<string, unknown>,
+	signal: AbortSignal,
+): Promise<{ status: number; body: unknown }> {
+	const url = `${regionalUrl()}/orders/quote`
+	const init: RequestInit = {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({ ...body, ...getOrgBinding() }),
+		signal,
+	}
+	if (!getAccessToken()) {
+		const response = await fetch(url, init)
+		return {
+			status: response.status,
+			body: await response.json().catch(() => null),
+		}
+	}
+	const { session, response } = await tenantFetch('/orders/quote', init)
+	if (session === 'transient') throw new OrderRequestError('quote_failed', 503)
+	if (session === 'signed_out') {
+		// The session ended: price it as a guest instead of showing nothing.
+		const guest = await fetch(url, init)
+		return { status: guest.status, body: await guest.json().catch(() => null) }
+	}
+	return {
+		status: response.status,
+		body: await response.json().catch(() => null),
+	}
+}
+
 /** Receipt capability is sent to the region only, never to App or Sites SSR. */
 export async function fetchOrderReceipt(
 	orgId: string,

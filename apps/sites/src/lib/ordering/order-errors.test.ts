@@ -24,6 +24,9 @@ const labels: OrderErrorLabels = {
 	locationUnavailable: 'locationUnavailable',
 	idempotencyConflict: 'idempotencyConflict',
 	rateLimited: 'rateLimited',
+	discountChanged: 'discountChanged',
+	couponRefused: 'couponRefused',
+	discountsUnavailable: 'discountsUnavailable',
 	generic: 'generic',
 }
 
@@ -70,6 +73,10 @@ describe('orderErrorLabelKey', () => {
 			location_not_found: 'locationUnavailable',
 			idempotency_conflict: 'idempotencyConflict',
 			rate_limit_exceeded: 'rateLimited',
+			discount_changed: 'discountChanged',
+			coupon_refused: 'couponRefused',
+			discounts_disabled: 'discountsUnavailable',
+			discounts_on_tab: 'discountsUnavailable',
 		}
 		for (const [code, key] of Object.entries(expectations)) {
 			expect(orderErrorLabelKey(code)).toBe(key)

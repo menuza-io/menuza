@@ -166,7 +166,7 @@ export function Receipt({
 			{order.adjustments.map((a) => (
 				<Row key={a.id}>
 					<span>{a.label}</span>
-					<span>-{money(a.amountCents)}</span>
+					<span>{money(-a.amountCents)}</span>
 				</Row>
 			))}
 			<Row>
@@ -218,7 +218,7 @@ export function Receipt({
 					<span>
 						{_(t`Refunded`)} · {_(TENDER_LABEL[r.method])}
 					</span>
-					<span>-{money(r.amountCents)}</span>
+					<span>{money(-r.amountCents)}</span>
 				</Row>
 			))}
 			{balance > 0 ? (

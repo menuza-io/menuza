@@ -6,7 +6,6 @@ import {
 	inArray,
 	isNull,
 	lte,
-	or,
 	sql,
 	type SQL,
 } from 'drizzle-orm'
@@ -22,11 +21,14 @@ import {
 import {
 	customers,
 	customerSubscriptions,
+	discountRedemptions,
 	marketingCampaigns,
 	marketingMessages,
 	restaurantOrders,
 	type TenantDatabase,
 } from '@repo/tenant-db'
+import { queryInChunks } from '../lib/chunked-in.ts'
+import { isPayableOrder, payableOrderCondition } from './order-payable.ts'
 
 /**
  * Most recent orders an order, item, or option report reads. Like the phone
@@ -56,24 +58,19 @@ type OrderSalesState = {
 
 /**
  * Open and completed orders count as sales once they are payable: handoff
- * orders right away, online orders after payment succeeds. Cancelled,
+ * orders right away, online orders after payment succeeds (or when none was
+ * due: a 100% discount). Cancelled,
  * expired, and payment-review orders are left out.
  */
 export function orderCountsTowardSales(order: OrderSalesState) {
-	return (
-		ACTIVE_STATUSES.includes(order.status) &&
-		(order.paymentMethod === 'handoff' || order.paymentStatus === 'paid')
-	)
+	return ACTIVE_STATUSES.includes(order.status) && isPayableOrder(order)
 }
 
 /** The same rule as {@link orderCountsTowardSales}, as a WHERE clause. */
 export function countedOrderCondition(): SQL {
 	return and(
 		inArray(restaurantOrders.status, [...RESTAURANT_ACTIVE_ORDER_STATUSES]),
-		or(
-			eq(restaurantOrders.paymentMethod, 'handoff'),
-			eq(restaurantOrders.paymentStatus, 'paid'),
-		),
+		payableOrderCondition(),
 	)!
 }
 
@@ -188,6 +185,10 @@ const orderColumns = {
 	tipCents: restaurantOrders.tipCents,
 	tipPercent: restaurantOrders.tipPercent,
 	totalCents: restaurantOrders.totalCents,
+	discountCents: restaurantOrders.discountCents,
+	deliveryDiscountCents: restaurantOrders.deliveryDiscountCents,
+	loyaltyDiscountCents: restaurantOrders.loyaltyDiscountCents,
+	tabId: restaurantOrders.tabId,
 	holdExpiresAt: restaurantOrders.holdExpiresAt,
 	createdAt: restaurantOrders.createdAt,
 	completedAt: restaurantOrders.completedAt,
@@ -428,6 +429,66 @@ export function attributedChannel(
 	return 'none'
 }
 
+/** Consumed tab discounts keyed by tab id (minor units, items plus delivery). */
+async function loadTabDiscountCentsByTabId(
+	db: TenantDatabase,
+	tabIds: readonly string[],
+): Promise<Map<string, number>> {
+	const totals = new Map<string, number>()
+	if (tabIds.length === 0) return totals
+	const rows = await queryInChunks([...tabIds], (chunk) =>
+		db
+			.select({
+				sourceId: discountRedemptions.sourceId,
+				amountMinor: discountRedemptions.amountMinor,
+				deliveryAmountMinor: discountRedemptions.deliveryAmountMinor,
+			})
+			.from(discountRedemptions)
+			.where(
+				and(
+					eq(discountRedemptions.sourceType, 'tab'),
+					eq(discountRedemptions.state, 'consumed'),
+					inArray(discountRedemptions.sourceId, chunk),
+				),
+			),
+	)
+	for (const row of rows) {
+		totals.set(
+			row.sourceId,
+			(totals.get(row.sourceId) ?? 0) +
+				row.amountMinor +
+				row.deliveryAmountMinor,
+		)
+	}
+	return totals
+}
+
+/** One order row per tab gets the tab's close discount in order reports. */
+function tabDiscountCentsByOrderId(
+	rows: readonly OrderReportRow[],
+	tabDiscounts: ReadonlyMap<string, number>,
+): Map<string, number> {
+	const latestByTab = new Map<string, OrderReportRow>()
+	for (const row of rows) {
+		if (!row.tabId) continue
+		const previous = latestByTab.get(row.tabId)
+		if (
+			!previous ||
+			(row.createdAt &&
+				previous.createdAt &&
+				row.createdAt > previous.createdAt)
+		) {
+			latestByTab.set(row.tabId, row)
+		}
+	}
+	const byOrder = new Map<string, number>()
+	for (const [tabId, order] of latestByTab) {
+		const cents = tabDiscounts.get(tabId)
+		if (cents && cents > 0) byOrder.set(order.id, cents)
+	}
+	return byOrder
+}
+
 export async function loadOrderRecords(
 	db: TenantDatabase,
 	orgId: string,
@@ -464,6 +525,18 @@ export async function loadOrderRecords(
 			? await loadAttributionMessages(db, earliest, latest)
 			: null
 
+	const needsTabDiscount = fields.has('discount')
+	const tabDiscountByOrderId = needsTabDiscount
+		? tabDiscountCentsByOrderId(
+				rows,
+				await loadTabDiscountCentsByTabId(db, [
+					...new Set(
+						rows.map((row) => row.tabId).filter((id): id is string => !!id),
+					),
+				]),
+			)
+		: new Map<string, number>()
+
 	const records = rows.map((row): ReportRecord => {
 		const state = reportOrderStatus(row, now)
 		const identity = history || messages ? orderIdentity(row, byPhone) : null
@@ -484,6 +557,14 @@ export async function loadOrderRecords(
 			tip: row.tipCents / 100,
 			tipPercent: row.tipPercent,
 			deliveryFee: row.deliveryFeeCents / 100,
+			// Items, delivery and loyalty on the order, plus a tab's close discount
+			// on its latest round (tab redemptions, not round rows).
+			discount:
+				(row.discountCents +
+					row.deliveryDiscountCents +
+					row.loyaltyDiscountCents +
+					(tabDiscountByOrderId.get(row.id) ?? 0)) /
+				100,
 		}
 		if ('lines' in row) {
 			record.itemCount = parseOrderLines(row.lines).reduce(

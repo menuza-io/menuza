@@ -63,15 +63,37 @@ export type PrintQrTargetServer = {
 	 * proof, download it and order it. Default: anyone with Print shop access.
 	 */
 	canView?(access: PrintShopAccess): Promise<boolean>
-	/** A new design's starting target for this product, or null to skip. */
+	/**
+	 * A new design's starting target for this product, or null to skip.
+	 * `ref` is the id of what the operator came from (a print started from
+	 * another page, `?start=<kind>:<ref>`); it is untrusted, so check it.
+	 */
 	defaultFor?(
 		access: PrintShopAccess,
-		input: { product: PrintProduct; scope: PrintScope | null },
+		input: {
+			product: PrintProduct
+			scope: PrintScope | null
+			ref?: string | null
+		},
 	): Promise<PrintQrTarget | null>
 	/** Data the target's editor fields need (JSON-serializable). */
 	editorData?(request: Request, access: PrintShopAccess): Promise<unknown>
 	/** How many pieces the target prints, for the proof's height. Default 1. */
 	pieceCount?(target: PrintQrTarget, editorData: unknown): number
+	/**
+	 * Words to start from when the operator left a field empty, written from
+	 * what the target points at ("10% off" for a discount). Null: use the
+	 * target's static copy.
+	 */
+	defaultCopy?(
+		target: PrintQrTarget,
+		locale: string,
+		access: PrintShopAccess,
+	): Promise<{
+		headline?: string
+		body?: string
+		callToAction?: string
+	} | null>
 	/** The target from the editor form; `'empty'` when nothing was chosen. */
 	fromForm(formData: FormData): PrintQrTarget | 'empty'
 	/**

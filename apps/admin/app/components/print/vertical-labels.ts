@@ -10,4 +10,5 @@ export const PRINT_VERTICAL_PRODUCT_LABELS: Record<string, MessageDescriptor> =
 	{
 		table_card: msg`Table QR cards`,
 		table_tent: msg`Table tent`,
+		coupon_card: msg`Coupon card`,
 	}

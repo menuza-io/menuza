@@ -253,6 +253,11 @@ export const ORG_PERMISSIONS = {
 	UPDATE_LOYALTY_POINTS_ANY: 'update:loyalty_points:any' as const,
 	UPDATE_LOYALTY_REDEMPTION_ANY: 'update:loyalty_redemption:any' as const,
 	READ_LOYALTY_REPORT_ANY: 'read:loyalty_report:any' as const,
+
+	// Discounts and coupons. Every discount surface is also behind the
+	// org-level discounts.* feature flags (see apps/app utils/discounts).
+	READ_DISCOUNT_ANY: 'read:discount:any' as const,
+	UPDATE_DISCOUNT_ANY: 'update:discount:any' as const,
 } as const
 
 /**

@@ -2,6 +2,22 @@ import { and, ConfigFlag, db, eq, isNull } from '@repo/database'
 import { type ActionFunctionArgs, type LoaderFunctionArgs } from 'react-router'
 import { z } from 'zod'
 import { FeatureFlags } from '#app/components/admin/feature-flags.tsx'
+import {
+	discountSiteCacheTargets,
+	type FlagPlacement,
+	requestSiteCachePurge,
+} from '#app/utils/sites-cache-purge.server.ts'
+
+/**
+ * Purges the public site cache each placement shows through, once each. An
+ * update passes the flag as it was and as it is, so moving a flag to another
+ * organization or key also clears the one it left.
+ */
+function maybePurgeDiscountSiteCache(...flags: (FlagPlacement | undefined)[]) {
+	for (const target of discountSiteCacheTargets(flags)) {
+		requestSiteCachePurge(target)
+	}
+}
 
 export async function loader({ request: _request }: LoaderFunctionArgs) {
 	const flags = (await db.select().from(ConfigFlag)).map((flag) => ({
@@ -63,7 +79,17 @@ export async function action({ request }: ActionFunctionArgs) {
 				{ status: 400 },
 			)
 		}
+		const [flag] = await db
+			.select({
+				key: ConfigFlag.key,
+				level: ConfigFlag.level,
+				organizationId: ConfigFlag.organizationId,
+			})
+			.from(ConfigFlag)
+			.where(eq(ConfigFlag.id, result.data.id))
+			.limit(1)
 		await db.delete(ConfigFlag).where(eq(ConfigFlag.id, result.data.id))
+		maybePurgeDiscountSiteCache(flag)
 		return Response.json({ ok: true })
 	}
 
@@ -122,6 +148,7 @@ export async function action({ request }: ActionFunctionArgs) {
 				organizationId: result.data.organizationId || null,
 				userId: result.data.userId || null,
 			})
+			maybePurgeDiscountSiteCache(result.data)
 		}
 
 		if (_action === 'update') {
@@ -131,6 +158,15 @@ export async function action({ request }: ActionFunctionArgs) {
 					{ status: 400 },
 				)
 			}
+			const [before] = await db
+				.select({
+					key: ConfigFlag.key,
+					level: ConfigFlag.level,
+					organizationId: ConfigFlag.organizationId,
+				})
+				.from(ConfigFlag)
+				.where(eq(ConfigFlag.id, result.data.id))
+				.limit(1)
 			await db
 				.update(ConfigFlag)
 				.set({
@@ -141,6 +177,7 @@ export async function action({ request }: ActionFunctionArgs) {
 					userId: result.data.userId || null,
 				})
 				.where(eq(ConfigFlag.id, result.data.id))
+			maybePurgeDiscountSiteCache(before, result.data)
 		}
 
 		return Response.json({ ok: true })

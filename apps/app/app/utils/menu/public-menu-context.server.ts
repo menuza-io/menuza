@@ -53,7 +53,12 @@ import {
 	OrganizationMenuModifierGroupOptionAssignment,
 	OrganizationMenuOption,
 } from '@repo/database'
+import { type OrderContextDiscounts } from '@repo/discounts'
 import { type AnySQLiteColumn } from 'drizzle-orm/sqlite-core'
+import {
+	buildPublicMenuDiscounts,
+	type PublicMenuPromotion,
+} from '#app/utils/discounts/order-context.server.ts'
 import {
 	applyOptionAssignment,
 	attachNestedModifierGroups,
@@ -71,6 +76,7 @@ import {
 	type PublicModifierGroupData,
 } from './public-serializers.server.ts'
 
+export type { PublicMenuPromotion } from '#app/utils/discounts/order-context.server.ts'
 export type {
 	PublicLocationData,
 	PublicMenuCategoryData,
@@ -101,6 +107,13 @@ export interface PublicSiteMenuPayload {
 			availabilityStatus?: string | null
 		}>
 	>
+	/** Banners and item badges. Absent on a cached menu from before discounts. */
+	promotions?: PublicMenuPromotion[]
+	/**
+	 * Not part of the public response. Till rules are loaded by a paired
+	 * terminal. The field stays so an older snapshot still type-checks.
+	 */
+	discountRules?: OrderContextDiscounts['discounts']
 }
 
 /** Org fields the menu builder needs; no PII. */
@@ -551,6 +564,7 @@ export async function buildPublicSiteMenuPayload(
 		locations.find((l) => l.isDefault) ||
 		locations[0]
 
+	const menuDiscounts = await buildPublicMenuDiscounts(org.id)
 	const payload: PublicSiteMenuPayload = {
 		organization: {
 			id: org.id,
@@ -563,6 +577,7 @@ export async function buildPublicSiteMenuPayload(
 		locations,
 		menus: structuredMenus,
 		locationOverrides: locationOverridesMap,
+		promotions: menuDiscounts.promotions,
 	}
 
 	const secondsUntilVariationReturn =

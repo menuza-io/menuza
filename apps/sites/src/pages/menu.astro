@@ -5,6 +5,7 @@ import {
 	isLocationOpenForOrdering,
 	type LocationOrderingAvailability,
 } from '@repo/common/location-types'
+import { menuItemSalePrice } from '@repo/discounts'
 import { getLocalizedMenuValue } from '@repo/common/menu-types'
 import { getLocaleHref } from '@repo/common/site-locales'
 import SitePage from '~/components/SitePage.astro'
@@ -35,6 +36,13 @@ import {
 	lowestAvailablePrice,
 } from '~/lib/ordering/catalog'
 import { formatMoney } from '~/lib/ordering/money'
+import {
+	MAX_BANNER_OFFERS,
+	MAX_ITEM_BADGES,
+	offersForItem,
+	promotionsForLocation,
+	worksForMode,
+} from '~/lib/ordering/offers'
 import { schedulingSettings } from '~/lib/ordering/schedule'
 import {
 	type FulfillmentMode,
@@ -249,6 +257,7 @@ function localizeItem(item: PublicMenuItemData, menu: PublicMenuData): OrderingI
 		calorieMin: item.calorieMin,
 		calorieMax: item.calorieMax,
 		isPopular: item.isPopular,
+		excludeFromDiscounts: item.excludeFromDiscounts === true,
 		availabilityStatus: item.availabilityStatus,
 		specialInstructions: menu.specialInstructions !== false,
 	}
@@ -295,16 +304,6 @@ for (const menu of menus) {
 }
 
 const allItems = flattenItems(categories)
-const popularCards = allItems
-	.filter((item) => item.isPopular)
-	.map((item) => ({
-		id: item.id,
-		name: item.displayName,
-		description: item.description,
-		...priceParts(item),
-		imageUrl: item.imageUrl,
-		soldOut: isItemSoldOut(item),
-	}))
 
 /**
  * Price split for display: the amount (or the sold-out label) plus a muted
@@ -326,14 +325,111 @@ function caloriesFor(item: OrderingItem): string | null {
 	return translate(i18n, msg`{count} Cal`, { count: item.calorieMin })
 }
 
-function rowProps(item: OrderingItem) {
+const promotions = menuPayload?.promotions ?? []
+const offersLabel = translate(i18n, msg`Offers`, {})
+
+function offerText(promotion: (typeof promotions)[number]): string {
+	// A set price, a deal, a ladder or a size-limited offer has no one value.
+	if (promotion.showName) return promotion.name
+	if (promotion.valueType === 'percent' && promotion.percentBp) {
+		return translate(i18n, msg`{percentText} off`, {
+			percentText: new Intl.NumberFormat(requestedLocale, {
+				style: 'percent',
+				maximumFractionDigits: 2,
+			}).format(promotion.percentBp / 10_000),
+		})
+	}
+	if (promotion.valueType === 'fixed' && promotion.amountMinor) {
+		return translate(i18n, msg`{amount} off`, {
+			amount: formatMoney(promotion.amountMinor / 100, currency, requestedLocale),
+		})
+	}
+	if (promotion.valueType === 'free_delivery') {
+		return translate(i18n, msg`Free delivery`, {})
+	}
+	return promotion.name
+}
+
+/**
+ * Badges for an item. `categoryIds` is the item's own (direct) category only:
+ * the region matches category offers by it, not by an ancestor.
+ */
+function offersFor(item: OrderingItem, categoryIds: string[]): string[] {
+	return offersForItem(livePromotions, item.id, categoryIds, MAX_ITEM_BADGES, {
+		excludeFromDiscounts: item.excludeFromDiscounts,
+	}).map(offerText)
+}
+
+/**
+ * The was/now price of an item, only when one plain offer (a percentage or an
+ * amount off each item) is the single offer covering it. Display only: the
+ * quote at checkout decides what an order costs.
+ */
+function saleInputFor(item: OrderingItem, categoryId: string) {
+	const available = (item.variations?.variants ?? []).filter(
+		(variant) => variant.availabilityStatus !== 'unavailable',
+	)
+	return {
+		id: item.id,
+		directCategoryIds: [categoryId],
+		priceMinor: Math.round(lowestAvailablePrice(item) * 100),
+		currency,
+		excludeFromDiscounts:
+			item.excludeFromDiscounts === true ||
+			available.some((variant) => variant.excludeFromDiscounts === true),
+	}
+}
+
+function salePriceFor(
+	item: OrderingItem,
+	categoryIds: string[],
+): { originalLabel: string; saleLabel: string } | null {
+	if (isItemSoldOut(item)) return null
+	const sale = menuItemSalePrice(
+		livePromotions,
+		saleInputFor(item, categoryIds[categoryIds.length - 1] ?? ''),
+	)
+	if (!sale) return null
+	return {
+		originalLabel: price(sale.originalMinor / 100),
+		saleLabel: price(sale.saleMinor / 100),
+	}
+}
+
+/**
+ * Every orderable item with what the browser needs to redo the was/now price
+ * when the visitor picks a time or order type (the offers are judged at the
+ * time the food is wanted, like the region does).
+ */
+type SaleItemInput = ReturnType<typeof saleInputFor>
+function collectSaleItems(
+	list: OrderingCategory[],
+	out: SaleItemInput[] = [],
+): SaleItemInput[] {
+	for (const category of list) {
+		for (const item of category.items ?? []) {
+			if (!isItemSoldOut(item)) out.push(saleInputFor(item, category.id))
+		}
+		collectSaleItems(category.subcategories ?? [], out)
+	}
+	return out
+}
+
+function rowProps(item: OrderingItem, categoryIds: string[]) {
+	const sale = salePriceFor(item, categoryIds)
 	return {
 		id: item.id,
 		name: item.displayName,
 		description: item.description,
 		...priceParts(item),
+		originalPriceSrLabel: labels.originalPrice,
+		salePriceSrLabel: labels.salePrice,
+		...(sale
+			? { priceLabel: sale.saleLabel, originalPriceLabel: sale.originalLabel }
+			: {}),
 		soldOut: isItemSoldOut(item),
 		popularLabel: item.isPopular ? popularLabel : null,
+		offerLabels: isItemSoldOut(item) ? [] : offersFor(item, categoryIds),
 		imageUrl: item.imageUrl,
 		calories: caloriesFor(item),
 		isVegetarian: item.isVegetarian,
@@ -342,6 +438,43 @@ function rowProps(item: OrderingItem) {
 		labels: dietaryLabels,
 	}
 }
+
+const saleInputById = new Map(
+	collectSaleItems(categories).map((input) => [input.id, input]),
+)
+
+/** The was/now price parts of a card that does not know its category (popular). */
+function salePartsFor(item: OrderingItem): {
+	priceLabel?: string
+	originalPriceLabel?: string
+	originalPriceSrLabel: string
+	salePriceSrLabel: string
+} {
+	const input = saleInputById.get(item.id)
+	const sale = input ? menuItemSalePrice(livePromotions, input) : null
+	return {
+		originalPriceSrLabel: labels.originalPrice,
+		salePriceSrLabel: labels.salePrice,
+		...(sale
+			? {
+					priceLabel: price(sale.saleMinor / 100),
+					originalPriceLabel: price(sale.originalMinor / 100),
+				}
+			: {}),
+	}
+}
+
+const popularCards = allItems
+	.filter((item) => item.isPopular)
+	.map((item) => ({
+		id: item.id,
+		name: item.displayName,
+		description: item.description,
+		...priceParts(item),
+		...salePartsFor(item),
+		imageUrl: item.imageUrl,
+		soldOut: isItemSoldOut(item),
+	}))
 
 const navItems = categories.map((category) => ({
 	id: category.id,
@@ -358,6 +491,35 @@ const allowedModes: FulfillmentMode[] = []
 if (fulfillment.pickup !== false) allowedModes.push('pickup')
 if (fulfillment.delivery !== false) allowedModes.push('delivery')
 if (!allowedModes.length) allowedModes.push('pickup')
+
+// Offers that work at this location, now (in its time zone) and for an order
+// type this page can place. A table order is `dine_in`, so those offers stay
+// in the list and the browser shows them only while a table is active.
+const livePromotions = promotionsForLocation(promotions, {
+	locationId: activeLocation?.id,
+	timeZone: activeLocation?.timezone || 'UTC',
+	modes: [...allowedModes, 'dine_in'],
+})
+const initialOfferMode = allowedModes[0] ?? 'pickup'
+// The banner lists up to 20; the browser narrows them to the current order
+// type and shows the first three of those.
+const bannerPool = livePromotions.slice(0, 20)
+const initialMatching = bannerPool.filter((promotion) =>
+	worksForMode(promotion, initialOfferMode),
+)
+const initialOffers = initialMatching.slice(0, MAX_BANNER_OFFERS)
+// "and N more offers" for every count the banner can reach, translated here so
+// plural rules stay the catalog's; the browser picks the one that fits.
+const moreOffersText: Record<number, string> = {}
+for (let count = 1; count <= bannerPool.length; count += 1) {
+	moreOffersText[count] = translate(
+		i18n,
+		msg`{count, plural, one {and # more offer} other {and # more offers}}`,
+		{ count },
+	)
+}
+const initialMore = Math.max(0, initialMatching.length - MAX_BANNER_OFFERS)
+const offerCodeText = (code: string) => translate(i18n, msg`Use code {code}`, { code })
 
 // Fallback fee before the customer has a verified address. Once the order
 // details hold a delivery quote, the cart uses the quote's zone fee instead
@@ -425,6 +587,30 @@ const clientMenuData = {
 	activeLocationId: activeLocation?.id ?? '',
 	locationIds: locations.map((location) => location.id),
 	timezone: activeLocation?.timezone || 'UTC',
+	saleItems: [...saleInputById.values()],
+	offers: promotions
+		.filter(
+			(promotion) =>
+				!promotion.locationIds ||
+				(activeLocation && promotion.locationIds.includes(activeLocation.id)),
+		)
+		.map((promotion) => ({
+			id: promotion.id,
+			valueType: promotion.valueType,
+			percentBp: promotion.percentBp ?? null,
+			amountMinor: promotion.amountMinor ?? null,
+			currency: promotion.currency ?? null,
+			scope: promotion.scope,
+			itemIds: promotion.itemIds,
+			categoryIds: promotion.categoryIds,
+			excludeItemIds: promotion.excludeItemIds ?? [],
+			excludeCategoryIds: promotion.excludeCategoryIds ?? [],
+			itemPrice: promotion.itemPrice === true,
+			fulfillments: promotion.fulfillments,
+			startsAt: promotion.startsAt ?? null,
+			endsAt: promotion.endsAt ?? null,
+			schedule: promotion.schedule,
+		})),
 	taxRate,
 	taxInclusive,
 	deliveryFee: resolveDeliveryFee(activeLocation),
@@ -498,8 +684,60 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 			{/* Active drops live on /drops; the menu only nudges toward them. */}
 			<DropNudge class="mt-5" />
 
+			{livePromotions.length > 0 ? (
+				<>
+					<ul
+						id="menu-offers"
+						class="mt-3 flex flex-col gap-2 [&[hidden]]:hidden"
+						aria-label={offersLabel}
+						data-max={MAX_BANNER_OFFERS}
+						hidden={initialOffers.length === 0}
+						data-more={JSON.stringify(moreOffersText)}
+					>
+						{bannerPool.map((promotion) => (
+							<li
+								class="surface flex items-start gap-3 rounded-xl px-3.5 py-2.5 [&[hidden]]:hidden"
+								data-offer
+								data-fulfillments={promotion.fulfillments?.join(' ') ?? ''}
+								hidden={!initialOffers.includes(promotion)}
+							>
+								{/* An offer shown by name has no value badge: the title says it. */}
+								{promotion.showName ? null : (
+									<span class="badge tone-brand shrink-0">{offerText(promotion)}</span>
+								)}
+								<div class="min-w-0">
+									<p class="font-semibold text-foreground">{promotion.name}</p>
+									{promotion.description ? (
+										<p class="text-sm leading-relaxed text-muted-foreground">{promotion.description}</p>
+									) : null}
+									{promotion.code ? (
+										<p class="mt-0.5 text-sm font-medium text-foreground">{offerCodeText(promotion.code)}</p>
+									) : null}
+								</div>
+							</li>
+						))}
+					</ul>
+					<p
+						id="menu-offers-more"
+						class="mt-1.5 px-1 text-sm text-muted-foreground [&[hidden]]:hidden"
+						hidden={initialMore === 0}
+					>
+						{moreOffersText[initialMore] ?? ''}
+					</p>
+				</>
+			) : null}
+
 			{/* Live region stays mounted so screen readers announce the inserted notice. */}
 			<div id="voice-order-notice" role="status" aria-live="polite"></div>
+
+			{/* A printed coupon's QR opened the menu: say the code is kept. The
+			    region still decides at checkout whether it applies. */}
+			<div id="menu-coupon-saved" role="status" aria-live="polite">
+				<p
+					class="surface mt-3 flex items-start gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium text-foreground [&[hidden]]:hidden"
+					hidden
+				></p>
+			</div>
 
 			{/* Search sits here below lg; on lg+ it lives at the top of the
 			    category rail (moved by the inline script after the rail). */}
@@ -599,7 +837,7 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 								{category.items.length > 0 ? (
 									<ul class="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
 										{category.items.map((item) => (
-											<MenuItemRow {...rowProps(item)} />
+											<MenuItemRow {...rowProps(item, [category.id])} />
 										))}
 									</ul>
 								) : null}
@@ -613,7 +851,7 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 										{sub.items.length > 0 ? (
 											<ul class="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
 												{sub.items.map((item) => (
-													<MenuItemRow {...rowProps(item)} />
+													<MenuItemRow {...rowProps(item, [sub.id])} />
 												))}
 											</ul>
 										) : null}
@@ -626,7 +864,7 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 												{subSub.items.length > 0 ? (
 													<ul class="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
 														{subSub.items.map((item) => (
-															<MenuItemRow {...rowProps(item)} />
+															<MenuItemRow {...rowProps(item, [subSub.id])} />
 														))}
 													</ul>
 												) : null}
@@ -662,6 +900,7 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 				includesTax: includesTaxLabel,
 				deliveryFee: deliveryFeeLabel,
 				total: totalLabel,
+				discounts: labels.discounts,
 				checkout: checkoutLabel,
 				close: labels.closeDialog,
 			}}
@@ -697,11 +936,33 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 	<script>
 		import { getBrowserTenantApiUrl, getOrgBinding } from '~/lib/client-auth'
 		import { indexCatalog } from '~/lib/ordering/catalog'
+		import {
+			cartDiscountView,
+			createQuoteBudget,
+			menuPricingPayload,
+		} from '~/lib/ordering/cart-discounts'
 		import { createCartStore } from '~/lib/ordering/cart-store'
 		import { mountCartUi } from '~/lib/ordering/cart-ui'
+		import {
+			createDiscountQuotes,
+			isTerminalRefusal,
+			adoptCouponFromUrl,
+			loadStoredCode,
+			rememberDroppedCode,
+			saveStoredCode,
+			stripCouponFromAddress,
+			type DiscountQuotes,
+		} from '~/lib/ordering/discount-quote'
+		import {
+			attemptKey,
+			couponContextKey,
+			shouldRetryHeldCoupon,
+			type HeldCoupon,
+		} from '~/lib/ordering/coupon-retry'
 		import { createItemModal } from '~/lib/ordering/item-modal'
 		import { el } from '~/lib/ordering/dom'
 		import { createMoneyFormatter } from '~/lib/ordering/money'
+		import { orderLines, postDiscountQuote } from '~/lib/ordering/order-client'
 		import {
 			hasValidDeliveryQuote,
 			loadOrderDetails,
@@ -710,8 +971,16 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 			updateOrderDetails,
 			type OrderDetails,
 		} from '~/lib/ordering/order-details'
+		import { menuItemSalePrice, type MenuPricePromotion } from '@repo/discounts'
+		import {
+			isPromotionLive,
+			localStamp,
+			type OfferMode,
+			worksForMode,
+		} from '~/lib/ordering/offers'
 		import { formatScheduledFor } from '~/lib/ordering/schedule'
 		import { mountScrollSpy } from '~/lib/ordering/scroll-spy'
+		import { posterSource } from '~/lib/ordering/table-session'
 		import {
 			type FulfillmentMode,
 			type OrderingCategory,
@@ -735,6 +1004,19 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 			activeLocationId: string
 			locationIds: string[]
 			timezone: string
+			saleItems: {
+				id: string
+				directCategoryIds: string[]
+				priceMinor: number
+				currency: string
+				excludeFromDiscounts: boolean
+			}[]
+			offers: (MenuPricePromotion & {
+				fulfillments?: OfferMode[]
+				startsAt?: string | null
+				endsAt?: string | null
+				schedule?: { day: number; start: string; end: string }[]
+			})[]
 			taxRate: number
 			taxInclusive?: boolean
 			deliveryFee: number
@@ -756,6 +1038,16 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 		const data = readJson<MenuData>('menu-data')
 		const labels = readJson<OrderingLabels>('ordering-labels')
 		const orgId = data.organizationId || 'default'
+		// A printed coupon's QR: keep its code like a typed one, and say so. A code
+		// this tab already let go of (removed, or refused for good) stays gone, and
+		// the link leaves the address bar so a reload does not send it again.
+		const adoptedCoupon = adoptCouponFromUrl(sessionStorage, orgId, window.location.search)
+		stripCouponFromAddress(window)
+		const couponSaved = document.querySelector<HTMLElement>('#menu-coupon-saved p')
+		if (adoptedCoupon && couponSaved && labels.couponSaved) {
+			couponSaved.textContent = fillTemplate(labels.couponSaved, { code: adoptedCoupon })
+			couponSaved.hidden = false
+		}
 		const money = createMoneyFormatter(data.currency, data.locale)
 		const catalog = indexCatalog(data.categories ?? [])
 
@@ -776,13 +1068,109 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 					formatMoney: money,
 					cartLines: () => store.lines(),
 					onAdd: (line) => store.add(line),
+					// The headline price of the open item (or chosen variant) as was/now.
+					salePrice: (item, variant) => {
+						const input = saleInputs.get(item.id)
+						if (!input) return null
+						const sale = menuItemSalePrice(liveOffers(), {
+							...input,
+							priceMinor: Math.round((variant?.price ?? item.price) * 100),
+							excludeFromDiscounts:
+								item.excludeFromDiscounts === true ||
+								variant?.excludeFromDiscounts === true,
+						})
+						return sale
+							? { original: sale.originalMinor / 100, sale: sale.saleMinor / 100 }
+							: null
+					},
 				})
 			: null
+
+		const atTable = () => document.documentElement.dataset.tableMode === 'true'
+
+		// Discounts in the cart: the region prices them (`/orders/quote`), the same
+		// call checkout makes, with the cart as ids and quantities and the coupon
+		// code checkout stored. The drawer and tray show the region's total only
+		// while that quote matches the cart; otherwise the estimate stays, marked
+		// as before discounts. At most about 20 requests a minute leave this page
+		// (the region allows 60 per address, shared with checkout).
+		let quotes: DiscountQuotes | null = null
+		// A code the region refused for good is not sent again (the region allows
+		// 20 refused answers per address per 10 minutes, and checkout shares them).
+		// It is held here, told to the guest once in the cart note, and sent once
+		// more only when what a hidden refusal depends on changes (see
+		// `coupon-retry.ts`, the same logic as checkout).
+		let heldCoupon: HeldCoupon | null = null
+		const triedCoupons = new Set<string>()
+		const quoteBudget = createQuoteBudget({ max: 20, windowMs: 60_000 })
+
+		function pricingPayload() {
+			const lines = store.lines()
+			return menuPricingPayload({
+				lines,
+				orderLines: orderLines(lines),
+				locale: data.locale,
+				locationId: data.activeLocationId,
+				mode: details.mode,
+				verifiedDelivery: hasValidDeliveryQuote(details) ? (details.delivery ?? null) : null,
+				scheduledFor: details.scheduledFor,
+				open: data.isOpen,
+				atTable: atTable(),
+				posterSource: posterSource(orgId),
+			})
+		}
+
+		function settleCoupon() {
+			if (!quotes) return
+			const stored = loadStoredCode(sessionStorage, orgId)
+			const state = quotes.state()
+			if (stored && state.status === 'ready') {
+				const outcome = state.quote.coupon
+				if (outcome?.status === 'refused' && isTerminalRefusal(outcome.reason)) {
+					const contextKey = couponContextKey(pricingPayload())
+					heldCoupon = { code: stored, reason: outcome.reason, contextKey }
+					if (outcome.reason === 'not_found' && contextKey) {
+						triedCoupons.add(attemptKey(stored, contextKey))
+					}
+					rememberDroppedCode(sessionStorage, orgId, stored)
+					saveStoredCode(sessionStorage, orgId, null)
+					return
+				}
+			}
+			if (!stored && heldCoupon) {
+				const key = couponContextKey(pricingPayload())
+				if (key && shouldRetryHeldCoupon(heldCoupon, key, triedCoupons)) {
+					triedCoupons.add(attemptKey(heldCoupon.code, key))
+					saveStoredCode(sessionStorage, orgId, heldCoupon.code)
+					heldCoupon = null
+				}
+			}
+		}
 
 		const cartUi = mountCartUi({
 			store,
 			labels,
 			formatMoney: money,
+			locale: data.locale,
+			discounts: {
+				sync: () => quotes?.sync(),
+				refusal: () => (heldCoupon ? { code: heldCoupon.code } : null),
+				dismissRefusal: () => {
+					heldCoupon = null
+				},
+				view: () =>
+					cartDiscountView({
+						state: quotes?.state() ?? { status: 'idle' },
+						fresh: quotes?.freshQuote() ?? null,
+						mode: atTable() ? 'pickup' : details.mode,
+						hasItems: store.lines().length > 0,
+						deliveryVerified: hasValidDeliveryQuote(details),
+						atTable: atTable(),
+						discountOffersAvailable: (data.offers ?? []).some((offer) =>
+							isPromotionLive(offer, localStamp(data.timezone, new Date())),
+						),
+					}),
+			},
 			totals: {
 				taxRate: data.taxRate || 0,
 				taxInclusive: data.taxInclusive === true,
@@ -797,6 +1185,28 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 				data.isOpen || details.scheduledFor
 					? { allowed: true }
 					: { allowed: false, reason: data.closedReason },
+		})
+
+		quotes = createDiscountQuotes({
+			post: async (body, signal) => {
+				const wait = quoteBudget.take()
+				// Over budget: answer as a busy region would, so the quote client waits
+				// and retries instead of sending.
+				if (wait > 0) {
+					return {
+						status: 429,
+						body: { error: 'rate_limited', retryAfterSeconds: Math.ceil(wait / 1000) },
+					}
+				}
+				return postDiscountQuote(body, signal)
+			},
+			pricingPayload,
+			code: () => loadStoredCode(sessionStorage, orgId),
+			onChange: () => {
+				settleCoupon()
+				cartUi.refresh()
+			},
+			debounceMs: 1000,
 		})
 
 		// Order bar: Pickup | Delivery, where, and when. The chips open the order
@@ -907,15 +1317,87 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 			})
 		}
 
+		// Banner offers: the ones that work for the current order type, the first
+		// three of them, and how many more there are. A table order is `dine_in`.
+		const offersList = document.getElementById('menu-offers')
+		const offersMore = document.getElementById('menu-offers-more')
+		function paintOffers() {
+			if (!offersList) return
+			const mode = atTable() ? 'dine_in' : details.mode
+			const max = Number(offersList.dataset.max) || 3
+			const items = Array.from(offersList.querySelectorAll<HTMLElement>('[data-offer]'))
+			const matching = items.filter((item) => {
+				const modes = item.dataset.fulfillments
+				return !modes || modes.split(' ').includes(mode)
+			})
+			for (const item of items) item.hidden = true
+			for (const item of matching.slice(0, max)) item.hidden = false
+			offersList.hidden = matching.length === 0
+			const more = Math.max(0, matching.length - max)
+			if (offersMore) {
+				let texts: Record<string, string> = {}
+				try {
+					texts = JSON.parse(offersList.dataset.more || '{}')
+				} catch {}
+				offersMore.textContent = more > 0 ? (texts[String(more)] ?? '') : ''
+				offersMore.hidden = more === 0
+			}
+		}
+		// Was/now prices: the offers are judged at the time the food is wanted in
+		// the location's zone (a scheduled time, else now), for the current order
+		// type, like the region does. Display only: checkout quotes the order.
+		// The offers live at the time the food is wanted, for the order type.
+		function liveOffers() {
+			const at = details.scheduledFor ? new Date(details.scheduledFor) : new Date()
+			const stamp = localStamp(data.timezone, Number.isNaN(at.getTime()) ? new Date() : at)
+			const mode = atTable() ? 'dine_in' : details.mode
+			return (data.offers ?? []).filter(
+				(offer) => isPromotionLive(offer, stamp) && worksForMode(offer, mode),
+			)
+		}
+		const saleInputs = new Map((data.saleItems ?? []).map((input) => [input.id, input]))
+		function paintPrices() {
+			const live = liveOffers()
+			for (const input of data.saleItems ?? []) {
+				const cards = document.querySelectorAll<HTMLElement>(
+					`[data-item-id="${CSS.escape(input.id)}"].js-item-card, [data-item-id="${CSS.escape(input.id)}"].js-popular-card`,
+				)
+				const sale = menuItemSalePrice(live, input)
+				const regular = money(input.priceMinor / 100)
+				for (const card of cards) {
+					const was = card.querySelector<HTMLElement>('.js-price-was')
+					const now = card.querySelector<HTMLElement>('.js-price-now')
+					const nowSr = card.querySelector<HTMLElement>('.js-price-now-sr')
+					if (!was || !now) continue
+					was.hidden = !sale
+					if (nowSr) nowSr.hidden = !sale
+					const wasText = was.querySelector<HTMLElement>('.js-price-was-text')
+					if (wasText) wasText.textContent = sale ? regular : ''
+					now.textContent = sale ? money(sale.saleMinor / 100) : regular
+				}
+			}
+		}
+		new MutationObserver(() => {
+			paintOffers()
+			paintPrices()
+		}).observe(document.documentElement, {
+			attributes: true,
+			attributeFilter: ['data-table-mode'],
+		})
+
 		subscribeOrderDetails(orgId, (next) => {
 			// Another store was picked: the sheet navigates to it (its menu, tax and
 			// fees are resolved server-side), so this page keeps its own location.
 			if (!next || next.locationId !== data.activeLocationId) return
 			details = next
 			paintOrderBar(true)
+			paintOffers()
+			paintPrices()
 			cartUi.refresh()
 		})
 		paintOrderBar(false)
+		paintOffers()
+		paintPrices()
 		cartUi.refresh()
 
 		mountTableOrdering({

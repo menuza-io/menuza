@@ -8,6 +8,7 @@ import {
 	type JourneyStatus,
 } from '@repo/marketing-workflow'
 import { isReservationJourneyTrigger } from '@repo/tenant-db/types/journey'
+import { useEffect } from 'react'
 import {
 	useLoaderData,
 	useNavigate,
@@ -23,6 +24,11 @@ import {
 } from '#app/components/ai/ai-panel-context.tsx'
 import { GlobalAIToggle } from '#app/components/ai/global-ai-panel.tsx'
 import { type BreadcrumbHandle } from '#app/utils/breadcrumb.ts'
+import { MARKETING_OFFER_ERROR_MESSAGES } from '#app/utils/discounts/marketing-offer-labels.ts'
+import {
+	checkJourneyOffers,
+	loadCouponDiscountOptions,
+} from '#app/utils/discounts/marketing-offers.server.ts'
 import {
 	resolveEmailBrandingForOrg,
 	type OrganizationEmailBranding,
@@ -93,7 +99,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	const { orgId, fetchTenant } = await getOperatorTenantClient(request, orgSlug)
 
 	// This route is the automation editor, so it requires write access.
-	await requireUserWithOrganizationPermission(
+	const userId = await requireUserWithOrganizationPermission(
 		request,
 		orgId,
 		ORG_PERMISSIONS.UPDATE_AUTOMATION_ANY,
@@ -113,6 +119,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	return {
 		orgSlug,
 		reservationTriggers: await reservationTriggersEnabled(orgId),
+		couponOptions: await loadCouponDiscountOptions(userId, orgId),
 		journey: {
 			id: String(journey.id),
 			name: String(journey.name),
@@ -124,6 +131,21 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			edges,
 		},
 	}
+}
+
+/** The saved nodes, so an unchanged coupon is not re-checked against the editor. */
+async function storedJourneyNodes(
+	fetchTenant: Awaited<
+		ReturnType<typeof getOperatorTenantClient>
+	>['fetchTenant'],
+	journeyId: string,
+): Promise<unknown[]> {
+	const res = await fetchTenant(`/operator/journeys/${journeyId}`)
+	if (!res.ok) return []
+	const data = (await res.json().catch(() => null)) as {
+		journey?: { nodes?: unknown }
+	} | null
+	return Array.isArray(data?.journey?.nodes) ? data.journey.nodes : []
 }
 
 async function currentTriggerType(
@@ -147,7 +169,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	const journeyId = params.journeyId || ''
 	const { orgId, fetchTenant } = await getOperatorTenantClient(request, orgSlug)
 
-	await requireUserWithOrganizationPermission(
+	const userId = await requireUserWithOrganizationPermission(
 		request,
 		orgId,
 		ORG_PERMISSIONS.UPDATE_AUTOMATION_ANY,
@@ -183,12 +205,26 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		}
 
 		const branding = await resolveEmailBrandingForOrg(orgId)
+		const renderedNodes = await withRenderedEmails(parsedGraph.nodes, branding)
+		const offers = await checkJourneyOffers({
+			userId,
+			organizationId: orgId,
+			nodes: renderedNodes,
+			// Only a step with a coupon needs the saved version to compare with.
+			storedNodes: renderedNodes.some(
+				(node) =>
+					(node as { data?: { discountOffer?: unknown } } | null)?.data
+						?.discountOffer,
+			)
+				? await storedJourneyNodes(fetchTenant, journeyId)
+				: [],
+		})
+		if (!offers.ok) {
+			return { error: i18n._(MARKETING_OFFER_ERROR_MESSAGES[offers.error]) }
+		}
 		const renderedGraph: WorkflowGraph = {
 			...parsedGraph,
-			nodes: (await withRenderedEmails(
-				parsedGraph.nodes,
-				branding,
-			)) as WorkflowGraph['nodes'],
+			nodes: offers.nodes as WorkflowGraph['nodes'],
 		}
 
 		const triggerNode = renderedGraph.nodes.find((n) => n.type === 'trigger')
@@ -323,10 +359,21 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
 export default function JourneyBuilderRoute() {
 	const { _ } = useLingui()
-	const { orgSlug, journey, reservationTriggers } =
+	const { orgSlug, journey, reservationTriggers, couponOptions } =
 		useLoaderData<typeof loader>()
 	const navigate = useNavigate()
-	const fetcher = useFetcher()
+	const fetcher = useFetcher<typeof action>()
+
+	const actionError =
+		fetcher.state === 'idle' &&
+		fetcher.data &&
+		'error' in fetcher.data &&
+		typeof fetcher.data.error === 'string'
+			? fetcher.data.error
+			: null
+	useEffect(() => {
+		if (actionError) toast.error(actionError)
+	}, [actionError, fetcher.data])
 
 	useAIPanelHotkey()
 	const { isOpen: isAIPanelOpen, isExpanded: isAIPanelExpanded } = useAIPanel()
@@ -394,6 +441,7 @@ export default function JourneyBuilderRoute() {
 				journeyName={journey.name}
 				journeyStatus={journey.status}
 				reservationTriggers={reservationTriggers}
+				couponOptions={couponOptions ?? undefined}
 				headerExtras={<GlobalAIToggle />}
 				onSave={handleSave}
 				onPublish={handlePublish}

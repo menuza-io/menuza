@@ -149,7 +149,9 @@ paragraph text, image, and button — in the App (`/marketing`) and Admin
   editing is not wired up yet (see below).
 - **Merge tags** — `{{name}}`, `{{firstName}}`, `{{lastName}}`, `{{email}}`,
   `{{phone}}`, `{{organizationName}}`, supported in block text, button labels,
-  and subjects.
+  and subjects. `{{couponCode}}` shows the message's coupon (a shared code or a
+  single-use code per recipient) in tenant broadcasts and automation steps; see
+  "Coupons in marketing messages" in [discounts-plan.md](./discounts-plan.md).
 
 ### Merge tag chips and fallbacks
 

@@ -10,6 +10,7 @@
 import { msg } from '@lingui/core/macro'
 import LoyaltyLabels from '~/components/loyalty/LoyaltyLabels.astro'
 import { buildLoyaltyLabels } from '~/lib/loyalty/labels'
+import { buildCouponRefusals } from '~/lib/ordering-labels'
 
 const i18n = Astro.locals.i18n
 const loyaltyLabels = buildLoyaltyLabels(i18n)
@@ -28,6 +29,7 @@ const labels = {
 	emptyTab: i18n._(msg`Nothing on your tab yet. Add dishes and send them to the kitchen.`),
 	payAtCounter: i18n._(msg`When you are done, show tab {number} at the counter to pay.`),
 	subtotal: i18n._(msg`Subtotal`),
+	discount: i18n._(msg`Discount`),
 	tax: i18n._(msg`Tax`),
 	includesTax: i18n._(msg`Includes tax`),
 	total: i18n._(msg`Total`),
@@ -42,6 +44,11 @@ const labels = {
 	errorTableGone: i18n._(msg`This table code no longer works. Please ask a team member for help.`),
 	errorLocked: i18n._(msg`A team member is settling this tab. Please ask them for help.`),
 	errorTabPaying: i18n._(msg`A payment for this tab is already on its way. Wait a moment, then check your tab.`),
+	errorCoupon: i18n._(msg`That coupon code could not be applied.`),
+	errorDiscountChanged: i18n._(msg`Your discount changed, so the total changed. Check it and pay again.`),
+	couponRefusals: buildCouponRefusals(i18n),
+	coupon: i18n._(msg`Coupon code`),
+	couponOptional: i18n._(msg`Optional`),
 	errorClosed: i18n._(msg`Ordering is closed right now.`),
 	errorRateLimited: i18n._(msg`This table has sent many orders. Please ask a team member for help.`),
 	errorUnavailable: i18n._(msg`Ordering at the table is not available right now.`),
@@ -147,6 +154,10 @@ const labels = {
 				<div class="flex items-baseline justify-between gap-4 text-sm text-muted-foreground">
 					<dt>{labels.subtotal}</dt>
 					<dd id="tab-subtotal" class="price font-medium text-foreground"></dd>
+				</div>
+				<div id="tab-promo-row" class="hidden items-baseline justify-between gap-4 text-sm text-muted-foreground [&:not(.hidden)]:flex">
+					<dt>{labels.discount}</dt>
+					<dd id="tab-promo" class="price font-medium text-foreground"></dd>
 				</div>
 				<div id="tab-discount-row" class="hidden items-baseline justify-between gap-4 text-sm text-muted-foreground [&:not(.hidden)]:flex">
 					<dt>{loyaltyLabels.pickerDiscount}</dt>
@@ -271,6 +282,10 @@ const labels = {
 			</div>
 			<p id="tab-rewards-notice" class="text-sm text-muted-foreground not-empty:mt-3" role="status"></p>
 		</div>
+		<label class="flex flex-col gap-1.5 text-sm font-medium text-foreground">
+			<span>{labels.coupon}<span class="ms-1.5 text-xs font-normal text-muted-foreground">{labels.couponOptional}</span></span>
+			<input name="coupon" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="40" class="field font-mono uppercase" dir="ltr" />
+		</label>
 		<label class="flex flex-col gap-1.5 text-sm font-medium text-foreground">
 			{labels.name}
 			<input name="name" type="text" autocomplete="name" maxlength="120" class="field" required />
