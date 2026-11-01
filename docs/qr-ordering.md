@@ -86,7 +86,10 @@ a name and phone number.
   Every round that still counts is marked paid and the totals are kept on the
   tab. Closing does not wait for the kitchen (your call). The App sends the
   total shown in the dialog (`expectedTotalCents`); a round that lands meanwhile
-  answers 409 `stale_tab` and the dialog shows the new total.
+  answers 409 `stale_tab` and the dialog shows the new total. The total shown is
+  net of the tab's automatic discounts, which the close records (reserved, then
+  consumed) the way a phone payment does; see
+  [discounts-plan.md](./discounts-plan.md#qr-tabs).
 - **Void:** nothing is charged; unfinished rounds are cancelled. A reason is
   required. Void checks the shown total the same way.
 - **Lock:** stops every phone from adding to or paying the tab (a re-scan is
@@ -125,6 +128,19 @@ but never restarts it; a different tip while a page is live is refused. A Stripe
 session's idempotency key carries its exact expiry, and a cached session that
 has expired is replaced by a new one instead of failing.
 
+- **Discounts and coupons:** the tab, not its rounds, carries a discount (a
+  round refuses `discounts` with `discounts_on_tab`). The request's `discounts`
+  field asks for them: automatic ones apply, a typed `code` is checked
+  server-side, and `expectedDiscountMinor` is the total the guest was shown; a
+  different priced total answers 409 `discount_changed`. A request with no
+  `discounts` field applies nothing. A reward and a discount combine (discounts
+  first), but a tab that ends at 0 cannot be paid online: it answers 422
+  `reward_covers_total` and the guest asks staff to close it (orders do not
+  refuse this: a free order skips payment). Coupon guesses use the same limits
+  as orders (see [discounts-plan.md](./discounts-plan.md#security)). A
+  `turnstileToken` is optional on this request: it is verified when sent, but
+  its absence is not refused (no client sends one, and the tab code is an
+  unguessable capability).
 - Only a verified provider event (or the App's provider lookup) closes a tab; a
   redirect never does.
 - A failed or expired session unbinds; the guest can try again or pay at the

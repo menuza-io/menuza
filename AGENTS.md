@@ -652,6 +652,14 @@ git commit --no-verify -m "fix: resolve ESLint warnings (verified manually)"
   routes and on operator writes that start something new, and new orders neither
   earn nor take a reward. The tick, reconciliation, review decisions and refunds
   keep going, and operators can still read. See `docs/loyalty.md`.
+- `DISCOUNTS_ENABLED` - Tenant-api only, optional (unset or `true` is on). Kill
+  switch for discounts and coupons on a node: `false` (also `0`, `off`, `no`,
+  `disabled`) makes it ignore every discount at quote, placement, tab payment
+  and the till (`GET /pos/discount-rules` answers an empty list, uploaded sales
+  keep their adjustments but get no discount-rule flag and record no use) and
+  answer a request that carries a coupon code with 503 `discounts_disabled`.
+  Orders already placed keep their discounts and their redemptions still settle.
+  See `docs/discounts-plan.md`.
 - `PRINT_BROWSER_ACCOUNT_ID` / `PRINT_BROWSER_API_TOKEN` - App only. Cloudflare
   Browser Rendering (REST `/pdf`) for Print shop PDFs. Empty in dev: downloads
   open a print-ready page instead. `PRINT_RENDER_LIMIT_PER_HOUR` caps new
@@ -876,6 +884,13 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
   Sites: Zod schemas for every loyalty route, earning and discount math, the
   operator token contract, permissions and `loyalty.*` flag keys, error codes,
   and the frozen acceptance examples. No UI strings, no I/O.
+- `@repo/discounts` - Discounts and coupons domain code shared by App,
+  tenant-api, Sites and Station: the definition schema
+  (`discountDefinitionSchema`, `discountRecordSchema`), the pure
+  `evaluateDiscounts` engine (rules, deals, ladders, stacking by kind), the wire
+  contracts (order context, quote, error codes, `parseOrderContextDiscounts`),
+  the `dsc+jwt` operator token contract, and calendar-period keys. Shares
+  `money.ts` with loyalty. No UI strings, no I/O.
 - `@repo/staffing` - Staff module domain code shared by App and tenant-api: Zod
   schemas, permission and `staffing.*` flag keys, PIN rules, formula-safe CSV
   export, time math (`computeTimecard` / `computeWeek`), clock state machine,
@@ -1094,6 +1109,59 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
 - Customer API fixtures: `npm run fixtures:loyalty -w tenant-api` re-records
   `packages/loyalty/contract-fixtures`; `loyalty-contract.test.ts` (tenant-api
   and `@repo/loyalty`) fails on drift.
+
+**Discounts and coupons (automatic, code and manual till discounts):**
+
+- Definitions live in the control plane (`Discount`, `DiscountCode`,
+  `OrganizationMenuItem.excludeFromDiscounts`; migration `0031_discounts`) and
+  hold no PII. Redemptions live in the regional tenant DB
+  (`discount_redemptions` and `discount_code_attempts`, tenant-db
+  `0026_discounts`) with append-only triggers; erasing a person clears
+  `customer_id` and keeps the amounts. Two permissions, `read:discount:any` and
+  `update:discount:any`.
+- Flags `discounts.enabled` (master) / `.automatic` / `.coupons` (default off,
+  only a literal `true`; sub-flags need the master). There is no `discounts.pos`
+  flag. App folds them into `discounts.features: {automatic, coupons}` of the
+  order context. Every App discounts loader and action awaits
+  `requireDiscountsAccess` first (404 while the flag is off).
+- How rules reach each channel: web and QR orders get `discounts` (definitions
+  plus codes) in `GET /resources/order-context`, and tenant-api evaluates in
+  `POST /orders/quote` and again in `placeOrder` (`expectedDiscountMinor` is
+  compared, never trusted; a difference is 409 `discount_changed`). A QR tab
+  never carries a discount on its rounds: the tab view, counter close and phone
+  payment (`POST /orders/tab/pay`) price it (`discount-tab.ts`). The till loads
+  automatic and manual rules from `GET /pos/discount-rules` (App
+  `/resources/discount-rules`, internal token) into its catalog and applies them
+  offline; it ignores rules older than 24 hours and never applies a use-limited
+  one by itself. The upload (contract 6, `discountApplications`) is checked
+  against the rules as they are now, and a mismatch only flags the sale. Loyalty
+  applies after discounts, on what is left. A total of 0 skips payment on orders
+  (`not_required`); a tab refuses it (`reward_covers_total`). The public menu
+  carries promotions from `buildPublicMenuDiscounts`.
+- Operators: the App mints a short-lived `dsc+jwt`
+  (`GET /<orgSlug>/discounts-token`, `discounts-token.ts`) and the browser reads
+  counts from `/operator/discounts/usage`. The editor is `discounts+/`.
+- Codes: `quoteIp` 60/min, `codeIp` 20 and `codeOrg` 10,000 wrong guesses per 10
+  minutes, counted before the check and given back when the code applies. Caps:
+  500 discounts and 2000 codes per organization, 90 codes per discount, 12
+  automatic discounts compete per cart. The region reads the context per record
+  (a bad row is dropped and logged by id). `DISCOUNTS_ENABLED` is the node kill
+  switch.
+- Tests and gates: `apps/tenant-api/src/routes/discounts-security.test.ts`
+  (forged tokens, cross-organization codes, limit races, replayed keys), the
+  `discounts-lifecycle`, `-free-order` and `-modifiers` suites,
+  `packages/discounts` engine and property tests, and
+  `apps/app/app/utils/discounts/discounts-guards.test.ts` (every App loader and
+  action awaits `requireDiscountsAccess` first). A new discounts route must pass
+  both. Deploy App, then tenant-api, then Station and Sites. Docs:
+  `docs/discounts-plan.md` (spec, limits, version skew).
+- Marketing coupons: broadcasts and automation email or text steps can carry a
+  coupon (`discountOffer`, `marketingOfferSchema` in `@repo/discounts`) that
+  fills `{{couponCode}}`: one shared code, or a single-use code the region mints
+  per recipient at send time (`discount_issued_codes`, tenant-db `0027`) and
+  resolves at checkout (`codesWithIssuedCode`). Attaching one needs the coupon
+  flags and `read:discount:any`; the App checks it in
+  `utils/discounts/marketing-offers.server.ts`.
 
 **Print shop (Marketing, Print shop):**
 

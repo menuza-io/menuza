@@ -68,8 +68,14 @@ through is built and has passed its launch checks.
   paid modifiers stay chargeable). Discounts are capped at the eligible
   merchandise value; zero-value and inapplicable rewards are rejected without
   spending points.
-- One reward per order or QR tab. Loyalty never stacks with other discretionary
-  discounts (`stacking_not_allowed`).
+- One reward per order or QR tab. A reward combines with discounts and coupons
+  (see [discounts-plan.md](./discounts-plan.md)): discounts apply first, then
+  the reward applies to what is left on each line, and points are earned on what
+  the customer pays after all of it. The old `stacking_not_allowed` refusal is
+  gone. A reward (or discounts) that bring an order to 0 no longer refuse it:
+  the order is free and skips payment. A QR tab still refuses that
+  (`reward_covers_total`), because a tab cannot be paid online at 0; the guest
+  asks staff to close it.
 - No tiers, referrals, transfers, expiry, or historical backfill at launch.
   Customers who verified before the program went live earn from their first
   order after it, not for earlier ones.
@@ -669,8 +675,9 @@ product decision) and verified by `acceptance-examples.test.ts`.
   extra cent to the first line.
 - `zero-value-rejected`: a free item whose base price is zero is refused; no
   points move.
-- `not-applicable`, `no-stacking`, `currency-locked`: refusal codes
-  `reward_not_applicable`, `stacking_not_allowed`, `currency_mismatch`.
+- `not-applicable`, `currency-locked`: refusal codes `reward_not_applicable`,
+  `currency_mismatch`. (`no-stacking` / `stacking_not_allowed` is retired: a
+  reward now applies on top of discounts, to what is left on each line.)
 
 **Refunds**
 
