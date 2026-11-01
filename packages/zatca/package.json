@@ -23,7 +23,8 @@
   },
   "dependencies": {
     "@noble/hashes": "^1.8.0",
-    "@noble/secp256k1": "^3.2.0"
+    "@noble/secp256k1": "^3.2.0",
+    "@repo/common": "*"
   },
   "devDependencies": {
     "@repo/config": "*",

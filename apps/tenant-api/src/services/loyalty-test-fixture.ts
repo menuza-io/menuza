@@ -221,6 +221,7 @@ export function cartLine(
 		quantity: 1,
 		unitBaseMinor: 1000,
 		unitMinor: 1000,
+		discountedMinor: 0,
 		...overrides,
 	}
 }
@@ -229,7 +230,7 @@ export function loyaltyCart(
 	lines: LoyaltyCartLine[] = [cartLine()],
 	currency = 'USD',
 ): LoyaltyCart {
-	return { currency, lines, otherDiscountMinor: 0 }
+	return { currency, lines }
 }
 
 export function orderLine(

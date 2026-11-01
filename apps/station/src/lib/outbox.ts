@@ -57,6 +57,21 @@ export const backoffFor = (attempts: number): number =>
  * checks the arithmetic and flags drift for review instead of refusing it.
  */
 export function toWireOrder(order: PosOrder) {
+	const discountApplications = order.adjustments
+		.filter((adjustment) => adjustment.kind === 'discount')
+		.map((adjustment) => ({
+			discountId:
+				adjustment.id.startsWith('auto:') || adjustment.id.startsWith('manual:')
+					? (adjustment.id.split(':')[1] ?? adjustment.id)
+					: adjustment.id,
+			name: adjustment.label,
+			amountCents: adjustment.amountCents,
+			...(adjustment.version ? { version: adjustment.version } : {}),
+			...(adjustment.approvedByStaffId
+				? { approvedByStaffId: adjustment.approvedByStaffId }
+				: {}),
+			...(adjustment.reason ? { reason: adjustment.reason } : {}),
+		}))
 	return {
 		id: order.id,
 		/** The server keeps the highest revision it has seen, so replays are harmless. */
@@ -120,12 +135,23 @@ export function toWireOrder(order: PosOrder) {
 			approvedBy: staffOrNull(v.approvedBy),
 			reason: v.reason,
 		})),
-		adjustments: order.adjustments.map((a) => ({
-			id: a.id,
-			kind: a.kind,
-			label: a.label,
-			amountCents: a.amountCents,
-		})),
+		adjustments: order.adjustments.map((a) => {
+			// Which line took what, only for lines that are still on the sale.
+			const onSale = new Set(order.lines.map((l) => l.id))
+			const lineAmounts = Object.fromEntries(
+				Object.entries(a.lineAmounts ?? {}).filter(
+					([lineId, amount]) => onSale.has(lineId) && amount > 0,
+				),
+			)
+			return {
+				id: a.id,
+				kind: a.kind,
+				label: a.label,
+				amountCents: a.amountCents,
+				...(Object.keys(lineAmounts).length > 0 ? { lineAmounts } : {}),
+			}
+		}),
+		...(discountApplications.length > 0 ? { discountApplications } : {}),
 		totals: {
 			subtotalCents: order.totals.subtotalCents,
 			adjustmentCents: order.totals.adjustmentCents,

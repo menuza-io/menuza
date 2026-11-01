@@ -18,6 +18,18 @@ export const orderSchema = z.object({
 	tipPercent: z.number().nullable().optional(),
 	/** A loyalty reward's discount, taken off the subtotal before tax. */
 	loyaltyDiscountCents: z.number().int(),
+	/** Non-loyalty discounts on the lines, in cents (missing means none). */
+	discountCents: z.number().int().optional().catch(undefined),
+	/** Discount taken off the delivery fee, in cents. */
+	deliveryDiscountCents: z.number().int().optional().catch(undefined),
+	/** Applied discounts; read through `appliedDiscounts()`, never trusted. */
+	discounts: z.array(z.unknown()).optional().catch(undefined),
+	/** Why a `payment_review` order waits, when the region knows. */
+	reviewReason: z
+		.literal('discount_limit_exceeded')
+		.nullable()
+		.optional()
+		.catch(undefined),
 	totalCents: z.number().int(),
 	/** Recorded by an operator as returned; the payment status stays `paid`. */
 	refundedCents: z.number().int(),
@@ -52,6 +64,8 @@ export const orderSchema = z.object({
 			unitPriceCents: z.number(),
 			totalCents: z.number(),
 			instructions: z.string().nullable(),
+			/** The size or other variant chosen ("Large"), when the item has one. */
+			variantNames: z.array(z.string()).optional(),
 			options: z.array(
 				z.object({
 					optionName: z.string(),
@@ -84,6 +98,44 @@ export const orderSchema = z.object({
 		.nullable(),
 })
 export type Order = z.infer<typeof orderSchema>
+
+export type AppliedOrderDiscount = {
+	discountId: string
+	name: string
+	code: string | null
+	amountMinor: number
+	deliveryAmountMinor: number
+}
+
+const appliedDiscountSchema = z.object({
+	discountId: z.string().catch(''),
+	name: z.string().catch(''),
+	code: z.string().nullable().catch(null),
+	amountMinor: z.number().int().min(0).catch(0),
+	deliveryAmountMinor: z.number().int().min(0).catch(0),
+})
+
+/** The discounts applied to an order. Unknown shapes are skipped. */
+export function appliedDiscounts(order: {
+	discounts?: unknown
+}): AppliedOrderDiscount[] {
+	if (!Array.isArray(order.discounts)) return []
+	const result: AppliedOrderDiscount[] = []
+	for (const entry of order.discounts) {
+		if (!entry || typeof entry !== 'object' || Array.isArray(entry)) continue
+		const parsed = appliedDiscountSchema.parse(entry)
+		if (parsed.amountMinor <= 0 && parsed.deliveryAmountMinor <= 0) continue
+		result.push(parsed)
+	}
+	return result
+}
+
+/** A free order (a discount covered the total) needs no payment at all. */
+export function isPaymentNotRequired(order: {
+	paymentStatus: string
+}): boolean {
+	return order.paymentStatus === 'not_required'
+}
 
 /** Body of `POST /operator/orders/:id/refunds`: an amount, or everything left. */
 export type OrderRefundBody =

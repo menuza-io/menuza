@@ -14,6 +14,8 @@ export function checkoutOrderPayload(
 		contact: { name: string; phone: string; email: string }
 		deliveryNotes?: string
 		reward: unknown
+		/** `{code?, expectedDiscountMinor}` from the confirmed discount quote; null sends none. */
+		discounts?: Record<string, unknown> | null
 	},
 ): Record<string, unknown> {
 	const notes = extra.deliveryNotes?.trim()
@@ -24,5 +26,6 @@ export function checkoutOrderPayload(
 			? { delivery: { ...priced.delivery, notes } }
 			: {}),
 		...(extra.reward ? { loyalty: extra.reward } : {}),
+		...(extra.discounts ? { discounts: extra.discounts } : {}),
 	}
 }

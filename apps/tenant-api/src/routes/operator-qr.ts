@@ -30,6 +30,8 @@ import {
 	patchQrTable,
 	releaseTabPayment,
 	voidTab,
+	withTabDiscounts,
+	type OperatorQrTab,
 	type QrResult,
 	type ReleasedTabPayment,
 } from '../services/qr-tab-service.ts'
@@ -130,11 +132,40 @@ function respond<T>(c: Context, result: QrResult<T>, key: string) {
 	return c.json({ [key]: result.data }, 200, noStoreHeaders())
 }
 
-/** Close, void and release: the tab plus the payment page they unbound. */
-function respondReleased(c: Context, result: QrResult<ReleasedTabPayment>) {
+/**
+ * A tab as staff read it: its discounts shown, the total and tax net of them,
+ * so the total in the close dialog is the one the counter charges.
+ */
+async function withDiscounts<T extends OperatorQrTab>(orgId: string, tab: T) {
+	const [shown] = await withTabDiscounts(orgId, [tab])
+	return shown ?? tab
+}
+
+async function respondTab(
+	c: Context,
+	orgId: string,
+	result: QrResult<OperatorQrTab>,
+) {
 	if (!result.ok) return respond(c, result, 'tab')
 	return c.json(
-		{ tab: result.data.tab, releasedSession: result.data.releasedSession },
+		{ tab: await withDiscounts(orgId, result.data) },
+		200,
+		noStoreHeaders(),
+	)
+}
+
+/** Close, void and release: the tab plus the payment page they unbound. */
+async function respondReleased(
+	c: Context,
+	orgId: string,
+	result: QrResult<ReleasedTabPayment>,
+) {
+	if (!result.ok) return respond(c, result, 'tab')
+	return c.json(
+		{
+			tab: await withDiscounts(orgId, result.data.tab),
+			releasedSession: result.data.releasedSession,
+		},
 		200,
 		noStoreHeaders(),
 	)
@@ -305,10 +336,13 @@ operatorQrRoutes.get('/tabs', async (c) => {
 	return safely(c, auth.auth.orgId, async () =>
 		c.json(
 			{
-				tabs: await listOperatorTabs(auth.auth.orgId, {
-					status: parsed.data.status ?? 'open',
-					limit: parsed.data.limit ?? 100,
-				}),
+				tabs: await withTabDiscounts(
+					auth.auth.orgId,
+					await listOperatorTabs(auth.auth.orgId, {
+						status: parsed.data.status ?? 'open',
+						limit: parsed.data.limit ?? 100,
+					}),
+				),
 			},
 			200,
 			noStoreHeaders(),
@@ -320,7 +354,11 @@ operatorQrRoutes.get('/tabs/:id', async (c) => {
 	const auth = await guard(c, 'qr:read')
 	if ('error' in auth) return auth.error
 	return safely(c, auth.auth.orgId, async () =>
-		respond(c, await getOperatorTab(auth.auth.orgId, c.req.param('id')), 'tab'),
+		respondTab(
+			c,
+			auth.auth.orgId,
+			await getOperatorTab(auth.auth.orgId, c.req.param('id')),
+		),
 	)
 })
 
@@ -332,6 +370,7 @@ operatorQrRoutes.post('/tabs/:id/close', async (c) => {
 	return safely(c, auth.auth.orgId, async () =>
 		respondReleased(
 			c,
+			auth.auth.orgId,
 			await closeTabAtCounter(auth.auth.orgId, c.req.param('id'), {
 				tipCents: parsed.data.tipCents,
 				closedBy: auth.auth.userId,
@@ -347,10 +386,10 @@ operatorQrRoutes.post('/tabs/:id/clear-station-flag', async (c) => {
 	const auth = await guard(c, 'qr:write')
 	if ('error' in auth) return auth.error
 	return safely(c, auth.auth.orgId, async () =>
-		respond(
+		respondTab(
 			c,
+			auth.auth.orgId,
 			await clearStationFlag(auth.auth.orgId, c.req.param('id')),
-			'tab',
 		),
 	)
 })
@@ -363,6 +402,7 @@ operatorQrRoutes.post('/tabs/:id/void', async (c) => {
 	return safely(c, auth.auth.orgId, async () =>
 		respondReleased(
 			c,
+			auth.auth.orgId,
 			await voidTab(auth.auth.orgId, c.req.param('id'), {
 				reason: parsed.data.reason,
 				closedBy: auth.auth.userId,
@@ -379,6 +419,7 @@ operatorQrRoutes.post('/tabs/:id/release-payment', async (c) => {
 	return safely(c, auth.auth.orgId, async () =>
 		respondReleased(
 			c,
+			auth.auth.orgId,
 			await releaseTabPayment(auth.auth.orgId, c.req.param('id')),
 		),
 	)
@@ -388,6 +429,10 @@ operatorQrRoutes.post('/tabs/:id/lock', async (c) => {
 	const auth = await guard(c, 'qr:write')
 	if ('error' in auth) return auth.error
 	return safely(c, auth.auth.orgId, async () =>
-		respond(c, await lockTab(auth.auth.orgId, c.req.param('id')), 'tab'),
+		respondTab(
+			c,
+			auth.auth.orgId,
+			await lockTab(auth.auth.orgId, c.req.param('id')),
+		),
 	)
 })

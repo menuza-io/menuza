@@ -4,6 +4,7 @@ import { useLingui } from '@lingui/react'
 import { CampaignDetailView, type CampaignDetail } from '@repo/marketing'
 import { useLoaderData, type LoaderFunctionArgs } from 'react-router'
 import { type BreadcrumbHandle } from '#app/utils/breadcrumb.ts'
+import { describeCampaignCoupon } from '#app/utils/discounts/marketing-offers.server.ts'
 import {
 	ORG_PERMISSIONS,
 	requireUserWithOrganizationPermission,
@@ -39,10 +40,17 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		}
 	}
 
-	const data = (await res.json()) as { campaign?: CampaignDetail }
+	const data = (await res.json()) as {
+		campaign?: CampaignDetail & { discountOffer?: unknown }
+	}
+	if (!data.campaign) return { orgSlug, campaign: null, error: null }
+	const { discountOffer, ...campaign } = data.campaign
 	return {
 		orgSlug,
-		campaign: data.campaign ?? null,
+		campaign: {
+			...campaign,
+			coupon: await describeCampaignCoupon(orgId, discountOffer),
+		} satisfies CampaignDetail,
 		error: null,
 	}
 }

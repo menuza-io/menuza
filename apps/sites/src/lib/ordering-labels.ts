@@ -25,12 +25,48 @@ function keep(i18n: I18n, descriptor: MessageDescriptor, ...names: string[]) {
 	)
 }
 
+/** Plain, kind copy per coupon refusal reason (checkout and the table tab). */
+export function buildCouponRefusals(i18n: I18n): Record<string, string> {
+	return {
+		not_found: i18n._(msg`That code isn't valid. Check it and try again.`),
+		not_started: i18n._(msg`This code isn't active yet.`),
+		expired: i18n._(msg`This code has expired.`),
+		not_available_now: i18n._(msg`This code isn't available at this time.`),
+		wrong_location: i18n._(msg`This code doesn't work at this location.`),
+		wrong_channel: i18n._(msg`This code can't be used for online orders.`),
+		wrong_fulfillment: i18n._(
+			msg`This code doesn't apply to this type of order. Try switching between pickup and delivery.`,
+		),
+		wrong_drop: i18n._(msg`This code can't be used on drop orders.`),
+		sign_in_required: i18n._(msg`Sign in to use this code.`),
+		new_customers_only: i18n._(
+			msg`This code is for first-time customers only.`,
+		),
+		members_only: i18n._(msg`This code is for rewards members only.`),
+		limit_reached: i18n._(msg`This code has reached its limit.`),
+		minimum_not_met: i18n._(
+			msg`Your order is below the minimum spend for this code.`,
+		),
+		requirement_not_met: i18n._(
+			msg`Add the required items to your order to use this code.`,
+		),
+		quantity_not_met: i18n._(
+			msg`Add more of the eligible items to use this code.`,
+		),
+		not_applicable: i18n._(
+			msg`This code doesn't apply to anything in your order.`,
+		),
+	}
+}
+
 /** Interface strings shared by the menu and drop ordering surfaces. */
 export function buildOrderingLabels(i18n: I18n): OrderingLabels {
 	return {
 		addToOrder: i18n._(msg`Add to order`),
 		soldOut: i18n._(msg`Sold out`),
 		from: i18n._(msg`From`),
+		originalPrice: i18n._(msg`Original price`),
+		salePrice: i18n._(msg`Sale price`),
 		required: i18n._(msg`Required`),
 		optional: i18n._(msg`Optional`),
 		done: i18n._(msg`Done`),
@@ -70,6 +106,21 @@ export function buildOrderingLabels(i18n: I18n): OrderingLabels {
 		closeDialog: i18n._(msg`Close`),
 		customizeItem: i18n._(msg`Customize item`),
 		itemsCount: keep(i18n, msg`{count} items`, 'count'),
+		discounts: i18n._(msg`Discounts`),
+		beforeDiscounts: i18n._(msg`Before discounts`),
+		discountsAtCheckout: i18n._(msg`Delivery fee and discounts at checkout`),
+		couponNotApplied: keep(
+			i18n,
+			msg`Code {code} could not be applied.`,
+			'code',
+		),
+		couponRemove: i18n._(msg`Remove`),
+		couponNoteRemove: keep(i18n, msg`Remove code {code}`, 'code'),
+		couponSaved: keep(
+			i18n,
+			msg`Code {code} is saved. Add what you like and it is applied at checkout.`,
+			'code',
+		),
 		exploreMenu: i18n._(msg`Explore menu`),
 	}
 }

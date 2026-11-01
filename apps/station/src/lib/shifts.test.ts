@@ -141,6 +141,33 @@ describe('cash drawer shifts', () => {
 		void second
 	})
 
+	it('shows what discounts took off, and the items before them, apart from sales', async () => {
+		await startShift({ openingFloatCents: 0, by: lina })
+		await createOrder(draft, cash(1100))
+		const discounted = await createOrder(
+			{
+				...draft,
+				adjustments: [
+					{
+						id: 'auto:d1',
+						kind: 'discount',
+						label: 'Happy hour',
+						amountCents: 200,
+					},
+					{ id: 'loyalty', kind: 'loyalty', label: 'Reward', amountCents: 100 },
+				],
+			},
+			cash(770),
+		)
+		const summary = await summarizeShift((await openShift())!)
+		// 1000 + 1000 before discounts; 200 of discount (the reward is not one).
+		expect(summary.grossBeforeDiscountsCents).toBe(2000)
+		expect(summary.discountCents).toBe(200)
+		// Sales is what was charged: after discounts, tax included.
+		expect(summary.grossSalesCents).toBe(1100 + discounted.totals.totalCents)
+		expect(discounted.totals.adjustmentCents).toBe(300)
+	})
+
 	it('needs a note and an amount for cash in or out, and a closed shift takes nothing more', async () => {
 		const shift = await startShift({ openingFloatCents: 0, by: null })
 		await expect(

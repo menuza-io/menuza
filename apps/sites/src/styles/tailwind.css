@@ -343,12 +343,14 @@
 }
 @utility tone-brand {
 	background-color: color-mix(in oklch, var(--primary) 12%, transparent);
-	color: color-mix(in oklch, var(--primary) 75%, var(--foreground));
+	/* Mostly the foreground, so a light brand colour (yellow, mint) still reads
+	   on its own tint; a dark brand colour keeps its hue. */
+	color: color-mix(in oklch, var(--primary) 40%, var(--foreground));
 	border-color: color-mix(in oklch, var(--primary) 24%, transparent);
 }
 @utility tone-success {
 	background-color: color-mix(in oklch, var(--success) 12%, transparent);
-	color: var(--success);
+	color: color-mix(in oklch, var(--success) 55%, var(--foreground));
 	border-color: color-mix(in oklch, var(--success) 25%, transparent);
 }
 @utility tone-warning {

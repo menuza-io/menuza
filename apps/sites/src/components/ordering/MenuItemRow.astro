@@ -17,10 +17,17 @@ interface Props {
 	priceLabel: string
 	/** Shown muted before the price when the item has a price range ("From"). */
 	fromLabel?: string | null
+	/** The regular price, struck through, when one plain offer sets the price. */
+	originalPriceLabel?: string | null
+	/** Screen-reader words before the struck and the current price. */
+	originalPriceSrLabel?: string
+	salePriceSrLabel?: string
 	soldOut: boolean
 	imageUrl?: string | null
 	calories?: string | null
 	popularLabel?: string | null
+	/** Promoted discounts that apply to this item (at most two). */
+	offerLabels?: string[]
 	isVegetarian?: boolean
 	isGlutenFree?: boolean
 	isAlcohol?: boolean
@@ -37,10 +44,14 @@ const {
 	description,
 	priceLabel,
 	fromLabel,
+	originalPriceLabel,
+	originalPriceSrLabel,
+	salePriceSrLabel,
 	soldOut,
 	imageUrl,
 	calories,
 	popularLabel,
+	offerLabels = [],
 	isVegetarian,
 	isGlutenFree,
 	isAlcohol,
@@ -52,7 +63,7 @@ const plusIcon = '<path d="M5 12h14"/><path d="M12 5v14"/>'
 const flameIcon =
 	'<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>'
 const hasMeta = Boolean(
-	(popularLabel && !soldOut) || calories || isVegetarian || isGlutenFree || isAlcohol,
+	(popularLabel && !soldOut) || offerLabels.length > 0 || calories || isVegetarian || isGlutenFree || isAlcohol,
 )
 ---
 
@@ -89,6 +100,9 @@ const hasMeta = Boolean(
 		) : null}
 		{hasMeta ? (
 			<div class="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1.5">
+				{!soldOut
+					? offerLabels.map((offerLabel) => <span class="badge tone-brand">{offerLabel}</span>)
+					: null}
 				{popularLabel && !soldOut ? (
 					<span class="badge tone-brand">
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-3" aria-hidden="true" set:html={flameIcon} />
@@ -112,7 +126,14 @@ const hasMeta = Boolean(
 			) : (
 				<span class="inline-flex items-baseline gap-1.5">
 					{fromLabel ? <span class="text-sm text-muted-foreground">{fromLabel}</span> : null}
-					<span class="price font-heading text-lg leading-none text-foreground">{priceLabel}</span>
+					<del class="js-price-was bidi-isolate text-sm text-muted-foreground" hidden={!originalPriceLabel}>
+						<span class="sr-only">{originalPriceSrLabel}</span>
+						<span class="js-price-was-text">{originalPriceLabel}</span>
+					</del>
+					<span class="price font-heading text-lg leading-none text-foreground">
+						<span class="js-price-now-sr sr-only" hidden={!originalPriceLabel}>{salePriceSrLabel}</span>
+						<span class="js-price-now">{priceLabel}</span>
+					</span>
 				</span>
 			)}
 			{!imageUrl && !soldOut ? (

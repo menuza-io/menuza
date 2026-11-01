@@ -57,6 +57,16 @@ describe('orderCountsTowardSales', () => {
 		).toBe(true)
 	})
 
+	it('counts a free online order that needed no payment', () => {
+		expect(
+			orderCountsTowardSales({
+				status: 'accepted',
+				paymentMethod: 'online',
+				paymentStatus: 'not_required',
+			}),
+		).toBe(true)
+	})
+
 	it('leaves out unpaid online, cancelled, and payment review orders', () => {
 		expect(
 			orderCountsTowardSales({
@@ -449,7 +459,56 @@ describe('report record loaders', () => {
 				tip: 3,
 				tipPercent: 15,
 				deliveryFee: 0,
+				discount: 0,
 			})
+		})
+
+		it('reports discounts (items, delivery and loyalty) and counts free online orders', async () => {
+			await insertOrders(
+				{
+					number: 'D1',
+					createdAt: ago(3),
+					subtotalCents: 2000,
+					discountCents: 300,
+					deliveryDiscountCents: 150,
+					loyaltyDiscountCents: 50,
+					totalCents: 1500,
+				},
+				{
+					number: 'D2',
+					createdAt: ago(2),
+					status: 'accepted',
+					paymentMethod: 'online',
+					paymentStatus: 'not_required',
+					subtotalCents: 1000,
+					taxCents: 0,
+					discountCents: 1000,
+					totalCents: 0,
+					lines: [orderLine('Burger', 1, 1000)],
+				},
+			)
+			const { records } = await loadOrderRecords(
+				db,
+				orgId,
+				orderSubject,
+				listDefinition('orders', ['orderNumber', 'discount']),
+				now,
+			)
+			expect(
+				records.map((r) => [r.orderNumber, r.discount, r.countsTowardSales]),
+			).toEqual([
+				['D2', 10, true],
+				['D1', 5, true],
+			])
+			const items = await loadOrderItemRecords(
+				db,
+				orgId,
+				listDefinition('order_items'),
+				now,
+			)
+			expect(items.records.map((r) => [r.itemName, r.sales])).toEqual([
+				['Burger', 10],
+			])
 		})
 
 		it('counts items per order only when the report uses item counts', async () => {

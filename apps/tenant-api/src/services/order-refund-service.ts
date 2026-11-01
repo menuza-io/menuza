@@ -15,6 +15,7 @@ import {
 
 import { type LoyaltyTx } from '../lib/loyalty-write.ts'
 import { retryOnSqliteBusy } from '../lib/sqlite-retry.ts'
+import { refundDiscountRedemptions } from './discount-apply.ts'
 import { loyaltySettleQueue } from './loyalty-purchase-service.ts'
 import {
 	orderFailure,
@@ -235,6 +236,9 @@ export async function recordOrderRefund(
 						.set({ refundedCents, updatedAt: new Date(now) })
 						.where(eq(restaurantOrders.id, order.id))
 						.returning()
+					if (refundedCents >= order.totalCents) {
+						await refundDiscountRedemptions(tx, order.id)
+					}
 					await loyalty.queue(
 						tx as unknown as LoyaltyTx,
 						{ type: 'restaurant_order', id: order.id },

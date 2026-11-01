@@ -4335,6 +4335,13 @@ export const Discount = sqliteTable(
 		totalLimit: integer(),
 		perCustomerLimit: text(),
 		combinable: integer({ mode: 'boolean' }).default(false).notNull(),
+		// JSON array of the kinds it may stack with (item, order, delivery). Null:
+		// `combinable` decides (all kinds, or none).
+		combinesWith: text(),
+		// JSON spend or quantity ladder; null means none.
+		tiers: text(),
+		// Free delivery only: the largest delivery fee it waives.
+		maxDeliveryFeeMinor: integer(),
 		priority: integer().default(0).notNull(),
 		promoteOnMenu: integer({ mode: 'boolean' }).default(false).notNull(),
 		requireApproval: integer({ mode: 'boolean' }).default(false).notNull(),

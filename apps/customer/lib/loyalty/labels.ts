@@ -167,7 +167,6 @@ export const LOYALTY_ERROR_LABELS: Readonly<
 	zero_value: 'errorGeneric',
 	insufficient_points: 'errorInsufficientPoints',
 	currency_mismatch: 'errorGeneric',
-	stacking_not_allowed: 'errorGeneric',
 	one_reward_per_order: 'errorGeneric',
 	cart_changed: 'errorGeneric',
 	stale_version: 'errorGeneric',

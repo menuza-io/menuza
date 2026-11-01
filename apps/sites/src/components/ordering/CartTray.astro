@@ -38,9 +38,16 @@ const { labels, initialTotal } = Astro.props
 		>
 			0
 		</span>
-		<span class="min-w-0 flex-1 truncate text-start text-base font-semibold">
-			{labels.viewOrder}
-			<span id="cart-tray-count" class="sr-only"></span>
+		<span class="min-w-0 flex-1 text-start">
+			<span class="block truncate text-base font-semibold">
+				{labels.viewOrder}
+				<span id="cart-tray-count" class="sr-only"></span>
+			</span>
+			{/* The estimate has no discounts yet; filled by `mountCartUi`. */}
+			<span
+				id="cart-tray-note"
+				class="hidden block truncate text-sm font-medium [&.hidden]:hidden"
+			></span>
 		</span>
 		<span class="flex shrink-0 items-center gap-1.5">
 			<span id="cart-tray-total" class="price text-base">{initialTotal}</span>

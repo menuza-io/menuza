@@ -332,6 +332,7 @@ export function reconcileMenuVariations(
 				valueIds,
 				price: inherited?.price ?? defaultPrice,
 				imageKey: inherited?.imageKey ?? null,
+				excludeFromDiscounts: inherited?.excludeFromDiscounts ?? false,
 				availabilityStatus: 'available',
 				unavailableUntil: null,
 			}
@@ -470,6 +471,7 @@ export const MenuItemInputSchema = z.object({
 	calorieMax: OptionalCountInputSchema,
 	applySalesTax: z.boolean().default(true),
 	excludeFromOverride: z.boolean().default(false),
+	excludeFromDiscounts: z.boolean().default(false),
 	isPopular: z.boolean().default(false),
 	isUpsell: z.boolean().default(false),
 	availabilityStatus: AvailabilityStatusSchema.default('available'),

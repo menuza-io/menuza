@@ -8,8 +8,10 @@ import {
 	posSignInRequestSchema,
 } from '@repo/common/pos-orders'
 import { type RestaurantOrderContext } from '@repo/common/restaurant-orders'
+import { discountRecordSchema, type DiscountRecord } from '@repo/discounts'
 import { getTenantDb, type TenantDatabase } from '@repo/tenant-db'
 import { z } from 'zod'
+import { isDiscountsKillSwitchOn } from '../lib/discount-switches.ts'
 import {
 	authenticatePosDevice,
 	isPosEnabled,
@@ -19,7 +21,14 @@ import {
 	posUnavailableResponse,
 } from '../lib/pos-auth.ts'
 import { mintPosStaffSession } from '../lib/pos-staff-session.ts'
-import { fetchOrderContext } from '../services/order-service.ts'
+import {
+	recordPosDiscountUses,
+	releasePosDiscountUses,
+} from '../services/discount-apply.ts'
+import {
+	fetchOrderContext,
+	fetchTillDiscountRules,
+} from '../services/order-service.ts'
 import { deviceApps } from '../services/pos-apps-service.ts'
 import {
 	requeueTillSaleLoyalty,
@@ -28,6 +37,7 @@ import {
 } from '../services/pos-loyalty-service.ts'
 import {
 	billUnchanged,
+	canonicalJson,
 	claimTab,
 	fiscalChainHeads,
 	holdUpload,
@@ -37,6 +47,7 @@ import {
 	recentTransfersAway,
 	redeemPairingCode,
 	reviewAgainstMenu,
+	revisionDiscountApplications,
 	serializePosOrder,
 	touchDevice,
 	unverifiedReview,
@@ -44,6 +55,7 @@ import {
 	verifyPosPin,
 	withClockCheck,
 	withDiscountCheck,
+	withDiscountRuleCheck,
 	withStaffCheck,
 	type PosReview,
 } from '../services/pos-service.ts'
@@ -102,8 +114,32 @@ const menuCache = new Map<
 	string,
 	{ at: number; context: RestaurantOrderContext }
 >()
+const rulesCache = new Map<string, { at: number; rules: DiscountRecord[] }>()
 /** Tests start from a cold cache. */
-export const clearPosMenuCache = () => menuCache.clear()
+export const clearPosMenuCache = () => {
+	menuCache.clear()
+	rulesCache.clear()
+}
+
+/**
+ * The till rules as they are now (automatic and manual, active only), kept for
+ * a minute like the menu. Null when App cannot be reached: nothing can be
+ * checked then, and a sale is never held back for it.
+ */
+async function tillRulesFor(orgId: string): Promise<DiscountRecord[] | null> {
+	const hit = rulesCache.get(orgId)
+	if (hit && Date.now() - hit.at < MENU_CACHE_MS) return hit.rules
+	const raw = await fetchTillDiscountRules(orgId)
+	if (!raw) return null
+	const rules: DiscountRecord[] = []
+	for (const row of raw) {
+		const parsed = discountRecordSchema.safeParse(row)
+		if (parsed.success) rules.push(parsed.data)
+	}
+	if (rulesCache.size > 200) rulesCache.clear()
+	rulesCache.set(orgId, { at: Date.now(), rules })
+	return rules
+}
 async function orderContextFor(orgId: string, locationId: string) {
 	const key = `${orgId}:${locationId}`
 	const hit = menuCache.get(key)
@@ -173,6 +209,24 @@ posRoutes.post('/pair', async (c) => {
  * sells, pick up a manager's changes, drop tabs another terminal took over, and
  * continue its fiscal chain if its local storage was lost.
  */
+/** Automatic and manual till rules. Not on the public menu. */
+posRoutes.get('/discount-rules', async (c) => {
+	const auth = await authenticatePosDevice(c)
+	if ('error' in auth) return auth.error
+	// Kill switch: an empty list is a real answer, so tills keep selling and
+	// drop the rules they had stored.
+	if (isDiscountsKillSwitchOn()) {
+		return c.json({ discountRules: [] }, 200, {
+			'Cache-Control': 'private, no-store',
+		})
+	}
+	const discountRules = await fetchTillDiscountRules(auth.pos.orgId)
+	if (!discountRules) return posError(503, 'ordering_unavailable')
+	return c.json({ discountRules }, 200, {
+		'Cache-Control': 'private, no-store',
+	})
+})
+
 posRoutes.get('/me', async (c) => {
 	const auth = await authenticatePosDevice(c)
 	if ('error' in auth) return auth.error
@@ -363,12 +417,15 @@ posRoutes.post('/orders', async (c) => {
 	// held back on the tablet, where a wipe would lose it.
 	const prior = await peekOrder(pos.db, order.id)
 	let review: PosReview
-	if (
-		prior &&
+	// Checks of the bill itself run once per bill: a replay, a cancellation or a
+	// payment on the same bill reuses what the first upload found, so a rule
+	// edited since the sale never flags it afterwards.
+	const sameBill =
+		prior !== null &&
 		(prior.revision >= order.revision ||
 			order.status === 'void' ||
 			billUnchanged(prior, order))
-	) {
+	if (sameBill) {
 		review = {
 			reviewReason: prior.reviewReason,
 			serverTotalCents: prior.serverTotalCents,
@@ -391,6 +448,40 @@ posRoutes.post('/orders', async (c) => {
 	)
 		? await tillRewardBackedCents(pos.db, order.id)
 		: 0
+	// The rule check runs on a new bill, and on a later revision of a checked
+	// bill that names discounts the previous revision did not (applications
+	// added when the sale was paid must not skip the rules).
+	// With the kill switch on this node ignores every discount: no rule check,
+	// no flags, no recorded uses. The sale and its adjustments are kept.
+	const discountsOff = isDiscountsKillSwitchOn()
+	const hasDiscountAdjustments = order.adjustments.some(
+		(adjustment) => adjustment.kind === 'discount',
+	)
+	const priorDiscountApps =
+		prior !== null && prior.revision < order.revision
+			? await revisionDiscountApplications(pos.db, order.id, prior.revision)
+			: null
+	const discountAppsChanged =
+		prior !== null &&
+		prior.revision < order.revision &&
+		canonicalJson(priorDiscountApps) !==
+			canonicalJson(order.discountApplications)
+	const checkDiscountRules =
+		!discountsOff &&
+		(!sameBill ||
+			discountAppsChanged ||
+			(order.status === 'paid' &&
+				hasDiscountAdjustments &&
+				order.discountApplications.length === 0 &&
+				Array.isArray(priorDiscountApps) &&
+				priorDiscountApps.length > 0))
+	// What the till applied, against the rules as they are now.
+	const tillRules =
+		!discountsOff &&
+		checkDiscountRules &&
+		(order.discountApplications.length > 0 || hasDiscountAdjustments)
+			? await tillRulesFor(pos.orgId)
+			: null
 	review = {
 		...review,
 		reviewReason: prioritizePosReviewReasons([
@@ -399,6 +490,9 @@ posRoutes.post('/orders', async (c) => {
 			withDiscountCheck(cleanReview, order, rewardBackedCents).reviewReason,
 			(await withStaffCheck(pos.db, pos.device, order, cleanReview))
 				.reviewReason,
+			checkDiscountRules
+				? withDiscountRuleCheck(cleanReview, order, tillRules).reviewReason
+				: null,
 		]),
 	}
 	// Loyalty commits with the sale but can never refuse it (see the service).
@@ -428,6 +522,37 @@ posRoutes.post('/orders', async (c) => {
 		}
 		await touchDevice(pos.db, pos.device)
 		await loyalty.settle()
+		if (order.discountApplications.length > 0) {
+			try {
+				if (order.status === 'paid') {
+					// Switched off: nothing is recorded (the money was taken and the
+					// sale stays). A void or full refund below still releases a use
+					// reserved before the switch went off.
+					if (discountsOff) {
+						// nothing to record
+					} else {
+						// A use is a sale that was paid: an open tab has not used it yet.
+						const context = await orderContextFor(pos.orgId, order.locationId)
+						await recordPosDiscountUses(pos.db, {
+							orderId: order.id,
+							locationId: order.locationId,
+							applications: order.discountApplications,
+							context,
+							rules: tillRules ?? (await tillRulesFor(pos.orgId)),
+							soldAt: new Date(order.createdAt),
+						})
+					}
+				} else if (order.status === 'void' || order.status === 'refunded') {
+					// Cancelled or refunded in full: the use stops counting.
+					await releasePosDiscountUses(pos.db, order.id)
+				}
+			} catch (error) {
+				console.error(
+					'POS discount use was not recorded',
+					error instanceof Error ? error.message : error,
+				)
+			}
+		}
 		// Signed ZATCA documents are reported in the background; the hourly tick catches up.
 		if ((await queueZatcaDocuments(pos.db, pos.device, order)) > 0)
 			inBackground(c, reportDueZatca(pos.db))

@@ -469,6 +469,23 @@ export function getPermissionGroups(): PermissionGroup[] {
 				},
 			],
 		},
+		{
+			title: t`Discounts`,
+			description: t`Discounts, coupon codes and how often they were used. Only applies when Discounts is turned on for your organization.`,
+			permissions: [
+				{
+					id: 'org_perm_read_discount_any',
+					label: t`View discounts`,
+					description: t`See discounts, coupon codes, and their usage.`,
+				},
+				{
+					id: 'org_perm_update_discount_any',
+					label: t`Manage discounts`,
+					description: t`Create, edit, pause, and archive discounts and coupon codes. Includes View discounts.`,
+					warning: t`Changes what customers pay`,
+				},
+			],
+		},
 	]
 }
 

@@ -15,6 +15,8 @@ const mocks = vi.hoisted(() => ({
 	startTabPayment: vi.fn(),
 	mountTabRewards: vi.fn(),
 	navigate: vi.fn(),
+	/** A tab other than the plain open one, for the test that sets it. */
+	tab: { value: null as unknown },
 }))
 
 vi.mock('~/lib/client-auth', async (importOriginal) => ({
@@ -27,7 +29,8 @@ vi.mock('~/lib/ordering/table-session', async (importOriginal) => ({
 	loadTableSession: () => storedSession(),
 	saveTableSession: () => {},
 	fetchTableContext: () => Promise.resolve(tableContext()),
-	fetchTab: () => Promise.resolve(openTab()),
+	fetchTab: () =>
+		Promise.resolve((mocks.tab.value as QrPublicTab | null) ?? openTab()),
 	startTabPayment: mocks.startTabPayment,
 }))
 
@@ -128,6 +131,8 @@ const LABELS = Object.fromEntries(
 		'errorTableGone',
 		'errorLocked',
 		'errorTabPaying',
+		'errorCoupon',
+		'errorDiscountChanged',
 		'errorClosed',
 		'errorRateLimited',
 		'errorUnavailable',
@@ -185,12 +190,15 @@ function mount() {
 			<div id="tab-drawer">
 				<button id="close-tab-btn" type="button">Close tab</button>
 				<div id="tab-rounds"></div>
+				<div id="tab-promo-row" class="hidden"><dd id="tab-promo"></dd></div>
+				<dd id="tab-total"></dd>
 				<div id="tab-pay-slot"></div>
 			</div>
 		</div>
 		<div id="tab-pay-backdrop" class="site-overlay hidden">
 			<form id="tab-pay">
 				<button id="tab-pay-close" type="button">Close</button>
+				<input name="coupon" />
 				<input name="name" />
 				<input name="phone" />
 				<fieldset>
@@ -223,6 +231,7 @@ function mount() {
 		tip: form.querySelector('fieldset')!,
 		rewardOptions: byId('tab-rewards-options'),
 		error: byId('tab-pay-error'),
+		coupon: form.elements.namedItem('coupon') as HTMLInputElement,
 		/** Opens the tab drawer, then the pay sheet from its Pay button. */
 		async openSheet() {
 			byId('open-tab-btn').click()
@@ -254,6 +263,7 @@ beforeEach(() => {
 	mocks.startTabPayment.mockReset()
 	mocks.mountTabRewards.mockReset()
 	mocks.navigate.mockReset()
+	mocks.tab.value = null
 	mocks.mountTabRewards.mockImplementation(() => ({
 		open: () => {},
 		amountMinor: (total: number, tip: number) => total + tip,
@@ -301,6 +311,37 @@ describe('paying the tab from the phone', () => {
 		)
 		expect(mocks.startTabPayment.mock.calls[0]?.[2]).toMatchObject({
 			loyalty: coffee,
+		})
+	})
+
+	it('shows the discounts priced into the tab and sends the total it showed', async () => {
+		const base = openTab()
+		mocks.tab.value = {
+			...base,
+			totals: {
+				...base.totals,
+				discountCents: 200,
+				taxCents: 149,
+				totalCents: 1_949,
+			},
+		}
+		const t = mount()
+		await vi.waitFor(() =>
+			expect(document.documentElement.dataset.tableMode).toBe('true'),
+		)
+		await t.openSheet()
+		expect(document.getElementById('tab-promo-row')).not.toHaveClass('hidden')
+		expect(document.getElementById('tab-promo')).toHaveTextContent('$-2.00')
+		expect(document.getElementById('tab-total')).toHaveTextContent('$19.49')
+		expect(t.submit).toHaveTextContent('Pay $19.49')
+		mocks.placement.mockResolvedValueOnce({ ok: true, loyalty: null })
+		mocks.startTabPayment.mockReturnValueOnce(new Promise(() => {}))
+		t.pay()
+		await vi.waitFor(() =>
+			expect(mocks.startTabPayment).toHaveBeenCalledTimes(1),
+		)
+		expect(mocks.startTabPayment.mock.calls[0]?.[2]).toMatchObject({
+			expectedDiscountMinor: 200,
 		})
 	})
 
@@ -451,6 +492,40 @@ describe('paying the tab from the phone', () => {
 		expect(t.error).not.toHaveTextContent('errorTabPaying')
 		expect(t.tip).toBeDisabled()
 		expect(t.name).toBeEnabled()
+	})
+
+	it('says a changed discount changed the total, without blaming the coupon', async () => {
+		const t = mount()
+		await vi.waitFor(() =>
+			expect(document.documentElement.dataset.tableMode).toBe('true'),
+		)
+		await t.openSheet()
+		mocks.placement.mockResolvedValueOnce({ ok: true, loyalty: null })
+		mocks.startTabPayment.mockRejectedValueOnce(
+			new TableRequestError('discount_changed', 409),
+		)
+		t.pay()
+		await vi.waitFor(() =>
+			expect(t.error).toHaveTextContent('errorDiscountChanged'),
+		)
+		expect(t.error).not.toHaveTextContent('errorCoupon')
+		expect(t.coupon).not.toHaveAttribute('aria-invalid')
+		expect(t.coupon).not.toHaveFocus()
+	})
+
+	it('marks the coupon field when the region refuses the code', async () => {
+		const t = mount()
+		await vi.waitFor(() =>
+			expect(document.documentElement.dataset.tableMode).toBe('true'),
+		)
+		await t.openSheet()
+		mocks.placement.mockResolvedValueOnce({ ok: true, loyalty: null })
+		mocks.startTabPayment.mockRejectedValueOnce(
+			new TableRequestError('coupon_refused', 409),
+		)
+		t.pay()
+		await vi.waitFor(() => expect(t.error).toHaveTextContent('errorCoupon'))
+		expect(t.coupon).toHaveAttribute('aria-invalid', 'true')
 	})
 
 	it('keeps the tip locked when the payment start got no answer', async () => {

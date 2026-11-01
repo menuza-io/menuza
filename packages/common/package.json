@@ -78,6 +78,11 @@
       "import": "./src/user-permissions.ts",
       "default": "./src/user-permissions.ts"
     },
+    "./discounts-flags": {
+      "types": "./src/discounts-flags.ts",
+      "import": "./src/discounts-flags.ts",
+      "default": "./src/discounts-flags.ts"
+    },
     "./feature-flags": {
       "types": "./src/feature-flags.server.ts",
       "import": "./src/feature-flags.server.ts",
@@ -198,6 +203,11 @@
       "import": "./src/pos-orders.ts",
       "default": "./src/pos-orders.ts"
     },
+    "./pos-discount-base": {
+      "types": "./src/pos-discount-base.ts",
+      "import": "./src/pos-discount-base.ts",
+      "default": "./src/pos-discount-base.ts"
+    },
     "./pos-fiscal": {
       "types": "./src/pos-fiscal.ts",
       "import": "./src/pos-fiscal.ts",
@@ -222,6 +232,7 @@
     "@remix-run/server-runtime": "^2.17.5",
     "@repo/config": "*",
     "@repo/database": "*",
+    "@repo/discounts": "*",
     "@repo/geo": "*",
     "@repo/security": "*",
     "@tusbar/cache-control": "^1.0.0",

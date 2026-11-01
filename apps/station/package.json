@@ -19,6 +19,7 @@
     "@lingui/core": "^5.8.0",
     "@lingui/macro": "^5.3.2",
     "@lingui/react": "^5.8.0",
+    "@repo/discounts": "^0.0.0",
     "@repo/ui": "*",
     "cn": "^0.3.3",
     "dexie": "^4.0.11",

@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
+	appliedDiscounts,
 	formatMoney,
+	isPaymentNotRequired,
+	orderSchema,
 	paymentDisplayStatus,
 	refundableCents,
 } from './order-model.ts'
@@ -45,5 +48,76 @@ describe('refundableCents', () => {
 		expect(refundableCents({ totalCents: 1000, refundedCents: 0 })).toBe(1000)
 		expect(refundableCents({ totalCents: 1000, refundedCents: 250 })).toBe(750)
 		expect(refundableCents({ totalCents: 1000, refundedCents: 1200 })).toBe(0)
+	})
+})
+
+describe('appliedDiscounts', () => {
+	it('reads well-formed discounts and skips junk', () => {
+		expect(
+			appliedDiscounts({
+				discounts: [
+					{
+						discountId: 'd1',
+						version: 2,
+						name: 'Lunch',
+						code: 'LUNCH',
+						amountMinor: 300,
+						deliveryAmountMinor: 0,
+						allocation: [{ lineId: 'a', amountMinor: 300, units: 1 }],
+					},
+					null,
+					'x',
+					[],
+					{ name: 'Nothing', amountMinor: 0 },
+					{
+						discountId: 'd2',
+						name: 'Ship',
+						amountMinor: 'bad',
+						deliveryAmountMinor: 200,
+					},
+				],
+			}),
+		).toEqual([
+			{
+				discountId: 'd1',
+				name: 'Lunch',
+				code: 'LUNCH',
+				amountMinor: 300,
+				deliveryAmountMinor: 0,
+			},
+			{
+				discountId: 'd2',
+				name: 'Ship',
+				code: null,
+				amountMinor: 0,
+				deliveryAmountMinor: 200,
+			},
+		])
+	})
+
+	it('treats a missing or non-array value as none', () => {
+		expect(appliedDiscounts({})).toEqual([])
+		expect(appliedDiscounts({ discounts: 'nope' })).toEqual([])
+		expect(appliedDiscounts({ discounts: { a: 1 } })).toEqual([])
+	})
+
+	it('detects a free order and keeps the status as stored', () => {
+		expect(isPaymentNotRequired({ paymentStatus: 'not_required' })).toBe(true)
+		expect(isPaymentNotRequired({ paymentStatus: 'paid' })).toBe(false)
+		expect(
+			paymentDisplayStatus({
+				paymentStatus: 'not_required',
+				totalCents: 0,
+				refundedCents: 0,
+			}),
+		).toBe('not_required')
+	})
+
+	it('tolerates malformed discount fields on the order payload', () => {
+		const shape = orderSchema.shape
+		expect(shape.discountCents.parse(undefined)).toBeUndefined()
+		expect(shape.discountCents.parse('x')).toBeUndefined()
+		expect(shape.deliveryDiscountCents.parse(250)).toBe(250)
+		expect(shape.discounts.parse('x')).toBeUndefined()
 	})
 })

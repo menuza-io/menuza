@@ -26,7 +26,7 @@ import {
 	type ZatcaDocumentInput,
 	xmlSafe,
 } from './document.ts'
-import { fromRefund, fromSale } from './from-sale.ts'
+import { fromRefund, fromSale, outOfScopeCents } from './from-sale.ts'
 import { readSignedDocument } from './verify.ts'
 
 const has = (tool: string) => {
@@ -367,6 +367,62 @@ describe('documents', () => {
 		expect(f.taxInclusiveCents + f.payableRoundingCents).toBe(refunded)
 	})
 
+	it('names each till discount on a VAT-inclusive sale, with the parts adding up to the allowance', () => {
+		// 1150 gross at 15%, a 115 discount made of two named discounts (10% off).
+		const input = fromSale(
+			{
+				lines: [
+					{
+						name: 'Meal',
+						variantLabel: null,
+						quantity: 1,
+						baseCents: 1150,
+						options: [],
+					},
+				],
+				taxRatePercent: 15,
+				taxInclusive: true,
+				totals: {
+					adjustmentCents: 115,
+					taxCents: 135,
+					tipCents: 0,
+					totalCents: 1035,
+				},
+				payments: [{ method: 'card' }],
+				discounts: [
+					{ name: 'Happy hour', amountCents: 69 },
+					{ name: 'Staff', amountCents: 46 },
+				],
+			},
+			{
+				id: 'T1-INV-000002',
+				uuid: '3cf5ee18-ee25-44ea-a444-2c37ba7f28be',
+				issuedAt: new Date('2026-10-21T18:30:05Z'),
+				counter: 2,
+				previousHash: ZATCA_GENESIS_PIH,
+				seller,
+			},
+		)
+		const rows = input.standardAllowances ?? []
+		expect(rows.map((row) => row.reason)).toEqual(['Happy hour', 'Staff'])
+		expect(rows.reduce((sum, row) => sum + row.cents, 0)).toBe(
+			input.allowanceCents,
+		)
+	})
+
+	it('falls back to one allowance when the named discounts are not the whole till discount', () => {
+		const input = sale({
+			totals: {
+				adjustmentCents: 500,
+				taxCents: 825,
+				tipCents: 300,
+				totalCents: 6725,
+			},
+			discounts: [{ name: 'Only part', amountCents: 100 }],
+		})
+		expect(input.standardAllowances).toBeUndefined()
+	})
+
 	it('drops characters XML 1.0 does not allow before hashing', () => {
 		const doc = sale({
 			lines: [
@@ -581,6 +637,91 @@ describe('documents', () => {
 		expect(ZATCA_GENESIS_PIH).toBe(
 			'NWZlY2ViNjZmZmM4NmYzOGQ5NTI3ODZjNmQ2OTZjNzljMmRiYzIzOWRkNGU5MWI0NjcyOWQ3M2EyN2ZiNTdlOQ==',
 		)
+	})
+})
+
+describe('a discount that names its lines', () => {
+	// Line A 1000 taxable; line B 100 taxable plus a 900 untaxed option; 500 off
+	// line A at 15% exclusive. The till's tax is 90 (taxable 600) and its total
+	// 1590. Spread over the whole sale instead, the invoice said 124 VAT.
+	const lines = [
+		{
+			id: 'A',
+			name: 'A',
+			variantLabel: null,
+			quantity: 1,
+			baseCents: 1000,
+			options: [],
+		},
+		{
+			id: 'B',
+			name: 'B',
+			variantLabel: null,
+			quantity: 1,
+			baseCents: 100,
+			options: [{ unitCents: 900, quantity: 1, taxable: false }],
+		},
+	]
+	const base = {
+		lines,
+		taxRatePercent: 15,
+		taxInclusive: false,
+		totals: {
+			adjustmentCents: 500,
+			taxCents: 90,
+			tipCents: 0,
+			totalCents: 1590,
+		},
+		payments: [{ method: 'cash' as const }],
+	}
+	const meta = {
+		id: 'inv-1',
+		uuid: '11111111-1111-4111-8111-111111111111',
+		issuedAt: new Date('2026-01-01T10:00:00Z'),
+		counter: 1,
+		previousHash: ZATCA_GENESIS_PIH,
+		seller,
+	}
+
+	it('takes tax off the lines the discount came from', () => {
+		const doc = fromSale(
+			{
+				...base,
+				discounts: [
+					{ name: 'Half off A', amountCents: 500, lineAmounts: { A: 500 } },
+				],
+			},
+			meta,
+		)
+		const f = figures(doc)
+		expect(f.taxCents).toBe(90)
+		expect(f.payableRoundingCents).toBe(0)
+		expect(doc.standardAllowances).toEqual([
+			{ reason: 'Half off A', cents: 500 },
+		])
+		expect(doc.outOfScopeAllowanceCents).toBe(0)
+		expect(
+			outOfScopeCents({
+				...base,
+				discounts: [{ name: 'x', amountCents: 500, lineAmounts: { A: 500 } }],
+			}),
+		).toBe(900)
+	})
+
+	it('still spreads a discount that names no lines over the whole sale', () => {
+		const f = figures(
+			fromSale(
+				{ ...base, discounts: [{ name: 'Half off', amountCents: 500 }] },
+				meta,
+			),
+		)
+		// The previous behavior: 500 of 2000 off, proportionally.
+		expect(f.taxCents).toBe(124)
+	})
+
+	it('counts a loyalty reward that took from a line, not named as a discount', () => {
+		const f = figures(fromSale({ ...base, otherLineAmounts: { A: 500 } }, meta))
+		expect(f.taxCents).toBe(90)
 	})
 })
 

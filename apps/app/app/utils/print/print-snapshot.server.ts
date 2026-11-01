@@ -246,19 +246,30 @@ export async function buildPrintSnapshot(input: {
 	)
 	if (locales.length === 0) locales.push(defaultLocale)
 
-	const copy = locales.map((locale) => {
-		const defaults = printCatalog.defaultCopy(locale, content.qr.kind)
-		return {
-			locale,
-			dir: localeDirection(locale),
-			headline: content.headline[locale]?.trim() || defaults.headline,
-			body: content.body[locale]?.trim() ?? '',
-			callToAction:
-				content.callToAction[locale]?.trim() || defaults.callToAction,
-			qrCaption: defaults.qrCaption,
-			pieceWord: printCatalog.pieceWord(locale, content.qr.kind),
-		}
-	})
+	const targetServer = printVertical.qrTargets?.[content.qr.kind]
+	const copy = await Promise.all(
+		locales.map(async (locale) => {
+			const defaults = printCatalog.defaultCopy(locale, content.qr.kind)
+			const fromTarget =
+				(await targetServer?.defaultCopy?.(content.qr, locale, input.access)) ??
+				null
+			return {
+				locale,
+				dir: localeDirection(locale),
+				headline:
+					content.headline[locale]?.trim() ||
+					fromTarget?.headline ||
+					defaults.headline,
+				body: content.body[locale]?.trim() || fromTarget?.body || '',
+				callToAction:
+					content.callToAction[locale]?.trim() ||
+					fromTarget?.callToAction ||
+					defaults.callToAction,
+				qrCaption: defaults.qrCaption,
+				pieceWord: printCatalog.pieceWord(locale, content.qr.kind),
+			}
+		}),
+	)
 
 	const scope = pickScope(await listPrintScopes(org.id), content.scopeId)
 

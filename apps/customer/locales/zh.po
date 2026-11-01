@@ -25,6 +25,7 @@ msgstr "还差 {amount}"
 msgid "{amount} more to unlock {reward}"
 msgstr "再获得 {amount} 即可兑换 {reward}"
 
+#: components/ordering/menu-screen.tsx:332
 #: lib/loyalty/labels.ts:56
 msgid "{amount} off"
 msgstr "立减 {amount}"
@@ -53,6 +54,10 @@ msgstr "{n, plural, other {{count} 颗星}}"
 msgid "{percent} off"
 msgstr "优惠 {percent}"
 
+#: components/ordering/menu-screen.tsx:324
+msgid "{percentText} off"
+msgstr "优惠 {percentText}"
+
 #: lib/loyalty/labels.ts:45
 msgid "{points} for each {items}"
 msgstr "每份 {items} 可获得 {points}"
@@ -76,6 +81,10 @@ msgstr "每次光临可获得 {points}（每天限一次）"
 #: lib/loyalty/labels.ts:43
 msgid "{points} for every {amount} you spend"
 msgstr "每消费 {amount} 可获得 {points}"
+
+#: components/ordering/menu-screen.tsx:261
+msgid "{price}, was {originalPrice}"
+msgstr "{price}，原价 {originalPrice}"
 
 #: components/auth/login-screen.tsx:25
 msgid "+1 555 000 0000"
@@ -193,17 +202,34 @@ msgstr "已取消"
 msgid "Change time"
 msgstr "修改时间"
 
+#: components/ordering/menu-screen.tsx:161
+msgid "Check back later, or open the website menu."
+msgstr "请稍后再来，或打开网站上的菜单。"
+
 #: lib/loyalty/labels.ts:89
 msgid "Check for requests"
 msgstr "查看请求"
+
+#: components/ordering/drops-screen.tsx:161
+msgid "Check the menu for what we are serving today."
+msgstr "查看菜单，了解我们今天供应的菜品。"
 
 #: lib/reservations/messages.ts:72
 msgid "Checking your payment…"
 msgstr "正在确认付款…"
 
+#: components/ordering/site-checkout.tsx:25
+msgid "Checkout"
+msgstr "结账"
+
 #: lib/reservations/messages.ts:26
 msgid "Choose a location"
 msgstr "选择门店"
+
+#: components/ordering/drops-screen.tsx:136
+#: components/ordering/drops-screen.tsx:215
+msgid "Coming up"
+msgstr "即将开始"
 
 #: lib/reservations/messages.ts:67
 msgid "Complete your payment"
@@ -273,6 +299,15 @@ msgstr "关闭"
 msgid "Done"
 msgstr "完成"
 
+#: app/(tabs)/_layout.tsx:58
+#: components/ordering/drops-screen.tsx:153
+msgid "Drops"
+msgstr "限量活动"
+
+#: components/ordering/drops-screen.tsx:115
+msgid "Drops could not be loaded."
+msgstr "无法加载限量活动。"
+
 #: lib/loyalty/labels.ts:108
 msgid "Earned"
 msgstr "获得"
@@ -301,7 +336,7 @@ msgstr "请输入有效的电子邮件地址。"
 msgid "Enter a valid phone number."
 msgstr "请输入有效的电话号码。"
 
-#: components/auth/verify-screen.tsx:27
+#: components/auth/verify-screen.tsx:39
 msgid "Enter your code"
 msgstr "输入验证码"
 
@@ -349,6 +384,10 @@ msgstr "如此人数的团体，请致电 {phone}。"
 #: lib/loyalty/labels.ts:64
 msgid "Free {item}"
 msgstr "免费 {item}"
+
+#: components/ordering/menu-screen.tsx:342
+msgid "Free delivery"
+msgstr "免配送费"
 
 #: lib/reservations/messages.ts:97
 msgid "Free to change until {time}"
@@ -428,6 +467,18 @@ msgstr "了解更多"
 msgid "Leave the waitlist"
 msgstr "退出候位"
 
+#: components/ordering/drops-screen.tsx:155
+msgid "Limited menus you pre-order for a pickup window."
+msgstr "限量菜单，预订后在指定时段自取。"
+
+#: components/ordering/drops-screen.tsx:109
+msgid "Loading drops"
+msgstr "正在加载限量活动"
+
+#: components/ordering/menu-screen.tsx:106
+msgid "Loading the menu"
+msgstr "正在加载菜单"
+
 #: components/profile/profile-screen.tsx:63
 msgid "Loading your profile…"
 msgstr "正在加载您的个人资料…"
@@ -441,6 +492,11 @@ msgstr "正在加载您的奖励…"
 #: lib/reservations/messages.ts:14
 msgid "Loading…"
 msgstr "加载中…"
+
+#: app/(tabs)/_layout.tsx:45
+#: components/ordering/menu-screen.tsx:141
+msgid "Menu"
+msgstr "菜单"
 
 #: components/reservations/parts.tsx:205
 msgid "More guests"
@@ -472,6 +528,10 @@ msgstr "暂无记录。您的消费将显示在这里。"
 #: lib/reservations/messages.ts:136
 msgid "No connection. Please try again."
 msgstr "无网络连接，请重试。"
+
+#: components/ordering/drops-screen.tsx:160
+msgid "No drops right now."
+msgstr "目前没有限量活动。"
 
 #: lib/reservations/messages.ts:52
 msgid "No preference"
@@ -509,6 +569,10 @@ msgstr "无"
 msgid "Not taking online reservations on this day."
 msgstr "当天不接受在线预订。"
 
+#: components/ordering/menu-screen.tsx:160
+msgid "Nothing on the menu right now."
+msgstr "菜单上现在没有内容。"
+
 #: lib/reservations/messages.ts:47
 msgid "Occasion"
 msgstr "场合"
@@ -541,9 +605,27 @@ msgstr "暂时无法在线预订。"
 msgid "Opens in your browser. Your points and rewards apply when you order there."
 msgstr "将在浏览器中打开。在那里下单时可使用您的积分和奖励。"
 
+#: components/ordering/drops-screen.tsx:246
+#: components/ordering/menu-screen.tsx:299
+msgid "Opens the website"
+msgstr "打开网站"
+
+#: components/ordering/site-checkout.tsx:38
+msgid "Opens the website. Add items on the menu, then check out there. Coupons and rewards apply at checkout."
+msgstr "打开网站。在菜单中添加商品，然后在那里结账。优惠券和奖励在结账时使用。"
+
+#: components/ordering/site-checkout.tsx:34
+msgid "Order on the menu"
+msgstr "在菜单中下单"
+
 #: components/loyalty/program-sections.tsx:129
 msgid "Order on the website"
 msgstr "在网站上下单"
+
+#: components/ordering/drops-screen.tsx:133
+#: components/ordering/drops-screen.tsx:213
+msgid "Ordering now"
+msgstr "正在接受订单"
 
 #: lib/reservations/messages.ts:34
 msgid "Other days with tables"
@@ -560,6 +642,14 @@ msgstr "人数"
 #: lib/reservations/messages.ts:21
 msgid "Past"
 msgstr "过往"
+
+#: components/ordering/drops-screen.tsx:216
+msgid "Past drop"
+msgstr "往期活动"
+
+#: components/ordering/drops-screen.tsx:139
+msgid "Past drops"
+msgstr "往期活动"
 
 #: lib/reservations/messages.ts:70
 msgid "Pay now"
@@ -595,7 +685,7 @@ msgstr "请重新登录。"
 msgid "Preferred time"
 msgstr "期望时间"
 
-#: app/(tabs)/_layout.tsx:59
+#: app/(tabs)/_layout.tsx:98
 #: lib/reservations/messages.ts:23
 msgid "Profile"
 msgstr "个人资料"
@@ -644,7 +734,7 @@ msgstr "奖励使用请求"
 msgid "Reservation"
 msgstr "预订详情"
 
-#: app/(tabs)/_layout.tsx:40
+#: app/(tabs)/_layout.tsx:71
 #: lib/reservations/messages.ts:17
 msgid "Reservations"
 msgstr "预订"
@@ -661,7 +751,7 @@ msgstr "确认您的预订"
 msgid "Reward returned"
 msgstr "奖励退回"
 
-#: app/(tabs)/_layout.tsx:49
+#: app/(tabs)/_layout.tsx:84
 #: lib/loyalty/labels.ts:53
 msgid "Rewards"
 msgstr "奖励"
@@ -698,7 +788,7 @@ msgstr "已入座"
 msgid "Seating area"
 msgstr "就座区域"
 
-#: components/auth/verify-screen.tsx:59
+#: components/auth/verify-screen.tsx:71
 msgid "Send a new code"
 msgstr "发送新验证码"
 
@@ -709,6 +799,10 @@ msgstr "提交申请"
 #: components/auth/login-screen.tsx:37
 msgid "Send code"
 msgstr "发送验证码"
+
+#: components/ordering/menu-screen.tsx:340
+msgid "Set price {amount}"
+msgstr "固定价 {amount}"
 
 #: lib/loyalty/labels.ts:106
 msgid "Show more"
@@ -746,6 +840,10 @@ msgstr "退出登录"
 #: components/auth/connect-site-screen.tsx:23
 msgid "Site address"
 msgstr "网站地址"
+
+#: components/ordering/menu-screen.tsx:274
+msgid "Sold out"
+msgstr "已售罄"
 
 #: lib/i18n/app-error-message.ts:41
 #: lib/loyalty/labels.ts:130
@@ -804,6 +902,10 @@ msgstr "该请求已处理。"
 #: lib/reservations/messages.ts:122
 msgid "That time was just taken. Pick another."
 msgstr "该时间刚被订走，请选择其他时间。"
+
+#: components/ordering/menu-screen.tsx:112
+msgid "The menu could not be loaded."
+msgstr "无法加载菜单。"
 
 #: lib/reservations/messages.ts:77
 msgid "The payment didn't go through."
@@ -878,6 +980,8 @@ msgid "Too many attempts. Please wait a moment and try again."
 msgstr "尝试次数过多，请稍候再试。"
 
 #: components/auth/site-unavailable-screen.tsx:26
+#: components/ordering/drops-screen.tsx:117
+#: components/ordering/menu-screen.tsx:114
 #: components/ui/error-message.tsx:28
 #: lib/loyalty/labels.ts:28
 #: lib/reservations/messages.ts:15
@@ -905,7 +1009,7 @@ msgstr "已更新"
 msgid "Use {reward}?"
 msgstr "使用 {reward}？"
 
-#: components/auth/verify-screen.tsx:67
+#: components/auth/verify-screen.tsx:79
 msgid "Use a different number"
 msgstr "使用其他号码"
 
@@ -918,11 +1022,15 @@ msgstr "使用其他网站"
 msgid "Use a reward when you order, or show your code at the counter."
 msgstr "下单时即可使用奖励，也可在柜台出示您的码。"
 
-#: components/auth/verify-screen.tsx:31
+#: components/ordering/menu-screen.tsx:213
+msgid "Use code {code}"
+msgstr "使用优惠码 {code}"
+
+#: components/auth/verify-screen.tsx:43
 msgid "Verification code"
 msgstr "验证码"
 
-#: components/auth/verify-screen.tsx:49
+#: components/auth/verify-screen.tsx:61
 msgid "Verify"
 msgstr "验证"
 
@@ -946,11 +1054,11 @@ msgstr "未找到相关内容。"
 msgid "We couldn't update your place in line. We'll keep trying."
 msgstr "无法更新您的排队位置。我们会继续尝试。"
 
-#: components/auth/verify-screen.tsx:28
+#: components/auth/verify-screen.tsx:40
 msgid "We sent a 6-digit code to {phone}."
 msgstr "我们已向 {phone} 发送了 6 位验证码。"
 
-#: components/auth/verify-screen.tsx:45
+#: components/auth/verify-screen.tsx:57
 msgid "We sent you a new code."
 msgstr "我们已向您发送了新验证码。"
 
@@ -965,6 +1073,10 @@ msgstr "将使用您账户中的号码 {phone}。"
 #: lib/reservations/messages.ts:43
 msgid "We're holding your table for {time}"
 msgstr "已为您保留餐桌 {time}"
+
+#: components/ordering/menu-screen.tsx:143
+msgid "What is on the menu today. Checkout is on the website."
+msgstr "这是今天的菜单。结账在网站上完成。"
 
 #: lib/reservations/messages.ts:86
 msgid "When"

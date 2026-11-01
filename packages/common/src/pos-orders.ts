@@ -94,9 +94,11 @@ export const posPairingCodeHashMessage = (code: string) => `pos-pair:${code}`
  * review instead of refusing it, so a paid sale is never stranded on a tablet.
  * Every field added since version 1 has a default. Version 4 added each line's
  * id and when it was sent (both optional). Version 5 added the sale's loyalty
- * (optional, see `posOrderLoyaltySchema`).
+ * (optional, see `posOrderLoyaltySchema`). Version 6 added
+ * `discountApplications` (optional, default empty) so a contract 5 upload
+ * still parses.
  */
-export const POS_CONTRACT_VERSION = 5
+export const POS_CONTRACT_VERSION = 6
 export const POS_CONTRACT_HEADER = 'Pos-Contract'
 
 export const POS_ORDER_STATUS_VALUES = [
@@ -318,6 +320,29 @@ export const posAdjustmentSchema = z.strictObject({
 	kind: z.enum(['discount', 'loyalty']),
 	label: z.string().max(120),
 	amountCents: cents.min(1),
+	/**
+	 * Optional. How much of this discount each line took, keyed by the line's
+	 * `id` (so only a till that sends line ids can use it). The till shrinks the
+	 * taxable amount line by line with it, as an online order does, and loyalty
+	 * spreads the discount over the same lines. Missing: the discount is on the
+	 * whole sale and is spread in proportion to line value.
+	 */
+	lineAmounts: z.record(z.string().min(1).max(100), cents.min(1)).optional(),
+})
+
+/** One discount the till applied. Contract 6; omitted uploads default to none. */
+export const posDiscountApplicationSchema = z.strictObject({
+	discountId: z.string().min(1).max(100),
+	name: z.string().max(120),
+	amountCents: cents.min(1),
+	/**
+	 * Optional. The version of the rule the till applied. A version that is not
+	 * the current one means the till sold from rules that were edited since, and
+	 * the sale is flagged `discount_stale` (never refused).
+	 */
+	version: z.number().int().min(1).optional(),
+	approvedByStaffId: z.string().min(1).max(100).optional(),
+	reason: z.string().max(200).optional(),
 })
 
 export const posTotalsSchema = z.strictObject({
@@ -428,7 +453,16 @@ export const posOrderRequestSchema = z
 		voidApprovedBy: posStaffSchema.nullable().default(null),
 		lines: z.array(posOrderLineSchema).min(1).max(50),
 		lineVoids: z.array(posLineVoidSchema).max(POS_MAX_LINE_VOIDS).default([]),
-		adjustments: z.array(posAdjustmentSchema).max(10).default([]),
+		adjustments: z.array(posAdjustmentSchema).max(40).default([]),
+		/**
+		 * Contract 6. Which discounts the till applied. Missing means none, so a
+		 * contract 5 upload still parses. The cap matches the adjustment list so
+		 * a busy automatic set is stored instead of held for review.
+		 */
+		discountApplications: z
+			.array(posDiscountApplicationSchema)
+			.max(40)
+			.default([]),
 		totals: posTotalsSchema,
 		payments: z.array(posPaymentSchema).max(20),
 		refunds: z.array(posRefundSchema).max(POS_MAX_REFUNDS).default([]),

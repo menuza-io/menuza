@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+	applyOrderDiscounts,
 	buildPublicOrderingOptions,
 	canonicalOrderRequest,
 	deliveryCoverageVerifiable,
@@ -10,6 +11,8 @@ import {
 	priceRestaurantOrder,
 	restaurantOrderContextSchema,
 	restaurantOrderRequestSchema,
+	RESTAURANT_PAYMENT_STATUS_VALUES,
+	type PricedRestaurantOrder,
 	type RestaurantOrderContext,
 	type RestaurantOrderRequest,
 } from './restaurant-orders.ts'
@@ -1286,6 +1289,213 @@ describe('canonicalOrderRequest', () => {
 	})
 })
 
+describe('canonicalOrderRequest: discounts', () => {
+	it('is unchanged when no discounts are sent, and changes with a code', () => {
+		const base = canonicalOrderRequest(makeRequest())
+		expect(base).not.toContain('discounts')
+		const withCode = canonicalOrderRequest(
+			makeRequest({ discounts: { code: 'SAVE10' } }),
+		)
+		expect(withCode).not.toBe(base)
+		expect(withCode).toContain('SAVE10')
+		expect(
+			canonicalOrderRequest(
+				makeRequest({
+					discounts: { code: 'SAVE10', expectedDiscountMinor: 200 },
+				}),
+			),
+		).not.toBe(withCode)
+	})
+
+	it('accepts only a code and an expected discount', () => {
+		expect(
+			restaurantOrderRequestSchema.safeParse(
+				rawRequest({ discounts: { code: 'SAVE10', amountMinor: 5 } }),
+			).success,
+		).toBe(false)
+		expect(
+			restaurantOrderRequestSchema.safeParse(
+				rawRequest({ discounts: { code: 'no way!' } }),
+			).success,
+		).toBe(false)
+	})
+
+	it('knows the not_required payment status', () => {
+		expect(RESTAURANT_PAYMENT_STATUS_VALUES).toContain('not_required')
+	})
+})
+
+describe('priceRestaurantOrder: item-level applySalesTax', () => {
+	it('leaves an untaxed item out of the taxable base but taxes its options', () => {
+		const gift = {
+			id: 'item-gift',
+			displayName: 'Gift card',
+			price: 20,
+			applySalesTax: false,
+			excludeFromDiscounts: true,
+			availabilityStatus: 'available',
+			modifierGroups: [
+				{
+					id: 'grp-x',
+					name: 'Extras',
+					selectionType: 'single',
+					minSelections: 0,
+					maxSelections: 1,
+					availabilityStatus: 'available',
+					options: [
+						{
+							id: 'opt-wrap',
+							displayName: 'Gift wrap',
+							price: 5,
+							availabilityStatus: 'available',
+						},
+					],
+				},
+			],
+		}
+		const menu = makeMenu([gift, burger])
+		const context = makeContext({ menu })
+		const result = priceRestaurantOrder(
+			context,
+			makeRequest({
+				lines: [
+					{
+						itemId: 'item-gift',
+						quantity: 2,
+						options: [{ groupId: 'grp-x', optionId: 'opt-wrap' }],
+					},
+				],
+			}),
+			{ now: NOW },
+		)
+		expect(result.ok).toBe(true)
+		if (!result.ok) return
+		const [line] = result.result.lines
+		expect(line?.totalCents).toBe(5000)
+		// Only the 2 x $5 wrap is taxable.
+		expect(line?.taxableCents).toBe(1000)
+		expect(line?.taxableUnitCents).toBe(500)
+		expect(line?.excludeFromDiscounts).toBe(true)
+	})
+
+	it('taxes the base price when the flag is missing', () => {
+		const context = makeContext()
+		const result = priceRestaurantOrder(context, makeRequest(), { now: NOW })
+		expect(result.ok).toBe(true)
+		if (!result.ok) return
+		expect(result.result.lines[0]?.taxableCents).toBe(
+			result.result.lines[0]?.totalCents,
+		)
+		expect(result.result.lines[0]).not.toHaveProperty('excludeFromDiscounts')
+	})
+})
+
+describe('applyOrderDiscounts', () => {
+	function priced(
+		overrides: Partial<PricedRestaurantOrder> = {},
+	): PricedRestaurantOrder {
+		return {
+			lines: [
+				{ totalCents: 2000, taxableCents: 2000 },
+				{ totalCents: 1000, taxableCents: 0 },
+			],
+			subtotalCents: 3000,
+			taxInclusive: false,
+			taxRatePercent: 10,
+			tipCents: 300,
+			deliveryFeeCents: 500,
+			...overrides,
+		} as PricedRestaurantOrder
+	}
+
+	it('changes nothing without discounts', () => {
+		const result = applyOrderDiscounts(priced(), {}, 0)
+		expect(result.discountCents).toBe(0)
+		expect(result.taxCents).toBe(200)
+		// 3000 + 200 tax + 300 tip + 500 delivery
+		expect(result.totalCents).toBe(4000)
+	})
+
+	it('treats a non-finite delivery discount as none instead of returning NaN totals', () => {
+		for (const bad of [Number.NaN, Infinity, -Infinity]) {
+			const result = applyOrderDiscounts(priced(), { '0': 500 }, bad)
+			expect(result.deliveryDiscountCents).toBe(0)
+			expect(result.totalCents).toBe(3000 - 500 + 150 + 300 + 500)
+			expect(Number.isFinite(result.taxCents)).toBe(true)
+		}
+	})
+
+	it('lowers exclusive tax per line, keeps the tip on the full subtotal', () => {
+		const result = applyOrderDiscounts(priced(), { '0': 500 }, 0)
+		expect(result.discountCents).toBe(500)
+		// taxable 1500 -> 150 tax
+		expect(result.taxCents).toBe(150)
+		expect(result.totalCents).toBe(3000 - 500 + 150 + 300 + 500)
+	})
+
+	it('reduces a partly taxed line in proportion', () => {
+		const result = applyOrderDiscounts(
+			priced({
+				lines: [{ totalCents: 1000, taxableCents: 100 }],
+				subtotalCents: 1000,
+				taxRatePercent: 10,
+				tipCents: 0,
+				deliveryFeeCents: 0,
+			}),
+			{ '0': 100 },
+			0,
+		)
+		expect(result.discountCents).toBe(100)
+		// 10% off leaves 90 of the 100 taxable. Tax is 9, not 0.
+		expect(result.taxCents).toBe(9)
+	})
+
+	it('never lowers tax for a discount on an untaxed line', () => {
+		const result = applyOrderDiscounts(priced(), { '1': 400 }, 0)
+		expect(result.discountCents).toBe(400)
+		expect(result.taxCents).toBe(200)
+		expect(result.totalCents).toBe(3000 - 400 + 200 + 300 + 500)
+	})
+
+	it('floors a line taxable base at 0 and caps a discount at its line', () => {
+		const result = applyOrderDiscounts(priced(), { '0': 9999 }, 0)
+		expect(result.discountCents).toBe(2000)
+		expect(result.taxCents).toBe(0)
+	})
+
+	it('reports inclusive tax without adding it', () => {
+		const result = applyOrderDiscounts(
+			priced({ taxInclusive: true, taxRatePercent: 15 }),
+			{ '0': 1150 },
+			0,
+		)
+		// taxable 850 -> 850 * 15 / 115 = 110.87 -> 111
+		expect(result.taxCents).toBe(111)
+		expect(result.totalCents).toBe(3000 - 1150 + 300 + 500)
+	})
+
+	it('takes a delivery discount off the fee, capped at the fee', () => {
+		expect(applyOrderDiscounts(priced(), {}, 500).totalCents).toBe(4000 - 500)
+		const capped = applyOrderDiscounts(priced(), {}, 900)
+		expect(capped.deliveryDiscountCents).toBe(500)
+		expect(capped.totalCents).toBe(3500)
+	})
+
+	it('reaches a zero total when everything is discounted', () => {
+		const result = applyOrderDiscounts(
+			priced({ tipCents: 0 }),
+			{ '0': 2000, '1': 1000 },
+			500,
+		)
+		expect(result.totalCents).toBe(0)
+		expect(result.taxCents).toBe(0)
+	})
+
+	it('ignores line ids that match no line', () => {
+		expect(applyOrderDiscounts(priced(), { '7': 100 }, 0).discountCents).toBe(0)
+	})
+})
+
 // ---------------------------------------------------------------------------
 // Public ordering options: aggregates only, no PII
 // ---------------------------------------------------------------------------
@@ -1927,5 +2137,80 @@ describe('priceRestaurantOrder: tax-inclusive (VAT) pricing', () => {
 		expect(inclusiveTaxCents(1000, 15)).toBe(130)
 		expect(inclusiveTaxCents(1000, 0)).toBe(0)
 		expect(inclusiveTaxCents(0, 15)).toBe(0)
+	})
+})
+
+describe('order context discounts tolerance', () => {
+	const record = (id: string) => ({
+		id,
+		version: 1,
+		createdAt: '2026-01-01T00:00:00.000Z',
+		name: 'Ten off',
+		internalName: null,
+		description: null,
+		status: 'active',
+		application: 'automatic',
+		valueType: 'percent',
+		percentBp: 1000,
+		amountMinor: null,
+		currency: null,
+		maxDiscountMinor: null,
+		target: {
+			scope: 'order',
+			itemIds: [],
+			categoryIds: [],
+			excludeItemIds: [],
+			excludeCategoryIds: [],
+		},
+		requirement: null,
+		quantityRule: { kind: 'none' },
+		maxDiscountedUnits: null,
+		minSubtotalMinor: null,
+		locationIds: null,
+		channels: ['web'],
+		fulfillments: ['pickup'],
+		includeDrops: false,
+		schedule: null,
+		startsAt: null,
+		endsAt: null,
+		eligibility: 'everyone',
+		totalLimit: null,
+		perCustomerLimit: null,
+		combinable: false,
+		priority: 0,
+		promoteOnMenu: false,
+		requireApproval: false,
+	})
+	const parse = (discounts: unknown) =>
+		restaurantOrderContextSchema.parse({
+			orgId: ORG_ID,
+			dataRegion: 'us',
+			menu: makeMenu(),
+			drop: null,
+			onlinePayment: { enabled: true, processor: 'connect' },
+			discounts,
+		})
+
+	it('drops one bad record and keeps the valid ones', () => {
+		const context = parse({
+			features: { automatic: true, coupons: true },
+			discounts: [record('good'), { ...record('bad'), percentBp: 'x' }],
+			codes: [
+				{ id: 'c1', discountId: 'good', normalizedCode: 'SAVE', maxUses: null },
+				{
+					id: 'c2',
+					discountId: 'good',
+					normalizedCode: `parked:${'x'.repeat(24)}`,
+					maxUses: null,
+				},
+			],
+		})
+		expect(context.discounts?.discounts.map((d) => d.id)).toEqual(['good'])
+		expect(context.discounts?.codes.map((c) => c.id)).toEqual(['c1'])
+	})
+
+	it('reads an unusable field as off without failing the context', () => {
+		expect(parse({ features: 'x' }).discounts).toBeUndefined()
+		expect(parse(undefined).discounts).toBeUndefined()
 	})
 })

@@ -1,4 +1,10 @@
 import { createOverlayMotion } from '../site-motion.ts'
+import {
+	applyCartQuote,
+	listedDiscountNames,
+	NO_CART_DISCOUNTS,
+	type CartDiscountView,
+} from './cart-discounts.ts'
 import { type CartStore } from './cart-store.ts'
 import { linesExcluding, remainingFor } from './constraints.ts'
 import { el, icon, lockScroll, trapFocus } from './dom.ts'
@@ -31,6 +37,21 @@ export type CartUiOptions = {
 	}
 	/** Decides whether the checkout button is usable right now. */
 	gate: () => CheckoutGate
+	/**
+	 * Discounts priced by the region. `sync` re-prices when the cart changed
+	 * (called before every render); `view` says what to show. Left out, the
+	 * cart shows its own estimate only.
+	 */
+	discounts?: {
+		sync(): void
+		view(): CartDiscountView
+		/** A code the region refused for good, to tell the guest once. */
+		refusal?(): { code: string } | null
+		/** The guest dismissed that refusal (it is removed with the code). */
+		dismissRefusal?(): void
+	}
+	/** The page language, for lists and the minus sign of amounts. */
+	locale?: string
 	constraints?: Constraints | null
 	/** Fills the `#cart-drawer-header-extra` slot on every render (pickup summary, etc.). */
 	renderHeaderExtra?: (slot: HTMLElement) => void
@@ -45,6 +66,18 @@ export type CartUi = {
 }
 
 const STEP_BTN = 'icon-btn size-8 border-0'
+
+/** Joins names the way the page language does ("A, B and C"). */
+export function listText(names: readonly string[], locale?: string): string {
+	try {
+		return new Intl.ListFormat(locale || undefined, {
+			style: 'long',
+			type: 'conjunction',
+		}).format(names)
+	} catch {
+		return names.join(', ')
+	}
+}
 
 export function computeTotals(
 	lines: CartItem[],
@@ -87,6 +120,7 @@ export function mountCartUi(options: CartUiOptions): CartUi {
 	const badge = q<HTMLElement>('cart-badge-count')
 	const trayTotal = q<HTMLElement>('cart-tray-total')
 	const trayCount = q<HTMLElement>('cart-tray-count')
+	const trayNote = q<HTMLElement>('cart-tray-note')
 	const backdrop = q<HTMLElement>('cart-drawer-backdrop')
 	const drawer = q<HTMLElement>('cart-drawer')
 	const closeBtn = q<HTMLButtonElement>('close-cart-btn')
@@ -97,6 +131,13 @@ export function mountCartUi(options: CartUiOptions): CartUi {
 	const taxRow = q<HTMLElement>('drawer-tax-row')
 	const deliveryRow = q<HTMLElement>('drawer-delivery-row')
 	const deliveryFeeEl = q<HTMLElement>('drawer-delivery-fee')
+	const discountRow = q<HTMLElement>('drawer-discount-row')
+	const discountNamesEl = q<HTMLElement>('drawer-discount-names')
+	const discountEl = q<HTMLElement>('drawer-discount')
+	const noteEl = q<HTMLElement>('drawer-discount-note')
+	const noteRow = q<HTMLElement>('drawer-discount-note-row')
+	const noteLive = q<HTMLElement>('drawer-discount-live')
+	const noteDismiss = q<HTMLButtonElement>('drawer-discount-note-dismiss')
 	const totalEl = q<HTMLElement>('drawer-total')
 	const checkoutBtn = q<HTMLElement>('drawer-checkout-btn')
 	const checkoutTotal = q<HTMLElement>('drawer-checkout-total')
@@ -203,7 +244,7 @@ export function mountCartUi(options: CartUiOptions): CartUi {
 				el(
 					'p',
 					'mt-1 text-xs leading-relaxed text-muted-foreground',
-					visibleOptions.map(optionLabel).join(', '),
+					listText(visibleOptions.map(optionLabel), options.locale),
 				),
 			)
 		}
@@ -267,7 +308,7 @@ export function mountCartUi(options: CartUiOptions): CartUi {
 	function refresh() {
 		const lines = store.lines()
 		const taxInclusive = options.totals.taxInclusive === true
-		const totals = computeTotals(lines, {
+		const estimate = computeTotals(lines, {
 			taxRate: options.totals.taxRate,
 			taxInclusive,
 			deliveryFee:
@@ -276,6 +317,25 @@ export function mountCartUi(options: CartUiOptions): CartUi {
 					: options.totals.deliveryFee,
 			mode: options.totals.mode(),
 		})
+		// Re-price first: a change of state re-enters `refresh`, and the view
+		// read below is then the latest one.
+		options.discounts?.sync()
+		const discountView = options.discounts?.view() ?? NO_CART_DISCOUNTS
+		const totals = applyCartQuote(estimate, discountView.quote)
+		const estimateNote =
+			discountView.note === 'before_discounts'
+				? labels.beforeDiscounts
+				: discountView.note === 'at_checkout'
+					? labels.discountsAtCheckout
+					: ''
+		// A code the region refused for good is told once, here, until the guest
+		// removes it.
+		const refusal = options.discounts?.refusal?.() ?? null
+		const refusalNote =
+			refusal && labels.couponNotApplied
+				? fillTemplate(labels.couponNotApplied, { code: refusal.code })
+				: ''
+		const note = [refusalNote, estimateNote].filter(Boolean).join(' ')
 
 		if (badge) badge.textContent = String(totals.count)
 		if (trayCount)
@@ -283,6 +343,26 @@ export function mountCartUi(options: CartUiOptions): CartUi {
 				count: totals.count,
 			})
 		if (trayTotal) trayTotal.textContent = formatMoney(totals.total)
+		if (trayNote) {
+			trayNote.textContent = note
+			trayNote.classList.toggle('hidden', !note)
+		}
+		if (noteLive && noteLive.textContent !== note) {
+			// The live region stays mounted and only its text changes, so a screen
+			// reader announces each new note (a node toggled from display:none
+			// often is not).
+			noteLive.textContent = note
+		}
+		if (noteDismiss) {
+			noteDismiss.classList.toggle('hidden', !refusalNote)
+			if (labels.couponRemove) noteDismiss.textContent = labels.couponRemove
+			if (refusal && labels.couponNoteRemove) {
+				noteDismiss.setAttribute(
+					'aria-label',
+					fillTemplate(labels.couponNoteRemove, { code: refusal.code }),
+				)
+			}
+		}
 		if (tray) {
 			tray.classList.toggle('translate-y-full', totals.count === 0)
 			tray.setAttribute('aria-hidden', totals.count === 0 ? 'true' : 'false')
@@ -303,6 +383,20 @@ export function mountCartUi(options: CartUiOptions): CartUi {
 			deliveryRow.classList.toggle('hidden', totals.deliveryFee <= 0)
 		if (deliveryFeeEl)
 			deliveryFeeEl.textContent = formatMoney(totals.deliveryFee)
+		if (discountRow)
+			discountRow.classList.toggle('hidden', totals.discount <= 0)
+		if (discountEl) {
+			// The sign comes from the number formatter, so it sits right in RTL.
+			discountEl.textContent =
+				totals.discount > 0 ? formatMoney(-totals.discount) : ''
+		}
+		if (discountNamesEl) {
+			const names = listedDiscountNames(totals.names)
+			discountNamesEl.textContent = listText(names, options.locale)
+			discountNamesEl.classList.toggle('hidden', names.length === 0)
+		}
+		if (noteEl) noteEl.textContent = note
+		noteRow?.classList.toggle('hidden', !note)
 		if (totalEl) totalEl.textContent = formatMoney(totals.total)
 		if (checkoutTotal) checkoutTotal.textContent = formatMoney(totals.total)
 
@@ -373,6 +467,11 @@ export function mountCartUi(options: CartUiOptions): CartUi {
 		motion.close()
 	}
 
+	noteDismiss?.addEventListener('click', () => {
+		options.discounts?.dismissRefusal?.()
+		refresh()
+		;(closeBtn ?? drawer)?.focus({ preventScroll: true })
+	})
 	openBtn?.addEventListener('click', open)
 	closeBtn?.addEventListener('click', close)
 	backdrop?.addEventListener('click', (event) => {

@@ -25,16 +25,19 @@ import { Card, CardContent } from '@repo/ui/card'
 import { Checkbox } from '@repo/ui/checkbox'
 import { Icon } from '@repo/ui/icon'
 import { Separator } from '@repo/ui/separator'
-import { type ReactNode, useState } from 'react'
+import { Fragment, type ReactNode, useState } from 'react'
 import { Link } from 'react-router'
 import { useSettledFocus } from '#app/hooks/use-settled-focus.ts'
 import {
 	CLOSED_ORDER_STATUSES,
 	formatDateTime,
+	appliedDiscounts,
 	formatMoney,
 	initialsOf,
+	isPaymentNotRequired,
 	localizedName,
 	nextOrderStatus,
+	type AppliedOrderDiscount,
 	type Order,
 	type OrderRefundBody,
 	paymentDisplayStatus,
@@ -151,10 +154,26 @@ export function OrderDetail({
 	const next = nextOrderStatus(order.status)
 	const closed = CLOSED_ORDER_STATUSES.includes(order.status)
 	const paid = order.paymentStatus === 'paid'
+	const paymentNotRequired = isPaymentNotRequired(order)
+	const discounts = appliedDiscounts(order)
+	const discountCents = order.discountCents ?? 0
+	const deliveryDiscountCents = order.deliveryDiscountCents ?? 0
+	const listedDiscountCents = discounts.reduce(
+		(sum, discount) => sum + discount.amountMinor,
+		0,
+	)
+	const listedDeliveryDiscountCents = discounts.reduce(
+		(sum, discount) => sum + discount.deliveryAmountMinor,
+		0,
+	)
 	// A table round is paid once, when its tab closes (QR ordering).
 	const onTab = Boolean(order.tabId)
 	const needsHandoffPayment =
-		!onTab && order.paymentMethod === 'handoff' && !paid && next === 'completed'
+		!onTab &&
+		!paymentNotRequired &&
+		order.paymentMethod === 'handoff' &&
+		!paid &&
+		next === 'completed'
 	const paidOnline = paid && order.paymentMethod === 'online'
 	const refundedCents = order.refundedCents ?? 0
 	const refundedMoney = money(refundedCents)
@@ -180,6 +199,13 @@ export function OrderDetail({
 				: _(
 						msg`This order needs a manual check before it goes ahead. Start preparing to accept it, or cancel it.`,
 					)
+			: null
+	const reviewReasonNote =
+		order.status === 'payment_review' &&
+		order.reviewReason === 'discount_limit_exceeded'
+			? _(
+					msg`A discount on this order reached its use limit before the payment arrived. The customer was charged the discounted price, so honoring the order means accepting that overrun.`,
+				)
 			: null
 
 	const timeline: Array<{
@@ -233,6 +259,9 @@ export function OrderDetail({
 	const hasTotalsBreakdown =
 		order.subtotalCents != null ||
 		!!order.loyaltyDiscountCents ||
+		discountCents > 0 ||
+		deliveryDiscountCents > 0 ||
+		discounts.length > 0 ||
 		!!order.taxCents ||
 		!!order.tipCents ||
 		!!order.deliveryFeeCents
@@ -265,6 +294,11 @@ export function OrderDetail({
 							<h1 className="text-2xl font-semibold tabular-nums">
 								<bdi dir="ltr">{order.number}</bdi>
 							</h1>
+							{paymentNotRequired ? (
+								<Badge variant="secondary" data-testid="order-free-badge">
+									<Trans>Free order</Trans>
+								</Badge>
+							) : null}
 							<CopyButton
 								value={order.number}
 								label={_(msg`Copy order number`)}
@@ -311,6 +345,14 @@ export function OrderDetail({
 						data-testid="order-review-note"
 					>
 						{paymentExplanation}
+						{reviewReasonNote ? (
+							<>
+								{' '}
+								<span data-testid="order-review-reason">
+									{reviewReasonNote}
+								</span>
+							</>
+						) : null}
 					</p>
 				) : null}
 			</header>
@@ -515,15 +557,16 @@ export function OrderDetail({
 												<p className="wrap-anywhere">
 													{localizedName(line.itemName, locale)}
 												</p>
-												{line.options.length ? (
+												{line.options.length || line.variantNames?.length ? (
 													<p className="text-muted-foreground text-xs">
-														{line.options
-															.map((option) =>
+														{[
+															...(line.variantNames ?? []),
+															...line.options.map((option) =>
 																option.quantity > 1
 																	? `${option.quantity} × ${localizedName(option.optionName, locale)}`
 																	: localizedName(option.optionName, locale),
-															)
-															.join(', ')}
+															),
+														].join(', ')}
 													</p>
 												) : null}
 												{line.instructions ? (
@@ -544,6 +587,49 @@ export function OrderDetail({
 											{order.subtotalCents != null ? (
 												<TotalRow label={<Trans>Subtotal</Trans>}>
 													{money(order.subtotalCents)}
+												</TotalRow>
+											) : null}
+											{discounts.map((discount, index) => (
+												<Fragment key={`${discount.discountId}-${index}`}>
+													{discount.amountMinor > 0 ? (
+														<TotalRow
+															label={<DiscountLabel discount={discount} />}
+															testId="order-discount-row"
+														>
+															{money(-discount.amountMinor)}
+														</TotalRow>
+													) : null}
+													{discount.deliveryAmountMinor > 0 ? (
+														<TotalRow
+															label={
+																<DiscountLabel discount={discount} delivery />
+															}
+															testId="order-delivery-discount-row"
+														>
+															{money(-discount.deliveryAmountMinor)}
+														</TotalRow>
+													) : null}
+												</Fragment>
+											))}
+											{discountCents > listedDiscountCents ? (
+												<TotalRow
+													label={<Trans>Discount</Trans>}
+													testId="order-discount-row"
+												>
+													{money(-(discountCents - listedDiscountCents))}
+												</TotalRow>
+											) : null}
+											{deliveryDiscountCents > listedDeliveryDiscountCents ? (
+												<TotalRow
+													label={<Trans>Delivery discount</Trans>}
+													testId="order-delivery-discount-row"
+												>
+													{money(
+														-(
+															deliveryDiscountCents -
+															listedDeliveryDiscountCents
+														),
+													)}
 												</TotalRow>
 											) : null}
 											{order.loyaltyDiscountCents ? (
@@ -621,11 +707,13 @@ export function OrderDetail({
 								<dd data-testid="order-payment-summary">
 									{paid
 										? _(msg`Paid ${totalMoney}`)
-										: order.paymentStatus === 'failed'
-											? _(msg`Payment failed. Nothing was charged.`)
-											: order.paymentStatus === 'expired'
-												? _(msg`Payment window expired before it was paid.`)
-												: _(msg`Payment not yet received`)}
+										: paymentNotRequired
+											? _(msg`No payment needed`)
+											: order.paymentStatus === 'failed'
+												? _(msg`Payment failed. Nothing was charged.`)
+												: order.paymentStatus === 'expired'
+													? _(msg`Payment window expired before it was paid.`)
+													: _(msg`Payment not yet received`)}
 								</dd>
 								{order.paidAt ? (
 									<>
@@ -739,7 +827,12 @@ export function OrderDetail({
 								type="button"
 								onClick={() => onUpdate(next, markPaid)}
 								disabled={
-									busy || (next === 'completed' && !paid && !markPaid && !onTab)
+									busy ||
+									(next === 'completed' &&
+										!paid &&
+										!paymentNotRequired &&
+										!markPaid &&
+										!onTab)
 								}
 							>
 								{primaryLabel}
@@ -808,15 +901,45 @@ export function OrderDetail({
 	)
 }
 
+function DiscountLabel({
+	discount,
+	delivery = false,
+}: {
+	discount: AppliedOrderDiscount
+	delivery?: boolean
+}) {
+	const name = discount.name || undefined
+	return (
+		<>
+			{delivery ? (
+				<Trans>Delivery discount</Trans>
+			) : (
+				(name ?? <Trans>Discount</Trans>)
+			)}
+			{delivery && name ? ` · ${name}` : null}
+			{discount.code ? (
+				<>
+					{' '}
+					<bdi dir="ltr" className="font-mono text-xs">
+						({discount.code})
+					</bdi>
+				</>
+			) : null}
+		</>
+	)
+}
+
 function TotalRow({
 	label,
 	children,
+	testId,
 }: {
 	label: ReactNode
 	children: ReactNode
+	testId?: string
 }) {
 	return (
-		<tr>
+		<tr data-testid={testId}>
 			<td />
 			<th
 				scope="row"

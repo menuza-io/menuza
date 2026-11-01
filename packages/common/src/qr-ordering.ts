@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { orderDiscountsRequestSchema } from '@repo/discounts'
 import { orderLoyaltySelectionSchema } from './order-loyalty.ts'
 
 /**
@@ -315,6 +316,13 @@ export type QrTabTotals = {
 	 * carries one (a counter close never does), so it is 0 while the tab is open.
 	 */
 	loyaltyDiscountCents: number
+	/**
+	 * Discounts and coupons taken off before tax, already out of `taxCents` and
+	 * `totalCents`. An open tab shows what its automatic discounts would take
+	 * off (what a counter close or a phone payment would apply); a settled tab
+	 * shows what it was settled with. Absent or 0: none.
+	 */
+	discountCents?: number
 	totalCents: number
 }
 
@@ -377,5 +385,14 @@ export const qrTabPayRequestSchema = z.strictObject({
 	 * before tax; a changed reward or cart is refused.
 	 */
 	loyalty: orderLoyaltySelectionSchema.optional(),
+	/**
+	 * A coupon, and the discount total the guest was shown
+	 * (`totals.discountCents` of the tab). Sending the field asks for discounts:
+	 * automatic ones apply and a missing total reads as 0, as on an order. With
+	 * no field nothing applies. The region compares the total; it never trusts
+	 * the amount as a price.
+	 */
+	discounts: orderDiscountsRequestSchema.optional(),
+	turnstileToken: z.string().min(1).max(2048).optional(),
 })
 export type QrTabPayRequest = z.infer<typeof qrTabPayRequestSchema>

@@ -1,5 +1,13 @@
-import { describe, expect, it } from 'vitest'
-import { buildCategories, categoryItems, isSoldOut } from './catalog.ts'
+import 'fake-indexeddb/auto'
+import { describe, expect, it, vi } from 'vitest'
+import {
+	buildCategories,
+	categoryItems,
+	refreshCatalog,
+	isSoldOut,
+} from './catalog.ts'
+import { loadSettings } from './config.ts'
+import { db } from './db.ts'
 import { demoCatalog } from './demo-catalog.ts'
 import {
 	availableOptions,
@@ -8,6 +16,7 @@ import {
 	defaultSelections,
 	defaultVariantPicks,
 } from './item-config.ts'
+import { tillRulesStatus } from './till-discounts.ts'
 import { type MenuPayload } from './types.ts'
 
 const menu = (): MenuPayload => structuredClone(demoCatalog().menu)
@@ -204,5 +213,42 @@ describe('availability and overrides match what the server enforces', () => {
 		)!.items.find((i) => i.id === 'i-chicken')!
 		delete (item as { availabilityStatus?: string }).availabilityStatus
 		expect(isSoldOut(find(m, 'i-chicken')!)).toBe(false)
+	})
+})
+
+describe('till discount rules in the stored catalog', () => {
+	it('stores the fetched rules as a list, with the time they were fetched', async () => {
+		const demo = demoCatalog()
+		const rules = [{ id: 'd1', name: 'Ten off' }]
+		const fetchMock = vi.fn(async (url: string | URL) => {
+			const path = String(url)
+			const json = (body: unknown) =>
+				new Response(JSON.stringify(body), { status: 200 })
+			if (path.includes('/pos/discount-rules')) {
+				return json({ discountRules: rules })
+			}
+			if (path.includes('/resources/sites/menu')) return json(demo.menu)
+			return json(demo.organization)
+		})
+		vi.stubGlobal('fetch', fetchMock)
+		try {
+			const settings = {
+				...loadSettings(),
+				demo: false,
+				appUrl: 'https://app.test',
+				slug: 'acme',
+				tenantApiUrl: 'https://region.test',
+				deviceToken: 'device',
+			}
+			const result = await refreshCatalog(settings)
+			expect(result.ok).toBe(true)
+			if (!result.ok) return
+			expect(Array.isArray(result.snapshot.menu.discountRules)).toBe(true)
+			expect(result.snapshot.menu.discountRulesAt).toBeTypeOf('number')
+			expect(tillRulesStatus(result.snapshot).state).toBe('fresh')
+		} finally {
+			vi.unstubAllGlobals()
+			await db.catalog.clear()
+		}
 	})
 })

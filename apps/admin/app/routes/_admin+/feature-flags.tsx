@@ -1,7 +1,26 @@
+import { DISCOUNTS_FLAG_KEYS } from '@repo/common/discounts-flags'
 import { and, ConfigFlag, db, eq, isNull } from '@repo/database'
 import { type ActionFunctionArgs, type LoaderFunctionArgs } from 'react-router'
 import { z } from 'zod'
 import { FeatureFlags } from '#app/components/admin/feature-flags.tsx'
+import { requestOrganizationSiteCachePurge } from '#app/utils/sites-cache-purge.server.ts'
+
+const DISCOUNT_FLAG_KEYS = new Set<string>(Object.values(DISCOUNTS_FLAG_KEYS))
+
+function maybePurgeDiscountSiteCache(
+	key: string,
+	level: string,
+	organizationId: string | null | undefined,
+) {
+	if (
+		level !== 'organization' ||
+		!organizationId ||
+		!DISCOUNT_FLAG_KEYS.has(key)
+	) {
+		return
+	}
+	requestOrganizationSiteCachePurge(organizationId)
+}
 
 export async function loader({ request: _request }: LoaderFunctionArgs) {
 	const flags = (await db.select().from(ConfigFlag)).map((flag) => ({
@@ -63,7 +82,19 @@ export async function action({ request }: ActionFunctionArgs) {
 				{ status: 400 },
 			)
 		}
+		const [flag] = await db
+			.select({
+				key: ConfigFlag.key,
+				level: ConfigFlag.level,
+				organizationId: ConfigFlag.organizationId,
+			})
+			.from(ConfigFlag)
+			.where(eq(ConfigFlag.id, result.data.id))
+			.limit(1)
 		await db.delete(ConfigFlag).where(eq(ConfigFlag.id, result.data.id))
+		if (flag) {
+			maybePurgeDiscountSiteCache(flag.key, flag.level, flag.organizationId)
+		}
 		return Response.json({ ok: true })
 	}
 
@@ -122,6 +153,11 @@ export async function action({ request }: ActionFunctionArgs) {
 				organizationId: result.data.organizationId || null,
 				userId: result.data.userId || null,
 			})
+			maybePurgeDiscountSiteCache(
+				result.data.key,
+				result.data.level,
+				result.data.organizationId,
+			)
 		}
 
 		if (_action === 'update') {
@@ -141,6 +177,11 @@ export async function action({ request }: ActionFunctionArgs) {
 					userId: result.data.userId || null,
 				})
 				.where(eq(ConfigFlag.id, result.data.id))
+			maybePurgeDiscountSiteCache(
+				result.data.key,
+				result.data.level,
+				result.data.organizationId,
+			)
 		}
 
 		return Response.json({ ok: true })

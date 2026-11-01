@@ -18,11 +18,18 @@ import { eq } from 'drizzle-orm'
 import { verifyDeliveryQuote } from '../lib/delivery-quote-token.ts'
 import { readTabToken } from '../lib/qr-tokens.ts'
 import { getNodeRegion } from '../lib/region.ts'
+import { isDiscountsKillSwitchOn } from '../lib/discount-switches.ts'
 import {
 	applyLoyaltyDiscountToTotals,
 	discountedTabTotals,
 	loyaltyCartForPricedOrder,
 } from '../restaurant/loyalty-checkout.ts'
+import {
+	couponOutcomeCountsAsGuess,
+	prepareOrderDiscounts,
+	totalsAfterDiscounts,
+} from './discount-apply.ts'
+import { evaluateTabDiscounts } from './discount-tab.ts'
 import { tabLoyaltyCart } from '../restaurant/loyalty-sources.ts'
 import { readBalanceViewInTx } from './loyalty-ledger.ts'
 import {
@@ -39,6 +46,7 @@ import { quoteReward } from './loyalty-redemption-service.ts'
 import {
 	fetchOrderContext,
 	orderFailure,
+	type OrderServiceFailure,
 	type OrderServiceResult,
 } from './order-service.ts'
 import { listTabRounds, tabTotals } from './qr-dine-in.ts'
@@ -127,13 +135,21 @@ async function quoteMemberRewards(
  * delivery check and engine), so the discount shown is the one placement
  * re-checks. Reads only: nothing is held until the order is placed.
  */
+export type LoyaltyCheckoutQuoteResult =
+	| { ok: false; failure: OrderServiceFailure }
+	| {
+			ok: true
+			data: LoyaltyCheckoutQuote
+			couponCountsAsGuess: boolean
+	  }
+
 export async function quoteCheckout(input: {
 	orgId: string
 	customerId: string
 	request: RestaurantOrderQuoteRequest
 	selection: LoyaltyOrderReward | null
 	now?: Date
-}): Promise<OrderServiceResult<LoyaltyCheckoutQuote>> {
+}): Promise<LoyaltyCheckoutQuoteResult> {
 	const { orgId, customerId, request, selection } = input
 	const now = input.now ?? new Date()
 	if (request.fulfillment === 'dine_in') {
@@ -192,20 +208,57 @@ export async function quoteCheckout(input: {
 		return { ok: false, failure: { status, code, message } }
 	}
 	const result = priced.result
-
-	const quoted = await quoteMemberRewards(orgId, await getTenantDb(orgId), {
+	const db = await getTenantDb(orgId)
+	const prepared = await prepareOrderDiscounts(db, {
+		priced: result,
+		context,
+		// The reward quote only hears about a code the discount quote already
+		// applied. With no `discounts` field the reward is priced on its own.
+		discounts: request.discounts,
+		fulfillment: request.fulfillment,
+		source: request.source === 'qr_poster' ? 'qr_poster' : null,
 		customerId,
-		cart: loyaltyCartForPricedOrder(result),
+		now,
+		killed: isDiscountsKillSwitchOn(),
+		applyAutomatic: true,
+	})
+	if (!prepared.ok && prepared.failure.code === 'discounts_disabled') {
+		return {
+			ok: false,
+			failure: {
+				status: prepared.failure.status,
+				code: prepared.failure.code,
+				message: prepared.failure.message,
+			},
+		}
+	}
+	const lineDiscounts = prepared.ok
+		? (prepared.prepared?.evaluation.lineDiscounts ?? {})
+		: {}
+	const deliveryDiscountMinor = prepared.ok
+		? prepared.prepared?.evaluation.deliveryDiscountMinor
+		: 0
+
+	const quoted = await quoteMemberRewards(orgId, db, {
+		customerId,
+		cart: loyaltyCartForPricedOrder(result, lineDiscounts),
 		currency: result.currency,
 		selection,
 	})
 	const { chosen } = quoted
+	const plain = totalsAfterDiscounts(
+		result,
+		prepared.ok ? prepared.prepared : null,
+	)
 	const totals = chosen
-		? applyLoyaltyDiscountToTotals(result, chosen.lines, chosen.discountMinor)
+		? applyLoyaltyDiscountToTotals(result, chosen.lines, chosen.discountMinor, {
+				lineDiscounts,
+				deliveryDiscountMinor,
+			})
 		: {
 				loyaltyDiscountCents: 0,
-				taxCents: result.taxCents,
-				totalCents: result.totalCents,
+				taxCents: plain.taxCents,
+				totalCents: plain.totalCents,
 			}
 
 	return {
@@ -227,6 +280,10 @@ export async function quoteCheckout(input: {
 			selectedRewardId: chosen?.rewardId ?? null,
 			availableAfter: quoted.balance.available - (chosen?.pointsCost ?? 0),
 		},
+		couponCountsAsGuess: couponOutcomeCountsAsGuess(
+			prepared.ok ? (prepared.prepared ?? null) : null,
+			request.discounts?.code,
+		),
 	}
 }
 
@@ -276,9 +333,26 @@ export async function quoteTab(input: {
 	}
 
 	const rounds = await listTabRounds(db, [tab.id])
+	const context = await fetchOrderContext(orgId, tab.locationId, null)
+	const tabDiscounts = context.ok
+		? await evaluateTabDiscounts(db, {
+				context: context.data,
+				rounds,
+				locationId: tab.locationId,
+				customerId,
+				tabId: tab.id,
+				// Asks for the automatic discounts, as the pay request does.
+				discounts: {},
+				now: new Date(),
+			})
+		: null
+	const lineDiscounts =
+		tabDiscounts && tabDiscounts.ok
+			? (tabDiscounts.quote?.prepared.evaluation.lineDiscounts ?? {})
+			: {}
 	const quoted = await quoteMemberRewards(orgId, db, {
 		customerId,
-		cart: tabLoyaltyCart(tab, rounds),
+		cart: tabLoyaltyCart(tab, rounds, lineDiscounts),
 		currency: tab.currency,
 		selection,
 	})

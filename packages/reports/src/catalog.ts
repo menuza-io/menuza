@@ -736,7 +736,7 @@ const orderFields: ReportField[] = [
 		label: 'Order total',
 		type: 'currency',
 		description:
-			'What the customer paid: subtotal, tax, delivery fee, and tip.',
+			'What the customer paid: subtotal, tax, delivery fee, and tip, net of discounts.',
 		sumLabel: 'Sales',
 		averageLabel: 'Average order value',
 	},
@@ -744,7 +744,8 @@ const orderFields: ReportField[] = [
 		id: 'subtotal',
 		label: 'Subtotal',
 		type: 'currency',
-		description: 'Items and options before tax, delivery fee, and tip.',
+		description:
+			'Items and options before discounts, tax, delivery fee, and tip.',
 		averageLabel: 'Average subtotal',
 	},
 	{
@@ -771,6 +772,15 @@ const orderFields: ReportField[] = [
 		label: 'Delivery fee',
 		type: 'currency',
 		sumLabel: 'Delivery fees',
+	},
+	{
+		id: 'discount',
+		label: 'Discounts',
+		type: 'currency',
+		description:
+			"Discounts and coupons, delivery discounts, and loyalty rewards taken off the order. Tab close discounts appear on the tab's latest round in the report.",
+		sumLabel: 'Discounts given',
+		averageLabel: 'Average discount',
 	},
 	{
 		id: 'itemCount',
@@ -802,7 +812,7 @@ const orderItemFields: ReportField[] = [
 		label: 'Item sales',
 		type: 'currency',
 		description:
-			'Price times quantity, including option charges, before tax and tips.',
+			'Price times quantity, including option charges, before discounts, tax and tips (gross line totals).',
 		averageLabel: 'Average item sale',
 	},
 	orderNumberField,

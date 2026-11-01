@@ -429,6 +429,32 @@ describe('wire format', () => {
 		}
 	})
 
+	it('uploads which line took each discount and the rule version, and only for lines still on the sale', async () => {
+		const order = await createOrder({
+			...input,
+			adjustments: [
+				{
+					id: 'auto:d1',
+					kind: 'discount',
+					label: '10% off',
+					amountCents: 230,
+					lineAmounts: { l1: 200, gone: 30 },
+					version: 3,
+				},
+			],
+		})
+		const wire = toWireOrder(order)
+		expect(wire.adjustments[0]).toMatchObject({
+			amountCents: 230,
+			lineAmounts: { l1: 200 },
+		})
+		expect(wire.discountApplications?.[0]).toMatchObject({
+			discountId: 'd1',
+			version: 3,
+		})
+		expect(posOrderRequestSchema.safeParse(wire).success).toBe(true)
+	})
+
 	it('still passes the contract after a tab is edited and then cancelled', async () => {
 		const tab = await createOrder(input)
 		const edited = await updateTab(tab.id, {

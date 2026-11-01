@@ -217,6 +217,8 @@ export class TableRequestError extends Error {
 	constructor(
 		readonly code: string,
 		readonly status: number,
+		/** The region's answer, when it sent one (only read for `discount_changed`). */
+		readonly body?: unknown,
 	) {
 		super(code)
 		this.name = 'TableRequestError'
@@ -239,7 +241,7 @@ async function readJson(response: Response): Promise<unknown> {
 			typeof value.error === 'string'
 				? value.error
 				: 'request_failed'
-		throw new TableRequestError(code, response.status)
+		throw new TableRequestError(code, response.status, value)
 	}
 	return value
 }
@@ -445,13 +447,12 @@ export async function submitTableRound(
 /** The tab with every round and the running total (no contact fields). */
 export async function fetchTab(tabToken: string): Promise<QrPublicTab> {
 	const params = new URLSearchParams(getOrgBinding())
-	const response = await withTimeout((signal) =>
-		fetch(`${regionalUrl()}/orders/tab?${params.toString()}`, {
-			cache: 'no-store',
-			headers: { [QR_TAB_TOKEN_HEADER]: tabToken },
-			signal,
-		}),
-	)
+	// As the customer when signed in: the region prices the discounts this
+	// guest qualifies for into the tab, the same ones the payment applies.
+	const response = await sendAsCustomer(`/orders/tab?${params.toString()}`, {
+		cache: 'no-store',
+		headers: { [QR_TAB_TOKEN_HEADER]: tabToken },
+	})
 	const value = await readJson(response)
 	if (!value || typeof value !== 'object' || !('tab' in value)) {
 		throw new TableRequestError('tab_unavailable', 502)
@@ -510,6 +511,15 @@ export function clearTabPayment(orgId: string) {
  * reference. A reward needs the member's token, so it is never sent as a
  * guest.
  */
+/** The discount total the region priced, from a `discount_changed` answer. */
+function discountMinorOf(body: unknown): number | null {
+	if (!isRecord(body) || !isRecord(body.details)) return null
+	const value = body.details.discountMinor
+	return typeof value === 'number' && Number.isInteger(value) && value >= 0
+		? value
+		: null
+}
+
 export type TabPaymentStart = {
 	url: string
 	/** What the region fixed for the hosted page. */
@@ -527,27 +537,52 @@ export async function startTabPayment(
 		contact: { name: string; phone: string }
 		locale: string
 		loyalty?: QrTabPayRequest['loyalty'] | null
+		coupon?: string | null
+		/** The discount total the tab showed (`totals.discountCents`). */
+		expectedDiscountMinor?: number
 	},
 ): Promise<TabPaymentStart> {
 	if (!session.tabToken) throw new TableRequestError('tab_not_found', 404)
-	const response = await sendAsCustomer(
-		'/orders/tab/pay',
-		{
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-				[QR_TAB_TOKEN_HEADER]: session.tabToken,
+	const tabToken = session.tabToken
+	const send = (expectedDiscountMinor: number) =>
+		sendAsCustomer(
+			'/orders/tab/pay',
+			{
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					[QR_TAB_TOKEN_HEADER]: tabToken,
+				},
+				body: JSON.stringify({
+					...getOrgBinding(),
+					tipPercent: input.tipPercent,
+					contact: input.contact,
+					...(input.loyalty ? { loyalty: input.loyalty } : {}),
+					// Always asks for discounts, so the automatic ones apply; the
+					// total is what the tab showed (a typed coupon is not in it).
+					discounts: {
+						...(input.coupon ? { code: input.coupon } : {}),
+						expectedDiscountMinor,
+					},
+				}),
 			},
-			body: JSON.stringify({
-				...getOrgBinding(),
-				tipPercent: input.tipPercent,
-				contact: input.contact,
-				...(input.loyalty ? { loyalty: input.loyalty } : {}),
-			}),
-		},
-		{ memberOnly: Boolean(input.loyalty) },
-	)
-	const value = await readJson(response)
+			{ memberOnly: Boolean(input.loyalty) },
+		)
+	let value: unknown
+	try {
+		value = await readJson(await send(input.expectedDiscountMinor ?? 0))
+	} catch (error) {
+		// The region priced a different discount than the tab showed (a coupon
+		// it could not know, or a limit that was reached). It says what it
+		// priced; ask once more with that. The guest still confirms the
+		// final amount before the hosted page opens.
+		const priced =
+			error instanceof TableRequestError && error.code === 'discount_changed'
+				? discountMinorOf(error.body)
+				: null
+		if (priced === null) throw error
+		value = await readJson(await send(priced))
+	}
 	const amount = (key: string) =>
 		isRecord(value) &&
 		typeof value[key] === 'number' &&

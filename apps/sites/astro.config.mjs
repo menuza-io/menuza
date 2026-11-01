@@ -110,6 +110,12 @@ export default defineConfig({
 		},
 		optimizeDeps: {
 			exclude: ['@lingui/core/macro'],
+			// The cart and menu scripts reach zod through shared workspace code
+			// (`@repo/common`, `@repo/discounts`). Left to be discovered while the
+			// page is open, Vite re-optimizes it, the page keeps asking for the old
+			// bundle and gets a 503/504, and the whole menu script dies silently:
+			// nothing on the page reacts to a click. Bundle it up front.
+			include: ['zod'],
 		},
 		resolve: {
 			alias: {

@@ -230,6 +230,8 @@ describe('person erasure covers every PII column of the tenant schema', () => {
 			'customer_refresh_tokens',
 			'customer_subscriptions',
 			'customer_payment_methods',
+			'discount_redemptions',
+			'discount_issued_codes',
 			'journey_runs',
 			'loyalty_members',
 			'journey_step_executions',

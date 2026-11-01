@@ -60,8 +60,14 @@ export interface CampaignDetail {
 	audience?: string | null
 	createdAt: string | Date
 	scheduledAt?: string | Date | null
+	/** The coupon `{{couponCode}}` showed, when the broadcast carried one. */
+	coupon?: CampaignCoupon | null
 	recipients: CampaignRecipient[]
 }
+
+export type CampaignCoupon =
+	| { mode: 'shared'; discountName: string | null; code: string }
+	| { mode: 'unique'; discountName: string | null; validDays: number }
 
 export interface MarketingMetrics {
 	emailsSent: number

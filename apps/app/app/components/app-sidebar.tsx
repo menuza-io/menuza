@@ -38,6 +38,10 @@ import { useMailboxUnreadCount } from '#app/hooks/use-mailbox.ts'
 
 import { type loader as rootLoader } from '#app/root.tsx'
 import {
+	HIDDEN_DISCOUNTS_NAV,
+	type DiscountsNavAccess,
+} from '#app/utils/discounts/nav.ts'
+import {
 	HIDDEN_LOYALTY_NAV,
 	type LoyaltyNavAccess,
 } from '#app/utils/loyalty/nav.ts'
@@ -63,6 +67,7 @@ import FavoriteNotes from './favorite-notes'
 import { FeatureUpdates } from './feature-updates'
 import { CalendarIcon } from './icons/calendar-icon'
 import { ChartPieIcon } from './icons/chart-pie-icon'
+import { DiscountIcon } from './icons/discount-icon'
 import { ExternalLinkIcon } from './icons/external-link-icon'
 import { GalleryHorizontalEndIcon } from './icons/gallery-horizontal-end-icon'
 import { MailboxIcon } from './icons/mailbox-icon'
@@ -277,6 +282,8 @@ function OrganizationSidebar({
 		rootData?.reservationsNav ?? HIDDEN_RESERVATIONS_NAV
 	const loyaltyNav: LoyaltyNavAccess =
 		rootData?.loyaltyNav ?? HIDDEN_LOYALTY_NAV
+	const discountsNav: DiscountsNavAccess =
+		rootData?.discountsNav ?? HIDDEN_DISCOUNTS_NAV
 	const printShopNav: PrintShopNavAccess =
 		rootData?.printShopNav ?? HIDDEN_PRINT_SHOP_NAV
 	const qrOrderingNav: QrOrderingNavAccess =
@@ -389,6 +396,12 @@ function OrganizationSidebar({
 			url: `/${orgSlug}/orders`,
 			isActive: location.pathname.startsWith(`/${orgSlug}/orders`),
 			icon: ReceiptIcon,
+		},
+		{
+			title: _(msg`Discounts`),
+			url: `/${orgSlug}/discounts`,
+			isActive: location.pathname.startsWith(`/${orgSlug}/discounts`),
+			icon: DiscountIcon,
 		},
 		{
 			title: _(msg`Mailbox`),
@@ -738,6 +751,9 @@ function OrganizationSidebar({
 			}
 			if (item.url === `/${orgSlug}/phone-agent`) {
 				return canReadPhoneAgent || canReadPhoneCalls
+			}
+			if (item.url === `/${orgSlug}/discounts`) {
+				return discountsNav.visible
 			}
 			if (item.url === `/${orgSlug}/reservations`) {
 				return reservationsNav.visible

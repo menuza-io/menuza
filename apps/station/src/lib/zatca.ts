@@ -1,4 +1,5 @@
 import { t } from '@lingui/macro'
+import { sumLineAmounts } from '@repo/common/pos-discount-base'
 import {
 	fromHex,
 	fromRefund,
@@ -163,6 +164,24 @@ const saleOf = (order: PosOrder) => ({
 	taxInclusive: order.taxInclusive,
 	totals: order.totals,
 	payments: order.payments,
+	// Each discount carries the lines it came off, so the invoice's taxable
+	// amount shrinks line by line exactly as the till's did.
+	discounts: order.adjustments
+		.filter((adjustment) => adjustment.kind === 'discount')
+		.map((adjustment) => ({
+			name: adjustment.label,
+			amountCents: adjustment.amountCents,
+			...(adjustment.lineAmounts
+				? { lineAmounts: adjustment.lineAmounts }
+				: {}),
+		})),
+	// A loyalty reward is not a named discount, but if it took from lines the
+	// till's tax already reflects that.
+	otherLineAmounts: Object.fromEntries(
+		sumLineAmounts(
+			order.adjustments.filter((adjustment) => adjustment.kind !== 'discount'),
+		),
+	),
 })
 
 /** The invoice number signed into a sale's invoice: the order number on its business day, as it was then. */

@@ -11,6 +11,12 @@ export type MenuOption = {
 	id: string
 	displayName: string
 	price: number
+	/**
+	 * What the whole topping costs on a pizza when it differs from `price`. The
+	 * server prices every whole choice with `priceWhole ?? price`, so the till
+	 * does too. Halves are not offered at the till.
+	 */
+	priceWhole?: number | null
 	minSelections: number
 	maxSelections: number | null
 	isDefault: boolean
@@ -42,6 +48,7 @@ export type Variant = {
 	valueIds: string[]
 	price: number
 	availabilityStatus: string
+	excludeFromDiscounts?: boolean
 }
 
 export type MenuItem = {
@@ -56,6 +63,8 @@ export type MenuItem = {
 	isAlcohol: boolean
 	allergens: string[]
 	isPopular: boolean
+	/** Left out of every discount. Absent on a menu published before the flag. */
+	excludeFromDiscounts?: boolean
 	availabilityStatus: string
 	position: number
 	modifierGroups: ModifierGroup[]
@@ -114,6 +123,15 @@ export type MenuPayload = {
 			availabilityStatus?: string | null
 		}>
 	>
+	/** Automatic and manual till rules. No coupon codes. Absent on an older catalog. */
+	discountRules?: unknown
+	/**
+	 * When `discountRules` were last fetched from the server (epoch ms). A failed
+	 * refresh keeps the older rules and their older stamp; the till stops
+	 * applying them after `TILL_RULES_MAX_AGE_MS`. Absent on a catalog stored
+	 * before the stamp existed (the catalog's own `fetchedAt` stands in).
+	 */
+	discountRulesAt?: number
 }
 
 /** Published branding (`GET /resources/sites`). */

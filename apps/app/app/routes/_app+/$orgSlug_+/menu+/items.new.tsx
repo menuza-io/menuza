@@ -143,6 +143,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			key === 'isVegetarian' ||
 			key === 'applySalesTax' ||
 			key === 'excludeFromOverride' ||
+			key === 'excludeFromDiscounts' ||
 			key === 'isPopular' ||
 			key === 'isUpsell'
 		) {
@@ -223,6 +224,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				calorieMax: data.calorieMax ?? null,
 				applySalesTax: data.applySalesTax,
 				excludeFromOverride: data.excludeFromOverride,
+				excludeFromDiscounts: data.excludeFromDiscounts,
 				isPopular: data.isPopular,
 				isUpsell: data.isUpsell,
 				availabilityStatus: data.availabilityStatus,

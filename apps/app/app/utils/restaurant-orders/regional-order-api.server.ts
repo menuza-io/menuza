@@ -58,7 +58,7 @@ export type RestaurantOrderQuote = {
 	/** Order status as reported by the regional service. */
 	status: string
 	/** Payment status ('pending' | 'paid' | ...) when reported separately. */
-	paymentStatus: 'paid' | 'pending' | 'failed' | 'unknown'
+	paymentStatus: 'paid' | 'pending' | 'failed' | 'not_required' | 'unknown'
 	/** Provider session already bound to this order, if any. */
 	boundSession: { sessionId: string; processor: 'connect' | 'checkout' } | null
 }
@@ -187,7 +187,9 @@ export async function fetchRestaurantOrderQuote(options: {
 				? 'failed'
 				: paymentStatusRaw === 'pending'
 					? 'pending'
-					: 'unknown'
+					: paymentStatusRaw === 'not_required'
+						? 'not_required'
+						: 'unknown'
 
 	const boundSession =
 		parsed.data.sessionId && parsed.data.processor === 'connect'

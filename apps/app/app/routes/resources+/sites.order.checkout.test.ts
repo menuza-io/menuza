@@ -162,6 +162,25 @@ describe('browser hosted checkout endpoint', () => {
 		})
 	})
 
+	it('answers 409 payment_not_required for a free order', async () => {
+		createCheckout.mockRejectedValue(
+			Response.json(
+				{ error: 'payment_not_required', retryable: false },
+				{ status: 409 },
+			),
+		)
+		const response = await post({
+			slug: 'cafe',
+			orderId: 'ord_1',
+			paymentToken: 'tok_1',
+		}).catch((error: unknown) => error as Response)
+		expect(response.status).toBe(409)
+		expect(await response.json()).toEqual({
+			error: 'payment_not_required',
+			retryable: false,
+		})
+	})
+
 	it('returns a retryable 503 on unexpected orchestrator failures', async () => {
 		createCheckout.mockRejectedValue(new Error('boom'))
 		const response = await post({

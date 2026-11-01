@@ -42,6 +42,7 @@ export type Variant = {
 	valueIds: string[]
 	price: number
 	imageUrl?: string | null
+	excludeFromDiscounts?: boolean
 	availabilityStatus: 'available' | 'unavailable' | string
 }
 
@@ -63,6 +64,7 @@ export type OrderingItem = {
 	calorieMin?: number | null
 	calorieMax?: number | null
 	isPopular?: boolean
+	excludeFromDiscounts?: boolean
 	availabilityStatus?: string
 	/** `false` when the owning menu disables the special instructions field. */
 	specialInstructions?: boolean
@@ -149,6 +151,9 @@ export type OrderingLabels = {
 	addToOrder: string
 	soldOut: string
 	from: string
+	/** Screen-reader words before the struck regular price and the sale price. */
+	originalPrice: string
+	salePrice: string
 	required: string
 	optional: string
 	done: string
@@ -177,6 +182,20 @@ export type OrderingLabels = {
 	closeDialog: string
 	customizeItem: string
 	itemsCount: string
+	/** Drawer row for the discounts the region priced. */
+	discounts: string
+	/** The estimate has no discounts yet (a quote is on its way or failed). */
+	beforeDiscounts: string
+	/** Delivery order with no verified address: the region cannot price yet. */
+	discountsAtCheckout: string
+	/** "Code {code} could not be applied." */
+	couponNotApplied?: string
+	/** "Remove" (the note's dismiss button text). */
+	couponRemove?: string
+	/** "Remove code {code}" (the note's dismiss button name). */
+	couponNoteRemove?: string
+	/** "Code {code} is saved…" after a printed coupon's QR opened the menu. */
+	couponSaved?: string
 	/** Empty-cart action in the drawer; closes it so the guest keeps browsing. */
 	exploreMenu?: string
 }

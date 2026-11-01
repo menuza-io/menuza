@@ -23,6 +23,7 @@ import {
 	resolveOrganizationForBrowserAuth,
 } from '../lib/origin.ts'
 import { deriveTableToken } from '../lib/qr-tokens.ts'
+import { syncEnvFromProcess } from '../lib/secrets.ts'
 import { updateOperatorOrder } from '../services/order-service.ts'
 import { operatorQrRoutes } from './operator-qr.ts'
 import { orderSystemRoutes } from './order-system.ts'
@@ -840,6 +841,81 @@ describe('QR ordering: dine-in tabs and the operator surface', () => {
 			.set({ status: 'completed' })
 			.where(eq(restaurantOrders.tabId, tabId))
 	}
+
+	describe('Turnstile on tab payment', () => {
+		let verified: string[]
+		let verdict: { success: boolean; action?: string; hostname?: string }
+		beforeEach(() => {
+			verified = []
+			verdict = { success: true, action: 'place-order' }
+			const base = vi.mocked(fetch)
+			vi.stubGlobal(
+				'fetch',
+				vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+					const url = typeof input === 'string' ? input : input.toString()
+					if (url.includes('challenges.cloudflare.com')) {
+						verified.push(String(init?.body ?? ''))
+						return Response.json(verdict)
+					}
+					return base(input, init)
+				}),
+			)
+		})
+
+		async function servedTab() {
+			const table = await createTable()
+			const first = await (
+				await placeRound({ 'X-Table-Token': table.token })
+			).json()
+			await serveAll(first.tab.id)
+			return first.tab.tabToken as string
+		}
+		// The secret is set only around the payment: placing the rounds is
+		// `POST /orders`, which always needs a token while a secret exists.
+		const payWith = async (tabToken: string, turnstileToken?: string) => {
+			vi.stubEnv('TURNSTILE_SECRET_KEY', 'secret-key')
+			vi.stubEnv('TURNSTILE_HOSTNAMES', '')
+			try {
+				return await request('/orders/tab/pay', {
+					method: 'POST',
+					headers: { 'X-Tab-Token': tabToken },
+					body: {
+						slug: 'test-org',
+						tipPercent: 0,
+						contact: { name: 'Lina Haddad', phone: '+1 555 222 3333' },
+						...(turnstileToken ? { turnstileToken } : {}),
+					},
+				})
+			} finally {
+				// `syncEnvFromProcess` never clears a key that went away, so reset
+				// the secret explicitly for the tests that follow.
+				vi.stubEnv('TURNSTILE_SECRET_KEY', '')
+				syncEnvFromProcess()
+			}
+		}
+
+		it('does not refuse a payment that carries no token (no client sends one)', async () => {
+			const tabToken = await servedTab()
+			const response = await payWith(tabToken)
+			expect(response.status).toBe(200)
+			expect(verified).toEqual([])
+		})
+
+		it('still refuses a token that fails verification', async () => {
+			const tabToken = await servedTab()
+			verdict = { success: false }
+			const response = await payWith(tabToken, 'bad-token')
+			expect(response.status).toBe(403)
+			expect(verified).toHaveLength(1)
+		})
+
+		it('accepts a token that verifies', async () => {
+			const tabToken = await servedTab()
+			const response = await payWith(tabToken, 'good-token')
+			expect(response.status).toBe(200)
+			expect(verified).toHaveLength(1)
+		})
+	})
 
 	it('pays a served tab online once, with a tip, and settles every round', async () => {
 		const table = await createTable()

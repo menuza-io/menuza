@@ -26,6 +26,14 @@ export function getSiteKvKey(
 	return `org:${id}:${type}:${queryHash}`
 }
 
+/**
+ * Drops the cached public site data of an organization. It never throws: every
+ * caller runs it after its database change committed, so a KV outage must not
+ * turn a saved change into an error for the operator. A failed purge only means
+ * the cache serves older data until its TTL ends (`setCachedSiteData`, 24 hours
+ * by default). Failures are logged with the organization id and the error
+ * message only.
+ */
 export async function purgeOrganizationSiteCache(
 	orgId: string,
 	slug?: string,
@@ -37,8 +45,10 @@ export async function purgeOrganizationSiteCache(
 	if (slug) prefixes.push(`org:${slug}:`)
 	if (host) prefixes.push(`org:${host}:`)
 
-	try {
-		for (const prefix of prefixes) {
+	// Each prefix is purged on its own, so one that fails (a list error, say) never
+	// leaves the others (slug, host) stale.
+	for (const prefix of prefixes) {
+		try {
 			let cursor: string | undefined = undefined
 			do {
 				const keysPage: KVNamespaceListResult<unknown, string> =
@@ -52,10 +62,12 @@ export async function purgeOrganizationSiteCache(
 				)
 				cursor = 'cursor' in keysPage ? keysPage.cursor : undefined
 			} while (cursor)
+		} catch (e) {
+			console.error(
+				`Failed to purge site KV cache for organization ${orgId}`,
+				e instanceof Error ? e.message : 'unknown error',
+			)
 		}
-	} catch (e) {
-		console.error('Failed to purge site KV cache', e)
-		throw e
 	}
 }
 

@@ -15,8 +15,9 @@ import {
 
 /**
  * Turns a channel's priced lines into the purchase snapshot earning and refunds
- * read. Each line's `netMinor` is its merchandise after the loyalty discount
- * and any other sale discount, without tax: inclusive tax is taken out of the
+ * read. Each line's `netMinor` is its merchandise after its discounts and
+ * coupons, the loyalty discount and any other sale discount, without tax, so
+ * points are earned on net spend: inclusive tax is taken out of the
  * line by its share of the sale's tax, exclusive tax was never in it. Shares
  * are largest-remainder splits, so the same sale always gives the same lines.
  */
@@ -99,6 +100,8 @@ export function buildPurchaseSnapshot(input: {
 	taxMinor: number
 	taxInclusive: boolean
 	lines: readonly SnapshotSourceLine[]
+	/** What discounts and coupons took off each line, before the reward. */
+	lineDiscounts?: readonly { lineId: string; discountMinor: number }[]
 	/** How the loyalty discount splits over the lines. */
 	allocation?: readonly SnapshotAllocationLine[]
 	/** A sale-level discount that is not split over lines (a till discount). */
@@ -106,6 +109,13 @@ export function buildPurchaseSnapshot(input: {
 }): LoyaltyPurchaseSnapshot {
 	const allocation = new Map<string, SnapshotAllocationLine>()
 	for (const line of input.allocation ?? []) allocation.set(line.lineId, line)
+	const lineDiscounts = new Map<string, number>()
+	for (const entry of input.lineDiscounts ?? []) {
+		lineDiscounts.set(
+			entry.lineId,
+			(lineDiscounts.get(entry.lineId) ?? 0) + nonNegative(entry.discountMinor),
+		)
+	}
 
 	const lines = input.lines.map((line) => {
 		const quantity = Math.min(
@@ -115,8 +125,9 @@ export function buildPurchaseSnapshot(input: {
 		const gross = nonNegative(line.grossMinor)
 		const taxable = Math.min(gross, nonNegative(line.taxableMinor))
 		const share = allocation.get(line.lineId)
+		const discounted = Math.min(gross, lineDiscounts.get(line.lineId) ?? 0)
 		const loyaltyDiscount = Math.min(
-			gross,
+			gross - discounted,
 			nonNegative(share?.discountMinor ?? 0),
 		)
 		const rewardUnits = Math.min(quantity, nonNegative(share?.rewardUnits ?? 0))
@@ -130,7 +141,7 @@ export function buildPurchaseSnapshot(input: {
 			quantity,
 			gross,
 			taxable,
-			afterLoyalty: gross - loyaltyDiscount,
+			afterLoyalty: gross - discounted - loyaltyDiscount,
 			rewardUnits,
 		}
 	})

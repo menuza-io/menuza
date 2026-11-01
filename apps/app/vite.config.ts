@@ -56,7 +56,9 @@ function stubCacheServerPlugin(): Plugin {
 		name: 'stub-cache-server',
 		enforce: 'pre',
 		resolveId(id) {
-			if (MODE === 'test' && id.includes('cache.server')) {
+			// `cache.server` only: `sites/kv-cache.server.ts` is a different module
+			// and must load for real.
+			if (MODE === 'test' && /(^|\/)cache\.server(\.[cm]?[jt]s)?$/.test(id)) {
 				return '\0virtual:cache-server-stub'
 			}
 		},

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
 	canonicalLoyaltyCart,
 	hashLoyaltyCart,
+	loyaltyCartSchema,
 	type LoyaltyCart,
 } from './cart.ts'
 import {
@@ -34,10 +35,7 @@ import {
 	LOYALTY_PERMISSIONS,
 	restrictLoyaltyGrantsForImpersonation,
 } from './permissions.ts'
-import {
-	classifySaleTime,
-	programVersionAt,
-} from './program.ts'
+import { classifySaleTime, programVersionAt } from './program.ts'
 import { loyaltyOutboxBackoffMs } from './reconciliation.ts'
 import {
 	canTransitionRedemption,
@@ -409,7 +407,6 @@ describe('reconciliation backoff', () => {
 describe('cart binding', () => {
 	const cart: LoyaltyCart = {
 		currency: 'USD',
-		otherDiscountMinor: 0,
 		lines: [
 			{
 				lineId: 'l1',
@@ -419,6 +416,7 @@ describe('cart binding', () => {
 				quantity: 1,
 				unitBaseMinor: 1000,
 				unitMinor: 1200,
+				discountedMinor: 0,
 			},
 		],
 	}
@@ -439,6 +437,34 @@ describe('cart binding', () => {
 		}
 		expect(await hashLoyaltyCart(pricier)).not.toBe(await hashLoyaltyCart(cart))
 		expect(await hashLoyaltyCart(cart)).toMatch(/^[0-9a-f]{64}$/)
+	})
+
+	it('binds what discounts already took off each line', async () => {
+		const discounted: LoyaltyCart = {
+			...cart,
+			lines: [{ ...cart.lines[0]!, discountedMinor: 200 }],
+		}
+		expect(await hashLoyaltyCart(discounted)).not.toBe(
+			await hashLoyaltyCart(cart),
+		)
+	})
+
+	it('refuses a line discounted below zero and an old otherDiscountMinor field', () => {
+		expect(
+			loyaltyCartSchema.safeParse({
+				...cart,
+				lines: [{ ...cart.lines[0]!, discountedMinor: 1201 }],
+			}).success,
+		).toBe(false)
+		expect(
+			loyaltyCartSchema.safeParse({ ...cart, otherDiscountMinor: 0 }).success,
+		).toBe(false)
+		expect(
+			loyaltyCartSchema.parse({
+				currency: 'USD',
+				lines: [{ ...cart.lines[0]!, discountedMinor: undefined }],
+			}).lines[0]?.discountedMinor,
+		).toBe(0)
 	})
 })
 

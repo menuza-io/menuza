@@ -9,6 +9,7 @@ import {
 } from '@repo/common/qr-ordering'
 import {
 	RESTAURANT_TURNSTILE_ACTION,
+	restaurantOrderDiscountQuoteSchema,
 	restaurantOrderRequestSchema,
 } from '@repo/common/restaurant-orders'
 import {
@@ -16,8 +17,17 @@ import {
 	parseTurnstileHostnames,
 	verifyTurnstileToken,
 } from '@repo/common/turnstile'
+import { normalizeDiscountCode } from '@repo/discounts'
+import { getTenantDb } from '@repo/tenant-db'
+import crypto from 'node:crypto'
 import { z } from 'zod'
 
+import {
+	chargeCouponGuess,
+	enforceDiscountLimit,
+	refundCouponGuess,
+	type CouponGuessSubject,
+} from '../lib/discount-rate-limit.ts'
 import {
 	resolveOrganizationForBrowserAuth,
 	type PublishedOrganization,
@@ -26,6 +36,7 @@ import { isQrDineInDisabled } from '../lib/qr-tokens.ts'
 import { rateLimitByKey } from '../lib/rate-limit.ts'
 import { orgMatchesNodeRegion } from '../lib/region.ts'
 import { getBearerToken, syncEnvFromProcess } from '../lib/secrets.ts'
+import { quoteOrderDiscounts } from '../services/discount-quote.ts'
 import {
 	buildOrderingOptionsWithContext,
 	fetchOrderContext,
@@ -40,6 +51,7 @@ import {
 	getPublicTab,
 	getTableContext,
 	prepareTabPayment,
+	withTabDiscounts,
 } from '../services/qr-tab-service.ts'
 import { authenticateCustomer } from './auth.ts'
 
@@ -52,6 +64,8 @@ function orderFailureResponse(failure: OrderServiceFailure) {
 		{
 			error: failure.code,
 			message: failure.message,
+			...(failure.reason ? { reason: failure.reason } : {}),
+			...(failure.quote ? { quote: failure.quote } : {}),
 			...(failure.details ? { details: failure.details } : {}),
 		},
 		{ status: failure.status, headers: { 'Cache-Control': 'no-store' } },
@@ -79,17 +93,154 @@ function dineInUnavailable() {
 function clientIp(c: Context) {
 	const cfConnectingIp = c.req.header('cf-connecting-ip')?.trim()
 	if (cfConnectingIp) return cfConnectingIp
+	// The last entry is the one our proxy appended. The first is client-supplied.
 	const forwardedFor = c.req.header('x-forwarded-for')
-	return forwardedFor
-		? forwardedFor.split(',')[0]?.trim() || undefined
-		: undefined
+	const last = forwardedFor?.split(',').at(-1)?.trim()
+	return last || undefined
 }
 
-async function verifyOrderTurnstile(c: Context, token: unknown) {
+function couponGuestSubject(c: Context): string | null {
+	const ip = clientIp(c)
+	if (ip) return ip
+	const sessionToken =
+		c.req.header('x-session-id') ??
+		c.req.header('authorization')?.slice(-16) ??
+		null
+	return sessionToken ? `s:${sessionToken}` : null
+}
+
+function couponSubject(
+	c: Context,
+	customerId: string | null | undefined,
+): CouponGuessSubject {
+	if (customerId) return { kind: 'customer', customerId }
+	return { kind: 'guest', address: couponGuestSubject(c) }
+}
+
+function couponLimitedResponse(retryAfterSeconds: number) {
+	return Response.json(
+		{
+			error: 'rate_limit_exceeded',
+			message: 'Too many coupon attempts. Please try again shortly.',
+			retryAfterSeconds,
+		},
+		{
+			status: 429,
+			headers: {
+				...noStoreHeaders(),
+				'Retry-After': String(Math.max(1, retryAfterSeconds)),
+			},
+		},
+	)
+}
+
+/**
+ * What makes two coupon requests the same question: the code and the cart (or
+ * the tab) it was tried on. The Sites page re-quotes on every cart change and
+ * again when the order is placed; none of those repeats is a new guess.
+ */
+export function couponFingerprint(code: string, ...parts: unknown[]): string {
+	return crypto
+		.createHash('sha256')
+		.update(JSON.stringify([normalizeDiscountCode(code), ...parts]))
+		.digest('hex')
+}
+
+/** Refusals the customer can fix by changing the cart, so they are not probes. */
+const FIXABLE_COUPON_REASONS = new Set(['minimum_not_met', 'quantity_not_met'])
+
+/**
+ * Whether a failed placement, quote or tab payment counts as a wrong coupon
+ * guess. A code the customer can still make work (minimum or quantity not met)
+ * is not a guess. A valid code beaten by an automatic discount (`replaced`)
+ * is one: it proves the code exists, so a probe is never free.
+ */
+export function failureCountsAsCouponGuess(failure: {
+	code: string
+	reason?: string | undefined
+}): boolean {
+	if (failure.code === 'coupon_refused') {
+		return !FIXABLE_COUPON_REASONS.has(failure.reason ?? '')
+	}
+	return (
+		failure.code === 'discount_changed' &&
+		failure.reason === 'replaced_by_better_discount'
+	)
+}
+
+/** The same rule for the `coupon` field of a quote answer. */
+export function couponStatusCountsAsGuess(
+	coupon: { status: string; reason?: string | undefined } | null | undefined,
+): boolean {
+	if (!coupon) return false
+	if (coupon.status === 'replaced') return true
+	return (
+		coupon.status === 'refused' &&
+		!FIXABLE_COUPON_REASONS.has(coupon.reason ?? '')
+	)
+}
+
+export type CouponGuard =
+	| { blocked: Response }
+	| {
+			blocked: null
+			/**
+			 * Call once the answer is known. A code that was refused as not a
+			 * working code stays counted (`refused: true`); anything else gives
+			 * the attempt back, so only wrong guesses use up the budget.
+			 */
+			settle: (outcome: { refused: boolean }) => Promise<void>
+	  }
+
+/**
+ * Counts a coupon attempt before the code is checked, for the address and for
+ * the organization, and answers 429 when either is over its budget. The count
+ * is taken first and given back when the code applies, so parallel requests
+ * cannot all slip under the limit the way a read-then-charge check lets them.
+ * No code, no count.
+ */
+export async function guardCouponGuess(
+	orgId: string,
+	c: Context,
+	code: string | null | undefined,
+	fingerprintParts: unknown[],
+	customerId?: string | null,
+): Promise<CouponGuard> {
+	if (!code) return { blocked: null, settle: async () => {} }
+	const db = await getTenantDb(orgId)
+	const result = await chargeCouponGuess(db, {
+		orgId,
+		subject: couponSubject(c, customerId),
+		fingerprint: couponFingerprint(code, ...fingerprintParts),
+	})
+	if (!result.ok) {
+		return { blocked: couponLimitedResponse(result.retryAfterSeconds) }
+	}
+	return {
+		blocked: null,
+		settle: async ({ refused }) => {
+			if (!refused) await refundCouponGuess(db, result.charge)
+		},
+	}
+}
+
+/**
+ * `POST /orders` requires a Turnstile token whenever the node has a secret.
+ * `optional` (tab payment) only checks a token that was sent: the phone's tab
+ * code is an unguessable capability and coupon guesses have their own limits,
+ * and no client sends a token on that flow, so requiring one would refuse every
+ * tab payment on a node with a secret.
+ */
+async function verifyOrderTurnstile(
+	c: Context,
+	token: unknown,
+	options: { optional?: boolean } = {},
+) {
 	syncEnvFromProcess()
 	const secret = ENV.TURNSTILE_SECRET_KEY ?? ''
 	if (!isTurnstileConfigured(secret)) return true
-	if (typeof token !== 'string' || !token.trim()) return false
+	if (typeof token !== 'string' || !token.trim())
+		return options.optional === true
 	const result = await verifyTurnstileToken({
 		secret,
 		token,
@@ -214,6 +365,20 @@ publicOrderRoutes.post('/', async (c) => {
 	const customer = await optionalCustomerId(c, organization.organization)
 	if ('error' in customer) return customer.error
 
+	const couponGuard = await guardCouponGuess(
+		organization.organization.id,
+		c,
+		request.discounts?.code,
+		[
+			request.locationId,
+			request.fulfillment,
+			request.dropSlug ?? null,
+			request.lines,
+		],
+		customer.customerId,
+	)
+	if (couponGuard.blocked) return couponGuard.blocked
+
 	// Table rounds may come without a phone; the durable per-table limit
 	// covers them inside the placement transaction.
 	const phoneLimit = request.contact.phone
@@ -223,6 +388,7 @@ publicOrderRoutes.post('/', async (c) => {
 			})
 		: { limited: false as const, retryAfter: 0 }
 	if (phoneLimit.limited) {
+		await couponGuard.settle({ refused: false })
 		return c.json(
 			{
 				error: 'rate_limit_exceeded',
@@ -244,6 +410,9 @@ publicOrderRoutes.post('/', async (c) => {
 			customerId: customer.customerId,
 			dineIn,
 		})
+		await couponGuard.settle({
+			refused: !result.ok && failureCountsAsCouponGuess(result.failure),
+		})
 		if (!result.ok) return orderFailureResponse(result.failure)
 
 		const body = {
@@ -256,12 +425,110 @@ publicOrderRoutes.post('/', async (c) => {
 		}
 		return c.json(body, result.data.status, noStoreHeaders())
 	} catch (error) {
+		await couponGuard.settle({ refused: false }).catch(() => {})
 		console.error(
 			`Failed to place order for org ${organization.organization.id}:`,
 			error instanceof Error ? error.message : error,
 		)
 		return c.json(
 			{ error: 'internal_error', message: 'We could not place this order.' },
+			500,
+			noStoreHeaders(),
+		)
+	}
+})
+
+// ---------------------------------------------------------------------------
+// POST /orders/quote — price discounts (and a reward, when sent). No hold.
+// ---------------------------------------------------------------------------
+
+publicOrderRoutes.post('/quote', async (c) => {
+	const contentLength = Number(c.req.header('content-length') ?? 0)
+	if (contentLength > MAX_ORDER_BODY_BYTES) {
+		return c.json({ error: 'Payload too large' }, 413, noStoreHeaders())
+	}
+	const rawBody = await c.req.json().catch(() => null)
+	const parsed = restaurantOrderDiscountQuoteSchema.safeParse(rawBody)
+	if (!parsed.success) {
+		return c.json(
+			{
+				error: 'invalid_request',
+				message: parsed.error.issues[0]?.message ?? 'Invalid order request',
+			},
+			400,
+			noStoreHeaders(),
+		)
+	}
+	const request = parsed.data
+	if (request.fulfillment === 'dine_in' && isQrDineInDisabled()) {
+		return dineInUnavailable()
+	}
+	const organization = await resolveOrderingOrganization(c, {
+		slug: request.slug,
+		host: request.host,
+	})
+	if ('error' in organization) return organization.error
+	const customer = await optionalCustomerId(c, organization.organization)
+	if ('error' in customer) return customer.error
+
+	const db = await getTenantDb(organization.organization.id)
+	const ip = clientIp(c) ?? 'unknown'
+	const quoteLimit = await enforceDiscountLimit(
+		db,
+		'quoteIp',
+		`${organization.organization.id}:${ip}`,
+	)
+	if (!quoteLimit.ok) {
+		return c.json(
+			{
+				error: 'rate_limit_exceeded',
+				message: 'Too many price checks. Please try again shortly.',
+				retryAfterSeconds: quoteLimit.retryAfterSeconds,
+			},
+			429,
+			{
+				...noStoreHeaders(),
+				'Retry-After': String(quoteLimit.retryAfterSeconds),
+			},
+		)
+	}
+	const couponGuard = await guardCouponGuess(
+		organization.organization.id,
+		c,
+		request.discounts?.code,
+		[
+			request.locationId,
+			request.fulfillment,
+			request.dropSlug ?? null,
+			request.lines,
+		],
+		customer.customerId,
+	)
+	if (couponGuard.blocked) return couponGuard.blocked
+
+	try {
+		const result = await quoteOrderDiscounts({
+			organization: organization.organization,
+			request,
+			customerId: customer.customerId,
+		})
+		// A refused code stays counted; a code that applied, or any other
+		// answer, gives the attempt back.
+		await couponGuard.settle({
+			refused: result.ok
+				? couponStatusCountsAsGuess(result.data.coupon)
+				: failureCountsAsCouponGuess(result.failure),
+		})
+		if (!result.ok) return orderFailureResponse(result.failure)
+		return c.json(result.data, 200, noStoreHeaders())
+	} catch (error) {
+		await couponGuard.settle({ refused: false }).catch(() => {})
+		console.error(
+			`Failed to quote an order for org ${organization.organization.id}:`,
+			error instanceof Error ? error.message : error,
+		)
+		return c.json(
+			{ error: 'internal_error', message: 'We could not price this order.' },
 			500,
 			noStoreHeaders(),
 		)
@@ -362,10 +629,19 @@ publicOrderRoutes.get('/tab', async (c) => {
 			noStoreHeaders(),
 		)
 	}
+	// A customer token is optional: a signed-in guest may qualify for
+	// discounts a guest does not, and the tab shows what they would get.
+	const customer = await optionalCustomerId(c, organization.organization)
+	if ('error' in customer) return customer.error
 	try {
 		const result = await getPublicTab(organization.organization.id, tabToken)
 		if (!result.ok) return orderFailureResponse(result.failure)
-		return c.json({ tab: result.data }, 200, noStoreHeaders())
+		const [shown] = await withTabDiscounts(
+			organization.organization.id,
+			[result.data],
+			{ customerId: customer.customerId },
+		)
+		return c.json({ tab: shown ?? result.data }, 200, noStoreHeaders())
 	} catch (error) {
 		console.error(
 			`Failed to load tab for org ${organization.organization.id}:`,
@@ -398,6 +674,18 @@ publicOrderRoutes.post('/tab/pay', async (c) => {
 			noStoreHeaders(),
 		)
 	}
+	if (
+		!(await verifyOrderTurnstile(c, parsed.data.turnstileToken, {
+			optional: true,
+		}))
+	) {
+		return c.json(
+			{ error: 'Verification failed. Please try again.' },
+			403,
+			noStoreHeaders(),
+		)
+	}
+
 	const organization = await resolveOrderingOrganization(c, {
 		slug: parsed.data.slug,
 		host: parsed.data.host,
@@ -418,16 +706,30 @@ publicOrderRoutes.post('/tab/pay', async (c) => {
 	const customer = await optionalCustomerId(c, organization.organization)
 	if ('error' in customer) return customer.error
 	const orgId = organization.organization.id
+	const couponGuard = await guardCouponGuess(
+		orgId,
+		c,
+		parsed.data.discounts?.code,
+		['tab', tabToken],
+		customer.customerId,
+	)
+	if (couponGuard.blocked) return couponGuard.blocked
 	try {
 		// The tab's own location decides whether online payment is on.
 		const tab = await getPublicTab(orgId, tabToken)
-		if (!tab.ok) return orderFailureResponse(tab.failure)
+		if (!tab.ok) {
+			await couponGuard.settle({ refused: false })
+			return orderFailureResponse(tab.failure)
+		}
 		const context = await fetchOrderContext(
 			orgId,
 			tab.data.table.locationId,
 			null,
 		)
-		if (!context.ok) return orderFailureResponse(context.failure)
+		if (!context.ok) {
+			await couponGuard.settle({ refused: false })
+			return orderFailureResponse(context.failure)
+		}
 		const features = readQrOrderingFeatures(
 			(context.data as { qrOrdering?: unknown }).qrOrdering,
 		)
@@ -438,10 +740,16 @@ publicOrderRoutes.post('/tab/pay', async (c) => {
 			onlinePayment: context.data.onlinePayment,
 			customerId: customer.customerId,
 			loyalty: parsed.data.loyalty ?? null,
+			context: context.data,
+			discounts: parsed.data.discounts ?? null,
+		})
+		await couponGuard.settle({
+			refused: !result.ok && failureCountsAsCouponGuess(result.failure),
 		})
 		if (!result.ok) return orderFailureResponse(result.failure)
 		return c.json(result.data, 200, noStoreHeaders())
 	} catch (error) {
+		await couponGuard.settle({ refused: false }).catch(() => {})
 		console.error(
 			`Failed to start tab payment for org ${orgId}:`,
 			error instanceof Error ? error.message : error,

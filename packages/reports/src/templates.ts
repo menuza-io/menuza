@@ -265,6 +265,18 @@ function salesTemplates(): ReportTemplate[] {
 			valueField: 'deliveryFee',
 			timeframePreset: 'last_30_days',
 		}),
+		template('organization', {
+			...sales,
+			id: 'discounts-given',
+			title: 'Discounts given',
+			description:
+				'Discounts, coupons and loyalty rewards taken off orders that count toward sales.',
+			groupBy: [],
+			chartStyle: 'single_number',
+			measure: 'sum',
+			valueField: 'discount',
+			timeframePreset: 'last_30_days',
+		}),
 	]
 }
 

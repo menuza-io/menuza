@@ -14,6 +14,7 @@ import {
 	type PrintScope,
 	type PrintShopServerVertical,
 } from '../vertical-contract.server.ts'
+import { couponTarget } from './coupon.server.ts'
 import {
 	canPrintQrTables,
 	fetchQrTablesForPrint,
@@ -236,6 +237,7 @@ export const restaurantPrintVertical: PrintShopServerVertical = {
 				}
 			},
 		},
+		coupon: couponTarget({ scopes: listLocations, siteUrl }),
 		menu: {
 			defaultFor: async (_access, { scope }) =>
 				scope ? { kind: 'menu', locationId: scope.id } : null,

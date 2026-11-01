@@ -383,6 +383,8 @@ export const marketingCampaigns = sqliteTable('marketing_campaigns', {
 	contentBlocks: text('content_blocks'),
 	/** Design-time rendered HTML for email broadcasts. */
 	contentHtml: text('content_html'),
+	/** JSON coupon for `{{couponCode}}` (`marketingOfferSchema`), or null. */
+	discountOffer: text('discount_offer'),
 	targetAudienceCount: integer('target_audience_count').default(0),
 	segmentationRules: text('segmentation_rules', { mode: 'json' }).default(
 		'{"audience": "all"}',
@@ -706,6 +708,23 @@ export const RESTAURANT_ORDER_ACTIVE_STATUSES = RESTAURANT_ACTIVE_ORDER_STATUSES
 
 export const RESTAURANT_PAYMENT_STATUSES = RESTAURANT_PAYMENT_STATUS_VALUES
 
+/** One applied discount, as stored on the order (`restaurant_orders.discounts`). */
+export type OrderDiscountSnapshot = {
+	discountId: string
+	version: number
+	name: string
+	code: string | null
+	amountMinor: number
+	deliveryAmountMinor: number
+	allocation: Array<{ lineId: string; amountMinor: number; units: number }>
+	/**
+	 * Set when the sale was paid after its hold lapsed and the discount's total,
+	 * customer or code limit had been used up by others in the meantime. The
+	 * sale is honored; an operator sees why it waits in `payment_review`.
+	 */
+	limitExceeded?: true
+}
+
 export const restaurantOrders = sqliteTable(
 	'restaurant_orders',
 	{
@@ -773,6 +792,17 @@ export const restaurantOrders = sqliteTable(
 		loyaltyDiscountCents: integer('loyalty_discount_cents')
 			.notNull()
 			.default(0),
+		// Discounts and coupons (`discount_redemptions` holds one row per applied
+		// discount): the sum of their line discounts, the delivery fee they took
+		// off, and a snapshot of each as it applied.
+		discountCents: integer('discount_cents').notNull().default(0),
+		deliveryDiscountCents: integer('delivery_discount_cents')
+			.notNull()
+			.default(0),
+		discounts: text('discounts', { mode: 'json' })
+			.$type<OrderDiscountSnapshot[]>()
+			.notNull()
+			.default([]),
 		// Money an operator recorded as returned (`restaurant_order_refunds`
 		// adds up to it). The payment status stays `paid`.
 		refundedCents: integer('refunded_cents').notNull().default(0),
@@ -6634,3 +6664,160 @@ export type LoyaltyMemberBindingRow = typeof loyaltyMemberBindings.$inferSelect
 export type LoyaltyApprovalRow = typeof loyaltyApprovals.$inferSelect
 export type LoyaltyOutboxRow = typeof loyaltyOutbox.$inferSelect
 export type LoyaltyAuditLogRow = typeof loyaltyAuditLog.$inferSelect
+
+// ==========================================
+// DISCOUNTS AND COUPONS (migration 0026_discounts)
+// Definitions live in the control plane (App D1); only usage lives here.
+// ==========================================
+
+export const DISCOUNT_REDEMPTION_STATE_VALUES = [
+	'reserved',
+	'consumed',
+	'released',
+	'refunded',
+] as const
+export const DISCOUNT_SOURCE_TYPE_VALUES = ['order', 'tab', 'pos'] as const
+
+export type DiscountRedemptionAllocationLine = {
+	lineId: string
+	amountMinor: number
+	units: number
+}
+
+// One row per discount applied to an order. It counts toward a discount's
+// limits while `reserved` or `consumed`. The snapshot, amounts and allocation
+// never change; erasing a person clears `customer_id` and keeps the amounts.
+export const discountRedemptions = sqliteTable(
+	'discount_redemptions',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		discountId: text('discount_id').notNull(),
+		discountVersion: integer('discount_version').notNull(),
+		codeId: text('code_id'),
+		normalizedCode: text('normalized_code'),
+		sourceType: text('source_type', {
+			enum: DISCOUNT_SOURCE_TYPE_VALUES,
+		}).notNull(),
+		sourceId: text('source_id').notNull(),
+		customerId: text('customer_id'),
+		state: text('state', { enum: DISCOUNT_REDEMPTION_STATE_VALUES })
+			.notNull()
+			.default('reserved'),
+		amountMinor: integer('amount_minor').notNull(),
+		deliveryAmountMinor: integer('delivery_amount_minor').notNull().default(0),
+		allocation: text('allocation', { mode: 'json' })
+			.$type<DiscountRedemptionAllocationLine[]>()
+			.notNull(),
+		// A frozen copy of the discount's rules when it applied.
+		snapshot: text('snapshot', { mode: 'json' })
+			.$type<Record<string, unknown>>()
+			.notNull(),
+		// Calendar keys in the location's time zone, for per-customer limits.
+		localDay: text('local_day').notNull(),
+		localWeek: text('local_week').notNull(),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+	},
+	(table) => [
+		uniqueIndex('discount_redemptions_one_per_source').on(
+			table.sourceType,
+			table.sourceId,
+			table.discountId,
+		),
+		index('idx_discount_redemptions_discount_state').on(
+			table.discountId,
+			table.state,
+		),
+		index('idx_discount_redemptions_discount_customer_state').on(
+			table.discountId,
+			table.customerId,
+			table.state,
+		),
+		index('idx_discount_redemptions_code_state').on(table.codeId, table.state),
+		index('idx_discount_redemptions_source').on(
+			table.sourceType,
+			table.sourceId,
+		),
+		index('idx_discount_redemptions_customer').on(table.customerId),
+		check(
+			'chk_discount_redemptions_state',
+			oneOf(table.state, DISCOUNT_REDEMPTION_STATE_VALUES),
+		),
+		check(
+			'chk_discount_redemptions_amounts',
+			sql`${table.amountMinor} >= 0 and ${table.deliveryAmountMinor} >= 0`,
+		),
+		check(
+			'chk_discount_redemptions_source_type',
+			oneOf(table.sourceType, DISCOUNT_SOURCE_TYPE_VALUES),
+		),
+		check(
+			'chk_discount_redemptions_json',
+			sql`json_valid(${table.allocation}) and json_valid(${table.snapshot})`,
+		),
+	],
+)
+
+export const DISCOUNT_ISSUED_SOURCE_TYPE_VALUES = [
+	'campaign',
+	'journey',
+] as const
+
+// Single-use coupon codes minted for one recipient of a marketing message (a
+// broadcast or an automation step), so `{{couponCode}}` can be unique per
+// person. The discount itself lives in the control plane; this row only links
+// a code to it. A code is used up while a redemption of it (`code_id` = this
+// id) is reserved or consumed. One row per message and recipient, so a retried
+// send reuses its code. Erasing a person clears `customer_id`.
+export const discountIssuedCodes = sqliteTable(
+	'discount_issued_codes',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		discountId: text('discount_id').notNull(),
+		code: text('code').notNull(),
+		normalizedCode: text('normalized_code').notNull(),
+		sourceType: text('source_type', {
+			enum: DISCOUNT_ISSUED_SOURCE_TYPE_VALUES,
+		}).notNull(),
+		sourceId: text('source_id').notNull(),
+		customerId: text('customer_id'),
+		expiresAt: integer('expires_at').notNull(),
+		createdAt: integer('created_at').notNull().default(nowMs),
+	},
+	(table) => [
+		uniqueIndex('discount_issued_codes_normalized').on(table.normalizedCode),
+		uniqueIndex('discount_issued_codes_one_per_recipient').on(
+			table.sourceType,
+			table.sourceId,
+			table.customerId,
+		),
+		index('idx_discount_issued_codes_discount').on(table.discountId),
+		index('idx_discount_issued_codes_customer').on(table.customerId),
+		check(
+			'chk_discount_issued_codes_source_type',
+			oneOf(table.sourceType, DISCOUNT_ISSUED_SOURCE_TYPE_VALUES),
+		),
+	],
+)
+
+// Durable rate counters for coupon-code attempts, keyed by an HMAC of the
+// subject (an address, or the organization), like `loyalty_rate_counters`.
+export const discountCodeAttempts = sqliteTable(
+	'discount_code_attempts',
+	{
+		bucket: text('bucket').notNull(),
+		subjectHash: text('subject_hash').notNull(),
+		windowStart: integer('window_start').notNull(),
+		count: integer('count').notNull().default(1),
+	},
+	(table) => [
+		primaryKey({
+			columns: [table.bucket, table.subjectHash, table.windowStart],
+		}),
+		index('idx_discount_code_attempts_window').on(table.windowStart),
+	],
+)

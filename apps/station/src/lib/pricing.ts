@@ -5,6 +5,11 @@
  * the order). The server reprices every synced order and its figures win;
  * these exist so the cashier sees a total with no network.
  */
+import {
+	discountedTaxableCents,
+	sumLineAmounts,
+} from '@repo/common/pos-discount-base'
+
 export type CartOption = {
 	groupId: string
 	groupName: string
@@ -52,6 +57,19 @@ export type Adjustment = {
 	kind: 'discount' | 'loyalty'
 	label: string
 	amountCents: number
+	approvedByStaffId?: string
+	reason?: string
+	/**
+	 * Optional. How much of this discount each line took, keyed by the local line
+	 * id. With it the taxable amount shrinks line by line, as it does online
+	 * (`applyOrderDiscounts` in `@repo/common/restaurant-orders`); without it
+	 * (a loyalty reward, or a sale loaded from another terminal) the discount
+	 * shrinks the whole taxable base in proportion. It is uploaded under the
+	 * same name, so the region can allocate the discount to loyalty line by line.
+	 */
+	lineAmounts?: Record<string, number>
+	/** The version of the rule a discount came from, so the region can tell when it is out of date. */
+	version?: number
 }
 
 export type Totals = {
@@ -87,27 +105,38 @@ export function computeTotals(input: {
 	adjustments?: Adjustment[]
 }): Totals {
 	const subtotalCents = input.lines.reduce((s, l) => s + lineTotalCents(l), 0)
-	const taxableCents = input.lines.reduce((s, l) => s + lineTaxableCents(l), 0)
+	const adjustments = input.adjustments ?? []
 	const adjustmentCents = Math.min(
 		subtotalCents,
-		(input.adjustments ?? []).reduce((s, a) => s + a.amountCents, 0),
+		adjustments.reduce((s, a) => s + a.amountCents, 0),
 	)
-	// Adjustments shrink the taxable base in proportion to the subtotal.
-	const taxBase =
-		subtotalCents > 0
-			? Math.round(taxableCents * (1 - adjustmentCents / subtotalCents))
-			: 0
+	// A discount that says which line took what shrinks that line's taxable
+	// amount, the way the server does it online: taxed and untaxed parts of a line
+	// lose the discount in proportion, and a discount on a line with nothing
+	// taxable never lowers the tax. Discounts without line amounts (a loyalty
+	// reward, a sale loaded from another terminal) shrink what is left in
+	// proportion to the whole bill.
+	// The shared calculation (`@repo/common/pos-discount-base`) is also what the
+	// ZATCA invoice uses, so its VAT is this VAT.
+	const perLine = sumLineAmounts(adjustments)
+	const { taxableAfterCents: taxBase } = discountedTaxableCents({
+		lines: input.lines.map((line) => ({
+			totalCents: lineTotalCents(line),
+			taxableCents: lineTaxableCents(line),
+			offCents: perLine.get(line.id),
+		})),
+		adjustmentCents,
+	})
 	const rate = Math.max(0, Math.min(100, input.taxRatePercent || 0))
 	const inclusive = input.taxInclusive === true
 	// Inclusive: the part of the price that is tax, as the engine computes it.
 	const taxCents = inclusive
 		? Math.round((taxBase * rate) / (100 + rate))
 		: Math.round((taxBase * rate) / 100)
+	// A tip is a percentage of the subtotal before discounts.
 	const tipCents =
 		input.tipCents ??
-		Math.round(
-			((subtotalCents - adjustmentCents) * (input.tipPercent ?? 0)) / 100,
-		)
+		Math.round((subtotalCents * (input.tipPercent ?? 0)) / 100)
 	return {
 		subtotalCents,
 		adjustmentCents,

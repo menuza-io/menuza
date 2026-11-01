@@ -1,5 +1,7 @@
 import {
 	customerPaymentMethods,
+	discountIssuedCodes,
+	discountRedemptions,
 	customerRefreshTokens,
 	customers,
 	customerSubscriptions,
@@ -1097,6 +1099,14 @@ export async function erasePerson(
 						.update(voiceCalls)
 						.set({ customerId: null })
 						.where(inArray(voiceCalls.customerId, chunk))
+					await tx
+						.update(discountRedemptions)
+						.set({ customerId: null })
+						.where(inArray(discountRedemptions.customerId, chunk))
+					await tx
+						.update(discountIssuedCodes)
+						.set({ customerId: null })
+						.where(inArray(discountIssuedCodes.customerId, chunk))
 					await tx.delete(customers).where(inArray(customers.id, chunk))
 				})
 

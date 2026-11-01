@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { evaluateDiscounts } from './evaluate.ts'
+import { discountDefinitionSchema } from './definition.ts'
+import { evaluateDiscounts, quoteManualDiscount } from './evaluate.ts'
 import {
 	makeContext,
 	makeDiscount,
@@ -42,7 +43,13 @@ describe('percent and fixed discounts', () => {
 		const result = evaluateDiscounts(
 			makeInput({
 				lines: [makeLine({ unitMinor: 10_000 })],
-				discounts: [makeDiscount({ percentBp: 5000, maxDiscountMinor: 1000 })],
+				discounts: [
+					makeDiscount({
+						percentBp: 5000,
+						maxDiscountMinor: 1000,
+						currency: 'USD',
+					}),
+				],
 			}),
 		)
 		expect(result.totalDiscountMinor).toBe(1000)
@@ -312,7 +319,9 @@ describe('when a discount is available', () => {
 		const dates = { startsAt: '2026-10-30T10:00', endsAt: '2026-10-30T14:00' }
 		expect(at('2026-10-30T09:59', dates)).toBe(0)
 		expect(at('2026-10-30T10:00', dates)).toBe(100)
-		expect(at('2026-10-30T14:00', dates)).toBe(100)
+		expect(at('2026-10-30T13:59', dates)).toBe(100)
+		// The end is exclusive, like the end of a weekly window.
+		expect(at('2026-10-30T14:00', dates)).toBe(0)
 		expect(at('2026-10-30T14:01', dates)).toBe(0)
 	})
 
@@ -352,8 +361,12 @@ describe('when a discount is available', () => {
 	})
 
 	it('needs the minimum spend before discounts', () => {
-		expect(at('2026-10-30T12:00', { minSubtotalMinor: 1001 })).toBe(0)
-		expect(at('2026-10-30T12:00', { minSubtotalMinor: 1000 })).toBe(100)
+		expect(
+			at('2026-10-30T12:00', { minSubtotalMinor: 1001, currency: 'USD' }),
+		).toBe(0)
+		expect(
+			at('2026-10-30T12:00', { minSubtotalMinor: 1000, currency: 'USD' }),
+		).toBe(100)
 	})
 
 	it('ignores paused and archived discounts', () => {
@@ -474,7 +487,7 @@ describe('coupon codes', () => {
 		expect(
 			evaluateDiscounts(
 				makeInput({
-					discounts: [coupon({ minSubtotalMinor: 5000 })],
+					discounts: [coupon({ minSubtotalMinor: 5000, currency: 'USD' })],
 					codes: [codeRecord],
 					code: 'save10',
 				}),
@@ -528,16 +541,62 @@ describe('combining', () => {
 		expect(result.totalDiscountMinor).toBe(190)
 	})
 
-	it('lets a combinable code stack on top of automatic discounts', () => {
+	it('lets a combinable code stack on top of combinable automatic discounts', () => {
 		const result = evaluateDiscounts(
 			makeInput({
-				discounts: [auto10, coupon({ combinable: true })],
+				discounts: [
+					makeDiscount({
+						id: 'a2',
+						percentBp: 1000,
+						priority: 1,
+						combinable: true,
+					}),
+					coupon({ combinable: true }),
+				],
 				codes: [codeRecord],
 				code: 'save10',
 			}),
 		)
 		expect(result.applied.map((d) => d.discountId)).toEqual(['a2', 'c1'])
 		expect(result.totalDiscountMinor).toBe(190)
+	})
+
+	it('picks the better of a non-combinable automatic and a combinable stack with a code', () => {
+		const betterStack = evaluateDiscounts(
+			makeInput({
+				lines: [makeLine({ unitMinor: 1000 })],
+				discounts: [
+					makeDiscount({ id: 'big', percentBp: 3000 }),
+					makeDiscount({ id: 'mid', percentBp: 2000, combinable: true }),
+					coupon({ combinable: true, percentBp: 1500 }),
+				],
+				codes: [codeRecord],
+				code: 'save10',
+			}),
+		)
+		// 20% of 1000, then 15% of the remaining 800, beats 30% alone.
+		expect(betterStack.totalDiscountMinor).toBe(320)
+		expect(betterStack.applied.map((d) => d.discountId)).toEqual(['mid', 'c1'])
+
+		const betterAlone = evaluateDiscounts(
+			makeInput({
+				lines: [makeLine({ unitMinor: 1000 })],
+				discounts: [
+					makeDiscount({ id: 'big', percentBp: 3000 }),
+					makeDiscount({ id: 'mid', percentBp: 2000, combinable: true }),
+					coupon({ combinable: true, percentBp: 500 }),
+				],
+				codes: [codeRecord],
+				code: 'save10',
+			}),
+		)
+		expect(betterAlone.code).toEqual({
+			status: 'replaced',
+			reason: 'replaced_by_better_discount',
+			discountId: 'c1',
+		})
+		expect(betterAlone.applied.map((d) => d.discountId)).toEqual(['big'])
+		expect(betterAlone.totalDiscountMinor).toBe(300)
 	})
 
 	it('keeps the better of a non-combinable code and the automatic discount', () => {
@@ -614,5 +673,367 @@ describe('free delivery', () => {
 	it('does nothing on pickup', () => {
 		const result = evaluateDiscounts(makeInput({ discounts: [freeDelivery] }))
 		expect(result.totalDiscountMinor).toBe(0)
+	})
+})
+
+describe('caps and minimums are tied to a currency', () => {
+	it('refuses a cap in another currency instead of reading its units', () => {
+		const result = evaluateDiscounts(
+			makeInput({
+				currency: 'KWD',
+				lines: [makeLine({ unitMinor: 20_000 })],
+				discounts: [
+					makeDiscount({
+						percentBp: 5000,
+						maxDiscountMinor: 500,
+						currency: 'USD',
+					}),
+				],
+			}),
+		)
+		expect(result.totalDiscountMinor).toBe(0)
+	})
+
+	it('needs a currency on the definition when a cap or minimum is set', () => {
+		const {
+			id: ignoredId,
+			version: ignoredVersion,
+			createdAt: ignoredCreatedAt,
+			...definition
+		} = makeDiscount({ percentBp: 1000, maxDiscountMinor: 500, currency: null })
+		expect(discountDefinitionSchema.safeParse(definition).success).toBe(false)
+	})
+})
+
+describe('definition validation', () => {
+	const parse = (overrides: Record<string, unknown>) => {
+		const {
+			id: ignoredId,
+			version: ignoredVersion,
+			createdAt: ignoredCreatedAt,
+			...definition
+		} = makeDiscount(overrides)
+		return discountDefinitionSchema.safeParse(definition).success
+	}
+	it('rejects impossible dates, empty lists and a zero-length window', () => {
+		expect(parse({ startsAt: '2026-02-31T10:00' })).toBe(false)
+		expect(parse({ endsAt: '2026-10-30T25:99' })).toBe(false)
+		expect(parse({ schedule: [] })).toBe(false)
+		expect(parse({ locationIds: [] })).toBe(false)
+		expect(
+			parse({ startsAt: '2026-10-30T10:00', endsAt: '2026-10-30T10:00' }),
+		).toBe(false)
+		expect(
+			parse({ startsAt: '2026-10-30T10:00', endsAt: '2026-10-31T10:00' }),
+		).toBe(true)
+	})
+})
+
+describe('competing automatic discounts are capped', () => {
+	it('lets only the 12 first by priority compete, however many are configured', () => {
+		const discounts = Array.from({ length: 16 }, (_, index) =>
+			makeDiscount({
+				id: `d${String(index).padStart(2, '0')}`,
+				name: `Discount ${index}`,
+				priority: index,
+				// Each one is better than the one before, so the best of all 16 is
+				// the last one, which is past the cap.
+				percentBp: 500 + index * 100,
+			}),
+		)
+		const result = evaluateDiscounts(
+			makeInput({ lines: [makeLine({ unitMinor: 10_000 })], discounts }),
+		)
+		// The 12th (index 11) is the best that competed: 16% off 100.00.
+		expect(result.applied.map((entry) => entry.discountId)).toEqual(['d11'])
+		expect(result.totalDiscountMinor).toBe(1600)
+	})
+})
+
+const burgers = {
+	scope: 'items' as const,
+	itemIds: ['burger'],
+	categoryIds: [],
+	excludeItemIds: [],
+	excludeCategoryIds: [],
+}
+
+describe('what each unit has left', () => {
+	it('keeps the other units whole after a discount took one unit', () => {
+		// 3 burgers at 10.00. A sets the first to 2.00 (8.00 off one unit); B
+		// then takes 9.00 off each unit, which is 2.00 + 9.00 + 9.00, not 9.00
+		// off an average of 7.33 left on each.
+		const setPrice = makeDiscount({
+			id: 'a',
+			priority: 0,
+			combinable: true,
+			valueType: 'fixed_price',
+			percentBp: null,
+			amountMinor: 200,
+			currency: 'USD',
+			maxDiscountedUnits: 1,
+			target: burgers,
+		})
+		const nineOff = makeDiscount({
+			id: 'b',
+			priority: 1,
+			combinable: true,
+			valueType: 'fixed',
+			percentBp: null,
+			amountMinor: 900,
+			currency: 'USD',
+			target: burgers,
+		})
+		const result = evaluateDiscounts(
+			makeInput({
+				lines: [makeLine({ unitMinor: 1000, quantity: 3 })],
+				discounts: [setPrice, nineOff],
+			}),
+		)
+		expect(result.applied.map((a) => [a.discountId, a.amountMinor])).toEqual([
+			['a', 800],
+			['b', 2000],
+		])
+		expect(result.totalDiscountMinor).toBe(2800)
+	})
+
+	it('gives the same discount whatever order the lines are in', () => {
+		const firstHalf = makeDiscount({
+			id: 'half',
+			priority: 0,
+			combinable: true,
+			percentBp: 5000,
+			maxDiscountedUnits: 1,
+			target: { ...burgers, itemIds: ['burger', 'fries'] },
+		})
+		const fixed = makeDiscount({
+			id: 'fixed',
+			priority: 1,
+			combinable: true,
+			valueType: 'fixed',
+			percentBp: null,
+			amountMinor: 900,
+			currency: 'USD',
+			target: burgers,
+		})
+		const a = makeLine({ lineId: 'a', itemId: 'burger', unitMinor: 1000 })
+		const b = makeLine({
+			lineId: 'b',
+			itemId: 'fries',
+			unitMinor: 1000,
+			quantity: 3,
+		})
+		const one = evaluateDiscounts(
+			makeInput({ lines: [a, b], discounts: [firstHalf, fixed] }),
+		)
+		const other = evaluateDiscounts(
+			makeInput({ lines: [b, a], discounts: [firstHalf, fixed] }),
+		)
+		expect(other.totalDiscountMinor).toBe(one.totalDiscountMinor)
+		expect(other.lineDiscounts).toEqual(one.lineDiscounts)
+	})
+})
+
+describe('buy one get one counts complete groups only', () => {
+	it('buy 1 get 2 with five items discounts one group of two', () => {
+		const result = evaluateDiscounts(
+			makeInput({
+				lines: [makeLine({ unitMinor: 1000, quantity: 5 })],
+				discounts: [
+					makeDiscount({
+						percentBp: 10_000,
+						target: burgers,
+						quantityRule: { kind: 'bogo', buyQuantity: 1, getQuantity: 2 },
+					}),
+				],
+			}),
+		)
+		// [buy, free, free] [buy, -]: the last burger is bought, not free.
+		expect(result.totalDiscountMinor).toBe(2000)
+	})
+
+	it('an incomplete group alone gives nothing', () => {
+		const result = evaluateDiscounts(
+			makeInput({
+				lines: [makeLine({ unitMinor: 1000, quantity: 2 })],
+				discounts: [
+					makeDiscount({
+						percentBp: 10_000,
+						target: burgers,
+						quantityRule: { kind: 'bogo', buyQuantity: 1, getQuantity: 2 },
+					}),
+				],
+			}),
+		)
+		expect(result.totalDiscountMinor).toBe(0)
+	})
+})
+
+describe('a fixed amount for the whole selection', () => {
+	it('an amount ladder step is one amount, not one per item', () => {
+		// "Spend 30.00 on burgers, get 5.00": four burgers get 5.00 in all.
+		const ladder = makeDiscount({
+			valueType: 'fixed',
+			percentBp: null,
+			currency: 'USD',
+			target: burgers,
+			tiers: {
+				basis: 'spend',
+				steps: [{ at: 3000, percentBp: null, amountMinor: 500 }],
+			},
+		})
+		const result = evaluateDiscounts(
+			makeInput({
+				lines: [makeLine({ unitMinor: 1000, quantity: 4 })],
+				discounts: [ladder],
+			}),
+		)
+		expect(result.totalDiscountMinor).toBe(500)
+	})
+
+	it('an amount the cashier types is for the whole selection', () => {
+		const manual = makeDiscount({
+			application: 'manual',
+			valueType: 'variable_amount',
+			percentBp: null,
+			currency: 'USD',
+			target: burgers,
+		})
+		const quote = quoteManualDiscount({
+			discount: manual,
+			lines: [
+				makeLine({ lineId: 'a', unitMinor: 1000, quantity: 4 }),
+				makeLine({ lineId: 'b', itemId: 'fries', unitMinor: 300 }),
+			],
+			amountMinor: 500,
+		})
+		expect(quote).toEqual({ ok: true, amountMinor: 500 })
+	})
+
+	it('a fixed manual discount from the definition stays per item', () => {
+		const manual = makeDiscount({
+			application: 'manual',
+			valueType: 'fixed',
+			percentBp: null,
+			amountMinor: 100,
+			currency: 'USD',
+			target: burgers,
+		})
+		const quote = quoteManualDiscount({
+			discount: manual,
+			lines: [makeLine({ unitMinor: 1000, quantity: 4 })],
+		})
+		expect(quote).toEqual({ ok: true, amountMinor: 400 })
+	})
+})
+
+describe('currency of a buy-side spend', () => {
+	it('refuses "spend 30 on burgers" stored in another currency', () => {
+		const deal = makeDiscount({
+			percentBp: 10_000,
+			currency: 'SAR',
+			quantityRule: {
+				kind: 'buy_get',
+				buy: { spendMinor: 3000, itemIds: ['burger'], categoryIds: [] },
+				get: { quantity: 1, itemIds: ['fries'], categoryIds: [] },
+			},
+		})
+		const result = evaluateDiscounts(
+			makeInput({
+				currency: 'USD',
+				lines: [
+					makeLine({ lineId: 'a', unitMinor: 5000 }),
+					makeLine({ lineId: 'b', itemId: 'fries', unitMinor: 300 }),
+				],
+				discounts: [deal],
+			}),
+		)
+		expect(result.totalDiscountMinor).toBe(0)
+		expect(
+			evaluateDiscounts(
+				makeInput({
+					currency: 'SAR',
+					lines: [
+						makeLine({ lineId: 'a', unitMinor: 5000 }),
+						makeLine({ lineId: 'b', itemId: 'fries', unitMinor: 300 }),
+					],
+					discounts: [deal],
+				}),
+			).totalDiscountMinor,
+		).toBe(300)
+	})
+})
+
+describe('input guards', () => {
+	const run = (line: Partial<Parameters<typeof makeLine>[0]>) => () =>
+		evaluateDiscounts(
+			makeInput({
+				lines: [makeLine(line)],
+				discounts: [makeDiscount()],
+			}),
+		)
+
+	it('refuses quantities and prices no order can carry', () => {
+		expect(run({ quantity: 1_000_000_000 })).toThrow(RangeError)
+		expect(run({ quantity: 51 })).toThrow(RangeError)
+		expect(run({ quantity: 0 })).toThrow(RangeError)
+		expect(run({ quantity: 1.5 })).toThrow(RangeError)
+		expect(run({ quantity: Number.NaN })).toThrow(RangeError)
+		expect(run({ unitMinor: -100 })).toThrow(RangeError)
+		expect(run({ unitMinor: 10.5 })).toThrow(RangeError)
+		expect(run({ quantity: 50 })).not.toThrow()
+	})
+
+	it('caps the units in one evaluation', () => {
+		const lines = Array.from({ length: 101 }, (_, index) =>
+			makeLine({ lineId: String(index), quantity: 50 }),
+		)
+		expect(() =>
+			evaluateDiscounts(makeInput({ lines, discounts: [makeDiscount()] })),
+		).toThrow(RangeError)
+	})
+})
+
+describe('a wall clock that cannot be read', () => {
+	it('applies no dated or scheduled discount, but undated ones still do', () => {
+		const dated = makeDiscount({
+			id: 'dated',
+			combinable: true,
+			endsAt: '2026-12-31T00:00',
+		})
+		const scheduled = makeDiscount({
+			id: 'scheduled',
+			combinable: true,
+			schedule: [{ day: 5, start: '00:00', end: '23:59' }],
+		})
+		const plain = makeDiscount({ id: 'plain', combinable: true })
+		for (const localNow of ['', 'not a time', '2026-02-31T12:00']) {
+			const result = evaluateDiscounts(
+				makeInput({
+					context: makeContext({ localNow }),
+					discounts: [dated, scheduled, plain],
+				}),
+			)
+			expect(result.applied.map((a) => a.discountId)).toEqual(['plain'])
+		}
+	})
+})
+
+describe('ties between equal priorities', () => {
+	it('go to the older discount by instant, not by text', () => {
+		// The same day: 09:00 at +03:00 is 06:00Z, before 08:00Z, although its
+		// text sorts after.
+		const older = makeDiscount({
+			id: 'z-older',
+			percentBp: 1000,
+			createdAt: '2026-01-01T09:00:00+03:00',
+		})
+		const newer = makeDiscount({
+			id: 'a-newer',
+			percentBp: 1000,
+			createdAt: '2026-01-01T08:00:00.000Z',
+		})
+		const result = evaluateDiscounts(makeInput({ discounts: [newer, older] }))
+		expect(result.applied.map((a) => a.discountId)).toEqual(['z-older'])
 	})
 })

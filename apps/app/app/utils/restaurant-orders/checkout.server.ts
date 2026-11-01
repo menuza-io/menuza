@@ -264,6 +264,10 @@ function quoteAllowsCheckout(
 	if (quote.paymentStatus === 'failed') {
 		return { ok: false, response: jsonError(409, 'payment_failed') }
 	}
+	// A discount covered the whole total: there is nothing to pay.
+	if (quote.paymentStatus === 'not_required') {
+		return { ok: false, response: jsonError(409, 'payment_not_required') }
+	}
 	if (quote.holdExpiresAt) {
 		const holdMs = new Date(quote.holdExpiresAt).getTime()
 		if (Number.isFinite(holdMs) && holdMs <= Date.now()) {
@@ -601,14 +605,7 @@ export async function getRestaurantOrderPaymentStatus(options: {
 		throw error
 	}
 
-	let paymentStatus: RestaurantOrderPaymentStatusResult['paymentStatus'] =
-		quote.paymentStatus === 'unknown'
-			? 'unknown'
-			: quote.paymentStatus === 'paid'
-				? 'paid'
-				: quote.paymentStatus === 'failed'
-					? 'failed'
-					: 'pending'
+	let paymentStatus = browserPaymentStatus(quote.paymentStatus)
 
 	// Trusted provider reconciliation: Stripe by session retrieval (below),
 	// Checkout.com by payment lookup (after this block).
@@ -673,6 +670,20 @@ export async function getRestaurantOrderPaymentStatus(options: {
 		holdExpiresAt: quote.holdExpiresAt,
 		processor: bound?.processor ?? null,
 	}
+}
+
+/**
+ * The payment status the browser is told. A free order (a reward or discount
+ * covered the total, `not_required`) never takes a payment, so nothing is left
+ * to wait for: Sites reads `paid` as confirmed, and any other word would keep
+ * it polling until it times out.
+ */
+export function browserPaymentStatus(
+	status: RestaurantOrderQuote['paymentStatus'],
+): RestaurantOrderPaymentStatusResult['paymentStatus'] {
+	if (status === 'paid' || status === 'not_required') return 'paid'
+	if (status === 'unknown' || status === 'failed') return status
+	return 'pending'
 }
 
 /**

@@ -40,6 +40,32 @@ export default function TabsLayout() {
 		>
 			<Tabs.Screen name="index" options={{ href: null }} />
 			<Tabs.Screen
+				name="menu"
+				options={{
+					title: t`Menu`,
+					tabBarIcon: ({ color, size }) => (
+						<Icon
+							name="menu"
+							size={size}
+							color={tabIconColor(color, palette.primary)}
+						/>
+					),
+				}}
+			/>
+			<Tabs.Screen
+				name="drops"
+				options={{
+					title: t`Drops`,
+					tabBarIcon: ({ color, size }) => (
+						<Icon
+							name="drops"
+							size={size}
+							color={tabIconColor(color, palette.primary)}
+						/>
+					),
+				}}
+			/>
+			<Tabs.Screen
 				name="reservations"
 				options={{
 					title: t`Reservations`,

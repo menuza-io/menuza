@@ -89,6 +89,7 @@
     "@repo/ai": "*",
     "@repo/audit": "*",
     "@repo/database": "*",
+    "@repo/discounts": "*",
     "@repo/email": "*",
     "@repo/flow-editor": "*",
     "@repo/geo": "*",

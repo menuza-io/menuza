@@ -79,6 +79,32 @@ describe('buildPurchaseSnapshot', () => {
 		expect(snapshot.lines.map((entry) => entry.netMinor)).toEqual([540, 360])
 	})
 
+	it('earns on net spend: line discounts come off before the reward', () => {
+		const snapshot = buildPurchaseSnapshot({
+			currency: 'USD',
+			totalPaidMinor: 450,
+			taxMinor: 0,
+			taxInclusive: false,
+			lines: [line('a', 600), line('b', 400)],
+			lineDiscounts: [{ lineId: 'a', discountMinor: 150 }],
+			allocation: [{ lineId: 'b', discountMinor: 400, rewardUnits: 0 }],
+		})
+		expect(snapshot.lines.map((entry) => entry.netMinor)).toEqual([450, 0])
+	})
+
+	it('never takes more off a line than it cost across discounts and the reward', () => {
+		const snapshot = buildPurchaseSnapshot({
+			currency: 'USD',
+			totalPaidMinor: 0,
+			taxMinor: 0,
+			taxInclusive: false,
+			lines: [line('a', 300)],
+			lineDiscounts: [{ lineId: 'a', discountMinor: 250 }],
+			allocation: [{ lineId: 'a', discountMinor: 250, rewardUnits: 0 }],
+		})
+		expect(snapshot.lines[0]?.netMinor).toBe(0)
+	})
+
 	it('records reward units so a free item earns no item points', () => {
 		const snapshot = buildPurchaseSnapshot({
 			currency: 'USD',

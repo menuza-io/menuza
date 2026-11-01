@@ -199,13 +199,18 @@ describe('quoting', () => {
 		expect(
 			quoteReward(snapshot, loyaltyCart([cartLine()], 'EUR'), 100),
 		).toMatchObject({ applicable: false, code: 'currency_mismatch' })
+		// A discount already on the line no longer blocks the reward: it applies
+		// to what is left (a 500 reward capped at the 100 left).
 		expect(
 			quoteReward(
 				snapshot,
-				{ currency: 'USD', lines: [cartLine()], otherDiscountMinor: 100 },
+				{
+					currency: 'USD',
+					lines: [cartLine({ discountedMinor: 900 })],
+				},
 				100,
 			),
-		).toMatchObject({ applicable: false, code: 'stacking_not_allowed' })
+		).toMatchObject({ applicable: true, discountMinor: 100 })
 		const itemsReward = await makeReward(
 			ORG,
 			rewardDefinition({

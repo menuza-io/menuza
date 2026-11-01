@@ -155,6 +155,27 @@ export async function upsertShift(
 	)
 }
 
+/** What a closed sale's adjustments took off, split into discounts and loyalty rewards. */
+function adjustmentSplit(row: PosOrderRow) {
+	let discountCents = 0
+	let loyaltyDiscountCents = 0
+	const adjustments = Array.isArray(row.adjustments)
+		? (row.adjustments as Array<{ kind?: unknown; amountCents?: unknown }>)
+		: []
+	if (adjustments.length === 0) {
+		// A till that sent no adjustment lines: its total is all discount.
+		return { discountCents: row.adjustmentCents, loyaltyDiscountCents }
+	}
+	for (const adjustment of adjustments) {
+		const amount = adjustment.amountCents
+		if (typeof amount !== 'number' || !Number.isSafeInteger(amount)) continue
+		if (adjustment.kind === 'loyalty') loyaltyDiscountCents += amount
+		else discountCents += amount
+	}
+	return { discountCents, loyaltyDiscountCents }
+}
+
+/** A stored sale as the shared summary reads it, discount figures included. */
 const summaryOrder = (row: PosOrderRow) => ({
 	status: row.status,
 	totals: {
@@ -162,8 +183,25 @@ const summaryOrder = (row: PosOrderRow) => ({
 		tipCents: row.tipCents,
 		totalCents: row.totalCents,
 	},
+	subtotalCents: row.subtotalCents,
+	...adjustmentSplit(row),
 	lineVoids: row.lineVoids as Array<{ quantity: number; unitCents: number }>,
 })
+
+/**
+ * The shared sales summary (`posSalesSummary` in `@repo/common/pos-reports`,
+ * which defines every figure, `grossBeforeDiscountsCents`, `discountCents` and
+ * `loyaltyDiscountCents` included). A stored sale always carries its subtotal
+ * and adjustments, so the discount figures are always present here.
+ */
+export type PosShiftSalesSummary = PosSalesSummary
+
+function salesSummary(
+	rows: PosOrderRow[],
+	rest: Omit<Parameters<typeof posSalesSummary>[0], 'orders'>,
+): PosShiftSalesSummary {
+	return posSalesSummary({ orders: rows.map(summaryOrder), ...rest })
+}
 
 /** Payments and refunds as the summary wants them; a refund's tax share comes from its order. */
 function summaryMoney(
@@ -201,7 +239,7 @@ async function ordersByIds(db: TenantDatabase, ids: string[]) {
 
 export type ShiftReport = {
 	shift: ReturnType<typeof serializeShift>
-	summary: PosSalesSummary
+	summary: PosShiftSalesSummary
 	/** Counted cash minus what the server expects; null while the shift is open. */
 	overShortCents: number | null
 }
@@ -266,8 +304,7 @@ export async function shiftReport(
 		db,
 		money.map((m) => m.orderId),
 	)
-	const summary = posSalesSummary({
-		orders: rungUp.map(summaryOrder),
+	const summary = salesSummary(rungUp, {
 		...summaryMoney(money, ordersById),
 		openingFloatCents: shift.openingFloatCents,
 		movements,
@@ -358,13 +395,13 @@ export async function dayReport(
 			const ids = new Set(mine.map((o) => o.id))
 			return {
 				terminal: { code: d.terminalCode, label: d.label },
-				summary: posSalesSummary({
-					orders: mine.map(summaryOrder),
-					...summaryMoney(
+				summary: salesSummary(
+					mine,
+					summaryMoney(
 						money.filter((m) => ids.has(m.orderId)),
 						ordersById,
 					),
-				}),
+				),
 			}
 		})
 		.filter(
@@ -390,10 +427,7 @@ export async function dayReport(
 		businessDate,
 		// Every order of one organization is in the restaurant's currency.
 		currency: orders[0]?.currency ?? null,
-		summary: posSalesSummary({
-			orders: orders.map(summaryOrder),
-			...summaryMoney(money, ordersById),
-		}),
+		summary: salesSummary(orders, summaryMoney(money, ordersById)),
 		byTerminal,
 		shifts,
 	}

@@ -157,6 +157,35 @@ describe('validateFlowCanvas', () => {
 		expect(validation.nodeErrors.c1).toBeDefined()
 	})
 
+	it('pairs the {{couponCode}} tag with a coupon on the step', () => {
+		const step = (id: string, data: Record<string, unknown>): Node => ({
+			id,
+			type: 'action_sms',
+			position: { x: 0, y: 0 },
+			data,
+		})
+		const offer = {
+			mode: 'unique',
+			discountId: 'd1',
+			prefix: '',
+			validDays: 30,
+		}
+		const { nodeErrors } = validateFlowCanvas(
+			[
+				step('tagOnly', { messageText: 'Code {{couponCode}}' }),
+				step('offerOnly', { messageText: 'Hello', discountOffer: offer }),
+				step('both', {
+					messageText: 'Code {{couponCode}}',
+					discountOffer: offer,
+				}),
+			],
+			[],
+		)
+		expect(nodeErrors.tagOnly?.[0]).toMatch(/Choose a coupon/)
+		expect(nodeErrors.offerOnly?.[0]).toMatch(/Add the Coupon code tag/)
+		expect(nodeErrors.both).toBeUndefined()
+	})
+
 	it('accepts a valid linear workflow', () => {
 		const nodes: Node[] = [
 			{

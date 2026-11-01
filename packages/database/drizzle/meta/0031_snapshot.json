@@ -1186,6 +1186,27 @@
 					"autoincrement": false,
 					"default": false
 				},
+				"combinesWith": {
+					"name": "combinesWith",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"tiers": {
+					"name": "tiers",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"maxDeliveryFeeMinor": {
+					"name": "maxDeliveryFeeMinor",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
 				"priority": {
 					"name": "priority",
 					"type": "integer",

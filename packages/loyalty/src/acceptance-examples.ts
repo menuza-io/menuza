@@ -1,4 +1,5 @@
-import { type LoyaltyCart } from './cart.ts'
+import { type z } from 'zod'
+import { type LoyaltyCart, type loyaltyCartSchema } from './cart.ts'
 import { type LoyaltyPurchaseSnapshot } from './earning.ts'
 import { type LoyaltyEarningRule } from './program.ts'
 import { type LoyaltyRewardDefinition } from './rewards.ts'
@@ -164,7 +165,7 @@ type DiscountExample = {
 	id: string
 	rule: string
 	reward: LoyaltyRewardDefinition
-	cart: LoyaltyCart
+	cart: z.input<typeof loyaltyCartSchema>
 	targetLineId?: string
 	expected:
 		| { ok: true; discountMinor: number; lines: Record<string, number> }
@@ -200,6 +201,7 @@ const cartLine = (
 	quantity: 1,
 	unitBaseMinor: unitMinor,
 	unitMinor,
+	discountedMinor: 0,
 	...extra,
 })
 
@@ -215,7 +217,6 @@ export const DISCOUNT_EXAMPLES: readonly DiscountExample[] = [
 		}),
 		cart: {
 			currency: 'USD',
-			otherDiscountMinor: 0,
 			lines: [cartLine('l1', 'tea', 350)],
 		},
 		expected: { ok: true, discountMinor: 350, lines: { l1: 350 } },
@@ -232,7 +233,6 @@ export const DISCOUNT_EXAMPLES: readonly DiscountExample[] = [
 		}),
 		cart: {
 			currency: 'USD',
-			otherDiscountMinor: 0,
 			lines: [
 				cartLine('l1', 'croissant', 500, {
 					quantity: 4,
@@ -255,7 +255,6 @@ export const DISCOUNT_EXAMPLES: readonly DiscountExample[] = [
 		}),
 		cart: {
 			currency: 'USD',
-			otherDiscountMinor: 0,
 			lines: [cartLine('l1', 'bagel', 299)],
 		},
 		expected: { ok: true, discountMinor: 44, lines: { l1: 44 } },
@@ -271,7 +270,6 @@ export const DISCOUNT_EXAMPLES: readonly DiscountExample[] = [
 		}),
 		cart: {
 			currency: 'USD',
-			otherDiscountMinor: 0,
 			lines: [
 				cartLine('small', 'latte', 360, {
 					variantId: 'small',
@@ -296,7 +294,6 @@ export const DISCOUNT_EXAMPLES: readonly DiscountExample[] = [
 		}),
 		cart: {
 			currency: 'USD',
-			otherDiscountMinor: 0,
 			lines: [
 				cartLine('small', 'latte', 360, {
 					variantId: 'small',
@@ -322,7 +319,6 @@ export const DISCOUNT_EXAMPLES: readonly DiscountExample[] = [
 		}),
 		cart: {
 			currency: 'USD',
-			otherDiscountMinor: 0,
 			lines: [
 				cartLine('a', 'x', 100),
 				cartLine('b', 'y', 100),
@@ -342,7 +338,6 @@ export const DISCOUNT_EXAMPLES: readonly DiscountExample[] = [
 		}),
 		cart: {
 			currency: 'USD',
-			otherDiscountMinor: 0,
 			lines: [cartLine('l1', 'water', 50, { unitBaseMinor: 0 })],
 		},
 		expected: { ok: false, code: 'zero_value' },
@@ -359,14 +354,61 @@ export const DISCOUNT_EXAMPLES: readonly DiscountExample[] = [
 		}),
 		cart: {
 			currency: 'USD',
-			otherDiscountMinor: 0,
 			lines: [cartLine('l1', 'tea', 300)],
 		},
 		expected: { ok: false, code: 'reward_not_applicable' },
 	},
 	{
-		id: 'no-stacking',
-		rule: 'A bill that already has a discretionary discount takes no reward.',
+		id: 'reward-on-discounted-line',
+		rule: 'A $3 coupon already took $1 off a $3 tea: 50% off the order is half of the $2 left (100 cents), not half of $3.',
+		reward: reward({
+			kind: 'order',
+			name: '50% off',
+			pointsCost: 80,
+			discount: { type: 'percent', percentBp: 5000, maxDiscountMinor: null },
+		}),
+		cart: {
+			currency: 'USD',
+			lines: [cartLine('l1', 'tea', 300, { discountedMinor: 100 })],
+		},
+		expected: { ok: true, discountMinor: 100, lines: { l1: 100 } },
+	},
+	{
+		id: 'fixed-reward-capped-at-what-is-left',
+		rule: '$5 off the order after discounts left $3.50: the reward takes $3.50.',
+		reward: reward({
+			kind: 'order',
+			name: '$5 off',
+			pointsCost: 100,
+			discount: { type: 'fixed', amountMinor: 500 },
+		}),
+		cart: {
+			currency: 'USD',
+			lines: [
+				cartLine('l1', 'tea', 300, { discountedMinor: 50 }),
+				cartLine('l2', 'cake', 400, { discountedMinor: 300 }),
+			],
+		},
+		expected: { ok: true, discountMinor: 350, lines: { l1: 250, l2: 100 } },
+	},
+	{
+		id: 'free-item-on-discounted-line',
+		rule: 'A free latte on a $4.00 latte that a coupon cut by $1.50 is worth the $2.50 left.',
+		reward: reward({
+			kind: 'free_item',
+			name: 'Free latte',
+			pointsCost: 200,
+			itemId: 'latte',
+		}),
+		cart: {
+			currency: 'USD',
+			lines: [cartLine('l1', 'latte', 400, { discountedMinor: 150 })],
+		},
+		expected: { ok: true, discountMinor: 250, lines: { l1: 250 } },
+	},
+	{
+		id: 'fully-discounted-line-takes-no-reward',
+		rule: 'A line a coupon already made free has nothing left for an order reward.',
 		reward: reward({
 			kind: 'order',
 			name: '$1 off',
@@ -375,10 +417,9 @@ export const DISCOUNT_EXAMPLES: readonly DiscountExample[] = [
 		}),
 		cart: {
 			currency: 'USD',
-			otherDiscountMinor: 200,
-			lines: [cartLine('l1', 'tea', 300)],
+			lines: [cartLine('l1', 'tea', 300, { discountedMinor: 300 })],
 		},
-		expected: { ok: false, code: 'stacking_not_allowed' },
+		expected: { ok: false, code: 'reward_not_applicable' },
 	},
 	{
 		id: 'currency-locked',
@@ -391,7 +432,6 @@ export const DISCOUNT_EXAMPLES: readonly DiscountExample[] = [
 		}),
 		cart: {
 			currency: 'SAR',
-			otherDiscountMinor: 0,
 			lines: [cartLine('l1', 'tea', 300)],
 		},
 		expected: { ok: false, code: 'currency_mismatch' },

@@ -121,6 +121,87 @@ describe('OrderDetail', () => {
 		expect(screen.getByTestId('order-total')).toHaveTextContent('$35.33')
 	})
 
+	it('lists each applied discount with its code, the delivery discount and loyalty apart', () => {
+		show(
+			order({
+				subtotalCents: 3700,
+				discountCents: 400,
+				deliveryDiscountCents: 300,
+				loyaltyDiscountCents: 500,
+				discounts: [
+					{
+						discountId: 'd1',
+						version: 1,
+						name: 'Lunch deal',
+						code: 'LUNCH',
+						amountMinor: 400,
+						deliveryAmountMinor: 0,
+						allocation: [],
+					},
+					{
+						discountId: 'd2',
+						name: 'Free delivery',
+						code: null,
+						amountMinor: 0,
+						deliveryAmountMinor: 300,
+					},
+					'junk',
+					{ nope: true },
+				],
+				taxCents: 300,
+				tipCents: 0,
+				tipPercent: null,
+				totalCents: 2800,
+			}),
+		)
+		const totals = screen.getByTestId('order-totals')
+		expect(totals).toHaveTextContent('Lunch deal (LUNCH)-$4.00')
+		expect(totals).toHaveTextContent('Delivery discount · Free delivery-$3.00')
+		expect(totals).toHaveTextContent('Loyalty reward-$5.00')
+		expect(screen.getAllByTestId('order-discount-row')).toHaveLength(1)
+		expect(screen.getAllByTestId('order-delivery-discount-row')).toHaveLength(1)
+	})
+
+	it('falls back to totals when the discount list is missing', () => {
+		show(order({ discountCents: 250, deliveryDiscountCents: 100 }))
+		const totals = screen.getByTestId('order-totals')
+		expect(totals).toHaveTextContent('Discount-$2.50')
+		expect(totals).toHaveTextContent('Delivery discount-$1.00')
+	})
+
+	it('shows no discount rows when there are none', () => {
+		show(order())
+		expect(screen.queryByTestId('order-discount-row')).toBeNull()
+		expect(screen.queryByTestId('order-free-badge')).toBeNull()
+	})
+
+	it('marks a free order and never asks for handoff payment', () => {
+		const onUpdate = show(
+			order({
+				status: 'ready',
+				paymentStatus: 'not_required',
+				paymentMethod: 'handoff',
+				paymentProcessor: null,
+				paidAt: null,
+				totalCents: 0,
+			}),
+		)
+		expect(screen.getByTestId('order-free-badge')).toHaveTextContent(
+			'Free order',
+		)
+		expect(screen.getByTestId('order-payment-status')).toHaveTextContent(
+			'No payment needed',
+		)
+		expect(screen.getByTestId('order-payment-summary')).toHaveTextContent(
+			'No payment needed',
+		)
+		expect(screen.queryByText('I have received payment at handoff')).toBeNull()
+		const complete = screen.getByRole('button', { name: 'Complete order' })
+		expect(complete).toBeEnabled()
+		fireEvent.click(complete)
+		expect(onUpdate).toHaveBeenCalledWith('completed', false)
+	})
+
 	it('explains a payment under review and offers the review actions', () => {
 		const onUpdate = show(order({ status: 'payment_review' }))
 		expect(screen.getByTestId('order-review-note')).toHaveTextContent(

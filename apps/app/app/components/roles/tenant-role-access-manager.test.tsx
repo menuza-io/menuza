@@ -50,6 +50,17 @@ describe('RoleAccessForm permission checkboxes', () => {
 		).not.toBeChecked()
 	})
 
+	it('offers the two discount permissions', async () => {
+		renderForm()
+
+		expect(
+			await screen.findByRole('checkbox', { name: 'View discounts' }),
+		).not.toBeChecked()
+		expect(
+			screen.getByRole('checkbox', { name: 'Manage discounts' }),
+		).not.toBeChecked()
+	})
+
 	it('shows the group checkbox as mixed while only some permissions are selected', async () => {
 		const user = userEvent.setup()
 		renderForm()

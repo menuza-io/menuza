@@ -107,8 +107,8 @@ if (!allowedModes.length) allowedModes.push('pickup')
 const odLabels = buildOrderDetailsLabels(i18n)
 const loyaltyLabels = buildLoyaltyLabels(i18n)
 
-const menuHref = getLocaleHref('/menu', requestedLocale, defaultLocale)
-const successHref = getLocaleHref('/menu/success', requestedLocale, defaultLocale)
+const menuHref = getLocaleHref('/menu', requestedLocale, requestedLocale, defaultLocale)
+const successHref = getLocaleHref('/menu/success', requestedLocale, requestedLocale, defaultLocale)
 
 const price = (amount: number) => formatMoney(amount, currency, requestedLocale)
 
@@ -150,6 +150,12 @@ const totalText = i18n._(msg`Total`)
 const placeOrderLabel = i18n._(msg`Place order`)
 const termsNotice = i18n._(msg`Secure checkout. By placing your order you agree to the restaurant's terms.`)
 const cartAvailabilityNotice = i18n._(msg`Some items are no longer available and were removed from your order.`)
+const couponToggleLabel = i18n._(msg`Add a coupon code`)
+const couponFieldLabel = i18n._(msg`Coupon code`)
+const couponApplyLabel = i18n._(msg`Apply`)
+const couponRemoveLabel = i18n._(msg`Remove`)
+const freeOrderTitle = i18n._(msg`No payment needed`)
+const freeOrderDesc = i18n._(msg`Your savings cover the whole order.`)
 
 // ---------- drop checkout strings ----------
 
@@ -206,6 +212,68 @@ const checkoutLabels = {
 		msg`Your order was placed, but we couldn't start online payment. You can pay from your receipt page.`,
 	),
 	viewReceipt: i18n._(msg`View your receipt`),
+	coupon: {
+		apply: couponApplyLabel,
+		checking: i18n._(msg`Checking…`),
+		remove: couponRemoveLabel,
+		removeCode: translate(i18n, msg`Remove code {code}`, { code: '{code}' }),
+	},
+	discounts: {
+		refusals: {
+			not_found: i18n._(msg`That code isn't valid. Check it and try again.`),
+			not_started: i18n._(msg`This code isn't active yet.`),
+			expired: i18n._(msg`This code has expired.`),
+			not_available_now: i18n._(msg`This code isn't available at this time.`),
+			wrong_location: i18n._(msg`This code doesn't work at this location.`),
+			wrong_channel: i18n._(msg`This code can't be used for online orders.`),
+			wrong_fulfillment: i18n._(
+				msg`This code doesn't apply to this type of order. Try switching between pickup and delivery.`,
+			),
+			wrong_drop: i18n._(msg`This code can't be used on drop orders.`),
+			sign_in_required: i18n._(msg`Sign in to use this code.`),
+			new_customers_only: i18n._(msg`This code is for first-time customers only.`),
+			members_only: i18n._(msg`This code is for rewards members only.`),
+			limit_reached: i18n._(msg`This code has reached its limit.`),
+			minimum_not_met: i18n._(msg`Your order is below the minimum spend for this code.`),
+			requirement_not_met: i18n._(
+				msg`Add the required items to your order to use this code.`,
+			),
+			quantity_not_met: i18n._(msg`Add more of the eligible items to use this code.`),
+			not_applicable: i18n._(msg`This code doesn't apply to anything in your order.`),
+		},
+		replaced: i18n._(msg`We applied a better discount instead of this code.`),
+		enterCode: i18n._(msg`Enter a coupon code.`),
+		applied: translate(i18n, msg`{code} applied`, { code: '{code}' }),
+		appliedAnnounce: translate(
+			i18n,
+			msg`Code {code} applied. You save {amount}. Total {total}.`,
+			{ code: '{code}', amount: '{amount}', total: '{total}' },
+		),
+		removedAnnounce: translate(i18n, msg`Coupon code removed. Total {total}.`, {
+			total: '{total}',
+		}),
+		totalUpdated: translate(i18n, msg`Total updated to {total}.`, { total: '{total}' }),
+		checking: i18n._(msg`Checking your code…`),
+		updating: i18n._(msg`Updating your total…`),
+		estimate: i18n._(
+			msg`Estimated total. We couldn't update it just now, so the final amount may differ.`,
+		),
+		deliveryDiscount: translate(i18n, msg`{name} (delivery)`, { name: '{name}' }),
+		discountChanged: translate(
+			i18n,
+			msg`Your discount changed, so we updated your total to {total}. Please review it and place your order again.`,
+			{ total: '{total}' },
+		),
+		couponRefusedGeneric: i18n._(
+			msg`We couldn't apply your coupon code. Please check it and try again.`,
+		),
+		discountsDisabled: i18n._(
+			msg`Discounts aren't available right now, so we removed your code. Please review your total and place your order again.`,
+		),
+		totalUnconfirmed: i18n._(msg`We couldn't confirm your total. Please try again.`),
+		waiting: i18n._(msg`We'll check your code once your order details are complete.`),
+		unchecked: i18n._(msg`We couldn't check your code just now. Please try again.`),
+	},
 	validation: {
 		name: i18n._(msg`Please enter your full name.`),
 		phone: i18n._(msg`Please enter your phone number.`),
@@ -241,6 +309,15 @@ const checkoutLabels = {
 			msg`Your order changed while it was being placed. Please review it and try again.`,
 		),
 		rateLimited: i18n._(msg`Too many attempts. Please try again later.`),
+		discountChanged: i18n._(
+			msg`Your discount changed. Please review your total and place your order again.`,
+		),
+		couponRefused: i18n._(
+			msg`We couldn't apply your coupon code. Please check it and try again.`,
+		),
+		discountsUnavailable: i18n._(
+			msg`Discounts aren't available right now. Please review your total and place your order again.`,
+		),
 		generic: i18n._(msg`We could not place your order. Please try again.`),
 	},
 }
@@ -549,8 +626,59 @@ const tipOff = 'border-border bg-background text-foreground'
 						{/* Injected dynamically from cart */}
 					</ul>
 
+					{/* Coupon code: collapsed to a link until asked for. Shown once the region
+					    says discounts exist (hidden when they are off). The cart summary
+					    only ever sends the typed code; the region decides what it is worth. */}
+					<div id="coupon-block" class="mt-1 hidden border-t border-border pt-2">
+						<button
+							type="button"
+							id="coupon-toggle"
+							aria-expanded="false"
+							aria-controls="coupon-panel"
+							class="focus-ring group -ms-2 inline-flex min-h-11 items-center gap-2 rounded-md px-2 text-sm font-semibold text-foreground underline-offset-4 hover:underline"
+						>
+							<svg xmlns="http://www.w3.org/2000/svg" class="size-4 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/></svg>
+							<span>{couponToggleLabel}</span>
+							<svg xmlns="http://www.w3.org/2000/svg" class="size-4 text-muted-foreground transition-transform duration-150 motion-reduce:transition-none group-aria-expanded:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+						</button>
+						<div id="coupon-panel" class="hidden pt-1 pb-1">
+							<label for="coupon-input" class={labelClass}>{couponFieldLabel}</label>
+							<div class="flex items-start gap-2">
+								<input
+									type="text"
+									id="coupon-input"
+									class="field min-w-0 flex-1 text-start rtl:text-end"
+									dir="ltr"
+									maxlength="40"
+									autocomplete="off"
+									autocapitalize="characters"
+									autocorrect="off"
+									spellcheck="false"
+									enterkeyhint="done"
+									aria-describedby="coupon-message"
+								/>
+								<button type="button" id="coupon-clear" class="btn-secondary hidden min-h-12 shrink-0 px-4">{couponRemoveLabel}</button>
+								<button type="button" id="coupon-apply" class="btn-secondary min-h-12 shrink-0 px-5 aria-disabled:cursor-not-allowed aria-disabled:opacity-60">
+									<svg id="coupon-spinner" xmlns="http://www.w3.org/2000/svg" class="hidden size-4 animate-spin motion-reduce:animate-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-6.22-8.56"/></svg>
+									<span id="coupon-apply-label">{couponApplyLabel}</span>
+								</button>
+							</div>
+						</div>
+						<div id="coupon-applied" tabindex="-1" class="hidden items-center gap-2 py-1 outline-none [&:not(.hidden)]:flex">
+							<span class="badge tone-success min-h-8 min-w-0 gap-1.5 px-2.5 text-sm">
+								<svg xmlns="http://www.w3.org/2000/svg" class="size-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+								<span id="coupon-applied-text" dir="auto" class="bidi-isolate truncate"></span>
+							</span>
+							<button type="button" id="coupon-remove" class="focus-ring ms-auto inline-flex min-h-11 shrink-0 items-center rounded-md px-2 text-sm font-semibold text-muted-foreground underline underline-offset-4 hover:text-foreground">{couponRemoveLabel}</button>
+						</div>
+						<p id="coupon-message" role="status" aria-atomic="true" class="sr-only items-start gap-2 text-sm font-medium [&:not(.sr-only)]:flex [&:not(.sr-only)]:pb-1">
+							<svg id="coupon-message-icon" xmlns="http://www.w3.org/2000/svg" class="mt-0.5 size-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+							<span id="coupon-message-text" class="min-w-0 flex-1 text-pretty"></span>
+						</p>
+					</div>
+
 					{/* Breakdown (estimate — the receipt is authoritative) */}
-					<dl class="mt-2 space-y-2 border-t border-border pt-4">
+					<dl id="co-breakdown" class="mt-2 space-y-2 border-t border-border pt-4">
 						<div class={rowClass}>
 							<dt>{subtotalText}</dt>
 							<dd id="co-subtotal" class={valueClass}>{price(0)}</dd>
@@ -582,7 +710,19 @@ const tipOff = 'border-border bg-background text-foreground'
 							<dd id="co-total" class="price font-heading text-xl">{price(0)}</dd>
 						</div>
 					</dl>
+					<p id="co-totals-note" class="hidden min-h-5 items-center gap-2 text-sm text-muted-foreground [&:not(.hidden)]:mt-3 [&:not(.hidden)]:flex">
+						<svg id="co-totals-spinner" xmlns="http://www.w3.org/2000/svg" class="hidden size-4 shrink-0 animate-spin motion-reduce:animate-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-6.22-8.56"/></svg>
+						<span id="co-totals-note-text"></span>
+					</p>
 					<p id="co-loyalty-notice" class="text-sm text-muted-foreground not-empty:mt-3" role="status"></p>
+					<div id="co-free-note" class:list={[noticeClass, 'tone-success hidden mt-4']} role="status">
+						<svg xmlns="http://www.w3.org/2000/svg" class="mt-0.5 size-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+						<div class="min-w-0 flex-1">
+							<p class="font-semibold">{freeOrderTitle}</p>
+							<p>{freeOrderDesc}</p>
+						</div>
+					</div>
+					<p id="discount-live" class="sr-only" aria-live="polite" aria-atomic="true"></p>
 
 					<div id="place-order-block" class:list={[noticeClass, 'tone-warning hidden mt-5']} role="status">
 						<svg xmlns="http://www.w3.org/2000/svg" class="mt-0.5 size-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
@@ -690,6 +830,35 @@ const tipOff = 'border-border bg-background text-foreground'
 		import { formatRemaining, startCountdown } from '~/lib/ordering/countdown'
 		import { checkoutOrderPayload } from '~/lib/ordering/checkout-payload'
 		import { orderErrorMessage } from '~/lib/ordering/order-errors'
+		import {
+			cleanTypedCode,
+			createDiscountQuotes,
+			isPlausibleCode,
+			isTerminalRefusal,
+			loadStoredCode,
+			parseDiscountOrderRefusal,
+			saveStoredCode,
+			type DiscountOrderRefusal,
+			type DiscountQuotes,
+		} from '~/lib/ordering/discount-quote'
+		import {
+			appliedAnnouncement,
+			couponView,
+			discountLines,
+			refusalMessage,
+			totalsFromQuote,
+			totalsNote,
+			type DiscountLabels,
+			type DiscountLine,
+		} from '~/lib/ordering/discount-view'
+		import { type DiscountRefusalReason } from '@repo/discounts'
+		import { deliveryFields } from '~/lib/ordering/cart-discounts'
+		import {
+			attemptKey,
+			couponContextKey,
+			shouldRetryHeldCoupon,
+			type HeldCoupon,
+		} from '~/lib/ordering/coupon-retry'
 		import { estimateTax } from '~/lib/ordering/tax'
 		import {
 			OrderRequestError,
@@ -697,6 +866,7 @@ const tipOff = 'border-border bg-background text-foreground'
 			clearCheckoutAttempt,
 			fetchOrderingOptions,
 			orderLines,
+			postDiscountQuote,
 			saveOrderCapability,
 			startOrderPayment,
 			submitRegionalOrder,
@@ -772,6 +942,8 @@ const tipOff = 'border-border bg-background text-foreground'
 			ordersClose: string
 			orderPlacedPaymentFailed: string
 			viewReceipt: string
+			coupon: { apply: string; checking: string; remove: string; removeCode: string }
+			discounts: DiscountLabels
 			validation: { name: string; phone: string; email: string; address: string }
 			errors: OrderErrorLabels
 		}
@@ -827,6 +999,27 @@ const tipOff = 'border-border bg-background text-foreground'
 		// Rewards for signed-in customers; set up once the cart is known.
 		const loyaltyLabels = readLoyaltyLabels()
 		let loyalty: RewardQuotes | null = null
+		// Discounts and coupon codes: the region prices them; the typed code is
+		// the only thing this page decides. `couponCode` is what is sent, `held`
+		// a code refused for good, kept on screen with its message until edited.
+		const discountLabels = labels.discounts
+		let discounts: DiscountQuotes | null = null
+		const linkCode = cleanTypedCode(
+			new URLSearchParams(location.search).get('coupon') ?? '',
+		)
+		const couponFromLink =
+			linkCode && isPlausibleCode(linkCode) ? linkCode : null
+		let couponCode: string | null = couponFromLink || loadStoredCode(sessionStorage, orgId)
+		let heldRefusal: HeldCoupon | null = null
+		// Codes sent again after a refusal the region words as "not found" (see
+		// `coupon-retry.ts`): once per code and order context.
+		const triedCoupons = new Set<string>()
+		let couponExpanded = false
+		let couponBusy = false
+		let pendingAnnounce: 'apply' | 'remove' | null = null
+		let focusChipAfterRender = false
+		let lastDiscountTotal: number | null = null
+		let freeNow = false
 
 		// Location-derived values resolved server-side (same source as the menu page).
 		// Drop orders tax at the pickup location chosen on the drop page.
@@ -865,33 +1058,120 @@ const tipOff = 'border-border bg-background text-foreground'
 			return node
 		}
 
-		// The on-page summary is an estimate unless the region priced this exact
-		// order for a member's rewards; the server re-prices everything and the
-		// authoritative totals render on the success page from the receipt.
-		function computeTotals() {
-			const quoted = loyalty?.freshQuote()?.totals
+		type Totals = {
+			subtotal: number
+			tax: number
+			deliveryFee: number
+			deliveryDiscount: number
+			tip: number
+			/** What discounts take off the items (never delivery). */
+			discount: number
+			/** A loyalty reward's saving. */
+			loyaltyDiscount: number
+			total: number
+			lines: DiscountLine[]
+			/** Priced by the region for the order on screen. */
+			priced: boolean
+		}
+
+		// The on-page summary shows the region's discount quote for the exact
+		// order and code on screen. The client estimate below is only the
+		// fallback while the first quote loads, while a new one is on its way, or
+		// when the region cannot be asked (and while discounts are off): the
+		// server re-prices everything and the authoritative totals render on the
+		// success page from the receipt.
+		function computeTotals(): Totals {
+			const rewardQuote = loyalty?.freshQuote()
+			const rewardTotals = rewardQuote?.selectedRewardId ? rewardQuote.totals : null
+			const discountQuote = discounts?.freshQuote() ?? null
+			if (rewardTotals) {
+				// A picked reward: the region priced it on what is left after discounts.
+				return {
+					subtotal: rewardTotals.subtotalMinor / 100,
+					tax: rewardTotals.taxMinor / 100,
+					deliveryFee: rewardTotals.deliveryFeeMinor / 100,
+					deliveryDiscount: (discountQuote?.deliveryDiscountMinor ?? 0) / 100,
+					tip: rewardTotals.tipMinor / 100,
+					discount: discountQuote
+						? (discountQuote.totalDiscountMinor - discountQuote.deliveryDiscountMinor) / 100
+						: 0,
+					loyaltyDiscount: rewardTotals.discountMinor / 100,
+					total: rewardTotals.totalMinor / 100,
+					lines: discountQuote ? discountLines(discountQuote, discountLabels) : [],
+					priced: true,
+				}
+			}
+			if (discountQuote) {
+				const t = totalsFromQuote(discountQuote)
+				return {
+					subtotal: t.subtotalMinor / 100,
+					tax: t.taxMinor / 100,
+					deliveryFee: t.deliveryFeeMinor / 100,
+					deliveryDiscount: t.deliveryDiscountMinor / 100,
+					tip: t.tipMinor / 100,
+					discount: t.discountMinor / 100,
+					loyaltyDiscount: t.loyaltyMinor / 100,
+					total: t.totalMinor / 100,
+					lines: discountLines(discountQuote, discountLabels),
+					priced: true,
+				}
+			}
+			const quoted = rewardQuote?.totals
 			if (quoted) {
 				return {
 					subtotal: quoted.subtotalMinor / 100,
 					tax: quoted.taxMinor / 100,
 					deliveryFee: quoted.deliveryFeeMinor / 100,
+					deliveryDiscount: 0,
 					tip: quoted.tipMinor / 100,
-					discount: quoted.discountMinor / 100,
+					discount: 0,
+					loyaltyDiscount: quoted.discountMinor / 100,
 					total: quoted.totalMinor / 100,
+					lines: [],
+					priced: true,
 				}
 			}
 			const subtotal = cart.reduce((acc, it) => acc + it.unitPrice * it.quantity, 0)
+			// While a quote is on its way, keep the saving the last one priced.
+			const carried = discounts?.lastQuote() ?? null
+			const lines = carried ? discountLines(carried, discountLabels) : []
+			const discount = Math.min(
+				subtotal,
+				carried ? (carried.totalDiscountMinor - carried.deliveryDiscountMinor) / 100 : 0,
+			)
 			// While a re-price is on its way, keep the saving the guest picked.
-			const discount = Math.min(subtotal, (loyalty?.displayDiscountMinor() ?? 0) / 100)
-			const { tax, added } = estimateTax(subtotal - discount, taxRate(), taxInclusive())
+			const loyaltyDiscount = Math.min(
+				subtotal - discount,
+				(loyalty?.displayDiscountMinor() ?? 0) / 100,
+			)
+			const { tax, added } = estimateTax(
+				subtotal - discount - loyaltyDiscount,
+				taxRate(),
+				taxInclusive(),
+			)
 			const fee = mode === 'delivery' ? (validDelivery()?.deliveryFee ?? 0) : 0
+			const deliveryDiscount = Math.min(fee, (carried?.deliveryDiscountMinor ?? 0) / 100)
 			const tip = (subtotal * tipPercent) / 100
-			const total = subtotal - discount + added + fee + tip
-			return { subtotal, tax, deliveryFee: fee, tip, discount, total }
+			const total = subtotal - discount - loyaltyDiscount + added + fee - deliveryDiscount + tip
+			return {
+				subtotal,
+				tax,
+				deliveryFee: fee,
+				deliveryDiscount,
+				tip,
+				discount,
+				loyaltyDiscount,
+				total,
+				lines,
+				priced: false,
+			}
 		}
 
 		function renderCheckout() {
-			const { subtotal, tax, deliveryFee, tip, discount, total } = computeTotals()
+			settleCoupon()
+			const totals = computeTotals()
+			const { subtotal, tax, deliveryFee, tip, total } = totals
+			const discount = totals.loyaltyDiscount
 
 			// Render items
 			const list = document.getElementById('checkout-items-list')
@@ -946,6 +1226,7 @@ const tipOff = 'border-border bg-background text-foreground'
 			if (discountLabel) {
 				discountLabel.textContent = loyalty?.rewardName() || loyaltyLabels.pickerDiscount
 			}
+			renderDiscountLines(totals.lines, discountRow)
 			if (coTax) coTax.textContent = formatCurrency(tax)
 			const coTaxLabel = document.getElementById('co-tax-label')
 			const coTaxLabelText = taxInclusive()
@@ -960,6 +1241,8 @@ const tipOff = 'border-border bg-background text-foreground'
 							? formatCurrency(deliveryFee)
 							: odLabels.free
 						: odLabels.feeAfterAddress
+					// A free-delivery discount keeps the fee on its line and shows
+					// the saving as its own row above.
 				} else {
 					coDeliveryRow.classList.add('hidden')
 				}
@@ -968,6 +1251,7 @@ const tipOff = 'border-border bg-background text-foreground'
 			if (coTotal) coTotal.textContent = formatCurrency(total)
 			const barTotal = document.getElementById('co-bar-total')
 			if (barTotal) barTotal.textContent = formatCurrency(total)
+			renderQuoteStatus(totals)
 
 			// Delivery address section visibility
 			const addrCard = document.getElementById('delivery-address-card')
@@ -981,7 +1265,63 @@ const tipOff = 'border-border bg-background text-foreground'
 			renderDeliveryDetails()
 			renderWhen()
 			renderBlockReason()
+			renderCoupon()
 			loyalty?.sync()
+			discounts?.sync()
+		}
+
+		const ROW_CLASS = 'flex items-baseline justify-between gap-4 text-sm text-muted-foreground'
+
+		/** One row per discount, above the reward row; rebuilt on every render. */
+		function renderDiscountLines(lines: DiscountLine[], anchor: HTMLElement | null) {
+			document.querySelectorAll('[data-discount-row]').forEach((node) => node.remove())
+			if (!anchor) return
+			for (const line of lines) {
+				const row = createEl('div', ROW_CLASS)
+				row.setAttribute('data-discount-row', '')
+				const name = createEl('dt', 'flex min-w-0 items-center gap-2')
+				name.appendChild(createEl('span', 'min-w-0 truncate', line.label))
+				name.lastElementChild?.setAttribute('dir', 'auto')
+				if (line.code) {
+					const code = createEl('span', 'badge tone-neutral bidi-isolate shrink-0', line.code)
+					code.setAttribute('dir', 'ltr')
+					name.appendChild(code)
+				}
+				row.appendChild(name)
+				row.appendChild(
+					createEl('dd', 'price font-medium text-foreground', formatCurrency(-line.amountMinor / 100)),
+				)
+				anchor.before(row)
+			}
+		}
+
+		/** The totals note, the free-order state and the dimmed total while a quote is on its way. */
+		function renderQuoteStatus(totals: Totals) {
+			const state = discounts?.state() ?? { status: 'off' as const }
+			const note = document.getElementById('co-totals-note')
+			const text = totalsNote(state, discountLabels)
+			const stale = state.status === 'loading'
+			if (note) {
+				const noteText = document.getElementById('co-totals-note-text')
+				if (noteText) noteText.textContent = text
+				document.getElementById('co-totals-spinner')?.classList.toggle('hidden', !stale)
+				note.classList.toggle('hidden', !text)
+			}
+			// Busy, not dimmed: the figure stays at full contrast while it updates.
+			for (const id of ['co-total', 'co-bar-total']) {
+				document.getElementById(id)?.setAttribute('aria-busy', stale ? 'true' : 'false')
+			}
+			document.getElementById('co-breakdown')?.setAttribute('aria-busy', stale ? 'true' : 'false')
+			// Free: the region priced it (not an estimate) and nothing is left to pay.
+			const wasFree = freeNow
+			freeNow = cart.length > 0 && totals.priced && totals.total <= 0
+			document.getElementById('co-free-note')?.classList.toggle('hidden', !freeNow)
+			document.getElementById('payment-method-card')?.classList.toggle('hidden', freeNow)
+			if (freeNow && !wasFree) {
+				const note = document.getElementById('co-free-note')?.textContent?.trim()
+				if (note) announce(note)
+			}
+			updateHoldNote()
 		}
 
 		const minutesRange = (eta: { min: number; max: number }) =>
@@ -1068,10 +1408,6 @@ const tipOff = 'border-border bg-background text-foreground'
 
 		/** Why the order cannot be placed yet (delivery address / minimum / time). */
 		function blockReason(): string | null {
-			// A reward that leaves nothing to pay cannot go through online payment.
-			if (cart.length > 0 && paymentMethod === 'online' && loyalty?.coversTotal()) {
-				return loyaltyLabels.pickerCoversOrder
-			}
 			if (isDrop || cart.length === 0) return null
 			if (mode === 'delivery') {
 				const delivery = validDelivery()
@@ -1274,7 +1610,7 @@ const tipOff = 'border-border bg-background text-foreground'
 		function updateHoldNote() {
 			const note = document.getElementById('checkout-hold-note')
 			if (!note) return
-			const visible = isDrop && paymentMethod === 'online'
+			const visible = isDrop && paymentMethod === 'online' && !freeNow
 			note.classList.toggle('hidden', !visible)
 			const placeBtn = document.getElementById('place-order-btn')
 			if (visible) placeBtn?.setAttribute('aria-describedby', 'checkout-hold-note')
@@ -1404,22 +1740,9 @@ const tipOff = 'border-border bg-background text-foreground'
 			}
 		}
 
-		type VerifiedDelivery = NonNullable<ReturnType<typeof validDelivery>>
-
 		// The address, city and unit are signed into the quote token; the
-		// region re-resolves the zone from it. City is only sent when the
-		// geocoder returned one (an empty city used to fail validation).
-		function deliveryFields(verified: VerifiedDelivery, notes = ''): Record<string, string> {
-			const delivery: Record<string, string> = {
-				address: verified.line1.trim().length >= 5 ? verified.line1.trim() : verified.formatted,
-				quoteToken: verified.quoteToken,
-			}
-			if (verified.city.trim()) delivery.city = verified.city.trim()
-			if (verified.unit?.trim()) delivery.unit = verified.unit.trim()
-			if (notes.trim()) delivery.notes = notes.trim()
-			return delivery
-		}
-
+		// region re-resolves the zone from it (`deliveryFields`, shared with the
+		// menu page's quote).
 		/**
 		 * The order as it would be placed now, without contact or notes: what a
 		 * reward quote prices. Null while it cannot be priced (no verified
@@ -1452,6 +1775,310 @@ const tipOff = 'border-border bg-background text-foreground'
 				tipPercent,
 				lines: orderLines(cart),
 			}
+		}
+
+		// ---------- coupon code ----------
+
+		const couponBlock = document.getElementById('coupon-block')
+		const couponToggle = document.getElementById('coupon-toggle') as HTMLButtonElement | null
+		const couponPanel = document.getElementById('coupon-panel')
+		const couponInput = document.getElementById('coupon-input') as HTMLInputElement | null
+		const couponApply = document.getElementById('coupon-apply') as HTMLButtonElement | null
+		const couponClear = document.getElementById('coupon-clear') as HTMLButtonElement | null
+		const couponApplied = document.getElementById('coupon-applied')
+		const couponRemove = document.getElementById('coupon-remove') as HTMLButtonElement | null
+		const couponMessage = document.getElementById('coupon-message')
+		let couponRevealed = false
+		let shownCouponMode = 'none'
+		/** A problem with what was typed, found before asking the region. */
+		let localMessage: string | null = null
+
+		if (couponInput && couponCode) couponInput.value = couponCode
+
+		function announce(text: string) {
+			const live = document.getElementById('discount-live')
+			if (live) live.textContent = text
+		}
+
+		/**
+		 * Takes in what the last quote said about the code: a refusal for good
+		 * stops it being sent (the next render prices the order again without
+		 * it), and the polite announcement says what changed for the customer.
+		 */
+		function holdFromRegion(code: string, reason: DiscountRefusalReason) {
+			const contextKey = couponContextKey(pricingPayload())
+			heldRefusal = { code, reason, contextKey }
+			if (reason === 'not_found' && contextKey) triedCoupons.add(attemptKey(code, contextKey))
+		}
+
+		/**
+		 * A held `not_found` may be a hidden "wrong order type, location or time":
+		 * when that part of the order changed, send the code once more. The next
+		 * `discounts.sync()` of this render prices it.
+		 */
+		function retryHeldCoupon() {
+			if (!discounts || couponCode || !heldRefusal) return
+			const key = couponContextKey(pricingPayload())
+			if (!key || !shouldRetryHeldCoupon(heldRefusal, key, triedCoupons)) return
+			triedCoupons.add(attemptKey(heldRefusal.code, key))
+			couponCode = heldRefusal.code
+			heldRefusal = null
+			couponBusy = true
+			saveStoredCode(sessionStorage, orgId, couponCode)
+		}
+
+		function settleCoupon() {
+			if (!discounts) return
+			retryHeldCoupon()
+			const state = discounts.state()
+			if (state.status === 'error' || state.status === 'off' || state.status === 'idle') {
+				couponBusy = false
+				pendingAnnounce = null
+			}
+			if (state.status !== 'ready') return
+			const quote = state.quote
+			const outcome = quote.coupon
+			if (couponCode && outcome?.status === 'refused' && isTerminalRefusal(outcome.reason)) {
+				holdFromRegion(couponCode, outcome.reason)
+				couponCode = null
+				saveStoredCode(sessionStorage, orgId, null)
+				pendingAnnounce = null
+			}
+			if (outcome && outcome.status !== 'applied') couponExpanded = true
+			const money = (minor: number) => formatCurrency(minor / 100)
+			if (pendingAnnounce === 'apply' && couponCode) {
+				if (outcome?.status === 'applied') {
+					announce(
+						appliedAnnouncement(
+							couponCode,
+							quote.totalDiscountMinor,
+							quote.totalMinor,
+							money,
+							discountLabels,
+						),
+					)
+					focusChipAfterRender = true
+				}
+				// A refusal or a replaced code is read out once, by the coupon
+				// message (a live region of its own), not announced here again.
+				pendingAnnounce = null
+			} else if (pendingAnnounce === 'remove') {
+				announce(fillTemplate(discountLabels.removedAnnounce, { total: money(quote.totalMinor) }))
+				pendingAnnounce = null
+			} else if (lastDiscountTotal !== null && quote.totalDiscountMinor !== lastDiscountTotal) {
+				announce(fillTemplate(discountLabels.totalUpdated, { total: money(quote.totalMinor) }))
+			}
+			couponBusy = false
+			lastDiscountTotal = quote.totalDiscountMinor
+		}
+
+		function setCouponMessage(text: string, tone: 'error' | 'info') {
+			if (!couponMessage) return
+			const textEl = document.getElementById('coupon-message-text')
+			// Only a changed message is rewritten, so it is announced once.
+			if (textEl && textEl.textContent !== text) textEl.textContent = text
+			// Kept rendered (visually hidden) while empty: a live region that is
+			// display:none when its text changes is often not announced.
+			couponMessage.classList.toggle('sr-only', !text)
+			couponMessage.classList.toggle('text-destructive', tone === 'error')
+			couponMessage.classList.toggle('text-muted-foreground', tone === 'info')
+			couponMessage.classList.toggle('mt-2', Boolean(text))
+		}
+
+		function renderCoupon() {
+			if (!couponBlock || !discounts) return
+			const state = discounts.state()
+			const couponsEnabled =
+				state.status !== 'ready' || state.quote.couponsEnabled !== false
+			if (state.status === 'ready' || state.status === 'error') couponRevealed = true
+			couponBlock.classList.toggle(
+				'hidden',
+				state.status === 'off' || !couponRevealed || !couponsEnabled,
+			)
+			if (state.status === 'off' || !couponRevealed || !couponsEnabled) return
+
+			const view = couponView({ code: couponCode, held: heldRefusal, state }, discountLabels)
+			// A quote on its way for a code that is already applied keeps the chip.
+			const mode = view.mode === 'checking' && shownCouponMode === 'applied' ? 'applied' : view.mode
+			shownCouponMode = mode
+			const showChip = mode === 'applied'
+			const showPanel = !showChip && (couponExpanded || mode !== 'none')
+			couponApplied?.classList.toggle('hidden', !showChip)
+			couponPanel?.classList.toggle('hidden', !showPanel)
+			couponToggle?.classList.toggle('hidden', showChip)
+			couponToggle?.setAttribute('aria-expanded', showPanel ? 'true' : 'false')
+
+			const code = 'code' in view ? view.code : ''
+			if (showChip && couponCode) {
+				const chip = document.getElementById('coupon-applied-text')
+				if (chip) chip.textContent = fillTemplate(discountLabels.applied, { code: couponCode })
+				couponRemove?.setAttribute('aria-label', fillTemplate(labels.coupon.removeCode, { code: couponCode }))
+			}
+			if (couponInput && document.activeElement !== couponInput && code && !couponInput.value) {
+				couponInput.value = code
+			}
+
+			let message = localMessage ?? ''
+			let tone: 'error' | 'info' = localMessage ? 'error' : 'info'
+			if (!localMessage && 'message' in view) {
+				message = view.message
+				tone = view.mode === 'refused' ? 'error' : 'info'
+			}
+			setCouponMessage(message, tone)
+			couponMessage?.querySelector('svg')?.classList.toggle('hidden', !message)
+			if (couponInput) {
+				if (tone === 'error' && message) couponInput.setAttribute('aria-invalid', 'true')
+				else couponInput.removeAttribute('aria-invalid')
+			}
+
+			// Apply: disabled and busy while the region checks, but still focusable.
+			const checking = couponBusy || (view.mode === 'checking' && !showChip)
+			if (couponApply) {
+				if (checking) couponApply.setAttribute('aria-disabled', 'true')
+				else couponApply.removeAttribute('aria-disabled')
+				couponApply.setAttribute('aria-busy', checking ? 'true' : 'false')
+			}
+			// Same name pattern as the chip's button: "Remove code ABC".
+			if (couponClear) {
+				const shown = couponCode ?? heldRefusal?.code ?? cleanTypedCode(couponInput?.value ?? '')
+				couponClear.setAttribute(
+					'aria-label',
+					shown ? fillTemplate(labels.coupon.removeCode, { code: shown }) : labels.coupon.remove,
+				)
+			}
+			couponClear?.classList.toggle(
+				'hidden',
+				!couponCode && !heldRefusal && !couponInput?.value.trim(),
+			)
+			document.getElementById('coupon-spinner')?.classList.toggle('hidden', !checking)
+			const applyLabel = document.getElementById('coupon-apply-label')
+			if (applyLabel) applyLabel.textContent = checking ? labels.coupon.checking : labels.coupon.apply
+			if (focusChipAfterRender && showChip) {
+				couponApplied?.focus()
+				focusChipAfterRender = false
+			}
+		}
+
+		function applyCoupon() {
+			if (!couponInput || couponApply?.getAttribute('aria-disabled') === 'true') return
+			const typed = cleanTypedCode(couponInput.value)
+			heldRefusal = null
+			localMessage = null
+			if (!pricingPayload()) {
+				localMessage = discountLabels.waiting
+				couponBusy = false
+				renderCoupon()
+				couponInput.focus()
+				return
+			}
+			if (!typed) {
+				// Clearing the field and pressing Apply must not resend the old code.
+				couponCode = null
+				heldRefusal = null
+				saveStoredCode(sessionStorage, orgId, null)
+				localMessage = discountLabels.enterCode
+				discounts?.refresh()
+				renderCoupon()
+				couponInput.focus()
+				return
+			}
+			if (!isPlausibleCode(typed)) {
+				// Not a code the region could ever accept: say so without asking.
+				heldRefusal = { code: typed, reason: 'not_found' }
+				couponCode = null
+				saveStoredCode(sessionStorage, orgId, null)
+				renderCoupon()
+				couponInput.focus()
+				return
+			}
+			couponCode = typed
+			couponInput.value = typed
+			saveStoredCode(sessionStorage, orgId, typed)
+			couponBusy = true
+			pendingAnnounce = 'apply'
+			announce(discountLabels.checking)
+			discounts?.refresh()
+			renderCoupon()
+		}
+
+		function removeCoupon() {
+			couponCode = null
+			heldRefusal = null
+			localMessage = null
+			saveStoredCode(sessionStorage, orgId, null)
+			if (couponInput) couponInput.value = ''
+			couponExpanded = true
+			couponBusy = false
+			pendingAnnounce = 'remove'
+			discounts?.refresh()
+			renderCoupon()
+			couponInput?.focus()
+		}
+
+		couponToggle?.addEventListener('click', () => {
+			couponExpanded = couponToggle.getAttribute('aria-expanded') !== 'true'
+			renderCoupon()
+			if (couponExpanded) couponInput?.focus()
+		})
+		couponApply?.addEventListener('click', applyCoupon)
+		couponRemove?.addEventListener('click', removeCoupon)
+		couponClear?.addEventListener('click', removeCoupon)
+		couponInput?.addEventListener('keydown', (event) => {
+			if (event.key === 'Enter') {
+				event.preventDefault()
+				applyCoupon()
+			}
+		})
+		couponInput?.addEventListener('input', () => {
+			// Editing a refused code clears its message; nothing is sent until Apply.
+			if (heldRefusal || localMessage) {
+				heldRefusal = null
+				localMessage = null
+				renderCoupon()
+			}
+		})
+
+		/**
+		 * The region refused the order over discounts. Always leaves the cart and
+		 * the contact details as they are; the customer decides again on a total
+		 * they can see.
+		 */
+		function handleDiscountRefusal(refusal: DiscountOrderRefusal) {
+			if (refusal.kind === 'changed') {
+				if (refusal.quote) discounts?.adopt(refusal.quote)
+				else discounts?.refresh()
+				renderCheckout()
+				const total = refusal.quote ? formatCurrency(refusal.quote.totalMinor / 100) : null
+				showCheckoutError(
+					total
+						? fillTemplate(discountLabels.discountChanged, { total })
+						: orderErrorMessage('discount_changed', labels.errors),
+				)
+				return
+			}
+			if (refusal.kind === 'refused') {
+				const reason = refusal.reason
+				if (reason && isTerminalRefusal(reason) && couponCode) {
+					holdFromRegion(couponCode, reason)
+					couponCode = null
+					saveStoredCode(sessionStorage, orgId, null)
+				}
+				couponExpanded = true
+				discounts?.refresh()
+				renderCheckout()
+				showCheckoutError(
+					reason ? refusalMessage(reason, discountLabels) : discountLabels.couponRefusedGeneric,
+				)
+				return
+			}
+			// Discounts went off (or cannot be used here): drop the code and show
+			// the plain total; the customer places the order again knowing that.
+			couponCode = null
+			heldRefusal = null
+			saveStoredCode(sessionStorage, orgId, null)
+			discounts?.disable()
+			renderCheckout()
+			showCheckoutError(discountLabels.discountsDisabled)
 		}
 
 		// Place order button
@@ -1546,16 +2173,37 @@ const tipOff = 'border-border bg-background text-foreground'
 			// seconds at most for a re-price still on its way, and stop when it
 			// did not confirm the pick.
 			const reward = (await loyalty?.placement()) ?? { ok: true as const, selection: null }
-			if (!reward.ok || (paymentMethod === 'online' && loyalty?.coversTotal())) {
+			if (!reward.ok) {
 				setBusy(false)
 				renderCheckout()
-				showCheckoutError(reward.ok ? loyaltyLabels.pickerCoversOrder : reward.message)
+				showCheckoutError(reward.message)
 				return
 			}
 			const sentReward = reward.selection
+			// Discounts go out only as the region's latest quote priced them: wait a
+			// few seconds at most for one on its way, and never place a total the
+			// customer was not shown. With discounts off nothing is sent.
+			const placedDiscounts = (await discounts?.placement()) ?? {
+				ok: true as const,
+				discounts: null,
+			}
+			if (!placedDiscounts.ok) {
+				setBusy(false)
+				renderCheckout()
+				showCheckoutError(discountLabels.totalUnconfirmed)
+				return
+			}
+			const sentDiscounts = placedDiscounts.discounts
 			// The guest may have changed the order during the wait: read all of it
 			// again now, in this same turn as the confirmation, and send only that.
 			const priced = readPricedOrder()
+			if (priced && sentDiscounts && !discounts?.freshQuote()) {
+				// The order changed after the quote was confirmed: price it again.
+				setBusy(false)
+				renderCheckout()
+				showCheckoutError(discountLabels.totalUnconfirmed)
+				return
+			}
 			if (!priced || (sentReward && !loyalty?.placementPick().ok)) {
 				setBusy(false)
 				if (priced) {
@@ -1573,6 +2221,7 @@ const tipOff = 'border-border bg-background text-foreground'
 					},
 					deliveryNotes: notesInput?.value,
 					reward: sentReward,
+					discounts: sentDiscounts,
 				})
 				const idempotencyKey = await checkoutAttemptKey(orgId, corePayload)
 				const created = await submitRegionalOrder({
@@ -1585,8 +2234,14 @@ const tipOff = 'border-border bg-background text-foreground'
 					if (isDrop && drop) clearPickupSelection(drop.id)
 					clearCheckoutAttempt(orgId)
 				} catch {}
+				// The order is placed: the next one in this tab must not send the code again.
+				saveStoredCode(sessionStorage, orgId, null)
 
-				if (paymentMethod === 'online') {
+				// A free order (a total of 0) is never paid: the region marks it
+				// `not_required` and accepts it, so go straight to the confirmation.
+				const needsPayment =
+					created.order.paymentStatus !== 'not_required' && created.order.totalCents > 0
+				if (paymentMethod === 'online' && needsPayment) {
 					try {
 						const url = await startOrderPayment(
 							orgId,
@@ -1614,8 +2269,16 @@ const tipOff = 'border-border bg-background text-foreground'
 					error instanceof OrderRequestError ? error.code : 'order_failed'
 				// Same key, different payload: the next attempt must mint a new key.
 				if (code === 'idempotency_conflict') clearCheckoutAttempt(orgId)
-				const rewardMessage = loyalty?.refused(code, sentReward !== null) ?? null
-				if (rewardMessage) {
+				const discountRefusal =
+					error instanceof OrderRequestError
+						? parseDiscountOrderRefusal(code, error.body)
+						: null
+				const rewardMessage = discountRefusal
+					? null
+					: (loyalty?.refused(code, sentReward !== null) ?? null)
+				if (discountRefusal) {
+					handleDiscountRefusal(discountRefusal)
+				} else if (rewardMessage) {
 					renderCheckout()
 					showCheckoutError(rewardMessage)
 				} else if (code === 'delivery_quote_expired') {
@@ -1662,6 +2325,30 @@ const tipOff = 'border-border bg-background text-foreground'
 			}
 		}
 
+		/**
+		 * The order a reward is priced on: the region takes discounts off first,
+		 * so the code goes along once the discount quote says it applies (a code
+		 * it refused would only be refused again).
+		 */
+		function loyaltyOrder(): Record<string, unknown> | null {
+			const order = pricingPayload()
+			if (!order) return null
+			const applied =
+				couponCode !== null && discounts?.freshQuote()?.coupon?.status === 'applied'
+			return applied ? { ...order, discounts: { code: couponCode } } : order
+		}
+
+		// Discounts: asked of the region for every guest, signed in or not. A 404
+		// or a disabled answer turns the whole feature off for this page view.
+		if (cart.length > 0) {
+			discounts = createDiscountQuotes({
+				post: postDiscountQuote,
+				pricingPayload,
+				code: () => couponCode,
+				onChange: () => renderCheckout(),
+			})
+		}
+
 		// Rewards: only a signed-in customer's browser asks the region, with the
 		// customer token; Sites never sees the balance or the pick.
 		const loyaltySection = document.getElementById('loyalty-rewards-card')
@@ -1684,11 +2371,11 @@ const tipOff = 'border-border bg-background text-foreground'
 				signedIn: () => Boolean(getAccessToken()),
 				loadRewards: () => spendableRewards(loyaltyClient),
 				pricingKey() {
-					const payload = pricingPayload()
+					const payload = loyaltyOrder()
 					return payload ? JSON.stringify(payload) : null
 				},
 				fetchQuote(selection, signal) {
-					const order = pricingPayload()
+					const order = loyaltyOrder()
 					// Not priceable any more: the quotes retry on the bill as it is.
 					if (!order) throw new Error('order_unpriceable')
 					return loyaltyClient.checkoutQuote({ order, selection, signal })

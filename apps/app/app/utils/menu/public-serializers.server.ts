@@ -111,12 +111,15 @@ export interface PublicMenuItemData {
 			valueIds: string[]
 			price: number
 			imageUrl: string | null
+			excludeFromDiscounts?: boolean
 			availabilityStatus: 'available' | 'unavailable'
 		}>
 	}
 	isAlcohol: boolean
 	isGlutenFree: boolean
 	isVegetarian: boolean
+	/** Never receives any discount (read defensively by the regional engine). */
+	excludeFromDiscounts?: boolean
 	allergens: string[]
 	calorieMin: number | null
 	calorieMax: number | null
@@ -352,6 +355,7 @@ export function serializePublicMenuItem(
 				id: variant.id,
 				valueIds: variant.valueIds,
 				price: variant.price,
+				excludeFromDiscounts: variant.excludeFromDiscounts === true,
 				availabilityStatus: variant.availabilityStatus,
 				imageUrl: variant.imageKey
 					? (mediaMap.get(variant.imageKey) ?? null)
@@ -361,6 +365,7 @@ export function serializePublicMenuItem(
 		isAlcohol: Boolean(item.isAlcohol),
 		isGlutenFree: Boolean(item.isGlutenFree),
 		isVegetarian: Boolean(item.isVegetarian),
+		excludeFromDiscounts: Boolean(item.excludeFromDiscounts),
 		allergens: safeJsonParse<string[]>(item.allergens, []),
 		calorieMin: item.calorieMin,
 		calorieMax: item.calorieMax,

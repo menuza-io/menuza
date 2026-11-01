@@ -33,6 +33,7 @@ export const PAYMENT_STATUS_LABELS: Record<string, MessageDescriptor> = {
 	failed: msg`Payment failed`,
 	expired: msg`Payment expired`,
 	review: msg`Payment under review`,
+	not_required: msg`No payment needed`,
 	// Display-only: a paid order whose money was recorded as returned.
 	refunded: msg`Refunded`,
 	partly_refunded: msg`Partly refunded`,
@@ -45,6 +46,7 @@ const PAYMENT_TONES: Record<string, Tone> = {
 	failed: 'destructive',
 	expired: 'muted',
 	review: 'destructive',
+	not_required: 'muted',
 	refunded: 'muted',
 	partly_refunded: 'warning',
 }

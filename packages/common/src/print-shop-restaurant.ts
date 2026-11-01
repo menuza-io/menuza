@@ -21,6 +21,10 @@ type CopyKey =
 	| 'orderAhead'
 	| 'bookTable'
 	| 'table'
+	| 'scanForOffer'
+	| 'offerHeadline'
+	| 'offerCta'
+	| 'offerCode'
 
 const COPY: Record<string, Record<CopyKey, string>> = {
 	en: {
@@ -31,6 +35,10 @@ const COPY: Record<string, Record<CopyKey, string>> = {
 		orderAhead: 'Order ahead, skip the line',
 		bookTable: 'Book your table',
 		table: 'Table',
+		scanForOffer: 'Scan for your offer',
+		offerHeadline: 'A little something for you',
+		offerCta: 'Scan to order. Your code is added for you.',
+		offerCode: 'Code',
 	},
 	ar: {
 		scanToOrder: 'امسح للطلب',
@@ -40,6 +48,10 @@ const COPY: Record<string, Record<CopyKey, string>> = {
 		orderAhead: 'اطلب مسبقًا ووفّر وقت الانتظار',
 		bookTable: 'احجز طاولتك',
 		table: 'طاولة',
+		scanForOffer: 'امسح للحصول على عرضك',
+		offerHeadline: 'هدية صغيرة لك',
+		offerCta: 'امسح للطلب، وسيُضاف الرمز تلقائيًا.',
+		offerCode: 'الرمز',
 	},
 	es: {
 		scanToOrder: 'Escanea para pedir',
@@ -49,6 +61,10 @@ const COPY: Record<string, Record<CopyKey, string>> = {
 		orderAhead: 'Pide con antelación y evita la fila',
 		bookTable: 'Reserva tu mesa',
 		table: 'Mesa',
+		scanForOffer: 'Escanea para tu oferta',
+		offerHeadline: 'Un detalle para ti',
+		offerCta: 'Escanea para pedir. Tu código se añade solo.',
+		offerCode: 'Código',
 	},
 	fr: {
 		scanToOrder: 'Scannez pour commander',
@@ -58,6 +74,10 @@ const COPY: Record<string, Record<CopyKey, string>> = {
 		orderAhead: 'Commandez à l’avance, sans attendre',
 		bookTable: 'Réservez votre table',
 		table: 'Table',
+		scanForOffer: 'Scannez pour votre offre',
+		offerHeadline: 'Un petit cadeau pour vous',
+		offerCta: 'Scannez pour commander. Votre code est ajouté pour vous.',
+		offerCode: 'Code',
 	},
 	de: {
 		scanToOrder: 'Scannen und bestellen',
@@ -67,6 +87,10 @@ const COPY: Record<string, Record<CopyKey, string>> = {
 		orderAhead: 'Vorbestellen statt anstehen',
 		bookTable: 'Tisch reservieren',
 		table: 'Tisch',
+		scanForOffer: 'Scannen für Ihr Angebot',
+		offerHeadline: 'Eine kleine Aufmerksamkeit für Sie',
+		offerCta: 'Scannen und bestellen. Der Code ist schon eingetragen.',
+		offerCode: 'Code',
 	},
 	zh: {
 		scanToOrder: '扫码点餐',
@@ -76,10 +100,25 @@ const COPY: Record<string, Record<CopyKey, string>> = {
 		orderAhead: '提前点餐，免排队',
 		bookTable: '预订餐桌',
 		table: '桌号',
+		scanForOffer: '扫码领取优惠',
+		offerHeadline: '给你的一份小心意',
+		offerCta: '扫码点餐，优惠码自动填写。',
+		offerCode: '优惠码',
 	},
 }
 
 const copy = (locale: string, key: CopyKey) => localeCopy(COPY, locale, key)
+
+/**
+ * A discount from Marketing, Discounts. A code discount names the code to
+ * print (`codeId`); an automatic one has none (`null`) and the code just
+ * opens the menu where the offer shows.
+ */
+export type RestaurantCouponTarget = {
+	kind: 'coupon'
+	discountId: string
+	codeId: string | null
+}
 
 /** `['all']` means every live table at proof and approval time. */
 export type RestaurantTableTarget = { kind: 'table'; tableIds: string[] }
@@ -96,6 +135,7 @@ export function isTableTarget(
 }
 
 const TABLE_TARGETS = ['table', 'menu', 'reservations', 'site'] as const
+const COUPON_TARGETS = ['coupon', 'menu', 'site'] as const
 
 export const restaurantPrintCatalog: PrintCatalogExtension = {
 	products: [
@@ -121,11 +161,24 @@ export const restaurantPrintCatalog: PrintCatalogExtension = {
 				{ key: '4x6', widthMm: 102, heightMm: 152, label: '4 × 6 in (folded)' },
 			],
 		},
+		{
+			// Shipped once Admin maps a vendor SKU per size (Admin, Print shop).
+			key: 'coupon_card',
+			family: 'card',
+			shippable: true,
+			featuredItems: false,
+			qrTargets: COUPON_TARGETS,
+			sizes: [
+				{ key: 'a6', widthMm: 105, heightMm: 148, label: 'A6 · 105 × 148 mm' },
+				{ key: '4x6', widthMm: 102, heightMm: 152, label: '4 × 6 in' },
+			],
+		},
 	],
 	productOrder: [
 		'table_card',
 		'poster',
 		'flyer',
+		'coupon_card',
 		'table_tent',
 		'window_sticker',
 	],
@@ -158,6 +211,21 @@ export const restaurantPrintCatalog: PrintCatalogExtension = {
 				callToAction: copy(locale, 'scanForMenu'),
 				qrCaption: copy(locale, 'scanToOrder'),
 			}),
+		},
+		{
+			kind: 'coupon',
+			schema: z.strictObject({
+				kind: z.literal('coupon'),
+				discountId: z.string().trim().min(1).max(100),
+				codeId: z.string().trim().min(1).max(100).nullable(),
+			}),
+			copy: (locale) => ({
+				headline: copy(locale, 'offerHeadline'),
+				callToAction: copy(locale, 'offerCta'),
+				qrCaption: copy(locale, 'scanForOffer'),
+			}),
+			// The code is printed where a table's label would be.
+			pieceWord: (locale) => copy(locale, 'offerCode'),
 		},
 		{
 			kind: 'reservations',

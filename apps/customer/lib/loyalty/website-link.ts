@@ -8,6 +8,15 @@ const SLUG = new RegExp(`^${LABEL}$`)
 const BRAND_DOMAIN = new RegExp(`^${LABEL}(?:\\.${LABEL})*$`)
 
 const ORDER_PATH = '/menu'
+const CHECKOUT_PATH = '/menu/checkout'
+const DROPS_PATH = '/drops'
+const DROP_SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
+
+export type WebsitePage =
+	| { page: 'menu' }
+	| { page: 'checkout' }
+	| { page: 'drops' }
+	| { page: 'drop'; slug: string }
 
 function hostnameOf(value: string | null | undefined): string | null {
 	const host = value?.trim().toLowerCase().replace(/\.$/, '')
@@ -43,4 +52,30 @@ export function websiteOrderUrl(input: {
 	if (SLUG.test(slug) && BRAND_DOMAIN.test(brand))
 		return `https://${slug}.${brand}${ORDER_PATH}`
 	return null
+}
+
+/**
+ * A public page on the same site as {@link websiteOrderUrl}. Menu and drops
+ * open here, and checkout is the website's `/menu/checkout`. The path is the
+ * only thing that changes: still no token, phone, query, or fragment.
+ */
+export function websitePageUrl(
+	input: {
+		organization: Pick<PublicOrganization, 'slug' | 'customDomain'>
+		siteAddress: SiteAddress
+		brandDomain: string
+	} & WebsitePage,
+): string | null {
+	const path = websitePagePath(input)
+	const menu = websiteOrderUrl(input)
+	if (!path || !menu?.endsWith(ORDER_PATH)) return null
+	return `${menu.slice(0, -ORDER_PATH.length)}${path}`
+}
+
+function websitePagePath(page: WebsitePage): string | null {
+	if (page.page === 'menu') return ORDER_PATH
+	if (page.page === 'checkout') return CHECKOUT_PATH
+	if (page.page === 'drops') return DROPS_PATH
+	const slug = page.slug.trim().toLowerCase()
+	return DROP_SLUG.test(slug) ? `/drop/${slug}` : null
 }

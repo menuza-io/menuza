@@ -23,7 +23,25 @@ export const VALIDATION_MSGS = {
 	smsMessageTooLong: msg`SMS message exceeds 1600 characters maximum.`,
 	conditionFieldRequired: msg`Condition comparison field is required.`,
 	conditionOperatorRequired: msg`Condition operator is required.`,
+	couponMissing: msg`This message uses the Coupon code tag. Choose a coupon, or remove the tag.`,
+	couponTagMissing: msg`Add the Coupon code tag to the message so customers see their code.`,
 } as const
+
+const COUPON_TAG = /\{\{\s*couponCode\s*(?:\|[^{}]*)?\}\}/
+
+/** `{{couponCode}}` needs a coupon on the step, and a coupon needs the tag. */
+function couponErrors(
+	texts: unknown[],
+	offer: unknown,
+	translate?: ValidationTranslateFn,
+): string[] {
+	const usesTag = texts.some(
+		(text) => typeof text === 'string' && COUPON_TAG.test(text),
+	)
+	if (usesTag && !offer) return [t(VALIDATION_MSGS.couponMissing, translate)]
+	if (!usesTag && offer) return [t(VALIDATION_MSGS.couponTagMissing, translate)]
+	return []
+}
 
 function t(
 	descriptor: MessageDescriptor,
@@ -126,6 +144,18 @@ export function validateFlowCanvas(
 						errs.push(t(VALIDATION_MSGS.emailBoilerplate, translate))
 					}
 				}
+				errs.push(
+					...couponErrors(
+						[
+							data.subject,
+							data.bodyHtml,
+							data.bodyText,
+							Array.isArray(data.blocks) ? JSON.stringify(data.blocks) : '',
+						],
+						data.discountOffer,
+						translate,
+					),
+				)
 				break
 			case 'action_sms':
 				if (
@@ -137,6 +167,9 @@ export function validateFlowCanvas(
 				} else if (data.messageText.length > 1600) {
 					errs.push(t(VALIDATION_MSGS.smsMessageTooLong, translate))
 				}
+				errs.push(
+					...couponErrors([data.messageText], data.discountOffer, translate),
+				)
 				break
 			case 'condition':
 				if (

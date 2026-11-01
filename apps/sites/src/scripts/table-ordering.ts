@@ -4,6 +4,11 @@ import {
 } from '@repo/common/qr-ordering'
 import { getAccessToken } from '~/lib/client-auth'
 import { type CartStore } from '~/lib/ordering/cart-store'
+import {
+	cleanTypedCode,
+	isPlausibleCode,
+	parseDiscountOrderRefusal,
+} from '~/lib/ordering/discount-quote'
 import { el, lockScroll, trapFocus } from '~/lib/ordering/dom'
 import {
 	acceptCheckoutUrl,
@@ -62,6 +67,8 @@ type Labels = Record<
 	| 'errorTableGone'
 	| 'errorLocked'
 	| 'errorTabPaying'
+	| 'errorCoupon'
+	| 'errorDiscountChanged'
 	| 'errorClosed'
 	| 'errorRateLimited'
 	| 'errorUnavailable'
@@ -84,7 +91,10 @@ type Labels = Record<
 	| 'stillConfirming'
 	| 'payPending',
 	string
->
+> & {
+	/** Plain copy per refusal reason, the same texts checkout shows. */
+	couponRefusals?: Record<string, string>
+}
 
 /**
  * The pay sheet's reward picker (`~/lib/loyalty/tab-rewards`), imported on
@@ -219,7 +229,7 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 		slot.appendChild(box)
 	}
 
-	function errorText(code: string) {
+	function errorText(code: string, body?: unknown) {
 		if (isDeadTableError(code)) {
 			return code === 'dine_in_unavailable'
 				? labels.errorUnavailable
@@ -227,6 +237,18 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 		}
 		if (code === 'tab_locked') return labels.errorLocked
 		if (code === 'tab_paying') return labels.errorTabPaying
+		if (code === 'discount_changed') {
+			return labels.errorDiscountChanged ?? labels.errorGeneric
+		}
+		if (code === 'coupon_refused') {
+			const refusal = parseDiscountOrderRefusal(code, body)
+			const reason =
+				refusal?.kind === 'refused' && refusal.reason ? refusal.reason : null
+			return (
+				(reason ? labels.couponRefusals?.[reason] : undefined) ??
+				labels.errorCoupon
+			)
+		}
 		if (code === 'ordering_closed') return labels.errorClosed
 		if (code === 'table_rate_limited' || code === 'rate_limit_exceeded') {
 			return labels.errorRateLimited
@@ -427,6 +449,13 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 		set('tab-subtotal', money(tab.totals.subtotalCents))
 		// A paid tab's receipt: the reward and the tip it was paid with.
 		const { loyaltyDiscountCents: discount, tipCents: tip } = tab.totals
+		// Discounts and coupons the region priced into the total (the counter
+		// charges the same figure), apart from a reward.
+		const promo = tab.totals.discountCents ?? 0
+		document
+			.getElementById('tab-promo-row')
+			?.classList.toggle('hidden', !(promo > 0))
+		set('tab-promo', promo > 0 ? money(-promo) : '')
 		document
 			.getElementById('tab-discount-row')
 			?.classList.toggle('hidden', !(discount > 0))
@@ -795,12 +824,10 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 			payError.textContent = ''
 			payError.classList.add('hidden')
 		}
-		for (const field of ['name', 'phone']) {
-			setInvalid(
-				payForm.elements.namedItem(field) as HTMLInputElement,
-				false,
-				'tab-pay-error',
-			)
+		for (const field of ['name', 'phone', 'coupon']) {
+			const input = payForm.elements.namedItem(field)
+			if (input instanceof HTMLElement)
+				setInvalid(input, false, 'tab-pay-error')
 		}
 		if (choiceHeld && payChanged) showAlert(payChanged, labels.payPending)
 		paintPayAmount()
@@ -927,11 +954,34 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 		paymentSent = true
 		let regionAnswered = false
 		try {
+			const couponField = payForm?.elements.namedItem('coupon')
+			const coupon =
+				couponField instanceof HTMLInputElement
+					? cleanTypedCode(couponField.value)
+					: ''
+			if (couponField instanceof HTMLInputElement) {
+				setInvalid(couponField, false, 'tab-pay-error')
+			}
+			if (coupon && !isPlausibleCode(coupon)) {
+				// Not a code the region could accept: say so without asking.
+				paymentSent = false
+				if (couponField instanceof HTMLInputElement) {
+					setInvalid(couponField, true, 'tab-pay-error')
+					couponField.focus()
+				}
+				stopPaying(labels.errorCoupon)
+				return
+			}
 			const started = await startTabPayment(orgId, current, {
 				tipPercent: tipPercent(),
 				contact,
 				locale: deps.locale,
 				loyalty: reward.loyalty,
+				coupon: coupon || null,
+				// The discount total the tab showed: the region compares it, and
+				// answers with its own when it differs (the guest then sees the
+				// final amount before paying).
+				expectedDiscountMinor: payTab?.totals.discountCents ?? 0,
 			})
 			regionAnswered = true
 			choiceHeld = true
@@ -955,6 +1005,15 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 					: code,
 				Boolean(reward.loyalty),
 			)
+			// A changed discount is not the code's fault: the guest checks the new
+			// total instead of being sent back to the coupon field.
+			if (code === 'coupon_refused') {
+				const field = payForm?.elements.namedItem('coupon')
+				if (field instanceof HTMLInputElement) {
+					setInvalid(field, true, 'tab-pay-error')
+					field.focus()
+				}
+			}
 			stopPaying(
 				rewardMessage ??
 					(code === 'rounds_pending'
@@ -963,7 +1022,10 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 							? labels.payUnavailable
 							: code === 'tab_paying' && choiceHeld
 								? labels.payPending
-								: errorText(code)),
+								: errorText(
+										code,
+										error instanceof TableRequestError ? error.body : undefined,
+									)),
 			)
 		}
 	}

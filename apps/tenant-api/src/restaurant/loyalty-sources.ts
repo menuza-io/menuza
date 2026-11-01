@@ -9,6 +9,7 @@ import {
 	type SnapshotSourceLine,
 } from '@repo/loyalty'
 import {
+	discountRedemptions,
 	loyaltyOutbox,
 	loyaltyRedemptions,
 	loyaltyRefunds,
@@ -17,7 +18,18 @@ import {
 	type QrTabRow,
 	type RestaurantOrder,
 } from '@repo/tenant-db'
-import { and, asc, eq, inArray, lte, ne, notExists, sql } from 'drizzle-orm'
+import {
+	and,
+	asc,
+	eq,
+	inArray,
+	like,
+	lte,
+	ne,
+	notExists,
+	or,
+	sql,
+} from 'drizzle-orm'
 import { type LoyaltyReader } from '../lib/loyalty-write.ts'
 import { type RedemptionRow } from '../services/loyalty-redemption-service.ts'
 import {
@@ -53,22 +65,32 @@ function categoryIdsOf(line: PricedOrderLine): string[] {
 	)
 }
 
-/** The cart a reward is quoted and bound on. */
+/**
+ * The cart a reward is quoted and bound on. `lineDiscounts` is what discounts
+ * and coupons already took off each line (by line id); the reward applies to
+ * what is left.
+ */
 export function restaurantCartLines(
 	lines: readonly PricedOrderLine[],
 	roundId?: string,
+	lineDiscounts: Readonly<Record<string, number>> = {},
 ): LoyaltyCartLine[] {
 	return lines.map((line, index) => {
 		const unitMinor = Math.max(0, line.unitPriceCents)
 		const unitBaseMinor = Math.min(unitMinor, Math.max(0, line.baseUnitCents))
+		const lineId = restaurantLineId(index, roundId)
 		return {
-			lineId: restaurantLineId(index, roundId),
+			lineId,
 			itemId: snapshotCatalogId(line.itemId),
 			variantId: line.variantId ? snapshotCatalogId(line.variantId) : null,
 			categoryIds: categoryIdsOf(line),
 			quantity: line.quantity,
 			unitBaseMinor,
 			unitMinor,
+			discountedMinor: Math.min(
+				Math.max(0, Math.trunc(lineDiscounts[lineId] ?? 0)),
+				unitMinor * line.quantity,
+			),
 		}
 	})
 }
@@ -139,16 +161,39 @@ export function orderTaxInclusive(
 		| 'loyaltyDiscountCents'
 		| 'tipCents'
 		| 'deliveryFeeCents'
-	>,
+	> &
+		Partial<Pick<RestaurantOrder, 'discountCents' | 'deliveryDiscountCents'>>,
 ): boolean {
 	return (
 		order.taxCents > 0 &&
 		order.totalCents ===
 			order.subtotalCents -
-				order.loyaltyDiscountCents +
+				order.loyaltyDiscountCents -
+				(order.discountCents ?? 0) +
 				order.tipCents +
-				order.deliveryFeeCents
+				order.deliveryFeeCents -
+				(order.deliveryDiscountCents ?? 0)
 	)
+}
+
+/** What the order's discounts and coupons took off each line, by line id. */
+export function orderLineDiscounts(
+	order: Pick<RestaurantOrder, 'discounts'>,
+): Array<{ lineId: string; discountMinor: number }> {
+	const totals = new Map<string, number>()
+	const applied = Array.isArray(order.discounts) ? order.discounts : []
+	for (const discount of applied) {
+		for (const share of discount.allocation ?? []) {
+			totals.set(
+				share.lineId,
+				(totals.get(share.lineId) ?? 0) + Math.max(0, share.amountMinor),
+			)
+		}
+	}
+	return [...totals].map(([lineId, discountMinor]) => ({
+		lineId,
+		discountMinor,
+	}))
 }
 
 const ms = (value: Date | null | undefined) =>
@@ -240,7 +285,9 @@ export function restaurantOrderVerdict(
 	redemption: RedemptionRow | null,
 	now: number,
 ): LoyaltySourceVerdict {
-	const paid = order.paymentStatus === 'paid'
+	// A free order (nothing to pay after discounts) has no payment to wait for.
+	const paid =
+		order.paymentStatus === 'paid' || order.paymentStatus === 'not_required'
 	const stopped =
 		order.status === 'cancelled' ||
 		order.status === 'expired' ||
@@ -287,6 +334,7 @@ export function restaurantOrderVerdict(
 			taxMinor: order.taxCents,
 			taxInclusive: orderTaxInclusive(order),
 			lines: snapshotLines(storedLines(order)),
+			lineDiscounts: orderLineDiscounts(order),
 			allocation: split.allocation,
 			otherDiscountMinor: split.otherDiscountMinor,
 		}),
@@ -428,10 +476,13 @@ export const LOYALTY_CART_MAX_LINE_QUANTITY = 1000
  */
 function tabCartGroups(
 	rounds: readonly RestaurantOrder[],
+	lineDiscounts: Readonly<Record<string, number>> = {},
 ): LoyaltyCartLine[][] {
 	const lines = rounds
 		.filter(liveRound)
-		.flatMap((round) => restaurantCartLines(storedLines(round), round.id))
+		.flatMap((round) =>
+			restaurantCartLines(storedLines(round), round.id, lineDiscounts),
+		)
 	if (lines.length <= LOYALTY_CART_MAX_LINES) return lines.map((line) => [line])
 	const groups: LoyaltyCartLine[][] = []
 	const open = new Map<string, { group: LoyaltyCartLine[]; quantity: number }>()
@@ -462,8 +513,9 @@ function tabCartGroups(
 /** The tab's counting rounds as one cart: what a reward on the tab is quoted on. */
 export function tabCartLines(
 	rounds: readonly RestaurantOrder[],
+	lineDiscounts: Readonly<Record<string, number>> = {},
 ): LoyaltyCartLine[] {
-	return tabCartGroups(rounds).map((group) =>
+	return tabCartGroups(rounds, lineDiscounts).map((group) =>
 		group.length === 1
 			? group[0]!
 			: {
@@ -515,11 +567,11 @@ export function expandTabAllocation<
 export function tabLoyaltyCart(
 	tab: Pick<QrTabRow, 'currency'>,
 	rounds: readonly RestaurantOrder[],
+	lineDiscounts: Readonly<Record<string, number>> = {},
 ): LoyaltyCart {
 	return {
 		currency: tab.currency,
-		lines: tabCartLines(rounds),
-		otherDiscountMinor: 0,
+		lines: tabCartLines(rounds, lineDiscounts),
 	}
 }
 
@@ -560,6 +612,28 @@ export async function qrTabVerdict(
 		split.allocation = expandTabAllocation(rounds, split.allocation)
 	}
 	const totals = tabTotals(tab, rounds, { useSnapshot: true })
+	const discountRows = await db
+		.select({ allocation: discountRedemptions.allocation })
+		.from(discountRedemptions)
+		.where(
+			and(
+				eq(discountRedemptions.sourceType, 'tab'),
+				or(
+					eq(discountRedemptions.sourceId, tab.id),
+					like(discountRedemptions.sourceId, `${tab.id}:%`),
+				),
+				inArray(discountRedemptions.state, ['reserved', 'consumed']),
+			),
+		)
+	const discountByLine = new Map<string, number>()
+	for (const row of discountRows) {
+		for (const line of row.allocation ?? []) {
+			discountByLine.set(
+				line.lineId,
+				(discountByLine.get(line.lineId) ?? 0) + line.amountMinor,
+			)
+		}
+	}
 	return {
 		kind: 'completed',
 		occurredAt: tab.paidAt ?? tab.closedAt ?? tab.updatedAt ?? now,
@@ -571,6 +645,9 @@ export async function qrTabVerdict(
 			taxInclusive: totals.taxInclusive,
 			lines: rounds.flatMap((round) =>
 				snapshotLines(storedLines(round), round.id),
+			),
+			lineDiscounts: [...discountByLine.entries()].map(
+				([lineId, discountMinor]) => ({ lineId, discountMinor }),
 			),
 			allocation: split.allocation,
 			otherDiscountMinor: split.otherDiscountMinor,

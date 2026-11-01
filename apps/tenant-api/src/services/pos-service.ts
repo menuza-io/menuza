@@ -35,8 +35,14 @@ import {
 	type PosOrderRequest,
 } from '@repo/common/pos-orders'
 import {
+	discountedTaxableCents,
+	sumLineAmounts,
+} from '@repo/common/pos-discount-base'
+import {
+	inclusiveTaxCents,
 	priceRestaurantOrder,
 	restaurantOrderRequestSchema,
+	type PricedRestaurantOrder,
 	type RestaurantOrderContext,
 } from '@repo/common/restaurant-orders'
 import {
@@ -1033,6 +1039,47 @@ export function driftMayBeMenuChange(
 }
 
 /**
+ * The tax and total (without tip) the live menu expects for a sale that
+ * carries discounts, by the rule the till and `applyOrderDiscounts` share
+ * (`discountedTaxableCents`). An adjustment's `lineAmounts` (keyed by the
+ * till's line ids) shrink those lines' taxable amounts; any discount without
+ * line data (a manual discount, a loyalty reward) is spread in proportion to
+ * the rest of the bill.
+ */
+export function expectedDiscountedTotals(
+	server: Pick<
+		PricedRestaurantOrder,
+		'lines' | 'subtotalCents' | 'taxInclusive' | 'taxRatePercent'
+	>,
+	order: Pick<PosOrderRequest, 'lines' | 'adjustments'>,
+): { adjustmentCents: number; taxCents: number; totalCents: number } {
+	const adjustmentCents = Math.min(
+		server.subtotalCents,
+		order.adjustments.reduce((sum, a) => sum + a.amountCents, 0),
+	)
+	const perLine = sumLineAmounts(order.adjustments)
+	const base = discountedTaxableCents({
+		lines: server.lines.map((line, index) => ({
+			totalCents: line.totalCents,
+			taxableCents: line.taxableCents,
+			offCents: perLine.get(order.lines[index]?.id ?? '') ?? 0,
+		})),
+		adjustmentCents,
+	})
+	const taxCents = server.taxInclusive
+		? inclusiveTaxCents(base.taxableAfterCents, server.taxRatePercent)
+		: Math.round((base.taxableAfterCents * server.taxRatePercent) / 100)
+	return {
+		adjustmentCents,
+		taxCents,
+		totalCents:
+			server.subtotalCents -
+			adjustmentCents +
+			(server.taxInclusive ? 0 : taxCents),
+	}
+}
+
+/**
  * Reprices the sale against the live menu with the same engine online orders
  * use. The result never decides whether the sale is kept (the money has
  * already changed hands); it decides whether a person should look at it, and
@@ -1084,17 +1131,31 @@ export function reviewAgainstMenu(
 		}
 	}
 	const server = priced.result
-	// With adjustments (discounts) the server's tax is not comparable, so no total.
-	const serverTotalCents =
-		order.adjustments.length > 0 ? null : server.totalCents - server.tipCents
 	const reasons: string[] = []
 	if (server.subtotalCents !== order.totals.subtotalCents) {
 		reasons.push(stale ? 'stale_price' : 'price_mismatch')
-	} else if (
-		order.adjustments.length === 0 &&
-		server.taxCents !== order.totals.taxCents
-	) {
-		reasons.push(stale ? 'stale_tax' : 'tax_mismatch')
+	}
+	let serverTotalCents: number
+	if (order.adjustments.length === 0) {
+		serverTotalCents = server.totalCents - server.tipCents
+		if (reasons.length === 0 && server.taxCents !== order.totals.taxCents) {
+			reasons.push(stale ? 'stale_tax' : 'tax_mismatch')
+		}
+	} else {
+		// With discounts the expected tax is rebuilt the way the till and
+		// `applyOrderDiscounts` do it: a discount that names its lines shrinks
+		// those lines' taxable amount, the rest shrinks the whole base in
+		// proportion. A till can no longer understate VAT by claiming a discount.
+		const expected = expectedDiscountedTotals(server, order)
+		serverTotalCents = expected.totalCents
+		// Rounding: one minor unit per line (each line's share rounds once).
+		const tolerance = Math.max(1, order.lines.length)
+		if (
+			reasons.length === 0 &&
+			Math.abs(expected.taxCents - order.totals.taxCents) > tolerance
+		) {
+			reasons.push(stale ? 'stale_tax' : 'tax_mismatch')
+		}
 	}
 	return { reviewReason: reasons[0] ?? null, serverTotalCents, locationName }
 }
@@ -1142,6 +1203,32 @@ export function billUnchanged(
 		prior.tipCents === order.totals.tipCents &&
 		prior.totalCents === order.totals.totalCents
 	)
+}
+
+/**
+ * The discount applications of a stored revision, or null when that revision
+ * is not stored. Used to see whether a later revision of an already checked
+ * bill names discounts the earlier one did not.
+ */
+export async function revisionDiscountApplications(
+	db: TenantDatabase,
+	orderId: string,
+	revision: number,
+): Promise<unknown[] | null> {
+	const [row] = await db
+		.select({ snapshot: posOrderRevisions.snapshot })
+		.from(posOrderRevisions)
+		.where(
+			and(
+				eq(posOrderRevisions.orderId, orderId),
+				eq(posOrderRevisions.revision, revision),
+			),
+		)
+		.limit(1)
+	if (!row) return null
+	const applications = (row.snapshot as { discountApplications?: unknown })
+		?.discountApplications
+	return Array.isArray(applications) ? applications : []
 }
 
 /** A discount above this share of the subtotal is shown to a manager. */
@@ -1197,6 +1284,19 @@ export const POS_HOLDING_REVIEW_REASONS: readonly string[] = [
 	'approver_not_manager',
 ]
 
+/**
+ * Till discount review reasons. They question the charge, not the people, so
+ * like a price difference they never hold the sale and a flagged sale still
+ * earns loyalty points.
+ */
+export const POS_DISCOUNT_REVIEW_REASONS = [
+	'unknown_discount',
+	'discount_approval_missing',
+	'discount_stale',
+	'discount_unexplained',
+	'discount_amount_mismatch',
+] as const
+
 /** The first holding reason wins; otherwise the first reason at all. */
 export function prioritizePosReviewReasons(
 	reasons: ReadonlyArray<string | null>,
@@ -1233,10 +1333,13 @@ export function withClockCheck(
 	return review
 }
 
-/** Everyone an order names: who rang it up, took or gave back money, removed items, cancelled or approved. */
+/**
+ * Everyone an order names: who rang it up, took or gave back money, removed
+ * items, cancelled or approved (a discount's approver included).
+ */
 function namedStaff(order: PosOrderRequest) {
-	const people: Array<{ who: PosStaff; approver: boolean }> = []
-	const add = (who: PosStaff | null, approver = false) => {
+	const people: Array<{ who: Pick<PosStaff, 'id'>; approver: boolean }> = []
+	const add = (who: Pick<PosStaff, 'id'> | null, approver = false) => {
 		if (who) people.push({ who, approver })
 	}
 	add(order.staff)
@@ -1251,7 +1354,150 @@ function namedStaff(order: PosOrderRequest) {
 		add(v.by)
 		add(v.approvedBy, true)
 	}
+	for (const d of order.discountApplications) {
+		if (d.approvedByStaffId) add({ id: d.approvedByStaffId }, true)
+	}
 	return people
+}
+
+/** The rule facts the till's discounts are checked against. */
+export type TillDiscountRule = {
+	id: string
+	version: number
+	requireApproval: boolean
+	valueType?: string
+	percentBp?: number | null
+	amountMinor?: number | null
+	maxDiscountMinor?: number | null
+	tiers?: unknown
+	target?: { scope?: string }
+}
+
+/**
+ * The most a percent rule can take off, in basis points: its own value, or the
+ * top step of its ladder (every step carries its own percentage).
+ */
+/** The most a fixed or fixed_price rule can take off this sale, in cents. */
+function fixedRuleCeilingMinor(
+	rule: TillDiscountRule,
+	order: Pick<PosOrderRequest, 'lines' | 'totals'>,
+): number | null {
+	if (rule.valueType !== 'fixed' && rule.valueType !== 'fixed_price') {
+		return null
+	}
+	const steps = (rule.tiers as { steps?: unknown } | null | undefined)?.steps
+	if (Array.isArray(steps)) {
+		let top = rule.amountMinor ?? 0
+		for (const step of steps) {
+			const minor = (step as { amountMinor?: unknown })?.amountMinor
+			if (typeof minor === 'number' && minor > top) top = minor
+		}
+		if (top > 0) return top
+	}
+	if (rule.amountMinor == null) return null
+	if (rule.target?.scope === 'order') return rule.amountMinor
+	const units = order.lines.reduce((sum, line) => sum + line.quantity, 0)
+	return rule.amountMinor * Math.max(1, units)
+}
+
+function rulePercentCeilingBp(rule: TillDiscountRule): number | null {
+	const steps = (rule.tiers as { steps?: unknown } | null | undefined)?.steps
+	if (!Array.isArray(steps)) return rule.percentBp ?? null
+	let top = rule.percentBp ?? 0
+	for (const step of steps) {
+		const bp = (step as { percentBp?: unknown })?.percentBp
+		if (typeof bp === 'number' && bp > top) top = bp
+	}
+	return top > 0 ? top : null
+}
+
+/**
+ * The till's discounts against the rules as they are now. The sale is kept
+ * either way; a person is asked to look when it names a discount that is not a
+ * till rule any more (unknown, paused or archived: only active rules are
+ * published), one that needs a manager and carries none, one the till
+ * applied from an older version of the rule, a `discount` adjustment that no
+ * application explains (`discount_unexplained`: the till took money off and
+ * named no rule), or an application bigger than the rule or the sale allows
+ * (`discount_amount_mismatch`: above the rule's cap, above its percent of the
+ * subtotal, or above the subtotal itself). `rules` is null when they could not
+ * be fetched: nothing about a rule can be said then, and only the checks that
+ * need no rule (unexplained, above the subtotal) still run.
+ */
+export function discountRuleReason(
+	order: Pick<
+		PosOrderRequest,
+		'discountApplications' | 'adjustments' | 'totals' | 'lines'
+	>,
+	rules: ReadonlyArray<TillDiscountRule> | null,
+): (typeof POS_DISCOUNT_REVIEW_REASONS)[number] | null {
+	const reasons = new Set<string>()
+	const byId = new Map((rules ?? []).map((rule) => [rule.id, rule]))
+	const subtotal = order.totals.subtotalCents
+	for (const application of order.discountApplications) {
+		const rule = byId.get(application.discountId)
+		if (rules && !rule) reasons.add('unknown_discount')
+		// Without the rule, an approval that was never named is still visible.
+		if (rule?.requireApproval && !application.approvedByStaffId)
+			reasons.add('discount_approval_missing')
+		if (
+			rule &&
+			application.version !== undefined &&
+			application.version !== rule.version
+		)
+			reasons.add('discount_stale')
+		if (application.amountCents > subtotal)
+			reasons.add('discount_amount_mismatch')
+		if (rule) {
+			if (
+				rule.maxDiscountMinor != null &&
+				application.amountCents > rule.maxDiscountMinor
+			)
+				reasons.add('discount_amount_mismatch')
+			const percentBp = rulePercentCeilingBp(rule)
+			if (
+				rule.valueType === 'percent' &&
+				percentBp != null &&
+				// Each line rounds on its own, so allow one cent of rounding per line.
+				application.amountCents >
+					Math.ceil((subtotal * percentBp) / 10_000) + order.lines.length
+			)
+				reasons.add('discount_amount_mismatch')
+			const fixedMinor = fixedRuleCeilingMinor(rule, order)
+			if (
+				fixedMinor != null &&
+				application.amountCents > fixedMinor + order.lines.length
+			)
+				reasons.add('discount_amount_mismatch')
+		}
+	}
+	// Every discount adjustment needs an application of the same amount.
+	const unexplained = new Map<number, number>()
+	for (const application of order.discountApplications)
+		unexplained.set(
+			application.amountCents,
+			(unexplained.get(application.amountCents) ?? 0) + 1,
+		)
+	for (const adjustment of order.adjustments) {
+		if (adjustment.kind !== 'discount') continue
+		const left = unexplained.get(adjustment.amountCents) ?? 0
+		if (left > 0) unexplained.set(adjustment.amountCents, left - 1)
+		else reasons.add('discount_unexplained')
+	}
+	return (
+		POS_DISCOUNT_REVIEW_REASONS.find((reason) => reasons.has(reason)) ?? null
+	)
+}
+
+/** Flags `discountRuleReason` on a review that has no reason yet. */
+export function withDiscountRuleCheck(
+	review: PosReview,
+	order: Parameters<typeof discountRuleReason>[0],
+	rules: Parameters<typeof discountRuleReason>[1],
+): PosReview {
+	if (review.reviewReason) return review
+	const reason = discountRuleReason(order, rules)
+	return reason ? { ...review, reviewReason: reason } : review
 }
 
 /**
@@ -1337,11 +1583,31 @@ const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b)
  * same sale, not a conflict.
  */
 function saleOf(snapshot: unknown) {
-	const body = snapshot as { lines?: unknown; loyalty?: unknown } | null
+	const body = snapshot as {
+		lines?: unknown
+		loyalty?: unknown
+		discountApplications?: unknown
+	} | null
 	if (!body || !Array.isArray(body.lines)) return snapshot
-	const { loyalty: ignoredLoyalty, ...sold } = body
+	const {
+		loyalty: ignoredLoyalty,
+		discountApplications: ignoredDiscounts,
+		...sold
+	} = body
+	const adjustments = (sold as { adjustments?: unknown }).adjustments
 	return {
 		...sold,
+		// Which line took a discount (optional) is not part of what was sold.
+		...(Array.isArray(adjustments)
+			? {
+					adjustments: adjustments.map((adjustment) => {
+						if (!adjustment || typeof adjustment !== 'object') return adjustment
+						const { lineAmounts: ignoredLineAmounts, ...rest } =
+							adjustment as Record<string, unknown>
+						return rest
+					}),
+				}
+			: {}),
 		lines: body.lines.map((line) => {
 			if (!line || typeof line !== 'object') return line
 			const {

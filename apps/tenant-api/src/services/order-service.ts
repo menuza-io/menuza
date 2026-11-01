@@ -56,11 +56,25 @@ import {
 	rewardRefusal,
 } from '../lib/loyalty-context.ts'
 import { type LoyaltyTx } from '../lib/loyalty-write.ts'
+import { isDiscountsKillSwitchOn } from '../lib/discount-switches.ts'
 import {
 	applyLoyaltyDiscountToTotals,
 	loyaltyCartForPricedOrder,
 	type LoyaltyDiscountedTotals,
 } from '../restaurant/loyalty-checkout.ts'
+import {
+	buildDiscountQuote,
+	consumeDiscountRedemptions,
+	interpretPlacement,
+	orderDiscountSnapshots,
+	prepareOrderDiscounts,
+	refundDiscountRedemptions,
+	releaseDiscountRedemptions,
+	reReserveReleasedDiscounts,
+	reserveOrderDiscounts,
+	totalsAfterDiscounts,
+} from './discount-apply.ts'
+import { releaseTabDiscounts } from './discount-tab.ts'
 import { qrTabPayableUntil } from '../restaurant/loyalty-sources.ts'
 import { readBalanceViewInTx } from './loyalty-ledger.ts'
 import {
@@ -107,6 +121,10 @@ export type OrderServiceFailure = {
 	message: string
 	/** Machine-readable extras for the client (e.g. the corrected discount). */
 	details?: Record<string, unknown>
+	/** A fresh discount quote, when the one the customer saw no longer holds. */
+	quote?: unknown
+	/** Why a coupon code was refused. */
+	reason?: string
 }
 
 export type OrderServiceResult<T> =
@@ -116,8 +134,23 @@ export function orderFailure(
 	status: number,
 	code: string,
 	message: string,
+	extra?: {
+		details?: Record<string, unknown>
+		quote?: unknown
+		reason?: string
+	},
 ): { ok: false; failure: OrderServiceFailure } {
-	return { ok: false, failure: { status, code, message } }
+	return {
+		ok: false,
+		failure: {
+			status,
+			code,
+			message,
+			...(extra?.details ? { details: extra.details } : {}),
+			...(extra?.quote !== undefined ? { quote: extra.quote } : {}),
+			...(extra?.reason ? { reason: extra.reason } : {}),
+		},
+	}
 }
 
 function fromEngineError(error: RestaurantOrderError): OrderServiceFailure {
@@ -295,6 +328,40 @@ function appOrderContextUrl() {
 	)
 }
 
+/**
+ * Automatic and manual till rules. Null when App cannot be reached; the till
+ * keeps the rules it already stored. An empty list is a real answer.
+ */
+export async function fetchTillDiscountRules(
+	orgId: string,
+): Promise<unknown[] | null> {
+	const appUrl = appOrderContextUrl()
+	const internalToken = getInternalCommandToken()
+	if (!appUrl || internalToken.length < 16) return null
+	try {
+		const response = await fetch(
+			`${appUrl}/resources/discount-rules?${new URLSearchParams({ orgId }).toString()}`,
+			{
+				headers: {
+					Accept: 'application/json',
+					Authorization: `Bearer ${internalToken}`,
+				},
+				redirect: 'error',
+				signal: AbortSignal.timeout(5_000),
+			},
+		)
+		if (!response.ok) return null
+		const body: unknown = await response.json()
+		if (!body || typeof body !== 'object' || !('discountRules' in body)) {
+			return null
+		}
+		const rules = (body as { discountRules: unknown }).discountRules
+		return Array.isArray(rules) ? rules : null
+	} catch {
+		return null
+	}
+}
+
 export async function fetchOrderContext(
 	orgId: string,
 	locationId: string,
@@ -382,8 +449,14 @@ async function expireHolds(
 			),
 		)
 		.returning({ id: restaurantOrders.id })
-	// Loyalty hears about every hold that actually lapsed (a no-op for orders
-	// loyalty does not track).
+	// A lapsed hold gives the discount use back. Loyalty hears about every
+	// hold that actually lapsed (a no-op for orders loyalty does not track).
+	if (expired.length > 0) {
+		await releaseDiscountRedemptions(
+			db,
+			expired.map((row) => row.id),
+		)
+	}
 	for (const row of expired) {
 		await loyalty.queue(
 			loyaltyTx(db),
@@ -750,10 +823,6 @@ export async function placeOrder(input: {
 	)
 	const loyaltyEarning = loyaltyCredits && !isDineIn
 	const loyaltyTabClaim = loyaltyCredits && isDineIn
-	const loyaltyCart = request.loyalty ? loyaltyCartForPricedOrder(result) : null
-	const loyaltyCartHash = loyaltyCart
-		? await hashLoyaltyCart(loyaltyCart)
-		: null
 
 	const orderId = crypto.randomUUID()
 	const receiptToken = deriveReceiptToken(orgId, orderId)
@@ -863,6 +932,9 @@ export async function placeOrder(input: {
 											: null,
 								},
 							)
+							// An abandoned phone payment reserved a code. A new
+							// round ends that payment, so the reservation goes too.
+							await releaseTabDiscounts(tx, existingTab.id)
 							const [cleared] = await tx
 								.update(qrTabs)
 								.set({
@@ -925,6 +997,49 @@ export async function placeOrder(input: {
 						if (entityFailure) return { ok: false, failure: entityFailure }
 					}
 
+					const preparedResult = await prepareOrderDiscounts(tx, {
+						priced: result,
+						context,
+						discounts: request.discounts,
+						fulfillment: request.fulfillment,
+						source: orderSource,
+						customerId,
+						now,
+						killed: isDiscountsKillSwitchOn(),
+					})
+					if (!preparedResult.ok) {
+						return orderFailure(
+							preparedResult.failure.status,
+							preparedResult.failure.code,
+							preparedResult.failure.message,
+							{
+								quote: preparedResult.failure.quote,
+								reason: preparedResult.failure.reason,
+							},
+						)
+					}
+					const prepared = preparedResult.prepared
+					// The kill switch prices nothing. A guest who was shown a
+					// discount must not be charged full price with a 201.
+					if (
+						!prepared &&
+						isDiscountsKillSwitchOn() &&
+						(request.discounts?.expectedDiscountMinor ?? 0) > 0
+					) {
+						return orderFailure(
+							409,
+							'discount_changed',
+							'Your discount changed. Review the new total and place the order again.',
+						)
+					}
+					const lineDiscounts = prepared?.evaluation.lineDiscounts ?? {}
+					const loyaltyCart = request.loyalty
+						? loyaltyCartForPricedOrder(result, lineDiscounts)
+						: null
+					const loyaltyCartHash = loyaltyCart
+						? await hashLoyaltyCart(loyaltyCart)
+						: null
+
 					const at = now.getTime()
 					const member =
 						(loyaltyEarning || loyaltyTabClaim) && customerId
@@ -947,35 +1062,65 @@ export async function placeOrder(input: {
 									currency: result.currency,
 								})
 							: null
+					const discounted = totalsAfterDiscounts(result, prepared)
 					const totals: LoyaltyDiscountedTotals = selected
 						? applyLoyaltyDiscountToTotals(
 								result,
 								selected.quote.lines,
 								selected.quote.discountMinor,
+								{
+									lineDiscounts,
+									deliveryDiscountMinor:
+										prepared?.evaluation.deliveryDiscountMinor,
+								},
 							)
 						: {
 								loyaltyDiscountCents: 0,
-								taxCents: result.taxCents,
-								totalCents: result.totalCents,
+								taxCents: discounted.taxCents,
+								totalCents: discounted.totalCents,
 							}
-					if (
-						selected &&
-						request.paymentMethod === 'online' &&
-						totals.totalCents <= 0
-					) {
-						return orderFailure(
-							422,
-							'reward_covers_total',
-							'This reward covers the whole order. Choose pay at handoff.',
+					if (prepared && request.discounts) {
+						const quote = buildDiscountQuote({
+							priced: result,
+							prepared,
+							loyaltyDiscountMinor: totals.loyaltyDiscountCents,
+							taxMinor: totals.taxCents,
+							totalMinor: totals.totalCents,
+						})
+						const decision = interpretPlacement(
+							request.discounts,
+							prepared,
+							quote,
 						)
+						if (!decision.ok) {
+							return orderFailure(
+								decision.failure.status,
+								decision.failure.code,
+								decision.failure.message,
+								{
+									quote: decision.failure.quote,
+									reason: decision.failure.reason,
+								},
+							)
+						}
 					}
+					const freeOrder =
+						request.paymentMethod === 'online' && totals.totalCents <= 0
+					// A free pickup or delivery order paid at handoff has nothing to
+					// collect either: store it as not_required (like a free online
+					// order) so no "mark paid" step is asked of staff. A table round is
+					// never free this way: its tab is settled once, at close.
+					const freeHandoff =
+						request.paymentMethod === 'handoff' &&
+						totals.totalCents <= 0 &&
+						!tabRow
 
 					const usedNumbers = new Set<string>()
 					let inserted: RestaurantOrder | null = null
 					for (let attempt = 0; attempt < 5 && !inserted; attempt += 1) {
 						const number = await nextOrderNumber(tx, now, usedNumbers)
 						const holdExpiresAt =
-							request.paymentMethod === 'online'
+							request.paymentMethod === 'online' && !freeOrder
 								? new Date(now.getTime() + result.holdMinutes * 60 * 1000)
 								: null
 						try {
@@ -990,7 +1135,11 @@ export async function placeOrder(input: {
 									status: 'accepted',
 									paymentMethod: request.paymentMethod,
 									paymentStatus:
-										request.paymentMethod === 'online' ? 'pending' : 'unpaid',
+										freeOrder || freeHandoff
+											? 'not_required'
+											: request.paymentMethod === 'online'
+												? 'pending'
+												: 'unpaid',
 									paymentProcessor:
 										request.paymentMethod === 'online'
 											? (context.onlinePayment.processor ?? null)
@@ -1032,6 +1181,9 @@ export async function placeOrder(input: {
 									tipPercent: result.tipPercent,
 									totalCents: totals.totalCents,
 									loyaltyDiscountCents: totals.loyaltyDiscountCents,
+									discountCents: discounted.discountCents,
+									deliveryDiscountCents: discounted.deliveryDiscountCents,
+									discounts: orderDiscountSnapshots(prepared),
 									lines: result.lines,
 									idempotencyKey: request.idempotencyKey,
 									requestHash,
@@ -1072,6 +1224,19 @@ export async function placeOrder(input: {
 					}
 
 					const source = { type: 'restaurant_order' as const, id: inserted.id }
+					if (prepared) {
+						await reserveOrderDiscounts(tx, {
+							orderId: inserted.id,
+							customerId,
+							prepared,
+						})
+						// A free order is already accepted: the use is spent. A
+						// pay-at-pickup order stays reserved until it is completed,
+						// and that reservation still counts toward the limit.
+						if (freeOrder) {
+							await consumeDiscountRedemptions(tx, [inserted.id])
+						}
+					}
 					if (selected && member && loyaltyCart && loyaltyCartHash) {
 						// Holds the points and binds the reward to this order. It throws
 						// (rolling the order back) when the member can no longer spend.
@@ -1483,6 +1648,7 @@ export async function applyPaymentEvent(input: {
 									updatedAt: now,
 								})
 								.where(eq(restaurantOrders.id, order.id))
+							await consumeDiscountRedemptions(tx, [order.id])
 							await queueLoyalty()
 							return {
 								ok: true,
@@ -1511,6 +1677,27 @@ export async function applyPaymentEvent(input: {
 									updatedAt: now,
 								})
 								.where(eq(restaurantOrders.id, order.id))
+							// The sweep gave the discount use back when the hold lapsed, but
+							// the guest paid the discounted price. Honor the sale: record the
+							// use again (reserved, like any order awaiting its decision) even
+							// if a limit has been reached since, so the counts stay true.
+							// The operator's accept consumes it and a cancel releases it.
+							const late = await reReserveReleasedDiscounts(tx, order.id)
+							if (late.exceededDiscountIds.length > 0) {
+								// Others took the last use while the page was still payable.
+								// Still honored, but the operator is told why it waits.
+								const exceeded = new Set(late.exceededDiscountIds)
+								await tx
+									.update(restaurantOrders)
+									.set({
+										discounts: (order.discounts ?? []).map((discount) =>
+											exceeded.has(discount.discountId)
+												? { ...discount, limitExceeded: true as const }
+												: discount,
+										),
+									})
+									.where(eq(restaurantOrders.id, order.id))
+							}
 							await queueLoyalty()
 							return {
 								ok: true,
@@ -1545,6 +1732,7 @@ export async function applyPaymentEvent(input: {
 									updatedAt: now,
 								})
 								.where(eq(restaurantOrders.id, order.id))
+							await releaseDiscountRedemptions(tx, [order.id])
 							await queueLoyalty()
 							return {
 								ok: true,
@@ -1578,6 +1766,7 @@ export async function applyPaymentEvent(input: {
 								updatedAt: now,
 							})
 							.where(eq(restaurantOrders.id, order.id))
+						await releaseDiscountRedemptions(tx, [order.id])
 						await queueLoyalty()
 						return {
 							ok: true,
@@ -1676,18 +1865,23 @@ export async function updateOperatorOrder(
 							)
 						}
 						if (order.paymentMethod !== 'online') {
-							if (
-								order.paymentStatus !== 'unpaid' &&
-								order.paymentStatus !== 'paid'
-							) {
-								return orderFailure(
-									409,
-									'payment_state_conflict',
-									'This order cannot be marked paid.',
-								)
+							// A free order (not_required) has nothing to collect: marking
+							// it paid is a no-op, so a stale client tap neither fails nor
+							// invents a payment.
+							if (order.paymentStatus !== 'not_required') {
+								if (
+									order.paymentStatus !== 'unpaid' &&
+									order.paymentStatus !== 'paid'
+								) {
+									return orderFailure(
+										409,
+										'payment_state_conflict',
+										'This order cannot be marked paid.',
+									)
+								}
+								patch.paymentStatus = 'paid'
+								patch.paidAt = now
 							}
-							patch.paymentStatus = 'paid'
-							patch.paidAt = now
 						} else {
 							return orderFailure(
 								409,
@@ -1711,6 +1905,23 @@ export async function updateOperatorOrder(
 						{ type: 'restaurant_order', id: order.id },
 						now.getTime(),
 					)
+					if (patch.status === 'cancelled') {
+						await releaseDiscountRedemptions(tx, [order.id])
+						await refundDiscountRedemptions(tx, order.id)
+					} else if (
+						patch.status === 'completed' ||
+						patch.paymentStatus === 'paid' ||
+						// An operator accepting a paid order that was held for review
+						// (it was paid after its hold lapsed) honors the sale.
+						(order.status === 'payment_review' && patch.status !== undefined)
+					) {
+						if (order.status === 'payment_review') {
+							// Orders that reached review before the use was re-recorded
+							// at that moment have only a released row: record it now.
+							await reReserveReleasedDiscounts(tx, order.id)
+						}
+						await consumeDiscountRedemptions(tx, [order.id])
+					}
 					return { ok: true, data: updated ?? order }
 				}),
 			),
@@ -1903,6 +2114,18 @@ export function publicOrderSummary(order: RestaurantOrder) {
 		tipCents: order.tipCents,
 		/** A loyalty reward's discount, taken off the subtotal before tax. */
 		loyaltyDiscountCents: order.loyaltyDiscountCents,
+		/** Coupons and automatic discounts on the items, in cents. */
+		discountCents: order.discountCents,
+		/** Delivery fee taken off by a discount, in cents. */
+		deliveryDiscountCents: order.deliveryDiscountCents,
+		/** Each applied discount, without the per-line allocation. */
+		discounts: (order.discounts ?? []).map((discount) => ({
+			discountId: discount.discountId,
+			name: discount.name,
+			code: discount.code,
+			amountMinor: discount.amountMinor,
+			deliveryAmountMinor: discount.deliveryAmountMinor,
+		})),
 		totalCents: order.totalCents,
 		holdExpiresAt: order.holdExpiresAt
 			? order.holdExpiresAt.toISOString()
@@ -1969,6 +2192,15 @@ export function operatorOrder(
 		paymentMethod: order.paymentMethod,
 		paymentProcessor: order.paymentProcessor,
 		paymentSessionId: order.paymentSessionId,
+		/**
+		 * Why a `payment_review` order waits, when the region knows: the sale was
+		 * paid late and a discount's limit had been used up since. Null otherwise.
+		 */
+		reviewReason:
+			order.status === 'payment_review' &&
+			(order.discounts ?? []).some((discount) => discount.limitExceeded)
+				? ('discount_limit_exceeded' as const)
+				: null,
 		/** Recorded as returned; the payment status stays `paid`. */
 		refundedCents: order.refundedCents,
 		dropId: order.dropId,

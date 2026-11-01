@@ -4,8 +4,10 @@ import {
 	ChevronLeft,
 	ChevronRight,
 	CircleUser,
+	Flame,
 	Gift,
 	Send,
+	Utensils,
 	type LucideIcon,
 } from 'lucide-react-native'
 import { type ColorValue } from 'react-native'
@@ -18,6 +20,8 @@ export type CustomerIconName =
 	| 'chevron-forward'
 	| 'checkmark-circle'
 	| 'paper-plane'
+	| 'menu'
+	| 'drops'
 
 const ICONS: Record<CustomerIconName, LucideIcon> = {
 	'calendar-outline': Calendar,
@@ -27,6 +31,8 @@ const ICONS: Record<CustomerIconName, LucideIcon> = {
 	'chevron-forward': ChevronRight,
 	'checkmark-circle': CheckCircle2,
 	'paper-plane': Send,
+	menu: Utensils,
+	drops: Flame,
 }
 
 /** Stroke icons for tabs and reservations (no icon-font assets). */

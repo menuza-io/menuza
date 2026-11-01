@@ -14,6 +14,7 @@ export const MERGE_TOKENS = [
 	{ tag: 'email', label: 'Email', sample: 'alex@example.com' },
 	{ tag: 'phone', label: 'Phone', sample: '+1 555 0100' },
 	{ tag: 'organizationName', label: 'Company', sample: 'Acme' },
+	{ tag: 'couponCode', label: 'Coupon code', sample: 'SAVE-7K3Q' },
 ] as const
 
 export type MergeTagName = (typeof MERGE_TOKENS)[number]['tag']

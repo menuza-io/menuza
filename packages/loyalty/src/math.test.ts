@@ -1,19 +1,14 @@
 import fc from 'fast-check'
 import { describe, expect, it } from 'vitest'
 import { loyaltyCartSchema, type LoyaltyCart } from './cart.ts'
-import { computeRewardDiscount, totalsWithDiscount } from './discount.ts'
+import { computeRewardDiscount } from './discount.ts'
 import {
 	computeEarning,
 	computeRefundReversal,
 	type LoyaltyPurchaseSnapshot,
 	visitDateOf,
 } from './earning.ts'
-import {
-	allocateProportionally,
-	inclusiveTaxMinor,
-	LOYALTY_MAX_POINTS,
-	mulDiv,
-} from './money.ts'
+import { allocateProportionally, LOYALTY_MAX_POINTS, mulDiv } from './money.ts'
 import {
 	loyaltyProgramConfigSchema,
 	type LoyaltyEarningRule,
@@ -85,7 +80,6 @@ const arbitraryCart = fc
 	.map((lines): LoyaltyCart =>
 		loyaltyCartSchema.parse({
 			currency: 'USD',
-			otherDiscountMinor: 0,
 			lines: lines.map((line, index) => ({
 				lineId: `l${index}`,
 				itemId: line.itemId,
@@ -182,55 +176,6 @@ describe('computeRewardDiscount properties', () => {
 				}
 			}),
 		)
-	})
-})
-
-describe('totalsWithDiscount', () => {
-	it('shrinks the exclusive tax base in proportion and tips on the discounted subtotal', () => {
-		expect(
-			totalsWithDiscount({
-				subtotalMinor: 2000,
-				taxableMinor: 2000,
-				taxRatePercent: 8.875,
-				taxInclusive: false,
-				discountMinor: 500,
-				tipPercent: 15,
-			}),
-		).toEqual({
-			subtotalMinor: 2000,
-			discountMinor: 500,
-			taxMinor: 133,
-			tipMinor: 225,
-			feesMinor: 0,
-			totalMinor: 1858,
-		})
-	})
-
-	it('reports inclusive tax without adding it', () => {
-		const totals = totalsWithDiscount({
-			subtotalMinor: 2300,
-			taxableMinor: 2300,
-			taxRatePercent: 15,
-			taxInclusive: true,
-			discountMinor: 230,
-			tipMinor: 0,
-		})
-		expect(totals.taxMinor).toBe(270)
-		expect(totals.totalMinor).toBe(2070)
-		expect(inclusiveTaxMinor(2070, 15)).toBe(270)
-	})
-
-	it('never takes off more than the subtotal', () => {
-		expect(
-			totalsWithDiscount({
-				subtotalMinor: 300,
-				taxableMinor: 300,
-				taxRatePercent: 10,
-				taxInclusive: false,
-				discountMinor: 1000,
-				feesMinor: 499,
-			}).totalMinor,
-		).toBe(499)
 	})
 })
 

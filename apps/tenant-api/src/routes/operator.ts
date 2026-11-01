@@ -5,6 +5,11 @@ import { randomUUID } from 'node:crypto'
 import { brand } from '@repo/config/brand'
 import { emailBlocksSchema } from '@repo/common/email-blocks'
 import {
+	marketingOfferSchema,
+	parseMarketingOffer,
+	usesCouponCodeTag,
+} from '@repo/discounts'
+import {
 	getOciMarketingMetrics,
 	isOciEngagementLoggingConfigured,
 } from '@repo/email'
@@ -22,6 +27,7 @@ import { errorLogFields } from '../lib/error-log.ts'
 import { checkGlobalSendCap } from '../lib/rate-limit.ts'
 import { getBearerToken, getOperatorToken } from '../lib/secrets.ts'
 import { sendTenantEmail } from '../lib/tenant-email.ts'
+import { couponCodeForRecipient } from '../services/discount-marketing-codes.ts'
 import { ensureEmailEngagementSynced } from '../services/email-engagement-sync.ts'
 import {
 	erasePerson,
@@ -424,6 +430,7 @@ operatorRoutes.get('/marketing/campaigns/:campaignId', async (c) => {
 				content: campaign.content,
 				contentBlocks: campaign.contentBlocks,
 				contentHtml: campaign.contentHtml,
+				discountOffer: parseMarketingOffer(campaign.discountOffer),
 				targetAudienceCount: campaign.targetAudienceCount,
 				audience: segmentationRules?.audience ?? 'all',
 				createdAt: campaign.createdAt,
@@ -466,6 +473,11 @@ const createCampaignSchema = z.object({
 		.nullable(),
 	/** Design-time rendered HTML for email broadcasts. */
 	contentHtml: z.string().max(500_000).optional().nullable(),
+	/**
+	 * The coupon `{{couponCode}}` shows. The App checks the discount belongs to
+	 * the organization and takes codes before it sends this.
+	 */
+	discountOffer: marketingOfferSchema.optional().nullable(),
 	scheduledAt: z.string().datetime().optional().nullable(),
 })
 
@@ -498,6 +510,24 @@ operatorRoutes.post('/marketing/campaigns', async (c) => {
 			400,
 		)
 	}
+	const offer = body.discountOffer ?? null
+	const usesTag = usesCouponCodeTag(
+		content,
+		channel === 'email' ? subject : null,
+		channel === 'email' ? body.contentHtml : null,
+	)
+	if (usesTag && !offer) {
+		return c.json(
+			{ error: 'Choose a discount for the {{couponCode}} tag' },
+			400,
+		)
+	}
+	if (offer && !usesTag) {
+		return c.json(
+			{ error: 'Add the {{couponCode}} tag so customers see their code' },
+			400,
+		)
+	}
 
 	try {
 		const db = await getTenantDb(orgId)
@@ -515,6 +545,7 @@ operatorRoutes.post('/marketing/campaigns', async (c) => {
 				? JSON.stringify(body.contentBlocks)
 				: null,
 			contentHtml: body.contentHtml || null,
+			discountOffer: offer ? JSON.stringify(offer) : null,
 			status,
 			segmentationRules: JSON.stringify({ audience }),
 			scheduledAt: isScheduled ? new Date(scheduledAt) : null,
@@ -578,6 +609,18 @@ async function dispatchCampaign(orgId: string, campaignId: string) {
 		// instead of a Completed one that delivered nothing. The campaign row has
 		// no reason column, so the generic reason goes to the log (ids only).
 		const consentOrigin = campaign.channel === 'email' ? consentBaseUrl() : null
+		const offer = parseMarketingOffer(campaign.discountOffer)
+		if (campaign.discountOffer && !offer) {
+			console.error('Broadcast failed: unreadable coupon', {
+				orgId,
+				campaignId,
+			})
+			await db
+				.update(marketingCampaigns)
+				.set({ status: 'Failed' })
+				.where(eq(marketingCampaigns.id, campaignId))
+			return
+		}
 		if (campaign.channel === 'email' && !consentOrigin) {
 			console.error('Broadcast failed: TENANT_API_URL is not set', {
 				orgId,
@@ -624,14 +667,24 @@ async function dispatchCampaign(orgId: string, campaignId: string) {
 			// Process sends concurrently across the batch
 			const results = await Promise.allSettled(
 				chunkItems.map(async ({ messageId, customer }) => {
-					// Templating engine via standard interpolateMergeTags
+					// The coupon is minted before anything is sent, so a failed
+					// mint fails this recipient instead of sending a raw tag.
+					const mergeContext: Record<string, string> = offer
+						? {
+								couponCode: await couponCodeForRecipient(db, offer, {
+									sourceType: 'campaign',
+									sourceId: campaignId,
+									customerId: customer.id,
+								}),
+							}
+						: {}
 					const parsedContent = interpolateMergeTags(
 						campaign.content,
 						customer,
-						{},
+						mergeContext,
 					)
 					const parsedSubject = campaign.subject
-						? interpolateMergeTags(campaign.subject, customer, {})
+						? interpolateMergeTags(campaign.subject, customer, mergeContext)
 						: ''
 
 					if (campaign.channel === 'email') {
@@ -645,7 +698,11 @@ async function dispatchCampaign(orgId: string, campaignId: string) {
 							topic: BROADCAST_TOPIC,
 						})
 						const bodyHtml = campaign.contentHtml
-							? interpolateMergeTagsHtml(campaign.contentHtml, customer, {})
+							? interpolateMergeTagsHtml(
+									campaign.contentHtml,
+									customer,
+									mergeContext,
+								)
 							: `<p>${escapeHtml(parsedContent)}</p>`
 						const emailRes = await sendTenantEmail({
 							to: customer.email,
