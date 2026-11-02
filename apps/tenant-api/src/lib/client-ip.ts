@@ -16,10 +16,19 @@ import type { Context } from 'hono'
  *   peer reached port 8080 directly, so its headers are ignored and the peer
  *   itself is the client. A spoofed `cf-connecting-ip` therefore buys nothing.
  *
+ * Deployment assumption: the node is reachable only through Cloudflare or a
+ * Cloudflare Tunnel (`docs/deployment.md`), and Cloudflare overwrites any
+ * `cf-connecting-ip` the client sent. A different reverse proxy in front of the
+ * node must itself overwrite `cf-connecting-ip` and `x-forwarded-for`, or strip
+ * them, before forwarding.
+ *
  * No environment variable is involved, so existing deployments keep working.
  */
 export function clientAddress(c: Context): string | null {
 	const peer = socketPeerAddress(c)
+	// No socket: the Worker runtime, where Cloudflare appends to
+	// `x-forwarded-for`. In any other socket-less setting (tests) the header is
+	// whatever the caller sent, so only call this where that holds.
 	if (peer === null) return headerAddress(c)
 	if (isTrustedProxyAddress(peer)) return headerAddress(c) ?? peer
 	return peer
@@ -151,15 +160,19 @@ function socketPeerAddress(c: Context): string | null {
 				incoming?: { socket?: { remoteAddress?: unknown } }
 		  }
 		| undefined
-	const bindings = env?.server ?? env
-	const remote = bindings?.incoming?.socket?.remoteAddress
+	// Look for the socket in each place on its own: a `server` without
+	// `incoming` must not hide an `incoming` on `env` (that would read as "no
+	// socket" and trust the headers).
+	const incoming = env?.server?.incoming ?? env?.incoming
+	const remote = incoming?.socket?.remoteAddress
 	return typeof remote === 'string' ? normalizeAddress(remote) : null
 }
 
 /**
  * A canonical address, or null when the text is not one: IPv4 as dotted
  * decimal (an IPv4-mapped IPv6 address becomes its IPv4 form, as dual-stack
- * Node sockets report it), IPv6 lower case without a zone.
+ * Node sockets report it), IPv6 lower case without a zone. Dropping the zone
+ * merges `fe80::1%eth0` and `fe80::1%eth1`, which is harmless for rate limits.
  */
 export function normalizeAddress(
 	raw: string | null | undefined,
@@ -181,7 +194,8 @@ function parseIpv4(text: string): number | null {
 	if (parts.length !== 4) return null
 	let value = 0
 	for (const part of parts) {
-		if (!/^\d{1,3}$/.test(part)) return null
+		// No leading zeros: some stacks read `010` as octal.
+		if (!/^(0|[1-9]\d{0,2})$/.test(part)) return null
 		const octet = Number(part)
 		if (octet > 255) return null
 		value = value * 256 + octet

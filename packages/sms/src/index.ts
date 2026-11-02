@@ -3,6 +3,12 @@ import { ENV } from './package-env.js'
 
 let twilioClient: twilio.Twilio | null = null
 
+function isExplicitLocalRuntime() {
+	return (
+		process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test'
+	)
+}
+
 export function getTwilioClient() {
 	if (!twilioClient) {
 		const accountSid = ENV.TWILIO_ACCOUNT_SID
@@ -30,7 +36,9 @@ export async function sendSms({
 	const client = getTwilioClient()
 
 	if (!client || !from) {
-		if (ENV.NODE_ENV === 'production') {
+		// Only an explicit local NODE_ENV may print the message. An unset
+		// value is production, so a missing credential cannot log the OTP.
+		if (!isExplicitLocalRuntime()) {
 			throw new Error(
 				'Twilio credentials not found. SMS disabled in production.',
 			)
@@ -40,7 +48,7 @@ export async function sendSms({
 	}
 
 	const region = (ENV.DATA_REGION || 'us').toLowerCase()
-	if (ENV.NODE_ENV === 'production' && region === 'ksa') {
+	if (!isExplicitLocalRuntime() && region === 'ksa') {
 		throw new Error(
 			'Twilio must not be used for KSA customer PII. Configure an in-kingdom SMS provider (see docs/tenant-data-residency.md).',
 		)

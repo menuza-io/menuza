@@ -68,7 +68,9 @@ export async function getSessionUserId(request: Request) {
 		)
 		.limit(1)
 	if (!session?.userId) {
-		throw redirect('/login', {
+		const redirectTo = getRequestDocumentPath(request)
+		const loginRedirect = `/login?${new URLSearchParams({ redirectTo })}`
+		throw redirect(loginRedirect, {
 			headers: {
 				'set-cookie': await authSessionStorage.destroySession(authSession),
 			},
@@ -210,6 +212,14 @@ export async function logout(
 	})
 }
 
+/**
+ * A cost-12 hash of a fixed string, started when this module loads. A missing
+ * account compares against it so login timing does not reveal whether the
+ * identifier exists. It is not a credential, and it is not stored as a hash
+ * literal.
+ */
+const dummyPasswordHash = bcrypt.hash('timing-equalization-placeholder', 12)
+
 export async function getPasswordHash(password: string) {
 	const hash = await bcrypt.hash(password, 12)
 	return hash
@@ -227,7 +237,10 @@ export async function verifyUserPassword(
 		.where(userWhere(where))
 		.limit(1)
 
+	// A missing account still runs a compare so the response time does not
+	// reveal whether the identifier exists.
 	if (!userWithPassword || !userWithPassword.hash) {
+		await bcrypt.compare(password, await dummyPasswordHash)
 		return null
 	}
 

@@ -2,7 +2,102 @@ import * as AuthSession from 'expo-auth-session'
 import Constants from 'expo-constants'
 import * as Crypto from 'expo-crypto'
 import * as Linking from 'expo-linking'
+import * as SecureStore from 'expo-secure-store'
 import { Platform } from 'react-native'
+
+const OAUTH_PENDING_KEY = 'oauth_pending'
+const WEB_PENDING_PREFIX = 'oauth:pending:'
+
+type OAuthPending = {
+	state: string
+	codeVerifier: string | null
+}
+
+async function deriveOAuthPendingKey(state: string) {
+	const digest = await crypto.subtle.digest(
+		'SHA-256',
+		new TextEncoder().encode(`epic-oauth-pending:${state}`),
+	)
+	return crypto.subtle.importKey('raw', digest, { name: 'AES-GCM' }, false, [
+		'encrypt',
+		'decrypt',
+	])
+}
+
+async function encryptOAuthPending(pending: OAuthPending): Promise<string> {
+	const iv = crypto.getRandomValues(new Uint8Array(12))
+	const key = await deriveOAuthPendingKey(pending.state)
+	const ciphertext = await crypto.subtle.encrypt(
+		{ name: 'AES-GCM', iv },
+		key,
+		new TextEncoder().encode(
+			JSON.stringify({ codeVerifier: pending.codeVerifier }),
+		),
+	)
+	const packed = new Uint8Array(iv.length + ciphertext.byteLength)
+	packed.set(iv)
+	packed.set(new Uint8Array(ciphertext), iv.length)
+	let binary = ''
+	for (const byte of packed) binary += String.fromCharCode(byte)
+	return btoa(binary)
+}
+
+async function decryptOAuthPending(
+	state: string,
+	payload: string,
+): Promise<OAuthPending | null> {
+	try {
+		const packed = Uint8Array.from(atob(payload), (char) => char.charCodeAt(0))
+		const iv = packed.slice(0, 12)
+		const data = packed.slice(12)
+		const key = await deriveOAuthPendingKey(state)
+		const plain = await crypto.subtle.decrypt(
+			{ name: 'AES-GCM', iv },
+			key,
+			data,
+		)
+		const parsed = JSON.parse(new TextDecoder().decode(plain)) as {
+			codeVerifier?: string | null
+		}
+		return {
+			state,
+			codeVerifier:
+				typeof parsed.codeVerifier === 'string' ? parsed.codeVerifier : null,
+		}
+	} catch {
+		return null
+	}
+}
+
+async function setOAuthPending(pending: OAuthPending) {
+	if (Platform.OS === 'web') {
+		const encrypted = await encryptOAuthPending(pending)
+		sessionStorage.setItem(`${WEB_PENDING_PREFIX}${pending.state}`, encrypted)
+		return
+	}
+	await SecureStore.setItemAsync(OAUTH_PENDING_KEY, JSON.stringify(pending))
+}
+
+async function getOAuthPending(state: string): Promise<OAuthPending | null> {
+	if (Platform.OS === 'web') {
+		const payload = sessionStorage.getItem(`${WEB_PENDING_PREFIX}${state}`)
+		if (!payload) return null
+		return decryptOAuthPending(state, payload)
+	}
+	const stored = await SecureStore.getItemAsync(OAUTH_PENDING_KEY)
+	if (!stored) return null
+	const parsed = JSON.parse(stored) as OAuthPending
+	if (parsed.state !== state) return null
+	return parsed
+}
+
+async function clearOAuthPending(state: string) {
+	if (Platform.OS === 'web') {
+		sessionStorage.removeItem(`${WEB_PENDING_PREFIX}${state}`)
+		return
+	}
+	await SecureStore.deleteItemAsync(OAUTH_PENDING_KEY)
+}
 
 export interface OAuthProvider {
 	name: string
@@ -94,20 +189,37 @@ export class OAuthService {
 			}
 
 			// Create the authorization request
+			const oauthState = state || this.generateState()
 			const request = new AuthSession.AuthRequest({
 				clientId: provider.clientId,
 				scopes: provider.scopes,
 				redirectUri: this.config.redirectUri,
 				responseType: AuthSession.ResponseType.Code,
-				state: state || this.generateState(),
+				state: oauthState,
 				extraParams: provider.additionalParameters,
 				usePKCE: true,
+			})
+
+			await setOAuthPending({
+				state: oauthState,
+				codeVerifier: request.codeVerifier ?? null,
 			})
 
 			// Start the authentication session
 			const result = await request.promptAsync(discovery)
 
 			if (result.type === 'success') {
+				if (result.params.state !== oauthState) {
+					return {
+						success: false,
+						error: 'state_mismatch',
+						errorDescription: 'OAuth state did not match this device',
+					}
+				}
+				await setOAuthPending({
+					state: oauthState,
+					codeVerifier: request.codeVerifier ?? null,
+				})
 				return {
 					success: true,
 					code: result.params.code,
@@ -155,10 +267,27 @@ export class OAuthService {
 			}
 
 			if (queryParams?.code) {
+				if (typeof queryParams.state !== 'string') {
+					return {
+						success: false,
+						error: 'state_mismatch',
+						errorDescription: 'OAuth state did not match this device',
+					}
+				}
+				const pending = await getOAuthPending(queryParams.state)
+				if (!pending || pending.state !== queryParams.state) {
+					return {
+						success: false,
+						error: 'state_mismatch',
+						errorDescription: 'OAuth state did not match this device',
+					}
+				}
+				await clearOAuthPending(queryParams.state)
 				return {
 					success: true,
 					code: queryParams.code as string,
-					state: queryParams.state as string,
+					state: queryParams.state,
+					codeVerifier: pending.codeVerifier ?? undefined,
 				}
 			}
 

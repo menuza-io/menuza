@@ -1,5 +1,14 @@
 import { verifySessionStorage } from '@repo/auth'
-import { db, eq, Password, Session } from '@repo/database'
+import {
+	ApiKey,
+	db,
+	eq,
+	MCPAuthorization,
+	Organization,
+	Password,
+	RefreshToken,
+	Session,
+} from '@repo/database'
 import { describe, expect, it } from 'vitest'
 import {
 	createAuthenticatedRequest,
@@ -82,6 +91,70 @@ describe('reset-password route integration', () => {
 			} as any)
 
 			expect(getResponseStatus(response)).toBe(400)
+		})
+
+		it('also revokes refresh tokens, MCP authorizations and API keys', async () => {
+			const user = await createTestUser({ password: 'OldPassword123!' })
+			const orgId = `org-${user.id}`
+			await db
+				.insert(Organization)
+				.values({ id: orgId, name: 'Reset Org', slug: orgId })
+			await db.insert(RefreshToken).values({
+				tokenHash: `rt-${user.id}`,
+				userId: user.id,
+				expiresAt: new Date(Date.now() + 86_400_000),
+			})
+			const [mcp] = await db
+				.insert(MCPAuthorization)
+				.values({
+					userId: user.id,
+					organizationId: orgId,
+					clientName: 'c',
+					clientId: `client-${user.id}`,
+				})
+				.returning()
+			const [key] = await db
+				.insert(ApiKey)
+				.values({
+					keyHash: `kh-${user.id}`,
+					keyPrefix: 'pre',
+					name: 'k',
+					userId: user.id,
+					organizationId: orgId,
+				})
+				.returning()
+
+			const cookie = await createResetPasswordCookie(user.username)
+			const formData = new FormData()
+			formData.append('password', 'NewSecretPassword123!')
+			formData.append('confirmPassword', 'NewSecretPassword123!')
+			await action({
+				request: createAuthenticatedRequest(
+					'http://localhost:3000/reset-password',
+					{ method: 'POST', body: formData },
+					cookie,
+				),
+				params: {},
+				context: {},
+			} as any)
+
+			const [rt] = await db
+				.select()
+				.from(RefreshToken)
+				.where(eq(RefreshToken.userId, user.id))
+			expect(rt?.revoked).toBe(true)
+			const [mcpAfter] = await db
+				.select()
+				.from(MCPAuthorization)
+				.where(eq(MCPAuthorization.id, mcp!.id))
+			expect(mcpAfter?.isActive).toBe(false)
+			// Expired (kept for audit), not deleted.
+			const [keyAfter] = await db
+				.select()
+				.from(ApiKey)
+				.where(eq(ApiKey.id, key!.id))
+			expect(keyAfter?.expiresAt).toBeInstanceOf(Date)
+			expect(keyAfter!.expiresAt!.getTime()).toBeLessThanOrEqual(Date.now())
 		})
 
 		it('successfully resets password, purges active sessions, and redirects to /login', async () => {

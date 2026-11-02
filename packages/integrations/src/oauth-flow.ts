@@ -10,6 +10,13 @@ const oauthGlobals = globalThis as unknown as {
 	__integrationOAuthInFlight?: Map<string, Promise<Integration>>
 }
 
+/**
+ * Starting and finishing a provider sign-in. The app binds the two halves to
+ * the browser and member who started it: it keeps the `state` returned by
+ * `start` in its own short-lived cookie, checks it against the callback, and
+ * passes the organization from that record to `complete`, never one taken
+ * from the callback URL.
+ */
 class OAuthFlow {
 	// Deduplicates concurrent callback deliveries for the same state so only one
 	// token exchange runs.
@@ -18,7 +25,10 @@ class OAuthFlow {
 	}
 
 	/**
-	 * Start OAuth flow for a provider
+	 * Start OAuth flow for a provider. `state` is the value the provider will
+	 * send back to the callback: the `state` parameter (OAuth 2.0), or the
+	 * request token (`oauth_token`, Trello's OAuth 1.0a). For a provider that
+	 * does not echo `state` (Clover), it is the signed state we generated.
 	 */
 	async start(
 		organizationId: string,
@@ -42,8 +52,16 @@ class OAuthFlow {
 		// Optional: extract state from the authUrl in case the provider generated its own
 		// but since we passed state, hopefully it uses it or we can just parse it
 		const url = new URL(authUrl)
-		const finalState = url.searchParams.get('state') || state
-		await OAuthStateManager.registerStateNonce(finalState)
+		const echoedState = url.searchParams.get('state')
+		const requestToken = url.searchParams.get('oauth_token')
+		const finalState = echoedState || requestToken || state
+		if (!finalState) {
+			throw new Error(`${providerName} returned no state to check on return`)
+		}
+		// A request token (OAuth 1.0a) is not one of our signed states.
+		if (echoedState || !requestToken) {
+			await OAuthStateManager.registerStateNonce(finalState)
+		}
 
 		// Log activity (using a dummy ID since we don't have an integration ID yet)
 		// Wait, logIntegrationActivity requires an integration ID. The prompt says "log activity".
@@ -57,7 +75,9 @@ class OAuthFlow {
 	}
 
 	/**
-	 * Complete OAuth flow by handling callback. Concurrent deliveries for the
+	 * Complete OAuth flow by handling callback. `params.organizationId` must be
+	 * the organization the app verified for this browser and member; the
+	 * provider's state has to belong to it too. Concurrent deliveries for the
 	 * same state share one run, so a duplicate callback cannot start a second
 	 * token exchange or trip the replay guard while the first is still in flight.
 	 */
@@ -82,6 +102,11 @@ class OAuthFlow {
 		providerName: string,
 		params: OAuthCallbackParams,
 	): Promise<Integration> {
+		const organizationId = params.organizationId
+		if (!organizationId) {
+			throw new Error('Missing organization for the OAuth callback')
+		}
+
 		const isOAuth1 = params.oauthToken && params.oauthVerifier
 
 		let stateData
@@ -105,6 +130,10 @@ class OAuthFlow {
 				)
 			}
 
+			if (tokenContext.organizationId !== organizationId) {
+				throw new Error('Organization mismatch in OAuth state')
+			}
+
 			stateData = {
 				organizationId: tokenContext.organizationId,
 				providerName: providerName,
@@ -121,6 +150,10 @@ class OAuthFlow {
 			if (stateData.providerName !== providerName) {
 				throw new Error('Provider name mismatch in OAuth state')
 			}
+
+			if (stateData.organizationId !== organizationId) {
+				throw new Error('Organization mismatch in OAuth state')
+			}
 		}
 
 		const provider = providerRegistry.get(providerName)
@@ -136,7 +169,7 @@ class OAuthFlow {
 		const tokenData = await provider.handleCallback(handleParams)
 
 		const integration = await integrationManager.createIntegration({
-			organizationId: stateData.organizationId,
+			organizationId,
 			organizationLocationId:
 				typeof stateData.organizationLocationId === 'string'
 					? stateData.organizationLocationId

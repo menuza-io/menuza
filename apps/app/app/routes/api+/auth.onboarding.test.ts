@@ -42,6 +42,7 @@ vi.mock('@repo/database', async (importOriginal) => {
 
 vi.mock('@repo/security', () => ({
 	checkHoneypot: vi.fn().mockResolvedValue(undefined),
+	assertSecretNotPlaceholder: (_name: string, value: string) => value,
 }))
 
 describe('auth.onboarding API action (WO-86 Email Session Binding)', () => {

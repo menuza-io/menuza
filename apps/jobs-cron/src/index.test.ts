@@ -146,6 +146,76 @@ describe('Jobs-Cron Worker Endpoints', () => {
 		})
 	})
 
+	describe('internal token and tenant URL hardening', () => {
+		const PLACEHOLDER = 'dev-internal-command-token-do-not-use-in-prod'
+		const startJourney = (token: string, body: Record<string, unknown>) =>
+			worker.fetch(
+				new Request('http://localhost/api/workflows/marketing-journey/start', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						Authorization: `Bearer ${token}`,
+					},
+					body: JSON.stringify(body),
+				}),
+				env,
+			)
+		const journey = {
+			orgId: 'org_1',
+			journeyId: 'j_1',
+			customerId: 'c_1',
+			graph: { nodes: [], edges: [] },
+		}
+
+		it('rejects "Bearer undefined" when the secret is unset', async () => {
+			env.INTERNAL_COMMAND_TOKEN = undefined as any
+			expect((await startJourney('undefined', journey)).status).toBe(401)
+		})
+
+		it('rejects a token shorter than 16 characters', async () => {
+			env.INTERNAL_COMMAND_TOKEN = 'short'
+			expect((await startJourney('short', journey)).status).toBe(401)
+		})
+
+		it('rejects the published placeholder token on a deployed Worker', async () => {
+			env.INTERNAL_COMMAND_TOKEN = PLACEHOLDER
+			expect((await startJourney(PLACEHOLDER, journey)).status).toBe(401)
+		})
+
+		it('still accepts the documented dev token when the App is local', async () => {
+			env.INTERNAL_COMMAND_TOKEN = PLACEHOLDER
+			env.APP_BASE_URL = 'http://localhost:3001'
+			expect((await startJourney(PLACEHOLDER, journey)).status).toBe(200)
+		})
+
+		it('refuses a tenantApiUrl that is not a configured node', async () => {
+			const res = await startJourney(mockInternalToken, {
+				...journey,
+				tenantApiUrl: 'https://attacker.example',
+			})
+			expect(res.status).toBe(400)
+			expect(mockJourneyWorkflowCreate).not.toHaveBeenCalled()
+		})
+
+		it('accepts a loopback tenantApiUrl only for a local App with no regional URLs', async () => {
+			env.TENANT_API_URL = undefined
+			env.TENANT_API_URL_KSA = undefined
+			env.APP_BASE_URL = 'http://localhost:3001'
+			const local = await startJourney(mockInternalToken, {
+				...journey,
+				tenantApiUrl: 'http://localhost:3007',
+			})
+			expect(local.status).toBe(200)
+
+			env.APP_BASE_URL = 'https://app.example.com'
+			const deployed = await startJourney(mockInternalToken, {
+				...journey,
+				tenantApiUrl: 'http://localhost:3007',
+			})
+			expect(deployed.status).toBe(400)
+		})
+	})
+
 	describe('POST /api/workflows/marketing-journey/start & /workflows/marketing-journey/start', () => {
 		const validPayload = {
 			orgId: 'org_test_123',

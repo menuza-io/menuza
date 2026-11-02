@@ -5,6 +5,8 @@ import { cleanupDuplicateSubscriptions } from '../utils/duplicate-subscriptions'
 
 export interface StripeCheckoutDependencies {
 	stripe: Stripe
+	/** The signed-in user. The session's client_reference_id must match. */
+	userId: string
 }
 
 /**
@@ -73,8 +75,11 @@ export async function handleStripeCheckout(
 		}
 
 		const userId = session.client_reference_id
-		if (!userId) {
-			throw new Error("No user ID found in session's client_reference_id.")
+		if (!userId || userId !== deps.userId) {
+			throw new Error('Checkout session does not belong to the signed-in user.')
+		}
+		if (session.status === 'expired' || session.payment_status === 'unpaid') {
+			throw new Error('Checkout session is not complete.')
 		}
 
 		const organizations = await db
@@ -91,6 +96,25 @@ export async function handleStripeCheckout(
 		)
 		if (!isMember) {
 			throw new Error('User is not authorized to update this organization.')
+		}
+
+		const [current] = await db
+			.select({
+				stripeSubscriptionId: Organization.stripeSubscriptionId,
+				slug: Organization.slug,
+			})
+			.from(Organization)
+			.where(eq(Organization.id, organizationId))
+		if (
+			current?.stripeSubscriptionId &&
+			current.stripeSubscriptionId !== subscriptionId &&
+			current.slug
+		) {
+			// A success URL can be replayed. Do not replace a different
+			// subscription the organization already has. Do not run duplicate
+			// cleanup here: it can cancel the org's recorded subscription while
+			// leaving the row unchanged.
+			return redirect(`/${current.slug}/dashboard`)
 		}
 
 		const [tenant] = await db

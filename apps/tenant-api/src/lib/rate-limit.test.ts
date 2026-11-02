@@ -108,4 +108,18 @@ describe('resolveClientIp', () => {
 	it('falls back to unknown', () => {
 		expect(resolveClientIp(ctx({}))).toBe('unknown')
 	})
+
+	it('counts addresses in one IPv6 /64 as the same client', () => {
+		const a = resolveClientIp(
+			ctx({ 'cf-connecting-ip': '2001:db8:1:2:aaaa::1' }),
+		)
+		const b = resolveClientIp(
+			ctx({ 'cf-connecting-ip': '2001:db8:1:2:bbbb::9' }),
+		)
+		const other = resolveClientIp(
+			ctx({ 'cf-connecting-ip': '2001:db8:1:3::1' }),
+		)
+		expect(a).toBe(b)
+		expect(a).not.toBe(other)
+	})
 })

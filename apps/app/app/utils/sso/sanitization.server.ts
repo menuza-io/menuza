@@ -286,6 +286,27 @@ export function sanitizeSSOConfigInput(input: any): any {
 		sanitized.revocationUrl = sanitizeUrl(input.revocationUrl)
 	}
 
+	// Access-policy fields. These used to be dropped here, which silently made
+	// the verified-email requirement and the domain allowlist (the only way to
+	// let an organization's IdP link accounts that already exist) impossible to
+	// save. The Zod schema still validates the domain format.
+	if (typeof input.requireVerifiedEmail === 'boolean') {
+		sanitized.requireVerifiedEmail = input.requireVerifiedEmail
+	}
+
+	if (typeof input.enforceSSOLogin === 'boolean') {
+		sanitized.enforceSSOLogin = input.enforceSSOLogin
+	}
+
+	if (input.allowedEmailDomains === null) {
+		sanitized.allowedEmailDomains = null
+	} else if (typeof input.allowedEmailDomains === 'string') {
+		sanitized.allowedEmailDomains = input.allowedEmailDomains
+			.toLowerCase()
+			.replace(/\s+/g, '')
+			.substring(0, 1000)
+	}
+
 	return sanitized
 }
 

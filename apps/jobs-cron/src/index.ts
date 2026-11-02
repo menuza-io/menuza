@@ -77,7 +77,43 @@ async function safeCompareAsync(
 	return result === 0
 }
 
+// Same markers as packages/security/src/insecure-secret.ts (this Worker does not
+// depend on that package): the documented placeholder values must never
+// authenticate a request.
+const INSECURE_SECRET_MARKERS = [
+	'your-jwt-secret',
+	'do-not-use-in-prod',
+	'change-me',
+]
+
+function isLocalUrl(value: string | undefined) {
+	try {
+		const { hostname } = new URL(value ?? '')
+		return (
+			hostname === 'localhost' ||
+			hostname === '127.0.0.1' ||
+			hostname === '[::1]' ||
+			hostname.endsWith('.localhost') ||
+			hostname.endsWith('.test')
+		)
+	} catch {
+		return false
+	}
+}
+
 async function requireInternalAuth(request: Request, env: Env) {
+	// A missing or short secret must not make `Bearer undefined` a valid token.
+	const configured = env.INTERNAL_COMMAND_TOKEN
+	if (
+		!configured ||
+		configured.length < 16 ||
+		// The documented dev token stays usable for `wrangler dev`, where the App
+		// is on localhost; a deployed Worker must not accept a published value.
+		(!isLocalUrl(env.APP_BASE_URL) &&
+			INSECURE_SECRET_MARKERS.some((m) => configured.toLowerCase().includes(m)))
+	) {
+		return new Response('Unauthorized', { status: 401 })
+	}
 	const authHeader = request.headers.get('Authorization')
 	const isAuthorized = await safeCompareAsync(
 		authHeader,
@@ -343,6 +379,28 @@ export default {
 					},
 					{ status: 400 },
 				)
+			}
+
+			// The workflow sends INTERNAL_COMMAND_TOKEN to this URL, so it must be one
+			// of the configured regional nodes, never an arbitrary caller-chosen host.
+			if (body.tenantApiUrl) {
+				const allowed = [env.TENANT_API_URL, env.TENANT_API_URL_KSA]
+					.filter((u): u is string => Boolean(u))
+					.map((u) => u.replace(/\/$/, ''))
+				const requested = String(body.tenantApiUrl).replace(/\/$/, '')
+				// Local development sets no regional URLs: the dispatchers default to
+				// localhost, so a loopback target is accepted only when the App itself
+				// is local too. A deployed Worker never sends the token to loopback.
+				const localDevTarget =
+					allowed.length === 0 &&
+					isLocalUrl(env.APP_BASE_URL) &&
+					isLocalUrl(requested)
+				if (!localDevTarget && !allowed.includes(requested)) {
+					return Response.json(
+						{ error: 'tenantApiUrl is not a configured tenant-api node' },
+						{ status: 400 },
+					)
+				}
 			}
 
 			const runId = body.runId || body.journeyInstanceId || crypto.randomUUID()

@@ -8,15 +8,7 @@ import {
 	generateBackupCodes,
 	deleteBackupCodes,
 } from '@repo/auth'
-import {
-	and,
-	db,
-	eq,
-	ne,
-	Password,
-	Session,
-	Verification,
-} from '@repo/database'
+import { and, db, eq, Password, Verification } from '@repo/database'
 import {
 	PasswordAndConfirmPasswordSchema,
 	PasswordSchema,
@@ -28,6 +20,35 @@ import {
 	twoFAVerifyVerificationType,
 } from '#app/routes/_app+/security.tsx'
 import { isCodeValid } from '#app/routes/_auth+/verify.server.tsx'
+import { checkRateLimit } from '#app/utils/rate-limit.server.ts'
+import { revokeUserCredentials } from '#app/utils/revoke-user-credentials.server.ts'
+
+const TWO_FA_CODE_RATE_LIMIT = {
+	scope: 'settings-2fa-code',
+	maxRequests: process.env.NODE_ENV === 'development' ? 1000 : 8,
+	windowMs: 15 * 60 * 1000,
+} as const
+
+async function refuseTwoFactorGuessing(userId: string) {
+	const attempt = await checkRateLimit(
+		{ type: 'user', value: userId },
+		TWO_FA_CODE_RATE_LIMIT,
+	)
+	if (attempt.allowed) return null
+	return Response.json(
+		{ status: 'error', message: 'Too many attempts. Try again later.' },
+		{ status: 429 },
+	)
+}
+
+async function currentSessionId(request: Request | undefined) {
+	if (!request) return null
+	const authSession = await authSessionStorage.getSession(
+		request.headers.get('cookie'),
+	)
+	const sessionId = authSession.get(sessionKey)
+	return typeof sessionId === 'string' ? sessionId : null
+}
 
 export const ChangePasswordSchema = z
 	.object({
@@ -103,20 +124,10 @@ export async function changePasswordAction({
 			set: { hash: newPasswordHash },
 		})
 
-	// Invalidate all other sessions except the current one
-	if (request) {
-		const authSession = await authSessionStorage.getSession(
-			request.headers.get('cookie'),
-		)
-		const currentSessionId = authSession.get(sessionKey)
-		if (currentSessionId) {
-			await db
-				.delete(Session)
-				.where(
-					and(eq(Session.userId, userId), ne(Session.id, currentSessionId)),
-				)
-		}
-	}
+	await revokeUserCredentials({
+		userId,
+		exceptSessionId: await currentSessionId(request),
+	})
 
 	return Response.json({
 		status: 'success',
@@ -163,20 +174,10 @@ export async function setPasswordAction({
 		hash: await getPasswordHash(password),
 	})
 
-	// Invalidate all other sessions except the current one
-	if (request) {
-		const authSession = await authSessionStorage.getSession(
-			request.headers.get('cookie'),
-		)
-		const currentSessionId = authSession.get(sessionKey)
-		if (currentSessionId) {
-			await db
-				.delete(Session)
-				.where(
-					and(eq(Session.userId, userId), ne(Session.id, currentSessionId)),
-				)
-		}
-	}
+	await revokeUserCredentials({
+		userId,
+		exceptSessionId: await currentSessionId(request),
+	})
 
 	return Response.json({
 		status: 'success',
@@ -188,6 +189,9 @@ export async function enable2FAAction({
 	formData,
 	userId,
 }: SecurityActionArgs) {
+	const limited = await refuseTwoFactorGuessing(userId)
+	if (limited) return limited
+
 	const submission = await parseWithZod(formData, {
 		schema: Enable2FASchema.superRefine(async (data, ctx) => {
 			const codeIsValid = await isCodeValid({
@@ -235,6 +239,9 @@ export async function disable2FAAction({
 	formData,
 	userId,
 }: SecurityActionArgs) {
+	const limited = await refuseTwoFactorGuessing(userId)
+	if (limited) return limited
+
 	const submission = await parseWithZod(formData, {
 		schema: Disable2FASchema.superRefine(async (data, ctx) => {
 			const codeIsValid = await isCodeValid({

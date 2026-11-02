@@ -133,6 +133,7 @@ describe('stripe webhook restaurant order dispatch', () => {
 		expect(recordShopOrder).toHaveBeenCalledWith(
 			SHOP_SESSION,
 			'checkout.session.completed',
+			undefined,
 		)
 	})
 

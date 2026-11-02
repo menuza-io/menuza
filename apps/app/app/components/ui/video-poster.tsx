@@ -1,6 +1,6 @@
 import { getVideoClipSrc, getVideoPosterSrc } from '@repo/common'
 import { cn } from '@repo/ui'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 export function VideoPoster({
 	objectKey,
@@ -20,15 +20,47 @@ export function VideoPoster({
 	height?: number
 }) {
 	const [isHovering, setIsHovering] = useState(false)
+	const [auth, setAuth] = useState<{ sig: string; expires: string } | null>(
+		null,
+	)
+
+	useEffect(() => {
+		const controller = new AbortController()
+		void fetch(
+			`/resources/videos/ticket?objectKey=${encodeURIComponent(objectKey)}`,
+			{ signal: controller.signal },
+		)
+			.then(async (response) => {
+				if (!response.ok) return
+				const body = (await response.json()) as {
+					sig?: unknown
+					expires?: unknown
+				}
+				if (typeof body.sig === 'string' && typeof body.expires === 'string') {
+					setAuth({ sig: body.sig, expires: body.expires })
+				}
+			})
+			.catch(() => {})
+		return () => controller.abort()
+	}, [objectKey])
+
+	if (!auth) {
+		return (
+			<div className={cn('bg-muted relative overflow-hidden', className)} />
+		)
+	}
+
 	const posterSrc = getVideoPosterSrc(
 		objectKey,
 		organizationId,
 		mediaTransformBaseUrl,
+		auth,
 	)
 	const clipSrc = getVideoClipSrc(
 		objectKey,
 		organizationId,
 		mediaTransformBaseUrl,
+		auth,
 	)
 	const showClip = isHovering && mediaTransformBaseUrl && clipSrc !== posterSrc
 

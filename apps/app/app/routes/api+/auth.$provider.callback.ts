@@ -4,12 +4,39 @@ import {
 	canUserLogin,
 	ProviderNameSchema,
 } from '@repo/auth'
-import { and, db, eq, Connection, User } from '@repo/database'
+import { and, db, eq, Connection, User, Verification } from '@repo/database'
 import { data } from 'react-router'
 import { authenticator } from '#app/utils/auth.server.ts'
-import { createAuthenticatedSessionResponse } from '#app/utils/jwt.server.ts'
+import {
+	create2FAToken,
+	createAuthenticatedSessionResponse,
+} from '#app/utils/jwt.server.ts'
 import { checkSSOEnforcementByUserId } from '#app/utils/sso/enforcement.server.ts'
 import { type Route } from './+types/auth.$provider.callback.ts'
+
+/**
+ * Social sign-in must honor the second factor like password sign-in does
+ * (see auth.login.ts): an enrolled user gets a login token for
+ * /api/auth/login/2fa instead of tokens.
+ */
+async function twoFactorChallenge(userId: string) {
+	const [enrolled] = await db
+		.select({ id: Verification.id })
+		.from(Verification)
+		.where(and(eq(Verification.target, userId), eq(Verification.type, '2fa')))
+		.limit(1)
+	if (!enrolled) return null
+	return data(
+		{
+			success: false,
+			error: 'two_factor_required',
+			message: 'Two-factor authentication required',
+			userId,
+			loginToken: create2FAToken(userId, crypto.randomUUID()),
+		},
+		{ status: 400 },
+	)
+}
 
 export async function loader({ request, params }: Route.LoaderArgs) {
 	const providerName = ProviderNameSchema.parse(params.provider)
@@ -114,6 +141,9 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 				)
 			}
 
+			const challenge = await twoFactorChallenge(existingConnection.userId)
+			if (challenge) return challenge
+
 			// Use shared helper to create authenticated session response
 			const response = await createAuthenticatedSessionResponse(
 				existingConnection.userId,
@@ -159,6 +189,13 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 					{ status: 403 },
 				)
 			}
+
+			// An enrolled user must pass the second factor before this provider can
+			// be linked, otherwise an abandoned challenge would still leave a linked
+			// provider that works as a first factor later. They sign in with their
+			// password and code, and link the provider from settings.
+			const challenge = await twoFactorChallenge(existingUser.id)
+			if (challenge) return challenge
 
 			// Connect provider to existing user
 			await db.insert(Connection).values({

@@ -6,10 +6,24 @@ import {
 	verifySessionStorage,
 	checkIsCommonPassword,
 	requireAnonymous,
+	getPasswordHash,
 } from '@repo/auth'
 import { useIsPending } from '@repo/common'
 import { getPageTitle } from '@repo/config/brand'
-import { db, eq, Session, User } from '@repo/database'
+import {
+	and,
+	ApiKey,
+	db,
+	eq,
+	gt,
+	isNull,
+	MCPAuthorization,
+	or,
+	RefreshToken,
+	Password,
+	Session,
+	User,
+} from '@repo/database'
 import {
 	Card,
 	CardContent,
@@ -28,7 +42,7 @@ import {
 	convertErrorsToFieldFormat,
 } from '#app/components/forms.tsx'
 
-import { resetUserPassword } from '#app/utils/auth.server.ts'
+import { revokePendingAuthorizationCodes } from '#app/utils/mcp/oauth.server.ts'
 import { type Route } from './+types/reset-password.ts'
 
 export const handle: SEOHandle = {
@@ -82,15 +96,50 @@ export async function action({ request }: Route.ActionArgs) {
 	}
 	const { password } = submission.value
 
-	await resetUserPassword({ username: resetPasswordUsername, password })
 	const [user] = await db
 		.select({ id: User.id })
 		.from(User)
 		.where(eq(User.username, resetPasswordUsername))
 		.limit(1)
-	if (user) {
-		await db.delete(Session).where(eq(Session.userId, user.id))
-	}
+	if (!user) throw new Error('User not found')
+
+	// The new password and the end of every other credential an attacker may
+	// hold commit together: a failure cannot leave the password changed while
+	// sessions, tokens or keys survive. API keys are expired rather than deleted
+	// to keep the audit trail.
+	const hashedPassword = await getPasswordHash(password)
+	const now = new Date()
+	await db.batch([
+		db
+			.insert(Password)
+			.values({ userId: user.id, hash: hashedPassword })
+			.onConflictDoUpdate({
+				target: Password.userId,
+				set: { hash: hashedPassword },
+			}),
+		db.delete(Session).where(eq(Session.userId, user.id)),
+		db
+			.update(RefreshToken)
+			.set({ revoked: true })
+			.where(
+				and(eq(RefreshToken.userId, user.id), eq(RefreshToken.revoked, false)),
+			),
+		db
+			.update(MCPAuthorization)
+			.set({ isActive: false })
+			.where(eq(MCPAuthorization.userId, user.id)),
+		db
+			.update(ApiKey)
+			.set({ expiresAt: now })
+			.where(
+				and(
+					eq(ApiKey.userId, user.id),
+					or(isNull(ApiKey.expiresAt), gt(ApiKey.expiresAt, now)),
+				),
+			),
+	])
+	// Codes issued before the reset must not mint a fresh authorization after it.
+	revokePendingAuthorizationCodes(user.id)
 	const verifySession = await verifySessionStorage.getSession(
 		request.headers.get('cookie'),
 	)

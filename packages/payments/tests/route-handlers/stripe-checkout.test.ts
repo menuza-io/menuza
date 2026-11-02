@@ -64,6 +64,7 @@ describe('handleStripeCheckout', () => {
 		const request = new Request('https://example.com/api/stripe/checkout')
 		const response = await handleStripeCheckout({ request } as any, {
 			stripe: mockStripe,
+			userId: 'user_123',
 		})
 
 		expect(response.status).toBe(302)
@@ -100,6 +101,7 @@ describe('handleStripeCheckout', () => {
 
 		const response = await handleStripeCheckout({ request } as any, {
 			stripe: mockStripe,
+			userId: 'user_123',
 		})
 
 		expect(response.status).toBe(302)
@@ -124,6 +126,7 @@ describe('handleStripeCheckout', () => {
 
 		const response = await handleStripeCheckout({ request } as any, {
 			stripe: mockStripe,
+			userId: 'user_123',
 		})
 
 		expect(response.status).toBe(302)
@@ -162,6 +165,7 @@ describe('handleStripeCheckout', () => {
 
 		const response = await handleStripeCheckout({ request } as any, {
 			stripe: mockStripe,
+			userId: 'user_123',
 		})
 
 		expect(response.status).toBe(302)

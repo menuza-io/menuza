@@ -100,6 +100,18 @@ describe('clientAddress', () => {
 			).toBe('198.51.100.8')
 		})
 
+		it('does not read a socket-less header as trusted when the nested server lacks one', () => {
+			// `server` exists without `incoming`; the socket is on `env` itself.
+			const c = {
+				req: { header: () => '1.2.3.4' },
+				env: {
+					server: {},
+					incoming: { socket: { remoteAddress: '198.51.100.7' } },
+				},
+			} as unknown as Context
+			expect(clientAddress(c)).toBe('198.51.100.7')
+		})
+
 		it('uses a trusted peer itself when it sends no header', () => {
 			expect(clientAddress(context({}, '127.0.0.1'))).toBe('127.0.0.1')
 		})
@@ -141,6 +153,13 @@ describe('normalizeAddress', () => {
 		expect(normalizeAddress('::ffff:203.0.113.9')).toBe('203.0.113.9')
 		expect(normalizeAddress('[2001:DB8::1]')).toBe('2001:db8:0:0:0:0:0:1')
 		expect(normalizeAddress('fe80::1%eth0')).toBe('fe80:0:0:0:0:0:0:1')
+	})
+
+	it('refuses IPv4 octets with leading zeros, which some stacks read as octal', () => {
+		expect(normalizeAddress('010.0.0.1')).toBeNull()
+		expect(normalizeAddress('1.2.3.04')).toBeNull()
+		expect(normalizeAddress('10.0.0.1')).toBe('10.0.0.1')
+		expect(normalizeAddress('0.0.0.0')).toBe('0.0.0.0')
 	})
 
 	it('refuses text that is not an address', () => {

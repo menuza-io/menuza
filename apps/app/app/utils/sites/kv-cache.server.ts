@@ -31,31 +31,44 @@ export function getSiteKvKey(
  * caller runs it after its database change committed, so a KV outage must not
  * turn a saved change into an error for the operator. A failed purge only means
  * the cache serves older data until its TTL ends (`setCachedSiteData`, 24 hours
- * by default). Failures are logged with the organization id and the error
- * message only.
+ * by default). Failures are logged with the organization id, which prefix kind
+ * failed (`id`, `slug` or `host`) and the error name and message only.
+ *
+ * Returns `false` when anything could not be purged (a list or delete error; a
+ * failure part-way through a long listing leaves the rest of that prefix
+ * un-deleted), so a caller that unpublishes or hides content can tell the
+ * operator or retry. Most callers ignore it. `true` when everything was dropped
+ * or there is no KV to purge.
  */
 export async function purgeOrganizationSiteCache(
 	orgId: string,
 	slug?: string,
 	host?: string | null,
-) {
-	if (!siteDataKv) return
+): Promise<boolean> {
+	const kv = siteDataKv
+	if (!kv) return true
 
-	const prefixes = [`org:${orgId}:`]
-	if (slug) prefixes.push(`org:${slug}:`)
-	if (host) prefixes.push(`org:${host}:`)
+	const prefixes: { kind: 'id' | 'slug' | 'host'; prefix: string }[] = [
+		{ kind: 'id', prefix: `org:${orgId}:` },
+	]
+	if (slug) prefixes.push({ kind: 'slug', prefix: `org:${slug}:` })
+	if (host) prefixes.push({ kind: 'host', prefix: `org:${host}:` })
+	let purged = true
 
 	// Each prefix is purged on its own, so one that fails (a list error, say) never
 	// leaves the others (slug, host) stale.
-	for (const prefix of prefixes) {
+	for (const { kind, prefix } of prefixes) {
 		try {
 			let cursor: string | undefined = undefined
 			do {
-				const keysPage: KVNamespaceListResult<unknown, string> =
-					await siteDataKv.list({ prefix, cursor })
+				const keysPage: KVNamespaceListResult<unknown, string> = await kv.list({
+					prefix,
+					cursor,
+				})
 				await Promise.allSettled(
 					keysPage.keys.map((key) =>
-						(siteDataKv as KVNamespace).delete(key.name).catch((e) => {
+						kv.delete(key.name).catch((e) => {
+							purged = false
 							console.error(`Failed to delete KV key ${key.name}`, e)
 						}),
 					),
@@ -63,12 +76,14 @@ export async function purgeOrganizationSiteCache(
 				cursor = 'cursor' in keysPage ? keysPage.cursor : undefined
 			} while (cursor)
 		} catch (e) {
+			purged = false
 			console.error(
-				`Failed to purge site KV cache for organization ${orgId}`,
-				e instanceof Error ? e.message : 'unknown error',
+				`Failed to purge site KV cache (${kind} prefix) for organization ${orgId}`,
+				e instanceof Error ? `${e.name}: ${e.message}` : 'unknown error',
 			)
 		}
 	}
+	return purged
 }
 
 /**

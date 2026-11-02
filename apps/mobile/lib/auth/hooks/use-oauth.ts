@@ -109,7 +109,13 @@ export function useOAuthCallback() {
 				const result = await oauthService.handleCallback(url)
 
 				if (result.success && result.code) {
-					await socialLogin(provider, result.code, result.state)
+					await socialLogin(
+						provider,
+						result.code,
+						result.state,
+						undefined,
+						result.codeVerifier,
+					)
 					return { success: true }
 				} else {
 					return {

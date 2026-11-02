@@ -131,6 +131,12 @@ export const PHONE_LINE_VERIFICATION_SEND_RATE_LIMIT: RateLimitConfig = {
 	windowMs: 60 * 60 * 1000, // 1 hour
 }
 
+export const AI_REQUEST_RATE_LIMIT: RateLimitConfig = {
+	scope: 'ai-request',
+	maxRequests: isDev ? 1000 : 30,
+	windowMs: 60 * 60 * 1000,
+}
+
 export const PHONE_LINE_VERIFICATION_CHECK_RATE_LIMIT: RateLimitConfig = {
 	scope: 'phone-agent-line-verification-check',
 	maxRequests: isDev ? 1000 : 20,

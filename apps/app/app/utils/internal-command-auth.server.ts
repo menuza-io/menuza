@@ -1,5 +1,6 @@
 import crypto from 'node:crypto'
 import { getInstanceInfo } from '@repo/common/litefs'
+import { assertSecretNotPlaceholder } from '@repo/security'
 import { redirect } from 'react-router'
 import { ENV } from 'varlock/env'
 
@@ -22,6 +23,7 @@ export async function requireInternalCommandAuth(request: Request) {
 	}
 
 	const token = ENV.INTERNAL_COMMAND_TOKEN
+	assertSecretNotPlaceholder('INTERNAL_COMMAND_TOKEN', token ?? '')
 	const authHeader = request.headers.get('Authorization')
 	const isAuthorized = safeCompare(authHeader, `Bearer ${token}`)
 	if (!isAuthorized) {

@@ -806,6 +806,7 @@ describe('Marketing Automation End-to-End Integration Suite (Milestones 1 - 5)',
 			.setProtectedHeader({ alg: 'HS256' })
 			.setAudience('tenant-api-operator')
 			.setIssuer(brand.shortName)
+			.setExpirationTime('15m')
 			.sign(secret)
 
 		const memberRes = await app.fetch(

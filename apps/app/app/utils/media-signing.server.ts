@@ -1,7 +1,8 @@
 import { createHmac, timingSafeEqual } from 'node:crypto'
 
+// Session secret first so a media-URL leak is not the internal command token.
 const MEDIA_SIGNING_SECRET =
-	process.env.INTERNAL_COMMAND_TOKEN || process.env.SESSION_SECRET
+	process.env.SESSION_SECRET || process.env.INTERNAL_COMMAND_TOKEN
 
 if (!MEDIA_SIGNING_SECRET) {
 	throw new Error(

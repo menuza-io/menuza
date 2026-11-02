@@ -1,16 +1,15 @@
 import { invariantResponse } from '@epic-web/invariant'
-import { getUserId } from '@repo/auth'
 import { getDomainUrl, isCloudflareWorkerRuntime } from '@repo/common'
-import {
-	and,
-	db,
-	eq,
-	OrganizationMediaAsset,
-	UserOrganization,
-} from '@repo/database'
-import { ssrfSafeFetch, validateInstanceUrlWithDns } from '@repo/security'
+import { db, eq, OrganizationMediaAsset } from '@repo/database'
+import { ssrfSafeFetch } from '@repo/security'
 import { isValidRasterBytes } from '@repo/storage'
 import { drainOnCancel } from '#app/utils/drain-on-cancel.server.ts'
+import {
+	authorizeRegisteredObject,
+	isPublicMediaAsset,
+	privateOrganizationIdFromObjectKey,
+	requireOrganizationMember,
+} from '#app/utils/media-access.server.ts'
 import { verifyMediaSignature } from '#app/utils/media-signing.server.ts'
 import {
 	getSignedGetRequestInfoAsync,
@@ -98,7 +97,12 @@ async function streamStoredVideo(
 	const upstream = await fetch(storageUrl, {
 		method,
 		headers: upstreamHeaders,
+		redirect: 'manual',
 	})
+	if (upstream.status >= 300 && upstream.status < 400) {
+		await upstream.body?.cancel()
+		return new Response('Upstream redirect refused', { status: 502 })
+	}
 
 	const responseHeaders = getImageResponseHeaders(cacheable && upstream.ok)
 	for (const headerName of VIDEO_PASSTHROUGH_HEADERS) {
@@ -120,20 +124,6 @@ async function streamStoredVideo(
 	})
 }
 
-const PUBLIC_MEDIA_SOURCES = new Set([
-	'organization-logo',
-	'site-icon',
-	'website-seo',
-	'website-asset',
-])
-
-/** Platform-scoped assets and organization branding assets are public. */
-function isPublicMediaAsset(asset: { storageScope: string; source: string }) {
-	return (
-		asset.storageScope === 'platform' || PUBLIC_MEDIA_SOURCES.has(asset.source)
-	)
-}
-
 /**
  * Media that is not public (membership-authorized library assets, signed
  * capability URLs, direct object keys, stored videos, external images) must not
@@ -148,7 +138,23 @@ function getImageResponseHeaders(cacheable: boolean) {
 	)
 	headers.set('Access-Control-Allow-Origin', '*')
 	headers.set('Cross-Origin-Resource-Policy', 'cross-origin')
+	headers.set('X-Content-Type-Options', 'nosniff')
+	headers.set('Content-Security-Policy', "default-src 'none'; sandbox")
 	return headers
+}
+
+/**
+ * Stored objects are user-controlled: a client chooses the MIME type at upload
+ * time, so only known raster types may be served back from this origin.
+ */
+function assertServableStoredType(
+	objectKey: string | null,
+	mimeType: string | undefined,
+) {
+	if (!objectKey) return
+	if (!mimeType || !ALLOWED_RASTER_MIME_TYPES.has(mimeType)) {
+		throw new Response('Unsupported Media Type', { status: 415 })
+	}
 }
 
 async function fetchExternalImage(
@@ -216,8 +222,16 @@ async function fetchImageSource(
 	if (objectKey) {
 		const { url: signedUrl, headers: signedHeaders } =
 			await getSignedGetRequestInfoAsync(objectKey, organizationId ?? undefined)
+		const upstream = await fetch(signedUrl, {
+			headers: signedHeaders,
+			redirect: 'manual',
+		})
+		if (upstream.status >= 300 && upstream.status < 400) {
+			await upstream.body?.cancel()
+			throw new Response('Upstream redirect refused', { status: 502 })
+		}
 		return {
-			upstream: await fetch(signedUrl, { headers: signedHeaders }),
+			upstream,
 			source: { url: signedUrl, headers: signedHeaders },
 		}
 	}
@@ -324,6 +338,7 @@ async function getCloudflareImageResponse(
 			await upstream.body?.cancel()
 			const rawContentType = transformed.headers.get('content-type')
 			const mimeType = rawContentType?.split(';')[0]?.trim().toLowerCase()
+			assertServableStoredType(objectKey, mimeType)
 			const headers = getImageResponseHeaders(cacheable)
 			if (mimeType) headers.set('Content-Type', mimeType)
 			return new Response(transformed.body, { headers, status: 200 })
@@ -337,6 +352,7 @@ async function getCloudflareImageResponse(
 
 	const rawContentType = upstream.headers.get('content-type')
 	const mimeType = rawContentType?.split(';')[0]?.trim().toLowerCase()
+	assertServableStoredType(objectKey, mimeType)
 	const headers = getImageResponseHeaders(cacheable)
 	if (mimeType) headers.set('Content-Type', mimeType)
 	return new Response(upstream.body, { headers, status: 200 })
@@ -413,20 +429,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 		)
 
 		if (!isPublicMedia && !hasValidSignature) {
-			const userId = await getUserId(request)
-			invariantResponse(userId, 'Unauthorized', { status: 401 })
-
-			const [membership] = await db
-				.select({ userId: UserOrganization.userId })
-				.from(UserOrganization)
-				.where(
-					and(
-						eq(UserOrganization.userId, userId),
-						eq(UserOrganization.organizationId, asset.organizationId),
-					),
-				)
-				.limit(1)
-			invariantResponse(membership, 'Forbidden', { status: 403 })
+			await requireOrganizationMember(request, asset.organizationId)
 		}
 
 		objectKey = asset.objectKey
@@ -435,36 +438,24 @@ export async function loader({ request }: Route.LoaderArgs) {
 	} else if (objectKey) {
 		// A direct object key can point at private note or comment media, so it
 		// is only cacheable when it is a registered public branding asset, and
-		// registered private media still requires organization membership.
-		const [asset] = await db
-			.select({
-				organizationId: OrganizationMediaAsset.organizationId,
-				storageScope: OrganizationMediaAsset.storageScope,
-				source: OrganizationMediaAsset.source,
-			})
-			.from(OrganizationMediaAsset)
-			.where(eq(OrganizationMediaAsset.objectKey, objectKey))
-			.limit(1)
-		cacheable = asset ? isPublicMediaAsset(asset) : false
-
-		if (asset && !cacheable) {
-			const userId = await getUserId(request)
-			invariantResponse(userId, 'Unauthorized', { status: 401 })
-
-			const [membership] = await db
-				.select({ userId: UserOrganization.userId })
-				.from(UserOrganization)
-				.where(
-					and(
-						eq(UserOrganization.userId, userId),
-						eq(UserOrganization.organizationId, asset.organizationId),
-					),
-				)
-				.limit(1)
-			invariantResponse(membership, 'Forbidden', { status: 403 })
-
-			organizationId =
-				asset.storageScope === 'organization' ? asset.organizationId : null
+		// registered private media requires active organization membership.
+		const access = await authorizeRegisteredObject(request, objectKey)
+		if (access) {
+			cacheable = access.isPublic
+			organizationId = access.organizationId
+		} else {
+			// Unregistered key (e.g. an upload preview before save). The owning
+			// organization comes from the key contract, not the query: private
+			// `orgs/<id>/` content needs active membership of that organization.
+			const keyOrganizationId = privateOrganizationIdFromObjectKey(objectKey)
+			if (keyOrganizationId) {
+				await requireOrganizationMember(request, keyOrganizationId)
+				organizationId = keyOrganizationId
+			} else if (organizationId) {
+				// Public branding or avatar key: a query organization picks which
+				// bucket and credentials sign the read, so only its members may use it.
+				await requireOrganizationMember(request, organizationId)
+			}
 		}
 	} else if (src && !URL.canParse(src)) {
 		// Local static assets served from `/public` or the client build.
@@ -526,10 +517,25 @@ export async function loader({ request }: Route.LoaderArgs) {
 			if (objectKey) {
 				const { url: signedUrl, headers: signedHeaders } =
 					await getSignedGetRequestInfoAsync(objectKey, organizationId!)
-				return {
-					type: 'fetch',
-					url: signedUrl,
+				const upstream = await fetch(signedUrl, {
 					headers: signedHeaders,
+					redirect: 'manual',
+				})
+				if (upstream.status >= 300 && upstream.status < 400) {
+					await upstream.body?.cancel()
+					return new Response('Upstream redirect refused', { status: 502 })
+				}
+				if (!upstream.ok) return upstream
+				const bytes = await upstream.arrayBuffer()
+				if (bytes.byteLength > MAX_IMAGE_BYTES) {
+					return new Response('Payload Too Large', { status: 413 })
+				}
+				return {
+					type: 'data',
+					// ReadableStream, not Uint8Array: openimg uses Readable.from() which
+					// iterates typed arrays byte-by-byte and breaks Sharp.
+					data: new Blob([bytes]).stream(),
+					cacheKey: objectKey,
 				}
 			}
 
@@ -537,13 +543,30 @@ export async function loader({ request }: Route.LoaderArgs) {
 			invariantResponse(src, 'src query parameter is required', { status: 400 })
 
 			if (URL.canParse(src)) {
-				const validation = await validateInstanceUrlWithDns(src)
-				if (!validation.valid) {
-					throw new Error(`Invalid image URL: ${validation.reason}`)
+				// Fetch here with redirects disabled. Returning type "fetch" would
+				// let openimg follow a 302 onto an internal address.
+				let upstream: Response
+				try {
+					upstream = await ssrfSafeFetch(src, {
+						signal: AbortSignal.timeout(10_000),
+					})
+				} catch {
+					return new Response('Invalid image URL', { status: 400 })
+				}
+				if (!upstream.ok) return upstream
+				const contentLength = upstream.headers.get('content-length')
+				if (contentLength && Number(contentLength) > MAX_IMAGE_BYTES) {
+					await upstream.body?.cancel()
+					return new Response('Payload Too Large', { status: 413 })
+				}
+				const bytes = await upstream.arrayBuffer()
+				if (bytes.byteLength > MAX_IMAGE_BYTES) {
+					return new Response('Payload Too Large', { status: 413 })
 				}
 				return {
-					type: 'fetch',
-					url: src,
+					type: 'data',
+					data: new Blob([bytes]).stream(),
+					cacheKey: src,
 				}
 			}
 

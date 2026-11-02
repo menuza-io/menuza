@@ -4,11 +4,12 @@ import {
 	logMCPAuthorizationApproved,
 	logMCPAuthorizationDenied,
 } from '@repo/audit'
-import { getUserId } from '@repo/auth'
+import { getSessionUserId } from '@repo/auth'
 import {
 	and,
 	db,
 	eq,
+	MCPClient,
 	Organization,
 	User,
 	UserOrganization,
@@ -56,8 +57,19 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	const url = new URL(request.url)
 	// Accept either client_id (standard OAuth) or client_name (MCP-specific)
 	const clientId = url.searchParams.get('client_id')
-	const clientName =
-		url.searchParams.get('client_name') || clientId || 'MCP Client'
+	// The consent screen must show who registered, never a name the link chose.
+	// Without a registered client the name is only a hint and is labeled so.
+	let clientName = 'Unregistered MCP client'
+	let clientRegistered = false
+	if (clientId) {
+		const [registered] = await db
+			.select({ clientName: MCPClient.clientName })
+			.from(MCPClient)
+			.where(eq(MCPClient.clientId, clientId))
+			.limit(1)
+		clientName = registered?.clientName ?? 'Unregistered MCP client'
+		clientRegistered = Boolean(registered)
+	}
 	const redirectUri = url.searchParams.get('redirect_uri')
 	const state = url.searchParams.get('state')
 	const codeChallenge = url.searchParams.get('code_challenge')
@@ -80,10 +92,19 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		{ status: 400 },
 	)
 
+	// PKCE (S256) is required: these are public clients with no secret.
+	invariantResponse(
+		codeChallenge && codeChallengeMethod === 'S256',
+		'code_challenge with code_challenge_method=S256 is required',
+		{ status: 400 },
+	)
+
 	// Note: state is optional but recommended for CSRF protection
 
-	// Check if user has an active session
-	const userId = await getUserId(request)
+	// MCP access is always granted to the real signed-in user. An administrator
+	// impersonating someone must not mint persistent client tokens as them: the
+	// code is bound to the session that approves it, and the target has none.
+	const userId = await getSessionUserId(request)
 	if (!userId) {
 		// Redirect to login with return URL
 		const loginUrl = new URL('/login', request.url)
@@ -129,6 +150,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		user,
 		clientId,
 		clientName,
+		clientRegistered,
 		redirectUri,
 		state,
 		codeChallenge,
@@ -142,7 +164,7 @@ export async function action({ request }: ActionFunctionArgs) {
 		status: 405,
 	})
 
-	const userId = await getUserId(request)
+	const userId = await getSessionUserId(request)
 	invariantResponse(userId, 'User not authenticated', { status: 401 })
 
 	// Check rate limit for authorization endpoint (10 per hour per user)
@@ -191,6 +213,14 @@ export async function action({ request }: ActionFunctionArgs) {
 	await userHasOrgAccess(request, organizationId as string)
 
 	if (intent === 'approve') {
+		// PKCE (S256) is mandatory: clients are public, so it is the only proof
+		// that whoever redeems the code is the party that asked for it.
+		invariantResponse(
+			codeChallenge && codeChallengeMethod === 'S256',
+			'code_challenge with code_challenge_method=S256 is required',
+			{ status: 400 },
+		)
+
 		// Generate authorization code (with PKCE parameters if provided)
 		const authCode = await createAuthorizationCode({
 			userId,
@@ -200,6 +230,7 @@ export async function action({ request }: ActionFunctionArgs) {
 			redirectUri: redirectUri as string,
 			codeChallenge: codeChallenge as string | undefined,
 			codeChallengeMethod: codeChallengeMethod as string | undefined,
+			sessionUserId: userId,
 		})
 
 		// Log authorization approval
@@ -277,6 +308,7 @@ export default function AuthorizePage() {
 		user,
 		clientId,
 		clientName,
+		clientRegistered,
 		redirectUri,
 		state,
 		codeChallenge,
@@ -306,11 +338,33 @@ export default function AuthorizePage() {
 							<Trans>Authorize MCP Client</Trans>
 						</DialogTitle>
 						<DialogDescription>
-							<Trans>
-								{clientName} is requesting access to your organization data
-							</Trans>
+							{clientRegistered ? (
+								<Trans>
+									{clientName} is requesting access to your organization data
+								</Trans>
+							) : (
+								<Trans>
+									An unregistered application is requesting access to your
+									organization data
+								</Trans>
+							)}
 						</DialogDescription>
 					</DialogHeader>
+
+					{clientRegistered ? null : (
+						<div
+							role="alert"
+							className="border-destructive/50 bg-destructive/10 text-destructive flex items-start gap-2 rounded-md border p-3 text-sm"
+						>
+							<Icon name="alert-triangle" className="mt-0.5 h-4 w-4" />
+							<p>
+								<Trans>
+									This application did not register with us, so we cannot verify
+									who it is. Only continue if you started this request yourself.
+								</Trans>
+							</p>
+						</div>
+					)}
 
 					<div className="space-y-6">
 						{/* User Info */}

@@ -1,7 +1,7 @@
 import { invariantResponse } from '@epic-web/invariant'
 import { t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import { requireUserId } from '@repo/auth'
+import { isImpersonating, requireUserId } from '@repo/auth'
 import { brand } from '@repo/config/brand'
 import {
 	and,
@@ -110,7 +110,14 @@ async function getOrgAndUser(request: Request, orgSlug: string) {
 
 	invariantResponse(organization, 'Organization not found', { status: 404 })
 
-	// Check if the user has access to this organization
+	// API keys and MCP grants outlive the impersonation session. An
+	// administrator must stop impersonating before minting them.
+	if (await isImpersonating(request)) {
+		throw new Response(
+			'Stop impersonation before managing API keys or MCP access',
+			{ status: 403 },
+		)
+	}
 	const userId = await requireUserId(request)
 	await userHasOrgAccess(request, organization.id)
 

@@ -13,6 +13,7 @@ const sendCode = i18n._(msg`Send Code`)
 const sending = i18n._(msg`Sending...`)
 const networkError = i18n._(msg`Network error. Please try again.`)
 const somethingWentWrong = i18n._(msg`Something went wrong.`)
+const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || ''
 
 if (!organization) {
 	return new Response('Not Found', { status: 404, statusText: 'Not Found' })
@@ -59,6 +60,10 @@ if (!organization) {
 					/>
 				</div>
 
+				{turnstileSiteKey ? (
+					<div class="cf-turnstile" data-sitekey={turnstileSiteKey} data-action="customer-login" />
+				) : null}
+
 				<div id="error-message" role="alert" class="hidden text-sm font-medium text-destructive"></div>
 
 				<button
@@ -71,6 +76,10 @@ if (!organization) {
 		</div>
 	</div>
 </SitePage>
+
+{turnstileSiteKey ? (
+	<script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer />
+) : null}
 
 <script>
 	import {
@@ -116,9 +125,11 @@ if (!organization) {
 		submitButton.textContent = sendingLabel
 
 		const formData = new FormData(form)
+		const turnstileToken = String(formData.get('cf-turnstile-response') || '')
 		const payload = {
-			...Object.fromEntries(formData.entries()),
+			phone: formData.get('phone'),
 			...getOrgBinding(),
+			...(turnstileToken ? { turnstileToken } : {}),
 		}
 
 		try {
@@ -130,6 +141,15 @@ if (!organization) {
 				window.location.href = browserLocaleHref('/verify')
 			} else {
 				showError(tenantErrorMessage(data, errorLabel))
+				const turnstileWidget = form.querySelector('.cf-turnstile')
+				const turnstileApi = (
+					window as typeof window & {
+						turnstile?: { reset: (element: Element) => void }
+					}
+				).turnstile
+				if (turnstileWidget && turnstileApi) {
+					turnstileApi.reset(turnstileWidget)
+				}
 			}
 		} catch {
 			showError(networkLabel)

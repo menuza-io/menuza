@@ -2,6 +2,7 @@ import crypto from 'node:crypto'
 import { canUserLogin } from '@repo/auth'
 import { brand } from '@repo/config/brand'
 import { and, db, eq, lt, or, RefreshToken, User } from '@repo/database'
+import { assertSecretNotPlaceholder } from '@repo/security'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 
@@ -11,7 +12,10 @@ if (!process.env.JWT_SECRET) {
 	)
 }
 
-const JWT_SECRET = process.env.JWT_SECRET
+const JWT_SECRET = assertSecretNotPlaceholder(
+	'JWT_SECRET',
+	process.env.JWT_SECRET,
+)
 const ACCESS_TOKEN_EXPIRES_IN = '15m' // 15 minutes
 const REFRESH_TOKEN_BYTES = 48
 const REFRESH_TOKEN_EXPIRES_DAYS = 30
