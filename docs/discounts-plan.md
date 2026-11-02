@@ -418,6 +418,14 @@ large thin-crust pizzas for $20".
   merged across items and most used first, then the values of each. It is hidden
   while the menu has no variations.
 
+**Rollout of option filters and translated names.** The definition schema is
+strict, so a node on the old build drops a record in the new shape (logged by
+id, the discount does not apply; nothing crashes). Deploy App, then tenant-api
+straight after, then Station and Sites. A till that cached rules in the old
+shape drops them the same way until its next catalog download. There is no data
+migration from `variantNames`: no organization used discounts before this
+change.
+
 **Translated names** (`nameI18n`, `descriptionI18n`; control-plane migration
 `0032_discount_i18n`). `name` and `description` stay the website's default
 language; the maps hold every website language. The editor writes them with the

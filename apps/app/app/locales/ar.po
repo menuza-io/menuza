@@ -80,7 +80,7 @@ msgstr "(غير موجود في القائمة)"
 msgid "(opens in a new tab)"
 msgstr "(يُفتح في علامة تبويب جديدة)"
 
-#: app/components/reservations/localized-fields.tsx:233
+#: app/components/reservations/localized-fields.tsx:244
 #: app/components/staff/controls.tsx:50
 #: app/components/staff/controls.tsx:90
 #: app/components/staff/controls.tsx:144
@@ -1443,6 +1443,10 @@ msgstr "{n, plural, one {سُجّل انصراف شخص واحد تلقائيً�
 msgid "{n, plural, one {A schedule was published} other {# schedules were published}}"
 msgstr "{n, plural, one {تم نشر جدول} two {تم نشر جدولين} few {تم نشر # جداول} many {تم نشر # جدولًا} other {تم نشر # جدول}}"
 
+#: app/components/discounts/variant-filter.tsx:66
+msgid "{name} added"
+msgstr "تمت إضافة {name}"
+
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:224
 msgid "{name} archived."
 msgstr "تمت أرشفة {name}."
@@ -1482,6 +1486,10 @@ msgstr "تم نقل {name} إلى المركز {position} من {total}."
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:229
 msgid "{name} paused."
 msgstr "تم إيقاف {name} مؤقتًا."
+
+#: app/components/discounts/variant-filter.tsx:59
+msgid "{name} removed"
+msgstr "تمت إزالة {name}"
 
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:228
 msgid "{name} restored. It is paused."
@@ -3708,7 +3716,7 @@ msgstr "إضافة خيار"
 msgid "Add Option"
 msgstr "إضافة خيار"
 
-#: app/components/discounts/variant-filter.tsx:168
+#: app/components/discounts/variant-filter.tsx:181
 msgid "Add option type"
 msgstr "إضافة نوع خيار"
 
@@ -7975,7 +7983,7 @@ msgstr "الخيارات"
 msgid "Choices per item"
 msgstr "الخيارات لكل عنصر"
 
-#: app/components/discounts/variant-filter.tsx:117
+#: app/components/discounts/variant-filter.tsx:127
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.new.tsx:416
 msgid "Choose"
 msgstr "اختر"
@@ -8262,7 +8270,7 @@ msgstr "اختر أحد الخيارات المدرجة."
 msgid "Choose one or more."
 msgstr "اختر فرعًا واحدًا أو أكثر."
 
-#: app/components/discounts/variant-filter.tsx:140
+#: app/components/discounts/variant-filter.tsx:150
 msgid "Choose options"
 msgstr "اختر الخيارات"
 
@@ -22385,7 +22393,7 @@ msgstr "لم يتم العثور على خيارات"
 msgid "No options match your active filters."
 msgstr "لا توجد خيارات مطابقة للفلاتر النشطة."
 
-#: app/components/discounts/variant-filter.tsx:141
+#: app/components/discounts/variant-filter.tsx:151
 msgid "No options yet."
 msgstr "لا توجد خيارات بعد."
 
@@ -24205,7 +24213,7 @@ msgid "Only the owner can share this dashboard."
 msgstr "يمكن للمالك فقط مشاركة لوحة التحكم هذه."
 
 #: app/components/discounts/discount-form.tsx:465
-#: app/components/discounts/variant-filter.tsx:69
+#: app/components/discounts/variant-filter.tsx:79
 msgid "Only these options"
 msgstr "هذه الخيارات فقط"
 
@@ -24645,13 +24653,21 @@ msgstr "صورة الخيار"
 msgid "Option photos are displayed in online ordering menus and modifier trays."
 msgstr "تُعرض صور الخيارات في قوائم الطلب عبر الإنترنت وصواني الإضافات."
 
-#: app/components/discounts/variant-filter.tsx:103
+#: app/components/discounts/variant-filter.tsx:113
 msgid "Option type"
 msgstr "نوع الخيار"
 
-#: app/components/discounts/variant-filter.tsx:104
+#: app/components/discounts/variant-filter.tsx:114
 msgid "Option type {number}"
 msgstr "نوع الخيار {number}"
+
+#: app/components/discounts/variant-filter.tsx:66
+msgid "Option type added"
+msgstr "تمت إضافة نوع الخيار"
+
+#: app/components/discounts/variant-filter.tsx:59
+msgid "Option type removed"
+msgstr "تمت إزالة نوع الخيار"
 
 #: app/components/menu/modifier-guest-preview.tsx:216
 msgid "Optional"
@@ -24734,7 +24750,7 @@ msgstr "اختياري. حدّد عدد الضيوف أو المجموعات ا�
 #~ msgid "Optional. Matches the size name, such as Large, on every item."
 #~ msgstr "اختياري. يطابق اسم الحجم، مثل كبير، على كل عنصر."
 
-#: app/components/discounts/variant-filter.tsx:72
+#: app/components/discounts/variant-filter.tsx:82
 msgid "Optional. Only items with these options get the discount, such as Size: Large."
 msgstr "اختياري. يحصل على الخصم فقط الأصناف التي لها هذه الخيارات، مثل الحجم: كبير."
 
@@ -24780,14 +24796,14 @@ msgstr "اختياري. هذه العناصر لا تحصل على هذا الخ
 
 #: app/components/app-sidebar.tsx:383
 #: app/components/discounts/discount-form.tsx:1777
-#: app/components/discounts/variant-filter.tsx:132
+#: app/components/discounts/variant-filter.tsx:142
 #: app/components/phone-agent/flow-editor/node-inspector.tsx:259
 #: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:65
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:350
 msgid "Options"
 msgstr "الخيارات"
 
-#: app/components/discounts/variant-filter.tsx:133
+#: app/components/discounts/variant-filter.tsx:143
 msgid "Options for option type {number}"
 msgstr "خيارات نوع الخيار {number}"
 
@@ -28700,7 +28716,7 @@ msgstr "إزالة الرقم"
 msgid "Remove option"
 msgstr "إزالة الخيار"
 
-#: app/components/discounts/variant-filter.tsx:149
+#: app/components/discounts/variant-filter.tsx:159
 msgid "Remove option type {number}"
 msgstr "إزالة نوع الخيار {number}"
 

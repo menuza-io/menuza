@@ -10,6 +10,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@repo/ui/select'
+import { useState } from 'react'
 import { CatalogPicker } from '#app/components/loyalty/catalog-picker.tsx'
 import {
 	type DiscountVariantGroupChoice,
@@ -38,6 +39,7 @@ export function VariantFilter({
 	onChange: (next: VariantFilterRow[]) => void
 }) {
 	const { t } = useLingui()
+	const [announcement, setAnnouncement] = useState('')
 	if (groups.length === 0 && rows.length === 0) return null
 	const id = fieldDomId(field)
 	const titleId = `${id}-title`
@@ -49,12 +51,20 @@ export function VariantFilter({
 
 	const update = (index: number, next: VariantFilterRow) =>
 		onChange(rows.map((row, at) => (at === index ? next : row)))
+	const groupName = (key: string) =>
+		groups.find((group) => group.key === key)?.name ?? key
 	const remove = (index: number) => {
+		const name = groupName(rows[index]?.group ?? '')
 		onChange(rows.filter((_, at) => at !== index))
+		setAnnouncement(name ? t`${name} removed` : t`Option type removed`)
 		document.getElementById(`${id}-add`)?.focus()
 	}
-	const add = () =>
-		onChange([...rows, { group: unused[0]?.key ?? '', values: [] }])
+	const add = () => {
+		const key = unused[0]?.key ?? ''
+		onChange([...rows, { group: key, values: [] }])
+		const name = groupName(key)
+		setAnnouncement(name ? t`${name} added` : t`Option type added`)
+	}
 
 	return (
 		<FieldSet
@@ -155,6 +165,9 @@ export function VariantFilter({
 				)
 			})}
 			{error ? <FieldErrorText id={errorId}>{error}</FieldErrorText> : null}
+			<p role="status" aria-live="polite" className="sr-only">
+				{announcement}
+			</p>
 			<div>
 				<Button
 					id={`${id}-add`}

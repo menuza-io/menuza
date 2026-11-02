@@ -15,17 +15,45 @@ import { z } from 'zod'
 export const DISCOUNT_MAX_VARIANT_GROUPS = 3
 export const DISCOUNT_MAX_VARIANT_VALUES = 50
 
-/** The key a discount stores for a group or value name. */
+/**
+ * The key a discount stores for a group or value name: Unicode-normalized
+ * (NFKC), without Arabic tatweel or diacritics, spaces collapsed, lower-cased.
+ * So "كبير" typed with harakat, or a composed and a decomposed "é", match.
+ */
 export function variantKey(name: string): string {
-	return name.trim().toLowerCase()
+	return name
+		.normalize('NFKC')
+		.replace(/[\u0640\u064B-\u065F\u0670]/g, '')
+		.replace(/\s+/g, ' ')
+		.trim()
+		.toLowerCase()
 }
+
+/**
+ * Parsed keys per raw menu name. The engine asks for the same few names for
+ * every line and discount on every evaluation (the till included), so each is
+ * parsed once. Cleared when it grows past a menu's worth of names.
+ */
+const KEY_CACHE_LIMIT = 5000
+const keyCache = new Map<string, readonly string[]>()
 
 /**
  * Every key a menu name answers to: each language's text when the name is a
  * JSON language map, otherwise the name itself.
  */
-export function variantNameKeys(raw: string | null | undefined): string[] {
+export function variantNameKeys(
+	raw: string | null | undefined,
+): readonly string[] {
 	if (!raw) return []
+	const cached = keyCache.get(raw)
+	if (cached) return cached
+	const keys = parseNameKeys(raw)
+	if (keyCache.size >= KEY_CACHE_LIMIT) keyCache.clear()
+	keyCache.set(raw, keys)
+	return keys
+}
+
+function parseNameKeys(raw: string): string[] {
 	const trimmed = raw.trim()
 	if (!trimmed) return []
 	if (trimmed.startsWith('{')) {
@@ -34,9 +62,8 @@ export function variantNameKeys(raw: string | null | undefined): string[] {
 			if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
 				const keys = new Set<string>()
 				for (const value of Object.values(parsed)) {
-					if (typeof value === 'string' && value.trim()) {
-						keys.add(variantKey(value))
-					}
+					const key = typeof value === 'string' ? variantKey(value) : ''
+					if (key) keys.add(key)
 				}
 				return [...keys]
 			}
@@ -44,7 +71,8 @@ export function variantNameKeys(raw: string | null | undefined): string[] {
 			/* a plain name that starts with a brace */
 		}
 	}
-	return [variantKey(trimmed)]
+	const key = variantKey(trimmed)
+	return key ? [key] : []
 }
 
 const variantKeySchema = z

@@ -19,6 +19,7 @@ import {
 	discountDefinitionSchema,
 	type DiscountStatus,
 	normalizeDiscountCode,
+	withCanonicalDiscountCopy,
 } from '@repo/discounts'
 import { type CodeInput, type StoredCode } from './editor-model.ts'
 import { type StoredDiscountLocations } from './location-scope.server.ts'
@@ -751,30 +752,22 @@ export async function duplicateDiscount(input: {
 	userId: string
 	discountId: string
 	copyName: (name: string) => string
+	/** The website's default language, whose entry is the canonical name. */
+	defaultLocale: string
 }): Promise<SaveSuccess | SaveFailure> {
 	const loaded = await getDiscount(input.organizationId, input.discountId)
 	if (!loaded?.stored) return { ok: false, reason: 'not_found' }
 	const { definition } = loaded.stored
 	const name = input.copyName(definition.name).slice(0, DISCOUNT_NAME_MAX)
-	// The default language's entry is the canonical name: it gets the copy's
-	// name too, or the editor and guests would still read the original.
-	const nameI18n = definition.nameI18n
-		? Object.fromEntries(
-				Object.entries(definition.nameI18n).map(([locale, text]) => [
-					locale,
-					text === definition.name ? name : text,
-				]),
-			)
-		: undefined
+	// Only the default language's entry takes the copy's name; translations
+	// stay as they were, even one that reads the same as the original name.
 	return createDiscount({
 		organizationId: input.organizationId,
 		userId: input.userId,
-		definition: {
-			...definition,
-			name,
-			...(nameI18n ? { nameI18n } : {}),
-			status: 'paused',
-		},
+		definition: withCanonicalDiscountCopy(
+			{ ...definition, name, status: 'paused' },
+			input.defaultLocale,
+		),
 		codes: [],
 	})
 }

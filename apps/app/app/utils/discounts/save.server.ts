@@ -1,4 +1,4 @@
-import { DISCOUNT_NAME_MAX } from '@repo/discounts'
+import { DISCOUNT_NAME_MAX, withCanonicalDiscountCopy } from '@repo/discounts'
 import { data, redirect } from 'react-router'
 import { z } from 'zod'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
@@ -97,8 +97,12 @@ export async function saveDiscountEditor({
 			String(form.get('copyWord') ?? '')
 				.trim()
 				.slice(0, 20) || DEFAULT_COPY_WORD
+		const { defaultLocale } = await loadDiscountSiteLocales(
+			access.organization.id,
+		)
 		const copy = await duplicateDiscount({
 			organizationId: access.organization.id,
+			defaultLocale,
 			userId: access.userId,
 			discountId,
 			// The form sends the word in the operator's language.
@@ -198,6 +202,11 @@ export async function saveDiscountEditor({
 		return data({ formError: 'invalid' as const }, { status: 400 })
 	}
 	if (!built.ok) return data({ errors: built.errors }, { status: 400 })
+	// One source of truth for the default language (see withCanonicalDiscountCopy).
+	built.definition = withCanonicalDiscountCopy(
+		built.definition,
+		siteLocales.defaultLocale,
+	)
 
 	if (
 		!discountLocationsAllowedInScope(

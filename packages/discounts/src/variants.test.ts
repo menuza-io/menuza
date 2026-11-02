@@ -16,6 +16,12 @@ describe('variantNameKeys', () => {
 			'كبير',
 		])
 	})
+	it('ignores Arabic diacritics and tatweel, and Unicode forms', () => {
+		expect(variantNameKeys('كَبِير')).toEqual(variantNameKeys('كبير'))
+		expect(variantNameKeys('كبـــير')).toEqual(variantNameKeys('كبير'))
+		expect(variantNameKeys('Cafe\u0301')).toEqual(variantNameKeys('Café'))
+		expect(variantNameKeys('Extra   large')).toEqual(['extra large'])
+	})
 	it('keeps a name that only looks like JSON', () => {
 		expect(variantNameKeys('{Large')).toEqual(['{large'])
 	})

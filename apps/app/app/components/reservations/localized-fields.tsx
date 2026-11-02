@@ -182,6 +182,16 @@ export function WritingLanguageNote() {
 }
 
 /**
+ * The language being written, for screen readers, when the organization has
+ * more than one: the visible switcher is not part of the field's name.
+ */
+function LanguageInLabel() {
+	const { activeLocale, locales } = useActiveLocale()
+	if (locales.length < 2) return null
+	return <span className="sr-only"> ({getSiteLocaleLabel(activeLocale)})</span>
+}
+
+/**
  * A labelled guest-facing field over a language map: the stock field chrome
  * (label, hint, inline error) around an input or textarea that edits the
  * active language.
@@ -227,6 +237,7 @@ export function LocalizedMapField({
 		<Field data-invalid={error ? true : undefined}>
 			<FieldLabel htmlFor={fieldId}>
 				{label}
+				<LanguageInLabel />
 				{optional ? (
 					<span className="text-muted-foreground font-normal">
 						{' '}

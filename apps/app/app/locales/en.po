@@ -82,7 +82,7 @@ msgstr "(not on the menu)"
 msgid "(opens in a new tab)"
 msgstr "(opens in a new tab)"
 
-#: app/components/reservations/localized-fields.tsx:233
+#: app/components/reservations/localized-fields.tsx:244
 #: app/components/staff/controls.tsx:50
 #: app/components/staff/controls.tsx:90
 #: app/components/staff/controls.tsx:144
@@ -1445,6 +1445,10 @@ msgstr "{n, plural, one {# person was clocked out automatically} other {# people
 msgid "{n, plural, one {A schedule was published} other {# schedules were published}}"
 msgstr "{n, plural, one {A schedule was published} other {# schedules were published}}"
 
+#: app/components/discounts/variant-filter.tsx:66
+msgid "{name} added"
+msgstr "{name} added"
+
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:224
 msgid "{name} archived."
 msgstr "{name} archived."
@@ -1484,6 +1488,10 @@ msgstr "{name} moved to position {position} of {total}."
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:229
 msgid "{name} paused."
 msgstr "{name} paused."
+
+#: app/components/discounts/variant-filter.tsx:59
+msgid "{name} removed"
+msgstr "{name} removed"
 
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:228
 msgid "{name} restored. It is paused."
@@ -3713,7 +3721,7 @@ msgstr "Add option"
 msgid "Add Option"
 msgstr "Add Option"
 
-#: app/components/discounts/variant-filter.tsx:168
+#: app/components/discounts/variant-filter.tsx:181
 msgid "Add option type"
 msgstr "Add option type"
 
@@ -7980,7 +7988,7 @@ msgstr "Choices"
 msgid "Choices per item"
 msgstr "Choices per item"
 
-#: app/components/discounts/variant-filter.tsx:117
+#: app/components/discounts/variant-filter.tsx:127
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.new.tsx:416
 msgid "Choose"
 msgstr "Choose"
@@ -8267,7 +8275,7 @@ msgstr "Choose one of the listed options."
 msgid "Choose one or more."
 msgstr "Choose one or more."
 
-#: app/components/discounts/variant-filter.tsx:140
+#: app/components/discounts/variant-filter.tsx:150
 msgid "Choose options"
 msgstr "Choose options"
 
@@ -22393,7 +22401,7 @@ msgstr "No options found"
 msgid "No options match your active filters."
 msgstr "No options match your active filters."
 
-#: app/components/discounts/variant-filter.tsx:141
+#: app/components/discounts/variant-filter.tsx:151
 msgid "No options yet."
 msgstr "No options yet."
 
@@ -24213,7 +24221,7 @@ msgid "Only the owner can share this dashboard."
 msgstr "Only the owner can share this dashboard."
 
 #: app/components/discounts/discount-form.tsx:465
-#: app/components/discounts/variant-filter.tsx:69
+#: app/components/discounts/variant-filter.tsx:79
 msgid "Only these options"
 msgstr "Only these options"
 
@@ -24653,13 +24661,21 @@ msgstr "Option Photo"
 msgid "Option photos are displayed in online ordering menus and modifier trays."
 msgstr "Option photos are displayed in online ordering menus and modifier trays."
 
-#: app/components/discounts/variant-filter.tsx:103
+#: app/components/discounts/variant-filter.tsx:113
 msgid "Option type"
 msgstr "Option type"
 
-#: app/components/discounts/variant-filter.tsx:104
+#: app/components/discounts/variant-filter.tsx:114
 msgid "Option type {number}"
 msgstr "Option type {number}"
+
+#: app/components/discounts/variant-filter.tsx:66
+msgid "Option type added"
+msgstr "Option type added"
+
+#: app/components/discounts/variant-filter.tsx:59
+msgid "Option type removed"
+msgstr "Option type removed"
 
 #: app/components/menu/modifier-guest-preview.tsx:216
 msgid "Optional"
@@ -24742,7 +24758,7 @@ msgstr "Optional. Limit how many guests or parties can be seated in the same tim
 #~ msgid "Optional. Matches the size name, such as Large, on every item."
 #~ msgstr "Optional. Matches the size name, such as Large, on every item."
 
-#: app/components/discounts/variant-filter.tsx:72
+#: app/components/discounts/variant-filter.tsx:82
 msgid "Optional. Only items with these options get the discount, such as Size: Large."
 msgstr "Optional. Only items with these options get the discount, such as Size: Large."
 
@@ -24788,14 +24804,14 @@ msgstr "Optional. These items never receive this discount."
 
 #: app/components/app-sidebar.tsx:383
 #: app/components/discounts/discount-form.tsx:1777
-#: app/components/discounts/variant-filter.tsx:132
+#: app/components/discounts/variant-filter.tsx:142
 #: app/components/phone-agent/flow-editor/node-inspector.tsx:259
 #: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:65
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:350
 msgid "Options"
 msgstr "Options"
 
-#: app/components/discounts/variant-filter.tsx:133
+#: app/components/discounts/variant-filter.tsx:143
 msgid "Options for option type {number}"
 msgstr "Options for option type {number}"
 
@@ -28708,7 +28724,7 @@ msgstr "Remove number"
 msgid "Remove option"
 msgstr "Remove option"
 
-#: app/components/discounts/variant-filter.tsx:149
+#: app/components/discounts/variant-filter.tsx:159
 msgid "Remove option type {number}"
 msgstr "Remove option type {number}"
 

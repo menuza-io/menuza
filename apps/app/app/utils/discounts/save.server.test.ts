@@ -268,7 +268,17 @@ describe('saveDiscountEditor', () => {
 
 	it('duplicates a discount as a paused copy with the word from the form', async () => {
 		const { access } = await setup()
-		const id = await create(access, { name: { en: 'Lunch deal' } })
+		await db
+			.update(Organization)
+			.set({
+				siteLocales: JSON.stringify(['en', 'ar']),
+				siteDefaultLocale: 'en',
+			})
+			.where(eq(Organization.id, access.organization.id))
+		// A translation that reads the same as the name (a brand name) stays.
+		const id = await create(access, {
+			name: { en: 'Lunch deal', ar: 'Lunch deal' },
+		})
 		const result = await saveDiscountEditor({
 			request: saveRequest({ intent: 'duplicate', copyWord: 'نسخة' }),
 			params: { orgSlug: access.organization.slug, discountId: id },
@@ -286,7 +296,7 @@ describe('saveDiscountEditor', () => {
 		expect(copy?.stored?.definition).toMatchObject({
 			name: 'Lunch deal نسخة',
 			// The default-language entry follows the copy's name.
-			nameI18n: { en: 'Lunch deal نسخة' },
+			nameI18n: { en: 'Lunch deal نسخة', ar: 'Lunch deal' },
 			status: 'paused',
 		})
 		const [original] = await db
