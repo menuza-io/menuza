@@ -611,14 +611,22 @@ jobs:
             ${{ needs.container-tenant-api.outputs.image }}:${{ github.sha }}
           PULL_TOKEN: ${{ secrets.GHCR_PULL_TOKEN || secrets.GITHUB_TOKEN }}
           GHCR_USER: ${{ github.actor }}
+          KNOWN_HOSTS: ${{ secrets.OCI_TENANT_KNOWN_HOSTS }}
         run: |
           set -euo pipefail
+          if [ -z "${KNOWN_HOSTS}" ]; then
+            echo "OCI_TENANT_KNOWN_HOSTS must be the ssh-keyscan output for the tenant host." >&2
+            exit 1
+          fi
           install -m 600 /dev/null /tmp/oci_key
           printf '%s\n' "$SSH_KEY" > /tmp/oci_key
-          ssh -i /tmp/oci_key -o StrictHostKeyChecking=accept-new \
+          mkdir -p ~/.ssh
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+          printf '%s\n' "$PULL_TOKEN" | ssh -i /tmp/oci_key -o StrictHostKeyChecking=yes \
             "${SSH_USER}@${HOST}" \
             "set -euo pipefail
-             echo '${PULL_TOKEN}' | docker login ghcr.io -u '${GHCR_USER}' --password-stdin
+             docker login ghcr.io -u '${GHCR_USER}' --password-stdin
              cd /opt/tenant-api
              TENANT_API_IMAGE='${IMAGE}' docker compose pull
              TENANT_API_IMAGE='${IMAGE}' docker compose up -d"
@@ -633,14 +641,22 @@ jobs:
             ${{ needs.container-tenant-api.outputs.image }}:${{ github.sha }}
           PULL_TOKEN: ${{ secrets.GHCR_PULL_TOKEN || secrets.GITHUB_TOKEN }}
           GHCR_USER: ${{ github.actor }}
+          KNOWN_HOSTS: ${{ secrets.OCI_TENANT_KNOWN_HOSTS }}
         run: |
           set -euo pipefail
+          if [ -z "${KNOWN_HOSTS}" ]; then
+            echo "OCI_TENANT_KNOWN_HOSTS must be the ssh-keyscan output for the tenant host." >&2
+            exit 1
+          fi
           install -m 600 /dev/null /tmp/oci_key
           printf '%s\n' "$SSH_KEY" > /tmp/oci_key
-          ssh -i /tmp/oci_key -o StrictHostKeyChecking=accept-new \
+          mkdir -p ~/.ssh
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+          printf '%s\n' "$PULL_TOKEN" | ssh -i /tmp/oci_key -o StrictHostKeyChecking=yes \
             "${SSH_USER}@${HOST}" \
             "set -euo pipefail
-             echo '${PULL_TOKEN}' | docker login ghcr.io -u '${GHCR_USER}' --password-stdin
+             docker login ghcr.io -u '${GHCR_USER}' --password-stdin
              cd /opt/tenant-api
              TENANT_API_IMAGE='${IMAGE}' docker compose pull
              TENANT_API_IMAGE='${IMAGE}' docker compose up -d"

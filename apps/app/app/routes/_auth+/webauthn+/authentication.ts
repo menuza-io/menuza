@@ -94,6 +94,19 @@ export async function action({ request }: Route.ActionArgs) {
 			)
 		}
 
+		const { checkSSOEnforcementByUserId } =
+			await import('#app/utils/sso/enforcement.server.ts')
+		const ssoEnforcement = await checkSSOEnforcementByUserId(passkey.userId)
+		if (ssoEnforcement.enforced) {
+			return Response.json(
+				{
+					status: 'error',
+					error: 'Your organization requires SSO login',
+				},
+				{ status: 403, headers: { 'Set-Cookie': deletePasskeyCookie } },
+			)
+		}
+
 		const { getClientIp } = await import('@repo/security')
 		const { getUserAgent } = await import('#app/utils/user-agent.server.ts')
 

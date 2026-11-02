@@ -221,6 +221,8 @@ describe('useOAuthCallback', () => {
 			'github',
 			'test-auth-code',
 			'test-state',
+			undefined,
+			undefined,
 		)
 		expect(callbackResult).toEqual({ success: true })
 	})

@@ -1,7 +1,7 @@
 import { LRUCache } from 'lru-cache'
 import type { Context, Next } from 'hono'
 import { ENV } from 'varlock/env'
-import { addressBucket, clientAddress } from './client-ip.ts'
+import { addressBucket, clientAddress, isLocalRuntime } from './client-ip.ts'
 
 interface RateLimitConfig {
 	windowMs: number
@@ -9,10 +9,9 @@ interface RateLimitConfig {
 }
 
 function isProduction(): boolean {
-	return (
-		(process.env.NODE_ENV ?? (ENV as { NODE_ENV?: string }).NODE_ENV) ===
-		'production'
-	)
+	// An unset NODE_ENV is production. The schema default must not turn
+	// rate limits off.
+	return !isLocalRuntime()
 }
 
 const limiters = new Map<string, LRUCache<string, number[]>>()

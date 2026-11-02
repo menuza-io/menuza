@@ -29,6 +29,10 @@ import {
 	ORG_PERMISSIONS,
 	requireUserWithOrganizationPermission,
 } from '#app/utils/organization/permissions.server.ts'
+import {
+	AI_REQUEST_RATE_LIMIT,
+	checkRateLimit,
+} from '#app/utils/rate-limit.server.ts'
 import { ADDABLE_BLOCK_TYPES } from '#app/utils/website/block-types.ts'
 
 const ADDABLE_SECTION_TYPES = ADDABLE_BLOCK_TYPES.map((block) => block.type)
@@ -322,6 +326,14 @@ ${
 export const maxDuration = 30
 
 export const action = async (args: ActionFunctionArgs) => {
+	const userId = await requireUserId(args.request)
+	const limit = await checkRateLimit(
+		{ type: 'user', value: userId },
+		AI_REQUEST_RATE_LIMIT,
+	)
+	if (!limit.allowed) {
+		return new Response('Too many requests', { status: 429 })
+	}
 	return handleChat(args, {
 		requireUserId,
 		requireOrgMembership: (request, organizationId) =>

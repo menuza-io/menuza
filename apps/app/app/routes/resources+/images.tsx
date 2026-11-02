@@ -1,7 +1,7 @@
 import { invariantResponse } from '@epic-web/invariant'
 import { getDomainUrl, isCloudflareWorkerRuntime } from '@repo/common'
 import { db, eq, OrganizationMediaAsset } from '@repo/database'
-import { ssrfSafeFetch, validateInstanceUrlWithDns } from '@repo/security'
+import { ssrfSafeFetch } from '@repo/security'
 import { isValidRasterBytes } from '@repo/storage'
 import { drainOnCancel } from '#app/utils/drain-on-cancel.server.ts'
 import {
@@ -97,7 +97,12 @@ async function streamStoredVideo(
 	const upstream = await fetch(storageUrl, {
 		method,
 		headers: upstreamHeaders,
+		redirect: 'manual',
 	})
+	if (upstream.status >= 300 && upstream.status < 400) {
+		await upstream.body?.cancel()
+		return new Response('Upstream redirect refused', { status: 502 })
+	}
 
 	const responseHeaders = getImageResponseHeaders(cacheable && upstream.ok)
 	for (const headerName of VIDEO_PASSTHROUGH_HEADERS) {
@@ -217,8 +222,16 @@ async function fetchImageSource(
 	if (objectKey) {
 		const { url: signedUrl, headers: signedHeaders } =
 			await getSignedGetRequestInfoAsync(objectKey, organizationId ?? undefined)
+		const upstream = await fetch(signedUrl, {
+			headers: signedHeaders,
+			redirect: 'manual',
+		})
+		if (upstream.status >= 300 && upstream.status < 400) {
+			await upstream.body?.cancel()
+			throw new Response('Upstream redirect refused', { status: 502 })
+		}
 		return {
-			upstream: await fetch(signedUrl, { headers: signedHeaders }),
+			upstream,
 			source: { url: signedUrl, headers: signedHeaders },
 		}
 	}
@@ -504,10 +517,25 @@ export async function loader({ request }: Route.LoaderArgs) {
 			if (objectKey) {
 				const { url: signedUrl, headers: signedHeaders } =
 					await getSignedGetRequestInfoAsync(objectKey, organizationId!)
-				return {
-					type: 'fetch',
-					url: signedUrl,
+				const upstream = await fetch(signedUrl, {
 					headers: signedHeaders,
+					redirect: 'manual',
+				})
+				if (upstream.status >= 300 && upstream.status < 400) {
+					await upstream.body?.cancel()
+					return new Response('Upstream redirect refused', { status: 502 })
+				}
+				if (!upstream.ok) return upstream
+				const bytes = await upstream.arrayBuffer()
+				if (bytes.byteLength > MAX_IMAGE_BYTES) {
+					return new Response('Payload Too Large', { status: 413 })
+				}
+				return {
+					type: 'data',
+					// ReadableStream, not Uint8Array: openimg uses Readable.from() which
+					// iterates typed arrays byte-by-byte and breaks Sharp.
+					data: new Blob([bytes]).stream(),
+					cacheKey: objectKey,
 				}
 			}
 
@@ -515,13 +543,30 @@ export async function loader({ request }: Route.LoaderArgs) {
 			invariantResponse(src, 'src query parameter is required', { status: 400 })
 
 			if (URL.canParse(src)) {
-				const validation = await validateInstanceUrlWithDns(src)
-				if (!validation.valid) {
-					throw new Error(`Invalid image URL: ${validation.reason}`)
+				// Fetch here with redirects disabled. Returning type "fetch" would
+				// let openimg follow a 302 onto an internal address.
+				let upstream: Response
+				try {
+					upstream = await ssrfSafeFetch(src, {
+						signal: AbortSignal.timeout(10_000),
+					})
+				} catch {
+					return new Response('Invalid image URL', { status: 400 })
+				}
+				if (!upstream.ok) return upstream
+				const contentLength = upstream.headers.get('content-length')
+				if (contentLength && Number(contentLength) > MAX_IMAGE_BYTES) {
+					await upstream.body?.cancel()
+					return new Response('Payload Too Large', { status: 413 })
+				}
+				const bytes = await upstream.arrayBuffer()
+				if (bytes.byteLength > MAX_IMAGE_BYTES) {
+					return new Response('Payload Too Large', { status: 413 })
 				}
 				return {
-					type: 'fetch',
-					url: src,
+					type: 'data',
+					data: new Blob([bytes]).stream(),
+					cacheKey: src,
 				}
 			}
 

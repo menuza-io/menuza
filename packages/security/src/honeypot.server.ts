@@ -1,5 +1,6 @@
 import { SpamError } from 'remix-utils/honeypot/server'
 import { ENV } from './package-env.js'
+import { assertSecretNotPlaceholder } from './insecure-secret.js'
 
 const DEFAULT_NAME_FIELD_NAME = 'name__confirm'
 const DEFAULT_VALID_FROM_FIELD_NAME = 'from__confirm'
@@ -59,7 +60,7 @@ async function decrypt(value: string, seed: string) {
 
 class AppHoneypot {
 	#encryptionSeed() {
-		return ENV.HONEYPOT_SECRET
+		return assertSecretNotPlaceholder('HONEYPOT_SECRET', ENV.HONEYPOT_SECRET)
 	}
 
 	#validFromFieldName() {

@@ -87,8 +87,13 @@ export class TenantApiClient {
 		return decodeResponse(response, publicOrganizationSchema, path)
 	}
 
-	async sendCode(phone: string): Promise<void> {
-		await this.#perform(this.#boundPost('/auth/send-code', { phone }))
+	async sendCode(phone: string, turnstileToken?: string): Promise<void> {
+		await this.#perform(
+			this.#boundPost('/auth/send-code', {
+				phone,
+				...(turnstileToken ? { turnstileToken } : {}),
+			}),
+		)
 	}
 
 	async verify(phone: string, code: string): Promise<VerifyResult> {
@@ -201,7 +206,10 @@ export class TenantApiClient {
 		fields: Record<string, string>,
 	): Omit<RequestSpec, 'timeoutMs'> {
 		const binding = siteQuery(this.configuration.siteAddress)
-		const headers: Record<string, string> = { Accept: 'application/json' }
+		const headers: Record<string, string> = {
+			Accept: 'application/json',
+			'X-Epic-Customer-App': '1',
+		}
 		const origin = authOriginHeader(this.configuration.siteAddress)
 		if (origin) headers.Origin = origin
 		return {

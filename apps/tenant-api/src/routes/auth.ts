@@ -5,6 +5,11 @@ import { SignJWT, jwtVerify } from 'jose'
 import { ENV } from 'varlock/env'
 import { z } from 'zod'
 
+import {
+	isTurnstileConfigured,
+	parseTurnstileHostnames,
+	verifyTurnstileToken,
+} from '@repo/common/turnstile'
 import { brand } from '@repo/config/brand'
 import { sendSms } from '@repo/sms'
 import {
@@ -14,18 +19,19 @@ import {
 	TENANT_ORG_ID_PATTERN,
 	runTenantTransaction,
 } from '@repo/tenant-db'
+import { clientAddress } from '../lib/client-ip.ts'
 import {
 	findActiveOrganizationById,
 	resolveOrganizationForBrowserAuth,
 	resolvePublishedOrganization,
 	type PublishedOrganization,
 } from '../lib/origin.ts'
+import { isValidPhone, legacyPhoneForms, normalizePhone } from '../lib/phone.ts'
 import {
 	checkGlobalSendCap,
 	rateLimit,
 	rateLimitByKey,
 } from '../lib/rate-limit.ts'
-import { isValidPhone, legacyPhoneForms, normalizePhone } from '../lib/phone.ts'
 import { orgMatchesNodeRegion } from '../lib/region.ts'
 import { getBearerToken, hmacHash } from '../lib/secrets.ts'
 import { evaluateAndSpawnTriggers } from '../services/journey-service.ts'
@@ -41,11 +47,46 @@ const phoneInputSchema = z
 	.min(5, 'Invalid phone number')
 	.max(32, 'Invalid phone number')
 
+const SEND_CODE_TTL_MS = 10 * 60 * 1000
+const SEND_CODE_COOLDOWN_MS = 60 * 1000
+const TURNSTILE_LOGIN_ACTION = 'customer-login'
+
 const sendCodeSchema = z.object({
 	slug: z.string().max(253).optional(),
 	host: z.string().max(253).optional(),
 	phone: phoneInputSchema,
+	turnstileToken: z.string().max(2048).optional(),
 })
+
+const NATIVE_CUSTOMER_APP_HEADER = 'x-epic-customer-app'
+
+function isNativeCustomerAppRequest(c: Context) {
+	return c.req.header(NATIVE_CUSTOMER_APP_HEADER)?.toLowerCase() === '1'
+}
+
+async function sendCodeChallengeAccepted(
+	c: Context,
+	token: string | undefined,
+) {
+	const secret = ENV.TURNSTILE_SECRET_KEY ?? ''
+	if (!isTurnstileConfigured(secret)) {
+		// Local runs without a widget. Production with no secret still sends,
+		// bounded by the per-phone cooldown and the send caps.
+		return true
+	}
+	if (!token?.trim()) {
+		// Expo customer app: org binding, Origin, and rate limits; no web widget.
+		return isNativeCustomerAppRequest(c)
+	}
+	const result = await verifyTurnstileToken({
+		secret,
+		token,
+		remoteIp: clientAddress(c) ?? undefined,
+		expectedAction: TURNSTILE_LOGIN_ACTION,
+		expectedHostnames: parseTurnstileHostnames(ENV.TURNSTILE_HOSTNAMES),
+	})
+	return result.success
+}
 
 const verifyCodeSchema = z.object({
 	slug: z.string().max(253).optional(),
@@ -399,12 +440,41 @@ authRoutes.post(
 			return c.json({ error: 'Invalid phone number' }, 400)
 		}
 
+		if (!(await sendCodeChallengeAccepted(c, parsed.data.turnstileToken))) {
+			return c.json({ error: 'challenge_required' }, 403)
+		}
+
 		const loaded = await loadProvisionedOrgDb(c, parsed.data)
 		if ('error' in loaded) return loaded.error
 		const { db, organization } = loaded
 
+		const existing = await findCustomerByPhone(db, phone)
+
+		if (existing?.phoneVerificationExpiresAt) {
+			const expiresAtMs = new Date(
+				existing.phoneVerificationExpiresAt,
+			).getTime()
+			const sentAt = expiresAtMs - SEND_CODE_TTL_MS
+			if (
+				expiresAtMs > Date.now() &&
+				Date.now() - sentAt < SEND_CODE_COOLDOWN_MS
+			) {
+				return c.json(
+					{
+						error: 'rate_limit_exceeded',
+						error_description: 'Please wait before requesting another code.',
+						retry_after: Math.ceil(
+							(SEND_CODE_COOLDOWN_MS - (Date.now() - sentAt)) / 1000,
+						),
+					},
+					429,
+				)
+			}
+		}
+
 		// Scoped per org so one tenant's customer cannot lock the same number
-		// out of another tenant's sign-in.
+		// out of another tenant's sign-in. Run after the resend cooldown so a
+		// wait response does not consume SMS quota counters.
 		const phoneLimit = rateLimitByKey(
 			'send-code-phone',
 			JSON.stringify([organization.id, phone]),
@@ -438,11 +508,9 @@ authRoutes.post(
 			)
 		}
 
-		const existing = await findCustomerByPhone(db, phone)
-
 		const code = crypto.randomInt(100000, 1_000_000).toString()
 		const hashedCode = hmacHash(code)
-		const expiresAt = new Date(Date.now() + 10 * 60 * 1000)
+		const expiresAt = new Date(Date.now() + SEND_CODE_TTL_MS)
 
 		if (existing) {
 			await db
@@ -472,6 +540,31 @@ authRoutes.post(
 			})
 		} catch (error) {
 			console.error('SMS sending error:', error)
+			if (existing) {
+				await db
+					.update(customers)
+					.set({
+						phoneVerificationCode: null,
+						phoneVerificationExpiresAt: null,
+					})
+					.where(
+						and(
+							eq(customers.id, existing.id),
+							eq(customers.phoneVerificationCode, hashedCode),
+						),
+					)
+					.run()
+			} else {
+				await db
+					.delete(customers)
+					.where(
+						and(
+							eq(customers.phone, phone),
+							eq(customers.phoneVerificationCode, hashedCode),
+						),
+					)
+					.run()
+			}
 			return c.json({ error: 'Failed to send SMS' }, 500)
 		}
 
@@ -531,16 +624,34 @@ authRoutes.post(
 
 		const hashedIncomingCode = hmacHash(code)
 
-		if (
+		const expired =
+			!customer.phoneVerificationExpiresAt ||
+			new Date() > customer.phoneVerificationExpiresAt
+		const mismatch =
 			!customer.phoneVerificationCode ||
 			customer.phoneVerificationCode.length !== hashedIncomingCode.length ||
+			expired ||
 			!crypto.timingSafeEqual(
 				Buffer.from(customer.phoneVerificationCode),
 				Buffer.from(hashedIncomingCode),
-			) ||
-			!customer.phoneVerificationExpiresAt ||
-			new Date() > customer.phoneVerificationExpiresAt
-		) {
+			)
+		if (mismatch) {
+			// A wrong guess burns the code. The counter is in SQLite, so evicting
+			// the isolate does not hand the same code back.
+			if (customer.phoneVerificationCode && !expired) {
+				await db
+					.update(customers)
+					.set({
+						phoneVerificationCode: null,
+					})
+					.where(eq(customers.id, customer.id))
+					.run()
+			}
+			return c.json({ error: 'Invalid or expired code' }, 400)
+		}
+
+		const storedVerificationCode = customer.phoneVerificationCode
+		if (!storedVerificationCode) {
 			return c.json({ error: 'Invalid or expired code' }, 400)
 		}
 
@@ -556,7 +667,7 @@ authRoutes.post(
 			.where(
 				and(
 					eq(customers.id, customer.id),
-					eq(customers.phoneVerificationCode, customer.phoneVerificationCode),
+					eq(customers.phoneVerificationCode, storedVerificationCode),
 				),
 			)
 			.returning({ id: customers.id })

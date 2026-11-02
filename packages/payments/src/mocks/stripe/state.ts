@@ -88,6 +88,16 @@ export async function mutateStripeObject<T = void>(
 	)
 }
 
+/** Connected account for a destination charge, when the object has one. */
+export function stripeConnectAccountId(object: Json): string | undefined {
+	const mockDestination = object.__mock?.intentData?.destination
+	if (typeof mockDestination === 'string') return mockDestination
+	const transferDestination = object.transfer_data?.destination
+	return typeof transferDestination === 'string'
+		? transferDestination
+		: undefined
+}
+
 export async function emitStripeEvent(
 	ctx: EmulatorContext,
 	type: string,

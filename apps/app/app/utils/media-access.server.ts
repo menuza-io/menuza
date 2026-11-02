@@ -80,9 +80,9 @@ export function privateOrganizationIdFromObjectKey(objectKey: string) {
 
 /**
  * Note videos (and their thumbnails) are rendered by Cloudflare Media
- * Transformations, which fetches the source URL without the viewer's cookies,
- * so they cannot be membership-gated here. Their keys carry the note and upload
- * ids and are only ever shown to members; a signed-URL scheme is the follow-up.
+ * Transformations, which fetches the source URL without the viewer's cookies.
+ * `/resources/videos/source` requires a short-lived signature from
+ * `/resources/videos/ticket` instead of treating the object key as a bearer.
  */
 export function noteVideoOrganizationId(objectKey: string) {
 	return /^orgs\/([^/]+)\/notes\/[^/]+\/videos\//.exec(objectKey)?.[1] ?? null

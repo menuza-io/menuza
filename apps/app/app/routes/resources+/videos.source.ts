@@ -3,6 +3,7 @@ import {
 	authorizeRegisteredObject,
 	noteVideoOrganizationId,
 } from '#app/utils/media-access.server.ts'
+import { verifyMediaSignature } from '#app/utils/media-signing.server.ts'
 import {
 	getSignedGetRequestInfoAsync,
 	getSignedHeadRequestInfoAsync,
@@ -54,6 +55,19 @@ export async function loader({ request }: Route.LoaderArgs) {
 	invariantResponse(registered || noteOrganizationId, 'Not found', {
 		status: 404,
 	})
+	// Note videos are not membership-gated: media transforms fetch this URL
+	// without cookies. A short-lived signature is the capability instead.
+	if (noteOrganizationId) {
+		invariantResponse(
+			verifyMediaSignature(
+				objectKey,
+				url.searchParams.get('sig'),
+				url.searchParams.get('expires'),
+			),
+			'Unauthorized',
+			{ status: 401 },
+		)
+	}
 	const access = registered ?? {
 		isPublic: false,
 		organizationId: noteOrganizationId,
@@ -75,7 +89,12 @@ export async function loader({ request }: Route.LoaderArgs) {
 	const upstream = await fetch(storageUrl, {
 		method,
 		headers: upstreamHeaders,
+		redirect: 'manual',
 	})
+	if (upstream.status >= 300 && upstream.status < 400) {
+		await upstream.body?.cancel()
+		return new Response('Upstream redirect refused', { status: 502 })
+	}
 
 	// The stored Content-Type is whatever the uploader declared, and this
 	// response is served from the app origin: only video (and the raster

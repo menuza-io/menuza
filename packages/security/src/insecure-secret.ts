@@ -11,6 +11,7 @@ const INSECURE_SECRET_MARKERS = [
 	'change-me',
 	'changeme',
 	'super-duper-secret',
+	'super-duper-s3cret',
 	'super-duper-s3cr3t',
 	'test-session-secret',
 ]

@@ -39,9 +39,24 @@ COPY --from=build /myapp/packages /myapp/packages
 COPY --from=build /myapp/apps/tenant-api /myapp/apps/tenant-api
 COPY --from=build /myapp/package.json /myapp/package.json
 
-RUN mkdir -p /data/tenants \
+RUN groupadd --system --gid 1001 tenant \
+	&& useradd --system --uid 1001 --gid tenant --home /myapp tenant \
+	&& mkdir -p /data/tenants \
 	&& echo "#!/bin/sh\nset -x\nsqlite3 \"\$1\"" > /usr/local/bin/tenant-db-cli \
-	&& chmod +x /usr/local/bin/tenant-db-cli
+	&& chmod +x /usr/local/bin/tenant-db-cli \
+	&& chown -R tenant:tenant /data/tenants /myapp \
+	&& printf '%s\n' \
+		'#!/bin/sh' \
+		'set -eu' \
+		'chown -R tenant:tenant /data/tenants' \
+		'cd /myapp/apps/tenant-api' \
+		'exec runuser -u tenant -- "$@"' \
+		> /usr/local/bin/tenant-entrypoint \
+	&& chmod 755 /usr/local/bin/tenant-entrypoint
+
+# Starts as root only long enough to make the data volume writable, then the
+# server runs as uid 1001.
+ENTRYPOINT ["tenant-entrypoint"]
 
 WORKDIR /myapp/apps/tenant-api
 

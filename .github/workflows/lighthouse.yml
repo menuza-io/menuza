@@ -72,7 +72,9 @@ jobs:
         id: deploy
         working-directory: apps/web
         run: |
-          deploy_output=$(npx wrangler deploy --config dist/server/wrangler.deploy.json --env="")
+          # Registry package, not the PR's node_modules copy, so this step's
+          # Cloudflare token is not handed to checkout code.
+          deploy_output=$(npx --yes --package wrangler@4.118.0 wrangler deploy --config dist/server/wrangler.deploy.json --env="")
           echo "$deploy_output"
           url=$(echo "$deploy_output" | grep -Eo 'https://[^[:space:]]+\.workers\.dev' | head -n 1)
           echo "url=$url" >> $GITHUB_OUTPUT

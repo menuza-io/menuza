@@ -1,7 +1,7 @@
 import { invariantResponse } from '@epic-web/invariant'
 import { requireUserWithRole } from '@repo/auth'
 import { getDomainUrl } from '@repo/common'
-import { ssrfSafeFetch, validateInstanceUrlWithDns } from '@repo/security'
+import { ssrfSafeFetch } from '@repo/security'
 import { ENV } from 'varlock/env'
 import { isCloudflareWorkerRuntime } from '#app/utils/runtime.server.ts'
 import { getSignedGetRequestInfoAsync } from '#app/utils/storage.server.ts'
@@ -312,10 +312,23 @@ export async function loader({ request }: Route.LoaderArgs) {
 			if (objectKey) {
 				const { url: signedUrl, headers: signedHeaders } =
 					await getSignedGetRequestInfoAsync(objectKey, organizationId!)
-				return {
-					type: 'fetch',
-					url: signedUrl,
+				const upstream = await fetch(signedUrl, {
 					headers: signedHeaders,
+					redirect: 'manual',
+				})
+				if (upstream.status >= 300 && upstream.status < 400) {
+					await upstream.body?.cancel()
+					return new Response('Upstream redirect refused', { status: 502 })
+				}
+				if (!upstream.ok) return upstream
+				const bytes = await upstream.arrayBuffer()
+				if (bytes.byteLength > MAX_IMAGE_BYTES) {
+					return new Response('Payload Too Large', { status: 413 })
+				}
+				return {
+					type: 'data',
+					data: new Blob([bytes]).stream(),
+					cacheKey: objectKey,
 				}
 			}
 
@@ -323,13 +336,28 @@ export async function loader({ request }: Route.LoaderArgs) {
 			invariantResponse(src, 'src query parameter is required', { status: 400 })
 
 			if (URL.canParse(src)) {
-				const validation = await validateInstanceUrlWithDns(src)
-				if (!validation.valid) {
-					throw new Error(`Invalid image URL: ${validation.reason}`)
+				let upstream: Response
+				try {
+					upstream = await ssrfSafeFetch(src, {
+						signal: AbortSignal.timeout(10_000),
+					})
+				} catch {
+					return new Response('Invalid image URL', { status: 400 })
+				}
+				if (!upstream.ok) return upstream
+				const contentLength = upstream.headers.get('content-length')
+				if (contentLength && Number(contentLength) > MAX_IMAGE_BYTES) {
+					await upstream.body?.cancel()
+					return new Response('Payload Too Large', { status: 413 })
+				}
+				const bytes = await upstream.arrayBuffer()
+				if (bytes.byteLength > MAX_IMAGE_BYTES) {
+					return new Response('Payload Too Large', { status: 413 })
 				}
 				return {
-					type: 'fetch',
-					url: src,
+					type: 'data',
+					data: new Blob([bytes]).stream(),
+					cacheKey: src,
 				}
 			}
 			invariantResponse(

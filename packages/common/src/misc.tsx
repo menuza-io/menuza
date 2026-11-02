@@ -19,10 +19,18 @@ export function getNoteImgSrc(objectKey: string, organizationId?: string) {
 	return `/resources/images?${params.toString()}`
 }
 
-export function getVideoSourceSrc(objectKey: string, organizationId?: string) {
+export function getVideoSourceSrc(
+	objectKey: string,
+	organizationId?: string,
+	auth?: { sig: string; expires: string },
+) {
 	const params = new URLSearchParams({ objectKey })
 	if (organizationId) {
 		params.set('organizationId', organizationId)
+	}
+	if (auth) {
+		params.set('sig', auth.sig)
+		params.set('expires', auth.expires)
 	}
 	return `/resources/videos/source?${params.toString()}`
 }
@@ -44,8 +52,9 @@ export function getVideoPosterSrc(
 	objectKey: string,
 	organizationId?: string,
 	mediaTransformBaseUrl?: string | null,
+	auth?: { sig: string; expires: string },
 ) {
-	const sourcePath = getVideoSourceSrc(objectKey, organizationId)
+	const sourcePath = getVideoSourceSrc(objectKey, organizationId, auth)
 	return buildMediaTransformUrl(
 		sourcePath,
 		'mode=frame,time=1s,width=640,fit=scale-down,format=jpg',
@@ -57,8 +66,9 @@ export function getVideoClipSrc(
 	objectKey: string,
 	organizationId?: string,
 	mediaTransformBaseUrl?: string | null,
+	auth?: { sig: string; expires: string },
 ) {
-	const sourcePath = getVideoSourceSrc(objectKey, organizationId)
+	const sourcePath = getVideoSourceSrc(objectKey, organizationId, auth)
 	return buildMediaTransformUrl(
 		sourcePath,
 		'mode=video,time=1s,duration=3s,width=480,fit=scale-down,audio=false',

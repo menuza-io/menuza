@@ -117,6 +117,29 @@ describe('getClientIp', () => {
 			expect(getClientIp(request)).toBe('13.14.15.16')
 		})
 
+		it('trusts CF-Connecting-IP on Workers even when proxy headers are off', () => {
+			const previous = globalThis.caches
+			Object.defineProperty(globalThis, 'caches', {
+				configurable: true,
+				value: { default: {} },
+			})
+			try {
+				const request = {
+					headers: {
+						get: (name: string) =>
+							name.toLowerCase() === 'cf-connecting-ip' ? '203.0.113.8' : null,
+					},
+					ip: '127.0.0.1',
+				}
+				expect(getClientIp(request, { trustProxy: false })).toBe('203.0.113.8')
+			} finally {
+				Object.defineProperty(globalThis, 'caches', {
+					configurable: true,
+					value: previous,
+				})
+			}
+		})
+
 		it('should use request.ip as fallback for Express requests', () => {
 			const request = {
 				get: () => undefined,

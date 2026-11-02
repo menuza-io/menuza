@@ -164,7 +164,9 @@ export async function verifyOperatorAnalyticsToken(options: {
 			typeof payload.exp === 'number' && typeof payload.iat === 'number'
 				? payload.exp - payload.iat
 				: null
-		if (lifetime === null ? pay : !(lifetime > 0)) return null
+		// jose does not require `exp`. A token with no expiry must not verify,
+		// including analytics tokens that do not grant wages.
+		if (lifetime === null || !(lifetime > 0)) return null
 		if (
 			lifetime !== null &&
 			lifetime > (pay ? PAY_TOKEN_MAX_SECONDS : TOKEN_MAX_SECONDS)

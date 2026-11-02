@@ -83,6 +83,43 @@ describe('customer auth hardening', () => {
 		expect(await db.select().from(customers).all()).toHaveLength(0)
 	})
 
+	it('burns a code after one wrong guess', async () => {
+		const db = await getTenantDb(orgId)
+		const expiresAt = new Date(Date.now() + 60_000)
+		await db.insert(customers).values({
+			name: 'Otp Customer',
+			phone,
+			phoneVerificationCode: hmacHash('123456'),
+			phoneVerificationExpiresAt: expiresAt,
+		})
+		const wrong = await post(app, '/auth/verify', { phone, code: '000000' })
+		expect(wrong.status).toBe(400)
+		const right = await post(app, '/auth/verify', { phone, code: '123456' })
+		expect(right.status).toBe(400)
+		const [row] = await db.select().from(customers)
+		expect(row?.phoneVerificationCode).toBeNull()
+		expect(row?.phoneVerificationExpiresAt).not.toBeNull()
+		const storedMs = row?.phoneVerificationExpiresAt?.getTime() ?? 0
+		expect(Math.abs(storedMs - expiresAt.getTime())).toBeLessThan(2000)
+	})
+
+	it('keeps the resend cooldown after a wrong OTP guess', async () => {
+		const db = await getTenantDb(orgId)
+		const sendCodeTtlMs = 10 * 60 * 1000
+		await db.insert(customers).values({
+			name: 'Otp Customer',
+			phone,
+			phoneVerificationCode: hmacHash('123456'),
+			phoneVerificationExpiresAt: new Date(Date.now() + sendCodeTtlMs - 5_000),
+		})
+		const wrong = await post(app, '/auth/verify', { phone, code: '000000' })
+		expect(wrong.status).toBe(400)
+		const resend = await post(app, '/auth/send-code', { phone })
+		expect(resend.status).toBe(429)
+		const body = (await resend.json()) as { error_description?: string }
+		expect(body.error_description).toMatch(/wait/i)
+	})
+
 	it('consumes a verification code only once', async () => {
 		const db = await getTenantDb(orgId)
 		await db.insert(customers).values({
