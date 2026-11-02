@@ -1,4 +1,4 @@
-import { DISCOUNT_NAME_MAX } from '@repo/discounts'
+import { DISCOUNT_NAME_MAX, withCanonicalDiscountCopy } from '@repo/discounts'
 import { data, redirect } from 'react-router'
 import { z } from 'zod'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
@@ -13,6 +13,7 @@ import {
 } from './discounts.server.ts'
 import {
 	loadDiscountLocations,
+	loadDiscountSiteLocales,
 	loadOrganizationDiscountIds,
 } from './editor-data.server.ts'
 import {
@@ -96,8 +97,12 @@ export async function saveDiscountEditor({
 			String(form.get('copyWord') ?? '')
 				.trim()
 				.slice(0, 20) || DEFAULT_COPY_WORD
+		const { defaultLocale } = await loadDiscountSiteLocales(
+			access.organization.id,
+		)
 		const copy = await duplicateDiscount({
 			organizationId: access.organization.id,
+			defaultLocale,
 			userId: access.userId,
 			discountId,
 			// The form sends the word in the operator's language.
@@ -173,7 +178,10 @@ export async function saveDiscountEditor({
 	// (orders price in their location's currency and the engine never converts).
 	// A discount with no location to read one from (an organization without
 	// locations) keeps the currency it was entered in, or takes the region's.
-	const locations = await loadDiscountLocations(access.organization.id)
+	const [locations, siteLocales] = await Promise.all([
+		loadDiscountLocations(access.organization.id),
+		loadDiscountSiteLocales(access.organization.id),
+	])
 	let built: ReturnType<typeof stateToDefinition>
 	try {
 		const { currency } = resolveDiscountCurrency(
@@ -186,12 +194,19 @@ export async function saveDiscountEditor({
 			currency,
 			// New discounts start paused so nothing goes live until the operator resumes.
 			status: discountId ? status.data : 'paused',
+			// The name and description keep the website's languages only.
+			locales: siteLocales,
 		})
 	} catch {
 		// A hand-made payload of the wrong shape is a bad request, not a crash.
 		return data({ formError: 'invalid' as const }, { status: 400 })
 	}
 	if (!built.ok) return data({ errors: built.errors }, { status: 400 })
+	// One source of truth for the default language (see withCanonicalDiscountCopy).
+	built.definition = withCanonicalDiscountCopy(
+		built.definition,
+		siteLocales.defaultLocale,
+	)
 
 	if (
 		!discountLocationsAllowedInScope(

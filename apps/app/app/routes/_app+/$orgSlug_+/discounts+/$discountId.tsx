@@ -88,7 +88,12 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		history,
 		createdAt: loaded.row.createdAt.toISOString(),
 		initial: stored
-			? stateFromDefinition(stored.definition, loaded.codes, storedCurrency)
+			? stateFromDefinition(
+					stored.definition,
+					loaded.codes,
+					storedCurrency,
+					editor.siteLocales,
+				)
 			: null,
 	}
 }
@@ -186,6 +191,7 @@ export default function EditDiscountRoute() {
 				catalog={data.editor.catalog}
 				locations={data.editor.locations}
 				choices={data.editor.choices}
+				siteLocales={data.editor.siteLocales}
 				initial={initial}
 				version={data.version}
 				status={data.status}

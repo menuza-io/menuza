@@ -11,7 +11,8 @@ import {
 	DISCOUNT_MAX_TARGET_MODIFIER_OPTIONS,
 	DISCOUNT_MAX_TIER_STEPS,
 	DISCOUNT_MAX_UNITS,
-	DISCOUNT_MAX_VARIANT_NAMES,
+	DISCOUNT_MAX_VARIANT_GROUPS,
+	DISCOUNT_MAX_VARIANT_VALUES,
 	DISCOUNT_NAME_MAX,
 	DISCOUNT_TOTAL_LIMIT_PRESETS,
 	type DiscountApplication,
@@ -28,6 +29,8 @@ import {
 	type DiscountTierBasis,
 	type DiscountValueType,
 	normalizeDiscountCode,
+	type DiscountVariantFilter,
+	variantKey,
 } from '@repo/discounts'
 import { type LoyaltyCatalogOption } from '#app/utils/loyalty/catalog.ts'
 import {
@@ -40,6 +43,12 @@ import {
 	parseMoneyToMinor,
 	parseWholeNumber,
 } from '#app/utils/money-input.ts'
+import {
+	cleanLocalizedMap,
+	defaultEntry,
+	type LocalesLike,
+	type LocalizedMap,
+} from '#app/utils/reservations/localized.ts'
 
 /**
  * The discount editor's form state and its conversion to and from the stored
@@ -58,13 +67,21 @@ export type CodeRow = {
 	maxUses: string
 }
 
+/**
+ * One row of an "only these options" filter: an option type ("size") and the
+ * values of it that qualify ("large", "medium"). Both are keys, the menu name
+ * lower-cased (`variantKey`). A row still being filled in may have an empty
+ * group or no values; the save drops it.
+ */
+export type VariantFilterRow = { group: string; values: string[] }
+
 /** A group of items or categories and how many of them the deal takes. */
 export type ItemGroupState = {
 	quantity: string
 	itemIds: string[]
 	categoryIds: string[]
-	/** Size names ("Large") the group is limited to; empty means any size. */
-	variantNames: string[]
+	/** Options the group is limited to ("Size: Large"); empty means any. */
+	variants: VariantFilterRow[]
 	/** The buy group only: count the items, or add up what is spent on them. */
 	by: 'quantity' | 'spend'
 	spend: string
@@ -84,22 +101,38 @@ export type TierRow = {
 export type SlotState = ItemGroupState & { key: string }
 
 /**
+ * An option type the menu uses ("Size"), with every value of it across the
+ * items. `key` and each value's `id` are what a discount stores; `name` is
+ * shown, in the website's default language.
+ */
+export type DiscountVariantGroupChoice = {
+	key: string
+	name: string
+	/** How many items use this option type. */
+	items: number
+	values: LoyaltyCatalogOption[]
+}
+
+/**
  * Choices beyond items and categories the editor can pick by name: modifier
- * groups and options, and sizes (variant names, shared across items).
+ * groups and options, and the option types (variations) items share.
  */
 export type DiscountChoiceCatalog = {
 	groups: LoyaltyCatalogOption[]
 	options: LoyaltyCatalogOption[]
-	sizes: LoyaltyCatalogOption[]
+	variantGroups: DiscountVariantGroupChoice[]
 }
 
 export type TotalLimitChoice =
 	'unlimited' | `${(typeof DISCOUNT_TOTAL_LIMIT_PRESETS)[number]}` | 'custom'
 
 export type EditorState = {
-	name: string
+	/** The guest-facing name in each website language (language → text). */
+	name: LocalizedMap
+	/** Operator-only, so one plain text. */
 	internalName: string
-	description: string
+	/** The guest-facing description in each website language. */
+	description: LocalizedMap
 	application: DiscountApplication
 	valueType: DiscountValueType
 	percent: string
@@ -115,8 +148,8 @@ export type EditorState = {
 	/** Modifier groups and options a modifier discount covers. */
 	modifierGroupIds: string[]
 	modifierOptionIds: string[]
-	/** Size names the discount is limited to (items, categories, modifiers). */
-	variantNames: string[]
+	/** Options the discount is limited to (items, categories, modifiers). */
+	variants: VariantFilterRow[]
 	itemIds: string[]
 	categoryIds: string[]
 	excludeItemIds: string[]
@@ -179,6 +212,7 @@ export function parseRangeCode(
 export type EditorErrorCode =
 	| RangeCode
 	| 'required'
+	| 'default_language_required'
 	| 'too_long'
 	| 'percent'
 	| 'amount'
@@ -211,7 +245,7 @@ export type EditorErrorCode =
 	| 'too_many_items'
 	| 'too_many_categories'
 	| 'too_many_modifiers'
-	| 'too_many_sizes'
+	| 'too_many_variants'
 	| 'application_off'
 	| 'location_scope'
 	| 'invalid'
@@ -344,7 +378,7 @@ export function emptyGroup(quantity = '1'): ItemGroupState {
 		quantity,
 		itemIds: [],
 		categoryIds: [],
-		variantNames: [],
+		variants: [],
 		by: 'quantity',
 		spend: '',
 	}
@@ -401,7 +435,7 @@ function groupFromRule(
 		spendMinor?: number
 		itemIds: readonly string[]
 		categoryIds: readonly string[]
-		variantNames?: readonly string[]
+		variants?: readonly DiscountVariantFilter[]
 	},
 	currency: string,
 ): ItemGroupState {
@@ -409,7 +443,7 @@ function groupFromRule(
 		quantity: String(set.quantity ?? 1),
 		itemIds: [...set.itemIds],
 		categoryIds: [...set.categoryIds],
-		variantNames: [...(set.variantNames ?? [])],
+		variants: variantRowsOf(set.variants),
 		by: set.spendMinor !== undefined ? 'spend' : 'quantity',
 		spend:
 			set.spendMinor !== undefined
@@ -422,9 +456,9 @@ export function emptyEditorState(
 	application: DiscountApplication = 'automatic',
 ): EditorState {
 	return {
-		name: '',
+		name: {},
 		internalName: '',
-		description: '',
+		description: {},
 		application,
 		valueType: 'percent',
 		percent: '',
@@ -437,7 +471,7 @@ export function emptyEditorState(
 		scope: 'order',
 		modifierGroupIds: [],
 		modifierOptionIds: [],
-		variantNames: [],
+		variants: [],
 		itemIds: [],
 		categoryIds: [],
 		excludeItemIds: [],
@@ -485,10 +519,53 @@ export type StoredCode = {
 	maxUses: number | null
 }
 
+/** Stored variant filters as editor rows (copies, so edits never alias). */
+function variantRowsOf(
+	filters: readonly DiscountVariantFilter[] | undefined,
+): VariantFilterRow[] {
+	return (filters ?? []).map((filter) => ({
+		group: filter.group,
+		values: [...filter.values],
+	}))
+}
+
+/**
+ * The filters a save stores: rows without an option type or without values
+ * are dropped, keys are normalized and each value is kept once.
+ */
+export function cleanVariantRows(
+	rows: readonly VariantFilterRow[],
+): DiscountVariantFilter[] {
+	return rows.flatMap((row) => {
+		const group = variantKey(row.group)
+		const values = [
+			...new Set(row.values.map(variantKey).filter((value) => value)),
+		]
+		return group && values.length > 0 ? [{ group, values }] : []
+	})
+}
+
+/**
+ * A stored language map as the editor's, with the canonical text as the
+ * default-language entry when the map lacks one (a discount saved before the
+ * default language changed, or a copy).
+ */
+function localizedState(
+	map: Readonly<Record<string, string>> | undefined,
+	canonical: string | null,
+	defaultLocale: string,
+): LocalizedMap {
+	const out: LocalizedMap = { ...map }
+	if (!out[defaultLocale]?.trim() && canonical) out[defaultLocale] = canonical
+	return out
+}
+
 export function stateFromDefinition(
 	definition: DiscountDefinition,
 	codes: readonly StoredCode[],
 	currency: string,
+	/** The website's default language: the canonical name is its entry. */
+	locales: Pick<LocalesLike, 'defaultLocale'>,
 ): EditorState {
 	const base = emptyEditorState(definition.application)
 	const rule = definition.quantityRule
@@ -497,9 +574,17 @@ export function stateFromDefinition(
 	)
 	return {
 		...base,
-		name: definition.name,
+		name: localizedState(
+			definition.nameI18n,
+			definition.name,
+			locales.defaultLocale,
+		),
 		internalName: definition.internalName ?? '',
-		description: definition.description ?? '',
+		description: localizedState(
+			definition.descriptionI18n,
+			definition.description,
+			locales.defaultLocale,
+		),
 		valueType: definition.valueType,
 		percent: bpToPercentInput(definition.percentBp),
 		amount: minorToMoneyInput(definition.amountMinor, currency),
@@ -525,7 +610,7 @@ export function stateFromDefinition(
 		scope: definition.target.scope,
 		modifierGroupIds: [...(definition.target.modifierGroupIds ?? [])],
 		modifierOptionIds: [...(definition.target.modifierOptionIds ?? [])],
-		variantNames: [...(definition.target.variantNames ?? [])],
+		variants: variantRowsOf(definition.target.variants),
 		itemIds: [...definition.target.itemIds],
 		categoryIds: [...definition.target.categoryIds],
 		excludeItemIds: [...definition.target.excludeItemIds],
@@ -611,8 +696,10 @@ export type EditorResult =
 /** Schema issue paths to the editor field ids that show them. */
 const PATH_TO_FIELD: Record<string, string> = {
 	name: 'name',
+	nameI18n: 'name',
 	internalName: 'internalName',
 	description: 'description',
+	descriptionI18n: 'description',
 	percentBp: 'percent',
 	amountMinor: 'amount',
 	currency: 'amount',
@@ -679,6 +766,11 @@ export function stateToDefinition(
 		 */
 		currency: string | null
 		status: DiscountStatus
+		/**
+		 * The website's languages. The name and description keep only these,
+		 * and the default language's entry is the canonical text.
+		 */
+		locales: LocalesLike
 		/** Existing codes' normalized values owned by other discounts, if known. */
 		takenCodes?: ReadonlySet<string>
 		features?: { automatic: boolean; coupons: boolean }
@@ -703,15 +795,34 @@ export function stateToDefinition(
 		return minor
 	}
 
-	const name = state.name.trim()
-	if (!name) fail('name', 'required')
-	else if (name.length > DISCOUNT_NAME_MAX) fail('name', 'too_long')
+	// Guest-facing text in the website's languages; the default language's
+	// entry is the canonical name and description.
+	const nameI18n = cleanLocalizedMap(state.name, options.locales)
+	const descriptionI18n = cleanLocalizedMap(state.description, options.locales)
+	const name = defaultEntry(nameI18n, options.locales)
+	if (!name) {
+		fail(
+			'name',
+			Object.keys(nameI18n).length > 0
+				? 'default_language_required'
+				: 'required',
+		)
+	} else if (
+		Object.values(nameI18n).some((text) => text.length > DISCOUNT_NAME_MAX)
+	) {
+		fail('name', 'too_long')
+	}
 	if (state.internalName.trim().length > DISCOUNT_NAME_MAX) {
 		fail('internalName', 'too_long')
 	}
-	if (state.description.trim().length > DISCOUNT_DESCRIPTION_MAX) {
+	if (
+		Object.values(descriptionI18n).some(
+			(text) => text.length > DISCOUNT_DESCRIPTION_MAX,
+		)
+	) {
 		fail('description', 'too_long')
 	}
+	const description = defaultEntry(descriptionI18n, options.locales) || null
 
 	let percentBp: number | null = null
 	let amountMinor: number | null = null
@@ -862,14 +973,31 @@ export function stateToDefinition(
 			'too_many_categories',
 		)
 	}
-	if (scope !== 'order') {
-		tooMany(
-			state.variantNames.length,
-			DISCOUNT_MAX_VARIANT_NAMES,
-			scope === 'modifiers' ? 'modifier-sizes' : 'sizes',
-			'too_many_sizes',
-		)
+	// "Only these options": at most a few option types, each once, and a
+	// bounded number of values in each.
+	const variantLimits = (rows: readonly VariantFilterRow[], field: string) => {
+		const filters = cleanVariantRows(rows)
+		if (
+			filters.length > DISCOUNT_MAX_VARIANT_GROUPS ||
+			filters.some(
+				(filter) => filter.values.length > DISCOUNT_MAX_VARIANT_VALUES,
+			)
+		) {
+			fail(field, 'too_many_variants')
+		} else if (
+			new Set(filters.map((filter) => filter.group)).size !== filters.length
+		) {
+			fail(field, 'invalid')
+		}
+		return filters
 	}
+	const targetVariants =
+		scope !== 'order'
+			? variantLimits(
+					state.variants,
+					scope === 'modifiers' ? 'modifier-variants' : 'variants',
+				)
+			: []
 	if (!(scope === 'order' && freeDelivery)) {
 		tooMany(
 			state.excludeItemIds.length,
@@ -962,12 +1090,7 @@ export function stateToDefinition(
 			`${path}.categories`,
 			'too_many_categories',
 		)
-		tooMany(
-			input.variantNames.length,
-			DISCOUNT_MAX_VARIANT_NAMES,
-			`${path}.sizes`,
-			'too_many_sizes',
-		)
+		return variantLimits(input.variants, `${path}.variants`)
 	}
 	const itemGroup = (
 		input: ItemGroupState,
@@ -977,16 +1100,14 @@ export function stateToDefinition(
 		if (input.itemIds.length + input.categoryIds.length === 0) {
 			fail(`${path}.items`, 'choose_one')
 		}
-		groupLimits(input, path)
+		const variants = groupLimits(input, path)
 		return quantity === null
 			? null
 			: {
 					quantity,
 					itemIds: input.itemIds,
 					categoryIds: input.categoryIds,
-					...(input.variantNames.length > 0
-						? { variantNames: input.variantNames }
-						: {}),
+					...(variants.length > 0 ? { variants } : {}),
 				}
 	}
 	/** The buy side may count items or add up what is spent on them. */
@@ -996,16 +1117,14 @@ export function stateToDefinition(
 		if (input.itemIds.length + input.categoryIds.length === 0) {
 			fail('buyGroup.items', 'choose_one')
 		}
-		groupLimits(input, 'buyGroup')
+		const variants = groupLimits(input, 'buyGroup')
 		return spendMinor === null
 			? null
 			: {
 					spendMinor,
 					itemIds: input.itemIds,
 					categoryIds: input.categoryIds,
-					...(input.variantNames.length > 0
-						? { variantNames: input.variantNames }
-						: {}),
+					...(variants.length > 0 ? { variants } : {}),
 				}
 	}
 	if (!freeDelivery) {
@@ -1140,8 +1259,10 @@ export function stateToDefinition(
 
 	const candidate = {
 		name,
+		...(Object.keys(nameI18n).length > 0 ? { nameI18n } : {}),
 		internalName: state.internalName.trim() || null,
-		description: state.description.trim() || null,
+		description,
+		...(Object.keys(descriptionI18n).length > 0 ? { descriptionI18n } : {}),
 		status: options.status,
 		application: state.application,
 		valueType: state.valueType,
@@ -1177,10 +1298,8 @@ export function stateToDefinition(
 						modifierOptionIds: state.modifierOptionIds,
 					}
 				: {}),
-			// Sizes narrow items, categories and modifier choices only.
-			...(scope !== 'order' && state.variantNames.length > 0
-				? { variantNames: state.variantNames }
-				: {}),
+			// Options narrow items, categories and modifier choices only.
+			...(targetVariants.length > 0 ? { variants: targetVariants } : {}),
 		},
 		requirement,
 		quantityRule,

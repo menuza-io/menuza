@@ -123,6 +123,56 @@ describe('presentMenu promotions', () => {
 		categoryIds: [],
 	}
 
+	it('shows the name and description in the app language', () => {
+		const payload = {
+			promotions: [
+				{
+					...base,
+					id: 'a',
+					valueType: 'percent',
+					percentBp: 1000,
+					name: 'Lunch deal',
+					description: 'Weekdays',
+					nameI18n: { en: 'Lunch deal', ar: 'عرض الغداء', fr: 'Menu midi' },
+					descriptionI18n: { en: 'Weekdays', fr: 'En semaine' },
+				},
+			],
+		}
+		expect(presentMenu(payload, 'ar', 'en').promotions[0]).toMatchObject({
+			name: 'عرض الغداء',
+			// No Arabic description: the default language's.
+			description: 'Weekdays',
+		})
+		expect(presentMenu(payload, 'de', 'fr').promotions[0]).toMatchObject({
+			name: 'Menu midi',
+			description: 'En semaine',
+		})
+	})
+
+	it('keeps the canonical text without a map, or with a malformed one', () => {
+		const menu = presentMenu(
+			{
+				promotions: [
+					{ ...base, id: 'a', valueType: 'percent', percentBp: 1000 },
+					{
+						...base,
+						id: 'b',
+						valueType: 'percent',
+						percentBp: 1000,
+						nameI18n: 'oops',
+					},
+				],
+			},
+			'ar',
+			'en',
+		)
+		expect(menu.promotions.map((promotion) => promotion.name)).toEqual([
+			'Offer',
+			'Offer',
+		])
+		expect(menu.promotions[0]?.description).toBeNull()
+	})
+
 	it('defaults the display fields for an older payload', () => {
 		const menu = presentMenu(
 			{

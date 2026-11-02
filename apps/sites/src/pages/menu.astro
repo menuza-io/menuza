@@ -39,6 +39,7 @@ import { formatMoney } from '~/lib/ordering/money'
 import {
 	MAX_BANNER_OFFERS,
 	MAX_ITEM_BADGES,
+	localizePromotion,
 	offersForItem,
 	promotionsForLocation,
 	worksForMode,
@@ -325,7 +326,10 @@ function caloriesFor(item: OrderingItem): string | null {
 	return translate(i18n, msg`{count} Cal`, { count: item.calorieMin })
 }
 
-const promotions = menuPayload?.promotions ?? []
+// Offer names and descriptions in the page language, like the menu itself.
+const promotions = (menuPayload?.promotions ?? []).map((promotion) =>
+	localizePromotion(promotion, requestedLocale, defaultLocale),
+)
 const offersLabel = translate(i18n, msg`Offers`, {})
 
 function offerText(promotion: (typeof promotions)[number]): string {
@@ -1152,6 +1156,7 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 			labels,
 			formatMoney: money,
 			locale: data.locale,
+			defaultLocale: document.documentElement.dataset.defaultLocale || 'en',
 			discounts: {
 				sync: () => quotes?.sync(),
 				refusal: () => (heldCoupon ? { code: heldCoupon.code } : null),

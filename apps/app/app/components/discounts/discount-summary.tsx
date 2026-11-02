@@ -19,12 +19,15 @@ export function DiscountSummary({
 	catalog,
 	choices,
 	locations,
+	defaultLocale,
 }: {
 	state: EditorState
 	currency: string
 	catalog: LoyaltyCatalog
 	choices: DiscountChoiceCatalog
 	locations: Array<{ id: string; name: string }>
+	/** The website's default language: the title is the name in it. */
+	defaultLocale: string
 }) {
 	const { i18n } = useLingui()
 	const summary = useMemo(
@@ -33,12 +36,13 @@ export function DiscountSummary({
 				state,
 				currency,
 				locale: i18n.locale,
+				defaultLocale,
 				catalog,
 				choices,
 				locations,
 				tx: (descriptor) => i18n._(descriptor),
 			}),
-		[state, currency, catalog, choices, locations, i18n],
+		[state, currency, catalog, choices, locations, defaultLocale, i18n],
 	)
 
 	return (

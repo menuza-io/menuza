@@ -33,7 +33,11 @@ function request(fields: Record<string, string>, withState = false) {
 	if (withState) {
 		form.set(
 			'state',
-			JSON.stringify({ ...emptyEditorState(), name: 'Lunch', percent: '10' }),
+			JSON.stringify({
+				...emptyEditorState(),
+				name: { en: 'Lunch' },
+				percent: '10',
+			}),
 		)
 	}
 	return new Request('http://localhost/x', { method: 'POST', body: form })

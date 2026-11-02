@@ -4,6 +4,7 @@ import {
 	type OfferPromotion,
 	isPromotionLive,
 	localStamp,
+	localizePromotion,
 	offersForItem,
 	promotionsForLocation,
 	worksForMode,
@@ -180,5 +181,42 @@ describe('bannerOffers', () => {
 		expect(shown.map((p) => p.id)).toEqual(['a', 'b', 'c'])
 		expect(more).toBe(2)
 		expect(bannerOffers(list.slice(0, 2)).more).toBe(0)
+	})
+})
+
+describe('localizePromotion', () => {
+	const offer = {
+		id: 'p1',
+		name: 'Lunch deal',
+		description: 'Weekdays only',
+		nameI18n: { en: 'Lunch deal', ar: 'عرض الغداء', es: 'Menú del día' },
+		descriptionI18n: { en: 'Weekdays only', ar: 'أيام الأسبوع فقط' },
+	}
+
+	it('picks the guest language, including a regional variant', () => {
+		expect(localizePromotion(offer, 'ar')).toMatchObject({
+			name: 'عرض الغداء',
+			description: 'أيام الأسبوع فقط',
+		})
+		expect(localizePromotion(offer, 'es-MX').name).toBe('Menú del día')
+	})
+
+	it('falls back to the default language, then the canonical text', () => {
+		expect(localizePromotion(offer, 'fr', 'ar').name).toBe('عرض الغداء')
+		// Spanish name, no Spanish description: the default language's.
+		expect(localizePromotion(offer, 'es', 'en').description).toBe(
+			'Weekdays only',
+		)
+		expect(
+			localizePromotion(
+				{ id: 'p2', name: 'Happy hour', description: null },
+				'ar',
+				'en',
+			),
+		).toMatchObject({ name: 'Happy hour', description: null })
+	})
+
+	it('keeps the other fields', () => {
+		expect(localizePromotion(offer, 'ar').id).toBe('p1')
 	})
 })

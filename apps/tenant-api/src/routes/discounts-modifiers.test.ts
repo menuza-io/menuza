@@ -114,9 +114,12 @@ function menuContext(discounts: unknown[]) {
 										groups: [
 											{
 												id: 'grp-size',
-												name: 'Size',
+												name: '{"en":"Size","ar":"الحجم"}',
 												values: [
-													{ id: 'val-large', name: 'Large' },
+													{
+														id: 'val-large',
+														name: '{"en":"Large","ar":"كبير"}',
+													},
 													{ id: 'val-small', name: 'Small' },
 												],
 											},
@@ -332,11 +335,12 @@ describe('modifier discounts on a priced order', () => {
 		expect(quoted.totalMinor).toBe(1330)
 	})
 
-	it('a size matches by name across the menu', async () => {
+	it('a variant matches by name across the menu, in any language', async () => {
 		activeContext = menuContext([
 			makeDiscount({
 				id: 'disc_large',
 				name: 'Large for ten',
+				nameI18n: { en: 'Large for ten', ar: 'الكبير بعشرة' },
 				valueType: 'fixed_price',
 				percentBp: null,
 				amountMinor: 1000,
@@ -347,7 +351,7 @@ describe('modifier discounts on a priced order', () => {
 					categoryIds: ['cat-pizza'],
 					excludeItemIds: [],
 					excludeCategoryIds: [],
-					variantNames: ['large'],
+					variants: [{ group: 'size', values: ['large'] }],
 				},
 			}),
 		])
@@ -356,7 +360,13 @@ describe('modifier discounts on a priced order', () => {
 			lines: [{ itemId: 'item-sized', variantId, quantity: 1, options: [] }],
 		})
 		// 14.00 becomes 10.00; the small is left alone.
-		expect((await quote(sized('var-large'))).totalDiscountMinor).toBe(400)
+		const large = await quote(sized('var-large'))
+		expect(large.totalDiscountMinor).toBe(400)
+		// The quote carries the translated names for the guest's language.
+		expect(large.discounts[0]?.nameI18n).toEqual({
+			en: 'Large for ten',
+			ar: 'الكبير بعشرة',
+		})
 		expect((await quote(sized('var-small'))).totalDiscountMinor).toBe(0)
 	})
 

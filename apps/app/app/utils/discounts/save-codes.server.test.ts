@@ -414,6 +414,7 @@ describe('duplicating a discount', () => {
 			userId: user.id,
 			discountId: created.id,
 			copyName: (name) => `${name} copy`,
+			defaultLocale: 'en',
 		})
 		if (!copy.ok) throw new Error('duplicate failed')
 		expect(copy.id).not.toBe(created.id)
@@ -445,6 +446,7 @@ describe('duplicating a discount', () => {
 				userId: user.id,
 				discountId: created.id,
 				copyName: (name) => `${name} copy`,
+				defaultLocale: 'en',
 			}),
 		).toEqual({ ok: false, reason: 'not_found' })
 	})
@@ -491,6 +493,7 @@ describe('organization caps', () => {
 				userId: user.id,
 				discountId: first.id,
 				copyName: (name) => `${name} copy`,
+				defaultLocale: 'en',
 			}),
 		).toEqual({ ok: false, reason: 'too_many_discounts' })
 

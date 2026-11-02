@@ -1,4 +1,8 @@
-import { type DiscountQuote, type DiscountRefusalReason } from '@repo/discounts'
+import {
+	type DiscountQuote,
+	type DiscountRefusalReason,
+	localizedDiscountText,
+} from '@repo/discounts'
 import { type DiscountQuoteState } from './discount-quote.ts'
 import { fillTemplate } from './money.ts'
 
@@ -57,20 +61,36 @@ export type DiscountLine = {
 }
 
 /**
+ * The page language a discount name is shown in: the guest's language, then
+ * the site's default language, then the name the operator typed.
+ */
+export type DiscountTextLanguage = {
+	locale?: string | null
+	defaultLocale?: string | null
+}
+
+/**
  * The discount lines of a quote, in the region's order. A discount that takes
  * something off both the items and delivery shows as two lines, so each sum
- * adds up to the amounts above it.
+ * adds up to the amounts above it. Names are shown in `language`.
  */
 export function discountLines(
 	quote: Pick<DiscountQuote, 'discounts'>,
 	labels: Pick<DiscountLabels, 'deliveryDiscount'>,
+	language: DiscountTextLanguage = {},
 ): DiscountLine[] {
 	const lines: DiscountLine[] = []
 	for (const discount of quote.discounts) {
+		const name = localizedDiscountText(
+			discount.nameI18n,
+			discount.name,
+			language.locale,
+			language.defaultLocale,
+		)
 		if (discount.amountMinor > 0) {
 			lines.push({
 				key: `${discount.discountId}:items`,
-				label: discount.name,
+				label: name,
 				code: discount.code,
 				amountMinor: discount.amountMinor,
 				delivery: false,
@@ -79,7 +99,7 @@ export function discountLines(
 		if (discount.deliveryAmountMinor > 0) {
 			lines.push({
 				key: `${discount.discountId}:delivery`,
-				label: fillTemplate(labels.deliveryDiscount, { name: discount.name }),
+				label: fillTemplate(labels.deliveryDiscount, { name }),
 				code: discount.code,
 				amountMinor: discount.deliveryAmountMinor,
 				delivery: true,
@@ -225,6 +245,17 @@ function cents(value: unknown): number {
 		: 0
 }
 
+/** A `{ locale: text }` map read defensively from an order the region sent. */
+function textMap(value: unknown): Record<string, string> | undefined {
+	if (!value || typeof value !== 'object' || Array.isArray(value))
+		return undefined
+	const out: Record<string, string> = {}
+	for (const [key, text] of Object.entries(value)) {
+		if (typeof text === 'string' && text.trim()) out[key] = text
+	}
+	return Object.keys(out).length > 0 ? out : undefined
+}
+
 export function receiptDiscounts(
 	order: {
 		discounts?: unknown
@@ -238,6 +269,7 @@ export function receiptDiscounts(
 		discount: string
 		deliveryDiscountPlain: string
 	},
+	language: DiscountTextLanguage = {},
 ): ReceiptDiscounts {
 	const rows = Array.isArray(order.discounts) ? order.discounts : []
 	const lines = discountLines(
@@ -258,6 +290,7 @@ export function receiptDiscounts(
 						discountId: id,
 						version: 1,
 						name,
+						nameI18n: textMap(entry.nameI18n),
 						code:
 							typeof entry.code === 'string' && entry.code ? entry.code : null,
 						amountMinor: cents(entry.amountMinor),
@@ -268,6 +301,7 @@ export function receiptDiscounts(
 			}),
 		},
 		labels,
+		language,
 	)
 	const deliveryCents = cents(order.deliveryDiscountCents)
 	const itemsCents = cents(order.discountCents)

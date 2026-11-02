@@ -5,7 +5,9 @@ import {
 	discountRecordSchema,
 	evaluateDiscounts,
 	localNowString,
+	localizedDiscountText,
 	quoteManualDiscount,
+	variantChoicesOf,
 	type AppliedDiscount,
 	type DiscountFulfillment,
 	type DiscountRecord,
@@ -207,13 +209,9 @@ function cartLines(
 			quantity: line.quantity,
 			unitMinor: lineUnitCents(line),
 			baseUnitMinor: line.baseCents,
-			variantNames:
+			variantChoices:
 				item && variant
-					? item.variations.groups.flatMap((group) =>
-							group.values
-								.filter((value) => variant.valueIds.includes(value.id))
-								.map((value) => value.name),
-						)
+					? variantChoicesOf(item.variations.groups, variant.valueIds)
 					: undefined,
 			options: line.options.map((option) => ({
 				groupId: option.groupId,
@@ -235,6 +233,30 @@ type TillContext = {
 	currency: string
 	locationId: string | null
 	fulfillment: DiscountFulfillment
+	/**
+	 * The language the order records its lines in (`recordLocale`), so a
+	 * discount's label on the receipt and invoice reads like its items. Missing:
+	 * the name the operator typed.
+	 */
+	language?: TillDiscountLanguage
+}
+
+export type TillDiscountLanguage = {
+	locale?: string | null
+	defaultLocale?: string | null
+}
+
+/** A discount's name in `language`: that language, the default, then `name`. */
+export function tillDiscountName(
+	discount: { name: string; nameI18n?: Readonly<Record<string, string>> },
+	language: TillDiscountLanguage | undefined,
+): string {
+	return localizedDiscountText(
+		discount.nameI18n,
+		discount.name,
+		language?.locale,
+		language?.defaultLocale,
+	)
 }
 
 function evaluationContext(input: TillContext, at: Date) {
@@ -348,9 +370,10 @@ export function automaticTillAdjustments(
 			for (const line of discount.lines)
 				if (line.amountMinor > 0) byLine.set(line.lineId, line.amountMinor)
 			current.set(discount.discountId, byLine)
+			const name = tillDiscountName(discount, input.language)
 			const row = rows.get(discount.discountId) ?? {
 				discountId: discount.discountId,
-				name: discount.name,
+				name,
 				version: discount.version,
 				lines: new Map<string, number>(),
 			}
@@ -379,7 +402,7 @@ export function automaticTillAdjustments(
 				row.lines.set(lineId, (row.lines.get(lineId) ?? 0) + added)
 				// It grew under today's rule, so it is that version's now.
 				row.version = discount.version
-				row.name = discount.name
+				row.name = name
 			}
 			rows.set(discount.discountId, row)
 		}
@@ -657,6 +680,8 @@ export function quoteTillManualDiscount(input: {
 	locationId?: string | null
 	fulfillment?: DiscountFulfillment
 	now?: Date
+	/** The language the label is recorded in (see `TillContext`). */
+	language?: TillDiscountLanguage
 }): ManualQuote {
 	const { discount } = input
 	// Say what is wrong with a typed value before the engine refuses it.
@@ -747,7 +772,12 @@ export function quoteTillManualDiscount(input: {
 		amountMinor < input.amountMinor
 	)
 		return { ok: false, reason: 'over_bill', maxMinor: amountMinor }
-	return { ok: true, amountMinor, label: discount.name, lineAmounts }
+	return {
+		ok: true,
+		amountMinor,
+		label: tillDiscountName(discount, input.language),
+		lineAmounts,
+	}
 }
 
 /** What the cashier asked for: one manual discount, with the typed value and who approved it. */
@@ -873,6 +903,7 @@ export function settleTillDiscounts(
 		locationId: input.locationId,
 		fulfillment: input.fulfillment,
 		now: input.now,
+		language: input.language,
 	})
 	if (!quoted.ok) {
 		return {

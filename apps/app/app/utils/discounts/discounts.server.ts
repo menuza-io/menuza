@@ -19,6 +19,7 @@ import {
 	discountDefinitionSchema,
 	type DiscountStatus,
 	normalizeDiscountCode,
+	withCanonicalDiscountCopy,
 } from '@repo/discounts'
 import { type CodeInput, type StoredCode } from './editor-model.ts'
 import { type StoredDiscountLocations } from './location-scope.server.ts'
@@ -107,8 +108,10 @@ function parseJson(value: string | null): unknown {
 export function definitionFromRow(row: DiscountRow): DiscountDefinition | null {
 	const parsed = discountDefinitionSchema.safeParse({
 		name: row.name,
+		nameI18n: parseJson(row.nameI18n) ?? undefined,
 		internalName: row.internalName,
 		description: row.description,
+		descriptionI18n: parseJson(row.descriptionI18n) ?? undefined,
 		status: row.status,
 		application: row.application,
 		valueType: row.valueType,
@@ -147,11 +150,18 @@ function jsonOrNull(value: unknown): string | null {
 	return value === null ? null : JSON.stringify(value)
 }
 
+/** A language map as a column; empty or missing is null. */
+function localizedColumn(map: Record<string, string> | undefined) {
+	return map && Object.keys(map).length > 0 ? JSON.stringify(map) : null
+}
+
 function columnsFor(definition: DiscountDefinition) {
 	return {
 		name: definition.name,
+		nameI18n: localizedColumn(definition.nameI18n),
 		internalName: definition.internalName,
 		description: definition.description,
+		descriptionI18n: localizedColumn(definition.descriptionI18n),
 		status: definition.status,
 		application: definition.application,
 		valueType: definition.valueType,
@@ -742,15 +752,22 @@ export async function duplicateDiscount(input: {
 	userId: string
 	discountId: string
 	copyName: (name: string) => string
+	/** The website's default language, whose entry is the canonical name. */
+	defaultLocale: string
 }): Promise<SaveSuccess | SaveFailure> {
 	const loaded = await getDiscount(input.organizationId, input.discountId)
 	if (!loaded?.stored) return { ok: false, reason: 'not_found' }
 	const { definition } = loaded.stored
 	const name = input.copyName(definition.name).slice(0, DISCOUNT_NAME_MAX)
+	// Only the default language's entry takes the copy's name; translations
+	// stay as they were, even one that reads the same as the original name.
 	return createDiscount({
 		organizationId: input.organizationId,
 		userId: input.userId,
-		definition: { ...definition, name, status: 'paused' },
+		definition: withCanonicalDiscountCopy(
+			{ ...definition, name, status: 'paused' },
+			input.defaultLocale,
+		),
 		codes: [],
 	})
 }

@@ -8,16 +8,14 @@ import { type ReactNode, useEffect, useState } from 'react'
 import { CatalogPicker } from '#app/components/loyalty/catalog-picker.tsx'
 import {
 	DISCOUNT_MAX_BUNDLE_SLOTS,
+	type DiscountVariantGroupChoice,
 	type EditorErrors,
 	type ItemGroupState,
 	newSlot,
 	type SlotState,
 } from '#app/utils/discounts/editor-model.ts'
 import { ANNOUNCE } from '#app/utils/discounts/labels.ts'
-import {
-	type LoyaltyCatalog,
-	type LoyaltyCatalogOption,
-} from '#app/utils/loyalty/catalog.ts'
+import { type LoyaltyCatalog } from '#app/utils/loyalty/catalog.ts'
 import {
 	FieldErrorText,
 	Indented,
@@ -25,6 +23,7 @@ import {
 	fieldDomId,
 	useEditorErrorText,
 } from './fields.tsx'
+import { VariantFilter } from './variant-filter.tsx'
 
 /**
  * One group of a deal: how many, and which items or categories count. The same
@@ -38,7 +37,7 @@ export function ItemGroup({
 	action,
 	group,
 	catalog,
-	sizes,
+	variantGroups,
 	currency,
 	canSpend = false,
 	errors,
@@ -52,8 +51,8 @@ export function ItemGroup({
 	action?: ReactNode
 	group: ItemGroupState
 	catalog: LoyaltyCatalog
-	/** Size names the group can be limited to. */
-	sizes: readonly LoyaltyCatalogOption[]
+	/** The option types (Size, Crust) the group can be limited to. */
+	variantGroups: readonly DiscountVariantGroupChoice[]
 	currency: string
 	/** The buy group can count items or add up what is spent on them. */
 	canSpend?: boolean
@@ -148,19 +147,16 @@ export function ItemGroup({
 					}
 					onChange={(categoryIds) => onChange({ ...group, categoryIds })}
 				/>
-				<CatalogPicker
-					id={fieldDomId(`${path}.sizes`)}
-					label={<Trans>Sizes</Trans>}
-					hint={<Trans>Optional. Leave empty to count every size.</Trans>}
-					options={sizes}
-					value={group.variantNames}
-					multiple
-					placeholder={t`Search sizes`}
-					emptyMessage={<Trans>No sizes yet.</Trans>}
+				<VariantFilter
+					field={`${path}.variants`}
+					rows={group.variants}
+					groups={variantGroups}
 					error={
-						errors[`${path}.sizes`] ? errorText(errors[`${path}.sizes`]!) : null
+						errors[`${path}.variants`]
+							? errorText(errors[`${path}.variants`]!)
+							: null
 					}
-					onChange={(variantNames) => onChange({ ...group, variantNames })}
+					onChange={(variants) => onChange({ ...group, variants })}
 				/>
 			</div>
 		</FieldSet>
@@ -172,7 +168,7 @@ export function BuyGetGroups({
 	buy,
 	get,
 	catalog,
-	sizes,
+	variantGroups,
 	currency,
 	errors,
 	onBuyChange,
@@ -181,7 +177,7 @@ export function BuyGetGroups({
 	buy: ItemGroupState
 	get: ItemGroupState
 	catalog: LoyaltyCatalog
-	sizes: readonly LoyaltyCatalogOption[]
+	variantGroups: readonly DiscountVariantGroupChoice[]
 	currency: string
 	errors: EditorErrors
 	onBuyChange: (next: ItemGroupState) => void
@@ -208,7 +204,7 @@ export function BuyGetGroups({
 					}
 					group={buy}
 					catalog={catalog}
-					sizes={sizes}
+					variantGroups={variantGroups}
 					currency={currency}
 					canSpend
 					errors={errors}
@@ -227,7 +223,7 @@ export function BuyGetGroups({
 					}
 					group={get}
 					catalog={catalog}
-					sizes={sizes}
+					variantGroups={variantGroups}
 					currency={currency}
 					errors={errors}
 					onChange={onGetChange}
@@ -241,14 +237,14 @@ export function BuyGetGroups({
 export function DealSlots({
 	slots,
 	catalog,
-	sizes,
+	variantGroups,
 	currency,
 	errors,
 	onChange,
 }: {
 	slots: readonly SlotState[]
 	catalog: LoyaltyCatalog
-	sizes: readonly LoyaltyCatalogOption[]
+	variantGroups: readonly DiscountVariantGroupChoice[]
 	currency: string
 	errors: EditorErrors
 	onChange: (next: SlotState[]) => void
@@ -319,7 +315,7 @@ export function DealSlots({
 							}
 							group={slot}
 							catalog={catalog}
-							sizes={sizes}
+							variantGroups={variantGroups}
 							currency={currency}
 							errors={errors}
 							onChange={(next) => update(index, next)}

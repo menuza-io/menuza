@@ -1,4 +1,4 @@
-import { discountPromotionLive } from '@repo/discounts'
+import { discountPromotionLive, localizedDiscountText } from '@repo/discounts'
 
 /**
  * Which promoted discounts the menu page shows, and where. The App sends every
@@ -142,5 +142,43 @@ export function bannerOffers<T>(
 	return {
 		shown: promotions.slice(0, max),
 		more: Math.max(0, promotions.length - max),
+	}
+}
+
+/** The guest-facing text of a promotion, as `PublicMenuPromotion` (`~/lib/org`) carries it. */
+export type PromotionText = {
+	name: string
+	description: string | null
+	/** Per website language; missing (older App or never translated): `name` only. */
+	nameI18n?: Record<string, string>
+	descriptionI18n?: Record<string, string>
+}
+
+/**
+ * The promotion with its name and description in the page language: the
+ * guest's language, then the site's default language, then the text the
+ * operator typed. A description shows only when there is one in some form.
+ */
+export function localizePromotion<T extends PromotionText>(
+	promotion: T,
+	locale: string | null | undefined,
+	defaultLocale?: string | null,
+): T {
+	const description = promotion.description ?? ''
+	const localizedDescription = localizedDiscountText(
+		promotion.descriptionI18n,
+		description,
+		locale,
+		defaultLocale,
+	)
+	return {
+		...promotion,
+		name: localizedDiscountText(
+			promotion.nameI18n,
+			promotion.name,
+			locale,
+			defaultLocale,
+		),
+		description: localizedDescription || null,
 	}
 }

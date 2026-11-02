@@ -12,8 +12,12 @@ import {
 import DiscountsIndexRoute from './_index.tsx'
 
 const built = stateToDefinition(
-	{ ...emptyEditorState(), name: 'Old lunch', percent: '10' },
-	{ currency: 'USD', status: 'archived' },
+	{ ...emptyEditorState(), name: { en: 'Old lunch' }, percent: '10' },
+	{
+		currency: 'USD',
+		status: 'archived',
+		locales: { locales: ['en'], defaultLocale: 'en' },
+	},
 )
 if (!built.ok) throw new Error('fixture')
 const definition = built.definition

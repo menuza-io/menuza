@@ -4304,9 +4304,13 @@ export const Discount = sqliteTable(
 				onDelete: 'cascade',
 				onUpdate: 'cascade',
 			}),
+		// Default website language; nameI18n / descriptionI18n hold every
+		// language (JSON maps, null when not translated).
 		name: text().notNull(),
+		nameI18n: text(),
 		internalName: text(),
 		description: text(),
+		descriptionI18n: text(),
 		// active | paused | archived. Never deleted: redemptions reference it.
 		status: text().default('active').notNull(),
 		// automatic | code | manual

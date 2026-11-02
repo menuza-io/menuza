@@ -7,6 +7,7 @@ import {
 	parseTillRules,
 	quoteTillManualDiscount,
 	settleTillDiscounts,
+	tillDiscountName,
 	noteTillClock,
 	reloadTillClock,
 	tillRulesStatus,
@@ -260,7 +261,7 @@ describe('automaticTillAdjustments', () => {
 				...target,
 				scope: 'items',
 				itemIds: ['i1'],
-				variantNames: ['large'],
+				variants: [{ group: 'size', values: ['large'] }],
 			},
 		})
 		const adjust = (variantId: string, baseCents: number) =>
@@ -1104,5 +1105,59 @@ describe('manual discount errors say what is wrong', () => {
 			ok: true,
 			amountMinor: 2000,
 		})
+	})
+})
+
+describe('discount names in the language of record', () => {
+	const nameI18n = { en: 'Happy hour', ar: 'ساعة السعادة', fr: 'Heure joyeuse' }
+
+	it('picks the language, its base, the default, then the typed name', () => {
+		expect(
+			tillDiscountName({ name: 'Happy hour', nameI18n }, { locale: 'ar' }),
+		).toBe('ساعة السعادة')
+		expect(
+			tillDiscountName({ name: 'Happy hour', nameI18n }, { locale: 'ar-SA' }),
+		).toBe('ساعة السعادة')
+		expect(
+			tillDiscountName(
+				{ name: 'Happy hour', nameI18n },
+				{ locale: 'de', defaultLocale: 'fr' },
+			),
+		).toBe('Heure joyeuse')
+		expect(tillDiscountName({ name: 'Happy hour' }, { locale: 'ar' })).toBe(
+			'Happy hour',
+		)
+		expect(tillDiscountName({ name: 'Happy hour', nameI18n }, undefined)).toBe(
+			'Happy hour',
+		)
+	})
+
+	it('records automatic and manual labels in that language', () => {
+		const rows = automaticTillAdjustments({
+			...common,
+			language: { locale: 'ar', defaultLocale: 'en' },
+			lines: [line()],
+			rules: [rule({ nameI18n })],
+		})
+		expect(rows[0]?.label).toBe('ساعة السعادة')
+		const manual = parseTillRules([
+			rule({ id: 'm1', application: 'manual', percentBp: 5000, nameI18n }),
+		])[0]!
+		expect(
+			quoteTillManualDiscount({
+				...common,
+				language: { locale: 'ar' },
+				discount: manual,
+				lines: [line()],
+			}),
+		).toMatchObject({ ok: true, label: 'ساعة السعادة' })
+		// No language given: the typed name, as before.
+		expect(
+			automaticTillAdjustments({
+				...common,
+				lines: [line()],
+				rules: [rule({ nameI18n })],
+			})[0]?.label,
+		).toBe('Happy hour')
 	})
 })

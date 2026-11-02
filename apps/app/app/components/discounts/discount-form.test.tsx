@@ -23,8 +23,16 @@ const CATALOG = {
 const CHOICES: DiscountChoiceCatalog = {
 	groups: [{ id: 'toppings', name: 'Toppings', detail: null }],
 	options: [{ id: 'ranch', name: 'Ranch', detail: null }],
-	sizes: [{ id: 'Large', name: 'Large', detail: null }],
+	variantGroups: [
+		{
+			key: 'size',
+			name: 'Size',
+			items: 2,
+			values: [{ id: 'large', name: 'Large', detail: null }],
+		},
+	],
 }
+const ONE_LANGUAGE = { locales: ['en' as const], defaultLocale: 'en' as const }
 
 const originalScrollIntoView = Element.prototype.scrollIntoView
 
@@ -60,9 +68,10 @@ function form(
 			catalog={CATALOG}
 			locations={[]}
 			choices={CHOICES}
+			siteLocales={ONE_LANGUAGE}
 			initial={{
 				...emptyEditorState(),
-				name: 'Lunch',
+				name: { en: 'Lunch' },
 				percent: '10',
 				...state,
 			}}
@@ -259,7 +268,7 @@ describe('DiscountForm repeated rows and fragments', () => {
 	})
 
 	it('isolates only the numbers in the description counter', () => {
-		renderStaff(form({ state: { description: 'Hello' } }))
+		renderStaff(form({ state: { description: { en: 'Hello' } } }))
 		const counter = screen.getByText(/of/, { selector: 'span.tabular-nums' })
 		expect(counter).not.toHaveAttribute('dir')
 		expect(
@@ -524,5 +533,94 @@ describe('DiscountForm currency', () => {
 		)
 		expect(screen.queryByText(/use different currencies/)).toBeNull()
 		expect(screen.getByText(/CAD/)).toBeTruthy()
+	})
+})
+
+describe('DiscountForm languages', () => {
+	const TWO_LANGUAGES = {
+		locales: ['en' as const, 'ar' as const],
+		defaultLocale: 'en' as const,
+	}
+
+	it('shows no language switcher for a one-language website', () => {
+		renderStaff(form())
+		expect(
+			screen.queryByRole('radiogroup', { name: 'Content language' }),
+		).toBeNull()
+	})
+
+	it('writes the name in each website language', async () => {
+		function Probe() {
+			return form({ siteLocales: TWO_LANGUAGES })
+		}
+		renderStaff(<Probe />)
+		const switcher = screen.getByRole('radiogroup', {
+			name: 'Content language',
+		})
+		expect(screen.getByLabelText('Name')).toHaveValue('Lunch')
+		await userEvent.click(within(switcher).getByRole('radio', { name: /AR/i }))
+		const name = screen.getByLabelText('Name')
+		expect(name).toHaveValue('')
+		expect(name).toHaveAttribute('dir', 'rtl')
+		expect(screen.getByText(/Writing the Arabic version/)).toBeTruthy()
+		await userEvent.type(name, 'غداء')
+		const posted = JSON.parse(
+			(document.querySelector('input[name="state"]') as HTMLInputElement).value,
+		) as EditorState
+		expect(posted.name).toEqual({ en: 'Lunch', ar: 'غداء' })
+	})
+})
+
+describe('DiscountForm option filter', () => {
+	it('is hidden when the menu has no option types', () => {
+		renderStaff(
+			form({
+				choices: { ...CHOICES, variantGroups: [] },
+				state: { scope: 'items', itemIds: ['pizza'] },
+			}),
+		)
+		expect(screen.queryByText('Only these options')).toBeNull()
+	})
+
+	it('adds an option type, and stops once every type is used', async () => {
+		renderStaff(form({ state: { scope: 'items', itemIds: ['pizza'] } }))
+		expect(screen.getByText('Only these options')).toBeTruthy()
+		const add = screen.getByRole('button', { name: 'Add option type' })
+		await userEvent.click(add)
+		expect(
+			screen.getByRole('combobox', { name: 'Option type 1' }),
+		).toHaveTextContent('Size')
+		expect(add).toBeDisabled()
+		await userEvent.click(
+			screen.getByRole('button', { name: 'Remove option type 1' }),
+		)
+		expect(screen.queryByRole('combobox', { name: 'Option type 1' })).toBeNull()
+		expect(add).toBeEnabled()
+	})
+
+	it('shows a stored filter with the menu names and its error', () => {
+		renderStaff(
+			form({
+				state: {
+					scope: 'categories',
+					categoryIds: ['pizzas'],
+					variants: [{ group: 'size', values: ['large'] }],
+				},
+				errors: { variants: 'too_many_variants' },
+			}),
+		)
+		expect(
+			screen.getByRole('combobox', { name: 'Option type 1' }),
+		).toHaveTextContent('Size')
+		// The error sits in the filter, tied to it for screen readers.
+		const filter = document.getElementById('discount-variants')!
+		expect(filter.getAttribute('aria-describedby')).toContain(
+			'discount-variants-error',
+		)
+		expect(
+			document.getElementById('discount-variants-error'),
+		).toHaveTextContent(/up to 3 option types, with up to 50 options each/)
+		const alert = screen.getByText('Fix these before saving.').closest('div')!
+		expect(within(alert).getByText(/^Only these options: /)).toBeTruthy()
 	})
 })

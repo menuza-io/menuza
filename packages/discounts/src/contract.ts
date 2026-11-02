@@ -210,6 +210,8 @@ export const discountQuoteSchema = z.object({
 			discountId: z.string(),
 			version: z.number().int(),
 			name: z.string(),
+			/** `name` per website language; pick with `localizedDiscountText`. */
+			nameI18n: z.record(z.string(), z.string()).optional(),
 			/** The code as the customer typed it, when one was used. */
 			code: z.string().nullable(),
 			amountMinor: minorSchema,

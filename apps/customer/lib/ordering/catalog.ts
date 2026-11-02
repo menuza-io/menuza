@@ -1,4 +1,5 @@
 import { getLocalizedMenuValue } from '@repo/common/menu-types'
+import { localizedDiscountText } from '@repo/discounts'
 import { z } from 'zod'
 import { ApiError, notBoundToTenantError } from '../api/api-error'
 import { fetchTransport, type HttpTransport } from '../api/http'
@@ -51,6 +52,9 @@ const promotionSchema = z.object({
 	id: z.string(),
 	name: z.string(),
 	description: z.string().nullish(),
+	// Per website language; a malformed map reads as none (the canonical text).
+	nameI18n: z.record(z.string(), z.string()).nullish().catch(null),
+	descriptionI18n: z.record(z.string(), z.string()).nullish().catch(null),
 	valueType: z.enum(['percent', 'fixed', 'fixed_price', 'free_delivery']),
 	percentBp: z.number().nullish(),
 	amountMinor: z.number().nullish(),
@@ -224,8 +228,21 @@ export function presentMenu(
 		return [
 			{
 				id: parsed.data.id,
-				name: parsed.data.name,
-				description: parsed.data.description ?? null,
+				// The guest's language, the site's default language, then the
+				// text the operator typed: the same order as menu names.
+				name: localizedDiscountText(
+					parsed.data.nameI18n,
+					parsed.data.name,
+					locale,
+					defaultLocale,
+				),
+				description:
+					localizedDiscountText(
+						parsed.data.descriptionI18n,
+						parsed.data.description ?? '',
+						locale,
+						defaultLocale,
+					) || null,
 				valueType: parsed.data.valueType,
 				percentBp: parsed.data.percentBp ?? null,
 				amountMinor: parsed.data.amountMinor ?? null,

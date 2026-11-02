@@ -5,9 +5,9 @@ current as of 30 October 2026 (`main` at `ad2526f7d`). Modelled on Square
 discounts and Owner.com coupons.
 
 **Built:** the engine (`@repo/discounts`, including meal deals, modifier
-discounts, sizes, spend and tier ladders, stacking by kind, free-delivery fee
-limit); control-plane migration `0031_discounts` and regional migrations
-`0026_discounts` and `0027_discount_marketing_codes`; the App editor
+discounts, option filters, spend and tier ladders, stacking by kind,
+free-delivery fee limit); control-plane migration `0031_discounts` and regional
+migrations `0026_discounts` and `0027_discount_marketing_codes`; the App editor
 (`discounts+/` routes, usage token, item and variant exclusions, order detail
 lines); the order context fields; `POST /orders/quote`, placement, free orders,
 the redemption lifecycle and refunds; loyalty applying after discounts; QR tab
@@ -271,10 +271,10 @@ first, then by line order:
 **Combining:**
 
 1. Automatic plans. Each largest group of automatic discounts that all stack
-   together (by kind, see "Sizes, spend deals, tiers, stacking and delivery
-   limits"), applied in priority order, each on the value the previous left
-   over. The plan with the largest total wins; ties go to the lower priority,
-   then the older discount.
+   together (by kind, see "Option filters, translated names, spend deals, tiers,
+   stacking and delivery limits"), applied in priority order, each on the value
+   the previous left over. The plan with the largest total wins; ties go to the
+   lower priority, then the older discount.
 2. Code. A code competes against the groups it can join, and the larger total
    wins. If it works alone but loses, its status is
    `replaced_by_better_discount`.
@@ -387,27 +387,55 @@ costs $13, not $10. A line with no modifier detail uses the whole unit.
 Not on the public menu yet: promotions skip `fixed_price` and modifier
 discounts, as the menu cannot show them.
 
-### Sizes, spend deals, tiers, stacking and delivery limits
+### Option filters, translated names, spend deals, tiers, stacking and delivery limits
 
 Migration `0031_discounts` includes three nullable `Discount` columns
 (`combinesWith`, `tiers`, `maxDeliveryFeeMinor`). Everything else here lives in
 existing JSON columns. Every new field is optional, so stored discounts still
 parse. Built in `@repo/discounts`, tested in `ladder-rules.test.ts`.
 
-**Sizes** (`variantNames` on `target`, and on the groups of `buy_get` and
-`bundle`). "Any large pizza $10", "2 large pizzas for $20".
+**Option filters** (`variants` on `target`, and on the groups of `buy_get` and
+`bundle`; `packages/discounts/src/variants.ts`). "Any large pizza
+$10", "2
+large thin-crust pizzas for $20".
 
-- Matched by the name the menu shows ("Large", "Thin"), ignoring case and
-  surrounding spaces, never by id: a size has a different id on every item but
-  the same name across a menu. A variant with several values ("Large", "Thin")
-  matches on any of them.
+- A filter is an option type and the values that qualify:
+  `[{ group: 'size', values: ['medium', 'large'] }, { group: 'crust', values: ['thin'] }]`.
+  Different option types must all match; values in one type are alternatives. At
+  most 3 option types, 50 values each, each type once.
+- Group and value are keys: the menu name in the website's default language,
+  lower-cased. Never ids: an option has a different id on every item but the
+  same name across a menu.
+- Menu names may be plain text or a JSON language map. A key matches a name in
+  any of its languages (`variantNameKeys`), so editing a translation or changing
+  the default language does not quietly stop a discount from matching.
 - Allowed on items, categories and modifier scopes, and on deal groups. Refused
   on the whole order, where it would be ignored.
-- A line with no variant detail matches no size. Priced lines carry
-  `variantNames` (new, optional on `PricedOrderLine`); older stored rounds
-  don't, so they get no size discount. The till reads names from its own menu
-  data.
-- The editor offers every size name used across the menu, most used first.
+- Priced lines carry `variantChoices` (`[{ group, value }]`, the raw menu names)
+  next to the display-only `variantNames`. The till builds the same with
+  `variantChoicesOf`. A line with no variant detail matches no filter.
+- The editor ("Only these options") offers the option types the menu uses,
+  merged across items and most used first, then the values of each. It is hidden
+  while the menu has no variations.
+
+**Rollout of option filters and translated names.** The definition schema is
+strict, so a node on the old build drops a record in the new shape (logged by
+id, the discount does not apply; nothing crashes). Deploy App, then tenant-api
+straight after, then Station and Sites. A till that cached rules in the old
+shape drops them the same way until its next catalog download. There is no data
+migration from `variantNames`: no organization used discounts before this
+change.
+
+**Translated names** (`nameI18n`, `descriptionI18n`; control-plane migration
+`0032_discount_i18n`). `name` and `description` stay the website's default
+language; the maps hold every website language. The editor writes them with the
+same language switcher as Menu and Reservations. They ride the order context,
+the public menu promotions, the till rules, the quote (`discounts[].nameI18n`),
+the stored order snapshot and the public order view. Sites, the customer app,
+the till and coupon prints pick the guest's language with
+`localizedDiscountText` (language, its base, default, then `name`). The till
+records labels in the order's language of record, like item names, so the
+receipt and the ZATCA document read in one language.
 
 **Spend on the buy side** (`buy_get` with `buy.spendMinor` in place of
 `buy.quantity`). "Spend $30 on burgers, get a free dessert".

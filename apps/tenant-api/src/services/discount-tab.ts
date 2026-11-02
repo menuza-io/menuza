@@ -203,7 +203,7 @@ function tabLines(rounds: readonly RestaurantOrder[]) {
 				unitMinor: line.unitPriceCents,
 				// Rounds stored before modifier detail carry neither field.
 				baseUnitMinor: line.baseUnitCents,
-				variantNames: line.variantNames,
+				variantChoices: line.variantChoices,
 				options: (line.options ?? []).map((option) => ({
 					groupId: option.groupId,
 					optionId: option.optionId,

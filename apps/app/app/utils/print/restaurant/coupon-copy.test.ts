@@ -57,6 +57,21 @@ describe('coupon headline', () => {
 			'Welcome offer',
 		)
 	})
+
+	it('names a deal in the print language when the owner translated it', () => {
+		const nameI18n = { en: 'Welcome offer', ar: 'عرض الترحيب' }
+		expect(copy({ hasTiers: true, nameI18n }, 'ar').headline).toBe(
+			'عرض الترحيب',
+		)
+		expect(copy({ hasTiers: true, nameI18n }, 'ar-SA').headline).toBe(
+			'عرض الترحيب',
+		)
+		// No French name: the name the owner typed.
+		expect(
+			copy({ valueType: 'fixed_price', percentBp: null, nameI18n }, 'fr')
+				.headline,
+		).toBe('Welcome offer')
+	})
 })
 
 describe('coupon terms', () => {

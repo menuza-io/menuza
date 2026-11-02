@@ -164,6 +164,28 @@ describe('applyCartQuote', () => {
 		)
 		expect(result.discount).toBe(8)
 	})
+
+	it('names each discount in the page language, then the default language', () => {
+		const translated = quote({
+			discounts: [
+				{
+					...quote().discounts[0]!,
+					nameI18n: { en: 'Lunch deal', ar: 'عرض الغداء', fr: 'Menu midi' },
+				},
+			],
+		})
+		expect(applyCartQuote(base, translated, { locale: 'ar' }).names).toEqual([
+			'عرض الغداء',
+		])
+		expect(
+			applyCartQuote(base, translated, { locale: 'de', defaultLocale: 'fr' })
+				.names,
+		).toEqual(['Menu midi'])
+		// No map: the name the operator typed.
+		expect(applyCartQuote(base, quote(), { locale: 'ar' }).names).toEqual([
+			'Lunch deal',
+		])
+	})
 })
 
 describe('listedDiscountNames', () => {

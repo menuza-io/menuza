@@ -225,6 +225,13 @@
 			"when": 1793390118144,
 			"tag": "0031_discounts",
 			"breakpoints": true
+		},
+		{
+			"idx": 32,
+			"version": "6",
+			"when": 1793597766075,
+			"tag": "0032_discount_i18n",
+			"breakpoints": true
 		}
 	]
 }
