@@ -28,7 +28,6 @@ import {
 	publicObject,
 	requireStripeObject,
 	seconds,
-	stripeConnectAccountId,
 } from './state'
 
 const PAYMENT_INTENT_PARAMS = {
@@ -347,9 +346,7 @@ export async function confirmPaymentIntent(
 		)
 		return { kind: 'requires_capture', intent: row }
 	}
-	await emitStripeEvent(ctx, 'payment_intent.succeeded', row.json, {
-		account: stripeConnectAccountId(row.json),
-	})
+	await emitStripeEvent(ctx, 'payment_intent.succeeded', row.json)
 	await emitStripeEvent(ctx, 'charge.succeeded', charge)
 	return { kind: 'succeeded', intent: row }
 }
@@ -472,9 +469,7 @@ export async function capturePaymentIntent(
 		json.amount_received = charge.amount_captured
 		json.amount_capturable = 0
 	})
-	await emitStripeEvent(ctx, 'payment_intent.succeeded', captured.json, {
-		account: stripeConnectAccountId(captured.json),
-	})
+	await emitStripeEvent(ctx, 'payment_intent.succeeded', captured.json)
 	return publicObject(captured.json)
 }
 
