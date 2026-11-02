@@ -713,6 +713,8 @@ export type OrderDiscountSnapshot = {
 	discountId: string
 	version: number
 	name: string
+	/** `name` per website language, when the operator translated it. */
+	nameI18n?: Record<string, string>
 	code: string | null
 	amountMinor: number
 	deliveryAmountMinor: number

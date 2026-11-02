@@ -1,13 +1,15 @@
 import { Trans, useLingui } from '@lingui/react/macro'
+import { type SiteLocalesConfig } from '@repo/common/site-locales'
 import {
 	DISCOUNT_COMBINE_CLASS_VALUES,
+	DISCOUNT_DESCRIPTION_MAX,
+	DISCOUNT_NAME_MAX,
 	DISCOUNT_TOTAL_LIMIT_PRESETS,
 	type DiscountValueType,
 } from '@repo/discounts'
 import { cn } from '@repo/ui'
 import { Badge } from '@repo/ui/badge'
 import { Field, FieldDescription, FieldLabel } from '@repo/ui/field'
-import { Textarea } from '@repo/ui/textarea'
 import {
 	type ComponentProps,
 	type ReactNode,
@@ -44,6 +46,7 @@ import {
 import { type DiscountLimit } from '#app/utils/discounts/limits.ts'
 import { type LoyaltyCatalog } from '#app/utils/loyalty/catalog.ts'
 import { formatInstantDate } from '#app/utils/people/people-view.ts'
+import { defaultEntry } from '#app/utils/reservations/localized.ts'
 import { CodesEditor } from './codes-editor.tsx'
 import { BuyGetGroups, DealSlots } from './deal-groups.tsx'
 import { DiscountHistory } from './discount-history.tsx'
@@ -63,10 +66,18 @@ import {
 	fieldDomId,
 	useEditorErrorText,
 } from './fields.tsx'
+import {
+	ContentLocaleProvider,
+	LocalizedMapInput,
+	LocalizedMapTextarea,
+	useActiveLocale,
+	WritingLanguageNote,
+} from './localized-fields.tsx'
 import { TierSteps } from './tier-steps.tsx'
+import { VariantFilter } from './variant-filter.tsx'
 import { WeeklyHours } from './weekly-hours.tsx'
 
-const DESCRIPTION_MAX = 75
+const DESCRIPTION_MAX = DISCOUNT_DESCRIPTION_MAX
 
 /** The values that are an amount of money. */
 const AMOUNT_VALUE_TYPES: ReadonlySet<DiscountValueType> =
@@ -78,8 +89,18 @@ const AMOUNT_VALUE_TYPES: ReadonlySet<DiscountValueType> =
  */
 export const UNSAVED_CHANGES_NOTE_ID = 'discount-unsaved-note'
 
+/**
+ * The guest-facing name and description are written in each website language
+ * (Website settings), the way Reservations and Menu text is: the header's
+ * switcher picks the language being written, and shows only when there are
+ * several.
+ */
 export function DiscountForm(props: ComponentProps<typeof DiscountFormBody>) {
-	return <DiscountFormBody {...props} />
+	return (
+		<ContentLocaleProvider config={props.siteLocales}>
+			<DiscountFormBody {...props} />
+		</ContentLocaleProvider>
+	)
 }
 
 /** One line under each discount value, so the names don't have to explain it. */
@@ -300,6 +321,7 @@ function DiscountFormBody({
 	catalog,
 	locations,
 	choices,
+	siteLocales,
 	initial,
 	version,
 	status,
@@ -324,6 +346,8 @@ function DiscountFormBody({
 	catalog: LoyaltyCatalog
 	locations: DiscountLocationChoice[]
 	choices: DiscountChoiceCatalog
+	/** The website's languages: the name and description are written in each. */
+	siteLocales: SiteLocalesConfig
 	initial: EditorState
 	version: number | null
 	status: 'active' | 'paused' | 'archived'
@@ -348,6 +372,7 @@ function DiscountFormBody({
 	sharedWithOtherLocations?: boolean
 }) {
 	const { t, i18n } = useLingui()
+	const { activeLocale } = useActiveLocale()
 	const [state, setState] = useState(initial)
 	// What the form held when it opened: the edits are the difference.
 	const [baseline] = useState(() => JSON.stringify(initial))
@@ -435,9 +460,9 @@ function DiscountFormBody({
 				return t`Minimum spend`
 			case 'target':
 				return t`Applies to`
-			case 'sizes':
-			case 'modifier-sizes':
-				return t`Only these sizes`
+			case 'variants':
+			case 'modifier-variants':
+				return t`Only these options`
 			case 'modifier-options':
 				return t`Modifier options`
 			case 'modifier-items':
@@ -549,7 +574,7 @@ function DiscountFormBody({
 						mode === 'new' ? (
 							<Trans>New discount</Trans>
 						) : (
-							state.name || t`Discount`
+							defaultEntry(state.name, siteLocales) || t`Discount`
 						)
 					}
 					backHref={backHref}
@@ -730,15 +755,27 @@ function DiscountFormBody({
 								</Trans>
 							}
 						>
-							<TextField
-								field="name"
-								label={<Trans>Name</Trans>}
-								value={state.name}
-								maxLength={60}
-								error={errors.name}
-								onChange={(name) => patch({ name })}
-								autoComplete="off"
-							/>
+							<Field>
+								<FieldLabel htmlFor={fieldDomId('name')}>
+									<Trans>Name</Trans>
+								</FieldLabel>
+								<LocalizedMapInput
+									id={fieldDomId('name')}
+									value={state.name}
+									maxLength={DISCOUNT_NAME_MAX}
+									autoComplete="off"
+									aria-invalid={errors.name ? true : undefined}
+									aria-describedby={
+										errors.name ? `${fieldDomId('name')}-error` : undefined
+									}
+									onChange={(name) => patch({ name })}
+								/>
+								{errors.name ? (
+									<FieldErrorText id={`${fieldDomId('name')}-error`}>
+										{errorText(errors.name)}
+									</FieldErrorText>
+								) : null}
+							</Field>
 							<TextField
 								field="internalName"
 								label={<Trans>Internal name</Trans>}
@@ -748,7 +785,7 @@ function DiscountFormBody({
 									</Trans>
 								}
 								value={state.internalName}
-								maxLength={60}
+								maxLength={DISCOUNT_NAME_MAX}
 								error={errors.internalName}
 								onChange={(internalName) => patch({ internalName })}
 							/>
@@ -759,12 +796,12 @@ function DiscountFormBody({
 									</FieldLabel>
 									<FieldDescription>
 										<Counter
-											value={state.description.length}
+											value={state.description[activeLocale]?.length ?? 0}
 											max={DESCRIPTION_MAX}
 										/>
 									</FieldDescription>
 								</div>
-								<Textarea
+								<LocalizedMapTextarea
 									id={fieldDomId('description')}
 									value={state.description}
 									maxLength={DESCRIPTION_MAX}
@@ -775,9 +812,7 @@ function DiscountFormBody({
 											? `${fieldDomId('description')}-error`
 											: undefined
 									}
-									onChange={(event) =>
-										patch({ description: event.currentTarget.value })
-									}
+									onChange={(description) => patch({ description })}
 								/>
 								{errors.description ? (
 									<FieldErrorText id={`${fieldDomId('description')}-error`}>
@@ -785,6 +820,7 @@ function DiscountFormBody({
 									</FieldErrorText>
 								) : null}
 							</Field>
+							<WritingLanguageNote />
 							<ChoiceGroup
 								field="application"
 								legend={<Trans>How it applies</Trans>}
@@ -1175,22 +1211,12 @@ function DiscountFormBody({
 									) : null}
 									{(state.scope === 'items' || state.scope === 'categories') &&
 									!freeDelivery ? (
-										<CatalogPicker
-											id={fieldDomId('sizes')}
-											error={pickError('sizes')}
-											label={<Trans>Only these sizes</Trans>}
-											hint={
-												<Trans>
-													Optional. Matches the size name, such as Large, on
-													every item.
-												</Trans>
-											}
-											options={choices.sizes}
-											value={state.variantNames}
-											multiple
-											placeholder={t`Search sizes`}
-											emptyMessage={<Trans>No sizes yet.</Trans>}
-											onChange={(variantNames) => patch({ variantNames })}
+										<VariantFilter
+											field="variants"
+											rows={state.variants}
+											groups={choices.variantGroups}
+											error={pickError('variants')}
+											onChange={(variants) => patch({ variants })}
 										/>
 									) : null}
 									{state.scope === 'modifiers' && !freeDelivery ? (
@@ -1259,22 +1285,12 @@ function DiscountFormBody({
 												emptyMessage={<Trans>No categories yet.</Trans>}
 												onChange={(categoryIds) => patch({ categoryIds })}
 											/>
-											<CatalogPicker
-												id={fieldDomId('modifier-sizes')}
-												error={pickError('modifier-sizes')}
-												label={<Trans>Only these sizes</Trans>}
-												hint={
-													<Trans>
-														Optional. Matches the size name, such as Large, on
-														every item.
-													</Trans>
-												}
-												options={choices.sizes}
-												value={state.variantNames}
-												multiple
-												placeholder={t`Search sizes`}
-												emptyMessage={<Trans>No sizes yet.</Trans>}
-												onChange={(variantNames) => patch({ variantNames })}
+											<VariantFilter
+												field="modifier-variants"
+												rows={state.variants}
+												groups={choices.variantGroups}
+												error={pickError('modifier-variants')}
+												onChange={(variants) => patch({ variants })}
 											/>
 										</>
 									) : null}
@@ -1436,7 +1452,7 @@ function DiscountFormBody({
 										buy={state.buyGroup}
 										get={state.getGroup}
 										catalog={catalog}
-										sizes={choices.sizes}
+										variantGroups={choices.variantGroups}
 										currency={currency}
 										errors={errors}
 										onBuyChange={(buyGroup) => patch({ buyGroup })}
@@ -1447,7 +1463,7 @@ function DiscountFormBody({
 									<DealSlots
 										slots={state.bundleSlots}
 										catalog={catalog}
-										sizes={choices.sizes}
+										variantGroups={choices.variantGroups}
 										currency={currency}
 										errors={errors}
 										onChange={(bundleSlots) => patch({ bundleSlots })}
@@ -1832,6 +1848,7 @@ function DiscountFormBody({
 								catalog={catalog}
 								choices={choices}
 								locations={locations}
+								defaultLocale={siteLocales.defaultLocale}
 							/>
 						</div>
 					</aside>

@@ -6,6 +6,7 @@ import { usePos } from '~/lib/store.ts'
 import {
 	limitedAutomaticRules,
 	parseTillRules,
+	tillDiscountName,
 	tillRulesStatus,
 	TILL_RULES_MAX_AGE_MS,
 } from '~/lib/till-discounts.ts'
@@ -318,7 +319,8 @@ export function ManualDiscount({
 								<option value="">{_(t`None`)}</option>
 								{rules.map((rule) => (
 									<option key={rule.id} value={rule.id}>
-										{rule.name}
+										{/* In the till's language; the order records it in its own. */}
+										{tillDiscountName(rule, { locale: i18n.locale })}
 									</option>
 								))}
 							</Select>

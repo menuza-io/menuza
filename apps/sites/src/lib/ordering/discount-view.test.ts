@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { receiptDiscounts } from './discount-view.ts'
+import { discountLines, receiptDiscounts } from './discount-view.ts'
 
 const labels = {
 	discount: 'Discount',
@@ -73,5 +73,84 @@ describe('receiptDiscounts', () => {
 			loyaltyCents: 0,
 			free: false,
 		})
+	})
+})
+
+describe('discount names in the page language', () => {
+	const discount = {
+		discountId: 'd1',
+		version: 1,
+		name: 'Lunch',
+		nameI18n: { en: 'Lunch', ar: 'غداء', fr: 'Déjeuner' },
+		code: null,
+		amountMinor: 300,
+		deliveryAmountMinor: 200,
+		lineIds: [],
+	}
+
+	it('labels the items and delivery lines in the guest language', () => {
+		const lines = discountLines({ discounts: [discount] }, labels, {
+			locale: 'ar-SA',
+		})
+		expect(lines.map((line) => line.label)).toEqual(['غداء', 'غداء (delivery)'])
+	})
+
+	it('falls back to the default language, then the canonical name', () => {
+		expect(
+			discountLines({ discounts: [discount] }, labels, {
+				locale: 'de',
+				defaultLocale: 'fr',
+			})[0]?.label,
+		).toBe('Déjeuner')
+		expect(
+			discountLines(
+				{ discounts: [{ ...discount, nameI18n: undefined }] },
+				labels,
+				{ locale: 'ar' },
+			)[0]?.label,
+		).toBe('Lunch')
+		expect(discountLines({ discounts: [discount] }, labels)[0]?.label).toBe(
+			'Lunch',
+		)
+	})
+
+	it('reads the receipt snapshot translations defensively', () => {
+		const receipt = receiptDiscounts(
+			{
+				discounts: [
+					{
+						discountId: 'd1',
+						name: 'Lunch',
+						nameI18n: { ar: 'غداء', fr: 42 },
+						code: null,
+						amountMinor: 300,
+					},
+					{
+						discountId: 'd2',
+						name: 'Bad map',
+						nameI18n: 'oops',
+						amountMinor: 100,
+					},
+				],
+			},
+			labels,
+			{ locale: 'ar', defaultLocale: 'en' },
+		)
+		expect(receipt.lines.map((line) => line.label)).toEqual(['غداء', 'Bad map'])
+		const french = receiptDiscounts(
+			{
+				discounts: [
+					{
+						discountId: 'd1',
+						name: 'Lunch',
+						nameI18n: { ar: 'غداء', fr: 42 },
+						amountMinor: 300,
+					},
+				],
+			},
+			labels,
+			{ locale: 'fr', defaultLocale: 'en' },
+		)
+		expect(french.lines[0]?.label).toBe('Lunch')
 	})
 })

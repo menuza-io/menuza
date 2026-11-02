@@ -358,6 +358,8 @@ export function useEditorErrorText(
 		switch (code) {
 			case 'required':
 				return t`Enter a value.`
+			case 'default_language_required':
+				return t`Enter it in your website's default language too. Other languages fall back to it.`
 			case 'too_long':
 				return t`That is too long.`
 			case 'percent':
@@ -428,8 +430,8 @@ export function useEditorErrorText(
 				return t`You can choose up to 100 categories here.`
 			case 'too_many_modifiers':
 				return t`You can choose up to 50 modifier groups and 200 modifier options.`
-			case 'too_many_sizes':
-				return t`You can choose up to 50 sizes.`
+			case 'too_many_variants':
+				return t`You can choose up to 3 option types, with up to 50 options each.`
 			case 'application_off':
 				return t`This way of applying is switched off for your organization. Choose another.`
 			case 'invalid':

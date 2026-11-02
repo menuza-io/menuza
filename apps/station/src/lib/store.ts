@@ -402,6 +402,13 @@ function settleCart(
 		fulfillment: state.orderType === 'dine_in' ? 'dine_in' : 'pickup',
 		// Sent rounds keep the automatic discounts they already carry.
 		kept: state.adjustments.filter((row) => row.id.startsWith('auto:')),
+		// Labels are recorded like order lines: in the language of record.
+		language: state.snapshot
+			? {
+					locale: recordLocale(state.snapshot.menu, state.location),
+					defaultLocale: state.snapshot.menu.organization.defaultLocale,
+				}
+			: undefined,
 	})
 }
 

@@ -15,6 +15,11 @@ import {
 	sameCurrency,
 	sumMinor,
 } from './money.ts'
+import {
+	type DiscountLineVariantChoice,
+	type DiscountVariantFilter,
+	variantFiltersMatch,
+} from './variants.ts'
 
 /**
  * The discount engine. Pure: no I/O, no clock, no randomness. Every channel
@@ -52,10 +57,11 @@ export type DiscountCartLine = {
 	/** The choices on each unit, for discounts that target modifiers. */
 	options?: readonly DiscountCartOption[]
 	/**
-	 * The names of the variant chosen ("Large", "Thin"), for discounts that
-	 * target a size. Missing means no variant detail, which matches no size.
+	 * The variant chosen, by group and value name ("Size" / "Large"), for
+	 * discounts limited to some variants. Missing means no variant detail,
+	 * which matches no variant filter.
 	 */
-	variantNames?: readonly string[]
+	variantChoices?: readonly DiscountLineVariantChoice[]
 	/** Excluded from every discount (item or variant flag). */
 	excluded: boolean
 }
@@ -130,6 +136,8 @@ export type AppliedDiscount = {
 	discountId: string
 	version: number
 	name: string
+	/** `name` in each website language, when the operator translated it. */
+	nameI18n?: Record<string, string>
 	codeId: string | null
 	normalizedCode: string | null
 	amountMinor: number
@@ -442,17 +450,6 @@ function refusalFor(
 	return null
 }
 
-/** True when no size is asked for, or the line's variant has one of the names. */
-function variantMatches(
-	names: readonly string[] | undefined,
-	line: DiscountCartLine,
-): boolean {
-	if (!names || names.length === 0) return true
-	if (!line.variantNames || line.variantNames.length === 0) return false
-	const wanted = new Set(names.map((name) => name.trim().toLowerCase()))
-	return line.variantNames.some((name) => wanted.has(name.trim().toLowerCase()))
-}
-
 function lineMatchesTarget(
 	discount: DiscountRecord,
 	line: DiscountCartLine,
@@ -464,7 +461,7 @@ function lineMatchesTarget(
 		return false
 	}
 	if (target.scope === 'order') return true
-	if (!variantMatches(target.variantNames, line)) return false
+	if (!variantFiltersMatch(target.variants, line.variantChoices)) return false
 	if (target.scope === 'modifiers') {
 		// The item filter for a modifier discount; empty means any item.
 		if (target.itemIds.length === 0 && target.categoryIds.length === 0) {
@@ -593,14 +590,14 @@ function byValueAsc(a: Unit, b: Unit): number {
 type ItemSet = {
 	itemIds: readonly string[]
 	categoryIds: readonly string[]
-	variantNames?: readonly string[]
+	variants?: readonly DiscountVariantFilter[]
 }
 
 function lineInSet(set: ItemSet, line: DiscountCartLine): boolean {
 	return (
 		(set.itemIds.includes(line.itemId) ||
 			line.categoryIds.some((id) => set.categoryIds.includes(id))) &&
-		variantMatches(set.variantNames, line)
+		variantFiltersMatch(set.variants, line.variantChoices)
 	)
 }
 
@@ -1350,6 +1347,9 @@ function toApplied(
 		discountId: discount.id,
 		version: discount.version,
 		name: discount.name,
+		...(discount.nameI18n && Object.keys(discount.nameI18n).length > 0
+			? { nameI18n: discount.nameI18n }
+			: {}),
 		codeId: code?.id ?? null,
 		normalizedCode: code?.normalizedCode ?? null,
 		amountMinor: result.amountMinor,

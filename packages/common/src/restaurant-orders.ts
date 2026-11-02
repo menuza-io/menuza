@@ -1090,11 +1090,15 @@ export type PricedOrderLine = {
 	/** Set (true) only when the item or variant never receives a discount. */
 	excludeFromDiscounts?: boolean
 	/**
-	 * The names of the variant chosen ("Large", "Thin"), so a discount can
-	 * target a size across items. Missing on a line with no variant and on
-	 * orders priced before this field existed.
+	 * The names of the variant chosen ("Large", "Thin"), for display (each may
+	 * be a JSON language map). Missing on a line with no variant.
 	 */
 	variantNames?: string[]
+	/**
+	 * The variant chosen by group and value name ("Size" / "Large"), so a
+	 * discount can be limited to some variants across items.
+	 */
+	variantChoices?: Array<{ group: string; value: string }>
 }
 
 export type OrderCapacityEntitySpec = {
@@ -2433,6 +2437,12 @@ export function priceRestaurantOrder(
 								(group.values ?? [])
 									.filter((value) => variant.valueIds?.includes(value.id))
 									.map((value) => value.name),
+						),
+						variantChoices: (entry.item.variations?.groups ?? []).flatMap(
+							(group) =>
+								(group.values ?? [])
+									.filter((value) => variant.valueIds?.includes(value.id))
+									.map((value) => ({ group: group.name, value: value.name })),
 						),
 					}
 				: {}),

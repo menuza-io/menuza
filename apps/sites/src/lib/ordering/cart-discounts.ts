@@ -1,3 +1,4 @@
+import { localizedDiscountText } from '@repo/discounts'
 import {
 	type DiscountQuote,
 	type DiscountQuoteState,
@@ -132,9 +133,21 @@ export type CartDiscountAmounts = CartAmounts & {
 export function applyCartQuote(
 	base: CartAmounts,
 	quote: DiscountQuote | null,
+	language: { locale?: string | null; defaultLocale?: string | null } = {},
 ): CartDiscountAmounts {
 	if (!quote) return { ...base, discount: 0, names: [] }
-	const names = [...new Set(quote.discounts.map((discount) => discount.name))]
+	const names = [
+		...new Set(
+			quote.discounts.map((discount) =>
+				localizedDiscountText(
+					discount.nameI18n,
+					discount.name,
+					language.locale,
+					language.defaultLocale,
+				),
+			),
+		),
+	]
 	return {
 		subtotal: base.subtotal,
 		tax: quote.taxMinor / 100,

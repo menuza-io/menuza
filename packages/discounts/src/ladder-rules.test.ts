@@ -36,7 +36,7 @@ const evaluate = (
 	extra: Record<string, unknown> = {},
 ) => evaluateDiscounts(makeInput({ lines, discounts, ...extra }))
 
-describe('sizes: a variant name narrows what is discounted', () => {
+describe('variants: an option filter narrows what is discounted', () => {
 	const largeForTen = makeDiscount({
 		valueType: 'fixed_price',
 		percentBp: null,
@@ -46,13 +46,15 @@ describe('sizes: a variant name narrows what is discounted', () => {
 			scope: 'categories',
 			itemIds: [],
 			categoryIds: ['pizzas'],
-			variantNames: ['Large'],
+			variants: [{ group: 'size', values: ['large'] }],
 		}),
 	})
+	const sized = (values: string[] | undefined) =>
+		values?.map((value) => ({ group: 'Size', value }))
 	const pizza = (id: string, size: string[] | undefined, price = 1400) =>
 		line(id, `pizza-${id}`, price, 1, {
 			categoryIds: ['pizzas'],
-			variantNames: size,
+			variantChoices: sized(size),
 		})
 
 	it('discounts the large pizzas and not the small ones', () => {
@@ -80,11 +82,58 @@ describe('sizes: a variant name narrows what is discounted', () => {
 		expect(evaluate([pizza('a', [])], [largeForTen]).totalDiscountMinor).toBe(0)
 	})
 
-	it('a variant with several values matches on any of them', () => {
-		expect(
-			evaluate([pizza('a', ['Large', 'Thin'])], [largeForTen])
-				.totalDiscountMinor,
-		).toBe(400)
+	it('matches a translated menu name in any of its languages', () => {
+		const translated = line('a', 'pizza-a', 1400, 1, {
+			categoryIds: ['pizzas'],
+			variantChoices: [
+				{
+					group: '{"en":"Size","ar":"الحجم"}',
+					value: '{"ar":"كبير","en":"Large"}',
+				},
+			],
+		})
+		expect(evaluate([translated], [largeForTen]).totalDiscountMinor).toBe(400)
+	})
+
+	it('needs the value in the named group, not another one', () => {
+		const wrongGroup = line('a', 'pizza-a', 1400, 1, {
+			categoryIds: ['pizzas'],
+			variantChoices: [{ group: 'Crust', value: 'Large' }],
+		})
+		expect(evaluate([wrongGroup], [largeForTen]).totalDiscountMinor).toBe(0)
+	})
+
+	it('needs every option type and any value inside one', () => {
+		const largeThin = makeDiscount({
+			percentBp: 1000,
+			target: target({
+				scope: 'categories',
+				itemIds: [],
+				categoryIds: ['pizzas'],
+				variants: [
+					{ group: 'size', values: ['medium', 'large'] },
+					{ group: 'crust', values: ['thin'] },
+				],
+			}),
+		})
+		const pie = (id: string, size: string, crust: string) =>
+			line(id, `pizza-${id}`, 1000, 1, {
+				categoryIds: ['pizzas'],
+				variantChoices: [
+					{ group: 'Size', value: size },
+					{ group: 'Crust', value: crust },
+				],
+			})
+		const result = evaluate(
+			[
+				pie('a', 'Large', 'Thin'),
+				pie('b', 'Medium', 'Thin'),
+				pie('c', 'Large', 'Deep'),
+				pie('d', 'Small', 'Thin'),
+			],
+			[largeThin],
+		)
+		expect(result.lineDiscounts).toEqual({ a: 100, b: 100 })
 	})
 
 	it('narrows a meal deal slot: any 2 large pizzas for a set price', () => {
@@ -100,7 +149,7 @@ describe('sizes: a variant name narrows what is discounted', () => {
 						quantity: 2,
 						itemIds: [],
 						categoryIds: ['pizzas'],
-						variantNames: ['Large'],
+						variants: [{ group: 'size', values: ['large'] }],
 					},
 				],
 			},
@@ -127,15 +176,15 @@ describe('sizes: a variant name narrows what is discounted', () => {
 					quantity: 1,
 					itemIds: ['fries'],
 					categoryIds: [],
-					variantNames: ['Large'],
+					variants: [{ group: 'size', values: ['large'] }],
 				},
 			},
 		})
 		const result = evaluate(
 			[
 				line('b', 'burger', 1000),
-				line('s', 'fries', 300, 1, { variantNames: ['Small'] }),
-				line('l', 'fries', 500, 1, { variantNames: ['Large'] }),
+				line('s', 'fries', 300, 1, { variantChoices: sized(['Small']) }),
+				line('l', 'fries', 500, 1, { variantChoices: sized(['Large']) }),
 			],
 			[rule],
 		)
@@ -152,13 +201,13 @@ describe('sizes: a variant name narrows what is discounted', () => {
 				excludeItemIds: [],
 				excludeCategoryIds: [],
 				modifierGroupIds: ['toppings'],
-				variantNames: ['Large'],
+				variants: [{ group: 'size', values: ['large'] }],
 			},
 		})
 		const withTopping = (id: string, size: string) =>
 			line(id, 'pizza', 1350, 1, {
 				baseUnitMinor: 1200,
-				variantNames: [size],
+				variantChoices: sized([size]),
 				options: [
 					{
 						groupId: 'toppings',
@@ -185,7 +234,10 @@ describe('sizes: a variant name narrows what is discounted', () => {
 		expect(
 			discountDefinitionSchema.safeParse({
 				...definition,
-				target: { ...orderTarget, variantNames: ['Large'] },
+				target: {
+					...orderTarget,
+					variants: [{ group: 'size', values: ['large'] }],
+				},
 			}).success,
 		).toBe(false)
 	})

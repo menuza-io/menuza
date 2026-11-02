@@ -29,7 +29,19 @@ const typed = z.string().max(64)
 const text = z.string().max(500)
 const id = z.string().min(1).max(200)
 const idList = z.array(id).max(2000)
-const nameList = z.array(z.string().max(200)).max(500)
+/** "Only these options" rows: an option type and the values that qualify. */
+const variantRows = z
+	.array(
+		z.object({
+			group: z.string().max(200),
+			values: z.array(z.string().max(200)).max(500),
+		}),
+	)
+	.max(20)
+/** Guest-facing text by website language. */
+const localizedText = z
+	.record(z.string().regex(/^[a-z]{2,3}$/), text)
+	.refine((map) => Object.keys(map).length <= 20)
 /** A stable React key the client makes up. */
 const key = z.string().max(100)
 
@@ -45,15 +57,15 @@ const itemGroupSchema = z.object({
 	quantity: typed,
 	itemIds: idList,
 	categoryIds: idList,
-	variantNames: nameList,
+	variants: variantRows,
 	by: z.enum(['quantity', 'spend']),
 	spend: typed,
 })
 
 export const editorStateSchema = z.object({
-	name: text,
+	name: localizedText,
 	internalName: text,
-	description: text,
+	description: localizedText,
 	application: z.enum(DISCOUNT_APPLICATION_VALUES),
 	valueType: z.enum(DISCOUNT_VALUE_TYPE_VALUES),
 	percent: typed,
@@ -66,7 +78,7 @@ export const editorStateSchema = z.object({
 	scope: z.enum(['order', 'items', 'categories', 'modifiers']),
 	modifierGroupIds: idList,
 	modifierOptionIds: idList,
-	variantNames: nameList,
+	variants: variantRows,
 	itemIds: idList,
 	categoryIds: idList,
 	excludeItemIds: idList,
@@ -164,8 +176,8 @@ export type OrganizationDiscountIds = {
  * organization, or one deleted since the editor opened, is dropped. Dropping
  * never widens a discount: a list it empties fails `stateToDefinition`
  * ("choose one"), and an excluded id that is not on this menu can't be in a
- * cart anyway. Size names are names, not ids, so they are left as they are
- * (dropping "Large" would turn "Large only" into "any size").
+ * cart anyway. Option filters are names, not ids, so they are left as they
+ * are (dropping "Large" would turn "Large only" into "any size").
  */
 export function keepOrganizationIds(
 	state: EditorState,

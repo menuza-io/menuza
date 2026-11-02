@@ -2122,6 +2122,7 @@ export function publicOrderSummary(order: RestaurantOrder) {
 		discounts: (order.discounts ?? []).map((discount) => ({
 			discountId: discount.discountId,
 			name: discount.name,
+			...(discount.nameI18n ? { nameI18n: discount.nameI18n } : {}),
 			code: discount.code,
 			amountMinor: discount.amountMinor,
 			deliveryAmountMinor: discount.deliveryAmountMinor,

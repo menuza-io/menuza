@@ -172,11 +172,38 @@ describe('publicPromotionFor', () => {
 		})
 	})
 
-	it('shows a size-limited discount by its name', () => {
+	it('shows an option-limited discount by its name', () => {
 		const promotion = publicPromotionFor(
-			makeDiscount({ target: target({ variantNames: ['Large'] }) }),
+			makeDiscount({
+				target: target({ variants: [{ group: 'size', values: ['large'] }] }),
+			}),
 		)
 		expect(promotion?.showName).toBe(true)
+		expect(promotion?.itemPrice).toBe(false)
+	})
+
+	it('carries the name and description in every language, only when there are any', () => {
+		const plain = publicPromotionFor(makeDiscount({ target: target() }))
+		expect(plain).not.toHaveProperty('nameI18n')
+		expect(plain).not.toHaveProperty('descriptionI18n')
+		const empty = publicPromotionFor(
+			makeDiscount({ target: target(), nameI18n: {}, descriptionI18n: {} }),
+		)
+		expect(empty).not.toHaveProperty('nameI18n')
+		const localized = publicPromotionFor(
+			makeDiscount({
+				target: target(),
+				name: 'Lunch',
+				nameI18n: { en: 'Lunch', ar: 'غداء' },
+				description: 'Weekdays',
+				descriptionI18n: { en: 'Weekdays', ar: 'أيام الأسبوع' },
+			}),
+		)
+		expect(localized).toMatchObject({
+			name: 'Lunch',
+			nameI18n: { en: 'Lunch', ar: 'غداء' },
+			descriptionI18n: { en: 'Weekdays', ar: 'أيام الأسبوع' },
+		})
 	})
 
 	describe('what is not a plain value shows the name', () => {

@@ -11,8 +11,16 @@ import {
  */
 export type PublicMenuPromotion = {
 	id: string
+	/** In the website's default language. */
 	name: string
 	description: string | null
+	/**
+	 * The name and description in each website language, the default
+	 * included, so the menu can show the visitor's (`localizedDiscountText`).
+	 * Left out when there are none.
+	 */
+	nameI18n?: Record<string, string>
+	descriptionI18n?: Record<string, string>
 	valueType: 'percent' | 'fixed' | 'fixed_price' | 'free_delivery'
 	percentBp: number | null
 	amountMinor: number | null
@@ -23,7 +31,7 @@ export type PublicMenuPromotion = {
 	categoryIds: string[]
 	/**
 	 * Show the discount's own name instead of a value badge. A set price, a deal,
-	 * a modifier discount, a ladder or a size-limited discount has no single
+	 * a modifier discount, a ladder or an option-limited discount has no single
 	 * "20% off" to put on an item.
 	 */
 	showName: boolean
@@ -59,6 +67,12 @@ export type PublicMenuPromotion = {
 	code: string | null
 	excludeItemIds: string[]
 	excludeCategoryIds: string[]
+}
+
+function nonEmpty(
+	map: Record<string, string> | undefined,
+): map is Record<string, string> {
+	return map !== undefined && Object.keys(map).length > 0
 }
 
 function unique(ids: readonly string[]): string[] {
@@ -108,7 +122,7 @@ export function publicPromotionFor(
 		freeDelivery ||
 		valueType === 'fixed_price' ||
 		Boolean(discount.tiers) ||
-		(target.variantNames?.length ?? 0) > 0 ||
+		(target.variants?.length ?? 0) > 0 ||
 		rule.kind !== 'none' ||
 		discount.minSubtotalMinor !== null ||
 		discount.schedule !== null ||
@@ -130,6 +144,10 @@ export function publicPromotionFor(
 		id: discount.id,
 		name: discount.name,
 		description: discount.description,
+		...(nonEmpty(discount.nameI18n) ? { nameI18n: discount.nameI18n } : {}),
+		...(nonEmpty(discount.descriptionI18n)
+			? { descriptionI18n: discount.descriptionI18n }
+			: {}),
 		valueType,
 		percentBp: discount.tiers ? null : discount.percentBp,
 		amountMinor: discount.tiers ? null : discount.amountMinor,

@@ -1,4 +1,6 @@
 import { z } from 'zod'
+import { discountLocalizedTextSchema } from './localized.ts'
+import { discountVariantFiltersSchema } from './variants.ts'
 
 /**
  * A discount as an operator configures it. The same shape is the App form's
@@ -86,7 +88,6 @@ export const DISCOUNT_MAX_SCHEDULE_WINDOWS = 28
 export const DISCOUNT_MAX_UNITS = 1000
 export const DISCOUNT_MAX_TARGET_MODIFIER_GROUPS = 50
 export const DISCOUNT_MAX_TARGET_MODIFIER_OPTIONS = 200
-export const DISCOUNT_MAX_VARIANT_NAMES = 50
 export const DISCOUNT_MAX_TIER_STEPS = 10
 export const DISCOUNT_MAX_BUNDLE_SLOTS = 8
 /** Units in one bundle, across all its slots. */
@@ -133,15 +134,6 @@ const timeOfDaySchema = z
 	.string()
 	.regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Use HH:MM')
 
-/**
- * Sizes and other variant choices by the name the menu shows ("Large"), matched
- * ignoring case. Names, not ids, because a size has a different id on every
- * item but the same name across a menu.
- */
-const variantNamesSchema = z
-	.array(z.string().trim().min(1).max(80))
-	.max(DISCOUNT_MAX_VARIANT_NAMES)
-
 export const discountTargetSchema = z
 	.object({
 		/**
@@ -168,10 +160,10 @@ export const discountTargetSchema = z
 			.max(DISCOUNT_MAX_TARGET_MODIFIER_OPTIONS)
 			.optional(),
 		/**
-		 * Only lines whose variant has one of these names ("any large pizza").
-		 * Items, categories and modifiers scope.
+		 * Only lines whose variant matches ("any large pizza"). Items,
+		 * categories and modifiers scope.
 		 */
-		variantNames: variantNamesSchema.optional(),
+		variants: discountVariantFiltersSchema.optional(),
 	})
 	.strict()
 export type DiscountTarget = z.infer<typeof discountTargetSchema>
@@ -194,8 +186,8 @@ export const discountItemSetSchema = z
 		quantity: quantityNumber,
 		itemIds: z.array(catalogIdSchema).max(DISCOUNT_MAX_TARGET_ITEMS),
 		categoryIds: z.array(catalogIdSchema).max(DISCOUNT_MAX_TARGET_CATEGORIES),
-		/** Only variants with these names count ("large"). */
-		variantNames: variantNamesSchema.optional(),
+		/** Only these variants count ("Size: Large"). */
+		variants: discountVariantFiltersSchema.optional(),
 	})
 	.strict()
 	.refine((set) => set.itemIds.length > 0 || set.categoryIds.length > 0, {
@@ -215,7 +207,7 @@ export const discountBuySetSchema = z
 		spendMinor: minorSchema.min(1).optional(),
 		itemIds: z.array(catalogIdSchema).max(DISCOUNT_MAX_TARGET_ITEMS),
 		categoryIds: z.array(catalogIdSchema).max(DISCOUNT_MAX_TARGET_CATEGORIES),
-		variantNames: variantNamesSchema.optional(),
+		variants: discountVariantFiltersSchema.optional(),
 	})
 	.strict()
 	.refine((set) => set.itemIds.length > 0 || set.categoryIds.length > 0, {
@@ -340,6 +332,15 @@ export const discountDefinitionSchema = z
 		name: z.string().trim().min(1).max(DISCOUNT_NAME_MAX),
 		internalName: z.string().trim().max(DISCOUNT_NAME_MAX).nullable(),
 		description: z.string().trim().max(DISCOUNT_DESCRIPTION_MAX).nullable(),
+		/**
+		 * `name` in every website language, the default included. Missing or
+		 * empty: `name` is used everywhere.
+		 */
+		nameI18n: discountLocalizedTextSchema(DISCOUNT_NAME_MAX).optional(),
+		/** `description` in every website language. */
+		descriptionI18n: discountLocalizedTextSchema(
+			DISCOUNT_DESCRIPTION_MAX,
+		).optional(),
 		status: z.enum(DISCOUNT_STATUS_VALUES),
 		application: z.enum(DISCOUNT_APPLICATION_VALUES),
 		valueType: z.enum(DISCOUNT_VALUE_TYPE_VALUES),
@@ -551,13 +552,13 @@ export const discountDefinitionSchema = z
 				issue('target', 'A set price needs items, categories or a bundle')
 			}
 		}
-		// Sizes narrow items, categories and modifiers; on the whole order they
-		// would be ignored.
+		// Variant filters narrow items, categories and modifiers; on the whole
+		// order they would be ignored.
 		if (
-			(value.target.variantNames?.length ?? 0) > 0 &&
+			(value.target.variants?.length ?? 0) > 0 &&
 			value.target.scope === 'order'
 		) {
-			issue('target', 'Sizes narrow items, categories or modifier choices')
+			issue('target', 'Options narrow items, categories or modifier choices')
 		}
 
 		// A spend threshold is an amount of money, so it needs its currency.

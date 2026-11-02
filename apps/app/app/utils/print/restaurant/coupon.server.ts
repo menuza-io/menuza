@@ -74,6 +74,7 @@ function offerOf(
 			: null
 	return {
 		name: definition.name,
+		...(definition.nameI18n ? { nameI18n: definition.nameI18n } : {}),
 		application: definition.application,
 		valueType: definition.valueType,
 		percentBp: definition.percentBp,

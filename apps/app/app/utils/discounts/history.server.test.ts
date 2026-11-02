@@ -20,6 +20,19 @@ describe('changedDiscountKeys', () => {
 		).toEqual(['target', 'added', 'gone'])
 	})
 
+	it('counts a translation with the text it translates', () => {
+		expect(
+			changedDiscountKeys(
+				{ name: 'A', nameI18n: { en: 'A', ar: 'أ' } },
+				{
+					name: 'B',
+					nameI18n: { en: 'B', ar: 'أ' },
+					descriptionI18n: { ar: 'و' },
+				},
+			),
+		).toEqual(['name', 'description'])
+	})
+
 	it('is empty when nothing changed', () => {
 		expect(changedDiscountKeys({ a: [1, 2] }, { a: [1, 2] })).toEqual([])
 	})

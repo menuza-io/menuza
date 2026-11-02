@@ -792,7 +792,7 @@ const valueClass = 'price font-medium text-foreground'
 				discount: labels.discount || 'Discount',
 				deliveryDiscount: labels.deliveryDiscount || '{name} (delivery)',
 				deliveryDiscountPlain: labels.deliveryDiscountPlain || 'Delivery discount',
-			})
+			}, { locale: labels.locale || 'en', defaultLocale })
 			const discountLinesEl = document.getElementById('order-discount-lines')
 			if (discountLinesEl) {
 				const rowClassName =

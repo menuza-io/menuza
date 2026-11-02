@@ -1009,6 +1009,11 @@ const tipOff = 'border-border bg-background text-foreground'
 		// the only thing this page decides. `couponCode` is what is sent, `held`
 		// a code refused for good, kept on screen with its message until edited.
 		const discountLabels = labels.discounts
+		// Discount names arrive in every website language; show the page's.
+		const discountLanguage = {
+			locale: meta.locale || 'en',
+			defaultLocale: document.documentElement.dataset.defaultLocale || 'en',
+		}
 		let discounts: DiscountQuotes | null = null
 		// A coupon link (`?coupon=`) is kept like a typed code, unless this tab
 		// already let that code go (removed, replaced or refused for good). It
@@ -1105,7 +1110,7 @@ const tipOff = 'border-border bg-background text-foreground'
 						: 0,
 					loyaltyDiscount: rewardTotals.discountMinor / 100,
 					total: rewardTotals.totalMinor / 100,
-					lines: discountQuote ? discountLines(discountQuote, discountLabels) : [],
+					lines: discountQuote ? discountLines(discountQuote, discountLabels, discountLanguage) : [],
 					priced: true,
 				}
 			}
@@ -1120,7 +1125,7 @@ const tipOff = 'border-border bg-background text-foreground'
 					discount: t.discountMinor / 100,
 					loyaltyDiscount: t.loyaltyMinor / 100,
 					total: t.totalMinor / 100,
-					lines: discountLines(discountQuote, discountLabels),
+					lines: discountLines(discountQuote, discountLabels, discountLanguage),
 					priced: true,
 				}
 			}
@@ -1142,7 +1147,7 @@ const tipOff = 'border-border bg-background text-foreground'
 			const subtotal = cart.reduce((acc, it) => acc + it.unitPrice * it.quantity, 0)
 			// While a quote is on its way, keep the saving the last one priced.
 			const carried = discounts?.lastQuote() ?? null
-			const lines = carried ? discountLines(carried, discountLabels) : []
+			const lines = carried ? discountLines(carried, discountLabels, discountLanguage) : []
 			const discount = Math.min(
 				subtotal,
 				carried ? (carried.totalDiscountMinor - carried.deliveryDiscountMinor) / 100 : 0,

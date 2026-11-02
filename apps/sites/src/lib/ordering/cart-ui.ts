@@ -50,8 +50,10 @@ export type CartUiOptions = {
 		/** The guest dismissed that refusal (it is removed with the code). */
 		dismissRefusal?(): void
 	}
-	/** The page language, for lists and the minus sign of amounts. */
+	/** The page language, for lists, discount names and the minus sign of amounts. */
 	locale?: string
+	/** The site's default language: discount names fall back to it. */
+	defaultLocale?: string
 	constraints?: Constraints | null
 	/** Fills the `#cart-drawer-header-extra` slot on every render (pickup summary, etc.). */
 	renderHeaderExtra?: (slot: HTMLElement) => void
@@ -321,7 +323,10 @@ export function mountCartUi(options: CartUiOptions): CartUi {
 		// read below is then the latest one.
 		options.discounts?.sync()
 		const discountView = options.discounts?.view() ?? NO_CART_DISCOUNTS
-		const totals = applyCartQuote(estimate, discountView.quote)
+		const totals = applyCartQuote(estimate, discountView.quote, {
+			locale: options.locale,
+			defaultLocale: options.defaultLocale,
+		})
 		const estimateNote =
 			discountView.note === 'before_discounts'
 				? labels.beforeDiscounts

@@ -262,6 +262,15 @@ export function listText(items: readonly string[], locale: string): string {
 	}
 }
 
+/** "Large or Medium": alternatives, in the operator's language. */
+export function orListText(items: readonly string[], locale: string): string {
+	try {
+		return new Intl.ListFormat(locale, { type: 'disjunction' }).format(items)
+	} catch {
+		return items.join(' / ')
+	}
+}
+
 /**
  * What an amount off is taken from. A fixed amount comes off every matching
  * item (or choice) on an item discount, each item the customer gets in a buy

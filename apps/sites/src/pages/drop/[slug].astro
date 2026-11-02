@@ -1140,6 +1140,7 @@ const clientData = {
 				labels,
 				formatMoney: money,
 				locale: data.locale,
+				defaultLocale: document.documentElement.dataset.defaultLocale || 'en',
 				totals,
 				gate: () =>
 					resolved

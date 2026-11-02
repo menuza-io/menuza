@@ -1,4 +1,10 @@
-import { db, Discount, eq, OrganizationLocation } from '@repo/database'
+import {
+	db,
+	Discount,
+	eq,
+	Organization,
+	OrganizationLocation,
+} from '@repo/database'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 import { setupTestOrgWithUser } from '#tests/test-utils.ts'
@@ -42,7 +48,7 @@ function saveRequest(
 			'state',
 			JSON.stringify({
 				...emptyEditorState(),
-				name: 'Lunch',
+				name: { en: 'Lunch' },
 				percent: '10',
 				...state,
 			}),
@@ -163,7 +169,7 @@ describe('saveDiscountEditor', () => {
 		const result = await saveDiscountEditor({
 			request: saveRequest(
 				{ intent: 'save', status: 'active', expectedVersion: '7' },
-				{ name: 'Mine' },
+				{ name: { en: 'Mine' } },
 			),
 			params: { orgSlug: access.organization.slug, discountId: id },
 			access,
@@ -204,7 +210,7 @@ describe('saveDiscountEditor', () => {
 		const result = await saveDiscountEditor({
 			request: saveRequest(
 				{ intent: 'save', status: 'active', expectedVersion: '2' },
-				{ name: 'Renamed' },
+				{ name: { en: 'Renamed' } },
 			),
 			params: { orgSlug: access.organization.slug, discountId: id },
 			access: off,
@@ -237,9 +243,32 @@ describe('saveDiscountEditor', () => {
 		expect(row?.currency).toBe('USD')
 	})
 
+	it('saves the name in the website languages, the default as the canonical text', async () => {
+		const { access } = await setup()
+		await db
+			.update(Organization)
+			.set({
+				siteLocales: JSON.stringify(['ar', 'en']),
+				siteDefaultLocale: 'ar',
+			})
+			.where(eq(Organization.id, access.organization.id))
+		const id = await create(access, {
+			name: { en: 'Lunch deal', ar: 'عرض الغداء', fr: 'Déjeuner' },
+			description: { en: 'Weekdays', ar: '' },
+		})
+		const row = await getDiscount(access.organization.id, id)
+		expect(row?.stored?.definition).toMatchObject({
+			name: 'عرض الغداء',
+			nameI18n: { en: 'Lunch deal', ar: 'عرض الغداء' },
+			description: null,
+			descriptionI18n: { en: 'Weekdays' },
+		})
+		expect(row?.stored?.definition.nameI18n).not.toHaveProperty('fr')
+	})
+
 	it('duplicates a discount as a paused copy with the word from the form', async () => {
 		const { access } = await setup()
-		const id = await create(access, { name: 'Lunch deal' })
+		const id = await create(access, { name: { en: 'Lunch deal' } })
 		const result = await saveDiscountEditor({
 			request: saveRequest({ intent: 'duplicate', copyWord: 'نسخة' }),
 			params: { orgSlug: access.organization.slug, discountId: id },
@@ -256,6 +285,8 @@ describe('saveDiscountEditor', () => {
 		const copy = await getDiscount(access.organization.id, copyId)
 		expect(copy?.stored?.definition).toMatchObject({
 			name: 'Lunch deal نسخة',
+			// The default-language entry follows the copy's name.
+			nameI18n: { en: 'Lunch deal نسخة' },
 			status: 'paused',
 		})
 		const [original] = await db
@@ -267,7 +298,7 @@ describe('saveDiscountEditor', () => {
 
 	it('cuts a long name, not the copy word', async () => {
 		const { access } = await setup()
-		const id = await create(access, { name: 'x'.repeat(60) })
+		const id = await create(access, { name: { en: 'x'.repeat(60) } })
 		const result = await saveDiscountEditor({
 			request: saveRequest({ intent: 'duplicate', copyWord: 'copy' }),
 			params: { orgSlug: access.organization.slug, discountId: id },
@@ -301,7 +332,7 @@ describe('saveDiscountEditor', () => {
 		const result = await saveDiscountEditor({
 			request: saveRequest(
 				{ intent: 'save', status: 'paused', expectedVersion: '3' },
-				{ name: 'Edited' },
+				{ name: { en: 'Edited' } },
 			),
 			params: { orgSlug: access.organization.slug, discountId: id },
 			access,
@@ -353,14 +384,14 @@ describe('saveDiscountEditor', () => {
 		it('after create and after update', async () => {
 			const { access } = await setup()
 			purge.mockImplementation(async () => {})
-			const id = await create(access, { name: 'First' })
+			const id = await create(access, { name: { en: 'First' } })
 			expect(purge).toHaveBeenCalledTimes(2)
 			calledFor(access)
 			const seen = watchPurge(access, id)
 			await saveDiscountEditor({
 				request: saveRequest(
 					{ intent: 'save', status: 'active', expectedVersion: '2' },
-					{ name: 'Second' },
+					{ name: { en: 'Second' } },
 				),
 				params: { orgSlug: access.organization.slug, discountId: id },
 				access,
@@ -392,7 +423,7 @@ describe('saveDiscountEditor', () => {
 		it('after duplicate', async () => {
 			const { access } = await setup()
 			purge.mockImplementation(async () => {})
-			const id = await create(access, { name: 'Lunch deal' })
+			const id = await create(access, { name: { en: 'Lunch deal' } })
 			purge.mockClear()
 			const seen = watchPurge(access, id)
 			await saveDiscountEditor({

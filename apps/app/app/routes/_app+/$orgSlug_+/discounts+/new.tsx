@@ -52,6 +52,7 @@ export default function NewDiscountRoute() {
 			catalog={data.editor.catalog}
 			locations={data.editor.locations}
 			choices={data.editor.choices}
+			siteLocales={data.editor.siteLocales}
 			initial={data.initial}
 			version={null}
 			status="paused"

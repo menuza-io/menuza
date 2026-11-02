@@ -2,6 +2,7 @@ import { msg, plural } from '@lingui/core/macro'
 import { type LoyaltyCatalog } from '#app/utils/loyalty/catalog.ts'
 import { parsePercentToBp } from '#app/utils/loyalty/loyalty-view.ts'
 import { parseMoneyToMinor } from '#app/utils/money-input.ts'
+import { defaultEntry } from '#app/utils/reservations/localized.ts'
 import {
 	ALL_CHANNELS,
 	ALL_FULFILLMENTS,
@@ -9,6 +10,7 @@ import {
 	type DiscountChoiceCatalog,
 	type EditorState,
 	type ItemGroupState,
+	type VariantFilterRow,
 } from './editor-model.ts'
 import {
 	amountEach,
@@ -21,6 +23,7 @@ import {
 	formatMoney,
 	listText,
 	numberText,
+	orListText,
 	perCustomerSummary,
 	type Translate,
 	valueSummary,
@@ -61,20 +64,52 @@ export function nameList(
 	return `${listText(names.slice(0, NAMES_SHOWN), locale)} +${more}`
 }
 
-/** "Pizzas (Large)": what a group covers, with the sizes it is limited to. */
-function withSizes(
-	text: string,
-	sizes: readonly string[],
-	locale: string,
-): string {
-	return sizes.length > 0 ? `${text} (${listText(sizes, locale)})` : text
+type SummaryContext = {
+	catalog: LoyaltyCatalog
+	choices: DiscountChoiceCatalog
+	locale: string
+	tx: Translate
 }
 
-function groupNames(
-	group: ItemGroupState,
-	catalog: LoyaltyCatalog,
-	locale: string,
+/**
+ * "Size: Large or Medium and Crust: Thin": the options a discount is limited
+ * to, named as the menu names them (the stored key when the menu no longer
+ * has it). Rows still being filled in are left out.
+ */
+export function variantFilterText(
+	rows: readonly VariantFilterRow[],
+	{ choices, locale, tx }: Pick<SummaryContext, 'choices' | 'locale' | 'tx'>,
 ): string {
+	const parts = rows.flatMap((row) => {
+		if (!row.group || row.values.length === 0) return []
+		const choice = choices.variantGroups.find(
+			(group) => group.key === row.group,
+		)
+		const group = choice?.name ?? row.group
+		const values = orListText(
+			row.values.map(
+				(value) =>
+					choice?.values.find((option) => option.id === value)?.name ?? value,
+			),
+			locale,
+		)
+		return [tx(msg`${group}: ${values}`)]
+	})
+	return listText(parts, locale)
+}
+
+/** "Pizzas (Size: Large)": what a group covers, with the options it is limited to. */
+function withVariants(
+	text: string,
+	rows: readonly VariantFilterRow[],
+	context: SummaryContext,
+): string {
+	const options = variantFilterText(rows, context)
+	return options ? `${text} (${options})` : text
+}
+
+function groupNames(group: ItemGroupState, context: SummaryContext): string {
+	const { catalog, locale } = context
 	const names = listText(
 		[
 			nameList(group.itemIds, catalog.items, locale),
@@ -82,15 +117,14 @@ function groupNames(
 		].filter(Boolean),
 		locale,
 	)
-	return names ? withSizes(names, group.variantNames, locale) : ''
+	return names ? withVariants(names, group.variants, context) : ''
 }
 
 function groupText(
 	group: ItemGroupState,
-	catalog: LoyaltyCatalog,
-	locale: string,
+	context: SummaryContext,
 ): string | null {
-	const names = groupNames(group, catalog, locale)
+	const names = groupNames(group, context)
 	if (!names) return null
 	const quantity = Number(group.quantity)
 	return Number.isInteger(quantity) && quantity > 1
@@ -102,6 +136,7 @@ export function buildDiscountSummary({
 	state,
 	currency,
 	locale,
+	defaultLocale,
 	catalog,
 	choices,
 	locations,
@@ -110,11 +145,14 @@ export function buildDiscountSummary({
 	state: EditorState
 	currency: string
 	locale: string
+	/** The website's default language: the title is the name in it. */
+	defaultLocale: string
 	catalog: LoyaltyCatalog
 	choices: DiscountChoiceCatalog
 	locations: readonly Named[]
 	tx: Translate
 }): DiscountSummary {
+	const context: SummaryContext = { catalog, choices, locale, tx }
 	const rows: SummaryRow[] = []
 	const add = (key: string, label: string, value: string | null) => {
 		if (value) rows.push({ key, label, value })
@@ -183,9 +221,9 @@ export function buildDiscountSummary({
 	if (freeDelivery) {
 		covers = tx(msg`Delivery fee`)
 	} else if (state.quantityKind === 'buy_get') {
-		const get = groupText(state.getGroup, catalog, locale)
+		const get = groupText(state.getGroup, context)
 		if (state.buyGroup.by === 'spend') {
-			const names = groupNames(state.buyGroup, catalog, locale)
+			const names = groupNames(state.buyGroup, context)
 			const spend = parseMoneyToMinor(state.buyGroup.spend, {
 				currency,
 				min: 1,
@@ -195,12 +233,12 @@ export function buildDiscountSummary({
 				covers = tx(msg`Spend ${amount} on ${names}, get ${get}`)
 			}
 		} else {
-			const buy = groupText(state.buyGroup, catalog, locale)
+			const buy = groupText(state.buyGroup, context)
 			if (buy && get) covers = tx(msg`Buy ${buy}, get ${get}`)
 		}
 	} else if (state.quantityKind === 'bundle') {
 		const parts = state.bundleSlots.flatMap((slot) => {
-			const text = groupText(slot, catalog, locale)
+			const text = groupText(slot, context)
 			return text ? [text] : []
 		})
 		if (parts.length > 0) covers = parts.join(' + ')
@@ -208,10 +246,10 @@ export function buildDiscountSummary({
 		covers = tx(msg`Whole order`)
 	} else if (state.scope === 'items') {
 		const names = nameList(state.itemIds, catalog.items, locale)
-		covers = names ? withSizes(names, state.variantNames, locale) : null
+		covers = names ? withVariants(names, state.variants, context) : null
 	} else if (state.scope === 'categories') {
 		const names = nameList(state.categoryIds, catalog.categories, locale)
-		covers = names ? withSizes(names, state.variantNames, locale) : null
+		covers = names ? withVariants(names, state.variants, context) : null
 	} else {
 		const picked = nameList(
 			[...state.modifierGroupIds, ...state.modifierOptionIds],
@@ -226,7 +264,9 @@ export function buildDiscountSummary({
 			locale,
 		)
 		if (picked) {
-			const on = withSizes(items, state.variantNames, locale)
+			// No items chosen means every item, still limited to the options.
+			const options = variantFilterText(state.variants, context)
+			const on = items ? withVariants(items, state.variants, context) : options
 			covers = on ? tx(msg`${picked} on ${on}`) : picked
 		}
 	}
@@ -455,7 +495,8 @@ export function buildDiscountSummary({
 	)
 
 	return {
-		title: state.name.trim() || tx(msg`Untitled discount`),
+		title:
+			defaultEntry(state.name, { defaultLocale }) || tx(msg`Untitled discount`),
 		headline,
 		rows,
 	}

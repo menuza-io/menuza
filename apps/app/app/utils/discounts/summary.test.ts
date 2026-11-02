@@ -29,16 +29,29 @@ const catalog = {
 const choices = {
 	groups: [{ id: 'toppings', name: 'Toppings', detail: null }],
 	options: [{ id: 'ranch', name: 'Ranch', detail: 'Sauces' }],
-	sizes: [
-		{ id: 'Large', name: 'Large', detail: null },
-		{ id: 'Small', name: 'Small', detail: null },
+	variantGroups: [
+		{
+			key: 'size',
+			name: 'Size',
+			items: 3,
+			values: [
+				{ id: 'large', name: 'Large', detail: null },
+				{ id: 'medium', name: 'Medium', detail: null },
+			],
+		},
+		{
+			key: 'crust',
+			name: 'Crust',
+			items: 1,
+			values: [{ id: 'thin', name: 'Thin', detail: null }],
+		},
 	],
 }
 
 function summarize(overrides: Partial<EditorState>) {
 	const state: EditorState = {
 		...emptyEditorState(),
-		name: 'Pizza night',
+		name: { en: 'Pizza night', ar: 'ليلة البيتزا' },
 		percent: '20',
 		...overrides,
 	}
@@ -46,6 +59,7 @@ function summarize(overrides: Partial<EditorState>) {
 		state,
 		currency: 'USD',
 		locale: 'en',
+		defaultLocale: 'en',
 		catalog,
 		choices,
 		locations: [{ id: 'l1', name: 'Downtown' }],
@@ -74,7 +88,7 @@ describe('nameList', () => {
 
 describe('discount summary', () => {
 	it('describes a half-filled discount instead of waiting for a valid one', () => {
-		const result = summarize({ name: '', percent: '' })
+		const result = summarize({ name: { ar: 'ليلة' }, percent: '' })
 		expect(result.title).toBe('Untitled discount')
 		expect(result.headline).toBe('Percentage off')
 		expect(result.row.covers).toBe('Whole order')
@@ -191,13 +205,38 @@ describe('discount summary', () => {
 		expect(result.headline).toBe('20% off')
 	})
 
-	it('adds the sizes to what a discount covers', () => {
+	it('adds the options to what a discount covers', () => {
 		const result = summarize({
 			scope: 'categories',
 			categoryIds: ['pizzas'],
-			variantNames: ['Large', 'Medium'],
+			variants: [{ group: 'size', values: ['large', 'medium'] }],
 		})
-		expect(result.row.covers).toBe('Pizzas (Large, Medium)')
+		expect(result.row.covers).toBe('Pizzas (Size: Large or Medium)')
+	})
+
+	it('names every option type, and keys the menu no longer has', () => {
+		const result = summarize({
+			scope: 'categories',
+			categoryIds: ['pizzas'],
+			variants: [
+				{ group: 'size', values: ['large'] },
+				{ group: 'crust', values: ['thin', 'stuffed'] },
+				{ group: 'colour', values: ['red'] },
+				{ group: '', values: [] },
+			],
+		})
+		expect(result.row.covers).toBe(
+			'Pizzas (Size: Large, Crust: Thin or stuffed, colour: red)',
+		)
+	})
+
+	it('limits a modifier discount on every item to its options', () => {
+		const result = summarize({
+			scope: 'modifiers',
+			modifierGroupIds: ['toppings'],
+			variants: [{ group: 'size', values: ['large'] }],
+		})
+		expect(result.row.covers).toBe('Toppings on Size: Large')
 	})
 
 	it('reads a spend deal as a sentence', () => {

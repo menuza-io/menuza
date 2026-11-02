@@ -16,12 +16,13 @@ import {
 	type EditorState,
 } from './editor-model.ts'
 
-const OPTIONS = { currency: 'USD', status: 'active' as const }
+const EN = { locales: ['en'], defaultLocale: 'en' }
+const OPTIONS = { currency: 'USD', status: 'active' as const, locales: EN }
 
 function state(overrides: Partial<EditorState>): EditorState {
 	return {
 		...emptyEditorState(),
-		name: 'Happy hour',
+		name: { en: 'Happy hour' },
 		percent: '10',
 		...overrides,
 	}
@@ -63,7 +64,7 @@ describe('stateToDefinition', () => {
 	})
 
 	it('reports field errors as codes', () => {
-		const result = convert({ name: ' ', percent: '150' })
+		const result = convert({ name: { en: ' ' }, percent: '150' })
 		expect(result).toEqual({
 			ok: false,
 			errors: { name: 'required', percent: 'percent' },
@@ -459,7 +460,7 @@ describe('modifier discounts', () => {
 		})
 		if (!first.ok) throw new Error(JSON.stringify(first.errors))
 		const second = stateToDefinition(
-			stateFromDefinition(first.definition, [], 'USD'),
+			stateFromDefinition(first.definition, [], 'USD', EN),
 			OPTIONS,
 		)
 		expect(second.ok && second.definition).toEqual(first.definition)
@@ -555,18 +556,73 @@ describe('ladders, sizes, spend, fee limit and stacking', () => {
 		expect(counted.ok && counted.definition.tiers).toBeUndefined()
 	})
 
-	it('limits a discount to sizes on items, categories and modifiers only', () => {
+	it('limits a discount to options on items, categories and modifiers only', () => {
 		const items = convert({
 			scope: 'items',
 			itemIds: ['pizza'],
-			variantNames: ['Large'],
+			variants: [{ group: 'Size', values: ['Large', 'large', ' Medium '] }],
 		})
-		expect(items.ok && items.definition.target.variantNames).toEqual(['Large'])
-		const order = convert({ scope: 'order', variantNames: ['Large'] })
-		expect(order.ok && order.definition.target.variantNames).toBeUndefined()
+		expect(items.ok && items.definition.target.variants).toEqual([
+			{ group: 'size', values: ['large', 'medium'] },
+		])
+		const order = convert({
+			scope: 'order',
+			variants: [{ group: 'size', values: ['large'] }],
+		})
+		expect(order.ok && order.definition.target.variants).toBeUndefined()
 	})
 
-	it('limits a deal group to sizes', () => {
+	it('drops option rows still being filled in', () => {
+		const result = convert({
+			scope: 'items',
+			itemIds: ['pizza'],
+			variants: [
+				{ group: '', values: [] },
+				{ group: 'crust', values: [] },
+			],
+		})
+		expect(result.ok && result.definition.target.variants).toBeUndefined()
+	})
+
+	it('caps the option types and their values', () => {
+		const many = convert({
+			scope: 'items',
+			itemIds: ['pizza'],
+			variants: ['a', 'b', 'c', 'd'].map((group) => ({
+				group,
+				values: ['x'],
+			})),
+		})
+		expect(many).toMatchObject({
+			ok: false,
+			errors: { variants: 'too_many_variants' },
+		})
+		const values = convert({
+			scope: 'modifiers',
+			modifierGroupIds: ['toppings'],
+			variants: [
+				{
+					group: 'size',
+					values: Array.from({ length: 51 }, (_, index) => `v${index}`),
+				},
+			],
+		})
+		expect(values).toMatchObject({
+			ok: false,
+			errors: { 'modifier-variants': 'too_many_variants' },
+		})
+		const twice = convert({
+			scope: 'items',
+			itemIds: ['pizza'],
+			variants: [
+				{ group: 'size', values: ['large'] },
+				{ group: 'Size', values: ['small'] },
+			],
+		})
+		expect(twice).toMatchObject({ ok: false, errors: { variants: 'invalid' } })
+	})
+
+	it('limits a deal group to options', () => {
 		const result = convert({
 			quantityKind: 'bundle',
 			valueType: 'fixed_price',
@@ -575,13 +631,15 @@ describe('ladders, sizes, spend, fee limit and stacking', () => {
 				{
 					...newSlot('2'),
 					categoryIds: ['pizzas'],
-					variantNames: ['Large'],
+					variants: [{ group: 'size', values: ['large'] }],
 				},
 			],
 		})
 		expect(result.ok && result.definition.quantityRule).toMatchObject({
 			kind: 'bundle',
-			slots: [{ quantity: 2, variantNames: ['Large'] }],
+			slots: [
+				{ quantity: 2, variants: [{ group: 'size', values: ['large'] }] },
+			],
 		})
 	})
 
@@ -654,7 +712,12 @@ describe('ladders, sizes, spend, fee limit and stacking', () => {
 		const base = convert({})
 		if (!base.ok) throw new Error('invalid')
 		const { combinesWith: ignoredCombinesWith, ...old } = base.definition
-		const state = stateFromDefinition({ ...old, combinable: true }, [], 'USD')
+		const state = stateFromDefinition(
+			{ ...old, combinable: true },
+			[],
+			'USD',
+			EN,
+		)
 		expect(state.combinesWith).toEqual(['item', 'order', 'delivery'])
 	})
 
@@ -662,13 +725,16 @@ describe('ladders, sizes, spend, fee limit and stacking', () => {
 		const first = ladder({
 			scope: 'categories',
 			categoryIds: ['pizzas'],
-			variantNames: ['Large'],
+			variants: [
+				{ group: 'size', values: ['large', 'medium'] },
+				{ group: 'crust', values: ['thin'] },
+			],
 			combinesWith: ['order'],
 			maxUnits: '4',
 		})
 		if (!first.ok) throw new Error(JSON.stringify(first.errors))
 		const second = stateToDefinition(
-			stateFromDefinition(first.definition, [], 'USD'),
+			stateFromDefinition(first.definition, [], 'USD', EN),
 			OPTIONS,
 		)
 		expect(second.ok && second.definition).toEqual(first.definition)
@@ -679,7 +745,7 @@ describe('ladders, sizes, spend, fee limit and stacking', () => {
 			buyGroup: {
 				...emptyGroup(),
 				itemIds: ['burger'],
-				variantNames: ['Large'],
+				variants: [{ group: 'size', values: ['large'] }],
 				by: 'spend',
 				spend: '30',
 			},
@@ -687,7 +753,7 @@ describe('ladders, sizes, spend, fee limit and stacking', () => {
 		})
 		if (!spend.ok) throw new Error(JSON.stringify(spend.errors))
 		const spendBack = stateToDefinition(
-			stateFromDefinition(spend.definition, [], 'USD'),
+			stateFromDefinition(spend.definition, [], 'USD', EN),
 			OPTIONS,
 		)
 		expect(spendBack.ok && spendBack.definition).toEqual(spend.definition)
@@ -698,7 +764,7 @@ describe('ladders, sizes, spend, fee limit and stacking', () => {
 		})
 		if (!delivery.ok) throw new Error(JSON.stringify(delivery.errors))
 		const deliveryBack = stateToDefinition(
-			stateFromDefinition(delivery.definition, [], 'USD'),
+			stateFromDefinition(delivery.definition, [], 'USD', EN),
 			OPTIONS,
 		)
 		expect(deliveryBack.ok && deliveryBack.definition).toEqual(
@@ -733,7 +799,7 @@ describe('stateFromDefinition', () => {
 			combinesWith: ['item', 'order'],
 		})
 		if (!first.ok) throw new Error(JSON.stringify(first.errors))
-		const back = stateFromDefinition(first.definition, [], 'USD')
+		const back = stateFromDefinition(first.definition, [], 'USD', EN)
 		const second = stateToDefinition(back, OPTIONS)
 		expect(second.ok && second.definition).toEqual(first.definition)
 	})
@@ -756,14 +822,15 @@ describe('stateFromDefinition', () => {
 				],
 			},
 		}
-		const editing = stateFromDefinition(stored, [], 'USD')
+		const editing = stateFromDefinition(stored, [], 'USD', EN)
 		const saved = stateToDefinition(
-			{ ...editing, name: 'Renamed deal' },
+			{ ...editing, name: { en: 'Renamed deal' } },
 			OPTIONS,
 		)
 		expect(saved.ok && saved.definition).toEqual({
 			...stored,
 			name: 'Renamed deal',
+			nameI18n: { en: 'Renamed deal' },
 		})
 	})
 
@@ -781,7 +848,7 @@ describe('stateFromDefinition', () => {
 			},
 		}
 		const saved = stateToDefinition(
-			stateFromDefinition(stored, [], 'USD'),
+			stateFromDefinition(stored, [], 'USD', EN),
 			OPTIONS,
 		)
 		expect(saved.ok && saved.definition).toEqual(stored)
@@ -790,9 +857,89 @@ describe('stateFromDefinition', () => {
 	it('shows a custom total limit as custom', () => {
 		const first = convert({ totalLimit: 'custom', totalLimitCustom: '75' })
 		if (!first.ok) throw new Error('invalid')
-		const back = stateFromDefinition(first.definition, [], 'USD')
+		const back = stateFromDefinition(first.definition, [], 'USD', EN)
 		expect(back.totalLimit).toBe('custom')
 		expect(back.totalLimitCustom).toBe('75')
+	})
+})
+
+describe('localized name and description', () => {
+	const LOCALES = { locales: ['en', 'ar'], defaultLocale: 'en' }
+
+	it('stores the default language as the canonical text and drops other languages', () => {
+		const result = stateToDefinition(
+			state({
+				name: { en: ' Lunch deal ', ar: 'عرض الغداء', fr: 'Déjeuner', de: '' },
+				description: { ar: 'خصم على الغداء', en: 'Lunch for less', es: 'x' },
+			}),
+			{ ...OPTIONS, locales: LOCALES },
+		)
+		expect(result.ok).toBe(true)
+		if (!result.ok) return
+		expect(result.definition).toMatchObject({
+			name: 'Lunch deal',
+			nameI18n: { en: 'Lunch deal', ar: 'عرض الغداء' },
+			description: 'Lunch for less',
+			descriptionI18n: { en: 'Lunch for less', ar: 'خصم على الغداء' },
+		})
+	})
+
+	it('needs the name in the default language', () => {
+		const missing = stateToDefinition(state({ name: { ar: 'عرض الغداء' } }), {
+			...OPTIONS,
+			locales: LOCALES,
+		})
+		expect(missing).toMatchObject({
+			ok: false,
+			errors: { name: 'default_language_required' },
+		})
+		const empty = stateToDefinition(state({ name: {} }), {
+			...OPTIONS,
+			locales: LOCALES,
+		})
+		expect(empty).toMatchObject({ ok: false, errors: { name: 'required' } })
+	})
+
+	it('checks the length in every language', () => {
+		const result = stateToDefinition(
+			state({ name: { en: 'Lunch', ar: 'ع'.repeat(61) } }),
+			{ ...OPTIONS, locales: LOCALES },
+		)
+		expect(result).toMatchObject({ ok: false, errors: { name: 'too_long' } })
+	})
+
+	it('a description only in another language has no canonical text', () => {
+		const result = stateToDefinition(state({ description: { ar: 'خصم' } }), {
+			...OPTIONS,
+			locales: LOCALES,
+		})
+		expect(result.ok && result.definition.description).toBeNull()
+		expect(result.ok && result.definition.descriptionI18n).toEqual({
+			ar: 'خصم',
+		})
+	})
+
+	it('round trips, and fills a missing default entry from the canonical name', () => {
+		const first = stateToDefinition(
+			state({ name: { en: 'Lunch', ar: 'غداء' } }),
+			{ ...OPTIONS, locales: LOCALES },
+		)
+		if (!first.ok) throw new Error(JSON.stringify(first.errors))
+		const back = stateFromDefinition(first.definition, [], 'USD', LOCALES)
+		expect(back.name).toEqual({ en: 'Lunch', ar: 'غداء' })
+		expect(stateToDefinition(back, { ...OPTIONS, locales: LOCALES })).toEqual(
+			first,
+		)
+		// The default language changed to Arabic, which has a translation.
+		const arabic = stateFromDefinition(first.definition, [], 'USD', {
+			defaultLocale: 'ar',
+		})
+		expect(arabic.name).toEqual({ en: 'Lunch', ar: 'غداء' })
+		// A discount saved before translations: the canonical name is the default entry.
+		const { nameI18n: ignoredNameI18n, ...plain } = first.definition
+		expect(stateFromDefinition(plain, [], 'USD', LOCALES).name).toEqual({
+			en: 'Lunch',
+		})
 	})
 })
 

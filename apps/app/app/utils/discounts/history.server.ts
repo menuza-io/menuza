@@ -23,15 +23,25 @@ const KIND_BY_ACTION: Record<string, DiscountHistoryKind> = {
 	[AuditAction.DISCOUNT_STATUS_CHANGED]: 'status',
 }
 
+/**
+ * Keys that are one setting in the editor: the translations of the name and
+ * description are counted with the text they translate.
+ */
+const FOLDED_KEYS: Record<string, string> = {
+	nameI18n: 'name',
+	descriptionI18n: 'description',
+}
+
 /** Top-level keys whose values differ, in the order of `after`. */
 export function changedDiscountKeys(
 	before: Record<string, unknown>,
 	after: Record<string, unknown>,
 ): string[] {
 	const keys = new Set([...Object.keys(after), ...Object.keys(before)])
-	return [...keys].filter(
-		(key) => JSON.stringify(before[key]) !== JSON.stringify(after[key]),
-	)
+	const changed = [...keys]
+		.filter((key) => JSON.stringify(before[key]) !== JSON.stringify(after[key]))
+		.map((key) => FOLDED_KEYS[key] ?? key)
+	return [...new Set(changed)]
 }
 
 type RecordInput = {

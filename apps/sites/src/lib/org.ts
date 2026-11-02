@@ -523,6 +523,9 @@ export type PublicMenuPromotion = {
 	id: string
 	name: string
 	description: string | null
+	/** `name` / `description` per website language (`localizePromotion`). */
+	nameI18n?: Record<string, string>
+	descriptionI18n?: Record<string, string>
 	valueType: 'percent' | 'fixed' | 'fixed_price' | 'free_delivery'
 	percentBp: number | null
 	amountMinor: number | null

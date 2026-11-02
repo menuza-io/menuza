@@ -13,6 +13,7 @@ import {
 } from './discounts.server.ts'
 import {
 	loadDiscountLocations,
+	loadDiscountSiteLocales,
 	loadOrganizationDiscountIds,
 } from './editor-data.server.ts'
 import {
@@ -173,7 +174,10 @@ export async function saveDiscountEditor({
 	// (orders price in their location's currency and the engine never converts).
 	// A discount with no location to read one from (an organization without
 	// locations) keeps the currency it was entered in, or takes the region's.
-	const locations = await loadDiscountLocations(access.organization.id)
+	const [locations, siteLocales] = await Promise.all([
+		loadDiscountLocations(access.organization.id),
+		loadDiscountSiteLocales(access.organization.id),
+	])
 	let built: ReturnType<typeof stateToDefinition>
 	try {
 		const { currency } = resolveDiscountCurrency(
@@ -186,6 +190,8 @@ export async function saveDiscountEditor({
 			currency,
 			// New discounts start paused so nothing goes live until the operator resumes.
 			status: discountId ? status.data : 'paused',
+			// The name and description keep the website's languages only.
+			locales: siteLocales,
 		})
 	} catch {
 		// A hand-made payload of the wrong shape is a bad request, not a crash.

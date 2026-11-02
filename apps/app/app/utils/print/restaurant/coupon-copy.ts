@@ -1,4 +1,5 @@
 import { localeCopy } from '@repo/common/print-shop'
+import { localizedDiscountText } from '@repo/discounts'
 
 /**
  * The words a coupon print starts with, written from the discount itself so
@@ -159,6 +160,8 @@ const fill = (template: string, values: Record<string, string>) =>
 
 export type CouponOffer = {
 	name: string
+	/** `name` per website language; the print's language picks one. */
+	nameI18n?: Readonly<Record<string, string>>
 	application: string
 	valueType: string
 	percentBp: number | null
@@ -226,8 +229,10 @@ function lastDay(endsAt: string): Date | null {
 
 function headlineFor(offer: CouponOffer, locale: string) {
 	const t = (key: Key) => localeCopy(COPY, locale, key)
+	// The discount's own name, in the print's language when the owner gave one.
+	const name = localizedDiscountText(offer.nameI18n, offer.name, locale)
 	if (offer.valueType === 'free_delivery') return t('freeDelivery')
-	if (offer.hasTiers) return offer.name
+	if (offer.hasTiers) return name
 	if (offer.valueType === 'percent' && offer.percentBp) {
 		return fill(t('percentOff'), {
 			value: new Intl.NumberFormat(locale, {
@@ -241,7 +246,7 @@ function headlineFor(offer: CouponOffer, locale: string) {
 			value: money(offer.amountMinor, offer.currency, locale),
 		})
 	}
-	return offer.name
+	return name
 }
 
 function termsFor(offer: CouponOffer, locale: string, now: number) {

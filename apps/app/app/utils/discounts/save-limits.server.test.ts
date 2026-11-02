@@ -38,7 +38,7 @@ function request(fields: Record<string, string>, state?: object) {
 			'state',
 			JSON.stringify({
 				...emptyEditorState(),
-				name: 'Lunch',
+				name: { en: 'Lunch' },
 				percent: '10',
 				...state,
 			}),
