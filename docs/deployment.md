@@ -179,8 +179,11 @@ and block volume per region. Mount the volume at `/data/tenants`
    US. Set `OCI_TENANT_US_HOST` in GitHub variables.
 
 Skip an OCI load balancer and NAT gateway. Put Cloudflare (or a Cloudflare
-Tunnel) in front of port 8080. Set `APP_URL` to the US App so org flags do not
-require a shared control-plane database.
+Tunnel) in front of port 8080. tenant-api believes `cf-connecting-ip` only from
+a Cloudflare edge or a peer on the host's own network (a Tunnel or local proxy),
+and uses the TCP peer otherwise. Any other reverse proxy in front of it must
+overwrite or strip `cf-connecting-ip` and `x-forwarded-for`. Set `APP_URL` to
+the US App so org flags do not require a shared control-plane database.
 
 On each VM, copy `apps/tenant-api/docker-compose.yml` and
 `apps/tenant-api/.env.example` to `/opt/tenant-api`, attach the volume at

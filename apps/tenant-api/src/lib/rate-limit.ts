@@ -1,6 +1,7 @@
 import { LRUCache } from 'lru-cache'
 import type { Context, Next } from 'hono'
 import { ENV } from 'varlock/env'
+import { addressBucket, clientAddress } from './client-ip.ts'
 
 interface RateLimitConfig {
 	windowMs: number
@@ -38,19 +39,15 @@ export function resetRateLimits() {
 }
 
 /**
- * IP resolution priority for rate limiting:
- * 1. cf-connecting-ip: set by the Cloudflare edge proxy
- * 2. x-forwarded-for, **last** entry: the address our own reverse proxy
- *    appended. The first entry is client-supplied and trivially spoofed, which
- *    would let one client mint unlimited rate-limit buckets.
- * 3. Fallback: 'unknown'
+ * The key a rate limit counts (`clientAddress` in `client-ip.ts`: forwarding
+ * headers only from Cloudflare or a proxy on our own network, otherwise the TCP
+ * peer), or `'unknown'` when there is none. An IPv6 client counts by its /64, so
+ * rotating the host part buys no new bucket. This is a bucket, not an address:
+ * use `clientAddress` where the real address is needed (Turnstile `remoteIp`).
  */
 export function resolveClientIp(c: Context): string {
-	const cfIp = c.req.header('cf-connecting-ip')?.trim()
-	if (cfIp) return cfIp
-	const forwarded = c.req.header('x-forwarded-for')
-	const last = forwarded?.split(',').at(-1)?.trim()
-	return last || 'unknown'
+	const address = clientAddress(c)
+	return address ? addressBucket(address) : 'unknown'
 }
 
 export function rateLimit(name: string, config: RateLimitConfig) {

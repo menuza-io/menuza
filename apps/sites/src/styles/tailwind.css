@@ -35,6 +35,8 @@
 	--color-input: var(--input);
 	--color-border: var(--border);
 	--color-destructive: var(--destructive);
+	--color-success: var(--success);
+	--color-warning: var(--warning);
 	--color-accent-foreground: var(--accent-foreground);
 	--color-accent: var(--accent);
 	--color-muted-foreground: var(--muted-foreground);
@@ -98,11 +100,18 @@
  * ------------------------------------------------------------------------- */
 
 :root {
+	/* Status roles: a universal hue pulled toward the org theme. Use as tints
+	 * (`bg-success/10`), pair with words and an icon, never color alone. */
+	--success: color-mix(in oklch, oklch(0.55 0.13 155) 80%, var(--primary));
+	--warning: color-mix(in oklch, oklch(0.62 0.14 65) 85%, var(--foreground));
+
 	/* Neutral elevation for floating layers. */
 	--elev-3: 0 12px 32px -8px oklch(0 0 0 / 0.22), 0 4px 8px oklch(0 0 0 / 0.06);
 }
 
 .dark {
+	--success: color-mix(in oklch, oklch(0.74 0.14 155) 80%, var(--primary));
+	--warning: color-mix(in oklch, oklch(0.8 0.13 75) 85%, var(--foreground));
 	--elev-3: 0 16px 40px -8px oklch(0 0 0 / 0.6);
 }
 
@@ -236,4 +245,56 @@
 		color: var(--muted-foreground);
 		cursor: not-allowed;
 	}
+}
+
+/* Tiny label on cards: Popular, Sold out, Live, Ends soon. Pair with a tone. */
+@utility badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+	min-height: 1.375rem;
+	padding-inline: 0.5rem;
+	border-radius: max(4px, calc(var(--radius) - 4px));
+	border: 1px solid transparent;
+	font-size: 0.75rem;
+	line-height: 1rem;
+	font-weight: 600;
+	white-space: nowrap;
+	/* The tint is gone when the browser forces colors: keep the label's edge so
+	   it still reads as a badge. */
+	@media (forced-colors: active) {
+		border-color: CanvasText;
+	}
+}
+@utility tone-neutral {
+	background-color: var(--muted);
+	color: var(--muted-foreground);
+	border-color: var(--border);
+}
+@utility tone-brand {
+	background-color: color-mix(in oklch, var(--primary) 12%, transparent);
+	/* Mostly the foreground, so a light brand colour (yellow, mint) still reads
+	   on its own tint; a dark brand colour keeps its hue. */
+	color: color-mix(in oklch, var(--primary) 40%, var(--foreground));
+	border-color: color-mix(in oklch, var(--primary) 24%, transparent);
+}
+@utility tone-success {
+	background-color: color-mix(in oklch, var(--success) 12%, transparent);
+	color: color-mix(in oklch, var(--success) 55%, var(--foreground));
+	border-color: color-mix(in oklch, var(--success) 25%, transparent);
+}
+@utility tone-warning {
+	background-color: color-mix(in oklch, var(--warning) 14%, transparent);
+	color: color-mix(in oklch, var(--warning) 55%, var(--foreground));
+	border-color: color-mix(in oklch, var(--warning) 30%, transparent);
+}
+@utility tone-danger {
+	background-color: color-mix(in oklch, var(--destructive) 10%, transparent);
+	color: var(--destructive);
+	border-color: color-mix(in oklch, var(--destructive) 25%, transparent);
+}
+@utility tone-solid {
+	background-color: var(--foreground);
+	color: var(--background);
+	border-color: var(--foreground);
 }
