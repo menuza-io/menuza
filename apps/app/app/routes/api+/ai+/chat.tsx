@@ -29,6 +29,10 @@ import {
 	ORG_PERMISSIONS,
 	requireUserWithOrganizationPermission,
 } from '#app/utils/organization/permissions.server.ts'
+import {
+	AI_REQUEST_RATE_LIMIT,
+	checkRateLimit,
+} from '#app/utils/rate-limit.server.ts'
 import { getReservationsFeatureState } from '#app/utils/reservations/access.server.ts'
 import { addableBlockTypes } from '#app/utils/website/block-types.ts'
 
@@ -328,6 +332,14 @@ ${
 export const maxDuration = 30
 
 export const action = async (args: ActionFunctionArgs) => {
+	const userId = await requireUserId(args.request)
+	const limit = await checkRateLimit(
+		{ type: 'user', value: userId },
+		AI_REQUEST_RATE_LIMIT,
+	)
+	if (!limit.allowed) {
+		return new Response('Too many requests', { status: 429 })
+	}
 	// The page-editor tools are built synchronously, after hasWebsiteAccess has
 	// run for the same organization, so the flag is read there.
 	const reservationsOnlineByOrg = new Map<string, boolean>()

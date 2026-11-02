@@ -3,8 +3,8 @@ import {
 	integrationOAuthCallbackUrl,
 	type ReviewProviderName,
 } from '@repo/integrations'
-import { redirectDocument } from 'react-router'
 import { ENV } from '#app/utils/env.server.ts'
+import { redirectToProviderWithHandoff } from '#app/utils/integrations/oauth-redirect.server.ts'
 
 export async function connectReviewProvider(
 	request: Request,
@@ -14,7 +14,7 @@ export async function connectReviewProvider(
 	organizationLocationId: string,
 ) {
 	const redirectUri = integrationOAuthCallbackUrl(ENV.BASE_URL ?? '', request)
-	const { authUrl } = await integrationManager.initiateOAuth(
+	const { authUrl, state } = await integrationManager.initiateOAuth(
 		organizationId,
 		providerName,
 		redirectUri,
@@ -23,7 +23,13 @@ export async function connectReviewProvider(
 			organizationLocationId,
 		},
 	)
-	return redirectDocument(authUrl)
+	return redirectToProviderWithHandoff(
+		request,
+		organizationId,
+		providerName,
+		authUrl,
+		state,
+	)
 }
 
 export function connectGoogleBusinessProfile(

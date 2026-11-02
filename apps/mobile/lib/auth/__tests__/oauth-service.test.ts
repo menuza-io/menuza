@@ -1,5 +1,6 @@
 import * as AuthSession from 'expo-auth-session'
 import * as Linking from 'expo-linking'
+import * as SecureStore from 'expo-secure-store'
 import {
 	OAuthService,
 	OAUTH_PROVIDERS,
@@ -210,6 +211,11 @@ describe('OAuthService', () => {
 
 	describe('handleCallback', () => {
 		it('should successfully handle callback with code', async () => {
+			jest
+				.mocked(SecureStore.getItemAsync)
+				.mockResolvedValue(
+					JSON.stringify({ state: 'test-state', codeVerifier: 'verifier' }),
+				)
 			mockLinking.parse.mockReturnValue({
 				scheme: 'epicnotes',
 				hostname: 'auth',
@@ -228,7 +234,25 @@ describe('OAuthService', () => {
 				success: true,
 				code: 'test-auth-code',
 				state: 'test-state',
+				codeVerifier: 'verifier',
 			})
+		})
+
+		it('rejects a callback whose state was not started on this device', async () => {
+			jest.mocked(SecureStore.getItemAsync).mockResolvedValue(null)
+			mockLinking.parse.mockReturnValue({
+				scheme: 'epicnotes',
+				hostname: 'auth',
+				path: 'callback',
+				queryParams: { code: 'test-auth-code', state: 'other-state' },
+			} as Linking.ParsedURL)
+
+			const result = await oauthService.handleCallback(
+				'epicnotes://auth/callback?code=test-auth-code&state=other-state',
+			)
+
+			expect(result.success).toBe(false)
+			expect(result.error).toBe('state_mismatch')
 		})
 
 		it('should handle callback error', async () => {
@@ -255,6 +279,9 @@ describe('OAuthService', () => {
 
 		it('should handle invalid callback', async () => {
 			mockLinking.parse.mockReturnValue({
+				scheme: 'epicnotes',
+				hostname: 'auth',
+				path: 'callback',
 				queryParams: {},
 			} as Linking.ParsedURL)
 

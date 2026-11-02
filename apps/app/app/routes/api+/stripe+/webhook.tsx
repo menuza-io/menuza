@@ -176,7 +176,11 @@ export async function action({ request, context }: ActionFunctionArgs) {
 					break
 				}
 				if (event.type === 'checkout.session.completed') {
-					await recordShopOrderFromConnectWebhook(session, event.type)
+					await recordShopOrderFromConnectWebhook(
+						session,
+						event.type,
+						event.account,
+					)
 				}
 				break
 			}
@@ -198,7 +202,11 @@ export async function action({ request, context }: ActionFunctionArgs) {
 					// bound session. Session-level events are authoritative instead.
 					break
 				}
-				await recordShopOrderFromConnectWebhook(paymentIntent, event.type)
+				await recordShopOrderFromConnectWebhook(
+					paymentIntent,
+					event.type,
+					event.account,
+				)
 				break
 			}
 

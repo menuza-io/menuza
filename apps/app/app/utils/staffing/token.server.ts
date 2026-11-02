@@ -1,4 +1,5 @@
 import { brand } from '@repo/config/brand'
+import { assertSecretNotPlaceholder } from '@repo/security'
 import {
 	restrictGrantsForImpersonation,
 	STAFFING_PERMISSIONS as P,
@@ -142,6 +143,7 @@ export async function mintStaffingToken(
 	input: MintStaffingTokenInput,
 ): Promise<MintedStaffingToken> {
 	const operatorSecret = ENV.TENANT_OPERATOR_TOKEN
+	assertSecretNotPlaceholder('TENANT_OPERATOR_TOKEN', operatorSecret ?? '')
 	if (!operatorSecret || operatorSecret.length < 16) {
 		throw new Response(
 			'TENANT_OPERATOR_TOKEN must be configured with >= 16 chars',

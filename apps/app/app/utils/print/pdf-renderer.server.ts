@@ -1,4 +1,4 @@
-import { ENV } from 'varlock/env'
+import { readLiveEnv } from '#app/utils/env.server.ts'
 
 /**
  * Turns a print document into a PDF with Cloudflare Browser Rendering (the
@@ -10,15 +10,14 @@ import { ENV } from 'varlock/env'
  * print-ready page instead and the browser's print dialog saves the PDF.
  */
 
-/** Read live (the Worker mirrors bindings into `process.env`), then varlock. */
+/** Read live (see `readLiveEnv`). */
 function rendererEnv(
 	name:
 		| 'PRINT_BROWSER_ACCOUNT_ID'
 		| 'PRINT_BROWSER_API_TOKEN'
 		| 'PRINT_RENDER_LIMIT_PER_HOUR',
 ): string {
-	const live = typeof process !== 'undefined' ? process.env?.[name] : undefined
-	return String(live ?? (ENV as Record<string, unknown>)[name] ?? '').trim()
+	return readLiveEnv(name)
 }
 
 export type PdfRenderResult =

@@ -47,6 +47,7 @@ import {
 	type ActionFunctionArgs,
 	type LoaderFunctionArgs,
 	Link,
+	redirect,
 	useLoaderData,
 } from 'react-router'
 import {
@@ -66,6 +67,7 @@ import {
 	importReviewActionIntent,
 	type ReviewIntegrationItem,
 } from '#app/components/settings/cards/organization/review-integrations-card.tsx'
+import { setIntegrationOAuthState } from '#app/utils/integrations/oauth-state.server.ts'
 import { connectPosPlatform } from '#app/utils/integrations/pos-connect.server.ts'
 import { connectReviewProvider } from '#app/utils/integrations/review-providers.server.ts'
 import { getLocationDisplayName } from '#app/utils/location/locations.ts'
@@ -237,7 +239,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		slug: true,
 	})
 
-	await requireUserWithOrganizationPermission(
+	const userId = await requireUserWithOrganizationPermission(
 		request,
 		organization.id,
 		ORG_PERMISSIONS.UPDATE_SETTINGS_ANY,
@@ -283,13 +285,26 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			const url = new URL(request.url)
 			const protocol = url.protocol === 'https:' ? 'https:' : 'http:'
 			const redirectUri = `${protocol}//${url.host}/api/integrations/oauth/callback?provider=${encodeURIComponent(providerName)}`
-			const { authUrl } = await integrationManager.initiateOAuth(
+
+			const { authUrl, state } = await integrationManager.initiateOAuth(
 				organization.id,
 				providerName,
 				redirectUri,
 				{ redirectUrl: redirectTo },
 			)
-			return Response.redirect(authUrl)
+
+			// The callback finishes only what this browser started, for this
+			// member (see api+/integrations+/oauth.callback.tsx).
+			return redirect(authUrl, {
+				headers: {
+					'Set-Cookie': await setIntegrationOAuthState({
+						state,
+						provider: providerName,
+						userId,
+						orgSlug: organization.slug,
+					}),
+				},
+			})
 		} catch (error) {
 			return redirectWithToast(redirectTo, {
 				title: 'Integration failed',

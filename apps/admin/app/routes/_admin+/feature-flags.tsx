@@ -1,3 +1,4 @@
+import { requireUserWithRole } from '@repo/auth'
 import { and, ConfigFlag, db, eq, isNull } from '@repo/database'
 import { type ActionFunctionArgs, type LoaderFunctionArgs } from 'react-router'
 import { z } from 'zod'
@@ -19,7 +20,9 @@ function maybePurgeDiscountSiteCache(...flags: (FlagPlacement | undefined)[]) {
 	}
 }
 
-export async function loader({ request: _request }: LoaderFunctionArgs) {
+export async function loader({ request }: LoaderFunctionArgs) {
+	// Layout loaders do not run for direct action requests; guard here too.
+	await requireUserWithRole(request, 'admin')
 	const flags = (await db.select().from(ConfigFlag)).map((flag) => ({
 		...flag,
 		value: flag.value as any,
@@ -68,6 +71,7 @@ const deleteSchema = z.object({
 })
 
 export async function action({ request }: ActionFunctionArgs) {
+	await requireUserWithRole(request, 'admin')
 	const formData = await request.formData()
 	const _action = formData.get('_action')
 

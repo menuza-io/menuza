@@ -2,7 +2,11 @@ import crypto from 'node:crypto'
 import { auditService, AuditAction } from '@repo/audit'
 import { isCloudflareWorkerRuntime } from '@repo/common'
 import {
+	and,
 	db,
+	gt,
+	lte,
+	Session,
 	eq,
 	MCPAccessToken,
 	MCPAuthorization,
@@ -12,6 +16,7 @@ import {
 	Organization,
 	User,
 } from '@repo/database'
+import { isActiveOrganizationMember } from '#app/utils/org-membership.server.ts'
 
 // Token expiration constants
 export const ACCESS_TOKEN_EXPIRATION = 60 * 60 * 1000 // 1 hour
@@ -212,6 +217,8 @@ const authorizationCodeCache = new Map<
 		expiresAt: number
 		codeChallenge?: string
 		codeChallengeMethod?: string
+		issuedAt: number
+		sessionUserId: string | null
 	}
 >()
 
@@ -316,6 +323,15 @@ export async function validateAccessToken(accessToken: string) {
 		return null
 	}
 
+	if (
+		!(await isActiveOrganizationMember(
+			accessTokenRecord.authorization.userId,
+			accessTokenRecord.authorization.organizationId,
+		))
+	) {
+		return null
+	}
+
 	return {
 		user: accessTokenRecord.user,
 		organization: accessTokenRecord.organization,
@@ -342,6 +358,15 @@ export async function validateApiKey(apiKey: string) {
 	if (
 		apiKeyRecord.apiKey.expiresAt &&
 		apiKeyRecord.apiKey.expiresAt < new Date()
+	) {
+		return null
+	}
+
+	if (
+		!(await isActiveOrganizationMember(
+			apiKeyRecord.apiKey.userId,
+			apiKeyRecord.apiKey.organizationId,
+		))
 	) {
 		return null
 	}
@@ -391,6 +416,7 @@ export async function createAuthorizationCode({
 	redirectUri,
 	codeChallenge,
 	codeChallengeMethod,
+	sessionUserId = null,
 }: {
 	userId: string
 	organizationId: string
@@ -399,6 +425,15 @@ export async function createAuthorizationCode({
 	redirectUri: string
 	codeChallenge?: string
 	codeChallengeMethod?: string
+	/**
+	 * Tie redemption to the sign-in that approved it: the code is only good while
+	 * a session of `sessionUserId` that already existed at issue time is still
+	 * live. This is the real signed-in user, which differs from `userId` when an
+	 * administrator is impersonating. Password reset deletes every session, so it
+	 * voids pending codes in the database, on any isolate and even for a
+	 * redemption already in flight.
+	 */
+	sessionUserId?: string | null
 }): Promise<string> {
 	const code = generateToken()
 	const codeHash = hashToken(code)
@@ -413,9 +448,22 @@ export async function createAuthorizationCode({
 		expiresAt: Date.now() + AUTHORIZATION_CODE_EXPIRATION,
 		codeChallenge,
 		codeChallengeMethod,
+		issuedAt: Date.now(),
+		sessionUserId,
 	})
 
 	return code
+}
+
+/**
+ * Drop every unredeemed authorization code issued to a user (password reset,
+ * ban). A code obtained before such an event must not turn into a new active
+ * authorization after it.
+ */
+export function revokePendingAuthorizationCodes(userId: string) {
+	for (const [hash, entry] of authorizationCodeCache.entries()) {
+		if (entry.userId === userId) authorizationCodeCache.delete(hash)
+	}
 }
 
 /**
@@ -468,32 +516,37 @@ export async function exchangeAuthorizationCode(
 		return null
 	}
 
-	// Verify PKCE if code challenge was provided
-	if (authData.codeChallenge) {
-		if (!codeVerifier) {
-			return null // code_verifier required but not provided
-		}
+	// Fail closed: clients are public, so PKCE is the only proof that the party
+	// redeeming a code is the one that asked for it. Every code is issued with an
+	// S256 challenge (see the authorize route); `plain` and no-challenge are out.
+	if (
+		!authData.codeChallenge ||
+		authData.codeChallengeMethod !== 'S256' ||
+		!codeVerifier
+	) {
+		return null
+	}
+	const computedChallenge = crypto
+		.createHash('sha256')
+		.update(codeVerifier)
+		.digest('base64url')
+	if (computedChallenge !== authData.codeChallenge) {
+		return null // PKCE verification failed
+	}
 
-		// Default to 'plain' per RFC 7636 when not specified
-		const method = authData.codeChallengeMethod || 'plain'
-
-		// Verify the code_verifier against the code_challenge
-		if (method === 'S256') {
-			const computedChallenge = crypto
-				.createHash('sha256')
-				.update(codeVerifier)
-				.digest('base64url')
-
-			if (computedChallenge !== authData.codeChallenge) {
-				return null // PKCE verification failed
-			}
-		} else if (method === 'plain') {
-			if (codeVerifier !== authData.codeChallenge) {
-				return null // PKCE verification failed
-			}
-		} else {
-			return null // Unsupported code_challenge_method
-		}
+	if (authData.sessionUserId) {
+		const [session] = await db
+			.select({ id: Session.id })
+			.from(Session)
+			.where(
+				and(
+					eq(Session.userId, authData.sessionUserId),
+					lte(Session.createdAt, new Date(authData.issuedAt)),
+					gt(Session.expirationDate, new Date()),
+				),
+			)
+			.limit(1)
+		if (!session) return null
 	}
 
 	// Create authorization record
@@ -553,6 +606,15 @@ export async function refreshAccessToken(refreshToken: string) {
 		refreshTokenRecord.token.revoked ||
 		!refreshTokenRecord.authorization.isActive ||
 		refreshTokenRecord.token.expiresAt < new Date()
+	) {
+		return null
+	}
+
+	if (
+		!(await isActiveOrganizationMember(
+			refreshTokenRecord.authorization.userId,
+			refreshTokenRecord.authorization.organizationId,
+		))
 	) {
 		return null
 	}

@@ -1,3 +1,5 @@
+import { isLocalHostname, isLocalUrl } from '@repo/security/local-host'
+
 /**
  * Activation rule for the local payment emulators. Pure and tiny on purpose:
  * production code imports this file, never the emulators themselves.
@@ -183,29 +185,9 @@ function safeMode(env: PaymentsMockEnv) {
 	}
 }
 
-/** Loopback and special-use local names. Mock pages never answer anywhere else. */
-export function isLocalHostname(hostname: string) {
-	const host = hostname
-		.trim()
-		.toLowerCase()
-		.replace(/^\[|\]$/g, '')
-	return (
-		host === 'localhost' ||
-		host === '127.0.0.1' ||
-		host === '::1' ||
-		host.endsWith('.localhost') ||
-		host.endsWith('.test')
-	)
-}
-
-export function isLocalUrl(value: string | undefined | null) {
-	if (!value) return false
-	try {
-		return isLocalHostname(new URL(value).hostname)
-	} catch {
-		return false
-	}
-}
+// Loopback and special-use local names. Mock pages never answer anywhere else.
+// The one shared rule, re-exported so callers of this package keep working.
+export { isLocalHostname, isLocalUrl }
 
 /**
  * The deployment is local: `BASE_URL` must be present and local, and

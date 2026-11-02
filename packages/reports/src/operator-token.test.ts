@@ -36,6 +36,32 @@ describe('operator analytics token', () => {
 		})
 	})
 
+	it('rejects a token with no expiry', async () => {
+		const key = createHash('sha256')
+			.update('tenant-operator-analytics-v1:')
+			.update(secret)
+			.digest()
+		const token = await new SignJWT({
+			orgId: 'org_1',
+			role: 'operator',
+			scope: 'analytics',
+			subjects: [],
+			scopeIds: null,
+		})
+			.setProtectedHeader({ alg: 'HS256' })
+			.setSubject('user_1')
+			.setIssuer(OPERATOR_TOKEN_ISS)
+			.setAudience(OPERATOR_TOKEN_AUD)
+			.setIssuedAt()
+			.sign(key)
+		expect(
+			await verifyOperatorAnalyticsToken({
+				internalCommandToken: secret,
+				token,
+			}),
+		).toBeNull()
+	})
+
 	it('rejects a token signed with a different secret', async () => {
 		const { token } = await mintOperatorAnalyticsToken({
 			internalCommandToken: secret,
@@ -99,6 +125,7 @@ describe('operator analytics token', () => {
 			.setSubject('user_1')
 			.setIssuer(OPERATOR_TOKEN_ISS)
 			.setAudience(OPERATOR_TOKEN_AUD)
+			.setIssuedAt()
 			.setExpirationTime('5m')
 			.sign(key)
 		const claims = await verifyOperatorAnalyticsToken({

@@ -237,13 +237,14 @@ export async function authenticateOperator(c: Context) {
 		throw c.json({ error: 'Not configured' }, 503)
 	}
 
-	let decoded: { orgId: string; role: string }
+	let decoded: { orgId: string; role: string; scope?: string }
 	try {
 		const secret = new TextEncoder().encode(operatorToken)
 		const { payload } = await jwtVerify(token, secret, {
 			audience: 'tenant-api-operator',
 			issuer: brand.shortName,
 			algorithms: ['HS256'],
+			requiredClaims: ['exp'],
 		})
 		decoded = payload as typeof decoded
 	} catch {
@@ -252,6 +253,12 @@ export async function authenticateOperator(c: Context) {
 
 	if (decoded.role !== 'operator') {
 		throw c.json({ error: 'Invalid role' }, 403)
+	}
+
+	// Journeys message customers: refuse tokens minted for a narrower purpose
+	// (mailbox, phone calls), which carry a `scope` claim.
+	if (decoded.scope) {
+		throw c.json({ error: 'Invalid token scope' }, 403)
 	}
 
 	return decoded

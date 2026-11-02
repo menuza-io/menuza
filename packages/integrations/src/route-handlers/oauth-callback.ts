@@ -1,11 +1,4 @@
-import { invariant } from '@epic-web/invariant'
-import {
-	Integration as IntegrationTable,
-	Organization as OrganizationTable,
-	and,
-	db,
-	eq,
-} from '@repo/database'
+import { and, db, eq, Integration as IntegrationTable } from '@repo/database'
 import {
 	integrationOAuthCallbackUrl,
 	readOAuthAuthorizationCode,
@@ -18,19 +11,29 @@ import { isPosProvider, providerNames, type PosProvider } from '../pos/types.ts'
 import { type LoaderFunctionArgs } from 'react-router'
 
 export interface OAuthCallbackDependencies {
-	requireUserId: (request: Request) => Promise<string>
+	/**
+	 * The organization this sign-in was started for. The app takes it from its
+	 * own record of the hand-off, after checking that the callback reached the
+	 * same browser and signed-in member, that the echoed state matches, and that
+	 * the member may still manage integrations. Never from the callback URL.
+	 */
+	organization: { id: string; slug: string }
 	redirectWithToast: (
 		url: string,
 		options: { title: string; description: string; type: string },
 	) => Response | Promise<Response>
 }
 
+/**
+ * Shared OAuth callback handler for integration providers.
+ * Handles both OAuth 1.0a (Trello) and OAuth 2.0 flows, and returns the
+ * member to the organization's integrations settings.
+ */
 export async function handleOAuthCallback(
 	{ request }: LoaderFunctionArgs,
 	deps: OAuthCallbackDependencies,
 ) {
-	await deps.requireUserId(request)
-
+	const back = `/${deps.organization.slug}/settings/integrations`
 	const url = new URL(request.url)
 	const code = readOAuthAuthorizationCode(url)
 	const state = url.searchParams.get('state')
@@ -47,14 +50,11 @@ export async function handleOAuthCallback(
 	if (error) {
 		const errorMsg = errorDescription || error
 		console.error('OAuth error:', errorMsg)
-		return deps.redirectWithToast(
-			state ? (peekOAuthState(state)?.redirectUrl ?? '/') : '/',
-			{
-				title: 'Integration failed',
-				description: `Failed to connect: ${errorMsg}`,
-				type: 'error',
-			},
-		)
+		return deps.redirectWithToast(back, {
+			title: 'Integration failed',
+			description: `Failed to connect: ${errorMsg}`,
+			type: 'error',
+		})
 	}
 
 	const isOAuth1 = oauthToken && oauthVerifier
@@ -69,7 +69,7 @@ export async function handleOAuthCallback(
 			state && !code
 				? `The provider did not return an authorization code (received: ${received.join(', ') || 'none'}). Remove the app and connect again to re-authorize.`
 				: `Missing required OAuth parameters (received: ${received.join(', ') || 'none'})`
-		return deps.redirectWithToast('/', {
+		return deps.redirectWithToast(back, {
 			title: 'Integration failed',
 			description,
 			type: 'error',
@@ -77,7 +77,7 @@ export async function handleOAuthCallback(
 	}
 
 	if (!providerName) {
-		return deps.redirectWithToast('/', {
+		return deps.redirectWithToast(back, {
 			title: 'Integration failed',
 			description: 'Missing provider parameter',
 			type: 'error',
@@ -98,8 +98,8 @@ export async function handleOAuthCallback(
 	}
 
 	try {
-		const integration = await oauthFlow.complete(providerName, {
-			organizationId: '',
+		await oauthFlow.complete(providerName, {
+			organizationId: deps.organization.id,
 			code: code || '',
 			state: state || '',
 			error: error || undefined,
@@ -110,19 +110,7 @@ export async function handleOAuthCallback(
 			redirectUri,
 		})
 
-		const [organization] = await db
-			.select({ slug: OrganizationTable.slug })
-			.from(OrganizationTable)
-			.where(eq(OrganizationTable.id, integration.organizationId))
-			.limit(1)
-
-		invariant(organization, 'Organization not found')
-
-		const successPath =
-			postConnectRedirect ??
-			(isPosProvider(providerName)
-				? `/${organization.slug}/settings/integrations`
-				: `/${organization.slug}/settings`)
+		const successPath = postConnectRedirect ?? back
 		const label = isPosProvider(providerName)
 			? providerNames[providerName as PosProvider]
 			: providerName
@@ -137,14 +125,14 @@ export async function handleOAuthCallback(
 			caught instanceof Error ? caught.message : 'Unknown error occurred'
 
 		if (errorMessage.includes('nonce already consumed')) {
-			let stateData = state ? peekOAuthState(state) : null
-			if (stateData) {
+			const stateData = state ? peekOAuthState(state) : null
+			if (stateData?.organizationId === deps.organization.id) {
 				const [existing] = await db
 					.select({ id: IntegrationTable.id })
 					.from(IntegrationTable)
 					.where(
 						and(
-							eq(IntegrationTable.organizationId, stateData.organizationId),
+							eq(IntegrationTable.organizationId, deps.organization.id),
 							eq(IntegrationTable.providerName, providerName),
 							eq(IntegrationTable.isActive, true),
 						),
@@ -152,23 +140,15 @@ export async function handleOAuthCallback(
 					.limit(1)
 
 				if (existing) {
-					const [organization] = await db
-						.select({ slug: OrganizationTable.slug })
-						.from(OrganizationTable)
-						.where(eq(OrganizationTable.id, stateData.organizationId))
-						.limit(1)
-					return deps.redirectWithToast(
-						organization ? `/${organization.slug}/settings/integrations` : '/',
-						{
-							title: 'Integration connected',
-							description: 'This connection was already completed.',
-							type: 'success',
-						},
-					)
+					return deps.redirectWithToast(back, {
+						title: 'Integration connected',
+						description: 'This connection was already completed.',
+						type: 'success',
+					})
 				}
 			}
 
-			return deps.redirectWithToast('/', {
+			return deps.redirectWithToast(back, {
 				title: 'Connection not completed',
 				description: 'Please try connecting again.',
 				type: 'error',
@@ -177,7 +157,7 @@ export async function handleOAuthCallback(
 
 		console.error('OAuth callback error:', caught)
 
-		return deps.redirectWithToast('/', {
+		return deps.redirectWithToast(back, {
 			title: 'Integration failed',
 			description: `Failed to complete connection: ${errorMessage}`,
 			type: 'error',

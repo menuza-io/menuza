@@ -25,6 +25,7 @@ describe('Canva emulator switch', () => {
 		for (const origin of [
 			'http://localhost:3001',
 			'http://127.0.0.1:3001',
+			'http://[::1]:3001',
 			'https://app.epic-startup.test:2999',
 		]) {
 			vi.stubEnv('BASE_URL', origin)

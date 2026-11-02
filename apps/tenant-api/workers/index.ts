@@ -350,7 +350,7 @@ async function handle(
 	) {
 		const orgId = await resolveOrgId(request, env)
 		if (orgId) {
-			const regionDenied = await assertOrgOnUsNode(orgId, env)
+			const regionDenied = await assertOrgOnUsNode(orgId, env, request)
 			if (regionDenied) return regionDenied
 			return forwardToOrg(request, env, orgId)
 		}
@@ -370,7 +370,7 @@ async function handle(
 	if (tickModule) {
 		const tickOrgId = await resolveOrgId(request, env)
 		if (tickOrgId) {
-			const regionDenied = await assertOrgOnUsNode(tickOrgId, env)
+			const regionDenied = await assertOrgOnUsNode(tickOrgId, env, request)
 			if (regionDenied) return regionDenied
 			return forwardToOrg(request, env, tickOrgId)
 		}
@@ -413,7 +413,7 @@ async function handle(
 
 	const regionDenied = isPublicReservationsPath(url.pathname)
 		? await assertReservationsOrgOnUsNode(orgId)
-		: await assertOrgOnUsNode(orgId, env)
+		: await assertOrgOnUsNode(orgId, env, request)
 	if (regionDenied) return regionDenied
 
 	return forwardToOrg(request, env, orgId)

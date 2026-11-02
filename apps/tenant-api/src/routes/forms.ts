@@ -70,7 +70,10 @@ function submissionClientIp(c: Context) {
 
 async function verifyFormTurnstile(c: Context, token: unknown) {
 	const secret = ENV.TURNSTILE_SECRET_KEY ?? ''
-	if (!isTurnstileConfigured(secret)) return true
+	// Off only for an explicit local NODE_ENV (see careers.ts).
+	if (!isTurnstileConfigured(secret)) {
+		return ENV.NODE_ENV === 'development' || ENV.NODE_ENV === 'test'
+	}
 	if (typeof token !== 'string' || !token.trim()) return false
 	const result = await verifyTurnstileToken({
 		secret,

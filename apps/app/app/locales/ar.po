@@ -42314,3 +42314,11 @@ msgstr "تكبير"
 #: app/components/reservations/floor-plan-canvas.tsx:983
 msgid "Zoom out"
 msgstr "تصغير"
+
+#: app/routes/mcp+/authorize.tsx:346
+msgid "An unregistered application is requesting access to your organization data"
+msgstr "يطلب تطبيق غير مسجّل الوصول إلى بيانات مؤسستك"
+
+#: app/routes/mcp+/authorize.tsx:361
+msgid "This application did not register with us, so we cannot verify who it is. Only continue if you started this request yourself."
+msgstr "لم يتم تسجيل هذا التطبيق لدينا، لذا لا يمكننا التحقق من هويته. تابع فقط إذا كنت أنت من بدأ هذا الطلب."

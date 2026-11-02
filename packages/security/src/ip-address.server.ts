@@ -52,6 +52,26 @@ function hasHeadersGet(
 }
 
 /**
+ * Cloudflare Workers has no TCP peer. `CF-Connecting-IP` is set by the edge
+ * and overwrites anything the client sent, so it is the client even when
+ * `TRUST_PROXY` was left at the schema default.
+ */
+function isCloudflareWorkerRuntime(): boolean {
+	const workerCaches = (globalThis as { caches?: { default?: unknown } }).caches
+	return workerCaches !== undefined && 'default' in workerCaches
+}
+
+let trustProxyWarningLogged = false
+
+function warnTrustProxyDisabled() {
+	if (trustProxyWarningLogged) return
+	trustProxyWarningLogged = true
+	console.error(
+		'TRUST_PROXY is disabled in production outside Cloudflare Workers. Rate limits and audit IPs will share one address until TRUST_PROXY=true.',
+	)
+}
+
+/**
  * Extract client IP address from various request types and proxy headers
  *
  * This function handles both Express-style requests (with `.get()` method) and
@@ -81,13 +101,6 @@ export function getClientIp(
 		return returnUndefined ? undefined : fallback
 	}
 
-	// If proxy headers are untrusted, rely strictly on direct request connection IP
-	if (!trustProxy) {
-		if (request.ip) return request.ip
-		if (request.socket?.remoteAddress) return request.socket.remoteAddress
-		return returnUndefined ? undefined : fallback
-	}
-
 	// Helper function to get header value regardless of request type
 	const getHeader = (name: string): string | null | undefined => {
 		if (hasGetMethod(request)) {
@@ -98,8 +111,26 @@ export function getClientIp(
 		return undefined
 	}
 
+	const onWorker = isCloudflareWorkerRuntime()
+	// On Workers this header is platform-controlled. Elsewhere it is spoofable,
+	// so it is only read when proxy headers are trusted.
+	if (onWorker) {
+		const cfConnectingIp = getHeader('CF-Connecting-IP')?.trim()
+		if (cfConnectingIp) return cfConnectingIp
+	}
+
+	// If proxy headers are untrusted, rely strictly on direct request connection IP
+	if (!trustProxy) {
+		if (ENV.NODE_ENV === 'production' && !onWorker) {
+			warnTrustProxyDisabled()
+		}
+		if (request.ip) return request.ip
+		if (request.socket?.remoteAddress) return request.socket.remoteAddress
+		return returnUndefined ? undefined : fallback
+	}
+
 	// Check provider-controlled edge headers first (Cloudflare preferred)
-	const cfConnectingIp = getHeader('CF-Connecting-IP')
+	const cfConnectingIp = getHeader('CF-Connecting-IP')?.trim()
 	if (cfConnectingIp) return cfConnectingIp
 
 	const realIp = getHeader('X-Real-IP')

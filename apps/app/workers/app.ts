@@ -9,6 +9,7 @@ import {
 } from 'react-router'
 import { installDevEmailCapture } from './dev-email-capture.ts'
 import { executionContext } from '../app/utils/after-response.server.ts'
+import { credentialRateLimitFor } from '../app/utils/credential-routes.ts'
 import { installDevS3Mock } from './dev-s3-mock.ts'
 import { applyWorkerEnv } from './worker-env.ts'
 
@@ -19,6 +20,27 @@ const cloudflareContext = createContext<{
 	env: Env
 	ctx: ExecutionContext
 }>()
+
+async function rateLimitCredentialRoutes(request: Request) {
+	// Playwright runs many fast logins from one address.
+	if (!import.meta.env.PROD || process.env.PLAYWRIGHT_TEST_BASE_URL) return null
+	const limit = credentialRateLimitFor(
+		request.method,
+		new URL(request.url).pathname,
+	)
+	if (!limit) return null
+
+	const [{ checkRateLimit, createRateLimitResponse }, { getClientIp }] =
+		await Promise.all([
+			import('../app/utils/rate-limit.server.ts'),
+			import('@repo/security'),
+		])
+	const result = await checkRateLimit(
+		{ type: 'ip', value: getClientIp(request) },
+		limit,
+	)
+	return result.allowed ? null : createRateLimitResponse(result.resetAt)
+}
 
 type RequestHandler = ReturnType<typeof createRequestHandler>
 
@@ -68,6 +90,12 @@ export default {
 		// here and forwarded to the organization's Durable Object.
 		const chatResponse = await chatUpgradeModule.handleChatRequest(request)
 		if (chatResponse) return chatResponse
+
+		// The Express server rate-limits credential routes, but this entry does
+		// not run it. Mirror its strictest tier (10/min per client IP) so password
+		// guessing, signup and token refresh are throttled here too.
+		const limited = await rateLimitCredentialRoutes(request)
+		if (limited) return limited
 
 		await linguiModule.ensureLinguiRequestLocale(request)
 

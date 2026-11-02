@@ -318,6 +318,25 @@ export function serializeSiteThemeConfig(config: SiteThemeConfig): string {
 }
 
 /**
+ * The theme is emitted inside an inline `<style>` element, and `cssVars` comes
+ * from stored JSON. A value that closes the element (`</style><script>`), the
+ * declaration (`;`) or the rule (`}`) would turn a color override into markup
+ * or arbitrary CSS, so only plain token names and values pass.
+ */
+function sanitizeCssVarOverrides(
+	cssVars: Record<string, string> | null | undefined,
+): Record<string, string> {
+	const out: Record<string, string> = {}
+	for (const [key, value] of Object.entries(cssVars ?? {})) {
+		if (!/^[a-zA-Z0-9-]{1,64}$/.test(key)) continue
+		if (typeof value !== 'string' || value.length > 200) continue
+		if (/[<>{};\\]|\/\*|@import|url\s*\(/i.test(value)) continue
+		out[key] = value
+	}
+	return out
+}
+
+/**
  * Same merge as shadcn create: base color tokens, then theme overrides.
  */
 export function resolveSiteThemeTokens(config: SiteThemeConfig): {
@@ -328,17 +347,18 @@ export function resolveSiteThemeTokens(config: SiteThemeConfig): {
 	const theme = THEME_BY_NAME[config.theme] ?? THEME_BY_NAME.neutral!
 	const radius = SITE_THEME_RADIUS_VALUES[config.radius]
 
+	const overrides = sanitizeCssVarOverrides(config.cssVars)
 	const lightRaw: ThemeTokens = {
 		...base.cssVars.light,
 		...theme.cssVars.light,
 		radius,
-		...config.cssVars,
+		...overrides,
 	}
 	const darkRaw: ThemeTokens = {
 		...base.cssVars.dark,
 		...theme.cssVars.dark,
 		radius,
-		...config.cssVars,
+		...overrides,
 	}
 
 	return {

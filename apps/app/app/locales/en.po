@@ -42322,3 +42322,11 @@ msgstr "Zoom in"
 #: app/components/reservations/floor-plan-canvas.tsx:983
 msgid "Zoom out"
 msgstr "Zoom out"
+
+#: app/routes/mcp+/authorize.tsx:346
+msgid "An unregistered application is requesting access to your organization data"
+msgstr "An unregistered application is requesting access to your organization data"
+
+#: app/routes/mcp+/authorize.tsx:361
+msgid "This application did not register with us, so we cannot verify who it is. Only continue if you started this request yourself."
+msgstr "This application did not register with us, so we cannot verify who it is. Only continue if you started this request yourself."

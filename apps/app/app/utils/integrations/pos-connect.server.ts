@@ -7,9 +7,8 @@ import {
 	providerUsesMerchantOAuth,
 	startPosOAuth,
 } from '@repo/integrations'
-import { redirectDocument } from 'react-router'
 import { ENV } from '#app/utils/env.server.ts'
-import { serializePosOAuthState } from '#app/utils/integrations/pos-oauth.server.ts'
+import { redirectToProviderWithHandoff } from '#app/utils/integrations/oauth-redirect.server.ts'
 
 export function posOAuthCallbackUrl(request: Request): string {
 	return integrationOAuthCallbackUrl(ENV.BASE_URL ?? '', request)
@@ -54,9 +53,13 @@ export async function connectPosPlatform(
 				organizationLocationId: options?.organizationLocationId,
 			},
 		)
-		return redirectDocument(authUrl, {
-			headers: { 'Set-Cookie': await serializePosOAuthState(state) },
-		})
+		return redirectToProviderWithHandoff(
+			request,
+			organizationId,
+			providerName,
+			authUrl,
+			state,
+		)
 	}
 
 	const organizationLocationId = options?.organizationLocationId?.trim()

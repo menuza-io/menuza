@@ -14,7 +14,7 @@ import { emptyEditorState, type EditorState } from './editor-model.ts'
 import { saveDiscountEditor } from './save.server.ts'
 
 vi.mock('#app/utils/sites/kv-cache.server.ts', () => ({
-	purgeOrganizationSiteCache: vi.fn(async () => {}),
+	purgeOrganizationSiteCache: vi.fn(async () => true),
 }))
 
 async function setup(
@@ -366,6 +366,7 @@ describe('saveDiscountEditor', () => {
 					status: rows.find((row) => row.id === id)?.status,
 					names: rows.map((row) => row.name),
 				})
+				return true
 			})
 			return seen
 		}
@@ -393,7 +394,7 @@ describe('saveDiscountEditor', () => {
 
 		it('after create and after update', async () => {
 			const { access } = await setup()
-			purge.mockImplementation(async () => {})
+			purge.mockImplementation(async () => true)
 			const id = await create(access, { name: { en: 'First' } })
 			expect(purge).toHaveBeenCalledTimes(2)
 			calledFor(access)
@@ -413,7 +414,7 @@ describe('saveDiscountEditor', () => {
 
 		it('after pause, archive and restore', async () => {
 			const { access } = await setup()
-			purge.mockImplementation(async () => {})
+			purge.mockImplementation(async () => true)
 			const id = await create(access)
 			purge.mockClear()
 			const seen = watchPurge(access, id)
@@ -432,7 +433,7 @@ describe('saveDiscountEditor', () => {
 
 		it('after duplicate', async () => {
 			const { access } = await setup()
-			purge.mockImplementation(async () => {})
+			purge.mockImplementation(async () => true)
 			const id = await create(access, { name: { en: 'Lunch deal' } })
 			purge.mockClear()
 			const seen = watchPurge(access, id)
@@ -448,7 +449,7 @@ describe('saveDiscountEditor', () => {
 
 		it('not when the change was refused', async () => {
 			const { access } = await setup()
-			purge.mockImplementation(async () => {})
+			purge.mockImplementation(async () => true)
 			const id = await create(access)
 			purge.mockClear()
 			const stale = await setStatus(access, id, 'paused', '9')

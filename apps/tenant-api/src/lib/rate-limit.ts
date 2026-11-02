@@ -1,7 +1,7 @@
 import { LRUCache } from 'lru-cache'
 import type { Context, Next } from 'hono'
 import { ENV } from 'varlock/env'
-import { clientAddress } from './client-ip.ts'
+import { addressBucket, clientAddress, isLocalRuntime } from './client-ip.ts'
 
 interface RateLimitConfig {
 	windowMs: number
@@ -9,10 +9,9 @@ interface RateLimitConfig {
 }
 
 function isProduction(): boolean {
-	return (
-		(process.env.NODE_ENV ?? (ENV as { NODE_ENV?: string }).NODE_ENV) ===
-		'production'
-	)
+	// An unset NODE_ENV is production. The schema default must not turn
+	// rate limits off.
+	return !isLocalRuntime()
 }
 
 const limiters = new Map<string, LRUCache<string, number[]>>()
@@ -39,12 +38,15 @@ export function resetRateLimits() {
 }
 
 /**
- * The client address for rate limiting (`clientAddress` in `client-ip.ts`:
- * forwarding headers only from Cloudflare or a proxy on our own network,
- * otherwise the TCP peer), or `'unknown'` when there is none.
+ * The key a rate limit counts (`clientAddress` in `client-ip.ts`: forwarding
+ * headers only from Cloudflare or a proxy on our own network, otherwise the TCP
+ * peer), or `'unknown'` when there is none. An IPv6 client counts by its /64, so
+ * rotating the host part buys no new bucket. This is a bucket, not an address:
+ * use `clientAddress` where the real address is needed (Turnstile `remoteIp`).
  */
 export function resolveClientIp(c: Context): string {
-	return clientAddress(c) ?? 'unknown'
+	const address = clientAddress(c)
+	return address ? addressBucket(address) : 'unknown'
 }
 
 export function rateLimit(name: string, config: RateLimitConfig) {
