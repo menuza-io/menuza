@@ -88,16 +88,13 @@ export async function mutateStripeObject<T = void>(
 	)
 }
 
-/** Connected account for a destination charge, when the object has one. */
-export function stripeConnectAccountId(object: Json): string | undefined {
-	const mockDestination = object.__mock?.intentData?.destination
-	if (typeof mockDestination === 'string') return mockDestination
-	const transferDestination = object.transfer_data?.destination
-	return typeof transferDestination === 'string'
-		? transferDestination
-		: undefined
-}
-
+/**
+ * `account` marks an event that happened on a connected account (Stripe's
+ * `event.account`), signed with the Connect endpoint secret. Destination
+ * charges and their checkout sessions live on the platform account, so their
+ * events never carry it, as on real Stripe. The App ignores checkout and
+ * payment intent events that do.
+ */
 export async function emitStripeEvent(
 	ctx: EmulatorContext,
 	type: string,
