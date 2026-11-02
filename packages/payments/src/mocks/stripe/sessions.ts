@@ -36,7 +36,6 @@ import {
 	publicObject,
 	requireStripeObject,
 	seconds,
-	stripeConnectAccountId,
 } from './state'
 
 const THIRTY_MINUTES = 30 * 60
@@ -621,9 +620,7 @@ async function finishAttempt(
 			() => null,
 		)
 		await emitStripeEvent(ctx, 'setup_intent.succeeded', setupIntent)
-		await emitStripeEvent(ctx, 'checkout.session.completed', row.json, {
-			account: stripeConnectAccountId(row.json),
-		})
+		await emitStripeEvent(ctx, 'checkout.session.completed', row.json)
 		return { status: 'saved', redirectUrl: successRedirect(row.json) }
 	}
 
@@ -688,9 +685,7 @@ async function finishAttempt(
 		},
 		() => null,
 	)
-	await emitStripeEvent(ctx, 'checkout.session.completed', row.json, {
-		account: stripeConnectAccountId(row.json),
-	})
+	await emitStripeEvent(ctx, 'checkout.session.completed', row.json)
 	if (profile.dispute) {
 		await createDispute(ctx, { paymentIntent: String(intent.id) })
 	}
