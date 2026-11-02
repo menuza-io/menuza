@@ -374,7 +374,59 @@ export function useDebounce<
 	)
 }
 
-export async function downloadFile(url: string, retries: number = 0) {
+const DEFAULT_MAX_DOWNLOAD_BYTES = 10 * 1024 * 1024 // 10MB
+
+class DownloadTooLargeError extends Error {}
+
+/**
+ * Read a response body without ever holding more than `maxBytes`. A declared
+ * Content-Length is checked first, but a server can lie or omit it, so the
+ * stream itself is counted too.
+ */
+async function readBodyWithLimit(
+	response: Response,
+	maxBytes: number,
+): Promise<ArrayBuffer> {
+	const declared = Number(response.headers.get('content-length'))
+	if (Number.isFinite(declared) && declared > maxBytes) {
+		await response.body?.cancel()
+		throw new DownloadTooLargeError(`Download exceeds ${maxBytes} bytes`)
+	}
+	if (!response.body) {
+		const whole = await response.arrayBuffer()
+		if (whole.byteLength > maxBytes) {
+			throw new DownloadTooLargeError(`Download exceeds ${maxBytes} bytes`)
+		}
+		return whole
+	}
+
+	const reader = response.body.getReader()
+	const chunks: Uint8Array[] = []
+	let total = 0
+	for (;;) {
+		const { done, value } = await reader.read()
+		if (done) break
+		total += value.byteLength
+		if (total > maxBytes) {
+			await reader.cancel()
+			throw new DownloadTooLargeError(`Download exceeds ${maxBytes} bytes`)
+		}
+		chunks.push(value)
+	}
+	const out = new Uint8Array(total)
+	let offset = 0
+	for (const chunk of chunks) {
+		out.set(chunk, offset)
+		offset += chunk.byteLength
+	}
+	return out.buffer as ArrayBuffer
+}
+
+export async function downloadFile(
+	url: string,
+	retries: number = 0,
+	maxBytes: number = DEFAULT_MAX_DOWNLOAD_BYTES,
+) {
 	const MAX_RETRIES = 3
 	try {
 		const response = await fetch(url)
@@ -382,14 +434,15 @@ export async function downloadFile(url: string, retries: number = 0) {
 			throw new Error(`Failed to fetch image with status ${response.status}`)
 		}
 		const contentType = response.headers.get('content-type') ?? 'image/jpg'
-		const arrayBuffer = await response.arrayBuffer()
-		const blob = new Blob([arrayBuffer], { type: contentType })
+		const bytes = await readBodyWithLimit(response, maxBytes)
+		const blob = new Blob([bytes], { type: contentType })
 		const file = new File([blob], 'downloaded-file', {
 			type: contentType,
 		})
 		return file
 	} catch (e) {
-		if (retries > MAX_RETRIES) throw e
-		return downloadFile(url, retries + 1)
+		// Retrying cannot make an oversized body smaller.
+		if (e instanceof DownloadTooLargeError || retries > MAX_RETRIES) throw e
+		return downloadFile(url, retries + 1, maxBytes)
 	}
 }

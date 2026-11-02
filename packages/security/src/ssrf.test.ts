@@ -241,3 +241,33 @@ describe('ssrfSafeFetch', () => {
 		fetchSpy.mockRestore()
 	})
 })
+
+describe('isPrivateIp IPv6 forms', () => {
+	it.each([
+		'::ffff:a9fe:a9fe',
+		'::ffff:7f00:1',
+		'::ffff:169.254.169.254',
+		'[::ffff:a00:1]',
+		'64:ff9b::a9fe:a9fe',
+		'2002:a9fe:a9fe::1',
+		'::7f00:1',
+		'0:0:0:0:0:0:0:1',
+		'fe80::1',
+		'fc00::1',
+		'ff02::1',
+		'198.18.0.1',
+		'192.88.99.1',
+		'64:ff9b:1::1',
+		'192.0.0.8',
+		'not-an-ip',
+	])('blocks %s', (ip) => {
+		expect(isPrivateIp(ip)).toBe(true)
+	})
+
+	it.each(['8.8.8.8', '2606:4700:4700::1111', '::ffff:808:808', '1.1.1.1'])(
+		'allows %s',
+		(ip) => {
+			expect(isPrivateIp(ip)).toBe(false)
+		},
+	)
+})

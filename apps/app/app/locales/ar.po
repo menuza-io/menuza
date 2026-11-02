@@ -504,7 +504,7 @@ msgstr "{changed, plural, one {# معدّلة} two {# معدّلتان} few {# �
 msgid "{choiceCount, plural, one {# choice} other {# choices}}"
 msgstr "{choiceCount, plural, zero {لا توجد خيارات} one {خيار واحد} two {خياران} few {# خيارات} many {# خياراً} other {# خيار}}"
 
-#: app/routes/mcp+/authorize.tsx:309
+#: app/routes/mcp+/authorize.tsx:339
 msgid "{clientName} is requesting access to your organization data"
 msgstr "{clientName} يطلب الوصول إلى بيانات منظمتك"
 
@@ -2639,6 +2639,10 @@ msgstr "تم تحديث مقابلة"
 msgid "An organization is a workspace where teams collect, organize, and work together."
 msgstr "المنظمة هي مساحة عمل حيث تجمع الفرق وتنظم وتعمل معًا."
 
+#: app/routes/mcp+/authorize.tsx:343
+msgid "An unregistered application is requesting access to your organization data"
+msgstr "يطلب تطبيق غير مسجّل الوصول إلى بيانات مؤسستك"
+
 #: app/components/app-sidebar.tsx:444
 #: app/components/workspace-breadcrumb.tsx:58
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:38
@@ -3075,11 +3079,11 @@ msgstr "مصادقة هذه العملية"
 msgid "Authentication Code"
 msgstr "رمز المصادقة"
 
-#: app/routes/mcp+/authorize.tsx:494
+#: app/routes/mcp+/authorize.tsx:545
 msgid "Authorize"
 msgstr "الموافقة"
 
-#: app/routes/mcp+/authorize.tsx:306
+#: app/routes/mcp+/authorize.tsx:335
 msgid "Authorize MCP Client"
 msgstr "الموافقة على عميل MCP"
 
@@ -5113,7 +5117,7 @@ msgstr "تأكيد كلمة المرور الجديدة"
 
 #: app/components/settings/password-form.tsx:154
 #: app/routes/_auth+/onboarding.tsx:487
-#: app/routes/_auth+/reset-password.tsx:163
+#: app/routes/_auth+/reset-password.tsx:212
 msgid "Confirm Password"
 msgstr "تأكيد كلمة المرور"
 
@@ -5125,7 +5129,7 @@ msgstr "أكّد رغبتك في إعادة توظيفهم رغم ذلك."
 msgid "Confirm upload"
 msgstr "تأكيد الرفع"
 
-#: app/routes/_auth+/reset-password.tsx:170
+#: app/routes/_auth+/reset-password.tsx:219
 msgid "Confirm your new password"
 msgstr "أكد كلمة المرور الجديدة"
 
@@ -6605,7 +6609,7 @@ msgstr "طلبات التوصيل"
 msgid "delivery tips"
 msgstr "إكراميات التوصيل"
 
-#: app/routes/mcp+/authorize.tsx:455
+#: app/routes/mcp+/authorize.tsx:506
 msgid "Deny"
 msgstr "رفض"
 
@@ -7787,11 +7791,11 @@ msgstr "أدخل بريدك الإلكتروني أو اسم المستخدم"
 msgid "Enter your full name"
 msgstr "أدخل اسمك الكامل"
 
-#: app/routes/_auth+/reset-password.tsx:148
+#: app/routes/_auth+/reset-password.tsx:197
 msgid "Enter your new password"
 msgstr "أدخل كلمة المرور الجديدة"
 
-#: app/routes/_auth+/reset-password.tsx:132
+#: app/routes/_auth+/reset-password.tsx:181
 msgid "Enter your new password below."
 msgstr "أدخل كلمة المرور الجديدة أدناه."
 
@@ -8955,7 +8959,7 @@ msgstr "يساعد المتصل طوال بقية المكالمة"
 msgid "Here's how to do it:"
 msgstr "إليك كيفية القيام بذلك:"
 
-#: app/routes/_auth+/reset-password.tsx:131
+#: app/routes/_auth+/reset-password.tsx:180
 msgid "Hi"
 msgstr "مرحباً"
 
@@ -11685,7 +11689,7 @@ msgid "New Page"
 msgstr "صفحة جديدة"
 
 #: app/components/settings/password-form.tsx:110
-#: app/routes/_auth+/reset-password.tsx:142
+#: app/routes/_auth+/reset-password.tsx:191
 msgid "New Password"
 msgstr "كلمة المرور الجديدة"
 
@@ -13903,7 +13907,7 @@ msgid "Password"
 msgstr "كلمة المرور"
 
 #: app/routes/_auth+/onboarding.tsx:129
-#: app/routes/_auth+/reset-password.tsx:71
+#: app/routes/_auth+/reset-password.tsx:85
 msgid "Password is too common"
 msgstr "كلمة المرور شائعة جداً"
 
@@ -16032,11 +16036,11 @@ msgstr "إعادة تعيين الكل"
 msgid "Reset draft"
 msgstr "إعادة تعيين المسودة"
 
-#: app/routes/_auth+/reset-password.tsx:191
+#: app/routes/_auth+/reset-password.tsx:240
 msgid "Reset password"
 msgstr "إعادة تعيين كلمة المرور"
 
-#: app/routes/_auth+/reset-password.tsx:128
+#: app/routes/_auth+/reset-password.tsx:177
 msgid "Reset Password"
 msgstr "إعادة تعيين كلمة المرور"
 
@@ -16881,7 +16885,7 @@ msgstr "البحث بالاسم أو البريد الإلكتروني..."
 msgid "Search campaigns..."
 msgstr "البحث في الحملات..."
 
-#: app/routes/mcp+/authorize.tsx:385
+#: app/routes/mcp+/authorize.tsx:436
 msgid "Search for users in your organization"
 msgstr "البحث عن المستخدمين في منظمتك"
 
@@ -17046,7 +17050,7 @@ msgid "Secure your account with an extra verification step"
 msgstr "أمّن حسابك بخطوة تحقق إضافية"
 
 #: app/components/app-sidebar.tsx:149
-#: app/routes/mcp+/authorize.tsx:405
+#: app/routes/mcp+/authorize.tsx:456
 msgid "Security"
 msgstr "الأمان"
 
@@ -17203,7 +17207,7 @@ msgstr "اختر اللغات"
 msgid "Select operator"
 msgstr "اختر العامل"
 
-#: app/routes/mcp+/authorize.tsx:341
+#: app/routes/mcp+/authorize.tsx:392
 msgid "Select Organization"
 msgstr "اختر المنظمة"
 
@@ -17865,7 +17869,7 @@ msgstr "أنشئ حساباً باستخدام حساب التواصل الاج�
 msgid "Signed in"
 msgstr "تم تسجيل الدخول"
 
-#: app/routes/mcp+/authorize.tsx:320
+#: app/routes/mcp+/authorize.tsx:371
 msgid "Signed in as"
 msgstr "تم تسجيل الدخول كـ"
 
@@ -19591,7 +19595,7 @@ msgstr "تم إيقاف الرابط."
 msgid "The main paragraph copy of your email."
 msgstr "الفقرة الرئيسية في بريدك الإلكتروني."
 
-#: app/routes/mcp+/authorize.tsx:363
+#: app/routes/mcp+/authorize.tsx:414
 msgid "The MCP client will only have access to data from the selected organization"
 msgstr "سيتمكن عميل MCP من الوصول فقط إلى بيانات المنظمة المحددة"
 
@@ -20034,6 +20038,10 @@ msgstr "لم يعد هذا المتقدّم قيد المنافسة."
 msgid "This applicant was declined. Move them back into the pipeline first."
 msgstr "تم رفض هذا المتقدّم. أعده إلى مسار التقديم أولًا."
 
+#: app/routes/mcp+/authorize.tsx:358
+msgid "This application did not register with us, so we cannot verify who it is. Only continue if you started this request yourself."
+msgstr "لم يتم تسجيل هذا التطبيق لدينا، لذا لا يمكننا التحقق من هويته. تابع فقط إذا كنت أنت من بدأ هذا الطلب."
+
 #: app/routes/mock-payments+/checkout-com.3ds.$attemptId.tsx:100
 #: app/routes/mock-payments+/stripe.3ds.$attemptId.tsx:110
 msgid "This authentication is no longer active"
@@ -20107,7 +20115,7 @@ msgstr "سبق أن أُضيفت هذه القائمة لهم."
 msgid "This Checkout Session is no longer active"
 msgstr "جلسة الدفع هذه لم تعد نشطة"
 
-#: app/routes/mcp+/authorize.tsx:374
+#: app/routes/mcp+/authorize.tsx:425
 msgid "This client will have access to:"
 msgstr "سيتمكن هذا العميل من الوصول إلى:"
 
@@ -22014,7 +22022,7 @@ msgstr "عرض سياسة العمل"
 msgid "View live site"
 msgstr "عرض الموقع المباشر"
 
-#: app/routes/mcp+/authorize.tsx:394
+#: app/routes/mcp+/authorize.tsx:445
 msgid "View notes from users you have access to"
 msgstr "عرض الملاحظات من المستخدمين الذين لديك وصول إليهم"
 
@@ -23239,7 +23247,7 @@ msgstr "يمكنك الاطلاع على هذه البطاقة لكن لا يم�
 msgid "You can revoke access at any time from the Authorized Clients section above"
 msgstr "يمكنك إلغاء الوصول في أي وقت من قسم العملاء المصرح لهم أعلاه"
 
-#: app/routes/mcp+/authorize.tsx:410
+#: app/routes/mcp+/authorize.tsx:461
 msgid "You can revoke this access at any time from your MCP settings page. The access token will expire in 1 hour."
 msgstr "يمكنك إلغاء هذا الوصول في أي وقت من صفحة إعدادات MCP. ستنتهي صلاحية رمز الوصول بعد ساعة واحدة."
 

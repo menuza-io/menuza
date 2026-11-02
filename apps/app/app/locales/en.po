@@ -506,7 +506,7 @@ msgstr "{changed, plural, one {# changed} other {# changed}}"
 msgid "{choiceCount, plural, one {# choice} other {# choices}}"
 msgstr "{choiceCount, plural, one {# choice} other {# choices}}"
 
-#: app/routes/mcp+/authorize.tsx:309
+#: app/routes/mcp+/authorize.tsx:339
 msgid "{clientName} is requesting access to your organization data"
 msgstr ""
 
@@ -2641,6 +2641,10 @@ msgstr "An interview was updated"
 msgid "An organization is a workspace where teams collect, organize, and work together."
 msgstr ""
 
+#: app/routes/mcp+/authorize.tsx:343
+msgid "An unregistered application is requesting access to your organization data"
+msgstr "An unregistered application is requesting access to your organization data"
+
 #: app/components/app-sidebar.tsx:444
 #: app/components/workspace-breadcrumb.tsx:58
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:38
@@ -3077,11 +3081,11 @@ msgstr "Authenticate this payment"
 msgid "Authentication Code"
 msgstr ""
 
-#: app/routes/mcp+/authorize.tsx:494
+#: app/routes/mcp+/authorize.tsx:545
 msgid "Authorize"
 msgstr ""
 
-#: app/routes/mcp+/authorize.tsx:306
+#: app/routes/mcp+/authorize.tsx:335
 msgid "Authorize MCP Client"
 msgstr ""
 
@@ -5115,7 +5119,7 @@ msgstr ""
 
 #: app/components/settings/password-form.tsx:154
 #: app/routes/_auth+/onboarding.tsx:487
-#: app/routes/_auth+/reset-password.tsx:163
+#: app/routes/_auth+/reset-password.tsx:212
 msgid "Confirm Password"
 msgstr ""
 
@@ -5127,7 +5131,7 @@ msgstr "Confirm that you want to rehire them anyway."
 msgid "Confirm upload"
 msgstr ""
 
-#: app/routes/_auth+/reset-password.tsx:170
+#: app/routes/_auth+/reset-password.tsx:219
 msgid "Confirm your new password"
 msgstr ""
 
@@ -6607,7 +6611,7 @@ msgstr "Delivery orders"
 msgid "delivery tips"
 msgstr "delivery tips"
 
-#: app/routes/mcp+/authorize.tsx:455
+#: app/routes/mcp+/authorize.tsx:506
 msgid "Deny"
 msgstr ""
 
@@ -7789,11 +7793,11 @@ msgstr ""
 msgid "Enter your full name"
 msgstr ""
 
-#: app/routes/_auth+/reset-password.tsx:148
+#: app/routes/_auth+/reset-password.tsx:197
 msgid "Enter your new password"
 msgstr ""
 
-#: app/routes/_auth+/reset-password.tsx:132
+#: app/routes/_auth+/reset-password.tsx:181
 msgid "Enter your new password below."
 msgstr ""
 
@@ -8957,7 +8961,7 @@ msgstr "Helps the caller for the rest of the call"
 msgid "Here's how to do it:"
 msgstr ""
 
-#: app/routes/_auth+/reset-password.tsx:131
+#: app/routes/_auth+/reset-password.tsx:180
 msgid "Hi"
 msgstr ""
 
@@ -11687,7 +11691,7 @@ msgid "New Page"
 msgstr ""
 
 #: app/components/settings/password-form.tsx:110
-#: app/routes/_auth+/reset-password.tsx:142
+#: app/routes/_auth+/reset-password.tsx:191
 msgid "New Password"
 msgstr ""
 
@@ -13905,7 +13909,7 @@ msgid "Password"
 msgstr ""
 
 #: app/routes/_auth+/onboarding.tsx:129
-#: app/routes/_auth+/reset-password.tsx:71
+#: app/routes/_auth+/reset-password.tsx:85
 msgid "Password is too common"
 msgstr ""
 
@@ -16034,11 +16038,11 @@ msgstr "Reset all"
 msgid "Reset draft"
 msgstr "Reset draft"
 
-#: app/routes/_auth+/reset-password.tsx:191
+#: app/routes/_auth+/reset-password.tsx:240
 msgid "Reset password"
 msgstr ""
 
-#: app/routes/_auth+/reset-password.tsx:128
+#: app/routes/_auth+/reset-password.tsx:177
 msgid "Reset Password"
 msgstr ""
 
@@ -16883,7 +16887,7 @@ msgstr ""
 msgid "Search campaigns..."
 msgstr ""
 
-#: app/routes/mcp+/authorize.tsx:385
+#: app/routes/mcp+/authorize.tsx:436
 msgid "Search for users in your organization"
 msgstr ""
 
@@ -17048,7 +17052,7 @@ msgid "Secure your account with an extra verification step"
 msgstr ""
 
 #: app/components/app-sidebar.tsx:149
-#: app/routes/mcp+/authorize.tsx:405
+#: app/routes/mcp+/authorize.tsx:456
 msgid "Security"
 msgstr ""
 
@@ -17205,7 +17209,7 @@ msgstr ""
 msgid "Select operator"
 msgstr ""
 
-#: app/routes/mcp+/authorize.tsx:341
+#: app/routes/mcp+/authorize.tsx:392
 msgid "Select Organization"
 msgstr ""
 
@@ -17867,7 +17871,7 @@ msgstr ""
 msgid "Signed in"
 msgstr ""
 
-#: app/routes/mcp+/authorize.tsx:320
+#: app/routes/mcp+/authorize.tsx:371
 msgid "Signed in as"
 msgstr ""
 
@@ -19593,7 +19597,7 @@ msgstr "The link was turned off."
 msgid "The main paragraph copy of your email."
 msgstr "The main paragraph copy of your email."
 
-#: app/routes/mcp+/authorize.tsx:363
+#: app/routes/mcp+/authorize.tsx:414
 msgid "The MCP client will only have access to data from the selected organization"
 msgstr ""
 
@@ -20036,6 +20040,10 @@ msgstr "This applicant is no longer in the running."
 msgid "This applicant was declined. Move them back into the pipeline first."
 msgstr "This applicant was declined. Move them back into the pipeline first."
 
+#: app/routes/mcp+/authorize.tsx:358
+msgid "This application did not register with us, so we cannot verify who it is. Only continue if you started this request yourself."
+msgstr "This application did not register with us, so we cannot verify who it is. Only continue if you started this request yourself."
+
 #: app/routes/mock-payments+/checkout-com.3ds.$attemptId.tsx:100
 #: app/routes/mock-payments+/stripe.3ds.$attemptId.tsx:110
 msgid "This authentication is no longer active"
@@ -20109,7 +20117,7 @@ msgstr "This checklist was already added for them."
 msgid "This Checkout Session is no longer active"
 msgstr "This Checkout Session is no longer active"
 
-#: app/routes/mcp+/authorize.tsx:374
+#: app/routes/mcp+/authorize.tsx:425
 msgid "This client will have access to:"
 msgstr ""
 
@@ -22016,7 +22024,7 @@ msgstr "View labor policy"
 msgid "View live site"
 msgstr ""
 
-#: app/routes/mcp+/authorize.tsx:394
+#: app/routes/mcp+/authorize.tsx:445
 msgid "View notes from users you have access to"
 msgstr ""
 
@@ -23241,7 +23249,7 @@ msgstr "You can look at this card but not change it."
 msgid "You can revoke access at any time from the Authorized Clients section above"
 msgstr ""
 
-#: app/routes/mcp+/authorize.tsx:410
+#: app/routes/mcp+/authorize.tsx:461
 msgid "You can revoke this access at any time from your MCP settings page. The access token will expire in 1 hour."
 msgstr ""
 

@@ -1,4 +1,5 @@
 import { brand } from '@repo/config/brand'
+import { assertSecretNotPlaceholder } from '@repo/security'
 import { customers, getTenantDb } from '@repo/tenant-db'
 import { eq } from 'drizzle-orm'
 import jwt from 'jsonwebtoken'
@@ -16,7 +17,7 @@ export function assertTenantCustomerJwtSecret() {
 			'TENANT_CUSTOMER_JWT_SECRET is missing or too short. Set it to match the US tenant-api JWT_SECRET.',
 		)
 	}
-	return secret
+	return assertSecretNotPlaceholder('TENANT_CUSTOMER_JWT_SECRET', secret)
 }
 
 function getTenantCustomerJwtSecret() {

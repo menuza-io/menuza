@@ -7,22 +7,54 @@ import {
 	MCPAuthorization,
 	MCPRefreshToken,
 	Organization,
+	Session,
 	User,
+	UserOrganization,
 } from '@repo/database'
 import * as fc from 'fast-check'
 import { describe, it, expect } from 'vitest'
+import { TEST_CODE_VERIFIER, TEST_PKCE_CHALLENGE } from '#tests/mcp-pkce.ts'
 import {
 	generateToken,
 	hashToken,
-	createAuthorizationWithTokens,
+	createAuthorizationWithTokens as createAuthorizationWithTokensRaw,
 	validateAccessToken,
-	createAuthorizationCode,
-	exchangeAuthorizationCode,
+	createAuthorizationCode as createAuthorizationCodeRaw,
+	exchangeAuthorizationCode as exchangeAuthorizationCodeRaw,
+	revokePendingAuthorizationCodes,
 	refreshAccessToken,
 	revokeAuthorization,
 	ACCESS_TOKEN_EXPIRATION,
 	REFRESH_TOKEN_EXPIRATION,
 } from './oauth.server'
+
+// Authorization codes are only issued with an S256 challenge, so tests do the same.
+const createAuthorizationCode = (
+	args: Parameters<typeof createAuthorizationCodeRaw>[0],
+) => createAuthorizationCodeRaw({ ...TEST_PKCE_CHALLENGE, ...args })
+const exchangeAuthorizationCode = (
+	code: string,
+	redirectUri: string,
+	clientId: string,
+	codeVerifier: string = TEST_CODE_VERIFIER,
+) => exchangeAuthorizationCodeRaw(code, redirectUri, clientId, codeVerifier)
+
+// Credentials are only honored for active members, so every authorization in
+// these tests belongs to a member of its organization.
+async function createAuthorizationWithTokens(
+	input: Parameters<typeof createAuthorizationWithTokensRaw>[0],
+) {
+	await db
+		.insert(UserOrganization)
+		.values({
+			userId: input.userId,
+			organizationId: input.organizationId,
+			organizationRoleId: 'org_role_member',
+			active: true,
+		})
+		.onConflictDoNothing()
+	return createAuthorizationWithTokensRaw(input)
+}
 
 function mcpAuthIdsSubquery(userId: string, organizationId: string) {
 	return db
@@ -1183,5 +1215,269 @@ describe('MCP OAuth Service', () => {
 				}
 			})
 		})
+	})
+})
+
+describe('MCP credentials honor account state', () => {
+	async function setup() {
+		const id = `sec${Math.random().toString(36).slice(2, 10)}`
+		const [user] = await db
+			.insert(User)
+			.values({
+				id: `u-${id}`,
+				email: `${id}@example.com`,
+				username: `user-${id}`,
+				name: 'Sec Test',
+			})
+			.returning()
+		const [org] = await db
+			.insert(Organization)
+			.values({ id: `o-${id}`, name: `Org ${id}`, slug: `org-${id}` })
+			.returning()
+		const auth = await createAuthorizationWithTokens({
+			userId: user!.id,
+			organizationId: org!.id,
+			clientName: 'sec-client',
+		})
+		return { user: user!, org: org!, auth }
+	}
+
+	it('rejects access and refresh tokens after the user is banned', async () => {
+		const { user, auth } = await setup()
+		expect(await validateAccessToken(auth.accessToken)).not.toBeNull()
+		await db.update(User).set({ isBanned: true }).where(eq(User.id, user.id))
+		expect(await validateAccessToken(auth.accessToken)).toBeNull()
+		expect(await refreshAccessToken(auth.refreshToken)).toBeNull()
+	})
+
+	it('rejects tokens after the member is deactivated or removed', async () => {
+		const { user, org, auth } = await setup()
+		await db
+			.update(UserOrganization)
+			.set({ active: false })
+			.where(
+				and(
+					eq(UserOrganization.userId, user.id),
+					eq(UserOrganization.organizationId, org.id),
+				),
+			)
+		expect(await validateAccessToken(auth.accessToken)).toBeNull()
+		expect(await refreshAccessToken(auth.refreshToken)).toBeNull()
+	})
+})
+
+describe('authorization code redemption fails closed on PKCE', () => {
+	const redirectUri = 'http://localhost:3000/callback'
+	const base = {
+		clientId: 'pkce-client',
+		userId: 'pkce-user',
+		organizationId: 'pkce-org',
+		clientName: 'pkce',
+		redirectUri,
+	}
+
+	it('rejects a code issued without a challenge, even with a verifier', async () => {
+		const code = await createAuthorizationCodeRaw(base)
+		expect(
+			await exchangeAuthorizationCodeRaw(
+				code,
+				redirectUri,
+				base.clientId,
+				TEST_CODE_VERIFIER,
+			),
+		).toBeNull()
+	})
+
+	it('rejects a plain challenge', async () => {
+		const code = await createAuthorizationCodeRaw({
+			...base,
+			codeChallenge: TEST_CODE_VERIFIER,
+			codeChallengeMethod: 'plain',
+		})
+		expect(
+			await exchangeAuthorizationCodeRaw(
+				code,
+				redirectUri,
+				base.clientId,
+				TEST_CODE_VERIFIER,
+			),
+		).toBeNull()
+	})
+
+	it('rejects a missing or wrong verifier', async () => {
+		for (const verifier of [undefined, 'not-the-verifier']) {
+			const code = await createAuthorizationCodeRaw({
+				...base,
+				...TEST_PKCE_CHALLENGE,
+			})
+			expect(
+				await exchangeAuthorizationCodeRaw(
+					code,
+					redirectUri,
+					base.clientId,
+					verifier,
+				),
+			).toBeNull()
+		}
+	})
+})
+
+describe('pending authorization codes can be revoked', () => {
+	const redirectUri = 'http://localhost:3000/callback'
+
+	it("drops a user's unredeemed codes (password reset) and leaves others alone", async () => {
+		const input = (userId: string) => ({
+			...TEST_PKCE_CHALLENGE,
+			clientId: 'revoke-client',
+			userId,
+			organizationId: 'revoke-org',
+			clientName: 'revoke',
+			redirectUri,
+		})
+		const victimCode = await createAuthorizationCodeRaw(input('victim'))
+		const otherCode = await createAuthorizationCodeRaw(input('someone-else'))
+
+		revokePendingAuthorizationCodes('victim')
+
+		expect(
+			await exchangeAuthorizationCodeRaw(
+				victimCode,
+				redirectUri,
+				'revoke-client',
+				TEST_CODE_VERIFIER,
+			),
+		).toBeNull()
+		// The other user's code was untouched: it fails only on the FK-less
+		// authorization insert, never on lookup (so it was found and consumed).
+		await expect(
+			exchangeAuthorizationCodeRaw(
+				otherCode,
+				redirectUri,
+				'revoke-client',
+				TEST_CODE_VERIFIER,
+			),
+		).rejects.toThrow()
+	})
+})
+
+describe('session-bound authorization codes', () => {
+	const redirectUri = 'http://localhost:3000/callback'
+
+	async function seedBound() {
+		const id = Math.random().toString(36).slice(2, 10)
+		const [user] = await db
+			.insert(User)
+			.values({
+				id: `u-${id}`,
+				email: `${id}@example.com`,
+				username: `user-${id}`,
+				name: 'Bound',
+			})
+			.returning()
+		const [org] = await db
+			.insert(Organization)
+			.values({ id: `o-${id}`, name: `Org ${id}`, slug: `org-${id}` })
+			.returning()
+		await db.insert(Session).values({
+			userId: user!.id,
+			expirationDate: new Date(Date.now() + 86_400_000),
+			createdAt: new Date(Date.now() - 1000),
+		})
+		const code = await createAuthorizationCodeRaw({
+			...TEST_PKCE_CHALLENGE,
+			clientId: 'bound-client',
+			userId: user!.id,
+			organizationId: org!.id,
+			clientName: 'bound',
+			redirectUri,
+			sessionUserId: user!.id,
+		})
+		return { user: user!, org: org!, code }
+	}
+
+	it('redeems while the approving session is still live', async () => {
+		const { code } = await seedBound()
+		expect(
+			await exchangeAuthorizationCodeRaw(
+				code,
+				redirectUri,
+				'bound-client',
+				TEST_CODE_VERIFIER,
+			),
+		).not.toBeNull()
+	})
+
+	it('is void once every session is deleted, as a password reset does', async () => {
+		const { user, code } = await seedBound()
+		await db.delete(Session).where(eq(Session.userId, user.id))
+		expect(
+			await exchangeAuthorizationCodeRaw(
+				code,
+				redirectUri,
+				'bound-client',
+				TEST_CODE_VERIFIER,
+			),
+		).toBeNull()
+	})
+
+	it('is not satisfied by a session created after the code was issued', async () => {
+		const { user, code } = await seedBound()
+		await db.delete(Session).where(eq(Session.userId, user.id))
+		await db.insert(Session).values({
+			userId: user.id,
+			expirationDate: new Date(Date.now() + 86_400_000),
+			createdAt: new Date(Date.now() + 5_000),
+		})
+		expect(
+			await exchangeAuthorizationCodeRaw(
+				code,
+				redirectUri,
+				'bound-client',
+				TEST_CODE_VERIFIER,
+			),
+		).toBeNull()
+	})
+
+	it('binds to the signed-in admin, not the impersonated target', async () => {
+		const { user: admin } = await seedBound()
+		const target = await seedBound()
+		// The target has no session of their own; the admin approved the code.
+		await db.delete(Session).where(eq(Session.userId, target.user.id))
+		const code = await createAuthorizationCodeRaw({
+			...TEST_PKCE_CHALLENGE,
+			clientId: 'bound-client',
+			userId: target.user.id,
+			organizationId: target.org.id,
+			clientName: 'bound',
+			redirectUri,
+			sessionUserId: admin.id,
+		})
+		expect(
+			await exchangeAuthorizationCodeRaw(
+				code,
+				redirectUri,
+				'bound-client',
+				TEST_CODE_VERIFIER,
+			),
+		).not.toBeNull()
+		// Once the admin's sessions go (e.g. their password is reset) it is void.
+		const voided = await createAuthorizationCodeRaw({
+			...TEST_PKCE_CHALLENGE,
+			clientId: 'bound-client',
+			userId: target.user.id,
+			organizationId: target.org.id,
+			clientName: 'bound',
+			redirectUri,
+			sessionUserId: admin.id,
+		})
+		await db.delete(Session).where(eq(Session.userId, admin.id))
+		expect(
+			await exchangeAuthorizationCodeRaw(
+				voided,
+				redirectUri,
+				'bound-client',
+				TEST_CODE_VERIFIER,
+			),
+		).toBeNull()
 	})
 })

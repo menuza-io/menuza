@@ -422,6 +422,48 @@ describe('Journey API Routes (System & Operator)', () => {
 				})
 				expect(res.status).toBe(403)
 			})
+
+			it.each(['mailbox', 'phone_calls'])(
+				'rejects a %s-scoped operator token on every journey method',
+				async (scope) => {
+					const secret = new TextEncoder().encode(operatorToken)
+					const scoped = await new SignJWT({ orgId, role: 'operator', scope })
+						.setProtectedHeader({ alg: 'HS256' })
+						.setAudience('tenant-api-operator')
+						.setIssuer(brand.shortName)
+						.setExpirationTime('15m')
+						.sign(secret)
+					for (const [method, path] of [
+						['GET', '/operator/journeys'],
+						['POST', '/operator/journeys'],
+						['POST', '/operator/journeys/trigger-test'],
+						['DELETE', '/operator/journeys/some-id'],
+					] as const) {
+						const res = await app.request(path, {
+							method,
+							headers: {
+								Authorization: `Bearer ${scoped}`,
+								'Content-Type': 'application/json',
+							},
+							body: method === 'GET' || method === 'DELETE' ? undefined : '{}',
+						})
+						expect(res.status, `${method} ${path}`).toBe(403)
+					}
+				},
+			)
+
+			it('rejects an operator token with no expiry', async () => {
+				const secret = new TextEncoder().encode(operatorToken)
+				const forever = await new SignJWT({ orgId, role: 'operator' })
+					.setProtectedHeader({ alg: 'HS256' })
+					.setAudience('tenant-api-operator')
+					.setIssuer(brand.shortName)
+					.sign(secret)
+				const res = await app.request('/operator/journeys', {
+					headers: { Authorization: `Bearer ${forever}` },
+				})
+				expect(res.status).toBe(401)
+			})
 		})
 
 		describe('CRUD Endpoints', () => {

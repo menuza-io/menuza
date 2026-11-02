@@ -55,6 +55,13 @@ export class GoogleProvider implements AuthProvider {
 			},
 			async ({ tokens }) => {
 				const profile = await GoogleStrategy.userProfile(tokens)
+				// Callers link accounts by email, so an unverified address must
+				// never reach them.
+				if (profile._json?.email_verified !== true) {
+					throw new Error(
+						'Your Google email address is not verified. Verify it with Google and try again.',
+					)
+				}
 				return {
 					id: profile.id,
 					email: profile.emails?.[0]?.value ?? '',

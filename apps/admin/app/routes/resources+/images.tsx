@@ -1,4 +1,5 @@
 import { invariantResponse } from '@epic-web/invariant'
+import { requireUserWithRole } from '@repo/auth'
 import { getDomainUrl } from '@repo/common'
 import { ssrfSafeFetch, validateInstanceUrlWithDns } from '@repo/security'
 import { ENV } from 'varlock/env'
@@ -158,7 +159,9 @@ async function getCloudflareImageResponse(request: Request) {
 	let fetchHeaders: HeadersInit | undefined
 
 	if (objectKey) {
-		headers.set('Cache-Control', 'public, max-age=31536000, immutable')
+		// Stored objects can belong to any organization: operators only.
+		await requireUserWithRole(request, 'admin')
+		headers.set('Cache-Control', 'private, max-age=3600')
 		if (
 			objectKey.length < 16 ||
 			objectKey.includes('..') ||
@@ -187,7 +190,15 @@ async function getCloudflareImageResponse(request: Request) {
 			const assetPath = normalizedSrc.startsWith('/')
 				? normalizedSrc
 				: `/${normalizedSrc}`
-			imageUrl = new URL(assetPath, url.origin).toString()
+			const assetUrl = new URL(assetPath, url.origin)
+			// A protocol-relative value (`//host/x`) does not parse as an absolute
+			// URL but resolves to another host, bypassing the SSRF guard.
+			invariantResponse(
+				assetUrl.origin === url.origin,
+				'Invalid image source',
+				{ status: 400 },
+			)
+			imageUrl = assetUrl.toString()
 		}
 	}
 
@@ -232,9 +243,16 @@ async function getCloudflareImageResponse(request: Request) {
 
 	const rawContentType = imageResponse.headers.get('content-type')
 	const mimeType = rawContentType?.split(';')[0]?.trim().toLowerCase()
+	// Uploaded objects are user-controlled: only serve known raster types.
+	// Same-origin static assets (e.g. SVG logos) are trusted.
+	if (objectKey && (!mimeType || !ALLOWED_RASTER_MIME_TYPES.has(mimeType))) {
+		throw new Response('Unsupported Media Type', { status: 415 })
+	}
 	if (mimeType) {
 		headers.set('Content-Type', mimeType)
 	}
+	headers.set('X-Content-Type-Options', 'nosniff')
+	headers.set('Content-Security-Policy', "default-src 'none'; sandbox")
 
 	return new Response(imageResponse.body, {
 		headers,
@@ -265,6 +283,9 @@ export async function loader({ request }: Route.LoaderArgs) {
 	const objectKey = searchParams.get('objectKey')
 	const organizationId = searchParams.get('organizationId')
 
+	if (objectKey) {
+		await requireUserWithRole(request, 'admin')
+	}
 	const isExternal = Boolean(
 		!objectKey &&
 		src &&
@@ -274,7 +295,11 @@ export async function loader({ request }: Route.LoaderArgs) {
 	const headers = new Headers()
 	headers.set(
 		'Cache-Control',
-		isExternal ? 'no-store' : 'public, max-age=31536000, immutable',
+		objectKey
+			? 'private, max-age=3600'
+			: isExternal
+				? 'no-store'
+				: 'public, max-age=31536000, immutable',
 	)
 
 	return getImgResponse(request, {
@@ -307,6 +332,11 @@ export async function loader({ request }: Route.LoaderArgs) {
 					url: src,
 				}
 			}
+			invariantResponse(
+				!src.includes('..') && !src.startsWith('//') && !src.includes('\\'),
+				'Invalid image source',
+				{ status: 400 },
+			)
 			if (src.startsWith('/assets')) {
 				return {
 					type: 'fs',

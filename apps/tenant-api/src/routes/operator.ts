@@ -81,6 +81,7 @@ export async function authenticateOperator(
 			audience: 'tenant-api-operator',
 			issuer: brand.shortName,
 			algorithms: ['HS256'],
+			requiredClaims: ['exp'],
 		})
 		decoded = payload as typeof decoded
 	} catch (error) {

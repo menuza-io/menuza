@@ -20,10 +20,17 @@ import {
 import fc from 'fast-check'
 import { describe, it, expect, afterEach } from 'vitest'
 import {
-	createAuthorizationCode,
+	createAuthorizationCode as createAuthorizationCodeRaw,
 	hashToken,
 	AUTHORIZATION_CODE_EXPIRATION,
 } from '#app/utils/mcp/oauth.server.ts'
+
+import { TEST_PKCE_CHALLENGE } from '#tests/mcp-pkce.ts'
+
+// Authorization codes are only issued with an S256 challenge, so tests do the same.
+const createAuthorizationCode = (
+	args: Parameters<typeof createAuthorizationCodeRaw>[0],
+) => createAuthorizationCodeRaw({ ...TEST_PKCE_CHALLENGE, ...args })
 
 async function connectUserRole(userId: string, roleName: string) {
 	const [role] = await db

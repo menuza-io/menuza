@@ -2,6 +2,7 @@ import { invariant } from '@epic-web/invariant'
 import { requireUserId } from '@repo/auth'
 import { brand } from '@repo/config/brand'
 import { and, db, eq, Organization, UserOrganization } from '@repo/database'
+import { assertSecretNotPlaceholder } from '@repo/security'
 import { SignJWT } from 'jose'
 import { ENV } from 'varlock/env'
 import { getBoundTenantApiService } from './tenant-api-service.server.ts'
@@ -99,6 +100,7 @@ export async function getOperatorTenantClient(
 	}
 
 	const operatorToken = ENV.TENANT_OPERATOR_TOKEN
+	assertSecretNotPlaceholder('TENANT_OPERATOR_TOKEN', operatorToken ?? '')
 
 	if (!operatorToken || operatorToken.length < 16) {
 		throw new Response(
@@ -180,6 +182,7 @@ export async function sendPhoneLineVerification(input: {
 		token && token.length >= 16,
 		'INTERNAL_COMMAND_TOKEN must be configured with >= 16 chars',
 	)
+	assertSecretNotPlaceholder('INTERNAL_COMMAND_TOKEN', token)
 	const { tenantApiUrl } = resolveRegionalTenantApiUrls('us')
 	const boundService = getBoundTenantApiService()
 	const fetchImpl = boundService ? boundService.fetch.bind(boundService) : fetch

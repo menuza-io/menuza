@@ -40,6 +40,15 @@ vi.mock('@repo/security', async (importOriginal) => {
 	}
 })
 
+const mediaAccess = vi.hoisted(() => ({
+	authorizeRegisteredObject: vi.fn(async () => null),
+	requireOrganizationMember: vi.fn(async () => 'user-1'),
+}))
+vi.mock('#app/utils/media-access.server.ts', async (importOriginal) => ({
+	...(await importOriginal<Record<string, unknown>>()),
+	...mediaAccess,
+}))
+
 vi.mock('#app/utils/storage.server.ts', () => ({
 	getSignedGetRequestInfoAsync: vi.fn(async () => ({
 		url: SIGNED_URL,
@@ -62,6 +71,7 @@ describe('resources/images on the Workers runtime', () => {
 	)
 
 	beforeEach(() => {
+		mediaAccess.requireOrganizationMember.mockClear()
 		resetMockDb()
 		fetchMock.mockClear()
 		vi.stubGlobal('fetch', fetchMock)
@@ -91,6 +101,56 @@ describe('resources/images on the Workers runtime', () => {
 			height: 384,
 			fit: 'cover',
 		})
+	})
+
+	it('derives the organization from a private key and requires membership of it', async () => {
+		const objectKey = 'orgs/org-1/media/images/1792072957921-abc.webp'
+		await loader({
+			request: new Request(
+				`http://localhost/resources/images?objectKey=${encodeURIComponent(objectKey)}&organizationId=attacker-org`,
+			),
+			params: {},
+			context: {},
+		} as any)
+		// The membership check names the key's organization, not the query's.
+		expect(mediaAccess.requireOrganizationMember).toHaveBeenCalledWith(
+			expect.anything(),
+			'org-1',
+		)
+	})
+
+	it('answers 401 for a private key when nobody is signed in', async () => {
+		mediaAccess.requireOrganizationMember.mockRejectedValueOnce(
+			new Response('Unauthorized', { status: 401 }),
+		)
+		const objectKey = 'orgs/org-1/media/images/1792072957921-abc.webp'
+		await expect(
+			loader({
+				request: new Request(
+					`http://localhost/resources/images?objectKey=${encodeURIComponent(objectKey)}`,
+				),
+				params: {},
+				context: {},
+			} as any),
+		).rejects.toMatchObject({ status: 401 })
+	})
+
+	it('refuses to serve a stored object that is not a raster image', async () => {
+		fetchMock.mockResolvedValueOnce(
+			new Response('<script>alert(1)</script>', {
+				headers: { 'Content-Type': 'text/html' },
+			}),
+		)
+		const objectKey = 'orgs/org-1/media/images/1792072957921-abc.webp'
+		await expect(
+			loader({
+				request: new Request(
+					`http://localhost/resources/images?objectKey=${encodeURIComponent(objectKey)}`,
+				),
+				params: {},
+				context: {},
+			} as any),
+		).rejects.toMatchObject({ status: 415 })
 	})
 
 	it('resizes a local asset without forwarding storage headers', async () => {
