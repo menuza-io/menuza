@@ -202,8 +202,9 @@ export class OAuthCallbackHandler {
 			throw new Error('Missing required OAuth parameters: code or state')
 		}
 
-		// Validate state
-		const stateData = OAuthStateManager.validateState(params.state)
+		// Validate state without consuming its nonce: the provider validates (and
+		// consumes) the same state again in `handleCallback`.
+		const stateData = OAuthStateManager.validateState(params.state, false)
 
 		// Verify provider name matches
 		if (stateData.providerName !== providerName) {

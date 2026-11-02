@@ -4,6 +4,7 @@ import { integrationManager, getAvailableProviders } from '@repo/integrations'
 import {
 	type ActionFunctionArgs,
 	type LoaderFunctionArgs,
+	redirect,
 	useLoaderData,
 } from 'react-router'
 
@@ -13,6 +14,7 @@ import {
 	disconnectIntegrationActionIntent,
 } from '#app/components/settings/cards/organization/integrations-card.tsx'
 
+import { setIntegrationOAuthState } from '#app/utils/integrations/oauth-state.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import {
 	requireUserWithOrganizationPermission,
@@ -45,7 +47,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		slug: true,
 	})
 
-	await requireUserWithOrganizationPermission(
+	const userId = await requireUserWithOrganizationPermission(
 		request,
 		organization.id,
 		ORG_PERMISSIONS.UPDATE_SETTINGS_ANY,
@@ -69,13 +71,24 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			const protocol = url.protocol === 'https:' ? 'https:' : 'http:'
 			const redirectUri = `${protocol}//${url.host}/api/integrations/oauth/callback?provider=${providerName}`
 
-			const { authUrl } = await integrationManager.initiateOAuth(
+			const { authUrl, state } = await integrationManager.initiateOAuth(
 				organization.id,
 				providerName,
 				redirectUri,
 			)
 
-			return Response.redirect(authUrl)
+			// The callback finishes only what this browser started, for this
+			// member (see api+/integrations+/oauth.callback.tsx).
+			return redirect(authUrl, {
+				headers: {
+					'Set-Cookie': await setIntegrationOAuthState({
+						state,
+						provider: providerName,
+						userId,
+						orgSlug: organization.slug,
+					}),
+				},
+			})
 		} catch (error) {
 			return redirectWithToast(`/${organization.slug}/settings/integrations`, {
 				title: 'Integration failed',

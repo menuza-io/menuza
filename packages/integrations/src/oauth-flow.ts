@@ -4,9 +4,18 @@ import { OAuthStateManager } from './oauth-manager'
 import { type OAuthCallbackParams } from './types'
 import { type Integration } from './database-types'
 
+/**
+ * Starting and finishing a provider sign-in. The app binds the two halves to
+ * the browser and member who started it: it keeps the `state` returned by
+ * `start` in its own short-lived cookie, checks it against the callback, and
+ * passes the organization from that record to `complete`, never one taken
+ * from the callback URL.
+ */
 class OAuthFlow {
 	/**
-	 * Start OAuth flow for a provider
+	 * Start OAuth flow for a provider. `state` is the value the provider will
+	 * send back to the callback: the `state` parameter (OAuth 2.0), or the
+	 * request token (`oauth_token`, Trello's OAuth 1.0a).
 	 */
 	async start(
 		organizationId: string,
@@ -14,47 +23,41 @@ class OAuthFlow {
 		redirectUri: string,
 		additionalParams?: Record<string, any>,
 	): Promise<{ authUrl: string; state: string }> {
-		const state = OAuthStateManager.generateState(
+		const provider = providerRegistry.get(providerName)
+		const authUrl = await provider.getAuthUrl(
 			organizationId,
-			providerName,
-			additionalParams?.redirectUrl,
+			redirectUri,
 			additionalParams,
 		)
 
-		const provider = providerRegistry.get(providerName)
-		const authUrl = await provider.getAuthUrl(organizationId, redirectUri, {
-			...additionalParams,
-			state,
-		})
-
-		// Optional: extract state from the authUrl in case the provider generated its own
-		// but since we passed state, hopefully it uses it or we can just parse it
 		const url = new URL(authUrl)
-		const finalState = url.searchParams.get('state') || state
+		const state =
+			url.searchParams.get('state') ?? url.searchParams.get('oauth_token')
+		if (!state) {
+			throw new Error(`${providerName} returned no state to check on return`)
+		}
 
-		// Log activity (using a dummy ID since we don't have an integration ID yet)
-		// Wait, logIntegrationActivity requires an integration ID. The prompt says "log activity".
-		// Actually, I can pass a special string or maybe integrationManager handles it.
-		// Wait, in integration-manager, logIntegrationActivity requires integrationId: string.
-		// Let me just not log it if it's not possible, or log with "pending_" + providerName?
-		// I'll skip logging in start if I can't, wait... wait, integrationManager.logIntegrationActivity expects a valid UUID in the DB! So I can't just log it with a fake ID.
-		// Wait! Maybe logIntegrationActivity can take a dummy ID? Or maybe the prompt means "log activity" in `complete`! The prompt said "start() - delegates to... log activity". I'll put a try-catch just in case.
-
-		return { authUrl: authUrl, state: finalState }
+		return { authUrl, state }
 	}
 
 	/**
-	 * Complete OAuth flow by handling callback
+	 * Complete OAuth flow by handling callback. `params.organizationId` must be
+	 * the organization the app verified for this browser and member; the
+	 * provider's state has to belong to it too.
 	 */
 	async complete(
 		providerName: string,
 		params: OAuthCallbackParams,
 	): Promise<Integration> {
+		const organizationId = params.organizationId
+		if (!organizationId) {
+			throw new Error('Missing organization for the OAuth callback')
+		}
+
 		const isOAuth1 = params.oauthToken && params.oauthVerifier
 
-		let stateData
 		if (isOAuth1) {
-			// OAuth 1.0a flow (Trello) - retrieve organization context from stored request token
+			// OAuth 1.0a flow (Trello) - the request token carries the organization
 			const provider = providerRegistry.get(providerName)
 			if (!provider || !('getRequestTokenContext' in provider)) {
 				throw new Error(
@@ -62,7 +65,6 @@ class OAuthFlow {
 				)
 			}
 
-			// Get the stored context using the oauth_token (request token)
 			const tokenContext = await (provider as any).getRequestTokenContext(
 				params.oauthToken!,
 			)
@@ -73,21 +75,26 @@ class OAuthFlow {
 				)
 			}
 
-			stateData = {
-				organizationId: tokenContext.organizationId,
-				providerName: providerName,
-				timestamp: tokenContext.timestamp,
+			if (tokenContext.organizationId !== organizationId) {
+				throw new Error('Organization mismatch in OAuth state')
 			}
 		} else {
-			// Standard OAuth 2.0 state validation
+			// Standard OAuth 2.0 state validation. The nonce is not consumed here:
+			// the provider validates (and consumes) the same state again in
+			// `handleCallback`, which would otherwise count as a replay.
+			let stateData
 			try {
-				stateData = OAuthStateManager.validateState(params.state)
+				stateData = OAuthStateManager.validateState(params.state, false)
 			} catch (error) {
 				throw new Error(`Invalid OAuth state: ${error}`)
 			}
 
 			if (stateData.providerName !== providerName) {
 				throw new Error('Provider name mismatch in OAuth state')
+			}
+
+			if (stateData.organizationId !== organizationId) {
+				throw new Error('Organization mismatch in OAuth state')
 			}
 		}
 
@@ -104,7 +111,7 @@ class OAuthFlow {
 		const tokenData = await provider.handleCallback(handleParams)
 
 		const integration = await integrationManager.createIntegration({
-			organizationId: stateData.organizationId,
+			organizationId,
 			providerName,
 			tokenData,
 			config: {},

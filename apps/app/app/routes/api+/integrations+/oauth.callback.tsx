@@ -1,41 +1,69 @@
-import { requireUserId } from '@repo/auth'
-import { redirectWithToast as _redirectWithToast } from '@repo/common/toast'
-import { handleOAuthCallback, OAuthStateManager } from '@repo/integrations'
+import { getUserId } from '@repo/auth'
+import { redirectWithToast } from '@repo/common/toast'
+import { handleOAuthCallback } from '@repo/integrations'
 import { type LoaderFunctionArgs } from 'react-router'
-import { userHasOrgAccess } from '#app/utils/organization/organizations.server.ts'
+import {
+	clearIntegrationOAuthState,
+	readIntegrationOAuthState,
+	sameState,
+} from '#app/utils/integrations/oauth-state.server.ts'
+import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
+import {
+	ORG_PERMISSIONS,
+	requireUserWithOrganizationPermission,
+} from '#app/utils/organization/permissions.server.ts'
 
+/**
+ * The OAuth redirect for the note integrations (Slack, Jira, ...). It
+ * finishes only what this browser started, for the same signed-in member, who
+ * must still be allowed to manage the organization's settings. The
+ * organization comes from that record, never from the callback URL.
+ */
 export async function loader(args: LoaderFunctionArgs) {
-	const url = new URL(args.request.url)
-	const state = url.searchParams.get('state')
-
-	if (state) {
-		try {
-			// Validate state signature and freshness BEFORE checking org access (do not consume nonce yet)
-			const stateData = OAuthStateManager.validateState(state, false)
-			if (stateData.organizationId) {
-				await userHasOrgAccess(args.request, stateData.organizationId)
-			}
-		} catch (error) {
-			return _redirectWithToast('/', {
-				title: 'Integration failed',
-				description:
-					error instanceof Error ? error.message : 'Authorization failed',
-				type: 'error',
-			})
-		}
+	const { request } = args
+	const saved = await readIntegrationOAuthState(request)
+	const clear = { 'Set-Cookie': await clearIntegrationOAuthState() }
+	const userId = await getUserId(request)
+	if (!saved || !userId || saved.userId !== userId) {
+		throw new Response('This connection was not started here.', {
+			status: 400,
+			headers: clear,
+		})
 	}
 
+	const url = new URL(request.url)
+	// OAuth 2.0 providers echo `state`; Trello (OAuth 1.0a) echoes its request
+	// token instead.
+	const echoed =
+		url.searchParams.get('state') || url.searchParams.get('oauth_token') || ''
+	if (
+		!echoed ||
+		!sameState(echoed, saved.state) ||
+		url.searchParams.get('provider') !== saved.provider
+	) {
+		throw new Response('This connection does not match.', {
+			status: 400,
+			headers: clear,
+		})
+	}
+
+	const organization = await requireUserOrganization(request, saved.orgSlug, {
+		id: true,
+		slug: true,
+	})
+	await requireUserWithOrganizationPermission(
+		request,
+		organization.id,
+		ORG_PERMISSIONS.UPDATE_SETTINGS_ANY,
+	)
+
 	return handleOAuthCallback(args, {
-		requireUserId,
-		redirectWithToast: async (
-			url: string,
-			options: { title: string; description: string; type: string },
-		) => {
-			return await _redirectWithToast(url, {
-				title: options.title,
-				description: options.description,
-				type: options.type as 'message' | 'success' | 'error',
-			})
-		},
+		organization,
+		redirectWithToast: (to, toast) =>
+			redirectWithToast(
+				to,
+				{ ...toast, type: toast.type as 'message' | 'success' | 'error' },
+				{ headers: clear },
+			),
 	})
 }

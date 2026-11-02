@@ -1,30 +1,11 @@
-import { ENV } from 'varlock/env'
+import { isLocalUrl } from '@repo/security/local-host'
+import { readLiveEnv } from '#app/utils/env.server.ts'
 
-/**
- * Social posting settings, read live (the Worker mirrors bindings into
- * `process.env`, so a rotated secret applies without a redeploy), then from
- * varlock.
- */
+/** Social posting settings, read live (see `readLiveEnv`). */
 export function socialEnv(
 	name: 'META_APP_ID' | 'META_APP_SECRET' | 'SOCIAL_MOCK' | 'BASE_URL',
 ): string {
-	const live = typeof process !== 'undefined' ? process.env?.[name] : undefined
-	return String(live ?? (ENV as Record<string, unknown>)[name] ?? '').trim()
-}
-
-function isLocalOrigin(value: string) {
-	try {
-		const host = new URL(value).hostname
-		return (
-			host === 'localhost' ||
-			host === '127.0.0.1' ||
-			host === '::1' ||
-			host.endsWith('.localhost') ||
-			host.endsWith('.test')
-		)
-	} catch {
-		return false
-	}
+	return readLiveEnv(name)
 }
 
 /**
@@ -35,7 +16,7 @@ export function isSocialMock(): boolean {
 	return (
 		['1', 'true', 'on', 'yes'].includes(
 			socialEnv('SOCIAL_MOCK').toLowerCase(),
-		) && isLocalOrigin(socialEnv('BASE_URL'))
+		) && isLocalUrl(socialEnv('BASE_URL'))
 	)
 }
 
