@@ -4,9 +4,22 @@ import { Alert, AlertDescription, AlertTitle } from '@repo/ui/alert'
 import { Button } from '@repo/ui/button'
 import { getHints } from '@repo/ui/client-hints'
 import { Icon } from '@repo/ui/icon'
+import {
+	Item,
+	ItemActions,
+	ItemContent,
+	ItemDescription,
+	ItemMedia,
+	ItemTitle,
+} from '@repo/ui/item'
 import { PageHeader } from '@repo/ui/page-header'
 import { Tabs, TabsList, TabsTrigger } from '@repo/ui/tabs'
-import { Link, useLoaderData, useSearchParams, type LoaderFunctionArgs } from 'react-router'
+import {
+	Link,
+	useLoaderData,
+	useSearchParams,
+	type LoaderFunctionArgs,
+} from 'react-router'
 import {
 	SocialCalendar,
 	SocialPostList,
@@ -16,7 +29,10 @@ import { SOCIAL_PLATFORM_LABELS } from '#app/components/social/social-labels.ts'
 import { SocialPlatformIcon } from '#app/components/social/social-ui.tsx'
 import { requireSocialAccess } from '#app/utils/social/access.server.ts'
 import { listSocialAccounts } from '#app/utils/social/accounts.server.ts'
-import { SOCIAL_PLATFORMS, isSocialPlatform } from '#app/utils/social/platforms.ts'
+import {
+	SOCIAL_PLATFORMS,
+	isSocialPlatform,
+} from '#app/utils/social/platforms.ts'
 import {
 	listSocialPostsBetween,
 	listUndatedSocialDrafts,
@@ -69,7 +85,10 @@ export default function SocialMediaRoute() {
 		? posts.filter((post) => post.platforms.includes(platform))
 		: posts
 	const monthPosts = visible
-		.filter((post) => post.at && dayKey(new Date(post.at), timeZone).startsWith(month))
+		.filter(
+			(post) =>
+				post.at && dayKey(new Date(post.at), timeZone).startsWith(month),
+		)
 		.sort((a, b) => (a.at ?? '').localeCompare(b.at ?? ''))
 	const visibleDrafts = platform
 		? drafts.filter((post) => post.platforms.includes(platform))
@@ -128,23 +147,28 @@ export default function SocialMediaRoute() {
 			/>
 
 			{accounts.length === 0 ? (
-				<Alert>
-					<Icon name="link-2" />
-					<AlertTitle>{_(msg`Connect your accounts`)}</AlertTitle>
-					<AlertDescription>
-						<p>
+				<Item variant="outline">
+					<ItemMedia variant="icon">
+						<Icon name="link-2" />
+					</ItemMedia>
+					<ItemContent>
+						<ItemTitle>{_(msg`Connect your accounts`)}</ItemTitle>
+						<ItemDescription>
 							{_(
 								msg`Connect a Facebook Page or an Instagram professional account to start publishing.`,
 							)}
-						</p>
-						<Link
-							to={`/${orgSlug}/marketing/social/accounts`}
-							className="underline underline-offset-4"
+						</ItemDescription>
+					</ItemContent>
+					<ItemActions>
+						<Button
+							variant="outline"
+							size="sm"
+							render={<Link to={`/${orgSlug}/marketing/social/accounts`} />}
 						>
 							{_(msg`Connect accounts`)}
-						</Link>
-					</AlertDescription>
-				</Alert>
+						</Button>
+					</ItemActions>
+				</Item>
 			) : needsReconnect ? (
 				<Alert variant="destructive">
 					<Icon name="circle-alert" />

@@ -36,6 +36,7 @@ import {
 	CardTitle,
 } from '@repo/ui/card'
 import { Checkbox } from '@repo/ui/checkbox'
+import { ChoiceCard, ChoiceCardTitle } from '@repo/ui/choice-card'
 import { Field, FieldLabel, FieldLegend, FieldSet } from '@repo/ui/field'
 import { Icon } from '@repo/ui/icon'
 import { Input } from '@repo/ui/input'
@@ -559,15 +560,14 @@ export default function PrintDesignRoute() {
 											className="flex flex-wrap gap-3"
 										>
 											{product.sizes.map((size) => (
-												<Label
-													key={size.key}
-													className="border-border has-[[data-checked]]:border-primary flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border px-4"
-												>
+												<ChoiceCard key={size.key} className="w-auto">
 													<RadioGroupItem value={size.key} />
-													<bdi>
-														{printSizeText(_, size.label, product.folded)}
-													</bdi>
-												</Label>
+													<ChoiceCardTitle>
+														<bdi>
+															{printSizeText(_, size.label, product.folded)}
+														</bdi>
+													</ChoiceCardTitle>
+												</ChoiceCard>
 											))}
 										</RadioGroup>
 									</FieldSet>
@@ -579,13 +579,12 @@ export default function PrintDesignRoute() {
 											className="flex flex-wrap gap-3"
 										>
 											{PRINT_TEMPLATE_STYLES.map((style) => (
-												<Label
-													key={style}
-													className="border-border has-[[data-checked]]:border-primary flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border px-4"
-												>
+												<ChoiceCard key={style} className="w-auto">
 													<RadioGroupItem value={style} />
-													{_(PRINT_STYLE_LABELS[style])}
-												</Label>
+													<ChoiceCardTitle>
+														{_(PRINT_STYLE_LABELS[style])}
+													</ChoiceCardTitle>
+												</ChoiceCard>
 											))}
 										</RadioGroup>
 									</FieldSet>

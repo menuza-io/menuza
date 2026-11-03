@@ -10,6 +10,11 @@ import {
 	CardHeader,
 	CardTitle,
 } from '@repo/ui/card'
+import {
+	ChoiceCard,
+	ChoiceCardContent,
+	ChoiceCardTitle,
+} from '@repo/ui/choice-card'
 import { Field, FieldLabel, FieldLegend, FieldSet } from '@repo/ui/field'
 import { Input } from '@repo/ui/input'
 import { Label } from '@repo/ui/label'
@@ -325,22 +330,17 @@ export default function CanvaImportRoute() {
 									className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
 								>
 									{designs.map((design) => (
-										<Label
-											key={design.id}
-											className="border-border has-[[data-checked]]:border-primary flex min-h-11 cursor-pointer items-start gap-3 rounded-lg border p-3"
-										>
-											<RadioGroupItem value={design.id} className="mt-1" />
-											<span className="flex min-w-0 flex-col gap-2">
+										<ChoiceCard key={design.id}>
+											<RadioGroupItem value={design.id} />
+											<ChoiceCardContent>
 												{design.thumbnail ? (
 													<img
 														src={design.thumbnail}
 														alt=""
-														className="bg-muted max-h-40 w-full rounded object-contain"
+														className="bg-muted mb-1.5 max-h-40 w-full rounded object-contain"
 													/>
 												) : null}
-												<span className="font-medium wrap-anywhere">
-													{design.title}
-												</span>
+												<ChoiceCardTitle>{design.title}</ChoiceCardTitle>
 												{design.pageCount && design.pageCount > 1 ? (
 													<span className="text-muted-foreground text-xs font-normal">
 														{(() => {
@@ -351,8 +351,8 @@ export default function CanvaImportRoute() {
 														})()}
 													</span>
 												) : null}
-											</span>
-										</Label>
+											</ChoiceCardContent>
+										</ChoiceCard>
 									))}
 								</RadioGroup>
 							)}
@@ -385,13 +385,12 @@ export default function CanvaImportRoute() {
 								className="grid gap-3 sm:grid-cols-3"
 							>
 								{data.products.map((option) => (
-									<Label
-										key={option.key}
-										className="border-border has-[[data-checked]]:border-primary flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border px-4"
-									>
+									<ChoiceCard key={option.key} className="w-auto">
 										<RadioGroupItem value={option.key} />
-										{_(printProductLabel(option.key).name)}
-									</Label>
+										<ChoiceCardTitle>
+											{_(printProductLabel(option.key).name)}
+										</ChoiceCardTitle>
+									</ChoiceCard>
 								))}
 							</RadioGroup>
 						</FieldSet>
@@ -405,13 +404,12 @@ export default function CanvaImportRoute() {
 								className="flex flex-wrap gap-3"
 							>
 								{sizes.map((size) => (
-									<Label
-										key={size.key}
-										className="border-border has-[[data-checked]]:border-primary flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border px-4"
-									>
+									<ChoiceCard key={size.key} className="w-auto">
 										<RadioGroupItem value={size.key} />
-										<bdi>{size.label}</bdi>
-									</Label>
+										<ChoiceCardTitle>
+											<bdi>{size.label}</bdi>
+										</ChoiceCardTitle>
+									</ChoiceCard>
 								))}
 							</RadioGroup>
 							<p className="text-muted-foreground text-sm">

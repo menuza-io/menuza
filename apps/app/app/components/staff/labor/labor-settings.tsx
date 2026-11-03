@@ -2,14 +2,16 @@ import { Trans, t } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { type SalesSource } from '@repo/staffing'
 import {
-	Field,
-	FieldContent,
+	ChoiceCard,
+	ChoiceCardContent,
+	ChoiceCardDescription,
+	ChoiceCardTitle,
+} from '@repo/ui/choice-card'
+import {
 	FieldDescription,
 	FieldError,
-	FieldLabel,
 	FieldLegend,
 	FieldSet,
-	FieldTitle,
 } from '@repo/ui/field'
 import { Input } from '@repo/ui/input'
 import { Item, ItemActions, ItemContent, ItemGroup } from '@repo/ui/item'
@@ -145,18 +147,19 @@ export function LaborSettingsForm({
 				<RadioGroup
 					value={source}
 					onValueChange={(value) => isSalesSource(value) && setSource(value)}
+					disabled={!canEdit || save.pending}
 					aria-label={_(t`Where sales come from`)}
 				>
 					{SOURCE_CHOICES.map((choice) => (
-						<FieldLabel key={choice.value} className="min-h-11">
-							<Field orientation="horizontal">
-								<RadioGroupItem value={choice.value} />
-								<FieldContent>
-									<FieldTitle>{_(choice.title)}</FieldTitle>
-									<FieldDescription>{_(choice.description)}</FieldDescription>
-								</FieldContent>
-							</Field>
-						</FieldLabel>
+						<ChoiceCard key={choice.value}>
+							<RadioGroupItem value={choice.value} />
+							<ChoiceCardContent>
+								<ChoiceCardTitle>{_(choice.title)}</ChoiceCardTitle>
+								<ChoiceCardDescription>
+									{_(choice.description)}
+								</ChoiceCardDescription>
+							</ChoiceCardContent>
+						</ChoiceCard>
 					))}
 				</RadioGroup>
 			</FieldSet>

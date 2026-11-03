@@ -61,7 +61,10 @@ import {
 } from '#app/utils/social/platforms.ts'
 
 const ActionSchema = z.discriminatedUnion('intent', [
-	z.object({ intent: z.literal('connect'), platform: z.enum(SOCIAL_PLATFORMS) }),
+	z.object({
+		intent: z.literal('connect'),
+		platform: z.enum(SOCIAL_PLATFORMS),
+	}),
 	z.object({ intent: z.literal('disconnect'), accountId: z.string().max(64) }),
 ])
 
@@ -195,9 +198,7 @@ export default function SocialAccountsRoute() {
 							? _(
 									msg`Switch the Instagram account to a business or creator account, link it to a Facebook Page, and allow that Page when Facebook asks.`,
 								)
-							: _(
-									msg`Allow at least one Page you manage when Facebook asks.`,
-								)}
+							: _(msg`Allow at least one Page you manage when Facebook asks.`)}
 					</AlertDescription>
 				</Alert>
 			) : notice?.kind === 'denied' ? (
@@ -219,25 +220,35 @@ export default function SocialAccountsRoute() {
 			) : null}
 
 			{!configured ? (
-				<Alert>
-					<Icon name="info" />
-					<AlertTitle>{_(msg`Connecting accounts is not available yet`)}</AlertTitle>
-					<AlertDescription>
-						{_(
-							msg`This server has no Meta app configured. Ask your platform administrator.`,
-						)}
-					</AlertDescription>
-				</Alert>
+				<Item variant="outline">
+					<ItemMedia variant="icon">
+						<Icon name="info" />
+					</ItemMedia>
+					<ItemContent>
+						<ItemTitle>
+							{_(msg`Connecting accounts is not available yet`)}
+						</ItemTitle>
+						<ItemDescription>
+							{_(
+								msg`This server has no Meta app configured. Ask your platform administrator.`,
+							)}
+						</ItemDescription>
+					</ItemContent>
+				</Item>
 			) : mock ? (
-				<Alert>
-					<Icon name="info" />
-					<AlertTitle>{_(msg`Local emulator`)}</AlertTitle>
-					<AlertDescription>
-						{_(
-							msg`Connecting adds a sample account and nothing is really posted. A post containing #fail is refused, to try the retry path.`,
-						)}
-					</AlertDescription>
-				</Alert>
+				<Item variant="outline">
+					<ItemMedia variant="icon">
+						<Icon name="info" />
+					</ItemMedia>
+					<ItemContent>
+						<ItemTitle>{_(msg`Local emulator`)}</ItemTitle>
+						<ItemDescription>
+							{_(
+								msg`Connecting adds a sample account and nothing is really posted. A post containing #fail is refused, to try the retry path.`,
+							)}
+						</ItemDescription>
+					</ItemContent>
+				</Item>
 			) : null}
 
 			{SOCIAL_PLATFORMS.map((platform) => {
@@ -251,39 +262,49 @@ export default function SocialAccountsRoute() {
 						aria-labelledby={`social-${platform}-heading`}
 						className="space-y-3"
 					>
-						<div className="flex flex-wrap items-start justify-between gap-4">
-							<div className="flex items-start gap-3">
-								<SocialPlatformIcon platform={platform} className="mt-0.5 size-5" />
-								<div>
-									<h2 id={`social-${platform}-heading`} className="font-medium">
-										{platformName}
-									</h2>
-									<p className="text-muted-foreground text-sm">
-										{_(PLATFORM_DESCRIPTIONS[platform])}
-									</p>
-								</div>
-							</div>
+						<Item>
+							<ItemMedia variant="icon">
+								<SocialPlatformIcon platform={platform} className="size-5" />
+							</ItemMedia>
+							<ItemContent>
+								<ItemTitle
+									id={`social-${platform}-heading`}
+									role="heading"
+									aria-level={2}
+								>
+									{platformName}
+								</ItemTitle>
+								<ItemDescription>
+									{_(PLATFORM_DESCRIPTIONS[platform])}
+								</ItemDescription>
+							</ItemContent>
 							{canWrite && configured ? (
-								<Form method="post">
-									<input type="hidden" name="platform" value={platform} />
-									<Button
-										type="submit"
-										name="intent"
-										value="connect"
-										variant={platformAccounts.length > 0 ? 'outline' : 'default'}
-										disabled={connecting != null}
-									>
-										<Icon name={connecting === platform ? 'loader' : 'plus'} />
-										{platformAccounts.length > 0
-											? _(msg`Add or refresh accounts`)
-											: _(msg`Connect ${platformName}`)}
-									</Button>
-								</Form>
+								<ItemActions>
+									<Form method="post">
+										<input type="hidden" name="platform" value={platform} />
+										<Button
+											type="submit"
+											name="intent"
+											value="connect"
+											variant={
+												platformAccounts.length > 0 ? 'outline' : 'default'
+											}
+											disabled={connecting != null}
+										>
+											<Icon
+												name={connecting === platform ? 'loader' : 'plus'}
+											/>
+											{platformAccounts.length > 0
+												? _(msg`Add or refresh accounts`)
+												: _(msg`Connect ${platformName}`)}
+										</Button>
+									</Form>
+								</ItemActions>
 							) : null}
-						</div>
+						</Item>
 
 						{platformAccounts.length === 0 ? (
-							<p className="text-muted-foreground text-sm">
+							<p className="text-muted-foreground px-3 text-sm">
 								{_(msg`No accounts connected.`)}
 							</p>
 						) : (
@@ -291,69 +312,77 @@ export default function SocialAccountsRoute() {
 								{platformAccounts.map((account) => {
 									const accountName = account.name
 									return (
-									<Item key={account.id} variant="outline" size="sm">
-										<ItemMedia variant="icon">
-											<SocialPlatformIcon platform={account.platform} />
-										</ItemMedia>
-										<ItemContent>
-											<ItemTitle className="wrap-anywhere">{account.name}</ItemTitle>
-											<ItemDescription>
-												{account.username ? `@${account.username} · ` : ''}
-												{(() => {
-													const date = connectedOn.format(new Date(account.createdAt))
-													return _(msg`Connected ${date}`)
-												})()}
-											</ItemDescription>
-										</ItemContent>
-										<ItemActions>
-											{account.status === 'needs_reauth' ? (
-												<Badge variant="warning">{_(msg`Reconnect needed`)}</Badge>
-											) : (
-												<Badge variant="success">{_(msg`Active`)}</Badge>
-											)}
-											{canWrite ? (
-												<AlertDialog>
-													<AlertDialogTrigger
-														render={
-															<Button variant="ghost" size="sm">
-																{_(msg`Disconnect`)}
-															</Button>
-														}
-													/>
-													<AlertDialogContent>
-														<AlertDialogHeader>
-															<AlertDialogTitle>
-																{_(msg`Disconnect ${accountName}?`)}
-															</AlertDialogTitle>
-															<AlertDialogDescription>
-																{_(
-																	msg`Posts already sent stay on ${platformName}. Scheduled posts will fail for this account.`,
-																)}
-															</AlertDialogDescription>
-														</AlertDialogHeader>
-														<AlertDialogFooter>
-															<AlertDialogCancel>{_(msg`Keep it`)}</AlertDialogCancel>
-															<Form method="post">
-																<input
-																	type="hidden"
-																	name="accountId"
-																	value={account.id}
-																/>
-																<Button
-																	type="submit"
-																	name="intent"
-																	value="disconnect"
-																	variant="destructive"
-																>
+										<Item key={account.id} variant="outline" size="sm">
+											<ItemMedia variant="icon">
+												<SocialPlatformIcon platform={account.platform} />
+											</ItemMedia>
+											<ItemContent>
+												<ItemTitle className="wrap-anywhere">
+													{account.name}
+												</ItemTitle>
+												<ItemDescription>
+													{account.username ? `@${account.username} · ` : ''}
+													{(() => {
+														const date = connectedOn.format(
+															new Date(account.createdAt),
+														)
+														return _(msg`Connected ${date}`)
+													})()}
+												</ItemDescription>
+											</ItemContent>
+											<ItemActions>
+												{account.status === 'needs_reauth' ? (
+													<Badge variant="warning">
+														{_(msg`Reconnect needed`)}
+													</Badge>
+												) : (
+													<Badge variant="success">{_(msg`Active`)}</Badge>
+												)}
+												{canWrite ? (
+													<AlertDialog>
+														<AlertDialogTrigger
+															render={
+																<Button variant="ghost" size="sm">
 																	{_(msg`Disconnect`)}
 																</Button>
-															</Form>
-														</AlertDialogFooter>
-													</AlertDialogContent>
-												</AlertDialog>
-											) : null}
-										</ItemActions>
-									</Item>
+															}
+														/>
+														<AlertDialogContent>
+															<AlertDialogHeader>
+																<AlertDialogTitle>
+																	{_(msg`Disconnect ${accountName}?`)}
+																</AlertDialogTitle>
+																<AlertDialogDescription>
+																	{_(
+																		msg`Posts already sent stay on ${platformName}. Scheduled posts will fail for this account.`,
+																	)}
+																</AlertDialogDescription>
+															</AlertDialogHeader>
+															<AlertDialogFooter>
+																<AlertDialogCancel>
+																	{_(msg`Keep it`)}
+																</AlertDialogCancel>
+																<Form method="post">
+																	<input
+																		type="hidden"
+																		name="accountId"
+																		value={account.id}
+																	/>
+																	<Button
+																		type="submit"
+																		name="intent"
+																		value="disconnect"
+																		variant="destructive"
+																	>
+																		{_(msg`Disconnect`)}
+																	</Button>
+																</Form>
+															</AlertDialogFooter>
+														</AlertDialogContent>
+													</AlertDialog>
+												) : null}
+											</ItemActions>
+										</Item>
 									)
 								})}
 							</ItemGroup>

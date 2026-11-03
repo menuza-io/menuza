@@ -10,6 +10,12 @@ import { printCatalog } from '@repo/common/print-shop-catalog'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
 import {
+	ChoiceCard,
+	ChoiceCardContent,
+	ChoiceCardDescription,
+	ChoiceCardTitle,
+} from '@repo/ui/choice-card'
+import {
 	Field,
 	FieldError,
 	FieldLabel,
@@ -17,7 +23,6 @@ import {
 	FieldSet,
 } from '@repo/ui/field'
 import { Input } from '@repo/ui/input'
-import { Label } from '@repo/ui/label'
 import { PageHeader } from '@repo/ui/page-header'
 import { RadioGroup, RadioGroupItem } from '@repo/ui/radio-group'
 import { useState } from 'react'
@@ -123,23 +128,20 @@ export default function NewPrintRoute() {
 						className="grid gap-3 sm:grid-cols-2"
 					>
 						{printCatalog.productKeys.map((key) => (
-							<Label
-								key={key}
-								className="border-border has-[[data-checked]]:border-primary flex min-h-11 cursor-pointer items-start gap-3 rounded-lg border p-4"
-							>
-								<RadioGroupItem value={key} className="mt-0.5" />
-								<span className="flex flex-col gap-1">
-									<span className="flex flex-wrap items-center gap-2 font-medium">
+							<ChoiceCard key={key}>
+								<RadioGroupItem value={key} />
+								<ChoiceCardContent>
+									<ChoiceCardTitle>
 										{_(printProductLabel(key).name)}
 										{shipping && printCatalog.products[key]!.shippable ? (
 											<Badge variant="secondary">{_(msg`Can ship`)}</Badge>
 										) : null}
-									</span>
-									<span className="text-muted-foreground text-sm font-normal">
+									</ChoiceCardTitle>
+									<ChoiceCardDescription>
 										{_(printProductLabel(key).description)}
-									</span>
-								</span>
-							</Label>
+									</ChoiceCardDescription>
+								</ChoiceCardContent>
+							</ChoiceCard>
 						))}
 					</RadioGroup>
 				</FieldSet>
@@ -153,19 +155,18 @@ export default function NewPrintRoute() {
 						className="flex flex-wrap gap-3"
 					>
 						{printCatalog.products[product]!.sizes.map((size) => (
-							<Label
-								key={size.key}
-								className="border-border has-[[data-checked]]:border-primary flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border px-4"
-							>
+							<ChoiceCard key={size.key} className="w-auto">
 								<RadioGroupItem value={size.key} />
-								<bdi>
-									{printSizeText(
-										_,
-										size.label,
-										printCatalog.products[product]!.folded,
-									)}
-								</bdi>
-							</Label>
+								<ChoiceCardTitle>
+									<bdi>
+										{printSizeText(
+											_,
+											size.label,
+											printCatalog.products[product]!.folded,
+										)}
+									</bdi>
+								</ChoiceCardTitle>
+							</ChoiceCard>
 						))}
 					</RadioGroup>
 					<FieldError errors={printFormErrors(_, fields.sizeKey.errors)} />
@@ -179,13 +180,12 @@ export default function NewPrintRoute() {
 						className="flex flex-wrap gap-3"
 					>
 						{PRINT_TEMPLATE_STYLES.map((style) => (
-							<Label
-								key={style}
-								className="border-border has-[[data-checked]]:border-primary flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border px-4"
-							>
+							<ChoiceCard key={style} className="w-auto">
 								<RadioGroupItem value={style} />
-								{_(PRINT_STYLE_LABELS[style])}
-							</Label>
+								<ChoiceCardTitle>
+									{_(PRINT_STYLE_LABELS[style])}
+								</ChoiceCardTitle>
+							</ChoiceCard>
 						))}
 					</RadioGroup>
 				</FieldSet>

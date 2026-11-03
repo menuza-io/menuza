@@ -93,6 +93,7 @@
     "./alert": "./components/ui/alert.tsx",
     "./alert-dialog": "./components/ui/alert-dialog.tsx",
     "./radio-group": "./components/ui/radio-group.tsx",
+    "./choice-card": "./components/ui/choice-card.tsx",
     "./spinner": "./components/ui/spinner.tsx",
     "./resizable": "./components/ui/resizable.tsx"
   },
