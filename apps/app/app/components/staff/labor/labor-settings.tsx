@@ -180,6 +180,7 @@ export function LaborSettingsForm({
 				<RadioGroup
 					value={source}
 					onValueChange={(value) => isSalesSource(value) && setSource(value)}
+					disabled={!canEdit || save.pending}
 					aria-label={_(t`Where sales come from`)}
 				>
 					{SOURCE_CHOICES.map((choice) => (

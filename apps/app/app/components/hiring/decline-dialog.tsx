@@ -23,7 +23,7 @@ import {
 } from '@repo/ui/dialog'
 import { FieldLegend, FieldSet } from '@repo/ui/field'
 import { RadioGroup, RadioGroupItem } from '@repo/ui/radio-group'
-import { useState, type FormEvent } from 'react'
+import { useId, useState, type FormEvent } from 'react'
 import { SelectField } from '#app/components/staff/controls.tsx'
 import { useStaffAction } from '#app/hooks/use-staff-action.ts'
 import { declineApplicant } from '#app/utils/hiring/applicant-api.ts'
@@ -56,6 +56,7 @@ export function DeclineDialog({
 }) {
 	const { _ } = useLingui()
 	const labels = useApplicantLabels()
+	const noEmailId = useId()
 	const action = useStaffAction(describeApplicantError)
 	const [reason, setReason] = useState<DeclineReason>('not_a_fit')
 	const [template, setTemplate] = useState<DeclineTemplate>(
@@ -111,7 +112,7 @@ export function DeclineDialog({
 							<Trans>Message to {name}</Trans>
 						</FieldLegend>
 						{!hasEmail ? (
-							<p className="text-muted-foreground text-sm">
+							<p id={noEmailId} className="text-muted-foreground text-sm">
 								<Trans>
 									There is no email on file, so nothing can be sent.
 								</Trans>
@@ -129,7 +130,11 @@ export function DeclineDialog({
 								const disabled = !hasEmail && key !== 'none'
 								return (
 									<ChoiceCard key={key}>
-										<RadioGroupItem value={key} disabled={disabled} />
+										<RadioGroupItem
+											value={key}
+											disabled={disabled}
+											aria-describedby={disabled ? noEmailId : undefined}
+										/>
 										<ChoiceCardContent>
 											<ChoiceCardTitle>
 												{labels.declineTemplate[key].label}
