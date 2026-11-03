@@ -8,7 +8,8 @@ import {
 	mulDiv,
 	sumMinor,
 } from './money.ts'
-import { loyaltyCatalogIdSchema, type LoyaltyEarningRule } from './program.ts'
+import { loyaltyCatalogIdSchema } from './catalog.ts'
+import { type LoyaltyEarningRule } from './program.ts'
 
 /**
  * Earning and refund reversal. Both read only the purchase snapshot and the
@@ -212,7 +213,10 @@ export function computeRefundReversal(input: {
 	rule: LoyaltyEarningRule
 	minimumSpendMinor: number
 	snapshot: LoyaltyPurchaseSnapshot
+	/** Everything the purchase earned: the base award and any promotion bonus. */
 	awardedPoints: number
+	/** The part of `awardedPoints` that came from promotions (0 when none). */
+	bonusPoints?: number
 	previouslyReversedPoints: number
 	cumulativeRefundedMinor: number
 }): RefundReversal {
@@ -229,6 +233,11 @@ export function computeRefundReversal(input: {
 				: Math.min(eligibleMinor, mulDiv(eligibleMinor, refunded, paid, 'ceil'))
 	const remainingEligibleMinor = eligibleMinor - refundedEligibleMinor
 	const awarded = Math.max(0, input.awardedPoints)
+	// The bonus is part of the award but not of the base rule: the rule below
+	// is applied to the base share only, and the bonus is kept in proportion
+	// to the merchandise that remains.
+	const bonus = Math.min(awarded, Math.max(0, input.bonusPoints ?? 0))
+	const baseAwarded = awarded - bonus
 
 	let pointsAfter: number
 	if (
@@ -237,15 +246,21 @@ export function computeRefundReversal(input: {
 		remainingEligibleMinor < input.minimumSpendMinor
 	) {
 		pointsAfter = 0
-	} else if (rule.method === 'spend') {
-		pointsAfter = Math.min(
-			awarded,
-			mulDiv(remainingEligibleMinor, rule.points, rule.perMinor),
-		)
-	} else if (rule.method === 'visit') {
-		pointsAfter = awarded
 	} else {
-		pointsAfter = mulDiv(awarded, remainingEligibleMinor, eligibleMinor)
+		let baseAfter: number
+		if (rule.method === 'spend') {
+			baseAfter = Math.min(
+				baseAwarded,
+				mulDiv(remainingEligibleMinor, rule.points, rule.perMinor),
+			)
+		} else if (rule.method === 'visit') {
+			baseAfter = baseAwarded
+		} else {
+			baseAfter = mulDiv(baseAwarded, remainingEligibleMinor, eligibleMinor)
+		}
+		const bonusAfter =
+			bonus === 0 ? 0 : mulDiv(bonus, remainingEligibleMinor, eligibleMinor)
+		pointsAfter = baseAfter + bonusAfter
 	}
 	const reversePoints = Math.max(
 		0,

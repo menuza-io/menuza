@@ -17,9 +17,11 @@ import {
 import { addDays, startOfLocalDay } from '@repo/zoned-time'
 import {
 	and,
+	desc,
 	eq,
 	gte,
 	inArray,
+	isNotNull,
 	lt,
 	ne,
 	sql,
@@ -104,6 +106,36 @@ export async function getLoyaltyReport(
 		})
 		.from(perMember)
 		.get()
+	// ---- Promotions (bonus points on completed purchases) --------------------
+	const promotionScope = and(
+		eq(loyaltyPurchases.state, 'completed'),
+		inWindow(loyaltyPurchases.occurredAt),
+		scopeCondition(loyaltyPurchases.locationId, locationIds),
+	)
+	const bonusTotals = await db
+		.select({
+			points: sql<number>`coalesce(sum(${loyaltyPurchases.bonusPoints}), 0)`,
+		})
+		.from(loyaltyPurchases)
+		.where(promotionScope)
+		.get()
+	const byPromotion = await db
+		.select({
+			id: sql<string>`json_extract(j.value, '$.id')`,
+			name: sql<string>`max(json_extract(j.value, '$.name'))`,
+			points: sql<number>`sum(json_extract(j.value, '$.points'))`,
+			purchases: sql<number>`count(*)`,
+		})
+		.from(loyaltyPurchases)
+		.innerJoin(
+			sql`json_each(${loyaltyPurchases.appliedPromotions}) as j`,
+			sql`1 = 1`,
+		)
+		.where(and(promotionScope, isNotNull(loyaltyPurchases.appliedPromotions)))
+		.groupBy(sql`json_extract(j.value, '$.id')`)
+		.orderBy(desc(sql`sum(json_extract(j.value, '$.points'))`))
+		.limit(100)
+		.all()
 	const activeMembers = toNumber(purchaseTotals?.members)
 	const purchaseCount = toNumber(purchaseTotals?.purchases)
 	const customerRevenueMinor = toNumber(purchaseTotals?.revenue)
@@ -282,11 +314,22 @@ export async function getLoyaltyReport(
 			discountCostMinor: consumedDiscount - toNumber(restored?.discount),
 			conversionBp: ratioToBp(toNumber(consumed?.members), activeMembers),
 		},
+		promotions: {
+			bonusPoints: toNumber(bonusTotals?.points),
+			byPromotion: byPromotion.map((row) => ({
+				id: String(row.id),
+				name: String(row.name),
+				points: toNumber(row.points),
+				purchases: toNumber(row.purchases),
+			})),
+		},
 		purchases: {
 			count: purchaseCount,
 			customerRevenueMinor,
 			averageOrderValueMinor:
-				purchaseCount > 0 ? Math.floor(customerRevenueMinor / purchaseCount) : 0,
+				purchaseCount > 0
+					? Math.floor(customerRevenueMinor / purchaseCount)
+					: 0,
 			repeatPurchaseRateBp: ratioToBp(repeatMembers, activeMembers),
 			frequencyHundredths:
 				activeMembers > 0

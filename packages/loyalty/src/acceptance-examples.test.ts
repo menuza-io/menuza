@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
 	DISCOUNT_EXAMPLES,
 	EARNING_EXAMPLES,
+	PROMOTION_EXAMPLES,
 	REFUND_EXAMPLES,
 } from './acceptance-examples.ts'
 import { loyaltyCartSchema } from './cart.ts'
@@ -12,6 +13,7 @@ import {
 	loyaltyPurchaseSnapshotSchema,
 } from './earning.ts'
 import { loyaltyEarningRuleSchema } from './program.ts'
+import { computePromotionBonus, loyaltyPromotionSchema } from './promotions.ts'
 import { loyaltyRewardDefinitionSchema } from './rewards.ts'
 
 describe('acceptance examples: earning', () => {
@@ -81,6 +83,35 @@ describe('acceptance examples: refunds', () => {
 				expect(result.fullRefund).toBe(step.fullRefund)
 				reversed += result.reversePoints
 			}
+		})
+	}
+})
+
+describe('acceptance examples: promotions', () => {
+	for (const example of PROMOTION_EXAMPLES) {
+		it(example.id, () => {
+			const rule = loyaltyEarningRuleSchema.parse(example.earning)
+			const snapshot = loyaltyPurchaseSnapshotSchema.parse(example.snapshot)
+			const earning = computeEarning(
+				{ rule, minimumSpendMinor: example.minimumSpendMinor, snapshot },
+				{ visitAlreadyAwarded: example.visitAlreadyAwarded },
+			)
+			expect(earning.points).toBe(example.expectedBasePoints)
+			const bonus = computePromotionBonus({
+				promotions: example.promotions.map((promotion) =>
+					loyaltyPromotionSchema.parse(promotion),
+				),
+				stacking: example.stacking ?? 'best',
+				earning,
+				snapshot,
+				occurredAt: example.occurredAt,
+				timeZone: example.timeZone,
+				locationId: example.locationId,
+			})
+			expect(bonus.points).toBe(example.expectedBonusPoints)
+			expect(bonus.applied.map(({ id, points }) => ({ id, points }))).toEqual(
+				example.expectedApplied,
+			)
 		})
 	}
 })

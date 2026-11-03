@@ -21,6 +21,8 @@ const programConfig: LoyaltyProgramConfig = {
 	earning: { method: 'spend', points: 1, perMinor: 100 },
 	terms: 'The terms',
 	labels: { items: {}, categories: {} },
+	promotions: [],
+	promotionStacking: 'best',
 }
 
 function makeToken(

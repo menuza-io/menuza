@@ -215,6 +215,9 @@ export const marketingJourneys = sqliteTable(
 				'reservation_completed',
 				'reservation_no_show',
 				'reservation_cancelled',
+				'loyalty_reward_available',
+				'loyalty_near_reward',
+				'loyalty_inactive',
 			],
 		})
 			.notNull()
@@ -5950,7 +5953,15 @@ export const loyaltyPurchases = sqliteTable(
 		>(),
 		eligibleMinor: integer('eligible_minor').notNull().default(0),
 		totalPaidMinor: integer('total_paid_minor').notNull().default(0),
+		// Everything the purchase earned, promotion bonus included.
 		awardedPoints: integer('awarded_points').notNull().default(0),
+		// The part of `awarded_points` that promotions gave (never above it, kept
+		// in code), and which promotions: ids, names and points only, frozen when
+		// the purchase settled so a later edit never changes a past award.
+		bonusPoints: integer('bonus_points').notNull().default(0),
+		appliedPromotions: text('applied_promotions', {
+			mode: 'json',
+		}).$type<Array<{ id: string; name: string; points: number }>>(),
 		reversedPoints: integer('reversed_points').notNull().default(0),
 		// Cumulative money returned; each refund recomputes from the total.
 		refundedMinor: integer('refunded_minor').notNull().default(0),
@@ -6004,6 +6015,35 @@ export const loyaltyPurchases = sqliteTable(
 			'chk_loyalty_purchases_state',
 			oneOf(table.state, LOYALTY_PURCHASE_STATE_VALUES),
 		),
+	],
+)
+
+// Which loyalty journey triggers already fired for a member, so each fires once
+// per crossing: `ref` is the reward id for the reward triggers (`state` flips to
+// 'armed' when the member drops back below, and fires again on the next
+// crossing) and the last purchase time for `loyalty_inactive` (one per quiet
+// spell). Ids and timestamps only.
+export const loyaltyJourneyEmissions = sqliteTable(
+	'loyalty_journey_emissions',
+	{
+		memberId: text('member_id')
+			.notNull()
+			.references(() => loyaltyMembers.id),
+		trigger: text('trigger', {
+			enum: [
+				'loyalty_reward_available',
+				'loyalty_near_reward',
+				'loyalty_inactive',
+			],
+		}).notNull(),
+		ref: text('ref').notNull(),
+		state: text('state', { enum: ['fired', 'armed'] })
+			.notNull()
+			.default('fired'),
+		emittedAt: integer('emitted_at').notNull().default(nowMs),
+	},
+	(table) => [
+		primaryKey({ columns: [table.memberId, table.trigger, table.ref] }),
 	],
 )
 
@@ -6655,6 +6695,8 @@ export type LoyaltyRewardVersionRow = typeof loyaltyRewardVersions.$inferSelect
 export type LoyaltyMemberRow = typeof loyaltyMembers.$inferSelect
 export type LoyaltyBalanceRow = typeof loyaltyBalances.$inferSelect
 export type LoyaltyPurchaseRow = typeof loyaltyPurchases.$inferSelect
+export type LoyaltyJourneyEmissionRow =
+	typeof loyaltyJourneyEmissions.$inferSelect
 export type NewLoyaltyPurchaseRow = typeof loyaltyPurchases.$inferInsert
 export type LoyaltyRedemptionRow = typeof loyaltyRedemptions.$inferSelect
 export type NewLoyaltyRedemptionRow = typeof loyaltyRedemptions.$inferInsert

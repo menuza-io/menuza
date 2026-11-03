@@ -49,6 +49,42 @@ export const loyaltyPosIdentifyResponseSchema = z
 	})
 	.strict()
 
+/**
+ * Joining at the till: the cashier types the guest's phone number, a one-time
+ * code goes to that phone, and reading it back proves the guest owns it. Only
+ * then is the phone verified, the points account opened and a binding issued
+ * (the same binding `identify` returns). A number alone links nothing.
+ */
+const phoneSchema = z.string().trim().min(5).max(32)
+
+export const loyaltyPosJoinSendRequestSchema = z
+	.object({ phone: phoneSchema })
+	.strict()
+
+export const loyaltyPosJoinSendResponseSchema = z
+	.object({ sent: z.literal(true), expiresAt: msSchema })
+	.strict()
+
+export const loyaltyPosJoinVerifyRequestSchema = z
+	.object({
+		phone: phoneSchema,
+		code: z.string().regex(/^\d{6}$/),
+	})
+	.strict()
+
+export const loyaltyPosJoinVerifyResponseSchema = z
+	.object({
+		member: loyaltyPosMemberSchema,
+		rewards: z.array(loyaltyPublicRewardSchema),
+		redemptionEnabled: z.boolean(),
+		/** True when this call opened the points account. */
+		joined: z.boolean(),
+	})
+	.strict()
+export type LoyaltyPosJoinVerifyResponse = z.infer<
+	typeof loyaltyPosJoinVerifyResponseSchema
+>
+
 export const loyaltyPosQuoteRequestSchema = z
 	.object({
 		binding: bindingSchema,

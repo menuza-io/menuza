@@ -2,10 +2,11 @@ import { msg, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import {
 	buildMergeToken,
-	MERGE_TOKENS,
+	mergeTokensFor,
 	mergeTagLabel,
 	parseMergeSegments,
 } from '@repo/common/merge-tags'
+import { useMergeTagScope } from './merge-tag-scope.tsx'
 import { cn } from '@repo/ui'
 import { Button } from '@repo/ui/button'
 import { Icon } from '@repo/ui/icon'
@@ -121,6 +122,7 @@ export function MergeTagField({
 	className,
 	disabled,
 }: MergeTagFieldProps) {
+	const tokens = mergeTokensFor({ loyalty: useMergeTagScope().loyalty })
 	const { _ } = useLingui()
 	const fallbackInputId = useId()
 	const editorRef = useRef<HTMLDivElement>(null)
@@ -289,7 +291,7 @@ export function MergeTagField({
 				<span className="text-muted-foreground text-[11px]">
 					<Trans>Insert</Trans>
 				</span>
-				{MERGE_TOKENS.map((entry) => (
+				{tokens.map((entry) => (
 					<button
 						key={entry.tag}
 						type="button"
@@ -359,7 +361,7 @@ export function MergeTagField({
 							<Trans>Variables</Trans>
 						</p>
 						<div className="max-h-56 overflow-auto">
-							{MERGE_TOKENS.map((entry) => {
+							{tokens.map((entry) => {
 								const isCurrent = active?.tag === entry.tag
 								return (
 									<button

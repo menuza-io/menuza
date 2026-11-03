@@ -16,6 +16,7 @@ import {
 	type StaffRef,
 } from './db.ts'
 import { issueCreditNote, issueInvoice } from './fiscal.ts'
+import { type SaleLoyalty } from './loyalty.ts'
 import {
 	computeTotals,
 	lineSignature,
@@ -67,6 +68,14 @@ export const MAX_REFUNDS = 20
 export const MAX_LINE_VOIDS = 200
 
 export type OrderDraft = {
+	/**
+	 * The sale's id, when it was fixed before the order existed: a loyalty reward
+	 * is approved for a sale id, so the order must be created under that same id.
+	 * Absent: a new one.
+	 */
+	id?: string
+	/** The loyalty member who earns on this sale, and the categories of its lines. */
+	loyalty?: SaleLoyalty | null
 	terminalCode: string
 	locationId: string
 	currency: string
@@ -338,7 +347,7 @@ export async function createOrder(
 		await db.meta.put({ key: counterKey, value: seq })
 
 		let order: PosOrder = {
-			id: crypto.randomUUID(),
+			id: draft.id ?? crypto.randomUUID(),
 			number: `${draft.terminalCode}-${String(seq).padStart(4, '0')}`,
 			businessDate,
 			createdAt: now,
@@ -353,6 +362,7 @@ export async function createOrder(
 			catalogFetchedAt: draft.catalogFetchedAt ?? null,
 			shiftId,
 			lines: sendLines(draft.lines, now),
+			loyalty: draft.loyalty ?? null,
 			lineVoids: [],
 			adjustments: draft.adjustments,
 			totals: computeTotals({
@@ -444,6 +454,8 @@ export async function updateTab(
 			customerName: draft.customerName.trim(),
 			tableLabel: draft.tableLabel.trim(),
 			lines: keepServed(sendLines(draft.lines, now), order.lines),
+			// A member identified later in the tab's life is kept for the rest of it.
+			loyalty: draft.loyalty ?? order.loyalty ?? null,
 			lineVoids,
 			adjustments: draft.adjustments,
 			totals: computeTotals({

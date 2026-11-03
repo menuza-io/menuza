@@ -173,6 +173,10 @@ msgstr "{0} tabs from this shift are still open. They stay open and can be paid 
 msgid "{0} to {1}"
 msgstr "{0} to {1}"
 
+#: src/screens/LoyaltySheet.tsx:632
+#~ msgid "{0} to go"
+#~ msgstr "{0} to go"
+
 #: src/apps/reservations/sheets.tsx:473
 #~ msgid "{0} visits before"
 #~ msgstr "{0} visits before"
@@ -217,11 +221,19 @@ msgstr "{count, plural, =0 {{0}: none fit} one {{1}: # fits} other {{2}: # fit}}
 msgid "{count, plural, one {# party} other {# parties}}"
 msgstr "{count, plural, one {# party} other {# parties}}"
 
+#: src/screens/LoyaltySheet.tsx:44
+msgid "{count, plural, one {# point} other {# points}}"
+msgstr "{count, plural, one {# point} other {# points}}"
+
+#: src/screens/LoyaltySheet.tsx:43
+msgid "{count, plural, one {# star} other {# stars}}"
+msgstr "{count, plural, one {# star} other {# stars}}"
+
 #: src/apps/reservations/news.ts:73
 #~ msgid "{count, plural, one {# update at the stand} other {# updates at the stand}}"
 #~ msgstr "{count, plural, one {# update at the stand} other {# updates at the stand}}"
 
-#: src/screens/Cart.tsx:350
+#: src/screens/Cart.tsx:352
 msgid "{count, plural, one {Subtotal · # item} other {Subtotal · # items}}"
 msgstr "{count, plural, one {Subtotal · # item} other {Subtotal · # items}}"
 
@@ -299,6 +311,10 @@ msgstr "{heldFor, plural, one {Told, holds # min} other {Told, holds # min}}"
 #: src/apps/reservations/TableSheet.tsx:368
 msgid "{heldLate, plural, one {# min late} other {# min late}}"
 msgstr "{heldLate, plural, one {# min late} other {# min late}}"
+
+#: src/screens/LoyaltySheet.tsx:473
+msgid "{heldText} held for a reward in progress"
+msgstr "{heldText} held for a reward in progress"
 
 #: src/apps/reservations/news.ts:146
 msgid "{here} arrived"
@@ -392,7 +408,7 @@ msgstr "{leftText}m"
 msgid "{length, plural, one {# digit entered} other {# digits entered}}"
 msgstr "{length, plural, one {# digit entered} other {# digits entered}}"
 
-#: src/App.tsx:801
+#: src/App.tsx:833
 msgid "{loadProblem}. The first load needs internet; after that the till works offline."
 msgstr "{loadProblem}. The first load needs internet; after that the till works offline."
 
@@ -420,6 +436,10 @@ msgstr "{minutesLeft, plural, one {# min left} other {# min left}}"
 msgid "{more, plural, one {and # more} other {and # more}}"
 msgstr "{more, plural, one {and # more} other {and # more}}"
 
+#: src/screens/LoyaltySheet.tsx:497
+msgid "{moreText} more to {nextName}"
+msgstr "{moreText} more to {nextName}"
+
 #: src/apps/reservations/HostStand.tsx:2511
 msgid "{name} is on the waitlist, about {quoted} min."
 msgstr "{name} is on the waitlist, about {quoted} min."
@@ -427,6 +447,10 @@ msgstr "{name} is on the waitlist, about {quoted} min."
 #: src/apps/reservations/HostStand.tsx:2512
 msgid "{name} is on the waitlist."
 msgstr "{name} is on the waitlist."
+
+#: src/screens/LoyaltyRewards.tsx:37
+msgid "{name}, {balance}"
+msgstr "{name}, {balance}"
 
 #: src/screens/MenuGrid.tsx:330
 msgid "{name}, {price}"
@@ -538,7 +562,7 @@ msgstr "{rejected, plural, one {# order needs attention} other {# orders need at
 msgid "{rejectedShifts, plural, one {# shift needs attention} other {# shifts need attention}}"
 msgstr "{rejectedShifts, plural, one {# shift needs attention} other {# shifts need attention}}"
 
-#: src/screens/ManualDiscount.tsx:464
+#: src/screens/ManualDiscount.tsx:466
 msgid "{replacedCount, plural, one {This discount does not combine with {replacedNames}, so it replaced it.} other {This discount does not combine with {replacedNames}, so it replaced them.}}"
 msgstr "{replacedCount, plural, one {This discount does not combine with {replacedNames}, so it replaced it.} other {This discount does not combine with {replacedNames}, so it replaced them.}}"
 
@@ -599,6 +623,10 @@ msgstr "{time}, {who}, large party of {size}, {standing}, {where}"
 #: src/apps/reservations/Timeline.tsx:813
 msgid "{time}, {who}, party of {size}, {standing}, {where}"
 msgstr "{time}, {who}, party of {size}, {standing}, {where}"
+
+#: src/screens/LoyaltySheet.tsx:633
+msgid "{toGo} to go"
+msgstr "{toGo} to go"
 
 #: src/screens/TopBar.tsx:285
 msgid "{total, plural, one {# upload needs attention} other {# uploads need attention}}"
@@ -804,11 +832,15 @@ msgstr "~{leftMin}m left"
 msgid "~{leftText}m"
 msgstr "~{leftText}m"
 
-#: src/lib/orders.ts:154
+#: src/screens/LoyaltySheet.tsx:405
+msgid "6-digit code"
+msgstr "6-digit code"
+
+#: src/lib/orders.ts:163
 msgid "A bill can take at most {MAX_PAYMENTS} payments"
 msgstr "A bill can take at most {MAX_PAYMENTS} payments"
 
-#: src/lib/orders.ts:579
+#: src/lib/orders.ts:591
 msgid "A bill can take at most {MAX_REFUNDS} refunds"
 msgstr "A bill can take at most {MAX_REFUNDS} refunds"
 
@@ -816,11 +848,11 @@ msgstr "A bill can take at most {MAX_REFUNDS} refunds"
 #~ msgid "A confirmation text was sent."
 #~ msgstr "A confirmation text was sent."
 
-#: src/screens/ManualDiscount.tsx:493
+#: src/screens/ManualDiscount.tsx:495
 msgid "A coupon code needs a connection. Automatic discounts still apply."
 msgstr "A coupon code needs a connection. Automatic discounts still apply."
 
-#: src/screens/ManualDiscount.tsx:439
+#: src/screens/ManualDiscount.tsx:441
 msgid "A discount no longer applies to this order."
 msgstr "A discount no longer applies to this order."
 
@@ -865,12 +897,12 @@ msgstr "A manager turns them on in the app, under Settings, Terminals. The termi
 msgid "A no-show cannot be reopened from a till. Seat them as a walk-in instead."
 msgstr "A no-show cannot be reopened from a till. Seat them as a walk-in instead."
 
-#: src/screens/ManualDiscount.tsx:99
+#: src/screens/ManualDiscount.tsx:100
 msgid "A percentage cannot be more than 100."
 msgstr "A percentage cannot be more than 100."
 
-#: src/lib/orders.ts:163
-#: src/lib/orders.ts:552
+#: src/lib/orders.ts:172
+#: src/lib/orders.ts:564
 msgid "A reference may hold letters, digits, spaces and . # / - only"
 msgstr "A reference may hold letters, digits, spaces and . # / - only"
 
@@ -881,6 +913,10 @@ msgstr "A shift is already open on this terminal."
 #: src/apps/reservations/AddSheets.tsx:368
 msgid "A text is sent only if the guest agreed to messages."
 msgstr "A text is sent only if the guest agreed to messages."
+
+#: src/screens/LoyaltySheet.tsx:149
+msgid "A text message could not be sent to that number."
+msgstr "A text message could not be sent to that number."
 
 #: src/apps/reservations/AddSheets.tsx:334
 msgid "About {quotedMin} min, number {position} in line."
@@ -923,7 +959,19 @@ msgstr "Add a party to the waitlist"
 msgid "Add items"
 msgstr "Add items"
 
-#: src/screens/Cart.tsx:148
+#: src/screens/LoyaltySheet.tsx:181
+msgid "Add items first, then choose a reward."
+msgstr "Add items first, then choose a reward."
+
+#: src/screens/LoyaltySheet.tsx:598
+msgid "Add items to the order to use a reward."
+msgstr "Add items to the order to use a reward."
+
+#: src/screens/LoyaltyRewards.tsx:39
+msgid "Add member"
+msgstr "Add member"
+
+#: src/screens/Cart.tsx:149
 msgid "Add name"
 msgstr "Add name"
 
@@ -931,7 +979,7 @@ msgstr "Add name"
 msgid "Add station"
 msgstr "Add station"
 
-#: src/screens/Cart.tsx:145
+#: src/screens/Cart.tsx:146
 msgid "Add table"
 msgstr "Add table"
 
@@ -955,7 +1003,7 @@ msgstr "Add to the waitlist"
 msgid "Added {addedTime}"
 msgstr "Added {addedTime}"
 
-#: src/screens/Cart.tsx:176
+#: src/screens/Cart.tsx:177
 msgid "Adding to tab #{tabNumber}"
 msgstr "Adding to tab #{tabNumber}"
 
@@ -1039,7 +1087,7 @@ msgid "Already booked? Seat their booking."
 msgstr "Already booked? Seat their booking."
 
 #: src/screens/Checkout.tsx:459
-#: src/screens/ManualDiscount.tsx:335
+#: src/screens/ManualDiscount.tsx:337
 #: src/screens/ShiftSheet.tsx:216
 msgid "Amount"
 msgstr "Amount"
@@ -1048,7 +1096,7 @@ msgstr "Amount"
 #~ msgid "An order can have at most {MAX_ORDER_LINES} different items. Split it across two orders."
 #~ msgstr "An order can have at most {MAX_ORDER_LINES} different items. Split it across two orders."
 
-#: src/lib/orders.ts:190
+#: src/lib/orders.ts:199
 msgid "An order holds at most {MAX_ORDER_LINES} lines. Take off the newest items, save, then ring them up as a new order."
 msgstr "An order holds at most {MAX_ORDER_LINES} lines. Take off the newest items, save, then ring them up as a new order."
 
@@ -1084,7 +1132,7 @@ msgstr "App"
 msgid "App URL"
 msgstr "App URL"
 
-#: src/screens/ManualDiscount.tsx:399
+#: src/screens/ManualDiscount.tsx:401
 msgid "Apply discount"
 msgstr "Apply discount"
 
@@ -1131,6 +1179,10 @@ msgstr "ASAP"
 #: src/screens/SettingsSheet.tsx:237
 msgid "Ask a manager for a pairing link in the Menuza app. Open it on this device, or paste it (or just the code) here."
 msgstr "Ask a manager for a pairing link in the Menuza app. Open it on this device, or paste it (or just the code) here."
+
+#: src/screens/LoyaltySheet.tsx:526
+msgid "Ask them to open their wallet and approve it, or text them a code."
+msgstr "Ask them to open their wallet and approve it, or text them a code."
 
 #: src/screens/OrdersSheet.tsx:1000
 msgid "Asking the other terminals…"
@@ -1355,7 +1407,7 @@ msgstr "Call"
 msgid "Callback number"
 msgstr "Callback number"
 
-#: src/App.tsx:799
+#: src/App.tsx:831
 msgid "Can’t load the menu yet"
 msgstr "Can’t load the menu yet"
 
@@ -1372,6 +1424,10 @@ msgstr "Cancel"
 #: src/apps/reservations/PartySheet.tsx:466
 msgid "Cancel booking"
 msgstr "Cancel booking"
+
+#: src/screens/LoyaltySheet.tsx:581
+msgid "Cancel request"
+msgstr "Cancel request"
 
 #: src/screens/OrdersSheet.tsx:775
 msgid "Cancel tab"
@@ -1418,7 +1474,7 @@ msgstr "Cancelled: {voidReason}"
 #~ msgid "Cancelled: {who}, {time}"
 #~ msgstr "Cancelled: {who}, {time}"
 
-#: src/lib/orders.ts:187
+#: src/lib/orders.ts:196
 msgid "Cannot save an empty order"
 msgstr "Cannot save an empty order"
 
@@ -1505,6 +1561,10 @@ msgstr "Change due"
 msgid "Change from the bank"
 msgstr "Change from the bank"
 
+#: src/screens/LoyaltySheet.tsx:434
+msgid "Change number"
+msgstr "Change number"
+
 #: src/apps/reservations/sheets.tsx:337
 msgid "Change party size"
 msgstr "Change party size"
@@ -1517,7 +1577,7 @@ msgstr "Change size or time"
 msgid "Changed"
 msgstr "Changed"
 
-#: src/screens/Cart.tsx:399
+#: src/screens/Cart.tsx:401
 #: src/screens/Checkout.tsx:294
 msgid "Charge"
 msgstr "Charge"
@@ -1529,6 +1589,10 @@ msgstr "Charged the wrong amount"
 #: src/apps/kitchen/KitchenSettings.tsx:105
 msgid "Check station names, unique item routes, and timing. The late threshold must be greater than the warning threshold."
 msgstr "Check station names, unique item routes, and timing. The late threshold must be greater than the warning threshold."
+
+#: src/screens/LoyaltySheet.tsx:151
+msgid "Check the number and try again."
+msgstr "Check the number and try again."
 
 #: src/apps/reservations/sheets.tsx:1506
 #: src/apps/reservations/sheets.tsx:1746
@@ -1555,6 +1619,7 @@ msgstr "Checking who is working…"
 
 #: src/apps/timeclock/TimeClock.tsx:747
 #: src/screens/LockScreen.tsx:193
+#: src/screens/LoyaltySheet.tsx:628
 #: src/ui/ManagerPinPad.tsx:98
 msgid "Checking…"
 msgstr "Checking…"
@@ -1597,11 +1662,11 @@ msgstr "Choose a table"
 msgid "Choose a time"
 msgstr "Choose a time"
 
-#: src/lib/orders.ts:206
+#: src/lib/orders.ts:215
 msgid "Choose a valid pickup time"
 msgstr "Choose a valid pickup time"
 
-#: src/lib/orders.ts:201
+#: src/lib/orders.ts:210
 msgid "Choose a valid pickup time zone"
 msgstr "Choose a valid pickup time zone"
 
@@ -1630,7 +1695,7 @@ msgstr "Chosen tables"
 msgid "Clear"
 msgstr "Clear"
 
-#: src/screens/Cart.tsx:206
+#: src/screens/Cart.tsx:207
 msgid "Clear order"
 msgstr "Clear order"
 
@@ -1667,7 +1732,7 @@ msgstr "Clocked in"
 msgid "Clocked out"
 msgstr "Clocked out"
 
-#: src/App.tsx:1077
+#: src/App.tsx:1111
 #: src/apps/reservations/discard.tsx:76
 #: src/apps/timeclock/TimeClock.tsx:1269
 #: src/ui/primitives.tsx:388
@@ -1709,6 +1774,10 @@ msgstr "Closing now leaves {remainingText} open on the tab"
 msgid "code <0>{0}</0>"
 msgstr "code <0>{0}</0>"
 
+#: src/screens/LoyaltySheet.tsx:545
+msgid "Code the guest was sent"
+msgstr "Code the guest was sent"
+
 #: src/apps/reservations/PickBar.tsx:79
 #: src/apps/reservations/PickBar.tsx:84
 #: src/apps/reservations/PickBar.tsx:228
@@ -1728,6 +1797,8 @@ msgid "Completed kitchen tickets stay available for recall for four hours."
 msgstr "Completed kitchen tickets stay available for recall for four hours."
 
 #: src/apps/reservations/PartySheet.tsx:346
+#: src/screens/LoyaltySheet.tsx:422
+#: src/screens/LoyaltySheet.tsx:561
 msgid "Confirm"
 msgstr "Confirm"
 
@@ -1753,7 +1824,7 @@ msgstr "Confirmed"
 #~ msgid "Confirmed by phone"
 #~ msgstr "Confirmed by phone"
 
-#: src/lib/store.ts:782
+#: src/lib/store.ts:816
 msgid "Connect to the internet to see other terminals’ tabs."
 msgstr "Connect to the internet to see other terminals’ tabs."
 
@@ -1806,7 +1877,7 @@ msgstr "Could not open this day."
 msgid "Could not pair this terminal. Try again."
 msgstr "Could not pair this terminal. Try again."
 
-#: src/lib/store.ts:794
+#: src/lib/store.ts:828
 msgid "Could not reach the server."
 msgstr "Could not reach the server."
 
@@ -1814,7 +1885,7 @@ msgstr "Could not reach the server."
 msgid "Could not reach the server. Check the connection and try again."
 msgstr "Could not reach the server. Check the connection and try again."
 
-#: src/lib/store.ts:832
+#: src/lib/store.ts:866
 msgid "Could not reach the server. The tab stays where it is."
 msgstr "Could not reach the server. The tab stays where it is."
 
@@ -1822,7 +1893,7 @@ msgstr "Could not reach the server. The tab stays where it is."
 msgid "Could not record the refund"
 msgstr "Could not record the refund"
 
-#: src/App.tsx:403
+#: src/App.tsx:435
 msgid "Could not save the order"
 msgstr "Could not save the order"
 
@@ -1830,7 +1901,7 @@ msgstr "Could not save the order"
 msgid "Could not save the payment"
 msgstr "Could not save the payment"
 
-#: src/App.tsx:437
+#: src/App.tsx:469
 msgid "Could not start payment"
 msgstr "Could not start payment"
 
@@ -1838,7 +1909,7 @@ msgstr "Could not start payment"
 msgid "Could not undo. Check the floor."
 msgstr "Could not undo. Check the floor."
 
-#: src/App.tsx:695
+#: src/App.tsx:727
 msgid "Couldn’t update the menu ({catalogError}). Selling from the copy saved on this device."
 msgstr "Couldn’t update the menu ({catalogError}). Selling from the copy saved on this device."
 
@@ -1876,14 +1947,14 @@ msgstr "Covers by time"
 msgid "Covers per hour"
 msgstr "Covers per hour"
 
-#: src/App.tsx:899
-#: src/screens/Cart.tsx:159
-#: src/screens/Cart.tsx:166
+#: src/App.tsx:931
+#: src/screens/Cart.tsx:160
+#: src/screens/Cart.tsx:167
 msgid "Current order"
 msgstr "Current order"
 
-#: src/screens/Cart.tsx:424
-#: src/screens/Cart.tsx:436
+#: src/screens/Cart.tsx:426
+#: src/screens/Cart.tsx:438
 #: src/screens/PhoneOrderSheet.tsx:101
 msgid "Customer name"
 msgstr "Customer name"
@@ -1979,7 +2050,7 @@ msgid "Dietary: {dietLine}"
 msgstr "Dietary: {dietLine}"
 
 #: src/apps/kitchen/Kitchen.tsx:747
-#: src/screens/Cart.tsx:193
+#: src/screens/Cart.tsx:194
 #: src/screens/OrdersSheet.tsx:83
 #: src/screens/Receipt.tsx:97
 msgid "Dine in"
@@ -2001,20 +2072,20 @@ msgstr "Discard this entry?"
 msgid "Discard this walk-in?"
 msgstr "Discard this walk-in?"
 
-#: src/screens/ManualDiscount.tsx:302
-#: src/screens/ManualDiscount.tsx:309
+#: src/screens/ManualDiscount.tsx:303
+#: src/screens/ManualDiscount.tsx:310
 msgid "Discount"
 msgstr "Discount"
 
-#: src/screens/ManualDiscount.tsx:259
+#: src/screens/ManualDiscount.tsx:260
 msgid "Discount applied"
 msgstr "Discount applied"
 
-#: src/screens/ManualDiscount.tsx:258
+#: src/screens/ManualDiscount.tsx:259
 msgid "Discount applied. It replaced {replaced}."
 msgstr "Discount applied. It replaced {replaced}."
 
-#: src/screens/ManualDiscount.tsx:421
+#: src/screens/ManualDiscount.tsx:423
 msgid "Discount removed"
 msgstr "Discount removed"
 
@@ -2023,24 +2094,24 @@ msgstr "Discount removed"
 msgid "Discounts"
 msgstr "Discounts"
 
-#: src/screens/ManualDiscount.tsx:110
+#: src/screens/ManualDiscount.tsx:111
 msgid "Discounts are off until this till refreshes its rules. Connect to the internet."
 msgstr "Discounts are off until this till refreshes its rules. Connect to the internet."
 
-#: src/screens/ManualDiscount.tsx:289
+#: src/screens/ManualDiscount.tsx:290
 msgid "Discounts are off: this till has not refreshed its discount rules in over {staleHours} hours. Connect to the internet and they come back."
 msgstr "Discounts are off: this till has not refreshed its discount rules in over {staleHours} hours. Connect to the internet and they come back."
 
-#: src/screens/ManualDiscount.tsx:286
+#: src/screens/ManualDiscount.tsx:287
 msgid "Discounts are off: this till’s clock moved back since it got its discount rules, so it cannot tell how old they are. Connect to the internet and they come back."
 msgstr "Discounts are off: this till’s clock moved back since it got its discount rules, so it cannot tell how old they are. Connect to the internet and they come back."
 
-#: src/screens/ManualDiscount.tsx:486
+#: src/screens/ManualDiscount.tsx:488
 msgid "Discounts with a use limit do not apply at the till by themselves, because it cannot count uses offline."
 msgstr "Discounts with a use limit do not apply at the till by themselves, because it cannot count uses offline."
 
 #: src/apps/reservations/FreeTableBanner.tsx:58
-#: src/screens/ManualDiscount.tsx:480
+#: src/screens/ManualDiscount.tsx:482
 #: src/ui/motion.tsx:222
 msgid "Dismiss"
 msgstr "Dismiss"
@@ -2048,8 +2119,9 @@ msgstr "Dismiss"
 #: src/apps/kitchen/Kitchen.tsx:325
 #: src/apps/reservations/BookingSheet.tsx:314
 #: src/apps/timeclock/TimeClock.tsx:1376
-#: src/screens/Cart.tsx:453
+#: src/screens/Cart.tsx:455
 #: src/screens/ItemSheet.tsx:369
+#: src/screens/LoyaltySheet.tsx:283
 #: src/screens/ShiftSheet.tsx:141
 msgid "Done"
 msgstr "Done"
@@ -2083,7 +2155,7 @@ msgstr "Duplicates are checked for {checkedDayLabel} only."
 msgid "Duplicates are checked for today only."
 msgstr "Duplicates are checked for today only."
 
-#: src/screens/Cart.tsx:447
+#: src/screens/Cart.tsx:449
 msgid "e.g. 12 or Patio 3"
 msgstr "e.g. 12 or Patio 3"
 
@@ -2100,11 +2172,11 @@ msgid "Earlier"
 msgstr "Earlier"
 
 #. placeholder {0}: shown.name
-#: src/screens/Cart.tsx:518
+#: src/screens/Cart.tsx:520
 msgid "Edit {0}"
 msgstr "Edit {0}"
 
-#: src/screens/Cart.tsx:218
+#: src/screens/Cart.tsx:219
 msgid "Edit phone order details"
 msgstr "Edit phone order details"
 
@@ -2116,24 +2188,24 @@ msgstr "eggs"
 msgid "End break"
 msgstr "End break"
 
-#: src/lib/orders.ts:197
+#: src/lib/orders.ts:206
 #: src/screens/PhoneOrderSheet.tsx:66
 msgid "Enter a customer name for this phone order"
 msgstr "Enter a customer name for this phone order"
 
-#: src/screens/ManualDiscount.tsx:234
+#: src/screens/ManualDiscount.tsx:235
 msgid "Enter a manager PIN to apply this discount."
 msgstr "Enter a manager PIN to apply this discount."
 
-#: src/screens/ManualDiscount.tsx:217
+#: src/screens/ManualDiscount.tsx:218
 msgid "Enter a number, such as 10 or 10.5."
 msgstr "Enter a number, such as 10 or 10.5."
 
-#: src/screens/ManualDiscount.tsx:229
+#: src/screens/ManualDiscount.tsx:230
 msgid "Enter a reason for this discount."
 msgstr "Enter a reason for this discount."
 
-#: src/lib/orders.ts:199
+#: src/lib/orders.ts:208
 #: src/screens/PhoneOrderSheet.tsx:71
 msgid "Enter a valid callback number"
 msgstr "Enter a valid callback number"
@@ -2142,7 +2214,7 @@ msgstr "Enter a valid callback number"
 msgid "Enter an amount"
 msgstr "Enter an amount"
 
-#: src/lib/orders.ts:546
+#: src/lib/orders.ts:558
 msgid "Enter an amount to refund"
 msgstr "Enter an amount to refund"
 
@@ -2150,7 +2222,7 @@ msgstr "Enter an amount to refund"
 msgid "Enter an amount."
 msgstr "Enter an amount."
 
-#: src/screens/ManualDiscount.tsx:107
+#: src/screens/ManualDiscount.tsx:108
 msgid "Enter how much to take off, an amount or a percentage."
 msgstr "Enter how much to take off, an amount or a percentage."
 
@@ -2204,9 +2276,13 @@ msgid "Fewer"
 msgstr "Fewer"
 
 #. placeholder {0}: shown.name
-#: src/screens/Cart.tsx:557
+#: src/screens/Cart.tsx:559
 msgid "Fewer {0}"
 msgstr "Fewer {0}"
+
+#: src/screens/LoyaltySheet.tsx:332
+msgid "Find"
+msgstr "Find"
 
 #: src/apps/reservations/BookingSheet.tsx:497
 #: src/apps/reservations/sheets.tsx:403
@@ -2390,7 +2466,7 @@ msgstr "Hi {0}"
 msgid "Hi {firstName}, what are you doing?"
 msgstr "Hi {firstName}, what are you doing?"
 
-#: src/App.tsx:677
+#: src/App.tsx:709
 msgid "Hide until the app reloads"
 msgstr "Hide until the app reloads"
 
@@ -2430,13 +2506,13 @@ msgstr "In"
 msgid "In queue"
 msgstr "In queue"
 
-#: src/screens/Cart.tsx:152
+#: src/screens/Cart.tsx:153
 #: src/screens/Checkout.tsx:364
 #: src/screens/OrdersSheet.tsx:677
 msgid "Includes tax"
 msgstr "Includes tax"
 
-#: src/screens/Cart.tsx:151
+#: src/screens/Cart.tsx:152
 msgid "Includes tax ({taxRatePercent}%)"
 msgstr "Includes tax ({taxRatePercent}%)"
 
@@ -2460,7 +2536,7 @@ msgstr "iOS app"
 msgid "It has been a while. Connect to the internet to sign in again."
 msgstr "It has been a while. Connect to the internet to sign in again."
 
-#: src/App.tsx:818
+#: src/App.tsx:850
 msgid "It is set up for a location that is not on the published menu, so it will not sell from another one. Ask a manager to check the location is published, then refresh."
 msgstr "It is set up for a location that is not on the published menu, so it will not sell from another one. Ask a manager to check the location is published, then refresh."
 
@@ -2522,7 +2598,7 @@ msgstr "Keep it"
 msgid "Keep paired"
 msgstr "Keep paired"
 
-#: src/App.tsx:1043
+#: src/App.tsx:1077
 msgid "Keep working"
 msgstr "Keep working"
 
@@ -2634,8 +2710,8 @@ msgstr "Live · refreshes every 5 seconds"
 msgid "Load menu"
 msgstr "Load menu"
 
-#: src/App.tsx:794
-#: src/App.tsx:1211
+#: src/App.tsx:826
+#: src/App.tsx:1245
 msgid "Loading menu…"
 msgstr "Loading menu…"
 
@@ -2667,7 +2743,7 @@ msgstr "Locked. Enter your PIN."
 msgid "longest first"
 msgstr "longest first"
 
-#: src/screens/ManualDiscount.tsx:356
+#: src/screens/ManualDiscount.tsx:358
 #: src/ui/ManagerPinPad.tsx:79
 msgid "Manager PIN"
 msgstr "Manager PIN"
@@ -2725,6 +2801,23 @@ msgstr "Marking part of a party is not available from this till yet."
 msgid "Meal break"
 msgstr "Meal break"
 
+#: src/screens/LoyaltySheet.tsx:306
+msgid "Member code"
+msgstr "Member code"
+
+#: src/screens/LoyaltySheet.tsx:465
+msgid "Member found"
+msgstr "Member found"
+
+#: src/screens/LoyaltySheet.tsx:464
+msgid "Member found: {firstName}"
+msgstr "Member found: {firstName}"
+
+#: src/screens/LoyaltySheet.tsx:130
+#: src/screens/LoyaltySheet.tsx:175
+msgid "Members can earn here, but spending points is switched off."
+msgstr "Members can earn here, but spending points is switched off."
+
 #: src/screens/PairingLinkDialog.tsx:151
 msgid "Menu and branding"
 msgstr "Menu and branding"
@@ -2755,7 +2848,7 @@ msgid "More"
 msgstr "More"
 
 #. placeholder {0}: shown.name
-#: src/screens/Cart.tsx:580
+#: src/screens/Cart.tsx:582
 msgid "More {0}"
 msgstr "More {0}"
 
@@ -2787,7 +2880,7 @@ msgstr "Name"
 msgid "Name (optional)"
 msgstr "Name (optional)"
 
-#: src/screens/Cart.tsx:448
+#: src/screens/Cart.tsx:450
 msgid "Name for the order"
 msgstr "Name for the order"
 
@@ -2799,7 +2892,7 @@ msgstr "Name stations for your kitchen, bar, coffee counter or packing area. Eac
 msgid "Name, phone, table or code"
 msgstr "Name, phone, table or code"
 
-#: src/screens/Cart.tsx:147
+#: src/screens/Cart.tsx:148
 msgid "Name: {detail}"
 msgstr "Name: {detail}"
 
@@ -2874,7 +2967,7 @@ msgstr "No cash tips"
 msgid "No completed tickets"
 msgstr "No completed tickets"
 
-#: src/App.tsx:267
+#: src/App.tsx:276
 msgid "No connection"
 msgstr "No connection"
 
@@ -2885,6 +2978,14 @@ msgstr "No connection, and this terminal has not seen this PIN before, so it can
 #: src/apps/reservations/HostStand.tsx:943
 msgid "No connection. Nothing was changed."
 msgstr "No connection. Nothing was changed."
+
+#: src/screens/LoyaltySheet.tsx:172
+msgid "No connection. Rewards can only be spent when the till is online."
+msgstr "No connection. Rewards can only be spent when the till is online."
+
+#: src/screens/LoyaltySheet.tsx:125
+msgid "No connection. Rewards need the internet; the sale can go on without."
+msgstr "No connection. Rewards need the internet; the sale can go on without."
 
 #: src/apps/timeclock/messages.ts:128
 msgid "No connection. Try again in a moment."
@@ -2902,11 +3003,11 @@ msgstr "No free tables to combine"
 msgid "No items match “{query}”."
 msgstr "No items match “{query}”."
 
-#: src/screens/Cart.tsx:288
+#: src/screens/Cart.tsx:289
 msgid "No items yet"
 msgstr "No items yet"
 
-#: src/App.tsx:833
+#: src/App.tsx:865
 msgid "No menu items"
 msgstr "No menu items"
 
@@ -2980,7 +3081,7 @@ msgstr "No room for that many at their table. Move them to a bigger table."
 msgid "No server"
 msgstr "No server"
 
-#: src/App.tsx:627
+#: src/App.tsx:659
 msgid "No shift is open. Tap to count the drawer and open one before selling."
 msgstr "No shift is open. Tap to count the drawer and open one before selling."
 
@@ -3069,7 +3170,7 @@ msgid "Nobody is waiting."
 msgstr "Nobody is waiting."
 
 #: src/screens/Checkout.tsx:406
-#: src/screens/ManualDiscount.tsx:318
+#: src/screens/ManualDiscount.tsx:319
 msgid "None"
 msgstr "None"
 
@@ -3078,11 +3179,11 @@ msgstr "None"
 msgid "Not a no-show"
 msgstr "Not a no-show"
 
-#: src/screens/ManualDiscount.tsx:447
+#: src/screens/ManualDiscount.tsx:449
 msgid "Not applied: {skippedNames}. This till’s clock moved back since it got its discount rules. Go online to refresh them."
 msgstr "Not applied: {skippedNames}. This till’s clock moved back since it got its discount rules. Go online to refresh them."
 
-#: src/screens/ManualDiscount.tsx:450
+#: src/screens/ManualDiscount.tsx:452
 msgid "Not applied: {skippedNames}. This till’s discount rules are over {staleHours} hours old. Go online to refresh them."
 msgstr "Not applied: {skippedNames}. This till’s discount rules are over {staleHours} hours old. Go online to refresh them."
 
@@ -3105,6 +3206,10 @@ msgstr "Not next to it"
 #: src/apps/reservations/BookingSheet.tsx:152
 msgid "Not open"
 msgstr "Not open"
+
+#: src/screens/LoyaltySheet.tsx:280
+msgid "Not them"
+msgstr "Not them"
 
 #: src/apps/reservations/StandHeader.tsx:418
 #: src/apps/reservations/StandHeader.tsx:422
@@ -3226,11 +3331,11 @@ msgstr "Online · all sent"
 msgid "Online orders"
 msgstr "Online orders"
 
-#: src/lib/orders.ts:544
+#: src/lib/orders.ts:556
 msgid "Only a paid order can be refunded"
 msgstr "Only a paid order can be refunded"
 
-#: src/screens/ManualDiscount.tsx:405
+#: src/screens/ManualDiscount.tsx:407
 msgid "Only one discount can be applied. This replaces {currentName}."
 msgstr "Only one discount can be applied. This replaces {currentName}."
 
@@ -3246,7 +3351,7 @@ msgstr "open {openTime}"
 msgid "Open a shift"
 msgstr "Open a shift"
 
-#: src/App.tsx:132
+#: src/App.tsx:135
 msgid "Open a shift before taking orders."
 msgstr "Open a shift before taking orders."
 
@@ -3296,6 +3401,10 @@ msgstr "Opening today’s floor…"
 msgid "Optional"
 msgstr "Optional"
 
+#: src/screens/LoyaltySheet.tsx:339
+msgid "or"
+msgstr "or"
+
 #. placeholder {0}: section.name
 #: src/apps/reservations/SectionsSheet.tsx:279
 msgid "Or type a name for {0}"
@@ -3309,14 +3418,14 @@ msgstr "Order #{doneNumber}"
 msgid "Order details"
 msgstr "Order details"
 
-#: src/App.tsx:884
+#: src/App.tsx:916
 msgid "Order is empty"
 msgstr "Order is empty"
 
-#: src/lib/orders.ts:409
-#: src/lib/orders.ts:473
-#: src/lib/orders.ts:542
-#: src/lib/orders.ts:672
+#: src/lib/orders.ts:419
+#: src/lib/orders.ts:485
+#: src/lib/orders.ts:554
+#: src/lib/orders.ts:684
 msgid "Order not found"
 msgstr "Order not found"
 
@@ -3324,7 +3433,7 @@ msgstr "Order not found"
 msgid "Order summary"
 msgstr "Order summary"
 
-#: src/screens/Cart.tsx:187
+#: src/screens/Cart.tsx:188
 msgid "Order type"
 msgstr "Order type"
 
@@ -3449,7 +3558,7 @@ msgstr "Pairing link or ppc1.… code"
 msgid "Pairing…"
 msgstr "Pairing…"
 
-#: src/lib/orders.ts:417
+#: src/lib/orders.ts:427
 msgid "Part of this bill is already paid"
 msgstr "Part of this bill is already paid"
 
@@ -3533,15 +3642,15 @@ msgstr "Pay · #{currentNumber}"
 msgid "Pay {balanceDue}"
 msgstr "Pay {balanceDue}"
 
-#: src/screens/Cart.tsx:381
+#: src/screens/Cart.tsx:383
 msgid "Pay at pickup"
 msgstr "Pay at pickup"
 
-#: src/screens/Cart.tsx:385
+#: src/screens/Cart.tsx:387
 msgid "Pay later"
 msgstr "Pay later"
 
-#: src/screens/Cart.tsx:397
+#: src/screens/Cart.tsx:399
 msgid "Pay now"
 msgstr "Pay now"
 
@@ -3553,7 +3662,7 @@ msgstr "Paying now"
 msgid "Payment"
 msgstr "Payment"
 
-#: src/lib/orders.ts:159
+#: src/lib/orders.ts:168
 msgid "Payment is more than the balance due"
 msgstr "Payment is more than the balance due"
 
@@ -3561,7 +3670,7 @@ msgstr "Payment is more than the balance due"
 msgid "Payment method"
 msgstr "Payment method"
 
-#: src/lib/orders.ts:157
+#: src/lib/orders.ts:166
 msgid "Payment must be more than zero"
 msgstr "Payment must be more than zero"
 
@@ -3573,7 +3682,7 @@ msgstr "Payments"
 msgid "peanuts"
 msgstr "peanuts"
 
-#: src/screens/ManualDiscount.tsx:334
+#: src/screens/ManualDiscount.tsx:336
 msgid "Percent"
 msgstr "Percent"
 
@@ -3610,7 +3719,11 @@ msgstr "Phone ending {ending}"
 #~ msgid "Phone ending {phoneEnd}"
 #~ msgstr "Phone ending {phoneEnd}"
 
-#: src/screens/Cart.tsx:255
+#: src/screens/LoyaltySheet.tsx:351
+msgid "Phone number"
+msgstr "Phone number"
+
+#: src/screens/Cart.tsx:256
 #: src/screens/PhoneOrderSheet.tsx:47
 msgid "Phone order"
 msgstr "Phone order"
@@ -3619,7 +3732,7 @@ msgstr "Phone order"
 msgid "Phone orders"
 msgstr "Phone orders"
 
-#: src/lib/orders.ts:195
+#: src/lib/orders.ts:204
 msgid "Phone orders are pickup only"
 msgstr "Phone orders are pickup only"
 
@@ -3716,7 +3829,11 @@ msgstr "Print Z report"
 msgid "Problem with the food"
 msgstr "Problem with the food"
 
-#: src/App.tsx:835
+#: src/screens/LoyaltySheet.tsx:488
+msgid "Progress to {nextName}"
+msgstr "Progress to {nextName}"
+
+#: src/App.tsx:867
 msgid "Publish a menu with items for this location, then refresh."
 msgstr "Publish a menu with items for this location, then refresh."
 
@@ -3769,7 +3886,7 @@ msgstr "Ready"
 msgid "Ready for the pass"
 msgstr "Ready for the pass"
 
-#: src/screens/ManualDiscount.tsx:375
+#: src/screens/ManualDiscount.tsx:377
 msgid "Reason"
 msgstr "Reason"
 
@@ -3799,8 +3916,8 @@ msgstr "Recorded at {at}."
 msgid "Reference (optional)"
 msgstr "Reference (optional)"
 
-#: src/App.tsx:826
-#: src/App.tsx:843
+#: src/App.tsx:858
+#: src/App.tsx:875
 msgid "Refresh"
 msgstr "Refresh"
 
@@ -3852,7 +3969,8 @@ msgstr "Regional orders API. Filled in automatically by a pairing link."
 msgid "Register"
 msgstr "Register"
 
-#: src/screens/Cart.tsx:591
+#: src/screens/Cart.tsx:593
+#: src/screens/LoyaltySheet.tsx:515
 msgid "Remove"
 msgstr "Remove"
 
@@ -3861,7 +3979,7 @@ msgstr "Remove"
 msgid "Remove {0}"
 msgstr "Remove {0}"
 
-#: src/screens/ManualDiscount.tsx:424
+#: src/screens/ManualDiscount.tsx:426
 msgid "Remove discount"
 msgstr "Remove discount"
 
@@ -3873,11 +3991,11 @@ msgstr "Remove station"
 msgid "Repeat round"
 msgstr "Repeat round"
 
-#: src/App.tsx:1050
+#: src/App.tsx:1084
 msgid "Replace it"
 msgstr "Replace it"
 
-#: src/App.tsx:1035
+#: src/App.tsx:1069
 msgid "Replace the order on screen?"
 msgstr "Replace the order on screen?"
 
@@ -3926,6 +4044,19 @@ msgstr "Rest break"
 msgid "Restaurant time: {zone}"
 msgstr "Restaurant time: {zone}"
 
+#: src/screens/LoyaltySheet.tsx:505
+msgid "Reward on this order: {appliedName}"
+msgstr "Reward on this order: {appliedName}"
+
+#: src/screens/LoyaltySheet.tsx:256
+#: src/screens/LoyaltySheet.tsx:589
+msgid "Rewards"
+msgstr "Rewards"
+
+#: src/screens/LoyaltySheet.tsx:128
+msgid "Rewards are not switched on for this restaurant."
+msgstr "Rewards are not switched on for this restaurant."
+
 #: src/apps/kitchen/Kitchen.tsx:889
 msgid "Right half"
 msgstr "Right half"
@@ -3967,7 +4098,7 @@ msgstr "Save kitchen setup"
 msgid "Save servers"
 msgstr "Save servers"
 
-#: src/screens/Cart.tsx:383
+#: src/screens/Cart.tsx:385
 msgid "Save tab"
 msgstr "Save tab"
 
@@ -3988,7 +4119,7 @@ msgstr "Saving…"
 msgid "Say what the cash is for."
 msgstr "Say what the cash is for."
 
-#: src/lib/orders.ts:420
+#: src/lib/orders.ts:430
 msgid "Say why items are coming off this tab"
 msgstr "Say why items are coming off this tab"
 
@@ -4166,9 +4297,18 @@ msgstr "Seated at the host stand"
 msgid "Sections"
 msgstr "Sections"
 
+#: src/screens/LoyaltySheet.tsx:443
 #: src/screens/ShiftSheet.tsx:440
 msgid "Send again"
 msgstr "Send again"
+
+#: src/screens/LoyaltySheet.tsx:442
+msgid "Send again in {resendIn}s"
+msgstr "Send again in {resendIn}s"
+
+#: src/screens/LoyaltySheet.tsx:382
+msgid "Send code"
+msgstr "Send code"
 
 #: src/screens/OrdersSheet.tsx:703
 #~ msgid "Send now"
@@ -4250,7 +4390,7 @@ msgstr "Sets tax and menu overrides."
 msgid "Settings"
 msgstr "Settings"
 
-#: src/App.tsx:1069
+#: src/App.tsx:1103
 msgid "Settings are for managers"
 msgstr "Settings are for managers"
 
@@ -4314,6 +4454,14 @@ msgstr "Sign in"
 msgid "Sign in again"
 msgstr "Sign in again"
 
+#: src/screens/LoyaltySheet.tsx:179
+msgid "Sign in again while online to spend rewards."
+msgstr "Sign in again while online to spend rewards."
+
+#: src/screens/LoyaltySheet.tsx:132
+msgid "Sign in again while online to use rewards."
+msgstr "Sign in again while online to use rewards."
+
 #: src/apps/kitchen/Kitchen.tsx:275
 msgid "Sign in online to use the kitchen display."
 msgstr "Sign in online to use the kitchen display."
@@ -4334,6 +4482,10 @@ msgstr "Simplified tax invoice"
 msgid "Size or time"
 msgstr "Size or time"
 
+#: src/screens/LoyaltySheet.tsx:289
+msgid "Skip"
+msgstr "Skip"
+
 #: src/apps/reservations/Floor.tsx:438
 msgid "Small"
 msgstr "Small"
@@ -4343,7 +4495,7 @@ msgstr "Small"
 msgid "Sold out"
 msgstr "Sold out"
 
-#: src/App.tsx:544
+#: src/App.tsx:576
 msgid "Sold out, not added: {names}"
 msgstr "Sold out, not added: {names}"
 
@@ -4352,7 +4504,7 @@ msgstr "Sold out, not added: {names}"
 msgid "Some are here"
 msgstr "Some are here"
 
-#: src/screens/ManualDiscount.tsx:457
+#: src/screens/ManualDiscount.tsx:459
 msgid "Some discounts on this tab are no longer offered; the guest keeps them."
 msgstr "Some discounts on this tab are no longer offered; the guest keeps them."
 
@@ -4370,6 +4522,8 @@ msgstr "Someone is booked on that table before this party would be done."
 
 #: src/apps/timeclock/messages.ts:133
 #: src/screens/AuditSheet.tsx:99
+#: src/screens/LoyaltySheet.tsx:162
+#: src/screens/LoyaltySheet.tsx:165
 #: src/screens/ShiftSheet.tsx:96
 msgid "Something went wrong. Try again."
 msgstr "Something went wrong. Try again."
@@ -4414,7 +4568,7 @@ msgstr "Start item"
 msgid "Start preparing"
 msgstr "Start preparing"
 
-#: src/App.tsx:246
+#: src/App.tsx:255
 msgid "Station"
 msgstr "Station"
 
@@ -4454,27 +4608,27 @@ msgstr "Swipe to see the whole room"
 msgid "Switch to a manager"
 msgstr "Switch to a manager"
 
-#: src/screens/Cart.tsx:183
+#: src/screens/Cart.tsx:184
 msgid "Switch to counter"
 msgstr "Switch to counter"
 
-#: src/App.tsx:1087
+#: src/App.tsx:1121
 #: src/apps/reservations/HostStand.tsx:2657
 msgid "Switch user"
 msgstr "Switch user"
 
-#: src/App.tsx:886
+#: src/App.tsx:918
 msgid "Tab #{activeTabNumber}"
 msgstr "Tab #{activeTabNumber}"
 
-#: src/App.tsx:498
+#: src/App.tsx:530
 msgid "Tab #{number} moved to terminal {movedTo}. Items not sent yet stay here as a new order."
 msgstr "Tab #{number} moved to terminal {movedTo}. Items not sent yet stay here as a new order."
 
 #: src/apps/reservations/BookPanel.tsx:1426
 #: src/apps/reservations/Timeline.tsx:367
-#: src/screens/Cart.tsx:424
-#: src/screens/Cart.tsx:436
+#: src/screens/Cart.tsx:426
+#: src/screens/Cart.tsx:438
 msgid "Table"
 msgstr "Table"
 
@@ -4642,7 +4796,7 @@ msgstr "table removed"
 msgid "Table removed"
 msgstr "Table removed"
 
-#: src/screens/Cart.tsx:144
+#: src/screens/Cart.tsx:145
 msgid "Table: {detail}"
 msgstr "Table: {detail}"
 
@@ -4662,7 +4816,7 @@ msgstr "Take {appliedText} · {leftAfter} left"
 msgid "Take cash out"
 msgstr "Take cash out"
 
-#: src/App.tsx:1005
+#: src/App.tsx:1039
 msgid "Take items off this tab?"
 msgstr "Take items off this tab?"
 
@@ -4679,12 +4833,12 @@ msgstr "Take table {0} out"
 msgid "Take the card on your card terminal first, then confirm here. This till does not process cards yet."
 msgstr "Take the card on your card terminal first, then confirm here. This till does not process cards yet."
 
-#: src/App.tsx:1009
+#: src/App.tsx:1043
 msgid "Take them off"
 msgstr "Take them off"
 
 #: src/apps/kitchen/Kitchen.tsx:750
-#: src/screens/Cart.tsx:198
+#: src/screens/Cart.tsx:199
 #: src/screens/OrdersSheet.tsx:84
 #: src/screens/OrdersSheet.tsx:451
 #: src/screens/OrdersSheet.tsx:452
@@ -4720,7 +4874,7 @@ msgstr "Tap a booking for details, or an empty stretch to book it."
 msgid "Tap a booking for details."
 msgstr "Tap a booking for details."
 
-#: src/screens/Cart.tsx:291
+#: src/screens/Cart.tsx:292
 msgid "Tap a dish on the menu to start the order."
 msgstr "Tap a dish on the menu to start the order."
 
@@ -4757,7 +4911,7 @@ msgstr "Tap any open table for {name}, party of {partySize}"
 msgid "tap to put back in line"
 msgstr "tap to put back in line"
 
-#: src/screens/Cart.tsx:155
+#: src/screens/Cart.tsx:156
 #: src/screens/Checkout.tsx:364
 #: src/screens/OrdersSheet.tsx:679
 #: src/screens/Receipt.tsx:174
@@ -4766,7 +4920,7 @@ msgstr "tap to put back in line"
 msgid "Tax"
 msgstr "Tax"
 
-#: src/screens/Cart.tsx:154
+#: src/screens/Cart.tsx:155
 msgid "Tax ({taxRatePercent}%)"
 msgstr "Tax ({taxRatePercent}%)"
 
@@ -4786,7 +4940,7 @@ msgstr "Terminal {transferredTo} took this tab over. It is kept here as history 
 msgid "Terminal code"
 msgstr "Terminal code"
 
-#: src/lib/outbox.ts:245
+#: src/lib/outbox.ts:250
 msgid "Terminal is not paired yet"
 msgstr "Terminal is not paired yet"
 
@@ -4817,6 +4971,10 @@ msgstr "Text on its way to {who}: your table is ready."
 #: src/apps/reservations/waitlist.ts:118
 msgid "Text on its way to {who}: your table is ready. Holds until {holdsUntil}."
 msgstr "Text on its way to {who}: your table is ready. Holds until {holdsUntil}."
+
+#: src/screens/LoyaltySheet.tsx:573
+msgid "Text them a code"
+msgstr "Text them a code"
 
 #: src/apps/reservations/sheets.tsx:626
 #~ msgid "Text: table ready"
@@ -4859,27 +5017,35 @@ msgstr "That choice is sold out"
 msgid "That code has expired or was already used. Ask a manager for a new one."
 msgstr "That code has expired or was already used. Ask a manager for a new one."
 
+#: src/screens/LoyaltySheet.tsx:145
+msgid "That code is not right, or it has expired."
+msgstr "That code is not right, or it has expired."
+
+#: src/screens/LoyaltySheet.tsx:142
+msgid "That code is not right, or it was already used. Ask for a new one from their wallet."
+msgstr "That code is not right, or it was already used. Ask for a new one from their wallet."
+
 #: src/apps/reservations/refusals.ts:98
 msgid "That did not go through. Try again."
 msgstr "That did not go through. Try again."
 
-#: src/screens/ManualDiscount.tsx:121
+#: src/screens/ManualDiscount.tsx:122
 msgid "That discount does not apply to this kind of order."
 msgstr "That discount does not apply to this kind of order."
 
-#: src/screens/ManualDiscount.tsx:128
+#: src/screens/ManualDiscount.tsx:129
 msgid "That discount does not apply to this order."
 msgstr "That discount does not apply to this order."
 
-#: src/screens/ManualDiscount.tsx:113
+#: src/screens/ManualDiscount.tsx:114
 msgid "That discount is no longer available."
 msgstr "That discount is no longer available."
 
-#: src/screens/ManualDiscount.tsx:119
+#: src/screens/ManualDiscount.tsx:120
 msgid "That discount is not available right now."
 msgstr "That discount is not available right now."
 
-#: src/lib/store.ts:897
+#: src/lib/store.ts:931
 msgid "That does not look like a pairing code or link."
 msgstr "That does not look like a pairing code or link."
 
@@ -4895,11 +5061,11 @@ msgstr "That is done in the app, not at a till."
 msgid "That is more than can be refunded (up to {upTo})."
 msgstr "That is more than can be refunded (up to {upTo})."
 
-#: src/screens/ManualDiscount.tsx:102
+#: src/screens/ManualDiscount.tsx:103
 msgid "That is more than this order can take off. The most is {most}."
 msgstr "That is more than this order can take off. The most is {most}."
 
-#: src/lib/orders.ts:548
+#: src/lib/orders.ts:560
 msgid "That is more than was paid and not yet refunded"
 msgstr "That is more than was paid and not yet refunded"
 
@@ -4932,6 +5098,18 @@ msgstr "That PIN is not right. Try again in {seconds} seconds."
 #: src/lib/signin.ts:393
 msgid "That PIN is not right. Try again in {wait} seconds."
 msgstr "That PIN is not right. Try again in {wait} seconds."
+
+#: src/screens/LoyaltySheet.tsx:187
+msgid "That reward cannot be used right now."
+msgstr "That reward cannot be used right now."
+
+#: src/screens/LoyaltySheet.tsx:185
+msgid "That reward does not apply to what is on this order."
+msgstr "That reward does not apply to what is on this order."
+
+#: src/screens/LoyaltySheet.tsx:156
+msgid "That reward is not available any more."
+msgstr "That reward is not available any more."
 
 #: src/apps/timeclock/messages.ts:67
 msgid "That role is not available. Choose another."
@@ -4966,7 +5144,7 @@ msgstr "That time is no longer available. Choose another."
 msgid "That time overlaps another shift. Ask a manager to fix it."
 msgstr "That time overlaps another shift. Ask a manager to fix it."
 
-#: src/screens/ManualDiscount.tsx:438
+#: src/screens/ManualDiscount.tsx:440
 msgid "The {stoppedName} discount was taken off this order."
 msgstr "The {stoppedName} discount was taken off this order."
 
@@ -4977,6 +5155,10 @@ msgstr "The biggest seats {biggest}."
 #: src/screens/OrdersSheet.tsx:66
 msgid "the bill changed after a payment was taken"
 msgstr "the bill changed after a payment was taken"
+
+#: src/screens/LoyaltySheet.tsx:309
+msgid "The code in the guest's wallet on the website or app."
+msgstr "The code in the guest's wallet on the website or app."
 
 #: src/screens/ShiftSheet.tsx:119
 msgid "The drawer balances"
@@ -5014,9 +5196,13 @@ msgstr "The next party is due at this table. Choose another table or ask a manag
 msgid "The note is full ({NOTE_MAX} characters). Shorten it to add more."
 msgstr "The note is full ({NOTE_MAX} characters). Shorten it to add more."
 
-#: src/App.tsx:1056
+#: src/App.tsx:1090
 msgid "The order you are ringing up has not been saved. Opening tab #{replaceNumber} here will discard it. Save it with “Pay later” first if you want to keep it."
 msgstr "The order you are ringing up has not been saved. Opening tab #{replaceNumber} here will discard it. Save it with “Pay later” first if you want to keep it."
+
+#: src/screens/LoyaltySheet.tsx:160
+msgid "The request expired. Ask again."
+msgstr "The request expired. Ask again."
 
 #: src/apps/reservations/HostStand.tsx:1253
 #~ msgid "The rest of {who} are seated."
@@ -5039,7 +5225,7 @@ msgid "the server already had this order closed"
 msgstr "the server already had this order closed"
 
 #. placeholder {0}: response.status
-#: src/lib/store.ts:790
+#: src/lib/store.ts:824
 msgid "The server answered {0}."
 msgstr "The server answered {0}."
 
@@ -5048,7 +5234,7 @@ msgstr "The server answered {0}."
 msgid "The server answered {0}. Try again."
 msgstr "The server answered {0}. Try again."
 
-#: src/lib/store.ts:829
+#: src/lib/store.ts:863
 msgid "The server answered {status}."
 msgstr "The server answered {status}."
 
@@ -5060,11 +5246,11 @@ msgstr "the server could not read it (this till may need updating)"
 msgid "The server could not record this punch. Ask a manager to add it."
 msgstr "The server could not record this punch. Ask a manager to add it."
 
-#: src/lib/outbox.ts:231
+#: src/lib/outbox.ts:236
 msgid "The server did not recognise this terminal. It will try again."
 msgstr "The server did not recognise this terminal. It will try again."
 
-#: src/App.tsx:641
+#: src/App.tsx:673
 msgid "The server is not recognising this terminal. Orders are safe on this device. Tap to check or pair it again."
 msgstr "The server is not recognising this terminal. Orders are safe on this device. Tap to check or pair it again."
 
@@ -5084,7 +5270,7 @@ msgstr "The server’s answer was not a pairing. Check the link and try again."
 msgid "The tab is kept, marked cancelled, with who cancelled it and why."
 msgstr "The tab is kept, marked cancelled, with who cancelled it and why."
 
-#: src/lib/store.ts:840
+#: src/lib/store.ts:874
 msgid "The tab was taken over but could not be saved on this device."
 msgstr "The tab was taken over but could not be saved on this device."
 
@@ -5169,6 +5355,14 @@ msgstr "These were saved while offline, and the server did not accept them. Tell
 msgid "They are at Table {0} already. Choose another."
 msgstr "They are at Table {0} already. Choose another."
 
+#: src/screens/LoyaltySheet.tsx:183
+msgid "They do not have enough points for that reward yet."
+msgstr "They do not have enough points for that reward yet."
+
+#: src/screens/LoyaltySheet.tsx:477
+msgid "They earn on this order when it is paid."
+msgstr "They earn on this order when it is paid."
+
 #: src/apps/reservations/sheets.tsx:672
 #~ msgid "They have been told their table is ready."
 #~ msgstr "They have been told their table is ready."
@@ -5189,12 +5383,12 @@ msgstr "They’re here"
 msgid "This app was built without a list of trusted servers, so it cannot connect to {host}. Ask whoever installed it to set VITE_POS_ALLOWED_ORIGINS."
 msgstr "This app was built without a list of trusted servers, so it cannot connect to {host}. Ask whoever installed it to set VITE_POS_ALLOWED_ORIGINS."
 
-#: src/lib/orders.ts:385
-#: src/lib/orders.ts:676
+#: src/lib/orders.ts:395
+#: src/lib/orders.ts:688
 msgid "This bill still has an amount to pay"
 msgstr "This bill still has an amount to pay"
 
-#: src/lib/orders.ts:514
+#: src/lib/orders.ts:526
 msgid "This bill took a payment: refund it instead of cancelling"
 msgstr "This bill took a payment: refund it instead of cancelling"
 
@@ -5206,7 +5400,7 @@ msgstr "This booking has a payment on it. A manager handles it in the app."
 msgid "This booking is no longer open."
 msgstr "This booking is no longer open."
 
-#: src/App.tsx:672
+#: src/App.tsx:704
 msgid "This browser may clear orders saved on this device when it runs low on space. Install Station (Add to Home Screen) so they are kept."
 msgstr "This browser may clear orders saved on this device when it runs low on space. Install Station (Add to Home Screen) so they are kept."
 
@@ -5238,7 +5432,7 @@ msgstr "This device will stop sending orders until it is paired again."
 #~ msgid "This discount does not combine with {replacedNames}, so it replaced them."
 #~ msgstr "This discount does not combine with {replacedNames}, so it replaced them."
 
-#: src/screens/ManualDiscount.tsx:105
+#: src/screens/ManualDiscount.tsx:106
 msgid "This discount is limited to {most} at most."
 msgstr "This discount is limited to {most} at most."
 
@@ -5250,11 +5444,27 @@ msgstr "This discount is limited to {most} at most."
 msgid "this location"
 msgstr "this location"
 
-#: src/screens/ManualDiscount.tsx:126
+#: src/screens/LoyaltySheet.tsx:158
+msgid "This member was forgotten. Find them again."
+msgstr "This member was forgotten. Find them again."
+
+#: src/screens/LoyaltySheet.tsx:177
+msgid "This member was identified too long ago. Find them again."
+msgstr "This member was identified too long ago. Find them again."
+
+#: src/screens/LoyaltySheet.tsx:153
+msgid "This member's account is not active."
+msgstr "This member's account is not active."
+
+#: src/screens/LoyaltySheet.tsx:357
+msgid "This number joins the rewards program. We text the guest a code to confirm it."
+msgstr "This number joins the rewards program. We text the guest a code to confirm it."
+
+#: src/screens/ManualDiscount.tsx:127
 msgid "This order does not have the items that discount needs."
 msgstr "This order does not have the items that discount needs."
 
-#: src/screens/Cart.tsx:338
+#: src/screens/Cart.tsx:339
 msgid "This order has more than {MAX_ORDER_LINES} lines and cannot be saved. Take off the newest items and ring them up as a new order."
 msgstr "This order has more than {MAX_ORDER_LINES} lines and cannot be saved. Take off the newest items and ring them up as a new order."
 
@@ -5262,17 +5472,17 @@ msgstr "This order has more than {MAX_ORDER_LINES} lines and cannot be saved. Ta
 #~ msgid "This order has more than {MAX_ORDER_LINES} lines and cannot be saved. Take payment, then start a new order for the rest."
 #~ msgstr "This order has more than {MAX_ORDER_LINES} lines and cannot be saved. Take payment, then start a new order for the rest."
 
-#: src/lib/orders.ts:411
-#: src/lib/orders.ts:475
-#: src/lib/orders.ts:674
+#: src/lib/orders.ts:421
+#: src/lib/orders.ts:487
+#: src/lib/orders.ts:686
 msgid "This order is already closed"
 msgstr "This order is already closed"
 
-#: src/screens/ManualDiscount.tsx:123
+#: src/screens/ManualDiscount.tsx:124
 msgid "This order is below the minimum spend for that discount."
 msgstr "This order is below the minimum spend for that discount."
 
-#: src/screens/Cart.tsx:341
+#: src/screens/Cart.tsx:342
 msgid "This order is close to the {MAX_ORDER_LINES}-line limit. Ring many more rounds as a new order."
 msgstr "This order is close to the {MAX_ORDER_LINES}-line limit. Ring many more rounds as a new order."
 
@@ -5312,22 +5522,22 @@ msgstr "This shift is already closed."
 msgid "This shift is closed."
 msgstr "This shift is closed."
 
-#: src/lib/orders.ts:761
-#: src/lib/store.ts:804
+#: src/lib/orders.ts:773
+#: src/lib/store.ts:838
 msgid "This tab has no tax rate on the server, so it cannot be billed here. Settle it on the terminal that opened it."
 msgstr "This tab has no tax rate on the server, so it cannot be billed here. Settle it on the terminal that opened it."
 
-#: src/App.tsx:1007
+#: src/App.tsx:1041
 msgid "This tab was already saved (and may have gone to the kitchen). Taking off {removalSummary} is recorded with who did it and why."
 msgstr "This tab was already saved (and may have gone to the kitchen). Taking off {removalSummary} is recorded with who did it and why."
 
 #. placeholder {0}: order.transferredTo
-#: src/lib/orders.ts:414
-#: src/lib/orders.ts:478
+#: src/lib/orders.ts:424
+#: src/lib/orders.ts:490
 msgid "This tab was taken over by terminal {0}"
 msgstr "This tab was taken over by terminal {0}"
 
-#: src/screens/Cart.tsx:272
+#: src/screens/Cart.tsx:273
 msgid "This table already has tab #{sameTableTab}. Add these items to it"
 msgstr "This table already has tab #{sameTableTab}. Add these items to it"
 
@@ -5348,7 +5558,7 @@ msgstr "This table seats {0}."
 msgid "This table seats {seats}: a party of {size} leaves it mostly empty."
 msgstr "This table seats {seats}: a party of {size} leaves it mostly empty."
 
-#: src/App.tsx:659
+#: src/App.tsx:691
 msgid "This tablet’s clock is about {clockMinutes} minutes off. Receipts and invoices carry the wrong time until it is set correctly in the tablet’s settings."
 msgstr "This tablet’s clock is about {clockMinutes} minutes off. Receipts and invoices carry the wrong time until it is set correctly in the tablet’s settings."
 
@@ -5368,24 +5578,28 @@ msgstr "This terminal cannot save punches without a connection. Try again when i
 msgid "This terminal is no longer paired. Ask a manager to pair it again."
 msgstr "This terminal is no longer paired. Ask a manager to pair it again."
 
-#: src/lib/store.ts:776
-#: src/lib/store.ts:801
+#: src/lib/store.ts:810
+#: src/lib/store.ts:835
 msgid "This terminal is not paired with a restaurant."
 msgstr "This terminal is not paired with a restaurant."
+
+#: src/screens/LoyaltySheet.tsx:135
+msgid "This terminal is not recognised. Ask a manager to pair it again."
+msgstr "This terminal is not recognised. Ask a manager to pair it again."
 
 #: src/lib/signin.ts:364
 msgid "This terminal was removed. Ask a manager to pair it again."
 msgstr "This terminal was removed. Ask a manager to pair it again."
 
-#: src/App.tsx:646
+#: src/App.tsx:678
 msgid "This terminal was removed. Orders are safe on this device. Tap to pair it again."
 msgstr "This terminal was removed. Orders are safe on this device. Tap to pair it again."
 
-#: src/lib/outbox.ts:225
+#: src/lib/outbox.ts:230
 msgid "This terminal was removed. Pair it again to keep sending orders."
 msgstr "This terminal was removed. Pair it again to keep sending orders."
 
-#: src/App.tsx:816
+#: src/App.tsx:848
 msgid "This terminal’s location isn’t on the menu"
 msgstr "This terminal’s location isn’t on the menu"
 
@@ -5414,7 +5628,7 @@ msgstr "till {untilShort}"
 msgid "Time"
 msgstr "Time"
 
-#: src/App.tsx:1169
+#: src/App.tsx:1203
 #: src/apps/timeclock/TimeClock.tsx:432
 #: src/screens/AppLauncher.tsx:50
 msgid "Time clock"
@@ -5509,9 +5723,17 @@ msgstr "Told, no response"
 msgid "Tomorrow"
 msgstr "Tomorrow"
 
-#: src/lib/orders.ts:438
+#: src/lib/orders.ts:448
 msgid "Too many changes to one tab. Cancel it and start a new one."
 msgstr "Too many changes to one tab. Cancel it and start a new one."
+
+#: src/screens/LoyaltySheet.tsx:138
+msgid "Too many tries. Wait a moment and try again."
+msgstr "Too many tries. Wait a moment and try again."
+
+#: src/screens/LoyaltySheet.tsx:147
+msgid "Too many wrong codes. Send a new one."
+msgstr "Too many wrong codes. Send a new one."
 
 #: src/apps/timeclock/messages.ts:26
 msgid "Too many wrong PINs. Try again in {seconds} seconds."
@@ -5540,7 +5762,7 @@ msgstr "Total due"
 msgid "tree nuts"
 msgstr "tree nuts"
 
-#: src/App.tsx:809
+#: src/App.tsx:841
 #: src/apps/kitchen/Kitchen.tsx:517
 #: src/apps/reservations/HostStand.tsx:2160
 #: src/apps/reservations/HostStand.tsx:2643
@@ -5595,7 +5817,7 @@ msgstr "Unpair"
 msgid "Unpair this terminal"
 msgstr "Unpair this terminal"
 
-#: src/App.tsx:1093
+#: src/App.tsx:1127
 msgid "Unpairing, server addresses and demo mode can only be changed by a manager. Ask a manager to sign in, or switch user."
 msgstr "Unpairing, server addresses and demo mode can only be changed by a manager. Ask a manager to sign in, or switch user."
 
@@ -5618,6 +5840,10 @@ msgstr "Updates paused"
 #: src/screens/OrdersSheet.tsx:810
 msgid "Upload now"
 msgstr "Upload now"
+
+#: src/screens/LoyaltySheet.tsx:629
+msgid "Use"
+msgstr "Use"
 
 #: src/apps/kitchen/KitchenSettings.tsx:130
 msgid "Use a Preparing step before Ready"
@@ -5657,7 +5883,7 @@ msgstr "Vegetarian"
 msgid "View"
 msgstr "View"
 
-#: src/App.tsx:888
+#: src/App.tsx:920
 msgid "View order"
 msgstr "View order"
 
@@ -5690,6 +5916,14 @@ msgstr "Waiting"
 #~ msgid "Waiting {waited} min, quoted {0}"
 #~ msgstr "Waiting {waited} min, quoted {0}"
 
+#: src/screens/LoyaltyRewards.tsx:59
+msgid "Waiting for approval"
+msgstr "Waiting for approval"
+
+#: src/screens/LoyaltySheet.tsx:523
+msgid "Waiting for the guest to approve {waitingName}"
+msgstr "Waiting for the guest to approve {waitingName}"
+
 #: src/apps/reservations/BookPanel.tsx:321
 #: src/apps/reservations/guest.ts:257
 #: src/apps/reservations/StandHeader.tsx:452
@@ -5718,6 +5952,18 @@ msgstr "Walk-in"
 #: src/apps/kitchen/KitchenSettings.tsx:285
 msgid "Warn after (min)"
 msgstr "Warn after (min)"
+
+#: src/screens/LoyaltySheet.tsx:399
+msgid "We texted a 6-digit code to {masked}. Ask the guest to read it out."
+msgstr "We texted a 6-digit code to {masked}. Ask the guest to read it out."
+
+#: src/screens/LoyaltySheet.tsx:462
+msgid "Welcome to the rewards program"
+msgstr "Welcome to the rewards program"
+
+#: src/screens/LoyaltySheet.tsx:461
+msgid "Welcome, {firstName}"
+msgstr "Welcome, {firstName}"
 
 #: src/apps/timeclock/TimeClock.tsx:1113
 msgid "What are you doing?"

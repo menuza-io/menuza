@@ -15,12 +15,14 @@ import {
 import { loyaltyRedemptions } from '@repo/tenant-db'
 import { and, eq, ne } from 'drizzle-orm'
 import {
+	afterActiveLoyaltyCommit,
 	type LoyaltyIdempotency,
 	type LoyaltyReader,
 	type LoyaltyTx,
 	withLoyaltyWrite,
 } from '../lib/loyalty-write.ts'
 import { recordLoyaltyAudit } from './loyalty-audit.ts'
+import { scheduleRewardJourneys } from './loyalty-journeys.ts'
 import {
 	holdPointsInTx,
 	postLedgerEntryInTx,
@@ -308,6 +310,10 @@ export async function consumeRedemptionInTx(
 		actorKind: input.actorKind,
 		actorId: input.actorId ?? null,
 		at: input.at,
+	})
+	// The balance left the reward's range: let its journeys fire again later.
+	afterActiveLoyaltyCommit((orgId) => {
+		scheduleRewardJourneys(orgId, redemption.memberId)
 	})
 	return row!
 }

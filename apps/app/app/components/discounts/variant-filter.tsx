@@ -1,7 +1,13 @@
 import { Trans, useLingui } from '@lingui/react/macro'
 import { DISCOUNT_MAX_VARIANT_GROUPS } from '@repo/discounts'
 import { Button } from '@repo/ui/button'
-import { Field, FieldDescription, FieldLabel, FieldSet } from '@repo/ui/field'
+import {
+	Field,
+	FieldDescription,
+	FieldLabel,
+	FieldLegend,
+	FieldSet,
+} from '@repo/ui/field'
 import { Icon } from '@repo/ui/icon'
 import {
 	Select,
@@ -75,9 +81,10 @@ export function VariantFilter({
 				.filter(Boolean)
 				.join(' ')}
 		>
-			<span id={titleId} className="text-sm font-medium">
+			{/* A legend sits outside the fieldset's flex gap, so the hint stays close. */}
+			<FieldLegend id={titleId} variant="label" className="mb-2">
 				<Trans>Only these options</Trans>
-			</span>
+			</FieldLegend>
 			<FieldDescription id={hintId}>
 				<Trans>
 					Optional. Only items with these options get the discount, such as
@@ -105,13 +112,16 @@ export function VariantFilter({
 				return (
 					<div
 						key={index}
-						className="grid items-end gap-2 sm:grid-cols-[minmax(0,12rem)_minmax(0,1fr)_auto]"
+						// Top-aligned, so chosen options wrapping below the picker never pull
+						// the option type or the remove button out of line.
+						className="grid items-start gap-2 sm:grid-cols-[minmax(0,12rem)_minmax(0,1fr)_auto]"
 					>
 						<Field>
 							<FieldLabel htmlFor={selectId}>
 								<RowLabel
 									short={<Trans>Option type</Trans>}
 									full={<Trans>Option type {number}</Trans>}
+									visible={index === 0}
 								/>
 							</FieldLabel>
 							<Select
@@ -141,6 +151,7 @@ export function VariantFilter({
 								<RowLabel
 									short={<Trans>Options</Trans>}
 									full={<Trans>Options for option type {number}</Trans>}
+									visible={index === 0}
 								/>
 							}
 							options={choice?.values ?? []}
@@ -151,16 +162,22 @@ export function VariantFilter({
 							emptyMessage={<Trans>No options yet.</Trans>}
 							onChange={(values) => update(index, { ...row, values })}
 						/>
-						<Button
-							type="button"
-							variant="ghost"
-							size="icon-sm"
-							className="mb-1"
-							aria-label={t`Remove option type ${number}`}
-							onClick={() => remove(index)}
-						>
-							<Icon name="trash-2" />
-						</Button>
+						<Field className="w-auto">
+							{/* An invisible copy of the column label, so the button sits
+							    on the same line as the controls. */}
+							<FieldLabel aria-hidden className="invisible max-sm:hidden">
+								{index === 0 ? <Trans>Options</Trans> : null}
+							</FieldLabel>
+							<Button
+								type="button"
+								variant="ghost"
+								size="icon"
+								aria-label={t`Remove option type ${number}`}
+								onClick={() => remove(index)}
+							>
+								<Icon name="trash-2" />
+							</Button>
+						</Field>
 					</div>
 				)
 			})}

@@ -80,6 +80,27 @@ export const loyaltyReportSchema = z
 				conversionBp: ratioBp,
 			})
 			.strict(),
+		// Optional on the wire: a region deployed before promotions omits it (App deploys first).
+		promotions: z
+			.object({
+				/** Bonus points given by promotions on completed purchases in the window, before refunds. */
+				bonusPoints: count,
+				/** The same by promotion, largest first. Names are as they were when each purchase settled. */
+				byPromotion: z
+					.array(
+						z
+							.object({
+								id: z.string(),
+								name: z.string(),
+								points: count,
+								purchases: count,
+							})
+							.strict(),
+					)
+					.max(100),
+			})
+			.strict()
+			.default({ bonusPoints: 0, byPromotion: [] }),
 		purchases: z
 			.object({
 				count,

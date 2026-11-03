@@ -7,7 +7,8 @@ import {
 	type LoyaltyScope,
 } from '@repo/loyalty'
 
-export type LoyaltySectionKey = 'overview' | 'program' | 'rewards' | 'activity'
+export type LoyaltySectionKey =
+	'overview' | 'program' | 'rewards' | 'promotions' | 'activity'
 
 export type LoyaltySectionDefinition = {
 	id: LoyaltySectionKey
@@ -45,6 +46,14 @@ export const LOYALTY_SECTIONS: readonly LoyaltySectionDefinition[] = [
 		id: 'rewards',
 		key: 'rewards',
 		path: 'rewards',
+		permissions: [P.READ_LOYALTY, P.UPDATE_LOYALTY_PROGRAM],
+		anyOf: [P.READ_LOYALTY, P.UPDATE_LOYALTY_PROGRAM],
+		scope: 'setup',
+	},
+	{
+		id: 'promotions',
+		key: 'promotions',
+		path: 'promotions',
 		permissions: [P.READ_LOYALTY, P.UPDATE_LOYALTY_PROGRAM],
 		anyOf: [P.READ_LOYALTY, P.UPDATE_LOYALTY_PROGRAM],
 		scope: 'setup',

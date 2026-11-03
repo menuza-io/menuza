@@ -10,6 +10,7 @@ import { Icon } from '@repo/ui/icon'
 import { Item, ItemContent, ItemActions, ItemFooter } from '@repo/ui/item'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { DishStatusBadge, RoundHeading } from './KitchenRounds.tsx'
+import { LoyaltyRewards } from './LoyaltyRewards.tsx'
 import { ManualDiscount } from './ManualDiscount.tsx'
 import { PhoneOrderSheet } from './PhoneOrderSheet.tsx'
 import { PhonePickupDetails } from './PhonePickupDetails.tsx'
@@ -343,6 +344,7 @@ export function Cart({
 				</p>
 			) : null}
 			<div className="border-border bg-card sticky bottom-0 z-10 shrink-0 space-y-3 border-t p-4">
+				<LoyaltyRewards money={money} />
 				<ManualDiscount disabled={lines.length === 0} money={money} />
 				<dl className="tnum space-y-1 text-sm">
 					<Row

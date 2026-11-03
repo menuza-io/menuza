@@ -312,6 +312,10 @@ export function ProgramForm({
 					0,
 				earning,
 				terms: value.terms,
+				// Promotions are edited on their own page; saving the program keeps
+				// them (and how they stack) exactly as they are.
+				promotions: program?.current.config.promotions ?? [],
+				promotionStacking: program?.current.config.promotionStacking ?? 'best',
 				labels: {
 					items:
 						earning.method === 'items'

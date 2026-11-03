@@ -27,6 +27,12 @@ export const LOYALTY_RATE_LIMITS = {
 	otpSend: { max: 3, windowMs: 60 * 60_000 },
 	/** One-time codes sent to one member, across approvals. */
 	otpSendMember: { max: 6, windowMs: 60 * 60_000 },
+	/** A terminal sending join codes (each one is a text message). */
+	joinSend: { max: 20, windowMs: 60 * 60_000 },
+	/** Join codes sent to one phone number. */
+	joinSendPhone: { max: 3, windowMs: 60 * 60_000 },
+	/** Join codes tried against one phone number (guessing is the threat). */
+	joinVerify: { max: 5, windowMs: 10 * 60_000 },
 	/** Quotes and holds by a customer or terminal. */
 	quote: { max: 120, windowMs: 10 * 60_000 },
 	/** Wallet decisions by a customer. */

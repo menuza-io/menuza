@@ -76,7 +76,7 @@ msgstr "{errorCount, plural, one {خطأ تحقق واحد} other {# أخطاء 
 msgid "{excluded, plural, one {# record is left out of this ratio because it has nothing to compare against, such as a day with wages and no sales entered, or wages in a different currency from the sales.} other {# records are left out of this ratio because they have nothing to compare against, such as days with wages and no sales entered, or wages in a different currency from the sales.}}"
 msgstr "{excluded, plural, zero {لا سجلات مستبعدة} one {تم استبعاد سجل واحد من هذه النسبة لأنه لا يوجد ما يقارن به، مثل يوم فيه أجور ولم تُدخل له مبيعات، أو أجور بعملة مختلفة عن المبيعات.} two {تم استبعاد سجلين من هذه النسبة لأنه لا يوجد ما يقارن بهما، مثل يومين فيهما أجور ولم تُدخل لهما مبيعات، أو أجور بعملة مختلفة عن المبيعات.} few {تم استبعاد # سجلات من هذه النسبة لأنه لا يوجد ما تقارن به، مثل أيام فيها أجور ولم تُدخل لها مبيعات، أو أجور بعملة مختلفة عن المبيعات.} many {تم استبعاد # سجلًا من هذه النسبة لأنه لا يوجد ما تقارن به، مثل أيام فيها أجور ولم تُدخل لها مبيعات، أو أجور بعملة مختلفة عن المبيعات.} other {تم استبعاد # سجل من هذه النسبة لأنه لا يوجد ما تقارن به، مثل أيام فيها أجور ولم تُدخل لها مبيعات، أو أجور بعملة مختلفة عن المبيعات.}}"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:347
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:362
 msgid "{field}"
 msgstr "{field}"
 
@@ -96,7 +96,7 @@ msgstr "{remainingMinutes, plural, zero {تنتهي الصلاحية خلال # 
 msgid "{selectedCount} selected"
 msgstr "{selectedCount} محدد"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:345
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:360
 msgid "{status}"
 msgstr "{status}"
 
@@ -120,7 +120,7 @@ msgstr "{totalSessions} جلسة إجمالية"
 msgid "{totalSize} total"
 msgstr "{totalSize} إجمالي"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:343
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:358
 msgid "{unit}"
 msgstr "{unit}"
 
@@ -163,7 +163,7 @@ msgstr "+{recentUsers} جديد هذا الأسبوع"
 msgid "<0>{0}</0> {1} <1>\"{2}\"</1>"
 msgstr "<0>{0}</0> {1} <1>\"{2}\"</1>"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:117
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:132
 msgid "<p>Hi {NAME_TAG},</p><p>Check out our latest update.</p>"
 msgstr "<p>مرحباً {NAME_TAG}،</p><p>اطّلع على آخر تحديثاتنا.</p>"
 
@@ -171,7 +171,7 @@ msgstr "<p>مرحباً {NAME_TAG}،</p><p>اطّلع على آخر تحديثا
 msgid "<p>Hi {NAME_TAG},</p><p>Welcome to our service!</p>"
 msgstr "<p>مرحباً {NAME_TAG}،</p><p>مرحباً بك في خدمتنا!</p>"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:126
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:141
 msgid "<p>Hi {NAME_TAG},</p><p>Your organization {ORGANIZATION_NAME_TAG} is ready.</p>"
 msgstr "<p>مرحباً {NAME_TAG}،</p><p>منظمتك {ORGANIZATION_NAME_TAG} جاهزة.</p>"
 
@@ -312,7 +312,7 @@ msgstr "الإجراءات"
 msgid "Activate"
 msgstr "تفعيل"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:324
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:339
 msgid "active"
 msgstr "نشط"
 
@@ -565,7 +565,7 @@ msgstr "تطبيق الإعداد المسبق"
 msgid "Archive Old Logs"
 msgstr "أرشفة السجلات القديمة"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:326
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:341
 msgid "archived"
 msgstr "مؤرشف"
 
@@ -983,6 +983,10 @@ msgstr "إغلاق"
 msgid "Close email design"
 msgstr "إغلاق تصميم البريد"
 
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:56
+msgid "Close to a Reward"
+msgstr "قريب من مكافأة"
+
 #: ../../packages/marketing/src/components/coupon-offer-field.tsx:165
 msgid "Code"
 msgstr "الرمز"
@@ -1026,7 +1030,7 @@ msgstr "معيار الامتثال (اختياري)"
 msgid "Comprehensive activity tracking and compliance audit trail"
 msgstr "تتبع شامل للأنشطة ومسار مراجعة الامتثال"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:110
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:125
 msgid "Condition Branch"
 msgstr "فرع شرطي"
 
@@ -1255,7 +1259,7 @@ msgid "Currently logged in users"
 msgstr "المستخدمون المسجلون حالياً"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:28
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:56
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:68
 msgid "Custom Event"
 msgstr "حدث مخصص"
 
@@ -1271,7 +1275,7 @@ msgstr "سياسة احتفاظ مخصصة"
 msgid "Custom trigger event"
 msgstr "حدث تشغيل مخصص"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:280
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:295
 msgid "customer"
 msgstr "عميل"
 
@@ -1325,7 +1329,7 @@ msgstr "لوحة التحكم"
 msgid "Date"
 msgstr "التاريخ"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:318
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:333
 msgid "days"
 msgstr "أيام"
 
@@ -1461,11 +1465,11 @@ msgstr "Discord"
 msgid "Discount no longer available"
 msgstr "الخصم لم يعد متاحًا"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:103
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:118
 msgid "Dispatch personalized email with merge tags"
 msgstr "إرسال بريد إلكتروني مخصص مع وسوم الدمج"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:107
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:122
 msgid "Dispatch text message with merge tags"
 msgstr "إرسال رسالة نصية مع وسوم الدمج"
 
@@ -1477,7 +1481,7 @@ msgstr "لا يساوي"
 msgid "Double-click a block to add it instantly"
 msgstr "انقر مرتين على كتلة لإضافتها فورًا"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:323
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:338
 msgid "draft"
 msgstr "مسودة"
 
@@ -1595,7 +1599,7 @@ msgid "Email"
 msgstr "البريد الإلكتروني"
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:491
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:330
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:345
 msgid "Email Address"
 msgstr "عنوان البريد الإلكتروني"
 
@@ -1844,7 +1848,7 @@ msgstr "فشل تنسيق الرسم البياني للتحقق"
 msgid "Failed to publish automation"
 msgstr "فشل نشر الأتمتة"
 
-#: ../../packages/marketing/src/components/email/merge-tag-field.tsx:324
+#: ../../packages/marketing/src/components/email/merge-tag-field.tsx:326
 msgid "Fallback"
 msgstr "القيمة الاحتياطية"
 
@@ -2031,7 +2035,7 @@ msgstr "محجوز للمؤسسة السابقة حتى {until}"
 msgid "Held: the previous organization was deleted while it had this number"
 msgstr "محجوز: حُذفت المؤسسة السابقة بينما كان هذا الرقم لديها"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:118
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:133
 msgid "Hi {NAME_TAG}, Check out our latest update."
 msgstr "مرحباً {NAME_TAG}، اطّلع على آخر تحديثاتنا."
 
@@ -2039,11 +2043,11 @@ msgstr "مرحباً {NAME_TAG}، اطّلع على آخر تحديثاتنا."
 msgid "Hi {NAME_TAG}, Welcome to our service!"
 msgstr "مرحباً {NAME_TAG}، مرحباً بك في خدمتنا!"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:122
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:137
 msgid "Hi {NAME_TAG}, your account update is ready!"
 msgstr "مرحباً {NAME_TAG}، تحديث حسابك جاهز!"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:131
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:146
 msgid "Hi {NAME_TAG}, your Menuza account is ready."
 msgstr "مرحباً {NAME_TAG}، حسابك في Menuza جاهز."
 
@@ -2051,7 +2055,7 @@ msgstr "مرحباً {NAME_TAG}، حسابك في Menuza جاهز."
 msgid "Hi {NAME_TAG}, your order has been confirmed!"
 msgstr "مرحباً {NAME_TAG}، تم تأكيد طلبك!"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:127
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:142
 msgid "Hi {NAME_TAG}, Your organization {ORGANIZATION_NAME_TAG} is ready."
 msgstr "مرحباً {NAME_TAG}، منظمتك {ORGANIZATION_NAME_TAG} جاهزة."
 
@@ -2071,7 +2075,7 @@ msgstr "فترة التخزين الساخن (أيام)"
 msgid "Hot storage: {hotStorageDays} days"
 msgstr "التخزين الساخن: {hotStorageDays} يوم"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:317
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:332
 msgid "hours"
 msgstr "ساعات"
 
@@ -2180,7 +2184,7 @@ msgstr "غير مكتمل"
 msgid "Info"
 msgstr "معلومات"
 
-#: ../../packages/marketing/src/components/email/merge-tag-field.tsx:290
+#: ../../packages/marketing/src/components/email/merge-tag-field.tsx:292
 msgid "Insert"
 msgstr "إدراج"
 
@@ -2419,6 +2423,18 @@ msgstr "رابط (اختياري)"
 msgid "Location"
 msgstr "الموقع"
 
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:75
+msgid "Loyalty: Close to a Reward"
+msgstr "الولاء: قريب من مكافأة"
+
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:76
+msgid "Loyalty: Member Went Quiet"
+msgstr "الولاء: عضو انقطع عن الشراء"
+
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:74
+msgid "Loyalty: Reward Available"
+msgstr "الولاء: مكافأة متاحة"
+
 #: app/routes/_admin+/cache.tsx:300
 #: app/routes/_admin+/cache.tsx:497
 msgid "LRU Cache"
@@ -2485,8 +2501,8 @@ msgid "Manual Endpoint Configuration"
 msgstr "إعداد نقطة النهاية اليدوي"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:32
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:57
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:87
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:69
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:102
 #: app/routes/_admin+/marketing+/automations._index.tsx:124
 msgid "Manual Trigger"
 msgstr "تشغيل يدوي"
@@ -2524,11 +2540,15 @@ msgstr "نسبة الزيادة (%)"
 msgid "Member"
 msgstr "عضو"
 
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:60
+msgid "Member Went Quiet"
+msgstr "عضو انقطع عن الشراء"
+
 #: app/components/admin-organizations-table.tsx:187
 msgid "Members"
 msgstr "الأعضاء"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:128
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:143
 msgid "Menuza Team"
 msgstr "فريق Menuza"
 
@@ -2554,7 +2574,7 @@ msgstr "الاحتفاظ بالرسائل"
 msgid "Message retention updated"
 msgstr "تم تحديث سياسة الاحتفاظ بالرسائل"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:316
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:331
 msgid "minutes"
 msgstr "دقائق"
 
@@ -2592,7 +2612,7 @@ msgid "N/A"
 msgstr "غير متاح"
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:500
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:333
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:348
 #: app/routes/_admin+/roles+/$roleId.tsx:530
 #: app/routes/_admin+/roles+/$roleId.tsx:763
 #: app/routes/_admin+/roles+/$roleId.tsx:854
@@ -2933,11 +2953,11 @@ msgstr "فُتِح {0}"
 msgid "openid email profile"
 msgstr "openid email profile"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:301
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:316
 msgid "operator"
 msgstr "مشغّل"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:75
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:90
 #: app/routes/_admin+/marketing+/automations._index.tsx:118
 msgid "Operator Invited"
 msgstr "تمت دعوة المشغّل"
@@ -2969,7 +2989,7 @@ msgstr "المؤسسة"
 msgid "Organization (optional)"
 msgstr "المنظمة (اختياري)"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:71
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:86
 #: app/routes/_admin+/marketing+/automations._index.tsx:116
 msgid "Organization Created"
 msgstr "تم إنشاء المنظمة"
@@ -3113,7 +3133,7 @@ msgstr "متأخر"
 msgid "Pause"
 msgstr "إيقاف مؤقت"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:325
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:340
 msgid "paused"
 msgstr "متوقف مؤقتاً"
 
@@ -3165,7 +3185,7 @@ msgid "Phone number"
 msgstr "رقم الهاتف"
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:494
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:331
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:346
 msgid "Phone Number"
 msgstr "رقم الهاتف"
 
@@ -3175,7 +3195,7 @@ msgid "Phone numbers"
 msgstr "أرقام الهاتف"
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:497
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:332
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:347
 msgid "Phone Verification Status"
 msgstr "حالة توثيق الهاتف"
 
@@ -3183,7 +3203,7 @@ msgstr "حالة توثيق الهاتف"
 msgid "Phone Verified"
 msgstr "الهاتف موثّق"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:54
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:66
 msgid "Phone Verified (OTP Success)"
 msgstr "الهاتف موثّق (نجاح OTP)"
 
@@ -3216,7 +3236,7 @@ msgstr "نص عادي احتياطي (اختياري)"
 msgid "Plan"
 msgstr "الخطة"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:335
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:350
 msgid "Plan Name"
 msgstr "اسم الخطة"
 
@@ -3315,7 +3335,7 @@ msgstr "المنتج والمقاس"
 msgid "Profile Completed"
 msgstr "اكتمل الملف الشخصي"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:55
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:67
 msgid "Profile Completed (Name/Email)"
 msgstr "اكتمل الملف الشخصي (الاسم/البريد)"
 
@@ -3565,7 +3585,7 @@ msgstr "إزالة التصميم"
 msgid "Remove Override"
 msgstr "إزالة التجاوز"
 
-#: ../../packages/marketing/src/components/email/merge-tag-field.tsx:405
+#: ../../packages/marketing/src/components/email/merge-tag-field.tsx:407
 msgid "Remove variable"
 msgstr "إزالة المتغير"
 
@@ -3600,22 +3620,22 @@ msgid "Requires attention"
 msgstr "يتطلب الانتباه"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:36
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:58
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:70
 msgid "Reservation Booked"
 msgstr "تم حجز طاولة"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:48
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:61
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:73
 msgid "Reservation Cancelled"
 msgstr "أُلغي الحجز"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:40
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:59
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:71
 msgid "Reservation Completed"
 msgstr "اكتملت الزيارة"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:44
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:60
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:72
 msgid "Reservation No-Show"
 msgstr "لم يحضر صاحب الحجز"
 
@@ -3712,6 +3732,10 @@ msgstr "رابط الإلغاء (اختياري)"
 msgid "Revoke"
 msgstr "إلغاء"
 
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:52
+msgid "Reward Available"
+msgstr "مكافأة متاحة"
+
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:95
 msgid "Right"
 msgstr "يمين"
@@ -3791,11 +3815,23 @@ msgstr "يعمل عندما يلغي ضيف وافق على تلقي رسائل�
 msgid "Runs when a guest who agreed to hear from you does not arrive"
 msgstr "يعمل عندما لا يحضر ضيف وافق على تلقي رسائلكم"
 
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:57
+msgid "Runs when a member gets within reach of a reward (80% of its points)"
+msgstr "يعمل عندما يقترب العضو من مكافأة (80% من نقاطها)"
+
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:61
+msgid "Runs when a member with points has not bought for 30 days"
+msgstr "يعمل عندما لا يشتري عضو لديه نقاط لمدة 30 يومًا"
+
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:53
+msgid "Runs when a member's points reach a reward, once each time they get there"
+msgstr "يعمل عندما تبلغ نقاط العضو مكافأة، مرة واحدة في كل مرة يصل فيها إليها"
+
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:17
 #~ msgid "Runs when a new customer registers"
 #~ msgstr "يُشغَّل عند تسجيل عميل جديد"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:72
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:87
 msgid "Runs when a new tenant organization is created"
 msgstr "يُشغَّل عند إنشاء منظمة مستأجر جديدة"
 
@@ -3803,15 +3839,15 @@ msgstr "يُشغَّل عند إنشاء منظمة مستأجر جديدة"
 #~ msgid "Runs when a tag is applied to customer"
 #~ msgstr "يُشغَّل عند إضافة وسم للعميل"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:84
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:99
 msgid "Runs when a tenant cancels their subscription"
 msgstr "يُشغَّل عند إلغاء المستأجر اشتراكه"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:80
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:95
 msgid "Runs when a tenant starts a paid subscription"
 msgstr "يُشغَّل عند بدء المستأجر اشتراكاً مدفوعاً"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:76
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:91
 msgid "Runs when an operator is invited to an organization"
 msgstr "يُشغَّل عند دعوة مشغّل إلى منظمة"
 
@@ -3836,7 +3872,7 @@ msgid "Sales per labor hour"
 msgstr "المبيعات لكل ساعة عمل"
 
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:170
-#: ../../packages/marketing/src/components/email/merge-tag-field.tsx:347
+#: ../../packages/marketing/src/components/email/merge-tag-field.tsx:349
 #: app/routes/_admin+/print-shop.tsx:330
 msgid "Save"
 msgstr "حفظ"
@@ -4021,7 +4057,7 @@ msgstr "اختر الحدث الذي يبدأ هذه الرحلة المؤتمت
 msgid "Send a one-time message to tenant operators."
 msgstr "أرسل رسالة لمرة واحدة إلى مشغّلي المستأجرين."
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:102
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:117
 msgid "Send Email"
 msgstr "إرسال بريد إلكتروني"
 
@@ -4033,7 +4069,7 @@ msgstr "إرسال الآن"
 msgid "Send one-time emails to tenant operators."
 msgstr "أرسل رسائل بريد إلكتروني لمرة واحدة إلى مشغّلي المستأجرين."
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:106
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:121
 msgid "Send SMS"
 msgstr "إرسال رسالة نصية"
 
@@ -4133,7 +4169,7 @@ msgstr "عرض {totalKeys} إدخال في ذاكرة التخزين المؤق�
 msgid "Showing {totalKeys} cache entries matching \"{query}\" in {cacheTypeUpper} cache"
 msgstr "عرض {totalKeys} إدخال في ذاكرة التخزين المؤقت مطابقة لـ \"{query}\" في ذاكرة التخزين المؤقت {cacheTypeUpper}"
 
-#: ../../packages/marketing/src/components/email/merge-tag-field.tsx:351
+#: ../../packages/marketing/src/components/email/merge-tag-field.tsx:353
 msgid "Shown to recipients who have no value for this field."
 msgstr "يُعرض للمستلمين الذين لا يملكون قيمة لهذا الحقل."
 
@@ -4202,7 +4238,7 @@ msgstr "المصدر"
 msgid "Specific Organization"
 msgstr "منظمة محددة"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:111
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:126
 msgid "Split path based on rules (True / False)"
 msgstr "تفرّع المسار بناءً على قواعد (صحيح / خاطئ)"
 
@@ -4252,7 +4288,7 @@ msgstr "تاريخ البداية"
 #~ msgid "Start Date"
 #~ msgstr "تاريخ البداية"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:95
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:110
 msgid "Start journey on lifecycle event"
 msgstr "بدء الرحلة عند حدث دورة الحياة"
 
@@ -4334,12 +4370,12 @@ msgstr "سطر الموضوع"
 msgid "Subscription"
 msgstr "الاشتراك"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:83
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:98
 #: app/routes/_admin+/marketing+/automations._index.tsx:122
 msgid "Subscription Cancelled"
 msgstr "تم إلغاء الاشتراك"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:79
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:94
 #: app/routes/_admin+/marketing+/automations._index.tsx:120
 msgid "Subscription Started"
 msgstr "بدأ الاشتراك"
@@ -4374,7 +4410,7 @@ msgstr "عناوين IP المشبوهة"
 msgid "Suspicious Score"
 msgstr "درجة الشبهة"
 
-#: ../../packages/marketing/src/components/email/merge-tag-field.tsx:319
+#: ../../packages/marketing/src/components/email/merge-tag-field.tsx:321
 msgid "Swap variable"
 msgstr "تبديل المتغير"
 
@@ -4443,7 +4479,7 @@ msgstr "بطاقة طاولة مطوية"
 #~ msgid "Tag Added"
 #~ msgstr "تمت إضافة وسم"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:334
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:349
 msgid "Tags"
 msgstr "الوسوم"
 
@@ -4459,7 +4495,7 @@ msgstr "الجمهور المستهدف"
 msgid "Target Value"
 msgstr "القيمة المستهدفة"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:119
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:134
 msgid "Team"
 msgstr "الفريق"
 
@@ -4680,7 +4716,7 @@ msgstr "الوقت"
 msgid "Time delay"
 msgstr "تأخير زمني"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:98
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:113
 msgid "Time Delay"
 msgstr "تأخير زمني"
 
@@ -4760,7 +4796,7 @@ msgstr "محفّز"
 msgid "Trigger a test execution for a specific customer ID."
 msgstr "تشغيل تنفيذ اختباري لمعرّف عميل محدد."
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:94
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:109
 msgid "Trigger Event"
 msgstr "حدث المحفّز"
 
@@ -4772,7 +4808,7 @@ msgstr "نوع حدث المحفّز"
 msgid "Trigger event type is required."
 msgstr "نوع حدث المحفّز مطلوب."
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:88
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:103
 msgid "Triggered via admin test or API"
 msgstr "يُفعَّل عبر اختبار المسؤول أو API"
 
@@ -4896,7 +4932,7 @@ msgstr "استخدم مفتاح الإثبات لتبادل الرموز لأم�
 msgid "Use this in your codebase to refer to this feature."
 msgstr "استخدم هذا في قاعدة الكود الخاصة بك للإشارة إلى هذه الميزة."
 
-#: ../../packages/marketing/src/components/email/merge-tag-field.tsx:330
+#: ../../packages/marketing/src/components/email/merge-tag-field.tsx:332
 msgid "Used when the value is empty"
 msgstr "يُستخدم عندما تكون القيمة فارغة"
 
@@ -4968,7 +5004,7 @@ msgstr "اجتاز التحقق"
 msgid "Value"
 msgstr "القيمة"
 
-#: ../../packages/marketing/src/components/email/merge-tag-field.tsx:359
+#: ../../packages/marketing/src/components/email/merge-tag-field.tsx:361
 msgid "Variables"
 msgstr "المتغيرات"
 
@@ -5070,7 +5106,7 @@ msgstr "الأجور كنسبة من المبيعات خلال آخر 30 يوم�
 msgid "Wait {0} {1}"
 msgstr "انتظر {0} {1}"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:99
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:114
 msgid "Wait for a specified duration before next step"
 msgstr "انتظر مدة محددة قبل الخطوة التالية"
 
@@ -5110,7 +5146,7 @@ msgstr "تحذيرات"
 msgid "We use cookies to enhance your experience, analyze site traffic and deliver personalized content."
 msgstr "نستخدم ملفات تعريف الارتباط لتحسين تجربتك وتحليل حركة المرور على الموقع وتقديم محتوى مخصص."
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:319
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:334
 msgid "weeks"
 msgstr "أسابيع"
 
@@ -5122,7 +5158,7 @@ msgstr "أسابيع"
 msgid "WELCOME"
 msgstr "WELCOME"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:125
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:140
 msgid "Welcome to Menuza, {ORGANIZATION_NAME_TAG}"
 msgstr "مرحباً بك في Menuza، {ORGANIZATION_NAME_TAG}"
 
@@ -5209,6 +5245,6 @@ msgstr "ليس لديك إذن للوصول إلى منطقة المدير هذ�
 msgid "Your email design has changes that haven't been saved. Leaving now will lose them."
 msgstr "تصميم بريدك يحتوي على تغييرات لم تُحفظ. المغادرة الآن ستفقدها."
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:116
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:131
 msgid "Your Exclusive Update"
 msgstr "تحديثك الحصري"

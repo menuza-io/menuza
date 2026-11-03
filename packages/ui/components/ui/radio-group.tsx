@@ -18,14 +18,16 @@ function RadioGroupItem({ className, ...props }: RadioPrimitive.Root.Props) {
 		<RadioPrimitive.Root
 			data-slot="radio-group-item"
 			className={cn(
-				'border-input text-primary dark:bg-input/30 focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:aria-invalid:border-destructive/50 group/radio-group-item peer relative flex aspect-square size-4 shrink-0 rounded-full border outline-none after:absolute after:-inset-4 focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:ring-[3px]',
+				'border-input dark:bg-input/30 focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:aria-invalid:border-destructive/50 group/radio-group-item peer relative flex aspect-square size-4 shrink-0 rounded-full border shadow-xs transition-[color,background-color,border-color,box-shadow] outline-none after:absolute after:-inset-4 focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:ring-[3px]',
+				// Chosen: a filled circle with a light dot, as in shadcn/ui.
+				'data-checked:border-primary data-checked:bg-primary dark:data-checked:bg-primary aria-invalid:data-checked:border-destructive aria-invalid:data-checked:bg-destructive dark:aria-invalid:data-checked:bg-destructive',
 				className,
 			)}
 			{...props}
 		>
 			<RadioPrimitive.Indicator
 				data-slot="radio-group-indicator"
-				className="group-aria-invalid/radio-group-item:text-destructive text-primary absolute inset-0 flex items-center justify-center"
+				className="text-primary-foreground absolute inset-0 flex items-center justify-center"
 			>
 				<span aria-hidden="true" className="size-2 rounded-full bg-current" />
 			</RadioPrimitive.Indicator>

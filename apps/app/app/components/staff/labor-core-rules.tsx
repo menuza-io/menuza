@@ -4,12 +4,11 @@ import { type LaborPolicyFields } from '@repo/staffing'
 import { Badge } from '@repo/ui/badge'
 import { Card } from '@repo/ui/card'
 import {
-	Field,
-	FieldContent,
-	FieldDescription,
-	FieldLabel,
-	FieldTitle,
-} from '@repo/ui/field'
+	ChoiceCard,
+	ChoiceCardContent,
+	ChoiceCardDescription,
+	ChoiceCardTitle,
+} from '@repo/ui/choice-card'
 import { Icon } from '@repo/ui/icon'
 import {
 	Item,
@@ -119,22 +118,20 @@ export function PresetPicker({
 				{options.map((option) => {
 					const id = `${groupId}-${option.id}`
 					return (
-						<FieldLabel key={option.id} htmlFor={id}>
-							<Field orientation="horizontal">
-								<FieldContent>
-									<FieldTitle>
-										{option.title}
-										{option.recommended ? (
-											<Badge variant="secondary">
-												<Trans>Recommended</Trans>
-											</Badge>
-										) : null}
-									</FieldTitle>
-									<FieldDescription>{option.text}</FieldDescription>
-								</FieldContent>
-								<RadioGroupItem value={option.id} id={id} />
-							</Field>
-						</FieldLabel>
+						<ChoiceCard key={option.id} htmlFor={id}>
+							<RadioGroupItem value={option.id} id={id} />
+							<ChoiceCardContent>
+								<ChoiceCardTitle>
+									{option.title}
+									{option.recommended ? (
+										<Badge variant="secondary">
+											<Trans>Recommended</Trans>
+										</Badge>
+									) : null}
+								</ChoiceCardTitle>
+								<ChoiceCardDescription>{option.text}</ChoiceCardDescription>
+							</ChoiceCardContent>
+						</ChoiceCard>
 					)
 				})}
 			</RadioGroup>

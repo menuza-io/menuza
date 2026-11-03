@@ -75,6 +75,8 @@ export function programConfig(
 		earning: { method: 'spend', points: 1, perMinor: 100 },
 		terms: 'The terms.',
 		labels: { items: {}, categories: {} },
+		promotions: [],
+		promotionStacking: 'best',
 		...overrides,
 	}
 }

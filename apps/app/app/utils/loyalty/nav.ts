@@ -11,6 +11,7 @@ export type LoyaltyNavAccess = {
 	overview: boolean
 	program: boolean
 	rewards: boolean
+	promotions: boolean
 	activity: boolean
 }
 
@@ -19,6 +20,7 @@ export const HIDDEN_LOYALTY_NAV: LoyaltyNavAccess = {
 	overview: false,
 	program: false,
 	rewards: false,
+	promotions: false,
 	activity: false,
 }
 
@@ -30,12 +32,14 @@ export function computeLoyaltyNavAccess(
 	const overview = canSeeLoyaltySection('overview', features, grants)
 	const program = canSeeLoyaltySection('program', features, grants)
 	const rewards = canSeeLoyaltySection('rewards', features, grants)
+	const promotions = canSeeLoyaltySection('promotions', features, grants)
 	const activity = canSeeLoyaltySection('activity', features, grants)
 	return {
-		visible: overview || program || rewards || activity,
+		visible: overview || program || rewards || promotions || activity,
 		overview,
 		program,
 		rewards,
+		promotions,
 		activity,
 	}
 }

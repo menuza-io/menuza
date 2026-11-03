@@ -68,8 +68,9 @@ export function MenuFormHeader({
 
 				{headerControls}
 
-				<div className="flex items-center justify-end gap-2 sm:gap-3">
-					<LocaleSwitcher className="mr-auto sm:mr-0" />
+				{/* Wraps instead of squeezing the language switcher to nothing. */}
+				<div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
+					<LocaleSwitcher className="mr-auto shrink-0 sm:mr-0" />
 					{showCancel ? (
 						<Button
 							type="button"

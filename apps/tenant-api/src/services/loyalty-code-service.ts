@@ -109,7 +109,9 @@ function firstNameOf(name: string | null | undefined): string | null {
 }
 
 /** The program, which must be active for anything new to happen. */
-async function activeProgramInTx(db: LoyaltyReader): Promise<CurrentProgram> {
+export async function activeProgramInTx(
+	db: LoyaltyReader,
+): Promise<CurrentProgram> {
 	const program = await readProgramInTx(db)
 	if (!program || program.program.status === 'draft') {
 		throw new LoyaltyDomainError('program_not_found')
@@ -195,6 +197,51 @@ export type TillIdentification = {
 }
 
 /**
+ * Binds an active, linked member to this terminal and returns what the till
+ * shows: the binding, the balance and the rewards. Shared by reading a member
+ * code and by joining at the till; it never authorizes spending.
+ */
+export async function issueTillIdentificationInTx(
+	tx: LoyaltyTx,
+	orgId: string,
+	input: {
+		member: { id: string; customerId: string | null }
+		program: CurrentProgram
+		device: TillDevice
+		features: LoyaltyFeatures
+		now: number
+	},
+): Promise<TillIdentification> {
+	const { member, program } = input
+	if (!member.customerId) throw new LoyaltyDomainError('code_invalid')
+	const binding = generateBindingToken()
+	const bindingExpiresAt = input.now + LOYALTY_BINDING_TTL_MS
+	await tx.insert(loyaltyMemberBindings).values({
+		memberId: member.id,
+		deviceId: input.device.id,
+		tokenHash: hashBinding(orgId, binding),
+		expiresAt: bindingExpiresAt,
+		createdAt: input.now,
+	})
+	const customer = await tx
+		.select({ name: customers.name })
+		.from(customers)
+		.where(eq(customers.id, member.customerId))
+		.get()
+	return {
+		member: {
+			binding,
+			bindingExpiresAt,
+			firstName: firstNameOf(customer?.name),
+			unitLabel: program.current.config.unitLabel,
+			balance: await readBalanceViewInTx(tx, member.id),
+		},
+		rewards: await programRewardsInTx(tx, program),
+		redemptionEnabled: input.features.redemption,
+	}
+}
+
+/**
  * The till reads a member code. A valid code is used up and becomes a binding
  * for this terminal. Unknown, used, expired and inactive-member codes all
  * answer the same `code_invalid`, so the answer never says which codes exist.
@@ -237,31 +284,13 @@ export async function identifyMemberByCode(
 			)
 			.returning({ id: loyaltyMemberCodes.id })
 		if (used.length !== 1) throw new LoyaltyDomainError('code_invalid')
-		const binding = generateBindingToken()
-		const bindingExpiresAt = ctx.now + LOYALTY_BINDING_TTL_MS
-		await tx.insert(loyaltyMemberBindings).values({
-			memberId: member.id,
-			deviceId: input.device.id,
-			tokenHash: hashBinding(orgId, binding),
-			expiresAt: bindingExpiresAt,
-			createdAt: ctx.now,
+		return issueTillIdentificationInTx(tx, orgId, {
+			member,
+			program,
+			device: input.device,
+			features: input.features,
+			now: ctx.now,
 		})
-		const customer = await tx
-			.select({ name: customers.name })
-			.from(customers)
-			.where(eq(customers.id, member.customerId))
-			.get()
-		return {
-			member: {
-				binding,
-				bindingExpiresAt,
-				firstName: firstNameOf(customer?.name),
-				unitLabel: program.current.config.unitLabel,
-				balance: await readBalanceViewInTx(tx, member.id),
-			},
-			rewards: await programRewardsInTx(tx, program),
-			redemptionEnabled: input.features.redemption,
-		}
 	})
 }
 

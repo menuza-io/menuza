@@ -7,6 +7,12 @@ import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
 import { Checkbox } from '@repo/ui/checkbox'
 import {
+	ChoiceCard,
+	ChoiceCardContent,
+	ChoiceCardDescription,
+	ChoiceCardTitle,
+} from '@repo/ui/choice-card'
+import {
 	Field,
 	FieldDescription,
 	FieldError,
@@ -16,7 +22,6 @@ import {
 } from '@repo/ui/field'
 import { Icon } from '@repo/ui/icon'
 import { Input } from '@repo/ui/input'
-import { Label } from '@repo/ui/label'
 import { Textarea } from '@repo/ui/textarea'
 import { useState } from 'react'
 import { Form, Link, useNavigation } from 'react-router'
@@ -206,10 +211,7 @@ export function SocialPostComposer({
 								{accounts.map((account) => {
 									const disabled = account.status === 'needs_reauth'
 									return (
-										<Label
-											key={account.id}
-											className="border-border has-[[data-checked]]:border-primary flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border p-3 has-[[data-disabled]]:cursor-not-allowed has-[[data-disabled]]:opacity-60"
-										>
+										<ChoiceCard key={account.id}>
 											<Checkbox
 												name="accountIds"
 												value={account.id}
@@ -220,22 +222,20 @@ export function SocialPostComposer({
 												}
 											/>
 											<SocialPlatformIcon platform={account.platform} />
-											<span className="flex min-w-0 flex-col">
-												<span className="truncate font-medium">
-													{account.name}
-												</span>
+											<ChoiceCardContent>
+												<ChoiceCardTitle>{account.name}</ChoiceCardTitle>
 												{account.username ? (
-													<span className="text-muted-foreground truncate text-xs font-normal">
+													<ChoiceCardDescription>
 														@{account.username}
-													</span>
+													</ChoiceCardDescription>
 												) : null}
-											</span>
+											</ChoiceCardContent>
 											{disabled ? (
 												<Badge variant="warning" className="ms-auto">
 													{_(msg`Reconnect`)}
 												</Badge>
 											) : null}
-										</Label>
+										</ChoiceCard>
 									)
 								})}
 							</div>

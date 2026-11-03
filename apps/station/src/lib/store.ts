@@ -22,6 +22,8 @@ import { type OrderType, type PosOrder } from './db.ts'
 import { adoptServerChain } from './fiscal.ts'
 import { decodedLine, renameLine } from './line-names.ts'
 import { effectiveLocale } from './locale.ts'
+import { orderCleared, rewardDropped } from './loyalty-hooks.ts'
+import { approvalIdOf } from './loyalty.ts'
 import { localizeMenu, menuText, recordLocale } from './menu-text.ts'
 import {
 	adoptTab,
@@ -194,6 +196,12 @@ export type PosState = {
 		| { ok: true; amountMinor: number; replacedManual?: string }
 		| { ok: false; reason: ManualRefusal; maxMinor?: number }
 	removeManualDiscount: (discountId: string) => void
+	/**
+	 * Puts the reward a member approved on the cart as its `loyalty` adjustment
+	 * (replacing any other), or takes it off with `null`. It does not tell the
+	 * region: the loyalty session does that.
+	 */
+	setLoyaltyReward: (reward: Adjustment | null) => void
 	loadTab: (order: PosOrder) => void
 	clearOrder: () => void
 	/**
@@ -417,6 +425,25 @@ const isOtherAdjustment = (row: Adjustment) =>
 	!row.id.startsWith('auto:') && !row.id.startsWith('manual:')
 
 /**
+ * An approved loyalty reward was priced on the cart as it stood (its lines and
+ * the discounts under it). Any change to either ends it: the row goes, and the
+ * loyalty session is told so it gives the member's points back.
+ */
+const keptOthers = (rows: readonly Adjustment[]): Adjustment[] => {
+	const kept: Adjustment[] = []
+	for (const row of rows) {
+		if (!isOtherAdjustment(row)) continue
+		if (row.kind === 'loyalty') {
+			const approvalId = approvalIdOf(row)
+			if (approvalId) rewardDropped(approvalId)
+			continue
+		}
+		kept.push(row)
+	}
+	return kept
+}
+
+/**
  * The sent-round discounts this tab keeps that the rules no longer offer, or
  * null when there are none (or the rules are too old to say: `rules_old` speaks
  * then).
@@ -440,7 +467,7 @@ function withAutomaticDiscounts(
 	lines: CartLine[],
 	extra: Record<string, unknown> = {},
 ) {
-	const others = state.adjustments.filter(isOtherAdjustment)
+	const others = keptOthers(state.adjustments)
 	const manualRow = state.adjustments.find((row) =>
 		row.id.startsWith('manual:'),
 	)
@@ -1086,7 +1113,8 @@ export const usePos = create<PosState>((set, get) => ({
 			adjustments: [
 				...settled.automatic,
 				adjustment,
-				...state.adjustments.filter(isOtherAdjustment),
+				// A new discount changes what a reward would take off: it ends the reward.
+				...keptOthers(state.adjustments),
 			],
 		})
 		return {
@@ -1108,6 +1136,13 @@ export const usePos = create<PosState>((set, get) => ({
 			return withAutomaticDiscounts({ ...state, adjustments: rest }, lines)
 		})
 	},
+	setLoyaltyReward: (reward) =>
+		set((s) => ({
+			adjustments: [
+				...s.adjustments.filter((row) => row.kind !== 'loyalty'),
+				...(reward ? [reward] : []),
+			],
+		})),
 	loadTab: (order) =>
 		set((s) => {
 			const lines = order.lines.map((line) => ({
@@ -1144,15 +1179,21 @@ export const usePos = create<PosState>((set, get) => ({
 			}
 		}),
 	releaseTab: () =>
-		set((s) => ({
-			activeOrderId: null,
-			activeTax: null,
-			adjustments: [],
-			lines: s.lines
-				.filter((line) => !line.sentAt)
-				.map((line) => ({ ...unsent(line), id: line.id })),
-		})),
-	clearOrder: () =>
+		set((s) => {
+			for (const row of s.adjustments) {
+				const approvalId = row.kind === 'loyalty' ? approvalIdOf(row) : null
+				if (approvalId) rewardDropped(approvalId)
+			}
+			return {
+				activeOrderId: null,
+				activeTax: null,
+				adjustments: [],
+				lines: s.lines
+					.filter((line) => !line.sentAt)
+					.map((line) => ({ ...unsent(line), id: line.id })),
+			}
+		}),
+	clearOrder: () => {
 		set({
 			lines: [],
 			orderSource: 'counter',
@@ -1167,7 +1208,10 @@ export const usePos = create<PosState>((set, get) => ({
 			keptNoticeKey: null,
 			activeOrderId: null,
 			activeTax: null,
-		}),
+		})
+		// The member and any reward belong to the sale that just ended.
+		orderCleared()
+	},
 }))
 
 // Punches saved while the tablet slept go out the moment it wakes, not on the

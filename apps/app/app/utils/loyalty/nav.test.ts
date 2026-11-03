@@ -121,6 +121,7 @@ describe('Loyalty navigation access', () => {
 			overview: true,
 			program: true,
 			rewards: true,
+			promotions: true,
 			activity: true,
 		})
 	})
@@ -136,6 +137,7 @@ describe('Loyalty navigation access', () => {
 			overview: true,
 			program: false,
 			rewards: false,
+			promotions: false,
 			activity: false,
 		})
 	})
@@ -154,6 +156,7 @@ describe('Loyalty navigation access', () => {
 			overview: true,
 			program: true,
 			rewards: true,
+			promotions: true,
 			activity: true,
 		})
 	})
@@ -195,6 +198,7 @@ describe('Loyalty navigation access', () => {
 				overview: true,
 				program: true,
 				rewards: true,
+				promotions: true,
 				activity: true,
 			},
 		)
@@ -206,6 +210,7 @@ describe('Loyalty navigation access', () => {
 			overview: true,
 			program: false,
 			rewards: false,
+			promotions: false,
 			activity: false,
 		})
 		expect(

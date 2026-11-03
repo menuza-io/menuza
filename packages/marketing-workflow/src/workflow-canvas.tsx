@@ -6,8 +6,15 @@ import {
 	readFlowDragData,
 	useFlowColorMode,
 } from '@repo/flow-editor'
-import { type CouponDiscountOption } from '@repo/marketing'
-import { RESERVATION_JOURNEY_TRIGGER_TYPES } from '@repo/tenant-db/types/journey'
+import {
+	MergeTagScopeProvider,
+	type CouponDiscountOption,
+} from '@repo/marketing'
+import { isLoyaltyJourneyTrigger } from '@repo/tenant-db/types/journey'
+import {
+	LOYALTY_JOURNEY_TRIGGER_TYPES,
+	RESERVATION_JOURNEY_TRIGGER_TYPES,
+} from '@repo/tenant-db/types/journey'
 import { cn } from '@repo/ui'
 import {
 	ReactFlow,
@@ -63,6 +70,8 @@ interface WorkflowCanvasProps {
 	workflowConfig?: WorkflowConfig
 	/** Offer the `reservation_*` triggers (the Reservations module is on). */
 	reservationTriggers?: boolean
+	/** Offer the `loyalty_*` triggers (Loyalty is on and the member may read it). */
+	loyaltyTriggers?: boolean
 	/** Coupon discounts for email and text steps; undefined hides the picker. */
 	couponOptions?: CouponDiscountOption[]
 	initialGraph?: WorkflowGraph | string
@@ -116,6 +125,19 @@ function WorkflowCanvasInner({
 		return validateFlowCanvas(nodes, edges, _)
 	}, [nodes, edges, _])
 
+	// The loyalty merge tags only mean something when the automation starts from
+	// a loyalty trigger.
+	const loyaltyAutomation = useMemo(
+		() =>
+			nodes.some(
+				(node) =>
+					node.type === 'trigger' &&
+					isLoyaltyJourneyTrigger(
+						(node.data as { triggerType?: unknown } | undefined)?.triggerType,
+					),
+			),
+		[nodes],
+	)
 	const selectedNode = useMemo(() => {
 		return nodes.find((n) => n.id === selectedNodeId) || null
 	}, [nodes, selectedNodeId])
@@ -300,20 +322,22 @@ function WorkflowCanvasInner({
 					autoSaveId="marketing-automation-builder"
 					sidebar={
 						selectedNode ? (
-							<NodeInspector
-								node={selectedNode}
-								onUpdateNodeData={handleUpdateNodeData}
-								onSaveNodeData={handleSaveNodeData}
-								onDeleteNode={handleDeleteNode}
-								onClose={() => setSelectedNodeId(null)}
-								errors={validation.nodeErrors[selectedNode.id] || []}
-								emailDesignerHeaderExtras={headerExtras}
-								emailDesignerContentClassName={
-									// Docked AI panel (420px) + the same 8px gutter the
-									// designer's own sections use.
-									reserveAiPanelWidth ? 'lg:pr-[27.25rem]' : undefined
-								}
-							/>
+							<MergeTagScopeProvider loyalty={loyaltyAutomation}>
+								<NodeInspector
+									node={selectedNode}
+									onUpdateNodeData={handleUpdateNodeData}
+									onSaveNodeData={handleSaveNodeData}
+									onDeleteNode={handleDeleteNode}
+									onClose={() => setSelectedNodeId(null)}
+									errors={validation.nodeErrors[selectedNode.id] || []}
+									emailDesignerHeaderExtras={headerExtras}
+									emailDesignerContentClassName={
+										// Docked AI panel (420px) + the same 8px gutter the
+										// designer's own sections use.
+										reserveAiPanelWidth ? 'lg:pr-[27.25rem]' : undefined
+									}
+								/>
+							</MergeTagScopeProvider>
 						) : (
 							<NodePalette onAddNode={handleAddNodeFromPalette} />
 						)
@@ -370,6 +394,7 @@ function resolveLocalizedWorkflowConfig(
 export function WorkflowCanvas({
 	workflowConfig: workflowConfigProp,
 	reservationTriggers = false,
+	loyaltyTriggers = false,
 	couponOptions,
 	...props
 }: WorkflowCanvasProps) {
@@ -386,14 +411,17 @@ export function WorkflowCanvas({
 			resolved.audience === 'tenant' && couponOptions
 				? { ...resolved, couponOptions }
 				: resolved
-		if (withCoupons.audience !== 'tenant' || reservationTriggers) {
-			return withCoupons
-		}
+		if (withCoupons.audience !== 'tenant') return withCoupons
+		const hidden = [
+			...(reservationTriggers ? [] : RESERVATION_JOURNEY_TRIGGER_TYPES),
+			...(loyaltyTriggers ? [] : LOYALTY_JOURNEY_TRIGGER_TYPES),
+		]
+		if (hidden.length === 0) return withCoupons
 		return {
 			...withCoupons,
 			hiddenTriggerTypes: [
 				...(withCoupons.hiddenTriggerTypes ?? []),
-				...RESERVATION_JOURNEY_TRIGGER_TYPES,
+				...hidden,
 			],
 		}
 	}, [
@@ -401,6 +429,7 @@ export function WorkflowCanvas({
 		localizedTenant,
 		localizedPlatform,
 		reservationTriggers,
+		loyaltyTriggers,
 		couponOptions,
 	])
 

@@ -2,7 +2,7 @@
 import { i18n } from '@lingui/core'
 import { I18nProvider } from '@lingui/react'
 import { type LoyaltyOperatorProgram, type LoyaltyReport } from '@repo/loyalty'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import { createRoutesStub, Outlet } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 import { LoyaltyClientContext } from '#app/components/loyalty/loyalty-client-provider.tsx'
@@ -37,6 +37,7 @@ const REPORT: LoyaltyReport = {
 		discountCostMinor: 1500,
 		conversionBp: 2500,
 	},
+	promotions: { bonusPoints: 0, byPromotion: [] },
 	purchases: {
 		count: 20,
 		customerRevenueMinor: 100_000,
@@ -72,6 +73,8 @@ const PROGRAM = {
 			earning: { method: 'spend', points: 1, perMinor: 100 },
 			terms: 'Points have no cash value.',
 			labels: { items: {}, categories: {} },
+			promotions: [],
+			promotionStacking: 'best',
 		},
 		createdAt: 1_700_000_000_000,
 		createdBy: null,
@@ -90,6 +93,7 @@ const FULL_NAV: LoyaltyNavAccess = {
 	overview: true,
 	program: true,
 	rewards: true,
+	promotions: true,
 	activity: true,
 }
 
@@ -264,5 +268,57 @@ describe('Loyalty overview', () => {
 		)
 		await waitFor(() => expect(client.getProgram).toHaveBeenCalledTimes(1))
 		expect(client.getReport).not.toHaveBeenCalled()
+	})
+
+	it('shows the bonus points promotions gave, and which promotion gave them', async () => {
+		const client = fakeClient({
+			getReport: vi.fn(async () => ({
+				...REPORT,
+				promotions: {
+					bonusPoints: 23,
+					byPromotion: [
+						{
+							id: 'promo_a',
+							name: 'Double Tuesdays',
+							points: 20,
+							purchases: 2,
+						},
+						{ id: 'promo_b', name: 'Latte bonus', points: 3, purchases: 1 },
+					],
+				},
+			})),
+		})
+		renderOverview({
+			canReadReports: true,
+			canReadProgram: false,
+			nav: REPORTS_ONLY_NAV,
+			client,
+		})
+
+		expect(await screen.findByTestId('loyalty-metric-bonus')).toHaveTextContent(
+			'23',
+		)
+		const rows = within(
+			screen.getByTestId('loyalty-report-promotions'),
+		).getAllByTestId('loyalty-report-promotion')
+		expect(rows).toHaveLength(2)
+		expect(rows[0]).toHaveTextContent('Double Tuesdays')
+		expect(rows[0]).toHaveTextContent('20')
+		expect(rows[0]).toHaveTextContent('2')
+		expect(rows[1]).toHaveTextContent('Latte bonus')
+	})
+
+	it('shows no promotions card when no promotion gave anything', async () => {
+		const client = fakeClient({})
+		renderOverview({
+			canReadReports: true,
+			canReadProgram: false,
+			nav: REPORTS_ONLY_NAV,
+			client,
+		})
+		expect(await screen.findByTestId('loyalty-metric-bonus')).toHaveTextContent(
+			'0',
+		)
+		expect(screen.queryByTestId('loyalty-report-promotions')).toBeNull()
 	})
 })

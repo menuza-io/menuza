@@ -1,6 +1,7 @@
 import {
 	classifySaleTime,
 	computeEarning,
+	computePromotionBonus,
 	computeRefundReversal,
 	LOYALTY_HOLDING_STATES,
 	LOYALTY_OUTBOX_MAX_ATTEMPTS,
@@ -30,6 +31,7 @@ import { and, asc, desc, eq, isNull, lte, ne, or, sql } from 'drizzle-orm'
 import { errorLogFields } from '../lib/error-log.ts'
 import { reportLoyaltyDeferred } from '../lib/loyalty-alarm.ts'
 import {
+	afterActiveLoyaltyCommit,
 	type LoyaltyIdempotency,
 	type LoyaltyReader,
 	type LoyaltyTx,
@@ -41,6 +43,7 @@ import {
 } from '../restaurant/loyalty-sources.ts'
 import { posOrderLoyaltySource } from '../restaurant/pos-loyalty-source.ts'
 import { recordLoyaltyAudit } from './loyalty-audit.ts'
+import { scheduleRewardJourneys } from './loyalty-journeys.ts'
 import { postLedgerEntryInTx } from './loyalty-ledger.ts'
 import {
 	locationVisible,
@@ -437,6 +440,7 @@ export async function applyPurchaseRefundsInTx(
 		minimumSpendMinor: version.config.minimumSpendMinor,
 		snapshot,
 		awardedPoints: purchase.awardedPoints,
+		bonusPoints: purchase.bonusPoints,
 		previouslyReversedPoints: purchase.reversedPoints,
 		cumulativeRefundedMinor: purchase.refundedMinor,
 	})
@@ -462,6 +466,11 @@ export async function applyPurchaseRefundsInTx(
 	if (!posted.inserted) {
 		return { purchase, pointsReversed: 0, fullRefund: reversal.fullRefund }
 	}
+	// Points taken back can put a member back out of a reward's range, which
+	// lets that reward's journeys fire again later.
+	afterActiveLoyaltyCommit((orgId) => {
+		scheduleRewardJourneys(orgId, purchase.memberId)
+	})
 	const [row] = await tx
 		.update(loyaltyPurchases)
 		.set({
@@ -550,12 +559,25 @@ async function settlePurchaseInTx(
 				isVisit && (await visitAwardedOnInTx(tx, purchase, visitDate)),
 		},
 	)
+	// Promotions running when the sale finished, as the program version in force
+	// then defines them: a pure step on top of the base award.
+	const locationId = facts.locationId ?? purchase.locationId
+	const promotion = computePromotionBonus({
+		promotions: config.promotions,
+		stacking: config.promotionStacking,
+		earning,
+		snapshot: verdict.snapshot,
+		occurredAt: verdict.occurredAt,
+		timeZone: config.timeZone,
+		locationId,
+	})
+	const awardedPoints = earning.points + promotion.points
 	if (
 		!options.trusted &&
-		earning.points > 0 &&
+		awardedPoints > 0 &&
 		purchase.sourceType === 'pos_order' &&
 		(await posEarnedOnVisitDateInTx(tx, purchase.memberId, visitDate)) +
-			earning.points >
+			awardedPoints >
 			LOYALTY_POS_DAILY_EARN_REVIEW_POINTS
 	) {
 		return reviewPurchaseInTx(tx, purchase, 'large_earn', now)
@@ -574,19 +596,22 @@ async function settlePurchaseInTx(
 			snapshot: verdict.snapshot as unknown as Record<string, unknown>,
 			eligibleMinor: earning.eligibleMinor,
 			totalPaidMinor: verdict.snapshot.totalPaidMinor,
-			awardedPoints: earning.points,
-			locationId: facts.locationId ?? purchase.locationId,
+			awardedPoints,
+			bonusPoints: promotion.points,
+			appliedPromotions:
+				promotion.applied.length > 0 ? promotion.applied : null,
+			locationId,
 			currency: verdict.snapshot.currency,
 			updatedAt: now,
 		})
 		.where(eq(loyaltyPurchases.id, purchase.id))
 		.returning()
 	let settled = row!
-	if (earning.points > 0) {
+	if (awardedPoints > 0) {
 		await postLedgerEntryInTx(tx, {
 			memberId: purchase.memberId,
 			type: 'earn',
-			delta: earning.points,
+			delta: awardedPoints,
 			eventKey: loyaltyEventKeys.earn(purchase.id),
 			purchaseId: purchase.id,
 			channel: purchase.channel,
@@ -595,6 +620,10 @@ async function settlePurchaseInTx(
 			actorKind: options.actorKind ?? 'system',
 			actorId: options.actorId ?? null,
 			at: now,
+		})
+		// A balance that reached a reward starts its journeys once this commits.
+		afterActiveLoyaltyCommit((orgId) => {
+			scheduleRewardJourneys(orgId, purchase.memberId)
 		})
 	}
 	await tx

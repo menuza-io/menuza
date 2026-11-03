@@ -1,9 +1,12 @@
 import { Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import { useState } from 'react'
-import { Form } from 'react-router'
 import { getLocalizedMenuValue } from '@repo/common/menu-types'
-import { cn } from '@repo/ui'
+import {
+	ChoiceCard,
+	ChoiceCardContent,
+	ChoiceCardDescription,
+	ChoiceCardTitle,
+} from '@repo/ui/choice-card'
 import {
 	Frame,
 	FrameDescription,
@@ -12,15 +15,17 @@ import {
 	FrameTitle,
 } from '@repo/ui/frame'
 import { Input } from '@repo/ui/input'
-import { Item, ItemContent, ItemTitle, ItemDescription } from '@repo/ui/item'
 import { Label } from '@repo/ui/label'
 import { RadioGroup, RadioGroupItem } from '@repo/ui/radio-group'
 import { Switch } from '@repo/ui/switch'
+import { useState } from 'react'
+import { Form } from 'react-router'
 import {
 	LocaleContext,
 	LocalizedInput,
 } from '#app/components/website/locale-fields.tsx'
 import { TranslateProvider } from '#app/components/website/translate-provider.tsx'
+import { AssignedSortableList } from './assigned-sortable-list.tsx'
 import { AvailabilityHoursSection } from './availability-hours-section.tsx'
 import {
 	LocationOverridesCard,
@@ -29,7 +34,6 @@ import {
 } from './location-overrides-card.tsx'
 import { MenuAvailabilityCard } from './menu-availability-card.tsx'
 import { MenuFormHeader } from './menu-form-header.tsx'
-import { AssignedSortableList } from './assigned-sortable-list.tsx'
 
 export interface MenuFormData {
 	displayName: string
@@ -233,59 +237,38 @@ export function MenuForm({
 												onValueChange={(val: any) => setMenuType(val)}
 												className="grid grid-cols-1 gap-3 sm:grid-cols-2"
 											>
-												<Item
-													variant="outline"
-													className={cn(
-														'cursor-pointer items-start gap-3 p-3.5 transition-colors select-none',
-														menuType === 'online_pos_kiosk' &&
-															'border-primary/60 bg-primary/5 ring-primary/20 ring-1',
-													)}
-													onClick={() => setMenuType('online_pos_kiosk')}
-												>
+												<ChoiceCard htmlFor="type_online">
 													<RadioGroupItem
 														value="online_pos_kiosk"
 														id="type_online"
-														className="mt-0.5"
 													/>
-													<ItemContent className="min-w-0">
-														<ItemTitle>
+													<ChoiceCardContent>
+														<ChoiceCardTitle>
 															<Trans>Online Ordering, POS & Kiosk</Trans>
-														</ItemTitle>
-														<ItemDescription className="text-muted-foreground text-xs">
+														</ChoiceCardTitle>
+														<ChoiceCardDescription>
 															<Trans>
 																Standard restaurant menus for dine-in, takeout,
 																and delivery.
 															</Trans>
-														</ItemDescription>
-													</ItemContent>
-												</Item>
+														</ChoiceCardDescription>
+													</ChoiceCardContent>
+												</ChoiceCard>
 
-												<Item
-													variant="outline"
-													className={cn(
-														'cursor-pointer items-start gap-3 p-3.5 transition-colors select-none',
-														menuType === 'catering' &&
-															'border-primary/60 bg-primary/5 ring-primary/20 ring-1',
-													)}
-													onClick={() => setMenuType('catering')}
-												>
-													<RadioGroupItem
-														value="catering"
-														id="type_catering"
-														className="mt-0.5"
-													/>
-													<ItemContent className="min-w-0">
-														<ItemTitle>
+												<ChoiceCard htmlFor="type_catering">
+													<RadioGroupItem value="catering" id="type_catering" />
+													<ChoiceCardContent>
+														<ChoiceCardTitle>
 															<Trans>Catering & Large Events</Trans>
-														</ItemTitle>
-														<ItemDescription className="text-muted-foreground text-xs">
+														</ChoiceCardTitle>
+														<ChoiceCardDescription>
 															<Trans>
 																Platters, party bundles, and advanced lead-time
 																catering menus.
 															</Trans>
-														</ItemDescription>
-													</ItemContent>
-												</Item>
+														</ChoiceCardDescription>
+													</ChoiceCardContent>
+												</ChoiceCard>
 											</RadioGroup>
 										</div>
 									</FramePanel>
