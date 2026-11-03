@@ -22,6 +22,14 @@ import {
 } from '@repo/ui/field'
 import { Icon } from '@repo/ui/icon'
 import { Input } from '@repo/ui/input'
+import {
+	Item,
+	ItemActions,
+	ItemContent,
+	ItemDescription,
+	ItemMedia,
+	ItemTitle,
+} from '@repo/ui/item'
 import { Textarea } from '@repo/ui/textarea'
 import { useState } from 'react'
 import { Form, Link, useNavigation } from 'react-router'
@@ -189,23 +197,30 @@ export function SocialPostComposer({
 					>
 						<FieldLegend>{_(msg`Post to`)}</FieldLegend>
 						{accounts.length === 0 ? (
-							<Alert>
-								<Icon name="link-2" />
-								<AlertTitle>{_(msg`No accounts connected`)}</AlertTitle>
-								<AlertDescription>
-									<p>
+							<Item variant="outline">
+								<ItemMedia variant="icon">
+									<Icon name="link-2" />
+								</ItemMedia>
+								<ItemContent>
+									<ItemTitle>{_(msg`No accounts connected`)}</ItemTitle>
+									<ItemDescription>
 										{_(
 											msg`Connect a Facebook Page or an Instagram account to publish. You can still save a draft.`,
 										)}
-									</p>
-									<Link
-										to={`/${orgSlug}/marketing/social/accounts`}
-										className="underline underline-offset-4"
+									</ItemDescription>
+								</ItemContent>
+								<ItemActions>
+									<Button
+										variant="outline"
+										size="sm"
+										render={
+											<Link to={`/${orgSlug}/marketing/social/accounts`} />
+										}
 									>
 										{_(msg`Connect accounts`)}
-									</Link>
-								</AlertDescription>
-							</Alert>
+									</Button>
+								</ItemActions>
+							</Item>
 						) : (
 							<div className="grid gap-3 sm:grid-cols-2">
 								{accounts.map((account) => {

@@ -4,6 +4,14 @@ import { Alert, AlertDescription, AlertTitle } from '@repo/ui/alert'
 import { Button } from '@repo/ui/button'
 import { getHints } from '@repo/ui/client-hints'
 import { Icon } from '@repo/ui/icon'
+import {
+	Item,
+	ItemActions,
+	ItemContent,
+	ItemDescription,
+	ItemMedia,
+	ItemTitle,
+} from '@repo/ui/item'
 import { PageHeader } from '@repo/ui/page-header'
 import { Tabs, TabsList, TabsTrigger } from '@repo/ui/tabs'
 import {
@@ -139,23 +147,28 @@ export default function SocialMediaRoute() {
 			/>
 
 			{accounts.length === 0 ? (
-				<Alert>
-					<Icon name="link-2" />
-					<AlertTitle>{_(msg`Connect your accounts`)}</AlertTitle>
-					<AlertDescription>
-						<p>
+				<Item variant="outline">
+					<ItemMedia variant="icon">
+						<Icon name="link-2" />
+					</ItemMedia>
+					<ItemContent>
+						<ItemTitle>{_(msg`Connect your accounts`)}</ItemTitle>
+						<ItemDescription>
 							{_(
 								msg`Connect a Facebook Page or an Instagram professional account to start publishing.`,
 							)}
-						</p>
-						<Link
-							to={`/${orgSlug}/marketing/social/accounts`}
-							className="underline underline-offset-4"
+						</ItemDescription>
+					</ItemContent>
+					<ItemActions>
+						<Button
+							variant="outline"
+							size="sm"
+							render={<Link to={`/${orgSlug}/marketing/social/accounts`} />}
 						>
 							{_(msg`Connect accounts`)}
-						</Link>
-					</AlertDescription>
-				</Alert>
+						</Button>
+					</ItemActions>
+				</Item>
 			) : needsReconnect ? (
 				<Alert variant="destructive">
 					<Icon name="circle-alert" />
