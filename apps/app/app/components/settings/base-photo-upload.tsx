@@ -28,7 +28,7 @@ export function BasePhotoUpload({
 	imgSrc,
 	alt,
 	dialogTitle,
-	imgClassName = 'ring-muted hover:ring-primary/50 h-full w-full rounded-full object-cover ring-2 ring-offset-2',
+	imgClassName = 'ring-muted ring-offset-card hover:ring-primary/50 h-full w-full rounded-full object-cover ring-2 ring-offset-2',
 	renderForm,
 	size = 'normal',
 	showAvatarChars = false,
@@ -94,7 +94,7 @@ export function BasePhotoUpload({
 					)}
 					<Button
 						variant="outline"
-						className={`absolute ${buttonPosition} flex ${size === 'small' ? 'size-8' : 'size-10'} dark:bg-background dark:hover:bg-muted hover:ring-primary/50 items-center justify-center rounded-full p-0 ring-2 ring-transparent ring-offset-2`}
+						className={`absolute ${buttonPosition} flex ${size === 'small' ? 'size-8' : 'size-10'} dark:bg-background dark:hover:bg-muted hover:ring-primary/50 ring-offset-card items-center justify-center rounded-full p-0 ring-2 ring-transparent ring-offset-2`}
 					>
 						<Icon name="image" className="size-4" />
 					</Button>

@@ -113,7 +113,7 @@ export function OnboardingChecklist({
 					}
 				}}
 				aria-label={t`Get started: ${completedCount} of ${totalSteps} steps complete`}
-				className={`group/onboarding border-sidebar-border hover:bg-sidebar-accent/60 focus-visible:ring-sidebar-ring bg-background mx-2 mt-2 block rounded-md border px-3 py-3 transition-colors duration-150 ease-out group-data-[collapsible=icon]:hidden focus-visible:ring-2 focus-visible:outline-none motion-reduce:transition-none ${className}`}
+				className={`group/onboarding border-sidebar-border hover:bg-sidebar-accent/60 focus-visible:ring-sidebar-ring bg-background mx-2 mt-2 block rounded-md border px-3 py-3 transition-colors duration-160 ease-out group-data-[collapsible=icon]:hidden focus-visible:ring-2 focus-visible:outline-none motion-reduce:transition-none ${className}`}
 			>
 				<div className="flex items-center justify-between gap-2">
 					<span className="text-sidebar-foreground/60 text-xs font-medium">
@@ -130,7 +130,7 @@ export function OnboardingChecklist({
 					</span>
 					<Icon
 						name={nextStep ? 'chevron-right' : 'check'}
-						className="text-sidebar-foreground/40 size-3.5 shrink-0 transition-transform duration-150 ease-out motion-reduce:transition-none ltr:group-hover/onboarding:translate-x-0.5 rtl:-scale-x-100 rtl:group-hover/onboarding:-translate-x-0.5"
+						className="text-sidebar-foreground/40 size-3.5 shrink-0 transition-transform duration-160 ease-out motion-reduce:transition-none ltr:group-hover/onboarding:translate-x-0.5 rtl:-scale-x-100 rtl:group-hover/onboarding:-translate-x-0.5"
 					/>
 				</div>
 

@@ -70,7 +70,7 @@ function TabsTrigger({ className, ...props }: TabsPrimitive.Tab.Props) {
 		<TabsPrimitive.Tab
 			data-slot="tabs-trigger"
 			className={cn(
-				"focus-visible:border-ring focus-visible:ring-ring focus-visible:outline-ring text-muted-foreground hover:text-foreground relative inline-flex h-full flex-1 items-center justify-center gap-1.5 rounded-sm border border-transparent px-2.5 text-xs font-medium whitespace-nowrap transition-[color,background-color,box-shadow] duration-150 group-data-[orientation=vertical]/tabs:w-full group-data-[orientation=vertical]/tabs:justify-start group-data-[variant=line]/tabs-list:px-2.5 group-data-[variant=line]/tabs-list:text-[13px] focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+				"focus-visible:border-ring focus-visible:ring-ring focus-visible:outline-ring text-muted-foreground hover:text-foreground relative inline-flex h-full flex-1 items-center justify-center gap-1.5 rounded-sm border border-transparent px-2.5 text-xs font-medium whitespace-nowrap transition-[color,background-color,box-shadow] duration-160 group-data-[orientation=vertical]/tabs:w-full group-data-[orientation=vertical]/tabs:justify-start group-data-[variant=line]/tabs-list:px-2.5 group-data-[variant=line]/tabs-list:text-[13px] focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
 				'data-active:text-foreground',
 				// While the indicator is hidden (not measured yet) the active tab
 				// paints its own pill or underline; see sliding-indicator.tsx.
@@ -92,7 +92,7 @@ function TabsContent({ className, ...props }: TabsPrimitive.Panel.Props) {
 				// after a tab change, so the first render does not animate. The
 				// outgoing panel stays mounted until its transitions finish; hide it
 				// at once so two panels never stack during a quick switch.
-				'ease-out-quint flex-1 text-sm transition-[opacity,translate] duration-200 outline-none data-ending-style:hidden data-starting-style:translate-y-1 data-starting-style:opacity-0 motion-reduce:data-starting-style:translate-y-0',
+				'ease-out-quint flex-1 text-sm transition-[opacity,translate] duration-180 outline-none data-ending-style:hidden data-starting-style:translate-y-1 data-starting-style:opacity-0 motion-reduce:data-starting-style:translate-y-0',
 				className,
 			)}
 			{...props}

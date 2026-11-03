@@ -48,6 +48,7 @@ import {
 	FrameTitle,
 } from '@repo/ui/frame'
 import { Icon } from '@repo/ui/icon'
+import { IconSwap } from '@repo/ui/icon-swap'
 import { Input } from '@repo/ui/input'
 import { Label } from '@repo/ui/label'
 import { PageTitle } from '@repo/ui/page-title'
@@ -572,8 +573,10 @@ function NewApiKeyModal({
 									className="absolute top-2 right-2 h-10 px-3"
 									onClick={handleCopy}
 								>
-									<Icon
-										name={copied ? 'check' : 'copy'}
+									<IconSwap
+										from="copy"
+										to="check"
+										swapped={copied}
 										className="mr-1 h-4 w-4"
 									/>
 									{copied ? <Trans>Copied!</Trans> : <Trans>Copy</Trans>}

@@ -2,21 +2,17 @@ import { msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { requireUserId } from '@repo/auth'
 import {
-	WorkspaceHero,
 	WorkspaceMetric,
 	WorkspaceMetricGrid,
 	WorkspacePage,
-	formatWorkspaceDate,
-	getWorkspaceGreeting,
-	getWorkspaceHour,
 } from '@repo/ui/workspace'
 import confetti from 'canvas-confetti'
-import { useCallback, useEffect, useMemo, useRef } from 'react'
-import { useNavigate, useRouteLoaderData, useSearchParams } from 'react-router'
+import { useCallback, useEffect, useRef } from 'react'
+import { useNavigate, useSearchParams } from 'react-router'
 import { DashboardBlockContent } from '#app/components/dashboard/dashboard-block-content.tsx'
 import { DashboardEditor } from '#app/components/dashboard/dashboard-editor.tsx'
 import { DashboardSwitcher } from '#app/components/dashboard/dashboard-switcher.tsx'
-import { type loader as rootLoader } from '#app/root.tsx'
+import { HomePrompt } from '#app/components/home-prompt.tsx'
 import { handleHomeAction } from '#app/utils/dashboards/actions.server.ts'
 import {
 	loadBlockPicker,
@@ -157,25 +153,8 @@ export default function HomeDashboard({ loaderData }: Route.ComponentProps) {
 		picker,
 		switcher,
 	} = loaderData
-	const rootData = useRouteLoaderData<typeof rootLoader>('root')
-	const userName = rootData?.user?.name || _(msg`User`)
 	const notes = blockData.notes
 	const daysShown = notes?.daysShown ?? 0
-	// The request's locale and time zone, so the server render matches the
-	// browser's.
-	const locale = rootData?.locale ?? 'en'
-	const timeZone = rootData?.requestInfo.hints.timeZone
-	const greeting = useMemo(() => {
-		const part = getWorkspaceGreeting(getWorkspaceHour(new Date(), timeZone))
-		if (part === 'morning') return _(msg`Good morning, ${userName}`)
-		if (part === 'afternoon') return _(msg`Good afternoon, ${userName}`)
-		return _(msg`Good evening, ${userName}`)
-	}, [_, timeZone, userName])
-	const todayLine = useMemo(() => {
-		const date = formatWorkspaceDate(new Date(), { locale, timeZone })
-		const organizationName = organization.name
-		return _(msg`${date} · Here's what's happening in ${organizationName}`)
-	}, [_, locale, organization.name, timeZone])
 	useCelebration()
 
 	const renderBlock = useCallback(
@@ -204,7 +183,9 @@ export default function HomeDashboard({ loaderData }: Route.ComponentProps) {
 
 	return (
 		<WorkspacePage>
-			<WorkspaceHero title={greeting} meta={todayLine} />
+			{/* No visible greeting; the page still needs its one heading. */}
+			<h1 className="sr-only">{organization.name}</h1>
+			<HomePrompt />
 			<WorkspaceMetricGrid>
 				<WorkspaceMetric
 					label={_(msg`Total notes`)}

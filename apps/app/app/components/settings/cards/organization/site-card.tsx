@@ -332,7 +332,7 @@ export function SiteCard({
 
 			<CardContent
 				className={cn(
-					'grid transition-all duration-200 ease-out',
+					'grid transition-[grid-template-rows,opacity] duration-180 ease-out motion-reduce:transition-none',
 					isPublished
 						? 'grid-rows-[1fr] opacity-100'
 						: 'grid-rows-[0fr] opacity-0',

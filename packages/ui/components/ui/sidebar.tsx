@@ -3,8 +3,10 @@ import { useRender } from '@base-ui/react/use-render'
 import { cva, type VariantProps } from 'class-variance-authority'
 import * as React from 'react'
 
+import { useFluidHover } from '../../hooks/use-fluid-hover'
 import { cn } from '../../lib/utils'
 import { useIsMobile } from '../../utils/use-mobile'
+import { FluidHoverHighlight } from '../fluid-hover-highlight'
 import { Icon } from '../icon'
 import { Button } from './button'
 import { Input } from './input'
@@ -210,7 +212,7 @@ function Sidebar({
 			<div
 				data-slot="sidebar-gap"
 				className={cn(
-					'relative w-(--sidebar-width) bg-transparent transition-[width] duration-200 ease-linear',
+					'relative w-(--sidebar-width) bg-transparent transition-[width] duration-180 ease-linear',
 					'group-data-[collapsible=offExamples]:w-0',
 					'group-data-[side=right]:rotate-180',
 					variant === 'floating' || variant === 'inset'
@@ -221,7 +223,7 @@ function Sidebar({
 			<div
 				data-slot="sidebar-container"
 				className={cn(
-					'fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) transition-[left,right,width] duration-200 ease-linear md:flex',
+					'fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) transition-[left,right,width] duration-180 ease-linear md:flex',
 					side === 'left'
 						? 'left-0 group-data-[collapsible=offExamples]:left-[calc(var(--sidebar-width)*-1)]'
 						: 'right-0 group-data-[collapsible=offExamples]:right-[calc(var(--sidebar-width)*-1)]',
@@ -288,7 +290,7 @@ function SidebarRail({ className, ...props }: React.ComponentProps<'button'>) {
 			onClick={toggleSidebar}
 			title="Toggle Sidebar"
 			className={cn(
-				'hover:after:bg-sidebar-border absolute inset-y-0 z-20 hidden w-4 -translate-x-1/2 transition-all ease-linear group-data-[side=left]:-right-4 group-data-[side=right]:left-0 after:absolute after:inset-y-0 after:left-1/2 after:w-[2px] sm:flex',
+				'hover:after:bg-sidebar-border absolute inset-y-0 z-20 hidden w-4 -translate-x-1/2 transition-[left,right] ease-linear group-data-[side=left]:-right-4 group-data-[side=right]:left-0 after:absolute after:inset-y-0 after:left-1/2 after:w-[2px] sm:flex',
 				'in-data-[side=left]:cursor-w-resize in-data-[side=right]:cursor-e-resize',
 				'[[data-side=left][data-state=collapsed]_&]:cursor-e-resize [[data-side=right][data-state=collapsed]_&]:cursor-w-resize',
 				'hover:group-data-[collapsible=offExamples]:bg-sidebar group-data-[collapsible=offExamples]:translate-x-0 group-data-[collapsible=offExamples]:after:left-full',
@@ -403,7 +405,7 @@ function SidebarGroupLabel({
 		props: mergeProps<'div'>(
 			{
 				className: cn(
-					'text-sidebar-foreground/70 ring-sidebar-ring text-2xs flex h-7 shrink-0 items-center rounded-md px-2 font-medium tracking-[0.04em] uppercase outline-hidden transition-[margin,opacity] duration-200 ease-linear group-data-[collapsible=icon]:-mt-7 group-data-[collapsible=icon]:opacity-0 focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0',
+					'text-sidebar-foreground/70 ring-sidebar-ring text-2xs flex h-7 shrink-0 items-center rounded-md px-2 font-medium tracking-[0.04em] uppercase outline-hidden transition-[margin,opacity] duration-180 ease-linear group-data-[collapsible=icon]:-mt-7 group-data-[collapsible=icon]:opacity-0 focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0',
 					className,
 				),
 			},
@@ -455,14 +457,92 @@ function SidebarGroupContent({
 	)
 }
 
-function SidebarMenu({ className, ...props }: React.ComponentProps<'ul'>) {
+/**
+ * One fluid hover per menu: a single highlight glides to the row nearest the
+ * cursor instead of every row repainting its own `:hover` fill, so it never
+ * blinks off in the gap between rows and a click in the gap lands on what is
+ * lit. Rows join through `useSidebarHoverItem`; sub-menu rows belong to the
+ * parent menu's list.
+ */
+type SidebarMenuHover = {
+	acquire: () => number
+	release: (index: number) => void
+	registerItem: (index: number, element: HTMLElement | null) => void
+}
+
+const SidebarMenuHoverContext = React.createContext<SidebarMenuHover | null>(
+	null,
+)
+
+const useIsoLayoutEffect =
+	typeof window !== 'undefined' ? React.useLayoutEffect : React.useEffect
+
+/** Registers a menu row with its menu's fluid hover. Returns whether it did. */
+function useSidebarHoverItem(ref: React.RefObject<HTMLElement | null>) {
+	const hover = React.useContext(SidebarMenuHoverContext)
+	useIsoLayoutEffect(() => {
+		const element = ref.current
+		if (!hover || !element) return
+		const index = hover.acquire()
+		hover.registerItem(index, element)
+		return () => {
+			hover.registerItem(index, null)
+			hover.release(index)
+		}
+	}, [hover, ref])
+	return hover !== null
+}
+
+const isMenuRowDisabled = (element: HTMLElement) =>
+	element.matches(':disabled, [aria-disabled="true"]')
+
+function SidebarMenu({
+	className,
+	children,
+	...props
+}: React.ComponentProps<'ul'>) {
+	const containerRef = React.useRef<HTMLDivElement>(null)
+	const hover = useFluidHover(containerRef, {
+		axis: 'y',
+		nearest: true,
+		isItemDisabled: isMenuRowDisabled,
+	})
+	const { registerItem } = hover
+	const freeIndexes = React.useRef<number[]>([])
+	const nextIndex = React.useRef(0)
+	const context = React.useMemo<SidebarMenuHover>(
+		() => ({
+			acquire: () => freeIndexes.current.pop() ?? nextIndex.current++,
+			release: (index) => {
+				freeIndexes.current.push(index)
+			},
+			registerItem,
+		}),
+		[registerItem],
+	)
+
 	return (
-		<ul
-			data-slot="sidebar-menu"
-			data-sidebar="menu"
-			className={cn('flex w-full min-w-0 flex-col gap-0.5', className)}
-			{...props}
-		/>
+		<SidebarMenuHoverContext value={context}>
+			{/* The highlight lives beside the list, not in it: a <ul> may only
+			    contain <li>. The wrapper is the hover container and has the
+			    list's box, so the measured rects line up. */}
+			<div
+				ref={containerRef}
+				data-slot="sidebar-menu-hover"
+				className="relative w-full min-w-0"
+				{...hover.handlers}
+			>
+				<FluidHoverHighlight hover={hover} className="rounded-full" />
+				<ul
+					data-slot="sidebar-menu"
+					data-sidebar="menu"
+					className={cn('flex w-full min-w-0 flex-col gap-0.5', className)}
+					{...props}
+				>
+					{children}
+				</ul>
+			</div>
+		</SidebarMenuHoverContext>
 	)
 }
 
@@ -478,7 +558,7 @@ function SidebarMenuItem({ className, ...props }: React.ComponentProps<'li'>) {
 }
 
 const sidebarMenuButtonVariants = cva(
-	'ring-sidebar-ring text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground active:bg-sidebar-accent active:text-sidebar-accent-foreground data-active:bg-card data-active:text-foreground data-active:shadow-raised dark:data-active:bg-accent data-popup-open:bg-sidebar-accent data-popup-open:text-sidebar-accent-foreground peer/menu-button group/menu-button [&_svg]:text-sidebar-foreground/65 hover:[&_svg]:text-sidebar-foreground data-active:[&_svg]:text-sidebar-foreground flex w-full items-center gap-2.5 overflow-hidden rounded-md px-2 text-left text-sm font-[450] outline-hidden transition-[width,height,padding,color,background-color,box-shadow] duration-150 group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-active:font-medium dark:data-active:shadow-none [&_svg]:size-4 [&_svg]:shrink-0 [&>span:last-child]:truncate',
+	'ring-sidebar-ring text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground active:bg-sidebar-accent active:text-sidebar-accent-foreground data-active:bg-card data-active:text-foreground data-active:shadow-raised dark:data-active:bg-accent data-popup-open:bg-sidebar-accent data-popup-open:text-sidebar-accent-foreground peer/menu-button group/menu-button [&_svg]:text-sidebar-foreground/65 hover:[&_svg]:text-sidebar-foreground data-active:[&_svg]:text-sidebar-foreground flex w-full items-center gap-2.5 overflow-hidden rounded-full px-2 text-left text-sm font-[450] outline-hidden transition-[width,height,padding,color,background-color,box-shadow] duration-160 group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 dark:data-active:shadow-none [&_svg]:size-4 [&_svg]:shrink-0 [&>span:last-child]:truncate',
 	{
 		variants: {
 			variant: {
@@ -513,11 +593,20 @@ function SidebarMenuButton({
 		tooltip?: string | React.ComponentProps<typeof TooltipContent>
 	} & VariantProps<typeof sidebarMenuButtonVariants>) {
 	const { isMobile, state } = useSidebar()
+	const rowRef = React.useRef<HTMLElement>(null)
+	const hasFluidHover = useSidebarHoverItem(rowRef)
 	const comp = useRender({
 		defaultTagName: 'button',
+		ref: rowRef,
 		props: mergeProps<'button'>(
 			{
-				className: cn(sidebarMenuButtonVariants({ variant, size }), className),
+				className: cn(
+					sidebarMenuButtonVariants({ variant, size }),
+					// The menu's gliding highlight is the hover fill; the default
+					// variant keeps only its text color change.
+					hasFluidHover && variant === 'default' && 'hover:bg-transparent',
+					className,
+				),
 			},
 			props,
 		),
@@ -616,7 +705,10 @@ function SidebarMenuSkeleton({
 		<div
 			data-slot="sidebar-menu-skeleton"
 			data-sidebar="menu-skeleton"
-			className={cn('flex h-7.5 items-center gap-2 rounded-md px-2', className)}
+			className={cn(
+				'flex h-7.5 items-center gap-2 rounded-full px-2',
+				className,
+			)}
 			{...props}
 		>
 			{showIcon && (
@@ -677,12 +769,16 @@ function SidebarMenuSubButton({
 		size?: 'sm' | 'md'
 		isActive?: boolean
 	}) {
+	const rowRef = React.useRef<HTMLElement>(null)
+	const hasFluidHover = useSidebarHoverItem(rowRef)
 	return useRender({
 		defaultTagName: 'a',
+		ref: rowRef,
 		props: mergeProps<'a'>(
 			{
 				className: cn(
-					'text-sidebar-foreground ring-sidebar-ring hover:bg-sidebar-accent hover:text-sidebar-accent-foreground active:bg-sidebar-accent active:text-sidebar-accent-foreground [&>svg]:text-sidebar-foreground/65 data-active:bg-card data-active:text-foreground data-active:shadow-raised dark:data-active:bg-accent flex h-7.5 min-w-0 -translate-x-px items-center gap-2 overflow-hidden rounded-md px-2 outline-hidden group-data-[collapsible=icon]:hidden focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-active:font-medium data-[size=md]:text-sm data-[size=sm]:text-[13px] dark:data-active:shadow-none [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0',
+					'text-sidebar-foreground ring-sidebar-ring hover:bg-sidebar-accent hover:text-sidebar-accent-foreground active:bg-sidebar-accent active:text-sidebar-accent-foreground [&>svg]:text-sidebar-foreground/65 data-active:bg-card data-active:text-foreground data-active:shadow-raised dark:data-active:bg-accent flex h-7.5 min-w-0 -translate-x-px items-center gap-2 overflow-hidden rounded-full px-2 outline-hidden group-data-[collapsible=icon]:hidden focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[size=md]:text-sm data-[size=sm]:text-[13px] dark:data-active:shadow-none [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0',
+					hasFluidHover && 'hover:bg-transparent',
 					className,
 				),
 			},

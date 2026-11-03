@@ -32,7 +32,7 @@ function ChoiceCard({ className, ...props }: React.ComponentProps<'label'>) {
 		<label
 			data-slot="choice-card"
 			className={cn(
-				'group/choice-card border-border relative flex min-h-11 w-full cursor-pointer items-start gap-2 rounded-lg border p-3 text-sm transition-colors duration-150 select-none',
+				'group/choice-card border-border relative flex min-h-11 w-full cursor-pointer items-start gap-2 rounded-lg border p-3 text-sm transition-colors duration-160 select-none',
 				'not-has-data-checked:not-has-data-disabled:hover:bg-muted/50',
 				// Chosen: a full-strength primary border (3:1 against the page) and a faint tint.
 				'has-data-checked:border-primary has-data-checked:bg-primary/5 dark:has-data-checked:bg-primary/10',

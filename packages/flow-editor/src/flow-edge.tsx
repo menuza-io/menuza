@@ -84,7 +84,7 @@ export function FlowEdgeView({
 	const labelY = loopsBack ? sourceY + 28 : midY
 
 	const labelClassName = cn(
-		'max-w-40 truncate rounded-full border px-2 py-0.5 text-[10px] font-medium shadow-xs transition-all',
+		'max-w-40 truncate rounded-full border px-2 py-0.5 text-[10px] font-medium shadow-xs transition-[color,background-color,border-color,box-shadow]',
 		invalid
 			? 'border-destructive bg-card text-destructive'
 			: TONE_LABEL_CLASS[tone],
@@ -143,7 +143,7 @@ export function FlowEdgeView({
 								type="button"
 								className={cn(
 									'bg-background border-border/80 text-muted-foreground hover:text-destructive hover:border-destructive size-5 rounded-full border shadow-xs',
-									'flex items-center justify-center opacity-0 transition-all group-hover:opacity-100 focus-visible:opacity-100',
+									'flex items-center justify-center opacity-0 transition-[opacity,color,border-color] group-hover:opacity-100 focus-visible:opacity-100',
 									selected && 'opacity-100',
 								)}
 								onClick={(event) => {

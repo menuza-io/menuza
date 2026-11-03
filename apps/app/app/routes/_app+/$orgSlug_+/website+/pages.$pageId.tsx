@@ -1683,8 +1683,8 @@ function AddSectionDialog({
 					onClick={() => setOpen(true)}
 					aria-label="Insert section here"
 				>
-					<span className="bg-border absolute inset-x-3 h-px origin-center scale-x-0 opacity-0 transition duration-150 ease-out group-hover/insert:scale-x-100 group-hover/insert:opacity-100 group-focus-visible/insert:scale-x-100 group-focus-visible/insert:opacity-100" />
-					<span className="border-border bg-background text-muted-foreground relative z-10 flex size-5 items-center justify-center rounded-full border opacity-0 shadow-sm transition duration-150 ease-out group-hover/insert:opacity-100 group-focus-visible/insert:opacity-100">
+					<span className="bg-border absolute inset-x-3 h-px origin-center scale-x-0 opacity-0 transition duration-160 ease-out group-hover/insert:scale-x-100 group-hover/insert:opacity-100 group-focus-visible/insert:scale-x-100 group-focus-visible/insert:opacity-100" />
+					<span className="border-border bg-background text-muted-foreground relative z-10 flex size-5 items-center justify-center rounded-full border opacity-0 shadow-sm transition duration-160 ease-out group-hover/insert:opacity-100 group-focus-visible/insert:opacity-100">
 						<Icon name="plus" className="size-3" />
 					</span>
 				</button>
@@ -1734,7 +1734,7 @@ function AddSectionDialog({
 								onClick={() => setSelected(block.type)}
 								onDoubleClick={() => confirmAdd(block.type)}
 								className={cn(
-									'group/tile border-border hover:bg-muted/50 focus-visible:ring-ring flex flex-col items-start gap-3 rounded-xl border p-3 text-left transition-[background-color,border-color] duration-150 outline-none focus-visible:ring-2',
+									'group/tile border-border hover:bg-muted/50 focus-visible:ring-ring flex flex-col items-start gap-3 rounded-xl border p-3 text-left transition-[background-color,border-color] duration-160 outline-none focus-visible:ring-2',
 									isSelected
 										? 'border-primary/40 bg-primary/5'
 										: 'bg-background',
@@ -1815,7 +1815,7 @@ function SectionPreviewCard({
 	return (
 		<div
 			className={cn(
-				'group relative cursor-pointer rounded-lg px-2 py-2 transition-colors duration-150',
+				'group relative cursor-pointer rounded-lg px-2 py-2 transition-colors duration-160',
 				isSelected ? 'bg-muted' : 'hover:bg-muted/60 focus-within:bg-muted/60',
 			)}
 			onClick={onSelect}
@@ -1834,7 +1834,7 @@ function SectionPreviewCard({
 					<Icon
 						name={(blockDef?.icon ?? 'blocks') as IconName}
 						className={cn(
-							'size-3.5 transition-opacity duration-150',
+							'size-3.5 transition-opacity duration-160',
 							!locked && 'group-hover:opacity-0 peer-focus-visible:opacity-0',
 							isDragging && 'opacity-0',
 						)}
@@ -1862,7 +1862,7 @@ function SectionPreviewCard({
 			</div>
 
 			{locked ? null : (
-				<div className="absolute top-1.5 right-1.5 opacity-0 transition-opacity duration-150 group-focus-within:opacity-100 group-hover:opacity-100">
+				<div className="absolute top-1.5 right-1.5 opacity-0 transition-opacity duration-160 group-focus-within:opacity-100 group-hover:opacity-100">
 					<Button
 						variant="ghost"
 						size="icon-xs"
@@ -1925,7 +1925,7 @@ function SortableSectionCard({
 							type="button"
 							ref={setActivatorNodeRef}
 							className={cn(
-								'text-muted-foreground hover:text-foreground peer pointer-events-none absolute inset-0 z-10 flex cursor-grab items-center justify-center rounded-md opacity-0 transition-opacity duration-150 active:cursor-grabbing',
+								'text-muted-foreground hover:text-foreground peer pointer-events-none absolute inset-0 z-10 flex cursor-grab items-center justify-center rounded-md opacity-0 transition-opacity duration-160 active:cursor-grabbing',
 								'group-hover:pointer-events-auto group-hover:opacity-100',
 								'focus-visible:pointer-events-auto focus-visible:opacity-100',
 								isDragging && 'pointer-events-auto opacity-100',
@@ -4660,13 +4660,13 @@ function FieldChoice({
 							className={
 								hasPreview
 									? cn(
-											'border-border hover:bg-muted/50 focus-visible:ring-ring flex min-w-0 flex-col items-stretch gap-1.5 rounded-xl border p-2 text-left transition-[background-color,border-color] duration-150 outline-none focus-visible:ring-2',
+											'border-border hover:bg-muted/50 focus-visible:ring-ring flex min-w-0 flex-col items-stretch gap-1.5 rounded-xl border p-2 text-left transition-[background-color,border-color] duration-160 outline-none focus-visible:ring-2',
 											selected
 												? 'border-foreground/30 bg-muted'
 												: 'bg-background',
 										)
 									: cn(
-											'text-muted-foreground hover:text-foreground focus-visible:ring-ring flex min-h-8 min-w-0 flex-1 items-center justify-center rounded-md px-2 py-1.5 text-xs font-medium transition-[background-color,color,box-shadow] duration-150 outline-none focus-visible:ring-2',
+											'text-muted-foreground hover:text-foreground focus-visible:ring-ring flex min-h-8 min-w-0 flex-1 items-center justify-center rounded-md px-2 py-1.5 text-xs font-medium transition-[background-color,color,box-shadow] duration-160 outline-none focus-visible:ring-2',
 											selected && 'bg-background text-foreground shadow-sm',
 										)
 							}
@@ -4987,7 +4987,7 @@ function FieldStars({
 							aria-label={`${rating} star${rating === 1 ? '' : 's'}`}
 							onClick={() => onChange(rating)}
 							className={cn(
-								'focus-visible:ring-ring flex size-8 items-center justify-center rounded-md transition-colors duration-150 outline-none focus-visible:ring-2',
+								'focus-visible:ring-ring flex size-8 items-center justify-center rounded-md transition-colors duration-160 outline-none focus-visible:ring-2',
 								filled
 									? 'text-foreground'
 									: 'text-muted-foreground/40 hover:text-muted-foreground',
@@ -5674,7 +5674,7 @@ export default function PageBuilderRoute() {
 							variant="ghost"
 							size="icon-xs"
 							className={cn(
-								'relative rounded-md transition-[transform,background-color,box-shadow,color] duration-150 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] after:absolute after:-inset-2.5 after:content-[""] active:scale-[0.97] motion-reduce:transition-none motion-reduce:active:scale-100',
+								'relative rounded-md transition-[transform,scale,background-color,box-shadow,color] duration-160 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] after:absolute after:-inset-2.5 after:content-[""] active:scale-[0.97] motion-reduce:transition-none motion-reduce:active:scale-100',
 								previewViewport === 'desktop' &&
 									'bg-background text-foreground hover:bg-background shadow-sm',
 							)}
@@ -5697,7 +5697,7 @@ export default function PageBuilderRoute() {
 							variant="ghost"
 							size="icon-xs"
 							className={cn(
-								'relative rounded-md transition-[transform,background-color,box-shadow,color] duration-150 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] after:absolute after:-inset-2.5 after:content-[""] active:scale-[0.97] motion-reduce:transition-none motion-reduce:active:scale-100',
+								'relative rounded-md transition-[transform,scale,background-color,box-shadow,color] duration-160 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] after:absolute after:-inset-2.5 after:content-[""] active:scale-[0.97] motion-reduce:transition-none motion-reduce:active:scale-100',
 								previewViewport === 'mobile' &&
 									'bg-background text-foreground hover:bg-background shadow-sm',
 							)}
@@ -5725,7 +5725,7 @@ export default function PageBuilderRoute() {
 				>
 					<div
 						className={cn(
-							'bg-background mx-auto h-full w-full overflow-hidden transition-[max-width,border-radius,box-shadow] duration-200 ease-[cubic-bezier(0.645,0.045,0.355,1)] motion-reduce:transition-none',
+							'bg-background mx-auto h-full w-full overflow-hidden transition-[max-width,border-radius,box-shadow] duration-180 ease-[cubic-bezier(0.645,0.045,0.355,1)] motion-reduce:transition-none',
 							previewViewport === 'mobile'
 								? 'max-w-93.75 rounded-[2rem] border shadow-sm'
 								: 'rounded-xl border shadow-sm',

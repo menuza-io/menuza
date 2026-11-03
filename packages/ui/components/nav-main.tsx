@@ -20,6 +20,7 @@ import {
 	SidebarMenuSubItem,
 	useSidebar,
 } from './ui/sidebar'
+import { WeightLabel } from './weight-label'
 
 export function NavMain({
 	items,
@@ -119,7 +120,9 @@ export function NavMain({
 																	size={16}
 																/>
 															)}
-															<span>{item.title}</span>
+															<WeightLabel active={item.isActive}>
+																{item.title}
+															</WeightLabel>
 														</div>
 													</SidebarMenuButton>
 												}
@@ -161,7 +164,9 @@ export function NavMain({
 															/>
 														</span>
 													)}
-													<span>{item.title}</span>
+													<WeightLabel active={item.isActive && !isOpen}>
+														{item.title}
+													</WeightLabel>
 												</div>
 												<Icon
 													name={isOpen ? 'chevron-down' : 'chevron-right'}
@@ -175,7 +180,9 @@ export function NavMain({
 															<SidebarMenuSubButton
 																render={
 																	<Link to={subItem.url}>
-																		<span>{subItem.title}</span>
+																		<WeightLabel active={subItem.isActive}>
+																			{subItem.title}
+																		</WeightLabel>
 																	</Link>
 																}
 																isActive={subItem.isActive}
@@ -205,7 +212,9 @@ export function NavMain({
 														/>
 													</span>
 												)}
-												<span>{item.title}</span>
+												<WeightLabel active={item.isActive}>
+													{item.title}
+												</WeightLabel>
 											</Link>
 										}
 										isActive={item.isActive}

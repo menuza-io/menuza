@@ -1,5 +1,6 @@
 'use client'
 
+import { type ChatAttachment } from '@repo/ai/chat-attachments'
 import {
 	createContext,
 	type ReactNode,
@@ -10,10 +11,17 @@ import {
 	useState,
 } from 'react'
 
+type PendingMessage = { text: string; files: ChatAttachment[] }
+
 type AIPanelContextValue = {
 	isOpen: boolean
 	isExpanded: boolean
 	hasActivated: boolean
+	/** A message waiting for the assistant to take it. */
+	pendingMessage: PendingMessage | null
+	clearPendingMessage: () => void
+	/** Opens the assistant full screen and sends it this message. */
+	ask: (text: string, files?: ChatAttachment[]) => void
 	open: () => void
 	close: () => void
 	toggle: () => void
@@ -30,6 +38,9 @@ export function AIPanelProvider({ children }: { children: ReactNode }) {
 	const [isOpen, setIsOpen] = useState(false)
 	const [isExpanded, setIsExpanded] = useState(false)
 	const [hasActivated, setHasActivated] = useState(false)
+	const [pendingMessage, setPendingMessage] = useState<PendingMessage | null>(
+		null,
+	)
 
 	// Restore from localStorage on first mount.
 	useEffect(() => {
@@ -66,6 +77,15 @@ export function AIPanelProvider({ children }: { children: ReactNode }) {
 		setHasActivated(true)
 	}, [])
 	const collapse = useCallback(() => setIsExpanded(false), [])
+	const clearPendingMessage = useCallback(() => setPendingMessage(null), [])
+	const ask = useCallback((text: string, files: ChatAttachment[] = []) => {
+		const trimmed = text.trim()
+		if (!trimmed && files.length === 0) return
+		setPendingMessage({ text: trimmed, files })
+		setIsOpen(true)
+		setIsExpanded(true)
+		setHasActivated(true)
+	}, [])
 	const toggleExpanded = useCallback(() => {
 		setIsExpanded((v) => !v)
 	}, [])
@@ -87,6 +107,9 @@ export function AIPanelProvider({ children }: { children: ReactNode }) {
 			isOpen,
 			isExpanded,
 			hasActivated,
+			pendingMessage,
+			clearPendingMessage,
+			ask,
 			open,
 			close,
 			toggle,
@@ -98,6 +121,9 @@ export function AIPanelProvider({ children }: { children: ReactNode }) {
 			isOpen,
 			isExpanded,
 			hasActivated,
+			pendingMessage,
+			clearPendingMessage,
+			ask,
 			open,
 			close,
 			toggle,

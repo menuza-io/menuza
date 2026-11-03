@@ -675,7 +675,7 @@ export function RoleAccessForm({
 												disabled={isSubmitting}
 												aria-pressed={isSelected}
 												className={cn(
-													'rounded-lg border px-3.5 py-1.5 text-sm font-medium transition-all',
+													'rounded-lg border px-3.5 py-1.5 text-sm font-medium transition-[color,background-color,border-color,box-shadow]',
 													isSelected
 														? 'bg-primary text-primary-foreground border-primary shadow-xs'
 														: 'bg-card text-muted-foreground border-border hover:text-foreground hover:bg-muted/40',

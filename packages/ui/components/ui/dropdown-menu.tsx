@@ -2,6 +2,7 @@ import { Menu as MenuPrimitive } from '@base-ui/react/menu'
 import * as React from 'react'
 
 import { cn } from '../../lib/utils'
+import { FluidHoverScope, useFluidHoverItemRef } from '../fluid-hover-scope'
 import { Icon } from '../icon'
 
 function DropdownMenu({ ...props }: MenuPrimitive.Root.Props) {
@@ -22,6 +23,7 @@ function DropdownMenuContent({
 	side = 'bottom',
 	sideOffset = 4,
 	className,
+	children,
 	...props
 }: MenuPrimitive.Popup.Props &
 	Pick<
@@ -40,11 +42,13 @@ function DropdownMenuContent({
 				<MenuPrimitive.Popup
 					data-slot="dropdown-menu-content"
 					className={cn(
-						'data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 data-closed:zoom-out-95 data-open:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 bg-popover text-popover-foreground shadow-pop z-50 max-h-(--available-height) w-max max-w-[min(20rem,var(--available-width))] min-w-(--anchor-width) origin-(--transform-origin) overflow-x-hidden overflow-y-auto rounded-xl p-1 duration-100 outline-none data-closed:overflow-hidden',
+						'data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 data-closed:zoom-out-95 data-open:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 bg-popover text-popover-foreground shadow-pop z-50 max-h-(--available-height) w-max max-w-[min(20rem,var(--available-width))] min-w-(--anchor-width) origin-(--transform-origin) overflow-x-hidden overflow-y-auto rounded-xl p-1 duration-80 outline-none data-closed:overflow-hidden',
 						className,
 					)}
 					{...props}
-				/>
+				>
+					<FluidHoverScope>{children}</FluidHoverScope>
+				</MenuPrimitive.Popup>
 			</MenuPrimitive.Positioner>
 		</MenuPrimitive.Portal>
 	)
@@ -78,6 +82,7 @@ function DropdownMenuItem({
 	className,
 	inset,
 	variant = 'default',
+	ref,
 	...props
 }: MenuPrimitive.Item.Props & {
 	inset?: boolean
@@ -88,13 +93,17 @@ function DropdownMenuItem({
 	 */
 	onSelect?: never
 }) {
+	const item = useFluidHoverItemRef(ref, variant !== 'destructive')
+
 	return (
 		<MenuPrimitive.Item
 			data-slot="dropdown-menu-item"
 			data-inset={inset}
 			data-variant={variant}
+			ref={item.ref}
 			className={cn(
 				"focus:bg-accent focus:text-accent-foreground data-[variant=destructive]:text-destructive data-[variant=destructive]:focus:bg-destructive/10 dark:data-[variant=destructive]:focus:bg-destructive/20 data-[variant=destructive]:focus:text-destructive data-[variant=destructive]:*:[svg]:text-destructive not-data-[variant=destructive]:focus:**:text-accent-foreground group/dropdown-menu-item relative flex cursor-default items-center gap-2 rounded-md px-2 py-1.5 text-sm outline-hidden select-none data-disabled:pointer-events-none data-disabled:opacity-50 data-[inset]:pl-8 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+				item.inScope && 'focus:bg-transparent',
 				className,
 			)}
 			{...props}
@@ -110,16 +119,21 @@ function DropdownMenuSubTrigger({
 	className,
 	inset,
 	children,
+	ref,
 	...props
 }: MenuPrimitive.SubmenuTrigger.Props & {
 	inset?: boolean
 }) {
+	const item = useFluidHoverItemRef(ref)
+
 	return (
 		<MenuPrimitive.SubmenuTrigger
 			data-slot="dropdown-menu-sub-trigger"
 			data-inset={inset}
+			ref={item.ref}
 			className={cn(
 				"focus:bg-accent focus:text-accent-foreground data-popup-open:bg-accent data-popup-open:text-accent-foreground not-data-[variant=destructive]:focus:**:text-accent-foreground flex cursor-default items-center gap-2 rounded-md px-2 py-1.5 text-sm outline-hidden select-none data-[inset]:pl-8 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+				item.inScope && 'focus:bg-transparent',
 				className,
 			)}
 			{...props}
@@ -145,7 +159,7 @@ function DropdownMenuSubContent({
 		<DropdownMenuContent
 			data-slot="dropdown-menu-sub-content"
 			className={cn(
-				'data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 data-closed:zoom-out-95 data-open:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 bg-popover text-popover-foreground shadow-pop w-auto min-w-[96px] rounded-md p-1 duration-100',
+				'data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 data-closed:zoom-out-95 data-open:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 bg-popover text-popover-foreground shadow-pop w-auto min-w-[96px] rounded-md p-1 duration-80',
 				className,
 			)}
 			align={align}
@@ -161,13 +175,18 @@ function DropdownMenuCheckboxItem({
 	className,
 	children,
 	checked,
+	ref,
 	...props
 }: MenuPrimitive.CheckboxItem.Props) {
+	const item = useFluidHoverItemRef(ref)
+
 	return (
 		<MenuPrimitive.CheckboxItem
 			data-slot="dropdown-menu-checkbox-item"
+			ref={item.ref}
 			className={cn(
 				"focus:bg-accent focus:text-accent-foreground focus:**:text-accent-foreground relative flex cursor-default items-center gap-2 rounded-md py-1.5 pr-8 pl-2 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+				item.inScope && 'focus:bg-transparent',
 				className,
 			)}
 			checked={checked}
@@ -198,13 +217,18 @@ function DropdownMenuRadioGroup({ ...props }: MenuPrimitive.RadioGroup.Props) {
 function DropdownMenuRadioItem({
 	className,
 	children,
+	ref,
 	...props
 }: MenuPrimitive.RadioItem.Props) {
+	const item = useFluidHoverItemRef(ref)
+
 	return (
 		<MenuPrimitive.RadioItem
 			data-slot="dropdown-menu-radio-item"
+			ref={item.ref}
 			className={cn(
 				"focus:bg-accent focus:text-accent-foreground focus:**:text-accent-foreground relative flex cursor-default items-center gap-2 rounded-md py-1.5 pr-8 pl-2 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+				item.inScope && 'focus:bg-transparent',
 				className,
 			)}
 			{...props}

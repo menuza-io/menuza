@@ -1231,7 +1231,7 @@ export default function WebsiteRedirectsRoute() {
 												}
 											}}
 											className={cn(
-												'rounded px-2.5 py-0.5 font-medium transition-all',
+												'rounded px-2.5 py-0.5 font-medium transition-[color,background-color,border-color,box-shadow]',
 												destinationType === 'page'
 													? 'bg-background text-foreground shadow-xs'
 													: 'text-muted-foreground hover:text-foreground',
@@ -1243,7 +1243,7 @@ export default function WebsiteRedirectsRoute() {
 											type="button"
 											onClick={() => setDestinationType('custom')}
 											className={cn(
-												'rounded px-2.5 py-0.5 font-medium transition-all',
+												'rounded px-2.5 py-0.5 font-medium transition-[color,background-color,border-color,box-shadow]',
 												destinationType === 'custom'
 													? 'bg-background text-foreground shadow-xs'
 													: 'text-muted-foreground hover:text-foreground',
@@ -1370,7 +1370,7 @@ export default function WebsiteRedirectsRoute() {
 										type="button"
 										onClick={() => setStatusCodeInput(301)}
 										className={cn(
-											'flex flex-col items-center justify-center rounded-md px-3 py-2 text-center transition-all',
+											'flex flex-col items-center justify-center rounded-md px-3 py-2 text-center transition-[color,background-color,border-color,box-shadow]',
 											statusCodeInput === 301
 												? 'bg-background text-foreground font-medium shadow-xs'
 												: 'text-muted-foreground hover:text-foreground',
@@ -1385,7 +1385,7 @@ export default function WebsiteRedirectsRoute() {
 										type="button"
 										onClick={() => setStatusCodeInput(302)}
 										className={cn(
-											'flex flex-col items-center justify-center rounded-md px-3 py-2 text-center transition-all',
+											'flex flex-col items-center justify-center rounded-md px-3 py-2 text-center transition-[color,background-color,border-color,box-shadow]',
 											statusCodeInput === 302
 												? 'bg-background text-foreground font-medium shadow-xs'
 												: 'text-muted-foreground hover:text-foreground',

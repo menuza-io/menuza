@@ -46,6 +46,7 @@ import { DirectionProvider } from '@repo/ui'
 import { ClientHintCheck, getHints } from '@repo/ui/client-hints'
 import { EpicToaster } from '@repo/ui/sonner'
 import { TooltipProvider } from '@repo/ui/tooltip'
+import { MotionConfig } from 'motion/react'
 import { OpenImgContextProvider } from 'openimg/react'
 import {
 	data,
@@ -615,35 +616,42 @@ function AppWithProviders() {
 	)
 
 	return (
-		<HoneypotProvider {...data.honeyProps}>
-			{isKiosk ? null : (
-				<PostHogAnalytics
-					consent={data.cookieConsent}
-					userId={data.user?.id}
-					organizationId={organizationId}
-				/>
-			)}
-			<OpenImgContextProvider
-				optimizerEndpoint="/resources/images"
-				getSrc={getImgSrc}
-			>
-				<div className="flex min-h-svh flex-col">
-					{data.impersonationInfo && (
-						<ImpersonationBanner impersonationInfo={data.impersonationInfo} />
-					)}
-					<div className="flex min-h-0 flex-1 flex-col">
-						<TooltipProvider>
-							<Outlet />
-						</TooltipProvider>
+		// `reducedMotion="user"` makes every Motion transform and layout animation
+		// in the app (sidebar slide, update cards, bell, fluid hover) honor the
+		// OS "reduce motion" setting; opacity fades still play.
+		<MotionConfig reducedMotion="user">
+			<HoneypotProvider {...data.honeyProps}>
+				{isKiosk ? null : (
+					<PostHogAnalytics
+						consent={data.cookieConsent}
+						userId={data.user?.id}
+						organizationId={organizationId}
+					/>
+				)}
+				<OpenImgContextProvider
+					optimizerEndpoint="/resources/images"
+					getSrc={getImgSrc}
+				>
+					<div className="flex min-h-svh flex-col">
+						{data.impersonationInfo && (
+							<ImpersonationBanner impersonationInfo={data.impersonationInfo} />
+						)}
+						<div className="flex min-h-0 flex-1 flex-col">
+							<TooltipProvider>
+								<Outlet />
+							</TooltipProvider>
+						</div>
 					</div>
-				</div>
-				<LeavePageDialog />
-				<SaveBar />
-				<SaveBarGuard />
-				{isKiosk ? null : <EpicToaster />}
-				{isKiosk ? null : <CookieConsentBanner consent={data.cookieConsent} />}
-			</OpenImgContextProvider>
-		</HoneypotProvider>
+					<LeavePageDialog />
+					<SaveBar />
+					<SaveBarGuard />
+					{isKiosk ? null : <EpicToaster />}
+					{isKiosk ? null : (
+						<CookieConsentBanner consent={data.cookieConsent} />
+					)}
+				</OpenImgContextProvider>
+			</HoneypotProvider>
+		</MotionConfig>
 	)
 }
 

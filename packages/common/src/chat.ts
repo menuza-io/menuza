@@ -44,15 +44,25 @@ const channelId = z.string().min(1).max(64)
 const messageId = z.number().int().positive()
 const messageBody = z.string().max(CHAT_LIMITS.bodyMax)
 
+/**
+ * One pictograph: a character that takes a skin tone with its tone (👍🏽), or
+ * any pictograph with the optional emoji-presentation selector (U+FE0F) that
+ * makes ❤️ or ☺️ draw as colour emoji. A tone after a heart (❤🏽) is malformed.
+ */
+const PICTOGRAPH =
+	'(?:\\p{Emoji_Modifier_Base}\\p{Emoji_Modifier}|\\p{Extended_Pictographic}\\uFE0F?)'
+const REACTION_EMOJI = new RegExp(
+	`^(?:${PICTOGRAPH}(?:\\u200D${PICTOGRAPH})*|\\p{Regional_Indicator}|[0-9#*]\\uFE0F?\\u20E3)+$`,
+	'u',
+)
+
 /** Reactions are Unicode emoji only; free text would turn into a chat channel. */
 export function isValidReactionEmoji(value: string) {
 	return (
 		value.length > 0 &&
 		value.length <= CHAT_LIMITS.emojiMax &&
 		!/\s/u.test(value) &&
-		/^(?:\p{Extended_Pictographic}(?:\u200D\p{Extended_Pictographic})*|\p{Regional_Indicator}|[0-9#*]\uFE0F?\u20E3)+$/u.test(
-			value,
-		)
+		REACTION_EMOJI.test(value)
 	)
 }
 

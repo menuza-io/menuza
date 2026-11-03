@@ -145,7 +145,7 @@ function SegmentedControl({
 						aria-checked={selected}
 						onClick={() => onChange(option.value)}
 						className={cn(
-							'focus-visible:ring-ring min-h-7 flex-1 rounded-md px-2 text-xs font-medium transition-[background-color,color,box-shadow] duration-150 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] outline-none focus-visible:ring-2',
+							'focus-visible:ring-ring min-h-7 flex-1 rounded-md px-2 text-xs font-medium transition-[background-color,color,box-shadow] duration-160 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] outline-none focus-visible:ring-2',
 							'active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100',
 							selected
 								? 'bg-background text-foreground shadow-sm'

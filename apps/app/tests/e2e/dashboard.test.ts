@@ -39,10 +39,14 @@ const DEFAULT_HOME_BLOCKS = [
 	'Top contributors',
 ]
 
-const GREETING = /^Good (morning|afternoon|evening),/
+/** The assistant prompt at the top of Home: headline, bar and suggestions. */
+function homePrompt(page: Page) {
+	// A group, not a region: Home's blocks are the regions in <main>.
+	return page.getByRole('group', { name: 'Ask the assistant' })
+}
 
-function homeGreeting(page: Page) {
-	return page.getByRole('heading', { level: 1, name: GREETING })
+function homePromptInput(page: Page) {
+	return page.getByRole('textbox', { name: 'Ask the assistant' })
 }
 
 /** A KPI tile above the Home grid, found by its label. */
@@ -214,13 +218,12 @@ test.describe('Dashboard', () => {
 		await navigate('/:slug', { slug: org.slug })
 		await page.waitForLoadState('networkidle')
 
-		// Verify organization name is displayed
-		await expect(
-			page.getByText(`Here's what's happening in ${org.name}`),
-		).toBeVisible()
+		// Home has no greeting; it opens with the assistant prompt and the KPIs.
+		await expect(homePromptInput(page)).toBeVisible()
+		await expect(homeMetric(page, 'Total notes')).toBeVisible()
 
-		// Verify dashboard components are present - use more specific selector
-		await expect(homeGreeting(page)).toBeVisible()
+		// The page keeps one h1 for screen readers, named after the organization.
+		await expect(page.getByRole('heading', { level: 1 })).toHaveText(org.name)
 		await expect(page.getByRole('main')).toBeVisible()
 	})
 
@@ -502,7 +505,7 @@ test.describe('Dashboard', () => {
 		await expect(
 			page.getByRole('heading', { name: /get started/i }),
 		).toBeVisible()
-		await expect(homeGreeting(page)).toBeVisible()
+		await expect(homePromptInput(page)).toBeVisible()
 	})
 
 	test('Dashboard navigation works correctly', async ({
@@ -597,10 +600,10 @@ test.describe('Dashboard', () => {
 		await expect(homeBlock(page, 'Top contributors')).toBeVisible()
 		expect(await homeBlockOrder(page)).toEqual(DEFAULT_HOME_BLOCKS)
 
-		const title = await boxOf(homeGreeting(page))
+		const prompt = await boxOf(homePrompt(page))
 		const kpis = await boxOf(homeMetric(page, 'Total notes'))
 		const chart = await boxOf(homeBlock(page, 'Notes chart'))
-		expect(title.y + title.height).toBeLessThanOrEqual(kpis.y)
+		expect(prompt.y + prompt.height).toBeLessThanOrEqual(kpis.y)
 		expect(kpis.y + kpis.height).toBeLessThanOrEqual(chart.y)
 
 		const onboarding = await boxOf(homeBlock(page, 'Onboarding checklist'))

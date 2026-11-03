@@ -18,7 +18,7 @@ msgstr "إغلاق المساعد"
 
 #. js-lingui-explicit-id
 #: app/components/ai/global-ai-panel.tsx:115
-#: app/components/ai/global-ai-panel.tsx:429
+#: app/components/ai/global-ai-panel.tsx:432
 msgid "Exit full screen"
 msgstr "الخروج من ملء الشاشة"
 
@@ -28,7 +28,7 @@ msgid "Open full screen"
 msgstr "فتح بملء الشاشة"
 
 #. js-lingui-explicit-id
-#: app/components/ai/global-ai-panel.tsx:441
+#: app/components/ai/global-ai-panel.tsx:444
 msgid "AI assistant"
 msgstr "المساعد الذكي"
 
@@ -60,7 +60,7 @@ msgstr "(تم التعديل)"
 msgid "(folded)"
 msgstr "(مطويّة)"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1136
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1135
 msgid "(opens in a new tab)"
 msgstr "(يُفتح في علامة تبويب جديدة)"
 
@@ -484,7 +484,7 @@ msgstr "{basePriceLabel} يُفوتر سنوياً"
 msgid "{before}% before, {after}% after"
 msgstr "قبل {before}٪، بعد {after}٪"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1200
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1199
 msgid "{bleed} mm bleed"
 msgstr "هامش قص {bleed} مم"
 
@@ -504,7 +504,7 @@ msgstr "{changed, plural, one {# معدّلة} two {# معدّلتان} few {# �
 msgid "{choiceCount, plural, one {# choice} other {# choices}}"
 msgstr "{choiceCount, plural, zero {لا توجد خيارات} one {خيار واحد} two {خياران} few {# خيارات} many {# خياراً} other {# خيار}}"
 
-#: app/routes/mcp+/authorize.tsx:339
+#: app/routes/mcp+/authorize.tsx:342
 msgid "{clientName} is requesting access to your organization data"
 msgstr "{clientName} يطلب الوصول إلى بيانات منظمتك"
 
@@ -580,9 +580,9 @@ msgstr "تم استيراد {created}، و{existing} موجودون في فري�
 msgid "{customized} changed"
 msgstr "تم تغيير {customized}"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:177
-msgid "{date} · Here's what's happening in {organizationName}"
-msgstr "{date} · إليك ما يحدث في {organizationName}"
+#: app/routes/_app+/$orgSlug_+/index.tsx:178
+#~ msgid "{date} · Here's what's happening in {organizationName}"
+#~ msgstr "{date} · إليك ما يحدث في {organizationName}"
 
 #: app/components/my-schedule/requests-view.tsx:97
 msgid "{day}: available {hours}"
@@ -617,7 +617,7 @@ msgstr "{dayName}: عدد المجدولين {people}، والورديات ال�
 msgid "{days} days"
 msgstr "{days} يومًا"
 
-#: app/components/ui/notification-bell.tsx:70
+#: app/components/ui/notification-bell.tsx:71
 msgid "{days}d ago"
 msgstr "منذ {days} يوم"
 
@@ -715,7 +715,7 @@ msgstr "{hours} س"
 msgid "{hours}h {rest}m"
 msgstr "{hours} س {rest} د"
 
-#: app/components/ui/notification-bell.tsx:66
+#: app/components/ui/notification-bell.tsx:67
 msgid "{hours}h ago"
 msgstr "منذ {hours} ساعة"
 
@@ -755,7 +755,7 @@ msgstr "{late, plural, one {متأخرة بيوم} two {متأخرة بيومي�
 msgid "{length, plural, =0 {No digits entered} one {# digit entered} other {# digits entered}}"
 msgstr "{length, plural, =0 {لم يتم إدخال أي رقم} one {تم إدخال رقم واحد} two {تم إدخال رقمين} few {تم إدخال # أرقام} many {تم إدخال # رقمًا} other {تم إدخال # رقم}}"
 
-#: app/components/app-sidebar.tsx:326
+#: app/components/app-sidebar.tsx:327
 msgid "{mailboxUnreadLabelCount} unread"
 msgstr "عدد غير المقروء: {mailboxUnreadLabelCount}"
 
@@ -773,7 +773,7 @@ msgstr "{minutes} دقيقة"
 msgid "{minutes}m {remainingSec}s"
 msgstr "{minutes} د {remainingSec} ث"
 
-#: app/components/ui/notification-bell.tsx:62
+#: app/components/ui/notification-bell.tsx:63
 msgid "{minutes}m ago"
 msgstr "منذ {minutes} دقيقة"
 
@@ -930,7 +930,7 @@ msgstr "{pairedName} جاهز. يمكن للموظفين تسجيل الحضور
 msgid "{people, plural, one {# person} other {# people}}"
 msgstr "{people, plural, one {شخص واحد} two {شخصان} few {# أشخاص} many {# شخصًا} other {# شخصًا}}"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:181
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:184
 msgid "{platformName} connected"
 msgstr "تم ربط {platformName}"
 
@@ -1024,7 +1024,7 @@ msgstr "{runsCount} تشغيل"
 msgid "{seconds, plural, one {Closing in # second} other {Closing in # seconds}}"
 msgstr "{seconds, plural, one {يُغلق خلال ثانية} two {يُغلق خلال ثانيتين} few {يُغلق خلال # ثوانٍ} many {يُغلق خلال # ثانية} other {يُغلق خلال # ثانية}}"
 
-#: app/components/ui/notification-bell.tsx:58
+#: app/components/ui/notification-bell.tsx:59
 msgid "{seconds}s ago"
 msgstr "منذ {seconds} ثانية"
 
@@ -1092,7 +1092,7 @@ msgstr "{unit}"
 msgid "{unread} unread"
 msgstr "{unread} غير مقروءة"
 
-#: app/components/social/post-composer.tsx:267
+#: app/components/social/post-composer.tsx:282
 msgid "{used} of {limit} characters"
 msgstr "{used} من {limit} حرفًا"
 
@@ -1454,7 +1454,7 @@ msgstr "رسالة مهذبة تفيد بأنك لن تتابع مع الطلب 
 msgid "A position with that name already exists."
 msgstr "يوجد منصب بهذا الاسم بالفعل."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:449
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:450
 msgid "A print can have at most {max} pieces. Choose fewer, then approve again."
 msgstr "يمكن أن تحتوي المطبوعة على {max} قطعة كحد أقصى. اختر عددًا أقل، ثم وافق مرة أخرى."
 
@@ -1593,11 +1593,11 @@ msgstr "إعدادات الحساب"
 msgid "Account Suspended"
 msgstr "الحساب معلق"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:118
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:137
 msgid "Accounts"
 msgstr "الحسابات"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:162
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:165
 msgid "Accounts connected here are shared with everyone in the organization who can manage marketing."
 msgstr "الحسابات المرتبطة هنا مشتركة مع كل من في المؤسسة ممن يمكنهم إدارة التسويق."
 
@@ -1613,15 +1613,15 @@ msgstr "acme"
 msgid "Acme Inc."
 msgstr "شركة Acme"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:212
-#: app/routes/_app+/$orgSlug_+/index.tsx:236
+#: app/routes/_app+/$orgSlug_+/index.tsx:193
+#: app/routes/_app+/$orgSlug_+/index.tsx:217
 msgid "Across your organization"
 msgstr "على مستوى مؤسستك"
 
 #: app/components/command-menu.tsx:299
 #: app/components/phone-agent/flow-editor/node-palette.tsx:106
 #: app/components/roles/tenant-role-access-manager.tsx:1118
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:966
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:976
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:640
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:213
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:623
@@ -1653,8 +1653,8 @@ msgstr "نشط"
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:60
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:259
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:138
-#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:312
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:996
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:339
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:1006
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:983
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:248
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:268
@@ -1952,7 +1952,7 @@ msgstr "إضافة حقل"
 msgid "Add hours across all workplaces"
 msgstr "احتساب الساعات في جميع أماكن العمل"
 
-#: app/components/social/post-composer.tsx:316
+#: app/components/social/post-composer.tsx:331
 msgid "Add image"
 msgstr "إضافة صورة"
 
@@ -1971,7 +1971,7 @@ msgstr "إضافة رابط"
 msgid "Add meal break"
 msgstr "إضافة استراحة وجبة"
 
-#: app/components/app-sidebar.tsx:644
+#: app/components/app-sidebar.tsx:643
 msgid "Add members"
 msgstr "إضافة أعضاء"
 
@@ -1991,7 +1991,7 @@ msgstr "أضف الاسم والبريد الإلكتروني والخيارات
 msgid "Add new page"
 msgstr "إضافة صفحة جديدة"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:454
+#: ../../packages/ai/src/components/ai-chat.tsx:483
 msgid "Add next steps"
 msgstr "إضافة الخطوات التالية"
 
@@ -2017,7 +2017,7 @@ msgstr "أضف واحدًا في إعدادات نشاطك التجاري أول
 msgid "Add option"
 msgstr "إضافة خيار"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:278
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:298
 msgid "Add or refresh accounts"
 msgstr "إضافة الحسابات أو تحديثها"
 
@@ -2046,7 +2046,7 @@ msgstr "إضافة صورة أو فيديو"
 msgid "Add position"
 msgstr "إضافة منصب"
 
-#: app/components/staff/labor/labor-settings.tsx:177
+#: app/components/staff/labor/labor-settings.tsx:180
 #: app/components/staff/labor/tip-settings-dialog.tsx:238
 msgid "Add positions on the Team page first."
 msgstr "أضف الوظائف أولًا من صفحة الفريق."
@@ -2123,7 +2123,7 @@ msgstr "إضافة مهمة"
 msgid "Add the end time before adding breaks."
 msgstr "أضف وقت الانتهاء قبل إضافة الاستراحات."
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:802
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:812
 msgid "Add the following configuration to the file:"
 msgstr "أضف التكوين التالي إلى الملف:"
 
@@ -2153,7 +2153,7 @@ msgstr "إضافتهم إلى الجدول"
 msgid "Add these shifts"
 msgstr "إضافة هذه الورديات"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:835
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:845
 msgid "Add this configuration to your .kiro/settings/mcp.json:"
 msgstr "أضف هذا التكوين إلى ملف .kiro/settings/mcp.json:"
 
@@ -2213,7 +2213,7 @@ msgstr "تُضاف عند الدفع"
 msgid "Added by a manager"
 msgstr "أضافها مدير"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:166
+#: ../../packages/ai/src/components/ai-chat.tsx:181
 msgid "Added section"
 msgstr "تمت إضافة القسم"
 
@@ -2225,7 +2225,7 @@ msgstr "تُضاف للموظفين الجدد"
 msgid "Added to the workplace."
 msgstr "تمت الإضافة إلى مكان العمل."
 
-#: ../../packages/ai/src/components/ai-chat.tsx:165
+#: ../../packages/ai/src/components/ai-chat.tsx:180
 msgid "Adding section"
 msgstr "إضافة قسم"
 
@@ -2257,7 +2257,7 @@ msgstr "مستخدمون إضافيون: ${monthlyPrice}/مستخدم/شهر"
 msgid "Address"
 msgstr "العنوان"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:818
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:817
 msgid "Address from"
 msgstr "العنوان من"
 
@@ -2294,8 +2294,8 @@ msgstr "إعدادات متقدمة"
 msgid "Affects pay"
 msgstr "يؤثر على الأجور"
 
-#: app/components/staff/labor-core-rules.tsx:407
-#: app/components/staff/labor-core-rules.tsx:411
+#: app/components/staff/labor-core-rules.tsx:404
+#: app/components/staff/labor-core-rules.tsx:408
 #: app/components/staff/labor-policy-editor.tsx:1288
 #: app/components/staff/labor-policy-editor.tsx:1313
 msgid "After"
@@ -2363,7 +2363,7 @@ msgstr "الوكيل متوقف"
 msgid "AI assistant"
 msgstr "المساعد الذكي"
 
-#: app/components/ai/global-ai-panel.tsx:341
+#: app/components/ai/global-ai-panel.tsx:342
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:690
 msgid "AI Assistant"
 msgstr "مساعد الذكاء الاصطناعي"
@@ -2433,7 +2433,7 @@ msgstr "المحاذاة"
 #: app/components/staff/timesheets/review-queue.tsx:166
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:258
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:66
-#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:207
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:231
 msgid "All"
 msgstr "الكل"
 
@@ -2477,8 +2477,8 @@ msgstr "كل الوظائف"
 msgid "All messages in this channel are permanently deleted for everyone. This can't be undone."
 msgstr "ستُحذف جميع الرسائل في هذه القناة نهائياً للجميع. لا يمكن التراجع عن هذا الإجراء."
 
-#: app/components/ui/notification-bell.tsx:389
-#: app/components/ui/notification-bell.tsx:490
+#: app/components/ui/notification-bell.tsx:386
+#: app/components/ui/notification-bell.tsx:486
 msgid "All Notifications"
 msgstr "جميع الإشعارات"
 
@@ -2499,8 +2499,8 @@ msgstr "يمكن لجميع أعضاء المنظمة عرض هذه الملاح
 msgid "All positions"
 msgstr "كل المناصب"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:417
-#: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:206
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:418
+#: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:211
 msgid "All prints"
 msgstr "كل المطبوعات"
 
@@ -2541,7 +2541,7 @@ msgstr "جميع أماكن العمل (افتراضي)"
 msgid "Allocation"
 msgstr "التخصيص"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:199
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:201
 msgid "Allow at least one Page you manage when Facebook asks."
 msgstr "اسمح بصفحة واحدة على الأقل من الصفحات التي تديرها عندما يطلب فيسبوك ذلك."
 
@@ -2573,7 +2573,7 @@ msgstr "موجود بالفعل."
 msgid "Already have an account?"
 msgstr "هل لديك حساب بالفعل؟"
 
-#: app/components/ui/notification-bell.tsx:213
+#: app/components/ui/notification-bell.tsx:214
 msgid "Already read"
 msgstr "تمت قراءتها بالفعل"
 
@@ -2603,7 +2603,7 @@ msgstr "المبلغ"
 msgid "Amounts can have at most two decimal places."
 msgstr "يمكن أن تحتوي المبالغ على خانتين عشريتين كحد أقصى."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:151
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:175
 msgid "An account needs to be reconnected"
 msgstr "يجب إعادة ربط أحد الحسابات"
 
@@ -2639,11 +2639,11 @@ msgstr "تم تحديث مقابلة"
 msgid "An organization is a workspace where teams collect, organize, and work together."
 msgstr "المنظمة هي مساحة عمل حيث تجمع الفرق وتنظم وتعمل معًا."
 
-#: app/routes/mcp+/authorize.tsx:343
+#: app/routes/mcp+/authorize.tsx:346
 msgid "An unregistered application is requesting access to your organization data"
 msgstr "يطلب تطبيق غير مسجّل الوصول إلى بيانات مؤسستك"
 
-#: app/components/app-sidebar.tsx:444
+#: app/components/app-sidebar.tsx:443
 #: app/components/workspace-breadcrumb.tsx:58
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:38
 msgid "Analytics"
@@ -2657,7 +2657,7 @@ msgstr "التحليلات والتتبع"
 msgid "Announcement actions"
 msgstr "إجراءات الإعلان"
 
-#: app/components/app-sidebar.tsx:460
+#: app/components/app-sidebar.tsx:459
 #: app/components/command-menu.tsx:149
 #: app/components/workspace-breadcrumb.tsx:59
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:49
@@ -2748,19 +2748,19 @@ msgstr "أي شيء آخر تحتاج إلى إنجازه، مثل تسليم ا
 msgid "Apartment, suite (optional)"
 msgstr "الشقة أو الجناح (اختياري)"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:556
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:564
 msgid "API Key"
 msgstr "مفتاح API"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:533
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:541
 msgid "API Key Created"
 msgstr "تم إنشاء مفتاح API"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:628
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:638
 msgid "API Keys"
 msgstr "مفاتيح API"
 
-#: app/components/app-sidebar.tsx:671
+#: app/components/app-sidebar.tsx:670
 msgid "App header"
 msgstr "ترويسة التطبيق"
 
@@ -2839,7 +2839,7 @@ msgstr "تاريخ التقديم"
 msgid "Apply automatically"
 msgstr "تطبيق تلقائي"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2018
+#: app/routes/_app+/$orgSlug_+/media.tsx:1979
 msgid "Applying…"
 msgstr "جارٍ التطبيق…"
 
@@ -2870,16 +2870,16 @@ msgstr "اعتمد مطبوعة، ثم اطلب نسخًا تُشحن إلى أ�
 msgid "Approve each print before ordering it."
 msgstr "اعتمد كل مطبوعة قبل طلبها."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:879
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1237
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:878
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1236
 msgid "Approve proof"
 msgstr "اعتماد البروفة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1073
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1072
 msgid "Approve the proof to download it."
 msgstr "اعتمد البروفة لتنزيلها."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:984
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:983
 msgid "Approve the proof to order prints."
 msgstr "اعتمد البروفة لطلب المطبوعات."
 
@@ -2897,7 +2897,7 @@ msgstr "اعتماد بطاقات الدوام وقفلها وفتحها. يشم
 #: app/components/staff/timesheets/card-history.tsx:51
 #: app/components/staff/timesheets/issue-copy.ts:57
 #: app/routes/_app+/$orgSlug_+/marketing+/print._index.tsx:140
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:902
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:901
 msgid "Approved"
 msgstr "معتمدة"
 
@@ -2916,16 +2916,16 @@ msgstr "الموافقة على التبديل أو التغطية تعدّل ا
 msgid "Arabic"
 msgstr "العربية"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1032
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1031
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:254
 msgid "Archive"
 msgstr "أرشفة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1008
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1007
 msgid "Archive this print"
 msgstr "أرشفة هذه المطبوعة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1015
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1014
 msgid "Archive this print?"
 msgstr "أرشفة هذه المطبوعة؟"
 
@@ -2959,7 +2959,7 @@ msgstr "هل أنت متأكد أنك تريد حذف هذا التعليق؟"
 msgid "Are you sure you want to remove this media asset?"
 msgstr "هل أنت متأكد أنك تريد إزالة عنصر الوسائط هذا؟"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:1060
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:1070
 msgid "Are you sure you want to revoke access for {clientName}? This action cannot be undone."
 msgstr "هل أنت متأكد أنك تريد إلغاء الوصول لـ {clientName}؟ لا يمكن التراجع عن هذا الإجراء."
 
@@ -2984,11 +2984,11 @@ msgstr "كما سُجّلت"
 msgid "Ask a teammate to cover it"
 msgstr "اطلب من زميل تغطيتها"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:727
+#: ../../packages/ai/src/components/ai-chat.tsx:824
 msgid "Ask about this note, or tell me where you'd like to go."
 msgstr "اسأل عن هذه الملاحظة أو أخبرني أين ترغب في الذهاب."
 
-#: app/components/ai/global-ai-panel.tsx:532
+#: app/components/ai/global-ai-panel.tsx:535
 msgid "Ask AI"
 msgstr "اسأل الذكاء الاصطناعي"
 
@@ -2996,7 +2996,7 @@ msgstr "اسأل الذكاء الاصطناعي"
 msgid "Ask an administrator to add training rules."
 msgstr "اطلب من أحد المسؤولين إضافة قواعد التدريب."
 
-#: ../../packages/ai/src/components/ai-chat.tsx:729
+#: ../../packages/ai/src/components/ai-chat.tsx:826
 msgid "Ask anything…"
 msgstr "اسأل أي شيء…"
 
@@ -3013,13 +3013,18 @@ msgstr "اطلب تغييرًا"
 msgid "Ask for a rating"
 msgstr "طلب تقييم"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:274
+#: ../../packages/ai/src/components/ai-chat.tsx:289
 msgid "Ask me to try again or choose a different destination."
 msgstr "اطلب مني المحاولة مرة أخرى أو اختر وجهة مختلفة."
 
 #: app/components/staff/timesheets/card-sheet.tsx:378
 msgid "Ask someone who can approve time cards to reopen it."
 msgstr "اطلب ممن يستطيع الموافقة على بطاقات الدوام إعادة فتحها."
+
+#: app/components/home-prompt.tsx:257
+#: app/components/home-prompt.tsx:356
+msgid "Ask the assistant"
+msgstr "اسأل المساعد"
 
 #: app/utils/my-schedule/my-schedule-messages.ts:71
 msgid "Ask your manager if you think this is a mistake."
@@ -3041,7 +3046,7 @@ msgstr "الملف"
 msgid "Assign"
 msgstr "تعيين"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:465
+#: ../../packages/ai/src/components/ai-chat.tsx:494
 msgid "Assign responsibilities"
 msgstr "تعيين المسؤوليات"
 
@@ -3052,6 +3057,13 @@ msgstr "تعليمات المساعد"
 #: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:91
 #~ msgid "Assistant paused"
 #~ msgstr "المساعد متوقف مؤقتًا"
+
+#: ../../packages/ai/src/components/ai-chat.tsx:1099
+#: ../../packages/ai/src/components/ai-chat.tsx:1100
+#: app/components/home-prompt.tsx:345
+#: app/components/home-prompt.tsx:346
+msgid "Attach an image"
+msgstr "إرفاق صورة"
 
 #: app/components/social/social-labels.ts:93
 msgid "Attach at most {SOCIAL_MAX_MEDIA} images."
@@ -3079,19 +3091,19 @@ msgstr "مصادقة هذه العملية"
 msgid "Authentication Code"
 msgstr "رمز المصادقة"
 
-#: app/routes/mcp+/authorize.tsx:545
+#: app/routes/mcp+/authorize.tsx:548
 msgid "Authorize"
 msgstr "الموافقة"
 
-#: app/routes/mcp+/authorize.tsx:335
+#: app/routes/mcp+/authorize.tsx:338
 msgid "Authorize MCP Client"
 msgstr "الموافقة على عميل MCP"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:979
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:989
 msgid "Authorized {createdAt}"
 msgstr "تمت الموافقة {createdAt}"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:938
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:948
 msgid "Authorized Clients"
 msgstr "العملاء المصرح لهم"
 
@@ -3136,7 +3148,7 @@ msgstr "تم نشر الأتمتة وتفعيلها!"
 msgid "Automation saved successfully"
 msgstr "تم حفظ الأتمتة بنجاح"
 
-#: app/components/app-sidebar.tsx:349
+#: app/components/app-sidebar.tsx:350
 #: app/components/command-menu.tsx:105
 #: app/components/workspace-breadcrumb.tsx:44
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:110
@@ -3186,11 +3198,11 @@ msgstr "متاح خلال…"
 msgid "Available then"
 msgstr "متاح في ذلك الوقت"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:1278
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:1288
 msgid "Available Tools"
 msgstr "الأدوات المتاحة"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:215
+#: app/routes/_app+/$orgSlug_+/index.tsx:196
 msgid "Avg per day"
 msgstr "المتوسط اليومي"
 
@@ -3207,7 +3219,7 @@ msgstr "أبيض وأسود"
 #: app/components/kiosk/kiosk-screens.tsx:495
 #: app/components/kiosk/kiosk-screens.tsx:571
 #: app/components/media-library/photo-studio-dialog.tsx:990
-#: app/components/website/create-page-dialog.tsx:198
+#: app/components/website/create-page-dialog.tsx:197
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.terminate.tsx:205
 #: app/routes/_app+/$orgSlug_+/staff+/team.bulk.tsx:192
 #: app/routes/_app+/$orgSlug_+/staff+/team.import.tsx:218
@@ -3245,7 +3257,7 @@ msgstr "العودة إلى المكالمات"
 msgid "Back to channels"
 msgstr "العودة إلى القنوات"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1978
+#: app/routes/_app+/$orgSlug_+/media.tsx:1939
 msgid "Back to details"
 msgstr "العودة إلى التفاصيل"
 
@@ -3305,8 +3317,8 @@ msgstr "تم تنزيل النسخة الاحتياطية."
 msgid "Base it on"
 msgstr "اعتمد على"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:541
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1165
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:542
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1164
 msgid "Basics"
 msgstr "الأساسيات"
 
@@ -3330,7 +3342,7 @@ msgstr "الوصول التجريبي"
 msgid "Billed monthly"
 msgstr "الفوترة الشهرية"
 
-#: app/components/app-sidebar.tsx:534
+#: app/components/app-sidebar.tsx:533
 #: app/components/command-menu.tsx:366
 #: app/components/workspace-breadcrumb.tsx:67
 msgid "Billing"
@@ -3389,7 +3401,7 @@ msgstr "ألوان جريئة"
 msgid "Branch on whether you're open right now."
 msgstr "التفرع حسب ما إذا كنت مفتوحًا الآن."
 
-#: app/components/app-sidebar.tsx:451
+#: app/components/app-sidebar.tsx:450
 #: app/components/website/branding-panel.tsx:244
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5133
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5134
@@ -3416,7 +3428,7 @@ msgstr "الاستراحة {number}"
 msgid "Break deducted"
 msgstr "استراحة مخصومة"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:466
+#: ../../packages/ai/src/components/ai-chat.tsx:495
 msgid "Break down complex tasks"
 msgstr "تقسيم المهام المعقدة"
 
@@ -3470,12 +3482,11 @@ msgstr "الاستراحات: من {before} إلى {after}"
 msgid "Bright & airy"
 msgstr "مشرق وهادئ"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1877
-#: app/routes/_app+/$orgSlug_+/media.tsx:1892
+#: app/routes/_app+/$orgSlug_+/media.tsx:1876
 msgid "Brightness"
 msgstr "السطوع"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:199
+#: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:204
 msgid "Bring in a design you made in Canva. It prints exactly as designed, as a poster, flyer or sign."
 msgstr "استورد تصميمًا أنشأته في Canva. يُطبع كما صُمّم تمامًا، ملصقًا أو نشرة أو لافتة."
 
@@ -3496,7 +3507,7 @@ msgstr "لم يتم العثور على البث"
 msgid "Broadcast preview"
 msgstr "معاينة البث"
 
-#: app/components/app-sidebar.tsx:342
+#: app/components/app-sidebar.tsx:343
 #: app/components/command-menu.tsx:104
 #: app/components/workspace-breadcrumb.tsx:43
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:100
@@ -3532,6 +3543,10 @@ msgstr "البناء"
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:334
 msgid "Build a branded HTML email with blocks."
 msgstr "أنشئ بريدًا HTML بعلامتك التجارية باستخدام الكتل."
+
+#: app/components/home-prompt.tsx:32
+msgid "Build a landing page"
+msgstr "أنشئ صفحة هبوط"
 
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:456
 msgid "Builder"
@@ -3649,9 +3664,9 @@ msgstr "حسب نسبة كل وظيفة"
 msgid "by the time clock"
 msgstr "بواسطة ساعة الدوام"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:223
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:247
 #: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:237
-#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:170
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:173
 msgid "Calendar"
 msgstr "التقويم"
 
@@ -3711,7 +3726,7 @@ msgstr "تسجيل المكالمات"
 msgid "Call time limit"
 msgstr "الحد الزمني للمكالمة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:681
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:680
 msgid "Call to action"
 msgstr "دعوة لاتخاذ إجراء"
 
@@ -3759,7 +3774,7 @@ msgstr "يسمع المتصلون كل خطوة بالترتيب. تنتظر ق�
 msgid "Calling…"
 msgstr "جارٍ الاتصال…"
 
-#: app/components/app-sidebar.tsx:376
+#: app/components/app-sidebar.tsx:375
 #: app/components/command-menu.tsx:122
 #: app/components/workspace-breadcrumb.tsx:46
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:47
@@ -3814,7 +3829,7 @@ msgstr "يمكن التعديل"
 msgid "Can edit teammate notes"
 msgstr "يمكنه تعديل ملاحظات الزملاء"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.new.tsx:135
+#: app/routes/_app+/$orgSlug_+/marketing+/print.new.tsx:137
 msgid "Can ship"
 msgstr "قابل للشحن"
 
@@ -3834,7 +3849,7 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/components/dashboard/dashboard-name-dialog.tsx:149
 #: app/components/dashboard/dashboard-options-menu.tsx:78
 #: app/components/form-actions.tsx:27
-#: app/components/hiring/decline-dialog.tsx:167
+#: app/components/hiring/decline-dialog.tsx:164
 #: app/components/hiring/hire-dialog.tsx:311
 #: app/components/hiring/interview-dialog.tsx:279
 #: app/components/hiring/job-editor.tsx:910
@@ -3867,7 +3882,7 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/components/settings/password-form.tsx:188
 #: app/components/settings/two-factor-form.tsx:123
 #: app/components/settings/two-factor-form.tsx:261
-#: app/components/social/post-composer.tsx:425
+#: app/components/social/post-composer.tsx:440
 #: app/components/staff/access-tab.tsx:259
 #: app/components/staff/access-tab.tsx:396
 #: app/components/staff/kiosk-manager.tsx:371
@@ -3901,8 +3916,8 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/components/website/translate-provider.tsx:258
 #: app/routes/_app+/$orgSlug_+/customers.tsx:817
 #: app/routes/_app+/$orgSlug_+/marketing+/print.new.tsx:213
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:470
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:1093
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:478
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:1103
 #: app/routes/_app+/$orgSlug_+/media.tsx:1665
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:866
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:922
@@ -3986,7 +4001,7 @@ msgstr "تعذّر تشغيل هذا التقرير"
 msgid "Cannot show this report"
 msgstr "تعذّر عرض هذا التقرير"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:954
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:953
 msgid "Canva"
 msgstr "Canva"
 
@@ -3994,7 +4009,7 @@ msgstr "Canva"
 msgid "Canva asked us to slow down. Try again in a minute."
 msgstr "طلبت Canva تقليل عدد الطلبات. حاول مرة أخرى بعد دقيقة."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:503
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:504
 msgid "Canva could not do that"
 msgstr "تعذّر على Canva تنفيذ ذلك"
 
@@ -4002,15 +4017,15 @@ msgstr "تعذّر على Canva تنفيذ ذلك"
 msgid "Canva did not answer. Try again in a minute."
 msgstr "لم تستجب Canva. حاول مرة أخرى بعد دقيقة."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:224
+#: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:229
 msgid "Canva did not finish the connection. Try again."
 msgstr "لم تُكمل Canva الربط. حاول مرة أخرى."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:213
+#: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:218
 msgid "Canva is connected"
 msgstr "Canva مرتبطة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:220
+#: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:225
 msgid "Canva was not connected"
 msgstr "لم يتم ربط Canva"
 
@@ -4244,7 +4259,7 @@ msgstr "المعاملات مفعلة"
 msgid "Chat"
 msgstr "الدردشة"
 
-#: app/components/app-sidebar.tsx:503
+#: app/components/app-sidebar.tsx:502
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:79
 msgid "Chat channels"
 msgstr "قنوات الدردشة"
@@ -4281,7 +4296,7 @@ msgstr "راجع الحقول المحددة وحاول مرة أخرى."
 msgid "Check the highlighted fields."
 msgstr "تحقق من الحقول المميزة."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:454
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:455
 msgid "Check the QR code: use a page on your own website, like /contact."
 msgstr "تحقق من رمز QR: استخدم صفحة على موقعك، مثل ‎/contact."
 
@@ -4293,7 +4308,7 @@ msgstr "راجع القواعد"
 msgid "Check the time cards before the limit is reached."
 msgstr "راجع بطاقات الوقت قبل بلوغ الحد."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:456
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:457
 msgid "Check the words and choices, then save again."
 msgstr "تحقق من النصوص والخيارات، ثم احفظ مجددًا."
 
@@ -4403,7 +4418,7 @@ msgstr "اختر تاريخًا: {label}"
 msgid "Choose a date."
 msgstr "اختر تاريخًا."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:234
+#: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:239
 msgid "Choose a design, what it prints as and a name."
 msgstr "اختر تصميمًا ونوع المطبوعة واسمًا."
 
@@ -4471,7 +4486,7 @@ msgstr "اختر زميلًا"
 msgid "Choose a teammate to start a conversation."
 msgstr "اختر زميلًا في الفريق لبدء محادثة."
 
-#: app/components/website/create-page-dialog.tsx:99
+#: app/components/website/create-page-dialog.tsx:104
 msgid "Choose a template"
 msgstr "اختر قالباً"
 
@@ -4500,7 +4515,7 @@ msgstr "اختر مكان العمل"
 msgid "Choose a workplace."
 msgstr "اختر مكان العمل."
 
-#: app/components/social/post-composer.tsx:354
+#: app/components/social/post-composer.tsx:369
 msgid "Choose an account to preview"
 msgstr "اختر حسابًا للمعاينة"
 
@@ -4593,7 +4608,7 @@ msgstr "اختر صلاحية العرض أو التعديل."
 msgid "Choose voice"
 msgstr "اختيار الصوت"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:435
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:436
 msgid "Choose what the QR codes are for."
 msgstr "اختر الغرض من رموز QR."
 
@@ -4661,7 +4676,7 @@ msgstr "المدينة"
 msgid "Classic"
 msgstr "كلاسيكي"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:788
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:798
 msgid "Claude Desktop Setup"
 msgstr "إعداد Claude Desktop"
 
@@ -4707,11 +4722,11 @@ msgstr "مسح الساعات"
 msgid "Clear search"
 msgstr "مسح البحث"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:874
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:884
 msgid "Click \"Add Server\" and paste this configuration:"
 msgstr "انقر على \"إضافة خادم\" والصق هذا التكوين:"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:797
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:807
 msgid "Click \"Edit Config\" to open claude_desktop_config.json"
 msgstr "انقر على \"تعديل التكوين\" لفتح claude_desktop_config.json"
 
@@ -4723,7 +4738,7 @@ msgstr "انقر على \"تحقق من عضوية Discord\" بعد الانضم
 msgid "Click rate"
 msgstr "معدل النقر"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:885
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:895
 msgid "Click Save and restart Cursor"
 msgstr "انقر حفظ وأعد تشغيل Cursor"
 
@@ -4736,7 +4751,7 @@ msgstr "انقر على اليوم الأول ثم على اليوم الأخي�
 msgid "Clicked {0}"
 msgstr "نُقِر {0}"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:957
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:967
 msgid "Client"
 msgstr "العميل"
 
@@ -5040,8 +5055,8 @@ msgstr "إكمال الإعداد"
 msgid "Complete the following steps."
 msgstr "أكمل الخطوات التالية."
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:849
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:888
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:859
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:898
 msgid "Complete the OAuth flow when prompted"
 msgstr "أكمل عملية OAuth عند المطالبة"
 
@@ -5145,15 +5160,15 @@ msgstr "يستغرق التأكيد وقتًا أطول من المعتاد. ح�
 msgid "Connect"
 msgstr "اتصال"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:279
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:299
 msgid "Connect {platformName}"
 msgstr "ربط {platformName}"
 
-#: app/components/social/post-composer.tsx:193
+#: app/components/social/post-composer.tsx:208
 msgid "Connect a Facebook Page or an Instagram account to publish. You can still save a draft."
 msgstr "اربط صفحة فيسبوك أو حساب إنستغرام للنشر. لا يزال بإمكانك حفظ مسودة."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:137
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:158
 msgid "Connect a Facebook Page or an Instagram professional account to start publishing."
 msgstr "اربط صفحة فيسبوك أو حساب إنستغرام احترافيًا لبدء النشر."
 
@@ -5161,12 +5176,12 @@ msgstr "اربط صفحة فيسبوك أو حساب إنستغرام احترا
 msgid "Connect a phone number"
 msgstr "ربط رقم هاتف"
 
-#: app/components/social/post-composer.tsx:200
-#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:144
+#: app/components/social/post-composer.tsx:220
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:168
 msgid "Connect accounts"
 msgstr "ربط الحسابات"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:260
+#: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:265
 msgid "Connect Canva"
 msgstr "ربط Canva"
 
@@ -5190,19 +5205,19 @@ msgstr "اربط منصات التحليلات التي تستخدمها على 
 msgid "Connect the caller to a person, such as a manager."
 msgstr "تحويل المتصل إلى شخص، مثل المدير."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:133
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:155
 msgid "Connect your accounts"
 msgstr "اربط حساباتك"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:1360
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:1370
 msgid "Connect your AI assistants to {organizationName} data using the Model Context Protocol"
 msgstr "ربط مساعدي الذكاء الاصطناعي ببيانات {organizationName} باستخدام بروتوكول سياق النموذج"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:246
+#: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:251
 msgid "Connect your Canva account"
 msgstr "اربط حسابك في Canva"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:755
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:765
 msgid "Connect your favorite AI client to access your organization's data securely. Follow the instructions for your preferred client below."
 msgstr "اربط عميل الذكاء الاصطناعي المفضل لديك للوصول إلى بيانات منظمتك بشكل آمن. اتبع التعليمات لعميلك المفضل أدناه."
 
@@ -5210,7 +5225,7 @@ msgstr "اربط عميل الذكاء الاصطناعي المفضل لديك 
 msgid "Connected"
 msgstr "متصل"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:304
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:329
 msgid "Connected {date}"
 msgstr "تم الربط في {date}"
 
@@ -5238,19 +5253,19 @@ msgstr "النموذج المرتبط"
 msgid "Connected on {createdAtDate}"
 msgstr "متصل في {createdAtDate}"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:271
+#: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:276
 msgid "Connected to Canva as {who}."
 msgstr "تم الربط بـ Canva باسم {who}."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:273
+#: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:278
 msgid "Connected to Canva."
 msgstr "تم الربط بـ Canva."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:224
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:229
 msgid "Connecting accounts is not available yet"
 msgstr "ربط الحسابات غير متاح بعد"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:237
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:247
 msgid "Connecting adds a sample account and nothing is really posted. A post containing #fail is refused, to try the retry path."
 msgstr "يؤدي الربط إلى إضافة حساب تجريبي ولا يُنشر أي شيء فعليًا. يتم رفض أي منشور يحتوي على #fail لتجربة مسار إعادة المحاولة."
 
@@ -5345,12 +5360,11 @@ msgstr "عقد"
 msgid "Contractor"
 msgstr "متعاقد"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1899
-#: app/routes/_app+/$orgSlug_+/media.tsx:1914
+#: app/routes/_app+/$orgSlug_+/media.tsx:1888
 msgid "Contrast"
 msgstr "التباين"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:234
+#: app/routes/_app+/$orgSlug_+/index.tsx:215
 msgid "Contributors"
 msgstr "المساهمون"
 
@@ -5387,8 +5401,8 @@ msgstr "تصل الورديات المنسوخة كمسودات. لا يصل ش�
 msgid "Copied to a new draft."
 msgstr "تم النسخ إلى مسودة جديدة."
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:314
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:572
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:322
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:582
 #: app/routes/_auth+/waitlist.tsx:330
 msgid "Copied!"
 msgstr "تم النسخ!"
@@ -5400,8 +5414,8 @@ msgstr "عدد النسخ من كل مطبوعة. تُطبع كل بطاقة ف�
 #: app/components/organization-invitations.tsx:224
 #: app/components/phone-agent/agent-details.tsx:239
 #: app/components/staff/schedule/shift-editor-sheet.tsx:693
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:319
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:572
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:327
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:582
 #: app/routes/_auth+/waitlist.tsx:332
 msgid "Copy"
 msgstr "نسخ"
@@ -5426,7 +5440,7 @@ msgstr "نسخ أسبوع…"
 msgid "Copy All"
 msgstr "نسخ الكل"
 
-#: ../../packages/ai/src/components/ai-elements/code-block.tsx:147
+#: ../../packages/ai/src/components/ai-elements/code-block.tsx:145
 msgid "Copy code"
 msgstr "نسخ الكود"
 
@@ -5601,7 +5615,7 @@ msgstr "تعذّر تحميل الأصوات"
 msgid "Couldn't mute your microphone. Try again."
 msgstr "تعذّر كتم الميكروفون. حاول مرة أخرى."
 
-#: ../../packages/ai/src/components/ai-chat.tsx:272
+#: ../../packages/ai/src/components/ai-chat.tsx:287
 msgid "Couldn't open {routeTitle}"
 msgstr "تعذر فتح {routeTitle}"
 
@@ -5649,7 +5663,7 @@ msgstr "التغطية مقابل الطلبات المعتادة"
 msgid "Coverage compares the orders you usually get each hour with who is scheduled. Red is short of your staffing standards, grey is clearly over."
 msgstr "تقارن التغطية الطلبات التي تصلك عادة كل ساعة بمن هم مجدولون. الأحمر أقل من معايير التوظيف لديك، والرمادي أكثر منها بوضوح."
 
-#: app/components/website/create-page-dialog.tsx:207
+#: app/components/website/create-page-dialog.tsx:206
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:914
 msgid "Create"
 msgstr "إنشاء"
@@ -5666,7 +5680,11 @@ msgstr "أنشئ قناة لبدء التواصل مع فريقك. يمكنك ق
 msgid "Create a custom role to assign specific permissions to teammates."
 msgstr "أنشئ دورًا مخصصًا لتعيين صلاحيات محددة للزملاء."
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:394
+#: app/components/home-prompt.tsx:33
+msgid "Create a landing page for my business with a hero, a few feature sections, an FAQ, and a contact section."
+msgstr "أنشئ صفحة هبوط لنشاطي التجاري تتضمن قسمًا رئيسيًا وبضعة أقسام للمزايا وقسمًا للأسئلة الشائعة وقسمًا للتواصل."
+
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:402
 msgid "Create a new API key to connect your AI assistants to {orgName} data."
 msgstr "إنشاء مفتاح API جديد لربط مساعدي الذكاء الاصطناعي ببيانات {orgName}."
 
@@ -5682,7 +5700,7 @@ msgstr "إنشاء كلمة مرور"
 msgid "Create a password to secure your account"
 msgstr "أنشئ كلمة مرور لحماية حسابك"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:477
+#: ../../packages/ai/src/components/ai-chat.tsx:506
 msgid "Create a plan"
 msgstr "إنشاء خطة"
 
@@ -5701,7 +5719,7 @@ msgstr "أنشئ دورًا جاهزًا للأشخاص الذين يديرون 
 msgid "Create account"
 msgstr "إنشاء حساب"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:425
+#: ../../packages/ai/src/components/ai-chat.tsx:454
 msgid "Create action items"
 msgstr "إنشاء عناصر العمل"
 
@@ -5717,7 +5735,7 @@ msgstr "إنشاء منظمة"
 msgid "Create and customize"
 msgstr "إنشاء وتخصيص"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:631
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:641
 msgid "Create and manage API keys to authenticate your MCP clients"
 msgstr "إنشاء وإدارة مفاتيح API لمصادقة عملاء MCP"
 
@@ -5733,9 +5751,9 @@ msgstr "أنشئ نموذجًا وانشره أولًا من الموقع الإ
 msgid "Create and send one-time email and SMS campaigns."
 msgstr "إنشاء وإرسال حملات بريد إلكتروني ورسائل SMS لمرة واحدة."
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:391
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:485
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:638
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:399
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:493
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:648
 msgid "Create API Key"
 msgstr "إنشاء مفتاح API"
 
@@ -5751,7 +5769,7 @@ msgstr "أنشئ إعلانات شريطية لموقع مؤسستك العام.
 msgid "Create broadcast"
 msgstr "إنشاء بث"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:452
+#: ../../packages/ai/src/components/ai-chat.tsx:481
 msgid "Create bullet points"
 msgstr "إنشاء نقاط تعداد"
 
@@ -5837,7 +5855,7 @@ msgstr "أنشئ نماذج قابلة لإعادة الاستخدام، ثم أ
 msgid "Create role"
 msgstr "إنشاء دور"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:689
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:699
 msgid "Create your first API key to get started"
 msgstr "أنشئ مفتاح API الأول للبدء"
 
@@ -5885,7 +5903,7 @@ msgstr "إنشاء وتحديث ونشر صفحات الويب والنماذج 
 msgid "Created"
 msgstr "تم الإنشاء"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:664
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:674
 msgid "Created {createdDate}"
 msgstr "تم الإنشاء {createdDate}"
 
@@ -5893,15 +5911,15 @@ msgstr "تم الإنشاء {createdDate}"
 msgid "Created By"
 msgstr "أنشأه"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:162
+#: ../../packages/ai/src/components/ai-chat.tsx:177
 msgid "Created page"
 msgstr "تم إنشاء الصفحة"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:161
+#: ../../packages/ai/src/components/ai-chat.tsx:176
 msgid "Creating page"
 msgstr "إنشاء الصفحة"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:480
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:488
 msgid "Creating..."
 msgstr "جاري الإنشاء..."
 
@@ -5976,7 +5994,7 @@ msgstr "الاشتراك الحالي"
 msgid "Current time {time}, {date}"
 msgstr "الوقت الحالي {time}، {date}"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:864
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:874
 msgid "Cursor Setup"
 msgstr "إعداد Cursor"
 
@@ -6025,7 +6043,7 @@ msgstr "عنوان URL مخصص"
 msgid "Custom voice"
 msgstr "صوت مخصص"
 
-#: app/components/staff/labor-core-rules.tsx:104
+#: app/components/staff/labor-core-rules.tsx:103
 msgid "Custom: what you have now"
 msgstr "مخصص: ما لديك الآن"
 
@@ -6062,7 +6080,7 @@ msgstr "معرّف العميل الفريد"
 msgid "customerId is required"
 msgstr "معرّف العميل مطلوب"
 
-#: app/components/app-sidebar.tsx:312
+#: app/components/app-sidebar.tsx:313
 #: app/components/command-menu.tsx:92
 #: app/components/workspace-breadcrumb.tsx:11
 msgid "Customers"
@@ -6126,8 +6144,8 @@ msgstr "داكن ودرامي"
 msgid "Dark mode"
 msgstr "الوضع الداكن"
 
-#: app/components/app-sidebar.tsx:137
-#: app/components/app-sidebar.tsx:286
+#: app/components/app-sidebar.tsx:138
+#: app/components/app-sidebar.tsx:287
 #: app/components/command-menu.tsx:88
 #: app/components/user-dropdown.tsx:61
 #: app/components/workspace-breadcrumb.tsx:76
@@ -6218,7 +6236,7 @@ msgid "Declared cash tips"
 msgstr "الإكراميات النقدية المصرّح بها"
 
 #: app/components/hiring/candidate-sheet.tsx:263
-#: app/components/hiring/decline-dialog.tsx:177
+#: app/components/hiring/decline-dialog.tsx:174
 #: app/components/staff/schedule/availability-page.tsx:314
 #: app/components/staff/schedule/availability-page.tsx:375
 #: app/components/staff/schedule/time-off-page.tsx:348
@@ -6228,7 +6246,7 @@ msgstr "الإكراميات النقدية المصرّح بها"
 msgid "Decline"
 msgstr "رفض"
 
-#: app/components/hiring/decline-dialog.tsx:95
+#: app/components/hiring/decline-dialog.tsx:93
 msgid "Decline {name}"
 msgstr "رفض {name}"
 
@@ -6282,7 +6300,7 @@ msgstr "تم الرفض. لا يوجد بريد إلكتروني مسجّل، ل
 msgid "Declined. They were sent your message."
 msgstr "تم الرفض. وصلتهم رسالتك."
 
-#: app/components/hiring/decline-dialog.tsx:175
+#: app/components/hiring/decline-dialog.tsx:172
 msgid "Declining…"
 msgstr "جارٍ الرفض…"
 
@@ -6290,16 +6308,16 @@ msgstr "جارٍ الرفض…"
 msgid "Dedicated"
 msgstr "مخصص"
 
-#: app/components/staff/labor-core-rules.tsx:340
-#: app/components/staff/labor-core-rules.tsx:344
+#: app/components/staff/labor-core-rules.tsx:337
+#: app/components/staff/labor-core-rules.tsx:341
 msgid "Deduct"
 msgstr "خصم"
 
-#: app/components/staff/labor-core-rules.tsx:319
+#: app/components/staff/labor-core-rules.tsx:316
 msgid "Deduct an unpaid break"
 msgstr "خصم استراحة غير مدفوعة"
 
-#: app/components/staff/labor-core-rules.tsx:320
+#: app/components/staff/labor-core-rules.tsx:317
 msgid "Deduct an unpaid break when none was recorded"
 msgstr "خصم استراحة غير مدفوعة عند عدم تسجيل أي استراحة"
 
@@ -6609,7 +6627,7 @@ msgstr "طلبات التوصيل"
 msgid "delivery tips"
 msgstr "إكراميات التوصيل"
 
-#: app/routes/mcp+/authorize.tsx:506
+#: app/routes/mcp+/authorize.tsx:509
 msgid "Deny"
 msgstr "رفض"
 
@@ -6646,7 +6664,7 @@ msgstr "الوصف"
 msgid "Deselect all"
 msgstr "إلغاء تحديد الكل"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:313
+#: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:318
 msgid "Design"
 msgstr "التصميم"
 
@@ -6684,7 +6702,7 @@ msgstr "إعدادات مدمرة لا يمكن التراجع عنها. سيت�
 #: app/components/staff/onboarding/template-editor.tsx:333
 #: app/components/staff/staff-profile-page.tsx:98
 #: app/components/workspace-breadcrumb.tsx:134
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:812
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:811
 #: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:92
 msgid "Details"
 msgstr "التفاصيل"
@@ -6693,7 +6711,7 @@ msgstr "التفاصيل"
 msgid "Details for the applicant"
 msgstr "تفاصيل للمتقدّم"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:491
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:492
 msgid "Details on this print changed since approval"
 msgstr "تغيّرت تفاصيل هذه المطبوعة منذ اعتمادها"
 
@@ -6777,25 +6795,25 @@ msgstr "تجاهل التغييرات غير المحفوظة؟"
 
 #: app/components/settings/cards/organization/integrations-card.tsx:225
 #: app/components/settings/connections.tsx:89
-#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:319
-#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:348
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:346
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:377
 msgid "Disconnect"
 msgstr "قطع الاتصال"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:326
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:353
 msgid "Disconnect {accountName}?"
 msgstr "هل تريد فصل {accountName}؟"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:1077
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:1087
 msgid "Disconnect any active MCP connections"
 msgstr "قطع أي اتصالات MCP نشطة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:283
+#: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:288
 msgid "Disconnect Canva"
 msgstr "إلغاء ربط Canva"
 
-#: app/components/feature-updates.tsx:134
-#: app/components/feature-updates.tsx:214
+#: app/components/feature-updates.tsx:145
+#: app/components/feature-updates.tsx:225
 msgid "Dismiss"
 msgstr "تجاهل"
 
@@ -6860,8 +6878,8 @@ msgstr "عدم الإعادة"
 msgid "Don't retry"
 msgstr "عدم إعادة المحاولة"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:180
-#: ../../packages/ai/src/components/ai-chat.tsx:227
+#: ../../packages/ai/src/components/ai-chat.tsx:195
+#: ../../packages/ai/src/components/ai-chat.tsx:242
 #: app/components/dashboard/dashboard-edit-toolbar.tsx:101
 #: app/components/hiring/applicant-labels.ts:41
 #: app/components/hiring/hire-dialog.tsx:156
@@ -6911,7 +6929,7 @@ msgstr "انخفض بنسبة {absTrend}٪ في هذه الفترة"
 
 #: app/components/media-library/photo-studio-dialog.tsx:877
 #: app/components/settings/backup-codes-display.tsx:99
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1065
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1064
 msgid "Download"
 msgstr "تنزيل"
 
@@ -6931,7 +6949,7 @@ msgstr "تنزيل رمز QR"
 msgid "Download staff backup"
 msgstr "تنزيل نسخة احتياطية للموظفين"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1081
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1080
 msgid "Download the PDF"
 msgstr "تنزيل ملف PDF"
 
@@ -6953,7 +6971,7 @@ msgstr "مسودة"
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:260
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:137
 #: app/routes/_app+/$orgSlug_+/marketing+/print._index.tsx:142
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:904
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:903
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:412
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:250
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:404
@@ -6997,7 +7015,7 @@ msgstr "تم حفظ المسودة · الإصدار v{publishedVersion} منش�
 msgid "Draft saved."
 msgstr "تم حفظ المسودة."
 
-#: ../../packages/ai/src/components/ai-chat.tsx:432
+#: ../../packages/ai/src/components/ai-chat.tsx:461
 msgid "Draft something for me"
 msgstr "اكتب مسودة لي"
 
@@ -7018,7 +7036,7 @@ msgstr "جارٍ كتابة المسودة..."
 msgid "Drafting…"
 msgstr "جارٍ إعداد المسودة…"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:257
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:281
 msgid "Drafts without a date"
 msgstr "مسودات بلا تاريخ"
 
@@ -7097,11 +7115,11 @@ msgstr "مثال: @gmail.com"
 msgid "e.g. +14155551212"
 msgstr "مثل: +14155551212"
 
-#: app/components/website/create-page-dialog.tsx:164
+#: app/components/website/create-page-dialog.tsx:163
 msgid "e.g. About Us"
 msgstr "مثل: من نحن"
 
-#: app/components/website/create-page-dialog.tsx:181
+#: app/components/website/create-page-dialog.tsx:180
 msgid "e.g. about-us"
 msgstr "مثل: about-us"
 
@@ -7149,7 +7167,7 @@ msgstr "مثال: مرحبًا {{firstName}}!"
 msgid "e.g. You've got mail!"
 msgstr "مثل: لديك بريد جديد!"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:409
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:417
 msgid "e.g., Claude Desktop, Kiro IDE"
 msgstr "مثل: Claude Desktop، Kiro IDE"
 
@@ -7271,7 +7289,7 @@ msgstr "تعديل التصميم"
 msgid "Edit image"
 msgstr "تعديل الصورة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1264
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1263
 msgid "Edit in Canva"
 msgstr "التعديل في Canva"
 
@@ -7714,7 +7732,7 @@ msgstr "أدخل أحد رموزك الاحتياطية للتحقق من هوي
 msgid "Enter opens a shift. Space picks it up, the arrow keys choose where, Space drops it."
 msgstr "Enter يفتح الوردية. Space يرفعها، وأسهم الاتجاه تحدد المكان، وSpace يُفلتها."
 
-#: app/components/staff/labor/labor-settings.tsx:101
+#: app/components/staff/labor/labor-settings.tsx:103
 msgid "Enter orders per hour from 0.5 to 200, with at most one decimal."
 msgstr "أدخل عدد الطلبات في الساعة من 0.5 إلى 200، بخانة عشرية واحدة كحد أقصى."
 
@@ -7997,7 +8015,7 @@ msgstr "الوقت الدقيق (بدون تقريب)"
 msgid "Exactly Equals"
 msgstr "يساوي تماماً"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:1200
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:1210
 msgid "Example Request"
 msgstr "مثال على الطلب"
 
@@ -8022,7 +8040,7 @@ msgstr "صفحة موجودة"
 msgid "Experience"
 msgstr "الخبرة"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:443
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:451
 msgid "Expiration Date"
 msgstr "تاريخ انتهاء الصلاحية"
 
@@ -8036,7 +8054,7 @@ msgstr "منتهي الصلاحية"
 msgid "Expires"
 msgstr "تنتهي الصلاحية"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:667
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:677
 msgid "Expires {expireDate}"
 msgstr "تنتهي صلاحيته {expireDate}"
 
@@ -8256,11 +8274,11 @@ msgstr "تم إنشاء متغيرات الأيقونة المفضلة وأيق�
 msgid "Favorites"
 msgstr "المفضلة"
 
-#: app/components/feature-updates.tsx:186
+#: app/components/feature-updates.tsx:197
 msgid "Feature Preview"
 msgstr "معاينة الميزة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:762
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:761
 msgid "Featured items"
 msgstr "عناصر مميزة"
 
@@ -8362,7 +8380,7 @@ msgstr "تصفية حسب مكان العمل"
 msgid "Find and reuse images uploaded across notes, comments, your website, and organization settings."
 msgstr "البحث عن الصور وإعادة استخدامها عبر الملاحظات والتعليقات وموقع الويب وإعدادات المؤسسة."
 
-#: ../../packages/ai/src/components/ai-chat.tsx:426
+#: ../../packages/ai/src/components/ai-chat.tsx:455
 msgid "Find potential issues"
 msgstr "العثور على المشكلات المحتملة"
 
@@ -8428,11 +8446,11 @@ msgstr "علّم الوردية للمراجعة عند عدم أخذ هذه ا�
 msgid "Flag applicants who answer differently. You still decide who to talk to."
 msgstr "يتم تمييز المتقدمين الذين يجيبون بشكل مختلف. وتبقى أنت من يقرر مع من تتحدث."
 
-#: app/components/staff/labor-core-rules.tsx:293
+#: app/components/staff/labor-core-rules.tsx:290
 msgid "Flag long shifts for review"
 msgstr "تمييز الورديات الطويلة للمراجعة"
 
-#: app/components/staff/labor-core-rules.tsx:305
+#: app/components/staff/labor-core-rules.tsx:302
 msgid "Flag shifts longer than"
 msgstr "تعليم الورديات الأطول من"
 
@@ -8478,7 +8496,7 @@ msgstr "بطاقة مناولة الأغذية"
 msgid "For"
 msgstr "لـ"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1098
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1097
 msgid "For a print shop (with bleed)"
 msgstr "لمطبعة (مع هامش القص)"
 
@@ -8490,7 +8508,7 @@ msgstr "لوردية لم تُسجَّل أبدًا أو تسجيل مفقود. 
 msgid "For our hours, press 1. To speak with our team, press 2."
 msgstr "لمعرفة ساعات العمل، اضغط 1. للتحدث مع فريقنا، اضغط 2."
 
-#: app/components/staff/labor-core-rules.tsx:361
+#: app/components/staff/labor-core-rules.tsx:358
 msgid "For shifts longer than"
 msgstr "للورديات الأطول من"
 
@@ -8541,7 +8559,7 @@ msgstr "التنسيق"
 msgid "Former member"
 msgstr "عضو سابق"
 
-#: app/components/app-sidebar.tsx:439
+#: app/components/app-sidebar.tsx:438
 #: app/components/command-menu.tsx:148
 #: app/components/workspace-breadcrumb.tsx:57
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:46
@@ -8570,7 +8588,7 @@ msgstr "أربعة"
 msgid "Four steps. Everything else has defaults you can change later."
 msgstr "أربع خطوات. كل ما عدا ذلك له إعدادات افتراضية يمكنك تغييرها لاحقًا."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1072
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1071
 msgid "Free PDFs of the approved proof."
 msgstr "ملفات PDF مجانية من البروفة المعتمدة."
 
@@ -8599,7 +8617,7 @@ msgid "From a file"
 msgstr "من ملف"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/print._index.tsx:134
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1185
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1184
 msgid "From Canva"
 msgstr "من Canva"
 
@@ -8640,7 +8658,7 @@ msgstr "دوام كامل"
 msgid "Full width"
 msgstr "عرض كامل"
 
-#: app/components/app-sidebar.tsx:482
+#: app/components/app-sidebar.tsx:481
 #: app/components/phone-agent/vertical-labels.ts:27
 #: app/components/phone-agent/vertical-labels.ts:39
 #: app/components/workspace-breadcrumb.tsx:62
@@ -8651,7 +8669,7 @@ msgstr "عام"
 msgid "General manager"
 msgstr "المدير العام"
 
-#: app/components/app-sidebar.tsx:429
+#: app/components/app-sidebar.tsx:428
 #: app/components/settings/cards/organization/general-settings-card.tsx:65
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:21
 msgid "General Settings"
@@ -8691,19 +8709,27 @@ msgstr "جارٍ الإنشاء…"
 msgid "Get a new price"
 msgstr "الحصول على سعر جديد"
 
-#: app/components/app-sidebar.tsx:636
+#: app/components/app-sidebar.tsx:635
 msgid "Get chrome extension"
 msgstr "احصل على إضافة كروم"
 
-#: app/components/app-sidebar.tsx:166
-#: app/components/app-sidebar.tsx:651
+#: app/components/app-sidebar.tsx:167
+#: app/components/app-sidebar.tsx:650
 msgid "Get help"
 msgstr "احصل على المساعدة"
 
-#: app/components/app-sidebar.tsx:109
+#: app/components/app-sidebar.tsx:110
 #: app/components/settings/cards/organization/billing-card.tsx:350
 msgid "Get in touch"
 msgstr "تواصل معنا"
+
+#: app/components/home-prompt.tsx:62
+msgid "Get set up"
+msgstr "ابدأ الإعداد"
+
+#: app/components/home-prompt.tsx:355
+msgid "Get something done"
+msgstr "أنجز شيئًا"
 
 #: app/components/onboarding-checklist.tsx:120
 #: app/components/onboarding-checklist.tsx:154
@@ -8723,13 +8749,13 @@ msgstr "اجعل وكيلك يرد على المكالمات"
 msgid "Give away {when}"
 msgstr "التخلي عن {when}"
 
-#: app/components/app-sidebar.tsx:174
-#: app/components/app-sidebar.tsx:659
+#: app/components/app-sidebar.tsx:175
+#: app/components/app-sidebar.tsx:658
 #: app/components/core/feedback-modal.tsx:69
 msgid "Give feedback"
 msgstr "إرسال ملاحظات"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:485
+#: ../../packages/ai/src/components/ai-chat.tsx:514
 msgid "Give me examples"
 msgstr "أعطني أمثلة"
 
@@ -8758,7 +8784,7 @@ msgstr "امنح الزوار مساحة لمشاركة تعليقاتهم."
 msgid "Give your group a name"
 msgstr "أدخل اسمًا لمجموعتك"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:295
+#: ../../packages/ai/src/components/ai-chat.tsx:310
 msgid "Go there"
 msgstr "الانتقال إلى هناك"
 
@@ -8770,7 +8796,7 @@ msgstr "الانتقال إلى"
 msgid "Go to Home"
 msgstr "الانتقال إلى الرئيسية"
 
-#: app/components/app-sidebar.tsx:230
+#: app/components/app-sidebar.tsx:231
 msgid "Go to homepage"
 msgstr "الذهاب إلى الصفحة الرئيسية"
 
@@ -8786,17 +8812,17 @@ msgstr "الذهاب إلى الصفحة الرئيسية"
 msgid "Golden light, rich textures"
 msgstr "إضاءة ذهبية وملمس غني"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:171
-msgid "Good afternoon, {userName}"
-msgstr "مساء الخير، {userName}"
-
 #: app/routes/_app+/$orgSlug_+/index.tsx:172
-msgid "Good evening, {userName}"
-msgstr "مساء الخير، {userName}"
+#~ msgid "Good afternoon, {userName}"
+#~ msgstr "مساء الخير، {userName}"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:170
-msgid "Good morning, {userName}"
-msgstr "صباح الخير، {userName}"
+#: app/routes/_app+/$orgSlug_+/index.tsx:173
+#~ msgid "Good evening, {userName}"
+#~ msgstr "مساء الخير، {userName}"
+
+#: app/routes/_app+/$orgSlug_+/index.tsx:171
+#~ msgid "Good morning, {userName}"
+#~ msgstr "صباح الخير، {userName}"
 
 #: app/components/phone-agent/flow-editor/flow-meta.ts:78
 #: app/components/phone-agent/phrase-fields.tsx:131
@@ -8827,8 +8853,7 @@ msgstr "بيانات الرسم البياني مفقودة"
 msgid "Gray color"
 msgstr "اللون الرمادي"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1943
-#: app/routes/_app+/$orgSlug_+/media.tsx:1958
+#: app/routes/_app+/$orgSlug_+/media.tsx:1912
 msgid "Grayscale"
 msgstr "تدرج الرمادي"
 
@@ -8919,7 +8944,7 @@ msgstr "لديه صلاحية الوصول"
 msgid "Has approved time off"
 msgstr "لديه إجازة معتمدة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:980
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:979
 msgid "Have it printed"
 msgstr "اطلب طباعتها"
 
@@ -8935,7 +8960,7 @@ msgstr "عنوان"
 msgid "Headings"
 msgstr "العناوين"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:653
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:652
 msgid "Headline"
 msgstr "العنوان الرئيسي"
 
@@ -8943,9 +8968,17 @@ msgstr "العنوان الرئيسي"
 msgid "Health card"
 msgstr "البطاقة الصحية"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:431
+#: ../../packages/ai/src/components/ai-chat.tsx:460
 msgid "Help me get started"
 msgstr "ساعدني في البدء"
+
+#: app/components/home-prompt.tsx:63
+msgid "Help me get started. What should I set up first for my organization?"
+msgstr "ساعدني على البدء. ما الذي يجب أن أعدّه أولًا لمؤسستي؟"
+
+#: app/components/home-prompt.tsx:51
+msgid "Help me plan a marketing email to my customers: suggest a subject line, an outline, and a call to action."
+msgstr "ساعدني في التخطيط لرسالة تسويقية إلى عملائي: اقترح عنوانًا للرسالة ومخططًا لمحتواها ودعوة لاتخاذ إجراء."
 
 #: app/components/settings/cards/organization/team-size-card.tsx:80
 msgid "Help us tailor recommendations to your organization."
@@ -9011,7 +9044,7 @@ msgstr "مرحبًا {name}"
 msgid "Hi {personName}, enter your PIN"
 msgstr "مرحبًا {personName}، أدخل رقمك السري"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:723
+#: ../../packages/ai/src/components/ai-chat.tsx:820
 msgid "Hi, {userName}"
 msgstr "مرحباً، {userName}"
 
@@ -9085,7 +9118,7 @@ msgid "Hired."
 msgstr "تم التوظيف."
 
 #: ../../packages/reports/src/ui/report-labels.ts:83
-#: app/components/app-sidebar.tsx:416
+#: app/components/app-sidebar.tsx:415
 #: app/components/command-menu.tsx:137
 #: app/components/roles/tenant-role-access-manager.tsx:364
 #: app/components/workspace-breadcrumb.tsx:37
@@ -9180,8 +9213,8 @@ msgid "Hourly rate"
 msgstr "الأجر بالساعة"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:291
-#: app/components/staff/labor-core-rules.tsx:302
-#: app/components/staff/labor-core-rules.tsx:358
+#: app/components/staff/labor-core-rules.tsx:299
+#: app/components/staff/labor-core-rules.tsx:355
 #: app/components/staff/labor-policy-editor.tsx:759
 #: app/components/staff/labor-policy-editor.tsx:840
 #: app/components/staff/labor-policy-fields.tsx:261
@@ -9216,7 +9249,7 @@ msgstr "الساعات حسب الموظف"
 msgid "Hours changed by <0>{delta}</0>"
 msgstr "تغيّرت الساعات بمقدار <0>{delta}</0>"
 
-#: app/components/staff/labor-core-rules.tsx:408
+#: app/components/staff/labor-core-rules.tsx:405
 msgid "hours in a week"
 msgstr "ساعات في الأسبوع"
 
@@ -9244,11 +9277,11 @@ msgstr "كيف تصل المكالمات إلى الوكيل"
 msgid "How can I help you today?"
 msgstr "كيف يمكنني مساعدتك اليوم؟"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:723
+#: ../../packages/ai/src/components/ai-chat.tsx:820
 msgid "How can I help?"
 msgstr "كيف يمكنني مساعدتك؟"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:487
+#: ../../packages/ai/src/components/ai-chat.tsx:516
 msgid "How can I implement this?"
 msgstr "كيف يمكنني تنفيذ هذا؟"
 
@@ -9273,7 +9306,7 @@ msgstr "عدد مرات تسجيل الحضور في الوقت المحدد ل�
 msgid "How people sign in"
 msgstr "طريقة تسجيل الدخول"
 
-#: app/components/staff/labor-core-rules.tsx:100
+#: app/components/staff/labor-core-rules.tsx:99
 msgid "How strict do you want to be?"
 msgstr "ما مدى الصرامة التي تريدها؟"
 
@@ -9310,7 +9343,7 @@ msgstr "لا أستطيع العمل فيها"
 msgid "I'll not be able to access the organization and its data anymore"
 msgstr "لن أتمكن من الوصول إلى المؤسسة وبياناتها بعد الآن"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:601
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:611
 msgid "I've Copied the Key"
 msgstr "لقد نسخت المفتاح"
 
@@ -9318,7 +9351,7 @@ msgstr "لقد نسخت المفتاح"
 msgid "ID"
 msgstr "المعرّف"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:478
+#: ../../packages/ai/src/components/ai-chat.tsx:507
 msgid "Identify risks"
 msgstr "تحديد المخاطر"
 
@@ -9382,11 +9415,11 @@ msgstr "صورة للقص"
 msgid "Image URL"
 msgstr "رابط الصورة"
 
-#: app/components/social/post-composer.tsx:275
+#: app/components/social/post-composer.tsx:290
 msgid "Images"
 msgstr "الصور"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:1074
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:1084
 msgid "Immediately invalidate all tokens for this client"
 msgstr "إبطال جميع الرموز المميزة لهذا العميل فوراً"
 
@@ -9413,7 +9446,7 @@ msgstr "استيراد الأعضاء الحاليين"
 msgid "Import daily sales"
 msgstr "استيراد المبيعات اليومية"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:440
+#: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:438
 msgid "Import design"
 msgstr "استيراد التصميم"
 
@@ -9422,7 +9455,7 @@ msgid "Import finished"
 msgstr "اكتمل الاستيراد"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/print._index.tsx:73
-#: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:197
+#: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:202
 msgid "Import from Canva"
 msgstr "الاستيراد من Canva"
 
@@ -9430,7 +9463,7 @@ msgstr "الاستيراد من Canva"
 msgid "Important"
 msgstr "مهم"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:898
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:908
 msgid "Important Notes"
 msgstr "ملاحظات مهمة"
 
@@ -9442,7 +9475,7 @@ msgstr "ملاحظة أمنية مهمة"
 msgid "Important tags"
 msgstr "الوسوم المهمة"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:585
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:595
 msgid "Important:"
 msgstr "مهم:"
 
@@ -9450,7 +9483,7 @@ msgstr "مهم:"
 msgid "Imported: {created} added, {updated} changed, {unchanged} already the same."
 msgstr "تم الاستيراد: أُضيف {created}، وتغيّر {updated}، وبقي {unchanged} كما هو."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:440
+#: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:438
 msgid "Importing from Canva…"
 msgstr "جارٍ الاستيراد من Canva…"
 
@@ -9556,7 +9589,7 @@ msgstr "يتطلب إنستغرام صورة."
 msgid "Instagram needs at least one image."
 msgstr "يتطلب إنستغرام صورة واحدة على الأقل."
 
-#: app/components/social/post-composer.tsx:278
+#: app/components/social/post-composer.tsx:293
 msgid "Instagram needs at least one image. Several images become a carousel."
 msgstr "يتطلب إنستغرام صورة واحدة على الأقل. تتحول الصور المتعددة إلى شريط صور متحرك."
 
@@ -9580,7 +9613,7 @@ msgstr "تفعيل Checkout.com فورًا (محاكاة)"
 msgid "Instantly enable Stripe (mock)"
 msgstr "تفعيل Stripe فورًا (محاكاة)"
 
-#: app/components/app-sidebar.tsx:510
+#: app/components/app-sidebar.tsx:509
 #: app/components/settings/cards/organization/integrations-card.tsx:101
 #: app/components/workspace-breadcrumb.tsx:65
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1034
@@ -9693,6 +9726,10 @@ msgstr "دعوة عضو"
 msgid "Invite members"
 msgstr "دعوة أعضاء"
 
+#: app/components/home-prompt.tsx:56
+msgid "Invite my team"
+msgstr "ادعُ فريقي"
+
 #: app/components/command-menu.tsx:316
 #: app/components/roles/tenant-role-access-manager.tsx:125
 msgid "Invite new members"
@@ -9784,7 +9821,7 @@ msgstr "الوقت مبكر جدًا لتسجيل الحضور لورديتك."
 msgid "It leaves the calendar here. What is already on Facebook or Instagram stays there: delete it on the platform if needed."
 msgstr "سيُزال من التقويم هنا. ما نُشر بالفعل على فيسبوك أو إنستغرام يبقى هناك: احذفه من المنصة إذا لزم الأمر."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1019
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1018
 msgid "It leaves the Print shop list. Orders already placed keep printing it."
 msgstr "ستُزال من قائمة المطبعة. الطلبات المقدّمة مسبقًا تواصل طباعتها."
 
@@ -9910,9 +9947,9 @@ msgstr "متابعة التعديل"
 
 #: app/components/staff/kiosk-manager.tsx:970
 #: app/components/staff/schedule/shift-editor-sheet.tsx:737
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1024
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1023
 #: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:163
-#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:335
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:363
 msgid "Keep it"
 msgstr "إبقاؤه"
 
@@ -9970,8 +10007,8 @@ msgstr "تُحفظ مع البطاقة وتظهر في سجلها."
 msgid "Key"
 msgstr "الزر"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:405
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:547
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:413
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:555
 msgid "Key Name"
 msgstr "اسم المفتاح"
 
@@ -10010,7 +10047,7 @@ msgstr "نوع الاستراحة {number}"
 msgid "Kiosk time clocks are turned off right now."
 msgstr "ساعات الدوام على الأجهزة اللوحية متوقفة حاليًا."
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:825
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:835
 msgid "Kiro IDE Setup"
 msgstr "إعداد Kiro IDE"
 
@@ -10034,7 +10071,7 @@ msgid "Label calls to find them later. With automatic tagging on, the agent appl
 msgstr "صنّف المكالمات بوسوم لتجدها لاحقًا. عند تفعيل الوسم التلقائي، يطبّق الوكيل الوسم عندما يتطابق الوصف مع المكالمة."
 
 #: ../../packages/reports/src/ui/report-labels.ts:82
-#: app/components/app-sidebar.tsx:411
+#: app/components/app-sidebar.tsx:410
 #: app/components/command-menu.tsx:136
 #: app/components/staff/labor/labor-page.tsx:211
 #: app/components/staff/labor/labor-page.tsx:240
@@ -10071,7 +10108,7 @@ msgstr "قواعد العمل"
 msgid "Labor rules saved."
 msgstr "تم حفظ قواعد العمل."
 
-#: app/components/staff/labor/labor-settings.tsx:126
+#: app/components/staff/labor/labor-settings.tsx:128
 msgid "Labor settings saved."
 msgstr "تم حفظ إعدادات العمالة."
 
@@ -10118,7 +10155,7 @@ msgid "Last {days} days"
 msgstr "آخر {days} يوم"
 
 #: app/components/notes-chart.tsx:63
-#: app/routes/_app+/$orgSlug_+/index.tsx:218
+#: app/routes/_app+/$orgSlug_+/index.tsx:199
 msgid "Last {daysShown} days"
 msgstr "آخر {daysShown} يوم"
 
@@ -10166,7 +10203,7 @@ msgstr "آخر فتح في {lastOpened}."
 msgid "Last used"
 msgstr "آخر استخدام"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:960
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:970
 msgid "Last Used"
 msgstr "آخر استخدام"
 
@@ -10214,7 +10251,7 @@ msgstr "التخطيط"
 msgid "Lead capture"
 msgstr "جمع العملاء المحتملين"
 
-#: app/components/feature-updates.tsx:205
+#: app/components/feature-updates.tsx:216
 #: app/components/settings/cards/organization/announcement-sheet.tsx:513
 msgid "Learn more"
 msgstr "اعرف المزيد"
@@ -10223,7 +10260,7 @@ msgstr "اعرف المزيد"
 msgid "Leave"
 msgstr "مغادرة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:600
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:599
 msgid "Leave a field empty to use the suggested words. Add a second language for a bilingual print."
 msgstr "اترك الحقل فارغًا لاستخدام النص المقترح. أضف لغة ثانية لمطبوعة بلغتين."
 
@@ -10426,7 +10463,7 @@ msgid "Links sent"
 msgstr "الروابط المرسلة"
 
 #: app/components/hiring/applicants-page.tsx:344
-#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:226
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:250
 msgid "List"
 msgstr "قائمة"
 
@@ -10617,7 +10654,7 @@ msgstr "جارٍ تحميل من هم على الساعة"
 msgid "Loading…"
 msgstr "جارٍ التحميل…"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:234
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:244
 msgid "Local emulator"
 msgstr "محاكي محلي"
 
@@ -10694,11 +10731,11 @@ msgstr "وردية طويلة"
 msgid "Long text"
 msgstr "نص طويل"
 
-#: app/components/staff/labor-core-rules.tsx:295
+#: app/components/staff/labor-core-rules.tsx:292
 msgid "Longer shifts are marked for review. They are not cut off."
 msgstr "تُعلَّم الورديات الأطول للمراجعة ولا يتم قطعها."
 
-#: app/components/staff/labor-core-rules.tsx:301
+#: app/components/staff/labor-core-rules.tsx:298
 msgid "Longer than"
 msgstr "أطول من"
 
@@ -10754,7 +10791,7 @@ msgstr "د"
 msgid "m@example.com"
 msgstr "م@مثال.com"
 
-#: app/components/app-sidebar.tsx:318
+#: app/components/app-sidebar.tsx:319
 #: app/components/command-menu.tsx:95
 #: app/components/workspace-breadcrumb.tsx:18
 msgid "Mailbox"
@@ -10764,7 +10801,7 @@ msgstr "صندوق الوارد"
 msgid "Mailbox sources"
 msgstr "مصادر صندوق الوارد"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:608
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:607
 msgid "Main language"
 msgstr "اللغة الرئيسية"
 
@@ -10785,7 +10822,7 @@ msgstr "مكان العمل الرئيسي"
 msgid "Make a test call"
 msgstr "إجراء مكالمة تجريبية"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:451
+#: ../../packages/ai/src/components/ai-chat.tsx:480
 msgid "Make it more detailed"
 msgstr "اجعلها أكثر تفصيلاً"
 
@@ -10945,7 +10982,7 @@ msgstr "رخام"
 msgid "Mark {reviewableCount} as reviewed"
 msgstr "تحديد {reviewableCount} كمراجَعة"
 
-#: app/components/ui/notification-bell.tsx:515
+#: app/components/ui/notification-bell.tsx:511
 msgid "Mark all as read"
 msgstr "تحديد الكل كمقروء"
 
@@ -10957,7 +10994,7 @@ msgstr "تحديد كمنتهية"
 msgid "Mark as not done"
 msgstr "وضع علامة غير منجزة"
 
-#: app/components/ui/notification-bell.tsx:215
+#: app/components/ui/notification-bell.tsx:216
 msgid "Mark as read"
 msgstr "تحديد كمقروء"
 
@@ -10998,7 +11035,7 @@ msgstr "تم التحديد كمراجَعة."
 msgid "Marked unavailable"
 msgstr "محدد كغير متاح"
 
-#: app/components/app-sidebar.tsx:329
+#: app/components/app-sidebar.tsx:330
 #: app/components/command-menu.tsx:100
 #: app/components/roles/tenant-role-access-manager.tsx:182
 #: app/components/workspace-breadcrumb.tsx:14
@@ -11026,11 +11063,11 @@ msgstr "الحد الأقصى لمدة المكالمة"
 msgid "Maximum call length (minutes)"
 msgstr "الحد الأقصى لمدة المكالمة (بالدقائق)"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:941
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:951
 msgid "MCP clients authorized to access your organization data"
 msgstr "عملاء MCP المصرح لهم بالوصول إلى بيانات منظمتك"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:752
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:762
 msgid "MCP OAuth Setup Instructions"
 msgstr "تعليمات إعداد MCP OAuth"
 
@@ -11038,8 +11075,8 @@ msgstr "تعليمات إعداد MCP OAuth"
 msgid "MCP server"
 msgstr "خادم MCP"
 
-#: app/components/app-sidebar.tsx:520
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:1359
+#: app/components/app-sidebar.tsx:519
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:1369
 msgid "MCP Server"
 msgstr "خادم MCP"
 
@@ -11063,7 +11100,7 @@ msgstr "تفاصيل الوسائط"
 msgid "Media details saved"
 msgstr "تم حفظ تفاصيل الوسائط"
 
-#: app/components/app-sidebar.tsx:306
+#: app/components/app-sidebar.tsx:307
 #: app/components/command-menu.tsx:91
 #: app/components/media-library/media-library-picker.tsx:229
 #: app/components/workspace-breadcrumb.tsx:20
@@ -11098,7 +11135,7 @@ msgstr "عضو"
 msgid "members"
 msgstr "أعضاء"
 
-#: app/components/app-sidebar.tsx:487
+#: app/components/app-sidebar.tsx:486
 #: app/components/chat/chat-group-settings-dialog.tsx:83
 #: app/components/organization-members.tsx:169
 #: app/components/roles/tenant-role-access-manager.tsx:1112
@@ -11120,7 +11157,7 @@ msgstr "الأعضاء الذين أنشأوا أكبر عدد من الملاح
 #: ../../packages/marketing/src/components/campaign-form.tsx:118
 #: app/components/phone-agent/flow-editor/node-inspector.tsx:415
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:580
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:668
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:667
 msgid "Message"
 msgstr "الرسالة"
 
@@ -11152,12 +11189,12 @@ msgstr "الرسالة طويلة جداً."
 msgid "Message taken"
 msgstr "تم أخذ رسالة"
 
-#: app/components/hiring/decline-dialog.tsx:114
+#: app/components/hiring/decline-dialog.tsx:112
 msgid "Message to {name}"
 msgstr "رسالة إلى {name}"
 
 #: app/components/hiring/applicant-labels.ts:100
-#: app/components/hiring/decline-dialog.tsx:129
+#: app/components/hiring/decline-dialog.tsx:127
 msgid "Message to the applicant"
 msgstr "رسالة إلى المتقدّم"
 
@@ -11173,11 +11210,11 @@ msgstr "وصف الميتا"
 msgid "Meta did not answer. Try again in a few minutes."
 msgstr "لم تستجب Meta. حاول مرة أخرى بعد بضع دقائق."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:216
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:217
 msgid "Meta did not complete the connection. Try again."
 msgstr "لم تكمل Meta عملية الربط. حاول مرة أخرى."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:155
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:179
 msgid "Meta no longer accepts its access. Posts to it will fail until you connect it again."
 msgstr "لم تعد Meta تقبل صلاحية الوصول الخاصة به. ستفشل المنشورات المرسلة إليه إلى أن تعيد ربطه."
 
@@ -11202,7 +11239,7 @@ msgid "Minimal"
 msgstr "بسيط"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:290
-#: app/components/staff/labor-core-rules.tsx:341
+#: app/components/staff/labor-core-rules.tsx:338
 #: app/components/staff/labor-policy-fields.tsx:194
 msgid "minutes"
 msgstr "دقائق"
@@ -11457,9 +11494,9 @@ msgstr "رابط جدولي"
 #: app/components/staff/staff-roster.tsx:134
 #: app/components/website/create-form-dialog.tsx:85
 #: app/components/website/form-builder-sidebar.tsx:673
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:545
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1169
-#: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:425
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:546
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1168
+#: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:423
 #: app/routes/_app+/$orgSlug_+/marketing+/print.new.tsx:194
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:682
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:683
@@ -11503,11 +11540,11 @@ msgstr "الاسم، مع رقم هاتف أو بريد إلكتروني. لا �
 msgid "Natural daylight"
 msgstr "ضوء النهار الطبيعي"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:871
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:881
 msgid "Navigate to Features → MCP Servers"
 msgstr "انتقل إلى الميزات → خوادم MCP"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:832
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:842
 msgid "Navigate to MCP Servers configuration"
 msgstr "انتقل إلى تكوين خوادم MCP"
 
@@ -11582,7 +11619,7 @@ msgstr "تدرج رمادي محايد وظلال ناعمة"
 msgid "Never"
 msgstr "أبدًا"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:987
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:997
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:961
 msgid "Never used"
 msgstr "لم يُستخدم أبداً"
@@ -11680,7 +11717,7 @@ msgstr "ملاحظة جديدة"
 msgid "New Note"
 msgstr "ملاحظة جديدة"
 
-#: app/components/website/create-page-dialog.tsx:140
+#: app/components/website/create-page-dialog.tsx:139
 msgid "New page"
 msgstr "صفحة جديدة"
 
@@ -11701,7 +11738,7 @@ msgstr "رمز PIN جديد"
 msgid "New PIN for {scopeName}"
 msgstr "رمز سري جديد لـ {scopeName}"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:123
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:142
 #: app/routes/_app+/$orgSlug_+/marketing+/social.new.tsx:59
 msgid "New post"
 msgstr "منشور جديد"
@@ -11711,7 +11748,7 @@ msgid "New post on {label}"
 msgstr "منشور جديد في {label}"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/print._index.tsx:82
-#: app/routes/_app+/$orgSlug_+/marketing+/print.new.tsx:111
+#: app/routes/_app+/$orgSlug_+/marketing+/print.new.tsx:116
 msgid "New print"
 msgstr "مطبوعة جديدة"
 
@@ -11750,7 +11787,7 @@ msgstr "ورديات جديدة ونُقلت وعُدّلت وحُذفت."
 
 #: app/components/hiring/job-editor.tsx:417
 #: app/components/kiosk/kiosk-screens.tsx:276
-#: app/components/website/create-page-dialog.tsx:132
+#: app/components/website/create-page-dialog.tsx:131
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:475
 msgid "Next"
 msgstr "التالي"
@@ -11761,7 +11798,7 @@ msgid "Next day"
 msgstr "اليوم التالي"
 
 #: app/components/staff/schedule/schedule-toolbar.tsx:114
-#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:182
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:206
 msgid "Next month"
 msgstr "الشهر التالي"
 
@@ -11800,11 +11837,11 @@ msgstr "لم تُسجَّل أي أخطاء 404"
 msgid "No access"
 msgstr "لا تملك صلاحية الوصول"
 
-#: app/components/social/post-composer.tsx:189
+#: app/components/social/post-composer.tsx:205
 msgid "No accounts connected"
 msgstr "لا توجد حسابات مرتبطة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:287
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:308
 msgid "No accounts connected."
 msgstr "لا توجد حسابات مرتبطة."
 
@@ -11821,7 +11858,7 @@ msgid "No active subscription"
 msgstr "لا يوجد اشتراك نشط"
 
 #: app/components/note/activity-log.tsx:207
-#: app/routes/_app+/$orgSlug_+/index.tsx:218
+#: app/routes/_app+/$orgSlug_+/index.tsx:199
 msgid "No activity yet"
 msgstr "لا يوجد نشاط بعد"
 
@@ -11837,7 +11874,7 @@ msgstr "لا توجد إعلانات بعد"
 msgid "No answer"
 msgstr "لا يوجد رد"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:688
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:698
 msgid "No API keys created yet"
 msgstr "لم يتم إنشاء مفاتيح API بعد"
 
@@ -11866,7 +11903,7 @@ msgstr "لا يوجد توفر لعرضه"
 msgid "No backup codes generated"
 msgstr "لم يتم إنشاء رموز احتياطية"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1202
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1201
 msgid "No bleed"
 msgstr "بلا هامش قص"
 
@@ -11898,7 +11935,7 @@ msgstr "لا توجد مكالمات بعد"
 msgid "No campaigns yet."
 msgstr "لا توجد حملات بعد."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:317
+#: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:322
 msgid "No Canva designs match that search."
 msgstr "لا توجد تصاميم في Canva تطابق هذا البحث."
 
@@ -11927,7 +11964,7 @@ msgstr "لا توجد قنوات بعد"
 msgid "No choice"
 msgstr "بلا اختيار"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:947
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:957
 msgid "No clients have been authorized yet"
 msgstr "لم يتم تفويض أي عملاء بعد"
 
@@ -11987,7 +12024,7 @@ msgstr "لا يوجد وصف بعد."
 msgid "No discrete action step dispatches recorded for this run."
 msgstr "لم تُسجَّل إرسالات خطوات إجراء منفصلة لهذا التشغيل."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:263
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:287
 msgid "No drafts."
 msgstr "لا توجد مسودات."
 
@@ -12015,7 +12052,7 @@ msgstr "لا توجد أحداث بعد."
 msgid "No execution runs recorded yet for this automation."
 msgstr "لم تُسجَّل عمليات تنفيذ بعد لهذه الأتمتة."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:191
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:194
 msgid "No Facebook Page found"
 msgstr "لم يتم العثور على صفحة فيسبوك"
 
@@ -12039,7 +12076,7 @@ msgstr "لا ساعات أو مبيعات في هذه الفترة"
 msgid "No hours set, so the agent treats you as open."
 msgstr "لم تُحدد ساعات عمل، لذا يعتبرك الوكيل مفتوحًا."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:190
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:193
 msgid "No Instagram professional account found"
 msgstr "لم يتم العثور على حساب إنستغرام احترافي"
 
@@ -12265,7 +12302,7 @@ msgstr "لا توجد صفحات تطابق هذا البحث"
 msgid "No pages yet"
 msgstr "لا توجد صفحات بعد"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:1170
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:1180
 msgid "No parameters required"
 msgstr "لا توجد معاملات مطلوبة"
 
@@ -12317,7 +12354,7 @@ msgstr "بلا منصب بعد"
 msgid "No positions yet"
 msgstr "لا توجد مناصب بعد"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:251
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:275
 msgid "No posts this month."
 msgstr "لا توجد منشورات هذا الشهر."
 
@@ -12463,7 +12500,7 @@ msgstr "بدون إكراميات"
 msgid "No tips to divide in this range"
 msgstr "لا إكراميات لتقسيمها في هذه الفترة"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:1291
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:1301
 msgid "No tools available."
 msgstr "لا توجد أدوات متاحة."
 
@@ -12577,7 +12614,7 @@ msgstr "لا شيء"
 #: app/components/staff/schedule/publish-dialog.tsx:160
 #: app/components/website/link-inspector.tsx:615
 #: app/components/website/link-inspector.tsx:634
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:635
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:634
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3351
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3381
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3843
@@ -12654,7 +12691,7 @@ msgstr "لست أنا"
 msgid "Not notified"
 msgstr "لم يُبلَّغوا"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:304
+#: ../../packages/ai/src/components/ai-chat.tsx:319
 msgid "Not now"
 msgstr "ليس الآن"
 
@@ -12766,7 +12803,7 @@ msgstr "ملاحظة: التحقق من Discord يدوي حالياً. اتصل 
 msgid "notes"
 msgstr "ملاحظات"
 
-#: app/components/app-sidebar.tsx:300
+#: app/components/app-sidebar.tsx:301
 #: app/components/command-menu.tsx:90
 #: app/components/command-menu.tsx:321
 #: app/components/hiring/candidate-sheet.tsx:350
@@ -12811,7 +12848,7 @@ msgstr "ملاحظات للذكاء الاصطناعي"
 msgid "Notes help you capture thoughts, meeting minutes, or anything important for your organization. Get started by creating your first note."
 msgstr "تساعدك الملاحظات على تسجيل الأفكار ومحاضر الاجتماعات أو أي شيء مهم لمنظمتك. ابدأ بإنشاء ملاحظتك الأولى."
 
-#: ../../packages/ai/src/components/ai-chat.tsx:728
+#: ../../packages/ai/src/components/ai-chat.tsx:825
 msgid "Notes, navigation, and your site — just ask."
 msgstr "المالملاحظات والتنقل وموقعك — فقط اسأل."
 
@@ -12843,7 +12880,7 @@ msgstr "لم يُحصَّل أي مبلغ بعد."
 msgid "Nothing has been set up for this person."
 msgstr "لم يتم إعداد أي شيء لهذا الشخص."
 
-#: app/components/ui/notification-bell.tsx:272
+#: app/components/ui/notification-bell.tsx:269
 msgid "Nothing here yet!"
 msgstr "لا شيء هنا بعد!"
 
@@ -12916,7 +12953,7 @@ msgstr "لم يُحصَّل أي مبلغ. ابدأ طلبًا جديدًا مت
 msgid "Nothing was charged. You can pay again below."
 msgstr "لم يُحصَّل أي مبلغ. يمكنك الدفع مجددًا أدناه."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:206
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:207
 msgid "Nothing was connected"
 msgstr "لم يتم ربط أي شيء"
 
@@ -12932,7 +12969,7 @@ msgstr "لا شيء بعد."
 msgid "Notification Preferences"
 msgstr "تفضيلات الإشعارات"
 
-#: app/components/app-sidebar.tsx:525
+#: app/components/app-sidebar.tsx:524
 #: app/components/workspace-breadcrumb.tsx:66
 msgid "Notifications"
 msgstr "الإشعارات"
@@ -12961,7 +12998,7 @@ msgstr "أرقام"
 msgid "Numbers the agent answers. We assign agent numbers to your business; forwarded lines start answering once you verify them."
 msgstr "الأرقام التي يرد عليها الوكيل. نخصص أرقام الوكيل لنشاطك التجاري، وتبدأ الخطوط المحوّلة في الرد بمجرد التحقق منها."
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:902
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:912
 msgid "OAuth tokens are scoped to your organization ({orgSlug})"
 msgstr "رموز OAuth محدودة بمنظمتك ({orgSlug})"
 
@@ -13024,7 +13061,7 @@ msgstr "معلّق"
 msgid "On leave"
 msgstr "في إجازة"
 
-#: app/components/staff/labor-core-rules.tsx:357
+#: app/components/staff/labor-core-rules.tsx:354
 msgid "On shifts longer than"
 msgstr "في الورديات الأطول من"
 
@@ -13087,7 +13124,7 @@ msgstr "مرة في الشهر"
 msgid "Once it is paired, your team can clock in with a PIN. This takes about a minute."
 msgstr "بعد الربط، يمكن لفريقك تسجيل الحضور بالرقم السري. يستغرق ذلك دقيقة تقريبًا."
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:948
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:958
 msgid "Once you connect an AI client using the setup instructions below, it will appear here."
 msgstr "بمجرد ربط عميل الذكاء الاصطناعي باستخدام تعليمات الإعداد أدناه، سيظهر هنا."
 
@@ -13095,7 +13132,7 @@ msgstr "بمجرد ربط عميل الذكاء الاصطناعي باستخد�
 msgid "One date"
 msgstr "تاريخ واحد"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:862
+#: ../../packages/ai/src/components/ai-chat.tsx:959
 msgid "One moment…"
 msgstr "لحظة واحدة…"
 
@@ -13186,11 +13223,11 @@ msgstr "لا يمكن بدء المكالمات التجريبية إلا لمن
 msgid "Only people who can view calls can change staff alerts, because alerts include callers' numbers and call summaries."
 msgstr "لا يمكن تغيير تنبيهات الفريق إلا لمن يملك صلاحية عرض المكالمات، لأن التنبيهات تتضمن أرقام المتصلين وملخصات المكالمات."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1069
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1068
 msgid "Only people who may see its QR codes can download this print."
 msgstr "لا يمكن تنزيل هذه المطبوعة إلا لمن يحق له رؤية رموز QR فيها."
 
-#: app/components/staff/labor-core-rules.tsx:82
+#: app/components/staff/labor-core-rules.tsx:81
 msgid "Only scheduled people clock in. Missing breaks are taken off."
 msgstr "يسجّل الحضور المجدولون فقط. تُخصم الاستراحات غير المسجلة."
 
@@ -13226,7 +13263,7 @@ msgstr "يمكن للمالك فقط مشاركة لوحة التحكم هذه."
 msgid "Only what you type here and your business name are used. Nothing is saved until you save."
 msgstr "يُستخدم فقط ما تكتبه هنا واسم نشاطك التجاري. لا يُحفظ شيء حتى تحفظ."
 
-#: app/components/staff/labor-core-rules.tsx:333
+#: app/components/staff/labor-core-rules.tsx:330
 msgid "Only where nobody pressed Start break. Each deduction is marked on the time card."
 msgstr "فقط حيث لم يضغط أحد على بدء الاستراحة. يُوضَّح كل خصم على بطاقة الدوام."
 
@@ -13255,11 +13292,11 @@ msgstr "فتح"
 msgid "Open {day} as a day"
 msgstr "فتح {day} كيوم"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:285
+#: ../../packages/ai/src/components/ai-chat.tsx:300
 msgid "Open {routeTitle}?"
 msgstr "هل تريد فتح {routeTitle}؟"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:957
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:956
 msgid "Open a copy in Canva to change anything freely. Bring it back with Import from Canva."
 msgstr "افتح نسخة في Canva لتعديل ما تشاء بحرية، ثم أعدها عبر الاستيراد من Canva."
 
@@ -13283,7 +13320,7 @@ msgstr "فتح قائمة المهام"
 msgid "Open Checkout dashboard"
 msgstr "فتح لوحة تحكم الدفع"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:792
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:802
 msgid "Open Claude Desktop and go to Settings → Developer"
 msgstr "افتح Claude Desktop وانتقل إلى الإعدادات → المطور"
 
@@ -13291,7 +13328,7 @@ msgstr "افتح Claude Desktop وانتقل إلى الإعدادات → ال�
 msgid "Open command menu"
 msgstr "فتح قائمة الأوامر"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:868
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:878
 msgid "Open Cursor Settings (Cmd/Ctrl + ,)"
 msgstr "افتح إعدادات Cursor (Cmd/Ctrl + ,)"
 
@@ -13321,7 +13358,7 @@ msgstr "فتح في تطبيق البريد"
 msgid "Open in new tab"
 msgstr "فتح في علامة تبويب جديدة"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:829
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:839
 msgid "Open Kiro IDE Settings"
 msgstr "افتح إعدادات Kiro IDE"
 
@@ -13329,13 +13366,17 @@ msgstr "افتح إعدادات Kiro IDE"
 msgid "Open link"
 msgstr "فتح الرابط"
 
-#: app/components/ui/notification-bell.tsx:505
+#: app/components/ui/notification-bell.tsx:501
 msgid "Open menu"
 msgstr "فتح القائمة"
 
 #: app/components/settings/cards/organization/mock-payments-panel.tsx:64
 msgid "Open mock payments dashboard"
 msgstr "فتح لوحة المدفوعات التجريبية"
+
+#: app/components/home-prompt.tsx:44
+msgid "Open my reports"
+msgstr "افتح تقاريري"
 
 #: app/components/phone-agent/flow-editor/flow-meta.ts:41
 msgid "Open or closed"
@@ -13467,7 +13508,7 @@ msgstr "فُتِح {0}"
 msgid "Opened {openedAt}"
 msgstr "فُتح في {openedAt}"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:261
+#: ../../packages/ai/src/components/ai-chat.tsx:276
 msgid "Opened {routeTitle}"
 msgstr "تم فتح {routeTitle}"
 
@@ -13531,8 +13572,8 @@ msgstr "اطلب {PRINT_MAX_COPIES} نسخة كحد أقصى"
 msgid "Order of {date}"
 msgstr "طلب بتاريخ {date}"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:994
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:997
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:993
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:996
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders._index.tsx:70
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders._index.tsx:85
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.new.tsx:186
@@ -13547,7 +13588,7 @@ msgstr "يتطلب طلب هذه المطبوعة أيضًا صلاحية رؤي
 msgid "Orders are unavailable right now. Your shop settings are still saved; try again later."
 msgstr "الطلبات غير متاحة حاليًا. إعدادات المتجر محفوظة؛ حاول مرة أخرى لاحقًا."
 
-#: app/components/staff/labor/labor-settings.tsx:166
+#: app/components/staff/labor/labor-settings.tsx:169
 msgid "Orders one person handles in an hour"
 msgstr "الطلبات التي يتولاها شخص واحد في الساعة"
 
@@ -13555,7 +13596,7 @@ msgstr "الطلبات التي يتولاها شخص واحد في الساعة
 msgid "Orders placed on your public site."
 msgstr "الطلبات المقدمة على موقعك العام."
 
-#: app/components/staff/labor/labor-settings.tsx:210
+#: app/components/staff/labor/labor-settings.tsx:213
 msgid "orders/h"
 msgstr "طلب/ساعة"
 
@@ -13595,7 +13636,7 @@ msgstr "حجم المؤسسة"
 msgid "Organization slug"
 msgstr "معرّف المؤسسة"
 
-#: app/components/app-sidebar.tsx:155
+#: app/components/app-sidebar.tsx:156
 #: app/components/nav-user.tsx:192
 #: app/components/team-switcher.tsx:139
 #: app/routes/_app+/organizations.tsx:192
@@ -13739,7 +13780,7 @@ msgstr "انتقلت الساعات الإضافية بعد الموافقة ع�
 msgid "Overtime rules used to estimate hours and cost. Leave them off if you do not use them."
 msgstr "قواعد العمل الإضافي المستخدمة لتقدير الساعات والتكلفة. اتركها معطّلة إن لم تستخدمها."
 
-#: app/components/app-sidebar.tsx:335
+#: app/components/app-sidebar.tsx:336
 #: app/components/staff/labor/labor-page.tsx:196
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:687
 msgid "Overview"
@@ -13748,7 +13789,7 @@ msgstr "نظرة عامة"
 #: app/components/website/link-inspector.tsx:366
 #: app/components/website/link-inspector.tsx:419
 #: app/components/workspace-breadcrumb.tsx:83
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:744
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:743
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:610
 msgid "Page"
 msgstr "صفحة"
@@ -13762,16 +13803,16 @@ msgstr "إجراءات الصفحة"
 msgid "Page Settings"
 msgstr "إعدادات الصفحة"
 
-#: app/components/website/create-page-dialog.tsx:157
+#: app/components/website/create-page-dialog.tsx:156
 msgid "Page Title"
 msgstr "عنوان الصفحة"
 
-#: app/components/website/create-page-dialog.tsx:171
+#: app/components/website/create-page-dialog.tsx:170
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2417
 msgid "Page URL"
 msgstr "رابط الصفحة"
 
-#: app/components/app-sidebar.tsx:434
+#: app/components/app-sidebar.tsx:433
 #: app/components/command-menu.tsx:147
 #: app/components/workspace-breadcrumb.tsx:56
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:28
@@ -13863,7 +13904,7 @@ msgid "Paragraphs, navigation, and other text."
 msgstr "الفقرات والتنقل والنصوص الأخرى."
 
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:120
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:1166
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:1176
 msgid "Parameters"
 msgstr "المعاملات"
 
@@ -13997,8 +14038,8 @@ msgstr "تم حفظ فترة الرواتب."
 msgid "Pay period settings"
 msgstr "إعدادات فترة الرواتب"
 
-#: app/components/staff/labor-core-rules.tsx:392
-#: app/components/staff/labor-core-rules.tsx:396
+#: app/components/staff/labor-core-rules.tsx:389
+#: app/components/staff/labor-core-rules.tsx:393
 #: app/components/staff/labor-policy-editor.tsx:1289
 #: app/components/staff/labor-policy-editor.tsx:1314
 msgid "Pay rate"
@@ -14236,7 +14277,7 @@ msgstr "رابط الدعوة الشخصي"
 msgid "Phone"
 msgstr "الهاتف"
 
-#: app/components/app-sidebar.tsx:370
+#: app/components/app-sidebar.tsx:369
 #: app/components/command-menu.tsx:115
 #: app/components/phone-agent/settings-nav.tsx:68
 #: app/components/workspace-breadcrumb.tsx:15
@@ -14371,7 +14412,7 @@ msgstr "اختر يومًا من 1 إلى 28."
 msgid "Pick a day from 1 to 28. Each period starts on that day."
 msgstr "اختر يومًا من 1 إلى 28. تبدأ كل فترة في ذلك اليوم."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:215
+#: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:220
 msgid "Pick a design below to make it a print."
 msgstr "اختر تصميمًا أدناه لتحويله إلى مطبوعة."
 
@@ -14383,7 +14424,7 @@ msgstr "اختر حقلاً لإضافته إلى نموذجك."
 msgid "Pick a layout, then customize the blocks."
 msgstr "اختر تخطيطًا ثم خصّص الكتل."
 
-#: app/components/staff/labor-core-rules.tsx:108
+#: app/components/staff/labor-core-rules.tsx:107
 msgid "Pick a starting point, then adjust anything below."
 msgstr "اختر نقطة بداية، ثم عدّل أي شيء أدناه."
 
@@ -14413,11 +14454,11 @@ msgstr "اختيار الاسم ثم الرقم السري"
 msgid "Pick the first day of any one period. Every second week after it starts a new one."
 msgstr "اختر أول يوم في أي فترة. تبدأ فترة جديدة كل أسبوعين بعدها."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:768
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:767
 msgid "Pick up to 4 items. Names, prices and photos come from your catalog."
 msgstr "اختر حتى 4 عناصر. الأسماء والأسعار والصور من كتالوجك."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.new.tsx:113
+#: app/routes/_app+/$orgSlug_+/marketing+/print.new.tsx:118
 msgid "Pick what to print. You can change the size, style and words next."
 msgstr "اختر ما تريد طباعته. يمكنك تغيير المقاس والنمط والنص بعد ذلك."
 
@@ -14480,6 +14521,10 @@ msgstr "عادي"
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:359
 msgid "Plaintext Fallback (Optional)"
 msgstr "نص عادي احتياطي (اختياري)"
+
+#: app/components/home-prompt.tsx:50
+msgid "Plan a customer email"
+msgstr "خطّط لرسالة إلى العملاء"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:309
 msgid "Plan Name"
@@ -14768,15 +14813,15 @@ msgstr "تمت جدولة المنشور."
 msgid "Post sent. See each account below."
 msgstr "تم إرسال المنشور. شاهد كل حساب أدناه."
 
-#: app/components/social/post-composer.tsx:185
+#: app/components/social/post-composer.tsx:198
 msgid "Post to"
 msgstr "النشر على"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:139
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:142
 msgid "Post to Instagram professional accounts (business or creator) linked to a Facebook Page."
 msgstr "انشر على حسابات إنستغرام الاحترافية (التجارية أو حسابات صانعي المحتوى) المرتبطة بصفحة فيسبوك."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:138
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:141
 msgid "Post to the Facebook Pages you manage."
 msgstr "انشر على صفحات فيسبوك التي تديرها."
 
@@ -14788,7 +14833,7 @@ msgstr "الرمز البريدي"
 msgid "Poster"
 msgstr "ملصق"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:330
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:357
 msgid "Posts already sent stay on {platformName}. Scheduled posts will fail for this account."
 msgstr "تبقى المنشورات المرسلة بالفعل على {platformName}. ستفشل المنشورات المجدولة لهذا الحساب."
 
@@ -14838,7 +14883,7 @@ msgstr "الضغط على 0 لن يصل إلى أي أحد حتى تضبط رق�
 #~ msgid "Pressing 0 won't reach anyone until you set a staff phone number in Setup."
 #~ msgstr "الضغط على 0 لن يصل إلى أي أحد حتى تضبط رقم هاتف الفريق في الإعداد."
 
-#: app/components/social/post-composer.tsx:346
+#: app/components/social/post-composer.tsx:361
 #: app/components/staff/schedule/recommend-dialog.tsx:241
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:548
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5949
@@ -14859,7 +14904,7 @@ msgid "Previous day"
 msgstr "اليوم السابق"
 
 #: app/components/staff/schedule/schedule-toolbar.tsx:108
-#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:174
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:198
 msgid "Previous month"
 msgstr "الشهر السابق"
 
@@ -14884,7 +14929,7 @@ msgstr "السعر غير مكوّن"
 msgid "Price ready"
 msgstr "السعر جاهز"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:495
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:496
 msgid "Prices, names or QR codes on this print are out of date. Approve the proof again to refresh it, or keep printing the approved version."
 msgstr "الأسعار أو الأسماء أو رموز QR في هذه المطبوعة قديمة. اعتمد البروفة مرة أخرى لتحديثها، أو تابع طباعة النسخة المعتمدة."
 
@@ -14906,11 +14951,11 @@ msgstr "الزر الأساسي"
 msgid "Print"
 msgstr "طباعة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1093
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1092
 msgid "Print at home (A4)"
 msgstr "الطباعة في المنزل (A4)"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1088
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1087
 msgid "Print at home (US Letter)"
 msgstr "الطباعة في المنزل (US Letter)"
 
@@ -14929,11 +14974,11 @@ msgstr "طلب طباعة"
 msgid "Print orders"
 msgstr "طلبات الطباعة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:933
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:932
 msgid "Print proof"
 msgstr "بروفة الطباعة"
 
-#: app/components/app-sidebar.tsx:363
+#: app/components/app-sidebar.tsx:362
 #: app/components/command-menu.tsx:106
 #: app/components/command-menu.tsx:110
 #: app/routes/_app+/$orgSlug_+/marketing+/print._index.tsx:46
@@ -14957,7 +15002,7 @@ msgstr "قيد الطباعة"
 msgid "Prints"
 msgstr "المطبوعات"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:463
+#: ../../packages/ai/src/components/ai-chat.tsx:492
 msgid "Prioritize these tasks"
 msgstr "تحديد أولوية هذه المهام"
 
@@ -14991,7 +15036,7 @@ msgstr "احترافي"
 msgid "Processing"
 msgstr "قيد المعالجة"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:2002
+#: app/routes/_app+/$orgSlug_+/media.tsx:1963
 msgid "Processing…"
 msgstr "جارٍ المعالجة…"
 
@@ -15003,7 +15048,7 @@ msgstr "اسم المنتج"
 msgid "Production has started, so this order can no longer be cancelled."
 msgstr "بدأ الإنتاج، لذلك لم يعد بالإمكان إلغاء هذا الطلب."
 
-#: app/components/app-sidebar.tsx:143
+#: app/components/app-sidebar.tsx:144
 #: app/components/staff/staff-profile-page.tsx:97
 #: app/components/user-dropdown.tsx:54
 #: app/routes/_auth+/onboarding_.$provider.tsx:277
@@ -15041,7 +15086,7 @@ msgstr "الرسالة الصوتية"
 msgid "Pronunciations"
 msgstr "طرق النطق"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:900
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:899
 msgid "Proof"
 msgstr "البروفة"
 
@@ -15093,7 +15138,7 @@ msgstr "سجل النشر"
 msgid "Publish history…"
 msgstr "سجل النشر…"
 
-#: app/components/social/post-composer.tsx:403
+#: app/components/social/post-composer.tsx:418
 msgid "Publish now"
 msgstr "النشر الآن"
 
@@ -15179,7 +15224,7 @@ msgid "Publishing..."
 msgstr "جارٍ النشر..."
 
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:494
-#: app/components/social/post-composer.tsx:402
+#: app/components/social/post-composer.tsx:417
 #: app/components/staff/schedule/publish-dialog.tsx:271
 msgid "Publishing…"
 msgstr "جارٍ النشر…"
@@ -15195,7 +15240,7 @@ msgstr "بصمات يحتاج المدير إلى إضافتها"
 #: app/components/hiring/applicant-labels.ts:31
 #: app/components/print/print-labels.ts:66
 #: app/components/settings/two-factor-form.tsx:176
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:702
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:701
 msgid "QR code"
 msgstr "رمز QR"
 
@@ -15239,6 +15284,10 @@ msgstr "أسئلة حول الفوترة؟"
 #: app/components/hiring/screener-editor.tsx:98
 msgid "Questions are optional. A short yes or no on weekends or experience saves you reading every application."
 msgstr "الأسئلة اختيارية. سؤال قصير بنعم أو لا عن العمل في عطلة نهاية الأسبوع أو الخبرة يوفّر عليك قراءة كل طلب."
+
+#: app/components/home-prompt.tsx:437
+msgid "Questions you ask will show up here."
+msgstr "ستظهر هنا الأسئلة التي تطرحها."
 
 #: app/routes/mock-payments+/dashboard.tsx:190
 msgid "Queued"
@@ -15298,7 +15347,7 @@ msgstr "قراءة الوثائق"
 msgid "Read organization details, verified domain, and storage status."
 msgstr "قراءة تفاصيل المنظمة والنطاق الموثّق وحالة التخزين."
 
-#: ../../packages/ai/src/components/ai-chat.tsx:158
+#: ../../packages/ai/src/components/ai-chat.tsx:173
 msgid "Read page details"
 msgstr "تمت قراءة تفاصيل الصفحة"
 
@@ -15318,7 +15367,7 @@ msgstr "قراءة فقط"
 msgid "Read-only access to organization notes"
 msgstr "وصول للقراءة فقط إلى ملاحظات المؤسسة"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:157
+#: ../../packages/ai/src/components/ai-chat.tsx:172
 msgid "Reading page details"
 msgstr "قراءة تفاصيل الصفحة"
 
@@ -15334,7 +15383,7 @@ msgstr "جاهز"
 msgid "Reason"
 msgstr "السبب"
 
-#: app/components/hiring/decline-dialog.tsx:106
+#: app/components/hiring/decline-dialog.tsx:104
 msgid "Reason (only you see this)"
 msgstr "السبب (أنت وحدك ترى هذا)"
 
@@ -15345,6 +15394,10 @@ msgstr "السبب: {reason}"
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:408
 msgid "Receives tips"
 msgstr "يتلقى الإكراميات"
+
+#: app/components/home-prompt.tsx:431
+msgid "Recent"
+msgstr "الأخيرة"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:241
 msgid "Recent campaigns"
@@ -15371,7 +15424,7 @@ msgstr "المستلمون"
 msgid "Recommend a schedule"
 msgstr "اقتراح جدول"
 
-#: app/components/staff/labor-core-rules.tsx:129
+#: app/components/staff/labor-core-rules.tsx:128
 msgid "Recommended"
 msgstr "موصى به"
 
@@ -15383,11 +15436,11 @@ msgstr "موصى به لـ"
 msgid "Recommended for SEO"
 msgstr "موصى به لتحسين محركات البحث"
 
-#: app/components/social/post-composer.tsx:235
+#: app/components/social/post-composer.tsx:250
 msgid "Reconnect"
 msgstr "إعادة الربط"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:310
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:336
 msgid "Reconnect needed"
 msgstr "يلزم إعادة الربط"
 
@@ -15461,7 +15514,7 @@ msgstr "نوع إعادة التوجيه"
 msgid "Redirected"
 msgstr "تمت إعادة التوجيه"
 
-#: app/components/app-sidebar.tsx:467
+#: app/components/app-sidebar.tsx:466
 #: app/components/command-menu.tsx:150
 #: app/components/workspace-breadcrumb.tsx:60
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:60
@@ -15561,7 +15614,7 @@ msgstr "رفض"
 msgid "Relationship"
 msgstr "صلة القرابة"
 
-#: app/components/staff/labor-core-rules.tsx:89
+#: app/components/staff/labor-core-rules.tsx:88
 msgid "Relaxed"
 msgstr "مرن"
 
@@ -15606,7 +15659,7 @@ msgstr "التذكير قبل بدء الوردية بمقدار"
 msgid "Remind people before their shift"
 msgstr "تذكير الأشخاص قبل ورديتهم"
 
-#: app/components/staff/labor-core-rules.tsx:73
+#: app/components/staff/labor-core-rules.tsx:72
 msgid "Reminders, not hard blocks. No overtime until you turn it on."
 msgstr "تذكيرات وليست قيودًا صارمة. لا ساعات إضافية حتى تفعّلها."
 
@@ -15632,6 +15685,11 @@ msgstr "الإزالة غير منشورة"
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2638
 msgid "Remove"
 msgstr "إزالة"
+
+#. placeholder {0}: attachment.name
+#: ../../packages/ai/src/components/chat-attachment-list.tsx:33
+msgid "Remove {0}"
+msgstr "إزالة {0}"
 
 #: app/components/staff/labor-policy-editor.tsx:1368
 msgid "Remove {date}"
@@ -15712,7 +15770,7 @@ msgstr "إزالة من مكان العمل"
 #: app/components/note/comment-image-preview.tsx:81
 #: app/components/note/comment-input.tsx:340
 #: app/components/note/comment-input.tsx:456
-#: app/components/social/post-composer.tsx:303
+#: app/components/social/post-composer.tsx:318
 #: app/components/ui/multi-image-upload.tsx:281
 msgid "Remove image"
 msgstr "إزالة الصورة"
@@ -15818,7 +15876,7 @@ msgstr "تمت الإزالة"
 msgid "Removed from {name}."
 msgstr "تمت الإزالة من {name}."
 
-#: ../../packages/ai/src/components/ai-chat.tsx:174
+#: ../../packages/ai/src/components/ai-chat.tsx:189
 msgid "Removed section"
 msgstr "تمت إزالة القسم"
 
@@ -15826,7 +15884,7 @@ msgstr "تمت إزالة القسم"
 msgid "Removed tablets ({removedCount})"
 msgstr "الأجهزة المُزالة ({removedCount})"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:173
+#: ../../packages/ai/src/components/ai-chat.tsx:188
 msgid "Removing section"
 msgstr "إزالة القسم"
 
@@ -15945,7 +16003,7 @@ msgstr "التقرير غير موجود"
 msgid "Report templates"
 msgstr "قوالب التقارير"
 
-#: app/components/app-sidebar.tsx:294
+#: app/components/app-sidebar.tsx:295
 #: app/components/command-menu.tsx:89
 #: app/components/workspace-breadcrumb.tsx:17
 msgid "Reports"
@@ -15990,11 +16048,11 @@ msgstr "جاري طلب التفويض"
 msgid "Requests"
 msgstr "الطلبات"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:1080
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:1090
 msgid "Require re-authorization to reconnect"
 msgstr "يتطلب إعادة التفويض لإعادة الاتصال"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:1186
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:1196
 msgid "required"
 msgstr "مطلوب"
 
@@ -16024,7 +16082,7 @@ msgstr "إعادة الإرسال إلى من لم تصلهم الرسالة"
 msgid "Reset"
 msgstr "إعادة تعيين"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1990
+#: app/routes/_app+/$orgSlug_+/media.tsx:1951
 msgid "Reset adjustments"
 msgstr "إعادة تعيين التعديلات"
 
@@ -16154,7 +16212,7 @@ msgstr "أعد استخدام نمط من الورديات أسبوعًا بعد
 msgid "Review"
 msgstr "التقييم"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:162
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:186
 msgid "Review accounts"
 msgstr "مراجعة الحسابات"
 
@@ -16187,15 +16245,15 @@ msgstr "راجع بطاقات الوقت التي تحتاج إلى نظرة."
 msgid "Reviews"
 msgstr "المراجعات"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:1013
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:1023
 msgid "Revoke"
 msgstr "إلغاء"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:1110
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:1120
 msgid "Revoke Access"
 msgstr "إلغاء الوصول"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:1057
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:1067
 msgid "Revoke Authorization"
 msgstr "إلغاء التفويض"
 
@@ -16207,12 +16265,12 @@ msgstr "إلغاء الجلسة"
 msgid "Revoke workspace access and remove non-admin members."
 msgstr "إلغاء الوصول إلى مساحة العمل وإزالة الأعضاء غير المسؤولين."
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:998
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:1017
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:1008
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:1027
 msgid "Revoked"
 msgstr "تم الإلغاء"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:1105
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:1115
 msgid "Revoking..."
 msgstr "جاري الإلغاء..."
 
@@ -16246,7 +16304,7 @@ msgstr "اسم الدور"
 msgid "Roles"
 msgstr "الأدوار"
 
-#: app/components/app-sidebar.tsx:494
+#: app/components/app-sidebar.tsx:493
 #: app/components/workspace-breadcrumb.tsx:64
 msgid "Roles & access"
 msgstr "الأدوار والصلاحيات"
@@ -16459,8 +16517,7 @@ msgstr "بدون زوائد"
 msgid "Saturated backdrop that makes it pop"
 msgstr "خلفية مشبعة تجعله يبرز"
 
-#: app/routes/_app+/$orgSlug_+/media.tsx:1921
-#: app/routes/_app+/$orgSlug_+/media.tsx:1936
+#: app/routes/_app+/$orgSlug_+/media.tsx:1900
 msgid "Saturation"
 msgstr "التشبع"
 
@@ -16490,7 +16547,7 @@ msgstr "المملكة العربية السعودية (KSA)"
 #: app/components/staff/schedule/time-off-sheet.tsx:175
 #: app/components/staff/timesheets/pay-period-dialog.tsx:199
 #: app/components/ui/photo-crop-form.tsx:236
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1228
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1227
 #: app/routes/_app+/$orgSlug_+/media.tsx:1681
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:863
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:458
@@ -16510,7 +16567,7 @@ msgstr "وفّر 20٪"
 msgid "Save and test"
 msgstr "حفظ واختبار"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:869
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:868
 msgid "Save and update proof"
 msgstr "حفظ وتحديث البروفة"
 
@@ -16519,7 +16576,7 @@ msgstr "حفظ وتحديث البروفة"
 #~ msgstr "حفظ الإجابات"
 
 #: app/components/media-library/photo-studio-dialog.tsx:1056
-#: app/routes/_app+/$orgSlug_+/media.tsx:2004
+#: app/routes/_app+/$orgSlug_+/media.tsx:1965
 msgid "Save as copy"
 msgstr "حفظ كنسخة"
 
@@ -16543,7 +16600,7 @@ msgstr "حفظ البطاقة للمعاملات اللاحقة"
 #: app/components/phone-agent/training-rules-section.tsx:645
 #: app/components/settings/cards/organization/announcement-sheet.tsx:551
 #: app/components/staff/timesheets/card-sheet.tsx:310
-#: app/routes/_app+/$orgSlug_+/media.tsx:2020
+#: app/routes/_app+/$orgSlug_+/media.tsx:1981
 #: app/routes/_app+/$orgSlug_+/notes-cards.tsx:446
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:432
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1462
@@ -16553,12 +16610,12 @@ msgstr "حفظ التغييرات"
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:193
 #: app/components/hiring/job-editor.tsx:411
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:695
-#: app/components/social/post-composer.tsx:422
+#: app/components/social/post-composer.tsx:437
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:478
 msgid "Save draft"
 msgstr "حفظ المسودة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:887
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:886
 msgid "Save first, so the proof shows your changes before you approve it."
 msgstr "احفظ أولًا لتظهر تغييراتك في البروفة قبل اعتمادها."
 
@@ -16607,11 +16664,11 @@ msgstr "حفظ الأجر"
 msgid "Save template"
 msgstr "حفظ القالب"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:811
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:821
 msgid "Save the file and restart Claude Desktop"
 msgstr "احفظ الملف وأعد تشغيل Claude Desktop"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:846
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:856
 msgid "Save the file and restart Kiro IDE"
 msgstr "احفظ الملف وأعد تشغيل Kiro IDE"
 
@@ -16762,11 +16819,11 @@ msgstr "امسح الرمز بكاميرا الجهاز اللوحي، أو اف
 msgid "Scan the code with this tablet's camera, or paste the link below."
 msgstr "امسح الرمز بكاميرا هذا الجهاز اللوحي، أو الصق الرابط أدناه."
 
-#: app/components/app-sidebar.tsx:406
+#: app/components/app-sidebar.tsx:405
 #: app/components/command-menu.tsx:135
 #: app/components/hiring/interview-dialog.tsx:287
 #: app/components/my-schedule/my-schedule-page.tsx:187
-#: app/components/social/post-composer.tsx:413
+#: app/components/social/post-composer.tsx:428
 #: app/components/workspace-breadcrumb.tsx:33
 #: app/routes/_app+/$orgSlug_+/staff+/schedule.tsx:38
 #: app/routes/_app+/$orgSlug_+/staff+/schedule.tsx:46
@@ -16802,7 +16859,7 @@ msgstr "عناصر تحكم الجدول"
 msgid "Schedule enforcement"
 msgstr "الالتزام بالجدول"
 
-#: app/components/social/post-composer.tsx:326
+#: app/components/social/post-composer.tsx:341
 msgid "Schedule for"
 msgstr "الجدولة في"
 
@@ -16856,8 +16913,8 @@ msgstr "الفرز"
 msgid "Seamless white backdrop, soft even light"
 msgstr "خلفية بيضاء سلسة وإضاءة ناعمة متساوية"
 
-#: app/components/app-sidebar.tsx:231
-#: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:300
+#: app/components/app-sidebar.tsx:232
+#: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:305
 msgid "Search"
 msgstr "بحث"
 
@@ -16885,7 +16942,7 @@ msgstr "البحث بالاسم أو البريد الإلكتروني..."
 msgid "Search campaigns..."
 msgstr "البحث في الحملات..."
 
-#: app/routes/mcp+/authorize.tsx:436
+#: app/routes/mcp+/authorize.tsx:439
 msgid "Search for users in your organization"
 msgstr "البحث عن المستخدمين في منظمتك"
 
@@ -16988,8 +17045,8 @@ msgstr "البحث في بطاقات الدوام"
 msgid "Search voices"
 msgstr "البحث في الأصوات"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:290
-#: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:297
+#: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:295
+#: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:302
 msgid "Search your Canva designs"
 msgstr "ابحث في تصاميمك على Canva"
 
@@ -16997,7 +17054,7 @@ msgstr "ابحث في تصاميمك على Canva"
 msgid "Search..."
 msgstr "البحث..."
 
-#: app/components/app-sidebar.tsx:710
+#: app/components/app-sidebar.tsx:709
 msgid "Search…"
 msgstr "بحث…"
 
@@ -17009,7 +17066,7 @@ msgstr "جارٍ البحث…"
 msgid "Seasonal"
 msgstr "موسمي"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:626
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:625
 msgid "Second language"
 msgstr "اللغة الثانية"
 
@@ -17049,8 +17106,8 @@ msgstr "الأقسام"
 msgid "Secure your account with an extra verification step"
 msgstr "أمّن حسابك بخطوة تحقق إضافية"
 
-#: app/components/app-sidebar.tsx:149
-#: app/routes/mcp+/authorize.tsx:456
+#: app/components/app-sidebar.tsx:150
+#: app/routes/mcp+/authorize.tsx:459
 msgid "Security"
 msgstr "الأمان"
 
@@ -17148,7 +17205,7 @@ msgstr "اختر مكالمة لقراءة الملخص والنص، ومعاو�
 msgid "Select a form"
 msgstr "اختر نموذجًا"
 
-#: app/components/website/create-page-dialog.tsx:102
+#: app/components/website/create-page-dialog.tsx:107
 msgid "Select a starting layout for your new page."
 msgstr "اختر تخطيطاً أولياً لصفحتك الجديدة."
 
@@ -17207,7 +17264,7 @@ msgstr "اختر اللغات"
 msgid "Select operator"
 msgstr "اختر العامل"
 
-#: app/routes/mcp+/authorize.tsx:392
+#: app/routes/mcp+/authorize.tsx:395
 msgid "Select Organization"
 msgstr "اختر المنظمة"
 
@@ -17253,7 +17310,8 @@ msgstr "لدى الأعضاء المحددين صلاحية الوصول الم�
 msgid "Sell one product on your public site. The platform keeps {SHOP_PLATFORM_FEE_PERCENT}% and the rest is paid out to you."
 msgstr "قم ببيع منتج واحد على موقعك العام. تحتفظ المنصة بنسبة {SHOP_PLATFORM_FEE_PERCENT}% ويتم دفع الباقي لك."
 
-#: ../../packages/ai/src/components/ai-chat.tsx:988
+#: ../../packages/ai/src/components/ai-chat.tsx:1133
+#: app/components/home-prompt.tsx:373
 #: app/components/my-schedule/availability-sheet.tsx:203
 msgid "Send"
 msgstr "إرسال"
@@ -17326,7 +17384,7 @@ msgstr "إرسال رسالة نصية"
 msgid "Send the first message — your team will see it here."
 msgstr "أرسل أول رسالة — سيراها فريقك هنا."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:970
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:969
 msgid "Send to Canva"
 msgstr "إرسال إلى Canva"
 
@@ -17448,11 +17506,11 @@ msgstr "حدد يومًا واحدًا على الأقل."
 msgid "Set clock-out"
 msgstr "تحديد الانصراف"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:464
+#: ../../packages/ai/src/components/ai-chat.tsx:493
 msgid "Set deadlines"
 msgstr "تعيين المواعيد النهائية"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:432
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:440
 msgid "Set expiration date (optional)"
 msgstr "تعيين تاريخ انتهاء الصلاحية (اختياري)"
 
@@ -17464,7 +17522,7 @@ msgstr "تحديد الساعات"
 msgid "Set it in Labor settings"
 msgstr "اضبطه في إعدادات العمالة"
 
-#: app/components/website/create-page-dialog.tsx:143
+#: app/components/website/create-page-dialog.tsx:142
 msgid "Set the title and URL for your new page."
 msgstr "حدد العنوان والرابط لصفحتك الجديدة."
 
@@ -17496,8 +17554,8 @@ msgstr "إعداد رمز الحضور الخاص بهم"
 msgid "Set up this tablet"
 msgstr "إعداد هذا الجهاز اللوحي"
 
-#: app/components/app-sidebar.tsx:381
-#: app/components/app-sidebar.tsx:474
+#: app/components/app-sidebar.tsx:380
+#: app/components/app-sidebar.tsx:473
 #: app/components/command-menu.tsx:345
 #: app/components/command-menu.tsx:378
 #: app/components/media-library/photo-studio-dialog.tsx:703
@@ -17685,7 +17743,7 @@ msgstr "تُشحن إلى عنوان في الولايات المتحدة. تر�
 msgid "Shipping"
 msgstr "الشحن"
 
-#: app/components/app-sidebar.tsx:515
+#: app/components/app-sidebar.tsx:514
 #: app/components/workspace-breadcrumb.tsx:68
 msgid "Shop"
 msgstr "المتجر"
@@ -17776,15 +17834,15 @@ msgstr "عرض الطلبات"
 msgid "Show result {position}"
 msgstr "عرض النتيجة {position}"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:475
+#: ../../packages/ai/src/components/ai-chat.tsx:504
 msgid "Show specific examples"
 msgstr "أرني أمثلة محددة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:846
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:845
 msgid "Show the address"
 msgstr "إظهار العنوان"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:854
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:853
 msgid "Show the website"
 msgstr "إظهار الموقع الإلكتروني"
 
@@ -17800,7 +17858,7 @@ msgstr "عرض الورديات القادمة"
 msgid "Showing {shownCount} of {total}"
 msgstr "عرض {shownCount} من {total}"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:925
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:924
 msgid "Showing 3 of {total} cards. Every card uses the same layout."
 msgstr "يُعرض 3 من {total} بطاقة. تستخدم كل البطاقات التصميم نفسه."
 
@@ -17869,7 +17927,7 @@ msgstr "أنشئ حساباً باستخدام حساب التواصل الاج�
 msgid "Signed in"
 msgstr "تم تسجيل الدخول"
 
-#: app/routes/mcp+/authorize.tsx:371
+#: app/routes/mcp+/authorize.tsx:374
 msgid "Signed in as"
 msgstr "تم تسجيل الدخول كـ"
 
@@ -17914,9 +17972,9 @@ msgstr "متجر الموقع"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:169
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:171
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:555
-#: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:400
-#: app/routes/_app+/$orgSlug_+/marketing+/print.new.tsx:148
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:556
+#: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:399
+#: app/routes/_app+/$orgSlug_+/marketing+/print.new.tsx:150
 msgid "Size"
 msgstr "الحجم"
 
@@ -17970,7 +18028,7 @@ msgstr "نص الرسالة النصية مطلوب."
 msgid "SMS messages over 160 characters will be segmented according to standard GSM telecommunication protocols."
 msgstr "ستُقسَّم الرسائل النصية التي تتجاوز 160 حرفاً وفق بروتوكولات GSM الاتصالية القياسية."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:160
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:163
 msgid "Social accounts"
 msgstr "حسابات التواصل الاجتماعي"
 
@@ -17978,9 +18036,9 @@ msgstr "حسابات التواصل الاجتماعي"
 msgid "Social links"
 msgstr "روابط التواصل الاجتماعي"
 
-#: app/components/app-sidebar.tsx:356
+#: app/components/app-sidebar.tsx:357
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:120
-#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:107
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:126
 msgid "Social media"
 msgstr "وسائل التواصل الاجتماعي"
 
@@ -18012,6 +18070,11 @@ msgstr "بعض الحقول تختلف بالفعل عن اللغة الافتر
 msgid "Some fields are already translated"
 msgstr "بعض الحقول مترجمة بالفعل"
 
+#: ../../packages/ai/src/components/ai-chat.tsx:1050
+#: app/components/home-prompt.tsx:322
+msgid "Some images couldn't be added. Use PNG, JPEG, WebP or GIF under 10 MB, up to 4 per message."
+msgstr "تعذّرت إضافة بعض الصور. استخدم صور PNG أو JPEG أو WebP أو GIF بحجم أقل من 10 ميغابايت، وبحد أقصى 4 صور في الرسالة."
+
 #: app/utils/my-schedule/my-schedule-messages.ts:26
 msgid "Some of what you entered is not right. Check it and try again."
 msgstr "بعض ما أدخلته غير صحيح. راجعه وحاول مرة أخرى."
@@ -18037,7 +18100,7 @@ msgstr "شخص ما"
 msgid "Someone else changed these settings. Reload to see their changes, then try again."
 msgstr "غيّر شخص آخر هذه الإعدادات. أعد التحميل لرؤية تغييراته ثم حاول مرة أخرى."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:443
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:444
 msgid "Someone else changed this print while you approved it. Check the proof, then approve again."
 msgstr "غيّر شخص آخر هذه المطبوعة أثناء اعتمادك لها. راجع البروفة، ثم اعتمدها مرة أخرى."
 
@@ -18057,7 +18120,7 @@ msgstr "يوجد شخص في فريقك بهذا البريد الإلكترون
 msgid "Something went wrong"
 msgstr "حدث خطأ ما"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:482
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:483
 msgid "Something went wrong making the file. Try again shortly."
 msgstr "حدث خطأ أثناء إنشاء الملف. حاول مرة أخرى بعد قليل."
 
@@ -18081,7 +18144,7 @@ msgstr "حدث خطأ ما. حاول مرة أخرى."
 msgid "Something went wrong. Reload the page and try again."
 msgstr "حدث خطأ ما. أعد تحميل الصفحة وحاول مرة أخرى."
 
-#: ../../packages/ai/src/components/ai-chat.tsx:222
+#: ../../packages/ai/src/components/ai-chat.tsx:237
 #: app/components/hiring/job-editor.tsx:486
 #: app/utils/staffing/staff-errors.ts:51
 msgid "Something went wrong. Try again."
@@ -18129,7 +18192,7 @@ msgstr "وردية مقسّمة"
 msgid "Square"
 msgstr "مربع"
 
-#: app/components/app-sidebar.tsx:390
+#: app/components/app-sidebar.tsx:389
 #: app/components/command-menu.tsx:129
 #: app/components/roles/tenant-role-access-manager.tsx:261
 #: app/components/workspace-breadcrumb.tsx:16
@@ -18219,7 +18282,7 @@ msgstr "عضو عادي في المؤسسة مع إمكانية الوصول إ�
 msgid "Standard platform roles. Click any role to review its active permissions."
 msgstr "أدوار المنصة القياسية. انقر أي دور لمراجعة صلاحياته الفعّالة."
 
-#: app/components/staff/labor-core-rules.tsx:71
+#: app/components/staff/labor-core-rules.tsx:70
 msgid "Standard starter"
 msgstr "بداية قياسية"
 
@@ -18335,7 +18398,7 @@ msgstr "القائمة المبدئية"
 msgid "Starting date"
 msgstr "تاريخ البدء"
 
-#: app/components/staff/labor-core-rules.tsx:116
+#: app/components/staff/labor-core-rules.tsx:115
 #: app/components/website/create-form-dialog.tsx:97
 msgid "Starting point"
 msgstr "نقطة البداية"
@@ -18381,7 +18444,7 @@ msgstr "الإحصائيات"
 #: app/components/workspace-breadcrumb.tsx:71
 #: app/components/workspace-breadcrumb.tsx:79
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:270
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:963
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:973
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:514
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:236
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:203
@@ -18395,7 +18458,7 @@ msgstr "الحالة"
 msgid "Stay"
 msgstr "البقاء"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:260
+#: ../../packages/ai/src/components/ai-chat.tsx:275
 msgid "Stayed on current page"
 msgstr "تم البقاء في الصفحة الحالية"
 
@@ -18420,7 +18483,7 @@ msgstr "الخطوات"
 msgid "Still clocked in"
 msgstr "ما زال في الدوام"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:988
+#: ../../packages/ai/src/components/ai-chat.tsx:1133
 msgid "Stop"
 msgstr "إيقاف"
 
@@ -18452,7 +18515,7 @@ msgstr "ترحيل التخزين"
 msgid "Street address"
 msgstr "عنوان الشارع"
 
-#: app/components/staff/labor-core-rules.tsx:80
+#: app/components/staff/labor-core-rules.tsx:79
 msgid "Strict"
 msgstr "صارم"
 
@@ -18486,7 +18549,7 @@ msgstr "استوديو"
 #: app/components/website/link-inspector.tsx:381
 #: app/components/website/link-inspector.tsx:383
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:575
-#: app/routes/_app+/$orgSlug_+/marketing+/print.new.tsx:175
+#: app/routes/_app+/$orgSlug_+/marketing+/print.new.tsx:176
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3630
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3699
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4004
@@ -18560,11 +18623,23 @@ msgstr "نجاح"
 msgid "Success message"
 msgstr "رسالة النجاح"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:424
+#: ../../packages/ai/src/components/ai-chat.tsx:453
 msgid "Suggest improvements"
 msgstr "اقتراح تحسينات"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:422
+#: app/components/home-prompt.tsx:430
+msgid "Suggestions"
+msgstr "الاقتراحات"
+
+#: app/components/home-prompt.tsx:39
+msgid "Summarize my most recent notes and list the action items I should follow up on."
+msgstr "لخّص أحدث ملاحظاتي واذكر المهام التي يجب أن أتابعها."
+
+#: app/components/home-prompt.tsx:38
+msgid "Summarize my notes"
+msgstr "لخّص ملاحظاتي"
+
+#: ../../packages/ai/src/components/ai-chat.tsx:451
 msgid "Summarize this note"
 msgstr "تلخيص هذه الملاحظة"
 
@@ -18618,7 +18693,7 @@ msgstr "طلبات التبديل والتغطية والإسقاط"
 msgid "Swaps are not offered at this workplace. Ask your manager."
 msgstr "التبديل غير متاح في مكان العمل هذا. اسأل مديرك."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:196
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:199
 msgid "Switch the Instagram account to a business or creator account, link it to a Facebook Page, and allow that Page when Facebook asks."
 msgstr "حوّل حساب إنستغرام إلى حساب تجاري أو حساب صانع محتوى، واربطه بصفحة فيسبوك، واسمح لتلك الصفحة عندما يطلب فيسبوك ذلك."
 
@@ -18661,7 +18736,7 @@ msgstr "ساعات الدوام على الأجهزة اللوحية متوقف�
 msgid "Tablets"
 msgstr "الأجهزة اللوحية"
 
-#: app/components/staff/labor-core-rules.tsx:278
+#: app/components/staff/labor-core-rules.tsx:275
 msgid "Tablets accept clock-ins"
 msgstr "الأجهزة اللوحية تقبل تسجيل الحضور"
 
@@ -18690,9 +18765,17 @@ msgstr "تلقي رسالة"
 msgid "Take a voicemail"
 msgstr "تلقي بريد صوتي"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:430
+#: app/components/home-prompt.tsx:45
+msgid "Take me to my reports and walk me through what to look at first."
+msgstr "خذني إلى تقاريري وأرشدني إلى ما يجب أن أنظر إليه أولًا."
+
+#: ../../packages/ai/src/components/ai-chat.tsx:459
 msgid "Take me to settings"
 msgstr "الانتقال إلى الإعدادات"
+
+#: app/components/home-prompt.tsx:57
+msgid "Take me to the page where I can invite team members to my organization."
+msgstr "خذني إلى الصفحة التي يمكنني منها دعوة أعضاء الفريق إلى مؤسستي."
 
 #: app/components/phone-agent/test-call-sheet.tsx:105
 msgid "Talk to your agent from this browser and use the dial pad to press keys. Test calls use the same call flow, rules, and business details as real calls and appear in Calls marked as tests."
@@ -18748,7 +18831,7 @@ msgid "Teal"
 msgstr "فيروزي"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:93
-#: app/components/app-sidebar.tsx:396
+#: app/components/app-sidebar.tsx:395
 #: app/components/command-menu.tsx:133
 #: app/components/staff/schedule/day-timeline.tsx:475
 #: app/components/staff/schedule/week-grid.tsx:359
@@ -18816,7 +18899,7 @@ msgstr "عرّفه بنشاطك التجاري"
 msgid "Tell managers when someone has not clocked in"
 msgstr "إبلاغ المديرين عندما لا يسجّل أحدهم حضوره"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:484
+#: ../../packages/ai/src/components/ai-chat.tsx:513
 msgid "Tell me more"
 msgstr "أخبرني المزيد"
 
@@ -18960,7 +19043,7 @@ msgstr "اختبار هذه المسودة"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:161
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:193
-#: app/components/social/post-composer.tsx:249
+#: app/components/social/post-composer.tsx:264
 #: app/components/website/link-inspector.tsx:644
 msgid "Text"
 msgstr "نص"
@@ -19308,7 +19391,7 @@ msgstr "يعمل وكيل الهاتف بالذكاء الاصطناعي على 
 msgid "The amount could not be read."
 msgstr "تعذّرت قراءة المبلغ."
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:454
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:462
 msgid "The API key will expire on this date. Leave unchecked for no expiration."
 msgstr "سينتهي صلاحية مفتاح API في هذا التاريخ. اترك بدون تحديد لعدم انتهاء الصلاحية."
 
@@ -19316,11 +19399,11 @@ msgstr "سينتهي صلاحية مفتاح API في هذا التاريخ. ا�
 msgid "The applicant is told the time and details you enter here."
 msgstr "يُبلَّغ المتقدّم بالوقت والتفاصيل التي تدخلها هنا."
 
-#: ../../packages/ai/src/components/ai-chat.tsx:882
+#: ../../packages/ai/src/components/ai-chat.tsx:979
 msgid "The assistant couldn't reply. Check your connection and try again."
 msgstr "تعذّر على المساعد الرد. تحقّق من اتصالك وحاول مرة أخرى."
 
-#: ../../packages/ai/src/components/ai-chat.tsx:887
+#: ../../packages/ai/src/components/ai-chat.tsx:984
 msgid "The assistant couldn't reply. Try again."
 msgstr "تعذّر على المساعد الرد. حاول مرة أخرى."
 
@@ -19328,7 +19411,7 @@ msgstr "تعذّر على المساعد الرد. حاول مرة أخرى."
 msgid "The assistant that answers your business calls."
 msgstr "المساعد الذي يرد على مكالمات نشاطك التجاري."
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:853
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:863
 msgid "The autoApprove setting allows automatic approval of these tools without prompting"
 msgstr "يسمح إعداد autoApprove بالموافقة التلقائية على هذه الأدوات دون مطالبة"
 
@@ -19348,7 +19431,7 @@ msgstr "يجب أن تقع الاستراحة داخل الوردية."
 msgid "The call got a tag you marked important."
 msgstr "حصلت المكالمة على وسم حددته كمهم."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:419
+#: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:417
 msgid "The Canva page must be this size. Bleed around it is fine (Canva: File, Settings, Show print bleed)."
 msgstr "يجب أن تكون صفحة Canva بهذا المقاس. لا بأس بهامش القص حولها (في Canva: ملف، الإعدادات، إظهار هامش القص)."
 
@@ -19364,15 +19447,15 @@ msgstr "انقضى تاريخ الإغلاق. اختر تاريخًا جديدً
 msgid "The code works once and expires after ten minutes."
 msgstr "يعمل الرمز مرة واحدة وتنتهي صلاحيته بعد عشر دقائق."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:214
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:215
 msgid "The connection failed"
 msgstr "فشل الربط"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:208
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:209
 msgid "The connection was cancelled in Facebook."
 msgstr "تم إلغاء الربط في فيسبوك."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:223
+#: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:228
 msgid "The connection was not allowed in Canva."
 msgstr "لم يُسمح بالربط في Canva."
 
@@ -19412,7 +19495,7 @@ msgstr "تعذر حفظ لوحة التحكم. يُرجى المحاولة مر�
 msgid "The dashboard could not be shared. Please try again."
 msgstr "تعذرت مشاركة لوحة التحكم. يُرجى المحاولة مرة أخرى."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:910
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:909
 msgid "The dashed line is where the print is cut. Keep words away from the edge."
 msgstr "الخط المتقطع هو مكان قص المطبوعة. أبقِ النص بعيدًا عن الحافة."
 
@@ -19432,11 +19515,11 @@ msgstr "يجب أن تكون الاستراحة المخصومة أقصر من �
 msgid "The description is too long. Shorten it and try again."
 msgstr "الوصف طويل جدًا. اختصره وحاول مرة أخرى."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1213
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1212
 msgid "The design has more pages: only the first one prints."
 msgstr "يحتوي التصميم على صفحات أخرى: تُطبع الصفحة الأولى فقط."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:231
+#: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:236
 msgid "The design was not imported"
 msgstr "لم يتم استيراد التصميم"
 
@@ -19448,7 +19531,7 @@ msgstr "مقاس صفحة التصميم لا يطابق مقاس المطبوع
 msgid "The design's PDF is larger than 40 MB."
 msgstr "حجم ملف PDF للتصميم أكبر من 40 ميغابايت."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:475
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:476
 msgid "The download could not be made"
 msgstr "تعذّر إنشاء التنزيل"
 
@@ -19571,7 +19654,7 @@ msgstr "تحتسب نسبة العمالة الطلبات عبر الإنترن�
 msgid "The last day cannot be before the first day."
 msgstr "لا يمكن أن يكون اليوم الأخير قبل اليوم الأول."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:516
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:517
 msgid "The latest version of the design is in. Approve the proof again to print it."
 msgstr "وصلت أحدث نسخة من التصميم. وافق على البروفة مرة أخرى لطباعتها."
 
@@ -19595,7 +19678,7 @@ msgstr "تم إيقاف الرابط."
 msgid "The main paragraph copy of your email."
 msgstr "الفقرة الرئيسية في بريدك الإلكتروني."
 
-#: app/routes/mcp+/authorize.tsx:414
+#: app/routes/mcp+/authorize.tsx:417
 msgid "The MCP client will only have access to data from the selected organization"
 msgstr "سيتمكن عميل MCP من الوصول فقط إلى بيانات المنظمة المحددة"
 
@@ -19693,7 +19776,7 @@ msgstr "المبيعات التي يُدخلها فريقك كل يوم. لا ت
 msgid "The schedule changed since you opened it. It was reloaded, so check it and publish again."
 msgstr "تغيّر الجدول منذ فتحته. أُعيد تحميله، فراجعه وانشر مرة أخرى."
 
-#: app/components/staff/labor/labor-settings.tsx:169
+#: app/components/staff/labor/labor-settings.tsx:172
 msgid "The schedule compares the orders you usually get each hour with the people you have scheduled. Set how many orders one person in a position handles in an hour; leave a position empty to leave it out."
 msgstr "يقارن الجدول الطلبات التي تصلك عادة كل ساعة بالأشخاص المجدولين. حدّد عدد الطلبات التي يتولاها شخص واحد في وظيفة ما خلال ساعة؛ واترك الوظيفة فارغة لاستبعادها."
 
@@ -19821,7 +19904,7 @@ msgstr "بطاقات الوقت الخاصة بهم بانتظار المراج�
 msgid "Theme"
 msgstr "السمة"
 
-#: app/components/app-sidebar.tsx:86
+#: app/components/app-sidebar.tsx:87
 msgid "There are <0>{daysRemaining} days</0> left in your trial. Get in touch with questions or feedback."
 msgstr "باقي <0>{daysRemaining} أيام</0> في فترة التجربة. تواصل معنا إذا كان لديك أي أسئلة أو ملاحظات."
 
@@ -19833,7 +19916,7 @@ msgstr "هناك بطاقات أكثر مما يمكننا عرضه هنا. عا
 msgid "There are no active members to import."
 msgstr "لا يوجد أعضاء نشطون للاستيراد."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:777
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:776
 msgid "There are no items to feature yet."
 msgstr "لا توجد عناصر لعرضها بعد."
 
@@ -19858,7 +19941,7 @@ msgstr "لا يوجد عمود للتاريخ."
 msgid "There is no email on file for this applicant, so call them with the details."
 msgstr "لا يوجد بريد إلكتروني مسجّل لهذا المتقدّم، لذا اتصل به لإبلاغه بالتفاصيل."
 
-#: app/components/hiring/decline-dialog.tsx:118
+#: app/components/hiring/decline-dialog.tsx:116
 msgid "There is no email on file, so nothing can be sent."
 msgstr "لا يوجد بريد إلكتروني مسجّل، لذا لا يمكن إرسال شيء."
 
@@ -19882,7 +19965,7 @@ msgstr "حدثت مشكلة في محاولة تسجيل الدخول. يرجى 
 msgid "These are settings, not legal advice. Overtime, break and cost figures are estimates to help you plan, and are not payroll. Check the rules that apply to your business before relying on them."
 msgstr "هذه إعدادات وليست استشارة قانونية. أرقام العمل الإضافي والاستراحات والتكلفة تقديرات لمساعدتك في التخطيط وليست كشف رواتب. تحقق من القواعد المطبّقة على نشاطك قبل الاعتماد عليها."
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:1281
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:1291
 msgid "These are the MCP tools available in your organization. AI clients can use these tools to interact with your data."
 msgstr "هذه هي أدوات MCP المتاحة في منظمتك. يمكن لعملاء الذكاء الاصطناعي استخدام هذه الأدوات للتفاعل مع بياناتك."
 
@@ -19954,7 +20037,7 @@ msgstr "لديهم تسجيل دخول وهم أعضاء في مؤسستك."
 msgid "They have no upcoming shifts you could swap for."
 msgstr "ليس لديهم ورديات قادمة يمكنك التبديل بها."
 
-#: app/components/hiring/decline-dialog.tsx:98
+#: app/components/hiring/decline-dialog.tsx:96
 msgid "They leave the pipeline. Their details are removed after {retentionDays} days."
 msgstr "يخرجون من مسار التقديم. تُحذف بياناتهم بعد {retentionDays} يومًا."
 
@@ -20038,7 +20121,7 @@ msgstr "لم يعد هذا المتقدّم قيد المنافسة."
 msgid "This applicant was declined. Move them back into the pipeline first."
 msgstr "تم رفض هذا المتقدّم. أعده إلى مسار التقديم أولًا."
 
-#: app/routes/mcp+/authorize.tsx:358
+#: app/routes/mcp+/authorize.tsx:361
 msgid "This application did not register with us, so we cannot verify who it is. Only continue if you started this request yourself."
 msgstr "لم يتم تسجيل هذا التطبيق لدينا، لذا لا يمكننا التحقق من هويته. تابع فقط إذا كنت أنت من بدأ هذا الطلب."
 
@@ -20115,7 +20198,7 @@ msgstr "سبق أن أُضيفت هذه القائمة لهم."
 msgid "This Checkout Session is no longer active"
 msgstr "جلسة الدفع هذه لم تعد نشطة"
 
-#: app/routes/mcp+/authorize.tsx:425
+#: app/routes/mcp+/authorize.tsx:428
 msgid "This client will have access to:"
 msgstr "سيتمكن هذا العميل من الوصول إلى:"
 
@@ -20171,7 +20254,7 @@ msgstr "هذا تقرير لمساعدتك على تقسيم الإكراميا�
 msgid "This is not available on this tablet."
 msgstr "هذا غير متاح على هذا الجهاز اللوحي."
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:588
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:598
 msgid "This is the only time you'll see this API key. Make sure to copy it and store it securely."
 msgstr "هذه هي المرة الوحيدة التي سترى فيها مفتاح API. تأكد من نسخه وتخزينه بشكل آمن."
 
@@ -20183,7 +20266,7 @@ msgstr "هذا ما يُطلب منهم قراءته والموافقة عليه
 msgid "This is your current session. Sign out to end it."
 msgstr "هذه هي جلستك الحالية. سجل الخروج لإنهائها."
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:770
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:780
 msgid "This is your organization's unique MCP server endpoint. Use this URL when configuring your AI client."
 msgstr "هذه هي نقطة نهاية خادم MCP الفريدة لمنظمتك. استخدم هذا الرابط عند تكوين عميل الذكاء الاصطناعي."
 
@@ -20335,7 +20418,7 @@ msgstr "هذا الشخص غير مهيأ لهذا المنصب هنا. ما ز�
 msgid "This PIN is paused for a few minutes. Ask a manager."
 msgstr "هذا الرقم السري متوقف مؤقتًا لبضع دقائق. اسأل مديرًا."
 
-#: app/components/social/post-composer.tsx:169
+#: app/components/social/post-composer.tsx:182
 msgid "This post can’t be sent yet"
 msgstr "لا يمكن إرسال هذا المنشور بعد"
 
@@ -20372,7 +20455,7 @@ msgstr "لا يمكن إنشاء هذه المطبوعة من تصميم جاه�
 msgid "This print carries private QR codes, so it cannot be sent to Canva."
 msgstr "تحمل هذه المطبوعة رموز QR خاصة، لذا لا يمكن إرسالها إلى Canva."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:378
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:379
 msgid "This print carries private QR codes, so only people who may see them can see the proof and download it."
 msgstr "تحمل هذه المطبوعة رموز QR خاصة، لذا لا يرى البروفة وينزّلها إلا من يحق له رؤيتها."
 
@@ -20380,7 +20463,7 @@ msgstr "تحمل هذه المطبوعة رموز QR خاصة، لذا لا ير
 msgid "This print has more pieces than one order can take. Approve a smaller set, then order."
 msgstr "تحتوي هذه المطبوعة على قطع أكثر مما يتسع له طلب واحد. وافق على مجموعة أصغر، ثم اطلب."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1188
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1187
 msgid "This print is a finished design: it prints exactly as it looks in Canva. Change it there, then update it here."
 msgstr "هذه المطبوعة تصميم جاهز: تُطبع تمامًا كما تظهر في Canva. عدّلها هناك، ثم حدّثها هنا."
 
@@ -20437,7 +20520,7 @@ msgstr "عدد أعمدة هذا الصف يختلف عن عدد أعمدة ال
 msgid "This schedule is no longer available"
 msgstr "هذا الجدول لم يعد متاحًا"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:227
+#: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:233
 msgid "This server has no Meta app configured. Ask your platform administrator."
 msgstr "لم يتم إعداد تطبيق Meta على هذا الخادم. اسأل مسؤول المنصة."
 
@@ -20521,7 +20604,7 @@ msgstr "يحتوي هذا الأسبوع على أقصى عدد من الورد�
 msgid "This week has not been published yet."
 msgstr "لم يُنشر هذا الأسبوع بعد."
 
-#: app/components/website/create-page-dialog.tsx:188
+#: app/components/website/create-page-dialog.tsx:187
 msgid "This will be the URL path for this page."
 msgstr "سيكون هذا مسار الرابط لهذه الصفحة."
 
@@ -20537,7 +20620,7 @@ msgstr "سيؤدي ذلك إلى حذف جميع أخطاء 404 المسجلة �
 msgid "This will permanently delete the redirect from <0>{deleteRedirectFrom}</0> to <1>{deleteRedirectTo}</1>. Visitors requesting this old URL will no longer be forwarded."
 msgstr "سيؤدي ذلك إلى حذف إعادة التوجيه نهائياً من <0>{deleteRedirectFrom}</0> إلى <1>{deleteRedirectTo}</1>. لن يُعاد توجيه الزوار الذين يطلبون عنوان URL القديم بعد الآن."
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:1070
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:1080
 msgid "This will:"
 msgstr "سيؤدي هذا إلى:"
 
@@ -20582,7 +20665,7 @@ msgstr "معرّف بكسل TikTok"
 msgid "Time"
 msgstr "الوقت"
 
-#: app/components/staff/labor-core-rules.tsx:385
+#: app/components/staff/labor-core-rules.tsx:382
 msgid "Time and a half is 1.5. Hours past the weekly limit are paid at this rate. Estimates, not payroll."
 msgstr "الأجر ونصف يعني 1.5. تُدفع الساعات التي تتجاوز الحد الأسبوعي بهذا المعدل. تقديرات وليست كشف رواتب."
 
@@ -20621,7 +20704,7 @@ msgstr "بطاقات الدوام (CSV)"
 msgid "Time cards: {timeCardCount} (not included in the backup)"
 msgstr "بطاقات الدوام: {timeCardCount} (غير مشمولة في النسخة الاحتياطية)"
 
-#: app/components/app-sidebar.tsx:401
+#: app/components/app-sidebar.tsx:400
 #: app/components/command-menu.tsx:134
 #: app/components/workspace-breadcrumb.tsx:29
 #: app/routes/_app+/$orgSlug_+/staff+/timeclock.tsx:54
@@ -20694,7 +20777,7 @@ msgstr "المنطقة الزمنية"
 msgid "Time zone saved."
 msgstr "تم حفظ المنطقة الزمنية."
 
-#: app/components/social/post-composer.tsx:337
+#: app/components/social/post-composer.tsx:352
 msgid "Times are in {timeZone}."
 msgstr "الأوقات بتوقيت {timeZone}."
 
@@ -20702,7 +20785,7 @@ msgstr "الأوقات بتوقيت {timeZone}."
 msgid "Times are in the workplace's time zone, {timeZone}."
 msgstr "الأوقات بالمنطقة الزمنية لمكان العمل، {timeZone}."
 
-#: app/components/staff/labor-core-rules.tsx:393
+#: app/components/staff/labor-core-rules.tsx:390
 msgid "times the normal rate"
 msgstr "أضعاف المعدل العادي"
 
@@ -20810,7 +20893,7 @@ msgstr "إلى: {recipient}"
 #: app/components/staff/schedule/day-timeline.tsx:441
 #: app/components/staff/schedule/schedule-toolbar.tsx:119
 #: app/components/staff/timesheets/period-nav.tsx:150
-#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:195
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:219
 #: app/routes/_app+/$orgSlug_+/staff+/timeclock.tsx:43
 msgid "Today"
 msgstr "اليوم"
@@ -20819,7 +20902,7 @@ msgstr "اليوم"
 msgid "Toggle announcement visibility"
 msgstr "تبديل ظهور الإعلان"
 
-#: app/components/ui/notification-bell.tsx:446
+#: app/components/ui/notification-bell.tsx:442
 msgid "Toggle notifications"
 msgstr "تبديل الإشعارات"
 
@@ -20827,7 +20910,7 @@ msgstr "تبديل الإشعارات"
 msgid "Toggle redirect active status"
 msgstr "تبديل حالة تفعيل إعادة التوجيه"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:913
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:923
 msgid "Tokens automatically expire after 30 days of inactivity"
 msgstr "تنتهي صلاحية الرموز المميزة تلقائياً بعد 30 يوماً من عدم النشاط"
 
@@ -20890,7 +20973,7 @@ msgstr "المجموع {totalText} من 100"
 msgid "Total before sales tax"
 msgstr "الإجمالي قبل ضريبة المبيعات"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:210
+#: app/routes/_app+/$orgSlug_+/index.tsx:191
 msgid "Total notes"
 msgstr "إجمالي الملاحظات"
 
@@ -20898,7 +20981,7 @@ msgstr "إجمالي الملاحظات"
 msgid "Total notes, the daily average and the trend."
 msgstr "إجمالي الملاحظات والمتوسط اليومي والاتجاه."
 
-#: app/components/staff/labor-core-rules.tsx:279
+#: app/components/staff/labor-core-rules.tsx:276
 msgid "Track time at this workplace"
 msgstr "تتبّع الوقت في مكان العمل هذا"
 
@@ -21015,7 +21098,7 @@ msgstr "ترجمة الكل"
 msgid "Transport"
 msgstr "المواصلات"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:222
+#: app/routes/_app+/$orgSlug_+/index.tsx:203
 msgid "Trend"
 msgstr "الاتجاه"
 
@@ -21067,7 +21150,7 @@ msgstr "جارٍ تشغيل اختبار للعميل \"{customerId}\"..."
 msgid "True"
 msgstr "صحيح"
 
-#: app/components/staff/labor-core-rules.tsx:91
+#: app/components/staff/labor-core-rules.tsx:90
 msgid "Trust your team. Few alerts and no automatic deductions."
 msgstr "ثق بفريقك. تنبيهات قليلة ولا خصومات تلقائية."
 
@@ -21101,7 +21184,7 @@ msgstr "جرّب مصطلح بحث مختلفًا."
 msgid "Try adjusting your search or filter."
 msgstr "جرّب تعديل البحث أو الفلتر."
 
-#: ../../packages/ai/src/components/ai-chat.tsx:898
+#: ../../packages/ai/src/components/ai-chat.tsx:995
 #: app/components/ai/global-ai-panel.tsx:86
 #: app/components/chat/chat-view.tsx:680
 #: app/components/hiring/applicants-page.tsx:397
@@ -21137,8 +21220,8 @@ msgstr "حاول لاحقًا أو اسأل مديرك."
 msgid "Try again later. Downloads still work."
 msgstr "حاول لاحقًا. التنزيلات ما زالت تعمل."
 
-#: ../../packages/ai/src/components/ai-chat.tsx:970
-#: ../../packages/ai/src/components/ai-chat.tsx:971
+#: ../../packages/ai/src/components/ai-chat.tsx:1115
+#: ../../packages/ai/src/components/ai-chat.tsx:1116
 msgid "Try another answer"
 msgstr "جرب إجابة أخرى"
 
@@ -21202,7 +21285,7 @@ msgstr "تشغيل صوت الوكيل"
 msgid "Turn on the agent"
 msgstr "شغّل الوكيل"
 
-#: app/components/staff/labor-core-rules.tsx:285
+#: app/components/staff/labor-core-rules.tsx:282
 msgid "Turn this off and tablets here will not accept punches."
 msgstr "عند إيقافه لن تقبل الأجهزة اللوحية هنا أي بصمات."
 
@@ -21434,8 +21517,8 @@ msgstr "إلغاء النشر"
 msgid "Unread"
 msgstr "غير مقروء"
 
-#: app/components/ui/notification-bell.tsx:390
-#: app/components/ui/notification-bell.tsx:495
+#: app/components/ui/notification-bell.tsx:387
+#: app/components/ui/notification-bell.tsx:491
 msgid "Unread Notifications"
 msgstr "الإشعارات غير المقروءة"
 
@@ -21513,7 +21596,7 @@ msgstr "تحديث"
 msgid "Update availability"
 msgstr "تحديث التوفّر"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1253
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1252
 msgid "Update from Canva"
 msgstr "التحديث من Canva"
 
@@ -21555,11 +21638,11 @@ msgstr "تم التحديث منذ {timeAgo}"
 msgid "Updated {updated}"
 msgstr "تم التحديث {updated}"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:513
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:514
 msgid "Updated from Canva"
 msgstr "تم التحديث من Canva"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:170
+#: ../../packages/ai/src/components/ai-chat.tsx:185
 msgid "Updated section"
 msgstr "تم تحديث القسم"
 
@@ -21567,7 +21650,7 @@ msgstr "تم تحديث القسم"
 msgid "Updates as you edit"
 msgstr "يتحدّث أثناء التعديل"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:169
+#: ../../packages/ai/src/components/ai-chat.tsx:184
 msgid "Updating section"
 msgstr "تحديث القسم"
 
@@ -21575,7 +21658,7 @@ msgstr "تحديث القسم"
 msgid "Updating…"
 msgstr "جارٍ التحديث…"
 
-#: app/components/app-sidebar.tsx:102
+#: app/components/app-sidebar.tsx:103
 #: app/components/settings/cards/organization/billing-card.tsx:506
 msgid "Upgrade"
 msgstr "ترقية"
@@ -21860,9 +21943,9 @@ msgstr "يُستخدم عند توظيف شخص من المتقدمين. يمك�
 msgid "Useful if staff should log what happened after a transfer."
 msgstr "مفيد إذا كان على الفريق تسجيل ما حدث بعد التحويل."
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:161
-msgid "User"
-msgstr "مستخدم"
+#: app/routes/_app+/$orgSlug_+/index.tsx:162
+#~ msgid "User"
+#~ msgstr "مستخدم"
 
 #: app/components/settings/cards/profile-card.tsx:133
 #: app/routes/_auth+/login.tsx:777
@@ -22022,7 +22105,7 @@ msgstr "عرض سياسة العمل"
 msgid "View live site"
 msgstr "عرض الموقع المباشر"
 
-#: app/routes/mcp+/authorize.tsx:445
+#: app/routes/mcp+/authorize.tsx:448
 msgid "View notes from users you have access to"
 msgstr "عرض الملاحظات من المستخدمين الذين لديك وصول إليهم"
 
@@ -22150,7 +22233,7 @@ msgstr "تم حفظ البريد الصوتي"
 msgid "Voicemails, callback requests, missed transfers, complaints, and low ratings stay open on the Calls page until someone marks them complete."
 msgstr "تبقى رسائل البريد الصوتي وطلبات معاودة الاتصال والتحويلات الفائتة والشكاوى والتقييمات المنخفضة مفتوحة في صفحة المكالمات حتى يضع أحدهم علامة عليها بأنها مكتملة."
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:231
+#: app/routes/_app+/$orgSlug_+/index.tsx:212
 msgid "Vs prior period"
 msgstr "مقارنة بالفترة السابقة"
 
@@ -22286,7 +22369,7 @@ msgstr "نؤكده مع البنك. ستتحدّث هذه الصفحة بعد ل
 msgid "We are unable to authenticate your payment method. Please choose a different payment method and try again."
 msgstr "تعذّرت مصادقة وسيلة الدفع. يرجى اختيار وسيلة دفع أخرى والمحاولة مرة أخرى."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:428
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:429
 msgid "We could not approve this print"
 msgstr "لم نتمكن من اعتماد هذه المطبوعة"
 
@@ -22437,7 +22520,7 @@ msgstr "تعذّرت قراءة هذا الملف."
 msgid "We could not save the time zone. Try again."
 msgstr "تعذّر حفظ المنطقة الزمنية. حاول مرة أخرى."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:429
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:430
 msgid "We could not save this print"
 msgstr "تعذّر حفظ هذه المطبوعة"
 
@@ -22458,7 +22541,7 @@ msgstr "وجدنا منظمتك:"
 msgid "We just sent you a text with a link to our website."
 msgstr "أرسلنا لك للتو رسالة نصية تحتوي على رابط إلى موقعنا الإلكتروني."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:983
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:982
 msgid "We print and ship it to your door."
 msgstr "نطبعها ونشحنها حتى بابك."
 
@@ -22506,7 +22589,7 @@ msgstr "الويب"
 msgid "Webhooks: {webhookMode}"
 msgstr "الويب هوك: {webhookMode}"
 
-#: app/components/app-sidebar.tsx:423
+#: app/components/app-sidebar.tsx:422
 #: app/components/command-menu.tsx:141
 #: app/components/workspace-breadcrumb.tsx:13
 #: app/routes/_app+/$orgSlug_+/media.tsx:1279
@@ -22547,8 +22630,8 @@ msgstr "الأسبوع"
 msgid "Week starts on"
 msgstr "يبدأ الأسبوع يوم"
 
-#: app/components/staff/labor-core-rules.tsx:376
-#: app/components/staff/labor-core-rules.tsx:377
+#: app/components/staff/labor-core-rules.tsx:373
+#: app/components/staff/labor-core-rules.tsx:374
 msgid "Weekly overtime"
 msgstr "العمل الإضافي الأسبوعي"
 
@@ -22598,7 +22681,7 @@ msgstr "ما يقرؤه المتقدمون"
 msgid "What applicants see, like \"Evening line cook\"."
 msgstr "ما يراه المتقدمون، مثل \"طاهٍ مسائي\"."
 
-#: ../../packages/ai/src/components/ai-chat.tsx:423
+#: ../../packages/ai/src/components/ai-chat.tsx:452
 msgid "What are the key points?"
 msgstr "ما هي النقاط الرئيسية؟"
 
@@ -22606,7 +22689,7 @@ msgstr "ما هي النقاط الرئيسية؟"
 #~ msgid "What callers hear before anything else, and when the assistant can't answer."
 #~ msgstr "ما يسمعه المتصلون قبل أي شيء آخر، وعندما لا يستطيع المساعد الإجابة."
 
-#: ../../packages/ai/src/components/ai-chat.tsx:429
+#: ../../packages/ai/src/components/ai-chat.tsx:458
 msgid "What can you help me with?"
 msgstr "بماذا يمكنك مساعدتي؟"
 
@@ -22623,7 +22706,7 @@ msgstr "ماذا تريد أن تسأل؟"
 msgid "What does it pay?"
 msgstr "كم الأجر؟"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:486
+#: ../../packages/ai/src/components/ai-chat.tsx:515
 msgid "What else should I know?"
 msgstr "ماذا يجب أن أعرف أيضاً؟"
 
@@ -22679,12 +22762,12 @@ msgstr "وظيفة هذا الخيار"
 msgid "What to do when the agent mishears or can't help."
 msgstr "ما يجب فعله عندما يسيء الوكيل فهم المتصل أو لا يستطيع المساعدة."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.new.tsx:118
+#: app/routes/_app+/$orgSlug_+/marketing+/print.new.tsx:123
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.new.tsx:250
 msgid "What to print"
 msgstr "ما الذي تريد طباعته"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:476
+#: ../../packages/ai/src/components/ai-chat.tsx:505
 msgid "What tools can help?"
 msgstr "ما الأدوات التي يمكن أن تساعد؟"
 
@@ -22696,7 +22779,7 @@ msgstr "ما الذي ترغب في جمعه؟"
 msgid "What would you like to know?"
 msgstr "ماذا تريد أن تعرف؟"
 
-#: app/components/social/post-composer.tsx:256
+#: app/components/social/post-composer.tsx:271
 msgid "What would you like to share?"
 msgstr "ماذا تريد أن تشارك؟"
 
@@ -22704,7 +22787,7 @@ msgstr "ماذا تريد أن تشارك؟"
 msgid "What your hours cost against your sales, the sales you enter, and how tips divide."
 msgstr "كم تكلّفك ساعات العمل مقابل مبيعاتك، والمبيعات التي تُدخلها، وكيف تُقسَّم الإكراميات."
 
-#: ../../packages/ai/src/components/ai-chat.tsx:453
+#: ../../packages/ai/src/components/ai-chat.tsx:482
 msgid "What's missing?"
 msgstr "ما الذي ينقص؟"
 
@@ -22752,7 +22835,7 @@ msgstr "عندما يسجّل الموظفون حضورهم أو تضيف بطا
 msgid "When people have hours they can or cannot work, the schedule warns you if a shift falls outside them."
 msgstr "عندما يحدد الأشخاص ساعات يستطيعون أو لا يستطيعون العمل فيها، يحذّرك الجدول إذا وقعت وردية خارجها."
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:814
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:824
 msgid "When prompted, authorize the connection in your browser"
 msgstr "عند المطالبة، وافق على الاتصال في متصفحك"
 
@@ -22788,7 +22871,7 @@ msgstr "عندما يطلب الزوار أو محركات البحث عنوان
 msgid "When you close it"
 msgstr "عندما تغلقها"
 
-#: app/components/ui/notification-bell.tsx:275
+#: app/components/ui/notification-bell.tsx:272
 msgid "When you get notifications, they'll show up here."
 msgstr "عند وصول الإشعارات، ستظهر هنا."
 
@@ -22816,12 +22899,12 @@ msgstr "أين نُشر"
 msgid "Where one period ends and the next begins. Timesheets and the payroll summary are cut on these lines."
 msgstr "أين تنتهي فترة وتبدأ التالية. تُقسَّم سجلات الدوام وملخص الرواتب على هذه الحدود."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:705
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:704
 msgid "Where people land when they scan. Links point at your own website only."
 msgstr "الصفحة التي يصل إليها الناس عند المسح. الروابط تشير إلى موقعك فقط."
 
-#: app/components/staff/labor/labor-settings.tsx:143
-#: app/components/staff/labor/labor-settings.tsx:148
+#: app/components/staff/labor/labor-settings.tsx:145
+#: app/components/staff/labor/labor-settings.tsx:151
 msgid "Where sales come from"
 msgstr "من أين تأتي المبيعات"
 
@@ -22953,7 +23036,7 @@ msgstr "سحب طلبه"
 msgid "within target"
 msgstr "ضمن الهدف"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1207
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1206
 msgid "Without bleed, color that runs to the edge can show a thin white line after cutting. Add bleed in Canva (File, Settings, Show print bleed) for shipped prints."
 msgstr "بدون هامش قص، قد يظهر خط أبيض رفيع بعد القص في الألوان الممتدة حتى الحافة. أضف هامش القص في Canva (ملف، الإعدادات، إظهار هامش القص) للمطبوعات المشحونة."
 
@@ -22969,7 +23052,7 @@ msgstr "الكلمة"
 msgid "Word, e.g. Nguyen"
 msgstr "الكلمة، مثل Nguyen"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:597
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:596
 msgid "Words"
 msgstr "النصوص"
 
@@ -23009,7 +23092,7 @@ msgstr "التحقق من سير العمل"
 msgid "Working"
 msgstr "يعمل"
 
-#: ../../packages/ai/src/components/ai-chat.tsx:180
+#: ../../packages/ai/src/components/ai-chat.tsx:195
 msgid "Working on it"
 msgstr "جارٍ العمل على ذلك"
 
@@ -23104,7 +23187,7 @@ msgstr "اكتب ردك…"
 msgid "Write your text message"
 msgstr "اكتب رسالتك النصية"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:109
+#: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:128
 msgid "Write, schedule and track posts on Facebook and Instagram."
 msgstr "اكتب المنشورات على فيسبوك وإنستغرام وجدولها وتتبعها."
 
@@ -23235,7 +23318,7 @@ msgstr "يمكنك إنشاء ملاحظات لمنظمتك هنا."
 msgid "You can leave a note. It is kept with the request."
 msgstr "يمكنك ترك ملاحظة. تُحفظ مع الطلب."
 
-#: app/components/staff/labor/labor-settings.tsx:224
+#: app/components/staff/labor/labor-settings.tsx:227
 msgid "You can look at these settings but not change them."
 msgstr "يمكنك الاطلاع على هذه الإعدادات لكن لا يمكنك تغييرها."
 
@@ -23243,11 +23326,11 @@ msgstr "يمكنك الاطلاع على هذه الإعدادات لكن لا �
 msgid "You can look at this card but not change it."
 msgstr "يمكنك الاطلاع على هذه البطاقة لكن لا يمكنك تغييرها."
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:907
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:917
 msgid "You can revoke access at any time from the Authorized Clients section above"
 msgstr "يمكنك إلغاء الوصول في أي وقت من قسم العملاء المصرح لهم أعلاه"
 
-#: app/routes/mcp+/authorize.tsx:461
+#: app/routes/mcp+/authorize.tsx:464
 msgid "You can revoke this access at any time from your MCP settings page. The access token will expire in 1 hour."
 msgstr "يمكنك إلغاء هذا الوصول في أي وقت من صفحة إعدادات MCP. ستنتهي صلاحية رمز الوصول بعد ساعة واحدة."
 
@@ -23372,7 +23455,7 @@ msgstr "وصلت إلى الحد الساعي لصور الذكاء الاصطن
 msgid "You receive"
 msgstr "تستلم"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:249
+#: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:254
 msgid "You sign in to Canva and allow access. Only the designs you import are copied here, and you can disconnect at any time."
 msgstr "تسجّل الدخول إلى Canva وتسمح بالوصول. تُنسخ هنا التصاميم التي تستوردها فقط، ويمكنك إلغاء الربط في أي وقت."
 
@@ -23424,7 +23507,7 @@ msgstr "لم ينضم الوكيل إلى المكالمة. تأكد من أن �
 #~ msgid "Your agent is answering calls."
 #~ msgstr "وكيلك يرد على المكالمات."
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:536
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:544
 msgid "Your API key has been created successfully. Copy it now - you won't be able to see it again."
 msgstr "تم إنشاء مفتاح API بنجاح. انسخه الآن - لن تتمكن من رؤيته مرة أخرى."
 
@@ -23444,7 +23527,7 @@ msgstr "أوقف متصفحك صوت الوكيل مؤقتًا. اضغط على 
 msgid "Your business line"
 msgstr "خط نشاطك التجاري"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:318
+#: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:323
 msgid "Your Canva account has no designs yet."
 msgstr "لا توجد تصاميم في حسابك على Canva بعد."
 
@@ -23472,7 +23555,7 @@ msgstr "تاريخ انتهاء بطاقتك غير مكتمل أو في الم�
 msgid "Your card's security code is incomplete."
 msgstr "رمز أمان بطاقتك غير مكتمل."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:439
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:440
 msgid "Your changes are saved, but the QR codes could not be loaded to approve the proof. Try again in a minute."
 msgstr "تم حفظ تغييراتك، لكن تعذّر تحميل رموز QR لاعتماد البروفة. حاول مرة أخرى بعد دقيقة."
 
@@ -23516,7 +23599,7 @@ msgstr "لم يتم نشر مسار المكالمة بعد، لذا اختبر 
 msgid "Your hours, phone, and address. The agent quotes them and uses the hours to tell when you're open."
 msgstr "ساعات العمل والهاتف والعنوان. يذكرها الوكيل ويستخدم الساعات لمعرفة متى تكون مفتوحًا."
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:766
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:776
 msgid "Your MCP Server URL"
 msgstr "رابط خادم MCP الخاص بك"
 
@@ -23540,7 +23623,7 @@ msgstr "ملاحظتك: {text}"
 msgid "Your order is on hold"
 msgstr "طلبك معلّق"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:479
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:480
 msgid "Your organization made many new print files this hour. Try again in about 15 minutes; files made before still download."
 msgstr "أنشأت مؤسستك ملفات طباعة جديدة كثيرة خلال هذه الساعة. حاول مرة أخرى بعد نحو 15 دقيقة؛ الملفات المنشأة سابقًا ما زالت قابلة للتنزيل."
 

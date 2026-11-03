@@ -2,7 +2,8 @@ import { Trans, msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { cn } from '@repo/ui'
 import { Icon } from '@repo/ui/icon'
-import { motion, AnimatePresence } from 'framer-motion'
+import { spring } from '@repo/ui/springs'
+import { motion, AnimatePresence } from 'motion/react'
 import { useState, useEffect } from 'react'
 
 interface FeatureUpdate {
@@ -78,12 +79,13 @@ export function FeatureUpdates({
 					className={cn('relative px-2 py-3', className)}
 					initial={{ opacity: 0, y: 20, scale: 0.95 }}
 					animate={{ opacity: 1, y: 0, scale: 1 }}
-					exit={{ opacity: 0, y: -20, scale: 0.95 }}
-					transition={{
-						duration: 0.4,
-						ease: [0.25, 0.46, 0.45, 0.94],
-						layout: { duration: 0.3 },
+					exit={{
+						opacity: 0,
+						y: -20,
+						scale: 0.95,
+						transition: spring.slow.exit,
 					}}
+					transition={{ ...spring.slow, layout: spring.moderate }}
 					layout
 				>
 					<div className="relative">
@@ -95,16 +97,26 @@ export function FeatureUpdates({
 										<motion.div
 											initial={{ opacity: 0, scale: 0.8, y: -10 }}
 											animate={{ opacity: 0.5, scale: 0.85, y: -24 }}
-											exit={{ opacity: 0, scale: 0.8, y: -10 }}
-											transition={{ duration: 0.3, ease: 'easeOut' }}
+											exit={{
+												opacity: 0,
+												scale: 0.8,
+												y: -10,
+												transition: spring.moderate.exit,
+											}}
+											transition={spring.moderate}
 											className="border-sidebar-border/60 bg-muted absolute inset-0 rounded-md border"
 										/>
 									)}
 									<motion.div
 										initial={{ opacity: 0, scale: 0.88, y: -5 }}
 										animate={{ opacity: 0.7, scale: 0.92, y: -12 }}
-										exit={{ opacity: 0, scale: 0.88, y: -5 }}
-										transition={{ duration: 0.3, ease: 'easeOut', delay: 0.05 }}
+										exit={{
+											opacity: 0,
+											scale: 0.88,
+											y: -5,
+											transition: spring.moderate.exit,
+										}}
+										transition={{ ...spring.moderate, delay: 0.05 }}
 										className="border-sidebar-border/60 bg-muted/80 absolute inset-0 rounded-md border"
 									/>
 								</>
@@ -116,16 +128,15 @@ export function FeatureUpdates({
 							key={currentUpdate.id}
 							initial={{ opacity: 0, scale: 0.9, y: 10 }}
 							animate={{ opacity: 1, scale: 1, y: 0 }}
-							exit={{ opacity: 0, scale: 0.9, x: -100 }}
-							transition={{
-								duration: 0.4,
-								ease: [0.25, 0.46, 0.45, 0.94],
+							exit={{
+								opacity: 0,
+								scale: 0.9,
+								x: -100,
+								transition: spring.slow.exit,
 							}}
+							transition={spring.slow}
 							className="bg-sidebar-accent border-sidebar-border relative z-20 flex flex-col justify-between rounded-md border p-3"
-							whileHover={{
-								scale: 1.02,
-								transition: { duration: 0.2 },
-							}}
+							whileHover={{ scale: 1.02, transition: spring.fast }}
 						>
 							{/* Dismiss button */}
 							<motion.button
@@ -134,7 +145,7 @@ export function FeatureUpdates({
 								aria-label={_(msg`Dismiss`)}
 								whileHover={{ scale: 1.1 }}
 								whileTap={{ scale: 0.95 }}
-								transition={{ duration: 0.15 }}
+								transition={spring.fast}
 							>
 								<Icon
 									name="x"
@@ -148,7 +159,7 @@ export function FeatureUpdates({
 									className="pr-6"
 									initial={{ opacity: 0, y: 10 }}
 									animate={{ opacity: 1, y: 0 }}
-									transition={{ duration: 0.4, delay: 0.1 }}
+									transition={{ ...spring.slow, delay: 0.1 }}
 								>
 									<h5 className="text-sidebar-foreground line-clamp-1 text-sm leading-5 font-bold">
 										{currentUpdate.title}
@@ -164,16 +175,16 @@ export function FeatureUpdates({
 										className="group relative my-3 flex aspect-video items-center overflow-hidden rounded"
 										initial={{ opacity: 0, scale: 0.95 }}
 										animate={{ opacity: 1, scale: 1 }}
-										transition={{ duration: 0.4, delay: 0.15 }}
+										transition={{ ...spring.slow, delay: 0.15 }}
 									>
-										<div className="bg-sidebar/50 group-hover:bg-sidebar/40 absolute inset-0 transition" />
+										<div className="bg-sidebar/50 group-hover:bg-sidebar/40 absolute inset-0 transition-colors" />
 										{currentUpdate.videoUrl && (
 											<motion.button
 												className="group absolute inset-0 flex items-center justify-center"
 												whileHover={{ scale: 1.05 }}
 												whileTap={{ scale: 0.95 }}
 											>
-												<div className="bg-sidebar-foreground rounded-full p-2 shadow-lg transition-all hover:-mt-px">
+												<div className="bg-sidebar-foreground rounded-full p-2 shadow-lg transition-transform hover:-translate-y-px">
 													<Icon
 														name="play"
 														className="text-sidebar ml-0.5 h-4 w-4"
@@ -194,7 +205,7 @@ export function FeatureUpdates({
 									className="mt-2 flex items-center"
 									initial={{ opacity: 0, y: 10 }}
 									animate={{ opacity: 1, y: 0 }}
-									transition={{ duration: 0.4, delay: 0.2 }}
+									transition={{ ...spring.slow, delay: 0.2 }}
 								>
 									{currentUpdate.learnMoreUrl && (
 										<motion.button
