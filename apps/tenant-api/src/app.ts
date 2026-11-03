@@ -3,6 +3,7 @@ import { bodyLimit } from 'hono/body-limit'
 import { logger as honoLogger } from 'hono/logger'
 import { installRequiredMessage } from '@repo/common/zod-defaults'
 import { logger } from '@repo/observability'
+import { withBackground } from './lib/background.ts'
 import { errorLogFields } from './lib/error-log.ts'
 import { isAllowedAnalyticsOrigin, isPosOrigin } from './lib/origin.ts'
 import { requestLoggingMiddleware } from './lib/request-logging.ts'
@@ -87,6 +88,19 @@ export function createTenantApiApp() {
 
 	app.use('*', requestLoggingMiddleware())
 	app.use('*', honoLogger())
+
+	// Background work started by a service (loyalty journeys) rides on the
+	// request's waitUntil on Workers. Hono throws without a context (Node).
+	app.use('*', (c, next) => {
+		let waitUntil: ((task: Promise<unknown>) => void) | null = null
+		try {
+			const ctx = c.executionCtx
+			waitUntil = (task) => ctx.waitUntil(task)
+		} catch {
+			/* Node: no execution context */
+		}
+		return waitUntil ? withBackground(waitUntil, next) : next()
+	})
 
 	// Reject oversized bodies before any handler buffers them with c.req.json().
 	// Service-to-service routes under /api carry transcripts, so get more room.

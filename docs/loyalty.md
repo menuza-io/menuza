@@ -518,8 +518,24 @@ campaign audience, which rechecks consent and suppression at send time.
   operator), and purges what nobody can use any more: codes, bindings, closed
   till requests (approved ones stay as the record of consent) and finished
   outbox rows after 30 days, expired idempotency records, and old rate counters.
-  It ignores the flags and the kill switch: everything it does finishes work
-  that already started. Organizations without a program are skipped.
+  It also retries reward journeys whose start never finished (an emission stored
+  as `pending` for over 5 minutes) and deletes nameless, unverified customer
+  rows a till join left behind (code expired over an hour ago, and no table with
+  a foreign key to `customers` refers to the row).
+- **Reward journeys** record a crossing as `pending` in the evaluation's
+  transaction (a fresh one blocks a concurrent evaluation), start the journey,
+  then promote it to `fired`. A failed start removes the mark so the next
+  evaluation retries. On Workers the evaluation is handed to the request's
+  `waitUntil`.
+- **Till join** codes are stored as `hmacHash('join:' + code)`, so they and the
+  website sign-in code (`hmacHash(code)`, same column) cannot consume each
+  other. A send to a number whose row holds any live code answers `sent: true`
+  without sending (a resend within the code's 5 minutes does nothing). Sends
+  count per terminal, per number and per organization (`joinSendOrg`) and pass
+  the node's global send cap. Verifying consumes the code, verifies the phone,
+  opens the account and issues the binding in one transaction. It ignores the
+  flags and the kill switch: everything it does finishes work that already
+  started. Organizations without a program are skipped.
 - **Parked sources**: parking sends the source's open purchase and bound
   redemption to the review queue. The hourly cron run fails when its own tick
   parks a source (`outboxParked` in the tick's counts; the alarm and interval

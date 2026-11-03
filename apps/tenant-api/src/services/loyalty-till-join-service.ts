@@ -6,12 +6,13 @@ import {
 } from '@repo/loyalty'
 import { sendSms } from '@repo/sms'
 import { customers, getTenantDb } from '@repo/tenant-db'
-import { and, eq } from 'drizzle-orm'
+import { and, eq, sql } from 'drizzle-orm'
 import { errorLogFields } from '../lib/error-log.ts'
 import { enforceLoyaltyLimit } from '../lib/loyalty-rate-limit.ts'
 import { withLoyaltyWrite } from '../lib/loyalty-write.ts'
 import { retryOnSqliteBusy } from '../lib/sqlite-retry.ts'
 import { isValidPhone, normalizePhone } from '../lib/phone.ts'
+import { checkGlobalSendCap } from '../lib/rate-limit.ts'
 import { hmacHash, timingSafeEqualString } from '../lib/secrets.ts'
 import { evaluateAndSpawnTriggers } from './journey-service.ts'
 import { findCustomerByPhone, upgradeLegacyPhone } from './customer-phone.ts'
@@ -58,8 +59,34 @@ function normalizeJoinPhone(raw: string): string {
 	return phone
 }
 
+/**
+ * The stored hash of a join code. The website sign-in code is `hmacHash(code)`
+ * in the same column; the `join:` prefix binds a till code to its purpose, so
+ * neither flow can consume the other's code even on the same row.
+ */
+function joinCodeHash(code: string): string {
+	return hmacHash(`join:${code}`)
+}
+
 function joinCodeMessage(programName: string, code: string): string {
 	return `${programName}: ${code} is your code to join. Share it only with the cashier. It expires in 5 minutes.`
+}
+
+function hasLiveCode(
+	row:
+		| {
+				phoneVerificationCode: string | null
+				phoneVerificationExpiresAt: Date | null
+		  }
+		| undefined
+		| null,
+	now: number,
+): boolean {
+	return Boolean(
+		row?.phoneVerificationCode &&
+		row.phoneVerificationExpiresAt &&
+		row.phoneVerificationExpiresAt.getTime() > now,
+	)
 }
 
 /**
@@ -82,22 +109,37 @@ export async function sendTillJoinCode(
 	const db = await getTenantDb(orgId)
 	await enforceLoyaltyLimit(db, 'joinSend', input.device.id, now)
 	await enforceLoyaltyLimit(db, 'joinSendPhone', phone, now)
+	await enforceLoyaltyLimit(db, 'joinSendOrg', 'org', now)
 	const program = await withLoyaltyWrite({ orgId, now }, (tx) =>
 		activeProgramInTx(tx),
 	)
 
+	let existing = await findCustomerByPhone(db, phone)
+	// Any row's live code may be a sign-in in flight (website or a till
+	// elsewhere): overwriting it would kill that sign-in. Answer as if sent,
+	// without sending, so the answer never says what the number is.
+	if (hasLiveCode(existing, now)) {
+		return { sent: true, expiresAt: now + LOYALTY_OTP_TTL_MS }
+	}
+
+	// Each text costs money: the node-wide cap applies like website sign-in.
+	if (checkGlobalSendCap().limited) {
+		throw new LoyaltyDomainError('rate_limited')
+	}
+
 	const code = crypto.randomInt(100000, 1_000_000).toString()
-	const hashedCode = hmacHash(code)
+	const hashedCode = joinCodeHash(code)
 	const expiresAt = now + LOYALTY_OTP_TTL_MS
 	const codeFields = {
 		phoneVerificationCode: hashedCode,
 		phoneVerificationExpiresAt: new Date(expiresAt),
 	}
-	let existing = await findCustomerByPhone(db, phone)
 	let createdId: string | null = null
 	if (!existing) {
 		// Insert-or-ignore: two sends for a new number at once cannot both
-		// insert (UNIQUE phone). The loser re-reads the winner's row.
+		// insert (UNIQUE phone). The loser re-reads the winner's row. The row
+		// is nameless and unverified until the code is read back; the tick
+		// purges one that never was (`purgeUnverifiedJoinRows`).
 		const [inserted] = await retryOnSqliteBusy(() =>
 			db
 				.insert(customers)
@@ -110,21 +152,21 @@ export async function sendTillJoinCode(
 		if (!createdId && !existing) throw new LoyaltyDomainError('otp_unavailable')
 	}
 	if (existing) {
-		// A signed-in account's live code may be a website sign-in in flight:
-		// overwriting it would kill that sign-in. Wait for it to expire.
-		if (
-			existing.phoneVerified &&
-			existing.phoneVerificationCode &&
-			existing.phoneVerificationExpiresAt &&
-			existing.phoneVerificationExpiresAt.getTime() > now
-		) {
-			throw new LoyaltyDomainError('otp_unavailable')
-		}
-		await db
+		// Only write while the row still holds no live code (a concurrent send
+		// may have just set one).
+		const updated = await db
 			.update(customers)
 			.set(codeFields)
-			.where(eq(customers.id, existing.id))
-			.run()
+			.where(
+				and(
+					eq(customers.id, existing.id),
+					sql`(${customers.phoneVerificationCode} is null or ${customers.phoneVerificationExpiresAt} is null or ${customers.phoneVerificationExpiresAt} <= ${Math.floor(now / 1000)})`,
+				),
+			)
+			.returning({ id: customers.id })
+		if (updated.length === 0) {
+			return { sent: true, expiresAt: now + LOYALTY_OTP_TTL_MS }
+		}
 	}
 	try {
 		await sendSms({
@@ -201,53 +243,40 @@ export async function verifyTillJoinCode(
 		!expected ||
 		!customer.phoneVerificationExpiresAt ||
 		customer.phoneVerificationExpiresAt.getTime() <= now ||
-		!timingSafeEqualString(hmacHash(input.code), expected)
+		!timingSafeEqualString(joinCodeHash(input.code), expected)
 	) {
 		throw new LoyaltyDomainError('otp_invalid')
 	}
-	// Check the loyalty side first: a suspended or erased account (or a program
-	// that stopped) must not burn the code and verify the phone for nothing.
-	await withLoyaltyWrite({ orgId, now }, async (tx) => {
-		await activeProgramInTx(tx)
-		const current = await memberForCustomerInTx(tx, customer.id)
-		if (current && current.status !== 'active') {
-			throw new LoyaltyDomainError('member_inactive')
-		}
-	})
-	// Consume the code atomically: two terminals reading the same code back
-	// cannot both succeed.
-	const [consumed] = await db
-		.update(customers)
-		.set({
-			phoneVerified: true,
-			phoneVerificationCode: null,
-			phoneVerificationExpiresAt: null,
-		})
-		.where(
-			and(
-				eq(customers.id, customer.id),
-				eq(customers.phoneVerificationCode, expected),
-			),
-		)
-		.returning({ id: customers.id })
-	if (!consumed) throw new LoyaltyDomainError('otp_invalid')
 
-	await upgradeLegacyPhone(db, customer, phone)
-	await linkVerifiedCustomerToGuest(db, customer.id, { orgId, now })
-	if (!customer.phoneVerified) {
-		void evaluateAndSpawnTriggers(orgId, 'phone_verified', customer.id).catch(
-			(error) => {
-				console.error(
-					'Failed to evaluate phone_verified journey triggers:',
-					errorLogFields(error),
-				)
-			},
-		)
-	}
-
-	return withLoyaltyWrite({ orgId, now }, async (tx, ctx) => {
+	// One transaction: the code is consumed, the phone verified, the points
+	// account opened and the binding issued together. Any refusal (a
+	// suspended or erased account, a program that stopped) rolls all of it
+	// back, so the phone is never left verified without a binding and the
+	// code is not burned for nothing.
+	const result = await withLoyaltyWrite({ orgId, now }, async (tx, ctx) => {
 		const program = await activeProgramInTx(tx)
 		const before = await memberForCustomerInTx(tx, customer.id)
+		if (before && before.status !== 'active') {
+			throw new LoyaltyDomainError('member_inactive')
+		}
+		// Consume the code atomically: two terminals reading the same code
+		// back cannot both succeed.
+		const [consumed] = await tx
+			.update(customers)
+			.set({
+				phoneVerified: true,
+				phoneVerificationCode: null,
+				phoneVerificationExpiresAt: null,
+			})
+			.where(
+				and(
+					eq(customers.id, customer.id),
+					eq(customers.phoneVerificationCode, expected),
+				),
+			)
+			.returning({ id: customers.id })
+		if (!consumed) throw new LoyaltyDomainError('otp_invalid')
+
 		const member = await ensureMemberForCustomerInTx(tx, customer.id, ctx.now)
 		// A suspended or erased account is never reopened.
 		if (!member || member.status !== 'active') {
@@ -263,4 +292,68 @@ export async function verifyTillJoinCode(
 		})
 		return { ...identification, joined: before === null }
 	})
+
+	// After the binding exists: the rest is best-effort follow-up.
+	await upgradeLegacyPhone(db, customer, phone)
+	await linkVerifiedCustomerToGuest(db, customer.id, { orgId, now })
+	if (!customer.phoneVerified) {
+		void evaluateAndSpawnTriggers(orgId, 'phone_verified', customer.id).catch(
+			(error) => {
+				console.error(
+					'Failed to evaluate phone_verified journey triggers:',
+					errorLogFields(error),
+				)
+			},
+		)
+	}
+	return result
+}
+
+/** Unverified, nameless join rows are kept this long past their code's expiry. */
+const JOIN_ROW_GRACE_MS = 60 * 60_000
+const JOIN_PURGE_BATCH = 100
+
+/**
+ * The tick's part: deletes the nameless, unverified rows a till join left
+ * behind when the guest never read the code back. A row is deleted only when
+ * its code has expired (past a grace period) and nothing at all refers to it:
+ * every table with a foreign key to `customers` is checked, so a customer with
+ * an order, a booking, a member account or any other data is never touched.
+ * If the foreign keys cannot be listed nothing is deleted.
+ */
+export async function purgeUnverifiedJoinRows(
+	orgId: string,
+	now = Date.now(),
+): Promise<{ purged: number }> {
+	try {
+		const db = await getTenantDb(orgId)
+		const refs = (await db.all(
+			sql`select m.name as tbl, f."from" as col from sqlite_master m, pragma_foreign_key_list(m.name) f where m.type = 'table' and f."table" = 'customers'`,
+		)) as Array<{ tbl: string; col: string }>
+		const ident = /^[A-Za-z_][A-Za-z0-9_]*$/
+		if (refs.length === 0 || refs.some((r) => !ident.test(r.tbl + r.col))) {
+			return { purged: 0 }
+		}
+		const unreferenced = refs.map(
+			(r) =>
+				sql`not exists (select 1 from ${sql.raw(`"${r.tbl}"`)} where ${sql.raw(`"${r.col}"`)} = ${customers.id})`,
+		)
+		const cutoff = Math.floor((now - JOIN_ROW_GRACE_MS) / 1000)
+		const deleted = await db
+			.delete(customers)
+			.where(
+				and(
+					sql`${customers.id} in (select id from customers where name = '' and (phone_verified is null or phone_verified = 0) and email is null and refresh_token_hash is null and stripe_customer_id is null and phone_verification_expires_at is not null and phone_verification_expires_at < ${cutoff} limit ${JOIN_PURGE_BATCH})`,
+					...unreferenced,
+				),
+			)
+			.returning({ id: customers.id })
+		return { purged: deleted.length }
+	} catch (error) {
+		console.error('Loyalty could not purge unverified join rows', {
+			orgId,
+			...errorLogFields(error),
+		})
+		return { purged: 0 }
+	}
 }

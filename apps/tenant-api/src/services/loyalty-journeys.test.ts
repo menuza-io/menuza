@@ -24,6 +24,8 @@ import {
 	evaluateRewardJourneys,
 	loyaltyJourneysIdle,
 	LOYALTY_INACTIVE_BATCH,
+	LOYALTY_PENDING_STALE_MS,
+	retryPendingRewardJourneys,
 	runInactiveJourneys,
 	setLoyaltyJourneySpawner,
 } from './loyalty-journeys.ts'
@@ -277,6 +279,69 @@ describe('reward journeys', () => {
 		await expect(evaluateRewardJourneys(ORG, memberId)).resolves.toBeUndefined()
 		expect(JSON.stringify(log.mock.calls)).not.toContain('+1555')
 		log.mockRestore()
+	})
+})
+
+describe('reward journeys: spawn before fired', () => {
+	it('a failed start leaves no fired state and retries on the next evaluation', async () => {
+		await journey('loyalty_reward_available')
+		const { memberId } = await member(30)
+		spawn.mockRejectedValueOnce(new Error('worker down'))
+		const log = vi.spyOn(console, 'error').mockImplementation(() => {})
+		await evaluateRewardJourneys(ORG, memberId)
+		log.mockRestore()
+		expect(
+			(await emissionsOf(memberId)).filter((r) => r.state === 'fired'),
+		).toEqual([])
+		await evaluateRewardJourneys(ORG, memberId)
+		expect(spawn).toHaveBeenCalledTimes(2)
+		const rows = await emissionsOf(memberId)
+		expect(rows.find((r) => r.ref === coffeeId)?.state).toBe('fired')
+	})
+
+	it('records pending while the start runs, and fired after', async () => {
+		await journey('loyalty_reward_available')
+		const { memberId } = await member(30)
+		let seen: string | undefined
+		spawn.mockImplementationOnce(async () => {
+			seen = (await emissionsOf(memberId)).find(
+				(r) => r.ref === coffeeId,
+			)?.state
+		})
+		await evaluateRewardJourneys(ORG, memberId)
+		expect(seen).toBe('pending')
+		expect((await emissionsOf(memberId))[0]?.state).toBe('fired')
+	})
+
+	it('concurrent evaluations start the journey once', async () => {
+		await journey('loyalty_reward_available')
+		const { memberId } = await member(30)
+		await Promise.all([
+			evaluateRewardJourneys(ORG, memberId),
+			evaluateRewardJourneys(ORG, memberId),
+			evaluateRewardJourneys(ORG, memberId),
+		])
+		expect(spawn).toHaveBeenCalledTimes(1)
+	})
+
+	it('a stale pending (start never finished) is retried by the tick', async () => {
+		await journey('loyalty_reward_available')
+		const { memberId } = await member(30)
+		const db = await getTenantDb(ORG)
+		await db.insert(loyaltyJourneyEmissions).values({
+			memberId,
+			trigger: 'loyalty_reward_available',
+			ref: coffeeId,
+			state: 'pending' as 'fired',
+			emittedAt: NOW,
+		})
+		await evaluateRewardJourneys(ORG, memberId, { now: NOW + 1000 })
+		expect(spawn).not.toHaveBeenCalled() // fresh pending blocks
+		await retryPendingRewardJourneys(ORG, {
+			now: NOW + LOYALTY_PENDING_STALE_MS + 1,
+		})
+		expect(spawn).toHaveBeenCalledTimes(1)
+		expect((await emissionsOf(memberId))[0]?.state).toBe('fired')
 	})
 })
 

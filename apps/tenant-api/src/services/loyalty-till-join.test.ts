@@ -2,6 +2,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { LOYALTY_OTP_TTL_MS } from '@repo/loyalty'
+import { hmacHash } from '../lib/secrets.ts'
 import { sendSms } from '@repo/sms'
 import {
 	customerSubscriptions,
@@ -17,6 +18,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { LOYALTY_RATE_LIMITS } from '../lib/loyalty-rate-limit.ts'
 import { resolveBindingInTx, type TillDevice } from './loyalty-code-service.ts'
 import {
+	purgeUnverifiedJoinRows,
 	sendTillJoinCode,
 	verifyTillJoinCode,
 } from './loyalty-till-join-service.ts'
@@ -34,6 +36,14 @@ import {
 import { withLoyaltyWrite } from '../lib/loyalty-write.ts'
 
 vi.mock('@repo/sms', () => ({ sendSms: vi.fn() }))
+const capState = vi.hoisted(() => ({ limited: false }))
+vi.mock('../lib/rate-limit.ts', async (importActual) => ({
+	...(await importActual<typeof import('../lib/rate-limit.ts')>()),
+	checkGlobalSendCap: () =>
+		capState.limited
+			? { limited: true as const, retryAfter: 60 }
+			: { limited: false as const },
+}))
 
 const sms = vi.mocked(sendSms)
 
@@ -77,6 +87,7 @@ beforeEach(async () => {
 	await provisionTenantDb(ORG)
 	await activateProgram(ORG)
 	device = { id: await insertPosDevice(ORG), locationId: LOC_1 }
+	capState.limited = false
 	sms.mockReset()
 	sms.mockResolvedValue(undefined as never)
 })
@@ -246,11 +257,152 @@ describe('joining at the till', () => {
 				phoneVerificationExpiresAt: new Date(NOW + 60_000),
 			})
 			.where(eq(customers.id, 'cus_signing_in'))
-		await expectLoyaltyError(send(), 'otp_unavailable')
+		// Answers as if sent (so it never says the account exists) but sends
+		// nothing and leaves the code alone.
+		expect((await send()).sent).toBe(true)
 		expect(sms).not.toHaveBeenCalled()
 		expect((await customerByPhone())?.phoneVerificationCode).toBe(
 			'website-hash',
 		)
+	})
+
+	it("does not overwrite an unverified customer's live code either", async () => {
+		await insertCustomer(ORG, {
+			id: 'cus_unv',
+			name: 'Ada Lovelace',
+			phone: PHONE,
+			verified: false,
+		})
+		const db = await getTenantDb(ORG)
+		await db
+			.update(customers)
+			.set({
+				phoneVerificationCode: 'website-hash',
+				phoneVerificationExpiresAt: new Date(NOW + 60_000),
+			})
+			.where(eq(customers.id, 'cus_unv'))
+		expect((await send()).sent).toBe(true)
+		expect(sms).not.toHaveBeenCalled()
+		expect((await customerByPhone())?.phoneVerificationCode).toBe(
+			'website-hash',
+		)
+	})
+
+	it('the website sign-in code and the join code cannot consume each other', async () => {
+		// A website code on the row is not a join code.
+		await insertCustomer(ORG, {
+			id: 'cus_web',
+			name: 'Ada Lovelace',
+			phone: PHONE,
+			verified: false,
+		})
+		const db = await getTenantDb(ORG)
+		await db
+			.update(customers)
+			.set({
+				phoneVerificationCode: hmacHash('123456'),
+				phoneVerificationExpiresAt: new Date(NOW + 60_000),
+			})
+			.where(eq(customers.id, 'cus_web'))
+		await expectLoyaltyError(verify('123456'), 'otp_invalid')
+		expect((await customerByPhone())?.phoneVerified).toBe(false)
+
+		// And a join code is not the website hash of the same digits.
+		await db
+			.update(customers)
+			.set({ phoneVerificationCode: null, phoneVerificationExpiresAt: null })
+			.where(eq(customers.id, 'cus_web'))
+		await send()
+		const stored = (await customerByPhone())?.phoneVerificationCode
+		expect(stored).not.toBe(hmacHash(lastCode()))
+		expect(stored).toBe(hmacHash(`join:${lastCode()}`))
+	})
+
+	it('refuses to send past the node-wide send cap, leaving nothing behind', async () => {
+		capState.limited = true
+		await expectLoyaltyError(send(), 'rate_limited')
+		expect(sms).not.toHaveBeenCalled()
+		expect(await customerByPhone()).toBeUndefined()
+	})
+
+	it('limits texts across the whole organization', async () => {
+		const { max } = LOYALTY_RATE_LIMITS.joinSendOrg
+		expect(max).toBeGreaterThan(LOYALTY_RATE_LIMITS.joinSend.max)
+		const db = await getTenantDb(ORG)
+		const { enforceLoyaltyLimit } = await import('../lib/loyalty-rate-limit.ts')
+		for (let i = 0; i < max; i++) {
+			await enforceLoyaltyLimit(db, 'joinSendOrg', 'org', NOW)
+		}
+		await expectLoyaltyError(send(), 'rate_limited')
+		expect(sms).not.toHaveBeenCalled()
+	})
+
+	it('a failed final step leaves the phone unverified and the code usable', async () => {
+		await send()
+		const code = lastCode()
+		const db = await getTenantDb(ORG)
+		// Simulate the binding failing: the member is suspended after the send
+		// (checked inside the same transaction as the verification).
+		const row = await customerByPhone()
+		await db
+			.update(customers)
+			.set({ phoneVerified: true })
+			.where(eq(customers.id, row!.id))
+		const memberId = await makeMember(ORG, { customerId: row!.id })
+		await setMemberStatus(ORG, {
+			memberId,
+			status: 'suspended',
+			actorId: 'op_test',
+			now: NOW,
+		})
+		await db
+			.update(customers)
+			.set({ phoneVerified: false })
+			.where(eq(customers.id, row!.id))
+		await expectLoyaltyError(verify(code), 'member_inactive')
+		const after = await customerByPhone()
+		expect(after?.phoneVerified).toBe(false)
+		expect(after?.phoneVerificationCode).toBeTruthy()
+		expect(await db.select().from(loyaltyMemberBindings).all()).toHaveLength(0)
+	})
+
+	it('the tick purges only unverified, nameless, expired and unreferenced join rows', async () => {
+		const LATER = NOW + LOYALTY_OTP_TTL_MS + 2 * 60 * 60_000
+		const db = await getTenantDb(ORG)
+		await send('+15550100501') // stale join row: purged
+		await send('+15550100502') // referenced by a member: kept
+		const kept = await customerByPhone('+15550100502')
+		await db
+			.update(customers)
+			.set({ phoneVerified: true })
+			.where(eq(customers.id, kept!.id))
+		await makeMember(ORG, { customerId: kept!.id })
+		await db
+			.update(customers)
+			.set({ phoneVerified: false })
+			.where(eq(customers.id, kept!.id))
+		await send('+15550100503') // code still live at the purge time: kept
+		await insertCustomer(ORG, {
+			id: 'cus_named',
+			name: 'Named Person',
+			phone: '+15550100504',
+			verified: false,
+		})
+		await db
+			.update(customers)
+			.set({ phoneVerificationExpiresAt: new Date(NOW) })
+			.where(eq(customers.id, 'cus_named'))
+		const live = await customerByPhone('+15550100503')
+		await db
+			.update(customers)
+			.set({ phoneVerificationExpiresAt: new Date(LATER + 60_000) })
+			.where(eq(customers.id, live!.id))
+
+		expect(await purgeUnverifiedJoinRows(ORG, LATER)).toEqual({ purged: 1 })
+		const left = (await db.select().from(customers).all())
+			.map((c) => c.phone)
+			.sort()
+		expect(left).toEqual(['+15550100502', '+15550100503', '+15550100504'])
 	})
 
 	it('concurrent sends for a new number do not fail on the UNIQUE phone', async () => {
