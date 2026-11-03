@@ -26,6 +26,8 @@ import {
 	defaultSelections,
 	defaultVariantPicks,
 } from '~/lib/item-config.ts'
+import { listenToCart, markPlaced, useLoyalty } from '~/lib/loyalty-store.ts'
+import { saleLoyalty } from '~/lib/loyalty.ts'
 import { moneyFormatter } from '~/lib/money.ts'
 import {
 	createOrder,
@@ -42,6 +44,7 @@ import { computeTotals, type CartLine } from '~/lib/pricing.ts'
 import { useStoragePersistence } from '~/lib/storage.ts'
 import { usePos } from '~/lib/store.ts'
 import { tabForTable } from '~/lib/tabs.ts'
+import { categoryIdsByItem } from '~/lib/till-discounts.ts'
 import { tipsAllowed } from '~/lib/tips.ts'
 import { type MenuItem } from '~/lib/types.ts'
 import { applyUpdateIfIdle } from '~/lib/update.ts'
@@ -217,6 +220,12 @@ export function App() {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [])
 
+	// The loyalty session follows the cart: a changed cart ends an approved
+	// reward, and a cleared order ends the member.
+	useEffect(() => {
+		listenToCart()
+	}, [])
+
 	const currency =
 		s.location?.currency ?? s.snapshot?.menu.organization.currency ?? 'USD'
 	const money = useMemo(
@@ -312,9 +321,29 @@ export function App() {
 		else setPicking(item)
 	}
 
+	/**
+	 * The member who earns on this sale and, when a reward was approved for it,
+	 * the sale id the region holds the reward under (the order is created under
+	 * that same id; a tab keeps its own).
+	 */
+	const loyaltyForSale = (): Pick<OrderDraft, 'id' | 'loyalty'> => {
+		const { member, applied, saleId } = useLoyalty.getState()
+		return {
+			...(applied && saleId && !s.activeOrderId ? { id: saleId } : {}),
+			loyalty: member
+				? saleLoyalty({
+						binding: member.binding,
+						lines: s.lines,
+						categoryIdsByItem: categoryIdsByItem(s.categories),
+					})
+				: null,
+		}
+	}
+
 	const draftFromCart = (): OrderDraft | null =>
 		s.location
 			? {
+					...loyaltyForSale(),
 					terminalCode: s.settings.terminalCode,
 					locationId: s.location.id,
 					currency,
@@ -394,6 +423,9 @@ export function App() {
 			const order = s.activeOrderId
 				? await updateTab(s.activeOrderId, draft, audit)
 				: await createOrder(draft)
+			// The order carries the member and any reward now: clearing the cart
+			// must not give the reward back.
+			markPlaced()
 			s.clearOrder()
 			setCartOpen(false)
 			void s.sync()
@@ -936,8 +968,10 @@ export function App() {
 							// Done, or part-paid and left as a tab: the cart is spent, but only when
 							// it was the cart being paid. Settling a tab from the Orders list must
 							// not wipe a different order the cashier is in the middle of.
-							if (checkout.source === 'cart' && (finished || order))
+							if (checkout.source === 'cart' && (finished || order)) {
+								markPlaced()
 								s.clearOrder()
+							}
 							void s.sync()
 						}}
 					/>

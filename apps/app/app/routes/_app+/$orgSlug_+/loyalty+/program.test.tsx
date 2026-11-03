@@ -36,6 +36,8 @@ function programWith(
 				earning: { method: 'spend', points: 1, perMinor: 100 },
 				terms: 'Points have no cash value.',
 				labels: { items: {}, categories: {} },
+				promotions: [],
+				promotionStacking: 'best',
 			},
 			createdAt: 1_700_000_000_000,
 			createdBy: null,

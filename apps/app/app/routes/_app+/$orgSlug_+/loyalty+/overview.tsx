@@ -551,6 +551,18 @@ export default function LoyaltyOverviewRoute() {
 									</div>
 									<div className="flex flex-col gap-0.5">
 										<dt className="text-muted-foreground text-xs">
+											<Trans>Bonus points from promotions</Trans>
+										</dt>
+										<dd
+											dir="ltr"
+											className="tabular-nums"
+											data-testid="loyalty-metric-bonus"
+										>
+											{report.promotions.bonusPoints}
+										</dd>
+									</div>
+									<div className="flex flex-col gap-0.5">
+										<dt className="text-muted-foreground text-xs">
 											<Trans>Waiting for review</Trans>
 										</dt>
 										<dd dir="ltr" className="tabular-nums">
@@ -561,6 +573,48 @@ export default function LoyaltyOverviewRoute() {
 								</dl>
 							</CardContent>
 						</Card>
+						{report.promotions.byPromotion.length > 0 ? (
+							<Card data-testid="loyalty-report-promotions">
+								<CardHeader className="pb-2">
+									<CardTitle className="text-base">
+										<Trans>Promotions</Trans>
+									</CardTitle>
+									<CardDescription>
+										<Trans>
+											Bonus points each promotion gave in the window, before
+											refunds.
+										</Trans>
+									</CardDescription>
+								</CardHeader>
+								<CardContent>
+									<ul className="flex flex-col gap-2 text-sm">
+										{report.promotions.byPromotion.map((promotion) => (
+											<li
+												key={promotion.id}
+												className="flex flex-wrap items-baseline justify-between gap-2"
+												data-testid="loyalty-report-promotion"
+											>
+												<span className="min-w-0 truncate font-medium">
+													{promotion.name}
+												</span>
+												<span className="text-muted-foreground">
+													<Trans>
+														<bdi dir="ltr" className="tabular-nums">
+															{promotion.points}
+														</bdi>{' '}
+														points on{' '}
+														<bdi dir="ltr" className="tabular-nums">
+															{promotion.purchases}
+														</bdi>{' '}
+														purchases
+													</Trans>
+												</span>
+											</li>
+										))}
+									</ul>
+								</CardContent>
+							</Card>
+						) : null}
 					</div>
 				) : reportFailed ? (
 					<Alert variant="destructive" data-testid="loyalty-report-error">

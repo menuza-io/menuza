@@ -12,6 +12,7 @@ const LOYALTY_TABLES = [
 	'loyalty_audit_log',
 	'loyalty_balances',
 	'loyalty_idempotency_keys',
+	'loyalty_journey_emissions',
 	'loyalty_ledger',
 	'loyalty_member_bindings',
 	'loyalty_member_codes',

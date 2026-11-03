@@ -1,5 +1,13 @@
 import { Trans, useLingui } from '@lingui/react/macro'
 import { Button } from '@repo/ui/button'
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from '@repo/ui/dropdown-menu'
+import { Icon } from '@repo/ui/icon'
 import { useState } from 'react'
 import {
 	type ActionFunctionArgs,
@@ -9,7 +17,7 @@ import {
 	Link,
 	useNavigation,
 } from 'react-router'
-import { ArchiveDiscountButton } from '#app/components/discounts/archive-discount-button.tsx'
+import { ArchiveDiscountDialog } from '#app/components/discounts/archive-discount-button.tsx'
 import {
 	DiscountForm,
 	UNSAVED_CHANGES_NOTE_ID,
@@ -110,6 +118,7 @@ export default function EditDiscountRoute() {
 	const actionData = useActionData<DiscountEditorActionData>()
 	const navigation = useNavigation()
 	const { t } = useLingui()
+	const [archiveOpen, setArchiveOpen] = useState(false)
 	const keepEdits = actionData?.keepEdits === true
 	// The form opens with the saved discount and is rebuilt when a new version
 	// arrives. A stale save is the exception: it brings the other person's
@@ -211,74 +220,98 @@ export default function EditDiscountRoute() {
 				statusActions={({ dirty }) =>
 					data.canWrite || data.printHref ? (
 						<>
-							{data.printHref ? (
+							{data.canWrite ? (
 								<Button
+									type="submit"
+									form="discount-status"
+									name="status"
+									value={data.status === 'archived' ? 'paused' : nextStatus}
 									variant="outline"
 									disabled={dirty}
 									aria-describedby={dirty ? UNSAVED_CHANGES_NOTE_ID : undefined}
-									render={<Link to={data.printHref} />}
 								>
-									<Trans>Print coupons</Trans>
+									{data.status === 'active'
+										? t`Pause`
+										: data.status === 'archived'
+											? t`Restore`
+											: t`Resume`}
 								</Button>
 							) : null}
-							{data.canWrite ? (
-								<>
-									<Button
-										type="submit"
-										form="discount-status"
-										name="status"
-										value={data.status === 'archived' ? 'paused' : nextStatus}
-										variant="outline"
-										disabled={dirty}
-										aria-describedby={
-											dirty ? UNSAVED_CHANGES_NOTE_ID : undefined
-										}
-									>
-										{data.status === 'active'
-											? t`Pause`
-											: data.status === 'archived'
-												? t`Restore`
-												: t`Resume`}
-									</Button>
-									<Button
-										type="submit"
-										form="discount-duplicate"
-										variant="outline"
-										disabled={dirty}
-										aria-describedby={
-											dirty ? UNSAVED_CHANGES_NOTE_ID : undefined
-										}
-									>
-										<Trans>Duplicate</Trans>
-									</Button>
-									{data.status !== 'archived' ? (
-										<ArchiveDiscountButton
-											name={data.name}
-											hasCodes={initial.application === 'code'}
+							{/* The rarer actions on the saved discount share one menu. */}
+							<DropdownMenu>
+								<DropdownMenuTrigger
+									disabled={dirty}
+									render={
+										<Button
+											type="button"
 											variant="outline"
-											size="default"
-											disabled={dirty}
-											describedBy={dirty ? UNSAVED_CHANGES_NOTE_ID : undefined}
-											onConfirm={() => {
-												const form = document.getElementById(
-													'discount-status',
-												) as HTMLFormElement | null
-												if (!form) return
-												const status = document.createElement('input')
-												status.type = 'hidden'
-												status.name = 'status'
-												status.value = 'archived'
-												form.appendChild(status)
-												form.requestSubmit()
-											}}
-										/>
+											size="icon"
+											aria-label={t`More actions`}
+											aria-describedby={
+												dirty ? UNSAVED_CHANGES_NOTE_ID : undefined
+											}
+										>
+											<Icon name="more-horizontal" className="size-4" />
+										</Button>
+									}
+								/>
+								<DropdownMenuContent align="end" className="min-w-44">
+									{data.printHref ? (
+										<DropdownMenuItem render={<Link to={data.printHref} />}>
+											<Icon name="printer" />
+											<Trans>Print coupons</Trans>
+										</DropdownMenuItem>
 									) : null}
-								</>
-							) : null}
+									{data.canWrite ? (
+										<DropdownMenuItem
+											onClick={() => {
+												const form = document.getElementById(
+													'discount-duplicate',
+												) as HTMLFormElement | null
+												form?.requestSubmit()
+											}}
+										>
+											<Icon name="copy" />
+											<Trans>Duplicate</Trans>
+										</DropdownMenuItem>
+									) : null}
+									{data.canWrite && data.status !== 'archived' ? (
+										<>
+											<DropdownMenuSeparator />
+											<DropdownMenuItem
+												variant="destructive"
+												onClick={() => setArchiveOpen(true)}
+											>
+												<Trans>Archive</Trans>
+											</DropdownMenuItem>
+										</>
+									) : null}
+								</DropdownMenuContent>
+							</DropdownMenu>
 						</>
 					) : null
 				}
 			/>
+			{data.canWrite && data.status !== 'archived' ? (
+				<ArchiveDiscountDialog
+					name={data.name}
+					hasCodes={initial.application === 'code'}
+					open={archiveOpen}
+					onOpenChange={setArchiveOpen}
+					onConfirm={() => {
+						const form = document.getElementById(
+							'discount-status',
+						) as HTMLFormElement | null
+						if (!form) return
+						const status = document.createElement('input')
+						status.type = 'hidden'
+						status.name = 'status'
+						status.value = 'archived'
+						form.appendChild(status)
+						form.requestSubmit()
+					}}
+				/>
+			) : null}
 		</>
 	)
 }

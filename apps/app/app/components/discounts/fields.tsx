@@ -1,6 +1,13 @@
-import { Trans, useLingui } from '@lingui/react/macro'
+import { Plural, Trans, useLingui } from '@lingui/react/macro'
 import { cn } from '@repo/ui'
+import { Badge } from '@repo/ui/badge'
 import { Checkbox } from '@repo/ui/checkbox'
+import {
+	ChoiceCard,
+	ChoiceCardContent,
+	ChoiceCardDescription,
+	ChoiceCardTitle,
+} from '@repo/ui/choice-card'
 import {
 	Field,
 	FieldDescription,
@@ -16,7 +23,12 @@ import {
 	FramePanel,
 	FrameTitle,
 } from '@repo/ui/frame'
-import { Input } from '@repo/ui/input'
+import { Icon } from '@repo/ui/icon'
+import {
+	InputGroup,
+	InputGroupAddon,
+	InputGroupInput,
+} from '@repo/ui/input-group'
 import { Label } from '@repo/ui/label'
 import { RadioGroup, RadioGroupItem } from '@repo/ui/radio-group'
 import { Switch } from '@repo/ui/switch'
@@ -26,7 +38,9 @@ import {
 	type ReactNode,
 	type Ref,
 	useContext,
+	useEffect,
 	useId,
+	useState,
 } from 'react'
 import {
 	type EditorErrorCode,
@@ -68,17 +82,21 @@ export function EditorSection({
 }) {
 	const titleId = `${id}-title`
 	return (
-		<Frame className="w-full" role="group" aria-labelledby={titleId} id={id}>
-			<FrameHeader>
-				<FrameTitle id={titleId} className="text-base">
-					{title}
-				</FrameTitle>
-				{description ? (
-					<FrameDescription>{description}</FrameDescription>
-				) : null}
-			</FrameHeader>
-			<FramePanel className="flex flex-col gap-5">{children}</FramePanel>
-		</Frame>
+		// The summary links and the error list move focus here, and the margin
+		// keeps the title clear of the sticky header.
+		<div id={id} tabIndex={-1} className="scroll-mt-24 rounded-xl outline-none">
+			<Frame className="w-full" role="group" aria-labelledby={titleId}>
+				<FrameHeader>
+					<FrameTitle id={titleId} className="text-base">
+						{title}
+					</FrameTitle>
+					{description ? (
+						<FrameDescription>{description}</FrameDescription>
+					) : null}
+				</FrameHeader>
+				<FramePanel className="flex flex-col gap-5">{children}</FramePanel>
+			</Frame>
+		</div>
 	)
 }
 
@@ -124,7 +142,8 @@ export function ChoiceGroup<T extends string>({
 					.join(' ') || undefined
 			}
 		>
-			<FieldLegend variant="label" className="mb-0">
+			{/* A legend sits outside the fieldset's flex gap, so it sets its own. */}
+			<FieldLegend variant="label" className="mb-2">
 				{legend}
 			</FieldLegend>
 			<RadioGroup
@@ -136,29 +155,21 @@ export function ChoiceGroup<T extends string>({
 				{choices.map((choice) => {
 					const optionId = `${id}-${choice.value}`
 					return (
-						<label
-							key={choice.value}
-							htmlFor={optionId}
-							className={cn(
-								'border-input has-data-checked:border-primary has-data-checked:bg-primary/5 has-focus-visible:ring-ring/50 flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors has-focus-visible:ring-2',
-								choice.disabled && 'cursor-not-allowed opacity-60',
-							)}
-						>
+						<ChoiceCard key={choice.value} htmlFor={optionId}>
 							<RadioGroupItem
 								id={optionId}
 								value={choice.value}
 								disabled={choice.disabled}
-								className="mt-0.5"
 							/>
-							<span className="flex min-w-0 flex-col gap-0.5">
-								<span className="text-sm font-medium">{choice.label}</span>
+							<ChoiceCardContent>
+								<ChoiceCardTitle>{choice.label}</ChoiceCardTitle>
 								{choice.description ? (
-									<span className="text-muted-foreground text-sm">
+									<ChoiceCardDescription>
 										{choice.description}
-									</span>
+									</ChoiceCardDescription>
 								) : null}
-							</span>
-						</label>
+							</ChoiceCardContent>
+						</ChoiceCard>
 					)
 				})}
 			</RadioGroup>
@@ -204,10 +215,15 @@ export function CheckboxGroup<T extends string>({
 					.join(' ') || undefined
 			}
 		>
-			<FieldLegend variant="label" className="mb-0">
+			{/* A legend sits outside the fieldset's flex gap, so it sets its own. */}
+			<FieldLegend variant="label" className="mb-2">
 				{legend}
 			</FieldLegend>
-			<div className="flex flex-wrap gap-x-5 gap-y-2">
+			{/* The slot gives it the kit's group spacing, like a radio group. */}
+			<div
+				data-slot="checkbox-group"
+				className="flex flex-wrap gap-x-5 gap-y-2"
+			>
 				{options.map((option) => {
 					const optionId = `${id}-${option.value}`
 					const checked = value.includes(option.value)
@@ -295,6 +311,69 @@ export function Indented({ children }: { children: ReactNode }) {
 	return (
 		<div className="border-border flex flex-col gap-4 border-s-2 ps-4">
 			{children}
+		</div>
+	)
+}
+
+/**
+ * Optional settings folded under one row, so a section shows what most
+ * discounts need first. It opens by itself when something inside is set or
+ * has an error, so nothing chosen is ever hidden.
+ */
+export function OptionalGroup({
+	label,
+	description,
+	chosen,
+	hasError = false,
+	children,
+}: {
+	label: ReactNode
+	description?: ReactNode
+	/** One entry per thing set inside; the row shows how many. */
+	chosen: readonly unknown[]
+	hasError?: boolean
+	children: ReactNode
+}) {
+	const panelId = useId()
+	const [open, setOpen] = useState(chosen.length > 0 || hasError)
+	// A failed save points at fields in here: show them.
+	useEffect(() => {
+		if (hasError) setOpen(true)
+	}, [hasError])
+	return (
+		<div className="flex flex-col gap-4">
+			<button
+				type="button"
+				aria-expanded={open}
+				aria-controls={panelId}
+				onClick={() => setOpen((current) => !current)}
+				className="group/optional hover:bg-muted/60 focus-visible:ring-ring/50 -mx-2 -my-1.5 flex items-start justify-between gap-4 rounded-md px-2 py-1.5 text-start transition-colors outline-none focus-visible:ring-2"
+			>
+				<span className="flex min-w-0 flex-col gap-0.5">
+					<span className="flex flex-wrap items-center gap-2 text-sm font-medium">
+						{label}
+						{chosen.length > 0 ? (
+							<Badge variant="secondary">
+								<Plural value={chosen.length} one="# chosen" other="# chosen" />
+							</Badge>
+						) : null}
+					</span>
+					{description ? (
+						<span className="text-muted-foreground text-sm">{description}</span>
+					) : null}
+				</span>
+				<Icon
+					name="chevron-down"
+					aria-hidden
+					className={cn(
+						'text-muted-foreground mt-0.5 size-4 shrink-0 transition-transform duration-200 motion-reduce:transition-none',
+						open && 'rotate-180',
+					)}
+				/>
+			</button>
+			<div id={panelId} hidden={!open}>
+				<Indented>{children}</Indented>
+			</div>
 		</div>
 	)
 }
@@ -493,6 +572,7 @@ export function TextField({
 	disabled,
 	autoComplete,
 	className,
+	width = 'full',
 }: {
 	field: string
 	label: ReactNode
@@ -503,18 +583,29 @@ export function TextField({
 	type?: string
 	inputMode?: 'decimal' | 'numeric' | 'text'
 	maxLength?: number
+	/** A unit shown inside the input, such as "%" or a currency code. */
 	suffix?: string
 	disabled?: boolean
 	autoComplete?: string
 	className?: string
+	/**
+	 * How wide the input is from the small breakpoint up: `short` for a count,
+	 * `medium` for an amount of money. The label and hint keep the full width.
+	 */
+	width?: 'full' | 'medium' | 'short'
 }) {
 	const errorText = useEditorErrorText()
 	const id = fieldDomId(field)
 	return (
 		<Field className={className}>
 			<FieldLabel htmlFor={id}>{label}</FieldLabel>
-			<div className="flex items-center gap-2">
-				<Input
+			<InputGroup
+				className={cn(
+					width === 'short' && 'sm:max-w-36',
+					width === 'medium' && 'sm:max-w-56',
+				)}
+			>
+				<InputGroupInput
 					id={id}
 					type={type}
 					inputMode={inputMode}
@@ -531,9 +622,11 @@ export function TextField({
 					onChange={(event) => onChange(event.currentTarget.value)}
 				/>
 				{suffix ? (
-					<span className="text-muted-foreground text-sm">{suffix}</span>
+					<InputGroupAddon align="inline-end">
+						<bdi>{suffix}</bdi>
+					</InputGroupAddon>
 				) : null}
-			</div>
+			</InputGroup>
 			{hint ? (
 				<FieldDescription id={`${id}-hint`}>{hint}</FieldDescription>
 			) : null}

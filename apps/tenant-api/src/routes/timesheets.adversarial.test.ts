@@ -737,7 +737,11 @@ describe('timesheets: adversarial', () => {
 			})
 			expect(r.body.people[0].money).toBeUndefined()
 			expect(r.body.people[0].cards[0].money).toBeUndefined()
-			expect(r.raw).not.toMatch(/rateMinor|cashTips|creditTips|1234|777/)
+			// The money figures are matched as JSON values (`:1234`), not as bare digits,
+			// which random ids sometimes contain.
+			expect(r.raw).not.toMatch(
+				/rateMinor|cashTips|creditTips|:\s*(1234|777)\b/,
+			)
 			// And a labor-only read of the aggregate is not a pay read: no audit row.
 			const reads = await (
 				await h.db(ORG_A)

@@ -53,43 +53,70 @@ export function ArchiveDiscountButton({
 			>
 				<Trans>Archive</Trans>
 			</Button>
-			<AlertDialog open={open} onOpenChange={setOpen}>
-				<AlertDialogContent>
-					<AlertDialogHeader>
-						<AlertDialogTitle>
-							<Trans>Archive {name}?</Trans>
-						</AlertDialogTitle>
-						<AlertDialogDescription>
-							{hasCodes ? (
-								<Trans>
-									It stops applying everywhere and its codes stop working. If
-									you restore it later, its codes are not brought back and their
-									use counts start again.
-								</Trans>
-							) : (
-								<Trans>
-									It stops applying everywhere. You can restore it later.
-								</Trans>
-							)}
-						</AlertDialogDescription>
-					</AlertDialogHeader>
-					<AlertDialogFooter>
-						<AlertDialogCancel>
-							<Trans>Keep it</Trans>
-						</AlertDialogCancel>
-						<AlertDialogAction
-							type="button"
-							variant="destructive"
-							onClick={() => {
-								setOpen(false)
-								onConfirm()
-							}}
-						>
-							<Trans>Archive</Trans>
-						</AlertDialogAction>
-					</AlertDialogFooter>
-				</AlertDialogContent>
-			</AlertDialog>
+			<ArchiveDiscountDialog
+				name={name}
+				hasCodes={hasCodes}
+				open={open}
+				onOpenChange={setOpen}
+				onConfirm={onConfirm}
+			/>
 		</>
+	)
+}
+
+/**
+ * The question before archiving, on its own so a menu item can open it too.
+ */
+export function ArchiveDiscountDialog({
+	name,
+	hasCodes,
+	open,
+	onOpenChange,
+	onConfirm,
+}: {
+	name: string
+	hasCodes: boolean
+	open: boolean
+	onOpenChange: (open: boolean) => void
+	onConfirm: () => void
+}) {
+	return (
+		<AlertDialog open={open} onOpenChange={onOpenChange}>
+			<AlertDialogContent>
+				<AlertDialogHeader>
+					<AlertDialogTitle>
+						<Trans>Archive {name}?</Trans>
+					</AlertDialogTitle>
+					<AlertDialogDescription>
+						{hasCodes ? (
+							<Trans>
+								It stops applying everywhere and its codes stop working. If you
+								restore it later, its codes are not brought back and their use
+								counts start again.
+							</Trans>
+						) : (
+							<Trans>
+								It stops applying everywhere. You can restore it later.
+							</Trans>
+						)}
+					</AlertDialogDescription>
+				</AlertDialogHeader>
+				<AlertDialogFooter>
+					<AlertDialogCancel>
+						<Trans>Keep it</Trans>
+					</AlertDialogCancel>
+					<AlertDialogAction
+						type="button"
+						variant="destructive"
+						onClick={() => {
+							onOpenChange(false)
+							onConfirm()
+						}}
+					>
+						<Trans>Archive</Trans>
+					</AlertDialogAction>
+				</AlertDialogFooter>
+			</AlertDialogContent>
+		</AlertDialog>
 	)
 }

@@ -48,6 +48,18 @@ const TENANT_TRIGGER_MSGS: Record<
 		label: msg`Reservation Cancelled`,
 		desc: msg`Runs when a guest who agreed to hear from you cancels`,
 	},
+	loyalty_reward_available: {
+		label: msg`Reward Available`,
+		desc: msg`Runs when a member's points reach a reward, once each time they get there`,
+	},
+	loyalty_near_reward: {
+		label: msg`Close to a Reward`,
+		desc: msg`Runs when a member gets within reach of a reward (80% of its points)`,
+	},
+	loyalty_inactive: {
+		label: msg`Member Went Quiet`,
+		desc: msg`Runs when a member with points has not bought for 30 days`,
+	},
 }
 
 const TENANT_TRIGGER_OPTION_MSGS: Record<string, ReturnType<typeof msg>> = {
@@ -59,6 +71,9 @@ const TENANT_TRIGGER_OPTION_MSGS: Record<string, ReturnType<typeof msg>> = {
 	reservation_completed: msg`Reservation Completed`,
 	reservation_no_show: msg`Reservation No-Show`,
 	reservation_cancelled: msg`Reservation Cancelled`,
+	loyalty_reward_available: msg`Loyalty: Reward Available`,
+	loyalty_near_reward: msg`Loyalty: Close to a Reward`,
+	loyalty_inactive: msg`Loyalty: Member Went Quiet`,
 }
 
 export { TENANT_TRIGGER_MSGS, TENANT_TRIGGER_OPTION_MSGS }

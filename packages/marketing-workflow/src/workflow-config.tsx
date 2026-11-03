@@ -68,6 +68,18 @@ const TENANT_TRIGGER_LABELS: Record<string, { label: string; desc: string }> = {
 		label: 'Reservation Cancelled',
 		desc: 'Runs when a guest who agreed to hear from you cancels',
 	},
+	loyalty_reward_available: {
+		label: 'Reward Available',
+		desc: "Runs when a member's points reach a reward, once each time they get there",
+	},
+	loyalty_near_reward: {
+		label: 'Close to a Reward',
+		desc: 'Runs when a member gets within reach of a reward (80% of its points)',
+	},
+	loyalty_inactive: {
+		label: 'Member Went Quiet',
+		desc: 'Runs when a member with points has not bought for 30 days',
+	},
 }
 
 const TENANT_TRIGGER_OPTIONS: TriggerOption[] = [
@@ -79,6 +91,9 @@ const TENANT_TRIGGER_OPTIONS: TriggerOption[] = [
 	{ value: 'reservation_completed', label: 'Reservation Completed' },
 	{ value: 'reservation_no_show', label: 'Reservation No-Show' },
 	{ value: 'reservation_cancelled', label: 'Reservation Cancelled' },
+	{ value: 'loyalty_reward_available', label: 'Loyalty: Reward Available' },
+	{ value: 'loyalty_near_reward', label: 'Loyalty: Close to a Reward' },
+	{ value: 'loyalty_inactive', label: 'Loyalty: Member Went Quiet' },
 ]
 
 export { TENANT_TRIGGER_LABELS, TENANT_TRIGGER_OPTIONS }

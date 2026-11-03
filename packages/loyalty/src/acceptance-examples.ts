@@ -2,6 +2,10 @@ import { type z } from 'zod'
 import { type LoyaltyCart, type loyaltyCartSchema } from './cart.ts'
 import { type LoyaltyPurchaseSnapshot } from './earning.ts'
 import { type LoyaltyEarningRule } from './program.ts'
+import {
+	type LoyaltyPromotion,
+	type LoyaltyPromotionStacking,
+} from './promotions.ts'
 import { type LoyaltyRewardDefinition } from './rewards.ts'
 
 /**
@@ -512,3 +516,393 @@ export const REFUND_EXAMPLES: readonly RefundExample[] = [
 		],
 	},
 ]
+
+type PromotionExample = {
+	id: string
+	rule: string
+	earning: LoyaltyEarningRule
+	minimumSpendMinor: number
+	snapshot: LoyaltyPurchaseSnapshot
+	promotions: Array<Partial<LoyaltyPromotion> & { id: string }>
+	stacking?: LoyaltyPromotionStacking
+	/** When the sale finished, in epoch ms. */
+	occurredAt: number
+	timeZone: string
+	locationId: string | null
+	visitAlreadyAwarded?: boolean
+	expectedBasePoints: number
+	expectedBonusPoints: number
+	expectedApplied: Array<{ id: string; points: number }>
+}
+
+const NY = 'America/New_York'
+/** Tuesday 2026-01-13 at the given New York wall-clock time (EST, UTC-5). */
+const tuesdayNy = (hour: number, minute = 0) =>
+	Date.UTC(2026, 0, 13, hour + 5, minute)
+
+const spendOne = { method: 'spend', points: 1, perMinor: 100 } as const
+
+export const PROMOTION_EXAMPLES: readonly PromotionExample[] = [
+	{
+		id: 'multiplier-order',
+		rule: '2x points on the whole order: a $20.00 order earns 20, the promotion adds 20.',
+		earning: spendOne,
+		minimumSpendMinor: 0,
+		snapshot: {
+			currency: 'USD',
+			totalPaidMinor: 2200,
+			lines: [line('l1', 'burger', 2000)],
+		},
+		promotions: [
+			{
+				id: 'double',
+				name: 'Double points',
+				kind: 'multiplier',
+				value: 20_000,
+			},
+		],
+		occurredAt: tuesdayNy(12),
+		timeZone: NY,
+		locationId: 'loc_1',
+		expectedBasePoints: 20,
+		expectedBonusPoints: 20,
+		expectedApplied: [{ id: 'double', points: 20 }],
+	},
+	{
+		id: 'multiplier-rounds-down-once',
+		rule: '1.5x on an order that earned 33 (10 points per $3, $10.00): the extra is 16.5, rounded down once to 16.',
+		earning: { method: 'spend', points: 10, perMinor: 300 },
+		minimumSpendMinor: 0,
+		snapshot: {
+			currency: 'USD',
+			totalPaidMinor: 1000,
+			lines: [line('l1', 'a', 500), line('l2', 'b', 500)],
+		},
+		promotions: [
+			{ id: 'half', name: 'Bonus', kind: 'multiplier', value: 15_000 },
+		],
+		occurredAt: tuesdayNy(12),
+		timeZone: NY,
+		locationId: null,
+		expectedBasePoints: 33,
+		expectedBonusPoints: 16,
+		expectedApplied: [{ id: 'half', points: 16 }],
+	},
+	{
+		id: 'recurring-window-opens-at-start-closes-at-end',
+		rule: 'Tuesday 3 to 5 pm happy hour: 14:59 earns no extra, 15:00 does, 16:59 does, 17:00 does not (New York time).',
+		earning: spendOne,
+		minimumSpendMinor: 0,
+		snapshot: {
+			currency: 'USD',
+			totalPaidMinor: 1000,
+			lines: [line('l1', 'a', 1000)],
+		},
+		promotions: [
+			{
+				id: 'happy',
+				name: 'Happy hour',
+				kind: 'multiplier',
+				value: 20_000,
+				recurring: { weekdays: [2], fromMinute: 15 * 60, toMinute: 17 * 60 },
+			},
+		],
+		occurredAt: tuesdayNy(14, 59),
+		timeZone: NY,
+		locationId: null,
+		expectedBasePoints: 10,
+		expectedBonusPoints: 0,
+		expectedApplied: [],
+	},
+	{
+		id: 'recurring-window-inside',
+		rule: 'The same happy hour at 15:00 sharp: the order earns 10 and the promotion adds 10.',
+		earning: spendOne,
+		minimumSpendMinor: 0,
+		snapshot: {
+			currency: 'USD',
+			totalPaidMinor: 1000,
+			lines: [line('l1', 'a', 1000)],
+		},
+		promotions: [
+			{
+				id: 'happy',
+				name: 'Happy hour',
+				kind: 'multiplier',
+				value: 20_000,
+				recurring: { weekdays: [2], fromMinute: 15 * 60, toMinute: 17 * 60 },
+			},
+		],
+		occurredAt: tuesdayNy(15),
+		timeZone: NY,
+		locationId: null,
+		expectedBasePoints: 10,
+		expectedBonusPoints: 10,
+		expectedApplied: [{ id: 'happy', points: 10 }],
+	},
+	{
+		id: 'recurring-window-closed-at-end',
+		rule: 'The same happy hour at 17:00: closed.',
+		earning: spendOne,
+		minimumSpendMinor: 0,
+		snapshot: {
+			currency: 'USD',
+			totalPaidMinor: 1000,
+			lines: [line('l1', 'a', 1000)],
+		},
+		promotions: [
+			{
+				id: 'happy',
+				name: 'Happy hour',
+				kind: 'multiplier',
+				value: 20_000,
+				recurring: { weekdays: [2], fromMinute: 15 * 60, toMinute: 17 * 60 },
+			},
+		],
+		occurredAt: tuesdayNy(17),
+		timeZone: NY,
+		locationId: null,
+		expectedBasePoints: 10,
+		expectedBonusPoints: 0,
+		expectedApplied: [],
+	},
+	{
+		id: 'best-wins-by-default',
+		rule: 'Two promotions match: 2x gives +10, a flat +15 gives 15. The best one wins: +15.',
+		earning: spendOne,
+		minimumSpendMinor: 0,
+		snapshot: {
+			currency: 'USD',
+			totalPaidMinor: 1000,
+			lines: [line('l1', 'a', 1000)],
+		},
+		promotions: [
+			{ id: 'double', name: 'Double', kind: 'multiplier', value: 20_000 },
+			{ id: 'flat', name: 'Flat', kind: 'bonus', value: 15 },
+		],
+		occurredAt: tuesdayNy(12),
+		timeZone: NY,
+		locationId: null,
+		expectedBasePoints: 10,
+		expectedBonusPoints: 15,
+		expectedApplied: [{ id: 'flat', points: 15 }],
+	},
+	{
+		id: 'add-stacks-every-match',
+		rule: 'The same two promotions with stacking "add": +10 and +15 give +25.',
+		earning: spendOne,
+		minimumSpendMinor: 0,
+		snapshot: {
+			currency: 'USD',
+			totalPaidMinor: 1000,
+			lines: [line('l1', 'a', 1000)],
+		},
+		promotions: [
+			{ id: 'double', name: 'Double', kind: 'multiplier', value: 20_000 },
+			{ id: 'flat', name: 'Flat', kind: 'bonus', value: 15 },
+		],
+		stacking: 'add',
+		occurredAt: tuesdayNy(12),
+		timeZone: NY,
+		locationId: null,
+		expectedBasePoints: 10,
+		expectedBonusPoints: 25,
+		expectedApplied: [
+			{ id: 'double', points: 10 },
+			{ id: 'flat', points: 15 },
+		],
+	},
+	{
+		id: 'per-purchase-cap',
+		rule: '3x on a $100.00 order would add 200; a cap of 50 bonus points per purchase holds it to 50.',
+		earning: spendOne,
+		minimumSpendMinor: 0,
+		snapshot: {
+			currency: 'USD',
+			totalPaidMinor: 10_000,
+			lines: [line('l1', 'a', 10_000)],
+		},
+		promotions: [
+			{
+				id: 'triple',
+				name: 'Triple',
+				kind: 'multiplier',
+				value: 30_000,
+				maxPointsPerPurchase: 50,
+			},
+		],
+		occurredAt: tuesdayNy(12),
+		timeZone: NY,
+		locationId: null,
+		expectedBasePoints: 100,
+		expectedBonusPoints: 50,
+		expectedApplied: [{ id: 'triple', points: 50 }],
+	},
+	{
+		id: 'category-multiplier-only-boosts-its-lines',
+		rule: "2x on dessert only: the $6.00 of desserts earned 6 of the order's 16, so the promotion adds 6, not 16.",
+		earning: spendOne,
+		minimumSpendMinor: 0,
+		snapshot: {
+			currency: 'USD',
+			totalPaidMinor: 1600,
+			lines: [
+				line('l1', 'steak', 1000),
+				line('l2', 'cake', 600, { categoryIds: ['dessert'] }),
+			],
+		},
+		promotions: [
+			{
+				id: 'sweet',
+				name: 'Sweet double',
+				kind: 'multiplier',
+				value: 20_000,
+				scope: { type: 'categories', categoryIds: ['dessert'] },
+			},
+		],
+		occurredAt: tuesdayNy(12),
+		timeZone: NY,
+		locationId: null,
+		expectedBasePoints: 16,
+		expectedBonusPoints: 6,
+		expectedApplied: [{ id: 'sweet', points: 6 }],
+	},
+	{
+		id: 'item-bonus-per-unit',
+		rule: '+3 points per latte: two lattes and a muffin add 6.',
+		earning: spendOne,
+		minimumSpendMinor: 0,
+		snapshot: {
+			currency: 'USD',
+			totalPaidMinor: 1100,
+			lines: [
+				line('l1', 'latte', 800, { quantity: 2 }),
+				line('l2', 'muffin', 300),
+			],
+		},
+		promotions: [
+			{
+				id: 'latte',
+				name: 'Latte bonus',
+				kind: 'bonus',
+				value: 3,
+				scope: { type: 'items', itemIds: ['latte'] },
+			},
+		],
+		occurredAt: tuesdayNy(12),
+		timeZone: NY,
+		locationId: null,
+		expectedBasePoints: 11,
+		expectedBonusPoints: 6,
+		expectedApplied: [{ id: 'latte', points: 6 }],
+	},
+	{
+		id: 'free-reward-unit-gets-no-item-bonus',
+		rule: 'A latte given away by a free-item reward is not a unit for the item bonus: one paid latte adds 3.',
+		earning: spendOne,
+		minimumSpendMinor: 0,
+		snapshot: {
+			currency: 'USD',
+			totalPaidMinor: 400,
+			lines: [line('l1', 'latte', 400, { quantity: 2, rewardUnits: 1 })],
+		},
+		promotions: [
+			{
+				id: 'latte',
+				name: 'Latte bonus',
+				kind: 'bonus',
+				value: 3,
+				scope: { type: 'items', itemIds: ['latte'] },
+			},
+		],
+		occurredAt: tuesdayNy(12),
+		timeZone: NY,
+		locationId: null,
+		expectedBasePoints: 4,
+		expectedBonusPoints: 3,
+		expectedApplied: [{ id: 'latte', points: 3 }],
+	},
+	{
+		id: 'location-scoped-promotion-at-another-location',
+		rule: 'A promotion for loc_2 gives nothing at loc_1, or on a sale with no location.',
+		earning: spendOne,
+		minimumSpendMinor: 0,
+		snapshot: {
+			currency: 'USD',
+			totalPaidMinor: 1000,
+			lines: [line('l1', 'a', 1000)],
+		},
+		promotions: [
+			{
+				id: 'second',
+				name: 'Second store',
+				kind: 'bonus',
+				value: 5,
+				locationIds: ['loc_2'],
+			},
+		],
+		occurredAt: tuesdayNy(12),
+		timeZone: NY,
+		locationId: 'loc_1',
+		expectedBasePoints: 10,
+		expectedBonusPoints: 0,
+		expectedApplied: [],
+	},
+	{
+		id: 'no-bonus-without-a-base-award',
+		rule: 'A purchase below the minimum spend earns nothing, so a flat +5 promotion adds nothing either.',
+		earning: spendOne,
+		minimumSpendMinor: 500,
+		snapshot: {
+			currency: 'USD',
+			totalPaidMinor: 400,
+			lines: [line('l1', 'a', 400)],
+		},
+		promotions: [{ id: 'flat', name: 'Flat', kind: 'bonus', value: 5 }],
+		occurredAt: tuesdayNy(12),
+		timeZone: NY,
+		locationId: null,
+		expectedBasePoints: 0,
+		expectedBonusPoints: 0,
+		expectedApplied: [],
+	},
+	{
+		id: 'no-bonus-on-a-second-visit-the-same-day',
+		rule: 'A visit program awards once a day: the second purchase earns nothing and a flat +5 promotion adds nothing.',
+		earning: { method: 'visit', points: 10 },
+		minimumSpendMinor: 0,
+		snapshot: {
+			currency: 'USD',
+			totalPaidMinor: 400,
+			lines: [line('l1', 'a', 400)],
+		},
+		promotions: [{ id: 'flat', name: 'Flat', kind: 'bonus', value: 5 }],
+		visitAlreadyAwarded: true,
+		occurredAt: tuesdayNy(12),
+		timeZone: NY,
+		locationId: null,
+		expectedBasePoints: 0,
+		expectedBonusPoints: 0,
+		expectedApplied: [],
+	},
+	{
+		id: 'disabled-promotion-gives-nothing',
+		rule: 'A promotion that is switched off gives nothing.',
+		earning: spendOne,
+		minimumSpendMinor: 0,
+		snapshot: {
+			currency: 'USD',
+			totalPaidMinor: 1000,
+			lines: [line('l1', 'a', 1000)],
+		},
+		promotions: [
+			{ id: 'off', name: 'Off', kind: 'bonus', value: 5, enabled: false },
+		],
+		occurredAt: tuesdayNy(12),
+		timeZone: NY,
+		locationId: null,
+		expectedBasePoints: 10,
+		expectedBonusPoints: 0,
+		expectedApplied: [],
+	},
+] as const

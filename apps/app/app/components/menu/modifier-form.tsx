@@ -1,5 +1,3 @@
-import { t, Trans } from '@lingui/macro'
-import { useLingui } from '@lingui/react'
 import {
 	DndContext,
 	KeyboardSensor,
@@ -16,11 +14,19 @@ import {
 	verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import { t, Trans } from '@lingui/macro'
+import { useLingui } from '@lingui/react'
 import { getLocalizedMenuValue } from '@repo/common/menu-types'
 import { cn } from '@repo/ui'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
 import { Checkbox } from '@repo/ui/checkbox'
+import {
+	ChoiceCard,
+	ChoiceCardContent,
+	ChoiceCardDescription,
+	ChoiceCardTitle,
+} from '@repo/ui/choice-card'
 import {
 	Dialog,
 	DialogContent,
@@ -39,10 +45,8 @@ import {
 } from '@repo/ui/frame'
 import { Icon } from '@repo/ui/icon'
 import { Input } from '@repo/ui/input'
-import { Item, ItemContent, ItemTitle, ItemDescription } from '@repo/ui/item'
 import { Label } from '@repo/ui/label'
 import { RadioGroup, RadioGroupItem } from '@repo/ui/radio-group'
-import { Switch } from '@repo/ui/switch'
 import {
 	Select,
 	SelectContent,
@@ -50,6 +54,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@repo/ui/select'
+import { Switch } from '@repo/ui/switch'
 import { useId, useState, useMemo } from 'react'
 import { Form } from 'react-router'
 import {
@@ -953,99 +958,55 @@ export function ModifierForm({
 												}
 												className="grid grid-cols-1 gap-3 sm:grid-cols-2"
 											>
-												<Item
-													variant={
-														selectionType === 'single' ? 'muted' : 'outline'
-													}
-													size="sm"
-													className="cursor-pointer items-start select-none"
-													onClick={() => handleSelectionTypeChange('single')}
-												>
-													<RadioGroupItem
-														value="single"
-														id="st_single"
-														className="mt-0.5"
-													/>
-													<ItemContent className="min-w-0">
-														<ItemTitle>
+												<ChoiceCard htmlFor="st_single">
+													<RadioGroupItem value="single" id="st_single" />
+													<ChoiceCardContent>
+														<ChoiceCardTitle>
 															<Trans>Single Choice (Radio)</Trans>
-														</ItemTitle>
-														<ItemDescription className="text-xs">
+														</ChoiceCardTitle>
+														<ChoiceCardDescription>
 															<Trans>Guests can pick up to 1 option.</Trans>
-														</ItemDescription>
-													</ItemContent>
-												</Item>
+														</ChoiceCardDescription>
+													</ChoiceCardContent>
+												</ChoiceCard>
 
-												<Item
-													variant={
-														selectionType === 'multiple' ? 'muted' : 'outline'
-													}
-													size="sm"
-													className="cursor-pointer items-start select-none"
-													onClick={() => handleSelectionTypeChange('multiple')}
-												>
-													<RadioGroupItem
-														value="multiple"
-														id="st_multiple"
-														className="mt-0.5"
-													/>
-													<ItemContent className="min-w-0">
-														<ItemTitle>
+												<ChoiceCard htmlFor="st_multiple">
+													<RadioGroupItem value="multiple" id="st_multiple" />
+													<ChoiceCardContent>
+														<ChoiceCardTitle>
 															<Trans>Multiple Choice (Checkboxes)</Trans>
-														</ItemTitle>
-														<ItemDescription className="text-xs">
+														</ChoiceCardTitle>
+														<ChoiceCardDescription>
 															<Trans>Guests can pick multiple options.</Trans>
-														</ItemDescription>
-													</ItemContent>
-												</Item>
+														</ChoiceCardDescription>
+													</ChoiceCardContent>
+												</ChoiceCard>
 
-												<Item
-													variant={
-														selectionType === 'quantity' ? 'muted' : 'outline'
-													}
-													size="sm"
-													className="cursor-pointer items-start select-none"
-													onClick={() => handleSelectionTypeChange('quantity')}
-												>
-													<RadioGroupItem
-														value="quantity"
-														id="st_quantity"
-														className="mt-0.5"
-													/>
-													<ItemContent className="min-w-0">
-														<ItemTitle>
+												<ChoiceCard htmlFor="st_quantity">
+													<RadioGroupItem value="quantity" id="st_quantity" />
+													<ChoiceCardContent>
+														<ChoiceCardTitle>
 															<Trans>Quantity Counter (+/-)</Trans>
-														</ItemTitle>
-														<ItemDescription className="text-xs">
+														</ChoiceCardTitle>
+														<ChoiceCardDescription>
 															<Trans>Guests choose counts per option.</Trans>
-														</ItemDescription>
-													</ItemContent>
-												</Item>
+														</ChoiceCardDescription>
+													</ChoiceCardContent>
+												</ChoiceCard>
 
-												<Item
-													variant={
-														selectionType === 'pizza' ? 'muted' : 'outline'
-													}
-													size="sm"
-													className="cursor-pointer items-start select-none"
-													onClick={() => handleSelectionTypeChange('pizza')}
-												>
-													<RadioGroupItem
-														value="pizza"
-														id="st_pizza"
-														className="mt-0.5"
-													/>
-													<ItemContent className="min-w-0">
-														<ItemTitle>
+												<ChoiceCard htmlFor="st_pizza">
+													<RadioGroupItem value="pizza" id="st_pizza" />
+													<ChoiceCardContent>
+														<ChoiceCardTitle>
 															<Trans>Pizza Toppings (Whole / Halves)</Trans>
-														</ItemTitle>
-														<ItemDescription className="text-xs">
+														</ChoiceCardTitle>
+														<ChoiceCardDescription>
 															<Trans>
 																Whole pizza, left half, or right half pricing.
 															</Trans>
-														</ItemDescription>
-													</ItemContent>
-												</Item>
+														</ChoiceCardDescription>
+													</ChoiceCardContent>
+												</ChoiceCard>
 											</RadioGroup>
 										</div>
 									</FramePanel>

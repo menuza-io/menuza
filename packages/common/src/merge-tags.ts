@@ -15,9 +15,50 @@ export const MERGE_TOKENS = [
 	{ tag: 'phone', label: 'Phone', sample: '+1 555 0100' },
 	{ tag: 'organizationName', label: 'Company', sample: 'Acme' },
 	{ tag: 'couponCode', label: 'Coupon code', sample: 'SAVE-7K3Q' },
+	// Loyalty tags: filled only in loyalty automations (`scope: 'loyalty'`), where
+	// they are read from the customer's points account when the message is built.
+	{
+		tag: 'pointsBalance',
+		label: 'Points balance',
+		sample: '85',
+		scope: 'loyalty',
+	},
+	{
+		tag: 'rewardName',
+		label: 'Reward name',
+		sample: 'Free coffee',
+		scope: 'loyalty',
+	},
+	{
+		tag: 'pointsToNextReward',
+		label: 'Points to reward',
+		sample: '15',
+		scope: 'loyalty',
+	},
 ] as const
 
 export type MergeTagName = (typeof MERGE_TOKENS)[number]['tag']
+
+type MergeTokenEntry = {
+	tag: MergeTagName
+	label: string
+	sample: string
+	/** Only offered where the value exists: loyalty automations. */
+	scope?: 'loyalty'
+}
+
+/** The tags an editor offers: the general ones, plus the loyalty ones in loyalty automations. */
+export function mergeTokensFor(
+	options: {
+		loyalty?: boolean
+	} = {},
+): readonly MergeTokenEntry[] {
+	return (MERGE_TOKENS as readonly MergeTokenEntry[]).filter(
+		(entry) =>
+			entry.scope === undefined ||
+			(entry.scope === 'loyalty' && options.loyalty === true),
+	)
+}
 
 export const MERGE_TAG_NAMES = MERGE_TOKENS.map((entry) => entry.tag)
 

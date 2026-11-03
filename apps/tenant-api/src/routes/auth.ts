@@ -1,5 +1,5 @@
 import crypto from 'node:crypto'
-import { and, desc, eq, gt, gte, inArray, isNull } from 'drizzle-orm'
+import { and, desc, eq, gt, gte, isNull } from 'drizzle-orm'
 import { Hono, type Context } from 'hono'
 import { SignJWT, jwtVerify } from 'jose'
 import { ENV } from 'varlock/env'
@@ -26,7 +26,7 @@ import {
 	resolvePublishedOrganization,
 	type PublishedOrganization,
 } from '../lib/origin.ts'
-import { isValidPhone, legacyPhoneForms, normalizePhone } from '../lib/phone.ts'
+import { isValidPhone, normalizePhone } from '../lib/phone.ts'
 import {
 	checkGlobalSendCap,
 	rateLimit,
@@ -35,6 +35,10 @@ import {
 import { orgMatchesNodeRegion } from '../lib/region.ts'
 import { getBearerToken, hmacHash } from '../lib/secrets.ts'
 import { evaluateAndSpawnTriggers } from '../services/journey-service.ts'
+import {
+	findCustomerByPhone,
+	upgradeLegacyPhone,
+} from '../services/customer-phone.ts'
 import { openPointsAccountOnSignIn } from '../services/loyalty-member-service.ts'
 import { linkVerifiedCustomerToGuest } from '../services/rsv-customer-link.ts'
 
@@ -269,56 +273,6 @@ async function loadProvisionedOrgDb(
 	}
 
 	return { organization, db }
-}
-
-/**
- * The customer for an E.164 number. Rows written before phone normalization
- * may hold the number without `+` or in national form, so when no row has the
- * E.164 form the legacy forms are tried (exact match always wins). The row is
- * rewritten to E.164 after a successful verify (`upgradeLegacyPhone`).
- */
-async function findCustomerByPhone(db: TenantDb, phone: string) {
-	const exact = await db
-		.select()
-		.from(customers)
-		.where(eq(customers.phone, phone))
-		.get()
-	if (exact) return exact
-	const legacy = legacyPhoneForms(phone)
-	if (legacy.length === 0) return undefined
-	const rows = await db
-		.select()
-		.from(customers)
-		.where(inArray(customers.phone, legacy)) // bounded: at most four forms
-		.all()
-	// Oldest row first: it is the original account, not a later duplicate.
-	return rows.sort(
-		(a, b) => (a.createdAt?.getTime() ?? 0) - (b.createdAt?.getTime() ?? 0),
-	)[0]
-}
-
-/**
- * Moves a legacy-format row to E.164. A UNIQUE collision (another row already
- * holds the E.164 form) is left alone: the two rows are never merged here.
- */
-async function upgradeLegacyPhone(
-	db: TenantDb,
-	customer: { id: string; phone: string | null },
-	phone: string,
-) {
-	if (customer.phone === phone) return
-	try {
-		await db
-			.update(customers)
-			.set({ phone })
-			.where(eq(customers.id, customer.id))
-			.run()
-	} catch (error) {
-		console.warn(
-			'Could not rewrite legacy phone to E.164 (kept as stored):',
-			error instanceof Error ? error.message : 'unknown error',
-		)
-	}
 }
 
 async function issueSessionTokens(

@@ -24,6 +24,10 @@ import {
 	sql,
 } from 'drizzle-orm'
 import { forEachWithBudget } from '../lib/concurrency.ts'
+import {
+	retryPendingRewardJourneys,
+	runInactiveJourneys,
+} from './loyalty-journeys.ts'
 import { errorLogFields } from '../lib/error-log.ts'
 import { purgeLoyaltyRateCounters } from '../lib/loyalty-rate-limit.ts'
 import {
@@ -47,6 +51,7 @@ import {
 	releaseRedemptionInTx,
 	reviewRedemptionInTx,
 } from './loyalty-redemption-service.ts'
+import { purgeUnverifiedJoinRows } from './loyalty-till-join-service.ts'
 import { sweepExpiredHolds } from './order-service.ts'
 
 /**
@@ -166,6 +171,12 @@ export async function runLoyaltyTickForOrg(
 			error instanceof Error ? error.name : 'unknown',
 		)
 	})
+
+	// Members who went quiet with points left start their inactivity journey (a
+	// bounded batch; it never throws and does nothing without an active journey).
+	await runInactiveJourneys(orgId, { now })
+	await retryPendingRewardJourneys(orgId, { now })
+	await purgeUnverifiedJoinRows(orgId, now)
 
 	const failures: Array<{ step: string; rowId: string | null }> = []
 	/** One row (or one step) in its own transaction; a failure is logged, not thrown. */

@@ -61,6 +61,7 @@ describe('loyalty guards: loyalty+ loaders and actions', () => {
 			'overview.tsx',
 			'program.tsx',
 			'rewards.tsx',
+			'promotions.tsx',
 			'activity.tsx',
 		]) {
 			expect(files).toContain(required)

@@ -519,6 +519,12 @@ describe('DiscountForm currency', () => {
 				/Your locations use different currencies\. Choose locations that share one currency to set an amount\./,
 			),
 		).toBeTruthy()
+		// No currency can be named yet, so the amount input shows no unit.
+		expect(
+			document
+				.getElementById('discount-amount')
+				?.closest('[data-slot="input-group"]'),
+		).not.toHaveTextContent(/CAD|USD/)
 	})
 
 	it('stays quiet for a percentage, or when the locations share a currency', () => {
@@ -532,7 +538,13 @@ describe('DiscountForm currency', () => {
 			}),
 		)
 		expect(screen.queryByText(/use different currencies/)).toBeNull()
-		expect(screen.getByText(/CAD/)).toBeTruthy()
+		// The hint names the currency and the amount input shows it as its unit.
+		expect(screen.getAllByText(/CAD/).length).toBeGreaterThan(1)
+		expect(
+			document
+				.getElementById('discount-amount')
+				?.closest('[data-slot="input-group"]'),
+		).toHaveTextContent('CAD')
 	})
 })
 

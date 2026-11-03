@@ -238,3 +238,17 @@ export async function withLoyaltyWrite<T>(
 	}
 	return outcome.value
 }
+
+/**
+ * Runs `hook` after the loyalty write that is running now commits, with its
+ * organization. For code deep in a write that has no context in hand (the
+ * purchase settling). Returns false, and runs nothing, when no write is open.
+ */
+export function afterActiveLoyaltyCommit(
+	hook: (orgId: string) => void | Promise<void>,
+): boolean {
+	const active = activeWrite.getStore()
+	if (!active || active.done) return false
+	active.ctx.afterCommit(() => hook(active.orgId))
+	return true
+}

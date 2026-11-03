@@ -6,7 +6,8 @@ import { type ReactNode } from 'react'
 import { useLocation } from 'react-router'
 import { type LoyaltyNavAccess } from '#app/utils/loyalty/nav.ts'
 
-type LoyaltyRouteKey = 'overview' | 'program' | 'rewards' | 'activity'
+type LoyaltyRouteKey =
+	'overview' | 'program' | 'rewards' | 'promotions' | 'activity'
 
 /**
  * The Loyalty page chrome: one PageHeader, one underline section tab bar,
@@ -29,7 +30,10 @@ export function LoyaltyChrome({
 		? location.pathname.slice(base.length + 1).split('/')[0]
 		: ''
 	const routeKey: LoyaltyRouteKey =
-		path === 'program' || path === 'rewards' || path === 'activity'
+		path === 'program' ||
+		path === 'rewards' ||
+		path === 'promotions' ||
+		path === 'activity'
 			? path
 			: 'overview'
 
@@ -56,6 +60,12 @@ export function LoyaltyChrome({
 			label: _(msg`Rewards`),
 			href: `${base}/rewards`,
 			visible: nav.rewards,
+		},
+		{
+			id: 'promotions',
+			label: _(msg`Promotions`),
+			href: `${base}/promotions`,
+			visible: nav.promotions,
 		},
 		{
 			id: 'activity',
@@ -91,6 +101,12 @@ export function LoyaltyChrome({
 		rewards: {
 			title: _(msg`Loyalty rewards`),
 			description: _(msg`What customers can spend their points on.`),
+		},
+		promotions: {
+			title: _(msg`Loyalty promotions`),
+			description: _(
+				msg`Bonus points for the days, hours, items and places you want to boost.`,
+			),
 		},
 		activity: {
 			title: _(msg`Loyalty activity`),

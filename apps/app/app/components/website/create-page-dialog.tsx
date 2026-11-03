@@ -1,7 +1,12 @@
 import { Trans, t } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import { cn } from '@repo/ui'
 import { Button } from '@repo/ui/button'
+import {
+	ChoiceCard,
+	ChoiceCardContent,
+	ChoiceCardDescription,
+	ChoiceCardTitle,
+} from '@repo/ui/choice-card'
 import {
 	Dialog,
 	DialogContent,
@@ -109,21 +114,15 @@ export function CreatePageDialog({
 							className="grid gap-3"
 						>
 							{templates.map((tmpl) => (
-								<label
-									key={tmpl.value}
-									className={cn(
-										'border-border hover:border-primary/50 flex cursor-pointer items-start gap-3 rounded-lg border p-4 transition-colors',
-										template === tmpl.value && 'border-primary bg-primary/5',
-									)}
-								>
-									<RadioGroupItem value={tmpl.value} className="mt-0.5" />
-									<div>
-										<div className="text-sm font-medium">{tmpl.label}</div>
-										<div className="text-muted-foreground text-xs">
+								<ChoiceCard key={tmpl.value}>
+									<RadioGroupItem value={tmpl.value} />
+									<ChoiceCardContent>
+										<ChoiceCardTitle>{tmpl.label}</ChoiceCardTitle>
+										<ChoiceCardDescription>
 											{tmpl.description}
-										</div>
-									</div>
-								</label>
+										</ChoiceCardDescription>
+									</ChoiceCardContent>
+								</ChoiceCard>
 							))}
 						</RadioGroup>
 

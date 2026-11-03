@@ -28,6 +28,9 @@ export const JOURNEY_TRIGGER_TYPES = [
 	'reservation_completed',
 	'reservation_no_show',
 	'reservation_cancelled',
+	'loyalty_reward_available',
+	'loyalty_near_reward',
+	'loyalty_inactive',
 ] as const
 export type JourneyTriggerType = (typeof JOURNEY_TRIGGER_TYPES)[number]
 
@@ -35,6 +38,25 @@ export type JourneyTriggerType = (typeof JOURNEY_TRIGGER_TYPES)[number]
  * Triggers fired by the Reservations module. Offered in the editor only while
  * the module is on, and their steps check `reservations` consent.
  */
+/**
+ * Loyalty triggers: a member's points reached a reward (`loyalty_reward_available`),
+ * came within reach of one (`loyalty_near_reward`), or the member has gone quiet
+ * with points left (`loyalty_inactive`). Each fires once per crossing or per
+ * quiet spell (`loyalty_journey_emissions`).
+ */
+export const LOYALTY_JOURNEY_TRIGGER_TYPES = [
+	'loyalty_reward_available',
+	'loyalty_near_reward',
+	'loyalty_inactive',
+] as const
+export type LoyaltyJourneyTriggerType =
+	(typeof LOYALTY_JOURNEY_TRIGGER_TYPES)[number]
+export function isLoyaltyJourneyTrigger(
+	value: unknown,
+): value is LoyaltyJourneyTriggerType {
+	return (LOYALTY_JOURNEY_TRIGGER_TYPES as readonly unknown[]).includes(value)
+}
+
 export const RESERVATION_JOURNEY_TRIGGER_TYPES = [
 	'reservation_booked',
 	'reservation_completed',

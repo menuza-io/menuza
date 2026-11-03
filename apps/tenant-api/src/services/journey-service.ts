@@ -11,6 +11,7 @@ import {
 	journeyRuns,
 	journeyStepExecutions,
 	marketingMessages,
+	isLoyaltyJourneyTrigger,
 	isReservationJourneyTrigger,
 	validateWorkflowDAG,
 	actionEmailNodeDataSchema,
@@ -29,6 +30,7 @@ import { getNodeRegion } from '../lib/region.ts'
 import { syncEnvFromProcess } from '../lib/secrets.ts'
 import { sendTenantEmail } from '../lib/tenant-email.ts'
 import { couponCodeForRecipient } from './discount-marketing-codes.ts'
+import { loyaltyMergeValues } from './loyalty-merge-values.ts'
 
 export const JOURNEY_PROCESSING_LEASE_MS = 5 * 60 * 1000
 export const JOURNEY_LIST_LIMIT = 100
@@ -113,8 +115,9 @@ export interface StepExecutionResult {
 /**
  * Reservation journeys reach guests who agreed to hear from the restaurant,
  * on the channels they agreed to. A step on any other channel (or after the
- * guest withdrew) is recorded as skipped and nothing is sent. Journeys with
- * any other trigger keep their behavior.
+ * guest withdrew) is recorded as skipped and nothing is sent. Loyalty journeys
+ * likewise need a deliverable marketing subscription. Journeys with any other
+ * trigger keep their behavior.
  */
 async function skipWithoutReservationConsent(
 	db: Awaited<ReturnType<typeof getTenantDb>>,
@@ -127,13 +130,21 @@ async function skipWithoutReservationConsent(
 		.from(marketingJourneys)
 		.where(eq(marketingJourneys.id, payload.journeyId))
 		.get()
-	if (!journey || !isReservationJourneyTrigger(journey.triggerType)) return null
+	if (!journey) return null
+	const topic = isReservationJourneyTrigger(journey.triggerType)
+		? ('reservations' as const)
+		: isLoyaltyJourneyTrigger(journey.triggerType)
+			? ('marketing' as const)
+			: null
+	if (!topic) return null
 
-	// Active subscription on the `reservations` topic; an email also needs an
-	// address its owner confirmed (double opt-in), like a broadcast does.
+	// Active subscription on the `reservations` topic (loyalty journeys: the
+	// `marketing` topic, so a member without marketing consent gets nothing); an
+	// email also needs an address its owner confirmed (double opt-in), like a
+	// broadcast does.
 	const consent = await hasDeliverableSubscription(db, {
 		customerId: payload.customerId,
-		topic: 'reservations',
+		topic,
 		channel: stepType,
 	})
 	if (consent) return null
@@ -432,6 +443,20 @@ export async function executeJourneyStep(
 	}
 
 	const config = payload.config || {}
+
+	// A loyalty journey fills the points tags from the customer's account as it
+	// is now, not as it was when the journey started.
+	if (isLoyaltyJourneyTrigger(run.triggerEvent)) {
+		const rewardId = contextData.rewardId
+		contextData = {
+			...contextData,
+			...(await loyaltyMergeValues(
+				orgId,
+				customer.id,
+				typeof rewardId === 'string' ? rewardId : null,
+			)),
+		}
+	}
 
 	// A step with a coupon fills `{{couponCode}}`: one shared code, or a
 	// single-use code minted once for this run's step (a retry reuses it).

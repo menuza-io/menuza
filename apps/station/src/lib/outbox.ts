@@ -7,6 +7,7 @@ import {
 import { noteServerDate } from './clock.ts'
 import { type PosSettings } from './config.ts'
 import { db, type PosOrder } from './db.ts'
+import { toWireLoyalty } from './loyalty.ts'
 import { isSendable } from './orders.ts'
 import { toWireShift } from './shifts.ts'
 
@@ -152,6 +153,10 @@ export function toWireOrder(order: PosOrder) {
 			}
 		}),
 		...(discountApplications.length > 0 ? { discountApplications } : {}),
+		// Contract 5: who earns on this sale. Nothing in it changes the bill.
+		...(order.loyalty
+			? { loyalty: toWireLoyalty(order.loyalty, order.lines) }
+			: {}),
 		totals: {
 			subtotalCents: order.totals.subtotalCents,
 			adjustmentCents: order.totals.adjustmentCents,

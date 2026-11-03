@@ -11,11 +11,11 @@ export function DiscountHistory({
 	const { i18n } = useLingui()
 	if (entries.length === 0) return null
 	return (
-		<details className="text-muted-foreground border-border mx-auto w-full max-w-6xl border-b px-4 py-1.5 text-xs md:px-6 lg:px-8">
-			<summary className="cursor-pointer">
+		<details className="group/history text-muted-foreground text-xs">
+			<summary className="hover:text-foreground focus-visible:ring-ring/50 w-fit cursor-pointer rounded-sm font-medium transition-colors outline-none focus-visible:ring-2">
 				<Trans>History</Trans>
 			</summary>
-			<ul className="mt-2 flex flex-col gap-1.5 pb-1">
+			<ul className="mt-2 flex flex-col gap-1.5">
 				{entries.map((entry) => (
 					<li key={entry.id} className="wrap-anywhere">
 						<HistoryLine entry={entry} />

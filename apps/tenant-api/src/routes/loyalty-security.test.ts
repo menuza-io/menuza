@@ -516,6 +516,8 @@ describe('mounts and route discovery', () => {
 		const posKeys = new Set(POS_ROUTES.map((r) => `${r.method} ${r.path}`))
 		for (const key of [
 			'POST /pos/loyalty/identify',
+			'POST /pos/loyalty/join/send',
+			'POST /pos/loyalty/join/verify',
 			'GET /pos/loyalty/member',
 			'POST /pos/loyalty/member/revoke',
 			'POST /pos/loyalty/quote',
@@ -1796,6 +1798,62 @@ describe('POS loyalty security', () => {
 			if (i < 30) {
 				expect(last.status).toBe(404)
 				expect(await errorBody(last)).toMatchObject({ error: 'code_invalid' })
+			}
+		}
+		expect(last!.status).toBe(429)
+		expect(await errorBody(last!)).toMatchObject({ error: 'rate_limited' })
+	})
+
+	it('joining at the till answers the flags and the kill switch like any new till work', async () => {
+		const body = { phone: '+15550100301' }
+		seedLoyaltyContextForTest(ORG_A, FEATURES_OFF)
+		const flagOff = await posRequest('POST', '/pos/loyalty/join/send', {
+			secret: devA.secret,
+			body,
+		})
+		expect(flagOff.status).toBe(403)
+
+		seedLoyaltyContextForTest(ORG_A, FEATURES_ON)
+		process.env.LOYALTY_ENABLED = 'false'
+		for (const path of ['/pos/loyalty/join/send', '/pos/loyalty/join/verify']) {
+			const killed = await posRequest('POST', path, {
+				secret: devA.secret,
+				body: { ...body, code: '123456' },
+			})
+			expect(killed.status).toBe(503)
+			expect(await errorBody(killed)).toMatchObject({
+				error: 'loyalty_unavailable',
+			})
+		}
+	})
+
+	it('join bodies are strict: a bad phone or code never reaches the domain', async () => {
+		for (const [path, bad] of [
+			['/pos/loyalty/join/send', {}],
+			['/pos/loyalty/join/send', { phone: '1' }],
+			['/pos/loyalty/join/send', { phone: '+15550100302', extra: true }],
+			['/pos/loyalty/join/verify', { phone: '+15550100302', code: '12345' }],
+			['/pos/loyalty/join/verify', { phone: '+15550100302', code: 'abcdef' }],
+			['/pos/loyalty/join/verify', { code: '123456' }],
+		] as const) {
+			const res = await posRequest('POST', path, {
+				secret: devA.secret,
+				body: bad,
+			})
+			expect(res.status, `${path} ${JSON.stringify(bad)}`).toBe(400)
+		}
+	})
+
+	it('a number that was never sent a code is otp_invalid, and guessing is limited per number (6th try → 429)', async () => {
+		let last: Response | undefined
+		for (let i = 0; i < 6; i++) {
+			last = await posRequest('POST', '/pos/loyalty/join/verify', {
+				secret: devA.secret,
+				body: { phone: '+15550100303', code: String(100000 + i) },
+			})
+			if (i < 5) {
+				expect(last.status).toBe(422)
+				expect(await errorBody(last)).toMatchObject({ error: 'otp_invalid' })
 			}
 		}
 		expect(last!.status).toBe(429)

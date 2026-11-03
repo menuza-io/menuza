@@ -16,16 +16,16 @@ in [Migrations and deployment order](#migrations-and-deployment-order) and
 
 ## Status by surface
 
-| Surface                                                                                                 | State                                                                                             |
-| ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| Regional API: programs, rewards, accounts, ledger, redemptions, reconciliation, tick, erasure           | Built                                                                                             |
-| Website orders: reward at placement, earning, refunds                                                   | Built: the region and the Sites checkout reward picker                                            |
-| QR tabs: one purchase per tab, reward on phone payment, counter close                                   | Built: the region, the App, and the Sites tab payment picker                                      |
-| Operator App: Loyalty pages, Loyalty panel on the Customer profile, order refunds, counter close option | Built                                                                                             |
-| Sites wallet                                                                                            | Built (balance, next reward, rewards, history, terms, member code, approvals)                     |
-| Station till                                                                                            | Regional `/pos/loyalty/*` routes and the till sale adapter built; the Station screens are not yet |
-| Customer app wallet (Expo, iOS and Android)                                                             | Built (balance, next reward, rewards, history, terms, member code, approvals, website link)       |
-| Marketing audience filters                                                                              | Not built yet (no flag; it will be added with them)                                               |
+| Surface                                                                                                 | State                                                                                                                      |
+| ------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Regional API: programs, rewards, accounts, ledger, redemptions, reconciliation, tick, erasure           | Built                                                                                                                      |
+| Website orders: reward at placement, earning, refunds                                                   | Built: the region and the Sites checkout reward picker                                                                     |
+| QR tabs: one purchase per tab, reward on phone payment, counter close                                   | Built: the region, the App, and the Sites tab payment picker                                                               |
+| Operator App: Loyalty pages, Loyalty panel on the Customer profile, order refunds, counter close option | Built                                                                                                                      |
+| Sites wallet                                                                                            | Built (balance, next reward, rewards, history, terms, member code, approvals)                                              |
+| Station till                                                                                            | Built: Rewards sheet in the cart (member code or phone join, balance, spend with approval), sale upload carries the member |
+| Customer app wallet (Expo, iOS and Android)                                                             | Built (balance, next reward, rewards, history, terms, member code, approvals, website link)                                |
+| Marketing audience filters                                                                              | Not built yet (no flag; it will be added with them)                                                                        |
 
 Keep `loyalty.enabled` off for every organization until each channel it sells
 through is built and has passed its launch checks.
@@ -279,8 +279,20 @@ A purchase earns once per source:
   counter tab; the exclusion reopens so the tab earns after all.
 - **Station sales** (`pos_order`): accepted, closed sales after sync, through
   the till sale adapter (`posOrderLoyaltySource` in
-  `apps/tenant-api/src/restaurant/pos-loyalty-source.ts`). The Station screens
-  that identify a member and redeem are not built yet.
+  `apps/tenant-api/src/restaurant/pos-loyalty-source.ts`). Station's Rewards
+  sheet (`apps/station/src/screens/LoyaltySheet.tsx`, session in
+  `apps/station/src/lib/loyalty-store.ts`) identifies the member by member code
+  or by phone: the cashier types the number, a one-time code is texted to it,
+  and reading it back verifies the phone and opens the points account
+  (`POST /pos/loyalty/join/send` and `/join/verify`). The till shows that the
+  number joins the rewards program before it sends the code. The sale then
+  uploads `loyalty: { binding, lines }` (contract 5), and an approved reward
+  rides on it as the `loyalty` adjustment, created under the sale id the reward
+  was approved for. A reward is priced on the cart as it stood, so any change to
+  the lines or to the discounts under it takes the reward off and gives the
+  points back. Spending is never offered offline (the region holds the points
+  and asks the member); earning needs only the held binding, which lives in
+  memory with the sale and is forgotten when the order is cleared.
 
 ## Redemption
 
@@ -506,8 +518,24 @@ campaign audience, which rechecks consent and suppression at send time.
   operator), and purges what nobody can use any more: codes, bindings, closed
   till requests (approved ones stay as the record of consent) and finished
   outbox rows after 30 days, expired idempotency records, and old rate counters.
-  It ignores the flags and the kill switch: everything it does finishes work
-  that already started. Organizations without a program are skipped.
+  It also retries reward journeys whose start never finished (an emission stored
+  as `pending` for over 5 minutes) and deletes nameless, unverified customer
+  rows a till join left behind (code expired over an hour ago, and no table with
+  a foreign key to `customers` refers to the row).
+- **Reward journeys** record a crossing as `pending` in the evaluation's
+  transaction (a fresh one blocks a concurrent evaluation), start the journey,
+  then promote it to `fired`. A failed start removes the mark so the next
+  evaluation retries. On Workers the evaluation is handed to the request's
+  `waitUntil`.
+- **Till join** codes are stored as `hmacHash('join:' + code)`, so they and the
+  website sign-in code (`hmacHash(code)`, same column) cannot consume each
+  other. A send to a number whose row holds any live code answers `sent: true`
+  without sending (a resend within the code's 5 minutes does nothing). Sends
+  count per terminal, per number and per organization (`joinSendOrg`) and pass
+  the node's global send cap. Verifying consumes the code, verifies the phone,
+  opens the account and issues the binding in one transaction. It ignores the
+  flags and the kill switch: everything it does finishes work that already
+  started. Organizations without a program are skipped.
 - **Parked sources**: parking sends the source's open purchase and bound
   redemption to the review queue. The hourly cron run fails when its own tick
   parks a source (`outboxParked` in the tick's counts; the alarm and interval
@@ -595,8 +623,9 @@ What each deploy carries:
   counter close option.
 - jobs-cron: the hourly `Tenant loyalty tick` (the alarms and intervals run
   without it).
-- Sites and the customer app read the flag live (the wallet and pickers);
-  Station follows when its screens are built.
+- Sites, the customer app and Station read the flag live (the wallet, the
+  pickers and the Rewards sheet; Station hides it once the region says loyalty
+  is off).
 
 ## Pilot and rollback runbook
 

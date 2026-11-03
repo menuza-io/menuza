@@ -5,9 +5,14 @@ import {
 	type DeclineReason,
 	type DeclineTemplate,
 } from '@repo/staffing'
-import { cn } from '@repo/ui'
 import { Alert, AlertDescription } from '@repo/ui/alert'
 import { Button } from '@repo/ui/button'
+import {
+	ChoiceCard,
+	ChoiceCardContent,
+	ChoiceCardDescription,
+	ChoiceCardTitle,
+} from '@repo/ui/choice-card'
 import {
 	Dialog,
 	DialogContent,
@@ -16,17 +21,9 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from '@repo/ui/dialog'
-import {
-	Field,
-	FieldContent,
-	FieldDescription,
-	FieldLabel,
-	FieldLegend,
-	FieldSet,
-	FieldTitle,
-} from '@repo/ui/field'
+import { FieldLegend, FieldSet } from '@repo/ui/field'
 import { RadioGroup, RadioGroupItem } from '@repo/ui/radio-group'
-import { useState, type FormEvent } from 'react'
+import { useId, useState, type FormEvent } from 'react'
 import { SelectField } from '#app/components/staff/controls.tsx'
 import { useStaffAction } from '#app/hooks/use-staff-action.ts'
 import { declineApplicant } from '#app/utils/hiring/applicant-api.ts'
@@ -59,6 +56,7 @@ export function DeclineDialog({
 }) {
 	const { _ } = useLingui()
 	const labels = useApplicantLabels()
+	const noEmailId = useId()
 	const action = useStaffAction(describeApplicantError)
 	const [reason, setReason] = useState<DeclineReason>('not_a_fit')
 	const [template, setTemplate] = useState<DeclineTemplate>(
@@ -114,7 +112,7 @@ export function DeclineDialog({
 							<Trans>Message to {name}</Trans>
 						</FieldLegend>
 						{!hasEmail ? (
-							<p className="text-muted-foreground text-sm">
+							<p id={noEmailId} className="text-muted-foreground text-sm">
 								<Trans>
 									There is no email on file, so nothing can be sent.
 								</Trans>
@@ -131,22 +129,21 @@ export function DeclineDialog({
 							{DECLINE_TEMPLATES.map((key) => {
 								const disabled = !hasEmail && key !== 'none'
 								return (
-									<FieldLabel
-										key={key}
-										className={cn(disabled && 'cursor-not-allowed opacity-50')}
-									>
-										<Field orientation="horizontal">
-											<RadioGroupItem value={key} disabled={disabled} />
-											<FieldContent>
-												<FieldTitle>
-													{labels.declineTemplate[key].label}
-												</FieldTitle>
-												<FieldDescription>
-													{labels.declineTemplate[key].description}
-												</FieldDescription>
-											</FieldContent>
-										</Field>
-									</FieldLabel>
+									<ChoiceCard key={key}>
+										<RadioGroupItem
+											value={key}
+											disabled={disabled}
+											aria-describedby={disabled ? noEmailId : undefined}
+										/>
+										<ChoiceCardContent>
+											<ChoiceCardTitle>
+												{labels.declineTemplate[key].label}
+											</ChoiceCardTitle>
+											<ChoiceCardDescription>
+												{labels.declineTemplate[key].description}
+											</ChoiceCardDescription>
+										</ChoiceCardContent>
+									</ChoiceCard>
 								)
 							})}
 						</RadioGroup>

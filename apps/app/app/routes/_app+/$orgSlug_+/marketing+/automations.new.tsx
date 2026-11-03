@@ -7,7 +7,10 @@ import {
 	createDefaultJourneyGraph,
 	type WorkflowGraph,
 } from '@repo/marketing-workflow'
-import { isReservationJourneyTrigger } from '@repo/tenant-db/types/journey'
+import {
+	isLoyaltyJourneyTrigger,
+	isReservationJourneyTrigger,
+} from '@repo/tenant-db/types/journey'
 import {
 	useLoaderData,
 	useNavigate,
@@ -23,6 +26,10 @@ import {
 } from '#app/components/ai/ai-panel-context.tsx'
 import { GlobalAIToggle } from '#app/components/ai/global-ai-panel.tsx'
 import { resolveEmailBrandingForOrg } from '#app/utils/email-branding.server.ts'
+import {
+	loyaltyTriggerBlocked,
+	loyaltyTriggersEnabled,
+} from '#app/utils/marketing/loyalty-triggers.server.ts'
 import {
 	reservationTriggerBlocked,
 	reservationTriggersEnabled,
@@ -87,6 +94,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	return {
 		orgSlug,
 		reservationTriggers: await reservationTriggersEnabled(orgId),
+		loyaltyTriggers: await loyaltyTriggersEnabled(request, orgId),
 	}
 }
 
@@ -145,6 +153,15 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	) {
 		return { error: i18n._(t`Turn on Reservations to use this trigger`) }
 	}
+	if (
+		isLoyaltyJourneyTrigger(triggerType) &&
+		loyaltyTriggerBlocked({
+			triggerType,
+			enabled: await loyaltyTriggersEnabled(request, orgId),
+		})
+	) {
+		return { error: i18n._(t`Turn on Loyalty to use this trigger`) }
+	}
 	const branding = await resolveEmailBrandingForOrg(orgId)
 	const nodes = await withRenderedEmails(parsedGraph.nodes, branding)
 	const resolvedGraph = { ...parsedGraph, nodes }
@@ -186,7 +203,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
 export default function NewJourneyRoute() {
 	const { _ } = useLingui()
-	const { orgSlug, reservationTriggers } = useLoaderData<typeof loader>()
+	const { orgSlug, reservationTriggers, loyaltyTriggers } =
+		useLoaderData<typeof loader>()
 	const navigate = useNavigate()
 	const fetcher = useFetcher()
 
@@ -228,6 +246,7 @@ export default function NewJourneyRoute() {
 				journeyName={_(msg`New Customer Journey`)}
 				journeyStatus="draft"
 				reservationTriggers={reservationTriggers}
+				loyaltyTriggers={loyaltyTriggers}
 				headerExtras={<GlobalAIToggle />}
 				onSave={handleSave}
 				onPublish={handlePublish}

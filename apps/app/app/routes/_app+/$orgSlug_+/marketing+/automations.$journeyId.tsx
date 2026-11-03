@@ -7,7 +7,10 @@ import {
 	type WorkflowGraph,
 	type JourneyStatus,
 } from '@repo/marketing-workflow'
-import { isReservationJourneyTrigger } from '@repo/tenant-db/types/journey'
+import {
+	isLoyaltyJourneyTrigger,
+	isReservationJourneyTrigger,
+} from '@repo/tenant-db/types/journey'
 import { useEffect } from 'react'
 import {
 	useLoaderData,
@@ -33,6 +36,10 @@ import {
 	resolveEmailBrandingForOrg,
 	type OrganizationEmailBranding,
 } from '#app/utils/email-branding.server.ts'
+import {
+	loyaltyTriggerBlocked,
+	loyaltyTriggersEnabled,
+} from '#app/utils/marketing/loyalty-triggers.server.ts'
 import {
 	reservationTriggerBlocked,
 	reservationTriggersEnabled,
@@ -119,6 +126,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	return {
 		orgSlug,
 		reservationTriggers: await reservationTriggersEnabled(orgId),
+		loyaltyTriggers: await loyaltyTriggersEnabled(request, orgId),
 		couponOptions: await loadCouponDiscountOptions(userId, orgId),
 		journey: {
 			id: String(journey.id),
@@ -248,6 +256,20 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				return { error: i18n._(t`Turn on Reservations to use this trigger`) }
 			}
 		}
+		if (isLoyaltyJourneyTrigger(triggerType)) {
+			const enabled = await loyaltyTriggersEnabled(request, orgId)
+			if (
+				loyaltyTriggerBlocked({
+					triggerType,
+					enabled,
+					currentTriggerType: enabled
+						? null
+						: await currentTriggerType(fetchTenant, journeyId),
+				})
+			) {
+				return { error: i18n._(t`Turn on Loyalty to use this trigger`) }
+			}
+		}
 
 		const updateRes = await fetchTenant(`/operator/journeys/${journeyId}`, {
 			method: 'PUT',
@@ -359,8 +381,13 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
 export default function JourneyBuilderRoute() {
 	const { _ } = useLingui()
-	const { orgSlug, journey, reservationTriggers, couponOptions } =
-		useLoaderData<typeof loader>()
+	const {
+		orgSlug,
+		journey,
+		reservationTriggers,
+		loyaltyTriggers,
+		couponOptions,
+	} = useLoaderData<typeof loader>()
 	const navigate = useNavigate()
 	const fetcher = useFetcher<typeof action>()
 
@@ -441,6 +468,7 @@ export default function JourneyBuilderRoute() {
 				journeyName={journey.name}
 				journeyStatus={journey.status}
 				reservationTriggers={reservationTriggers}
+				loyaltyTriggers={loyaltyTriggers}
 				couponOptions={couponOptions ?? undefined}
 				headerExtras={<GlobalAIToggle />}
 				onSave={handleSave}

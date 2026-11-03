@@ -2,6 +2,8 @@ import {
 	LoyaltyDomainError,
 	loyaltyPosApprovalRequestSchema,
 	loyaltyPosIdentifyRequestSchema,
+	loyaltyPosJoinSendRequestSchema,
+	loyaltyPosJoinVerifyRequestSchema,
 	loyaltyPosOtpVerifyRequestSchema,
 	loyaltyPosQuoteRequestSchema,
 	type LoyaltyFeatures,
@@ -32,6 +34,10 @@ import {
 	verifyTillApprovalOtp,
 	type TillDevice,
 } from '../services/loyalty-code-service.ts'
+import {
+	sendTillJoinCode,
+	verifyTillJoinCode,
+} from '../services/loyalty-till-join-service.ts'
 
 /**
  * Till loyalty routes (`/pos/loyalty/*`), called browser-direct by a paired
@@ -136,6 +142,51 @@ posLoyaltyRoutes.post('/identify', async (c) => {
 		if ('error' in body) return body.error
 		await enforceLoyaltyLimit(gate.pos.db, 'identify', gate.pos.device.id)
 		const result = await identifyMemberByCode(gate.pos.orgId, {
+			code: body.data.code,
+			device: gate.pos.device,
+			features: gate.pos.features,
+		})
+		return Response.json(result, {
+			status: 200,
+			headers: { 'Cache-Control': 'private, no-store' },
+		})
+	} catch (error) {
+		return loyaltyErrorResponse(error)
+	}
+})
+
+// ---------------------------------------------------------------------------
+// POST /join/send, POST /join/verify — a guest with no account joins at the till
+// ---------------------------------------------------------------------------
+
+posLoyaltyRoutes.post('/join/send', async (c) => {
+	try {
+		const gate = await requireLoyaltyPos(c)
+		if ('error' in gate) return gate.error
+		const body = await readJsonBody(c, loyaltyPosJoinSendRequestSchema)
+		if ('error' in body) return body.error
+		const result = await sendTillJoinCode(gate.pos.orgId, {
+			phone: body.data.phone,
+			device: gate.pos.device,
+			features: gate.pos.features,
+		})
+		return Response.json(result, {
+			status: 200,
+			headers: { 'Cache-Control': 'private, no-store' },
+		})
+	} catch (error) {
+		return loyaltyErrorResponse(error)
+	}
+})
+
+posLoyaltyRoutes.post('/join/verify', async (c) => {
+	try {
+		const gate = await requireLoyaltyPos(c)
+		if ('error' in gate) return gate.error
+		const body = await readJsonBody(c, loyaltyPosJoinVerifyRequestSchema)
+		if ('error' in body) return body.error
+		const result = await verifyTillJoinCode(gate.pos.orgId, {
+			phone: body.data.phone,
 			code: body.data.code,
 			device: gate.pos.device,
 			features: gate.pos.features,

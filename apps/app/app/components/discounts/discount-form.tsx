@@ -8,12 +8,14 @@ import {
 	type DiscountValueType,
 } from '@repo/discounts'
 import { cn } from '@repo/ui'
+import { Alert, AlertDescription } from '@repo/ui/alert'
 import { Badge } from '@repo/ui/badge'
 import { Field, FieldDescription, FieldLabel } from '@repo/ui/field'
 import {
 	type ComponentProps,
 	type ReactNode,
 	useEffect,
+	useMemo,
 	useRef,
 	useState,
 } from 'react'
@@ -61,6 +63,7 @@ import {
 	FieldErrorText,
 	Indented,
 	LimitNotice,
+	OptionalGroup,
 	SwitchRow,
 	TextField,
 	fieldDomId,
@@ -88,6 +91,69 @@ const AMOUNT_VALUE_TYPES: ReadonlySet<DiscountValueType> =
  * edits. The buttons point at it with `aria-describedby`.
  */
 export const UNSAVED_CHANGES_NOTE_ID = 'discount-unsaved-note'
+
+/** The form's sections, top to bottom, as the summary links to them. */
+const SECTION_IDS = [
+	'discount-section-basics',
+	'discount-section-target',
+	'discount-section-quantity',
+	'discount-section-when',
+	'discount-section-where',
+	'discount-section-who',
+	'discount-section-codes',
+	'discount-section-options',
+] as const
+
+/** The section an error's field sits in, so the summary can mark it. */
+function sectionOfField(field: string): string {
+	const head = field.split('.')[0]!
+	switch (head) {
+		case 'target':
+		case 'variants':
+		case 'modifier-variants':
+		case 'modifier-options':
+		case 'modifier-items':
+		case 'modifier-categories':
+		case 'exclude-items':
+		case 'exclude-categories':
+		case 'requireQuantity':
+		case 'requirement':
+		case 'require-categories':
+			return 'discount-section-target'
+		case 'quantityKind':
+		case 'quantityRule':
+		case 'quantityN':
+		case 'perItemN':
+		case 'buyQuantity':
+		case 'getQuantity':
+		case 'maxUnits':
+		case 'buyGroup':
+		case 'getGroup':
+		case 'slots':
+			return 'discount-section-quantity'
+		case 'schedule':
+		case 'startsAt':
+		case 'endsAt':
+			return 'discount-section-when'
+		case 'locations':
+		case 'channels':
+		case 'fulfillments':
+			return 'discount-section-where'
+		case 'eligibility':
+		case 'totalLimit':
+		case 'totalLimitCustom':
+		case 'minSubtotal':
+		case 'perCustomerCount':
+			return 'discount-section-who'
+		case 'codes':
+			return 'discount-section-codes'
+		case 'combinesWith':
+		case 'priority':
+			return 'discount-section-options'
+		default:
+			return 'discount-section-basics'
+	}
+}
 
 /**
  * The guest-facing name and description are written in each website language
@@ -559,6 +625,55 @@ function DiscountFormBody({
 		limitRef.current?.scrollIntoView({ block: 'nearest' })
 	}, [isSubmitting, limit, hasErrors])
 
+	// The summary marks the sections a failed save points at.
+	const errorSections = useMemo(
+		() => new Set(Object.keys(errors).map(sectionOfField)),
+		[errors],
+	)
+	// ...and the one being read: the last section whose title has passed a
+	// reading line a third of the way down the screen (the last section once
+	// the page can't scroll further).
+	const [activeSection, setActiveSection] = useState<string | null>(null)
+	const hasCodesSection = state.application === 'code'
+	useEffect(() => {
+		const nodes = SECTION_IDS.flatMap((sectionId) => {
+			const node = document.getElementById(sectionId)
+			return node ? [node] : []
+		})
+		if (nodes.length === 0) return
+		let frame = 0
+		const measure = () => {
+			frame = 0
+			const line = window.innerHeight / 3
+			const atEnd =
+				window.scrollY + window.innerHeight >=
+				document.documentElement.scrollHeight - 2
+			let current = nodes[0]!
+			for (const node of nodes) {
+				if (node.getBoundingClientRect().top <= line) current = node
+			}
+			setActiveSection(atEnd ? nodes[nodes.length - 1]!.id : current.id)
+		}
+		const schedule = () => {
+			if (!frame) frame = requestAnimationFrame(measure)
+		}
+		measure()
+		window.addEventListener('scroll', schedule, { passive: true })
+		window.addEventListener('resize', schedule)
+		return () => {
+			if (frame) cancelAnimationFrame(frame)
+			window.removeEventListener('scroll', schedule)
+			window.removeEventListener('resize', schedule)
+		}
+	}, [freeDelivery, hasCodesSection])
+	const goToSection = (sectionId: string) => {
+		const node = document.getElementById(sectionId)
+		if (!node) return
+		const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+		node.scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'start' })
+		node.focus({ preventScroll: true })
+	}
+
 	return (
 		<EditorCurrencyContext.Provider value={amountsCurrency}>
 			<Form method="post" className="min-h-full">
@@ -603,19 +718,6 @@ function DiscountFormBody({
 					secondaryAction={statusActions?.({ dirty })}
 				/>
 
-				{mode === 'edit' && createdBy ? (
-					<p className="text-muted-foreground border-border mx-auto w-full max-w-6xl border-b px-4 py-1.5 text-xs md:px-6 lg:px-8">
-						<Trans>Created by {createdBy.name}</Trans>
-						{createdAtLabel ? (
-							<>
-								<span aria-hidden="true"> · </span>
-								<span>{createdAtLabel}</span>
-							</>
-						) : null}
-					</p>
-				) : null}
-				{mode === 'edit' ? <DiscountHistory entries={history} /> : null}
-
 				<div className="mx-auto grid w-full max-w-6xl grid-cols-1 gap-6 px-4 py-6 md:px-6 lg:grid-cols-12 lg:px-8">
 					<fieldset
 						disabled={!editable}
@@ -646,26 +748,30 @@ function DiscountFormBody({
 							</p>
 						) : null}
 						{mode === 'edit' && status === 'paused' ? (
-							<p className="text-muted-foreground text-sm">
-								<Trans>
-									This discount is paused. Customers can't get it until you
-									resume it.
-								</Trans>
-							</p>
+							<Alert role={undefined}>
+								<AlertDescription>
+									<Trans>
+										This discount is paused. Customers can't get it until you
+										resume it.
+									</Trans>
+								</AlertDescription>
+							</Alert>
 						) : null}
 						{mode === 'edit' && status === 'archived' ? (
-							<p role="status" className="text-muted-foreground text-sm">
-								<Trans>
-									This discount is archived, so it can't be edited. Restore it
-									to change it. It comes back paused.
-								</Trans>{' '}
-								{state.application === 'code' ? (
+							<Alert role="status">
+								<AlertDescription>
 									<Trans>
-										Its coupon codes are not brought back: add new ones before
-										you turn it on.
-									</Trans>
-								) : null}
-							</p>
+										This discount is archived, so it can't be edited. Restore it
+										to change it. It comes back paused.
+									</Trans>{' '}
+									{state.application === 'code' ? (
+										<Trans>
+											Its coupon codes are not brought back: add new ones before
+											you turn it on.
+										</Trans>
+									) : null}
+								</AlertDescription>
+							</Alert>
 						) : null}
 						{editable && dirty && statusActions ? (
 							<p
@@ -697,20 +803,22 @@ function DiscountFormBody({
 							</p>
 						) : null}
 						{!canWrite ? (
-							<p className="text-muted-foreground text-sm">
-								{sharedWithOtherLocations ? (
-									<Trans>
-										This discount also runs at locations outside yours, so you
-										can look at it but not change it. Ask someone who manages
-										every location.
-									</Trans>
-								) : (
-									<Trans>
-										You can look at this discount. You don't have permission to
-										change it.
-									</Trans>
-								)}
-							</p>
+							<Alert role={undefined}>
+								<AlertDescription>
+									{sharedWithOtherLocations ? (
+										<Trans>
+											This discount also runs at locations outside yours, so you
+											can look at it but not change it. Ask someone who manages
+											every location.
+										</Trans>
+									) : (
+										<Trans>
+											You can look at this discount. You don't have permission
+											to change it.
+										</Trans>
+									)}
+								</AlertDescription>
+							</Alert>
 						) : null}
 						{hasErrors ? (
 							<div
@@ -989,6 +1097,7 @@ function DiscountFormBody({
 										value={state.maxDiscount}
 										error={errors.maxDiscount}
 										inputMode="decimal"
+										suffix={mixedCurrencies ? undefined : amountsCurrency}
 										onChange={(maxDiscount) => patch({ maxDiscount })}
 									/>
 								</div>
@@ -1020,6 +1129,8 @@ function DiscountFormBody({
 									value={state.amount}
 									error={errors.amount}
 									inputMode="decimal"
+									suffix={mixedCurrencies ? undefined : amountsCurrency}
+									width="medium"
 									onChange={(amount) => patch({ amount })}
 								/>
 							) : null}
@@ -1036,6 +1147,8 @@ function DiscountFormBody({
 									value={state.maxDeliveryFee}
 									error={errors.maxDeliveryFee}
 									inputMode="decimal"
+									suffix={mixedCurrencies ? undefined : amountsCurrency}
+									width="medium"
 									onChange={(maxDeliveryFee) => patch({ maxDeliveryFee })}
 								/>
 							) : null}
@@ -1075,14 +1188,6 @@ function DiscountFormBody({
 										</Indented>
 									) : null}
 								</>
-							) : null}
-							{state.scope === 'modifiers' && !setRule && !freeDelivery ? (
-								<p className="text-muted-foreground text-sm">
-									<Trans>
-										The discount applies to the price of each choice, not the
-										item itself.
-									</Trans>
-								</p>
 							) : null}
 							{setRule && state.valueType !== 'fixed_price' ? (
 								<p className="text-muted-foreground text-sm">
@@ -1182,6 +1287,14 @@ function DiscountFormBody({
 												disabled: freeDelivery || tierLock,
 											},
 										]}
+										hint={
+											state.scope === 'modifiers' && !freeDelivery ? (
+												<Trans>
+													The discount applies to the price of each choice, not
+													the item itself.
+												</Trans>
+											) : undefined
+										}
 									/>
 									{state.scope === 'items' && !freeDelivery ? (
 										<CatalogPicker
@@ -1258,75 +1371,108 @@ function DiscountFormBody({
 													patch({ modifierOptionIds })
 												}
 											/>
-											<CatalogPicker
-												id={fieldDomId('modifier-items')}
-												error={pickError('modifier-items')}
-												label={<Trans>Only on these items</Trans>}
-												hint={
+											<OptionalGroup
+												label={<Trans>Narrow it down</Trans>}
+												description={
 													<Trans>
-														Optional. Leave empty to cover every item.
+														Optional. Only certain items, categories or options.
 													</Trans>
 												}
-												options={catalog.items}
-												value={state.itemIds}
-												multiple
-												placeholder={t`Search items`}
-												emptyMessage={<Trans>No items yet.</Trans>}
-												onChange={(itemIds) => patch({ itemIds })}
-											/>
-											<CatalogPicker
-												id={fieldDomId('modifier-categories')}
-												error={pickError('modifier-categories')}
-												label={<Trans>Only in these categories</Trans>}
-												options={catalog.categories}
-												value={state.categoryIds}
-												multiple
-												placeholder={t`Search categories`}
-												emptyMessage={<Trans>No categories yet.</Trans>}
-												onChange={(categoryIds) => patch({ categoryIds })}
-											/>
-											<VariantFilter
-												field="modifier-variants"
-												rows={state.variants}
-												groups={choices.variantGroups}
-												error={pickError('modifier-variants')}
-												onChange={(variants) => patch({ variants })}
-											/>
+												chosen={[
+													...state.itemIds,
+													...state.categoryIds,
+													...state.variants,
+												]}
+												hasError={
+													errors['modifier-items'] !== undefined ||
+													errors['modifier-categories'] !== undefined ||
+													Object.keys(errors).some((key) =>
+														key.startsWith('modifier-variants'),
+													)
+												}
+											>
+												<CatalogPicker
+													id={fieldDomId('modifier-items')}
+													error={pickError('modifier-items')}
+													label={<Trans>Only on these items</Trans>}
+													hint={
+														<Trans>
+															Optional. Leave empty to cover every item.
+														</Trans>
+													}
+													options={catalog.items}
+													value={state.itemIds}
+													multiple
+													placeholder={t`Search items`}
+													emptyMessage={<Trans>No items yet.</Trans>}
+													onChange={(itemIds) => patch({ itemIds })}
+												/>
+												<CatalogPicker
+													id={fieldDomId('modifier-categories')}
+													error={pickError('modifier-categories')}
+													label={<Trans>Only in these categories</Trans>}
+													options={catalog.categories}
+													value={state.categoryIds}
+													multiple
+													placeholder={t`Search categories`}
+													emptyMessage={<Trans>No categories yet.</Trans>}
+													onChange={(categoryIds) => patch({ categoryIds })}
+												/>
+												<VariantFilter
+													field="modifier-variants"
+													rows={state.variants}
+													groups={choices.variantGroups}
+													error={pickError('modifier-variants')}
+													onChange={(variants) => patch({ variants })}
+												/>
+											</OptionalGroup>
 										</>
 									) : null}
 								</>
 							)}
 							{!freeDelivery ? (
 								<>
-									<CatalogPicker
-										id={fieldDomId('exclude-items')}
-										error={pickError('exclude-items')}
-										label={<Trans>Exclude items</Trans>}
-										hint={
+									<OptionalGroup
+										label={<Trans>Exclusions</Trans>}
+										description={
 											<Trans>
-												Optional. These items never receive this discount.
+												Leave items or categories out of this discount.
 											</Trans>
 										}
-										options={catalog.items}
-										value={state.excludeItemIds}
-										multiple
-										placeholder={t`Search items to exclude`}
-										emptyMessage={<Trans>No items yet.</Trans>}
-										onChange={(excludeItemIds) => patch({ excludeItemIds })}
-									/>
-									<CatalogPicker
-										id={fieldDomId('exclude-categories')}
-										error={pickError('exclude-categories')}
-										label={<Trans>Exclude categories</Trans>}
-										options={catalog.categories}
-										value={state.excludeCategoryIds}
-										multiple
-										placeholder={t`Search categories to exclude`}
-										emptyMessage={<Trans>No categories yet.</Trans>}
-										onChange={(excludeCategoryIds) =>
-											patch({ excludeCategoryIds })
+										chosen={[
+											...state.excludeItemIds,
+											...state.excludeCategoryIds,
+										]}
+										hasError={
+											errors['exclude-items'] !== undefined ||
+											errors['exclude-categories'] !== undefined
 										}
-									/>
+									>
+										<CatalogPicker
+											id={fieldDomId('exclude-items')}
+											error={pickError('exclude-items')}
+											label={<Trans>Exclude items</Trans>}
+											options={catalog.items}
+											value={state.excludeItemIds}
+											multiple
+											placeholder={t`Search items to exclude`}
+											emptyMessage={<Trans>No items yet.</Trans>}
+											onChange={(excludeItemIds) => patch({ excludeItemIds })}
+										/>
+										<CatalogPicker
+											id={fieldDomId('exclude-categories')}
+											error={pickError('exclude-categories')}
+											label={<Trans>Exclude categories</Trans>}
+											options={catalog.categories}
+											value={state.excludeCategoryIds}
+											multiple
+											placeholder={t`Search categories to exclude`}
+											emptyMessage={<Trans>No categories yet.</Trans>}
+											onChange={(excludeCategoryIds) =>
+												patch({ excludeCategoryIds })
+											}
+										/>
+									</OptionalGroup>
 									<SwitchRow
 										label={<Trans>Require specific items or categories</Trans>}
 										description={
@@ -1346,6 +1492,7 @@ function DiscountFormBody({
 												value={state.requireQuantity}
 												error={errors.requireQuantity}
 												inputMode="numeric"
+												width="short"
 												onChange={(requireQuantity) =>
 													patch({ requireQuantity })
 												}
@@ -1413,6 +1560,7 @@ function DiscountFormBody({
 										value={state.quantityN}
 										error={errors.quantityN}
 										inputMode="numeric"
+										width="short"
 										onChange={(quantityN) => patch({ quantityN })}
 									/>
 								) : null}
@@ -1423,7 +1571,7 @@ function DiscountFormBody({
 										value={state.perItemN}
 										error={errors.perItemN}
 										inputMode="numeric"
-										className="sm:max-w-32"
+										width="short"
 										onChange={(perItemN) => patch({ perItemN })}
 									/>
 								) : null}
@@ -1499,6 +1647,7 @@ function DiscountFormBody({
 									value={state.maxUnits}
 									error={errors.maxUnits}
 									inputMode="numeric"
+									width="short"
 									disabled={!itemScope}
 									onChange={(maxUnits) => patch({ maxUnits })}
 								/>
@@ -1563,6 +1712,7 @@ function DiscountFormBody({
 						<EditorSection
 							id="discount-section-where"
 							title={<Trans>Where</Trans>}
+							description={<Trans>Locations, channels and order types.</Trans>}
 						>
 							<SwitchRow
 								label={<Trans>All locations</Trans>}
@@ -1638,10 +1788,12 @@ function DiscountFormBody({
 						<EditorSection
 							id="discount-section-who"
 							title={<Trans>Who can use it</Trans>}
+							description={<Trans>Customers, limits and minimum spend.</Trans>}
 						>
 							<ChoiceGroup
 								field="eligibility"
 								legend={<Trans>Customers</Trans>}
+								columns={2}
 								value={state.eligibility}
 								onChange={(eligibility) => patch({ eligibility })}
 								choices={(
@@ -1656,64 +1808,71 @@ function DiscountFormBody({
 									label: i18n._(DISCOUNT_ELIGIBILITY_LABELS[value]),
 								}))}
 							/>
-							<Field>
-								<FieldLabel htmlFor={fieldDomId('totalLimit')}>
-									<Trans>Maximum uses</Trans>
-								</FieldLabel>
-								<select
-									id={fieldDomId('totalLimit')}
-									className="border-input bg-card h-8 w-full rounded-md border px-2.5 text-sm"
-									value={state.totalLimit}
-									aria-invalid={errors.totalLimit ? true : undefined}
-									aria-describedby={
-										errors.totalLimit
-											? `${fieldDomId('totalLimit')}-error`
-											: undefined
-									}
-									onChange={(event) =>
-										patch({
-											totalLimit: event.currentTarget
-												.value as EditorState['totalLimit'],
-										})
-									}
-								>
-									<option value="unlimited">{t`Unlimited`}</option>
-									{DISCOUNT_TOTAL_LIMIT_PRESETS.map((preset) => (
-										<option key={preset} value={String(preset)}>
-											{preset}
-										</option>
-									))}
-									<option value="custom">{t`Custom`}</option>
-								</select>
-								{errors.totalLimit ? (
-									<FieldErrorText id={`${fieldDomId('totalLimit')}-error`}>
-										{errorText(errors.totalLimit)}
-									</FieldErrorText>
-								) : null}
-							</Field>
-							{state.totalLimit === 'custom' ? (
+							<div className="grid items-start gap-4 sm:grid-cols-2">
+								<div className="flex flex-col gap-4">
+									<Field>
+										<FieldLabel htmlFor={fieldDomId('totalLimit')}>
+											<Trans>Maximum uses</Trans>
+										</FieldLabel>
+										<select
+											id={fieldDomId('totalLimit')}
+											className="border-input bg-card focus-visible:border-primary focus-visible:ring-primary/12 aria-invalid:border-destructive h-8 w-full rounded-md border px-2.5 text-sm transition-colors outline-none focus-visible:ring-3"
+											value={state.totalLimit}
+											aria-invalid={errors.totalLimit ? true : undefined}
+											aria-describedby={
+												errors.totalLimit
+													? `${fieldDomId('totalLimit')}-error`
+													: undefined
+											}
+											onChange={(event) =>
+												patch({
+													totalLimit: event.currentTarget
+														.value as EditorState['totalLimit'],
+												})
+											}
+										>
+											<option value="unlimited">{t`Unlimited`}</option>
+											{DISCOUNT_TOTAL_LIMIT_PRESETS.map((preset) => (
+												<option key={preset} value={String(preset)}>
+													{preset}
+												</option>
+											))}
+											<option value="custom">{t`Custom`}</option>
+										</select>
+										{errors.totalLimit ? (
+											<FieldErrorText id={`${fieldDomId('totalLimit')}-error`}>
+												{errorText(errors.totalLimit)}
+											</FieldErrorText>
+										) : null}
+									</Field>
+									{state.totalLimit === 'custom' ? (
+										<TextField
+											field="totalLimitCustom"
+											label={<Trans>Custom maximum</Trans>}
+											value={state.totalLimitCustom}
+											error={errors.totalLimitCustom ?? errors.totalLimit}
+											inputMode="numeric"
+											onChange={(totalLimitCustom) =>
+												patch({ totalLimitCustom })
+											}
+										/>
+									) : null}
+								</div>
 								<TextField
-									field="totalLimitCustom"
-									label={<Trans>Custom maximum</Trans>}
-									value={state.totalLimitCustom}
-									error={errors.totalLimitCustom ?? errors.totalLimit}
-									inputMode="numeric"
-									onChange={(totalLimitCustom) => patch({ totalLimitCustom })}
+									field="minSubtotal"
+									label={<Trans>Minimum spend</Trans>}
+									hint={
+										<Trans>
+											Optional. Checked on the subtotal before discounts.
+										</Trans>
+									}
+									value={state.minSubtotal}
+									error={errors.minSubtotal}
+									inputMode="decimal"
+									suffix={mixedCurrencies ? undefined : amountsCurrency}
+									onChange={(minSubtotal) => patch({ minSubtotal })}
 								/>
-							) : null}
-							<TextField
-								field="minSubtotal"
-								label={<Trans>Minimum spend</Trans>}
-								hint={
-									<Trans>
-										Optional. Checked on the subtotal before discounts.
-									</Trans>
-								}
-								value={state.minSubtotal}
-								error={errors.minSubtotal}
-								inputMode="decimal"
-								onChange={(minSubtotal) => patch({ minSubtotal })}
-							/>
+							</div>
 							<SwitchRow
 								label={<Trans>Limit uses per customer</Trans>}
 								description={
@@ -1733,6 +1892,7 @@ function DiscountFormBody({
 										value={state.perCustomerCount}
 										error={errors.perCustomerCount}
 										inputMode="numeric"
+										width="short"
 										onChange={(perCustomerCount) => patch({ perCustomerCount })}
 									/>
 									<ChoiceGroup
@@ -1775,6 +1935,11 @@ function DiscountFormBody({
 						<EditorSection
 							id="discount-section-options"
 							title={<Trans>Options</Trans>}
+							description={
+								<Trans>
+									Combining with other discounts, priority and the menu.
+								</Trans>
+							}
 						>
 							<CheckboxGroup
 								field="combinesWith"
@@ -1807,6 +1972,7 @@ function DiscountFormBody({
 								value={state.priority}
 								error={errors.priority}
 								inputMode="numeric"
+								width="short"
 								onChange={(priority) => patch({ priority })}
 							/>
 							<SwitchRow
@@ -1849,6 +2015,27 @@ function DiscountFormBody({
 								choices={choices}
 								locations={locations}
 								defaultLocale={siteLocales.defaultLocale}
+								activeSection={activeSection}
+								errorSections={errorSections}
+								onNavigate={goToSection}
+								footer={
+									mode === 'edit' && (createdBy || history.length > 0) ? (
+										<>
+											{createdBy ? (
+												<p>
+													<Trans>Created by {createdBy.name}</Trans>
+													{createdAtLabel ? (
+														<>
+															<span aria-hidden="true"> · </span>
+															<span>{createdAtLabel}</span>
+														</>
+													) : null}
+												</p>
+											) : null}
+											<DiscountHistory entries={history} />
+										</>
+									) : null
+								}
 							/>
 						</div>
 					</aside>

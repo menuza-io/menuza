@@ -170,6 +170,10 @@ the repo root unless a line starts with `cd apps/app`.
   `no-restyle` fails, fix the call site. Extend the component's contract only
   when the design system intentionally allows the change.
 - Wrap long user-supplied names with `wrap-anywhere`, as the dashboard menus do.
+- Choosing between a few options shown as cards (a radio or checkbox with a
+  title and an optional description) uses `ChoiceCard` from
+  `@repo/ui/choice-card`, inside a `RadioGroup` or with `Checkbox`. Do not
+  hand-build card labels or reuse `Item` for this. Plain radio lists stay plain.
 
 ## Internationalization
 

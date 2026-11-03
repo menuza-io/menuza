@@ -1,6 +1,7 @@
 import { type PosFiscalDocument } from '@repo/common/pos-fiscal'
 import { type PosOrderSource } from '@repo/common/pos-orders'
 import Dexie, { type EntityTable } from 'dexie'
+import { type SaleLoyalty } from './loyalty.ts'
 import { type Adjustment, type CartLine, type Totals } from './pricing.ts'
 import { type CatalogSnapshot } from './types.ts'
 
@@ -118,6 +119,13 @@ export type PosOrder = {
 	/** The cash drawer shift it was rung up in, when one was open. */
 	shiftId?: string | null
 	lines: CartLine[]
+	/**
+	 * The loyalty member behind this sale: the opaque binding the till got when
+	 * it identified them (never a phone number) and each line's categories. It
+	 * is uploaded as `loyalty` so the sale earns for that member; the reward, if
+	 * any, is the `loyalty` adjustment below.
+	 */
+	loyalty?: SaleLoyalty | null
 	/** Items taken off after the order was saved. */
 	lineVoids: LineVoid[]
 	adjustments: Adjustment[]

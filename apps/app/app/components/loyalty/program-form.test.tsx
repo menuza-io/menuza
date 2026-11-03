@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import {
+	loyaltyPromotionSchema,
 	type LoyaltyOperatorProgram,
 	type LoyaltyProgramConfig,
 } from '@repo/loyalty'
@@ -38,6 +39,8 @@ function programWith(config: Partial<LoyaltyProgramConfig>) {
 				earning: { method: 'spend', points: 1, perMinor: 100 },
 				terms: 'Points have no cash value.',
 				labels: { items: {}, categories: {} },
+				promotions: [],
+				promotionStacking: 'best',
 				...config,
 			},
 			createdAt: 1_700_000_000_000,
@@ -103,6 +106,8 @@ describe('ProgramForm', () => {
 				earning: { method: 'spend', points: 1, perMinor: 100 },
 				terms: 'Points have no cash value.',
 				labels: { items: {}, categories: {} },
+				promotions: [],
+				promotionStacking: 'best',
 			},
 			null,
 		)
@@ -125,11 +130,51 @@ describe('ProgramForm', () => {
 		expect(onSave.mock.calls[0]![1]).toBe(3)
 	})
 
+	it('saves the program with its promotions and how they stack, exactly as they were', async () => {
+		const promotions = [
+			loyaltyPromotionSchema.parse({
+				id: 'promo_double',
+				name: 'Double Tuesdays',
+				kind: 'multiplier',
+				value: 20_000,
+				recurring: { weekdays: [2], fromMinute: 900, toMinute: 1020 },
+				locationIds: ['loc_1'],
+				maxPointsPerPurchase: 50,
+			}),
+			loyaltyPromotionSchema.parse({
+				id: 'promo_latte',
+				name: 'Latte bonus',
+				kind: 'bonus',
+				value: 3,
+				scope: { type: 'items', itemIds: ['item_latte'] },
+				labels: { items: { item_latte: 'Latte' }, categories: {} },
+				enabled: false,
+			}),
+		]
+		const { onSave } = setup(
+			programWith({ promotions, promotionStacking: 'add' }),
+		)
+		// An unrelated edit: saving the program must not drop the promotions.
+		const name = screen.getByTestId('loyalty-program-name')
+		await userEvent.clear(name)
+		await userEvent.type(name, 'Espresso Club')
+		await userEvent.click(screen.getByTestId('loyalty-program-save'))
+
+		await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1))
+		const config = onSave.mock.calls[0]![0] as LoyaltyProgramConfig
+		expect(config.name).toBe('Espresso Club')
+		expect(config.promotions).toEqual(promotions)
+		expect(config.promotionStacking).toBe('add')
+		expect(onSave.mock.calls[0]![1]).toBe(3)
+	})
+
 	it('earns on chosen items and saves their menu names', async () => {
 		const { onSave } = setup(
 			programWith({
 				earning: { method: 'items', points: 5, itemIds: ['item_latte'] },
 				labels: { items: { item_latte: 'Old latte' }, categories: {} },
+				promotions: [],
+				promotionStacking: 'best',
 			}),
 		)
 		await userEvent.click(
