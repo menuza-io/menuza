@@ -138,6 +138,43 @@ export async function userHasOrgAccess(userId: string, organizationId: string) {
 	)
 }
 
+/**
+ * Same rule the note loader applies: a private note is readable by members
+ * with org-wide note read, its creator, or a user it was shared with. Intents
+ * that act on a note must repeat it; organization-level `read:note:own` alone
+ * does not reach private notes of other members.
+ */
+async function requireNoteReadAccess(userId: string, noteId: string) {
+	const note = await db.query.OrganizationNote.findFirst({
+		columns: { organizationId: true, isPublic: true, createdById: true },
+		with: { noteAccess: { columns: { userId: true } } },
+		where: (record, { eq }) => eq(record.id, noteId),
+	})
+	invariantResponse(note, 'Note not found', { status: 404 })
+
+	await userHasOrgAccess(userId, note.organizationId)
+
+	if (!note.isPublic) {
+		try {
+			await requireUserWithOrganizationPermission(
+				userId,
+				note.organizationId,
+				ORG_PERMISSIONS.READ_NOTE_ANY,
+			)
+		} catch {
+			const hasPersonalAccess =
+				note.createdById === userId ||
+				note.noteAccess.some((access) => access.userId === userId)
+			if (!hasPersonalAccess) {
+				throw new Response('Not authorized - insufficient note permissions', {
+					status: 403,
+				})
+			}
+		}
+	}
+	return note
+}
+
 export async function handleDeleteNoteIntent({
 	formData,
 	userId,
@@ -230,13 +267,7 @@ export async function handleConnectChannelIntent({
 	}
 
 	const { noteId, integrationId, channelId } = submission.value
-	const [note] = await db
-		.select({ organizationId: OrganizationNote.organizationId })
-		.from(OrganizationNote)
-		.where(eq(OrganizationNote.id, noteId))
-		.limit(1)
-	invariantResponse(note, 'Note not found', { status: 404 })
-	await userHasOrgAccess(userId, note.organizationId)
+	await requireNoteReadAccess(userId, noteId)
 
 	try {
 		await integrationManager.connectNoteToChannel({
@@ -278,16 +309,12 @@ export async function handleDisconnectChannelIntent({
 
 	const { connectionId } = submission.value
 	const [connection] = await db
-		.select({ organizationId: OrganizationNote.organizationId })
+		.select({ noteId: NoteIntegrationConnection.noteId })
 		.from(NoteIntegrationConnection)
-		.innerJoin(
-			OrganizationNote,
-			eq(NoteIntegrationConnection.noteId, OrganizationNote.id),
-		)
 		.where(eq(NoteIntegrationConnection.id, connectionId))
 		.limit(1)
 	invariantResponse(connection, 'Connection not found', { status: 404 })
-	await userHasOrgAccess(userId, connection.organizationId)
+	await requireNoteReadAccess(userId, connection.noteId)
 
 	try {
 		const [connectionDetails] = await db
