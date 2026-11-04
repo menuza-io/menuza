@@ -344,6 +344,28 @@ npx wrangler secret put SESSION_SECRET --env staging
 | `TWILIO_AUTH_TOKEN`        | US SMS only (not KSA production)                               |
 | `VOICE_AGENT_TOKEN`        | **Same as App** and the LiveKit agent (AI phone agent)         |
 
+#### Setting and rotating `OPERATOR_ANALYTICS_TOKEN`
+
+It signs report tokens: App mints them, every tenant-api verifies them. Generate
+it separately from `INTERNAL_COMMAND_TOKEN` (`openssl rand -hex 32`); the two
+must differ, and rotating one never requires touching the other.
+
+- **First deploy:** set it on every tenant-api node and on App _before_ App
+  ships. App without it answers `503 Reports are temporarily unavailable`
+  (logged as `operator_analytics_token_not_configured`); a tenant-api without it
+  answers 401 to report queries. Both fail closed.
+- **Rotation:** report tokens last 15 minutes (5 for pay data), so there is no
+  long-lived token to revoke. Set the new value on all tenant-api nodes and App
+  in the same window. There is no previous-key fallback, so any App and
+  tenant-api pair that holds different values answers 401 (a token from App
+  fails on a node that still has the old value, and the reverse), and a report
+  screen opened before the swap holds a token signed with the old value, so its
+  queries answer 401 until it is reloaded. Swap every node and App together.
+- **Local and CI:** the schema default (`dev-operator-analytics-token-...`) is
+  accepted outside production and in a production build served from localhost
+  (E2E, `npm run build` + preview). On a real deploy (`BASE_URL` not local, or
+  missing) it is refused.
+
 ### Jobs cron (`apps/jobs-cron`)
 
 | Secret                   | Notes           |

@@ -1736,7 +1736,7 @@ msgstr "Add a general application"
 msgid "Add a heading"
 msgstr "Add a heading"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5641
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5645
 msgid "Add a hero, gallery, or any block between the header and footer."
 msgstr ""
 
@@ -1805,7 +1805,7 @@ msgstr "Add a rule to teach the agent how your business works."
 msgid "Add a second shift later the same day, like lunch and dinner."
 msgstr "Add a second shift later the same day, like lunch and dinner."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5749
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5753
 msgid "Add a section from the left to see a live preview."
 msgstr ""
 
@@ -1989,7 +1989,7 @@ msgstr ""
 msgid "Add name, email, choices, and more to start collecting responses."
 msgstr "Add name, email, choices, and more to start collecting responses."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5899
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5904
 msgid "Add new page"
 msgstr ""
 
@@ -3071,6 +3071,10 @@ msgstr "Attach an image"
 msgid "Attach at most {SOCIAL_MAX_MEDIA} images."
 msgstr "Attach at most {SOCIAL_MAX_MEDIA} images."
 
+#: ../../packages/ai/src/components/chat-attachment-list.tsx:22
+msgid "Attached images"
+msgstr "Attached images"
+
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:414
 msgid "Attempt: {attempt} • Executed: {executedAtLabel}"
 msgstr ""
@@ -3538,7 +3542,7 @@ msgid "Bucket Name"
 msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:539
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5934
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5939
 msgid "Build"
 msgstr ""
 
@@ -6686,7 +6690,7 @@ msgstr "Design branded posters, flyers and signs. Download a print-ready PDF for
 msgid "Design email"
 msgstr "Design email"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5690
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5694
 msgid "Desktop"
 msgstr ""
 
@@ -6981,7 +6985,7 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:412
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:250
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:404
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5851
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5856
 msgid "Draft"
 msgstr ""
 
@@ -9190,8 +9194,8 @@ msgstr "Holidays"
 #: app/components/workspace-breadcrumb.tsx:142
 #: app/components/workspace-breadcrumb.tsx:156
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:382
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5886
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5908
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5891
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5913
 msgid "Home"
 msgstr ""
 
@@ -11287,7 +11291,7 @@ msgstr "Missing required segmentation field"
 msgid "Missing something the job needs"
 msgstr "Missing something the job needs"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5713
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5717
 msgid "Mobile"
 msgstr ""
 
@@ -12425,7 +12429,7 @@ msgstr "No sales to compare"
 msgid "No screening questions"
 msgstr "No screening questions"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5638
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5642
 msgid "No sections yet"
 msgstr ""
 
@@ -13396,7 +13400,7 @@ msgstr "Open pages, forms, and themes in the site builder."
 msgid "Open payout dashboard"
 msgstr "Open payout dashboard"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6000
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6005
 msgid "Open preview"
 msgstr ""
 
@@ -14896,7 +14900,7 @@ msgstr "Pressing 0 won't reach anyone until you set a staff phone number above."
 #: app/components/social/post-composer.tsx:361
 #: app/components/staff/schedule/recommend-dialog.tsx:241
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:548
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5949
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5954
 msgid "Preview"
 msgstr ""
 
@@ -15119,7 +15123,7 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:426
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:490
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:448
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5963
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5968
 msgid "Publish"
 msgstr ""
 
@@ -15161,7 +15165,7 @@ msgid "Publish this week"
 msgstr "Publish this week"
 
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:492
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5970
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5975
 msgid "Publish updates"
 msgstr ""
 
@@ -15179,7 +15183,7 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:410
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:248
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:402
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5849
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5854
 msgid "Published"
 msgstr ""
 
@@ -15555,7 +15559,7 @@ msgstr "Refresh calls"
 msgid "Refresh Checkout setup"
 msgstr "Refresh Checkout setup"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5991
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5996
 msgid "Refresh preview"
 msgstr ""
 
@@ -15697,7 +15701,7 @@ msgid "Remove"
 msgstr ""
 
 #. placeholder {0}: attachment.name
-#: ../../packages/ai/src/components/chat-attachment-list.tsx:33
+#: ../../packages/ai/src/components/chat-attachment-list.tsx:36
 msgid "Remove {0}"
 msgstr "Remove {0}"
 
@@ -17113,7 +17117,7 @@ msgstr ""
 #: app/components/staff/staff-profile-page.tsx:126
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5127
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5128
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5621
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5625
 msgid "Sections"
 msgstr ""
 
@@ -21524,7 +21528,7 @@ msgstr "Unpaid time off"
 
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:514
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:463
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6020
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6025
 msgid "Unpublish"
 msgstr ""
 
@@ -21603,7 +21607,7 @@ msgid "Upcoming"
 msgstr "Upcoming"
 
 #: app/components/media-library/photo-studio-dialog.tsx:922
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5967
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5972
 msgid "Update"
 msgstr ""
 
@@ -22116,7 +22120,7 @@ msgstr "View labor cost"
 msgid "View labor policy"
 msgstr "View labor policy"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6009
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6014
 msgid "View live site"
 msgstr ""
 
@@ -23658,7 +23662,7 @@ msgstr ""
 msgid "Your organizations"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5746
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5750
 msgid "Your page will appear here"
 msgstr ""
 

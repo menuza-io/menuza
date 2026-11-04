@@ -8,6 +8,7 @@ import {
 	operatorTokenAllowsSubject,
 	ORG_WIDE_REPORT_SUBJECTS,
 	RESTRICTED_REPORT_SUBJECTS,
+	resolveOperatorAnalyticsSecret,
 	STAFFING_REPORT_SUBJECTS,
 	verifyOperatorAnalyticsToken,
 } from './operator-token.ts'
@@ -336,5 +337,51 @@ describe('operator analytics token', () => {
 			)
 			expect((await verify(mixed))?.scopeIds).toEqual(['loc-1'])
 		})
+	})
+})
+
+describe('resolveOperatorAnalyticsSecret', () => {
+	const good = 'a-unique-report-signing-secret-0123456789'
+	const internal = 'a-different-internal-command-token-0123456789'
+	const isPlaceholder = (value: string) => value.includes('do-not-use-in-prod')
+	const resolve = (
+		overrides: Partial<Parameters<typeof resolveOperatorAnalyticsSecret>[0]>,
+	) =>
+		resolveOperatorAnalyticsSecret({
+			secret: good,
+			internalCommandToken: internal,
+			isPlaceholder,
+			placeholderAllowed: false,
+			...overrides,
+		})
+
+	it('returns a usable secret', () => {
+		expect(resolve({})).toBe(good)
+		expect(resolve({ internalCommandToken: undefined })).toBe(good)
+	})
+
+	it('refuses a missing or short secret', () => {
+		expect(resolve({ secret: undefined })).toBe('')
+		expect(resolve({ secret: null })).toBe('')
+		expect(resolve({ secret: '' })).toBe('')
+		expect(resolve({ secret: 'short-15-chars!' })).toBe('')
+		expect(resolve({ secret: 'exactly-16-chars' })).toBe('exactly-16-chars')
+	})
+
+	it('refuses the same value as the internal command token', () => {
+		expect(resolve({ secret: internal })).toBe('')
+	})
+
+	it('refuses a placeholder unless the caller allows it', () => {
+		const placeholder = 'dev-operator-analytics-token-do-not-use-in-prod'
+		expect(resolve({ secret: placeholder })).toBe('')
+		expect(resolve({ secret: placeholder, placeholderAllowed: true })).toBe(
+			placeholder,
+		)
+	})
+
+	it('still refuses a short or shared secret where placeholders are allowed', () => {
+		expect(resolve({ secret: 'short', placeholderAllowed: true })).toBe('')
+		expect(resolve({ secret: internal, placeholderAllowed: true })).toBe('')
 	})
 })

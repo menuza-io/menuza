@@ -124,9 +124,13 @@ async function readTextWithLimit(
 ): Promise<string | null> {
 	const reader = request.body?.getReader()
 	if (!reader) return ''
+	// Decode each chunk as it arrives so the raw bytes can be freed, and join
+	// once at the end. Holding every chunk and then copying them into one
+	// buffer would keep the body three times over at its peak (chunks, buffer,
+	// string), which matters in a 128 MB Worker isolate.
 	const decoder = new TextDecoder()
+	const parts: string[] = []
 	let received = 0
-	let text = ''
 	for (;;) {
 		const { done, value } = await reader.read()
 		if (done) break
@@ -135,12 +139,18 @@ async function readTextWithLimit(
 			await reader.cancel()
 			return null
 		}
-		text += decoder.decode(value, { stream: true })
+		parts.push(decoder.decode(value, { stream: true }))
 	}
-	return text + decoder.decode()
+	parts.push(decoder.decode())
+	return parts.join('')
 }
 
-/** Whether the first bytes of the decoded data are those of the declared type. */
+/**
+ * Whether the first bytes of the decoded data are those of the declared type.
+ * A content guard only: it rejects payloads that are plainly not an image, but
+ * a valid header followed by anything passes. The model provider validates the
+ * image itself.
+ */
 function hasImageSignature(mediaType: string, base64: string): boolean {
 	let bytes: Uint8Array
 	try {
@@ -183,7 +193,8 @@ function hasImageSignature(mediaType: string, base64: string): boolean {
 
 /**
  * Checks every file part and returns a refusal for anything that is not a
- * small, inline, base64 PNG/JPEG/WebP/GIF whose bytes match its declared type.
+ * small, inline, base64 PNG/JPEG/WebP/GIF that starts with the signature of its
+ * declared type (see `hasImageSignature`: this is not full image validation).
  * A remote URL would make the server fetch whatever the client names, and a
  * provider reference would make the model use something other than the bytes
  * that were checked.
@@ -340,7 +351,16 @@ export async function handleChat(
 	}
 	const text = await readTextWithLimit(request, MAX_CHAT_BODY_BYTES)
 	if (text === null) return new Response('Request too large', { status: 413 })
-	const body = JSON.parse(text) as {
+	let parsed: unknown
+	try {
+		parsed = JSON.parse(text)
+	} catch {
+		return new Response('Invalid JSON', { status: 400 })
+	}
+	if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+		return new Response('Invalid JSON', { status: 400 })
+	}
+	const body = parsed as {
 		messages: unknown[]
 		pageId?: string | null
 		currentPath?: unknown

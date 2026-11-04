@@ -1734,7 +1734,7 @@ msgstr "إضافة طلب توظيف عام"
 msgid "Add a heading"
 msgstr "أضف عنوانًا"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5641
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5645
 msgid "Add a hero, gallery, or any block between the header and footer."
 msgstr "أضف قسماً رئيسياً، معرض صور، أو أي كتلة بين الترويسة والتذييل."
 
@@ -1803,7 +1803,7 @@ msgstr "أضف قاعدة لتعلّم الوكيل كيف يعمل نشاطك �
 msgid "Add a second shift later the same day, like lunch and dinner."
 msgstr "أضف وردية ثانية لاحقًا في اليوم نفسه، مثل الغداء والعشاء."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5749
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5753
 msgid "Add a section from the left to see a live preview."
 msgstr "أضف قسماً من القائمة على اليسار لرؤية معاينة مباشرة."
 
@@ -1987,7 +1987,7 @@ msgstr "إضافة المزيد من الاتصالات"
 msgid "Add name, email, choices, and more to start collecting responses."
 msgstr "أضف الاسم والبريد الإلكتروني والخيارات وغيرها لبدء جمع الردود."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5899
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5904
 msgid "Add new page"
 msgstr "إضافة صفحة جديدة"
 
@@ -3069,6 +3069,10 @@ msgstr "إرفاق صورة"
 msgid "Attach at most {SOCIAL_MAX_MEDIA} images."
 msgstr "أرفق {SOCIAL_MAX_MEDIA} صور كحد أقصى."
 
+#: ../../packages/ai/src/components/chat-attachment-list.tsx:22
+msgid "Attached images"
+msgstr "الصور المرفقة"
+
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:414
 msgid "Attempt: {attempt} • Executed: {executedAtLabel}"
 msgstr "المحاولة: {attempt} • التنفيذ: {executedAtLabel}"
@@ -3536,7 +3540,7 @@ msgid "Bucket Name"
 msgstr "اسم الحاوية"
 
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:539
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5934
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5939
 msgid "Build"
 msgstr "البناء"
 
@@ -6684,7 +6688,7 @@ msgstr "صمّم ملصقات ومنشورات ولافتات بهويتك. نز
 msgid "Design email"
 msgstr "تصميم البريد"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5690
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5694
 msgid "Desktop"
 msgstr "سطح المكتب"
 
@@ -6979,7 +6983,7 @@ msgstr "مسودة"
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:412
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:250
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:404
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5851
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5856
 msgid "Draft"
 msgstr "مسودة"
 
@@ -9188,8 +9192,8 @@ msgstr "العطل"
 #: app/components/workspace-breadcrumb.tsx:142
 #: app/components/workspace-breadcrumb.tsx:156
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:382
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5886
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5908
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5891
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5913
 msgid "Home"
 msgstr "الرئيسية"
 
@@ -11285,7 +11289,7 @@ msgstr "لم يُحدَّد حقل التجميع المطلوب"
 msgid "Missing something the job needs"
 msgstr "ينقصه شيء تحتاجه الوظيفة"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5713
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5717
 msgid "Mobile"
 msgstr "الجوال"
 
@@ -12423,7 +12427,7 @@ msgstr "لا مبيعات للمقارنة"
 msgid "No screening questions"
 msgstr "لا توجد أسئلة فرز"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5638
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5642
 msgid "No sections yet"
 msgstr "لا توجد أقسام بعد"
 
@@ -13394,7 +13398,7 @@ msgstr "فتح الصفحات والنماذج والسمات في منشئ ال
 msgid "Open payout dashboard"
 msgstr "فتح لوحة تحكم المدفوعات"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6000
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6005
 msgid "Open preview"
 msgstr "فتح المعاينة"
 
@@ -14894,7 +14898,7 @@ msgstr "الضغط على 0 لن يصل إلى أي أحد حتى تضبط رق�
 #: app/components/social/post-composer.tsx:361
 #: app/components/staff/schedule/recommend-dialog.tsx:241
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:548
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5949
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5954
 msgid "Preview"
 msgstr "معاينة"
 
@@ -15117,7 +15121,7 @@ msgstr "الوصول العام"
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:426
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:490
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:448
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5963
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5968
 msgid "Publish"
 msgstr "نشر"
 
@@ -15159,7 +15163,7 @@ msgid "Publish this week"
 msgstr "نشر هذا الأسبوع"
 
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:492
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5970
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5975
 msgid "Publish updates"
 msgstr "نشر التحديثات"
 
@@ -15177,7 +15181,7 @@ msgstr "انشر موقعك قبل مشاركة رابط المتجر مع ال�
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:410
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:248
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:402
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5849
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5854
 msgid "Published"
 msgstr "منشور"
 
@@ -15553,7 +15557,7 @@ msgstr "تحديث المكالمات"
 msgid "Refresh Checkout setup"
 msgstr "تحديث إعدادات الدفع"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5991
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5996
 msgid "Refresh preview"
 msgstr "تحديث المعاينة"
 
@@ -15695,7 +15699,7 @@ msgid "Remove"
 msgstr "إزالة"
 
 #. placeholder {0}: attachment.name
-#: ../../packages/ai/src/components/chat-attachment-list.tsx:33
+#: ../../packages/ai/src/components/chat-attachment-list.tsx:36
 msgid "Remove {0}"
 msgstr "إزالة {0}"
 
@@ -17111,7 +17115,7 @@ msgstr "ارتفاع القسم"
 #: app/components/staff/staff-profile-page.tsx:126
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5127
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5128
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5621
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5625
 msgid "Sections"
 msgstr "الأقسام"
 
@@ -21522,7 +21526,7 @@ msgstr "إجازة غير مدفوعة"
 
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:514
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:463
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6020
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6025
 msgid "Unpublish"
 msgstr "إلغاء النشر"
 
@@ -21601,7 +21605,7 @@ msgid "Upcoming"
 msgstr "القادمة"
 
 #: app/components/media-library/photo-studio-dialog.tsx:922
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5967
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5972
 msgid "Update"
 msgstr "تحديث"
 
@@ -22114,7 +22118,7 @@ msgstr "عرض تكلفة العمالة"
 msgid "View labor policy"
 msgstr "عرض سياسة العمل"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6009
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6014
 msgid "View live site"
 msgstr "عرض الموقع المباشر"
 
@@ -23656,7 +23660,7 @@ msgstr "الخطة الحالية لمؤسستك وحالة الفوترة"
 msgid "Your organizations"
 msgstr "مؤسساتك"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5746
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5750
 msgid "Your page will appear here"
 msgstr "ستظهر صفحتك هنا"
 

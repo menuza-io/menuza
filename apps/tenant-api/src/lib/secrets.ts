@@ -1,4 +1,5 @@
 import crypto from 'node:crypto'
+import { resolveOperatorAnalyticsSecret } from '@repo/reports/token'
 import { ENV, initVarlockEnv } from 'varlock/env'
 
 const INSECURE_SECRET_MARKERS = [
@@ -118,21 +119,16 @@ export const DEV_OPERATOR_ANALYTICS_TOKEN =
  */
 export function getOperatorAnalyticsToken() {
 	syncEnvFromProcess()
-	const token = ENV.OPERATOR_ANALYTICS_TOKEN || ''
-	if (token.length < 16) return ''
-	const internal = getInternalCommandToken()
-	if (internal && timingSafeEqualString(token, internal)) return ''
 	// An unset NODE_ENV is production. The schema default must not sign reports.
 	const nodeEnv =
 		typeof process !== 'undefined' ? process.env.NODE_ENV : undefined
-	const isLocal = nodeEnv === 'development' || nodeEnv === 'test'
-	if (
-		!isLocal &&
-		(token === DEV_OPERATOR_ANALYTICS_TOKEN || isInsecureSecret(token))
-	) {
-		return ''
-	}
-	return token
+	return resolveOperatorAnalyticsSecret({
+		secret: ENV.OPERATOR_ANALYTICS_TOKEN,
+		internalCommandToken: getInternalCommandToken(),
+		isPlaceholder: (token) =>
+			token === DEV_OPERATOR_ANALYTICS_TOKEN || isInsecureSecret(token),
+		placeholderAllowed: nodeEnv === 'development' || nodeEnv === 'test',
+	})
 }
 
 export function getVoiceAgentToken() {

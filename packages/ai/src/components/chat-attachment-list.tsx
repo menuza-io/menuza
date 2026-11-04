@@ -18,7 +18,10 @@ export function ChatAttachmentList({
 	const { _ } = useLingui()
 	if (attachments.length === 0) return null
 	return (
-		<ul className={className ?? 'flex flex-wrap gap-2 px-1 pt-2'}>
+		<ul
+			aria-label={_(t`Attached images`)}
+			className={className ?? 'flex flex-wrap gap-2 px-1 pt-2'}
+		>
 			{attachments.map((attachment) => (
 				<li key={attachment.id} className="group/thumb relative">
 					{/* The remove button carries the file name, so the image is decorative. */}

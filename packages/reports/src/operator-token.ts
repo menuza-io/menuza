@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto'
+import { createHash, timingSafeEqual } from 'node:crypto'
 import { SignJWT, jwtVerify } from 'jose'
 import {
 	isStaffingReportSubject,
@@ -75,6 +75,41 @@ export function operatorTokenAllowsSubject(
 	return (
 		!isRestrictedReportSubject(subject) || claims.subjects.includes(subject)
 	)
+}
+
+/**
+ * The one rule for the secret that signs operator analytics tokens, shared by
+ * App (which mints) and tenant-api (which verifies) so the two cannot drift.
+ * Returns `''` when the secret must not be used: too short, the same value as
+ * INTERNAL_COMMAND_TOKEN (a leaked cron or provision token would then mint
+ * report tokens), or a documented placeholder where placeholders are not
+ * allowed.
+ *
+ * `placeholderAllowed` is the caller's decision about its runtime: App passes
+ * `!isProductionLike()` (a production build on localhost, as E2E runs, may use
+ * the schema default), tenant-api passes whether `NODE_ENV` is `development`
+ * or `test` (an unset `NODE_ENV` counts as production there).
+ */
+export function resolveOperatorAnalyticsSecret(options: {
+	secret: string | null | undefined
+	internalCommandToken: string | null | undefined
+	isPlaceholder: (secret: string) => boolean
+	placeholderAllowed: boolean
+}): string {
+	const secret = options.secret || ''
+	if (secret.length < 16) return ''
+	const internal = options.internalCommandToken || ''
+	if (
+		internal &&
+		timingSafeEqual(
+			createHash('sha256').update(secret).digest(),
+			createHash('sha256').update(internal).digest(),
+		)
+	) {
+		return ''
+	}
+	if (!options.placeholderAllowed && options.isPlaceholder(secret)) return ''
+	return secret
 }
 
 function signingKey(signingSecret: string) {
