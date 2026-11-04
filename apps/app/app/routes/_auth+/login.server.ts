@@ -155,6 +155,17 @@ export async function handleVerification({
 			}),
 		)
 	} else {
+		// A signed-in step-up must be for the signed-in user. Without this, a
+		// valid code for any other account would stamp `verified-time` on this
+		// session and satisfy `requireRecentVerification` (change-email, etc.).
+		const sessionUserId = await getUserId(request)
+		if (!sessionUserId || sessionUserId !== submission.value.target) {
+			throw await redirectWithToast('/login', {
+				type: 'error',
+				title: 'Invalid session',
+				description: 'Could not find session to verify. Please try again.',
+			})
+		}
 		headers.append(
 			'set-cookie',
 			await authSessionStorage.commitSession(authSession),

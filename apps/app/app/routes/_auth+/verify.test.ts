@@ -2,7 +2,12 @@ import { generateTOTP } from '@epic-web/totp'
 import { db, eq, Verification } from '@repo/database'
 
 import { describe, expect, it } from 'vitest'
-import { createTestUser, getResponseStatus } from '#tests/test-utils.ts'
+import {
+	createAuthenticatedRequest,
+	createTestSession,
+	createTestUser,
+	getResponseStatus,
+} from '#tests/test-utils.ts'
 import { action } from './verify.tsx'
 
 describe('verify route integration', () => {
@@ -137,5 +142,73 @@ describe('verify route integration', () => {
 
 		expect(response.status).toBe(302)
 		expect(response.headers.get('Location')).toContain('/onboarding')
+	})
+
+	describe('signed-in two-factor step-up', () => {
+		async function setupTwoFactor(userId: string) {
+			const secret = 'JBSWY3DPEHPK3PXP'
+			await db.insert(Verification).values({
+				type: '2fa',
+				target: userId,
+				secret,
+				algorithm: 'SHA-1',
+				digits: 6,
+				period: 30,
+				charSet: '0123456789',
+			})
+			const { otp } = await generateTOTP({
+				secret,
+				algorithm: 'SHA-1',
+				period: 30,
+				digits: 6,
+			})
+			return otp
+		}
+
+		async function submit2fa(cookie: string, target: string, code: string) {
+			const formData = new FormData()
+			formData.append('type', '2fa')
+			formData.append('target', target)
+			formData.append('code', code)
+			const request = createAuthenticatedRequest(
+				'http://localhost:3000/verify',
+				{ method: 'POST', body: formData },
+				cookie,
+			)
+			try {
+				return (await action({
+					request,
+					params: {},
+					context: {},
+				} as any)) as Response
+			} catch (thrown) {
+				return thrown as Response
+			}
+		}
+
+		it("refuses another account's valid code for a signed-in session", async () => {
+			const caller = await createTestUser()
+			const other = await createTestUser()
+			await setupTwoFactor(caller.id)
+			const otherOtp = await setupTwoFactor(other.id)
+			const { cookie } = await createTestSession(caller.id)
+
+			const response = await submit2fa(cookie, other.id, otherOtp)
+
+			expect(response.status).toBe(302)
+			expect(response.headers.get('Location')).toContain('/login')
+		})
+
+		it("accepts the signed-in user's own code", async () => {
+			const caller = await createTestUser()
+			const otp = await setupTwoFactor(caller.id)
+			const { cookie } = await createTestSession(caller.id)
+
+			const response = await submit2fa(cookie, caller.id, otp)
+
+			expect(response.status).toBe(302)
+			expect(response.headers.get('Location')).not.toContain('/login')
+			expect(response.headers.get('set-cookie')).toBeTruthy()
+		})
 	})
 })
