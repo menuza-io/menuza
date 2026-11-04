@@ -6,16 +6,22 @@ import { assertSecretNotPlaceholder } from '@repo/security'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 
-if (!process.env.JWT_SECRET) {
-	throw new Error(
-		'JWT_SECRET environment variable is required. Please set it in your .env file.',
-	)
+/**
+ * Read per call, not at module load. On Workers the bindings reach
+ * `process.env` through `applyWorkerEnv`, and the server build's Varlock
+ * bootstrap runs before that settles, so a module-level read can capture the
+ * `.env.schema` default instead of the real secret.
+ */
+function getJwtSecret() {
+	const secret = process.env.JWT_SECRET
+	if (!secret) {
+		throw new Error(
+			'JWT_SECRET environment variable is required. Please set it in your .env file.',
+		)
+	}
+	return assertSecretNotPlaceholder('JWT_SECRET', secret)
 }
 
-const JWT_SECRET = assertSecretNotPlaceholder(
-	'JWT_SECRET',
-	process.env.JWT_SECRET,
-)
 const ACCESS_TOKEN_EXPIRES_IN = '15m' // 15 minutes
 const REFRESH_TOKEN_BYTES = 48
 const REFRESH_TOKEN_EXPIRES_DAYS = 30
@@ -43,7 +49,7 @@ export interface TokenPair {
 export function createAccessToken(
 	payload: Omit<JWTPayload, 'iat' | 'exp'>,
 ): string {
-	return jwt.sign(payload, JWT_SECRET, {
+	return jwt.sign(payload, getJwtSecret(), {
 		expiresIn: ACCESS_TOKEN_EXPIRES_IN,
 		issuer: JWT_ISSUER,
 		audience: JWT_AUDIENCE,
@@ -55,7 +61,7 @@ export function createAccessToken(
  */
 export function verifyAccessToken(token: string): JWTPayload | null {
 	try {
-		const decoded = jwt.verify(token, JWT_SECRET, {
+		const decoded = jwt.verify(token, getJwtSecret(), {
 			issuer: JWT_ISSUER,
 			audience: JWT_AUDIENCE,
 			algorithms: ['HS256'],
@@ -70,7 +76,7 @@ export function verifyAccessToken(token: string): JWTPayload | null {
  * Create a short-lived intermediate token for 2FA login
  */
 export function create2FAToken(userId: string, sessionId: string): string {
-	return jwt.sign({ sub: userId, sid: sessionId }, JWT_SECRET, {
+	return jwt.sign({ sub: userId, sid: sessionId }, getJwtSecret(), {
 		expiresIn: '5m',
 		issuer: JWT_ISSUER,
 		audience: 'api-2fa',
@@ -84,7 +90,7 @@ export function verify2FAToken(
 	token: string,
 ): { userId: string; sessionId: string } | null {
 	try {
-		const decoded = jwt.verify(token, JWT_SECRET, {
+		const decoded = jwt.verify(token, getJwtSecret(), {
 			issuer: JWT_ISSUER,
 			audience: 'api-2fa',
 			algorithms: ['HS256'],
