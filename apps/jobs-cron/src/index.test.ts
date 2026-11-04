@@ -182,6 +182,20 @@ describe('Jobs-Cron Worker Endpoints', () => {
 			expect((await startJourney(PLACEHOLDER, journey)).status).toBe(401)
 		})
 
+		it.each([
+			'changeme-changeme-changeme',
+			'super-duper-secret-token-value',
+			'super-duper-s3cret-token-value',
+			'super-duper-s3cr3t-token-value',
+			'test-session-secret-0123456789',
+		])(
+			'rejects the published placeholder %s on a deployed Worker',
+			async (token) => {
+				env.INTERNAL_COMMAND_TOKEN = token
+				expect((await startJourney(token, journey)).status).toBe(401)
+			},
+		)
+
 		it('still accepts the documented dev token when the App is local', async () => {
 			env.INTERNAL_COMMAND_TOKEN = PLACEHOLDER
 			env.APP_BASE_URL = 'http://localhost:3001'

@@ -5,7 +5,7 @@ import { isLocalUrl } from './local-host.js'
  * production deploy that forgot to set one would otherwise run on a value
  * anyone can read in the repository.
  */
-const INSECURE_SECRET_MARKERS = [
+export const INSECURE_SECRET_MARKERS = [
 	'your-jwt-secret',
 	'do-not-use-in-prod',
 	'change-me',
