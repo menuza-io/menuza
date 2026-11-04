@@ -1,6 +1,7 @@
 ---
 import Section from '../site/Section.astro'
 import Button from '../ui/Button.astro'
+import { escapeHtml } from '../../lib/markdown'
 
 interface Props {
 	richText?: any
@@ -18,12 +19,12 @@ const renderLexicalContent = (content: any) => {
 	return content.root.children
 		.map((node: any) => {
 			if (node.type === 'paragraph' && node.children) {
-				const text = node.children.map((child: any) => child.text || '').join('')
+				const text = node.children.map((child: any) => escapeHtml(String(child.text ?? ''))).join('')
 				return `<p class="text-[17px] leading-relaxed text-foreground/65">${text}</p>`
 			}
 			if (node.type === 'heading' && node.children) {
-				const text = node.children.map((child: any) => child.text || '').join('')
-				const tag = node.tag === 'h1' ? 'h2' : node.tag || 'h2'
+				const text = node.children.map((child: any) => escapeHtml(String(child.text ?? ''))).join('')
+				const tag = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(node.tag) && node.tag !== 'h1' ? node.tag : 'h2'
 				const idAttr = tag === 'h2' ? ' id="cta-heading"' : ''
 				return `<${tag}${idAttr} class="font-display text-balance text-[40px] font-medium tracking-[-0.03em] text-foreground sm:text-[52px]">${text}</${tag}>`
 			}
