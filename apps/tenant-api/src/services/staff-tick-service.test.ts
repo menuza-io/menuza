@@ -1244,8 +1244,15 @@ describe('manager alerts across the plane boundary', () => {
 		expect(h.alerts.length).toBeGreaterThan(0)
 		const kinds = new Set(h.alerts.map((a) => a.kind))
 		expect(kinds.size).toBeGreaterThan(0)
-		const serialized = JSON.stringify(h.alerts)
+		// `eventId` is 32 hex characters of a hash, so a short secret such as '1500'
+		// can occur inside it by chance and fail this test on an unlucky run. Its
+		// shape is checked below; leave it out of the text the secrets are
+		// searched in.
+		const serialized = JSON.stringify(
+			h.alerts.map(({ eventId: ignoredEventId, ...alert }) => alert),
+		)
 		for (const alert of h.alerts) {
+			expect(alert.eventId).toMatch(/^[0-9a-f]{32}$/)
 			expect(Object.keys(alert).sort()).toEqual([
 				'count',
 				'eventId',
