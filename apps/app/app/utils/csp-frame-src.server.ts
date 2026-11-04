@@ -55,7 +55,7 @@ export function sitePreviewFrameSrc(
 	env: FrameSrcEnv = {},
 	requestHost?: string | null,
 ) {
-	const sources = ["'self'", 'builder.io', 'localhost:*']
+	const sources = ["'self'", 'localhost:*']
 	for (const suffix of sitePreviewHostSuffixes(env, requestHost)) {
 		sources.push(`*.${suffix}:*`, `*.${suffix}`)
 	}

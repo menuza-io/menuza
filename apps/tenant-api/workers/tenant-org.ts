@@ -8,6 +8,7 @@ import {
 	schema,
 	registerTenantDb,
 	registerTenantDbTransactionRunner,
+	runInTenantOrgScope,
 	unregisterTenantDb,
 	TENANT_ORG_ID_PATTERN,
 	type TenantDatabase,
@@ -79,7 +80,7 @@ export class TenantOrg extends DurableObject<TenantApiWorkerEnv> {
 		fn: () => Promise<T>,
 	): Promise<T> {
 		registerTenantDb(orgId, db as unknown as TenantDatabase)
-		return fn()
+		return runInTenantOrgScope(orgId, fn)
 	}
 
 	async fetch(request: Request): Promise<Response> {

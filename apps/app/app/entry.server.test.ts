@@ -4,7 +4,7 @@ import { applyContentSecurity, handleDataRequest } from './entry.server.tsx'
 describe('entry.server content security policy', () => {
 	it('allows OAuth form redirects only to the supported providers', () => {
 		const headers = new Headers()
-		applyContentSecurity(headers, 'test-nonce', false)
+		applyContentSecurity(headers, 'test-nonce')
 
 		const formAction = headers
 			.get('Content-Security-Policy')

@@ -56,11 +56,7 @@ function setSecurityHeaders(responseHeaders: Headers) {
 	}
 }
 
-function applyContentSecurity(
-	responseHeaders: Headers,
-	nonce: string,
-	options: { relaxed: boolean },
-) {
+function applyContentSecurity(responseHeaders: Headers, nonce: string) {
 	contentSecurity(responseHeaders, {
 		crossOriginEmbedderPolicy: false,
 		contentSecurityPolicy: {
@@ -77,20 +73,10 @@ function applyContentSecurity(
 					'object-src': ["'none'"],
 					'connect-src': [MODE === 'development' ? 'ws:' : undefined, "'self'"],
 					'font-src': ["'self'"],
-					'frame-src': ["'self'", 'builder.io'],
+					'frame-src': ["'self'"],
 					'img-src': ["'self'", 'data:'],
-					'script-src': options.relaxed
-						? [
-								"'unsafe-inline'",
-								"'unsafe-eval'",
-								"'self'",
-								`'nonce-${nonce}'`,
-								'https://cdn.builder.io',
-							]
-						: ["'strict-dynamic'", "'self'", `'nonce-${nonce}'`],
-					'script-src-attr': options.relaxed
-						? [`'nonce-${nonce}'`, "'unsafe-inline'"]
-						: [`'nonce-${nonce}'`],
+					'script-src': ["'strict-dynamic'", "'self'", `'nonce-${nonce}'`],
+					'script-src-attr': [`'nonce-${nonce}'`],
 				},
 			},
 		},
@@ -117,8 +103,6 @@ export default async function handleRequest(...args: DocRequestArgs) {
 	const locale = await linguiServer.getLocale(request)
 	await loadCatalog(locale)
 
-	const relaxedCsp =
-		MODE === 'development' && request.url.includes('builder.my')
 	const timings = makeTimings('render', 'renderToReadableStream')
 	const controller = new AbortController()
 	const timeoutId = setTimeout(() => controller.abort(), streamTimeout + 5000)
@@ -147,9 +131,7 @@ export default async function handleRequest(...args: DocRequestArgs) {
 
 		responseHeaders.set('Content-Type', 'text/html')
 		responseHeaders.append('Server-Timing', timings.toString())
-		if (!relaxedCsp) {
-			applyContentSecurity(responseHeaders, nonce, { relaxed: false })
-		}
+		applyContentSecurity(responseHeaders, nonce)
 
 		if (waitForAllContent) {
 			await body.allReady

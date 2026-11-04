@@ -31,7 +31,7 @@ import {
 import { findActiveOrganizationById } from '../lib/origin.ts'
 import { describeStaffError } from '../services/staff-audit.ts'
 import { getNodeRegion, orgMatchesNodeRegion } from '../lib/region.ts'
-import { getBearerToken, getInternalCommandToken } from '../lib/secrets.ts'
+import { getBearerToken, getOperatorAnalyticsToken } from '../lib/secrets.ts'
 import {
 	auditStaffReportRun,
 	loadApplicationRecords,
@@ -267,7 +267,7 @@ analyticsRoutes.post('/query', async (c) => {
 	}
 
 	const claims = await verifyOperatorAnalyticsToken({
-		internalCommandToken: getInternalCommandToken(),
+		signingSecret: getOperatorAnalyticsToken(),
 		token,
 	})
 	if (!claims) {

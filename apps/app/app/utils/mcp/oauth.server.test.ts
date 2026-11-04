@@ -24,6 +24,7 @@ import {
 	revokePendingAuthorizationCodes,
 	refreshAccessToken,
 	revokeAuthorization,
+	validateMCPRedirectUri,
 	ACCESS_TOKEN_EXPIRATION,
 	REFRESH_TOKEN_EXPIRATION,
 } from './oauth.server'
@@ -1479,5 +1480,15 @@ describe('session-bound authorization codes', () => {
 				TEST_CODE_VERIFIER,
 			),
 		).toBeNull()
+	})
+})
+
+describe('MCP redirect validation', () => {
+	it('rejects a localhost redirect when client_id is omitted', async () => {
+		const result = await validateMCPRedirectUri(
+			'http://localhost:3000/callback',
+		)
+		expect(result.isValid).toBe(false)
+		expect(result.error).toMatch(/client_id/)
 	})
 })

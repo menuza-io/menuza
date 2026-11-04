@@ -125,8 +125,9 @@ the repo root unless a line starts with `cd apps/app`.
   (`/api/notifications/stream`) stays open. Wait for a specific element or
   response instead. The Playwright `page` fixture in `tests/playwright-utils.ts`
   aborts the stream.
-- Do not log out to switch users. See "Known issues" in the root `AGENTS.md`
-  (logout then login lands on `/_.data`).
+- To switch users, use a new browser context and open `/login` directly.
+  `getRequestDocumentPath` turns a single-fetch `/_.data` URL back into `/`
+  before it is stored as `redirectTo`.
 - Arabic and RTL: add `?lng=ar` to any URL. The `lng` cookie is httpOnly, so
   page scripts cannot set it.
 - Dashboard edits save after a 500 ms debounce (`SAVE_DELAY_MS` in
@@ -209,9 +210,8 @@ the repo root unless a line starts with `cd apps/app`.
   directly. The token needs `read:analytics:any`, `read:settings:any` or
   `read:website:any`. Call reports also need `read:phone_call:any`. Staff
   reports follow the staffing flags and permissions.
-- No role grants `read:analytics:any` (see root Known issues). To test a
-  non-admin report viewer, insert a `Permission` row and grant it to an org
-  role.
+- The built-in admin role has `read:analytics:any`. A custom role can be given
+  it in the role editor without settings access.
 - Create saved reports with `saveReport` from `@repo/reports/server`. It sets
   `title` from `definition.settings.title`; raw SQL must keep the two equal.
 - Current limitations: the UI cannot delete a saved report, and choosing Table

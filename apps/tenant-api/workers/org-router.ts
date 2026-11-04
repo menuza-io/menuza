@@ -176,11 +176,10 @@ export async function resolveOrgId(
 		return organization?.id ?? null
 	}
 
-	const queryOrgId = url.searchParams.get('orgId')
-	if (queryOrgId && TENANT_ORG_ID_PATTERN.test(queryOrgId)) {
-		return queryOrgId
-	}
-
+	// Credential-bearing routes name their organization themselves. A query
+	// orgId must not run the request inside another organization's Durable
+	// Object (that arms the wrong staff alarm, and a missing in-isolate handle
+	// would fall back to a filesystem database).
 	if (pathname.startsWith('/operator')) {
 		return orgIdFromOperatorJwt(request, env)
 	}
@@ -218,6 +217,15 @@ export async function resolveOrgId(
 	if (request.method === 'POST' || request.method === 'PATCH') {
 		const fromBody = await orgIdFromJsonBody(request)
 		if (fromBody) return fromBody
+	}
+
+	// Server GETs that cannot put orgId in a body (journey definitions). Public
+	// and session routes above never consult this.
+	if (pathname.startsWith('/api/')) {
+		const queryOrgId = url.searchParams.get('orgId')
+		if (queryOrgId && TENANT_ORG_ID_PATTERN.test(queryOrgId)) {
+			return queryOrgId
+		}
 	}
 
 	return null

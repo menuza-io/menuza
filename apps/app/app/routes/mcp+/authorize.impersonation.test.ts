@@ -1,4 +1,10 @@
-import { db, Organization, User, UserOrganization } from '@repo/database'
+import {
+	db,
+	MCPClient,
+	Organization,
+	User,
+	UserOrganization,
+} from '@repo/database'
 import { describe, expect, it, vi } from 'vitest'
 import { loader } from './authorize.tsx'
 
@@ -43,8 +49,17 @@ describe('MCP consent while an administrator is impersonating', () => {
 		auth.getUserId.mockResolvedValue(target.user.id)
 		auth.getSessionUserId.mockResolvedValue(admin.user.id)
 
+		const redirectUri = 'http://localhost:3000/callback'
+		const clientId = `impersonation-${Math.random().toString(36).slice(2, 10)}`
+		await db.insert(MCPClient).values({
+			clientId,
+			clientName: 'Test MCP',
+			redirectUris: JSON.stringify([redirectUri]),
+		})
+
 		const url = new URL('https://app.example.test/mcp/authorize')
-		url.searchParams.set('redirect_uri', 'http://localhost:3000/callback')
+		url.searchParams.set('client_id', clientId)
+		url.searchParams.set('redirect_uri', redirectUri)
 		url.searchParams.set('code_challenge', 'x'.repeat(43))
 		url.searchParams.set('code_challenge_method', 'S256')
 

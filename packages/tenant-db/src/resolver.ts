@@ -1,4 +1,24 @@
+import { AsyncLocalStorage } from 'node:async_hooks'
 import type { TenantDatabase, TenantTransaction } from './types.ts'
+
+/**
+ * The organization whose Durable Object is handling the current request.
+ * Several objects can share an isolate, so a module-level map is not enough:
+ * a caller that passes another org id must not receive that org's live handle,
+ * and a miss must not open a filesystem database from inside the object.
+ */
+const tenantOrgScope = new AsyncLocalStorage<string>()
+
+export function currentTenantOrgScope(): string | undefined {
+	return tenantOrgScope.getStore()
+}
+
+export function runInTenantOrgScope<T>(
+	orgId: string,
+	fn: () => Promise<T>,
+): Promise<T> {
+	return tenantOrgScope.run(orgId, fn)
+}
 
 type TenantDbResolver = (
 	orgId: string,
@@ -54,11 +74,21 @@ export async function resolveTenantDb(
 	options: { createIfMissing?: boolean } = {},
 	fallback: TenantDbResolver,
 ): Promise<TenantDatabase> {
-	const db =
-		registeredTenantDbs.get(orgId) ??
-		(tenantDbResolver
-			? await tenantDbResolver(orgId, options)
-			: await fallback(orgId, options))
+	const scopedOrgId = tenantOrgScope.getStore()
+	if (scopedOrgId !== undefined && scopedOrgId !== orgId) {
+		throw new Error('Tenant database does not belong to this organization')
+	}
+	const registered = registeredTenantDbs.get(orgId)
+	if (registered) {
+		dbOrgIds.set(registered, orgId)
+		return registered
+	}
+	if (scopedOrgId !== undefined) {
+		throw new Error('Tenant database is not open for this organization')
+	}
+	const db = tenantDbResolver
+		? await tenantDbResolver(orgId, options)
+		: await fallback(orgId, options)
 	dbOrgIds.set(db, orgId)
 	return db
 }

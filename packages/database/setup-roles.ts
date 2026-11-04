@@ -158,6 +158,14 @@ const ORG_PERMISSIONS = [
 		description: 'Edit website pages, forms, redirects, and translations',
 	},
 	{
+		id: 'org_perm_read_analytics_any',
+		action: 'read',
+		entity: 'analytics',
+		access: 'any',
+		context: 'organization',
+		description: 'Run organization reports',
+	},
+	{
 		id: 'org_perm_read_announcement_any',
 		action: 'read',
 		entity: 'announcement',

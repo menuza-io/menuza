@@ -17,13 +17,13 @@ const secret = 'dev-internal-command-token-do-not-use-in-prod'
 describe('operator analytics token', () => {
 	it('round-trips claims', async () => {
 		const { token } = await mintOperatorAnalyticsToken({
-			internalCommandToken: secret,
+			signingSecret: secret,
 			userId: 'user_1',
 			orgId: 'org_1',
 			role: 'operator',
 		})
 		const claims = await verifyOperatorAnalyticsToken({
-			internalCommandToken: secret,
+			signingSecret: secret,
 			token,
 		})
 		expect(claims).toEqual({
@@ -56,7 +56,7 @@ describe('operator analytics token', () => {
 			.sign(key)
 		expect(
 			await verifyOperatorAnalyticsToken({
-				internalCommandToken: secret,
+				signingSecret: secret,
 				token,
 			}),
 		).toBeNull()
@@ -64,13 +64,13 @@ describe('operator analytics token', () => {
 
 	it('rejects a token signed with a different secret', async () => {
 		const { token } = await mintOperatorAnalyticsToken({
-			internalCommandToken: secret,
+			signingSecret: secret,
 			userId: 'user_1',
 			orgId: 'org_1',
 			role: 'operator',
 		})
 		const claims = await verifyOperatorAnalyticsToken({
-			internalCommandToken: `${secret}-other`,
+			signingSecret: `${secret}-other`,
 			token,
 		})
 		expect(claims).toBeNull()
@@ -78,14 +78,14 @@ describe('operator analytics token', () => {
 
 	it('carries granted restricted subjects', async () => {
 		const { token } = await mintOperatorAnalyticsToken({
-			internalCommandToken: secret,
+			signingSecret: secret,
 			userId: 'user_1',
 			orgId: 'org_1',
 			role: 'operator',
 			subjects: ['phone_calls'],
 		})
 		const claims = await verifyOperatorAnalyticsToken({
-			internalCommandToken: secret,
+			signingSecret: secret,
 			token,
 		})
 		expect(claims?.subjects).toEqual(['phone_calls'])
@@ -94,13 +94,13 @@ describe('operator analytics token', () => {
 
 	it('only allows restricted subjects the token grants', async () => {
 		const { token } = await mintOperatorAnalyticsToken({
-			internalCommandToken: secret,
+			signingSecret: secret,
 			userId: 'user_1',
 			orgId: 'org_1',
 			role: 'operator',
 		})
 		const claims = await verifyOperatorAnalyticsToken({
-			internalCommandToken: secret,
+			signingSecret: secret,
 			token,
 		})
 		expect(operatorTokenAllowsSubject(claims!, 'phone_calls')).toBe(false)
@@ -129,7 +129,7 @@ describe('operator analytics token', () => {
 			.setExpirationTime('5m')
 			.sign(key)
 		const claims = await verifyOperatorAnalyticsToken({
-			internalCommandToken: secret,
+			signingSecret: secret,
 			token,
 		})
 		expect(claims?.subjects).toEqual(['phone_calls'])
@@ -137,7 +137,7 @@ describe('operator analytics token', () => {
 
 	describe('subject by grant matrix', () => {
 		const base = {
-			internalCommandToken: secret,
+			signingSecret: secret,
 			userId: 'user_1',
 			orgId: 'org_1',
 			role: 'operator' as const,
@@ -161,7 +161,7 @@ describe('operator analytics token', () => {
 					scopeIds: null,
 				})
 				const claims = await verifyOperatorAnalyticsToken({
-					internalCommandToken: secret,
+					signingSecret: secret,
 					token,
 				})
 				for (const subject of RESTRICTED_REPORT_SUBJECTS) {
@@ -181,7 +181,7 @@ describe('operator analytics token', () => {
 					scopeIds: ['loc-a'],
 				})
 				const claims = await verifyOperatorAnalyticsToken({
-					internalCommandToken: secret,
+					signingSecret: secret,
 					token,
 				})
 				for (const subject of ORG_WIDE_REPORT_SUBJECTS) {
@@ -199,13 +199,13 @@ describe('operator analytics token', () => {
 
 	describe('staff subjects', () => {
 		const base = {
-			internalCommandToken: secret,
+			signingSecret: secret,
 			userId: 'user_1',
 			orgId: 'org_1',
 			role: 'operator' as const,
 		}
 		const verify = (token: string) =>
-			verifyOperatorAnalyticsToken({ internalCommandToken: secret, token })
+			verifyOperatorAnalyticsToken({ signingSecret: secret, token })
 
 		it('carries staff subjects and the scope', async () => {
 			const { token } = await mintOperatorAnalyticsToken({

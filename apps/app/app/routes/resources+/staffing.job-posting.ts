@@ -32,10 +32,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	try {
 		await requireInternalCommandAuth(request)
 	} catch (error) {
-		// Machine-to-machine endpoint: a plain 403 instead of the browser redirect.
-		if (error instanceof Response && error.status === 302) {
-			return new Response('Forbidden', { status: 403 })
-		}
+		if (error instanceof Response && error.status === 401) return error
 		throw error
 	}
 

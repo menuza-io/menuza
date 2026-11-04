@@ -13,7 +13,7 @@ import {
 } from '@repo/tenant-db'
 import { sendSms } from '@repo/sms'
 import { authRoutes } from './auth.ts'
-import { hmacHash } from '../lib/secrets.ts'
+import { hmacHash, syncEnvFromProcess } from '../lib/secrets.ts'
 
 const orgId = 'clw9x0a12000008l00test08'
 
@@ -196,5 +196,25 @@ describe.each([
 				[scenario.e164, scenario.e164.slice(1)].sort(),
 			)
 		})
+	})
+})
+
+describe('send-code without Turnstile', () => {
+	afterEach(() => {
+		vi.unstubAllEnvs()
+		syncEnvFromProcess()
+	})
+
+	it('does not send SMS when the secret is unset in production', async () => {
+		vi.stubEnv('NODE_ENV', 'production')
+		vi.stubEnv('TURNSTILE_SECRET_KEY', '')
+		syncEnvFromProcess()
+		const app = new Hono()
+		app.route('/auth', authRoutes)
+		vi.mocked(sendSms).mockClear()
+		const res = await post(app, '/auth/send-code', { phone: '+15551234567' })
+		expect(res.status).toBe(403)
+		expect(await res.json()).toMatchObject({ error: 'challenge_required' })
+		expect(sendSms).not.toHaveBeenCalled()
 	})
 })

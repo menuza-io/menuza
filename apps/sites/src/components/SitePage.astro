@@ -90,7 +90,7 @@ const alternateLinks = [
 	imageUrl={imageUrl}
 	canonicalUrl={resolvedCanonical}
 	alternateLinks={isPreview ? [] : alternateLinks}
-	noIndex={noIndex}
+	noIndex={Boolean(noIndex) || isPreview}
 	theme={organization.theme}
 	lang={activeLocale}
 	dir={localeDirection}
@@ -121,60 +121,15 @@ const alternateLinks = [
 		<SiteFooter config={footer?.config} organization={organization} />
 		
 		{isPreview ? (
-			<script is:inline>
-				(function() {
-					window.addEventListener('message', async (event) => {
-						if (event.data?.type === 'epic-preview-update') {
-							try {
-								const res = await fetch(window.location.href, {
-									method: 'POST',
-									headers: { 'Content-Type': 'application/json' },
-									body: JSON.stringify({ sections: event.data.sections, theme: event.data.theme })
-								});
-								const html = await res.text();
-								const parser = new DOMParser();
-								const doc = parser.parseFromString(html, 'text/html');
-								
-								const newHtml = doc.documentElement;
-								document.documentElement.className = newHtml.className;
-								['siteTheme', 'siteBase', 'headingFont', 'bodyFont'].forEach(key => {
-									if (newHtml.dataset[key]) {
-										document.documentElement.dataset[key] = newHtml.dataset[key];
-									} else {
-										delete document.documentElement.dataset[key];
-									}
-								});
-								
-								const updateStyle = (id) => {
-									const current = document.getElementById(id);
-									const next = doc.getElementById(id);
-									if (current && next) {
-										// Use textContent for style elements — CSS is not HTML, avoids XSS flag
-										current.textContent = next.textContent;
-									} else if (!current && next) {
-										document.head.appendChild(next.cloneNode(true));
-									} else if (current && !next) {
-										current.remove();
-									}
-								};
-								updateStyle('org-site-theme');
-								updateStyle('org-site-fonts');
+			<>
+				<div hidden data-preview-parent-origin={appUrl} />
+				<script>
+					import { initSitePreview } from '~/lib/site-preview'
 
-								const currentContainer = document.querySelector('div.bg-background');
-								const newContainer = doc.querySelector('div.bg-background');
-								
-								if (currentContainer && newContainer) {
-									// Use replaceChildren with cloned nodes instead of innerHTML
-									currentContainer.replaceChildren(...Array.from(newContainer.cloneNode(true).childNodes));
-									document.dispatchEvent(new Event('sites:content-updated'));
-								}
-							} catch (err) {
-								console.error('Failed to update preview', err);
-							}
-						}
-					});
-				})()
-			</script>
+					const node = document.querySelector('[data-preview-parent-origin]')
+					if (node instanceof HTMLElement) initSitePreview(node)
+				</script>
+			</>
 		) : null}
 
 	</div>

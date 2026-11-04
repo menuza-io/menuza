@@ -106,6 +106,35 @@ export function getInternalCommandToken() {
 	return ENV.INTERNAL_COMMAND_TOKEN || ''
 }
 
+/** The value committed in .env.schema. */
+export const DEV_OPERATOR_ANALYTICS_TOKEN =
+	'dev-operator-analytics-token-do-not-use-in-prod'
+
+/**
+ * Secret that signs operator analytics JWTs. Distinct from
+ * INTERNAL_COMMAND_TOKEN so a leaked cron/provision token cannot mint tokens
+ * that read calls, customers, orders, and wages. Empty when it is missing,
+ * shared with the command token, or still the development default in production.
+ */
+export function getOperatorAnalyticsToken() {
+	syncEnvFromProcess()
+	const token = ENV.OPERATOR_ANALYTICS_TOKEN || ''
+	if (token.length < 16) return ''
+	const internal = getInternalCommandToken()
+	if (internal && timingSafeEqualString(token, internal)) return ''
+	// An unset NODE_ENV is production. The schema default must not sign reports.
+	const nodeEnv =
+		typeof process !== 'undefined' ? process.env.NODE_ENV : undefined
+	const isLocal = nodeEnv === 'development' || nodeEnv === 'test'
+	if (
+		!isLocal &&
+		(token === DEV_OPERATOR_ANALYTICS_TOKEN || isInsecureSecret(token))
+	) {
+		return ''
+	}
+	return token
+}
+
 export function getVoiceAgentToken() {
 	syncEnvFromProcess()
 	return ENV.VOICE_AGENT_TOKEN || ''

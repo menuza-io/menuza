@@ -3,6 +3,7 @@ import {
 	registerTenantDb,
 	registerTenantDbTransactionRunner,
 	resolveTenantDb,
+	runInTenantOrgScope,
 	runTenantTransaction,
 	setTenantDbResolver,
 	unregisterTenantDb,
@@ -34,6 +35,24 @@ describe('tenant DB registry', () => {
 		setTenantDbResolver(async () => dbB)
 		setTenantDbResolver(null)
 		expect(await resolveTenantDb('org_a', {}, never)).toBe(dbA)
+	})
+
+	it('refuses another org and the filesystem while inside a Durable Object', async () => {
+		registerTenantDb('org_a', dbA)
+		registerTenantDb('org_b', dbB)
+		await expect(
+			runInTenantOrgScope('org_a', () => resolveTenantDb('org_b', {}, never)),
+		).rejects.toThrow(/does not belong/)
+		await expect(
+			runInTenantOrgScope('org_missing', () =>
+				resolveTenantDb('org_missing', {}, never),
+			),
+		).rejects.toThrow(/not open/)
+		expect(
+			await runInTenantOrgScope('org_a', () =>
+				resolveTenantDb('org_a', {}, never),
+			),
+		).toBe(dbA)
 	})
 
 	it('only unregisters the handle it owns', async () => {

@@ -70,9 +70,14 @@ async function sendCodeChallengeAccepted(
 ) {
 	const secret = ENV.TURNSTILE_SECRET_KEY ?? ''
 	if (!isTurnstileConfigured(secret)) {
-		// Local runs without a widget. Production with no secret still sends,
-		// bounded by the per-phone cooldown and the send caps.
-		return true
+		// Same rule as forms and careers: an explicit local NODE_ENV may send
+		// without a widget. An unset NODE_ENV counts as production and refuses,
+		// so a deploy that forgot the secret cannot be used to pump SMS.
+		const nodeEnv =
+			typeof process !== 'undefined' ? process.env.NODE_ENV : undefined
+		const isLocal = nodeEnv === 'development' || nodeEnv === 'test'
+		if (!isLocal) console.error('turnstile_not_configured')
+		return isLocal
 	}
 	if (!token?.trim()) {
 		// Expo customer app: org binding, Origin, and rate limits; no web widget.

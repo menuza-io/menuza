@@ -1,6 +1,7 @@
 import { LRUCache } from 'lru-cache'
 import type { Context, Next } from 'hono'
 import { ENV } from 'varlock/env'
+import { currentTenantOrgScope } from '@repo/tenant-db'
 import { addressBucket, clientAddress, isLocalRuntime } from './client-ip.ts'
 
 interface RateLimitConfig {
@@ -14,19 +15,33 @@ function isProduction(): boolean {
 	return !isLocalRuntime()
 }
 
-const limiters = new Map<string, LRUCache<string, number[]>>()
+/** Caps how many per-org caches one isolate keeps. Eviction resets that org's window. */
+const limiters = new LRUCache<string, LRUCache<string, number[]>>({
+	max: 512,
+})
+
+/**
+ * One cache per organization. Durable Objects in the same isolate share this
+ * module, so a single 5,000-key cache would let one tenant evict another's
+ * counters and reset their limits. Node (no Durable Object scope) keeps one
+ * shared cache, as it did before.
+ */
+function limiterId(name: string) {
+	const orgId = currentTenantOrgScope()
+	return orgId ? `${name}\0${orgId}` : name
+}
 
 function getLimiter(name: string, config: RateLimitConfig) {
-	if (!limiters.has(name)) {
-		limiters.set(
-			name,
-			new LRUCache<string, number[]>({
-				max: 5000,
-				ttl: config.windowMs,
-			}),
-		)
+	const id = limiterId(name)
+	let cache = limiters.get(id)
+	if (!cache) {
+		cache = new LRUCache<string, number[]>({
+			max: 5000,
+			ttl: config.windowMs,
+		})
+		limiters.set(id, cache)
 	}
-	return limiters.get(name)!
+	return cache
 }
 
 /**
@@ -50,13 +65,14 @@ export function resolveClientIp(c: Context): string {
 }
 
 export function rateLimit(name: string, config: RateLimitConfig) {
-	const cache = getLimiter(name, config)
-
 	return async (c: Context, next: Next) => {
 		if (!isProduction()) {
 			return await next()
 		}
 
+		// Resolve inside the request so the Durable Object's org scope is set.
+		// Looking the cache up at registration would share one LRU across orgs.
+		const cache = getLimiter(name, config)
 		const ip = resolveClientIp(c)
 
 		const now = Date.now()

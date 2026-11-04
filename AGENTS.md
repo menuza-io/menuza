@@ -562,7 +562,13 @@ git commit --no-verify -m "fix: resolve ESLint warnings (verified manually)"
   `docs/platform-marketing-email.md`.
 - `INTERNAL_COMMAND_TOKEN` - Shared by App, Admin, every tenant-api, and
   `apps/jobs-cron` (≥16 chars). Authenticates cron POSTs to `/resources/jobs/*`
-  and tenant provision/deprovision.
+  and tenant provision/deprovision. It does not sign report JWTs.
+- `OPERATOR_ANALYTICS_TOKEN` - App and every tenant-api (≥16 chars). Signs
+  operator analytics JWTs. Must differ from `INTERNAL_COMMAND_TOKEN`. The schema
+  default is refused outside development and test. Set it on each tenant-api
+  first, then the App. An unset, placeholder, or command-token-equal App value
+  makes the report token route answer 503, so no query runs. The same problem on
+  a tenant-api, or a value that differs from the App, makes queries answer 401.
 - `TENANT_OPERATOR_TOKEN` - Shared secret between App and tenant-api (≥16
   chars). Signs and validates operator JWT tokens for tenant-api `/operator/*`
   routes.
@@ -915,15 +921,6 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
 
 ## Known issues
 
-- **Logging out and back in lands on `/_.data` (404 "Organization not found").**
-  Logout redirects to `/`, the client loads `/_.data`, and `requireUserId` in
-  `packages/auth/src/auth.server.ts` builds `redirectTo` from that raw
-  single-fetch URL. To switch users, use a new browser context and open `/login`
-  directly. Remove when fixed.
-- **No role grants `read:analytics:any`.** The report token route checks it, but
-  no migration or `packages/database/setup-roles.ts` seeds it. Only roles with
-  `read:settings:any` or `read:website:any` (the built-in admin role) can run
-  reports. Remove when fixed.
 - **The pre-commit ESLint step checks nothing.** lint-staged runs from the repo
   root, and the root `eslint.config.js` ignores every file. Run
   `npm run lint -w <workspace>` before committing. Remove when fixed.

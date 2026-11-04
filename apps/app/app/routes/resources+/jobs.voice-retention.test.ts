@@ -93,7 +93,7 @@ describe('voice retention job', () => {
 	it('only accepts authenticated POST requests', async () => {
 		expect((await action(args({ method: 'GET' }))).status).toBe(405)
 		await expect(action(args({ authorized: false }))).rejects.toMatchObject({
-			status: 302,
+			status: 401,
 		})
 		expect(fetchSpy).not.toHaveBeenCalled()
 	})

@@ -67,9 +67,9 @@ describe('staffing workplace context', () => {
 		})
 	})
 
-	it('requires internal command authentication (403, not a redirect)', async () => {
+	it('requires internal command authentication (401, not a redirect)', async () => {
 		const response = await loader(args(ORG_ID, false))
-		expect(response.status).toBe(403)
+		expect(response.status).toBe(401)
 		expect(findOrg).not.toHaveBeenCalled()
 		expect(mockDb.select).not.toHaveBeenCalled()
 	})

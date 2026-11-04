@@ -151,6 +151,18 @@ export function getPermissionGroups(): PermissionGroup[] {
 			],
 		},
 		{
+			title: t`Reports`,
+			description: t`Organization reports such as customers, orders, and calls.`,
+			permissions: [
+				{
+					id: 'org_perm_read_analytics_any',
+					label: t`View reports`,
+					description: t`Run organization reports, including customers, orders, and calls when those extra permissions are held.`,
+					warning: t`Customer and business data`,
+				},
+			],
+		},
+		{
 			title: t`Website & Publishing`,
 			description: t`Website editor, announcements, and public pages.`,
 			permissions: [

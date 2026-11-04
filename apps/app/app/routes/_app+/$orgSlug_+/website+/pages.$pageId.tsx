@@ -5271,20 +5271,24 @@ export default function PageBuilderRoute() {
 		defaultLocale,
 	])
 
-	useEffect(() => {
-		const frame = iframeRef.current
-		if (frame?.contentWindow && previewUrl) {
-			const targetOrigin = new URL(previewUrl).origin
+	const postPreviewUpdate = useCallback(
+		(frame: HTMLIFrameElement | null) => {
+			if (!frame?.contentWindow || !previewUrl) return
 			frame.contentWindow.postMessage(
 				{
 					type: 'epic-preview-update',
 					sections: page.sections,
 					theme: themeConfig,
 				},
-				targetOrigin,
+				new URL(previewUrl).origin,
 			)
-		}
-	}, [page.sections, themeConfig, previewUrl])
+		},
+		[page.sections, themeConfig, previewUrl],
+	)
+
+	useEffect(() => {
+		postPreviewUpdate(iframeRef.current)
+	}, [postPreviewUpdate])
 
 	const [mode, setMode] = useState<'build' | 'preview'>('build')
 	// Page builder split is desktop-first (matches `lg:` preview visibility).
@@ -5759,6 +5763,7 @@ export default function PageBuilderRoute() {
 								className="h-full w-full border-0"
 								title="Live Preview"
 								allow="autoplay; fullscreen; picture-in-picture"
+								onLoad={(event) => postPreviewUpdate(event.currentTarget)}
 							/>
 						)}
 					</div>

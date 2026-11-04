@@ -6,21 +6,48 @@ import {
 	publishedHtmlCacheUrl,
 	shouldCachePublishedHtml,
 	sitesConnectSrc,
+	PARTYTOWN_SCRIPT_HASH,
+	SITES_BOOT_SCRIPT,
 	sitesScriptSrc,
+	sitesScriptSrcAttr,
 } from './site-headers.ts'
 
 describe('sitesScriptSrc', () => {
-	it('allows Cloudflare Insights and inline scripts in production', () => {
-		expect(sitesScriptSrc(false)).toContain(
-			'https://static.cloudflareinsights.com',
-		)
-		expect(sitesScriptSrc(false)).toContain('https://challenges.cloudflare.com')
-		expect(sitesScriptSrc(false)).toContain("'unsafe-inline'")
-		expect(sitesScriptSrc(false)).not.toContain('unsafe-eval')
+	it('hashes the boot script and does not allow unsafe-inline in production', async () => {
+		const { createHash } = await import('node:crypto')
+		const bootHash = `'sha256-${createHash('sha256').update(SITES_BOOT_SCRIPT).digest('base64')}'`
+		const policy = sitesScriptSrc(false)
+		expect(policy).toContain('https://static.cloudflareinsights.com')
+		expect(policy).toContain('https://challenges.cloudflare.com')
+		expect(policy).toContain('https://connect.facebook.net')
+		expect(policy).toContain('https://analytics.tiktok.com')
+		expect(policy).toContain(PARTYTOWN_SCRIPT_HASH)
+		expect(policy).toContain(bootHash)
+		expect(policy).not.toContain('unsafe-inline')
+		expect(policy).not.toContain('unsafe-eval')
+		expect(sitesScriptSrcAttr(false)).toBe("script-src-attr 'none'")
 	})
 
-	it('keeps unsafe-eval for Vite in development only', () => {
+	it('keeps unsafe-inline and unsafe-eval for Vite in development only', () => {
+		expect(sitesScriptSrc(true)).toContain("'unsafe-inline'")
 		expect(sitesScriptSrc(true)).toContain("'unsafe-eval'")
+		expect(sitesScriptSrcAttr(true)).toBe('')
+	})
+
+	it('matches the Partytown snippet this app injects in production', async () => {
+		const { createHash } = await import('node:crypto')
+		const { partytownSnippet } = await import('@qwik.dev/partytown/integration')
+		const lib = '/~partytown/'
+		const recreate = `;(e=>{e.addEventListener("astro:before-swap",e=>{let r=document.body.querySelector("iframe[src*='${lib}']");if(r)e.newDocument.body.append(r)})})(document);`
+		const source =
+			partytownSnippet({
+				lib,
+				forward: ['dataLayer.push', 'gtag'],
+				debug: false,
+			}) + recreate
+		const hash = `'sha256-${createHash('sha256').update(source).digest('base64')}'`
+		expect(PARTYTOWN_SCRIPT_HASH).toBe(hash)
+		expect(SITES_BOOT_SCRIPT).not.toContain('unsafe')
 	})
 })
 
@@ -28,6 +55,12 @@ describe('sitesConnectSrc', () => {
 	it('allows Cloudflare Insights beacons', () => {
 		expect(sitesConnectSrc(['https://app.example'])).toContain(
 			'https://cloudflareinsights.com',
+		)
+		expect(sitesConnectSrc(['https://app.example'])).toContain(
+			'https://www.facebook.com',
+		)
+		expect(sitesConnectSrc(['https://app.example'])).toContain(
+			'https://analytics.tiktok.com',
 		)
 	})
 })

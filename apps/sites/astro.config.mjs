@@ -162,6 +162,9 @@ export default defineConfig({
 			),
 		},
 		build: {
+			// Bundled site scripts must stay external files. Production CSP
+			// allows 'self' plus two hashes, so an inlined module would not run.
+			assetsInlineLimit: 0,
 			rollupOptions: {
 				output: {
 					assetFileNames(info) {
