@@ -112,25 +112,40 @@ export async function getOperatorTenantClient(
 	}
 
 	const secret = new TextEncoder().encode(operatorToken)
-	const jwt = await new SignJWT({
-		orgId: organization.id,
-		role: 'operator',
-		scope: options.scope,
-		...(options.canUpdate ? { canUpdate: true } : {}),
-		...(options.canDelete ? { canDelete: true } : {}),
-	})
-		.setSubject(userId)
-		.setProtectedHeader({ alg: 'HS256' })
-		.setAudience('tenant-api-operator')
-		.setIssuer(brand.shortName)
-		.setExpirationTime('15m')
-		.sign(secret)
+	const signOperatorJwt = (claims: {
+		canUpdate?: boolean
+		canDelete?: boolean
+	}) =>
+		new SignJWT({
+			orgId: organization.id,
+			role: 'operator',
+			scope: options.scope,
+			...(claims.canUpdate ? { canUpdate: true } : {}),
+			...(claims.canDelete ? { canDelete: true } : {}),
+		})
+			.setSubject(userId)
+			.setProtectedHeader({ alg: 'HS256' })
+			.setAudience('tenant-api-operator')
+			.setIssuer(brand.shortName)
+			.setExpirationTime('15m')
+			.sign(secret)
+
+	// `jwt` can be handed to the browser, so it carries only the write claims
+	// the caller's permissions earned (see `options`). tenant-api refuses writes
+	// from a token without them.
+	const jwt = await signOperatorJwt(options)
+	// `fetchTenant` never leaves the server: callers are loaders and actions that
+	// have already authorized the user for what they send, so it carries the
+	// full claims. Scoped tokens (mailbox, phone calls) keep exactly what was asked.
+	const serverJwt = options.scope
+		? jwt
+		: await signOperatorJwt({ canUpdate: true, canDelete: true })
 
 	const { tenantApiUrl } = resolveRegionalTenantApiUrls(organization.dataRegion)
 
 	const fetchTenant = async (path: string, init: RequestInit = {}) => {
 		const headers = new Headers(init.headers || {})
-		headers.set('Authorization', `Bearer ${jwt}`)
+		headers.set('Authorization', `Bearer ${serverJwt}`)
 		headers.set('Content-Type', 'application/json')
 
 		const url = `${tenantApiUrl}${path.startsWith('/') ? path : `/${path}`}`

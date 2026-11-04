@@ -100,6 +100,19 @@ export async function authenticateOperator(
 	return decoded
 }
 
+/**
+ * Refuses a write unless the token carries the claim App mints only for people
+ * who hold the matching update or delete permission. A token without it (the
+ * read-only one a browser may hold) can list but not change anything.
+ */
+export function requireOperatorClaim(
+	c: Context,
+	auth: { canUpdate?: boolean; canDelete?: boolean },
+	claim: 'canUpdate' | 'canDelete',
+) {
+	return auth[claim] === true ? null : c.json({ error: 'Forbidden' }, 403)
+}
+
 const updateCustomerSchema = z.object({
 	name: z.string().min(1, 'Name is required').max(100, 'Name is too long'),
 	email: z
@@ -169,6 +182,8 @@ operatorRoutes.patch('/customers/:customerId', async (c) => {
 	} catch (response) {
 		return response as Response
 	}
+	const denied = requireOperatorClaim(c, auth, 'canUpdate')
+	if (denied) return denied
 
 	const { orgId } = auth
 	const customerId = c.req.param('customerId')
@@ -470,6 +485,8 @@ operatorRoutes.post('/marketing/campaigns', async (c) => {
 	} catch (response) {
 		return response as Response
 	}
+	const denied = requireOperatorClaim(c, auth, 'canUpdate')
+	if (denied) return denied
 
 	const { orgId } = auth
 	let body: z.infer<typeof createCampaignSchema>

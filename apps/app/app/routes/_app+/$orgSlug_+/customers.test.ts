@@ -98,23 +98,23 @@ describe('customers loader', () => {
 		} as never)
 	}
 
-	it('mints an erase-capable token only for people who can update settings', async () => {
+	it('mints an edit- and erase-capable token only for people who can update settings', async () => {
 		vi.mocked(userHasOrganizationPermission).mockResolvedValue(true)
 		expect(await load()).toMatchObject({ canErase: true })
 		expect(getOperatorTenantClient).toHaveBeenCalledWith(
 			expect.any(Request),
 			'acme',
-			{ canDelete: true },
+			{ canUpdate: true, canDelete: true },
 		)
 	})
 
-	it('withholds the erase token from read-only people', async () => {
+	it('withholds the edit and erase claims from read-only people', async () => {
 		vi.mocked(userHasOrganizationPermission).mockResolvedValue(false)
 		expect(await load()).toMatchObject({ canErase: false })
 		expect(getOperatorTenantClient).toHaveBeenCalledWith(
 			expect.any(Request),
 			'acme',
-			{ canDelete: false },
+			{ canUpdate: false, canDelete: false },
 		)
 	})
 })

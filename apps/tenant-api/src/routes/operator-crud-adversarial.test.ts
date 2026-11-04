@@ -94,6 +94,8 @@ describe('Adversarial Stress Suite: Operator CRUD & Auth Lifecycle Triggers', ()
 		return new SignJWT({
 			orgId: tenantOrgId,
 			role,
+			canUpdate: true,
+			canDelete: true,
 		})
 			.setProtectedHeader({ alg: 'HS256' })
 			.setAudience('tenant-api-operator')

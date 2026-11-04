@@ -284,8 +284,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		ORG_PERMISSIONS.READ_SETTINGS_ANY,
 	)
 
-	// Erasing a customer is destructive: only people who can change settings get
-	// a token that tenant-api accepts for it.
+	// Editing and erasing a customer change data: only people who can change
+	// settings get a token that tenant-api accepts for either. Read-only members
+	// can still list customers.
 	const canErase = await userHasOrganizationPermission(
 		userId,
 		organization.id,
@@ -294,7 +295,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	const { jwt, tenantApiUrl } = await getOperatorTenantClient(
 		request,
 		orgSlug,
-		{ canDelete: canErase },
+		{ canUpdate: canErase, canDelete: canErase },
 	)
 
 	return { jwt, tenantApiUrl, canErase }
