@@ -1,6 +1,18 @@
+/// <reference types="node" />
+// The canonical marker list lives in @repo/security, which reads `process.env`.
+
+import { INSECURE_SECRET_MARKERS as CANONICAL_MARKERS } from '@repo/security/insecure-secret'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import worker, { JOB_ROUTES } from './index'
+import worker, { INSECURE_SECRET_MARKERS, JOB_ROUTES } from './index'
 import type { Env } from './index'
+
+describe('placeholder markers', () => {
+	it('match the canonical list in @repo/security', () => {
+		expect([...INSECURE_SECRET_MARKERS].sort()).toEqual(
+			[...CANONICAL_MARKERS].sort(),
+		)
+	})
+})
 
 describe('Jobs-Cron Worker Endpoints', () => {
 	const mockInternalToken = 'test-internal-command-token-12345'
@@ -181,6 +193,20 @@ describe('Jobs-Cron Worker Endpoints', () => {
 			env.INTERNAL_COMMAND_TOKEN = PLACEHOLDER
 			expect((await startJourney(PLACEHOLDER, journey)).status).toBe(401)
 		})
+
+		it.each([
+			'changeme-changeme-changeme',
+			'super-duper-secret-token-value',
+			'super-duper-s3cret-token-value',
+			'super-duper-s3cr3t-token-value',
+			'test-session-secret-0123456789',
+		])(
+			'rejects the published placeholder %s on a deployed Worker',
+			async (token) => {
+				env.INTERNAL_COMMAND_TOKEN = token
+				expect((await startJourney(token, journey)).status).toBe(401)
+			},
+		)
 
 		it('still accepts the documented dev token when the App is local', async () => {
 			env.INTERNAL_COMMAND_TOKEN = PLACEHOLDER

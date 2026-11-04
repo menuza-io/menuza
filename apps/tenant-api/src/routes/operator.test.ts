@@ -40,6 +40,7 @@ describe('Operator Routes', () => {
 	let tempDir: string
 	let app: Hono
 	let validToken: string
+	let readOnlyToken: string
 
 	beforeEach(async () => {
 		tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tenant-api-op-test-'))
@@ -52,10 +53,21 @@ describe('Operator Routes', () => {
 		await provisionTenantDb(testOrgId)
 
 		const secret = new TextEncoder().encode(operatorSecret)
+		// A token for someone who may update and delete (App mints the claims only
+		// for people holding those permissions).
 		validToken = await new SignJWT({
 			orgId: testOrgId,
 			role: 'operator',
+			canUpdate: true,
+			canDelete: true,
 		})
+			.setProtectedHeader({ alg: 'HS256' })
+			.setAudience('tenant-api-operator')
+			.setIssuer(brand.shortName)
+			.setExpirationTime('1h')
+			.sign(secret)
+		// A read-only member's token: no write claims.
+		readOnlyToken = await new SignJWT({ orgId: testOrgId, role: 'operator' })
 			.setProtectedHeader({ alg: 'HS256' })
 			.setAudience('tenant-api-operator')
 			.setIssuer(brand.shortName)
@@ -123,6 +135,112 @@ describe('Operator Routes', () => {
 		expect(body.customer).not.toHaveProperty('phoneVerificationCode')
 		expect(body.customer).not.toHaveProperty('refreshTokenHash')
 		expect(body.customer).not.toHaveProperty('stripeCustomerId')
+	})
+
+	describe('a token with canUpdate but not canDelete', () => {
+		async function updateOnlyToken() {
+			return new SignJWT({
+				orgId: testOrgId,
+				role: 'operator',
+				canUpdate: true,
+			})
+				.setProtectedHeader({ alg: 'HS256' })
+				.setAudience('tenant-api-operator')
+				.setIssuer(brand.shortName)
+				.setExpirationTime('1h')
+				.sign(new TextEncoder().encode(operatorSecret))
+		}
+
+		it('can update a customer', async () => {
+			const db = await getTenantDb(testOrgId)
+			const [inserted] = await db
+				.insert(customers)
+				.values({ name: 'Before', phone: '+15550000012' })
+				.returning()
+			const token = await updateOnlyToken()
+
+			const res = await app.request(`/operator/customers/${inserted!.id}`, {
+				method: 'PATCH',
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({ name: 'After' }),
+			})
+			expect(res.status).toBe(200)
+			const [after] = await db
+				.select({ name: customers.name })
+				.from(customers)
+				.where(eq(customers.id, inserted!.id))
+			expect(after?.name).toBe('After')
+		})
+
+		it('can create a campaign', async () => {
+			const token = await updateOnlyToken()
+
+			const res = await app.request('/operator/marketing/campaigns', {
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					name: 'Update-only promo',
+					channel: 'email',
+					subject: 'Hello',
+					content: 'Hi {{customer.name}}!',
+					audience: 'verified',
+				}),
+			})
+			expect(res.status).toBe(200)
+		})
+	})
+
+	describe('a token without write claims (read-only member)', () => {
+		it('lists customers but cannot update one', async () => {
+			const db = await getTenantDb(testOrgId)
+			const [inserted] = await db
+				.insert(customers)
+				.values({ name: 'Old Name', phone: '+15550000011' })
+				.returning()
+
+			const list = await app.request('/operator/customers', {
+				headers: { Authorization: `Bearer ${readOnlyToken}` },
+			})
+			expect(list.status).toBe(200)
+
+			const res = await app.request(`/operator/customers/${inserted!.id}`, {
+				method: 'PATCH',
+				headers: {
+					Authorization: `Bearer ${readOnlyToken}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({ name: 'Hijacked' }),
+			})
+			expect(res.status).toBe(403)
+			const [after] = await db
+				.select({ name: customers.name })
+				.from(customers)
+				.where(eq(customers.id, inserted!.id))
+			expect(after?.name).toBe('Old Name')
+		})
+
+		it('cannot create a campaign', async () => {
+			const res = await app.request('/operator/marketing/campaigns', {
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${readOnlyToken}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					name: 'Blast',
+					subject: 'Hi',
+					content: 'Hello',
+					channel: 'email',
+				}),
+			})
+			expect(res.status).toBe(403)
+		})
 	})
 
 	it('computes marketing metrics via SQL aggregates accurately', async () => {

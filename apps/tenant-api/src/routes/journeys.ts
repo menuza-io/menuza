@@ -33,6 +33,7 @@ import {
 	triggerTestJourney,
 } from '../services/journey-service.ts'
 import { brand } from '@repo/config/brand'
+import { requireOperatorClaim } from './operator.ts'
 
 // =========================================================================
 // 1. SYSTEM-TO-SYSTEM JOURNEY ROUTES (/api/journeys/*)
@@ -237,7 +238,14 @@ export async function authenticateOperator(c: Context) {
 		throw c.json({ error: 'Not configured' }, 503)
 	}
 
-	let decoded: { orgId: string; role: string; scope?: string }
+	let decoded: {
+		orgId: string
+		role: string
+		scope?: string
+		sub?: string
+		canUpdate?: boolean
+		canDelete?: boolean
+	}
 	try {
 		const secret = new TextEncoder().encode(operatorToken)
 		const { payload } = await jwtVerify(token, secret, {
@@ -293,6 +301,8 @@ journeyOperatorRoutes.post('/', async (c) => {
 	} catch (response) {
 		return response as Response
 	}
+	const denied = requireOperatorClaim(c, auth, 'canUpdate')
+	if (denied) return denied
 
 	const body = await c.req.json().catch(() => ({}))
 	const parsed = createJourneySchema.safeParse(body)
@@ -346,6 +356,8 @@ journeyOperatorRoutes.patch('/:id', async (c) => {
 	} catch (response) {
 		return response as Response
 	}
+	const denied = requireOperatorClaim(c, auth, 'canUpdate')
+	if (denied) return denied
 
 	const journeyId = c.req.param('id')
 	const body = await c.req.json().catch(() => ({}))
@@ -378,6 +390,8 @@ journeyOperatorRoutes.put('/:id', async (c) => {
 	} catch (response) {
 		return response as Response
 	}
+	const denied = requireOperatorClaim(c, auth, 'canUpdate')
+	if (denied) return denied
 
 	const journeyId = c.req.param('id')
 	const body = await c.req.json().catch(() => ({}))
@@ -410,6 +424,8 @@ journeyOperatorRoutes.post('/:id/publish', async (c) => {
 	} catch (response) {
 		return response as Response
 	}
+	const denied = requireOperatorClaim(c, auth, 'canUpdate')
+	if (denied) return denied
 
 	const journeyId = c.req.param('id')
 	try {
@@ -432,6 +448,8 @@ journeyOperatorRoutes.post('/:id/pause', async (c) => {
 	} catch (response) {
 		return response as Response
 	}
+	const denied = requireOperatorClaim(c, auth, 'canUpdate')
+	if (denied) return denied
 
 	const journeyId = c.req.param('id')
 	try {
@@ -454,6 +472,8 @@ journeyOperatorRoutes.delete('/:id', async (c) => {
 	} catch (response) {
 		return response as Response
 	}
+	const denied = requireOperatorClaim(c, auth, 'canDelete')
+	if (denied) return denied
 
 	const journeyId = c.req.param('id')
 	try {
@@ -516,6 +536,8 @@ journeyOperatorRoutes.post('/trigger-test', async (c) => {
 	} catch (response) {
 		return response as Response
 	}
+	const denied = requireOperatorClaim(c, auth, 'canUpdate')
+	if (denied) return denied
 
 	const body = await c.req.json().catch(() => ({}))
 	const parsed = triggerTestSchema.safeParse(body)

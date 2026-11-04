@@ -30,7 +30,7 @@ import {
 	getInternalCommandToken,
 	timingSafeEqualString,
 } from '../lib/secrets.ts'
-import { authenticateOperator } from './operator.ts'
+import { authenticateOperator, requireOperatorClaim } from './operator.ts'
 
 export const publicFormRoutes = new Hono()
 export const formOperatorRoutes = new Hono()
@@ -294,11 +294,15 @@ formOperatorRoutes.get('/', async (c) => {
 
 formOperatorRoutes.post('/', async (c) => {
 	let orgId: string
+	let auth
 	try {
-		orgId = (await authenticateOperator(c)).orgId
+		auth = await authenticateOperator(c)
+		orgId = auth.orgId
 	} catch (response) {
 		return response as Response
 	}
+	const denied = requireOperatorClaim(c, auth, 'canUpdate')
+	if (denied) return denied
 	const parsed = formSchema.safeParse(await c.req.json().catch(() => null))
 	if (!parsed.success) {
 		return c.json(
@@ -313,11 +317,15 @@ formOperatorRoutes.post('/', async (c) => {
 
 formOperatorRoutes.put('/:formId', async (c) => {
 	let orgId: string
+	let auth
 	try {
-		orgId = (await authenticateOperator(c)).orgId
+		auth = await authenticateOperator(c)
+		orgId = auth.orgId
 	} catch (response) {
 		return response as Response
 	}
+	const denied = requireOperatorClaim(c, auth, 'canUpdate')
+	if (denied) return denied
 	const parsed = formSchema.safeParse(await c.req.json().catch(() => null))
 	if (!parsed.success) {
 		return c.json(
@@ -359,11 +367,15 @@ formOperatorRoutes.get('/:formId/submissions', async (c) => {
 
 formOperatorRoutes.delete('/:formId/submissions/:submissionId', async (c) => {
 	let orgId: string
+	let auth
 	try {
-		orgId = (await authenticateOperator(c)).orgId
+		auth = await authenticateOperator(c)
+		orgId = auth.orgId
 	} catch (response) {
 		return response as Response
 	}
+	const denied = requireOperatorClaim(c, auth, 'canDelete')
+	if (denied) return denied
 	const db = await getTenantDb(orgId)
 	const deleted = await db
 		.delete(websiteFormSubmissions)
@@ -381,11 +393,15 @@ formOperatorRoutes.delete('/:formId/submissions/:submissionId', async (c) => {
 
 formOperatorRoutes.delete('/:formId', async (c) => {
 	let orgId: string
+	let auth
 	try {
-		orgId = (await authenticateOperator(c)).orgId
+		auth = await authenticateOperator(c)
+		orgId = auth.orgId
 	} catch (response) {
 		return response as Response
 	}
+	const denied = requireOperatorClaim(c, auth, 'canDelete')
+	if (denied) return denied
 	const db = await getTenantDb(orgId)
 	const deleted = await db
 		.delete(websiteForms)

@@ -2,12 +2,17 @@ import crypto from 'node:crypto'
 import { resolveOperatorAnalyticsSecret } from '@repo/reports/token'
 import { ENV, initVarlockEnv } from 'varlock/env'
 
-const INSECURE_SECRET_MARKERS = [
+// Keep in sync with packages/security/src/insecure-secret.ts (this node does
+// not depend on that package). secrets.test.ts fails when the lists drift.
+export const INSECURE_SECRET_MARKERS = [
 	'your-jwt-secret',
 	'do-not-use-in-prod',
 	'change-me',
+	'changeme',
 	'super-duper-secret',
+	'super-duper-s3cret',
 	'super-duper-s3cr3t',
+	'test-session-secret',
 ]
 
 function isInsecureSecret(value: string) {

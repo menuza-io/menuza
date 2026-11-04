@@ -93,6 +93,8 @@ describe('Adversarial Stress Testing: Journey Service, Step Execution, Auth & PI
 		return new SignJWT({
 			orgId: tenantOrgId,
 			role,
+			canUpdate: true,
+			canDelete: true,
 		})
 			.setProtectedHeader({ alg: 'HS256' })
 			.setAudience(audience)

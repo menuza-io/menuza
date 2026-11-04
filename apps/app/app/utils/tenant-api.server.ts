@@ -112,19 +112,31 @@ export async function getOperatorTenantClient(
 	}
 
 	const secret = new TextEncoder().encode(operatorToken)
-	const jwt = await new SignJWT({
-		orgId: organization.id,
-		role: 'operator',
-		scope: options.scope,
-		...(options.canUpdate ? { canUpdate: true } : {}),
-		...(options.canDelete ? { canDelete: true } : {}),
-	})
-		.setSubject(userId)
-		.setProtectedHeader({ alg: 'HS256' })
-		.setAudience('tenant-api-operator')
-		.setIssuer(brand.shortName)
-		.setExpirationTime('15m')
-		.sign(secret)
+	const signOperatorJwt = (claims: {
+		canUpdate?: boolean
+		canDelete?: boolean
+	}) =>
+		new SignJWT({
+			orgId: organization.id,
+			role: 'operator',
+			scope: options.scope,
+			...(claims.canUpdate ? { canUpdate: true } : {}),
+			...(claims.canDelete ? { canDelete: true } : {}),
+		})
+			.setSubject(userId)
+			.setProtectedHeader({ alg: 'HS256' })
+			.setAudience('tenant-api-operator')
+			.setIssuer(brand.shortName)
+			.setExpirationTime('15m')
+			.sign(secret)
+
+	// Both the browser token and the one `fetchTenant` signs carry only the write
+	// claims the caller asked for (see `options`), and tenant-api refuses writes
+	// from a token without them. A loader or action that never asked for
+	// `canUpdate` / `canDelete` therefore cannot write or erase, even if a later
+	// change forgets its own permission check. Ask for them only after the
+	// permission check that earns them.
+	const jwt = await signOperatorJwt(options)
 
 	const { tenantApiUrl } = resolveRegionalTenantApiUrls(organization.dataRegion)
 

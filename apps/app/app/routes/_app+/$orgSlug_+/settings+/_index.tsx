@@ -58,6 +58,7 @@ import {
 	requireUserWithOrganizationPermission,
 	ORG_PERMISSIONS,
 } from '#app/utils/organization/permissions.server.ts'
+import { isPublicEmailDomain } from '#app/utils/organization/public-email-domains.ts'
 import {
 	updateSeatQuantity,
 	deleteSubscription,
@@ -144,6 +145,15 @@ async function rejectUnsafeS3Endpoint(endpoint: string | null | undefined) {
 	if (!endpoint || process.env.NODE_ENV !== 'production') return null
 	const result = await validateInstanceUrlWithDns(endpoint)
 	return result.valid ? null : (result.reason ?? 'Invalid S3 endpoint')
+}
+
+const EMAIL_DOMAIN_PATTERN =
+	/^(?=.{4,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/
+
+/** A lowercase, trimmed hostname, or null when it is not a plain domain. */
+function normalizeEmailDomain(value: string) {
+	const domain = value.trim().toLowerCase()
+	return EMAIL_DOMAIN_PATTERN.test(domain) ? domain : null
 }
 
 export async function action({ request, params }: ActionFunctionArgs) {
@@ -345,34 +355,35 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	if (intent === 'verified-domain') {
 		const submission = parseWithZod(formData, {
 			schema: VerifiedDomainSchema.superRefine((data, ctx) => {
-				if (data.verifiedDomain) {
-					// Block common domains
-					if (
-						[
-							'gmail.com',
-							'yahoo.com',
-							'hotmail.com',
-							'outlook.com',
-							'icloud.com',
-						].includes(data.verifiedDomain)
-					) {
-						ctx.addIssue({
-							path: ['verifiedDomain'],
-							code: z.ZodIssueCode.custom,
-							message: 'Email domain is not supported.',
-						})
-						return
-					}
+				const domain = normalizeEmailDomain(data.verifiedDomain)
+				if (!domain) {
+					ctx.addIssue({
+						path: ['verifiedDomain'],
+						code: z.ZodIssueCode.custom,
+						message: 'Enter a valid domain such as example.com.',
+					})
+					return
+				}
+				// Mailbox providers anyone can register on are never an organization.
+				if (isPublicEmailDomain(domain)) {
+					ctx.addIssue({
+						path: ['verifiedDomain'],
+						code: z.ZodIssueCode.custom,
+						message: 'Email domain is not supported.',
+					})
+					return
+				}
 
-					// Check if user's email domain matches the verified domain
-					if (!user.email.endsWith(`@${data.verifiedDomain}`)) {
-						ctx.addIssue({
-							path: ['verifiedDomain'],
-							code: z.ZodIssueCode.custom,
-							message: `The domain provided does not match your email address domain. Please update your email to match the domain and try again.`,
-						})
-						return
-					}
+				// The caller must hold an address on the domain. This is not proof
+				// that the organization owns the domain (no DNS check), so the
+				// address itself must be mailbox-verified (see change-email).
+				if (!user.email.toLowerCase().endsWith(`@${domain}`)) {
+					ctx.addIssue({
+						path: ['verifiedDomain'],
+						code: z.ZodIssueCode.custom,
+						message: `The domain provided does not match your email address domain. Please update your email to match the domain and try again.`,
+					})
+					return
 				}
 			}),
 		})
@@ -381,7 +392,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			return Response.json({ result: submission.reply() })
 		}
 
-		const { verifiedDomain } = submission.value
+		// Stored lowercase and trimmed: signup and discovery match it exactly.
+		const verifiedDomain = normalizeEmailDomain(
+			submission.value.verifiedDomain,
+		) as string
 
 		const autoAddedMembers: Array<{ userId: string; roleId: string }> = []
 		try {

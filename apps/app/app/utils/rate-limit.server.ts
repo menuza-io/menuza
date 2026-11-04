@@ -121,6 +121,20 @@ export const PHONE_LINE_VERIFICATION_SEND_RATE_LIMIT: RateLimitConfig = {
 	windowMs: 60 * 60 * 1000, // 1 hour
 }
 
+// Each change-email request sends mail to an address the requester typed, so cap
+// it per user and per recipient (a victim's inbox must not be a mail target).
+export const CHANGE_EMAIL_USER_RATE_LIMIT: RateLimitConfig = {
+	scope: 'change-email-user',
+	maxRequests: isDev ? 100 : 5,
+	windowMs: 60 * 60 * 1000, // 1 hour
+}
+
+export const CHANGE_EMAIL_RECIPIENT_RATE_LIMIT: RateLimitConfig = {
+	scope: 'change-email-recipient',
+	maxRequests: isDev ? 100 : 3,
+	windowMs: 60 * 60 * 1000, // 1 hour
+}
+
 export const AI_REQUEST_RATE_LIMIT: RateLimitConfig = {
 	scope: 'ai-request',
 	maxRequests: isDev ? 1000 : 30,
