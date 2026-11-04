@@ -119,7 +119,7 @@ async function mint(slug: string, cookie: string) {
 		init?: { headers?: Record<string, string> } | null
 	}
 	const claims = await verifyOperatorAnalyticsToken({
-		internalCommandToken: ENV.INTERNAL_COMMAND_TOKEN || '',
+		signingSecret: ENV.OPERATOR_ANALYTICS_TOKEN || '',
 		token: result.data.token,
 	})
 	return {

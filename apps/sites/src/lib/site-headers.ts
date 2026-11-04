@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import {
 	type ShopCheckoutCspOptions,
 	getShopCheckoutConnectSrc,
@@ -8,6 +9,13 @@ import {
 const CLOUDFLARE_INSIGHTS_SCRIPT = 'https://static.cloudflareinsights.com'
 const CLOUDFLARE_INSIGHTS_CONNECT = 'https://cloudflareinsights.com'
 const TURNSTILE_ORIGIN = 'https://challenges.cloudflare.com'
+const FACEBOOK_SCRIPT = 'https://connect.facebook.net'
+const TIKTOK_SCRIPT = 'https://analytics.tiktok.com'
+const PIXEL_CONNECT_SRC = [
+	'https://connect.facebook.net',
+	'https://www.facebook.com',
+	'https://analytics.tiktok.com',
+]
 
 // Google Analytics / Google Tag Manager (loaded off-thread by Partytown)
 const GA_SCRIPT_SRC = 'https://www.googletagmanager.com'
@@ -17,9 +25,40 @@ const GA_CONNECT_SRC = [
 	'https://www.googletagmanager.com',
 ]
 
+/**
+ * Runs before paint: theme class, deferred font activation, and the signed-in
+ * marker. Kept inline so it is not deferred, and hashed so production CSP does
+ * not need script-src 'unsafe-inline' (which would let a markup breakout read
+ * the customer tokens in localStorage).
+ */
+export const SITES_BOOT_SCRIPT = `(function(){try{var root=document.documentElement;if(root.dataset.themeMode==='system'){root.classList.toggle('dark',window.matchMedia('(prefers-color-scheme: dark)').matches)}var links=document.querySelectorAll('link[data-defer-stylesheet]');for(var i=0;i<links.length;i++){var link=links[i];if(link.sheet){link.setAttribute('media','all')}else{link.addEventListener('load',function(){this.setAttribute('media','all')})}}if(localStorage.getItem('tenant_access_token')){root.dataset.customerSession='1'}}catch(e){}})()`
+
+/** Production Partytown head snippet. Locked by site-headers.test.ts. */
+export const PARTYTOWN_SCRIPT_HASH =
+	"'sha256-FUzdwjA8djeqEDBUmi/iSbyxJRR0eWVZeot7zNmhrOo='"
+
+function scriptHash(source: string) {
+	return `'sha256-${createHash('sha256').update(source).digest('base64')}'`
+}
+
+const SCRIPT_HOSTS = [
+	CLOUDFLARE_INSIGHTS_SCRIPT,
+	GA_SCRIPT_SRC,
+	TURNSTILE_ORIGIN,
+	FACEBOOK_SCRIPT,
+	TIKTOK_SCRIPT,
+].join(' ')
+
 export function sitesScriptSrc(isDev: boolean) {
-	const evalSrc = isDev ? " 'unsafe-eval'" : ''
-	return `script-src 'self' 'unsafe-inline'${evalSrc} ${CLOUDFLARE_INSIGHTS_SCRIPT} ${GA_SCRIPT_SRC} ${TURNSTILE_ORIGIN}`
+	if (isDev) {
+		return `script-src 'self' 'unsafe-inline' 'unsafe-eval' ${SCRIPT_HOSTS}`
+	}
+	return `script-src 'self' ${scriptHash(SITES_BOOT_SCRIPT)} ${PARTYTOWN_SCRIPT_HASH} ${SCRIPT_HOSTS}`
+}
+
+/** Blocks onclick and other inline handlers. Dev keeps Vite's inline scripts. */
+export function sitesScriptSrcAttr(isDev: boolean) {
+	return isDev ? '' : "script-src-attr 'none'"
 }
 
 export function sitesConnectSrc(origins: string[]) {
@@ -29,6 +68,7 @@ export function sitesConnectSrc(origins: string[]) {
 		...origins,
 		CLOUDFLARE_INSIGHTS_CONNECT,
 		...GA_CONNECT_SRC,
+		...PIXEL_CONNECT_SRC,
 	]
 		.filter(Boolean)
 		.join(' ')

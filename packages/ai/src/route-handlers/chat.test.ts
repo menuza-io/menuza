@@ -169,6 +169,316 @@ describe('handleChat', () => {
 		})
 	})
 
+	it('passes an attached image through to the model', async () => {
+		const image = 'data:image/jpeg;base64,/9j/4AAQ'
+		const request = new Request('http://localhost/api/ai/chat', {
+			method: 'POST',
+			body: JSON.stringify({
+				messages: [
+					{
+						id: 'message-1',
+						role: 'user',
+						parts: [
+							{ type: 'file', mediaType: 'image/jpeg', url: image },
+							{ type: 'text', text: 'What is this?' },
+						],
+					},
+				],
+			}),
+		})
+		const createChatStream = vi.fn(() => streamResult())
+
+		await handleChat(
+			{ request, params: {} } as any,
+			baseDeps({ createChatStream }),
+		)
+
+		expect(createChatStream).toHaveBeenCalledTimes(1)
+		const call = createChatStream.mock.calls[0] as unknown as [
+			{ messages: Array<{ content: Array<{ type: string }> }> },
+		]
+		expect(call[0].messages[0]?.content.map((part) => part.type)).toContain(
+			'file',
+		)
+	})
+
+	it('refuses a file that is not an inline image', async () => {
+		for (const part of [
+			{
+				type: 'file',
+				mediaType: 'image/png',
+				url: 'https://example.com/a.png',
+			},
+			{
+				type: 'file',
+				mediaType: 'application/pdf',
+				url: 'data:application/pdf;base64,AA',
+			},
+		]) {
+			const request = new Request('http://localhost/api/ai/chat', {
+				method: 'POST',
+				body: JSON.stringify({
+					messages: [{ id: 'm', role: 'user', parts: [part] }],
+				}),
+			})
+			const createChatStream = vi.fn(() => streamResult())
+			const response = await handleChat(
+				{ request, params: {} } as any,
+				baseDeps({ createChatStream }),
+			)
+			expect((response as Response).status).toBe(400)
+			expect(createChatStream).not.toHaveBeenCalled()
+		}
+	})
+
+	it('refuses an image whose declared type does not match its data', async () => {
+		for (const part of [
+			{
+				type: 'file',
+				mediaType: 'image/png',
+				url: 'data:image/svg+xml;base64,PHN2Zz4=',
+			},
+			{
+				type: 'file',
+				mediaType: 'image/png',
+				url: 'data:image/png,plain-text',
+			},
+			{
+				type: 'file',
+				mediaType: 'image/jpeg',
+				url: 'data:image/png;base64,AAAA',
+			},
+		]) {
+			const request = new Request('http://localhost/api/ai/chat', {
+				method: 'POST',
+				body: JSON.stringify({
+					messages: [{ id: 'm', role: 'user', parts: [part] }],
+				}),
+			})
+			const createChatStream = vi.fn(() => streamResult())
+			const response = await handleChat(
+				{ request, params: {} } as any,
+				baseDeps({ createChatStream }),
+			)
+			expect((response as Response).status).toBe(400)
+			expect(createChatStream).not.toHaveBeenCalled()
+		}
+	})
+
+	it('refuses data that is not base64 or whose bytes are not the declared type', async () => {
+		for (const part of [
+			// Not base64.
+			{
+				type: 'file',
+				mediaType: 'image/jpeg',
+				url: 'data:image/jpeg;base64,not base64!!',
+			},
+			// Valid base64 of plain text (no JPEG signature).
+			{
+				type: 'file',
+				mediaType: 'image/jpeg',
+				url: 'data:image/jpeg;base64,aGVsbG8gd29ybGQ=',
+			},
+			// A JPEG body declared as PNG.
+			{
+				type: 'file',
+				mediaType: 'image/png',
+				url: 'data:image/png;base64,/9j/4AAQ',
+			},
+		]) {
+			const request = new Request('http://localhost/api/ai/chat', {
+				method: 'POST',
+				body: JSON.stringify({
+					messages: [{ id: 'm', role: 'user', parts: [part] }],
+				}),
+			})
+			const createChatStream = vi.fn(() => streamResult())
+			const response = await handleChat(
+				{ request, params: {} } as any,
+				baseDeps({ createChatStream }),
+			)
+			expect((response as Response).status).toBe(400)
+			expect(createChatStream).not.toHaveBeenCalled()
+		}
+	})
+
+	it('counts the bytes that arrive when the declared length is missing or wrong', async () => {
+		// A stream with no Content-Length, larger than the limit.
+		const chunk = new TextEncoder().encode('x'.repeat(1_000_000))
+		let sent = 0
+		const stream = new ReadableStream<Uint8Array>({
+			pull(controller) {
+				if (sent >= 41) return controller.close()
+				sent += 1
+				controller.enqueue(chunk)
+			},
+		})
+		const request = new Request('http://localhost/api/ai/chat', {
+			method: 'POST',
+			body: stream,
+			// @ts-expect-error Node requires duplex for a streamed body.
+			duplex: 'half',
+		})
+		const response = await handleChat(
+			{ request, params: {} } as any,
+			baseDeps(),
+		)
+		expect((response as Response).status).toBe(413)
+		// It stopped reading well before the end of the stream.
+		expect(sent).toBeLessThan(45)
+	})
+
+	it('refuses a request that declares a body larger than the limit before reading it', async () => {
+		const request = new Request('http://localhost/api/ai/chat', {
+			method: 'POST',
+			headers: { 'content-length': '41000000' },
+			body: JSON.stringify({ messages: [] }),
+		})
+		const response = await handleChat(
+			{ request, params: {} } as any,
+			baseDeps(),
+		)
+		expect((response as Response).status).toBe(413)
+	})
+
+	it('answers 400, not 500, to a body that is not a JSON object', async () => {
+		for (const body of ['{"messages":', '', 'null', '[]', '"text"', '12']) {
+			const request = new Request('http://localhost/api/ai/chat', {
+				method: 'POST',
+				body,
+			})
+			const response = await handleChat(
+				{ request, params: {} } as any,
+				baseDeps(),
+			)
+			expect((response as Response).status, `body: ${body}`).toBe(400)
+		}
+	})
+
+	it('reads a body that arrives in several chunks, including a split multi-byte character', async () => {
+		const bytes = new TextEncoder().encode(
+			JSON.stringify({ messages: [], note: 'caf\u00e9 \u2603' }),
+		)
+		// Cut inside the two-byte "\u00e9" so a per-chunk decode would corrupt it.
+		const cut = bytes.indexOf(0xc3) + 1
+		const stream = new ReadableStream<Uint8Array>({
+			start(controller) {
+				controller.enqueue(bytes.slice(0, cut))
+				controller.enqueue(bytes.slice(cut))
+				controller.close()
+			},
+		})
+		const request = new Request('http://localhost/api/ai/chat', {
+			method: 'POST',
+			body: stream,
+			// @ts-expect-error Node requires duplex for a streamed body.
+			duplex: 'half',
+		})
+		const response = await handleChat(
+			{ request, params: {} } as any,
+			baseDeps(),
+		)
+		// Parsed and past the attachment check: it reaches the stream, not a 400.
+		expect((response as Response).status).not.toBe(400)
+	})
+
+	it('drops everything but the known fields from an accepted image', async () => {
+		const request = new Request('http://localhost/api/ai/chat', {
+			method: 'POST',
+			body: JSON.stringify({
+				messages: [
+					{
+						id: 'm',
+						role: 'user',
+						parts: [
+							{
+								type: 'file',
+								mediaType: 'image/jpeg',
+								url: 'data:image/jpeg;base64,/9j/4AAQ',
+								providerReference: { google: 'files/abc' },
+								providerMetadata: { google: { x: 1 } },
+							},
+						],
+					},
+				],
+			}),
+		})
+		const createChatStream = vi.fn(() => streamResult())
+		await handleChat(
+			{ request, params: {} } as any,
+			baseDeps({ createChatStream }),
+		)
+		expect(createChatStream).toHaveBeenCalledTimes(1)
+		const call = createChatStream.mock.calls[0] as unknown as [
+			{ messages: Array<{ content: Array<Record<string, unknown>> }> },
+		]
+		const part = call[0].messages[0]?.content[0] ?? {}
+		expect(JSON.stringify(part)).not.toContain('files/abc')
+		expect(JSON.stringify(part)).not.toContain('providerReference')
+	})
+
+	it('refuses more than four images in one message, and a non-array body', async () => {
+		const image = {
+			type: 'file',
+			mediaType: 'image/jpeg',
+			url: 'data:image/jpeg;base64,/9j/4AAQ',
+		}
+		const tooMany = new Request('http://localhost/api/ai/chat', {
+			method: 'POST',
+			body: JSON.stringify({
+				messages: [
+					{ id: 'm', role: 'user', parts: [image, image, image, image, image] },
+				],
+			}),
+		})
+		expect(
+			(
+				(await handleChat(
+					{ request: tooMany, params: {} } as any,
+					baseDeps(),
+				)) as Response
+			).status,
+		).toBe(413)
+		const notArray = new Request('http://localhost/api/ai/chat', {
+			method: 'POST',
+			body: JSON.stringify({ messages: 'nope' }),
+		})
+		expect(
+			(
+				(await handleChat(
+					{ request: notArray, params: {} } as any,
+					baseDeps(),
+				)) as Response
+			).status,
+		).toBe(400)
+	})
+
+	it('refuses an oversized image', async () => {
+		const request = new Request('http://localhost/api/ai/chat', {
+			method: 'POST',
+			body: JSON.stringify({
+				messages: [
+					{
+						id: 'm',
+						role: 'user',
+						parts: [
+							{
+								type: 'file',
+								mediaType: 'image/jpeg',
+								url: `data:image/jpeg;base64,${'A'.repeat(3_000_001)}`,
+							},
+						],
+					},
+				],
+			}),
+		})
+		const response = await handleChat(
+			{ request, params: {} } as any,
+			baseDeps(),
+		)
+		expect((response as Response).status).toBe(413)
+	})
+
 	it('loads the currently viewed page when pageId is provided', async () => {
 		const request = new Request('http://localhost/api/ai/chat?orgSlug=acme', {
 			method: 'POST',

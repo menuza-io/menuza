@@ -42,7 +42,7 @@ afterEach(async () => {
 })
 
 describe('GET /resources/reservations/context (VAL-FND-018)', () => {
-	it('returns 403 when unauthenticated, given a wrong bearer token, or given an operator session cookie without internal command token', async () => {
+	it('returns 401 when unauthenticated, given a wrong bearer token, or given an operator session cookie without internal command token', async () => {
 		const { organization, cookie } = await setupTestOrgWithUser('admin')
 
 		const unauthRes = await loader({
@@ -52,7 +52,7 @@ describe('GET /resources/reservations/context (VAL-FND-018)', () => {
 			params: {},
 			context: {},
 		} as never)
-		expect(unauthRes.status).toBe(403)
+		expect(unauthRes.status).toBe(401)
 
 		const wrongTokenRes = await loader({
 			request: new Request(
@@ -62,7 +62,7 @@ describe('GET /resources/reservations/context (VAL-FND-018)', () => {
 			params: {},
 			context: {},
 		} as never)
-		expect(wrongTokenRes.status).toBe(403)
+		expect(wrongTokenRes.status).toBe(401)
 
 		const sessionRes = await loader({
 			request: createAuthenticatedRequest(
@@ -73,7 +73,7 @@ describe('GET /resources/reservations/context (VAL-FND-018)', () => {
 			params: {},
 			context: {},
 		} as never)
-		expect(sessionRes.status).toBe(403)
+		expect(sessionRes.status).toBe(401)
 	})
 
 	it('returns 400 on invalid orgId and 404 on unknown orgId', async () => {

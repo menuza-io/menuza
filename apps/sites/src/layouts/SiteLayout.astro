@@ -3,6 +3,7 @@ import { buildCustomSiteFontFaceCss } from '@repo/common/site-fonts'
 import { brand } from '@repo/config/brand'
 import SiteAnalyticsIntegrations from '~/components/SiteAnalyticsIntegrations.astro'
 import { resolveMediaUrl } from '~/lib/media'
+import { SITES_BOOT_SCRIPT } from '~/lib/site-headers'
 import { type PublicSiteTheme } from '~/lib/org'
 import '../styles/tailwind.css'
 import siteFontsStylesheet from '../styles/site-fonts.css?url'
@@ -85,6 +86,7 @@ const htmlClass =
 	lang={lang}
 	dir={dir}
 	class={htmlClass}
+	data-theme-mode={themeMode}
 	data-site-theme={theme?.theme}
 	data-site-base={theme?.baseColor}
 	data-heading-font={headingFont}
@@ -103,7 +105,7 @@ const htmlClass =
 			rel="stylesheet"
 			href={siteFontsStylesheet}
 			media="print"
-			onload="this.setAttribute('media','all')"
+			data-defer-stylesheet
 		/>
 		<noscript>
 			<link rel="stylesheet" href={siteFontsStylesheet} />
@@ -134,33 +136,7 @@ const htmlClass =
 				</>
 			) : null
 		}
-		{
-			themeMode === 'system' ? (
-				<script is:inline>
-					;(function () {
-						try {
-							const prefersDark = window.matchMedia(
-								'(prefers-color-scheme: dark)',
-							).matches
-							document.documentElement.classList.toggle('dark', prefersDark)
-						} catch {
-							/* ignore */
-						}
-					})()
-				</script>
-			) : null
-		}
-		<script is:inline>
-			;(function () {
-				try {
-					if (localStorage.getItem('tenant_access_token')) {
-						document.documentElement.dataset.customerSession = '1'
-					}
-				} catch {
-					/* ignore */
-				}
-			})()
-		</script>
+		<script is:inline set:html={SITES_BOOT_SCRIPT} />
 		<style is:inline>
 			html[data-customer-session] [data-auth='signed-out'] {
 				display: none !important;

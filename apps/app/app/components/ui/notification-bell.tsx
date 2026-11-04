@@ -17,13 +17,14 @@ import {
 import { Icon } from '@repo/ui/icon'
 import { Popover, PopoverTrigger, PopoverContent } from '@repo/ui/popover'
 import { ScrollArea } from '@repo/ui/scroll-area'
+import { spring } from '@repo/ui/springs'
 import {
 	Tooltip,
 	TooltipContent,
 	TooltipProvider,
 	TooltipTrigger,
 } from '@repo/ui/tooltip'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } from 'motion/react'
 import React, { useEffect, useState, useRef } from 'react'
 import Markdown from 'react-markdown'
 import { useNavigate, useFetcher, useParams } from 'react-router'
@@ -276,11 +277,7 @@ function EmptyState() {
 							y: variant.y,
 							x: variant.x,
 							rotate: variant.rotate,
-							transition: {
-								duration: 0.4,
-								delay: index * 0.1,
-								ease: [0.22, 1, 0.36, 1],
-							},
+							transition: { ...spring.slow, delay: index * 0.1 },
 						}}
 					>
 						<div className="border-border bg-background mx-auto w-full rounded-lg border p-4 shadow-sm">
@@ -424,16 +421,13 @@ export default function NotificationBell() {
 			opacity: 1,
 			scale: 1,
 			y: 0,
-			transition: {
-				duration: 0.2,
-				staggerChildren: 0.1,
-			},
+			transition: { ...spring.moderate, staggerChildren: 0.04 },
 		},
 	}
 
 	const itemVariants = {
 		hidden: { opacity: 0, x: -20 },
-		visible: { opacity: 1, x: 0 },
+		visible: { opacity: 1, x: 0, transition: spring.moderate },
 	}
 
 	return (
@@ -449,6 +443,7 @@ export default function NotificationBell() {
 				<motion.span
 					className="flex size-full items-center justify-center"
 					whileTap={{ scale: 0.92 }}
+					transition={spring.fast}
 				>
 					<BellIcon size={16} />
 				</motion.span>
@@ -457,7 +452,8 @@ export default function NotificationBell() {
 						<motion.div
 							initial={{ scale: 0 }}
 							animate={{ scale: 1 }}
-							exit={{ scale: 0 }}
+							exit={{ scale: 0, transition: spring.fast.exit }}
+							transition={spring.fast}
 							className="absolute -top-1 -right-1"
 						>
 							<Badge

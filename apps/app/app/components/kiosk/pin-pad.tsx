@@ -156,7 +156,7 @@ export function PinDots({ length }: { length: number }) {
 					key={index}
 					aria-hidden="true"
 					className={cn(
-						'size-5 rounded-full border-2 transition-colors duration-100 motion-reduce:transition-none',
+						'size-5 rounded-full border-2 transition-colors duration-80 motion-reduce:transition-none',
 						index < length
 							? 'bg-foreground border-foreground'
 							: 'border-foreground/50',

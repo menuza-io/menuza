@@ -96,7 +96,7 @@ export const StatusButton = ({
 
 	const getButtonClassName = () => {
 		const baseClasses =
-			'transition-all duration-200 flex justify-center items-center'
+			'transition-[color,background-color,border-color,box-shadow,scale] duration-180 flex justify-center items-center'
 
 		switch (internalStatus) {
 			case 'success':

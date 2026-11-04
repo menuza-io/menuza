@@ -125,10 +125,11 @@ export async function validateMCPRedirectUri(
 		return formatValidation
 	}
 
-	// If no clientId provided, fall back to format validation only
-	// This maintains backward compatibility
+	// A missing client has no registered redirect list. Format checks alone
+	// would let any localhost (or custom-scheme) listener receive the code
+	// after the operator approves "Unregistered MCP client".
 	if (!clientId) {
-		return { isValid: true }
+		return { isValid: false, error: 'client_id is required' }
 	}
 
 	// Look up the client registration

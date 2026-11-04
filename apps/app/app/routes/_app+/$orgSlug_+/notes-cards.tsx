@@ -287,7 +287,7 @@ export const NoteCard = ({
 	return (
 		<div className="group h-full">
 			<Card
-				className="group-hover:bg-muted/30 relative h-full cursor-pointer overflow-hidden border-none py-0 shadow-[0px_1px_1px_0px_rgba(0,0,0,0.05),0px_1px_1px_0px_rgba(255,252,240,0.5)_inset,0px_0px_0px_1px_hsla(0,0%,100%,0.1)_inset,0px_0px_1px_0px_rgba(28,27,26,0.5)] transition-all dark:shadow-[0_1px_0_0_rgba(255,255,255,0.03)_inset,0_0_0_1px_rgba(255,255,255,0.03)_inset,0_0_0_1px_rgba(0,0,0,0.1),0_2px_2px_0_rgba(0,0,0,0.1),0_4px_4px_0_rgba(0,0,0,0.1),0_8px_8px_0_rgba(0,0,0,0.1)]"
+				className="group-hover:bg-muted/30 relative h-full cursor-pointer overflow-hidden border-none py-0 shadow-[0px_1px_1px_0px_rgba(0,0,0,0.05),0px_1px_1px_0px_rgba(255,252,240,0.5)_inset,0px_0px_0px_1px_hsla(0,0%,100%,0.1)_inset,0px_0px_1px_0px_rgba(28,27,26,0.5)] transition-[background-color,box-shadow] dark:shadow-[0_1px_0_0_rgba(255,255,255,0.03)_inset,0_0_0_1px_rgba(255,255,255,0.03)_inset,0_0_0_1px_rgba(0,0,0,0.1),0_2px_2px_0_rgba(0,0,0,0.1),0_4px_4px_0_rgba(0,0,0,0.1),0_8px_8px_0_rgba(0,0,0,0.1)]"
 				onClick={handleCardClick}
 				onKeyDown={(e) => {
 					if (e.key === 'Enter' || e.key === ' ') {
@@ -313,7 +313,7 @@ export const NoteCard = ({
 											organizationId={organizationId}
 											mediaTransformBaseUrl={mediaTransformBaseUrl}
 											alt={firstVideo.altText || 'Video thumbnail'}
-											className="absolute inset-0 h-full w-full rounded-xl transition-all duration-300"
+											className="absolute inset-0 h-full w-full rounded-xl transition-[opacity,transform] duration-240"
 											width={200}
 											height={200}
 										/>
@@ -324,7 +324,7 @@ export const NoteCard = ({
 												`/resources/images?objectKey=${encodeURIComponent(firstImage.objectKey)}&organizationId=${encodeURIComponent(organizationId)}`
 											}
 											alt={firstImage.altText || 'Note image'}
-											className="absolute inset-0 h-full w-full rounded-xl object-cover transition-all duration-300"
+											className="absolute inset-0 h-full w-full rounded-xl object-cover transition-[opacity,transform] duration-240"
 											width={200}
 											height={200}
 										/>
@@ -332,7 +332,7 @@ export const NoteCard = ({
 
 									{/* Video play overlay */}
 									{isVideo && (
-										<div className="absolute inset-0 flex items-center justify-center rounded-xl opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+										<div className="absolute inset-0 flex items-center justify-center rounded-xl opacity-0 transition-opacity duration-240 group-hover:opacity-100">
 											<div className="rounded-full bg-black/20 p-3 backdrop-blur-sm">
 												<Icon
 													name="arrow-right"
@@ -355,7 +355,7 @@ export const NoteCard = ({
 							</div>
 
 							{/* Card action buttons - styled like attachment count */}
-							<div className="absolute -top-[1px] -right-[1px] z-10 flex transition-all duration-300">
+							<div className="absolute -top-[1px] -right-[1px] z-10 flex transition-opacity duration-240">
 								{setEditingNote && (
 									<div className="pointer-events-auto">
 										<Tooltip>

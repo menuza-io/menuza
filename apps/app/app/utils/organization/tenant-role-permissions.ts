@@ -15,6 +15,7 @@ export const TENANT_ROLE_PERMISSION_IDS = [
 	'org_perm_create_member_any',
 	'org_perm_delete_member_any',
 	'org_perm_read_settings_any',
+	'org_perm_read_analytics_any',
 	'org_perm_update_settings_any',
 	'org_perm_read_website_any',
 	'org_perm_update_website_any',

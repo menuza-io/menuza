@@ -8,8 +8,10 @@ import {
 	mintOperatorAnalyticsToken,
 	ORDER_REPORT_SUBJECTS,
 	ORG_WIDE_REPORT_SUBJECTS,
+	resolveOperatorAnalyticsSecret,
 	type RestrictedReportSubject,
 } from '@repo/reports/token'
+import { isInsecureSecret, isProductionLike } from '@repo/security'
 import { data } from 'react-router'
 import { ENV } from 'varlock/env'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
@@ -95,8 +97,26 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		...reservations.subjects,
 	]
 
+	// A production build on localhost (E2E, build + preview) may keep the schema
+	// default; a real deploy may not. tenant-api applies its own rule (it has no
+	// BASE_URL, and an unset NODE_ENV counts as production there), so a
+	// production-mode tenant-api still answers 401 to a token signed with the
+	// default. Real deploys refuse the default on both sides.
+	const signingSecret = resolveOperatorAnalyticsSecret({
+		secret: ENV.OPERATOR_ANALYTICS_TOKEN,
+		internalCommandToken: ENV.INTERNAL_COMMAND_TOKEN,
+		isPlaceholder: isInsecureSecret,
+		placeholderAllowed: !isProductionLike(),
+	})
+	if (!signingSecret) {
+		console.error('operator_analytics_token_not_configured')
+		throw data(
+			{ error: 'Reports are temporarily unavailable' },
+			{ status: 503 },
+		)
+	}
 	const minted = await mintOperatorAnalyticsToken({
-		internalCommandToken: ENV.INTERNAL_COMMAND_TOKEN || '',
+		signingSecret,
 		userId,
 		orgId: organization.id,
 		role: 'operator',

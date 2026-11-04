@@ -2,11 +2,14 @@ import { z } from 'zod'
 
 /**
  * What a paired tablet remembers: the device secret, the regional node it talks
- * to, and its last known configuration. The secret lives in `localStorage` like
- * every other tenant token (AGENTS.md); mitigations are the server-side ones:
- * it is bound to one scope, can only punch, and is revoked from the manager
- * screen at once. Every read and write is guarded: private windows and blocked
- * storage must leave the kiosk usable, just unpaired.
+ * to, and its last known configuration. The secret stays in `localStorage`
+ * because the tablet calls the regional tenant-api directly (an HttpOnly cookie
+ * on the App origin could not be sent there, and proxying punches through the
+ * App would move staff data across regions). The App's script CSP is
+ * nonce-based. Server-side, the secret is bound to one scope, can only punch,
+ * and is revoked from the manager screen at once. Every read and write is
+ * guarded: private windows and blocked storage must leave the kiosk usable,
+ * just unpaired.
  */
 
 const STORAGE_KEY = 'kiosk.device.v1'

@@ -1,4 +1,5 @@
 import crypto from 'node:crypto'
+import { resolveOperatorAnalyticsSecret } from '@repo/reports/token'
 import { ENV, initVarlockEnv } from 'varlock/env'
 
 const INSECURE_SECRET_MARKERS = [
@@ -104,6 +105,30 @@ export function getOperatorToken() {
 export function getInternalCommandToken() {
 	syncEnvFromProcess()
 	return ENV.INTERNAL_COMMAND_TOKEN || ''
+}
+
+/** The value committed in .env.schema. */
+export const DEV_OPERATOR_ANALYTICS_TOKEN =
+	'dev-operator-analytics-token-do-not-use-in-prod'
+
+/**
+ * Secret that signs operator analytics JWTs. Distinct from
+ * INTERNAL_COMMAND_TOKEN so a leaked cron/provision token cannot mint tokens
+ * that read calls, customers, orders, and wages. Empty when it is missing,
+ * shared with the command token, or still the development default in production.
+ */
+export function getOperatorAnalyticsToken() {
+	syncEnvFromProcess()
+	// An unset NODE_ENV is production. The schema default must not sign reports.
+	const nodeEnv =
+		typeof process !== 'undefined' ? process.env.NODE_ENV : undefined
+	return resolveOperatorAnalyticsSecret({
+		secret: ENV.OPERATOR_ANALYTICS_TOKEN,
+		internalCommandToken: getInternalCommandToken(),
+		isPlaceholder: (token) =>
+			token === DEV_OPERATOR_ANALYTICS_TOKEN || isInsecureSecret(token),
+		placeholderAllowed: nodeEnv === 'development' || nodeEnv === 'test',
+	})
 }
 
 export function getVoiceAgentToken() {

@@ -41,7 +41,7 @@ function EpicProgress() {
 					transition.state === 'idle' &&
 						(animationComplete
 							? 'transition-none'
-							: 'w-full opacity-0 transition-all'),
+							: 'w-full opacity-0 transition-[width,opacity]'),
 					delayedPending && transition.state === 'submitting' && 'w-5/12',
 					delayedPending && transition.state === 'loading' && 'w-8/12',
 				)}

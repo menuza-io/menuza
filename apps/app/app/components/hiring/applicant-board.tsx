@@ -281,7 +281,7 @@ function BoardCard({
 			ref={setNodeRef}
 			className={cn('group/card', isDragging && 'opacity-40')}
 		>
-			<div className="bg-card shadow-card hover:border-border-strong flex flex-col gap-2 rounded-lg border p-3 transition-[border-color,box-shadow] duration-150 hover:shadow-xs">
+			<div className="bg-card shadow-card hover:border-border-strong flex flex-col gap-2 rounded-lg border p-3 transition-[border-color,box-shadow] duration-160 hover:shadow-xs">
 				<div className="flex min-w-0 items-center gap-2">
 					{/* The initials double as the drag handle: it shows on hover,
 					    keyboard focus, and always on touch screens. */}

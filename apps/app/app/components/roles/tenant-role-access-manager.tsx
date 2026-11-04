@@ -155,6 +155,18 @@ export function getPermissionGroups(): PermissionGroup[] {
 			],
 		},
 		{
+			title: t`Reports`,
+			description: t`Organization reports such as customers, orders, and calls.`,
+			permissions: [
+				{
+					id: 'org_perm_read_analytics_any',
+					label: t`View reports`,
+					description: t`Run organization reports, including customers, orders, and calls when those extra permissions are held.`,
+					warning: t`Customer and business data`,
+				},
+			],
+		},
+		{
 			title: t`Website & Publishing`,
 			description: t`Website editor, announcements, and public pages.`,
 			permissions: [
@@ -891,7 +903,7 @@ export function RoleAccessForm({
 												disabled={isSubmitting}
 												aria-pressed={isSelected}
 												className={cn(
-													'rounded-lg border px-3.5 py-1.5 text-sm font-medium transition-all',
+													'rounded-lg border px-3.5 py-1.5 text-sm font-medium transition-[color,background-color,border-color,box-shadow]',
 													isSelected
 														? 'bg-primary text-primary-foreground border-primary shadow-xs'
 														: 'bg-card text-muted-foreground border-border hover:text-foreground hover:bg-muted/40',

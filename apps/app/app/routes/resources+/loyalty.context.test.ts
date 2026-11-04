@@ -52,11 +52,11 @@ afterEach(async () => {
 })
 
 describe('GET /resources/loyalty/context', () => {
-	it('returns 403 when unauthenticated, given a wrong bearer token, or given an operator session cookie without the internal command token', async () => {
+	it('returns 401 when unauthenticated, given a wrong bearer token, or given an operator session cookie without the internal command token', async () => {
 		const { organization, cookie } = await setupTestOrgWithUser('admin')
 
 		const unauthRes = await callLoader(contextRequest(organization.id, false))
-		expect(unauthRes.status).toBe(403)
+		expect(unauthRes.status).toBe(401)
 
 		const wrongTokenRes = await callLoader(
 			new Request(
@@ -64,7 +64,7 @@ describe('GET /resources/loyalty/context', () => {
 				{ headers: { Authorization: 'Bearer wrong-token' } },
 			),
 		)
-		expect(wrongTokenRes.status).toBe(403)
+		expect(wrongTokenRes.status).toBe(401)
 
 		const sessionRes = await callLoader(
 			createAuthenticatedRequest(
@@ -73,7 +73,7 @@ describe('GET /resources/loyalty/context', () => {
 				cookie,
 			),
 		)
-		expect(sessionRes.status).toBe(403)
+		expect(sessionRes.status).toBe(401)
 	})
 
 	it('returns 400 on an invalid orgId and 404 on an unknown orgId', async () => {

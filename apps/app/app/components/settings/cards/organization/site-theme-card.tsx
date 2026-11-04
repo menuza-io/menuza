@@ -635,7 +635,7 @@ function CssVarsEditor({
 				) : null}
 				<span
 					className={cn(
-						'text-muted-foreground flex size-6 shrink-0 items-center justify-center rounded-md transition-transform duration-200 ease-out',
+						'text-muted-foreground flex size-6 shrink-0 items-center justify-center rounded-md transition-transform duration-180 ease-out',
 						'group-hover/advanced:text-foreground',
 						open && 'text-foreground rotate-180',
 					)}
@@ -646,7 +646,7 @@ function CssVarsEditor({
 
 			<div
 				className={cn(
-					'grid transition-[grid-template-rows] duration-300 ease-out',
+					'grid transition-[grid-template-rows] duration-240 ease-out',
 					open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
 				)}
 			>

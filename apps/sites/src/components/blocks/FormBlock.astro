@@ -118,6 +118,8 @@ const verificationRequired = Astro.locals.i18n._(
 						data-error-label={submissionError}
 						data-verification-label={verificationRequired}
 						data-turnstile-site-key={turnstileSiteKey || undefined}
+						data-success-class={siteStatusSuccessClass}
+						data-error-class={siteStatusErrorClass}
 					>
 						<div class="hidden" aria-hidden="true">
 							<label for={`${blockId}-website`}>Website</label>
@@ -207,7 +209,7 @@ const verificationRequired = Astro.locals.i18n._(
 								data-action="website-form"
 							/>
 						) : null}
-						<p data-form-status class="hidden" role="status" />
+						<p data-form-status class="sr-only" role="status" aria-live="polite"></p>
 						<button class={siteBtnPrimaryClass} type="submit">
 							{pickLocalized(form.submitLabel, activeLocale, defaultLocale)}
 						</button>
@@ -224,101 +226,10 @@ const verificationRequired = Astro.locals.i18n._(
 
 {
 	form ? (
-		<script
-			is:inline
-			define:vars={{
-				blockId,
-				successClass: siteStatusSuccessClass,
-				errorClass: siteStatusErrorClass,
-			}}
-		>
-			const formElement = document.getElementById(blockId)
-			formElement?.addEventListener('submit', async (event) => {
-				event.preventDefault()
-				if (!(formElement instanceof HTMLFormElement)) return
-				const button = formElement.querySelector('button[type="submit"]')
-				const status = formElement.querySelector('[data-form-status]')
-				if (
-					!(button instanceof HTMLButtonElement) ||
-					!(status instanceof HTMLElement)
-				)
-					return
-				button.disabled = true
-				button.textContent =
-					formElement.dataset.submittingLabel || 'Submitting...'
-				status.className = 'hidden'
-				const formData = new FormData(formElement)
-				const website = String(formData.get('website') || '')
-				formData.delete('website')
-				const turnstileToken = String(
-					formData.get('cf-turnstile-response') || '',
-				)
-				formData.delete('cf-turnstile-response')
-				if (formElement.dataset.turnstileSiteKey && !turnstileToken) {
-					status.textContent =
-						formElement.dataset.verificationLabel ||
-						'Complete the verification check before submitting.'
-					status.className = errorClass
-					button.disabled = false
-					button.textContent = formElement.dataset.submitLabel || 'Submit'
-					return
-				}
-				try {
-					const response = await fetch(
-						`${formElement.dataset.tenantApiUrl}/forms/${formElement.dataset.formId}/submissions`,
-						{
-							method: 'POST',
-							headers: { 'Content-Type': 'application/json' },
-							body: JSON.stringify({
-								slug: formElement.dataset.orgSlug,
-								host: formElement.dataset.customHost,
-								website,
-								turnstileToken: turnstileToken || undefined,
-								values: Object.fromEntries(
-									Array.from(new Set(formData.keys())).map((key) => {
-										const values = formData.getAll(key).map(String)
-										return [
-											key,
-											values.length > 1 ? values : values[0] || '',
-										]
-									}),
-								),
-							}),
-						},
-					)
-					const result = await response.json().catch(() => ({}))
-					if (!response.ok) {
-						throw new Error(
-							result.error ||
-								formElement.dataset.errorLabel ||
-								'Unable to submit the form.',
-						)
-					}
-					formElement.reset()
-					const turnstile = globalThis.turnstile
-					if (turnstile && typeof turnstile.reset === 'function') {
-						turnstile.reset()
-					}
-					status.textContent =
-						formElement.dataset.successMessage ||
-						result.message ||
-						'Thank you.'
-					status.className = successClass
-				} catch (error) {
-					status.textContent =
-						error instanceof Error
-							? error.message
-							: formElement.dataset.errorLabel || 'Unable to submit the form.'
-					status.className = errorClass
-					const turnstile = globalThis.turnstile
-					if (turnstile && typeof turnstile.reset === 'function') {
-						turnstile.reset()
-					}
-				} finally {
-					button.disabled = false
-					button.textContent = formElement.dataset.submitLabel || 'Submit'
-				}
-			})
+		<script>
+			import { initWebsiteForms } from '~/lib/website-form'
+
+			initWebsiteForms()
 		</script>
 	) : null
 }

@@ -33,11 +33,11 @@ export function EmptyState({
 				className,
 			)}
 		>
-			<div className="group rounded-lg px-8 py-14 motion-safe:transition motion-safe:duration-300">
+			<div className="group rounded-lg px-8 py-14 motion-safe:transition motion-safe:duration-240">
 				<div className="isolate flex justify-center">
 					{icons.length === 3 ? (
 						<>
-							<div className="bg-background ring-border relative top-1.5 left-2.5 grid size-12 -rotate-6 place-items-center rounded-xl shadow-lg ring-1 motion-safe:transition motion-safe:duration-500 motion-safe:group-hover:-translate-x-5 motion-safe:group-hover:-translate-y-0.5 motion-safe:group-hover:-rotate-12 motion-safe:group-hover:duration-200">
+							<div className="bg-background ring-border relative top-1.5 left-2.5 grid size-12 -rotate-6 place-items-center rounded-xl shadow-lg ring-1 motion-safe:transition motion-safe:duration-500 motion-safe:group-hover:-translate-x-5 motion-safe:group-hover:-translate-y-0.5 motion-safe:group-hover:-rotate-12 motion-safe:group-hover:duration-180">
 								{icons[0] && (
 									<Icon
 										name={icons[0]}
@@ -45,7 +45,7 @@ export function EmptyState({
 									/>
 								)}
 							</div>
-							<div className="bg-background ring-border relative z-10 grid size-12 place-items-center rounded-xl shadow-lg ring-1 motion-safe:transition motion-safe:duration-500 motion-safe:group-hover:-translate-y-0.5 motion-safe:group-hover:duration-200">
+							<div className="bg-background ring-border relative z-10 grid size-12 place-items-center rounded-xl shadow-lg ring-1 motion-safe:transition motion-safe:duration-500 motion-safe:group-hover:-translate-y-0.5 motion-safe:group-hover:duration-180">
 								{icons[1] && (
 									<Icon
 										name={icons[1]}
@@ -53,7 +53,7 @@ export function EmptyState({
 									/>
 								)}
 							</div>
-							<div className="bg-background ring-border relative top-1.5 right-2.5 grid size-12 rotate-6 place-items-center rounded-xl shadow-lg ring-1 motion-safe:transition motion-safe:duration-500 motion-safe:group-hover:translate-x-5 motion-safe:group-hover:-translate-y-0.5 motion-safe:group-hover:rotate-12 motion-safe:group-hover:duration-200">
+							<div className="bg-background ring-border relative top-1.5 right-2.5 grid size-12 rotate-6 place-items-center rounded-xl shadow-lg ring-1 motion-safe:transition motion-safe:duration-500 motion-safe:group-hover:translate-x-5 motion-safe:group-hover:-translate-y-0.5 motion-safe:group-hover:rotate-12 motion-safe:group-hover:duration-180">
 								{icons[2] && (
 									<Icon
 										name={icons[2]}
@@ -63,7 +63,7 @@ export function EmptyState({
 							</div>
 						</>
 					) : (
-						<div className="bg-background ring-border grid size-12 place-items-center rounded-xl shadow-lg ring-1 motion-safe:transition motion-safe:duration-500 motion-safe:group-hover:-translate-y-0.5 motion-safe:group-hover:duration-200">
+						<div className="bg-background ring-border grid size-12 place-items-center rounded-xl shadow-lg ring-1 motion-safe:transition motion-safe:duration-500 motion-safe:group-hover:-translate-y-0.5 motion-safe:group-hover:duration-180">
 							{icons[0] && (
 								<Icon
 									name={icons[0]}

@@ -27,10 +27,8 @@ export async function action({ request }: ActionFunctionArgs) {
 	try {
 		await requireInternalCommandAuth(request)
 	} catch (error) {
-		// Machine-to-machine endpoint: a plain 401 instead of the browser redirect.
-		if (error instanceof Response && error.status === 302) {
-			return new Response('Unauthorized', { status: 401 })
-		}
+		// Machine-to-machine endpoint: the 401 from internal auth is the answer.
+		if (error instanceof Response && error.status === 401) return error
 		throw error
 	}
 

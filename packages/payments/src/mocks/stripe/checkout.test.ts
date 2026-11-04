@@ -134,6 +134,28 @@ describe('Stripe Checkout payment mode', () => {
 		).toBe(true)
 	})
 
+	it('a destination charge reports platform events: no account, signed with the platform secret', async () => {
+		const harness = createTestHarness({
+			secrets: {
+				stripePlatform: 'whsec_platform',
+				stripeConnect: 'whsec_connect',
+			},
+		})
+		const { session } = await paymentSession(harness)
+		await harness.emulator.testing.completeCheckout(session.id)
+		const paid = harness.deliveries.filter((entry) =>
+			['payment_intent.succeeded', 'checkout.session.completed'].includes(
+				(JSON.parse(entry.body) as { type: string }).type,
+			),
+		)
+		expect(paid).toHaveLength(2)
+		for (const delivery of paid) {
+			expect(() => verifyStripeDelivery(delivery, 'whsec_connect')).toThrow()
+			const event = verifyStripeDelivery(delivery, 'whsec_platform')
+			expect(event).not.toHaveProperty('account')
+		}
+	})
+
 	it('a decline keeps the session open and carries the card error', async () => {
 		const harness = createTestHarness()
 		const { session } = await paymentSession(harness)

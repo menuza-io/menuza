@@ -320,7 +320,7 @@ export default function WebsiteFormBuilderRoute() {
 		<main className="bg-muted/30 flex min-h-0 flex-1 items-center justify-center overflow-auto p-4 sm:p-8">
 			<div
 				className={cn(
-					'bg-background border-border w-full rounded-xl border shadow-sm transition-[max-width] duration-200 motion-reduce:transition-none',
+					'bg-background border-border w-full rounded-xl border shadow-sm transition-[max-width] duration-180 motion-reduce:transition-none',
 					viewport === 'mobile' ? 'max-w-[375px]' : 'max-w-2xl',
 				)}
 			>

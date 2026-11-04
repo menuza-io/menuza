@@ -222,7 +222,7 @@ export const WebPreviewConsole = ({
 						<Icon
 							name="chevron-down"
 							className={cn(
-								'h-4 w-4 transition-transform duration-200',
+								'h-4 w-4 transition-transform duration-180',
 								consoleOpen && 'rotate-180',
 							)}
 						/>

@@ -151,6 +151,7 @@ function asString(value: unknown) {
 }
 
 function PanelBody() {
+	const { pendingMessage, clearPendingMessage } = useAIPanel()
 	const isBuilderRoute = useIsBuilderRoute()
 	const params = useParams()
 	const location = useLocation()
@@ -362,6 +363,8 @@ function PanelBody() {
 							routeParams={routeParams}
 							onToolCall={handleToolCall}
 							resolveDestinationLabel={resolveDestinationLabel}
+							pendingMessage={pendingMessage}
+							onPendingMessageSent={clearPendingMessage}
 						/>
 					</Suspense>
 				</PanelErrorBoundary>
@@ -429,7 +432,7 @@ function AIPanelSurface() {
 					aria-label={i18n._('Exit full screen')}
 					onClick={collapse}
 					className={cn(
-						'animate-in fade-in-0 fixed inset-0 bg-black/10 duration-200 supports-backdrop-filter:backdrop-blur-xs',
+						'animate-in fade-in-0 fixed inset-0 bg-black/10 duration-180 supports-backdrop-filter:backdrop-blur-xs',
 						isBuilderRoute ? 'z-60' : 'z-40',
 					)}
 				/>
@@ -455,7 +458,7 @@ function AIPanelSurface() {
 					!isMobile &&
 						isFullscreen &&
 						cn(
-							'bg-popover animate-in fade-in-0 zoom-in-95 shadow-pop fixed rounded-2xl duration-200',
+							'bg-popover animate-in fade-in-0 zoom-in-95 shadow-pop fixed rounded-2xl duration-180',
 							isBuilderRoute
 								? 'inset-3 z-70 sm:inset-4'
 								: 'inset-3 z-50 sm:inset-4',
@@ -464,7 +467,7 @@ function AIPanelSurface() {
 						!isFullscreen &&
 						isBuilderRoute &&
 						cn(
-							'fixed top-14 right-2 bottom-2 z-80 w-105 rounded-xl shadow-sm transition-[transform,opacity] duration-[180ms] [transition-timing-function:cubic-bezier(0.19,1,0.22,1)]',
+							'fixed top-14 right-2 bottom-2 z-80 w-105 rounded-xl shadow-sm transition-[translate,opacity] duration-[180ms] [transition-timing-function:cubic-bezier(0.19,1,0.22,1)]',
 							isOpen
 								? 'translate-x-0 opacity-100'
 								: 'translate-x-[calc(100%+0.5rem)] opacity-0',
@@ -474,7 +477,7 @@ function AIPanelSurface() {
 						!isBuilderRoute &&
 						cn(
 							'fixed inset-y-0 right-0 z-40 border-l',
-							'ease-out-quint transition-[width,opacity] duration-300 motion-reduce:transition-none',
+							'ease-out-quint transition-[width,opacity] duration-240 motion-reduce:transition-none',
 							isVisible ? 'w-105 opacity-100' : 'w-0 border-l-0 opacity-0',
 						),
 				)}

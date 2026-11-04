@@ -46,7 +46,7 @@ describe('internal tenant organization metadata', () => {
 	it('requires internal authentication before returning metadata', async () => {
 		await expect(
 			loader(args('clw9x0a12000008l00mailbox1', false)),
-		).rejects.toMatchObject({ status: 302 })
+		).rejects.toMatchObject({ status: 401 })
 	})
 
 	it('rejects malformed IDs', async () => {

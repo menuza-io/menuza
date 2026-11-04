@@ -11,14 +11,7 @@ export async function action({ request }: ActionFunctionArgs) {
 	if (request.method !== 'POST') {
 		return new Response('Method Not Allowed', { status: 405 })
 	}
-	try {
-		await requireInternalCommandAuth(request)
-	} catch (error) {
-		if (error instanceof Response && error.status === 302) {
-			throw new Response('Forbidden', { status: 403 })
-		}
-		throw error
-	}
+	await requireInternalCommandAuth(request)
 	const result = await publishDueSocialPosts()
 	return Response.json({
 		success: true,

@@ -31,7 +31,7 @@ function SaveBar({
 			role="group"
 			aria-busy={saving}
 			className={cn(
-				'animate-in fade-in slide-in-from-top-2 bg-foreground text-background fixed top-2 left-1/2 z-50 flex -translate-x-1/2 items-center gap-1 rounded-full p-1 ps-4 shadow-lg duration-150 motion-reduce:animate-none',
+				'animate-in fade-in slide-in-from-top-2 bg-foreground text-background fixed top-2 left-1/2 z-50 flex -translate-x-1/2 items-center gap-1 rounded-full p-1 ps-4 shadow-lg duration-160 motion-reduce:animate-none',
 				className,
 			)}
 			{...props}

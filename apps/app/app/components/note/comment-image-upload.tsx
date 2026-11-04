@@ -98,7 +98,7 @@ export function CommentImageUpload({
 			{/* Optional: Drop zone overlay when dragging */}
 			<div
 				className={cn(
-					'absolute inset-0 rounded border-2 border-dashed transition-all',
+					'absolute inset-0 rounded border-2 border-dashed transition-[border-color,background-color,opacity]',
 					isDragging
 						? 'border-primary bg-primary/5 opacity-100'
 						: 'pointer-events-none border-transparent opacity-0',

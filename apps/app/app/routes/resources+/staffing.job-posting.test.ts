@@ -113,8 +113,8 @@ describe('GET /resources/staffing/job-posting', () => {
 		const org = await setup()
 		await posting(org.id, 'cook')
 		const result = await call(`orgId=${org.id}&slug=cook`, false)
-		expect(result.status).toBe(403)
-		expect(result.body).toBeNull()
+		expect(result.status).toBe(401)
+		expect(result.body).toEqual({ error: 'Unauthorized' })
 	})
 
 	it('returns what intake needs, including the dealbreaker, for a live posting', async () => {

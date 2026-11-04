@@ -251,17 +251,18 @@ Generate values: `openssl rand -hex 32`
 
 ### App (`apps/app`) — required for production
 
-| Secret                       | Notes                                            |
-| ---------------------------- | ------------------------------------------------ |
-| `SESSION_SECRET`             | Session cookie signing — **must match Admin**    |
-| `HONEYPOT_SECRET`            | CSRF honeypot                                    |
-| `INTERNAL_COMMAND_TOKEN`     | Shared with Admin, tenant-api, jobs-cron         |
-| `TENANT_OPERATOR_TOKEN`      | Operator JWT for browser → tenant-api            |
-| `JWT_SECRET`                 | App/mobile operator API tokens                   |
-| `TENANT_CUSTOMER_JWT_SECRET` | **Must match US tenant-api `JWT_SECRET`**        |
-| `LAUNCH_STATUS`              | `CLOSED_BETA` \| `PUBLIC_BETA` \| `LAUNCHED`     |
-| `BASE_URL`                   | Public App origin (can also use GitHub Variable) |
-| `AUDIT_LOG_SECRET_KEY`       | Required in production                           |
+| Secret                       | Notes                                                                                  |
+| ---------------------------- | -------------------------------------------------------------------------------------- |
+| `SESSION_SECRET`             | Session cookie signing — **must match Admin**                                          |
+| `HONEYPOT_SECRET`            | CSRF honeypot                                                                          |
+| `INTERNAL_COMMAND_TOKEN`     | Shared with Admin, tenant-api, jobs-cron                                               |
+| `TENANT_OPERATOR_TOKEN`      | Operator JWT for browser → tenant-api                                                  |
+| `OPERATOR_ANALYTICS_TOKEN`   | Report JWTs. Same value on every tenant-api. Must differ from `INTERNAL_COMMAND_TOKEN` |
+| `JWT_SECRET`                 | App/mobile operator API tokens                                                         |
+| `TENANT_CUSTOMER_JWT_SECRET` | **Must match US tenant-api `JWT_SECRET`**                                              |
+| `LAUNCH_STATUS`              | `CLOSED_BETA` \| `PUBLIC_BETA` \| `LAUNCHED`                                           |
+| `BASE_URL`                   | Public App origin (can also use GitHub Variable)                                       |
+| `AUDIT_LOG_SECRET_KEY`       | Required in production                                                                 |
 
 ### App — when billing is live (`LAUNCH_STATUS=LAUNCHED`)
 
@@ -332,14 +333,37 @@ npx wrangler secret put SESSION_SECRET --env staging
 
 ### Tenant API US (`apps/tenant-api`)
 
-| Secret                   | Notes                                                          |
-| ------------------------ | -------------------------------------------------------------- |
-| `JWT_SECRET`             | Customer tokens — **matches App `TENANT_CUSTOMER_JWT_SECRET`** |
-| `AUTH_HMAC_SECRET`       | OTP / refresh hashes — unique per region                       |
-| `INTERNAL_COMMAND_TOKEN` | **Same as App**                                                |
-| `TENANT_OPERATOR_TOKEN`  | **Same as App**                                                |
-| `TWILIO_AUTH_TOKEN`      | US SMS only (not KSA production)                               |
-| `VOICE_AGENT_TOKEN`      | **Same as App** and the LiveKit agent (AI phone agent)         |
+| Secret                     | Notes                                                          |
+| -------------------------- | -------------------------------------------------------------- |
+| `JWT_SECRET`               | Customer tokens — **matches App `TENANT_CUSTOMER_JWT_SECRET`** |
+| `AUTH_HMAC_SECRET`         | OTP / refresh hashes — unique per region                       |
+| `INTERNAL_COMMAND_TOKEN`   | **Same as App**                                                |
+| `TENANT_OPERATOR_TOKEN`    | **Same as App**                                                |
+| `OPERATOR_ANALYTICS_TOKEN` | **Same as App**. Report queries answer 401 without it          |
+| `TWILIO_AUTH_TOKEN`        | US SMS only (not KSA production)                               |
+| `VOICE_AGENT_TOKEN`        | **Same as App** and the LiveKit agent (AI phone agent)         |
+
+#### Setting and rotating `OPERATOR_ANALYTICS_TOKEN`
+
+It signs report tokens: App mints them, every tenant-api verifies them. Generate
+it separately from `INTERNAL_COMMAND_TOKEN` (`openssl rand -hex 32`); the two
+must differ, and rotating one never requires touching the other.
+
+- **First deploy:** set it on every tenant-api node and on App _before_ App
+  ships. App without it answers `503 Reports are temporarily unavailable`
+  (logged as `operator_analytics_token_not_configured`); a tenant-api without it
+  answers 401 to report queries. Both fail closed.
+- **Rotation:** report tokens last 15 minutes (5 for pay data), so there is no
+  long-lived token to revoke. Set the new value on all tenant-api nodes and App
+  in the same window. There is no previous-key fallback, so any App and
+  tenant-api pair that holds different values answers 401 (a token from App
+  fails on a node that still has the old value, and the reverse), and a report
+  screen opened before the swap holds a token signed with the old value, so its
+  queries answer 401 until it is reloaded. Swap every node and App together.
+- **Local and CI:** the schema default (`dev-operator-analytics-token-...`) is
+  accepted outside production and in a production build served from localhost
+  (E2E, `npm run build` + preview). On a real deploy (`BASE_URL` not local, or
+  missing) it is refused.
 
 ### Jobs cron (`apps/jobs-cron`)
 
@@ -358,6 +382,7 @@ JWT_SECRET=...          # unique to KSA
 AUTH_HMAC_SECRET=...
 INTERNAL_COMMAND_TOKEN=...   # same as App
 TENANT_OPERATOR_TOKEN=...    # same as App
+OPERATOR_ANALYTICS_TOKEN=... # same as App; must differ from INTERNAL_COMMAND_TOKEN
 APP_URL=https://app.yourdomain.com
 ROOT_APP=yourdomain.com
 ```
@@ -427,6 +452,8 @@ Wrangler dev secrets: `apps/app/.dev.vars`, `apps/tenant-api/.dev.vars`
 - [ ] Provision OCI VM + block volume at `/data/tenants`
 - [ ] Set `OCI_TENANT_KSA_HOST`, `OCI_TENANT_SSH_KEY`, `TENANT_API_URL_KSA`
 - [ ] Copy `docker-compose.yml` + `.env` to `/opt/tenant-api`
+- [ ] Set `OPERATOR_ANALYTICS_TOKEN` to the same value as App (distinct from
+      `INTERNAL_COMMAND_TOKEN`)
 - [ ] Verify: `curl $TENANT_API_URL_KSA/api/health` → `"region":"ksa"`
 
 ### 7. CMS (Vercel — optional)

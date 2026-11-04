@@ -6,6 +6,7 @@ import { AIChat } from '@repo/ai'
 import { render, screen, within } from '@testing-library/react'
 import { userEvent } from '@testing-library/user-event'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { stubImageDecoding } from '../test-image-decoding.ts'
 
 function uiMessageStreamResponse(text: string) {
 	return sseResponse([
@@ -240,4 +241,111 @@ test('shows a loading state while the request is pending', async () => {
 
 	expect(await screen.findByText('One moment…')).toBeInTheDocument()
 	expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+})
+
+test('sends a question handed over from outside once, then reports it sent', async () => {
+	const fetchMock = vi
+		.fn<typeof fetch>()
+		.mockResolvedValue(uiMessageStreamResponse('Opened your reports.'))
+	vi.stubGlobal('fetch', fetchMock)
+	const onSent = vi.fn()
+
+	render(
+		<I18nProvider i18n={i18n}>
+			<AIChat
+				orgSlug="acme"
+				pendingMessage={{ text: 'Take me to my reports' }}
+				onPendingMessageSent={onSent}
+			/>
+		</I18nProvider>,
+	)
+
+	expect(await screen.findByText('Opened your reports.')).toBeInTheDocument()
+	expect(fetchMock).toHaveBeenCalledTimes(1)
+	expect(onSent).toHaveBeenCalledTimes(1)
+	const body = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body)) as {
+		messages: unknown
+	}
+	expect(JSON.stringify(body.messages)).toContain('Take me to my reports')
+})
+
+test('attaches an image and sends it with the message', async () => {
+	stubImageDecoding()
+	const fetchMock = vi
+		.fn<typeof fetch>()
+		.mockResolvedValue(uiMessageStreamResponse('It is a cat.'))
+	vi.stubGlobal('fetch', fetchMock)
+
+	const user = userEvent.setup()
+	const { container } = render(
+		<I18nProvider i18n={i18n}>
+			<AIChat orgSlug="acme" />
+		</I18nProvider>,
+	)
+
+	const file = new File([new Uint8Array([137, 80, 78, 71])], 'cat.png', {
+		type: 'image/png',
+	})
+	const input = container.querySelector('input[type="file"]')
+	expect(input).not.toBeNull()
+	await user.upload(input as HTMLInputElement, file)
+
+	expect(
+		await screen.findByRole('button', { name: 'Remove cat.png' }),
+	).toBeInTheDocument()
+	// A picture alone is enough to send.
+	await user.click(screen.getByRole('button', { name: 'Send' }))
+
+	expect(await screen.findByText('It is a cat.')).toBeInTheDocument()
+	const body = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body)) as {
+		messages: Array<{ parts: Array<{ type: string; mediaType?: string }> }>
+	}
+	const parts = body.messages[0]?.parts ?? []
+	expect(parts.some((part) => part.type === 'file')).toBe(true)
+	expect(parts.some((part) => part.type === 'text' && 'text' in part)).toBe(
+		false,
+	)
+})
+
+test('removes an attached image before sending', async () => {
+	stubImageDecoding()
+	vi.stubGlobal('fetch', vi.fn<typeof fetch>())
+	const user = userEvent.setup()
+	const { container } = render(
+		<I18nProvider i18n={i18n}>
+			<AIChat orgSlug="acme" />
+		</I18nProvider>,
+	)
+	const file = new File([new Uint8Array([1, 2, 3])], 'a.png', {
+		type: 'image/png',
+	})
+	await user.upload(
+		container.querySelector('input[type="file"]') as HTMLInputElement,
+		file,
+	)
+	await screen.findByRole('button', { name: 'Remove a.png' })
+	await user.click(screen.getByRole('button', { name: 'Remove a.png' }))
+	expect(
+		screen.queryByRole('button', { name: 'Remove a.png' }),
+	).not.toBeInTheDocument()
+})
+
+test('refuses a file that is not an image', async () => {
+	vi.stubGlobal('fetch', vi.fn<typeof fetch>())
+	const { container } = render(
+		<I18nProvider i18n={i18n}>
+			<AIChat orgSlug="acme" />
+		</I18nProvider>,
+	)
+	const input = container.querySelector(
+		'input[type="file"]',
+	) as HTMLInputElement
+	const file = new File(['x'], 'notes.pdf', { type: 'application/pdf' })
+	// user.upload honours `accept`, so fire the change directly.
+	const { fireEvent } = await import('@testing-library/react')
+	fireEvent.change(input, { target: { files: [file] } })
+	expect(await screen.findByRole('status')).toHaveTextContent(
+		"Some images couldn't be added",
+	)
+	expect(screen.queryByRole('img')).not.toBeInTheDocument()
 })

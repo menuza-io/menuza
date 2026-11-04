@@ -65,7 +65,7 @@ function ProgressIndicator({
 			data-slot="progress-indicator"
 			data-variant={variant}
 			className={cn(
-				'transition-[width] duration-300 ease-out motion-reduce:transition-none',
+				'transition-[width] duration-240 ease-out motion-reduce:transition-none',
 				variant === 'pill'
 					? 'bg-background dark:bg-muted relative flex h-full items-center justify-end overflow-hidden rounded-r-full shadow-xs'
 					: 'bg-primary h-full duration-500',

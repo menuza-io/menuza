@@ -17,7 +17,7 @@ import { type CSSProperties, useLayoutEffect, useRef, useState } from 'react'
  * inside the row's isolated stacking context) and settles without overshoot.
  */
 export const slidingIndicatorVariants = cva(
-	'ease-out-quint pointer-events-none absolute top-0 left-0 -z-10 transition-[translate,width,height] duration-300 motion-reduce:transition-none',
+	'ease-out-quint pointer-events-none absolute top-0 left-0 -z-10 transition-[translate,width,height] duration-240 motion-reduce:transition-none',
 	{
 		variants: {
 			variant: {

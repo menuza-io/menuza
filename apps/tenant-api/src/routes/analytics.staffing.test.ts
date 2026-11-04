@@ -9,7 +9,7 @@ import { hiringApplications, shifts, staffAuditLog } from '@repo/tenant-db'
 import { registerOrderSource } from '../services/order-source.ts'
 import { createFakeOrderSource } from '../../tests/order-source.ts'
 import {
-	INTERNAL_TOKEN,
+	ANALYTICS_TOKEN,
 	makeOrg,
 	type TestOrg,
 } from '../../tests/staff-harness.ts'
@@ -102,7 +102,7 @@ describe('/analytics/query on staff subjects', () => {
 				options.token ??
 				(
 					await mintOperatorAnalyticsToken({
-						internalCommandToken: INTERNAL_TOKEN,
+						signingSecret: ANALYTICS_TOKEN,
 						userId: 'user-1',
 						orgId: options.orgId ?? ORG_A,
 						role: 'operator',
@@ -352,7 +352,7 @@ describe('/analytics/query on staff subjects', () => {
 			const { createHash } = await import('node:crypto')
 			const key = createHash('sha256')
 				.update('tenant-operator-analytics-v1:')
-				.update(INTERNAL_TOKEN)
+				.update(ANALYTICS_TOKEN)
 				.digest()
 			const token = await new SignJWT({
 				orgId: ORG_A,
@@ -416,7 +416,7 @@ describe('/analytics/query on staff subjects', () => {
 			const { createHash } = await import('node:crypto')
 			const key = createHash('sha256')
 				.update('tenant-operator-analytics-v1:')
-				.update(INTERNAL_TOKEN)
+				.update(ANALYTICS_TOKEN)
 				.digest()
 			const token = await new SignJWT({
 				orgId: ORG_A,

@@ -33,7 +33,7 @@ export const HeroHeader = () => {
 			<nav
 				data-state={menuState && 'active'}
 				className={cn(
-					'fixed z-20 w-full transition-all duration-300',
+					'fixed z-20 w-full transition-[background-color,border-color,backdrop-filter] duration-240',
 					isScrolled &&
 						'bg-background/75 border-b border-black/5 backdrop-blur-lg',
 				)}
@@ -41,7 +41,7 @@ export const HeroHeader = () => {
 				<div className="mx-auto max-w-5xl px-6">
 					<div
 						className={cn(
-							'relative flex flex-wrap items-center justify-between gap-6 py-6 transition-all duration-200 lg:gap-0',
+							'relative flex flex-wrap items-center justify-between gap-6 py-6 transition-[padding] duration-180 lg:gap-0',
 							isScrolled && 'py-3',
 						)}
 					>
@@ -61,11 +61,11 @@ export const HeroHeader = () => {
 							>
 								<Icon
 									name="hamburger-menu"
-									className="m-auto size-6 duration-200 in-data-[state=active]:scale-0 in-data-[state=active]:rotate-180 in-data-[state=active]:opacity-0"
+									className="m-auto size-6 duration-180 in-data-[state=active]:scale-0 in-data-[state=active]:rotate-180 in-data-[state=active]:opacity-0"
 								/>
 								<Icon
 									name="x"
-									className="absolute inset-0 m-auto size-6 scale-0 -rotate-180 opacity-0 duration-200 in-data-[state=active]:scale-100 in-data-[state=active]:rotate-0 in-data-[state=active]:opacity-100"
+									className="absolute inset-0 m-auto size-6 scale-0 -rotate-180 opacity-0 duration-180 in-data-[state=active]:scale-100 in-data-[state=active]:rotate-0 in-data-[state=active]:opacity-100"
 								/>
 							</button>
 
@@ -93,7 +93,7 @@ export const HeroHeader = () => {
 										<li key={index}>
 											<Link
 												to={item.href}
-												className="text-muted-foreground hover:text-accent-foreground block duration-150"
+												className="text-muted-foreground hover:text-accent-foreground block duration-160"
 											>
 												<span>{item.name}</span>
 											</Link>

@@ -41,9 +41,9 @@ beforeEach(() => {
 })
 
 describe('POST /resources/sites/cache-purge', () => {
-	it('returns 403 without internal auth', async () => {
+	it('returns 401 without internal auth', async () => {
 		const res = await callAction(post({ organizationId: 'org_x' }, false))
-		expect(res.status).toBe(403)
+		expect(res.status).toBe(401)
 		const wrong = await callAction(
 			new Request('http://localhost:3001/resources/sites/cache-purge', {
 				method: 'POST',
@@ -51,7 +51,7 @@ describe('POST /resources/sites/cache-purge', () => {
 				body: JSON.stringify({ scope: 'all-menus' }),
 			}),
 		)
-		expect(wrong.status).toBe(403)
+		expect(wrong.status).toBe(401)
 		expect(kv.purge).not.toHaveBeenCalled()
 		expect(kv.bump).not.toHaveBeenCalled()
 	})

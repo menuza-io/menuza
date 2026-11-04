@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
 	createTestHarness,
 	onboardedAccount,
+	verifyStripeDelivery,
 	type Harness,
 } from '../test-helpers'
 
@@ -144,6 +145,42 @@ describe('Stripe setup mode and off-session charges', () => {
 		expect(
 			(await harness.stripe.paymentIntents.cancel(canceled.id)).status,
 		).toBe('canceled')
+	})
+
+	it('a captured destination charge reports a platform event', async () => {
+		const harness = createTestHarness({
+			secrets: {
+				stripePlatform: 'whsec_platform',
+				stripeConnect: 'whsec_connect',
+			},
+		})
+		const { customer } = await savedCard(harness, '4242424242424242')
+		const methods = await harness.stripe.customers.listPaymentMethods(
+			customer.id,
+		)
+		const destination = await onboardedAccount(harness)
+		const held = await harness.stripe.paymentIntents.create({
+			amount: 3000,
+			currency: 'usd',
+			customer: customer.id,
+			payment_method: methods.data[0]!.id,
+			off_session: true,
+			confirm: true,
+			capture_method: 'manual',
+			application_fee_amount: 300,
+			transfer_data: { destination },
+		})
+		harness.deliveries.length = 0
+		await harness.stripe.paymentIntents.capture(held.id)
+		const succeeded = harness.deliveries.filter(
+			(entry) =>
+				(JSON.parse(entry.body) as { type: string }).type ===
+				'payment_intent.succeeded',
+		)
+		expect(succeeded).toHaveLength(1)
+		expect(() => verifyStripeDelivery(succeeded[0]!, 'whsec_connect')).toThrow()
+		const event = verifyStripeDelivery(succeeded[0]!, 'whsec_platform')
+		expect(event).not.toHaveProperty('account')
 	})
 })
 

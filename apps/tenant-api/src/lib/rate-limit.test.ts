@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { runInTenantOrgScope } from '@repo/tenant-db'
 import {
 	getGlobalSendMax,
 	rateLimitByKey,
@@ -74,6 +75,28 @@ describe('rateLimitByKey', () => {
 			if (third.limited) {
 				expect(third.retryAfter).toBeGreaterThan(0)
 			}
+		} finally {
+			process.env.NODE_ENV = originalNodeEnv
+		}
+	})
+
+	it('does not share a counter between Durable Object organizations', async () => {
+		const originalNodeEnv = process.env.NODE_ENV
+		try {
+			process.env.NODE_ENV = 'production'
+			const config = { maxRequests: 1, windowMs: 60 * 1000 }
+			const first = await runInTenantOrgScope('org_a', () =>
+				Promise.resolve(rateLimitByKey('scoped', '+15550001', config)),
+			)
+			const second = await runInTenantOrgScope('org_b', () =>
+				Promise.resolve(rateLimitByKey('scoped', '+15550001', config)),
+			)
+			const third = await runInTenantOrgScope('org_a', () =>
+				Promise.resolve(rateLimitByKey('scoped', '+15550001', config)),
+			)
+			expect(first).toEqual({ limited: false })
+			expect(second).toEqual({ limited: false })
+			expect(third.limited).toBe(true)
 		} finally {
 			process.env.NODE_ENV = originalNodeEnv
 		}
