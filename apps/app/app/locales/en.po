@@ -5781,6 +5781,10 @@ msgstr "Attach at most {SOCIAL_MAX_MEDIA} images."
 msgid "Attach secondary modifier groups that appear when this modifier item is selected by a customer (e.g. selecting \"French Fries\" prompts for \"Fry Size\")."
 msgstr "Attach secondary modifier groups that appear when this modifier item is selected by a customer (e.g. selecting \"French Fries\" prompts for \"Fry Size\")."
 
+#: ../../packages/ai/src/components/chat-attachment-list.tsx:22
+msgid "Attached images"
+msgstr "Attached images"
+
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:414
 msgid "Attempt: {attempt} • Executed: {executedAtLabel}"
 msgstr ""
@@ -28943,7 +28947,7 @@ msgid "Remove"
 msgstr ""
 
 #. placeholder {0}: attachment.name
-#: ../../packages/ai/src/components/chat-attachment-list.tsx:33
+#: ../../packages/ai/src/components/chat-attachment-list.tsx:36
 msgid "Remove {0}"
 msgstr "Remove {0}"
 

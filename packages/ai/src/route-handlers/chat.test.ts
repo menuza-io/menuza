@@ -341,6 +341,47 @@ describe('handleChat', () => {
 		expect((response as Response).status).toBe(413)
 	})
 
+	it('answers 400, not 500, to a body that is not a JSON object', async () => {
+		for (const body of ['{"messages":', '', 'null', '[]', '"text"', '12']) {
+			const request = new Request('http://localhost/api/ai/chat', {
+				method: 'POST',
+				body,
+			})
+			const response = await handleChat(
+				{ request, params: {} } as any,
+				baseDeps(),
+			)
+			expect((response as Response).status, `body: ${body}`).toBe(400)
+		}
+	})
+
+	it('reads a body that arrives in several chunks, including a split multi-byte character', async () => {
+		const bytes = new TextEncoder().encode(
+			JSON.stringify({ messages: [], note: 'caf\u00e9 \u2603' }),
+		)
+		// Cut inside the two-byte "\u00e9" so a per-chunk decode would corrupt it.
+		const cut = bytes.indexOf(0xc3) + 1
+		const stream = new ReadableStream<Uint8Array>({
+			start(controller) {
+				controller.enqueue(bytes.slice(0, cut))
+				controller.enqueue(bytes.slice(cut))
+				controller.close()
+			},
+		})
+		const request = new Request('http://localhost/api/ai/chat', {
+			method: 'POST',
+			body: stream,
+			// @ts-expect-error Node requires duplex for a streamed body.
+			duplex: 'half',
+		})
+		const response = await handleChat(
+			{ request, params: {} } as any,
+			baseDeps(),
+		)
+		// Parsed and past the attachment check: it reaches the stream, not a 400.
+		expect((response as Response).status).not.toBe(400)
+	})
+
 	it('drops everything but the known fields from an accepted image', async () => {
 		const request = new Request('http://localhost/api/ai/chat', {
 			method: 'POST',

@@ -5776,6 +5776,10 @@ msgstr "أرفق {SOCIAL_MAX_MEDIA} صور كحد أقصى."
 msgid "Attach secondary modifier groups that appear when this modifier item is selected by a customer (e.g. selecting \"French Fries\" prompts for \"Fry Size\")."
 msgstr "إرفاق مجموعات معدِّلات فرعية تظهر عندما يختار العميل هذا العنصر (مثل اختيار \"بطاطس مقلية\" يفتح \"حجم البطاطس\")."
 
+#: ../../packages/ai/src/components/chat-attachment-list.tsx:22
+msgid "Attached images"
+msgstr "الصور المرفقة"
+
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:414
 msgid "Attempt: {attempt} • Executed: {executedAtLabel}"
 msgstr "المحاولة: {attempt} • التنفيذ: {executedAtLabel}"
@@ -28935,7 +28939,7 @@ msgid "Remove"
 msgstr "إزالة"
 
 #. placeholder {0}: attachment.name
-#: ../../packages/ai/src/components/chat-attachment-list.tsx:33
+#: ../../packages/ai/src/components/chat-attachment-list.tsx:36
 msgid "Remove {0}"
 msgstr "إزالة {0}"
 

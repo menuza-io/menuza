@@ -21,7 +21,12 @@ export function isInsecureSecret(value: string) {
 	return INSECURE_SECRET_MARKERS.some((marker) => lower.includes(marker))
 }
 
-function isProductionLike() {
+/**
+ * Whether this process is a real (non-local) production deploy: a production
+ * build whose `BASE_URL` is not localhost. A production build that E2E or
+ * `npm run build` + preview runs on localhost is not.
+ */
+export function isProductionLike() {
 	if (process.env.NODE_ENV !== 'production') return false
 	// `npm run build` + preview and E2E run a production build on localhost.
 	// A missing or unparseable BASE_URL is not provably local, so enforce.
