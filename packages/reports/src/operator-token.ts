@@ -100,18 +100,18 @@ export function operatorTokenAllowsSubject(
 	)
 }
 
-function signingKey(internalCommandToken: string) {
-	if (internalCommandToken.length < 16) {
-		throw new Error('INTERNAL_COMMAND_TOKEN is not configured')
+function signingKey(signingSecret: string) {
+	if (signingSecret.length < 16) {
+		throw new Error('Report signing secret is not configured')
 	}
 	return createHash('sha256')
 		.update('tenant-operator-analytics-v1:')
-		.update(internalCommandToken)
+		.update(signingSecret)
 		.digest()
 }
 
 export async function mintOperatorAnalyticsToken(options: {
-	internalCommandToken: string
+	signingSecret: string
 	userId: string
 	orgId: string
 	role: OperatorAnalyticsRole
@@ -125,7 +125,7 @@ export async function mintOperatorAnalyticsToken(options: {
 	 */
 	scopeIds?: readonly string[] | null
 }): Promise<{ token: string; expiresAt: string }> {
-	const key = signingKey(options.internalCommandToken)
+	const key = signingKey(options.signingSecret)
 	const subjects = [...new Set(options.subjects ?? [])]
 	const staffGranted = subjects.some(
 		(subject) =>
@@ -159,13 +159,13 @@ export async function mintOperatorAnalyticsToken(options: {
 }
 
 export async function verifyOperatorAnalyticsToken(options: {
-	internalCommandToken: string
+	signingSecret: string
 	token: string
 }): Promise<OperatorAnalyticsClaims | null> {
 	try {
 		const { payload } = await jwtVerify(
 			options.token,
-			signingKey(options.internalCommandToken),
+			signingKey(options.signingSecret),
 			{
 				issuer: OPERATOR_TOKEN_ISS,
 				audience: OPERATOR_TOKEN_AUD,

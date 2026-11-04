@@ -3,7 +3,7 @@
 import { t } from '@lingui/core/macro'
 import { useLingui } from '@lingui/react'
 import { Button } from '@repo/ui/button'
-import { Icon } from '@repo/ui/icon'
+import { IconSwap } from '@repo/ui/icon-swap'
 import {
 	type ComponentProps,
 	type HTMLAttributes,
@@ -140,8 +140,6 @@ export const CodeBlockCopyButton = ({
 		}
 	}
 
-	const iconName = isCopied ? 'check' : 'copy'
-
 	return (
 		<Button
 			aria-label={_(t`Copy code`)}
@@ -151,7 +149,14 @@ export const CodeBlockCopyButton = ({
 			variant="ghost"
 			{...props}
 		>
-			{children ?? <Icon name={iconName} className="size-3.5" />}
+			{children ?? (
+				<IconSwap
+					from="copy"
+					to="check"
+					swapped={isCopied}
+					className="size-3.5"
+				/>
+			)}
 		</Button>
 	)
 }

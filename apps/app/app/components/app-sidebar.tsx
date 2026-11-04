@@ -23,6 +23,7 @@ import {
 	SidebarMenuButton,
 	useSidebar,
 } from '@repo/ui/sidebar'
+import { spring } from '@repo/ui/springs'
 import { UserIcon } from '@repo/ui/user-icon'
 import { UserRoundPlusIcon } from '@repo/ui/user-round-plus'
 import { motion } from 'motion/react'
@@ -932,7 +933,7 @@ function OrganizationSidebar({
 							className="flex min-w-0 flex-1 justify-start overflow-hidden group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:flex-none group-data-[collapsible=icon]:justify-center"
 						>
 							<Logo
-								className="h-8 max-w-full px-1.5 transition-[gap] duration-200 ease-out group-data-[collapsible=icon]:gap-0 group-data-[collapsible=icon]:px-0 motion-reduce:transition-none"
+								className="h-8 max-w-full px-1.5 transition-[gap] duration-180 ease-out group-data-[collapsible=icon]:gap-0 group-data-[collapsible=icon]:px-0 motion-reduce:transition-none"
 								aria-hidden="true"
 							/>
 						</Link>
@@ -1087,11 +1088,7 @@ export function AppSidebar({
 							x: isAccountRoute ? 0 : -300,
 							opacity: isAccountRoute ? 1 : 0,
 						}}
-						transition={{
-							duration: 0.4,
-							ease: [0.4, 0, 0.2, 1],
-							opacity: { duration: 0.3 },
-						}}
+						transition={isAccountRoute ? spring.moderate : spring.moderate.exit}
 						className="absolute inset-0 flex h-full flex-col"
 						style={{ pointerEvents: isAccountRoute ? 'auto' : 'none' }}
 						inert={!isAccountRoute ? true : undefined}
@@ -1115,11 +1112,9 @@ export function AppSidebar({
 							x: !isAccountRoute ? 0 : 300,
 							opacity: !isAccountRoute ? 1 : 0,
 						}}
-						transition={{
-							duration: 0.4,
-							ease: [0.4, 0, 0.2, 1],
-							opacity: { duration: 0.3 },
-						}}
+						transition={
+							!isAccountRoute ? spring.moderate : spring.moderate.exit
+						}
 						className="absolute inset-0 flex h-full flex-col"
 						style={{ pointerEvents: !isAccountRoute ? 'auto' : 'none' }}
 						inert={isAccountRoute ? true : undefined}

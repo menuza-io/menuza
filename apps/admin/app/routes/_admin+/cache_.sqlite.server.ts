@@ -1,7 +1,6 @@
 import crypto from 'node:crypto'
 import { cache } from '@repo/cache'
 import { getInstanceInfo } from '@repo/common/litefs'
-import { redirect } from 'react-router'
 import { ENV } from 'varlock/env'
 import { z } from 'zod'
 import { isCloudflareWorkerRuntime } from '#app/utils/runtime.server.ts'
@@ -31,7 +30,16 @@ export async function action({ request }: Route.ActionArgs) {
 	const isAuthorized = safeCompare(authHeader, `Bearer ${token}`)
 	if (!isAuthorized) {
 		// nah, you can't be here...
-		return redirect('https://www.youtube.com/watch?v=dQw4w9WgXcQ')
+		return Response.json(
+			{ error: 'Unauthorized' },
+			{
+				status: 401,
+				headers: {
+					'WWW-Authenticate': 'Bearer',
+					'Cache-Control': 'no-store',
+				},
+			},
+		)
 	}
 	const { key, cacheValue } = z
 		.object({ key: z.string(), cacheValue: z.unknown().optional() })

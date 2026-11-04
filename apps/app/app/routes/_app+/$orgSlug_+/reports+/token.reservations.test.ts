@@ -108,7 +108,7 @@ async function mint(slug: string, cookie: string) {
 		context: {},
 	} as never)) as { data: { token: string; subjects: string[] } }
 	const claims = await verifyOperatorAnalyticsToken({
-		internalCommandToken: ENV.INTERNAL_COMMAND_TOKEN || '',
+		signingSecret: ENV.OPERATOR_ANALYTICS_TOKEN || '',
 		token: result.data.token,
 	})
 	return { subjects: result.data.subjects, claims: claims! }

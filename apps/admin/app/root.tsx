@@ -21,6 +21,7 @@ import { honeypot } from '@repo/security'
 import { DirectionProvider } from '@repo/ui'
 import { EpicToaster } from '@repo/ui/sonner'
 import { TooltipProvider } from '@repo/ui/tooltip'
+import { MotionConfig } from 'motion/react'
 import { OpenImgContextProvider } from 'openimg/react'
 import {
 	data,
@@ -257,21 +258,25 @@ function AppWithProviders() {
 	useToast(data.toast)
 
 	return (
-		<HoneypotProvider {...data.honeyProps}>
-			<OpenImgContextProvider
-				optimizerEndpoint="/resources/images"
-				getSrc={getImgSrc}
-			>
-				{data.impersonationInfo && (
-					<ImpersonationBanner impersonationInfo={data.impersonationInfo} />
-				)}
-				<TooltipProvider>
-					<Outlet />
-				</TooltipProvider>
-				<EpicToaster />
-				<CookieConsentBanner consent={data.cookieConsent} />
-			</OpenImgContextProvider>
-		</HoneypotProvider>
+		// Motion components in @repo/ui (switch, slider, hover highlight) honor the
+		// OS "reduce motion" setting; opacity fades still play.
+		<MotionConfig reducedMotion="user">
+			<HoneypotProvider {...data.honeyProps}>
+				<OpenImgContextProvider
+					optimizerEndpoint="/resources/images"
+					getSrc={getImgSrc}
+				>
+					{data.impersonationInfo && (
+						<ImpersonationBanner impersonationInfo={data.impersonationInfo} />
+					)}
+					<TooltipProvider>
+						<Outlet />
+					</TooltipProvider>
+					<EpicToaster />
+					<CookieConsentBanner consent={data.cookieConsent} />
+				</OpenImgContextProvider>
+			</HoneypotProvider>
+		</MotionConfig>
 	)
 }
 

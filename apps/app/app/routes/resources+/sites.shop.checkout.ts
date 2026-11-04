@@ -5,8 +5,12 @@ import {
 	checkRateLimit,
 	createRateLimitResponse,
 	PUBLIC_SITE_RATE_LIMIT,
+	SHOP_CHECKOUT_RATE_LIMIT,
 } from '#app/utils/rate-limit.server.ts'
-import { createPublicShopCheckoutSession } from '#app/utils/shop.server.ts'
+import {
+	createPublicShopCheckoutSession,
+	findPublishedShopOrganization,
+} from '#app/utils/shop.server.ts'
 
 const checkoutSchema = z.object({
 	slug: z.string().optional(),
@@ -49,14 +53,34 @@ export async function action({ request }: ActionFunctionArgs) {
 	if (!parsed.data.slug && !parsed.data.host) {
 		return Response.json({ error: 'slug or host is required' }, { status: 400 })
 	}
+	// The creator rejects a caller-supplied email. Refuse it before the shop
+	// ceiling so that request cannot lock out other customers.
+	if (parsed.data.customerEmail) {
+		return Response.json({ error: 'Invalid request' }, { status: 400 })
+	}
+
+	const organization = await findPublishedShopOrganization({
+		slug: parsed.data.slug,
+		host: parsed.data.host,
+	})
+	if (!organization) {
+		return new Response('Organization not found', { status: 404 })
+	}
+	const shopLimit = await checkRateLimit(
+		{ type: 'org', value: organization.id },
+		SHOP_CHECKOUT_RATE_LIMIT,
+	)
+	if (!shopLimit.allowed) {
+		return createRateLimitResponse(shopLimit.resetAt)
+	}
 
 	try {
 		const { session, processor } = await createPublicShopCheckoutSession({
 			request,
 			slug: parsed.data.slug,
 			host: parsed.data.host,
+			organizationId: organization.id,
 			customerId: parsed.data.customerId,
-			customerEmail: parsed.data.customerEmail || null,
 			embed: parsed.data.embed,
 		})
 

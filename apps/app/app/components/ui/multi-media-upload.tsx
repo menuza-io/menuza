@@ -265,7 +265,7 @@ export function MultiMediaUpload({
 			{canAddMore && (
 				<div
 					className={cn(
-						'cursor-pointer rounded-lg border-2 border-dashed transition-all duration-200',
+						'cursor-pointer rounded-lg border-2 border-dashed transition-[border-color,background-color] duration-180',
 						isDragging ? 'border-primary bg-primary/5' : 'hover:border-primary',
 					)}
 					onDragOver={handleDragOver}

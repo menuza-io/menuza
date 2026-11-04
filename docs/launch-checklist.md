@@ -251,17 +251,18 @@ Generate values: `openssl rand -hex 32`
 
 ### App (`apps/app`) — required for production
 
-| Secret                       | Notes                                            |
-| ---------------------------- | ------------------------------------------------ |
-| `SESSION_SECRET`             | Session cookie signing — **must match Admin**    |
-| `HONEYPOT_SECRET`            | CSRF honeypot                                    |
-| `INTERNAL_COMMAND_TOKEN`     | Shared with Admin, tenant-api, jobs-cron         |
-| `TENANT_OPERATOR_TOKEN`      | Operator JWT for browser → tenant-api            |
-| `JWT_SECRET`                 | App/mobile operator API tokens                   |
-| `TENANT_CUSTOMER_JWT_SECRET` | **Must match US tenant-api `JWT_SECRET`**        |
-| `LAUNCH_STATUS`              | `CLOSED_BETA` \| `PUBLIC_BETA` \| `LAUNCHED`     |
-| `BASE_URL`                   | Public App origin (can also use GitHub Variable) |
-| `AUDIT_LOG_SECRET_KEY`       | Required in production                           |
+| Secret                       | Notes                                                                                  |
+| ---------------------------- | -------------------------------------------------------------------------------------- |
+| `SESSION_SECRET`             | Session cookie signing — **must match Admin**                                          |
+| `HONEYPOT_SECRET`            | CSRF honeypot                                                                          |
+| `INTERNAL_COMMAND_TOKEN`     | Shared with Admin, tenant-api, jobs-cron                                               |
+| `TENANT_OPERATOR_TOKEN`      | Operator JWT for browser → tenant-api                                                  |
+| `OPERATOR_ANALYTICS_TOKEN`   | Report JWTs. Same value on every tenant-api. Must differ from `INTERNAL_COMMAND_TOKEN` |
+| `JWT_SECRET`                 | App/mobile operator API tokens                                                         |
+| `TENANT_CUSTOMER_JWT_SECRET` | **Must match US tenant-api `JWT_SECRET`**                                              |
+| `LAUNCH_STATUS`              | `CLOSED_BETA` \| `PUBLIC_BETA` \| `LAUNCHED`                                           |
+| `BASE_URL`                   | Public App origin (can also use GitHub Variable)                                       |
+| `AUDIT_LOG_SECRET_KEY`       | Required in production                                                                 |
 
 ### App — when billing is live (`LAUNCH_STATUS=LAUNCHED`)
 
@@ -332,14 +333,15 @@ npx wrangler secret put SESSION_SECRET --env staging
 
 ### Tenant API US (`apps/tenant-api`)
 
-| Secret                   | Notes                                                          |
-| ------------------------ | -------------------------------------------------------------- |
-| `JWT_SECRET`             | Customer tokens — **matches App `TENANT_CUSTOMER_JWT_SECRET`** |
-| `AUTH_HMAC_SECRET`       | OTP / refresh hashes — unique per region                       |
-| `INTERNAL_COMMAND_TOKEN` | **Same as App**                                                |
-| `TENANT_OPERATOR_TOKEN`  | **Same as App**                                                |
-| `TWILIO_AUTH_TOKEN`      | US SMS only (not KSA production)                               |
-| `VOICE_AGENT_TOKEN`      | **Same as App** and the LiveKit agent (AI phone agent)         |
+| Secret                     | Notes                                                          |
+| -------------------------- | -------------------------------------------------------------- |
+| `JWT_SECRET`               | Customer tokens — **matches App `TENANT_CUSTOMER_JWT_SECRET`** |
+| `AUTH_HMAC_SECRET`         | OTP / refresh hashes — unique per region                       |
+| `INTERNAL_COMMAND_TOKEN`   | **Same as App**                                                |
+| `TENANT_OPERATOR_TOKEN`    | **Same as App**                                                |
+| `OPERATOR_ANALYTICS_TOKEN` | **Same as App**. Report queries answer 401 without it          |
+| `TWILIO_AUTH_TOKEN`        | US SMS only (not KSA production)                               |
+| `VOICE_AGENT_TOKEN`        | **Same as App** and the LiveKit agent (AI phone agent)         |
 
 ### Jobs cron (`apps/jobs-cron`)
 
@@ -358,6 +360,7 @@ JWT_SECRET=...          # unique to KSA
 AUTH_HMAC_SECRET=...
 INTERNAL_COMMAND_TOKEN=...   # same as App
 TENANT_OPERATOR_TOKEN=...    # same as App
+OPERATOR_ANALYTICS_TOKEN=... # same as App; must differ from INTERNAL_COMMAND_TOKEN
 APP_URL=https://app.yourdomain.com
 ROOT_APP=yourdomain.com
 ```
@@ -427,6 +430,8 @@ Wrangler dev secrets: `apps/app/.dev.vars`, `apps/tenant-api/.dev.vars`
 - [ ] Provision OCI VM + block volume at `/data/tenants`
 - [ ] Set `OCI_TENANT_KSA_HOST`, `OCI_TENANT_SSH_KEY`, `TENANT_API_URL_KSA`
 - [ ] Copy `docker-compose.yml` + `.env` to `/opt/tenant-api`
+- [ ] Set `OPERATOR_ANALYTICS_TOKEN` to the same value as App (distinct from
+      `INTERNAL_COMMAND_TOKEN`)
 - [ ] Verify: `curl $TENANT_API_URL_KSA/api/health` → `"region":"ksa"`
 
 ### 7. CMS (Vercel — optional)

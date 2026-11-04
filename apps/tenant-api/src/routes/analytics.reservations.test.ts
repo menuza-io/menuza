@@ -36,7 +36,7 @@ import {
 import { analyticsRoutes } from './analytics.ts'
 import { publicContext } from './reservations-public-fixture.ts'
 
-const INTERNAL = 'test-reservations-analytics-internal-token-32chars!!'
+const ANALYTICS_TOKEN = 'test-reservations-analytics-signing-secret-32chars!!'
 const ORG = 'org_rsv_analytics'
 const LOC = 'loc_a'
 const LOC_B = 'loc_b'
@@ -79,7 +79,7 @@ async function query(
 	} = {},
 ) {
 	const { token } = await mintOperatorAnalyticsToken({
-		internalCommandToken: INTERNAL,
+		signingSecret: ANALYTICS_TOKEN,
 		userId: 'usr_analytics',
 		orgId: ORG,
 		role: 'operator',
@@ -110,7 +110,7 @@ describe('/analytics/query on reservations subjects', () => {
 		tempDir = mkdtempSync(path.join(tmpdir(), 'rsv-analytics-'))
 		process.env.TENANT_DB_DIR = tempDir
 		process.env.DATA_REGION = 'us'
-		process.env.INTERNAL_COMMAND_TOKEN = INTERNAL
+		process.env.OPERATOR_ANALYTICS_TOKEN = ANALYTICS_TOKEN
 		resetReservationsContextCache()
 		orgs.set(ORG, {
 			id: ORG,

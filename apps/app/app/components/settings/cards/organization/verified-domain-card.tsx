@@ -85,7 +85,7 @@ export default function VerifiedDomainCard({
 				</CardDescription>
 			</CardHeader>
 			<div
-				className={`grid transition-[grid-template-rows] duration-300 ease-out ${
+				className={`grid transition-[grid-template-rows] duration-240 ease-out ${
 					isChecked ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
 				}`}
 			>

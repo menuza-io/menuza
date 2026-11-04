@@ -24,30 +24,40 @@ export async function action({ request }: Route.ActionArgs) {
 			),
 		)
 	const token = ENV.INTERNAL_COMMAND_TOKEN
-	const results = await Promise.allSettled(
-		organizations.map(async (organization) => {
-			const { tenantApiUrl } = resolveRegionalTenantApiUrls(
-				organization.dataRegion,
-			)
-			const response = await fetch(
-				`${tenantApiUrl}/api/forms/purge-submissions`,
-				{
-					method: 'POST',
-					headers: {
-						Authorization: `Bearer ${token}`,
-						'Content-Type': 'application/json',
-					},
-					body: JSON.stringify({
-						orgId: organization.id,
-						retentionDays: FORM_SUBMISSION_RETENTION_DAYS,
-					}),
-					signal: AbortSignal.timeout(10_000),
-				},
-			)
-			if (!response.ok) throw new Error(`Purge failed with ${response.status}`)
-			return (await response.json()) as { deleted: number }
-		}),
-	)
+	const results: PromiseSettledResult<{ deleted: number }>[] = []
+	// One purge per organization, a few at a time, so a manual run cannot
+	// open every regional database at once. The daily cron stays unscheduled.
+	for (let index = 0; index < organizations.length; index += 8) {
+		const batch = organizations.slice(index, index + 8)
+		results.push(
+			...(await Promise.allSettled(
+				batch.map(async (organization) => {
+					const { tenantApiUrl } = resolveRegionalTenantApiUrls(
+						organization.dataRegion,
+					)
+					const response = await fetch(
+						`${tenantApiUrl}/api/forms/purge-submissions`,
+						{
+							method: 'POST',
+							headers: {
+								Authorization: `Bearer ${token}`,
+								'Content-Type': 'application/json',
+							},
+							body: JSON.stringify({
+								orgId: organization.id,
+								retentionDays: FORM_SUBMISSION_RETENTION_DAYS,
+							}),
+							signal: AbortSignal.timeout(10_000),
+						},
+					)
+					if (!response.ok) {
+						throw new Error(`Purge failed with ${response.status}`)
+					}
+					return (await response.json()) as { deleted: number }
+				}),
+			)),
+		)
+	}
 
 	const deleted = results.reduce(
 		(total, result) =>

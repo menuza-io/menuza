@@ -20,7 +20,8 @@ describe('site preview frame-src', () => {
 	})
 
 	it('allows tenant Sites on the live brand domain from the request host', () => {
-		expect(sitePreviewFrameSrc({}, 'app.preview.example.dev')).toEqual(
+		const sources = sitePreviewFrameSrc({}, 'app.preview.example.dev')
+		expect(sources).toEqual(
 			expect.arrayContaining([
 				"'self'",
 				'*.preview.example.dev',
@@ -28,6 +29,7 @@ describe('site preview frame-src', () => {
 				`*.${getBrandDomain()}`,
 			]),
 		)
+		expect(sources.join(' ')).not.toContain('builder.io')
 	})
 
 	it('includes PUBLIC_SITE_HOST_SUFFIXES from env', () => {

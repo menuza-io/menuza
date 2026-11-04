@@ -182,13 +182,13 @@ afterEach(async () => {
 })
 
 describe('POST /resources/staffing/notify authentication and shape', () => {
-	it('answers 403 (not a redirect) without the internal token, and does nothing', async () => {
+	it('answers 401 without the internal token, and does nothing', async () => {
 		const { organization } = await setupTestOrgWithUser('admin')
 		await turnOn(organization.id)
 		const response = await call(eventFor(organization.id, null), {
 			authorized: false,
 		})
-		expect(response.status).toBe(403)
+		expect(response.status).toBe(401)
 		expect(sendEmailMock).not.toHaveBeenCalled()
 	})
 

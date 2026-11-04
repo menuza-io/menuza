@@ -185,6 +185,34 @@ describe('Durable Object routing of staff tokens', () => {
 		expect(orgId).toBe(ORG_B)
 	})
 
+	it('does not let ?orgId= steer a staff token into another Durable Object', async () => {
+		const token = await mintStaffToken({ orgId: ORG_B })
+		const orgId = await resolveOrgId(
+			new Request(`https://api.test/operator/staff?orgId=${ORG_A}`, {
+				headers: { Authorization: `Bearer ${token}` },
+			}),
+			env,
+		)
+		expect(orgId).toBe(ORG_B)
+		expect(
+			await resolveOrgId(
+				new Request(`https://api.test/operator/staff?orgId=${ORG_A}`),
+				env,
+			),
+		).toBeNull()
+	})
+
+	it('still routes a server GET by query orgId', async () => {
+		expect(
+			await resolveOrgId(
+				new Request(
+					`https://api.test/api/journeys/definitions/j1?orgId=${ORG_A}`,
+				),
+				env,
+			),
+		).toBe(ORG_A)
+	})
+
 	it('does not route unsigned, foreign-audience or foreign-secret tokens', async () => {
 		for (const token of [
 			await mintStaffToken({ secret: 'another-secret-another-secret-123' }),

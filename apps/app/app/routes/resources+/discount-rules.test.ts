@@ -31,13 +31,13 @@ describe('GET /resources/discount-rules', () => {
 	it('refuses a request without the internal token, or with a wrong one', async () => {
 		const { organization } = await setupTestOrgWithUser('admin')
 		const missing = await callLoader(get(organization.id))
-		expect(missing.status).toBe(403)
+		expect(missing.status).toBe(401)
 		const wrong = await callLoader(get(organization.id, 'Bearer nope'))
-		expect(wrong.status).toBe(403)
+		expect(wrong.status).toBe(401)
 		const unprefixed = await callLoader(
 			get(organization.id, ENV.INTERNAL_COMMAND_TOKEN),
 		)
-		expect(unprefixed.status).toBe(403)
+		expect(unprefixed.status).toBe(401)
 		expect(build).not.toHaveBeenCalled()
 	})
 

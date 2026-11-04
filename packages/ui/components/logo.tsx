@@ -27,7 +27,7 @@ export function Logo({
 					></path>
 				</svg>
 			</div>
-			<div className="max-w-40 overflow-hidden whitespace-nowrap opacity-100 transition-[max-width,opacity] duration-150 ease-out group-data-[collapsible=icon]:max-w-0 group-data-[collapsible=icon]:opacity-0 motion-reduce:transition-none">
+			<div className="max-w-40 overflow-hidden whitespace-nowrap opacity-100 transition-[max-width,opacity] duration-160 ease-out group-data-[collapsible=icon]:max-w-0 group-data-[collapsible=icon]:opacity-0 motion-reduce:transition-none">
 				{brand.name}
 			</div>
 		</div>

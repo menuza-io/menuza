@@ -137,9 +137,9 @@ describe('internal restaurant order context', () => {
 		buildDrop.mockReset().mockResolvedValue(null)
 	})
 
-	it('requires internal command authentication (403, not a redirect)', async () => {
+	it('requires internal command authentication (401, not a redirect)', async () => {
 		const response = await loader(args({}, false))
-		expect(response.status).toBe(403)
+		expect(response.status).toBe(401)
 		expect(findOrg).not.toHaveBeenCalled()
 	})
 

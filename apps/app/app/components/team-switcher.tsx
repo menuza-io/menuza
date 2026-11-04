@@ -165,7 +165,7 @@ export function TeamSwitcher() {
 								</div>
 								<Icon
 									name="chevron-down"
-									className="text-muted-foreground size-3.5 shrink-0 transition-transform duration-200 ease-out group-data-popup-open/org:rotate-180 group-data-[collapsible=icon]:hidden motion-reduce:transition-none"
+									className="text-muted-foreground size-3.5 shrink-0 transition-transform duration-180 ease-out group-data-popup-open/org:rotate-180 group-data-[collapsible=icon]:hidden motion-reduce:transition-none"
 								/>
 							</SidebarMenuButton>
 						}

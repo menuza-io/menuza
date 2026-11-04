@@ -506,6 +506,7 @@ export async function createPublicShopCheckoutSession(options: {
 	request: Request
 	slug?: string | null
 	host?: string | null
+	organizationId?: string | null
 	customerId?: string | null
 	customerEmail?: string | null
 	embed?: boolean
@@ -515,7 +516,10 @@ export async function createPublicShopCheckoutSession(options: {
 		host: options.host,
 	})
 
-	if (!organization) {
+	if (
+		!organization ||
+		(options.organizationId && organization.id !== options.organizationId)
+	) {
 		throw new Response('Organization not found', { status: 404 })
 	}
 
@@ -586,6 +590,7 @@ export async function createPublicShopPaymentIntent(options: {
 	request: Request
 	slug?: string | null
 	host?: string | null
+	organizationId?: string | null
 	customerId?: string | null
 }) {
 	const organization = await findPublishedShopOrganization({
@@ -593,7 +598,10 @@ export async function createPublicShopPaymentIntent(options: {
 		host: options.host,
 	})
 
-	if (!organization) {
+	if (
+		!organization ||
+		(options.organizationId && organization.id !== options.organizationId)
+	) {
 		throw new Response('Organization not found', { status: 404 })
 	}
 

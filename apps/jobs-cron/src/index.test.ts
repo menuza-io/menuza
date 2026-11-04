@@ -1145,13 +1145,8 @@ describe('Jobs-Cron Worker Endpoints', () => {
 			].map((match) => match[1])
 			expect(crons.length).toBeLessThanOrEqual(5)
 			expect(crons).toContain('0 * * * *')
-			for (const [cron, paths] of Object.entries(JOB_ROUTES)) {
-				if (paths.includes('/resources/jobs/form-submission-retention')) {
-					// Deliberately unscheduled until form retention is turned on.
-					expect(crons).not.toContain(cron)
-				} else {
-					expect(crons).toContain(cron)
-				}
+			for (const [cron] of Object.entries(JOB_ROUTES)) {
+				expect(crons).toContain(cron)
 			}
 		})
 

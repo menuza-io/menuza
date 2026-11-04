@@ -23,6 +23,7 @@ import { staffOperatorRoutes } from '../src/routes/staff.ts'
 export const OPERATOR_SECRET = 'test-operator-token-very-long-and-secure-12345'
 export const HMAC_SECRET = 'test-hmac-secret-123456789'
 export const INTERNAL_TOKEN = 'test-internal-token-very-long-and-secure-12345'
+export const ANALYTICS_TOKEN = 'test-analytics-token-very-long-and-secure-12345'
 export const JWT_SECRET = 'test-jwt-secret-123456789'
 
 export const ORG_A = 'clw9x0a12000008l00staffa'
@@ -127,6 +128,7 @@ export function stubStaffEnv(directory: string, region: 'us' | 'ksa' = 'us') {
 	vi.stubEnv('TENANT_DB_DIR', directory)
 	vi.stubEnv('DATA_REGION', region)
 	vi.stubEnv('INTERNAL_COMMAND_TOKEN', INTERNAL_TOKEN)
+	vi.stubEnv('OPERATOR_ANALYTICS_TOKEN', ANALYTICS_TOKEN)
 	vi.stubEnv('TENANT_OPERATOR_TOKEN', OPERATOR_SECRET)
 	vi.stubEnv('JWT_SECRET', JWT_SECRET)
 	vi.stubEnv('AUTH_HMAC_SECRET', HMAC_SECRET)

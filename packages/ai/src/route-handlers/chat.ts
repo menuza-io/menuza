@@ -101,6 +101,143 @@ export interface ChatDependencies {
 	) => Promise<void>
 }
 
+/** Limits on images attached to a chat message. The client downsizes them and
+ *  keeps only the last few in a request, so these only stop a request that
+ *  skipped the client. */
+export const MAX_CHAT_IMAGES = 12
+export const MAX_CHAT_IMAGES_PER_MESSAGE = 4
+export const MAX_CHAT_IMAGE_URL_LENGTH = 3_000_000
+
+const INLINE_IMAGE_URL = /^data:(image\/(?:png|jpeg|webp|gif));base64,/
+const BASE64_BODY = /^[A-Za-z0-9+/]*={0,2}$/
+/** Largest request body read at all: the image caps plus room for the text. */
+export const MAX_CHAT_BODY_BYTES = 40_000_000
+
+/**
+ * Reads the request body as text, giving up as soon as more than `maxBytes`
+ * have arrived (and cancelling the rest), so an oversized or unannounced body
+ * is never held in memory whole. Returns null when the limit is exceeded.
+ */
+async function readTextWithLimit(
+	request: Request,
+	maxBytes: number,
+): Promise<string | null> {
+	const reader = request.body?.getReader()
+	if (!reader) return ''
+	const decoder = new TextDecoder()
+	let received = 0
+	let text = ''
+	for (;;) {
+		const { done, value } = await reader.read()
+		if (done) break
+		received += value.byteLength
+		if (received > maxBytes) {
+			await reader.cancel()
+			return null
+		}
+		text += decoder.decode(value, { stream: true })
+	}
+	return text + decoder.decode()
+}
+
+/** Whether the first bytes of the decoded data are those of the declared type. */
+function hasImageSignature(mediaType: string, base64: string): boolean {
+	let bytes: Uint8Array
+	try {
+		// 24 characters decode to 18 bytes, enough for every signature below.
+		const head = base64.slice(0, 24)
+		bytes = Uint8Array.from(
+			atob(head.padEnd(Math.ceil(head.length / 4) * 4, '=')),
+			(c) => c.charCodeAt(0),
+		)
+	} catch {
+		return false
+	}
+	const at = (index: number) => bytes[index] ?? -1
+	switch (mediaType) {
+		case 'image/png':
+			return (
+				at(0) === 0x89 && at(1) === 0x50 && at(2) === 0x4e && at(3) === 0x47
+			)
+		case 'image/jpeg':
+			return at(0) === 0xff && at(1) === 0xd8 && at(2) === 0xff
+		case 'image/gif':
+			return (
+				at(0) === 0x47 && at(1) === 0x49 && at(2) === 0x46 && at(3) === 0x38
+			)
+		case 'image/webp':
+			return (
+				at(0) === 0x52 &&
+				at(1) === 0x49 &&
+				at(2) === 0x46 &&
+				at(3) === 0x46 &&
+				at(8) === 0x57 &&
+				at(9) === 0x45 &&
+				at(10) === 0x42 &&
+				at(11) === 0x50
+			)
+		default:
+			return false
+	}
+}
+
+/**
+ * Checks every file part and returns a refusal for anything that is not a
+ * small, inline, base64 PNG/JPEG/WebP/GIF whose bytes match its declared type.
+ * A remote URL would make the server fetch whatever the client names, and a
+ * provider reference would make the model use something other than the bytes
+ * that were checked.
+ *
+ * It also CHANGES `rawMessages`: each accepted part is replaced by one rebuilt
+ * from the known fields only, so nothing else the client attached reaches the
+ * model.
+ */
+export function sanitizeChatAttachments(rawMessages: unknown): Response | null {
+	if (!Array.isArray(rawMessages)) {
+		return new Response('Invalid messages', { status: 400 })
+	}
+	let images = 0
+	for (const message of rawMessages) {
+		const parts = (message as { parts?: unknown })?.parts
+		if (!Array.isArray(parts)) continue
+		let inMessage = 0
+		for (let index = 0; index < parts.length; index++) {
+			const part = parts[index] as Record<string, unknown> | null
+			if (part?.type !== 'file') continue
+			const { url, mediaType, filename } = part
+			const match = typeof url === 'string' ? INLINE_IMAGE_URL.exec(url) : null
+			if (!match || typeof mediaType !== 'string' || mediaType !== match[1]) {
+				return new Response('Only images can be attached', { status: 400 })
+			}
+			const urlText = url as string
+			if (urlText.length > MAX_CHAT_IMAGE_URL_LENGTH) {
+				return new Response('That image is too large', { status: 413 })
+			}
+			const payload = urlText.slice(match[0].length)
+			if (
+				!BASE64_BODY.test(payload) ||
+				!hasImageSignature(mediaType, payload)
+			) {
+				return new Response('Only images can be attached', { status: 400 })
+			}
+			inMessage += 1
+			images += 1
+			if (inMessage > MAX_CHAT_IMAGES_PER_MESSAGE || images > MAX_CHAT_IMAGES) {
+				return new Response('Too many images', { status: 413 })
+			}
+			parts[index] = {
+				type: 'file',
+				mediaType,
+				url,
+				...(typeof filename === 'string'
+					? { filename: filename.slice(0, 200) }
+					: {}),
+			}
+		}
+	}
+	return null
+}
+
 async function convertIncomingMessages(
 	rawMessages: unknown[],
 	tools?: Record<string, any>,
@@ -194,13 +331,24 @@ export async function handleChat(
 	const noteId = url.searchParams.get('noteId')
 	const orgSlug = url.searchParams.get('orgSlug')
 
-	const body = (await request.json()) as {
+	// Read the body with a real limit. The Content-Length header is only a hint
+	// (it can be missing, chunked or understated), so it is checked first for a
+	// cheap refusal and the bytes are counted as they arrive either way.
+	const declaredLength = Number(request.headers.get('content-length'))
+	if (declaredLength > MAX_CHAT_BODY_BYTES) {
+		return new Response('Request too large', { status: 413 })
+	}
+	const text = await readTextWithLimit(request, MAX_CHAT_BODY_BYTES)
+	if (text === null) return new Response('Request too large', { status: 413 })
+	const body = JSON.parse(text) as {
 		messages: unknown[]
 		pageId?: string | null
 		currentPath?: unknown
 		params?: unknown
 	}
 	const { messages: rawMessages } = body
+	const attachmentRefusal = sanitizeChatAttachments(rawMessages)
+	if (attachmentRefusal) return attachmentRefusal
 	const pageId = url.searchParams.get('pageId') ?? body.pageId ?? null
 
 	// When noteId is absent, attach app-navigation tools plus (when allowed)

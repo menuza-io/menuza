@@ -43,7 +43,7 @@ export function ColorSwatch({
 								}
 							: { 'aria-pressed': selected })}
 						className={cn(
-							'size-6 rounded-full transition-[box-shadow,transform] duration-150 ease-out',
+							'size-6 rounded-full transition-[box-shadow,scale] duration-160 ease-out',
 							'focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none',
 							'disabled:pointer-events-none disabled:opacity-50',
 							selected

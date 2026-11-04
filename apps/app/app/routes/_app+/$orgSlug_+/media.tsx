@@ -31,11 +31,11 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from '@repo/ui/dialog'
+import { FluidSlider } from '@repo/ui/fluid-slider'
 import { Icon } from '@repo/ui/icon'
 import { Input } from '@repo/ui/input'
 import { Label } from '@repo/ui/label'
 import { PageHeader } from '@repo/ui/page-header'
-import { Slider } from '@repo/ui/slider'
 import { Textarea } from '@repo/ui/textarea'
 import { format, formatDistanceToNow } from 'date-fns'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -921,7 +921,7 @@ export default function MediaLibraryRoute({
 									<img
 										src={asset.url}
 										alt={asset.altText ?? ''}
-										className="size-full object-cover motion-safe:transition-transform motion-safe:duration-300 motion-safe:group-hover:scale-[1.02]"
+										className="size-full object-cover motion-safe:transition-transform motion-safe:duration-240 motion-safe:group-hover:scale-[1.02]"
 										loading="lazy"
 										width={360}
 										height={360}
@@ -1871,93 +1871,54 @@ function MediaDetailsDialog({
 
 							{/* Adjustment Sliders Grid */}
 							<div className="bg-muted/30 grid grid-cols-1 gap-4 rounded-lg border p-4 sm:grid-cols-2 md:grid-cols-4">
-								<div className="space-y-1.5">
-									<div className="text-foreground flex justify-between text-xs">
-										<Label className="text-xs font-normal">
-											<Trans>Brightness</Trans>
-										</Label>
-										<span className="text-muted-foreground font-mono">
-											{brightness}%
-										</span>
-									</div>
-									<Slider
-										variant="pill"
-										min={50}
-										max={150}
-										value={brightness}
-										onValueChange={(val) => {
-											setActivePreset(null)
-											setBrightness(typeof val === 'number' ? val : val[0])
-										}}
-										aria-label={_(msg`Brightness`)}
-									/>
-								</div>
-
-								<div className="space-y-1.5">
-									<div className="text-foreground flex justify-between text-xs">
-										<Label className="text-xs font-normal">
-											<Trans>Contrast</Trans>
-										</Label>
-										<span className="text-muted-foreground font-mono">
-											{contrast}%
-										</span>
-									</div>
-									<Slider
-										variant="pill"
-										min={50}
-										max={150}
-										value={contrast}
-										onValueChange={(val) => {
-											setActivePreset(null)
-											setContrast(typeof val === 'number' ? val : val[0])
-										}}
-										aria-label={_(msg`Contrast`)}
-									/>
-								</div>
-
-								<div className="space-y-1.5">
-									<div className="text-foreground flex justify-between text-xs">
-										<Label className="text-xs font-normal">
-											<Trans>Saturation</Trans>
-										</Label>
-										<span className="text-muted-foreground font-mono">
-											{saturation}%
-										</span>
-									</div>
-									<Slider
-										variant="pill"
-										min={0}
-										max={200}
-										value={saturation}
-										onValueChange={(val) => {
-											setActivePreset(null)
-											setSaturation(typeof val === 'number' ? val : val[0])
-										}}
-										aria-label={_(msg`Saturation`)}
-									/>
-								</div>
-
-								<div className="space-y-1.5">
-									<div className="text-foreground flex justify-between text-xs">
-										<Label className="text-xs font-normal">
-											<Trans>Grayscale</Trans>
-										</Label>
-										<span className="text-muted-foreground font-mono">
-											{grayscale}%
-										</span>
-									</div>
-									<Slider
-										variant="pill"
-										min={0}
-										max={100}
-										value={grayscale}
-										onValueChange={(val) => {
-											setActivePreset(null)
-											setGrayscale(typeof val === 'number' ? val : val[0])
-										}}
-										aria-label={_(msg`Grayscale`)}
-									/>
-								</div>
+								<FluidSlider
+									variant="scrubber"
+									label={_(msg`Brightness`)}
+									min={50}
+									max={150}
+									value={brightness}
+									formatValue={(value) => `${value}%`}
+									onChange={(value) => {
+										setActivePreset(null)
+										setBrightness(value)
+									}}
+								/>
+								<FluidSlider
+									variant="scrubber"
+									label={_(msg`Contrast`)}
+									min={50}
+									max={150}
+									value={contrast}
+									formatValue={(value) => `${value}%`}
+									onChange={(value) => {
+										setActivePreset(null)
+										setContrast(value)
+									}}
+								/>
+								<FluidSlider
+									variant="scrubber"
+									label={_(msg`Saturation`)}
+									min={0}
+									max={200}
+									value={saturation}
+									formatValue={(value) => `${value}%`}
+									onChange={(value) => {
+										setActivePreset(null)
+										setSaturation(value)
+									}}
+								/>
+								<FluidSlider
+									variant="scrubber"
+									label={_(msg`Grayscale`)}
+									min={0}
+									max={100}
+									value={grayscale}
+									formatValue={(value) => `${value}%`}
+									onChange={(value) => {
+										setActivePreset(null)
+										setGrayscale(value)
+									}}
+								/>
 							</div>
 						</div>
 

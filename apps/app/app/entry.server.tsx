@@ -83,7 +83,6 @@ async function applyInstanceHeaders(responseHeaders: Headers) {
 export function applyContentSecurity(
 	responseHeaders: Headers,
 	nonce: string,
-	builderMode: boolean,
 	requestHost?: string | null,
 ) {
 	contentSecurity(responseHeaders, {
@@ -131,18 +130,8 @@ export function applyContentSecurity(
 					'img-src': ["'self'", 'data:', 'blob:'],
 					// Voice previews are same-origin; call recordings play from the bucket.
 					'media-src': ["'self'", ...recordingMediaSrc(ENV)],
-					'script-src': builderMode
-						? [
-								"'unsafe-inline'",
-								"'unsafe-eval'",
-								"'self'",
-								`'nonce-${nonce}'`,
-								'https://cdn.builder.io',
-							]
-						: ["'strict-dynamic'", "'self'", `'nonce-${nonce}'`],
-					'script-src-attr': builderMode
-						? [`'nonce-${nonce}'`, "'unsafe-inline'"]
-						: [`'nonce-${nonce}'`],
+					'script-src': ["'strict-dynamic'", "'self'", `'nonce-${nonce}'`],
+					'script-src-attr': [`'nonce-${nonce}'`],
 					'worker-src': ["'self'", 'blob:', 'data:'],
 				},
 			},
@@ -167,10 +156,6 @@ export default async function handleRequest(...args: DocRequestArgs) {
 	const locale = await linguiServer.getLocale(request)
 	await loadCatalog(locale)
 
-	const builderMode =
-		MODE === 'development' &&
-		request.url.includes('builder.my') &&
-		!isCloudflareWorkerRuntime()
 	const requestHost =
 		request.headers.get('x-forwarded-host') ?? request.headers.get('host')
 
@@ -201,7 +186,7 @@ export default async function handleRequest(...args: DocRequestArgs) {
 
 	responseHeaders.set('Content-Type', 'text/html')
 	responseHeaders.append('Server-Timing', timings.toString())
-	applyContentSecurity(responseHeaders, nonce, builderMode, requestHost)
+	applyContentSecurity(responseHeaders, nonce, requestHost)
 
 	return new Response(stream, {
 		headers: responseHeaders,

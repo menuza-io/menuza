@@ -134,7 +134,7 @@ export default function NewWebsiteFormRoute() {
 								onClick={() => setSelected(template.id)}
 								aria-pressed={selected === template.id}
 								className={cn(
-									'border-border bg-card hover:border-primary/50 focus-visible:ring-ring rounded-xl border p-5 text-left transition-[border-color,box-shadow,transform] duration-150 focus-visible:ring-2 focus-visible:outline-none active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100',
+									'border-border bg-card hover:border-primary/50 focus-visible:ring-ring rounded-xl border p-5 text-left transition-[border-color,box-shadow,transform,scale] duration-160 focus-visible:ring-2 focus-visible:outline-none active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100',
 									selected === template.id &&
 										'border-primary ring-primary/15 ring-4',
 								)}

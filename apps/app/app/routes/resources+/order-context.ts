@@ -75,11 +75,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	try {
 		await requireInternalCommandAuth(request)
 	} catch (error) {
-		// Machine-to-machine endpoint: surface a plain 403 instead of the
-		// browser-facing redirect used by human-facing pages.
-		if (error instanceof Response && error.status === 302) {
-			return new Response('Forbidden', { status: 403 })
-		}
+		// Machine-to-machine endpoint: the 401 from internal auth is the answer.
+		if (error instanceof Response && error.status === 401) return error
 		throw error
 	}
 

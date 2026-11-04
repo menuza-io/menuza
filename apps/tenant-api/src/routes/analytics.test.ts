@@ -256,8 +256,8 @@ describe('loadPhoneCallRecords', () => {
 			{ daysAgo: 40, phone: '+15550000002' },
 		])
 		const internalCommandToken = 'analytics-internal-token-1234567890'
-		const previousToken = process.env.INTERNAL_COMMAND_TOKEN
-		process.env.INTERNAL_COMMAND_TOKEN = internalCommandToken
+		const previousToken = process.env.OPERATOR_ANALYTICS_TOKEN
+		process.env.OPERATOR_ANALYTICS_TOKEN = internalCommandToken
 		process.env.DATA_REGION = 'us'
 		vi.mocked(findActiveOrganizationById).mockResolvedValue({
 			id: orgId,
@@ -270,7 +270,7 @@ describe('loadPhoneCallRecords', () => {
 		vi.useFakeTimers({ now, toFake: ['Date'] })
 		try {
 			const { token } = await mintOperatorAnalyticsToken({
-				internalCommandToken,
+				signingSecret: internalCommandToken,
 				userId: 'user_1',
 				orgId,
 				role: 'admin',
@@ -290,25 +290,25 @@ describe('loadPhoneCallRecords', () => {
 			expect(body).not.toHaveProperty('sourceTruncated')
 		} finally {
 			vi.useRealTimers()
-			process.env.INTERNAL_COMMAND_TOKEN = previousToken ?? ''
+			process.env.OPERATOR_ANALYTICS_TOKEN = previousToken ?? ''
 		}
 	})
 })
 
 describe('POST /query', () => {
 	const internalCommandToken = 'analytics-internal-token-1234567890'
-	const previousToken = process.env.INTERNAL_COMMAND_TOKEN
+	const previousToken = process.env.OPERATOR_ANALYTICS_TOKEN
 	afterEach(() => {
-		process.env.INTERNAL_COMMAND_TOKEN = previousToken
+		process.env.OPERATOR_ANALYTICS_TOKEN = previousToken
 	})
 
 	it('refuses phone call reports without the phone call permission', async () => {
-		process.env.INTERNAL_COMMAND_TOKEN = internalCommandToken
+		process.env.OPERATOR_ANALYTICS_TOKEN = internalCommandToken
 		const definition = organizationTemplates().find(
 			(template) => template.definition.subject === 'phone_calls',
 		)!.definition
 		const { token } = await mintOperatorAnalyticsToken({
-			internalCommandToken,
+			signingSecret: internalCommandToken,
 			userId: 'user_1',
 			orgId: 'org_1',
 			role: 'admin',
@@ -330,11 +330,11 @@ describe('POST /query order reports', () => {
 	const internalCommandToken = 'analytics-internal-token-1234567890'
 	const orgId = 'clw9x0a12000008l00report02'
 	const now = new Date('2026-03-20T12:00:00Z')
-	const previousToken = process.env.INTERNAL_COMMAND_TOKEN
+	const previousToken = process.env.OPERATOR_ANALYTICS_TOKEN
 	let tempDir: string
 
 	beforeEach(async () => {
-		process.env.INTERNAL_COMMAND_TOKEN = internalCommandToken
+		process.env.OPERATOR_ANALYTICS_TOKEN = internalCommandToken
 		process.env.DATA_REGION = 'us'
 		tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tenant-api-order-report-'))
 		process.env.TENANT_DB_DIR = tempDir
@@ -352,7 +352,7 @@ describe('POST /query order reports', () => {
 
 	afterEach(async () => {
 		vi.useRealTimers()
-		process.env.INTERNAL_COMMAND_TOKEN = previousToken ?? ''
+		process.env.OPERATOR_ANALYTICS_TOKEN = previousToken ?? ''
 		await destroyTenantDb(orgId).catch(() => {})
 		fs.rmSync(tempDir, { recursive: true, force: true })
 	})
@@ -367,7 +367,7 @@ describe('POST /query order reports', () => {
 		subjects: readonly RestrictedReportSubject[] = [],
 	) {
 		const { token } = await mintOperatorAnalyticsToken({
-			internalCommandToken,
+			signingSecret: internalCommandToken,
 			userId: 'user_1',
 			orgId,
 			role: 'operator',

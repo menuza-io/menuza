@@ -24,6 +24,19 @@ const hasPostHogSourceMapCredentials = Boolean(
 	process.env.POSTHOG_PERSONAL_API_KEY && process.env.POSTHOG_PROJECT_ID,
 )
 
+/**
+ * Miniflare's local trace store (`.wrangler/state/v3/observability`) grows
+ * without bound (several GB in two weeks). @cloudflare/vite-plugin turns local
+ * capture on by default and only reads the `X_LOCAL_OBSERVABILITY` env var for
+ * it: the Worker config's `observability.enabled` does not affect it, so that
+ * stays on in wrangler.jsonc for the deployed Worker. Set the variable
+ * yourself (`X_LOCAL_OBSERVABILITY=true`) to get traces in the Local Explorer.
+ */
+function disableLocalWorkerObservability(command: string): null {
+	if (command === 'serve') process.env.X_LOCAL_OBSERVABILITY ??= 'false'
+	return null
+}
+
 function cloudflareWorkerAliasPlugin(): Plugin | null {
 	if (!isCloudflare) return null
 	const workerFile = (name: string) => `${appDir}/workers/${name}`
@@ -206,15 +219,8 @@ export default defineConfig((config) => ({
 		cloudflareWorkerAliasPlugin(),
 		...(isCloudflare
 			? [
-					cloudflare({
-						viteEnvironment: { name: 'ssr' },
-						// miniflare's local trace store grows without bound (9+ GB); keep
-						// observability on in the deployed config, off for local dev.
-						config:
-							config.command === 'serve'
-								? { observability: { enabled: false } }
-								: undefined,
-					}),
+					disableLocalWorkerObservability(config.command),
+					cloudflare({ viteEnvironment: { name: 'ssr' } }),
 				]
 			: [varlockVitePlugin()]),
 		MODE === 'test' ? stubCacheServerPlugin() : null,
