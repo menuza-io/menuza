@@ -1,4 +1,5 @@
 import { router, type Href } from 'expo-router'
+import { isValidRedirectPath } from './utils'
 
 /**
  * Handle deep link URLs for authentication flows
@@ -32,7 +33,13 @@ export const handleDeepLink = (url: string): void => {
 			const type = searchParams.get('type')
 			const target = searchParams.get('target')
 			const code = searchParams.get('code')
-			const redirectTo = searchParams.get('redirectTo')
+			// A link can come from any app or page, so only an in-app path may
+			// ride along to sign-in. Anything else is dropped, not forwarded.
+			const requestedRedirect = searchParams.get('redirectTo')
+			const redirectTo =
+				requestedRedirect && isValidRedirectPath(requestedRedirect)
+					? requestedRedirect
+					: null
 
 			if (type && target && code) {
 				// Navigate to verification screen with pre-filled data
