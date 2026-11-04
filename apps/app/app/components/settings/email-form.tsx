@@ -44,10 +44,6 @@ export function EmailChangeForm({
 					your inbox and follow the instructions to verify your new email
 					address.
 				</p>
-				<p className="text-sm">
-					Verification code:{' '}
-					<strong>{fetcher.data.verificationInfo.otp}</strong>
-				</p>
 				<div className="mt-4 flex justify-end">
 					<Button onClick={() => setIsOpen(false)}>Close</Button>
 				</div>
