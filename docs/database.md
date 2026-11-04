@@ -146,11 +146,13 @@ The control-plane migrations (`packages/database/drizzle`) diverged the same
 way: the fork's `0021` to `0027` shipped before upstream's print and social
 migrations, so upstream's files land here under the next free index.
 
-| Change       | Upstream            | Here                                                      |
-| ------------ | ------------------- | --------------------------------------------------------- |
-| Print shop   | `0020_print_shop`   | `0027_print_shop` (same SQL; upstream's file is not kept) |
-| Canva        | `0021_print_canva`  | `0028_print_canva` (same SQL)                             |
-| Social media | `0022_social_media` | `0029_social_media` (same SQL)                            |
+| Change                  | Upstream                         | Here                                                                        |
+| ----------------------- | -------------------------------- | --------------------------------------------------------------------------- |
+| Print shop              | `0020_print_shop`                | `0027_print_shop` (same SQL; upstream's file is not kept)                   |
+| Canva                   | `0021_print_canva`               | `0028_print_canva` (same SQL)                                               |
+| Social media            | `0022_social_media`              | `0029_social_media` (same SQL)                                              |
+| Read analytics grant    | `0023_read_analytics_permission` | `0033_read_analytics_permission` (same SQL, synced 2026-11-04, PR #58)      |
+| Chat channel name index | `0016_chat_channel_name_unique`  | folded into `0019_team_chat` (the index is created there; no separate file) |
 
 Merge them the way the tenant steps above describe: keep this side's journal and
 snapshots in a conflict, append each upstream delta with the next free index and
@@ -158,6 +160,21 @@ a `when` greater than the previous entry's, and chain a snapshot built from the
 latest one here. Then run `drizzle-kit generate --name check` in
 `packages/database` (directly, as `node ../../node_modules/drizzle-kit/bin.cjs`)
 and expect "No schema changes".
+
+Two details that bit the `0033` sync:
+
+- **A data-only migration** (rows, no schema change, like
+  `0033_read_analytics_permission`) still needs a snapshot: copy the latest one
+  and change only its `id` and `prevId` (edit those two lines, so the formatting
+  stays identical).
+- **A merge can bring upstream's file back under its own number.** Upstream's
+  `0023_read_analytics_permission.sql` is the same change as our `0033`. When a
+  sync adds it again (a squash merge carries no rename), delete it and drop its
+  `0023` journal entry rather than taking it: our `0023` is
+  `staffing_restaurant_locations`, so a second `0023_*` file and an out-of-order
+  journal entry would break the chain. The permission id
+  (`org_perm_read_analytics_any`) is also inserted with `INSERT OR IGNORE` and
+  defined in `setup-roles.ts`, so a repeat run cannot create a duplicate.
 
 #### One-off: local tenant databases that ran the reservations branch early
 
