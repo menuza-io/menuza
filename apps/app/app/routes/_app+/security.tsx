@@ -261,6 +261,8 @@ export const cancelDataDeletionActionIntent = 'cancel-data-deletion'
 export const twoFAVerificationType = '2fa'
 export const twoFAVerifyVerificationType = '2fa-verify'
 export const newEmailAddressSessionKey = 'new-email-address'
+/** Hash of the secret behind the code mailed to the pending new address. */
+export const newEmailVerificationSessionKey = 'new-email-verification'
 
 export async function action({ request }: ActionFunctionArgs) {
 	const userId = await requireUserId(request)

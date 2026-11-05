@@ -79,11 +79,16 @@ async function safeCompareAsync(
 
 // Same markers as packages/security/src/insecure-secret.ts (this Worker does not
 // depend on that package): the documented placeholder values must never
-// authenticate a request.
-const INSECURE_SECRET_MARKERS = [
+// authenticate a request. index.test.ts fails when the lists drift.
+export const INSECURE_SECRET_MARKERS = [
 	'your-jwt-secret',
 	'do-not-use-in-prod',
 	'change-me',
+	'changeme',
+	'super-duper-secret',
+	'super-duper-s3cret',
+	'super-duper-s3cr3t',
+	'test-session-secret',
 ]
 
 function isLocalUrl(value: string | undefined) {

@@ -7,6 +7,7 @@ import {
 	STAFFING_JOB_POSTING_PATH,
 } from '@repo/staffing'
 import { TENANT_ORG_ID_PATTERN } from '@repo/tenant-db'
+import { fetchApp } from './app-service.ts'
 import { getInternalCommandToken, syncEnvFromProcess } from './secrets.ts'
 
 /**
@@ -81,14 +82,13 @@ export async function getLivePosting(
 	if (!base || token.length < 16) return { status: 'unavailable' }
 
 	try {
-		const response = await fetch(
+		const response = await fetchApp(
 			`${base}${STAFFING_JOB_POSTING_PATH}?${new URLSearchParams({ orgId, slug })}`,
 			{
 				headers: {
 					Accept: 'application/json',
 					Authorization: `Bearer ${token}`,
 				},
-				redirect: 'error',
 				signal: AbortSignal.timeout(4_000),
 			},
 		)

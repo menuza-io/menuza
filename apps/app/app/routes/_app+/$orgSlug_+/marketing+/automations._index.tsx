@@ -139,7 +139,11 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
 export async function action({ request, params }: ActionFunctionArgs) {
 	const orgSlug = params.orgSlug || ''
-	const { orgId, fetchTenant } = await getOperatorTenantClient(request, orgSlug)
+	const { orgId, fetchTenant } = await getOperatorTenantClient(
+		request,
+		orgSlug,
+		{ canUpdate: true, canDelete: true },
+	)
 
 	await requireUserWithOrganizationPermission(
 		request,

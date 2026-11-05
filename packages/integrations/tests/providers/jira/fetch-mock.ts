@@ -25,7 +25,7 @@ export function jiraApiRequestOptions(token = 'decrypted-access-token') {
 			Authorization: `Bearer ${token}`,
 			Accept: 'application/json',
 		},
-		redirect: 'error',
+		redirect: 'manual',
 	}
 }
 

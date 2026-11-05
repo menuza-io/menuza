@@ -1,6 +1,7 @@
 import crypto from 'node:crypto'
 import { cache } from '@repo/cache'
 import { getInstanceInfo } from '@repo/common/litefs'
+import { assertSecretNotPlaceholder } from '@repo/security'
 import { ENV } from 'varlock/env'
 import { z } from 'zod'
 import { isCloudflareWorkerRuntime } from '#app/utils/runtime.server.ts'
@@ -26,6 +27,8 @@ export async function action({ request }: Route.ActionArgs) {
 		}
 	}
 	const token = ENV.INTERNAL_COMMAND_TOKEN
+	// Same gate as App: a published placeholder must never authenticate.
+	assertSecretNotPlaceholder('INTERNAL_COMMAND_TOKEN', token ?? '')
 	const authHeader = request.headers.get('Authorization')
 	const isAuthorized = safeCompare(authHeader, `Bearer ${token}`)
 	if (!isAuthorized) {

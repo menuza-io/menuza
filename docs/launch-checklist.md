@@ -444,6 +444,10 @@ Wrangler dev secrets: `apps/app/.dev.vars`, `apps/tenant-api/.dev.vars`
 
 - [ ] Enable Durable Objects on Cloudflare account
 - [ ] Set `TENANT_API_US_WORKER_NAME*`, `APP_BASE_URL`, `ROOT_APP`
+- [ ] Set `APP_WORKER_NAME*` on the tenant-api build too: it becomes the `APP`
+      service binding. Without it tenant-api calls the App's public URL, which
+      does not reach the App Worker from the same zone, so every operator route
+      answers `Organization not found`
 - [ ] Set tenant-api Wrangler secrets
 - [ ] Verify: `curl $TENANT_API_URL/api/health` → `"region":"us"`
 

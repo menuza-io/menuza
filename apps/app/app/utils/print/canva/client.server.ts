@@ -1,5 +1,6 @@
 import crypto from 'node:crypto'
 import { PRINT_ARTWORK_MAX_BYTES } from '@repo/common/print-shop'
+import { fetchNoRedirect } from '@repo/security/fetch-no-redirect'
 import { canvaEnv, canvaRedirectUri, isCanvaMock } from './env.server.ts'
 import { CanvaError } from './errors.ts'
 import { mockCanva } from './mock.server.ts'
@@ -84,14 +85,13 @@ async function tokenRequest(
 ): Promise<CanvaTokens> {
 	let response: Response
 	try {
-		response = await fetch(`${API}/oauth/token`, {
+		response = await fetchNoRedirect(`${API}/oauth/token`, {
 			method: 'POST',
 			headers: {
 				Authorization: basicAuth(),
 				'Content-Type': 'application/x-www-form-urlencoded',
 			},
 			body: new URLSearchParams(form),
-			redirect: 'error',
 			signal: AbortSignal.timeout(15_000),
 		})
 	} catch {
@@ -162,14 +162,13 @@ export async function refreshCanvaTokens(
 /** Best effort: a disconnect never fails because Canva did not answer. */
 export async function revokeCanvaToken(token: string): Promise<void> {
 	if (isCanvaMock()) return
-	await fetch(`${API}/oauth/revoke`, {
+	await fetchNoRedirect(`${API}/oauth/revoke`, {
 		method: 'POST',
 		headers: {
 			Authorization: basicAuth(),
 			'Content-Type': 'application/x-www-form-urlencoded',
 		},
 		body: new URLSearchParams({ token }),
-		redirect: 'error',
 		signal: AbortSignal.timeout(10_000),
 	}).catch(() => null)
 }
@@ -194,7 +193,7 @@ async function call(
 ): Promise<Record<string, unknown>> {
 	let response: Response
 	try {
-		response = await fetch(`${API}${path}`, {
+		response = await fetchNoRedirect(`${API}${path}`, {
 			...init,
 			headers: {
 				Authorization: `Bearer ${accessToken}`,
@@ -203,7 +202,6 @@ async function call(
 					: {}),
 				...(init.headers as Record<string, string> | undefined),
 			},
-			redirect: 'error',
 			signal: AbortSignal.timeout(30_000),
 		})
 	} catch {

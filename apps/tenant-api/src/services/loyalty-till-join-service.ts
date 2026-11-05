@@ -15,7 +15,7 @@ import { isValidPhone, normalizePhone } from '../lib/phone.ts'
 import { checkGlobalSendCap } from '../lib/rate-limit.ts'
 import { hmacHash, timingSafeEqualString } from '../lib/secrets.ts'
 import { evaluateAndSpawnTriggers } from './journey-service.ts'
-import { findCustomerByPhone, upgradeLegacyPhone } from './customer-phone.ts'
+import { findCustomerByPhone } from './customer-phone.ts'
 import {
 	activeProgramInTx,
 	issueTillIdentificationInTx,
@@ -294,7 +294,6 @@ export async function verifyTillJoinCode(
 	})
 
 	// After the binding exists: the rest is best-effort follow-up.
-	await upgradeLegacyPhone(db, customer, phone)
 	await linkVerifiedCustomerToGuest(db, customer.id, { orgId, now })
 	if (!customer.phoneVerified) {
 		void evaluateAndSpawnTriggers(orgId, 'phone_verified', customer.id).catch(

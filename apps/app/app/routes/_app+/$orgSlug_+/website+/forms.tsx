@@ -101,6 +101,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	const { fetchTenant, orgId } = await getOperatorTenantClient(
 		request,
 		params.orgSlug || '',
+		{ canUpdate: true, canDelete: true },
 	)
 	await requireUserWithOrganizationPermission(
 		request,
@@ -130,9 +131,12 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	if (intent === 'delete') {
 		const id = String(formData.get('id') || '')
 		if (!id) return { error: 'Form not found.' }
-		const response = await fetchTenant(`/operator/forms/${encodeURIComponent(id)}`, {
-			method: 'DELETE',
-		})
+		const response = await fetchTenant(
+			`/operator/forms/${encodeURIComponent(id)}`,
+			{
+				method: 'DELETE',
+			},
+		)
 		if (!response.ok) return { error: 'Unable to delete the form.' }
 		await deleteCachedPublicForm(orgId, id)
 		return { success: 'Form deleted.' }

@@ -634,6 +634,19 @@ function applyTargetPatches(
 		)
 		patchVar('APP_URL', 'APP_BASE_URL', 'app_base_url')
 		patchVar('ROOT_APP', 'ROOT_APP', 'root_app')
+
+		// A Worker's fetch to the App's public URL does not reach the App Worker
+		// on the same zone (it hangs), so tenant-api reaches the App through a
+		// service binding. Without APP_WORKER_NAME it falls back to APP_URL.
+		const appWorkerName = readEnv(
+			`APP_WORKER_NAME${suffix}`,
+			launchConfig,
+			`bindings.${bindingEnv}.app.worker_name`,
+		)
+		if (appWorkerName) {
+			target.services = [{ binding: 'APP', service: appWorkerName }]
+			patches.push(`services.APP [${targetEnv}] ← ${appWorkerName}`)
+		}
 	}
 
 	patchRoutesForApp(appKey, targetEnv, target, launchConfig, patches)

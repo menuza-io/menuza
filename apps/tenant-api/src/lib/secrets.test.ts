@@ -1,6 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { INSECURE_SECRET_MARKERS as CANONICAL_MARKERS } from '@repo/security/insecure-secret'
 import {
+	assertTenantApiSecrets,
 	DEV_VOICE_AGENT_TOKEN,
+	INSECURE_SECRET_MARKERS,
 	logVoiceAgentTokenProblem,
 	voiceAgentTokenProblem,
 } from './secrets.ts'
@@ -77,5 +80,49 @@ describe('voiceAgentTokenProblem', () => {
 			'Voice agent routes are disabled: unique test problem',
 		)
 		errors.mockRestore()
+	})
+})
+
+describe('placeholder markers', () => {
+	it('match the canonical list in @repo/security', () => {
+		expect([...INSECURE_SECRET_MARKERS].sort()).toEqual(
+			[...CANONICAL_MARKERS].sort(),
+		)
+	})
+
+	describe('assertTenantApiSecrets in production', () => {
+		const keys = [
+			'INTERNAL_COMMAND_TOKEN',
+			'TENANT_OPERATOR_TOKEN',
+			'JWT_SECRET',
+			'AUTH_HMAC_SECRET',
+			'NODE_ENV',
+		] as const
+		const saved: Record<string, string | undefined> = {}
+
+		beforeEach(() => {
+			for (const key of keys) saved[key] = process.env[key]
+			process.env.TENANT_OPERATOR_TOKEN = 'prod-operator-secret-9f3a1c7e'
+			process.env.JWT_SECRET = 'prod-jwt-secret-9f3a1c7e22'
+			process.env.AUTH_HMAC_SECRET = 'prod-hmac-secret-9f3a1c7e22'
+			process.env.NODE_ENV = 'production'
+		})
+
+		afterEach(() => {
+			for (const key of keys) process.env[key] = saved[key] ?? ''
+		})
+
+		it.each(CANONICAL_MARKERS)(
+			'refuses an internal command token containing %s',
+			(marker) => {
+				process.env.INTERNAL_COMMAND_TOKEN = `${marker}-0123456789`
+				expect(() => assertTenantApiSecrets()).toThrow(/development default/)
+			},
+		)
+
+		it('accepts a generated internal command token', () => {
+			process.env.INTERNAL_COMMAND_TOKEN = 'prod-internal-token-9f3a1c7e22'
+			expect(() => assertTenantApiSecrets()).not.toThrow()
+		})
 	})
 })

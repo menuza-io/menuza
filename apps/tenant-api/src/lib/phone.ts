@@ -31,9 +31,10 @@ export { isValidE164Phone as isValidPhone }
 
 /**
  * Forms a number may have been stored in before E.164 normalization: the
- * digits without the `+`, and the region's national forms. Used only to find
- * an existing customer (never to write); the row is rewritten to E.164 on a
- * successful sign-in. The E.164 form itself is not included.
+ * digits without the `+`, and the region's national forms. Only the erasure
+ * path uses it, to find every row a number could be stored in. Never use it to
+ * look up a customer to sign in as: a short E.164 could claim another number's
+ * national-form row (see `findCustomerByPhone`).
  */
 export function legacyPhoneForms(
 	e164: string,

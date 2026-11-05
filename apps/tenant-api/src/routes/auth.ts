@@ -35,10 +35,7 @@ import {
 import { orgMatchesNodeRegion } from '../lib/region.ts'
 import { getBearerToken, hmacHash } from '../lib/secrets.ts'
 import { evaluateAndSpawnTriggers } from '../services/journey-service.ts'
-import {
-	findCustomerByPhone,
-	upgradeLegacyPhone,
-} from '../services/customer-phone.ts'
+import { findCustomerByPhone } from '../services/customer-phone.ts'
 import { openPointsAccountOnSignIn } from '../services/loyalty-member-service.ts'
 import { linkVerifiedCustomerToGuest } from '../services/rsv-customer-link.ts'
 
@@ -706,7 +703,6 @@ authRoutes.post(
 			return c.json({ error: 'Invalid or expired code' }, 400)
 		}
 
-		await upgradeLegacyPhone(db, customer, phone)
 		// The phone is now verified: link the reservation guest that carries it
 		// (best effort, never fails sign-in, ids only).
 		await linkVerifiedCustomerToGuest(db, customer.id, {

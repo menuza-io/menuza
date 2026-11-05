@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "DEV_EMAIL_CAPTURE_DIR=.dev-mail/us tsx watch src/index.ts",
     "dev:ksa": "DATA_REGION=ksa PORT=3009 DEV_EMAIL_CAPTURE_DIR=.dev-mail/ksa tsx watch src/index.ts",
-    "start": "node --import=tsx src/index.ts",
+    "start": "NODE_ENV=production node --import=tsx src/index.ts",
     "generate:do-migrations": "node scripts/generate-do-migrations.mjs",
     "codegen": "../../node_modules/.bin/varlock codegen --path .",
     "build": "npm run codegen && npm run generate:do-migrations && tsc",

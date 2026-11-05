@@ -1,5 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { findActiveOrganizationById } from './origin.ts'
+import { bindAppService } from './app-service.ts'
+import {
+	findActiveOrganizationById,
+	resetLookupLogThrottleForTests,
+} from './origin.ts'
 
 const { select } = vi.hoisted(() => ({ select: vi.fn() }))
 
@@ -18,6 +22,7 @@ const organization = {
 const commandToken = 'test-internal-command-token'
 
 beforeEach(() => {
+	resetLookupLogThrottleForTests()
 	vi.stubEnv('APP_URL', 'https://app.example.com')
 	vi.stubEnv('INTERNAL_COMMAND_TOKEN', commandToken)
 	select.mockClear()
@@ -25,6 +30,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+	bindAppService(null)
 	vi.unstubAllGlobals()
 	vi.unstubAllEnvs()
 	vi.restoreAllMocks()
@@ -42,7 +48,7 @@ describe('active organization lookup', () => {
 					Accept: 'application/json',
 					Authorization: `Bearer ${commandToken}`,
 				},
-				redirect: 'error',
+				redirect: 'manual',
 				signal: expect.any(AbortSignal),
 			}),
 		)
@@ -112,5 +118,120 @@ describe('active organization lookup', () => {
 		)
 		expect(fetch).not.toHaveBeenCalled()
 		expect(select).toHaveBeenCalledOnce()
+	})
+})
+
+describe('organization lookup failure logs', () => {
+	const logged = () =>
+		JSON.stringify([
+			...vi.mocked(console.warn).mock.calls,
+			...vi.mocked(console.error).mock.calls,
+		])
+
+	beforeEach(() => {
+		vi.spyOn(console, 'warn').mockImplementation(() => {})
+		vi.spyOn(console, 'error').mockImplementation(() => {})
+	})
+
+	it('reports a token mismatch as an error with the status, without secrets', async () => {
+		vi.mocked(fetch).mockResolvedValueOnce(
+			Response.json({ error: 'Unauthorized' }, { status: 401 }),
+		)
+		expect(await findActiveOrganizationById(organization.id)).toBeNull()
+		expect(console.error).toHaveBeenCalledWith('tenant org lookup failed', {
+			reason: 'app_rejected_internal_command_token',
+			status: 401,
+			appHost: 'app.example.com',
+		})
+		expect(logged()).not.toContain(commandToken)
+		expect(logged()).not.toContain(organization.id)
+	})
+
+	it('does not log the token length or the URL when the token is too short', async () => {
+		vi.stubEnv('INTERNAL_COMMAND_TOKEN', 'tiny-secret')
+		expect(await findActiveOrganizationById(organization.id)).toBeNull()
+		expect(fetch).not.toHaveBeenCalled()
+		expect(console.error).toHaveBeenCalledWith('tenant org lookup failed', {
+			reason: 'internal_command_token_missing_or_short',
+			appHost: 'app.example.com',
+		})
+		expect(logged()).not.toContain('tiny-secret')
+		expect(logged()).not.toMatch(/length/i)
+	})
+
+	it('logs an error name and cause code, never the message with the URL', async () => {
+		const failure = Object.assign(
+			new TypeError(
+				`fetch failed: https://app.example.com/resources/tenant-organization?orgId=${organization.id}`,
+			),
+			{ cause: { code: 'ECONNREFUSED' } },
+		)
+		vi.mocked(fetch).mockRejectedValueOnce(failure)
+		expect(await findActiveOrganizationById(organization.id)).toBeNull()
+		expect(console.warn).toHaveBeenCalledWith('tenant org lookup failed', {
+			reason: 'app_lookup_threw',
+			appHost: 'app.example.com',
+			errorName: 'TypeError',
+			errorCode: 'ECONNREFUSED',
+		})
+		expect(logged()).not.toContain(organization.id)
+		expect(logged()).not.toContain('fetch failed')
+	})
+
+	it('logs a repeated failure once a minute', async () => {
+		vi.useFakeTimers()
+		try {
+			vi.mocked(fetch).mockResolvedValue(
+				Response.json({ error: 'nope' }, { status: 500 }),
+			)
+			await findActiveOrganizationById(organization.id)
+			await findActiveOrganizationById(organization.id)
+			expect(console.warn).toHaveBeenCalledTimes(1)
+			vi.advanceTimersByTime(61_000)
+			await findActiveOrganizationById(organization.id)
+			expect(console.warn).toHaveBeenCalledTimes(2)
+		} finally {
+			vi.useRealTimers()
+		}
+	})
+
+	it('treats a redirect from the App as a failed lookup and never follows it', async () => {
+		vi.mocked(fetch).mockResolvedValueOnce(
+			new Response(null, {
+				status: 302,
+				headers: { Location: 'http://169.254.169.254/latest/meta-data' },
+			}),
+		)
+		expect(await findActiveOrganizationById(organization.id)).toBeNull()
+		expect(fetch).toHaveBeenCalledTimes(1)
+		expect(console.warn).toHaveBeenCalledWith('tenant org lookup failed', {
+			reason: 'app_lookup_threw',
+			appHost: 'app.example.com',
+			errorName: 'RedirectBlockedError',
+			errorCode: undefined,
+		})
+		expect(logged()).not.toContain('169.254')
+	})
+
+	it('asks the App over the service binding when there is one', async () => {
+		const binding = {
+			fetch: vi.fn().mockResolvedValue(Response.json(organization)),
+		}
+		bindAppService(binding)
+
+		expect(await findActiveOrganizationById(organization.id)).toEqual(
+			organization,
+		)
+		expect(binding.fetch).toHaveBeenCalledWith(
+			`https://app.example.com/resources/tenant-organization?orgId=${organization.id}`,
+			expect.objectContaining({
+				headers: {
+					Accept: 'application/json',
+					Authorization: `Bearer ${commandToken}`,
+				},
+			}),
+		)
+		// The public URL is never used, so a same-zone Worker cannot hang on it.
+		expect(fetch).not.toHaveBeenCalled()
 	})
 })

@@ -6,10 +6,14 @@ import {
 	eq,
 	NoteComment,
 	NoteCommentImage,
+	Integration,
+	NoteIntegrationConnection,
 	OrganizationMediaAsset,
 	OrganizationNote,
 	OrganizationNoteFavorite,
+	OrganizationRole,
 	UserOrganization,
+	_OrganizationPermissionToRole,
 } from '@repo/database'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { consoleError } from '#tests/setup/setup-test-env.ts'
@@ -451,5 +455,127 @@ describe('notes.$noteId route integration', () => {
 				expect(invalidateUserFavoritesCache).toHaveBeenCalledWith(user.id)
 			},
 		)
+
+		describe('channel connections on a private note', () => {
+			async function setup() {
+				const { user: owner, organization } =
+					await setupTestOrgWithUser('admin')
+				const note = await createTestNote(organization.id, owner.id, {
+					title: 'Private Note',
+					isPublic: false,
+				})
+				// A custom role with read:note:own but without read:note:org, so the
+				// caller passes the organization check but is not the note owner.
+				const [role] = await db
+					.insert(OrganizationRole)
+					.values({
+						name: `own-notes-${Date.now()}`,
+						level: 1,
+						organizationId: organization.id,
+					})
+					.returning()
+				await db.insert(_OrganizationPermissionToRole).values({
+					A: role!.id,
+					B: 'org_perm_read_note_own',
+				})
+				const guest = await createTestUser()
+				await db.insert(UserOrganization).values({
+					userId: guest.id,
+					organizationId: organization.id,
+					organizationRoleId: role!.id,
+					active: true,
+				})
+				const { cookie: guestCookie } = await createTestSession(guest.id)
+				return { owner, organization, note, guestCookie }
+			}
+
+			async function submit(
+				organizationSlug: string,
+				noteId: string,
+				cookie: string,
+				fields: Record<string, string>,
+			) {
+				const formData = new FormData()
+				for (const [key, value] of Object.entries(fields)) {
+					formData.append(key, value)
+				}
+				try {
+					return await action({
+						request: createAuthenticatedRequest(
+							`http://localhost:3000/${organizationSlug}/notes/${noteId}`,
+							{ method: 'POST', body: formData },
+							cookie,
+						),
+						params: { orgSlug: organizationSlug, noteId },
+						context: {},
+					} as any)
+				} catch (thrown) {
+					return thrown
+				}
+			}
+
+			it("refuses connecting another member's private note", async () => {
+				const { organization, note, guestCookie } = await setup()
+
+				const response = await submit(organization.slug, note.id, guestCookie, {
+					intent: 'connect-note-to-channel',
+					noteId: note.id,
+					integrationId: 'integration_1',
+					channelId: 'channel_1',
+				})
+
+				expect(getResponseStatus(response)).toBe(403)
+			})
+
+			it("refuses disconnecting from another member's private note", async () => {
+				const { organization, note, guestCookie } = await setup()
+				const [integration] = await db
+					.insert(Integration)
+					.values({
+						organizationId: organization.id,
+						providerName: 'slack',
+						providerType: 'slack',
+						accessToken: 'token',
+						config: '{}',
+					})
+					.returning()
+				const [connection] = await db
+					.insert(NoteIntegrationConnection)
+					.values({
+						noteId: note.id,
+						integrationId: integration!.id,
+						externalId: 'channel_1',
+						config: '{}',
+					})
+					.returning()
+
+				const response = await submit(organization.slug, note.id, guestCookie, {
+					intent: 'disconnect-note-from-channel',
+					connectionId: connection!.id,
+				})
+
+				expect(getResponseStatus(response)).toBe(403)
+				const [stillThere] = await db
+					.select({ id: NoteIntegrationConnection.id })
+					.from(NoteIntegrationConnection)
+					.where(eq(NoteIntegrationConnection.id, connection!.id))
+				expect(stillThere).toBeDefined()
+			})
+
+			it('does not refuse the note owner at the access check', async () => {
+				const { owner, organization, note } = await setup()
+				const { cookie: ownerCookie } = await createTestSession(owner.id)
+
+				const response = await submit(organization.slug, note.id, ownerCookie, {
+					intent: 'connect-note-to-channel',
+					noteId: note.id,
+					integrationId: 'missing_integration',
+					channelId: 'channel_1',
+				})
+
+				// Passes authorization, then fails because the integration is unknown.
+				expect(getResponseStatus(response)).not.toBe(403)
+			})
+		})
 	})
 })

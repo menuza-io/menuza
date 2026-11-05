@@ -10,6 +10,7 @@ import { registerRestaurantOrderSource } from '../src/restaurant/staffing-order-
 import {
 	isPosOrigin,
 	organizationFromProvisionPayload,
+	resolveCorsAllowOrigin,
 } from '../src/lib/origin.ts'
 import {
 	DEPROVISION_RECORDING_BUDGET_MS,
@@ -302,7 +303,7 @@ export function withTerminalCors(request: Request, response: Response) {
 	})
 }
 
-export default {
+const worker = {
 	async fetch(
 		request: Request,
 		env: TenantApiWorkerEnv,
@@ -417,4 +418,46 @@ async function handle(
 	if (regionDenied) return regionDenied
 
 	return forwardToOrg(request, env, orgId)
+}
+
+/**
+ * The edge answers some requests itself (unresolvable organization, unknown
+ * organization, region mismatch) before the Hono app and its CORS middleware
+ * run. A browser hides a response without `Access-Control-Allow-Origin`, so
+ * those errors reached operators as an opaque "Failed to fetch". Add the same
+ * header the app sets, for allowed origins only.
+ */
+async function withCors(request: Request, response: Response) {
+	// A 101 upgrade response cannot be rebuilt (it carries the socket).
+	if (
+		response.status === 101 ||
+		response.headers.has('Access-Control-Allow-Origin')
+	) {
+		return response
+	}
+	const allowOrigin = await resolveCorsAllowOrigin(
+		request.headers.get('Origin'),
+	)
+	if (!allowOrigin) return response
+	// Responses forwarded from a Durable Object have immutable headers, so build
+	// a new response instead of mutating this one.
+	return new Response(response.body, {
+		status: response.status,
+		statusText: response.statusText,
+		headers: [
+			...response.headers,
+			['Access-Control-Allow-Origin', allowOrigin],
+			['Vary', 'Origin'],
+		],
+	})
+}
+
+export default {
+	async fetch(
+		request: Request,
+		env: TenantApiWorkerEnv,
+		ctx: ExecutionContext,
+	): Promise<Response> {
+		return withCors(request, await worker.fetch(request, env, ctx))
+	},
 }

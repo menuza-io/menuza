@@ -3,6 +3,7 @@ import MarkdownText from './site/MarkdownText.astro'
 import Badge from './ui/Badge.astro'
 import Button from './ui/Button.astro'
 import Section from './site/Section.astro'
+import { escapeHtml, isSafeHref } from '../lib/markdown'
 
 interface Props {
 	richText?: any
@@ -86,30 +87,31 @@ const renderLexicalContent = (content: any, textAlign: string) => {
 			const linkText = child.children
 				?.map((linkChild: any) => {
 					if (linkChild.format && linkChild.format > 0) {
-						let formattedText = linkChild.text || ''
+						let formattedText = escapeHtml(String(linkChild.text ?? ''))
 						if (linkChild.format & 1)
 							formattedText = `<strong class="font-semibold">${formattedText}</strong>`
 						if (linkChild.format & 2)
 							formattedText = `<em class="italic">${formattedText}</em>`
 						return applyTextState(formattedText, linkChild)
 					}
-					return applyTextState(linkChild.text || '', linkChild)
+					return applyTextState(escapeHtml(String(linkChild.text ?? '')), linkChild)
 				})
 				.join('') || ''
-			const url = child.fields?.url || child.url || '#'
+			const rawUrl = String(child.fields?.url || child.url || '#')
+			const url = escapeHtml(isSafeHref(rawUrl) ? rawUrl : '#')
 			const target = child.fields?.newTab || child.newTab ? ' target="_blank" rel="noopener noreferrer"' : ''
 			return `<a href="${url}"${target} class="text-primary underline hover:text-primary/80 transition-colors">${linkText}</a>`
 		}
 		// Handle formatted text
 		if (child.format && child.format > 0) {
-			let formattedText = child.text || ''
+			let formattedText = escapeHtml(String(child.text ?? ''))
 			if (child.format & 1)
 				formattedText = `<strong class="font-semibold">${formattedText}</strong>`
 			if (child.format & 2)
 				formattedText = `<em class="italic">${formattedText}</em>`
 			return applyTextState(formattedText, child)
 		}
-		return applyTextState(child.text || '', child)
+		return applyTextState(escapeHtml(String(child.text ?? '')), child)
 	}
 
 	return content.root.children
@@ -122,9 +124,9 @@ const renderLexicalContent = (content: any, textAlign: string) => {
 				const text = node.children
 					.map((child: any) => {
 						if (child.format === 2) {
-							return applyTextState(`<span class="italic font-cursive">${child.text}</span>`, child)
+							return applyTextState(`<span class="italic font-cursive">${escapeHtml(String(child.text ?? ''))}</span>`, child)
 						}
-						return applyTextState(child.text || '', child)
+						return applyTextState(escapeHtml(String(child.text ?? '')), child)
 					})
 					.join('')
 				return `<h1 class="font-display text-4xl md:text-6xl lg:text-7xl tracking-[-0.03em] text-foreground leading-tight ${alignClass}">${text}</h1>`

@@ -31,6 +31,7 @@ import {
 	HOME_PAGE_SLUG,
 	HOME_PAGE_TITLE,
 } from '#app/utils/website/home-page.ts'
+import { isPublicEmailDomain } from './public-email-domains.ts'
 
 export type OrganizationWithImage = {
 	id: string
@@ -478,6 +479,7 @@ export async function getOrganizationBySlug(slug: string) {
 }
 
 export async function getOrganizationByDomain(domain: string) {
+	if (isPublicEmailDomain(domain)) return null
 	const [organization] = await db
 		.select({
 			id: Organization.id,

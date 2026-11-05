@@ -211,7 +211,7 @@ describe('ssrfSafeFetch', () => {
 		).rejects.toThrow('SSRF security validation failed')
 	})
 
-	it('calls fetch with redirect: error for safe URLs', async () => {
+	it('calls fetch with redirect: manual for safe URLs', async () => {
 		mockResolve4.mockResolvedValue(['142.250.80.46'])
 		mockResolve6.mockRejectedValue(new Error('no AAAA'))
 
@@ -233,10 +233,52 @@ describe('ssrfSafeFetch', () => {
 		expect(fetchSpy).toHaveBeenCalledWith(
 			'https://gitlab.example.com/api/v4/user',
 			expect.objectContaining({
-				redirect: 'error',
+				redirect: 'manual',
 				headers: { Authorization: 'Bearer token' },
 			}),
 		)
+
+		fetchSpy.mockRestore()
+	})
+
+	it('refuses a redirect response instead of returning it', async () => {
+		mockResolve4.mockResolvedValue(['142.250.80.46'])
+		mockResolve6.mockRejectedValue(new Error('no AAAA'))
+
+		const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+			new Response(null, {
+				status: 302,
+				headers: { Location: 'http://169.254.169.254/latest/meta-data' },
+			}),
+		)
+
+		await expect(
+			ssrfSafeFetch('https://gitlab.example.com/api/v4/user'),
+		).rejects.toThrow('redirect blocked')
+
+		fetchSpy.mockRestore()
+	})
+
+	it('cancels the body of a refused redirect response', async () => {
+		mockResolve4.mockResolvedValue(['142.250.80.46'])
+		mockResolve6.mockRejectedValue(new Error('no AAAA'))
+
+		let cancelled = false
+		const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+			new Response(
+				new ReadableStream({
+					cancel() {
+						cancelled = true
+					},
+				}),
+				{ status: 302, headers: { Location: 'http://169.254.169.254/' } },
+			),
+		)
+
+		await expect(
+			ssrfSafeFetch('https://gitlab.example.com/api/v4/user'),
+		).rejects.toThrow('redirect blocked')
+		expect(cancelled).toBe(true)
 
 		fetchSpy.mockRestore()
 	})

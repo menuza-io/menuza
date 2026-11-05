@@ -35,6 +35,30 @@ validate the requests.
 Outside of this, the Epic Stack does not access other first-party services or
 databases.
 
+## Outbound requests never follow redirects
+
+A server-to-server or user-influenced `fetch` must not follow a redirect: a safe
+URL can redirect to an internal one, and a redirect can carry a bearer token to
+another host.
+
+Do not write `fetch(url, { redirect: 'error' })`. Cloudflare Workers does not
+implement it: `fetch` throws
+`TypeError: Invalid redirect value, must be one of "follow" or "manual"` before
+it sends anything. In production this made every organization lookup from the
+tenant-api Worker fail and answer `Organization not found`, so every operator
+route returned 404.
+
+Use `fetchNoRedirect` from `@repo/security/fetch-no-redirect` instead. It sets
+`redirect: 'manual'`, cancels the body and throws `RedirectBlockedError` on a
+3xx, so a caller never receives a redirect response. `ssrfSafeFetch` does the
+same after its DNS check and throws
+`SSRF security validation failed: redirect blocked`. `apps/tenant-api` does not
+depend on `@repo/security` and keeps a copy in `src/lib/fetch-no-redirect.ts`;
+its test runs the same cases on both.
+
+Code that follows redirects on purpose (the Canva download) uses
+`redirect: 'manual'` and validates each hop itself.
+
 ## Secrets
 
 The currently recommended policy for managing secrets is to place them in a
