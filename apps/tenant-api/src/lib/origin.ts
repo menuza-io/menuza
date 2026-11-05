@@ -50,6 +50,38 @@ const corsCache = new LRUCache<string, boolean>({
 	ttl: 30_000,
 })
 
+const LOOKUP_LOG_INTERVAL_MS = 60_000
+const lookupLastLoggedAt = new Map<string, number>()
+
+/**
+ * Why an organization lookup against the App failed. The lookup runs on every
+ * request, so an outage or a bad token would log once per request: each reason
+ * and App host logs at most once a minute. Fields are limited to the host, a
+ * status or an error name and code. Never the token, its length, the URL or an
+ * error message (fetch errors can embed the request URL).
+ */
+function logLookupFailure(
+	level: 'warn' | 'error',
+	reason: string,
+	detail: Record<string, string | number | undefined>,
+) {
+	const key = `${reason}:${String(detail.appHost)}`
+	const now = Date.now()
+	const last = lookupLastLoggedAt.get(key)
+	if (last !== undefined && now - last < LOOKUP_LOG_INTERVAL_MS) return
+	if (lookupLastLoggedAt.size >= 50) lookupLastLoggedAt.clear()
+	lookupLastLoggedAt.set(key, now)
+	console[level]('tenant org lookup failed', { reason, ...detail })
+}
+
+function safeHost(url: string) {
+	try {
+		return new URL(url).host
+	} catch {
+		return 'invalid-url'
+	}
+}
+
 function appBaseUrl() {
 	return (ENV.APP_URL || (ENV as { BASE_URL?: string }).BASE_URL || '').replace(
 		/\/$/,
@@ -232,7 +264,15 @@ export async function findActiveOrganizationById(orgId: string) {
 	if (appUrl) {
 		// App owns the current org flags. A node-local control-plane copy may be
 		// missing or stale, especially when App uses D1 or the org changes region.
-		if (token.length < 16) return null
+		// Every failure below answers "not found", so each one logs why (see
+		// `logLookupFailure`).
+		const appHost = safeHost(appUrl)
+		if (token.length < 16) {
+			logLookupFailure('error', 'internal_command_token_missing_or_short', {
+				appHost,
+			})
+			return null
+		}
 		try {
 			const params = new URLSearchParams({ orgId })
 			const response = await fetch(
@@ -246,11 +286,32 @@ export async function findActiveOrganizationById(orgId: string) {
 					signal: AbortSignal.timeout(5_000),
 				},
 			)
-			if (!response.ok) return null
+			if (!response.ok) {
+				// 401/403 is a token mismatch with the App; anything else is the App
+				// or the route misbehaving. They need different fixes.
+				logLookupFailure(
+					response.status === 401 || response.status === 403 ? 'error' : 'warn',
+					response.status === 401 || response.status === 403
+						? 'app_rejected_internal_command_token'
+						: 'app_lookup_not_ok',
+					{ status: response.status, appHost },
+				)
+				return null
+			}
 			const parsed = activeOrganizationSchema.safeParse(await response.json())
-			return parsed.success && parsed.data.id === orgId ? parsed.data : null
-		} catch {
+			if (!parsed.success || parsed.data.id !== orgId) {
+				logLookupFailure('warn', 'app_lookup_unexpected_body', { appHost })
+				return null
+			}
+			return parsed.data
+		} catch (error) {
 			// Fail closed: do not authorize from stale metadata after an outage.
+			const cause = (error as { cause?: { code?: unknown } } | null)?.cause
+			logLookupFailure('warn', 'app_lookup_threw', {
+				appHost,
+				errorName: error instanceof Error ? error.name : typeof error,
+				errorCode: typeof cause?.code === 'string' ? cause.code : undefined,
+			})
 			return null
 		}
 	}
@@ -403,4 +464,9 @@ export async function isAllowedAnalyticsOrigin(origin: string) {
 export async function resolveCorsAllowOrigin(origin: string | null) {
 	if (!origin) return null
 	return (await isAllowedAnalyticsOrigin(origin)) ? origin : null
+}
+
+/** Test only: forget which lookup failures were already logged. */
+export function resetLookupLogThrottleForTests() {
+	lookupLastLoggedAt.clear()
 }
