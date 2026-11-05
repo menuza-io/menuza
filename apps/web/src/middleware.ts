@@ -30,7 +30,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
 	const securityHeaders = {
 		'X-Content-Type-Options': 'nosniff',
 		'X-Frame-Options': 'DENY',
-		'Content-Security-Policy': `default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' ${posthogSources}; connect-src 'self' ${posthogSources}; worker-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self';`,
+		'Content-Security-Policy': `default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' ${posthogSources}; script-src-attr 'none'; connect-src 'self' ${posthogSources}; worker-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self';`,
 	}
 	const response = await next()
 	const { pathname } = context.url

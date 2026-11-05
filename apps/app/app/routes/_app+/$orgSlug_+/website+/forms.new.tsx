@@ -49,6 +49,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	const { fetchTenant, orgId } = await getOperatorTenantClient(
 		request,
 		params.orgSlug || '',
+		{ canUpdate: true },
 	)
 	await requireUserWithOrganizationPermission(
 		request,

@@ -94,6 +94,12 @@ export function isValidRedirectPath(path: string): boolean {
 	// Only allow paths that start with / and are within our app
 	if (!path.startsWith('/')) return false
 
+	// `//host` is protocol-relative: expo-router would open it as https://host
+	// in the system browser. A backslash is read as a slash by URL parsers, and
+	// control characters can hide the second slash.
+	if (path.startsWith('//') || path.includes('\\')) return false
+	if (/[\u0000-\u001f\u007f]/.test(path)) return false
+
 	// Allow dashboard routes
 	if (path.startsWith('/(dashboard)')) return true
 

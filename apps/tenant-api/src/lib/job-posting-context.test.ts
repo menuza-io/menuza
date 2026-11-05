@@ -53,7 +53,7 @@ describe('getLivePosting', () => {
 		expect((init.headers as Record<string, string>).Authorization).toMatch(
 			/^Bearer test-internal/,
 		)
-		expect(init.redirect).toBe('error')
+		expect(init.redirect).toBe('manual')
 	})
 
 	it('caches for a short time, and caches a miss for less', async () => {

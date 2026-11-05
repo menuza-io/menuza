@@ -38,6 +38,13 @@ describe('Navigation Utils', () => {
 			expect(isValidRedirectPath('/profile')).toBe(true)
 			expect(isValidRedirectPath('/settings')).toBe(true)
 		})
+
+		it('should disallow protocol-relative and backslash paths', () => {
+			expect(isValidRedirectPath('//example.invalid')).toBe(false)
+			expect(isValidRedirectPath('//example.invalid/path')).toBe(false)
+			expect(isValidRedirectPath('/\\example.invalid')).toBe(false)
+			expect(isValidRedirectPath('/\t/example.invalid')).toBe(false)
+		})
 	})
 
 	describe('parseDeepLink', () => {

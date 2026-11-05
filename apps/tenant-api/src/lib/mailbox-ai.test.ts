@@ -45,7 +45,7 @@ describe('regional mailbox AI provider', () => {
 		).toBe('Thank you for your inquiry.')
 		const [url, init] = fetchMock.mock.calls[0]!
 		expect(url).toBe('https://regional-model.example.com/v1/chat/completions')
-		expect(init.redirect).toBe('error')
+		expect(init.redirect).toBe('manual')
 		expect(init.signal).toBeInstanceOf(AbortSignal)
 		const payload = JSON.parse(init.body)
 		expect(payload.messages[0].role).toBe('system')

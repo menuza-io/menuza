@@ -48,6 +48,7 @@ import {
 import { signup } from '#app/utils/auth.server.ts'
 import { getLaunchStatus } from '#app/utils/env.server.ts'
 import { auditMemberAdded } from '#app/utils/organization/membership-audit.server.ts'
+import { isPublicEmailDomain } from '#app/utils/organization/public-email-domains.ts'
 import { updateSeatQuantity } from '#app/utils/payments.server.ts'
 import { type Route } from './+types/onboarding.ts'
 
@@ -227,7 +228,9 @@ export async function action({ request }: Route.ActionArgs) {
 	// Check for organizations with verified domains matching the user's email
 	try {
 		const emailDomain = email.split('@')[1]
-		if (emailDomain) {
+		// A claim on a public mailbox provider (e.g. gmail.com) would enroll
+		// strangers, so it never auto-joins.
+		if (emailDomain && !isPublicEmailDomain(emailDomain)) {
 			const [organizationsWithMatchingDomain, memberRole] = await Promise.all([
 				db
 					.select({

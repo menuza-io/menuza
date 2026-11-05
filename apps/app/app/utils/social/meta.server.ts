@@ -1,4 +1,5 @@
 import crypto from 'node:crypto'
+import { fetchNoRedirect } from '@repo/security/fetch-no-redirect'
 import { metaRedirectUri, isSocialMock, socialEnv } from './env.server.ts'
 import { SocialError } from './errors.ts'
 import { mockMeta } from './mock.server.ts'
@@ -110,7 +111,7 @@ async function graph<T>(
 	if (method === 'GET') url.search = params.toString()
 	let response: Response
 	try {
-		response = await fetch(url, {
+		response = await fetchNoRedirect(url, {
 			method,
 			headers: {
 				...(options.token ? { Authorization: `Bearer ${options.token}` } : {}),
@@ -119,7 +120,6 @@ async function graph<T>(
 					: {}),
 			},
 			body: method === 'POST' ? params : undefined,
-			redirect: 'error',
 			signal: AbortSignal.timeout(30_000),
 		})
 	} catch {

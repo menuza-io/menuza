@@ -7,26 +7,29 @@
 
 import { createCookieSessionStorage } from 'react-router'
 
-// Validate SESSION_SECRET is set - required for secure nonce storage
-if (!process.env.SESSION_SECRET) {
-	throw new Error(
-		'SESSION_SECRET environment variable is required for SSO nonce storage. ' +
-			'Please add SESSION_SECRET to your .env file.',
-	)
+// Session storage for SSO nonces (short-lived, 10 minutes max). Built on first
+// use so SESSION_SECRET is read after the Worker bindings are applied, not when
+// the server build loads.
+function getSsoNonceStorage() {
+	const secret = process.env.SESSION_SECRET
+	if (!secret) {
+		throw new Error(
+			'SESSION_SECRET environment variable is required for SSO nonce storage. ' +
+				'Please add SESSION_SECRET to your .env file.',
+		)
+	}
+	return createCookieSessionStorage({
+		cookie: {
+			name: '__sso_nonce',
+			httpOnly: true,
+			path: '/',
+			sameSite: 'lax',
+			secrets: [secret],
+			secure: process.env.NODE_ENV === 'production',
+			maxAge: 60 * 10, // 10 minutes - nonces should be short-lived
+		},
+	})
 }
-
-// Session storage for SSO nonces (short-lived, 10 minutes max)
-const ssoNonceStorage = createCookieSessionStorage({
-	cookie: {
-		name: '__sso_nonce',
-		httpOnly: true,
-		path: '/',
-		sameSite: 'lax',
-		secrets: [process.env.SESSION_SECRET],
-		secure: process.env.NODE_ENV === 'production',
-		maxAge: 60 * 10, // 10 minutes - nonces should be short-lived
-	},
-})
 
 const NONCE_KEY = 'sso_nonce'
 const NONCE_TIMESTAMP_KEY = 'sso_nonce_ts'
@@ -50,12 +53,12 @@ export async function storeNonce(
 	request: Request,
 	nonce: string,
 ): Promise<string> {
-	const session = await ssoNonceStorage.getSession(
+	const session = await getSsoNonceStorage().getSession(
 		request.headers.get('Cookie'),
 	)
 	session.set(NONCE_KEY, nonce)
 	session.set(NONCE_TIMESTAMP_KEY, Date.now())
-	return ssoNonceStorage.commitSession(session)
+	return getSsoNonceStorage().commitSession(session)
 }
 
 /**
@@ -66,7 +69,7 @@ export async function consumeNonce(request: Request): Promise<{
 	nonce: string | null
 	cookieHeader: string
 }> {
-	const session = await ssoNonceStorage.getSession(
+	const session = await getSsoNonceStorage().getSession(
 		request.headers.get('Cookie'),
 	)
 	const nonce = session.get(NONCE_KEY) as string | null
@@ -79,13 +82,13 @@ export async function consumeNonce(request: Request): Promise<{
 			// Nonce expired, destroy session
 			return {
 				nonce: null,
-				cookieHeader: await ssoNonceStorage.destroySession(session),
+				cookieHeader: await getSsoNonceStorage().destroySession(session),
 			}
 		}
 	}
 
 	// Destroy the session to consume the nonce
-	const cookieHeader = await ssoNonceStorage.destroySession(session)
+	const cookieHeader = await getSsoNonceStorage().destroySession(session)
 
 	return { nonce, cookieHeader }
 }
@@ -94,7 +97,7 @@ export async function consumeNonce(request: Request): Promise<{
  * Get the stored nonce without consuming it (for validation purposes)
  */
 export async function getNonce(request: Request): Promise<string | null> {
-	const session = await ssoNonceStorage.getSession(
+	const session = await getSsoNonceStorage().getSession(
 		request.headers.get('Cookie'),
 	)
 	return session.get(NONCE_KEY) as string | null

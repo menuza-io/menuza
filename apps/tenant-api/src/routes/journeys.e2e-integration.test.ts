@@ -95,6 +95,8 @@ describe('Marketing Automation End-to-End Integration Suite (Milestones 1 - 5)',
 			orgId: testOrgId,
 			role: 'operator',
 			userId: 'user_operator_123',
+			canUpdate: true,
+			canDelete: true,
 		})
 			.setProtectedHeader({ alg: 'HS256' })
 			.setAudience('tenant-api-operator')

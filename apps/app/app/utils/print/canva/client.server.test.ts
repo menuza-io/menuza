@@ -114,6 +114,43 @@ describe('Canva OAuth', () => {
 	})
 })
 
+describe('Canva redirects', () => {
+	it('refuses a redirect from the token endpoint without following it', async () => {
+		let cancelled = false
+		fetchMock.mockResolvedValueOnce(
+			new Response(
+				new ReadableStream({
+					cancel() {
+						cancelled = true
+					},
+				}),
+				{ status: 302, headers: { Location: 'http://169.254.169.254/' } },
+			),
+		)
+
+		await expect(refreshCanvaTokens('refresh-token')).rejects.toMatchObject({
+			code: 'unavailable',
+		})
+		expect(fetchMock).toHaveBeenCalledTimes(1)
+		expect(requestAt(0).init.redirect).toBe('manual')
+		expect(cancelled).toBe(true)
+	})
+
+	it('refuses a redirect from the REST API', async () => {
+		fetchMock.mockResolvedValueOnce(
+			new Response(null, {
+				status: 307,
+				headers: { Location: 'http://169.254.169.254/' },
+			}),
+		)
+
+		await expect(canvaApi('at').getDesign('D1')).rejects.toMatchObject({
+			code: 'unavailable',
+		})
+		expect(fetchMock).toHaveBeenCalledTimes(1)
+	})
+})
+
 describe('Canva API', () => {
 	it('exports page 1 as a pro PDF and polls the job', async () => {
 		fetchMock

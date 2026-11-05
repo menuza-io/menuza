@@ -3,7 +3,7 @@ import { auditService, AuditAction } from '@repo/audit'
 import {
 	authSessionStorage,
 	verifySessionStorage,
-	getUserId,
+	getSessionUserId,
 	safeDocumentRedirect,
 	sessionKey,
 } from '@repo/auth'
@@ -155,6 +155,38 @@ export async function handleVerification({
 			}),
 		)
 	} else {
+		// A signed-in step-up must be for the signed-in user. Without this, a
+		// valid code for any other account would stamp `verified-time` on this
+		// session and satisfy `requireRecentVerification` (change-email, etc.).
+		// Compare with the auth-session user, not `getUserId`: while an admin
+		// impersonates someone, `getUserId` is the target, and the stamp would
+		// land on the admin's own cookie.
+		const sessionUserId = await getSessionUserId(request)
+		if (!sessionUserId || sessionUserId !== submission.value.target) {
+			// A valid code for a different account is an abuse signal.
+			void auditService.logAuth(
+				AuditAction.USER_LOGIN_FAILED,
+				sessionUserId ?? undefined,
+				'Two-factor code for a different account presented on a signed-in session',
+				{ reason: 'two_factor_target_mismatch' },
+				request,
+				false,
+			)
+			throw await redirectWithToast(
+				'/login',
+				{
+					type: 'error',
+					title: 'Invalid session',
+					description: 'Could not find session to verify. Please try again.',
+				},
+				{
+					headers: {
+						'set-cookie':
+							await verifySessionStorage.destroySession(verifySession),
+					},
+				},
+			)
+		}
 		headers.append(
 			'set-cookie',
 			await authSessionStorage.commitSession(authSession),
@@ -194,7 +226,9 @@ export async function shouldRequestTwoFA(request: Request) {
 		request.headers.get('cookie'),
 	)
 	if (verifySession.has(unverifiedSessionIdKey)) return true
-	const userId = await getUserId(request)
+	// The person at the keyboard steps up, not the account an admin impersonates:
+	// `verified-time` lives on the admin's own session cookie.
+	const userId = await getSessionUserId(request)
 	if (!userId) return false
 	// if it's over two hours since they last verified, we should request 2FA again
 	const [userHasTwoFA] = await db

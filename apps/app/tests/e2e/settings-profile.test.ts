@@ -11,7 +11,8 @@ import {
 	waitFor,
 } from '#tests/playwright-utils.ts'
 
-// const CODE_REGEX = /Here's your verification code: (?<code>[\d\w]+)/
+const CODE_REGEX =
+	/(?:Here's your verification code|Your verification code):?\s*(?<code>[\da-zA-Z]+)/i
 
 test('Users can update their basic info', async ({ page, login, navigate }) => {
 	await login()
@@ -163,11 +164,13 @@ test('Users can change their email address', async ({
 		page.getByText(/verification email has been sent/i),
 	).toBeVisible()
 
-	// Extract the verification code directly from the success message
-	const codeElement = page.getByText(/Verification code:/).getByRole('strong')
-	await expect(codeElement).toBeVisible()
-	const code = await codeElement.innerText()
-	invariant(code, 'Verification code not found in dialog')
+	// The code is only delivered to the new address, never shown on the page.
+	await expect(page.getByText(/Verification code:/)).toHaveCount(0)
+	const verificationEmail = await waitFor(() => readEmail(newEmailAddress), {
+		errorMessage: 'Verification email was not sent to the new address',
+	})
+	const code = verificationEmail.text.match(CODE_REGEX)?.groups?.code
+	invariant(code, 'Verification code not found in email')
 
 	// Close the dialog and proceed with verification on the verify page
 	await page.getByRole('button', { name: 'Close' }).first().click()

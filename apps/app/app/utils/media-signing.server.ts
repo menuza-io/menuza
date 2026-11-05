@@ -1,17 +1,21 @@
 import { createHmac, timingSafeEqual } from 'node:crypto'
 
-// Session secret first so a media-URL leak is not the internal command token.
-const MEDIA_SIGNING_SECRET =
-	process.env.SESSION_SECRET || process.env.INTERNAL_COMMAND_TOKEN
-
-if (!MEDIA_SIGNING_SECRET) {
-	throw new Error(
-		'INTERNAL_COMMAND_TOKEN or SESSION_SECRET is required for media URL signing.',
-	)
+// Read per call: on Workers the bindings reach `process.env` after the server
+// build loads, so a module-level read can capture the build default.
+function getMediaSigningSecret(): string {
+	// Session secret first so a media-URL leak is not the internal command token.
+	const secret =
+		process.env.SESSION_SECRET || process.env.INTERNAL_COMMAND_TOKEN
+	if (!secret) {
+		throw new Error(
+			'INTERNAL_COMMAND_TOKEN or SESSION_SECRET is required for media URL signing.',
+		)
+	}
+	return secret
 }
 
 export function signMediaId(mediaId: string, expiresAt: number): string {
-	return createHmac('sha256', MEDIA_SIGNING_SECRET)
+	return createHmac('sha256', getMediaSigningSecret())
 		.update(`media:${mediaId}:${expiresAt}`)
 		.digest('hex')
 }

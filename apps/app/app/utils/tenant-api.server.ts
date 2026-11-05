@@ -123,6 +123,12 @@ export async function getOperatorTenantClient(
 	}
 
 	const secret = new TextEncoder().encode(operatorToken)
+	// The browser token and the one `fetchTenant` signs carry only the write
+	// claims the caller asked for (see `options`), and tenant-api refuses writes
+	// from a token without them. A loader or action that never asked for
+	// `canUpdate` / `canDelete` therefore cannot write or erase, even if a later
+	// change forgets its own permission check. Ask for them only after the
+	// permission check that earns them.
 	const jwt = await new SignJWT({
 		...options.claims,
 		orgId: organization.id,
