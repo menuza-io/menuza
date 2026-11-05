@@ -395,3 +395,12 @@ export async function isAllowedAnalyticsOrigin(origin: string) {
 	if (isOperatorControlPlaneOrigin(origin)) return true
 	return isAllowedBrowserOrigin(origin)
 }
+
+/**
+ * The `Access-Control-Allow-Origin` value for a request: the request origin
+ * when it is on the allowlist above, otherwise null (send no CORS header).
+ */
+export async function resolveCorsAllowOrigin(origin: string | null) {
+	if (!origin) return null
+	return (await isAllowedAnalyticsOrigin(origin)) ? origin : null
+}
