@@ -31,8 +31,10 @@ function isRedirect(status: number) {
 export async function fetchNoRedirect(
 	input: string | URL | Request,
 	init: RequestInit = {},
+	// Only in this copy: pass a service binding's fetch to reach the App Worker.
+	fetchImpl: typeof fetch = fetch,
 ): Promise<Response> {
-	const response = await fetch(input, { ...init, redirect: 'manual' })
+	const response = await fetchImpl(input, { ...init, redirect: 'manual' })
 	if (isRedirect(response.status)) {
 		// An unread body can hold the connection open on Workers.
 		await response.body?.cancel().catch(() => {})

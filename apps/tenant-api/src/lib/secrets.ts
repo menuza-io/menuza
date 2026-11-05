@@ -1,6 +1,7 @@
 import crypto from 'node:crypto'
 import { resolveOperatorAnalyticsSecret } from '@repo/reports/token'
 import { ENV, initVarlockEnv } from 'varlock/env'
+import { bindAppService } from './app-service.ts'
 
 // Keep in sync with packages/security/src/insecure-secret.ts (this node does
 // not depend on that package). secrets.test.ts fails when the lists drift.
@@ -77,6 +78,9 @@ export function syncEnvFromProcess() {
 
 export function applyVarlockEnv(env: Record<string, unknown> | object) {
 	ensureVarlockInit()
+	// Every entry that receives `env` (Worker fetch, Durable Object fetch and
+	// alarm) comes through here, so the App service binding is always current.
+	bindAppService((env as { APP?: unknown }).APP)
 	const existingConfig = (globalThis as any).__varlockLoadedEnv?.config ?? {}
 	const newConfig: Record<string, { value: unknown }> = { ...existingConfig }
 	if (typeof process !== 'undefined' && process.env) {

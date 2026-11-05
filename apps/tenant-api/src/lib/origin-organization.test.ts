@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { bindAppService } from './app-service.ts'
 import {
 	findActiveOrganizationById,
 	resetLookupLogThrottleForTests,
@@ -29,6 +30,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+	bindAppService(null)
 	vi.unstubAllGlobals()
 	vi.unstubAllEnvs()
 	vi.restoreAllMocks()
@@ -209,5 +211,27 @@ describe('organization lookup failure logs', () => {
 			errorCode: undefined,
 		})
 		expect(logged()).not.toContain('169.254')
+	})
+
+	it('asks the App over the service binding when there is one', async () => {
+		const binding = {
+			fetch: vi.fn().mockResolvedValue(Response.json(organization)),
+		}
+		bindAppService(binding)
+
+		expect(await findActiveOrganizationById(organization.id)).toEqual(
+			organization,
+		)
+		expect(binding.fetch).toHaveBeenCalledWith(
+			`https://app.example.com/resources/tenant-organization?orgId=${organization.id}`,
+			expect.objectContaining({
+				headers: {
+					Accept: 'application/json',
+					Authorization: `Bearer ${commandToken}`,
+				},
+			}),
+		)
+		// The public URL is never used, so a same-zone Worker cannot hang on it.
+		expect(fetch).not.toHaveBeenCalled()
 	})
 })

@@ -3,7 +3,7 @@ import { ENV } from 'varlock/env'
 import { z } from 'zod'
 import { isValidTimeZone } from '@repo/staffing'
 import { TENANT_ORG_ID_PATTERN } from '@repo/tenant-db'
-import { fetchNoRedirect } from './fetch-no-redirect.ts'
+import { fetchApp } from './app-service.ts'
 import { getInternalCommandToken, syncEnvFromProcess } from './secrets.ts'
 
 /**
@@ -95,7 +95,7 @@ async function fetchContext(
 	const token = getInternalCommandToken()
 	if (!base || token.length < 16) return null
 	try {
-		const response = await fetchNoRedirect(
+		const response = await fetchApp(
 			`${base}/resources/staffing/scope-context?${new URLSearchParams({ orgId })}`,
 			{
 				headers: {

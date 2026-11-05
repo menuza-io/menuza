@@ -6,7 +6,7 @@ import { getBrandDomain, getLocalDomain } from '@repo/config/brand'
 import { and, db, eq, or, Organization } from '@repo/database'
 import { TENANT_ORG_ID_PATTERN } from '@repo/tenant-db'
 
-import { fetchNoRedirect } from './fetch-no-redirect.ts'
+import { appFetchImpl, fetchApp } from './app-service.ts'
 import { orgMatchesNodeRegion } from './region.ts'
 import { getInternalCommandToken } from './secrets.ts'
 
@@ -149,9 +149,12 @@ async function lookupOrganizationFromApp(query: {
 	if (query.host) params.set('host', query.host)
 
 	try {
-		const response = await fetch(`${appUrl}/resources/sites?${params}`, {
-			headers: { Accept: 'application/json' },
-		})
+		const response = await appFetchImpl()(
+			`${appUrl}/resources/sites?${params}`,
+			{
+				headers: { Accept: 'application/json' },
+			},
+		)
 		if (!response.ok) return null
 		const data = (await response.json()) as {
 			id?: string
@@ -276,7 +279,7 @@ export async function findActiveOrganizationById(orgId: string) {
 		}
 		try {
 			const params = new URLSearchParams({ orgId })
-			const response = await fetchNoRedirect(
+			const response = await fetchApp(
 				`${appUrl}/resources/tenant-organization?${params}`,
 				{
 					headers: {

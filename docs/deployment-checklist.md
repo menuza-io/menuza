@@ -122,6 +122,8 @@ cd apps/app && npx wrangler deploy --config wrangler.deploy.jsonc
 
 - [ ] Enable Durable Objects
 - [ ] Set `TENANT_API_US_WORKER_NAME` GitHub Variable
+- [ ] Set `APP_WORKER_NAME` (also a Cloudflare Build variable on the tenant-api
+      build): tenant-api reaches the App through it as a service binding
 - [ ] Set tenant-api Wrangler secrets (`JWT_SECRET`, `AUTH_HMAC_SECRET`, etc.)
 - [ ] Set `TENANT_API_URL` for CI health checks
 

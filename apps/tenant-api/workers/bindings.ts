@@ -8,6 +8,8 @@ export interface TenantApiWorkerEnv {
 	DATA_REGION: string
 	NODE_ENV?: string
 	APP_URL: string
+	/** Service binding to the App Worker (see `src/lib/app-service.ts`). */
+	APP?: Fetcher
 	/** Public origin of this node, used in consent email links. Required in production. */
 	TENANT_API_URL?: string
 	ROOT_APP: string

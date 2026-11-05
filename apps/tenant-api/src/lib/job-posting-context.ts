@@ -7,7 +7,7 @@ import {
 	STAFFING_JOB_POSTING_PATH,
 } from '@repo/staffing'
 import { TENANT_ORG_ID_PATTERN } from '@repo/tenant-db'
-import { fetchNoRedirect } from './fetch-no-redirect.ts'
+import { fetchApp } from './app-service.ts'
 import { getInternalCommandToken, syncEnvFromProcess } from './secrets.ts'
 
 /**
@@ -82,7 +82,7 @@ export async function getLivePosting(
 	if (!base || token.length < 16) return { status: 'unavailable' }
 
 	try {
-		const response = await fetchNoRedirect(
+		const response = await fetchApp(
 			`${base}${STAFFING_JOB_POSTING_PATH}?${new URLSearchParams({ orgId, slug })}`,
 			{
 				headers: {
