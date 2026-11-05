@@ -1,5 +1,6 @@
 import { ENV } from 'varlock/env'
 import { z } from 'zod'
+import { fetchNoRedirect } from './fetch-no-redirect.ts'
 import { getNodeRegion } from './region.ts'
 
 export function isMailboxAIConfigured() {
@@ -25,7 +26,7 @@ export async function draftMailboxReply(context: unknown) {
 	if (!isMailboxAIConfigured()) throw new Error('Mailbox AI is not configured')
 	const baseUrl = ENV.MAILBOX_AI_BASE_URL
 	if (!baseUrl) throw new Error('Mailbox AI is not configured')
-	const response = await fetch(
+	const response = await fetchNoRedirect(
 		`${baseUrl.replace(/\/$/, '')}/chat/completions`,
 		{
 			method: 'POST',
@@ -33,7 +34,6 @@ export async function draftMailboxReply(context: unknown) {
 				Authorization: `Bearer ${ENV.MAILBOX_AI_API_KEY}`,
 				'Content-Type': 'application/json',
 			},
-			redirect: 'error',
 			signal: AbortSignal.timeout(30000),
 			body: JSON.stringify({
 				model: ENV.MAILBOX_AI_MODEL,

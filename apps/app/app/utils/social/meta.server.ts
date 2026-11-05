@@ -1,4 +1,5 @@
 import crypto from 'node:crypto'
+import { fetchNoRedirect } from '@repo/security/fetch-no-redirect'
 import { metaRedirectUri, isSocialMock, socialEnv } from './env.server.ts'
 import { SocialError } from './errors.ts'
 import { mockMeta } from './mock.server.ts'
@@ -69,7 +70,12 @@ function graphError(status: number, error: GraphError | undefined) {
 		(typeof error?.message === 'string' && error.message) ||
 		`Meta request failed (${status})`
 	// 190: token expired or revoked; 10 and 200-299: a permission is missing.
-	if (code === 190 || code === 102 || code === 10 || (code >= 200 && code < 300)) {
+	if (
+		code === 190 ||
+		code === 102 ||
+		code === 10 ||
+		(code >= 200 && code < 300)
+	) {
 		return new SocialError('unauthorized', message, status)
 	}
 	if ([4, 17, 32, 613, 80001, 80002].includes(code) || status === 429) {
@@ -99,31 +105,28 @@ async function graph<T>(
 ): Promise<T> {
 	const method = options.method ?? 'GET'
 	const params = new URLSearchParams(options.params)
-	if (options.token) params.set('appsecret_proof', appSecretProof(options.token))
+	if (options.token)
+		params.set('appsecret_proof', appSecretProof(options.token))
 	const url = new URL(`${GRAPH}${path}`)
 	if (method === 'GET') url.search = params.toString()
 	let response: Response
 	try {
-		response = await fetch(url, {
+		response = await fetchNoRedirect(url, {
 			method,
 			headers: {
-				...(options.token
-					? { Authorization: `Bearer ${options.token}` }
-					: {}),
+				...(options.token ? { Authorization: `Bearer ${options.token}` } : {}),
 				...(method === 'POST'
 					? { 'Content-Type': 'application/x-www-form-urlencoded' }
 					: {}),
 			},
 			body: method === 'POST' ? params : undefined,
-			redirect: 'error',
 			signal: AbortSignal.timeout(30_000),
 		})
 	} catch {
 		throw new SocialError('unavailable', 'meta_unavailable')
 	}
 	const json = (await response.json().catch(() => null)) as
-		| (Record<string, unknown> & { error?: GraphError })
-		| null
+		(Record<string, unknown> & { error?: GraphError }) | null
 	if (!response.ok || !json || json.error) {
 		throw graphError(response.status, json?.error)
 	}

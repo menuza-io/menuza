@@ -46,7 +46,7 @@ describe('active organization lookup', () => {
 					Accept: 'application/json',
 					Authorization: `Bearer ${commandToken}`,
 				},
-				redirect: 'error',
+				redirect: 'manual',
 				signal: expect.any(AbortSignal),
 			}),
 		)
@@ -191,5 +191,23 @@ describe('organization lookup failure logs', () => {
 		} finally {
 			vi.useRealTimers()
 		}
+	})
+
+	it('treats a redirect from the App as a failed lookup and never follows it', async () => {
+		vi.mocked(fetch).mockResolvedValueOnce(
+			new Response(null, {
+				status: 302,
+				headers: { Location: 'http://169.254.169.254/latest/meta-data' },
+			}),
+		)
+		expect(await findActiveOrganizationById(organization.id)).toBeNull()
+		expect(fetch).toHaveBeenCalledTimes(1)
+		expect(console.warn).toHaveBeenCalledWith('tenant org lookup failed', {
+			reason: 'app_lookup_threw',
+			appHost: 'app.example.com',
+			errorName: 'RedirectBlockedError',
+			errorCode: undefined,
+		})
+		expect(logged()).not.toContain('169.254')
 	})
 })

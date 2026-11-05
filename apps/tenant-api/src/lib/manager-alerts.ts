@@ -6,6 +6,7 @@ import {
 	type ManagerAlertEvent,
 	type ManagerAlertResult,
 } from '@repo/staffing'
+import { fetchNoRedirect } from './fetch-no-redirect.ts'
 import { getInternalCommandToken, syncEnvFromProcess } from './secrets.ts'
 
 /**
@@ -47,7 +48,7 @@ export async function sendManagerAlert(
 		return { status: 'retry', code: 'not_configured' }
 
 	try {
-		const response = await fetch(`${base}${STAFFING_NOTIFY_PATH}`, {
+		const response = await fetchNoRedirect(`${base}${STAFFING_NOTIFY_PATH}`, {
 			method: 'POST',
 			headers: {
 				Accept: 'application/json',
@@ -55,7 +56,6 @@ export async function sendManagerAlert(
 				Authorization: `Bearer ${token}`,
 			},
 			body: JSON.stringify(parsed.data),
-			redirect: 'error',
 			signal: AbortSignal.timeout(8_000),
 		})
 		if (!response.ok) {

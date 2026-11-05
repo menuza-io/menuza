@@ -35,7 +35,7 @@ describe('sending a manager alert to the App', () => {
 		expect(url).toBe('https://app.example.test/resources/staffing/notify')
 		expect(init.method).toBe('POST')
 		expect(init.headers.Authorization).toBe(`Bearer ${'x'.repeat(32)}`)
-		expect(init.redirect).toBe('error')
+		expect(init.redirect).toBe('manual')
 		expect(JSON.parse(init.body)).toEqual(event)
 	})
 

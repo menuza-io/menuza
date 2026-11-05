@@ -2,6 +2,7 @@ import { invariantResponse } from '@epic-web/invariant'
 import { requireUserWithRole } from '@repo/auth'
 import { getDomainUrl } from '@repo/common'
 import { ssrfSafeFetch } from '@repo/security'
+import { fetchNoRedirect } from '@repo/security/fetch-no-redirect'
 import { ENV } from 'varlock/env'
 import { isCloudflareWorkerRuntime } from '#app/utils/runtime.server.ts'
 import { getSignedGetRequestInfoAsync } from '#app/utils/storage.server.ts'
@@ -207,9 +208,8 @@ async function getCloudflareImageResponse(request: Request) {
 				headers: fetchHeaders,
 				signal: AbortSignal.timeout(10_000),
 			})
-		: await fetch(imageUrl, {
+		: await fetchNoRedirect(imageUrl, {
 				headers: fetchHeaders,
-				redirect: 'error',
 				signal: AbortSignal.timeout(10_000),
 			})
 
