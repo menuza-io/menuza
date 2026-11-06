@@ -163,6 +163,27 @@ export const personErasureLog = sqliteTable(
 
 export type PersonErasureLogEntry = typeof personErasureLog.$inferSelect
 
+// One row per sign-in code sent. The send-code limits that must hold across
+// isolates and Durable Object restarts (the in-process limiter does not) count
+// these rows. Phone and IP are stored only as purpose-prefixed HMACs, and rows
+// older than a day are deleted as new ones are written.
+export const smsSendEvents = sqliteTable(
+	'sms_send_events',
+	{
+		id: integer('id').primaryKey({ autoIncrement: true }),
+		at: integer('at', { mode: 'timestamp_ms' }).notNull(),
+		// 'browser' passed Turnstile; 'native' was the customer app's header.
+		kind: text('kind', { enum: ['browser', 'native'] }).notNull(),
+		phoneHash: text('phone_hash').notNull(),
+		ipHash: text('ip_hash').notNull(),
+	},
+	(table) => [
+		index('idx_sms_send_events_kind_at').on(table.kind, table.at),
+		index('idx_sms_send_events_phone_at').on(table.phoneHash, table.at),
+		index('idx_sms_send_events_ip_at').on(table.ipHash, table.at),
+	],
+)
+
 // ==========================================
 // 2. MARKETING JOURNEYS (Workflow Definitions)
 // ==========================================

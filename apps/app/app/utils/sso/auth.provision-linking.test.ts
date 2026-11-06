@@ -1,4 +1,4 @@
-import { db, Organization, User, UserOrganization } from '@repo/database'
+import { db, eq, Organization, User, UserOrganization } from '@repo/database'
 import { describe, expect, it, vi } from 'vitest'
 import { ssoAuthService } from './auth.server.ts'
 
@@ -28,6 +28,8 @@ function config(
 ) {
 	return {
 		organizationId,
+		providerName: 'Test IdP',
+		issuerUrl: 'https://idp.example/',
 		autoProvision: true,
 		defaultRole: 'member',
 		allowedEmailDomains: null,
@@ -38,23 +40,16 @@ function config(
 }
 
 describe('SSO provisioning never links foreign accounts', () => {
-	it('refuses an existing user who is not a member (default config)', async () => {
-		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+	it('refuses every sign-in while the configuration lists no allowed domains', async () => {
 		const { victim, org, id } = await seed()
 		await expect(
 			ssoAuthService.provisionUser(
 				{ sub: id, email: victim.email, email_verified: true } as any,
 				config(org.id),
 			),
-		).rejects.toThrow(/cannot be linked/)
+		).rejects.toThrow(/no allowed email domains/)
 		const memberships = await db.select().from(UserOrganization)
 		expect(memberships.some((m) => m.userId === victim.id)).toBe(false)
-		// The log names the real cause, so an operator can tell an IdP that omits
-		// the claim from a domain that is not allowlisted.
-		expect(warn).toHaveBeenCalledWith(
-			expect.stringContaining('allowedEmailDomains'),
-		)
-		warn.mockRestore()
 	})
 
 	it('refuses when the email is unverified even if the domain is allowed', async () => {
@@ -104,5 +99,84 @@ describe('SSO provisioning never links foreign accounts', () => {
 			config(org.id, { allowedEmailDomains: 'other.example' }),
 		)
 		expect(user.id).toBe(victim.id)
+	})
+})
+
+describe('SSO identity link (issuer + subject)', () => {
+	async function orgWithDomain() {
+		const id = `idl${Math.random().toString(36).slice(2, 10)}`
+		const [org] = await db
+			.insert(Organization)
+			.values({ id: `o-${id}`, name: `Org ${id}`, slug: `org-${id}` })
+			.returning()
+		const domain = `${id}.example`
+		return {
+			id,
+			domain,
+			org: org!,
+			cfg: config(org!.id, { allowedEmailDomains: domain }),
+		}
+	}
+
+	it('a new account is linked, and later sign-ins match the subject, not the email', async () => {
+		const { id, domain, cfg } = await orgWithDomain()
+		const created = await ssoAuthService.provisionUser(
+			{ sub: `sub-${id}`, email: `ann@${domain}` } as any,
+			cfg,
+		)
+		const again = await ssoAuthService.provisionUser(
+			{ sub: `sub-${id}`, email: `ann.renamed@${domain}` } as any,
+			cfg,
+		)
+		expect(again.id).toBe(created.id)
+	})
+
+	it('another IdP user asserting a linked member email is refused', async () => {
+		const { id, domain, cfg } = await orgWithDomain()
+		const member = await ssoAuthService.provisionUser(
+			{ sub: `real-${id}`, email: `bob@${domain}` } as any,
+			cfg,
+		)
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+		await expect(
+			ssoAuthService.provisionUser(
+				{ sub: `impostor-${id}`, email: `bob@${domain}` } as any,
+				cfg,
+			),
+		).rejects.toThrow(/linked to a different identity provider account/)
+		warn.mockRestore()
+		const [still] = await db
+			.select({ email: User.email })
+			.from(User)
+			.where(eq(User.id, member.id))
+		expect(still!.email).toBe(`bob@${domain}`)
+	})
+
+	it('an IdP cannot sign in an existing member whose email is outside its domains', async () => {
+		const { id, org, cfg } = await orgWithDomain()
+		// A consultant who is a member here but whose address is elsewhere.
+		const [consultant] = await db
+			.insert(User)
+			.values({
+				id: `c-${id}`,
+				email: `consultant-${id}@agency.example`,
+				username: `consultant-${id}`,
+			})
+			.returning()
+		await db.insert(UserOrganization).values({
+			userId: consultant!.id,
+			organizationId: org.id,
+			organizationRoleId: 'org_role_member',
+		})
+		await expect(
+			ssoAuthService.provisionUser(
+				{
+					sub: `x-${id}`,
+					email: consultant!.email,
+					email_verified: true,
+				} as any,
+				cfg,
+			),
+		).rejects.toThrow(/not allowed/)
 	})
 })

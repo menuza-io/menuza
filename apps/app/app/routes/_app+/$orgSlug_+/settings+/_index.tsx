@@ -6,17 +6,12 @@ import { organizationSlugSchema } from '@repo/common'
 import { markStepCompleted } from '@repo/common/onboarding'
 import { redirectWithToast } from '@repo/common/toast'
 import {
-	and,
 	db,
 	eq,
-	isNull,
-	like,
 	Organization,
 	OrganizationImage,
-	OrganizationRole,
 	OrganizationS3Config,
 	User,
-	UserOrganization,
 } from '@repo/database'
 import {
 	decrypt,
@@ -53,16 +48,20 @@ import VerifiedDomainCard, {
 } from '#app/components/settings/cards/organization/verified-domain-card.tsx'
 
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
-import { auditMemberAdded } from '#app/utils/organization/membership-audit.server.ts'
 import {
 	requireUserWithOrganizationPermission,
 	ORG_PERMISSIONS,
 } from '#app/utils/organization/permissions.server.ts'
 import { isPublicEmailDomain } from '#app/utils/organization/public-email-domains.ts'
 import {
-	updateSeatQuantity,
-	deleteSubscription,
-} from '#app/utils/payments.server.ts'
+	checkDomainClaim,
+	domainVerificationRecordName,
+	domainVerificationRecordValue,
+	inviteExistingDomainUsers,
+	isDomainClaimedElsewhere,
+	startDomainClaim,
+} from '#app/utils/organization/verified-domain.server.ts'
+import { deleteSubscription } from '#app/utils/payments.server.ts'
 import {
 	countOrgMediaObjectKeys,
 	createAndStartStorageMigration,
@@ -87,8 +86,24 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		slug: true,
 		size: true,
 		verifiedDomain: true,
+		verifiedDomainProvedAt: true,
+		pendingVerifiedDomain: true,
+		verifiedDomainToken: true,
 		stripeSubscriptionId: true,
 	})
+	// The TXT record to publish for a pending claim; the token itself only
+	// travels inside that record value.
+	const { verifiedDomainToken, ...organizationFields } = organization
+	const domainClaim =
+		organization.pendingVerifiedDomain && verifiedDomainToken
+			? {
+					domain: organization.pendingVerifiedDomain,
+					recordName: domainVerificationRecordName(
+						organization.pendingVerifiedDomain,
+					),
+					recordValue: domainVerificationRecordValue(verifiedDomainToken),
+				}
+			: null
 
 	const [s3Config, image] = await Promise.all([
 		db
@@ -104,7 +119,14 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			.from(OrganizationS3Config)
 			.where(eq(OrganizationS3Config.organizationId, organization.id))
 			.limit(1)
-			.then((rows) => rows[0] ?? null),
+			// The page only needs to know a secret is stored; its ciphertext
+			// never goes to the browser.
+			.then((rows) => {
+				const row = rows[0]
+				if (!row) return null
+				const { secretAccessKey, ...rest } = row
+				return { ...rest, hasSecretAccessKey: Boolean(secretAccessKey) }
+			}),
 		db
 			.select({
 				id: OrganizationImage.id,
@@ -124,7 +146,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	])
 
 	return {
-		organization: { ...organization, s3Config, image },
+		organization: { ...organizationFields, s3Config, image, domainClaim },
 		activeMigration,
 		latestMigration,
 		mediaFileCount,
@@ -169,7 +191,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		}),
 		// Get user email for domain validation
 		db
-			.select({ email: User.email })
+			.select({ email: User.email, name: User.name, username: User.username })
 			.from(User)
 			.where(eq(User.id, userId))
 			.limit(1)
@@ -186,6 +208,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		'update-settings',
 		'update-team-size',
 		'verified-domain',
+		'check-verified-domain',
 		'toggle-verified-domain',
 		'delete-organization',
 		s3StorageActionIntent,
@@ -393,109 +416,68 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		}
 
 		// Stored lowercase and trimmed: signup and discovery match it exactly.
-		const verifiedDomain = normalizeEmailDomain(
+		const domain = normalizeEmailDomain(
 			submission.value.verifiedDomain,
 		) as string
-
-		const autoAddedMembers: Array<{ userId: string; roleId: string }> = []
-		try {
-			await db.transaction(async (tx) => {
-				// Update the organization with the verified domain
-				await tx
-					.update(Organization)
-					.set({ verifiedDomain })
-					.where(eq(Organization.id, organization.id))
-
-				// Find all users with emails ending with this domain who are not already members
-				const usersWithMatchingDomain = await tx
-					.select({ id: User.id, email: User.email, name: User.name })
-					.from(User)
-					.leftJoin(
-						UserOrganization,
-						and(
-							eq(UserOrganization.userId, User.id),
-							eq(UserOrganization.organizationId, organization.id),
-						),
-					)
-					.where(
-						and(
-							like(User.email, `%@${verifiedDomain}`),
-							isNull(UserOrganization.userId),
-						),
-					)
-
-				// Auto-add these users to the organization
-				if (usersWithMatchingDomain.length > 0) {
-					// Get the member role first
-					const [memberRole] = await tx
-						.select({ id: OrganizationRole.id })
-						.from(OrganizationRole)
-						.where(
-							and(
-								eq(OrganizationRole.name, 'member'),
-								isNull(OrganizationRole.organizationId),
-							),
-						)
-						.limit(1)
-
-					if (!memberRole) {
-						throw new Error('Member role not found')
-					}
-
-					await tx.insert(UserOrganization).values(
-						usersWithMatchingDomain.map((user) => ({
-							userId: user.id,
-							organizationId: organization.id,
-							organizationRoleId: memberRole.id,
-						})),
-					)
-					for (const user of usersWithMatchingDomain)
-						autoAddedMembers.push({ userId: user.id, roleId: memberRole.id })
-				}
-
-				// Update seat quantity for billing if users were added
-				if (usersWithMatchingDomain.length > 0) {
-					try {
-						await updateSeatQuantity(organization.id)
-					} catch {
-						// Failed to update seat quantity
-					}
-				}
-			})
-
-			for (const member of autoAddedMembers) {
-				await auditMemberAdded({
-					organizationId: organization.id,
-					memberUserId: member.userId,
-					actorId: userId,
-					via: 'verified_domain',
-					roleId: member.roleId,
-					request,
-				})
-			}
-
-			await invalidateUserOrganizationsCache(userId)
-
-			return redirectWithToast(`/${organization.slug}/settings`, {
-				title: 'Verified domain updated',
-				description:
-					'Your organization verified domain has been updated and matching users have been automatically added.',
-				type: 'success',
-			})
-		} catch {
+		if (await isDomainClaimedElsewhere(domain, organization.id)) {
 			return Response.json({
 				result: submission.reply({
-					formErrors: ['Failed to update verified domain. Please try again.'],
+					fieldErrors: {
+						verifiedDomain: [
+							'This domain is already verified by another organization.',
+						],
+					},
 				}),
 			})
 		}
+		// Nothing changes until the TXT record proves control of the domain.
+		const claim = await startDomainClaim(organization.id, domain)
+		return Response.json({
+			result: submission.reply(),
+			domainClaim: { domain, ...claim },
+		})
+	}
+
+	if (intent === 'check-verified-domain') {
+		const check = await checkDomainClaim(organization.id)
+		if (check.status !== 'verified') {
+			const message = {
+				no_claim: 'Add a domain first.',
+				not_found:
+					'The TXT record was not found yet. DNS changes can take a few minutes; try again shortly.',
+				taken: 'This domain is already verified by another organization.',
+				lookup_failed: 'The DNS lookup failed. Please try again.',
+			}[check.status]
+			return Response.json({ domainCheck: { status: check.status, message } })
+		}
+		const { invited, more } = await inviteExistingDomainUsers({
+			organizationId: organization.id,
+			organizationName: organization.name,
+			domain: check.domain,
+			inviterId: userId,
+			inviterName: user.name || user.username || organization.name,
+			request,
+		})
+		await invalidateUserOrganizationsCache(userId)
+		return redirectWithToast(`/${organization.slug}/settings`, {
+			title: 'Domain verified',
+			description: `${check.domain} is verified. ${invited} existing ${
+				invited === 1 ? 'person was' : 'people were'
+			} invited to join${more ? '; invite the rest from Members' : ''}. New sign-ups on this domain join automatically.`,
+			type: 'success',
+		})
 	}
 
 	if (intent === 'toggle-verified-domain') {
 		try {
 			await db
 				.update(Organization)
-				.set({ verifiedDomain: null })
+				.set({
+					verifiedDomain: null,
+					verifiedDomainProvedAt: null,
+					pendingVerifiedDomain: null,
+					verifiedDomainToken: null,
+				})
 				.where(eq(Organization.id, organization.id))
 			await invalidateUserOrganizationsCache(userId)
 			return Response.json({ status: 'success' })

@@ -5,7 +5,10 @@ import {
 	desc,
 	eq,
 	Feedback,
+	exists,
 	isNull,
+	NoteAccess,
+	or,
 	Organization,
 	OrganizationNote,
 	OrganizationNoteStatus,
@@ -30,12 +33,19 @@ export async function fetchControlPlaneRecords(options: {
 	subject: string
 	scope: 'organization' | 'platform'
 	organizationId?: string
+	/**
+	 * The member running an organization report. Notes follow the notes-list
+	 * rule for them: public notes, their own, and notes shared with them.
+	 * Without it an organization notes report returns nothing.
+	 */
+	viewerUserId?: string
 }): Promise<ReportRecord[]> {
-	const { subject, scope, organizationId } = options
+	const { subject, scope, organizationId, viewerUserId } = options
 
 	if (scope === 'organization') {
 		if (!organizationId) return []
 		if (subject === 'notes') {
+			if (!viewerUserId) return []
 			const rows = await db
 				.select({
 					createdAt: OrganizationNote.createdAt,
@@ -50,7 +60,26 @@ export async function fetchControlPlaneRecords(options: {
 					OrganizationNoteStatus,
 					eq(OrganizationNote.statusId, OrganizationNoteStatus.id),
 				)
-				.where(eq(OrganizationNote.organizationId, organizationId))
+				.where(
+					and(
+						eq(OrganizationNote.organizationId, organizationId),
+						or(
+							eq(OrganizationNote.isPublic, true),
+							eq(OrganizationNote.createdById, viewerUserId),
+							exists(
+								db
+									.select({ noteId: NoteAccess.noteId })
+									.from(NoteAccess)
+									.where(
+										and(
+											eq(NoteAccess.noteId, OrganizationNote.id),
+											eq(NoteAccess.userId, viewerUserId),
+										),
+									),
+							),
+						),
+					),
+				)
 			return rows
 		}
 		if (subject === 'members') {
@@ -69,7 +98,13 @@ export async function fetchControlPlaneRecords(options: {
 					eq(UserOrganization.organizationRoleId, OrganizationRole.id),
 				)
 				.innerJoin(User, eq(UserOrganization.userId, User.id))
-				.where(eq(UserOrganization.organizationId, organizationId))
+				// Same as the Members page: active members only.
+				.where(
+					and(
+						eq(UserOrganization.organizationId, organizationId),
+						eq(UserOrganization.active, true),
+					),
+				)
 			return rows
 		}
 		if (subject === 'feedback') {

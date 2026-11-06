@@ -67,6 +67,12 @@ export async function getOperatorTenantClient(
 	orgSlug: string,
 	options: {
 		scope?: 'mailbox' | 'phone_calls'
+		/**
+		 * Names the area of a token that reaches the browser. tenant-api accepts
+		 * it only on that area's routes, so the permission checked before minting
+		 * cannot unlock another area. Omit for tokens that stay on the server.
+		 */
+		area?: 'marketing' | 'customers'
 		/** Lets tenant-api accept changes (e.g. completing or tagging calls). */
 		canUpdate?: boolean
 		/** Lets tenant-api accept destructive calls (e.g. deleting call logs). */
@@ -120,6 +126,7 @@ export async function getOperatorTenantClient(
 			orgId: organization.id,
 			role: 'operator',
 			scope: options.scope,
+			...(options.area ? { area: options.area } : {}),
 			...(claims.canUpdate ? { canUpdate: true } : {}),
 			...(claims.canDelete ? { canDelete: true } : {}),
 		})

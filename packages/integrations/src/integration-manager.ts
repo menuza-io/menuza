@@ -11,6 +11,7 @@
  */
 
 import { ENV } from './package-env.js'
+import { pinGitLabInstanceUrl } from './providers/gitlab/instance-pin.js'
 import {
 	Integration as IntegrationTable,
 	IntegrationLog as IntegrationLogTable,
@@ -290,7 +291,10 @@ export class IntegrationManager {
 		config: Record<string, any>,
 	): Promise<Integration> {
 		const [existing] = await db
-			.select({ providerName: IntegrationTable.providerName })
+			.select({
+				providerName: IntegrationTable.providerName,
+				config: IntegrationTable.config,
+			})
 			.from(IntegrationTable)
 			.where(eq(IntegrationTable.id, integrationId))
 			.limit(1)
@@ -308,6 +312,12 @@ export class IntegrationManager {
 					)
 				}
 			}
+		}
+
+		if (existing?.providerName === 'gitlab') {
+			const pinned = pinGitLabInstanceUrl(existing.config, config)
+			if ('error' in pinned) throw new Error(pinned.error)
+			config = pinned.config
 		}
 
 		const [integration] = await db

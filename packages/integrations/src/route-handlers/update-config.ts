@@ -1,6 +1,7 @@
 import { Integration as IntegrationTable, and, db, eq } from '@repo/database'
 import { integrationManager, JiraProvider } from '../index'
 import { type ActionFunctionArgs } from 'react-router'
+import { pinGitLabInstanceUrl } from '../providers/gitlab/instance-pin.js'
 
 export interface UpdateConfigDependencies {
 	requireUserId: (request: Request) => Promise<string>
@@ -117,6 +118,14 @@ export async function handleUpdateIntegrationConfig(
 					)
 				}
 			}
+		}
+
+		if (integration.providerName === 'gitlab') {
+			const pinned = pinGitLabInstanceUrl(integration.config, config)
+			if ('error' in pinned) {
+				return Response.json({ error: pinned.error }, { status: 400 })
+			}
+			config = pinned.config
 		}
 
 		// Special handling for Jira bot user configuration

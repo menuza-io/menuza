@@ -221,17 +221,10 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		// This will either find existing user or create new one based on SSO config
 		let user: any
 		try {
-			// Prepare user info for provisioning - keep the original format for tests
-			const userInfo = {
-				sub: String(providerUser.id),
-				email: providerUser.email,
-				name: providerUser.name,
-				preferred_username: providerUser.username,
-			}
-
-			// The SSO auth service handles user provisioning and organization membership
-			// It will create the user if auto-provisioning is enabled, or throw an error if not
-			user = await ssoAuthService.provisionUser(userInfo, ssoConfig)
+			// handleCallback already provisioned the user from the IdP's claims
+			// (subject, email, email_verified) and returns their id. Provisioning
+			// again here would only see our own id and email.
+			user = await ssoAuthService.getProvisionedUser(String(providerUser.id))
 		} catch (error) {
 			console.error('User provisioning failed:', error)
 			trackSuspiciousActivity(activityKey, 'failed_auth')

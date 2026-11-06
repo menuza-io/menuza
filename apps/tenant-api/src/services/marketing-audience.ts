@@ -160,9 +160,8 @@ export async function setCustomerSubscription(
 					subscribedAt: now,
 					unsubscribedAt: null,
 					confirmedEmailHash,
-					// A fresh opt-in starts a fresh confirmation.
-					confirmationSentAt: null,
-					confirmationSentHash: null,
+					// The confirmation send clock (confirmationSentAt/Hash) is kept:
+					// it throttles resends to one address across opt-in cycles.
 					updatedAt: now,
 				},
 			})

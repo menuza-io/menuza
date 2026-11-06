@@ -1,7 +1,7 @@
 import { msg, Plural, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { parseFormData } from '@mjackson/form-data-parser'
-import { requireUserId } from '@repo/auth'
+import { requireUserId, userHasOrganizationPermission } from '@repo/auth'
 import {
 	and,
 	db,
@@ -50,6 +50,10 @@ import {
 } from '#app/components/media-library/photo-studio-dialog.tsx'
 import { isPhotoStudioConfigured } from '#app/utils/media/photo-studio.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
+import {
+	ORG_PERMISSIONS,
+	requireUserWithOrganizationPermission,
+} from '#app/utils/organization/permissions.server.ts'
 import {
 	deleteOrganizationStorageObject,
 	uploadOrganizationMediaFileOnly,
@@ -300,7 +304,7 @@ async function deleteMediaObjectIfUnreferenced({
 }
 
 export async function loader({ request, params }: Route.LoaderArgs) {
-	await requireUserId(request)
+	const userId = await requireUserId(request)
 	const organization = await requireUserOrganization(request, params.orgSlug, {
 		id: true,
 		slug: true,
@@ -330,11 +334,25 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		.orderBy(desc(OrganizationMediaAsset.createdAt))
 		.limit(200)
 
+	const [canManageMedia, canUsePhotoStudio] = await Promise.all([
+		userHasOrganizationPermission(
+			userId,
+			organization.id,
+			ORG_PERMISSIONS.UPDATE_MEDIA_ANY,
+		),
+		userHasOrganizationPermission(
+			userId,
+			organization.id,
+			ORG_PERMISSIONS.CREATE_MEDIA_STUDIO_ANY,
+		),
+	])
+
 	return {
 		organization,
 		assets: assets.map(serializeAsset),
 		search: normalizedSearch,
-		photoStudioEnabled: isPhotoStudioConfigured(),
+		canManageMedia,
+		photoStudioEnabled: isPhotoStudioConfigured() && canUsePhotoStudio,
 	}
 }
 
@@ -346,6 +364,16 @@ export async function action({ request, params }: Route.ActionArgs) {
 	})
 	const formData = await parseFormData(request, { maxFileSize: MAX_IMAGE_SIZE })
 	const intent = formData.get('intent')
+
+	// Every intent except the read-only reference lookup changes the shared
+	// library (update, delete, replace, upload).
+	if (intent !== 'get-references') {
+		await requireUserWithOrganizationPermission(
+			request,
+			organization.id,
+			ORG_PERMISSIONS.UPDATE_MEDIA_ANY,
+		)
+	}
 
 	if (intent === 'update') {
 		const result = UpdateSchema.safeParse({
@@ -520,6 +548,14 @@ export async function action({ request, params }: Route.ActionArgs) {
 			return Response.json({ error: 'Media not found.' }, { status: 404 })
 		}
 
+		// Notes and comments are listed only when this member could open the
+		// note (the notes-list rule): public, their own, or shared with them.
+		const readableNote = or(
+			eq(OrganizationNote.isPublic, true),
+			eq(OrganizationNote.createdById, userId),
+			sql`EXISTS (SELECT 1 FROM NoteAccess WHERE NoteAccess.noteId = ${OrganizationNote.id} AND NoteAccess.userId = ${userId})`,
+		)
+
 		// 1. Notes
 		const noteRefs = await db
 			.select({
@@ -536,6 +572,7 @@ export async function action({ request, params }: Route.ActionArgs) {
 				and(
 					eq(OrganizationNoteUpload.objectKey, asset.objectKey),
 					eq(OrganizationNote.organizationId, organization.id),
+					readableNote,
 				),
 			)
 
@@ -555,6 +592,7 @@ export async function action({ request, params }: Route.ActionArgs) {
 				and(
 					eq(NoteCommentImage.objectKey, asset.objectKey),
 					eq(OrganizationNote.organizationId, organization.id),
+					readableNote,
 				),
 			)
 
@@ -729,7 +767,8 @@ export default function MediaLibraryRoute({
 		open: boolean
 		assetIds?: string[]
 	}>({ open: false })
-	const { assets, search, organization, photoStudioEnabled } = loaderData
+	const { assets, search, organization, photoStudioEnabled, canManageMedia } =
+		loaderData
 	const isUploading = uploadFetcher.state !== 'idle'
 
 	useEffect(() => {
@@ -855,21 +894,23 @@ export default function MediaLibraryRoute({
 								<Trans>Enhance with AI</Trans>
 							</Button>
 						) : null}
-						<Button
-							type="button"
-							disabled={isUploading}
-							onClick={() => fileInputRef.current?.click()}
-						>
-							<Icon
-								name={isUploading ? 'loader' : 'plus'}
-								className={isUploading ? 'animate-spin' : undefined}
-							/>
-							{isUploading ? (
-								<Trans>Uploading…</Trans>
-							) : (
-								<Trans>Upload image</Trans>
-							)}
-						</Button>
+						{canManageMedia ? (
+							<Button
+								type="button"
+								disabled={isUploading}
+								onClick={() => fileInputRef.current?.click()}
+							>
+								<Icon
+									name={isUploading ? 'loader' : 'plus'}
+									className={isUploading ? 'animate-spin' : undefined}
+								/>
+								{isUploading ? (
+									<Trans>Uploading…</Trans>
+								) : (
+									<Trans>Upload image</Trans>
+								)}
+							</Button>
+						) : null}
 					</>
 				}
 			/>
@@ -988,6 +1029,7 @@ export default function MediaLibraryRoute({
 				onDelete={handleDeleteAsset}
 				onReplace={handleReplaceAsset}
 				onSaveCopy={handleSaveCopy}
+				readOnly={!canManageMedia}
 				onEnhance={
 					photoStudioEnabled
 						? (id) => {
@@ -1025,7 +1067,10 @@ function MediaDetailsDialog({
 	onSaveCopy,
 	onEnhance,
 	isUpdating,
+	readOnly = false,
 }: {
+	/** Viewers without update:media:any see details but cannot change them. */
+	readOnly?: boolean
 	asset: SerializedMediaAsset | null
 	onClose: () => void
 	onEnhance?: (id: string) => void
@@ -1338,18 +1383,20 @@ function MediaDetailsDialog({
 												}
 											}}
 										/>
-										<Button
-											type="button"
-											variant="secondary"
-											size="xs"
-											disabled={isUpdating}
-											onClick={() => replaceFileInputRef.current?.click()}
-											className="absolute top-2.5 left-2.5 shadow-sm"
-										>
-											<Icon name="refresh-cw" className="size-3" />
-											<Trans>Replace image</Trans>
-										</Button>
-										{asset.mimeType !== 'image/gif' ? (
+										{readOnly ? null : (
+											<Button
+												type="button"
+												variant="secondary"
+												size="xs"
+												disabled={isUpdating}
+												onClick={() => replaceFileInputRef.current?.click()}
+												className="absolute top-2.5 left-2.5 shadow-sm"
+											>
+												<Icon name="refresh-cw" className="size-3" />
+												<Trans>Replace image</Trans>
+											</Button>
+										)}
+										{!readOnly && asset.mimeType !== 'image/gif' ? (
 											<Button
 												type="button"
 												variant="secondary"
@@ -1640,48 +1687,61 @@ function MediaDetailsDialog({
 						</div>
 
 						{/* Details Footer */}
-						<DialogFooter className="m-0 sm:items-center sm:justify-between">
-							<Button
-								type="button"
-								variant="destructive"
-								size="sm"
-								disabled={isUpdating}
-								onClick={() => onDelete(asset.id)}
-							>
-								<Icon name="trash-2" className="size-4" />
-								<span>
-									<Trans>Delete</Trans>
-								</span>
-							</Button>
-
-							<div className="flex items-center gap-2">
+						{readOnly ? (
+							<DialogFooter className="m-0">
 								<Button
 									type="button"
 									variant="ghost"
 									size="sm"
-									disabled={isUpdating}
 									onClick={onClose}
 								>
-									<Trans>Cancel</Trans>
+									<Trans>Close</Trans>
 								</Button>
+							</DialogFooter>
+						) : (
+							<DialogFooter className="m-0 sm:items-center sm:justify-between">
 								<Button
 									type="button"
-									variant="default"
+									variant="destructive"
 									size="sm"
 									disabled={isUpdating}
-									onClick={() =>
-										onUpdate({
-											id: asset.id,
-											fileName,
-											altText,
-											caption,
-										})
-									}
+									onClick={() => onDelete(asset.id)}
 								>
-									{isUpdating ? <Trans>Saving…</Trans> : <Trans>Save</Trans>}
+									<Icon name="trash-2" className="size-4" />
+									<span>
+										<Trans>Delete</Trans>
+									</span>
 								</Button>
-							</div>
-						</DialogFooter>
+
+								<div className="flex items-center gap-2">
+									<Button
+										type="button"
+										variant="ghost"
+										size="sm"
+										disabled={isUpdating}
+										onClick={onClose}
+									>
+										<Trans>Cancel</Trans>
+									</Button>
+									<Button
+										type="button"
+										variant="default"
+										size="sm"
+										disabled={isUpdating}
+										onClick={() =>
+											onUpdate({
+												id: asset.id,
+												fileName,
+												altText,
+												caption,
+											})
+										}
+									>
+										{isUpdating ? <Trans>Saving…</Trans> : <Trans>Save</Trans>}
+									</Button>
+								</div>
+							</DialogFooter>
+						)}
 					</>
 				) : (
 					<>

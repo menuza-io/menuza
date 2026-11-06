@@ -418,7 +418,7 @@ msgstr "إضافة نقاط قائمة الانتظار"
 
 #: app/components/admin-sidebar.tsx:151
 #: app/components/admin-sidebar.tsx:159
-#: app/components/sso-configuration-form.tsx:392
+#: app/components/sso-configuration-form.tsx:438
 #: app/components/sso-user-management.tsx:98
 #: app/routes/_admin+/roles+/$roleId.tsx:465
 #: app/routes/_admin+/roles+/system.$roleId.tsx:228
@@ -500,6 +500,10 @@ msgstr "السماح بالتصدير"
 msgid "Allow users to export audit logs"
 msgstr "السماح للمستخدمين بتصدير سجلات المراجعة"
 
+#: app/components/sso-configuration-form.tsx:364
+msgid "Allowed email domains"
+msgstr "نطاقات البريد الإلكتروني المسموح بها"
+
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:241
 msgid "Alt text"
 msgstr "النص البديل"
@@ -576,7 +580,7 @@ msgstr "تعيين"
 msgid "Assigned, not connected"
 msgstr "معيَّن، غير متصل"
 
-#: app/components/sso-configuration-form.tsx:409
+#: app/components/sso-configuration-form.tsx:455
 msgid "Attribute Mapping (JSON)"
 msgstr "تعيين الخصائص (JSON)"
 
@@ -597,7 +601,7 @@ msgstr "سجلات المراجعة"
 msgid "Authentication Methods"
 msgstr "طرق المصادقة"
 
-#: app/components/sso-configuration-form.tsx:260
+#: app/components/sso-configuration-form.tsx:267
 msgid "Authorization URL"
 msgstr "رابط التفويض"
 
@@ -605,12 +609,12 @@ msgstr "رابط التفويض"
 msgid "Auto"
 msgstr "تلقائي"
 
-#: app/components/sso-configuration-form.tsx:242
+#: app/components/sso-configuration-form.tsx:249
 #: app/components/sso-configuration-overview.tsx:195
 msgid "Auto-Discovery"
 msgstr "الاكتشاف التلقائي"
 
-#: app/components/sso-configuration-form.tsx:363
+#: app/components/sso-configuration-form.tsx:409
 #: app/components/sso-configuration-overview.tsx:221
 msgid "Auto-Provision Users"
 msgstr "توفير المستخدمين تلقائياً"
@@ -619,11 +623,11 @@ msgstr "توفير المستخدمين تلقائياً"
 msgid "Automatically archive old logs to cold storage"
 msgstr "أرشفة السجلات القديمة تلقائياً في التخزين البارد"
 
-#: app/components/sso-configuration-form.tsx:366
+#: app/components/sso-configuration-form.tsx:412
 msgid "Automatically create user accounts for new SSO users"
 msgstr "إنشاء حسابات المستخدمين تلقائياً لمستخدمي SSO الجدد"
 
-#: app/components/sso-configuration-form.tsx:245
+#: app/components/sso-configuration-form.tsx:252
 msgid "Automatically discover OAuth2 endpoints from the issuer URL"
 msgstr "اكتشاف نقاط نهاية OAuth2 تلقائياً من رابط المُصدر"
 
@@ -913,7 +917,7 @@ msgstr "معدل النقر"
 msgid "Clicked {0}"
 msgstr "نُقِر {0}"
 
-#: app/components/sso-configuration-form.tsx:177
+#: app/components/sso-configuration-form.tsx:184
 msgid "Client ID"
 msgstr "معرف العميل"
 
@@ -921,7 +925,7 @@ msgstr "معرف العميل"
 msgid "Client ID:"
 msgstr "معرف العميل:"
 
-#: app/components/sso-configuration-form.tsx:191
+#: app/components/sso-configuration-form.tsx:198
 msgid "Client Secret"
 msgstr "سر العميل"
 
@@ -1008,11 +1012,11 @@ msgstr "الإعداد مطلوب"
 msgid "Configure custom retention and archival settings"
 msgstr "تكوين إعدادات الاحتفاظ والأرشفة المخصصة"
 
-#: app/components/sso-configuration-form.tsx:349
+#: app/components/sso-configuration-form.tsx:356
 msgid "Configure how users are created and managed through SSO"
 msgstr "تكوين كيفية إنشاء وإدارة المستخدمين من خلال SSO"
 
-#: app/components/sso-configuration-form.tsx:227
+#: app/components/sso-configuration-form.tsx:234
 msgid "Configure OAuth2 endpoints and security settings"
 msgstr "تكوين نقاط نهاية OAuth2 وإعدادات الأمان"
 
@@ -1020,11 +1024,11 @@ msgstr "تكوين نقاط نهاية OAuth2 وإعدادات الأمان"
 msgid "Configure retention and archival settings for {organizationName}"
 msgstr "تكوين إعدادات الاحتفاظ والأرشفة لـ {organizationName}"
 
-#: app/routes/_admin+/organizations+/$organizationId_+/sso.tsx:460
+#: app/routes/_admin+/organizations+/$organizationId_+/sso.tsx:491
 msgid "Configure Single Sign-On for {organizationName}"
 msgstr "تكوين تسجيل الدخول الموحد لـ {organizationName}"
 
-#: app/components/sso-configuration-form.tsx:140
+#: app/components/sso-configuration-form.tsx:147
 msgid "Configure your organization's identity provider settings"
 msgstr "تكوين إعدادات موفر الهوية لمؤسستك"
 
@@ -1234,7 +1238,7 @@ msgstr "إلغاء التفعيل"
 msgid "Default"
 msgstr "افتراضي"
 
-#: app/components/sso-configuration-form.tsx:375
+#: app/components/sso-configuration-form.tsx:421
 msgid "Default Role"
 msgstr "الدور الافتراضي"
 
@@ -1328,7 +1332,7 @@ msgstr "هل استلم المورد هذا الطلب؟"
 msgid "Disable"
 msgstr "تعطيل"
 
-#: app/components/sso-configuration-form.tsx:495
+#: app/components/sso-configuration-form.tsx:541
 msgid "Disable SSO"
 msgstr "تعطيل SSO"
 
@@ -1431,7 +1435,7 @@ msgstr "مثال: مرحبًا {{firstName}}!"
 msgid "e.g., editor, moderator, contributor"
 msgstr "مثل: محرر، مشرف، مساهم"
 
-#: app/components/sso-configuration-form.tsx:154
+#: app/components/sso-configuration-form.tsx:161
 msgid "e.g., Okta, Azure AD, Auth0"
 msgstr "مثل: Okta، Azure AD، Auth0"
 
@@ -1549,7 +1553,7 @@ msgstr "تفعيل {item}"
 msgid "Enable Archiving"
 msgstr "تفعيل الأرشفة"
 
-#: app/components/sso-configuration-form.tsx:497
+#: app/components/sso-configuration-form.tsx:543
 msgid "Enable SSO"
 msgstr "تفعيل SSO"
 
@@ -1883,7 +1887,7 @@ msgstr "بيانات الرسم البياني مطلوبة"
 msgid "Graph data missing"
 msgstr "بيانات الرسم البياني مفقودة"
 
-#: app/components/sso-configuration-form.tsx:401
+#: app/components/sso-configuration-form.tsx:447
 msgid "Guest"
 msgstr "ضيف"
 
@@ -1967,23 +1971,23 @@ msgstr "المدة المراد الاحتفاظ بالسجلات قابلة ل�
 msgid "How often people clock in on time for the shifts they were scheduled on."
 msgstr "عدد مرات تسجيل الحضور في الوقت المحدد للمناوبات المجدولة."
 
-#: app/components/sso-configuration-form.tsx:168
+#: app/components/sso-configuration-form.tsx:175
 msgid "https://your-domain.okta.com"
 msgstr "https://your-domain.okta.com"
 
-#: app/components/sso-configuration-form.tsx:267
+#: app/components/sso-configuration-form.tsx:274
 msgid "https://your-domain.okta.com/oauth2/v1/authorize"
 msgstr "https://your-domain.okta.com/oauth2/v1/authorize"
 
-#: app/components/sso-configuration-form.tsx:312
+#: app/components/sso-configuration-form.tsx:319
 msgid "https://your-domain.okta.com/oauth2/v1/revoke"
 msgstr "https://your-domain.okta.com/oauth2/v1/revoke"
 
-#: app/components/sso-configuration-form.tsx:282
+#: app/components/sso-configuration-form.tsx:289
 msgid "https://your-domain.okta.com/oauth2/v1/token"
 msgstr "https://your-domain.okta.com/oauth2/v1/token"
 
-#: app/components/sso-configuration-form.tsx:297
+#: app/components/sso-configuration-form.tsx:304
 msgid "https://your-domain.okta.com/oauth2/v1/userinfo"
 msgstr "https://your-domain.okta.com/oauth2/v1/userinfo"
 
@@ -1991,7 +1995,7 @@ msgstr "https://your-domain.okta.com/oauth2/v1/userinfo"
 msgid "I found nothing, retry"
 msgstr "لم أجد شيئًا، أعد المحاولة"
 
-#: app/components/sso-configuration-form.tsx:137
+#: app/components/sso-configuration-form.tsx:144
 msgid "Identity Provider Configuration"
 msgstr "إعداد موفر الهوية"
 
@@ -2100,7 +2104,7 @@ msgstr "هو"
 msgid "Is Verified (True)"
 msgstr "موثّق (صحيح)"
 
-#: app/components/sso-configuration-form.tsx:162
+#: app/components/sso-configuration-form.tsx:169
 msgid "Issuer URL"
 msgstr "رابط المُصدر"
 
@@ -2320,7 +2324,7 @@ msgstr "إدارة مستخدمي قائمة الانتظار ومنح الوص�
 msgid "Manual Actions"
 msgstr "الإجراءات اليدوية"
 
-#: app/components/sso-configuration-form.tsx:255
+#: app/components/sso-configuration-form.tsx:262
 msgid "Manual Endpoint Configuration"
 msgstr "إعداد نقطة النهاية اليدوي"
 
@@ -2335,7 +2339,7 @@ msgstr "تشغيل يدوي"
 msgid "Manually trigger archival of logs older than the hot storage period"
 msgstr "تشغيل أرشفة السجلات الأقدم من فترة التخزين الساخن يدويًا"
 
-#: app/components/sso-configuration-form.tsx:426
+#: app/components/sso-configuration-form.tsx:472
 msgid "Map OIDC claims to user attributes. Leave empty for default mapping."
 msgstr "تعيين مطالبات OIDC إلى سمات المستخدم. اترك فارغاً للتعيين الافتراضي."
 
@@ -2359,7 +2363,7 @@ msgstr "التسويق"
 msgid "Markup (%)"
 msgstr "نسبة الزيادة (%)"
 
-#: app/components/sso-configuration-form.tsx:395
+#: app/components/sso-configuration-form.tsx:441
 #: app/components/sso-user-management.tsx:104
 msgid "Member"
 msgstr "عضو"
@@ -2687,15 +2691,15 @@ msgstr "الملاحظات المنشأة"
 msgid "Number"
 msgstr "رقم"
 
-#: app/components/sso-configuration-form.tsx:183
+#: app/components/sso-configuration-form.tsx:190
 msgid "OAuth2 Client ID"
 msgstr "معرف عميل OAuth2"
 
-#: app/components/sso-configuration-form.tsx:197
+#: app/components/sso-configuration-form.tsx:204
 msgid "OAuth2 Client Secret"
 msgstr "سر عميل OAuth2"
 
-#: app/components/sso-configuration-form.tsx:224
+#: app/components/sso-configuration-form.tsx:231
 msgid "OAuth2 Configuration"
 msgstr "إعداد OAuth2"
 
@@ -2736,7 +2740,7 @@ msgstr "معدل الفتح"
 msgid "Opened {0}"
 msgstr "فُتِح {0}"
 
-#: app/components/sso-configuration-form.tsx:212
+#: app/components/sso-configuration-form.tsx:219
 msgid "openid email profile"
 msgstr "openid email profile"
 
@@ -2996,7 +3000,7 @@ msgstr "اختر كتلة لإضافتها إلى بريدك."
 msgid "Pick a layout, then customize the blocks."
 msgstr "اختر تخطيطًا ثم خصّص الكتل."
 
-#: app/components/sso-configuration-form.tsx:329
+#: app/components/sso-configuration-form.tsx:336
 #: app/components/sso-configuration-overview.tsx:208
 msgid "PKCE Enabled"
 msgstr "PKCE مفعل"
@@ -3112,7 +3116,7 @@ msgstr "اكتمل الملف الشخصي (الاسم/البريد)"
 msgid "Provider Details"
 msgstr "تفاصيل موفر الخدمة"
 
-#: app/components/sso-configuration-form.tsx:148
+#: app/components/sso-configuration-form.tsx:155
 msgid "Provider Name"
 msgstr "اسم موفر الخدمة"
 
@@ -3293,6 +3297,10 @@ msgstr "مُسترد"
 msgid "Refunded by an admin"
 msgstr "استرده أحد المسؤولين"
 
+#: app/components/sso-configuration-form.tsx:392
+msgid "Refuse sign-in unless the identity provider marks the email as verified (email_verified). Some providers, such as Microsoft Entra ID, do not send it."
+msgstr "رفض تسجيل الدخول ما لم يحدد موفّر الهوية أن البريد الإلكتروني موثّق (email_verified). بعض الموفّرين، مثل Microsoft Entra ID، لا يرسلونه."
+
 #: app/components/privacy-banner.tsx:48
 msgid "Reject"
 msgstr "رفض"
@@ -3339,6 +3347,14 @@ msgstr "مُقدَّم"
 #: app/routes/_admin+/ip-addresses+/index.tsx:220
 msgid "Requests"
 msgstr "الطلبات"
+
+#: app/components/sso-configuration-form.tsx:389
+msgid "Require a verified email"
+msgstr "اشتراط بريد إلكتروني موثّق"
+
+#: app/components/sso-configuration-form.tsx:374
+msgid "Required. The identity provider can only create accounts and sign people in for email addresses on these domains."
+msgstr "مطلوب. لا يمكن لموفّر الهوية إنشاء حسابات أو تسجيل دخول الأشخاص إلا لعناوين البريد الإلكتروني على هذه النطاقات."
 
 #: app/routes/_admin+/gdpr-requests.tsx:478
 msgid "Requires attention"
@@ -3407,7 +3423,7 @@ msgstr "العودة إلى التطبيق"
 msgid "Returned"
 msgstr "مُعاد"
 
-#: app/components/sso-configuration-form.tsx:305
+#: app/components/sso-configuration-form.tsx:312
 msgid "Revocation URL (Optional)"
 msgstr "رابط الإلغاء (اختياري)"
 
@@ -3533,7 +3549,7 @@ msgstr "حفظ"
 msgid "Save Changes"
 msgstr "حفظ التغييرات"
 
-#: app/components/sso-configuration-form.tsx:455
+#: app/components/sso-configuration-form.tsx:501
 msgid "Save Configuration"
 msgstr "حفظ الإعداد"
 
@@ -3570,7 +3586,7 @@ msgid "Saving new automation draft..."
 msgstr "جارٍ حفظ مسودة الأتمتة الجديدة..."
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:193
-#: app/components/sso-configuration-form.tsx:447
+#: app/components/sso-configuration-form.tsx:493
 #: app/routes/_admin+/organizations+/$organizationId_+/audit-retention.tsx:481
 msgid "Saving..."
 msgstr "جاري الحفظ..."
@@ -3592,7 +3608,7 @@ msgstr "الساعات المجدولة مقابل الفعلية وتسجيلا
 msgid "Scheduled: {scheduledFor}"
 msgstr "مجدول: {scheduledFor}"
 
-#: app/components/sso-configuration-form.tsx:206
+#: app/components/sso-configuration-form.tsx:213
 msgid "Scopes"
 msgstr "النطاقات"
 
@@ -3899,7 +3915,7 @@ msgid "SSO Audit Trail"
 msgstr "مسار مراجعة SSO"
 
 #: app/components/sso-configuration-overview.tsx:98
-#: app/routes/_admin+/organizations+/$organizationId_+/sso.tsx:457
+#: app/routes/_admin+/organizations+/$organizationId_+/sso.tsx:488
 msgid "SSO Configuration"
 msgstr "إعداد SSO"
 
@@ -4122,7 +4138,7 @@ msgstr "القيمة المستهدفة"
 msgid "Team"
 msgstr "الفريق"
 
-#: app/components/sso-configuration-form.tsx:476
+#: app/components/sso-configuration-form.tsx:522
 #: app/components/sso-configuration-overview.tsx:114
 msgid "Test Connection"
 msgstr "اختبار الاتصال"
@@ -4132,7 +4148,7 @@ msgstr "اختبار الاتصال"
 msgid "Test run"
 msgstr "تشغيل اختباري"
 
-#: app/components/sso-configuration-form.tsx:471
+#: app/components/sso-configuration-form.tsx:517
 msgid "Testing..."
 msgstr "جاري الاختبار..."
 
@@ -4311,7 +4327,7 @@ msgstr "البقشيش على الطلبات عبر الإنترنت المحت�
 msgid "Toggle theme"
 msgstr "تبديل المظهر"
 
-#: app/components/sso-configuration-form.tsx:275
+#: app/components/sso-configuration-form.tsx:282
 msgid "Token URL"
 msgstr "رابط الرمز"
 
@@ -4463,7 +4479,7 @@ msgstr "تحديث"
 msgid "Update {item}"
 msgstr "تحديث {item}"
 
-#: app/components/sso-configuration-form.tsx:453
+#: app/components/sso-configuration-form.tsx:499
 msgid "Update Configuration"
 msgstr "تحديث الإعداد"
 
@@ -4487,7 +4503,7 @@ msgstr "إحصائيات الاستخدام"
 msgid "Use lowercase letters, numbers, and hyphens only"
 msgstr "استخدم أحرفاً صغيرة وأرقاماً وشرطات فقط"
 
-#: app/components/sso-configuration-form.tsx:332
+#: app/components/sso-configuration-form.tsx:339
 msgid "Use Proof Key for Code Exchange for enhanced security"
 msgstr "استخدم مفتاح الإثبات لتبادل الرموز لأمان محسّن"
 
@@ -4518,7 +4534,7 @@ msgstr "المستخدم ليس عضواً في أي منظمات"
 msgid "User Override"
 msgstr "تجاوز المستخدم"
 
-#: app/components/sso-configuration-form.tsx:346
+#: app/components/sso-configuration-form.tsx:353
 msgid "User Provisioning"
 msgstr "توفير المستخدم"
 
@@ -4526,7 +4542,7 @@ msgstr "توفير المستخدم"
 msgid "User+Org Override"
 msgstr "تجاوز المستخدم+المؤسسة"
 
-#: app/components/sso-configuration-form.tsx:290
+#: app/components/sso-configuration-form.tsx:297
 msgid "UserInfo URL"
 msgstr "رابط معلومات المستخدم"
 
@@ -4639,7 +4655,7 @@ msgstr "عرض المستخدمين →"
 msgid "View, search, and manage user accounts"
 msgstr "عرض والبحث وإدارة حسابات المستخدمين"
 
-#: app/components/sso-configuration-form.tsx:398
+#: app/components/sso-configuration-form.tsx:444
 msgid "Viewer"
 msgstr "عارض"
 

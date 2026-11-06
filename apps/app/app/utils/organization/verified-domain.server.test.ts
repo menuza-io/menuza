@@ -1,0 +1,138 @@
+import {
+	db,
+	eq,
+	Organization,
+	OrganizationInvitation,
+	UserOrganization,
+} from '@repo/database'
+import { describe, expect, it, vi } from 'vitest'
+import { consoleError } from '#tests/setup/setup-test-env.ts'
+import { createTestUser, setupTestOrgWithUser } from '#tests/test-utils.ts'
+import {
+	checkDomainClaim,
+	domainVerificationRecordName,
+	inviteExistingDomainUsers,
+	isDomainClaimedElsewhere,
+	lookupTxtRecords,
+	startDomainClaim,
+} from './verified-domain.server.ts'
+
+vi.mock('./invitation.server.ts', async (importOriginal) => ({
+	...(await importOriginal<Record<string, unknown>>()),
+	sendOrganizationInvitationEmail: vi.fn().mockResolvedValue(undefined),
+}))
+
+function dnsAnswer(values: string[]) {
+	return vi.fn(async () =>
+		Response.json({
+			Answer: values.map((value) => ({ type: 16, data: `"${value}"` })),
+		}),
+	) as unknown as typeof fetch
+}
+
+function uniqueDomain() {
+	return `corp-${Date.now()}-${Math.random().toString(36).slice(2, 7)}.test`
+}
+
+describe('verified domain proof', () => {
+	it('a claim changes nothing until the TXT record is there', async () => {
+		const { organization } = await setupTestOrgWithUser('admin')
+		const domain = uniqueDomain()
+		const claim = await startDomainClaim(organization.id, domain)
+		expect(claim.recordName).toBe(domainVerificationRecordName(domain))
+
+		const missing = await checkDomainClaim(
+			organization.id,
+			dnsAnswer(['other']),
+		)
+		expect(missing.status).toBe('not_found')
+		const [row] = await db
+			.select({ verifiedDomain: Organization.verifiedDomain })
+			.from(Organization)
+			.where(eq(Organization.id, organization.id))
+		expect(row!.verifiedDomain).toBeNull()
+
+		const found = await checkDomainClaim(
+			organization.id,
+			dnsAnswer([claim.recordValue]),
+		)
+		expect(found).toEqual({ status: 'verified', domain })
+		const [after] = await db
+			.select({
+				verifiedDomain: Organization.verifiedDomain,
+				provedAt: Organization.verifiedDomainProvedAt,
+				pending: Organization.pendingVerifiedDomain,
+			})
+			.from(Organization)
+			.where(eq(Organization.id, organization.id))
+		expect(after).toMatchObject({ verifiedDomain: domain, pending: null })
+		expect(after!.provedAt).toBeInstanceOf(Date)
+	})
+
+	it('one organization per domain', async () => {
+		const first = await setupTestOrgWithUser('admin')
+		const second = await setupTestOrgWithUser('admin')
+		const domain = uniqueDomain()
+		const claim = await startDomainClaim(first.organization.id, domain)
+		await checkDomainClaim(
+			first.organization.id,
+			dnsAnswer([claim.recordValue]),
+		)
+
+		expect(await isDomainClaimedElsewhere(domain, second.organization.id)).toBe(
+			true,
+		)
+		const secondClaim = await startDomainClaim(second.organization.id, domain)
+		expect(
+			await checkDomainClaim(
+				second.organization.id,
+				dnsAnswer([secondClaim.recordValue]),
+			),
+		).toEqual({ status: 'taken' })
+	})
+
+	it('invites existing users on the domain instead of adding them', async () => {
+		// The test database has no onboarding steps; invitations log that.
+		consoleError.mockImplementation(() => {})
+		const { user: admin, organization } = await setupTestOrgWithUser('admin')
+		const domain = uniqueDomain()
+		const existing = await createTestUser({
+			email: `someone@${domain}`,
+		} as never)
+		const result = await inviteExistingDomainUsers({
+			organizationId: organization.id,
+			organizationName: organization.name,
+			domain,
+			inviterId: admin.id,
+			inviterName: 'Admin',
+		})
+		expect(result).toEqual({ invited: 1, more: false })
+		const memberships = await db
+			.select()
+			.from(UserOrganization)
+			.where(eq(UserOrganization.userId, existing.id))
+		expect(memberships).toHaveLength(0)
+		const invites = await db
+			.select({ email: OrganizationInvitation.email })
+			.from(OrganizationInvitation)
+			.where(eq(OrganizationInvitation.organizationId, organization.id))
+		expect(invites.map((invite) => invite.email)).toEqual([`someone@${domain}`])
+		// Running again does not re-invite.
+		expect(
+			await inviteExistingDomainUsers({
+				organizationId: organization.id,
+				organizationName: organization.name,
+				domain,
+				inviterId: admin.id,
+				inviterName: 'Admin',
+			}),
+		).toEqual({ invited: 0, more: false })
+	})
+
+	it('joins TXT strings a resolver split into chunks', async () => {
+		const fetchImpl = vi.fn(async () =>
+			Response.json({ Answer: [{ type: 16, data: '"abc" "def"' }] }),
+		) as unknown as typeof fetch
+		expect(await lookupTxtRecords('x.test', fetchImpl)).toEqual(['abcdef'])
+	})
+})

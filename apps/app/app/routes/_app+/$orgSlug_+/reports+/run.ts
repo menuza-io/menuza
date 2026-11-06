@@ -8,12 +8,14 @@ import {
 	runReport,
 } from '@repo/reports'
 import { fetchControlPlaneRecords } from '@repo/reports/server'
+import { isPermissionGatedReportSubject } from '@repo/reports/token'
 import { data } from 'react-router'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
+import { permissionGatedReportSubjects } from '#app/utils/staffing/report-grants.server.ts'
 import { type Route } from './+types/run.ts'
 
 export async function action({ request, params }: Route.ActionArgs) {
-	await requireUserId(request)
+	const userId = await requireUserId(request)
 	const organization = await requireUserOrganization(request, params.orgSlug, {
 		id: true,
 	})
@@ -53,10 +55,27 @@ export async function action({ request, params }: Route.ActionArgs) {
 		)
 	}
 
+	// Members and notes need the permission their app page needs.
+	if (
+		isPermissionGatedReportSubject(subject.id) &&
+		!(await permissionGatedReportSubjects(userId, organization.id)).includes(
+			subject.id,
+		)
+	) {
+		return data(
+			{
+				error: 'forbidden' as const,
+				message: 'You do not have access to this report subject.',
+			},
+			{ status: 403 },
+		)
+	}
+
 	const records = await fetchControlPlaneRecords({
 		subject: parsed.data.subject,
 		scope: 'organization',
 		organizationId: organization.id,
+		viewerUserId: userId,
 	})
 	const result = runReport(catalog, parsed.data, records, new Date(), {
 		timeZone: reportTimeZoneForRequest(parsed.data, body),

@@ -532,7 +532,7 @@ describe('loadBlockPicker', () => {
 			userId: viewer.id,
 			organizationId: organization.id,
 			blockData: noBlockData,
-			grants: ['customers', 'shop_orders'],
+			grants: ['customers', 'shop_orders', 'members'],
 		})
 
 		expect(picker.savedReports).toEqual([
@@ -569,11 +569,12 @@ describe('loadBlockPicker', () => {
 			title: 'Notes by status',
 			definition: templateDefinition('notes-by-status', 'Notes by status'),
 		})
+		// Notes are covered (read:note:own), shop orders are not.
 		const picker = await loadBlockPicker({
 			userId: viewer.id,
 			organizationId: organization.id,
 			blockData: noBlockData,
-			grants: [],
+			grants: ['notes'],
 		})
 		expect(picker.savedReports.map((report) => report.id)).toEqual([notes.id])
 		const offered = picker.templateGroups.flatMap((group) =>

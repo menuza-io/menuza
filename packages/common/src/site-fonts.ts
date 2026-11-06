@@ -248,7 +248,7 @@ export function buildCustomSiteFontFaceCss(options: {
 			),
 		)
 	}
-	return faces.join('\n')
+	return faces.filter(Boolean).join('\n')
 }
 
 function buildFontFace(
@@ -256,10 +256,14 @@ function buildFontFace(
 	url: string,
 	format: SiteFontFormat,
 ): string {
+	// Preview payloads are caller-supplied, so neither value may be trusted: the
+	// result lands in a raw-text <style>, where `</style>` ends the element.
+	if (!isSiteFontFormat(format)) return ''
+	const safeUrl = JSON.stringify(url).replace(/</g, '\\3c ')
 	return [
 		'@font-face {',
 		`\tfont-family: ${family};`,
-		`\tsrc: url(${JSON.stringify(url)}) format("${format}");`,
+		`\tsrc: url(${safeUrl}) format("${format}");`,
 		'\tfont-weight: 100 900;',
 		'\tfont-style: normal;',
 		'\tfont-display: swap;',

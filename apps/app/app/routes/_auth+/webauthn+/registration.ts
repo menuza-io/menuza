@@ -5,6 +5,7 @@ import {
 	generateRegistrationOptions,
 	verifyRegistrationResponse,
 } from '@simplewebauthn/server'
+import { refuseCredentialChangeWhileImpersonating } from '#app/utils/impersonation-guard.server.ts'
 import { type Route } from './+types/registration.ts'
 import {
 	PasskeyCookieSchema,
@@ -67,6 +68,8 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 export async function action({ request }: Route.ActionArgs) {
+	// Outside the try: the catch below would turn the 403 into a 500.
+	await refuseCredentialChangeWhileImpersonating(request)
 	try {
 		const userId = await requireUserId(request)
 

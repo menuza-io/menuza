@@ -520,11 +520,19 @@ function applyTargetPatches(
 		}
 	}
 
+	// Staging resources come only from the *_STAGING names. Falling back to the
+	// production id would point staging deploys and dev-branch D1 migrations at
+	// production, and would also satisfy --require-bindings. Unset staging names
+	// are reported as missing (D1, KV); an unset staging worker name keeps the
+	// committed env.staging name.
+	const resourceEnvNames = (base) =>
+		targetEnv === 'staging' ? [`${base}${suffix}`] : [base]
+
 	if (appKey === 'app' || appKey === 'admin') {
 		if (
 			!patch(
 				'd1_databases[0].database_id',
-				[`${prefix}_D1_DATABASE_ID${suffix}`, `${prefix}_D1_DATABASE_ID`],
+				resourceEnvNames(`${prefix}_D1_DATABASE_ID`),
 				`bindings.${bindingEnv}.${appKey}.d1_database_id`,
 			)
 		) {
@@ -533,7 +541,7 @@ function applyTargetPatches(
 		if (
 			!patch(
 				'kv_namespaces[0].id',
-				[`${prefix}_KV_NAMESPACE_ID${suffix}`, `${prefix}_KV_NAMESPACE_ID`],
+				resourceEnvNames(`${prefix}_KV_NAMESPACE_ID`),
 				`bindings.${bindingEnv}.${appKey}.kv_namespace_id`,
 			)
 		) {
@@ -556,7 +564,7 @@ function applyTargetPatches(
 		}
 		patch(
 			'name',
-			[`${prefix}_WORKER_NAME${suffix}`, `${prefix}_WORKER_NAME`],
+			resourceEnvNames(`${prefix}_WORKER_NAME`),
 			`bindings.${bindingEnv}.${appKey}.worker_name`,
 		)
 		if (appKey === 'app') {

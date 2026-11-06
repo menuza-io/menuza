@@ -126,6 +126,79 @@ async function orgIdFromKioskRequest(
 }
 
 /**
+ * Unsubscribe and confirm links carry only `?token=`; the signed consent token
+ * names its organization in claim `o`. One-click unsubscribe (RFC 8058) may
+ * send the token in a form body instead. Like the kiosk credential, the token
+ * is only parsed here to pick the Durable Object; the route verifies its
+ * signature before doing anything.
+ */
+async function orgIdFromConsentToken(
+	request: Request,
+	url: URL,
+): Promise<string | null> {
+	let token = url.searchParams.get('token')
+	if (!token && request.method === 'POST') {
+		const form = await request
+			.clone()
+			.formData()
+			.catch(() => null)
+		const value = form?.get('token')
+		token = typeof value === 'string' ? value : null
+	}
+	if (!token || token.length > 1024) return null
+	const [body] = token.split('.')
+	try {
+		const payload = JSON.parse(
+			new TextDecoder().decode(
+				Uint8Array.from(
+					atob(body!.replace(/-/g, '+').replace(/_/g, '/')),
+					(char) => char.charCodeAt(0),
+				),
+			),
+		) as { o?: unknown }
+		return typeof payload.o === 'string' &&
+			TENANT_ORG_ID_PATTERN.test(payload.o)
+			? payload.o
+			: null
+	} catch {
+		return null
+	}
+}
+
+/**
+ * Public website forms: the organization is the one the browser's Origin
+ * names (with the slug or host the page passes), never a client-supplied
+ * orgId. The submission POST carries slug and host in its JSON body.
+ */
+async function orgIdFromPublicForm(
+	request: Request,
+	url: URL,
+): Promise<string | null> {
+	let identity = {
+		slug: url.searchParams.get('slug') ?? undefined,
+		host: url.searchParams.get('host') ?? undefined,
+	}
+	if (request.method === 'POST') {
+		const body = await request
+			.clone()
+			.json()
+			.catch(() => null)
+		if (body && typeof body === 'object') {
+			const { slug, host } = body as { slug?: unknown; host?: unknown }
+			identity = {
+				slug: typeof slug === 'string' ? slug : undefined,
+				host: typeof host === 'string' ? host : undefined,
+			}
+		}
+	}
+	const organization = await resolveOrganizationForBrowserAuth(
+		request.headers.get('Origin') ?? undefined,
+		identity,
+	)
+	return organization?.id ?? null
+}
+
+/**
  * Resolve which tenant org should handle this request on Cloudflare Workers.
  * Returns null when the route is not org-scoped (health, sync-all, etc.).
  */
@@ -196,6 +269,22 @@ export async function resolveOrgId(
 		const fromJwt = await orgIdFromCustomerJwt(request, env)
 		if (fromJwt) return fromJwt
 		return orgIdFromAuthBody(request)
+	}
+
+	if (
+		pathname === '/subscriptions/unsubscribe' ||
+		pathname === '/subscriptions/confirm'
+	) {
+		return orgIdFromConsentToken(request, url)
+	}
+
+	// Customer subscription toggles: the signed-in customer's own organization.
+	if (pathname === '/subscriptions' || pathname.startsWith('/subscriptions/')) {
+		return orgIdFromCustomerJwt(request, env)
+	}
+
+	if (pathname.startsWith('/forms/')) {
+		return orgIdFromPublicForm(request, url)
 	}
 
 	if (pathname.startsWith('/voice/')) {

@@ -1,5 +1,6 @@
 import {
 	getUserId,
+	isImpersonating,
 	isWorkersDevMockOAuthCallback,
 	normalizeEmail,
 	normalizeUsername,
@@ -123,6 +124,18 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 
 	// If we're already logged in, then link the account
 	if (userId) {
+		// Linking a login to an impersonated account would outlive the grant.
+		if (await isImpersonating(request)) {
+			return redirectWithToast(
+				'/settings',
+				{
+					type: 'error',
+					title: 'Not Connected',
+					description: 'Stop impersonating before connecting a sign-in method.',
+				},
+				{ headers: destroyRedirectToHeaders(request) },
+			)
+		}
 		await db.insert(Connection).values({
 			providerName,
 			providerId: String(profile.id),

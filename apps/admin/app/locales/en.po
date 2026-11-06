@@ -418,7 +418,7 @@ msgstr "Add waitlist points"
 
 #: app/components/admin-sidebar.tsx:151
 #: app/components/admin-sidebar.tsx:159
-#: app/components/sso-configuration-form.tsx:392
+#: app/components/sso-configuration-form.tsx:438
 #: app/components/sso-user-management.tsx:98
 #: app/routes/_admin+/roles+/$roleId.tsx:465
 #: app/routes/_admin+/roles+/system.$roleId.tsx:228
@@ -500,6 +500,10 @@ msgstr ""
 msgid "Allow users to export audit logs"
 msgstr ""
 
+#: app/components/sso-configuration-form.tsx:364
+msgid "Allowed email domains"
+msgstr "Allowed email domains"
+
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:241
 msgid "Alt text"
 msgstr "Alt text"
@@ -576,7 +580,7 @@ msgstr "Assign"
 msgid "Assigned, not connected"
 msgstr "Assigned, not connected"
 
-#: app/components/sso-configuration-form.tsx:409
+#: app/components/sso-configuration-form.tsx:455
 msgid "Attribute Mapping (JSON)"
 msgstr ""
 
@@ -597,7 +601,7 @@ msgstr ""
 msgid "Authentication Methods"
 msgstr ""
 
-#: app/components/sso-configuration-form.tsx:260
+#: app/components/sso-configuration-form.tsx:267
 msgid "Authorization URL"
 msgstr ""
 
@@ -605,12 +609,12 @@ msgstr ""
 msgid "Auto"
 msgstr "Auto"
 
-#: app/components/sso-configuration-form.tsx:242
+#: app/components/sso-configuration-form.tsx:249
 #: app/components/sso-configuration-overview.tsx:195
 msgid "Auto-Discovery"
 msgstr ""
 
-#: app/components/sso-configuration-form.tsx:363
+#: app/components/sso-configuration-form.tsx:409
 #: app/components/sso-configuration-overview.tsx:221
 msgid "Auto-Provision Users"
 msgstr ""
@@ -619,11 +623,11 @@ msgstr ""
 msgid "Automatically archive old logs to cold storage"
 msgstr ""
 
-#: app/components/sso-configuration-form.tsx:366
+#: app/components/sso-configuration-form.tsx:412
 msgid "Automatically create user accounts for new SSO users"
 msgstr ""
 
-#: app/components/sso-configuration-form.tsx:245
+#: app/components/sso-configuration-form.tsx:252
 msgid "Automatically discover OAuth2 endpoints from the issuer URL"
 msgstr ""
 
@@ -913,7 +917,7 @@ msgstr ""
 msgid "Clicked {0}"
 msgstr ""
 
-#: app/components/sso-configuration-form.tsx:177
+#: app/components/sso-configuration-form.tsx:184
 msgid "Client ID"
 msgstr ""
 
@@ -921,7 +925,7 @@ msgstr ""
 msgid "Client ID:"
 msgstr ""
 
-#: app/components/sso-configuration-form.tsx:191
+#: app/components/sso-configuration-form.tsx:198
 msgid "Client Secret"
 msgstr ""
 
@@ -1008,11 +1012,11 @@ msgstr ""
 msgid "Configure custom retention and archival settings"
 msgstr ""
 
-#: app/components/sso-configuration-form.tsx:349
+#: app/components/sso-configuration-form.tsx:356
 msgid "Configure how users are created and managed through SSO"
 msgstr ""
 
-#: app/components/sso-configuration-form.tsx:227
+#: app/components/sso-configuration-form.tsx:234
 msgid "Configure OAuth2 endpoints and security settings"
 msgstr ""
 
@@ -1020,11 +1024,11 @@ msgstr ""
 msgid "Configure retention and archival settings for {organizationName}"
 msgstr ""
 
-#: app/routes/_admin+/organizations+/$organizationId_+/sso.tsx:460
+#: app/routes/_admin+/organizations+/$organizationId_+/sso.tsx:491
 msgid "Configure Single Sign-On for {organizationName}"
 msgstr ""
 
-#: app/components/sso-configuration-form.tsx:140
+#: app/components/sso-configuration-form.tsx:147
 msgid "Configure your organization's identity provider settings"
 msgstr ""
 
@@ -1234,7 +1238,7 @@ msgstr ""
 msgid "Default"
 msgstr ""
 
-#: app/components/sso-configuration-form.tsx:375
+#: app/components/sso-configuration-form.tsx:421
 msgid "Default Role"
 msgstr ""
 
@@ -1328,7 +1332,7 @@ msgstr "Did the vendor get this order?"
 msgid "Disable"
 msgstr ""
 
-#: app/components/sso-configuration-form.tsx:495
+#: app/components/sso-configuration-form.tsx:541
 msgid "Disable SSO"
 msgstr ""
 
@@ -1431,7 +1435,7 @@ msgstr "e.g. Welcome {{firstName}}!"
 msgid "e.g., editor, moderator, contributor"
 msgstr ""
 
-#: app/components/sso-configuration-form.tsx:154
+#: app/components/sso-configuration-form.tsx:161
 msgid "e.g., Okta, Azure AD, Auth0"
 msgstr ""
 
@@ -1549,7 +1553,7 @@ msgstr "Enable {item}"
 msgid "Enable Archiving"
 msgstr ""
 
-#: app/components/sso-configuration-form.tsx:497
+#: app/components/sso-configuration-form.tsx:543
 msgid "Enable SSO"
 msgstr ""
 
@@ -1883,7 +1887,7 @@ msgstr ""
 msgid "Graph data missing"
 msgstr ""
 
-#: app/components/sso-configuration-form.tsx:401
+#: app/components/sso-configuration-form.tsx:447
 msgid "Guest"
 msgstr ""
 
@@ -1967,23 +1971,23 @@ msgstr ""
 msgid "How often people clock in on time for the shifts they were scheduled on."
 msgstr "How often people clock in on time for the shifts they were scheduled on."
 
-#: app/components/sso-configuration-form.tsx:168
+#: app/components/sso-configuration-form.tsx:175
 msgid "https://your-domain.okta.com"
 msgstr ""
 
-#: app/components/sso-configuration-form.tsx:267
+#: app/components/sso-configuration-form.tsx:274
 msgid "https://your-domain.okta.com/oauth2/v1/authorize"
 msgstr ""
 
-#: app/components/sso-configuration-form.tsx:312
+#: app/components/sso-configuration-form.tsx:319
 msgid "https://your-domain.okta.com/oauth2/v1/revoke"
 msgstr ""
 
-#: app/components/sso-configuration-form.tsx:282
+#: app/components/sso-configuration-form.tsx:289
 msgid "https://your-domain.okta.com/oauth2/v1/token"
 msgstr ""
 
-#: app/components/sso-configuration-form.tsx:297
+#: app/components/sso-configuration-form.tsx:304
 msgid "https://your-domain.okta.com/oauth2/v1/userinfo"
 msgstr ""
 
@@ -1991,7 +1995,7 @@ msgstr ""
 msgid "I found nothing, retry"
 msgstr "I found nothing, retry"
 
-#: app/components/sso-configuration-form.tsx:137
+#: app/components/sso-configuration-form.tsx:144
 msgid "Identity Provider Configuration"
 msgstr ""
 
@@ -2100,7 +2104,7 @@ msgstr "is"
 msgid "Is Verified (True)"
 msgstr ""
 
-#: app/components/sso-configuration-form.tsx:162
+#: app/components/sso-configuration-form.tsx:169
 msgid "Issuer URL"
 msgstr ""
 
@@ -2320,7 +2324,7 @@ msgstr ""
 msgid "Manual Actions"
 msgstr ""
 
-#: app/components/sso-configuration-form.tsx:255
+#: app/components/sso-configuration-form.tsx:262
 msgid "Manual Endpoint Configuration"
 msgstr ""
 
@@ -2335,7 +2339,7 @@ msgstr ""
 msgid "Manually trigger archival of logs older than the hot storage period"
 msgstr ""
 
-#: app/components/sso-configuration-form.tsx:426
+#: app/components/sso-configuration-form.tsx:472
 msgid "Map OIDC claims to user attributes. Leave empty for default mapping."
 msgstr ""
 
@@ -2359,7 +2363,7 @@ msgstr ""
 msgid "Markup (%)"
 msgstr "Markup (%)"
 
-#: app/components/sso-configuration-form.tsx:395
+#: app/components/sso-configuration-form.tsx:441
 #: app/components/sso-user-management.tsx:104
 msgid "Member"
 msgstr ""
@@ -2687,15 +2691,15 @@ msgstr ""
 msgid "Number"
 msgstr ""
 
-#: app/components/sso-configuration-form.tsx:183
+#: app/components/sso-configuration-form.tsx:190
 msgid "OAuth2 Client ID"
 msgstr ""
 
-#: app/components/sso-configuration-form.tsx:197
+#: app/components/sso-configuration-form.tsx:204
 msgid "OAuth2 Client Secret"
 msgstr ""
 
-#: app/components/sso-configuration-form.tsx:224
+#: app/components/sso-configuration-form.tsx:231
 msgid "OAuth2 Configuration"
 msgstr ""
 
@@ -2736,7 +2740,7 @@ msgstr ""
 msgid "Opened {0}"
 msgstr ""
 
-#: app/components/sso-configuration-form.tsx:212
+#: app/components/sso-configuration-form.tsx:219
 msgid "openid email profile"
 msgstr ""
 
@@ -2996,7 +3000,7 @@ msgstr "Pick a block to add to your email."
 msgid "Pick a layout, then customize the blocks."
 msgstr "Pick a layout, then customize the blocks."
 
-#: app/components/sso-configuration-form.tsx:329
+#: app/components/sso-configuration-form.tsx:336
 #: app/components/sso-configuration-overview.tsx:208
 msgid "PKCE Enabled"
 msgstr ""
@@ -3112,7 +3116,7 @@ msgstr ""
 msgid "Provider Details"
 msgstr ""
 
-#: app/components/sso-configuration-form.tsx:148
+#: app/components/sso-configuration-form.tsx:155
 msgid "Provider Name"
 msgstr ""
 
@@ -3293,6 +3297,10 @@ msgstr "Refunded"
 msgid "Refunded by an admin"
 msgstr "Refunded by an admin"
 
+#: app/components/sso-configuration-form.tsx:392
+msgid "Refuse sign-in unless the identity provider marks the email as verified (email_verified). Some providers, such as Microsoft Entra ID, do not send it."
+msgstr "Refuse sign-in unless the identity provider marks the email as verified (email_verified). Some providers, such as Microsoft Entra ID, do not send it."
+
 #: app/components/privacy-banner.tsx:48
 msgid "Reject"
 msgstr ""
@@ -3339,6 +3347,14 @@ msgstr ""
 #: app/routes/_admin+/ip-addresses+/index.tsx:220
 msgid "Requests"
 msgstr ""
+
+#: app/components/sso-configuration-form.tsx:389
+msgid "Require a verified email"
+msgstr "Require a verified email"
+
+#: app/components/sso-configuration-form.tsx:374
+msgid "Required. The identity provider can only create accounts and sign people in for email addresses on these domains."
+msgstr "Required. The identity provider can only create accounts and sign people in for email addresses on these domains."
 
 #: app/routes/_admin+/gdpr-requests.tsx:478
 msgid "Requires attention"
@@ -3407,7 +3423,7 @@ msgstr ""
 msgid "Returned"
 msgstr "Returned"
 
-#: app/components/sso-configuration-form.tsx:305
+#: app/components/sso-configuration-form.tsx:312
 msgid "Revocation URL (Optional)"
 msgstr ""
 
@@ -3533,7 +3549,7 @@ msgstr "Save"
 msgid "Save Changes"
 msgstr ""
 
-#: app/components/sso-configuration-form.tsx:455
+#: app/components/sso-configuration-form.tsx:501
 msgid "Save Configuration"
 msgstr ""
 
@@ -3570,7 +3586,7 @@ msgid "Saving new automation draft..."
 msgstr ""
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:193
-#: app/components/sso-configuration-form.tsx:447
+#: app/components/sso-configuration-form.tsx:493
 #: app/routes/_admin+/organizations+/$organizationId_+/audit-retention.tsx:481
 msgid "Saving..."
 msgstr ""
@@ -3592,7 +3608,7 @@ msgstr "Scheduled vs actual hours and clock-ins"
 msgid "Scheduled: {scheduledFor}"
 msgstr ""
 
-#: app/components/sso-configuration-form.tsx:206
+#: app/components/sso-configuration-form.tsx:213
 msgid "Scopes"
 msgstr ""
 
@@ -3899,7 +3915,7 @@ msgid "SSO Audit Trail"
 msgstr ""
 
 #: app/components/sso-configuration-overview.tsx:98
-#: app/routes/_admin+/organizations+/$organizationId_+/sso.tsx:457
+#: app/routes/_admin+/organizations+/$organizationId_+/sso.tsx:488
 msgid "SSO Configuration"
 msgstr ""
 
@@ -4122,7 +4138,7 @@ msgstr ""
 msgid "Team"
 msgstr ""
 
-#: app/components/sso-configuration-form.tsx:476
+#: app/components/sso-configuration-form.tsx:522
 #: app/components/sso-configuration-overview.tsx:114
 msgid "Test Connection"
 msgstr ""
@@ -4132,7 +4148,7 @@ msgstr ""
 msgid "Test run"
 msgstr ""
 
-#: app/components/sso-configuration-form.tsx:471
+#: app/components/sso-configuration-form.tsx:517
 msgid "Testing..."
 msgstr ""
 
@@ -4311,7 +4327,7 @@ msgstr "Tips on online orders that count toward sales, by business day. How a po
 msgid "Toggle theme"
 msgstr ""
 
-#: app/components/sso-configuration-form.tsx:275
+#: app/components/sso-configuration-form.tsx:282
 msgid "Token URL"
 msgstr ""
 
@@ -4463,7 +4479,7 @@ msgstr "Update"
 msgid "Update {item}"
 msgstr "Update {item}"
 
-#: app/components/sso-configuration-form.tsx:453
+#: app/components/sso-configuration-form.tsx:499
 msgid "Update Configuration"
 msgstr ""
 
@@ -4487,7 +4503,7 @@ msgstr ""
 msgid "Use lowercase letters, numbers, and hyphens only"
 msgstr ""
 
-#: app/components/sso-configuration-form.tsx:332
+#: app/components/sso-configuration-form.tsx:339
 msgid "Use Proof Key for Code Exchange for enhanced security"
 msgstr ""
 
@@ -4518,7 +4534,7 @@ msgstr ""
 msgid "User Override"
 msgstr ""
 
-#: app/components/sso-configuration-form.tsx:346
+#: app/components/sso-configuration-form.tsx:353
 msgid "User Provisioning"
 msgstr ""
 
@@ -4526,7 +4542,7 @@ msgstr ""
 msgid "User+Org Override"
 msgstr ""
 
-#: app/components/sso-configuration-form.tsx:290
+#: app/components/sso-configuration-form.tsx:297
 msgid "UserInfo URL"
 msgstr ""
 
@@ -4639,7 +4655,7 @@ msgstr ""
 msgid "View, search, and manage user accounts"
 msgstr ""
 
-#: app/components/sso-configuration-form.tsx:398
+#: app/components/sso-configuration-form.tsx:444
 msgid "Viewer"
 msgstr ""
 

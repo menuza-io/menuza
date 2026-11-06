@@ -1410,6 +1410,37 @@ export const SSOConfiguration = sqliteTable(
 	],
 )
 
+/**
+ * Which identity-provider account (issuer + subject) signs in as which user.
+ * Created on a user's first SSO sign-in; afterwards SSO matches on this pair,
+ * not on the email the IdP sends, so an IdP cannot sign in as another person
+ * by asserting their address.
+ */
+export const SSOIdentity = sqliteTable(
+	'SSOIdentity',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		issuer: text().notNull(),
+		subject: text().notNull(),
+		userId: text()
+			.notNull()
+			.references(() => User.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		uniqueIndex('SSOIdentity_issuer_subject_key').on(
+			table.issuer,
+			table.subject,
+		),
+		uniqueIndex('SSOIdentity_issuer_userId_key').on(table.issuer, table.userId),
+	],
+)
+
 export const SSOSession = sqliteTable(
 	'SSOSession',
 	{
@@ -2388,7 +2419,13 @@ export const Organization = sqliteTable(
 		stripeSubscriptionId: text(),
 		subscriptionStatus: text(),
 		size: text(),
+		// Set only after a DNS TXT proof (see verified-domain.server.ts in App).
+		// Rows saved before that proof existed have verifiedDomainProvedAt null.
 		verifiedDomain: text(),
+		verifiedDomainProvedAt: integer({ mode: 'timestamp_ms' }),
+		// A claim waiting for its TXT record: the domain and the expected value.
+		pendingVerifiedDomain: text(),
+		verifiedDomainToken: text(),
 		sitePublished: integer({ mode: 'boolean' }).default(false).notNull(),
 		customDomain: text(),
 		customDomainStatus: text(),
@@ -2435,6 +2472,7 @@ export const Organization = sqliteTable(
 	(table) => [
 		uniqueIndex('Organization_customDomain_key').on(table.customDomain),
 		uniqueIndex('Organization_slug_key').on(table.slug),
+		uniqueIndex('Organization_verifiedDomain_key').on(table.verifiedDomain),
 	],
 )
 

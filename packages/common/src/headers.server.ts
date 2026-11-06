@@ -114,10 +114,33 @@ export function getConservativeCacheControl(
 }
 
 /**
+ * Parses a Host-style value (`name` or `name:port`) and returns it normalized,
+ * or null when it is anything more than a bare host: userinfo
+ * (`localhost:80@evil.example`), a path, query, fragment or stray characters
+ * would otherwise turn a "validated" host into a different fetch destination.
+ */
+function parseBareHost(
+	value: string,
+): { host: string; hostname: string } | null {
+	const candidate = value.trim().toLowerCase()
+	if (!candidate || /[\s/\\?#@]/.test(candidate)) return null
+	let url: URL
+	try {
+		url = new URL(`http://${candidate}`)
+	} catch {
+		return null
+	}
+	if (url.username || url.password || url.host !== candidate) return null
+	return { host: url.host, hostname: url.hostname.replace(/^\[|\]$/g, '') }
+}
+
+/**
  * Validates and extracts the host from a request, checking against allowed hosts.
  * Returns the validated host or null if invalid.
  *
- * Accepts localhost, 127.0.0.1, ::1, and hosts matching the BASE_URL.
+ * Accepts localhost, 127.0.0.1, ::1, and hosts matching the BASE_URL. When the
+ * forwarded host is not allowed, falls back to the request's own Host header
+ * (the routed hostname on Workers), still only as a bare host.
  */
 export function getValidatedHost(
 	request: Request,
@@ -131,27 +154,22 @@ export function getValidatedHost(
 		return null
 	}
 
-	const hostWithoutPort = candidateHost.split(':')[0]?.toLowerCase()
+	const parsed = parseBareHost(candidateHost)
+	if (parsed) {
+		const { hostname } = parsed
+		if (
+			hostname === 'localhost' ||
+			hostname === '127.0.0.1' ||
+			hostname === '::1'
+		) {
+			return parsed.host
+		}
 
-	if (!hostWithoutPort) {
-		return null
+		const baseUrlHost = new URL(baseUrl).hostname.toLowerCase()
+		if (hostname === baseUrlHost || hostname.endsWith(`.${baseUrlHost}`)) {
+			return parsed.host
+		}
 	}
 
-	if (
-		hostWithoutPort === 'localhost' ||
-		hostWithoutPort === '127.0.0.1' ||
-		hostWithoutPort === '::1'
-	) {
-		return candidateHost
-	}
-
-	const baseUrlHost = new URL(baseUrl).hostname.toLowerCase()
-	if (
-		hostWithoutPort === baseUrlHost ||
-		hostWithoutPort.endsWith(`.${baseUrlHost}`)
-	) {
-		return candidateHost
-	}
-
-	return host
+	return host ? (parseBareHost(host)?.host ?? null) : null
 }

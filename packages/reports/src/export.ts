@@ -1,3 +1,4 @@
+import { neutralizeCsvCell } from '@repo/staffing'
 import {
 	type ReportDefinition,
 	type ReportResult,
@@ -20,7 +21,13 @@ export function slugFilename(title: string, extension: string): string {
 	return `${slug || 'report'}.${extension}`
 }
 
-function csvCell(value: string): string {
+/** A plain (possibly negative) number or percentage stays numeric. */
+const PLAIN_NUMBER = /^-?\d+(\.\d+)?%?$/
+
+function csvCell(raw: string): string {
+	// Cells hold lower-trust text (customer names, emails): one starting with
+	// `=`, `+`, `-`, `@`, tab or CR would run as a formula in a spreadsheet.
+	const value = PLAIN_NUMBER.test(raw) ? raw : neutralizeCsvCell(raw)
 	if (/[",\n\r]/.test(value)) {
 		return `"${value.replaceAll('"', '""')}"`
 	}

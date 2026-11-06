@@ -21,6 +21,10 @@ import {
 } from '@repo/tenant-db'
 import { clientAddress } from '../lib/client-ip.ts'
 import {
+	nativeSendRetryAfter,
+	recordSmsSend,
+} from '../services/sms-send-limits.ts'
+import {
 	findActiveOrganizationById,
 	resolveOrganizationForBrowserAuth,
 	resolvePublishedOrganization,
@@ -64,10 +68,15 @@ function isNativeCustomerAppRequest(c: Context) {
 	return c.req.header(NATIVE_CUSTOMER_APP_HEADER)?.toLowerCase() === '1'
 }
 
-async function sendCodeChallengeAccepted(
+/**
+ * How a send-code request passed the challenge: Turnstile, the customer app's
+ * header (no widget there, so tighter durable limits apply), or an explicit
+ * local environment without a Turnstile secret. Null means refuse.
+ */
+async function sendCodeChallenge(
 	c: Context,
 	token: string | undefined,
-) {
+): Promise<'browser' | 'native' | null> {
 	const secret = ENV.TURNSTILE_SECRET_KEY ?? ''
 	if (!isTurnstileConfigured(secret)) {
 		// Same rule as forms and careers: an explicit local NODE_ENV may send
@@ -77,11 +86,12 @@ async function sendCodeChallengeAccepted(
 			typeof process !== 'undefined' ? process.env.NODE_ENV : undefined
 		const isLocal = nodeEnv === 'development' || nodeEnv === 'test'
 		if (!isLocal) console.error('turnstile_not_configured')
-		return isLocal
+		return isLocal ? 'browser' : null
 	}
 	if (!token?.trim()) {
-		// Expo customer app: org binding, Origin, and rate limits; no web widget.
-		return isNativeCustomerAppRequest(c)
+		// Expo customer app: org binding, Origin, and the durable native limits
+		// in sms-send-limits.ts; no web widget.
+		return isNativeCustomerAppRequest(c) ? 'native' : null
 	}
 	const result = await verifyTurnstileToken({
 		secret,
@@ -90,7 +100,7 @@ async function sendCodeChallengeAccepted(
 		expectedAction: TURNSTILE_LOGIN_ACTION,
 		expectedHostnames: parseTurnstileHostnames(ENV.TURNSTILE_HOSTNAMES),
 	})
-	return result.success
+	return result.success ? 'browser' : null
 }
 
 const verifyCodeSchema = z.object({
@@ -404,7 +414,8 @@ authRoutes.post(
 			return c.json({ error: 'Invalid phone number' }, 400)
 		}
 
-		if (!(await sendCodeChallengeAccepted(c, parsed.data.turnstileToken))) {
+		const challenge = await sendCodeChallenge(c, parsed.data.turnstileToken)
+		if (!challenge) {
 			return c.json({ error: 'challenge_required' }, 403)
 		}
 
@@ -471,6 +482,30 @@ authRoutes.post(
 				429,
 			)
 		}
+
+		if (challenge === 'native') {
+			const retryAfter = await nativeSendRetryAfter(db, {
+				phone,
+				ip: clientAddress(c),
+			})
+			if (retryAfter !== null) {
+				return c.json(
+					{
+						error: 'rate_limit_exceeded',
+						error_description:
+							'Too many verification codes requested. Please try again later.',
+						retry_after: retryAfter,
+					},
+					429,
+				)
+			}
+		}
+		// Counted before the send: a failed send still used a provider request.
+		await recordSmsSend(db, {
+			kind: challenge,
+			phone,
+			ip: clientAddress(c),
+		})
 
 		const code = crypto.randomInt(100000, 1_000_000).toString()
 		const hashedCode = hmacHash(code)

@@ -334,7 +334,16 @@ export class ChatStore {
 
 	search(
 		query: string,
-		options: { limit?: number; channelIds?: string[] } = {},
+		options: {
+			limit?: number
+			channelIds?: string[]
+			/**
+			 * Per-channel history cutoff (ms), the same one history and thread
+			 * reads honor: a late joiner of a group that hides earlier history
+			 * must not find those messages through search either.
+			 */
+			since?: Record<string, number | null | undefined>
+		} = {},
 	) {
 		const limit = Math.min(options.limit ?? 25, CHAT_LIMITS.searchResultsMax)
 		const term = query
@@ -353,8 +362,20 @@ export class ChatStore {
 			created_at: number
 			author_id: string
 		}[] = []
-		for (const part of chunk(channels)) {
-			const channelClause = ` AND m.channel_id IN (${placeholders(part.length)})`
+		const since = options.since ?? {}
+		const uncut = channels.filter((id) => !since[id])
+		const cut = channels.filter((id) => since[id])
+		const queries = [
+			...chunk(uncut).map((part) => ({
+				clause: ` AND m.channel_id IN (${placeholders(part.length)})`,
+				args: part as (string | number)[],
+			})),
+			...cut.map((id) => ({
+				clause: ' AND m.channel_id = ? AND m.created_at >= ?',
+				args: [id, since[id]!] as (string | number)[],
+			})),
+		]
+		for (const { clause: channelClause, args } of queries) {
 			rows.push(
 				...this.all<{
 					id: number
@@ -370,7 +391,7 @@ export class ChatStore {
 						ORDER BY m.id DESC
 						LIMIT ?`,
 					term,
-					...part,
+					...args,
 					limit,
 				),
 			)

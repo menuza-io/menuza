@@ -40,9 +40,11 @@ import {
 	getActiveErasureRequest,
 	getLatestExportRequest,
 } from '#app/utils/gdpr.server.ts'
+import { refuseCredentialChangeWhileImpersonating } from '#app/utils/impersonation-guard.server.ts'
 import { checkSSOEnforcementByUserId } from '#app/utils/sso/enforcement.server.ts'
 import { parseUserAgent } from '#app/utils/user-agent.server.ts'
 import { getUserSecuritySelect } from '#app/utils/user-security.server.ts'
+import { requireRecentVerification } from '../_auth+/verify.server.tsx'
 import { signOutOfSessionsAction } from '../settings+/actions/account.actions'
 import { disconnectProviderAction } from '../settings+/actions/connections.actions'
 import {
@@ -264,10 +266,27 @@ export const newEmailAddressSessionKey = 'new-email-address'
 /** Hash of the secret behind the code mailed to the pending new address. */
 export const newEmailVerificationSessionKey = 'new-email-verification'
 
+/** Intents that add, change or remove a way to sign in or a second factor. */
+const CREDENTIAL_INTENTS = new Set<string>([
+	disconnectProviderActionIntent,
+	changePasswordActionIntent,
+	setPasswordActionIntent,
+	enable2FAActionIntent,
+	disable2FAActionIntent,
+	generateBackupCodesActionIntent,
+	regenerateBackupCodesActionIntent,
+	registerPasskeyActionIntent,
+	deletePasskeyActionIntent,
+])
+
 export async function action({ request }: ActionFunctionArgs) {
 	const userId = await requireUserId(request)
 	const formData = await request.formData()
 	const intent = formData.get('intent')
+
+	if (typeof intent === 'string' && CREDENTIAL_INTENTS.has(intent)) {
+		await refuseCredentialChangeWhileImpersonating(request)
+	}
 
 	switch (intent) {
 		case signOutOfSessionsActionIntent: {
@@ -292,9 +311,13 @@ export async function action({ request }: ActionFunctionArgs) {
 			return disable2FAAction({ request, userId, formData })
 		}
 		case generateBackupCodesActionIntent: {
+			// Backup codes are accepted as a 2FA factor (step-up, disable-2FA), so
+			// minting them needs the same recent verification as those gates.
+			await requireRecentVerification(request)
 			return generateBackupCodesAction({ request, userId, formData })
 		}
 		case regenerateBackupCodesActionIntent: {
+			await requireRecentVerification(request)
 			return regenerateBackupCodesAction({ request, userId, formData })
 		}
 		case registerPasskeyActionIntent: {

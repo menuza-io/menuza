@@ -275,6 +275,63 @@ export async function getMessageHistoryCutoff(
 	return member?.joinedAt?.getTime() ?? Date.now()
 }
 
+/**
+ * `getMessageHistoryCutoff` for many channels at once (chat search): one query
+ * for the channels and one for the memberships instead of two per channel.
+ */
+export async function getMessageHistoryCutoffs(
+	organizationId: string,
+	userId: string,
+	channelIds: string[],
+): Promise<Map<string, number | null>> {
+	const cutoffs = new Map<string, number | null>(
+		channelIds.map((id) => [id, null]),
+	)
+	const hidden: string[] = []
+	for (const ids of chunk(channelIds)) {
+		const channels = await db
+			.select({
+				id: OrganizationChatChannel.id,
+				kind: OrganizationChatChannel.kind,
+				showHistoryToNewMembers:
+					OrganizationChatChannel.showHistoryToNewMembers,
+			})
+			.from(OrganizationChatChannel)
+			.where(
+				and(
+					inArray(OrganizationChatChannel.id, ids),
+					eq(OrganizationChatChannel.organizationId, organizationId),
+				),
+			)
+		for (const channel of channels) {
+			if (channel.kind !== 'channel' && !channel.showHistoryToNewMembers) {
+				hidden.push(channel.id)
+			}
+		}
+	}
+	if (hidden.length === 0) return cutoffs
+	const now = Date.now()
+	for (const id of hidden) cutoffs.set(id, now)
+	for (const ids of chunk(hidden)) {
+		const members = await db
+			.select({
+				channelId: OrganizationChatChannelMember.channelId,
+				joinedAt: OrganizationChatChannelMember.joinedAt,
+			})
+			.from(OrganizationChatChannelMember)
+			.where(
+				and(
+					inArray(OrganizationChatChannelMember.channelId, ids),
+					eq(OrganizationChatChannelMember.userId, userId),
+				),
+			)
+		for (const member of members) {
+			cutoffs.set(member.channelId, member.joinedAt?.getTime() ?? now)
+		}
+	}
+	return cutoffs
+}
+
 /** Member user ids per group channel (for roster UI). */
 export async function listGroupMemberIdsByChannel(
 	channelIds: string[],

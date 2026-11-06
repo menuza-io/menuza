@@ -7,6 +7,7 @@ import {
 	Organization,
 	OrganizationRole,
 	SSOConfiguration as SSOConfigurationTable,
+	SSOIdentity as SSOIdentityTable,
 	SSOSession as SSOSessionTable,
 	User as UserTable,
 	UserOrganization,
@@ -31,6 +32,21 @@ import {
 } from '@repo/sso'
 import { OAuth2Strategy, CodeChallengeMethod } from 'remix-auth-oauth2'
 import { ssoConfigurationService } from './configuration.server.ts'
+
+/** Issuer as stored on SSOIdentity: trimmed, without a trailing slash. */
+export function normalizeIssuer(issuerUrl: string) {
+	return issuerUrl.trim().replace(/\/+$/, '')
+}
+
+/** The configured allowed email domains, lowercase. */
+export function parseAllowedEmailDomains(config: {
+	allowedEmailDomains?: string | null
+}): string[] {
+	return (config.allowedEmailDomains ?? '')
+		.split(',')
+		.map((domain) => domain.trim().toLowerCase())
+		.filter(Boolean)
+}
 
 export interface OIDCUserInfo {
 	sub: string
@@ -219,72 +235,104 @@ export class SSOAuthService {
 			throw new Error('Username is required for user provisioning')
 		}
 
-		// Validate email policies
+		const subject = userInfo.sub ? String(userInfo.sub) : ''
+		if (!subject) {
+			throw new Error(
+				'The identity provider did not send a user identifier (sub claim).',
+			)
+		}
+
+		// An IdP is trusted only for the domains its organization listed. With
+		// none listed it could create or sign in accounts for any address.
+		if (parseAllowedEmailDomains(config).length === 0) {
+			throw new Error(
+				'Single sign-on for this organization has no allowed email domains yet. Ask your administrator to add them.',
+			)
+		}
+
+		// Domain allowlist and the optional verified-email requirement.
 		this.validateEmailPolicies(email, userInfo, config)
 
-		// Check if user already exists
+		const issuer = normalizeIssuer(config.issuerUrl)
+		const normalizedEmail = email.toLowerCase()
+
+		// 1. This IdP account signed in before: it is that user, whatever email
+		// the IdP sends now.
+		const [identity] = await db
+			.select({ userId: SSOIdentityTable.userId })
+			.from(SSOIdentityTable)
+			.where(
+				and(
+					eq(SSOIdentityTable.issuer, issuer),
+					eq(SSOIdentityTable.subject, subject),
+				),
+			)
+			.limit(1)
+		if (identity) {
+			if (
+				!config.autoProvision &&
+				!(await this.isMember(identity.userId, config.organizationId))
+			) {
+				throw new Error(
+					'User exists but is not a member of this organization. Auto-provisioning is disabled.',
+				)
+			}
+			return this.updateUserFromSSO(identity.userId, userInfo, config)
+		}
+
+		// 2. First SSO sign-in for an existing account with this email.
 		const [existingUser] = await db
 			.select()
 			.from(UserTable)
-			.where(eq(UserTable.email, email.toLowerCase()))
+			.where(eq(UserTable.email, normalizedEmail))
 			.limit(1)
 
 		if (existingUser) {
-			// For existing users, check if they are already a member of the organization
-			const [existingMembership] = await db
-				.select({ userId: UserOrganization.userId })
-				.from(UserOrganization)
+			// The account is already linked to a different account at this IdP:
+			// the same email from another IdP user must not take it over.
+			const [linked] = await db
+				.select({ id: SSOIdentityTable.id })
+				.from(SSOIdentityTable)
 				.where(
 					and(
-						eq(UserOrganization.userId, existingUser.id),
-						eq(UserOrganization.organizationId, config.organizationId),
+						eq(SSOIdentityTable.issuer, issuer),
+						eq(SSOIdentityTable.userId, existingUser.id),
 					),
 				)
 				.limit(1)
+			if (linked) {
+				console.warn(
+					`SSO sign-in refused for ${config.providerName}: the account is linked to a different identity-provider user`,
+				)
+				throw new Error(
+					'This account is linked to a different identity provider account. Ask an administrator for help.',
+				)
+			}
+
+			const isMember = await this.isMember(
+				existingUser.id,
+				config.organizationId,
+			)
 
 			// If user exists but is not a member, only add them if autoProvision is enabled
-			if (!existingMembership && !config.autoProvision) {
+			if (!isMember && !config.autoProvision) {
 				throw new Error(
 					'User exists but is not a member of this organization. Auto-provisioning is disabled.',
 				)
 			}
 
-			// An identity provider is only authoritative for the domains its
-			// organization owns. Never let one tenant's IdP sign in as, or enroll,
-			// an account that already exists elsewhere unless the IdP verified the
-			// email and the address is in the organization's domain allowlist.
-			if (!existingMembership) {
-				const allowedDomains = (
-					((config as any).allowedEmailDomains as string | null) ?? ''
+			// Enrolling an account that exists elsewhere also needs the IdP to
+			// vouch for the address (the domain was checked above).
+			if (!isMember && userInfo.email_verified !== true) {
+				console.warn(
+					`SSO link refused for ${config.providerName}: the IdP did not send email_verified=true`,
 				)
-					.split(',')
-					.map((d) => d.trim().toLowerCase())
-					.filter(Boolean)
-				const emailDomain = email.split('@')[1]?.toLowerCase()
-				// Name the cause in the log, not to the user, so an operator can tell
-				// an IdP that omits `email_verified` (common with Entra ID) from a
-				// domain that is not allowlisted.
-				if (userInfo.email_verified !== true) {
-					console.warn(
-						`SSO link refused for ${config.providerName}: the IdP did not send email_verified=true`,
-					)
-				} else if (!emailDomain || !allowedDomains.includes(emailDomain)) {
-					console.warn(
-						`SSO link refused for ${config.providerName}: email domain is not in the organization's allowedEmailDomains`,
-					)
-				}
-				if (
-					userInfo.email_verified !== true ||
-					!emailDomain ||
-					!allowedDomains.includes(emailDomain)
-				) {
-					throw new Error(
-						'This account already exists and cannot be linked by this organization. Ask an administrator to invite you.',
-					)
-				}
+				throw new Error(
+					'This account already exists and cannot be linked by this organization. Ask an administrator to invite you.',
+				)
 			}
 
-			// Update existing user with SSO attributes
+			await this.linkIdentity(issuer, subject, existingUser.id)
 			return this.updateUserFromSSO(existingUser.id, userInfo, config)
 		}
 
@@ -301,7 +349,7 @@ export class SSOAuthService {
 		const [user] = await db
 			.insert(UserTable)
 			.values({
-				email: email.toLowerCase(),
+				email: normalizedEmail,
 				username,
 				name: name || email,
 			})
@@ -315,6 +363,8 @@ export class SSOAuthService {
 		if (userRole)
 			await db.insert(_RoleToUser).values({ A: userRole.id, B: user.id })
 
+		await this.linkIdentity(issuer, subject, user.id)
+
 		// Add user to organization
 		await this.ensureOrganizationMembership(
 			user.id,
@@ -322,6 +372,38 @@ export class SSOAuthService {
 			config.defaultRole,
 		)
 
+		return user
+	}
+
+	private async isMember(userId: string, organizationId: string) {
+		const [membership] = await db
+			.select({ userId: UserOrganization.userId })
+			.from(UserOrganization)
+			.where(
+				and(
+					eq(UserOrganization.userId, userId),
+					eq(UserOrganization.organizationId, organizationId),
+				),
+			)
+			.limit(1)
+		return Boolean(membership)
+	}
+
+	private async linkIdentity(issuer: string, subject: string, userId: string) {
+		await db
+			.insert(SSOIdentityTable)
+			.values({ issuer, subject, userId })
+			.onConflictDoNothing()
+	}
+
+	/** The user `handleCallback` provisioned (the strategy returns their id). */
+	async getProvisionedUser(userId: string): Promise<User> {
+		const [user] = await db
+			.select()
+			.from(UserTable)
+			.where(eq(UserTable.id, userId))
+			.limit(1)
+		if (!user) throw new Error('Failed to provision user account')
 		return user
 	}
 
@@ -402,11 +484,18 @@ export class SSOAuthService {
 
 		const name = this.extractAttribute(userInfo, attributeMapping.name!)
 
-		const [user] = await db
-			.update(UserTable)
-			.set(name ? { name } : {})
-			.where(eq(UserTable.id, userId))
-			.returning()
+		// An IdP that sends no name changes nothing (an empty UPDATE throws).
+		const [user] = name
+			? await db
+					.update(UserTable)
+					.set({ name })
+					.where(eq(UserTable.id, userId))
+					.returning()
+			: await db
+					.select()
+					.from(UserTable)
+					.where(eq(UserTable.id, userId))
+					.limit(1)
 		if (!user) throw new Error('User not found')
 
 		// Ensure user is member of the organization

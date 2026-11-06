@@ -30,6 +30,14 @@ function createHarness(
 	options: {
 		audienceTtlMs?: number
 		isModerator?: (userId: string) => Promise<boolean>
+		historyCutoff?: (
+			userId: string,
+			channelId: string,
+		) => Promise<number | null>
+		historyCutoffs?: (
+			userId: string,
+			channelIds: string[],
+		) => Promise<Map<string, number | null>>
 	} = {},
 ) {
 	const store = createStore()
@@ -48,6 +56,8 @@ function createHarness(
 		now: () => clock,
 		audienceTtlMs: options.audienceTtlMs,
 		isModerator: options.isModerator,
+		historyCutoff: options.historyCutoff,
+		historyCutoffs: options.historyCutoffs,
 		resolveAudiences: async (ids) => {
 			resolveCalls += 1
 			return new Map(
@@ -699,5 +709,98 @@ describe('ChatEngine protocol hygiene', () => {
 			t: 'channel.deleted',
 			channel: 'eng',
 		})
+	})
+})
+
+describe('search honors the history cutoff', () => {
+	// A group that hides earlier history from late joiners: history and thread
+	// reads apply the member's join time, and search must too.
+	function seed(options: Parameters<typeof createHarness>[1]) {
+		const harness = createHarness(
+			{ g: ['old', 'late'], open: ['late'] },
+			options,
+		)
+		harness.store.addMessage({
+			channel: 'g',
+			author: 'old',
+			body: 'zebra before',
+			now: 10,
+		})
+		harness.store.addMessage({
+			channel: 'g',
+			author: 'old',
+			body: 'zebra after',
+			now: 30,
+		})
+		harness.store.addMessage({
+			channel: 'open',
+			author: 'old',
+			body: 'zebra open',
+			now: 5,
+		})
+		return harness
+	}
+
+	async function searchAs(harness: ReturnType<typeof seed>, userId: string) {
+		const conn = harness.connect(userId)
+		await harness.send(conn, {
+			t: 'search',
+			id: 's1',
+			query: 'zebra',
+			channels: ['g', 'open'],
+		})
+		const frame = harness.ack(conn, 's1')
+		if (!frame?.ok) throw new Error('search was refused')
+		return (frame.data as { results: { body: string }[] }).results
+			.map((hit) => hit.body)
+			.sort()
+	}
+
+	const cutoff = async (userId: string, channel: string) =>
+		userId === 'late' && channel === 'g' ? 20 : null
+
+	it('hides messages from before a late joiner joined (per-channel dep)', async () => {
+		const harness = seed({ historyCutoff: cutoff })
+		expect(await searchAs(harness, 'late')).toEqual([
+			'zebra after',
+			'zebra open',
+		])
+	})
+
+	it('uses the batched dep when present', async () => {
+		let calls = 0
+		const harness = seed({
+			historyCutoff: async () => {
+				throw new Error('per-channel lookup should not run')
+			},
+			historyCutoffs: async (userId, ids) => {
+				calls += 1
+				return new Map(
+					await Promise.all(
+						ids.map(async (id) => [id, await cutoff(userId, id)] as const),
+					),
+				)
+			},
+		})
+		expect(await searchAs(harness, 'late')).toEqual([
+			'zebra after',
+			'zebra open',
+		])
+		expect(calls).toBe(1)
+	})
+
+	it('still shows full history to members without a cutoff', async () => {
+		const harness = seed({ historyCutoff: cutoff })
+		const conn = harness.connect('old')
+		await harness.send(conn, {
+			t: 'search',
+			id: 's2',
+			query: 'zebra',
+			channels: ['g'],
+		})
+		const frame = harness.ack(conn, 's2')
+		if (!frame?.ok) throw new Error('search was refused')
+		const results = (frame.data as { results: unknown[] }).results
+		expect(results).toHaveLength(2)
 	})
 })

@@ -1,4 +1,5 @@
 ---
+import { sanitizeSvg } from '../../lib/sanitize-markup'
 import Section from '../site/Section.astro'
 import MarkdownText from '../site/MarkdownText.astro'
 
@@ -58,7 +59,7 @@ const stringContent = typeof content === 'string' ? content : ''
 				<div class="space-y-1">
 					{signatureSvg ? (
 						<div class="mb-6 opacity-80 dark:invert [&>svg]:max-w-[140px] [&>svg]:h-auto">
-							<Fragment set:html={signatureSvg} />
+							<Fragment set:html={sanitizeSvg(signatureSvg)} />
 						</div>
 					) : (
 						<div class="mb-6 font-serif text-3xl sm:text-4xl italic text-foreground/80 tracking-tight">

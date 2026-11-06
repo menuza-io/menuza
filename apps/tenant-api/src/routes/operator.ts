@@ -53,9 +53,19 @@ function escapeHtml(value: string) {
 		.replace(/'/g, '&#39;')
 }
 
+/**
+ * Browser-held operator tokens name the one area they were minted for (the
+ * App checks a different permission per page). A token with an `area` is
+ * accepted only by routes that pass that same area, so the weakest page's
+ * permission cannot unlock another area's routes. Tokens without an `area` are
+ * the server-side ones App signs per request and never hands to a browser.
+ */
+export type OperatorArea = 'marketing' | 'customers'
+
 export async function authenticateOperator(
 	c: Context,
 	scope?: 'mailbox' | 'phone_calls',
+	area?: OperatorArea,
 ) {
 	const token = getBearerToken(c.req.header('Authorization')) || null
 	if (!token) {
@@ -72,6 +82,7 @@ export async function authenticateOperator(
 		role: string
 		sub?: string
 		scope?: string
+		area?: string
 		canUpdate?: boolean
 		canDelete?: boolean
 	}
@@ -92,7 +103,8 @@ export async function authenticateOperator(
 	if (
 		!decoded.orgId ||
 		decoded.role !== 'operator' ||
-		decoded.scope !== scope
+		decoded.scope !== scope ||
+		(decoded.area !== undefined && decoded.area !== area)
 	) {
 		throw c.json({ error: 'Unauthorized' }, 401)
 	}
@@ -126,7 +138,7 @@ const updateCustomerSchema = z.object({
 operatorRoutes.get('/customers', async (c) => {
 	let auth
 	try {
-		auth = await authenticateOperator(c)
+		auth = await authenticateOperator(c, undefined, 'customers')
 	} catch (response) {
 		return response as Response
 	}
@@ -178,7 +190,7 @@ operatorRoutes.get('/customers', async (c) => {
 operatorRoutes.patch('/customers/:customerId', async (c) => {
 	let auth
 	try {
-		auth = await authenticateOperator(c)
+		auth = await authenticateOperator(c, undefined, 'customers')
 	} catch (response) {
 		return response as Response
 	}
@@ -242,7 +254,7 @@ operatorRoutes.patch('/customers/:customerId', async (c) => {
 operatorRoutes.post('/customers/:customerId/erase', async (c) => {
 	let auth
 	try {
-		auth = await authenticateOperator(c)
+		auth = await authenticateOperator(c, undefined, 'customers')
 	} catch (response) {
 		return response as Response
 	}
@@ -273,7 +285,7 @@ operatorRoutes.post('/customers/:customerId/erase', async (c) => {
 operatorRoutes.get('/marketing/metrics', async (c) => {
 	let auth
 	try {
-		auth = await authenticateOperator(c)
+		auth = await authenticateOperator(c, undefined, 'marketing')
 	} catch (response) {
 		return response as Response
 	}
@@ -342,7 +354,7 @@ operatorRoutes.get('/marketing/metrics', async (c) => {
 operatorRoutes.get('/marketing/campaigns', async (c) => {
 	let auth
 	try {
-		auth = await authenticateOperator(c)
+		auth = await authenticateOperator(c, undefined, 'marketing')
 	} catch (response) {
 		return response as Response
 	}
@@ -377,7 +389,7 @@ operatorRoutes.get('/marketing/campaigns', async (c) => {
 operatorRoutes.get('/marketing/campaigns/:campaignId', async (c) => {
 	let auth
 	try {
-		auth = await authenticateOperator(c)
+		auth = await authenticateOperator(c, undefined, 'marketing')
 	} catch (response) {
 		return response as Response
 	}
@@ -481,7 +493,7 @@ const createCampaignSchema = z.object({
 operatorRoutes.post('/marketing/campaigns', async (c) => {
 	let auth
 	try {
-		auth = await authenticateOperator(c)
+		auth = await authenticateOperator(c, undefined, 'marketing')
 	} catch (response) {
 		return response as Response
 	}

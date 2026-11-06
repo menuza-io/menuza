@@ -35,7 +35,17 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
 	return {
 		organization,
-		integrations,
+		// Only what the page shows. The full rows carry token ciphertext and the
+		// connected notes (including private ones), and any member can load this.
+		integrations: integrations.map((integration) => ({
+			id: integration.id,
+			providerName: integration.providerName,
+			providerType: integration.providerType,
+			isActive: integration.isActive,
+			lastSyncAt: integration.lastSyncAt,
+			config: integration.config,
+			_count: { connections: integration.connections?.length ?? 0 },
+		})),
 		availableProviders,
 	}
 }

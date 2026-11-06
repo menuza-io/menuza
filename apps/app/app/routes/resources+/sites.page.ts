@@ -167,13 +167,16 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		await setCachedSiteData(cacheKey, payload)
 	}
 
-	return Response.json(payload, {
-		headers: {
-			// Draft content must never sit in a shared cache, even keyed by token.
-			'Cache-Control': isPreview
-				? 'private, no-store'
-				: 'public, max-age=60, stale-while-revalidate=300',
-			Vary: 'Accept-Language',
+	return Response.json(
+		isPreview ? { ...payload, previewVerified: true } : payload,
+		{
+			headers: {
+				// Draft content must never sit in a shared cache, even keyed by token.
+				'Cache-Control': isPreview
+					? 'private, no-store'
+					: 'public, max-age=60, stale-while-revalidate=300',
+				Vary: 'Accept-Language',
+			},
 		},
-	})
+	)
 }

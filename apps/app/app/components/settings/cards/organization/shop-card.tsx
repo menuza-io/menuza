@@ -32,6 +32,8 @@ type ShopCardProps = {
 	organization: ShopOrganization
 	orders: ShopOrderSummary[]
 	ordersUnavailable?: boolean
+	/** The viewer may not see customer details, so orders were not loaded. */
+	ordersHidden?: boolean
 	configuredProcessors?: ShopProcessorId[]
 	/** Dev and CI only; always off in a production build. */
 	paymentsMock?: PaymentsMockUiState
@@ -48,6 +50,7 @@ export function ShopCard({
 	organization,
 	orders,
 	ordersUnavailable = false,
+	ordersHidden = false,
 	configuredProcessors = [],
 	paymentsMock,
 }: ShopCardProps) {
@@ -381,6 +384,15 @@ export function ShopCard({
 					)}
 				</CardContent>
 			</Card>
+
+			{isUsRegion && ordersHidden ? (
+				<p className="text-muted-foreground rounded-lg border border-dashed p-4 text-sm">
+					<Trans>
+						Recent orders include customer contact details, so only people who
+						can view settings see them.
+					</Trans>
+				</p>
+			) : null}
 
 			{isUsRegion && (ordersUnavailable || orders.length > 0) ? (
 				<Card>

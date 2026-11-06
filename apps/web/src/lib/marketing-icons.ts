@@ -1,3 +1,5 @@
+import { sanitizeSvg } from './sanitize-markup'
+
 /**
  * Maps marketing block CMS icon keys (from ICON_OPTIONS) to inline SVG markup.
  */
@@ -38,7 +40,7 @@ export function resolveMarketingIcon(
 ): string | undefined {
 	const trimmed = icon?.trim()
 	if (!trimmed) return undefined
-	if (trimmed.startsWith('<')) return trimmed
+	if (trimmed.startsWith('<')) return sanitizeSvg(trimmed) || undefined
 
 	const paths = ICON_PATHS[trimmed.toLowerCase()]
 	return paths ? marketingIconSvg(paths, size) : undefined

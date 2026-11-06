@@ -562,7 +562,11 @@ async function copyStorageObject({
 		objectKey,
 		sourceConfig,
 	)
-	const sourceResponse = await fetch(sourceUrl, { headers: sourceHeaders })
+	// Org endpoints are validated when saved, not their redirect targets.
+	const sourceResponse = await fetch(sourceUrl, {
+		headers: sourceHeaders,
+		redirect: 'manual',
+	})
 	if (!sourceResponse.ok) {
 		throw new Error(`Source fetch failed: ${sourceResponse.status}`)
 	}
@@ -581,6 +585,7 @@ async function copyStorageObject({
 			'Content-Length': String(sourceBody.byteLength),
 		},
 		body: sourceBody,
+		redirect: 'manual',
 	})
 
 	if (!putResponse.ok) {
@@ -594,6 +599,7 @@ async function copyStorageObject({
 	const deleteResponse = await fetch(deleteUrl, {
 		method: 'DELETE',
 		headers: deleteHeaders,
+		redirect: 'manual',
 	})
 	if (!deleteResponse.ok && deleteResponse.status !== 404) {
 		throw new Error(`Source delete failed: ${deleteResponse.status}`)

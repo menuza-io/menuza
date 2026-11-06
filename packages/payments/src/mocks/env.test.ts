@@ -269,14 +269,38 @@ describe('mock secrets', () => {
 		)
 	})
 
-	it('signs with the secret the route verifies with, placeholder included', () => {
+	it('treats the whsec_*** placeholder as unset and signs with the mock secret locally', () => {
 		const env = {
 			MOCKS: 'true',
 			...localBase,
 			STRIPE_WEBHOOK_SECRET: 'whsec_***',
 		}
-		expect(mockWebhookSecrets(env).stripePlatform).toBe('whsec_***')
-		expect(getStripeWebhookSecrets(env, LOCAL)).toEqual(['whsec_***'])
+		expect(mockWebhookSecrets(env).stripePlatform).toBe(
+			MOCK_STRIPE_WEBHOOK_SECRET,
+		)
+		expect(getStripeWebhookSecrets(env, LOCAL)).toEqual([
+			MOCK_STRIPE_WEBHOOK_SECRET,
+		])
+	})
+
+	it('never verifies with the published whsec_*** placeholder outside the local mock', () => {
+		// Regression: an unbound production secret kept the schema default, and
+		// anyone could forge a signed event with it.
+		const placeholder = { STRIPE_WEBHOOK_SECRET: 'whsec_***' }
+		expect(getStripeWebhookSecrets(placeholder, REMOTE)).toEqual([])
+		expect(
+			getStripeWebhookSecrets(
+				{ ...placeholder, BASE_URL: 'https://app.example.com' },
+				REMOTE,
+			),
+		).toEqual([])
+		// Mock on, but a non-local request: still refused.
+		expect(
+			getStripeWebhookSecrets(
+				{ MOCKS: 'true', ...localBase, ...placeholder },
+				REMOTE,
+			),
+		).toEqual([])
 	})
 
 	it('a missing platform secret falls back to the mock secret only while the mock is on', () => {

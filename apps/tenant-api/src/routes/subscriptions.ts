@@ -144,12 +144,23 @@ subscriptionRoutes.put(
 			const now = Date.now()
 			const addressHash = emailConsentHash(email)
 			const pending = existing && !existing.unsubscribedAt
+			if (!pending) {
+				await setCustomerSubscription(db, {
+					customerId,
+					topic,
+					channel,
+					subscribed,
+					source,
+					confirmedEmail: null,
+				})
+			}
 			// A repeat request for the SAME address resends the link, at most once
-			// per RESEND_INTERVAL_MS after the last link actually sent. A new
-			// address (or one never sent to) is never throttled.
+			// per RESEND_INTERVAL_MS after the last link actually sent. The clock
+			// survives an unsubscribe and re-subscribe, which would otherwise mail
+			// an unverified address once per cycle. A new address (or one never
+			// sent to) is never throttled.
 			if (
-				pending &&
-				existing.confirmationSentHash === addressHash &&
+				existing?.confirmationSentHash === addressHash &&
 				existing.confirmationSentAt
 			) {
 				const sinceLast = now - existing.confirmationSentAt.getTime()
@@ -163,16 +174,6 @@ subscriptionRoutes.put(
 						retryAfter: Math.ceil((RESEND_INTERVAL_MS - sinceLast) / 1000),
 					})
 				}
-			}
-			if (!pending) {
-				await setCustomerSubscription(db, {
-					customerId,
-					topic,
-					channel,
-					subscribed,
-					source,
-					confirmedEmail: null,
-				})
 			}
 			const confirmationSent = await sendConfirmationEmail(c.req.url, {
 				orgId: auth.orgId,

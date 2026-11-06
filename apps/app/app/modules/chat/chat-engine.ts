@@ -49,6 +49,11 @@ export type ChatEngineDeps = {
 	audienceTtlMs?: number
 	/** Hide messages before this timestamp for late joiners (ms since epoch). */
 	historyCutoff?: (userId: string, channelId: string) => Promise<number | null>
+	/** Batched `historyCutoff` for search; falls back to one call per channel. */
+	historyCutoffs?: (
+		userId: string,
+		channelIds: string[],
+	) => Promise<Map<string, number | null>>
 	/** Fire-and-forget hook after a message is persisted (notifications, etc.). */
 	onMessageSent?: (input: {
 		message: ChatMessage
@@ -377,14 +382,34 @@ export class ChatEngine {
 		void this.deps.onMessageSent?.({ message, authorId: conn.userId })
 	}
 
+	private async historyCutoffs(
+		userId: string,
+		channelIds: string[],
+	): Promise<Record<string, number | null>> {
+		if (this.deps.historyCutoffs) {
+			return Object.fromEntries(
+				await this.deps.historyCutoffs(userId, channelIds),
+			)
+		}
+		if (!this.deps.historyCutoff) return {}
+		const entries = await Promise.all(
+			channelIds.map(
+				async (id) => [id, await this.deps.historyCutoff!(userId, id)] as const,
+			),
+		)
+		return Object.fromEntries(entries)
+	}
+
 	private async onSearch(
 		conn: ChatConnection,
 		frame: Extract<ChatClientFrame, { t: 'search' }>,
 	) {
 		const allowed = await this.allowedChannels(conn.userId, frame.channels)
+		const since = await this.historyCutoffs(conn.userId, allowed)
 		const hits = this.store.search(frame.query, {
 			limit: frame.limit,
 			channelIds: allowed,
+			since,
 		})
 		const allowedSet = new Set(allowed)
 		const visible = hits.filter((hit) => allowedSet.has(hit.channel))

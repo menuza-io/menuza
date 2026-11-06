@@ -120,6 +120,13 @@
 			"when": 1792524703189,
 			"tag": "0016_customer_subscription_confirmation_sent",
 			"breakpoints": true
+		},
+		{
+			"idx": 17,
+			"version": "6",
+			"when": 1793942129603,
+			"tag": "0017_sms_send_events",
+			"breakpoints": true
 		}
 	]
 }
