@@ -37,6 +37,7 @@ import {
 	useSearchParams,
 } from 'react-router'
 import { z } from 'zod'
+import authBackground from '#app/assets/images/background_1.webp'
 import {
 	ErrorList,
 	convertErrorsToFieldFormat,
@@ -254,7 +255,7 @@ export default function OnboardingProviderRoute({
 		<div
 			className="flex min-h-screen items-center justify-center bg-gradient-to-br from-purple-400 via-pink-500 to-red-500 p-4"
 			style={{
-				backgroundImage: `url('/assets/images/background_1.webp')`,
+				backgroundImage: `url(${authBackground})`,
 				backgroundSize: 'cover',
 				backgroundPosition: 'center',
 				backgroundRepeat: 'no-repeat',

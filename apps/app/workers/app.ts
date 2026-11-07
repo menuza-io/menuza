@@ -58,6 +58,8 @@ export default {
 			tenantApiModule,
 			chatNamespaceModule,
 			chatUpgradeModule,
+			privateClientCodeModule,
+			sessionGateModule,
 		] = await Promise.all([
 			import('@repo/cache'),
 			import('@repo/database'),
@@ -66,6 +68,8 @@ export default {
 			import('../app/utils/tenant-api-service.server.ts'),
 			import('../app/utils/chat/namespace.server.ts'),
 			import('../app/utils/chat/upgrade.server.ts'),
+			import('../app/utils/private-client-code.server.ts'),
+			import('../app/utils/session-gate.server.ts'),
 		])
 		requestHandlerPromise ??= import('virtual:react-router/server-build').then(
 			(build) => {
@@ -84,6 +88,16 @@ export default {
 		}
 		chatNamespaceModule.bindChatNamespace(env.CHAT_ORG)
 
+		// Logged-in UI code (`/assets/app/*`) needs a valid session; logged-out
+		// visitors get a 404, and `/__manifest` never names private routes to
+		// them. See `app/utils/route-visibility.ts`.
+		const { hasActiveSession } = sessionGateModule
+		const gatedAsset = await privateClientCodeModule.serveGatedAsset(request, {
+			assets: env.ASSETS,
+			hasSession: hasActiveSession,
+		})
+		if (gatedAsset) return gatedAsset
+
 		// Chat WebSockets bypass the React Router handler: they are authenticated
 		// here and forwarded to the organization's Durable Object.
 		const chatResponse = await chatUpgradeModule.handleChatRequest(request)
@@ -101,6 +115,9 @@ export default {
 		loadContext.set(cloudflareContext, { env, ctx })
 		loadContext.set(executionContext, ctx)
 
-		return requestHandler(request, loadContext)
+		const response = await requestHandler(request, loadContext)
+		return privateClientCodeModule.filterRouteDiscovery(request, response, {
+			hasSession: hasActiveSession,
+		})
 	},
 } satisfies ExportedHandler<Env>

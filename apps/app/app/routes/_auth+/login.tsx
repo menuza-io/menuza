@@ -39,6 +39,10 @@ import {
 	ErrorList,
 	convertErrorsToFieldFormat,
 } from '#app/components/forms.tsx'
+import {
+	TurnstileWidget,
+	useTurnstileReady,
+} from '#app/components/turnstile-widget.tsx'
 import { ensureLinguiRequestLocale } from '#app/modules/lingui/lingui.server.ts'
 import { login } from '#app/utils/auth.server.ts'
 import {
@@ -55,6 +59,10 @@ import {
 } from '#app/utils/organization/organizations.server.ts'
 import { ssoConfigurationService } from '#app/utils/sso/configuration.server.ts'
 import { checkSSOEnforcementByIdentifier } from '#app/utils/sso/enforcement.server.ts'
+import {
+	checkOperatorTurnstile,
+	getOperatorTurnstileSiteKey,
+} from '#app/utils/turnstile.server.ts'
 import { type Route } from './+types/login.ts'
 import { handleNewSession } from './login.server.ts'
 
@@ -87,6 +95,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 	return {
 		organization,
 		ssoConfig: ssoConfig && ssoConfig.isEnabled ? ssoConfig : null,
+		turnstileSiteKey: getOperatorTurnstileSiteKey(),
 	}
 }
 
@@ -173,6 +182,35 @@ export async function action({ request }: Route.ActionArgs) {
 		})
 	}
 
+	// Bot check before any credential lookup. The email step above only
+	// discovers SSO, so the challenge sits on the password step.
+	const turnstile = await checkOperatorTurnstile(request, formData, 'login')
+	if (!turnstile.ok) {
+		// Keep bot attempts in the failed-login history (SOC 2 CC7.2), without
+		// checking the credentials.
+		const username = formData.get('username')?.toString()
+		void auditService.logAuth(
+			AuditAction.USER_LOGIN_FAILED,
+			undefined,
+			`Failed login attempt for: ${username} (security check)`,
+			{ username, source: 'web', reason: 'turnstile' },
+			request,
+			false,
+		)
+		const submission = parseWithZod(formData, { schema: LoginFormSchema })
+		return data(
+			{
+				result: submission.reply({
+					formErrors: [turnstile.error],
+					hideFields: ['password'],
+				}),
+				username,
+				ssoAvailable: false,
+			},
+			{ status: 400 },
+		)
+	}
+
 	// Handle regular login
 	const submission = await parseWithZod(formData, {
 		schema: (intent) =>
@@ -250,7 +288,7 @@ export default function LoginPage({
 	const redirectTo = searchParams.get('redirectTo')
 	const isBanned = searchParams.get('banned') === 'true'
 	const error = searchParams.get('error')
-	const { organization, ssoConfig } = loaderData
+	const { organization, ssoConfig, turnstileSiteKey } = loaderData
 
 	// Determine the current step based on action data
 	const ssoAvailable = (actionData as any)?.ssoAvailable
@@ -358,6 +396,7 @@ export default function LoginPage({
 								ssoConfig={ssoConfig || discoveredSSOConfig}
 								redirectTo={redirectTo}
 								actionData={actionData}
+								turnstileSiteKey={turnstileSiteKey}
 								showBackToSSO={
 									usePassword && ssoAvailable && discoveredSSOConfig
 								}
@@ -699,6 +738,7 @@ function PasswordLoginStep({
 	organization,
 	redirectTo,
 	actionData,
+	turnstileSiteKey,
 	showBackToSSO = false,
 }: {
 	username?: string
@@ -706,6 +746,7 @@ function PasswordLoginStep({
 	ssoConfig?: any
 	redirectTo: string | null
 	actionData: any
+	turnstileSiteKey: string | null
 	showBackToSSO?: boolean
 }) {
 	const LoginFormSchema = z.object({
@@ -716,6 +757,8 @@ function PasswordLoginStep({
 	})
 
 	const isPending = useIsPending()
+	const [turnstileReady, setTurnstileReady] =
+		useTurnstileReady(turnstileSiteKey)
 	const navigate = useNavigate()
 
 	const [form, fields] = useForm({
@@ -848,13 +891,19 @@ function PasswordLoginStep({
 					</Field>
 
 					<input {...getInputProps(fields.redirectTo, { type: 'hidden' })} />
+					<TurnstileWidget
+						siteKey={turnstileSiteKey}
+						action="login"
+						resetKey={actionData?.result}
+						onReadyChange={setTurnstileReady}
+					/>
 					<ErrorList errors={form.errors} id={form.errorId} />
 
 					<StatusButton
 						className="w-full"
 						status={isPending ? 'pending' : (form.status ?? 'idle')}
 						type="submit"
-						disabled={isPending}
+						disabled={isPending || !turnstileReady}
 					>
 						<Trans>Sign In</Trans>
 					</StatusButton>

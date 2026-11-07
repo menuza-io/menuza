@@ -29,9 +29,18 @@ import {
 	convertErrorsToFieldFormat,
 } from '#app/components/forms.tsx'
 import {
+	TurnstileWidget,
+	useTurnstileReady,
+} from '#app/components/turnstile-widget.tsx'
+import { ensureLinguiRequestLocale } from '#app/modules/lingui/lingui.server.ts'
+import {
 	ProviderConnectionForm,
 	useConfiguredProviders,
 } from '#app/utils/connections.tsx'
+import {
+	checkOperatorTurnstile,
+	getOperatorTurnstileSiteKey,
+} from '#app/utils/turnstile.server.ts'
 import { type Route } from './+types/signup.ts'
 import { onboardingInviteTokenSessionKey } from './onboarding'
 import { prepareVerification } from './verify.server.tsx'
@@ -58,13 +67,31 @@ export async function loader({ request }: Route.LoaderArgs) {
 	)
 	const inviteToken = verifySession.get(onboardingInviteTokenSessionKey)
 
-	return { inviteToken: typeof inviteToken === 'string' ? inviteToken : null }
+	return {
+		inviteToken: typeof inviteToken === 'string' ? inviteToken : null,
+		turnstileSiteKey: getOperatorTurnstileSiteKey(),
+	}
 }
 
 export async function action(args: Route.ActionArgs) {
+	await ensureLinguiRequestLocale(args.request)
 	const formData = await args.request.formData()
 
 	await checkHoneypot(formData)
+
+	// Bot check before the email lookup and before any email is sent.
+	const turnstile = await checkOperatorTurnstile(
+		args.request,
+		formData,
+		'signup',
+	)
+	if (!turnstile.ok) {
+		const submission = parseWithZod(formData, { schema: SignupSchema })
+		return data(
+			{ result: submission.reply({ formErrors: [turnstile.error] }) },
+			{ status: 400 },
+		)
+	}
 
 	const submission = await parseWithZod(formData, {
 		schema: SignupSchema.superRefine(async (fields, ctx) => {
@@ -158,6 +185,9 @@ export default function SignupRoute({
 	const [searchParams] = useSearchParams()
 	const redirectTo = searchParams.get('redirectTo')
 	const inviteToken = loaderData?.inviteToken
+	const turnstileSiteKey = loaderData?.turnstileSiteKey ?? null
+	const [turnstileReady, setTurnstileReady] =
+		useTurnstileReady(turnstileSiteKey)
 	const configuredProviders = useConfiguredProviders()
 
 	const [form, fields] = useForm({
@@ -237,13 +267,19 @@ export default function SignupRoute({
 								/>
 							</Field>
 
+							<TurnstileWidget
+								siteKey={turnstileSiteKey}
+								action="signup"
+								resetKey={actionData?.result}
+								onReadyChange={setTurnstileReady}
+							/>
 							<ErrorList errors={form.errors} id={form.errorId} />
 
 							<StatusButton
 								className="w-full"
 								status={isPending ? 'pending' : (form.status ?? 'idle')}
 								type="submit"
-								disabled={isPending}
+								disabled={isPending || !turnstileReady}
 							>
 								<Trans>Sign up</Trans>
 							</StatusButton>

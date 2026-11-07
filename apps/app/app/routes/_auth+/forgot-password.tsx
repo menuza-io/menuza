@@ -2,6 +2,7 @@ import { getFormProps, getInputProps, useForm } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { Trans, t } from '@lingui/macro'
 import { type SEOHandle } from '@nasa-gcn/remix-seo'
+import { useIsPending } from '@repo/common'
 import { brand, getPageTitle } from '@repo/config/brand'
 import { db, eq, or, User } from '@repo/database'
 import { ForgotPasswordEmail, sendEmail } from '@repo/email'
@@ -23,7 +24,14 @@ import { Icon } from '@repo/ui/icon'
 import { Input } from '@repo/ui/input'
 import { StatusButton } from '@repo/ui/status-button'
 import { EmailSchema, UsernameSchema } from '@repo/validation'
-import { data, redirect, Link, Form, useActionData } from 'react-router'
+import {
+	data,
+	redirect,
+	Link,
+	Form,
+	useActionData,
+	useLoaderData,
+} from 'react-router'
 import { HoneypotInputs } from 'remix-utils/honeypot/react'
 import { z } from 'zod'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
@@ -32,9 +40,18 @@ import {
 	convertErrorsToFieldFormat,
 } from '#app/components/forms.tsx'
 import {
+	TurnstileWidget,
+	useTurnstileReady,
+} from '#app/components/turnstile-widget.tsx'
+import { ensureLinguiRequestLocale } from '#app/modules/lingui/lingui.server.ts'
+import {
 	checkRateLimit,
 	createRateLimitResponse,
 } from '#app/utils/rate-limit.server.ts'
+import {
+	checkOperatorTurnstile,
+	getOperatorTurnstileSiteKey,
+} from '#app/utils/turnstile.server.ts'
 import { type Route } from './+types/forgot-password.ts'
 import { prepareVerification } from './verify.server.tsx'
 
@@ -58,7 +75,12 @@ const FORGOT_PASSWORD_RATE_LIMIT = {
 	windowMs: 60 * 60 * 1000, // 1 hour
 }
 
+export function loader() {
+	return { turnstileSiteKey: getOperatorTurnstileSiteKey() }
+}
+
 export async function action({ request }: Route.ActionArgs) {
+	await ensureLinguiRequestLocale(request)
 	const formData = await request.formData()
 	await checkHoneypot(formData)
 
@@ -69,6 +91,20 @@ export async function action({ request }: Route.ActionArgs) {
 	)
 	if (!rateLimitCheck.allowed) {
 		return createRateLimitResponse(rateLimitCheck.resetAt)
+	}
+
+	// Bot check before the account lookup and before any email is sent.
+	const turnstile = await checkOperatorTurnstile(
+		request,
+		formData,
+		'forgot-password',
+	)
+	if (!turnstile.ok) {
+		const submission = parseWithZod(formData, { schema: ForgotPasswordSchema })
+		return data(
+			{ result: submission.reply({ formErrors: [turnstile.error] }) },
+			{ status: 400 },
+		)
 	}
 
 	// Parse and length-bound the submitted value with Zod *before* running any
@@ -154,6 +190,10 @@ export const meta: Route.MetaFunction = () => {
 }
 
 export default function ForgotPasswordRoute() {
+	const { turnstileSiteKey } = useLoaderData<typeof loader>()
+	const isPending = useIsPending()
+	const [turnstileReady, setTurnstileReady] =
+		useTurnstileReady(turnstileSiteKey)
 	const actionData = useActionData<typeof action>() as {
 		error?: string
 		error_description?: string
@@ -227,12 +267,20 @@ export default function ForgotPasswordRoute() {
 							/>
 						</Field>
 
+						<TurnstileWidget
+							siteKey={turnstileSiteKey}
+							action="forgot-password"
+							resetKey={actionData}
+							onReadyChange={setTurnstileReady}
+						/>
 						<ErrorList errors={form.errors} id={form.errorId} />
 
 						<StatusButton
 							className="w-full"
-							status={form.status ?? 'idle'}
+							status={isPending ? 'pending' : (form.status ?? 'idle')}
 							type="submit"
+							// One submission at a time: a Turnstile token works only once.
+							disabled={isPending || !turnstileReady}
 						>
 							<Trans>Send reset instructions</Trans>
 						</StatusButton>

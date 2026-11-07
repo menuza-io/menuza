@@ -592,6 +592,11 @@ git commit --no-verify -m "fix: resolve ESLint warnings (verified manually)"
 - `TURNSTILE_SECRET_KEY` / `TURNSTILE_HOSTNAMES` - Tenant-api only: Turnstile
   siteverify secret and comma-separated allowed hostnames for form submissions
   and careers applications (action `careers-apply`).
+- `TURNSTILE_SITE_KEY` / `TURNSTILE_SECRET_KEY` / `TURNSTILE_HOSTNAMES` - App
+  (optional, separate values from Sites and tenant-api): Turnstile on operator
+  login, signup and forgot-password. On only when both keys are set; empty
+  disables it (local dev, Vitest, E2E). The mobile `/api/auth/*` JSON routes
+  stay on rate limits. See `docs/security.md`.
 - `VOICE_AGENT_TOKEN` - Shared by App, tenant-api, and `apps/voice-agent` (≥32
   chars, distinct from `INTERNAL_COMMAND_TOKEN`). Authenticates
   `/resources/phone-agent-config` and tenant-api `/api/voice/*`.
@@ -645,6 +650,15 @@ git commit --no-verify -m "fix: resolve ESLint warnings (verified manually)"
   local Stripe and Checkout.com emulators (`MOCKS=true` also turns them on).
   Startup refuses live keys; mock routes are stripped from Worker builds. See
   `docs/payments-mock.md`.
+
+**Private client code (App)**: logged-out visitors can download only public
+route code. A route a logged-out visitor opens, or that a public page sends a
+fetcher or form to, must be listed in `PUBLIC_ROUTE_PATTERNS`
+(`apps/app/app/utils/route-visibility.ts`); everything else is built into
+`/assets/app/`, which the Worker serves only with a valid session. Public code
+must not import from private route files (move shared constants into
+`app/utils/`); the client build fails with the import chain if it does. See
+`docs/security.md#private-client-code`.
 
 **CMS Storage**:
 
