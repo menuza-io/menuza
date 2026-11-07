@@ -147,8 +147,9 @@ async function loadProfile(options: {
 	nameInput: HTMLElement | null
 	emailInput: HTMLElement | null
 	phoneInput: HTMLElement | null
+	onError: () => void
 }) {
-	const { nameInput, emailInput, phoneInput } = options
+	const { nameInput, emailInput, phoneInput, onError } = options
 
 	try {
 		const res = await tenantFetch('/auth/me')
@@ -173,7 +174,10 @@ async function loadProfile(options: {
 			}
 		}
 	} catch (err) {
+		// Offline, or a refresh that failed without ending the session: the
+		// customer is still signed in and can try again.
 		console.error('Failed to load profile:', err)
+		onError()
 	}
 }
 
@@ -199,7 +203,16 @@ export function initProfilePage() {
 	const networkLabel =
 		form?.dataset.network || 'Network error. Please try again.'
 
-	void loadProfile({ nameInput, emailInput, phoneInput })
+	void loadProfile({
+		nameInput,
+		emailInput,
+		phoneInput,
+		onError: () => {
+			if (!errorMessage) return
+			errorMessage.textContent = networkLabel
+			errorMessage.classList.remove('hidden')
+		},
+	})
 	void loadShopAccountData({
 		orderHistory,
 		paymentMethodsList,

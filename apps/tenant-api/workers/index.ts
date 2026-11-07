@@ -5,6 +5,7 @@ import {
 } from '@repo/tenant-db'
 import { createTenantApiApp } from '../src/app.ts'
 import {
+	findActiveOrganizationById,
 	organizationFromProvisionPayload,
 	resolveCorsAllowOrigin,
 } from '../src/lib/origin.ts'
@@ -93,7 +94,12 @@ async function handleProvision(
 	}
 
 	const { orgId } = parsed.data
-	const organization = organizationFromProvisionPayload(parsed.data)
+	// The App's own record wins over the region the caller put in the payload
+	// (as on the Node runtime): a stale or crossed command must not wipe or
+	// create a US database for an organization the App has in another region.
+	const organization =
+		(await findActiveOrganizationById(orgId)) ||
+		organizationFromProvisionPayload(parsed.data)
 	if (!organization) {
 		return Response.json({ error: 'Organization not found' }, { status: 404 })
 	}
@@ -284,6 +290,16 @@ const worker = {
 							: 'invalid_device',
 				},
 				{ status: 401 },
+			)
+		}
+		if (
+			!orgId &&
+			(url.pathname === '/schedule-link' ||
+				url.pathname.startsWith('/schedule-link/'))
+		) {
+			return Response.json(
+				{ error: 'invalid_link' },
+				{ status: 401, headers: { 'Cache-Control': 'private, no-store' } },
 			)
 		}
 		if (!orgId) {

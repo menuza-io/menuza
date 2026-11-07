@@ -20,6 +20,7 @@ import {
 	runTenantTransaction,
 } from '@repo/tenant-db'
 import { clientAddress } from '../lib/client-ip.ts'
+import { reserveSmsSend } from '../services/sms-send-limits.ts'
 import {
 	findActiveOrganizationById,
 	resolveOrganizationForBrowserAuth,
@@ -64,10 +65,15 @@ function isNativeCustomerAppRequest(c: Context) {
 	return c.req.header(NATIVE_CUSTOMER_APP_HEADER)?.toLowerCase() === '1'
 }
 
-async function sendCodeChallengeAccepted(
+/**
+ * How a send-code request passed the challenge: Turnstile, the customer app's
+ * header (no widget there, so tighter durable limits apply), or an explicit
+ * local environment without a Turnstile secret. Null means refuse.
+ */
+async function sendCodeChallenge(
 	c: Context,
 	token: string | undefined,
-) {
+): Promise<'browser' | 'native' | null> {
 	const secret = ENV.TURNSTILE_SECRET_KEY ?? ''
 	if (!isTurnstileConfigured(secret)) {
 		// Same rule as forms and careers: an explicit local NODE_ENV may send
@@ -77,11 +83,12 @@ async function sendCodeChallengeAccepted(
 			typeof process !== 'undefined' ? process.env.NODE_ENV : undefined
 		const isLocal = nodeEnv === 'development' || nodeEnv === 'test'
 		if (!isLocal) console.error('turnstile_not_configured')
-		return isLocal
+		return isLocal ? 'browser' : null
 	}
 	if (!token?.trim()) {
-		// Expo customer app: org binding, Origin, and rate limits; no web widget.
-		return isNativeCustomerAppRequest(c)
+		// Expo customer app: org binding, Origin, and the durable native limits
+		// in sms-send-limits.ts; no web widget.
+		return isNativeCustomerAppRequest(c) ? 'native' : null
 	}
 	const result = await verifyTurnstileToken({
 		secret,
@@ -90,7 +97,7 @@ async function sendCodeChallengeAccepted(
 		expectedAction: TURNSTILE_LOGIN_ACTION,
 		expectedHostnames: parseTurnstileHostnames(ENV.TURNSTILE_HOSTNAMES),
 	})
-	return result.success
+	return result.success ? 'browser' : null
 }
 
 const verifyCodeSchema = z.object({
@@ -139,6 +146,18 @@ function getJwtSecret(): string {
 const ACCESS_TOKEN_EXPIRY = '15m'
 const REFRESH_TOKEN_EXPIRY_DAYS = 30
 const REFRESH_TOKEN_EXPIRY_MS = REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000
+// How long after a rotation the parent refresh token may be presented again
+// (a lost response, then a retry) and receive the same child token.
+export const REFRESH_REUSE_GRACE_MS = 60 * 1000
+
+/**
+ * The refresh token a parent rotates into. Deterministic (keyed by
+ * AUTH_HMAC_SECRET), so a retried rotation finds the same child; unguessable
+ * without both the parent token and the server secret.
+ */
+function deriveChildRefreshToken(parentToken: string) {
+	return hmacHash(`customer-refresh-rotation:${parentToken}`)
+}
 
 function customerNeedsName(name: string | null | undefined) {
 	return !name || name.trim().length < 2
@@ -259,27 +278,14 @@ async function issueAccessToken(payload: {
 async function issueRefreshToken(
 	db: Awaited<ReturnType<typeof getTenantDb>>,
 	customerId: string,
-	options: { revokeExisting?: boolean } = {},
 ): Promise<string> {
 	const rawToken = crypto.randomBytes(32).toString('hex')
 	const tokenHash = hmacHash(rawToken)
 	const expiresAt = new Date(Date.now() + REFRESH_TOKEN_EXPIRY_MS)
-	const now = new Date()
 
-	if (options.revokeExisting !== false) {
-		await db
-			.update(customerRefreshTokens)
-			.set({ revokedAt: now })
-			.where(
-				and(
-					eq(customerRefreshTokens.customerId, customerId),
-					isNull(customerRefreshTokens.rotatedAt),
-					isNull(customerRefreshTokens.revokedAt),
-				),
-			)
-			.run()
-	}
-
+	// Signing in starts a new session next to the customer's others (website
+	// and app at once). Revoking them here made the other device's next
+	// refresh look like a stolen-token replay, which signed out every device.
 	await db.insert(customerRefreshTokens).values({
 		customerId,
 		tokenHash,
@@ -404,7 +410,8 @@ authRoutes.post(
 			return c.json({ error: 'Invalid phone number' }, 400)
 		}
 
-		if (!(await sendCodeChallengeAccepted(c, parsed.data.turnstileToken))) {
+		const challenge = await sendCodeChallenge(c, parsed.data.turnstileToken)
+		if (!challenge) {
 			return c.json({ error: 'challenge_required' }, 403)
 		}
 
@@ -467,6 +474,28 @@ authRoutes.post(
 					error_description:
 						'Service is temporarily unavailable. Please try again later.',
 					retry_after: globalLimit.retryAfter,
+				},
+				429,
+			)
+		}
+
+		// Counted before the send (a failed send still used a provider request).
+		// App-header requests also get the durable hourly ceilings; a number that
+		// already verified here is exempt from the organization-wide one, so
+		// header traffic cannot lock returning customers out of the app.
+		const reservation = await reserveSmsSend(db, {
+			kind: challenge,
+			phone,
+			ip: clientAddress(c),
+			knownCustomer: existing?.phoneVerified === true,
+		})
+		if (!reservation.ok) {
+			return c.json(
+				{
+					error: 'rate_limit_exceeded',
+					error_description:
+						'Too many verification codes requested. Please try again later.',
+					retry_after: reservation.retryAfter,
 				},
 				429,
 			)
@@ -645,14 +674,20 @@ authRoutes.post(
 			organization,
 		)
 
-		// Fire-and-forget: evaluate active marketing journey triggers
-		void evaluateAndSpawnTriggers(
-			organization.id,
-			'phone_verified',
-			customer.id,
-		).catch((err) => {
-			console.error('Failed to evaluate phone_verified journey triggers:', err)
-		})
+		// Fire-and-forget: evaluate active marketing journey triggers, only when
+		// this sign-in verified the phone (not on every later sign-in).
+		if (!customer.phoneVerified) {
+			void evaluateAndSpawnTriggers(
+				organization.id,
+				'phone_verified',
+				customer.id,
+			).catch((err) => {
+				console.error(
+					'Failed to evaluate phone_verified journey triggers:',
+					err,
+				)
+			})
+		}
 
 		return c.json({
 			success: true,
@@ -689,7 +724,10 @@ authRoutes.post(
 
 		const tokenHash = hmacHash(refreshToken)
 
-		const newRefreshToken = crypto.randomBytes(32).toString('hex')
+		// The child token is derived from the parent, so a retry of a refresh
+		// whose response was lost can be handed the same child again (see
+		// REFRESH_REUSE_GRACE_MS) instead of looking like a stolen-token replay.
+		const newRefreshToken = deriveChildRefreshToken(refreshToken)
 		const newRefreshTokenHash = hmacHash(newRefreshToken)
 		const newRefreshTokenExpiresAt = new Date(
 			Date.now() + REFRESH_TOKEN_EXPIRY_MS,
@@ -743,7 +781,39 @@ authRoutes.post(
 						return { kind: 'invalid' as const, reason: 'expired' as const }
 					}
 
+					// A retry of a refresh whose response never arrived presents the
+					// parent again. Within the grace window, and only while the child
+					// it was rotated into is still unused, hand back that same child.
+					// Anything else (outside the window, an older ancestor, a child
+					// already used or revoked) is a replay and revokes every session.
+					const graceRetry = async (record: typeof tokenRecord) => {
+						if (
+							record.revokedAt ||
+							!record.rotatedAt ||
+							Date.now() - record.rotatedAt.getTime() > REFRESH_REUSE_GRACE_MS
+						) {
+							return null
+						}
+						const child = await tx
+							.select()
+							.from(customerRefreshTokens)
+							.where(eq(customerRefreshTokens.tokenHash, newRefreshTokenHash))
+							.get()
+						if (
+							!child ||
+							child.customerId !== customer.id ||
+							child.rotatedAt ||
+							child.revokedAt ||
+							new Date() > child.expiresAt
+						) {
+							return null
+						}
+						return { kind: 'rotated' as const, customer }
+					}
+
 					if (tokenRecord.rotatedAt || tokenRecord.revokedAt) {
+						const retried = await graceRetry(tokenRecord)
+						if (retried) return retried
 						await revokeAll(customer.id)
 						return {
 							kind: 'invalid' as const,
@@ -764,6 +834,13 @@ authRoutes.post(
 						)
 						.returning({ id: customerRefreshTokens.id })
 					if (!rotatedToken) {
+						const current = await tx
+							.select()
+							.from(customerRefreshTokens)
+							.where(eq(customerRefreshTokens.id, tokenRecord.id))
+							.get()
+						const retried = current ? await graceRetry(current) : null
+						if (retried) return retried
 						await revokeAll(customer.id)
 						return {
 							kind: 'invalid' as const,
@@ -963,7 +1040,10 @@ authRoutes.post(
 				customDomain: auth.organization.customDomain,
 			})
 
-			// Fire-and-forget: evaluate active marketing journey triggers
+			// Fire-and-forget: evaluate active marketing journey triggers. A
+			// customer enters a profile_completed journey once
+			// (evaluateAndSpawnTriggers skips one they already entered), so a
+			// later save does not start it again.
 			void evaluateAndSpawnTriggers(
 				auth.orgId,
 				'profile_completed',

@@ -43,9 +43,7 @@ beforeEach(() => {
 	meta.publishToFacebook.mockReset()
 	meta.publishToInstagram.mockReset()
 	meta.publishToFacebook.mockImplementation(async () => published('facebook'))
-	meta.publishToInstagram.mockImplementation(async () =>
-		published('instagram'),
-	)
+	meta.publishToInstagram.mockImplementation(async () => published('instagram'))
 })
 
 async function setup() {
@@ -159,9 +157,9 @@ describe('social posts', () => {
 		expect(calls(meta.publishToFacebook)).toHaveLength(1)
 		expect(calls(meta.publishToInstagram)).toHaveLength(1)
 		expect(calls(meta.publishToInstagram)[0]![1].imageUrls).toHaveLength(1)
-		expect(
-			(await getSocialPost(owner.organization.id, later.id))?.status,
-		).toBe('scheduled')
+		expect((await getSocialPost(owner.organization.id, later.id))?.status).toBe(
+			'scheduled',
+		)
 	})
 
 	it('claims a post once when two callers race', async () => {
@@ -219,6 +217,30 @@ describe('social posts', () => {
 		expect(meta.publishToFacebook).toHaveBeenCalledTimes(1)
 	})
 
+	it('does not flag an account reconnected while a stale-token publish was in flight', async () => {
+		const { owner, facebook } = await setup()
+		meta.publishToFacebook.mockImplementationOnce(async () => {
+			// The member reconnects (new token) while Meta refuses the old one.
+			await saveSocialAccounts(owner, [
+				{
+					platform: 'facebook',
+					externalId: facebook.externalId,
+					name: 'Bakery Page',
+					username: null,
+					accessToken: 'fresh-page-token',
+				},
+			])
+			throw new SocialError('unauthorized', 'Error validating access token')
+		})
+		const post = await schedule(owner, { accountIds: [facebook.id] })
+		await publishSocialPost(post.id)
+		const [account] = await db
+			.select({ status: SocialAccount.status })
+			.from(SocialAccount)
+			.where(eq(SocialAccount.id, facebook.id))
+		expect(account?.status).toBe('active')
+	})
+
 	it('keeps the history of a disconnected account and fails its scheduled posts', async () => {
 		const { owner, facebook } = await setup()
 		const { id } = await schedule(owner, { accountIds: [facebook.id] })
@@ -254,11 +276,71 @@ describe('social posts', () => {
 
 		const post = await getSocialPost(owner.organization.id, id)
 		expect(post?.status).toBe('partial')
-		expect(post?.targets.find((t) => t.platform === 'facebook')).toMatchObject(
-			{ status: 'failed', error: 'interrupted' },
-		)
+		expect(post?.targets.find((t) => t.platform === 'facebook')).toMatchObject({
+			status: 'failed',
+			error: 'interrupted',
+		})
 		expect(meta.publishToFacebook).not.toHaveBeenCalled()
 		expect(meta.publishToInstagram).toHaveBeenCalledTimes(1)
+	})
+
+	it('Retry never resends an interrupted target; only an explicit confirmation does', async () => {
+		const { owner, facebook, instagram, image } = await setup()
+		meta.publishToInstagram.mockRejectedValueOnce(
+			new SocialError('rejected', 'Aspect ratio not supported'),
+		)
+		const { id } = await schedule(owner, {
+			accountIds: [facebook.id, instagram.id],
+			mediaIds: [image.id],
+		})
+		// A worker claimed the post, started Facebook, then died.
+		await db
+			.update(SocialPost)
+			.set({
+				status: 'publishing',
+				updatedAt: new Date(Date.now() - 20 * 60_000),
+			})
+			.where(eq(SocialPost.id, id))
+		await db
+			.update(SocialPostTarget)
+			.set({ status: 'publishing' })
+			.where(eq(SocialPostTarget.socialAccountId, facebook.id))
+		await publishDueSocialPosts()
+		expect(meta.publishToFacebook).not.toHaveBeenCalled()
+
+		expect(await retrySocialPost(owner.organization.id, id)).toBe(true)
+		let post = await getSocialPost(owner.organization.id, id)
+		expect(meta.publishToFacebook).not.toHaveBeenCalled()
+		expect(meta.publishToInstagram).toHaveBeenCalledTimes(2)
+		const fb = post?.targets.find((t) => t.platform === 'facebook')
+		expect(fb).toMatchObject({ status: 'failed', error: 'interrupted' })
+		// Nothing left that Retry may send: it does not reopen the post.
+		expect(await retrySocialPost(owner.organization.id, id)).toBe(false)
+
+		expect(
+			await retrySocialPost(owner.organization.id, id, {
+				confirmedTargetId: fb!.id,
+			}),
+		).toBe(true)
+		post = await getSocialPost(owner.organization.id, id)
+		expect(post?.status).toBe('published')
+		expect(meta.publishToFacebook).toHaveBeenCalledTimes(1)
+	})
+
+	it('marks a target whose publish call got no answer as unknown, and Retry leaves it', async () => {
+		const { owner, facebook } = await setup()
+		meta.publishToFacebook.mockRejectedValueOnce(
+			new SocialError('unavailable', 'meta_unavailable'),
+		)
+		const { id } = await schedule(owner, { accountIds: [facebook.id] })
+		await publishSocialPost(id)
+		const post = await getSocialPost(owner.organization.id, id)
+		expect(post?.targets[0]).toMatchObject({
+			status: 'failed',
+			error: 'outcome_unknown',
+		})
+		expect(await retrySocialPost(owner.organization.id, id)).toBe(false)
+		expect(meta.publishToFacebook).toHaveBeenCalledTimes(1)
 	})
 
 	it('refuses to edit a post that has gone out', async () => {

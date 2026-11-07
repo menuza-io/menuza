@@ -158,6 +158,22 @@ const ORG_PERMISSIONS = [
 		description: 'Edit website pages, forms, redirects, and translations',
 	},
 	{
+		id: 'org_perm_update_media_any',
+		action: 'update',
+		entity: 'media',
+		access: 'any',
+		context: 'organization',
+		description: 'Upload, edit, replace, and delete media library files',
+	},
+	{
+		id: 'org_perm_create_media_studio_any',
+		action: 'create',
+		entity: 'media_studio',
+		access: 'any',
+		context: 'organization',
+		description: 'Create images with the AI photo studio',
+	},
+	{
 		id: 'org_perm_read_analytics_any',
 		action: 'read',
 		entity: 'analytics',
@@ -467,6 +483,8 @@ const MEMBER_PERMISSION_IDS = [
 	'org_perm_read_member_any',
 	'org_perm_read_campaign_any',
 	'org_perm_read_automation_any',
+	'org_perm_update_media_any',
+	'org_perm_create_media_studio_any',
 	// Staffing: only inert "own" grants. They mean nothing until a login is
 	// linked to a staff record, and staffing is behind org-level flags.
 	'org_perm_read_schedule_own',

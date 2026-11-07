@@ -9,6 +9,11 @@ export interface OAuthCallbackDependencies {
 	 * the member may still manage integrations. Never from the callback URL.
 	 */
 	organization: { id: string; slug: string }
+	/**
+	 * OAuth 1.0a (Trello): the request-token secret kept with the same
+	 * hand-off record.
+	 */
+	requestTokenSecret?: string
 	redirectWithToast: (
 		url: string,
 		options: { title: string; description: string; type: string },
@@ -76,6 +81,7 @@ export async function handleOAuthCallback(
 			errorDescription: errorDescription || undefined,
 			oauthToken: oauthToken || undefined,
 			oauthVerifier: oauthVerifier || undefined,
+			requestTokenSecret: deps.requestTokenSecret,
 		})
 
 		return deps.redirectWithToast(back, {

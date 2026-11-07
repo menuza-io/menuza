@@ -295,7 +295,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	const { jwt, tenantApiUrl } = await getOperatorTenantClient(
 		request,
 		orgSlug,
-		{ canUpdate: canErase, canDelete: canErase },
+		{ area: 'customers', canUpdate: canErase, canDelete: canErase },
 	)
 
 	// The same permission gates both, so read-only members see no Edit action

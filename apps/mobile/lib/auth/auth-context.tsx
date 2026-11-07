@@ -6,6 +6,7 @@ import React, {
 	type ReactNode,
 } from 'react'
 import { jwtAuthApi } from '../api'
+import { endsSession } from '../api/session-refresh'
 import { TokenManager } from '../storage/session-manager'
 import { authReducer, initialAuthState } from './auth-reducer'
 import { type AuthContextType, type LoginCredentials } from './types'
@@ -235,60 +236,37 @@ export function AuthProvider({ children }: AuthProviderProps) {
 		}
 	}, [tokenManager])
 
-	// Refresh tokens function
+	// Refresh tokens function. Shares the app's single in-flight refresh with
+	// the HTTP client, and signs out only when the server refused the refresh
+	// token: offline, rate limits and server errors keep the session.
 	const refreshTokens = useCallback(async () => {
+		dispatch({ type: 'REFRESH_START' })
 		try {
-			dispatch({ type: 'REFRESH_START' })
+			const { tokens, user: returnedUser } = await jwtAuthApi.refreshSession()
+			const storedUser = await tokenManager.getUser()
 
-			const currentTokens = await tokenManager.getCurrentTokens()
-			const user = await tokenManager.getUser()
+			// Use existing user if not returned in refresh response
+			const refreshedUser = returnedUser
+				? {
+						id: returnedUser.id,
+						email: returnedUser.email,
+						username: returnedUser.username,
+						name: returnedUser.name || undefined,
+						image: returnedUser.image || undefined,
+						createdAt: returnedUser.createdAt,
+						updatedAt: returnedUser.updatedAt,
+					}
+				: storedUser
 
-			if (!currentTokens?.refreshToken || !user?.id) {
+			if (!refreshedUser) {
 				await logout()
 				return
 			}
 
-			const response = await jwtAuthApi.refreshTokens(
-				currentTokens.refreshToken,
-				user.id,
-			)
-
-			if (response.success && response.data?.accessToken) {
-				// Transform API response to match mobile app types
-				const tokens = {
-					accessToken: response.data.accessToken,
-					refreshToken: response.data.refreshToken,
-					expiresIn: response.data.expiresIn,
-					expiresAt: response.data.expiresAt,
-				}
-
-				// Store updated tokens
-				await tokenManager.storeTokens(tokens)
-
-				// Update auth token
-				await jwtAuthApi.setAuthToken(tokens.accessToken)
-
-				// Use existing user if not returned in refresh response
-				const refreshedUser = response.data.user
-					? {
-							id: response.data.user.id,
-							email: response.data.user.email,
-							username: response.data.user.username,
-							name: response.data.user.name || undefined,
-							image: response.data.user.image || undefined,
-							createdAt: response.data.user.createdAt,
-							updatedAt: response.data.user.updatedAt,
-						}
-					: user
-
-				dispatch({
-					type: 'REFRESH_SUCCESS',
-					payload: { user: refreshedUser, tokens },
-				})
-			} else {
-				// Refresh failed, logout user
-				await logout()
-			}
+			dispatch({
+				type: 'REFRESH_SUCCESS',
+				payload: { user: refreshedUser, tokens },
+			})
 		} catch (error) {
 			console.error('Token refresh error:', error)
 			dispatch({
@@ -298,8 +276,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 						error instanceof Error ? error.message : 'Token refresh failed',
 				},
 			})
-			// On refresh error, logout user
-			await logout()
+			if (endsSession(error)) await logout()
 		}
 	}, [logout, tokenManager])
 
@@ -309,14 +286,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
 			try {
 				dispatch({ type: 'SET_LOADING', payload: { isLoading: true } })
 
-				const storedTokens = await tokenManager.getCurrentTokens()
+				// The stored tokens even when the access token has expired: a
+				// relaunch after more than 15 minutes refreshes instead of signing out.
+				const validation = await tokenManager.validateTokens()
+				const storedTokens = validation.tokens
 				const storedUser = await tokenManager.getUser()
 
 				if (storedTokens && storedUser) {
-					// Check if tokens are still valid
-					const validation = await tokenManager.validateTokens()
-
-					if (validation.isValid) {
+					if (validation.isValid && !validation.needsRefresh) {
 						// Set auth token for API requests
 						await jwtAuthApi.setAuthToken(storedTokens.accessToken)
 
@@ -327,19 +304,27 @@ export function AuthProvider({ children }: AuthProviderProps) {
 								tokens: storedTokens,
 							},
 						})
-					} else if (validation.needsRefresh) {
-						// Try to refresh tokens
-						try {
-							await refreshTokens()
-						} catch {
-							// Refresh failed, clear storage
-							await tokenManager.clearTokens()
-							jwtAuthApi.clearAuthToken()
-						}
 					} else {
-						// Tokens expired, clear storage
-						await tokenManager.clearTokens()
-						jwtAuthApi.clearAuthToken()
+						try {
+							const { tokens } = await jwtAuthApi.refreshSession()
+							dispatch({
+								type: 'AUTH_SUCCESS',
+								payload: { user: storedUser, tokens },
+							})
+						} catch (error) {
+							if (endsSession(error)) {
+								// The shared refresh already cleared the stored tokens.
+								jwtAuthApi.clearAuthToken()
+							} else {
+								// Offline or the server is unavailable: stay signed in;
+								// the HTTP client refreshes on the next request.
+								await jwtAuthApi.setAuthToken(storedTokens.accessToken)
+								dispatch({
+									type: 'AUTH_SUCCESS',
+									payload: { user: storedUser, tokens: storedTokens },
+								})
+							}
+						}
 					}
 				}
 			} catch {
@@ -354,7 +339,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 		}
 
 		void initializeAuth()
-	}, [tokenManager, refreshTokens])
+	}, [tokenManager])
 
 	// Verify function
 	const verify = useCallback(

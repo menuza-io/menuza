@@ -351,6 +351,8 @@ export async function uploadToStorage(
 	const uploadResponse = await fetch(url, {
 		method: 'PUT',
 		headers,
+		// Never follow a redirect: the org endpoint was validated, its target was not.
+		redirect: 'manual',
 		body: file instanceof File ? file : file.stream(),
 	})
 
@@ -374,6 +376,8 @@ export async function deleteFromStorage(
 	const response = await fetch(url, {
 		method: 'DELETE',
 		headers,
+		// Never follow a redirect: the org endpoint was validated, its target was not.
+		redirect: 'manual',
 	})
 
 	if (!response.ok && response.status !== 404) {
@@ -399,6 +403,7 @@ export async function testS3Connection(
 			method: 'PUT',
 			headers,
 			body: testFile,
+			redirect: 'manual',
 		})
 
 		if (response.ok) {
@@ -406,7 +411,11 @@ export async function testS3Connection(
 			try {
 				const { url: deleteUrl, headers: deleteHeaders } =
 					getSignedDeleteRequestInfo(testKey, config)
-				await fetch(deleteUrl, { method: 'DELETE', headers: deleteHeaders })
+				await fetch(deleteUrl, {
+					method: 'DELETE',
+					headers: deleteHeaders,
+					redirect: 'manual',
+				})
 			} catch {
 				// Ignore delete errors - test file will remain in bucket
 			}

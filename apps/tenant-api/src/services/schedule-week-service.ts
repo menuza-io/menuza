@@ -1,4 +1,4 @@
-import { and, eq, inArray, sql } from 'drizzle-orm'
+import { and, eq, gt, inArray, sql } from 'drizzle-orm'
 import {
 	addDays,
 	allocatePaidMinutesByDay,
@@ -398,7 +398,7 @@ export async function loadWeek(
 			s.state === 'cancel_pending',
 	).length
 
-	const pending = await countPending(ctx.db, peopleIds, frame.scopeId)
+	const pending = await countPending(ctx.db, peopleIds, frame.scopeId, ctx.now)
 
 	// Positions in use here.
 	const positionIds = new Set<string>()
@@ -666,6 +666,7 @@ async function countPending(
 	db: StaffDb,
 	staffIds: readonly string[],
 	scopeId: string,
+	now: number,
 ): Promise<ScheduleWeekView['pending']> {
 	const [timeOff, availability, requests] = await Promise.all([
 		staffIds.length === 0
@@ -695,7 +696,12 @@ async function countPending(
 			.from(shiftRequests)
 			.innerJoin(shifts, eq(shifts.id, shiftRequests.shiftId))
 			.where(
-				and(eq(shiftRequests.status, 'pending'), eq(shifts.scopeId, scopeId)),
+				and(
+					eq(shiftRequests.status, 'pending'),
+					eq(shifts.scopeId, scopeId),
+					// A request for a shift that has begun can no longer be approved.
+					gt(shifts.startsAt, now),
+				),
 			),
 	])
 	return {

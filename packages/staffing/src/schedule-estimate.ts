@@ -6,7 +6,7 @@ import {
 	type TimeEntryInput,
 	type WeekSummary,
 } from './time-math.ts'
-import { addDays, weekStartFor } from './tz.ts'
+import { addDays, businessDateOf, weekStartFor } from './tz.ts'
 
 /**
  * Scheduled hours, overtime and cost, estimated by the same `computeWeek` the
@@ -103,17 +103,25 @@ export function estimateWeek(
 /** Every workweek a set of shifts touches (by start and by end). */
 export function weeksTouched(
 	shifts: readonly { startsAt: number; endsAt: number }[],
-	rules: Pick<LaborRules, 'weekStartsOn'>,
+	rules: Pick<LaborRules, 'weekStartsOn' | 'workdayStartMinute'>,
 	timeZone: string,
 ): string[] {
+	// computeWeek buckets time by business date, so pick weeks the same way.
 	const weeks = new Set<string>()
 	for (const shift of shifts) {
 		weeks.add(
-			weekStartFor(localDateOf(shift.startsAt, timeZone), rules.weekStartsOn),
+			weekStartFor(
+				businessDateOf(shift.startsAt, timeZone, rules.workdayStartMinute),
+				rules.weekStartsOn,
+			),
 		)
 		weeks.add(
 			weekStartFor(
-				localDateOf(Math.max(shift.startsAt, shift.endsAt - 1), timeZone),
+				businessDateOf(
+					Math.max(shift.startsAt, shift.endsAt - 1),
+					timeZone,
+					rules.workdayStartMinute,
+				),
 				rules.weekStartsOn,
 			),
 		)

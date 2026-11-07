@@ -61,6 +61,11 @@ export interface CampaignDetail {
 	createdAt: string | Date
 	scheduledAt?: string | Date | null
 	recipients: CampaignRecipient[]
+	/**
+	 * Recipients whose send outcome is unknown: their message row was left
+	 * Processing by an interrupted or timed-out send. Platform campaigns only.
+	 */
+	unconfirmedRecipientCount?: number
 }
 
 export interface MarketingMetrics {

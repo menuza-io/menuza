@@ -197,8 +197,12 @@ describe('Home dashboard loader', () => {
 
 	it('counts every contributor, not only those on the leaderboard', async () => {
 		const { organization, cookie } = await setupTestOrgWithUser('admin')
+		// Note authors are members: the leaderboard ranks active members only.
 		const writers = await Promise.all(
-			Array.from({ length: 8 }, () => insertTestUser()),
+			Array.from({ length: 8 }, async () => {
+				const { user } = await insertTestMember(organization.id)
+				return user
+			}),
 		)
 		for (const writer of writers) {
 			await createTestNote(organization.id, writer.id)
@@ -326,14 +330,18 @@ describe('Home dashboard loader', () => {
 		])
 		// The picker lists only the templates the person's reports token covers.
 		// An admin holds the organization-wide subjects (customers, shop orders)
-		// but not the staff ones, which need the staffing flags and grants.
+		// and the members and notes subjects, but not the staff ones, which
+		// need the staffing flags and grants.
 		const offered = data.picker.templateGroups.flatMap((group) =>
 			group.templates.map((template) => template.id),
 		)
 		expect(offered).toEqual(
-			reportTemplateGroups(['customers', 'shop_orders']).flatMap((group) =>
-				group.templates.map((template) => template.id),
-			),
+			reportTemplateGroups([
+				'customers',
+				'shop_orders',
+				'members',
+				'notes',
+			]).flatMap((group) => group.templates.map((template) => template.id)),
 		)
 		expect(offered.length).toBeGreaterThan(0)
 		expect(offered.length).toBeLessThan(organizationTemplates().length)

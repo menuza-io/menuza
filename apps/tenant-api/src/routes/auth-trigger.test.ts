@@ -128,6 +128,44 @@ describe('Auth Trigger Lifecycle Hooks', () => {
 		expect(triggerEvents).toContain('phone_verified')
 	})
 
+	it('does not start phone_verified journeys when a verified customer signs in again', async () => {
+		const db = await getTenantDb(orgId)
+		await db.insert(marketingJourneys).values({
+			name: 'SMS on Phone Verified',
+			status: 'active',
+			triggerType: 'phone_verified',
+		})
+		const [customer] = await db
+			.insert(customers)
+			.values({
+				name: 'Returning Customer',
+				phone: '+15553335555',
+				phoneVerified: true,
+				phoneVerificationCode: hmacHash('654321'),
+				phoneVerificationExpiresAt: new Date(Date.now() + 10 * 60 * 1000),
+			})
+			.returning()
+
+		const res = await app.request('/auth/verify', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				slug: 'test-org',
+				phone: '+15553335555',
+				code: '654321',
+			}),
+		})
+		expect(res.status).toBe(200)
+		await new Promise((resolve) => setTimeout(resolve, 50))
+
+		const runs = await db
+			.select()
+			.from(journeyRuns)
+			.where(eq(journeyRuns.customerId, customer!.id))
+			.all()
+		expect(runs).toHaveLength(0)
+	})
+
 	it('spawns active profile_completed journeys upon customer profile update', async () => {
 		const db = await getTenantDb(orgId)
 

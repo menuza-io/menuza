@@ -4,6 +4,7 @@ import os from 'node:os'
 import path from 'node:path'
 import { eq } from 'drizzle-orm'
 import { sendOciEmail } from '@repo/email'
+import { sendSms } from '@repo/sms'
 import {
 	provisionTenantDb,
 	destroyTenantDb,
@@ -30,7 +31,9 @@ import {
 	listJourneyRuns,
 	getJourneyRunTimeline,
 	triggerTestJourney,
+	evaluateJourneyCondition,
 } from './journey-service.ts'
+import { setCustomerSubscription } from './marketing-audience.ts'
 
 // Mock external dispatch modules
 vi.mock('@repo/email', () => ({
@@ -82,6 +85,22 @@ describe('Journey Service & Regional Message Dispatching', () => {
 		// Provision clean regional tenant DB
 		await provisionTenantDb(orgId)
 	})
+
+	/** Marketing consent for one channel, as a broadcast audience needs it. */
+	async function consent(
+		customer: { id: string; email?: string | null },
+		channel: 'email' | 'sms',
+	) {
+		const db = await getTenantDb(orgId)
+		await setCustomerSubscription(db, {
+			customerId: customer.id,
+			topic: 'marketing',
+			channel,
+			subscribed: true,
+			source: 'signup',
+			confirmedEmail: channel === 'email' ? customer.email : undefined,
+		})
+	}
 
 	afterEach(async () => {
 		try {
@@ -207,6 +226,7 @@ describe('Journey Service & Regional Message Dispatching', () => {
 				})
 				.returning()
 			const customer = customerInsert[0]!
+			await consent(customer, 'email')
 
 			// Seed journey and run
 			const journeyInsert = await db
@@ -301,6 +321,7 @@ describe('Journey Service & Regional Message Dispatching', () => {
 					})
 					.returning()
 			)[0]!
+			await consent(customer, 'email')
 
 			const journey = (
 				await db
@@ -367,10 +388,11 @@ describe('Journey Service & Regional Message Dispatching', () => {
 				})
 				.returning()
 			const customer = customerInsert[0]!
+			await consent(customer, 'sms')
 
 			const journeyInsert = await db
 				.insert(marketingJourneys)
-				.values({ name: 'SMS Flow' })
+				.values({ name: 'SMS Flow', status: 'active' })
 				.returning()
 			const journey = journeyInsert[0]!
 
@@ -408,78 +430,93 @@ describe('Journey Service & Regional Message Dispatching', () => {
 			expect(stepExec?.stepType).toBe('sms')
 		})
 
-		it('fails step with 422 if customer has no email address for email action', async () => {
+		it('skips an email step for a customer who unsubscribed, sends nothing, and stays skipped on retry', async () => {
 			const db = await getTenantDb(orgId)
-
-			// Customer has phone but no email
-			const customerInsert = await db
-				.insert(customers)
-				.values({
-					name: 'No Email User',
-					phone: '+15550001111',
-				})
-				.returning()
-			const customer = customerInsert[0]!
-
-			const journeyInsert = await db
-				.insert(marketingJourneys)
-				.values({ name: 'Email Flow' })
-				.returning()
-			const journey = journeyInsert[0]!
-
-			const runInsert = await db
-				.insert(journeyRuns)
-				.values({ journeyId: journey.id, customerId: customer.id })
-				.returning()
-			const run = runInsert[0]!
-
-			const result = await executeJourneyStep(orgId, {
+			vi.mocked(sendOciEmail).mockClear()
+			const customer = (
+				await db
+					.insert(customers)
+					.values({ name: 'Opted Out', email: 'optout@example.com' })
+					.returning()
+			)[0]!
+			await consent(customer, 'email')
+			await setCustomerSubscription(db, {
+				customerId: customer.id,
+				topic: 'marketing',
+				channel: 'email',
+				subscribed: false,
+				source: 'profile',
+			})
+			const journey = (
+				await db
+					.insert(marketingJourneys)
+					.values({ name: 'Email Flow', status: 'active' })
+					.returning()
+			)[0]!
+			const run = (
+				await db
+					.insert(journeyRuns)
+					.values({ journeyId: journey.id, customerId: customer.id })
+					.returning()
+			)[0]!
+			const step = {
 				orgId,
 				journeyId: journey.id,
 				runId: run.id,
 				customerId: customer.id,
 				nodeId: 'node-email-1',
 				nodeType: 'action_email',
-				config: { subject: 'Test', content: 'Test' },
-			})
+				config: { subject: 'Sale', content: 'Everything 20% off' },
+			}
 
-			expect(result.success).toBe(false)
-			expect(result.status).toBe('failed')
-			expect(result.statusCode).toBe(422)
-			expect(result.error).toContain('no email address')
+			const result = await executeJourneyStep(orgId, step)
 
+			expect(result).toMatchObject({ success: true, status: 'skipped' })
+			expect(vi.mocked(sendOciEmail)).not.toHaveBeenCalled()
+			expect(await db.select().from(marketingMessages).all()).toEqual([])
 			const stepExec = await db
 				.select()
 				.from(journeyStepExecutions)
 				.where(eq(journeyStepExecutions.id, result.executionId!))
 				.get()
-			expect(stepExec?.status).toBe('failed')
-			expect(stepExec?.errorMessage).toContain('no email address')
+			expect(stepExec?.status).toBe('skipped')
+
+			// A workflow retry of the same step answers the same, without sending.
+			const retry = await executeJourneyStep(orgId, step)
+			expect(retry).toMatchObject({
+				success: true,
+				status: 'skipped',
+				executionId: result.executionId,
+			})
+			expect(vi.mocked(sendOciEmail)).not.toHaveBeenCalled()
 		})
 
-		it('fails step with 422 if customer has no phone number for SMS action', async () => {
+		it('skips an SMS step when the phone is not verified, even with an SMS subscription', async () => {
 			const db = await getTenantDb(orgId)
-
-			const customerInsert = await db
-				.insert(customers)
-				.values({
-					name: 'No Phone User',
-					email: 'nophone@example.com',
-				})
-				.returning()
-			const customer = customerInsert[0]!
-
-			const journeyInsert = await db
-				.insert(marketingJourneys)
-				.values({ name: 'SMS Flow' })
-				.returning()
-			const journey = journeyInsert[0]!
-
-			const runInsert = await db
-				.insert(journeyRuns)
-				.values({ journeyId: journey.id, customerId: customer.id })
-				.returning()
-			const run = runInsert[0]!
+			vi.mocked(sendSms).mockClear()
+			const customer = (
+				await db
+					.insert(customers)
+					.values({
+						name: 'Unverified Phone',
+						phone: '+15550001111',
+						phoneVerified: false,
+					})
+					.returning()
+			)[0]!
+			await consent(customer, 'sms')
+			const journey = (
+				await db
+					.insert(marketingJourneys)
+					.values({ name: 'SMS Flow', status: 'active' })
+					.returning()
+			)[0]!
+			const run = (
+				await db
+					.insert(journeyRuns)
+					.values({ journeyId: journey.id, customerId: customer.id })
+					.returning()
+			)[0]!
 
 			const result = await executeJourneyStep(orgId, {
 				orgId,
@@ -491,10 +528,8 @@ describe('Journey Service & Regional Message Dispatching', () => {
 				config: { messageText: 'Hello' },
 			})
 
-			expect(result.success).toBe(false)
-			expect(result.status).toBe('failed')
-			expect(result.statusCode).toBe(422)
-			expect(result.error).toContain('no phone number')
+			expect(result).toMatchObject({ success: true, status: 'skipped' })
+			expect(vi.mocked(sendSms)).not.toHaveBeenCalled()
 		})
 
 		it('returns 404 if customer does not exist in regional database', async () => {
@@ -502,7 +537,7 @@ describe('Journey Service & Regional Message Dispatching', () => {
 
 			const journeyInsert = await db
 				.insert(marketingJourneys)
-				.values({ name: 'Flow' })
+				.values({ name: 'Flow', status: 'active' })
 				.returning()
 			const journey = journeyInsert[0]!
 
@@ -532,10 +567,11 @@ describe('Journey Service & Regional Message Dispatching', () => {
 				})
 				.returning()
 			const customer = customerInsert[0]!
+			await consent(customer, 'email')
 
 			const journeyInsert = await db
 				.insert(marketingJourneys)
-				.values({ name: 'Error Flow' })
+				.values({ name: 'Error Flow', status: 'active' })
 				.returning()
 			const journey = journeyInsert[0]!
 
@@ -877,7 +913,8 @@ describe('Journey Service & Regional Message Dispatching', () => {
 			})
 			const journeyId = createRes.journeyId!
 
-			// Seed runs: 1 running, 1 completed, 1 failed
+			// Seed runs: 1 running, 1 completed, 1 failed. A customer is enrolled
+			// once per once-per-customer trigger, so the repeats are test runs.
 			const run1 = (
 				await db
 					.insert(journeyRuns)
@@ -892,6 +929,7 @@ describe('Journey Service & Regional Message Dispatching', () => {
 			await db.insert(journeyRuns).values({
 				journeyId,
 				customerId: customer.id,
+				triggerEvent: 'manual',
 				status: 'completed',
 				completedAt: new Date(),
 			})
@@ -899,6 +937,7 @@ describe('Journey Service & Regional Message Dispatching', () => {
 			await db.insert(journeyRuns).values({
 				journeyId,
 				customerId: customer.id,
+				triggerEvent: 'manual',
 				status: 'failed',
 				errorMessage: 'Step failed',
 				completedAt: new Date(),
@@ -970,6 +1009,13 @@ describe('Journey Service & Regional Message Dispatching', () => {
 			expect(run?.triggerEvent).toBe('manual')
 		})
 
+		it('keeps the processing lease the length jobs-cron retries are sized for', () => {
+			// apps/jobs-cron ACTION_STEP_RETRIES must outlast this lease (its test
+			// 'keeps retrying an action step for longer than tenant-api holds its
+			// processing lease' assumes 5 minutes). Change both together.
+			expect(JOURNEY_PROCESSING_LEASE_MS).toBe(5 * 60 * 1000)
+		})
+
 		it('keeps a slow provider delivery lease idempotent for five minutes', async () => {
 			const db = await getTenantDb(orgId)
 
@@ -1020,9 +1066,284 @@ describe('Journey Service & Regional Message Dispatching', () => {
 				},
 			})
 
-			expect(duplicateRes.success).toBe(true)
+			// Not a success: if the attempt holding the lease died before sending,
+			// a success here would move the journey on with nothing sent.
+			expect(duplicateRes.success).toBe(false)
 			expect(duplicateRes.status).toBe('processing')
+			expect(duplicateRes.statusCode).toBe(409)
 			expect(duplicateRes.executionId).toBe(existingExec.id)
+		})
+	})
+
+	// =========================================================================
+	// 7. Paused journeys, unknown dispatch outcomes, one-time enrollment
+	// =========================================================================
+	describe('run lifecycle safety', () => {
+		async function seedRun(
+			journeyStatus: 'active' | 'paused' = 'active',
+			customerValues: Partial<typeof customers.$inferInsert> = {},
+		) {
+			const db = await getTenantDb(orgId)
+			const [customer] = await db
+				.insert(customers)
+				.values({
+					name: 'Lifecycle User',
+					email: 'lifecycle@example.com',
+					phone: '+15550001111',
+					phoneVerified: true,
+					...customerValues,
+				})
+				.returning()
+			await consent(customer!, 'email')
+			await consent(customer!, 'sms')
+			const [journey] = await db
+				.insert(marketingJourneys)
+				.values({ name: 'Lifecycle', status: journeyStatus })
+				.returning()
+			const [run] = await db
+				.insert(journeyRuns)
+				.values({
+					journeyId: journey!.id,
+					customerId: customer!.id,
+					status: 'running',
+				})
+				.returning()
+			return { db, customer: customer!, journey: journey!, run: run! }
+		}
+
+		function emailStep(
+			ids: {
+				journey: { id: string }
+				run: { id: string }
+				customer: { id: string }
+			},
+			nodeType: 'action_email' | 'action_sms' = 'action_email',
+		) {
+			return {
+				orgId,
+				journeyId: ids.journey.id,
+				runId: ids.run.id,
+				customerId: ids.customer.id,
+				nodeId: 'node-1',
+				nodeType,
+				config: { subject: 'Hi', bodyHtml: 'Hello', messageText: 'Hello' },
+			}
+		}
+
+		it('sends nothing for a run whose journey was paused and cancels the run', async () => {
+			const seeded = await seedRun('active')
+			await pauseJourney(orgId, seeded.journey.id)
+			vi.mocked(sendOciEmail).mockClear()
+
+			const result = await executeJourneyStep(orgId, emailStep(seeded))
+
+			expect(result.status).toBe('halted')
+			expect(vi.mocked(sendOciEmail)).not.toHaveBeenCalled()
+			const messages = await seeded.db.select().from(marketingMessages).all()
+			expect(messages).toHaveLength(0)
+			const run = await seeded.db
+				.select()
+				.from(journeyRuns)
+				.where(eq(journeyRuns.id, seeded.run.id))
+				.get()
+			expect(run?.status).toBe('cancelled')
+			expect(run?.errorMessage).toBe('Journey is paused')
+
+			// The workflow's own completion cannot flip it back to completed.
+			await completeJourneyRun(orgId, {
+				orgId,
+				runId: seeded.run.id,
+				status: 'completed',
+			})
+			const after = await seeded.db
+				.select()
+				.from(journeyRuns)
+				.where(eq(journeyRuns.id, seeded.run.id))
+				.get()
+			expect(after?.status).toBe('cancelled')
+		})
+
+		it('halts a condition step of a paused journey', async () => {
+			const seeded = await seedRun('paused')
+			const result = await evaluateJourneyCondition(orgId, {
+				orgId,
+				journeyId: seeded.journey.id,
+				runId: seeded.run.id,
+				customerId: seeded.customer.id,
+				nodeId: 'cond-1',
+				condition: {
+					field: 'phoneVerified',
+					operator: 'equals',
+					value: 'true',
+				},
+			})
+			expect(result).toMatchObject({ success: true, halted: true })
+		})
+
+		it('answers a repeated condition evaluation with the recorded result', async () => {
+			const seeded = await seedRun('active')
+			const payload = {
+				orgId,
+				journeyId: seeded.journey.id,
+				runId: seeded.run.id,
+				customerId: seeded.customer.id,
+				nodeId: 'cond-1',
+				condition: {
+					field: 'phoneVerified',
+					operator: 'equals' as const,
+					value: 'true',
+				},
+			}
+			const first = await evaluateJourneyCondition(orgId, payload)
+			const second = await evaluateJourneyCondition(orgId, payload)
+			expect(first).toMatchObject({ success: true, result: true })
+			expect(second).toMatchObject({
+				success: true,
+				result: true,
+				executionId: (first as { executionId: string }).executionId,
+			})
+		})
+
+		it('never resends an email whose provider call timed out', async () => {
+			const seeded = await seedRun('active')
+			const send = vi.mocked(sendOciEmail)
+			send.mockClear()
+			send.mockResolvedValueOnce({
+				status: 'error',
+				error: {
+					message: 'Request timed out',
+					cause: Object.assign(new Error('Request timed out'), {
+						code: 'ETIMEDOUT',
+					}),
+				},
+			})
+
+			const first = await executeJourneyStep(orgId, emailStep(seeded))
+			const retry = await executeJourneyStep(orgId, emailStep(seeded))
+
+			expect(first.status).toBe('unknown')
+			expect(retry.status).toBe('unknown')
+			expect(send).toHaveBeenCalledTimes(1)
+			const execution = await seeded.db
+				.select()
+				.from(journeyStepExecutions)
+				.where(eq(journeyStepExecutions.id, first.executionId!))
+				.get()
+			expect(execution?.errorMessage).toContain('outcome unknown')
+		})
+
+		it('resends a refused email with the same Message-ID', async () => {
+			const seeded = await seedRun('active')
+			const send = vi.mocked(sendOciEmail)
+			send.mockClear()
+			send.mockResolvedValueOnce({
+				status: 'error',
+				error: { message: 'Throttled', statusCode: 429 },
+			})
+
+			const first = await executeJourneyStep(orgId, emailStep(seeded))
+			const retry = await executeJourneyStep(orgId, emailStep(seeded))
+
+			expect(first.status).toBe('failed')
+			expect(retry.status).toBe('delivered')
+			expect(send).toHaveBeenCalledTimes(2)
+			const ids = send.mock.calls.map((call) => call[0].messageId)
+			expect(ids[0]).toBe(first.executionId)
+			expect(ids[1]).toBe(first.executionId)
+		})
+
+		it('never resends an SMS whose provider call timed out', async () => {
+			const seeded = await seedRun('active')
+			const sms = vi.mocked(sendSms)
+			sms.mockClear()
+			sms.mockRejectedValueOnce(
+				Object.assign(new Error('socket hang up'), { code: 'ECONNRESET' }),
+			)
+
+			const first = await executeJourneyStep(
+				orgId,
+				emailStep(seeded, 'action_sms'),
+			)
+			const retry = await executeJourneyStep(
+				orgId,
+				emailStep(seeded, 'action_sms'),
+			)
+
+			expect(first.status).toBe('unknown')
+			expect(retry.status).toBe('unknown')
+			expect(sms).toHaveBeenCalledTimes(1)
+		})
+
+		it('enrolls a customer in a phone_verified journey once', async () => {
+			const db = await getTenantDb(orgId)
+			const [customer] = await db
+				.insert(customers)
+				.values({ name: 'Returning Customer' })
+				.returning()
+			await db.insert(marketingJourneys).values({
+				name: 'Welcome once',
+				status: 'active',
+				triggerType: 'phone_verified',
+			})
+
+			const first = await evaluateAndSpawnTriggers(
+				orgId,
+				'phone_verified',
+				customer!.id,
+			)
+			const second = await evaluateAndSpawnTriggers(
+				orgId,
+				'phone_verified',
+				customer!.id,
+			)
+
+			expect(first.spawnedCount).toBe(1)
+			expect(second.spawnedCount).toBe(0)
+			const runs = await db
+				.select()
+				.from(journeyRuns)
+				.where(eq(journeyRuns.customerId, customer!.id))
+				.all()
+			expect(runs).toHaveLength(1)
+		})
+
+		it('the database refuses a second once-per-customer run but not repeated test runs', async () => {
+			const db = await getTenantDb(orgId)
+			const [customer] = await db
+				.insert(customers)
+				.values({ name: 'Backstop Customer' })
+				.returning()
+			const [journey] = await db
+				.insert(marketingJourneys)
+				.values({
+					name: 'Backstop',
+					status: 'active',
+					triggerType: 'phone_verified',
+				})
+				.returning()
+			const run = (triggerEvent: string) =>
+				db.insert(journeyRuns).values({
+					journeyId: journey!.id,
+					customerId: customer!.id,
+					triggerEvent,
+				})
+
+			await run('phone_verified')
+			await expect(run('phone_verified')).rejects.toThrow()
+			// Operator test runs repeat freely.
+			await run('manual')
+			await run('manual')
+
+			const rows = await db
+				.select()
+				.from(journeyRuns)
+				.where(eq(journeyRuns.customerId, customer!.id))
+				.all()
+			expect(rows.map((row) => row.triggerEvent).sort()).toEqual([
+				'manual',
+				'manual',
+				'phone_verified',
+			])
 		})
 	})
 })

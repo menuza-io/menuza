@@ -24,6 +24,8 @@ export type PolarShopOrder = {
 	id: string
 	checkoutId: string | null
 	paid: boolean
+	/** Refunded in full (a partial refund leaves the order paid). */
+	refunded: boolean
 	amountCents: number
 	currency: string
 	metadata: Record<string, string>
@@ -175,6 +177,7 @@ export function mapPolarShopOrder(order: {
 	id: string
 	checkoutId?: string | null
 	paid?: boolean
+	status?: string | null
 	netAmount?: number
 	totalAmount?: number
 	amount?: number
@@ -188,6 +191,7 @@ export function mapPolarShopOrder(order: {
 		id: order.id,
 		checkoutId: order.checkoutId ?? null,
 		paid: Boolean(order.paid),
+		refunded: order.status === 'refunded',
 		amountCents: order.netAmount ?? order.totalAmount ?? order.amount ?? 0,
 		currency: order.currency || 'usd',
 		metadata,

@@ -37,6 +37,10 @@ export class ChatRequestError extends Error {
 	}
 }
 
+function newChatClientId() {
+	return crypto.randomUUID()
+}
+
 type Pending = {
 	resolve(data: unknown): void
 	reject(error: Error): void
@@ -90,6 +94,11 @@ export function useChat({
 	const socketRef = useRef<WebSocket | null>(null)
 	const pending = useRef(new Map<string, Pending>())
 	const nextId = useRef(0)
+	// Idempotency keys of sends that failed without an answer (timeout or
+	// disconnect), by content. Sending the same message again reuses the key, so
+	// if the first attempt did land the server returns it instead of posting a
+	// duplicate. A confirmed send drops its key.
+	const unconfirmedSends = useRef(new Map<string, string>())
 	const lastTypingSent = useRef(0)
 
 	// Latest values for callbacks that outlive a render (socket handlers).
@@ -312,15 +321,37 @@ export function useChat({
 			parent?: number,
 			attachmentKeys?: string[],
 		) => {
-			const { message } = await request<{ message: ChatMessage }>({
-				t: 'send',
+			const contentKey = JSON.stringify([
 				channel,
-				body,
-				parent,
-				attachmentKeys,
-			})
-			notifyChatActivity(orgSlug)
-			return message
+				parent ?? null,
+				body.trim(),
+				attachmentKeys ?? [],
+			])
+			const clientId =
+				unconfirmedSends.current.get(contentKey) ?? newChatClientId()
+			unconfirmedSends.current.set(contentKey, clientId)
+			try {
+				const { message } = await request<{ message: ChatMessage }>({
+					t: 'send',
+					channel,
+					body,
+					parent,
+					attachmentKeys,
+					clientId,
+				})
+				unconfirmedSends.current.delete(contentKey)
+				notifyChatActivity(orgSlug)
+				return message
+			} catch (error) {
+				// Only an attempt that may have reached the server keeps its key.
+				if (
+					!(error instanceof ChatRequestError) ||
+					(error.code !== 'timeout' && error.code !== 'offline')
+				) {
+					unconfirmedSends.current.delete(contentKey)
+				}
+				throw error
+			}
 		},
 		[request, orgSlug],
 	)

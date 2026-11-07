@@ -1,5 +1,6 @@
+import { auditService, AuditAction } from '@repo/audit'
 import { requireUserWithRole } from '@repo/auth'
-import { and, ConfigFlag, db, eq, isNull } from '@repo/database'
+import { and, ConfigFlag, db, eq, isNull, ne } from '@repo/database'
 import { type ActionFunctionArgs, type LoaderFunctionArgs } from 'react-router'
 import { z } from 'zod'
 import { FeatureFlags } from '#app/components/admin/feature-flags.tsx'
@@ -54,8 +55,71 @@ const deleteSchema = z.object({
 	id: z.string().min(1, 'ID is required for delete'),
 })
 
+type FlagScope = {
+	key: string
+	level: string
+	organizationId: string | null
+	userId: string | null
+}
+
+/** The row with the same key, level, organization and user (NULLs matched). */
+function sameScope(scope: FlagScope) {
+	return and(
+		eq(ConfigFlag.key, scope.key),
+		eq(ConfigFlag.level, scope.level),
+		scope.organizationId
+			? eq(ConfigFlag.organizationId, scope.organizationId)
+			: isNull(ConfigFlag.organizationId),
+		scope.userId
+			? eq(ConfigFlag.userId, scope.userId)
+			: isNull(ConfigFlag.userId),
+	)
+}
+
+/**
+ * Creates the flag, or updates it when it already exists. A unique index over
+ * the key, level and scope (NULLs included) keeps one row, so concurrent
+ * creates cannot add a second: the insert that loses does nothing and the
+ * update gives the one row its value.
+ */
+async function upsertFlag(scope: FlagScope, value: unknown) {
+	const [inserted] = await db
+		.insert(ConfigFlag)
+		.values({ ...scope, value })
+		.onConflictDoNothing()
+		.returning({ id: ConfigFlag.id })
+	if (inserted) return { id: inserted.id, created: true }
+	const [updated] = await db
+		.update(ConfigFlag)
+		.set({ value })
+		.where(sameScope(scope))
+		.returning({ id: ConfigFlag.id })
+	if (!updated) throw new Error('Feature flag was not saved')
+	return { id: updated.id, created: false }
+}
+
+/**
+ * Flag changes switch features for organizations and users, so each one is
+ * audited here. `auditSensitiveRoutes` in `entry.server.tsx` only sees
+ * document requests, not these fetcher posts.
+ */
+async function auditFlagChange(
+	request: Request,
+	adminUserId: string,
+	details: string,
+	metadata: Record<string, unknown>,
+) {
+	await auditService.logAdminOperation(
+		AuditAction.ADMIN_CONFIG_CHANGED,
+		adminUserId,
+		details,
+		{ resource: 'feature_flag', ...metadata },
+		request,
+	)
+}
+
 export async function action({ request }: ActionFunctionArgs) {
-	await requireUserWithRole(request, 'admin')
+	const adminUserId = await requireUserWithRole(request, 'admin')
 	const formData = await request.formData()
 	const _action = formData.get('_action')
 
@@ -67,7 +131,24 @@ export async function action({ request }: ActionFunctionArgs) {
 				{ status: 400 },
 			)
 		}
-		await db.delete(ConfigFlag).where(eq(ConfigFlag.id, result.data.id))
+		const deleted = await db
+			.delete(ConfigFlag)
+			.where(eq(ConfigFlag.id, result.data.id))
+			.returning({
+				id: ConfigFlag.id,
+				key: ConfigFlag.key,
+				level: ConfigFlag.level,
+				organizationId: ConfigFlag.organizationId,
+				userId: ConfigFlag.userId,
+			})
+		for (const flag of deleted) {
+			await auditFlagChange(
+				request,
+				adminUserId,
+				`Deleted feature flag ${flag.key}`,
+				{ action: 'delete', flagId: flag.id, ...flag },
+			)
+		}
 		return Response.json({ ok: true })
 	}
 
@@ -96,36 +177,21 @@ export async function action({ request }: ActionFunctionArgs) {
 	}
 
 	try {
+		const scope: FlagScope = {
+			key: result.data.key,
+			level: result.data.level,
+			organizationId: result.data.organizationId || null,
+			userId: result.data.userId || null,
+		}
+
 		if (_action === 'create') {
-			const [existing] = await db
-				.select()
-				.from(ConfigFlag)
-				.where(
-					and(
-						eq(ConfigFlag.key, result.data.key),
-						eq(ConfigFlag.level, result.data.level),
-						result.data.organizationId
-							? eq(ConfigFlag.organizationId, result.data.organizationId)
-							: isNull(ConfigFlag.organizationId),
-						result.data.userId
-							? eq(ConfigFlag.userId, result.data.userId)
-							: isNull(ConfigFlag.userId),
-					),
-				)
-				.limit(1)
-			if (existing) {
-				return Response.json(
-					{ error: 'A flag with this key already exists at this level' },
-					{ status: 400 },
-				)
-			}
-			await db.insert(ConfigFlag).values({
-				key: result.data.key,
-				value: value,
-				level: result.data.level,
-				organizationId: result.data.organizationId || null,
-				userId: result.data.userId || null,
-			})
+			const saved = await upsertFlag(scope, value)
+			await auditFlagChange(
+				request,
+				adminUserId,
+				`${saved.created ? 'Created' : 'Updated'} feature flag ${scope.key}`,
+				{ action: 'create', flagId: saved.id, ...scope, value },
+			)
 		}
 
 		if (_action === 'update') {
@@ -135,21 +201,38 @@ export async function action({ request }: ActionFunctionArgs) {
 					{ status: 400 },
 				)
 			}
+			// Moving a flag onto another row's key and scope would leave two rows
+			// that `getFeatureFlag` cannot tell apart.
+			const [clash] = await db
+				.select({ id: ConfigFlag.id })
+				.from(ConfigFlag)
+				.where(and(sameScope(scope), ne(ConfigFlag.id, result.data.id)))
+				.limit(1)
+			if (clash) {
+				return Response.json(
+					{ error: 'A flag with this key already exists at this level' },
+					{ status: 400 },
+				)
+			}
 			await db
 				.update(ConfigFlag)
-				.set({
-					key: result.data.key,
-					value: value,
-					level: result.data.level,
-					organizationId: result.data.organizationId || null,
-					userId: result.data.userId || null,
-				})
+				.set({ ...scope, value })
 				.where(eq(ConfigFlag.id, result.data.id))
+			await auditFlagChange(
+				request,
+				adminUserId,
+				`Updated feature flag ${scope.key}`,
+				{ action: 'update', flagId: result.data.id, ...scope, value },
+			)
 		}
 
 		return Response.json({ ok: true })
 	} catch (error: any) {
-		if (error?.code === 'P2002') {
+		// An update that moved a flag onto another row's key and scope.
+		if (
+			String(error?.message ?? '').includes('UNIQUE constraint failed') ||
+			String(error?.cause?.message ?? '').includes('UNIQUE constraint failed')
+		) {
 			return Response.json(
 				{ error: 'A flag with this key already exists at this level' },
 				{ status: 400 },

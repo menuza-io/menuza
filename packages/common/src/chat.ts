@@ -94,6 +94,14 @@ export const chatClientFrameSchema = z.discriminatedUnion('t', [
 			.array(z.string().min(1).max(512))
 			.max(CHAT_LIMITS.attachmentsMax)
 			.optional(),
+		/**
+		 * Idempotency key the client keeps while it retries the same message,
+		 * so a send whose ack was lost does not post twice.
+		 */
+		clientId: z
+			.string()
+			.regex(/^[A-Za-z0-9_-]{8,64}$/)
+			.optional(),
 	}),
 	z.object({
 		t: z.literal('search'),

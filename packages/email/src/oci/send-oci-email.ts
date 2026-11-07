@@ -25,7 +25,16 @@ export type SendOciEmailResult =
 	  }
 	| {
 			status: 'error'
-			error: { message: string; statusCode?: number }
+			error: {
+				message: string
+				statusCode?: number
+				/**
+				 * The error thrown while submitting. Present only when the request
+				 * reached the network, so a caller can tell a timeout (the message
+				 * may have been accepted) from a refusal.
+				 */
+				cause?: unknown
+			}
 	  }
 	| {
 			status: 'skipped'
@@ -62,12 +71,14 @@ export async function sendOciEmail(
 		}
 	}
 
+	let submitting = false
 	try {
 		const provider = createOciAuthProvider(config)
 		const client = new emaildataplane.EmailDPClient({
 			authenticationDetailsProvider: provider,
 		})
 
+		submitting = true
 		const response = await client.submitEmail({
 			submitEmailDetails: {
 				messageId: input.messageId,
@@ -109,9 +120,18 @@ export async function sendOciEmail(
 		const message =
 			error instanceof Error ? error.message : 'Failed to send email via OCI'
 		console.error('OCI Email Delivery send failed:', error)
+		const statusCode =
+			error &&
+			typeof (error as { statusCode?: unknown }).statusCode === 'number'
+				? (error as { statusCode: number }).statusCode
+				: undefined
 		return {
 			status: 'error',
-			error: { message },
+			error: {
+				message,
+				...(statusCode !== undefined ? { statusCode } : {}),
+				...(submitting ? { cause: error } : {}),
+			},
 		}
 	}
 }

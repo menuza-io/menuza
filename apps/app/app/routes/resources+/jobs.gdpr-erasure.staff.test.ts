@@ -11,6 +11,10 @@ import { RouterContextProvider } from 'react-router'
 import { ENV } from 'varlock/env'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type * as outbox from '#app/utils/staffing/outbox.server.ts'
+import {
+	ERASURE_RETRY_DELAY_MS,
+	processDueErasureRequests,
+} from '#app/utils/gdpr.server.ts'
 import { createTestOrganization, createTestUser } from '#tests/test-utils.ts'
 import { action } from './jobs.gdpr-erasure.ts'
 
@@ -99,7 +103,7 @@ async function scheduleErasure(userId: string) {
 }
 
 describe('GDPR erasure and regional staff records', () => {
-	it('queues an erase for every provisioned organization, then deletes the account', async () => {
+	it('queues an erase for every organization, provisioned or not, once the account is deleted', async () => {
 		const user = await createTestUser()
 		const usOrg = await memberOf(user.id, { dataRegion: 'us' })
 		const ksaOrg = await memberOf(user.id, { dataRegion: 'ksa' })
@@ -114,8 +118,10 @@ describe('GDPR erasure and regional staff records', () => {
 		const mine = rows.filter((row) =>
 			[usOrg, ksaOrg, removedOrg, noDbOrg].includes(row.organizationId),
 		)
+		// A cleared flag may hide a database that still exists (a failed region
+		// switch), so it is no reason to skip the erasure.
 		expect(mine.map((row) => row.organizationId).sort()).toEqual(
-			[usOrg, ksaOrg, removedOrg].sort(),
+			[usOrg, ksaOrg, removedOrg, noDbOrg].sort(),
 		)
 		for (const row of mine) {
 			expect(row).toMatchObject({
@@ -162,36 +168,43 @@ describe('GDPR erasure and regional staff records', () => {
 		expect(row).toMatchObject({ kind: 'erase_user', status: 'pending' })
 	})
 
-	it('does not delete the account when the erase cannot be queued', async () => {
+	it('keeps the erasure retryable when the erase cannot be queued after the delete', async () => {
 		const user = await createTestUser()
-		await memberOf(user.id, {})
+		const org = await memberOf(user.id, {})
 		const dsr = await scheduleErasure(user.id)
 		enqueueControl.fail = true
 
 		await run()
 
+		// The account is gone; the organizations to tell were saved on the
+		// request before the delete, so the retry can still queue them.
 		expect(
 			await db.select().from(User).where(eq(User.id, user.id)),
-		).toHaveLength(1)
-		const [updated] = await db
+		).toHaveLength(0)
+		const [failed] = await db
 			.select()
 			.from(DataSubjectRequest)
 			.where(eq(DataSubjectRequest.id, dsr.id))
-		expect(updated?.status).toBe('failed')
+		expect(failed?.status).toBe('failed')
 		expect(regional.post).not.toHaveBeenCalled()
-	})
 
-	it('queues nothing for a user who belongs to no provisioned organization', async () => {
-		const user = await createTestUser()
-		const org = await memberOf(user.id, { provisioned: false })
-		await scheduleErasure(user.id)
-		await run()
-		expect(
-			await db
-				.select()
-				.from(StaffingOutbox)
-				.where(eq(StaffingOutbox.organizationId, org)),
-		).toHaveLength(0)
-		expect(regional.post).not.toHaveBeenCalled()
+		enqueueControl.fail = false
+		const results = await processDueErasureRequests({
+			now: new Date(Date.now() + ERASURE_RETRY_DELAY_MS + 1000),
+		})
+		expect(results.processed).toBeGreaterThanOrEqual(1)
+		const [completed] = await db
+			.select()
+			.from(DataSubjectRequest)
+			.where(eq(DataSubjectRequest.id, dsr.id))
+		expect(completed?.status).toBe('completed')
+		const [row] = await db
+			.select()
+			.from(StaffingOutbox)
+			.where(eq(StaffingOutbox.organizationId, org))
+		expect(row).toMatchObject({
+			kind: 'erase_user',
+			payload: { userId: user.id },
+		})
 	})
 })

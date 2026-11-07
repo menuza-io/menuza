@@ -13,6 +13,7 @@ import {
 } from '#app/utils/print/orders.server.ts'
 import {
 	handleConnectAccountUpdated,
+	recordShopOrderAdjustmentFromConnectWebhook,
 	recordShopOrderFromConnectWebhook,
 } from '#app/utils/shop.server.ts'
 
@@ -157,6 +158,20 @@ export async function action({ request, context }: ActionFunctionArgs) {
 				}
 				await recordShopOrderFromConnectWebhook(
 					paymentIntent,
+					event.type,
+					event.account,
+				)
+				break
+			}
+
+			case 'charge.refunded':
+			case 'charge.dispute.created':
+			case 'charge.dispute.closed':
+			case 'payment_intent.payment_failed':
+			case 'payment_intent.canceled': {
+				// Shop orders only: print refunds are recorded where they are made.
+				await recordShopOrderAdjustmentFromConnectWebhook(
+					event.data.object,
 					event.type,
 					event.account,
 				)

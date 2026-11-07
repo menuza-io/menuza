@@ -239,7 +239,14 @@ function NumberActions({ number }: { number: PlatformNumber }) {
 	const quarantine = result && !result.ok ? result.quarantine : undefined
 	const e164 = number.e164
 	const submit = (action: 'unassign' | 'retire') =>
-		void fetcher.submit({ _action: action, id: number.id }, { method: 'POST' })
+		void fetcher.submit(
+			{
+				_action: action,
+				id: number.id,
+				expectedOrganizationId: number.organization?.id ?? '',
+			},
+			{ method: 'POST' },
+		)
 
 	if (number.retiredAt) return null
 	return (

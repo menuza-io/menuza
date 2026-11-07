@@ -82,6 +82,7 @@ if (!organization) {
 
 <script>
 	import {
+		getBrowserTenantApiUrl,
 		getOrgBinding,
 		redirectHomeIfSignedIn,
 		tenantErrorMessage,
@@ -98,6 +99,14 @@ if (!organization) {
 	const sendingLabel = form.dataset.sending || 'Sending...'
 	const networkLabel = form.dataset.network || 'Network error. Please try again.'
 	const errorLabel = form.dataset.error || 'Something went wrong.'
+
+	// No tenant-api serves this organization's region: sign-in is unavailable
+	// (a phone number is never sent to another region's node).
+	if (!getBrowserTenantApiUrl()) {
+		errorMessage.textContent = errorLabel
+		errorMessage.classList.remove('hidden')
+		submitButton.disabled = true
+	}
 
 	form.addEventListener('submit', async (e) => {
 		e.preventDefault()

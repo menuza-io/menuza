@@ -11,11 +11,11 @@ export interface AuditMiddlewareOptions {
 
 const DEFAULT_SENSITIVE_ROUTES = [
 	{
-		pattern: /^\/settings\/billing/,
+		pattern: /^\/[^/]+\/settings\/billing(\/|$)/,
 		details: 'Accessed billing settings',
 	},
 	{
-		pattern: /^\/settings\/api-keys/,
+		pattern: /^\/[^/]+\/settings\/api-keys(\/|$)/,
 		details: 'Accessed API keys settings',
 	},
 	{
@@ -23,7 +23,7 @@ const DEFAULT_SENSITIVE_ROUTES = [
 		details: 'Accessed admin area',
 	},
 	{
-		pattern: /^\/org\/.*\/settings/,
+		pattern: /^\/[^/]+\/settings(\/|$)/,
 		details: 'Accessed organization settings',
 	},
 ]
@@ -46,8 +46,9 @@ export function createAuditMiddleware(options: AuditMiddlewareOptions) {
 			const userId = await getUserId(request)
 			if (!userId) return
 
-			// Log it (fire and forget)
-			auditService
+			// Await the write so a caller that hands this call to `waitUntil`
+			// keeps it alive; failures are logged, never thrown.
+			await auditService
 				.log({
 					action: AuditAction.SENSITIVE_ROUTE_ACCESSED,
 					userId,

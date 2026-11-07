@@ -29,6 +29,29 @@ export const SOCIAL_TARGET_STATUSES = [
 ] as const
 export type SocialTargetStatus = (typeof SOCIAL_TARGET_STATUSES)[number]
 
+/**
+ * Failed-target codes where the platform may already show the post: the send
+ * was interrupted, or Meta stopped answering after the publish call went out.
+ * Meta takes no idempotency key and has no reliable lookup, so Retry leaves
+ * these alone; a member checks the account and sends one again explicitly.
+ */
+export const SOCIAL_UNKNOWN_OUTCOME_ERRORS = [
+	'interrupted',
+	'outcome_unknown',
+] as const
+
+export function socialTargetOutcomeUnknown(target: {
+	status: string
+	error: string | null
+}): boolean {
+	return (
+		target.status === 'failed' &&
+		(SOCIAL_UNKNOWN_OUTCOME_ERRORS as readonly string[]).includes(
+			target.error ?? '',
+		)
+	)
+}
+
 /** A media library image attached to a post. */
 export type SocialPostMedia = {
 	mediaId: string
@@ -48,15 +71,13 @@ export const SOCIAL_PLATFORM_RULES: Record<
 
 /** The longest post any platform accepts. */
 export const SOCIAL_MAX_TEXT = Math.max(
-	...SOCIAL_PLATFORMS.map((platform) => SOCIAL_PLATFORM_RULES[platform].maxText),
+	...SOCIAL_PLATFORMS.map(
+		(platform) => SOCIAL_PLATFORM_RULES[platform].maxText,
+	),
 )
 
 export type SocialPostProblem =
-	| 'empty'
-	| 'too_long'
-	| 'needs_media'
-	| 'too_many_media'
-	| 'too_many_hashtags'
+	'empty' | 'too_long' | 'needs_media' | 'too_many_media' | 'too_many_hashtags'
 
 export function countHashtags(body: string): number {
 	return body.match(/(^|\s)#[^\s#]+/gu)?.length ?? 0

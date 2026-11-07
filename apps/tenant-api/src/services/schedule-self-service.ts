@@ -58,7 +58,9 @@ import {
 	isOpaqueId,
 	type ScheduleContext,
 	type ScheduleResult,
+	type SelfWriteGuard,
 } from './schedule-shared.ts'
+import { type StaffDb } from './staff-audit.ts'
 import { buildLiveCards, fail, ok, selectCardRows } from './timesheet-shared.ts'
 import { inJsonList } from '../lib/chunked-in.ts'
 
@@ -115,15 +117,20 @@ function selfAuth(ctx: SelfContext, scopeIds: string[]): StaffAuth {
 	}
 }
 
-function writeContext(ctx: SelfContext, scopeIds: string[]) {
+function writeContext(
+	ctx: SelfContext,
+	scopeIds: string[],
+	beforeSelfWrite?: SelfWriteGuard,
+) {
 	const auth = selfAuth(ctx, scopeIds)
-	return {
+	const base = {
 		db: ctx.db,
 		auth,
 		scope: scopeToScopes(auth) satisfies ScopeAccess,
 		ipHash: ctx.ipHash,
 		now: ctx.now,
 	} satisfies ScheduleContext
+	return beforeSelfWrite ? { ...base, beforeSelfWrite } : base
 }
 
 type ScopeInfo = {
@@ -504,9 +511,12 @@ export async function listMyRequests(
 	})
 }
 
-async function pendingCount(ctx: SelfContext): Promise<number> {
+async function pendingCount(
+	ctx: SelfContext,
+	db: StaffDb = ctx.db,
+): Promise<number> {
 	const counts = await Promise.all([
-		ctx.db
+		db
 			.select({ n: count() })
 			.from(timeOffRequests)
 			.where(
@@ -515,7 +525,7 @@ async function pendingCount(ctx: SelfContext): Promise<number> {
 					eq(timeOffRequests.status, 'pending'),
 				),
 			),
-		ctx.db
+		db
 			.select({ n: count() })
 			.from(staffAvailability)
 			.where(
@@ -524,7 +534,7 @@ async function pendingCount(ctx: SelfContext): Promise<number> {
 					eq(staffAvailability.status, 'pending'),
 				),
 			),
-		ctx.db
+		db
 			.select({ n: count() })
 			.from(shiftRequests)
 			.where(
@@ -537,15 +547,24 @@ async function pendingCount(ctx: SelfContext): Promise<number> {
 	return counts.reduce((sum, [row]) => sum + Number(row?.n ?? 0), 0)
 }
 
-/** Open requests are capped, so a leaked link cannot fill a manager's queue. */
+/**
+ * Open requests are capped, so a leaked link cannot fill a manager's queue.
+ * The early check answers quickly; the guard repeats the count inside the
+ * insert's transaction, so two requests sent together cannot both pass.
+ */
 async function underPendingCap(
 	ctx: SelfContext,
 	adding = 1,
+	db: StaffDb = ctx.db,
 ): Promise<ScheduleResult<null>> {
-	if ((await pendingCount(ctx)) + adding > SELF_MAX_PENDING_REQUESTS) {
+	if ((await pendingCount(ctx, db)) + adding > SELF_MAX_PENDING_REQUESTS) {
 		return fail(409, 'too_many_pending')
 	}
 	return ok(null)
+}
+
+function pendingCapGuard(ctx: SelfContext, adding = 1): SelfWriteGuard {
+	return (tx) => underPendingCap(ctx, adding, tx)
 }
 
 export async function createMyTimeOff(
@@ -555,11 +574,14 @@ export async function createMyTimeOff(
 	const capped = await underPendingCap(ctx)
 	if (!capped.ok) return capped
 	const { scopeIds } = await assignedScopes(ctx.db, ctx.staff.id)
-	const created = await createTimeOff(writeContext(ctx, scopeIds), {
-		...input,
-		staffId: ctx.staff.id,
-		submission: 'staff_request',
-	})
+	const created = await createTimeOff(
+		writeContext(ctx, scopeIds, pendingCapGuard(ctx)),
+		{
+			...input,
+			staffId: ctx.staff.id,
+			submission: 'staff_request',
+		},
+	)
 	if (!created.ok) return created
 	const [row] = await ctx.db
 		.select()
@@ -588,7 +610,11 @@ export async function cancelMyTimeOff(
 	// Taking back a decided request is the manager's call.
 	if (row.status !== 'pending') return fail(409, 'already_decided')
 	const { scopeIds } = await assignedScopes(ctx.db, ctx.staff.id)
-	const cancelled = await cancelTimeOff(writeContext(ctx, scopeIds), id)
+	// Checked again inside the cancel's transaction: a manager may approve it
+	// between this read and the write.
+	const cancelled = await cancelTimeOff(writeContext(ctx, scopeIds), id, {
+		pendingOnly: true,
+	})
 	if (!cancelled.ok) return cancelled
 	return ok(toMyTimeOff({ ...row, status: 'cancelled' }))
 }
@@ -600,11 +626,14 @@ export async function createMyAvailability(
 	const capped = await underPendingCap(ctx, input.rows.length)
 	if (!capped.ok) return capped
 	const { scopeIds } = await assignedScopes(ctx.db, ctx.staff.id)
-	const created = await createAvailability(writeContext(ctx, scopeIds), {
-		...input,
-		staffId: ctx.staff.id,
-		submission: 'staff_request',
-	})
+	const created = await createAvailability(
+		writeContext(ctx, scopeIds, pendingCapGuard(ctx, input.rows.length)),
+		{
+			...input,
+			staffId: ctx.staff.id,
+			submission: 'staff_request',
+		},
+	)
 	if (!created.ok) return created
 	const ids = created.value.map((row) => row.id)
 	const rows = await ctx.db
@@ -632,7 +661,9 @@ export async function cancelMyAvailability(
 	if (!row) return fail(404, 'not_found')
 	if (row.status !== 'pending') return fail(409, 'already_decided')
 	const { scopeIds } = await assignedScopes(ctx.db, ctx.staff.id)
-	const cancelled = await cancelAvailability(writeContext(ctx, scopeIds), id)
+	const cancelled = await cancelAvailability(writeContext(ctx, scopeIds), id, {
+		pendingOnly: true,
+	})
 	if (!cancelled.ok) return cancelled
 	return ok(toMyAvailability({ ...row, status: 'cancelled' }))
 }
@@ -770,11 +801,14 @@ export async function createMyShiftRequest(
 		}
 	}
 	const { scopeIds } = await assignedScopes(ctx.db, ctx.staff.id)
-	const created = await createShiftRequest(writeContext(ctx, scopeIds), {
-		...input,
-		requesterStaffId: ctx.staff.id,
-		submission: 'staff_request',
-	})
+	const created = await createShiftRequest(
+		writeContext(ctx, scopeIds, pendingCapGuard(ctx)),
+		{
+			...input,
+			requesterStaffId: ctx.staff.id,
+			submission: 'staff_request',
+		},
+	)
 	if (!created.ok) return created
 	const [view] = await myShiftRequests(
 		ctx,

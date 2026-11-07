@@ -142,6 +142,142 @@ export function replaceMergeTokens(
 	)
 }
 
+/** Schemes a merge tag may produce in a URL-valued HTML attribute. */
+export const SAFE_URL_SCHEMES = ['http', 'https', 'mailto', 'tel'] as const
+
+const URL_ATTRIBUTES = new Set([
+	'href',
+	'src',
+	'action',
+	'formaction',
+	'background',
+	'poster',
+	'cite',
+	'longdesc',
+	'xlink:href',
+])
+
+const NAMED_ENTITIES: Record<string, string> = {
+	amp: '&',
+	lt: '<',
+	gt: '>',
+	quot: '"',
+	apos: "'",
+	colon: ':',
+	tab: '\t',
+	newline: '\n',
+	sol: '/',
+	lpar: '(',
+	rpar: ')',
+	period: '.',
+}
+
+/** Decode character references once, as a browser does for an attribute. */
+function decodeAttributeValue(value: string): string {
+	return value.replace(
+		/&(?:#x([0-9a-f]+)|#(\d+)|([a-z]+));?/gi,
+		(entity, hex?: string, dec?: string, name?: string) => {
+			if (hex || dec) {
+				const code = hex ? parseInt(hex, 16) : Number(dec)
+				return code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : ''
+			}
+			return NAMED_ENTITIES[name!.toLowerCase()] ?? entity
+		},
+	)
+}
+
+/**
+ * Whether an HTML attribute value (as written in the markup) is a URL with an
+ * allowed scheme, or a relative URL. The value is decoded once, then the
+ * characters a URL parser drops (tabs, newlines, leading and trailing control
+ * characters and spaces) are removed, so `java&#x09;script:` and
+ * `JavaScript:` are caught. Anything before the first `:` that may still be a
+ * character reference is refused rather than guessed at.
+ */
+export function isSafeUrlAttributeValue(attributeValue: string): boolean {
+	const url = decodeAttributeValue(attributeValue)
+		.replace(/[\t\n\r]/g, '')
+		// eslint-disable-next-line no-control-regex
+		.replace(/^[\u0000-\u0020]+|[\u0000-\u0020]+$/g, '')
+	const scheme = /^([a-z][a-z0-9+.-]*):/i.exec(url)
+	if (scheme) {
+		return (SAFE_URL_SCHEMES as readonly string[]).includes(
+			scheme[1]!.toLowerCase(),
+		)
+	}
+	const colon = url.indexOf(':')
+	if (colon === -1) return true
+	const beforeColon = url.slice(0, colon)
+	// A relative URL whose first `:` comes after a path, query or fragment.
+	// eslint-disable-next-line no-control-regex
+	if (/[/?#]/.test(beforeColon) && !/[&\u0000-\u0020]/.test(beforeColon)) {
+		return true
+	}
+	return false
+}
+
+const HTML_TAG = /<[a-zA-Z][^<>]*>/g
+const HTML_ATTRIBUTE =
+	/(\s)([^\s"'<>/=]+)(\s*=\s*)(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+))/g
+
+/**
+ * `replaceMergeTokens` for an HTML template. Tokens in text and ordinary
+ * attributes are replaced with `resolve` (which must escape its result). In a
+ * URL-valued attribute (`href`, `src`, ...) that holds a token, the whole
+ * value is checked after replacement: unless it is a relative URL or uses
+ * http, https, mailto or tel, the attribute value is emptied, since escaping
+ * does not make `javascript:` safe.
+ */
+export function replaceMergeTokensInHtml(
+	template: string,
+	resolve: (tag: string, fallback: string, raw: string) => string,
+): string {
+	if (!template) return ''
+	const guardedTags = template.replace(HTML_TAG, (tag) =>
+		tag.replace(
+			HTML_ATTRIBUTE,
+			(
+				attribute,
+				space: string,
+				name: string,
+				equals: string,
+				doubleQuoted?: string,
+				singleQuoted?: string,
+				unquoted?: string,
+			) => {
+				const value = doubleQuoted ?? singleQuoted ?? unquoted ?? ''
+				if (
+					!URL_ATTRIBUTES.has(name.toLowerCase()) ||
+					!createMergeTokenRegex().test(value)
+				) {
+					return attribute
+				}
+				const replaced = replaceMergeTokens(value, resolve)
+				const safe = isSafeUrlAttributeValue(replaced) ? replaced : ''
+				const quote =
+					doubleQuoted !== undefined
+						? '"'
+						: singleQuoted !== undefined
+							? "'"
+							: '"'
+				// Mark the value as done so the outer pass leaves it alone.
+				return `${space}${name}${equals}${quote}${protectTokens(safe)}${quote}`
+			},
+		),
+	)
+	return restoreTokens(replaceMergeTokens(guardedTags, resolve))
+}
+
+// Replaced attribute values can contain `{{...}}` text from a recipient's
+// value; this keeps the outer pass from treating it as a token.
+const OPEN_BRACES = '\u0000mt-open\u0000'
+function protectTokens(value: string): string {
+	return value.replaceAll('{{', OPEN_BRACES)
+}
+function restoreTokens(value: string): string {
+	return value.replaceAll(OPEN_BRACES, '{{')
+}
+
 /** Resolve a tag to a non-empty value, preferring the value then the fallback. */
 export function resolveWithFallback(
 	value: string | null | undefined,

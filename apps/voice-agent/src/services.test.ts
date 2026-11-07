@@ -70,7 +70,7 @@ describe('runtime config cache', () => {
 		expect(request).toHaveBeenCalledTimes(2)
 	})
 
-	it('serves the cached config while App is down or timing out, up to a day', async () => {
+	it('serves the cached config while App is down or timing out, for a short window', async () => {
 		const config = testConfig()
 		const { load, advance } = loader([
 			{ kind: 'config', config },
@@ -88,6 +88,18 @@ describe('runtime config cache', () => {
 		await expect(load(lookup)).resolves.toMatchObject({ stale: true })
 		advance(CONFIG_MAX_STALE_MS)
 		await expect(load(lookup)).rejects.toThrow('Could not reach App')
+	})
+
+	it('does not answer as an organization App last confirmed for the number hours ago', async () => {
+		// The number may have been reassigned during the outage; a config
+		// confirmed long ago would answer, log and text as the previous owner.
+		const { load, advance } = loader([
+			{ kind: 'config', config: testConfig() },
+			new ServiceError('Bad gateway', 502),
+		])
+		await load(lookup)
+		advance(2 * 60 * 60_000)
+		await expect(load(lookup)).rejects.toThrow('Bad gateway')
 	})
 
 	it('never answers from the cache when App refuses the number', async () => {

@@ -15,6 +15,7 @@ import {
 	and,
 	db,
 	eq,
+	isNotNull,
 	isNull,
 	Organization,
 	OrganizationRole,
@@ -249,6 +250,8 @@ export async function action({ request }: Route.ActionArgs) {
 					.where(
 						and(
 							eq(Organization.verifiedDomain, emailDomain),
+							// Only a DNS-proven domain enrolls sign-ups.
+							isNotNull(Organization.verifiedDomainProvedAt),
 							isNull(UserOrganization.userId),
 						),
 					),

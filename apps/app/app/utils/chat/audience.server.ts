@@ -6,6 +6,7 @@ import {
 	OrganizationChatChannel,
 	OrganizationChatChannelMember,
 	OrganizationChatChannelRole,
+	User,
 	UserOrganization,
 } from '@repo/database'
 
@@ -27,7 +28,9 @@ function chunk<T>(items: T[], size = ID_CHUNK) {
  * calls it (batched, cached for a few seconds) and trusts nothing else, so the
  * rules cannot drift between the HTTP pages and the realtime path:
  *
- * - the user must be an **active** member of the organization, always;
+ * - the user must be an **active**, unbanned member of the organization,
+ *   always (an open socket of a banned user is re-checked on the next
+ *   audience refresh);
  * - `everyone` channels admit every active member;
  * - `restricted` channels admit active members whose role is listed **or** who
  *   are listed individually. Holding `update:chat:any` does not grant entry.
@@ -75,10 +78,12 @@ export async function resolveChannelAudiences(
 			roleId: UserOrganization.organizationRoleId,
 		})
 		.from(UserOrganization)
+		.innerJoin(User, eq(User.id, UserOrganization.userId))
 		.where(
 			and(
 				eq(UserOrganization.organizationId, organizationId),
 				eq(UserOrganization.active, true),
+				eq(User.isBanned, false),
 			),
 		)
 
@@ -138,7 +143,7 @@ export async function resolveChannelAudiences(
 	return audiences
 }
 
-/** Whether `userId` is an active member of the organization. */
+/** Whether `userId` is an active, unbanned member of the organization. */
 export async function isActiveOrganizationMember(
 	organizationId: string,
 	userId: string,
@@ -146,11 +151,13 @@ export async function isActiveOrganizationMember(
 	const [row] = await db
 		.select({ userId: UserOrganization.userId })
 		.from(UserOrganization)
+		.innerJoin(User, eq(User.id, UserOrganization.userId))
 		.where(
 			and(
 				eq(UserOrganization.organizationId, organizationId),
 				eq(UserOrganization.userId, userId),
 				eq(UserOrganization.active, true),
+				eq(User.isBanned, false),
 			),
 		)
 		.limit(1)

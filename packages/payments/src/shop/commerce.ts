@@ -19,6 +19,7 @@ import {
 	mapCheckoutWebhookToPayment,
 	mapPolarShopOrder,
 	checkoutPaymentStatusToOrderStatus,
+	CHECKOUT_ADJUSTMENT_EVENT_TYPES,
 	polarCheckoutStatusToOrderStatus,
 	retrieveCheckoutShopPayment,
 	retrieveCheckoutSubEntityStatus,
@@ -570,14 +571,21 @@ export class ShopCommerce {
 		email?: string | null
 		phone?: string | null
 		metadata: Record<string, string>
+		/** One Stripe customer per key, however many requests race. */
+		idempotencyKey?: string
 	}) {
 		const customer = await this.withConnect(() =>
-			this.getStripe().customers.create({
-				name: options.name || undefined,
-				email: options.email || undefined,
-				phone: options.phone || undefined,
-				metadata: options.metadata,
-			}),
+			this.getStripe().customers.create(
+				{
+					name: options.name || undefined,
+					email: options.email || undefined,
+					phone: options.phone || undefined,
+					metadata: options.metadata,
+				},
+				options.idempotencyKey
+					? { idempotencyKey: options.idempotencyKey }
+					: undefined,
+			),
 		)
 		return customer.id
 	}
@@ -854,7 +862,8 @@ export class ShopCommerce {
 			processorCheckoutId: order.checkoutId,
 			processorPaymentId: null,
 			processorOrderId: order.id,
-			status: order.paid ? 'paid' : 'pending',
+			// A refunded Polar order still reads `paid`.
+			status: order.refunded ? 'refunded' : order.paid ? 'paid' : 'pending',
 		})
 	}
 
@@ -897,7 +906,10 @@ export class ShopCommerce {
 		const payment = mapCheckoutWebhookToPayment(event)
 		if (!payment) return null
 		const order = this.mapCheckoutPaymentToOrder(payment)
-		return order ? { type: 'payment', order } : null
+		if (!order) return null
+		return CHECKOUT_ADJUSTMENT_EVENT_TYPES.has(event.type)
+			? { type: 'adjustment', order }
+			: { type: 'payment', order }
 	}
 
 	verifyHostedWebhook(
@@ -919,7 +931,11 @@ export class ShopCommerce {
 		type: string
 		data: unknown
 	}): ShopMorWebhookEvent | null {
-		if (event.type === 'order.paid' || event.type === 'order.updated') {
+		if (
+			event.type === 'order.paid' ||
+			event.type === 'order.updated' ||
+			event.type === 'order.refunded'
+		) {
 			const order = mapPolarShopOrder(
 				event.data as Parameters<typeof mapPolarShopOrder>[0],
 			)

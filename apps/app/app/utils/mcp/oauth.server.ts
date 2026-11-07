@@ -1,12 +1,14 @@
 import crypto from 'node:crypto'
 import { auditService, AuditAction } from '@repo/audit'
-import { isCloudflareWorkerRuntime } from '@repo/common'
 import {
 	and,
 	db,
 	gt,
+	lt,
 	lte,
 	Session,
+	sql,
+	Verification,
 	eq,
 	MCPAccessToken,
 	MCPAuthorization,
@@ -205,36 +207,26 @@ export function validateMCPRedirectUriFormat(redirectUri: string): {
 	return validateRedirectUriFormat(redirectUri)
 }
 
-// In-memory cache for authorization codes (in production, use Redis)
-// Using a Map with automatic cleanup to prevent memory leaks
-const authorizationCodeCache = new Map<
-	string,
-	{
-		userId: string
-		organizationId: string
-		clientName: string
-		clientId: string
-		redirectUri: string
-		expiresAt: number
-		codeChallenge?: string
-		codeChallengeMethod?: string
-		issuedAt: number
-		sessionUserId: string | null
-	}
->()
+/**
+ * Authorization codes live in the control-plane database, not in memory: the
+ * /mcp/authorize and /mcp/token requests usually land on different Workers
+ * isolates. A code is a `Verification` row (type `mcp-authorization-code`,
+ * target the SHA-256 of the code, secret the JSON below). Redemption is a
+ * `DELETE ... RETURNING`, so a code is consumed exactly once on any isolate.
+ */
+const AUTHORIZATION_CODE_TYPE = 'mcp-authorization-code'
 
-// Clean up expired codes every minute with batched deletions
-// to prevent blocking the event loop with large caches
-if (!isCloudflareWorkerRuntime()) {
-	setInterval(() => {
-		const now = Date.now()
-		const toDelete: string[] = []
-		for (const [code, entry] of authorizationCodeCache.entries()) {
-			if (entry.expiresAt < now) toDelete.push(code)
-			if (toDelete.length > 100) break // limit iteration per cleanup cycle
-		}
-		toDelete.forEach((code) => authorizationCodeCache.delete(code))
-	}, 60 * 1000).unref() // unref to allow process to exit if this is the only thing keeping it alive
+type AuthorizationCodeData = {
+	userId: string
+	organizationId: string
+	clientName: string
+	clientId: string
+	redirectUri: string
+	expiresAt: number
+	codeChallenge?: string
+	codeChallengeMethod?: string
+	issuedAt: number
+	sessionUserId: string | null
 }
 
 // Generate cryptographically secure random token
@@ -408,7 +400,7 @@ export async function revokeAuthorization(authorizationId: string) {
 	])
 }
 
-// Generate authorization code (stored in memory/cache)
+// Generate authorization code (stored in the database, see above)
 export async function createAuthorizationCode({
 	userId,
 	organizationId,
@@ -438,19 +430,39 @@ export async function createAuthorizationCode({
 }): Promise<string> {
 	const code = generateToken()
 	const codeHash = hashToken(code)
-
-	// Store in cache with expiration (including PKCE parameters)
-	authorizationCodeCache.set(codeHash, {
+	const now = Date.now()
+	const authData: AuthorizationCodeData = {
 		userId,
 		organizationId,
 		clientName,
 		clientId,
 		redirectUri,
-		expiresAt: Date.now() + AUTHORIZATION_CODE_EXPIRATION,
+		expiresAt: now + AUTHORIZATION_CODE_EXPIRATION,
 		codeChallenge,
 		codeChallengeMethod,
-		issuedAt: Date.now(),
+		issuedAt: now,
 		sessionUserId,
+	}
+
+	// Opportunistic cleanup of codes nobody redeemed.
+	await db
+		.delete(Verification)
+		.where(
+			and(
+				eq(Verification.type, AUTHORIZATION_CODE_TYPE),
+				lt(Verification.expiresAt, new Date(now)),
+			),
+		)
+	// The TOTP columns are required by the table but unused for a code.
+	await db.insert(Verification).values({
+		type: AUTHORIZATION_CODE_TYPE,
+		target: codeHash,
+		secret: JSON.stringify(authData),
+		algorithm: 'none',
+		digits: 0,
+		period: 0,
+		charSet: '',
+		expiresAt: new Date(authData.expiresAt),
 	})
 
 	return code
@@ -461,10 +473,15 @@ export async function createAuthorizationCode({
  * ban). A code obtained before such an event must not turn into a new active
  * authorization after it.
  */
-export function revokePendingAuthorizationCodes(userId: string) {
-	for (const [hash, entry] of authorizationCodeCache.entries()) {
-		if (entry.userId === userId) authorizationCodeCache.delete(hash)
-	}
+export async function revokePendingAuthorizationCodes(userId: string) {
+	await db
+		.delete(Verification)
+		.where(
+			and(
+				eq(Verification.type, AUTHORIZATION_CODE_TYPE),
+				sql`json_extract(${Verification.secret}, '$.userId') = ${userId}`,
+			),
+		)
 }
 
 /**
@@ -495,12 +512,26 @@ export async function exchangeAuthorizationCode(
 	codeVerifier?: string,
 ) {
 	const codeHash = hashToken(code)
-	const authData = authorizationCodeCache.get(codeHash)
+	// Consume the code atomically before any check, so it cannot be reused
+	// (even after a failed validation) and only one redemption ever wins.
+	const [row] = await db
+		.delete(Verification)
+		.where(
+			and(
+				eq(Verification.type, AUTHORIZATION_CODE_TYPE),
+				eq(Verification.target, codeHash),
+			),
+		)
+		.returning({ secret: Verification.secret })
+	if (!row) return null
+	let authData: AuthorizationCodeData
+	try {
+		authData = JSON.parse(row.secret) as AuthorizationCodeData
+	} catch {
+		return null
+	}
 
-	// Delete code immediately to prevent reuse (even on failed validation)
-	authorizationCodeCache.delete(codeHash)
-
-	if (!authData || authData.expiresAt < Date.now()) {
+	if (authData.expiresAt < Date.now()) {
 		return null
 	}
 

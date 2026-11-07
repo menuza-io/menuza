@@ -70,6 +70,7 @@ export function timeCardsTable(
 			? ['Currency', 'Hourly rate', 'Estimated pay', 'Cash tips', 'Credit tips']
 			: []),
 		'Status',
+		'Figures changed after approval',
 		'Issues',
 		'Note',
 	]
@@ -102,6 +103,7 @@ export function timeCardsTable(
 					]
 				: []),
 			card.status,
+			card.figuresChanged ? 'yes' : 'no',
 			card.issues.join(' '),
 			card.managerNote,
 		] satisfies CsvCell[]
@@ -124,6 +126,7 @@ export function payrollSummaryTable(
 		'Holiday hours',
 		'Paid hours',
 		'Unapproved cards',
+		'Cards changed after approval',
 		...(options.includeMoney
 			? ['Currency', 'Hourly rate', 'Estimated pay', 'Cash tips', 'Credit tips']
 			: []),
@@ -141,6 +144,7 @@ export function payrollSummaryTable(
 			minutesToHours(row.holidayMinutes),
 			minutesToHours(row.paidMinutes),
 			row.unapprovedCards,
+			row.changedCards,
 		]
 		if (!options.includeMoney || !row.money) {
 			body.push(base)
@@ -179,6 +183,7 @@ export function payrollSummaryTable(
 							row.employeeNumber,
 							row.firstName,
 							row.lastName,
+							'',
 							'',
 							'',
 							'',

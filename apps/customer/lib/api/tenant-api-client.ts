@@ -166,12 +166,17 @@ export class TenantApiClient {
 		return envelope.customer
 	}
 
-	/** `email` undefined leaves the stored email alone; an empty string clears it. */
+	/**
+	 * `email` undefined leaves the stored email alone; an empty string clears it.
+	 * tenant-api re-issues only the access token (its `name` claim changed):
+	 * rotating the refresh token would sign the customer out of their other
+	 * devices. A refresh token is returned only if the server ever sends one.
+	 */
 	async updateProfile(
 		name: string,
 		email: string | undefined,
 		accessToken: string,
-	): Promise<AuthTokens> {
+	): Promise<{ accessToken: string; refreshToken?: string }> {
 		const path = '/auth/profile'
 		const response = await this.#perform({
 			method: 'POST',
@@ -183,17 +188,19 @@ export class TenantApiClient {
 			json: email === undefined ? { name } : { name, email },
 		})
 		const payload = decodeResponse(response, verifyResultSchema, path)
-		if (!payload.accessToken || !payload.refreshToken) {
+		if (!payload.accessToken) {
 			throw new ApiError(
 				400,
 				payload.error || 'Could not save your profile',
 				'profile_not_saved',
 			)
 		}
-		return {
-			accessToken: payload.accessToken,
-			refreshToken: payload.refreshToken,
-		}
+		return payload.refreshToken
+			? {
+					accessToken: payload.accessToken,
+					refreshToken: payload.refreshToken,
+				}
+			: { accessToken: payload.accessToken }
 	}
 
 	/**

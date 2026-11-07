@@ -269,6 +269,11 @@ export interface OAuthCallbackParams {
 	errorDescription?: string
 	oauthToken?: string
 	oauthVerifier?: string
+	/**
+	 * OAuth 1.0a (Trello): the request-token secret from `oauthFlow.start`,
+	 * kept by the app in its signed hand-off record.
+	 */
+	requestTokenSecret?: string
 }
 
 // OAuth state data

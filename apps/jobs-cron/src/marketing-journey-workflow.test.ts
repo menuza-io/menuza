@@ -1,5 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { MarketingJourneyWorkflow } from './marketing-journey-workflow'
+import {
+	ACTION_STEP_RETRIES,
+	MarketingJourneyWorkflow,
+} from './marketing-journey-workflow'
 import type {
 	MarketingJourneyWorkflowEnv,
 	MarketingJourneyWorkflowParams,
@@ -134,11 +137,7 @@ describe('MarketingJourneyWorkflow', () => {
 		expect(mockStep.do).toHaveBeenCalledWith(
 			'action-node_email_1',
 			{
-				retries: {
-					limit: 3,
-					delay: '10 seconds',
-					backoff: 'exponential',
-				},
+				retries: ACTION_STEP_RETRIES,
 				timeout: '2 minutes',
 			},
 			expect.any(Function),
@@ -488,6 +487,141 @@ describe('MarketingJourneyWorkflow', () => {
 		)
 	})
 
+	function jsonResponse(body: unknown, status = 200) {
+		return new Response(JSON.stringify(body), {
+			status,
+			headers: { 'Content-Type': 'application/json' },
+		})
+	}
+
+	function completeRunStatuses(fetchMock: ReturnType<typeof vi.fn>) {
+		return fetchMock.mock.calls
+			.filter(([url]) => String(url).includes('/api/journeys/complete-run'))
+			.map(([, init]) => JSON.parse(String((init as RequestInit).body)).status)
+	}
+
+	const pausedGraph = {
+		nodes: [
+			{ id: 'p1', type: 'trigger', data: {} },
+			{ id: 'p2', type: 'action_email', data: { subject: 'First' } },
+			{ id: 'p3', type: 'action_sms', data: { messageText: 'Second' } },
+		],
+		edges: [
+			{ id: 'e1', source: 'p1', target: 'p2' },
+			{ id: 'e2', source: 'p2', target: 'p3' },
+		],
+	}
+
+	it('stops the run when tenant-api says the journey was paused', async () => {
+		const fetchMock = vi.fn().mockImplementation(async (url: string) => {
+			if (String(url).includes('/api/journeys/execute-step')) {
+				return jsonResponse({ success: true, status: 'halted' })
+			}
+			return jsonResponse({ success: true })
+		})
+		globalThis.fetch = fetchMock
+
+		const result = await createWorkflowInstance(env).run(
+			{
+				payload: {
+					orgId: 'org_p',
+					journeyId: 'jny_p',
+					runId: 'run_paused',
+					customerId: 'cust_p',
+					graph: pausedGraph,
+				},
+			} as any,
+			mockStep as any,
+		)
+
+		expect(result.status).toBe('cancelled')
+		const executeCalls = fetchMock.mock.calls.filter(([url]) =>
+			String(url).includes('/api/journeys/execute-step'),
+		)
+		expect(executeCalls).toHaveLength(1)
+		expect(completeRunStatuses(fetchMock)).not.toContain('completed')
+	})
+
+	const conditionGraph = {
+		nodes: [
+			{ id: 'c1', type: 'trigger', data: {} },
+			{
+				id: 'c2',
+				type: 'condition',
+				data: { field: 'phoneVerified', operator: 'equals', value: 'true' },
+			},
+			{ id: 'c3', type: 'action_sms', data: { messageText: 'Yes' } },
+			{ id: 'c4', type: 'action_email', data: { subject: 'No' } },
+		],
+		edges: [
+			{ id: 'e1', source: 'c1', target: 'c2' },
+			{ id: 'e2', source: 'c2', target: 'c3', sourceHandle: 'true' },
+			{ id: 'e3', source: 'c2', target: 'c4', sourceHandle: 'false' },
+		],
+	}
+
+	it('retries a condition step on a 5xx and never routes on an unanswered condition', async () => {
+		const fetchMock = vi.fn().mockImplementation(async (url: string) => {
+			if (String(url).includes('/api/journeys/evaluate-condition')) {
+				return new Response('Service Unavailable', { status: 503 })
+			}
+			return jsonResponse({ success: true, status: 'delivered' })
+		})
+		globalThis.fetch = fetchMock
+
+		// The step throws, so Workflows retries it; after the last retry the
+		// run fails instead of taking the "false" branch.
+		await expect(
+			createWorkflowInstance(env).run(
+				{
+					payload: {
+						orgId: 'org_c',
+						journeyId: 'jny_c',
+						runId: 'run_cond_503',
+						customerId: 'cust_c',
+						graph: conditionGraph,
+					},
+				} as any,
+				mockStep as any,
+			),
+		).rejects.toThrow('HTTP 503')
+
+		const executeCalls = fetchMock.mock.calls.filter(([url]) =>
+			String(url).includes('/api/journeys/execute-step'),
+		)
+		expect(executeCalls).toHaveLength(0)
+		expect(completeRunStatuses(fetchMock)).toEqual(['failed'])
+	})
+
+	it('stops the run when a condition step finds the journey paused', async () => {
+		const fetchMock = vi.fn().mockImplementation(async (url: string) => {
+			if (String(url).includes('/api/journeys/evaluate-condition')) {
+				return jsonResponse({ success: true, halted: true, result: false })
+			}
+			return jsonResponse({ success: true, status: 'delivered' })
+		})
+		globalThis.fetch = fetchMock
+
+		const result = await createWorkflowInstance(env).run(
+			{
+				payload: {
+					orgId: 'org_c',
+					journeyId: 'jny_c',
+					runId: 'run_cond_paused',
+					customerId: 'cust_c',
+					graph: conditionGraph,
+				},
+			} as any,
+			mockStep as any,
+		)
+
+		expect(result.status).toBe('cancelled')
+		const executeCalls = fetchMock.mock.calls.filter(([url]) =>
+			String(url).includes('/api/journeys/execute-step'),
+		)
+		expect(executeCalls).toHaveLength(0)
+	})
+
 	it('handles empty or missing graph gracefully', async () => {
 		const fetchMock = vi.fn().mockImplementation(async () => {
 			return new Response(JSON.stringify({ success: true }), {
@@ -731,5 +865,22 @@ describe('MarketingJourneyWorkflow', () => {
 		)
 
 		expect(result).toEqual({ status: 'completed', executedSteps: 1 })
+	})
+
+	it('keeps retrying an action step for longer than tenant-api holds its processing lease', () => {
+		// tenant-api: JOURNEY_PROCESSING_LEASE_MS. While it holds, execute-step
+		// answers 409; only after it expires can a crashed attempt be reclaimed.
+		const leaseMs = 5 * 60 * 1000
+		const [amount, unit] = ACTION_STEP_RETRIES.delay.split(' ')
+		const firstDelayMs =
+			Number(amount) * (unit!.startsWith('minute') ? 60_000 : 1000)
+		let spanMs = 0
+		for (let attempt = 0; attempt < ACTION_STEP_RETRIES.limit; attempt++) {
+			spanMs +=
+				ACTION_STEP_RETRIES.backoff === 'exponential'
+					? firstDelayMs * 2 ** attempt
+					: firstDelayMs
+		}
+		expect(spanMs).toBeGreaterThan(leaseMs)
 	})
 })

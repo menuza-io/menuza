@@ -22,8 +22,31 @@ class OAuthFlow {
 		providerName: string,
 		redirectUri: string,
 		additionalParams?: Record<string, any>,
-	): Promise<{ authUrl: string; state: string }> {
+	): Promise<{ authUrl: string; state: string; requestTokenSecret?: string }> {
 		const provider = providerRegistry.get(providerName)
+
+		// OAuth 1.0a (Trello): the request-token secret is needed to finish.
+		// It goes back to the app, which keeps it in its signed hand-off
+		// record, so any isolate can complete the flow.
+		if (
+			'startOAuth1' in provider &&
+			typeof provider.startOAuth1 === 'function'
+		) {
+			const started = (await provider.startOAuth1(
+				organizationId,
+				redirectUri,
+			)) as {
+				authUrl: string
+				requestToken: string
+				requestTokenSecret: string
+			}
+			return {
+				authUrl: started.authUrl,
+				state: started.requestToken,
+				requestTokenSecret: started.requestTokenSecret,
+			}
+		}
+
 		const authUrl = await provider.getAuthUrl(
 			organizationId,
 			redirectUri,
@@ -57,26 +80,14 @@ class OAuthFlow {
 		const isOAuth1 = params.oauthToken && params.oauthVerifier
 
 		if (isOAuth1) {
-			// OAuth 1.0a flow (Trello) - the request token carries the organization
-			const provider = providerRegistry.get(providerName)
-			if (!provider || !('getRequestTokenContext' in provider)) {
-				throw new Error(
-					`${providerName} provider not found or does not support OAuth 1.0a`,
-				)
-			}
-
-			const tokenContext = await (provider as any).getRequestTokenContext(
-				params.oauthToken!,
-			)
-
-			if (!tokenContext) {
+			// OAuth 1.0a flow (Trello). The app has already matched the echoed
+			// request token against its signed hand-off record for this
+			// browser and member, which also carries the organization and the
+			// request-token secret.
+			if (!params.requestTokenSecret) {
 				throw new Error(
 					'OAuth request token not found or expired. Please restart the authorization process.',
 				)
-			}
-
-			if (tokenContext.organizationId !== organizationId) {
-				throw new Error('Organization mismatch in OAuth state')
 			}
 		} else {
 			// Standard OAuth 2.0 state validation. The nonce is not consumed here:

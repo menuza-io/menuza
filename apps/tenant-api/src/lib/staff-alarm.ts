@@ -15,6 +15,11 @@
  *   organization with nothing going on goes quiet and costs nothing, and the
  *   hourly cron or the next kiosk call wakes it again.
  *
+ * The same alarm drives broadcasts: the tick reports when it next has broadcast
+ * work (a scheduled send, a throttled or interrupted one to resume) as
+ * `nextAt`, and creating a campaign arms it with `armAlarmBy`. An alarm is only
+ * ever moved earlier, never later.
+ *
  * This file holds the logic with a narrow storage interface so it can be tested
  * without a Durable Object runtime; `workers/tenant-org.ts` is thin glue.
  */
@@ -53,22 +58,41 @@ export function isStaffActivityPath(pathname: string): boolean {
 }
 
 /**
- * Arms the next alarm unless one is already pending. Never moves an existing
- * alarm, so a busy kiosk cannot push the tick back indefinitely.
+ * Arms an alarm for `at` unless one is already pending at or before it. Only
+ * ever moves an alarm earlier, so repeated calls cannot push it back. A pending
+ * alarm long past `now` (it was lost) is replaced.
  */
-export async function armStaffAlarm(
+export async function armAlarmBy(
+	storage: AlarmStorage,
+	orgId: string,
+	at: number,
+	now: number,
+	intervalMs = STAFF_ALARM_INTERVAL_MS,
+): Promise<'armed' | 'already_armed'> {
+	const existing = await storage.getAlarm()
+	if (existing !== null && existing > now - intervalMs && existing <= at) {
+		return 'already_armed'
+	}
+	if ((await storage.get<string>(STAFF_ALARM_ORG_KEY)) !== orgId) {
+		await storage.put(STAFF_ALARM_ORG_KEY, orgId)
+	}
+	await storage.setAlarm(at)
+	return 'armed'
+}
+
+/**
+ * Arms the next alarm one interval ahead unless one is already pending within
+ * it. Never pushes an existing alarm back, so a busy kiosk cannot delay the
+ * tick indefinitely; an alarm set further out (a broadcast scheduled for next
+ * week) is brought forward.
+ */
+export function armStaffAlarm(
 	storage: AlarmStorage,
 	orgId: string,
 	now: number,
 	intervalMs = STAFF_ALARM_INTERVAL_MS,
 ): Promise<'armed' | 'already_armed'> {
-	const existing = await storage.getAlarm()
-	if (existing !== null && existing > now - intervalMs) return 'already_armed'
-	if ((await storage.get<string>(STAFF_ALARM_ORG_KEY)) !== orgId) {
-		await storage.put(STAFF_ALARM_ORG_KEY, orgId)
-	}
-	await storage.setAlarm(now + intervalMs)
-	return 'armed'
+	return armAlarmBy(storage, orgId, now + intervalMs, now, intervalMs)
 }
 
 export type AlarmOutcome =
@@ -84,7 +108,13 @@ export type AlarmOutcome =
 export async function handleStaffAlarm(options: {
 	storage: AlarmStorage
 	now: number
-	runTick: (orgId: string) => Promise<{ needsFollowUp: boolean }>
+	/**
+	 * `needsFollowUp` asks for another run one interval ahead; `nextAt` (when
+	 * there is broadcast work) asks for one at that time. The earlier wins.
+	 */
+	runTick: (
+		orgId: string,
+	) => Promise<{ needsFollowUp: boolean; nextAt?: number | null }>
 	intervalMs?: number
 }): Promise<AlarmOutcome> {
 	const { storage, now } = options
@@ -95,8 +125,12 @@ export async function handleStaffAlarm(options: {
 	try {
 		const result = await options.runTick(orgId)
 		await storage.delete(STAFF_ALARM_FAILURES_KEY)
-		if (result.needsFollowUp) {
-			await storage.setAlarm(now + intervalMs)
+		const next = Math.min(
+			result.needsFollowUp ? now + intervalMs : Number.POSITIVE_INFINITY,
+			result.nextAt ?? Number.POSITIVE_INFINITY,
+		)
+		if (Number.isFinite(next)) {
+			await storage.setAlarm(next)
 			return { status: 'ran', rearmed: true }
 		}
 		return { status: 'ran', rearmed: false }

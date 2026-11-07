@@ -11,6 +11,7 @@
  */
 
 import { ENV } from './package-env.js'
+import { pinGitLabInstanceUrl } from './providers/gitlab/instance-pin.js'
 import {
 	Integration as IntegrationTable,
 	IntegrationLog as IntegrationLogTable,
@@ -164,6 +165,8 @@ export class IntegrationManager {
 	): Promise<{
 		authUrl: string
 		state: string
+		/** OAuth 1.0a only: keep it with the hand-off for the callback. */
+		requestTokenSecret?: string
 	}> {
 		const { oauthFlow } = await import('./oauth-flow')
 		return oauthFlow.start(
@@ -290,7 +293,10 @@ export class IntegrationManager {
 		config: Record<string, any>,
 	): Promise<Integration> {
 		const [existing] = await db
-			.select({ providerName: IntegrationTable.providerName })
+			.select({
+				providerName: IntegrationTable.providerName,
+				config: IntegrationTable.config,
+			})
 			.from(IntegrationTable)
 			.where(eq(IntegrationTable.id, integrationId))
 			.limit(1)
@@ -308,6 +314,12 @@ export class IntegrationManager {
 					)
 				}
 			}
+		}
+
+		if (existing?.providerName === 'gitlab') {
+			const pinned = pinGitLabInstanceUrl(existing.config, config)
+			if ('error' in pinned) throw new Error(pinned.error)
+			config = pinned.config
 		}
 
 		const [integration] = await db
@@ -343,6 +355,8 @@ export class IntegrationManager {
 			throw new Error('Integration not found')
 		}
 
+		await this.revokeProviderGrant(integration)
+
 		// Delete all connections first
 		await db
 			.delete(ConnectionTable)
@@ -363,6 +377,27 @@ export class IntegrationManager {
 			provider: integration.providerName,
 			connectionCount: integration.connections?.length || 0,
 		})
+	}
+
+	/**
+	 * Revoke the integration's grant at the provider, best effort: a provider
+	 * outage or an already revoked token must not keep the member from
+	 * disconnecting, so failures are logged and ignored.
+	 */
+	private async revokeProviderGrant(integration: Integration): Promise<void> {
+		try {
+			const provider = providerRegistry.get(integration.providerName)
+			if (!provider.revokeToken) return
+			const { tokenManager } = await import('./token-manager')
+			const tokenData = await tokenManager.getTokenData(integration.id)
+			if (!tokenData?.accessToken) return
+			await provider.revokeToken(tokenData.accessToken, integration)
+		} catch (error) {
+			console.warn(
+				`Failed to revoke ${integration.providerName} grant on disconnect:`,
+				error instanceof Error ? error.message : error,
+			)
+		}
 	}
 
 	// Note-to-Channel Connection Management
@@ -567,9 +602,14 @@ export class IntegrationManager {
 	/**
 	 * Refresh expired tokens for an integration
 	 * @param integrationId - Integration ID
+	 * @param options.rejectedAccessToken - The access token the provider just
+	 *   refused; when the stored one already differs, it is used as is
 	 * @returns Updated integration with new tokens
 	 */
-	async refreshIntegrationTokens(integrationId: string): Promise<Integration> {
+	async refreshIntegrationTokens(
+		integrationId: string,
+		options: { rejectedAccessToken?: string } = {},
+	): Promise<Integration> {
 		const integration = await this.getIntegration(integrationId)
 		if (!integration) {
 			throw new Error('Integration not found')
@@ -581,13 +621,14 @@ export class IntegrationManager {
 
 		const { tokenManager } = await import('./token-manager')
 		const provider = this.getProvider(integration.providerName)
-		const { decryptToken } = await import('./encryption')
-		const refreshToken = await decryptToken(integration.refreshToken)
 
+		// Decrypts the stored refresh token and persists the rotated pair with
+		// a compare-and-set; a lost race returns the token the winner stored.
 		const result = await tokenManager.refreshToken(
 			integration,
 			provider,
-			refreshToken,
+			undefined,
+			options,
 		)
 
 		if (!result.success) {

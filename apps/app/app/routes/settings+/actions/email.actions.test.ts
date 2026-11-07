@@ -132,6 +132,28 @@ describe('changeEmailAction', () => {
 		expect(await emailOf(user.id)).toBe(before)
 	})
 
+	it('treats an address differing only in case as already in use and stores lowercase', async () => {
+		const taken = uniqueEmail('taken')
+		await createTestUser({ email: taken })
+		const user = await createTestUser()
+		const { cookie } = await createTestSession(user.id)
+
+		const clash = await requestChange(user.id, cookie, taken.toUpperCase())
+		expect(clash.response.status).toBe(400)
+		expect(clash.verifyCookie).toBeUndefined()
+
+		const mixed = uniqueEmail('Mixed').replace('mixed', 'MiXeD')
+		const { otp, verifyCookie, to } = await requestChange(
+			user.id,
+			cookie,
+			mixed,
+		)
+		expect(to).toBe(mixed.toLowerCase())
+		const response = await submitCode(user.id, cookie, verifyCookie!, otp!)
+		expect(response.status).toBe(302)
+		expect(await emailOf(user.id)).toBe(mixed.toLowerCase())
+	})
+
 	it('limits how many codes one address can be sent', async () => {
 		const user = await createTestUser()
 		const { cookie } = await createTestSession(user.id)

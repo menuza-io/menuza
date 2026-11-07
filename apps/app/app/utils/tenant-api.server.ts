@@ -16,7 +16,8 @@ export interface OperatorTenantClient {
 	orgId: string
 	orgSlug: string
 	dataRegion: string
-	jwt: string
+	/** Present only for a token bound to an `area` or `scope` (browser use). */
+	jwt: string | undefined
 	/** Server-to-server origin (may be http://localhost in local npm run dev). */
 	tenantApiUrl: string
 	/** Browser-facing origin. HTTPS via the dev proxy so App pages are not mixed content. */
@@ -67,6 +68,12 @@ export async function getOperatorTenantClient(
 	orgSlug: string,
 	options: {
 		scope?: 'mailbox' | 'phone_calls'
+		/**
+		 * Names the area of a token that reaches the browser. tenant-api accepts
+		 * it only on that area's routes, so the permission checked before minting
+		 * cannot unlock another area. Omit for tokens that stay on the server.
+		 */
+		area?: 'marketing' | 'customers'
 		/** Lets tenant-api accept changes (e.g. completing or tagging calls). */
 		canUpdate?: boolean
 		/** Lets tenant-api accept destructive calls (e.g. deleting call logs). */
@@ -120,6 +127,7 @@ export async function getOperatorTenantClient(
 			orgId: organization.id,
 			role: 'operator',
 			scope: options.scope,
+			...(options.area ? { area: options.area } : {}),
 			...(claims.canUpdate ? { canUpdate: true } : {}),
 			...(claims.canDelete ? { canDelete: true } : {}),
 		})
@@ -162,7 +170,10 @@ export async function getOperatorTenantClient(
 		orgId: organization.id,
 		orgSlug: organization.slug,
 		dataRegion: organization.dataRegion,
-		jwt,
+		// Only a token bound to an area or scope may reach a browser: tenant-api
+		// accepts an unbound one on every operator route, so it stays inside
+		// `fetchTenant`.
+		jwt: options.area || options.scope ? jwt : undefined,
 		tenantApiUrl,
 		fetchTenant,
 	}

@@ -678,6 +678,61 @@ describe('timesheet figures, pay periods and export', () => {
 			expect(summary.body.totals.unapprovedCards).toBe(0)
 		})
 
+		it("is not ready for payroll when an approved card's figures moved, and the exports say so", async () => {
+			await t.setPolicy(LOC_1, {
+				dailyOvertime: { thresholdMinutes: 480, multiplierBp: 15000 },
+				timesheetApprovalMode: 'approve',
+			})
+			const { staffId } = await t.staff()
+			const eight = await t.card({
+				staffId,
+				scopeId: LOC_1,
+				date: '2026-03-02',
+				startTime: '08:00',
+				endTime: '16:00',
+				reason: 'Shift',
+			})
+			const early = await t.card({
+				staffId,
+				scopeId: LOC_1,
+				date: '2026-03-02',
+				startTime: '05:00',
+				endTime: '07:00',
+				reason: 'Earlier prep the same day',
+			})
+			await t.send('POST', '/timesheets/approve', {
+				entries: [{ id: eight.body.card.id, version: 1 }],
+			})
+			// Removing the earlier card moves overtime off the approved one.
+			const fixed = await t.send(
+				'DELETE',
+				`/timesheets/entries/${early.body.card.id}`,
+				{
+					expectedVersion: early.body.card.version,
+					reason: 'Entered by mistake',
+				},
+			)
+			expect(fixed.status).toBe(200)
+			const summary = await t.get('/timesheets/summary?date=2026-03-02')
+			expect(summary.body.totals.unapprovedCards).toBe(0)
+			expect(summary.body.totals.changedCards).toBe(1)
+			expect(summary.body.rows[0].changedCards).toBe(1)
+			expect(summary.body.readyForPayroll).toBe(false)
+
+			const cards = await t.get('/timesheets/export?date=2026-03-02&kind=cards')
+			const column = cards.body.headers.indexOf(
+				'Figures changed after approval',
+			)
+			expect(column).toBeGreaterThan(-1)
+			expect(cards.body.rows.map((row: any[]) => row[column])).toEqual(['yes'])
+			const totals = await t.get(
+				'/timesheets/export?date=2026-03-02&kind=summary',
+			)
+			const count = totals.body.headers.indexOf('Cards changed after approval')
+			expect(count).toBeGreaterThan(-1)
+			expect(totals.body.rows[0][count]).toBe(1)
+		})
+
 		it('does not hold payroll for approval at a scope where approval is off', async () => {
 			const { staffId } = await t.staff()
 			await t.card({

@@ -197,11 +197,15 @@ export function memoryConfigCache(): ConfigCacheStore {
 }
 
 /**
- * The oldest cached config the worker still answers with while App is down.
- * Safety switches flipped during an outage don't reach the worker until App
- * is back, so this keeps that window bounded.
+ * The oldest cached config the worker still answers with while App is down,
+ * measured from the last time App confirmed the number belongs to the
+ * config's organization. Safety switches flipped and numbers unassigned or
+ * reassigned during an outage don't reach the worker until App is back, and a
+ * stale entry would answer (and log, and text) as the previous organization,
+ * so the window is kept short: long enough to ride out a deploy or a blip,
+ * not a day.
  */
-export const CONFIG_MAX_STALE_MS = 24 * 60 * 60_000
+export const CONFIG_MAX_STALE_MS = 30 * 60_000
 
 /** App could not answer: unreachable, timed out, or a server error. */
 function isOutage(error: unknown) {

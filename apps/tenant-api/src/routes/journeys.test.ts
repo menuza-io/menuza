@@ -13,6 +13,7 @@ import {
 	journeyRuns,
 } from '@repo/tenant-db'
 import { journeySystemRoutes, journeyOperatorRoutes } from './journeys.ts'
+import { setCustomerSubscription } from '../services/marketing-audience.ts'
 import { brand } from '@repo/config/brand.ts'
 
 vi.mock('../lib/origin.ts', () => ({
@@ -148,10 +149,18 @@ describe('Journey API Routes (System & Operator)', () => {
 					})
 					.returning()
 				const customer = customerInsert[0]!
+				await setCustomerSubscription(db, {
+					customerId: customer.id,
+					topic: 'marketing',
+					channel: 'email',
+					subscribed: true,
+					source: 'signup',
+					confirmedEmail: customer.email,
+				})
 
 				const journeyInsert = await db
 					.insert(marketingJourneys)
-					.values({ name: 'System Journey' })
+					.values({ name: 'System Journey', status: 'active' })
 					.returning()
 				const journey = journeyInsert[0]!
 
@@ -206,10 +215,17 @@ describe('Journey API Routes (System & Operator)', () => {
 					})
 					.returning()
 				const customer = customerInsert[0]!
+				await setCustomerSubscription(db, {
+					customerId: customer.id,
+					topic: 'marketing',
+					channel: 'sms',
+					subscribed: true,
+					source: 'signup',
+				})
 
 				const journeyInsert = await db
 					.insert(marketingJourneys)
-					.values({ name: 'System SMS Journey' })
+					.values({ name: 'System SMS Journey', status: 'active' })
 					.returning()
 				const journey = journeyInsert[0]!
 
@@ -260,7 +276,7 @@ describe('Journey API Routes (System & Operator)', () => {
 				expect(json.error).toContain('Invalid execute step payload')
 			})
 
-			it('returns 422 when customer lacks email for email action', async () => {
+			it('skips an email step for a customer with no email consent', async () => {
 				const db = await getTenantDb(orgId)
 
 				const customerInsert = await db
@@ -271,7 +287,7 @@ describe('Journey API Routes (System & Operator)', () => {
 
 				const journeyInsert = await db
 					.insert(marketingJourneys)
-					.values({ name: 'J' })
+					.values({ name: 'J', status: 'active' })
 					.returning()
 				const journey = journeyInsert[0]!
 
@@ -298,9 +314,9 @@ describe('Journey API Routes (System & Operator)', () => {
 					}),
 				})
 
-				expect(res.status).toBe(422)
+				expect(res.status).toBe(200)
 				const json = await res.json()
-				expect(json.error).toContain('no email address')
+				expect(json.status).toBe('skipped')
 			})
 		})
 
@@ -316,7 +332,7 @@ describe('Journey API Routes (System & Operator)', () => {
 
 				const journeyInsert = await db
 					.insert(marketingJourneys)
-					.values({ name: 'Complete Flow' })
+					.values({ name: 'Complete Flow', status: 'active' })
 					.returning()
 				const journey = journeyInsert[0]!
 
@@ -398,6 +414,23 @@ describe('Journey API Routes (System & Operator)', () => {
 				expect(json.journey.nodes).toHaveLength(1)
 			})
 
+			it('refuses an org whose data region is not this node', async () => {
+				const { findActiveOrganizationById } = await import('../lib/origin.ts')
+				vi.mocked(findActiveOrganizationById).mockResolvedValueOnce({
+					id: orgId,
+					slug: 'test-org',
+					customDomain: null,
+					hasProvisionedDb: true,
+					dataRegion: 'ksa',
+				} as never)
+				const res = await app.request(
+					`/api/journeys/definitions/some-id?orgId=${orgId}`,
+					{ headers: { Authorization: `Bearer ${internalToken}` } },
+				)
+				expect(res.status).toBe(409)
+				expect((await res.json()).error).toBe('region_mismatch')
+			})
+
 			it('returns 400 if orgId is missing from query string', async () => {
 				const res = await app.request('/api/journeys/definitions/some-id', {
 					headers: { Authorization: `Bearer ${internalToken}` },
@@ -417,12 +450,12 @@ describe('Journey API Routes (System & Operator)', () => {
 				expect(res.status).toBe(401)
 			})
 
-			it('rejects non-operator tokens with 403', async () => {
+			it('rejects non-operator tokens with 401', async () => {
 				const customerToken = await mintOperatorJwt(orgId, 'customer')
 				const res = await app.request('/operator/journeys', {
 					headers: { Authorization: `Bearer ${customerToken}` },
 				})
-				expect(res.status).toBe(403)
+				expect(res.status).toBe(401)
 			})
 
 			it.each(['mailbox', 'phone_calls'])(
@@ -449,7 +482,7 @@ describe('Journey API Routes (System & Operator)', () => {
 							},
 							body: method === 'GET' || method === 'DELETE' ? undefined : '{}',
 						})
-						expect(res.status, `${method} ${path}`).toBe(403)
+						expect(res.status, `${method} ${path}`).toBe(401)
 					}
 				},
 			)
@@ -718,7 +751,7 @@ describe('Journey API Routes (System & Operator)', () => {
 
 				const journeyInsert = await db
 					.insert(marketingJourneys)
-					.values({ name: 'Runs Inspector Journey' })
+					.values({ name: 'Runs Inspector Journey', status: 'active' })
 					.returning()
 				const journey = journeyInsert[0]!
 

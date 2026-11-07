@@ -7,6 +7,7 @@ import {
 	OrganizationChatChannelMember,
 	OrganizationChatChannelRole,
 	OrganizationRole,
+	User,
 	UserOrganization,
 } from '@repo/database'
 import { describe, expect, it } from 'vitest'
@@ -407,5 +408,20 @@ describe('chatChannelInputSchema', () => {
 				access: 'everyone',
 			}).success,
 		).toBe(false)
+	})
+})
+
+describe('banned users', () => {
+	it('drop out of every audience, so an open socket loses access on refresh', async () => {
+		const { org, alice, bob } = await setup()
+		const channelId = await createChannel(org.id, alice.id, input())
+		expect(await audienceOf(org.id, channelId)).toContain(bob.id)
+		expect(await isActiveOrganizationMember(org.id, bob.id)).toBe(true)
+
+		await db.update(User).set({ isBanned: true }).where(eq(User.id, bob.id))
+
+		expect(await audienceOf(org.id, channelId)).not.toContain(bob.id)
+		expect(await audienceOf(org.id, channelId)).toContain(alice.id)
+		expect(await isActiveOrganizationMember(org.id, bob.id)).toBe(false)
 	})
 })

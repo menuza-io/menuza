@@ -686,10 +686,11 @@ export class JiraProvider extends BaseIntegrationProvider {
 		integration: Integration,
 		apiCall: (accessToken: string) => Promise<T>,
 	): Promise<T> {
+		let accessToken: string | undefined
 		try {
 			// Try with current token
 			const { decryptToken } = await import('../../encryption')
-			const accessToken = await decryptToken(integration.accessToken!)
+			accessToken = await decryptToken(integration.accessToken!)
 			return await apiCall(accessToken)
 		} catch (error) {
 			// Check if it's an authorization error
@@ -702,7 +703,12 @@ export class JiraProvider extends BaseIntegrationProvider {
 					// Try to refresh tokens if refresh token is available
 					if (integration.refreshToken) {
 						const refreshedIntegration =
-							await integrationManager.refreshIntegrationTokens(integration.id)
+							await integrationManager.refreshIntegrationTokens(
+								integration.id,
+								{
+									rejectedAccessToken: accessToken,
+								},
+							)
 
 						// Try again with refreshed token
 						const { decryptToken } = await import('../../encryption')

@@ -9,6 +9,7 @@ import {
 } from '#app/utils/rate-limit.server.ts'
 import {
 	getCachedSiteData,
+	getSiteCacheVersion,
 	getSiteKvKey,
 	setCachedSiteData,
 } from '#app/utils/sites/kv-cache.server.ts'
@@ -52,14 +53,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	const previewToken = url.searchParams.get('pt')
 	const acceptLocales = getClientLocales(request)
 
-	// We will generate the cache key after getting orgId
-
-	// First find the organization to ensure it's published and active, and to get its ID
-	let orgId = null
-	let defaultLocale = 'en'
-	let headerConfig: string | null = null
-	let footerConfig: string | null = null
-	if (slug) {
+	// The organization row is read again on a cache miss (below), after the
+	// cache version: what gets cached must have been read after that version.
+	async function findSiteOrganization() {
 		const [org] = await db
 			.select({
 				id: Organization.id,
@@ -69,41 +65,25 @@ export async function loader({ request }: LoaderFunctionArgs) {
 			})
 			.from(Organization)
 			.where(
-				and(
-					eq(Organization.slug, slug),
-					eq(Organization.active, true),
-					eq(Organization.sitePublished, true),
-				),
+				slug
+					? and(
+							eq(Organization.slug, slug),
+							eq(Organization.active, true),
+							eq(Organization.sitePublished, true),
+						)
+					: and(
+							eq(Organization.customDomain, host ?? ''),
+							eq(Organization.active, true),
+							eq(Organization.sitePublished, true),
+							inArray(Organization.customDomainStatus, ['active', 'pending']),
+						),
 			)
 			.limit(1)
-		orgId = org?.id
-		defaultLocale = org?.siteDefaultLocale ?? 'en'
-		headerConfig = org?.siteHeaderConfig ?? null
-		footerConfig = org?.siteFooterConfig ?? null
-	} else if (host) {
-		const [org] = await db
-			.select({
-				id: Organization.id,
-				siteDefaultLocale: Organization.siteDefaultLocale,
-				siteHeaderConfig: Organization.siteHeaderConfig,
-				siteFooterConfig: Organization.siteFooterConfig,
-			})
-			.from(Organization)
-			.where(
-				and(
-					eq(Organization.customDomain, host),
-					eq(Organization.active, true),
-					eq(Organization.sitePublished, true),
-					inArray(Organization.customDomainStatus, ['active', 'pending']),
-				),
-			)
-			.limit(1)
-		orgId = org?.id
-		defaultLocale = org?.siteDefaultLocale ?? 'en'
-		headerConfig = org?.siteHeaderConfig ?? null
-		footerConfig = org?.siteFooterConfig ?? null
+		return org
 	}
 
+	let org = await findSiteOrganization()
+	const orgId = org?.id
 	if (!orgId) {
 		throw new Response('Not Found', { status: 404 })
 	}
@@ -116,9 +96,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		: (acceptLocales ?? '')
 	const queryHash = `${pageSlug || ''}-${wantHome}-${lng || ''}-${localeKey}`
 	let cacheKey: string | null = null
+	const cacheVersion = isPreview ? null : await getSiteCacheVersion(orgId)
 
-	if (!isPreview) {
-		cacheKey = getSiteKvKey('page', orgId, queryHash)
+	if (cacheVersion !== null) {
+		cacheKey = getSiteKvKey('page', orgId, queryHash, cacheVersion)
 		const cached = await getCachedSiteData(cacheKey)
 		if (cached) {
 			return Response.json(cached, {
@@ -128,7 +109,13 @@ export async function loader({ request }: LoaderFunctionArgs) {
 				},
 			})
 		}
+		org = await findSiteOrganization()
+		if (org?.id !== orgId) throw new Response('Not Found', { status: 404 })
 	}
+
+	const defaultLocale = org?.siteDefaultLocale ?? 'en'
+	const headerConfig = org?.siteHeaderConfig ?? null
+	const footerConfig = org?.siteFooterConfig ?? null
 
 	// Then fetch the page
 	const page = await findPublishedSitePage(orgId, pageSlug, {
@@ -163,17 +150,23 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		footerConfig,
 	})
 
-	if (!isPreview && cacheKey) {
-		await setCachedSiteData(cacheKey, payload)
+	if (cacheKey && cacheVersion !== null) {
+		await setCachedSiteData(cacheKey, payload, {
+			orgId,
+			version: cacheVersion,
+		})
 	}
 
-	return Response.json(payload, {
-		headers: {
-			// Draft content must never sit in a shared cache, even keyed by token.
-			'Cache-Control': isPreview
-				? 'private, no-store'
-				: 'public, max-age=60, stale-while-revalidate=300',
-			Vary: 'Accept-Language',
+	return Response.json(
+		isPreview ? { ...payload, previewVerified: true } : payload,
+		{
+			headers: {
+				// Draft content must never sit in a shared cache, even keyed by token.
+				'Cache-Control': isPreview
+					? 'private, no-store'
+					: 'public, max-age=60, stale-while-revalidate=300',
+				Vary: 'Accept-Language',
+			},
 		},
-	})
+	)
 }

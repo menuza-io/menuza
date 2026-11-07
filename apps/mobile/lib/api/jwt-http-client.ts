@@ -1,6 +1,7 @@
 import { type RequestConfig, type ApiResponse } from '@repo/types'
 import { TokenManager } from '../storage/session-manager'
 import { HttpClient } from './http-client'
+import { RefreshFailedError, endsSession } from './session-refresh'
 
 export interface JWTHttpClientConfig {
 	baseUrl: string
@@ -73,9 +74,10 @@ export class JWTHttpClient extends HttpClient {
 
 				// Retry the request with the new token (already set via setDefaultHeader)
 				response = await super.request<T>(url, options)
-			} catch {
-				// Refresh failed, call auth error handler
-				this.onAuthError?.()
+			} catch (error) {
+				// Only a refused refresh token ends the session; offline, rate
+				// limits and server errors leave it for the next attempt.
+				if (endsSession(error)) this.onAuthError?.()
 			}
 		}
 
@@ -143,11 +145,13 @@ export class JWTHttpClient extends HttpClient {
 			throw new Error('No token refresh handler configured')
 		}
 
-		const tokens = await this.tokenManager.getCurrentTokens()
+		// The stored tokens, even when the access token has expired (that is
+		// when a refresh is needed).
+		const { tokens } = await this.tokenManager.validateTokens()
 		const user = await this.tokenManager.getUser()
 
 		if (!tokens?.refreshToken || !user?.id) {
-			throw new Error('No refresh token or user ID available')
+			throw new RefreshFailedError('No refresh token or user ID available', 401)
 		}
 
 		try {
@@ -160,8 +164,9 @@ export class JWTHttpClient extends HttpClient {
 			// Store the new tokens
 			await this.tokenManager.storeTokens(newTokens)
 		} catch (error) {
-			// Clear tokens on refresh failure
-			await this.tokenManager.clearTokens()
+			// Clear tokens only when the server refused the refresh token. A
+			// network error, a rate limit or a 5xx keeps the session.
+			if (endsSession(error)) await this.tokenManager.clearTokens()
 			throw error
 		}
 	}

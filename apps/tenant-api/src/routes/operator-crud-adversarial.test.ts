@@ -915,7 +915,7 @@ describe('Adversarial Stress Suite: Operator CRUD & Auth Lifecycle Triggers', ()
 			const res1 = await app.request('/operator/journeys', {
 				headers: { Authorization: `Bearer ${customerToken}` },
 			})
-			expect(res1.status).toBe(403)
+			expect(res1.status).toBe(401)
 
 			// Token with wrong secret
 			const forgedToken = await mintOperatorJwt(

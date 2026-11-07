@@ -126,13 +126,15 @@ export function parseMockWebhookMode(
 }
 
 /**
- * The platform webhook secret exactly as the route verifies with it, even when
- * it is still the `whsec_***` placeholder (any string is a usable HMAC key).
- * Only a missing value falls back to the mock's own secret.
+ * The platform webhook secret the route verifies with. An unreplaced `***`
+ * placeholder (the public `.env.schema` default) is not a secret: anyone can
+ * sign with it, so it counts as missing, like the Connect secret and the
+ * Stripe key. A missing value falls back to the mock's own secret only while
+ * the mock is on.
  */
 function platformWebhookSecret(env: PaymentsMockEnv, mockOn: boolean) {
 	const configured = env.STRIPE_WEBHOOK_SECRET?.trim()
-	if (configured) return configured
+	if (configured && isRealSecret(configured)) return configured
 	return mockOn ? MOCK_STRIPE_WEBHOOK_SECRET : null
 }
 

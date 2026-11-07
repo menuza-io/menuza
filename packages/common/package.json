@@ -9,6 +9,7 @@
   "exports": {
     "./mailbox": "./src/mailbox.ts",
     "./phone": "./src/phone.ts",
+    "./ascii-digits": "./src/ascii-digits.ts",
     "./chat": "./src/chat.ts",
     "./zod-defaults": "./src/zod-defaults.ts",
     "./chat-markdown": "./src/chat-markdown.ts",

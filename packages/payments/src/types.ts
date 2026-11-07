@@ -59,6 +59,8 @@ export interface Subscription {
 	cancelAtPeriodEnd?: boolean
 	quantity?: number
 	items: SubscriptionItem[]
+	/** When the subscription was created, in Unix seconds (Stripe's `created`). */
+	created?: number
 }
 
 export interface SubscriptionItem {

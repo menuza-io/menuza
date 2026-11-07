@@ -139,6 +139,34 @@ describe('enqueueStaffingOutbox', () => {
 	})
 })
 
+describe('erase_user while the database is marked unprovisioned', () => {
+	it('is queued anyway and waits (retries) on org_not_provisioned instead of being dropped', async () => {
+		const orgId = await provisionedOrg({ hasProvisionedDb: false })
+		const id = await enqueueStaffingOutbox({
+			organizationId: orgId,
+			kind: 'erase_user',
+			payload: { userId: 'u1' },
+			evenIfUnprovisioned: true,
+		})
+		expect(id).not.toBeNull()
+		regional.post.mockResolvedValue(
+			reply(404, { error: 'org_not_provisioned' }),
+		)
+
+		await drainStaffingOutbox({
+			organizationId: orgId,
+			now: new Date(Date.now() + 1000),
+		})
+
+		const [row] = await rowsFor(orgId)
+		expect(row).toMatchObject({
+			status: 'pending',
+			attempts: 1,
+			lastError: 'org_not_provisioned',
+		})
+	})
+})
+
 describe('drainStaffingOutbox', () => {
 	it('delivers each kind to its path with ids only, in the organization’s region', async () => {
 		const usOrg = await provisionedOrg()
@@ -488,6 +516,62 @@ describe('drainStaffingOutbox', () => {
 		expect(ids).not.toContain(oldFail)
 		expect(ids).toContain(recentDone)
 		expect(ids).toContain(recentFail)
+	})
+})
+
+describe('drainStaffingOutbox leasing and load window', () => {
+	it('leases from the wall clock, so a drain started in the past still hides its in-flight row', async () => {
+		const orgId = await provisionedOrg()
+		const user = userId()
+		await enqueueStaffingOutbox({
+			organizationId: orgId,
+			kind: 'unlink_user',
+			payload: { userId: user },
+		})
+		const delivered: string[] = []
+		regional.post.mockImplementation(async (args: Sent) => {
+			delivered.push(String(args.body.userId))
+			if (delivered.length === 1) {
+				// While the row is in flight, an inline flush runs for the same login.
+				await drainStaffingOutbox({ organizationId: orgId, userId: user })
+			}
+			return reply(200, { ok: true })
+		})
+		await drainStaffingOutbox({
+			organizationId: orgId,
+			now: new Date(Date.now() - 5 * 60_000),
+		})
+		expect(delivered).toHaveLength(1)
+		expect((await rowsFor(orgId))[0]).toMatchObject({ status: 'done' })
+	})
+
+	it('does not let a backlog of backed-off rows starve a newer due row', async () => {
+		const orgA = await provisionedOrg()
+		const orgB = await provisionedOrg()
+		const early = new Date(Date.now() - 3 * 60 * 60_000)
+		const later = new Date(Date.now() + 60 * 60_000)
+		const values = Array.from({ length: 1000 }, (_, i) => ({
+			organizationId: orgA,
+			kind: 'unlink_user',
+			payload: { userId: `backlog_${i}` },
+			createdAt: early,
+			nextAttemptAt: later,
+		}))
+		for (let i = 0; i < values.length; i += 100) {
+			await db.insert(StaffingOutbox).values(values.slice(i, i + 100))
+		}
+		const userB = userId()
+		await enqueueStaffingOutbox({
+			organizationId: orgB,
+			kind: 'unlink_user',
+			payload: { userId: userB },
+		})
+		const result = await drainStaffingOutbox({ organizationId: undefined })
+		expect(sent.map((call) => call.body.userId)).toContain(userB)
+		expect(result.done).toBeGreaterThanOrEqual(1)
+		await db
+			.delete(StaffingOutbox)
+			.where(eq(StaffingOutbox.organizationId, orgA))
 	})
 })
 

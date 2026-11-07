@@ -17,6 +17,8 @@ import {
 	laborPolicies,
 	notificationOutbox,
 	provisionTenantDb,
+	shiftRequests,
+	shifts,
 	staffAuditLog,
 	staffingSettings,
 	staffMembers,
@@ -560,6 +562,53 @@ describe('automatic clock-out', () => {
 		await tick(T0 + 13 * HOUR)
 		const [closed] = await h.db.select().from(timeEntries)
 		expect(closed!.clockOutAt).toBe(T0 + 12 * HOUR + 20 * MIN)
+	})
+
+	it('leaves an entry changed after it was read for the next tick', async () => {
+		const person = await addStaff()
+		const entry = await addEntry({
+			staffId: person.id,
+			clockInAt: T0,
+			shiftId: 'shift-1',
+		})
+		// A manager corrects the clock-in after the tick read the open entries
+		// and before it closes them (the shift lookup runs in between).
+		let edited = false
+		const deps: Partial<TickDeps> = {
+			...h.deps,
+			matchShift: async () => {
+				if (!edited) {
+					edited = true
+					await h.db
+						.update(timeEntries)
+						.set({ clockInAt: T0 + 2 * HOUR, version: entry.version + 1 })
+						.where(eq(timeEntries.id, entry.id))
+				}
+				return null
+			},
+		}
+		h.now.value = T0 + 13 * HOUR
+		await runStaffTickForOrg(ORG_A, { db: h.db, deps })
+		const [after] = await h.db
+			.select()
+			.from(timeEntries)
+			.where(eq(timeEntries.id, entry.id))
+		expect(after).toMatchObject({
+			clockInAt: T0 + 2 * HOUR,
+			clockOutAt: null,
+			version: entry.version + 1,
+		})
+		expect(await h.db.select().from(timeEntryEdits)).toHaveLength(0)
+
+		// The next tick works from the corrected entry.
+		h.now.value = T0 + 15 * HOUR
+		await runStaffTickForOrg(ORG_A, { db: h.db, deps })
+		const [closed] = await h.db
+			.select()
+			.from(timeEntries)
+			.where(eq(timeEntries.id, entry.id))
+		expect(closed!.clockOutAt).toBe(T0 + 14 * HOUR)
+		expect(closed!.version).toBe(entry.version + 2)
 	})
 
 	it('leaves a person who already clocked out alone', async () => {
@@ -1320,6 +1369,37 @@ describe('manager alerts across the plane boundary', () => {
 		expect((await outbox())[0]!.status).toBe('sent')
 	})
 
+	it('keeps the first event id when a lost response is retried after more rows arrived', async () => {
+		await setPolicy({
+			missedClockOutReminderMinutes: 30,
+			longShiftMinutes: 720,
+		})
+		const first = await addStaff({ email: null })
+		await addEntry({ staffId: first.id, clockInAt: T0 })
+		// The App handled it, but the answer never arrived.
+		h.alertResult.value = { status: 'retry', code: 'network' }
+		await tick(T0 + 13 * HOUR)
+		expect(h.alerts).toHaveLength(1)
+		const original = h.alerts[0]!
+
+		// A second person becomes overdue before the retry.
+		const second = await addStaff({ firstName: 'Omar', email: null })
+		await addEntry({ staffId: second.id, clockInAt: T0 + HOUR })
+		h.alertResult.value = {
+			status: 'delivered',
+			result: { inApp: 1, emailed: 0 },
+		}
+		await tick(T0 + 14 * HOUR)
+		const retried = h.alerts.slice(1)
+		// The retry repeats the first event exactly, so the App's per-event
+		// dedupe holds; the new row is its own event.
+		expect(retried).toContainEqual(original)
+		expect(retried).toHaveLength(2)
+		const fresh = retried.find((a) => a.eventId !== original.eventId)!
+		expect(fresh).toMatchObject({ kind: 'missed_clock_out', count: 1 })
+		expect((await outbox()).every((row) => row.status === 'sent')).toBe(true)
+	})
+
 	it('marks a rejected alert failed and does not retry it', async () => {
 		await setPolicy({
 			missedClockOutReminderMinutes: 30,
@@ -1509,5 +1589,52 @@ describe('residency of what the tick returns', () => {
 		]) {
 			expect(serialized).not.toContain(secret)
 		}
+	})
+})
+
+describe('shift requests whose shift has begun', () => {
+	it('closes them so they stop counting as waiting', async () => {
+		const person = await addStaff()
+		const [past, future] = await h.db
+			.insert(shifts)
+			.values(
+				[T0, T0 + 48 * HOUR].map((startsAt) => ({
+					scopeId: LOC,
+					staffId: person.id,
+					startsAt,
+					endsAt: startsAt + 8 * HOUR,
+					localDate: businessDateOf(startsAt, ZONE, 0),
+					timeZone: ZONE,
+					status: 'published' as const,
+				})),
+			)
+			.returning()
+		const [stale, open] = await h.db
+			.insert(shiftRequests)
+			.values(
+				[past!, future!].map((shift) => ({
+					kind: 'drop' as const,
+					shiftId: shift.id,
+					requesterStaffId: person.id,
+					status: 'pending' as const,
+					createdAt: T0 - 24 * HOUR,
+					updatedAt: T0 - 24 * HOUR,
+				})),
+			)
+			.returning()
+		const result = await tick(T0 + HOUR)
+		expect(
+			result.tasks.find((t) => t.name === 'shift_request_expiry'),
+		).toMatchObject({ status: 'ok', expired: 1 })
+		const rows = await h.db.select().from(shiftRequests)
+		expect(rows.find((r) => r.id === stale!.id)!.status).toBe('cancelled')
+		expect(rows.find((r) => r.id === open!.id)!.status).toBe('pending')
+		const audit = (await h.db.select().from(staffAuditLog)).find(
+			(row) => row.action === 'schedule.shift_request.expired',
+		)
+		expect(audit).toMatchObject({
+			actorKind: 'system',
+			entityId: stale!.id,
+		})
 	})
 })

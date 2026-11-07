@@ -40,6 +40,20 @@ describe('normalizePhone', () => {
 		)
 	})
 
+	it('reads Arabic-Indic and Persian digits as ASCII', () => {
+		expect(normalizePhone('+٩٦٦٥٠١٢٣٤٥٦٧')).toBe('+966501234567')
+		expect(normalizePhone('٠٥٠ ١٢٣ ٤٥٦٧', { region: 'ksa' })).toBe(
+			'+966501234567',
+		)
+		expect(normalizePhone('۰۵۰۱۲۳۴۵۶۷', { region: 'ksa' })).toBe(
+			'+966501234567',
+		)
+		expect(normalizePhone('٠٠١ 555 123 4567', { region: 'ksa' })).toBe(
+			'+15551234567',
+		)
+		expect(isValidE164Phone(normalizePhone('+٩٦٦٥٠١٢٣٤٥٦٧'))).toBe(true)
+	})
+
 	it('returns the cleaned input unchanged without a region or a rule', () => {
 		expect(normalizePhone('0501234567')).toBe('0501234567')
 		expect(normalizePhone('0501234567', { region: 'us' })).toBe('0501234567')

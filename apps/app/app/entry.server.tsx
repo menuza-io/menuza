@@ -16,6 +16,7 @@ import {
 	type HandleDocumentRequestFunction,
 } from 'react-router'
 import { ENV } from 'varlock/env'
+import { runAfterResponse } from '#app/utils/after-response.server.ts'
 import { auditSensitiveRoutes } from '#app/utils/audit/audit-middleware.server.ts'
 import {
 	sitePreviewFrameSrc,
@@ -140,12 +141,20 @@ export function applyContentSecurity(
 }
 
 export default async function handleRequest(...args: DocRequestArgs) {
-	const [request, responseStatusCode, responseHeaders, reactRouterContext] =
-		args
-
-	void auditSensitiveRoutes(
+	const [
 		request,
-		new Response(null, { status: responseStatusCode }),
+		responseStatusCode,
+		responseHeaders,
+		reactRouterContext,
+		loadContext,
+	] = args
+
+	// Kept alive past the response on Workers via `waitUntil`.
+	runAfterResponse(loadContext, () =>
+		auditSensitiveRoutes(
+			request,
+			new Response(null, { status: responseStatusCode }),
+		),
 	)
 
 	applySecurityHeaders(responseHeaders)

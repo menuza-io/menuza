@@ -25,9 +25,16 @@ import { sendSms } from '@repo/sms'
 import { getNodeRegion } from '../lib/region.ts'
 import { syncEnvFromProcess } from '../lib/secrets.ts'
 import { sendTenantEmail } from '../lib/tenant-email.ts'
+import { hasMarketingConsent } from './marketing-audience.ts'
 
 export const JOURNEY_PROCESSING_LEASE_MS = 5 * 60 * 1000
 export const JOURNEY_LIST_LIMIT = 100
+
+/** Triggers that describe a one-time change of a customer, not an event. */
+const ONCE_PER_CUSTOMER_TRIGGERS: ReadonlySet<string> = new Set([
+	'phone_verified',
+	'profile_completed',
+])
 
 function isSqliteUniqueConstraintError(error: unknown) {
 	return (
@@ -62,12 +69,14 @@ function deliveredResultFromDispatchedExecution(execution: {
 	executionDetails?: string | null | unknown
 }): StepExecutionResult {
 	let messageId: string | undefined
+	let outcomeUnknown = false
 	try {
 		const details =
 			typeof execution.executionDetails === 'string'
 				? JSON.parse(execution.executionDetails)
 				: execution.executionDetails
 		if (details && typeof details === 'object') {
+			outcomeUnknown = details.outcomeUnknown === true
 			if ('messageId' in details && typeof details.messageId === 'string') {
 				messageId = details.messageId
 			} else if ('sid' in details && typeof details.sid === 'string') {
@@ -79,9 +88,111 @@ function deliveredResultFromDispatchedExecution(execution: {
 	return {
 		success: true,
 		executionId: execution.id,
-		status: 'delivered',
+		status: outcomeUnknown ? 'unknown' : 'delivered',
 		messageId,
 	}
+}
+
+function parseRunContext(raw: unknown): Record<string, unknown> {
+	if (!raw) return {}
+	try {
+		const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw
+		return parsed && typeof parsed === 'object'
+			? (parsed as Record<string, unknown>)
+			: {}
+	} catch {
+		return {}
+	}
+}
+
+/**
+ * Why a run must not take another step, or null when it may. A run goes on
+ * only while it is `running` and its journey is `active`. An operator test run
+ * (`triggerTestJourney`) may also exercise a draft or paused journey, but never
+ * an archived one. Pausing a journey therefore stops its in-flight runs at
+ * their next step, including runs waiting out a delay.
+ */
+function runHaltReason(
+	run: { status: string; triggerEvent?: string | null; contextData?: unknown },
+	journey: { status: string } | undefined,
+): string | null {
+	if (run.status !== 'running') return `Journey run is ${run.status}`
+	if (!journey) return 'Journey no longer exists'
+	if (journey.status === 'active') return null
+	const isTestRun =
+		run.triggerEvent === 'manual' &&
+		parseRunContext(run.contextData).isTestRun === true
+	if (isTestRun && journey.status !== 'archived') return null
+	return `Journey is ${journey.status}`
+}
+
+/**
+ * Loads the run's journey and, when the run must stop, cancels the run (only
+ * from `running`, so a finished run keeps its outcome) and returns the reason.
+ */
+async function haltRunIfStopped(
+	db: Awaited<ReturnType<typeof getTenantDb>>,
+	run: typeof journeyRuns.$inferSelect,
+): Promise<string | null> {
+	const journey = await db
+		.select({ status: marketingJourneys.status })
+		.from(marketingJourneys)
+		.where(eq(marketingJourneys.id, run.journeyId))
+		.get()
+	const reason = runHaltReason(run, journey)
+	if (reason && run.status === 'running') {
+		await db
+			.update(journeyRuns)
+			.set({
+				status: 'cancelled',
+				errorMessage: reason,
+				completedAt: new Date(),
+				updatedAt: new Date(),
+			})
+			.where(and(eq(journeyRuns.id, run.id), eq(journeyRuns.status, 'running')))
+	}
+	return reason
+}
+
+/**
+ * A provider error after which the message may or may not have gone out: a
+ * timeout, a dropped connection, or a provider 5xx. A definitive refusal (4xx,
+ * missing credentials, a refused connection) means nothing was sent.
+ */
+const AMBIGUOUS_NETWORK_CODES = new Set([
+	'ETIMEDOUT',
+	'ECONNRESET',
+	'ECONNABORTED',
+	'EPIPE',
+	'ESOCKETTIMEDOUT',
+	'UND_ERR_SOCKET',
+	'UND_ERR_HEADERS_TIMEOUT',
+	'UND_ERR_BODY_TIMEOUT',
+])
+export function isAmbiguousDispatchError(error: unknown): boolean {
+	if (!error || typeof error !== 'object') return false
+	const e = error as {
+		name?: unknown
+		code?: unknown
+		status?: unknown
+		statusCode?: unknown
+		outcomeUnknown?: unknown
+		cause?: unknown
+	}
+	if (e.outcomeUnknown === true) return true
+	if (e.name === 'TimeoutError' || e.name === 'AbortError') return true
+	if (typeof e.code === 'string' && AMBIGUOUS_NETWORK_CODES.has(e.code)) {
+		return true
+	}
+	const status =
+		typeof e.status === 'number'
+			? e.status
+			: typeof e.statusCode === 'number'
+				? e.statusCode
+				: undefined
+	if (status !== undefined && (status === 408 || status >= 500)) return true
+	if (e.cause && e.cause !== error) return isAmbiguousDispatchError(e.cause)
+	return false
 }
 
 export type CreateJourneyInput = z.input<typeof createJourneySchema>
@@ -97,13 +208,81 @@ function getEnvVar(key: string, defaultValue = ''): string {
 
 export { interpolateMergeTags }
 
+/**
+ * Another attempt holds this step's lease and may be sending right now. Not a
+ * success: a caller that took it as one would move the journey on even when
+ * that attempt died before sending. 409 is retried by the workflow until the
+ * lease expires and the step can be reclaimed.
+ */
+function stillProcessing(executionId: string): StepExecutionResult {
+	return {
+		success: false,
+		executionId,
+		status: 'processing',
+		error: 'Step is still being sent by another attempt',
+		statusCode: 409,
+	}
+}
+
 export interface StepExecutionResult {
 	success: boolean
 	executionId?: string
-	status: 'delivered' | 'failed' | 'skipped' | 'processing'
+	/**
+	 * `halted`: the journey was paused or the run ended, so nothing was sent
+	 * and the workflow must stop the run. `unknown`: the provider failed in a
+	 * way that may have sent the message; it is never sent again.
+	 */
+	status:
+		'delivered' | 'failed' | 'skipped' | 'processing' | 'halted' | 'unknown'
 	messageId?: string
+	/** Why a step was `skipped`. */
+	reason?: JourneySkipReason
 	error?: string
 	statusCode?: number
+}
+
+/**
+ * Recorded as `executionDetails.skipReason` on a skipped step, so the runs view
+ * can say why nothing was sent. `no_consent`: the customer has no marketing
+ * consent for the step's channel (see `hasMarketingConsent`).
+ */
+export type JourneySkipReason = 'no_consent'
+
+/**
+ * The provider may have accepted the message (timeout, dropped connection,
+ * 5xx). Marks the step dispatched with an unknown outcome so no retry sends it
+ * again (at most once), and lets the journey go on.
+ */
+async function recordOutcomeUnknown(
+	db: Awaited<ReturnType<typeof getTenantDb>>,
+	input: {
+		stepExecutionId: string
+		channel: 'email' | 'sms'
+		messageId?: string
+		errorMessage: string
+	},
+): Promise<StepExecutionResult> {
+	await db
+		.update(journeyStepExecutions)
+		.set({
+			status: 'failed',
+			errorMessage: `Dispatch outcome unknown, not resent: ${input.errorMessage}`,
+			executionDetails: JSON.stringify({
+				...(input.messageId ? { messageId: input.messageId } : {}),
+				channel: input.channel,
+				dispatched: true,
+				outcomeUnknown: true,
+				dispatchedAt: new Date().toISOString(),
+			}),
+			completedAt: new Date(),
+		})
+		.where(eq(journeyStepExecutions.id, input.stepExecutionId))
+	return {
+		success: true,
+		executionId: input.stepExecutionId,
+		status: 'unknown',
+		messageId: input.messageId,
+	}
 }
 
 /**
@@ -152,6 +331,17 @@ export async function executeJourneyStep(
 		}
 	}
 
+	// A paused journey or an ended run sends nothing more. `halted` is not a
+	// failure the workflow retries: it ends the run there.
+	const haltReason = await haltRunIfStopped(db, run)
+	if (haltReason) {
+		return {
+			success: true,
+			status: 'halted',
+			error: haltReason,
+		}
+	}
+
 	const rawType = payload.nodeType
 	const stepType =
 		rawType === 'action_email' || rawType === 'email' ? 'email' : 'sms'
@@ -197,6 +387,15 @@ export async function executeJourneyStep(
 				}
 			}
 
+			const skippedExecution = existing.find((e) => e.status === 'skipped')
+			if (skippedExecution) {
+				return {
+					success: true,
+					executionId: skippedExecution.id,
+					status: 'skipped' as const,
+				}
+			}
+
 			const processingExecution = existing.find(
 				(e) =>
 					e.status === 'processing' &&
@@ -205,11 +404,7 @@ export async function executeJourneyStep(
 						JOURNEY_PROCESSING_LEASE_MS,
 			)
 			if (processingExecution) {
-				return {
-					success: true,
-					executionId: processingExecution.id,
-					status: 'processing' as const,
-				}
+				return stillProcessing(processingExecution.id)
 			}
 
 			const dispatchedExecution = existing.find((e) =>
@@ -292,17 +487,21 @@ export async function executeJourneyStep(
 					return deliveredResultFromDispatchedExecution(raced)
 				}
 
+				if (raced.status === 'skipped') {
+					return {
+						success: true,
+						executionId: raced.id,
+						status: 'skipped' as const,
+					}
+				}
+
 				if (
 					raced.status === 'processing' &&
 					raced.executedAt &&
 					Date.now() - new Date(raced.executedAt).getTime() <
 						JOURNEY_PROCESSING_LEASE_MS
 				) {
-					return {
-						success: true,
-						executionId: raced.id,
-						status: 'processing' as const,
-					}
+					return stillProcessing(raced.id)
 				}
 
 				throw error
@@ -343,6 +542,36 @@ export async function executeJourneyStep(
 
 	const config = payload.config || {}
 
+	// Journeys are marketing: the same consent rules as a broadcast apply to
+	// every send (active subscription, confirmed email, verified phone). A
+	// customer without consent skips this step and the journey goes on. There
+	// is no transactional exemption: a welcome text right after
+	// `phone_verified` is skipped until the customer subscribes to texts (see
+	// docs/platform-marketing-email.md, "Journey consent").
+	if (!(await hasMarketingConsent(db, customer.id, stepType))) {
+		await db
+			.update(journeyStepExecutions)
+			.set({
+				status: 'skipped',
+				errorMessage:
+					stepType === 'sms'
+						? 'Skipped: the customer has not subscribed to marketing texts'
+						: 'Skipped: the customer has not confirmed marketing email',
+				executionDetails: JSON.stringify({
+					skipReason: 'no_consent' satisfies JourneySkipReason,
+					channel: stepType,
+				}),
+				completedAt: new Date(),
+			})
+			.where(eq(journeyStepExecutions.id, stepExecutionId))
+		return {
+			success: true,
+			executionId: stepExecutionId,
+			status: 'skipped',
+			reason: 'no_consent',
+		}
+	}
+
 	// 4. Execute channel-specific dispatch
 	if (stepType === 'email') {
 		if (!customer.email || customer.email.trim().length === 0) {
@@ -374,8 +603,19 @@ export async function executeJourneyStep(
 					: (config as { bodyHtml?: unknown }).bodyHtml,
 		})
 		if (!parsedConfig.success) {
+			// Release the lease: left `processing`, a retry would be told the
+			// step is still being sent.
+			await db
+				.update(journeyStepExecutions)
+				.set({
+					status: 'failed',
+					errorMessage: 'Invalid email journey configuration',
+					completedAt: new Date(),
+				})
+				.where(eq(journeyStepExecutions.id, stepExecutionId))
 			return {
 				success: false,
+				executionId: stepExecutionId,
 				status: 'failed',
 				error: 'Invalid email journey configuration',
 				statusCode: 422,
@@ -404,7 +644,9 @@ export async function executeJourneyStep(
 				: `<p>${text}</p>`
 
 		try {
-			const outboundMessageId = randomUUID()
+			// Stable across retries of this step: a reclaimed step keeps its
+			// execution id, so a resend carries the same Message-ID.
+			const outboundMessageId = stepExecutionId
 			const emailRes = await sendTenantEmail({
 				to: customer.email,
 				toName: customer.name,
@@ -422,6 +664,17 @@ export async function executeJourneyStep(
 			if (emailRes.status === 'error') {
 				const errorMessage =
 					emailRes.error.message || 'Failed to dispatch email'
+				if (
+					emailRes.error.cause !== undefined &&
+					isAmbiguousDispatchError(emailRes.error.cause)
+				) {
+					return recordOutcomeUnknown(db, {
+						stepExecutionId,
+						channel: 'email',
+						messageId: outboundMessageId,
+						errorMessage,
+					})
+				}
 				await db
 					.update(journeyStepExecutions)
 					.set({
@@ -515,6 +768,14 @@ export async function executeJourneyStep(
 				dispatchErr instanceof Error
 					? dispatchErr.message
 					: 'Email dispatch failed'
+			if (isAmbiguousDispatchError(dispatchErr)) {
+				return recordOutcomeUnknown(db, {
+					stepExecutionId,
+					channel: 'email',
+					messageId: stepExecutionId,
+					errorMessage,
+				})
+			}
 			await db
 				.update(journeyStepExecutions)
 				.set({
@@ -639,6 +900,15 @@ export async function executeJourneyStep(
 				dispatchErr instanceof Error
 					? dispatchErr.message
 					: 'SMS dispatch failed'
+			// Twilio has no idempotency key for a new message, so an SMS whose
+			// outcome is unknown is never sent again.
+			if (isAmbiguousDispatchError(dispatchErr)) {
+				return recordOutcomeUnknown(db, {
+					stepExecutionId,
+					channel: 'sms',
+					errorMessage,
+				})
+			}
 			await db
 				.update(journeyStepExecutions)
 				.set({
@@ -678,6 +948,16 @@ export async function completeJourneyRun(
 			success: false,
 			error: `Journey run "${payload.runId}" not found`,
 			statusCode: 404,
+		}
+	}
+
+	// A run cancelled because its journey was paused stays cancelled: an
+	// older workflow that kept walking the graph must not mark it completed.
+	if (run.status === 'cancelled') {
+		return {
+			success: true,
+			runId: payload.runId,
+			status: 'cancelled' as const,
 		}
 	}
 
@@ -735,17 +1015,38 @@ export async function evaluateJourneyCondition(
 		}
 	}
 
-	let contextData: Record<string, unknown> = {}
-	if (run.contextData) {
-		try {
-			contextData =
-				typeof run.contextData === 'string'
-					? JSON.parse(run.contextData)
-					: (run.contextData as Record<string, unknown>)
-		} catch {
-			contextData = {}
+	// A workflow retry after the answer was recorded (the response was lost)
+	// gets the recorded answer, not a unique-constraint error.
+	const recorded = await db
+		.select()
+		.from(journeyStepExecutions)
+		.where(
+			and(
+				eq(journeyStepExecutions.runId, payload.runId),
+				eq(journeyStepExecutions.nodeId, payload.nodeId),
+			),
+		)
+		.get()
+	if (recorded && recorded.status === 'completed') {
+		const details = parseRunContext(recorded.executionDetails)
+		return {
+			success: true,
+			executionId: recorded.id,
+			result: details.result === true,
 		}
 	}
+
+	const haltReason = await haltRunIfStopped(db, run)
+	if (haltReason) {
+		return {
+			success: true,
+			halted: true,
+			result: false,
+			reason: haltReason,
+		}
+	}
+
+	const contextData = parseRunContext(run.contextData)
 
 	const { field, operator, value } = payload.condition
 
@@ -966,16 +1267,46 @@ export async function evaluateAndSpawnTriggers(
 	for (const journey of activeJourneys) {
 		const runId = randomUUID()
 
-		// 2. Insert run record in regional SQLite
-		await db.insert(journeyRuns).values({
-			id: runId,
-			journeyId: journey.id,
-			customerId,
-			triggerEvent: triggerType,
-			contextData: JSON.stringify(contextData),
-			status: 'running',
-			startedAt: new Date(),
-		})
+		// 2. Insert run record in regional SQLite. A once-per-customer trigger
+		// (verified phone, completed profile) enrolls a customer in a journey
+		// once: a later sign-in or profile save must not start it again. The
+		// check and the insert share a transaction so two concurrent sign-ins
+		// enroll once.
+		const enrolled = await retryOnSqliteBusy(() =>
+			runTenantTransaction(db, async (tx) => {
+				if (ONCE_PER_CUSTOMER_TRIGGERS.has(triggerType)) {
+					const prior = await tx
+						.select({ id: journeyRuns.id })
+						.from(journeyRuns)
+						.where(
+							and(
+								eq(journeyRuns.journeyId, journey.id),
+								eq(journeyRuns.customerId, customerId),
+								eq(journeyRuns.triggerEvent, triggerType),
+							),
+						)
+						.get()
+					if (prior) return false
+				}
+				// A unique index backs the check for once-per-customer triggers: a
+				// conflict means the customer is already enrolled.
+				const inserted = await tx
+					.insert(journeyRuns)
+					.values({
+						id: runId,
+						journeyId: journey.id,
+						customerId,
+						triggerEvent: triggerType,
+						contextData: JSON.stringify(contextData),
+						status: 'running',
+						startedAt: new Date(),
+					})
+					.onConflictDoNothing()
+					.returning({ id: journeyRuns.id })
+				return inserted.length > 0
+			}),
+		)
+		if (!enrolled) continue
 
 		let nodes: unknown[] = []
 		let edges: unknown[] = []

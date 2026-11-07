@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
+	armAlarmBy,
 	armStaffAlarm,
 	type AlarmStorage,
 	handleStaffAlarm,
@@ -85,6 +86,29 @@ describe('arming the alarm', () => {
 		expect(await armStaffAlarm(storage, 'org_1', NOW)).toBe('armed')
 		expect(state.alarm).toBe(NOW + STAFF_ALARM_INTERVAL_MS)
 	})
+
+	it('brings forward an alarm set far out for a scheduled broadcast', async () => {
+		const { storage, state } = fakeStorage()
+		const nextWeek = NOW + 7 * 24 * 60 * 60 * 1000
+		expect(await armAlarmBy(storage, 'org_1', nextWeek, NOW)).toBe('armed')
+		expect(state.alarm).toBe(nextWeek)
+		// Staff activity still gets its tick within the interval.
+		expect(await armStaffAlarm(storage, 'org_1', NOW)).toBe('armed')
+		expect(state.alarm).toBe(NOW + STAFF_ALARM_INTERVAL_MS)
+	})
+
+	it('arms by a time but never pushes a pending alarm back', async () => {
+		const { storage, state, kv } = fakeStorage()
+		const at = NOW + 60_000
+		expect(await armAlarmBy(storage, 'org_1', at, NOW)).toBe('armed')
+		expect(kv.get(STAFF_ALARM_ORG_KEY)).toBe('org_1')
+		expect(await armAlarmBy(storage, 'org_1', at + 60_000, NOW)).toBe(
+			'already_armed',
+		)
+		expect(state.alarm).toBe(at)
+		expect(await armAlarmBy(storage, 'org_1', at - 30_000, NOW)).toBe('armed')
+		expect(state.alarm).toBe(at - 30_000)
+	})
 })
 
 describe('when the alarm fires', () => {
@@ -103,6 +127,37 @@ describe('when the alarm fires', () => {
 		const outcome = await handleStaffAlarm({ storage, now: NOW, runTick })
 		expect(runTick).toHaveBeenCalledWith('org_1')
 		expect(outcome).toEqual({ status: 'ran', rearmed: true })
+		expect(state.alarm).toBe(NOW + STAFF_ALARM_INTERVAL_MS)
+	})
+
+	it('wakes for the next broadcast even when staffing needs nothing', async () => {
+		const { storage, state } = fakeStorage({ [STAFF_ALARM_ORG_KEY]: 'org_1' })
+		const nextAt = NOW + 42 * 60_000
+		const outcome = await handleStaffAlarm({
+			storage,
+			now: NOW,
+			runTick: async () => ({ needsFollowUp: false, nextAt }),
+		})
+		expect(outcome).toEqual({ status: 'ran', rearmed: true })
+		expect(state.alarm).toBe(nextAt)
+	})
+
+	it('takes the earlier of the staff follow-up and the next broadcast', async () => {
+		const { storage, state } = fakeStorage({ [STAFF_ALARM_ORG_KEY]: 'org_1' })
+		await handleStaffAlarm({
+			storage,
+			now: NOW,
+			runTick: async () => ({ needsFollowUp: true, nextAt: NOW + 60_000 }),
+		})
+		expect(state.alarm).toBe(NOW + 60_000)
+		await handleStaffAlarm({
+			storage,
+			now: NOW,
+			runTick: async () => ({
+				needsFollowUp: true,
+				nextAt: NOW + 2 * STAFF_ALARM_INTERVAL_MS,
+			}),
+		})
 		expect(state.alarm).toBe(NOW + STAFF_ALARM_INTERVAL_MS)
 	})
 

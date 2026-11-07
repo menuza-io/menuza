@@ -1,3 +1,4 @@
+import { type ORG_PERMISSIONS, userHasOrganizationPermission } from '@repo/auth'
 import { type User, type Organization } from '@repo/database/types'
 
 /**
@@ -36,6 +37,12 @@ export interface MCPTool {
 	name: string
 	description: string
 	inputSchema: any
+	/**
+	 * Organization permission the caller must hold, checked live on every call
+	 * (the same one the app page for this data requires). A token or API key
+	 * proves membership only, so a role change takes effect on the next call.
+	 */
+	permission?: (typeof ORG_PERMISSIONS)[keyof typeof ORG_PERMISSIONS]
 	handler: (args: any, context: MCPContext) => Promise<MCPToolResponse>
 }
 
@@ -90,6 +97,24 @@ export async function executeTool(
 
 	if (!tool) {
 		throw new Error(`Tool not found: ${name}`)
+	}
+
+	if (
+		tool.permission &&
+		!(await userHasOrganizationPermission(
+			context.user.id,
+			context.organization.id,
+			tool.permission,
+		))
+	) {
+		return {
+			content: [
+				{
+					type: 'text',
+					text: `Permission denied: ${name} needs the ${tool.permission} permission in this organization.`,
+				},
+			],
+		}
 	}
 
 	try {

@@ -4,6 +4,7 @@ import {
 	kioskDevices,
 	kioskPairingCodes,
 	staffAuditLog,
+	staffScopeAssignments,
 	staffJobs,
 	staffPositions,
 	timeBreaks,
@@ -700,6 +701,50 @@ describe('/kiosk', () => {
 			})
 			expect(await entries()).toHaveLength(1)
 			expect(await punches()).toHaveLength(1)
+		})
+
+		it('a punch whose answer was lost replays as recorded after the PIN changes', async () => {
+			const id = crypto.randomUUID()
+			const first = await h.punch(secret, { pin, kind: 'clock_in', id })
+			expect(first.status).toBe(200)
+
+			// The answer never reached the tablet. Before it retries, a manager
+			// resets the person's PIN.
+			const db = await h.db(ORG_A)
+			await db
+				.update(staffScopeAssignments)
+				.set({ pinLookup: 'reset-by-manager' })
+			h.advance(30 * MIN)
+
+			const replay = await h.punch(secret, { pin, kind: 'clock_in', id })
+			expect(replay.status).toBe(200)
+			expect(replay.body).toMatchObject({
+				duplicate: true,
+				kind: 'clock_in',
+				at: first.body.at,
+				firstName: 'Rana',
+			})
+
+			// Only this device's own recorded punch, for the same action, replays
+			// past a refused PIN: another tablet, or another action under the
+			// same id, is refused without learning whose punch it was.
+			const otherTablet = await h.pair(ORG_A, LOC_1, { name: 'Bar' })
+			const fromOtherTablet = await h.punch(otherTablet.secret, {
+				pin,
+				kind: 'clock_in',
+				id,
+			})
+			expect(fromOtherTablet.status).toBe(401)
+			expect(fromOtherTablet.raw).not.toContain('Rana')
+			const otherAction = await h.punch(secret, { pin, kind: 'clock_out', id })
+			expect(otherAction.status).toBe(401)
+			expect(otherAction.raw).not.toContain('Rana')
+
+			// The replay is no way around the PIN: a new punch with the old PIN
+			// is still refused.
+			const fresh = await h.punch(secret, { pin, kind: 'clock_out' })
+			expect(fresh.status).toBe(401)
+			expect(await entries()).toHaveLength(1)
 		})
 
 		it('a replay after the state moved on still reports the original action', async () => {

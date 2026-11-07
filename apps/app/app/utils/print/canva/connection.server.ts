@@ -24,8 +24,13 @@ type Owner = Pick<PrintShopAccess, 'userId'> & {
 	organization: { id: string }
 }
 
-/** How long a refused refresh waits for a concurrent one to be stored. */
-const CONCURRENT_WAIT_MS = 400
+/**
+ * How long a refused refresh waits for a concurrent one to be stored, and how
+ * often it looks. A slow or retried response from another request can take a
+ * few seconds; deleting the connection too early would throw away the token
+ * that request is about to store. Mutable only so tests can shorten it.
+ */
+export const CONCURRENT_REFRESH_WAIT = { totalMs: 5_000, stepMs: 250 }
 
 /** Refresh this long before the access token runs out. */
 const REFRESH_MARGIN_MS = 2 * 60_000
@@ -116,30 +121,66 @@ async function refresh(
 		tokens = await refreshCanvaTokens(current.refreshToken)
 	} catch (error) {
 		if (error instanceof CanvaError && error.code === 'invalid_grant') {
-			// Another request may have used the token a moment ago, and may not
-			// have stored the new one yet: look again after a short wait.
-			let latest = await readTokens(owner)
-			if (latest && latest.row.refreshToken === current.row.refreshToken) {
-				await new Promise((resolve) => setTimeout(resolve, CONCURRENT_WAIT_MS))
-				latest = await readTokens(owner)
-			}
-			if (latest && latest.row.refreshToken !== current.row.refreshToken) {
-				return latest.accessToken
-			}
-			// The grant is gone (revoked in Canva, or expired): connect again.
-			// Only the row that failed, never a connection saved meanwhile.
-			await db
-				.delete(PrintCanvaConnection)
-				.where(
-					and(
-						ownedBy(owner),
-						eq(PrintCanvaConnection.refreshToken, current.row.refreshToken),
-					),
-				)
-			throw new CanvaError('unauthorized', 'Canva is not connected')
+			return recoverFromInvalidGrant(owner, current)
 		}
 		throw error
 	}
+	return storeRefreshed(owner, current, tokens)
+}
+
+/**
+ * Canva refused our refresh token. Usually another request spent it a moment
+ * ago and has not stored the new one yet, so wait for the row to change. Only
+ * when it never does, and a second refresh is refused too, is the grant really
+ * gone: then forget that row (never a connection saved meanwhile).
+ */
+async function recoverFromInvalidGrant(
+	owner: Owner,
+	current: NonNullable<Awaited<ReturnType<typeof readTokens>>>,
+): Promise<string> {
+	const deadline = Date.now() + CONCURRENT_REFRESH_WAIT.totalMs
+	for (;;) {
+		const latest = await readTokens(owner)
+		if (!latest) throw new CanvaError('unauthorized', 'Canva is not connected')
+		if (latest.row.refreshToken !== current.row.refreshToken) {
+			return latest.accessToken
+		}
+		if (Date.now() >= deadline) break
+		await new Promise((resolve) =>
+			setTimeout(resolve, CONCURRENT_REFRESH_WAIT.stepMs),
+		)
+	}
+	let tokens: CanvaTokens
+	try {
+		tokens = await refreshCanvaTokens(current.refreshToken)
+	} catch (error) {
+		if (!(error instanceof CanvaError && error.code === 'invalid_grant')) {
+			throw error
+		}
+		// The grant is gone (revoked in Canva, or expired): connect again.
+		const deleted = await db
+			.delete(PrintCanvaConnection)
+			.where(
+				and(
+					ownedBy(owner),
+					eq(PrintCanvaConnection.refreshToken, current.row.refreshToken),
+				),
+			)
+			.returning({ id: PrintCanvaConnection.id })
+		if (deleted.length === 0) {
+			const latest = await readTokens(owner)
+			if (latest) return latest.accessToken
+		}
+		throw new CanvaError('unauthorized', 'Canva is not connected')
+	}
+	return storeRefreshed(owner, current, tokens)
+}
+
+async function storeRefreshed(
+	owner: Owner,
+	current: NonNullable<Awaited<ReturnType<typeof readTokens>>>,
+	tokens: CanvaTokens,
+): Promise<string> {
 	const updated = await db
 		.update(PrintCanvaConnection)
 		.set({

@@ -115,61 +115,66 @@ export async function submitApplication(
 		? applicantContactHash('phone', orgId, posting.id, body.phone)
 		: null
 
-	// Same person, same posting, still in the pipeline: nothing to add.
-	const contact = [
-		emailHash ? eq(hiringApplications.emailHash, emailHash) : undefined,
-		phoneHash ? eq(hiringApplications.phoneHash, phoneHash) : undefined,
-	].filter((clause) => clause !== undefined)
-	if (contact.length > 0) {
-		const matches = await db
-			.select({ stage: hiringApplications.stage })
-			.from(hiringApplications)
-			.where(and(eq(hiringApplications.postingId, posting.id), or(...contact)))
-			.limit(10)
-		if (matches.some((match) => match.stage !== 'declined')) {
-			return { status: 'received', duplicate: true }
-		}
-	}
-
-	const [orgRecent] = await db
-		.select({ total: count() })
-		.from(hiringApplications)
-		.where(gte(hiringApplications.createdAt, now - HOUR_MS))
-	if ((orgRecent?.total ?? 0) >= HIRING_LIMITS.perOrgPerHour) {
-		return { status: 'rate_limited', scope: 'organization' }
-	}
-	if (ipHash) {
-		const [hour, day] = await Promise.all([
-			db
-				.select({ total: count() })
-				.from(hiringApplications)
-				.where(
-					and(
-						eq(hiringApplications.ipHash, ipHash),
-						gte(hiringApplications.createdAt, now - HOUR_MS),
-					),
-				),
-			db
-				.select({ total: count() })
-				.from(hiringApplications)
-				.where(
-					and(
-						eq(hiringApplications.ipHash, ipHash),
-						gte(hiringApplications.createdAt, now - DAY_MS),
-					),
-				),
-		])
-		if (
-			(hour[0]?.total ?? 0) >= HIRING_LIMITS.perIpPerHour ||
-			(day[0]?.total ?? 0) >= HIRING_LIMITS.perIpPerDay
-		) {
-			return { status: 'rate_limited', scope: 'address' }
-		}
-	}
-
 	try {
-		await retryOnSqliteBusy(() =>
-			runTenantTransaction(db, async (tx) => {
+		return await retryOnSqliteBusy(() =>
+			runTenantTransaction(db, async (tx): Promise<ApplyOutcome> => {
+				// The duplicate check and the abuse counts run inside the insert's
+				// transaction: counted outside it, concurrent submissions (Node,
+				// separate connections) could all pass the same ceiling.
+				// Same person, same posting, still in the pipeline: nothing to add.
+				const contact = [
+					emailHash ? eq(hiringApplications.emailHash, emailHash) : undefined,
+					phoneHash ? eq(hiringApplications.phoneHash, phoneHash) : undefined,
+				].filter((clause) => clause !== undefined)
+				if (contact.length > 0) {
+					const matches = await tx
+						.select({ stage: hiringApplications.stage })
+						.from(hiringApplications)
+						.where(
+							and(eq(hiringApplications.postingId, posting.id), or(...contact)),
+						)
+						.limit(10)
+					if (matches.some((match) => match.stage !== 'declined')) {
+						return { status: 'received', duplicate: true }
+					}
+				}
+
+				const [orgRecent] = await tx
+					.select({ total: count() })
+					.from(hiringApplications)
+					.where(gte(hiringApplications.createdAt, now - HOUR_MS))
+				if ((orgRecent?.total ?? 0) >= HIRING_LIMITS.perOrgPerHour) {
+					return { status: 'rate_limited', scope: 'organization' }
+				}
+				if (ipHash) {
+					const [hour, day] = await Promise.all([
+						tx
+							.select({ total: count() })
+							.from(hiringApplications)
+							.where(
+								and(
+									eq(hiringApplications.ipHash, ipHash),
+									gte(hiringApplications.createdAt, now - HOUR_MS),
+								),
+							),
+						tx
+							.select({ total: count() })
+							.from(hiringApplications)
+							.where(
+								and(
+									eq(hiringApplications.ipHash, ipHash),
+									gte(hiringApplications.createdAt, now - DAY_MS),
+								),
+							),
+					])
+					if (
+						(hour[0]?.total ?? 0) >= HIRING_LIMITS.perIpPerHour ||
+						(day[0]?.total ?? 0) >= HIRING_LIMITS.perIpPerDay
+					) {
+						return { status: 'rate_limited', scope: 'address' }
+					}
+				}
+
 				const [created] = await tx
 					.insert(hiringApplications)
 					.values({
@@ -220,6 +225,7 @@ export async function submitApplication(
 						createdAt: now,
 					})
 					.onConflictDoNothing()
+				return { status: 'received', duplicate: false }
 			}),
 		)
 	} catch (error) {
@@ -227,5 +233,4 @@ export async function submitApplication(
 		if (isUniqueViolation(error)) return { status: 'received', duplicate: true }
 		throw error
 	}
-	return { status: 'received', duplicate: false }
 }

@@ -35,7 +35,17 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
 	return {
 		organization,
-		integrations,
+		// Only what the page shows. The full rows carry token ciphertext and the
+		// connected notes (including private ones), and any member can load this.
+		integrations: integrations.map((integration) => ({
+			id: integration.id,
+			providerName: integration.providerName,
+			providerType: integration.providerType,
+			isActive: integration.isActive,
+			lastSyncAt: integration.lastSyncAt,
+			config: integration.config,
+			_count: { connections: integration.connections?.length ?? 0 },
+		})),
 		availableProviders,
 	}
 }
@@ -71,11 +81,12 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			const protocol = url.protocol === 'https:' ? 'https:' : 'http:'
 			const redirectUri = `${protocol}//${url.host}/api/integrations/oauth/callback?provider=${providerName}`
 
-			const { authUrl, state } = await integrationManager.initiateOAuth(
-				organization.id,
-				providerName,
-				redirectUri,
-			)
+			const { authUrl, state, requestTokenSecret } =
+				await integrationManager.initiateOAuth(
+					organization.id,
+					providerName,
+					redirectUri,
+				)
 
 			// The callback finishes only what this browser started, for this
 			// member (see api+/integrations+/oauth.callback.tsx).
@@ -86,6 +97,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 						provider: providerName,
 						userId,
 						orgSlug: organization.slug,
+						...(requestTokenSecret ? { requestTokenSecret } : {}),
 					}),
 				},
 			})

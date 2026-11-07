@@ -28,6 +28,10 @@ import {
 	type TestOrg,
 } from '../../tests/hiring-harness.ts'
 import { hiringDeps } from '../services/hiring-service.ts'
+import {
+	resetTickLocks,
+	runStaffTickForOrg,
+} from '../services/staff-tick-service.ts'
 
 const orgs = vi.hoisted(() => new Map<string, TestOrg>())
 
@@ -731,6 +735,60 @@ describe('/operator/hiring', () => {
 			expect(events).not.toContain('bounced')
 		})
 
+		it('sends an invite the request never got to, from the tick, once', async () => {
+			const d = await db()
+			const app = await seedApplication(d, { email: 'sara@example.com' })
+			// The node stops between the commit and the send.
+			hiringDeps.emailEnabled = () => {
+				throw new Error('node stopped')
+			}
+			const reply = await h.operator(
+				'POST',
+				`/applications/${app.id}/interviews`,
+				{ body: { scheduledAt: inTwoDays } },
+			)
+			expect(reply.status).toBe(500)
+			const [interview] = await d.select().from(hiringInterviews)
+			expect(interview?.inviteStatus).toBe('not_sent')
+			expect(sent).toHaveLength(0)
+
+			hiringDeps.emailEnabled = () => true
+			resetTickLocks()
+			const tick = (at: number) =>
+				runStaffTickForOrg(ORG_A, {
+					db: d,
+					deps: {
+						now: () => at,
+						getFeatures: async () => ({
+							features: {
+								enabled: true,
+								timeclock: false,
+								scheduling: false,
+								hiring: true,
+							},
+							dataRegion: 'us',
+						}),
+						getScope: async () => null,
+						notifyManagers: async () => ({
+							status: 'delivered',
+							result: { inApp: 0, emailed: 0 },
+						}),
+						emailEnabled: () => true,
+						extraTasks: () => [],
+					},
+				})
+			// Within the request's hold the tick leaves it alone.
+			await tick(NOW + 60_000)
+			expect(sent).toHaveLength(0)
+			await tick(NOW + 11 * 60_000)
+			expect(sent).toHaveLength(1)
+			expect(sent[0]!.to).toBe('sara@example.com')
+			const [after] = await d.select().from(hiringInterviews)
+			expect(after?.inviteStatus).toBe('sent')
+			await tick(NOW + 60 * 60_000)
+			expect(sent).toHaveLength(1)
+		})
+
 		it('can skip the invitation, and needs a scope for an organization-wide job', async () => {
 			const d = await db()
 			const app = await seedApplication(d)
@@ -1280,6 +1338,28 @@ describe('/operator/hiring', () => {
 			expect(await d.select().from(onboardingTasks)).toHaveLength(0)
 		})
 
+		it('answers a retried hire with the staff id it already created', async () => {
+			const d = await db()
+			const position = await addPosition()
+			const app = await seedApplication(d)
+			const first = await h.operator('POST', `/applications/${app.id}/hire`, {
+				body: hireBody(position.id),
+			})
+			expect(first.status).toBe(201)
+			// The response was lost; the browser sends the same request again.
+			const retry = await h.operator('POST', `/applications/${app.id}/hire`, {
+				body: hireBody(position.id),
+			})
+			expect(retry.status).toBe(201)
+			expect(retry.body).toMatchObject({
+				staffId: first.body.staffId,
+				applicationId: app.id,
+				inviteEmail: first.body.inviteEmail,
+				alreadyHired: true,
+			})
+			expect(await d.select().from(staffMembers)).toHaveLength(1)
+		})
+
 		it('is refused for a hired, declined or unknown candidate and a bad position', async () => {
 			const d = await db()
 			const position = await addPosition()
@@ -1330,7 +1410,9 @@ describe('/operator/hiring', () => {
 					body: hireBody(position.id),
 				}),
 			])
-			expect([first.status, second.status].sort()).toEqual([201, 409])
+			// The second is answered as a retry of the first: same person.
+			expect([first.status, second.status]).toEqual([201, 201])
+			expect(second.body.staffId).toBe(first.body.staffId)
 			expect(await d.select().from(staffMembers)).toHaveLength(1)
 		})
 

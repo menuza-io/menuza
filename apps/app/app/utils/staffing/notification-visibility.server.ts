@@ -103,11 +103,9 @@ export async function countVisibleStaffingAlerts(
 /** Drops staffing alerts the member can no longer open; everything else passes. */
 export async function filterVisibleNotifications<
 	T extends { type: string; organizationId: string },
->(userId: string, notifications: readonly T[]): Promise<T[]> {
-	const staffing = notifications.filter((n) =>
-		isStaffingNotificationType(n.type),
-	)
-	if (staffing.length === 0) return [...notifications]
+>(userId: string, all: readonly T[]): Promise<T[]> {
+	const staffing = all.filter((n) => isStaffingNotificationType(n.type))
+	if (staffing.length === 0) return [...all]
 	const visibleByGroup = new Map<StaffingAlertGroup, Set<string>>()
 	for (const group of ['timeclock', 'schedule', 'hiring'] as const) {
 		const inGroup = staffing.filter((n) => staffingAlertGroup(n.type) === group)
@@ -121,7 +119,7 @@ export async function filterVisibleNotifications<
 			),
 		)
 	}
-	return notifications.filter(
+	return all.filter(
 		(n) =>
 			!isStaffingNotificationType(n.type) ||
 			visibleByGroup.get(staffingAlertGroup(n.type))?.has(n.organizationId) ===

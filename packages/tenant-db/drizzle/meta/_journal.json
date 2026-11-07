@@ -33,7 +33,7 @@
 		{
 			"idx": 4,
 			"version": "6",
-			"when": 1787955877667,
+			"when": 1788000000004,
 			"tag": "0004_drop_unwired_journey_triggers",
 			"breakpoints": true
 		},
@@ -119,6 +119,20 @@
 			"version": "6",
 			"when": 1792524703189,
 			"tag": "0016_customer_subscription_confirmation_sent",
+			"breakpoints": true
+		},
+		{
+			"idx": 17,
+			"version": "6",
+			"when": 1793942129603,
+			"tag": "0017_sms_send_events",
+			"breakpoints": true
+		},
+		{
+			"idx": 18,
+			"version": "6",
+			"when": 1793995512691,
+			"tag": "0018_concurrency_guards",
 			"breakpoints": true
 		}
 	]

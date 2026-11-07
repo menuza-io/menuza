@@ -55,6 +55,8 @@ interface IntegrationControlsProps {
 	open?: boolean
 	onOpenChange?: (open: boolean) => void
 	showTrigger?: boolean
+	/** False for people who can read but not edit the note: list only. */
+	canManage?: boolean
 }
 
 export function IntegrationControls({
@@ -64,6 +66,7 @@ export function IntegrationControls({
 	open: controlledOpen,
 	onOpenChange,
 	showTrigger = true,
+	canManage = true,
 }: IntegrationControlsProps) {
 	const [internalOpen, setInternalOpen] = useState(false)
 	const open = controlledOpen ?? internalOpen
@@ -132,6 +135,7 @@ export function IntegrationControls({
 									<ConnectedChannelItem
 										key={connection.id}
 										connection={connection}
+										canDisconnect={canManage}
 										onDisconnect={() => {
 											const formData = new FormData()
 											formData.append('intent', disconnectNoteActionIntent)
@@ -151,7 +155,7 @@ export function IntegrationControls({
 						)}
 
 						{/* Add New Connection */}
-						{hasAvailableIntegrations && (
+						{canManage && hasAvailableIntegrations && (
 							<div className="space-y-3">
 								<h4 className="text-sm font-medium">
 									{hasConnections ? 'Add Connection' : 'Connect to Channel'}
@@ -194,12 +198,14 @@ export function IntegrationControls({
 
 interface ConnectedChannelItemProps {
 	connection: Connection
+	canDisconnect: boolean
 	onDisconnect: () => void
 	isDisconnecting: boolean
 }
 
 function ConnectedChannelItem({
 	connection,
+	canDisconnect,
 	onDisconnect,
 	isDisconnecting,
 }: ConnectedChannelItemProps) {
@@ -217,15 +223,17 @@ function ConnectedChannelItem({
 					</p>
 				</div>
 			</div>
-			<StatusButton
-				variant="outline"
-				size="sm"
-				onClick={onDisconnect}
-				status={isDisconnecting ? 'pending' : 'idle'}
-				className="text-destructive hover:text-destructive"
-			>
-				<Icon name="x" className="h-3 w-3" />
-			</StatusButton>
+			{canDisconnect ? (
+				<StatusButton
+					variant="outline"
+					size="sm"
+					onClick={onDisconnect}
+					status={isDisconnecting ? 'pending' : 'idle'}
+					className="text-destructive hover:text-destructive"
+				>
+					<Icon name="x" className="h-3 w-3" />
+				</StatusButton>
+			) : null}
 		</div>
 	)
 }
@@ -238,6 +246,7 @@ interface AddConnectionFormProps {
 }
 
 function AddConnectionForm({
+	noteId,
 	integrations,
 	onConnect,
 	isConnecting,
@@ -261,6 +270,7 @@ function AddConnectionForm({
 			const formData = new FormData()
 			formData.append('intent', 'get-integration-channels')
 			formData.append('integrationId', integrationId)
+			formData.append('noteId', noteId)
 
 			void channelsFetcher.submit(formData, { method: 'POST' })
 		}

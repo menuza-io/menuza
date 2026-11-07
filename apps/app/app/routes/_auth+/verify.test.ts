@@ -103,6 +103,49 @@ describe('verify route integration', () => {
 		expect(verificationAfter).toBeUndefined()
 	})
 
+	it('lets only one of several concurrent submissions of the same code pass', async () => {
+		const user = await createTestUser()
+		const secret = 'JBSWY3DPEHPK3PXQ'
+		const { otp } = await generateTOTP({
+			secret,
+			algorithm: 'SHA-1',
+			period: 600,
+			digits: 6,
+		})
+		await db.insert(Verification).values({
+			type: 'reset-password',
+			target: user.email.toLowerCase(),
+			secret,
+			algorithm: 'SHA-1',
+			digits: 6,
+			period: 600,
+			charSet: '0123456789',
+			expiresAt: new Date(Date.now() + 1000 * 60 * 10),
+		})
+		const submit = () => {
+			const formData = new FormData()
+			formData.append('type', 'reset-password')
+			formData.append('target', user.email.toLowerCase())
+			formData.append('code', otp)
+			return action({
+				request: new Request('http://localhost:3000/verify', {
+					method: 'POST',
+					body: formData,
+				}),
+				params: {},
+				context: {},
+			} as any).catch((error: unknown) => error)
+		}
+		const results = await Promise.all([submit(), submit(), submit()])
+		const passed = results.filter(
+			(result) =>
+				result instanceof Response &&
+				result.status === 302 &&
+				result.headers.get('Location')?.includes('/reset-password'),
+		)
+		expect(passed).toHaveLength(1)
+	})
+
 	it('successfully verifies onboarding and redirects to /onboarding', async () => {
 		const email = `onboarding_${Date.now()}@example.com`
 

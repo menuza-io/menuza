@@ -37,14 +37,28 @@ describe('org-wide subjects', () => {
 		)
 	})
 
-	it('are offered when granted, and control-plane subjects always are', () => {
+	it('are offered when granted', () => {
 		const granted = ['customers', 'shop_orders']
 		const ids = catalogForGrants(catalog, granted).subjects.map((s) => s.id)
 		expect(ids).toEqual(expect.arrayContaining(granted))
 		expect(definitionAllowed(catalog, definitionOn('customers'), granted)).toBe(
 			true,
 		)
-		expect(definitionAllowed(catalog, definitionOn('notes'), [])).toBe(true)
+	})
+
+	it('members and notes need the grant their app page needs', () => {
+		// read:member:any and read:note:own in the App, listed as grants.
+		const without = catalogForGrants(catalog, []).subjects.map((s) => s.id)
+		expect(without).not.toContain('members')
+		expect(without).not.toContain('notes')
+		expect(definitionAllowed(catalog, definitionOn('notes'), [])).toBe(false)
+		expect(definitionAllowed(catalog, definitionOn('notes'), ['notes'])).toBe(
+			true,
+		)
+		const withBoth = catalogForGrants(catalog, ['members', 'notes'])
+		expect(withBoth.subjects.map((s) => s.id)).toEqual(
+			expect.arrayContaining(['members', 'notes']),
+		)
 	})
 
 	it('drop templates on a subject the grants do not cover', () => {

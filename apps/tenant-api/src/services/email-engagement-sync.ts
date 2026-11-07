@@ -159,16 +159,28 @@ export async function syncEmailEngagementForAllOrgs(options?: {
 	}
 
 	let eventsApplied = 0
+	let orgsFailed = 0
 	for (const orgId of orgIds) {
-		eventsApplied += await applyEngagementEventsForOrg(orgId, events)
-		markOrgSynced(orgId)
+		// One org whose database is not on this node (deleted, moved region,
+		// or another region's events) must not stop the rest of the run.
+		try {
+			eventsApplied += await applyEngagementEventsForOrg(orgId, events)
+			markOrgSynced(orgId)
+		} catch (error) {
+			orgsFailed++
+			console.error('Email engagement sync failed for organization', {
+				orgId,
+				error: error instanceof Error ? error.name : 'unknown',
+				code: (error as { code?: unknown } | null)?.code,
+			})
+		}
 	}
 
 	return {
 		synced: true,
 		eventsFetched: events.length,
 		eventsApplied,
-		orgsProcessed: orgIds.size,
+		orgsProcessed: orgIds.size - orgsFailed,
 	}
 }
 

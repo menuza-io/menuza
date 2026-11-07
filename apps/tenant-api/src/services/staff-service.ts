@@ -33,6 +33,7 @@ import {
 	PIN_DEFAULT_LENGTH,
 } from '@repo/staffing'
 import {
+	shiftRequests,
 	staffAuditLog,
 	staffJobs,
 	staffScopeAssignments,
@@ -1798,6 +1799,22 @@ export async function terminateStaff(
 			})
 			.where(eq(staffScopeAssignments.staffId, staffId))
 		const closedJobs = await closeOpenJobs(tx, staffId, effectiveDate)
+		// Swap, cover and drop requests they asked for or were named in can no
+		// longer be carried out: a manager approving one later must not hand a
+		// shift to someone who has left.
+		const cancelledRequests = await tx
+			.update(shiftRequests)
+			.set({ status: 'cancelled', updatedAt: now })
+			.where(
+				and(
+					eq(shiftRequests.status, 'pending'),
+					or(
+						eq(shiftRequests.requesterStaffId, staffId),
+						eq(shiftRequests.targetStaffId, staffId),
+					),
+				),
+			)
+			.returning({ id: shiftRequests.id })
 		// Their "my schedule" link stops working with their employment.
 		const linkRevoked = await revokeScheduleLink(
 			tx,
@@ -1816,6 +1833,7 @@ export async function terminateStaff(
 				effectiveDate,
 				eligibleForRehire: input.eligibleForRehire,
 				closedJobs,
+				shiftRequestsCancelled: cancelledRequests.length,
 				pinsCleared: allAssignments.filter((a) => a.pinLookup !== null).length,
 				scheduleLinkRevoked: linkRevoked,
 			},

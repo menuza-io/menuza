@@ -12,6 +12,7 @@ See the full guide: [docs/scheduled-jobs.md](../../docs/scheduled-jobs.md).
 | `0 2 * * *` | `/resources/jobs/audit-log-archival`                    |
 | `0 3 * * *` | `/resources/jobs/mcp-token-cleanup`                     |
 | `0 3 * * *` | `/resources/jobs/job-postings-expiry`                   |
+| `0 3 * * *` | `/resources/jobs/seat-reconcile`                        |
 | `0 4 * * *` | `/resources/jobs/gdpr-erasure`                          |
 | `0 4 * * *` | `/resources/jobs/voice-retention`                       |
 | `0 4 * * *` | `/resources/jobs/staffing-outbox`                       |

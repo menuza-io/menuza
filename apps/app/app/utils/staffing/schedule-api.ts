@@ -41,14 +41,22 @@ export type CreateShiftsInput = {
 	endTime: string
 	unpaidBreakMinutes?: number
 	notes?: string | null
+	/** Sent again on a resend so the server does not add the shifts twice. */
+	clientRequestId?: string
 }
 
 export async function createShifts(
 	client: StaffClient,
 	body: CreateShiftsInput,
 ) {
+	// One id per create: the client's resend after a refreshed token carries
+	// the same body, so a create that did land is not written twice.
+	const json = {
+		...body,
+		clientRequestId: body.clientRequestId ?? crypto.randomUUID(),
+	}
 	return shiftWriteSchema.parse(
-		await client.request('/shifts', { method: 'POST', json: body }),
+		await client.request('/shifts', { method: 'POST', json }),
 	)
 }
 

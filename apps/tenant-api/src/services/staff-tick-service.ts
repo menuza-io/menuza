@@ -30,6 +30,8 @@ import {
 	getTenantDb,
 	hiringApplications,
 	notificationOutbox,
+	shiftRequests,
+	shifts,
 	staffAuditLog,
 	staffMembers,
 	timeBreaks,
@@ -56,7 +58,11 @@ import { orgMatchesNodeRegion } from '../lib/region.ts'
 import { retryOnSqliteBusy } from '../lib/sqlite-retry.ts'
 import { normalizeStaffLocale, renderStaffEmail } from '../lib/staff-email.ts'
 import { sendTenantEmail } from '../lib/tenant-email.ts'
-import { purgeExpiredApplications } from './hiring-service.ts'
+import {
+	deliverQueuedInterviewInvites,
+	INTERVIEW_INVITE_OUTBOX_KIND,
+	purgeExpiredApplications,
+} from './hiring-service.ts'
 import { runOnboardingTick } from './onboarding-tick.ts'
 import { resolvePolicy } from './labor-policy-service.ts'
 import { buildScheduleNotice } from './schedule-notify-service.ts'
@@ -112,6 +118,7 @@ export const TICK_TASK_NAMES = [
 	'missed_clock_out',
 	'no_clock_in',
 	'pre_shift',
+	'shift_request_expiry',
 	'overtime',
 	'hiring_retention',
 ] as const
@@ -133,6 +140,8 @@ export type TickTaskResult = {
 	closed?: number
 	/** Declined applicants purged (hiring retention only). */
 	purged?: number
+	/** Pending shift requests closed because their shift began. */
+	expired?: number
 	/** Why the task did nothing, as a short code. */
 	reason?: string
 }
@@ -383,6 +392,74 @@ async function loadOpenEntries(db: StaffDb): Promise<OpenEntry[]> {
 // Tasks
 // ---------------------------------------------------------------------------
 
+const MAX_EXPIRED_REQUESTS_PER_TICK = 500
+
+/**
+ * A swap, cover or drop request for a shift that has begun can no longer be
+ * approved (the decision refuses it), so it is closed here instead of waiting
+ * for ever: it would keep the manager's pending count up and keep counting
+ * against the person's own open-request cap. Closed as cancelled, with an
+ * audit row per request.
+ */
+async function expireShiftRequestsTask(
+	ctx: TickContext,
+): Promise<TickTaskResult> {
+	const expired = await retryOnSqliteBusy(() =>
+		runTenantTransaction(ctx.db, async (tx) => {
+			const stale = await tx
+				.select({
+					id: shiftRequests.id,
+					kind: shiftRequests.kind,
+					requesterStaffId: shiftRequests.requesterStaffId,
+					scopeId: shifts.scopeId,
+				})
+				.from(shiftRequests)
+				.innerJoin(shifts, eq(shifts.id, shiftRequests.shiftId))
+				.where(
+					and(
+						eq(shiftRequests.status, 'pending'),
+						lte(shifts.startsAt, ctx.now),
+					),
+				)
+				.limit(MAX_EXPIRED_REQUESTS_PER_TICK)
+			let count = 0
+			for (const row of stale) {
+				const updated = await tx
+					.update(shiftRequests)
+					.set({ status: 'cancelled', updatedAt: ctx.now })
+					.where(
+						and(
+							eq(shiftRequests.id, row.id),
+							eq(shiftRequests.status, 'pending'),
+						),
+					)
+					.returning({ id: shiftRequests.id })
+				if (updated.length === 0) continue
+				count++
+				await tx.insert(staffAuditLog).values({
+					actorKind: 'system',
+					actorId: TICK_SYSTEM_ACTOR,
+					impersonated: false,
+					action: 'schedule.shift_request.expired',
+					entityType: 'shift_request',
+					entityId: row.id,
+					staffId: row.requesterStaffId,
+					scopeId: row.scopeId,
+					sensitivity: 'standard',
+					changes: { kind: row.kind },
+				})
+			}
+			return count
+		}),
+	)
+	return {
+		name: 'shift_request_expiry',
+		status: 'ok',
+		queued: 0,
+		expired,
+	}
+}
+
 /**
  * Closes entries still open past the policy's automatic clock-out time, flags
  * them for review, and queues the notices. Off unless the policy sets
@@ -455,13 +532,34 @@ async function closeEntryAutomatically(
 	policy: LaborPolicyView,
 	closeAt: number,
 ): Promise<{ queued: number } | null> {
-	const { entry } = item
 	const now = ctx.now
+
+	// The open entries were read before this transaction. Read the entry again
+	// here: if anyone changed it since (a clock-out, an edit, a break), the
+	// close time was worked out from figures that no longer hold, so this tick
+	// leaves it and the next one starts from the current row.
+	const [entry] = await tx
+		.select()
+		.from(timeEntries)
+		.where(eq(timeEntries.id, item.entry.id))
+		.limit(1)
+	if (
+		!entry ||
+		entry.version !== item.entry.version ||
+		entry.clockOutAt !== null ||
+		entry.voidedAt !== null
+	) {
+		return null
+	}
 
 	// Everything below depends on the entry still being open, so the guarded
 	// update is the first write: a person who clocked out a moment ago won the
 	// race and nothing is changed.
 	const breaksBefore = (await loadBreaks(tx, [entry.id])).get(entry.id) ?? []
+	const openBreak = breaksBefore.find(
+		(b) => b.voidedAt === null && b.endAt === null,
+	)
+	if ((openBreak?.startAt ?? null) !== item.openBreakStartAt) return null
 	const breaksAfter = breaksBefore.map((b) =>
 		b.voidedAt === null && b.endAt === null ? { ...b, endAt: closeAt } : b,
 	)
@@ -479,7 +577,13 @@ async function closeEntryAutomatically(
 			version: entry.version + 1,
 			updatedAt: now,
 		})
-		.where(and(eq(timeEntries.id, entry.id), isNull(timeEntries.clockOutAt)))
+		.where(
+			and(
+				eq(timeEntries.id, entry.id),
+				eq(timeEntries.version, entry.version),
+				isNull(timeEntries.clockOutAt),
+			),
+		)
 		.returning({ id: timeEntries.id })
 	if (updated.length === 0) return null
 
@@ -907,6 +1011,7 @@ function deliverableKinds(features: StaffingFeatures): string[] {
 			managerOutboxKind('new_applicant'),
 			managerOutboxKind('onboarding_due'),
 			managerOutboxKind('certificate_expiring'),
+			INTERVIEW_INVITE_OUTBOX_KIND,
 		)
 	}
 	return kinds
@@ -1148,16 +1253,33 @@ function sharedActor(
 		: {}
 }
 
+/** Payload key that holds the event id a row was first sent under. */
+const MANAGER_EVENT_ID_KEY = 'managerEventId'
+
+function frozenEventId(row: NotificationOutboxRow): string | null {
+	const value = (row.payload as Record<string, unknown> | null)?.[
+		MANAGER_EVENT_ID_KEY
+	]
+	return typeof value === 'string' && /^[0-9a-f]{32}$/.test(value)
+		? value
+		: null
+}
+
 async function deliverManagerRows(
 	ctx: TickContext,
 	rows: NotificationOutboxRow[],
 	totals: DeliveryTotals,
 ) {
+	// A row already attempted keeps the group (and so the event id) it was
+	// first sent in: a retry after a lost response must carry the same id, or
+	// the App would treat it as a new alert. Rows queued since form their own
+	// group.
 	const groups = new Map<
 		string,
 		{
 			kind: ManagerAlertKind
 			scopeId: string | null
+			eventId: string | null
 			rows: NotificationOutboxRow[]
 		}
 	>()
@@ -1174,10 +1296,12 @@ async function deliverManagerRows(
 			await skipRow(ctx.db, row, 'stale', totals)
 			continue
 		}
-		const key = `${kind}|${row.scopeId ?? ''}`
+		const frozen = frozenEventId(row)
+		const key = frozen ? `event|${frozen}` : `new|${kind}|${row.scopeId ?? ''}`
 		const group = groups.get(key) ?? {
 			kind,
 			scopeId: row.scopeId,
+			eventId: frozen,
 			rows: [],
 		}
 		group.rows.push(row)
@@ -1188,9 +1312,23 @@ async function deliverManagerRows(
 	for (const group of groups.values()) {
 		if (delivered >= MAX_MANAGER_GROUPS_PER_TICK) break
 		delivered++
+		let eventId = group.eventId
+		if (eventId === null) {
+			eventId = managerEventId(group.rows.map((row) => row.dedupeKey))
+			// Recorded before the call, so a response that never arrives still
+			// leaves the rows tied to this id.
+			for (const row of group.rows) {
+				const payload = {
+					...((row.payload as Record<string, unknown> | null) ?? {}),
+					[MANAGER_EVENT_ID_KEY]: eventId,
+				}
+				await markRow(ctx.db, row, { payload })
+				row.payload = payload
+			}
+		}
 		const event: ManagerAlertEvent = {
 			orgId: ctx.orgId,
-			eventId: managerEventId(group.rows.map((row) => row.dedupeKey)),
+			eventId,
 			kind: group.kind,
 			scopeId: group.scopeId,
 			count: Math.min(group.rows.length, 10_000),
@@ -1263,6 +1401,22 @@ async function deliverOutbox(
 	}
 	if (managerRows.length > 0) {
 		await deliverManagerRows(ctx, managerRows, managers)
+	}
+	// Interview invites a request queued but did not get to send.
+	const inviteRows = due.filter(
+		(row) => row.kind === INTERVIEW_INVITE_OUTBOX_KIND,
+	)
+	if (inviteRows.length > 0) {
+		const invites = await deliverQueuedInterviewInvites(
+			ctx.db,
+			ctx.orgId,
+			inviteRows,
+			ctx.now,
+		)
+		staff.sent += invites.sent
+		staff.skipped += invites.skipped
+		staff.failed += invites.failed
+		staff.retry += invites.retry
 	}
 	return { staff, managers }
 }
@@ -1423,6 +1577,11 @@ export async function runStaffTickForOrg(
 					upcoming = out.upcoming
 					return out.result
 				}),
+			)
+			tasks.push(
+				await guarded('shift_request_expiry', () =>
+					expireShiftRequestsTask(ctx),
+				),
 			)
 		}
 

@@ -75,7 +75,7 @@ const structuredData = posting
 			logoUrl: organization.siteIcon?.original ?? null,
 			// Only claimed when the page really has the form (it needs the regional
 			// node's address).
-			directApply: getTenantApiUrl(organization.dataRegion) !== '',
+			directApply: Boolean(getTenantApiUrl(organization.dataRegion)),
 		})
 	: null
 const closedTitle = i18n._(msg`This job is no longer open.`)

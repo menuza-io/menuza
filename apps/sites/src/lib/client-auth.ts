@@ -50,11 +50,38 @@ export function clearSessionTokens() {
 	delete document.documentElement.dataset.customerSession
 }
 
-export function getBrowserTenantApiUrl(): string {
+/**
+ * The tenant-api could not be used: the page names no node for this
+ * organization's region, or a session refresh failed for a reason that says
+ * nothing about the session (offline, rate limited, server error). Any session
+ * is kept, so callers show a retryable error instead of the sign-in page.
+ */
+export class TenantApiUnavailableError extends Error {
+	constructor(message: string) {
+		super(message)
+		this.name = 'TenantApiUnavailableError'
+	}
+}
+
+/**
+ * The organization's regional tenant-api, from `data-tenant-api-url`. SSR
+ * leaves it out when no node serves the organization's region; there is no
+ * fallback, because another region's node must never receive this
+ * organization's customer data. Sign-in is unavailable instead.
+ */
+export function getBrowserTenantApiUrl(): string | null {
 	const fromDom = document.documentElement.dataset.tenantApiUrl
-	if (fromDom) return fromDom.replace(/\/$/, '')
-	// SSR should set data-tenant-api-url; localhost fallback for local dev only.
-	return 'http://localhost:3007'
+	return fromDom ? fromDom.replace(/\/$/, '') : null
+}
+
+function tenantApiEndpoint(path: string): string {
+	const base = getBrowserTenantApiUrl()
+	if (!base) {
+		throw new TenantApiUnavailableError(
+			'No tenant-api serves this organization region',
+		)
+	}
+	return `${base}${path}`
 }
 
 export function getOrgBinding(): OrgBinding {
@@ -129,6 +156,22 @@ function refreshSession(): Promise<boolean> {
 	return tracked
 }
 
+// 401: invalid, expired or replayed refresh token. 400: a request tenant-api
+// can never accept. 403 only with `organization_inactive`: tenant-api also
+// answers a bare 403 while it cannot reach the control plane, which says
+// nothing about the session (the customer app's rule, see `endsSession` in
+// apps/customer/lib/api/api-error.ts).
+function isTerminalRefreshAnswer(
+	status: number,
+	data: Record<string, unknown>,
+) {
+	return (
+		status === 400 ||
+		status === 401 ||
+		(status === 403 && data.code === 'organization_inactive')
+	)
+}
+
 async function doRefreshSession(): Promise<boolean> {
 	const refreshToken = getRefreshToken()
 	const orgId = getAccessTokenClaims()?.orgId
@@ -138,12 +181,15 @@ async function doRefreshSession(): Promise<boolean> {
 	}
 
 	try {
-		const { ok, data } = await tenantJson('/auth/refresh', {
+		const { ok, status, data } = await tenantJson('/auth/refresh', {
 			refreshToken,
 			orgId,
 		})
 		if (!ok || typeof data.accessToken !== 'string') {
-			clearSessionTokens()
+			// Sign out only when tenant-api refused the token itself. A rate limit,
+			// a server error or an outage says nothing about the session, and a
+			// later refresh with the same token can still succeed.
+			if (isTerminalRefreshAnswer(status, data)) clearSessionTokens()
 			return false
 		}
 		setSessionTokens({
@@ -153,7 +199,7 @@ async function doRefreshSession(): Promise<boolean> {
 		})
 		return true
 	} catch {
-		clearSessionTokens()
+		// Network failure: keep the tokens for the next attempt.
 		return false
 	}
 }
@@ -162,7 +208,7 @@ export async function tenantJson(
 	path: string,
 	body: unknown,
 ): Promise<{ ok: boolean; status: number; data: Record<string, unknown> }> {
-	const res = await fetch(`${getBrowserTenantApiUrl()}${path}`, {
+	const res = await fetch(tenantApiEndpoint(path), {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify(body),
@@ -186,10 +232,16 @@ export function redirectHomeIfSignedIn() {
 	}
 }
 
+/**
+ * An authenticated call with one refresh after a 401. A 401 comes back only
+ * when the session has ended (callers send the customer to sign in); a refresh
+ * that failed while the session was kept throws `TenantApiUnavailableError`.
+ */
 export async function tenantFetch(
 	path: string,
 	init: RequestInit = {},
 ): Promise<Response> {
+	const url = tenantApiEndpoint(path)
 	const headers = new Headers(init.headers)
 	const access = getAccessToken()
 	if (access) headers.set('Authorization', `Bearer ${access}`)
@@ -197,8 +249,7 @@ export async function tenantFetch(
 		headers.set('Content-Type', 'application/json')
 	}
 
-	const request = () =>
-		fetch(`${getBrowserTenantApiUrl()}${path}`, { ...init, headers })
+	const request = () => fetch(url, { ...init, headers })
 
 	let res = await request()
 	if (res.status === 401 && getRefreshToken()) {
@@ -207,6 +258,10 @@ export async function tenantFetch(
 			const nextAccess = getAccessToken()
 			if (nextAccess) headers.set('Authorization', `Bearer ${nextAccess}`)
 			res = await request()
+		} else if (getRefreshToken()) {
+			// Only a terminal refresh answer clears the tokens: this one was
+			// transient, so the customer stays signed in and can try again.
+			throw new TenantApiUnavailableError('Session refresh failed; try again')
 		}
 	}
 	return res

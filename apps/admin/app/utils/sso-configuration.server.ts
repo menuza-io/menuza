@@ -13,6 +13,29 @@ import {
 	type EndpointConfiguration,
 } from '@repo/sso'
 
+const EMAIL_DOMAIN =
+	/^(?=.{1,253}$)([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/
+
+/**
+ * The domains an organization's IdP may sign people in for: lowercase,
+ * de-duplicated, comma-separated. Null when the list is empty or invalid.
+ */
+export function normalizeAllowedEmailDomains(value: unknown): string | null {
+	if (typeof value !== 'string') return null
+	const domains = [
+		...new Set(
+			value
+				.split(',')
+				.map((domain) => domain.trim().toLowerCase())
+				.filter(Boolean),
+		),
+	]
+	if (domains.length === 0 || !domains.every((d) => EMAIL_DOMAIN.test(d))) {
+		return null
+	}
+	return domains.join(',')
+}
+
 export interface SSOConfigInput {
 	providerName: string
 	issuerUrl: string
@@ -24,6 +47,9 @@ export interface SSOConfigInput {
 	autoProvision?: boolean
 	defaultRole?: string
 	attributeMapping?: Record<string, string>
+	/** Comma-separated, normalized domains the IdP is trusted for. */
+	allowedEmailDomains?: string | null
+	requireVerifiedEmail?: boolean
 }
 
 export interface ConnectionTestResult {
@@ -69,6 +95,8 @@ export class SSOConfigurationService {
 				attributeMapping: config.attributeMapping
 					? JSON.stringify(config.attributeMapping)
 					: null,
+				allowedEmailDomains: config.allowedEmailDomains ?? null,
+				requireVerifiedEmail: config.requireVerifiedEmail ?? false,
 				createdById,
 			})
 			.returning()

@@ -1,3 +1,4 @@
+import { createId } from '@paralleldrive/cuid2'
 import {
 	and,
 	asc,
@@ -7,6 +8,7 @@ import {
 	gte,
 	lt,
 	RateLimitEntry,
+	sql,
 } from '@repo/database'
 
 /**
@@ -148,40 +150,13 @@ export const PHONE_LINE_VERIFICATION_CHECK_RATE_LIMIT: RateLimitConfig = {
 }
 
 /**
- * Serialize all rate-limit checks within this process.
- *
- * The libsql client's `concurrency` option (see packages/database/src/client.ts)
- * only limits its HTTP/WebSocket transports - it has no effect on the local
- * SQLite file transport this app uses - so nothing else guarantees that two
- * overlapping "count, then insert" sequences for the same key can't race.
- * Wrapping the check in a `db.transaction()` (SQLite `BEGIN IMMEDIATE`)
- * would fix that in principle, but concurrent transactions against the
- * local file driver were found to be unstable under load in practice
- * (observed `SQLITE_IOERR` failures with a burst of concurrent callers).
- *
- * A simple in-process FIFO queue sidesteps that entirely: only one check
- * ever runs at a time per process, so no two callers can observe the same
- * pre-insert count. This matches how this app is actually deployed -
- * LiteFS elects a single writer across instances, so cross-process races
- * on this table are not a concern this function needs to solve.
- */
-let rateLimitQueue: Promise<unknown> = Promise.resolve()
-function runSerialized<T>(fn: () => Promise<T>): Promise<T> {
-	const run = rateLimitQueue.then(fn, fn)
-	// Always resolve the queue tail, even when `fn` rejects, so one failed
-	// check doesn't wedge every subsequent caller. The real outcome (success
-	// or failure) still propagates to the caller via `run`.
-	rateLimitQueue = run.then(
-		() => undefined,
-		() => undefined,
-	)
-	return run
-}
-
-/**
  * Check if a request should be rate limited.
- * Uses a sliding window algorithm with database persistence. See
- * `runSerialized` above for how concurrent callers are kept from racing.
+ *
+ * Sliding window with database persistence. The allow decision is one atomic
+ * SQL statement (`INSERT ... SELECT ... WHERE (count in window) < max`), so
+ * concurrent callers in different Workers isolates or processes can never
+ * both observe the same pre-insert count: SQLite runs each statement
+ * serially, and only an inserted row means "allowed".
  */
 export async function checkRateLimit(
 	key: RateLimitKey,
@@ -191,83 +166,82 @@ export async function checkRateLimit(
 	remaining: number
 	resetAt: Date
 }> {
-	return runSerialized(async () => {
-		const now = new Date()
-		const windowStart = new Date(now.getTime() - config.windowMs)
+	const now = new Date()
+	const windowStart = new Date(now.getTime() - config.windowMs)
 
-		// Namespace the key by rule so unrelated rate limiters never share
-		// rows, even when their `type`/`value` pairs are otherwise identical.
-		const keyId = `${config.scope}:${key.type}:${key.value}`
+	// Namespace the key by rule so unrelated rate limiters never share
+	// rows, even when their `type`/`value` pairs are otherwise identical.
+	const keyId = `${config.scope}:${key.type}:${key.value}`
 
-		try {
-			// Clean up old entries outside the window
-			await db
-				.delete(RateLimitEntry)
-				.where(
-					and(
-						eq(RateLimitEntry.keyId, keyId),
-						lt(RateLimitEntry.createdAt, windowStart),
-					),
-				)
+	try {
+		// Clean up old entries outside the window. Not part of the decision:
+		// the count below only looks inside the window.
+		await db
+			.delete(RateLimitEntry)
+			.where(
+				and(
+					eq(RateLimitEntry.keyId, keyId),
+					lt(RateLimitEntry.createdAt, windowStart),
+				),
+			)
 
-			// Count requests in the current window
-			const [countRow] = await db
-				.select({ value: count() })
-				.from(RateLimitEntry)
-				.where(
-					and(
-						eq(RateLimitEntry.keyId, keyId),
-						gte(RateLimitEntry.createdAt, windowStart),
-					),
-				)
-			const requestCount = countRow?.value ?? 0
+		const inserted = await db.all<{ id: string }>(sql`
+			INSERT INTO "RateLimitEntry" ("id", "keyId", "keyType", "keyValue", "createdAt")
+			SELECT ${createId()}, ${keyId}, ${key.type}, ${key.value}, ${now.getTime()}
+			WHERE (
+				SELECT count(*) FROM "RateLimitEntry"
+				WHERE "keyId" = ${keyId} AND "createdAt" >= ${windowStart.getTime()}
+			) < ${config.maxRequests}
+			RETURNING "id"
+		`)
+		const allowed = inserted.length > 0
 
-			// The reset time is when the *oldest* surviving entry ages out of
-			// the window - not `windowStart + windowMs`, which always equals
-			// `now` and would report an immediate reset even while a 429 is
-			// still in effect.
-			const [oldestRow] = await db
-				.select({ createdAt: RateLimitEntry.createdAt })
-				.from(RateLimitEntry)
-				.where(
-					and(
-						eq(RateLimitEntry.keyId, keyId),
-						gte(RateLimitEntry.createdAt, windowStart),
-					),
-				)
-				.orderBy(asc(RateLimitEntry.createdAt))
-				.limit(1)
+		// Count requests in the current window (including this one if allowed)
+		const [countRow] = await db
+			.select({ value: count() })
+			.from(RateLimitEntry)
+			.where(
+				and(
+					eq(RateLimitEntry.keyId, keyId),
+					gte(RateLimitEntry.createdAt, windowStart),
+				),
+			)
+		const requestCount = countRow?.value ?? 0
 
-			const allowed = requestCount < config.maxRequests
-			const remaining = Math.max(0, config.maxRequests - requestCount - 1)
-			const resetAt = oldestRow
-				? new Date(oldestRow.createdAt.getTime() + config.windowMs)
-				: new Date(now.getTime() + config.windowMs)
+		// The reset time is when the *oldest* surviving entry ages out of
+		// the window - not `windowStart + windowMs`, which always equals
+		// `now` and would report an immediate reset even while a 429 is
+		// still in effect.
+		const [oldestRow] = await db
+			.select({ createdAt: RateLimitEntry.createdAt })
+			.from(RateLimitEntry)
+			.where(
+				and(
+					eq(RateLimitEntry.keyId, keyId),
+					gte(RateLimitEntry.createdAt, windowStart),
+				),
+			)
+			.orderBy(asc(RateLimitEntry.createdAt))
+			.limit(1)
 
-			// If allowed, record this request. Because every call to
-			// `checkRateLimit` is serialized above, no concurrent caller for
-			// the same key can have read a stale count before this insert
-			// commits.
-			if (allowed) {
-				await db.insert(RateLimitEntry).values({
-					keyId,
-					keyType: key.type,
-					keyValue: key.value,
-				})
-			}
+		const remaining = allowed
+			? Math.max(0, config.maxRequests - requestCount)
+			: 0
+		const resetAt = oldestRow
+			? new Date(oldestRow.createdAt.getTime() + config.windowMs)
+			: new Date(now.getTime() + config.windowMs)
 
-			return { allowed, remaining, resetAt }
-		} catch (error) {
-			// SECURITY: Fail closed - deny request when rate limiting is unavailable
-			// This prevents brute force attacks during database outages
-			console.error('Rate limit check failed:', error)
-			return {
-				allowed: false,
-				remaining: 0,
-				resetAt: new Date(now.getTime() + 60000), // Retry in 1 minute
-			}
+		return { allowed, remaining, resetAt }
+	} catch (error) {
+		// SECURITY: Fail closed - deny request when rate limiting is unavailable
+		// This prevents brute force attacks during database outages
+		console.error('Rate limit check failed:', error)
+		return {
+			allowed: false,
+			remaining: 0,
+			resetAt: new Date(now.getTime() + 60000), // Retry in 1 minute
 		}
-	})
+	}
 }
 
 /**

@@ -6,6 +6,7 @@ import {
 	db,
 	eq,
 	inArray,
+	isD1Bound,
 	isNull,
 	or,
 	sql,
@@ -149,28 +150,41 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		}
 	}
 
-	await db.transaction(async (tx) => {
-		await tx
-			.update(OrganizationRole)
-			.set({ name, description })
-			.where(
-				and(
-					eq(OrganizationRole.id, role.id),
-					eq(OrganizationRole.organizationId, organization.organizationId),
-				),
-			)
-		await tx
-			.delete(_OrganizationPermissionToRole)
-			.where(eq(_OrganizationPermissionToRole.A, role.id))
-		if (permissionIds.length) {
-			await tx.insert(_OrganizationPermissionToRole).values(
-				permissionIds.map((permissionId) => ({
-					A: role.id,
-					B: permissionId,
-				})),
-			)
-		}
-	})
+	const roleWhere = and(
+		eq(OrganizationRole.id, role.id),
+		eq(OrganizationRole.organizationId, organization.organizationId),
+	)
+	const permissionRows = permissionIds.map((permissionId) => ({
+		A: role.id,
+		B: permissionId,
+	}))
+	if (isD1Bound()) {
+		// D1 has no interactive transactions (the client's `transaction` is a
+		// plain callback), so one batch keeps the swap atomic: a failed insert
+		// must not leave the role without its permission links.
+		await db.batch([
+			db.update(OrganizationRole).set({ name, description }).where(roleWhere),
+			db
+				.delete(_OrganizationPermissionToRole)
+				.where(eq(_OrganizationPermissionToRole.A, role.id)),
+			...(permissionRows.length
+				? [db.insert(_OrganizationPermissionToRole).values(permissionRows)]
+				: []),
+		])
+	} else {
+		await db.transaction(async (tx) => {
+			await tx
+				.update(OrganizationRole)
+				.set({ name, description })
+				.where(roleWhere)
+			await tx
+				.delete(_OrganizationPermissionToRole)
+				.where(eq(_OrganizationPermissionToRole.A, role.id))
+			if (permissionRows.length) {
+				await tx.insert(_OrganizationPermissionToRole).values(permissionRows)
+			}
+		})
+	}
 
 	try {
 		await invalidateAssignedActiveMembers(role.id)

@@ -212,6 +212,8 @@ export type PublicWebsitePage = {
 		noIndex: boolean
 	}
 	sections: PublicWebsitePageSection[]
+	/** Set by the App only after it verified the signed preview token. */
+	previewVerified?: boolean
 }
 
 export async function fetchPublishedSitePage(options: {

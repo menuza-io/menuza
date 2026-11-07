@@ -197,8 +197,19 @@ export class CustomerSession {
 		const next = await this.authorized((token) =>
 			this.client.updateProfile(trimmedName, trimmedEmail, token),
 		)
-		// /auth/profile rotates the refresh token.
-		const stored = await this.#store(next, generation)
+		// /auth/profile re-issues only the access token (its name claim changed)
+		// and keeps the refresh token, so the customer's other devices stay
+		// signed in. Read the refresh token now: a refresh during the save may
+		// have rotated it.
+		const current = this.#tokens
+		if (!current) throw unauthorizedError()
+		const stored = await this.#store(
+			{
+				accessToken: next.accessToken,
+				refreshToken: next.refreshToken ?? current.refreshToken,
+			},
+			generation,
+		)
 		if (!stored) throw unauthorizedError()
 		return this.profile()
 	}

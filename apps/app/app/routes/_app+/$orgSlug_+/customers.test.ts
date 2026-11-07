@@ -104,7 +104,7 @@ describe('customers loader', () => {
 		expect(getOperatorTenantClient).toHaveBeenCalledWith(
 			expect.any(Request),
 			'acme',
-			{ canUpdate: true, canDelete: true },
+			{ area: 'customers', canUpdate: true, canDelete: true },
 		)
 	})
 
@@ -114,7 +114,7 @@ describe('customers loader', () => {
 		expect(getOperatorTenantClient).toHaveBeenCalledWith(
 			expect.any(Request),
 			'acme',
-			{ canUpdate: false, canDelete: false },
+			{ area: 'customers', canUpdate: false, canDelete: false },
 		)
 	})
 })

@@ -290,6 +290,29 @@ export class GitLabProvider extends BaseIntegrationProvider {
 	}
 
 	/**
+	 * Revoke the access token on the integration's GitLab instance (best
+	 * effort, used on disconnect).
+	 */
+	async revokeToken(token: string, integration?: Integration): Promise<void> {
+		const revokeUrl = this.getBaseUrl(integration).replace(
+			/\/api\/v4$/,
+			'/oauth/revoke',
+		)
+		const response = await fetch(revokeUrl, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+			body: new URLSearchParams({
+				client_id: this.clientId,
+				client_secret: this.clientSecret,
+				token,
+			}).toString(),
+		})
+		if (!response.ok) {
+			throw new Error(`GitLab token revoke failed: ${response.status}`)
+		}
+	}
+
+	/**
 	 * Refresh GitLab access token
 	 */
 	async refreshToken(refreshToken: string): Promise<TokenData> {
@@ -491,7 +514,7 @@ export class GitLabProvider extends BaseIntegrationProvider {
 		if (!response.ok) {
 			const errorText = await response.text()
 			throw new Error(
-				`Failed to get GitLab user: ${response.statusText} - ${errorText}`,
+				`Failed to get GitLab user: ${response.status} ${response.statusText} - ${errorText}`,
 			)
 		}
 
@@ -506,13 +529,14 @@ export class GitLabProvider extends BaseIntegrationProvider {
 		integration: Integration,
 		apiCall: (accessToken: string) => Promise<T>,
 	): Promise<T> {
+		let accessToken: string | undefined
 		try {
 			if (!integration.accessToken) {
 				throw new Error('No access token available for GitLab integration')
 			}
 			// Decrypt the access token
 			const { decryptToken } = await import('../../encryption')
-			const accessToken = await decryptToken(integration.accessToken)
+			accessToken = await decryptToken(integration.accessToken)
 			return await apiCall(accessToken)
 		} catch (error) {
 			// If token is expired, try to refresh it
@@ -521,25 +545,24 @@ export class GitLabProvider extends BaseIntegrationProvider {
 					throw new Error('Access token expired and no refresh token available')
 				}
 
-				try {
-					const newTokenData = await this.refreshToken(integration.refreshToken)
-
-					// Update the integration with new tokens (this would typically be done by the calling code)
-					integration.accessToken = newTokenData.accessToken
-					if (newTokenData.refreshToken) {
-						integration.refreshToken = newTokenData.refreshToken
-					}
-					if (newTokenData.expiresAt) {
-						integration.tokenExpiresAt = newTokenData.expiresAt
-					}
-
-					// Retry the API call with the new token (already decrypted)
-					return await apiCall(newTokenData.accessToken)
-				} catch (refreshError) {
+				// GitLab rotates refresh tokens. The token manager refreshes from
+				// the stored, decrypted refresh token and persists the new pair
+				// (compare-and-set), so the next request does not reuse a spent
+				// refresh token.
+				const { tokenManager } = await import('../../token-manager')
+				const result = await tokenManager.refreshStoredToken(
+					integration.id,
+					this,
+					{ rejectedAccessToken: accessToken },
+				)
+				if (!result.success || !result.tokenData?.accessToken) {
 					throw new Error(
-						`Token refresh failed: ${refreshError instanceof Error ? refreshError.message : 'Unknown error'}`,
+						`Token refresh failed: ${result.error ?? 'Unknown error'}`,
 					)
 				}
+
+				// Retry the API call with the new token (already decrypted)
+				return await apiCall(result.tokenData.accessToken)
 			}
 
 			throw error
@@ -566,7 +589,7 @@ export class GitLabProvider extends BaseIntegrationProvider {
 		if (!response.ok) {
 			const errorText = await response.text()
 			throw new Error(
-				`Failed to get GitLab projects: ${response.statusText} - ${errorText}`,
+				`Failed to get GitLab projects: ${response.status} ${response.statusText} - ${errorText}`,
 			)
 		}
 
@@ -594,7 +617,9 @@ export class GitLabProvider extends BaseIntegrationProvider {
 		)
 
 		if (!response.ok) {
-			throw new Error(`Failed to get GitLab project: ${response.statusText}`)
+			throw new Error(
+				`Failed to get GitLab project: ${response.status} ${response.statusText}`,
+			)
 		}
 
 		return (await response.json()) as GitLabProject
@@ -726,7 +751,7 @@ export class GitLabProvider extends BaseIntegrationProvider {
 
 			if (!response.ok) {
 				throw new Error(
-					`Failed to get GitLab project labels: ${response.statusText}`,
+					`Failed to get GitLab project labels: ${response.status} ${response.statusText}`,
 				)
 			}
 
@@ -757,7 +782,7 @@ export class GitLabProvider extends BaseIntegrationProvider {
 
 			if (!response.ok) {
 				throw new Error(
-					`Failed to get GitLab project milestones: ${response.statusText}`,
+					`Failed to get GitLab project milestones: ${response.status} ${response.statusText}`,
 				)
 			}
 
@@ -794,7 +819,7 @@ export class GitLabProvider extends BaseIntegrationProvider {
 
 			if (!response.ok) {
 				throw new Error(
-					`Failed to search GitLab project users: ${response.statusText}`,
+					`Failed to search GitLab project users: ${response.status} ${response.statusText}`,
 				)
 			}
 

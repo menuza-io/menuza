@@ -1,6 +1,7 @@
 import { ENV } from 'varlock/env'
 import { listTenantOrgIds } from '@repo/tenant-db'
 import { fanOutStaffTick } from '../services/staff-tick-fanout.ts'
+import { startBroadcastTickForOrg } from '../services/broadcast-dispatch.ts'
 import { runStaffTickForOrg } from '../services/staff-tick-service.ts'
 import { syncEnvFromProcess } from './secrets.ts'
 
@@ -52,7 +53,14 @@ export function startStaffTickInterval(
 		(async () =>
 			fanOutStaffTick({
 				orgIds: await listTenantOrgIds(),
-				run: (orgId) => runStaffTickForOrg(orgId).catch(() => null),
+				run: async (orgId) => {
+					const result = await runStaffTickForOrg(orgId).catch(() => null)
+					// Claim interrupted broadcasts and scheduled ones that are due; they
+					// send in the background (the process keeps running them), so a
+					// large campaign does not delay the next pass.
+					await startBroadcastTickForOrg(orgId)
+					return result
+				},
 			}))
 	const timer = (options.setIntervalFn ?? setInterval)(() => {
 		// A slow pass is never overlapped by the next one.

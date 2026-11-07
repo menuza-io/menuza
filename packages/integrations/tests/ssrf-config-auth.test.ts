@@ -28,7 +28,9 @@ describe('Jira configuration protection', () => {
 		const { handleUpdateIntegrationConfig } =
 			await import('../src/route-handlers/update-config')
 		mockDb.select.mockImplementationOnce(() =>
-			queryChain([{ id: 'integration-1', providerName: 'jira' }]),
+			queryChain([
+				{ id: 'integration-1', organizationId: 'org-1', providerName: 'jira' },
+			]),
 		)
 		const formData = new FormData()
 		formData.set('intent', 'update-integration-config')
@@ -49,9 +51,8 @@ describe('Jira configuration protection', () => {
 			} as any,
 			{
 				requireUserId: vi.fn().mockResolvedValue('user-1'),
-				getUserDefaultOrganization: vi
-					.fn()
-					.mockResolvedValue({ organization: { id: 'org-1' } }),
+				isOrganizationMember: vi.fn().mockResolvedValue(true),
+				requireOrgPermission: vi.fn().mockResolvedValue(undefined),
 			},
 		)
 

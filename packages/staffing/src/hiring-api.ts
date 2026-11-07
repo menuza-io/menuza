@@ -526,6 +526,8 @@ export type HiringHireResult = {
 	onboardingTasks: number
 	/** The email on the application, so the App can offer an app invitation. */
 	inviteEmail: string | null
+	/** The application was already hired (a retried request): nothing new was written. */
+	alreadyHired?: boolean
 }
 
 // ---------------------------------------------------------------------------

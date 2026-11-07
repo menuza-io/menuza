@@ -167,6 +167,32 @@ describe('login route integration', () => {
 			expect(response.headers.get('set-cookie')).toContain('_session=')
 		})
 
+		it('logs in when the username or email is typed in a different case', async () => {
+			const password = 'CaseValidPassword123!'
+			const user = await createTestUser({
+				password,
+				username: `kody_${Math.random().toString(36).slice(2, 8)}`,
+			})
+			for (const identifier of [
+				` ${user.username.toUpperCase()} `,
+				user.email.toUpperCase(),
+			]) {
+				const formData = new FormData()
+				formData.append('username', identifier)
+				formData.append('password', password)
+				const response = (await action({
+					request: new Request('http://localhost:3000/login', {
+						method: 'POST',
+						body: formData,
+					}),
+					params: {},
+					context: {},
+				} as any)) as Response
+				expect(response.status).toBe(302)
+				expect(response.headers.get('set-cookie')).toContain('_session=')
+			}
+		})
+
 		it('supports redirectTo parameter', async () => {
 			const password = 'RedirectPassword123!'
 			const user = await createTestUser({ password })

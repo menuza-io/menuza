@@ -240,6 +240,7 @@ const shopOrderFields: ReportField[] = [
 			{ value: 'paid', label: 'Paid' },
 			{ value: 'failed', label: 'Failed' },
 			{ value: 'refunded', label: 'Refunded' },
+			{ value: 'disputed', label: 'Disputed' },
 		],
 	},
 	{

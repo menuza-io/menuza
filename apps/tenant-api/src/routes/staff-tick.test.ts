@@ -3,10 +3,14 @@ import os from 'node:os'
 import path from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { BUILTIN_LABOR_POLICY } from '@repo/staffing'
+import { sendSms } from '@repo/sms'
 import {
+	customers,
+	customerSubscriptions,
 	destroyTenantDb,
 	getTenantDb,
 	laborPolicies,
+	marketingCampaigns,
 	provisionTenantDb,
 	staffMembers,
 	timeEntries,
@@ -38,6 +42,10 @@ const features = vi.hoisted(
 		>(),
 )
 const alerts = vi.hoisted(() => [] as unknown[])
+
+vi.mock('@repo/sms', () => ({
+	sendSms: vi.fn().mockResolvedValue({ success: true }),
+}))
 
 vi.mock('../lib/scope-context.ts', () => ({
 	getStaffingFeatures: vi.fn(
@@ -171,6 +179,52 @@ describe('POST /api/staff/tick body', () => {
 })
 
 describe('POST /api/staff/tick for one organization', () => {
+	it('answers without waiting for a due broadcast to finish sending', async () => {
+		const db = await getTenantDb(ORG_A)
+		const [customer] = await db
+			.insert(customers)
+			.values({ name: 'Ada', phone: '+15550001234', phoneVerified: true })
+			.returning()
+		await db.insert(customerSubscriptions).values({
+			customerId: customer!.id,
+			topic: 'marketing',
+			channel: 'sms',
+			source: 'signup',
+			subscribedAt: new Date(),
+		})
+		await db.insert(marketingCampaigns).values({
+			id: 'campaign-due',
+			name: 'Promo',
+			channel: 'sms',
+			content: 'Hello',
+			status: 'Scheduled',
+			scheduledAt: new Date(Date.now() - 60_000),
+			segmentationRules: JSON.stringify({ audience: 'all' }),
+		})
+		let releaseSend!: () => void
+		vi.mocked(sendSms).mockImplementationOnce(
+			() =>
+				new Promise((resolve) => {
+					releaseSend = () => resolve({ success: true } as never)
+				}),
+		)
+
+		const response = await post({ orgId: ORG_A })
+		expect(response.status).toBe(200)
+		// The send is still in flight: the tick only claimed the campaign.
+		await vi.waitFor(() => expect(sendSms).toHaveBeenCalledTimes(1))
+		const status = async () =>
+			(
+				await db
+					.select({ status: marketingCampaigns.status })
+					.from(marketingCampaigns)
+					.get()
+			)?.status
+		expect(await status()).toBe('Processing')
+		releaseSend()
+		await vi.waitFor(async () => expect(await status()).toBe('Completed'))
+	})
+
 	it('runs the organization and answers counts only', async () => {
 		features.set(ORG_A, ON)
 		const person = await seedForgottenEntry(ORG_A)

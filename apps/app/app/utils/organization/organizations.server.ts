@@ -7,6 +7,7 @@ import {
 	desc,
 	eq,
 	inArray,
+	isNotNull,
 	isNull,
 	Organization,
 	OrganizationImage,
@@ -14,6 +15,7 @@ import {
 	OrganizationRole as OrgRoleTable,
 	Permission,
 	_OrganizationPermissionToRole,
+	sql,
 	UserOrganization,
 	WebsitePage,
 	WebsitePageSection,
@@ -31,6 +33,7 @@ import {
 	HOME_PAGE_SLUG,
 	HOME_PAGE_TITLE,
 } from '#app/utils/website/home-page.ts'
+import { publishWebsitePage } from '#app/utils/website/publish-page.server.ts'
 import { isPublicEmailDomain } from './public-email-domains.ts'
 
 export type OrganizationWithImage = {
@@ -238,21 +241,15 @@ export async function setUserDefaultOrganization(
 	userId: string,
 	organizationId: string,
 ) {
-	await db.transaction(async (tx) => {
-		await tx
-			.update(UserOrganization)
-			.set({ isDefault: false })
-			.where(eq(UserOrganization.userId, userId))
-		await tx
-			.update(UserOrganization)
-			.set({ isDefault: true })
-			.where(
-				and(
-					eq(UserOrganization.userId, userId),
-					eq(UserOrganization.organizationId, organizationId),
-				),
-			)
-	})
+	// One statement, not "clear all" then "set one": D1 runs `db.transaction`
+	// callbacks without a transaction, so two requests switching organizations
+	// at once could interleave the two writes and leave two defaults.
+	await db
+		.update(UserOrganization)
+		.set({
+			isDefault: sql`(${UserOrganization.organizationId} = ${organizationId})`,
+		})
+		.where(eq(UserOrganization.userId, userId))
 	return getUserDefaultOrganization(userId)
 }
 
@@ -379,22 +376,26 @@ export async function createOrganization({
 				organizationId: created.id,
 				title: HOME_PAGE_TITLE,
 				slug: HOME_PAGE_SLUG,
-				status: 'published',
+				// Published below, together with the snapshot the public site serves.
+				status: 'draft',
 				template: 'blank',
 				isHomePage: true,
 				position: 0,
 				createdById: userId,
 			})
 			.returning({ id: WebsitePage.id })
-		if (page && sections.length) {
-			await tx.insert(WebsitePageSection).values(
-				sections.map((section) => ({
-					pageId: page.id,
-					type: section.type,
-					position: section.position,
-					config: JSON.stringify(section.config),
-				})),
-			)
+		if (page) {
+			if (sections.length) {
+				await tx.insert(WebsitePageSection).values(
+					sections.map((section) => ({
+						pageId: page.id,
+						type: section.type,
+						position: section.position,
+						config: JSON.stringify(section.config),
+					})),
+				)
+			}
+			await publishWebsitePage(page.id, tx)
 		}
 		return created
 	})
@@ -488,7 +489,13 @@ export async function getOrganizationByDomain(domain: string) {
 			verifiedDomain: Organization.verifiedDomain,
 		})
 		.from(Organization)
-		.where(eq(Organization.verifiedDomain, domain.toLowerCase()))
+		.where(
+			and(
+				eq(Organization.verifiedDomain, domain.toLowerCase()),
+				// Only a DNS-proven domain routes sign-ins to an organization.
+				isNotNull(Organization.verifiedDomainProvedAt),
+			),
+		)
 		.limit(1)
 	return organization ?? null
 }

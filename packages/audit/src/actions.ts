@@ -160,6 +160,8 @@ export enum AuditAction {
 
 	SSO_USER_PROVISIONED = 'sso_user_provisioned',
 	SSO_USER_ROLE_CHANGED = 'sso_user_role_changed',
+	// A platform admin removed a user's identity-provider link (SSOIdentity)
+	SSO_IDENTITY_LINK_RESET = 'sso_identity_link_reset',
 
 	SSO_HEALTH_CHECK_FAILED = 'sso_health_check_failed',
 	SSO_PROVIDER_UNAVAILABLE = 'sso_provider_unavailable',

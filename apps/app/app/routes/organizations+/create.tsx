@@ -60,13 +60,17 @@ import { getLaunchStatus } from '#app/utils/env.server.ts'
 import {
 	createOrganizationInvitation,
 	sendOrganizationInvitationEmail,
+	validateOrganizationInviteRoles,
 } from '#app/utils/organization/invitation.server.ts'
 import { MAX_ORGANIZATION_INVITES_PER_REQUEST } from '#app/utils/organization/invitation.ts'
 import {
 	createOrganization,
 	setUserDefaultOrganization,
-	userHasOrgAccess,
 } from '#app/utils/organization/organizations.server.ts'
+import {
+	ORG_PERMISSIONS,
+	requireUserWithOrganizationPermission,
+} from '#app/utils/organization/permissions.server.ts'
 import {
 	getTrialConfig,
 	getPlansAndPrices,
@@ -281,14 +285,21 @@ export async function action({ request }: ActionFunctionArgs) {
 
 	// Handle step 2: Send invitations
 	if (intent === 'send-invitations') {
-		const orgId = formData.get('orgId') as string
+		const orgId = formData.get('orgId')
+		if (typeof orgId !== 'string' || !orgId) {
+			return Response.json({ error: 'Invalid organization' }, { status: 400 })
+		}
 		const submission = parseWithZod(formData, { schema: InviteSchema })
 
 		if (submission.status !== 'success') {
 			return Response.json({ result: submission.reply() }, { status: 400 })
 		}
 
-		await userHasOrgAccess(request, orgId)
+		await requireUserWithOrganizationPermission(
+			request,
+			orgId,
+			ORG_PERMISSIONS.CREATE_MEMBER_ANY,
+		)
 
 		const rateLimitCheck = await checkRateLimit(
 			{ type: 'user', value: `${userId}:${orgId}` },
@@ -322,6 +333,9 @@ export async function action({ request }: ActionFunctionArgs) {
 				if (!organization) {
 					throw new Error('Organization not found')
 				}
+
+				// Validate every role before sending anything (no partial sends).
+				await validateOrganizationInviteRoles(orgId, invites, userId)
 
 				await Promise.all(
 					invites.map(async (invite) => {
@@ -373,7 +387,15 @@ export async function action({ request }: ActionFunctionArgs) {
 			})
 		}
 
-		const orgId = formData.get('orgId') as string
+		const orgId = formData.get('orgId')
+		if (typeof orgId !== 'string' || !orgId) {
+			return Response.json({ error: 'Invalid organization' }, { status: 400 })
+		}
+		await requireUserWithOrganizationPermission(
+			request,
+			orgId,
+			ORG_PERMISSIONS.UPDATE_SETTINGS_ANY,
+		)
 		const submission = parseWithZod(formData, { schema: SubscriptionSchema })
 
 		if (submission.status !== 'success') {
@@ -410,7 +432,15 @@ export async function action({ request }: ActionFunctionArgs) {
 
 	// Handle step 4: Complete setup (previously step 3)
 	if (intent === 'complete-setup') {
-		const orgId = formData.get('orgId') as string
+		const orgId = formData.get('orgId')
+		if (typeof orgId !== 'string' || !orgId) {
+			return Response.json({ error: 'Invalid organization' }, { status: 400 })
+		}
+		await requireUserWithOrganizationPermission(
+			request,
+			orgId,
+			ORG_PERMISSIONS.UPDATE_SETTINGS_ANY,
+		)
 		const submission = parseWithZod(formData, { schema: Step4Schema })
 
 		if (submission.status !== 'success') {

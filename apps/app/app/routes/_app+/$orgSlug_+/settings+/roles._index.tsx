@@ -4,10 +4,11 @@ import {
 	count,
 	db,
 	eq,
+	exists,
+	not,
 	OrganizationInvitation,
 	OrganizationInviteLink,
 	OrganizationRole,
-	_OrganizationPermissionToRole,
 	UserOrganization,
 } from '@repo/database'
 import {
@@ -122,19 +123,33 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			}
 		}
 
-		await db.transaction(async (tx) => {
-			await tx
-				.delete(_OrganizationPermissionToRole)
-				.where(eq(_OrganizationPermissionToRole.A, role.id))
-			await tx
-				.delete(OrganizationRole)
-				.where(
-					and(
-						eq(OrganizationRole.id, role.id),
-						eq(OrganizationRole.organizationId, organization.organizationId),
+		// Invitations cascade when their role is deleted (so deleting an
+		// organization is never blocked by one), so the role delete itself
+		// refuses while one exists: an invitation sent after the check above
+		// must not be silently dropped. Permission links cascade with the role.
+		const deleted = await db
+			.delete(OrganizationRole)
+			.where(
+				and(
+					eq(OrganizationRole.id, role.id),
+					eq(OrganizationRole.organizationId, organization.organizationId),
+					not(
+						exists(
+							db
+								.select({ id: OrganizationInvitation.id })
+								.from(OrganizationInvitation)
+								.where(eq(OrganizationInvitation.organizationRoleId, role.id)),
+						),
 					),
-				)
-		})
+				),
+			)
+			.returning({ id: OrganizationRole.id })
+		if (deleted.length === 0) {
+			return {
+				error:
+					'Cannot delete this role while invitations or invite links still reference it.',
+			}
+		}
 
 		await invalidateAssignedActiveMembers(role.id)
 		await auditService.log({

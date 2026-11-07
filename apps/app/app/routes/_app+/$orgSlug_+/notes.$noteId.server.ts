@@ -31,6 +31,7 @@ import {
 	sanitizeCommentContent,
 	sanitizeTextContent,
 } from '#app/utils/content-sanitization.server.ts'
+import { attachLibraryAssetToComment } from '#app/utils/media/library-attach.server.ts'
 import {
 	getNoteFavoriteUserIds,
 	invalidateFavoritesCaches,
@@ -175,6 +176,23 @@ async function requireNoteReadAccess(userId: string, noteId: string) {
 	return note
 }
 
+/**
+ * Connecting or disconnecting an external channel changes the note's state and
+ * posts its activity outside the app, so it needs the same right as editing
+ * the note: `update:note:own` for its creator, `update:note:any` otherwise.
+ */
+async function requireNoteEditAccess(userId: string, noteId: string) {
+	const note = await requireNoteReadAccess(userId, noteId)
+	await requireUserWithOrganizationPermission(
+		userId,
+		note.organizationId,
+		note.createdById === userId
+			? ORG_PERMISSIONS.UPDATE_NOTE_OWN
+			: ORG_PERMISSIONS.UPDATE_NOTE_ANY,
+	)
+	return note
+}
+
 export async function handleDeleteNoteIntent({
 	formData,
 	userId,
@@ -267,7 +285,7 @@ export async function handleConnectChannelIntent({
 	}
 
 	const { noteId, integrationId, channelId } = submission.value
-	await requireNoteReadAccess(userId, noteId)
+	await requireNoteEditAccess(userId, noteId)
 
 	try {
 		await integrationManager.connectNoteToChannel({
@@ -314,7 +332,7 @@ export async function handleDisconnectChannelIntent({
 		.where(eq(NoteIntegrationConnection.id, connectionId))
 		.limit(1)
 	invariantResponse(connection, 'Connection not found', { status: 404 })
-	await requireNoteReadAccess(userId, connection.noteId)
+	await requireNoteEditAccess(userId, connection.noteId)
 
 	try {
 		const [connectionDetails] = await db
@@ -373,10 +391,12 @@ export async function handleGetChannelsIntent({
 		)
 	}
 
-	const { integrationId } = submission.value
+	const { integrationId, noteId } = submission.value
+	// Channels are listed only to someone about to connect this note.
+	const note = await requireNoteEditAccess(userId, noteId)
 	try {
 		const integration = await integrationManager.getIntegration(integrationId)
-		if (!integration) {
+		if (!integration || integration.organizationId !== note.organizationId) {
 			return data({ error: 'Integration not found' }, { status: 404 })
 		}
 
@@ -931,14 +951,20 @@ export async function handleAddCommentIntent({
 					await tx.insert(NoteCommentImage).values(uploadedImages)
 				}
 
-				if (libraryAssets.length > 0) {
-					await tx.insert(NoteCommentImage).values(
-						libraryAssets.map((asset) => ({
-							commentId,
-							objectKey: asset.objectKey,
-							altText: asset.altText,
-						})),
-					)
+				for (const asset of libraryAssets) {
+					const attached = await attachLibraryAssetToComment(tx, {
+						organizationId: note.organizationId,
+						assetId: asset.id,
+						objectKey: asset.objectKey,
+						commentId,
+						altText: asset.altText,
+					})
+					// Deleted or replaced in the media library since it was picked.
+					// D1 has no rollback, so remove the comment by hand.
+					if (!attached) {
+						await tx.delete(NoteComment).where(eq(NoteComment.id, commentId))
+						throw new Error('A library image is no longer available')
+					}
 				}
 			})
 		} catch (error) {

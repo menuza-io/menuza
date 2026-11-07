@@ -37,6 +37,16 @@ const E164 = z
 
 const NumberId = z.string().trim().min(1).max(64)
 
+/**
+ * The organization the admin saw holding the number ('' for none). Unassign and
+ * retire apply only while it still does, so a stale page cannot take the number
+ * away from an organization it was reassigned to since.
+ */
+const ExpectedOrganizationId = z
+	.string()
+	.max(64)
+	.transform((value) => value.trim() || null)
+
 const ActionSchema = z.discriminatedUnion('_action', [
 	z.object({
 		_action: z.literal('add'),
@@ -56,8 +66,16 @@ const ActionSchema = z.discriminatedUnion('_action', [
 			.optional()
 			.transform((value) => value === 'on' || value === 'true'),
 	}),
-	z.object({ _action: z.literal('unassign'), id: NumberId }),
-	z.object({ _action: z.literal('retire'), id: NumberId }),
+	z.object({
+		_action: z.literal('unassign'),
+		id: NumberId,
+		expectedOrganizationId: ExpectedOrganizationId,
+	}),
+	z.object({
+		_action: z.literal('retire'),
+		id: NumberId,
+		expectedOrganizationId: ExpectedOrganizationId,
+	}),
 ])
 
 export type ReassignmentHold = {
@@ -400,9 +418,19 @@ export async function action({
 	const now = new Date()
 	// An orphaned number (see getReassignmentHold) is released now, which is
 	// later than it really was and so only lengthens the hold.
+	if (number.assignedOrganizationId !== input.expectedOrganizationId) {
+		return {
+			ok: false,
+			error:
+				'This number’s assignment changed since the page loaded. Reload and try again.',
+		}
+	}
 	const releasing = Boolean(number.assignedOrganizationId || number.assignedAt)
-	// The update runs first so it can still see the connection it records.
-	const [ignoredReleased, removedConnections] = await db.batch([
+	// The update runs first so it can still see the connection it records. Both
+	// statements are conditional on the assignment the admin saw, so a
+	// reassignment that lands between the read above and this batch is left
+	// alone (the batch runs as one transaction).
+	const [released, removedConnections] = await db.batch([
 		db
 			.update(PlatformPhoneNumber)
 			.set({
@@ -417,16 +445,41 @@ export async function action({
 					: {}),
 				...(input._action === 'retire' ? { retiredAt: now } : {}),
 			})
-			.where(eq(PlatformPhoneNumber.id, number.id)),
+			.where(
+				and(
+					eq(PlatformPhoneNumber.id, number.id),
+					input.expectedOrganizationId
+						? eq(
+								PlatformPhoneNumber.assignedOrganizationId,
+								input.expectedOrganizationId,
+							)
+						: isNull(PlatformPhoneNumber.assignedOrganizationId),
+				),
+			)
+			.returning({ id: PlatformPhoneNumber.id }),
 		db
 			.delete(PhoneAgentNumber)
-			.where(eq(PhoneAgentNumber.platformNumberId, number.id))
+			.where(
+				and(
+					eq(PhoneAgentNumber.platformNumberId, number.id),
+					// Only once the number is unassigned: never a connection of an
+					// organization the number now belongs to.
+					sql`not exists (select 1 from ${PlatformPhoneNumber} where ${PlatformPhoneNumber.id} = ${number.id} and ${PlatformPhoneNumber.assignedOrganizationId} is not null)`,
+				),
+			)
 			.returning({
 				id: PhoneAgentNumber.id,
 				mode: PhoneAgentNumber.mode,
 				verifiedAt: PhoneAgentNumber.verifiedAt,
 			}),
 	])
+	if (released.length === 0) {
+		return {
+			ok: false,
+			error:
+				'This number’s assignment changed since the page loaded. Reload and try again.',
+		}
+	}
 	const hadVerifiedForwarding = removedConnections.some(
 		(row) => row.mode === 'forwarding' && row.verifiedAt !== null,
 	)

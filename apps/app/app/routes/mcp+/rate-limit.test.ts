@@ -1,7 +1,7 @@
 import { faker } from '@faker-js/faker'
 import { RateLimitEntry, count, db, eq } from '@repo/database'
 import { getClientIp } from '@repo/security'
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { checkRateLimit, RATE_LIMITS } from '#app/utils/rate-limit.server.ts'
 
 describe('Rate Limiting', () => {
@@ -400,6 +400,35 @@ describe('Rate Limiting', () => {
 				longRule,
 			)
 			expect(stillDenied.allowed).toBe(false)
+		})
+	})
+
+	describe('Atomic allow decision', () => {
+		it('never admits more than maxRequests across separate isolates', async () => {
+			// Each `vi.resetModules()` import is a fresh module instance, like a
+			// second Workers isolate: no in-memory state is shared between them.
+			const isolates: Array<{ checkRateLimit: typeof checkRateLimit }> = []
+			for (let i = 0; i < 4; i++) {
+				vi.resetModules()
+				isolates.push(await import('#app/utils/rate-limit.server.ts'))
+			}
+			const config = {
+				scope: `atomic-${faker.string.uuid()}`,
+				maxRequests: 3,
+				windowMs: 60_000,
+			}
+			const key = { type: 'ip' as const, value: faker.internet.ipv4() }
+			const results = await Promise.all(
+				Array.from({ length: 12 }, (_, i) =>
+					isolates[i % isolates.length]!.checkRateLimit(key, config),
+				),
+			)
+			expect(results.filter((r) => r.allowed)).toHaveLength(3)
+			const [row] = await db
+				.select({ value: count() })
+				.from(RateLimitEntry)
+				.where(eq(RateLimitEntry.keyId, `${config.scope}:ip:${key.value}`))
+			expect(row?.value).toBe(3)
 		})
 	})
 })

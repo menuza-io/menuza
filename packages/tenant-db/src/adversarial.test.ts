@@ -704,6 +704,9 @@ describe('Adversarial SQLite Schema Testing (Milestone 1)', () => {
 						journeyId: journey!.id,
 						customerId: cust!.id,
 						workflowInstanceId: `wf-concurrent-${i}`,
+						// Repeatable test runs: a once-per-customer trigger enrolls
+						// a customer once.
+						triggerEvent: 'manual',
 						contextData: JSON.stringify({ index: i }),
 					})
 					.returning()

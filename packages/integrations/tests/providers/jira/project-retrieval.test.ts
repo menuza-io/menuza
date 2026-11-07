@@ -290,6 +290,7 @@ describe('JiraProvider - Project Retrieval', () => {
 			expect(channels).toHaveLength(2)
 			expect(integrationManager.refreshIntegrationTokens).toHaveBeenCalledWith(
 				'integration-123',
+				{ rejectedAccessToken: 'expired-token' },
 			)
 		})
 

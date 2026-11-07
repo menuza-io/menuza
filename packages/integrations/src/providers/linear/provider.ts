@@ -170,6 +170,19 @@ export class LinearProvider extends BaseIntegrationProvider {
 	}
 
 	/**
+	 * Revoke the access token (best effort, used on disconnect).
+	 */
+	async revokeToken(token: string): Promise<void> {
+		const response = await fetch(`${this.apiBaseUrl}/oauth/revoke`, {
+			method: 'POST',
+			headers: { Authorization: `Bearer ${token}` },
+		})
+		if (!response.ok) {
+			throw new Error(`Linear token revoke failed: ${response.status}`)
+		}
+	}
+
+	/**
 	 * Refresh expired access token
 	 */
 	async refreshToken(_refreshToken: string): Promise<TokenData> {

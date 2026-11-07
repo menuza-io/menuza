@@ -33,7 +33,6 @@ import {
 import {
 	CUSTOM_SITE_FONT_ID,
 	parseSiteThemeConfig,
-	serializeSiteThemeConfig,
 	siteFontExtension,
 	sniffSiteFontFormat,
 } from '@repo/common/site-theme'
@@ -172,6 +171,14 @@ import {
 } from '#app/utils/website/block-types.ts'
 import { HOME_PAGE_SLUG } from '#app/utils/website/home-page.ts'
 import { ensureSiteChrome } from '#app/utils/website/locked-chrome.server.ts'
+import {
+	buildPublishWebsitePageUpdate,
+	publishWebsitePage,
+} from '#app/utils/website/publish-page.server.ts'
+import {
+	SiteThemeConflictError,
+	updateSiteTheme,
+} from '#app/utils/website/site-theme.server.ts'
 import { BULK_UPDATE_SECTIONS_INTENT } from '#app/utils/website/translation.ts'
 
 // --- Action Intents ---
@@ -861,33 +868,20 @@ export async function action({ request, params }: ActionFunctionArgs) {
 					{ type: fontFile.type, lastModified: Date.now() },
 				)
 				const objectKey = await uploadSiteFont(organization.id, role, safeFile)
-				const [org] = await db
-					.select({ siteTheme: Organization.siteTheme })
-					.from(Organization)
-					.where(eq(Organization.id, organization.id))
-					.limit(1)
-				const current = parseSiteThemeConfig(org?.siteTheme)
 				const customFont = {
 					objectKey,
 					filename: fontFile.name.replace(/^.*[\\/]/, '').slice(0, 180),
 					format,
 				}
-				await db
-					.update(Organization)
-					.set({
-						siteTheme: serializeSiteThemeConfig({
-							...current,
-							headingFont:
-								role === 'heading' ? CUSTOM_SITE_FONT_ID : current.headingFont,
-							bodyFont:
-								role === 'body' ? CUSTOM_SITE_FONT_ID : current.bodyFont,
-							headingCustomFont:
-								role === 'heading' ? customFont : current.headingCustomFont,
-							bodyCustomFont:
-								role === 'body' ? customFont : current.bodyCustomFont,
-						}),
-					})
-					.where(eq(Organization.id, organization.id))
+				await updateSiteTheme(organization.id, (current) => ({
+					...current,
+					headingFont:
+						role === 'heading' ? CUSTOM_SITE_FONT_ID : current.headingFont,
+					bodyFont: role === 'body' ? CUSTOM_SITE_FONT_ID : current.bodyFont,
+					headingCustomFont:
+						role === 'heading' ? customFont : current.headingCustomFont,
+					bodyCustomFont: role === 'body' ? customFont : current.bodyCustomFont,
+				}))
 				await invalidateUserOrganizationsCache(userId)
 				await purgeOrganizationSiteCache(
 					organization.id,
@@ -1428,52 +1422,40 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
 	if (intent === publishIntent) {
 		const themeData = formData.get('theme') as string | null
-		const sections = await db
-			.select({
-				id: WebsitePageSection.id,
-				type: WebsitePageSection.type,
-				position: WebsitePageSection.position,
-				config: WebsitePageSection.config,
-			})
-			.from(WebsitePageSection)
-			.where(eq(WebsitePageSection.pageId, page.id))
-			.orderBy(asc(WebsitePageSection.position))
-		const publishedSections = sections.filter(
-			(section) => !isLockedBlockType(section.type),
-		)
+		let theme: Partial<ReturnType<typeof parseSiteThemeConfig>> | null = null
+		if (themeData) {
+			try {
+				theme = JSON.parse(themeData) as Partial<
+					ReturnType<typeof parseSiteThemeConfig>
+				>
+			} catch {}
+		}
 
-		await db.transaction(async (tx) => {
-			await tx
-				.update(WebsitePage)
-				.set({
-					status: 'published',
-					publishedData: JSON.stringify(publishedSections),
-				})
-				.where(eq(WebsitePage.id, page.id))
-
-			if (themeData) {
-				try {
-					const theme = JSON.parse(themeData) as ReturnType<
-						typeof parseSiteThemeConfig
-					>
-					const [org] = await tx
-						.select({ siteTheme: Organization.siteTheme })
-						.from(Organization)
-						.where(eq(Organization.id, organization.id))
-						.limit(1)
-					const current = parseSiteThemeConfig(org?.siteTheme)
-					await tx
-						.update(Organization)
-						.set({
-							siteTheme: serializeSiteThemeConfig({
-								...current,
-								...theme,
-							}),
-						})
-						.where(eq(Organization.id, organization.id))
-				} catch {}
+		if (theme) {
+			// The page and the theme go live together or not at all.
+			try {
+				await updateSiteTheme(
+					organization.id,
+					(current) => ({ ...current, ...theme }),
+					async (themeUnchanged) => {
+						const { update } = await buildPublishWebsitePageUpdate(
+							page.id,
+							db,
+							themeUnchanged,
+						)
+						return [update]
+					},
+				)
+			} catch (error) {
+				if (!(error instanceof SiteThemeConflictError)) throw error
+				return Response.json(
+					{ status: 'error', error: error.message },
+					{ status: 409 },
+				)
 			}
-		})
+		} else {
+			await publishWebsitePage(page.id)
+		}
 		await purgeOrganizationSiteCache(
 			organization.id,
 			organization.slug,
@@ -1511,35 +1493,23 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			submission.value
 
 		try {
-			const [org] = await db
-				.select({ siteTheme: Organization.siteTheme })
-				.from(Organization)
-				.where(eq(Organization.id, organization.id))
-				.limit(1)
-			const current = parseSiteThemeConfig(org?.siteTheme)
-			await db
-				.update(Organization)
-				.set({
-					siteTheme: serializeSiteThemeConfig({
-						baseColor,
-						theme,
-						radius,
-						mode,
-						headingFont:
-							headingFont === CUSTOM_SITE_FONT_ID && !current.headingCustomFont
-								? current.headingFont
-								: headingFont,
-						bodyFont:
-							bodyFont === CUSTOM_SITE_FONT_ID && !current.bodyCustomFont
-								? current.bodyFont
-								: bodyFont,
-						headingCustomFont: current.headingCustomFont,
-						bodyCustomFont: current.bodyCustomFont,
-						cssVars:
-							cssVars && Object.keys(cssVars).length > 0 ? cssVars : null,
-					}),
-				})
-				.where(eq(Organization.id, organization.id))
+			await updateSiteTheme(organization.id, (current) => ({
+				baseColor,
+				theme,
+				radius,
+				mode,
+				headingFont:
+					headingFont === CUSTOM_SITE_FONT_ID && !current.headingCustomFont
+						? current.headingFont
+						: headingFont,
+				bodyFont:
+					bodyFont === CUSTOM_SITE_FONT_ID && !current.bodyCustomFont
+						? current.bodyFont
+						: bodyFont,
+				headingCustomFont: current.headingCustomFont,
+				bodyCustomFont: current.bodyCustomFont,
+				cssVars: cssVars && Object.keys(cssVars).length > 0 ? cssVars : null,
+			}))
 			await invalidateUserOrganizationsCache(userId)
 			await purgeOrganizationSiteCache(
 				organization.id,
@@ -1604,25 +1574,14 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		}
 
 		try {
-			const [org] = await db
-				.select({ siteTheme: Organization.siteTheme })
-				.from(Organization)
-				.where(eq(Organization.id, organization.id))
-				.limit(1)
-			const current = parseSiteThemeConfig(org?.siteTheme)
-			await db
-				.update(Organization)
-				.set({
-					siteTheme: serializeSiteThemeConfig({
-						...current,
-						headingFont: role === 'heading' ? 'inter' : current.headingFont,
-						bodyFont: role === 'body' ? 'inter' : current.bodyFont,
-						headingCustomFont:
-							role === 'heading' ? null : current.headingCustomFont,
-						bodyCustomFont: role === 'body' ? null : current.bodyCustomFont,
-					}),
-				})
-				.where(eq(Organization.id, organization.id))
+			await updateSiteTheme(organization.id, (current) => ({
+				...current,
+				headingFont: role === 'heading' ? 'inter' : current.headingFont,
+				bodyFont: role === 'body' ? 'inter' : current.bodyFont,
+				headingCustomFont:
+					role === 'heading' ? null : current.headingCustomFont,
+				bodyCustomFont: role === 'body' ? null : current.bodyCustomFont,
+			}))
 			await invalidateUserOrganizationsCache(userId)
 			await purgeOrganizationSiteCache(
 				organization.id,

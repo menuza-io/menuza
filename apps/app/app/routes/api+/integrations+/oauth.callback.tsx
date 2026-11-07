@@ -59,6 +59,7 @@ export async function loader(args: LoaderFunctionArgs) {
 
 	return handleOAuthCallback(args, {
 		organization,
+		requestTokenSecret: saved.requestTokenSecret,
 		redirectWithToast: (to, toast) =>
 			redirectWithToast(
 				to,

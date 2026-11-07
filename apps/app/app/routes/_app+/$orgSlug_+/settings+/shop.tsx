@@ -1,5 +1,5 @@
 import { parseWithZod } from '@conform-to/zod/v4'
-import { requireUserId } from '@repo/auth'
+import { requireUserId, userHasOrganizationPermission } from '@repo/auth'
 import { redirectWithToast } from '@repo/common/toast'
 import { db, eq, User as UserTable } from '@repo/database'
 import { AnnotatedLayout, AnnotatedSection } from '@repo/ui/annotated-layout'
@@ -98,9 +98,20 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		}
 	}
 
+	// Orders carry customer names, phones and emails: same rule as the
+	// Customers page, so members without settings access see the settings only.
+	const canViewOrders = await userHasOrganizationPermission(
+		await requireUserId(request),
+		organization.id,
+		ORG_PERMISSIONS.READ_SETTINGS_ANY,
+	)
 	let orders: Awaited<ReturnType<typeof listOrganizationShopOrders>> = []
 	let ordersUnavailable = false
-	if (organization.dataRegion === 'us' && organization.hasProvisionedDb) {
+	if (
+		canViewOrders &&
+		organization.dataRegion === 'us' &&
+		organization.hasProvisionedDb
+	) {
 		try {
 			orders = await listOrganizationShopOrders(organization.id)
 		} catch (error) {
@@ -127,6 +138,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		},
 		orders,
 		ordersUnavailable,
+		ordersHidden: !canViewOrders,
 		configuredProcessors: listConfiguredShopProcessors(),
 		// Dev and CI only: always `enabled: false` in a production build.
 		paymentsMock: getPaymentsMockStatus(request),
@@ -433,6 +445,7 @@ export default function ShopSettingsRoute() {
 		organization,
 		orders,
 		ordersUnavailable,
+		ordersHidden,
 		configuredProcessors,
 		paymentsMock,
 	} = useLoaderData<typeof loader>()
@@ -444,6 +457,7 @@ export default function ShopSettingsRoute() {
 					organization={organization}
 					orders={orders}
 					ordersUnavailable={ordersUnavailable}
+					ordersHidden={ordersHidden}
 					configuredProcessors={configuredProcessors}
 					paymentsMock={paymentsMock}
 				/>

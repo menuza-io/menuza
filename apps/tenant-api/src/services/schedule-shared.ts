@@ -86,6 +86,13 @@ export type ScheduleContext = {
 export type ScheduleResult<T> = TimesheetResult<T>
 export { fail, ok }
 
+/**
+ * A check a self-service write runs inside its own transaction, before it
+ * inserts (the open-request cap). Counting outside the transaction would let
+ * two requests sent together both pass on the Node runtime.
+ */
+export type SelfWriteGuard = (tx: StaffDb) => Promise<ScheduleResult<null>>
+
 const DAY_MS = 24 * 60 * 60 * 1000
 /** Most rows loaded for one list: a bigger set asks the caller to narrow. */
 export const MAX_LIST_ROWS = 500

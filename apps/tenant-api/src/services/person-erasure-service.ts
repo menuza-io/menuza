@@ -199,6 +199,33 @@ async function redactFormSubmissions(
 	return redacted
 }
 
+/**
+ * Copies that migration 0018 kept of duplicate journey runs, their steps and
+ * messages (`__archived_*_0018`). They are not in the Drizzle schema, and
+ * have no foreign keys, so nothing cascades to them: they are erased here.
+ * A step's customer id may be empty; it is found through its run.
+ */
+async function eraseArchivedRows(tx: TenantTransaction, customerIds: string[]) {
+	const ids = sql.join(
+		customerIds.map((id) => sql`${id}`),
+		sql`, `,
+	)
+	await tx.run(sql`
+		DELETE FROM \`__archived_journey_step_executions_0018\`
+		WHERE \`customer_id\` IN (${ids})
+			OR \`run_id\` IN (
+				SELECT \`id\` FROM \`__archived_journey_runs_0018\`
+				WHERE \`customer_id\` IN (${ids})
+			)
+	`)
+	await tx.run(sql`
+		DELETE FROM \`__archived_journey_runs_0018\` WHERE \`customer_id\` IN (${ids})
+	`)
+	await tx.run(sql`
+		DELETE FROM \`__archived_marketing_messages_0018\` WHERE \`customer_id\` IN (${ids})
+	`)
+}
+
 export async function erasePerson(
 	db: TenantDatabase,
 	target: { customerId: string },
@@ -368,6 +395,7 @@ export async function erasePerson(
 					.update(voiceCalls)
 					.set({ customerId: null })
 					.where(inArray(voiceCalls.customerId, chunk))
+				await eraseArchivedRows(tx, chunk)
 				await tx.delete(customers).where(inArray(customers.id, chunk))
 			})
 

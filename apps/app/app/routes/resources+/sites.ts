@@ -8,6 +8,7 @@ import {
 } from '#app/utils/rate-limit.server.ts'
 import {
 	getCachedSiteData,
+	getSiteCacheVersion,
 	getSiteKvKey,
 	setCachedSiteData,
 } from '#app/utils/sites/kv-cache.server.ts'
@@ -67,12 +68,29 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		? acceptLocales.join(',')
 		: (acceptLocales ?? '')
 	const queryHash = `${slug || ''}-${host || ''}-${lng || ''}-${localeKey}`
-	const cacheKey = getSiteKvKey('org', organization.id, queryHash)
+	const cacheVersion = await getSiteCacheVersion(organization.id)
+	const cacheKey =
+		cacheVersion === null
+			? null
+			: getSiteKvKey('org', organization.id, queryHash, cacheVersion)
 
-	let payload = await getCachedSiteData(cacheKey)
+	let payload = cacheKey ? await getCachedSiteData(cacheKey) : null
 	if (!payload) {
-		payload = toPublicSitePayload(organization, { preferredLocale })
-		await setCachedSiteData(cacheKey, payload)
+		// Only data read after the cache version may be cached under it, so a
+		// publish that lands meanwhile cannot be hidden behind an old copy.
+		const fresh = cacheKey
+			? await findPublishedSiteOrganization({ slug, host })
+			: organization
+		if (!fresh || fresh.id !== organization.id) {
+			throw new Response('Not Found', { status: 404 })
+		}
+		payload = toPublicSitePayload(fresh, { preferredLocale })
+		if (cacheKey && cacheVersion !== null) {
+			await setCachedSiteData(cacheKey, payload, {
+				orgId: organization.id,
+				version: cacheVersion,
+			})
+		}
 	}
 
 	return Response.json(payload, {

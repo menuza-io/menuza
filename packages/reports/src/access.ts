@@ -4,7 +4,10 @@ import {
 	isStaffingReportSubject,
 } from './catalog-staffing.ts'
 import { type ReportDefinition } from './dsl.ts'
-import { isOrgWideReportSubject } from './org-wide-subjects.ts'
+import {
+	isOrgWideReportSubject,
+	isPermissionGatedReportSubject,
+} from './org-wide-subjects.ts'
 import { referencedFieldIds } from './engine.ts'
 import { type ReportTemplate } from './templates.ts'
 
@@ -23,7 +26,11 @@ import { type ReportTemplate } from './templates.ts'
 
 /** Subjects that exist for someone only while their token grants them. */
 function isGatedSubject(subject: string) {
-	return isStaffingReportSubject(subject) || isOrgWideReportSubject(subject)
+	return (
+		isStaffingReportSubject(subject) ||
+		isOrgWideReportSubject(subject) ||
+		isPermissionGatedReportSubject(subject)
+	)
 }
 
 function fieldAvailable(

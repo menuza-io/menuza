@@ -1,6 +1,7 @@
 import { getFormProps, getInputProps, useForm } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { Trans } from '@lingui/macro'
+import { Button } from '@repo/ui/button'
 import {
 	Card,
 	CardContent,
@@ -24,14 +25,24 @@ export const VerifiedDomainSchema = z.object({
 	organizationId: z.string(),
 })
 
+type DomainClaim = { domain: string; recordName: string; recordValue: string }
+
 export default function VerifiedDomainCard({
 	organization,
 	actionData,
 }: {
-	organization: { id: string; verifiedDomain?: string | null }
+	organization: {
+		id: string
+		verifiedDomain?: string | null
+		verifiedDomainProvedAt?: Date | string | null
+		domainClaim?: DomainClaim | null
+	}
 	actionData?: any
 }) {
-	const [isChecked, setIsChecked] = useState(!!organization.verifiedDomain)
+	// A pending claim keeps the card open so its DNS record stays visible.
+	const [isChecked, setIsChecked] = useState(
+		Boolean(organization.verifiedDomain || organization.domainClaim),
+	)
 	const saveFetcher = useFetcher()
 
 	const [form, fields] = useForm({
@@ -46,13 +57,23 @@ export default function VerifiedDomainCard({
 		// Hidden inputs belong in the defaults, or Conform reports the form dirty.
 		defaultValue: {
 			intent: 'verified-domain',
-			verifiedDomain: organization.verifiedDomain || '',
+			verifiedDomain:
+				organization.verifiedDomain || organization.domainClaim?.domain || '',
 			organizationId: organization.id,
 		},
 	})
 
 	const toggleFetcher = useFetcher()
+	const checkFetcher = useFetcher<{
+		domainCheck?: { status: string; message: string }
+	}>()
 	useConformSaveBar(form, saveFetcher)
+	// The loader supplies the pending claim and revalidates after each save.
+	// Not from `saveFetcher.data`: a fetcher keeps its last response, so a
+	// verified or removed claim would linger.
+	const claim: DomainClaim | null = organization.domainClaim ?? null
+	const verifiedDomain = organization.verifiedDomain
+	const claimDomain = claim?.domain
 
 	const handleSwitchChange = (checked: boolean) => {
 		setIsChecked(checked)
@@ -78,11 +99,17 @@ export default function VerifiedDomainCard({
 				</div>
 				<CardDescription>
 					<Trans>
-						When someone signs up using an email that matches your verified
-						domain, they will be automatically added to your organization as a
-						member.
+						Prove you control your domain with a DNS record. People who sign up
+						with an email on that domain then join your organization as members,
+						and people who already have an account are invited.
 					</Trans>
 				</CardDescription>
+				{organization.verifiedDomain && organization.verifiedDomainProvedAt ? (
+					<p className="flex items-center gap-1.5 text-sm">
+						<Icon name="check" className="size-4" />
+						<Trans>{verifiedDomain} is verified.</Trans>
+					</p>
+				) : null}
 			</CardHeader>
 			<div
 				className={`grid transition-[grid-template-rows] duration-240 ease-out ${
@@ -109,6 +136,56 @@ export default function VerifiedDomainCard({
 							</FieldGroup>
 							<ErrorList id={form.errorId} errors={form.errors} />
 						</CardContent>
+						{claim ? (
+							<CardContent className="space-y-3 pb-4">
+								<p className="text-sm">
+									<Trans>
+										To verify {claimDomain}, add this TXT record at your DNS
+										provider, then check it.
+									</Trans>
+								</p>
+								<dl className="bg-muted grid gap-2 rounded-md p-3 font-mono text-xs break-all">
+									<div>
+										<dt className="text-muted-foreground font-sans">
+											<Trans>Name</Trans>
+										</dt>
+										<dd>{claim.recordName}</dd>
+									</div>
+									<div>
+										<dt className="text-muted-foreground font-sans">
+											<Trans>Value</Trans>
+										</dt>
+										<dd>{claim.recordValue}</dd>
+									</div>
+								</dl>
+								<Button
+									type="button"
+									variant="outline"
+									size="sm"
+									disabled={checkFetcher.state !== 'idle'}
+									onClick={() =>
+										void checkFetcher.submit(
+											{
+												intent: 'check-verified-domain',
+												organizationId: organization.id,
+											},
+											{ method: 'POST' },
+										)
+									}
+								>
+									{checkFetcher.state !== 'idle' ? (
+										<Trans>Checking…</Trans>
+									) : (
+										<Trans>Check DNS record</Trans>
+									)}
+								</Button>
+								{checkFetcher.data?.domainCheck ? (
+									<p className="text-destructive text-sm" role="alert">
+										{checkFetcher.data.domainCheck.message}
+									</p>
+								) : null}
+							</CardContent>
+						) : null}
 						<CardFooter className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
 							<div className="text-muted-foreground flex min-w-0 items-start gap-1.5 text-xs">
 								<Icon name="help-circle" className="mt-0.5 h-4 w-4 shrink-0" />

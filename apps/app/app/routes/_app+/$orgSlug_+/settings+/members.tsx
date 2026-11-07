@@ -10,6 +10,7 @@ import {
 	eq,
 	exists,
 	ne,
+	not,
 	or,
 	isNull,
 	OrganizationRole,
@@ -29,6 +30,7 @@ import { InvitationsCard } from '#app/components/settings/cards/organization/inv
 import { MembersCard } from '#app/components/settings/cards/organization/members-card.tsx'
 
 import { notifyChat } from '#app/utils/chat/namespace.server.ts'
+import { hasPendingErasure } from '#app/utils/gdpr.server.ts'
 import {
 	createOrganizationInvitation,
 	validateOrganizationInviteRoles,
@@ -52,6 +54,7 @@ import {
 	getUserOrganizationPermissionsForClient,
 } from '#app/utils/organization/permissions.server.ts'
 import { updateSeatQuantity } from '#app/utils/payments.server.ts'
+import { deleteCanvaConnection } from '#app/utils/print/canva/connection.server.ts'
 import {
 	checkRateLimit,
 	createRateLimitResponse,
@@ -203,6 +206,8 @@ function otherActiveAdminsExist(organizationId: string, excludeUserId: string) {
 					eq(OtherMembership.active, true),
 					eq(OrganizationRole.id, 'org_role_admin'),
 					ne(OtherMembership.userId, excludeUserId),
+					// An admin whose account is scheduled for deletion is leaving too.
+					not(hasPendingErasure(OtherMembership.userId)),
 				),
 			),
 	)
@@ -453,6 +458,20 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			// Drop the removed member's open chat sockets right away instead of
 			// waiting for the room's ~30s access re-check.
 			await notifyChat(organization.id, (room) => room.evictUser(memberUserId))
+
+			// A removed member's Canva grant must not outlive their access: forget
+			// it here and revoke it at Canva (best effort; the removal stands).
+			try {
+				await deleteCanvaConnection({
+					userId: memberUserId,
+					organization: { id: organization.id },
+				})
+			} catch (error) {
+				console.error(
+					'Failed to remove Canva connection of removed member:',
+					error instanceof Error ? error.name : 'unknown',
+				)
+			}
 
 			try {
 				await updateSeatQuantity(organization.id)

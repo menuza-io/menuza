@@ -1,7 +1,14 @@
 import { faker } from '@faker-js/faker'
-import { db, eq, Organization, UserOrganization } from '@repo/database'
+import {
+	db,
+	eq,
+	Organization,
+	OrganizationInvitation,
+	UserOrganization,
+} from '@repo/database'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { __setMockLaunchStatus } from '#app/utils/env.server.ts'
+import { createCheckoutSession } from '#app/utils/payments.server.ts'
 import {
 	deprovisionTenantDatabase,
 	provisionTenantDatabase,
@@ -12,6 +19,11 @@ import {
 	createTestUser,
 } from '#tests/test-utils.ts'
 import { action, loader } from './create.tsx'
+
+vi.mock('#app/utils/payments.server.ts', async (importOriginal) => ({
+	...(await importOriginal<typeof import('#app/utils/payments.server.ts')>()),
+	createCheckoutSession: vi.fn(),
+}))
 
 vi.mock('#app/utils/sites/tenant-api.server.ts', () => ({
 	provisionTenantDatabase: vi.fn(),
@@ -225,6 +237,110 @@ describe('organizations+/create route integration', () => {
 				.limit(1)
 
 			expect(updatedOrg?.size).toBe('11-50')
+		})
+
+		describe('onboarding access control', () => {
+			async function post(userId: string, fields: Record<string, string>) {
+				const { cookie } = await createTestSession(userId)
+				const formData = new FormData()
+				for (const [k, v] of Object.entries(fields)) formData.append(k, v)
+				const request = createAuthenticatedRequest(
+					'http://localhost:3000/organizations/create',
+					{ method: 'POST', body: formData },
+					cookie,
+				)
+				try {
+					return (await action({
+						request,
+						params: {},
+						context: {},
+					} as any)) as any
+				} catch (error) {
+					return error as Response
+				}
+			}
+
+			it('send-invitations refuses a viewer and creates no invitation', async () => {
+				const { createTestOrganization } = await import('#tests/test-utils.ts')
+				const owner = await createTestUser()
+				const viewer = await createTestUser()
+				const org = await createTestOrganization(owner.id, 'admin')
+				await db.insert(UserOrganization).values({
+					userId: viewer.id,
+					organizationId: org.id,
+					organizationRoleId: 'org_role_viewer',
+				})
+				const res = await post(viewer.id, {
+					intent: 'send-invitations',
+					orgId: org.id,
+					'invites[0].email': 'outsider@example.com',
+					'invites[0].role': 'member',
+				})
+				expect(res.status).toBe(403)
+				const rows = await db
+					.select()
+					.from(OrganizationInvitation)
+					.where(eq(OrganizationInvitation.organizationId, org.id))
+				expect(rows).toHaveLength(0)
+			})
+
+			it('subscribe refuses a viewer and a non-member, and does not call checkout', async () => {
+				const { createTestOrganization } = await import('#tests/test-utils.ts')
+				vi.mocked(createCheckoutSession).mockClear()
+				const owner = await createTestUser()
+				const viewer = await createTestUser()
+				const outsider = await createTestUser()
+				const org = await createTestOrganization(owner.id, 'admin')
+				await db.insert(UserOrganization).values({
+					userId: viewer.id,
+					organizationId: org.id,
+					organizationRoleId: 'org_role_viewer',
+				})
+				for (const id of [viewer.id, outsider.id]) {
+					const res = await post(id, {
+						intent: 'subscribe',
+						orgId: org.id,
+						priceId: 'price_x',
+					})
+					expect(res.status).toBe(403)
+				}
+				expect(createCheckoutSession).not.toHaveBeenCalled()
+			})
+
+			it('subscribe lets the creator (admin) through to checkout', async () => {
+				const { createTestOrganization } = await import('#tests/test-utils.ts')
+				vi.mocked(createCheckoutSession).mockResolvedValue(
+					new Response(null, { status: 302 }) as any,
+				)
+				const owner = await createTestUser()
+				const org = await createTestOrganization(owner.id, 'admin')
+				const res = await post(owner.id, {
+					intent: 'subscribe',
+					orgId: org.id,
+					priceId: 'price_x',
+				})
+				expect(res.status).toBe(302)
+				expect(createCheckoutSession).toHaveBeenCalledTimes(1)
+			})
+
+			it('complete-setup refuses a non-member and leaves the size unchanged', async () => {
+				const { createTestOrganization } = await import('#tests/test-utils.ts')
+				const owner = await createTestUser()
+				const outsider = await createTestUser()
+				const org = await createTestOrganization(owner.id, 'admin')
+				const res = await post(outsider.id, {
+					intent: 'complete-setup',
+					orgId: org.id,
+					organizationSize: '1000+',
+					userDepartment: 'sales',
+				})
+				expect(res.status).toBe(403)
+				const [after] = await db
+					.select()
+					.from(Organization)
+					.where(eq(Organization.id, org.id))
+				expect(after?.size).not.toBe('1000+')
+			})
 		})
 	})
 })

@@ -98,8 +98,9 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 }
 
 export async function action({ request, params }: Route.ActionArgs) {
+	// imageUrl is deliberately not read from the form: it comes from the signed
+	// verify session so the browser cannot choose what the server downloads.
 	const SignupFormSchema = z.object({
-		imageUrl: z.string().optional(),
 		username: UsernameSchema,
 		name: NameSchema,
 		agreeToTermsOfServiceAndPrivacyPolicy: z.boolean({
@@ -117,6 +118,9 @@ export async function action({ request, params }: Route.ActionArgs) {
 		request.headers.get('cookie'),
 	)
 	const inviteToken = verifySession.get(onboardingInviteTokenSessionKey)
+	const prefilledImageUrl = (
+		verifySession.get(prefilledProfileKey) as { imageUrl?: unknown } | undefined
+	)?.imageUrl
 
 	const submission = await parseWithZod(formData, {
 		schema: SignupFormSchema.superRefine(async (data, ctx) => {
@@ -137,6 +141,8 @@ export async function action({ request, params }: Route.ActionArgs) {
 			const session = await signupWithConnection({
 				request,
 				...data,
+				imageUrl:
+					typeof prefilledImageUrl === 'string' ? prefilledImageUrl : undefined,
 				email,
 				providerId: String(providerId),
 				providerName,

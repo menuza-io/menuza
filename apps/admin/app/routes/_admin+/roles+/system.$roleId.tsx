@@ -8,7 +8,9 @@ import {
 	Permission,
 	Role,
 	_PermissionToRole,
+	_RoleToUser,
 	asc,
+	count,
 	db,
 	eq,
 	and,
@@ -41,13 +43,21 @@ import { Label } from '@repo/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@repo/ui/tabs'
 import { Textarea } from '@repo/ui/textarea'
 import { useState } from 'react'
-import { Form, Link, useLoaderData } from 'react-router'
+import { Form, Link, redirect, useLoaderData } from 'react-router'
 import { z } from 'zod'
 import { type Route } from './+types/system.$roleId.ts'
 
 export const handle: SEOHandle = {
 	getSitemapEntries: () => null,
 }
+
+/**
+ * Roles that `requireUserWithRole` checks by name. Deleting or renaming one
+ * strips it from every holder (the admin role from every platform admin), so
+ * these keep their name and cannot be deleted. Role ids are generated, so the
+ * check is on the name, never the id.
+ */
+const CORE_SYSTEM_ROLE_NAMES: ReadonlySet<string> = new Set(['admin', 'user'])
 
 const UpdateSystemRoleSchema = z.object({
 	intent: z.enum([
@@ -61,33 +71,35 @@ const UpdateSystemRoleSchema = z.object({
 	permissionId: z.string().optional(),
 })
 
-export async function loader({ params }: Route.LoaderArgs) {
+export async function loader({ request, params }: Route.LoaderArgs) {
+	// A single-fetch `.data` request can run this loader without the layout's
+	// loader, so it checks the role itself.
+	await requireUserWithRole(request, 'admin')
 	invariant(params.roleId, 'Role ID is required')
 
 	const result = await db.query.Role.findFirst({
 		where: eq(Role.id, params.roleId),
-		with: {
-			permissionToRoles: { with: { permission: true } },
-			roleToUsers: true,
-		},
+		with: { permissionToRoles: { with: { permission: true } } },
 	})
-	const role = result
-		? {
-				...result,
-				permissions: result.permissionToRoles
-					.filter(({ permission }) => permission.context === 'system')
-					.map(({ permission }) => permission)
-					.sort(
-						(a, b) =>
-							a.entity.localeCompare(b.entity) ||
-							a.action.localeCompare(b.action),
-					),
-				_count: { users: result.roleToUsers.length },
-			}
-		: null
-
-	if (!role) {
+	if (!result) {
 		throw new Response('Role not found', { status: 404 })
+	}
+	// Only the number of holders is shown, so their ids stay on the server.
+	const [holders] = await db
+		.select({ count: count() })
+		.from(_RoleToUser)
+		.where(eq(_RoleToUser.A, result.id))
+	const { permissionToRoles, ...roleFields } = result
+	const role = {
+		...roleFields,
+		permissions: permissionToRoles
+			.filter(({ permission }) => permission.context === 'system')
+			.map(({ permission }) => permission)
+			.sort(
+				(a, b) =>
+					a.entity.localeCompare(b.entity) || a.action.localeCompare(b.action),
+			),
+		_count: { users: holders?.count ?? 0 },
 	}
 
 	return {
@@ -104,6 +116,15 @@ export async function action({ request, params }: Route.ActionArgs) {
 	await requireUserWithRole(request, 'admin')
 	invariant(params.roleId, 'Role ID is required')
 
+	const role = await db.query.Role.findFirst({
+		columns: { id: true, name: true },
+		where: eq(Role.id, params.roleId),
+	})
+	if (!role) {
+		throw new Response('Role not found', { status: 404 })
+	}
+	const isCoreRole = CORE_SYSTEM_ROLE_NAMES.has(role.name)
+
 	const formData = await request.formData()
 	const submission = parseWithZod(formData, { schema: UpdateSystemRoleSchema })
 
@@ -116,6 +137,14 @@ export async function action({ request, params }: Route.ActionArgs) {
 	try {
 		switch (intent) {
 			case 'update-basic': {
+				if (isCoreRole && name !== undefined && name !== role.name) {
+					return {
+						result: submission.reply({
+							formErrors: ['Cannot rename core system roles'],
+						}),
+						success: false,
+					}
+				}
 				await db
 					.update(Role)
 					.set({
@@ -165,7 +194,7 @@ export async function action({ request, params }: Route.ActionArgs) {
 
 			case 'delete-role': {
 				// Don't allow deletion of core system roles
-				if (['admin', 'user'].includes(params.roleId)) {
+				if (isCoreRole) {
 					return {
 						result: submission.reply({
 							formErrors: ['Cannot delete core system roles'],
@@ -175,7 +204,7 @@ export async function action({ request, params }: Route.ActionArgs) {
 				}
 
 				await db.delete(Role).where(eq(Role.id, params.roleId))
-				return Response.redirect('/roles')
+				return redirect('/roles')
 			}
 		}
 	} catch (error) {
@@ -207,7 +236,9 @@ export default function AdminSystemRoleDetailPage() {
 	)
 
 	const rolePermissionIds = new Set(role.permissions.map((p) => p.id))
-	const isCoreRole = ['admin', 'user'].includes(role.id)
+	// Core roles keep their name and cannot be deleted; their description and
+	// permissions stay editable.
+	const isCoreRole = CORE_SYSTEM_ROLE_NAMES.has(role.name)
 
 	// Extract values for lingui compliance
 	const createdDate = new Date(role.createdAt).toLocaleDateString('en-US', {
@@ -332,15 +363,12 @@ export default function AdminSystemRoleDetailPage() {
 								defaultValue={role.description || ''}
 								placeholder={_(msg`Role description`)}
 								rows={3}
-								disabled={isCoreRole}
 							/>
 						</div>
 
-						{!isCoreRole && (
-							<Button type="submit" size="sm">
-								<Trans>Save Changes</Trans>
-							</Button>
-						)}
+						<Button type="submit" size="sm">
+							<Trans>Save Changes</Trans>
+						</Button>
 					</Form>
 
 					{/* Role Statistics */}
@@ -380,11 +408,9 @@ export default function AdminSystemRoleDetailPage() {
 								<h2 className="text-lg">
 									<Trans>System permissions</Trans>
 								</h2>
-								{!isCoreRole && (
-									<Button size="sm" variant="outline">
-										<Trans>Add permission</Trans>
-									</Button>
-								)}
+								<Button size="sm" variant="outline">
+									<Trans>Add permission</Trans>
+								</Button>
 							</div>
 
 							<div className="space-y-4">
@@ -396,7 +422,6 @@ export default function AdminSystemRoleDetailPage() {
 											permissions={permissions}
 											rolePermissionIds={rolePermissionIds}
 											roleId={role.id}
-											disabled={isCoreRole}
 										/>
 									),
 								)}

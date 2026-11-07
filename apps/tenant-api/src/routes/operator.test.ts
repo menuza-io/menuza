@@ -245,9 +245,15 @@ describe('Operator Routes', () => {
 
 	it('computes marketing metrics via SQL aggregates accurately', async () => {
 		const db = await getTenantDb(testOrgId)
-		const [cust] = await db
+		// One message per campaign and customer, so one customer each.
+		const people = await db
 			.insert(customers)
-			.values({ name: 'Metrics User', phone: '+15550000020' })
+			.values(
+				[20, 21, 22, 23].map((n) => ({
+					name: `Metrics User ${n}`,
+					phone: `+155500000${n}`,
+				})),
+			)
 			.returning()
 
 		const [camp] = await db
@@ -261,10 +267,10 @@ describe('Operator Routes', () => {
 			.returning()
 
 		await db.insert(marketingMessages).values([
-			{ campaignId: camp!.id, customerId: cust!.id, status: 'Sent' },
-			{ campaignId: camp!.id, customerId: cust!.id, status: 'Opened' },
-			{ campaignId: camp!.id, customerId: cust!.id, status: 'Clicked' },
-			{ campaignId: camp!.id, customerId: cust!.id, status: 'Failed' },
+			{ campaignId: camp!.id, customerId: people[0]!.id, status: 'Sent' },
+			{ campaignId: camp!.id, customerId: people[1]!.id, status: 'Opened' },
+			{ campaignId: camp!.id, customerId: people[2]!.id, status: 'Clicked' },
+			{ campaignId: camp!.id, customerId: people[3]!.id, status: 'Failed' },
 		])
 
 		const res = await app.request('/operator/marketing/metrics', {

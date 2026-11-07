@@ -61,6 +61,6 @@ export async function revokeUserCredentials(options: {
 	])
 
 	if (options.revokePendingMcpCodes !== false) {
-		revokePendingAuthorizationCodes(options.userId)
+		await revokePendingAuthorizationCodes(options.userId)
 	}
 }

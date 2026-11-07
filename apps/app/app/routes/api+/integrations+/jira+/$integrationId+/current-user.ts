@@ -1,7 +1,7 @@
 import { requireUserId } from '@repo/auth'
 import { handleJiraCurrentUser } from '@repo/integrations'
 import { type LoaderFunctionArgs } from 'react-router'
-import { getUserDefaultOrganization } from '#app/utils/organization/organizations.server.ts'
+import { isActiveOrganizationMember } from '#app/utils/org-membership.server.ts'
 import { requireUserWithOrganizationPermission } from '#app/utils/organization/permissions.server.ts'
 
 /**
@@ -11,7 +11,8 @@ import { requireUserWithOrganizationPermission } from '#app/utils/organization/p
 export async function loader(args: LoaderFunctionArgs) {
 	return handleJiraCurrentUser(args, {
 		requireUserId,
-		getUserDefaultOrganization,
+		// The integration's own organization, not the member's default one.
+		isOrganizationMember: isActiveOrganizationMember,
 		requireOrgPermission: async (request, organizationId, permission) => {
 			await requireUserWithOrganizationPermission(
 				request,

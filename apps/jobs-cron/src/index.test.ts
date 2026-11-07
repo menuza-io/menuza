@@ -584,7 +584,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 			)
 		})
 
-		it('runs MCP token cleanup and job postings expiry from the shared 0 3 trigger', async () => {
+		it('runs MCP token cleanup, job postings expiry and the seat reconcile from the shared 0 3 trigger', async () => {
 			const fetchMock = vi.fn(async (url: string) =>
 				url.endsWith('/mcp-token-cleanup')
 					? new Response('down', { status: 502 })
@@ -607,10 +607,12 @@ describe('Jobs-Cron Worker Endpoints', () => {
 			expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
 				'https://app.example.com/resources/jobs/mcp-token-cleanup',
 				'https://app.example.com/resources/jobs/job-postings-expiry',
+				'https://app.example.com/resources/jobs/seat-reconcile',
 			])
-			// One failing job does not stop the other from running.
+			// One failing job does not stop the others from running.
 			expect(results.map((result) => result.status)).toEqual([
 				'rejected',
+				'fulfilled',
 				'fulfilled',
 			])
 			errorSpy.mockRestore()
@@ -683,6 +685,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
+					'fulfilled',
 				])
 				const calls = fetchMock.mock.calls.map(([url, init]: any) => [
 					url,
@@ -714,9 +717,14 @@ describe('Jobs-Cron Worker Endpoints', () => {
 							'POST',
 							token,
 						],
+						[
+							'https://app.example.com/resources/jobs/impersonation-cleanup',
+							'POST',
+							token,
+						],
 					]),
 				)
-				expect(calls).toHaveLength(6)
+				expect(calls).toHaveLength(7)
 			})
 
 			it('sends the staff tick an empty body so each node runs every organization', async () => {
@@ -753,6 +761,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'rejected',
 					'fulfilled',
 					'fulfilled',
+					'fulfilled',
 				])
 				// The healthy node still ran its tick.
 				expect(fetchMock.mock.calls.map(([url]) => url)).toContain(
@@ -777,6 +786,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 				expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
 					'https://app.example.com/resources/jobs/print-sync',
 					'https://app.example.com/resources/jobs/social-publish',
+					'https://app.example.com/resources/jobs/impersonation-cleanup',
 				])
 			})
 		})

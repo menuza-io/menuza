@@ -16,6 +16,7 @@ import {
 	emitStripeEvent,
 	findStripeObject,
 	insertStripeObject,
+	listEnvelope,
 	mutateStripeObject,
 	publicObject,
 	requireStripeObject,
@@ -410,6 +411,25 @@ async function refundApplicationFee(
 		parentId: String(charge.application_fee),
 	})
 	return feeRefund
+}
+
+/** `GET /v1/refunds`, filtered by `payment_intent` or `charge` like Stripe. */
+export async function listRefunds(ctx: EmulatorContext, params: Json) {
+	const paymentIntent = stringParam(params.payment_intent, 'payment_intent')
+	const chargeId = stringParam(params.charge, 'charge')
+	const rows = await ctx.store.listObjects('stripe', {
+		type: 'refund',
+		limit: 500,
+	})
+	const refunds = rows
+		.map((row: MockObjectRow) => publicObject(row.json))
+		.filter(
+			(refund) =>
+				(!paymentIntent || refund.payment_intent === paymentIntent) &&
+				(!chargeId || refund.charge === chargeId),
+		)
+		.sort((a, b) => Number(b.created ?? 0) - Number(a.created ?? 0))
+	return listEnvelope(refunds, '/v1/refunds')
 }
 
 export async function retrieveRefund(ctx: EmulatorContext, id: string) {

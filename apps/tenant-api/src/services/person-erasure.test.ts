@@ -238,6 +238,45 @@ describe('person erasure', () => {
 		)
 	})
 
+	it('erases the rows migration 0018 archived for the customer', async () => {
+		const id = await seedPerson(a, { name: NAME, phone: PHONE, email: EMAIL })
+		const other = await seedPerson(a, {
+			name: 'Other',
+			phone: OTHER_PHONE,
+			email: 'other@example.test',
+		})
+		// Rows as 0018 archives them: copies, with no foreign keys.
+		for (const customerId of [id, other]) {
+			await a.run(sql`
+				INSERT INTO __archived_journey_runs_0018 (id, journey_id, customer_id, trigger_event, status, context_data)
+				VALUES (${`run-${customerId}`}, 'j', ${customerId}, 'phone_verified', 'completed', ${JSON.stringify({ phone: customerId === id ? PHONE : OTHER_PHONE })})
+			`)
+			// A step whose customer id was never set is found by its run.
+			await a.run(sql`
+				INSERT INTO __archived_journey_step_executions_0018 (id, run_id, customer_id, node_id, status)
+				VALUES (${`step-${customerId}`}, ${`run-${customerId}`}, NULL, 'email-1', 'completed')
+			`)
+			await a.run(sql`
+				INSERT INTO __archived_marketing_messages_0018 (id, customer_id, channel, status, archive_reason)
+				VALUES (${`msg-${customerId}`}, ${customerId}, 'email', 'Sent', 'duplicate_broadcast')
+			`)
+		}
+
+		await erasePerson(a, { customerId: id }, { actorId: 'user_1' })
+
+		expect(await tablesContaining(a, [PHONE])).toEqual([])
+		for (const table of [
+			'__archived_journey_runs_0018',
+			'__archived_journey_step_executions_0018',
+			'__archived_marketing_messages_0018',
+		]) {
+			expect(
+				await a.all(sql.raw(`select id from "${table}"`)),
+				table,
+			).toHaveLength(1)
+		}
+	})
+
 	it('leaves other customers of the same organization untouched', async () => {
 		const id = await seedPerson(a, { name: NAME, phone: PHONE, email: EMAIL })
 		const otherId = await seedPerson(a, {

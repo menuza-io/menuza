@@ -30,6 +30,14 @@ function createHarness(
 	options: {
 		audienceTtlMs?: number
 		isModerator?: (userId: string) => Promise<boolean>
+		historyCutoff?: (
+			userId: string,
+			channelId: string,
+		) => Promise<number | null>
+		historyCutoffs?: (
+			userId: string,
+			channelIds: string[],
+		) => Promise<Map<string, number | null>>
 	} = {},
 ) {
 	const store = createStore()
@@ -48,6 +56,8 @@ function createHarness(
 		now: () => clock,
 		audienceTtlMs: options.audienceTtlMs,
 		isModerator: options.isModerator,
+		historyCutoff: options.historyCutoff,
+		historyCutoffs: options.historyCutoffs,
 		resolveAudiences: async (ids) => {
 			resolveCalls += 1
 			return new Map(
@@ -310,6 +320,107 @@ describe('ChatStore', () => {
 			lastReadId: 0,
 		})
 		expect(store.history('y').messages).toHaveLength(1)
+	})
+})
+
+describe('ChatEngine send retries', () => {
+	it('adds the key column to a store created before it existed', () => {
+		const db = new DatabaseSync(':memory:')
+		db.exec(`CREATE TABLE messages (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			channel_id TEXT NOT NULL,
+			parent_id INTEGER,
+			author_id TEXT NOT NULL,
+			body TEXT NOT NULL,
+			created_at INTEGER NOT NULL,
+			edited_at INTEGER,
+			deleted_at INTEGER
+		)`)
+		const store = new ChatStore({
+			exec: (query, ...bindings) => ({
+				toArray: () =>
+					db.prepare(query).all(...(bindings as never[])) as Record<
+						string,
+						unknown
+					>[],
+			}),
+		})
+		store.migrate()
+		store.migrate()
+		const message = store.addMessage({
+			channel: 'c',
+			author: 'a',
+			body: 'hi',
+			now: 1,
+			clientId: 'key-00000001',
+		})
+		expect(store.findByClientId('a', 'key-00000001')?.id).toBe(message.id)
+	})
+
+	it('a send retried after a lost ack posts the message once', async () => {
+		const h = createHarness({ eng: ['alice', 'bob'] })
+		const alice = h.connect('alice')
+		const bob = h.connect('bob')
+		const clientId = 'retry-key-0001'
+		await h.send(alice, {
+			t: 'send',
+			id: 'a1',
+			channel: 'eng',
+			body: 'hello',
+			clientId,
+		})
+		// The ack never reached the client, so it sends again with a new
+		// frame id and the same idempotency key.
+		await h.send(alice, {
+			t: 'send',
+			id: 'a2',
+			channel: 'eng',
+			body: 'hello',
+			clientId,
+		})
+
+		const first = h.ack(alice, 'a1') as { data: { message: { id: number } } }
+		const second = h.ack(alice, 'a2') as {
+			ok: boolean
+			data: { message: { id: number } }
+		}
+		expect(second.ok).toBe(true)
+		expect(second.data.message.id).toBe(first.data.message.id)
+		expect(h.store.history('eng', {}).messages).toHaveLength(1)
+		expect(bob.frames.filter((frame) => frame.t === 'message')).toHaveLength(1)
+	})
+
+	it('two different sends with no key are both posted', async () => {
+		const h = createHarness({ eng: ['alice'] })
+		const alice = h.connect('alice')
+		await h.send(alice, { t: 'send', id: 'a1', channel: 'eng', body: 'ok' })
+		await h.send(alice, { t: 'send', id: 'a2', channel: 'eng', body: 'ok' })
+		expect(h.store.history('eng', {}).messages).toHaveLength(2)
+	})
+
+	it('another author cannot reuse a key to read a message', async () => {
+		const h = createHarness({ eng: ['alice', 'bob'] })
+		const alice = h.connect('alice')
+		const bob = h.connect('bob')
+		const clientId = 'shared-key-0001'
+		await h.send(alice, {
+			t: 'send',
+			id: 'a',
+			channel: 'eng',
+			body: 'a',
+			clientId,
+		})
+		await h.send(bob, {
+			t: 'send',
+			id: 'b',
+			channel: 'eng',
+			body: 'b',
+			clientId,
+		})
+		expect(h.store.history('eng', {}).messages.map((m) => m.body)).toEqual([
+			'a',
+			'b',
+		])
 	})
 })
 
@@ -699,5 +810,98 @@ describe('ChatEngine protocol hygiene', () => {
 			t: 'channel.deleted',
 			channel: 'eng',
 		})
+	})
+})
+
+describe('search honors the history cutoff', () => {
+	// A group that hides earlier history from late joiners: history and thread
+	// reads apply the member's join time, and search must too.
+	function seed(options: Parameters<typeof createHarness>[1]) {
+		const harness = createHarness(
+			{ g: ['old', 'late'], open: ['late'] },
+			options,
+		)
+		harness.store.addMessage({
+			channel: 'g',
+			author: 'old',
+			body: 'zebra before',
+			now: 10,
+		})
+		harness.store.addMessage({
+			channel: 'g',
+			author: 'old',
+			body: 'zebra after',
+			now: 30,
+		})
+		harness.store.addMessage({
+			channel: 'open',
+			author: 'old',
+			body: 'zebra open',
+			now: 5,
+		})
+		return harness
+	}
+
+	async function searchAs(harness: ReturnType<typeof seed>, userId: string) {
+		const conn = harness.connect(userId)
+		await harness.send(conn, {
+			t: 'search',
+			id: 's1',
+			query: 'zebra',
+			channels: ['g', 'open'],
+		})
+		const frame = harness.ack(conn, 's1')
+		if (!frame?.ok) throw new Error('search was refused')
+		return (frame.data as { results: { body: string }[] }).results
+			.map((hit) => hit.body)
+			.sort()
+	}
+
+	const cutoff = async (userId: string, channel: string) =>
+		userId === 'late' && channel === 'g' ? 20 : null
+
+	it('hides messages from before a late joiner joined (per-channel dep)', async () => {
+		const harness = seed({ historyCutoff: cutoff })
+		expect(await searchAs(harness, 'late')).toEqual([
+			'zebra after',
+			'zebra open',
+		])
+	})
+
+	it('uses the batched dep when present', async () => {
+		let calls = 0
+		const harness = seed({
+			historyCutoff: async () => {
+				throw new Error('per-channel lookup should not run')
+			},
+			historyCutoffs: async (userId, ids) => {
+				calls += 1
+				return new Map(
+					await Promise.all(
+						ids.map(async (id) => [id, await cutoff(userId, id)] as const),
+					),
+				)
+			},
+		})
+		expect(await searchAs(harness, 'late')).toEqual([
+			'zebra after',
+			'zebra open',
+		])
+		expect(calls).toBe(1)
+	})
+
+	it('still shows full history to members without a cutoff', async () => {
+		const harness = seed({ historyCutoff: cutoff })
+		const conn = harness.connect('old')
+		await harness.send(conn, {
+			t: 'search',
+			id: 's2',
+			query: 'zebra',
+			channels: ['g'],
+		})
+		const frame = harness.ack(conn, 's2')
+		if (!frame?.ok) throw new Error('search was refused')
+		const results = (frame.data as { results: unknown[] }).results
+		expect(results).toHaveLength(2)
 	})
 })

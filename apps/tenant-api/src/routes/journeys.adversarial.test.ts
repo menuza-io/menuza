@@ -74,6 +74,16 @@ vi.mock('@repo/sms', () => ({
 	}),
 }))
 
+// These tests are about provider failures, escaping and zero-PII responses,
+// not consent: every customer here counts as consenting. The consent gate
+// itself is tested in journey-service.test.ts and journeys.e2e-integration.
+vi.mock('../services/marketing-audience.ts', async (importOriginal) => ({
+	...(await importOriginal<
+		typeof import('../services/marketing-audience.ts')
+	>()),
+	hasMarketingConsent: vi.fn(async () => true),
+}))
+
 describe('Adversarial Stress Testing: Journey Service, Step Execution, Auth & PII Isolation', () => {
 	let tempDir: string
 	let app: Hono
@@ -257,7 +267,7 @@ describe('Adversarial Stress Testing: Journey Service, Step Execution, Auth & PI
 			const journey = (
 				await db
 					.insert(marketingJourneys)
-					.values({ name: 'Orphan Test Journey' })
+					.values({ name: 'Orphan Test Journey', status: 'active' })
 					.returning()
 			)[0]!
 
@@ -301,7 +311,7 @@ describe('Adversarial Stress Testing: Journey Service, Step Execution, Auth & PI
 			const journey = (
 				await db
 					.insert(marketingJourneys)
-					.values({ name: 'Valid Journey' })
+					.values({ name: 'Valid Journey', status: 'active' })
 					.returning()
 			)[0]!
 
@@ -367,7 +377,7 @@ describe('Adversarial Stress Testing: Journey Service, Step Execution, Auth & PI
 			const journey = (
 				await db
 					.insert(marketingJourneys)
-					.values({ name: 'Crash Journey' })
+					.values({ name: 'Crash Journey', status: 'active' })
 					.returning()
 			)[0]!
 
@@ -423,7 +433,7 @@ describe('Adversarial Stress Testing: Journey Service, Step Execution, Auth & PI
 			const journey = (
 				await db
 					.insert(marketingJourneys)
-					.values({ name: 'Domain Error Journey' })
+					.values({ name: 'Domain Error Journey', status: 'active' })
 					.returning()
 			)[0]!
 
@@ -470,7 +480,7 @@ describe('Adversarial Stress Testing: Journey Service, Step Execution, Auth & PI
 			const journey = (
 				await db
 					.insert(marketingJourneys)
-					.values({ name: 'Carrier Error Journey' })
+					.values({ name: 'Carrier Error Journey', status: 'active' })
 					.returning()
 			)[0]!
 
@@ -521,7 +531,7 @@ describe('Adversarial Stress Testing: Journey Service, Step Execution, Auth & PI
 			const journey = (
 				await db
 					.insert(marketingJourneys)
-					.values({ name: 'Confidential Flow' })
+					.values({ name: 'Confidential Flow', status: 'active' })
 					.returning()
 			)[0]!
 
@@ -622,7 +632,7 @@ describe('Adversarial Stress Testing: Journey Service, Step Execution, Auth & PI
 				})
 				expect(res.status).toBe(401)
 				const json = await res.json()
-				expect(json.error).toContain('Invalid or expired operator token')
+				expect(json.error).toBe('Unauthorized')
 			})
 
 			it('rejects expired operator JWT with 401', async () => {
@@ -652,14 +662,14 @@ describe('Adversarial Stress Testing: Journey Service, Step Execution, Auth & PI
 				expect(res.status).toBe(401)
 			})
 
-			it('rejects JWT with non-operator role (role: "admin" or "customer") with 403', async () => {
+			it('rejects JWT with non-operator role (role: "admin" or "customer") with 401', async () => {
 				const adminToken = await mintOperatorJwt(orgId, 'admin')
 				const res = await app.request('/operator/journeys', {
 					headers: { Authorization: `Bearer ${adminToken}` },
 				})
-				expect(res.status).toBe(403)
+				expect(res.status).toBe(401)
 				const json = await res.json()
-				expect(json.error).toContain('Invalid role')
+				expect(json.error).toBe('Unauthorized')
 			})
 		})
 	})
@@ -685,7 +695,7 @@ describe('Adversarial Stress Testing: Journey Service, Step Execution, Auth & PI
 			const journey = (
 				await db
 					.insert(marketingJourneys)
-					.values({ name: 'Concurrent Step Journey' })
+					.values({ name: 'Concurrent Step Journey', status: 'active' })
 					.returning()
 			)[0]!
 
@@ -740,7 +750,7 @@ describe('Adversarial Stress Testing: Journey Service, Step Execution, Auth & PI
 			expect(outboxRecords).toHaveLength(CONCURRENCY_COUNT)
 		})
 
-		it('handles rapid concurrent trigger evaluations and creates distinct runs', async () => {
+		it('enrolls a customer once under rapid concurrent trigger evaluations', async () => {
 			const db = await getTenantDb(orgId)
 
 			const customer = (
@@ -764,12 +774,14 @@ describe('Adversarial Stress Testing: Journey Service, Step Execution, Auth & PI
 			const results = await Promise.all(promises)
 			expect(results).toHaveLength(EVAL_COUNT)
 
+			// phone_verified enrolls a customer once, however often it fires.
 			const runs = await db
 				.select()
 				.from(journeyRuns)
 				.where(eq(journeyRuns.customerId, customer.id))
 				.all()
-			expect(runs).toHaveLength(EVAL_COUNT)
+			expect(runs).toHaveLength(1)
+			expect(results.reduce((sum, r) => sum + r.spawnedCount, 0)).toBe(1)
 		})
 	})
 

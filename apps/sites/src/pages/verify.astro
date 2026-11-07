@@ -52,7 +52,6 @@ if (!organization) {
 						name="code"
 						placeholder="123456"
 						required
-						maxlength="6"
 						minlength="6"
 						inputmode="numeric"
 						autocomplete="one-time-code"
@@ -75,6 +74,7 @@ if (!organization) {
 </SitePage>
 
 <script>
+	import { isCompleteOtpCode, otpCodeDigits } from '@repo/common/ascii-digits'
 	import {
 		getOrgBinding,
 		redirectHomeIfSignedIn,
@@ -91,6 +91,7 @@ if (!organization) {
 	const submitButton = form.querySelector('button[type="submit"]') as HTMLButtonElement
 	const displayPhone = document.getElementById('display-phone')!
 	const phoneInput = document.getElementById('phone-input') as HTMLInputElement
+	const codeInput = document.getElementById('code') as HTMLInputElement
 	const verifyLabel = form.dataset.verify || 'Verify'
 	const verifyingLabel = form.dataset.verifying || 'Verifying...'
 	const invalidLabel = form.dataset.invalid || 'Invalid verification code.'
@@ -105,15 +106,31 @@ if (!organization) {
 		phoneInput.value = phone
 	}
 
+	// tenant-api accepts six ASCII digits only. An Arabic keyboard types
+	// Arabic-Indic digits and a pasted code may be spaced ("123 456"), so keep
+	// the digits as they arrive instead of letting maxlength cut a paste short.
+	codeInput.addEventListener('input', () => {
+		const digits = otpCodeDigits(codeInput.value)
+		if (digits !== codeInput.value) codeInput.value = digits
+	})
+
 	form.addEventListener('submit', async (e) => {
 		e.preventDefault()
 		errorMessage.classList.add('hidden')
+		const code = otpCodeDigits(codeInput.value)
+		codeInput.value = code
+		if (!isCompleteOtpCode(code)) {
+			errorMessage.textContent = invalidLabel
+			errorMessage.classList.remove('hidden')
+			return
+		}
 		submitButton.disabled = true
 		submitButton.textContent = verifyingLabel
 
 		const formData = new FormData(form)
 		const payload = {
 			...Object.fromEntries(formData.entries()),
+			code,
 			...getOrgBinding(),
 		}
 

@@ -99,14 +99,22 @@ export async function action({ request }: Route.ActionArgs) {
 	const intent = formData.get('intent')
 
 	const LoginFormSchema = z.object({
-		username: z.string().min(1, t`Username or email is required`),
+		username: z
+			.string()
+			.trim()
+			.toLowerCase()
+			.min(1, t`Username or email is required`),
 		password: LoginPasswordSchema,
 		redirectTo: z.string().optional(),
 		remember: z.boolean().optional(),
 	})
 
 	const EmailCheckSchema = z.object({
-		username: z.string().min(1, t`Please enter your email or username`),
+		username: z
+			.string()
+			.trim()
+			.toLowerCase()
+			.min(1, t`Please enter your email or username`),
 		redirectTo: z.string().optional(),
 	})
 

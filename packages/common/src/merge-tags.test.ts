@@ -5,9 +5,11 @@ import {
 	collectMergeTags,
 	findMergeSegmentAt,
 	isMergeTagName,
+	isSafeUrlAttributeValue,
 	mergeTagLabel,
 	parseMergeSegments,
 	replaceMergeTokens,
+	replaceMergeTokensInHtml,
 	resolveWithFallback,
 } from './merge-tags'
 
@@ -117,5 +119,63 @@ describe('tag metadata', () => {
 	it('recognises catalog tags', () => {
 		expect(isMergeTagName('firstName')).toBe(true)
 		expect(isMergeTagName('nope')).toBe(false)
+	})
+})
+
+describe('isSafeUrlAttributeValue', () => {
+	it('allows http, https, mailto, tel and relative URLs', () => {
+		for (const value of [
+			'https://x.test/a?b=c:d',
+			'HTTP://x.test',
+			'mailto:a@x.test',
+			'tel:+1555',
+			'/path:with-colon',
+			'?q=a:b',
+			'#top',
+			'logo.png',
+			'',
+		]) {
+			expect(isSafeUrlAttributeValue(value), value).toBe(true)
+		}
+	})
+
+	it('refuses other schemes, however they are written', () => {
+		for (const value of [
+			'javascript:alert(1)',
+			'JaVaScRiPt:alert(1)',
+			'  javascript:alert(1)',
+			'java\tscript:alert(1)',
+			'java&#x09;script:alert(1)',
+			'java&Tab;script:alert(1)',
+			'&#106;avascript:alert(1)',
+			'&#x6A;avascript:alert(1)',
+			'javascript&colon;alert(1)',
+			'&#0;javascript:alert(1)',
+			'data:text/html,x',
+			'vbscript:x',
+			'jav&unknown;script:x',
+		]) {
+			expect(isSafeUrlAttributeValue(value), value).toBe(false)
+		}
+	})
+})
+
+describe('replaceMergeTokensInHtml', () => {
+	const resolve = (tag: string) =>
+		({ a: 'javascript:alert(1)', b: 'https://x.test', c: '{{b}}' })[tag] ?? ''
+
+	it('empties a URL attribute whose result is unsafe', () => {
+		expect(replaceMergeTokensInHtml('<a href={{a}}>{{a}}</a>', resolve)).toBe(
+			'<a href="">javascript:alert(1)</a>',
+		)
+		expect(replaceMergeTokensInHtml('<a HREF="{{b}}">x</a>', resolve)).toBe(
+			'<a HREF="https://x.test">x</a>',
+		)
+	})
+
+	it('does not re-read a substituted value as a token', () => {
+		expect(replaceMergeTokensInHtml('<a href="{{c}}">{{c}}</a>', resolve)).toBe(
+			'<a href="{{b}}">{{b}}</a>',
+		)
 	})
 })

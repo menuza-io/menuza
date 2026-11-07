@@ -172,6 +172,15 @@ value → explicit fallback → built-in default**. For an unknown tag, the fall
 is used when present; otherwise the token is left verbatim. In HTML output the
 substituted value _and_ the fallback are escaped.
 
+A fallback is unescaped once and escaped again, so a double-encoded fallback
+such as `&amp;lt;script&amp;gt;` stays text. Escaping does not make a URL safe,
+so in a URL attribute (`href`, `src`, and the like) the attribute is emptied
+unless the interpolated value is a relative URL or uses `http`, `https`,
+`mailto` or `tel` (`replaceMergeTokensInHtml` in
+`packages/common/src/merge-tags.ts`). The check decodes the attribute once and
+drops tabs, newlines and control characters first, as a browser does, so
+`JavaScript:` or `java&#x09;script:` is refused too.
+
 ### Unsubscribe follow-up
 
 The current email footer is informational only; it must not be treated as a
@@ -232,3 +241,75 @@ To backfill consent a business already holds (for example an existing mailing
 list), insert rows with `source = 'import'` through `setCustomerSubscription()`
 in `apps/tenant-api/src/services/marketing-audience.ts`. Only import people who
 agreed to receive marketing.
+
+Broadcasts are sent by the regional tick, which only claims them: each claimed
+campaign sends in the background (`waitUntil` where the runtime offers one,
+otherwise an un-awaited promise), so a large campaign does not hold the staff
+tick or other organizations; a send that dies with its isolate is resumed once
+its lease goes stale. On the Durable Object runtime the organization's alarm
+wakes at the next scheduled `scheduledAt`, and while a campaign is `Processing`
+it wakes when its lease could go stale (to resume a throttled or interrupted
+send). Creating a campaign and the hourly tick arm it, so a scheduled broadcast
+does not wait for the hourly cron.
+
+## Journey consent
+
+Journeys (App > Marketing > Automations) are marketing, so every email and SMS
+step uses the broadcast consent rules above (`hasMarketingConsent` in
+`apps/tenant-api/src/services/marketing-audience.ts`): an active `marketing`
+subscription for the step's channel, a verified phone for texts, and a confirmed
+address for email. There is no transactional exemption. A customer without
+consent skips that step and the journey goes on. The step execution is recorded
+as `skipped` with `executionDetails.skipReason = 'no_consent'` (and the channel)
+and a readable `errorMessage`, which the run timeline in the App shows; the
+system route `POST /api/journeys/execute-step` answers `reason: 'no_consent'`.
+
+What this means when you design a journey:
+
+- A text right after `phone_verified` (the editor's default trigger) is skipped
+  for nearly everyone: the customer cannot hold an SMS subscription before the
+  request that verified the phone, which is the one that fires the trigger. Put
+  a delay first (a customer who subscribes to texts meanwhile then gets it), or
+  start the journey from a `custom_event` your code sends after the customer
+  subscribes.
+- An email after `profile_completed` is skipped until the customer follows the
+  confirmation link (double opt-in), unless consent was recorded with the
+  `operator` or `import` source.
+- Messages a customer must get whatever their marketing choice (receipts,
+  sign-in codes) are not journeys; send them from the code path that needs them.
+
+## Migration archives
+
+Two migrations remove duplicate rows before they add the unique indexes that
+stop two dispatchers sending twice. Each copies the rows it removes to an
+archive table first, so the deletion can be undone:
+
+- Control plane, `packages/database/drizzle/0027_concurrency_guards.sql`:
+  duplicate `PlatformMarketingMessage` rows per campaign and user. The kept row
+  is the most engaged one (Clicked, Opened, Sent, Processing, then Failed; the
+  oldest on a tie). Removed rows go to
+  `__archived_PlatformMarketingMessage_0027`.
+- Every organization's tenant database,
+  `packages/tenant-db/drizzle/0018_concurrency_guards.sql`:
+  - Journey runs of a once-per-customer trigger (`phone_verified`,
+    `profile_completed`), duplicated per journey and customer. The kept run is
+    completed, then running, then failed, then cancelled (the oldest on a tie).
+    Removed runs go to `__archived_journey_runs_0018`, and their step executions
+    to `__archived_journey_step_executions_0018`. A message sent by a removed
+    step keeps its row with the step link set to `NULL`; a copy with the old
+    link is in `__archived_marketing_messages_0018`
+    (`archive_reason = 'journey_step_unlinked'`).
+  - Broadcast messages duplicated per campaign and customer. The kept row is the
+    most engaged one (Clicked, Opened, Delivered or Sent, Unknown or Processing,
+    then Failed; the oldest on a tie). Removed rows go to
+    `__archived_marketing_messages_0018`
+    (`archive_reason = 'duplicate_broadcast'`).
+
+The archive tables are created even when nothing was removed (then empty). They
+hold customer ids and journey context, so person erasure deletes a customer's
+archived rows too (`eraseArchivedRows` in
+`apps/tenant-api/src/services/person-erasure-service.ts`), and they live in the
+organization's own region like the rows they came from. To restore a row, insert
+it back from the archive (drop `archive_reason`) after removing the row that was
+kept, since the unique index allows one. Drop the archive tables in a later
+migration once the rollout has been checked.

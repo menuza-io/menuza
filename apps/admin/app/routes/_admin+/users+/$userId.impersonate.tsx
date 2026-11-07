@@ -2,6 +2,7 @@ import { invariantResponse } from '@epic-web/invariant'
 import { auditService, AuditAction } from '@repo/audit'
 import {
 	requireUserWithRole,
+	endImpersonationSessions,
 	impersonationSessionStorage,
 	impersonationSessionKey,
 	getImpersonationExpirationDate,
@@ -76,10 +77,13 @@ export async function action({
 	const clientIp = getClientIp(request)
 	const ipHash = hashIp(clientIp)
 
-	// Delete any existing impersonation sessions for this admin
-	await db
-		.delete(ImpersonationSession)
-		.where(eq(ImpersonationSession.adminUserId, adminUserId))
+	// An admin has one impersonation at a time. End any earlier one with an
+	// audited END (reason `replaced`, or `expired`) before starting this one.
+	await endImpersonationSessions({
+		where: eq(ImpersonationSession.adminUserId, adminUserId),
+		reason: 'replaced',
+		request,
+	})
 
 	// Create a new impersonation session with 15-minute TTL and IP binding
 	const [impersonationSession] = await db
