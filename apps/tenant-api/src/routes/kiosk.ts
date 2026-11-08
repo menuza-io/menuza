@@ -37,6 +37,7 @@ import {
 import {
 	describeClockState,
 	processPunch,
+	replayRecordedPunch,
 	defaultPunchDeps,
 	type PunchDeps,
 } from '../services/punch-service.ts'
@@ -344,7 +345,22 @@ kioskRoutes.post(
 				},
 				kioskDeps.punch.now(),
 			)
-			if (!verified.ok) return pinFailureResponse(verified)
+			if (!verified.ok) {
+				// The tablet may be retrying a punch whose answer was lost, after
+				// the PIN was reset or the person moved. A punch this device
+				// already recorded under this id answers as recorded: it must
+				// never come back refused. A valid PIN never reaches here, so
+				// another person's PIN still gets punch_id_conflict below.
+				const replayed = await replayRecordedPunch(
+					kiosk.db,
+					kiosk.device.id,
+					request,
+					kioskDeps.punch.now(),
+					kiosk.device.scopeId,
+				)
+				if (replayed) return json(replayed.result)
+				return pinFailureResponse(verified)
+			}
 
 			const outcome = await processPunch(
 				kiosk.db,

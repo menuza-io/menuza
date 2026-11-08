@@ -7,6 +7,14 @@ import {
 	userHasOrganizationPermission,
 	type OrganizationPermissionString,
 } from '@repo/auth'
+import {
+	and,
+	db,
+	eq,
+	isNull,
+	OrganizationRole,
+	UserOrganization,
+} from '@repo/database'
 
 export { ORG_PERMISSIONS, getUserOrganizationPermissionsForClient }
 
@@ -53,4 +61,48 @@ export async function requireAnyUserWithOrganizationPermission(
 	}
 
 	throw createForbiddenResponse(permissions.join(' or '))
+}
+
+/**
+ * Whether the user is an active member of the organization with the built-in
+ * `admin` role. Custom roles never qualify, whatever permissions they carry:
+ * this gates actions that cannot be undone, such as deleting the organization.
+ */
+export async function userIsOrganizationAdmin(
+	userId: string,
+	organizationId: string,
+): Promise<boolean> {
+	const [membership] = await db
+		.select({ userId: UserOrganization.userId })
+		.from(UserOrganization)
+		.innerJoin(
+			OrganizationRole,
+			eq(OrganizationRole.id, UserOrganization.organizationRoleId),
+		)
+		.where(
+			and(
+				eq(UserOrganization.userId, userId),
+				eq(UserOrganization.organizationId, organizationId),
+				eq(UserOrganization.active, true),
+				eq(OrganizationRole.name, 'admin'),
+				isNull(OrganizationRole.organizationId),
+			),
+		)
+		.limit(1)
+	return Boolean(membership)
+}
+
+/** Require the built-in organization `admin` role - throws 403 if not. */
+export async function requireOrganizationAdmin(
+	request: Request,
+	organizationId: string,
+): Promise<string> {
+	const userId = await getUserId(request)
+	if (!userId) {
+		throw new Response('Unauthorized', { status: 401 })
+	}
+	if (!(await userIsOrganizationAdmin(userId, organizationId))) {
+		throw createForbiddenResponse('admin', true)
+	}
+	return userId
 }

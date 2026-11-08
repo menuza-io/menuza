@@ -1,5 +1,9 @@
 import { and, asc, count, desc, eq, inArray, isNotNull, sql } from 'drizzle-orm'
-import { STAFF_EXPORT_FORMAT, type StaffSummary } from '@repo/staffing'
+import {
+	STAFF_EXPORT_FORMAT,
+	STAFFING_PERMISSIONS,
+	type StaffSummary,
+} from '@repo/staffing'
 import {
 	hiringApplications,
 	staffAuditLog,
@@ -386,7 +390,7 @@ export type ExportOptions = {
 	/** Limit to one person. Omitted exports the whole roster. */
 	staffId?: string
 	/** Which sensitive groups to include (the caller's grants decide). */
-	include: { pay: boolean; private: boolean }
+	include: { pay: boolean; private: boolean; hiring: boolean }
 	/** Operator ids and client hashes are left out of a person's own copy. */
 	includeActors: boolean
 }
@@ -394,7 +398,8 @@ export type ExportOptions = {
 /**
  * Everything the regional database holds about staff, shaped for a file.
  * `pin_lookup`, failure counters and other secrets are never included. Pay and
- * private groups appear only when `include` allows them; they are omitted, not
+ * private and hiring groups (the application, onboarding tasks and
+ * certificates) appear only when `include` allows them; they are omitted, not
  * blanked.
  */
 export async function buildStaffExport(
@@ -409,12 +414,13 @@ export async function buildStaffExport(
 		.orderBy(asc(staffMembers.lastName), asc(staffMembers.firstName))
 	const staffIds = staffRows.map((row) => row.id)
 
-	const applications = staffIds.length
-		? await db
-				.select()
-				.from(hiringApplications)
-				.where(inJsonList(hiringApplications.hiredStaffId, staffIds))
-		: []
+	const applications =
+		staffIds.length && options.include.hiring
+			? await db
+					.select()
+					.from(hiringApplications)
+					.where(inJsonList(hiringApplications.hiredStaffId, staffIds))
+			: []
 	const [assignments, jobs, notes, privates, tasks, certificates] =
 		staffIds.length
 			? await Promise.all([
@@ -438,16 +444,20 @@ export async function buildStaffExport(
 								.from(staffPrivate)
 								.where(inJsonList(staffPrivate.staffId, staffIds))
 						: Promise.resolve([]),
-					db
-						.select()
-						.from(onboardingTasks)
-						.where(inJsonList(onboardingTasks.staffId, staffIds))
-						.orderBy(asc(onboardingTasks.sortOrder)),
-					db
-						.select()
-						.from(staffCertificates)
-						.where(inJsonList(staffCertificates.staffId, staffIds))
-						.orderBy(asc(staffCertificates.expiresOn)),
+					options.include.hiring
+						? db
+								.select()
+								.from(onboardingTasks)
+								.where(inJsonList(onboardingTasks.staffId, staffIds))
+								.orderBy(asc(onboardingTasks.sortOrder))
+						: Promise.resolve([]),
+					options.include.hiring
+						? db
+								.select()
+								.from(staffCertificates)
+								.where(inJsonList(staffCertificates.staffId, staffIds))
+								.orderBy(asc(staffCertificates.expiresOn))
+						: Promise.resolve([]),
 				])
 			: [[], [], [], [], [], []]
 
@@ -496,7 +506,11 @@ export async function buildStaffExport(
 		exportedAt: Date.now(),
 		orgId: meta.orgId,
 		region: getNodeRegion(),
-		includes: { pay: options.include.pay, private: options.include.private },
+		includes: {
+			pay: options.include.pay,
+			private: options.include.private,
+			hiring: options.include.hiring,
+		},
 		settings: settings ? serializeSettings(settings) : null,
 		positions: positions.map((row) =>
 			serializePosition(row, options.include.pay),
@@ -509,31 +523,39 @@ export async function buildStaffExport(
 				jobs: byStaff(jobs, row.id).map((job) =>
 					serializeJob(job, options.include.pay),
 				),
-				// What the person told us when they applied (their own answers).
-				application: serializeApplicationForExport(
-					applications.find((item) => item.hiredStaffId === row.id),
-				),
-				onboardingTasks: byStaff(tasks, row.id).map((task) => ({
-					id: task.id,
-					taskKey: task.taskKey,
-					title: task.title,
-					type: task.type,
-					instructions: task.instructions,
-					linkUrl: task.linkUrl,
-					status: task.status,
-					dueDate: task.dueDate,
-					completedAt: task.completedAt,
-					createdAt: task.createdAt,
-					...(options.includeActors ? { completedBy: task.completedBy } : {}),
-				})),
-				certificates: byStaff(certificates, row.id).map((certificate) => ({
-					id: certificate.id,
-					kind: certificate.kind,
-					label: certificate.label,
-					issuedOn: certificate.issuedOn,
-					expiresOn: certificate.expiresOn,
-					note: certificate.note,
-				})),
+				...(options.include.hiring
+					? {
+							// What the person told us when they applied (their own answers).
+							application: serializeApplicationForExport(
+								applications.find((item) => item.hiredStaffId === row.id),
+							),
+							onboardingTasks: byStaff(tasks, row.id).map((task) => ({
+								id: task.id,
+								taskKey: task.taskKey,
+								title: task.title,
+								type: task.type,
+								instructions: task.instructions,
+								linkUrl: task.linkUrl,
+								status: task.status,
+								dueDate: task.dueDate,
+								completedAt: task.completedAt,
+								createdAt: task.createdAt,
+								...(options.includeActors
+									? { completedBy: task.completedBy }
+									: {}),
+							})),
+							certificates: byStaff(certificates, row.id).map(
+								(certificate) => ({
+									id: certificate.id,
+									kind: certificate.kind,
+									label: certificate.label,
+									issuedOn: certificate.issuedOn,
+									expiresOn: certificate.expiresOn,
+									note: certificate.note,
+								}),
+							),
+						}
+					: {}),
 				notes: byStaff(notes, row.id)
 					.filter((note) => note.deletedAt === null)
 					.map((note) => ({
@@ -622,6 +644,7 @@ export async function exportForOperator(
 	const include = {
 		pay: hasGrant(ctx.auth, 'read:staff_pay:any'),
 		private: hasGrant(ctx.auth, 'read:staff_private:any'),
+		hiring: hasGrant(ctx.auth, STAFFING_PERMISSIONS.READ_HIRING),
 	}
 	await writeStaffAudit(ctx.db, ctx.auth, ctx.ipHash, {
 		action: 'staff.exported',
@@ -633,6 +656,7 @@ export async function exportForOperator(
 			scope: input.staffId ? 'one' : 'all',
 			pay: include.pay,
 			private: include.private,
+			hiring: include.hiring,
 		},
 	})
 	return ok(
@@ -681,7 +705,7 @@ export async function exportSubject(
 		db,
 		{
 			staffId: staff.id,
-			include: { pay: true, private: true },
+			include: { pay: true, private: true, hiring: true },
 			includeActors: false,
 		},
 		meta,

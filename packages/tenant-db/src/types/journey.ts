@@ -2,6 +2,7 @@ import { emailBlocksSchema } from '@repo/common/email-blocks'
 import {
 	isMergeTagName,
 	replaceMergeTokens,
+	replaceMergeTokensInHtml,
 	resolveWithFallback,
 } from '@repo/common/merge-tags'
 import { z } from 'zod'
@@ -768,10 +769,35 @@ export function escapeHtmlValue(value: string): string {
 	return value.replace(/[&<>"']/g, (char) => HTML_ESCAPES[char] ?? char)
 }
 
+const HTML_UNESCAPES: Record<string, string> = {
+	'&amp;': '&',
+	'&lt;': '<',
+	'&gt;': '>',
+	'&quot;': '"',
+	'&#39;': "'",
+	'&#x27;': "'",
+	'&apos;': "'",
+}
+
+/** Undoes `escapeHtmlValue`, or React's escaping (`&#x27;`), in one pass. */
+function unescapeHtmlValue(value: string): string {
+	return value.replace(
+		/&(?:amp|lt|gt|quot|apos|#39|#x27);/g,
+		(entity) => HTML_UNESCAPES[entity] ?? entity,
+	)
+}
+
 /**
  * Same as `interpolateMergeTags`, but escapes every substituted value so
  * customer PII cannot inject markup into a pre-rendered HTML email body.
  * Use the plain variant for the text part of the message.
+ *
+ * A fallback is part of the HTML template, so it usually arrives escaped
+ * (React escaped it when the email was designed). It is unescaped first, so
+ * escaped and raw fallbacks both come out escaped once.
+ *
+ * In a URL attribute (`href`, `src`, ...) the result must also be a relative
+ * URL or use http, https, mailto or tel, or the attribute is emptied.
  */
 export function interpolateMergeTagsHtml(
 	template: string,
@@ -782,9 +808,10 @@ export function interpolateMergeTagsHtml(
 	},
 	contextData: Record<string, unknown> = {},
 ): string {
-	return replaceMergeTokens(template, (key, fallback, raw) => {
+	return replaceMergeTokensInHtml(template, (key, htmlFallback, raw) => {
 		// Literal text is written by the editor and stays as-is; only the
 		// substituted values (and fallbacks) are escaped.
+		const fallback = unescapeHtmlValue(htmlFallback)
 		if (!isMergeTagName(key)) {
 			if (contextData[key] !== undefined && contextData[key] !== null) {
 				return escapeHtmlValue(
@@ -793,6 +820,8 @@ export function interpolateMergeTagsHtml(
 			}
 			return fallback.trim() ? escapeHtmlValue(fallback) : raw
 		}
-		return escapeHtmlValue(interpolateMergeTags(raw, customer, contextData))
+		// Unescaping adds no braces, so the rebuilt tag parses the same way.
+		const tag = fallback ? `{{${key}|${fallback}}}` : raw
+		return escapeHtmlValue(interpolateMergeTags(tag, customer, contextData))
 	})
 }

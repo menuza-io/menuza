@@ -26,9 +26,11 @@ const folder = path.join(
 /**
  * Journal entries that had shipped at each point: 16 is the state before the
  * upstream sync, 19 the state of `main` when the reservations migrations were
- * appended (the last entry is `0018_customer_subscription_confirmation_sent`).
+ * appended (the last entry is `0018_customer_subscription_confirmation_sent`),
+ * 29 the state before upstream's `0017_sms_send_events` and
+ * `0018_concurrency_guards` were appended as `0029` and `0030`.
  */
-const SHIPPED_STATES = [16, 19]
+const SHIPPED_STATES = [16, 19, 29]
 /** `when` of `0018_customer_subscription_confirmation_sent`, the last entry on main. */
 const MAIN_LAST_WHEN = 1792532036810
 /** The one early entry whose `when` is older than its predecessor's. */

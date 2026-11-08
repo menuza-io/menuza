@@ -23,6 +23,7 @@ import {
 } from '#app/utils/restaurant-orders/payment-webhooks.server.ts'
 import {
 	handleConnectAccountUpdated,
+	recordShopOrderAdjustmentFromConnectWebhook,
 	recordShopOrderFromConnectWebhook,
 } from '#app/utils/shop.server.ts'
 
@@ -221,9 +222,27 @@ export async function action({ request, context }: ActionFunctionArgs) {
 
 			case 'charge.dispute.created':
 			case 'charge.dispute.closed': {
+				// Each handler ignores payments that are not its own.
 				await handleReservationStripeDisputeEvent(
 					event.data.object as Stripe.Dispute,
 					event.type,
+				)
+				await recordShopOrderAdjustmentFromConnectWebhook(
+					event.data.object,
+					event.type,
+					event.account,
+				)
+				break
+			}
+
+			case 'charge.refunded':
+			case 'payment_intent.payment_failed':
+			case 'payment_intent.canceled': {
+				// Shop orders only: print refunds are recorded where they are made.
+				await recordShopOrderAdjustmentFromConnectWebhook(
+					event.data.object,
+					event.type,
+					event.account,
 				)
 				break
 			}

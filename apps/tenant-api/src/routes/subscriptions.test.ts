@@ -498,6 +498,30 @@ describe('customer subscription routes', () => {
 				expect(await audience()).toHaveLength(1)
 			})
 
+			it('keeps the resend wait across an unsubscribe and re-subscribe cycle', async () => {
+				await putEmail()
+				expect(send).toHaveBeenCalledTimes(1)
+				for (let cycle = 0; cycle < 3; cycle++) {
+					await put('marketing/email', { subscribed: false })
+					await expect(putEmail()).resolves.toMatchObject({
+						pending: true,
+						confirmationSent: false,
+					})
+				}
+				expect(send).toHaveBeenCalledTimes(1)
+				// The re-subscribe still took effect (pending, not opted out).
+				const db = await getTenantDb(orgId)
+				const [row] = await db.select().from(customerSubscriptions)
+				expect(row!.unsubscribedAt).toBeNull()
+				// Once the wait is over a cycle resends.
+				await backdate(RESEND_INTERVAL_MS + 1000)
+				await put('marketing/email', { subscribed: false })
+				await expect(putEmail()).resolves.toMatchObject({
+					confirmationSent: true,
+				})
+				expect(send).toHaveBeenCalledTimes(2)
+			})
+
 			it('never throttles the first link for a new address, even right after a confirm', async () => {
 				const db = await getTenantDb(orgId)
 				await putEmail()

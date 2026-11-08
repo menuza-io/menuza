@@ -16,17 +16,6 @@ import {
 } from '../../types'
 import crypto from 'crypto'
 
-// Simple in-memory storage for OAuth 1.0a request tokens
-// In production, this should be stored in a database or cache with TTL
-const requestTokenStorage = new Map<
-	string,
-	{
-		organizationId: string
-		requestTokenSecret: string
-		timestamp: number
-	}
->()
-
 /**
  * Trello API response interfaces
  */
@@ -99,57 +88,6 @@ export class TrelloProvider extends BaseIntegrationProvider {
 	}
 
 	/**
-	 * Store request token context for OAuth 1.0a flow
-	 */
-	async storeRequestTokenContext(
-		requestToken: string,
-		context: {
-			organizationId: string
-			requestTokenSecret: string
-			timestamp: number
-		},
-	): Promise<void> {
-		// Store with 1 hour TTL
-		requestTokenStorage.set(requestToken, context)
-
-		// Clean up expired tokens (older than 1 hour)
-		setTimeout(
-			() => {
-				const now = Date.now()
-				for (const [token, ctx] of requestTokenStorage.entries()) {
-					if (now - ctx.timestamp > 60 * 60 * 1000) {
-						// 1 hour
-						requestTokenStorage.delete(token)
-					}
-				}
-			},
-			60 * 60 * 1000,
-		) // Clean up after 1 hour
-	}
-
-	/**
-	 * Retrieve request token context for OAuth 1.0a flow
-	 */
-	public async getRequestTokenContext(requestToken: string): Promise<{
-		organizationId: string
-		requestTokenSecret: string
-		timestamp: number
-	} | null> {
-		const context = requestTokenStorage.get(requestToken)
-		if (!context) {
-			return null
-		}
-
-		// Check if expired (1 hour)
-		if (Date.now() - context.timestamp > 60 * 60 * 1000) {
-			requestTokenStorage.delete(requestToken)
-			return null
-		}
-
-		return context
-	}
-
-	/**
 	 * Generate OAuth 1.0a signature for Trello API
 	 */
 	private generateOAuthSignature(
@@ -187,13 +125,32 @@ export class TrelloProvider extends BaseIntegrationProvider {
 	}
 
 	/**
-	 * Generate Trello OAuth authorization URL
+	 * Generate Trello OAuth authorization URL. The request-token secret is
+	 * dropped here; use `startOAuth1` to keep it for the callback.
 	 */
 	async getAuthUrl(
 		organizationId: string,
 		redirectUri: string,
 		_additionalParams?: Record<string, any>,
 	): Promise<string> {
+		const { authUrl } = await this.startOAuth1(organizationId, redirectUri)
+		return authUrl
+	}
+
+	/**
+	 * Start the OAuth 1.0a flow: get a request token and the authorization
+	 * URL. The caller keeps `requestTokenSecret` with its own hand-off record
+	 * (the App's signed callback cookie) and passes it back to
+	 * `handleCallback`, so the flow can finish on any isolate.
+	 */
+	async startOAuth1(
+		_organizationId: string,
+		redirectUri: string,
+	): Promise<{
+		authUrl: string
+		requestToken: string
+		requestTokenSecret: string
+	}> {
 		try {
 			// Step 1: Get request token
 			const requestTokenParams: Record<string, string> = {
@@ -235,15 +192,6 @@ export class TrelloProvider extends BaseIntegrationProvider {
 				throw new Error('Failed to get request token from Trello')
 			}
 
-			// Store the organization context with the request token for later retrieval
-			// In a production app, you'd store this in a database or cache
-			// For now, we'll use a simple in-memory storage approach
-			await this.storeRequestTokenContext(requestToken, {
-				organizationId,
-				requestTokenSecret,
-				timestamp: Date.now(),
-			})
-
 			// Step 2: Generate authorization URL
 			const authParams = new URLSearchParams({
 				oauth_token: requestToken,
@@ -253,7 +201,11 @@ export class TrelloProvider extends BaseIntegrationProvider {
 				response_type: 'fragment',
 			})
 
-			return `${this.authBaseUrl}/authorize?${authParams.toString()}`
+			return {
+				authUrl: `${this.authBaseUrl}/authorize?${authParams.toString()}`,
+				requestToken,
+				requestTokenSecret,
+			}
 		} catch (error) {
 			console.error('Trello auth URL generation failed:', error)
 			throw new Error(
@@ -266,7 +218,7 @@ export class TrelloProvider extends BaseIntegrationProvider {
 	 * Handle OAuth callback and exchange code for tokens
 	 */
 	async handleCallback(params: OAuthCallbackParams): Promise<TokenData> {
-		const { code: oauthVerifier, oauthToken } = params
+		const { code: oauthVerifier, oauthToken, requestTokenSecret } = params
 
 		if (!oauthVerifier) {
 			throw new Error('OAuth verifier is required')
@@ -277,10 +229,8 @@ export class TrelloProvider extends BaseIntegrationProvider {
 		}
 
 		try {
-			// Get the stored request token context
-			const tokenContext = await this.getRequestTokenContext(oauthToken)
-			if (!tokenContext) {
-				throw new Error('Request token context not found or expired')
+			if (!requestTokenSecret) {
+				throw new Error('Request token secret not found or expired')
 			}
 
 			// Step 3: Exchange verifier for access token
@@ -297,7 +247,7 @@ export class TrelloProvider extends BaseIntegrationProvider {
 			const accessTokenUrl = `${this.authBaseUrl}/OAuthGetAccessToken`
 
 			// Generate signature using request token secret
-			const tokenSecret = tokenContext.requestTokenSecret
+			const tokenSecret = requestTokenSecret
 			const signature = this.generateOAuthSignature(
 				'POST',
 				accessTokenUrl,
@@ -328,9 +278,6 @@ export class TrelloProvider extends BaseIntegrationProvider {
 				throw new Error('Failed to get access token from Trello')
 			}
 
-			// Clean up the stored request token
-			requestTokenStorage.delete(oauthToken)
-
 			return {
 				accessToken,
 				refreshToken: accessTokenSecret, // Store token secret as refresh token
@@ -341,6 +288,19 @@ export class TrelloProvider extends BaseIntegrationProvider {
 			throw new Error(
 				`Trello OAuth callback failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
 			)
+		}
+	}
+
+	/**
+	 * Delete the member token (best effort, used on disconnect).
+	 */
+	async revokeToken(token: string): Promise<void> {
+		const response = await fetch(
+			`${this.apiBaseUrl}/tokens/${encodeURIComponent(token)}?key=${this.apiKey}&token=${encodeURIComponent(token)}`,
+			{ method: 'DELETE' },
+		)
+		if (!response.ok) {
+			throw new Error(`Trello token revoke failed: ${response.status}`)
 		}
 	}
 

@@ -63,6 +63,11 @@ export interface CampaignDetail {
 	/** The coupon `{{couponCode}}` showed, when the broadcast carried one. */
 	coupon?: CampaignCoupon | null
 	recipients: CampaignRecipient[]
+	/**
+	 * Recipients whose send outcome is unknown: their message row was left
+	 * Processing by an interrupted or timed-out send. Platform campaigns only.
+	 */
+	unconfirmedRecipientCount?: number
 }
 
 export type CampaignCoupon =

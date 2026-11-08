@@ -11,6 +11,11 @@
 		"enabled": true,
 	},
 	"workers_dev": true,
+	// Finishes platform campaigns whose dispatch stopped (workers/app.ts
+	// `scheduled`). See docs/scheduled-jobs.md.
+	"triggers": {
+		"crons": ["*/5 * * * *"],
+	},
 	// Binding IDs are injected at deploy time by scripts/patch-wrangler.mjs.
 	"d1_databases": [
 		{
@@ -33,6 +38,9 @@
 	"env": {
 		"staging": {
 			"name": "menuza-admin-staging",
+			"triggers": {
+				"crons": ["*/5 * * * *"],
+			},
 			"d1_databases": [
 				{
 					"binding": "DB",

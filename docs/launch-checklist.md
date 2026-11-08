@@ -175,6 +175,15 @@ npx wrangler kv namespace create menuza-cache-staging
 Admin shares the **same D1 database** as App in most installs — use the same
 `database_id` for both.
 
+Set `APP_WORKER_NAME*` on the Admin build too: it becomes Admin's `APP` service
+binding, used for GDPR expedite and print-shop refunds and retries. Without it
+Admin calls the App's public `APP_URL`, which does not reach the App Worker from
+the same zone (the request hangs until it times out).
+
+Admin's Worker has a Cron Trigger (`*/5 * * * *`) that finishes platform
+broadcasts (see
+[scheduled jobs](./scheduled-jobs.md#platform-broadcasts-admin-cron)).
+
 ### Web / marketing (`apps/web`)
 
 | Variable (production) | Variable (staging)           |

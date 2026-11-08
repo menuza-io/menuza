@@ -12,6 +12,13 @@
 		"enabled": true,
 	},
 	// @cloudflare/vite-plugin injects assets.directory at build time — do not set directory here.
+	// Logged-in UI code lives in /assets/app/; the Worker serves it only with a
+	// valid session (app/utils/private-client-code.server.ts). The full route
+	// manifest file is deleted at build time and answered 404 here as well.
+	"assets": {
+		"binding": "ASSETS",
+		"run_worker_first": ["/assets/app/*", "/assets/manifest-*"],
+	},
 	// Binding IDs are injected at deploy time by scripts/patch-wrangler.mjs (GitHub Variables or launch.config.json).
 	"d1_databases": [
 		{
@@ -59,6 +66,10 @@
 	"env": {
 		"staging": {
 			"name": "menuza-app-staging",
+			"assets": {
+				"binding": "ASSETS",
+				"run_worker_first": ["/assets/app/*", "/assets/manifest-*"],
+			},
 			"d1_databases": [
 				{
 					"binding": "DB",

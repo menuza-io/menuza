@@ -62,21 +62,23 @@ function requestTool(controller: CallController) {
 			if (controller.transferInProgress) return TRANSFER_IN_PROGRESS
 			const requestType: CallRequestType = type ?? 'callback'
 			const callerPhone = normalizeE164(callbackPhone) ?? controller.callerPhone
-			await controller.services.createRequest({
-				orgId: controller.config.organization.id,
-				callId: controller.callId,
-				type: requestType,
-				callerName: callerName?.trim() || null,
-				callerPhone,
-				details: Object.fromEntries(
-					details
-						.filter((entry) => entry.field.trim() && entry.value.trim())
-						.map((entry) => [
-							entry.field.trim().slice(0, 60),
-							entry.value.trim().slice(0, 1000),
-						]),
-				),
-			})
+			await controller.trackSave(
+				controller.services.createRequest({
+					orgId: controller.config.organization.id,
+					callId: controller.callId,
+					type: requestType,
+					callerName: callerName?.trim() || null,
+					callerPhone,
+					details: Object.fromEntries(
+						details
+							.filter((entry) => entry.field.trim() && entry.value.trim())
+							.map((entry) => [
+								entry.field.trim().slice(0, 60),
+								entry.value.trim().slice(0, 1000),
+							]),
+					),
+				}),
+			)
 			controller.state.requests.push(requestType)
 			return { saved: true, note: 'Tell the caller the team will follow up.' }
 		},

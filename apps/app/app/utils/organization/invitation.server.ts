@@ -374,8 +374,14 @@ async function acceptInvitation(
 	await db
 		.delete(OrganizationInvitation)
 		.where(eq(OrganizationInvitation.id, invitation.id))
+	// A failed Stripe write is fixed by the daily seat reconcile job.
 	if (!member)
-		await updateSeatQuantity(invitation.organizationId).catch(() => {})
+		await updateSeatQuantity(invitation.organizationId).catch((error) =>
+			console.error(
+				`Failed to update seat quantity for organization ${invitation.organizationId}:`,
+				error,
+			),
+		)
 	await auditInvitationAccepted({
 		organizationId: invitation.organizationId,
 		userId,
@@ -674,7 +680,13 @@ export async function validateAndAcceptInviteLink(
 				active: true,
 			})
 			.onConflictDoNothing()
-		await updateSeatQuantity(link.organizationId).catch(() => {})
+		// A failed Stripe write is fixed by the daily seat reconcile job.
+		await updateSeatQuantity(link.organizationId).catch((error) =>
+			console.error(
+				`Failed to update seat quantity for organization ${link.organizationId}:`,
+				error,
+			),
+		)
 		await auditMemberAdded({
 			organizationId: link.organizationId,
 			memberUserId: userId,

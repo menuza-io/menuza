@@ -204,6 +204,10 @@ export const ORG_PERMISSIONS = {
 	// Menu permissions
 	READ_MENU_ANY: 'read:menu:any' as const,
 	UPDATE_MENU_ANY: 'update:menu:any' as const,
+	// Media library: browsing is open to every member; changing the shared
+	// library and spending AI studio credits are not.
+	UPDATE_MEDIA_ANY: 'update:media:any' as const,
+	CREATE_MEDIA_STUDIO_ANY: 'create:media_studio:any' as const,
 
 	// Team chat: manage channels and who can access them. Using chat only
 	// requires access to a channel, not a permission.

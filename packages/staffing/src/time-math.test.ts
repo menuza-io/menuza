@@ -52,6 +52,18 @@ describe('roundInstant', () => {
 		expect(roundInstant(t('08:07'), nearest, CHI)).toBe(t('08:00'))
 		expect(roundInstant(t('08:08'), nearest, CHI)).toBe(t('08:15'))
 	})
+	it('keeps an exact hour on the hour for every accepted increment', () => {
+		for (const incrementMinutes of [5, 6, 10, 12, 15, 20, 30, 60]) {
+			for (const mode of ['nearest', 'up', 'down'] as const) {
+				for (const date of ['2026-01-15', '2026-03-08', '2026-06-10']) {
+					const exact = at(date, '09:00', CHI)
+					expect(roundInstant(exact, { mode, incrementMinutes }, CHI)).toBe(
+						exact,
+					)
+				}
+			}
+		}
+	})
 	it('rounds up and down', () => {
 		expect(
 			roundInstant(t('08:01'), { mode: 'up', incrementMinutes: 15 }, CHI),

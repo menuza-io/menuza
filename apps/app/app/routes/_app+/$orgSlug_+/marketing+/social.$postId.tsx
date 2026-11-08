@@ -39,6 +39,7 @@ import {
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { SocialPostComposer } from '#app/components/social/post-composer.tsx'
 import {
+	SOCIAL_FORM_ERROR_LABELS,
 	SOCIAL_PLATFORM_LABELS,
 	socialTargetError,
 } from '#app/components/social/social-labels.ts'
@@ -50,10 +51,12 @@ import {
 import { runAfterResponse } from '#app/utils/after-response.server.ts'
 import { requireSocialAccess } from '#app/utils/social/access.server.ts'
 import { listSocialAccounts } from '#app/utils/social/accounts.server.ts'
+import { socialTargetOutcomeUnknown } from '#app/utils/social/platforms.ts'
 import { handleSocialPostForm } from '#app/utils/social/post-form.server.ts'
 import {
 	deleteSocialPost,
 	getSocialPost,
+	isSocialPostEditable,
 	retrySocialPost,
 	saveSocialPost,
 } from '#app/utils/social/posts.server.ts'
@@ -67,8 +70,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	const post = await getSocialPost(access.organization.id, params.postId ?? '')
 	if (!post) throw new Response('Not Found', { status: 404 })
 	const { timeZone } = getHints(request)
-	const editable =
-		access.canWrite && (post.status === 'draft' || post.status === 'scheduled')
+	const editable = access.canWrite && isSocialPostEditable(post.status)
 	return {
 		orgSlug: access.organization.slug,
 		canWrite: access.canWrite,
@@ -89,7 +91,8 @@ export async function action({ request, params, context }: ActionFunctionArgs) {
 	const postId = params.postId ?? ''
 	const organizationId = access.organization.id
 	const calendar = `/${access.organization.slug}/marketing/social`
-	const intent = (await request.clone().formData()).get('intent')
+	const submitted = await request.clone().formData()
+	const intent = submitted.get('intent')
 
 	if (intent === 'delete') {
 		if (!(await deleteSocialPost(organizationId, postId))) {
@@ -103,6 +106,22 @@ export async function action({ request, params, context }: ActionFunctionArgs) {
 
 	if (intent === 'retry') {
 		if (!(await retrySocialPost(organizationId, postId))) {
+			return { error: 'busy' as const }
+		}
+		return redirectWithToast(`${calendar}/${postId}`, {
+			type: 'success',
+			description: linguiI18n._(t`Sent again. See each account below.`),
+		})
+	}
+
+	if (intent === 'resend-target') {
+		const targetId = submitted.get('targetId')
+		if (
+			typeof targetId !== 'string' ||
+			!(await retrySocialPost(organizationId, postId, {
+				confirmedTargetId: targetId,
+			}))
+		) {
 			return { error: 'busy' as const }
 		}
 		return redirectWithToast(`${calendar}/${postId}`, {
@@ -131,6 +150,10 @@ export async function action({ request, params, context }: ActionFunctionArgs) {
 
 	const post = await getSocialPost(organizationId, postId)
 	if (!post) throw new Response('Not Found', { status: 404 })
+	// A page opened before publishing began can still submit the form.
+	if (!isSocialPostEditable(post.status)) {
+		return { error: 'not_editable' as const }
+	}
 	return handleSocialPostForm(request, access, postId, {
 		publishInBackground: (task) => runAfterResponse(context, task),
 	})
@@ -218,7 +241,11 @@ export default function SocialPostRoute() {
 	})()
 	const errors =
 		actionData && 'error' in actionData ? actionData.error : undefined
-	const hasFailed = post.targets.some((target) => target.status === 'failed')
+	// Retry skips targets that may already be live; each has its own button.
+	const hasFailed = post.targets.some(
+		(target) =>
+			target.status === 'failed' && !socialTargetOutcomeUnknown(target),
+	)
 
 	return (
 		<div className="space-y-8">
@@ -244,6 +271,11 @@ export default function SocialPostRoute() {
 			{errors === 'busy' ? (
 				<p className="text-destructive text-sm" role="alert">
 					{_(msg`This post is publishing right now. Try again in a moment.`)}
+				</p>
+			) : null}
+			{errors === 'not_editable' ? (
+				<p className="text-destructive text-sm" role="alert">
+					{_(SOCIAL_FORM_ERROR_LABELS.not_editable!)}
 				</p>
 			) : null}
 
@@ -307,6 +339,28 @@ export default function SocialPostRoute() {
 										</ItemContent>
 										<ItemActions>
 											<SocialTargetStatusBadge status={target.status} />
+											{canWrite &&
+											post.status !== 'publishing' &&
+											socialTargetOutcomeUnknown(target) ? (
+												<Form method="post">
+													<input
+														type="hidden"
+														name="targetId"
+														value={target.id}
+													/>
+													<Button
+														type="submit"
+														name="intent"
+														value="resend-target"
+														variant="outline"
+														size="sm"
+														disabled={busyIntent != null}
+													>
+														<Icon name="refresh-cw" />
+														{_(msg`Not there? Send again`)}
+													</Button>
+												</Form>
+											) : null}
 											{target.permalink ? (
 												<Button
 													variant="ghost"

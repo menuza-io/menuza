@@ -2,13 +2,14 @@ import { requireUserId } from '@repo/auth'
 import { calculateReorderPosition } from '@repo/common'
 import {
 	and,
-	asc,
 	db,
 	eq,
 	isNull,
 	ne,
+	or,
 	OrganizationNote,
 	OrganizationNoteStatus,
+	sql,
 } from '@repo/database'
 import { type ActionFunction } from 'react-router'
 import { validateOrgAccess } from '#app/utils/organization/loader.server.ts'
@@ -98,8 +99,10 @@ export const action: ActionFunction = async ({ request, params }) => {
 			throw new Error('Note not found')
 		}
 
-		// Get all notes in the destination column (excluding the note being moved)
-		const notesInDestColumn = await tx
+		// The client computes the target index over the notes this user can see
+		// (public, own, shared with them), nulls last. Use the same list, or a
+		// hidden private note or an unpositioned note shifts the slot.
+		const visible = await tx
 			.select({ id: OrganizationNote.id, position: OrganizationNote.position })
 			.from(OrganizationNote)
 			.where(
@@ -109,15 +112,33 @@ export const action: ActionFunction = async ({ request, params }) => {
 						? eq(OrganizationNote.statusId, statusId)
 						: isNull(OrganizationNote.statusId),
 					ne(OrganizationNote.id, noteId),
+					or(
+						eq(OrganizationNote.isPublic, true),
+						eq(OrganizationNote.createdById, userId),
+						sql`EXISTS (SELECT 1 FROM NoteAccess WHERE noteId = ${OrganizationNote.id} AND userId = ${userId})`,
+					),
 				),
 			)
-			.orderBy(asc(OrganizationNote.position))
+		const positioned = visible
+			.filter((n) => n.position !== null)
+			.sort((a, b) => (a.position as number) - (b.position as number))
+		const unpositioned = visible.filter((n) => n.position === null)
+		// Give unpositioned notes real positions after the positioned ones so
+		// the stored order matches what the board shows.
+		let nextPosition = (positioned[positioned.length - 1]?.position ?? 0) + 1
+		const notesInDestColumn: { id: string; position: number }[] =
+			positioned.map((n) => ({ id: n.id, position: n.position as number }))
+		for (const n of unpositioned) {
+			await tx
+				.update(OrganizationNote)
+				.set({ position: nextPosition })
+				.where(eq(OrganizationNote.id, n.id))
+			notesInDestColumn.push({ id: n.id, position: nextPosition })
+			nextPosition += 1
+		}
 
 		// Calculate the new fractional position using shared utility
-		const newPosition = calculateReorderPosition(
-			notesInDestColumn.map((n) => ({ position: n.position ?? 0 })),
-			targetIndex,
-		)
+		const newPosition = calculateReorderPosition(notesInDestColumn, targetIndex)
 
 		// Update the note with new position and status
 		await tx

@@ -51,15 +51,39 @@ export function clearSessionTokens() {
 }
 
 /**
- * The regional tenant-api origin the page was rendered with. A page without
- * one has no region to call: outside local development the call fails here
- * instead of sending the customer's token to another address.
+ * The tenant-api could not be used: the page names no node for this
+ * organization's region. Any session is kept, so callers show a retryable
+ * error instead of the sign-in page.
  */
-export function getBrowserTenantApiUrl(): string {
+export class TenantApiUnavailableError extends Error {
+	constructor(message = 'region_unavailable') {
+		super(message)
+		this.name = 'TenantApiUnavailableError'
+	}
+}
+
+function tenantApiUrlFromPage(): string | null {
 	const fromDom = document.documentElement.dataset.tenantApiUrl
 	if (fromDom) return fromDom.replace(/\/$/, '')
 	if (import.meta.env.DEV) return 'http://localhost:3007'
-	throw new Error('region_unavailable')
+	return null
+}
+
+/**
+ * The regional tenant-api origin the page was rendered with. SSR leaves it out
+ * when no node serves the organization's region; there is no fallback outside
+ * local development, because another region's node must never receive this
+ * organization's customer data. The call fails here instead.
+ */
+export function getBrowserTenantApiUrl(): string {
+	const url = tenantApiUrlFromPage()
+	if (!url) throw new TenantApiUnavailableError()
+	return url
+}
+
+/** Whether the page names a tenant-api node (sign-in is unavailable without one). */
+export function hasBrowserTenantApi(): boolean {
+	return tenantApiUrlFromPage() !== null
 }
 
 export function getOrgBinding(): OrgBinding {

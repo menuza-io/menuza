@@ -394,6 +394,13 @@ export function toPublicPagePayload(
 	}
 }
 
+/**
+ * Serve a published page from its `publishedData` snapshot, taken by
+ * `publishWebsitePage`. A page with no snapshot keeps its live sections only
+ * for legacy rows: pages published before every publish path wrote a snapshot
+ * (new organizations' Home pages and the Pages list's Publish). Such a page
+ * stops exposing later edits once it is published again.
+ */
 function withPublishedSections(
 	page: PublicSitePage | null,
 	preview?: boolean,

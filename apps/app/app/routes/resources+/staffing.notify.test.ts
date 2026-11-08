@@ -470,6 +470,70 @@ describe('notification preferences', () => {
 		])
 	})
 
+	it('emails an email-only member once when the same event is delivered twice', async () => {
+		const { organization } = await setupTestOrgWithUser('admin')
+		await turnOn(organization.id)
+		const mailOnly = await memberWith(organization.id, [READ_TIMESHEET])
+		await prefer(mailOnly.id, organization.id, 'staffing-attendance-workflow', {
+			inApp: false,
+			email: true,
+		})
+		const event = eventFor(organization.id, null)
+		await call(event)
+		await call(event)
+		expect(
+			sendEmailMock.mock.calls.filter(([a]) => a.to === mailOnly.email),
+		).toHaveLength(1)
+		// In-app is off: no notification row at all.
+		const rows = await db
+			.select()
+			.from(Notification)
+			.where(eq(Notification.userId, mailOnly.id))
+		expect(rows).toHaveLength(0)
+	})
+
+	it('emails each manager once when the same event arrives twice at once', async () => {
+		const { organization, user } = await setupTestOrgWithUser('admin')
+		await turnOn(organization.id)
+		const mailOnly = await memberWith(organization.id, [READ_TIMESHEET])
+		await prefer(mailOnly.id, organization.id, 'staffing-attendance-workflow', {
+			inApp: false,
+			email: true,
+		})
+		const event = eventFor(organization.id, null)
+
+		await Promise.all([call(event), call(event)])
+
+		const to = sendEmailMock.mock.calls.map(([a]) => a.to).sort()
+		expect(to).toEqual([user.email, mailOnly.email].sort())
+	})
+
+	it('still sends the email on a retry when the first attempt died before it', async () => {
+		const { organization } = await setupTestOrgWithUser('admin')
+		await turnOn(organization.id)
+		const member = await memberWith(organization.id, [READ_TIMESHEET])
+		vi.spyOn(console, 'error').mockImplementation(() => {})
+		let failed = false
+		sendEmailMock.mockImplementation(async ({ to }: { to: string }) => {
+			if (to === member.email && !failed) {
+				failed = true
+				throw new Error('boom')
+			}
+			return { status: 'success', data: {} }
+		})
+		const event = eventFor(organization.id, null)
+		await call(event)
+		await call(event)
+		expect(
+			sendEmailMock.mock.calls.filter(([a]) => a.to === member.email),
+		).toHaveLength(2)
+		expect(await notificationsFor(member.id)).toHaveLength(1)
+		await call(event)
+		expect(
+			sendEmailMock.mock.calls.filter(([a]) => a.to === member.email),
+		).toHaveLength(2)
+	})
+
 	it('keeps attendance and overtime preferences separate', async () => {
 		const { organization, user } = await setupTestOrgWithUser('admin')
 		await turnOn(organization.id)
@@ -550,7 +614,7 @@ describe('idempotency', () => {
 		await turnOn(organization.id)
 		const late = await memberWith(organization.id, [READ_TIMESHEET])
 		const event = eventFor(organization.id, null)
-		// The first attempt reached only the admin.
+		// The first attempt reached only the admin (in-app row, email never sent).
 		await db.insert(Notification).values({
 			userId: user.id,
 			organizationId: organization.id,
@@ -559,7 +623,7 @@ describe('idempotency', () => {
 			payload: '{}',
 		})
 		const result = await (await call(event)).json()
-		expect(result).toEqual({ inApp: 1, emailed: 1 })
+		expect(result).toEqual({ inApp: 1, emailed: 2 })
 		expect(await notificationsFor(late.id)).toHaveLength(1)
 		expect(await notificationsFor(user.id)).toHaveLength(1)
 	})

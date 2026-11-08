@@ -44,6 +44,37 @@ type ConfigFlag = {
 	updatedAt: Date
 }
 
+/**
+ * The action's refusals: `error` (one message) or `errors` (Zod field errors).
+ * Field errors name their field, since Zod's own messages ("Required") do not.
+ */
+function actionErrorMessages(data: unknown): string[] {
+	if (!data || typeof data !== 'object') return []
+	const { error, errors } = data as { error?: unknown; errors?: unknown }
+	const messages = typeof error === 'string' ? [error] : []
+	if (errors && typeof errors === 'object') {
+		for (const [field, fieldMessages] of Object.entries(errors)) {
+			if (!Array.isArray(fieldMessages)) continue
+			for (const message of fieldMessages) {
+				if (typeof message === 'string') messages.push(`${field}: ${message}`)
+			}
+		}
+	}
+	return messages
+}
+
+function ActionErrors({ data }: { data: unknown }) {
+	const messages = actionErrorMessages(data)
+	if (messages.length === 0) return null
+	return (
+		<ul role="alert" className="text-destructive text-sm">
+			{messages.map((message) => (
+				<li key={message}>{message}</li>
+			))}
+		</ul>
+	)
+}
+
 function FeatureFlagDialog({
 	flag,
 	level = 'system',
@@ -102,9 +133,7 @@ function FeatureFlagDialog({
 						)}
 					</DialogDescription>
 				</DialogHeader>
-				{fetcher.data?.error && (
-					<p className="text-destructive text-sm">{fetcher.data.error}</p>
-				)}
+				<ActionErrors data={fetcher.data} />
 				<fetcher.Form method="post" action="/feature-flags">
 					<input
 						type="hidden"
@@ -123,7 +152,8 @@ function FeatureFlagDialog({
 							placeholder={_(msg`Flag Key`)}
 							required
 							defaultValue={flag?.key}
-							disabled={!!flag}
+							// Read-only rather than disabled: an edit must still submit the key.
+							readOnly={!!flag}
 						/>
 						<Select
 							name="type"
@@ -169,6 +199,8 @@ function FeatureFlagDialog({
 						{type === 'boolean' && (
 							<Switch
 								name="value"
+								// Submits "off" when unchecked, which the action reads as false.
+								uncheckedValue="off"
 								defaultChecked={(flag?.value as boolean) ?? false}
 							/>
 						)}
@@ -253,9 +285,7 @@ function OverrideDialog({
 						)}
 					</DialogDescription>
 				</DialogHeader>
-				{fetcher.data?.error && (
-					<p className="text-destructive text-sm">{fetcher.data.error}</p>
-				)}
+				<ActionErrors data={fetcher.data} />
 				<fetcher.Form method="post" action="/feature-flags">
 					<input
 						type="hidden"
@@ -300,6 +330,7 @@ function OverrideDialog({
 							<div className="flex items-center gap-2">
 								<Switch
 									name="value"
+									uncheckedValue="off"
 									defaultChecked={(currentValue as boolean) ?? false}
 								/>
 								<span className="text-sm">

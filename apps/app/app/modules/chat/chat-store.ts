@@ -87,6 +87,18 @@ export class ChatStore {
 				deleted_at INTEGER
 			)`,
 		)
+		// Added after launch: the sender's idempotency key, so a send retried
+		// after a lost ack returns the first message instead of a duplicate.
+		const hasClientId = this.all<{ name: string }>(
+			`PRAGMA table_info(messages)`,
+		).some((column) => column.name === 'client_id')
+		if (!hasClientId) {
+			this.run(`ALTER TABLE messages ADD COLUMN client_id TEXT`)
+		}
+		this.run(
+			`CREATE UNIQUE INDEX IF NOT EXISTS messages_author_client
+				ON messages (author_id, client_id) WHERE client_id IS NOT NULL`,
+		)
 		this.run(
 			`CREATE INDEX IF NOT EXISTS messages_channel_top
 				ON messages (channel_id, id) WHERE parent_id IS NULL`,
@@ -273,6 +285,16 @@ export class ChatStore {
 		})
 	}
 
+	/** The message this author already sent with this idempotency key. */
+	findByClientId(author: string, clientId: string): ChatMessage | null {
+		const [row] = this.all<{ id: number }>(
+			`SELECT id FROM messages WHERE author_id = ? AND client_id = ?`,
+			author,
+			clientId,
+		)
+		return row ? this.getMessage(row.id) : null
+	}
+
 	getMessage(id: number): ChatMessage | null {
 		const [row] = this.all<MessageRow>(
 			`SELECT * FROM messages WHERE id = ?`,
@@ -288,6 +310,8 @@ export class ChatStore {
 		attachmentKeys?: string[]
 		parent?: number
 		now: number
+		/** Sender's idempotency key; unique per author. */
+		clientId?: string
 	}): ChatMessage {
 		if (input.parent !== undefined) {
 			const parent = this.getMessage(input.parent)
@@ -312,13 +336,14 @@ export class ChatStore {
 			CHAT_LIMITS.attachmentsMax,
 		)
 		const [{ id }] = this.all<{ id: number }>(
-			`INSERT INTO messages (channel_id, parent_id, author_id, body, created_at)
-				VALUES (?, ?, ?, ?, ?) RETURNING id`,
+			`INSERT INTO messages (channel_id, parent_id, author_id, body, created_at, client_id)
+				VALUES (?, ?, ?, ?, ?, ?) RETURNING id`,
 			input.channel,
 			input.parent ?? null,
 			input.author,
 			input.body,
 			input.now,
+			input.clientId ?? null,
 		) as [{ id: number }]
 		for (const [index, objectKey] of keys.entries()) {
 			this.run(
@@ -334,7 +359,16 @@ export class ChatStore {
 
 	search(
 		query: string,
-		options: { limit?: number; channelIds?: string[] } = {},
+		options: {
+			limit?: number
+			channelIds?: string[]
+			/**
+			 * Per-channel history cutoff (ms), the same one history and thread
+			 * reads honor: a late joiner of a group that hides earlier history
+			 * must not find those messages through search either.
+			 */
+			since?: Record<string, number | null | undefined>
+		} = {},
 	) {
 		const limit = Math.min(options.limit ?? 25, CHAT_LIMITS.searchResultsMax)
 		const term = query
@@ -353,8 +387,20 @@ export class ChatStore {
 			created_at: number
 			author_id: string
 		}[] = []
-		for (const part of chunk(channels)) {
-			const channelClause = ` AND m.channel_id IN (${placeholders(part.length)})`
+		const since = options.since ?? {}
+		const uncut = channels.filter((id) => !since[id])
+		const cut = channels.filter((id) => since[id])
+		const queries = [
+			...chunk(uncut).map((part) => ({
+				clause: ` AND m.channel_id IN (${placeholders(part.length)})`,
+				args: part as (string | number)[],
+			})),
+			...cut.map((id) => ({
+				clause: ' AND m.channel_id = ? AND m.created_at >= ?',
+				args: [id, since[id]!] as (string | number)[],
+			})),
+		]
+		for (const { clause: channelClause, args } of queries) {
 			rows.push(
 				...this.all<{
 					id: number
@@ -370,7 +416,7 @@ export class ChatStore {
 						ORDER BY m.id DESC
 						LIMIT ?`,
 					term,
-					...part,
+					...args,
 					limit,
 				),
 			)

@@ -82,6 +82,9 @@ export async function authenticateQrOperator(
 	if (typeof orgId !== 'string' || !TENANT_ORG_ID_PATTERN.test(orgId)) {
 		return unauthorized()
 	}
+	// A browser token bound to another page's area (see `authenticateOperator`)
+	// never reaches the QR routes.
+	if (decoded.area !== undefined) return unauthorized()
 	if (decoded.role !== 'operator') {
 		return { error: Response.json({ error: 'Invalid role' }, { status: 403 }) }
 	}

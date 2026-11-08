@@ -42,6 +42,10 @@ import {
 	revokeScheduleLink,
 } from '../services/schedule-link-service.ts'
 import {
+	cancelMyAvailability,
+	cancelMyTimeOff,
+} from '../services/schedule-self-service.ts'
+import {
 	resetStaffTickTasks,
 	resetTickLocks,
 	runStaffTickForOrg,
@@ -929,6 +933,155 @@ describe('my schedule link', () => {
 			})
 			expect(eleventh.status).toBe(409)
 			expect(eleventh.body.error).toBe('too_many_pending')
+		})
+
+		it('keeps the open-request cap when two requests arrive together', async () => {
+			const ana = await person()
+			const t = await token(ana.staffId)
+			for (let i = 0; i < 9; i++) {
+				const date = `2026-04-${String(i + 1).padStart(2, '0')}`
+				expect(
+					(
+						await call('POST', '/me/time-off', {
+							token: t,
+							body: { startDate: date, endDate: date },
+						})
+					).status,
+				).toBe(201)
+			}
+			const results = await Promise.all(
+				['2026-04-20', '2026-04-21', '2026-04-22'].map((date) =>
+					call('POST', '/me/time-off', {
+						token: t,
+						body: { startDate: date, endDate: date },
+					}),
+				),
+			)
+			expect(results.map((r) => r.status).sort()).toEqual([201, 409, 409])
+			const rows = await (
+				await db()
+			)
+				.select()
+				.from(timeOffRequests)
+				.where(
+					and(
+						eq(timeOffRequests.staffId, ana.staffId),
+						eq(timeOffRequests.status, 'pending'),
+					),
+				)
+			expect(rows).toHaveLength(10)
+		})
+
+		it('records a time off request sent twice only once', async () => {
+			const ana = await person()
+			const t = await token(ana.staffId)
+			const body = { startDate: '2026-03-20', endDate: '2026-03-20' }
+			const [first, second] = await Promise.all([
+				call('POST', '/me/time-off', { token: t, body }),
+				call('POST', '/me/time-off', { token: t, body }),
+			])
+			expect([first.status, second.status]).toEqual([201, 201])
+			expect(second.body.id).toBe(first.body.id)
+			const rows = await (
+				await db()
+			)
+				.select()
+				.from(timeOffRequests)
+				.where(eq(timeOffRequests.staffId, ana.staffId))
+			expect(rows).toHaveLength(1)
+		})
+
+		it('never cancels time off or availability a manager approved after it was read', async () => {
+			const ana = await person()
+			const t = await token(ana.staffId)
+			const timeOff = await call('POST', '/me/time-off', {
+				token: t,
+				body: { startDate: '2026-05-01', endDate: '2026-05-01' },
+			})
+			const availability = await call('POST', '/me/availability', {
+				token: t,
+				body: {
+					rows: [{ kind: 'weekly', weekday: 1, availability: 'unavailable' }],
+				},
+			})
+			const real = await db()
+			const [staff] = await real
+				.select()
+				.from(staffMembers)
+				.where(eq(staffMembers.id, ana.staffId))
+			const [link] = await real
+				.select()
+				.from(scheduleLinks)
+				.where(eq(scheduleLinks.staffId, ana.staffId))
+			// A database whose first transaction starts only after a manager has
+			// approved the request: the self-service read before it saw "pending".
+			function approvingFirst(approve: () => Promise<unknown>) {
+				let done = false
+				return new Proxy(real, {
+					get(target, prop) {
+						const value = Reflect.get(target, prop, target)
+						if (prop === 'transaction') {
+							return async (...args: unknown[]) => {
+								if (!done) {
+									done = true
+									await approve()
+								}
+								return value.apply(target, args)
+							}
+						}
+						return typeof value === 'function' ? value.bind(target) : value
+					},
+				})
+			}
+			const ctx = (database: typeof real) => ({
+				db: database,
+				orgId: ORG_A,
+				staff: staff!,
+				link: link!,
+				ipHash: null,
+				now: h.clock.now,
+			})
+
+			const cancelledTimeOff = await cancelMyTimeOff(
+				ctx(
+					approvingFirst(() =>
+						real
+							.update(timeOffRequests)
+							.set({ status: 'approved' })
+							.where(eq(timeOffRequests.id, timeOff.body.id)),
+					),
+				),
+				timeOff.body.id,
+			)
+			expect(cancelledTimeOff).toMatchObject({
+				ok: false,
+				status: 409,
+				error: 'already_decided',
+			})
+			const [timeOffRow] = await real
+				.select()
+				.from(timeOffRequests)
+				.where(eq(timeOffRequests.id, timeOff.body.id))
+			expect(timeOffRow!.status).toBe('approved')
+
+			const availabilityId = availability.body[0].id
+			const cancelledAvailability = await cancelMyAvailability(
+				ctx(
+					approvingFirst(() =>
+						real
+							.update(staffAvailability)
+							.set({ status: 'approved' })
+							.where(eq(staffAvailability.id, availabilityId)),
+					),
+				),
+				availabilityId,
+			)
+			expect(cancelledAvailability).toMatchObject({ ok: false, status: 409 })
+			const [availabilityRow] = await real
+				.select()
+				.from(staffAvailability)
+				.where(eq(staffAvailability.id, availabilityId))
+			expect(availabilityRow!.status).toBe('approved')
 		})
 
 		it('does not let someone with no scope assignment file a request', async () => {

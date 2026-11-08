@@ -84,7 +84,7 @@ interface Organization {
 		endpoint: string
 		bucketName: string
 		accessKeyId: string
-		secretAccessKey: string
+		hasSecretAccessKey: boolean
 		region: string
 	} | null
 }
@@ -299,13 +299,13 @@ export function S3StorageCard({
 											...getInputProps(fields.s3SecretAccessKey, {
 												type: 'password',
 											}),
-											placeholder: organization.s3Config?.secretAccessKey
+											placeholder: organization.s3Config?.hasSecretAccessKey
 												? '••••••••••••••••••••••••••••••••••••••••••'
 												: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
 										}}
 										errors={fields.s3SecretAccessKey.errors}
 									/>
-									{organization.s3Config?.secretAccessKey && (
+									{organization.s3Config?.hasSecretAccessKey && (
 										<p className="text-muted-foreground mt-1 text-sm">
 											<Trans>
 												Leave empty to keep existing secret key, or enter a new

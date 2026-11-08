@@ -227,6 +227,7 @@ export const summaryRowSchema = z.object({
 	paidMinutes: z.number(),
 	unpaidBreakMinutes: z.number(),
 	unapprovedCards: z.number(),
+	changedCards: z.number().default(0),
 	money: summaryMoneySchema.optional(),
 })
 export type SummaryRow = z.infer<typeof summaryRowSchema>
@@ -239,6 +240,7 @@ export const payrollSummarySchema = z.object({
 	totals: minutesSchema.extend({
 		cards: z.number(),
 		unapprovedCards: z.number(),
+		changedCards: z.number().default(0),
 	}),
 	readyForPayroll: z.boolean(),
 	truncated: z.boolean(),

@@ -63,7 +63,8 @@ export interface IntegrationProvider {
 	 * @returns Promise resolving to new token data
 	 */
 	refreshToken(refreshToken: string): Promise<TokenData>
-	revokeToken?(token: string): Promise<void>
+	/** Revoke the grant at the provider; `integration` is the stored row. */
+	revokeToken?(token: string, integration?: Integration): Promise<void>
 
 	// Provider-specific operations
 
@@ -98,7 +99,7 @@ export interface IntegrationProvider {
 	 * Optionally revoke an access token
 	 * @param token - Access token to revoke
 	 */
-	revokeToken?: (token: string) => Promise<void>
+	revokeToken?: (token: string, integration?: Integration) => Promise<void>
 
 	/**
 	 * Get provider-specific configuration schema
@@ -126,7 +127,7 @@ export abstract class BaseIntegrationProvider implements IntegrationProvider {
 
 	abstract handleCallback(params: OAuthCallbackParams): Promise<TokenData>
 	abstract refreshToken(refreshToken: string): Promise<TokenData>
-	revokeToken?(token: string): Promise<void>
+	revokeToken?(token: string, integration?: Integration): Promise<void>
 	abstract getAvailableChannels(integration: Integration): Promise<Channel[]>
 	abstract postMessage(
 		connection: NoteIntegrationConnection & { integration: Integration },
@@ -215,10 +216,13 @@ export abstract class BaseIntegrationProvider implements IntegrationProvider {
 		// On 401 Unauthorized, force token refresh and retry request once
 		if (response.status === 401 && integration.refreshToken) {
 			try {
-				const refreshResult = await tokenManager.refreshToken(
-					integration,
+				// Refresh from the stored (decrypted) refresh token, never the
+				// ciphertext on the integration object; if another request
+				// already replaced the rejected token, use the stored one.
+				const refreshResult = await tokenManager.refreshStoredToken(
+					integration.id,
 					this,
-					integration.refreshToken,
+					{ rejectedAccessToken: accessToken },
 				)
 				if (refreshResult.success && refreshResult.tokenData?.accessToken) {
 					headers.set(

@@ -576,6 +576,69 @@ describe('notes.$noteId route integration', () => {
 				// Passes authorization, then fails because the integration is unknown.
 				expect(getResponseStatus(response)).not.toBe(403)
 			})
+
+			it('refuses a reader who cannot edit a public note: connect, disconnect, list channels', async () => {
+				const { owner, organization, guestCookie } = await setup()
+				// Public, so the custom role can read it, but it has no update:note:*.
+				const note = await createTestNote(organization.id, owner.id, {
+					title: 'Public Note',
+					isPublic: true,
+				})
+				const [integration] = await db
+					.insert(Integration)
+					.values({
+						organizationId: organization.id,
+						providerName: 'slack',
+						providerType: 'slack',
+						accessToken: 'token',
+						config: '{}',
+					})
+					.returning()
+				const [connection] = await db
+					.insert(NoteIntegrationConnection)
+					.values({
+						noteId: note.id,
+						integrationId: integration!.id,
+						externalId: 'channel_1',
+						config: '{}',
+					})
+					.returning()
+
+				const attempts: Array<Record<string, string>> = [
+					{
+						intent: 'connect-note-to-channel',
+						noteId: note.id,
+						integrationId: integration!.id,
+						channelId: 'channel_2',
+					},
+					{
+						intent: 'disconnect-note-from-channel',
+						connectionId: connection!.id,
+					},
+					{
+						intent: 'get-integration-channels',
+						integrationId: integration!.id,
+						noteId: note.id,
+					},
+				]
+				for (const fields of attempts) {
+					const response = await submit(
+						organization.slug,
+						note.id,
+						guestCookie,
+						fields,
+					)
+					expect({
+						intent: fields.intent,
+						status: getResponseStatus(response),
+					}).toEqual({ intent: fields.intent, status: 403 })
+				}
+				const rows = await db
+					.select({ id: NoteIntegrationConnection.id })
+					.from(NoteIntegrationConnection)
+					.where(eq(NoteIntegrationConnection.noteId, note.id))
+				expect(rows).toHaveLength(1)
+			})
 		})
 	})
 })

@@ -205,6 +205,17 @@ function asciiDigits(value: string): string {
 		.replace(/٬/g, ',')
 }
 
+/**
+ * Drops trailing characters other than digits, `.` and `,` (a currency mark
+ * after the amount). A loop rather than an unanchored `/[^\d.,]+$/`, which
+ * backtracks quadratically on a long run of such characters.
+ */
+function trimTrailingNonNumeric(value: string): string {
+	let end = value.length
+	while (end > 0 && !/[\d.,]/.test(value[end - 1]!)) end--
+	return value.slice(0, end)
+}
+
 export type AmountResult =
 	{ ok: true; minor: number } | { ok: false; code: SalesCsvErrorCode }
 
@@ -217,7 +228,7 @@ export function parseSalesAmount(raw: string): AmountResult {
 	let text = asciiDigits(raw)
 		.replace(/[\s  ]/g, '')
 		.replace(/^[^\d\-+.,]+/, '')
-		.replace(/[^\d.,]+$/, '')
+	text = trimTrailingNonNumeric(text)
 	if (text === '') return { ok: false, code: 'bad_amount' }
 	let negative = false
 	if (text.startsWith('-')) {
@@ -234,7 +245,9 @@ export function parseSalesAmount(raw: string): AmountResult {
 	let fraction = ''
 	if (lastMark >= 0) {
 		const after = text.length - lastMark - 1
-		if (after === 3 && !text.startsWith('0')) {
+		// With both marks present the last one is the decimal mark.
+		const hasBothMarks = text.includes('.') && text.includes(',')
+		if (!hasBothMarks && after === 3 && !text.startsWith('0')) {
 			// A thousands mark: every mark must then sit before groups of three.
 			whole = text
 		} else {
@@ -244,7 +257,7 @@ export function parseSalesAmount(raw: string): AmountResult {
 	}
 	// Only groups of exactly three digits may follow a thousands mark.
 	if (/[.,]/.test(whole)) {
-		if (!/^\d{1,3}([.,]\d{3})+$/.test(whole)) {
+		if (!/^\d{1,3}(\.\d{3})+$|^\d{1,3}(,\d{3})+$/.test(whole)) {
 			return { ok: false, code: 'bad_amount' }
 		}
 		whole = whole.replace(/[.,]/g, '')

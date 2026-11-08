@@ -40,6 +40,7 @@ import {
 import { TablePagination } from '#app/components/data-table/table-pagination.tsx'
 import { UrlFilters } from '#app/components/data-table/url-filters.tsx'
 import { EmptyState } from '#app/components/empty-state.tsx'
+import { runErasureInApp } from '#app/utils/gdpr-erasure.server.ts'
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	const adminId = await requireUserWithRole(request, 'admin')
@@ -218,26 +219,33 @@ export async function action({ request }: ActionFunctionArgs) {
 				)
 			}
 
-			await db
+			// Make the request due now, then let the App run it through the same
+			// path as the scheduled job (sole-admin re-check, claim, regional
+			// staff erasure, retries).
+			const [due] = await db
 				.update(DataSubjectRequest)
-				.set({
-					status: 'processing',
-					processedAt: new Date(),
-				})
-				.where(eq(DataSubjectRequest.id, requestId))
+				.set({ scheduledFor: new Date() })
+				.where(
+					and(
+						eq(DataSubjectRequest.id, requestId),
+						eq(DataSubjectRequest.status, 'scheduled'),
+					),
+				)
+				.returning({ id: DataSubjectRequest.id })
+			if (!due) {
+				return Response.json(
+					{ error: 'Can only expedite scheduled erasure requests' },
+					{ status: 400 },
+				)
+			}
 
-			try {
-				await db.delete(User).where(eq(User.id, dsr.userId!))
-
-				await db
-					.update(DataSubjectRequest)
-					.set({
-						status: 'completed',
-						completedAt: new Date(),
-						executedAt: new Date(),
-					})
-					.where(eq(DataSubjectRequest.id, requestId))
-
+			const outcome = await runErasureInApp(requestId)
+			const metadata = {
+				adminAction: true,
+				expedited: true,
+				targetUserId: dsr.userId,
+			}
+			if (outcome.ok && outcome.processed > 0) {
 				await auditService.log({
 					action: AuditAction.DATA_DELETION_COMPLETED,
 					userId: adminId,
@@ -245,40 +253,31 @@ export async function action({ request }: ActionFunctionArgs) {
 					resourceType: 'data_subject_request',
 					resourceId: requestId,
 					request,
-					metadata: {
-						adminAction: true,
-						expedited: true,
-						targetUserId: dsr.userId,
-					},
+					metadata,
 					severity: 'warning',
 				})
-
 				return Response.json({ success: true })
-			} catch (error) {
-				const errorMessage =
-					error instanceof Error ? error.message : 'Unknown error'
-
-				await db
-					.update(DataSubjectRequest)
-					.set({
-						status: 'failed',
-						failureReason: errorMessage,
-					})
-					.where(eq(DataSubjectRequest.id, requestId))
-
-				await auditService.log({
-					action: AuditAction.DATA_DELETION_FAILED,
-					userId: adminId,
-					details: `Admin expedited deletion failed: ${errorMessage}`,
-					resourceType: 'data_subject_request',
-					resourceId: requestId,
-					request,
-					metadata: { adminAction: true, error: errorMessage },
-					severity: 'error',
-				})
-
-				return Response.json({ error: errorMessage }, { status: 500 })
 			}
+
+			const errorMessage = !outcome.ok
+				? outcome.error
+				: outcome.held > 0
+					? 'The user is the only admin of an organization; the deletion is on hold'
+					: (outcome.errors[0] ?? 'The deletion did not run')
+			await auditService.log({
+				action: AuditAction.DATA_DELETION_FAILED,
+				userId: adminId,
+				details: `Admin expedited deletion failed: ${errorMessage}`,
+				resourceType: 'data_subject_request',
+				resourceId: requestId,
+				request,
+				metadata: { ...metadata, error: errorMessage },
+				severity: 'error',
+			})
+			return Response.json(
+				{ error: errorMessage },
+				{ status: outcome.ok && outcome.held > 0 ? 409 : 502 },
+			)
 		}
 
 		case 'export-for-user': {
@@ -324,6 +323,16 @@ export default function GDPRRequestsPage() {
 	const { _ } = useLingui()
 	const { requests, pagination, statistics } = useLoaderData<typeof loader>()
 	const fetcher = useFetcher()
+
+	// App's erasure run holds a request whose user would leave an organization
+	// without an admin, and records `sole_admin: <organization ids>`.
+	function formatFailureReason(reason: string) {
+		if (!reason.startsWith('sole_admin:')) return reason
+		const organizationIds = reason.slice('sole_admin:'.length).trim()
+		return _(
+			msg`On hold: last admin of organization ${organizationIds}. It runs once another admin is added there.`,
+		)
+	}
 
 	const filterFields = useMemo<FilterField[]>(
 		() => [
@@ -562,7 +571,7 @@ export default function GDPRRequestsPage() {
 												)}
 												{req.failureReason && (
 													<div className="text-destructive">
-														{req.failureReason}
+														{formatFailureReason(req.failureReason)}
 													</div>
 												)}
 											</TableCell>

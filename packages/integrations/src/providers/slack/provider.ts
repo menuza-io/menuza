@@ -193,6 +193,19 @@ export class SlackProvider extends BaseIntegrationProvider {
 	}
 
 	/**
+	 * Revoke the access token (best effort, used on disconnect).
+	 */
+	async revokeToken(token: string): Promise<void> {
+		const response = await fetch('https://slack.com/api/auth.revoke', {
+			method: 'POST',
+			headers: { Authorization: `Bearer ${token}` },
+		})
+		if (!response.ok) {
+			throw new Error(`Slack token revoke failed: ${response.status}`)
+		}
+	}
+
+	/**
 	 * Refresh Slack access token
 	 */
 	async refreshToken(_refreshToken: string): Promise<TokenData> {

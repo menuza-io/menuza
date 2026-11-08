@@ -236,6 +236,32 @@ export async function signup({
 	return session
 }
 
+const TRUSTED_AVATAR_HOSTS = new Set([
+	'avatars.githubusercontent.com',
+	'github.com',
+])
+
+/**
+ * Only https URLs on the hosts our OAuth providers serve profile images from
+ * are downloaded server-side, so a profile image can never point the server at
+ * an internal or arbitrary address.
+ */
+export function isTrustedProviderAvatarUrl(value: string) {
+	let url: URL
+	try {
+		url = new URL(value)
+	} catch {
+		return false
+	}
+	if (url.protocol !== 'https:' || url.username || url.password) return false
+	if (url.port && url.port !== '443') return false
+	const host = url.hostname.toLowerCase()
+	return (
+		TRUSTED_AVATAR_HOSTS.has(host) ||
+		/^[a-z0-9-]+\.googleusercontent\.com$/.test(host)
+	)
+}
+
 export async function signupWithConnection({
 	email,
 	username,
@@ -272,12 +298,18 @@ export async function signupWithConnection({
 		.insert(ConnectionTable)
 		.values({ userId: user.id, providerId, providerName })
 
-	if (imageUrl) {
-		const imageFile = await downloadFile(imageUrl)
-		await db.insert(UserImage).values({
-			userId: user.id,
-			objectKey: await uploadProfileImage(user.id, imageFile),
-		})
+	// The avatar is a nicety: a bad URL or a failed download must not abort
+	// signup after the user, role and connection rows exist.
+	if (imageUrl && isTrustedProviderAvatarUrl(imageUrl)) {
+		try {
+			const imageFile = await downloadFile(imageUrl)
+			await db.insert(UserImage).values({
+				userId: user.id,
+				objectKey: await uploadProfileImage(user.id, imageFile),
+			})
+		} catch (error) {
+			console.error('Could not save the provider profile image', error)
+		}
 	}
 
 	// Create and return the session

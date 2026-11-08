@@ -21,6 +21,7 @@ vi.mock('@repo/database', () => ({
 		update: (...args: unknown[]) => mockUpdate(...args),
 	},
 	desc: vi.fn(),
+	lt: vi.fn((left: unknown, right: unknown) => ({ lt: [left, right] })),
 	eq: vi.fn((left: unknown, right: unknown) => ({ left, right })),
 	and: vi.fn((...conditions: unknown[]) => conditions),
 	Organization: { id: 'id', name: 'name' },
@@ -43,7 +44,11 @@ vi.mock('@repo/email', () => ({
 	getEmailProvider: vi.fn(() => 'resend'),
 }))
 
-import { dispatchPlatformCampaign } from './platform-campaigns.server.ts'
+import {
+	createPlatformCampaign,
+	dispatchPlatformCampaign,
+	resumeStalePlatformCampaigns,
+} from './platform-campaigns.server.ts'
 
 function mockSelectResult(result: unknown) {
 	const chain = {
@@ -56,9 +61,22 @@ function mockSelectResult(result: unknown) {
 	return chain
 }
 
+/** A select that finds nothing (existing messages, unconfirmed count). */
+function emptySelect() {
+	return {
+		from: vi.fn().mockReturnValue({
+			where: vi.fn().mockResolvedValue([]),
+		}),
+	}
+}
+
 function mockInsertChain() {
 	const chain = {
-		values: vi.fn().mockResolvedValue(undefined),
+		values: vi.fn().mockReturnValue({
+			onConflictDoNothing: () => ({
+				returning: vi.fn().mockResolvedValue([{ id: 'inserted' }]),
+			}),
+		}),
 	}
 	mockInsert.mockReturnValue(chain)
 	return chain
@@ -92,6 +110,7 @@ describe('dispatchPlatformCampaign', () => {
 			content: 'Welcome {{name}} from {{organizationName}}',
 			audience: 'all_operators',
 			targetOrganizationId: null,
+			status: 'Processing',
 		}
 
 		mockSelect
@@ -110,6 +129,8 @@ describe('dispatchPlatformCampaign', () => {
 					},
 				]),
 			)
+			.mockReturnValueOnce(emptySelect())
+			.mockReturnValueOnce(emptySelect())
 
 		mockInsertChain()
 		mockUpdateChain()
@@ -142,6 +163,7 @@ describe('dispatchPlatformCampaign', () => {
 			content: 'Ignored for SMS channel in this test',
 			audience: 'all_operators',
 			targetOrganizationId: null,
+			status: 'Processing',
 		}
 
 		mockSelect
@@ -166,6 +188,8 @@ describe('dispatchPlatformCampaign', () => {
 					},
 				]),
 			)
+			.mockReturnValueOnce(emptySelect())
+			.mockReturnValueOnce(emptySelect())
 
 		mockInsertChain()
 		const updateChain = mockUpdateChain()
@@ -177,5 +201,136 @@ describe('dispatchPlatformCampaign', () => {
 			expect.objectContaining({ targetAudienceCount: 1 }),
 		)
 		expect(mockSendEmail).not.toHaveBeenCalled()
+	})
+
+	it('resumes without re-sending to users who already have a message row', async () => {
+		const campaign = {
+			id: 'campaign-3',
+			name: 'Resumed',
+			channel: 'email',
+			subject: 'Hi',
+			content: 'Hello {{name}}',
+			audience: 'all_operators',
+			targetOrganizationId: null,
+			status: 'Processing',
+		}
+		const recipients = ['user-sent', 'user-unknown', 'user-new'].map(
+			(userId) => ({
+				userId,
+				email: `${userId}@example.com`,
+				name: userId,
+				organizationName: 'Acme',
+			}),
+		)
+		const existingMessages = [
+			{ userId: 'user-sent', status: 'Sent' },
+			// Interrupted mid-send: the outcome is unknown, so never re-send.
+			{ userId: 'user-unknown', status: 'Processing' },
+		]
+		mockSelect
+			.mockReturnValueOnce({
+				from: vi.fn().mockReturnValue({
+					where: vi.fn().mockResolvedValue([campaign]),
+				}),
+			})
+			.mockReturnValueOnce(mockSelectResult(recipients))
+			.mockReturnValueOnce({
+				from: vi.fn().mockReturnValue({
+					where: vi.fn().mockResolvedValue(existingMessages),
+				}),
+			})
+			// After the send, the interrupted row is still Processing.
+			.mockReturnValueOnce({
+				from: vi.fn().mockReturnValue({
+					where: vi.fn().mockResolvedValue([{ id: 'message-unknown' }]),
+				}),
+			})
+		const insertChain = mockInsertChain()
+		const updateChain = mockUpdateChain()
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+		await dispatchPlatformCampaign('campaign-3')
+
+		expect(mockSendEmail.mock.calls.map((call) => call[0].to)).toEqual([
+			'user-new@example.com',
+		])
+		expect(insertChain.values).toHaveBeenCalledTimes(1)
+		expect(insertChain.values).toHaveBeenCalledWith(
+			expect.objectContaining({ userId: 'user-new' }),
+		)
+		expect(updateChain.set).toHaveBeenCalledWith({ status: 'Completed' })
+		// A resume keeps the audience count of the first dispatch.
+		expect(updateChain.set).not.toHaveBeenCalledWith(
+			expect.objectContaining({ targetAudienceCount: expect.anything() }),
+		)
+		expect(warn).toHaveBeenCalledWith(
+			expect.stringContaining('1 unconfirmed recipient'),
+		)
+		warn.mockRestore()
+	})
+
+	it('does not dispatch a campaign that is no longer Processing', async () => {
+		mockSelect.mockReturnValueOnce({
+			from: vi.fn().mockReturnValue({
+				where: vi
+					.fn()
+					.mockResolvedValue([{ id: 'campaign-4', status: 'Completed' }]),
+			}),
+		})
+		mockInsertChain()
+		mockUpdateChain()
+
+		await dispatchPlatformCampaign('campaign-4')
+
+		expect(mockInsert).not.toHaveBeenCalled()
+		expect(mockSendEmail).not.toHaveBeenCalled()
+	})
+
+	it('hands the dispatch to the caller-provided background runner', async () => {
+		mockCreateId.mockReset()
+		mockCreateId.mockReturnValue('campaign-5')
+		mockInsertChain()
+		const runInBackground = vi.fn()
+
+		await createPlatformCampaign(
+			{
+				name: 'Launch',
+				channel: 'email',
+				subject: 'Hi',
+				content: 'Hello',
+				audience: 'all_operators',
+			},
+			'admin-1',
+			{ runInBackground },
+		)
+
+		expect(runInBackground).toHaveBeenCalledTimes(1)
+		expect(runInBackground.mock.calls[0]?.[0]).toEqual(expect.any(Function))
+		expect(mockSelect).not.toHaveBeenCalled()
+	})
+
+	it('resumes each stale Processing campaign once, only after claiming it', async () => {
+		mockSelect.mockReturnValueOnce({
+			from: vi.fn().mockReturnValue({
+				where: vi
+					.fn()
+					.mockResolvedValue([{ id: 'stale-1' }, { id: 'stale-2' }]),
+			}),
+		})
+		const returning = vi
+			.fn()
+			.mockResolvedValueOnce([{ id: 'stale-1' }])
+			// Another caller claimed stale-2 first.
+			.mockResolvedValueOnce([])
+		mockUpdate.mockReturnValue({
+			set: vi.fn().mockReturnThis(),
+			where: vi.fn().mockReturnValue({ returning }),
+		})
+		const runInBackground = vi.fn()
+
+		const result = await resumeStalePlatformCampaigns({ runInBackground })
+
+		expect(result).toEqual({ resumed: ['stale-1'] })
+		expect(runInBackground).toHaveBeenCalledTimes(1)
 	})
 })

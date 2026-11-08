@@ -64,7 +64,8 @@ export const SOCIAL_PROBLEM_LABELS: Record<
 export const SOCIAL_TARGET_ERROR_LABELS: Record<string, MessageDescriptor> = {
 	disconnected: msg`This account is no longer connected. Connect it again, then retry.`,
 	needs_reauth: msg`Meta no longer accepts this account’s access. Connect it again, then retry.`,
-	interrupted: msg`Publishing was interrupted. Check the account before retrying: the post may already be live.`,
+	interrupted: msg`Publishing was interrupted, so the post may already be live. Check the account and send it again only if it is not there.`,
+	outcome_unknown: msg`Meta did not confirm this post, so it may already be live. Check the account and send it again only if it is not there.`,
 	unexpected: msg`Something went wrong while publishing.`,
 	meta_unavailable: msg`Meta did not answer. Try again in a few minutes.`,
 	needs_image: msg`Instagram posts need an image.`,

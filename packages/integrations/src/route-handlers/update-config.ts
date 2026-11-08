@@ -1,58 +1,30 @@
-import { Integration as IntegrationTable, and, db, eq } from '@repo/database'
+import { Integration as IntegrationTable, db, eq } from '@repo/database'
 import { integrationManager, JiraProvider } from '../index'
 import { type ActionFunctionArgs } from 'react-router'
+import { pinGitLabInstanceUrl } from '../providers/gitlab/instance-pin.js'
+import {
+	authorizeIntegration,
+	type IntegrationRouteAuthDependencies,
+} from './authorize-integration'
 
-export interface UpdateConfigDependencies {
-	requireUserId: (request: Request) => Promise<string>
-	getUserDefaultOrganization: (
-		userId: string,
-	) => Promise<{ organization: { id: string } } | null>
-	requireOrgPermission?: (
-		request: Request,
-		organizationId: string,
-		permission: `${string}:${string}:${string}`,
-	) => Promise<void>
-}
+export type UpdateConfigDependencies = IntegrationRouteAuthDependencies
 
 /**
  * Shared handler for updating integration configuration.
  * Used by the Jira bot user settings UI.
- * Used by both the admin and app applications.
+ *
+ * The member must be allowed to update the settings of the organization that
+ * owns the integration (`update:settings:any`).
  *
  * @param request - The incoming request
- * @param deps - Dependencies (auth, org utils)
- * @returns JSON response with updated integration
+ * @param deps - Dependencies (auth, membership, permission)
+ * @returns JSON `{ success: true }`; the row (token ciphertext) stays server-side
  */
 export async function handleUpdateIntegrationConfig(
 	{ request }: ActionFunctionArgs,
 	deps: UpdateConfigDependencies,
 ) {
 	const userId = await deps.requireUserId(request)
-	const defaultOrg = await deps.getUserDefaultOrganization(userId)
-
-	if (!defaultOrg) {
-		return Response.json(
-			{ error: 'No organization found for user' },
-			{ status: 403 },
-		)
-	}
-
-	if (deps.requireOrgPermission) {
-		try {
-			await deps.requireOrgPermission(
-				request,
-				defaultOrg.organization.id,
-				'update:settings:any',
-			)
-		} catch {
-			return Response.json(
-				{
-					error: 'Insufficient permissions to update integration configuration',
-				},
-				{ status: 403 },
-			)
-		}
-	}
 
 	const formData = await request.formData()
 	const intent = formData.get('intent')
@@ -70,33 +42,37 @@ export async function handleUpdateIntegrationConfig(
 		)
 	}
 
-	const configString = formData.get('config')
-	if (!configString || typeof configString !== 'string') {
-		return Response.json({ error: 'Config is required' }, { status: 400 })
-	}
-
-	let config: any
 	try {
-		config = JSON.parse(configString)
-	} catch {
-		return Response.json({ error: 'Invalid config JSON' }, { status: 400 })
-	}
+		const access = await authorizeIntegration(
+			request,
+			userId,
+			integrationId,
+			deps,
+			'update:settings:any',
+		)
+		if ('status' in access) {
+			return access.status === 404
+				? Response.json({ error: 'Integration not found' }, { status: 404 })
+				: Response.json(
+						{
+							error:
+								'Insufficient permissions to update integration configuration',
+						},
+						{ status: 403 },
+					)
+		}
+		const { integration } = access
 
-	try {
-		// Verify the integration belongs to this organization
-		const [integration] = await db
-			.select()
-			.from(IntegrationTable)
-			.where(
-				and(
-					eq(IntegrationTable.id, integrationId),
-					eq(IntegrationTable.organizationId, defaultOrg.organization.id),
-				),
-			)
-			.limit(1)
+		const configString = formData.get('config')
+		if (!configString || typeof configString !== 'string') {
+			return Response.json({ error: 'Config is required' }, { status: 400 })
+		}
 
-		if (!integration) {
-			return Response.json({ error: 'Integration not found' }, { status: 404 })
+		let config: any
+		try {
+			config = JSON.parse(configString)
+		} catch {
+			return Response.json({ error: 'Invalid config JSON' }, { status: 400 })
 		}
 
 		// Validate Jira configuration instanceUrl / siteUrl before saving
@@ -117,6 +93,14 @@ export async function handleUpdateIntegrationConfig(
 					)
 				}
 			}
+		}
+
+		if (integration.providerName === 'gitlab') {
+			const pinned = pinGitLabInstanceUrl(integration.config, config)
+			if ('error' in pinned) {
+				return Response.json({ error: pinned.error }, { status: 400 })
+			}
+			config = pinned.config
 		}
 
 		// Special handling for Jira bot user configuration
@@ -147,15 +131,16 @@ export async function handleUpdateIntegrationConfig(
 		}
 
 		// Update the integration config
-		const [updatedIntegration] = await db
+		await db
 			.update(IntegrationTable)
 			.set({
 				config: JSON.stringify(config),
 			})
-			.where(eq(IntegrationTable.id, integrationId))
-			.returning()
+			.where(eq(IntegrationTable.id, integration.id))
 
-		return Response.json({ success: true, integration: updatedIntegration })
+		// Not the row: it holds the encrypted tokens, and the page needs nothing
+		// back (it reloads the integration without them).
+		return Response.json({ success: true })
 	} catch (error) {
 		console.error('Error updating integration config:', error)
 		return Response.json(

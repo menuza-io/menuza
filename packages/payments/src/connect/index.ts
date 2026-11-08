@@ -35,6 +35,7 @@ export {
 	findCheckoutShopPaymentsByReference,
 	retrieveCheckoutShopPayment,
 	checkoutPaymentStatusToOrderStatus,
+	CHECKOUT_ADJUSTMENT_EVENT_TYPES,
 	mapCheckoutShopPayment,
 	checkoutWebhookSignatureFromRequest,
 	verifyCheckoutWebhookEvent,

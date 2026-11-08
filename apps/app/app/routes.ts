@@ -8,6 +8,8 @@ import { flatRoutes } from 'remix-flat-routes'
  * payment mock also needs a local request).
  */
 const DEV_MOCK_ROUTE_FOLDERS = ['mock-payments+', 'mock-email+']
+/** Dev-only route files, stripped the same way (E2E launch-status switch). */
+const DEV_MOCK_ROUTE_FILES = ['api+/mock-env.ts']
 
 export default remixRoutesOptionAdapter((defineRoutes) => {
 	return flatRoutes('routes', defineRoutes, {
@@ -24,7 +26,10 @@ export default remixRoutesOptionAdapter((defineRoutes) => {
 			'**/*.server.*',
 			'**/*.client.*',
 			...(process.env.STRIP_DEV_MOCKS === 'true'
-				? DEV_MOCK_ROUTE_FOLDERS.map((folder) => `${folder}/**`)
+				? [
+						...DEV_MOCK_ROUTE_FOLDERS.map((folder) => `${folder}/**`),
+						...DEV_MOCK_ROUTE_FILES,
+					]
 				: []),
 		],
 	})

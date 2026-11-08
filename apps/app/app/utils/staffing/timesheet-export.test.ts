@@ -74,6 +74,7 @@ describe('browser CSV', () => {
 					paidMinutes: 960,
 					unpaidBreakMinutes: 30,
 					unapprovedCards: 1,
+					changedCards: 0,
 				},
 			],
 			{ includeMoney: false },

@@ -1,5 +1,8 @@
 import { userHasOrganizationPermission } from '@repo/auth'
-import { ORG_WIDE_REPORT_SUBJECTS } from '@repo/reports/token'
+import {
+	ORG_WIDE_REPORT_SUBJECTS,
+	PERMISSION_GATED_REPORT_SUBJECTS,
+} from '@repo/reports/token'
 import { ORG_PERMISSIONS } from '#app/utils/organization/permissions.server.ts'
 import { resolveReservationsReportAccess } from '#app/utils/reservations/report-access.server.ts'
 import { resolveStaffReportAccessForRequest } from './report-access.server.ts'
@@ -42,14 +45,35 @@ export async function resolveReportGrantsForRequest(
 	userId: string,
 	organizationId: string,
 ): Promise<string[]> {
-	const [staff, reservations, admin] = await Promise.all([
+	const [staff, reservations, admin, pageSubjects] = await Promise.all([
 		resolveStaffReportAccessForRequest(request, userId, organizationId),
 		resolveReservationsReportAccess({ request, userId, organizationId }),
 		hasAdminReportAccess(userId, organizationId),
+		permissionGatedReportSubjects(userId, organizationId),
 	])
 	return [
 		...(admin ? ORG_WIDE_REPORT_SUBJECTS : []),
+		...pageSubjects,
 		...staff.subjects,
 		...reservations.subjects,
 	]
+}
+
+/**
+ * Members and notes reports need the permission their app page needs
+ * (`read:member:any`, `read:note:own`).
+ */
+export async function permissionGatedReportSubjects(
+	userId: string,
+	organizationId: string,
+): Promise<string[]> {
+	const entries = Object.entries(PERMISSION_GATED_REPORT_SUBJECTS)
+	const allowed = await Promise.all(
+		entries.map(([, permission]) =>
+			userHasOrganizationPermission(userId, organizationId, permission),
+		),
+	)
+	return entries
+		.filter((_, index) => allowed[index])
+		.map(([subject]) => subject)
 }

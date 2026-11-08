@@ -19,6 +19,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { serverBuildContext } from '#app/server-context.ts'
 import { ssoAuthService } from '#app/utils/sso/auth.server.ts'
 import { ssoConfigurationService } from '#app/utils/sso/configuration.server.ts'
+import { SSOProvisioningError } from '#app/utils/sso/provisioning-error.ts'
 import { createUser } from '#tests/db-utils.ts'
 import { consoleError } from '#tests/setup/setup-test-env.ts'
 import { BASE_URL, convertSetCookieToCookie } from '#tests/utils.ts'
@@ -40,7 +41,7 @@ const PARAMS = { organizationSlug: TEST_ORG_SLUG }
 vi.mock('#app/utils/sso/auth.server.ts', () => ({
 	ssoAuthService: {
 		handleCallback: vi.fn(),
-		provisionUser: vi.fn(),
+		getProvisionedUser: vi.fn(),
 		createSSOSession: vi.fn(),
 	},
 }))
@@ -141,7 +142,7 @@ test('successful SSO authentication creates session for existing user', async ()
 	}
 
 	vi.mocked(ssoAuthService.handleCallback).mockResolvedValue(mockProviderUser)
-	vi.mocked(ssoAuthService.provisionUser).mockResolvedValue(existingUser)
+	vi.mocked(ssoAuthService.getProvisionedUser).mockResolvedValue(existingUser)
 	vi.mocked(ssoAuthService.createSSOSession).mockResolvedValue({} as any)
 
 	const request = await setupRequest()
@@ -205,7 +206,7 @@ test('successful SSO authentication with auto-provisioning creates new user', as
 	}
 
 	vi.mocked(ssoAuthService.handleCallback).mockResolvedValue(mockProviderUser)
-	vi.mocked(ssoAuthService.provisionUser).mockResolvedValue(createdUser)
+	vi.mocked(ssoAuthService.getProvisionedUser).mockResolvedValue(createdUser)
 	vi.mocked(ssoAuthService.createSSOSession).mockResolvedValue({} as any)
 
 	const request = await setupRequest()
@@ -227,15 +228,9 @@ test('successful SSO authentication with auto-provisioning creates new user', as
 	)
 	await expect(response).toHaveSessionForUser(createdUser.id)
 
-	// Verify user provisioning was called
-	expect(ssoAuthService.provisionUser).toHaveBeenCalledWith(
-		{
-			sub: mockProviderUser.id,
-			email: mockProviderUser.email,
-			name: mockProviderUser.name,
-			preferred_username: mockProviderUser.username,
-		},
-		testSSOConfig,
+	// The user handleCallback provisioned is loaded by the id it returned.
+	expect(ssoAuthService.getProvisionedUser).toHaveBeenCalledWith(
+		String(mockProviderUser.id),
 	)
 })
 
@@ -336,19 +331,14 @@ test('handles OAuth callback failure', async () => {
 	)
 })
 
-test('handles user provisioning failure', async () => {
+test('shows why the organization refused the account (provisioning failure)', async () => {
 	consoleError.mockImplementation(() => {})
 
-	const mockProviderUser = {
-		id: faker.string.uuid(),
-		email: faker.internet.email(),
-		username: faker.internet.username(),
-		name: faker.person.fullName(),
-	}
-
-	vi.mocked(ssoAuthService.handleCallback).mockResolvedValue(mockProviderUser)
-	vi.mocked(ssoAuthService.provisionUser).mockRejectedValue(
-		new Error('User provisioning failed: auto-provisioning disabled'),
+	// provisionUser runs inside handleCallback; its policy errors are typed.
+	vi.mocked(ssoAuthService.handleCallback).mockRejectedValue(
+		new SSOProvisioningError(
+			'Single sign-on for this organization has no allowed email domains yet. Ask your administrator to add them.',
+		),
 	)
 
 	const request = await setupRequest()
@@ -365,14 +355,12 @@ test('handles user provisioning failure', async () => {
 	await expect(response).toSendToast(
 		expect.objectContaining({
 			title: 'User Provisioning Failed',
-			description: 'User provisioning failed: auto-provisioning disabled',
+			description:
+				'Single sign-on for this organization has no allowed email domains yet. Ask your administrator to add them.',
 			type: 'error',
 		}),
 	)
-	expect(consoleError).toHaveBeenCalledWith(
-		'User provisioning failed:',
-		expect.any(Error),
-	)
+	expect(ssoAuthService.getProvisionedUser).not.toHaveBeenCalled()
 })
 
 test('handles user already logged in', async () => {
@@ -424,7 +412,7 @@ test('handles banned user login attempt', async () => {
 	}
 
 	vi.mocked(ssoAuthService.handleCallback).mockResolvedValue(mockProviderUser)
-	vi.mocked(ssoAuthService.provisionUser).mockResolvedValue(bannedUser)
+	vi.mocked(ssoAuthService.getProvisionedUser).mockResolvedValue(bannedUser)
 
 	const request = await setupRequest()
 	const response = await loader({

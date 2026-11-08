@@ -69,6 +69,18 @@ async function setup() {
 		.returning()
 
 	async function post(body: Record<string, string>) {
+		// Unassign and retire send the assignment the page showed; default to the
+		// current one, as a freshly loaded page would.
+		if (
+			(body._action === 'unassign' || body._action === 'retire') &&
+			body.expectedOrganizationId === undefined
+		) {
+			const [current] = await db
+				.select({ org: PlatformPhoneNumber.assignedOrganizationId })
+				.from(PlatformPhoneNumber)
+				.where(eq(PlatformPhoneNumber.id, body.id!))
+			body = { ...body, expectedOrganizationId: current?.org ?? '' }
+		}
 		const url = 'http://localhost:3004/phone-numbers'
 		return action({
 			request: new Request(url, {
@@ -157,6 +169,41 @@ describe('getReassignmentHold', () => {
 })
 
 describe('platform phone number reassignment', () => {
+	it('refuses a stale unassign after the number moved to another organization', async () => {
+		const { previous, next, scopeId, number, post, readNumber } = await setup()
+		vi.spyOn(auditService, 'log').mockResolvedValue(undefined)
+		// The admin's page still shows the previous organization...
+		const stale = previous.id
+		// ...but the number has since been reassigned and connected.
+		await db
+			.update(PlatformPhoneNumber)
+			.set({ assignedOrganizationId: next.id, assignedAt: new Date() })
+			.where(eq(PlatformPhoneNumber.id, number.id))
+		await db.insert(PhoneAgentNumber).values({
+			organizationId: next.id,
+			scopeId,
+			platformNumberId: number.id,
+			e164: number.e164,
+			mode: 'direct',
+			isActive: true,
+		})
+
+		const result = await post({
+			_action: 'unassign',
+			id: number.id,
+			expectedOrganizationId: stale,
+		})
+
+		expect(result).toMatchObject({ ok: false })
+		expect((await readNumber()).assignedOrganizationId).toBe(next.id)
+		expect(
+			await db
+				.select()
+				.from(PhoneAgentNumber)
+				.where(eq(PhoneAgentNumber.platformNumberId, number.id)),
+		).toHaveLength(1)
+	})
+
 	it('records the release and the verified forwarding on unassign', async () => {
 		const { previous, scopeId, number, post, readNumber } = await setup()
 		vi.spyOn(auditService, 'log').mockResolvedValue(undefined)

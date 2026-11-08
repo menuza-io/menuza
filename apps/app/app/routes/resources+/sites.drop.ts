@@ -17,6 +17,7 @@ import {
 } from '#app/utils/rate-limit.server.ts'
 import {
 	getCachedSiteData,
+	getSiteCacheVersion,
 	getSiteKvKey,
 	setCachedSiteData,
 } from '#app/utils/sites/kv-cache.server.ts'
@@ -97,9 +98,15 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		}
 	}
 
-	const cacheKey = getSiteKvKey('page', org.id, `drop-${dropSlug}`)
+	// The organization's cache version: a purge bumps it, so a payload read
+	// before the purge is never stored under the new version.
+	const cacheVersion = isPreview ? null : await getSiteCacheVersion(org.id)
+	const cacheKey =
+		cacheVersion === null
+			? null
+			: getSiteKvKey('page', org.id, `drop-${dropSlug}`, cacheVersion)
 
-	if (!isPreview) {
+	if (cacheKey) {
 		const cached = await getCachedSiteData(cacheKey)
 		if (cached) {
 			return Response.json(cached, {
@@ -129,8 +136,13 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		return Response.json({ error: 'Drop not published' }, { status: 404 })
 	}
 
-	if (!isPreview) {
-		await setCachedSiteData(cacheKey, payload, 30)
+	if (cacheKey && cacheVersion !== null) {
+		await setCachedSiteData(
+			cacheKey,
+			payload,
+			{ orgId: org.id, version: cacheVersion },
+			30,
+		)
 	}
 
 	return Response.json(payload, {

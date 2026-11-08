@@ -57,6 +57,12 @@ export type EnqueueInput<K extends StaffingOutboxKind = StaffingOutboxKind> = {
 	organizationId: string
 	kind: K
 	payload: Record<string, string>
+	/**
+	 * Queue even while the organization's database is marked unprovisioned
+	 * (used by `erase_user`: a failed region switch clears the flag while the
+	 * old database, and the staff row in it, may still exist).
+	 */
+	evenIfUnprovisioned?: boolean
 }
 
 /**
@@ -75,7 +81,8 @@ export async function enqueueStaffingOutbox<K extends StaffingOutboxKind>(
 		.from(Organization)
 		.where(eq(Organization.id, input.organizationId))
 		.limit(1)
-	if (!organization?.hasProvisionedDb) return null
+	if (!organization) return null
+	if (!organization.hasProvisionedDb && !input.evenIfUnprovisioned) return null
 	const [row] = await db
 		.insert(StaffingOutbox)
 		.values({
@@ -140,7 +147,13 @@ async function deliver(
 	} catch {
 		// Keep the status code.
 	}
-	return RETRYABLE_STATUSES.has(response.status)
+	// A database that is not provisioned right now may be mid region switch
+	// (or a switch failed and will be retried), so the event waits for it
+	// rather than being dropped; the attempt cap still bounds it.
+	const retryable =
+		RETRYABLE_STATUSES.has(response.status) ||
+		(response.status === 404 && code === 'org_not_provisioned')
+	return retryable
 		? { result: 'retry', error: code }
 		: { result: 'dead', error: code }
 }
@@ -181,6 +194,13 @@ export async function drainStaffingOutbox(
 	options: DrainOptions = {},
 ): Promise<DrainResult> {
 	const now = options.now ?? new Date()
+	/**
+	 * Due checks and leases use the wall clock at the moment they happen, not the
+	 * moment the drain started: a long drain would otherwise lease rows with a
+	 * lease that has already expired. `options.now` may only move this later
+	 * (and feeds backoff).
+	 */
+	const effectiveNow = () => new Date(Math.max(now.getTime(), Date.now()))
 	const limit = options.limit ?? 200
 	const timeoutMs = options.timeoutMs ?? 10_000
 	const result: DrainResult = {
@@ -192,21 +212,63 @@ export async function drainStaffingOutbox(
 		purged: 0,
 	}
 
-	const pending = await db
-		.select()
+	// Only logins whose oldest pending event is due are loaded (with the rest of
+	// their queue behind it), so a backlog of backed-off rows can never push
+	// newer due rows out of the load window.
+	const scope = and(
+		options.organizationId
+			? eq(StaffingOutbox.organizationId, options.organizationId)
+			: undefined,
+		options.userId
+			? sql`coalesce(json_extract(${StaffingOutbox.payload}, '$.userId'), '') = ${options.userId}`
+			: undefined,
+	)
+	const heads = await db
+		.select({
+			organizationId: StaffingOutbox.organizationId,
+			userId: sql<string>`coalesce(json_extract(${StaffingOutbox.payload}, '$.userId'), '')`,
+		})
 		.from(StaffingOutbox)
 		.where(
 			and(
 				eq(StaffingOutbox.status, 'pending'),
-				options.organizationId
-					? eq(StaffingOutbox.organizationId, options.organizationId)
-					: undefined,
+				lte(StaffingOutbox.nextAttemptAt, effectiveNow()),
+				scope,
+				sql`not exists (
+					select 1 from "StaffingOutbox" as earlier
+					where earlier.status = 'pending'
+						and earlier."organizationId" = ${StaffingOutbox.organizationId}
+						and coalesce(json_extract(earlier.payload, '$.userId'), '') = coalesce(json_extract(${StaffingOutbox.payload}, '$.userId'), '')
+						and (earlier."createdAt" < ${StaffingOutbox.createdAt}
+							or (earlier."createdAt" = ${StaffingOutbox.createdAt} and earlier.rowid < "StaffingOutbox".rowid))
+				)`,
 			),
 		)
-		// `createdAt` has millisecond resolution, so two events queued in the same
-		// millisecond tie; the rowid (insertion order) settles it.
 		.orderBy(asc(StaffingOutbox.createdAt), asc(sql`rowid`))
 		.limit(PENDING_LOAD_LIMIT)
+	const headKeys = new Set(heads.map((h) => `${h.organizationId}:${h.userId}`))
+	const pending = heads.length
+		? (
+				await db
+					.select()
+					.from(StaffingOutbox)
+					.where(
+						and(
+							eq(StaffingOutbox.status, 'pending'),
+							inArray(StaffingOutbox.organizationId, [
+								...new Set(heads.map((h) => h.organizationId)),
+							]),
+							inArray(
+								sql`coalesce(json_extract(${StaffingOutbox.payload}, '$.userId'), '')`,
+								[...new Set(heads.map((h) => h.userId))],
+							),
+						),
+					)
+					// `createdAt` has millisecond resolution, so two events queued in the same
+					// millisecond tie; the rowid (insertion order) settles it.
+					.orderBy(asc(StaffingOutbox.createdAt), asc(sql`rowid`))
+			).filter((row) => headKeys.has(userKey(row)))
+		: []
 
 	const groups = new Map<string, OutboxRow[]>()
 	for (const row of pending) {
@@ -233,19 +295,20 @@ export async function drainStaffingOutbox(
 				result.waiting += rows.length - index
 				break
 			}
-			if (row.nextAttemptAt > now) {
+			const leaseAt = effectiveNow()
+			if (row.nextAttemptAt > leaseAt) {
 				result.waiting += rows.length - index
 				break
 			}
 			// Lease the row so a concurrent drain does not deliver it twice.
 			const [leased] = await db
 				.update(StaffingOutbox)
-				.set({ nextAttemptAt: new Date(now.getTime() + OUTBOX_LEASE_MS) })
+				.set({ nextAttemptAt: new Date(leaseAt.getTime() + OUTBOX_LEASE_MS) })
 				.where(
 					and(
 						eq(StaffingOutbox.id, row.id),
 						eq(StaffingOutbox.status, 'pending'),
-						lte(StaffingOutbox.nextAttemptAt, now),
+						lte(StaffingOutbox.nextAttemptAt, leaseAt),
 					),
 				)
 				.returning({ id: StaffingOutbox.id })

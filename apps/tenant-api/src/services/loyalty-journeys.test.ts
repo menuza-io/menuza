@@ -564,6 +564,14 @@ describe('a loyalty journey step', () => {
 				triggerEvent: 'phone_verified',
 			})
 			.returning()
+		// Every journey needs marketing consent for its channel.
+		await db.insert(customerSubscriptions).values({
+			customerId,
+			topic: 'marketing',
+			channel: 'sms',
+			source: 'operator',
+			subscribedAt: new Date(),
+		})
 		await executeJourneyStep(ORG, {
 			orgId: ORG,
 			journeyId: row!.id,

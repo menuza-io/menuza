@@ -9,6 +9,7 @@ import {
 	shiftRequests,
 	shifts,
 	type ShiftRequestRow,
+	type ShiftRequestShiftTimes,
 	type ShiftRow,
 	type TenantDatabase,
 } from '@repo/tenant-db'
@@ -21,6 +22,7 @@ import {
 	MAX_LIST_ROWS,
 	type ScheduleContext,
 	type ScheduleResult,
+	type SelfWriteGuard,
 } from './schedule-shared.ts'
 import {
 	applyShiftChange,
@@ -40,6 +42,8 @@ import { fail, moneyAccess, ok } from './timesheet-shared.ts'
 
 export type ShiftRequestWriteContext = Omit<ScheduleContext, 'db'> & {
 	db: TenantDatabase
+	/** Self-service only: runs inside the insert's transaction. */
+	beforeSelfWrite?: SelfWriteGuard
 }
 
 export type ShiftRequestDecisionResult = {
@@ -116,6 +120,38 @@ async function loadRequest(
 }
 
 /**
+ * Whether a shift still has the times the people in a request saw. Staff see
+ * the published version, so a request is about the published times at the
+ * moment it was made: a pending move (a draft patch with other times) or
+ * published times other than the ones recorded on the request mean the shift
+ * is no longer the one they asked about. A change to anything else (notes,
+ * position) leaves the request valid.
+ *
+ * Requests made before the times were recorded fall back to the publication
+ * time: any publication that changed the shift after the request counts.
+ */
+function movedSince(
+	shift: ShiftRow,
+	request: ShiftRequestRow,
+	which: 'shift' | 'target',
+): boolean {
+	const current = effectiveShift(shift)
+	if (
+		current.startsAt !== shift.startsAt ||
+		current.endsAt !== shift.endsAt ||
+		current.localDate !== shift.localDate
+	) {
+		return true
+	}
+	const seen =
+		which === 'shift' ? request.shiftTimes : request.shiftTimes?.target
+	if (seen) {
+		return seen.startsAt !== shift.startsAt || seen.endsAt !== shift.endsAt
+	}
+	return shift.publishedAt !== null && shift.publishedAt > request.createdAt
+}
+
+/**
  * Applies an approved request to the schedule, inside the caller's
  * transaction. Returns the ids of the shifts it changed.
  */
@@ -124,7 +160,11 @@ async function applyRequest(
 	ctx: ShiftRequestWriteContext,
 	request: ShiftRequestRow,
 	shift: ShiftRow,
+	options: { enteredNow?: boolean } = {},
 ): Promise<ScheduleResult<string[]>> {
+	// A manager entering and approving in one step sees the shift as it is now.
+	const moved = (row: ShiftRow, which: 'shift' | 'target') =>
+		!options.enteredNow && movedSince(row, request, which)
 	if (shift.status !== 'published') return fail(409, 'request_stale')
 	const current = effectiveShift(shift)
 	if (current.cancelPending) return fail(409, 'request_stale')
@@ -132,6 +172,9 @@ async function applyRequest(
 	if (current.staffId !== request.requesterStaffId) {
 		return fail(409, 'request_stale')
 	}
+	// A shift that has begun is past changing hands.
+	if (current.startsAt <= ctx.now) return fail(409, 'shift_started')
+	if (moved(shift, 'shift')) return fail(409, 'request_stale')
 
 	if (request.kind === 'drop') {
 		const changed = await applyShiftChange(tx, ctx, shift, { staffId: null })
@@ -173,6 +216,16 @@ async function applyRequest(
 	) {
 		return fail(409, 'request_stale')
 	}
+	if (otherCurrent.startsAt <= ctx.now) return fail(409, 'shift_started')
+	if (moved(other, 'target')) return fail(409, 'request_stale')
+	// The requester takes the other shift, so they must still be someone who
+	// can be scheduled (not terminated since they asked).
+	const requester = await requireSchedulablePerson(
+		tx,
+		ctx.scope,
+		request.requesterStaffId,
+	)
+	if (!requester.ok) return requester
 	const first = await applyShiftChange(tx, ctx, shift, {
 		staffId: request.targetStaffId,
 	})
@@ -228,6 +281,10 @@ export async function createShiftRequest(
 				ids: string[]
 			}>
 		> => {
+			if (ctx.beforeSelfWrite) {
+				const allowed = await ctx.beforeSelfWrite(tx)
+				if (!allowed.ok) return allowed
+			}
 			if (!isOpaqueId(input.shiftId)) return fail(404, 'not_found')
 			const [shift] = await tx
 				.select()
@@ -241,6 +298,14 @@ export async function createShiftRequest(
 			if (shift.status !== 'published') return fail(409, 'not_published')
 			if (shift.staffId !== input.requesterStaffId) {
 				return fail(422, 'not_your_shift')
+			}
+			if (effectiveShift(shift).startsAt <= ctx.now) {
+				return fail(409, 'shift_started')
+			}
+			// The published times, which are what staff see and ask about.
+			const shiftTimes: ShiftRequestShiftTimes = {
+				startsAt: shift.startsAt,
+				endsAt: shift.endsAt,
 			}
 			if (input.kind === 'swap') {
 				const [other] = await tx
@@ -256,6 +321,7 @@ export async function createShiftRequest(
 				) {
 					return fail(422, 'not_your_shift')
 				}
+				shiftTimes.target = { startsAt: other.startsAt, endsAt: other.endsAt }
 			}
 			const [request] = await tx
 				.insert(shiftRequests)
@@ -269,6 +335,7 @@ export async function createShiftRequest(
 					status: 'pending',
 					source: approved ? 'manager' : 'staff',
 					requestedBy: ctx.auth.userId,
+					shiftTimes,
 					createdAt: ctx.now,
 					updatedAt: ctx.now,
 				})
@@ -276,7 +343,9 @@ export async function createShiftRequest(
 			let ids: string[] = []
 			let final = request!
 			if (approved) {
-				const applied = await applyRequest(tx, ctx, request!, shift)
+				const applied = await applyRequest(tx, ctx, request!, shift, {
+					enteredNow: true,
+				})
 				if (!applied.ok) return applied
 				ids = applied.value
 				const [approvedRow] = await tx
@@ -371,8 +440,9 @@ export async function cancelShiftRequest(
 		const [updated] = await tx
 			.update(shiftRequests)
 			.set({ status: 'cancelled', updatedAt: ctx.now })
-			.where(eq(shiftRequests.id, id))
+			.where(and(eq(shiftRequests.id, id), eq(shiftRequests.status, 'pending')))
 			.returning()
+		if (!updated) return fail(409, 'already_decided')
 		await writeStaffAudit(tx, ctx.auth, ctx.ipHash, {
 			action: 'schedule.shift_request.cancelled',
 			entityType: 'shift_request',

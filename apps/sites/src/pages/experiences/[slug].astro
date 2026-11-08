@@ -30,10 +30,12 @@ const locale = Astro.locals.requestedLocale || organization.locale || defaultLoc
 const labels = buildReservationLabels(i18n)
 
 const gate = await fetchPublishedReservations({ slug: orgSlug, host: customHost })
+// No node serves this organization's region: the catalog is unavailable.
+const regionalApiUrl = getTenantApiUrl(organization.dataRegion)
 const experience =
-	gate?.experiences
+	gate?.experiences && regionalApiUrl
 		? await fetchPublicExperience(slug, {
-				tenantApiUrl: getTenantApiUrl(organization.dataRegion),
+				tenantApiUrl: regionalApiUrl,
 				origin: Astro.url.origin,
 				locale,
 				locationId: Astro.url.searchParams.get('locationId'),

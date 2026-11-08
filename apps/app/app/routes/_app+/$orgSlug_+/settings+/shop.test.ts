@@ -7,6 +7,13 @@ vi.mock('#app/utils/organization/loader.server.ts', () => ({
 	requireUserOrganization: vi.fn(),
 }))
 
+// An admin: orders are loaded only for people with read:settings:any.
+vi.mock('@repo/auth', async (importOriginal) => ({
+	...(await importOriginal<Record<string, unknown>>()),
+	requireUserId: vi.fn().mockResolvedValue('user-1'),
+	userHasOrganizationPermission: vi.fn().mockResolvedValue(true),
+}))
+
 vi.mock('#app/utils/shop.server.ts', () => ({
 	listOrganizationShopOrders: vi.fn(),
 	listConfiguredShopProcessors: vi.fn(() => []),

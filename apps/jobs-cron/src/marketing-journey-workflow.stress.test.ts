@@ -269,7 +269,7 @@ describe('MarketingJourneyWorkflow — Adversarial Stress & Resilience Suite', (
 			}
 		})
 
-		it('handles condition evaluation failure gracefully with fail-closed fallback to false', async () => {
+		it('fails the run instead of routing when condition evaluation keeps failing', async () => {
 			const fetchMock = vi
 				.fn()
 				.mockImplementation(async (url: string | URL | Request) => {
@@ -316,23 +316,32 @@ describe('MarketingJourneyWorkflow — Adversarial Stress & Resilience Suite', (
 				],
 			}
 
+			// A 500 throws inside the step so Workflows retries it. Once the
+			// retries run out the run fails: neither branch was evaluated, so
+			// neither may run.
 			const workflow = createWorkflowInstance(env)
-			const result = await workflow.run(
-				{
-					payload: {
-						orgId: 'org_fallback',
-						journeyId: 'jny_fallback',
-						runId: 'run_fallback',
-						customerId: 'cust_fallback',
-						graph,
-					},
-				} as any,
-				mockStep as any,
-			)
+			await expect(
+				workflow.run(
+					{
+						payload: {
+							orgId: 'org_fallback',
+							journeyId: 'jny_fallback',
+							runId: 'run_fallback',
+							customerId: 'cust_fallback',
+							graph,
+						},
+					} as any,
+					mockStep as any,
+				),
+			).rejects.toThrow('HTTP 500')
 
-			expect(result.status).toBe('completed')
-			expect(mockStep.do).toHaveBeenCalledWith(
+			expect(mockStep.do).not.toHaveBeenCalledWith(
 				'action-act_false',
+				expect.any(Object),
+				expect.any(Function),
+			)
+			expect(mockStep.do).not.toHaveBeenCalledWith(
+				'action-act_true',
 				expect.any(Object),
 				expect.any(Function),
 			)

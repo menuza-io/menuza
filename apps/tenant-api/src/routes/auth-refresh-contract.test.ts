@@ -12,7 +12,7 @@ import {
 	getTenantDb,
 	provisionTenantDb,
 } from '@repo/tenant-db'
-import { authRoutes, REFRESH_ROTATION_GRACE_MS } from './auth.ts'
+import { authRoutes, REFRESH_REUSE_GRACE_MS } from './auth.ts'
 import { hmacHash } from '../lib/secrets.ts'
 
 const orgId = 'clw9x0a12000008l00test09'
@@ -201,11 +201,11 @@ describe('customer refresh contract', () => {
 
 	describe('rotation grace window', () => {
 		it('is between 30 and 60 seconds', () => {
-			expect(REFRESH_ROTATION_GRACE_MS).toBeGreaterThanOrEqual(30_000)
-			expect(REFRESH_ROTATION_GRACE_MS).toBeLessThanOrEqual(60_000)
+			expect(REFRESH_REUSE_GRACE_MS).toBeGreaterThanOrEqual(30_000)
+			expect(REFRESH_REUSE_GRACE_MS).toBeLessThanOrEqual(60_000)
 		})
 
-		it('answers a token whose rotation answer was lost with a fresh pair in the same session', async () => {
+		it('answers a token whose rotation answer was lost with the same successor', async () => {
 			const { refreshToken: first } = await signIn()
 			const lost = await refresh(first)
 			expect(lost.status).toBe(200)
@@ -221,7 +221,8 @@ describe('customer refresh contract', () => {
 			}
 			expect(typeof pair.accessToken).toBe('string')
 			expect(pair.refreshToken).not.toBe(first)
-			expect(pair.refreshToken).not.toBe(lostSuccessor)
+			// The retry is handed the child the lost answer carried.
+			expect(pair.refreshToken).toBe(lostSuccessor)
 
 			// Still exactly one live refresh token: the one just handed out.
 			const live = await liveTokens()
@@ -253,7 +254,7 @@ describe('customer refresh contract', () => {
 			expect(rotated.status).toBe(200)
 			const current = ((await rotated.json()) as { refreshToken: string })
 				.refreshToken
-			await backdateRotation(first, REFRESH_ROTATION_GRACE_MS + 5_000)
+			await backdateRotation(first, REFRESH_REUSE_GRACE_MS + 5_000)
 
 			const replay = await refresh(first)
 			expect(replay.status).toBe(401)

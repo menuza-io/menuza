@@ -302,6 +302,45 @@ if (IS_DEV) {
 	})
 } else {
 	console.log('Starting production server')
+	const build = await import(BUILD_PATH)
+	// Same module instance as the build (see the express handler below).
+	const { RouterContextProvider, createRequestHandler: createFetchHandler } =
+		await new Function("return import('react-router')")()
+	const { serverBuildContext } = await import('../app/server-context.ts')
+	const getLoadContext = async () => {
+		const ctx = new RouterContextProvider()
+		ctx.set(serverBuildContext, build)
+		return ctx
+	}
+
+	// Same rules as the Worker (`workers/app.ts`): logged-in UI code in
+	// /assets/app/ needs a valid session, the full route manifest file is
+	// hidden, and /__manifest names no private route to a logged-out visitor.
+	// The dev server (above) serves source modules and gates nothing.
+	// See docs/security.md#private-client-code.
+	const { ROUTE_DISCOVERY_PATH } =
+		await import('../app/utils/private-client-code.server.ts')
+	const {
+		privateAssetsMiddleware,
+		routeDiscoveryHandler,
+		setPrivateAssetHeaders,
+	} = await import('../app/utils/private-client-code.express.server.ts')
+	// From the server build: `@repo/auth` cannot be loaded from source here.
+	const { hasActiveSession } = build.entry.module as {
+		hasActiveSession: (request: Request) => Promise<boolean>
+	}
+	const handleFetch = createFetchHandler(build, MODE)
+	// Mounted at the root, not at /assets: `/%61ssets/app/x.js` would skip an
+	// /assets mount and reach the root static handler below, which decodes it.
+	app.use(privateAssetsMiddleware(hasActiveSession))
+	app.get(
+		ROUTE_DISCOVERY_PATH,
+		routeDiscoveryHandler(
+			async (request) => handleFetch(request, await getLoadContext()),
+			hasActiveSession,
+		),
+	)
+
 	// React Router fingerprints its assets so we can cache forever.
 	app.use(
 		'/assets',
@@ -309,26 +348,27 @@ if (IS_DEV) {
 			immutable: true,
 			maxAge: '1y',
 			fallthrough: false,
+			// No shared cache may hand logged-in UI code to someone else.
+			setHeaders: setPrivateAssetHeaders,
 		}),
 	)
 	// Everything else (like favicon.ico) is cached for an hour. You may want to be
 	// more aggressive with this caching.
-	app.use(express.static('build/client', { maxAge: '1h' }))
+	app.use(
+		express.static('build/client', {
+			maxAge: '1h',
+			// Also reached by /%61ssets/app/... (gated above): keep it private.
+			setHeaders: setPrivateAssetHeaders,
+		}),
+	)
 
 	const { createRequestHandler } = await import('@react-router/express')
-	const { serverBuildContext } = await import('../app/server-context.ts')
-	const build = await import(BUILD_PATH)
 
 	app.use(
 		createRequestHandler({
 			build,
 			mode: MODE,
-			getLoadContext: async () => {
-				const RR = await new Function("return import('react-router')")()
-				const ctx = new RR.RouterContextProvider()
-				ctx.set(serverBuildContext, build)
-				return ctx
-			},
+			getLoadContext,
 		}),
 	)
 }

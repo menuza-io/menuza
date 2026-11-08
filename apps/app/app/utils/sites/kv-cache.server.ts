@@ -18,12 +18,36 @@ export function bindSiteDataKV(kv: KVNamespace | null | undefined) {
 	if (kv) siteDataKv = kv
 }
 
+/**
+ * Cached site data is keyed by a per-organization version that every purge
+ * replaces. A request that read the database before a publish can still write
+ * its result after the purge, but only under the old version, which no later
+ * request looks up. Deleting by prefix alone let that write serve the old page
+ * for the whole TTL.
+ */
+function siteCacheVersionKey(orgId: string) {
+	return `site-version:${orgId}`
+}
+
+/** `null` when there is no KV or it cannot be read: do not cache then. */
+export async function getSiteCacheVersion(
+	orgId: string,
+): Promise<string | null> {
+	if (!siteDataKv) return null
+	try {
+		return (await siteDataKv.get(siteCacheVersionKey(orgId))) ?? '0'
+	} catch {
+		return null
+	}
+}
+
 export function getSiteKvKey(
 	type: 'org' | 'page',
 	id: string,
 	queryHash: string,
+	version: string,
 ) {
-	return `org:${id}:${type}:${queryHash}`
+	return `org:${id}:v${version}:${type}:${queryHash}`
 }
 
 /**
@@ -48,12 +72,25 @@ export async function purgeOrganizationSiteCache(
 	const kv = siteDataKv
 	if (!kv) return true
 
+	// Retire every key written under the current version first: this is what
+	// keeps a request that raced the change from caching what it read.
+	let purged = true
+	try {
+		await kv.put(siteCacheVersionKey(orgId), crypto.randomUUID())
+	} catch (e) {
+		purged = false
+		console.error(
+			`Failed to bump site KV cache version for organization ${orgId}`,
+			e instanceof Error ? `${e.name}: ${e.message}` : 'unknown error',
+		)
+	}
+
+	// Old keys also expire on their own; deleting them just frees space sooner.
 	const prefixes: { kind: 'id' | 'slug' | 'host'; prefix: string }[] = [
 		{ kind: 'id', prefix: `org:${orgId}:` },
 	]
 	if (slug) prefixes.push({ kind: 'slug', prefix: `org:${slug}:` })
 	if (host) prefixes.push({ kind: 'host', prefix: `org:${host}:` })
-	let purged = true
 
 	// Each prefix is purged on its own, so one that fails (a list error, say) never
 	// leaves the others (slug, host) stale.
@@ -142,13 +179,19 @@ export async function getCachedSiteData(key: string) {
 	}
 }
 
+/**
+ * Stores `data` under `key` (from `getSiteKvKey` with `version`) unless the
+ * organization's version changed while the data was being read.
+ */
 export async function setCachedSiteData(
 	key: string,
 	data: unknown,
+	guard: { orgId: string; version: string },
 	ttlSeconds = 60 * 60 * 24, // 24 hours default expiration
 ) {
 	if (!siteDataKv) return
 	try {
+		if ((await getSiteCacheVersion(guard.orgId)) !== guard.version) return
 		await siteDataKv.put(key, JSON.stringify(data), {
 			expirationTtl: ttlSeconds,
 		})

@@ -44,24 +44,55 @@ async function provisionedMemberships(userId: string) {
 }
 
 /**
- * Queues `erase_user` for every provisioned organization the user belongs to
- * (active or not: a removed member's staff link may still be pending). Throws if
- * a row cannot be written, so the caller can stop before deleting the account.
+ * Every organization the user belongs to (active or not: a removed member's
+ * staff link may still be pending), whether or not its regional database is
+ * currently marked provisioned. A failed region switch leaves the flag cleared
+ * while the old database may still hold the staff row, so the flag is not a
+ * reason to skip the erasure.
+ */
+export async function staffErasureOrganizationIds(
+	userId: string,
+): Promise<string[]> {
+	const rows = await db
+		.select({ organizationId: UserOrganization.organizationId })
+		.from(UserOrganization)
+		.where(eq(UserOrganization.userId, userId))
+	return [...new Set(rows.map((row) => row.organizationId))]
+}
+
+/**
+ * Queues `erase_user` for each of `organizationIds` (see
+ * `staffErasureOrganizationIds`). Throws if a row cannot be written. Ids of
+ * organizations that no longer exist are skipped.
+ */
+export async function enqueueStaffErasureForOrganizations(
+	userId: string,
+	organizationIds: readonly string[],
+): Promise<string[]> {
+	const queued: string[] = []
+	for (const organizationId of organizationIds) {
+		const id = await enqueueStaffingOutbox({
+			organizationId,
+			kind: 'erase_user',
+			payload: { userId },
+			evenIfUnprovisioned: true,
+		})
+		if (id) queued.push(organizationId)
+	}
+	return queued
+}
+
+/**
+ * Queues `erase_user` for every organization the user belongs to. Throws if a
+ * row cannot be written.
  */
 export async function enqueueStaffErasureForUser(
 	userId: string,
 ): Promise<string[]> {
-	const memberships = await provisionedMemberships(userId)
-	const queued: string[] = []
-	for (const membership of memberships) {
-		const id = await enqueueStaffingOutbox({
-			organizationId: membership.organizationId,
-			kind: 'erase_user',
-			payload: { userId },
-		})
-		if (id) queued.push(membership.organizationId)
-	}
-	return queued
+	return enqueueStaffErasureForOrganizations(
+		userId,
+		await staffErasureOrganizationIds(userId),
+	)
 }
 
 /** Best-effort immediate delivery of the events queued above. Never throws. */

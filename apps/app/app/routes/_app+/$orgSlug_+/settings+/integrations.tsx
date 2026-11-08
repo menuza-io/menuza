@@ -72,11 +72,11 @@ import { connectPosPlatform } from '#app/utils/integrations/pos-connect.server.t
 import { connectReviewProvider } from '#app/utils/integrations/review-providers.server.ts'
 import { getLocationDisplayName } from '#app/utils/location/locations.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
-import { requireOrganizationAdmin } from '#app/utils/organization/require-org-admin.server.ts'
 import {
 	requireUserWithOrganizationPermission,
 	ORG_PERMISSIONS,
 } from '#app/utils/organization/permissions.server.ts'
+import { requireOrganizationAdmin } from '#app/utils/organization/require-org-admin.server.ts'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const organization = await requireUserOrganization(request, params.orgSlug, {
@@ -207,11 +207,23 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		availablePosProviders,
 		availableNoteProviders,
 		selectedLocationId,
-		noteIntegrations: integrations.filter(
-			(integration) =>
-				!posProviderNames.has(integration.providerName) &&
-				!reviewProviderNames.has(integration.providerName as any),
-		),
+		// Only what the page shows. The full rows carry token ciphertext and the
+		// connected notes (including private ones), and any member can load this.
+		noteIntegrations: integrations
+			.filter(
+				(integration) =>
+					!posProviderNames.has(integration.providerName) &&
+					!reviewProviderNames.has(integration.providerName as any),
+			)
+			.map((integration) => ({
+				id: integration.id,
+				providerName: integration.providerName,
+				providerType: integration.providerType,
+				isActive: integration.isActive,
+				lastSyncAt: integration.lastSyncAt,
+				config: integration.config,
+				_count: { connections: integration.connections?.length ?? 0 },
+			})),
 		integrations: scopedIntegrations
 			.filter((integration) => posProviderNames.has(integration.providerName))
 			.map((integration) => ({
@@ -286,12 +298,13 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			const protocol = url.protocol === 'https:' ? 'https:' : 'http:'
 			const redirectUri = `${protocol}//${url.host}/api/integrations/oauth/callback?provider=${encodeURIComponent(providerName)}`
 
-			const { authUrl, state } = await integrationManager.initiateOAuth(
-				organization.id,
-				providerName,
-				redirectUri,
-				{ redirectUrl: redirectTo },
-			)
+			const { authUrl, state, requestTokenSecret } =
+				await integrationManager.initiateOAuth(
+					organization.id,
+					providerName,
+					redirectUri,
+					{ redirectUrl: redirectTo },
+				)
 
 			// The callback finishes only what this browser started, for this
 			// member (see api+/integrations+/oauth.callback.tsx).
@@ -302,6 +315,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 						provider: providerName,
 						userId,
 						orgSlug: organization.slug,
+						...(requestTokenSecret ? { requestTokenSecret } : {}),
 					}),
 				},
 			})

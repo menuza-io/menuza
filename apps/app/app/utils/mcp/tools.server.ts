@@ -1,3 +1,4 @@
+import { ORG_PERMISSIONS } from '@repo/auth'
 import {
 	and,
 	db,
@@ -20,8 +21,8 @@ import { registerTool, type MCPContext } from './server.server'
  * - find_user: Search for users in the authorized organization
  * - get_user_notes: Retrieve notes for a specific user
  *
- * All tools enforce organization-level access control based on the
- * authenticated user's context.
+ * All tools are scoped to the authenticated organization, and each declares
+ * the organization permission it needs (checked live by `executeTool`).
  */
 
 /**
@@ -52,6 +53,8 @@ async function getUserBase64Image(imageObjectKey: string): Promise<string> {
  */
 registerTool({
 	name: 'find_user',
+	// The member list page requires it too.
+	permission: ORG_PERMISSIONS.READ_MEMBER_ANY,
 	description:
 		'Search for users in your organization by their name or username',
 	inputSchema: {
@@ -164,6 +167,8 @@ registerTool({
  */
 registerTool({
 	name: 'get_user_notes',
+	// The notes pages require it too.
+	permission: ORG_PERMISSIONS.READ_NOTE_OWN,
 	description: 'Get the notes for a user in your organization',
 	inputSchema: {
 		type: 'object',

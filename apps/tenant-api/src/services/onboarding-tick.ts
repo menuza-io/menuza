@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray, lt, lte } from 'drizzle-orm'
+import { and, asc, eq, inArray, lt, lte, or } from 'drizzle-orm'
 import {
 	addDays,
 	certificateAlertStage,
@@ -76,6 +76,13 @@ export async function runOnboardingTick(
 	let tasksQueued = 0
 	let certificatesQueued = 0
 	const tomorrow = addDays(utcDate(now), 1)
+	// Only rows that can still advance are read, so rows already at their latest
+	// reachable stage never fill the batch. A scope's "today" is at most one UTC
+	// day ahead, hence `tomorrow` as the latest "today" in every bound.
+	const overdueCutoff = addDays(
+		tomorrow,
+		-ONBOARDING_LIMITS.overdueReminderDays,
+	)
 
 	const dueTasks = await db
 		.select({
@@ -90,8 +97,16 @@ export async function runOnboardingTick(
 		.where(
 			and(
 				eq(onboardingTasks.status, 'todo'),
-				lte(onboardingTasks.dueDate, tomorrow),
-				lt(onboardingTasks.remindedStage, 2),
+				or(
+					and(
+						eq(onboardingTasks.remindedStage, 0),
+						lte(onboardingTasks.dueDate, tomorrow),
+					),
+					and(
+						eq(onboardingTasks.remindedStage, 1),
+						lte(onboardingTasks.dueDate, overdueCutoff),
+					),
+				),
 				inArray(staffMembers.status, [...ACTIVE_STATUSES]),
 			),
 		)
@@ -140,8 +155,17 @@ export async function runOnboardingTick(
 		.innerJoin(staffMembers, eq(staffMembers.id, staffCertificates.staffId))
 		.where(
 			and(
-				lte(staffCertificates.expiresOn, horizon),
-				lt(staffCertificates.alertStage, 2),
+				or(
+					and(
+						eq(staffCertificates.alertStage, 0),
+						lte(staffCertificates.expiresOn, horizon),
+					),
+					// Expired somewhere on Earth already: stage 2 is reachable.
+					and(
+						eq(staffCertificates.alertStage, 1),
+						lt(staffCertificates.expiresOn, tomorrow),
+					),
+				),
 				inArray(staffMembers.status, [...ACTIVE_STATUSES]),
 			),
 		)

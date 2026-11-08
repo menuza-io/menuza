@@ -8,6 +8,7 @@ import {
 	Organization,
 	OrganizationRole,
 	SSOConfiguration,
+	SSOIdentity,
 	SSOSession,
 	Session,
 	User,
@@ -17,6 +18,7 @@ import {
 	db,
 	desc,
 	eq,
+	inArray,
 	isNull,
 	like,
 	or,
@@ -26,10 +28,11 @@ import { z } from 'zod'
 import { SSOUserManagement } from '#app/components/sso-user-management.tsx'
 import { auditLogService } from '#app/utils/audit-log.server.ts'
 import { ssoConfigurationService } from '#app/utils/sso-configuration.server.ts'
+import { resetSSOIdentityLink } from '#app/utils/sso-identity.server.ts'
 import { type Route } from './+types/$organizationId.sso.users.ts'
 
 const SSOUserActionSchema = z.object({
-	intent: z.enum(['change_role', 'toggle_status']),
+	intent: z.enum(['change_role', 'toggle_status', 'reset_link']),
 	userId: z.string(),
 	roleId: z.string().optional(),
 	active: z.boolean().optional(),
@@ -72,26 +75,39 @@ export async function loader({ request, params }: Route['LoaderArgs']) {
 		})
 	}
 
+	// Users linked to an account at this configuration's IdP. A linked user
+	// whose sessions have all ended is still listed, so their link can be
+	// reset when they cannot sign in.
+	const linkedRows = await db
+		.select({ userId: SSOIdentity.userId })
+		.from(SSOIdentity)
+		.where(eq(SSOIdentity.ssoConfigId, ssoConfig.id))
+	const linkedUserIds = new Set(linkedRows.map((row) => row.userId))
+
+	const memberColumns = {
+		user: {
+			id: User.id,
+			name: User.name,
+			email: User.email,
+			username: User.username,
+		},
+		image: { id: UserImage.id, altText: UserImage.altText },
+		organizationRole: {
+			id: OrganizationRole.id,
+			name: OrganizationRole.name,
+			level: OrganizationRole.level,
+		},
+		active: UserOrganization.active,
+		isDefault: UserOrganization.isDefault,
+		department: UserOrganization.department,
+		createdAt: UserOrganization.createdAt,
+		updatedAt: UserOrganization.updatedAt,
+	}
+
 	// Get users who have authenticated through SSO
 	const ssoRows = await db
 		.select({
-			user: {
-				id: User.id,
-				name: User.name,
-				email: User.email,
-				username: User.username,
-			},
-			image: { id: UserImage.id, altText: UserImage.altText },
-			organizationRole: {
-				id: OrganizationRole.id,
-				name: OrganizationRole.name,
-				level: OrganizationRole.level,
-			},
-			active: UserOrganization.active,
-			isDefault: UserOrganization.isDefault,
-			department: UserOrganization.department,
-			createdAt: UserOrganization.createdAt,
-			updatedAt: UserOrganization.updatedAt,
+			...memberColumns,
 			ssoSession: {
 				id: SSOSession.id,
 				providerUserId: SSOSession.providerUserId,
@@ -144,7 +160,30 @@ export async function loader({ request, params }: Route['LoaderArgs']) {
 			})
 		}
 	}
-	const transformedSSOUsers = [...usersById.values()]
+	const linkedWithoutSessions = [...linkedUserIds].filter(
+		(id) => !usersById.has(id),
+	)
+	const linkedOnlyRows = linkedWithoutSessions.length
+		? await db
+				.select(memberColumns)
+				.from(User)
+				.innerJoin(UserOrganization, eq(UserOrganization.userId, User.id))
+				.innerJoin(
+					OrganizationRole,
+					eq(UserOrganization.organizationRoleId, OrganizationRole.id),
+				)
+				.leftJoin(UserImage, eq(UserImage.userId, User.id))
+				.where(
+					and(
+						eq(UserOrganization.organizationId, organization.id),
+						inArray(User.id, linkedWithoutSessions),
+					),
+				)
+		: []
+	const transformedSSOUsers = [
+		...usersById.values(),
+		...linkedOnlyRows.map((row) => ({ ...row, ssoSessions: [] })),
+	].map((row) => ({ ...row, ssoLinked: linkedUserIds.has(row.user.id) }))
 
 	// Get available roles
 	const availableRoles = await db
@@ -327,6 +366,34 @@ export async function action({ request, params }: Route['ActionArgs']) {
 				)
 			}
 
+			case 'reset_link': {
+				const result = await resetSSOIdentityLink({
+					organizationId: params.organizationId,
+					userId,
+					adminUserId,
+					request,
+				})
+				if (result.status !== 'reset') {
+					return redirectWithToast(
+						`/organizations/${params.organizationId}/sso/users`,
+						{
+							type: 'message',
+							title: 'Nothing to Reset',
+							description: 'This user has no SSO link for this organization.',
+						},
+					)
+				}
+				return redirectWithToast(
+					`/organizations/${params.organizationId}/sso/users`,
+					{
+						type: 'success',
+						title: 'SSO Link Reset',
+						description:
+							'The user will be linked again the next time they sign in with SSO.',
+					},
+				)
+			}
+
 			default:
 				return Response.json(
 					{
@@ -415,6 +482,25 @@ export default function AdminOrganizationSSOUsersPage() {
 		form.submit()
 	}
 
+	const handleResetLink = (userId: string) => {
+		const form = document.createElement('form')
+		form.method = 'POST'
+		form.style.display = 'none'
+
+		const intentInput = document.createElement('input')
+		intentInput.name = 'intent'
+		intentInput.value = 'reset_link'
+		form.appendChild(intentInput)
+
+		const userIdInput = document.createElement('input')
+		userIdInput.name = 'userId'
+		userIdInput.value = userId
+		form.appendChild(userIdInput)
+
+		document.body.appendChild(form)
+		form.submit()
+	}
+
 	return (
 		<div className="space-y-6">
 			{/* Page Header */}
@@ -439,6 +525,7 @@ export default function AdminOrganizationSSOUsersPage() {
 				availableRoles={availableRoles}
 				onRoleChange={handleRoleChange}
 				onUserStatusChange={handleUserStatusChange}
+				onResetLink={handleResetLink}
 			/>
 		</div>
 	)

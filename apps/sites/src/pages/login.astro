@@ -86,6 +86,7 @@ if (!organization) {
 		clearSessionTokens,
 		getAccessToken,
 		getRefreshToken,
+		hasBrowserTenantApi,
 		getOrgBinding,
 		redirectHomeIfSignedIn,
 		tenantErrorMessage,
@@ -114,6 +115,14 @@ if (!organization) {
 		phoneField.setAttribute('aria-describedby', 'error-message')
 		// Disabling the button while sending dropped focus.
 		phoneField.focus()
+	}
+
+	// No tenant-api serves this organization's region: sign-in is unavailable
+	// (a phone number is never sent to another region's node).
+	if (!hasBrowserTenantApi()) {
+		errorMessage.textContent = errorLabel
+		errorMessage.classList.remove('hidden')
+		submitButton.disabled = true
 	}
 
 	form.addEventListener('submit', async (e) => {

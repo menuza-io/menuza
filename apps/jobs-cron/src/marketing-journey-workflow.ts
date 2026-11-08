@@ -12,6 +12,18 @@ import type {
 	ConditionNodeData,
 } from './types'
 
+/**
+ * tenant-api answers 409 while another attempt holds a step's five-minute
+ * processing lease (it may be sending right now). The retries must outlast
+ * that lease, so a step whose attempt died before sending is reclaimed and
+ * sent instead of failing the run: 30 s, 1, 2, 4 and 8 minutes.
+ */
+export const ACTION_STEP_RETRIES = {
+	limit: 5,
+	delay: '30 seconds',
+	backoff: 'exponential',
+} as const
+
 export class MarketingJourneyWorkflow extends WorkflowEntrypoint<
 	MarketingJourneyWorkflowEnv,
 	MarketingJourneyWorkflowParams
@@ -113,6 +125,10 @@ export class MarketingJourneyWorkflow extends WorkflowEntrypoint<
 
 		let currentNodeId: string | null = startNode?.id || null
 		let stepCount = 0
+		// tenant-api answers `halted` once the journey is paused or the run has
+		// ended: nothing was sent and the run stops there (tenant-api already
+		// marked it cancelled).
+		let halted = false
 		const visited = new Set<string>()
 		const maxSteps = 500
 
@@ -168,14 +184,10 @@ export class MarketingJourneyWorkflow extends WorkflowEntrypoint<
 							nodeType = 'action_sms'
 						}
 
-						await step.do(
+						const actionResult = await step.do(
 							`action-${node.id}`,
 							{
-								retries: {
-									limit: 3,
-									delay: '10 seconds',
-									backoff: 'exponential',
-								},
+								retries: ACTION_STEP_RETRIES,
 								timeout: '2 minutes',
 							},
 							async () => {
@@ -214,6 +226,7 @@ export class MarketingJourneyWorkflow extends WorkflowEntrypoint<
 								}
 							},
 						)
+						if (actionResult?.status === 'halted') halted = true
 						break
 					}
 
@@ -226,44 +239,68 @@ export class MarketingJourneyWorkflow extends WorkflowEntrypoint<
 								timeout: '1 minute',
 							},
 							async () => {
-								try {
-									const res = await fetch(
-										`${tenantApiBase}/api/journeys/evaluate-condition`,
-										{
-											method: 'POST',
-											headers: {
-												'Content-Type': 'application/json',
-												Authorization: `Bearer ${env.INTERNAL_COMMAND_TOKEN}`,
-											},
-											body: JSON.stringify({
-												orgId,
-												journeyId,
-												runId,
-												customerId,
-												nodeId: node.id,
-												condition: conditionData,
-											}),
+								// A transport error or a 5xx throws so the step is retried:
+								// returning a value would be recorded as this step's
+								// answer for good. After the last retry the step throws,
+								// and the run ends as failed below instead of taking a
+								// branch nobody evaluated.
+								const res = await fetch(
+									`${tenantApiBase}/api/journeys/evaluate-condition`,
+									{
+										method: 'POST',
+										headers: {
+											'Content-Type': 'application/json',
+											Authorization: `Bearer ${env.INTERNAL_COMMAND_TOKEN}`,
 										},
-									)
+										body: JSON.stringify({
+											orgId,
+											journeyId,
+											runId,
+											customerId,
+											nodeId: node.id,
+											condition: conditionData,
+										}),
+									},
+								)
 
-									if (res.ok) {
-										const data = (await res.json().catch(() => ({}))) as {
-											result?: boolean
-										}
-										return { result: data.result === true }
-									}
-								} catch {
-									// Fail closed: an unavailable condition evaluator must
-									// not silently route the customer down the "true" branch.
+								if (
+									res.status >= 500 ||
+									res.status === 408 ||
+									res.status === 429
+								) {
+									const errorText = await res.text().catch(() => '')
+									throw new Error(
+										`Condition evaluation (${node.id}) failed with HTTP ${res.status}: ${errorText}`,
+									)
 								}
-								return { result: false }
+
+								if (!res.ok) {
+									// A definitive refusal (unknown customer or run, bad
+									// condition): fail closed to the "false" branch.
+									return { result: false, halted: false }
+								}
+
+								const data = (await res.json()) as {
+									result?: boolean
+									halted?: boolean
+								}
+								return {
+									result: data.result === true,
+									halted: data.halted === true,
+								}
 							},
 						)
 
+						if (evalResult.halted) {
+							halted = true
+							break
+						}
 						branchHandle = evalResult.result ? 'true' : 'false'
 						break
 					}
 				}
+
+				if (halted) break
 
 				// Resolve next node in graph
 				const outgoingEdges = (graph.edges || []).filter(
@@ -302,6 +339,10 @@ export class MarketingJourneyWorkflow extends WorkflowEntrypoint<
 					// Cycle detected; terminate traversal safely
 					break
 				}
+			}
+
+			if (halted) {
+				return { status: 'cancelled', executedSteps: stepCount }
 			}
 
 			// Finalize successful workflow run

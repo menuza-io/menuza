@@ -635,7 +635,7 @@ describe('AppStore', () => {
 		})
 
 		it('asks a new customer for a name', async () => {
-			const { store, transport } = await ready({
+			const { store, transport, tokenStorage } = await ready({
 				'/auth/send-code': { json: { success: true } },
 				'/auth/verify': {
 					json: {
@@ -645,11 +645,11 @@ describe('AppStore', () => {
 						needsName: true,
 					},
 				},
+				// tenant-api's real answer: a new access token, no refresh token.
 				'/auth/profile': {
 					json: {
 						success: true,
 						accessToken: makeAccessToken({ name: 'Grace Hopper' }),
-						refreshToken: 'refresh-2',
 					},
 				},
 				'/auth/me': {
@@ -665,8 +665,11 @@ describe('AppStore', () => {
 			expect(store.getSnapshot().error).toEqual({ reason: 'nameRequired' })
 
 			await store.completeName('Grace Hopper')
+			expect(store.getSnapshot().error).toBeNull()
+			expect(store.getSnapshot().isSignedIn).toBe(true)
 			expect(store.getSnapshot().needsName).toBe(false)
 			expect(store.getSnapshot().profile?.name).toBe('Grace Hopper')
+			expect(tokenStorage.current?.refreshToken).toBe('r')
 		})
 
 		it('keeps the code screen with a wrong code', async () => {

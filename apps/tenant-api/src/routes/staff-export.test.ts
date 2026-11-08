@@ -1,5 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { getTenantDb, staffAuditLog } from '@repo/tenant-db'
+import {
+	getTenantDb,
+	onboardingTasks,
+	staffAuditLog,
+	staffCertificates,
+} from '@repo/tenant-db'
 import {
 	ADMIN_GRANTS,
 	createStaffHarness,
@@ -93,7 +98,11 @@ describe('GET /operator/staff/export', () => {
 		const token = await mintStaffToken({ grants: MANAGER_GRANTS })
 		const reply = await h.request('GET', '/export', { token })
 		expect(reply.status).toBe(200)
-		expect(reply.body.includes).toEqual({ pay: false, private: false })
+		expect(reply.body.includes).toEqual({
+			pay: false,
+			private: false,
+			hiring: false,
+		})
 		const rana = reply.body.staff.find((s: any) => s.id === staffId)
 		expect(rana).not.toHaveProperty('private')
 		expect(rana.jobs[0]).not.toHaveProperty('rateMinor')
@@ -107,6 +116,46 @@ describe('GET /operator/staff/export', () => {
 		expect(
 			reply.body.auditLog.every((row: any) => row.sensitivity === 'standard'),
 		).toBe(true)
+	})
+
+	it('gives hiring and onboarding data only to a token with the hiring grant', async () => {
+		const db = await getTenantDb(ORG_A)
+		await db.insert(onboardingTasks).values({
+			staffId,
+			title: 'Sign the handbook',
+			type: 'custom',
+		})
+		await db
+			.insert(staffCertificates)
+			.values({ staffId, kind: 'other', label: 'Food handler' })
+
+		const plain = await h.request('GET', '/export')
+		expect(plain.body.includes.hiring).toBe(false)
+		for (const rana of [plain.body.staff.find((s: any) => s.id === staffId)]) {
+			expect(rana).not.toHaveProperty('application')
+			expect(rana).not.toHaveProperty('onboardingTasks')
+			expect(rana).not.toHaveProperty('certificates')
+		}
+		expect(plain.raw).not.toContain('Sign the handbook')
+		expect(plain.raw).not.toContain('Food handler')
+
+		const token = await mintStaffToken({
+			grants: [...ADMIN_GRANTS, 'read:hiring:any'],
+		})
+		const withHiring = await h.request('GET', '/export', { token })
+		expect(withHiring.body.includes.hiring).toBe(true)
+		const rana = withHiring.body.staff.find((s: any) => s.id === staffId)
+		expect(rana).toHaveProperty('application')
+		expect(rana.onboardingTasks).toHaveLength(1)
+		expect(rana.certificates).toHaveLength(1)
+
+		const rows = (await db.select().from(staffAuditLog)).filter(
+			(row) => row.action === 'staff.exported',
+		)
+		expect(rows.map((row) => (row.changes as any).hiring).sort()).toEqual([
+			false,
+			true,
+		])
 	})
 
 	it('can be limited to one person', async () => {
@@ -127,7 +176,7 @@ describe('GET /operator/staff/export', () => {
 		expect(rows[0]).toMatchObject({
 			actorId: 'operator-1',
 			sensitivity: 'private',
-			changes: { scope: 'all', pay: true, private: true },
+			changes: { scope: 'all', pay: true, private: true, hiring: false },
 		})
 	})
 
@@ -166,7 +215,11 @@ describe('GET /operator/staff/export', () => {
 		})
 		const reply = await h.request('GET', '/export', { token })
 		expect(reply.status).toBe(200)
-		expect(reply.body.includes).toEqual({ pay: false, private: false })
+		expect(reply.body.includes).toEqual({
+			pay: false,
+			private: false,
+			hiring: false,
+		})
 		expect(reply.raw).not.toContain('1990-04-02')
 	})
 })

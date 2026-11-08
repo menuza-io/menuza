@@ -82,6 +82,8 @@ describe('shop writes notify the regional reservations context', () => {
 			chargesEnabled: true,
 			payoutsEnabled: true,
 		})
+		// The handler stores what Stripe says the account is now.
+		commerce.retrieveConnectAccountStatus.mockResolvedValue(status(true))
 
 		await handleConnectAccountUpdated({})
 		expect(notify).toHaveBeenCalledWith(organization.id, 'payments')

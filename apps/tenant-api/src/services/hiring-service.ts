@@ -35,12 +35,16 @@ import {
 	type InterviewCreate,
 	type InterviewUpdate,
 	type InviteStatus,
+	OUTBOX_MAX_ATTEMPTS,
+	outboxRetryDelayMs,
 } from '@repo/staffing'
 import {
 	hiringApplications,
 	hiringEvents,
 	hiringInterviews,
 	hiringNotes,
+	notificationOutbox,
+	type NotificationOutboxRow,
 	staffJobs,
 	staffScopeAssignments,
 	staffMembers,
@@ -813,25 +817,97 @@ function interviewTimeProblem(scheduledAt: number, now: number): string | null {
 	return null
 }
 
+/**
+ * Interview invites go through the notification outbox. The row is written in
+ * the same transaction as the interview (or the resend request), held for the
+ * request that wrote it for `INVITE_CLAIM_MS`, and sent straight after the
+ * commit; the request then settles the row. If the node dies between the
+ * commit and the send, the staff tick finds the row once the hold has passed
+ * and sends it (`deliverQueuedInterviewInvites`), so an invite is never lost.
+ */
+export const INTERVIEW_INVITE_OUTBOX_KIND = 'applicant.interview_invite'
+const INVITE_CLAIM_MS = 10 * 60 * 1000
+/** The outbox needs a staff id; an applicant is not staff yet. */
+const APPLICANT_OUTBOX_STAFF_ID = 'applicant'
+
+type InvitePayload = {
+	applicationId: string
+	interviewId: string
+	rescheduled: boolean
+}
+
+async function queueInvite(
+	tx: StaffDb,
+	input: InvitePayload & { scopeId: string | null; now: number },
+): Promise<string> {
+	const [queued] = await tx
+		.insert(notificationOutbox)
+		.values({
+			kind: INTERVIEW_INVITE_OUTBOX_KIND,
+			staffId: APPLICANT_OUTBOX_STAFF_ID,
+			scopeId: input.scopeId,
+			// Every request to send is its own message (a resend sends again).
+			dedupeKey: `interview_invite:${input.interviewId}:${crypto.randomUUID()}`,
+			payload: {
+				applicationId: input.applicationId,
+				interviewId: input.interviewId,
+				rescheduled: input.rescheduled,
+			},
+			nextAttemptAt: input.now + INVITE_CLAIM_MS,
+			createdAt: input.now,
+		})
+		.returning({ id: notificationOutbox.id })
+	return queued!.id
+}
+
+function outboxStatusFor(
+	outcome: MailOutcome | 'scope_unavailable',
+): 'sent' | 'skipped' | 'failed' {
+	if (outcome === 'sent') return 'sent'
+	if (outcome === 'no_email' || outcome === 'email_disabled') return 'skipped'
+	return 'failed'
+}
+
+async function settleOutboxRow(
+	tx: StaffDb,
+	id: string,
+	patch: Partial<typeof notificationOutbox.$inferInsert>,
+) {
+	await tx
+		.update(notificationOutbox)
+		.set(patch)
+		.where(
+			and(
+				eq(notificationOutbox.id, id),
+				eq(notificationOutbox.status, 'pending'),
+			),
+		)
+}
+
+function inviteEmail(interview: HiringInterviewRow, rescheduled: boolean) {
+	return () => ({
+		kind: 'interview_invite' as const,
+		interview: {
+			scheduledAt: interview.scheduledAt,
+			durationMinutes: interview.durationMinutes,
+			mode: interview.mode,
+			details: interview.details,
+			rescheduled,
+		},
+	})
+}
+
 async function deliverInvite(
 	ctx: StaffContext,
 	row: HiringApplicationRow,
 	interview: HiringInterviewRow,
 	rescheduled: boolean,
+	outboxId: string,
 ): Promise<HiringInterviewRow> {
 	const now = hiringDeps.now()
 	const outcome = await sendToApplicant(
 		row,
-		() => ({
-			kind: 'interview_invite',
-			interview: {
-				scheduledAt: interview.scheduledAt,
-				durationMinutes: interview.durationMinutes,
-				mode: interview.mode,
-				details: interview.details,
-				rescheduled,
-			},
-		}),
+		inviteEmail(interview, rescheduled),
 		interview.scopeId,
 		ctx.auth.orgId,
 	)
@@ -848,6 +924,12 @@ async function deliverInvite(
 			})
 			.where(eq(hiringInterviews.id, interview.id))
 			.returning()
+		await settleOutboxRow(tx, outboxId, {
+			status: outboxStatusFor(outcome),
+			attempts: 1,
+			sentAt: outcome === 'sent' ? now : null,
+			lastError: outcome === 'sent' ? null : detail,
+		})
 		await recordEvent(tx, {
 			applicationId: row.id,
 			kind: 'invite_sent',
@@ -864,6 +946,137 @@ async function deliverInvite(
 		})
 		return updated!
 	})
+}
+
+export type InviteDeliveryTotals = {
+	sent: number
+	skipped: number
+	failed: number
+	retry: number
+}
+
+/**
+ * The staff tick's half of the invite outbox: sends invites whose request did
+ * not settle them (the node stopped after the commit). Each row is claimed
+ * before sending, so two passes never send the same one. An invite for an
+ * interview that is no longer ahead, or a candidate who is closed, is dropped.
+ */
+export async function deliverQueuedInterviewInvites(
+	db: StaffDb,
+	orgId: string,
+	rows: readonly NotificationOutboxRow[],
+	now: number,
+): Promise<InviteDeliveryTotals> {
+	const totals: InviteDeliveryTotals = {
+		sent: 0,
+		skipped: 0,
+		failed: 0,
+		retry: 0,
+	}
+	for (const queued of rows) {
+		if (queued.kind !== INTERVIEW_INVITE_OUTBOX_KIND) continue
+		const claimed = await db
+			.update(notificationOutbox)
+			.set({ nextAttemptAt: now + INVITE_CLAIM_MS })
+			.where(
+				and(
+					eq(notificationOutbox.id, queued.id),
+					eq(notificationOutbox.status, 'pending'),
+					eq(notificationOutbox.nextAttemptAt, queued.nextAttemptAt),
+				),
+			)
+			.returning({ id: notificationOutbox.id })
+		if (claimed.length === 0) continue
+
+		const payload = (queued.payload ?? {}) as Partial<InvitePayload>
+		const [found] =
+			typeof payload.applicationId === 'string' &&
+			typeof payload.interviewId === 'string'
+				? await db
+						.select({ row: hiringApplications, interview: hiringInterviews })
+						.from(hiringInterviews)
+						.innerJoin(
+							hiringApplications,
+							eq(hiringApplications.id, hiringInterviews.applicationId),
+						)
+						.where(
+							and(
+								eq(hiringInterviews.id, payload.interviewId),
+								eq(hiringInterviews.applicationId, payload.applicationId),
+							),
+						)
+						.limit(1)
+				: []
+		const stage = found ? stageOf(found.row.stage) : null
+		if (
+			!found ||
+			found.interview.status !== 'scheduled' ||
+			found.interview.scheduledAt <= now ||
+			stage === 'hired' ||
+			stage === 'declined'
+		) {
+			await settleOutboxRow(db, queued.id, {
+				status: 'skipped',
+				lastError: 'not_applicable',
+			})
+			totals.skipped++
+			continue
+		}
+		const { row, interview } = found
+		const outcome = await sendToApplicant(
+			row,
+			inviteEmail(interview, payload.rescheduled === true),
+			interview.scopeId,
+			orgId,
+		)
+		const attempts = queued.attempts + 1
+		const retry =
+			(outcome === 'failed' || outcome === 'scope_unavailable') &&
+			attempts < OUTBOX_MAX_ATTEMPTS
+		if (retry) {
+			await settleOutboxRow(db, queued.id, {
+				attempts,
+				lastError: outcome,
+				nextAttemptAt: now + outboxRetryDelayMs(attempts),
+			})
+			totals.retry++
+			continue
+		}
+		const status: InviteStatus =
+			outcome === 'scope_unavailable' ? 'failed' : outcome
+		await write(db as TenantDatabase, async (tx) => {
+			await tx
+				.update(hiringInterviews)
+				.set({
+					inviteStatus: status,
+					inviteSentAt: status === 'sent' ? now : interview.inviteSentAt,
+					updatedAt: now,
+				})
+				.where(eq(hiringInterviews.id, interview.id))
+			await settleOutboxRow(tx, queued.id, {
+				status: outboxStatusFor(outcome),
+				attempts,
+				sentAt: outcome === 'sent' ? now : null,
+				lastError: outcome === 'sent' ? null : outcome,
+			})
+			await recordEvent(tx, {
+				applicationId: row.id,
+				kind: 'invite_sent',
+				actorId: null,
+				detail: outcome,
+				now,
+			})
+			await writeSystemAudit(tx, {
+				action: 'hiring.interview.invite',
+				entityType: 'application_interview',
+				entityId: interview.id,
+				scopeId: row.scopeId,
+				changes: { applicationId: row.id, outcome, queued: true },
+			})
+		})
+		totals[outboxStatusFor(outcome)]++
+	}
+	return totals
 }
 
 export async function createInterview(
@@ -936,13 +1149,28 @@ export async function createInterview(
 				movedToInterview: moved,
 			},
 		})
-		return ok({ row, interview: interview! })
+		const outboxId = input.sendInvite
+			? await queueInvite(tx, {
+					applicationId: id,
+					interviewId: interview!.id,
+					rescheduled: false,
+					scopeId,
+					now,
+				})
+			: null
+		return ok({ row, interview: interview!, outboxId })
 	})
 	if (!created.ok) return created
 
 	let { interview } = created.value
-	if (input.sendInvite) {
-		interview = await deliverInvite(ctx, created.value.row, interview, false)
+	if (created.value.outboxId) {
+		interview = await deliverInvite(
+			ctx,
+			created.value.row,
+			interview,
+			false,
+			created.value.outboxId,
+		)
 	}
 	return ok({ interview: toInterview(interview) })
 }
@@ -1019,7 +1247,26 @@ export async function updateInterview(
 			.select()
 			.from(hiringInterviews)
 			.where(eq(hiringInterviews.id, interviewId))
-		return ok({ row: loaded.value, before: existing, interview: fresh! })
+		// Queued with the change, so a resend survives a crash before it is sent.
+		const rescheduled =
+			existing.inviteStatus === 'sent' || existing.inviteSentAt !== null
+		const outboxId =
+			input.resendInvite && fresh!.status === 'scheduled'
+				? await queueInvite(tx, {
+						applicationId: id,
+						interviewId,
+						rescheduled,
+						scopeId: fresh!.scopeId,
+						now,
+					})
+				: null
+		return ok({
+			row: loaded.value,
+			before: existing,
+			interview: fresh!,
+			outboxId,
+			rescheduled,
+		})
 	})
 	if (!updated.ok) return updated
 
@@ -1056,12 +1303,13 @@ export async function updateInterview(
 				now: hiringDeps.now(),
 			})
 		})
-	} else if (input.resendInvite && interview.status === 'scheduled') {
+	} else if (updated.value.outboxId) {
 		interview = await deliverInvite(
 			ctx,
 			row,
 			interview,
-			before.inviteStatus === 'sent' || before.inviteSentAt !== null,
+			updated.value.rescheduled,
+			updated.value.outboxId,
 		)
 	}
 	return ok({ interview: toInterview(interview) })
@@ -1243,7 +1491,20 @@ export async function hireApplicant(
 			if (!loaded.ok) return loaded
 			const row = loaded.value
 			const from = stageOf(row.stage)
-			if (from === 'hired') return fail(409, 'already_hired')
+			if (from === 'hired') {
+				// A retry after a lost response finds its own hire: answer with the
+				// staff id it created, so the App can still offer the invite.
+				if (row.hiredStaffId) {
+					return ok({
+						staffId: row.hiredStaffId,
+						applicationId: row.id,
+						onboardingTasks: 0,
+						inviteEmail: row.email,
+						alreadyHired: true,
+					})
+				}
+				return fail(409, 'already_hired')
+			}
 			if (from === 'declined') {
 				return fail(409, 'application_declined', 'Reopen the candidate first')
 			}
@@ -1494,21 +1755,32 @@ export async function purgeExpiredApplications(
 		.limit(RETENTION_BATCH)
 	if (due.length === 0) return { purged: 0 }
 	const ids = due.map((row) => row.id)
-	await db.delete(hiringApplications).where(
-		and(
-			inJsonList(hiringApplications.id, ids),
-			// Re-checked in the delete itself: a candidate reopened since the select
-			// is not purged.
-			eq(hiringApplications.stage, 'declined'),
-			lte(hiringApplications.retentionExpiresAt, now),
-		),
+	// The delete and its audit row commit together, and the audit carries the
+	// rows actually deleted: a purge is never unrecorded, and a candidate
+	// reopened since the select is neither purged nor counted.
+	const purged = await retryOnSqliteBusy(() =>
+		runTenantTransaction(db, async (tx) => {
+			const deleted = await tx
+				.delete(hiringApplications)
+				.where(
+					and(
+						inJsonList(hiringApplications.id, ids),
+						// Re-checked in the delete itself.
+						eq(hiringApplications.stage, 'declined'),
+						lte(hiringApplications.retentionExpiresAt, now),
+					),
+				)
+				.returning({ id: hiringApplications.id })
+			if (deleted.length === 0) return 0
+			await writeSystemAudit(tx, {
+				action: 'hiring.applications.purged',
+				entityType: 'application',
+				changes: { count: deleted.length, reason: 'retention' },
+			})
+			return deleted.length
+		}),
 	)
-	await writeSystemAudit(db, {
-		action: 'hiring.applications.purged',
-		entityType: 'application',
-		changes: { count: ids.length, reason: 'retention' },
-	})
-	return { purged: ids.length }
+	return { purged }
 }
 
 /** Applications whose hire created these staff rows (used by staff erasure). */

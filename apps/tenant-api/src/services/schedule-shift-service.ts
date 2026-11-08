@@ -38,7 +38,7 @@ import {
 	type ScheduleResult,
 } from './schedule-shared.ts'
 import { type StaffDb, writeStaffAudit } from './staff-audit.ts'
-import { insertRowsInChunks } from '../lib/chunked-in.ts'
+import { insertRowsInChunks, inJsonList } from '../lib/chunked-in.ts'
 import { fail, moneyAccess, ok } from './timesheet-shared.ts'
 
 /**
@@ -333,11 +333,66 @@ async function viewsFor(
 // Create
 // ---------------------------------------------------------------------------
 
+/** The per-shift ids a create with `clientRequestId` writes, in date order. */
+function clientRequestIdsFor(clientRequestId: string, count: number) {
+	return Array.from({ length: count }, (_, i) => `${clientRequestId}:${i}`)
+}
+
+/**
+ * Shifts an earlier attempt of the same create (same author, same client id)
+ * already wrote, in date order. Empty when there was no earlier attempt.
+ */
+async function shiftsOfEarlierAttempt(
+	db: TenantDatabase,
+	createdBy: string,
+	ids: readonly string[],
+): Promise<string[]> {
+	const rows = await db
+		.select({
+			id: shifts.id,
+			clientRequestId: shifts.clientRequestId,
+		})
+		.from(shifts)
+		.where(
+			and(
+				eq(shifts.createdBy, createdBy),
+				inJsonList(shifts.clientRequestId, ids),
+			),
+		)
+	const order = new Map(ids.map((id, index) => [id, index]))
+	return rows
+		.sort(
+			(a, b) =>
+				(order.get(a.clientRequestId ?? '') ?? 0) -
+				(order.get(b.clientRequestId ?? '') ?? 0),
+		)
+		.map((row) => row.id)
+}
+
+function isClientRequestConflict(error: unknown) {
+	return /UNIQUE constraint failed: (shifts\.created_by|index 'uniq_shifts_client_request)/i.test(
+		rootMessage(error),
+	)
+}
+
 export async function createShifts(
 	ctx: ScheduleWriteContext,
 	input: ShiftCreate,
 ): Promise<ScheduleResult<ShiftWriteResult>> {
 	const frames = new FrameCache(ctx)
+	const requestIds = input.clientRequestId
+		? clientRequestIdsFor(input.clientRequestId, input.dates.length)
+		: null
+	if (requestIds) {
+		const earlier = await shiftsOfEarlierAttempt(
+			ctx.db,
+			ctx.auth.userId,
+			requestIds,
+		)
+		if (earlier.length > 0) {
+			return ok({ shifts: await viewsFor(ctx, frames, earlier) })
+		}
+	}
 	const framed = await requireFrame(
 		ctx,
 		frames,
@@ -387,44 +442,61 @@ export async function createShifts(
 		})
 	}
 
-	const outcome = await transact(ctx.db, async (tx) => {
-		const capacity = await checkWeekCapacity(
-			tx,
-			frame.scopeId,
-			frame.weekStartsOn,
-			new Map(resolved.map((r) => [r.date, 1])),
-		)
-		if (!capacity.ok) return capacity
-		const rows = await insertDrafts(
-			tx,
-			ctx,
-			resolved.map((r) => ({
-				scopeId: frame.scopeId,
+	const write = () =>
+		transact(ctx.db, async (tx) => {
+			const capacity = await checkWeekCapacity(
+				tx,
+				frame.scopeId,
+				frame.weekStartsOn,
+				new Map(resolved.map((r) => [r.date, 1])),
+			)
+			if (!capacity.ok) return capacity
+			const rows = await insertDrafts(
+				tx,
+				ctx,
+				resolved.map((r, index) => ({
+					scopeId: frame.scopeId,
+					staffId: input.staffId ?? null,
+					positionId: input.positionId ?? null,
+					startsAt: r.startsAt,
+					endsAt: r.endsAt,
+					localDate: r.date,
+					timeZone: frame.timeZone,
+					unpaidBreakMinutes: input.unpaidBreakMinutes,
+					notes: input.notes ?? null,
+					clientRequestId: requestIds?.[index] ?? null,
+				})),
+			)
+			await writeStaffAudit(tx, ctx.auth, ctx.ipHash, {
+				action: 'schedule.shift.created',
+				entityType: 'shift',
+				entityId: rows[0]!.id,
 				staffId: input.staffId ?? null,
-				positionId: input.positionId ?? null,
-				startsAt: r.startsAt,
-				endsAt: r.endsAt,
-				localDate: r.date,
-				timeZone: frame.timeZone,
-				unpaidBreakMinutes: input.unpaidBreakMinutes,
-				notes: input.notes ?? null,
-			})),
-		)
-		await writeStaffAudit(tx, ctx.auth, ctx.ipHash, {
-			action: 'schedule.shift.created',
-			entityType: 'shift',
-			entityId: rows[0]!.id,
-			staffId: input.staffId ?? null,
-			scopeId: frame.scopeId,
-			changes: {
-				count: rows.length,
-				firstDate: dates[0],
-				lastDate: dates[dates.length - 1],
-				open: !input.staffId,
-			},
+				scopeId: frame.scopeId,
+				changes: {
+					count: rows.length,
+					firstDate: dates[0],
+					lastDate: dates[dates.length - 1],
+					open: !input.staffId,
+				},
+			})
+			return ok(rows.map((row) => row.id))
 		})
-		return ok(rows.map((row) => row.id))
-	})
+	let outcome: Awaited<ReturnType<typeof write>>
+	try {
+		outcome = await write()
+	} catch (error) {
+		// The same create arrived twice at once and the other attempt wrote
+		// first: answer with its shifts.
+		if (!requestIds || !isClientRequestConflict(error)) throw error
+		const earlier = await shiftsOfEarlierAttempt(
+			ctx.db,
+			ctx.auth.userId,
+			requestIds,
+		)
+		if (earlier.length === 0) throw error
+		return ok({ shifts: await viewsFor(ctx, frames, earlier) })
+	}
 	if (!outcome.ok) return outcome
 	return ok({ shifts: await viewsFor(ctx, frames, outcome.value) })
 }

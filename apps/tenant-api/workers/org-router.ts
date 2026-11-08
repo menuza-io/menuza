@@ -9,8 +9,10 @@ import { RESERVATIONS_TOKEN_AUDIENCE } from '@repo/reservations'
 import {
 	parseKioskDeviceSecret,
 	parseKioskPairingCode,
+	parseScheduleLinkToken,
 	STAFFING_TOKEN_AUDIENCE,
 } from '@repo/staffing'
+import { verifyOperatorAnalyticsToken } from '@repo/reports/token'
 import { TENANT_ORG_ID_PATTERN } from '@repo/tenant-db'
 import { brand } from '@repo/config/brand'
 import {
@@ -23,8 +25,13 @@ import {
 import {
 	getBearerToken,
 	getInternalCommandToken,
+	getOperatorAnalyticsToken,
 	timingSafeEqualString,
 } from '../src/lib/secrets.ts'
+import {
+	type ConsentTokenKind,
+	verifyConsentToken,
+} from '../src/lib/email-consent.ts'
 import type { TenantApiWorkerEnv } from './bindings.ts'
 
 const orgIdBodySchema = z.object({
@@ -83,6 +90,35 @@ async function orgIdFromOperatorJwt(
 	} catch {
 		return null
 	}
+}
+
+/**
+ * Operator analytics tokens (reports) use their own signing key, issuer and
+ * audience, so the customer JWT check cannot read them. Verified with the same
+ * function and secret as the route; the route re-verifies.
+ */
+async function orgIdFromAnalyticsToken(
+	request: Request,
+): Promise<string | null> {
+	const token = getBearerToken(request.headers.get('Authorization'))
+	if (!token) return null
+	const signingSecret = getOperatorAnalyticsToken()
+	if (!signingSecret) return null
+	const claims = await verifyOperatorAnalyticsToken({ signingSecret, token })
+	return claims && TENANT_ORG_ID_PATTERN.test(claims.orgId)
+		? claims.orgId
+		: null
+}
+
+/**
+ * "My schedule" requests carry the organization as a plain prefix of the
+ * bearer link token. Nothing else (body, query) may choose it. The route
+ * verifies the link itself.
+ */
+function orgIdFromScheduleLink(request: Request): string | null {
+	const token = getBearerToken(request.headers.get('Authorization'))
+	const orgId = parseScheduleLinkToken(token)?.orgId
+	return orgId && TENANT_ORG_ID_PATTERN.test(orgId) ? orgId : null
 }
 
 async function orgIdFromAuthBody(request: Request): Promise<string | null> {
@@ -251,6 +287,117 @@ async function orgIdFromPosRequest(
 }
 
 /**
+ * Public bodies read at the edge, before any verification. The same ceiling
+ * as the public routes' own body limit (app.ts), so a request the route would
+ * accept is never refused here; consent-token forms are tiny.
+ */
+const MAX_PUBLIC_BODY_BYTES = 1024 * 1024
+const MAX_TOKEN_FORM_BYTES = 16 * 1024
+
+/**
+ * Reads a clone of the body as text, counting bytes as they arrive: a
+ * spoofed small Content-Length cannot make the edge buffer more than `max`.
+ * Null when the body is missing or over the limit.
+ */
+async function readBoundedText(
+	request: Request,
+	max: number,
+): Promise<string | null> {
+	const declared = Number(request.headers.get('content-length'))
+	if (Number.isFinite(declared) && declared > max) return null
+	const body = request.clone().body
+	if (!body) return null
+	const reader = body.getReader()
+	const chunks: Uint8Array[] = []
+	let total = 0
+	for (;;) {
+		const { done, value } = await reader.read()
+		if (done) break
+		total += value.byteLength
+		if (total > max) {
+			// Not awaited: cancelling one branch of a cloned (tee'd) body only
+			// settles once the other branch is cancelled too.
+			void reader.cancel().catch(() => {})
+			return null
+		}
+		chunks.push(value)
+	}
+	const bytes = new Uint8Array(total)
+	let offset = 0
+	for (const chunk of chunks) {
+		bytes.set(chunk, offset)
+		offset += chunk.byteLength
+	}
+	return new TextDecoder().decode(bytes)
+}
+
+/**
+ * Unsubscribe and confirm links carry only `?token=`; the signed consent token
+ * names its organization in claim `o`. One-click unsubscribe (RFC 8058) may
+ * send the token in a form body instead. The signature is checked here, so a
+ * junk token cannot wake an organization's Durable Object; expiry is left to
+ * the route, which answers an expired link with a page.
+ */
+async function orgIdFromConsentToken(
+	request: Request,
+	url: URL,
+	kind: ConsentTokenKind,
+): Promise<string | null> {
+	let token = url.searchParams.get('token')
+	if (!token && request.method === 'POST') {
+		const text = await readBoundedText(request, MAX_TOKEN_FORM_BYTES)
+		token = text ? new URLSearchParams(text).get('token') : null
+	}
+	if (!token) return null
+	const payload = verifyConsentToken(token, kind, 0)
+	return payload && TENANT_ORG_ID_PATTERN.test(payload.o) ? payload.o : null
+}
+
+/**
+ * Public website forms: the organization is the one the browser's Origin
+ * names (with the slug or host the page passes), never a client-supplied
+ * orgId. The submission POST carries slug and host in its JSON body.
+ */
+async function orgIdFromPublicForm(
+	request: Request,
+	url: URL,
+): Promise<string | null> {
+	let identity = {
+		slug: url.searchParams.get('slug') ?? undefined,
+		host: url.searchParams.get('host') ?? undefined,
+	}
+	if (request.method === 'POST') {
+		// Refused at the edge when over the public routes' own limit, whatever
+		// names the organization (Origin alone would): an oversized post must
+		// not reach, or wake, a tenant's Durable Object.
+		const text = await readBoundedText(request, MAX_PUBLIC_BODY_BYTES)
+		if (text === null) return null
+		// The submission carries slug and host in its JSON body; a query
+		// identity, when present, wins.
+		if (!identity.slug && !identity.host) {
+			let body: unknown = null
+			try {
+				body = JSON.parse(text)
+			} catch {
+				body = null
+			}
+			if (body && typeof body === 'object') {
+				const { slug, host } = body as { slug?: unknown; host?: unknown }
+				identity = {
+					slug: typeof slug === 'string' ? slug : undefined,
+					host: typeof host === 'string' ? host : undefined,
+				}
+			}
+		}
+	}
+	const organization = await resolveOrganizationForBrowserAuth(
+		request.headers.get('Origin') ?? undefined,
+		identity,
+	)
+	return organization?.id ?? null
+}
+
+/**
  * Resolve which tenant org should handle this request on Cloudflare Workers.
  * Returns null when the route is not org-scoped (health, sync-all, etc.).
  */
@@ -380,11 +527,15 @@ export async function resolveOrgId(
 		return orgIdFromJsonBody(request)
 	}
 
-	if (
-		pathname.startsWith('/shop') ||
-		pathname.startsWith('/analytics') ||
-		pathname === '/auth/me'
-	) {
+	if (pathname === '/analytics' || pathname.startsWith('/analytics/')) {
+		return orgIdFromAnalyticsToken(request)
+	}
+
+	if (pathname === '/schedule-link' || pathname.startsWith('/schedule-link/')) {
+		return orgIdFromScheduleLink(request)
+	}
+
+	if (pathname.startsWith('/shop') || pathname === '/auth/me') {
 		return orgIdFromCustomerJwt(request, env)
 	}
 
@@ -392,6 +543,22 @@ export async function resolveOrgId(
 		const fromJwt = await orgIdFromCustomerJwt(request, env)
 		if (fromJwt) return fromJwt
 		return orgIdFromAuthBody(request)
+	}
+
+	if (pathname === '/subscriptions/unsubscribe') {
+		return orgIdFromConsentToken(request, url, 'unsubscribe')
+	}
+	if (pathname === '/subscriptions/confirm') {
+		return orgIdFromConsentToken(request, url, 'confirm')
+	}
+
+	// Customer subscription toggles: the signed-in customer's own organization.
+	if (pathname === '/subscriptions' || pathname.startsWith('/subscriptions/')) {
+		return orgIdFromCustomerJwt(request, env)
+	}
+
+	if (pathname.startsWith('/forms/')) {
+		return orgIdFromPublicForm(request, url)
 	}
 
 	if (pathname.startsWith('/voice/')) {
@@ -476,6 +643,12 @@ export async function assertOrgOnUsNode(
 			},
 			{ status: 409 },
 		)
+	}
+	// Mid region switch, after a failed one, or before provisioning finished:
+	// the object must not be woken (it would rebuild an empty database). Only
+	// `/api/provision` creates it, and that path does not come through here.
+	if (!organization.hasProvisionedDb) {
+		return Response.json({ error: 'org_not_provisioned' }, { status: 404 })
 	}
 	return null
 }

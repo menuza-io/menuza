@@ -17,6 +17,7 @@ import {
 	sql,
 	User,
 	UserImage,
+	UserOrganization,
 } from '@repo/database'
 import { definitionAllowed, type ReportDefinition } from '@repo/reports'
 import { listSavedReports, parseDefinition } from '@repo/reports/server'
@@ -58,7 +59,6 @@ export type NotesSeries = NotesSummary & {
 export type LeaderboardEntry = {
 	id: string
 	name: string
-	email: string
 	notesCount: number
 	rank: number
 	image: string | null
@@ -177,6 +177,15 @@ async function loadLeaderboard(
 			noteCount: count(OrganizationNote.id),
 		})
 		.from(OrganizationNote)
+		// Only active members rank; removed members drop off the board.
+		.innerJoin(
+			UserOrganization,
+			and(
+				eq(UserOrganization.userId, OrganizationNote.createdById),
+				eq(UserOrganization.organizationId, organizationId),
+				eq(UserOrganization.active, true),
+			),
+		)
 		.where(eq(OrganizationNote.organizationId, organizationId))
 		.groupBy(OrganizationNote.createdById)
 		.orderBy(desc(count(OrganizationNote.id)))
@@ -187,7 +196,6 @@ async function loadLeaderboard(
 		.select({
 			id: User.id,
 			name: User.name,
-			email: User.email,
 			objectKey: UserImage.objectKey,
 		})
 		.from(User)
@@ -205,7 +213,6 @@ async function loadLeaderboard(
 		return {
 			id: row.createdById,
 			name: user?.name || 'Unknown User',
-			email: user?.email || '',
 			notesCount: row.noteCount,
 			rank: index + 1,
 			image: user?.objectKey ? getUserImgSrc(user.objectKey) : null,

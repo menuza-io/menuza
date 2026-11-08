@@ -151,6 +151,21 @@ export function getGlobalSendMax() {
 }
 let globalSendTimestamps: number[] = []
 
+/**
+ * Hourly ceiling on broadcast recipients per organization and channel. Every
+ * recipient counts, against the organization's own `marketing_messages` rows
+ * (durable across isolates and restarts; see broadcast-dispatch.ts). Texts
+ * share the SMS cap; email has its own, higher one.
+ */
+export function getBroadcastHourlyCap(channel: 'email' | 'sms') {
+	if (channel === 'sms') return getGlobalSendMax()
+	const raw =
+		process.env.BROADCAST_EMAIL_HOURLY_CAP ??
+		(ENV as Record<string, unknown>).BROADCAST_EMAIL_HOURLY_CAP
+	const parsed = raw ? Number.parseInt(String(raw), 10) : Number.NaN
+	return Number.isFinite(parsed) && parsed > 0 ? parsed : 10_000
+}
+
 export function checkGlobalSendCap():
 	{ limited: true; retryAfter: number } | { limited: false } {
 	if (!isProduction()) {

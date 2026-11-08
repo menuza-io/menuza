@@ -1,12 +1,13 @@
 import { db, eq, Organization } from '@repo/database'
 import { RouterContextProvider } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type * as reservationsAccess from '#app/utils/reservations/access.server.ts'
+import type * as reservationsRegionGuard from '#app/utils/reservations/region-guard.server.ts'
 import {
 	deprovisionTenantDatabase,
 	provisionTenantDatabase,
 } from '#app/utils/sites/tenant-api.server.ts'
-import type * as reservationsAccess from '#app/utils/reservations/access.server.ts'
-import type * as reservationsRegionGuard from '#app/utils/reservations/region-guard.server.ts'
+import { fetchStaffSummary } from '#app/utils/staffing/region-guard.server.ts'
 import type * as regionGuard from '#app/utils/staffing/region-guard.server.ts'
 import {
 	createAuthenticatedRequest,
@@ -17,6 +18,16 @@ import {
 import { action } from './_index.tsx'
 
 const databaseMocks = vi.hoisted(() => ({ update: vi.fn() }))
+const EMPTY_STAFF_SUMMARY = vi.hoisted(() => ({
+	staff: 0,
+	byStatus: { invited: 0, active: 0, on_leave: 0, terminated: 0 },
+	linkedLogins: 0,
+	scopeAssignments: 0,
+	positions: 0,
+	payRecords: 0,
+	notes: 0,
+	auditEntries: 0,
+}))
 
 vi.mock('@repo/database', async (importOriginal) => {
 	const actual = await importOriginal<{ db: typeof db }>()
@@ -49,16 +60,7 @@ vi.mock(
 		const actual = await importOriginal<typeof regionGuard>()
 		return {
 			...actual,
-			fetchStaffSummary: vi.fn().mockResolvedValue({
-				staff: 0,
-				byStatus: { invited: 0, active: 0, on_leave: 0, terminated: 0 },
-				linkedLogins: 0,
-				scopeAssignments: 0,
-				positions: 0,
-				payRecords: 0,
-				notes: 0,
-				auditEntries: 0,
-			}),
+			fetchStaffSummary: vi.fn().mockResolvedValue(EMPTY_STAFF_SUMMARY),
 		}
 	},
 )
@@ -232,7 +234,7 @@ describe('website tenant database lifecycle', () => {
 		})
 	})
 
-	it('can retry provisioning the selected region without wiping it', async () => {
+	it('wipes any database left in the current region before provisioning it again', async () => {
 		const { organization, submit } = await setup(false)
 
 		expect(
@@ -243,7 +245,16 @@ describe('website tenant database lifecycle', () => {
 				})
 			).status,
 		).toBe(302)
-		expect(deprovisionTenantDatabase).not.toHaveBeenCalled()
+		// The flag is false, but an earlier failed switch may have left the old
+		// database (and staff rows whose erasure was skipped) in place.
+		expect(deprovisionTenantDatabase).toHaveBeenCalledWith(
+			expect.objectContaining({ orgId: organization.id, dataRegion: 'us' }),
+		)
+		expect(
+			vi.mocked(deprovisionTenantDatabase).mock.invocationCallOrder[0],
+		).toBeLessThan(
+			vi.mocked(provisionTenantDatabase).mock.invocationCallOrder[0]!,
+		)
 		expect(provisionTenantDatabase).toHaveBeenCalledOnce()
 		expect(
 			(
@@ -365,5 +376,88 @@ describe('website tenant database lifecycle', () => {
 		).toBe(302)
 		expect(deprovisionTenantDatabase).toHaveBeenCalledTimes(2)
 		expect(provisionTenantDatabase).toHaveBeenCalledOnce()
+	})
+
+	it('lets only one of two concurrent region switches wipe the database', async () => {
+		const { organization, submit } = await setup()
+		// This admin loaded the provisioned row; while their request checks the
+		// old region, another admin's switch clears the flag.
+		vi.mocked(fetchStaffSummary).mockImplementationOnce(async () => {
+			await db
+				.update(Organization)
+				.set({ hasProvisionedDb: false })
+				.where(eq(Organization.id, organization.id))
+			return EMPTY_STAFF_SUMMARY
+		})
+
+		const response = await submit({
+			intent: 'update-site-data-region',
+			dataRegion: 'ksa',
+			confirmWipe: 'true',
+		})
+
+		expect(response.status).toBe(409)
+		expect(deprovisionTenantDatabase).not.toHaveBeenCalled()
+		expect(provisionTenantDatabase).not.toHaveBeenCalled()
+	})
+
+	it('lets only one of two retries of an unfinished switch wipe and provision', async () => {
+		const { organization, submit } = await setup(false)
+		// tenant-api, as a set of the regions that hold this organization's database.
+		const databases = new Set<string>(['us'])
+		vi.mocked(deprovisionTenantDatabase).mockImplementation(
+			async ({ dataRegion }) => {
+				databases.delete(dataRegion ?? 'us')
+				return { region: dataRegion as 'us' }
+			},
+		)
+		vi.mocked(provisionTenantDatabase).mockImplementation(
+			async ({ dataRegion }) => {
+				databases.add(dataRegion ?? 'us')
+				return { region: dataRegion as 'ksa' }
+			},
+		)
+		const retry = () =>
+			submit({ intent: 'update-site-data-region', dataRegion: 'ksa' })
+
+		// Both requests read the organization with the flag cleared. The second
+		// runs to completion just before the first one's first write.
+		let second: Response | undefined
+		const update = databaseMocks.update.getMockImplementation()!
+		databaseMocks.update.mockImplementationOnce((table) => {
+			const pending = retry().then((response) => {
+				second = response
+			})
+			return {
+				set: (values: Record<string, unknown>) => ({
+					where: (condition: unknown) => ({
+						returning: async (fields: unknown) => {
+							await pending
+							return update(table)
+								.set(values)
+								.where(condition)
+								.returning(fields)
+						},
+						then: async (resolve: (value: unknown) => void) => {
+							await pending
+							resolve(await update(table).set(values).where(condition))
+						},
+					}),
+				}),
+			}
+		})
+
+		const first = await retry()
+
+		expect(second?.status).toBe(302)
+		expect(first.status).toBe(409)
+		expect(deprovisionTenantDatabase).toHaveBeenCalledOnce()
+		expect(provisionTenantDatabase).toHaveBeenCalledOnce()
+		expect([...databases]).toEqual(['ksa'])
+		expect(
+			await db.query.Organization.findFirst({
+				where: eq(Organization.id, organization.id),
+			}),
+		).toMatchObject({ dataRegion: 'ksa', hasProvisionedDb: true })
 	})
 })

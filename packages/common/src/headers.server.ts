@@ -114,10 +114,50 @@ export function getConservativeCacheControl(
 }
 
 /**
+ * Parses a Host-style value (`name` or `name:port`) and returns it normalized,
+ * or null when it is anything more than a bare host: userinfo
+ * (`localhost:80@evil.example`), a path, query, fragment or stray characters
+ * would otherwise turn a "validated" host into a different fetch destination.
+ */
+function parseBareHost(
+	value: string,
+): { host: string; hostname: string } | null {
+	const candidate = value.trim().toLowerCase()
+	if (!candidate || /[\s/\\?#@]/.test(candidate)) return null
+	let url: URL
+	try {
+		url = new URL(`http://${candidate}`)
+	} catch {
+		return null
+	}
+	if (url.username || url.password) return null
+	// The URL parser drops the scheme's default port, so `name:80` comes back
+	// as `name`; anything else that changed was not a bare host.
+	const sameHost =
+		url.host === candidate || (!url.port && `${url.host}:80` === candidate)
+	if (!sameHost) return null
+	return { host: url.host, hostname: url.hostname.replace(/^\[|\]$/g, '') }
+}
+
+function isAllowedHostname(hostname: string, baseUrl: string) {
+	if (
+		hostname === 'localhost' ||
+		hostname === '127.0.0.1' ||
+		hostname === '::1'
+	) {
+		return true
+	}
+	const baseUrlHost = new URL(baseUrl).hostname.toLowerCase()
+	return hostname === baseUrlHost || hostname.endsWith(`.${baseUrlHost}`)
+}
+
+/**
  * Validates and extracts the host from a request, checking against allowed hosts.
  * Returns the validated host or null if invalid.
  *
- * Accepts localhost, 127.0.0.1, ::1, and hosts matching the BASE_URL.
+ * Accepts localhost, 127.0.0.1, ::1, and hosts matching the BASE_URL, from
+ * X-Forwarded-Host or else the Host header. When neither is allowed, the
+ * BASE_URL's own host is returned: a client-chosen Host never comes back.
  */
 export function getValidatedHost(
 	request: Request,
@@ -125,33 +165,14 @@ export function getValidatedHost(
 ): string | null {
 	const forwardedHost = request.headers.get('X-Forwarded-Host')
 	const host = request.headers.get('host')
-	const candidateHost = forwardedHost ?? host
+	if (!forwardedHost && !host) return null
 
-	if (!candidateHost) {
-		return null
+	for (const candidate of [forwardedHost, host]) {
+		if (!candidate) continue
+		const parsed = parseBareHost(candidate)
+		if (parsed && isAllowedHostname(parsed.hostname, baseUrl)) {
+			return parsed.host
+		}
 	}
-
-	const hostWithoutPort = candidateHost.split(':')[0]?.toLowerCase()
-
-	if (!hostWithoutPort) {
-		return null
-	}
-
-	if (
-		hostWithoutPort === 'localhost' ||
-		hostWithoutPort === '127.0.0.1' ||
-		hostWithoutPort === '::1'
-	) {
-		return candidateHost
-	}
-
-	const baseUrlHost = new URL(baseUrl).hostname.toLowerCase()
-	if (
-		hostWithoutPort === baseUrlHost ||
-		hostWithoutPort.endsWith(`.${baseUrlHost}`)
-	) {
-		return candidateHost
-	}
-
-	return host
+	return new URL(baseUrl).host
 }

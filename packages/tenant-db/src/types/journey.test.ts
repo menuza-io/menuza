@@ -16,6 +16,7 @@ import {
 	getDownstreamNodes,
 	serializeWorkflowGraph,
 	parseWorkflowGraph,
+	interpolateMergeTagsHtml,
 	type WorkflowGraph,
 } from './journey.ts'
 
@@ -622,5 +623,97 @@ describe('Journey Helper Utilities', () => {
 		expect(parsed.nodes).toHaveLength(2)
 		expect(parsed.edges).toHaveLength(1)
 		expect(parsed.viewport).toEqual({ x: 10, y: 20, zoom: 1.5 })
+	})
+})
+
+describe('interpolateMergeTagsHtml', () => {
+	it('escapes the fallback of a designed email once', () => {
+		// What React renders for `Hey {{firstName|friend's & co}}` at design time.
+		const designed = '<p>Hey {{firstName|friend&#x27;s &amp; co}}</p>'
+		const html = interpolateMergeTagsHtml(designed, { name: null })
+		expect(html).toBe('<p>Hey friend&#39;s &amp; co</p>')
+		expect(html).not.toContain('&amp;amp;')
+		expect(html).not.toContain('&amp;#x27;')
+	})
+
+	it('treats escaped and raw fallbacks alike for every kind of tag', () => {
+		for (const fallback of ['a &lt;b&gt; &amp; c', 'a <b> & c']) {
+			expect(
+				interpolateMergeTagsHtml(`{{lastName|${fallback}}}`, { name: 'Alex' }),
+			).toBe('a &lt;b&gt; &amp; c')
+			expect(
+				interpolateMergeTagsHtml(
+					`{{orderNumber|${fallback}}}`,
+					{},
+					{ orderNumber: '' },
+				),
+			).toBe('a &lt;b&gt; &amp; c')
+			expect(interpolateMergeTagsHtml(`{{orderNumber|${fallback}}}`, {})).toBe(
+				'a &lt;b&gt; &amp; c',
+			)
+		}
+	})
+
+	it('still escapes customer and context values as they are', () => {
+		expect(
+			interpolateMergeTagsHtml('<p>{{name|friend}}</p>', {
+				name: 'AT&amp;T <b>',
+			}),
+		).toBe('<p>AT&amp;amp;T &lt;b&gt;</p>')
+		expect(
+			interpolateMergeTagsHtml(
+				'{{orderNumber|n/a}}',
+				{},
+				{
+					orderNumber: '<i>7</i>',
+				},
+			),
+		).toBe('&lt;i&gt;7&lt;/i&gt;')
+		expect(interpolateMergeTagsHtml('<p>{{unknown}}</p>', {})).toBe(
+			'<p>{{unknown}}</p>',
+		)
+	})
+})
+
+describe('interpolateMergeTagsHtml in URL attributes', () => {
+	it('refuses unsafe schemes from customer and context values', () => {
+		for (const value of [
+			'javascript:alert(1)',
+			'JAVASCRIPT:alert(1)',
+			' \tjava\nscript:alert(1)',
+			'data:text/html,<b>',
+			'vbscript:x',
+		]) {
+			expect(
+				interpolateMergeTagsHtml('<a href="{{name}}">x</a>', { name: value }),
+			).toBe('<a href="">x</a>')
+			expect(
+				interpolateMergeTagsHtml('<img src="{{link}}">', {}, { link: value }),
+			).toBe('<img src="">')
+		}
+	})
+
+	it('keeps safe URLs and leaves other attributes and text alone', () => {
+		expect(
+			interpolateMergeTagsHtml(
+				'<a href="{{link}}" title="{{link}}">{{link}}</a>',
+				{},
+				{ link: 'https://x.test/?a=1&b=2' },
+			),
+		).toBe(
+			'<a href="https://x.test/?a=1&amp;b=2" title="https://x.test/?a=1&amp;b=2">https://x.test/?a=1&amp;b=2</a>',
+		)
+		expect(
+			interpolateMergeTagsHtml('<a href="mailto:{{email}}">x</a>', {
+				email: 'a@example.com',
+			}),
+		).toBe('<a href="mailto:a@example.com">x</a>')
+		expect(
+			interpolateMergeTagsHtml(
+				'<p title="{{link}}">{{link}}</p>',
+				{},
+				{ link: 'javascript:alert(1)' },
+			),
+		).toBe('<p title="javascript:alert(1)">javascript:alert(1)</p>')
 	})
 })

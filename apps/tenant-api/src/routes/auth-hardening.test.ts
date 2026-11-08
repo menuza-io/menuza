@@ -12,7 +12,7 @@ import {
 	getTenantDb,
 	provisionTenantDb,
 } from '@repo/tenant-db'
-import { authRoutes } from './auth.ts'
+import { REFRESH_REUSE_GRACE_MS, authRoutes } from './auth.ts'
 import { hmacHash } from '../lib/secrets.ts'
 
 const orgId = 'clw9x0a12000008l00test07'
@@ -141,6 +141,50 @@ describe('customer auth hardening', () => {
 		expect(first.status).toBe(200)
 		const second = await post(app, '/auth/verify', { phone, code: '123456' })
 		expect(second.status).toBe(400)
+	})
+
+	it('keeps a customer signed in on every device they sign in on', async () => {
+		const db = await getTenantDb(orgId)
+		await db.insert(customers).values({ name: 'Two Devices', phone })
+		async function signIn(code: string) {
+			await db
+				.update(customers)
+				.set({
+					phoneVerificationCode: hmacHash(code),
+					phoneVerificationExpiresAt: new Date(Date.now() + 60_000),
+				})
+				.where(eq(customers.phone, phone))
+			const res = await post(app, '/auth/verify', { phone, code })
+			expect(res.status).toBe(200)
+			return (await res.json()).refreshToken as string
+		}
+		const refresh = (refreshToken: string) =>
+			post(app, '/auth/refresh', { refreshToken, orgId })
+
+		const website = await signIn('111111')
+		const phoneApp = await signIn('222222')
+
+		// The website's access token expires and it refreshes: this is the
+		// website's own token, not a stolen one.
+		const websiteRefresh = await refresh(website)
+		expect(websiteRefresh.status).toBe(200)
+		const phoneAppRefresh = await refresh(phoneApp)
+		expect(phoneAppRefresh.status).toBe(200)
+
+		// Reuse detection still works: presenting the website's already-rotated
+		// token again is a replay and ends every session. (Inside the grace
+		// window a re-presented parent is treated as a retry after a lost
+		// response, so the replay here arrives after the window.)
+		await db
+			.update(customerRefreshTokens)
+			.set({ rotatedAt: new Date(Date.now() - REFRESH_REUSE_GRACE_MS - 5_000) })
+			.where(eq(customerRefreshTokens.tokenHash, hmacHash(website)))
+			.run()
+		expect((await refresh(website)).status).toBe(401)
+		const afterReplay = await refresh(
+			(await phoneAppRefresh.json()).refreshToken as string,
+		)
+		expect(afterReplay.status).toBe(401)
 	})
 
 	it('rejects verification codes that are not six digits', async () => {

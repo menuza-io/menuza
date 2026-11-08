@@ -34,6 +34,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	const { orgId, jwt, tenantApiUrl } = await getOperatorTenantClient(
 		request,
 		orgSlug,
+		{ area: 'marketing' },
 	)
 
 	await requireAnyUserWithOrganizationPermission(request, orgId, [

@@ -26,6 +26,16 @@ describe('polarCheckoutStatusToOrderStatus', () => {
 })
 
 describe('mapPolarShopOrder', () => {
+	it('marks an order Polar refunded in full, not one refunded in part', () => {
+		const base = { id: 'ord_2', paid: true, metadata: {} }
+		expect(mapPolarShopOrder({ ...base, status: 'refunded' }).refunded).toBe(
+			true,
+		)
+		expect(
+			mapPolarShopOrder({ ...base, status: 'partially_refunded' }).refunded,
+		).toBe(false)
+	})
+
 	it('prefers metadata product name and net amount', () => {
 		expect(
 			mapPolarShopOrder({
@@ -41,6 +51,7 @@ describe('mapPolarShopOrder', () => {
 			id: 'ord_1',
 			checkoutId: 'chk_1',
 			paid: true,
+			refunded: false,
 			amountCents: 1999,
 			currency: 'usd',
 			metadata: {

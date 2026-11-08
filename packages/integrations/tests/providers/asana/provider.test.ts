@@ -18,6 +18,7 @@ vi.mock('../../../src/encryption', async () => {
 })
 
 import { decryptToken } from '../../../src/encryption'
+import { tokenManager } from '../../../src/token-manager'
 
 describe('AsanaProvider', () => {
 	let provider: AsanaProvider
@@ -380,8 +381,8 @@ describe('AsanaProvider', () => {
 				},
 			} as any
 
-			// Mock decryptToken to throw an error
-			vi.mocked(decryptToken).mockRejectedValueOnce(
+			// The token manager fails to produce a token
+			vi.spyOn(tokenManager, 'getValidAccessToken').mockRejectedValueOnce(
 				new Error('Decryption error'),
 			)
 

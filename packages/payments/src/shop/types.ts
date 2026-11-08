@@ -8,7 +8,13 @@ export const SHOP_ORDER_METADATA_TYPE = 'shop_order' as const
 export type ShopProcessorId = 'connect' | 'mor' | 'checkout'
 export type ShopProcessorDbValue = 'stripe' | 'polar' | 'checkout'
 
-export type ShopOrderStatus = 'paid' | 'pending' | 'failed'
+/**
+ * `disputed`: the payer opened a dispute (chargeback); the money is held until
+ * it is decided. A won dispute returns the order to `paid`, a lost one makes
+ * it `refunded`.
+ */
+export type ShopOrderStatus =
+	'paid' | 'pending' | 'failed' | 'refunded' | 'disputed'
 
 export type ShopCheckoutUi = 'redirect' | 'inline-card' | 'hosted-embed'
 
@@ -72,6 +78,17 @@ export type ShopOrderUpsert = {
 	processorPaymentId: string | null
 	processorOrderId: string | null
 	status: ShopOrderStatus
+	/**
+	 * The status was read from the processor after a refund or a void, not
+	 * taken from a (possibly stale) payment event: `failed` may then replace
+	 * `paid` (a voided authorization). Nothing replaces `refunded`.
+	 */
+	final?: boolean
+	/**
+	 * The dispute on this payment was decided for the merchant: `paid` may
+	 * then replace `disputed`. Without it a (late) `paid` never clears one.
+	 */
+	disputeWon?: boolean
 }
 
 export type ShopConnectAccountUpdate = {
@@ -98,6 +115,10 @@ export type ShopMorWebhookEvent =
 	| { type: 'checkout'; order: ShopOrderUpsert }
 
 export type ShopCheckoutWebhookEvent = {
-	type: 'payment'
+	/**
+	 * `adjustment`: a refund or a void. The event alone cannot tell a full
+	 * refund from a partial one, so the caller reads the payment again.
+	 */
+	type: 'payment' | 'adjustment'
 	order: ShopOrderUpsert
 }

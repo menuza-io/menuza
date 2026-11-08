@@ -997,6 +997,47 @@ export const StorageMigration = sqliteTable(
 	],
 )
 
+/**
+ * The objects a storage migration moves, listed once when it starts. Batches
+ * take the next pending items, so media added or removed while it runs never
+ * shifts which object is next.
+ */
+export const StorageMigrationItem = sqliteTable(
+	'StorageMigrationItem',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		migrationId: text()
+			.notNull()
+			.references(() => StorageMigration.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		objectKey: text().notNull(),
+		contentType: text().notNull(),
+		/** 'pending' | 'done' | 'failed' */
+		status: text().notNull().default('pending'),
+		attempts: integer().notNull().default(0),
+		lastError: text(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		uniqueIndex('StorageMigrationItem_migrationId_objectKey_key').on(
+			table.migrationId,
+			table.objectKey,
+		),
+		index('StorageMigrationItem_migrationId_status_idx').on(
+			table.migrationId,
+			table.status,
+		),
+	],
+)
+
 export const OrganizationNote = sqliteTable(
 	'OrganizationNote',
 	{
@@ -1149,10 +1190,14 @@ export const OrganizationInvitation = sqliteTable(
 			.$defaultFn(() => createId())
 			.notNull(),
 		email: text().notNull(),
+		// Cascade so deleting an organization (which cascades to its custom
+		// roles) is not blocked by a pending invitation. Deleting a role that
+		// still has invitations is refused in code instead (App
+		// settings/roles, Admin roles).
 		organizationRoleId: text()
 			.notNull()
 			.references(() => OrganizationRole.id, {
-				onDelete: 'restrict',
+				onDelete: 'cascade',
 				onUpdate: 'cascade',
 			}),
 		token: text().notNull(),
@@ -1220,9 +1265,10 @@ export const OrganizationInviteLink = sqliteTable(
 				onDelete: 'cascade',
 				onUpdate: 'cascade',
 			}),
+		// A link is personal: it goes when its creator's account is deleted.
 		createdById: text()
 			.notNull()
-			.references(() => User.id, { onDelete: 'restrict', onUpdate: 'cascade' }),
+			.references(() => User.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
 	},
 	(table) => [
 		uniqueIndex('OrganizationInviteLink_organizationId_createdById_key').on(
@@ -1341,11 +1387,14 @@ export const ConfigFlag = sqliteTable(
 			.notNull(),
 	},
 	(table) => [
-		uniqueIndex('ConfigFlag_key_level_organizationId_userId_key').on(
+		// NULL organization or user ids (system and organization flags) are
+		// compared as '' so they are covered too: SQLite treats NULLs in a
+		// plain unique index as distinct.
+		uniqueIndex('ConfigFlag_key_level_scope_key').on(
 			table.key,
 			table.level,
-			table.organizationId,
-			table.userId,
+			sql`coalesce(${table.organizationId}, '')`,
+			sql`coalesce(${table.userId}, '')`,
 		),
 		index('ConfigFlag_userId_idx').on(table.userId),
 		index('ConfigFlag_organizationId_idx').on(table.organizationId),
@@ -1368,6 +1417,9 @@ export const RefreshToken = sqliteTable(
 		userAgent: text(),
 		ipAddress: text(),
 		revoked: integer({ mode: 'boolean' }).default(false).notNull(),
+		// Set when the token was rotated (not signed out): the id of its
+		// successor. No foreign key, so cleaning up either row is independent.
+		replacedById: text(),
 		expiresAt: integer({ mode: 'timestamp_ms' }).notNull(),
 		createdAt: integer({ mode: 'timestamp_ms' })
 			.$defaultFn(() => new Date())
@@ -1435,6 +1487,54 @@ export const SSOConfiguration = sqliteTable(
 	],
 )
 
+/**
+ * Which identity-provider account (subject) signs in as which user, per SSO
+ * configuration. Created on a user's first SSO sign-in; afterwards SSO matches
+ * on this pair, not on the email the IdP sends, so an IdP cannot sign in as
+ * another person by asserting their address.
+ *
+ * Scoped to the configuration, not the issuer: IdPs such as Entra ID issue a
+ * pairwise `sub` per application (client id), so two organizations on one
+ * tenant, or one organization that replaces its app registration, see
+ * different subjects for the same person. A trigger (migration 0028) deletes a
+ * configuration's links when its client id or issuer changes, and Admin can
+ * reset one user's link.
+ */
+export const SSOIdentity = sqliteTable(
+	'SSOIdentity',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		ssoConfigId: text()
+			.notNull()
+			.references(() => SSOConfiguration.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		issuer: text().notNull(),
+		subject: text().notNull(),
+		userId: text()
+			.notNull()
+			.references(() => User.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		uniqueIndex('SSOIdentity_ssoConfigId_subject_key').on(
+			table.ssoConfigId,
+			table.subject,
+		),
+		uniqueIndex('SSOIdentity_ssoConfigId_userId_key').on(
+			table.ssoConfigId,
+			table.userId,
+		),
+		index('SSOIdentity_userId_idx').on(table.userId),
+	],
+)
+
 export const SSOSession = sqliteTable(
 	'SSOSession',
 	{
@@ -1451,7 +1551,7 @@ export const SSOSession = sqliteTable(
 		ssoConfigId: text()
 			.notNull()
 			.references(() => SSOConfiguration.id, {
-				onDelete: 'restrict',
+				onDelete: 'cascade',
 				onUpdate: 'cascade',
 			}),
 		providerUserId: text().notNull(),
@@ -2155,9 +2255,12 @@ export const WebsitePage = sqliteTable(
 			.$defaultFn(() => new Date())
 			.$onUpdate(() => new Date())
 			.notNull(),
-		createdById: text()
-			.notNull()
-			.references(() => User.id, { onDelete: 'restrict', onUpdate: 'cascade' }),
+		// Null once the author's account is deleted: the page belongs to the
+		// organization.
+		createdById: text().references(() => User.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
 		seoTitle: text(),
 		seoDescription: text(),
 		seoImageUrl: text(),
@@ -2413,7 +2516,15 @@ export const Organization = sqliteTable(
 		stripeSubscriptionId: text(),
 		subscriptionStatus: text(),
 		size: text(),
+		// Set only after a DNS TXT proof (see verified-domain.server.ts in App),
+		// together with verifiedDomainProvedAt. Readers also require
+		// verifiedDomainProvedAt: migration 0025 turned the unproven legacy
+		// values into pending claims.
 		verifiedDomain: text(),
+		verifiedDomainProvedAt: integer({ mode: 'timestamp_ms' }),
+		// A claim waiting for its TXT record: the domain and the expected value.
+		pendingVerifiedDomain: text(),
+		verifiedDomainToken: text(),
 		sitePublished: integer({ mode: 'boolean' }).default(false).notNull(),
 		customDomain: text(),
 		customDomainStatus: text(),
@@ -2460,6 +2571,7 @@ export const Organization = sqliteTable(
 	(table) => [
 		uniqueIndex('Organization_customDomain_key').on(table.customDomain),
 		uniqueIndex('Organization_slug_key').on(table.slug),
+		uniqueIndex('Organization_verifiedDomain_key').on(table.verifiedDomain),
 	],
 )
 
@@ -2628,7 +2740,12 @@ export const PlatformMarketingMessage = sqliteTable(
 			.notNull(),
 	},
 	(table) => [
-		index('PlatformMarketingMessage_campaignId_idx').on(table.campaignId),
+		// One message per user per campaign: a dispatch sends only to the users
+		// whose row it inserted, so two dispatches never both send.
+		uniqueIndex('PlatformMarketingMessage_campaignId_userId_key').on(
+			table.campaignId,
+			table.userId,
+		),
 		index('PlatformMarketingMessage_userId_idx').on(table.userId),
 		index('PlatformMarketingMessage_providerMessageId_idx').on(
 			table.providerMessageId,
@@ -3738,6 +3855,42 @@ export const StaffingOutbox = sqliteTable(
 			table.nextAttemptAt,
 		),
 		index('StaffingOutbox_organizationId_idx').on(table.organizationId),
+	],
+)
+
+/**
+ * One row per manager emailed about a staffing alert event, written before the
+ * email is sent. A redelivered or concurrent event finds the row and sends
+ * nothing. Ids only.
+ */
+export const StaffingAlertEmail = sqliteTable(
+	'StaffingAlertEmail',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		eventId: text().notNull(),
+		userId: text()
+			.notNull()
+			.references(() => User.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		uniqueIndex('StaffingAlertEmail_organizationId_eventId_userId_key').on(
+			table.organizationId,
+			table.eventId,
+			table.userId,
+		),
+		index('StaffingAlertEmail_userId_idx').on(table.userId),
 	],
 )
 

@@ -32,9 +32,28 @@ type ShopCardProps = {
 	organization: ShopOrganization
 	orders: ShopOrderSummary[]
 	ordersUnavailable?: boolean
+	/** The viewer may not see customer details, so orders were not loaded. */
+	ordersHidden?: boolean
 	configuredProcessors?: ShopProcessorId[]
 	/** Dev and CI only; always off in a production build. */
 	paymentsMock?: PaymentsMockUiState
+}
+
+function OrderStatus({ status }: { status: string }) {
+	switch (status) {
+		case 'paid':
+			return <Trans>Paid</Trans>
+		case 'pending':
+			return <Trans>Pending</Trans>
+		case 'failed':
+			return <Trans>Failed</Trans>
+		case 'refunded':
+			return <Trans>Refunded</Trans>
+		case 'disputed':
+			return <Trans>Disputed</Trans>
+		default:
+			return <>{status}</>
+	}
 }
 
 function formatMoney(cents: number, currency = 'usd') {
@@ -48,6 +67,7 @@ export function ShopCard({
 	organization,
 	orders,
 	ordersUnavailable = false,
+	ordersHidden = false,
 	configuredProcessors = [],
 	paymentsMock,
 }: ShopCardProps) {
@@ -396,6 +416,15 @@ export function ShopCard({
 				</CardContent>
 			</Card>
 
+			{isUsRegion && ordersHidden ? (
+				<p className="text-muted-foreground rounded-lg border border-dashed p-4 text-sm">
+					<Trans>
+						Recent orders include customer contact details, so only people who
+						can view settings see them.
+					</Trans>
+				</p>
+			) : null}
+
 			{isUsRegion && (ordersUnavailable || orders.length > 0) ? (
 				<Card>
 					<CardHeader>
@@ -437,7 +466,7 @@ export function ShopCard({
 												</p>
 											)}
 											<p className="text-muted-foreground">
-												{order.status}
+												<OrderStatus status={order.status} />
 												{order.paymentProvider
 													? ` · ${normalizeShopProcessor(order.paymentProvider)}`
 													: ''}{' '}

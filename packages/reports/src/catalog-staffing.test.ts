@@ -199,7 +199,7 @@ describe('what a person is offered', () => {
 		const offered = templatesForGrants(
 			organizationCatalog,
 			organizationTemplates(),
-			[...ORG_WIDE_REPORT_SUBJECTS],
+			[...ORG_WIDE_REPORT_SUBJECTS, 'members', 'notes'],
 		)
 		expect(
 			offered.filter((template) =>

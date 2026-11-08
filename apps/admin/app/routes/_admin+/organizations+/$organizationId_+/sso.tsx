@@ -22,7 +22,10 @@ import { z } from 'zod'
 import { SSOConfigurationForm } from '#app/components/sso-configuration-form.tsx'
 import { SSOConfigurationOverview } from '#app/components/sso-configuration-overview.tsx'
 import { auditLogService } from '#app/utils/audit-log.server.ts'
-import { ssoConfigurationService } from '#app/utils/sso-configuration.server.ts'
+import {
+	normalizeAllowedEmailDomains,
+	ssoConfigurationService,
+} from '#app/utils/sso-configuration.server.ts'
 import { type Route } from './+types/$organizationId.sso.ts'
 
 const SSOConfigurationActionSchema = z.object({
@@ -61,6 +64,13 @@ const SSOConfigurationActionSchema = z.object({
 		.optional(),
 	defaultRole: z.string().default('member').optional(),
 	attributeMapping: z.string().optional(),
+	// Comma-separated domains the IdP is trusted for (required to save).
+	allowedEmailDomains: z.string().optional(),
+	requireVerifiedEmail: z
+		.union([z.literal('on'), z.literal('off'), z.boolean()])
+		.transform((val) => val === 'on' || val === true)
+		.default(false)
+		.optional(),
 	authorizationUrl: z
 		.string()
 		.optional()
@@ -109,6 +119,10 @@ const SSOConfigurationActionSchema = z.object({
  */
 function buildSSOConfigData(configData: any) {
 	return {
+		allowedEmailDomains: normalizeAllowedEmailDomains(
+			configData.allowedEmailDomains,
+		),
+		requireVerifiedEmail: configData.requireVerifiedEmail ?? false,
 		providerName: configData.providerName,
 		issuerUrl: configData.issuerUrl,
 		clientId: configData.clientId,
@@ -268,6 +282,23 @@ export async function action({ request, params }: Route['ActionArgs']) {
 								formErrors: [
 									'Provider name, issuer URL, client ID, and client secret are required',
 								],
+							}),
+						},
+						{ status: 400 },
+					)
+				}
+
+				// The IdP is trusted only for these domains: without them it could
+				// create or sign in accounts for any address.
+				if (!normalizeAllowedEmailDomains(configData.allowedEmailDomains)) {
+					return Response.json(
+						{
+							result: submission.reply({
+								fieldErrors: {
+									allowedEmailDomains: [
+										'Enter one or more email domains, separated by commas (for example acme.com, acme.co.uk).',
+									],
+								},
 							}),
 						},
 						{ status: 400 },

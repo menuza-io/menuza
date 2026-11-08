@@ -47,6 +47,8 @@ interface SSOUser {
 	createdAt: Date
 	updatedAt: Date
 	// SSO-specific data
+	// Linked to an account at this organization's identity provider.
+	ssoLinked?: boolean
 	ssoSessions: Array<{
 		id: string
 		providerUserId: string
@@ -82,6 +84,7 @@ interface SSOUserManagementProps {
 	}>
 	onRoleChange?: (userId: string, roleId: string) => void
 	onUserStatusChange?: (userId: string, active: boolean) => void
+	onResetLink?: (userId: string) => void
 }
 
 const getRoleBadge = (role: string, _level: number) => {
@@ -137,6 +140,7 @@ export function SSOUserManagement({
 	availableRoles,
 	onRoleChange,
 	onUserStatusChange,
+	onResetLink,
 }: SSOUserManagementProps) {
 	const userCount = ssoUsers.length
 	const activeCount = ssoUsers.filter((u) => u.active).length
@@ -300,6 +304,15 @@ export function SSOUserManagement({
 															<Trans>Activate</Trans>
 														)}
 													</Button>
+													{user.ssoLinked && onResetLink ? (
+														<Button
+															size="sm"
+															variant="outline"
+															onClick={() => onResetLink(user.id)}
+														>
+															<Trans>Reset SSO link</Trans>
+														</Button>
+													) : null}
 												</div>
 											</TableCell>
 										</TableRow>

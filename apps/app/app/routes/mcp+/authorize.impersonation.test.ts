@@ -70,4 +70,31 @@ describe('MCP consent while an administrator is impersonating', () => {
 		expect(data.user.id).toBe(admin.user.id)
 		expect(data.organizations.map((o) => o.id)).toEqual([admin.org.id])
 	})
+	it('sends a signed-out user to login and back to the real /mcp/authorize path', async () => {
+		auth.getSessionUserId.mockResolvedValue(null)
+		const redirectUri = 'http://localhost:3000/callback'
+		const clientId = `signedout-${Math.random().toString(36).slice(2, 10)}`
+		await db.insert(MCPClient).values({
+			clientId,
+			clientName: 'Test MCP',
+			redirectUris: JSON.stringify([redirectUri]),
+		})
+		const url = new URL('https://app.example.test/mcp/authorize')
+		url.searchParams.set('client_id', clientId)
+		url.searchParams.set('redirect_uri', redirectUri)
+		url.searchParams.set('code_challenge', 'x'.repeat(43))
+		url.searchParams.set('code_challenge_method', 'S256')
+
+		const thrown = (await loader({ request: new Request(url) } as any).catch(
+			(e: unknown) => e,
+		)) as Response
+		expect(thrown).toBeInstanceOf(Response)
+		const location = new URL(thrown.headers.get('location')!)
+		expect(location.pathname).toBe('/login')
+		const redirectTo = location.searchParams.get('redirectTo')!
+		expect(redirectTo.startsWith('/mcp/authorize?')).toBe(true)
+		expect(new URLSearchParams(redirectTo.split('?')[1]).get('client_id')).toBe(
+			clientId,
+		)
+	})
 })

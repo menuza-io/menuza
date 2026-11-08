@@ -101,7 +101,9 @@ describe('GET /resources/reservations/context (VAL-FND-018)', () => {
 	it('returns folded flags, hex-converted emailTheme, locations, and payment readiness with zero PII', async () => {
 		const { organization } = await setupTestOrgWithUser('admin')
 
-		// Enable reservations.enabled and reservations.payments, set platform_fee_bp = 250
+		// Enable reservations.enabled and reservations.payments. The system
+		// platform_fee_bp (250) comes from migration 0025_reservations, and a
+		// second system row for the same key is refused by its unique index.
 		const insertedFlags = await db
 			.insert(ConfigFlag)
 			.values([
@@ -116,11 +118,6 @@ describe('GET /resources/reservations/context (VAL-FND-018)', () => {
 					value: true,
 					level: 'organization',
 					organizationId: organization.id,
-				},
-				{
-					key: PLATFORM_FEE_FLAG_KEY,
-					value: 250,
-					level: 'system',
 				},
 			])
 			.returning({ id: ConfigFlag.id })
@@ -198,7 +195,6 @@ describe('GET /resources/reservations/context (VAL-FND-018)', () => {
 		const inserted = await db
 			.insert(ConfigFlag)
 			.values([
-				{ key: PLATFORM_FEE_FLAG_KEY, value: 250, level: 'system' },
 				{
 					key: PLATFORM_FEE_FLAG_KEY,
 					value: 400,

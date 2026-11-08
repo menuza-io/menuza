@@ -5,7 +5,10 @@ import {
 	isStaffingReportSubject,
 } from './catalog-staffing.ts'
 import { type ReportDefinition } from './dsl.ts'
-import { isOrgWideReportSubject } from './org-wide-subjects.ts'
+import {
+	isOrgWideReportSubject,
+	isPermissionGatedReportSubject,
+} from './org-wide-subjects.ts'
 import { referencedFieldIds } from './engine.ts'
 import { type ReportTemplate } from './templates.ts'
 
@@ -27,7 +30,8 @@ function isGatedSubject(subject: string) {
 	return (
 		isStaffingReportSubject(subject) ||
 		isReservationsReportSubject(subject) ||
-		isOrgWideReportSubject(subject)
+		isOrgWideReportSubject(subject) ||
+		isPermissionGatedReportSubject(subject)
 	)
 }
 

@@ -17,6 +17,10 @@ import {
 	type PhotoStudioStyle,
 } from '#app/utils/media/photo-studio.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
+import {
+	ORG_PERMISSIONS,
+	requireUserWithOrganizationPermission,
+} from '#app/utils/organization/permissions.server.ts'
 import { type Route } from './+types/media_.studio'
 
 const GenerateSchema = z.object({
@@ -57,6 +61,19 @@ export async function action({ request, params }: Route.ActionArgs) {
 	const organization = await requireUserOrganization(request, params.orgSlug, {
 		id: true,
 	})
+	// The studio spends model credits, and its results are saved to the shared
+	// library through /media, which needs permission to manage media. Without
+	// both, a generation would cost credits and could never be saved.
+	await requireUserWithOrganizationPermission(
+		request,
+		organization.id,
+		ORG_PERMISSIONS.CREATE_MEDIA_STUDIO_ANY,
+	)
+	await requireUserWithOrganizationPermission(
+		request,
+		organization.id,
+		ORG_PERMISSIONS.UPDATE_MEDIA_ANY,
+	)
 
 	let formData: FormData
 	try {

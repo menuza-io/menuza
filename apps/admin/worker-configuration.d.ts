@@ -4,6 +4,8 @@ interface Env {
 	DB: D1Database
 	CACHE: KVNamespace
 	ASSETS: Fetcher
+	/** Service binding to the App Worker (see `app/utils/app-service.server.ts`). */
+	APP?: Fetcher
 	NODE_ENV: string
 	ALLOW_INDEXING: string
 	BASE_URL: string

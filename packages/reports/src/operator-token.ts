@@ -12,7 +12,9 @@ import { ENV } from './package-env.js'
 
 export {
 	isOrgWideReportSubject,
+	isPermissionGatedReportSubject,
 	ORG_WIDE_REPORT_SUBJECTS,
+	PERMISSION_GATED_REPORT_SUBJECTS,
 } from './org-wide-subjects.ts'
 
 export {

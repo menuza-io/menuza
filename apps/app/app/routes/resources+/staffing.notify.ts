@@ -1,4 +1,11 @@
-import { and, db, eq, Notification, Organization } from '@repo/database'
+import {
+	and,
+	db,
+	eq,
+	Notification,
+	Organization,
+	StaffingAlertEmail as StaffingAlertEmailSent,
+} from '@repo/database'
 import { StaffingAlertEmail, sendEmail } from '@repo/email'
 import {
 	MANAGER_ALERT_NOTIFICATION_TYPE,
@@ -14,13 +21,16 @@ import { isStaffingEmailEnabled } from '#app/utils/staffing/email-switch.server.
 import { describeManagerAlert } from '#app/utils/staffing/manager-alert-copy.ts'
 import {
 	loadChannelPreferences,
-	loadNotifiedUserIds,
+	loadDeliveredTypes,
 	resolveAlertRecipients,
 } from '#app/utils/staffing/manager-alerts.server.ts'
 import {
 	hasLocationScopes,
 	loadOrganizationScopes,
 } from '#app/utils/staffing/scope.server.ts'
+
+/** Recipients handled at once: bounds the time spent on a long list. */
+const DELIVERY_CONCURRENCY = 8
 
 const NO_STORE = { 'Cache-Control': 'private, no-store' }
 
@@ -136,15 +146,15 @@ export async function action({ request }: ActionFunctionArgs) {
 
 	const type = MANAGER_ALERT_NOTIFICATION_TYPE[event.kind]
 	const userIds = recipients.map((r) => r.userId)
-	const [preferences, alreadyNotified] = await Promise.all([
+	const [preferences, alreadyDelivered] = await Promise.all([
 		loadChannelPreferences({
 			organizationId: organization.id,
 			kind: event.kind,
 			userIds,
 		}),
-		loadNotifiedUserIds({
+		loadDeliveredTypes({
 			organizationId: organization.id,
-			type,
+			types: [type],
 			eventId: event.eventId,
 			userIds,
 		}),
@@ -161,18 +171,17 @@ export async function action({ request }: ActionFunctionArgs) {
 
 	let inApp = 0
 	let emailed = 0
-	for (const recipient of recipients) {
-		// Already handled on an earlier delivery of this event: do nothing again.
-		if (alreadyNotified.has(recipient.userId)) continue
+	const deliver = async (recipient: (typeof recipients)[number]) => {
+		const delivered = alreadyDelivered.get(recipient.userId)
 		const channels = preferences.get(recipient.userId) ?? {
 			inApp: true,
 			email: true,
 		}
 
-		if (channels.inApp) {
+		if (channels.inApp && !delivered?.has(type)) {
 			// Ids and counts only. The scope name and the people are looked up in
 			// the app when the manager opens it.
-			await db
+			const inserted = await db
 				.insert(Notification)
 				.values({
 					userId: recipient.userId,
@@ -187,10 +196,28 @@ export async function action({ request }: ActionFunctionArgs) {
 					}),
 				})
 				.onConflictDoNothing()
-			inApp++
+				.returning({ id: Notification.id })
+			if (inserted.length > 0) inApp++
 		}
 
 		if (channels.email && emailAllowed) {
+			// Claimed before the send, whatever the member's in-app choice: a
+			// redelivered or concurrent event finds the row and sends nothing.
+			const claim = await db
+				.insert(StaffingAlertEmailSent)
+				.values({
+					organizationId: organization.id,
+					eventId: event.eventId,
+					userId: recipient.userId,
+				})
+				.onConflictDoNothing()
+				.returning({ id: StaffingAlertEmailSent.id })
+			if (claim.length === 0) return
+			const release = () =>
+				db
+					.delete(StaffingAlertEmailSent)
+					.where(eq(StaffingAlertEmailSent.id, claim[0]!.id))
+					.catch(() => {})
 			try {
 				const result = await sendEmail({
 					to: recipient.email,
@@ -206,14 +233,22 @@ export async function action({ request }: ActionFunctionArgs) {
 					}),
 				})
 				if (result.status === 'error') {
+					// Not sent: a retried delivery may try again.
+					await release()
 					console.error('Failed to send staffing alert email')
 				} else {
 					emailed++
 				}
 			} catch {
+				await release()
 				console.error('Failed to send staffing alert email')
 			}
 		}
+	}
+	for (let i = 0; i < recipients.length; i += DELIVERY_CONCURRENCY) {
+		await Promise.all(
+			recipients.slice(i, i + DELIVERY_CONCURRENCY).map(deliver),
+		)
 	}
 
 	return answer({ inApp, emailed })

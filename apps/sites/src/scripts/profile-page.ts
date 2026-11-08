@@ -184,7 +184,10 @@ async function loadProfile(options: {
 			}
 		}
 	} catch (err) {
+		// Offline, or a refresh that failed without ending the session: the
+		// customer is still signed in and can try again.
 		console.error('Failed to load profile:', err)
+		onTransient()
 	}
 }
 

@@ -14,7 +14,6 @@ import { UserAvatar } from './user-avatar'
 interface LeadershipUser {
 	id: string
 	name: string
-	email: string
 	notesCount: number
 	rank: number
 	image?: string | null
@@ -82,7 +81,6 @@ export function LeadershipCard({ leaders, className }: LeadershipCardProps) {
 								<UserAvatar
 									user={{
 										name: leader.name,
-										email: leader.email,
 										image: leader.image,
 									}}
 									className="h-8 w-8 shrink-0"

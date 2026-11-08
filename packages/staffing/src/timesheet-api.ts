@@ -528,6 +528,11 @@ export type PayrollSummaryRow = {
 	unpaidBreakMinutes: number
 	/** Cards still waiting to be approved (open, needs review, closed). */
 	unapprovedCards: number
+	/**
+	 * Approved or locked cards whose figures moved after the decision (a
+	 * neighbouring card changed overtime): payroll must re-check them.
+	 */
+	changedCards: number
 	/** Money: present only with the pay grant. */
 	money?: {
 		estimate: true
@@ -545,8 +550,15 @@ export type PayrollSummary = {
 	period: TimesheetPayPeriod
 	filters: TimesheetFiltersEcho
 	rows: PayrollSummaryRow[]
-	totals: TimesheetMinutes & { cards: number; unapprovedCards: number }
-	/** Every card in the range is approved or locked. */
+	totals: TimesheetMinutes & {
+		cards: number
+		unapprovedCards: number
+		changedCards: number
+	}
+	/**
+	 * Every card in the range is approved or locked, and none of their figures
+	 * moved after approval.
+	 */
 	readyForPayroll: boolean
 	truncated: boolean
 	labor?: TimesheetLabor

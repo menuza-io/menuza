@@ -208,6 +208,35 @@ describe('/operator/schedule', () => {
 			])
 		})
 
+		it('returns the same shifts when a create is retried with its client id', async () => {
+			const { staffId } = await s.staff()
+			const body = {
+				scopeId: LOC_1,
+				staffId,
+				dates: ['2026-03-10', '2026-03-09'],
+				startTime: '10:00',
+				endTime: '14:00',
+				clientRequestId: 'create-retry-0001',
+			}
+			// Two attempts at once (a retry racing the first), then a late one.
+			const [first, again] = await Promise.all([
+				s.send('POST', '/shifts', body),
+				s.send('POST', '/shifts', body),
+			])
+			const alsoAgain = await s.send('POST', '/shifts', body)
+
+			expect(first.status).toBe(201)
+			expect(again.status).toBe(201)
+			const ids = first.body.shifts.map((x: any) => x.id)
+			expect(ids).toHaveLength(2)
+			expect(again.body.shifts.map((x: any) => x.id)).toEqual(ids)
+			expect(alsoAgain.body.shifts.map((x: any) => x.id)).toEqual(ids)
+			const week = await s.get(`/week?scopeId=${LOC_1}&date=2026-03-09`)
+			expect(
+				week.body.shifts.filter((x: any) => x.staffId === staffId),
+			).toHaveLength(2)
+		})
+
 		it('treats an end before the start as the next day', async () => {
 			const { staffId } = await s.staff()
 			const view = await s.shift({

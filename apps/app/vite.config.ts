@@ -9,6 +9,7 @@ import { varlockVitePlugin } from '@varlock/vite-integration'
 import { defineConfig, searchForWorkspaceRoot, type Plugin } from 'vite'
 import { envOnlyMacros } from 'vite-env-only'
 import macrosPlugin from 'vite-plugin-babel-macros'
+import { privateRouteChunks } from './vite/private-route-chunks.ts'
 
 const appDir = fileURLToPath(new URL('.', import.meta.url))
 const domain = `app.${getLocalDomain()}`
@@ -23,6 +24,15 @@ const devLan = process.env.DEV_LAN === '1'
 const hasPostHogSourceMapCredentials = Boolean(
 	process.env.POSTHOG_PERSONAL_API_KEY && process.env.POSTHOG_PROJECT_ID,
 )
+
+/**
+ * Logged-in UI code goes to `build/client/assets/app/`, which the Worker serves
+ * only with a valid session (see `vite/private-route-chunks.ts`).
+ */
+const privateChunks = privateRouteChunks({
+	appDirectory: fileURLToPath(new URL('./app', import.meta.url)),
+	clientOutDir: fileURLToPath(new URL('./build/client', import.meta.url)),
+})
 
 /**
  * Miniflare's local trace store (`.wrangler/state/v3/observability`) grows
@@ -148,6 +158,22 @@ export default defineConfig((config) => ({
 				!config.isSsrBuild
 			: true,
 	},
+	...(config.command === 'build' &&
+		MODE !== 'test' && {
+			environments: {
+				client: {
+					build: {
+						rollupOptions: { output: privateChunks.output },
+						// Production client code is minified and ships no public source
+						// maps. With PostHog credentials the PostHog plugin builds
+						// `hidden` maps, uploads them and deletes them from the output.
+						...(config.mode === 'production' && { minify: true }),
+						...(config.mode === 'production' &&
+							!hasPostHogSourceMapCredentials && { sourcemap: false }),
+					},
+				},
+			},
+		}),
 	optimizeDeps: {
 		// esbuild 0.28 rejects destructuring for Vite 6's default browser target list.
 		esbuildOptions: { target: 'es2022' },
@@ -217,6 +243,7 @@ export default defineConfig((config) => ({
 	},
 	plugins: [
 		cloudflareWorkerAliasPlugin(),
+		config.command === 'build' && MODE !== 'test' ? privateChunks.plugin : null,
 		...(isCloudflare
 			? [
 					disableLocalWorkerObservability(config.command),

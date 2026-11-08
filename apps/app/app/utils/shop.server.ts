@@ -647,6 +647,7 @@ export async function createPublicShopPaymentIntent(options: {
 		const tenantDb = await getTenantDb(organization.id)
 		platformCustomerId = await getOrCreateConnectPlatformCustomer(
 			tenantDb,
+			organization.id,
 			verifiedCustomer.customerId,
 		)
 		await syncCustomerPaymentMethodsToConnect(
@@ -864,14 +865,123 @@ export async function recordShopOrderFromConnectWebhook(
 	return null
 }
 
+/**
+ * Connect events that change a shop payment after checkout: a full refund, a
+ * dispute opened (the money is held), decided for the merchant (paid again)
+ * or lost (the money went back to the payer), or a failed or cancelled
+ * payment. The order is read from the payment intent as it is now, and its
+ * destination must be the organization's connected account.
+ */
+export async function recordShopOrderAdjustmentFromConnectWebhook(
+	object: unknown,
+	eventType: string,
+	connectAccountId?: string | null,
+) {
+	// Shop payments are destination charges on the platform account: an
+	// event from a connected account is that account's own business.
+	if (connectAccountId) return null
+	const record = (object ?? {}) as Record<string, unknown>
+	const idOf = (value: unknown) =>
+		typeof value === 'string'
+			? value
+			: value && typeof value === 'object' && 'id' in value
+				? String((value as { id: unknown }).id)
+				: null
+	let paymentIntentId: string | null = null
+	let status: ShopOrderUpsert['status']
+	let disputeWon = false
+	if (eventType === 'charge.refunded') {
+		// A partial refund leaves the order paid.
+		if (record.refunded !== true) return null
+		paymentIntentId = idOf(record.payment_intent)
+		status = 'refunded'
+	} else if (eventType === 'charge.dispute.created') {
+		paymentIntentId = idOf(record.payment_intent)
+		status = 'disputed'
+	} else if (eventType === 'charge.dispute.closed') {
+		paymentIntentId = idOf(record.payment_intent)
+		if (record.status === 'lost') {
+			status = 'refunded'
+		} else if (record.status === 'won' || record.status === 'warning_closed') {
+			// Won, or an inquiry that closed without becoming a chargeback.
+			status = 'paid'
+			disputeWon = true
+		} else {
+			return null
+		}
+	} else if (
+		eventType === 'payment_intent.payment_failed' ||
+		eventType === 'payment_intent.canceled'
+	) {
+		paymentIntentId = idOf(record.id)
+		status = 'failed'
+	} else {
+		return null
+	}
+	if (!paymentIntentId) return null
+
+	const commerce = getShopCommerce()
+	let paymentIntent: Awaited<ReturnType<ShopCommerce['retrievePaymentIntent']>>
+	try {
+		paymentIntent = await commerce.retrievePaymentIntent(paymentIntentId)
+	} catch (error) {
+		const code = (error as { statusCode?: number } | null)?.statusCode
+		if (code === 404) return null
+		throw error
+	}
+	// Paid by now (a retry on the same intent): the failure is history.
+	if (status === 'failed' && paymentIntent.status === 'succeeded') return null
+	const order = commerce.mapConnectPaymentIntentToOrder(paymentIntent)
+	if (!order) return null
+	if (
+		!(await connectAccountOwnsOrganization(
+			order.orgId,
+			connectAccountFromStripeObject(paymentIntent),
+		))
+	) {
+		console.warn(
+			'Ignored shop webhook: Stripe account does not match the organization',
+		)
+		return null
+	}
+	// A failed attempt is not final: the payer may retry on the same intent.
+	return recordShopOrder({ ...order, status, disputeWon })
+}
+
 export async function recordShopOrderFromCheckoutWebhook(
 	payload: string,
 	signature: string,
 ) {
-	const event = getShopCommerce().parseCheckoutWebhookEvent(
+	return recordShopOrderFromVerifiedCheckoutEvent(
 		getShopCommerce().verifyCheckoutWebhook(payload, signature),
 	)
+}
+
+/** Records the shop order a signature-checked Checkout.com event is about. */
+export async function recordShopOrderFromVerifiedCheckoutEvent(
+	verifiedEvent: ReturnType<ShopCommerce['verifyCheckoutWebhook']>,
+) {
+	const commerce = getShopCommerce()
+	const event = commerce.parseCheckoutWebhookEvent(verifiedEvent)
 	if (!event) return null
+	if (event.type === 'adjustment') {
+		// A refund or void event does not say what the payment is now (a
+		// partial refund sends `payment_refunded` too): read the payment as it
+		// is now, and record nothing without its id.
+		if (!event.order.processorPaymentId) {
+			console.warn(
+				'Ignored Checkout.com adjustment webhook: the event has no payment id',
+			)
+			return null
+		}
+		const current = await commerce.getOrderStatus({
+			processor: 'checkout',
+			organizationId: event.order.orgId,
+			paymentId: event.order.processorPaymentId,
+		})
+		if (!current.order) return null
+		return recordShopOrder({ ...current.order, final: true })
+	}
 	return recordShopOrder(event.order)
 }
 
@@ -895,12 +1005,18 @@ export async function handleConnectAccountUpdated(event: unknown) {
 		)
 		.limit(1)
 	if (!before) return
+	// Stripe does not order deliveries: a retried, older snapshot must not
+	// turn charges back on (or off). Store what the account is now; a failed
+	// read throws, so Stripe retries the event.
+	const current = await getShopCommerce().retrieveConnectAccountStatus(
+		update.accountId,
+	)
 
 	await db
 		.update(OrganizationTable)
 		.set({
-			stripeConnectChargesEnabled: update.chargesEnabled,
-			stripeConnectPayoutsEnabled: update.payoutsEnabled,
+			stripeConnectChargesEnabled: current.chargesEnabled,
+			stripeConnectPayoutsEnabled: current.payoutsEnabled,
 			updatedAt: new Date(),
 		})
 		.where(
@@ -910,7 +1026,7 @@ export async function handleConnectAccountUpdated(event: unknown) {
 			),
 		)
 
-	if (Boolean(before.stripeConnectChargesEnabled) !== update.chargesEnabled) {
+	if (Boolean(before.stripeConnectChargesEnabled) !== current.chargesEnabled) {
 		await notifyReservationsContextChanged(update.organizationId, 'payments')
 	}
 }
@@ -967,6 +1083,7 @@ export async function getPublicShopOrderStatus(options: {
 
 async function getOrCreateConnectPlatformCustomer(
 	tenantDb: Awaited<ReturnType<typeof getTenantDb>>,
+	organizationId: string,
 	customerId: string,
 ) {
 	const [customer] = await tenantDb
@@ -989,12 +1106,15 @@ async function getOrCreateConnectPlatformCustomer(
 		return customer.stripeCustomerId
 	}
 
+	// Two checkouts at once for one customer get the same Stripe customer
+	// (same key), and only the first write is kept.
 	const platformCustomerId =
 		await getShopCommerce().createConnectPlatformCustomer({
 			name: customer.name,
 			email: customer.email,
 			phone: customer.phone,
 			metadata: { tenantCustomerId: customer.id },
+			idempotencyKey: `tenant-cust-${organizationId}-${customer.id}`,
 		})
 
 	await tenantDb
@@ -1003,9 +1123,16 @@ async function getOrCreateConnectPlatformCustomer(
 			stripeCustomerId: platformCustomerId,
 			updatedAt: new Date(),
 		})
-		.where(eq(customers.id, customer.id))
+		.where(
+			and(eq(customers.id, customer.id), isNull(customers.stripeCustomerId)),
+		)
 
-	return platformCustomerId
+	const [stored] = await tenantDb
+		.select({ stripeCustomerId: customers.stripeCustomerId })
+		.from(customers)
+		.where(eq(customers.id, customer.id))
+		.limit(1)
+	return stored?.stripeCustomerId ?? platformCustomerId
 }
 
 async function syncCustomerPaymentMethodsToConnect(
@@ -1163,6 +1290,34 @@ async function resolveShopOrderCustomerId(
 	return customerRow?.id ?? null
 }
 
+/**
+ * The status an event may write over the stored one:
+ * - `refunded` is final: nothing replaces it.
+ * - `disputed` replaces anything but `refunded`. Only a won dispute
+ *   (`disputeWon`) returns it to `paid`; a (late) `paid` never clears it.
+ * - `paid` never undoes a refund or an open dispute.
+ * - A stale `pending`/`failed` never undoes a payment, unless the status was
+ *   read from the processor after a void (`final`), which may turn a paid
+ *   authorization into `failed`.
+ */
+function nextShopOrderStatus(order: ShopOrderUpsert) {
+	const current = shopOrders.status
+	switch (order.status) {
+		case 'refunded':
+			return order.status
+		case 'disputed':
+			return sql`CASE WHEN ${current} = 'refunded' THEN ${current} ELSE ${order.status} END`
+		case 'paid':
+			return order.disputeWon
+				? sql`CASE WHEN ${current} = 'refunded' THEN ${current} ELSE ${order.status} END`
+				: sql`CASE WHEN ${current} IN ('refunded', 'disputed') THEN ${current} ELSE ${order.status} END`
+		default:
+			return order.final
+				? sql`CASE WHEN ${current} IN ('refunded', 'disputed') THEN ${current} ELSE ${order.status} END`
+				: sql`CASE WHEN ${current} IN ('paid', 'refunded', 'disputed') THEN ${current} ELSE ${order.status} END`
+	}
+}
+
 async function upsertShopOrder(
 	tenantDb: Awaited<ReturnType<typeof getTenantDb>>,
 	order: ShopOrderUpsert,
@@ -1176,10 +1331,7 @@ async function upsertShopOrder(
 	const keepOrSet = <T>(column: unknown, value: T | null) =>
 		value === null ? sql`${column}` : value
 	const updateSet = {
-		status:
-			order.status === 'paid'
-				? order.status
-				: sql`CASE WHEN ${shopOrders.status} IN ('paid', 'refunded') THEN ${shopOrders.status} ELSE ${order.status} END`,
+		status: nextShopOrderStatus(order),
 		customerId: keepOrSet(shopOrders.customerId, customerId),
 		paymentProvider,
 		stripeCheckoutSessionId: keepOrSet(
@@ -1234,19 +1386,34 @@ async function upsertShopOrder(
 	// The same Connect order can arrive keyed by session only, by payment intent
 	// only, or by both. Attach to the row either identifier already owns, or the
 	// insert would violate the other unique index.
-	if (values.stripeCheckoutSessionId && values.stripePaymentIntentId) {
+	// Checkout.com (a status poll stores the payment id before the webhook
+	// brings the session id) and Polar (checkout id, then order id) do the same.
+	const idPairs = [
+		[
+			shopOrders.stripeCheckoutSessionId,
+			values.stripeCheckoutSessionId,
+			shopOrders.stripePaymentIntentId,
+			values.stripePaymentIntentId,
+		],
+		[
+			shopOrders.checkoutSessionId,
+			values.checkoutSessionId,
+			shopOrders.checkoutPaymentId,
+			values.checkoutPaymentId,
+		],
+		[
+			shopOrders.polarCheckoutId,
+			values.polarCheckoutId,
+			shopOrders.polarOrderId,
+			values.polarOrderId,
+		],
+	] as const
+	for (const [firstColumn, first, secondColumn, second] of idPairs) {
+		if (!first || !second) continue
 		const [existing] = await tenantDb
 			.select({ id: shopOrders.id })
 			.from(shopOrders)
-			.where(
-				or(
-					eq(
-						shopOrders.stripeCheckoutSessionId,
-						values.stripeCheckoutSessionId,
-					),
-					eq(shopOrders.stripePaymentIntentId, values.stripePaymentIntentId),
-				),
-			)
+			.where(or(eq(firstColumn, first), eq(secondColumn, second)))
 			.limit(1)
 		if (existing) {
 			await tenantDb

@@ -239,6 +239,41 @@
 			"when": 1793764281000,
 			"tag": "0033_read_analytics_permission",
 			"breakpoints": true
+		},
+		{
+			"idx": 34,
+			"version": "6",
+			"when": 1793764282000,
+			"tag": "0034_media_permissions",
+			"breakpoints": true
+		},
+		{
+			"idx": 35,
+			"version": "6",
+			"when": 1793942439052,
+			"tag": "0035_verified_domain_proof",
+			"breakpoints": true
+		},
+		{
+			"idx": 36,
+			"version": "6",
+			"when": 1793942704396,
+			"tag": "0036_sso_identity",
+			"breakpoints": true
+		},
+		{
+			"idx": 37,
+			"version": "6",
+			"when": 1793995950953,
+			"tag": "0037_concurrency_guards",
+			"breakpoints": true
+		},
+		{
+			"idx": 38,
+			"version": "6",
+			"when": 1794033996216,
+			"tag": "0038_sso_identity_config_cascades",
+			"breakpoints": true
 		}
 	]
 }

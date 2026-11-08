@@ -253,14 +253,11 @@ describe('TenantApiClient', () => {
 	})
 
 	it('posts the name and email when saving the profile', async () => {
+		const renamed = makeAccessToken({ name: 'Ada Byron' })
+		// tenant-api re-issues only the access token: rotating the refresh token
+		// would sign the customer out of their other devices.
 		const transport = new StubTransport([
-			{
-				json: {
-					success: true,
-					accessToken: makeAccessToken(),
-					refreshToken: 'refresh-2',
-				},
-			},
+			{ json: { success: true, accessToken: renamed } },
 		])
 		const client = new TenantApiClient(makeConfiguration(), transport.send)
 
@@ -270,7 +267,8 @@ describe('TenantApiClient', () => {
 			'token-123',
 		)
 
-		expect(tokens.refreshToken).toBe('refresh-2')
+		expect(tokens.accessToken).toBe(renamed)
+		expect(tokens.refreshToken).toBeUndefined()
 		expect(transport.lastRequest?.request.url).toBe(
 			'https://tenant-us.epic-startup.com/auth/profile',
 		)
@@ -280,9 +278,9 @@ describe('TenantApiClient', () => {
 		})
 	})
 
-	it('refuses token answers without a refresh token', async () => {
+	it('refuses sign-in and refresh answers without a refresh token', async () => {
 		const answer = { json: { success: true, accessToken: makeAccessToken() } }
-		const transport = new StubTransport([answer, answer, answer])
+		const transport = new StubTransport([answer, answer])
 		const client = new TenantApiClient(makeConfiguration(), transport.send)
 
 		expect((await caught(client.verify('+15550001111', '123456'))).code).toBe(
@@ -291,6 +289,12 @@ describe('TenantApiClient', () => {
 		expect((await caught(client.refresh('refresh-1', 'org_1'))).code).toBe(
 			'session_expired',
 		)
+	})
+
+	it('refuses a profile answer without an access token', async () => {
+		const transport = new StubTransport([{ json: { success: true } }])
+		const client = new TenantApiClient(makeConfiguration(), transport.send)
+
 		expect(
 			(await caught(client.updateProfile('Ada', undefined, 't'))).code,
 		).toBe('profile_not_saved')

@@ -1,3 +1,4 @@
+import { requireUserId } from '@repo/auth'
 import { and, db, eq, OrganizationLocation } from '@repo/database'
 import { redirect, type ActionFunctionArgs } from 'react-router'
 import { setSelectedLocation } from '#app/utils/location/location-cookie.server.ts'
@@ -8,6 +9,8 @@ export async function loader() {
 }
 
 export async function action({ request }: ActionFunctionArgs) {
+	// The organization comes from the body, so check the session before reading it.
+	await requireUserId(request)
 	const formData = await request.formData()
 	const orgSlug = formData.get('orgSlug') as string
 	const locationId = (formData.get('locationId') as string) || 'all'

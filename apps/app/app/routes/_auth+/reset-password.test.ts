@@ -18,6 +18,10 @@ import {
 } from '#tests/test-utils.ts'
 import { convertSetCookieToCookie } from '#tests/utils.ts'
 import {
+	createResetPasswordGrant,
+	resetPasswordGrantSessionKey,
+} from './reset-password-grant.server.ts'
+import {
 	action,
 	loader,
 	resetPasswordUsernameSessionKey,
@@ -26,6 +30,10 @@ import {
 async function createResetPasswordCookie(username: string) {
 	const verifySession = await verifySessionStorage.getSession()
 	verifySession.set(resetPasswordUsernameSessionKey, username)
+	verifySession.set(
+		resetPasswordGrantSessionKey,
+		await createResetPasswordGrant(username),
+	)
 	const cookieHeader = await verifySessionStorage.commitSession(verifySession)
 	return convertSetCookieToCookie(cookieHeader)
 }
@@ -216,6 +224,75 @@ describe('reset-password route integration', () => {
 			})
 			expect(newLoginSession).toBeDefined()
 			expect(newLoginSession?.userId).toBe(user.id)
+		})
+	})
+
+	describe('one-time grant', () => {
+		function resetRequest(cookie: string, password: string) {
+			const formData = new FormData()
+			formData.append('password', password)
+			formData.append('confirmPassword', password)
+			return createAuthenticatedRequest(
+				'http://localhost:3000/reset-password',
+				{ method: 'POST', body: formData },
+				cookie,
+			)
+		}
+
+		async function runAction(request: Request) {
+			try {
+				return (await action({ request, params: {}, context: {} } as any)) as
+					Response | { result: unknown }
+			} catch (error) {
+				return error as Response
+			}
+		}
+
+		it('refuses a replay of the same cookie after a successful reset', async () => {
+			const user = await createTestUser({ password: 'OldPassword123!' })
+			const cookie = await createResetPasswordCookie(user.username)
+
+			const first = (await runAction(
+				resetRequest(cookie, 'FirstNewPassword123!'),
+			)) as Response
+			expect(first.status).toBe(302)
+			const [afterFirst] = await db
+				.select({ hash: Password.hash })
+				.from(Password)
+				.where(eq(Password.userId, user.id))
+
+			const replay = (await runAction(
+				resetRequest(cookie, 'AttackerPassword123!'),
+			)) as Response
+			expect(replay.status).toBe(302)
+			expect(replay.headers.get('Location')).toBe('/login')
+			const [afterReplay] = await db
+				.select({ hash: Password.hash })
+				.from(Password)
+				.where(eq(Password.userId, user.id))
+			expect(afterReplay?.hash).toBe(afterFirst?.hash)
+		})
+
+		it('refuses a cookie that names a user but carries no grant', async () => {
+			const user = await createTestUser({ password: 'OldPassword123!' })
+			const verifySession = await verifySessionStorage.getSession()
+			verifySession.set(resetPasswordUsernameSessionKey, user.username)
+			const cookie = convertSetCookieToCookie(
+				await verifySessionStorage.commitSession(verifySession),
+			)
+			const [before] = await db
+				.select({ hash: Password.hash })
+				.from(Password)
+				.where(eq(Password.userId, user.id))
+			const response = (await runAction(
+				resetRequest(cookie, 'AttackerPassword123!'),
+			)) as Response
+			expect(response.headers.get('Location')).toBe('/login')
+			const [after] = await db
+				.select({ hash: Password.hash })
+				.from(Password)
+				.where(eq(Password.userId, user.id))
+			expect(after?.hash).toBe(before?.hash)
 		})
 	})
 })

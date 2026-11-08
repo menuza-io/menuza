@@ -42,6 +42,8 @@ export interface PreparedUploads {
 		mimeType?: string
 		fileSize?: number
 		status: string
+		/** Set for a media library item; attach it with attachLibraryAssetToNote. */
+		libraryAssetId?: string
 	}>
 }
 
@@ -121,6 +123,7 @@ export async function processNoteMediaUploads(
 						mimeType: asset.mimeType,
 						fileSize: asset.fileSize ?? undefined,
 						status: 'completed',
+						libraryAssetId: upload.mediaId,
 					}
 				}
 

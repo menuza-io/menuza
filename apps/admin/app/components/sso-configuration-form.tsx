@@ -45,6 +45,11 @@ const ignoredSSOConfigurationSchema = z.object({
 		.default(true),
 	defaultRole: z.string().default('member'),
 	attributeMapping: z.string().optional(),
+	allowedEmailDomains: z.string().min(1, 'Enter at least one email domain'),
+	requireVerifiedEmail: z
+		.union([z.literal('on'), z.literal('off'), z.boolean()])
+		.transform((val) => val === 'on' || val === true)
+		.default(false),
 	// Manual endpoint configuration (when autoDiscovery is false)
 	authorizationUrl: z.string().url().optional(),
 	tokenUrl: z.string().url().optional(),
@@ -68,6 +73,8 @@ interface SSOConfigurationFormProps {
 		autoDiscovery: boolean
 		pkceEnabled: boolean
 		autoProvision: boolean
+		allowedEmailDomains?: string | null
+		requireVerifiedEmail?: boolean
 		defaultRole: string
 		attributeMapping: string | null
 		authorizationUrl: string | null
@@ -352,6 +359,45 @@ export function SSOConfigurationForm({
 						</CardDescription>
 					</CardHeader>
 					<CardContent className="space-y-4">
+						<div className="space-y-2">
+							<Label htmlFor="allowedEmailDomains">
+								<Trans>Allowed email domains</Trans>
+							</Label>
+							<Input
+								id="allowedEmailDomains"
+								name="allowedEmailDomains"
+								required
+								placeholder="acme.com, acme.co.uk"
+								defaultValue={existingConfig?.allowedEmailDomains ?? ''}
+							/>
+							<p className="text-muted-foreground text-xs">
+								<Trans>
+									Required. The identity provider can only create accounts and
+									sign people in for email addresses on these domains.
+								</Trans>
+							</p>
+						</div>
+
+						<Label className="hover:bg-accent/50 has-[[data-state=checked]]:border-primary/50 has-[[data-state=checked]]:bg-accent/50 flex items-start gap-2 rounded-lg border p-3">
+							<Checkbox
+								id="requireVerifiedEmail"
+								name="requireVerifiedEmail"
+								defaultChecked={existingConfig?.requireVerifiedEmail ?? false}
+							/>
+							<div className="flex flex-col gap-1">
+								<p>
+									<Trans>Require a verified email</Trans>
+								</p>
+								<p className="text-muted-foreground text-xs">
+									<Trans>
+										Refuse sign-in unless the identity provider marks the email
+										as verified (email_verified). Some providers, such as
+										Microsoft Entra ID, do not send it.
+									</Trans>
+								</p>
+							</div>
+						</Label>
+
 						<Label className="hover:bg-accent/50 has-[[data-state=checked]]:border-primary/50 has-[[data-state=checked]]:bg-accent/50 flex items-start gap-2 rounded-lg border p-3">
 							<Checkbox
 								id="autoProvision"

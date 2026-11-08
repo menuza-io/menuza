@@ -273,6 +273,11 @@ export interface OAuthCallbackParams {
 	merchantId?: string
 	/** Registered OAuth callback URL (required by some token exchanges). */
 	redirectUri?: string
+	/**
+	 * OAuth 1.0a (Trello): the request-token secret from `oauthFlow.start`,
+	 * kept by the app in its signed hand-off record.
+	 */
+	requestTokenSecret?: string
 }
 
 // OAuth state data

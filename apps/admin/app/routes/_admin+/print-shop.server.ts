@@ -15,8 +15,8 @@ import {
 	PrintVendorProduct,
 } from '@repo/database'
 import { type ActionFunctionArgs, type LoaderFunctionArgs } from 'react-router'
-import { ENV } from 'varlock/env'
 import { z } from 'zod'
+import { postToApp } from '#app/utils/app-service.server.ts'
 
 const MARGIN_STATUSES = new Set([
 	'paid',
@@ -200,30 +200,23 @@ async function command(
 async function appCommand(
 	body: Record<string, unknown>,
 ): Promise<PrintAdminResult> {
-	const base = ENV.APP_URL?.replace(/\/$/, '')
-	const token = ENV.INTERNAL_COMMAND_TOKEN
-	if (!base || !token)
+	const result = await postToApp('/resources/print/admin-command', body, {
+		timeoutMs: 30_000,
+	})
+	if (result.status === 'not_configured')
 		return {
 			ok: false,
 			code: 'app_not_configured',
 			message: 'APP_URL or INTERNAL_COMMAND_TOKEN is not set.',
 		}
-	const response = await fetch(`${base}/resources/print/admin-command`, {
-		method: 'POST',
-		headers: {
-			Authorization: `Bearer ${token}`,
-			'Content-Type': 'application/json',
-		},
-		body: JSON.stringify(body),
-		signal: AbortSignal.timeout(30_000),
-	}).catch(() => null)
-	if (!response) {
+	if (result.status === 'unreachable') {
 		return {
 			ok: false,
 			code: 'app_unreachable',
 			message: 'The App did not answer.',
 		}
 	}
+	const { response } = result
 	if (response.ok) return { ok: true }
 	const error = (await response.json().catch(() => null)) as {
 		error?: string

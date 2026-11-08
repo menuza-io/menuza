@@ -2,6 +2,10 @@ import { invariant } from '@epic-web/invariant'
 import { verifySessionStorage } from '@repo/auth'
 import { db, eq, or, User } from '@repo/database'
 import { data, redirect } from 'react-router'
+import {
+	createResetPasswordGrant,
+	resetPasswordGrantSessionKey,
+} from './reset-password-grant.server.ts'
 import { resetPasswordUsernameSessionKey } from './reset-password.tsx'
 import { type VerifyFunctionArgs } from './verify.server.tsx'
 
@@ -32,6 +36,10 @@ export async function handleVerification({
 		request.headers.get('cookie'),
 	)
 	verifySession.set(resetPasswordUsernameSessionKey, user.username)
+	verifySession.set(
+		resetPasswordGrantSessionKey,
+		await createResetPasswordGrant(user.username),
+	)
 	return redirect('/reset-password', {
 		headers: {
 			'set-cookie': await verifySessionStorage.commitSession(verifySession),

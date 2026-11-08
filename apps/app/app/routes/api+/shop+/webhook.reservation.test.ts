@@ -29,7 +29,18 @@ vi.mock('#app/utils/shop.server.ts', async () => {
 	const commerce = createShopCommerce(
 		createShopCommerceConfigFromEnv(process.env),
 	)
-	return { recordShopOrder, getShopCommerce: () => commerce }
+	return {
+		recordShopOrder,
+		getShopCommerce: () => commerce,
+		// The real one also re-reads refunds and voids; payment events are
+		// recorded as parsed.
+		recordShopOrderFromVerifiedCheckoutEvent: async (
+			verified: ReturnType<typeof commerce.verifyCheckoutWebhook>,
+		) => {
+			const event = commerce.parseCheckoutWebhookEvent(verified)
+			if (event) await recordShopOrder(event.order)
+		},
+	}
 })
 
 function post(payload: string, signature: string) {
