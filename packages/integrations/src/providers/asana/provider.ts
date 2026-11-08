@@ -238,6 +238,30 @@ export class AsanaProvider extends BaseIntegrationProvider {
 	}
 
 	/**
+	 * Revoke the grant (best effort, used on disconnect). Asana revokes by
+	 * refresh token; the stored refresh token is used when there is one.
+	 */
+	async revokeToken(token: string, integration?: Integration): Promise<void> {
+		let revoke = token
+		if (integration?.refreshToken) {
+			const { decryptToken } = await import('../../encryption')
+			revoke = await decryptToken(integration.refreshToken)
+		}
+		const response = await fetch('https://app.asana.com/-/oauth_revoke', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+			body: new URLSearchParams({
+				client_id: this.clientId,
+				client_secret: this.clientSecret,
+				token: revoke,
+			}).toString(),
+		})
+		if (!response.ok) {
+			throw new Error(`Asana token revoke failed: ${response.status}`)
+		}
+	}
+
+	/**
 	 * Refresh Asana access token
 	 */
 	async refreshToken(refreshToken: string): Promise<TokenData> {
@@ -293,6 +317,23 @@ export class AsanaProvider extends BaseIntegrationProvider {
 	}
 
 	/**
+	 * A usable access token. Asana access tokens last an hour: the token
+	 * manager decrypts the stored token, refreshes it when it is expired or
+	 * about to expire, and persists the new one.
+	 */
+	private async getAccessToken(integration: Integration): Promise<string> {
+		const { tokenManager } = await import('../../token-manager')
+		const accessToken = await tokenManager.getValidAccessToken(
+			integration,
+			this,
+		)
+		if (!accessToken) {
+			throw new Error('Failed to obtain access token for Asana integration')
+		}
+		return accessToken
+	}
+
+	/**
 	 * Get available Asana projects (mapped as channels)
 	 */
 	async getAvailableChannels(integration: Integration): Promise<Channel[]> {
@@ -301,13 +342,7 @@ export class AsanaProvider extends BaseIntegrationProvider {
 				throw new Error('No access token available for Asana integration')
 			}
 
-			// Decrypt the access token
-			const { decryptToken } = await import('../../encryption')
-			const accessToken = await decryptToken(integration.accessToken)
-
-			if (!accessToken) {
-				throw new Error('Failed to decrypt access token for Asana integration')
-			}
+			const accessToken = await this.getAccessToken(integration)
 
 			// Get user's workspaces first
 			const workspaces = await this.getUserWorkspaces(accessToken)
@@ -365,18 +400,11 @@ export class AsanaProvider extends BaseIntegrationProvider {
 		message: MessageData,
 	): Promise<void> {
 		try {
-			// Decrypt the access token
-			const { decryptToken } = await import('../../encryption')
-
 			if (!connection.integration.accessToken) {
 				throw new Error('No access token available for Asana integration')
 			}
 
-			const accessToken = await decryptToken(connection.integration.accessToken)
-
-			if (!accessToken) {
-				throw new Error('Failed to decrypt access token for Asana integration')
-			}
+			const accessToken = await this.getAccessToken(connection.integration)
 
 			// Parse connection config
 			const config = connection.config as any
@@ -462,18 +490,11 @@ export class AsanaProvider extends BaseIntegrationProvider {
 		connection: NoteIntegrationConnection & { integration: Integration },
 	): Promise<boolean> {
 		try {
-			// Decrypt the access token
-			const { decryptToken } = await import('../../encryption')
-
 			if (!connection.integration.accessToken) {
 				return false
 			}
 
-			const accessToken = await decryptToken(connection.integration.accessToken)
-
-			if (!accessToken) {
-				return false
-			}
+			const accessToken = await this.getAccessToken(connection.integration)
 
 			// Parse connection config
 			const config = connection.config as any

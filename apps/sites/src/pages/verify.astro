@@ -52,7 +52,6 @@ if (!organization) {
 						name="code"
 						placeholder="123456"
 						required
-						maxlength="6"
 						minlength="6"
 						inputmode="numeric"
 						autocomplete="one-time-code"
@@ -75,6 +74,7 @@ if (!organization) {
 </SitePage>
 
 <script>
+	import { isCompleteOtpCode, otpCodeDigits } from '@repo/common/ascii-digits'
 	import {
 		getOrgBinding,
 		redirectHomeIfSignedIn,
@@ -116,17 +116,32 @@ if (!organization) {
 		codeField.select()
 	}
 
+	// tenant-api accepts six ASCII digits only. An Arabic keyboard types
+	// Arabic-Indic digits and a pasted code may be spaced ("123 456"), so keep
+	// the digits as they arrive instead of letting maxlength cut a paste short.
+	codeField.addEventListener('input', () => {
+		const digits = otpCodeDigits(codeField.value)
+		if (digits !== codeField.value) codeField.value = digits
+	})
+
 	form.addEventListener('submit', async (e) => {
 		e.preventDefault()
 		errorMessage.classList.add('hidden')
 		codeField.removeAttribute('aria-invalid')
 		codeField.removeAttribute('aria-describedby')
+		const code = otpCodeDigits(codeField.value)
+		codeField.value = code
+		if (!isCompleteOtpCode(code)) {
+			showError(invalidLabel)
+			return
+		}
 		submitButton.disabled = true
 		submitButton.textContent = verifyingLabel
 
 		const formData = new FormData(form)
 		const payload = {
 			...Object.fromEntries(formData.entries()),
+			code,
 			...getOrgBinding(),
 		}
 

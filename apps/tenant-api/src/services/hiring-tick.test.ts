@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
+import { sql } from 'drizzle-orm'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { type ManagerAlertEvent, managerAlertEventSchema } from '@repo/staffing'
 import {
@@ -155,6 +156,43 @@ describe('retention of declined applicants', () => {
 			changes: { count: 1, reason: 'retention' },
 		})
 		expect(JSON.stringify(after)).not.toMatch(/Zainab|zainab@/)
+	})
+
+	it('deletes and audits together, counting only the rows deleted', async () => {
+		const kept = await seedApplication(db, {
+			stage: 'declined',
+			retentionExpiresAt: NOW - 1,
+		})
+		await seedApplication(db, {
+			stage: 'declined',
+			retentionExpiresAt: NOW - 1,
+		})
+		// Stands in for a row that changed between the select and the delete:
+		// SQLite skips its deletion.
+		await db.run(
+			sql.raw(
+				`CREATE TRIGGER keep_one BEFORE DELETE ON hiring_applications WHEN old.id = '${kept.id}' BEGIN SELECT RAISE(IGNORE); END`,
+			),
+		)
+		expect(await purgeExpiredApplications(db, NOW)).toEqual({ purged: 1 })
+		const purge = (await db.select().from(staffAuditLog)).find(
+			(r) => r.action === 'hiring.applications.purged',
+		)
+		expect(purge?.changes).toMatchObject({ count: 1 })
+	})
+
+	it('keeps the applicants when the purge cannot be audited', async () => {
+		await seedApplication(db, {
+			stage: 'declined',
+			retentionExpiresAt: NOW - 1,
+		})
+		await db.run(
+			sql.raw(
+				`CREATE TRIGGER no_purge_audit BEFORE INSERT ON staff_audit_log WHEN new.action = 'hiring.applications.purged' BEGIN SELECT RAISE(ABORT, 'audit down'); END`,
+			),
+		)
+		await expect(purgeExpiredApplications(db, NOW)).rejects.toThrow()
+		expect(await remaining()).toHaveLength(1)
 	})
 
 	it('does nothing, and writes nothing, when nothing is due', async () => {

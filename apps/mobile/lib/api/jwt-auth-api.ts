@@ -18,6 +18,11 @@ import {
 	type User,
 } from '@repo/types'
 import { JWTHttpClient } from './jwt-http-client'
+import {
+	RefreshFailedError,
+	type RefreshedSession,
+	refreshSessionOnce,
+} from './session-refresh'
 
 export interface JWTAuthApiConfig {
 	baseUrl: string
@@ -71,45 +76,32 @@ export class JWTAuthApi {
 	}
 
 	/**
-	 * Handle token refresh
+	 * Handle token refresh for the HTTP client: joins the app's single shared
+	 * refresh, which reads the stored tokens itself.
 	 */
 	private async handleTokenRefresh(
-		accessToken: string,
-		refreshToken: string,
-		userId: string,
+		_accessToken: string,
+		_refreshToken: string,
+		_userId: string,
 	): Promise<{
 		accessToken: string
 		refreshToken: string
 		expiresIn: number
 		expiresAt: string
 	}> {
-		const response = await fetch(
-			`${this.httpClient.getConfig().baseUrl}${this.endpoints.refresh}`,
-			{
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({ refreshToken, userId }),
-			},
+		return (await this.refreshSession()).tokens
+	}
+
+	/**
+	 * Refreshes the stored session once for every concurrent caller. Throws a
+	 * RefreshFailedError; only `endsSession` errors cleared the stored tokens.
+	 */
+	async refreshSession(): Promise<RefreshedSession> {
+		const session = await refreshSessionOnce(
+			this.httpClient.getConfig().baseUrl,
 		)
-
-		if (!response.ok) {
-			throw new Error('Token refresh failed')
-		}
-
-		const data = await response.json()
-
-		if (!data.success || !data.data) {
-			throw new Error(data.message || 'Token refresh failed')
-		}
-
-		return {
-			accessToken: data.data.accessToken,
-			refreshToken: data.data.refreshToken,
-			expiresIn: data.data.expiresIn,
-			expiresAt: data.data.expiresAt,
-		}
+		await this.httpClient.setAccessToken(session.tokens.accessToken)
+		return session
 	}
 
 	/**
@@ -349,34 +341,27 @@ export class JWTAuthApi {
 	 * Refreshes JWT tokens using refresh token
 	 */
 	async refreshTokens(
-		refreshToken: string,
-		userId: string,
+		_refreshToken: string,
+		_userId: string,
 	): Promise<JWTRefreshApiResponse> {
+		// The stored tokens are what gets refreshed, through the shared refresh,
+		// so a second caller never replays an already-rotated token.
 		try {
-			const response = await this.httpClient.post<
-				JWTRefreshApiResponse['data']
-			>(this.endpoints.refresh, { refreshToken, userId })
-
-			if (!response.success) {
-				return {
-					success: false,
-					error: response.error,
-					message: response.message,
-					status: response.status,
-				}
-			}
-
-			// Set the new access token for future requests
-			if (response.data?.accessToken) {
-				await this.httpClient.setAccessToken(response.data.accessToken)
-			}
-
+			const { tokens, user } = await this.refreshSession()
 			return {
 				success: true,
-				data: response.data,
-				status: response.status,
+				data: { ...tokens, user },
+				status: 200,
 			}
 		} catch (error) {
+			if (error instanceof RefreshFailedError) {
+				return {
+					success: false,
+					error: error.endsSession ? 'invalid_refresh_token' : 'refresh_failed',
+					message: error.message,
+					status: error.status,
+				}
+			}
 			return this.handleError(error as Error)
 		}
 	}

@@ -77,7 +77,7 @@ export async function handleChangeEmailVerification({
 	if (!preUpdateUser) throw new Response('User not found', { status: 404 })
 	const [user] = await db
 		.update(User)
-		.set({ email: newEmail })
+		.set({ email: newEmail.toLowerCase() })
 		.where(eq(User.id, submission.value.target))
 		.returning({ id: User.id, email: User.email, username: User.username })
 	if (!user) throw new Response('User not found', { status: 404 })
@@ -239,7 +239,19 @@ async function pendingChangeEmailSecret(request: Request, target: string) {
 		: null
 }
 
-export async function checkCodeValidity({
+export async function checkCodeValidity(args: {
+	code: string
+	type: VerificationTypes | typeof twoFAVerifyVerificationType
+	target: string
+}): Promise<'valid' | 'expired' | 'invalid'> {
+	return (await checkCode(args)).status
+}
+
+/**
+ * Like `checkCodeValidity`, plus the stored secret the code matched (null for a
+ * backup code), so the caller can consume exactly that row.
+ */
+async function checkCode({
 	code,
 	type,
 	target,
@@ -247,7 +259,10 @@ export async function checkCodeValidity({
 	code: string
 	type: VerificationTypes | typeof twoFAVerifyVerificationType
 	target: string
-}): Promise<'valid' | 'expired' | 'invalid'> {
+}): Promise<{
+	status: 'valid' | 'expired' | 'invalid'
+	secret: string | null
+}> {
 	const [verification] = await db
 		.select({
 			algorithm: Verification.algorithm,
@@ -259,29 +274,29 @@ export async function checkCodeValidity({
 		.from(Verification)
 		.where(and(eq(Verification.target, target), eq(Verification.type, type)))
 		.limit(1)
-	if (!verification) return 'invalid'
+	if (!verification) return { status: 'invalid', secret: null }
 	const result = await verifyTOTP({
 		otp: code,
 		...verification,
 	})
 	if (result) {
 		if (verification.expiresAt && verification.expiresAt < new Date()) {
-			return 'expired'
+			return { status: 'expired', secret: null }
 		}
-		return 'valid'
+		return { status: 'valid', secret: verification.secret }
 	}
 
 	// For 2FA verification, also try backup codes as fallback
 	if (type === twoFAVerificationType) {
 		const backupCodeValid = await validateAndConsumeBackupCode(target, code)
-		if (backupCodeValid) return 'valid'
+		if (backupCodeValid) return { status: 'valid', secret: null }
 	}
 
 	if (verification.expiresAt && verification.expiresAt < new Date()) {
-		return 'expired'
+		return { status: 'expired', secret: null }
 	}
 
-	return 'invalid'
+	return { status: 'invalid', secret: null }
 }
 
 export async function isCodeValid(args: {
@@ -310,13 +325,15 @@ export async function validateRequest(
 		if (!attempts.allowed) return createRateLimitResponse(attempts.resetAt)
 	}
 
+	let checkedSecret: string | null = null
 	const submission = await parseWithZod(body, {
 		schema: VerifySchema.superRefine(async (data, ctx) => {
-			const status = await checkCodeValidity({
+			const { status, secret } = await checkCode({
 				code: data[codeQueryParam],
 				type: data[typeQueryParam],
 				target: data[targetQueryParam],
 			})
+			checkedSecret = secret
 			if (status !== 'valid') {
 				ctx.addIssue({
 					path: ['code'],
@@ -341,24 +358,38 @@ export async function validateRequest(
 
 	const { value: submissionValue } = submission
 
-	async function deleteVerification() {
-		await db
+	/**
+	 * Consume exactly the code that was checked. Of several concurrent requests
+	 * with the same code only one deletes the row; the others (and any request
+	 * racing a newer code that replaced it) get "Invalid code".
+	 */
+	async function consumeVerification() {
+		if (!checkedSecret) return false
+		const deleted = await db
 			.delete(Verification)
 			.where(
 				and(
 					eq(Verification.target, submissionValue[targetQueryParam]),
 					eq(Verification.type, submissionValue[typeQueryParam]),
+					eq(Verification.secret, checkedSecret),
 				),
 			)
+			.returning({ id: Verification.id })
+		return deleted.length > 0
 	}
+	const alreadyUsed = () =>
+		data(
+			{ result: submission.reply({ fieldErrors: { code: ['Invalid code'] } }) },
+			{ status: 400 },
+		)
 
 	switch (submissionValue[typeQueryParam]) {
 		case 'reset-password': {
-			await deleteVerification()
+			if (!(await consumeVerification())) return alreadyUsed()
 			return handleResetPasswordVerification({ request, body, submission })
 		}
 		case 'onboarding': {
-			await deleteVerification()
+			if (!(await consumeVerification())) return alreadyUsed()
 			return handleOnboardingVerification({ request, body, submission })
 		}
 		case 'change-email': {

@@ -3,6 +3,7 @@ import {
 	type LaborRules,
 	NEUTRAL_LABOR_RULES,
 	ROUNDING_MODES,
+	roundingIncrementSchema,
 	thresholdRuleSchema,
 } from './rules.ts'
 import {
@@ -84,7 +85,7 @@ const holidaySchema = z
 const roundingSchema = z
 	.object({
 		mode: z.enum(ROUNDING_MODES),
-		incrementMinutes: z.number().int().min(1).max(60),
+		incrementMinutes: roundingIncrementSchema,
 	})
 	.strict()
 

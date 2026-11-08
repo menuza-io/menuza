@@ -1,7 +1,17 @@
 import { eq } from 'drizzle-orm'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { shifts, staffAuditLog, staffAvailability } from '@repo/tenant-db'
-import { makeOrg, type TestOrg } from '../../tests/staff-harness.ts'
+import {
+	shiftRequests,
+	shifts,
+	staffAuditLog,
+	staffAvailability,
+	staffMembers,
+} from '@repo/tenant-db'
+import {
+	makeOrg,
+	mintStaffToken,
+	type TestOrg,
+} from '../../tests/staff-harness.ts'
 import {
 	at,
 	CHI,
@@ -705,6 +715,156 @@ describe('time off, availability and shift requests', () => {
 			)
 			expect(rejected.body.request.status).toBe('rejected')
 			expect(rejected.body.shifts).toEqual([])
+		})
+
+		it('refuses a request whose shift moved after it was made', async () => {
+			const { ana, ben, anaShift } = await twoPublished()
+			const created = await s.send('POST', '/requests', {
+				kind: 'cover',
+				shiftId: anaShift.id,
+				requesterStaffId: ana.staffId,
+				targetStaffId: ben.staffId,
+			})
+			// Ben agreed to 09:00-17:00; the manager then moves it to the evening.
+			h.setClock(at('2026-03-02', '12:05'))
+			const moved = await s.send('PATCH', `/shifts/${anaShift.id}`, {
+				startTime: '17:00',
+				endTime: '23:00',
+			})
+			expect(moved.status).toBe(200)
+			const pendingMove = await s.send(
+				'POST',
+				`/requests/${created.body.request.id}/decision`,
+				{ decision: 'approve' },
+			)
+			expect(pendingMove.status).toBe(409)
+			expect(pendingMove.body.error).toBe('request_stale')
+			// Still refused once the move is published.
+			h.setClock(at('2026-03-02', '12:10'))
+			expect((await s.publish(LOC_1, WEEK)).status).toBe(200)
+			const published = await s.send(
+				'POST',
+				`/requests/${created.body.request.id}/decision`,
+				{ decision: 'approve' },
+			)
+			expect(published.status).toBe(409)
+			expect(published.body.error).toBe('request_stale')
+		})
+
+		it('still approves a request after an unrelated edit to the shift is published', async () => {
+			const { ana, ben, anaShift } = await twoPublished()
+			const created = await s.send('POST', '/requests', {
+				kind: 'cover',
+				shiftId: anaShift.id,
+				requesterStaffId: ana.staffId,
+				targetStaffId: ben.staffId,
+			})
+			// The manager adds a note; the times Ben agreed to stay the same.
+			h.setClock(at('2026-03-02', '12:05'))
+			const noted = await s.send('PATCH', `/shifts/${anaShift.id}`, {
+				notes: 'Bring the keys',
+			})
+			expect(noted.status).toBe(200)
+			h.setClock(at('2026-03-02', '12:10'))
+			expect((await s.publish(LOC_1, WEEK)).status).toBe(200)
+
+			const approved = await s.send(
+				'POST',
+				`/requests/${created.body.request.id}/decision`,
+				{ decision: 'approve' },
+			)
+			expect(approved.status).toBe(200)
+			expect(approved.body.request.status).toBe('approved')
+		})
+
+		it('refuses to approve a request once its shift has begun, and drops it from the count', async () => {
+			const { ana, anaShift } = await twoPublished()
+			const created = await s.send('POST', '/requests', {
+				kind: 'drop',
+				shiftId: anaShift.id,
+				requesterStaffId: ana.staffId,
+			})
+			expect(created.status).toBe(201)
+			h.setClock(at('2026-03-03', '09:30'))
+			const late = await s.send(
+				'POST',
+				`/requests/${created.body.request.id}/decision`,
+				{ decision: 'approve' },
+			)
+			expect(late.status).toBe(409)
+			expect(late.body.error).toBe('shift_started')
+			expect(
+				(await s.get(`/week?scopeId=${LOC_1}&date=${WEEK}`)).body.pending
+					.shiftRequests,
+			).toBe(0)
+			// A new request for a shift under way is refused too.
+			const again = await s.send('POST', '/requests', {
+				kind: 'drop',
+				shiftId: anaShift.id,
+				requesterStaffId: ana.staffId,
+				submission: 'manager_entered',
+			})
+			expect(again.status).toBe(409)
+		})
+
+		it('never hands a swapped shift to someone who has left', async () => {
+			const { ana, ben, anaShift, benShift } = await twoPublished()
+			const created = await s.send('POST', '/requests', {
+				kind: 'swap',
+				shiftId: anaShift.id,
+				requesterStaffId: ana.staffId,
+				targetStaffId: ben.staffId,
+				targetShiftId: benShift.id,
+			})
+			const db = await h.db(ORG_A)
+			await db
+				.update(staffMembers)
+				.set({ status: 'terminated' })
+				.where(eq(staffMembers.id, ana.staffId))
+			const decided = await s.send(
+				'POST',
+				`/requests/${created.body.request.id}/decision`,
+				{ decision: 'approve' },
+			)
+			expect(decided.status).toBe(422)
+			expect(decided.body.error).toBe('staff_terminated')
+			const [row] = await db
+				.select()
+				.from(shifts)
+				.where(eq(shifts.id, benShift.id))
+			expect(row!.draftPatch).toBeNull()
+		})
+
+		it('cancels the open requests of someone who is terminated', async () => {
+			const { ana, ben, anaShift, benShift } = await twoPublished()
+			const created = await s.send('POST', '/requests', {
+				kind: 'swap',
+				shiftId: anaShift.id,
+				requesterStaffId: ana.staffId,
+				targetStaffId: ben.staffId,
+				targetShiftId: benShift.id,
+			})
+			const terminated = await h.app.request(
+				`/operator/staff/${ana.staffId}/terminate`,
+				{
+					method: 'POST',
+					headers: {
+						Authorization: `Bearer ${await mintStaffToken({ orgId: ORG_A })}`,
+						'content-type': 'application/json',
+					},
+					body: JSON.stringify({
+						reason: 'Resigned',
+						eligibleForRehire: true,
+					}),
+				},
+			)
+			expect(terminated.status).toBe(200)
+			const db = await h.db(ORG_A)
+			const [request] = await db
+				.select()
+				.from(shiftRequests)
+				.where(eq(shiftRequests.id, created.body.request.id))
+			expect(request!.status).toBe('cancelled')
 		})
 
 		it('only accepts requests the requester can make', async () => {

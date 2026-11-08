@@ -10,6 +10,7 @@ import {
 	PrintVendorOrder,
 	PrintVendorProduct,
 } from '@repo/database'
+import { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { insertTestUser } from '#tests/dashboard-utils.ts'
 import { createTestOrganization } from '#tests/test-utils.ts'
@@ -37,8 +38,26 @@ const stripeMock = vi.hoisted(() => ({
 			})),
 		},
 	},
-	refunds: { create: vi.fn(async () => ({ id: 're_1' })) },
+	refunds: {
+		create: vi.fn(
+			async (params: { payment_intent: string; amount: number }) => {
+				stripeRefunds.push({ ...params, status: 'succeeded' })
+				return { id: `re_${stripeRefunds.length}` }
+			},
+		),
+		list: vi.fn(({ payment_intent }: { payment_intent: string }) =>
+			(async function* () {
+				yield* stripeRefunds.filter(
+					(refund) => refund.payment_intent === payment_intent,
+				)
+			})(),
+		),
+	},
 }))
+/** Refunds Stripe holds, whatever the order's ledger says. */
+const stripeRefunds = vi.hoisted(
+	() => [] as Array<{ payment_intent: string; amount: number; status: string }>,
+)
 
 const vendorState = vi.hoisted(() => ({
 	value: null as null | 'returned' | 'failed' | 'cancelled',
@@ -92,6 +111,7 @@ const {
 	getPrintOrderDetail,
 	submitPrintOrder,
 	syncOpenPrintOrders,
+	syncPrintVendorOrder,
 	adminRetryPrintOrder,
 	continuePrintSubmission,
 	adminRefundPrintOrder,
@@ -208,6 +228,7 @@ describe('shipped print orders', () => {
 		vi.clearAllMocks()
 		vendorState.value = null
 		vendorState.quoteError = null
+		stripeRefunds.length = 0
 	})
 
 	it('quotes with the markup, takes payment and submits to the vendor', async () => {
@@ -871,6 +892,24 @@ describe('shipped print orders', () => {
 		})
 	})
 
+	it('does not submit an order that was held after the sweep read it', async () => {
+		const { orderId } = await paidOrderLater()
+		await db
+			.update(PrintOrder)
+			.set({ status: 'held', holdReason: 'partial_cancel' })
+			.where(eq(PrintOrder.id, orderId))
+		expect(await submitPrintOrder(orderId)).toBe('done')
+		expect((await getPrintOrderDetail(null, orderId)).order).toMatchObject({
+			status: 'held',
+			holdReason: 'partial_cancel',
+		})
+		// Only Admin's retry may take a held order.
+		expect(await submitPrintOrder(orderId, { fromHeld: true })).toBe('done')
+		expect((await getPrintOrderDetail(null, orderId)).order.status).toBe(
+			'submitted',
+		)
+	})
+
 	it('refunds a paid order the vendor refuses when it is re-quoted', async () => {
 		const { orderId } = await paidOrderLater()
 		vendorState.quoteError = 'rejected'
@@ -902,6 +941,344 @@ describe('shipped print orders', () => {
 		})
 		expect(vendorOrders[0]!.status).toBe('pending')
 		expect(stripeMock.refunds.create).not.toHaveBeenCalled()
+	})
+
+	/**
+	 * Paid desk cards in two sizes, the submission left for later: A6 prints at
+	 * Gelato, and 4x6 at `vendorOf4x6` (one vendor order per vendor).
+	 */
+	async function paidTwoSizeOrder(vendorOf4x6: 'gelato' | 'prodigi') {
+		const { access, design } = await setup()
+		// Replaced as Admin does: one active row per product and size.
+		await db
+			.update(PrintVendorProduct)
+			.set({ active: false })
+			.where(eq(PrintVendorProduct.sizeKey, '4x6'))
+		await db.insert(PrintVendorProduct).values({
+			product: 'desk_card',
+			sizeKey: '4x6',
+			vendor: vendorOf4x6,
+			vendorSku: `cards_4x6_${vendorOf4x6}`,
+			bleedMm: 3,
+		})
+		const [other] = await db
+			.insert(PrintDesign)
+			.values({
+				organizationId: access.organization.id,
+				createdById: access.userId,
+				name: 'Desk cards 4x6',
+				product: 'desk_card',
+				sizeKey: '4x6',
+				style: 'classic',
+				templateVersion: 1,
+				content: {},
+				status: 'approved',
+				snapshot: { ...snapshot(), sizeKey: '4x6' },
+				snapshotHash: 'hash-2',
+			})
+			.returning()
+		const request = new Request('https://app.test/')
+		const orderId = await createPrintQuote(request, access, {
+			lines: [
+				{ designId: design.id, quantity: 1 },
+				{ designId: other!.id, quantity: 1 },
+			],
+			address,
+			scopeId: null,
+		})
+		const url = await startPrintCheckout(
+			request,
+			access,
+			orderId,
+			'https://app.test/x',
+		)
+		const { order } = await getPrintOrderDetail(null, orderId)
+		await handlePrintStripeSession(
+			{
+				id: url.split('/').pop()!,
+				metadata: {
+					type: 'print_order',
+					orderId,
+					organizationId: access.organization.id,
+				},
+				payment_status: 'paid',
+				currency: 'usd',
+				amount_total: order.totalCents,
+				total_details: { amount_tax: 0 },
+				payment_intent: `pi_${orderId}`,
+			} as never,
+			'checkout.session.completed',
+			{ later: () => {} },
+		)
+		const { vendorOrders } = await getPrintOrderDetail(null, orderId)
+		return {
+			orderId,
+			gelato: vendorOrders.find((row) => row.vendor === 'gelato')!,
+			prodigi: vendorOrders.find((row) => row.vendor === 'prodigi'),
+		}
+	}
+
+	const refundedIntents = () =>
+		stripeMock.refunds.create.mock.calls.map(
+			(call) =>
+				(call as unknown as [{ payment_intent: string }])[0].payment_intent,
+		)
+
+	async function vendorOrderRow(id: string) {
+		const [row] = await db
+			.select()
+			.from(PrintVendorOrder)
+			.where(eq(PrintVendorOrder.id, id))
+		return row!
+	}
+
+	it('never refunds a vendor drop automatically while another vendor may have the rest', async () => {
+		// Gelato has its part; sending the Prodigi part timed out, so Prodigi
+		// may have it as well.
+		const { orderId, gelato, prodigi } = await paidTwoSizeOrder('prodigi')
+		await db
+			.update(PrintVendorOrder)
+			.set({ status: 'submitted', vendorOrderId: `mock_${Date.now()}_g` })
+			.where(eq(PrintVendorOrder.id, gelato.id))
+		await db
+			.update(PrintOrder)
+			.set({ status: 'held', holdReason: 'vendor_unknown' })
+			.where(eq(PrintOrder.id, orderId))
+
+		vendorState.value = 'cancelled'
+		await syncOpenPrintOrders(1000)
+		const held = await getPrintOrderDetail(null, orderId)
+		expect(held.order).toMatchObject({
+			status: 'held',
+			holdReason: 'vendor_unknown',
+			failureReason: 'vendor_cancelled',
+			refundCents: 0,
+		})
+		expect((await vendorOrderRow(gelato.id)).status).toBe('cancelled')
+		expect((await vendorOrderRow(prodigi!.id)).status).toBe('pending')
+		expect(refundedIntents()).not.toContain(`pi_${orderId}`)
+
+		// Sending the rest would ship half the order at the full price: Admin
+		// checks the other vendor, then refunds.
+		await expect(
+			adminRetryPrintOrder(orderId, false, { checkedVendor: true }),
+		).rejects.toMatchObject({ code: 'refund_needed' })
+		await adminRefundPrintOrder(orderId, { checkedVendor: true })
+		expect((await getPrintOrderDetail(null, orderId)).order).toMatchObject({
+			status: 'refunded',
+			failureReason: 'vendor_cancelled',
+		})
+	})
+
+	it('cancels what it can on a vendor drop but leaves vendor-check and after-shipping holds to Admin', async () => {
+		vendorState.value = 'cancelled'
+		const now = Date.now()
+		// A claim cut short with both parts recorded at their vendors.
+		const stale = await paidTwoSizeOrder('prodigi')
+		await db
+			.update(PrintVendorOrder)
+			.set({ status: 'submitted', vendorOrderId: `mock_${now}_g` })
+			.where(eq(PrintVendorOrder.id, stale.gelato.id))
+		await db
+			.update(PrintVendorOrder)
+			.set({ status: 'submitted', vendorOrderId: `mock_${now}_p` })
+			.where(eq(PrintVendorOrder.id, stale.prodigi!.id))
+		await db
+			.update(PrintOrder)
+			.set({ status: 'held', holdReason: 'stale_claim' })
+			.where(eq(PrintOrder.id, stale.orderId))
+		await syncPrintVendorOrder(await vendorOrderRow(stale.gelato.id))
+		expect(
+			(await getPrintOrderDetail(null, stale.orderId)).order,
+		).toMatchObject({
+			status: 'held',
+			holdReason: 'stale_claim',
+			failureReason: 'vendor_cancelled',
+		})
+		// The other vendor's part was cancelled while it still could be.
+		expect((await vendorOrderRow(stale.prodigi!.id)).status).toBe('cancelled')
+
+		// A parcel already came back: nothing is cancelled or refunded.
+		const returned = await paidTwoSizeOrder('prodigi')
+		await db
+			.update(PrintVendorOrder)
+			.set({
+				status: 'returned',
+				vendorOrderId: `mock_${now}_r`,
+				shippedAt: new Date(),
+			})
+			.where(eq(PrintVendorOrder.id, returned.gelato.id))
+		await db
+			.update(PrintVendorOrder)
+			.set({ status: 'submitted', vendorOrderId: `mock_${now}_s` })
+			.where(eq(PrintVendorOrder.id, returned.prodigi!.id))
+		await db
+			.update(PrintOrder)
+			.set({ status: 'held', holdReason: 'vendor_returned' })
+			.where(eq(PrintOrder.id, returned.orderId))
+		await syncPrintVendorOrder(await vendorOrderRow(returned.prodigi!.id))
+		expect(
+			(await getPrintOrderDetail(null, returned.orderId)).order,
+		).toMatchObject({
+			status: 'held',
+			holdReason: 'vendor_returned',
+			failureReason: 'vendor_cancelled',
+		})
+		expect((await vendorOrderRow(returned.gelato.id)).status).toBe('returned')
+
+		expect(refundedIntents()).not.toContain(`pi_${stale.orderId}`)
+		expect(refundedIntents()).not.toContain(`pi_${returned.orderId}`)
+	})
+
+	it('leaves a vendor drop for the next sync while a submission holds the order', async () => {
+		const { orderId, gelato, prodigi } = await paidTwoSizeOrder('prodigi')
+		await db
+			.update(PrintVendorOrder)
+			.set({ status: 'submitted', vendorOrderId: `mock_${Date.now()}_g` })
+			.where(eq(PrintVendorOrder.id, gelato.id))
+		// Phase 2 is sending the Prodigi part right now.
+		await db
+			.update(PrintOrder)
+			.set({ status: 'submitting', holdReason: 'vendor_sending' })
+			.where(eq(PrintOrder.id, orderId))
+		vendorState.value = 'failed'
+		await syncPrintVendorOrder(await vendorOrderRow(gelato.id))
+		// Untouched, and the drop is not recorded, so the next sync sees it.
+		expect((await getPrintOrderDetail(null, orderId)).order).toMatchObject({
+			status: 'submitting',
+			holdReason: 'vendor_sending',
+		})
+		expect((await vendorOrderRow(gelato.id)).status).toBe('submitted')
+		expect(refundedIntents()).not.toContain(`pi_${orderId}`)
+
+		// The send finished: both parts are recorded at their vendors.
+		await db
+			.update(PrintVendorOrder)
+			.set({ status: 'submitted', vendorOrderId: `mock_${Date.now()}_p` })
+			.where(eq(PrintVendorOrder.id, prodigi!.id))
+		await db
+			.update(PrintOrder)
+			.set({ status: 'submitted', holdReason: null })
+			.where(eq(PrintOrder.id, orderId))
+		await syncPrintVendorOrder(await vendorOrderRow(gelato.id))
+		expect((await getPrintOrderDetail(null, orderId)).order).toMatchObject({
+			status: 'refunded',
+			failureReason: 'vendor_failed',
+		})
+		expect((await vendorOrderRow(gelato.id)).status).toBe('failed')
+		expect((await vendorOrderRow(prodigi!.id)).status).toBe('cancelled')
+		expect(refundedIntents()).toContain(`pi_${orderId}`)
+	})
+
+	it('reroutes a vendor order only as a whole, never into a mix of two vendors', async () => {
+		// Both sizes print at Gelato: one vendor order with two products.
+		const { orderId, gelato } = await paidTwoSizeOrder('gelato')
+		const before = await getPrintOrderDetail(null, orderId)
+		expect(before.vendorOrders).toHaveLength(1)
+		expect(before.items).toHaveLength(2)
+		await db
+			.update(PrintOrder)
+			.set({ status: 'held', holdReason: 'vendor_unavailable' })
+			.where(eq(PrintOrder.id, orderId))
+
+		// Admin moves only the 4x6 size to Prodigi.
+		await db
+			.update(PrintVendorProduct)
+			.set({ active: false })
+			.where(eq(PrintVendorProduct.sizeKey, '4x6'))
+		await db.insert(PrintVendorProduct).values({
+			product: 'desk_card',
+			sizeKey: '4x6',
+			vendor: 'prodigi',
+			vendorSku: 'cards_4x6_prodigi',
+			bleedMm: 3,
+		})
+		await expect(adminRetryPrintOrder(orderId, false)).rejects.toMatchObject({
+			code: 'mixed_vendors',
+		})
+		const refused = await getPrintOrderDetail(null, orderId)
+		expect(refused.order).toMatchObject({
+			status: 'held',
+			holdReason: 'vendor_unavailable',
+		})
+		expect(refused.vendorOrders[0]).toMatchObject({
+			vendor: 'gelato',
+			status: 'pending',
+		})
+		expect(refused.items.map(({ item }) => item.vendor)).toEqual([
+			'gelato',
+			'gelato',
+		])
+
+		// Once both sizes print at Prodigi, the whole vendor order moves.
+		await db
+			.update(PrintVendorProduct)
+			.set({ active: false })
+			.where(eq(PrintVendorProduct.sizeKey, 'a6'))
+		await db.insert(PrintVendorProduct).values({
+			product: 'desk_card',
+			sizeKey: 'a6',
+			vendor: 'prodigi',
+			vendorSku: 'cards_a6_prodigi',
+			bleedMm: 3,
+		})
+		expect(await adminRetryPrintOrder(orderId, true)).toBe('done')
+		const moved = await getPrintOrderDetail(null, orderId)
+		expect(moved.order.status).toBe('submitted')
+		expect(moved.vendorOrders[0]).toMatchObject({
+			id: gelato.id,
+			vendor: 'prodigi',
+			status: 'submitted',
+			// The new vendor's own method, not the old vendor's.
+			shippingMethod: 'mock-standard',
+		})
+		expect(
+			moved.items.map(({ item }) => [item.vendor, item.vendorSku]).sort(),
+		).toEqual([
+			['prodigi', 'cards_4x6_prodigi'],
+			['prodigi', 'cards_a6_prodigi'],
+		])
+	})
+
+	it('renders pieces with the bleed of the vendor SKU the order was priced with', async () => {
+		const { orderId } = await paidOrderLater()
+		// Admin replaces the mapping (Gelato, 4 mm bleed) before the order is sent.
+		await db.update(PrintVendorProduct).set({ active: false })
+		await db.insert(PrintVendorProduct).values({
+			product: 'desk_card',
+			sizeKey: 'a6',
+			vendor: 'prodigi',
+			vendorSku: 'cards_a6_prodigi',
+			bleedMm: 0,
+		})
+		const render = vi.spyOn(printFiles, 'getPrintFile')
+		expect(await submitPrintOrder(orderId)).toBe('done')
+		expect(render).toHaveBeenCalled()
+		for (const [input] of render.mock.calls) {
+			expect(input).toMatchObject({ format: 'pro', bleedMm: 4 })
+		}
+		const { order, vendorOrders } = await getPrintOrderDetail(null, orderId)
+		expect(order.status).toBe('submitted')
+		expect(vendorOrders[0]!.vendor).toBe('gelato')
+		vi.restoreAllMocks()
+	})
+
+	it('holds an order whose vendor SKU has no catalog row instead of guessing its bleed', async () => {
+		const { orderId } = await paidOrderLater()
+		await db.delete(PrintVendorProduct)
+		const render = vi.spyOn(printFiles, 'getPrintFile')
+		expect(await submitPrintOrder(orderId)).toBe('done')
+		expect(render).not.toHaveBeenCalled()
+		const { order, vendorOrders } = await getPrintOrderDetail(null, orderId)
+		expect(order).toMatchObject({
+			status: 'held',
+			holdReason: 'render_unavailable',
+		})
+		expect(vendorOrders[0]).toMatchObject({
+			status: 'pending',
+			vendorOrderId: null,
+		})
+		vi.restoreAllMocks()
 	})
 
 	it('refunds a vendor failure before shipping, but holds one after it', async () => {
@@ -1137,5 +1514,156 @@ describe('shipped print orders', () => {
 			holdReason: null,
 		})
 		expect(detail.vendorOrders[0]).toMatchObject({ status: 'submitted' })
+	})
+	it('never moves a paid order back when a stalled tab finishes its checkout', async () => {
+		const { access, design } = await setup()
+		const request = new Request('https://app.test/')
+		const orderId = await createPrintQuote(request, access, {
+			lines: [{ designId: design.id, quantity: 1 }],
+			address,
+			scopeId: null,
+		})
+		// While this tab waits on Stripe, another tab's payment lands.
+		stripeMock.checkout.sessions.create.mockImplementationOnce(async () => {
+			await db
+				.update(PrintOrder)
+				.set({
+					status: 'submitted',
+					stripeCheckoutSessionId: 'cs_paid_elsewhere',
+					stripePaymentIntentId: 'pi_paid_elsewhere',
+				})
+				.where(eq(PrintOrder.id, orderId))
+			return { id: 'cs_stalled', url: 'https://checkout.example/cs_stalled' }
+		})
+		await expect(
+			startPrintCheckout(request, access, orderId, 'https://app.test/x'),
+		).rejects.toMatchObject({ code: 'not_payable' })
+		const { order } = await getPrintOrderDetail(null, orderId)
+		expect(order).toMatchObject({
+			status: 'submitted',
+			stripeCheckoutSessionId: 'cs_paid_elsewhere',
+		})
+		// The stalled tab's session cannot take a second payment.
+		expect(stripeMock.checkout.sessions.expire).toHaveBeenCalledWith(
+			'cs_stalled',
+		)
+	})
+
+	it('never erases a hold taken while the vendor status rolls up', async () => {
+		const { orderId } = await paidOrder()
+		// Placed long ago, so the emulator reports it shipped.
+		await db
+			.update(PrintVendorOrder)
+			.set({ vendorOrderId: `mock_1_${orderId}` })
+			.where(eq(PrintVendorOrder.orderId, orderId))
+		// A partial cancel holds the order between the roll-up's read and write.
+		// `db` is a proxy, so the race is injected on drizzle's own update.
+		const realUpdate = db.update.bind(db)
+		const original = BaseSQLiteDatabase.prototype.update
+		let raced = false
+		const spy = vi
+			.spyOn(BaseSQLiteDatabase.prototype, 'update')
+			.mockImplementation(function (
+				this: BaseSQLiteDatabase<'async', unknown>,
+				table: typeof PrintOrder,
+			) {
+				const builder = original.call(this, table) as ReturnType<
+					typeof realUpdate
+				>
+				if (table !== PrintOrder || raced) return builder
+				const realSet = builder.set.bind(builder)
+				builder.set = ((values: { status?: string; holdReason?: unknown }) => {
+					const chain = realSet(values as never)
+					if (
+						raced ||
+						!values.status ||
+						!['in_production', 'shipped', 'delivered'].includes(values.status)
+					) {
+						return chain
+					}
+					raced = true
+					const realWhere = chain.where.bind(chain)
+					chain.where = ((condition: Parameters<typeof realWhere>[0]) => {
+						const query = realWhere(condition)
+						const hold = () =>
+							realUpdate(PrintOrder)
+								.set({ status: 'held', holdReason: 'partial_cancel' })
+								.where(eq(PrintOrder.id, orderId))
+						return {
+							returning: (...args: Parameters<typeof query.returning>) =>
+								hold().then(() => query.returning(...args)),
+							then: (
+								resolve: (value: unknown) => unknown,
+								reject: (error: unknown) => unknown,
+							) =>
+								hold()
+									.then(() => query)
+									.then(resolve, reject),
+						}
+					}) as never
+					return chain
+				}) as never
+				return builder
+			} as never)
+		try {
+			await syncOpenPrintOrders()
+		} finally {
+			spy.mockRestore()
+		}
+		expect(raced).toBe(true)
+		const { order } = await getPrintOrderDetail(null, orderId)
+		expect(order).toMatchObject({
+			status: 'held',
+			holdReason: 'partial_cancel',
+		})
+	})
+
+	it('records a full refund Stripe already made instead of refunding again', async () => {
+		const { orderId } = await paidOrder()
+		const { order } = await getPrintOrderDetail(null, orderId)
+		// The refund went through, then the request died before the ledger.
+		stripeRefunds.push({
+			payment_intent: order.stripePaymentIntentId!,
+			amount: order.totalCents,
+			status: 'succeeded',
+		})
+		await db
+			.update(PrintOrder)
+			.set({ status: 'held', holdReason: 'refund_failed' })
+			.where(eq(PrintOrder.id, orderId))
+		await adminRefundPrintOrder(orderId, { keepPrinting: true })
+		const { order: after } = await getPrintOrderDetail(null, orderId)
+		expect(after).toMatchObject({
+			status: 'refunded',
+			refundCents: order.totalCents,
+		})
+		expect(stripeMock.refunds.create).not.toHaveBeenCalled()
+	})
+
+	it('keeps a partial refund Stripe made before its answer was lost', async () => {
+		const { orderId } = await paidOrder()
+		await db
+			.update(PrintOrder)
+			.set({ status: 'held', holdReason: 'partial_cancel' })
+			.where(eq(PrintOrder.id, orderId))
+		stripeMock.refunds.create.mockImplementationOnce(async (params) => {
+			stripeRefunds.push({ ...params, status: 'succeeded' })
+			throw new Error('Request timed out')
+		})
+		await adminRefundPrintOrder(orderId, { amountCents: 100 })
+		const { order } = await getPrintOrderDetail(null, orderId)
+		expect(order.refundCents).toBe(100)
+
+		// A ledger behind Stripe is caught up before any new refund.
+		await db
+			.update(PrintOrder)
+			.set({ status: 'held', holdReason: 'partial_cancel', refundCents: 0 })
+			.where(eq(PrintOrder.id, orderId))
+		await expect(
+			adminRefundPrintOrder(orderId, { amountCents: 100 }),
+		).rejects.toMatchObject({ code: 'refund_reconciled' })
+		const { order: caughtUp } = await getPrintOrderDetail(null, orderId)
+		expect(caughtUp.refundCents).toBe(100)
+		expect(stripeMock.refunds.create).toHaveBeenCalledTimes(1)
 	})
 })

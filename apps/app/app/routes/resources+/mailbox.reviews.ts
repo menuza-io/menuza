@@ -1,3 +1,4 @@
+import { requireUserId } from '@repo/auth'
 import { listUnifiedReviews, replyToUnifiedReview } from '@repo/integrations'
 import { type ActionFunctionArgs, type LoaderFunctionArgs } from 'react-router'
 import { z } from 'zod'
@@ -77,6 +78,8 @@ const replySchema = z.object({
 })
 
 export async function action({ request }: ActionFunctionArgs) {
+	// The organization comes from the body, so check the session before reading it.
+	await requireUserId(request)
 	let body: unknown
 	try {
 		body = await request.json()

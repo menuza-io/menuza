@@ -5,6 +5,7 @@ import { useLingui } from '@lingui/react'
 import { type SEOHandle } from '@nasa-gcn/remix-seo'
 import { requireUserWithRole } from '@repo/auth'
 import {
+	OrganizationInvitation,
 	OrganizationRole,
 	Permission,
 	Role,
@@ -14,7 +15,9 @@ import {
 	asc,
 	db,
 	eq,
+	exists,
 	isNull,
+	not,
 } from '@repo/database'
 import { Badge } from '@repo/ui/badge'
 import {
@@ -296,14 +299,50 @@ export async function action({ request, params }: Route.ActionArgs) {
 				if (params.roleId.startsWith('sys_')) {
 					await db.delete(Role).where(eq(Role.id, params.roleId))
 				} else {
-					await db
+					// Invitations cascade when their role is deleted, so a global
+					// role with pending invitations (in any organization) is refused
+					// here instead of dropping them.
+					const deleted = await db
 						.delete(OrganizationRole)
 						.where(
 							and(
 								eq(OrganizationRole.id, params.roleId),
 								isNull(OrganizationRole.organizationId),
+								not(
+									exists(
+										db
+											.select({ id: OrganizationInvitation.id })
+											.from(OrganizationInvitation)
+											.where(
+												eq(
+													OrganizationInvitation.organizationRoleId,
+													params.roleId,
+												),
+											),
+									),
+								),
 							),
 						)
+						.returning({ id: OrganizationRole.id })
+					if (deleted.length === 0) {
+						const [pending] = await db
+							.select({ id: OrganizationInvitation.id })
+							.from(OrganizationInvitation)
+							.where(
+								eq(OrganizationInvitation.organizationRoleId, params.roleId),
+							)
+							.limit(1)
+						if (pending) {
+							return {
+								result: submission.reply({
+									formErrors: [
+										'This role still has pending invitations. Revoke them before deleting the role.',
+									],
+								}),
+								success: false,
+							}
+						}
+					}
 				}
 				return redirect('/roles')
 			}

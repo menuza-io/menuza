@@ -31,6 +31,7 @@ as the Admin cache route).
 | `0 2 * * *` | `/resources/jobs/audit-log-archival`             | Archive old audit logs                          |
 | `0 3 * * *` | `/resources/jobs/mcp-token-cleanup`              | Remove expired MCP tokens                       |
 | `0 3 * * *` | `/resources/jobs/job-postings-expiry`            | Mark job postings past their closing date       |
+| `0 3 * * *` | `/resources/jobs/seat-reconcile`                 | Sync Stripe seat counts with active members     |
 | `0 4 * * *` | `/resources/jobs/gdpr-erasure`                   | Process pending GDPR erasures                   |
 | `0 4 * * *` | `/resources/jobs/voice-retention`                | Delete expired call recordings and caller data  |
 | `0 4 * * *` | `/resources/jobs/staffing-outbox`                | Deliver staffing link, unlink, and erase events |
@@ -41,12 +42,14 @@ The hourly `0 * * * *` trigger fans out to every regional tenant-api node: the
 tenant engagement sync, the staff tick, the reservations tick and the loyalty
 tick (below), and also calls the App job that reconciles reservation payments
 (below). They are independent requests, so one failing never blocks the others.
-The same trigger runs two more App jobs: `/resources/jobs/print-sync` and
+The same trigger runs three more App jobs: `/resources/jobs/print-sync`;
 `/resources/jobs/social-publish`, a sweep behind the per-post
 `SocialPostWorkflow` that wakes the App when a scheduled social post is due (see
-`docs/social-media.md`). The Workers free plan allows five cron triggers per
-Worker, so new daily jobs share an existing trigger (each job is still its own
-request with its own error logging).
+`docs/social-media.md`); and `/resources/jobs/impersonation-cleanup`, which ends
+expired admin impersonation sessions and writes each one's
+`ADMIN_IMPERSONATION_END` audit entry. The Workers free plan allows five cron
+triggers per Worker, so new daily jobs share an existing trigger (each job is
+still its own request with its own error logging).
 
 ### Shared organization alarm (staffing and reservations)
 
@@ -224,6 +227,46 @@ Form-submission retention (delete regional website-form submissions older than
 365 days) is mapped in `JOB_ROUTES`, but `0 5 * * *` is not in
 `apps/jobs-cron/wrangler.jsonc`, so it does not run. Add that trigger only when
 you want old form submissions deleted.
+
+## Platform broadcasts (Admin cron)
+
+Platform broadcasts (Admin, Marketing, Platform Broadcasts) are sent by
+`dispatchPlatformCampaign` in `@repo/marketing/server/platform-campaigns`. The
+Admin action starts the dispatch after its response, but on Workers that work
+only lives about 30 seconds (`waitUntil`), so it sends for 20 seconds and then
+hands the rest on. The **Admin Worker's own Cron Trigger** finishes it:
+
+| Cron          | Worker               | Purpose                                    |
+| ------------- | -------------------- | ------------------------------------------ |
+| `*/5 * * * *` | Admin (`apps/admin`) | `resumeStalePlatformCampaigns` (scheduled) |
+
+`scheduled` in `apps/admin/workers/app.ts` resumes every campaign still
+`Processing` with no heartbeat for `PLATFORM_CAMPAIGN_STALE_MS` (3 minutes) and
+keeps each dispatch alive with `ctx.waitUntil`. A cron run may last up to 15
+minutes, so each dispatch sends for at most 10 minutes, then stops between sends
+and hands the rest to the next run. It lives on Admin rather than jobs-cron
+because jobs-cron only reaches the App and is near its five-trigger limit.
+
+How the pieces fit:
+
+- A live dispatch writes a heartbeat (`updatedAt`) at most every 15 seconds,
+  before each send. A send times out after 60 seconds, so a live dispatch never
+  looks stale; a resume claims a campaign with a conditional update, so two
+  runners never resume the same one.
+- A dispatch that stops early (its time budget ran out, or a recipient's message
+  row could not be written) leaves the campaign `Processing` and marks it stale
+  at once, so the next cron run picks it up.
+- Every recipient gets one message row, written before the send. A resume skips
+  anyone who has a row, so nobody is mailed twice. A row left `Processing` (the
+  send timed out, or its outcome could not be recorded) is reported as
+  unconfirmed and never re-sent.
+- Only an error before the first send (loading the campaign or its audience)
+  marks a campaign `Failed`. A database error during sending costs at most that
+  recipient; the campaign stays `Processing` and the cron finishes it.
+
+The Node runtime (local dev, self-hosting) has no cron. There a dispatch is not
+cut short by `waitUntil`, and opening the broadcasts list as someone who may
+send campaigns resumes any campaign a crash or restart stopped.
 
 ## Secrets and configuration
 

@@ -133,6 +133,14 @@ describe('timeCardsTable', () => {
 		}
 	})
 
+	it('marks a card whose figures changed after approval', () => {
+		const table = timeCardsTable([row({}, { figuresChanged: true }), row()], {
+			includeMoney: true,
+		})
+		const column = table.headers.indexOf('Figures changed after approval')
+		expect(table.rows.map((r) => r[column])).toEqual(['yes', 'no'])
+	})
+
 	it('starts with a byte order mark so Excel reads Arabic names as UTF-8', () => {
 		const csv = timesheetTableToCsv(
 			timeCardsTable([row({ firstName: 'رنا' })], { includeMoney: false }),
@@ -158,6 +166,7 @@ describe('payrollSummaryTable', () => {
 		paidMinutes: 2520,
 		unpaidBreakMinutes: 150,
 		unapprovedCards: 0,
+		changedCards: 0,
 		...patch,
 	})
 
@@ -212,6 +221,30 @@ describe('payrollSummaryTable', () => {
 		expect(table.rows[0]![rate]).toBe(20)
 		const pay = table.headers.indexOf('Estimated pay')
 		expect(table.rows.map((r) => r[pay])).toEqual([100, 500])
+	})
+
+	it('counts cards whose figures changed after approval, on every line width', () => {
+		const table = payrollSummaryTable(
+			[
+				summary({
+					changedCards: 2,
+					money: {
+						estimate: true,
+						ratesMinor: [],
+						payMinorByCurrency: { USD: 1, CAD: 1 },
+						cashTipsMinorByCurrency: {},
+						creditTipsMinorByCurrency: {},
+						unpricedMinutes: 0,
+					},
+				}),
+			],
+			{ includeMoney: true },
+		)
+		const column = table.headers.indexOf('Cards changed after approval')
+		expect(table.rows.map((r) => r[column])).toEqual([2, ''])
+		for (const line of table.rows) {
+			expect(line).toHaveLength(table.headers.length)
+		}
 	})
 
 	it('keeps people with no money rows as a single line', () => {

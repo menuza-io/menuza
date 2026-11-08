@@ -6,12 +6,14 @@ import {
 	db,
 	desc,
 	eq,
+	exists,
 	inArray,
 	isD1Bound,
 	isNotNull,
 	isNull,
 	lt,
 	lte,
+	notInArray,
 	or,
 	OrganizationMediaAsset,
 	SocialAccount,
@@ -29,6 +31,7 @@ import { SocialError } from './errors.ts'
 import { publishToFacebook, publishToInstagram } from './meta.server.ts'
 import {
 	SOCIAL_MAX_MEDIA,
+	SOCIAL_UNKNOWN_OUTCOME_ERRORS,
 	settledPostStatus,
 	type SocialPlatform,
 	type SocialPostMedia,
@@ -47,8 +50,63 @@ import {
 const EDITABLE_STATUSES = ['draft', 'scheduled'] as const
 const RETRYABLE_STATUSES = ['failed', 'partial'] as const
 
-function socialPostRevisionGuard(postId: string, updatedAtMs: number) {
-	return sql`exists (select 1 from ${SocialPost} as p where p.id = ${postId} and p."updatedAt" = ${updatedAtMs} and p.status in ('draft', 'scheduled'))`
+/** Drafts and scheduled posts can be edited; the others have started publishing. */
+export function isSocialPostEditable(status: string): boolean {
+	return (EDITABLE_STATUSES as readonly string[]).includes(status)
+}
+
+/**
+ * The post as this edit left it: same organization, still editable, stamped
+ * with this save. A D1 batch runs every statement even when the UPDATE before
+ * them matched nothing, so each statement on the targets checks this: an edit
+ * that lost the race against publishing (or another save) changes nothing.
+ */
+function savedRevision(postId: string, organizationId: string, savedAt: Date) {
+	return and(
+		eq(SocialPost.id, postId),
+		eq(SocialPost.organizationId, organizationId),
+		eq(SocialPost.updatedAt, savedAt),
+		inArray(SocialPost.status, [...EDITABLE_STATUSES]),
+	)
+}
+
+function value<T>(input: T, name: string) {
+	return sql`${input}`.as(name)
+}
+
+/**
+ * Inserts each target only while the post is at `savedRevision`, so an edit
+ * saved after publishing began adds no pending target for the publisher (or
+ * Retry) to send a second time.
+ */
+function guardedTargetInsertStatements(
+	postId: string,
+	organizationId: string,
+	savedAt: Date,
+	targets: Omit<SocialPostTargetRow, 'postId'>[],
+) {
+	return targets.map((target) =>
+		db.insert(SocialPostTarget).select(
+			db
+				.select({
+					id: value(createId(), 'id'),
+					postId: value(postId, 'postId'),
+					socialAccountId: value(target.socialAccountId, 'socialAccountId'),
+					platform: value(target.platform, 'platform'),
+					accountName: value(target.accountName, 'accountName'),
+					status: value('pending', 'status'),
+					externalPostId: value(null, 'externalPostId'),
+					permalink: value(null, 'permalink'),
+					error: value(null, 'error'),
+					attempts: value(0, 'attempts'),
+					publishedAt: value(null, 'publishedAt'),
+					createdAt: value(savedAt.getTime(), 'createdAt'),
+					updatedAt: value(savedAt.getTime(), 'updatedAt'),
+				})
+				.from(SocialPost)
+				.where(savedRevision(postId, organizationId, savedAt)),
+		),
+	)
 }
 
 /** D1 allows 100 bound parameters per statement; a target row binds several fields. */
@@ -210,10 +268,12 @@ export async function saveSocialPost(
 
 	if (postId) {
 		if (isD1Bound()) {
-			const saveStamp = Date.now()
+			// One batch (D1 has no interactive transactions): the target
+			// statements check `savedRevision`, not the UPDATE's result.
+			const savedAt = new Date()
 			const updatePost = db
 				.update(SocialPost)
-				.set({ ...values, updatedAt: new Date(saveStamp) })
+				.set({ ...values, updatedAt: savedAt })
 				.where(
 					and(
 						eq(SocialPost.id, postId),
@@ -222,19 +282,26 @@ export async function saveSocialPost(
 					),
 				)
 				.returning({ id: SocialPost.id })
-			const deleteTargets = db
-				.delete(SocialPostTarget)
-				.where(
-					and(
-						eq(SocialPostTarget.postId, postId),
-						socialPostRevisionGuard(postId, saveStamp),
+			const deleteTargets = db.delete(SocialPostTarget).where(
+				and(
+					eq(SocialPostTarget.postId, postId),
+					exists(
+						db
+							.select({ id: SocialPost.id })
+							.from(SocialPost)
+							.where(savedRevision(postId, organizationId, savedAt)),
 					),
-				)
-			const targetInserts = socialPostTargetInsertStatements(postId, targets)
+				),
+			)
 			const batchResult = await db.batch([
 				updatePost,
 				deleteTargets,
-				...targetInserts,
+				...guardedTargetInsertStatements(
+					postId,
+					organizationId,
+					savedAt,
+					targets,
+				),
 			])
 			const updatedRows = batchResult[0] as { id: string }[] | undefined
 			if (!updatedRows?.[0]?.id) throw new SocialPostConflict()
@@ -456,13 +523,39 @@ export async function deleteSocialPost(
 	return deleted.length > 0
 }
 
-/** Sends the failed accounts of a post again, now. */
+/**
+ * Sends the failed accounts of a post again, now. A target whose outcome is
+ * unknown (it may already be live) is sent again only when a member names it
+ * in `confirmedTargetId` after checking the account; Retry skips it.
+ */
 export async function retrySocialPost(
 	organizationId: string,
 	postId: string,
+	options: { confirmedTargetId?: string } = {},
 ): Promise<boolean> {
 	const now = new Date()
+	const resend = options.confirmedTargetId
+		? and(
+				eq(SocialPostTarget.postId, postId),
+				eq(SocialPostTarget.status, 'failed'),
+				eq(SocialPostTarget.id, options.confirmedTargetId),
+			)
+		: and(
+				eq(SocialPostTarget.postId, postId),
+				eq(SocialPostTarget.status, 'failed'),
+				or(
+					isNull(SocialPostTarget.error),
+					notInArray(SocialPostTarget.error, [
+						...SOCIAL_UNKNOWN_OUTCOME_ERRORS,
+					]),
+				),
+			)
 	const reopened = await db.transaction(async (tx) => {
+		const toResend = await tx
+			.select({ id: SocialPostTarget.id })
+			.from(SocialPostTarget)
+			.where(resend)
+		if (toResend.length === 0) return false
 		const updated = await tx
 			.update(SocialPost)
 			.set({ status: 'scheduled', scheduledAt: now })
@@ -478,12 +571,7 @@ export async function retrySocialPost(
 		await tx
 			.update(SocialPostTarget)
 			.set({ status: 'pending', error: null })
-			.where(
-				and(
-					eq(SocialPostTarget.postId, postId),
-					eq(SocialPostTarget.status, 'failed'),
-				),
-			)
+			.where(resend)
 		return true
 	})
 	if (!reopened) return false
@@ -536,6 +624,9 @@ async function deliverTarget(
 	if (!claimed) return
 
 	let accountId: string | null = null
+	let accountToken: string | null = null
+	// From here on Meta may have accepted the post even if we see an error.
+	let publishCalled = false
 	try {
 		const account = target.socialAccountId
 			? await readSocialAccountForPublishing(target.socialAccountId)
@@ -551,6 +642,7 @@ async function deliverTarget(
 			throw new SocialError('unauthorized', 'needs_reauth')
 		}
 		accountId = account.id
+		accountToken = account.accessTokenCiphertext
 		const media = Array.isArray(post.media)
 			? (post.media as SocialPostMedia[])
 			: []
@@ -564,6 +656,7 @@ async function deliverTarget(
 			externalId: account.externalId,
 			accessToken: account.accessToken,
 		}
+		publishCalled = true
 		const result =
 			account.platform === 'instagram'
 				? await publishToInstagram(publishing, input)
@@ -589,16 +682,38 @@ async function deliverTarget(
 		if (
 			error instanceof SocialError &&
 			error.code === 'unauthorized' &&
-			accountId
+			accountId &&
+			accountToken
 		) {
-			await markSocialAccountNeedsReauth(accountId)
+			await markSocialAccountNeedsReauth(accountId, accountToken)
 		}
-		const message = error instanceof SocialError ? error.message : 'unexpected'
+		const message = !publishCalled
+			? error instanceof SocialError
+				? error.message
+				: 'unexpected'
+			: outcomeIsUnknown(error)
+				? 'outcome_unknown'
+				: (error as SocialError).message
 		await db
 			.update(SocialPostTarget)
 			.set({ status: 'failed', error: message.slice(0, 500) })
 			.where(eq(SocialPostTarget.id, target.id))
 	}
+}
+
+/**
+ * After the publish call went out: no answer (timeout, dropped connection),
+ * a Meta 5xx or temporary error, or our own failure (saving the result)
+ * leaves the outcome open. A definite Meta refusal (rejected, unauthorized,
+ * rate limited) or a container that never finished means nothing went live.
+ */
+function outcomeIsUnknown(error: unknown): boolean {
+	if (!(error instanceof SocialError)) return true
+	// `unavailable` covers no answer, 5xx and Meta's "temporary" codes; only
+	// a container that never finished processing was surely not published.
+	return (
+		error.code === 'unavailable' && error.message !== 'image_processing_slow'
+	)
 }
 
 /** Sends every pending target of a claimed post, then settles its status. */

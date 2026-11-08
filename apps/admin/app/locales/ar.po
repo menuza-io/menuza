@@ -46,7 +46,7 @@ msgid "{active} active • +{recent} new this week"
 msgstr "{active} نشط • +{recent} جديد هذا الأسبوع"
 
 #: app/components/admin-user-detail.tsx:264
-#: app/components/sso-user-management.tsx:407
+#: app/components/sso-user-management.tsx:420
 #: app/routes/_admin+/organizations+/$organizationId_+/audit-retention.tsx:265
 msgid "{activeCount} active"
 msgstr "{activeCount} نشط"
@@ -80,7 +80,7 @@ msgstr "{excluded, plural, zero {لا سجلات مستبعدة} one {تم اس�
 msgid "{field}"
 msgstr "{field}"
 
-#: app/routes/_admin+/phone-numbers.tsx:401
+#: app/routes/_admin+/phone-numbers.tsx:408
 msgid "{numberCount} numbers"
 msgstr "{numberCount} أرقام"
 
@@ -124,8 +124,8 @@ msgstr "{totalSize} إجمالي"
 msgid "{unit}"
 msgstr "{unit}"
 
-#: app/routes/_admin+/roles+/$roleId.tsx:577
-#: app/routes/_admin+/roles+/system.$roleId.tsx:353
+#: app/routes/_admin+/roles+/$roleId.tsx:616
+#: app/routes/_admin+/roles+/system.$roleId.tsx:381
 msgid "{userCount} users"
 msgstr "{userCount} مستخدم"
 
@@ -187,7 +187,7 @@ msgstr "0 مفاتيح مرور"
 msgid "1 entry"
 msgstr "إدخال واحد"
 
-#: app/routes/_admin+/phone-numbers.tsx:399
+#: app/routes/_admin+/phone-numbers.tsx:406
 msgid "1 number"
 msgstr "رقم واحد"
 
@@ -274,7 +274,7 @@ msgstr "تم رفض الوصول"
 msgid "Access Granted"
 msgstr "تم منح الوصول"
 
-#: app/routes/_admin+/roles+/$roleId.tsx:879
+#: app/routes/_admin+/roles+/$roleId.tsx:918
 msgid "Access Level"
 msgstr "مستوى الوصول"
 
@@ -282,7 +282,7 @@ msgstr "مستوى الوصول"
 msgid "across all caches"
 msgstr "عبر جميع ذاكرات التخزين المؤقت"
 
-#: app/routes/_admin+/roles+/$roleId.tsx:867
+#: app/routes/_admin+/roles+/$roleId.tsx:906
 msgid "Action"
 msgstr "إجراء"
 
@@ -290,16 +290,16 @@ msgstr "إجراء"
 msgid "Action failed"
 msgstr "فشل الإجراء"
 
-#: app/components/admin/feature-flags.tsx:378
-#: app/components/admin/feature-flags.tsx:484
-#: app/components/admin/feature-flags.tsx:655
-#: app/components/sso-user-management.tsx:177
+#: app/components/admin/feature-flags.tsx:409
+#: app/components/admin/feature-flags.tsx:515
+#: app/components/admin/feature-flags.tsx:686
+#: app/components/sso-user-management.tsx:181
 #: app/routes/_admin+/cache.tsx:619
-#: app/routes/_admin+/gdpr-requests.tsx:508
+#: app/routes/_admin+/gdpr-requests.tsx:517
 #: app/routes/_admin+/ip-addresses+/$ip.tsx:251
 #: app/routes/_admin+/ip-addresses+/index.tsx:235
 #: app/routes/_admin+/marketing+/automations._index.tsx:219
-#: app/routes/_admin+/phone-numbers.tsx:357
+#: app/routes/_admin+/phone-numbers.tsx:364
 #: app/routes/_admin+/print-shop.tsx:377
 #: app/routes/_admin+/print-shop.tsx:803
 #: app/routes/_admin+/roles+/index.tsx:412
@@ -308,7 +308,7 @@ msgstr "فشل الإجراء"
 msgid "Actions"
 msgstr "الإجراءات"
 
-#: app/components/sso-user-management.tsx:300
+#: app/components/sso-user-management.tsx:304
 msgid "Activate"
 msgstr "تفعيل"
 
@@ -319,7 +319,7 @@ msgstr "نشط"
 #: app/components/admin-organizations-table.tsx:95
 #: app/components/admin-organizations-table.tsx:271
 #: app/components/admin-users-table.tsx:176
-#: app/components/sso-user-management.tsx:265
+#: app/components/sso-user-management.tsx:269
 #: app/routes/_admin+/ip-addresses+/$ip.tsx:127
 #: app/routes/_admin+/ip-addresses+/$ip.tsx:278
 #: app/routes/_admin+/ip-addresses+/index.tsx:277
@@ -374,11 +374,11 @@ msgstr "أضف عنوانًا"
 msgid "Add a number"
 msgstr "إضافة رقم"
 
-#: app/routes/_admin+/phone-numbers.tsx:339
+#: app/routes/_admin+/phone-numbers.tsx:346
 msgid "Add a number above to start the inventory."
 msgstr "أضف رقمًا أعلاه لبدء المخزون."
 
-#: app/routes/_admin+/marketing+/campaigns.new.tsx:99
+#: app/routes/_admin+/marketing+/campaigns.new.tsx:103
 msgid "Add at least one email block"
 msgstr "أضف كتلة بريد إلكتروني واحدة على الأقل"
 
@@ -388,12 +388,12 @@ msgstr "أضف كتلة بريد إلكتروني واحدة على الأقل"
 msgid "Add block"
 msgstr "إضافة كتلة"
 
-#: app/routes/_admin+/roles+/$roleId.tsx:806
+#: app/routes/_admin+/roles+/$roleId.tsx:845
 msgid "Add feature"
 msgstr "إضافة ميزة"
 
-#: app/components/admin/feature-flags.tsx:95
-#: app/components/admin/feature-flags.tsx:761
+#: app/components/admin/feature-flags.tsx:126
+#: app/components/admin/feature-flags.tsx:792
 msgid "Add Flag"
 msgstr "إضافة مؤشر"
 
@@ -409,14 +409,14 @@ msgstr "أضف الأرقام المشتراة من Twilio والموجَّهة 
 msgid "Add or change an override"
 msgstr "إضافة أو تعديل استثناء"
 
-#: app/components/admin/feature-flags.tsx:537
-#: app/components/admin/feature-flags.tsx:715
+#: app/components/admin/feature-flags.tsx:568
+#: app/components/admin/feature-flags.tsx:746
 msgid "Add Override"
 msgstr "إضافة تجاوز"
 
-#: app/routes/_admin+/roles+/$roleId.tsx:829
-#: app/routes/_admin+/roles+/$roleId.tsx:922
-#: app/routes/_admin+/roles+/system.$roleId.tsx:385
+#: app/routes/_admin+/roles+/$roleId.tsx:868
+#: app/routes/_admin+/roles+/$roleId.tsx:961
+#: app/routes/_admin+/roles+/system.$roleId.tsx:412
 msgid "Add permission"
 msgstr "إضافة صلاحية"
 
@@ -443,10 +443,10 @@ msgstr "إضافة نقاط قائمة الانتظار"
 
 #: app/components/admin-sidebar.tsx:161
 #: app/components/admin-sidebar.tsx:169
-#: app/components/sso-configuration-form.tsx:392
-#: app/components/sso-user-management.tsx:98
-#: app/routes/_admin+/roles+/$roleId.tsx:465
-#: app/routes/_admin+/roles+/system.$roleId.tsx:228
+#: app/components/sso-configuration-form.tsx:438
+#: app/components/sso-user-management.tsx:101
+#: app/routes/_admin+/roles+/$roleId.tsx:504
+#: app/routes/_admin+/roles+/system.$roleId.tsx:259
 msgid "Admin"
 msgstr "مدير"
 
@@ -472,7 +472,7 @@ msgstr "دور المدير مطلوب"
 msgid "Alignment"
 msgstr "المحاذاة"
 
-#: app/routes/_admin+/marketing+/campaigns._index.tsx:23
+#: app/routes/_admin+/marketing+/campaigns._index.tsx:30
 msgid "All"
 msgstr "الكل"
 
@@ -484,7 +484,7 @@ msgstr "جميع ذاكرات التخزين المؤقت"
 msgid "All checks passed. This workflow is ready to publish."
 msgstr "اجتازت جميع الفحوصات. سير العمل هذا جاهز للنشر."
 
-#: app/routes/_admin+/marketing+/campaigns.new.tsx:206
+#: app/routes/_admin+/marketing+/campaigns.new.tsx:215
 msgid "All organizations"
 msgstr "جميع المؤسسات"
 
@@ -505,7 +505,7 @@ msgstr "جميع المستلمين"
 #~ msgid "All statuses"
 #~ msgstr "جميع الحالات"
 
-#: app/routes/_admin+/marketing+/campaigns.new.tsx:192
+#: app/routes/_admin+/marketing+/campaigns.new.tsx:201
 msgid "All Tenant Operators"
 msgstr "جميع مشغّلي المستأجرين"
 
@@ -525,6 +525,10 @@ msgstr "السماح بالتصدير"
 msgid "Allow users to export audit logs"
 msgstr "السماح للمستخدمين بتصدير سجلات المراجعة"
 
+#: app/components/sso-configuration-form.tsx:364
+msgid "Allowed email domains"
+msgstr "نطاقات البريد الإلكتروني المسموح بها"
+
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:241
 msgid "Alt text"
 msgstr "النص البديل"
@@ -537,7 +541,7 @@ msgstr "المبلغ بالدولار الأمريكي، حتى {left}"
 msgid "Answering"
 msgstr "يرد على المكالمات"
 
-#: app/routes/_admin+/roles+/$roleId.tsx:897
+#: app/routes/_admin+/roles+/$roleId.tsx:936
 msgid "any - Any resources"
 msgstr "أي - أي موارد"
 
@@ -581,23 +585,23 @@ msgstr "السجلات المؤرشفة"
 msgid "Are you sure you want to blacklist {ipAddress}? This will prevent all future requests from this IP address."
 msgstr "هل أنت متأكد من أنك تريد إدراج {ipAddress} في القائمة السوداء؟ سيمنع هذا جميع الطلبات المستقبلية من عنوان IP هذا."
 
-#: app/routes/_admin+/roles+/$roleId.tsx:504
+#: app/routes/_admin+/roles+/$roleId.tsx:543
 msgid "Are you sure you want to delete this role?"
 msgstr "هل أنت متأكد من أنك تريد حذف هذا الدور؟"
 
-#: app/routes/_admin+/roles+/system.$roleId.tsx:274
+#: app/routes/_admin+/roles+/system.$roleId.tsx:305
 msgid "Are you sure you want to delete this system role?"
 msgstr "هل أنت متأكد من أنك تريد حذف دور النظام هذا؟"
 
-#: app/routes/_admin+/gdpr-requests.tsx:461
+#: app/routes/_admin+/gdpr-requests.tsx:470
 msgid "Article 17 fulfilled"
 msgstr "تم استيفاء المادة 17"
 
-#: app/routes/_admin+/gdpr-requests.tsx:427
+#: app/routes/_admin+/gdpr-requests.tsx:436
 msgid "Article 20 requests"
 msgstr "طلبات المادة 20"
 
-#: app/routes/_admin+/phone-numbers.tsx:282
+#: app/routes/_admin+/phone-numbers.tsx:289
 msgid "Assign"
 msgstr "تعيين"
 
@@ -605,7 +609,7 @@ msgstr "تعيين"
 msgid "Assigned, not connected"
 msgstr "معيَّن، غير متصل"
 
-#: app/components/sso-configuration-form.tsx:409
+#: app/components/sso-configuration-form.tsx:455
 msgid "Attribute Mapping (JSON)"
 msgstr "تعيين الخصائص (JSON)"
 
@@ -626,7 +630,7 @@ msgstr "سجلات المراجعة"
 msgid "Authentication Methods"
 msgstr "طرق المصادقة"
 
-#: app/components/sso-configuration-form.tsx:260
+#: app/components/sso-configuration-form.tsx:267
 msgid "Authorization URL"
 msgstr "رابط التفويض"
 
@@ -634,12 +638,12 @@ msgstr "رابط التفويض"
 msgid "Auto"
 msgstr "تلقائي"
 
-#: app/components/sso-configuration-form.tsx:242
+#: app/components/sso-configuration-form.tsx:249
 #: app/components/sso-configuration-overview.tsx:195
 msgid "Auto-Discovery"
 msgstr "الاكتشاف التلقائي"
 
-#: app/components/sso-configuration-form.tsx:363
+#: app/components/sso-configuration-form.tsx:409
 #: app/components/sso-configuration-overview.tsx:221
 msgid "Auto-Provision Users"
 msgstr "توفير المستخدمين تلقائياً"
@@ -648,11 +652,11 @@ msgstr "توفير المستخدمين تلقائياً"
 msgid "Automatically archive old logs to cold storage"
 msgstr "أرشفة السجلات القديمة تلقائياً في التخزين البارد"
 
-#: app/components/sso-configuration-form.tsx:366
+#: app/components/sso-configuration-form.tsx:412
 msgid "Automatically create user accounts for new SSO users"
 msgstr "إنشاء حسابات المستخدمين تلقائياً لمستخدمي SSO الجدد"
 
-#: app/components/sso-configuration-form.tsx:245
+#: app/components/sso-configuration-form.tsx:252
 msgid "Automatically discover OAuth2 endpoints from the issuer URL"
 msgstr "اكتشاف نقاط نهاية OAuth2 تلقائياً من رابط المُصدر"
 
@@ -689,7 +693,7 @@ msgstr "متوسط الانتظار في قائمة الانتظار، آخر 7 
 msgid "Awaiting line verification"
 msgstr "بانتظار التحقق من الخط"
 
-#: app/routes/_admin+/marketing+/campaigns.new.tsx:158
+#: app/routes/_admin+/marketing+/campaigns.new.tsx:167
 msgid "Back"
 msgstr "رجوع"
 
@@ -748,8 +752,8 @@ msgstr "محظور:"
 msgid "Banning..."
 msgstr "جاري الحظر..."
 
-#: app/routes/_admin+/roles+/$roleId.tsx:520
-#: app/routes/_admin+/roles+/system.$roleId.tsx:292
+#: app/routes/_admin+/roles+/$roleId.tsx:559
+#: app/routes/_admin+/roles+/system.$roleId.tsx:323
 msgid "Basic information"
 msgstr "المعلومات الأساسية"
 
@@ -823,11 +827,11 @@ msgstr "مصادر الحجز"
 msgid "Bookings cancelled after the free-cancellation window over the last 30 days."
 msgstr "الحجوزات الملغاة بعد انتهاء فترة الإلغاء المجاني خلال آخر 30 يومًا."
 
-#: app/components/admin/feature-flags.tsx:145
+#: app/components/admin/feature-flags.tsx:175
 msgid "Boolean"
 msgstr "منطقي"
 
-#: app/routes/_admin+/marketing+/campaigns.$campaignId.tsx:18
+#: app/routes/_admin+/marketing+/campaigns.$campaignId.tsx:19
 msgid "Broadcast not found"
 msgstr "لم يتم العثور على البث"
 
@@ -884,7 +888,7 @@ msgstr "اسم الحملة"
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:162
 #: app/components/admin-ban-user-dialog.tsx:166
 #: app/components/admin-cache-confirmation-dialog.tsx:111
-#: app/routes/_admin+/gdpr-requests.tsx:587
+#: app/routes/_admin+/gdpr-requests.tsx:596
 #: app/routes/_admin+/print-shop.tsx:193
 #: app/routes/_admin+/roles+/index.tsx:352
 #: app/routes/_admin+/waitlist.tsx:487
@@ -899,7 +903,7 @@ msgstr "ملغي"
 msgid "Cancellations by who"
 msgstr "الإلغاءات حسب الجهة"
 
-#: app/routes/_admin+/gdpr-requests.tsx:365
+#: app/routes/_admin+/gdpr-requests.tsx:374
 #: app/routes/_admin+/print-shop.tsx:76
 msgid "Cancelled"
 msgstr "ملغي"
@@ -963,7 +967,7 @@ msgstr "معدل النقر"
 msgid "Clicked {0}"
 msgstr "نُقِر {0}"
 
-#: app/components/sso-configuration-form.tsx:177
+#: app/components/sso-configuration-form.tsx:184
 msgid "Client ID"
 msgstr "معرف العميل"
 
@@ -971,7 +975,7 @@ msgstr "معرف العميل"
 msgid "Client ID:"
 msgstr "معرف العميل:"
 
-#: app/components/sso-configuration-form.tsx:191
+#: app/components/sso-configuration-form.tsx:198
 msgid "Client Secret"
 msgstr "سر العميل"
 
@@ -1001,20 +1005,20 @@ msgid "Compare wages as a share of sales across your workplaces."
 msgstr "قارن الأجور كنسبة من المبيعات بين أماكن العمل."
 
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:9
-#: app/routes/_admin+/gdpr-requests.tsx:364
-#: app/routes/_admin+/marketing+/campaigns._index.tsx:24
+#: app/routes/_admin+/gdpr-requests.tsx:373
+#: app/routes/_admin+/marketing+/campaigns._index.tsx:31
 msgid "Completed"
 msgstr "مكتمل"
 
-#: app/routes/_admin+/gdpr-requests.tsx:452
+#: app/routes/_admin+/gdpr-requests.tsx:461
 msgid "Completed Deletions"
 msgstr "عمليات الحذف المكتملة"
 
-#: app/routes/_admin+/gdpr-requests.tsx:418
+#: app/routes/_admin+/gdpr-requests.tsx:427
 msgid "Completed Exports"
 msgstr "عمليات التصدير المكتملة"
 
-#: app/routes/_admin+/gdpr-requests.tsx:560
+#: app/routes/_admin+/gdpr-requests.tsx:569
 msgid "Completed: {completedAt}"
 msgstr "اكتمل: {completedAt}"
 
@@ -1050,7 +1054,7 @@ msgstr "عامل الشرط مطلوب."
 msgid "Conditional split"
 msgstr "تفرّع شرطي"
 
-#: app/components/sso-user-management.tsx:439
+#: app/components/sso-user-management.tsx:452
 msgid "Config Changes"
 msgstr "تغييرات الإعداد"
 
@@ -1066,11 +1070,11 @@ msgstr "الإعداد مطلوب"
 msgid "Configure custom retention and archival settings"
 msgstr "تكوين إعدادات الاحتفاظ والأرشفة المخصصة"
 
-#: app/components/sso-configuration-form.tsx:349
+#: app/components/sso-configuration-form.tsx:356
 msgid "Configure how users are created and managed through SSO"
 msgstr "تكوين كيفية إنشاء وإدارة المستخدمين من خلال SSO"
 
-#: app/components/sso-configuration-form.tsx:227
+#: app/components/sso-configuration-form.tsx:234
 msgid "Configure OAuth2 endpoints and security settings"
 msgstr "تكوين نقاط نهاية OAuth2 وإعدادات الأمان"
 
@@ -1078,11 +1082,11 @@ msgstr "تكوين نقاط نهاية OAuth2 وإعدادات الأمان"
 msgid "Configure retention and archival settings for {organizationName}"
 msgstr "تكوين إعدادات الاحتفاظ والأرشفة لـ {organizationName}"
 
-#: app/routes/_admin+/organizations+/$organizationId_+/sso.tsx:460
+#: app/routes/_admin+/organizations+/$organizationId_+/sso.tsx:491
 msgid "Configure Single Sign-On for {organizationName}"
 msgstr "تكوين تسجيل الدخول الموحد لـ {organizationName}"
 
-#: app/components/sso-configuration-form.tsx:140
+#: app/components/sso-configuration-form.tsx:147
 msgid "Configure your organization's identity provider settings"
 msgstr "تكوين إعدادات موفر الهوية لمؤسستك"
 
@@ -1101,7 +1105,7 @@ msgstr "الاتصالات"
 #: app/components/admin-organizations-table.tsx:306
 #: app/components/admin-users-table.tsx:229
 #: app/routes/_admin+/audit-logs.tsx:125
-#: app/routes/_admin+/gdpr-requests.tsx:335
+#: app/routes/_admin+/gdpr-requests.tsx:344
 #: app/routes/_admin+/waitlist.tsx:262
 msgid "contains"
 msgstr "يحتوي على"
@@ -1110,7 +1114,7 @@ msgstr "يحتوي على"
 msgid "Contains (Partial Match)"
 msgstr "يحتوي (تطابق جزئي)"
 
-#: app/routes/_admin+/roles+/system.$roleId.tsx:252
+#: app/routes/_admin+/roles+/system.$roleId.tsx:283
 msgid "Core System Role"
 msgstr "دور النظام الأساسي"
 
@@ -1163,7 +1167,7 @@ msgstr "عدد الضيوف في كل وقت بدء مقارنة بحد الوت
 msgid "Covers today"
 msgstr "ضيوف اليوم"
 
-#: app/components/admin/feature-flags.tsx:101
+#: app/components/admin/feature-flags.tsx:132
 msgid "Create a new feature flag at system level."
 msgstr "إنشاء مؤشر ميزة جديد على مستوى النظام."
 
@@ -1171,11 +1175,11 @@ msgstr "إنشاء مؤشر ميزة جديد على مستوى النظام."
 msgid "Create a new role with custom permissions"
 msgstr "إنشاء دور جديد بصلاحيات مخصصة"
 
-#: app/components/admin/feature-flags.tsx:250
+#: app/components/admin/feature-flags.tsx:282
 msgid "Create an override at organization level."
 msgstr "إنشاء تجاوز على مستوى المؤسسة."
 
-#: app/components/admin/feature-flags.tsx:252
+#: app/components/admin/feature-flags.tsx:284
 msgid "Create an override at user level."
 msgstr "إنشاء تجاوز على مستوى المستخدم."
 
@@ -1183,11 +1187,11 @@ msgstr "إنشاء تجاوز على مستوى المستخدم."
 msgid "Create Automation"
 msgstr "إنشاء أتمتة"
 
-#: app/routes/_admin+/marketing+/campaigns._index.tsx:113
+#: app/routes/_admin+/marketing+/campaigns._index.tsx:135
 msgid "Create Broadcast"
 msgstr "إنشاء بث"
 
-#: app/components/admin/feature-flags.tsx:189
+#: app/components/admin/feature-flags.tsx:221
 msgid "Create Flag"
 msgstr "إنشاء مؤشر"
 
@@ -1195,11 +1199,11 @@ msgstr "إنشاء مؤشر"
 msgid "Create New Role"
 msgstr "إنشاء دور جديد"
 
-#: app/components/admin/feature-flags.tsx:347
+#: app/components/admin/feature-flags.tsx:378
 msgid "Create Override"
 msgstr "إنشاء تجاوز"
 
-#: app/components/admin/feature-flags.tsx:243
+#: app/components/admin/feature-flags.tsx:275
 msgid "Create Override for \"{flagKey}\""
 msgstr "إنشاء تجاوز لـ \"{flagKey}\""
 
@@ -1215,7 +1219,7 @@ msgstr "أنشئ أول بث لك"
 msgid "Create your first platform automation workflow."
 msgstr "أنشئ أول سير عمل أتمتة للمنصة."
 
-#: app/routes/_admin+/marketing+/campaigns._index.tsx:107
+#: app/routes/_admin+/marketing+/campaigns._index.tsx:129
 msgid "Create your first platform email campaign for tenant operators."
 msgstr "أنشئ أول حملة بريد إلكتروني للمنصة لمشغّلي المستأجرين."
 
@@ -1225,8 +1229,8 @@ msgstr "أنشئ أول حملة بريد إلكتروني للمنصة لمشغ
 msgid "Created"
 msgstr "تم الإنشاء"
 
-#: app/routes/_admin+/roles+/$roleId.tsx:574
-#: app/routes/_admin+/roles+/system.$roleId.tsx:350
+#: app/routes/_admin+/roles+/$roleId.tsx:613
+#: app/routes/_admin+/roles+/system.$roleId.tsx:378
 msgid "Created {createdDate}"
 msgstr "تم الإنشاء {createdDate}"
 
@@ -1324,7 +1328,7 @@ msgstr "لوحة التحكم"
 #~ msgid "Data Subject Requests"
 #~ msgstr "طلبات أصحاب البيانات"
 
-#: app/components/admin/feature-flags.tsx:148
+#: app/components/admin/feature-flags.tsx:178
 #: app/routes/_admin+/waitlist.tsx:290
 msgid "Date"
 msgstr "التاريخ"
@@ -1337,15 +1341,15 @@ msgstr "أيام"
 msgid "Days"
 msgstr "أيام"
 
-#: app/components/sso-user-management.tsx:298
+#: app/components/sso-user-management.tsx:302
 msgid "Deactivate"
 msgstr "إلغاء التفعيل"
 
-#: app/components/sso-user-management.tsx:230
+#: app/components/sso-user-management.tsx:234
 msgid "Default"
 msgstr "افتراضي"
 
-#: app/components/sso-configuration-form.tsx:375
+#: app/components/sso-configuration-form.tsx:421
 msgid "Default Role"
 msgstr "الدور الافتراضي"
 
@@ -1357,7 +1361,7 @@ msgstr "يجب أن تكون مدة التأخير 1 على الأقل."
 msgid "Delay unit is required."
 msgstr "وحدة التأخير مطلوبة."
 
-#: app/components/admin/feature-flags.tsx:409
+#: app/components/admin/feature-flags.tsx:440
 #: app/routes/_admin+/marketing+/automations._index.tsx:289
 msgid "Delete"
 msgstr "حذف"
@@ -1387,8 +1391,8 @@ msgstr "حذف الاتصال"
 msgid "Delete node"
 msgstr "حذف العقدة"
 
-#: app/routes/_admin+/roles+/$roleId.tsx:510
-#: app/routes/_admin+/roles+/system.$roleId.tsx:281
+#: app/routes/_admin+/roles+/$roleId.tsx:549
+#: app/routes/_admin+/roles+/system.$roleId.tsx:312
 msgid "Delete role"
 msgstr "حذف الدور"
 
@@ -1401,13 +1405,13 @@ msgid "Describe what this role can do..."
 msgstr "وصف ما يمكن لهذا الدور فعله..."
 
 #: app/components/admin-organizations-table.tsx:168
-#: app/routes/_admin+/roles+/$roleId.tsx:554
-#: app/routes/_admin+/roles+/$roleId.tsx:790
-#: app/routes/_admin+/roles+/$roleId.tsx:906
+#: app/routes/_admin+/roles+/$roleId.tsx:593
+#: app/routes/_admin+/roles+/$roleId.tsx:829
+#: app/routes/_admin+/roles+/$roleId.tsx:945
 #: app/routes/_admin+/roles+/index.tsx:314
 #: app/routes/_admin+/roles+/index.tsx:409
 #: app/routes/_admin+/roles+/index.tsx:451
-#: app/routes/_admin+/roles+/system.$roleId.tsx:327
+#: app/routes/_admin+/roles+/system.$roleId.tsx:358
 msgid "Description"
 msgstr "الوصف"
 
@@ -1419,7 +1423,7 @@ msgstr "تصميم البريد"
 msgid "Detailed information for IP {ip}"
 msgstr "معلومات تفصيلية لعنوان IP {ip}"
 
-#: app/routes/_admin+/gdpr-requests.tsx:505
+#: app/routes/_admin+/gdpr-requests.tsx:514
 msgid "Details"
 msgstr "التفاصيل"
 
@@ -1439,7 +1443,7 @@ msgstr "هل استلم المورد هذا الطلب؟"
 msgid "Disable"
 msgstr "تعطيل"
 
-#: app/components/sso-configuration-form.tsx:495
+#: app/components/sso-configuration-form.tsx:541
 msgid "Disable SSO"
 msgstr "تعطيل SSO"
 
@@ -1518,7 +1522,7 @@ msgstr "مثال: checkout_abandoned, tier_upgraded"
 #~ msgid "e.g. contact-us, demo-request"
 #~ msgstr "مثال: contact-us, demo-request"
 
-#: app/routes/_admin+/roles+/$roleId.tsx:872
+#: app/routes/_admin+/roles+/$roleId.tsx:911
 msgid "e.g. create, read, approve, publish"
 msgstr "مثل: إنشاء، قراءة، موافقة، نشر"
 
@@ -1546,7 +1550,7 @@ msgstr "مثال: مرحبًا {FIRST_NAME_TAG}!"
 msgid "e.g., editor, moderator, contributor"
 msgstr "مثل: محرر، مشرف، مساهم"
 
-#: app/components/sso-configuration-form.tsx:154
+#: app/components/sso-configuration-form.tsx:161
 msgid "e.g., Okta, Azure AD, Auth0"
 msgstr "مثل: Okta، Azure AD، Auth0"
 
@@ -1558,7 +1562,7 @@ msgstr "ساعات ومناوبات كل يوم المنشورة بجانب ال
 msgid "Each shippable product and size prints at one vendor. Changing the vendor here is how orders are rerouted: retrying a held order picks up the new mapping."
 msgstr "يُطبع كل منتج ومقاس قابل للشحن لدى مورّد واحد. تغيير المورّد هنا هو طريقة إعادة توجيه الطلبات: إعادة محاولة طلب معلّق تستخدم الربط الجديد."
 
-#: app/components/admin/feature-flags.tsx:402
+#: app/components/admin/feature-flags.tsx:433
 #: app/components/roles/roles-table-rows.tsx:59
 #: app/components/sso-configuration-overview.tsx:118
 #: app/routes/_admin+/marketing+/automations._index.tsx:231
@@ -1569,25 +1573,25 @@ msgstr "تحرير"
 msgid "Edit design"
 msgstr "تعديل التصميم"
 
-#: app/components/admin/feature-flags.tsx:95
+#: app/components/admin/feature-flags.tsx:126
 msgid "Edit Flag"
 msgstr "تحرير المؤشر"
 
-#: app/components/admin/feature-flags.tsx:535
-#: app/components/admin/feature-flags.tsx:713
+#: app/components/admin/feature-flags.tsx:566
+#: app/components/admin/feature-flags.tsx:744
 msgid "Edit Override"
 msgstr "تحرير التجاوز"
 
-#: app/components/admin/feature-flags.tsx:241
+#: app/components/admin/feature-flags.tsx:273
 msgid "Edit Override for \"{flagKey}\""
 msgstr "تحرير التجاوز لـ \"{flagKey}\""
 
-#: app/components/admin/feature-flags.tsx:99
+#: app/components/admin/feature-flags.tsx:130
 msgid "Edit the details of the feature flag."
 msgstr "تحرير تفاصيل مؤشر الميزة."
 
-#: app/components/admin/feature-flags.tsx:478
-#: app/components/admin/feature-flags.tsx:649
+#: app/components/admin/feature-flags.tsx:509
+#: app/components/admin/feature-flags.tsx:680
 msgid "Effective Value"
 msgstr "القيمة الفعالة"
 
@@ -1631,7 +1635,7 @@ msgstr "سطر موضوع البريد الإلكتروني مطلوب."
 msgid "Email tenant operators"
 msgstr "مراسلة مشغّلي المستأجرين"
 
-#: app/routes/_admin+/gdpr-requests.tsx:336
+#: app/routes/_admin+/gdpr-requests.tsx:345
 msgid "Email, username, or name"
 msgstr "البريد الإلكتروني أو اسم المستخدم أو الاسم"
 
@@ -1664,11 +1668,11 @@ msgstr "تفعيل {item}"
 msgid "Enable Archiving"
 msgstr "تفعيل الأرشفة"
 
-#: app/components/sso-configuration-form.tsx:497
+#: app/components/sso-configuration-form.tsx:543
 msgid "Enable SSO"
 msgstr "تفعيل SSO"
 
-#: app/components/admin/feature-flags.tsx:306
+#: app/components/admin/feature-flags.tsx:337
 #: app/components/sso-configuration-overview.tsx:101
 #: app/routes/_admin+/organizations+/$organizationId_+/audit-retention.tsx:415
 #: app/routes/_admin+/organizations+/$organizationId_+/audit-retention.tsx:440
@@ -1696,31 +1700,31 @@ msgstr "أدخل عددًا صحيحًا من النقاط الأساسية بي
 msgid "Enter an amount above zero and no more than what is left to refund."
 msgstr "أدخل مبلغًا أكبر من صفر ولا يتجاوز المتبقي للاسترداد."
 
-#: app/routes/_admin+/roles+/$roleId.tsx:800
+#: app/routes/_admin+/roles+/$roleId.tsx:839
 msgid "Enter feature description"
 msgstr "أدخل وصف الميزة"
 
-#: app/routes/_admin+/roles+/$roleId.tsx:783
+#: app/routes/_admin+/roles+/$roleId.tsx:822
 msgid "Enter feature key"
 msgstr "أدخل مفتاح الميزة"
 
-#: app/routes/_admin+/roles+/$roleId.tsx:768
+#: app/routes/_admin+/roles+/$roleId.tsx:807
 msgid "Enter feature name"
 msgstr "أدخل اسم الميزة"
 
-#: app/components/admin/feature-flags.tsx:452
+#: app/components/admin/feature-flags.tsx:483
 msgid "Enter Organization ID"
 msgstr "أدخل معرف المؤسسة"
 
-#: app/components/admin/feature-flags.tsx:607
+#: app/components/admin/feature-flags.tsx:638
 msgid "Enter Organization ID (optional - for per-org overrides)"
 msgstr "أدخل معرف المؤسسة (اختياري - للتجاوزات لكل مؤسسة)"
 
-#: app/routes/_admin+/roles+/$roleId.tsx:916
+#: app/routes/_admin+/roles+/$roleId.tsx:955
 msgid "Enter permission description"
 msgstr "أدخل وصف الصلاحية"
 
-#: app/routes/_admin+/roles+/$roleId.tsx:859
+#: app/routes/_admin+/roles+/$roleId.tsx:898
 msgid "Enter permission name"
 msgstr "أدخل اسم الصلاحية"
 
@@ -1740,7 +1744,7 @@ msgstr "أدخل سبب حظر هذا المستخدم..."
 msgid "Enter the vendor order id."
 msgstr "أدخل رقم طلب المورد."
 
-#: app/components/admin/feature-flags.tsx:598
+#: app/components/admin/feature-flags.tsx:629
 msgid "Enter User ID (required)"
 msgstr "أدخل معرف المستخدم (مطلوب)"
 
@@ -1748,11 +1752,11 @@ msgstr "أدخل معرف المستخدم (مطلوب)"
 msgid "Entries:"
 msgstr "الإدخالات:"
 
-#: app/routes/_admin+/gdpr-requests.tsx:540
+#: app/routes/_admin+/gdpr-requests.tsx:549
 msgid "Erasure"
 msgstr "المحو"
 
-#: app/routes/_admin+/gdpr-requests.tsx:349
+#: app/routes/_admin+/gdpr-requests.tsx:358
 msgid "Erasure (Article 17)"
 msgstr "المحو (المادة 17)"
 
@@ -1788,7 +1792,7 @@ msgstr "يحصل الجميع على {code}"
 msgid "Exactly Equals"
 msgstr "يساوي تماماً"
 
-#: app/routes/_admin+/gdpr-requests.tsx:605
+#: app/routes/_admin+/gdpr-requests.tsx:614
 msgid "Expedite Now"
 msgstr "تسريع الآن"
 
@@ -1804,11 +1808,11 @@ msgstr "ينتهي:"
 msgid "Expires: {expiresAt}"
 msgstr "تنتهي الصلاحية: {expiresAt}"
 
-#: app/routes/_admin+/gdpr-requests.tsx:538
+#: app/routes/_admin+/gdpr-requests.tsx:547
 msgid "Export"
 msgstr "تصدير"
 
-#: app/routes/_admin+/gdpr-requests.tsx:348
+#: app/routes/_admin+/gdpr-requests.tsx:357
 msgid "Export (Article 20)"
 msgstr "التصدير (المادة 20)"
 
@@ -1821,13 +1825,13 @@ msgid "Export JSON"
 msgstr "تصدير JSON"
 
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:10
-#: app/routes/_admin+/gdpr-requests.tsx:366
-#: app/routes/_admin+/marketing+/campaigns._index.tsx:26
+#: app/routes/_admin+/gdpr-requests.tsx:375
+#: app/routes/_admin+/marketing+/campaigns._index.tsx:33
 #: app/routes/_admin+/print-shop.tsx:75
 msgid "Failed"
 msgstr "فشل"
 
-#: app/routes/_admin+/gdpr-requests.tsx:469
+#: app/routes/_admin+/gdpr-requests.tsx:478
 msgid "Failed Requests"
 msgstr "الطلبات الفاشلة"
 
@@ -1835,7 +1839,7 @@ msgstr "الطلبات الفاشلة"
 msgid "Failed to create automation"
 msgstr "فشل إنشاء الأتمتة"
 
-#: app/routes/_admin+/marketing+/campaigns.new.tsx:137
+#: app/routes/_admin+/marketing+/campaigns.new.tsx:146
 msgid "Failed to create campaign"
 msgstr "فشل إنشاء الحملة"
 
@@ -1856,7 +1860,7 @@ msgstr "القيمة الاحتياطية"
 msgid "False"
 msgstr "خطأ"
 
-#: app/components/admin/feature-flags.tsx:739
+#: app/components/admin/feature-flags.tsx:770
 msgid "Feature flags"
 msgstr "مؤشرات الميزات"
 
@@ -1864,12 +1868,12 @@ msgstr "مؤشرات الميزات"
 msgid "Feature Flags"
 msgstr "مؤشرات الميزات"
 
-#: app/routes/_admin+/roles+/$roleId.tsx:595
-#: app/routes/_admin+/roles+/$roleId.tsx:605
+#: app/routes/_admin+/roles+/$roleId.tsx:634
+#: app/routes/_admin+/roles+/$roleId.tsx:644
 msgid "Feature permissions"
 msgstr "صلاحيات الميزات"
 
-#: app/routes/_admin+/roles+/$roleId.tsx:843
+#: app/routes/_admin+/roles+/$roleId.tsx:882
 msgid "Feature: {selectedEntity}"
 msgstr "الميزة: {selectedEntity}"
 
@@ -1913,24 +1917,24 @@ msgstr "ملاءمة عرض اللوحة"
 msgid "Fix validation errors before publishing"
 msgstr "أصلح أخطاء التحقق قبل النشر"
 
-#: app/components/admin/feature-flags.tsx:123
+#: app/components/admin/feature-flags.tsx:152
 msgid "Flag Key"
 msgstr "مفتاح المؤشر"
 
-#: app/components/admin/feature-flags.tsx:155
-#: app/components/admin/feature-flags.tsx:164
+#: app/components/admin/feature-flags.tsx:185
+#: app/components/admin/feature-flags.tsx:194
 msgid "Flag Value"
 msgstr "قيمة المؤشر"
 
-#: app/components/admin/feature-flags.tsx:468
+#: app/components/admin/feature-flags.tsx:499
 msgid "Flags for Organization: {searchedOrgId}"
 msgstr "المؤشرات للمؤسسة: {searchedOrgId}"
 
-#: app/components/admin/feature-flags.tsx:637
+#: app/components/admin/feature-flags.tsx:668
 msgid "Flags for User: {searchedUserId} (Global)"
 msgstr "المؤشرات للمستخدم: {searchedUserId} (عام)"
 
-#: app/components/admin/feature-flags.tsx:633
+#: app/components/admin/feature-flags.tsx:664
 msgid "Flags for User: {searchedUserId} (Org: {searchedOrgId})"
 msgstr "المؤشرات للمستخدم: {searchedUserId} (المؤسسة: {searchedOrgId})"
 
@@ -1979,7 +1983,7 @@ msgstr "اسم المرسل (اختياري)"
 msgid "Full width"
 msgstr "عرض كامل"
 
-#: app/routes/_admin+/gdpr-requests.tsx:408
+#: app/routes/_admin+/gdpr-requests.tsx:417
 msgid "GDPR Data Requests"
 msgstr "طلبات بيانات GDPR"
 
@@ -2019,7 +2023,7 @@ msgstr "بيانات الرسم البياني مطلوبة"
 msgid "Graph data missing"
 msgstr "بيانات الرسم البياني مفقودة"
 
-#: app/components/sso-configuration-form.tsx:401
+#: app/components/sso-configuration-form.tsx:447
 msgid "Guest"
 msgstr "ضيف"
 
@@ -2119,23 +2123,23 @@ msgstr "عدد مرات تسجيل الحضور في الوقت المحدد ل�
 msgid "How waitlist parties ended up over the last 30 days: seated, left, cancelled or no response."
 msgstr "كيف انتهت مجموعات قائمة الانتظار خلال آخر 30 يومًا: جلست أو غادرت أو ألغت أو لم تردّ."
 
-#: app/components/sso-configuration-form.tsx:168
+#: app/components/sso-configuration-form.tsx:175
 msgid "https://your-domain.okta.com"
 msgstr "https://your-domain.okta.com"
 
-#: app/components/sso-configuration-form.tsx:267
+#: app/components/sso-configuration-form.tsx:274
 msgid "https://your-domain.okta.com/oauth2/v1/authorize"
 msgstr "https://your-domain.okta.com/oauth2/v1/authorize"
 
-#: app/components/sso-configuration-form.tsx:312
+#: app/components/sso-configuration-form.tsx:319
 msgid "https://your-domain.okta.com/oauth2/v1/revoke"
 msgstr "https://your-domain.okta.com/oauth2/v1/revoke"
 
-#: app/components/sso-configuration-form.tsx:282
+#: app/components/sso-configuration-form.tsx:289
 msgid "https://your-domain.okta.com/oauth2/v1/token"
 msgstr "https://your-domain.okta.com/oauth2/v1/token"
 
-#: app/components/sso-configuration-form.tsx:297
+#: app/components/sso-configuration-form.tsx:304
 msgid "https://your-domain.okta.com/oauth2/v1/userinfo"
 msgstr "https://your-domain.okta.com/oauth2/v1/userinfo"
 
@@ -2143,7 +2147,7 @@ msgstr "https://your-domain.okta.com/oauth2/v1/userinfo"
 msgid "I found nothing, retry"
 msgstr "لم أجد شيئًا، أعد المحاولة"
 
-#: app/components/sso-configuration-form.tsx:137
+#: app/components/sso-configuration-form.tsx:144
 msgid "Identity Provider Configuration"
 msgstr "إعداد موفر الهوية"
 
@@ -2159,7 +2163,7 @@ msgstr "رابط الصورة"
 msgid "Impersonate"
 msgstr "انتحال الشخصية"
 
-#: app/routes/_admin+/gdpr-requests.tsx:444
+#: app/routes/_admin+/gdpr-requests.tsx:453
 msgid "In grace period"
 msgstr "ضمن فترة السماح"
 
@@ -2172,7 +2176,7 @@ msgid "In-memory LRU cache"
 msgstr "ذاكرة التخزين المؤقت LRU في الذاكرة"
 
 #: app/components/admin-organizations-table.tsx:271
-#: app/components/sso-user-management.tsx:267
+#: app/components/sso-user-management.tsx:271
 msgid "Inactive"
 msgstr "غير نشط"
 
@@ -2245,8 +2249,8 @@ msgstr "معلومات IP"
 #: app/components/admin-organizations-table.tsx:327
 #: app/components/admin-users-table.tsx:238
 #: app/routes/_admin+/audit-logs.tsx:152
-#: app/routes/_admin+/gdpr-requests.tsx:344
-#: app/routes/_admin+/gdpr-requests.tsx:357
+#: app/routes/_admin+/gdpr-requests.tsx:353
+#: app/routes/_admin+/gdpr-requests.tsx:366
 #: app/routes/_admin+/waitlist.tsx:271
 #: app/routes/_admin+/waitlist.tsx:284
 msgid "is"
@@ -2256,7 +2260,7 @@ msgstr "هو"
 msgid "Is Verified (True)"
 msgstr "موثّق (صحيح)"
 
-#: app/components/sso-configuration-form.tsx:162
+#: app/components/sso-configuration-form.tsx:169
 msgid "Issuer URL"
 msgstr "رابط المُصدر"
 
@@ -2277,15 +2281,15 @@ msgstr "متابعة التعديل"
 msgid "Keep forever"
 msgstr "الاحتفاظ للأبد"
 
-#: app/components/admin/feature-flags.tsx:372
-#: app/components/admin/feature-flags.tsx:475
-#: app/components/admin/feature-flags.tsx:646
+#: app/components/admin/feature-flags.tsx:403
+#: app/components/admin/feature-flags.tsx:506
+#: app/components/admin/feature-flags.tsx:677
 #: app/routes/_admin+/cache.tsx:607
-#: app/routes/_admin+/roles+/$roleId.tsx:492
-#: app/routes/_admin+/roles+/$roleId.tsx:541
-#: app/routes/_admin+/roles+/$roleId.tsx:775
-#: app/routes/_admin+/roles+/system.$roleId.tsx:260
-#: app/routes/_admin+/roles+/system.$roleId.tsx:314
+#: app/routes/_admin+/roles+/$roleId.tsx:531
+#: app/routes/_admin+/roles+/$roleId.tsx:580
+#: app/routes/_admin+/roles+/$roleId.tsx:814
+#: app/routes/_admin+/roles+/system.$roleId.tsx:291
+#: app/routes/_admin+/roles+/system.$roleId.tsx:345
 msgid "Key"
 msgstr "المفتاح"
 
@@ -2321,11 +2325,11 @@ msgstr "نسبة تكلفة العمالة حسب اليوم"
 msgid "Labor cost percent by workplace"
 msgstr "نسبة تكلفة العمالة حسب مكان العمل"
 
-#: app/components/sso-user-management.tsx:455
+#: app/components/sso-user-management.tsx:468
 msgid "Last 30 days"
 msgstr "آخر 30 يوم"
 
-#: app/components/sso-user-management.tsx:431
+#: app/components/sso-user-management.tsx:444
 msgid "Last 7 days"
 msgstr "آخر 7 أيام"
 
@@ -2350,7 +2354,7 @@ msgstr "آخر ظهور"
 msgid "Last Seen: {lastSeenAt}"
 msgstr "آخر ظهور: {lastSeenAt}"
 
-#: app/components/sso-user-management.tsx:171
+#: app/components/sso-user-management.tsx:175
 msgid "Last SSO Login"
 msgstr "آخر تسجيل دخول SSO"
 
@@ -2382,7 +2386,7 @@ msgstr "بدء التشغيل"
 msgid "Launch status is currently <0>{launchStatus}</0>. The waitlist is only active when LAUNCH_STATUS is set to CLOSED_BETA."
 msgstr "حالة الإطلاق حالياً <0>{launchStatus}</0>. قائمة الانتظار نشطة فقط عندما يتم تعيين LAUNCH_STATUS إلى CLOSED_BETA."
 
-#: app/components/admin/feature-flags.tsx:619
+#: app/components/admin/feature-flags.tsx:650
 msgid "Leave Organization ID empty to view/set global user overrides. Enter an Organization ID to view/set overrides for that specific organization."
 msgstr "اترك معرف المؤسسة فارغاً لعرض/تعيين التجاوزات العامة للمستخدم. أدخل معرف المؤسسة لعرض/تعيين التجاوزات لتلك المؤسسة المحددة."
 
@@ -2456,7 +2460,7 @@ msgstr "إدارة جميع المستخدمين في النظام"
 msgid "Manage Cache →"
 msgstr "إدارة ذاكرة التخزين المؤقت →"
 
-#: app/routes/_admin+/gdpr-requests.tsx:410
+#: app/routes/_admin+/gdpr-requests.tsx:419
 msgid "Manage data export and deletion requests for compliance"
 msgstr "إدارة طلبات تصدير البيانات وحذفها للامتثال"
 
@@ -2480,7 +2484,7 @@ msgstr "إدارة الاحتفاظ برسائل محادثات الفريق ف�
 msgid "Manage Users"
 msgstr "إدارة المستخدمين"
 
-#: app/routes/_admin+/organizations+/$organizationId_+/sso.users.tsx:427
+#: app/routes/_admin+/organizations+/$organizationId_+/sso.users.tsx:513
 msgid "Manage users who authenticate through SSO for {organizationName}"
 msgstr "إدارة المستخدمين الذين يصادقون من خلال SSO لـ {organizationName}"
 
@@ -2496,7 +2500,7 @@ msgstr "إدارة مستخدمي قائمة الانتظار ومنح الوص�
 msgid "Manual Actions"
 msgstr "الإجراءات اليدوية"
 
-#: app/components/sso-configuration-form.tsx:255
+#: app/components/sso-configuration-form.tsx:262
 msgid "Manual Endpoint Configuration"
 msgstr "إعداد نقطة النهاية اليدوي"
 
@@ -2511,7 +2515,7 @@ msgstr "تشغيل يدوي"
 msgid "Manually trigger archival of logs older than the hot storage period"
 msgstr "تشغيل أرشفة السجلات الأقدم من فترة التخزين الساخن يدويًا"
 
-#: app/components/sso-configuration-form.tsx:426
+#: app/components/sso-configuration-form.tsx:472
 msgid "Map OIDC claims to user attributes. Leave empty for default mapping."
 msgstr "تعيين مطالبات OIDC إلى سمات المستخدم. اترك فارغاً للتعيين الافتراضي."
 
@@ -2535,8 +2539,8 @@ msgstr "التسويق"
 msgid "Markup (%)"
 msgstr "نسبة الزيادة (%)"
 
-#: app/components/sso-configuration-form.tsx:395
-#: app/components/sso-user-management.tsx:104
+#: app/components/sso-configuration-form.tsx:441
+#: app/components/sso-user-management.tsx:107
 msgid "Member"
 msgstr "عضو"
 
@@ -2561,7 +2565,7 @@ msgstr "فريق Menuza"
 msgid "Message"
 msgstr "الرسالة"
 
-#: app/routes/_admin+/marketing+/campaigns.new.tsx:112
+#: app/routes/_admin+/marketing+/campaigns.new.tsx:116
 msgid "Message content is required"
 msgstr "محتوى الرسالة مطلوب"
 
@@ -2582,7 +2586,7 @@ msgstr "دقائق"
 msgid "Minutes"
 msgstr "دقائق"
 
-#: app/components/admin/feature-flags.tsx:248
+#: app/components/admin/feature-flags.tsx:280
 msgid "Modify the override value."
 msgstr "تعديل قيمة التجاوز."
 
@@ -2613,10 +2617,10 @@ msgstr "غير متاح"
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:500
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:348
-#: app/routes/_admin+/roles+/$roleId.tsx:530
-#: app/routes/_admin+/roles+/$roleId.tsx:763
-#: app/routes/_admin+/roles+/$roleId.tsx:854
-#: app/routes/_admin+/roles+/system.$roleId.tsx:302
+#: app/routes/_admin+/roles+/$roleId.tsx:569
+#: app/routes/_admin+/roles+/$roleId.tsx:802
+#: app/routes/_admin+/roles+/$roleId.tsx:893
+#: app/routes/_admin+/roles+/system.$roleId.tsx:333
 msgid "Name"
 msgstr "الاسم"
 
@@ -2638,7 +2642,7 @@ msgstr "الاسم أو المعرّف أو الوصف"
 
 #: app/components/admin-users-table.tsx:189
 #: app/components/sso-configuration-overview.tsx:252
-#: app/components/sso-user-management.tsx:258
+#: app/components/sso-user-management.tsx:262
 msgid "Never"
 msgstr "أبداً"
 
@@ -2646,20 +2650,20 @@ msgstr "أبداً"
 msgid "New Automation"
 msgstr "أتمتة جديدة"
 
-#: app/routes/_admin+/marketing+/campaigns.new.tsx:165
+#: app/routes/_admin+/marketing+/campaigns.new.tsx:174
 msgid "New broadcast"
 msgstr "بث جديد"
 
-#: app/routes/_admin+/marketing+/campaigns._index.tsx:65
+#: app/routes/_admin+/marketing+/campaigns._index.tsx:87
 msgid "New Broadcast"
 msgstr "بث جديد"
 
-#: app/routes/_admin+/roles+/$roleId.tsx:747
-#: app/routes/_admin+/roles+/$roleId.tsx:754
+#: app/routes/_admin+/roles+/$roleId.tsx:786
+#: app/routes/_admin+/roles+/$roleId.tsx:793
 msgid "New feature"
 msgstr "ميزة جديدة"
 
-#: app/routes/_admin+/roles+/$roleId.tsx:836
+#: app/routes/_admin+/roles+/$roleId.tsx:875
 msgid "New permission"
 msgstr "صلاحية جديدة"
 
@@ -2682,7 +2686,7 @@ msgstr "لا"
 msgid "No active sessions"
 msgstr "لا توجد جلسات نشطة"
 
-#: app/components/sso-user-management.tsx:385
+#: app/components/sso-user-management.tsx:398
 msgid "No Audit Logs"
 msgstr "لا توجد سجلات مراجعة"
 
@@ -2695,7 +2699,7 @@ msgstr "لم يتم العثور على سجلات مراجعة"
 msgid "No automations found"
 msgstr "لم يتم العثور على أتمتة"
 
-#: app/routes/_admin+/marketing+/campaigns._index.tsx:105
+#: app/routes/_admin+/marketing+/campaigns._index.tsx:127
 msgid "No broadcasts found"
 msgstr "لم يتم العثور على بثّات"
 
@@ -2733,12 +2737,12 @@ msgstr "لا توجد سجلات تسليم بعد."
 msgid "No description"
 msgstr "لا يوجد وصف"
 
-#: app/components/admin/feature-flags.tsx:495
-#: app/components/admin/feature-flags.tsx:666
+#: app/components/admin/feature-flags.tsx:526
+#: app/components/admin/feature-flags.tsx:697
 msgid "No flags configured"
 msgstr "لم يتم تكوين أي مؤشرات"
 
-#: app/routes/_admin+/gdpr-requests.tsx:628
+#: app/routes/_admin+/gdpr-requests.tsx:637
 msgid "No GDPR requests found"
 msgstr "لم يتم العثور على طلبات GDPR"
 
@@ -2758,7 +2762,7 @@ msgstr "لم يتم إنشاء ملاحظات"
 #~ msgid "No numbers in the inventory yet."
 #~ msgstr "لا توجد أرقام في المخزون بعد."
 
-#: app/routes/_admin+/phone-numbers.tsx:338
+#: app/routes/_admin+/phone-numbers.tsx:345
 msgid "No numbers yet"
 msgstr "لا توجد أرقام بعد"
 
@@ -2794,15 +2798,15 @@ msgstr "لا يوجد نشاط حديث"
 msgid "No recent comments"
 msgstr "لا توجد تعليقات حديثة"
 
-#: app/components/sso-user-management.tsx:388
+#: app/components/sso-user-management.tsx:401
 msgid "No SSO activities have been recorded yet."
 msgstr "لم يتم تسجيل أي أنشطة SSO حتى الآن."
 
-#: app/components/sso-user-management.tsx:242
+#: app/components/sso-user-management.tsx:246
 msgid "No SSO sessions"
 msgstr "لا توجد جلسات SSO"
 
-#: app/components/sso-user-management.tsx:317
+#: app/components/sso-user-management.tsx:330
 msgid "No SSO Users"
 msgstr "لا يوجد مستخدمو SSO"
 
@@ -2811,7 +2815,7 @@ msgstr "لا يوجد مستخدمو SSO"
 msgid "No Subscription"
 msgstr "لا توجد اشتراكات"
 
-#: app/components/admin/feature-flags.tsx:389
+#: app/components/admin/feature-flags.tsx:420
 msgid "No system flags configured"
 msgstr "لم يتم تكوين أي مؤشرات نظام"
 
@@ -2827,7 +2831,7 @@ msgstr "لا يوجد مستخدمون"
 #~ msgid "No users found."
 #~ msgstr "لم يتم العثور على مستخدمين."
 
-#: app/components/sso-user-management.tsx:320
+#: app/components/sso-user-management.tsx:333
 msgid "No users have authenticated through SSO yet."
 msgstr "لم يتحقق أي مستخدمين من خلال SSO حتى الآن."
 
@@ -2895,20 +2899,20 @@ msgstr "الملاحظات المنشأة"
 #~ msgid "Nothing there, retry"
 #~ msgstr "لا يوجد شيء، أعد المحاولة"
 
-#: app/components/admin/feature-flags.tsx:142
-#: app/routes/_admin+/phone-numbers.tsx:348
+#: app/components/admin/feature-flags.tsx:172
+#: app/routes/_admin+/phone-numbers.tsx:355
 msgid "Number"
 msgstr "رقم"
 
-#: app/components/sso-configuration-form.tsx:183
+#: app/components/sso-configuration-form.tsx:190
 msgid "OAuth2 Client ID"
 msgstr "معرف عميل OAuth2"
 
-#: app/components/sso-configuration-form.tsx:197
+#: app/components/sso-configuration-form.tsx:204
 msgid "OAuth2 Client Secret"
 msgstr "سر عميل OAuth2"
 
-#: app/components/sso-configuration-form.tsx:224
+#: app/components/sso-configuration-form.tsx:231
 msgid "OAuth2 Configuration"
 msgstr "إعداد OAuth2"
 
@@ -2919,6 +2923,10 @@ msgstr "أقدم سجل"
 #: app/routes/_admin+/print-shop.tsx:74
 msgid "On hold"
 msgstr "معلّق"
+
+#: app/routes/_admin+/gdpr-requests.tsx:333
+msgid "On hold: last admin of organization {organizationIds}. It runs once another admin is added there."
+msgstr "معلّق: آخر مسؤول في المؤسسة {organizationIds}. يُنفَّذ بعد إضافة مسؤول آخر إليها."
 
 #: ../../packages/reports/src/ui/report-labels.ts:56
 msgid "On-time arrival"
@@ -2949,7 +2957,7 @@ msgstr "معدل الفتح"
 msgid "Opened {0}"
 msgstr "فُتِح {0}"
 
-#: app/components/sso-configuration-form.tsx:212
+#: app/components/sso-configuration-form.tsx:219
 msgid "openid email profile"
 msgstr "openid email profile"
 
@@ -2962,8 +2970,8 @@ msgstr "مشغّل"
 msgid "Operator Invited"
 msgstr "تمت دعوة المشغّل"
 
-#: app/routes/_admin+/roles+/$roleId.tsx:794
-#: app/routes/_admin+/roles+/$roleId.tsx:910
+#: app/routes/_admin+/roles+/$roleId.tsx:833
+#: app/routes/_admin+/roles+/$roleId.tsx:949
 msgid "Optional"
 msgstr "اختياري"
 
@@ -2971,21 +2979,21 @@ msgstr "اختياري"
 msgid "Orders"
 msgstr "الطلبات"
 
-#: app/routes/_admin+/roles+/$roleId.tsx:894
+#: app/routes/_admin+/roles+/$roleId.tsx:933
 msgid "org - Organization resources"
 msgstr "org - موارد المؤسسة"
 
 #: app/components/admin-organizations-table.tsx:139
 #: app/components/admin-users-table.tsx:235
-#: app/components/admin/feature-flags.tsx:753
+#: app/components/admin/feature-flags.tsx:784
 #: app/routes/_admin+/feature-flags_.reservations-fees.tsx:121
 #: app/routes/_admin+/feature-flags_.reservations-fees.tsx:199
-#: app/routes/_admin+/phone-numbers.tsx:354
+#: app/routes/_admin+/phone-numbers.tsx:361
 #: app/routes/_admin+/print-shop.tsx:796
 msgid "Organization"
 msgstr "المؤسسة"
 
-#: app/routes/_admin+/marketing+/campaigns.new.tsx:202
+#: app/routes/_admin+/marketing+/campaigns.new.tsx:211
 msgid "Organization (optional)"
 msgstr "المنظمة (اختياري)"
 
@@ -2994,7 +3002,7 @@ msgstr "المنظمة (اختياري)"
 msgid "Organization Created"
 msgstr "تم إنشاء المنظمة"
 
-#: app/components/admin/feature-flags.tsx:520
+#: app/components/admin/feature-flags.tsx:551
 msgid "Organization Override"
 msgstr "تجاوز المؤسسة"
 
@@ -3014,11 +3022,11 @@ msgstr "أدوار المؤسسة"
 msgid "Organization roles apply within specific organizations, while system roles are global."
 msgstr "تنطبق أدوار المؤسسة على مؤسسات محددة، بينما الأدوار النظامية عامة."
 
-#: app/routes/_admin+/phone-numbers.tsx:276
+#: app/routes/_admin+/phone-numbers.tsx:283
 msgid "Organization slug or ID"
 msgstr "المعرّف المختصر للمؤسسة أو معرّفها"
 
-#: app/routes/_admin+/phone-numbers.tsx:277
+#: app/routes/_admin+/phone-numbers.tsx:284
 msgid "Organization slug or ID for {e164}"
 msgstr "المعرّف المختصر للمؤسسة أو معرّفها للرقم {e164}"
 
@@ -3040,8 +3048,8 @@ msgstr "ستظهر المؤسسات هنا بمجرد إنشائها."
 msgid "Outline"
 msgstr "محدد"
 
-#: app/components/admin/feature-flags.tsx:285
-#: app/components/admin/feature-flags.tsx:294
+#: app/components/admin/feature-flags.tsx:315
+#: app/components/admin/feature-flags.tsx:324
 msgid "Override Value"
 msgstr "قيمة التجاوز"
 
@@ -3062,11 +3070,11 @@ msgstr "ساعات العمل الإضافي حسب الأسبوع"
 msgid "Overview"
 msgstr "نظرة عامة"
 
-#: app/routes/_admin+/roles+/$roleId.tsx:891
+#: app/routes/_admin+/roles+/$roleId.tsx:930
 msgid "own - User's own resources"
 msgstr "own - موارد المستخدم الخاصة"
 
-#: app/components/sso-user-management.tsx:92
+#: app/components/sso-user-management.tsx:95
 msgid "Owner"
 msgstr "المالك"
 
@@ -3149,7 +3157,7 @@ msgstr "قيد الانتظار"
 msgid "Pending Access"
 msgstr "الوصول قيد الانتظار"
 
-#: app/routes/_admin+/gdpr-requests.tsx:435
+#: app/routes/_admin+/gdpr-requests.tsx:444
 msgid "Pending Deletions"
 msgstr "عمليات الحذف قيد الانتظار"
 
@@ -3165,10 +3173,10 @@ msgstr "لكل إدخال SQLite"
 msgid "Performance metrics"
 msgstr "مقاييس الأداء"
 
-#: app/routes/_admin+/roles+/$roleId.tsx:588
+#: app/routes/_admin+/roles+/$roleId.tsx:627
 #: app/routes/_admin+/roles+/index.tsx:406
 #: app/routes/_admin+/roles+/index.tsx:448
-#: app/routes/_admin+/roles+/system.$roleId.tsx:364
+#: app/routes/_admin+/roles+/system.$roleId.tsx:392
 msgid "Permissions"
 msgstr "الصلاحيات"
 
@@ -3190,7 +3198,7 @@ msgid "Phone Number"
 msgstr "رقم الهاتف"
 
 #: app/components/admin-sidebar.tsx:93
-#: app/routes/_admin+/phone-numbers.tsx:325
+#: app/routes/_admin+/phone-numbers.tsx:332
 msgid "Phone numbers"
 msgstr "أرقام الهاتف"
 
@@ -3219,7 +3227,7 @@ msgstr "اختر تخطيطًا ثم خصّص الكتل."
 msgid "Pick an organization by name or slug. Saving again replaces its override."
 msgstr "اختر منظمة بالاسم أو المعرّف النصي. الحفظ مرة أخرى يستبدل استثناءها."
 
-#: app/components/sso-configuration-form.tsx:329
+#: app/components/sso-configuration-form.tsx:336
 #: app/components/sso-configuration-overview.tsx:208
 msgid "PKCE Enabled"
 msgstr "PKCE مفعل"
@@ -3248,7 +3256,7 @@ msgstr "أُنشئت أتمتة المنصة عبر المُنشئ المرئي.
 msgid "Platform Automations"
 msgstr "أتمتة المنصة"
 
-#: app/routes/_admin+/marketing+/campaigns._index.tsx:59
+#: app/routes/_admin+/marketing+/campaigns._index.tsx:81
 msgid "Platform Broadcasts"
 msgstr "بثّات المنصة"
 
@@ -3264,7 +3272,7 @@ msgstr "تسويق المنصة"
 msgid "Platform test runs are not yet wired to execution."
 msgstr "تشغيلات اختبار المنصة غير موصولة بالتنفيذ بعد."
 
-#: app/routes/_admin+/phone-numbers.tsx:327
+#: app/routes/_admin+/phone-numbers.tsx:334
 msgid "Platform-owned numbers for the AI phone agent. Organizations can only connect numbers assigned to them here."
 msgstr "أرقام تملكها المنصة لوكيل الهاتف بالذكاء الاصطناعي. لا يمكن للمؤسسات ربط إلا الأرقام المخصصة لها هنا."
 
@@ -3318,8 +3326,8 @@ msgid "Pro"
 msgstr "احترافي"
 
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:8
-#: app/routes/_admin+/gdpr-requests.tsx:362
-#: app/routes/_admin+/marketing+/campaigns._index.tsx:25
+#: app/routes/_admin+/gdpr-requests.tsx:371
+#: app/routes/_admin+/marketing+/campaigns._index.tsx:32
 msgid "Processing"
 msgstr "قيد المعالجة"
 
@@ -3343,7 +3351,7 @@ msgstr "اكتمل الملف الشخصي (الاسم/البريد)"
 msgid "Provider Details"
 msgstr "تفاصيل موفر الخدمة"
 
-#: app/components/sso-configuration-form.tsx:148
+#: app/components/sso-configuration-form.tsx:155
 msgid "Provider Name"
 msgstr "اسم موفر الخدمة"
 
@@ -3429,7 +3437,7 @@ msgstr "الحملات الأخيرة"
 msgid "Recent Comments"
 msgstr "التعليقات الأخيرة"
 
-#: app/components/sso-user-management.tsx:415
+#: app/components/sso-user-management.tsx:428
 msgid "Recent Logins"
 msgstr "تسجيلات الدخول الأخيرة"
 
@@ -3445,7 +3453,7 @@ msgstr "الملاحظات الأخيرة"
 msgid "Recent notes shown"
 msgstr "الملاحظات الأخيرة المعروضة"
 
-#: app/components/sso-user-management.tsx:335
+#: app/components/sso-user-management.tsx:348
 msgid "Recent SSO configuration changes and user activities"
 msgstr "تغييرات إعداد SSO الأخيرة وأنشطة المستخدم"
 
@@ -3461,6 +3469,10 @@ msgstr "مستلمين"
 #: ../../packages/marketing/src/components/campaign-detail.tsx:137
 msgid "Recipients"
 msgstr "المستلمون"
+
+#: app/routes/_admin+/marketing+/campaigns.$campaignId.tsx:37
+msgid "Recipients not confirmed: {unconfirmed}. Their send was cut off or timed out, so the email may or may not have arrived. They stay Processing below and are not sent again."
+msgstr "مستلمون لم يُؤكَّد إرسالهم: {unconfirmed}. انقطع الإرسال إليهم أو انتهت مهلته، لذا ربما وصلت الرسالة وربما لم تصل. تبقى حالتهم «قيد المعالجة» أدناه ولن يُعاد الإرسال إليهم."
 
 #: app/routes/_admin+/print-shop.tsx:641
 msgid "Record and track"
@@ -3564,6 +3576,10 @@ msgstr "مُسترد"
 msgid "Refunded by an admin"
 msgstr "استرده أحد المسؤولين"
 
+#: app/components/sso-configuration-form.tsx:392
+msgid "Refuse sign-in unless the identity provider marks the email as verified (email_verified). Some providers, such as Microsoft Entra ID, do not send it."
+msgstr "رفض تسجيل الدخول ما لم يحدد موفّر الهوية أن البريد الإلكتروني موثّق (email_verified). بعض الموفّرين، مثل Microsoft Entra ID، لا يرسلونه."
+
 #: app/components/privacy-banner.tsx:48
 msgid "Reject"
 msgstr "رفض"
@@ -3581,7 +3597,7 @@ msgstr "إزالة الكتلة"
 msgid "Remove design"
 msgstr "إزالة التصميم"
 
-#: app/components/admin/feature-flags.tsx:340
+#: app/components/admin/feature-flags.tsx:371
 msgid "Remove Override"
 msgstr "إزالة التجاوز"
 
@@ -3597,7 +3613,7 @@ msgstr "جارٍ العرض…"
 msgid "Reports"
 msgstr "التقارير"
 
-#: app/routes/_admin+/gdpr-requests.tsx:341
+#: app/routes/_admin+/gdpr-requests.tsx:350
 msgid "Request type"
 msgstr "نوع الطلب"
 
@@ -3605,8 +3621,8 @@ msgstr "نوع الطلب"
 #~ msgid "Request Type"
 #~ msgstr "نوع الطلب"
 
-#: app/routes/_admin+/gdpr-requests.tsx:361
-#: app/routes/_admin+/gdpr-requests.tsx:502
+#: app/routes/_admin+/gdpr-requests.tsx:370
+#: app/routes/_admin+/gdpr-requests.tsx:511
 msgid "Requested"
 msgstr "مُقدَّم"
 
@@ -3615,7 +3631,15 @@ msgstr "مُقدَّم"
 msgid "Requests"
 msgstr "الطلبات"
 
-#: app/routes/_admin+/gdpr-requests.tsx:478
+#: app/components/sso-configuration-form.tsx:389
+msgid "Require a verified email"
+msgstr "اشتراط بريد إلكتروني موثّق"
+
+#: app/components/sso-configuration-form.tsx:374
+msgid "Required. The identity provider can only create accounts and sign people in for email addresses on these domains."
+msgstr "مطلوب. لا يمكن لموفّر الهوية إنشاء حسابات أو تسجيل دخول الأشخاص إلا لعناوين البريد الإلكتروني على هذه النطاقات."
+
+#: app/routes/_admin+/gdpr-requests.tsx:487
 msgid "Requires attention"
 msgstr "يتطلب الانتباه"
 
@@ -3655,6 +3679,10 @@ msgstr "رسوم منصة الحجوزات"
 msgid "Reset"
 msgstr "إعادة تعيين"
 
+#: app/components/sso-user-management.tsx:313
+msgid "Reset SSO link"
+msgstr "إعادة تعيين ربط SSO"
+
 #: app/routes/_admin+/audit-logs.tsx:286
 msgid "Resource"
 msgstr "المصدر"
@@ -3679,11 +3707,11 @@ msgstr "سياسة الاحتفاظ"
 msgid "Retention: {retentionDays} days ({retentionYears} years)"
 msgstr "الاحتفاظ: {retentionDays} يوم ({retentionYears} سنة)"
 
-#: app/routes/_admin+/phone-numbers.tsx:309
+#: app/routes/_admin+/phone-numbers.tsx:316
 msgid "Retire"
 msgstr "إيقاف نهائي"
 
-#: app/routes/_admin+/phone-numbers.tsx:302
+#: app/routes/_admin+/phone-numbers.tsx:309
 msgid "Retire {e164}? It can't be assigned again, and any agent using it stops answering."
 msgstr "إيقاف {e164} نهائيًا؟ لن يمكن تعيينه مرة أخرى، وسيتوقف أي وكيل يستخدمه عن الرد."
 
@@ -3724,7 +3752,7 @@ msgstr "العودة إلى التطبيق"
 msgid "Returned"
 msgstr "مُعاد"
 
-#: app/components/sso-configuration-form.tsx:305
+#: app/components/sso-configuration-form.tsx:312
 msgid "Revocation URL (Optional)"
 msgstr "رابط الإلغاء (اختياري)"
 
@@ -3740,19 +3768,19 @@ msgstr "مكافأة متاحة"
 msgid "Right"
 msgstr "يمين"
 
-#: app/components/sso-user-management.tsx:165
+#: app/components/sso-user-management.tsx:169
 #: app/routes/_admin+/roles+/index.tsx:397
 #: app/routes/_admin+/roles+/index.tsx:442
 msgid "Role"
 msgstr "الدور"
 
-#: app/routes/_admin+/roles+/$roleId.tsx:560
-#: app/routes/_admin+/roles+/system.$roleId.tsx:333
+#: app/routes/_admin+/roles+/$roleId.tsx:599
+#: app/routes/_admin+/roles+/system.$roleId.tsx:364
 msgid "Role description"
 msgstr "وصف الدور"
 
-#: app/routes/_admin+/roles+/$roleId.tsx:536
-#: app/routes/_admin+/roles+/system.$roleId.tsx:308
+#: app/routes/_admin+/roles+/$roleId.tsx:575
+#: app/routes/_admin+/roles+/system.$roleId.tsx:339
 msgid "Role name"
 msgstr "اسم الدور"
 
@@ -3761,9 +3789,9 @@ msgid "Role Type"
 msgstr "نوع الدور"
 
 #: app/components/admin-sidebar.tsx:99
-#: app/routes/_admin+/roles+/$roleId.tsx:473
+#: app/routes/_admin+/roles+/$roleId.tsx:512
 #: app/routes/_admin+/roles+/index.tsx:376
-#: app/routes/_admin+/roles+/system.$roleId.tsx:236
+#: app/routes/_admin+/roles+/system.$roleId.tsx:267
 msgid "Roles"
 msgstr "الأدوار"
 
@@ -3877,12 +3905,12 @@ msgstr "المبيعات لكل ساعة عمل"
 msgid "Save"
 msgstr "حفظ"
 
-#: app/routes/_admin+/roles+/$roleId.tsx:566
-#: app/routes/_admin+/roles+/system.$roleId.tsx:341
+#: app/routes/_admin+/roles+/$roleId.tsx:605
+#: app/routes/_admin+/roles+/system.$roleId.tsx:370
 msgid "Save Changes"
 msgstr "حفظ التغييرات"
 
-#: app/components/sso-configuration-form.tsx:455
+#: app/components/sso-configuration-form.tsx:501
 msgid "Save Configuration"
 msgstr "حفظ الإعداد"
 
@@ -3927,7 +3955,7 @@ msgid "Saving new automation draft..."
 msgstr "جارٍ حفظ مسودة الأتمتة الجديدة..."
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:193
-#: app/components/sso-configuration-form.tsx:447
+#: app/components/sso-configuration-form.tsx:493
 #: app/routes/_admin+/organizations+/$organizationId_+/audit-retention.tsx:481
 msgid "Saving..."
 msgstr "جاري الحفظ..."
@@ -3937,7 +3965,7 @@ msgid "Saving…"
 msgstr "جارٍ الحفظ…"
 
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:7
-#: app/routes/_admin+/gdpr-requests.tsx:363
+#: app/routes/_admin+/gdpr-requests.tsx:372
 msgid "Scheduled"
 msgstr "مجدول"
 
@@ -3945,11 +3973,11 @@ msgstr "مجدول"
 msgid "Scheduled vs actual hours and clock-ins"
 msgstr "الساعات المجدولة مقابل الفعلية وتسجيلات الحضور"
 
-#: app/routes/_admin+/gdpr-requests.tsx:555
+#: app/routes/_admin+/gdpr-requests.tsx:564
 msgid "Scheduled: {scheduledFor}"
 msgstr "مجدول: {scheduledFor}"
 
-#: app/components/sso-configuration-form.tsx:206
+#: app/components/sso-configuration-form.tsx:213
 msgid "Scopes"
 msgstr "النطاقات"
 
@@ -3959,8 +3987,8 @@ msgstr "النطاقات:"
 
 #: app/components/admin-organizations-table.tsx:303
 #: app/components/admin-users-table.tsx:226
-#: app/components/admin/feature-flags.tsx:458
-#: app/components/admin/feature-flags.tsx:615
+#: app/components/admin/feature-flags.tsx:489
+#: app/components/admin/feature-flags.tsx:646
 #: app/routes/_admin+/audit-logs.tsx:122
 #: app/routes/_admin+/waitlist.tsx:259
 msgid "Search"
@@ -3978,7 +4006,7 @@ msgstr "البحث في الأتمتة..."
 msgid "Search cache keys..."
 msgstr "البحث عن مفاتيح ذاكرة التخزين المؤقت..."
 
-#: app/routes/_admin+/marketing+/campaigns._index.tsx:73
+#: app/routes/_admin+/marketing+/campaigns._index.tsx:95
 msgid "Search campaigns..."
 msgstr "البحث في الحملات..."
 
@@ -3986,7 +4014,7 @@ msgstr "البحث في الحملات..."
 #~ msgid "Search details or action..."
 #~ msgstr "البحث عن التفاصيل أو الإجراء..."
 
-#: app/components/admin/feature-flags.tsx:446
+#: app/components/admin/feature-flags.tsx:477
 msgid "Search Organization"
 msgstr "البحث عن المؤسسة"
 
@@ -3994,7 +4022,7 @@ msgstr "البحث عن المؤسسة"
 #~ msgid "Search organizations..."
 #~ msgstr "البحث عن المؤسسات..."
 
-#: app/components/admin/feature-flags.tsx:591
+#: app/components/admin/feature-flags.tsx:622
 msgid "Search User"
 msgstr "البحث عن المستخدم"
 
@@ -4015,8 +4043,8 @@ msgstr "الأمان"
 msgid "Security Events"
 msgstr "أحداث الأمان"
 
-#: app/routes/_admin+/roles+/$roleId.tsx:884
-#: app/routes/_admin+/roles+/$roleId.tsx:887
+#: app/routes/_admin+/roles+/$roleId.tsx:923
+#: app/routes/_admin+/roles+/$roleId.tsx:926
 msgid "Select access level"
 msgstr "اختر مستوى الوصول"
 
@@ -4024,11 +4052,11 @@ msgstr "اختر مستوى الوصول"
 msgid "Select attribute"
 msgstr "اختر السمة"
 
-#: app/routes/_admin+/marketing+/campaigns.new.tsx:188
+#: app/routes/_admin+/marketing+/campaigns.new.tsx:197
 msgid "Select audience"
 msgstr "اختر الجمهور"
 
-#: app/components/admin/feature-flags.tsx:132
+#: app/components/admin/feature-flags.tsx:162
 msgid "Select flag type"
 msgstr "اختر نوع المؤشر"
 
@@ -4053,7 +4081,7 @@ msgstr "اختر نوع المحفّز"
 msgid "Select which event initiates this automated journey."
 msgstr "اختر الحدث الذي يبدأ هذه الرحلة المؤتمتة."
 
-#: app/routes/_admin+/marketing+/campaigns.new.tsx:168
+#: app/routes/_admin+/marketing+/campaigns.new.tsx:177
 msgid "Send a one-time message to tenant operators."
 msgstr "أرسل رسالة لمرة واحدة إلى مشغّلي المستأجرين."
 
@@ -4065,7 +4093,7 @@ msgstr "إرسال بريد إلكتروني"
 msgid "Send now"
 msgstr "إرسال الآن"
 
-#: app/routes/_admin+/marketing+/campaigns._index.tsx:60
+#: app/routes/_admin+/marketing+/campaigns._index.tsx:82
 msgid "Send one-time emails to tenant operators."
 msgstr "أرسل رسائل بريد إلكتروني لمرة واحدة إلى مشغّلي المستأجرين."
 
@@ -4112,7 +4140,7 @@ msgstr "محدد"
 msgid "Set expiration date (optional)"
 msgstr "تعيين تاريخ انتهاء الصلاحية (اختياري)"
 
-#: app/components/admin/feature-flags.tsx:741
+#: app/components/admin/feature-flags.tsx:772
 msgid "Set system defaults and override them for an organization or a user."
 msgstr "عيّن القيم الافتراضية للنظام وتجاوزها لمؤسسة أو مستخدم."
 
@@ -4137,7 +4165,7 @@ msgstr "تؤدي فترات الاحتفاظ الأقصر إلى حذف الرس
 msgid "Showing {showing} of {totalEvents} events"
 msgstr "عرض {showing} من {totalEvents} حدث"
 
-#: app/routes/_admin+/gdpr-requests.tsx:618
+#: app/routes/_admin+/gdpr-requests.tsx:627
 msgid "Showing {showing} of {totalRequests} requests"
 msgstr "عرض {showing} من {totalRequests} طلب"
 
@@ -4209,6 +4237,10 @@ msgstr "ستُقسَّم الرسائل النصية التي تتجاوز 160 �
 msgid "Solid"
 msgstr "ممتلئ"
 
+#: app/routes/_admin+/marketing+/campaigns.$campaignId.tsx:34
+msgid "Some sends were not confirmed"
+msgstr "لم يُؤكَّد بعض الإرسال"
+
 #: app/routes/_admin+/print-shop.tsx:94
 msgid "Some vendor orders were cancelled and others are printing: refund what was cancelled"
 msgstr "أُلغيت بعض طلبات الموردين وبعضها قيد الطباعة: استرد قيمة ما أُلغي"
@@ -4229,12 +4261,12 @@ msgstr "الترتيب حسب"
 #~ msgid "Sort by Rank"
 #~ msgstr "الترتيب حسب الترتيب"
 
-#: app/components/admin/feature-flags.tsx:481
-#: app/components/admin/feature-flags.tsx:652
+#: app/components/admin/feature-flags.tsx:512
+#: app/components/admin/feature-flags.tsx:683
 msgid "Source"
 msgstr "المصدر"
 
-#: app/routes/_admin+/marketing+/campaigns.new.tsx:195
+#: app/routes/_admin+/marketing+/campaigns.new.tsx:204
 msgid "Specific Organization"
 msgstr "منظمة محددة"
 
@@ -4251,12 +4283,12 @@ msgstr "ذاكرة التخزين المؤقت SQLite"
 msgid "SQLite only"
 msgstr "SQLite فقط"
 
-#: app/components/sso-user-management.tsx:332
+#: app/components/sso-user-management.tsx:345
 msgid "SSO Audit Trail"
 msgstr "مسار مراجعة SSO"
 
 #: app/components/sso-configuration-overview.tsx:98
-#: app/routes/_admin+/organizations+/$organizationId_+/sso.tsx:457
+#: app/routes/_admin+/organizations+/$organizationId_+/sso.tsx:488
 msgid "SSO Configuration"
 msgstr "إعداد SSO"
 
@@ -4268,15 +4300,15 @@ msgstr "لم يتم اختبار اتصال SSO مؤخراً أو قد يواج�
 msgid "SSO is configured but currently disabled. Users cannot authenticate through SSO."
 msgstr "تم تكوين SSO لكنه معطل حالياً. لا يمكن للمستخدمين المصادقة من خلال SSO."
 
-#: app/components/sso-user-management.tsx:168
+#: app/components/sso-user-management.tsx:172
 msgid "SSO Provider"
 msgstr "موفر SSO"
 
-#: app/routes/_admin+/organizations+/$organizationId_+/sso.users.tsx:424
+#: app/routes/_admin+/organizations+/$organizationId_+/sso.users.tsx:510
 msgid "SSO Users"
 msgstr "مستخدمو SSO"
 
-#: app/components/sso-user-management.tsx:150
+#: app/components/sso-user-management.tsx:154
 msgid "SSO Users ({userCount})"
 msgstr "مستخدمو SSO ({userCount})"
 
@@ -4299,13 +4331,13 @@ msgstr "ابدأ بقالب"
 #: app/components/admin-organizations-table.tsx:266
 #: app/components/admin-users-table.tsx:161
 #: app/components/sso-configuration-overview.tsx:232
-#: app/components/sso-user-management.tsx:174
-#: app/routes/_admin+/gdpr-requests.tsx:354
-#: app/routes/_admin+/gdpr-requests.tsx:499
+#: app/components/sso-user-management.tsx:178
+#: app/routes/_admin+/gdpr-requests.tsx:363
+#: app/routes/_admin+/gdpr-requests.tsx:508
 #: app/routes/_admin+/ip-addresses+/$ip.tsx:114
 #: app/routes/_admin+/ip-addresses+/$ip.tsx:239
 #: app/routes/_admin+/ip-addresses+/index.tsx:217
-#: app/routes/_admin+/phone-numbers.tsx:351
+#: app/routes/_admin+/phone-numbers.tsx:358
 #: app/routes/_admin+/print-shop.tsx:797
 #: app/routes/_admin+/waitlist.tsx:365
 msgid "Status"
@@ -4344,7 +4376,7 @@ msgstr "إيقاف شحن {item}"
 msgid "Stop shipping this size?"
 msgstr "إيقاف شحن هذا المقاس؟"
 
-#: app/components/admin/feature-flags.tsx:139
+#: app/components/admin/feature-flags.tsx:169
 msgid "String"
 msgstr "نص"
 
@@ -4414,7 +4446,7 @@ msgstr "درجة الشبهة"
 msgid "Swap variable"
 msgstr "تبديل المتغير"
 
-#: app/components/admin/feature-flags.tsx:750
+#: app/components/admin/feature-flags.tsx:781
 #: app/routes/resources+/theme-switch.tsx:80
 msgid "System"
 msgstr "النظام"
@@ -4423,12 +4455,12 @@ msgstr "النظام"
 msgid "System default"
 msgstr "الافتراضي للنظام"
 
-#: app/components/admin/feature-flags.tsx:522
-#: app/components/admin/feature-flags.tsx:699
+#: app/components/admin/feature-flags.tsx:553
+#: app/components/admin/feature-flags.tsx:730
 msgid "System Default"
 msgstr "الافتراضي للنظام"
 
-#: app/components/admin/feature-flags.tsx:365
+#: app/components/admin/feature-flags.tsx:396
 msgid "System Flags"
 msgstr "مؤشرات النظام"
 
@@ -4436,13 +4468,13 @@ msgstr "مؤشرات النظام"
 msgid "System Management"
 msgstr "إدارة النظام"
 
-#: app/routes/_admin+/roles+/$roleId.tsx:598
-#: app/routes/_admin+/roles+/system.$roleId.tsx:374
-#: app/routes/_admin+/roles+/system.$roleId.tsx:381
+#: app/routes/_admin+/roles+/$roleId.tsx:637
+#: app/routes/_admin+/roles+/system.$roleId.tsx:402
+#: app/routes/_admin+/roles+/system.$roleId.tsx:409
 msgid "System permissions"
 msgstr "صلاحيات النظام"
 
-#: app/routes/_admin+/roles+/$roleId.tsx:629
+#: app/routes/_admin+/roles+/$roleId.tsx:668
 msgid "System permissions management coming soon"
 msgstr "إدارة صلاحيات النظام قريباً"
 
@@ -4458,11 +4490,11 @@ msgstr "أدوار النظام"
 msgid "System theme"
 msgstr "مظهر النظام"
 
-#: app/components/admin/feature-flags.tsx:277
+#: app/components/admin/feature-flags.tsx:307
 msgid "System value:"
 msgstr "قيمة النظام:"
 
-#: app/routes/_admin+/roles+/system.$roleId.tsx:367
+#: app/routes/_admin+/roles+/system.$roleId.tsx:395
 msgid "System-wide permissions for this role"
 msgstr "صلاحيات على مستوى النظام لهذا الدور"
 
@@ -4483,7 +4515,7 @@ msgstr "بطاقة طاولة مطوية"
 msgid "Tags"
 msgstr "الوسوم"
 
-#: app/routes/_admin+/marketing+/campaigns.new.tsx:184
+#: app/routes/_admin+/marketing+/campaigns.new.tsx:193
 msgid "Target Audience"
 msgstr "الجمهور المستهدف"
 
@@ -4499,7 +4531,7 @@ msgstr "القيمة المستهدفة"
 msgid "Team"
 msgstr "الفريق"
 
-#: app/components/sso-configuration-form.tsx:476
+#: app/components/sso-configuration-form.tsx:522
 #: app/components/sso-configuration-overview.tsx:114
 msgid "Test Connection"
 msgstr "اختبار الاتصال"
@@ -4509,7 +4541,7 @@ msgstr "اختبار الاتصال"
 msgid "Test run"
 msgstr "تشغيل اختباري"
 
-#: app/components/sso-configuration-form.tsx:471
+#: app/components/sso-configuration-form.tsx:517
 msgid "Testing..."
 msgstr "جاري الاختبار..."
 
@@ -4736,7 +4768,7 @@ msgstr "لإرسال قسيمة، أنشئ أولًا خصمًا يطبّقه ا
 msgid "Toggle theme"
 msgstr "تبديل المظهر"
 
-#: app/components/sso-configuration-form.tsx:275
+#: app/components/sso-configuration-form.tsx:282
 msgid "Token URL"
 msgstr "رابط الرمز"
 
@@ -4772,7 +4804,7 @@ msgstr "إجمالي الملاحظات"
 msgid "Total Requests"
 msgstr "إجمالي الطلبات"
 
-#: app/components/sso-user-management.tsx:400
+#: app/components/sso-user-management.tsx:413
 msgid "Total SSO Users"
 msgstr "إجمالي مستخدمي SSO"
 
@@ -4823,7 +4855,7 @@ msgstr "صحيح"
 #: app/components/admin-organizations-table.tsx:395
 #: app/components/admin-users-table.tsx:305
 #: app/routes/_admin+/audit-logs.tsx:347
-#: app/routes/_admin+/gdpr-requests.tsx:629
+#: app/routes/_admin+/gdpr-requests.tsx:638
 #: app/routes/_admin+/waitlist.tsx:335
 msgid "Try different filters or clear them."
 msgstr "جرّب مرشحات مختلفة أو أزلها."
@@ -4840,16 +4872,16 @@ msgstr "مدد الجلوس"
 msgid "Turn times against target"
 msgstr "مدد الجلوس مقابل الهدف"
 
-#: app/components/admin/feature-flags.tsx:135
-#: app/routes/_admin+/gdpr-requests.tsx:496
+#: app/components/admin/feature-flags.tsx:165
+#: app/routes/_admin+/gdpr-requests.tsx:505
 msgid "Type"
 msgstr "النوع"
 
-#: app/routes/_admin+/phone-numbers.tsx:265
+#: app/routes/_admin+/phone-numbers.tsx:272
 msgid "Unassign"
 msgstr "إلغاء التعيين"
 
-#: app/routes/_admin+/phone-numbers.tsx:258
+#: app/routes/_admin+/phone-numbers.tsx:265
 msgid "Unassign {e164}? The organization's agent stops answering it right away."
 msgstr "إلغاء تخصيص {e164}؟ سيتوقف وكيل المؤسسة عن الرد عليه فورًا."
 
@@ -4900,15 +4932,15 @@ msgstr "تحديث"
 msgid "Update {item}"
 msgstr "تحديث {item}"
 
-#: app/components/sso-configuration-form.tsx:453
+#: app/components/sso-configuration-form.tsx:499
 msgid "Update Configuration"
 msgstr "تحديث الإعداد"
 
-#: app/components/admin/feature-flags.tsx:189
+#: app/components/admin/feature-flags.tsx:221
 msgid "Update Flag"
 msgstr "تحديث المؤشر"
 
-#: app/components/admin/feature-flags.tsx:345
+#: app/components/admin/feature-flags.tsx:376
 msgid "Update Override"
 msgstr "تحديث التجاوز"
 
@@ -4924,11 +4956,11 @@ msgstr "إحصائيات الاستخدام"
 msgid "Use lowercase letters, numbers, and hyphens only"
 msgstr "استخدم أحرفاً صغيرة وأرقاماً وشرطات فقط"
 
-#: app/components/sso-configuration-form.tsx:332
+#: app/components/sso-configuration-form.tsx:339
 msgid "Use Proof Key for Code Exchange for enhanced security"
 msgstr "استخدم مفتاح الإثبات لتبادل الرموز لأمان محسّن"
 
-#: app/routes/_admin+/roles+/$roleId.tsx:778
+#: app/routes/_admin+/roles+/$roleId.tsx:817
 msgid "Use this in your codebase to refer to this feature."
 msgstr "استخدم هذا في قاعدة الكود الخاصة بك للإشارة إلى هذه الميزة."
 
@@ -4937,11 +4969,11 @@ msgid "Used when the value is empty"
 msgstr "يُستخدم عندما تكون القيمة فارغة"
 
 #: app/components/admin-users-table.tsx:92
-#: app/components/admin/feature-flags.tsx:756
-#: app/components/sso-user-management.tsx:162
+#: app/components/admin/feature-flags.tsx:787
+#: app/components/sso-user-management.tsx:166
 #: app/routes/_admin+/audit-logs.tsx:283
-#: app/routes/_admin+/gdpr-requests.tsx:332
-#: app/routes/_admin+/gdpr-requests.tsx:493
+#: app/routes/_admin+/gdpr-requests.tsx:341
+#: app/routes/_admin+/gdpr-requests.tsx:502
 #: app/routes/_admin+/ip-addresses+/$ip.tsx:233
 #: app/routes/_admin+/waitlist.tsx:347
 msgid "User"
@@ -4951,19 +4983,19 @@ msgstr "المستخدم"
 msgid "User is not a member of any organizations"
 msgstr "المستخدم ليس عضواً في أي منظمات"
 
-#: app/components/admin/feature-flags.tsx:696
+#: app/components/admin/feature-flags.tsx:727
 msgid "User Override"
 msgstr "تجاوز المستخدم"
 
-#: app/components/sso-configuration-form.tsx:346
+#: app/components/sso-configuration-form.tsx:353
 msgid "User Provisioning"
 msgstr "توفير المستخدم"
 
-#: app/components/admin/feature-flags.tsx:694
+#: app/components/admin/feature-flags.tsx:725
 msgid "User+Org Override"
 msgstr "تجاوز المستخدم+المؤسسة"
 
-#: app/components/sso-configuration-form.tsx:290
+#: app/components/sso-configuration-form.tsx:297
 msgid "UserInfo URL"
 msgstr "رابط معلومات المستخدم"
 
@@ -4984,7 +5016,7 @@ msgstr "المستخدمون"
 msgid "Users Associated with this IP ({count})"
 msgstr "المستخدمون المرتبطون بعنوان IP هذا ({count})"
 
-#: app/components/sso-user-management.tsx:153
+#: app/components/sso-user-management.tsx:157
 msgid "Users who have authenticated through SSO"
 msgstr "المستخدمون الذين تحققوا من خلال SSO"
 
@@ -5000,7 +5032,7 @@ msgstr "صالحة لمدة (أيام)"
 msgid "Validation passed"
 msgstr "اجتاز التحقق"
 
-#: app/components/admin/feature-flags.tsx:375
+#: app/components/admin/feature-flags.tsx:406
 msgid "Value"
 msgstr "القيمة"
 
@@ -5052,7 +5084,7 @@ msgstr "حالة التوثيق"
 msgid "View all"
 msgstr "عرض الكل"
 
-#: app/components/sso-user-management.tsx:367
+#: app/components/sso-user-management.tsx:380
 msgid "View details"
 msgstr "عرض التفاصيل"
 
@@ -5080,7 +5112,7 @@ msgstr "عرض المستخدمين →"
 msgid "View, search, and manage user accounts"
 msgstr "عرض والبحث وإدارة حسابات المستخدمين"
 
-#: app/components/sso-configuration-form.tsx:398
+#: app/components/sso-configuration-form.tsx:444
 msgid "Viewer"
 msgstr "عارض"
 

@@ -7,6 +7,7 @@ import {
 	getInternalCommandToken,
 	timingSafeEqualString,
 } from '../lib/secrets.ts'
+import { startBroadcastTickForOrg } from '../services/broadcast-dispatch.ts'
 import { fanOutStaffTick } from '../services/staff-tick-fanout.ts'
 import { runStaffTickForOrg } from '../services/staff-tick-service.ts'
 
@@ -31,6 +32,21 @@ staffTickRoutes.use(
 	'*',
 	rateLimit('staff-tick', { windowMs: 60 * 1000, maxRequests: 60 }),
 )
+
+/**
+ * Lets a claimed broadcast keep sending after the response: `waitUntil` at the
+ * edge; elsewhere (Node, or the Durable Object, where Hono has no execution
+ * context) the promise simply runs on. The task already catches its errors.
+ */
+function runDetached(c: Context) {
+	return (task: Promise<unknown>) => {
+		try {
+			c.executionCtx.waitUntil(task)
+		} catch {
+			// Hono throws when there is no execution context.
+		}
+	}
+}
 
 function unauthorized(c: Context) {
 	const internalToken = getInternalCommandToken()
@@ -65,13 +81,22 @@ staffTickRoutes.post('/tick', async (c) => {
 
 	if (parsed.data.orgId) {
 		const result = await runStaffTickForOrg(parsed.data.orgId)
+		// Same pass: claim interrupted broadcasts and scheduled ones that are due,
+		// and send them without holding this request.
+		await startBroadcastTickForOrg(parsed.data.orgId, {
+			runDetached: runDetached(c),
+		})
 		return c.json({ success: true, result }, 200, NO_STORE)
 	}
 
 	const orgIds = await listTenantOrgIds()
 	const totals = await fanOutStaffTick({
 		orgIds,
-		run: (orgId) => runStaffTickForOrg(orgId).catch(() => null),
+		run: async (orgId) => {
+			const result = await runStaffTickForOrg(orgId).catch(() => null)
+			await startBroadcastTickForOrg(orgId, { runDetached: runDetached(c) })
+			return result
+		},
 	})
 	return c.json({ success: totals.errors === 0, ...totals }, 200, NO_STORE)
 })

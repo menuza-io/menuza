@@ -216,3 +216,85 @@ describe('note integration OAuth callback', () => {
 		).resolves.toHaveLength(0)
 	})
 })
+
+describe('Trello (OAuth 1.0a) callback', () => {
+	it('finishes on a fresh isolate: the request-token secret travels in the hand-off', async () => {
+		vi.stubEnv('TRELLO_API_KEY', 'trello-key')
+		vi.stubEnv('TRELLO_API_SECRET', 'trello-secret')
+		const realFetch = globalThis.fetch
+		const exchanged: string[] = []
+		vi.stubGlobal(
+			'fetch',
+			async (input: RequestInfo | URL, init?: RequestInit) => {
+				const url = String(input instanceof Request ? input.url : input)
+				if (url === 'https://trello.com/1/OAuthGetRequestToken') {
+					return new Response(
+						'oauth_token=req-token&oauth_token_secret=req-secret',
+					)
+				}
+				if (url === 'https://trello.com/1/OAuthGetAccessToken') {
+					exchanged.push(String(init?.body ?? ''))
+					return new Response(
+						'oauth_token=member-token&oauth_token_secret=member-secret',
+					)
+				}
+				return realFetch(input, init)
+			},
+		)
+		try {
+			const admin = await signedInMember()
+			const slug = (admin.organization as { slug: string }).slug
+			const start = (await settingsAction({
+				request: createAuthenticatedRequest(
+					`${APP}/${slug}/settings/integrations`,
+					{
+						method: 'POST',
+						body: new URLSearchParams({
+							intent: connectIntegrationActionIntent,
+							providerName: 'trello',
+						}),
+					},
+					admin.cookie,
+				),
+				params: { orgSlug: slug },
+				context: {},
+			} as any)) as Response
+			expect(start.status).toBe(302)
+			const handoff = convertSetCookieToCookie(
+				start.headers.get('Set-Cookie') ?? '',
+			)
+
+			// A different Worker isolate: no module state from the start.
+			vi.resetModules()
+			const { loader: freshLoader } = await import('./oauth.callback.tsx')
+			const query = new URLSearchParams({
+				provider: 'trello',
+				oauth_token: 'req-token',
+				oauth_verifier: 'verifier-1',
+			})
+			const response = (await freshLoader({
+				request: new Request(
+					`${APP}/api/integrations/oauth/callback?${query}`,
+					{ headers: { Cookie: [admin.cookie, handoff].join('; ') } },
+				),
+				params: {},
+				context: {},
+			} as any)) as Response
+
+			expect(response.status).toBe(302)
+			expect(exchanged).toHaveLength(1)
+			const rows = await db
+				.select({ id: Integration.id })
+				.from(Integration)
+				.where(
+					and(
+						eq(Integration.organizationId, admin.organization.id),
+						eq(Integration.providerName, 'trello'),
+					),
+				)
+			expect(rows).toHaveLength(1)
+		} finally {
+			vi.unstubAllGlobals()
+		}
+	})
+})

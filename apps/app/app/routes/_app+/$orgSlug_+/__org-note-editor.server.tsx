@@ -18,6 +18,10 @@ import { noteHooks } from '@repo/integrations'
 import { data, redirect, type ActionFunctionArgs } from 'react-router'
 import { z } from 'zod'
 import { sanitizeNoteContent } from '#app/utils/content-sanitization.server.ts'
+import {
+	attachLibraryAssetToNote,
+	libraryAssetsStillMatch,
+} from '#app/utils/media/library-attach.server.ts'
 import { invalidateNoteFavoritesCaches } from '#app/utils/note-favorites.server.ts'
 import { processNoteMediaUploads } from '#app/utils/note-media-pipeline.server.ts'
 import {
@@ -218,6 +222,18 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		}
 	}
 
+	// Deleted or replaced in the media library since it was picked. Check
+	// before the first write: on D1 a transaction does not roll back, so
+	// failing inside it would leave the note half-saved.
+	const libraryItems = newUploads.flatMap(({ libraryAssetId, objectKey }) =>
+		libraryAssetId ? [{ assetId: libraryAssetId, objectKey }] : [],
+	)
+	if (!(await libraryAssetsStillMatch(organization.id, libraryItems))) {
+		throw new Response('Selected media is no longer available', {
+			status: 409,
+		})
+	}
+
 	const updatedNote = await db.transaction(async (tx) => {
 		const noteValues = {
 			title,
@@ -281,10 +297,32 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				}
 			}
 		}
-		if (newUploads.length > 0) {
+		const fileUploads = newUploads.filter((upload) => !upload.libraryAssetId)
+		if (fileUploads.length > 0) {
 			await tx
 				.insert(OrganizationNoteUpload)
-				.values(newUploads.map((upload) => ({ ...upload, noteId })))
+				.values(fileUploads.map((upload) => ({ ...upload, noteId })))
+		}
+		for (const { libraryAssetId, ...upload } of newUploads) {
+			if (!libraryAssetId) continue
+			const attached = await attachLibraryAssetToNote(tx, {
+				organizationId: organization.id,
+				assetId: libraryAssetId,
+				objectKey: upload.objectKey,
+				noteId,
+				altText: upload.altText,
+				mimeType: upload.mimeType,
+				fileSize: upload.fileSize,
+			})
+			// Deleted or replaced in the media library after the check above.
+			// The note is already written, so drop only this item; throwing
+			// here would not undo the writes before it on D1.
+			if (!attached) {
+				console.warn('A media library item was removed while attaching', {
+					noteId,
+					assetId: libraryAssetId,
+				})
+			}
 		}
 		return updated
 	})

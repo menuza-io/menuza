@@ -7,6 +7,16 @@ import {
 } from './checkout-shop'
 
 describe('checkoutPaymentStatusToOrderStatus', () => {
+	it('a refunded or voided payment is not paid, though it was approved', () => {
+		expect(checkoutPaymentStatusToOrderStatus(true, 'Refunded')).toBe(
+			'refunded',
+		)
+		expect(checkoutPaymentStatusToOrderStatus(true, 'Voided')).toBe('failed')
+		expect(checkoutPaymentStatusToOrderStatus(true, 'Partially Refunded')).toBe(
+			'paid',
+		)
+	})
+
 	it('maps approved payments to paid', () => {
 		expect(checkoutPaymentStatusToOrderStatus(true)).toBe('paid')
 		expect(checkoutPaymentStatusToOrderStatus(false, 'Declined')).toBe('failed')
@@ -47,6 +57,54 @@ describe('mapCheckoutWebhookToPayment', () => {
 			},
 			productName: 'Pack',
 		})
+	})
+})
+
+describe('mapCheckoutWebhookToPayment on adjustment events', () => {
+	const refundAction = {
+		id: 'pay_1',
+		action_id: 'act_refund_1',
+		// A partial refund: the action is approved, the payment is not
+		// refunded in full.
+		amount: 500,
+		approved: true,
+		currency: 'USD',
+		metadata: { type: 'shop_order', orgId: 'org_1', productName: 'Pack' },
+	}
+
+	it('does not turn a (partial) refund event into a refunded payment', () => {
+		const payment = mapCheckoutWebhookToPayment({
+			type: 'payment_refunded',
+			data: refundAction,
+		})
+		expect(payment).not.toBeNull()
+		expect(payment!.status).toBeUndefined()
+		expect(
+			checkoutPaymentStatusToOrderStatus(payment!.paid, payment!.status),
+		).not.toBe('refunded')
+	})
+
+	it('does not invent a status for a canceled or expired payment', () => {
+		for (const type of [
+			'payment_canceled',
+			'payment_expired',
+			'payment_voided',
+		]) {
+			const payment = mapCheckoutWebhookToPayment({
+				type,
+				data: { id: 'pay_1', approved: true },
+			})
+			expect({ type, status: payment?.status }).toEqual({
+				type,
+				status: undefined,
+			})
+		}
+		expect(
+			mapCheckoutWebhookToPayment({
+				type: 'payment_expired',
+				data: { id: 'pay_1', status: 'Expired' },
+			})?.status,
+		).toBe('Expired')
 	})
 })
 

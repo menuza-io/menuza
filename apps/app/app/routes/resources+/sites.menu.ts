@@ -13,6 +13,7 @@ import {
 import {
 	getCachedSiteData,
 	getMenuCacheGeneration,
+	getSiteCacheVersion,
 	getSiteKvKey,
 	setCachedSiteData,
 } from '#app/utils/sites/kv-cache.server.ts'
@@ -166,14 +167,21 @@ export const loader = withPublicCors(async function loader({
 	// The generation lets one bump rebuild every organization's menu (a
 	// system-level discount flag changes all of them; `bumpMenuCacheGeneration`).
 	const generation = await getMenuCacheGeneration()
-	const cacheKey = getSiteKvKey(
-		'page',
-		orgId,
-		`menu-g${generation}-${queryHash}`,
-	)
+	// The organization's cache version: a purge bumps it, so a payload read
+	// before the purge is never stored under the new version.
+	const cacheVersion = isPreview ? null : await getSiteCacheVersion(orgId)
+	const cacheKey =
+		cacheVersion === null
+			? null
+			: getSiteKvKey(
+					'page',
+					orgId,
+					`menu-g${generation}-${queryHash}`,
+					cacheVersion,
+				)
 
 	// Check KV Cache
-	if (!isPreview) {
+	if (cacheKey) {
 		const cached = await getCachedSiteData(cacheKey)
 		if (cached) {
 			return Response.json(withoutTillRules(cached), {
@@ -199,12 +207,14 @@ export const loader = withPublicCors(async function loader({
 		await buildPublicSiteMenuPayload(orgContext, locationId)
 
 	if (
-		!isPreview &&
+		cacheKey &&
+		cacheVersion !== null &&
 		(secondsUntilVariationReturn === null || secondsUntilVariationReturn >= 60)
 	) {
 		await setCachedSiteData(
 			cacheKey,
 			payload,
+			{ orgId, version: cacheVersion },
 			secondsUntilVariationReturn ?? undefined,
 		)
 	}

@@ -3,6 +3,7 @@ import { verifySessionStorage } from '@repo/auth'
 import { brand } from '@repo/config/brand'
 import { db, eq, User } from '@repo/database'
 import { EmailChangeEmail, sendEmail } from '@repo/email'
+import { EmailSchema } from '@repo/validation'
 import { z } from 'zod'
 
 import {
@@ -20,7 +21,9 @@ import {
 } from '#app/utils/rate-limit.server.ts'
 
 export const ChangeEmailSchema = z.object({
-	email: z.string().email({ message: 'Please provide a valid email address' }),
+	// EmailSchema lowercases, so the uniqueness check, rate limits, cookie and
+	// update all see the stored form of the address.
+	email: EmailSchema,
 })
 
 type EmailActionArgs = {

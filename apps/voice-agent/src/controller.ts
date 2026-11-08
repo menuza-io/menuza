@@ -680,9 +680,15 @@ export class CallController {
 				await this.textLink(node)
 				return this.enter(next())
 			case 'transfer': {
-				const phone = isE164(node.data.phone)
-					? node.data.phone
-					: (this.settings.escalationPhone ?? null)
+				// A step with its own number only obeys the safety switch; one that
+				// falls back to the shared staff number obeys the Staff transfers
+				// toggle and transfer hours like press 0 and the AI tools.
+				const ownPhone = isE164(node.data.phone) ? node.data.phone : null
+				const phone =
+					ownPhone ??
+					(this.transfers.transfersAvailable
+						? (this.settings.escalationPhone ?? null)
+						: null)
 				const outcome = await this.transfer(
 					phone && !this.settings.safety.transfersDisabled
 						? { phone, retries: 0, contactId: null }
@@ -900,7 +906,29 @@ export class CallController {
 		return { node: voicemail.node, message: voicemail.parts.join(' ').trim() }
 	}
 
-	private async saveVoicemail(message: string) {
+	/** Request saves still running, so the call log waits for them. */
+	private readonly pendingSaves = new Set<Promise<unknown>>()
+
+	/** Tracks a request save so settle() can wait for it after a hang-up. */
+	trackSave<T>(save: Promise<T>): Promise<T> {
+		this.pendingSaves.add(save)
+		const forget = () => void this.pendingSaves.delete(save)
+		save.then(forget, forget)
+		return save
+	}
+
+	/** Waits for every in-flight request or voicemail save to finish. */
+	async settle() {
+		while (this.pendingSaves.size > 0) {
+			await Promise.allSettled(this.pendingSaves)
+		}
+	}
+
+	private saveVoicemail(message: string) {
+		return this.trackSave(this.doSaveVoicemail(message))
+	}
+
+	private async doSaveVoicemail(message: string) {
 		try {
 			await this.services.createRequest({
 				orgId: this.config.organization.id,
@@ -942,6 +970,7 @@ export class CallController {
 	async flushVoicemail() {
 		const taken = this.takeVoicemail()
 		if (taken?.message) await this.saveVoicemail(taken.message)
+		await this.settle()
 	}
 
 	// ---- Links ----
@@ -1278,17 +1307,19 @@ export class CallController {
 	private async textAfterMissedTransfer() {
 		let requestSaved = false
 		try {
-			await this.services.createRequest({
-				orgId: this.config.organization.id,
-				callId: this.callId,
-				type: 'callback',
-				callerName: null,
-				callerPhone: this.callerPhone,
-				details: {
-					message:
-						'Nobody answered the transfer. The caller asked to be texted back.',
-				},
-			})
+			await this.trackSave(
+				this.services.createRequest({
+					orgId: this.config.organization.id,
+					callId: this.callId,
+					type: 'callback',
+					callerName: null,
+					callerPhone: this.callerPhone,
+					details: {
+						message:
+							'Nobody answered the transfer. The caller asked to be texted back.',
+					},
+				}),
+			)
 			this.state.requests.push('callback')
 			requestSaved = true
 		} catch (error) {

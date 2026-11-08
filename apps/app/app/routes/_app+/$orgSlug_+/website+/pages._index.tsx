@@ -64,6 +64,7 @@ import {
 	requireUserWithOrganizationPermission,
 	ORG_PERMISSIONS,
 } from '#app/utils/organization/permissions.server.ts'
+import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 import {
 	PAGE_TEMPLATES,
 	getDefaultConfig,
@@ -72,6 +73,7 @@ import {
 } from '#app/utils/website/block-types.ts'
 import { HOME_PAGE_SLUG } from '#app/utils/website/home-page.ts'
 import { ensureSiteChrome } from '#app/utils/website/locked-chrome.server.ts'
+import { publishWebsitePage } from '#app/utils/website/publish-page.server.ts'
 
 // --- Action Intents ---
 const createPageIntent = 'create-page'
@@ -167,6 +169,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	const organization = await requireUserOrganization(request, params.orgSlug, {
 		id: true,
 		slug: true,
+		customDomain: true,
 	})
 
 	await requireUserWithOrganizationPermission(
@@ -300,11 +303,18 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			)
 		}
 
+		// Sites serve cached page payloads for up to 24 hours, so every change to
+		// what is public drops the organization's cache, as the editor does.
+		const purgeSiteCache = () =>
+			purgeOrganizationSiteCache(
+				organization.id,
+				organization.slug,
+				organization.customDomain,
+			)
+
 		if (intent === publishPageIntent) {
-			await db
-				.update(WebsitePage)
-				.set({ status: 'published' })
-				.where(eq(WebsitePage.id, pageId))
+			await publishWebsitePage(pageId)
+			await purgeSiteCache()
 			return Response.json({ status: 'success' as const })
 		}
 
@@ -319,6 +329,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				.update(WebsitePage)
 				.set({ status: 'draft' })
 				.where(eq(WebsitePage.id, pageId))
+			await purgeSiteCache()
 			return Response.json({ status: 'success' as const })
 		}
 
@@ -330,6 +341,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				})
 			}
 			await db.delete(WebsitePage).where(eq(WebsitePage.id, pageId))
+			await purgeSiteCache()
 			return Response.json({ status: 'success' as const })
 		}
 	}

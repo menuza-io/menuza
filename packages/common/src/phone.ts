@@ -1,3 +1,5 @@
+import { toAsciiDigits } from './ascii-digits.ts'
+
 /**
  * E.164 phone normalization shared by the tenant API and the apps.
  *
@@ -35,12 +37,17 @@ function applyRegion(digits: string, region: PhoneRegion): string | null {
 	return null
 }
 
-/** Strips punctuation and applies the region's national-number rule. */
+/**
+ * Strips punctuation and applies the region's national-number rule. Arabic-Indic
+ * and Persian digits (an Arabic keyboard) are read as ASCII first.
+ */
 export function normalizePhone(
 	raw: string,
 	options?: NormalizePhoneOptions,
 ): string {
-	let cleaned = raw.trim().replace(/[\s\-().]/g, '')
+	let cleaned = toAsciiDigits(raw)
+		.trim()
+		.replace(/[\s\-().]/g, '')
 	if (cleaned.startsWith('00')) {
 		cleaned = `+${cleaned.slice(2)}`
 	}

@@ -2,6 +2,17 @@ import { z } from 'zod'
 import { basisPointsSchema, localDateSchema } from './schemas.ts'
 
 export const ROUNDING_MODES = ['none', 'nearest', 'up', 'down'] as const
+
+/** Only divisors of 60 keep rounding boundaries on the local clock's hour. */
+export const roundingIncrementSchema = z
+	.number()
+	.int()
+	.min(1)
+	.max(60)
+	.refine((n) => 60 % n === 0, {
+		error:
+			'Rounding increment must divide 60 evenly (1, 2, 3, 5, 6, 10, 12, 15, 20, 30 or 60).',
+	})
 export type RoundingMode = (typeof ROUNDING_MODES)[number]
 
 export const thresholdRuleSchema = z.object({
@@ -28,7 +39,7 @@ export const laborRulesSchema = z
 		/** Rounding applied to clock-in and clock-out; raw punches are kept. */
 		rounding: z.object({
 			mode: z.enum(ROUNDING_MODES),
-			incrementMinutes: z.number().int().min(1).max(60),
+			incrementMinutes: roundingIncrementSchema,
 		}),
 		dailyOvertime: thresholdRuleSchema.nullable(),
 		dailyDoubleTime: thresholdRuleSchema.nullable(),

@@ -497,7 +497,16 @@ export async function loadPayrollSummary(
 	// A card still needs a decision unless approval is off for its scope and
 	// nothing is wrong with it.
 	const awaiting = new Map<string, number>()
+	// An approved card whose figures moved since (overtime shifted onto it
+	// from a neighbouring card) is not what the approver signed off.
+	const changed = new Map<string, number>()
 	for (const live of lives) {
+		if (live.figuresChanged) {
+			changed.set(
+				live.entry.staffId,
+				(changed.get(live.entry.staffId) ?? 0) + 1,
+			)
+		}
 		if (live.status === 'approved' || live.status === 'locked') continue
 		const policy = await policies.get(live.entry.scopeId)
 		const needsDecision =
@@ -526,6 +535,7 @@ export async function loadPayrollSummary(
 			paidMinutes: person.totals.paidMinutes,
 			unpaidBreakMinutes: person.totals.unpaidBreakMinutes,
 			unapprovedCards: awaiting.get(person.staffId) ?? 0,
+			changedCards: changed.get(person.staffId) ?? 0,
 		}
 		if (person.money) {
 			const seen = new Set<string>()
@@ -568,6 +578,7 @@ export async function loadPayrollSummary(
 			paidMinutes: sum.paidMinutes + row.paidMinutes,
 			unpaidBreakMinutes: sum.unpaidBreakMinutes + row.unpaidBreakMinutes,
 			unapprovedCards: sum.unapprovedCards + row.unapprovedCards,
+			changedCards: sum.changedCards + row.changedCards,
 		}),
 		{
 			cards: 0,
@@ -578,6 +589,7 @@ export async function loadPayrollSummary(
 			paidMinutes: 0,
 			unpaidBreakMinutes: 0,
 			unapprovedCards: 0,
+			changedCards: 0,
 		},
 	)
 
@@ -593,7 +605,8 @@ export async function loadPayrollSummary(
 		rows,
 		totals,
 		// A cut-off view cannot vouch for the cards it left out.
-		readyForPayroll: totals.unapprovedCards === 0 && !truncated,
+		readyForPayroll:
+			totals.unapprovedCards === 0 && totals.changedCards === 0 && !truncated,
 		truncated,
 		...(labor ? { labor } : {}),
 	})

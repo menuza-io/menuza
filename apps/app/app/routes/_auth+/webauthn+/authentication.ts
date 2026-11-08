@@ -1,4 +1,4 @@
-import { db, eq, Passkey, Session } from '@repo/database'
+import { and, db, eq, Passkey, Session } from '@repo/database'
 import {
 	generateAuthenticationOptions,
 	verifyAuthenticationResponse,
@@ -8,8 +8,10 @@ import { handleNewSession } from '../login.server.ts'
 import { type Route } from './+types/authentication.ts'
 import {
 	PasskeyLoginBodySchema,
+	consumeAuthenticationChallenge,
+	createAuthenticationChallenge,
 	getWebAuthnConfig,
-	passkeyCookie,
+	passkeyAuthCookie,
 } from './utils.server.ts'
 
 export async function loader({ request }: Route.LoaderArgs) {
@@ -19,8 +21,8 @@ export async function loader({ request }: Route.LoaderArgs) {
 		userVerification: 'preferred',
 	})
 
-	const cookieHeader = await passkeyCookie.serialize({
-		challenge: options.challenge,
+	const cookieHeader = await passkeyAuthCookie.serialize({
+		id: await createAuthenticationChallenge(options.challenge),
 	})
 
 	return Response.json({ options }, { headers: { 'Set-Cookie': cookieHeader } })
@@ -28,10 +30,17 @@ export async function loader({ request }: Route.LoaderArgs) {
 
 export async function action({ request }: Route.ActionArgs) {
 	const cookieHeader = request.headers.get('Cookie')
-	const cookie = await passkeyCookie.parse(cookieHeader)
-	const deletePasskeyCookie = await passkeyCookie.serialize('', { maxAge: 0 })
+	const cookie = await passkeyAuthCookie.parse(cookieHeader)
+	const deletePasskeyCookie = await passkeyAuthCookie.serialize('', {
+		maxAge: 0,
+	})
 	try {
-		if (!cookie?.challenge) {
+		if (typeof cookie?.id !== 'string') {
+			throw new Error('Authentication challenge not found')
+		}
+		// Single use: consumed before anything else, even if verification fails.
+		const expectedChallenge = await consumeAuthenticationChallenge(cookie.id)
+		if (!expectedChallenge) {
 			throw new Error('Authentication challenge not found')
 		}
 
@@ -58,7 +67,7 @@ export async function action({ request }: Route.ActionArgs) {
 
 			const verification = await verifyAuthenticationResponse({
 				response: authResponse,
-				expectedChallenge: cookie.challenge,
+				expectedChallenge,
 				expectedOrigin: config.origin,
 				expectedRPID: config.rpID,
 				credential: {
@@ -73,10 +82,24 @@ export async function action({ request }: Route.ActionArgs) {
 			}
 
 			// Update the authenticator's counter in the DB to the newest count
-			await tx
-				.update(Passkey)
-				.set({ counter: verification.authenticationInfo.newCounter })
-				.where(eq(Passkey.id, passkey.id))
+			// Compare-and-swap on the old counter. A counter of 0 means the
+			// authenticator does not count (synced passkeys): nothing to update.
+			const { newCounter } = verification.authenticationInfo
+			if (newCounter > 0) {
+				const updated = await tx
+					.update(Passkey)
+					.set({ counter: newCounter })
+					.where(
+						and(
+							eq(Passkey.id, passkey.id),
+							eq(Passkey.counter, passkey.counter),
+						),
+					)
+					.returning({ id: Passkey.id })
+				if (updated.length === 0) {
+					throw new Error('Authentication verification failed')
+				}
+			}
 
 			return { passkey }
 		})

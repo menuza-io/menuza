@@ -62,6 +62,24 @@ describe('assertOrgOnUsNode and unknown organizations', () => {
 		expect(res?.status).toBe(404)
 	})
 
+	it('refuses a known US organization whose database is not provisioned', async () => {
+		// Mid region switch or after a failed one: waking the object would
+		// rebuild an empty database.
+		findActiveOrganizationById.mockResolvedValue({
+			id: 'org_1',
+			dataRegion: 'us',
+			hasProvisionedDb: false,
+		})
+		for (const [path, bearer] of [
+			['/auth/me', undefined],
+			['/api/staff/tick', TOKEN],
+		] as const) {
+			const res = await assertOrgOnUsNode('org_1', env, request(path, bearer))
+			expect(res?.status, path).toBe(404)
+			expect(await res?.json()).toEqual({ error: 'org_not_provisioned' })
+		}
+	})
+
 	it('still allows a known US organization', async () => {
 		findActiveOrganizationById.mockResolvedValue({
 			id: 'org_1',

@@ -352,3 +352,40 @@ describe('reportToCsv for hours and ratios', () => {
 		expect(perHour).toContain('Mon,1,87.92')
 	})
 })
+
+describe('reportToCsv formula safety', () => {
+	it('neutralizes cells a spreadsheet would run as a formula', () => {
+		const result = {
+			segments: [],
+			total: 2,
+			columns: [
+				{ id: 'name', label: 'Name' },
+				{ id: 'email', label: 'Email' },
+			],
+			rows: [
+				{ name: '=HYPERLINK("http://example.invalid","x")', email: '@a' },
+				{ name: ' +cmd', email: '​-1+1' },
+			],
+		} as unknown as ReportResult
+		const csv = reportToCsv(tableDefinition(), result)
+		const cells = csv
+			.trim()
+			.split('\n')
+			.slice(1)
+			.flatMap((line) => line.match(/("([^"]|"")*"|[^,]*)/g)!.filter(Boolean))
+			.map((cell) => cell.replace(/^"|"$/g, ''))
+		for (const cell of cells) {
+			expect(cell).not.toMatch(/^[\s​]*[=+\-@\t\r]/)
+		}
+	})
+
+	it('keeps negative numbers numeric', () => {
+		const result = {
+			segments: [],
+			total: 1,
+			columns: [{ id: 'name', label: 'Name' }],
+			rows: [{ name: '-12.5' }],
+		} as unknown as ReportResult
+		expect(reportToCsv(tableDefinition(), result)).toContain('\n-12.5\n')
+	})
+})

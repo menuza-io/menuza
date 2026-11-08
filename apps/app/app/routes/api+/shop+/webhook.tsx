@@ -6,7 +6,11 @@ import {
 import { type ActionFunctionArgs } from 'react-router'
 import { handleReservationCheckoutWebhookEvent } from '#app/utils/reservations/payment-webhooks.server.ts'
 import { handleRestaurantOrderCheckoutWebhookEvent } from '#app/utils/restaurant-orders/payment-webhooks.server.ts'
-import { getShopCommerce, recordShopOrder } from '#app/utils/shop.server.ts'
+import {
+	getShopCommerce,
+	recordShopOrder,
+	recordShopOrderFromVerifiedCheckoutEvent,
+} from '#app/utils/shop.server.ts'
 
 export async function action({ request }: ActionFunctionArgs) {
 	if (request.method !== 'POST') {
@@ -55,10 +59,7 @@ export async function action({ request }: ActionFunctionArgs) {
 			// same retry rule (a regional failure throws, the provider retries).
 			await handleReservationCheckoutWebhookEvent(verifiedEvent)
 
-			const event = shopCommerce.parseCheckoutWebhookEvent(verifiedEvent)
-			if (event) {
-				await recordShopOrder(event.order)
-			}
+			await recordShopOrderFromVerifiedCheckoutEvent(verifiedEvent)
 
 			return new Response('Webhook processed successfully', { status: 200 })
 		} catch (error) {

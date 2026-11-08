@@ -155,6 +155,23 @@ export function getPermissionGroups(): PermissionGroup[] {
 			],
 		},
 		{
+			title: t`Media library`,
+			description: t`Shared images and videos, and the AI photo studio.`,
+			permissions: [
+				{
+					id: 'org_perm_update_media_any',
+					label: t`Manage media`,
+					description: t`Upload, rename, replace, and delete files in the shared media library. Everyone can browse it.`,
+					warning: t`Replaced files can change published pages`,
+				},
+				{
+					id: 'org_perm_create_media_studio_any',
+					label: t`Use the AI photo studio`,
+					description: t`Create and enhance images with AI, which uses paid model credits. Needs Manage media.`,
+				},
+			],
+		},
+		{
 			title: t`Reports`,
 			description: t`Organization reports such as customers, orders, and calls.`,
 			permissions: [
@@ -525,6 +542,7 @@ export function getPresets(): RolePreset[] {
 				'org_perm_read_website_any',
 				'org_perm_read_announcement_any',
 				'org_perm_update_announcement_any',
+				'org_perm_update_media_any',
 			],
 		},
 		{

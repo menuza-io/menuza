@@ -272,6 +272,32 @@ describe('weeksTouched and overtimeMinutesByShift', () => {
 })
 
 describe('estimatePerShift', () => {
+	it('prices an after-midnight shift whose business date is in the previous week', () => {
+		const rules: LaborRules = {
+			...NEUTRAL_LABOR_RULES,
+			weekStartsOn: 1,
+			workdayStartMinute: 240,
+		}
+		// Monday 00:30-03:30 belongs to Sunday's business day (previous week).
+		const early = shift(
+			'early',
+			'2026-11-09',
+			'00:30',
+			'03:30',
+			{ rateMinor: 2000, currency: 'USD' },
+			'America/New_York',
+		)
+		expect(weeksTouched([early], rules, 'America/New_York')).toEqual([
+			'2026-11-02',
+		])
+		const out = estimatePerShift([early], rules, 'America/New_York')
+		expect(out.get('early')).toEqual({
+			overtimeMinutes: 0,
+			costUnitsByCurrency: { USD: 3.6e9 },
+			unpricedMinutes: 0,
+		})
+	})
+
 	it('gives each shift its overtime share and its cost in cost units', () => {
 		const shifts = [
 			shift('a', '2026-03-02', '08:00', '18:00', {

@@ -1,4 +1,6 @@
+import crypto from 'node:crypto'
 import { getDomainUrl } from '@repo/common'
+import { and, db, eq, lt, Verification } from '@repo/database'
 import {
 	type AuthenticationResponseJSON,
 	type RegistrationResponseJSON,
@@ -15,6 +17,73 @@ export const passkeyCookie = createCookie('webauthn-challenge', {
 	secure: true,
 	secrets: [ENV.SESSION_SECRET],
 })
+
+/**
+ * Sign-in challenges are single-use and live server-side: the cookie holds
+ * only an opaque id, and the action consumes the matching `Verification` row
+ * with `DELETE ... RETURNING` before verifying. Replaying a captured request
+ * (synced passkeys report a signCount of 0) therefore fails.
+ */
+export const AUTHENTICATION_CHALLENGE_TTL_MS = 5 * 60 * 1000
+const AUTHENTICATION_CHALLENGE_TYPE = 'webauthn-authentication-challenge'
+
+export const passkeyAuthCookie = createCookie('webauthn-auth-challenge', {
+	path: '/',
+	sameSite: 'lax',
+	httpOnly: true,
+	maxAge: AUTHENTICATION_CHALLENGE_TTL_MS / 1000,
+	secure: true,
+	secrets: [ENV.SESSION_SECRET],
+})
+
+function hashChallengeId(id: string) {
+	return crypto.createHash('sha256').update(id).digest('hex')
+}
+
+export async function createAuthenticationChallenge(challenge: string) {
+	const id = crypto.randomBytes(32).toString('base64url')
+	const now = Date.now()
+	// Opportunistic cleanup of challenges nobody used.
+	await db
+		.delete(Verification)
+		.where(
+			and(
+				eq(Verification.type, AUTHENTICATION_CHALLENGE_TYPE),
+				lt(Verification.expiresAt, new Date(now)),
+			),
+		)
+	await db.insert(Verification).values({
+		type: AUTHENTICATION_CHALLENGE_TYPE,
+		target: hashChallengeId(id),
+		secret: challenge,
+		algorithm: 'none',
+		digits: 0,
+		period: 0,
+		charSet: '',
+		expiresAt: new Date(now + AUTHENTICATION_CHALLENGE_TTL_MS),
+	})
+	return id
+}
+
+/** Returns the challenge once, or null when unknown, used or expired. */
+export async function consumeAuthenticationChallenge(id: string) {
+	const [row] = await db
+		.delete(Verification)
+		.where(
+			and(
+				eq(Verification.type, AUTHENTICATION_CHALLENGE_TYPE),
+				eq(Verification.target, hashChallengeId(id)),
+			),
+		)
+		.returning({
+			secret: Verification.secret,
+			expiresAt: Verification.expiresAt,
+		})
+	if (!row || !row.expiresAt || row.expiresAt.getTime() < Date.now()) {
+		return null
+	}
+	return row.secret
+}
 
 export const PasskeyCookieSchema = z.object({
 	challenge: z.string(),

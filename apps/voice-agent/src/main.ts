@@ -299,6 +299,7 @@ async function entry(ctx: JobContext) {
 			controller.dispose()
 			void recording.stop()
 			await controller.flushVoicemail()
+			await controller.settle()
 			const input = buildFinishInput(state, config, {
 				vertical: phoneAgentVertical,
 				formatPrice,

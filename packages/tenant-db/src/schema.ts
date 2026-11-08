@@ -189,6 +189,27 @@ export const personErasureLog = sqliteTable(
 
 export type PersonErasureLogEntry = typeof personErasureLog.$inferSelect
 
+// One row per sign-in code sent. The send-code limits that must hold across
+// isolates and Durable Object restarts (the in-process limiter does not) count
+// these rows. Phone and IP are stored only as purpose-prefixed HMACs, and rows
+// older than a day are deleted as new ones are written.
+export const smsSendEvents = sqliteTable(
+	'sms_send_events',
+	{
+		id: integer('id').primaryKey({ autoIncrement: true }),
+		at: integer('at', { mode: 'timestamp_ms' }).notNull(),
+		// 'browser' passed Turnstile; 'native' was the customer app's header.
+		kind: text('kind', { enum: ['browser', 'native'] }).notNull(),
+		phoneHash: text('phone_hash').notNull(),
+		ipHash: text('ip_hash').notNull(),
+	},
+	(table) => [
+		index('idx_sms_send_events_kind_at').on(table.kind, table.at),
+		index('idx_sms_send_events_phone_at').on(table.phoneHash, table.at),
+		index('idx_sms_send_events_ip_at').on(table.ipHash, table.at),
+	],
+)
+
 // ==========================================
 // 2. MARKETING JOURNEYS (Workflow Definitions)
 // ==========================================
@@ -286,6 +307,14 @@ export const journeyRuns = sqliteTable(
 		index('idx_journey_runs_journey_status').on(table.journeyId, table.status),
 		index('idx_journey_runs_customer').on(table.customerId),
 		index('idx_journey_runs_status').on(table.status),
+		// Once-per-customer triggers enroll a customer in a journey once. The
+		// enrolling transaction checks first; this is the backstop. Manual test
+		// runs (`manual`) and repeatable triggers are not covered.
+		uniqueIndex('uniq_journey_runs_once_per_customer')
+			.on(table.journeyId, table.customerId, table.triggerEvent)
+			.where(
+				sql`${table.triggerEvent} IN ('phone_verified', 'profile_completed')`,
+			),
 	],
 )
 
@@ -435,6 +464,11 @@ export const marketingMessages = sqliteTable(
 		index('idx_marketing_messages_journey_step').on(
 			table.journeyStepExecutionId,
 		),
+		// One broadcast message per customer: a dispatcher sends only to the
+		// customers whose row it inserted, so two dispatchers never both send.
+		uniqueIndex('uniq_marketing_messages_campaign_customer')
+			.on(table.campaignId, table.customerId)
+			.where(sql`${table.campaignId} IS NOT NULL`),
 	],
 )
 
@@ -540,7 +574,7 @@ export const shopOrders = sqliteTable(
 		checkoutSessionId: text('checkout_session_id'),
 		checkoutPaymentId: text('checkout_payment_id'),
 		status: text('status', {
-			enum: ['pending', 'paid', 'failed', 'refunded'],
+			enum: ['pending', 'paid', 'failed', 'refunded', 'disputed'],
 		})
 			.notNull()
 			.default('pending'),
@@ -2713,6 +2747,14 @@ export type ShiftDraftPatch = {
 	cancel?: boolean
 }
 
+/** Shift times a swap, cover or drop request was made against (epoch ms). */
+export type ShiftRequestShiftTimes = {
+	startsAt: number
+	endsAt: number
+	/** Swap only: the other shift. */
+	target?: { startsAt: number; endsAt: number }
+}
+
 /** One slot of a shift template, relative to a weekday rather than a date. */
 export type ShiftTemplateSlot = {
 	/** 0 = Sunday ... 6 = Saturday. */
@@ -2816,6 +2858,10 @@ export const shifts = sqliteTable(
 		cancelledAt: integer('cancelled_at'),
 		createdBy: text('created_by'),
 		updatedBy: text('updated_by'),
+		// Client-chosen id of the create request that wrote this shift (one
+		// suffix per shift), so a retried create returns these rows instead of
+		// adding the shifts again.
+		clientRequestId: text('client_request_id'),
 		version: integer('version').notNull().default(1),
 		createdAt: integer('created_at').notNull().default(nowMs),
 		updatedAt: integer('updated_at').notNull().default(nowMs),
@@ -2825,6 +2871,9 @@ export const shifts = sqliteTable(
 		index('idx_shifts_staff_start').on(table.staffId, table.startsAt),
 		index('idx_shifts_range').on(table.startsAt, table.endsAt),
 		index('idx_shifts_status').on(table.status),
+		uniqueIndex('uniq_shifts_client_request')
+			.on(table.createdBy, table.clientRequestId)
+			.where(sql`${table.clientRequestId} IS NOT NULL`),
 	],
 )
 
@@ -3046,6 +3095,13 @@ export const shiftRequests = sqliteTable(
 		decidedBy: text('decided_by'),
 		decidedAt: integer('decided_at'),
 		decisionNote: text('decision_note'),
+		// The published times of the shift (and, for a swap, of the other
+		// shift) when the request was made. Approval refuses the request as
+		// stale when they moved since; an edit to notes or position does not.
+		// Null on requests made before this was recorded.
+		shiftTimes: text('shift_times', {
+			mode: 'json',
+		}).$type<ShiftRequestShiftTimes>(),
 		createdAt: integer('created_at').notNull().default(nowMs),
 		updatedAt: integer('updated_at').notNull().default(nowMs),
 	},

@@ -113,6 +113,7 @@ export async function notifyChatMessage({
 			.where(eq(OrganizationChatChannelMember.channelId, message.channel))
 		for (const peer of peers) {
 			if (peer.userId === authorId) continue
+			if (!channelAudience.has(peer.userId)) continue
 			await upsertChatNotification({
 				userId: peer.userId,
 				organizationId,

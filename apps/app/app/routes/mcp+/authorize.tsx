@@ -110,7 +110,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		const loginUrl = new URL('/login', request.url)
 		loginUrl.searchParams.set(
 			'redirectTo',
-			`/mcp+/authorize?${url.searchParams.toString()}`,
+			`/mcp/authorize?${url.searchParams.toString()}`,
 		)
 		throw redirect(loginUrl.toString())
 	}

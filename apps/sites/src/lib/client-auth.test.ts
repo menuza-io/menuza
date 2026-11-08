@@ -4,9 +4,12 @@ import {
 	getAccessToken,
 	getBrowserTenantApiUrl,
 	getRefreshToken,
+	hasBrowserTenantApi,
 	setSessionTokens,
+	TenantApiUnavailableError,
 	tenantFetch,
 	tenantFetchResponse,
+	tenantJson,
 	TenantSessionUnavailableError,
 } from './client-auth.ts'
 
@@ -293,5 +296,22 @@ describe('the regional address', () => {
 		vi.stubGlobal('fetch', fetchMock)
 		await expect(tenantFetch('/loyalty/wallet')).rejects.toThrow()
 		expect(fetchMock).not.toHaveBeenCalled()
+	})
+
+	it('fails sign-in calls too, without touching the session', async () => {
+		delete document.documentElement.dataset.tenantApiUrl
+		vi.stubEnv('DEV', false)
+		setSessionTokens({ accessToken: accessToken(), refreshToken: 'refresh-1' })
+		const fetchMock = vi.fn()
+		vi.stubGlobal('fetch', fetchMock)
+		expect(hasBrowserTenantApi()).toBe(false)
+		await expect(tenantFetch('/auth/me')).rejects.toBeInstanceOf(
+			TenantApiUnavailableError,
+		)
+		await expect(
+			tenantJson('/auth/send-code', { phone: '+966501234567' }),
+		).rejects.toBeInstanceOf(TenantApiUnavailableError)
+		expect(fetchMock).not.toHaveBeenCalled()
+		expect(getRefreshToken()).toBe('refresh-1')
 	})
 })

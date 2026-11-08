@@ -12,7 +12,7 @@ import {
 	UserOrganization,
 } from '@repo/database'
 import * as fc from 'fast-check'
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { TEST_CODE_VERIFIER, TEST_PKCE_CHALLENGE } from '#tests/mcp-pkce.ts'
 import {
 	generateToken,
@@ -1338,7 +1338,7 @@ describe('pending authorization codes can be revoked', () => {
 		const victimCode = await createAuthorizationCodeRaw(input('victim'))
 		const otherCode = await createAuthorizationCodeRaw(input('someone-else'))
 
-		revokePendingAuthorizationCodes('victim')
+		await revokePendingAuthorizationCodes('victim')
 
 		expect(
 			await exchangeAuthorizationCodeRaw(
@@ -1490,5 +1490,83 @@ describe('MCP redirect validation', () => {
 		)
 		expect(result.isValid).toBe(false)
 		expect(result.error).toMatch(/client_id/)
+	})
+})
+
+describe('authorization codes survive across isolates', () => {
+	const redirectUri = 'http://localhost:3000/callback'
+
+	async function seed() {
+		const id = Math.random().toString(36).slice(2, 10)
+		const [user] = await db
+			.insert(User)
+			.values({
+				id: `iu-${id}`,
+				email: `iso-${id}@example.com`,
+				username: `iso-${id}`,
+				name: 'Isolate',
+			})
+			.returning()
+		const [org] = await db
+			.insert(Organization)
+			.values({ id: `io-${id}`, name: `Org ${id}`, slug: `iso-org-${id}` })
+			.returning()
+		return { user: user!, org: org! }
+	}
+
+	// A fresh module instance stands in for another Workers isolate: the
+	// /mcp/authorize request and the /mcp/token request rarely share one.
+	async function freshIsolate() {
+		vi.resetModules()
+		return import('./oauth.server')
+	}
+
+	it('redeems a code on another isolate, exactly once', async () => {
+		const { user, org } = await seed()
+		const issuer = await freshIsolate()
+		const code = await issuer.createAuthorizationCode({
+			...TEST_PKCE_CHALLENGE,
+			clientId: 'iso-client',
+			userId: user.id,
+			organizationId: org.id,
+			clientName: 'iso',
+			redirectUri,
+		})
+		const redeemers = [await freshIsolate(), await freshIsolate()]
+		const results = await Promise.all(
+			redeemers.map((isolate) =>
+				isolate.exchangeAuthorizationCode(
+					code,
+					redirectUri,
+					'iso-client',
+					TEST_CODE_VERIFIER,
+				),
+			),
+		)
+		expect(results.filter(Boolean)).toHaveLength(1)
+	})
+
+	it('revokes pending codes from any isolate', async () => {
+		const { user, org } = await seed()
+		const issuer = await freshIsolate()
+		const code = await issuer.createAuthorizationCode({
+			...TEST_PKCE_CHALLENGE,
+			clientId: 'iso-client',
+			userId: user.id,
+			organizationId: org.id,
+			clientName: 'iso',
+			redirectUri,
+		})
+		await (await freshIsolate()).revokePendingAuthorizationCodes(user.id)
+		expect(
+			await (
+				await freshIsolate()
+			).exchangeAuthorizationCode(
+				code,
+				redirectUri,
+				'iso-client',
+				TEST_CODE_VERIFIER,
+			),
+		).toBeNull()
 	})
 })

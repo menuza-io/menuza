@@ -220,6 +220,30 @@ export class GitHubProvider extends BaseIntegrationProvider {
 	}
 
 	/**
+	 * Revoke the app's grant for this token (best effort, used on disconnect).
+	 */
+	async revokeToken(token: string): Promise<void> {
+		const basic = Buffer.from(
+			`${this.clientId()}:${this.clientSecret()}`,
+		).toString('base64')
+		const response = await fetch(
+			`${this.apiBaseUrl}/applications/${this.clientId()}/grant`,
+			{
+				method: 'DELETE',
+				headers: {
+					Authorization: `Basic ${basic}`,
+					Accept: 'application/vnd.github+json',
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({ access_token: token }),
+			},
+		)
+		if (!response.ok && response.status !== 404) {
+			throw new Error(`GitHub grant revoke failed: ${response.status}`)
+		}
+	}
+
+	/**
 	 * Refresh GitHub access token
 	 * Note: GitHub doesn't support refresh tokens in the standard OAuth flow
 	 */

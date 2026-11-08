@@ -1,5 +1,4 @@
 import { Hono, type Context } from 'hono'
-import { jwtVerify } from 'jose'
 import { z } from 'zod'
 
 import {
@@ -14,7 +13,6 @@ import { getNodeRegion, orgMatchesNodeRegion } from '../lib/region.ts'
 import {
 	getBearerToken,
 	getInternalCommandToken,
-	getOperatorToken,
 	timingSafeEqualString,
 } from '../lib/secrets.ts'
 import {
@@ -32,8 +30,7 @@ import {
 	getJourneyRunTimeline,
 	triggerTestJourney,
 } from '../services/journey-service.ts'
-import { brand } from '@repo/config/brand'
-import { requireOperatorClaim } from './operator.ts'
+import { authenticateOperator, requireOperatorClaim } from './operator.ts'
 
 // =========================================================================
 // 1. SYSTEM-TO-SYSTEM JOURNEY ROUTES (/api/journeys/*)
@@ -130,6 +127,7 @@ journeySystemRoutes.post('/execute-step', async (c) => {
 		executionId: result.executionId,
 		status: result.status,
 		messageId: result.messageId,
+		...(result.reason ? { reason: result.reason } : {}),
 	})
 })
 
@@ -210,6 +208,9 @@ journeySystemRoutes.get('/definitions/:journeyId', async (c) => {
 		)
 	}
 
+	const regionDenied = await assertOrgRegion(c, query.data.orgId)
+	if (regionDenied) return regionDenied
+
 	const result = await getJourneyDefinition(query.data.orgId, journeyId)
 
 	if (!result.success) {
@@ -222,55 +223,14 @@ journeySystemRoutes.get('/definitions/:journeyId', async (c) => {
 
 // =========================================================================
 // 2. OPERATOR JOURNEY MANAGEMENT ROUTES (/operator/journeys/*)
-// Authenticated via Operator JWT minted with audience: 'tenant-api-operator'
+// Authenticated via Operator JWT minted with audience: 'tenant-api-operator',
+// verified by the one operator verifier in operator.ts. Journeys name no
+// `area`, so a token bound to an area (the Marketing or Customers page's
+// browser token) or to a scope (mailbox, phone calls) is refused here. Only the
+// server-side tokens App signs per request reach these routes.
 // =========================================================================
 
 export const journeyOperatorRoutes = new Hono()
-
-export async function authenticateOperator(c: Context) {
-	const token = getBearerToken(c.req.header('Authorization')) || null
-	if (!token) {
-		throw c.json({ error: 'Unauthorized' }, 401)
-	}
-
-	const operatorToken = getOperatorToken()
-	if (operatorToken.length < 16) {
-		throw c.json({ error: 'Not configured' }, 503)
-	}
-
-	let decoded: {
-		orgId: string
-		role: string
-		scope?: string
-		sub?: string
-		canUpdate?: boolean
-		canDelete?: boolean
-	}
-	try {
-		const secret = new TextEncoder().encode(operatorToken)
-		const { payload } = await jwtVerify(token, secret, {
-			audience: 'tenant-api-operator',
-			issuer: brand.shortName,
-			algorithms: ['HS256'],
-			requiredClaims: ['exp'],
-		})
-		decoded = payload as typeof decoded
-	} catch {
-		throw c.json({ error: 'Invalid or expired operator token' }, 401)
-	}
-
-	if (decoded.role !== 'operator') {
-		throw c.json({ error: 'Invalid role' }, 403)
-	}
-
-	// Journeys message customers: refuse tokens minted for a narrower purpose
-	// (mailbox, phone calls), which carry a `scope` claim.
-	if (decoded.scope) {
-		throw c.json({ error: 'Invalid token scope' }, 403)
-	}
-
-	return decoded
-}
 
 const triggerTestSchema = z.object({
 	journeyId: z.string().min(1, 'journeyId is required'),

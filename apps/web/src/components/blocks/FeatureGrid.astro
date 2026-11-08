@@ -1,4 +1,5 @@
 ---
+import { sanitizeSvg } from '../../lib/sanitize-markup'
 import MarkdownInline from '../site/MarkdownInline.astro'
 import MarkdownText from '../site/MarkdownText.astro'
 import Section from '../site/Section.astro'
@@ -68,7 +69,7 @@ const {
 		{
 			features.map((feature) => (
 				<li class="border-t-2 border-brand pt-5">
-					{feature.icon && <div class="mb-3 text-brand" aria-hidden="true" set:html={feature.icon} />}
+					{feature.icon && <div class="mb-3 text-brand" aria-hidden="true" set:html={sanitizeSvg(feature.icon)} />}
 					<h3 class="text-[15px] text-foreground">
 						<MarkdownInline content={feature.title} />
 					</h3>

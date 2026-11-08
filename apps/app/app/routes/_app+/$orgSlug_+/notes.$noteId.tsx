@@ -378,6 +378,7 @@ export const DisconnectNoteSchema = z.object({
 export const GetChannelsSchema = z.object({
 	intent: z.literal('get-integration-channels'),
 	integrationId: z.string(),
+	noteId: z.string(),
 })
 
 export const ShareNoteSchema = z.object({
@@ -1068,14 +1069,30 @@ function NoteSheetActions({
 				organizationMembers={organizationMembers}
 			/>
 			{hasIntegrations ? (
-				<IntegrationControls
-					showTrigger={false}
-					open={integrationsOpen}
-					onOpenChange={setIntegrationsOpen}
-					noteId={note.id}
-					connections={connections}
-					availableIntegrations={availableIntegrations}
-				/>
+				<CanEditNote
+					noteOwnerId={note.createdById}
+					currentUserId={currentUserId}
+					fallback={
+						<IntegrationControls
+							showTrigger={false}
+							open={integrationsOpen}
+							onOpenChange={setIntegrationsOpen}
+							noteId={note.id}
+							connections={connections}
+							availableIntegrations={availableIntegrations}
+							canManage={false}
+						/>
+					}
+				>
+					<IntegrationControls
+						showTrigger={false}
+						open={integrationsOpen}
+						onOpenChange={setIntegrationsOpen}
+						noteId={note.id}
+						connections={connections}
+						availableIntegrations={availableIntegrations}
+					/>
+				</CanEditNote>
 			) : null}
 			<CanDeleteNote
 				noteOwnerId={note.createdById}

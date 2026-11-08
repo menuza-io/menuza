@@ -1,9 +1,11 @@
+import { createId } from '@paralleldrive/cuid2'
 import { auditService, AuditAction } from '@repo/audit'
 import { redirectWithToast } from '@repo/common/toast'
 import {
 	and,
 	db,
 	eq,
+	isD1Bound,
 	isNull,
 	or,
 	sql,
@@ -100,28 +102,37 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		}
 	}
 
-	const createdRole = await db.transaction(async (tx) => {
-		const [role] = await tx
-			.insert(OrganizationRole)
-			.values({
-				name,
-				description,
-				level: 0,
-				organizationId: organization.organizationId,
-			})
-			.returning({ id: OrganizationRole.id })
-
-		if (role && permissionIds.length) {
-			await tx.insert(_OrganizationPermissionToRole).values(
-				permissionIds.map((permissionId) => ({
-					A: role.id,
-					B: permissionId,
-				})),
-			)
-		}
-
-		return role ?? null
-	})
+	const roleId = createId()
+	const roleValues = {
+		id: roleId,
+		name,
+		description,
+		level: 0,
+		organizationId: organization.organizationId,
+	}
+	const permissionRows = permissionIds.map((permissionId) => ({
+		A: roleId,
+		B: permissionId,
+	}))
+	if (isD1Bound()) {
+		// D1 has no interactive transactions (the client's `transaction` is a
+		// plain callback), so one batch keeps the create atomic: a failed link
+		// insert must not leave a role without its permissions.
+		await db.batch([
+			db.insert(OrganizationRole).values(roleValues),
+			...(permissionRows.length
+				? [db.insert(_OrganizationPermissionToRole).values(permissionRows)]
+				: []),
+		])
+	} else {
+		await db.transaction(async (tx) => {
+			await tx.insert(OrganizationRole).values(roleValues)
+			if (permissionRows.length) {
+				await tx.insert(_OrganizationPermissionToRole).values(permissionRows)
+			}
+		})
+	}
+	const createdRole = { id: roleId }
 
 	if (createdRole) {
 		await auditService.log({

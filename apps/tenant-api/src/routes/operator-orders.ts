@@ -145,6 +145,7 @@ export async function authenticateOrdersOperator(
 		orgId?: string
 		role?: string
 		scope?: string
+		area?: unknown
 		linkCustomers?: boolean
 		linkGuests?: boolean
 		stationApps?: unknown
@@ -166,6 +167,11 @@ export async function authenticateOrdersOperator(
 	}
 
 	if (!decoded.orgId || !TENANT_ORG_ID_PATTERN.test(decoded.orgId)) {
+		return { error: Response.json({ error: 'Unauthorized' }, { status: 401 }) }
+	}
+	// A browser token bound to another page's area (see `authenticateOperator`)
+	// never reaches orders or the till.
+	if (decoded.area !== undefined) {
 		return { error: Response.json({ error: 'Unauthorized' }, { status: 401 }) }
 	}
 	if (decoded.role !== 'operator') {

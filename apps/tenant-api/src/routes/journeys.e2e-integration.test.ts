@@ -19,6 +19,7 @@ import {
 } from '@repo/tenant-db'
 import { journeySystemRoutes, journeyOperatorRoutes } from './journeys.ts'
 import { evaluateAndSpawnTriggers } from '../services/journey-service.ts'
+import { setCustomerSubscription } from '../services/marketing-audience.ts'
 import * as emailModule from '@repo/email'
 import { getMarketingEmailHeaders } from '@repo/config/marketing-email'
 import * as smsModule from '@repo/sms'
@@ -283,6 +284,17 @@ describe('Marketing Automation End-to-End Integration Suite (Milestones 1 - 5)',
 			phone: '+15550192834',
 			phoneVerified: true,
 		})
+		for (const channel of ['email', 'sms'] as const) {
+			await setCustomerSubscription(db, {
+				customerId,
+				topic: 'marketing',
+				channel,
+				subscribed: true,
+				source: 'signup',
+				confirmedEmail:
+					channel === 'email' ? 'sarah.connor@sky.net' : undefined,
+			})
+		}
 
 		// 6. Lifecycle event triggers journey spawn
 		// Mock fetch to simulate Cloudflare Workflows ingestion
@@ -614,6 +626,17 @@ describe('Marketing Automation End-to-End Integration Suite (Milestones 1 - 5)',
 			phone: '+15559876543',
 			phoneVerified: false, // NOT verified!
 		})
+		for (const channel of ['email', 'sms'] as const) {
+			await setCustomerSubscription(db, {
+				customerId,
+				topic: 'marketing',
+				channel,
+				subscribed: true,
+				source: 'signup',
+				confirmedEmail:
+					channel === 'email' ? 'john.wick@continental.hotel' : undefined,
+			})
+		}
 
 		// Trigger profile_completed with custom contextData
 		const triggerResult = await evaluateAndSpawnTriggers(
@@ -650,41 +673,55 @@ describe('Marketing Automation End-to-End Integration Suite (Milestones 1 - 5)',
 		const evalData = (await evalRes.json()) as { result: boolean }
 		expect(evalData.result).toBe(false) // Verified that condition accurately resolves false!
 
-		// 3. Execute False branch (action_verify_sms) with contextData merge tag
-		const smsRes = await app.fetch(
-			new Request('http://localhost:3007/api/journeys/execute-step', {
-				method: 'POST',
-				headers: {
-					Authorization: `Bearer ${internalToken}`,
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({
-					orgId: testOrgId,
-					journeyId,
-					runId,
-					customerId,
-					nodeId: 'action_verify_sms',
-					nodeType: 'action_sms',
-					config: {
-						messageText:
-							'Hi {{firstName}}, use promo code {{promoCode}} after verifying your phone!',
+		// 3. Execute the False branch with a contextData merge tag. A text to
+		// an unverified phone has no consent and is skipped; the confirmed
+		// email address does, so the reminder goes by email.
+		const executeFalseBranch = (nodeType: string, config: object) =>
+			app.fetch(
+				new Request('http://localhost:3007/api/journeys/execute-step', {
+					method: 'POST',
+					headers: {
+						Authorization: `Bearer ${internalToken}`,
+						'Content-Type': 'application/json',
 					},
+					body: JSON.stringify({
+						orgId: testOrgId,
+						journeyId,
+						runId,
+						customerId,
+						nodeId: `action_verify_${nodeType}`,
+						nodeType,
+						config,
+					}),
 				}),
-			}),
-		)
+			)
+		const smsRes = await executeFalseBranch('action_sms', {
+			messageText:
+				'Hi {{firstName}}, use promo code {{promoCode}} after verifying your phone!',
+		})
 		expect(smsRes.status).toBe(200)
+		expect(((await smsRes.json()) as { status: string }).status).toBe('skipped')
+		expect(smsModule.sendSms).not.toHaveBeenCalledWith(
+			expect.objectContaining({ to: '+15559876543' }),
+		)
+
+		const emailRes = await executeFalseBranch('action_email', {
+			subject: 'Verify your phone',
+			bodyHtml:
+				'Hi {{firstName}}, use promo code {{promoCode}} after verifying your phone!',
+		})
+		expect(emailRes.status).toBe(200)
 
 		// Verify that custom context tag {{promoCode}} was properly interpolated
-		expect(smsModule.sendSms).toHaveBeenCalledWith(
+		expect(emailModule.sendOciEmail).toHaveBeenCalledWith(
 			expect.objectContaining({
-				to: '+15559876543',
-				message:
-					'Hi Johnathan, use promo code CONTINENTAL50 after verifying your phone!',
+				to: 'john.wick@continental.hotel',
+				html: '<p>Hi Johnathan, use promo code CONTINENTAL50 after verifying your phone!</p>',
 			}),
 		)
 	})
 
-	it('Scenario 3: Missing Customer PII Handling & Graceful Step Failure', async () => {
+	it('Scenario 3: Missing Customer Email Skips the Step', async () => {
 		const db = await getTenantDb(testOrgId)
 
 		// Seed customer with NO email
@@ -719,6 +756,11 @@ describe('Marketing Automation End-to-End Integration Suite (Milestones 1 - 5)',
 			}),
 		)
 		const { journeyId } = (await createRes.json()) as { journeyId: string }
+		// A real (not test) run only takes steps while its journey is active.
+		await db
+			.update(marketingJourneys)
+			.set({ status: 'active' })
+			.where(eq(marketingJourneys.id, journeyId))
 
 		const runId = crypto.randomUUID()
 		await db.insert(journeyRuns).values({
@@ -752,26 +794,33 @@ describe('Marketing Automation End-to-End Integration Suite (Milestones 1 - 5)',
 			}),
 		)
 
-		expect(stepRes.status).toBe(422)
+		// No address means no email consent: the step is skipped (recorded),
+		// never sent, and the journey goes on.
+		expect(stepRes.status).toBe(200)
 		const stepData = (await stepRes.json()) as {
-			error: string
 			status: string
+			reason?: string
 			executionId: string
 		}
-		expect(stepData.status).toBe('failed')
-		expect(stepData.error).toContain('Customer has no email address')
+		expect(stepData.status).toBe('skipped')
+		expect(stepData.reason).toBe('no_consent')
 
-		// Verify audit step recorded as failed in SQLite
 		const stepExecution = await db
 			.select()
 			.from(journeyStepExecutions)
 			.where(eq(journeyStepExecutions.id, stepData.executionId))
 			.get()
-		expect(stepExecution).toBeDefined()
-		expect(stepExecution?.status).toBe('failed')
-		expect(stepExecution?.errorMessage).toContain(
-			'Customer has no email address',
-		)
+		expect(stepExecution?.status).toBe('skipped')
+		// The runs view reads why: a code, plus the message it already shows.
+		const details =
+			typeof stepExecution?.executionDetails === 'string'
+				? JSON.parse(stepExecution.executionDetails)
+				: stepExecution?.executionDetails
+		expect(details).toMatchObject({
+			skipReason: 'no_consent',
+			channel: 'email',
+		})
+		expect(stepExecution?.errorMessage).toContain('Skipped')
 	})
 
 	it('Scenario 4: Security & Authentication Guardrails (Constant-Time Token Check & Operator RBAC)', async () => {
@@ -818,7 +867,7 @@ describe('Marketing Automation End-to-End Integration Suite (Milestones 1 - 5)',
 				},
 			}),
 		)
-		expect(memberRes.status).toBe(403)
+		expect(memberRes.status).toBe(401)
 
 		// 4. Operator endpoint with wrong audience
 		const wrongAudJwt = await new SignJWT({

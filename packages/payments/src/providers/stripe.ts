@@ -227,6 +227,7 @@ export class StripeProvider implements PaymentProvider {
 				priceId: item.price.id,
 				quantity: item.quantity,
 			})),
+			created: sub.created,
 		}
 	}
 
@@ -253,6 +254,7 @@ export class StripeProvider implements PaymentProvider {
 				priceId: item.price.id,
 				quantity: item.quantity,
 			})),
+			created: sub.created,
 		}))
 	}
 
@@ -307,6 +309,7 @@ export class StripeProvider implements PaymentProvider {
 				priceId: item.price.id,
 				quantity: item.quantity,
 			})),
+			created: updatedSub.created,
 		}
 	}
 
@@ -330,6 +333,7 @@ export class StripeProvider implements PaymentProvider {
 				priceId: item.price.id,
 				quantity: item.quantity,
 			})),
+			created: sub.created,
 		}
 	}
 

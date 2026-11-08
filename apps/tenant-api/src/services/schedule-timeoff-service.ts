@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, inArray, lte, sql } from 'drizzle-orm'
+import { and, desc, eq, gte, inArray, isNull, lte, sql } from 'drizzle-orm'
 import {
 	addDays,
 	type AvailabilityCreate,
@@ -31,6 +31,7 @@ import {
 	type PersonRecord,
 	type ScheduleContext,
 	type ScheduleResult,
+	type SelfWriteGuard,
 	visibleStaffWhere,
 } from './schedule-shared.ts'
 import { transact } from './schedule-shift-service.ts'
@@ -48,7 +49,12 @@ import { inJsonList, insertRowsInChunks } from '../lib/chunked-in.ts'
 
 export type TimeOffWriteContext = Omit<ScheduleContext, 'db'> & {
 	db: TenantDatabase
+	/** Self-service only: runs inside the insert's transaction. */
+	beforeSelfWrite?: SelfWriteGuard
 }
+
+/** Self-service cancels: only a request still waiting may be taken back. */
+export type CancelOptions = { pendingOnly?: boolean }
 
 const MAX_WARNING_SCAN_DAYS = 62
 
@@ -236,7 +242,47 @@ export async function createTimeOff(
 	})
 	if (!person.ok) return person
 	const approved = input.submission === 'manager_entered'
+	const startMinute =
+		!input.allDay && input.startTime
+			? minuteOfDayFromAvailabilityTime(input.startTime)
+			: null
+	const endMinute =
+		!input.allDay && input.endTime
+			? minuteOfDayFromAvailabilityTime(input.endTime)
+			: null
 	const created = await transact(ctx.db, async (tx) => {
+		// A request sent again (a retry after a lost response, a double tap)
+		// finds the live request it already made instead of adding a second
+		// one: two live requests for the same person, kind and time are never
+		// meaningful. Only a row in the state this one would start in counts, so
+		// a manager entering time off someone asked for still records it.
+		// Checked inside the transaction, so two sent together
+		// cannot both insert.
+		const [existing] = await tx
+			.select()
+			.from(timeOffRequests)
+			.where(
+				and(
+					eq(timeOffRequests.staffId, input.staffId),
+					eq(timeOffRequests.category, input.category),
+					eq(timeOffRequests.startDate, input.startDate),
+					eq(timeOffRequests.endDate, input.endDate),
+					eq(timeOffRequests.allDay, input.allDay),
+					startMinute === null
+						? isNull(timeOffRequests.startMinute)
+						: eq(timeOffRequests.startMinute, startMinute),
+					endMinute === null
+						? isNull(timeOffRequests.endMinute)
+						: eq(timeOffRequests.endMinute, endMinute),
+					eq(timeOffRequests.status, approved ? 'approved' : 'pending'),
+				),
+			)
+			.limit(1)
+		if (existing) return ok(existing)
+		if (ctx.beforeSelfWrite) {
+			const allowed = await ctx.beforeSelfWrite(tx)
+			if (!allowed.ok) return allowed
+		}
 		const [row] = await tx
 			.insert(timeOffRequests)
 			.values({
@@ -245,14 +291,8 @@ export async function createTimeOff(
 				startDate: input.startDate,
 				endDate: input.endDate,
 				allDay: input.allDay,
-				startMinute:
-					!input.allDay && input.startTime
-						? minuteOfDayFromAvailabilityTime(input.startTime)
-						: null,
-				endMinute:
-					!input.allDay && input.endTime
-						? minuteOfDayFromAvailabilityTime(input.endTime)
-						: null,
+				startMinute,
+				endMinute,
 				note: input.note ?? null,
 				status: approved ? 'approved' : 'pending',
 				source: approved ? 'manager' : 'staff',
@@ -349,19 +389,22 @@ export async function decideTimeOff(
 export async function cancelTimeOff(
 	ctx: TimeOffWriteContext,
 	id: string,
+	options: CancelOptions = {},
 ): Promise<ScheduleResult<TimeOffView>> {
 	const outcome = await transact(ctx.db, async (tx) => {
 		const loaded = await loadVisibleTimeOff(tx, ctx.scope, id)
 		if (!loaded.ok) return loaded
 		const { row } = loaded.value
-		if (row.status !== 'pending' && row.status !== 'approved') {
-			return fail(409, 'already_decided')
-		}
+		const allowed = options.pendingOnly ? ['pending'] : ['pending', 'approved']
+		if (!allowed.includes(row.status)) return fail(409, 'already_decided')
 		const [updated] = await tx
 			.update(timeOffRequests)
 			.set({ status: 'cancelled', updatedAt: ctx.now })
-			.where(eq(timeOffRequests.id, id))
+			.where(
+				and(eq(timeOffRequests.id, id), eq(timeOffRequests.status, row.status)),
+			)
 			.returning()
+		if (!updated) return fail(409, 'already_decided')
 		await writeStaffAudit(tx, ctx.auth, ctx.ipHash, {
 			action: 'schedule.time_off.cancelled',
 			entityType: 'time_off_request',
@@ -483,6 +526,10 @@ export async function createAvailability(
 	if (!person.ok) return person
 	const approved = input.submission === 'manager_entered'
 	return transact(ctx.db, async (tx) => {
+		if (ctx.beforeSelfWrite) {
+			const allowed = await ctx.beforeSelfWrite(tx)
+			if (!allowed.ok) return allowed
+		}
 		const rows = await insertRowsInChunks(
 			staffAvailability,
 			input.rows.map((row) => ({
@@ -623,6 +670,7 @@ export async function decideAvailability(
 export async function cancelAvailability(
 	ctx: TimeOffWriteContext,
 	id: string,
+	options: CancelOptions = {},
 ): Promise<ScheduleResult<AvailabilityView>> {
 	if (!isOpaqueId(id)) return fail(404, 'not_found')
 	return transact(ctx.db, async (tx) => {
@@ -634,14 +682,19 @@ export async function cancelAvailability(
 		if (!row || !(await rowPerson(tx, ctx.scope, row.staffId))) {
 			return fail(404, 'not_found')
 		}
-		if (row.status !== 'pending' && row.status !== 'approved') {
-			return fail(409, 'already_decided')
-		}
+		const allowed = options.pendingOnly ? ['pending'] : ['pending', 'approved']
+		if (!allowed.includes(row.status)) return fail(409, 'already_decided')
 		const [updated] = await tx
 			.update(staffAvailability)
 			.set({ status: 'cancelled', updatedAt: ctx.now })
-			.where(eq(staffAvailability.id, id))
+			.where(
+				and(
+					eq(staffAvailability.id, id),
+					eq(staffAvailability.status, row.status),
+				),
+			)
 			.returning()
+		if (!updated) return fail(409, 'already_decided')
 		await writeStaffAudit(tx, ctx.auth, ctx.ipHash, {
 			action: 'schedule.availability.cancelled',
 			entityType: 'staff_availability',

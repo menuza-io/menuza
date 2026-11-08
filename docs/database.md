@@ -101,6 +101,8 @@ The files are the same changes, in a different order and with different indexes:
 | Email confirmation on subscriptions    | `0015_customer_subscription_email_confirmation` | `0017_customer_subscription_email_confirmation` (same SQL)                   |
 | Confirmation sent marker               | `0016_customer_subscription_confirmation_sent`  | `0018_customer_subscription_confirmation_sent` (same SQL)                    |
 | Reservations module (tables, triggers) | not upstream                                    | `0019_reservations` (one migration for the whole module)                     |
+| SMS send events                        | `0017_sms_send_events`                          | `0029_sms_send_events` (same SQL, synced 2026-11-07)                         |
+| Concurrency guards                     | `0018_concurrency_guards`                       | `0030_concurrency_guards` (same SQL)                                         |
 
 The reservations module is one migration, `0019_reservations`, which also holds
 two non-reservation changes it needed (`voice_call_actions` and
@@ -146,13 +148,18 @@ The control-plane migrations (`packages/database/drizzle`) diverged the same
 way: the fork's `0021` to `0027` shipped before upstream's print and social
 migrations, so upstream's files land here under the next free index.
 
-| Change                  | Upstream                         | Here                                                                        |
-| ----------------------- | -------------------------------- | --------------------------------------------------------------------------- |
-| Print shop              | `0020_print_shop`                | `0027_print_shop` (same SQL; upstream's file is not kept)                   |
-| Canva                   | `0021_print_canva`               | `0028_print_canva` (same SQL)                                               |
-| Social media            | `0022_social_media`              | `0029_social_media` (same SQL)                                              |
-| Read analytics grant    | `0023_read_analytics_permission` | `0033_read_analytics_permission` (same SQL, synced 2026-11-04, PR #58)      |
-| Chat channel name index | `0016_chat_channel_name_unique`  | folded into `0019_team_chat` (the index is created there; no separate file) |
+| Change                  | Upstream                            | Here                                                                        |
+| ----------------------- | ----------------------------------- | --------------------------------------------------------------------------- |
+| Print shop              | `0020_print_shop`                   | `0027_print_shop` (same SQL; upstream's file is not kept)                   |
+| Canva                   | `0021_print_canva`                  | `0028_print_canva` (same SQL)                                               |
+| Social media            | `0022_social_media`                 | `0029_social_media` (same SQL)                                              |
+| Read analytics grant    | `0023_read_analytics_permission`    | `0033_read_analytics_permission` (same SQL, synced 2026-11-04, PR #58)      |
+| Chat channel name index | `0016_chat_channel_name_unique`     | folded into `0019_team_chat` (the index is created there; no separate file) |
+| Media permissions       | `0024_media_permissions`            | `0034_media_permissions` (same SQL, synced 2026-11-07)                      |
+| Verified domain proof   | `0025_verified_domain_proof`        | `0035_verified_domain_proof` (same SQL)                                     |
+| SSO identity            | `0026_sso_identity`                 | `0036_sso_identity` (same SQL)                                              |
+| Concurrency guards      | `0027_concurrency_guards`           | `0037_concurrency_guards` (same SQL)                                        |
+| SSO identity cascades   | `0028_sso_identity_config_cascades` | `0038_sso_identity_config_cascades` (same SQL)                              |
 
 Merge them the way the tenant steps above describe: keep this side's journal and
 snapshots in a conflict, append each upstream delta with the next free index and
@@ -160,6 +167,11 @@ a `when` greater than the previous entry's, and chain a snapshot built from the
 latest one here. Then run `drizzle-kit generate --name check` in
 `packages/database` (directly, as `node ../../node_modules/drizzle-kit/bin.cjs`)
 and expect "No schema changes".
+
+The archive tables those concurrency-guard migrations create keep upstream's
+suffixes (`__archived_PlatformMarketingMessage_0027` here from `0037`, and
+`__archived_*_0018` in each tenant database from `0030`), because App and
+tenant-api code (person erasure, tests) refers to them by those names.
 
 Two details that bit the `0033` sync:
 

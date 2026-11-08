@@ -41,6 +41,8 @@ describe('parseSalesAmount', () => {
 		['1.2.3', 'bad_amount'],
 		['-50', 'negative_amount'],
 		['0.125', 'too_many_decimals'],
+		['1,234.567', 'too_many_decimals'],
+		['12.345,678', 'too_many_decimals'],
 		['1.2345', 'too_many_decimals'],
 		['99999999999999', 'amount_too_large'],
 	])('rejects %s', (raw, code) => {

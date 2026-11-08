@@ -692,6 +692,51 @@ describe('CallController', () => {
 		)
 	})
 
+	it('waits for a voicemail still being saved when the caller hangs up', async () => {
+		const { controller, services, state } = setupController()
+		let resolveSave: (value: { requestId: string }) => void = () => undefined
+		services.createRequest.mockImplementationOnce(
+			() =>
+				new Promise((resolve) => {
+					resolveSave = resolve
+				}),
+		)
+		controller.begin()
+		await flush()
+		controller.onKeypad('2')
+		await flush()
+		controller.onCallerSpeech('Call me back about my bill')
+		controller.onKeypad('#')
+		controller.dispose()
+		let settled = false
+		const done = controller.flushVoicemail().then(() => {
+			settled = true
+		})
+		await flush()
+		expect(settled).toBe(false)
+		resolveSave({ requestId: 'r' })
+		await done
+		expect(services.createRequest).toHaveBeenCalledTimes(1)
+		expect(state.voicemail).toBe(true)
+		expect(state.requests).toEqual(['callback'])
+	})
+
+	it('does not ring the shared staff number from a flow step when staff transfers are off', async () => {
+		const { controller, dialer, session } = setupController({
+			settings: { autoEscalate: false, escalationPhone: '+15556667777' },
+			configure: (config) => {
+				const staff = config.flow.graph.nodes.find((n) => n.id === 'staff')
+				if (staff) delete staff.data.phone
+			},
+		})
+		controller.begin()
+		await flush()
+		controller.onKeypad('2')
+		await flush()
+		expect(dialer.transfer).not.toHaveBeenCalled()
+		expect(session.said.at(-1)).toBe('Leave a message.')
+	})
+
 	it('does not repeat the assistant disclosure after the notice', async () => {
 		const { controller } = setupController()
 		controller.begin()

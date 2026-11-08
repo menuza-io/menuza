@@ -144,22 +144,24 @@ export class AuditLogQuery {
 			'User Agent',
 		]
 
-		const rows = logs.map((log: any) => [
-			log.createdAt.toISOString(),
-			log.id,
-			log.action,
-			log.severity,
-			log.userId || '',
-			log.user?.name || '',
-			log.user?.email || '',
-			log.targetUserId || '',
-			log.organizationId || '',
-			log.resourceType || '',
-			log.resourceId || '',
-			this.escapeCsvValue(log.details),
-			log.ipAddress || '',
-			this.escapeCsvValue(log.userAgent || ''),
-		])
+		const rows = logs.map((log: any) =>
+			[
+				log.createdAt.toISOString(),
+				log.id,
+				log.action,
+				log.severity,
+				log.userId || '',
+				log.user?.name || '',
+				log.user?.email || '',
+				log.targetUserId || '',
+				log.organizationId || '',
+				log.resourceType || '',
+				log.resourceId || '',
+				log.details ?? '',
+				log.ipAddress || '',
+				log.userAgent || '',
+			].map((value) => this.escapeCsvValue(String(value ?? ''))),
+		)
 
 		return [headers.join(','), ...rows.map((r: any) => r.join(','))].join('\n')
 	}
@@ -248,11 +250,28 @@ export class AuditLogQuery {
 		}
 	}
 
+	/**
+	 * Quotes every field (names and emails may hold commas or line breaks) and
+	 * neutralizes formulas: user agents and names come from untrusted requests.
+	 */
 	private escapeCsvValue(val: string): string {
 		if (!val) return '""'
-		const sanitized = val.replace(/"/g, '""')
-		return `"${sanitized}"`
+		return `"${neutralizeCsvFormula(val).replace(/"/g, '""')}"`
 	}
+}
+
+// Leading whitespace, C0 controls and zero-width marks are skipped by
+// spreadsheet apps before they look for a formula trigger.
+// oxlint-disable-next-line no-control-regex
+const FORMULA_TRIGGERS = /^[\s\u0000-\u001f\u200b-\u200f\ufeff]*[=+\-@\t\r]/
+
+/**
+ * Same rule as `neutralizeCsvCell` in `@repo/staffing`: a cell a spreadsheet
+ * would read as a formula (after skipping spaces and invisible leaders) gets a
+ * leading single quote so it shows as text.
+ */
+function neutralizeCsvFormula(value: string): string {
+	return FORMULA_TRIGGERS.test(value) ? `'${value}` : value
 }
 
 export const auditQuery = new AuditLogQuery()

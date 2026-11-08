@@ -33,6 +33,7 @@ export const SUMMARY_COLUMNS: readonly SummaryColumn[] = [
 	{ id: 'holiday', header: 'Holiday hours' },
 	{ id: 'paid', header: 'Paid hours' },
 	{ id: 'unapproved', header: 'Unapproved cards' },
+	{ id: 'changed', header: 'Cards changed after approval' },
 	{ id: 'currency', header: 'Currency', money: true },
 	{ id: 'rate', header: 'Hourly rate', money: true },
 	{ id: 'pay', header: 'Estimated pay', money: true },
@@ -49,6 +50,7 @@ export const DEFAULT_SUMMARY_COLUMNS: readonly string[] = [
 	'overtime',
 	'paid',
 	'unapproved',
+	'changed',
 	'rate',
 	'pay',
 ]

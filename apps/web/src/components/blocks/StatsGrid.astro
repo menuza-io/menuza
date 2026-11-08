@@ -1,4 +1,5 @@
 ---
+import { sanitizeSvg } from '../../lib/sanitize-markup'
 import Section from '../site/Section.astro'
 import SectionHead from '../site/SectionHead.astro'
 
@@ -59,13 +60,13 @@ const getColSpanClass = (colSpan?: string) => {
 						</div>
 					)}
 					{stat.variant === 'icon' && stat.icon && (
-						<div class="mb-4 text-brand" set:html={stat.icon} />
+						<div class="mb-4 text-brand" set:html={sanitizeSvg(stat.icon)} />
 					)}
 					{stat.variant === 'chart' && stat.chartSvg && (
-						<div class="mb-4" set:html={stat.chartSvg} />
+						<div class="mb-4" set:html={sanitizeSvg(stat.chartSvg)} />
 					)}
 					{stat.variant === 'dashboard' && stat.icon && (
-						<div class="mb-4 text-brand" set:html={stat.icon} />
+						<div class="mb-4 text-brand" set:html={sanitizeSvg(stat.icon)} />
 					)}
 					<h3 class="text-[17px] text-foreground">{stat.title}</h3>
 					<p class="mt-2 text-[14px] leading-relaxed text-muted-foreground">{stat.description}</p>

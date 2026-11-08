@@ -1,10 +1,12 @@
-import { auditService, AuditAction } from '@repo/audit'
 import { combineHeaders } from '@repo/common'
 import { createToastHeaders } from '@repo/common/toast'
 import { ImpersonationSession, db, eq } from '@repo/database'
 import { data, redirect } from 'react-router'
 
-import { destroyImpersonationSession } from './impersonation.server.ts'
+import {
+	destroyImpersonationSession,
+	endImpersonationSessions,
+} from './impersonation.server.ts'
 import {
 	impersonationSessionKey,
 	impersonationSessionStorage,
@@ -56,33 +58,17 @@ export async function stopImpersonation(
 		})
 	}
 
-	const adminUserId = impersonationSession.adminUserId
-	const targetUserId = impersonationSession.targetUserId
 	const targetName =
 		impersonationSession.targetUser.name ||
 		impersonationSession.targetUser.username
-	const duration = Date.now() - impersonationSession.createdAt.getTime()
 
-	await db
-		.delete(ImpersonationSession)
-		.where(eq(ImpersonationSession.id, impersonationSessionId))
-
-	const durationMinutes = Math.floor(duration / 1000 / 60)
-
-	await auditService.logAdminOperation(
-		AuditAction.ADMIN_IMPERSONATION_END,
-		adminUserId,
-		`Stopped impersonating user: ${targetName}`,
-		{
-			adminId: adminUserId,
-			targetUserId,
-			targetName,
-			duration,
-			durationMinutes,
-			impersonationSessionId,
-		},
+	// Audited before the row goes, with `expired` when the session had already
+	// run out.
+	await endImpersonationSessions({
+		where: eq(ImpersonationSession.id, impersonationSessionId),
+		reason: 'stopped',
 		request,
-	)
+	})
 
 	throw redirect(redirectTo, {
 		headers: combineHeaders(

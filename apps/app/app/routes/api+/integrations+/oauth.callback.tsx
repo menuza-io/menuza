@@ -17,12 +17,12 @@ import {
 	readIntegrationOAuthState,
 	sameState,
 } from '#app/utils/integrations/oauth-state.server.ts'
+import { posOAuthCallbackUrl } from '#app/utils/integrations/pos-connect.server.ts'
 import {
 	clearPosOAuthAttempt,
 	hasPosOAuthAttempt,
 	markPosOAuthAttempt,
 } from '#app/utils/integrations/pos-oauth.server.ts'
-import { posOAuthCallbackUrl } from '#app/utils/integrations/pos-connect.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import {
 	ORG_PERMISSIONS,
@@ -181,6 +181,7 @@ export async function loader(args: LoaderFunctionArgs) {
 		{ ...args, request: scoped },
 		{
 			organization,
+			requestTokenSecret: saved.requestTokenSecret,
 			redirectWithToast: async (to, toast) =>
 				_redirectWithToast(to, {
 					...toast,

@@ -41,8 +41,17 @@ export async function loadBroadcastAudience(
 		channel: BroadcastChannel
 		audience?: BroadcastAudience | string | null
 		topics?: readonly CustomerSubscriptionTopic[] | null
+		/** Narrow to one customer (journeys check consent per send). */
+		customerId?: string
+		/**
+		 * Narrow to these customers: a broadcast re-checks consent per batch so
+		 * an unsubscribe during a long send is honoured. Keep it to one batch
+		 * (the ids are bound parameters).
+		 */
+		customerIds?: readonly string[]
 	},
 ): Promise<Customer[]> {
+	if (params.customerIds && params.customerIds.length === 0) return []
 	const topics = params.topics?.length ? [...params.topics] : [BROADCAST_TOPIC]
 	const rows = await db
 		.select({
@@ -60,6 +69,11 @@ export async function loadBroadcastAudience(
 				isNull(customerSubscriptions.unsubscribedAt),
 				// bounded: marketing topics are a small closed enum
 				inArray(customerSubscriptions.topic, topics),
+				params.customerId ? eq(customers.id, params.customerId) : undefined,
+				params.customerIds
+					? // bounded: callers pass one broadcast batch (BROADCAST_BATCH_SIZE)
+						inArray(customers.id, [...params.customerIds])
+					: undefined,
 			),
 		)
 		.orderBy(asc(customers.id))
@@ -92,6 +106,20 @@ export async function loadBroadcastAudience(
 		audience = audience.filter((c) => !c.phoneVerified)
 	}
 	return audience
+}
+
+/**
+ * Whether one customer may get a marketing message on this channel now, by
+ * the same rules as a broadcast audience (active subscription, verified phone
+ * for texts, confirmed address for email).
+ */
+export async function hasMarketingConsent(
+	db: TenantDatabase,
+	customerId: string,
+	channel: BroadcastChannel,
+): Promise<boolean> {
+	const audience = await loadBroadcastAudience(db, { channel, customerId })
+	return audience.length > 0
 }
 
 /**
@@ -161,9 +189,8 @@ export async function setCustomerSubscription(
 					subscribedAt: now,
 					unsubscribedAt: null,
 					confirmedEmailHash,
-					// A fresh opt-in starts a fresh confirmation.
-					confirmationSentAt: null,
-					confirmationSentHash: null,
+					// The confirmation send clock (confirmationSentAt/Hash) is kept:
+					// it throttles resends to one address across opt-in cycles.
 					updatedAt: now,
 				},
 			})
@@ -248,7 +275,5 @@ export async function hasDeliverableSubscription(
 	if (!row) return false
 	if (params.channel === 'sms') return true
 	const email = row.email?.trim()
-	return Boolean(
-		email && row.confirmedEmailHash === emailConsentHash(email),
-	)
+	return Boolean(email && row.confirmedEmailHash === emailConsentHash(email))
 }

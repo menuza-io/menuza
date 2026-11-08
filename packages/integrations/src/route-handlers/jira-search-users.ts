@@ -1,27 +1,22 @@
-import { Integration as IntegrationTable, and, db, eq } from '@repo/database'
 import { integrationManager, JiraProvider } from '../index'
 import { type LoaderFunctionArgs } from 'react-router'
+import {
+	authorizeIntegration,
+	type IntegrationRouteAuthDependencies,
+} from './authorize-integration'
 
-export interface JiraSearchUsersDependencies {
-	requireUserId: (request: Request) => Promise<string>
-	getUserDefaultOrganization: (
-		userId: string,
-	) => Promise<{ organization: { id: string } } | null>
-	requireOrgPermission?: (
-		request: Request,
-		organizationId: string,
-		permission: `${string}:${string}:${string}`,
-	) => Promise<void>
-}
+export type JiraSearchUsersDependencies = IntegrationRouteAuthDependencies
 
 /**
  * Shared handler for searching Jira users.
  * Used by the bot user configuration UI.
- * Used by both the admin and app applications.
+ *
+ * The member must be allowed to update the settings of the organization that
+ * owns the integration (`update:settings:any`).
  *
  * @param request - The incoming request
  * @param params - Route params containing integrationId
- * @param deps - Dependencies (auth, org utils)
+ * @param deps - Dependencies (auth, membership, permission)
  * @returns JSON response with search results
  */
 export async function handleJiraSearchUsers(
@@ -29,31 +24,6 @@ export async function handleJiraSearchUsers(
 	deps: JiraSearchUsersDependencies,
 ) {
 	const userId = await deps.requireUserId(request)
-	const defaultOrg = await deps.getUserDefaultOrganization(userId)
-
-	if (!defaultOrg) {
-		return Response.json(
-			{ error: 'No organization found for user' },
-			{ status: 403 },
-		)
-	}
-
-	if (deps.requireOrgPermission) {
-		try {
-			await deps.requireOrgPermission(
-				request,
-				defaultOrg.organization.id,
-				'update:settings:any',
-			)
-		} catch {
-			return Response.json(
-				{
-					error: 'Insufficient permissions to access Jira users',
-				},
-				{ status: 403 },
-			)
-		}
-	}
 
 	const integrationId = params.integrationId
 	if (!integrationId) {
@@ -72,24 +42,28 @@ export async function handleJiraSearchUsers(
 	}
 
 	try {
-		// Verify the integration belongs to this organization
-		const [integration] = await db
-			.select()
-			.from(IntegrationTable)
-			.where(
-				and(
-					eq(IntegrationTable.id, integrationId),
-					eq(IntegrationTable.organizationId, defaultOrg.organization.id),
-				),
+		const access = await authorizeIntegration(
+			request,
+			userId,
+			integrationId,
+			deps,
+			'update:settings:any',
+		)
+		if ('status' in access && access.status === 403) {
+			return Response.json(
+				{
+					error: 'Insufficient permissions to access Jira users',
+				},
+				{ status: 403 },
 			)
-			.limit(1)
-
-		if (!integration || integration.providerName !== 'jira') {
+		}
+		if ('status' in access || access.integration.providerName !== 'jira') {
 			return Response.json(
 				{ error: 'Jira integration not found' },
 				{ status: 404 },
 			)
 		}
+		const { integration } = access
 
 		// Get Jira provider
 		const jiraProvider = integrationManager.getProvider('jira') as JiraProvider

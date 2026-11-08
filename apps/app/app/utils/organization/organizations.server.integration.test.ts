@@ -129,9 +129,17 @@ describe('organizations.server integration', () => {
 		const domain = `test-${Date.now()}.com`
 		const org = await createTestOrganization(user.id, 'admin')
 
+		// A domain without DNS proof (a legacy claim) routes nobody.
 		await db
 			.update(Organization)
 			.set({ verifiedDomain: domain })
+			.where(eq(Organization.id, org.id))
+		expect(await getOrganizationByDomain(domain)).toBeNull()
+		expect(await discoverOrganizationFromEmail(`alice@${domain}`)).toBeNull()
+
+		await db
+			.update(Organization)
+			.set({ verifiedDomainProvedAt: new Date() })
 			.where(eq(Organization.id, org.id))
 
 		const byDomain = await getOrganizationByDomain(domain)

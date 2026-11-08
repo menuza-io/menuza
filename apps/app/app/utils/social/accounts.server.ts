@@ -108,12 +108,27 @@ export async function readSocialAccountForPublishing(accountId: string) {
 		externalId: row.externalId,
 		status: row.status,
 		accessToken,
+		/** The stored ciphertext, to flag exactly this token as refused. */
+		accessTokenCiphertext: row.accessToken,
 	}
 }
 
-export async function markSocialAccountNeedsReauth(accountId: string) {
+/**
+ * Flags the account for reconnecting, but only while it still holds the token
+ * Meta refused: a member who reconnected meanwhile stored a new one, and that
+ * fresh connection must stay active.
+ */
+export async function markSocialAccountNeedsReauth(
+	accountId: string,
+	refusedAccessTokenCiphertext: string,
+) {
 	await db
 		.update(SocialAccount)
 		.set({ status: 'needs_reauth' })
-		.where(eq(SocialAccount.id, accountId))
+		.where(
+			and(
+				eq(SocialAccount.id, accountId),
+				eq(SocialAccount.accessToken, refusedAccessTokenCiphertext),
+			),
+		)
 }

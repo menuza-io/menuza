@@ -119,6 +119,7 @@ describe('reservations tick on the Workers edge', () => {
 		findOrg.mockImplementation(async (id: string) => ({
 			id,
 			dataRegion: 'us',
+			hasProvisionedDb: true,
 		}))
 	})
 

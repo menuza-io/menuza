@@ -58,6 +58,21 @@ describe('labor policy', () => {
 		).toThrow()
 	})
 
+	it('rejects rounding increments that do not divide 60', () => {
+		for (const incrementMinutes of [7, 25, 45]) {
+			expect(
+				laborPolicyPatchSchema.safeParse({
+					rounding: { mode: 'nearest', incrementMinutes },
+				}).success,
+			).toBe(false)
+		}
+		expect(
+			laborPolicyPatchSchema.safeParse({
+				rounding: { mode: 'nearest', incrementMinutes: 20 },
+			}).success,
+		).toBe(true)
+	})
+
 	it('rejects unknown keys and out-of-range values in a patch', () => {
 		expect(laborPolicyPatchSchema.safeParse({ nope: 1 }).success).toBe(false)
 		expect(laborPolicyPatchSchema.safeParse({ weekStartsOn: 7 }).success).toBe(

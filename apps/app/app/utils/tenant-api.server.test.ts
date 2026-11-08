@@ -69,19 +69,27 @@ describe('getOperatorTenantClient tokens', () => {
 	}
 
 	it('gives the browser token only the write claims it was asked for', async () => {
-		const readOnly = await client({})
-		expect(decodeJwt(readOnly.jwt)).not.toHaveProperty('canUpdate')
-		expect(decodeJwt(readOnly.jwt)).not.toHaveProperty('canDelete')
+		const readOnly = await client({ area: 'customers' })
+		expect(decodeJwt(readOnly.jwt!)).not.toHaveProperty('canUpdate')
+		expect(decodeJwt(readOnly.jwt!)).not.toHaveProperty('canDelete')
 
-		const updater = await client({ canUpdate: true })
-		expect(decodeJwt(updater.jwt)).toMatchObject({ canUpdate: true })
-		expect(decodeJwt(updater.jwt)).not.toHaveProperty('canDelete')
+		const updater = await client({ area: 'customers', canUpdate: true })
+		expect(decodeJwt(updater.jwt!)).toMatchObject({
+			area: 'customers',
+			canUpdate: true,
+		})
+		expect(decodeJwt(updater.jwt!)).not.toHaveProperty('canDelete')
+	})
+
+	it('never hands out an unbound token: it works on every operator route', async () => {
+		const unbound = await client({ canUpdate: true })
+		expect(unbound.jwt).toBeUndefined()
 	})
 
 	it('signs the member and organization the request was authorized for', async () => {
-		const operator = await client({ canUpdate: true })
+		const operator = await client({ area: 'marketing', canUpdate: true })
 
-		expect(decodeJwt(operator.jwt)).toMatchObject({
+		expect(decodeJwt(operator.jwt!)).toMatchObject({
 			sub: operator.userId,
 			orgId: operator.organizationId,
 			role: 'operator',
@@ -125,6 +133,6 @@ describe('getOperatorTenantClient tokens', () => {
 
 		const headers = new Headers(fetchSpy.mock.calls[0]?.[1]?.headers)
 		expect(headers.get('Authorization')).toBe(`Bearer ${scoped.jwt}`)
-		expect(decodeJwt(scoped.jwt)).not.toHaveProperty('canUpdate')
+		expect(decodeJwt(scoped.jwt!)).not.toHaveProperty('canUpdate')
 	})
 })

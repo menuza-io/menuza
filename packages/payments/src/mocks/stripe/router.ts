@@ -28,7 +28,7 @@ import {
 	retrievePaymentIntent,
 	retrieveSetupIntent,
 } from './intents'
-import { createRefund, retrieveRefund } from './ledger'
+import { createRefund, listRefunds, retrieveRefund } from './ledger'
 import {
 	createCheckoutSession,
 	expireCheckoutSession,
@@ -144,6 +144,11 @@ const ROUTES: Array<{
 	},
 	{
 		method: 'GET',
+		pattern: /^\/v1\/refunds$/,
+		handler: (c, _m, p) => listRefunds(c, p),
+	},
+	{
+		method: 'GET',
 		pattern: /^\/v1\/refunds\/([^/]+)$/,
 		handler: (c, m) => retrieveRefund(c, m[1]!),
 	},
@@ -201,17 +206,15 @@ export async function handleStripeRequest(
 			),
 		)
 	}
+	let pathMatchedOtherMethod = false
 	for (const route of ROUTES) {
 		const match = url.pathname.match(route.pattern)
 		if (!match) continue
+		// The same path can serve several methods (POST and GET /v1/refunds):
+		// keep looking, and answer 405 only when no route takes this method.
 		if (route.method !== method) {
-			return errorResponse(
-				new StripeApiError(
-					405,
-					'invalid_request_error',
-					`Unrecognized request URL (${method}: ${url.pathname}).`,
-				),
-			)
+			pathMatchedOtherMethod = true
+			continue
 		}
 		const params = parseFormBody(
 			method === 'GET' ? url.search.replace(/^\?/, '') : await request.text(),
@@ -222,6 +225,15 @@ export async function handleStripeRequest(
 			idempotencyKey:
 				method === 'POST' ? request.headers.get('idempotency-key') : null,
 		})
+	}
+	if (pathMatchedOtherMethod) {
+		return errorResponse(
+			new StripeApiError(
+				405,
+				'invalid_request_error',
+				`Unrecognized request URL (${method}: ${url.pathname}).`,
+			),
+		)
 	}
 	ctx.log(
 		`501 Stripe emulator does not implement ${method} ${url.pathname}. Add it to packages/payments/src/mocks/stripe/router.ts or avoid the call.`,

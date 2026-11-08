@@ -12,7 +12,7 @@ import {
 	getTenantDb,
 	provisionTenantDb,
 } from '@repo/tenant-db'
-import { authRoutes, REFRESH_ROTATION_GRACE_MS } from './auth.ts'
+import { REFRESH_REUSE_GRACE_MS, authRoutes } from './auth.ts'
 import { hmacHash } from '../lib/secrets.ts'
 
 const orgId = 'clw9x0a12000008l00test06'
@@ -35,13 +35,21 @@ vi.mock('../lib/origin.ts', () => {
 	}
 })
 
-/** Moves a rotation out of the grace window, where a replay counts as reuse. */
-async function rotatedLongAgo(rawToken: string) {
+function refresh(app: Hono, refreshToken: string) {
+	return app.request('/auth/refresh', {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({ refreshToken, orgId }),
+	})
+}
+
+// Moves a rotated token's rotation outside the lost-response grace window.
+async function ageRotation(refreshToken: string) {
 	const db = await getTenantDb(orgId)
 	await db
 		.update(customerRefreshTokens)
-		.set({ rotatedAt: new Date(Date.now() - REFRESH_ROTATION_GRACE_MS - 5_000) })
-		.where(eq(customerRefreshTokens.tokenHash, hmacHash(rawToken)))
+		.set({ rotatedAt: new Date(Date.now() - REFRESH_REUSE_GRACE_MS - 5_000) })
+		.where(eq(customerRefreshTokens.tokenHash, hmacHash(refreshToken)))
 		.run()
 }
 
@@ -94,7 +102,10 @@ describe('refresh token rotation', () => {
 		})
 		expect(firstRotation.status).toBe(200)
 		const currentToken = (await firstRotation.json()).refreshToken as string
-		await rotatedLongAgo(firstToken)
+
+		// A replay inside the grace window is indistinguishable from a retry of
+		// a lost response; this test covers the replay that arrives later.
+		await ageRotation(firstToken)
 
 		const replay = await app.request('/auth/refresh', {
 			method: 'POST',
@@ -122,6 +133,67 @@ describe('refresh token rotation', () => {
 		expect(customer?.refreshTokenHash).toBeNull()
 	})
 
+	it('gives a retry after a lost refresh response the same working session', async () => {
+		const legacyRefresh = await refresh(app, legacyRefreshToken)
+		const firstToken = (await legacyRefresh.json()).refreshToken as string
+
+		// The response to this rotation is "lost": the client keeps firstToken.
+		const lost = await refresh(app, firstToken)
+		expect(lost.status).toBe(200)
+		const lostChild = (await lost.json()).refreshToken as string
+
+		const retry = await refresh(app, firstToken)
+		expect(retry.status).toBe(200)
+		const retryBody = await retry.json()
+		expect(retryBody.accessToken).toEqual(expect.any(String))
+		expect(retryBody.refreshToken).toBe(lostChild)
+
+		// The session keeps working and nothing was revoked.
+		const next = await refresh(app, retryBody.refreshToken as string)
+		expect(next.status).toBe(200)
+		const db = await getTenantDb(orgId)
+		const tokens = await db.select().from(customerRefreshTokens).all()
+		expect(tokens.some((token) => token.revokedAt)).toBe(false)
+	})
+
+	it('still revokes when an older ancestor is replayed inside the grace window', async () => {
+		const legacyRefresh = await refresh(app, legacyRefreshToken)
+		const firstToken = (await legacyRefresh.json()).refreshToken as string
+		const second = await refresh(app, firstToken)
+		const secondToken = (await second.json()).refreshToken as string
+		const third = await refresh(app, secondToken)
+		const thirdToken = (await third.json()).refreshToken as string
+
+		// firstToken's child (secondToken) was already used, so this is a replay.
+		const replay = await refresh(app, firstToken)
+		expect(replay.status).toBe(401)
+		expect((await refresh(app, thirdToken)).status).toBe(401)
+
+		const db = await getTenantDb(orgId)
+		const tokens = await db.select().from(customerRefreshTokens).all()
+		expect(tokens.every((token) => token.revokedAt)).toBe(true)
+	})
+
+	it('gives concurrent refreshes of the same token the same session', async () => {
+		const legacyRefresh = await refresh(app, legacyRefreshToken)
+		expect(legacyRefresh.status).toBe(200)
+		const firstToken = (await legacyRefresh.json()).refreshToken as string
+
+		const [a, b] = await Promise.all([
+			refresh(app, firstToken),
+			refresh(app, firstToken),
+		])
+		expect([a.status, b.status]).toEqual([200, 200])
+		const tokenA = (await a.json()).refreshToken as string
+		const tokenB = (await b.json()).refreshToken as string
+		expect(tokenA).toBe(tokenB)
+
+		const db = await getTenantDb(orgId)
+		const tokens = await db.select().from(customerRefreshTokens).all()
+		expect(tokens).toHaveLength(2)
+		expect((await refresh(app, tokenA)).status).toBe(200)
+	})
+
 	it('does not leave a valid token behind when concurrent rotation detects reuse', async () => {
 		const legacyRefresh = await app.request('/auth/refresh', {
 			method: 'POST',
@@ -138,7 +210,7 @@ describe('refresh token rotation', () => {
 		})
 		expect(rotation.status).toBe(200)
 		const secondToken = (await rotation.json()).refreshToken as string
-		await rotatedLongAgo(firstToken)
+		await ageRotation(firstToken)
 
 		// The current token and a replay of the old one race.
 		const [currentAttempt, replayAttempt] = await Promise.all([
@@ -156,8 +228,7 @@ describe('refresh token rotation', () => {
 		expect(replayAttempt.status).toBe(401)
 
 		if (currentAttempt.status === 200) {
-			const currentToken = (await currentAttempt.json())
-				.refreshToken as string
+			const currentToken = (await currentAttempt.json()).refreshToken as string
 			const currentSession = await app.request('/auth/refresh', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },

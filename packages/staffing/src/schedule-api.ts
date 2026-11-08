@@ -104,6 +104,14 @@ export const shiftCreateSchema = z
 		endTime: hhmmSchema,
 		unpaidBreakMinutes: z.number().int().min(0).max(720).default(0),
 		notes: noteSchema.nullable().optional(),
+		/**
+		 * Chosen by the client once per create and sent again on a retry: the
+		 * shifts the first attempt wrote are returned instead of new ones.
+		 */
+		clientRequestId: z
+			.string()
+			.regex(/^[A-Za-z0-9_-]{8,64}$/)
+			.optional(),
 	})
 	.strict()
 	.refine((body) => new Set(body.dates).size === body.dates.length, {

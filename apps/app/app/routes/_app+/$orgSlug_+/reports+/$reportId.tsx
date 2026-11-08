@@ -66,6 +66,23 @@ export async function action({ request, params }: Route.ActionArgs) {
 		userId,
 		organization.id,
 	)
+	// Overwriting needs the same access as opening: a report the caller may not
+	// open looks like it does not exist.
+	const existing = await getSavedReport({
+		id: params.reportId ?? '',
+		scope: 'organization',
+		organizationId: organization.id,
+	})
+	if (
+		!existing ||
+		!definitionAllowed(
+			getCatalog('organization'),
+			parseDefinition(existing.definition),
+			grants,
+		)
+	) {
+		throw new Response('Not Found', { status: 404 })
+	}
 	if (!definitionAllowed(getCatalog('organization'), definition, grants)) {
 		throw new Response('Forbidden', { status: 403 })
 	}

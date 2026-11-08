@@ -21,6 +21,7 @@ import {
 	customerPortalAction,
 	getPlansAndPrices,
 	getOrganizationInvoices,
+	hasLiveSubscription,
 } from '#app/utils/payments.server.ts'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
@@ -41,10 +42,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	// Block access to billing page for PUBLIC_BETA and CLOSED_BETA
 	// EXCEPT for organizations with existing active subscriptions (grandfathered)
 	const launchStatus = getLaunchStatus()
-	const hasActiveSubscription = Boolean(
-		organization.stripeSubscriptionId &&
-		organization.subscriptionStatus === 'active',
-	)
+	// Past due or paused still counts: the organization must be able to pay.
+	const hasActiveSubscription = hasLiveSubscription(organization)
 
 	if (
 		!hasActiveSubscription &&
@@ -112,10 +111,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	// Block access to billing actions for PUBLIC_BETA and CLOSED_BETA
 	// EXCEPT for organizations with existing active subscriptions (grandfathered)
 	const launchStatus = getLaunchStatus()
-	const hasActiveSubscription = Boolean(
-		organization.stripeSubscriptionId &&
-		organization.subscriptionStatus === 'active',
-	)
+	// Past due or paused still counts: the organization must be able to pay.
+	const hasActiveSubscription = hasLiveSubscription(organization)
 
 	if (
 		!hasActiveSubscription &&

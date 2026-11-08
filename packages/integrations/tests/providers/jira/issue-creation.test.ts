@@ -464,6 +464,7 @@ describe('JiraProvider - Issue Creation', () => {
 
 			expect(integrationManager.refreshIntegrationTokens).toHaveBeenCalledWith(
 				'integration-123',
+				{ rejectedAccessToken: 'expired-token' },
 			)
 		})
 

@@ -24,6 +24,7 @@ export const JOB_ROUTES: Record<string, readonly string[]> = {
 	'0 3 * * *': [
 		'/resources/jobs/mcp-token-cleanup',
 		'/resources/jobs/job-postings-expiry',
+		'/resources/jobs/seat-reconcile',
 	],
 	'0 4 * * *': [
 		'/resources/jobs/gdpr-erasure',
@@ -49,6 +50,9 @@ const RESERVATION_PAYMENTS_RECONCILE_PATH =
 // Hourly App job: fetches the status of shipped print orders whose vendor
 // webhook may have been missed.
 const PRINT_SYNC_PATH = '/resources/jobs/print-sync'
+// Hourly App job: ends expired impersonation sessions and writes their END
+// audit entries (a session lasts 15 minutes, so a daily sweep would be late).
+const IMPERSONATION_CLEANUP_PATH = '/resources/jobs/impersonation-cleanup'
 // Workflows sleep at most 365 days; a day of margin covers clock skew between
 // the App and this Worker. A post due later is left to the hourly
 // social-publish sweep (the App logs the refused wake-up and carries on).
@@ -588,6 +592,10 @@ export default {
 				[
 					'Social post sweep',
 					(jobEnv: Env) => invokeJob(jobEnv, SOCIAL_PUBLISH_PATH),
+				],
+				[
+					'Impersonation cleanup',
+					(jobEnv: Env) => invokeJob(jobEnv, IMPERSONATION_CLEANUP_PATH),
 				],
 			] as const) {
 				ctx.waitUntil(

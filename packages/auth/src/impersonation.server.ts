@@ -1,4 +1,13 @@
-import { alias, db, eq, lte, User, ImpersonationSession } from '@repo/database'
+import { auditService, AuditAction } from '@repo/audit'
+import {
+	alias,
+	db,
+	eq,
+	inArray,
+	lte,
+	User,
+	ImpersonationSession,
+} from '@repo/database'
 import {
 	impersonationSessionStorage,
 	impersonationSessionKey,
@@ -129,10 +138,82 @@ export async function deleteImpersonationSessionFromDb(
 		.catch(() => {})
 }
 
-export async function cleanupExpiredImpersonationSessions(): Promise<number> {
+export type ImpersonationEndReason = 'stopped' | 'expired' | 'replaced'
+
+/**
+ * Ends the impersonation sessions matching `where`: each gets an
+ * ADMIN_IMPERSONATION_END entry with the reason before its row is deleted, so a
+ * START is never left without an END (an expired session swept up or replaced
+ * by a new one included). Returns how many sessions were ended.
+ */
+export async function endImpersonationSessions({
+	where,
+	reason,
+	request,
+	now = new Date(),
+}: {
+	where: ReturnType<typeof eq> | undefined
+	/** Used for sessions that have not expired; expired ones say `expired`. */
+	reason: ImpersonationEndReason
+	request?: Request
+	now?: Date
+}): Promise<number> {
+	const sessions = await db
+		.select({
+			id: ImpersonationSession.id,
+			adminUserId: ImpersonationSession.adminUserId,
+			targetUserId: ImpersonationSession.targetUserId,
+			createdAt: ImpersonationSession.createdAt,
+			expiresAt: ImpersonationSession.expiresAt,
+			targetName: targetUser.name,
+			targetUsername: targetUser.username,
+		})
+		.from(ImpersonationSession)
+		.innerJoin(targetUser, eq(ImpersonationSession.targetUserId, targetUser.id))
+		.where(where)
+	for (const session of sessions) {
+		const endReason = session.expiresAt <= now ? 'expired' : reason
+		const targetName = session.targetName || session.targetUsername
+		// Expired sessions end at their expiry, not when they are swept up.
+		const endedAt = endReason === 'expired' ? session.expiresAt : now
+		const duration = Math.max(
+			0,
+			endedAt.getTime() - session.createdAt.getTime(),
+		)
+		await auditService.logAdminOperation(
+			AuditAction.ADMIN_IMPERSONATION_END,
+			session.adminUserId,
+			endReason === 'stopped'
+				? `Stopped impersonating user: ${targetName}`
+				: `Impersonation of user ${targetName} ended (${endReason})`,
+			{
+				adminId: session.adminUserId,
+				targetUserId: session.targetUserId,
+				targetName,
+				duration,
+				durationMinutes: Math.floor(duration / 1000 / 60),
+				impersonationSessionId: session.id,
+				reason: endReason,
+			},
+			request,
+		)
+	}
+	if (sessions.length === 0) return 0
 	const deleted = await db
 		.delete(ImpersonationSession)
-		.where(lte(ImpersonationSession.expiresAt, new Date()))
+		.where(
+			inArray(
+				ImpersonationSession.id,
+				sessions.map((session) => session.id),
+			),
+		)
 		.returning({ id: ImpersonationSession.id })
 	return deleted.length
+}
+
+export async function cleanupExpiredImpersonationSessions(): Promise<number> {
+	return endImpersonationSessions({
+		where: lte(ImpersonationSession.expiresAt, new Date()),
+		reason: 'expired',
+	})
 }

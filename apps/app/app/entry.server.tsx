@@ -16,6 +16,7 @@ import {
 	type HandleDocumentRequestFunction,
 } from 'react-router'
 import { ENV } from 'varlock/env'
+import { runAfterResponse } from '#app/utils/after-response.server.ts'
 import { auditSensitiveRoutes } from '#app/utils/audit/audit-middleware.server.ts'
 import {
 	sitePreviewFrameSrc,
@@ -23,11 +24,26 @@ import {
 } from '#app/utils/csp-frame-src.server.ts'
 import { liveKitConnectSrc } from '#app/utils/phone-agent/livekit-csp.ts'
 import { recordingMediaSrc } from '#app/utils/phone-agent/recording-csp.ts'
+import {
+	documentContextFor,
+	rendersPrivateRoute,
+} from '#app/utils/private-client-code.server.ts'
+import {
+	hasActiveSession,
+	sessionStatus,
+} from '#app/utils/session-gate.server.ts'
+import { turnstileCspSources } from '#app/utils/turnstile.server.ts'
 import { loadCatalog } from './modules/lingui/lingui'
 import { linguiServer } from './modules/lingui/lingui.server'
 import { capturePostHogServerException } from './utils/posthog.server.ts'
 
 export const streamTimeout = 5000
+
+/**
+ * For the Node server (`server/index.ts`), which gates `/assets/app/*` and
+ * `/__manifest` like the Worker but cannot load `@repo/auth` from source.
+ */
+export { hasActiveSession }
 
 const MODE = ENV.NODE_ENV ?? 'development'
 
@@ -124,14 +140,28 @@ export function applyContentSecurity(
 						"'self'",
 						...tenantApiConnectSrc(ENV),
 						...liveKitConnectSrc(ENV.LIVEKIT_URL),
+						// The Turnstile widget talks to its origin from the page too.
+						...turnstileCspSources(),
 					],
 					'font-src': ["'self'"],
-					'frame-src': sitePreviewFrameSrc(ENV, requestHost),
+					'frame-src': [
+						...sitePreviewFrameSrc(ENV, requestHost),
+						...turnstileCspSources(),
+					],
 					'img-src': ["'self'", 'data:', 'blob:'],
 					// Voice previews are same-origin; call recordings play from the bucket.
 					'media-src': ["'self'", ...recordingMediaSrc(ENV)],
-					'script-src': ["'strict-dynamic'", "'self'", `'nonce-${nonce}'`],
+					'script-src': [
+						"'strict-dynamic'",
+						"'self'",
+						`'nonce-${nonce}'`,
+						...turnstileCspSources(),
+					],
 					'script-src-attr': [`'nonce-${nonce}'`],
+					// No stylesheets from other origins (the helmet default allows any
+					// `https:` one). Inline styles stay: React `style` props need them.
+					// Print pages send their own policy (`printDocumentCsp`).
+					'style-src': ["'self'", "'unsafe-inline'"],
 					'worker-src': ["'self'", 'blob:', 'data:'],
 				},
 			},
@@ -140,12 +170,20 @@ export function applyContentSecurity(
 }
 
 export default async function handleRequest(...args: DocRequestArgs) {
-	const [request, responseStatusCode, responseHeaders, reactRouterContext] =
-		args
-
-	void auditSensitiveRoutes(
+	const [
 		request,
-		new Response(null, { status: responseStatusCode }),
+		responseStatusCode,
+		responseHeaders,
+		reactRouterContext,
+		loadContext,
+	] = args
+
+	// Kept alive past the response on Workers via `waitUntil`.
+	runAfterResponse(loadContext, () =>
+		auditSensitiveRoutes(
+			request,
+			new Response(null, { status: responseStatusCode }),
+		),
 	)
 
 	applySecurityHeaders(responseHeaders)
@@ -159,6 +197,43 @@ export default async function handleRequest(...args: DocRequestArgs) {
 	const requestHost =
 		request.headers.get('x-forwarded-host') ?? request.headers.get('host')
 
+	// A logged-out visitor's page must not name private route modules.
+	// A private route that rendered successfully already passed its loader's
+	// session check (route-guards.test.ts), so the common signed-in page costs
+	// no second lookup; public pages and error pages ask the database.
+	const privateRoute = rendersPrivateRoute(reactRouterContext)
+	const session =
+		privateRoute && responseStatusCode < 400
+			? 'active'
+			: await sessionStatus(request)
+	if (privateRoute && session === 'unavailable') {
+		// The lookup failed, not the session: do not send a signed-in user to
+		// the login page, and do not render a page that names private modules.
+		return new Response('Service Unavailable', {
+			status: 503,
+			headers: {
+				'Content-Type': 'text/plain; charset=utf-8',
+				'Cache-Control': 'no-store',
+				'Retry-After': '5',
+			},
+		})
+	}
+	const authenticated = session === 'active'
+	if (!authenticated && privateRoute) {
+		const url = new URL(request.url)
+		const redirectTo = `${url.pathname}${url.search}`
+		return new Response(null, {
+			status: 302,
+			headers: {
+				Location: `/login?${new URLSearchParams({ redirectTo })}`,
+				'Cache-Control': 'no-store',
+			},
+		})
+	}
+	const documentContext = documentContextFor(reactRouterContext, {
+		authenticated,
+	})
+
 	let didError = false
 	const timings = makeTimings('render', 'renderToReadableStream')
 
@@ -167,7 +242,7 @@ export default async function handleRequest(...args: DocRequestArgs) {
 			<NonceProvider value={nonce}>
 				<ServerRouter
 					nonce={nonce}
-					context={reactRouterContext}
+					context={documentContext}
 					url={request.url}
 				/>
 			</NonceProvider>

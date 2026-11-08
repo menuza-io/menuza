@@ -92,7 +92,8 @@ describe('TokenManager with Drizzle', () => {
 	})
 
 	it('keeps a valid connection active after a transient refresh failure', async () => {
-		mockDb.select.mockImplementationOnce(() =>
+		// Read by the validity check, the refresh and its post-failure re-read.
+		mockDb.select.mockImplementation(() =>
 			queryChain([
 				{
 					accessToken: 'encrypted-access',

@@ -78,23 +78,24 @@ describe('TrelloProvider', () => {
 
 	describe('handleCallback', () => {
 		it('should handle successful OAuth callback', async () => {
-			// First, store a request token context
-			await provider.storeRequestTokenContext('request-token', {
-				organizationId: 'org-123',
-				requestTokenSecret: 'request-secret',
-				timestamp: Date.now(),
-			})
-
-			// Override MSW handler for access token
+			// The request-token secret comes from the caller's hand-off record,
+			// not from memory on this instance (a fresh provider never saw it).
+			let signedBody = ''
 			server.use(
-				http.post('https://trello.com/1/OAuthGetAccessToken', () => {
-					return new HttpResponse(
-						'oauth_token=access-token&oauth_token_secret=access-secret',
-						{
-							headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-						},
-					)
-				}),
+				http.post(
+					'https://trello.com/1/OAuthGetAccessToken',
+					async ({ request }) => {
+						signedBody = await request.text()
+						return new HttpResponse(
+							'oauth_token=access-token&oauth_token_secret=access-secret',
+							{
+								headers: {
+									'Content-Type': 'application/x-www-form-urlencoded',
+								},
+							},
+						)
+					},
+				),
 			)
 
 			const params = {
@@ -102,12 +103,49 @@ describe('TrelloProvider', () => {
 				code: 'oauth-verifier',
 				state: 'valid-state',
 				oauthToken: 'request-token',
+				requestTokenSecret: 'request-secret',
 			}
 
-			const tokenData = await provider.handleCallback(params)
+			const tokenData = await new TrelloProvider().handleCallback(params)
 
 			expect(tokenData.accessToken).toBe('access-token')
 			expect(tokenData.refreshToken).toBe('access-secret')
+			expect(new URLSearchParams(signedBody).get('oauth_token')).toBe(
+				'request-token',
+			)
+		})
+
+		it('refuses a callback without the request-token secret', async () => {
+			await expect(
+				provider.handleCallback({
+					organizationId: 'org-123',
+					code: 'oauth-verifier',
+					state: 'valid-state',
+					oauthToken: 'request-token',
+				}),
+			).rejects.toThrow('Request token secret not found')
+		})
+
+		it('hands the request-token secret to the caller on start', async () => {
+			server.use(
+				http.post('https://trello.com/1/OAuthGetRequestToken', () => {
+					return new HttpResponse(
+						'oauth_token=request-token&oauth_token_secret=request-secret',
+						{
+							headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+						},
+					)
+				}),
+			)
+
+			const started = await provider.startOAuth1(
+				'org-123',
+				'https://example.com/callback',
+			)
+
+			expect(started.requestToken).toBe('request-token')
+			expect(started.requestTokenSecret).toBe('request-secret')
+			expect(started.authUrl).toContain('oauth_token=request-token')
 		})
 
 		it('should handle OAuth error response', async () => {

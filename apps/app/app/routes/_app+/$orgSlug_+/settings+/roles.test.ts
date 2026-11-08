@@ -1,4 +1,11 @@
-import { and, db, eq, OrganizationRole } from '@repo/database'
+import {
+	and,
+	db,
+	eq,
+	OrganizationInvitation,
+	OrganizationRole,
+	_OrganizationPermissionToRole,
+} from '@repo/database'
 import { describe, expect, it, vi } from 'vitest'
 
 vi.hoisted(() => {
@@ -167,6 +174,67 @@ describe('settings/roles route integration', () => {
 			context: {},
 		} as any)
 		expect(deleteResult).toMatchObject({ message: 'Role deleted.' })
+	})
+
+	it('refuses to delete a custom role that a pending invitation uses, and keeps the invitation', async () => {
+		const { organization, cookie } = await setupTestOrgWithUser('admin')
+		const [role] = await db
+			.insert(OrganizationRole)
+			.values({
+				name: `Invited role ${crypto.randomUUID().slice(0, 8)}`,
+				level: 1,
+				organizationId: organization.id,
+			})
+			.returning({ id: OrganizationRole.id })
+		await db
+			.insert(_OrganizationPermissionToRole)
+			.values({ A: role!.id, B: 'org_perm_read_note_org' })
+		const [invitation] = await db
+			.insert(OrganizationInvitation)
+			.values({
+				email: `invitee-${crypto.randomUUID().slice(0, 8)}@example.com`,
+				organizationRoleId: role!.id,
+				organizationId: organization.id,
+				token: crypto.randomUUID(),
+			})
+			.returning({ id: OrganizationInvitation.id })
+		const remove = () =>
+			deleteAction({
+				request: createRoleRequest(
+					`http://localhost:3000/${organization.slug}/settings/roles`,
+					cookie,
+					{ intent: 'delete-role', roleId: role!.id },
+				),
+				params: { orgSlug: organization.slug },
+				context: {},
+			} as any)
+
+		expect(await remove()).toMatchObject({
+			error:
+				'Cannot delete this role while invitations or invite links still reference it.',
+		})
+		const invitations = await db
+			.select({ id: OrganizationInvitation.id })
+			.from(OrganizationInvitation)
+			.where(eq(OrganizationInvitation.id, invitation!.id))
+		expect(invitations).toHaveLength(1)
+		const permissions = await db
+			.select()
+			.from(_OrganizationPermissionToRole)
+			.where(eq(_OrganizationPermissionToRole.A, role!.id))
+		expect(permissions).toHaveLength(1)
+
+		// Once the invitation is gone the role (and its permission links) go.
+		await db
+			.delete(OrganizationInvitation)
+			.where(eq(OrganizationInvitation.id, invitation!.id))
+		expect(await remove()).toMatchObject({ message: 'Role deleted.' })
+		expect(
+			await db
+				.select()
+				.from(_OrganizationPermissionToRole)
+				.where(eq(_OrganizationPermissionToRole.A, role!.id)),
+		).toEqual([])
 	})
 
 	it('reports a bad role name as a Role name field error, not a page error', async () => {

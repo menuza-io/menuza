@@ -62,6 +62,14 @@ export class ChatOrg extends DurableObject<Env> {
 					channelId,
 				)
 			},
+			historyCutoffs: async (userId, channelIds) => {
+				const { conversations } = await this.prepare()
+				return conversations.getMessageHistoryCutoffs(
+					this.requireOrgId(),
+					userId,
+					channelIds,
+				)
+			},
 			onMessageSent: async ({ message, authorId }) => {
 				await this.notifyAppMessage(authorId, message)
 			},

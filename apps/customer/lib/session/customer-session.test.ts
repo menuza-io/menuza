@@ -302,16 +302,11 @@ describe('CustomerSession', () => {
 		expect(storage.current?.refreshToken).toBe('refresh-2')
 	})
 
-	it('stores rotated tokens after saving the profile', async () => {
-		const rotated = makeAccessToken({ name: 'Ada Byron' })
+	it('stores the re-issued access token and keeps the refresh token after saving the profile', async () => {
+		const renamed = makeAccessToken({ name: 'Ada Byron' })
+		// tenant-api's real answer: only the access token (its name claim changed).
 		const transport = new StubTransport([
-			{
-				json: {
-					success: true,
-					accessToken: rotated,
-					refreshToken: 'refresh-2',
-				},
-			},
+			{ json: { success: true, accessToken: renamed } },
 			{
 				json: {
 					customer: { id: 'cust_1', name: 'Ada Byron', needsName: false },
@@ -326,12 +321,46 @@ describe('CustomerSession', () => {
 		)
 
 		expect(profile.name).toBe('Ada Byron')
-		expect(storage.current?.accessToken).toBe(rotated)
-		expect(storage.current?.refreshToken).toBe('refresh-2')
+		expect(storage.current?.accessToken).toBe(renamed)
+		expect(storage.current?.refreshToken).toBe('refresh-1')
+		expect(session.customerName).toBe('Ada Byron')
 		expect(transport.recorded[0]?.body).toEqual({
 			name: 'Ada Byron',
 			email: 'ada@example.com',
 		})
+		expect(header(transport.recorded[1], 'Authorization')).toBe(
+			`Bearer ${renamed}`,
+		)
+	})
+
+	it('keeps the refresh token a refresh rotated while the profile was saved', async () => {
+		const refreshed = makeAccessToken()
+		const renamed = makeAccessToken({ name: 'Ada Byron' })
+		const transport = new StubTransport([
+			{ status: 401, raw: '{"error":"Invalid or expired token"}' },
+			{
+				json: {
+					success: true,
+					accessToken: refreshed,
+					refreshToken: 'refresh-2',
+				},
+			},
+			{ json: { success: true, accessToken: renamed } },
+			{ json: { customer: { id: 'cust_1', name: 'Ada Byron' } } },
+		])
+		const { session, storage } = await signedIn(transport)
+
+		await session.updateProfile('Ada Byron', null)
+
+		expect(transport.paths).toEqual([
+			'/auth/profile',
+			'/auth/refresh',
+			'/auth/profile',
+			'/auth/me',
+		])
+		expect(storage.current?.accessToken).toBe(renamed)
+		// The rotated token, not the one the save started with.
+		expect(storage.current?.refreshToken).toBe('refresh-2')
 	})
 
 	it('requires a name of two characters', async () => {
@@ -462,16 +491,17 @@ describe('CustomerSession', () => {
 		expect(storage.current?.refreshToken).toBe('refresh-2')
 	})
 
-	it('rejects a profile answer without a refresh token and keeps the session', async () => {
-		const transport = new StubTransport([
-			{ json: { success: true, accessToken: makeAccessToken() } },
-		])
+	it('rejects a profile answer without an access token and keeps the session', async () => {
+		const transport = new StubTransport([{ json: { success: true } }])
 		const { session, storage } = await signedIn(transport)
+		const before = storage.current?.accessToken
 
 		const error = await caught(session.updateProfile('Ada Byron', null))
 
 		expect(error.code).toBe('profile_not_saved')
+		expect(storage.current?.accessToken).toBe(before)
 		expect(storage.current?.refreshToken).toBe('refresh-1')
+		expect(session.isSignedIn).toBe(true)
 	})
 
 	it('discards a refresh that finishes after sign-out', async () => {
@@ -518,11 +548,7 @@ describe('CustomerSession', () => {
 	it('omits the email when none is given', async () => {
 		const transport = new StubTransport([
 			{
-				json: {
-					success: true,
-					accessToken: makeAccessToken({ name: 'Ada' }),
-					refreshToken: 'refresh-2',
-				},
+				json: { success: true, accessToken: makeAccessToken({ name: 'Ada' }) },
 			},
 			{
 				json: {
@@ -647,15 +673,9 @@ describe('CustomerSession', () => {
 	})
 
 	it('keeps a signed-in session when no verification is pending', async () => {
-		const rotated = makeAccessToken({ name: 'Ada Byron' })
+		const renamed = makeAccessToken({ name: 'Ada Byron' })
 		const transport = new StubTransport([
-			{
-				json: {
-					success: true,
-					accessToken: rotated,
-					refreshToken: 'refresh-2',
-				},
-			},
+			{ json: { success: true, accessToken: renamed } },
 			{ json: { customer: { id: 'cust_1', name: 'Ada Byron' } } },
 		])
 		const { session, storage } = await signedIn(transport)
@@ -663,7 +683,7 @@ describe('CustomerSession', () => {
 		session.abandonPendingVerification()
 		await session.updateProfile('Ada Byron', null)
 
-		expect(storage.current?.accessToken).toBe(rotated)
+		expect(storage.current?.accessToken).toBe(renamed)
 	})
 
 	it('signs out without waiting for the server to revoke the token', async () => {

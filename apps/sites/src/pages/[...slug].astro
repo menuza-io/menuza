@@ -49,7 +49,12 @@ if (!page) {
 	Astro.response.statusText = 'Not Found'
 }
 
-if (page && Astro.url.searchParams.get('preview') === 'true') {
+// The override needs the App's verdict on the signed token: `?preview=true`
+// alone (any cross-site POST or cookie) must not change what a visitor sees.
+if (
+	page?.previewVerified === true &&
+	Astro.url.searchParams.get('preview') === 'true'
+) {
 	let sectionsCookie = Astro.cookies.get('epic_preview_sections')?.value
 	let themeCookie = Astro.cookies.get('epic_preview_theme')?.value
 

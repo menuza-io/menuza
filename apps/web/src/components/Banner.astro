@@ -1,4 +1,5 @@
 ---
+import { sanitizeInlineHtml } from '../lib/sanitize-markup'
 import { getBanner } from '../lib/emdash'
 
 // Define valid banner types
@@ -44,7 +45,7 @@ const textColors: Record<BannerType, string> = {
 			<div role={ariaRoles[type]} class={`${bgColors[type]} ${textColors[type]} px-4 py-3 relative`}>
 			<div class="container mx-auto flex items-center justify-between">
 				<div class="flex-1 text-center text-sm font-medium flex justify-center items-center">
-					<span class="flex items-center" set:html={content}></span>
+					<span class="flex items-center" set:html={sanitizeInlineHtml(content)}></span>
 					{addLink && link && (
 						<>
 							<span class="mx-2 mr-1 text-muted-foreground">—</span>

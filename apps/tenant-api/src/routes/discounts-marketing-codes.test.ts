@@ -4,6 +4,7 @@ import os from 'node:os'
 import path from 'node:path'
 import { sendSms } from '@repo/sms'
 import {
+	customerSubscriptions,
 	customers,
 	destroyTenantDb,
 	discountIssuedCodes,
@@ -201,6 +202,14 @@ describe('marketing coupon codes', () => {
 			.insert(customers)
 			.values({ name, phone, phoneVerified: true })
 			.returning()
+		// Marketing consent for texts, which journeys and broadcasts require.
+		await db.insert(customerSubscriptions).values({
+			customerId: row!.id,
+			topic: 'marketing',
+			channel: 'sms',
+			source: 'operator',
+			subscribedAt: new Date(),
+		})
 		return row!
 	}
 

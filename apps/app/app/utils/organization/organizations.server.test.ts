@@ -15,6 +15,7 @@ import {
 	captureInserts,
 	mockDb,
 	mockSelectResults,
+	queryChain,
 	resetMockDb,
 } from '#tests/setup/drizzle-mock.ts'
 import { createOrganization } from './organizations.server.ts'
@@ -23,6 +24,34 @@ type CreatedHomePageSection = {
 	type: string
 	position: number
 	config: string
+}
+
+/** Record the values of every `db.update(...).set(values)`. */
+function captureUpdates() {
+	const updatedValues: unknown[] = []
+	mockDb.update.mockImplementation(() => {
+		const chain = queryChain()
+		const set = chain.set
+		chain.set = (values: unknown) => {
+			updatedValues.push(values)
+			return set(values)
+		}
+		return chain
+	})
+	return { updatedValues }
+}
+
+/** Fail the write that records the tenant database as provisioned. */
+function failReadinessUpdate(error: Error) {
+	mockDb.update.mockImplementation(() => {
+		const chain = queryChain()
+		const set = chain.set
+		chain.set = (values: Record<string, unknown>) => {
+			if ('hasProvisionedDb' in values) throw error
+			return set(values)
+		}
+		return chain
+	})
 }
 
 vi.mock('@repo/audit', () => ({
@@ -79,6 +108,16 @@ describe('createOrganization', () => {
 			[{ id: 'page-1' }],
 			[],
 		)
+		const storedSections = [
+			{
+				id: 'section-hero',
+				type: 'hero',
+				position: 0,
+				config: '{"heading":"Welcome to Acme"}',
+			},
+		]
+		mockSelectResults([{ id: 'role-admin' }], storedSections)
+		const { updatedValues } = captureUpdates()
 
 		await createOrganization({
 			name: 'Acme',
@@ -134,13 +173,19 @@ describe('createOrganization', () => {
 				organizationId: 'org-1',
 				title: HOME_PAGE_TITLE,
 				slug: HOME_PAGE_SLUG,
-				status: 'published',
+				status: 'draft',
 				template: 'blank',
 				isHomePage: true,
 				position: 0,
 				createdById: 'user-1',
 			}),
 		)
+		// Published the way the editor publishes: with a snapshot of the stored
+		// sections, which the public site serves instead of later edits.
+		expect(updatedValues).toContainEqual({
+			status: 'published',
+			publishedData: JSON.stringify(storedSections),
+		})
 
 		const sections = insertedValues[3] as CreatedHomePageSection[]
 		expect(sections.map((section) => section.type)).toEqual([
@@ -237,9 +282,7 @@ describe('createOrganization', () => {
 			[{ id: 'page-1' }],
 			[],
 		)
-		mockDb.update.mockImplementationOnce(() => {
-			throw new Error('Could not record database readiness')
-		})
+		failReadinessUpdate(new Error('Could not record database readiness'))
 
 		await expect(
 			createOrganization({ name: 'Acme', slug: 'acme', userId: 'user-1' }),
@@ -265,9 +308,7 @@ describe('createOrganization', () => {
 			if (failure === 'provisioning') {
 				vi.mocked(provisionTenantDatabase).mockRejectedValueOnce(originalError)
 			} else {
-				mockDb.update.mockImplementationOnce(() => {
-					throw originalError
-				})
+				failReadinessUpdate(originalError)
 			}
 			mockDb.delete.mockImplementationOnce(() => {
 				throw deleteError

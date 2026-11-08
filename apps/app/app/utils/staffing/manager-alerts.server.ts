@@ -155,24 +155,34 @@ export async function loadChannelPreferences(input: {
 	return result
 }
 
-/** Ids already notified for an event, so a retried delivery repeats nothing. */
-export async function loadNotifiedUserIds(input: {
+/**
+ * The in-app rows (`type`) already delivered for an event, per member, so a
+ * retried delivery does not repeat them. Emails are deduplicated separately,
+ * by the StaffingAlertEmail table.
+ */
+export async function loadDeliveredTypes(input: {
 	organizationId: string
-	type: string
+	types: readonly string[]
 	eventId: string
 	userIds: readonly string[]
-}): Promise<Set<string>> {
-	if (input.userIds.length === 0) return new Set()
+}): Promise<Map<string, Set<string>>> {
+	const result = new Map<string, Set<string>>()
+	if (input.userIds.length === 0) return result
 	const rows = await db
-		.select({ userId: Notification.userId })
+		.select({ userId: Notification.userId, type: Notification.type })
 		.from(Notification)
 		.where(
 			and(
 				eq(Notification.organizationId, input.organizationId),
-				eq(Notification.type, input.type),
+				inArray(Notification.type, [...input.types]),
 				eq(Notification.entityId, input.eventId),
 				inArray(Notification.userId, [...input.userIds]),
 			),
 		)
-	return new Set(rows.map((row) => row.userId))
+	for (const row of rows) {
+		const set = result.get(row.userId) ?? new Set<string>()
+		set.add(row.type)
+		result.set(row.userId, set)
+	}
+	return result
 }

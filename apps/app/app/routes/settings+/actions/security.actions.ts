@@ -29,11 +29,25 @@ const TWO_FA_CODE_RATE_LIMIT = {
 	windowMs: 15 * 60 * 1000,
 } as const
 
+const CURRENT_PASSWORD_RATE_LIMIT = {
+	scope: 'settings-current-password',
+	maxRequests: process.env.NODE_ENV === 'development' ? 1000 : 8,
+	windowMs: 15 * 60 * 1000,
+} as const
+
 async function refuseTwoFactorGuessing(userId: string) {
-	const attempt = await checkRateLimit(
-		{ type: 'user', value: userId },
-		TWO_FA_CODE_RATE_LIMIT,
-	)
+	return refuseGuessing(userId, TWO_FA_CODE_RATE_LIMIT)
+}
+
+async function refuseCurrentPasswordGuessing(userId: string) {
+	return refuseGuessing(userId, CURRENT_PASSWORD_RATE_LIMIT)
+}
+
+async function refuseGuessing(
+	userId: string,
+	limit: typeof TWO_FA_CODE_RATE_LIMIT | typeof CURRENT_PASSWORD_RATE_LIMIT,
+) {
+	const attempt = await checkRateLimit({ type: 'user', value: userId }, limit)
 	if (attempt.allowed) return null
 	return Response.json(
 		{ status: 'error', message: 'Too many attempts. Try again later.' },
@@ -76,6 +90,10 @@ export async function changePasswordAction({
 	formData,
 	request,
 }: SecurityActionArgs) {
+	// The current-password check is a guessing oracle for anyone holding a session.
+	const limited = await refuseCurrentPasswordGuessing(userId)
+	if (limited) return limited
+
 	const submission = await parseWithZod(formData, {
 		async: true,
 		schema: ChangePasswordSchema.superRefine(
@@ -169,10 +187,30 @@ export async function setPasswordAction({
 
 	const { password } = submission.value
 
-	await db.insert(Password).values({
-		userId,
-		hash: await getPasswordHash(password),
-	})
+	// Atomic: a double submit (or a second tab) must neither throw on the unique
+	// index nor overwrite a password that was just set.
+	const inserted = await db
+		.insert(Password)
+		.values({
+			userId,
+			hash: await getPasswordHash(password),
+		})
+		.onConflictDoNothing()
+		.returning({ userId: Password.userId })
+
+	if (inserted.length === 0) {
+		return Response.json(
+			{
+				result: submission.reply({
+					formErrors: [
+						'A password is already set. Use change password instead.',
+					],
+					hideFields: ['password', 'confirmPassword'],
+				}),
+			},
+			{ status: 400 },
+		)
+	}
 
 	await revokeUserCredentials({
 		userId,

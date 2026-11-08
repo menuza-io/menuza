@@ -31,6 +31,7 @@ vi.mock('#app/utils/reservations/payment-webhooks.server.ts', () => ({
 vi.mock('#app/utils/shop.server.ts', () => ({
 	handleConnectAccountUpdated: vi.fn(),
 	recordShopOrderFromConnectWebhook: recordShopOrder,
+	recordShopOrderAdjustmentFromConnectWebhook: vi.fn(),
 }))
 
 function post(event: { id: string; type: string; data: { object: unknown } }) {
@@ -67,6 +68,8 @@ function verified(type: string, object: unknown) {
 
 describe('stripe webhook reservation dispatch', () => {
 	beforeEach(() => {
+		// The `.env.schema` placeholder (`whsec_***`) no longer counts as a secret.
+		vi.stubEnv('STRIPE_WEBHOOK_SECRET', 'whsec_test_webhook_secret')
 		consoleError.mockImplementation(() => {})
 		constructEvent.mockReset()
 		for (const fn of Object.values(reservation)) {

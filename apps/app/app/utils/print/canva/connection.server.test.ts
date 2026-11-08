@@ -24,11 +24,16 @@ vi.mock('./client.server.ts', async (importOriginal) => {
 
 const { CanvaError } = await import('./errors.ts')
 const {
+	CONCURRENT_REFRESH_WAIT,
 	deleteCanvaConnection,
 	getCanvaConnection,
 	saveCanvaConnection,
 	withCanva,
 } = await import('./connection.server.ts')
+
+// Keep the "is another refresh about to store a token?" wait short in tests.
+CONCURRENT_REFRESH_WAIT.totalMs = 1_500
+CONCURRENT_REFRESH_WAIT.stepMs = 100
 
 const key = () => getEncryptionKey('INTEGRATION_ENCRYPTION_KEY')
 
@@ -107,13 +112,55 @@ describe('Canva connections', () => {
 			userId: null,
 			displayName: null,
 		})
-		client.refreshCanvaTokens.mockRejectedValueOnce(
-			new CanvaError('invalid_grant', 'invalid_grant', 400),
-		)
+		client.refreshCanvaTokens
+			.mockRejectedValueOnce(
+				new CanvaError('invalid_grant', 'invalid_grant', 400),
+			)
+			.mockRejectedValueOnce(
+				new CanvaError('invalid_grant', 'invalid_grant', 400),
+			)
 		await expect(withCanva(member, async () => 'never')).rejects.toMatchObject({
 			code: 'unauthorized',
 		})
 		expect(await getCanvaConnection(member)).toBeNull()
+	})
+
+	it('waits for a slow concurrent refresh instead of deleting a good connection', async () => {
+		const member = await owner()
+		await saveCanvaConnection(member, tokens('slow-first', 1_000), {
+			userId: null,
+			displayName: null,
+		})
+		// The winning request stores its token well after Canva refused ours
+		// (a slow response, or a lost response the other request retried).
+		client.refreshCanvaTokens.mockImplementationOnce(async () => {
+			setTimeout(() => {
+				void saveCanvaConnection(member, tokens('slow-winner'), {
+					userId: null,
+					displayName: null,
+				})
+			}, 800)
+			throw new CanvaError('invalid_grant', 'invalid_grant', 400)
+		})
+		const used = await withCanva(member, async (api) => api)
+		expect(used).toEqual({ token: 'access-slow-winner' })
+		expect(await getCanvaConnection(member)).not.toBeNull()
+	})
+
+	it('keeps the connection when a second refresh succeeds after a spurious invalid_grant', async () => {
+		const member = await owner()
+		await saveCanvaConnection(member, tokens('flaky', 1_000), {
+			userId: null,
+			displayName: null,
+		})
+		client.refreshCanvaTokens
+			.mockRejectedValueOnce(
+				new CanvaError('invalid_grant', 'invalid_grant', 400),
+			)
+			.mockResolvedValueOnce(tokens('flaky-new'))
+		const used = await withCanva(member, async (api) => api)
+		expect(used).toEqual({ token: 'access-flaky-new' })
+		expect(await getCanvaConnection(member)).not.toBeNull()
 	})
 
 	it('keeps the connection through a passing Canva error', async () => {

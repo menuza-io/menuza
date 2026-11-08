@@ -16,6 +16,7 @@ import {
 	type TenantDatabase,
 } from '@repo/tenant-db'
 import { ORG_A, stubStaffEnv } from '../../tests/staff-harness.ts'
+import { ONBOARDING_TICK_BATCH } from './onboarding-tick.ts'
 import { eraseLinkedUser, exportSubject } from './staff-internal-service.ts'
 import {
 	resetStaffTickTasks,
@@ -324,6 +325,28 @@ describe('certificate expiry alerts', () => {
 		now = Date.UTC(2026, 11, 30, 12)
 		await tick()
 		expect(alerts).toHaveLength(2)
+	})
+
+	it('is not starved by certificates that were already alerted', async () => {
+		const sara = await person()
+		// More than a batch of rows that already sit at stage 1 and sort first.
+		await db.insert(staffCertificates).values(
+			Array.from({ length: ONBOARDING_TICK_BATCH + 1 }, () => ({
+				staffId: sara.id,
+				kind: 'food_handler' as const,
+				expiresOn: '2026-10-15',
+				alertStage: 1,
+			})),
+		)
+		const fresh = await cert(sara.id, '2026-10-24')
+		const result = await tick()
+		expect(result.status).toBe('ran')
+		const [row] = await db
+			.select()
+			.from(staffCertificates)
+			.where(eq(staffCertificates.id, fresh.id))
+		expect(row!.alertStage).toBe(1)
+		expect(alerts).toHaveLength(1)
 	})
 
 	it('is quiet for a certificate that is fine, has no expiry, or belongs to someone who left', async () => {

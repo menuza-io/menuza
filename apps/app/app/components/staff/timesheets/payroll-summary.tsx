@@ -172,6 +172,7 @@ function useColumnLabels(): Record<string, string> {
 		holiday: _(t`Holiday`),
 		paid: _(t`Paid hours`),
 		unapproved: _(t`To approve`),
+		changed: _(t`Changed since approval`),
 		currency: _(t`Currency`),
 		rate: _(t`Hourly rate`),
 		pay: _(t`Est. pay`),
@@ -188,6 +189,7 @@ const RIGHT = new Set([
 	'holiday',
 	'paid',
 	'unapproved',
+	'changed',
 	'rate',
 	'pay',
 	'cashTips',
@@ -246,6 +248,8 @@ function cellFor(
 			return row.paidMinutes ? formatHours(row.paidMinutes, locale) : null
 		case 'unapproved':
 			return row.unapprovedCards > 0 ? row.unapprovedCards : null
+		case 'changed':
+			return row.changedCards > 0 ? row.changedCards : null
 		case 'currency':
 			return (
 				Object.keys(row.money?.payMinorByCurrency ?? {})
@@ -313,12 +317,23 @@ export function PayrollSummary({
 	) : (
 		<p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
 			<Icon name="alert-triangle" className="size-4" />
-			<span>
-				{plural(data.totals.unapprovedCards, {
-					one: '# card is still waiting to be approved or reviewed.',
-					other: '# cards are still waiting to be approved or reviewed.',
-				})}
-			</span>
+			{data.totals.unapprovedCards > 0 || data.totals.changedCards === 0 ? (
+				<span>
+					{plural(data.totals.unapprovedCards, {
+						one: '# card is still waiting to be approved or reviewed.',
+						other: '# cards are still waiting to be approved or reviewed.',
+					})}
+				</span>
+			) : null}
+			{data.totals.changedCards > 0 ? (
+				<span>
+					{plural(data.totals.changedCards, {
+						one: '# approved card has different hours since it was approved.',
+						other:
+							'# approved cards have different hours since they were approved.',
+					})}
+				</span>
+			) : null}
 			<Button variant="link" className="h-auto p-0" onClick={onReviewQueue}>
 				<Trans>Open the review queue</Trans>
 			</Button>
@@ -402,7 +417,9 @@ export function PayrollSummary({
 											key={column.id}
 											className={cn(
 												RIGHT.has(column.id) ? 'text-end tabular-nums' : '',
-												column.id === 'unapproved' ? 'font-medium' : '',
+												column.id === 'unapproved' || column.id === 'changed'
+													? 'font-medium'
+													: '',
 											)}
 										>
 											{value === null || value === '' ? <EmptyValue /> : value}
@@ -438,6 +455,8 @@ export function PayrollSummary({
 										formatHours(data.totals.paidMinutes, locale)
 									) : column.id === 'unapproved' ? (
 										data.totals.unapprovedCards
+									) : column.id === 'changed' ? (
+										data.totals.changedCards
 									) : column.id === 'pay' && labor ? (
 										labor
 									) : null}

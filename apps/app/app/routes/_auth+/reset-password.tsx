@@ -44,6 +44,11 @@ import {
 
 import { revokePendingAuthorizationCodes } from '#app/utils/mcp/oauth.server.ts'
 import { type Route } from './+types/reset-password.ts'
+import {
+	consumeResetPasswordGrant,
+	hasResetPasswordGrant,
+	resetPasswordGrantSessionKey,
+} from './reset-password-grant.server.ts'
 
 export const handle: SEOHandle = {
 	getSitemapEntries: () => null,
@@ -53,7 +58,7 @@ export const resetPasswordUsernameSessionKey = 'resetPasswordUsername'
 
 const ResetPasswordSchema = PasswordAndConfirmPasswordSchema
 
-async function requireResetPasswordUsername(request: Request) {
+async function requireResetPasswordGrant(request: Request) {
 	await requireAnonymous(request)
 	const verifySession = await verifySessionStorage.getSession(
 		request.headers.get('cookie'),
@@ -61,19 +66,34 @@ async function requireResetPasswordUsername(request: Request) {
 	const resetPasswordUsername = verifySession.get(
 		resetPasswordUsernameSessionKey,
 	)
-	if (typeof resetPasswordUsername !== 'string' || !resetPasswordUsername) {
+	const grantToken = verifySession.get(resetPasswordGrantSessionKey)
+	if (
+		typeof resetPasswordUsername !== 'string' ||
+		!resetPasswordUsername ||
+		typeof grantToken !== 'string' ||
+		!grantToken
+	) {
 		throw redirect('/login')
 	}
-	return resetPasswordUsername
+	return { resetPasswordUsername, grantToken }
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
-	const resetPasswordUsername = await requireResetPasswordUsername(request)
+	const { resetPasswordUsername, grantToken } =
+		await requireResetPasswordGrant(request)
+	// The cookie alone is not the grant: it must name a live, unused server row.
+	if (!(await hasResetPasswordGrant(resetPasswordUsername, grantToken))) {
+		throw redirect('/login')
+	}
 	return { resetPasswordUsername }
 }
 
 export async function action({ request }: Route.ActionArgs) {
-	const resetPasswordUsername = await requireResetPasswordUsername(request)
+	const { resetPasswordUsername, grantToken } =
+		await requireResetPasswordGrant(request)
+	if (!(await hasResetPasswordGrant(resetPasswordUsername, grantToken))) {
+		throw redirect('/login')
+	}
 	const formData = await request.formData()
 	const submission = await parseWithZod(formData, {
 		schema: ResetPasswordSchema.superRefine(async ({ password }, ctx) => {
@@ -102,6 +122,12 @@ export async function action({ request }: Route.ActionArgs) {
 		.where(eq(User.username, resetPasswordUsername))
 		.limit(1)
 	if (!user) throw new Error('User not found')
+
+	// Consume the grant atomically before writing: of two requests with the
+	// same cookie (a replay, or a copy), only one can win the delete.
+	if (!(await consumeResetPasswordGrant(resetPasswordUsername, grantToken))) {
+		throw redirect('/login')
+	}
 
 	// The new password and the end of every other credential an attacker may
 	// hold commit together: a failure cannot leave the password changed while
@@ -139,7 +165,7 @@ export async function action({ request }: Route.ActionArgs) {
 			),
 	])
 	// Codes issued before the reset must not mint a fresh authorization after it.
-	revokePendingAuthorizationCodes(user.id)
+	await revokePendingAuthorizationCodes(user.id)
 	const verifySession = await verifySessionStorage.getSession(
 		request.headers.get('cookie'),
 	)

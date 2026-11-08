@@ -12,6 +12,7 @@ import {
 import { eq } from 'drizzle-orm'
 import {
 	resetEmailEngagementSyncThrottle,
+	syncEmailEngagementForAllOrgs,
 	syncEmailEngagementForOrg,
 } from './email-engagement-sync.ts'
 
@@ -88,6 +89,54 @@ describe('email-engagement-sync', () => {
 
 		expect(updated?.status).toBe('Clicked')
 		expect(updated?.openedAt?.toISOString()).toBe('2026-01-01T12:30:00.000Z')
+		expect(updated?.clickedAt?.toISOString()).toBe('2026-01-01T12:45:00.000Z')
+	})
+
+	it('keeps syncing other orgs when one org has no database on this node', async () => {
+		const db = await getTenantDb(orgId)
+		const customerId = randomUUID()
+		const messageId = randomUUID()
+		await db.insert(customers).values({
+			id: customerId,
+			name: 'Jordan',
+			email: 'jordan@example.com',
+			phone: '+15555550101',
+		})
+		await db.insert(marketingMessages).values({
+			id: messageId,
+			customerId,
+			channel: 'email',
+			status: 'Sent',
+			sentAt: new Date('2026-01-01T12:00:00.000Z'),
+		})
+		const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+		vi.mocked(fetchOciEngagementEvents).mockResolvedValue([
+			{
+				action: 'open',
+				messageId: randomUUID(),
+				orgId: 'org_not_on_this_node',
+				occurredAt: new Date('2026-01-01T12:10:00.000Z'),
+			},
+			{
+				action: 'click',
+				messageId,
+				orgId,
+				occurredAt: new Date('2026-01-01T12:45:00.000Z'),
+			},
+		])
+
+		const result = await syncEmailEngagementForAllOrgs()
+		expect(result.synced).toBe(true)
+		expect(result.eventsApplied).toBe(1)
+		expect(errorSpy).toHaveBeenCalledWith(
+			'Email engagement sync failed for organization',
+			expect.objectContaining({ orgId: 'org_not_on_this_node' }),
+		)
+
+		const [updated] = await db
+			.select()
+			.from(marketingMessages)
+			.where(eq(marketingMessages.id, messageId))
 		expect(updated?.clickedAt?.toISOString()).toBe('2026-01-01T12:45:00.000Z')
 	})
 })

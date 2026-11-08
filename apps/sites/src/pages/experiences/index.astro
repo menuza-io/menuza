@@ -33,10 +33,12 @@ const labels = buildReservationLabels(i18n)
 // published there, if anything. Only the public catalog is read here: no
 // guest data is fetched or rendered on the server.
 const gate = await fetchPublishedReservations({ slug: orgSlug, host: customHost })
+// No node serves this organization's region: the catalog is unavailable.
+const regionalApiUrl = getTenantApiUrl(organization.dataRegion)
 const experiences =
-	gate?.experiences
+	gate?.experiences && regionalApiUrl
 		? await fetchPublicExperiences({
-				tenantApiUrl: getTenantApiUrl(organization.dataRegion),
+				tenantApiUrl: regionalApiUrl,
 				origin: Astro.url.origin,
 				locale,
 			})

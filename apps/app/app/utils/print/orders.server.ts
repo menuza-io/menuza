@@ -128,6 +128,36 @@ export async function vendorProductFor(product: string, sizeKey: string) {
 	return { ...row, vendor: row.vendor as PrintVendorName }
 }
 
+/**
+ * The bleed of the vendor SKU an item is sent as. Vendor and SKU are frozen on
+ * the item when it is priced (or rerouted), and Admin replaces or removes a
+ * mapping by deactivating its row, so that row still says the bleed; today's
+ * mapping may be another vendor's. Null when no row matches: the caller holds
+ * the order rather than guess.
+ */
+async function bleedMmFor(
+	item: Pick<ItemRow, 'product' | 'sizeKey' | 'vendor' | 'vendorSku'>,
+) {
+	const [row] = await db
+		.select({ bleedMm: PrintVendorProduct.bleedMm })
+		.from(PrintVendorProduct)
+		.where(
+			and(
+				eq(PrintVendorProduct.product, item.product),
+				eq(PrintVendorProduct.sizeKey, item.sizeKey),
+				eq(PrintVendorProduct.vendor, item.vendor),
+				eq(PrintVendorProduct.vendorSku, item.vendorSku),
+			),
+		)
+		// The live row first, then the newest one.
+		.orderBy(
+			desc(PrintVendorProduct.active),
+			desc(PrintVendorProduct.updatedAt),
+		)
+		.limit(1)
+	return row?.bleedMm ?? null
+}
+
 /** Product/size pairs that can ship right now (a vendor SKU is mapped). */
 export async function shippableSizes(): Promise<Set<string>> {
 	const rows = await db
@@ -705,10 +735,42 @@ export async function startPrintCheckout(
 			idempotencyKey: `print-checkout-${order.id}-${order.quoteExpiresAt.getTime()}-${previousSession ?? 'first'}`,
 		},
 	)
-	await db
+	// Only while the order is still unpaid: a tab that stalled here while
+	// another tab's payment landed must not move a paid order back.
+	const bound = await db
 		.update(PrintOrder)
 		.set({ status: 'awaiting_payment', stripeCheckoutSessionId: session.id })
-		.where(eq(PrintOrder.id, order.id))
+		.where(
+			and(
+				eq(PrintOrder.id, order.id),
+				inArray(PrintOrder.status, ['quote', 'awaiting_payment']),
+			),
+		)
+		.returning({ id: PrintOrder.id })
+	if (bound.length === 0) {
+		const [now] = await db
+			.select({ sessionId: PrintOrder.stripeCheckoutSessionId })
+			.from(PrintOrder)
+			.where(eq(PrintOrder.id, order.id))
+			.limit(1)
+		// Close the session this tab opened so it cannot take a second payment
+		// (never the one the order is bound to: that one may be the paid one).
+		if (now?.sessionId !== session.id) {
+			await platformStripe()
+				.checkout.sessions.expire(session.id)
+				.catch((error: unknown) =>
+					logger.error(
+						{ orderId: order.id, err: error },
+						'Print checkout: could not expire an unbound session',
+					),
+				)
+		}
+		throw new PrintOrderError(
+			409,
+			'not_payable',
+			'This order is already paid or closed.',
+		)
+	}
 	if (!session.url)
 		throw new PrintOrderError(
 			503,
@@ -879,7 +941,9 @@ async function refuseAndRefund(
 		.update(PrintVendorOrder)
 		.set({ status: 'failed', error: error.message })
 		.where(eq(PrintVendorOrder.id, vendorOrderId))
-	await failAndRefund(orderId, 'vendor_rejected')
+	// This submission holds the `submitting` claim and sends nothing more, so
+	// its unsent vendor parts are safe to cancel with the rest.
+	await failAndRefund(orderId, 'vendor_rejected', { ownsSubmission: true })
 }
 
 /**
@@ -962,17 +1026,26 @@ async function pieceFileUrls(
  */
 export async function submitPrintOrder(
 	orderId: string,
-	options: { ignoreDrift?: boolean; budgetMs?: number } = {},
+	options: {
+		ignoreDrift?: boolean
+		budgetMs?: number
+		/** Only Admin Retry may take an order that was put on hold. */
+		fromHeld?: boolean
+	} = {},
 ): Promise<'done' | 'deferred'> {
 	// Claim the order first: only one submission runs, and a cancel or refund
-	// cannot slip between the vendor call and the status write.
+	// cannot slip between the vendor call and the status write. The sweep and
+	// continuations read the order as `paid`; one held since (partial cancel,
+	// unknown vendor) must stay held until Admin retries it.
 	const claimed = await db
 		.update(PrintOrder)
 		.set({ status: 'submitting' })
 		.where(
 			and(
 				eq(PrintOrder.id, orderId),
-				inArray(PrintOrder.status, ['paid', 'held']),
+				options.fromHeld
+					? inArray(PrintOrder.status, ['paid', 'held'])
+					: eq(PrintOrder.status, 'paid'),
 			),
 		)
 		.returning({ id: PrintOrder.id })
@@ -1055,17 +1128,35 @@ async function submitClaimedOrder(
 					})
 					.where(eq(PrintVendorOrder.id, vendorOrder.id))
 			}
-			ready.push({ vendorOrder, vendor, files: [] })
+			let toSend = vendorOrder
+			if (!vendorOrder.shippingMethod) {
+				// Admin rerouted it to another vendor, whose shipping methods
+				// differ: use the one this quote priced.
+				await db
+					.update(PrintVendorOrder)
+					.set({ shippingMethod: quote.shippingMethod })
+					.where(eq(PrintVendorOrder.id, vendorOrder.id))
+				toSend = { ...vendorOrder, shippingMethod: quote.shippingMethod }
+			}
+			ready.push({ vendorOrder: toSend, vendor, files: [] })
 		}
 		quoting = null
 		for (const entry of ready) {
 			for (const item of itemsOf(entry.vendorOrder.id)) {
-				// Each product and size has its own bleed at the vendor.
-				const mapping = await vendorProductFor(item.product, item.sizeKey)
+				// The bleed of the vendor SKU the item is sent as, never a guess.
+				const bleedMm = await bleedMmFor(item)
+				if (bleedMm === null) {
+					logger.error(
+						{ orderId: order.id, itemId: item.id },
+						'Print order held: no catalog row for the vendor SKU of an item',
+					)
+					await hold(order.id, 'render_unavailable')
+					return 'done'
+				}
 				const urls = await pieceFileUrls(
 					order.organizationId,
 					item,
-					mapping?.bleedMm ?? 3,
+					bleedMm,
 					options.deadline,
 					progress,
 				)
@@ -1179,11 +1270,18 @@ async function rollUp(orderId: string) {
 		ROLLUP_ORDER.includes(least) ? least : 'submitted'
 	) as PrintOrderStatus
 	if (next !== order.status) {
-		await db
+		// Only from the status we read: a hold (partial cancel, a returned
+		// parcel) or a cancel claim taken meanwhile must not be erased.
+		const moved = await db
 			.update(PrintOrder)
 			.set({ status: next })
-			.where(eq(PrintOrder.id, order.id))
-		if (next === 'shipped') await notifyPrintOrder(order.id, 'shipped')
+			.where(
+				and(eq(PrintOrder.id, order.id), eq(PrintOrder.status, order.status)),
+			)
+			.returning({ id: PrintOrder.id })
+		if (moved.length > 0 && next === 'shipped') {
+			await notifyPrintOrder(order.id, 'shipped')
+		}
 	}
 }
 
@@ -1200,23 +1298,38 @@ export async function syncPrintVendorOrder(vendorOrder: VendorOrderRow) {
 		vendorOrder.vendor as PrintVendorName,
 	).status(vendorOrder.vendorOrderId)
 	const now = new Date()
-	await db
-		.update(PrintVendorOrder)
-		.set({
-			status: status.state,
-			carrier: status.carrier ?? vendorOrder.carrier,
-			trackingNumber: status.trackingNumber ?? vendorOrder.trackingNumber,
-			trackingUrl: status.trackingUrl ?? vendorOrder.trackingUrl,
-			lastEventAt: now,
-			...(status.state === 'shipped' && !vendorOrder.shippedAt
-				? { shippedAt: now }
-				: {}),
-			...(status.state === 'delivered' ? { deliveredAt: now } : {}),
-		})
-		.where(eq(PrintVendorOrder.id, vendorOrder.id))
+	const record = async () => {
+		await db
+			.update(PrintVendorOrder)
+			.set({
+				status: status.state,
+				carrier: status.carrier ?? vendorOrder.carrier,
+				trackingNumber: status.trackingNumber ?? vendorOrder.trackingNumber,
+				trackingUrl: status.trackingUrl ?? vendorOrder.trackingUrl,
+				lastEventAt: now,
+				...(status.state === 'shipped' && !vendorOrder.shippedAt
+					? { shippedAt: now }
+					: {}),
+				...(status.state === 'delivered' ? { deliveredAt: now } : {}),
+			})
+			.where(eq(PrintVendorOrder.id, vendorOrder.id))
+	}
 	const leftVendor =
 		Boolean(vendorOrder.shippedAt) ||
 		['shipped', 'delivered'].includes(vendorOrder.status)
+	if (
+		!leftVendor &&
+		(status.state === 'failed' || status.state === 'cancelled')
+	) {
+		// The vendor dropped a paid order before it shipped: refund in full,
+		// unless another vendor may still have part of it. The drop is recorded
+		// only once the order can be settled (see failAndRefund).
+		await failAndRefund(vendorOrder.orderId, `vendor_${status.state}`, {
+			recordDrop: record,
+		})
+		return
+	}
+	await record()
 	if (
 		status.state === 'returned' ||
 		(leftVendor && (status.state === 'failed' || status.state === 'cancelled'))
@@ -1244,11 +1357,6 @@ export async function syncPrintVendorOrder(vendorOrder: VendorOrderRow) {
 					]),
 				),
 			)
-		return
-	}
-	if (status.state === 'failed' || status.state === 'cancelled') {
-		// The vendor dropped a paid order before it shipped: refund in full.
-		await failAndRefund(vendorOrder.orderId, `vendor_${status.state}`)
 		return
 	}
 	await rollUp(vendorOrder.orderId)
@@ -1409,19 +1517,41 @@ export async function syncOpenPrintOrders(limit = 50) {
 // Cancellation and refunds
 // ---------------------------------------------------------------------------
 
+/**
+ * What Stripe has refunded on the payment, live or settled. The ledger
+ * (`refundCents`) can lag it: a refund that went through before a crash or
+ * a timeout is still on Stripe, and after the idempotency window a retry
+ * under the same key would refund it again.
+ */
+async function stripeRefundedCents(paymentIntentId: string) {
+	let total = 0
+	for await (const refund of platformStripe().refunds.list({
+		payment_intent: paymentIntentId,
+		limit: 100,
+	})) {
+		if (refund.status === 'failed' || refund.status === 'canceled') continue
+		total += refund.amount
+	}
+	return total
+}
+
 async function refundInFull(order: OrderRow) {
 	if (!order.stripePaymentIntentId || order.refundCents >= order.totalCents)
 		return
-	await platformStripe().refunds.create(
-		{
-			payment_intent: order.stripePaymentIntentId,
-			amount: order.totalCents - order.refundCents,
-			metadata: { type: PRINT_STRIPE_METADATA_TYPE, orderId: order.id },
-		},
-		// Keyed on what was refunded before, so a part refunded earlier never
-		// collides with this one.
-		{ idempotencyKey: `print-refund-${order.id}-from-${order.refundCents}` },
-	)
+	const before = await stripeRefundedCents(order.stripePaymentIntentId)
+	const refunded = Math.max(before, order.refundCents)
+	if (refunded < order.totalCents) {
+		await platformStripe().refunds.create(
+			{
+				payment_intent: order.stripePaymentIntentId,
+				amount: order.totalCents - refunded,
+				metadata: { type: PRINT_STRIPE_METADATA_TYPE, orderId: order.id },
+			},
+			// Keyed on what Stripe already refunded, so a part refunded earlier
+			// never collides with this one.
+			{ idempotencyKey: `print-refund-${order.id}-from-${refunded}` },
+		)
+	}
 	await db
 		.update(PrintOrder)
 		.set({ refundCents: order.totalCents, refundedAt: new Date() })
@@ -1480,16 +1610,84 @@ async function cancelAtVendors(vendorOrders: VendorOrderRow[]) {
 	return true
 }
 
-async function failAndRefund(orderId: string, reason: string) {
-	const { order, vendorOrders } = await getPrintOrderDetail(null, orderId)
-	if (order.status === 'refunded' || order.status === 'cancelled') return
+/**
+ * A vendor refused or dropped a paid order before it shipped: cancel the rest
+ * at the vendors and refund in full. Claimed from the status it read, like a
+ * cancel, so nothing else acts on the order meanwhile. While a vendor may hold
+ * a part we never recorded (a vendor-check hold), it cancels what it can but
+ * refunds nothing: the order stays held for Admin, who checks that vendor
+ * first. After shipping, Admin settles it as well.
+ */
+async function failAndRefund(
+	orderId: string,
+	reason: string,
+	options: {
+		/** The caller is the submission holding the `submitting` claim. */
+		ownsSubmission?: boolean
+		/**
+		 * Records the vendor's drop. It runs only once this call owns the order
+		 * (or the order is closed): while a submission or a cancel holds it,
+		 * nothing is written, so the next sync sees the drop again.
+		 */
+		recordDrop?: () => Promise<void>
+	} = {},
+) {
+	const { order } = await getPrintOrderDetail(null, orderId)
+	if (order.status === 'refunded' || order.status === 'cancelled') {
+		await options.recordDrop?.()
+		return
+	}
+	// A submission (it may be calling a vendor right now) or a cancel settles
+	// the order itself: leave the drop for the next sync.
+	if (
+		order.status === 'cancelling' ||
+		(order.status === 'submitting' && !options.ownsSubmission)
+	) {
+		return
+	}
+	// Claim from the state we saw, like a cancel, so a concurrent sync, cancel
+	// or submission cannot act on the same order meanwhile.
+	const claimed = await db
+		.update(PrintOrder)
+		.set({ status: 'cancelling' })
+		.where(
+			and(eq(PrintOrder.id, order.id), eq(PrintOrder.status, order.status)),
+		)
+		.returning({ id: PrintOrder.id })
+	if (claimed.length === 0) return
+	await options.recordDrop?.()
+	const whileClaimed = and(
+		eq(PrintOrder.id, order.id),
+		eq(PrintOrder.status, 'cancelling'),
+	)
+	const heldFor = order.status === 'held' ? (order.holdReason ?? '') : ''
+	if (PRINT_AFTER_SHIPPING_HOLDS.includes(heldFor)) {
+		// Prints were made and shipped: Admin settles it (reship or refund).
+		await db
+			.update(PrintOrder)
+			.set({ status: 'held', failureReason: reason })
+			.where(whileClaimed)
+		return
+	}
+	// Read again: the drop is recorded now, so it is not cancelled twice.
+	const { vendorOrders } = await getPrintOrderDetail(null, orderId)
 	const cancelled = await cancelAtVendors(vendorOrders).catch(() => false)
+	if (PRINT_VENDOR_CHECK_HOLDS.includes(heldFor)) {
+		// A vendor may have a part we never recorded, and nothing here can
+		// cancel it: a full refund now could pay for prints that still ship.
+		// The hold stays for Admin to check that vendor, then refund.
+		await db
+			.update(PrintOrder)
+			.set({ status: 'held', failureReason: reason })
+			.where(whileClaimed)
+		return
+	}
 	if (!cancelled) {
 		// Some vendor is printing it: a person decides what to refund.
 		await db
 			.update(PrintOrder)
 			.set({ status: 'held', holdReason: 'partial_cancel' })
-			.where(eq(PrintOrder.id, order.id))
+			.where(whileClaimed)
 		return
 	}
 	try {
@@ -1509,13 +1707,13 @@ async function failAndRefund(orderId: string, reason: string) {
 				holdReason: 'refund_failed',
 				failureReason: reason,
 			})
-			.where(eq(PrintOrder.id, order.id))
+			.where(whileClaimed)
 		return
 	}
 	await db
 		.update(PrintOrder)
 		.set({ status: 'refunded', failureReason: reason })
-		.where(eq(PrintOrder.id, order.id))
+		.where(whileClaimed)
 	await notifyPrintOrder(order.id, 'failed')
 }
 
@@ -1785,6 +1983,29 @@ async function adminPartialRefund(
 			'Enter an amount above zero and no more than what is left to refund.',
 		)
 	}
+	// A refund that went through without being recorded (a crash or a
+	// timeout after Stripe answered) is on Stripe: record it and let Admin
+	// decide again, instead of refunding the same part twice.
+	const onStripe = await stripeRefundedCents(order.stripePaymentIntentId!)
+	if (onStripe > order.refundCents) {
+		await db
+			.update(PrintOrder)
+			.set({
+				refundCents: Math.min(onStripe, order.totalCents),
+				refundedAt: new Date(),
+			})
+			.where(
+				and(
+					eq(PrintOrder.id, order.id),
+					eq(PrintOrder.refundCents, order.refundCents),
+				),
+			)
+		throw new PrintOrderError(
+			409,
+			'refund_reconciled',
+			'Stripe already refunded more than this order shows. The refunded total is updated: check it before refunding more.',
+		)
+	}
 	// Claim the refunded total we saw: a second click (or a second admin)
 	// cannot refund the same part twice.
 	const claimed = await db
@@ -1811,16 +2032,22 @@ async function adminPartialRefund(
 			{ idempotencyKey: `print-refund-${order.id}-from-${order.refundCents}` },
 		)
 	} catch (error) {
-		await db
-			.update(PrintOrder)
-			.set({ refundCents: order.refundCents })
-			.where(
-				and(
-					eq(PrintOrder.id, order.id),
-					eq(PrintOrder.refundCents, order.refundCents + amountCents),
-				),
-			)
-		throw error
+		// A timeout may hide a refund Stripe made: keep the claim if so.
+		const after = await stripeRefundedCents(order.stripePaymentIntentId!).catch(
+			() => null,
+		)
+		if (after === null || after < order.refundCents + amountCents) {
+			await db
+				.update(PrintOrder)
+				.set({ refundCents: order.refundCents })
+				.where(
+					and(
+						eq(PrintOrder.id, order.id),
+						eq(PrintOrder.refundCents, order.refundCents + amountCents),
+					),
+				)
+			throw error
+		}
 	}
 	// The rest keeps printing: track it again instead of holding it, but only
 	// when nothing is still waiting to be sent (that stays held for Admin).
@@ -1942,6 +2169,19 @@ export async function adminRetryPrintOrder(
 		)
 	}
 	if (
+		vendorOrders.some((vendorOrder) =>
+			['cancelled', 'failed'].includes(vendorOrder.status),
+		)
+	) {
+		// A vendor dropped part of it (or a cancel stopped halfway): sending the
+		// rest would ship an incomplete order at the full price.
+		throw new PrintOrderError(
+			409,
+			'refund_needed',
+			'Part of this order was cancelled or failed at a vendor: refund it instead of retrying.',
+		)
+	}
+	if (
 		PRINT_VENDOR_CHECK_HOLDS.includes(order.holdReason ?? '') &&
 		!options.checkedVendor
 	) {
@@ -1951,25 +2191,72 @@ export async function adminRetryPrintOrder(
 			'The vendor may already have this order. Search the vendor dashboard for its references first, then retry.',
 		)
 	}
-	for (const { item } of items) {
-		const mapping = await vendorProductFor(item.product, item.sizeKey)
-		if (!mapping) continue
-		const vendorOrder = vendorOrders.find(
-			(entry) => entry.id === item.vendorOrderId,
-		)
-		if (!vendorOrder || vendorOrder.status !== 'pending') continue
-		if (
-			mapping.vendor !== item.vendor ||
-			mapping.vendorSku !== item.vendorSku
-		) {
+	// Admin reroutes a held order by changing the vendor catalog. A vendor
+	// order moves as a whole, once every product in it maps to the same
+	// vendor: a product left behind (mapped elsewhere, or no longer mapped)
+	// would send that vendor a SKU it does not know, and a refusal refunds
+	// the paid order. Planned in full first, so a refusal changes nothing.
+	const reroutes: Array<{
+		vendorOrder: VendorOrderRow
+		vendor: PrintVendorName
+		items: Array<{ item: ItemRow; vendorSku: string }>
+	}> = []
+	for (const vendorOrder of vendorOrders) {
+		if (vendorOrder.status !== 'pending') continue
+		const planned: Array<{
+			item: ItemRow
+			vendor: PrintVendorName
+			vendorSku: string
+		}> = []
+		for (const { item } of items) {
+			if (item.vendorOrderId !== vendorOrder.id) continue
+			const mapping = await vendorProductFor(item.product, item.sizeKey)
+			// No longer mapped: it keeps the vendor and SKU it was priced with.
+			planned.push({
+				item,
+				vendor: mapping?.vendor ?? (item.vendor as PrintVendorName),
+				vendorSku: mapping?.vendorSku ?? item.vendorSku,
+			})
+		}
+		const vendors = new Set(planned.map((entry) => entry.vendor))
+		if (vendors.size > 1) {
+			throw new PrintOrderError(
+				409,
+				'mixed_vendors',
+				'The products of one vendor order now map to different vendors. Map them all to one vendor (or back to the old one), then retry.',
+			)
+		}
+		const [vendor] = vendors
+		if (!vendor) continue
+		reroutes.push({
+			vendorOrder,
+			vendor,
+			items: planned.filter(
+				(entry) =>
+					entry.vendor !== entry.item.vendor ||
+					entry.vendorSku !== entry.item.vendorSku,
+			),
+		})
+	}
+	for (const { vendorOrder, vendor, items: changed } of reroutes) {
+		for (const { item, vendorSku } of changed) {
 			await db
 				.update(PrintOrderItem)
-				.set({ vendor: mapping.vendor, vendorSku: mapping.vendorSku })
+				.set({ vendor, vendorSku })
 				.where(eq(PrintOrderItem.id, item.id))
+		}
+		if (vendor !== vendorOrder.vendor) {
+			// The shipping method came from the old vendor's quote: the new
+			// vendor's re-quote supplies its own.
 			await db
 				.update(PrintVendorOrder)
-				.set({ vendor: mapping.vendor })
-				.where(eq(PrintVendorOrder.id, vendorOrder.id))
+				.set({ vendor, shippingMethod: null })
+				.where(
+					and(
+						eq(PrintVendorOrder.id, vendorOrder.id),
+						eq(PrintVendorOrder.status, 'pending'),
+					),
+				)
 		}
 	}
 	// One short run fits Admin's command call; a large set that is handed
@@ -1977,6 +2264,7 @@ export async function adminRetryPrintOrder(
 	return submitPrintOrder(order.id, {
 		ignoreDrift: acceptPrice,
 		budgetMs: ADMIN_RETRY_BUDGET_MS,
+		fromHeld: true,
 	})
 }
 

@@ -122,6 +122,35 @@ describe('Stripe refunds with ledger reversal', () => {
 		})
 	})
 
+	it("lists a payment intent's refunds, newest first, like Stripe", async () => {
+		const harness = createTestHarness()
+		const { intent } = await paidCharge(harness)
+		const other = await paidCharge(harness)
+		await harness.stripe.refunds.create({
+			payment_intent: intent,
+			amount: 2_000,
+		})
+		await harness.stripe.refunds.create({
+			payment_intent: intent,
+			amount: 3_000,
+		})
+		await harness.stripe.refunds.create({
+			payment_intent: other.intent,
+			amount: 1_000,
+		})
+
+		const listed: Stripe.Refund[] = []
+		for await (const refund of harness.stripe.refunds.list({
+			payment_intent: intent,
+		})) {
+			listed.push(refund)
+		}
+		expect(listed.map((refund) => refund.amount).sort()).toEqual([2_000, 3_000])
+		expect(listed.every((refund) => refund.payment_intent === intent)).toBe(
+			true,
+		)
+	})
+
 	it('refuses an over-refund and an already refunded charge', async () => {
 		const harness = createTestHarness()
 		const { intent } = await paidCharge(harness)
