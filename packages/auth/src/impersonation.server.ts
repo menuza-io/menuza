@@ -11,6 +11,7 @@ import {
 import {
 	impersonationSessionStorage,
 	impersonationSessionKey,
+	getImpersonationExpirationDate,
 	getClientIp,
 	hashIp,
 } from './impersonation-session.server.ts'
@@ -221,4 +222,52 @@ export async function cleanupExpiredImpersonationSessions(): Promise<number> {
 		where: lte(ImpersonationSession.expiresAt, new Date()),
 		reason: 'expired',
 	})
+}
+
+/** Another start for the same admin created its session first. */
+export class ImpersonationStartConflictError extends Error {
+	constructor() {
+		super('Another impersonation start for this admin is in progress')
+		this.name = 'ImpersonationStartConflictError'
+	}
+}
+
+/**
+ * Starts an impersonation for `adminUserId`, ending any earlier one (audited
+ * END, reason `replaced` or `expired`). `ImpersonationSession.adminUserId` is
+ * unique, so of two overlapping starts only one insert wins. The loser throws
+ * `ImpersonationStartConflictError` instead of ending the winner's session,
+ * so a session id handed to a caller is never one a concurrent start deleted.
+ */
+export async function startImpersonationSession({
+	adminUserId,
+	targetUserId,
+	ipHash,
+	request,
+}: {
+	adminUserId: string
+	targetUserId: string
+	ipHash: string
+	request?: Request
+}): Promise<{ id: string; expiresAt: Date }> {
+	await endImpersonationSessions({
+		where: eq(ImpersonationSession.adminUserId, adminUserId),
+		reason: 'replaced',
+		request,
+	})
+	const [created] = await db
+		.insert(ImpersonationSession)
+		.values({
+			adminUserId,
+			targetUserId,
+			expiresAt: getImpersonationExpirationDate(),
+			ipHash,
+		})
+		.onConflictDoNothing({ target: ImpersonationSession.adminUserId })
+		.returning({
+			id: ImpersonationSession.id,
+			expiresAt: ImpersonationSession.expiresAt,
+		})
+	if (!created) throw new ImpersonationStartConflictError()
+	return created
 }

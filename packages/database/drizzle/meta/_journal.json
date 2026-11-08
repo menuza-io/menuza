@@ -204,6 +204,13 @@
 			"when": 1794033996216,
 			"tag": "0028_sso_identity_config_cascades",
 			"breakpoints": true
+		},
+		{
+			"idx": 29,
+			"version": "6",
+			"when": 1794174690033,
+			"tag": "0029_impersonation_one_per_admin",
+			"breakpoints": true
 		}
 	]
 }
