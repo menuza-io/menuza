@@ -42,11 +42,13 @@ describe('dev mock route folders', () => {
 		const removed = withMocks.filter((file) => !stripped.includes(file))
 		expect(removed.length).toBeGreaterThanOrEqual(3)
 		expect(
-			removed.every(
+			removed.filter(
 				(file) =>
-					file.includes('mock-email+') || file.includes('mock-payments+'),
+					!file.includes('mock-email+') &&
+					!file.includes('mock-payments+') &&
+					file !== 'routes/api+/mock-env.ts',
 			),
-		).toBe(true)
+		).toEqual([])
 	})
 })
 

@@ -578,6 +578,8 @@ describe('loadBlockPicker', () => {
 		const { viewer, organization } = await setupReportOrg()
 		const grants = [
 			...ORG_WIDE_REPORT_SUBJECTS,
+			'members',
+			'notes',
 			STAFF_PAY_REPORT_PERMISSION,
 			...STAFFING_REPORT_SUBJECTS,
 			...RESERVATIONS_REPORT_SUBJECTS,
