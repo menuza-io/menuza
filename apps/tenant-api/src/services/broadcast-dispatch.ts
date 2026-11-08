@@ -4,12 +4,12 @@ import {
 	count,
 	eq,
 	gte,
-	inArray,
 	isNotNull,
 	lt,
 	lte,
 	min,
 	or,
+	sql,
 } from 'drizzle-orm'
 import { sendSms } from '@repo/sms'
 import {
@@ -56,6 +56,13 @@ export const BROADCAST_BATCH_SIZE = 25
 /** A `Processing` campaign with no heartbeat for this long is resumed. */
 export const BROADCAST_STALE_MS = 10 * 60 * 1000
 const HOUR_MS = 60 * 60 * 1000
+/**
+ * Dispatch attempts in a row that may end in an unexpected error before the
+ * campaign is marked `Failed`. Each retry waits for the lease to go stale
+ * (`BROADCAST_STALE_MS`), so this is roughly an hour of failures; a batch that
+ * goes out resets the count.
+ */
+export const BROADCAST_MAX_FAILURES = 6
 /** Campaigns claimed per organization per tick. */
 const MAX_CAMPAIGNS_PER_TICK = 3
 
@@ -126,6 +133,15 @@ async function heartbeat(db: Db, campaignId: string, lease: Date, now: number) {
 	return rows.length > 0 ? next : null
 }
 
+/** The campaign is still `Processing` under this dispatcher's lease. */
+function holdsLease(campaignId: string, lease: Date) {
+	return and(
+		eq(marketingCampaigns.id, campaignId),
+		eq(marketingCampaigns.status, 'Processing'),
+		eq(marketingCampaigns.updatedAt, lease),
+	)
+}
+
 async function finish(
 	db: Db,
 	campaignId: string,
@@ -149,7 +165,7 @@ export type BroadcastDispatchOptions = {
 }
 
 export type BroadcastDispatchOutcome =
-	'completed' | 'failed' | 'throttled' | 'lost_lease' | 'missing'
+	'completed' | 'failed' | 'retry' | 'throttled' | 'lost_lease' | 'missing'
 
 /**
  * Sends a `Processing` campaign the caller holds (it created it or claimed it
@@ -211,6 +227,7 @@ export async function dispatchBroadcast(
 
 		const pending = targets.filter((c) => !alreadyMessaged.has(c.id))
 		const cap = getBroadcastHourlyCap(channel)
+		let failuresReset = false
 
 		for (let i = 0; i < pending.length; i += BROADCAST_BATCH_SIZE) {
 			const next = await heartbeat(db, campaignId, currentLease, clock())
@@ -323,6 +340,20 @@ export async function dispatchBroadcast(
 						),
 					)
 			}
+			// A batch went out and was recorded: earlier failed attempts were
+			// transient. Only while we hold the lease (like `heartbeat` and
+			// `finish`).
+			if (
+				!failuresReset &&
+				sentIds.length > 0 &&
+				campaign.dispatchFailures > 0
+			) {
+				await db
+					.update(marketingCampaigns)
+					.set({ dispatchFailures: 0 })
+					.where(holdsLease(campaignId, currentLease))
+				failuresReset = true
+			}
 			if (capReached) {
 				console.warn('Broadcast reached the hourly send cap; will resume', {
 					orgId,
@@ -340,13 +371,31 @@ export async function dispatchBroadcast(
 			campaignId,
 			reason: error instanceof Error ? error.message : 'unknown',
 		})
+		// An unexpected error (a database or storage blip) is usually
+		// transient: leave the campaign `Processing`, so its lease goes stale
+		// and a later tick resumes it. Message rows already written are never
+		// resent. After `BROADCAST_MAX_FAILURES` failed attempts in a row the
+		// campaign is marked `Failed`, so an error that never clears stops.
 		try {
 			const handle = db ?? (await getTenantDb(orgId))
-			await finish(handle, campaignId, currentLease, 'Failed')
+			const [row] = await handle
+				.update(marketingCampaigns)
+				.set({
+					dispatchFailures: sql`${marketingCampaigns.dispatchFailures} + 1`,
+				})
+				// A dispatcher that lost its lease must not count against the
+				// campaign another one now holds.
+				.where(holdsLease(campaignId, currentLease))
+				.returning({ failures: marketingCampaigns.dispatchFailures })
+			if (!row) return 'lost_lease'
+			if (row.failures >= BROADCAST_MAX_FAILURES) {
+				await finish(handle, campaignId, currentLease, 'Failed')
+				return 'failed'
+			}
 		} catch {
 			// The tick resumes a campaign left Processing.
 		}
-		return 'failed'
+		return 'retry'
 	}
 }
 
@@ -422,7 +471,7 @@ export async function claimBroadcast(
 						),
 					),
 					and(
-						inArray(marketingCampaigns.status, ['Scheduled', 'Draft']),
+						eq(marketingCampaigns.status, 'Scheduled'),
 						isNotNull(marketingCampaigns.scheduledAt),
 						lte(marketingCampaigns.scheduledAt, new Date(now)),
 					),
@@ -461,7 +510,7 @@ export async function claimDueBroadcasts(db: Db, now: number) {
 					lt(marketingCampaigns.updatedAt, new Date(now - BROADCAST_STALE_MS)),
 				),
 				and(
-					inArray(marketingCampaigns.status, ['Scheduled', 'Draft']),
+					eq(marketingCampaigns.status, 'Scheduled'),
 					isNotNull(marketingCampaigns.scheduledAt),
 					lte(marketingCampaigns.scheduledAt, new Date(now)),
 				),
@@ -512,7 +561,7 @@ export async function nextBroadcastWakeAt(
 		.from(marketingCampaigns)
 		.where(
 			and(
-				inArray(marketingCampaigns.status, ['Scheduled', 'Draft']),
+				eq(marketingCampaigns.status, 'Scheduled'),
 				isNotNull(marketingCampaigns.scheduledAt),
 			),
 		)

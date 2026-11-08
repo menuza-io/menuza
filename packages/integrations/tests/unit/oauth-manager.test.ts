@@ -446,7 +446,10 @@ describe('TokenManager', () => {
 			)
 
 			expect(result).toEqual(newTokenData)
-			expect(mockProvider.refreshToken).toHaveBeenCalledWith(refreshToken)
+			expect(mockProvider.refreshToken).toHaveBeenCalledWith(
+				refreshToken,
+				undefined,
+			)
 			expect(mockProvider.refreshToken).toHaveBeenCalledTimes(1)
 		})
 

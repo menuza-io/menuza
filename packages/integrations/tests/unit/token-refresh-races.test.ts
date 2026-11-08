@@ -226,7 +226,9 @@ describe('token refresh persistence and races', () => {
 
 		const response = await probe.call({ ...row })
 
-		expect(probe.refreshToken).toHaveBeenCalledWith('r1')
+		expect(probe.refreshToken).toHaveBeenCalledWith('r1', {
+			config: row.config,
+		})
 		expect(response.status).toBe(200)
 		expect(seen).toEqual(['Bearer old-access', 'Bearer new-access'])
 		expect(row.refreshToken).toBe('enc:r2')
@@ -239,7 +241,10 @@ describe('token refresh persistence and races', () => {
 			accessToken: 'enc:old-access',
 			refreshToken: 'enc:gl-r1',
 			tokenExpiresAt: null,
-			config: '{}',
+			// As the OAuth flow stores a gitlab.com integration.
+			config: JSON.stringify({
+				metadata: { instanceUrl: 'https://gitlab.com' },
+			}),
 		})
 		let refreshSent: string | undefined
 		server.use(
@@ -324,6 +329,7 @@ describe('token refresh persistence and races', () => {
 		expect(revoke).toHaveBeenCalledWith(
 			'gl-access',
 			expect.objectContaining({ id: 'int-1' }),
+			{ signal: expect.any(AbortSignal) },
 		)
 		expect(mockDb.delete).toHaveBeenCalledTimes(3)
 	})

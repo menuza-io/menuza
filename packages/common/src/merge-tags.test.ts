@@ -173,6 +173,51 @@ describe('replaceMergeTokensInHtml', () => {
 		)
 	})
 
+	it('checks a URL attribute after a quoted value that contains >', () => {
+		expect(
+			replaceMergeTokensInHtml('<a title="x>y" href="{{a}}">x</a>', resolve),
+		).toBe('<a title="x>y" href="">x</a>')
+		expect(
+			replaceMergeTokensInHtml("<a title='x>y' href={{a}}>x</a>", resolve),
+		).toBe('<a title=\'x>y\' href="">x</a>')
+		expect(
+			replaceMergeTokensInHtml('<p>1 > 0</p><a href="{{b}}">x</a>', resolve),
+		).toBe('<p>1 > 0</p><a href="https://x.test">x</a>')
+	})
+
+	it('treats a quote inside an unquoted value as an ordinary character', () => {
+		expect(
+			replaceMergeTokensInHtml('<a title=a"b href="{{a}}">x</a>', resolve),
+		).toBe('<a title=a"b href="">x</a>')
+		expect(
+			replaceMergeTokensInHtml("<a title=a='b href={{a}}>x</a>", resolve),
+		).toBe('<a title=a=\'b href="">x</a>')
+	})
+
+	it('escapes everything from a tag that never ends', () => {
+		expect(
+			replaceMergeTokensInHtml(`<a title='x>y<a href="{{a}}">z</a>`, resolve),
+		).toBe(`&lt;a title='x>y&lt;a href="javascript:alert(1)">z&lt;/a>`)
+		expect(replaceMergeTokensInHtml('<b>ok</b><a<a<a', resolve)).toBe(
+			'<b>ok</b>&lt;a&lt;a&lt;a',
+		)
+	})
+
+	it('stays linear on many broken tags', () => {
+		const input = '<a'.repeat(200_000)
+		const started = performance.now()
+		expect(replaceMergeTokensInHtml(input, resolve)).toBe(
+			'&lt;a'.repeat(200_000),
+		)
+		expect(performance.now() - started).toBeLessThan(1000)
+	})
+
+	it('treats a quote outside a value as part of the tag', () => {
+		expect(
+			replaceMergeTokensInHtml('<a data-x"y href="{{a}}">x</a>', resolve),
+		).toBe('<a data-x"y href="">x</a>')
+	})
+
 	it('does not re-read a substituted value as a token', () => {
 		expect(replaceMergeTokensInHtml('<a href="{{c}}">{{c}}</a>', resolve)).toBe(
 			'<a href="{{b}}">{{b}}</a>',

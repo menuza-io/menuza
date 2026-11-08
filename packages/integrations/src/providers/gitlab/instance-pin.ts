@@ -1,6 +1,24 @@
 /**
+ * The instance an integration's token belongs to. The OAuth flow stores it as
+ * `config.metadata.instanceUrl`; a config saved later may also carry
+ * `config.instanceUrl`. Undefined means gitlab.com.
+ */
+export function storedGitLabInstanceUrl(config: unknown): string | undefined {
+	if (!config || typeof config !== 'object') return undefined
+	const record = config as {
+		instanceUrl?: unknown
+		metadata?: { instanceUrl?: unknown } | null
+	}
+	if (typeof record.instanceUrl === 'string' && record.instanceUrl) {
+		return record.instanceUrl
+	}
+	const fromOAuth = record.metadata?.instanceUrl
+	return typeof fromOAuth === 'string' && fromOAuth ? fromOAuth : undefined
+}
+
+/**
  * The GitLab access token was issued by the instance chosen when the org
- * connected (stored in `config.instanceUrl` by the OAuth callback). Every API
+ * connected (see `storedGitLabInstanceUrl`). Every API
  * call sends that token to `config.instanceUrl`, so a later config update must
  * not move it: that would hand the org's token to any public host. Changing the
  * instance means reconnecting, which gets a token from the new instance.
@@ -22,10 +40,18 @@ export function pinGitLabInstanceUrl(
 	} catch {
 		stored = {}
 	}
-	const storedUrl =
-		typeof stored.instanceUrl === 'string' ? stored.instanceUrl : undefined
-	const nextUrl = nextConfig.instanceUrl
-	if (nextUrl === undefined) {
+	const storedUrl = storedGitLabInstanceUrl(stored)
+	// Every place the token's host is read from (`storedGitLabInstanceUrl`):
+	// the top-level field and the OAuth metadata. Each one the update sets
+	// must be the stored instance.
+	const metadata = nextConfig.metadata
+	const nextUrls = [
+		nextConfig.instanceUrl,
+		metadata && typeof metadata === 'object'
+			? (metadata as { instanceUrl?: unknown }).instanceUrl
+			: undefined,
+	].filter((value) => value !== undefined)
+	if (nextUrls.length === 0) {
 		return {
 			config: storedUrl
 				? { ...nextConfig, instanceUrl: storedUrl }
@@ -36,7 +62,8 @@ export function pinGitLabInstanceUrl(
 		typeof value === 'string'
 			? trimTrailingSlashes(value.trim()).toLowerCase()
 			: null
-	if (normalize(nextUrl) !== normalize(storedUrl ?? 'https://gitlab.com')) {
+	const expected = normalize(storedUrl ?? 'https://gitlab.com')
+	if (nextUrls.some((url) => normalize(url) !== expected)) {
 		return {
 			error:
 				'The GitLab instance cannot be changed here. Disconnect and connect again to use another instance.',

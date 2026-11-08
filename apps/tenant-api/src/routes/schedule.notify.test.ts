@@ -326,7 +326,13 @@ describe('publishing tells people', () => {
 			await s.publish(LOC_1, WEEK, { notifyMode: 'changed' })
 			await tick()
 			const mail = sent[0]!
-			const all = `${mail.subject}${mail.text}${mail.html}`
+			// The private link token is random hex and a UUID, which can contain
+			// "987" by chance: leave it out of the check.
+			const all = `${mail.subject}${mail.text}${mail.html}`.replace(
+				/slk1\.[\w.-]+/g,
+				'slk1.<token>',
+			)
+			expect(all).toContain('slk1.<token>')
 			expect(all).not.toMatch(/987|\$|USD|SAR|rate|wage/i)
 		})
 

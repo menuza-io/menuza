@@ -1,5 +1,11 @@
 import { and, count, eq, gte, lt, lte, min } from 'drizzle-orm'
-import { smsSendEvents, type TenantDatabase } from '@repo/tenant-db'
+import {
+	getTenantDb,
+	smsSendEvents,
+	type TenantDatabase,
+	type TenantTransaction,
+} from '@repo/tenant-db'
+import { inJsonList } from '../lib/chunked-in.ts'
 import { addressBucket } from '../lib/client-ip.ts'
 import { hmacHash } from '../lib/secrets.ts'
 
@@ -154,4 +160,41 @@ export async function reserveSmsSend(
 		),
 	)
 	return { ok: false, retryAfter: Math.max(1, Math.ceil(retryAfterMs / 1000)) }
+}
+
+/**
+ * Deletes send events older than the retention window (served by
+ * `idx_sms_send_events_at`). Inserts prune only now and then, so a quiet
+ * organization's rows (phone and IP hashes) would linger: the hourly tick
+ * fan-out calls this for every organization.
+ */
+export async function pruneSmsSendEvents(db: TenantDatabase, now = Date.now()) {
+	await db
+		.delete(smsSendEvents)
+		.where(lt(smsSendEvents.at, new Date(now - RETENTION_MS)))
+		.run()
+}
+
+/** `pruneSmsSendEvents` for the tick: never throws, ids only in logs. */
+export async function pruneSmsSendEventsForOrg(orgId: string) {
+	try {
+		await pruneSmsSendEvents(await getTenantDb(orgId))
+	} catch (error) {
+		console.error('SMS send event prune failed', {
+			orgId,
+			reason: error instanceof Error ? error.message : 'unknown',
+		})
+	}
+}
+
+/** Erasure: deletes the send events of these phone numbers. */
+export async function eraseSmsSendEvents(
+	db: TenantDatabase | TenantTransaction,
+	phones: string[],
+) {
+	if (phones.length === 0) return
+	await db
+		.delete(smsSendEvents)
+		.where(inJsonList(smsSendEvents.phoneHash, phones.map(phoneHash)))
+		.run()
 }

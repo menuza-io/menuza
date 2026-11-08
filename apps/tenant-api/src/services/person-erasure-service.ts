@@ -17,6 +17,7 @@ import {
 } from '@repo/tenant-db'
 import { and, eq, inArray, sql } from 'drizzle-orm'
 import { forEachInChunks, queryInChunks } from '../lib/chunked-in.ts'
+import { eraseSmsSendEvents } from './sms-send-limits.ts'
 
 /**
  * ONE erasure flow for a person.
@@ -398,6 +399,9 @@ export async function erasePerson(
 				await eraseArchivedRows(tx, chunk)
 				await tx.delete(customers).where(inArray(customers.id, chunk))
 			})
+
+			// Send-code rate-limit rows hold an HMAC of the phone number.
+			await eraseSmsSendEvents(tx, identity.phones)
 
 			// Best effort: only a field whose whole value is the stored phone or
 			// the email can be recognised.

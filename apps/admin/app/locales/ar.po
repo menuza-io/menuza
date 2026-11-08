@@ -278,7 +278,7 @@ msgstr "فشل الإجراء"
 #: app/components/admin/feature-flags.tsx:686
 #: app/components/sso-user-management.tsx:181
 #: app/routes/_admin+/cache.tsx:619
-#: app/routes/_admin+/gdpr-requests.tsx:517
+#: app/routes/_admin+/gdpr-requests.tsx:584
 #: app/routes/_admin+/ip-addresses+/$ip.tsx:251
 #: app/routes/_admin+/ip-addresses+/index.tsx:235
 #: app/routes/_admin+/marketing+/automations._index.tsx:219
@@ -564,11 +564,11 @@ msgstr "هل أنت متأكد من أنك تريد حذف هذا الدور؟"
 msgid "Are you sure you want to delete this system role?"
 msgstr "هل أنت متأكد من أنك تريد حذف دور النظام هذا؟"
 
-#: app/routes/_admin+/gdpr-requests.tsx:470
+#: app/routes/_admin+/gdpr-requests.tsx:537
 msgid "Article 17 fulfilled"
 msgstr "تم استيفاء المادة 17"
 
-#: app/routes/_admin+/gdpr-requests.tsx:436
+#: app/routes/_admin+/gdpr-requests.tsx:503
 msgid "Article 20 requests"
 msgstr "طلبات المادة 20"
 
@@ -842,7 +842,7 @@ msgstr "اسم الحملة"
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:162
 #: app/components/admin-ban-user-dialog.tsx:166
 #: app/components/admin-cache-confirmation-dialog.tsx:111
-#: app/routes/_admin+/gdpr-requests.tsx:596
+#: app/routes/_admin+/gdpr-requests.tsx:663
 #: app/routes/_admin+/print-shop.tsx:193
 #: app/routes/_admin+/roles+/index.tsx:352
 #: app/routes/_admin+/waitlist.tsx:487
@@ -853,7 +853,7 @@ msgstr "إلغاء"
 msgid "Canceled"
 msgstr "ملغي"
 
-#: app/routes/_admin+/gdpr-requests.tsx:374
+#: app/routes/_admin+/gdpr-requests.tsx:430
 #: app/routes/_admin+/print-shop.tsx:76
 msgid "Cancelled"
 msgstr "ملغي"
@@ -947,20 +947,20 @@ msgid "Compare wages as a share of sales across your workplaces."
 msgstr "قارن الأجور كنسبة من المبيعات بين أماكن العمل."
 
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:9
-#: app/routes/_admin+/gdpr-requests.tsx:373
+#: app/routes/_admin+/gdpr-requests.tsx:429
 #: app/routes/_admin+/marketing+/campaigns._index.tsx:31
 msgid "Completed"
 msgstr "مكتمل"
 
-#: app/routes/_admin+/gdpr-requests.tsx:461
+#: app/routes/_admin+/gdpr-requests.tsx:528
 msgid "Completed Deletions"
 msgstr "عمليات الحذف المكتملة"
 
-#: app/routes/_admin+/gdpr-requests.tsx:427
+#: app/routes/_admin+/gdpr-requests.tsx:494
 msgid "Completed Exports"
 msgstr "عمليات التصدير المكتملة"
 
-#: app/routes/_admin+/gdpr-requests.tsx:569
+#: app/routes/_admin+/gdpr-requests.tsx:636
 msgid "Completed: {completedAt}"
 msgstr "اكتمل: {completedAt}"
 
@@ -1047,7 +1047,7 @@ msgstr "الاتصالات"
 #: app/components/admin-organizations-table.tsx:306
 #: app/components/admin-users-table.tsx:229
 #: app/routes/_admin+/audit-logs.tsx:125
-#: app/routes/_admin+/gdpr-requests.tsx:344
+#: app/routes/_admin+/gdpr-requests.tsx:400
 #: app/routes/_admin+/waitlist.tsx:262
 msgid "contains"
 msgstr "يحتوي على"
@@ -1312,7 +1312,7 @@ msgstr "تصميم البريد"
 msgid "Detailed information for IP {ip}"
 msgstr "معلومات تفصيلية لعنوان IP {ip}"
 
-#: app/routes/_admin+/gdpr-requests.tsx:514
+#: app/routes/_admin+/gdpr-requests.tsx:581
 msgid "Details"
 msgstr "التفاصيل"
 
@@ -1520,7 +1520,7 @@ msgstr "سطر موضوع البريد الإلكتروني مطلوب."
 msgid "Email tenant operators"
 msgstr "مراسلة مشغّلي المستأجرين"
 
-#: app/routes/_admin+/gdpr-requests.tsx:345
+#: app/routes/_admin+/gdpr-requests.tsx:401
 msgid "Email, username, or name"
 msgstr "البريد الإلكتروني أو اسم المستخدم أو الاسم"
 
@@ -1636,11 +1636,11 @@ msgstr "الإدخالات:"
 msgid "Epic Startup Team"
 msgstr "فريق Epic Startup"
 
-#: app/routes/_admin+/gdpr-requests.tsx:549
+#: app/routes/_admin+/gdpr-requests.tsx:616
 msgid "Erasure"
 msgstr "المحو"
 
-#: app/routes/_admin+/gdpr-requests.tsx:358
+#: app/routes/_admin+/gdpr-requests.tsx:414
 msgid "Erasure (Article 17)"
 msgstr "المحو (المادة 17)"
 
@@ -1668,7 +1668,7 @@ msgstr "سير عمل قائم على الأحداث لدورة حياة مشغ�
 msgid "Exactly Equals"
 msgstr "يساوي تماماً"
 
-#: app/routes/_admin+/gdpr-requests.tsx:614
+#: app/routes/_admin+/gdpr-requests.tsx:681
 msgid "Expedite Now"
 msgstr "تسريع الآن"
 
@@ -1684,11 +1684,11 @@ msgstr "ينتهي:"
 msgid "Expires: {expiresAt}"
 msgstr "تنتهي الصلاحية: {expiresAt}"
 
-#: app/routes/_admin+/gdpr-requests.tsx:547
+#: app/routes/_admin+/gdpr-requests.tsx:614
 msgid "Export"
 msgstr "تصدير"
 
-#: app/routes/_admin+/gdpr-requests.tsx:357
+#: app/routes/_admin+/gdpr-requests.tsx:413
 msgid "Export (Article 20)"
 msgstr "التصدير (المادة 20)"
 
@@ -1701,13 +1701,13 @@ msgid "Export JSON"
 msgstr "تصدير JSON"
 
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:10
-#: app/routes/_admin+/gdpr-requests.tsx:375
+#: app/routes/_admin+/gdpr-requests.tsx:431
 #: app/routes/_admin+/marketing+/campaigns._index.tsx:33
 #: app/routes/_admin+/print-shop.tsx:75
 msgid "Failed"
 msgstr "فشل"
 
-#: app/routes/_admin+/gdpr-requests.tsx:478
+#: app/routes/_admin+/gdpr-requests.tsx:545
 msgid "Failed Requests"
 msgstr "الطلبات الفاشلة"
 
@@ -1847,7 +1847,7 @@ msgstr "اسم المرسل (اختياري)"
 msgid "Full width"
 msgstr "عرض كامل"
 
-#: app/routes/_admin+/gdpr-requests.tsx:417
+#: app/routes/_admin+/gdpr-requests.tsx:473
 msgid "GDPR Data Requests"
 msgstr "طلبات بيانات GDPR"
 
@@ -2011,7 +2011,7 @@ msgstr "رابط الصورة"
 msgid "Impersonate"
 msgstr "انتحال الشخصية"
 
-#: app/routes/_admin+/gdpr-requests.tsx:453
+#: app/routes/_admin+/gdpr-requests.tsx:520
 msgid "In grace period"
 msgstr "ضمن فترة السماح"
 
@@ -2093,8 +2093,8 @@ msgstr "معلومات IP"
 #: app/components/admin-organizations-table.tsx:327
 #: app/components/admin-users-table.tsx:238
 #: app/routes/_admin+/audit-logs.tsx:152
-#: app/routes/_admin+/gdpr-requests.tsx:353
-#: app/routes/_admin+/gdpr-requests.tsx:366
+#: app/routes/_admin+/gdpr-requests.tsx:409
+#: app/routes/_admin+/gdpr-requests.tsx:422
 #: app/routes/_admin+/waitlist.tsx:271
 #: app/routes/_admin+/waitlist.tsx:284
 msgid "is"
@@ -2284,7 +2284,7 @@ msgstr "إدارة جميع المستخدمين في النظام"
 msgid "Manage Cache →"
 msgstr "إدارة ذاكرة التخزين المؤقت →"
 
-#: app/routes/_admin+/gdpr-requests.tsx:419
+#: app/routes/_admin+/gdpr-requests.tsx:475
 msgid "Manage data export and deletion requests for compliance"
 msgstr "إدارة طلبات تصدير البيانات وحذفها للامتثال"
 
@@ -2308,7 +2308,7 @@ msgstr "إدارة الاحتفاظ برسائل محادثات الفريق ف�
 msgid "Manage Users"
 msgstr "إدارة المستخدمين"
 
-#: app/routes/_admin+/organizations+/$organizationId_+/sso.users.tsx:514
+#: app/routes/_admin+/organizations+/$organizationId_+/sso.users.tsx:513
 msgid "Manage users who authenticate through SSO for {organizationName}"
 msgstr "إدارة المستخدمين الذين يصادقون من خلال SSO لـ {organizationName}"
 
@@ -2553,7 +2553,7 @@ msgstr "لا يوجد وصف"
 msgid "No flags configured"
 msgstr "لم يتم تكوين أي مؤشرات"
 
-#: app/routes/_admin+/gdpr-requests.tsx:637
+#: app/routes/_admin+/gdpr-requests.tsx:704
 msgid "No GDPR requests found"
 msgstr "لم يتم العثور على طلبات GDPR"
 
@@ -2711,7 +2711,7 @@ msgstr "أقدم سجل"
 msgid "On hold"
 msgstr "معلّق"
 
-#: app/routes/_admin+/gdpr-requests.tsx:333
+#: app/routes/_admin+/gdpr-requests.tsx:389
 msgid "On hold: last admin of organization {organizationIds}. It runs once another admin is added there."
 msgstr "معلّق: آخر مسؤول في المؤسسة {organizationIds}. يُنفَّذ بعد إضافة مسؤول آخر إليها."
 
@@ -2938,7 +2938,7 @@ msgstr "قيد الانتظار"
 msgid "Pending Access"
 msgstr "الوصول قيد الانتظار"
 
-#: app/routes/_admin+/gdpr-requests.tsx:444
+#: app/routes/_admin+/gdpr-requests.tsx:511
 msgid "Pending Deletions"
 msgstr "عمليات الحذف قيد الانتظار"
 
@@ -3095,7 +3095,7 @@ msgid "Pro"
 msgstr "احترافي"
 
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:8
-#: app/routes/_admin+/gdpr-requests.tsx:371
+#: app/routes/_admin+/gdpr-requests.tsx:427
 #: app/routes/_admin+/marketing+/campaigns._index.tsx:32
 msgid "Processing"
 msgstr "قيد المعالجة"
@@ -3338,7 +3338,7 @@ msgstr "جارٍ العرض…"
 msgid "Reports"
 msgstr "التقارير"
 
-#: app/routes/_admin+/gdpr-requests.tsx:350
+#: app/routes/_admin+/gdpr-requests.tsx:406
 msgid "Request type"
 msgstr "نوع الطلب"
 
@@ -3346,8 +3346,8 @@ msgstr "نوع الطلب"
 #~ msgid "Request Type"
 #~ msgstr "نوع الطلب"
 
-#: app/routes/_admin+/gdpr-requests.tsx:370
-#: app/routes/_admin+/gdpr-requests.tsx:511
+#: app/routes/_admin+/gdpr-requests.tsx:426
+#: app/routes/_admin+/gdpr-requests.tsx:578
 msgid "Requested"
 msgstr "مُقدَّم"
 
@@ -3364,7 +3364,7 @@ msgstr "اشتراط بريد إلكتروني موثّق"
 msgid "Required. The identity provider can only create accounts and sign people in for email addresses on these domains."
 msgstr "مطلوب. لا يمكن لموفّر الهوية إنشاء حسابات أو تسجيل دخول الأشخاص إلا لعناوين البريد الإلكتروني على هذه النطاقات."
 
-#: app/routes/_admin+/gdpr-requests.tsx:487
+#: app/routes/_admin+/gdpr-requests.tsx:554
 msgid "Requires attention"
 msgstr "يتطلب الانتباه"
 
@@ -3608,7 +3608,7 @@ msgid "Saving…"
 msgstr "جارٍ الحفظ…"
 
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:7
-#: app/routes/_admin+/gdpr-requests.tsx:372
+#: app/routes/_admin+/gdpr-requests.tsx:428
 msgid "Scheduled"
 msgstr "مجدول"
 
@@ -3616,7 +3616,7 @@ msgstr "مجدول"
 msgid "Scheduled vs actual hours and clock-ins"
 msgstr "الساعات المجدولة مقابل الفعلية وتسجيلات الحضور"
 
-#: app/routes/_admin+/gdpr-requests.tsx:564
+#: app/routes/_admin+/gdpr-requests.tsx:631
 msgid "Scheduled: {scheduledFor}"
 msgstr "مجدول: {scheduledFor}"
 
@@ -3808,7 +3808,7 @@ msgstr "تؤدي فترات الاحتفاظ الأقصر إلى حذف الرس
 msgid "Showing {showing} of {totalEvents} events"
 msgstr "عرض {showing} من {totalEvents} حدث"
 
-#: app/routes/_admin+/gdpr-requests.tsx:627
+#: app/routes/_admin+/gdpr-requests.tsx:694
 msgid "Showing {showing} of {totalRequests} requests"
 msgstr "عرض {showing} من {totalRequests} طلب"
 
@@ -3947,7 +3947,7 @@ msgstr "تم تكوين SSO لكنه معطل حالياً. لا يمكن للم
 msgid "SSO Provider"
 msgstr "موفر SSO"
 
-#: app/routes/_admin+/organizations+/$organizationId_+/sso.users.tsx:511
+#: app/routes/_admin+/organizations+/$organizationId_+/sso.users.tsx:510
 msgid "SSO Users"
 msgstr "مستخدمو SSO"
 
@@ -3975,8 +3975,8 @@ msgstr "ابدأ بقالب"
 #: app/components/admin-users-table.tsx:161
 #: app/components/sso-configuration-overview.tsx:232
 #: app/components/sso-user-management.tsx:178
-#: app/routes/_admin+/gdpr-requests.tsx:363
-#: app/routes/_admin+/gdpr-requests.tsx:508
+#: app/routes/_admin+/gdpr-requests.tsx:419
+#: app/routes/_admin+/gdpr-requests.tsx:575
 #: app/routes/_admin+/ip-addresses+/$ip.tsx:114
 #: app/routes/_admin+/ip-addresses+/$ip.tsx:239
 #: app/routes/_admin+/ip-addresses+/index.tsx:217
@@ -4255,6 +4255,10 @@ msgstr "قد تظل المؤسسة السابقة تحوّل خطها إلى ه�
 msgid "The print file could not be made"
 msgstr "تعذّر إنشاء ملف الطباعة"
 
+#: app/routes/_admin+/gdpr-requests.tsx:483
+msgid "The request was not completed"
+msgstr "لم يكتمل الطلب"
+
 #: app/routes/_admin+/print-shop.tsx:98
 msgid "The vendor cancelled or failed the order after it shipped: check before refunding"
 msgstr "ألغى المورّد الطلب أو تعثّر بعد شحنه: تحقّق قبل الاسترداد"
@@ -4430,7 +4434,7 @@ msgstr "صحيح"
 #: app/components/admin-organizations-table.tsx:395
 #: app/components/admin-users-table.tsx:305
 #: app/routes/_admin+/audit-logs.tsx:347
-#: app/routes/_admin+/gdpr-requests.tsx:638
+#: app/routes/_admin+/gdpr-requests.tsx:705
 #: app/routes/_admin+/waitlist.tsx:335
 msgid "Try different filters or clear them."
 msgstr "جرّب مرشحات مختلفة أو أزلها."
@@ -4440,7 +4444,7 @@ msgid "TTL"
 msgstr "TTL"
 
 #: app/components/admin/feature-flags.tsx:165
-#: app/routes/_admin+/gdpr-requests.tsx:505
+#: app/routes/_admin+/gdpr-requests.tsx:572
 msgid "Type"
 msgstr "النوع"
 
@@ -4535,8 +4539,8 @@ msgstr "يُستخدم عندما تكون القيمة فارغة"
 #: app/components/admin/feature-flags.tsx:787
 #: app/components/sso-user-management.tsx:166
 #: app/routes/_admin+/audit-logs.tsx:283
-#: app/routes/_admin+/gdpr-requests.tsx:341
-#: app/routes/_admin+/gdpr-requests.tsx:502
+#: app/routes/_admin+/gdpr-requests.tsx:397
+#: app/routes/_admin+/gdpr-requests.tsx:569
 #: app/routes/_admin+/ip-addresses+/$ip.tsx:233
 #: app/routes/_admin+/waitlist.tsx:347
 msgid "User"

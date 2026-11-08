@@ -141,10 +141,11 @@ export async function deleteImpersonationSessionFromDb(
 export type ImpersonationEndReason = 'stopped' | 'expired' | 'replaced'
 
 /**
- * Ends the impersonation sessions matching `where`: each gets an
- * ADMIN_IMPERSONATION_END entry with the reason before its row is deleted, so a
- * START is never left without an END (an expired session swept up or replaced
- * by a new one included). Returns how many sessions were ended.
+ * Ends the impersonation sessions matching `where`: each session this call
+ * deletes gets one ADMIN_IMPERSONATION_END entry with the reason (an expired
+ * session swept up or replaced by a new one included). Rows are deleted first,
+ * so two callers ending the same session (a stop click and the hourly cleanup)
+ * log it once. Returns how many sessions were ended.
  */
 export async function endImpersonationSessions({
 	where,
@@ -171,7 +172,21 @@ export async function endImpersonationSessions({
 		.from(ImpersonationSession)
 		.innerJoin(targetUser, eq(ImpersonationSession.targetUserId, targetUser.id))
 		.where(where)
+	if (sessions.length === 0) return 0
+	// Delete first and log only the sessions this call removed: a stop click
+	// racing the hourly cleanup must log one end, not two.
+	const deleted = await db
+		.delete(ImpersonationSession)
+		.where(
+			inArray(
+				ImpersonationSession.id,
+				sessions.map((session) => session.id),
+			),
+		)
+		.returning({ id: ImpersonationSession.id })
+	const deletedIds = new Set(deleted.map((row) => row.id))
 	for (const session of sessions) {
+		if (!deletedIds.has(session.id)) continue
 		const endReason = session.expiresAt <= now ? 'expired' : reason
 		const targetName = session.targetName || session.targetUsername
 		// Expired sessions end at their expiry, not when they are swept up.
@@ -198,16 +213,6 @@ export async function endImpersonationSessions({
 			request,
 		)
 	}
-	if (sessions.length === 0) return 0
-	const deleted = await db
-		.delete(ImpersonationSession)
-		.where(
-			inArray(
-				ImpersonationSession.id,
-				sessions.map((session) => session.id),
-			),
-		)
-		.returning({ id: ImpersonationSession.id })
 	return deleted.length
 }
 

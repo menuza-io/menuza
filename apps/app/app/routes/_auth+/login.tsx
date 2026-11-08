@@ -23,7 +23,7 @@ import { StatusButton } from '@repo/ui/status-button'
 import { LoginPasswordSchema } from '@repo/validation'
 import { startAuthentication } from '@simplewebauthn/browser'
 import { type PublicKeyCredentialRequestOptionsJSON } from '@simplewebauthn/server'
-import { useOptimistic, useState, useTransition } from 'react'
+import { useId, useOptimistic, useState, useTransition } from 'react'
 import {
 	data,
 	Form,
@@ -40,6 +40,7 @@ import {
 	convertErrorsToFieldFormat,
 } from '#app/components/forms.tsx'
 import {
+	TurnstileSubmitStatus,
 	TurnstileWidget,
 	useTurnstileReady,
 } from '#app/components/turnstile-widget.tsx'
@@ -757,6 +758,7 @@ function PasswordLoginStep({
 	})
 
 	const isPending = useIsPending()
+	const turnstileHintId = useId()
 	const [turnstileReady, setTurnstileReady] =
 		useTurnstileReady(turnstileSiteKey)
 	const navigate = useNavigate()
@@ -899,11 +901,17 @@ function PasswordLoginStep({
 					/>
 					<ErrorList errors={form.errors} id={form.errorId} />
 
+					<TurnstileSubmitStatus
+						id={turnstileHintId}
+						siteKey={turnstileSiteKey}
+						ready={turnstileReady}
+					/>
 					<StatusButton
 						className="w-full"
 						status={isPending ? 'pending' : (form.status ?? 'idle')}
 						type="submit"
 						disabled={isPending || !turnstileReady}
+						aria-describedby={turnstileReady ? undefined : turnstileHintId}
 					>
 						<Trans>Sign In</Trans>
 					</StatusButton>

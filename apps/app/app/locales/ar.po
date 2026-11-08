@@ -1148,7 +1148,7 @@ msgstr "• إذا كان العميل {0}{1}<0>{2}</0> → <1>فرع صحيح</
 msgid "• Otherwise → <0>False branch</0>"
 msgstr "• وإلا → <0>فرع خاطئ</0>"
 
-#: app/routes/_auth+/login.tsx:811
+#: app/routes/_auth+/login.tsx:813
 msgid "← Back to SSO login"
 msgstr "→ العودة إلى تسجيل الدخول بـ SSO"
 
@@ -1602,7 +1602,7 @@ msgstr "تم نسخ معرف الحساب إلى الحافظة"
 msgid "Account settings"
 msgstr "إعدادات الحساب"
 
-#: app/routes/_auth+/login.tsx:328
+#: app/routes/_auth+/login.tsx:329
 msgid "Account Suspended"
 msgstr "الحساب معلق"
 
@@ -2582,7 +2582,7 @@ msgstr "محجوز مسبقًا"
 msgid "Already exists."
 msgstr "موجود بالفعل."
 
-#: app/routes/_auth+/signup.tsx:291
+#: app/routes/_auth+/signup.tsx:300
 msgid "Already have an account?"
 msgstr "هل لديك حساب بالفعل؟"
 
@@ -3288,7 +3288,7 @@ msgid "Back to latest"
 msgstr "العودة إلى أحدث الرسائل"
 
 #: app/routes/_auth+/forgot-password.sent.tsx:49
-#: app/routes/_auth+/forgot-password.tsx:290
+#: app/routes/_auth+/forgot-password.tsx:302
 msgid "Back to login"
 msgstr "العودة لتسجيل الدخول"
 
@@ -5090,6 +5090,10 @@ msgstr "أكمل الخطوات التالية."
 msgid "Complete the OAuth flow when prompted"
 msgstr "أكمل عملية OAuth عند المطالبة"
 
+#: app/components/turnstile-widget.tsx:117
+msgid "Complete the security check to continue."
+msgstr "أكمل التحقق الأمني للمتابعة."
+
 #: app/utils/turnstile.server.ts:45
 msgid "Complete the security check, then try again."
 msgstr "أكمل التحقق الأمني، ثم حاول مرة أخرى."
@@ -5107,7 +5111,7 @@ msgstr "إكمال إعداد المصادقة الثنائية"
 msgid "Complete your profile"
 msgstr "أكمل ملفك الشخصي"
 
-#: app/routes/_auth+/signup.tsx:216
+#: app/routes/_auth+/signup.tsx:219
 msgid "Complete your signup to join the organization"
 msgstr "أكمل التسجيل للانضمام إلى المنظمة"
 
@@ -5362,7 +5366,7 @@ msgstr "محرر المحتوى"
 #: app/components/kiosk/pin-pad.tsx:127
 #: app/routes/_app+/$orgSlug_+/marketing+/print.new.tsx:208
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.terminate.tsx:156
-#: app/routes/_auth+/login.tsx:729
+#: app/routes/_auth+/login.tsx:730
 #: app/routes/mock-payments+/checkout-com.3ds.$attemptId.tsx:95
 #: app/routes/organizations+/create.tsx:854
 msgid "Continue"
@@ -5376,11 +5380,11 @@ msgstr "متابعة إعداد المدفوعات"
 msgid "Continue to Payment"
 msgstr "المتابعة إلى الدفع"
 
-#: app/routes/_auth+/login.tsx:641
+#: app/routes/_auth+/login.tsx:642
 msgid "Continue with"
 msgstr "المتابعة باستخدام"
 
-#: app/routes/_auth+/login.tsx:316
+#: app/routes/_auth+/login.tsx:317
 msgid "Continue with your password"
 msgstr "تابع باستخدام كلمة المرور الخاصة بك"
 
@@ -5747,7 +5751,7 @@ msgstr "إنشاء مطبوعة"
 msgid "Create a ready-made role for the people who run your team. Each one becomes a normal custom role that you can rename, edit, or delete."
 msgstr "أنشئ دورًا جاهزًا للأشخاص الذين يديرون فريقك. يصبح كل دور دورًا مخصصًا عاديًا يمكنك إعادة تسميته أو تعديله أو حذفه."
 
-#: app/routes/_auth+/login.tsx:417
+#: app/routes/_auth+/login.tsx:418
 #: app/routes/_auth+/onboarding_.$provider.tsx:392
 #: app/routes/_auth+/onboarding.tsx:554
 msgid "Create account"
@@ -5757,7 +5761,7 @@ msgstr "إنشاء حساب"
 msgid "Create action items"
 msgstr "إنشاء عناصر العمل"
 
-#: app/routes/_auth+/signup.tsx:211
+#: app/routes/_auth+/signup.tsx:214
 msgid "Create an account"
 msgstr "إنشاء حساب"
 
@@ -6915,7 +6919,7 @@ msgstr "لا يعمل في مكان العمل هذا"
 msgid "Domain"
 msgstr "النطاق"
 
-#: app/routes/_auth+/login.tsx:408
+#: app/routes/_auth+/login.tsx:409
 msgid "Don't have an account?"
 msgstr "ليس لديك حساب؟"
 
@@ -7452,8 +7456,8 @@ msgstr "مؤهل لإعادة التوظيف."
 #: app/components/website/link-inspector.tsx:468
 #: app/routes/_app+/$orgSlug_+/staff+/team.new.tsx:188
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:237
-#: app/routes/_auth+/login.tsx:826
-#: app/routes/_auth+/signup.tsx:255
+#: app/routes/_auth+/login.tsx:828
+#: app/routes/_auth+/signup.tsx:258
 #: app/routes/mock-payments+/__card-form.tsx:30
 #: app/utils/website/field-types.ts:37
 #: app/utils/website/field-types.ts:40
@@ -7489,8 +7493,8 @@ msgstr "البريد الإلكتروني متوقف"
 msgid "Email is turned off, so nothing was sent"
 msgstr "البريد الإلكتروني متوقف، لذا لم يُرسل شيء"
 
-#: app/routes/_auth+/login.tsx:702
-#: app/routes/_auth+/login.tsx:831
+#: app/routes/_auth+/login.tsx:703
+#: app/routes/_auth+/login.tsx:833
 msgid "Email or Username"
 msgstr "البريد الإلكتروني / اسم المستخدم"
 
@@ -7849,8 +7853,8 @@ msgstr "أدخل وقت بدء الاستراحة وانتهائها."
 msgid "Enter who receives the parcel"
 msgstr "أدخل اسم مستلم الطرد"
 
-#: app/routes/_auth+/login.tsx:708
-#: app/routes/_auth+/login.tsx:838
+#: app/routes/_auth+/login.tsx:709
+#: app/routes/_auth+/login.tsx:840
 msgid "Enter your email or username"
 msgstr "أدخل بريدك الإلكتروني أو اسم المستخدم"
 
@@ -7867,7 +7871,7 @@ msgstr "أدخل كلمة المرور الجديدة"
 msgid "Enter your new password below."
 msgstr "أدخل كلمة المرور الجديدة أدناه."
 
-#: app/routes/_auth+/login.tsx:867
+#: app/routes/_auth+/login.tsx:869
 msgid "Enter your password"
 msgstr "أدخل كلمة المرور"
 
@@ -7880,7 +7884,7 @@ msgstr "أدخل رقمك السري"
 msgid "Enter your username"
 msgstr "أدخل اسم المستخدم"
 
-#: app/routes/_auth+/forgot-password.tsx:255
+#: app/routes/_auth+/forgot-password.tsx:260
 msgid "Enter your username or email"
 msgstr "أدخل اسم المستخدم أو البريد الإلكتروني"
 
@@ -8201,7 +8205,7 @@ msgstr "فشل"
 msgid "Failed ({lastStatus})"
 msgstr "فشل ({lastStatus})"
 
-#: app/routes/_auth+/login.tsx:490
+#: app/routes/_auth+/login.tsx:491
 msgid "Failed to authenticate with passkey: {errorMessage}"
 msgstr "فشل التحقق باستخدام مفتاح المرور: {errorMessage}"
 
@@ -8563,7 +8567,7 @@ msgstr "لمعرفة ساعات العمل، اضغط 1. للتحدث مع فر�
 msgid "For shifts longer than"
 msgstr "للورديات الأطول من"
 
-#: app/routes/_auth+/forgot-password.tsx:219
+#: app/routes/_auth+/forgot-password.tsx:224
 msgid "Forgot Password"
 msgstr "نسيت كلمة المرور"
 
@@ -8572,7 +8576,7 @@ msgstr "نسيت كلمة المرور"
 msgid "Forgot to clock out"
 msgstr "نسي تسجيل الانصراف"
 
-#: app/routes/_auth+/login.tsx:860
+#: app/routes/_auth+/login.tsx:862
 msgid "Forgot your password?"
 msgstr "هل نسيت كلمة المرور؟"
 
@@ -8734,7 +8738,7 @@ msgstr "إنشاء رموز احتياطية"
 msgid "Generate with AI"
 msgstr "إنشاء بالذكاء الاصطناعي"
 
-#: app/routes/_auth+/login.tsx:452
+#: app/routes/_auth+/login.tsx:453
 msgid "Generating Authentication Options"
 msgstr "جاري إنشاء خيارات المصادقة"
 
@@ -9722,7 +9726,7 @@ msgstr "عنوان البريد الإلكتروني غير صالح"
 msgid "Invalid graph format"
 msgstr "تنسيق الرسم البياني غير صالح"
 
-#: app/routes/_auth+/login.tsx:241
+#: app/routes/_auth+/login.tsx:242
 msgid "Invalid username or password"
 msgstr "اسم المستخدم أو كلمة المرور غير صحيحة"
 
@@ -9943,7 +9947,7 @@ msgstr "وظائف يمكن للناس رؤيتها والتقديم عليها 
 msgid "Join Discord server"
 msgstr "انضم إلى خادم Discord"
 
-#: app/routes/_auth+/signup.tsx:209
+#: app/routes/_auth+/signup.tsx:212
 msgid "Join organization"
 msgstr "الانضمام إلى المنظمة"
 
@@ -10249,8 +10253,8 @@ msgstr "اسم العائلة"
 msgid "Last opened {lastOpened}."
 msgstr "آخر فتح في {lastOpened}."
 
-#: app/routes/_auth+/login.tsx:532
-#: app/routes/_auth+/login.tsx:543
+#: app/routes/_auth+/login.tsx:533
+#: app/routes/_auth+/login.tsx:544
 msgid "Last used"
 msgstr "آخر استخدام"
 
@@ -10744,11 +10748,11 @@ msgstr "القفل متوقف في مكان العمل هذا. فعّله من �
 msgid "Log out"
 msgstr "تسجيل الخروج"
 
-#: app/routes/_auth+/login.tsx:345
+#: app/routes/_auth+/login.tsx:346
 msgid "Login Error"
 msgstr "خطأ في تسجيل الدخول"
 
-#: app/routes/_auth+/login.tsx:446
+#: app/routes/_auth+/login.tsx:447
 msgid "Login with a passkey"
 msgstr "تسجيل الدخول بمفتاح المرور"
 
@@ -10838,7 +10842,7 @@ msgstr "التقييمات المنخفضة"
 msgid "m"
 msgstr "د"
 
-#: app/routes/_auth+/signup.tsx:261
+#: app/routes/_auth+/signup.tsx:264
 msgid "m@example.com"
 msgstr "م@مثال.com"
 
@@ -12601,7 +12605,7 @@ msgstr "لا توجد أماكن عمل للعرض"
 msgid "No workplaces yet"
 msgstr "لا توجد أماكن عمل بعد"
 
-#: app/routes/_auth+/forgot-password.tsx:222
+#: app/routes/_auth+/forgot-password.tsx:227
 msgid "No worries, we'll send you reset instructions."
 msgstr "لا تقلق، سنرسل لك تعليمات إعادة التعيين."
 
@@ -13609,11 +13613,11 @@ msgstr "اختياري. يعرّف الذكاء الاصطناعي نفسه دا
 msgid "Options"
 msgstr "الخيارات"
 
-#: app/routes/_auth+/signup.tsx:241
+#: app/routes/_auth+/signup.tsx:244
 msgid "Or continue with"
 msgstr "أو تابع باستخدام"
 
-#: app/routes/_auth+/login.tsx:363
+#: app/routes/_auth+/login.tsx:364
 msgid "Or continue with email or username"
 msgstr "أو تابع باستخدام البريد الإلكتروني أو اسم المستخدم"
 
@@ -14011,7 +14015,7 @@ msgid "Passkeys are a secure, passwordless way to sign in using your device's bi
 msgstr "مفاتيح المرور هي طريقة آمنة وبدون كلمة مرور لتسجيل الدخول باستخدام القياسات الحيوية لجهازك."
 
 #: app/components/settings/password-form.tsx:112
-#: app/routes/_auth+/login.tsx:854
+#: app/routes/_auth+/login.tsx:856
 #: app/routes/_auth+/onboarding.tsx:473
 #: app/routes/mock-payments+/checkout-com.3ds.$attemptId.tsx:83
 msgid "Password"
@@ -14749,8 +14753,8 @@ msgstr "يرجى إدخال استعلام بحث"
 msgid "Please enter your 2FA code to verify your identity."
 msgstr "يرجى إدخال رمز المصادقة الثنائية للتحقق من هويتك."
 
-#: app/routes/_auth+/login.tsx:126
-#: app/routes/_auth+/login.tsx:675
+#: app/routes/_auth+/login.tsx:127
+#: app/routes/_auth+/login.tsx:676
 msgid "Please enter your email or username"
 msgstr "يرجى إدخال بريدك الإلكتروني أو اسم المستخدم"
 
@@ -15511,7 +15515,7 @@ msgstr "اقتراح جدول"
 msgid "Recommended"
 msgstr "موصى به"
 
-#: app/routes/_auth+/login.tsx:645
+#: app/routes/_auth+/login.tsx:646
 msgid "Recommended for"
 msgstr "موصى به لـ"
 
@@ -15716,14 +15720,14 @@ msgstr "إعادة تحميل الصفحة"
 msgid "Reload the page to try again."
 msgstr "أعد تحميل الصفحة للمحاولة مرة أخرى."
 
-#: app/routes/_auth+/login.tsx:889
+#: app/routes/_auth+/login.tsx:891
 #: app/routes/_auth+/onboarding_.$provider.tsx:375
 #: app/routes/_auth+/onboarding.tsx:540
 msgid "Remember me"
 msgstr "تذكرني"
 
 #: app/routes/_auth+/forgot-password.sent.tsx:47
-#: app/routes/_auth+/forgot-password.tsx:288
+#: app/routes/_auth+/forgot-password.tsx:300
 msgid "Remember your password?"
 msgstr "هل تتذكر كلمة المرور الخاصة بك؟"
 
@@ -16127,7 +16131,7 @@ msgstr "اطلب الحذف الدائم لحسابك وجميع البيانا�
 msgid "Request time off"
 msgstr "طلب إجازة"
 
-#: app/routes/_auth+/login.tsx:458
+#: app/routes/_auth+/login.tsx:459
 msgid "Requesting your authorization"
 msgstr "جاري طلب التفويض"
 
@@ -17204,9 +17208,13 @@ msgstr "أمّن حسابك بخطوة تحقق إضافية"
 msgid "Security"
 msgstr "الأمان"
 
-#: app/components/turnstile-widget.tsx:171
+#: app/components/turnstile-widget.tsx:224
 msgid "Security check"
 msgstr "التحقق الأمني"
+
+#: app/components/turnstile-widget.tsx:115
+msgid "Security check complete."
+msgstr "اكتمل التحقق الأمني."
 
 #: app/components/settings/passkey-manager.tsx:200
 msgid "Security Key"
@@ -17469,7 +17477,7 @@ msgstr "إرسال الآن"
 msgid "Send request"
 msgstr "إرسال الطلب"
 
-#: app/routes/_auth+/forgot-password.tsx:282
+#: app/routes/_auth+/forgot-password.tsx:294
 msgid "Send reset instructions"
 msgstr "إرسال تعليمات إعادة التعيين"
 
@@ -17993,15 +18001,15 @@ msgstr "مرضية"
 msgid "Sick leave"
 msgstr "إجازة مرضية"
 
-#: app/routes/_auth+/signup.tsx:300
+#: app/routes/_auth+/signup.tsx:309
 msgid "Sign in"
 msgstr "تسجيل الدخول"
 
-#: app/routes/_auth+/login.tsx:908
+#: app/routes/_auth+/login.tsx:916
 msgid "Sign In"
 msgstr "تسجيل الدخول"
 
-#: app/routes/_auth+/login.tsx:318
+#: app/routes/_auth+/login.tsx:319
 msgid "Sign in to your account"
 msgstr "تسجيل الدخول إلى حسابك"
 
@@ -18013,7 +18021,7 @@ msgstr "تسجيل الخروج"
 msgid "Sign out of all other devices"
 msgstr "تسجيل الخروج من جميع الأجهزة الأخرى"
 
-#: app/routes/_auth+/signup.tsx:284
+#: app/routes/_auth+/signup.tsx:293
 msgid "Sign up"
 msgstr "إنشاء حساب"
 
@@ -18021,7 +18029,7 @@ msgstr "إنشاء حساب"
 msgid "Sign Up"
 msgstr "إنشاء حساب"
 
-#: app/routes/_auth+/signup.tsx:218
+#: app/routes/_auth+/signup.tsx:221
 msgid "Sign up with your social account or email"
 msgstr "أنشئ حساباً باستخدام حساب التواصل الاجتماعي أو البريد الإلكتروني"
 
@@ -18037,8 +18045,8 @@ msgstr "تم تسجيل الدخول كـ"
 msgid "Signed webhook deliveries, newest first."
 msgstr "عمليات تسليم الويب هوك الموقّعة، الأحدث أولًا."
 
-#: app/routes/_auth+/login.tsx:615
-#: app/routes/_auth+/login.tsx:793
+#: app/routes/_auth+/login.tsx:616
+#: app/routes/_auth+/login.tsx:795
 msgid "Signing in as"
 msgstr "تسجيل الدخول باسم"
 
@@ -19894,7 +19902,7 @@ msgstr "لا يمكن أن تنتهي الوردية الثانية عند وق�
 msgid "The second shift overlaps the first."
 msgstr "الوردية الثانية تتداخل مع الأولى."
 
-#: app/components/turnstile-widget.tsx:178
+#: app/components/turnstile-widget.tsx:231
 msgid "The security check could not load. Turn off content blockers or check your connection, then try again."
 msgstr "تعذّر تحميل التحقق الأمني. أوقف أدوات حظر المحتوى أو تحقق من اتصالك، ثم حاول مرة أخرى."
 
@@ -20067,7 +20075,7 @@ msgstr "لا يوجد أشخاص آخرون في هذه المؤسسة لمشا�
 msgid "There is nothing new to publish this week."
 msgstr "لا يوجد جديد للنشر هذا الأسبوع."
 
-#: app/routes/_auth+/login.tsx:349
+#: app/routes/_auth+/login.tsx:350
 msgid "There was an issue with your login attempt. Please try again."
 msgstr "حدثت مشكلة في محاولة تسجيل الدخول. يرجى المحاولة مرة أخرى."
 
@@ -21036,7 +21044,7 @@ msgstr "أُبلغوا"
 msgid "Too many hashtags for Facebook."
 msgstr "عدد الوسوم كبير جدًا لفيسبوك."
 
-#: app/routes/_auth+/forgot-password.tsx:234
+#: app/routes/_auth+/forgot-password.tsx:239
 msgid "Too Many Requests"
 msgstr "طلبات كثيرة جداً"
 
@@ -21318,7 +21326,7 @@ msgstr "جرّب تعديل البحث أو الفلتر."
 #: app/components/staff/schedule/schedule-page.tsx:408
 #: app/components/staff/timeclock-today.tsx:232
 #: app/components/staff/timesheets/timesheets-page.tsx:692
-#: app/components/turnstile-widget.tsx:192
+#: app/components/turnstile-widget.tsx:252
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:372
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:806
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:159
@@ -22002,7 +22010,7 @@ msgstr "استخدم الصيغة الدولية، مثل +15551234567."
 msgid "Use own time clock"
 msgstr "استخدام ساعة الدوام الخاصة"
 
-#: app/routes/_auth+/login.tsx:658
+#: app/routes/_auth+/login.tsx:659
 msgid "Use password instead"
 msgstr "استخدم كلمة المرور بدلاً من ذلك"
 
@@ -22071,18 +22079,18 @@ msgstr "مفيد إذا كان على الفريق تسجيل ما حدث بعد
 #~ msgstr "مستخدم"
 
 #: app/components/settings/cards/profile-card.tsx:133
-#: app/routes/_auth+/login.tsx:828
+#: app/routes/_auth+/login.tsx:830
 #: app/routes/_auth+/onboarding_.$provider.tsx:304
 #: app/routes/_auth+/onboarding.tsx:439
 msgid "Username"
 msgstr "اسم المستخدم"
 
-#: app/routes/_auth+/forgot-password.tsx:250
+#: app/routes/_auth+/forgot-password.tsx:255
 msgid "Username or Email"
 msgstr "اسم المستخدم أو البريد الإلكتروني"
 
-#: app/routes/_auth+/login.tsx:115
-#: app/routes/_auth+/login.tsx:753
+#: app/routes/_auth+/login.tsx:116
+#: app/routes/_auth+/login.tsx:754
 msgid "Username or email is required"
 msgstr "اسم المستخدم أو البريد الإلكتروني مطلوب"
 
@@ -22152,7 +22160,7 @@ msgstr "تحقق من الخط"
 msgid "Verify your business line"
 msgstr "تحقق من خط نشاطك التجاري"
 
-#: app/routes/_auth+/login.tsx:460
+#: app/routes/_auth+/login.tsx:461
 msgid "Verifying your passkey"
 msgstr "جاري التحقق من مفتاح المرور"
 
@@ -22663,7 +22671,7 @@ msgstr "لا نحتفظ بنسخة، لذا لا يمكن استرجاعه لا�
 msgid "We do not pick this for you. Until you choose, overtime is estimated at each workplace separately."
 msgstr "لا نختار هذا نيابةً عنك. إلى أن تختار، تُقدَّر الساعات الإضافية في كل مكان عمل على حدة."
 
-#: app/routes/_auth+/login.tsx:619
+#: app/routes/_auth+/login.tsx:620
 msgid "We found your organization:"
 msgstr "وجدنا منظمتك:"
 
@@ -22785,7 +22793,7 @@ msgid "Welcome aboard!"
 msgstr "مرحباً بك على متن الطائرة!"
 
 #: app/components/kiosk/kiosk-screens.tsx:661
-#: app/routes/_auth+/login.tsx:308
+#: app/routes/_auth+/login.tsx:309
 msgid "Welcome back"
 msgstr "مرحباً بعودتك"
 
@@ -23594,7 +23602,7 @@ msgstr "تم تسجيل انصرافك تلقائيًا."
 msgid "You’re all caught up"
 msgstr "قرأت جميع الردود"
 
-#: app/routes/_auth+/login.tsx:486
+#: app/routes/_auth+/login.tsx:487
 msgid "You're logged in! Navigating..."
 msgstr "تم تسجيل الدخول! جاري التوجيه..."
 
@@ -23614,7 +23622,7 @@ msgstr "أنت مسجل الدخول على {sessionCount, plural, one {# جها
 msgid "You've drafted answers many times this hour. Try again later."
 msgstr "لقد صغت إجابات مرات عديدة خلال هذه الساعة. حاول مرة أخرى لاحقًا."
 
-#: app/routes/_auth+/login.tsx:332
+#: app/routes/_auth+/login.tsx:333
 msgid "Your account has been suspended. Please contact support if you believe this is an error."
 msgstr "تم تعليق حسابك. يرجى الاتصال بالدعم إذا كنت تعتقد أن هذا خطأ."
 
