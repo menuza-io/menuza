@@ -55,6 +55,8 @@ const INVENTORY_TABLES = [
 	'inv_storage_areas',
 	'inv_supplier_products',
 	'inv_suppliers',
+	'inv_transfer_lines',
+	'inv_transfers',
 	'inv_waste',
 ]
 
@@ -93,6 +95,11 @@ const INVENTORY_TRIGGERS = [
 	'inv_recipes_facts_fixed',
 	'inv_recipes_made_item_owner',
 	'inv_recipes_no_delete',
+	'inv_transfer_lines_frozen',
+	'inv_transfer_lines_no_delete',
+	'inv_transfer_lines_no_insert',
+	'inv_transfers_closed_final',
+	'inv_transfers_forward_only',
 	'inv_waste_no_delete',
 	'inv_waste_no_update',
 	'inv_waste_reversal_matches',

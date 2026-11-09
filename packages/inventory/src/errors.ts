@@ -35,6 +35,9 @@ export const INVENTORY_ERROR_CODES = [
 	'not_a_made_item',
 	// Phase 4 (additive).
 	'task_closed',
+	// Phase 5 (additive).
+	'transfer_closed',
+	'transfer_same_location',
 ] as const
 export type InventoryErrorCode = (typeof INVENTORY_ERROR_CODES)[number]
 

@@ -8373,6 +8373,111 @@ export const invPrepTasks = sqliteTable(
 	],
 )
 
+// ── Phase 5: transfers ──────────────────────────────────────────────────────
+
+export const INV_TRANSFER_KIND_VALUES = ['transfer', 'request'] as const
+export const INV_TRANSFER_STATUS_VALUES = [
+	'requested',
+	'draft',
+	'sent',
+	'received',
+	'cancelled',
+] as const
+
+// Stock moving between two locations of the organization, or a branch asking a
+// central kitchen for stock (`kind = 'request'`). Stock leaves the sender when
+// the transfer is sent (`transfer_out` movements) and enters the receiver when
+// it is received (`transfer_in`); the difference is missing in transit and
+// stays on the record. A closed transfer (received, cancelled) never changes
+// (trigger).
+export const invTransfers = sqliteTable(
+	'inv_transfers',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		number: integer('number').notNull(),
+		kind: text('kind', { enum: INV_TRANSFER_KIND_VALUES }).notNull(),
+		status: text('status', { enum: INV_TRANSFER_STATUS_VALUES }).notNull(),
+		fromLocationId: text('from_location_id').notNull(),
+		toLocationId: text('to_location_id').notNull(),
+		note: text('note'),
+		clientId: text('client_id').notNull(),
+		createdByKind: text('created_by_kind', {
+			enum: INV_ACTOR_KIND_VALUES,
+		}).notNull(),
+		createdById: text('created_by_id'),
+		sentAt: integer('sent_at'),
+		sentByKind: text('sent_by_kind', { enum: INV_ACTOR_KIND_VALUES }),
+		sentById: text('sent_by_id'),
+		receivedAt: integer('received_at'),
+		receivedByKind: text('received_by_kind', { enum: INV_ACTOR_KIND_VALUES }),
+		receivedById: text('received_by_id'),
+		cancelledAt: integer('cancelled_at'),
+		version: integer('version').notNull().default(1),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+	},
+	(table) => [
+		uniqueIndex('uniq_inv_transfers_number').on(table.number),
+		uniqueIndex('uniq_inv_transfers_client').on(table.clientId),
+		index('idx_inv_transfers_from').on(table.fromLocationId, table.status),
+		index('idx_inv_transfers_to').on(table.toLocationId, table.status),
+		check(
+			'chk_inv_transfers_kind',
+			oneOf(table.kind, INV_TRANSFER_KIND_VALUES),
+		),
+		check(
+			'chk_inv_transfers_status',
+			oneOf(table.status, INV_TRANSFER_STATUS_VALUES),
+		),
+		check(
+			'chk_inv_transfers_places',
+			sql`${table.fromLocationId} <> ${table.toLocationId}`,
+		),
+		check(
+			'chk_inv_transfers_start',
+			sql`(${table.kind} = 'request' and ${table.status} <> 'draft') or (${table.kind} = 'transfer' and ${table.status} <> 'requested')`,
+		),
+	],
+)
+
+export const invTransferLines = sqliteTable(
+	'inv_transfer_lines',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		transferId: text('transfer_id')
+			.notNull()
+			.references(() => invTransfers.id),
+		itemId: text('item_id')
+			.notNull()
+			.references(() => invItems.id),
+		requestedQuantity: integer('requested_quantity').notNull(),
+		sentQuantity: integer('sent_quantity'),
+		receivedQuantity: integer('received_quantity'),
+		// Average cost per base unit (micro-minor) when it was sent, so what
+		// arrives is valued at what left. Null when the item had no cost.
+		unitCostMicro: integer('unit_cost_micro'),
+		costCurrency: text('cost_currency'),
+		sortOrder: integer('sort_order').notNull().default(0),
+	},
+	(table) => [
+		uniqueIndex('uniq_inv_transfer_lines_item').on(
+			table.transferId,
+			table.itemId,
+		),
+		index('idx_inv_transfer_lines_item').on(table.itemId),
+		check(
+			'chk_inv_transfer_lines_quantities',
+			sql`${table.requestedQuantity} >= 0 and (${table.sentQuantity} is null or ${table.sentQuantity} >= 0) and (${table.receivedQuantity} is null or ${table.receivedQuantity} >= 0)`,
+		),
+	],
+)
+
+export type InvTransferRow = typeof invTransfers.$inferSelect
+export type InvTransferLineRow = typeof invTransferLines.$inferSelect
 export type InvPrepTaskRow = typeof invPrepTasks.$inferSelect
 export type InvSoldOutRow = typeof invSoldOut.$inferSelect
 export type InvSettingsRow = typeof invSettings.$inferSelect

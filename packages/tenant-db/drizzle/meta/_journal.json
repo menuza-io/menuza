@@ -267,6 +267,13 @@
 			"when": 1794243667152,
 			"tag": "0037_inventory_prep",
 			"breakpoints": true
+		},
+		{
+			"idx": 38,
+			"version": "6",
+			"when": 1794245121651,
+			"tag": "0038_inventory_transfers",
+			"breakpoints": true
 		}
 	]
 }

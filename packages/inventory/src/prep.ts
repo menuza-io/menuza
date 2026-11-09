@@ -147,10 +147,15 @@ export function suggestPrepAmount(input: {
 	demandBp: number
 	/** Base thousandths one batch makes (`makesQuantity`), when known. */
 	batchSize: number | null
+	/**
+	 * What branches have asked this place for and has not left yet (a central
+	 * kitchen): made on top of the level, so the requests can be filled.
+	 */
+	committed?: number
 }): PrepSuggestion {
-	const target = Math.round(
-		(input.fillUpTo * input.demandBp) / NEUTRAL_DEMAND_BP,
-	)
+	const target =
+		Math.round((input.fillUpTo * input.demandBp) / NEUTRAL_DEMAND_BP) +
+		Math.max(0, input.committed ?? 0)
 	const need = Math.max(0, target - Math.max(0, input.onHand))
 	if (need === 0)
 		return { amount: 0, batches: input.batchSize ? 0 : null, target }

@@ -1,7 +1,7 @@
 import { foodCostBp, type foodCostSchema } from '@repo/inventory'
 import { addDays } from '@repo/reservations'
 import { invCounts, invMovements } from '@repo/tenant-db'
-import { and, desc, eq, gt, isNull, lte, sql } from 'drizzle-orm'
+import { and, desc, eq, gt, inArray, isNull, lte, sql } from 'drizzle-orm'
 import { type z } from 'zod'
 import { type InventoryReader } from '../lib/inventory-write.ts'
 import { readItemSales } from './item-sales.ts'
@@ -98,7 +98,13 @@ export async function computeFoodCost(
 				db,
 				input.locationId,
 				and(
-					eq(invMovements.kind, 'delivery'),
+					// What came in over the period: deliveries and transfers in, less
+					// transfers out (their values are negative, so the sum subtracts).
+					inArray(invMovements.kind, [
+						'delivery',
+						'transfer_in',
+						'transfer_out',
+					]),
 					gt(invMovements.createdAt, opening.approvedAt),
 					lte(invMovements.createdAt, closing.approvedAt),
 				),

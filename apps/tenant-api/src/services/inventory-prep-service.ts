@@ -50,6 +50,7 @@ import {
 } from './inventory-items-service.ts'
 import { loadVersionsAt } from './inventory-recipe-store.ts'
 import { getInventorySettings } from './inventory-settings-service.ts'
+import { committedFromLocation } from './inventory-transfers-service.ts'
 import { readItemSales } from './item-sales.ts'
 
 /**
@@ -191,6 +192,7 @@ async function toPlan(
 	const batchByItem = new Map(
 		versions.map((version) => [version.ownerId, version.makesQuantity]),
 	)
+	const committed = await committedFromLocation(db, input.locationId)
 	const tasks: PrepTask[] = []
 	for (const row of rows as TaskRow[]) {
 		const stock = byItem.get(row.itemId)
@@ -220,11 +222,19 @@ async function toPlan(
 					: null,
 			explain: {
 				fillUpTo: Math.round(
-					(row.fillUpToQuantity * 10_000) / Math.max(1, row.demandBp),
+					(Math.max(
+						0,
+						row.fillUpToQuantity - (committed.get(row.itemId) ?? 0),
+					) *
+						10_000) /
+						Math.max(1, row.demandBp),
 				),
 				target: row.fillUpToQuantity,
 				onHand: row.onHandQuantity,
 				demandBp: row.demandBp,
+				...((committed.get(row.itemId) ?? 0) > 0
+					? { committed: committed.get(row.itemId)! }
+					: {}),
 			},
 			status: row.status,
 			startedAt: row.startedAt,
@@ -338,6 +348,8 @@ export async function generatePrep(
 		const batchOf = new Map(
 			versions.map((version) => [version.ownerId, version.makesQuantity]),
 		)
+		// A central kitchen also makes what its branches have asked for.
+		const committed = await committedFromLocation(tx, locationId)
 
 		let changed = 0
 		for (const row of active) {
@@ -357,6 +369,7 @@ export async function generatePrep(
 				onHand: row.onHand,
 				demandBp: demand.bp,
 				batchSize: batchOf.get(row.item.id) ?? null,
+				committed: committed.get(row.item.id) ?? 0,
 			})
 			if (task && task.status !== 'todo') continue
 			if (suggestion.amount <= 0) {

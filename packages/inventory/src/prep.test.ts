@@ -145,6 +145,19 @@ describe('suggestPrepAmount', () => {
 		).toEqual({ amount: 7_200_000, batches: null, target: 7_200_000 })
 	})
 
+	it('makes enough on top of the level to fill what branches asked for', () => {
+		// Fill up to 6 L, 2 L on hand, branches asked for 3 L, a batch makes 4 L.
+		expect(
+			suggestPrepAmount({
+				fillUpTo: 6_000_000,
+				onHand: 2_000_000,
+				demandBp: NEUTRAL_DEMAND_BP,
+				batchSize: 4_000_000,
+				committed: 3_000_000,
+			}),
+		).toEqual({ amount: 8_000_000, batches: 2, target: 9_000_000 })
+	})
+
 	it('makes nothing when there is enough, and treats negative stock as none', () => {
 		expect(
 			suggestPrepAmount({

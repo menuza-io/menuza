@@ -50,6 +50,8 @@ export const prepExplainSchema = z.object({
 	onHand: z.number().int(),
 	/** 10000 is a normal day; 12000 sells 20% more. */
 	demandBp: z.number().int(),
+	/** What branches have asked this place for and not yet taken (a central kitchen), base thousandths. */
+	committed: z.number().int().optional(),
 })
 
 export const prepTaskSchema = z.object({

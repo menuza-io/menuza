@@ -57,12 +57,16 @@ const FEATURES_ON: InventoryFeatures = {
 	purchasing: true,
 	recipes: true,
 	prep: true,
-	transfers: false,
+	transfers: true,
 }
 const FEATURES_OFF: InventoryFeatures = { ...FEATURES_ON, enabled: false }
 const FEATURES_NO_PURCHASING: InventoryFeatures = {
 	...FEATURES_ON,
 	purchasing: false,
+}
+const FEATURES_NO_TRANSFERS: InventoryFeatures = {
+	...FEATURES_ON,
+	transfers: false,
 }
 const FEATURES_NO_PREP: InventoryFeatures = {
 	...FEATURES_ON,
@@ -203,6 +207,15 @@ const ROUTE_GRANTS: Record<
 	'POST /prep/tasks/:id/start': UPDATE,
 	'POST /prep/tasks/:id/done': UPDATE,
 	'POST /prep/tasks/:id/skip': UPDATE,
+	// Phase 5: transfers (need the inventory.transfers flag).
+	'GET /compare': READ,
+	'GET /transfers': READ,
+	'POST /transfers': UPDATE,
+	'GET /transfers/:id': READ,
+	'PATCH /transfers/:id': UPDATE,
+	'POST /transfers/:id/send': UPDATE,
+	'POST /transfers/:id/receive': UPDATE,
+	'POST /transfers/:id/cancel': UPDATE,
 }
 
 /** POST routes that change nothing (they only carry a body), so a read grant and an impersonated token may call them. */
@@ -225,6 +238,18 @@ const PURCHASING_FLAG_ROUTES = new Set([
 	'POST /orders/:id/cancel',
 	'GET /orders/:id/text',
 	'GET /orders/:id/receive-prefill',
+])
+
+/** Routes behind the `inventory.transfers` flag (403 feature_disabled while it is off). */
+const TRANSFERS_FLAG_ROUTES = new Set([
+	'GET /compare',
+	'GET /transfers',
+	'POST /transfers',
+	'GET /transfers/:id',
+	'PATCH /transfers/:id',
+	'POST /transfers/:id/send',
+	'POST /transfers/:id/receive',
+	'POST /transfers/:id/cancel',
 ])
 
 /** Routes behind the `inventory.prep` flag (403 feature_disabled while it is off). */
@@ -609,6 +634,32 @@ describe('inventory operator routes: flags and switches', () => {
 		expect(failures).toEqual([])
 	})
 
+	it('inventory.transfers gates the transfer routes (403 feature_disabled) and nothing else', async () => {
+		const token = await mintInventoryToken({ features: FEATURES_NO_TRANSFERS })
+		const failures: string[] = []
+		for (const route of ROUTES) {
+			const request = validRequest(route)
+			const res = await call(route.method, request.path, {
+				token,
+				body: request.body,
+			})
+			const body = (await res.json()) as { code?: string; feature?: string }
+			const gated = TRANSFERS_FLAG_ROUTES.has(routeKey(route))
+			if (gated) {
+				if (
+					res.status !== 403 ||
+					body.code !== 'feature_disabled' ||
+					body.feature !== 'transfers'
+				) {
+					failures.push(`${routeKey(route)} -> ${res.status} ${body.code}`)
+				}
+			} else if (body.code === 'feature_disabled') {
+				failures.push(`${routeKey(route)} is gated but not listed`)
+			}
+		}
+		expect(failures).toEqual([])
+	})
+
 	it('inventory.prep gates the prep routes (403 feature_disabled) and nothing else', async () => {
 		const token = await mintInventoryToken({ features: FEATURES_NO_PREP })
 		const failures: string[] = []
@@ -809,6 +860,7 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 		made: '',
 		soldOut: '',
 		prepTask: '',
+		transfer: '',
 	}
 	let admin: string
 	let seedCounts = 0
@@ -970,6 +1022,18 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 			fillUpToQuantity: 1_000_000,
 			onHandQuantity: 0,
 		})
+		// A transfer from LOC_B to a third place that stays a draft: the sweeps send a
+		// version it does not have, so nothing about it changes.
+		seed.transfer = (
+			await seedCall('POST', '/transfers', {
+				clientId: 'sec-transfer-0001',
+				kind: 'transfer',
+				fromLocationId: LOC_B,
+				// A third place: a token for LOC_A alone covers neither end.
+				toLocationId: 'loc_third',
+				lines: [{ itemId: seed.item, amount: 1, unit: 'g' }],
+			})
+		).id
 		seedCounts = (await seedCall('GET', `/counts?locationId=${LOC_B}`)).counts
 			.length
 	})
@@ -1351,6 +1415,37 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 					locationId: loc,
 					made: { kind: 'batches', count: 1 },
 				},
+				byId: true,
+			}),
+			// Answers the locations a token covers (never a refusal), so it is organization-wide.
+			c('GET /compare', `/compare?locationIds=${loc},${LOC_A}`, {
+				location: false,
+			}),
+			c('GET /transfers', `/transfers?${q}`),
+			c('POST /transfers', '/transfers', {
+				body: {
+					clientId: 'sec-transfer-0002',
+					kind: 'transfer',
+					fromLocationId: loc,
+					toLocationId: LOC_A,
+					lines: [{ itemId: seed.item, amount: 1, unit: 'g' }],
+				},
+			}),
+			c('GET /transfers/:id', `/transfers/${seed.transfer}`, { byId: true }),
+			c('PATCH /transfers/:id', `/transfers/${seed.transfer}`, {
+				body: { expectedVersion: 99, note: 'Renamed' },
+				byId: true,
+			}),
+			c('POST /transfers/:id/send', `/transfers/${seed.transfer}/send`, {
+				body: { expectedVersion: 99 },
+				byId: true,
+			}),
+			c('POST /transfers/:id/receive', `/transfers/${seed.transfer}/receive`, {
+				body: { expectedVersion: 99 },
+				byId: true,
+			}),
+			c('POST /transfers/:id/cancel', `/transfers/${seed.transfer}/cancel`, {
+				body: { expectedVersion: 99 },
 				byId: true,
 			}),
 			c('GET /prep', `/prep?${q}`),
