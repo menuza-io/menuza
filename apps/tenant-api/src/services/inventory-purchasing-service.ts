@@ -802,13 +802,29 @@ export async function recordDelivery(
 ) {
 	const { body } = input
 	assertLocationAllowed(caller.locationIds, body.locationId)
+	// Marking a delivery paid is a purchasing decision.
+	if (body.paid && !caller.purchasing) {
+		throw new InventoryError('purchasing_required', 403)
+	}
+	// The wire schema made money optional for the quantity-only path (phase 2);
+	// this priced path still needs it, and `quantityOnly` is not built yet.
+	const currency = body.currency
+	if (body.quantityOnly || currency === undefined) {
+		throw badRequest('priced_delivery_required')
+	}
+	const lines = body.lines.map((line) => {
+		if (line.lineTotalMinor === undefined) {
+			throw badRequest('priced_delivery_required')
+		}
+		return { ...line, lineTotalMinor: line.lineTotalMinor }
+	})
 	return withInventoryWrite(
 		{ orgId: caller.orgId, idempotency: input.idempotency },
 		async (tx, ctx) => {
 			if (body.supplierId) {
 				await loadSupplier(tx, body.supplierId)
 			}
-			const itemIds = [...new Set(body.lines.map((line) => line.itemId))]
+			const itemIds = [...new Set(lines.map((line) => line.itemId))]
 			const [items, costs] = await Promise.all([
 				queryInChunks(itemIds, (chunk) =>
 					tx.select().from(invItems).where(inArray(invItems.id, chunk)),
@@ -828,12 +844,11 @@ export async function recordDelivery(
 			}
 			const costById = new Map(costs.map((row) => [row.itemId, row]))
 			for (const cost of costs) {
-				if (cost.currency !== body.currency)
-					throw badRequest('currency_mismatch')
+				if (cost.currency !== currency) throw badRequest('currency_mismatch')
 			}
 			const productIds = [
 				...new Set(
-					body.lines
+					lines
 						.map((line) => line.supplierProductId)
 						.filter((id): id is string => !!id),
 				),
@@ -850,7 +865,7 @@ export async function recordDelivery(
 					),
 			)
 			const productById = new Map(products.map((row) => [row.id, row]))
-			for (const line of body.lines) {
+			for (const line of lines) {
 				if (!line.supplierProductId) continue
 				const product = productById.get(line.supplierProductId)
 				if (!product || product.itemId !== line.itemId) throw notFound()
@@ -871,7 +886,7 @@ export async function recordDelivery(
 				invoiceDate: body.invoiceDate ?? null,
 				vatMinor: body.vatMinor ?? null,
 				totalMinor: body.totalMinor ?? null,
-				currency: body.currency,
+				currency,
 				zatcaReference: body.zatcaReference || null,
 				paidAt: body.paid ? ctx.now : null,
 				receivedByKind: caller.actor.kind,
@@ -892,7 +907,7 @@ export async function recordDelivery(
 					changeBp: number
 				}
 			>()
-			for (const line of body.lines) {
+			for (const line of lines) {
 				const item = itemById.get(line.itemId)!
 				const costMicro = costMicroFromPackPrice(
 					line.lineTotalMinor,
@@ -916,7 +931,7 @@ export async function recordDelivery(
 					})
 				}
 				const next = {
-					currency: body.currency,
+					currency,
 					lastCostMicro: costMicro,
 					lastPricedAt: ctx.now,
 					avgCostMicro: average,
@@ -945,6 +960,7 @@ export async function recordDelivery(
 					priceMinor: line.packPriceMinor ?? null,
 					lineTotalMinor: line.lineTotalMinor,
 					realWeightQuantity: line.realWeightQuantity ?? null,
+					pricedAt: ctx.now,
 					createdAt: ctx.now,
 				})
 				await tx.insert(invMovements).values({
@@ -952,7 +968,7 @@ export async function recordDelivery(
 					itemId: item.id,
 					quantity: line.quantity,
 					valueMinor: line.lineTotalMinor,
-					currency: body.currency,
+					currency,
 					kind: 'delivery',
 					sourceType: 'delivery',
 					sourceId: deliveryId,
@@ -976,7 +992,7 @@ export async function recordDelivery(
 						.update(invSupplierProducts)
 						.set({
 							priceMinor: line.packPriceMinor,
-							currency: body.currency,
+							currency,
 							version: product.version + 1,
 							updatedAt: ctx.now,
 						})
@@ -995,7 +1011,7 @@ export async function recordDelivery(
 				resourceType: 'delivery',
 				resourceId: deliveryId,
 				locationId: body.locationId,
-				detail: { lines: body.lines.length, paid: body.paid },
+				detail: { lines: lines.length, paid: body.paid },
 				at: ctx.now,
 			})
 			const row = await tx

@@ -754,11 +754,17 @@ export const POS_STAFF_SESSION_HEADER = 'Pos-Staff-Session'
  * Which Station apps a terminal offers: the terminal's own setting, and the
  * organization's feature flag, both on. The till sells regardless.
  */
-export type PosDeviceApps = { timeclock: boolean; reservations: boolean }
+export type PosDeviceApps = {
+	timeclock: boolean
+	reservations: boolean
+	/** The Stock app (counts, waste, receiving); the launcher tile is `stock`. */
+	inventory: boolean
+}
 
 export const NO_POS_DEVICE_APPS: PosDeviceApps = {
 	timeclock: false,
 	reservations: false,
+	inventory: false,
 }
 
 /**

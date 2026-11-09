@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { countSummarySchema } from './counts.ts'
 import { currencyOut, minorOut } from './common.ts'
+import { orderSummarySchema } from './orders.ts'
 import { deliveryDetailSchema } from './purchasing.ts'
 import { foodCostSchema } from './today.ts'
 
@@ -24,6 +25,24 @@ import { foodCostSchema } from './today.ts'
  *   `/archive` → `supplierProductSchema`.
  * - `POST /deliveries/:id/paid`, `/cancel`, `GET /deliveries/:id` →
  *   `deliveryDetailSchema`.
+ *
+ * Phase 2 (additive):
+ *
+ * - `POST /deliveries` → `recordDeliveryResultSchema` (now also the order).
+ * - `POST /deliveries/:id/confirm-prices` → `recordDeliveryResultSchema`.
+ * - `POST /deliveries/:id/invoice-photo` → `invoicePhotoUploadSchema`;
+ *   `.../invoice-photo/confirm` → `deliveryDetailSchema`.
+ * - `POST /deliveries/:id/credit-message` → `creditMessageSchema`.
+ * - `GET /orders/suggested` → `suggestedOrdersSchema`.
+ * - `POST /orders`, `PATCH /orders/:id`, `/cancel`, `GET /orders/:id` →
+ *   `orderDetailSchema`; `GET /orders` → `listOrdersResultSchema`.
+ * - `POST /orders/:id/send` → `sendOrderResultSchema`;
+ *   `GET /orders/:id/text` → `orderTextSchema`;
+ *   `GET /orders/:id/receive-prefill` → `receivePrefillSchema`.
+ * - `GET /levels` → `listLevelsResultSchema`; `PUT /levels/bulk` →
+ *   `putLevelsResultSchema`; `GET /levels/suggestions` →
+ *   `levelSuggestionsSchema`.
+ * - `GET /price-alerts` → `priceAlertsSchema`.
  */
 
 /** `POST /items/:id/adjust`. */
@@ -65,5 +84,7 @@ export const recordDeliveryResultSchema = z.object({
 	delivery: deliveryDetailSchema,
 	/** Items whose price rose, largest rise first. Left out without the cost grant. */
 	priceChanges: z.array(priceChangeSchema).optional(),
+	/** Phase 2: the order the delivery was received against, with its new status. */
+	order: orderSummarySchema.optional(),
 })
 export type RecordDeliveryResult = z.infer<typeof recordDeliveryResultSchema>

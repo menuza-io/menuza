@@ -196,6 +196,8 @@ const ALLOWED_COLUMNS: Record<string, string> = {
 	'inv_count_lists.name': inventoryOperatorName,
 	'inv_movements.note': inventoryStockNote,
 	'inv_waste.note': inventoryStockNote,
+	'inv_orders.note':
+		'operator note on a purchase order to a supplier (e.g. "use the back gate"), not about a customer; frozen with the closed order',
 	'inv_suppliers.name': inventorySupplierContact,
 	'inv_suppliers.contact_name': inventorySupplierContact,
 	'inv_suppliers.phone': inventorySupplierContact,
@@ -209,6 +211,9 @@ const ALLOWED_COLUMNS: Record<string, string> = {
 	'inv_deliveries.received_by_id': inventoryActorId,
 	'inv_waste.actor_id': inventoryActorId,
 	'inv_audit_log.actor_id': inventoryActorId,
+	'inv_orders.created_by_id': inventoryActorId,
+	'inv_waste.device_id':
+		'opaque id of the Station terminal that logged the waste (feeds its recent-items chips), not a person',
 }
 
 function listColumns() {

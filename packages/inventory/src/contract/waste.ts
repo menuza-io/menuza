@@ -23,28 +23,20 @@ export const WASTE_UNDO_WINDOW_MS = 24 * 60 * 60 * 1000
  * send several). Phase 1 logs items; dishes come with recipes. The system
  * reasons (`cancelled_after_cooking`, `remade_at_till`) are refused here.
  */
-export const logWasteSchema = z
+export const wasteEntryInputSchema = z
 	.object({
-		entries: z
-			.array(
-				z
-					.object({
-						clientId: clientIdSchema,
-						locationId: inventoryLocationIdSchema,
-						itemId: inventoryIdSchema,
-						amount: typedAmountSchema.refine(
-							(a) => a > 0,
-							'Must be above zero',
-						),
-						unit: unitRefSchema,
-						reason: wasteReasonSchema,
-						note: inventoryNoteSchema.optional(),
-					})
-					.strict(),
-			)
-			.min(1)
-			.max(50),
+		clientId: clientIdSchema,
+		locationId: inventoryLocationIdSchema,
+		itemId: inventoryIdSchema,
+		amount: typedAmountSchema.refine((a) => a > 0, 'Must be above zero'),
+		unit: unitRefSchema,
+		reason: wasteReasonSchema,
+		note: inventoryNoteSchema.optional(),
 	})
+	.strict()
+
+export const logWasteSchema = z
+	.object({ entries: z.array(wasteEntryInputSchema).min(1).max(50) })
 	.strict()
 
 export const logWasteResultSchema = z.object({

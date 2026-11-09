@@ -39,6 +39,29 @@ const KINDS: Record<AttentionItem['kind'], AttentionItem> = {
 		supplierName: 'Fresh Farms',
 	},
 	unpaid_deliveries: { kind: 'unpaid_deliveries', count: 2 },
+	order_cutoff: {
+		kind: 'order_cutoff',
+		supplierId: 's1',
+		supplierName: 'Fresh Farms',
+		cutoffDate: '2026-11-09',
+		cutoffTime: '16:00',
+		expectedDate: '2026-11-10',
+		itemCount: 4,
+		draftOrderId: null,
+	},
+	delivery_expected: {
+		kind: 'delivery_expected',
+		orderId: 'o1',
+		supplierName: 'Fresh Farms',
+		expectedDate: '2026-11-09',
+		overdue: false,
+	},
+	prices_pending: {
+		kind: 'prices_pending',
+		deliveryId: 'd2',
+		supplierName: null,
+		lineCount: 3,
+	},
 }
 
 describe('attentionTarget', () => {
@@ -56,6 +79,9 @@ describe('attentionTarget', () => {
 			count_in_review: '/acme/inventory/counts/c2/review',
 			price_rise: '/acme/inventory/purchasing/deliveries/d1',
 			unpaid_deliveries: '/acme/inventory/purchasing',
+			order_cutoff: '/acme/inventory/purchasing',
+			delivery_expected: '/acme/inventory/purchasing',
+			prices_pending: '/acme/inventory/purchasing/deliveries/d2',
 		})
 	})
 

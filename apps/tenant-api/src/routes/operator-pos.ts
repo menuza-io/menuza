@@ -92,6 +92,7 @@ const createCodeSchema = z.strictObject({
 	shiftsRequired: z.boolean().optional(),
 	timeclockEnabled: z.boolean().optional(),
 	reservationsEnabled: z.boolean().optional(),
+	inventoryEnabled: z.boolean().optional(),
 })
 
 operatorPosRoutes.get('/terminals', async (c) => {
@@ -134,6 +135,7 @@ operatorPosRoutes.post('/pairing-codes', async (c) => {
 			shiftsRequired: parsed.data.shiftsRequired,
 			timeclockEnabled: parsed.data.timeclockEnabled,
 			reservationsEnabled: parsed.data.reservationsEnabled,
+			inventoryEnabled: parsed.data.inventoryEnabled,
 			createdBy: g.auth.userId,
 		})
 	} catch (error) {
@@ -149,7 +151,11 @@ operatorPosRoutes.post('/pairing-codes', async (c) => {
 	}
 	// A terminal that will open with Station apps on is a change like any switch.
 	// Best effort: the code is already made and is shown only now.
-	if (parsed.data.timeclockEnabled || parsed.data.reservationsEnabled)
+	if (
+		parsed.data.timeclockEnabled ||
+		parsed.data.reservationsEnabled ||
+		parsed.data.inventoryEnabled
+	)
 		await writeOperatorAudit(g.db, g.auth.userId, null, {
 			action: 'pos.pairing_code.created',
 			entityType: 'pos_pairing_code',
@@ -157,6 +163,7 @@ operatorPosRoutes.post('/pairing-codes', async (c) => {
 			changes: {
 				timeclockEnabled: parsed.data.timeclockEnabled === true,
 				reservationsEnabled: parsed.data.reservationsEnabled === true,
+				inventoryEnabled: parsed.data.inventoryEnabled === true,
 				locationId: parsed.data.locationId ?? null,
 			},
 		}).catch((error: unknown) =>
@@ -265,7 +272,11 @@ operatorPosRoutes.post('/held/:id/resolve', async (c) => {
  */
 async function stationAppsDenied(
 	auth: { orgId: string; stationApps: StationAppClaims },
-	patch: { timeclockEnabled?: boolean; reservationsEnabled?: boolean },
+	patch: {
+		timeclockEnabled?: boolean
+		reservationsEnabled?: boolean
+		inventoryEnabled?: boolean
+	},
 	/** The terminal's location once this change is made (null: none). */
 	hostLocationId: string | null,
 	/** Its staffing workplace once this change is made (`posStaffScopeId`). */
@@ -302,6 +313,17 @@ async function stationAppsDenied(
 		)
 			return posError(403, 'location_not_allowed')
 	}
+	if (patch.inventoryEnabled === true) {
+		if (!auth.stationApps.inventory)
+			return posError(403, 'inventory_permission_required')
+		// A member limited to some locations opens Stock only there.
+		const allowed = auth.stationApps.inventoryLocationIds
+		if (
+			allowed !== null &&
+			(hostLocationId === null || !allowed.includes(hostLocationId))
+		)
+			return posError(403, 'location_not_allowed')
+	}
 	return null
 }
 
@@ -312,6 +334,7 @@ const patchTerminalSchema = z
 		shiftsRequired: z.boolean().optional(),
 		timeclockEnabled: z.boolean().optional(),
 		reservationsEnabled: z.boolean().optional(),
+		inventoryEnabled: z.boolean().optional(),
 		locationId: z.string().trim().min(1).max(100).optional(),
 	})
 	.refine((p) => Object.values(p).some((value) => value !== undefined))
@@ -337,6 +360,13 @@ operatorPosRoutes.patch('/terminals/:id', async (c) => {
 		scopeId: current.scopeId,
 		locationId: hostLocationId,
 	})
+	// Binding a location to a till whose Stock app is on is opening it there.
+	const opensInventory =
+		parsed.data.inventoryEnabled === true ||
+		(current.inventoryEnabled &&
+			parsed.data.inventoryEnabled !== false &&
+			parsed.data.locationId !== undefined &&
+			current.locationId === null)
 	// Binding can also move a till's time clock to that location's people.
 	const opensTimeclock =
 		parsed.data.timeclockEnabled === true ||
@@ -351,6 +381,7 @@ operatorPosRoutes.patch('/terminals/:id', async (c) => {
 			reservationsEnabled: opensHostStand
 				? true
 				: parsed.data.reservationsEnabled,
+			inventoryEnabled: opensInventory ? true : parsed.data.inventoryEnabled,
 		},
 		hostLocationId,
 		workplace,

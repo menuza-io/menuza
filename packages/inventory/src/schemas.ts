@@ -18,6 +18,11 @@ export const inventorySettingsSchema = z.object({
 	/** Bumped on every change; send it back as `expectedVersion`. */
 	version: z.number().int().min(0),
 	updatedAt: z.number().int().nullable(),
+	/**
+	 * Phase 2: any signed-in Station staff member may receive deliveries (else
+	 * a till manager, `pos_managers`). Default false; omitted by an older region.
+	 */
+	anyStaffCanReceive: z.boolean().optional(),
 })
 export type InventorySettings = z.infer<typeof inventorySettingsSchema>
 
@@ -30,13 +35,15 @@ export const updateInventorySettingsSchema = z
 		targetFoodCostBp: z.number().int().min(0).max(10_000).optional(),
 		unitSystem: unitSystemSchema.optional(),
 		countDayOfWeek: z.number().int().min(0).max(6).nullable().optional(),
+		anyStaffCanReceive: z.boolean().optional(),
 	})
 	.strict()
 	.refine(
 		(body) =>
 			body.targetFoodCostBp !== undefined ||
 			body.unitSystem !== undefined ||
-			body.countDayOfWeek !== undefined,
+			body.countDayOfWeek !== undefined ||
+			body.anyStaffCanReceive !== undefined,
 		{ message: 'Nothing to change' },
 	)
 export type UpdateInventorySettings = z.infer<

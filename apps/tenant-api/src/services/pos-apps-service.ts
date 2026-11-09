@@ -1,6 +1,8 @@
 import { type PosDeviceApps } from '@repo/common/pos-orders'
+import { type STATION_INVENTORY_GATE_CODES } from '@repo/inventory'
 import { type ReservationsContext } from '@repo/reservations'
 import { type PosDevice } from '@repo/tenant-db'
+import { getInventoryFlagState } from '../lib/inventory-context.ts'
 import { isKioskEnabled } from '../lib/kiosk-auth.ts'
 import { getReservationsContext } from '../lib/reservations-context.ts'
 import { getStaffingFeatures } from '../lib/scope-context.ts'
@@ -106,6 +108,42 @@ export async function reservationsGate(
 	return { ok: true, context, locationId }
 }
 
+export type InventoryGate =
+	| { ok: true; locationId: string }
+	| {
+			ok: false
+			code:
+				| (typeof STATION_INVENTORY_GATE_CODES)[number]
+				// The node's kill switch (`INVENTORY_ENABLED=false`) is on.
+				| 'inventory_unavailable'
+	  }
+
+/**
+ * The Stock app on a terminal: the terminal's own switch, a signed-in person
+ * (counts and waste are attributed), the terminal's location, and the
+ * organization's `inventory.enabled` flag. A flag that cannot be read is never
+ * taken as on (`service_unavailable`, so `/pos/me` keeps what the till knew).
+ */
+export async function inventoryGate(
+	orgId: string,
+	device: PosDevice,
+): Promise<InventoryGate> {
+	if (!device.inventoryEnabled) {
+		return { ok: false, code: 'inventory_not_enabled' }
+	}
+	if (!device.signInRequired)
+		return { ok: false, code: 'inventory_needs_sign_in' }
+	const locationId = device.locationId
+	if (!locationId) return { ok: false, code: 'inventory_needs_location' }
+	const state = await getInventoryFlagState(orgId)
+	if (state.status === 'stopped')
+		return { ok: false, code: 'inventory_unavailable' }
+	if (state.status === 'unknown')
+		return { ok: false, code: 'service_unavailable' }
+	if (!state.features.enabled) return { ok: false, code: 'inventory_disabled' }
+	return { ok: true, locationId }
+}
+
 /**
  * What `/pos/me` tells the till to show. An app whose flag cannot be read right
  * now is left out, and the till keeps what it last knew: a short App outage
@@ -131,6 +169,16 @@ export async function deviceApps(
 		const gate = await reservationsGate(orgId, device)
 		if (gate.ok) apps.reservations = true
 		else if (gate.code !== 'service_unavailable') apps.reservations = false
+	}
+	if (!device.inventoryEnabled) apps.inventory = false
+	else {
+		const gate = await inventoryGate(orgId, device)
+		if (gate.ok) apps.inventory = true
+		else if (
+			gate.code !== 'service_unavailable' &&
+			gate.code !== 'inventory_unavailable'
+		)
+			apps.inventory = false
 	}
 	return apps
 }

@@ -1885,6 +1885,14 @@ export const posDevices = sqliteTable(
 		reservationsEnabled: integer('reservations_enabled', { mode: 'boolean' })
 			.notNull()
 			.default(false),
+		// The Stock app (counts, waste, receiving), gated by the organization's
+		// `inventory.enabled` flag. `inventory_disabled_at` is when it was last
+		// switched off here, so a replay can tell an item made before from one
+		// made after.
+		inventoryEnabled: integer('inventory_enabled', { mode: 'boolean' })
+			.notNull()
+			.default(false),
+		inventoryDisabledAt: integer('inventory_disabled_at'),
 		// Keyed hash of the device secret. The secret itself is never stored.
 		secretHash: text('secret_hash').notNull(),
 		pairedBy: text('paired_by').notNull(),
@@ -1928,6 +1936,9 @@ export const posPairingCodes = sqliteTable(
 			.notNull()
 			.default(false),
 		reservationsEnabled: integer('reservations_enabled', { mode: 'boolean' })
+			.notNull()
+			.default(false),
+		inventoryEnabled: integer('inventory_enabled', { mode: 'boolean' })
 			.notNull()
 			.default(false),
 		createdBy: text('created_by').notNull(),
@@ -6931,9 +6942,11 @@ export const discountCodeAttempts = sqliteTable(
 )
 
 // ==========================================
-// INVENTORY (migration 0033_inventory)
+// INVENTORY (migrations 0033_inventory, 0034_inventory_orders)
 // Phase 0 and 1 tables: setup, catalogue, per-location levels, the stock
 // ledger, costs, counts, suppliers, deliveries, waste and the audit log.
+// Phase 2 adds purchase orders, receiving against them, the Station app's
+// terminal setting, waste from tablets and the notification dedupe log.
 // One database per organization, so no org column. Location ids are the
 // control plane's opaque ids (`main` when the organization has none).
 //
@@ -6989,6 +7002,33 @@ export const INV_DELIVERY_STATUS_VALUES = [
 	'cancelled',
 ] as const
 export const INV_DELIVERY_SOURCE_VALUES = ['operator', 'station'] as const
+// Phase 2 (0034_inventory_orders).
+export const INV_ORDER_STATUS_VALUES = [
+	'draft',
+	'sent',
+	'partly_received',
+	'received',
+	'cancelled',
+] as const
+export const INV_ORDER_SEND_CHANNEL_VALUES = [
+	'email',
+	'whatsapp',
+	'copy',
+	'pdf',
+] as const
+export const INV_WASTE_SOURCE_VALUES = ['operator', 'station'] as const
+export const INV_ALERT_KIND_VALUES = [
+	'inventory_low_stock',
+	'inventory_count_review',
+	'inventory_delivery_due',
+	'inventory_price_rise',
+] as const
+export const INV_ALERT_STATUS_VALUES = ['sent', 'pending'] as const
+export const INV_INVOICE_PHOTO_CONTENT_TYPE_VALUES = [
+	'image/jpeg',
+	'image/png',
+	'image/webp',
+] as const
 
 // Organization-wide settings: one row (`id = 'default'`), created on the first
 // save. Until then the API answers defaults (version 0).
@@ -7000,6 +7040,14 @@ export const invSettings = sqliteTable(
 		unitSystem: text('unit_system', { enum: INV_UNIT_SYSTEM_VALUES }).notNull(),
 		// 0 = Sunday … 6 = Saturday; null = no weekly count scheduled.
 		countDayOfWeek: integer('count_day_of_week'),
+		// When true any signed-in person on a Station tablet may receive a
+		// delivery; otherwise it needs a till manager.
+		anyStaffCanReceive: integer('any_staff_can_receive', { mode: 'boolean' })
+			.notNull()
+			.default(false),
+		// The next human order number ("Order 12"), taken inside the write
+		// that creates the order.
+		nextOrderNumber: integer('next_order_number').notNull().default(1),
 		version: integer('version').notNull().default(1),
 		updatedAt: integer('updated_at').notNull().default(nowMs),
 	},
@@ -7505,6 +7553,115 @@ export const invSupplierProducts = sqliteTable(
 	],
 )
 
+// A purchase order to one supplier for one location. `number` is the human
+// number, unique per organization and taken from `inv_settings.next_order_number`.
+// `client_id` makes create idempotent. Lines are replaced wholesale while the
+// order is a draft and frozen after (triggers); a closed order (`received`,
+// `cancelled`) never changes. What was received is derived from delivery
+// lines, never stored here.
+export const invOrders = sqliteTable(
+	'inv_orders',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		number: integer('number').notNull(),
+		clientId: text('client_id').notNull(),
+		locationId: text('location_id').notNull(),
+		supplierId: text('supplier_id')
+			.notNull()
+			.references(() => invSuppliers.id),
+		status: text('status', { enum: INV_ORDER_STATUS_VALUES })
+			.notNull()
+			.default('draft'),
+		// Local date the delivery is expected (`YYYY-MM-DD`).
+		expectedDate: text('expected_date'),
+		note: text('note'),
+		currency: text('currency'),
+		createdByKind: text('created_by_kind', {
+			enum: INV_ACTOR_KIND_VALUES,
+		}).notNull(),
+		createdById: text('created_by_id'),
+		// First send only; `sent_via` is the channel of that first send.
+		sentAt: integer('sent_at'),
+		sentVia: text('sent_via', { enum: INV_ORDER_SEND_CHANNEL_VALUES }),
+		// When it became `received` or `cancelled`.
+		closedAt: integer('closed_at'),
+		version: integer('version').notNull().default(1),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+	},
+	(table) => [
+		uniqueIndex('uniq_inv_orders_number').on(table.number),
+		uniqueIndex('uniq_inv_orders_client').on(table.clientId),
+		index('idx_inv_orders_location_status').on(
+			table.locationId,
+			table.status,
+			table.createdAt,
+		),
+		index('idx_inv_orders_supplier').on(table.supplierId),
+		check(
+			'chk_inv_orders_status',
+			oneOf(table.status, INV_ORDER_STATUS_VALUES),
+		),
+		check(
+			'chk_inv_orders_created_by_kind',
+			oneOf(table.createdByKind, INV_ACTOR_KIND_VALUES),
+		),
+		check(
+			'chk_inv_orders_sent_via',
+			sql`${table.sentVia} is null or ${table.sentVia} in ('email', 'whatsapp', 'copy', 'pdf')`,
+		),
+		check('chk_inv_orders_number', sql`${table.number} >= 1`),
+		check(
+			'chk_inv_orders_closed',
+			sql`${table.status} not in ('received', 'cancelled') or ${table.closedAt} is not null`,
+		),
+	],
+)
+
+// One ordered line. Pack name, size and price are snapshots of the supplier
+// product when the line was added. `packs` is in thousandths of a pack and
+// `quantity` is `packs` times the pack size in base thousandths. `price_minor`
+// is the pack price before VAT, null when the product has none.
+export const invOrderLines = sqliteTable(
+	'inv_order_lines',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		orderId: text('order_id')
+			.notNull()
+			.references(() => invOrders.id),
+		itemId: text('item_id')
+			.notNull()
+			.references(() => invItems.id),
+		supplierProductId: text('supplier_product_id').references(
+			() => invSupplierProducts.id,
+		),
+		packName: text('pack_name').notNull(),
+		packBaseQuantity: integer('pack_base_quantity').notNull(),
+		pricedByWeight: integer('priced_by_weight', { mode: 'boolean' })
+			.notNull()
+			.default(false),
+		packs: integer('packs').notNull(),
+		quantity: integer('quantity').notNull(),
+		priceMinor: integer('price_minor'),
+		// The packs the suggestion proposed, when the line came from one.
+		suggestedPacks: integer('suggested_packs'),
+		sortOrder: integer('sort_order').notNull().default(0),
+		createdAt: integer('created_at').notNull().default(nowMs),
+	},
+	(table) => [
+		index('idx_inv_order_lines_order').on(table.orderId, table.sortOrder),
+		index('idx_inv_order_lines_item').on(table.itemId),
+		check(
+			'chk_inv_order_lines_amounts',
+			sql`${table.packs} > 0 and ${table.quantity} > 0 and ${table.packBaseQuantity} > 0 and (${table.priceMinor} is null or ${table.priceMinor} >= 0) and (${table.suggestedPacks} is null or ${table.suggestedPacks} >= 0)`,
+		),
+	],
+)
+
 // A delivery received at a location, with the supplier's invoice facts. VAT
 // is kept here, never folded into item costs. Lines are written once, when
 // the delivery is received.
@@ -7529,6 +7686,22 @@ export const invDeliveries = sqliteTable(
 		zatcaReference: text('zatca_reference'),
 		// Storage key of the invoice photo (phase 2).
 		photoKey: text('photo_key'),
+		photoContentType: text('photo_content_type', {
+			enum: INV_INVOICE_PHOTO_CONTENT_TYPE_VALUES,
+		}),
+		photoUploadedAt: integer('photo_uploaded_at'),
+		// The order this was received against, when it was.
+		orderId: text('order_id').references(() => invOrders.id),
+		// A quantity-only delivery (the tablet, or a person without the
+		// purchasing grant) is `pricesPending` until `prices_confirmed_at` is set.
+		quantityOnly: integer('quantity_only', { mode: 'boolean' })
+			.notNull()
+			.default(false),
+		pricesConfirmedAt: integer('prices_confirmed_at'),
+		// Made on a tablet long before it arrived (flagged for a manager).
+		lateSync: integer('late_sync', { mode: 'boolean' })
+			.notNull()
+			.default(false),
 		paidAt: integer('paid_at'),
 		receivedByKind: text('received_by_kind', {
 			enum: INV_ACTOR_KIND_VALUES,
@@ -7556,6 +7729,7 @@ export const invDeliveries = sqliteTable(
 			table.supplierId,
 			table.paidAt,
 		),
+		index('idx_inv_deliveries_order').on(table.orderId),
 		check(
 			'chk_inv_deliveries_status',
 			oneOf(table.status, INV_DELIVERY_STATUS_VALUES),
@@ -7602,9 +7776,16 @@ export const invDeliveryLines = sqliteTable(
 		priceMinor: integer('price_minor'),
 		lineTotalMinor: integer('line_total_minor').notNull(),
 		realWeightQuantity: integer('real_weight_quantity'),
+		// The order line this was received against. Received per order line is the
+		// sum of `quantity` over the lines pointing at it.
+		orderLineId: text('order_line_id').references(() => invOrderLines.id),
+		// When the price was set. Null on a quantity-only line (stored with a zero
+		// total) until `confirm-prices` fills it, the one update the trigger allows.
+		pricedAt: integer('priced_at'),
 		createdAt: integer('created_at').notNull().default(nowMs),
 	},
 	(table) => [
+		index('idx_inv_delivery_lines_order_line').on(table.orderLineId),
 		index('idx_inv_delivery_lines_delivery').on(table.deliveryId),
 		index('idx_inv_delivery_lines_item_created').on(
 			table.itemId,
@@ -7643,6 +7824,16 @@ export const invWaste = sqliteTable(
 			(): AnySQLiteColumn => invWaste.id,
 		),
 		businessDate: text('business_date').notNull(),
+		// Where it was logged. A Station tablet records its terminal (`device_id`),
+		// which feeds that terminal's recent-items chips; `late_sync` flags waste
+		// that arrived long after it happened.
+		source: text('source', { enum: INV_WASTE_SOURCE_VALUES })
+			.notNull()
+			.default('operator'),
+		deviceId: text('device_id'),
+		lateSync: integer('late_sync', { mode: 'boolean' })
+			.notNull()
+			.default(false),
 		createdAt: integer('created_at').notNull().default(nowMs),
 	},
 	(table) => [
@@ -7655,6 +7846,7 @@ export const invWaste = sqliteTable(
 			table.businessDate,
 		),
 		index('idx_inv_waste_item_created').on(table.itemId, table.createdAt),
+		index('idx_inv_waste_device_created').on(table.deviceId, table.createdAt),
 		check('chk_inv_waste_reason', oneOf(table.reason, INV_WASTE_REASON_VALUES)),
 		check(
 			'chk_inv_waste_actor_kind',
@@ -7720,6 +7912,46 @@ export const invAuditLog = sqliteTable(
 	],
 )
 
+// Notification dedupe and retry for the inventory tick. One row per thing that
+// can happen once (`dedupe_key`: a business date for digests and due
+// deliveries, a count id for review, a delivery id for a price rise). `pending`
+// rows are retried by the next tick; counts and ids only, never a name or an
+// amount.
+export const invAlertLog = sqliteTable(
+	'inv_alert_log',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		kind: text('kind', { enum: INV_ALERT_KIND_VALUES }).notNull(),
+		locationId: text('location_id').notNull(),
+		dedupeKey: text('dedupe_key').notNull(),
+		count: integer('count').notNull(),
+		status: text('status', { enum: INV_ALERT_STATUS_VALUES })
+			.notNull()
+			.default('pending'),
+		attempts: integer('attempts').notNull().default(0),
+		sentAt: integer('sent_at'),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+	},
+	(table) => [
+		uniqueIndex('uniq_inv_alert_log_event').on(
+			table.kind,
+			table.locationId,
+			table.dedupeKey,
+		),
+		index('idx_inv_alert_log_status').on(table.status, table.createdAt),
+		check('chk_inv_alert_log_kind', oneOf(table.kind, INV_ALERT_KIND_VALUES)),
+		check(
+			'chk_inv_alert_log_status',
+			oneOf(table.status, INV_ALERT_STATUS_VALUES),
+		),
+		check('chk_inv_alert_log_count', sql`${table.count} >= 1`),
+		check('chk_inv_alert_log_attempts', sql`${table.attempts} >= 0`),
+	],
+)
+
 export type InvSettingsRow = typeof invSettings.$inferSelect
 export type InvStorageAreaRow = typeof invStorageAreas.$inferSelect
 export type InvItemRow = typeof invItems.$inferSelect
@@ -7737,3 +7969,6 @@ export type InvDeliveryRow = typeof invDeliveries.$inferSelect
 export type InvDeliveryLineRow = typeof invDeliveryLines.$inferSelect
 export type InvWasteRow = typeof invWaste.$inferSelect
 export type InvAuditLogRow = typeof invAuditLog.$inferSelect
+export type InvOrderRow = typeof invOrders.$inferSelect
+export type InvOrderLineRow = typeof invOrderLines.$inferSelect
+export type InvAlertLogRow = typeof invAlertLog.$inferSelect

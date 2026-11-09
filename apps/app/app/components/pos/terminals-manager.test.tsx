@@ -342,6 +342,7 @@ describe('TerminalsManager', () => {
 			locationId: null,
 			timeclockEnabled: false,
 			reservationsEnabled: false,
+			inventoryEnabled: false,
 		})
 		expect(create.auth).toBe('Bearer write-token')
 		expect(within(dialog).getByText('Waiting for the terminal…')).toBeTruthy()
@@ -351,13 +352,19 @@ describe('TerminalsManager', () => {
 		const api = stubApi({ devices: [terminal()] })
 		render({
 			locations: [{ id: 'loc_1', name: 'Downtown' }],
-			stationFeatures: { timeclock: true, reservations: true },
+			stationFeatures: {
+				timeclock: true,
+				reservations: true,
+				inventory: false,
+			},
 			stationGrants: {
 				timeclock: true,
 				reservations: true,
 				guestDetails: true,
 				locationIds: null,
 				scopeIds: null,
+				inventory: false,
+				inventoryLocationIds: null,
 			},
 		})
 		await screen.findByText('Front counter')
@@ -383,6 +390,71 @@ describe('TerminalsManager', () => {
 		})
 	})
 
+	it('pairs a terminal with Stock on, and switches Stock on a paired terminal once it has a location and a PIN', async () => {
+		const api = stubApi({
+			devices: [
+				terminal({ signInRequired: true }),
+				terminal({
+					id: 'd2',
+					label: 'Stockroom',
+					terminalCode: 'T2',
+					locationId: 'loc_1',
+					signInRequired: true,
+				}),
+			],
+		})
+		render({
+			locations: [{ id: 'loc_1', name: 'Downtown' }],
+			stationFeatures: {
+				timeclock: false,
+				reservations: false,
+				inventory: true,
+			},
+			stationGrants: {
+				timeclock: false,
+				reservations: false,
+				guestDetails: false,
+				locationIds: [],
+				scopeIds: [],
+				inventory: true,
+				inventoryLocationIds: null,
+			},
+		})
+		await screen.findByText('Stockroom')
+		// A terminal without a location cannot run Stock; one with a location can.
+		expect(
+			screen.getByRole('button', { name: 'Stock on Front counter, off' }),
+		).toBeDisabled()
+		expect(
+			screen.getByText("Choose the terminal's location to use Stock."),
+		).toBeTruthy()
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Stock on Stockroom, off' }),
+		)
+		await waitFor(() =>
+			expect(
+				api.calls
+					.filter((c) => c.method === 'PATCH')
+					.map((c) => [c.url.split('/').pop(), c.body]),
+			).toEqual([['d2', { inventoryEnabled: true }]]),
+		)
+
+		fireEvent.click(screen.getByRole('button', { name: 'Pair a terminal' }))
+		const dialog = await screen.findByRole('dialog')
+		fireEvent.change(within(dialog).getByLabelText('Name'), {
+			target: { value: 'Back office' },
+		})
+		fireEvent.click(within(dialog).getByRole('checkbox', { name: /Stock/ }))
+		fireEvent.click(
+			within(dialog).getByRole('button', { name: 'Create pairing code' }),
+		)
+		await within(dialog).findByLabelText('Pairing link')
+		expect(api.calls.find((c) => c.method === 'POST')!.body).toMatchObject({
+			locationId: 'loc_1',
+			inventoryEnabled: true,
+		})
+	})
+
 	it('a member limited to other locations cannot open the host stand here', async () => {
 		stubApi({
 			devices: [
@@ -397,13 +469,19 @@ describe('TerminalsManager', () => {
 		})
 		render({
 			locations: [{ id: 'loc_1', name: 'Downtown' }],
-			stationFeatures: { timeclock: true, reservations: true },
+			stationFeatures: {
+				timeclock: true,
+				reservations: true,
+				inventory: false,
+			},
 			stationGrants: {
 				timeclock: true,
 				reservations: true,
 				guestDetails: false,
 				locationIds: ['loc_2'],
 				scopeIds: null,
+				inventory: false,
+				inventoryLocationIds: null,
 			},
 		})
 		await screen.findByText('Host stand')
@@ -433,13 +511,19 @@ describe('TerminalsManager', () => {
 		})
 		render({
 			locations: [{ id: 'loc_1', name: 'Downtown' }],
-			stationFeatures: { timeclock: true, reservations: true },
+			stationFeatures: {
+				timeclock: true,
+				reservations: true,
+				inventory: false,
+			},
 			stationGrants: {
 				timeclock: true,
 				reservations: true,
 				guestDetails: true,
 				locationIds: null,
 				scopeIds: null,
+				inventory: false,
+				inventoryLocationIds: null,
 			},
 		})
 		await screen.findByText('Host stand')
@@ -488,7 +572,11 @@ describe('TerminalsManager', () => {
 		})
 		render({
 			locations: [{ id: 'loc_1', name: 'Downtown' }],
-			stationFeatures: { timeclock: true, reservations: true },
+			stationFeatures: {
+				timeclock: true,
+				reservations: true,
+				inventory: false,
+			},
 		})
 		await screen.findByText('Front counter')
 		const off = screen.getByRole('button', {

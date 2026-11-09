@@ -19,6 +19,15 @@ export const INVENTORY_ERROR_CODES = [
 	'undo_expired',
 	'already_undone',
 	'reason_not_allowed',
+	// Phase 2 (additive).
+	'order_not_editable',
+	'order_closed',
+	'order_empty',
+	'supplier_mismatch',
+	'purchasing_required',
+	'prices_confirmed',
+	'upload_not_configured',
+	'email_failed',
 ] as const
 export type InventoryErrorCode = (typeof INVENTORY_ERROR_CODES)[number]
 
@@ -30,4 +39,8 @@ export const INVENTORY_LIMITS = {
 	countListsPerLocation: 50,
 	suppliers: 500,
 	entriesPerBatch: 200,
+	// Phase 2 (additive).
+	linesPerOrder: 200,
+	openOrdersPerLocation: 100,
+	levelsPerBatch: 200,
 } as const

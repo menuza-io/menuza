@@ -70,6 +70,17 @@ export function attentionTarget(
 			}
 		case 'unpaid_deliveries':
 			return { kind: item.kind, to: join(`${base}/purchasing`, search) }
+		case 'order_cutoff':
+		case 'delivery_expected':
+			return { kind: item.kind, to: join(`${base}/purchasing`, search) }
+		case 'prices_pending':
+			return {
+				kind: item.kind,
+				to: join(
+					`${base}/purchasing/deliveries/${encodeURIComponent(item.deliveryId)}`,
+					search,
+				),
+			}
 	}
 }
 

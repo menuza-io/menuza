@@ -1069,7 +1069,7 @@ msgstr "{created, plural, one {# task added.} other {# tasks added.}}"
 msgid "{created} imported, {existing} already on your team, {notImported} not imported."
 msgstr "{created} imported, {existing} already on your team, {notImported} not imported."
 
-#: app/components/pos/terminals-manager.tsx:1666
+#: app/components/pos/terminals-manager.tsx:1750
 msgid "{createdLabel} is ready to take orders."
 msgstr "{createdLabel} is ready to take orders."
 
@@ -1393,7 +1393,7 @@ msgstr "{label} has expired"
 msgid "{label} note (guest-facing)"
 msgstr "{label} note (guest-facing)"
 
-#: app/components/pos/terminals-manager.tsx:230
+#: app/components/pos/terminals-manager.tsx:240
 msgid "{label} was removed."
 msgstr "{label} was removed."
 
@@ -1926,7 +1926,7 @@ msgstr "{remainingMinutes, plural, one {# minute left} other {# minutes left}}"
 msgid "{remainingText} until overtime starts."
 msgstr "{remainingText} until overtime starts."
 
-#: app/components/pos/terminals-manager.tsx:837
+#: app/components/pos/terminals-manager.tsx:849
 msgid "{removingLabel} will stop sending orders at once. Orders it has already saved stay on that device and send after it is paired again. Nothing already received is deleted."
 msgstr "{removingLabel} will stop sending orders at once. Orders it has already saved stay on that device and send after it is paired again. Nothing already received is deleted."
 
@@ -2709,7 +2709,7 @@ msgstr "A cap on what one purchase can get from this promotion."
 msgid "A change applies the next time their Staff session refreshes, within 15 minutes."
 msgstr "A change applies the next time their Staff session refreshes, within 15 minutes."
 
-#: app/components/pos/terminals-manager.tsx:1177
+#: app/components/pos/terminals-manager.tsx:1220
 msgid "A change to a bill that was already settled"
 msgstr "A change to a bill that was already settled"
 
@@ -3183,11 +3183,11 @@ msgstr "A template can hold up to 30 tasks."
 msgid "A template with that name already exists."
 msgstr "A template with that name already exists."
 
-#: app/components/pos/terminals-manager.tsx:1445
+#: app/components/pos/terminals-manager.tsx:1500
 msgid "A terminal bound to a location sells only there and can run its host stand."
 msgstr "A terminal bound to a location sells only there and can run its host stand."
 
-#: app/components/pos/terminals-manager.tsx:620
+#: app/components/pos/terminals-manager.tsx:630
 msgid "A terminal sent something the server could not apply, such as a change to a closed bill or an order from an out-of-date terminal. Nothing was lost: check it against the terminal, enter it by hand if needed, then mark it settled."
 msgstr "A terminal sent something the server could not apply, such as a change to a closed bill or an order from an out-of-date terminal. Nothing was lost: check it against the terminal, enter it by hand if needed, then mark it settled."
 
@@ -5481,8 +5481,8 @@ msgstr "Any cash tips this shift?"
 msgid "Any language"
 msgstr "Any language"
 
-#: app/components/pos/terminals-manager.tsx:1430
-#: app/components/pos/terminals-manager.tsx:1435
+#: app/components/pos/terminals-manager.tsx:1485
+#: app/components/pos/terminals-manager.tsx:1490
 msgid "Any location"
 msgstr "Any location"
 
@@ -7278,8 +7278,8 @@ msgid "Business date"
 msgstr "Business date"
 
 #: app/components/pos/pos-day-report.tsx:137
-#: app/components/pos/terminals-manager.tsx:575
-#: app/components/pos/terminals-manager.tsx:1454
+#: app/components/pos/terminals-manager.tsx:585
+#: app/components/pos/terminals-manager.tsx:1509
 msgid "Business day"
 msgstr "Business day"
 
@@ -7731,8 +7731,8 @@ msgstr "Can't text that number"
 #: app/components/phone-agent/phone-number-dialogs.tsx:676
 #: app/components/phone-agent/training-rules-section.tsx:639
 #: app/components/phone-agent/training-rules-section.tsx:691
-#: app/components/pos/terminals-manager.tsx:684
-#: app/components/pos/terminals-manager.tsx:1560
+#: app/components/pos/terminals-manager.tsx:694
+#: app/components/pos/terminals-manager.tsx:1644
 #: app/components/pos/zatca-settings.tsx:562
 #: app/components/qr/open-tabs.tsx:306
 #: app/components/qr/open-tabs.tsx:574
@@ -8132,7 +8132,7 @@ msgid "Cash"
 msgstr "Cash"
 
 #: app/components/pos/pos-day-report.tsx:264
-#: app/components/pos/terminals-manager.tsx:538
+#: app/components/pos/terminals-manager.tsx:548
 msgid "Cash drawer shifts"
 msgstr "Cash drawer shifts"
 
@@ -8789,7 +8789,7 @@ msgstr "Choose a file"
 msgid "Choose a JPEG, PNG, GIF, WebP, or AVIF image."
 msgstr "Choose a JPEG, PNG, GIF, WebP, or AVIF image."
 
-#: app/components/pos/terminals-manager.tsx:1085
+#: app/components/pos/terminals-manager.tsx:1118
 msgid "Choose a location"
 msgstr "Choose a location"
 
@@ -9110,12 +9110,16 @@ msgstr "Choose the members who also work here. You review the list next."
 msgid "Choose the role you are working."
 msgstr "Choose the role you are working."
 
-#: app/components/pos/terminals-manager.tsx:1003
+#: app/components/pos/terminals-manager.tsx:1016
 msgid "Choose the terminal's location to use reservations."
 msgstr "Choose the terminal's location to use reservations."
 
-#: app/components/pos/terminals-manager.tsx:998
-#: app/components/pos/terminals-manager.tsx:1508
+#: app/components/pos/terminals-manager.tsx:1024
+msgid "Choose the terminal's location to use Stock."
+msgstr "Choose the terminal's location to use Stock."
+
+#: app/components/pos/terminals-manager.tsx:1011
+#: app/components/pos/terminals-manager.tsx:1563
 msgid "Choose the terminal's location to use the time clock."
 msgstr "Choose the terminal's location to use the time clock."
 
@@ -9476,7 +9480,7 @@ msgstr "Clocked out, {firstName}"
 #: app/components/kiosk/kiosk-chrome.tsx:255
 #: app/components/onboarding-checklist.tsx:177
 #: app/components/phone-agent/voice-picker.tsx:559
-#: app/components/pos/terminals-manager.tsx:1754
+#: app/components/pos/terminals-manager.tsx:1838
 #: app/components/staff/kiosk-manager.tsx:792
 #: app/components/staff/timesheets/card-sheet.tsx:275
 #: app/routes/_app+/$orgSlug_+/media.tsx:1851
@@ -9550,7 +9554,7 @@ msgstr "Close thread"
 msgid "Close to a Reward"
 msgstr "Close to a Reward"
 
-#: app/components/pos/terminals-manager.tsx:1756
+#: app/components/pos/terminals-manager.tsx:1840
 #: app/components/staff/kiosk-manager.tsx:794
 msgid "Close, I'll finish later"
 msgstr "Close, I'll finish later"
@@ -9646,7 +9650,7 @@ msgstr "Code {number}"
 #~ msgid "Code added. {total} codes."
 #~ msgstr "Code added. {total} codes."
 
-#: app/components/pos/terminals-manager.tsx:1652
+#: app/components/pos/terminals-manager.tsx:1736
 msgid "Code copied."
 msgstr "Code copied."
 
@@ -10195,7 +10199,7 @@ msgstr ""
 msgid "Connect your POS"
 msgstr "Connect your POS"
 
-#: app/components/pos/terminals-manager.tsx:1671
+#: app/components/pos/terminals-manager.tsx:1755
 #: app/components/pos/zatca-settings.tsx:378
 #: app/components/settings/cards/organization/pos-integrations-card.tsx:102
 #: app/components/settings/cards/organization/review-integrations-card.tsx:54
@@ -10502,7 +10506,7 @@ msgid "Copy All"
 msgstr ""
 
 #: ../../packages/ai/src/components/ai-elements/code-block.tsx:145
-#: app/components/pos/terminals-manager.tsx:1744
+#: app/components/pos/terminals-manager.tsx:1828
 msgid "Copy code"
 msgstr ""
 
@@ -10519,7 +10523,7 @@ msgid "Copy into this week"
 msgstr "Copy into this week"
 
 #: app/components/hiring/job-share-panel.tsx:87
-#: app/components/pos/terminals-manager.tsx:1744
+#: app/components/pos/terminals-manager.tsx:1828
 #: app/components/staff/kiosk-manager.tsx:782
 #: app/routes/_app+/$orgSlug_+/media.tsx:1136
 #: app/routes/_app+/$orgSlug_+/notes-cards.tsx:220
@@ -10608,14 +10612,14 @@ msgstr "Could not assign the table."
 msgid "Could not be sent"
 msgstr "Could not be sent"
 
-#: app/components/pos/terminals-manager.tsx:389
+#: app/components/pos/terminals-manager.tsx:399
 msgid "Could not cancel the code."
 msgstr "Could not cancel the code."
 
-#: app/components/pos/terminals-manager.tsx:262
-#: app/components/pos/terminals-manager.tsx:281
-#: app/components/pos/terminals-manager.tsx:300
-#: app/components/pos/terminals-manager.tsx:319
+#: app/components/pos/terminals-manager.tsx:272
+#: app/components/pos/terminals-manager.tsx:291
+#: app/components/pos/terminals-manager.tsx:310
+#: app/components/pos/terminals-manager.tsx:329
 msgid "Could not change the setting."
 msgstr "Could not change the setting."
 
@@ -10623,11 +10627,11 @@ msgstr "Could not change the setting."
 msgid "Could not change the status."
 msgstr "Could not change the status."
 
-#: app/components/pos/terminals-manager.tsx:349
+#: app/components/pos/terminals-manager.tsx:359
 msgid "Could not change who can manage terminals."
 msgstr "Could not change who can manage terminals."
 
-#: app/components/pos/terminals-manager.tsx:374
+#: app/components/pos/terminals-manager.tsx:384
 msgid "Could not change who runs the host stand."
 msgstr "Could not change who runs the host stand."
 
@@ -10635,7 +10639,7 @@ msgstr "Could not change who runs the host stand."
 msgid "Could not connect the terminal."
 msgstr "Could not connect the terminal."
 
-#: app/components/pos/terminals-manager.tsx:1654
+#: app/components/pos/terminals-manager.tsx:1738
 msgid "Could not copy. Select it and copy it by hand."
 msgstr "Could not copy. Select it and copy it by hand."
 
@@ -10655,7 +10659,7 @@ msgstr "Could not copy. Select the PIN and copy it yourself."
 msgid "Could not create a draft. Try again."
 msgstr "Could not create a draft. Try again."
 
-#: app/components/pos/terminals-manager.tsx:1343
+#: app/components/pos/terminals-manager.tsx:1398
 msgid "Could not create a pairing code. Try again."
 msgstr "Could not create a pairing code. Try again."
 
@@ -10697,7 +10701,7 @@ msgstr "Could not load replies."
 msgid "Could not load reservation settings"
 msgstr "Could not load reservation settings"
 
-#: app/components/pos/terminals-manager.tsx:200
+#: app/components/pos/terminals-manager.tsx:210
 msgid "Could not load terminals."
 msgstr "Could not load terminals."
 
@@ -10729,7 +10733,7 @@ msgstr "Could not load the ZATCA settings."
 msgid "Could not make a PIN. Try again."
 msgstr "Could not make a PIN. Try again."
 
-#: app/components/pos/terminals-manager.tsx:334
+#: app/components/pos/terminals-manager.tsx:344
 msgid "Could not mark it settled."
 msgstr "Could not mark it settled."
 
@@ -10753,7 +10757,7 @@ msgstr "Could not post your reply."
 msgid "Could not reach the time clock. Check the connection and try again."
 msgstr "Could not reach the time clock. Check the connection and try again."
 
-#: app/components/pos/terminals-manager.tsx:237
+#: app/components/pos/terminals-manager.tsx:247
 msgid "Could not remove the terminal."
 msgstr "Could not remove the terminal."
 
@@ -10951,6 +10955,10 @@ msgstr "Count paid online orders as sales. The share is shown but never judged a
 #: app/components/roles/tenant-role-access-manager.tsx:730
 msgid "Count stock, log waste & deliveries"
 msgstr "Count stock, log waste & deliveries"
+
+#: app/components/pos/terminals-manager.tsx:1618
+msgid "Count stock, log waste and receive deliveries on this terminal."
+msgstr "Count stock, log waste and receive deliveries on this terminal."
 
 #: app/components/inventory/setup-checklist.tsx:24
 msgid "Count what you have now. Every number after this starts here."
@@ -11444,7 +11452,7 @@ msgstr "Create notes"
 msgid "Create Option"
 msgstr "Create Option"
 
-#: app/components/pos/terminals-manager.tsx:1569
+#: app/components/pos/terminals-manager.tsx:1653
 #: app/components/staff/kiosk-manager.tsx:616
 msgid "Create pairing code"
 msgstr "Create pairing code"
@@ -11602,7 +11610,7 @@ msgstr "Creating page"
 msgid "Creating..."
 msgstr ""
 
-#: app/components/pos/terminals-manager.tsx:1567
+#: app/components/pos/terminals-manager.tsx:1651
 #: app/components/reservations/experiences/experience-create-sheet.tsx:178
 #: app/components/staff/kiosk-manager.tsx:614
 #: app/components/website/create-form-dialog.tsx:305
@@ -12079,7 +12087,7 @@ msgstr "Day"
 msgid "Day controls"
 msgstr "Day controls"
 
-#: app/components/pos/terminals-manager.tsx:896
+#: app/components/pos/terminals-manager.tsx:908
 msgid "Day ends {time}"
 msgstr "Day ends {time}"
 
@@ -13480,7 +13488,7 @@ msgstr "Don't take phone orders for"
 #: app/components/kiosk/kiosk-screens.tsx:720
 #: app/components/note/share-note-button.tsx:365
 #: app/components/phone-agent/call-request-card.tsx:41
-#: app/components/pos/terminals-manager.tsx:1675
+#: app/components/pos/terminals-manager.tsx:1759
 #: app/components/reservations/settings/setup-checklist.tsx:173
 #: app/components/settings/backup-codes-display.tsx:108
 #: app/components/staff/kiosk-manager.tsx:722
@@ -15251,7 +15259,7 @@ msgstr "Enter their first day."
 #~ msgid "Enter this code in the POS app's settings on the device. It works once."
 #~ msgstr "Enter this code in the POS app's settings on the device. It works once."
 
-#: app/components/pos/terminals-manager.tsx:1695
+#: app/components/pos/terminals-manager.tsx:1779
 msgid "Enter this code in the Station app's settings on the device. It works once."
 msgstr "Enter this code in the Station app's settings on the device. It works once."
 
@@ -15630,7 +15638,7 @@ msgstr "Everyone on the team"
 msgid "Everyone who has ordered, signed in or booked a table, in one list. Data is served from your tenant region."
 msgstr "Everyone who has ordered, signed in or booked a table, in one list. Data is served from your tenant region."
 
-#: app/components/pos/terminals-manager.tsx:704
+#: app/components/pos/terminals-manager.tsx:714
 msgid "Everyone with a PIN can take orders and use the time clock. Managers can also change a terminal's settings. The host stand is for the people you choose here. Set a person's PIN under Staff."
 msgstr "Everyone with a PIN can take orders and use the time clock. Managers can also change a terminal's settings. The host stand is for the people you choose here. Set a person's PIN under Staff."
 
@@ -15848,7 +15856,7 @@ msgstr "Expires at {expiresAt}"
 #~ msgid "Expires at <0>{0}</0>"
 #~ msgstr "Expires at <0>{0}</0>"
 
-#: app/components/pos/terminals-manager.tsx:1721
+#: app/components/pos/terminals-manager.tsx:1805
 #: app/components/staff/kiosk-manager.tsx:367
 #: app/components/staff/kiosk-manager.tsx:759
 msgid "Expires in {left}"
@@ -17108,7 +17116,7 @@ msgstr ""
 msgid "From the paper invoice. VAT is kept apart from prices."
 msgstr "From the paper invoice. VAT is kept apart from prices."
 
-#: app/components/pos/terminals-manager.tsx:1398
+#: app/components/pos/terminals-manager.tsx:1453
 msgid "Front counter"
 msgstr "Front counter"
 
@@ -18054,7 +18062,7 @@ msgstr "Hide details"
 msgid "Hide from search engines"
 msgstr ""
 
-#: app/components/pos/terminals-manager.tsx:781
+#: app/components/pos/terminals-manager.tsx:791
 msgid "Hide removed terminals"
 msgstr "Hide removed terminals"
 
@@ -18229,16 +18237,16 @@ msgstr "Host"
 msgid "Host Notes"
 msgstr "Host Notes"
 
-#: app/components/pos/terminals-manager.tsx:934
+#: app/components/pos/terminals-manager.tsx:946
 #: app/utils/reservations/labels.ts:49
 msgid "Host stand"
 msgstr "Host stand"
 
-#: app/components/pos/terminals-manager.tsx:1069
+#: app/components/pos/terminals-manager.tsx:1102
 msgid "Host stand for {locationName}"
 msgstr "Host stand for {locationName}"
 
-#: app/components/pos/terminals-manager.tsx:951
+#: app/components/pos/terminals-manager.tsx:963
 msgid "Host stand for {name}"
 msgstr "Host stand for {name}"
 
@@ -18248,7 +18256,7 @@ msgstr "Host stand for {name}"
 #~ msgid "Host stand views"
 #~ msgstr "Host stand views"
 
-#: app/components/pos/terminals-manager.tsx:935
+#: app/components/pos/terminals-manager.tsx:947
 msgid "Host stand with guest details"
 msgstr "Host stand with guest details"
 
@@ -19543,7 +19551,7 @@ msgstr "Keep editing"
 #~ msgstr "Keep forever"
 
 #: app/components/discounts/archive-discount-button.tsx:106
-#: app/components/pos/terminals-manager.tsx:846
+#: app/components/pos/terminals-manager.tsx:858
 #: app/components/reservations/experiences/experience-editor.tsx:1031
 #: app/components/staff/kiosk-manager.tsx:970
 #: app/components/staff/schedule/shift-editor-sheet.tsx:737
@@ -20507,7 +20515,7 @@ msgid "Link copied!"
 msgstr ""
 
 #: app/components/hiring/job-share-panel.tsx:49
-#: app/components/pos/terminals-manager.tsx:1652
+#: app/components/pos/terminals-manager.tsx:1736
 #: app/components/staff/kiosk-manager.tsx:697
 msgid "Link copied."
 msgstr "Link copied."
@@ -20993,8 +21001,8 @@ msgstr "Local emulator"
 #: app/components/menu/drop-wizard/drop-drawers.tsx:249
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:37
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:43
-#: app/components/pos/terminals-manager.tsx:1418
-#: app/components/pos/terminals-manager.tsx:1426
+#: app/components/pos/terminals-manager.tsx:1473
+#: app/components/pos/terminals-manager.tsx:1481
 #: app/components/print/restaurant/vertical-ui.tsx:217
 #: app/components/print/restaurant/vertical-ui.tsx:278
 #: app/components/qr/tables-manager.tsx:174
@@ -21026,7 +21034,7 @@ msgstr "Location Details"
 msgid "Location Name"
 msgstr "Location Name"
 
-#: app/components/pos/terminals-manager.tsx:1082
+#: app/components/pos/terminals-manager.tsx:1115
 msgid "Location of {label}"
 msgstr "Location of {label}"
 
@@ -21374,7 +21382,7 @@ msgstr "Main workplace"
 msgid "Maintenance"
 msgstr "Maintenance"
 
-#: app/components/pos/terminals-manager.tsx:869
+#: app/components/pos/terminals-manager.tsx:881
 msgid "Make {name} a manager"
 msgstr "Make {name} a manager"
 
@@ -21399,7 +21407,7 @@ msgstr "Make a test call"
 msgid "Make it more detailed"
 msgstr ""
 
-#: app/components/pos/terminals-manager.tsx:748
+#: app/components/pos/terminals-manager.tsx:758
 msgid "Make manager"
 msgstr "Make manager"
 
@@ -21618,7 +21626,7 @@ msgstr "Manage your restaurant's name, slug, and profile image."
 msgid "Manage your restaurant's subscription"
 msgstr "Manage your restaurant's subscription"
 
-#: app/components/pos/terminals-manager.tsx:729
+#: app/components/pos/terminals-manager.tsx:739
 #: app/components/staff/timesheets/card-history.tsx:67
 msgid "Manager"
 msgstr "Manager"
@@ -21758,7 +21766,7 @@ msgstr "Mark ready"
 msgid "Mark removed from tab {number}. It now earns loyalty points like any other tab."
 msgstr "Mark removed from tab {number}. It now earns loyalty points like any other tab."
 
-#: app/components/pos/terminals-manager.tsx:651
+#: app/components/pos/terminals-manager.tsx:661
 msgid "Mark settled"
 msgstr "Mark settled"
 
@@ -22840,7 +22848,7 @@ msgstr "My schedule link"
 #: app/components/inventory/supplier-form.tsx:195
 #: app/components/loyalty/promotion-dialog.tsx:604
 #: app/components/loyalty/reward-dialog.tsx:435
-#: app/components/pos/terminals-manager.tsx:1390
+#: app/components/pos/terminals-manager.tsx:1445
 #: app/components/reservations/policies/policy-sheet.tsx:217
 #: app/components/reservations/waitlist/party-fields.tsx:62
 #: app/components/reservations/walk-in-dialog.tsx:239
@@ -22883,7 +22891,7 @@ msgstr "Name (guest-facing)"
 #~ msgid "Name in Arabic"
 #~ msgstr "Name in Arabic"
 
-#: app/components/pos/terminals-manager.tsx:1382
+#: app/components/pos/terminals-manager.tsx:1437
 msgid "Name it so you can tell it apart. The code prefixes its order numbers."
 msgstr "Name it so you can tell it apart. The code prefixes its order numbers."
 
@@ -22967,7 +22975,11 @@ msgstr ""
 msgid "Need an integration but don't see it here?"
 msgstr ""
 
-#: app/components/pos/terminals-manager.tsx:1539
+#: app/components/pos/terminals-manager.tsx:1623
+msgid "Needs a location and a staff PIN, so every count and waste entry records who made it."
+msgstr "Needs a location and a staff PIN, so every count and waste entry records who made it."
+
+#: app/components/pos/terminals-manager.tsx:1594
 msgid "Needs a location and a staff PIN, so guests’ details only open for someone signed in."
 msgstr "Needs a location and a staff PIN, so guests’ details only open for someone signed in."
 
@@ -23931,7 +23943,7 @@ msgstr "No grouping"
 #~ msgid "No guests match your search"
 #~ msgstr "No guests match your search"
 
-#: app/components/pos/terminals-manager.tsx:933
+#: app/components/pos/terminals-manager.tsx:945
 msgid "No host stand"
 msgstr "No host stand"
 
@@ -24472,7 +24484,7 @@ msgstr "No pickup windows scheduled"
 msgid "No PIN at {first} yet"
 msgstr "No PIN at {first} yet"
 
-#: app/components/pos/terminals-manager.tsx:724
+#: app/components/pos/terminals-manager.tsx:734
 #: app/components/staff/access-tab.tsx:160
 msgid "No PIN yet"
 msgstr "No PIN yet"
@@ -24834,7 +24846,7 @@ msgstr "No teammates available"
 msgid "No templates yet. Save a week you like and it will show up here."
 msgstr "No templates yet. Save a week you like and it will show up here."
 
-#: app/components/pos/terminals-manager.tsx:445
+#: app/components/pos/terminals-manager.tsx:455
 msgid "No terminals yet"
 msgstr "No terminals yet"
 
@@ -25264,7 +25276,7 @@ msgstr "Not published yet."
 msgid "Not reached yet"
 msgstr "Not reached yet"
 
-#: app/components/pos/terminals-manager.tsx:568
+#: app/components/pos/terminals-manager.tsx:578
 msgid "Not required"
 msgstr "Not required"
 
@@ -25272,7 +25284,7 @@ msgstr "Not required"
 msgid "Not saved yet"
 msgstr "Not saved yet"
 
-#: app/components/pos/terminals-manager.tsx:1205
+#: app/components/pos/terminals-manager.tsx:1248
 #: app/components/staff/kiosk-manager.tsx:442
 msgid "Not seen yet"
 msgstr "Not seen yet"
@@ -26628,7 +26640,7 @@ msgstr "Open the waitlist to see who is waiting."
 msgid "Open this on the tablet"
 msgstr "Open this on the tablet"
 
-#: app/components/pos/terminals-manager.tsx:1686
+#: app/components/pos/terminals-manager.tsx:1770
 msgid "Open this on the terminal"
 msgstr "Open this on the terminal"
 
@@ -27067,7 +27079,7 @@ msgstr "Ordering Window"
 msgid "Orders"
 msgstr "Orders"
 
-#: app/components/pos/terminals-manager.tsx:1462
+#: app/components/pos/terminals-manager.tsx:1517
 msgid "Orders after midnight count towards the previous day until then, so a late service keeps one day's numbers and takings."
 msgstr "Orders after midnight count towards the previous day until then, so a late service keeps one day's numbers and takings."
 
@@ -27621,8 +27633,8 @@ msgstr "Paid when the tab closes"
 msgid "Pair a tablet"
 msgstr "Pair a tablet"
 
-#: app/components/pos/terminals-manager.tsx:415
-#: app/components/pos/terminals-manager.tsx:1379
+#: app/components/pos/terminals-manager.tsx:425
+#: app/components/pos/terminals-manager.tsx:1434
 msgid "Pair a terminal"
 msgstr "Pair a terminal"
 
@@ -27635,19 +27647,19 @@ msgstr "Pair a terminal"
 msgid "Pair this tablet"
 msgstr "Pair this tablet"
 
-#: app/components/pos/terminals-manager.tsx:447
+#: app/components/pos/terminals-manager.tsx:457
 msgid "Pair your first terminal to start taking walk-in orders."
 msgstr "Pair your first terminal to start taking walk-in orders."
 
-#: app/components/pos/terminals-manager.tsx:455
+#: app/components/pos/terminals-manager.tsx:465
 msgid "Paired terminals"
 msgstr "Paired terminals"
 
-#: app/components/pos/terminals-manager.tsx:1726
+#: app/components/pos/terminals-manager.tsx:1810
 msgid "Pairing code"
 msgstr "Pairing code"
 
-#: app/components/pos/terminals-manager.tsx:1726
+#: app/components/pos/terminals-manager.tsx:1810
 #: app/components/staff/kiosk-manager.tsx:764
 msgid "Pairing link"
 msgstr "Pairing link"
@@ -28718,21 +28730,21 @@ msgstr "PIN set"
 msgid "PIN set on {setOn}"
 msgstr "PIN set on {setOn}"
 
-#: app/components/pos/terminals-manager.tsx:254
+#: app/components/pos/terminals-manager.tsx:264
 msgid "PIN sign-in is off. The terminal updates the next time it connects."
 msgstr "PIN sign-in is off. The terminal updates the next time it connects."
 
-#: app/components/pos/terminals-manager.tsx:251
+#: app/components/pos/terminals-manager.tsx:261
 msgid "PIN sign-in is on. The terminal updates the next time it connects."
 msgstr "PIN sign-in is on. The terminal updates the next time it connects."
 
-#: app/components/pos/terminals-manager.tsx:519
-#: app/components/pos/terminals-manager.tsx:531
+#: app/components/pos/terminals-manager.tsx:529
+#: app/components/pos/terminals-manager.tsx:541
 msgid "PIN sign-in off"
 msgstr "PIN sign-in off"
 
-#: app/components/pos/terminals-manager.tsx:517
-#: app/components/pos/terminals-manager.tsx:529
+#: app/components/pos/terminals-manager.tsx:527
+#: app/components/pos/terminals-manager.tsx:539
 msgid "PIN sign-in on"
 msgstr "PIN sign-in on"
 
@@ -29987,7 +29999,7 @@ msgstr "QR code that opens the pairing page"
 msgid "QR code that opens this job"
 msgstr "QR code that opens this job"
 
-#: app/components/pos/terminals-manager.tsx:1707
+#: app/components/pos/terminals-manager.tsx:1791
 msgid "QR code that pairs the terminal"
 msgstr "QR code that pairs the terminal"
 
@@ -30893,7 +30905,7 @@ msgstr "Removal not published"
 #: app/components/menu/option-form.tsx:379
 #: app/components/note/share-note-button.tsx:265
 #: app/components/phone-agent/phone-number-dialogs.tsx:178
-#: app/components/pos/terminals-manager.tsx:488
+#: app/components/pos/terminals-manager.tsx:498
 #: app/components/reservations/experiences/experience-editor.tsx:1005
 #: app/components/settings/cards/organization/site-icon-card.tsx:224
 #: app/components/settings/cards/organization/site-theme-card.tsx:299
@@ -30943,12 +30955,12 @@ msgid "Remove {itemName}"
 msgstr "Remove {itemName}"
 
 #: app/components/chat/chat-compose-dialog.tsx:129
-#: app/components/pos/terminals-manager.tsx:873
+#: app/components/pos/terminals-manager.tsx:885
 #: app/components/reservations/experiences/schedule-sheet.tsx:295
 msgid "Remove {label}"
 msgstr "Remove {label}"
 
-#: app/components/pos/terminals-manager.tsx:868
+#: app/components/pos/terminals-manager.tsx:880
 msgid "Remove {name} as manager"
 msgstr "Remove {name} as manager"
 
@@ -31053,7 +31065,7 @@ msgstr ""
 msgid "Remove link"
 msgstr ""
 
-#: app/components/pos/terminals-manager.tsx:746
+#: app/components/pos/terminals-manager.tsx:756
 msgid "Remove manager"
 msgstr "Remove manager"
 
@@ -31150,7 +31162,7 @@ msgstr "Remove team members"
 msgid "Remove template {templateName}"
 msgstr "Remove template {templateName}"
 
-#: app/components/pos/terminals-manager.tsx:851
+#: app/components/pos/terminals-manager.tsx:863
 msgid "Remove terminal"
 msgstr "Remove terminal"
 
@@ -31216,7 +31228,7 @@ msgstr "Remove this task?"
 msgid "Remove this template?"
 msgstr "Remove this template?"
 
-#: app/components/pos/terminals-manager.tsx:834
+#: app/components/pos/terminals-manager.tsx:846
 msgid "Remove this terminal?"
 msgstr "Remove this terminal?"
 
@@ -31505,7 +31517,7 @@ msgstr ""
 msgid "Requests"
 msgstr "Requests"
 
-#: app/components/pos/terminals-manager.tsx:879
+#: app/components/pos/terminals-manager.tsx:891
 msgid "Require a cash drawer shift before {label} sells"
 msgstr "Require a cash drawer shift before {label} sells"
 
@@ -31513,8 +31525,8 @@ msgstr "Require a cash drawer shift before {label} sells"
 msgid "Require a manager at the till"
 msgstr "Require a manager at the till"
 
-#: app/components/pos/terminals-manager.tsx:497
-#: app/components/pos/terminals-manager.tsx:1477
+#: app/components/pos/terminals-manager.tsx:507
+#: app/components/pos/terminals-manager.tsx:1532
 msgid "Require a staff PIN"
 msgstr "Require a staff PIN"
 
@@ -31522,7 +31534,7 @@ msgstr "Require a staff PIN"
 msgid "Require re-authorization to reconnect"
 msgstr ""
 
-#: app/components/pos/terminals-manager.tsx:560
+#: app/components/pos/terminals-manager.tsx:570
 msgid "Require shifts"
 msgstr "Require shifts"
 
@@ -31643,7 +31655,7 @@ msgstr "Reservation records will be deleted too"
 #: app/components/app-sidebar.tsx:522
 #: app/components/customers/person-profile-screen.tsx:119
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:40
-#: app/components/pos/terminals-manager.tsx:1530
+#: app/components/pos/terminals-manager.tsx:1585
 #: app/components/roles/tenant-role-access-manager.tsx:418
 #: app/components/settings/cards/organization/integrations-card.tsx:63
 #: app/components/workspace-breadcrumb.tsx:75
@@ -31668,19 +31680,19 @@ msgstr "Reservations manager"
 #~ msgid "Reservations navigation"
 #~ msgstr "Reservations navigation"
 
-#: app/components/pos/terminals-manager.tsx:1061
+#: app/components/pos/terminals-manager.tsx:1082
 msgid "Reservations off"
 msgstr "Reservations off"
 
-#: app/components/pos/terminals-manager.tsx:1060
+#: app/components/pos/terminals-manager.tsx:1081
 msgid "Reservations on"
 msgstr "Reservations on"
 
-#: app/components/pos/terminals-manager.tsx:1059
+#: app/components/pos/terminals-manager.tsx:1080
 msgid "Reservations on {label}, off"
 msgstr "Reservations on {label}, off"
 
-#: app/components/pos/terminals-manager.tsx:1058
+#: app/components/pos/terminals-manager.tsx:1079
 msgid "Reservations on {label}, on"
 msgstr "Reservations on {label}, on"
 
@@ -32468,8 +32480,8 @@ msgstr "Sales for {label} removed."
 msgid "Sales for {label} saved."
 msgstr "Sales for {label} saved."
 
-#: app/components/pos/terminals-manager.tsx:613
-#: app/components/pos/terminals-manager.tsx:617
+#: app/components/pos/terminals-manager.tsx:623
+#: app/components/pos/terminals-manager.tsx:627
 msgid "Sales held for review"
 msgstr "Sales held for review"
 
@@ -32909,9 +32921,9 @@ msgstr "Saved with the refund, along with who recorded it."
 msgid "Saved."
 msgstr "Saved."
 
-#: app/components/pos/terminals-manager.tsx:274
-#: app/components/pos/terminals-manager.tsx:293
-#: app/components/pos/terminals-manager.tsx:312
+#: app/components/pos/terminals-manager.tsx:284
+#: app/components/pos/terminals-manager.tsx:303
+#: app/components/pos/terminals-manager.tsx:322
 msgid "Saved. The terminal updates the next time it connects."
 msgstr "Saved. The terminal updates the next time it connects."
 
@@ -33047,7 +33059,7 @@ msgstr "Say why. It is kept with the card."
 msgid "Scan QR Code or Enter Setup Key"
 msgstr ""
 
-#: app/components/pos/terminals-manager.tsx:1690
+#: app/components/pos/terminals-manager.tsx:1774
 msgid "Scan the code with the device's camera, or open the link in its browser. It works once."
 msgstr "Scan the code with the device's camera, or open the link in its browser. It works once."
 
@@ -33873,7 +33885,7 @@ msgstr "See your jobs"
 msgid "See your own published shifts. Only useful for people who also work shifts."
 msgstr "See your own published shifts. Only useful for people who also work shifts."
 
-#: app/components/pos/terminals-manager.tsx:1220
+#: app/components/pos/terminals-manager.tsx:1263
 msgid "Seen {label}"
 msgstr "Seen {label}"
 
@@ -33881,7 +33893,7 @@ msgstr "Seen {label}"
 msgid "Seen {seen}"
 msgstr "Seen {seen}"
 
-#: app/components/pos/terminals-manager.tsx:1207
+#: app/components/pos/terminals-manager.tsx:1250
 msgid "Seen just now"
 msgstr "Seen just now"
 
@@ -34313,7 +34325,7 @@ msgstr "Sent"
 msgid "Sent {0}"
 msgstr ""
 
-#: app/components/pos/terminals-manager.tsx:1171
+#: app/components/pos/terminals-manager.tsx:1214
 msgid "Sent after another terminal took the tab over"
 msgstr "Sent after another terminal took the tab over"
 
@@ -34334,7 +34346,7 @@ msgstr "Sent ahead of the booking, at the lead time set below."
 msgid "Sent by email to people who have an address on file."
 msgstr "Sent by email to people who have an address on file."
 
-#: app/components/pos/terminals-manager.tsx:1179
+#: app/components/pos/terminals-manager.tsx:1222
 msgid "Sent for a location this terminal is not paired to"
 msgstr "Sent for a location this terminal is not paired to"
 
@@ -34872,8 +34884,8 @@ msgstr "Shift with the up or right arrow makes a shift end later. Shift with the
 msgid "Shifts"
 msgstr "Shifts"
 
-#: app/components/pos/terminals-manager.tsx:558
-#: app/components/pos/terminals-manager.tsx:566
+#: app/components/pos/terminals-manager.tsx:568
+#: app/components/pos/terminals-manager.tsx:576
 msgid "Shifts required"
 msgstr "Shifts required"
 
@@ -34979,7 +34991,7 @@ msgstr "Show"
 msgid "Show \"Popular\" badge on menus."
 msgstr "Show \"Popular\" badge on menus."
 
-#: app/components/pos/terminals-manager.tsx:783
+#: app/components/pos/terminals-manager.tsx:793
 msgid "Show {removedCount} removed"
 msgstr "Show {removedCount} removed"
 
@@ -35777,7 +35789,7 @@ msgstr "Staff alerts"
 msgid "Staff at a terminal"
 msgstr "Staff at a terminal"
 
-#: app/components/pos/terminals-manager.tsx:1502
+#: app/components/pos/terminals-manager.tsx:1557
 msgid "Staff clock in and out on this terminal with their PIN, even while it is locked."
 msgstr "Staff clock in and out on this terminal with their PIN, even while it is locked."
 
@@ -36154,11 +36166,11 @@ msgstr "State or region"
 msgid "Station"
 msgstr "Station"
 
-#: app/components/pos/terminals-manager.tsx:1039
+#: app/components/pos/terminals-manager.tsx:1060
 msgid "Station apps"
 msgstr "Station apps"
 
-#: app/components/pos/terminals-manager.tsx:399
+#: app/components/pos/terminals-manager.tsx:409
 msgid "Station terminals"
 msgstr "Station terminals"
 
@@ -36263,6 +36275,7 @@ msgstr "Still needed: {missingList}"
 #: app/components/app-sidebar.tsx:426
 #: app/components/inventory/inventory-chrome.tsx:24
 #: app/components/inventory/inventory-chrome.tsx:36
+#: app/components/pos/terminals-manager.tsx:1614
 #: app/components/workspace-breadcrumb.tsx:92
 msgid "Stock"
 msgstr "Stock"
@@ -36274,6 +36287,22 @@ msgstr "Stock adjusted."
 #: app/components/inventory/count-review-screen.tsx:604
 msgid "Stock is set to what was counted and the count closes. This cannot be undone."
 msgstr "Stock is set to what was counted and the count closes. This cannot be undone."
+
+#: app/components/pos/terminals-manager.tsx:1095
+msgid "Stock off"
+msgstr "Stock off"
+
+#: app/components/pos/terminals-manager.tsx:1094
+msgid "Stock on"
+msgstr "Stock on"
+
+#: app/components/pos/terminals-manager.tsx:1093
+msgid "Stock on {label}, off"
+msgstr "Stock on {label}, off"
+
+#: app/components/pos/terminals-manager.tsx:1092
+msgid "Stock on {label}, on"
+msgstr "Stock on {label}, on"
 
 #: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:391
 msgid "Stock value"
@@ -36316,7 +36345,7 @@ msgstr "Stop online payment, tab {number}, table {label}"
 msgid "Stop preview"
 msgstr "Stop preview"
 
-#: app/components/pos/terminals-manager.tsx:878
+#: app/components/pos/terminals-manager.tsx:890
 msgid "Stop requiring cash drawer shifts on {label}"
 msgstr "Stop requiring cash drawer shifts on {label}"
 
@@ -37366,11 +37395,11 @@ msgstr "Temporary (302) keeps original search indexing. Best for short-term prom
 msgid "Temporary forward"
 msgstr "Temporary forward"
 
-#: app/components/pos/terminals-manager.tsx:1404
+#: app/components/pos/terminals-manager.tsx:1459
 msgid "Terminal code"
 msgstr "Terminal code"
 
-#: app/components/pos/terminals-manager.tsx:1663
+#: app/components/pos/terminals-manager.tsx:1747
 msgid "Terminal paired"
 msgstr "Terminal paired"
 
@@ -37383,7 +37412,7 @@ msgstr "Terminals"
 msgid "Terminals connected to ZATCA"
 msgstr "Terminals connected to ZATCA"
 
-#: app/components/pos/terminals-manager.tsx:402
+#: app/components/pos/terminals-manager.tsx:412
 msgid "Terminals take walk-in orders in the restaurant, even without internet, and send them here when they reconnect. Pair a tablet or a waiter's phone with a one-time code."
 msgstr "Terminals take walk-in orders in the restaurant, even without internet, and send them here when they reconnect. Pair a tablet or a waiter's phone with a one-time code."
 
@@ -38505,7 +38534,7 @@ msgstr "The guest was sent a link to confirm this charge with their bank."
 msgid "The header is shared across every page."
 msgstr ""
 
-#: app/components/pos/terminals-manager.tsx:1534
+#: app/components/pos/terminals-manager.tsx:1589
 msgid "The host stand for this location: today’s floor, arrivals, walk-ins and the waitlist."
 msgstr "The host stand for this location: today’s floor, arrivals, walk-ins and the waitlist."
 
@@ -39018,7 +39047,7 @@ msgstr "The security check could not load. Turn off content blockers or check yo
 msgid "The security check failed. Please try again."
 msgstr "The security check failed. Please try again."
 
-#: app/components/pos/terminals-manager.tsx:1181
+#: app/components/pos/terminals-manager.tsx:1224
 msgid "The server could not apply it"
 msgstr "The server could not apply it"
 
@@ -39164,11 +39193,11 @@ msgstr "The tag could not be changed. Try again."
 msgid "The tasks a new hire starts with. Due dates count from the day they are hired."
 msgstr "The tasks a new hire starts with. Due dates count from the day they are hired."
 
-#: app/components/pos/terminals-manager.tsx:1480
+#: app/components/pos/terminals-manager.tsx:1535
 msgid "The terminal locks when idle and each order records who took it. Staff need a PIN set under Staff."
 msgstr "The terminal locks when idle and each order records who took it. Staff need a PIN set under Staff."
 
-#: app/components/pos/terminals-manager.tsx:1169
+#: app/components/pos/terminals-manager.tsx:1212
 msgid "The terminal's app may be out of date"
 msgstr "The terminal's app may be out of date"
 
@@ -39670,7 +39699,7 @@ msgstr "This Checkout Session is no longer active"
 msgid "This client will have access to:"
 msgstr ""
 
-#: app/components/pos/terminals-manager.tsx:1719
+#: app/components/pos/terminals-manager.tsx:1803
 #: app/components/staff/kiosk-manager.tsx:757
 msgid "This code expired. Make a new one."
 msgstr "This code expired. Make a new one."
@@ -39679,7 +39708,7 @@ msgstr "This code expired. Make a new one."
 msgid "This code is listed twice."
 msgstr "This code is listed twice."
 
-#: app/components/pos/terminals-manager.tsx:1717
+#: app/components/pos/terminals-manager.tsx:1801
 msgid "This code was removed. Make a new one."
 msgstr "This code was removed. Make a new one."
 
@@ -40578,25 +40607,25 @@ msgstr "Time cards: {timeCardCount} (not included in the backup)"
 
 #: app/components/app-sidebar.tsx:607
 #: app/components/command-menu.tsx:145
-#: app/components/pos/terminals-manager.tsx:1498
+#: app/components/pos/terminals-manager.tsx:1553
 #: app/components/workspace-breadcrumb.tsx:30
 #: app/routes/_app+/$orgSlug_+/staff+/timeclock.tsx:54
 msgid "Time clock"
 msgstr "Time clock"
 
-#: app/components/pos/terminals-manager.tsx:1049
+#: app/components/pos/terminals-manager.tsx:1070
 msgid "Time clock off"
 msgstr "Time clock off"
 
-#: app/components/pos/terminals-manager.tsx:1048
+#: app/components/pos/terminals-manager.tsx:1069
 msgid "Time clock on"
 msgstr "Time clock on"
 
-#: app/components/pos/terminals-manager.tsx:1047
+#: app/components/pos/terminals-manager.tsx:1068
 msgid "Time clock on {label}, off"
 msgstr "Time clock on {label}, off"
 
-#: app/components/pos/terminals-manager.tsx:1046
+#: app/components/pos/terminals-manager.tsx:1067
 msgid "Time clock on {label}, on"
 msgstr "Time clock on {label}, on"
 
@@ -41328,7 +41357,7 @@ msgstr ""
 #: app/components/phone-agent/call-detail-sheet.tsx:367
 #: app/components/phone-agent/call-recording-player.tsx:154
 #: app/components/phone-agent/voice-picker.tsx:456
-#: app/components/pos/terminals-manager.tsx:433
+#: app/components/pos/terminals-manager.tsx:443
 #: app/components/qr/open-tabs.tsx:266
 #: app/components/reservations/experiences/experience-editor.tsx:256
 #: app/components/reservations/experiences/experiences-screen.tsx:247
@@ -41440,7 +41469,7 @@ msgstr "Turn off"
 msgid "Turn off agent audio"
 msgstr "Turn off agent audio"
 
-#: app/components/pos/terminals-manager.tsx:862
+#: app/components/pos/terminals-manager.tsx:874
 msgid "Turn off PIN sign-in for {label}"
 msgstr "Turn off PIN sign-in for {label}"
 
@@ -41485,7 +41514,7 @@ msgstr "Turn on agent audio"
 msgid "Turn on Loyalty to use this trigger"
 msgstr "Turn on Loyalty to use this trigger"
 
-#: app/components/pos/terminals-manager.tsx:863
+#: app/components/pos/terminals-manager.tsx:875
 msgid "Turn on PIN sign-in for {label}"
 msgstr "Turn on PIN sign-in for {label}"
 
@@ -41498,9 +41527,13 @@ msgstr "Turn on Reservations to use this trigger"
 msgid "Turn on the agent"
 msgstr "Turn on the agent"
 
-#: app/components/pos/terminals-manager.tsx:1005
+#: app/components/pos/terminals-manager.tsx:1018
 msgid "Turn on the staff PIN to use reservations."
 msgstr "Turn on the staff PIN to use reservations."
+
+#: app/components/pos/terminals-manager.tsx:1026
+msgid "Turn on the staff PIN to use Stock."
+msgstr "Turn on the staff PIN to use Stock."
 
 #: app/components/staff/labor-core-rules.tsx:282
 msgid "Turn this off and tablets here will not accept punches."
@@ -41539,8 +41572,12 @@ msgid "Turned on training rule \"{title}\""
 msgstr "Turned on training rule \"{title}\""
 
 #: app/components/pos/terminals-manager.tsx:1115
-msgid "Turning an app on needs permission to change its settings (time clock rules, or reservation settings)."
-msgstr "Turning an app on needs permission to change its settings (time clock rules, or reservation settings)."
+#~ msgid "Turning an app on needs permission to change its settings (time clock rules, or reservation settings)."
+#~ msgstr "Turning an app on needs permission to change its settings (time clock rules, or reservation settings)."
+
+#: app/components/pos/terminals-manager.tsx:1157
+msgid "Turning an app on needs permission to change its settings (time clock rules, reservation settings, or stock)."
+msgstr "Turning an app on needs permission to change its settings (time clock rules, reservation settings, or stock)."
 
 #: app/components/staff/schedule-link-section.tsx:149
 msgid "Turning off…"
@@ -41918,7 +41955,7 @@ msgstr "Unknown redemption on the sale"
 msgid "Unknown role"
 msgstr "Unknown role"
 
-#: app/components/pos/terminals-manager.tsx:635
+#: app/components/pos/terminals-manager.tsx:645
 msgid "Unknown terminal"
 msgstr "Unknown terminal"
 
@@ -43272,12 +43309,12 @@ msgstr "Waiting for review"
 msgid "Waiting for the tablet…"
 msgstr "Waiting for the tablet…"
 
-#: app/components/pos/terminals-manager.tsx:1749
+#: app/components/pos/terminals-manager.tsx:1833
 msgid "Waiting for the terminal…"
 msgstr "Waiting for the terminal…"
 
-#: app/components/pos/terminals-manager.tsx:662
-#: app/components/pos/terminals-manager.tsx:666
+#: app/components/pos/terminals-manager.tsx:672
+#: app/components/pos/terminals-manager.tsx:676
 #: app/components/staff/kiosk-manager.tsx:167
 msgid "Waiting to be paired"
 msgstr "Waiting to be paired"
@@ -44188,11 +44225,11 @@ msgstr "When someone orders a pizza, offer garlic knots once."
 #~ msgid "When the agent can't help, it transfers to your staff phone number from Setup."
 #~ msgstr "When the agent can't help, it transfers to your staff phone number from Setup."
 
-#: app/components/pos/terminals-manager.tsx:1458
+#: app/components/pos/terminals-manager.tsx:1513
 msgid "When the business day ends"
 msgstr "When the business day ends"
 
-#: app/components/pos/terminals-manager.tsx:883
+#: app/components/pos/terminals-manager.tsx:895
 msgid "When the business day ends for {label}"
 msgstr "When the business day ends for {label}"
 
@@ -44353,8 +44390,8 @@ msgstr "Who can access this channel?"
 msgid "Who can book online, how far ahead, and how bookings are confirmed."
 msgstr "Who can book online, how far ahead, and how bookings are confirmed."
 
-#: app/components/pos/terminals-manager.tsx:696
-#: app/components/pos/terminals-manager.tsx:701
+#: app/components/pos/terminals-manager.tsx:706
+#: app/components/pos/terminals-manager.tsx:711
 msgid "Who can manage terminals"
 msgstr "Who can manage terminals"
 
@@ -44923,7 +44960,7 @@ msgstr "You can look at this count but not change it."
 msgid "You can look at this discount. You don't have permission to change it."
 msgstr "You can look at this discount. You don't have permission to change it."
 
-#: app/components/pos/terminals-manager.tsx:1008
+#: app/components/pos/terminals-manager.tsx:1021
 msgid "You can open the host stand only at your own locations."
 msgstr "You can open the host stand only at your own locations."
 
@@ -44935,8 +44972,12 @@ msgstr ""
 msgid "You can revoke this access at any time from your MCP settings page. The access token will expire in 1 hour."
 msgstr ""
 
-#: app/components/pos/terminals-manager.tsx:1000
-#: app/components/pos/terminals-manager.tsx:1512
+#: app/components/pos/terminals-manager.tsx:1029
+msgid "You can turn on Stock only at your own locations."
+msgstr "You can turn on Stock only at your own locations."
+
+#: app/components/pos/terminals-manager.tsx:1013
+#: app/components/pos/terminals-manager.tsx:1567
 msgid "You can turn on the time clock only at your own locations."
 msgstr "You can turn on the time clock only at your own locations."
 

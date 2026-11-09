@@ -46,8 +46,9 @@ export type PosSettings = {
 	activeApp: StationApp
 }
 
-/** The apps a Station tablet can show: the till, the time clock, the host stand. */
-export type StationApp = 'pos' | 'timeclock' | 'reservations' | 'kitchen'
+/** The apps a Station tablet can show: the till, the time clock, the host stand, the kitchen, Stock. */
+export type StationApp =
+	'pos' | 'timeclock' | 'reservations' | 'kitchen' | 'stock'
 
 /**
  * The active app if the terminal still offers it, else the till. A till where

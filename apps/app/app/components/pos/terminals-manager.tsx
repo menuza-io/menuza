@@ -66,6 +66,7 @@ const terminalSchema = z.object({
 	// Station apps beside the till. Older servers: off.
 	timeclockEnabled: z.boolean().default(false),
 	reservationsEnabled: z.boolean().default(false),
+	inventoryEnabled: z.boolean().default(false),
 	pairedAt: z.number(),
 	lastSeenAt: z.number().nullable(),
 	revokedAt: z.number().nullable(),
@@ -117,7 +118,12 @@ const QUIET_AFTER_MS = 10 * 60 * 1000
 
 /** Walk-in POS terminals: pair a tablet or phone, see when each last sent an order, remove one that is lost. */
 /** The Station apps a terminal can offer, as the organization has them switched on. */
-export type StationFeatures = { timeclock: boolean; reservations: boolean }
+export type StationFeatures = {
+	timeclock: boolean
+	reservations: boolean
+	/** The Stock app (counts, waste, receiving). */
+	inventory: boolean
+}
 /** What this member may switch on: each app, guest details for hosts, and where. */
 export type StationGrants = StationFeatures & {
 	guestDetails: boolean
@@ -125,10 +131,14 @@ export type StationGrants = StationFeatures & {
 	locationIds: string[] | null
 	/** Workplaces where this member may switch the time clock on; null is all of them. */
 	scopeIds: string[] | null
+	/** Locations where this member may switch Stock on; null is all of them. */
+	inventoryLocationIds: string[] | null
 }
 const NO_GRANTS: StationGrants = {
 	timeclock: false,
 	reservations: false,
+	inventory: false,
+	inventoryLocationIds: [],
 	guestDetails: false,
 	locationIds: [],
 	scopeIds: [],
@@ -141,7 +151,7 @@ export function TerminalsManager({
 	posUrl,
 	appUrl,
 	locations = [],
-	stationFeatures = { timeclock: false, reservations: false },
+	stationFeatures = { timeclock: false, reservations: false, inventory: false },
 	stationGrants = NO_GRANTS,
 }: {
 	orgSlug: string
@@ -815,8 +825,10 @@ export function TerminalsManager({
 					timeclock: stationFeatures.timeclock && stationGrants.timeclock,
 					reservations:
 						stationFeatures.reservations && stationGrants.reservations,
+					inventory: stationFeatures.inventory && stationGrants.inventory,
 				}}
 				hostLocationIds={stationGrants.locationIds}
+				stockLocationIds={stationGrants.inventoryLocationIds}
 				clockScopeIds={stationGrants.scopeIds}
 				suggestedCode={suggestCode(
 					state.status === 'ready' ? state.data.devices : [],
@@ -991,7 +1003,8 @@ function StationApps({
 }) {
 	const { _ } = useLingui()
 	const label = device.label
-	if (!features.timeclock && !features.reservations) return null
+	if (!features.timeclock && !features.reservations && !features.inventory)
+		return null
 	// Where staff work by location, the clock needs the terminal's own (its workplace).
 	const timeclockBlocked =
 		!device.locationId && locations.length > 0
@@ -1006,6 +1019,14 @@ function StationApps({
 			: grants.locationIds !== null &&
 				  !grants.locationIds.includes(device.locationId)
 				? _(t`You can open the host stand only at your own locations.`)
+				: null
+	const inventoryBlocked = !device.locationId
+		? _(t`Choose the terminal's location to use Stock.`)
+		: !device.signInRequired
+			? _(t`Turn on the staff PIN to use Stock.`)
+			: grants.inventoryLocationIds !== null &&
+				  !grants.inventoryLocationIds.includes(device.locationId)
+				? _(t`You can turn on Stock only at your own locations.`)
 				: null
 	const toggle = (
 		on: boolean,
@@ -1064,12 +1085,24 @@ function StationApps({
 							!grants.reservations || reservationsBlocked !== null,
 						)
 					: null}
+				{features.inventory
+					? toggle(
+							device.inventoryEnabled,
+							device.inventoryEnabled
+								? _(t`Stock on ${label}, on`)
+								: _(t`Stock on ${label}, off`),
+							<Trans>Stock on</Trans>,
+							<Trans>Stock off</Trans>,
+							() => onChange({ inventoryEnabled: !device.inventoryEnabled }),
+							!grants.inventory || inventoryBlocked !== null,
+						)
+					: null}
 				{features.reservations && locationName ? (
 					<span className="text-muted-foreground text-sm">
 						<Trans>Host stand for {locationName}</Trans>
 					</span>
 				) : null}
-				{(features.reservations || features.timeclock) &&
+				{(features.reservations || features.timeclock || features.inventory) &&
 				canWrite &&
 				!device.locationId &&
 				locations.length > 0 ? (
@@ -1106,15 +1139,24 @@ function StationApps({
 			reservationsBlocked ? (
 				<p className="text-muted-foreground text-sm">{reservationsBlocked}</p>
 			) : null}
+			{features.inventory &&
+			grants.inventory &&
+			!device.inventoryEnabled &&
+			inventoryBlocked ? (
+				<p className="text-muted-foreground text-sm">{inventoryBlocked}</p>
+			) : null}
 			{canWrite &&
 			((features.timeclock && !grants.timeclock && !device.timeclockEnabled) ||
 				(features.reservations &&
 					!grants.reservations &&
-					!device.reservationsEnabled)) ? (
+					!device.reservationsEnabled) ||
+				(features.inventory &&
+					!grants.inventory &&
+					!device.inventoryEnabled)) ? (
 				<p className="text-muted-foreground text-sm">
 					<Trans>
 						Turning an app on needs permission to change its settings (time
-						clock rules, or reservation settings).
+						clock rules, reservation settings, or stock).
 					</Trans>
 				</p>
 			) : null}
@@ -1125,6 +1167,7 @@ function StationApps({
 type StationAppPatch =
 	| { timeclockEnabled: boolean }
 	| { reservationsEnabled: boolean }
+	| { inventoryEnabled: boolean }
 	| { locationId: string }
 
 function DayStartSelect({
@@ -1252,6 +1295,7 @@ function PairDialog({
 	locations,
 	stationFeatures,
 	hostLocationIds = null,
+	stockLocationIds = null,
 	clockScopeIds = null,
 	suggestedCode,
 }: {
@@ -1266,6 +1310,8 @@ function PairDialog({
 	stationFeatures: StationFeatures
 	/** Locations whose host stand this member may open; null is all of them. */
 	hostLocationIds?: string[] | null
+	/** Locations where this member may switch Stock on; null is all of them. */
+	stockLocationIds?: string[] | null
 	/** Workplaces where this member may switch the time clock on; null is all of them. */
 	clockScopeIds?: string[] | null
 	suggestedCode: string
@@ -1276,6 +1322,7 @@ function PairDialog({
 	const [locationId, setLocationId] = useState(firstLocation)
 	const [timeclockEnabled, setTimeclockEnabled] = useState(false)
 	const [reservationsEnabled, setReservationsEnabled] = useState(false)
+	const [inventoryEnabled, setInventoryEnabled] = useState(false)
 	const [label, setLabel] = useState('')
 	const [terminalCode, setTerminalCode] = useState(suggestedCode)
 	const [pending, setPending] = useState(false)
@@ -1297,6 +1344,12 @@ function PairDialog({
 		locationId !== NO_LOCATION &&
 		signInRequired &&
 		(hostLocationIds === null || hostLocationIds.includes(locationId))
+	// Stock attributes counts and waste to a signed-in person at one location.
+	const inventoryAllowed =
+		stationFeatures.inventory &&
+		locationId !== NO_LOCATION &&
+		signInRequired &&
+		(stockLocationIds === null || stockLocationIds.includes(locationId))
 
 	useEffect(() => {
 		if (open) {
@@ -1309,6 +1362,7 @@ function PairDialog({
 			setLocationId(firstLocation)
 			setTimeclockEnabled(false)
 			setReservationsEnabled(false)
+			setInventoryEnabled(false)
 			setPaired(false)
 		}
 		// Re-seed only when the dialog opens.
@@ -1331,6 +1385,7 @@ function PairDialog({
 						locationId: locationId === NO_LOCATION ? null : locationId,
 						timeclockEnabled: timeclockAllowed && timeclockEnabled,
 						reservationsEnabled: reservationsAllowed && reservationsEnabled,
+						inventoryEnabled: inventoryAllowed && inventoryEnabled,
 					}),
 				}),
 			)
@@ -1539,6 +1594,35 @@ function PairDialog({
 											<Trans>
 												Needs a location and a staff PIN, so guests’ details
 												only open for someone signed in.
+											</Trans>
+										)}
+									</span>
+								</span>
+							</label>
+						) : null}
+						{stationFeatures.inventory ? (
+							<label className="flex items-start gap-3 text-sm">
+								<Checkbox
+									checked={inventoryAllowed && inventoryEnabled}
+									disabled={!inventoryAllowed}
+									onCheckedChange={(checked) =>
+										setInventoryEnabled(checked === true)
+									}
+								/>
+								<span>
+									<span className="block font-medium">
+										<Trans>Stock</Trans>
+									</span>
+									<span className="text-muted-foreground">
+										{inventoryAllowed ? (
+											<Trans>
+												Count stock, log waste and receive deliveries on this
+												terminal.
+											</Trans>
+										) : (
+											<Trans>
+												Needs a location and a staff PIN, so every count and
+												waste entry records who made it.
 											</Trans>
 										)}
 									</span>

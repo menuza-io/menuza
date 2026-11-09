@@ -41,10 +41,14 @@ type Candidate = { item: AttentionItem; money: number; priority: number }
 const KIND_PRIORITY: Record<AttentionItem['kind'], number> = {
 	count_in_review: 0,
 	low_stock: 1,
-	count_due: 2,
-	count_in_progress: 3,
-	price_rise: 4,
-	unpaid_deliveries: 5,
+	// Phase 2 kinds are produced by the region work that follows the contract.
+	order_cutoff: 2,
+	delivery_expected: 3,
+	count_due: 4,
+	count_in_progress: 5,
+	prices_pending: 6,
+	price_rise: 7,
+	unpaid_deliveries: 8,
 }
 
 /** Items whose cost rose more than the alert threshold on the latest delivery at a location. */

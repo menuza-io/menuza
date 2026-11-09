@@ -232,7 +232,7 @@ describe('flat shared Item workbench', () => {
 				logoUrl: null,
 				locationName: 'Main',
 				app: 'reservations',
-				apps: { timeclock: true, reservations: true },
+				apps: { timeclock: true, reservations: true, inventory: false },
 				onApp: app,
 			}),
 		)

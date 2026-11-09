@@ -120,6 +120,21 @@ describe('order credentials', () => {
 		})
 	})
 
+	it('signs the Stock grant even when it is the only Station app the member may switch on', async () => {
+		const grants = {
+			timeclock: false,
+			reservations: false,
+			inventory: true,
+			inventoryLocationIds: ['loc_1'],
+		}
+		mocks.station.mockResolvedValue(grants)
+		await run('?write=1')
+		expect(mocks.client).toHaveBeenCalledWith(expect.any(Request), 'cafe', {
+			scope: 'orders:write',
+			claims: { stationApps: grants, locationIds: null },
+		})
+	})
+
 	it('signs the member’s locations on read and write credentials', async () => {
 		mocks.locations.mockResolvedValue(['loc_1'])
 		for (const suffix of ['', '?write=1']) {

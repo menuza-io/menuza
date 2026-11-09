@@ -69,6 +69,14 @@ export type OperatorOrderAuth = {
 export type StationAppClaims = {
 	timeclock: boolean
 	reservations: boolean
+	/**
+	 * May switch the Stock app on for a terminal (`update:inventory:any` with
+	 * `inventory.enabled`). Absent from a token minted by an App that predates
+	 * it, which reads as false: fail closed, so deploy App before tenant-api.
+	 */
+	inventory: boolean
+	/** Locations where Stock may be switched on; null is all (and meaningless while `inventory` is false). */
+	inventoryLocationIds: string[] | null
 	guestDetails: boolean
 	locationIds: string[] | null
 	/** Staffing workplaces where the time clock may be switched on; null is all. */
@@ -87,6 +95,8 @@ function readStationApps(raw: unknown): StationAppClaims {
 	return {
 		timeclock: claim.timeclock === true,
 		reservations: claim.reservations === true,
+		inventory: claim.inventory === true,
+		inventoryLocationIds: ids(claim.inventoryLocationIds),
 		guestDetails: claim.guestDetails === true,
 		locationIds: ids(claim.locationIds),
 		scopeIds: ids(claim.scopeIds),

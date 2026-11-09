@@ -167,6 +167,13 @@ export const updateSupplierProductSchema = supplierProductFieldsSchema
  * invoice line says, before VAT); the region derives cost per base unit as
  * `lineTotalMinor / quantity`. `packPriceMinor`, when sent with a supplier
  * product, becomes that product's new price.
+ *
+ * Phase 2 (additive): `lineTotalMinor` is required unless the request is
+ * `quantityOnly` (then it and `packPriceMinor` must be absent, see
+ * `recordDeliverySchema`). `orderLineId` ties the line to a line of the
+ * `orderId` the delivery is received against; `orderedQuantity` echoes what
+ * the screen showed as ordered (informational: the region uses its own
+ * figure and only keeps the echo in the audit detail).
  */
 export const deliveryLineInputSchema = z
 	.object({
@@ -177,32 +184,126 @@ export const deliveryLineInputSchema = z
 		packName: inventoryNameSchema.nullable().optional(),
 		packBaseQuantity: positiveQuantitySchema.nullable().optional(),
 		packPriceMinor: z.number().int().min(0).nullable().optional(),
-		lineTotalMinor: z.number().int().min(0),
+		lineTotalMinor: z.number().int().min(0).optional(),
 		/** Real weight (base thousandths) when the line is priced by weight. */
 		realWeightQuantity: positiveQuantitySchema.nullable().optional(),
+		/** Line of `orderId` this line receives (phase 2). */
+		orderLineId: inventoryIdSchema.nullable().optional(),
+		/** What the screen showed as ordered, base thousandths (phase 2, informational). */
+		orderedQuantity: z.number().int().min(0).nullable().optional(),
 	})
 	.strict()
 
-/**
- * `POST /deliveries` (`update:inventory:any`). Posts a `delivery` movement per
- * line, updates last and average cost, and remembers pack prices.
- */
-export const recordDeliverySchema = z
+/** The request without the cross-field rules (kept so `.extend` stays possible). */
+export const recordDeliveryBaseSchema = z
 	.object({
 		clientId: clientIdSchema,
 		locationId: inventoryLocationIdSchema,
 		supplierId: inventoryIdSchema.nullable(),
 		invoiceNumber: optionalText(60),
 		invoiceDate: isoDateSchema.nullable().optional(),
-		currency: currencySchema,
+		/**
+		 * Required unless `quantityOnly` (a token without the cost grant does not
+		 * know the money format; the region then uses the organization's currency).
+		 */
+		currency: currencySchema.optional(),
 		vatMinor: z.number().int().min(0).nullable().optional(),
 		/** The invoice's grand total, to compare with the lines. */
 		totalMinor: z.number().int().min(0).nullable().optional(),
 		zatcaReference: optionalText(200),
+		/** Needs `update:inventory_purchasing:any` (403 `purchasing_required` otherwise). */
 		paid: z.boolean().default(false),
+		/**
+		 * Phase 2: received quantities only, no prices. See `recordDeliverySchema`.
+		 */
+		/** Absent means false. */
+		quantityOnly: z.boolean().optional(),
+		/** Phase 2: receive against this order (`update:inventory:any`, flag `purchasing`). */
+		orderId: inventoryIdSchema.nullable().optional(),
+		/**
+		 * Phase 2: nothing more is coming for `orderId`: close it as `received`
+		 * even if lines are short (the shortfalls stay readable for credit).
+		 */
+		/** Absent means false. */
+		closeOrder: z.boolean().optional(),
 		lines: z.array(deliveryLineInputSchema).min(1).max(200),
 	})
 	.strict()
+
+/**
+ * `POST /deliveries` (`update:inventory:any`). Posts a `delivery` movement per
+ * line, updates last and average cost, and remembers pack prices.
+ *
+ * Who may send what:
+ * - Priced lines (the default): any token with `update:inventory:any`, as in
+ *   phase 1. Every line needs `lineTotalMinor` and `currency` is required.
+ * - `paid: true` needs `update:inventory_purchasing:any` as well; without it
+ *   the region answers 403 `purchasing_required` (save as unpaid instead).
+ * - `quantityOnly: true` (phase 2): the cost-less path for staff and for
+ *   tokens without `read:inventory_cost:any`. Any token with
+ *   `update:inventory:any` may use it. No line may carry `lineTotalMinor` or
+ *   `packPriceMinor`, and `vatMinor`, `totalMinor` and `paid: true` are
+ *   refused. The region posts the stock in and does NOT touch costs or
+ *   supplier prices for those lines; the delivery is stored with
+ *   `pricesPending: true` and Today asks a person with the purchasing grant
+ *   to confirm (`POST /deliveries/:id/confirm-prices`).
+ * - `orderId` (phase 2): the lines are matched to the order's lines by
+ *   `orderLineId`; the supplier must match the order (409 `supplier_mismatch`),
+ *   and a cancelled or fully received order answers 409 `order_closed`. After
+ *   posting, the region sets the order to `partly_received` or `received`
+ *   (`orderStatusAfterReceipt`), or to `received` when `closeOrder` is true.
+ * - A replayed `clientId` answers the first result.
+ */
+export const recordDeliverySchema = recordDeliveryBaseSchema.superRefine(
+	(body, ctx) => {
+		if (body.quantityOnly) {
+			if (body.paid) {
+				ctx.addIssue({
+					code: 'custom',
+					path: ['paid'],
+					message: 'A quantity-only delivery cannot be marked paid',
+				})
+			}
+			for (const key of ['vatMinor', 'totalMinor'] as const) {
+				if (body[key] !== null && body[key] !== undefined) {
+					ctx.addIssue({
+						code: 'custom',
+						path: [key],
+						message: 'A quantity-only delivery carries no money',
+					})
+				}
+			}
+			body.lines.forEach((line, index) => {
+				for (const key of ['lineTotalMinor', 'packPriceMinor'] as const) {
+					if (line[key] !== null && line[key] !== undefined) {
+						ctx.addIssue({
+							code: 'custom',
+							path: ['lines', index, key],
+							message: 'A quantity-only line carries no money',
+						})
+					}
+				}
+			})
+			return
+		}
+		if (body.currency === undefined) {
+			ctx.addIssue({
+				code: 'custom',
+				path: ['currency'],
+				message: 'Required',
+			})
+		}
+		body.lines.forEach((line, index) => {
+			if (line.lineTotalMinor === undefined) {
+				ctx.addIssue({
+					code: 'custom',
+					path: ['lines', index, 'lineTotalMinor'],
+					message: 'Required',
+				})
+			}
+		})
+	},
+)
 export type RecordDelivery = z.infer<typeof recordDeliverySchema>
 
 export const deliveryLineSchema = z.object({
@@ -217,6 +318,12 @@ export const deliveryLineSchema = z.object({
 	lineTotalMinor: minorOut,
 	/** Change in cost per base unit vs the item's previous last cost, in basis points. */
 	priceChangeBp: z.number().int().nullable().optional(),
+	// Phase 2 (optional).
+	orderLineId: z.string().nullable().optional(),
+	/** What the order said, base thousandths (omitted when not received against an order). */
+	orderedQuantity: z.number().int().nullable().optional(),
+	/** False for a quantity-only line until prices are confirmed. */
+	priced: z.boolean().optional(),
 })
 
 export const deliverySummarySchema = z.object({
@@ -239,12 +346,34 @@ export const deliverySummarySchema = z.object({
 	vatMinor: minorOut,
 	totalMinor: minorOut,
 	currency: currencyOut,
+	// Phase 2 (all optional: a region that predates them omits them).
+	/** Quantities were recorded without prices; a person with the purchasing grant still has to confirm them. */
+	pricesPending: z.boolean().optional(),
+	/** The order this was received against. */
+	orderId: z.string().nullable().optional(),
+	orderNumber: z.number().int().nullable().optional(),
+	hasPhoto: z.boolean().optional(),
+	/** Recorded by a Station tablet more than 48 hours after it happened. */
+	lateSync: z.boolean().optional(),
 })
 export type DeliverySummary = z.infer<typeof deliverySummarySchema>
 
 export const deliveryDetailSchema = deliverySummarySchema.extend({
 	zatcaReference: z.string().nullable(),
 	lines: z.array(deliveryLineSchema),
+	/**
+	 * The invoice photo, as a short-lived read link into the region's own
+	 * storage (5 minutes, `RECORDING_URL_TTL_SECONDS`). Present on
+	 * `GET /deliveries/:id` only, never in lists. Phase 2.
+	 */
+	photo: z
+		.object({
+			url: z.string(),
+			expiresAt: z.number().int(),
+			contentType: z.string(),
+		})
+		.nullable()
+		.optional(),
 })
 export type DeliveryDetail = z.infer<typeof deliveryDetailSchema>
 

@@ -51,7 +51,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		)
 	const claims = {
 		...(link.linkCustomers || link.linkGuests ? link : {}),
-		...(stationApps && (stationApps.timeclock || stationApps.reservations)
+		...(stationApps &&
+		(stationApps.timeclock || stationApps.reservations || stationApps.inventory)
 			? { stationApps }
 			: {}),
 		locationIds,

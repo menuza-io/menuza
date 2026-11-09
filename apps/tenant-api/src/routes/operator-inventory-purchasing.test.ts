@@ -658,6 +658,43 @@ describe('deliveries', () => {
 		expect(denied.status).toBe(403)
 	})
 
+	it('refuses paid: true without the purchasing grant, and records nothing', async () => {
+		const s = await supplier('Paid grant supplier')
+		const flour = await item('Paid grant flour')
+		const body = (paid: boolean) =>
+			delivery(
+				s.id,
+				[{ itemId: flour.id, quantity: 5_000_000, lineTotalMinor: 4000 }],
+				{ paid },
+			)
+		const refused = await call('POST', `${BASE}/deliveries`, {
+			token: noPurchasing,
+			body: body(true),
+		})
+		expect(refused.status).toBe(403)
+		expect(refused.body.code).toBe('purchasing_required')
+		const stock = await call(
+			'GET',
+			`${BASE}/items/${flour.id}?locationId=${LOC}`,
+			{ token: full },
+		)
+		expect(stock.body.onHand).toBe(0)
+
+		// Unpaid is open to anyone who may receive; the grant holder may mark it paid.
+		const unpaid = await call('POST', `${BASE}/deliveries`, {
+			token: noPurchasing,
+			body: body(false),
+		})
+		expect(unpaid.status, JSON.stringify(unpaid.body)).toBe(200)
+		expect(unpaid.body.delivery.paid).toBe(false)
+		const paid = await call('POST', `${BASE}/deliveries`, {
+			token: full,
+			body: body(true),
+		})
+		expect(paid.status, JSON.stringify(paid.body)).toBe(200)
+		expect(paid.body.delivery.paid).toBe(true)
+	})
+
 	it('cancels by reversing movements: stock goes back, history stays, last cost reverts, once', async () => {
 		const s = await supplier('Cancel supplier')
 		const oil = await item('Cancel oil', 'ml')

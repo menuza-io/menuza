@@ -3,7 +3,12 @@
 Status: phase 0 built on `pr/inventory` (domain package, flags and permissions,
 regional schema `0033_inventory`, tenant-api auth and the first operator routes,
 the items-sold reader, the App shell with empty tabs behind
-`inventory.enabled`); nothing is user-visible until the flag is on. Placement is
+`inventory.enabled`); phase 1 built behind the same flag (Stock, Counts,
+Purchasing deliveries and suppliers, Waste, Today). The **phase 2 wire contract
+is written** in `@repo/inventory`
+(`contract/{levels,orders,orders-rules,receiving, notify,station}.ts`, see
+[Phase 2 wire contract](#phase-2-wire-contract)); the region, Station and App
+implement against it. Nothing is user-visible until the flag is on. Placement is
 recorded in [ADR 049](./decisions/049-inventory-data-residency.md). Research
 current as of 8 November 2026. An earlier uncommitted attempt was rejected and
 is parked on the local branch `wip/inventory-v1` for reference only.
@@ -552,7 +557,7 @@ are `no-store` and carry no money and no supplier contacts. Writes go through
 `withInventoryWrite`. CORS allows `POS_ORIGINS` on `/pos/*` as today.
 
 **Contract and tests.** Wire schemas live in `@repo/inventory`
-(`schemas/station.ts`). The tablet's payloads are recorded fixtures in
+(`contract/station.ts`). The tablet's payloads are recorded fixtures in
 `apps/station/src/apps/stock/fixtures`, kept in step by
 `apps/tenant-api/src/routes/pos-inventory-contract.test.ts` (re-record with
 `RECORD_STATION_FIXTURES=1`, as for the host stand). A Station e2e spec covers
@@ -678,6 +683,153 @@ delivery lines and waste are append-only with triggers like `0025_loyalty.sql`.
 Supplier contact fields and actor columns are added to the person-erasure PII
 column test with a reason (business contacts, staff actors), and erasing a staff
 member clears actor names, keeping quantities and money.
+
+### Phase 2 wire contract
+
+Written in `@repo/inventory` before any region, Station or App code; additive to
+phase 1 (nothing renamed or removed). Requests are strict, money is omitted
+without `read:inventory_cost:any`, versioned rows take `expectedVersion`, and
+creates carry a `clientId`. "Flag" is the control-plane flag the route needs on
+top of `inventory.enabled`; "purchasing" is `update:inventory_purchasing:any`.
+Operator routes are under `/operator/inventory`.
+
+| Route                                            | Grant                  | Flag       | Answer                                                                |
+| ------------------------------------------------ | ---------------------- | ---------- | --------------------------------------------------------------------- |
+| `GET /levels?locationId=`                        | read                   | purchasing | `listLevelsResultSchema` (every item with its levels)                 |
+| `GET /levels/suggestions?locationId=`            | read                   | purchasing | `levelSuggestionsSchema` ("you use about 22 kg a week")               |
+| `PUT /levels/bulk`                               | purchasing             | purchasing | `putLevelsResultSchema` (per row `updated` or `refused`)              |
+| `GET /orders/suggested?locationId=`              | read (money: cost)     | purchasing | `suggestedOrdersSchema` (a card per supplier, `unsourced` items)      |
+| `POST /orders`                                   | purchasing             | purchasing | `orderDetailSchema` (draft, from the suggestion or blank)             |
+| `GET /orders?locationId=&status=`                | read                   | purchasing | `listOrdersResultSchema`                                              |
+| `GET /orders/:id`                                | read                   | purchasing | `orderDetailSchema`                                                   |
+| `PATCH /orders/:id`                              | purchasing             | purchasing | `orderDetailSchema` (lines only while draft)                          |
+| `POST /orders/:id/send`                          | purchasing             | purchasing | `sendOrderResultSchema` (`emailSent`, `waLink`, `mailto`, text)       |
+| `POST /orders/:id/cancel`                        | purchasing             | purchasing | `orderDetailSchema`                                                   |
+| `GET /orders/:id/text?locale=`                   | read                   | purchasing | `orderTextSchema` (never money)                                       |
+| `GET /orders/:id/receive-prefill`                | read (money: cost)     | purchasing | `receivePrefillSchema` (lines prefilled with what is outstanding)     |
+| `POST /deliveries` (extended)                    | update (`paid`: purch) | none       | `recordDeliveryResultSchema`; `orderId`, `quantityOnly`, `closeOrder` |
+| `POST /deliveries/:id/confirm-prices`            | purchasing             | none       | `recordDeliveryResultSchema` (quantity-only delivery gets its prices) |
+| `POST /deliveries/:id/credit-message`            | read                   | none       | `creditMessageSchema` (draft text for short and missing lines)        |
+| `POST /deliveries/:id/invoice-photo` + `confirm` | update                 | none       | `invoicePhotoUploadSchema`, then `deliveryDetailSchema`               |
+| `GET /price-alerts?locationId=&days=`            | cost                   | none       | `priceAlertsSchema` (rises over 5%)                                   |
+| `POST /api/inventory/tick`                       | internal token         | none       | `inventoryTickAnswerSchema` (counts only)                             |
+| App `POST /resources/inventory/notify`           | internal token         | none       | `inventoryNotifyEventSchema` in, `inventoryNotifyResultSchema` out    |
+
+Station (`/pos/inventory/*`, device secret plus `Pos-Staff-Session`, contract
+header `Pos-Inventory-Contract`, `INVENTORY_POS_CONTRACT_VERSION = 1`; all in
+`contract/station.ts`): `GET /catalog`, `POST /counts` (start or join),
+`GET /counts/:id`, `POST /counts/:id/entries`, `POST /counts/:id/send`,
+`POST /waste`, `POST /waste/:id/undo`, `POST /deliveries`,
+`POST /deliveries/:id/photo` and `/photo/confirm`. No money anywhere in a
+Station response (a test walks the schemas). The tablet's Dexie queue row is
+`stationOutboxItemSchema`; `classifyStationFailure` decides permanent, pause,
+retry or unpair for each error code.
+
+Rules decided in the contract (pure code with tests in
+`contract/orders-rules.ts`, shared by region, App and Station):
+
+- **Needs an order** when on hand plus what is on sent orders is **below**
+  "order more when below" (the same `<` as the Low badge), or out with only
+  "fill up to" set. Quantity reaches "fill up to", **rounded up to whole
+  packs**, never below one pack; a pack priced by weight is ordered in
+  **halves**. With no "fill up to" the target is "order more when below". Drafts
+  do not count as on order, so a suggestion shows the draft id and the App
+  offers "Continue draft".
+- **Supplier choice** per item: the preferred product, else the only one, else
+  the cheapest per base unit; an item with levels but no supplier product is
+  listed under `unsourced`.
+- **Expected date and cut-off** from the supplier's delivery days and cut-off
+  (`nextOrderableDelivery`): the first delivery day whose cut-off has not
+  passed; the region owns time zones, the contract carries local date and time.
+- **Order status**: `draft` → `sent` (send, any channel) → `partly_received` →
+  `received` (`orderStatusAfterReceipt`; a priced-by-weight line counts as
+  complete at 95% of the ordered weight; `closeOrder` ends it short).
+  `cancelled` and `received` are final. Receiving against a draft is allowed.
+- **Send** is one call: it renders the text, emails it only when the node can
+  (otherwise `emailSent: false`, `emailSkipped`, and a `mailto`), builds a
+  `wa.me` link for WhatsApp, and marks the order sent. PDF is the App printing
+  the same text; there is no server PDF in phase 2. Order text never contains
+  money and is written in the caller's `locale` (`en` or `ar`) by the region.
+- **Quantity-only receiving** (`quantityOnly: true`): any token with
+  `update:inventory:any` may record received quantities without prices; costs
+  and supplier prices are untouched; the delivery is `pricesPending` until a
+  person with the purchasing grant calls `confirm-prices`. `paid: true` needs
+  the purchasing grant (403 `purchasing_required`). Priced receiving is
+  unchanged.
+- **Station deliveries never refuse goods**: a closed, unknown or other-supplier
+  order is recorded unlinked (`orderLinkIgnored`), unlike the operator route
+  (409 `order_closed`, `supplier_mismatch`). Receiving at the tablet needs a
+  till manager unless `anyStaffCanReceive` (inventory Settings).
+- **Price alerts** are the whole answer in money, so they need the cost grant
+  (403 otherwise). A rise of more than 5% against the previous priced delivery;
+  20% or more is "big".
+- **Invoice photo**: one per delivery, JPEG, PNG or WebP up to 5 MB, uploaded
+  straight from the browser to the region's own object storage with a presigned
+  `PUT` (generalised `lib/recording-storage.ts`, prefix
+  `inventory-invoices/<orgId>/`), then confirmed. Read link on
+  `GET /deliveries/:id` only, five minutes. Deprovisioning deletes the prefix.
+- **Notifications**: counts and ids only, `eventId` is a SHA-256 hex digest of
+  `inventoryNotifyDedupeKey` (date for digests and due deliveries, count id for
+  review, delivery id for a price rise). The tick posts them, retries deferred
+  ones and reports counts only.
+
+### Phase 2 schema needs
+
+The wire contract needs these additions to `packages/tenant-db` (one new
+migration, built as `0034_inventory_orders`, items 1 to 8 included, with guard
+triggers: order lines change only while the order is a draft, order status only
+moves forward and a closed order is final, a quantity-only delivery line may be
+priced exactly once, waste source and invoice photo type are checked).
+`inv_deliveries.currency` stays NOT NULL, so a quantity-only delivery stores the
+organization's currency. `inv_orders` and `inv_order_lines` were in the data
+model above but not in `0033_inventory`; they are new in `0034`. The Durable
+Object bundle (`workers/migrations.generated.ts`) is generated from the journal,
+so it picks `0034` up with `npm run generate:do-migrations`.
+
+1. **`inv_orders`**: `id`, `number` (integer, unique, from
+   `inv_settings.next_order_number`), `location_id`, `supplier_id` (not null),
+   `status` (`draft|sent|partly_received|received|cancelled`, check),
+   `expected_date`, `note`, `currency`, `created_by_kind`, `created_by_id`,
+   `sent_at` (first send), `sent_via` (`email|whatsapp|copy|pdf`), `closed_at`,
+   `version`, `created_at`, `updated_at`. Indexes on `(location_id, status)` and
+   `(supplier_id)`. A unique client id for create (or the idempotency table, as
+   for deliveries).
+2. **`inv_order_lines`**: `id`, `order_id`, `item_id`, `supplier_product_id`,
+   `pack_name`, `pack_base_quantity`, `priced_by_weight`, `packs` (thousandths
+   of a pack), `quantity` (base thousandths, packs × pack size), `price_minor`
+   (pack price snapshot, null when unpriced), `suggested_packs` (thousandths,
+   null), `sort_order`. Lines are replaced wholesale while the order is a draft.
+3. **`inv_deliveries`**: `order_id` (nullable), `prices_confirmed_at` (null
+   while a quantity-only delivery waits), `quantity_only` (boolean), `late_sync`
+   (boolean), `photo_content_type`, `photo_uploaded_at`. `photo_key` already
+   exists. `source = 'station'` already exists.
+4. **`inv_delivery_lines`**: `order_line_id` (nullable), `priced_at` (null for a
+   quantity-only line). `line_total_minor` stays NOT NULL: a quantity-only line
+   stores 0 with `priced_at` null, which avoids rebuilding the table. The
+   append-only trigger must allow ONE update of `price_minor`,
+   `line_total_minor` and `priced_at` while `priced_at` is null (confirm
+   prices), and nothing else. Received per order line is the sum over delivery
+   lines with that `order_line_id` (index it).
+5. **`inv_settings`**: `any_staff_can_receive` (boolean, default 0) and
+   `next_order_number` (integer, default 1).
+6. **`pos_devices.inventory_enabled`** (and the same column on
+   `pos_pairing_codes`), default 0; optionally `inventory_disabled_at` like the
+   time clock's, so a replay can tell a switch turned off after the item was
+   made.
+7. **`inv_waste`**: `source` (`operator|station`), `device_id`, `late_sync`
+   (boolean). `device_id` feeds the recent-items chips per terminal. Optionally
+   `device_id` on `inv_count_entries`.
+8. **`inv_alert_log`** (notification dedupe and retry): `kind`, `location_id`,
+   `dedupe_key`, `count`, `status` (`sent|pending`), `attempts`, `sent_at`;
+   unique on `(kind, location_id, dedupe_key)`. Without it the tick would resend
+   an alert every hour (the App dedupes by event id, but a retry state is needed
+   for the 50-second budget and App outages).
+9. **No table** for credit (the message is drafted on request), price alerts
+   (computed from priced delivery lines, `idx_inv_delivery_lines_item_created`),
+   suggestions or levels from use (computed from movements). An optional
+   `inv_deliveries.credit_requested_at` would let the list show "Credit asked".
+10. Person-erasure column test: `inv_orders.created_by_id` and the new actor
+    columns, like the other actor columns.
 
 ### Units
 
@@ -936,11 +1088,18 @@ Recommendations first; none blocks phase 0.
 2. **Kitchen team sees costs?** Recommend no by default (cost is its own grant).
 3. **Invoice photo reading.** Recommend phase 5, US first through `@repo/ai`;
    KSA only with an in-region model (the tenant-api OpenAI-compatible client),
-   and always with a "check these lines" step.
+   and always with a "check these lines" step. _Phase 2 decision: photos are
+   stored and shown only; no reading, nothing in the contract._
 4. **Invoice photo storage.** Recommend in-region object storage (generalise
-   `lib/recording-storage.ts`) rather than US App storage.
-5. **Auto sold out default.** Recommend off per item, opt-in.
+   `lib/recording-storage.ts`) rather than US App storage. _Phase 2 decision:
+   yes, presigned `PUT` from the browser to the region's own bucket (see
+   [Phase 2 wire contract](#phase-2-wire-contract))._
+5. **Auto sold out default.** Recommend off per item, opt-in. _Phase 3; no phase
+   2 contract._
 6. **Unpaid deliveries in phase 2.** Recommend yes, mark paid only, no payments.
+   _Phase 2 decision: yes. `POST /deliveries/:id/paid` and the supplier unpaid
+   totals already exist; `paid: true` on a new delivery needs the purchasing
+   grant, and `confirm-prices` may mark paid in the same step._
 
 ## Risks
 

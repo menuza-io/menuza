@@ -715,7 +715,7 @@ export const usePos = create<PosState>((set, get) => ({
 					...get().settings,
 					deviceToken: null,
 					signInRequired: false,
-					apps: { timeclock: false, reservations: false },
+					apps: { timeclock: false, reservations: false, inventory: false },
 				}
 				saveSettings(settings)
 				set({ settings, pairingLost: true, session: null })
@@ -794,7 +794,7 @@ export const usePos = create<PosState>((set, get) => ({
 			...get().settings,
 			deviceToken: null,
 			signInRequired: false,
-			apps: { timeclock: false, reservations: false },
+			apps: { timeclock: false, reservations: false, inventory: false },
 		}
 		saveSettings(settings)
 		set({ settings, pairingLost: true, session: null })
@@ -963,7 +963,7 @@ export const usePos = create<PosState>((set, get) => ({
 			deviceLabel: null,
 			locationLocked: false,
 			signInRequired: false,
-			apps: { timeclock: false, reservations: false },
+			apps: { timeclock: false, reservations: false, inventory: false },
 		}
 		saveSettings(settings)
 		set({ settings, pairingLost: false, session: null })

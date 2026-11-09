@@ -104,23 +104,18 @@ export type CountSheet = z.infer<typeof countSheetSchema>
  * on a count that is no longer `counting` answer per entry with
  * `count_closed`. A replayed `clientId` is reported in `duplicates`.
  */
-export const countEntriesSchema = z
+export const countEntrySchema = z
 	.object({
-		entries: z
-			.array(
-				z
-					.object({
-						clientId: clientIdSchema,
-						itemId: inventoryIdSchema,
-						areaId: inventoryIdSchema.nullable(),
-						amount: typedAmountSchema.nullable(),
-						unit: unitRefSchema,
-					})
-					.strict(),
-			)
-			.min(1)
-			.max(200),
+		clientId: clientIdSchema,
+		itemId: inventoryIdSchema,
+		areaId: inventoryIdSchema.nullable(),
+		amount: typedAmountSchema.nullable(),
+		unit: unitRefSchema,
 	})
+	.strict()
+
+export const countEntriesSchema = z
+	.object({ entries: z.array(countEntrySchema).min(1).max(200) })
 	.strict()
 
 export const countEntriesResultSchema = z.object({
