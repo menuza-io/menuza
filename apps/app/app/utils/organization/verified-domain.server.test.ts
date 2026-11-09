@@ -69,6 +69,43 @@ describe('verified domain proof', () => {
 		expect(after!.provedAt).toBeInstanceOf(Date)
 	})
 
+	it('claiming the pending domain again keeps its token', async () => {
+		const { organization } = await setupTestOrgWithUser('admin')
+		const domain = uniqueDomain()
+		const first = await startDomainClaim(organization.id, domain)
+		const again = await startDomainClaim(organization.id, domain)
+		expect(again.recordValue).toBe(first.recordValue)
+
+		const other = await startDomainClaim(organization.id, uniqueDomain())
+		expect(other.recordValue).not.toBe(first.recordValue)
+	})
+
+	it('does not verify a claim that changed during the DNS lookup', async () => {
+		const { organization } = await setupTestOrgWithUser('admin')
+		const domain = uniqueDomain()
+		const claim = await startDomainClaim(organization.id, domain)
+		const nextDomain = uniqueDomain()
+		const lookup = vi.fn(async () => {
+			// An admin claims another domain while the lookup is in flight.
+			await startDomainClaim(organization.id, nextDomain)
+			return Response.json({
+				Answer: [{ type: 16, data: `"${claim.recordValue}"` }],
+			})
+		}) as unknown as typeof fetch
+
+		expect(await checkDomainClaim(organization.id, lookup)).toEqual({
+			status: 'no_claim',
+		})
+		const [row] = await db
+			.select({
+				verifiedDomain: Organization.verifiedDomain,
+				pending: Organization.pendingVerifiedDomain,
+			})
+			.from(Organization)
+			.where(eq(Organization.id, organization.id))
+		expect(row).toEqual({ verifiedDomain: null, pending: nextDomain })
+	})
+
 	it('one organization per domain', async () => {
 		const first = await setupTestOrgWithUser('admin')
 		const second = await setupTestOrgWithUser('admin')

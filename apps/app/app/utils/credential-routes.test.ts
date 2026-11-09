@@ -18,6 +18,7 @@ describe('credentialRateLimitFor', () => {
 		['POST', '/%6Cogin'],
 		['POST', '/api/AUTH/login'],
 		['POST', '//login'],
+		['POST', '/webauthn/authentication'],
 	])('throttles %s %s strictly', (method, path) => {
 		expect(credentialRateLimitFor(method, path)?.maxRequests).toBe(10)
 	})
@@ -29,6 +30,16 @@ describe('credentialRateLimitFor', () => {
 	})
 
 	it.each([
+		['GET', '/webauthn/authentication'],
+		['HEAD', '/WebAuthn/Authentication'],
+	])('limits the passkey challenge %s %s on its own budget', (method, path) => {
+		expect(credentialRateLimitFor(method, path)?.scope).toBe(
+			'worker-passkey-challenge',
+		)
+	})
+
+	it.each([
+		['GET', '/webauthn/registration'],
 		['GET', '/login'],
 		['HEAD', '/login'],
 		['POST', '/login-help'],

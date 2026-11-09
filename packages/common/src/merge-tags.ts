@@ -258,7 +258,97 @@ export function isSafeUrlAttributeValue(attributeValue: string): boolean {
 	return false
 }
 
-const HTML_TAG = /<[a-zA-Z][^<>]*>/g
+/**
+ * Calls `replace` with every start tag (`<name ...>`) in `html` and splices in
+ * its result. Tag boundaries follow the HTML tokenizer's attribute states: a
+ * quote opens a value only right after `=` (a quote inside an unquoted value
+ * or an attribute name is an ordinary character), and a `>` inside a quoted
+ * value does not end the tag. So `<a title="x>y" href="...">` and
+ * `<a title=a"b href="...">` are each one tag whose `href` is checked.
+ *
+ * Fails closed: from a tag that never ends (no `>`, or a quoted value that
+ * never closes) every `<` is escaped to `&lt;`, so nothing later in the
+ * template is passed through as markup unchecked.
+ */
+function replaceStartTags(
+	html: string,
+	replace: (tag: string) => string,
+): string {
+	const isSpace = (char: string | undefined) =>
+		char === ' ' ||
+		char === '\t' ||
+		char === '\n' ||
+		char === '\r' ||
+		char === '\f'
+	/** Index of the tag's closing `>`, or -1 when a quoted value never closes. */
+	function tagEnd(start: number): number {
+		let j = start
+		while (
+			j < html.length &&
+			!isSpace(html[j]) &&
+			html[j] !== '/' &&
+			html[j] !== '>'
+		)
+			j++
+		while (j < html.length) {
+			const char = html[j]!
+			if (char === '>') return j
+			if (isSpace(char) || char === '/') {
+				j++
+				continue
+			}
+			// Attribute name (its first character may be `=`).
+			j++
+			while (
+				j < html.length &&
+				!isSpace(html[j]) &&
+				html[j] !== '/' &&
+				html[j] !== '>' &&
+				html[j] !== '='
+			) {
+				j++
+			}
+			let k = j
+			while (isSpace(html[k])) k++
+			if (html[k] !== '=') continue
+			k++
+			while (isSpace(html[k])) k++
+			const quote = html[k]
+			if (quote === '"' || quote === "'") {
+				const close = html.indexOf(quote, k + 1)
+				if (close === -1) return -1
+				j = close + 1
+			} else {
+				while (k < html.length && !isSpace(html[k]) && html[k] !== '>') k++
+				j = k
+			}
+		}
+		return -1
+	}
+
+	let out = ''
+	let copied = 0
+	let i = html.indexOf('<')
+	while (i !== -1 && i < html.length - 1) {
+		if (!/[a-zA-Z]/.test(html[i + 1]!)) {
+			i = html.indexOf('<', i + 1)
+			continue
+		}
+		const end = tagEnd(i + 1)
+		if (end === -1) {
+			// Fail closed, in one pass: a browser reads the rest as part of this
+			// tag, so escape every `<` from here and stop. Rescanning after each
+			// broken tag would be quadratic on input like `<a<a<a...`.
+			out += html.slice(copied, i) + html.slice(i).replaceAll('<', '&lt;')
+			return out
+		}
+		out += html.slice(copied, i) + replace(html.slice(i, end + 1))
+		copied = end + 1
+		i = html.indexOf('<', copied)
+	}
+	return out + html.slice(copied)
+}
+
 const HTML_ATTRIBUTE =
 	/(\s)([^\s"'<>/=]+)(\s*=\s*)(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+))/g
 
@@ -275,7 +365,7 @@ export function replaceMergeTokensInHtml(
 	resolve: (tag: string, fallback: string, raw: string) => string,
 ): string {
 	if (!template) return ''
-	const guardedTags = template.replace(HTML_TAG, (tag) =>
+	const guardedTags = replaceStartTags(template, (tag) =>
 		tag.replace(
 			HTML_ATTRIBUTE,
 			(

@@ -94,6 +94,33 @@ export function useTurnstileReady(siteKey: string | null | undefined) {
 }
 
 /**
+ * Screen-reader status for a Turnstile-gated submit button: while the check is
+ * not done it says why the button is disabled (point the button's
+ * `aria-describedby` at `id`), and it announces when the check completes.
+ * Always rendered while Turnstile is on, so the change is announced.
+ */
+export function TurnstileSubmitStatus({
+	id,
+	siteKey,
+	ready,
+}: {
+	id: string
+	siteKey: string | null | undefined
+	ready: boolean
+}) {
+	if (!siteKey) return null
+	return (
+		<p id={id} role="status" className="sr-only">
+			{ready ? (
+				<Trans>Security check complete.</Trans>
+			) : (
+				<Trans>Complete the security check to continue.</Trans>
+			)}
+		</p>
+	)
+}
+
+/**
  * Cloudflare Turnstile challenge for a form. Renders nothing without a site
  * key. The widget adds a hidden `cf-turnstile-response` input to the
  * surrounding form; the action verifies it with `checkOperatorTurnstile`.

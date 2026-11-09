@@ -1218,9 +1218,12 @@ describe('Journey Service & Regional Message Dispatching', () => {
 			const runId = testRes.runId!
 
 			// A provider dispatch started nearly five minutes ago must not be retried
-			// while the first request may still complete.
+			// while the first request may still complete. A minute of margin:
+			// `executed_at` is stored in whole seconds, and a slow CI runner can
+			// spend more than a second before the check, which made a 1-second
+			// margin flaky.
 			const recentProcessingTime = new Date(
-				Date.now() - JOURNEY_PROCESSING_LEASE_MS + 1_000,
+				Date.now() - JOURNEY_PROCESSING_LEASE_MS + 60_000,
 			)
 			const existingExecInsert = await db
 				.insert(journeyStepExecutions)

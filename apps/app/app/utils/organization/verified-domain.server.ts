@@ -93,9 +93,24 @@ export async function isDomainClaimedElsewhere(
 	return Boolean(row)
 }
 
-/** Starts a claim: stores the domain and a fresh token until DNS proves it. */
+/**
+ * Starts a claim: stores the domain and a token until DNS proves it. Claiming
+ * the domain already pending keeps its token, so a TXT record the admin
+ * already published stays valid.
+ */
 export async function startDomainClaim(organizationId: string, domain: string) {
-	const token = newDomainVerificationToken()
+	const [current] = await db
+		.select({
+			pending: Organization.pendingVerifiedDomain,
+			token: Organization.verifiedDomainToken,
+		})
+		.from(Organization)
+		.where(eq(Organization.id, organizationId))
+		.limit(1)
+	const token =
+		current?.pending === domain && current.token
+			? current.token
+			: newDomainVerificationToken()
 	await db
 		.update(Organization)
 		.set({ pendingVerifiedDomain: domain, verifiedDomainToken: token })
@@ -143,7 +158,9 @@ export async function checkDomainClaim(
 		return { status: 'taken' }
 	}
 	try {
-		await db
+		// Only the claim this check proved: a claim changed or removed during
+		// the DNS lookup is left alone.
+		const updated = await db
 			.update(Organization)
 			.set({
 				verifiedDomain: org.pending,
@@ -151,7 +168,15 @@ export async function checkDomainClaim(
 				pendingVerifiedDomain: null,
 				verifiedDomainToken: null,
 			})
-			.where(eq(Organization.id, organizationId))
+			.where(
+				and(
+					eq(Organization.id, organizationId),
+					eq(Organization.pendingVerifiedDomain, org.pending),
+					eq(Organization.verifiedDomainToken, org.token),
+				),
+			)
+			.returning({ id: Organization.id })
+		if (updated.length === 0) return { status: 'no_claim' }
 	} catch {
 		// The unique index: another organization verified it first.
 		return { status: 'taken' }

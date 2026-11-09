@@ -18,9 +18,11 @@ import {
 	provisionTenantDb,
 	type TenantDatabase,
 } from '@repo/tenant-db'
+import { getBroadcastHourlyCap } from '../lib/rate-limit.ts'
 import { sendTenantEmail } from '../lib/tenant-email.ts'
 import { operatorRoutes } from '../routes/operator.ts'
 import {
+	BROADCAST_MAX_FAILURES,
 	BROADCAST_STALE_MS,
 	broadcastLease,
 	dispatchBroadcast,
@@ -40,6 +42,13 @@ vi.mock('@repo/email', () => ({
 vi.mock('@repo/sms', () => ({
 	sendSms: vi.fn().mockResolvedValue({ success: true }),
 }))
+vi.mock('../lib/rate-limit.ts', async (importOriginal) => {
+	const actual = await importOriginal<typeof import('../lib/rate-limit.ts')>()
+	return {
+		...actual,
+		getBroadcastHourlyCap: vi.fn(actual.getBroadcastHourlyCap),
+	}
+})
 vi.mock('../lib/tenant-email.ts', () => ({
 	sendTenantEmail: vi.fn().mockResolvedValue({ status: 'success' }),
 }))
@@ -295,19 +304,90 @@ describe('broadcast dispatch', () => {
 		expect((await getCampaign(db, campaignId))?.status).toBe('Completed')
 	})
 
-	it('sends a legacy scheduled Draft once it is due', async () => {
+	it('never sends a Draft, even one with a past scheduled time', async () => {
 		const db = await getTenantDb(orgId)
-		const [customer] = await emailCustomers(db, 1)
+		await emailCustomers(db, 1)
 		const now = Date.now()
 		const id = await campaign(db, {
 			status: 'Draft',
 			scheduledAt: new Date(now - 60_000),
 		})
 
-		await runBroadcastTick(orgId, db, now)
+		const result = await runBroadcastTick(orgId, db, now)
 
+		expect(result.claimed).toBe(0)
+		expect(emailedTo()).toEqual([])
+		expect((await getCampaign(db, id))?.status).toBe('Draft')
+		expect(await nextBroadcastWakeAt(db, now)).toBeNull()
+	})
+
+	it('leaves a broadcast Processing after an unexpected error, and resumes it', async () => {
+		const db = await getTenantDb(orgId)
+		const [customer] = await emailCustomers(db, 1)
+		const now = Date.now()
+		const id = await campaign(db, { updatedAt: broadcastLease(now) })
+		vi.mocked(getBroadcastHourlyCap).mockImplementationOnce(() => {
+			throw new Error('storage blip')
+		})
+
+		expect(await dispatchBroadcast(orgId, id, broadcastLease(now))).toBe(
+			'retry',
+		)
+		expect((await getCampaign(db, id))?.status).toBe('Processing')
+		expect(emailedTo()).toEqual([])
+
+		const later = now + BROADCAST_STALE_MS + 1000
+		const result = await runBroadcastTick(orgId, db, later)
+		expect(result.outcomes).toEqual(['completed'])
 		expect(emailedTo()).toEqual([customer!.email])
-		expect((await getCampaign(db, id))?.status).toBe('Completed')
+	})
+
+	it('a dispatcher that lost its lease does not count a failure', async () => {
+		const db = await getTenantDb(orgId)
+		await emailCustomers(db, 1)
+		const now = Date.now()
+		// Another dispatcher holds the campaign now (a newer lease).
+		const id = await campaign(db, {
+			dispatchFailures: BROADCAST_MAX_FAILURES - 1,
+			updatedAt: broadcastLease(now),
+		})
+		vi.mocked(getBroadcastHourlyCap).mockImplementationOnce(() => {
+			throw new Error('storage blip')
+		})
+
+		expect(
+			await dispatchBroadcast(orgId, id, broadcastLease(now - 60_000)),
+		).toBe('lost_lease')
+		const stored = await getCampaign(db, id)
+		expect(stored?.status).toBe('Processing')
+		expect(stored?.dispatchFailures).toBe(BROADCAST_MAX_FAILURES - 1)
+	})
+
+	it('fails a broadcast after repeated errors, and a sent batch resets the count', async () => {
+		const db = await getTenantDb(orgId)
+		await emailCustomers(db, 1)
+		const now = Date.now()
+		const id = await campaign(db, {
+			dispatchFailures: BROADCAST_MAX_FAILURES - 1,
+			updatedAt: broadcastLease(now),
+		})
+		vi.mocked(getBroadcastHourlyCap).mockImplementationOnce(() => {
+			throw new Error('storage blip')
+		})
+
+		expect(await dispatchBroadcast(orgId, id, broadcastLease(now))).toBe(
+			'failed',
+		)
+		expect((await getCampaign(db, id))?.status).toBe('Failed')
+
+		const recovering = await campaign(db, {
+			dispatchFailures: BROADCAST_MAX_FAILURES - 1,
+			updatedAt: broadcastLease(now),
+		})
+		expect(
+			await dispatchBroadcast(orgId, recovering, broadcastLease(now)),
+		).toBe('completed')
+		expect((await getCampaign(db, recovering))?.dispatchFailures).toBe(0)
 	})
 
 	it('the tick pass claims a due broadcast and sends it detached, without holding the tick', async () => {

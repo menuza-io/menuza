@@ -11,6 +11,7 @@ import {
 import {
 	impersonationSessionStorage,
 	impersonationSessionKey,
+	getImpersonationExpirationDate,
 	getClientIp,
 	hashIp,
 } from './impersonation-session.server.ts'
@@ -141,10 +142,11 @@ export async function deleteImpersonationSessionFromDb(
 export type ImpersonationEndReason = 'stopped' | 'expired' | 'replaced'
 
 /**
- * Ends the impersonation sessions matching `where`: each gets an
- * ADMIN_IMPERSONATION_END entry with the reason before its row is deleted, so a
- * START is never left without an END (an expired session swept up or replaced
- * by a new one included). Returns how many sessions were ended.
+ * Ends the impersonation sessions matching `where`: each session this call
+ * deletes gets one ADMIN_IMPERSONATION_END entry with the reason (an expired
+ * session swept up or replaced by a new one included). Rows are deleted first,
+ * so two callers ending the same session (a stop click and the hourly cleanup)
+ * log it once. Returns how many sessions were ended.
  */
 export async function endImpersonationSessions({
 	where,
@@ -171,7 +173,21 @@ export async function endImpersonationSessions({
 		.from(ImpersonationSession)
 		.innerJoin(targetUser, eq(ImpersonationSession.targetUserId, targetUser.id))
 		.where(where)
+	if (sessions.length === 0) return 0
+	// Delete first and log only the sessions this call removed: a stop click
+	// racing the hourly cleanup must log one end, not two.
+	const deleted = await db
+		.delete(ImpersonationSession)
+		.where(
+			inArray(
+				ImpersonationSession.id,
+				sessions.map((session) => session.id),
+			),
+		)
+		.returning({ id: ImpersonationSession.id })
+	const deletedIds = new Set(deleted.map((row) => row.id))
 	for (const session of sessions) {
+		if (!deletedIds.has(session.id)) continue
 		const endReason = session.expiresAt <= now ? 'expired' : reason
 		const targetName = session.targetName || session.targetUsername
 		// Expired sessions end at their expiry, not when they are swept up.
@@ -198,16 +214,6 @@ export async function endImpersonationSessions({
 			request,
 		)
 	}
-	if (sessions.length === 0) return 0
-	const deleted = await db
-		.delete(ImpersonationSession)
-		.where(
-			inArray(
-				ImpersonationSession.id,
-				sessions.map((session) => session.id),
-			),
-		)
-		.returning({ id: ImpersonationSession.id })
 	return deleted.length
 }
 
@@ -216,4 +222,52 @@ export async function cleanupExpiredImpersonationSessions(): Promise<number> {
 		where: lte(ImpersonationSession.expiresAt, new Date()),
 		reason: 'expired',
 	})
+}
+
+/** Another start for the same admin created its session first. */
+export class ImpersonationStartConflictError extends Error {
+	constructor() {
+		super('Another impersonation start for this admin is in progress')
+		this.name = 'ImpersonationStartConflictError'
+	}
+}
+
+/**
+ * Starts an impersonation for `adminUserId`, ending any earlier one (audited
+ * END, reason `replaced` or `expired`). `ImpersonationSession.adminUserId` is
+ * unique, so of two overlapping starts only one insert wins. The loser throws
+ * `ImpersonationStartConflictError` instead of ending the winner's session,
+ * so a session id handed to a caller is never one a concurrent start deleted.
+ */
+export async function startImpersonationSession({
+	adminUserId,
+	targetUserId,
+	ipHash,
+	request,
+}: {
+	adminUserId: string
+	targetUserId: string
+	ipHash: string
+	request?: Request
+}): Promise<{ id: string; expiresAt: Date }> {
+	await endImpersonationSessions({
+		where: eq(ImpersonationSession.adminUserId, adminUserId),
+		reason: 'replaced',
+		request,
+	})
+	const [created] = await db
+		.insert(ImpersonationSession)
+		.values({
+			adminUserId,
+			targetUserId,
+			expiresAt: getImpersonationExpirationDate(),
+			ipHash,
+		})
+		.onConflictDoNothing({ target: ImpersonationSession.adminUserId })
+		.returning({
+			id: ImpersonationSession.id,
+			expiresAt: ImpersonationSession.expiresAt,
+		})
+	if (!created) throw new ImpersonationStartConflictError()
+	return created
 }

@@ -22,6 +22,17 @@ const REFRESH: CredentialRateLimit = {
 	windowMs: WINDOW_MS,
 }
 
+// Each passkey sign-in starts with an unauthenticated GET that writes a
+// challenge row to the database, so that GET is limited too, on its own budget
+// so opening the login page a few times does not use up the password tier.
+const PASSKEY_CHALLENGE: CredentialRateLimit = {
+	scope: 'worker-passkey-challenge',
+	maxRequests: 30,
+	windowMs: WINDOW_MS,
+}
+
+const PASSKEY_AUTHENTICATION = '/webauthn/authentication'
+
 const STRICT_PREFIXES = [
 	'/login',
 	'/signup',
@@ -31,6 +42,7 @@ const STRICT_PREFIXES = [
 	'/resources/verify',
 	'/api/auth/login',
 	'/api/auth/signup',
+	PASSKEY_AUTHENTICATION,
 ]
 
 function matchesPrefix(pathname: string, prefix: string) {
@@ -67,8 +79,12 @@ export function credentialRateLimitFor(
 	method: string,
 	rawPathname: string,
 ): CredentialRateLimit | null {
-	if (method === 'GET' || method === 'HEAD') return null
 	const pathname = normalizePath(rawPathname)
+	if (method === 'GET' || method === 'HEAD') {
+		return matchesPrefix(pathname, PASSKEY_AUTHENTICATION)
+			? PASSKEY_CHALLENGE
+			: null
+	}
 	if (matchesPrefix(pathname, '/mcp')) return null
 	if (matchesPrefix(pathname, '/api/auth/refresh')) return REFRESH
 	if (STRICT_PREFIXES.some((prefix) => matchesPrefix(pathname, prefix))) {

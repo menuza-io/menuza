@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 import { act, fireEvent, screen } from '@testing-library/react'
+import { useState } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { renderStaff } from '#tests/staff-render.tsx'
-import { TurnstileWidget } from './turnstile-widget.tsx'
+import { TurnstileSubmitStatus, TurnstileWidget } from './turnstile-widget.tsx'
 
 type RenderOptions = {
 	callback?: (token: string) => void
@@ -130,5 +131,48 @@ describe('TurnstileWidget', () => {
 		fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
 		expect(turnstile.reset).toHaveBeenCalledWith('widget-1')
 		expect(screen.queryByText(/The security check could not load/)).toBeNull()
+	})
+})
+
+describe('TurnstileSubmitStatus', () => {
+	function Form() {
+		const [ready, setReady] = useState(false)
+		return (
+			<form>
+				<TurnstileSubmitStatus id="hint" siteKey="site-key" ready={ready} />
+				<button
+					type="submit"
+					disabled={!ready}
+					aria-describedby={ready ? undefined : 'hint'}
+				>
+					Sign in
+				</button>
+				<button type="button" onClick={() => setReady(true)}>
+					Solve
+				</button>
+			</form>
+		)
+	}
+
+	it('describes the disabled button, then announces the completed check', () => {
+		renderStaff(<Form />)
+		expect(
+			screen.getByRole('button', { name: 'Sign in' }),
+		).toHaveAccessibleDescription('Complete the security check to continue.')
+
+		fireEvent.click(screen.getByRole('button', { name: 'Solve' }))
+		expect(screen.getByRole('status')).toHaveTextContent(
+			'Security check complete.',
+		)
+		expect(screen.getByRole('button', { name: 'Sign in' })).not.toHaveAttribute(
+			'aria-describedby',
+		)
+	})
+
+	it('renders nothing while Turnstile is off', () => {
+		renderStaff(
+			<TurnstileSubmitStatus id="hint" siteKey={null} ready={false} />,
+		)
+		expect(screen.queryByRole('status')).toBeNull()
 	})
 })

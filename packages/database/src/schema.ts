@@ -1909,7 +1909,9 @@ export const ImpersonationSession = sqliteTable(
 	(table) => [
 		index('ImpersonationSession_expiresAt_idx').on(table.expiresAt),
 		index('ImpersonationSession_targetUserId_idx').on(table.targetUserId),
-		index('ImpersonationSession_adminUserId_idx').on(table.adminUserId),
+		// One active impersonation per admin, enforced by the database so two
+		// concurrent starts cannot both insert.
+		uniqueIndex('ImpersonationSession_adminUserId_key').on(table.adminUserId),
 	],
 )
 

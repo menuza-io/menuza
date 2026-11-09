@@ -209,26 +209,24 @@ export default async function handleRequest(...args: DocRequestArgs) {
 	if (privateRoute && session === 'unavailable') {
 		// The lookup failed, not the session: do not send a signed-in user to
 		// the login page, and do not render a page that names private modules.
-		return new Response('Service Unavailable', {
-			status: 503,
-			headers: {
-				'Content-Type': 'text/plain; charset=utf-8',
-				'Cache-Control': 'no-store',
-				'Retry-After': '5',
-			},
+		const headers = new Headers({
+			'Content-Type': 'text/plain; charset=utf-8',
+			'Cache-Control': 'no-store',
+			'Retry-After': '5',
 		})
+		applySecurityHeaders(headers)
+		return new Response('Service Unavailable', { status: 503, headers })
 	}
 	const authenticated = session === 'active'
 	if (!authenticated && privateRoute) {
 		const url = new URL(request.url)
 		const redirectTo = `${url.pathname}${url.search}`
-		return new Response(null, {
-			status: 302,
-			headers: {
-				Location: `/login?${new URLSearchParams({ redirectTo })}`,
-				'Cache-Control': 'no-store',
-			},
+		const headers = new Headers({
+			Location: `/login?${new URLSearchParams({ redirectTo })}`,
+			'Cache-Control': 'no-store',
 		})
+		applySecurityHeaders(headers)
+		return new Response(null, { status: 302, headers })
 	}
 	const documentContext = documentContextFor(reactRouterContext, {
 		authenticated,

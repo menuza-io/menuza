@@ -192,7 +192,8 @@ export type PersonErasureLogEntry = typeof personErasureLog.$inferSelect
 // One row per sign-in code sent. The send-code limits that must hold across
 // isolates and Durable Object restarts (the in-process limiter does not) count
 // these rows. Phone and IP are stored only as purpose-prefixed HMACs, and rows
-// older than a day are deleted as new ones are written.
+// older than a day are deleted by the hourly regional tick (and now and then as
+// new ones are written).
 export const smsSendEvents = sqliteTable(
 	'sms_send_events',
 	{
@@ -207,6 +208,8 @@ export const smsSendEvents = sqliteTable(
 		index('idx_sms_send_events_kind_at').on(table.kind, table.at),
 		index('idx_sms_send_events_phone_at').on(table.phoneHash, table.at),
 		index('idx_sms_send_events_ip_at').on(table.ipHash, table.at),
+		// The retention prune deletes by `at` alone.
+		index('idx_sms_send_events_at').on(table.at),
 	],
 )
 
@@ -422,6 +425,11 @@ export const marketingCampaigns = sqliteTable('marketing_campaigns', {
 		'{"audience": "all"}',
 	),
 	scheduledAt: integer('scheduled_at', { mode: 'timestamp' }),
+	/**
+	 * Dispatch attempts in a row that ended in an unexpected error; reset when
+	 * a batch goes out. The campaign is marked `Failed` at the cap.
+	 */
+	dispatchFailures: integer('dispatch_failures').notNull().default(0),
 	createdAt: integer('created_at', { mode: 'timestamp' }).default(
 		sql`(strftime('%s', 'now'))`,
 	),

@@ -295,7 +295,7 @@ msgstr ""
 #: app/components/admin/feature-flags.tsx:686
 #: app/components/sso-user-management.tsx:181
 #: app/routes/_admin+/cache.tsx:619
-#: app/routes/_admin+/gdpr-requests.tsx:517
+#: app/routes/_admin+/gdpr-requests.tsx:584
 #: app/routes/_admin+/ip-addresses+/$ip.tsx:251
 #: app/routes/_admin+/ip-addresses+/index.tsx:235
 #: app/routes/_admin+/marketing+/automations._index.tsx:219
@@ -593,11 +593,11 @@ msgstr ""
 msgid "Are you sure you want to delete this system role?"
 msgstr ""
 
-#: app/routes/_admin+/gdpr-requests.tsx:470
+#: app/routes/_admin+/gdpr-requests.tsx:537
 msgid "Article 17 fulfilled"
 msgstr ""
 
-#: app/routes/_admin+/gdpr-requests.tsx:436
+#: app/routes/_admin+/gdpr-requests.tsx:503
 msgid "Article 20 requests"
 msgstr ""
 
@@ -888,7 +888,7 @@ msgstr ""
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:162
 #: app/components/admin-ban-user-dialog.tsx:166
 #: app/components/admin-cache-confirmation-dialog.tsx:111
-#: app/routes/_admin+/gdpr-requests.tsx:596
+#: app/routes/_admin+/gdpr-requests.tsx:663
 #: app/routes/_admin+/print-shop.tsx:193
 #: app/routes/_admin+/roles+/index.tsx:352
 #: app/routes/_admin+/waitlist.tsx:487
@@ -903,7 +903,7 @@ msgstr ""
 msgid "Cancellations by who"
 msgstr "Cancellations by who"
 
-#: app/routes/_admin+/gdpr-requests.tsx:374
+#: app/routes/_admin+/gdpr-requests.tsx:430
 #: app/routes/_admin+/print-shop.tsx:76
 msgid "Cancelled"
 msgstr ""
@@ -1005,20 +1005,20 @@ msgid "Compare wages as a share of sales across your workplaces."
 msgstr "Compare wages as a share of sales across your workplaces."
 
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:9
-#: app/routes/_admin+/gdpr-requests.tsx:373
+#: app/routes/_admin+/gdpr-requests.tsx:429
 #: app/routes/_admin+/marketing+/campaigns._index.tsx:31
 msgid "Completed"
 msgstr ""
 
-#: app/routes/_admin+/gdpr-requests.tsx:461
+#: app/routes/_admin+/gdpr-requests.tsx:528
 msgid "Completed Deletions"
 msgstr ""
 
-#: app/routes/_admin+/gdpr-requests.tsx:427
+#: app/routes/_admin+/gdpr-requests.tsx:494
 msgid "Completed Exports"
 msgstr ""
 
-#: app/routes/_admin+/gdpr-requests.tsx:569
+#: app/routes/_admin+/gdpr-requests.tsx:636
 msgid "Completed: {completedAt}"
 msgstr ""
 
@@ -1105,7 +1105,7 @@ msgstr ""
 #: app/components/admin-organizations-table.tsx:306
 #: app/components/admin-users-table.tsx:229
 #: app/routes/_admin+/audit-logs.tsx:125
-#: app/routes/_admin+/gdpr-requests.tsx:344
+#: app/routes/_admin+/gdpr-requests.tsx:400
 #: app/routes/_admin+/waitlist.tsx:262
 msgid "contains"
 msgstr "contains"
@@ -1423,7 +1423,7 @@ msgstr "Design email"
 msgid "Detailed information for IP {ip}"
 msgstr ""
 
-#: app/routes/_admin+/gdpr-requests.tsx:514
+#: app/routes/_admin+/gdpr-requests.tsx:581
 msgid "Details"
 msgstr "Details"
 
@@ -1635,7 +1635,7 @@ msgstr ""
 msgid "Email tenant operators"
 msgstr ""
 
-#: app/routes/_admin+/gdpr-requests.tsx:345
+#: app/routes/_admin+/gdpr-requests.tsx:401
 msgid "Email, username, or name"
 msgstr "Email, username, or name"
 
@@ -1752,11 +1752,11 @@ msgstr ""
 msgid "Entries:"
 msgstr ""
 
-#: app/routes/_admin+/gdpr-requests.tsx:549
+#: app/routes/_admin+/gdpr-requests.tsx:616
 msgid "Erasure"
 msgstr ""
 
-#: app/routes/_admin+/gdpr-requests.tsx:358
+#: app/routes/_admin+/gdpr-requests.tsx:414
 msgid "Erasure (Article 17)"
 msgstr ""
 
@@ -1792,7 +1792,7 @@ msgstr "Everyone gets {code}"
 msgid "Exactly Equals"
 msgstr ""
 
-#: app/routes/_admin+/gdpr-requests.tsx:614
+#: app/routes/_admin+/gdpr-requests.tsx:681
 msgid "Expedite Now"
 msgstr ""
 
@@ -1808,11 +1808,11 @@ msgstr ""
 msgid "Expires: {expiresAt}"
 msgstr ""
 
-#: app/routes/_admin+/gdpr-requests.tsx:547
+#: app/routes/_admin+/gdpr-requests.tsx:614
 msgid "Export"
 msgstr ""
 
-#: app/routes/_admin+/gdpr-requests.tsx:357
+#: app/routes/_admin+/gdpr-requests.tsx:413
 msgid "Export (Article 20)"
 msgstr ""
 
@@ -1825,13 +1825,13 @@ msgid "Export JSON"
 msgstr ""
 
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:10
-#: app/routes/_admin+/gdpr-requests.tsx:375
+#: app/routes/_admin+/gdpr-requests.tsx:431
 #: app/routes/_admin+/marketing+/campaigns._index.tsx:33
 #: app/routes/_admin+/print-shop.tsx:75
 msgid "Failed"
 msgstr ""
 
-#: app/routes/_admin+/gdpr-requests.tsx:478
+#: app/routes/_admin+/gdpr-requests.tsx:545
 msgid "Failed Requests"
 msgstr ""
 
@@ -1983,7 +1983,7 @@ msgstr ""
 msgid "Full width"
 msgstr "Full width"
 
-#: app/routes/_admin+/gdpr-requests.tsx:417
+#: app/routes/_admin+/gdpr-requests.tsx:473
 msgid "GDPR Data Requests"
 msgstr ""
 
@@ -2163,7 +2163,7 @@ msgstr "Image URL"
 msgid "Impersonate"
 msgstr ""
 
-#: app/routes/_admin+/gdpr-requests.tsx:453
+#: app/routes/_admin+/gdpr-requests.tsx:520
 msgid "In grace period"
 msgstr ""
 
@@ -2249,8 +2249,8 @@ msgstr ""
 #: app/components/admin-organizations-table.tsx:327
 #: app/components/admin-users-table.tsx:238
 #: app/routes/_admin+/audit-logs.tsx:152
-#: app/routes/_admin+/gdpr-requests.tsx:353
-#: app/routes/_admin+/gdpr-requests.tsx:366
+#: app/routes/_admin+/gdpr-requests.tsx:409
+#: app/routes/_admin+/gdpr-requests.tsx:422
 #: app/routes/_admin+/waitlist.tsx:271
 #: app/routes/_admin+/waitlist.tsx:284
 msgid "is"
@@ -2460,7 +2460,7 @@ msgstr ""
 msgid "Manage Cache →"
 msgstr ""
 
-#: app/routes/_admin+/gdpr-requests.tsx:419
+#: app/routes/_admin+/gdpr-requests.tsx:475
 msgid "Manage data export and deletion requests for compliance"
 msgstr ""
 
@@ -2742,7 +2742,7 @@ msgstr ""
 msgid "No flags configured"
 msgstr ""
 
-#: app/routes/_admin+/gdpr-requests.tsx:637
+#: app/routes/_admin+/gdpr-requests.tsx:704
 msgid "No GDPR requests found"
 msgstr ""
 
@@ -2924,7 +2924,7 @@ msgstr ""
 msgid "On hold"
 msgstr "On hold"
 
-#: app/routes/_admin+/gdpr-requests.tsx:333
+#: app/routes/_admin+/gdpr-requests.tsx:389
 msgid "On hold: last admin of organization {organizationIds}. It runs once another admin is added there."
 msgstr "On hold: last admin of organization {organizationIds}. It runs once another admin is added there."
 
@@ -3157,7 +3157,7 @@ msgstr ""
 msgid "Pending Access"
 msgstr ""
 
-#: app/routes/_admin+/gdpr-requests.tsx:444
+#: app/routes/_admin+/gdpr-requests.tsx:511
 msgid "Pending Deletions"
 msgstr ""
 
@@ -3326,7 +3326,7 @@ msgid "Pro"
 msgstr ""
 
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:8
-#: app/routes/_admin+/gdpr-requests.tsx:371
+#: app/routes/_admin+/gdpr-requests.tsx:427
 #: app/routes/_admin+/marketing+/campaigns._index.tsx:32
 msgid "Processing"
 msgstr ""
@@ -3613,7 +3613,7 @@ msgstr "Rendering…"
 msgid "Reports"
 msgstr ""
 
-#: app/routes/_admin+/gdpr-requests.tsx:350
+#: app/routes/_admin+/gdpr-requests.tsx:406
 msgid "Request type"
 msgstr "Request type"
 
@@ -3621,8 +3621,8 @@ msgstr "Request type"
 #~ msgid "Request Type"
 #~ msgstr ""
 
-#: app/routes/_admin+/gdpr-requests.tsx:370
-#: app/routes/_admin+/gdpr-requests.tsx:511
+#: app/routes/_admin+/gdpr-requests.tsx:426
+#: app/routes/_admin+/gdpr-requests.tsx:578
 msgid "Requested"
 msgstr ""
 
@@ -3639,7 +3639,7 @@ msgstr "Require a verified email"
 msgid "Required. The identity provider can only create accounts and sign people in for email addresses on these domains."
 msgstr "Required. The identity provider can only create accounts and sign people in for email addresses on these domains."
 
-#: app/routes/_admin+/gdpr-requests.tsx:487
+#: app/routes/_admin+/gdpr-requests.tsx:554
 msgid "Requires attention"
 msgstr ""
 
@@ -3965,7 +3965,7 @@ msgid "Saving…"
 msgstr "Saving…"
 
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:7
-#: app/routes/_admin+/gdpr-requests.tsx:372
+#: app/routes/_admin+/gdpr-requests.tsx:428
 msgid "Scheduled"
 msgstr ""
 
@@ -3973,7 +3973,7 @@ msgstr ""
 msgid "Scheduled vs actual hours and clock-ins"
 msgstr "Scheduled vs actual hours and clock-ins"
 
-#: app/routes/_admin+/gdpr-requests.tsx:564
+#: app/routes/_admin+/gdpr-requests.tsx:631
 msgid "Scheduled: {scheduledFor}"
 msgstr ""
 
@@ -4165,7 +4165,7 @@ msgstr "Shorter retention periods permanently remove older messages on the next 
 msgid "Showing {showing} of {totalEvents} events"
 msgstr ""
 
-#: app/routes/_admin+/gdpr-requests.tsx:627
+#: app/routes/_admin+/gdpr-requests.tsx:694
 msgid "Showing {showing} of {totalRequests} requests"
 msgstr ""
 
@@ -4332,8 +4332,8 @@ msgstr "Start with a template"
 #: app/components/admin-users-table.tsx:161
 #: app/components/sso-configuration-overview.tsx:232
 #: app/components/sso-user-management.tsx:178
-#: app/routes/_admin+/gdpr-requests.tsx:363
-#: app/routes/_admin+/gdpr-requests.tsx:508
+#: app/routes/_admin+/gdpr-requests.tsx:419
+#: app/routes/_admin+/gdpr-requests.tsx:575
 #: app/routes/_admin+/ip-addresses+/$ip.tsx:114
 #: app/routes/_admin+/ip-addresses+/$ip.tsx:239
 #: app/routes/_admin+/ip-addresses+/index.tsx:217
@@ -4652,6 +4652,10 @@ msgstr "The previous organization may still forward its line to this number, so 
 msgid "The print file could not be made"
 msgstr "The print file could not be made"
 
+#: app/routes/_admin+/gdpr-requests.tsx:483
+msgid "The request was not completed"
+msgstr "The request was not completed"
+
 #: ../../packages/reports/src/ui/report-labels.ts:133
 msgid "The share of booked parties that did not show up over the last 30 days."
 msgstr "The share of booked parties that did not show up over the last 30 days."
@@ -4855,7 +4859,7 @@ msgstr "True"
 #: app/components/admin-organizations-table.tsx:395
 #: app/components/admin-users-table.tsx:305
 #: app/routes/_admin+/audit-logs.tsx:347
-#: app/routes/_admin+/gdpr-requests.tsx:638
+#: app/routes/_admin+/gdpr-requests.tsx:705
 #: app/routes/_admin+/waitlist.tsx:335
 msgid "Try different filters or clear them."
 msgstr "Try different filters or clear them."
@@ -4873,7 +4877,7 @@ msgid "Turn times against target"
 msgstr "Turn times against target"
 
 #: app/components/admin/feature-flags.tsx:165
-#: app/routes/_admin+/gdpr-requests.tsx:505
+#: app/routes/_admin+/gdpr-requests.tsx:572
 msgid "Type"
 msgstr ""
 
@@ -4972,8 +4976,8 @@ msgstr "Used when the value is empty"
 #: app/components/admin/feature-flags.tsx:787
 #: app/components/sso-user-management.tsx:166
 #: app/routes/_admin+/audit-logs.tsx:283
-#: app/routes/_admin+/gdpr-requests.tsx:341
-#: app/routes/_admin+/gdpr-requests.tsx:502
+#: app/routes/_admin+/gdpr-requests.tsx:397
+#: app/routes/_admin+/gdpr-requests.tsx:569
 #: app/routes/_admin+/ip-addresses+/$ip.tsx:233
 #: app/routes/_admin+/waitlist.tsx:347
 msgid "User"
