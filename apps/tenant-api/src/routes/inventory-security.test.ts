@@ -1643,6 +1643,57 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 		})
 	})
 
+	it('adjusting stock needs the cost grant (403 forbidden, grant read:inventory_cost:any)', async () => {
+		const token = await mintInventoryToken({ grants: [READ, UPDATE] })
+		const res = await call(
+			'POST',
+			`/operator/inventory/items/${seed.item}/adjust`,
+			{
+				token,
+				body: {
+					clientId: 'sec-adjust-grant',
+					locationId: LOC_A,
+					quantity: 1_000_000,
+					reason: 'found',
+				},
+			},
+		)
+		expect(res.status).toBe(403)
+		expect(await res.json()).toMatchObject({
+			code: 'forbidden',
+			reason: 'grant',
+			required: COST,
+		})
+	})
+
+	it('changing target food cost on settings needs the cost grant', async () => {
+		const token = await mintInventoryToken({ grants: [READ, UPDATE] })
+		const res = await call('PUT', '/operator/inventory/settings', {
+			token,
+			body: { expectedVersion: 0, targetFoodCostBp: 2500 },
+		})
+		expect(res.status).toBe(403)
+		expect(await res.json()).toMatchObject({
+			code: 'forbidden',
+			reason: 'grant',
+			required: COST,
+		})
+	})
+
+	it('changing who may receive on Station needs the purchasing grant', async () => {
+		const token = await mintInventoryToken({ grants: [READ, UPDATE, COST] })
+		const res = await call('PUT', '/operator/inventory/settings', {
+			token,
+			body: { expectedVersion: 0, anyStaffCanReceive: true },
+		})
+		expect(res.status).toBe(403)
+		expect(await res.json()).toMatchObject({
+			code: 'forbidden',
+			reason: 'grant',
+			required: PURCHASING,
+		})
+	})
+
 	it('a read-scope token reads, and every change is refused (403 forbidden, scope)', async () => {
 		const token = await mintInventoryToken({
 			scope: 'read',

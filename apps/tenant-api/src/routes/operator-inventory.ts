@@ -1,4 +1,5 @@
 import {
+	hasInventoryGrant,
 	INVENTORY_PERMISSIONS,
 	inventoryStatusQuerySchema,
 	updateInventorySettingsSchema,
@@ -16,7 +17,11 @@ import {
 	inventoryErrorResponse,
 	readOptionalIdempotencyKey,
 } from '../lib/inventory-http.ts'
-import { parseBody, parseQuery } from '../lib/inventory-route.ts'
+import {
+	APPROVE_EXTRA_GRANT,
+	parseBody,
+	parseQuery,
+} from '../lib/inventory-route.ts'
 import { hashInventoryRequest } from '../lib/inventory-write.ts'
 import { operatorInventoryCountsRoutes } from './operator-inventory-counts.ts'
 import { operatorInventoryItemsRoutes } from './operator-inventory-items.ts'
@@ -100,6 +105,28 @@ operatorInventoryRoutes.put(
 			}
 			const body = await parseBody(c, updateInventorySettingsSchema)
 			if ('error' in body) return body.error
+			const change = body.data
+			if (
+				change.targetFoodCostBp !== undefined &&
+				!hasInventoryGrant(ctx.grants, APPROVE_EXTRA_GRANT)
+			) {
+				return inventoryDeny(403, 'forbidden', {
+					reason: 'grant',
+					required: APPROVE_EXTRA_GRANT,
+				})
+			}
+			if (
+				change.anyStaffCanReceive !== undefined &&
+				!hasInventoryGrant(
+					ctx.grants,
+					INVENTORY_PERMISSIONS.UPDATE_INVENTORY_PURCHASING,
+				)
+			) {
+				return inventoryDeny(403, 'forbidden', {
+					reason: 'grant',
+					required: INVENTORY_PERMISSIONS.UPDATE_INVENTORY_PURCHASING,
+				})
+			}
 			const idem = readOptionalIdempotencyKey(c)
 			if ('error' in idem) return idem.error
 			const settings = await updateInventorySettings(ctx.orgId, {

@@ -13,8 +13,8 @@ Status: built behind feature flags (default `false`) in two surfaces:
 
 All inventory tables (`inv_*`) live in the regional tenant database
 (`packages/tenant-db`, migrations `0033_inventory` through
-`0038_inventory_transfers`). Control-plane D1 holds only permissions, folded
-config flags (`0040_inventory`), and menu item availability overrides.
+`0039_inventory_location_settings`). Control-plane D1 holds only permissions,
+folded config flags (`0040_inventory`), and menu item availability overrides.
 
 ---
 
@@ -25,13 +25,13 @@ config flags (`0040_inventory`), and menu item availability overrides.
 `inventory.enabled` is the parent switch; every child flag is folded with
 `inventory.enabled` in `getInventoryFeatureState(orgId)`:
 
-| Flag                   | Controls                                                                                  |
-| ---------------------- | ----------------------------------------------------------------------------------------- |
-| `inventory.enabled`    | Master switch for the organization (Today, Items, Counts, Waste, Deliveries, Settings)    |
-| `inventory.purchasing` | Par levels, suggested orders, purchase orders (`GET/PUT /levels*`, `/orders*`)            |
-| `inventory.recipes`    | Dish & option recipes, batch production, theoretical usage from sales, auto sold-out      |
-| `inventory.prep`       | Daily prep list, weekday prep targets, cook task actions (`/prep*`)                       |
-| `inventory.transfers`  | Multi-location comparison and stock transfers (`/compare`, `/transfers*`)                 |
+| Flag                   | Controls                                                                               |
+| ---------------------- | -------------------------------------------------------------------------------------- |
+| `inventory.enabled`    | Master switch for the organization (Today, Items, Counts, Waste, Deliveries, Settings) |
+| `inventory.purchasing` | Par levels, suggested orders, purchase orders (`GET/PUT /levels*`, `/orders*`)         |
+| `inventory.recipes`    | Dish & option recipes, batch production, theoretical usage from sales, auto sold-out   |
+| `inventory.prep`       | Daily prep list, weekday prep targets, cook task actions (`/prep*`)                    |
+| `inventory.transfers`  | Multi-location comparison and stock transfers (`/compare`, `/transfers*`)              |
 
 ### Operator permissions
 
@@ -84,23 +84,22 @@ Seeded by `0040_inventory.sql` and granted by default to `org_role_admin` only:
 
 ## Multi-Tablet Counting & Approval
 
-- **Per-device participation (`inv_count_devices`)**: Each tablet or browser
-  that records entries or sends its part of a count is tracked in
-  `inv_count_devices` (`countId`, `deviceKey`, `actorName`, `joinedAt`,
-  `sentAt`).
-- **Sending a count (`POST /counts/:id/send` / `/pos/inventory/counts/:id/send`)**:
-  - From Station (or when a `deviceKey` has joined alongside other active
-    devices), sending marks that device's `sentAt` timestamp. The count moves to
-    `in_review` automatically once all joined devices have sent their parts.
-  - A manager in the Operator App can also close and send the count to
-    `in_review` directly (or pass `closeAll: true`).
+- **Station "I'm done" (`POST /pos/inventory/counts/:id/send`, contract v2)**:
+  Writes an audit row only (`markCountDeviceDone`). It does **not** move the
+  count to `in_review` or track which tablets are still counting. The Operator
+  App sends the count with `POST /counts/:id/send`, which moves it to
+  `in_review`.
 - **Approval adjustment math (`POST /counts/:id/approve`)**:
-  - Each count line compares the counted quantity against the ledger stock as of
-    the count's snapshot (`entries.createdAt` / `count.startedAt`), excluding
-    movements that happened after the count started:
-    `adjustment = counted - (currentOnHand - movementsAfterSnapshot)`.
-  - Sales, deliveries, waste, and batch movements recorded while the count was
-    open are preserved on top of the counted baseline.
+  - Each counted line compares the entered quantity with ledger stock **as of
+    that line's latest entry time** (`inv_count_entries.createdAt`, including
+    `madeAt` from Station). Movements recorded after that instant are excluded
+    from `expected` but stay on hand after approval.
+  - Sales, deliveries, waste, and batch movements that happened after an item
+    was counted are not part of its `expected` and survive approval on top of
+    the counted baseline.
+- **Unsynced tablets**: Unsent Station entries live in the tablet outbox until
+  they sync. A manager can approve from the App before every tablet has synced;
+  treat that as an operational risk until participant tracking ships.
 
 ---
 
@@ -121,10 +120,10 @@ R2 / OCI bucket configured via `RECORDING_S3_*`:
    (`POS_ORIGINS`):
    - Allowed methods: `PUT`, `GET`, `HEAD`
    - Allowed headers: `Content-Type`, `Content-Length`
-3. **KSA / OCI Object Storage note**: Verify browser-direct presigned `PUT`
-   CORS on the KSA bucket before enabling photo uploads for KSA organizations.
-   If `RECORDING_S3_BUCKET` is unset, photo upload routes degrade gracefully
-   with `503 upload_not_configured`.
+3. **KSA / OCI Object Storage note**: Verify browser-direct presigned `PUT` CORS
+   on the KSA bucket before enabling photo uploads for KSA organizations. If
+   `RECORDING_S3_BUCKET` is unset, photo upload routes degrade gracefully with
+   `503 upload_not_configured`.
 4. **Retention & erasure**: Replacing a delivery's photo deletes the previous
    object; organization deprovision deletes the entire
    `inventory-invoices/<orgId>/` prefix alongside call recordings. Confirm that
@@ -155,20 +154,20 @@ R2 / OCI bucket configured via `RECORDING_S3_*`:
 - **Node interval (KSA / OCI)**: `INVENTORY_TICK_INTERVAL_SECONDS` (default
   `300`, min `60`, `0` disables) runs the tick in-process between hourly crons.
 
-| Table / Storage          | Retention & Purge Policy                                                                 |
-| ------------------------ | ---------------------------------------------------------------------------------------- |
-| `inv_outbox`             | Settled rows pruned after 14 days in `runInventoryTickForOrg` (`pruneInventoryOutbox`)   |
-| `inv_idempotency_keys`   | Expired rows (`expires_at < now`, 48h TTL) pruned in `runInventoryTickForOrg`            |
-| `inv_alert_log`          | Pending alerts stop retrying after 3 days or 40 attempts                                 |
-| `inv_movements` / ledger | Append-only by design (`note` columns clearable for privacy)                             |
-| `inventory-invoices/*`   | Deleted when replaced on a delivery or when the organization is deprovisioned            |
+| Table / Storage          | Retention & Purge Policy                                                               |
+| ------------------------ | -------------------------------------------------------------------------------------- |
+| `inv_outbox`             | Settled rows pruned after 14 days in `runInventoryTickForOrg` (`pruneInventoryOutbox`) |
+| `inv_idempotency_keys`   | Expired rows (`expires_at < now`, 48h TTL) pruned in `runInventoryTickForOrg`          |
+| `inv_alert_log`          | Pending alerts stop retrying after 3 days or 40 attempts                               |
+| `inv_movements` / ledger | Append-only by design (`note` columns clearable for privacy)                           |
+| `inventory-invoices/*`   | Deleted when replaced on a delivery or when the organization is deprovisioned          |
 
 ---
 
 ## Rollout Order
 
-All `inventory.*` flags default to `false`, so code deploys are dark until Step
-7.
+All `inventory.*` flags default to `false`, so code deploys are dark until
+Step 7.
 
 1. **Control-plane D1 (`0040_inventory.sql`)**: Applied first by CI
    (`migrate-control-plane-d1`). Adds permissions and `inventory.*` system flags
@@ -181,10 +180,10 @@ All `inventory.*` flags default to `false`, so code deploys are dark until Step
    few minutes ahead of `tenant-api`.
 3. **Tenant API — US Worker (`apps/tenant-api`)**: `wrangler.jsonc` runs
    `npm run generate:do-migrations` during build; each Durable Object applies
-   migrations `0033`–`0038` on first open.
-4. **Tenant API — KSA (`apps/tenant-api` OCI)**: Applies `0033`–`0038` lazily
-   per `tenant_<orgId>.db` on first open (and across all active orgs on the
-   next tick).
+   migrations `0033`–`0039` on first open.
+4. **Tenant API — KSA (`apps/tenant-api` OCI)**: Applies `0033`–`0039` lazily
+   per `tenant_<orgId>.db` on first open (and across all active orgs on the next
+   tick).
 5. **Node environment variables**: Configure `RECORDING_S3_*` (with write
    permissions + bucket CORS), optional `INVOICE_READER_*` (matching
    `DATA_REGION`), and `INVENTORY_TICK_INTERVAL_SECONDS` on Node hosts.

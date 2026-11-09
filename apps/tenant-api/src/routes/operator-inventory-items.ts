@@ -18,8 +18,9 @@ import {
 	inventoryGuard,
 	requireInventoryLocation,
 } from '../lib/inventory-guard.ts'
-import { inventoryErrorResponse } from '../lib/inventory-http.ts'
+import { inventoryDeny, inventoryErrorResponse } from '../lib/inventory-http.ts'
 import {
+	APPROVE_EXTRA_GRANT,
 	clientIdempotency,
 	idParam,
 	inventoryCaller,
@@ -248,6 +249,13 @@ operatorInventoryItemsRoutes.put(
 operatorInventoryItemsRoutes.post('/items/:id/adjust', writes(), async (c) => {
 	try {
 		const ctx = getInventoryAuth(c)
+		const caller = inventoryCaller(ctx)
+		if (!caller.cost) {
+			return inventoryDeny(403, 'forbidden', {
+				reason: 'grant',
+				required: APPROVE_EXTRA_GRANT,
+			})
+		}
 		const id = idParam(c)
 		const body = await parseBody(c, adjustStockSchema)
 		if ('error' in body) return body.error
@@ -255,7 +263,7 @@ operatorInventoryItemsRoutes.post('/items/:id/adjust', writes(), async (c) => {
 		if (!location.ok) return location.response
 		return respond(
 			ctx,
-			await adjustStock(inventoryCaller(ctx), { itemId: id, body: body.data }),
+			await adjustStock(caller, { itemId: id, body: body.data }),
 		)
 	} catch (error) {
 		return inventoryErrorResponse(error)
