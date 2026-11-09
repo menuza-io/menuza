@@ -18,6 +18,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { LogWaste } from '../stock/LogWaste.tsx'
 import { chime, chimeReady, unlockChime } from './chime.ts'
 import { KitchenSettings } from './KitchenSettings.tsx'
+import { PrepView } from './PrepView.tsx'
 import { TicketWaste } from './TicketWaste.tsx'
 import {
 	allDayCounts,
@@ -29,6 +30,7 @@ import {
 	type KitchenView,
 } from './model.ts'
 import { useKitchen } from './useKitchen.ts'
+import { usePrep } from './usePrep.ts'
 import { categoryItems } from '~/lib/catalog.ts'
 import { type PosSettings } from '~/lib/config.ts'
 import { menuText } from '~/lib/menu-text.ts'
@@ -119,6 +121,8 @@ export function Kitchen({
 		readPreference(preferenceKey(settings)),
 	)
 	const [configuring, setConfiguring] = useState(false)
+	// Prep sits beside the tickets when the organization has it (`available`).
+	const [section, setSection] = useState<'tickets' | 'prep'>('tickets')
 	// Cooks waste food in the kitchen, not at a desk: the Stock app's waste sheet, from here.
 	const [wasting, setWasting] = useState(false)
 	const [fullscreen, setFullscreen] = useState(
@@ -150,6 +154,8 @@ export function Kitchen({
 	)
 		? preference.stationId
 		: null
+	const prep = usePrep(settings, session, reachable, stationId)
+	const showPrep = section === 'prep' && prep.available === true
 	const tickets = useMemo(
 		() =>
 			feed
@@ -329,6 +335,18 @@ export function Kitchen({
 							{ value: 'done', label: _(t`Done`) },
 						]}
 					/>
+					{prep.available ? (
+						<Segmented
+							label={_(t`Kitchen section`)}
+							wrap={false}
+							value={section}
+							onChange={(next) => setSection(next as 'tickets' | 'prep')}
+							options={[
+								{ value: 'tickets', label: _(t`Tickets`) },
+								{ value: 'prep', label: _(t`Prep`) },
+							]}
+						/>
+					) : null}
 					{feed ? (
 						<>
 							<Select
@@ -471,7 +489,7 @@ export function Kitchen({
 					) : null}
 				</div>,
 			)}
-			<Reveal open={allDay.length > 0}>
+			<Reveal open={allDay.length > 0 && !showPrep}>
 				<section
 					aria-label={_(
 						msg({
@@ -539,7 +557,9 @@ export function Kitchen({
 					</Trans>
 				</p>
 			) : null}
-			{!feed ? (
+			{showPrep ? (
+				<PrepView prep={prep} online={reachable} />
+			) : !feed ? (
 				settings.demo ? (
 					// The demo tickets are read from this tablet in a moment.
 					<div className="flex-1" />

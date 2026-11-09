@@ -1307,6 +1307,37 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
   in force now and writes an `inv_waste` row per ingredient ("Cancelled after
   cooking", this terminal) plus the `waste` movement; a dish with no recipe adds
   nothing. Phase 3 is complete.
+- Prep (phase 4, behind `inventory.prep`, tenant `0037_inventory_prep`):
+  `inv_prep_levels` (fill up to per weekday, base thousandths), `inv_prep_items`
+  (the kitchen station that makes a made item, an opaque id from Kitchen setup)
+  and `inv_prep_tasks` (one per made item and business day, with the numbers the
+  plan came from). `@repo/inventory` `prep.ts` is the pure math:
+  `suggestPrepAmount` = fill up to x weekday factor - on hand, rounded UP to
+  whole batches of the recipe; `weekdayDemand` = same weekday of the last 4
+  weeks over the mean of the 28 days (clamped 0.5x to 2x, neutral with under 7
+  days or 2 same weekdays of history, days with no sales ignored); in Ramadan
+  (`isRamadan`, Hijri month 9 through Intl) only Ramadan days are compared,
+  otherwise Ramadan days are left out. `services/inventory-prep-service.ts`:
+  `generatePrep` refreshes tasks not yet started (started, done and skipped are
+  never touched; a level taken away or enough on hand removes an untouched task;
+  the day is "planned" once `prep.generate` is audited, so an empty plan is a
+  plan), `donePrepTask` records the batch (`recordBatch` joined into the same
+  transaction, idempotent by `clientId`) and closes the task, start and skip
+  answer a repeat. Dates are limited to yesterday, today and tomorrow. Operator
+  routes `/prep`, `/prep/generate`, `/prep/levels` (GET, PUT) and
+  `/prep/tasks/:id/start|done|skip` (`routes/operator-inventory-prep.ts`); the
+  same plan and task actions under `/pos/inventory/prep` for Station (device
+  plus staff session, online only). The hourly tick plans each location once
+  from 07:00 local. No money anywhere in prep. App: the Prep tab (list and
+  board, `components/inventory/prep-screen.tsx`, levels in
+  `prep-levels-panel.tsx`, done reuses `RecordBatchDialog` with a `target`);
+  with prep on, Waste leaves the tab bar and sidebar (`visibleInventoryTabs`)
+  and Today links "See all". Station: Kitchen gets a Tickets | Prep switch when
+  the region answers (`kitchen/usePrep.ts`, `PrepView.tsx`), filtered by the
+  screen's station, Start, Done ("How much did you make?" pre-filled) and Skip;
+  a write is never queued and the plan is read again after every answer. Not
+  built: booked covers from reservations in the demand nudge, the tick's `prep`
+  alerts.
 - Product rules: owner words (no par, AvT, COGS, 86), at most five tabs, one
   plain name per item (inventory inputs are never translated; App strings are
   Lingui). Security gate: `routes/inventory-security.test.ts`.

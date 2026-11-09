@@ -72,6 +72,46 @@ export async function resetStock() {
 	})
 }
 
+/** One made item to make today, as the region plans it. */
+export function preparedTask() {
+	return {
+		id: 'task_1',
+		itemId: 'item_sauce',
+		itemName: 'Garlic sauce',
+		baseUnit: 'ml' as const,
+		countUnit: 'l' as const,
+		units: [],
+		stationId: null,
+		businessDate: '2026-01-01',
+		plannedQuantity: 2_000_000,
+		batchSize: 1_000_000,
+		batches: 2,
+		explain: {
+			fillUpTo: 2_000_000,
+			target: 2_000_000,
+			onHand: 0,
+			demandBp: 10_000,
+		},
+		status: 'todo' as const,
+		startedAt: null,
+		doneAt: null,
+		madeQuantity: null,
+		version: 1,
+	}
+}
+
+export function preparedPlan() {
+	return {
+		locationId: 'main',
+		date: '2026-01-01',
+		stations: [{ id: 'kitchen', name: 'Kitchen' }],
+		demand: { bp: 10_000, known: false, ramadan: false, samples: 0 },
+		generated: true,
+		canGenerate: true,
+		tasks: [preparedTask()],
+	}
+}
+
 export type Recorded = StockApi & {
 	calls: Array<{ name: string; args: unknown[] }>
 }
@@ -149,6 +189,38 @@ export function fakeApi(over: Partial<StockApi> = {}): Recorded {
 				duplicates: [],
 				refused: [],
 				lateSync: [],
+			})
+		},
+		async prepPlan(...args) {
+			return record('prepPlan', args, preparedPlan())
+		},
+		async prepGenerate(...args) {
+			return record('prepGenerate', args, preparedPlan())
+		},
+		async prepStart(...args) {
+			return record('prepStart', args, {
+				...preparedTask(),
+				id: String(args[0]),
+				status: 'in_progress' as const,
+				version: 2,
+			})
+		},
+		async prepSkip(...args) {
+			return record('prepSkip', args, {
+				...preparedTask(),
+				id: String(args[0]),
+				status: 'skipped' as const,
+				version: 2,
+			})
+		},
+		async prepDone(...args) {
+			return record('prepDone', args, {
+				...preparedTask(),
+				id: String(args[0]),
+				status: 'done' as const,
+				madeQuantity: 2_000_000,
+				doneAt: 1,
+				version: 3,
 			})
 		},
 		async dishWaste(...args) {

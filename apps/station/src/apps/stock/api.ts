@@ -3,6 +3,12 @@ import {
 	INVENTORY_POS_CONTRACT_HEADER,
 	INVENTORY_POS_CONTRACT_VERSION,
 	INVENTORY_POS_PATHS,
+	PREP_POS_PATHS,
+	doneTaskSchema,
+	prepPlanSchema,
+	prepTaskActionSchema,
+	prepTaskSchema,
+	generatePrepSchema,
 	stationCatalogSchema,
 	stationCountEntriesResultSchema,
 	stationCountEntriesSchema,
@@ -81,6 +87,26 @@ export type StockApi = {
 	dishWaste(
 		body: Body<typeof stationDishWasteSchema>,
 	): Promise<z.infer<typeof stationDishWasteResultSchema>>
+	/** Kitchen prep (online only; the screen reads back after an uncertain write). */
+	prepPlan(
+		locationId: string,
+		stationId?: string | null,
+	): Promise<z.infer<typeof prepPlanSchema>>
+	prepGenerate(
+		body: Body<typeof generatePrepSchema>,
+	): Promise<z.infer<typeof prepPlanSchema>>
+	prepStart(
+		id: string,
+		body: Body<typeof prepTaskActionSchema>,
+	): Promise<z.infer<typeof prepTaskSchema>>
+	prepSkip(
+		id: string,
+		body: Body<typeof prepTaskActionSchema>,
+	): Promise<z.infer<typeof prepTaskSchema>>
+	prepDone(
+		id: string,
+		body: Body<typeof doneTaskSchema>,
+	): Promise<z.infer<typeof prepTaskSchema>>
 	undoWaste(
 		id: string,
 		body: Body<typeof undoWasteSchema>,
@@ -238,6 +264,50 @@ export function createStockApi(
 				schema: stationWasteSchema,
 				body,
 			}),
+		prepPlan: (locationId, stationId) =>
+			call(
+				'GET',
+				`${PREP_POS_PATHS.plan}?${new URLSearchParams({
+					locationId,
+					...(stationId ? { stationId } : {}),
+				})}`,
+				prepPlanSchema,
+			),
+		prepGenerate: (body) =>
+			call('POST', PREP_POS_PATHS.generate, prepPlanSchema, {
+				schema: generatePrepSchema,
+				body,
+			}),
+		prepStart: (id, body) =>
+			call(
+				'POST',
+				PREP_POS_PATHS.start(encodeURIComponent(id)),
+				prepTaskSchema,
+				{
+					schema: prepTaskActionSchema,
+					body,
+				},
+			),
+		prepSkip: (id, body) =>
+			call(
+				'POST',
+				PREP_POS_PATHS.skip(encodeURIComponent(id)),
+				prepTaskSchema,
+				{
+					schema: prepTaskActionSchema,
+					body,
+				},
+			),
+		prepDone: (id, body) =>
+			call(
+				'POST',
+				PREP_POS_PATHS.done(encodeURIComponent(id)),
+				prepTaskSchema,
+				{
+					schema: doneTaskSchema,
+					body,
+				},
+			),
 		dishWaste: (body) =>
 			call(
 				'POST',

@@ -9,8 +9,10 @@ through 3c, and 3b-2 (used by sales: the sale queue, settle and tick retry in
 `services/inventory-sales-service.ts`) is built, with auto sold out
 (`inv_sold_out`, tenant `0036`), the Today signals for stock and till voids and
 expected vs counted (review lines show what moved); and Kitchen "log it as
-waste?" (`POST /pos/inventory/waste/dishes`): phase 3 is complete. The **phase 2
-wire contract is written** in `@repo/inventory`
+waste?" (`POST /pos/inventory/waste/dishes`): phase 3 is complete. Phase 4
+(prep: weekday levels, the day's plan with the Ramadan-aware weekday factor, the
+App tab and the Kitchen view) is built; the reservations covers nudge is not.
+The **phase 2 wire contract is written** in `@repo/inventory`
 (`contract/{levels,orders,orders-rules,receiving, notify,station}.ts`, see
 [Phase 2 wire contract](#phase-2-wire-contract)); the region, Station and App
 implement against it. Nothing is user-visible until the flag is on. Placement is

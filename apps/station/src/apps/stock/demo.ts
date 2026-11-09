@@ -277,6 +277,21 @@ export function createDemoStockApi(): StockApi {
 				lateSync: [],
 			}
 		},
+		async prepPlan(locationId) {
+			return demoPrepPlan(locationId)
+		},
+		async prepGenerate(body) {
+			return demoPrepPlan(body.locationId)
+		},
+		async prepStart(id) {
+			return demoPrepMove(id, 'in_progress')
+		},
+		async prepSkip(id) {
+			return demoPrepMove(id, 'skipped')
+		},
+		async prepDone(id, body) {
+			return demoPrepMove(id, 'done', body)
+		},
 		async dishWaste(body) {
 			// The demo has no recipes: nothing is taken out, nothing is sent.
 			return { logged: 0, withoutRecipe: body.lines.length, duplicate: false }
@@ -309,6 +324,72 @@ export function createDemoStockApi(): StockApi {
 		async putPhoto() {},
 		async photoConfirm() {},
 	}
+}
+
+// ── Demo prep: two tasks that live on this tablet ──────────────────────────
+
+type DemoTask = ReturnType<typeof demoTask>
+function demoTask(id: string, name: string, planned: number, batches: number) {
+	return {
+		id,
+		itemId: `demo-${id}`,
+		itemName: name,
+		baseUnit: 'ml' as const,
+		countUnit: 'l' as const,
+		units: [],
+		stationId: null,
+		businessDate: '2026-01-01',
+		plannedQuantity: planned,
+		batchSize: planned / batches,
+		batches,
+		explain: {
+			fillUpTo: planned,
+			target: planned,
+			onHand: 0,
+			demandBp: 10_000,
+		},
+		status: 'todo' as 'todo' | 'in_progress' | 'done' | 'skipped',
+		startedAt: null as number | null,
+		doneAt: null as number | null,
+		madeQuantity: null as number | null,
+		version: 1,
+	}
+}
+const demoTasks: DemoTask[] = [
+	demoTask('demo-prep-1', 'Garlic sauce', 4_000_000, 2),
+	demoTask('demo-prep-2', 'Tahini', 2_000_000, 1),
+]
+
+function demoPrepPlan(locationId: string) {
+	return {
+		locationId,
+		date: '2026-01-01',
+		stations: [{ id: 'kitchen', name: 'Kitchen' }],
+		demand: { bp: 10_000, known: false, ramadan: false, samples: 0 },
+		generated: true,
+		canGenerate: true,
+		tasks: demoTasks.map((task) => ({ ...task })),
+	}
+}
+
+function demoPrepMove(
+	id: string,
+	status: DemoTask['status'],
+	body?: { made: { kind: 'batches' | 'amount'; count?: number } },
+) {
+	const task = demoTasks.find((entry) => entry.id === id)
+	if (!task) throw new Error('not_found')
+	task.status = status
+	task.version += 1
+	if (status === 'in_progress') task.startedAt = NOW()
+	if (status === 'done') {
+		task.doneAt = NOW()
+		task.madeQuantity =
+			body?.made.kind === 'batches' && body.made.count
+				? Math.round(task.plannedQuantity * (body.made.count / task.batches))
+				: task.plannedQuantity
+	}
+	return { ...task }
 }
 
 let shared: StockApi | null = null

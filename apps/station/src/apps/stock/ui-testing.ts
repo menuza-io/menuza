@@ -4,6 +4,7 @@ import { act, createElement as h, type ReactNode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { vi } from 'vitest'
 import catalogFixture from './fixtures/catalog.json'
+import { preparedPlan, preparedTask } from './testing.ts'
 import countSheet from './fixtures/count-sheet.json'
 
 /** Shared set-up for the Stock screen tests (jsdom): a page to draw in, DOM stand-ins, and a recording region behind `fetch`. */
@@ -194,6 +195,28 @@ export function region(options: { online?: boolean } = {}) {
 					refused: [],
 					lateSync: [],
 				})
+			if (path === '/pos/inventory/prep' && method === 'GET')
+				return Response.json(preparedPlan())
+			if (path === '/pos/inventory/prep/generate')
+				return Response.json(preparedPlan())
+			match =
+				/^\/pos\/inventory\/prep\/tasks\/([^/]+)\/(start|skip|done)$/.exec(path)
+			if (match) {
+				const done = match[2] === 'done'
+				return Response.json({
+					...preparedTask(),
+					id: match[1],
+					status:
+						match[2] === 'start'
+							? 'in_progress'
+							: match[2] === 'skip'
+								? 'skipped'
+								: 'done',
+					madeQuantity: done ? 2_000_000 : null,
+					doneAt: done ? 1 : null,
+					version: 2,
+				})
+			}
 			if (path === '/pos/inventory/waste/dishes')
 				return Response.json({
 					logged: body.lines.length,
