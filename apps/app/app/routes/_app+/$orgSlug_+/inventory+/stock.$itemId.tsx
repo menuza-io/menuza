@@ -302,13 +302,15 @@ function ItemSheetBody({
 						<Icon name="pencil" />
 						<Trans>Edit</Trans>
 					</Button>
-					<Button
-						variant="outline"
-						onClick={() => setAdjusting(true)}
-						data-testid="item-sheet-adjust"
-					>
-						<Trans>Adjust stock</Trans>
-					</Button>
+					{canSeeCost ? (
+						<Button
+							variant="outline"
+							onClick={() => setAdjusting(true)}
+							data-testid="item-sheet-adjust"
+						>
+							<Trans>Adjust stock</Trans>
+						</Button>
+					) : null}
 					<Button
 						variant="outline"
 						onClick={() => {

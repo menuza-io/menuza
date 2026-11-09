@@ -239,6 +239,7 @@ describe('Inventory item sheet', () => {
 		renderSheet(region(quantityOnly), { ...CONTEXT, canSeeCost: false })
 		await screen.findByTestId('item-sheet-on-hand')
 		expect(screen.queryByTestId('item-sheet-cost')).toBeNull()
+		expect(screen.queryByTestId('item-sheet-adjust')).toBeNull()
 		expect(screen.queryByText(/SAR/)).toBeNull()
 	})
 

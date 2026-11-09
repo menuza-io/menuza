@@ -106,8 +106,11 @@ operatorInventoryRoutes.put(
 			const body = await parseBody(c, updateInventorySettingsSchema)
 			if ('error' in body) return body.error
 			const change = body.data
+			const db = await getTenantDb(ctx.orgId)
+			const current = await getInventorySettings(db, ctx.region)
 			if (
 				change.targetFoodCostBp !== undefined &&
+				change.targetFoodCostBp !== current.targetFoodCostBp &&
 				!hasInventoryGrant(ctx.grants, APPROVE_EXTRA_GRANT)
 			) {
 				return inventoryDeny(403, 'forbidden', {
@@ -117,6 +120,7 @@ operatorInventoryRoutes.put(
 			}
 			if (
 				change.anyStaffCanReceive !== undefined &&
+				change.anyStaffCanReceive !== (current.anyStaffCanReceive ?? false) &&
 				!hasInventoryGrant(
 					ctx.grants,
 					INVENTORY_PERMISSIONS.UPDATE_INVENTORY_PURCHASING,

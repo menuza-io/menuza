@@ -36,6 +36,7 @@ import {
 	mintToken,
 	READ,
 	RECIPE,
+	COST,
 	setupTenantEnv,
 	UPDATE,
 } from './inventory-test-utils.ts'
@@ -91,7 +92,7 @@ beforeAll(async () => {
 		await provisionTenantDb(id)
 	}
 	full = await mintToken(ORG, {
-		grants: [READ, UPDATE, RECIPE],
+		grants: [READ, UPDATE, RECIPE, COST],
 		features,
 	})
 	readOnly = await mintToken(ORG, {

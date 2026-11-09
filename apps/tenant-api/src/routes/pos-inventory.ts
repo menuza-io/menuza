@@ -30,6 +30,8 @@ import {
 	STATION_WASTE_UNDO_SERVER_MS,
 	undoWasteSchema,
 } from '@repo/inventory'
+import { invCounts } from '@repo/tenant-db'
+import { eq } from 'drizzle-orm'
 import { InventoryError } from '../lib/inventory-http.ts'
 import { getInventoryFlagState } from '../lib/inventory-context.ts'
 import {
@@ -233,12 +235,24 @@ posInventoryRoutes.post(
 	stationRoute({ body: stationCountEntriesSchema }, async (ctx, body) => {
 		const id = idParam(ctx)
 		const now = posInventoryDeps.now()
+		const countRow = await ctx.pos.db
+			.select({ createdAt: invCounts.createdAt })
+			.from(invCounts)
+			.where(eq(invCounts.id, id))
+			.get()
+		if (!countRow) throw notFound()
 		const { actorFor } = await actorsFor(ctx, body.entries)
 		const made = new Map(
-			body.entries.map((entry) => [
-				entry.clientId,
-				clampMadeAt(entry.madeAt, now),
-			]),
+			body.entries.map((entry) => {
+				const clamped = clampMadeAt(entry.madeAt, now)
+				return [
+					entry.clientId,
+					{
+						...clamped,
+						at: Math.max(clamped.at, countRow.createdAt),
+					},
+				]
+			}),
 		)
 		const result = await addCountEntries(
 			ctx.caller,

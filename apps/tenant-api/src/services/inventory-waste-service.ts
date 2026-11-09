@@ -238,7 +238,7 @@ export async function logWaste(
 				source: station ? 'station' : 'operator',
 				deviceId: station?.deviceId ?? null,
 				lateSync: late,
-				createdAt: ctx.now,
+				createdAt: madeAt,
 			})
 			await tx.insert(invMovements).values({
 				locationId: entry.locationId,
@@ -255,7 +255,7 @@ export async function logWaste(
 				actorKind: actor.kind,
 				actorId: actor.id,
 				note: entry.note?.length ? entry.note : null,
-				createdAt: ctx.now,
+				createdAt: madeAt,
 			})
 			const out: (typeof accepted)[number] = {
 				clientId: entry.clientId,

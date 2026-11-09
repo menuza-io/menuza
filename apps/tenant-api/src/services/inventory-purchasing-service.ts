@@ -1262,7 +1262,7 @@ export async function recordDelivery(
 					onHandBefore: onHand,
 					avgBeforeMicro: existing?.avgCostMicro ?? null,
 					avgAfterMicro: average,
-					createdAt: receivedAt,
+					createdAt: ctx.now,
 				})
 				await tx.insert(invMovements).values({
 					locationId: body.locationId,
@@ -1769,22 +1769,22 @@ async function rewoundAverage(
 		.from(invCostEvents)
 		.where(eq(invCostEvents.itemId, itemId))
 		.orderBy(invCostEvents.createdAt, sql`rowid`)
-	const cancelled = new Set(
-		(
-			await tx
-				.select({ id: invDeliveryLines.id })
-				.from(invDeliveryLines)
-				.innerJoin(
-					invDeliveries,
-					eq(invDeliveries.id, invDeliveryLines.deliveryId),
-				)
-				.where(
-					and(
-						eq(invDeliveryLines.itemId, itemId),
-						eq(invDeliveries.status, 'cancelled'),
-					),
-				)
-		).map((line) => line.id),
+	const cancelledRows = await tx
+		.select({
+			id: invDeliveryLines.id,
+			cancelledAt: invDeliveries.updatedAt,
+		})
+		.from(invDeliveryLines)
+		.innerJoin(invDeliveries, eq(invDeliveries.id, invDeliveryLines.deliveryId))
+		.where(
+			and(
+				eq(invDeliveryLines.itemId, itemId),
+				eq(invDeliveries.status, 'cancelled'),
+			),
+		)
+	const cancelled = new Set(cancelledRows.map((line) => line.id))
+	const cancelledAt = new Map(
+		cancelledRows.map((line) => [line.id, line.cancelledAt]),
 	)
 	const standing = (event: (typeof events)[number]) =>
 		!event.deliveryLineId || !cancelled.has(event.deliveryLineId)
@@ -1797,7 +1797,10 @@ async function rewoundAverage(
 		let cancelledQty = 0
 		for (let j = 0; j < i; j++) {
 			const prior = events[j]!
-			if (prior.deliveryLineId && cancelled.has(prior.deliveryLineId)) {
+			if (!prior.deliveryLineId || !cancelled.has(prior.deliveryLineId))
+				continue
+			const atCancel = cancelledAt.get(prior.deliveryLineId)
+			if (atCancel !== undefined && atCancel > event.createdAt) {
 				cancelledQty += prior.quantity
 			}
 		}

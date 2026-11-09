@@ -1694,6 +1694,19 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 		})
 	})
 
+	it('saving only the unit system does not need the cost grant when food cost is unchanged', async () => {
+		const token = await mintInventoryToken({ grants: [READ, UPDATE] })
+		const put = await call('PUT', '/operator/inventory/settings', {
+			token,
+			body: {
+				expectedVersion: 0,
+				targetFoodCostBp: 3000,
+				unitSystem: 'metric',
+			},
+		})
+		expect(put.status).toBe(200)
+	})
+
 	it('a read-scope token reads, and every change is refused (403 forbidden, scope)', async () => {
 		const token = await mintInventoryToken({
 			scope: 'read',

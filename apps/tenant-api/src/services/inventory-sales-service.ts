@@ -1,5 +1,6 @@
 import {
 	applyUsageDeltas,
+	clampMadeAt,
 	desiredUsage,
 	diffUsage,
 	inventoryValueMinor,
@@ -529,6 +530,7 @@ async function settleInTx(
 		sourceId: source.id,
 		locationId: row.locationId,
 	})
+	const occurredAt = clampMadeAt(loaded.at, ctx.now).at
 	const { store } = await buildRecipeStore(tx, {
 		at: loaded.at,
 		owners: loaded.owners,
@@ -598,7 +600,7 @@ async function settleInTx(
 				businessDate: loaded.businessDate,
 				actorKind: 'system',
 				actorId: null,
-				createdAt: loaded.at,
+				createdAt: occurredAt,
 			})
 		}
 		if (deltas.length > 0) {
@@ -636,7 +638,7 @@ async function settleInTx(
 					businessDate: loaded.businessDate,
 					source: loaded.deviceId ? 'station' : 'operator',
 					deviceId: loaded.deviceId,
-					createdAt: loaded.at,
+					createdAt: occurredAt,
 				})
 				await tx.insert(invMovements).values({
 					id: newId(),
@@ -653,7 +655,7 @@ async function settleInTx(
 					businessDate: loaded.businessDate,
 					actorKind: 'system',
 					actorId: null,
-					createdAt: loaded.at,
+					createdAt: occurredAt,
 				})
 			}
 			await storeUsage(tx, {
