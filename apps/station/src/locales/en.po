@@ -307,7 +307,7 @@ msgstr "{covers, plural, one {# cover} other {# covers}}"
 msgid "{day} at {time}"
 msgstr "{day} at {time}"
 
-#: src/apps/kitchen/Kitchen.tsx:817
+#: src/apps/kitchen/Kitchen.tsx:829
 msgid "{elapsed} min"
 msgstr "{elapsed} min"
 
@@ -969,7 +969,7 @@ msgstr "A manager handles this booking: it has a deposit."
 msgid "A manager has these, clear"
 msgstr "A manager has these, clear"
 
-#: src/apps/kitchen/Kitchen.tsx:284
+#: src/apps/kitchen/Kitchen.tsx:285
 msgid "A manager must sign in to change the kitchen setup."
 msgstr "A manager must sign in to change the kitchen setup."
 
@@ -1095,7 +1095,7 @@ msgstr "Add to the waitlist"
 #~ msgid "Added"
 #~ msgstr "Added"
 
-#: src/apps/kitchen/Kitchen.tsx:886
+#: src/apps/kitchen/Kitchen.tsx:899
 msgid "Added {addedTime}"
 msgstr "Added {addedTime}"
 
@@ -1120,14 +1120,14 @@ msgstr "All {0}"
 msgid "All day"
 msgstr "All day"
 
-#: src/apps/kitchen/Kitchen.tsx:425
-#: src/apps/kitchen/Kitchen.tsx:476
-#: src/apps/kitchen/Kitchen.tsx:485
+#: src/apps/kitchen/Kitchen.tsx:426
+#: src/apps/kitchen/Kitchen.tsx:477
+#: src/apps/kitchen/Kitchen.tsx:486
 msgctxt "Kitchen: how many of each dish are still to make on the board"
 msgid "All day"
 msgstr "All day"
 
-#: src/apps/kitchen/Kitchen.tsx:356
+#: src/apps/kitchen/Kitchen.tsx:357
 #: src/screens/OrdersSheet.tsx:435
 msgid "All orders"
 msgstr "All orders"
@@ -1137,7 +1137,7 @@ msgstr "All orders"
 msgid "All services"
 msgstr "All services"
 
-#: src/apps/kitchen/Kitchen.tsx:342
+#: src/apps/kitchen/Kitchen.tsx:343
 msgid "All stations"
 msgstr "All stations"
 
@@ -1299,11 +1299,11 @@ msgstr "Assign servers"
 msgid "At the stand"
 msgstr "At the stand"
 
-#: src/apps/kitchen/Kitchen.tsx:387
+#: src/apps/kitchen/Kitchen.tsx:388
 msgid "Average time from firing to cleared, last two hours"
 msgstr "Average time from firing to cleared, last two hours"
 
-#: src/apps/kitchen/Kitchen.tsx:390
+#: src/apps/kitchen/Kitchen.tsx:391
 msgid "Avg {average} min"
 msgstr "Avg {average} min"
 
@@ -1369,7 +1369,7 @@ msgstr "Best fit"
 msgid "Bill"
 msgstr "Bill"
 
-#: src/apps/kitchen/Kitchen.tsx:281
+#: src/apps/kitchen/Kitchen.tsx:282
 msgid "Bind this terminal to a location in Settings → Terminals in the App."
 msgstr "Bind this terminal to a location in Settings → Terminals in the App."
 
@@ -1565,7 +1565,7 @@ msgstr "Cancelled"
 msgid "Cancelled · items taken off"
 msgstr "Cancelled · items taken off"
 
-#: src/apps/kitchen/Kitchen.tsx:838
+#: src/apps/kitchen/Kitchen.tsx:850
 msgid "Cancelled · stop preparing"
 msgstr "Cancelled · stop preparing"
 
@@ -1747,7 +1747,7 @@ msgstr "Checking who is working…"
 msgid "Checking…"
 msgstr "Checking…"
 
-#: src/apps/kitchen/Kitchen.tsx:398
+#: src/apps/kitchen/Kitchen.tsx:399
 msgid "Chime for new tickets"
 msgstr "Chime for new tickets"
 
@@ -1931,7 +1931,7 @@ msgstr "Combine tables for {name}, party of {partySize}"
 msgid "Combine tables for {name}: {covers} of {wholeParty}"
 msgstr "Combine tables for {name}: {covers} of {wholeParty}"
 
-#: src/apps/kitchen/Kitchen.tsx:580
+#: src/apps/kitchen/Kitchen.tsx:581
 msgid "Completed kitchen tickets stay available for recall for four hours."
 msgstr "Completed kitchen tickets stay available for recall for four hours."
 
@@ -1971,7 +1971,7 @@ msgstr "Connect to the internet to see other terminals’ tabs."
 msgid "Connect to the internet to sign in. The first sign-in on this device needs a connection."
 msgstr "Connect to the internet to sign in. The first sign-in on this device needs a connection."
 
-#: src/apps/kitchen/Kitchen.tsx:551
+#: src/apps/kitchen/Kitchen.tsx:552
 msgid "Connecting to the kitchen…"
 msgstr "Connecting to the kitchen…"
 
@@ -1979,7 +1979,7 @@ msgstr "Connecting to the kitchen…"
 msgid "Connection details"
 msgstr "Connection details"
 
-#: src/apps/kitchen/Kitchen.tsx:516
+#: src/apps/kitchen/Kitchen.tsx:517
 msgid "Connection lost. These are the last received tickets, not a live queue. Reconnect before changing preparation."
 msgstr "Connection lost. These are the last received tickets, not a live queue. Reconnect before changing preparation."
 
@@ -2095,8 +2095,8 @@ msgstr "Counted"
 msgid "counted."
 msgstr "counted."
 
-#: src/apps/kitchen/Kitchen.tsx:357
-#: src/apps/kitchen/Kitchen.tsx:763
+#: src/apps/kitchen/Kitchen.tsx:358
+#: src/apps/kitchen/Kitchen.tsx:775
 msgid "Counter"
 msgstr "Counter"
 
@@ -2159,7 +2159,7 @@ msgstr "Default station"
 msgid "Delete"
 msgstr "Delete"
 
-#: src/apps/kitchen/Kitchen.tsx:768
+#: src/apps/kitchen/Kitchen.tsx:780
 #: src/apps/stock/Stock.tsx:169
 msgid "Delivery"
 msgstr "Delivery"
@@ -2176,7 +2176,7 @@ msgstr "Delivery without an order"
 msgid "Demo mode"
 msgstr "Demo mode"
 
-#: src/apps/kitchen/Kitchen.tsx:379
+#: src/apps/kitchen/Kitchen.tsx:380
 msgid "Demo mode · nothing leaves this tablet"
 msgstr "Demo mode · nothing leaves this tablet"
 
@@ -2231,7 +2231,7 @@ msgstr "Dietary note on file. A manager can see the details."
 msgid "Dietary: {dietLine}"
 msgstr "Dietary: {dietLine}"
 
-#: src/apps/kitchen/Kitchen.tsx:766
+#: src/apps/kitchen/Kitchen.tsx:778
 #: src/screens/Cart.tsx:194
 #: src/screens/OrdersSheet.tsx:83
 #: src/screens/Receipt.tsx:97
@@ -2298,7 +2298,7 @@ msgstr "Discounts with a use limit do not apply at the till by themselves, becau
 msgid "Dismiss"
 msgstr "Dismiss"
 
-#: src/apps/kitchen/Kitchen.tsx:328
+#: src/apps/kitchen/Kitchen.tsx:329
 #: src/apps/reservations/BookingSheet.tsx:314
 #: src/apps/stock/DeliverySheet.tsx:183
 #: src/apps/stock/WasteSheet.tsx:230
@@ -2310,7 +2310,7 @@ msgstr "Dismiss"
 msgid "Done"
 msgstr "Done"
 
-#: src/apps/kitchen/Kitchen.tsx:988
+#: src/apps/kitchen/Kitchen.tsx:1001
 msgid "Done · clear ticket"
 msgstr "Done · clear ticket"
 
@@ -2327,7 +2327,7 @@ msgid "Dry goods"
 msgstr "Dry goods"
 
 #. placeholder {0}: time.format(ticket.dueAt)
-#: src/apps/kitchen/Kitchen.tsx:831
+#: src/apps/kitchen/Kitchen.tsx:843
 msgid "Due {0}"
 msgstr "Due {0}"
 
@@ -2464,7 +2464,7 @@ msgstr "Everything has been sent."
 msgid "Exact"
 msgstr "Exact"
 
-#: src/apps/kitchen/Kitchen.tsx:439
+#: src/apps/kitchen/Kitchen.tsx:440
 msgid "Exit full screen"
 msgstr "Exit full screen"
 
@@ -2566,7 +2566,7 @@ msgstr "Full"
 msgid "Full amount ({upTo})"
 msgstr "Full amount ({upTo})"
 
-#: src/apps/kitchen/Kitchen.tsx:439
+#: src/apps/kitchen/Kitchen.tsx:440
 msgid "Full screen"
 msgstr "Full screen"
 
@@ -2795,7 +2795,7 @@ msgstr "It is too early to clock in for your shift."
 msgid "It was too late to undo this waste."
 msgstr "It was too late to undo this waste."
 
-#: src/apps/kitchen/Kitchen.tsx:958
+#: src/apps/kitchen/Kitchen.tsx:971
 msgid "Item ready"
 msgstr "Item ready"
 
@@ -2873,12 +2873,12 @@ msgstr "Keep working"
 msgid "Keypad"
 msgstr "Keypad"
 
-#: src/apps/kitchen/Kitchen.tsx:318
+#: src/apps/kitchen/Kitchen.tsx:319
 #: src/screens/AppLauncher.tsx:45
 msgid "Kitchen"
 msgstr "Kitchen"
 
-#: src/apps/kitchen/Kitchen.tsx:312
+#: src/apps/kitchen/Kitchen.tsx:313
 msgid "Kitchen display"
 msgstr "Kitchen display"
 
@@ -2888,16 +2888,16 @@ msgstr "Kitchen display"
 msgid "Kitchen note"
 msgstr "Kitchen note"
 
-#: src/apps/kitchen/Kitchen.tsx:467
+#: src/apps/kitchen/Kitchen.tsx:468
 #: src/apps/kitchen/KitchenSettings.tsx:64
 msgid "Kitchen setup"
 msgstr "Kitchen setup"
 
-#: src/apps/kitchen/Kitchen.tsx:550
+#: src/apps/kitchen/Kitchen.tsx:551
 msgid "Kitchen unavailable"
 msgstr "Kitchen unavailable"
 
-#: src/apps/kitchen/Kitchen.tsx:321
+#: src/apps/kitchen/Kitchen.tsx:322
 msgid "Kitchen view"
 msgstr "Kitchen view"
 
@@ -2936,7 +2936,7 @@ msgstr "Last name"
 msgid "Last refresh failed: {error}."
 msgstr "Last refresh failed: {error}."
 
-#: src/apps/kitchen/Kitchen.tsx:826
+#: src/apps/kitchen/Kitchen.tsx:838
 #: src/apps/reservations/BookPanel.tsx:234
 msgid "Late"
 msgstr "Late"
@@ -2953,7 +2953,7 @@ msgstr "Late or over time"
 msgid "left"
 msgstr "left"
 
-#: src/apps/kitchen/Kitchen.tsx:906
+#: src/apps/kitchen/Kitchen.tsx:919
 msgid "Left half"
 msgstr "Left half"
 
@@ -2965,11 +2965,11 @@ msgstr "List"
 msgid "List ({listCount})"
 msgstr "List ({listCount})"
 
-#: src/apps/kitchen/Kitchen.tsx:326
+#: src/apps/kitchen/Kitchen.tsx:327
 msgid "Live"
 msgstr "Live"
 
-#: src/apps/kitchen/Kitchen.tsx:380
+#: src/apps/kitchen/Kitchen.tsx:381
 msgid "Live · refreshes every 5 seconds"
 msgstr "Live · refreshes every 5 seconds"
 
@@ -3016,11 +3016,19 @@ msgstr "Locked. Enter your PIN."
 msgid "Log food thrown away"
 msgstr "Log food thrown away"
 
-#: src/apps/kitchen/Kitchen.tsx:455
+#: src/apps/kitchen/TicketWaste.tsx:118
+msgid "Log it as waste?"
+msgstr "Log it as waste?"
+
+#: src/apps/kitchen/Kitchen.tsx:456
 #: src/apps/stock/WasteSheet.tsx:227
 #: src/apps/stock/WasteSheet.tsx:240
 msgid "Log waste"
 msgstr "Log waste"
+
+#: src/apps/kitchen/TicketWaste.tsx:108
+msgid "Logged as waste."
+msgstr "Logged as waste."
 
 #: src/apps/stock/WasteSheet.tsx:215
 msgid "Logging as {staffName}"
@@ -3047,7 +3055,7 @@ msgstr "Mark as no-show"
 #~ msgid "Mark confirmed"
 #~ msgstr "Mark confirmed"
 
-#: src/apps/kitchen/Kitchen.tsx:757
+#: src/apps/kitchen/Kitchen.tsx:769
 #: src/apps/reservations/WaitlistSheet.tsx:136
 msgid "Mark ready"
 msgstr "Mark ready"
@@ -3204,7 +3212,7 @@ msgstr "Net sales"
 msgid "Never"
 msgstr "Never"
 
-#: src/apps/kitchen/Kitchen.tsx:260
+#: src/apps/kitchen/Kitchen.tsx:261
 #: src/apps/reservations/BookPanel.tsx:1290
 #: src/apps/reservations/BookPanel.tsx:1293
 #: src/apps/reservations/BookPanel.tsx:1305
@@ -3230,7 +3238,7 @@ msgstr "New order"
 msgid "New station"
 msgstr "New station"
 
-#: src/apps/kitchen/Kitchen.tsx:576
+#: src/apps/kitchen/Kitchen.tsx:577
 msgid "New Station and online orders will appear here. Unsent offline orders arrive after the register reconnects."
 msgstr "New Station and online orders will appear here. Unsent offline orders arrive after the register reconnects."
 
@@ -3258,7 +3266,7 @@ msgstr "No bookings this day."
 msgid "No cash tips"
 msgstr "No cash tips"
 
-#: src/apps/kitchen/Kitchen.tsx:567
+#: src/apps/kitchen/Kitchen.tsx:568
 msgid "No completed tickets"
 msgstr "No completed tickets"
 
@@ -3438,7 +3446,7 @@ msgstr "No tables yet."
 #~ msgid "No tables yet. A manager adds the floor plan in the app, under Reservations, Setup."
 #~ msgstr "No tables yet. A manager adds the floor plan in the app, under Reservations, Setup."
 
-#: src/apps/kitchen/Kitchen.tsx:672
+#: src/apps/kitchen/Kitchen.tsx:681
 msgid "No tickets"
 msgstr "No tickets"
 
@@ -3555,7 +3563,7 @@ msgstr "Nothing matches these filters."
 msgid "Nothing more is coming for this order"
 msgstr "Nothing more is coming for this order"
 
-#: src/apps/kitchen/Kitchen.tsx:569
+#: src/apps/kitchen/Kitchen.tsx:570
 msgid "Nothing scheduled"
 msgstr "Nothing scheduled"
 
@@ -3670,8 +3678,8 @@ msgstr "Online"
 msgid "Online · all sent"
 msgstr "Online · all sent"
 
-#: src/apps/kitchen/Kitchen.tsx:359
-#: src/apps/kitchen/Kitchen.tsx:760
+#: src/apps/kitchen/Kitchen.tsx:360
+#: src/apps/kitchen/Kitchen.tsx:772
 msgid "Online orders"
 msgstr "Online orders"
 
@@ -4052,8 +4060,8 @@ msgstr "peanuts"
 msgid "Percent"
 msgstr "Percent"
 
-#: src/apps/kitchen/Kitchen.tsx:358
-#: src/apps/kitchen/Kitchen.tsx:762
+#: src/apps/kitchen/Kitchen.tsx:359
+#: src/apps/kitchen/Kitchen.tsx:774
 #: src/apps/reservations/AddSheets.tsx:342
 #: src/apps/reservations/guest.ts:249
 #: src/screens/OrdersSheet.tsx:81
@@ -4160,7 +4168,7 @@ msgstr "Popular"
 msgid "Prefix on order numbers."
 msgstr "Prefix on order numbers."
 
-#: src/apps/kitchen/Kitchen.tsx:334
+#: src/apps/kitchen/Kitchen.tsx:335
 msgid "Prep station"
 msgstr "Prep station"
 
@@ -4173,12 +4181,12 @@ msgstr "Prep stations"
 msgid "Preparation workflow"
 msgstr "Preparation workflow"
 
-#: src/apps/kitchen/Kitchen.tsx:756
-#: src/apps/kitchen/Kitchen.tsx:953
+#: src/apps/kitchen/Kitchen.tsx:768
+#: src/apps/kitchen/Kitchen.tsx:966
 msgid "Prepare again"
 msgstr "Prepare again"
 
-#: src/apps/kitchen/Kitchen.tsx:261
+#: src/apps/kitchen/Kitchen.tsx:262
 #: src/screens/KitchenRounds.tsx:122
 msgid "Preparing"
 msgstr "Preparing"
@@ -4259,12 +4267,12 @@ msgstr "Quoted wait by party size"
 msgid "Read only, seating is for today"
 msgstr "Read only, seating is for today"
 
-#: src/apps/kitchen/Kitchen.tsx:262
+#: src/apps/kitchen/Kitchen.tsx:263
 #: src/screens/KitchenRounds.tsx:123
 msgid "Ready"
 msgstr "Ready"
 
-#: src/apps/kitchen/Kitchen.tsx:992
+#: src/apps/kitchen/Kitchen.tsx:1005
 msgid "Ready for the pass"
 msgstr "Ready for the pass"
 
@@ -4276,7 +4284,7 @@ msgstr "Real weight from the scale"
 msgid "Reason"
 msgstr "Reason"
 
-#: src/apps/kitchen/Kitchen.tsx:977
+#: src/apps/kitchen/Kitchen.tsx:990
 msgid "Recall ticket"
 msgstr "Recall ticket"
 
@@ -4319,7 +4327,7 @@ msgstr "Reference (optional)"
 msgid "Refresh"
 msgstr "Refresh"
 
-#: src/apps/kitchen/Kitchen.tsx:431
+#: src/apps/kitchen/Kitchen.tsx:432
 msgid "Refresh kitchen"
 msgstr "Refresh kitchen"
 
@@ -4432,7 +4440,7 @@ msgstr "Reservations are off on this terminal"
 msgid "Reservations need a connection"
 msgstr "Reservations need a connection"
 
-#: src/apps/kitchen/Kitchen.tsx:1013
+#: src/apps/kitchen/Kitchen.tsx:1026
 msgid "Reset preparation"
 msgstr "Reset preparation"
 
@@ -4473,7 +4481,7 @@ msgstr "Rewards"
 msgid "Rewards are not switched on for this restaurant."
 msgstr "Rewards are not switched on for this restaurant."
 
-#: src/apps/kitchen/Kitchen.tsx:908
+#: src/apps/kitchen/Kitchen.tsx:921
 msgid "Right half"
 msgstr "Right half"
 
@@ -4552,7 +4560,7 @@ msgstr "Say what the cash is for."
 msgid "Say why items are coming off this tab"
 msgstr "Say why items are coming off this tab"
 
-#: src/apps/kitchen/Kitchen.tsx:327
+#: src/apps/kitchen/Kitchen.tsx:328
 #: src/screens/PhoneOrderSheet.tsx:138
 msgid "Scheduled"
 msgstr "Scheduled"
@@ -4561,7 +4569,7 @@ msgstr "Scheduled"
 msgid "Scheduled food waits in Scheduled until its preparation window. Its timer starts then, not when the order was placed."
 msgstr "Scheduled food waits in Scheduled until its preparation window. Its timer starts then, not when the order was placed."
 
-#: src/apps/kitchen/Kitchen.tsx:583
+#: src/apps/kitchen/Kitchen.tsx:584
 msgid "Scheduled tickets move to Live when their preparation window begins."
 msgstr "Scheduled tickets move to Live when their preparation window begins."
 
@@ -4803,7 +4811,7 @@ msgstr "Sent for review"
 msgid "Served"
 msgstr "Served"
 
-#: src/apps/kitchen/Kitchen.tsx:881
+#: src/apps/kitchen/Kitchen.tsx:894
 #: src/screens/KitchenRounds.tsx:89
 msgid "Served {servedTime}"
 msgstr "Served {servedTime}"
@@ -4928,7 +4936,7 @@ msgstr "Show server sections on the floor"
 msgid "Sign in"
 msgstr "Sign in"
 
-#: src/apps/kitchen/Kitchen.tsx:521
+#: src/apps/kitchen/Kitchen.tsx:522
 #: src/apps/stock/StockNotices.tsx:87
 #: src/apps/stock/StockNotices.tsx:102
 #: src/apps/stock/SyncSheet.tsx:134
@@ -4943,7 +4951,7 @@ msgstr "Sign in again while online to spend rewards."
 msgid "Sign in again while online to use rewards."
 msgstr "Sign in again while online to use rewards."
 
-#: src/apps/kitchen/Kitchen.tsx:278
+#: src/apps/kitchen/Kitchen.tsx:279
 msgid "Sign in online to use the kitchen display."
 msgstr "Sign in online to use the kitchen display."
 
@@ -5021,7 +5029,7 @@ msgstr "Someone is booked on that table before this party would be done."
 msgid "Something went wrong. Try again."
 msgstr "Something went wrong. Try again."
 
-#: src/apps/kitchen/Kitchen.tsx:350
+#: src/apps/kitchen/Kitchen.tsx:351
 msgid "Source"
 msgstr "Source"
 
@@ -5066,11 +5074,11 @@ msgstr "Start before pickup (min)"
 msgid "Start break"
 msgstr "Start break"
 
-#: src/apps/kitchen/Kitchen.tsx:956
+#: src/apps/kitchen/Kitchen.tsx:969
 msgid "Start item"
 msgstr "Start item"
 
-#: src/apps/kitchen/Kitchen.tsx:754
+#: src/apps/kitchen/Kitchen.tsx:766
 msgid "Start preparing"
 msgstr "Start preparing"
 
@@ -5167,7 +5175,7 @@ msgstr "Table"
 #. placeholder {0}: r.tableLabels.join(' + ')
 #. placeholder {0}: target.table.label
 #. placeholder {0}: ticket.tableLabel
-#: src/apps/kitchen/Kitchen.tsx:801
+#: src/apps/kitchen/Kitchen.tsx:813
 #: src/apps/reservations/PartySheet.tsx:501
 #: src/apps/reservations/TableSheet.tsx:117
 msgid "Table {0}"
@@ -5381,7 +5389,7 @@ msgstr "Take the card on your card terminal first, then confirm here. This till 
 msgid "Take them off"
 msgstr "Take them off"
 
-#: src/apps/kitchen/Kitchen.tsx:769
+#: src/apps/kitchen/Kitchen.tsx:781
 #: src/screens/Cart.tsx:199
 #: src/screens/OrdersSheet.tsx:84
 #: src/screens/OrdersSheet.tsx:451
@@ -5744,15 +5752,15 @@ msgstr "The invoice photo could not be uploaded. The delivery itself was recorde
 #~ msgid "The kitchen combines real Station and online orders at the terminal’s paired location. Demo sales stay on this device."
 #~ msgstr "The kitchen combines real Station and online orders at the terminal’s paired location. Demo sales stay on this device."
 
-#: src/apps/kitchen/Kitchen.tsx:570
+#: src/apps/kitchen/Kitchen.tsx:571
 msgid "The kitchen is clear"
 msgstr "The kitchen is clear"
 
-#: src/apps/kitchen/Kitchen.tsx:286
+#: src/apps/kitchen/Kitchen.tsx:287
 msgid "The kitchen is not connected. Check the connection and refresh. Changes are paused."
 msgstr "The kitchen is not connected. Check the connection and refresh. Changes are paused."
 
-#: src/apps/kitchen/Kitchen.tsx:535
+#: src/apps/kitchen/Kitchen.tsx:536
 msgid "The kitchen queue is too large to show every ticket. Clear older tickets before relying on this display."
 msgstr "The kitchen queue is too large to show every ticket. Clear older tickets before relying on this display."
 
@@ -6285,7 +6293,7 @@ msgstr "This terminal was removed. Pair it again to keep sending orders."
 msgid "This terminal’s location isn’t on the menu"
 msgstr "This terminal’s location isn’t on the menu"
 
-#: src/apps/kitchen/Kitchen.tsx:275
+#: src/apps/kitchen/Kitchen.tsx:276
 msgid "This ticket or setup changed on another screen. Review the latest version, then try again."
 msgstr "This ticket or setup changed on another screen. Review the latest version, then try again."
 
@@ -6297,15 +6305,15 @@ msgstr "This was too large to send."
 msgid "This waste was already undone."
 msgstr "This waste was already undone."
 
-#: src/apps/kitchen/Kitchen.tsx:780
+#: src/apps/kitchen/Kitchen.tsx:792
 msgid "Ticket {number}"
 msgstr "Ticket {number}"
 
-#: src/apps/kitchen/Kitchen.tsx:616
+#: src/apps/kitchen/Kitchen.tsx:617
 msgid "Tickets"
 msgstr "Tickets"
 
-#: src/apps/kitchen/Kitchen.tsx:555
+#: src/apps/kitchen/Kitchen.tsx:556
 msgid "Tickets come directly from your regional server. Only saved and uploaded orders appear here."
 msgstr "Tickets come directly from your regional server. Only saved and uploaded orders appear here."
 
@@ -6463,7 +6471,7 @@ msgid "tree nuts"
 msgstr "tree nuts"
 
 #: src/App.tsx:855
-#: src/apps/kitchen/Kitchen.tsx:528
+#: src/apps/kitchen/Kitchen.tsx:529
 #: src/apps/reservations/HostStand.tsx:2160
 #: src/apps/reservations/HostStand.tsx:2643
 #: src/apps/reservations/HostStand.tsx:2681
@@ -6560,7 +6568,7 @@ msgstr "Up to {max}"
 msgid "Update"
 msgstr "Update"
 
-#: src/apps/kitchen/Kitchen.tsx:377
+#: src/apps/kitchen/Kitchen.tsx:378
 msgid "Updates paused"
 msgstr "Updates paused"
 
@@ -6584,7 +6592,7 @@ msgstr "Use a sample menu to try the till."
 msgid "Use these details"
 msgstr "Use these details"
 
-#: src/apps/kitchen/Kitchen.tsx:895
+#: src/apps/kitchen/Kitchen.tsx:908
 msgid "Variant unavailable · check the order"
 msgstr "Variant unavailable · check the order"
 
@@ -6631,7 +6639,7 @@ msgstr "VIP, large party: {text}"
 msgid "VIP: {text}"
 msgstr "VIP: {text}"
 
-#: src/apps/kitchen/Kitchen.tsx:826
+#: src/apps/kitchen/Kitchen.tsx:838
 msgid "Waiting"
 msgstr "Waiting"
 
@@ -6692,6 +6700,10 @@ msgstr "Waste"
 #: src/apps/stock/SyncSheet.tsx:97
 msgid "Waste: {name}, {text} {unit}, {reason}"
 msgstr "Waste: {name}, {text} {unit}, {reason}"
+
+#: src/apps/kitchen/TicketWaste.tsx:122
+msgid "We could not log it. Try again."
+msgstr "We could not log it. Try again."
 
 #: src/screens/LoyaltySheet.tsx:399
 msgid "We texted a 6-digit code to {masked}. Ask the guest to read it out."

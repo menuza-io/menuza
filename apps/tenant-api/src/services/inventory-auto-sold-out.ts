@@ -238,6 +238,7 @@ async function syncOnce(
 				db
 					.selectDistinct({ locationId: invMovements.locationId })
 					.from(invMovements)
+					// bounded: its own statement, one chunk of at most 90 ids
 					.where(inArray(invMovements.itemId, chunk)),
 			),
 		])

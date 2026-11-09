@@ -10,6 +10,8 @@ import {
 	stationCountSummarySchema,
 	stationDeliveryResultSchema,
 	stationDeliverySchema,
+	stationDishWasteResultSchema,
+	stationDishWasteSchema,
 	stationPhotoConfirmResultSchema,
 	stationPhotoRequestSchema,
 	stationPhotoUploadSchema,
@@ -75,6 +77,10 @@ export type StockApi = {
 	waste(
 		body: Body<typeof stationWasteSchema>,
 	): Promise<z.infer<typeof stationWasteResultSchema>>
+	/** Kitchen "Log it as waste?": started dishes of a cancelled ticket (online only). */
+	dishWaste(
+		body: Body<typeof stationDishWasteSchema>,
+	): Promise<z.infer<typeof stationDishWasteResultSchema>>
 	undoWaste(
 		id: string,
 		body: Body<typeof undoWasteSchema>,
@@ -232,6 +238,13 @@ export function createStockApi(
 				schema: stationWasteSchema,
 				body,
 			}),
+		dishWaste: (body) =>
+			call(
+				'POST',
+				INVENTORY_POS_PATHS.dishWaste,
+				stationDishWasteResultSchema,
+				{ schema: stationDishWasteSchema, body },
+			),
 		undoWaste: (id, body) =>
 			call(
 				'POST',

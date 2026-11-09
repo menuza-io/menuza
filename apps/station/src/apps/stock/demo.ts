@@ -277,6 +277,10 @@ export function createDemoStockApi(): StockApi {
 				lateSync: [],
 			}
 		},
+		async dishWaste(body) {
+			// The demo has no recipes: nothing is taken out, nothing is sent.
+			return { logged: 0, withoutRecipe: body.lines.length, duplicate: false }
+		},
 		async undoWaste() {
 			return { id: `demo-undo-${++serial}` }
 		},

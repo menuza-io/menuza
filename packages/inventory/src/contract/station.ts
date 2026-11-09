@@ -127,6 +127,7 @@ export const INVENTORY_POS_PATHS = {
 	countEntries: (id: string) => `/pos/inventory/counts/${id}/entries`,
 	sendCount: (id: string) => `/pos/inventory/counts/${id}/send`,
 	waste: '/pos/inventory/waste',
+	dishWaste: '/pos/inventory/waste/dishes',
 	undoWaste: (id: string) => `/pos/inventory/waste/${id}/undo`,
 	deliveries: '/pos/inventory/deliveries',
 	deliveryPhoto: (id: string) => `/pos/inventory/deliveries/${id}/photo`,
@@ -477,6 +478,47 @@ export const stationWasteResultSchema = z.object({
 	/** `clientId`s accepted but flagged `late_sync`. */
 	lateSync: z.array(z.string()),
 })
+
+/**
+ * `POST /pos/inventory/waste/dishes` (phase 3, Kitchen "Log it as waste?"):
+ * the dishes a cook had already started when the ticket was cancelled, voided
+ * or refunded, recorded as waste with the reason "Cancelled after cooking".
+ * Never automatic: the cook knows whether the food was saved. Online only
+ * (Kitchen rules: read back after an uncertain write, never replayed blindly).
+ *
+ * Lines are dishes as the kitchen board knows them: a menu item id, the size
+ * (variant) when there is one, and how many. The region expands each dish
+ * with the recipe in force now into its ingredients (an `inv_waste` row per
+ * ingredient, "Cancelled after cooking") and answers how many ingredient
+ * entries it wrote and how many dishes had no recipe (nothing to take out).
+ * It needs `inventory.recipes`; without it the answer is 403
+ * `inventory_disabled`. `clientId` makes a repeat answer the first result
+ * (`duplicate`). No money.
+ */
+export const stationDishWasteLineSchema = z
+	.object({
+		itemId: z.string().min(1).max(100),
+		variantId: z.string().min(1).max(100).nullable().optional(),
+		quantity: z.number().int().min(1).max(50),
+	})
+	.strict()
+export const stationDishWasteSchema = z
+	.object({
+		clientId: clientIdSchema,
+		locationId: inventoryLocationIdSchema,
+		lines: z.array(stationDishWasteLineSchema).min(1).max(50),
+	})
+	.strict()
+export const stationDishWasteResultSchema = z.object({
+	/** Ingredient waste entries written. */
+	logged: z.number().int().nonnegative(),
+	/** Dishes in the request with no recipe: nothing was taken out for them. */
+	withoutRecipe: z.number().int().nonnegative(),
+	duplicate: z.boolean(),
+})
+export type StationDishWasteResult = z.infer<
+	typeof stationDishWasteResultSchema
+>
 
 /**
  * `POST /pos/inventory/waste/:id/undo` (`undoWasteSchema`: the undo's own

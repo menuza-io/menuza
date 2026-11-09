@@ -194,6 +194,12 @@ export function region(options: { online?: boolean } = {}) {
 					refused: [],
 					lateSync: [],
 				})
+			if (path === '/pos/inventory/waste/dishes')
+				return Response.json({
+					logged: body.lines.length,
+					withoutRecipe: 0,
+					duplicate: false,
+				})
 			if (/\/waste\/[^/]+\/undo$/.test(path))
 				return Response.json({ id: 'rev_1' })
 			if (path === '/pos/inventory/deliveries')

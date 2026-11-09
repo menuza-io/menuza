@@ -18,6 +18,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { LogWaste } from '../stock/LogWaste.tsx'
 import { chime, chimeReady, unlockChime } from './chime.ts'
 import { KitchenSettings } from './KitchenSettings.tsx'
+import { TicketWaste } from './TicketWaste.tsx'
 import {
 	allDayCounts,
 	averageTicketMinutes,
@@ -664,6 +665,14 @@ export function Kitchen({
 													now
 												}
 												onCommand={(extra) => command(ticket, extra)}
+												wasteAction={
+													<TicketWaste
+														ticket={ticket}
+														settings={settings}
+														session={session}
+														online={online}
+													/>
+												}
 											/>
 										))}
 									</div>
@@ -715,6 +724,7 @@ function Ticket({
 	labels,
 	fresh,
 	onCommand,
+	wasteAction,
 }: {
 	ticket: KdsTicket
 	stationId: string | null
@@ -727,6 +737,8 @@ function Ticket({
 	/** Came in (or had dishes added) a moment ago: ringed so it is seen. */
 	fresh: boolean
 	onCommand: (extra: Partial<KdsCommand>) => void
+	/** "Log it as waste?" for a cancelled ticket (Stock's waste, offered when the terminal has it). */
+	wasteAction?: React.ReactNode
 }) {
 	const { _ } = useLingui()
 	const lines = ticket.lines.filter(
@@ -838,6 +850,7 @@ function Ticket({
 					<Trans>Cancelled · stop preparing</Trans>
 				</p>
 			) : null}
+			{ticket.cancelled ? wasteAction : null}
 			<ul className="divide-border divide-y">
 				{lines.map((line) => {
 					const item = items.get(line.itemId)

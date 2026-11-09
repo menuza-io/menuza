@@ -6,6 +6,7 @@ import {
 	stationCountEntriesResultSchema,
 	stationCountSheetSchema,
 	stationDeliveryResultSchema,
+	stationDishWasteResultSchema,
 	stationPhotoUploadSchema,
 	stationStartCountResultSchema,
 	stationUndoWasteResultSchema,
@@ -18,6 +19,8 @@ import {
 	invDeliveries,
 	invDeliveryLines,
 	invMovements,
+	invRecipeLines,
+	invRecipes,
 	invWaste,
 } from '@repo/tenant-db'
 import { eq } from 'drizzle-orm'
@@ -29,10 +32,14 @@ import {
 	type ClockHarness,
 } from '../../tests/timeclock-harness.ts'
 import { makeOrg, type TestOrg } from '../../tests/staff-harness.ts'
-import { invalidateInventoryContext } from '../lib/inventory-context.ts'
+import {
+	invalidateInventoryContext,
+	seedInventoryContextForTest,
+} from '../lib/inventory-context.ts'
 import {
 	createStationKit,
 	moneyKeys,
+	ON,
 	STOCK_LOC,
 	type Kitchen,
 	type StationKit,
@@ -930,6 +937,108 @@ describe('/pos/inventory', () => {
 			expect(
 				audit.find((row) => row.actorId === tablet.manager.staffId)?.detail,
 			).toEqual({ entries: 1, syncedBy: tablet.cashier.staffId })
+		})
+
+		describe('dishes (Kitchen "Log it as waste?")', () => {
+			const dishWaste = (
+				lines: unknown[],
+				extra: Record<string, unknown> = {},
+				who: 'cashier' | 'manager' = 'cashier',
+			) =>
+				as(who)('POST', '/pos/inventory/waste/dishes', {
+					body: {
+						clientId: uid('dish'),
+						locationId: STOCK_LOC,
+						lines,
+						...extra,
+					},
+				})
+
+			async function recipeFor(dishId: string) {
+				const db = await h.db(ORG_A)
+				const id = `rec_${dishId}`
+				await db.insert(invRecipes).values({
+					id,
+					ownerKind: 'menu_item',
+					ownerId: dishId,
+					version: 1,
+					effectiveFrom: 1,
+					createdByKind: 'system',
+				})
+				await db.insert(invRecipeLines).values({
+					recipeId: id,
+					itemId: k.items.tomato.id,
+					quantity: 100_000,
+				})
+			}
+
+			it('writes the dish as waste of its ingredients, "Cancelled after cooking", against this terminal, once', async () => {
+				await recipeFor('dish_shawarma')
+				const clientId = uid('dish')
+				const lines = [
+					{ itemId: 'dish_shawarma', quantity: 2 },
+					{ itemId: 'dish_without_recipe', quantity: 1 },
+				]
+				const reply = await dishWaste(lines, { clientId })
+				expect(reply.status, reply.raw).toBe(200)
+				expect(reply.headers.get('cache-control')).toBe('private, no-store')
+				expect(stationDishWasteResultSchema.parse(reply.body)).toEqual({
+					logged: 1,
+					withoutRecipe: 1,
+					duplicate: false,
+				})
+				expect(moneyKeys(reply.body)).toEqual([])
+				const rows = await kit.wasteRows(ORG_A, tablet.deviceId)
+				expect(rows).toHaveLength(1)
+				expect(rows[0]).toMatchObject({
+					itemId: k.items.tomato.id,
+					quantity: 200_000,
+					reason: 'cancelled_after_cooking',
+					source: 'station',
+					deviceId: tablet.deviceId,
+					actorKind: 'staff',
+					actorId: tablet.cashier.staffId,
+				})
+				const db = await h.db(ORG_A)
+				const moves = await db
+					.select()
+					.from(invMovements)
+					.where(eq(invMovements.sourceId, rows[0]!.id))
+				expect(moves).toEqual([
+					expect.objectContaining({ kind: 'waste', quantity: -200_000 }),
+				])
+
+				// A second tap answers the first result and writes nothing.
+				const again = await dishWaste(lines, { clientId })
+				expect(again.status).toBe(200)
+				expect(again.body).toMatchObject({ duplicate: true })
+				expect(await kit.wasteRows(ORG_A, tablet.deviceId)).toHaveLength(1)
+			})
+
+			it('needs the recipes flag and refuses another location', async () => {
+				await recipeFor('dish_shawarma')
+				const lines = [{ itemId: 'dish_shawarma', quantity: 1 }]
+				const wrong = await dishWaste(lines, { locationId: 'loc_elsewhere' })
+				expect(wrong.status).toBe(403)
+				expect(wrong.body).toMatchObject({ error: 'wrong_location' })
+
+				seedInventoryContextForTest(ORG_A, { ...ON, recipes: false })
+				const off = await dishWaste(lines)
+				expect(off.status).toBe(403)
+				expect(off.body).toMatchObject({ error: 'inventory_disabled' })
+				expect(await kit.wasteRows(ORG_A)).toHaveLength(0)
+			})
+
+			it('refuses a malformed request', async () => {
+				for (const lines of [
+					[],
+					[{ itemId: 'dish_shawarma', quantity: 0 }],
+					[{ itemId: 'dish_shawarma', quantity: 1, price: 5 }],
+				]) {
+					const reply = await dishWaste(lines)
+					expect(reply.status).toBe(400)
+				}
+			})
 		})
 
 		describe('undo', () => {

@@ -216,6 +216,24 @@ describe('/pos/inventory security', () => {
 				}),
 			},
 			{
+				name: 'dish waste',
+				method: 'POST',
+				path: '/pos/inventory/waste/dishes',
+				body: {
+					clientId: uid('dish'),
+					locationId: STOCK_LOC,
+					lines: [{ itemId: 'sec_dish', quantity: 1 }],
+				},
+				named: (location) => ({
+					path: '/pos/inventory/waste/dishes',
+					body: {
+						clientId: uid('dish'),
+						locationId: location,
+						lines: [{ itemId: 'sec_dish', quantity: 1 }],
+					},
+				}),
+			},
+			{
 				name: 'undo waste',
 				method: 'POST',
 				path: `/pos/inventory/waste/${wasteId}/undo`,
@@ -517,6 +535,7 @@ describe('/pos/inventory security', () => {
 				'catalog',
 				'start count',
 				'waste',
+				'dish waste',
 				'delivery',
 			])
 			for (const route of named) {

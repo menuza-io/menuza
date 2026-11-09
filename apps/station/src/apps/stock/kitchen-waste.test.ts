@@ -40,9 +40,49 @@ const feed: KdsFeed = {
 	truncated: false,
 }
 
-function drawKitchen(inventory: boolean) {
+const cancelledTicket = {
+	id: 'ord_9',
+	source: 'online' as const,
+	number: '9',
+	channel: 'online' as const,
+	fulfillment: 'takeaway' as const,
+	tableLabel: null,
+	createdAt: 1_900_000,
+	dueAt: null,
+	version: 'v1',
+	completedAt: null,
+	cancelled: true,
+	lines: [
+		{
+			id: 'l1',
+			itemId: 'dish_shawarma',
+			name: 'Shawarma',
+			quantity: 2,
+			variant: null,
+			variantId: null,
+			options: [],
+			instructions: '',
+			stationId: DEFAULT_KDS_CONFIG.defaultStationId,
+			stage: 'preparing' as const,
+		},
+		{
+			id: 'l2',
+			itemId: 'dish_fries',
+			name: 'Fries',
+			quantity: 1,
+			variant: null,
+			variantId: null,
+			options: [],
+			instructions: '',
+			stationId: DEFAULT_KDS_CONFIG.defaultStationId,
+			stage: 'new' as const,
+		},
+	],
+}
+
+function drawKitchen(inventory: boolean, tickets: KdsFeed['tickets'] = []) {
 	vi.mocked(useKitchen).mockReturnValue({
-		feed,
+		feed: { ...feed, tickets },
 		error: null,
 		busy: false,
 		stale: false,
@@ -99,5 +139,61 @@ describe('Kitchen’s Log waste button', () => {
 		// Closing it leaves the board as it was.
 		await click(button(dialog(), 'Done'))
 		expect(page.host.querySelector('dialog')).toBeNull()
+	})
+})
+
+describe('Kitchen’s "Log it as waste?" on a cancelled ticket', () => {
+	it('records only the dishes already started, once the cook taps it', async () => {
+		const api = region()
+		api.install()
+		await drawKitchen(true, [cancelledTicket])
+		await click(button(page.host, /Log it as waste\?/))
+		await vi.waitFor(() =>
+			expect(text(page.host)).toContain('Logged as waste.'),
+		)
+		const sent = api.requests.find(
+			(request) => request.path === '/pos/inventory/waste/dishes',
+		)!
+		expect(sent.method).toBe('POST')
+		expect(sent.body).toMatchObject({
+			locationId: 'main',
+			// The fries had not been started, so they are not waste.
+			lines: [{ itemId: 'dish_shawarma', variantId: null, quantity: 2 }],
+		})
+		expect(sent.body.clientId).toBe('kw-online-ord_9')
+		expect(hasButton(page.host, /Log it as waste\?/)).toBe(false)
+	})
+
+	it('is offered only on a cancelled ticket of a terminal that has Stock', async () => {
+		await drawKitchen(false, [cancelledTicket])
+		expect(hasButton(page.host, /Log it as waste\?/)).toBe(false)
+		await page.unmount()
+		page = mount()
+		await drawKitchen(true, [{ ...cancelledTicket, cancelled: false }])
+		expect(hasButton(page.host, /Log it as waste\?/)).toBe(false)
+		await page.unmount()
+		page = mount()
+		// Nothing started, nothing wasted.
+		await drawKitchen(true, [
+			{
+				...cancelledTicket,
+				lines: cancelledTicket.lines.map((line) => ({
+					...line,
+					stage: 'new' as const,
+				})),
+			},
+		])
+		expect(hasButton(page.host, /Log it as waste\?/)).toBe(false)
+	})
+
+	it('says so when it could not log it, and lets the cook try again', async () => {
+		const api = region({ online: false })
+		api.install()
+		await drawKitchen(true, [cancelledTicket])
+		await click(button(page.host, /Log it as waste\?/))
+		await vi.waitFor(() =>
+			expect(text(page.host)).toContain('We could not log it. Try again.'),
+		)
+		expect(hasButton(page.host, /Log it as waste\?/)).toBe(true)
 	})
 })

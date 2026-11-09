@@ -10,6 +10,8 @@ import {
 	stationCountSummarySchema,
 	stationDeliveryResultSchema,
 	stationDeliverySchema,
+	stationDishWasteResultSchema,
+	stationDishWasteSchema,
 	stationPhotoConfirmResultSchema,
 	stationPhotoRequestSchema,
 	stationPhotoUploadSchema,
@@ -50,6 +52,7 @@ import {
 	requestInvoicePhotoUpload,
 } from '../services/inventory-receiving-service.ts'
 import { getInventorySettings } from '../services/inventory-settings-service.ts'
+import { logDishWaste } from '../services/inventory-dish-waste-service.ts'
 import { logWaste, undoWaste } from '../services/inventory-waste-service.ts'
 import {
 	activeRosterIds,
@@ -289,6 +292,42 @@ posInventoryRoutes.post(
 				},
 			)
 			return stationJson(stationWasteResultSchema.parse(result))
+		},
+	),
+)
+
+/**
+ * Kitchen "Log it as waste?": dishes a cook had started on a ticket that was
+ * cancelled, recorded as waste of their ingredients. Needs the recipes flag.
+ */
+posInventoryRoutes.post(
+	'/waste/dishes',
+	stationRoute(
+		{
+			body: stationDishWasteSchema,
+			locations: (body) => [body.locationId],
+		},
+		async (ctx, body) => {
+			const flags = await getInventoryFlagState(ctx.pos.orgId)
+			if (flags.status !== 'on' || !flags.features.recipes) {
+				return stationError(
+					flags.status === 'on' || flags.status === 'off'
+						? 'inventory_disabled'
+						: 'inventory_unavailable',
+				)
+			}
+			const result = await logDishWaste(ctx.caller, {
+				clientId: body.clientId,
+				locationId: body.locationId,
+				lines: body.lines.map((line) => ({
+					itemId: line.itemId,
+					variantId: line.variantId ?? null,
+					quantity: line.quantity,
+				})),
+				deviceId: ctx.pos.device.id,
+				idempotency: idempotency(ctx, 'dish_waste', body.clientId, body),
+			})
+			return stationJson(stationDishWasteResultSchema.parse(result))
 		},
 	),
 )

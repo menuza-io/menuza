@@ -1297,8 +1297,16 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
   week) and the App panel `SoldOutPanel` lists what is off with the undo. No
   `inventory_sold_out` notification kind yet (`inv_alert_log` has a kind check).
 - Count review lines carry `movements` (delivered, used by sales, wasted,
-  adjusted since the last approved count) so "expected" explains itself. Not
-  built yet: Kitchen "log it as waste?".
+  adjusted since the last approved count) so "expected" explains itself.
+- Kitchen "Log it as waste?" (Station): a cancelled ticket with dishes already
+  started (anything past New) offers one tap that posts
+  `POST /pos/inventory/waste/dishes` (`stationDishWasteSchema`, online only, the
+  same `clientId` per ticket so a second tap is a duplicate, needs
+  `inventory.recipes` and a signed-in person).
+  `services/inventory-dish-waste-service.ts` expands each dish with the recipe
+  in force now and writes an `inv_waste` row per ingredient ("Cancelled after
+  cooking", this terminal) plus the `waste` movement; a dish with no recipe adds
+  nothing. Phase 3 is complete.
 - Product rules: owner words (no par, AvT, COGS, 86), at most five tabs, one
   plain name per item (inventory inputs are never translated; App strings are
   Lingui). Security gate: `routes/inventory-security.test.ts`.

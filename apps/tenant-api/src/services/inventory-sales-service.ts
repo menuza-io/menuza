@@ -274,7 +274,7 @@ export function parsePosVoids(raw: unknown): PosVoidInput[] {
 	return voids
 }
 
-function ownersOf(
+export function ownersOf(
 	lines: readonly SaleLine[],
 	voids: readonly PosVoidInput[],
 ): LoadedSource['owners'] {

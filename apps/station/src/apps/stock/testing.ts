@@ -151,6 +151,14 @@ export function fakeApi(over: Partial<StockApi> = {}): Recorded {
 				lateSync: [],
 			})
 		},
+		async dishWaste(...args) {
+			const body = args[0] as { lines: unknown[] }
+			return record('dishWaste', args, {
+				logged: body.lines.length,
+				withoutRecipe: 0,
+				duplicate: false,
+			})
+		},
 		async undoWaste(...args) {
 			return record('undoWaste', args, { id: `rev_${++serial}` })
 		},

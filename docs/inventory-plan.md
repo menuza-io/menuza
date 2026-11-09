@@ -8,9 +8,9 @@ Purchasing deliveries and suppliers, Waste, Today); phase 3 recipes are built
 through 3c, and 3b-2 (used by sales: the sale queue, settle and tick retry in
 `services/inventory-sales-service.ts`) is built, with auto sold out
 (`inv_sold_out`, tenant `0036`), the Today signals for stock and till voids and
-expected vs counted (review lines show what moved); only Kitchen "log it as
-waste?" remains of phase 3. The **phase 2 wire contract is written** in
-`@repo/inventory`
+expected vs counted (review lines show what moved); and Kitchen "log it as
+waste?" (`POST /pos/inventory/waste/dishes`): phase 3 is complete. The **phase 2
+wire contract is written** in `@repo/inventory`
 (`contract/{levels,orders,orders-rules,receiving, notify,station}.ts`, see
 [Phase 2 wire contract](#phase-2-wire-contract)); the region, Station and App
 implement against it. Nothing is user-visible until the flag is on. Placement is
