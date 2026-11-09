@@ -119,6 +119,15 @@ export function writeQueue(
 	}
 }
 
+/** How many entries for `countId` are waiting in `localStorage` on this device. */
+export function pendingCountEntriesCount(
+	storage: Pick<Storage, 'getItem'> | null,
+	orgSlug: string,
+	countId: string,
+): number {
+	return readQueue(storage, queueStorageKey(orgSlug, countId)).length
+}
+
 export type SettledBatch = {
 	/** Entries the region took (or already had). */
 	done: QueuedEntry[]
@@ -181,6 +190,8 @@ export type CountEntrySync = {
 	submit: (entry: Omit<QueuedEntry, 'queuedAt'>) => Promise<void>
 	/** Send whatever is queued now: Retry, reconnect, page load. */
 	flush: () => Promise<void>
+	/** Reload the queue from storage when another tab writes to the same key. */
+	reloadFromStorage: () => void
 }
 
 export function createCountEntrySync(options: {
@@ -292,6 +303,7 @@ export function createCountEntrySync(options: {
 			const nextSaved = new Set(saved)
 			nextSaved.delete(slot)
 			saved = nextSaved
+			refused = refused.filter((item) => entrySlotKey(item.entry) !== slot)
 			// A replaced entry that failed no longer counts as failed.
 			failed = new Set(
 				[...failed].filter((id) => queue.some((item) => item.clientId === id)),
@@ -300,5 +312,10 @@ export function createCountEntrySync(options: {
 			return flush()
 		},
 		flush,
+		reloadFromStorage() {
+			if (closed) return
+			queue = readQueue(storage, key)
+			rebuild()
+		},
 	}
 }

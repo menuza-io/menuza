@@ -3,8 +3,8 @@
 import { i18n } from '@lingui/core'
 import { I18nProvider } from '@lingui/react'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { beforeAll, describe, expect, it, vi } from 'vitest'
 import { toast } from 'sonner'
+import { beforeAll, describe, expect, it, vi } from 'vitest'
 import { OperatorRequestError } from '#app/hooks/use-operator-client.ts'
 import {
 	type InventoryClient,

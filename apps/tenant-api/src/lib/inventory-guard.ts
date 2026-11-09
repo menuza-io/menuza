@@ -3,6 +3,7 @@ import {
 	type InventoryPermission,
 	type InventoryScope,
 } from '@repo/inventory'
+import { getTenantDb } from '@repo/tenant-db'
 import { type Context, type MiddlewareHandler } from 'hono'
 import {
 	hasInventoryOperatorGrant,
@@ -101,8 +102,11 @@ export function inventoryGuard(
 			return inventoryDeny(404, 'not_found')
 		}
 
-		// Keep the region's copy of the locations' money and days current.
-		await syncLocationSettings(ctx.orgId)
+		// Ensure the region's tenant database is open (creating the local SQLite
+		// file if an organization marked `hasProvisionedDb` in `data.db` lost its
+		// local dev file) and keep its copy of the locations' money and days current.
+		const db = await getTenantDb(ctx.orgId, { createIfMissing: true })
+		await syncLocationSettings(ctx.orgId, { db })
 		c.set(INVENTORY_AUTH_KEY, ctx)
 		await next()
 	}

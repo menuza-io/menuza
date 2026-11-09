@@ -71,11 +71,11 @@ export function PrepLevelsPanel({
 	if (!data || data.items.length === 0) return null
 
 	const summary = (item: PrepLevelItem) => {
-		const set = item.weekdays.filter((value) => value !== null)
-		if (set.length > 0) {
+		const setCount = item.weekdays.filter((value) => value !== null).length
+		if (setCount > 0) {
 			return (
 				<Trans>
-					Set for <bdi dir="ltr">{set.length}</bdi> of 7 days
+					Set for <bdi dir="ltr">{setCount}</bdi> of 7 days
 				</Trans>
 			)
 		}

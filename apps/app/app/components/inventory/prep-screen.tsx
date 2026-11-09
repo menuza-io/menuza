@@ -385,6 +385,7 @@ function Explain({ task }: { task: PrepTask }) {
 	const target = quantity.format(task.explain.target, shape)
 	const have = quantity.format(Math.max(0, task.explain.onHand), shape)
 	const percent = demandPercent(task.explain.demandBp)
+	const absPercent = Math.abs(percent)
 	return (
 		<span className="text-muted-foreground text-xs" data-testid="prep-explain">
 			<Trans>
@@ -400,7 +401,7 @@ function Explain({ task }: { task: PrepTask }) {
 						</Trans>
 					) : (
 						<Trans>
-							sells <bdi dir="ltr">{Math.abs(percent)}%</bdi> less today
+							sells <bdi dir="ltr">{absPercent}%</bdi> less today
 						</Trans>
 					)}
 				</>

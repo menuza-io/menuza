@@ -1,4 +1,4 @@
-import { Trans, useLingui } from '@lingui/react/macro'
+import { Plural, Trans, useLingui } from '@lingui/react/macro'
 import { type OrderSendChannel, type SendOrderResult } from '@repo/inventory'
 import { Alert, AlertDescription } from '@repo/ui/alert'
 import { Button } from '@repo/ui/button'
@@ -112,8 +112,12 @@ export function SendOrderDialog({
 						) : (
 							<Trans>
 								<span className="wrap-anywhere">{supplier}</span> will get{' '}
-								<bdi dir="ltr">{itemCount}</bdi> items. Nothing is sent until
-								you press Send.
+								<Plural
+									value={itemCount}
+									one="# item"
+									other="# items"
+								/>
+								. Nothing is sent until you press Send.
 							</Trans>
 						)}
 					</DialogDescription>

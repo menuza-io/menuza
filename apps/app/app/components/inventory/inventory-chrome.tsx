@@ -6,11 +6,14 @@ import { PageHeader } from '@repo/ui/page-header'
 import { WorkspacePage, WorkspaceTabBar } from '@repo/ui/workspace'
 import { createContext, type ReactNode, useContext, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { useLocation } from 'react-router'
+import { Link, useLocation } from 'react-router'
 import { LogWasteDialog } from '#app/components/inventory/log-waste-dialog.tsx'
 import { FilterSelect } from '#app/components/staff/controls.tsx'
 import {
 	type InventoryNavAccess,
+	type InventoryRoute,
+	inventoryRouteFromPath,
+	inventorySettingsPath,
 	type InventoryTab,
 	inventoryTabFromPath,
 	inventoryTabPath,
@@ -28,7 +31,10 @@ const TAB_LABELS = {
 	waste: msg`Waste`,
 } as const
 
-const TAB_HEADERS = {
+const TAB_HEADERS: Record<
+	InventoryRoute,
+	{ title: ReturnType<typeof msg>; description: ReturnType<typeof msg> }
+> = {
 	today: {
 		title: msg`Inventory`,
 		description: msg`What needs you today.`,
@@ -53,7 +59,15 @@ const TAB_HEADERS = {
 		title: msg`Waste`,
 		description: msg`What was thrown away, why, and what it cost.`,
 	},
-} as const
+	transfers: {
+		title: msg`Transfers`,
+		description: msg`Move stock between your locations.`,
+	},
+	settings: {
+		title: msg`Inventory settings`,
+		description: msg`Units, target food cost, count reminders, and receiving rules.`,
+	},
+}
 
 const InventoryActionsSlotContext = createContext<HTMLElement | null>(null)
 
@@ -125,10 +139,17 @@ export function InventoryChrome({
 	const [actionsSlot, setActionsSlot] = useState<HTMLElement | null>(null)
 	const [wasteOpen, setWasteOpen] = useState(false)
 
-	const routeKey: InventoryTab =
-		inventoryTabFromPath(location.pathname, orgSlug) ?? 'today'
-	const header = TAB_HEADERS[routeKey]
-	const search = locations.length > 1 ? location.search : ''
+	const activeRoute: InventoryRoute =
+		inventoryRouteFromPath(location.pathname, orgSlug) ?? 'today'
+	const routeKey: InventoryTab | null =
+		inventoryTabFromPath(location.pathname, orgSlug) ??
+		(activeRoute === 'settings' || activeRoute === 'transfers' ? null : 'today')
+	const header = TAB_HEADERS[activeRoute]
+	const locParam = new URLSearchParams(location.search).get('locationId')
+	const search =
+		locations.length > 1 && locParam
+			? `?locationId=${encodeURIComponent(locParam)}`
+			: ''
 
 	const tabs = visibleInventoryTabs(nav).map((tab) => ({
 		label: i18n._(TAB_LABELS[tab]),
@@ -156,6 +177,17 @@ export function InventoryChrome({
 										<Trans>Log waste</Trans>
 									</Button>
 								) : null}
+								<Button
+									variant={activeRoute === 'settings' ? 'secondary' : 'outline'}
+									size="icon-sm"
+									render={
+										<Link to={`${inventorySettingsPath(orgSlug)}${search}`} />
+									}
+									aria-label={t`Inventory settings`}
+									data-testid="inventory-settings-link"
+								>
+									<Icon name="settings" />
+								</Button>
 								<div ref={setActionsSlot} className="contents" />
 								<InventoryHeaderControls
 									locations={locations}

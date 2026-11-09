@@ -948,7 +948,7 @@ export function RecordDeliveryScreen({
 														{short.kind === 'missing' ? (
 															<Trans>Missing</Trans>
 														) : (
-															<Trans>Short</Trans>
+															<Trans context="delivery line">Short</Trans>
 														)}
 													</Badge>
 												</li>

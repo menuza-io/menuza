@@ -1,3 +1,4 @@
+import { plural } from '@lingui/core/macro'
 import { Plural, Trans, useLingui } from '@lingui/react/macro'
 import {
 	bulkCreateItemsResultSchema,
@@ -106,7 +107,9 @@ export default function InventoryAddManyRoute() {
 			notifyChanged()
 			ctx.reload()
 			const added = parsed.created.length
-			toast.success(added === 1 ? t`1 item added.` : t`${added} items added.`)
+			toast.success(
+				plural(added, { one: '# item added.', other: '# items added.' }),
+			)
 		} catch (caught) {
 			setSubmitError(i18n._(inventorySaveErrorMessage(caught)))
 		} finally {

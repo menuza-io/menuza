@@ -145,6 +145,28 @@ export function inventoryOrderPath(orgSlug: string, orderId: string): string {
 	return `/${orgSlug}/inventory/purchasing/orders/${encodeURIComponent(orderId)}`
 }
 
+/** Paths inside `/inventory` that do not belong to a tab (e.g. `/inventory/transfers`, `/inventory/settings`). */
+export type InventoryNonTabRoute = 'transfers' | 'settings'
+
+export type InventoryRoute = InventoryTab | InventoryNonTabRoute
+
+export function inventoryRouteFromPath(pathname: string, orgSlug: string): InventoryRoute | null {
+	const base = `/${orgSlug}/inventory/`
+	if (!pathname.startsWith(base)) return null
+	const match = /\/inventory\/([^/?#]+)/.exec(pathname)
+	if (match?.[1] === 'transfers') return 'transfers'
+	if (match?.[1] === 'settings') return 'settings'
+	return inventoryTabFromPath(pathname, orgSlug)
+}
+
+export function inventoryTransfersPath(orgSlug: string): string {
+	return `/${orgSlug}/inventory/transfers`
+}
+
+export function inventorySettingsPath(orgSlug: string): string {
+	return `/${orgSlug}/inventory/settings`
+}
+
 /** Receive a delivery against an open order. */
 export function inventoryReceivePath(orgSlug: string, orderId: string): string {
 	return `/${orgSlug}/inventory/purchasing/deliveries/new?orderId=${encodeURIComponent(orderId)}`

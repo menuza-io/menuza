@@ -15,6 +15,9 @@ export function inventoryErrorMessage(error: unknown): MessageDescriptor {
 		if (error.status === 401 || error.status === 403) {
 			return msg`You do not have access to inventory. Ask an owner to check your role.`
 		}
+		if (error.code === 'not_found' || error.status === 404) {
+			return msg`This record is no longer here. It may have been archived or removed.`
+		}
 		if (error.status === 503 || error.code === 'inventory_unavailable') {
 			return msg`Inventory is paused right now. Try again in a few minutes.`
 		}
@@ -28,8 +31,47 @@ export function inventoryErrorMessage(error: unknown): MessageDescriptor {
  */
 export function inventorySaveErrorMessage(error: unknown): MessageDescriptor {
 	if (error instanceof OperatorRequestError) {
-		if (error.code === 'unit_in_use') {
+		if (error.code === 'unit_in_use' || error.code === 'unit_locked') {
 			return msg`This unit is already used by stock, so it cannot be changed.`
+		}
+		if (error.code === 'unit_mismatch') {
+			return msg`That unit cannot measure this item. Pick another unit.`
+		}
+		if (error.code === 'limit_reached') {
+			return msg`You have reached the limit for this list. Archive or remove old items first.`
+		}
+		if (error.code === 'idempotency_conflict') {
+			return msg`This change conflicted with an earlier attempt. Close this form and try again.`
+		}
+		if (error.code === 'already_undone') {
+			return msg`This was already undone.`
+		}
+		if (error.code === 'undo_expired') {
+			return msg`It is too late to undo this entry.`
+		}
+		if (error.code === 'count_closed') {
+			return msg`This count is already closed.`
+		}
+		if (error.code === 'task_closed') {
+			return msg`This prep task was already finished or skipped.`
+		}
+		if (error.code === 'transfer_closed') {
+			return msg`This transfer is already closed.`
+		}
+		if (error.code === 'send_in_progress') {
+			return msg`This order is being sent right now. Wait a moment and refresh.`
+		}
+		if (error.code === 'currency_unknown') {
+			return msg`Set a currency for this location or enter prices on the first delivery.`
+		}
+		if (error.code === 'currency_mismatch') {
+			return msg`The currency does not match this location's currency.`
+		}
+		if (error.code === 'not_batch_counted' || error.code === 'batch_not_counted') {
+			return msg`Turn on batch counting for this made item before recording a batch.`
+		}
+		if (error.code === 'not_found' || error.status === 404) {
+			return msg`This record could not be found. It may have been archived or removed.`
 		}
 		if (error.code === 'order_not_editable') {
 			return msg`This order was already sent, so its items cannot change. Start a new order instead.`
@@ -135,6 +177,9 @@ export function batchSaveErrorMessage(error: unknown): MessageDescriptor {
 		}
 		if (error.code === 'not_a_made_item') {
 			return msg`Only an item made in house can be recorded as a batch.`
+		}
+		if (error.code === 'not_batch_counted' || error.code === 'batch_not_counted') {
+			return msg`Turn on batch counting for this made item before recording a batch.`
 		}
 		if (error.code === 'amount_out_of_range') {
 			return msg`That amount is too small or too large. Check it and try again.`

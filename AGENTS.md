@@ -687,12 +687,15 @@ git commit --no-verify -m "fix: resolve ESLint warnings (verified manually)"
 - `INVOICE_READER_BASE_URL` / `INVOICE_READER_API_KEY` / `INVOICE_READER_MODEL`
   / `INVOICE_READER_DATA_REGION` - Tenant-api only, optional. OpenAI-compatible
   vision endpoint that reads an inventory invoice photo into lines to check.
-  Used only when the data region equals `DATA_REGION`. See
-  `docs/inventory-plan.md`.
+  Used only when the data region equals `DATA_REGION`. See `docs/inventory.md`.
 - `INVENTORY_ENABLED` - Tenant-api only, optional (unset or `true` is on). Kill
   switch for inventory on a node: `false` (also `0`, `off`, `no`, `disabled`)
-  answers 503 `inventory_unavailable` on operator (and later Station) inventory
-  routes. See `docs/inventory-plan.md`.
+  answers 503 `inventory_unavailable` on operator and Station inventory routes.
+  See `docs/inventory.md`.
+- `INVENTORY_TICK_INTERVAL_SECONDS` - Tenant-api Node (OCI) runtime only,
+  optional. Seconds between in-process inventory ticks (default 300, minimum 60,
+  `0` off). The hourly cron fan-out always runs; the Workers runtime uses
+  Durable Object alarms. See `docs/inventory.md`.
 - `PRINT_BROWSER_ACCOUNT_ID` / `PRINT_BROWSER_API_TOKEN` - App only. Cloudflare
   Browser Rendering (REST `/pdf`) for Print shop PDFs. Empty in dev: downloads
   open a print-ready page instead. `PRINT_RENDER_LIMIT_PER_HOUR` caps new

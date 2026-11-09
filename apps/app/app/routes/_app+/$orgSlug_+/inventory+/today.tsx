@@ -156,8 +156,14 @@ export default function InventoryTodayRoute() {
 	// Undefined when the route renders without its loader (tests, previews).
 	const loaderData = useLoaderData<typeof loader>() as
 		Awaited<ReturnType<typeof loader>> | undefined
-	const menuDishes = loaderData?.dishes ?? []
-	const menuOptions = loaderData?.options ?? []
+	const menuDishes = useMemo(
+		() => loaderData?.dishes ?? [],
+		[loaderData?.dishes],
+	)
+	const menuOptions = useMemo(
+		() => loaderData?.options ?? [],
+		[loaderData?.options],
+	)
 	const dishNames = useMemo(
 		() => new Map(menuDishes.map((dish) => [dish.id, dish.name])),
 		[menuDishes],

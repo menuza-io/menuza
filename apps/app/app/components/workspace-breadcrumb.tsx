@@ -92,6 +92,7 @@ const SEGMENT_LABELS: Record<string, ReactNode> = {
 	stock: <Trans>Stock</Trans>,
 	counts: <Trans>Counts</Trans>,
 	purchasing: <Trans>Purchasing</Trans>,
+	prep: <Trans>Prep</Trans>,
 	waste: <Trans>Waste</Trans>,
 	areas: <Trans>Storage areas</Trans>,
 	lists: <Trans>Count lists</Trans>,

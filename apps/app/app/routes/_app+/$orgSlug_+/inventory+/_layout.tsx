@@ -180,8 +180,8 @@ export default function InventoryLayout() {
 
 	return (
 		<InventoryClientProvider orgSlug={orgSlug}>
-			<InventoryPrefsProvider dataRegion={dataRegion}>
-				<InventoryChangeProvider>
+			<InventoryChangeProvider>
+				<InventoryPrefsProvider dataRegion={dataRegion}>
 					{fullPage ? (
 						<Outlet context={context} />
 					) : (
@@ -199,8 +199,8 @@ export default function InventoryLayout() {
 							<Outlet context={context} />
 						</InventoryChrome>
 					)}
-				</InventoryChangeProvider>
-			</InventoryPrefsProvider>
+				</InventoryPrefsProvider>
+			</InventoryChangeProvider>
 		</InventoryClientProvider>
 	)
 }

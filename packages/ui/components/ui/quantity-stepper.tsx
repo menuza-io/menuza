@@ -97,6 +97,8 @@ function QuantityStepper({
 
 	return (
 		<div
+			role="group"
+			aria-label={ariaLabel}
 			dir="ltr"
 			data-slot="quantity-stepper"
 			className={cn('flex w-fit max-w-full flex-col gap-2', className)}
@@ -132,13 +134,27 @@ function QuantityStepper({
 					onChange={(event) => {
 						const typed = event.target.value
 						setText(typed)
+						if (typed.trim() === '') {
+							onValueChange(null)
+							return
+						}
 						const parsed = parseQuantityText(typed)
-						onValueChange(parsed === null || parsed > max ? null : parsed)
+						if (parsed !== null && parsed <= max && parsed >= min) {
+							onValueChange(parsed)
+						}
 					}}
 					onBlur={() => {
-						// Settle what was typed: "1½" becomes 1.5, junk is cleared.
+						if (text.trim() === '') {
+							setText('')
+							onValueChange(null)
+							return
+						}
 						const parsed = parseQuantityText(text)
-						setText(formatQuantityText(parsed === null ? null : parsed))
+						if (parsed === null || parsed > max || parsed < min) {
+							setText(formatQuantityText(value))
+							return
+						}
+						commit(parsed)
 					}}
 				/>
 				<Button

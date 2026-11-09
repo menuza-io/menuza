@@ -25,8 +25,8 @@ export function isInvoiceReaderConfigured(): boolean {
 export const MAX_READ_LINES = 100
 
 const clean = (value: string, max: number) =>
-	// eslint-disable-next-line no-control-regex
 	value
+		// eslint-disable-next-line no-control-regex
 		.replace(/[\u0000-\u001f\u007f]/g, ' ')
 		.replace(/\s+/g, ' ')
 		.trim()

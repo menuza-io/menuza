@@ -332,6 +332,25 @@ describe('rowSaveState', () => {
 		).toBe('failed')
 	})
 
+	it('returns refused when a row entry was refused by the region', () => {
+		expect(
+			rowSaveState({
+				row,
+				amounts: { 'i1|a1': { kg: 2 } },
+				snapshot: {
+					...quiet,
+					refused: [
+						{
+							entry: entry('a'),
+							code: 'unit_mismatch',
+						},
+					],
+				},
+				dirty: false,
+			}),
+		).toBe('refused')
+	})
+
 	it('ignores entries of other rows', () => {
 		expect(
 			rowSaveState({

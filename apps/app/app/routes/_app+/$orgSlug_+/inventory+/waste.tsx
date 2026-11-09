@@ -1,4 +1,4 @@
-import { Trans, useLingui } from '@lingui/react/macro'
+import { Plural, Trans, useLingui } from '@lingui/react/macro'
 import {
 	listWasteResultSchema,
 	type WasteEntry,
@@ -393,7 +393,11 @@ export default function InventoryWasteRoute() {
 						/>
 						<div className="text-muted-foreground mt-3 flex flex-wrap items-center justify-between gap-3 text-sm">
 							<span aria-live="polite">
-								<Trans>Showing {shown} entries</Trans>
+								<Plural
+									value={shown}
+									one="Showing # entry"
+									other="Showing # entries"
+								/>
 							</span>
 							{hasMore && limit < WASTE_MAX_LIMIT ? (
 								<Button

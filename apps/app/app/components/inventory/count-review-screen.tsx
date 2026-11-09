@@ -269,7 +269,16 @@ export function CountReviewScreen({
 							<Trans>Review: {title}</Trans>
 						</h1>
 						<span className="text-muted-foreground text-xs">
-							<bdi dir="ltr">{count.businessDate}</bdi>
+							<bdi dir="ltr">
+								{(() => {
+									const [year, month, dayOfMonth] = count.businessDate
+										.split('-')
+										.map(Number) as [number, number, number]
+									return new Intl.DateTimeFormat(i18n.locale, {
+										dateStyle: 'medium',
+									}).format(new Date(year, month - 1, dayOfMonth))
+								})()}
+							</bdi>
 						</span>
 					</div>
 					<div className="flex flex-wrap items-center gap-2">

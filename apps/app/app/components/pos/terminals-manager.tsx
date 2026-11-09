@@ -1385,7 +1385,9 @@ function PairDialog({
 						locationId: locationId === NO_LOCATION ? null : locationId,
 						timeclockEnabled: timeclockAllowed && timeclockEnabled,
 						reservationsEnabled: reservationsAllowed && reservationsEnabled,
-						inventoryEnabled: inventoryAllowed && inventoryEnabled,
+						...(inventoryAllowed && inventoryEnabled
+							? { inventoryEnabled: true }
+							: {}),
 					}),
 				}),
 			)

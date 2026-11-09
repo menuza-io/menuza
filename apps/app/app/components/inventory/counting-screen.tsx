@@ -49,6 +49,7 @@ import {
 	initialSheetAmounts,
 	isRowCounted,
 	othersQuantity,
+	rowKey,
 	type RowSaveState,
 	rowSaveState,
 	rowUnitChoices,
@@ -168,6 +169,30 @@ export function CountingScreen({
 		return map
 	}, [tabs])
 
+	// A refused entry was not saved: drop its committed value so typing or
+	// blurring the same number again can re-submit it.
+	useEffect(() => {
+		for (const { entry } of snapshot.refused) {
+			committedRef.current.delete(
+				slotOf(rowKey(entry.itemId, entry.areaId), entry.unit),
+			)
+		}
+	}, [snapshot.refused])
+
+	const refusedNames = useMemo(() => {
+		const names: string[] = []
+		const seen = new Set<string>()
+		for (const { entry } of snapshot.refused) {
+			const row = rowsByKey.get(rowKey(entry.itemId, entry.areaId))
+			const label = row?.name
+			if (label && !seen.has(label)) {
+				seen.add(label)
+				names.push(label)
+			}
+		}
+		return names.join(', ')
+	}, [rowsByKey, snapshot.refused])
+
 	const commit = useCallback(
 		(key: string, unit: UnitRef) => {
 			const slot = slotOf(key, unit)
@@ -179,7 +204,12 @@ export function CountingScreen({
 			dirtyRef.current.delete(slot)
 			setDirtyCount(dirtyRef.current.size)
 			const value = amountsRef.current[key]?.[unit] ?? null
-			if ((committedRef.current.get(slot) ?? null) === value) return
+			if (
+				committedRef.current.has(slot) &&
+				(committedRef.current.get(slot) ?? null) === value
+			) {
+				return
+			}
 			committedRef.current.set(slot, value)
 			void sync.submit({
 				clientId: newClientId('c'),
@@ -450,6 +480,9 @@ export function CountingScreen({
 								one="# entry could not be saved and was left out. Check that item and enter it again."
 								other="# entries could not be saved and were left out. Check those items and enter them again."
 							/>
+							{refusedNames ? (
+								<span className="mt-1 block font-medium">{refusedNames}</span>
+							) : null}
 						</AlertDescription>
 					</Alert>
 				) : null}
@@ -631,6 +664,11 @@ function SaveStatus({
 				<span className="text-warning flex items-center gap-1">
 					<Icon name="cloud-off" className="size-3" />
 					<Trans>Waiting to send</Trans>
+				</span>
+			) : state === 'refused' ? (
+				<span className="text-destructive flex items-center gap-1">
+					<Icon name="alert-triangle" className="size-3" />
+					<Trans>Could not save — enter again</Trans>
 				</span>
 			) : state === 'failed' ? (
 				<span className="text-destructive flex items-center gap-2">

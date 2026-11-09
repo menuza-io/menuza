@@ -193,17 +193,21 @@ export type RowSaveState =
 	| 'waiting'
 	/** The last attempt did not reach the region: "Retry". */
 	| 'failed'
+	/** The region refused the entry for good: enter it again. */
+	| 'refused'
 	/** The region has it. */
 	| 'saved'
 
 /**
  * What a row shows beside its field. A row never looks saved while an entry
- * of it is still queued or has failed.
+ * of it is still queued, has failed, or was refused by the region.
  */
 export function rowSaveState(input: {
 	row: Pick<CountRow, 'key' | 'itemId' | 'areaId' | 'quantity'>
 	amounts: SheetAmounts
-	snapshot: Pick<CountSyncSnapshot, 'pending' | 'sending' | 'failed'>
+	snapshot: Pick<CountSyncSnapshot, 'pending' | 'sending' | 'failed'> & {
+		refused?: CountSyncSnapshot['refused']
+	}
 	/** Units of this row typed but not yet queued. */
 	dirty: boolean
 }): RowSaveState {
@@ -219,5 +223,13 @@ export function rowSaveState(input: {
 	}
 	if (entries.length > 0) return 'waiting'
 	if (input.dirty) return 'unsaved'
+	if (
+		snapshot.refused?.some(
+			(item) =>
+				item.entry.itemId === row.itemId && item.entry.areaId === row.areaId,
+		)
+	) {
+		return 'refused'
+	}
 	return isRowCounted(row, amounts) ? 'saved' : 'idle'
 }

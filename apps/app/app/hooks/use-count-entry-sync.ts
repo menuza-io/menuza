@@ -106,6 +106,15 @@ export function useCountEntrySync({
 	const waiting = snapshot.pending.length > 0
 
 	useEffect(() => {
+		const key = queueStorageKey(orgSlug, countId)
+		const onStorage = (event: StorageEvent) => {
+			if (event.key === key) sync.reloadFromStorage()
+		}
+		window.addEventListener('storage', onStorage)
+		return () => window.removeEventListener('storage', onStorage)
+	}, [orgSlug, countId, sync])
+
+	useEffect(() => {
 		if (!enabled) return
 		const flush = () => void sync.flush()
 		flush()

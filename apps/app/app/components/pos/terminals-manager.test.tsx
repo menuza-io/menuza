@@ -342,7 +342,6 @@ describe('TerminalsManager', () => {
 			locationId: null,
 			timeclockEnabled: false,
 			reservationsEnabled: false,
-			inventoryEnabled: false,
 		})
 		expect(create.auth).toBe('Bearer write-token')
 		expect(within(dialog).getByText('Waiting for the terminal…')).toBeTruthy()

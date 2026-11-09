@@ -6,6 +6,7 @@ import {
 	enqueueEntry,
 	entrySlotKey,
 	MAX_ENTRIES_PER_REQUEST,
+	pendingCountEntriesCount,
 	type QueuedEntry,
 	queueStorageKey,
 	readQueue,
@@ -469,5 +470,41 @@ describe('createCountEntrySync', () => {
 		expect(seen.length).toBeGreaterThanOrEqual(2)
 		expect(seen.some((snapshot) => snapshot.pending.length === 1)).toBe(true)
 		expect(seen.at(-1)!.pending).toEqual([])
+	})
+
+	it('clears a previous refusal for the same slot when a new entry is submitted and counts queued entries on disk', async () => {
+		const storage = memoryStorage()
+		const send = vi
+			.fn<(batch: QueuedEntry[]) => Promise<EntryResult>>()
+			.mockResolvedValueOnce({
+				accepted: [],
+				duplicates: [],
+				refused: [{ clientId: 'a', code: 'unit_mismatch' }],
+			})
+			.mockImplementation(async (batch) => acceptAll(batch))
+		const sync = createCountEntrySync({ storage, key: KEY, send })
+		await sync.submit({
+			clientId: 'a',
+			itemId: 'itm_1',
+			areaId: 'area_1',
+			amount: 1,
+			unit: 'kg',
+		})
+		expect(sync.getSnapshot().refused).toHaveLength(1)
+
+		await sync.submit({
+			clientId: 'b',
+			itemId: 'itm_1',
+			areaId: 'area_1',
+			amount: 1,
+			unit: 'kg',
+		})
+		expect(sync.getSnapshot().refused).toEqual([])
+		expect(sync.getSnapshot().saved.has('itm_1|area_1|kg')).toBe(true)
+
+		writeQueue(storage, KEY, [entry({ clientId: 'c' }), entry({ clientId: 'd', itemId: 'itm_2' })])
+		expect(pendingCountEntriesCount(storage, 'acme', 'cnt_1')).toBe(2)
+		sync.reloadFromStorage()
+		expect(sync.getSnapshot().pending).toHaveLength(2)
 	})
 })

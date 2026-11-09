@@ -79,6 +79,18 @@ describe('QuantityStepper', () => {
 		expect(field).toHaveAttribute('aria-invalid', 'true')
 	})
 
+	it('keeps the previous valid amount when invalid text is typed, and restores it on blur', async () => {
+		render(<Harness initial={5} />)
+		const field = screen.getByRole('textbox', { name: 'Amount' })
+		await userEvent.type(field, ',5')
+		expect(field).toHaveValue('5,5')
+		expect(field).toHaveAttribute('aria-invalid', 'true')
+		expect(screen.getByTestId('value')).toHaveTextContent('5')
+		await userEvent.tab()
+		expect(field).toHaveValue('5')
+		expect(screen.getByTestId('value')).toHaveTextContent('5')
+	})
+
 	it('settles typed text on blur and keeps a trailing dot while typing', async () => {
 		render(<Harness initial={null} />)
 		const field = screen.getByRole('textbox', { name: 'Amount' })

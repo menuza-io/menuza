@@ -39,6 +39,7 @@ import { StartCountDialog } from '#app/components/inventory/start-count-dialog.t
 import { useInventoryQuery } from '#app/hooks/use-inventory-client.ts'
 import { requireInventoryAccess } from '#app/utils/inventory/access.server.ts'
 import { loadMemberNames } from '#app/utils/inventory/actors.server.ts'
+import { pendingCountEntriesCount } from '#app/utils/inventory/count-queue.ts'
 import { formatMoney } from '#app/utils/inventory/format.ts'
 import { inventoryErrorMessage } from '#app/utils/inventory/inventory-errors.ts'
 import {
@@ -139,6 +140,13 @@ export default function InventoryCountsRoute() {
 		pastCounts.some((count) => count.differenceValueMinor !== undefined)
 	const hasMorePast =
 		past.data?.nextCursor !== null && past.data?.nextCursor !== undefined
+	const localStorageSafe = () => {
+		try {
+			return typeof window === 'undefined' ? null : window.localStorage
+		} catch {
+			return null
+		}
+	}
 
 	const startButton = canEdit ? (
 		<Button onClick={() => setStartOpen(true)} data-testid="counts-start">
@@ -183,50 +191,70 @@ export default function InventoryCountsRoute() {
 					</p>
 				) : (
 					<ul className="flex flex-col gap-2" data-testid="counts-open">
-						{openCounts.map((count) => (
-							<li
-								key={count.id}
-								className="bg-card flex flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between"
-								data-testid={`count-card-${count.id}`}
-							>
-								<div className="flex min-w-0 flex-col gap-1">
-									<div className="flex flex-wrap items-center gap-2">
-										<span className="font-medium wrap-anywhere">
-											{name(count)}
-										</span>
-										<CountStatusBadge status={count.status} />
+						{openCounts.map((count) => {
+							const pendingLocal = pendingCountEntriesCount(
+								localStorageSafe(),
+								orgSlug,
+								count.id,
+							)
+							return (
+								<li
+									key={count.id}
+									className="bg-card flex flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between"
+									data-testid={`count-card-${count.id}`}
+								>
+									<div className="flex min-w-0 flex-col gap-1">
+										<div className="flex flex-wrap items-center gap-2">
+											<span className="font-medium wrap-anywhere">
+												{name(count)}
+											</span>
+											<CountStatusBadge status={count.status} />
+										</div>
+										<StartedLine
+											startedAt={when(count.createdAt)}
+											by={who(count.startedBy)}
+										/>
+										{pendingLocal > 0 ? (
+											<span
+												className="text-warning flex items-center gap-1 text-xs"
+												data-testid={`count-card-pending-${count.id}`}
+											>
+												<Icon name="cloud-off" className="size-3" />
+												<Plural
+													value={pendingLocal}
+													one="# entry waiting on this device"
+													other="# entries waiting on this device"
+												/>
+											</span>
+										) : null}
 									</div>
-									<StartedLine
-										startedAt={when(count.createdAt)}
-										by={who(count.startedBy)}
-									/>
-								</div>
-								<div className="flex items-center justify-between gap-4 sm:justify-end">
-									<CountProgress
-										counted={count.itemsCounted}
-										total={count.itemTotal}
-										testId={`count-card-progress-${count.id}`}
-									/>
-									<Button
-										variant={
-											count.status === 'counting' && canEdit
-												? 'default'
-												: 'outline'
-										}
-										render={<Link to={hrefFor(count)} />}
-										data-testid={`count-card-open-${count.id}`}
-									>
-										{count.status === 'in_review' ? (
-											<Trans>Review</Trans>
-										) : canEdit ? (
-											<Trans>Resume</Trans>
-										) : (
-											<Trans>View</Trans>
-										)}
-									</Button>
-								</div>
-							</li>
-						))}
+									<div className="flex items-center justify-between gap-4 sm:justify-end">
+										<CountProgress
+											counted={count.itemsCounted}
+											total={count.itemTotal}
+											testId={`count-card-progress-${count.id}`}
+										/>
+										<Button
+											variant={
+												count.status === 'counting' && canEdit
+													? 'default'
+													: 'outline'
+											}
+											render={<Link to={hrefFor(count)} />}
+											data-testid={`count-card-open-${count.id}`}
+										>
+											{count.status === 'in_review' ? (
+												<Trans>Review</Trans>
+											) : canEdit ? (
+												<Trans>Resume</Trans>
+											) : (
+												<Trans>View</Trans>
+											)}
+										</Button>
+									</div>
+								</li>
+							)
+						})}
 					</ul>
 				)}
 			</WorkspacePanel>

@@ -10,7 +10,9 @@ import {
 	type ReactNode,
 	useCallback,
 	useContext,
+	useEffect,
 	useMemo,
+	useRef,
 	useState,
 } from 'react'
 import { useInventoryQuery } from '#app/hooks/use-inventory-client.ts'
@@ -40,6 +42,15 @@ export function InventoryPrefsProvider({
 	children: ReactNode
 }) {
 	const settings = useInventoryQuery('/settings', inventorySettingsSchema)
+	const { reload } = settings
+	const revision = useInventoryRevision()
+	const seenRevision = useRef(revision)
+	useEffect(() => {
+		if (revision !== seenRevision.current) {
+			seenRevision.current = revision
+			reload()
+		}
+	}, [revision, reload])
 	const unitSystem = settings.data?.unitSystem ?? defaultUnitSystem(dataRegion)
 	return (
 		<UnitSystemContext.Provider value={unitSystem}>
