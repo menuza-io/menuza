@@ -1,6 +1,6 @@
 import { Plural, Trans, useLingui } from '@lingui/react/macro'
 import { type DeliveryDetail, deliveryDetailSchema } from '@repo/inventory'
-import { Alert, AlertDescription } from '@repo/ui/alert'
+import { Alert, AlertAction, AlertDescription } from '@repo/ui/alert'
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -13,11 +13,14 @@ import {
 } from '@repo/ui/alert-dialog'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
+import { Icon } from '@repo/ui/icon'
 import { Skeleton } from '@repo/ui/skeleton'
 import { Textarea } from '@repo/ui/textarea'
-import { useState } from 'react'
-import { useParams } from 'react-router'
+import { useRef, useState } from 'react'
+import { Link, useParams } from 'react-router'
 import { toast } from 'sonner'
+import { ConfirmPricesDialog } from '#app/components/inventory/confirm-prices-dialog.tsx'
+import { CreditMessageDialog } from '#app/components/inventory/credit-message-dialog.tsx'
 import {
 	useNotifyInventoryChanged,
 	useQuantityFormat,
@@ -35,6 +38,12 @@ import {
 	inventoryErrorMessage,
 	inventorySaveErrorMessage,
 } from '#app/utils/inventory/inventory-errors.ts'
+import {
+	InvoicePhotoError,
+	isAllowedInvoicePhotoType,
+	uploadInvoicePhoto,
+} from '#app/utils/inventory/invoice-photo.ts'
+import { inventoryOrderPath } from '#app/utils/inventory/nav.ts'
 import { type Route } from './+types/purchasing.deliveries.$deliveryId.ts'
 
 export async function loader({ request, params }: Route.LoaderArgs) {
@@ -64,6 +73,10 @@ export default function InventoryDeliveryRoute() {
 		delivery?.locationId ?? ctx.activeLocationId,
 	)
 	const [cancelOpen, setCancelOpen] = useState(false)
+	const [creditOpen, setCreditOpen] = useState(false)
+	const [confirmOpen, setConfirmOpen] = useState(false)
+	const [uploading, setUploading] = useState(false)
+	const photoInput = useRef<HTMLInputElement>(null)
 	const [note, setNote] = useState('')
 	const [busy, setBusy] = useState(false)
 	const [error, setError] = useState<string | null>(null)
@@ -97,6 +110,32 @@ export default function InventoryDeliveryRoute() {
 			query.reload()
 		} finally {
 			setBusy(false)
+		}
+	}
+
+	async function attachPhoto(file: File | undefined) {
+		if (!file || !delivery) return
+		if (!isAllowedInvoicePhotoType(file.type)) {
+			setError(t`Choose a JPEG, PNG or WebP picture.`)
+			return
+		}
+		setUploading(true)
+		setError(null)
+		try {
+			await uploadInvoicePhoto(request, delivery.id, file)
+			toast.success(t`Photo saved.`)
+			ctx.reload()
+			query.reload()
+		} catch (caught) {
+			setError(
+				caught instanceof InvoicePhotoError
+					? caught.code === 'size'
+						? t`That picture is too large. Choose one under 5 MB.`
+						: t`The photo could not be uploaded. Try again.`
+					: i18n._(inventorySaveErrorMessage(caught)),
+			)
+		} finally {
+			setUploading(false)
 		}
 	}
 
@@ -144,6 +183,7 @@ export default function InventoryDeliveryRoute() {
 	const showMoney = ctx.canSeeCost && delivery.totalMinor !== undefined
 	const cancelled = delivery.status === 'cancelled'
 	const supplierName = delivery.supplierName ?? t`No supplier`
+	const orderNumber = delivery.orderNumber ?? 0
 	const lineText = (line: DeliveryDetail['lines'][number]) => {
 		const baseUnit = baseUnits[line.itemId]
 		const amount = baseUnit
@@ -164,11 +204,16 @@ export default function InventoryDeliveryRoute() {
 			description={<bdi dir="auto">{when}</bdi>}
 			headerExtra={
 				<div className="flex flex-wrap items-center gap-1">
+					{delivery.pricesPending && !cancelled ? (
+						<Badge variant="outline" data-testid="delivery-prices-pending">
+							<Trans>Prices to confirm</Trans>
+						</Badge>
+					) : null}
 					{cancelled ? (
 						<Badge variant="outline">
 							<Trans>Cancelled</Trans>
 						</Badge>
-					) : delivery.paid ? (
+					) : delivery.pricesPending ? null : delivery.paid ? (
 						<Badge variant="success">
 							<Trans>Paid</Trans>
 						</Badge>
@@ -196,7 +241,46 @@ export default function InventoryDeliveryRoute() {
 				</Alert>
 			) : null}
 
+			{delivery.pricesPending && !cancelled ? (
+				<Alert data-testid="delivery-pending-note">
+					<AlertDescription>
+						<Trans>
+							This delivery was recorded without prices. Check the invoice and
+							confirm them so costs stay right.
+						</Trans>
+					</AlertDescription>
+					{ctx.canManagePurchasing ? (
+						<AlertAction>
+							<Button
+								type="button"
+								size="sm"
+								onClick={() => setConfirmOpen(true)}
+								data-testid="delivery-confirm-prices"
+							>
+								<Trans>Confirm prices</Trans>
+							</Button>
+						</AlertAction>
+					) : null}
+				</Alert>
+			) : null}
+
 			<dl className="flex flex-col gap-2 text-sm">
+				{delivery.orderId && delivery.orderNumber ? (
+					<div className="flex justify-between gap-4">
+						<dt className="text-muted-foreground">
+							<Trans>Order</Trans>
+						</dt>
+						<dd className="text-end">
+							<Link
+								to={inventoryOrderPath(ctx.orgSlug, delivery.orderId)}
+								className="underline"
+								data-testid="delivery-order-link"
+							>
+								<Trans>Order {orderNumber}</Trans>
+							</Link>
+						</dd>
+					</div>
+				) : null}
 				{delivery.invoiceNumber ? (
 					<div className="flex justify-between gap-4">
 						<dt className="text-muted-foreground">
@@ -243,7 +327,11 @@ export default function InventoryDeliveryRoute() {
 								<span className="font-medium wrap-anywhere">
 									{line.itemName}
 								</span>
-								{showMoney && line.lineTotalMinor !== undefined ? (
+								{line.priced === false ? (
+									<span className="text-muted-foreground text-xs">
+										<Trans>Price to confirm</Trans>
+									</span>
+								) : showMoney && line.lineTotalMinor !== undefined ? (
 									<bdi dir="ltr" className="text-sm tabular-nums">
 										{money(line.lineTotalMinor)}
 									</bdi>
@@ -317,9 +405,85 @@ export default function InventoryDeliveryRoute() {
 				</dl>
 			) : null}
 
+			{!cancelled && (delivery.photo || ctx.canEdit) ? (
+				<section
+					className="flex flex-col gap-2"
+					aria-label={t`Photo of the invoice`}
+					data-testid="delivery-photo"
+				>
+					<h3 className="text-sm font-semibold">
+						<Trans>Photo of the invoice</Trans>
+					</h3>
+					{delivery.photo ? (
+						<a
+							href={delivery.photo.url}
+							target="_blank"
+							rel="noopener noreferrer"
+							className="self-start"
+						>
+							<img
+								src={delivery.photo.url}
+								alt={t`The photo of the invoice`}
+								className="max-h-56 rounded-lg border object-contain"
+								data-testid="delivery-photo-image"
+							/>
+						</a>
+					) : (
+						<p className="text-muted-foreground text-sm">
+							<Trans>No photo yet.</Trans>
+						</p>
+					)}
+					{ctx.canEdit ? (
+						<>
+							<Button
+								type="button"
+								variant="outline"
+								size="sm"
+								className="self-start"
+								disabled={uploading}
+								onClick={() => photoInput.current?.click()}
+								data-testid="delivery-photo-button"
+							>
+								<Icon name={uploading ? 'loader' : 'camera'} />
+								{delivery.photo ? (
+									<Trans>Replace photo</Trans>
+								) : (
+									<Trans>Add a photo</Trans>
+								)}
+							</Button>
+							<input
+								ref={photoInput}
+								type="file"
+								accept="image/jpeg,image/png,image/webp"
+								capture="environment"
+								className="sr-only"
+								tabIndex={-1}
+								aria-hidden
+								onChange={(event) => {
+									const file = event.target.files?.[0]
+									event.target.value = ''
+									void attachPhoto(file)
+								}}
+								data-testid="delivery-photo-input"
+							/>
+						</>
+					) : null}
+				</section>
+			) : null}
+
 			{!cancelled ? (
 				<div className="flex flex-wrap gap-2 border-t pt-4">
-					{ctx.canManagePurchasing ? (
+					{delivery.orderId ? (
+						<Button
+							type="button"
+							variant="outline"
+							onClick={() => setCreditOpen(true)}
+							data-testid="delivery-ask-credit"
+						>
+							<Trans>Ask for credit</Trans>
+						</Button>
+					) : null}
+					{ctx.canManagePurchasing && !delivery.pricesPending ? (
 						<Button
 							type="button"
 							variant={delivery.paid ? 'outline' : 'default'}
@@ -353,6 +517,29 @@ export default function InventoryDeliveryRoute() {
 						</Button>
 					) : null}
 				</div>
+			) : null}
+
+			{creditOpen ? (
+				<CreditMessageDialog
+					open
+					onOpenChange={setCreditOpen}
+					deliveryId={delivery.id}
+					canSeeCost={ctx.canSeeCost}
+					currency={code}
+				/>
+			) : null}
+			{confirmOpen ? (
+				<ConfirmPricesDialog
+					open
+					onOpenChange={setConfirmOpen}
+					delivery={delivery}
+					currency={code}
+					onConfirmed={() => {
+						notifyChanged()
+						ctx.reload()
+						query.reload()
+					}}
+				/>
 			) : null}
 
 			<AlertDialog

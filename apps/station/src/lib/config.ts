@@ -63,6 +63,8 @@ export function shownApp(
 	if (s.activeApp === 'reservations' && s.apps.reservations)
 		return 'reservations'
 	if (s.activeApp === 'kitchen') return 'kitchen'
+	// Stock is offered by the terminal's `inventory` setting (and the organization's flag).
+	if (s.activeApp === 'stock' && s.apps.inventory) return 'stock'
 	return 'pos'
 }
 

@@ -13,7 +13,11 @@ import {
 	type UnitRef,
 	type UnitSystem,
 } from '@repo/inventory'
-import { currentBusinessDate, isValidTimeZone } from '@repo/reservations'
+import {
+	currentBusinessDate,
+	isValidTimeZone,
+	localParts,
+} from '@repo/reservations'
 import {
 	invMovements,
 	invItemUnits,
@@ -107,6 +111,47 @@ export async function locationBusinessDate(
 		return currentBusinessDate(now, row.timeZone, row.dayStartMin)
 	}
 	return currentBusinessDate(now, 'UTC', 240)
+}
+
+export type LocationClock = {
+	timeZone: string
+	/** The business date (`YYYY-MM-DD`) of `now`. */
+	date: string
+	/** The wall clock at the location right now (the calendar date, not the business date). */
+	local: { date: string; time: string }
+}
+
+const two = (value: number): string => String(value).padStart(2, '0')
+
+/**
+ * The location's business date and wall clock at `now`. A location without
+ * reservations settings has no time zone: UTC and a 04:00 day start, as
+ * `locationBusinessDate`.
+ */
+export async function locationClock(
+	db: InventoryReader,
+	locationId: string,
+	now: number,
+): Promise<LocationClock> {
+	const row = await db
+		.select({
+			timeZone: rsvLocationSettings.timeZone,
+			dayStartMin: rsvLocationSettings.dayStartMin,
+		})
+		.from(rsvLocationSettings)
+		.where(eq(rsvLocationSettings.locationId, locationId))
+		.get()
+	const valid = row && isValidTimeZone(row.timeZone)
+	const timeZone = valid ? row.timeZone : 'UTC'
+	const parts = localParts(now, timeZone)
+	return {
+		timeZone,
+		date: currentBusinessDate(now, timeZone, valid ? row.dayStartMin : 240),
+		local: {
+			date: `${parts.year}-${two(parts.month)}-${two(parts.day)}`,
+			time: `${two(parts.hour)}:${two(parts.minute)}`,
+		},
+	}
 }
 
 // ── Cursors ─────────────────────────────────────────────────────────────────

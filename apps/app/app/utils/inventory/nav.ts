@@ -74,8 +74,9 @@ export function inventoryTabFromPath(
 /**
  * Pages that take the whole screen instead of the Inventory header and tab
  * bar: counting a count (`/counts/<id>`), its review (`/counts/<id>/review`)
- * and recording a delivery (`/purchasing/deliveries/new`). They carry their
- * own sticky header, like the menu editors.
+ * recording a delivery (`/purchasing/deliveries/new`) and reviewing an order
+ * (`/purchasing/orders/<id>`). They carry their own sticky header, like the
+ * menu editors.
  */
 export function isInventoryFullPage(
 	pathname: string,
@@ -93,8 +94,7 @@ export function isInventoryFullPage(
 	return (
 		parts[0] === 'purchasing' &&
 		parts.length === 3 &&
-		parts[1] === 'deliveries' &&
-		parts[2] === 'new'
+		((parts[1] === 'deliveries' && parts[2] === 'new') || parts[1] === 'orders')
 	)
 }
 
@@ -107,4 +107,13 @@ export function inventoryCountReviewPath(
 	countId: string,
 ): string {
 	return `${inventoryCountPath(orgSlug, countId)}/review`
+}
+
+export function inventoryOrderPath(orgSlug: string, orderId: string): string {
+	return `/${orgSlug}/inventory/purchasing/orders/${encodeURIComponent(orderId)}`
+}
+
+/** Receive a delivery against an open order. */
+export function inventoryReceivePath(orgSlug: string, orderId: string): string {
+	return `/${orgSlug}/inventory/purchasing/deliveries/new?orderId=${encodeURIComponent(orderId)}`
 }

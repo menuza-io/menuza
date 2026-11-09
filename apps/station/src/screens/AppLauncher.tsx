@@ -61,6 +61,15 @@ export function AppLauncher({
 					},
 				]
 			: []),
+		...(apps?.inventory
+			? [
+					{
+						value: 'stock' as const,
+						label: _(t`Stock`),
+						icon: 'layers' as const,
+					},
+				]
+			: []),
 	]
 	const current = options.find((option) => option.value === app) ?? options[0]!
 	const dismiss = useCallback((restoreFocus = false) => {

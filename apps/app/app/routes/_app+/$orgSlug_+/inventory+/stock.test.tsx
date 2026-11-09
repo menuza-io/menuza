@@ -28,6 +28,7 @@ const CONTEXT: InventoryLayoutContext = {
 	canSeeCost: false,
 	canEdit: true,
 	canManagePurchasing: false,
+	purchasingEnabled: false,
 	dataRegion: 'ksa',
 	currency: 'SAR',
 	userName: 'Sara',

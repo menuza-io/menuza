@@ -1,10 +1,13 @@
 import {
 	costMicroFromPackPrice,
 	INVENTORY_LIMITS,
+	orderStatusAfterReceipt,
 	priceChangeBp,
 	weightedAverageCostMicro,
 	type DeliveryDetail,
 	type DeliverySummary,
+	type OrderSummary,
+	type RecordDeliveryResult,
 	type Supplier,
 	type SupplierProduct,
 } from '@repo/inventory'
@@ -14,8 +17,11 @@ import {
 	invItemCosts,
 	invItems,
 	invMovements,
+	invOrderLines,
+	invOrders,
 	invSupplierProducts,
 	invSuppliers,
+	rsvLocationSettings,
 } from '@repo/tenant-db'
 import { and, count, desc, eq, inArray, isNull, ne, or, sql } from 'drizzle-orm'
 import { inJsonList, queryInChunks } from '../lib/chunked-in.ts'
@@ -41,6 +47,7 @@ import {
 	stateConflict,
 } from './inventory-common.ts'
 import {
+	type ConfirmDeliveryPricesInput,
 	type CreateSupplierInput,
 	type ListDeliveriesQuery,
 	type RecordDeliveryInput,
@@ -49,6 +56,11 @@ import {
 	type UpdateSupplierProductInput,
 } from './inventory-contract-types.ts'
 import { type InventoryCaller } from './inventory-items-service.ts'
+import {
+	orderSummaries,
+	receivedByOrderLine,
+} from './inventory-orders-service.ts'
+import { presignObjectRead } from '../lib/recording-storage.ts'
 
 type SupplierRow = typeof invSuppliers.$inferSelect
 type ProductRow = typeof invSupplierProducts.$inferSelect
@@ -597,6 +609,8 @@ export async function archiveSupplierProduct(
 
 // ── Deliveries ──────────────────────────────────────────────────────────────
 
+type OrderRow = typeof invOrders.$inferSelect
+
 async function toSummaries(
 	db: InventoryReader,
 	rows: readonly DeliveryRow[],
@@ -607,7 +621,12 @@ async function toSummaries(
 			rows.map((row) => row.supplierId).filter((id): id is string => !!id),
 		),
 	]
-	const [suppliers, totals] = await Promise.all([
+	const orderIds = [
+		...new Set(
+			rows.map((row) => row.orderId).filter((id): id is string => !!id),
+		),
+	]
+	const [suppliers, totals, orders] = await Promise.all([
 		queryInChunks(supplierIds, (chunk) =>
 			db
 				.select({ id: invSuppliers.id, name: invSuppliers.name })
@@ -618,8 +637,15 @@ async function toSummaries(
 			db,
 			rows.map((row) => row.id),
 		),
+		queryInChunks(orderIds, (chunk) =>
+			db
+				.select({ id: invOrders.id, number: invOrders.number })
+				.from(invOrders)
+				.where(inArray(invOrders.id, chunk)),
+		),
 	])
 	const names = new Map(suppliers.map((row) => [row.id, row.name]))
+	const numbers = new Map(orders.map((row) => [row.id, row.number]))
 	return rows.map((row) => {
 		const money = totals.get(row.id)
 		const summary: DeliverySummary = {
@@ -638,6 +664,11 @@ async function toSummaries(
 			paid: row.paidAt !== null,
 			paidAt: row.paidAt,
 			version: row.version,
+			pricesPending: row.quantityOnly && row.pricesConfirmedAt === null,
+			orderId: row.orderId,
+			orderNumber: row.orderId ? (numbers.get(row.orderId) ?? null) : null,
+			hasPhoto: row.photoKey !== null,
+			lateSync: row.lateSync,
 		}
 		if (cost) {
 			summary.linesTotalMinor = money?.linesTotal ?? 0
@@ -696,7 +727,10 @@ export async function listDeliveries(
 
 type LineRow = typeof invDeliveryLines.$inferSelect
 
-/** Cost per base unit of each item's latest earlier delivered line (other deliveries). */
+/**
+ * Cost per base unit of each item's latest earlier PRICED delivered line
+ * (other deliveries). A quantity-only line waiting for its price has no cost.
+ */
 async function previousCosts(
 	db: InventoryReader,
 	delivery: DeliveryRow,
@@ -719,6 +753,7 @@ async function previousCosts(
 					inArray(invDeliveryLines.itemId, chunk),
 					eq(invDeliveries.status, 'received'),
 					ne(invDeliveries.id, delivery.id),
+					sql`${invDeliveryLines.pricedAt} is not null`,
 					sql`${invDeliveryLines.createdAt} <= ${delivery.createdAt}`,
 				),
 			)
@@ -747,13 +782,18 @@ export async function getDelivery(
 		.get()
 	if (!row) throw notFound()
 	assertLocationAllowed(input.caller.locationIds, row.locationId)
-	return deliveryDetail(db, row, input.caller.cost)
+	return deliveryDetail(db, row, input.caller.cost, { photo: true })
 }
 
-async function deliveryDetail(
+/**
+ * A delivery with its lines. `photo` adds the five-minute read link to the
+ * invoice photo (`GET /deliveries/:id` and the photo confirm answer only).
+ */
+export async function deliveryDetail(
 	db: InventoryReader,
 	row: DeliveryRow,
 	cost: boolean,
+	options: { photo?: boolean } = {},
 ): Promise<DeliveryDetail> {
 	const lines = await db
 		.select({ line: invDeliveryLines, itemName: invItems.name })
@@ -766,11 +806,25 @@ async function deliveryDetail(
 				...new Set(lines.map((entry) => entry.line.itemId)),
 			])
 		: new Map<string, number>()
+	const orderLineIds = lines
+		.map((entry) => entry.line.orderLineId)
+		.filter((id): id is string => !!id)
+	const orderedById = new Map(
+		(
+			await queryInChunks(orderLineIds, (chunk) =>
+				db
+					.select({ id: invOrderLines.id, quantity: invOrderLines.quantity })
+					.from(invOrderLines)
+					.where(inArray(invOrderLines.id, chunk)),
+			)
+		).map((line) => [line.id, line.quantity]),
+	)
 	const [summary] = await toSummaries(db, [row], cost)
-	return {
+	const detail: DeliveryDetail = {
 		...summary!,
 		zatcaReference: row.zatcaReference,
 		lines: lines.map(({ line, itemName }) => {
+			const priced = line.pricedAt !== null
 			const out: DeliveryDetail['lines'][number] = {
 				id: line.id,
 				itemId: line.itemId,
@@ -779,8 +833,14 @@ async function deliveryDetail(
 				packs: line.packs === null ? null : line.packs / 1000,
 				packName: line.packName,
 				realWeightQuantity: line.realWeightQuantity,
+				priced,
 			}
-			if (cost) {
+			if (line.orderLineId) {
+				out.orderLineId = line.orderLineId
+				out.orderedQuantity = orderedById.get(line.orderLineId) ?? null
+			}
+			// A line still waiting for its price has no money (never a zero).
+			if (cost && priced) {
 				out.lineTotalMinor = line.lineTotalMinor
 				if (line.priceMinor !== null) out.packPriceMinor = line.priceMinor
 				out.priceChangeBp =
@@ -794,36 +854,174 @@ async function deliveryDetail(
 			return out
 		}),
 	}
+	if (options.photo) {
+		const link =
+			row.photoKey && row.photoContentType
+				? presignObjectRead(row.photoKey, {
+						contentType: row.photoContentType,
+					})
+				: null
+		detail.photo = link
+			? {
+					url: link.url,
+					expiresAt: link.expiresAt,
+					contentType: row.photoContentType!,
+				}
+			: null
+	}
+	return detail
 }
 
+/**
+ * The currency of the organization's inventory money, for a delivery that
+ * carries none (quantity only): what its items already cost in, else the
+ * order's or supplier's currency, else the location's (reservations settings),
+ * else USD (as a supplier product with no supplier currency).
+ */
+export async function resolveInventoryCurrency(
+	db: InventoryReader,
+	input: {
+		locationId: string
+		order?: { currency: string | null } | null
+		supplier?: { currency: string | null } | null
+	},
+): Promise<string> {
+	const cost = await db
+		.select({ currency: invItemCosts.currency })
+		.from(invItemCosts)
+		.limit(1)
+		.get()
+	if (cost?.currency) return cost.currency
+	if (input.order?.currency) return input.order.currency
+	if (input.supplier?.currency) return input.supplier.currency
+	const place = await db
+		.select({ currency: rsvLocationSettings.currency })
+		.from(rsvLocationSettings)
+		.where(eq(rsvLocationSettings.locationId, input.locationId))
+		.get()
+	return place?.currency ?? 'USD'
+}
+
+export type RecordDeliveryOptions = {
+	/** Where it was recorded (default the App). */
+	source?: 'operator' | 'station'
+	/** Flagged for a manager: made on a tablet long before it arrived. */
+	lateSync?: boolean
+	/** When it happened (a tablet's clock), never later than now. Sets `receivedAt` and the business date. */
+	madeAt?: number
+	/**
+	 * Station: the goods arrived, so an order that is closed, unknown or for
+	 * another supplier does not refuse the delivery; it is recorded unlinked
+	 * and `orderLinkIgnored` says why.
+	 */
+	lenientOrder?: boolean
+	/** Called when the `clientId` was already stored and the first result is returned. */
+	onReplay?: () => void
+}
+
+type OrderLinkIgnored = NonNullable<RecordDeliveryResult['orderLinkIgnored']>
+
+/**
+ * Records a received delivery: stock in, and (priced) last and average cost
+ * and remembered pack prices.
+ *
+ * - `quantityOnly` stores the received quantities with no money: lines carry a
+ *   zero total and no `priced_at`, costs and supplier prices are NOT touched,
+ *   and the delivery is `pricesPending` until `confirmDeliveryPrices`.
+ * - `orderId` receives against an order: the order moves to `partly_received`
+ *   or `received` (`orderStatusAfterReceipt`), or to `received` with
+ *   `closeOrder`. The operator route refuses a closed order (`order_closed`),
+ *   a supplier that is not the order's (`supplier_mismatch`) and an unknown
+ *   order (404); `lenientOrder` (Station) records the goods unlinked instead.
+ * - A replayed `clientId` answers the first result.
+ */
 export async function recordDelivery(
 	caller: InventoryCaller,
-	input: { body: RecordDeliveryInput; idempotency: InventoryIdempotency },
-) {
+	input: {
+		body: RecordDeliveryInput
+		idempotency: InventoryIdempotency
+		options?: RecordDeliveryOptions
+	},
+): Promise<RecordDeliveryResult> {
 	const { body } = input
+	const options = input.options ?? {}
 	assertLocationAllowed(caller.locationIds, body.locationId)
+	const quantityOnly = body.quantityOnly === true
 	// Marking a delivery paid is a purchasing decision.
 	if (body.paid && !caller.purchasing) {
 		throw new InventoryError('purchasing_required', 403)
 	}
-	// The wire schema made money optional for the quantity-only path (phase 2);
-	// this priced path still needs it, and `quantityOnly` is not built yet.
-	const currency = body.currency
-	if (body.quantityOnly || currency === undefined) {
+	if (quantityOnly && body.paid) throw badRequest('quantity_only_unpaid')
+	if (!quantityOnly && body.currency === undefined) {
 		throw badRequest('priced_delivery_required')
 	}
-	const lines = body.lines.map((line) => {
-		if (line.lineTotalMinor === undefined) {
+	for (const line of body.lines) {
+		if (quantityOnly && line.lineTotalMinor !== undefined) {
+			throw badRequest('quantity_only_no_money')
+		}
+		if (!quantityOnly && line.lineTotalMinor === undefined) {
 			throw badRequest('priced_delivery_required')
 		}
-		return { ...line, lineTotalMinor: line.lineTotalMinor }
-	})
+	}
 	return withInventoryWrite(
-		{ orgId: caller.orgId, idempotency: input.idempotency },
+		{
+			orgId: caller.orgId,
+			idempotency: input.idempotency,
+			onReplay: options.onReplay,
+		},
 		async (tx, ctx) => {
-			if (body.supplierId) {
-				await loadSupplier(tx, body.supplierId)
+			// ── The order this delivery is against ──────────────────────────────
+			let order: OrderRow | null = null
+			let orderLinkIgnored: OrderLinkIgnored | null = null
+			if (body.orderId) {
+				const found = await tx
+					.select()
+					.from(invOrders)
+					.where(eq(invOrders.id, body.orderId))
+					.get()
+				if (!found || found.locationId !== body.locationId) {
+					if (!options.lenientOrder) throw notFound()
+					orderLinkIgnored = 'not_found'
+				} else if (
+					found.status === 'received' ||
+					found.status === 'cancelled'
+				) {
+					if (!options.lenientOrder) {
+						throw new InventoryError('order_closed', 409)
+					}
+					orderLinkIgnored = 'closed'
+				} else if (
+					body.supplierId !== null &&
+					body.supplierId !== found.supplierId
+				) {
+					if (!options.lenientOrder) {
+						throw new InventoryError('supplier_mismatch', 409)
+					}
+					orderLinkIgnored = 'wrong_supplier'
+				} else {
+					order = found
+				}
 			}
+			const supplierId = body.supplierId ?? order?.supplierId ?? null
+			const supplier = supplierId ? await loadSupplier(tx, supplierId) : null
+			const orderLines = order
+				? await tx
+						.select()
+						.from(invOrderLines)
+						.where(eq(invOrderLines.orderId, order.id))
+				: []
+			const orderLineById = new Map(orderLines.map((line) => [line.id, line]))
+			// A line's `orderLineId` must be a line of the linked order for the same item.
+			const lines = body.lines.map((line) => {
+				if (!line.orderLineId) return { ...line, orderLineId: null }
+				const target = orderLineById.get(line.orderLineId)
+				if (target && target.itemId === line.itemId) {
+					return { ...line, orderLineId: target.id }
+				}
+				if (!options.lenientOrder) throw badRequest('order_line')
+				return { ...line, orderLineId: null }
+			})
+
 			const itemIds = [...new Set(lines.map((line) => line.itemId))]
 			const [items, costs] = await Promise.all([
 				queryInChunks(itemIds, (chunk) =>
@@ -843,8 +1041,17 @@ export async function recordDelivery(
 				throw notFound()
 			}
 			const costById = new Map(costs.map((row) => [row.itemId, row]))
-			for (const cost of costs) {
-				if (cost.currency !== currency) throw badRequest('currency_mismatch')
+			const currency = quantityOnly
+				? await resolveInventoryCurrency(tx, {
+						locationId: body.locationId,
+						order,
+						supplier,
+					})
+				: body.currency!
+			if (!quantityOnly) {
+				for (const cost of costs) {
+					if (cost.currency !== currency) throw badRequest('currency_mismatch')
+				}
 			}
 			const productIds = [
 				...new Set(
@@ -872,15 +1079,16 @@ export async function recordDelivery(
 			}
 
 			const deliveryId = newId()
+			const receivedAt = Math.min(options.madeAt ?? ctx.now, ctx.now)
 			const businessDate = await locationBusinessDate(
 				tx,
 				body.locationId,
-				ctx.now,
+				receivedAt,
 			)
 			await tx.insert(invDeliveries).values({
 				id: deliveryId,
 				locationId: body.locationId,
-				supplierId: body.supplierId,
+				supplierId,
 				status: 'received',
 				invoiceNumber: body.invoiceNumber || null,
 				invoiceDate: body.invoiceDate ?? null,
@@ -888,12 +1096,15 @@ export async function recordDelivery(
 				totalMinor: body.totalMinor ?? null,
 				currency,
 				zatcaReference: body.zatcaReference || null,
+				orderId: order?.id ?? null,
+				quantityOnly,
+				lateSync: options.lateSync === true,
 				paidAt: body.paid ? ctx.now : null,
 				receivedByKind: caller.actor.kind,
 				receivedById: caller.actor.id,
-				receivedAt: ctx.now,
+				receivedAt,
 				businessDate,
-				source: 'operator',
+				source: options.source ?? 'operator',
 				createdAt: ctx.now,
 				updatedAt: ctx.now,
 			})
@@ -909,10 +1120,44 @@ export async function recordDelivery(
 			>()
 			for (const line of lines) {
 				const item = itemById.get(line.itemId)!
-				const costMicro = costMicroFromPackPrice(
-					line.lineTotalMinor,
-					line.quantity,
-				)
+				const lineId = newId()
+				if (quantityOnly) {
+					// Stock in only: no cost, no price, no value.
+					await tx.insert(invDeliveryLines).values({
+						id: lineId,
+						deliveryId,
+						itemId: item.id,
+						supplierProductId: line.supplierProductId ?? null,
+						quantity: line.quantity,
+						packName: line.packName ?? null,
+						packBaseQuantity: line.packBaseQuantity ?? null,
+						packs: line.packs == null ? null : Math.round(line.packs * 1000),
+						priceMinor: null,
+						lineTotalMinor: 0,
+						realWeightQuantity: line.realWeightQuantity ?? null,
+						orderLineId: line.orderLineId,
+						pricedAt: null,
+						createdAt: ctx.now,
+					})
+					await tx.insert(invMovements).values({
+						locationId: body.locationId,
+						itemId: item.id,
+						quantity: line.quantity,
+						valueMinor: null,
+						currency: null,
+						kind: 'delivery',
+						sourceType: 'delivery',
+						sourceId: deliveryId,
+						eventKey: `delivery:${lineId}`,
+						businessDate,
+						actorKind: caller.actor.kind,
+						actorId: caller.actor.id,
+						createdAt: ctx.now,
+					})
+					continue
+				}
+				const lineTotalMinor = line.lineTotalMinor!
+				const costMicro = costMicroFromPackPrice(lineTotalMinor, line.quantity)
 				const existing = costById.get(item.id) ?? null
 				const onHand = await onHandTotal(tx, item.id)
 				const average = weightedAverageCostMicro({
@@ -947,7 +1192,6 @@ export async function recordDelivery(
 					...next,
 				})
 
-				const lineId = newId()
 				await tx.insert(invDeliveryLines).values({
 					id: lineId,
 					deliveryId,
@@ -958,8 +1202,9 @@ export async function recordDelivery(
 					packBaseQuantity: line.packBaseQuantity ?? null,
 					packs: line.packs == null ? null : Math.round(line.packs * 1000),
 					priceMinor: line.packPriceMinor ?? null,
-					lineTotalMinor: line.lineTotalMinor,
+					lineTotalMinor,
 					realWeightQuantity: line.realWeightQuantity ?? null,
+					orderLineId: line.orderLineId,
 					pricedAt: ctx.now,
 					createdAt: ctx.now,
 				})
@@ -967,7 +1212,7 @@ export async function recordDelivery(
 					locationId: body.locationId,
 					itemId: item.id,
 					quantity: line.quantity,
-					valueMinor: line.lineTotalMinor,
+					valueMinor: lineTotalMinor,
 					currency,
 					kind: 'delivery',
 					sourceType: 'delivery',
@@ -1004,6 +1249,41 @@ export async function recordDelivery(
 					})
 				}
 			}
+
+			// ── The order after this delivery ──────────────────────────────────
+			let orderSummary: OrderSummary | undefined
+			if (order) {
+				const received = await receivedByOrderLine(
+					tx,
+					orderLines.map((line) => line.id),
+				)
+				const status = orderStatusAfterReceipt({
+					status: order.status,
+					closeOrder: body.closeOrder === true,
+					lines: orderLines.map((line) => ({
+						orderedQuantity: line.quantity,
+						receivedQuantity: received.get(line.id) ?? 0,
+						pricedByWeight: line.pricedByWeight,
+					})),
+				})
+				if (status !== order.status) {
+					await tx
+						.update(invOrders)
+						.set({
+							status,
+							closedAt: status === 'received' ? ctx.now : null,
+							version: order.version + 1,
+							updatedAt: ctx.now,
+						})
+						.where(eq(invOrders.id, order.id))
+				}
+				const nextOrder = await tx
+					.select()
+					.from(invOrders)
+					.where(eq(invOrders.id, order.id))
+					.get()
+				;[orderSummary] = await orderSummaries(tx, [nextOrder!], caller.cost)
+			}
 			await recordInventoryAudit(tx, {
 				actorKind: caller.actor.kind,
 				actorId: caller.actor.id,
@@ -1011,7 +1291,15 @@ export async function recordDelivery(
 				resourceType: 'delivery',
 				resourceId: deliveryId,
 				locationId: body.locationId,
-				detail: { lines: lines.length, paid: body.paid },
+				detail: {
+					lines: lines.length,
+					paid: body.paid,
+					quantityOnly,
+					orderId: order?.id ?? null,
+					orderLinkIgnored,
+					source: options.source ?? 'operator',
+					lateSync: options.lateSync === true,
+				},
 				at: ctx.now,
 			})
 			const row = await tx
@@ -1019,35 +1307,37 @@ export async function recordDelivery(
 				.from(invDeliveries)
 				.where(eq(invDeliveries.id, deliveryId))
 				.get()
-			const result: {
-				delivery: DeliveryDetail
-				priceChanges?: Array<{
-					itemId: string
-					itemName: string
-					previousCostMicro: number
-					costMicro: number
-					changeBp: number
-				}>
-			} = { delivery: await deliveryDetail(tx, row!, caller.cost) }
-			if (caller.cost) {
-				result.priceChanges = [...rises.entries()]
-					.map(([itemId, rise]) => ({
-						itemId,
-						itemName: rise.itemName,
-						previousCostMicro: rise.previous,
-						costMicro: rise.costMicro,
-						changeBp: rise.changeBp,
-					}))
-					.sort(
-						(a, b) => b.changeBp - a.changeBp || (a.itemId < b.itemId ? -1 : 1),
-					)
+			const result: RecordDeliveryResult = {
+				delivery: await deliveryDetail(tx, row!, caller.cost),
 			}
+			if (caller.cost && !quantityOnly) {
+				result.priceChanges = priceChangeList(rises)
+			}
+			if (orderSummary) result.order = orderSummary
+			if (body.orderId) result.orderLinkIgnored = orderLinkIgnored
 			return result
 		},
 	)
 }
 
-async function loadAllowedDelivery(
+function priceChangeList(
+	rises: Map<
+		string,
+		{ itemName: string; previous: number; costMicro: number; changeBp: number }
+	>,
+) {
+	return [...rises.entries()]
+		.map(([itemId, rise]) => ({
+			itemId,
+			itemName: rise.itemName,
+			previousCostMicro: rise.previous,
+			costMicro: rise.costMicro,
+			changeBp: rise.changeBp,
+		}))
+		.sort((a, b) => b.changeBp - a.changeBp || (a.itemId < b.itemId ? -1 : 1))
+}
+
+export async function loadAllowedDelivery(
 	db: InventoryReader,
 	id: string,
 	caller: Pick<InventoryCaller, 'locationIds'>,
@@ -1060,6 +1350,245 @@ async function loadAllowedDelivery(
 	if (!row) throw notFound()
 	assertLocationAllowed(caller.locationIds, row.locationId)
 	return row
+}
+
+/**
+ * Prices a quantity-only delivery (one that arrived from a Station tablet, or
+ * without prices) once a person has the invoice. Every unpriced line is
+ * listed exactly once. It does what `recordDelivery` does for priced lines:
+ * cost per base unit from `lineTotalMinor / quantity`, last and weighted
+ * average cost (on hand minus this delivery's quantity, floored at zero),
+ * the supplier's pack price, and price changes; the delivery then reads
+ * `pricesPending: false`. The value of the purchase enters the ledger as a
+ * zero-quantity `delivery` movement now (the original movement carried no
+ * value and movements are append-only).
+ */
+export async function confirmDeliveryPrices(
+	caller: InventoryCaller,
+	input: { id: string; body: ConfirmDeliveryPricesInput },
+): Promise<RecordDeliveryResult> {
+	const { body } = input
+	return withInventoryWrite({ orgId: caller.orgId }, async (tx, ctx) => {
+		const row = await loadAllowedDelivery(tx, input.id, caller)
+		assertVersion(row.version, body.expectedVersion)
+		if (row.status !== 'received') throw stateConflict('not_received')
+		if (!row.quantityOnly || row.pricesConfirmedAt !== null) {
+			throw new InventoryError('prices_confirmed', 409)
+		}
+		const lines: LineRow[] = await tx
+			.select()
+			.from(invDeliveryLines)
+			.where(eq(invDeliveryLines.deliveryId, row.id))
+			.orderBy(invDeliveryLines.createdAt, invDeliveryLines.id)
+		const unpriced = lines.filter((line) => line.pricedAt === null)
+		if (unpriced.length === 0) throw new InventoryError('prices_confirmed', 409)
+		const sent = new Map(body.lines.map((line) => [line.lineId, line]))
+		if (
+			sent.size !== body.lines.length ||
+			sent.size !== unpriced.length ||
+			unpriced.some((line) => !sent.has(line.id))
+		) {
+			throw badRequest('lines')
+		}
+		const currency = body.currency
+		const itemIds = [...new Set(unpriced.map((line) => line.itemId))]
+		const [items, costs] = await Promise.all([
+			queryInChunks(itemIds, (chunk) =>
+				tx.select().from(invItems).where(inArray(invItems.id, chunk)),
+			),
+			queryInChunks(itemIds, (chunk) =>
+				tx
+					.select()
+					.from(invItemCosts)
+					.where(inArray(invItemCosts.itemId, chunk)),
+			),
+		])
+		const itemById = new Map(items.map((item) => [item.id, item]))
+		const costById = new Map(costs.map((cost) => [cost.itemId, cost]))
+		for (const cost of costs) {
+			if (cost.currency !== currency) throw badRequest('currency_mismatch')
+		}
+		const productIds = [
+			...new Set(
+				unpriced
+					.map((line) => line.supplierProductId)
+					.filter((id): id is string => !!id),
+			),
+		]
+		const products = await queryInChunks(productIds, (chunk) =>
+			tx
+				.select()
+				.from(invSupplierProducts)
+				.where(inArray(invSupplierProducts.id, chunk)),
+		)
+		const productById = new Map(
+			products.map((product) => [product.id, product]),
+		)
+
+		// Stock before this delivery, per item, so the average weighs only what
+		// was on the shelf before it (floored at zero), line by line.
+		const delivered = new Map<string, number>()
+		for (const line of lines) {
+			delivered.set(
+				line.itemId,
+				(delivered.get(line.itemId) ?? 0) + line.quantity,
+			)
+		}
+		const stockBefore = new Map<string, number>()
+		for (const itemId of itemIds) {
+			stockBefore.set(
+				itemId,
+				Math.max(
+					0,
+					(await onHandTotal(tx, itemId)) - (delivered.get(itemId) ?? 0),
+				),
+			)
+		}
+
+		const businessDate = await locationBusinessDate(tx, row.locationId, ctx.now)
+		const rises = new Map<
+			string,
+			{
+				itemName: string
+				previous: number
+				costMicro: number
+				changeBp: number
+			}
+		>()
+		for (const line of unpriced) {
+			const item = itemById.get(line.itemId)
+			if (!item) throw notFound()
+			const entry = sent.get(line.id)!
+			const costMicro = costMicroFromPackPrice(
+				entry.lineTotalMinor,
+				line.quantity,
+			)
+			const existing = costById.get(item.id) ?? null
+			const before = stockBefore.get(item.id) ?? 0
+			const average = weightedAverageCostMicro({
+				onHandQuantity: before,
+				averageCostMicro: existing?.avgCostMicro ?? null,
+				receivedQuantity: line.quantity,
+				receivedCostMicro: costMicro,
+			})
+			stockBefore.set(item.id, before + line.quantity)
+			const change = priceChangeBp(existing?.lastCostMicro ?? null, costMicro)
+			if (change !== null && change > 0 && existing?.lastCostMicro != null) {
+				rises.set(item.id, {
+					itemName: item.name,
+					previous: existing.lastCostMicro,
+					costMicro,
+					changeBp: change,
+				})
+			}
+			const next = {
+				currency,
+				lastCostMicro: costMicro,
+				lastPricedAt: ctx.now,
+				avgCostMicro: average,
+				version: (existing?.version ?? 0) + 1,
+				updatedAt: ctx.now,
+			}
+			await tx
+				.insert(invItemCosts)
+				.values({ itemId: item.id, ...next })
+				.onConflictDoUpdate({ target: invItemCosts.itemId, set: next })
+			costById.set(item.id, { itemId: item.id, ...next })
+
+			await tx
+				.update(invDeliveryLines)
+				.set({
+					priceMinor: entry.packPriceMinor ?? null,
+					lineTotalMinor: entry.lineTotalMinor,
+					pricedAt: ctx.now,
+				})
+				.where(eq(invDeliveryLines.id, line.id))
+			// The money of the purchase: the first movement had no value.
+			await tx.insert(invMovements).values({
+				locationId: row.locationId,
+				itemId: item.id,
+				quantity: 0,
+				valueMinor: entry.lineTotalMinor,
+				currency,
+				kind: 'delivery',
+				sourceType: 'delivery',
+				sourceId: row.id,
+				eventKey: `delivery-priced:${line.id}`,
+				businessDate,
+				actorKind: caller.actor.kind,
+				actorId: caller.actor.id,
+				createdAt: ctx.now,
+			})
+			const product = line.supplierProductId
+				? productById.get(line.supplierProductId)
+				: undefined
+			if (
+				product &&
+				product.archivedAt === null &&
+				entry.packPriceMinor != null &&
+				entry.packPriceMinor !== product.priceMinor
+			) {
+				await tx
+					.update(invSupplierProducts)
+					.set({
+						priceMinor: entry.packPriceMinor,
+						currency,
+						version: product.version + 1,
+						updatedAt: ctx.now,
+					})
+					.where(eq(invSupplierProducts.id, product.id))
+				productById.set(product.id, {
+					...product,
+					priceMinor: entry.packPriceMinor,
+					version: product.version + 1,
+				})
+			}
+		}
+
+		const set: Partial<typeof invDeliveries.$inferInsert> = {
+			currency,
+			pricesConfirmedAt: ctx.now,
+			version: row.version + 1,
+			updatedAt: ctx.now,
+		}
+		if (body.invoiceNumber !== undefined) {
+			set.invoiceNumber = body.invoiceNumber || null
+		}
+		if (body.invoiceDate !== undefined) set.invoiceDate = body.invoiceDate
+		if (body.vatMinor !== undefined) set.vatMinor = body.vatMinor
+		if (body.totalMinor !== undefined) set.totalMinor = body.totalMinor
+		if (body.zatcaReference !== undefined) {
+			set.zatcaReference = body.zatcaReference || null
+		}
+		if (body.paid) set.paidAt = ctx.now
+		await tx.update(invDeliveries).set(set).where(eq(invDeliveries.id, row.id))
+		await recordInventoryAudit(tx, {
+			actorKind: caller.actor.kind,
+			actorId: caller.actor.id,
+			action: 'delivery.confirm_prices',
+			resourceType: 'delivery',
+			resourceId: row.id,
+			locationId: row.locationId,
+			detail: { lines: unpriced.length, paid: body.paid },
+			at: ctx.now,
+		})
+		const next = await loadAllowedDelivery(tx, row.id, caller)
+		const result: RecordDeliveryResult = {
+			delivery: await deliveryDetail(tx, next, caller.cost),
+		}
+		if (caller.cost) result.priceChanges = priceChangeList(rises)
+		if (next.orderId) {
+			const order = await tx
+				.select()
+				.from(invOrders)
+				.where(eq(invOrders.id, next.orderId))
+				.get()
+			if (order) {
+				;[result.order] = await orderSummaries(tx, [order], caller.cost)
+			}
+		}
+		return result
+	})
 }
 
 export async function markDeliveryPaid(
@@ -1095,8 +1624,10 @@ export async function markDeliveryPaid(
 /**
  * Cancels a received delivery: its stock goes out again by reversing
  * movements (the lines and the original movements stay). The last cost of
- * each item goes back to the latest remaining delivery; the weighted average
- * is not rewound (it is a moving figure and the next delivery rebalances it).
+ * each item goes back to the latest remaining PRICED delivery; the weighted
+ * average is not rewound (it is a moving figure and the next delivery
+ * rebalances it). An order it was received against keeps its status (it only
+ * moves forward) but the lines read as less received.
  */
 export async function cancelDelivery(
 	caller: InventoryCaller,
@@ -1113,12 +1644,13 @@ export async function cancelDelivery(
 			.orderBy(invDeliveryLines.createdAt, invDeliveryLines.id)
 		const businessDate = await locationBusinessDate(tx, row.locationId, ctx.now)
 		for (const line of lines) {
+			const priced = line.pricedAt !== null
 			await tx.insert(invMovements).values({
 				locationId: row.locationId,
 				itemId: line.itemId,
 				quantity: -line.quantity,
-				valueMinor: -line.lineTotalMinor,
-				currency: row.currency,
+				valueMinor: priced ? -line.lineTotalMinor : null,
+				currency: priced ? row.currency : null,
 				kind: 'delivery',
 				sourceType: 'delivery',
 				sourceId: row.id,
@@ -1138,7 +1670,9 @@ export async function cancelDelivery(
 				updatedAt: ctx.now,
 			})
 			.where(eq(invDeliveries.id, row.id))
-		for (const itemId of new Set(lines.map((line) => line.itemId))) {
+		for (const itemId of new Set(
+			lines.filter((line) => line.pricedAt !== null).map((line) => line.itemId),
+		)) {
 			const remaining = await tx
 				.select({
 					quantity: invDeliveryLines.quantity,
@@ -1154,6 +1688,7 @@ export async function cancelDelivery(
 					and(
 						eq(invDeliveryLines.itemId, itemId),
 						eq(invDeliveries.status, 'received'),
+						sql`${invDeliveryLines.pricedAt} is not null`,
 					),
 				)
 				.orderBy(desc(invDeliveryLines.createdAt), desc(invDeliveryLines.id))

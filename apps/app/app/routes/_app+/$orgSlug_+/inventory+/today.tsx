@@ -38,6 +38,7 @@ import { summarizeFoodCost } from '#app/utils/inventory/count-review.ts'
 import { formatMoney } from '#app/utils/inventory/format.ts'
 import { inventoryErrorMessage } from '#app/utils/inventory/inventory-errors.ts'
 import { WASTE_REASON_LABELS } from '#app/utils/inventory/labels.ts'
+import { cutoffText, weekdayShort } from '#app/utils/inventory/order-view.ts'
 import { deriveInventorySetupSteps } from '#app/utils/inventory/setup-progress.ts'
 import {
 	attentionTarget,
@@ -89,6 +90,7 @@ export default function InventoryTodayRoute() {
 		activeLocationId,
 		canEdit,
 		canSeeCost,
+		canManagePurchasing,
 		currency,
 	} = useInventoryLayoutData()
 	const { search } = useLocation()
@@ -187,19 +189,17 @@ export default function InventoryTodayRoute() {
 						<Icon name="plus" />
 						<Trans>Start count</Trans>
 					</Button>
-					{canSeeCost ? (
-						<Button
-							variant="outline"
-							render={
-								<Link
-									to={`/${orgSlug}/inventory/purchasing/deliveries/new${linkSearch}`}
-								/>
-							}
-							data-testid="today-record-delivery"
-						>
-							<Trans>Record delivery</Trans>
-						</Button>
-					) : null}
+					<Button
+						variant="outline"
+						render={
+							<Link
+								to={`/${orgSlug}/inventory/purchasing/deliveries/new${linkSearch}`}
+							/>
+						}
+						data-testid="today-record-delivery"
+					>
+						<Trans>Record delivery</Trans>
+					</Button>
 				</InventoryHeaderActions>
 			) : null}
 
@@ -259,6 +259,7 @@ export default function InventoryTodayRoute() {
 											}).to
 										}
 										canEdit={canEdit}
+										canManagePurchasing={canManagePurchasing}
 										canSeeCost={canSeeCost}
 										currency={currency}
 										today={data.date}
@@ -322,7 +323,8 @@ function TodayMetrics({
 			style: 'percent',
 			maximumFractionDigits: 1,
 		}).format(bp / 10_000)
-	const toOrder = metrics.lowItems + metrics.outItems
+	const toOrder = metrics.toOrderItems ?? metrics.lowItems + metrics.outItems
+	const toOrderSuppliers = metrics.toOrderSuppliers ?? null
 	const lastCount = (() => {
 		if (metrics.lastCountAt === null) {
 			return <Trans>No count yet</Trans>
@@ -348,7 +350,26 @@ function TodayMetrics({
 					label={<Trans>Items low</Trans>}
 					value={<bdi dir="ltr">{metrics.lowItems}</bdi>}
 					tone={metrics.lowItems > 0 ? 'warning' : 'default'}
-					hint={<Trans>Below the amount you order at</Trans>}
+					hint={
+						metrics.toOrderItems !== undefined &&
+						metrics.toOrderSuppliers !== undefined ? (
+							<>
+								<Plural
+									value={metrics.toOrderItems}
+									one="# item to order"
+									other="# items to order"
+								/>
+								{' · '}
+								<Plural
+									value={metrics.toOrderSuppliers}
+									one="# supplier"
+									other="# suppliers"
+								/>
+							</>
+						) : (
+							<Trans>Below the amount you order at</Trans>
+						)
+					}
 				/>
 				<WorkspaceMetric
 					label={<Trans>Out of stock</Trans>}
@@ -437,9 +458,17 @@ function TodayMetrics({
 				}
 				tone={toOrder > 0 ? 'warning' : 'default'}
 				hint={
-					<Trans>
-						<bdi dir="ltr">{outCount}</bdi> of them out of stock
-					</Trans>
+					toOrderSuppliers !== null ? (
+						<Plural
+							value={toOrderSuppliers}
+							one="from # supplier"
+							other="from # suppliers"
+						/>
+					) : (
+						<Trans>
+							<bdi dir="ltr">{outCount}</bdi> of them out of stock
+						</Trans>
+					)
 				}
 			/>
 		</WorkspaceMetricGrid>
@@ -450,6 +479,7 @@ function AttentionRow({
 	item,
 	href,
 	canEdit,
+	canManagePurchasing,
 	canSeeCost,
 	currency,
 	today,
@@ -457,6 +487,7 @@ function AttentionRow({
 	item: AttentionItem
 	href: string
 	canEdit: boolean
+	canManagePurchasing: boolean
 	canSeeCost: boolean
 	currency: string
 	today: string
@@ -582,6 +613,84 @@ function AttentionRow({
 				/>
 			)
 			action = <Trans>See unpaid</Trans>
+			break
+		}
+		case 'order_cutoff': {
+			const supplier = item.supplierName
+			const by = cutoffText(
+				{ date: item.cutoffDate, time: item.cutoffTime },
+				i18n.locale,
+			)
+			const day = weekdayShort(item.expectedDate, i18n.locale)
+			const itemCount = item.itemCount
+			sentence = (
+				<>
+					<Trans>
+						Order from{' '}
+						<span className="font-medium wrap-anywhere">{supplier}</span> by{' '}
+						<bdi dir="ltr">{by}</bdi> for <bdi dir="ltr">{day}</bdi>.
+					</Trans>{' '}
+					<Plural
+						value={itemCount}
+						one="# item to order."
+						other="# items to order."
+					/>
+				</>
+			)
+			action = item.draftOrderId ? (
+				<Trans>Continue draft</Trans>
+			) : (
+				<Trans>Review order</Trans>
+			)
+			break
+		}
+		case 'delivery_expected': {
+			const supplier = item.supplierName
+			const due = new Intl.DateTimeFormat(i18n.locale, {
+				dateStyle: 'medium',
+			}).format(localDate(item.expectedDate))
+			sentence = item.overdue ? (
+				<Trans>
+					The order from{' '}
+					<span className="font-medium wrap-anywhere">{supplier}</span> was due{' '}
+					<bdi dir="ltr">{due}</bdi> and has not been received.
+				</Trans>
+			) : (
+				<Trans>
+					The order from{' '}
+					<span className="font-medium wrap-anywhere">{supplier}</span> is due
+					today.
+				</Trans>
+			)
+			action = canEdit ? <Trans>Receive</Trans> : <Trans>See order</Trans>
+			break
+		}
+		case 'prices_pending': {
+			const supplier = item.supplierName
+			const lineCount = item.lineCount
+			sentence = (
+				<>
+					{supplier ? (
+						<Trans>
+							A delivery from{' '}
+							<span className="font-medium wrap-anywhere">{supplier}</span>{' '}
+							arrived without prices.
+						</Trans>
+					) : (
+						<Trans>A delivery arrived without prices.</Trans>
+					)}{' '}
+					<Plural
+						value={lineCount}
+						one="# item needs its price."
+						other="# items need their prices."
+					/>
+				</>
+			)
+			action = canManagePurchasing ? (
+				<Trans>Confirm prices</Trans>
+			) : (
+				<Trans>See delivery</Trans>
+			)
 			break
 		}
 	}

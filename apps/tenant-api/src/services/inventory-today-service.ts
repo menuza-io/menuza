@@ -1,8 +1,5 @@
 import {
-	costMicroFromPackPrice,
 	inventoryValueMinor,
-	PRICE_RISE_ALERT_BP,
-	priceChangeBp,
 	type AttentionItem,
 	type Today,
 } from '@repo/inventory'
@@ -11,14 +8,13 @@ import {
 	invCounts,
 	invDeliveries,
 	invDeliveryLines,
-	invItems,
 	invSupplierProducts,
 	invSuppliers,
 } from '@repo/tenant-db'
-import { and, desc, eq, gte, inArray, isNull, ne, sql } from 'drizzle-orm'
+import { and, desc, eq, inArray, isNull, ne, sql } from 'drizzle-orm'
 import { queryInChunks } from '../lib/chunked-in.ts'
 import { type InventoryReader } from '../lib/inventory-write.ts'
-import { locationBusinessDate, wireUnit } from './inventory-common.ts'
+import { locationClock, wireUnit } from './inventory-common.ts'
 import { computeFoodCost } from './inventory-food-cost.ts'
 import {
 	type InventoryCaller,
@@ -26,6 +22,12 @@ import {
 	stockValueMinor,
 } from './inventory-items-service.ts'
 import { listCounts } from './inventory-counts-service.ts'
+import {
+	buildSuggestedOrders,
+	listDueOrders,
+	listOpenOrdersForWeek,
+} from './inventory-orders-service.ts'
+import { findPriceRises } from './inventory-receiving-service.ts'
 import {
 	getInventorySettings,
 	getInventoryStatus,
@@ -51,12 +53,48 @@ const KIND_PRIORITY: Record<AttentionItem['kind'], number> = {
 	unpaid_deliveries: 8,
 }
 
-/** Items whose cost rose more than the alert threshold on the latest delivery at a location. */
+/**
+ * Items whose latest priced delivery at a location rose by more than the
+ * alert threshold, among prices set in the last week (a quantity-only
+ * delivery counts from the day its prices were confirmed).
+ */
 async function recentPriceRises(
 	db: InventoryReader,
 	locationId: string,
 	now: number,
 ) {
+	const rises = await findPriceRises(db, {
+		locationId,
+		sinceMs: now - PRICE_RISE_WINDOW_MS,
+	})
+	if (rises.length === 0) return []
+	const supplierIds = [
+		...new Set(
+			rises.map((rise) => rise.supplierId).filter((id): id is string => !!id),
+		),
+	]
+	const suppliers = await queryInChunks(supplierIds, (chunk) =>
+		db
+			.select({ id: invSuppliers.id, name: invSuppliers.name })
+			.from(invSuppliers)
+			.where(inArray(invSuppliers.id, chunk)),
+	)
+	const names = new Map(suppliers.map((row) => [row.id, row.name]))
+	return rises.map((rise) => ({
+		itemId: rise.itemId,
+		itemName: rise.itemName,
+		changeBp: rise.changeBp,
+		money: inventoryValueMinor(
+			rise.quantity,
+			Math.max(rise.costMicro - rise.previousCostMicro, 0),
+		),
+		deliveryId: rise.deliveryId,
+		supplierName: rise.supplierId ? (names.get(rise.supplierId) ?? null) : null,
+	}))
+}
+
+/** The delivery that has waited longest for its prices (Station quantity-only receipts). */
+async function oldestPricesPending(db: InventoryReader, locationId: string) {
 	const delivery = await db
 		.select()
 		.from(invDeliveries)
@@ -64,20 +102,15 @@ async function recentPriceRises(
 			and(
 				eq(invDeliveries.locationId, locationId),
 				eq(invDeliveries.status, 'received'),
-				gte(invDeliveries.createdAt, now - PRICE_RISE_WINDOW_MS),
+				eq(invDeliveries.quantityOnly, true),
+				isNull(invDeliveries.pricesConfirmedAt),
 			),
 		)
-		.orderBy(desc(invDeliveries.createdAt), desc(invDeliveries.id))
+		.orderBy(invDeliveries.createdAt, invDeliveries.id)
 		.limit(1)
 		.get()
-	if (!delivery) return []
-	const [lines, supplier] = await Promise.all([
-		db
-			.select({ line: invDeliveryLines, itemName: invItems.name })
-			.from(invDeliveryLines)
-			.innerJoin(invItems, eq(invItems.id, invDeliveryLines.itemId))
-			.where(eq(invDeliveryLines.deliveryId, delivery.id))
-			.orderBy(invDeliveryLines.createdAt, invDeliveryLines.id),
+	if (!delivery) return null
+	const [supplier, lines] = await Promise.all([
 		delivery.supplierId
 			? db
 					.select({ name: invSuppliers.name })
@@ -85,62 +118,17 @@ async function recentPriceRises(
 					.where(eq(invSuppliers.id, delivery.supplierId))
 					.get()
 			: Promise.resolve(undefined),
-	])
-	const itemIds = [...new Set(lines.map((entry) => entry.line.itemId))]
-	const earlier = await queryInChunks(itemIds, (chunk) =>
 		db
-			.select({
-				itemId: invDeliveryLines.itemId,
-				quantity: invDeliveryLines.quantity,
-				total: invDeliveryLines.lineTotalMinor,
-			})
+			.select({ n: sql<number>`count(*)` })
 			.from(invDeliveryLines)
-			.innerJoin(
-				invDeliveries,
-				eq(invDeliveries.id, invDeliveryLines.deliveryId),
-			)
-			.where(
-				and(
-					inArray(invDeliveryLines.itemId, chunk),
-					eq(invDeliveries.status, 'received'),
-					ne(invDeliveries.id, delivery.id),
-					sql`${invDeliveryLines.createdAt} <= ${delivery.createdAt}`,
-				),
-			)
-			.orderBy(invDeliveryLines.createdAt, invDeliveryLines.id),
-	)
-	const previous = new Map<string, number>()
-	for (const row of earlier) {
-		if (row.quantity > 0) {
-			previous.set(row.itemId, costMicroFromPackPrice(row.total, row.quantity))
-		}
-	}
-	const rises: Array<{
-		itemId: string
-		itemName: string
-		changeBp: number
-		money: number
-	}> = []
-	for (const { line, itemName } of lines) {
-		if (line.quantity <= 0) continue
-		const cost = costMicroFromPackPrice(line.lineTotalMinor, line.quantity)
-		const before = previous.get(line.itemId) ?? null
-		const change = priceChangeBp(before, cost)
-		if (change === null || change <= PRICE_RISE_ALERT_BP || before === null) {
-			continue
-		}
-		rises.push({
-			itemId: line.itemId,
-			itemName,
-			changeBp: change,
-			money: inventoryValueMinor(line.quantity, cost - before),
-		})
-	}
-	return rises.map((rise) => ({
-		...rise,
+			.where(eq(invDeliveryLines.deliveryId, delivery.id))
+			.get(),
+	])
+	return {
 		deliveryId: delivery.id,
 		supplierName: supplier?.name ?? null,
-	}))
+		lineCount: Number(lines?.n ?? 0),
+	}
 }
 
 export async function getToday(
@@ -149,11 +137,15 @@ export async function getToday(
 		locationId: string
 		caller: InventoryCaller
 		now: number
+		/** `inventory.purchasing` is on: orders, cut-offs and expected deliveries. */
+		purchasing?: boolean
 	},
 ): Promise<Today> {
 	const { locationId, caller, now } = input
 	const cost = caller.cost
-	const date = await locationBusinessDate(db, locationId, now)
+	const purchasing = input.purchasing === true
+	const clock = await locationClock(db, locationId, now)
+	const date = clock.date
 	const weekFrom = addDays(date, -6)
 	const [settings, stock, status, lastCount, openCounts, waste, supplierRows] =
 		await Promise.all([
@@ -212,6 +204,52 @@ export async function getToday(
 	const candidates: Candidate[] = []
 	const push = (item: AttentionItem, money = 0) =>
 		candidates.push({ item, money, priority: KIND_PRIORITY[item.kind] })
+
+	const suggestion = purchasing
+		? await buildSuggestedOrders(db, { locationId, cost, now })
+		: null
+	if (suggestion) {
+		metrics.toOrderItems = suggestion.toOrderItems
+		metrics.toOrderSuppliers = suggestion.suppliers.length
+		// An order whose cut-off is today and not yet passed.
+		for (const card of suggestion.suppliers) {
+			if (
+				!card.cutoff ||
+				!card.expectedDate ||
+				card.cutoff.date !== clock.local.date
+			) {
+				continue
+			}
+			push(
+				{
+					kind: 'order_cutoff',
+					supplierId: card.supplierId,
+					supplierName: card.supplierName,
+					cutoffDate: card.cutoff.date,
+					cutoffTime: card.cutoff.time,
+					expectedDate: card.expectedDate,
+					itemCount: card.lineCount,
+					draftOrderId: card.draftOrderId,
+				},
+				card.totalMinor ?? 0,
+			)
+		}
+		// Open orders due today, or overdue (the oldest few).
+		for (const due of (await listDueOrders(db, { locationId, date })).slice(
+			0,
+			3,
+		)) {
+			push({
+				kind: 'delivery_expected',
+				orderId: due.order.id,
+				supplierName: due.supplierName,
+				expectedDate: due.order.expectedDate!,
+				overdue: due.order.expectedDate! < date,
+			})
+		}
+	}
+	const pending = await oldestPricesPending(db, locationId)
+	if (pending) push({ kind: 'prices_pending', ...pending })
 
 	const lowRows = [...out, ...low]
 	if (lowRows.length > 0) {
@@ -340,6 +378,9 @@ export async function getToday(
 			a.name.toLowerCase().localeCompare(b.name.toLowerCase()) ||
 			(a.id < b.id ? -1 : 1),
 	)
+	const openOrders = purchasing
+		? await listOpenOrdersForWeek(db, locationId)
+		: []
 	const week: Today['week'] = []
 	for (let offset = 0; offset < 7; offset++) {
 		const day = addDays(date, offset)
@@ -354,12 +395,20 @@ export async function getToday(
 		}
 		for (const supplier of suppliers) {
 			if (supplier.deliveryDays.includes(weekday)) {
-				week.push({
+				const entry: Today['week'][number] = {
 					date: day,
 					kind: 'delivery',
 					supplierId: supplier.id,
 					supplierName: supplier.name,
-				})
+				}
+				if (purchasing) {
+					entry.orderId =
+						openOrders.find(
+							(order) =>
+								order.supplierId === supplier.id && order.expectedDate === day,
+						)?.id ?? null
+				}
+				week.push(entry)
 			}
 		}
 	}

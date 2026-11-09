@@ -89,6 +89,29 @@ describe('deprovision', () => {
 		expect(fs.existsSync(dbFile())).toBe(false)
 	})
 
+	it('deletes the inventory invoice photos with the recordings, before destroying the database', async () => {
+		const photo = `inventory-invoices/${orgId}/delivery-1/00000000-0000-4000-8000-000000000000.jpg`
+		const call = `voice-recordings/${orgId}/call-1.ogg`
+		const deleted: string[] = []
+		fetchSpy.mockImplementation(async (url, init) => {
+			if ((init as RequestInit).method === 'DELETE') {
+				expect(fs.existsSync(dbFile())).toBe(true)
+				deleted.push(new URL(String(url)).pathname.replace('/recordings/', ''))
+				return new Response(null, { status: 204 })
+			}
+			const prefix = new URL(String(url)).searchParams.get('prefix')
+			const key = prefix?.startsWith('inventory-invoices/') ? photo : call
+			return new Response(
+				`<ListBucketResult><Contents><Key>${key}</Key></Contents><IsTruncated>false</IsTruncated></ListBucketResult>`,
+			)
+		})
+		const res = await deprovision()
+		expect(res.status).toBe(200)
+		expect(await res.json()).toMatchObject({ recordings: 'deleted' })
+		expect(deleted.sort()).toEqual([call, photo].sort())
+		expect(fs.existsSync(dbFile())).toBe(false)
+	})
+
 	it('still destroys the database when storage fails or is not configured', async () => {
 		const errors = vi.spyOn(console, 'error').mockImplementation(() => {})
 		fetchSpy.mockResolvedValue(new Response(null, { status: 503 }))

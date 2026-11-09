@@ -50,6 +50,10 @@ const MONEY_FIELDS = [
 	'wasteWeekMinor',
 	'wasteWeekShareBp',
 	'minimumOrderMinor',
+	'shortOfMinimumMinor',
+	'belowMinimum',
+	'unpricedLines',
+	'previousPackPriceMinor',
 	'priceChangeBp',
 	'priceChanges',
 	'foodCost',
@@ -158,6 +162,30 @@ export function parseQuery<S extends ZodTypeAny>(
 	schema: S,
 ): { data: z.infer<S> } | { error: Response } {
 	const raw = Object.fromEntries(new URL(c.req.url).searchParams)
+	const parsed = schema.safeParse(raw)
+	return parsed.success
+		? { data: parsed.data }
+		: { error: invalidRequest(parsed.error) }
+}
+
+/**
+ * Like `parseBody` for a request whose fields are all optional: an empty body
+ * (or none) reads as `{}`. A body that is present must still be valid JSON
+ * and pass the strict schema.
+ */
+export async function parseOptionalBody<S extends ZodTypeAny>(
+	c: Context,
+	schema: S,
+): Promise<{ data: z.infer<S> } | { error: Response }> {
+	const text = await c.req.text().catch(() => '')
+	let raw: unknown = {}
+	if (text.trim() !== '') {
+		try {
+			raw = JSON.parse(text)
+		} catch {
+			return { error: invalidRequest() }
+		}
+	}
 	const parsed = schema.safeParse(raw)
 	return parsed.success
 		? { data: parsed.data }

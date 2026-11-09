@@ -86,5 +86,13 @@ export const recordDeliveryResultSchema = z.object({
 	priceChanges: z.array(priceChangeSchema).optional(),
 	/** Phase 2: the order the delivery was received against, with its new status. */
 	order: orderSummarySchema.optional(),
+	/**
+	 * Additive: why a Station delivery was recorded without the order it named
+	 * (the operator route refuses instead, 409). Absent when the order linked.
+	 */
+	orderLinkIgnored: z
+		.enum(['closed', 'not_found', 'wrong_supplier'])
+		.nullable()
+		.optional(),
 })
 export type RecordDeliveryResult = z.infer<typeof recordDeliveryResultSchema>

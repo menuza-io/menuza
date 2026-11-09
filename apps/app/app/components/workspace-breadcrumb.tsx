@@ -99,6 +99,7 @@ const SEGMENT_LABELS: Record<string, ReactNode> = {
 	review: <Trans>Review</Trans>,
 	deliveries: <Trans>Deliveries</Trans>,
 	suppliers: <Trans>Suppliers</Trans>,
+	levels: <Trans>Levels</Trans>,
 }
 
 // What a record id under each collection is called when its route gives no name.
@@ -122,6 +123,7 @@ const RECORD_LABELS: Record<string, ReactNode> = {
 	counts: <Trans>Count</Trans>,
 	deliveries: <Trans>Delivery</Trans>,
 	suppliers: <Trans>Supplier</Trans>,
+	orders: <Trans>Order</Trans>,
 }
 
 // Path prefixes with no page of their own. `notes/status` would be read as a
@@ -131,6 +133,8 @@ const UNLINKED_PREFIXES = new Set([
 	// Sheets of the Purchasing tab: the list lives on the tab itself.
 	'inventory/purchasing/suppliers',
 	'inventory/purchasing/deliveries',
+	// A reviewed order is a page of its own; `orders` has no list page.
+	'inventory/purchasing/orders',
 ])
 
 function isWordSegment(segment: string) {

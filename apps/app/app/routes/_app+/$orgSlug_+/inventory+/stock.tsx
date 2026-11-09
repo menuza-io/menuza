@@ -66,7 +66,16 @@ const SEARCH_DELAY_MS = 250
 export default function InventoryStockRoute() {
 	const { t, i18n } = useLingui()
 	const layout = useInventoryLayoutData()
-	const { orgSlug, activeLocationId, canEdit, canSeeCost, currency } = layout
+	const {
+		orgSlug,
+		activeLocationId,
+		canEdit,
+		canSeeCost,
+		canManagePurchasing,
+		purchasingEnabled,
+		currency,
+	} = layout
+	const canSetLevels = purchasingEnabled && canManagePurchasing
 	const direction = useDirection()
 	const navigate = useNavigate()
 	const outlet = useOutlet()
@@ -192,12 +201,14 @@ export default function InventoryStockRoute() {
 
 	return (
 		<div className="flex flex-col gap-6">
-			{canEdit ? (
+			{canEdit || canSetLevels ? (
 				<InventoryHeaderActions>
-					<Button render={<Link to={addHref} />} data-testid="stock-add-item">
-						<Icon name="plus" />
-						<Trans>Add item</Trans>
-					</Button>
+					{canEdit ? (
+						<Button render={<Link to={addHref} />} data-testid="stock-add-item">
+							<Icon name="plus" />
+							<Trans>Add item</Trans>
+						</Button>
+					) : null}
 					<DropdownMenu>
 						<DropdownMenuTrigger
 							render={
@@ -212,24 +223,37 @@ export default function InventoryStockRoute() {
 							}
 						/>
 						<DropdownMenuContent align="end">
-							<DropdownMenuItem
-								render={<Link to={`${basePath}/add-many${search}`} />}
-							>
-								<Icon name="list-plus" />
-								<Trans>Add many items</Trans>
-							</DropdownMenuItem>
-							<DropdownMenuItem
-								render={<Link to={`${basePath}/areas${search}`} />}
-							>
-								<Icon name="layers" />
-								<Trans>Storage areas</Trans>
-							</DropdownMenuItem>
-							<DropdownMenuItem
-								render={<Link to={`${basePath}/lists${search}`} />}
-							>
-								<Icon name="list" />
-								<Trans>Count lists</Trans>
-							</DropdownMenuItem>
+							{canEdit ? (
+								<>
+									<DropdownMenuItem
+										render={<Link to={`${basePath}/add-many${search}`} />}
+									>
+										<Icon name="list-plus" />
+										<Trans>Add many items</Trans>
+									</DropdownMenuItem>
+									<DropdownMenuItem
+										render={<Link to={`${basePath}/areas${search}`} />}
+									>
+										<Icon name="layers" />
+										<Trans>Storage areas</Trans>
+									</DropdownMenuItem>
+									<DropdownMenuItem
+										render={<Link to={`${basePath}/lists${search}`} />}
+									>
+										<Icon name="list" />
+										<Trans>Count lists</Trans>
+									</DropdownMenuItem>
+								</>
+							) : null}
+							{canSetLevels ? (
+								<DropdownMenuItem
+									render={<Link to={`${basePath}/levels${search}`} />}
+									data-testid="stock-set-levels"
+								>
+									<Icon name="sliders-horizontal" />
+									<Trans>Set levels</Trans>
+								</DropdownMenuItem>
+							) : null}
 						</DropdownMenuContent>
 					</DropdownMenu>
 				</InventoryHeaderActions>

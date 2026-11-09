@@ -115,6 +115,13 @@ export const inventoryTickResultSchema = z.object({
 	/** Phase 3: sale-usage outbox rows settled (0 before). */
 	salesSettled: z.number().int().nonnegative(),
 	errors: z.number().int().nonnegative(),
+	/**
+	 * Additive (region only, read by the Durable Object alarm and left out of
+	 * the cross-node totals): an alert still waits for the App, so the object
+	 * should wake again, and when. Ids and times only.
+	 */
+	needsFollowUp: z.boolean().optional(),
+	nextDueAt: z.number().int().nullable().optional(),
 })
 export type InventoryTickResult = z.infer<typeof inventoryTickResultSchema>
 

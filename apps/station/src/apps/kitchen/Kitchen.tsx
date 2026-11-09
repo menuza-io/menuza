@@ -15,6 +15,7 @@ import {
 import { Icon } from '@repo/ui/icon'
 import { Item, ItemMedia, ItemContent, ItemActions } from '@repo/ui/item'
 import { useEffect, useMemo, useState } from 'react'
+import { LogWaste } from '../stock/LogWaste.tsx'
 import { chime, chimeReady, unlockChime } from './chime.ts'
 import { KitchenSettings } from './KitchenSettings.tsx'
 import {
@@ -117,6 +118,8 @@ export function Kitchen({
 		readPreference(preferenceKey(settings)),
 	)
 	const [configuring, setConfiguring] = useState(false)
+	// Cooks waste food in the kitchen, not at a desk: the Stock app's waste sheet, from here.
+	const [wasting, setWasting] = useState(false)
 	const [fullscreen, setFullscreen] = useState(
 		() =>
 			typeof document !== 'undefined' && Boolean(document.fullscreenElement),
@@ -445,6 +448,14 @@ export function Kitchen({
 							)}
 						</IconButton>
 					) : null}
+					{settings.apps.inventory ? (
+						<Button variant="ghost" onClick={() => setWasting(true)}>
+							<Icon name="trash-2" className="size-4" />
+							<span className="max-sm:sr-only">
+								<Trans>Log waste</Trans>
+							</span>
+						</Button>
+					) : null}
 					{canConfigure && feed ? (
 						<Button
 							variant="ghost"
@@ -679,6 +690,14 @@ export function Kitchen({
 						if (await kitchen.configure(feed.configVersion, config))
 							setConfiguring(false)
 					}}
+				/>
+			) : null}
+			{wasting ? (
+				<LogWaste
+					settings={settings}
+					session={session}
+					online={online}
+					onClose={() => setWasting(false)}
 				/>
 			) : null}
 		</main>

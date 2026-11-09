@@ -1,9 +1,12 @@
 import {
 	type CreateItem,
 	costMicroFromPackPrice,
+	type CreditLine,
+	creditLines,
 	type InventoryBaseUnit,
 	MAX_ENTRY_QUANTITY,
 	priceChangeBp,
+	type ReceivePrefill,
 	type RecordDelivery,
 	standardUnitsFor,
 	type SupplierProduct,
@@ -47,6 +50,21 @@ export type PackChoice = {
 	priceMinor: number | null
 }
 
+/** What the order said about a line that is being received against it. */
+export type OrderLineInfo = {
+	orderLineId: string
+	orderedPacks: number
+	/** Ordered, base thousandths. */
+	orderedQuantity: number
+	/** Received on earlier deliveries, base thousandths. */
+	receivedQuantity: number
+	/** Still to come before this delivery, base thousandths. */
+	outstandingQuantity: number
+	outstandingPacks: number
+	/** The supplier's pack price the screen started from (cost grant only). */
+	supplierPackPriceMinor: number | null
+}
+
 export type DeliveryLineDraft = {
 	/** Stable key for the row (not sent). */
 	key: string
@@ -65,6 +83,8 @@ export type DeliveryLineDraft = {
 	totalText: string
 	/** The item's last cost per base unit (micro-minor), to show how the price moved. */
 	previousCostMicro: number | null
+	/** Set when the line receives a line of an order. */
+	order?: OrderLineInfo
 }
 
 export type LineProblem = 'packs' | 'price' | 'weight' | 'total'
@@ -91,14 +111,22 @@ function inRange(quantity: number): boolean {
 	)
 }
 
+export type ComputeLineOptions = {
+	/** Received quantities only: no price, total or cost is worked out. */
+	quantityOnly?: boolean
+}
+
 /** What one invoice line is, from what was typed. */
 export function computeLine(
 	line: DeliveryLineDraft,
 	currency: string,
+	options: ComputeLineOptions = {},
 ): ComputedLine {
 	const problems: LineProblem[] = []
-	const priceMinor = parseMoneyToMinor(line.priceText, { currency, min: 1 })
-	if (priceMinor === null) problems.push('price')
+	const priceMinor = options.quantityOnly
+		? null
+		: parseMoneyToMinor(line.priceText, { currency, min: 1 })
+	if (priceMinor === null && !options.quantityOnly) problems.push('price')
 
 	const packsTyped = line.packsText.trim() !== ''
 	const packs = packsTyped ? parseQuantityText(line.packsText) : null
@@ -141,7 +169,7 @@ export function computeLine(
 	}
 
 	let lineTotalMinor = computedTotal
-	if (line.totalText.trim() !== '') {
+	if (!options.quantityOnly && line.totalText.trim() !== '') {
 		lineTotalMinor = parseMoneyToMinor(line.totalText, { currency, min: 0 })
 		if (lineTotalMinor === null) problems.push('total')
 	}
@@ -239,6 +267,12 @@ export type DeliveryDraft = {
 	zatcaReference: string
 	paid: boolean
 	lines: DeliveryLineDraft[]
+	/** Receive against this order (phase 2). */
+	orderId?: string | null
+	/** Nothing more is coming for the order: close it even when lines are short. */
+	closeOrder?: boolean
+	/** Record received quantities only (a role without the cost grant). */
+	quantityOnly?: boolean
 }
 
 export type DeliveryHeaderField =
@@ -257,6 +291,30 @@ export type DeliveryProblems = {
 const DATE = /^\d{4}-\d{2}-\d{2}$/
 const CONTROL_CHARS = /\p{Cc}/u
 
+/**
+ * A line of an order that nothing arrived for: left out of the delivery (the
+ * region refuses a line with no quantity) and offered for credit when the
+ * order closes.
+ */
+export function isUnreceivedOrderLine(line: DeliveryLineDraft): boolean {
+	if (!line.order) return false
+	const packs =
+		line.packsText.trim() === '' ? 0 : parseQuantityText(line.packsText)
+	// Text that is not a number is a problem to show, not "nothing arrived".
+	if (packs !== 0) return false
+	if (!line.pack.pricedByWeight) return true
+	const weight =
+		line.weightText.trim() === '' ? 0 : parseQuantityText(line.weightText)
+	return weight === 0
+}
+
+/** The lines that go into the delivery: every line, except an order line nothing arrived for. */
+export function receivedLines(
+	draft: Pick<DeliveryDraft, 'lines'>,
+): DeliveryLineDraft[] {
+	return draft.lines.filter((line) => !isUnreceivedOrderLine(line))
+}
+
 /** The body of `POST /deliveries`, or what is wrong with the draft. */
 export function buildRecordDelivery(
 	draft: DeliveryDraft,
@@ -265,12 +323,16 @@ export function buildRecordDelivery(
 	| { ok: true; payload: RecordDelivery }
 	| { ok: false; problems: DeliveryProblems } {
 	const { currency } = context
+	const quantityOnly = draft.quantityOnly === true
 	const header: DeliveryHeaderField[] = []
 	const lineProblems: Record<string, LineProblem[]> = {}
 
-	if (draft.lines.length === 0) header.push('lines')
-	const computed = draft.lines.map((line) => computeLine(line, currency))
-	draft.lines.forEach((line, index) => {
+	const sent = receivedLines(draft)
+	if (sent.length === 0) header.push('lines')
+	const computed = sent.map((line) =>
+		computeLine(line, currency, { quantityOnly }),
+	)
+	sent.forEach((line, index) => {
 		const problems = computed[index]!.problems
 		if (problems.length > 0) lineProblems[line.key] = problems
 	})
@@ -287,15 +349,21 @@ export function buildRecordDelivery(
 		header.push('invoiceDate')
 	}
 	const vatMinor =
-		draft.vatText.trim() === ''
+		quantityOnly || draft.vatText.trim() === ''
 			? null
 			: parseMoneyToMinor(draft.vatText, { currency, min: 0 })
-	if (draft.vatText.trim() !== '' && vatMinor === null) header.push('vat')
+	if (!quantityOnly && draft.vatText.trim() !== '' && vatMinor === null) {
+		header.push('vat')
+	}
 	const totalMinor =
-		draft.invoiceTotalText.trim() === ''
+		quantityOnly || draft.invoiceTotalText.trim() === ''
 			? null
 			: parseMoneyToMinor(draft.invoiceTotalText, { currency, min: 0 })
-	if (draft.invoiceTotalText.trim() !== '' && totalMinor === null) {
+	if (
+		!quantityOnly &&
+		draft.invoiceTotalText.trim() !== '' &&
+		totalMinor === null
+	) {
 		header.push('invoiceTotal')
 	}
 
@@ -303,18 +371,25 @@ export function buildRecordDelivery(
 		return { ok: false, problems: { header, lines: lineProblems } }
 	}
 
+	const orderId = draft.orderId ?? null
 	const payload: RecordDelivery = {
 		clientId: context.clientId,
 		locationId: context.locationId,
 		supplierId: draft.supplierId === '' ? null : draft.supplierId,
 		...(invoiceNumber !== '' ? { invoiceNumber } : {}),
 		...(draft.invoiceDate !== '' ? { invoiceDate: draft.invoiceDate } : {}),
-		currency,
+		...(quantityOnly ? { quantityOnly: true } : { currency }),
 		...(vatMinor !== null ? { vatMinor } : {}),
 		...(totalMinor !== null ? { totalMinor } : {}),
 		...(zatca !== '' ? { zatcaReference: zatca } : {}),
-		paid: draft.paid,
-		lines: draft.lines.map((line, index) => {
+		paid: quantityOnly ? false : draft.paid,
+		...(orderId !== null
+			? {
+					orderId,
+					...(draft.closeOrder ? { closeOrder: true } : {}),
+				}
+			: {}),
+		lines: sent.map((line, index) => {
 			const result = computed[index]!
 			return {
 				itemId: line.itemId,
@@ -326,15 +401,115 @@ export function buildRecordDelivery(
 				...(result.packs !== null ? { packs: result.packs } : {}),
 				packName: line.pack.name,
 				packBaseQuantity: line.pack.baseQuantity,
-				packPriceMinor: result.packPriceMinor!,
-				lineTotalMinor: result.lineTotalMinor!,
+				...(quantityOnly
+					? {}
+					: {
+							packPriceMinor: result.packPriceMinor!,
+							lineTotalMinor: result.lineTotalMinor!,
+						}),
 				...(result.realWeightQuantity !== null
 					? { realWeightQuantity: result.realWeightQuantity }
+					: {}),
+				...(line.order
+					? {
+							orderLineId: line.order.orderLineId,
+							orderedQuantity: line.order.orderedQuantity,
+						}
 					: {}),
 			}
 		}),
 	}
 	return { ok: true, payload }
+}
+
+/**
+ * What came short against the order once this delivery is counted in: the
+ * lines to ask for credit on (`short` when some arrived, `missing` when
+ * nothing did), by the contract's own rule (a weight-priced line is complete
+ * at 95%).
+ */
+export function shortOrderLines(
+	draft: Pick<DeliveryDraft, 'lines'>,
+	currency: string,
+	options: ComputeLineOptions = {},
+): CreditLine[] {
+	return creditLines(
+		draft.lines
+			.filter((line) => line.order)
+			.map((line) => {
+				const order = line.order!
+				const arrived = isUnreceivedOrderLine(line)
+					? 0
+					: (computeLine(line, currency, options).quantity ?? 0)
+				return {
+					itemId: line.itemId,
+					orderLineId: order.orderLineId,
+					orderedQuantity: order.orderedQuantity,
+					receivedQuantity: order.receivedQuantity + arrived,
+					pricedByWeight: line.pack.pricedByWeight,
+				}
+			}),
+	)
+}
+
+/**
+ * The draft lines of a delivery received against an order: what is still
+ * outstanding as packs, the supplier's current pack price (when the caller may
+ * see money), and the order line each one receives.
+ */
+export function linesFromPrefill(
+	prefill: ReceivePrefill,
+	input: {
+		currency: string
+		system: UnitSystem
+		/** Whether the viewer may see and enter prices. */
+		withPrices: boolean
+	},
+): DeliveryLineDraft[] {
+	return prefill.lines.map((line) => {
+		const pack: PackChoice = {
+			id: line.supplierProductId
+				? `product:${line.supplierProductId}`
+				: `orderline:${line.orderLineId}`,
+			name: line.packName,
+			baseQuantity: line.packBaseQuantity,
+			productId: line.supplierProductId,
+			pricedByWeight: line.pricedByWeight,
+			priceMinor: input.withPrices ? (line.packPriceMinor ?? null) : null,
+		}
+		const supplierPrice = input.withPrices
+			? (line.packPriceMinor ?? null)
+			: null
+		return {
+			key: line.orderLineId,
+			itemId: line.itemId,
+			itemName: line.itemName,
+			baseUnit: line.baseUnit,
+			pack,
+			packsText:
+				line.outstandingQuantity > 0 ? String(line.outstandingPacks) : '',
+			priceText:
+				supplierPrice === null
+					? ''
+					: minorToMajorText(supplierPrice, input.currency),
+			weightText: '',
+			weightUnit: defaultEntryUnit(line.baseUnit, null, [], input.system),
+			totalText: '',
+			previousCostMicro:
+				supplierPrice === null || supplierPrice <= 0
+					? null
+					: costMicroFromPackPrice(supplierPrice, line.packBaseQuantity),
+			order: {
+				orderLineId: line.orderLineId,
+				orderedPacks: line.orderedPacks,
+				orderedQuantity: line.orderedQuantity,
+				receivedQuantity: line.receivedQuantity,
+				outstandingQuantity: line.outstandingQuantity,
+				outstandingPacks: line.outstandingPacks,
+				supplierPackPriceMinor: supplierPrice,
+			},
+		}
+	})
 }
 
 /** A price move worth showing: `null` when nothing changed or nothing to compare with. */

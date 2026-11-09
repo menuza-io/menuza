@@ -59,6 +59,7 @@ import {
 import { reservationsOperatorRoutes } from './routes/reservations-operator.ts'
 import { reservationsPaymentsInternalRoutes } from './routes/reservations-payments-internal.ts'
 import { reservationsPublicRoutes } from './routes/reservations-public.ts'
+import { inventoryTickRoutes } from './routes/inventory-tick.ts'
 import { loyaltyTickRoutes } from './routes/loyalty-tick.ts'
 import { loyaltyRoutes } from './routes/loyalty.ts'
 import { operatorDiscountRoutes } from './routes/operator-discounts.ts'
@@ -340,6 +341,7 @@ export function createTenantApiApp() {
 	app.route('/api/reservations/payments', reservationsPaymentsInternalRoutes)
 	app.route('/api/reservations', reservationsTickRoutes)
 	app.route('/api/loyalty', loyaltyTickRoutes)
+	app.route('/api/inventory', inventoryTickRoutes)
 	app.route('/loyalty', loyaltyRoutes)
 	app.route('/operator/loyalty', operatorLoyaltyRoutes)
 	app.route('/operator/discounts', operatorDiscountRoutes)

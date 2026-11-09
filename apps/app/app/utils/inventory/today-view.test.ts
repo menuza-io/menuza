@@ -80,7 +80,7 @@ describe('attentionTarget', () => {
 			price_rise: '/acme/inventory/purchasing/deliveries/d1',
 			unpaid_deliveries: '/acme/inventory/purchasing',
 			order_cutoff: '/acme/inventory/purchasing',
-			delivery_expected: '/acme/inventory/purchasing',
+			delivery_expected: '/acme/inventory/purchasing/deliveries/new?orderId=o1',
 			prices_pending: '/acme/inventory/purchasing/deliveries/d2',
 		})
 	})
@@ -92,6 +92,32 @@ describe('attentionTarget', () => {
 		)
 		expect(attentionTarget(KINDS.count_in_review, { ...CTX, search }).to).toBe(
 			'/acme/inventory/counts/c2/review?locationId=olaya',
+		)
+	})
+
+	it('continues the draft for an order cut-off and reads the order when the member cannot receive', () => {
+		expect(
+			attentionTarget(
+				{
+					...(KINDS.order_cutoff as Extract<
+						AttentionItem,
+						{ kind: 'order_cutoff' }
+					>),
+					draftOrderId: 'o9',
+				},
+				CTX,
+			).to,
+		).toBe('/acme/inventory/purchasing/orders/o9')
+		expect(
+			attentionTarget(KINDS.delivery_expected, { ...CTX, canEdit: false }).to,
+		).toBe('/acme/inventory/purchasing/orders/o1')
+		expect(
+			attentionTarget(KINDS.delivery_expected, {
+				...CTX,
+				search: '?locationId=olaya',
+			}).to,
+		).toBe(
+			'/acme/inventory/purchasing/deliveries/new?locationId=olaya&orderId=o1',
 		)
 	})
 

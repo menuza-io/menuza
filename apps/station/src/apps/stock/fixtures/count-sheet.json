@@ -1,0 +1,61 @@
+{
+	"count": {
+		"id": "cnt_open1",
+		"locationId": "main",
+		"listId": "list_weekly",
+		"listName": "Weekly count",
+		"status": "counting",
+		"businessDate": "2026-01-01",
+		"startedBy": { "kind": "operator", "id": "usr_owner" },
+		"itemTotal": 5,
+		"itemsCounted": 2,
+		"counters": [{ "kind": "staff", "id": "stf_omar" }],
+		"sentForReviewAt": null,
+		"approvedAt": null,
+		"approvedBy": null,
+		"cancelledAt": null,
+		"createdAt": 1767222000000,
+		"version": 2
+	},
+	"areas": [
+		{
+			"areaId": "area_walkin",
+			"name": "Walk-in fridge",
+			"items": [
+				{
+					"itemId": "item_chicken",
+					"name": "Chicken thigh",
+					"baseUnit": "g",
+					"countUnit": "kg",
+					"units": [],
+					"quantity": 4500000,
+					"mine": { "amount": 4.5, "unit": "kg" }
+				},
+				{
+					"itemId": "item_tomato",
+					"name": "Tomatoes",
+					"baseUnit": "g",
+					"countUnit": "kg",
+					"units": [],
+					"quantity": null,
+					"mine": null
+				}
+			]
+		},
+		{
+			"areaId": null,
+			"name": null,
+			"items": [
+				{
+					"itemId": "item_lemon",
+					"name": "Lemons",
+					"baseUnit": "piece",
+					"countUnit": "piece",
+					"units": [],
+					"quantity": 30000,
+					"mine": null
+				}
+			]
+		}
+	]
+}

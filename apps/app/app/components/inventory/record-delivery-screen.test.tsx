@@ -418,14 +418,6 @@ describe('RecordDeliveryScreen', () => {
 		expect(screen.getByTestId('delivery-paid')).toHaveAttribute('data-disabled')
 	})
 
-	it('explains that recording a delivery needs the cost grant', async () => {
-		setup(region(), { canSeeCost: false })
-		expect(await screen.findByTestId('delivery-needs-cost')).toHaveTextContent(
-			'needs access to costs',
-		)
-		expect(screen.queryByTestId('record-delivery')).toBeNull()
-	})
-
 	it('a reader can look but not record', async () => {
 		setup(region(), { canEdit: false })
 		expect(await screen.findByTestId('delivery-needs-cost')).toHaveTextContent(

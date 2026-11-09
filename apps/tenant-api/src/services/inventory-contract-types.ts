@@ -2,6 +2,18 @@ import {
 	type adjustStockSchema,
 	type approveCountSchema,
 	type bulkCreateItemsSchema,
+	type cancelOrderSchema,
+	type confirmDeliveryPricesSchema,
+	type createOrderSchema,
+	type creditMessageRequestSchema,
+	type invoicePhotoRequestSchema,
+	type levelSuggestionsQuerySchema,
+	type listLevelsQuerySchema,
+	type listOrdersQuerySchema,
+	type priceAlertsQuerySchema,
+	type putLevelsSchema,
+	type sendOrderSchema,
+	type updateOrderSchema,
 	type countEntriesSchema,
 	type createCountListSchema,
 	type createItemSchema,
@@ -47,3 +59,19 @@ export type UpdateSupplierProductInput = z.infer<
 >
 export type RecordDeliveryInput = z.infer<typeof recordDeliverySchema>
 export type ListDeliveriesQuery = z.infer<typeof listDeliveriesQuerySchema>
+
+// Phase 2.
+export type CreateOrderInput = z.infer<typeof createOrderSchema>
+export type UpdateOrderInput = z.infer<typeof updateOrderSchema>
+export type SendOrderInput = z.infer<typeof sendOrderSchema>
+export type CancelOrderInput = z.infer<typeof cancelOrderSchema>
+export type ListOrdersQuery = z.infer<typeof listOrdersQuerySchema>
+export type ListLevelsQuery = z.infer<typeof listLevelsQuerySchema>
+export type PutLevelsInput = z.infer<typeof putLevelsSchema>
+export type LevelSuggestionsQuery = z.infer<typeof levelSuggestionsQuerySchema>
+export type ConfirmDeliveryPricesInput = z.infer<
+	typeof confirmDeliveryPricesSchema
+>
+export type CreditMessageRequest = z.infer<typeof creditMessageRequestSchema>
+export type InvoicePhotoRequest = z.infer<typeof invoicePhotoRequestSchema>
+export type PriceAlertsQuery = z.infer<typeof priceAlertsQuerySchema>

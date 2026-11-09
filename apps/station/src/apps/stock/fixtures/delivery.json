@@ -1,0 +1,10 @@
+{
+	"id": "dlv_9",
+	"lineCount": 2,
+	"receivedAt": 1767229200000,
+	"pricesPending": true,
+	"lateSync": false,
+	"duplicate": false,
+	"order": { "id": "ord_41", "status": "partly_received" },
+	"orderLinkIgnored": null
+}

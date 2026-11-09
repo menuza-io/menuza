@@ -1,10 +1,15 @@
 import {
 	cancelDeliverySchema,
+	confirmDeliveryPricesSchema,
+	confirmInvoicePhotoSchema,
 	createSupplierSchema,
+	creditMessageRequestSchema,
 	INVENTORY_PERMISSIONS,
+	invoicePhotoRequestSchema,
 	listDeliveriesQuerySchema,
 	listSuppliersQuerySchema,
 	markDeliveryPaidSchema,
+	priceAlertsQuerySchema,
 	recordDeliverySchema,
 	supplierProductInputSchema,
 	updateSupplierProductSchema,
@@ -18,19 +23,24 @@ import {
 	inventoryGuard,
 	requireInventoryLocation,
 } from '../lib/inventory-guard.ts'
-import { inventoryErrorResponse } from '../lib/inventory-http.ts'
+import {
+	InventoryError,
+	inventoryErrorResponse,
+} from '../lib/inventory-http.ts'
 import {
 	clientIdempotency,
 	idParam,
 	inventoryCaller,
 	respond,
 	parseBody,
+	parseOptionalBody,
 	parseQuery,
 } from '../lib/inventory-route.ts'
 import {
 	archiveSupplier,
 	archiveSupplierProduct,
 	cancelDelivery,
+	confirmDeliveryPrices,
 	createSupplier,
 	createSupplierProduct,
 	getDelivery,
@@ -42,6 +52,12 @@ import {
 	updateSupplier,
 	updateSupplierProduct,
 } from '../services/inventory-purchasing-service.ts'
+import {
+	confirmInvoicePhoto,
+	getCreditMessage,
+	getPriceAlerts,
+	requestInvoicePhotoUpload,
+} from '../services/inventory-receiving-service.ts'
 
 /**
  * Suppliers, their products and deliveries under `/operator/inventory`.
@@ -61,6 +77,11 @@ const writes = (): ReturnType<typeof inventoryGuard> =>
 	inventoryGuard({ scope: 'write', grant: UPDATE })
 const purchasing = (): ReturnType<typeof inventoryGuard> =>
 	inventoryGuard({ scope: 'write', grant: PURCHASING })
+const costReads = (): ReturnType<typeof inventoryGuard> =>
+	inventoryGuard({
+		scope: ['read', 'write'],
+		grant: INVENTORY_PERMISSIONS.READ_INVENTORY_COST,
+	})
 
 // ── Suppliers ───────────────────────────────────────────────────────────────
 
@@ -239,6 +260,10 @@ operatorInventoryPurchasingRoutes.post('/deliveries', writes(), async (c) => {
 		if ('error' in body) return body.error
 		const location = requireInventoryLocation(ctx, body.data.locationId)
 		if (!location.ok) return location.response
+		// Receiving against an order is part of purchasing (the flag).
+		if (body.data.orderId && !ctx.features.purchasing) {
+			throw new InventoryError('feature_disabled', 403)
+		}
 		return respond(
 			ctx,
 			await recordDelivery(inventoryCaller(ctx), {
@@ -329,6 +354,122 @@ operatorInventoryPurchasingRoutes.post(
 					id,
 					expectedVersion: body.data.expectedVersion,
 					note: body.data.note,
+				}),
+			)
+		} catch (error) {
+			return inventoryErrorResponse(error)
+		}
+	},
+)
+
+operatorInventoryPurchasingRoutes.post(
+	'/deliveries/:id/confirm-prices',
+	purchasing(),
+	async (c) => {
+		try {
+			const ctx = getInventoryAuth(c)
+			const id = idParam(c)
+			const body = await parseBody(c, confirmDeliveryPricesSchema)
+			if ('error' in body) return body.error
+			return respond(
+				ctx,
+				await confirmDeliveryPrices(inventoryCaller(ctx), {
+					id,
+					body: body.data,
+				}),
+			)
+		} catch (error) {
+			return inventoryErrorResponse(error)
+		}
+	},
+)
+
+// A POST only because it has a body: it changes nothing, so a read token may call it.
+operatorInventoryPurchasingRoutes.post(
+	'/deliveries/:id/credit-message',
+	reads(),
+	async (c) => {
+		try {
+			const ctx = getInventoryAuth(c)
+			const id = idParam(c)
+			const body = await parseOptionalBody(c, creditMessageRequestSchema)
+			if ('error' in body) return body.error
+			return respond(
+				ctx,
+				await getCreditMessage(await getTenantDb(ctx.orgId), {
+					id,
+					body: body.data,
+					caller: inventoryCaller(ctx),
+				}),
+			)
+		} catch (error) {
+			return inventoryErrorResponse(error)
+		}
+	},
+)
+
+operatorInventoryPurchasingRoutes.post(
+	'/deliveries/:id/invoice-photo',
+	writes(),
+	async (c) => {
+		try {
+			const ctx = getInventoryAuth(c)
+			const id = idParam(c)
+			const body = await parseBody(c, invoicePhotoRequestSchema)
+			if ('error' in body) return body.error
+			return respond(
+				ctx,
+				await requestInvoicePhotoUpload(await getTenantDb(ctx.orgId), {
+					id,
+					body: body.data,
+					caller: inventoryCaller(ctx),
+				}),
+			)
+		} catch (error) {
+			return inventoryErrorResponse(error)
+		}
+	},
+)
+
+operatorInventoryPurchasingRoutes.post(
+	'/deliveries/:id/invoice-photo/confirm',
+	writes(),
+	async (c) => {
+		try {
+			const ctx = getInventoryAuth(c)
+			const id = idParam(c)
+			const body = await parseBody(c, confirmInvoicePhotoSchema)
+			if ('error' in body) return body.error
+			return respond(
+				ctx,
+				await confirmInvoicePhoto(inventoryCaller(ctx), {
+					id,
+					key: body.data.key,
+				}),
+			)
+		} catch (error) {
+			return inventoryErrorResponse(error)
+		}
+	},
+)
+
+// ── Price alerts ────────────────────────────────────────────────────────────
+
+operatorInventoryPurchasingRoutes.get(
+	'/price-alerts',
+	costReads(),
+	async (c) => {
+		try {
+			const ctx = getInventoryAuth(c)
+			const query = parseQuery(c, priceAlertsQuerySchema)
+			if ('error' in query) return query.error
+			const location = requireInventoryLocation(ctx, query.data.locationId)
+			if (!location.ok) return location.response
+			return respond(
+				ctx,
+				await getPriceAlerts(await getTenantDb(ctx.orgId), {
+					query: query.data,
+					now: Date.now(),
 				}),
 			)
 		} catch (error) {

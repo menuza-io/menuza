@@ -1,6 +1,8 @@
 import { buildTenantMarketingEmailHeaders } from '@repo/config/marketing-email'
 import {
+	isOciEmailConfigured,
 	sendOciEmail,
+	shouldUseOciEmailMockTransport,
 	type SendOciEmailInput,
 	type SendOciEmailResult,
 } from '@repo/email'
@@ -34,6 +36,21 @@ let devCapture: TenantEmailCapture | null = null
 /** The Node entry registers the file sink; the Workers entry never does. */
 export function setTenantEmailDevCapture(sink: TenantEmailCapture | null) {
 	devCapture = sink
+}
+
+/**
+ * Whether `sendTenantEmail` can do something on this node: OCI Email Delivery
+ * is configured, the mock transport is on (tests, `MOCKS=true`) or the Node
+ * entry registered the development file sink. Used by the person-driven sends
+ * (an inventory order) that report "not sent from here" instead of failing
+ * when the node has no email; automated mail keeps calling `sendTenantEmail`.
+ */
+export function canSendTenantEmail(): boolean {
+	return (
+		devCapture !== null ||
+		shouldUseOciEmailMockTransport() ||
+		isOciEmailConfigured()
+	)
 }
 
 export async function sendTenantEmail(

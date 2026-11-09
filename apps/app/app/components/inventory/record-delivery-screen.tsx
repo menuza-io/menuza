@@ -4,6 +4,7 @@ import {
 	INVENTORY_CATEGORIES,
 	itemDetailSchema,
 	listSuppliersResultSchema,
+	receivePrefillSchema,
 	recordDeliveryResultSchema,
 	standardUnitsFor,
 	type StockItem,
@@ -32,6 +33,9 @@ import {
 } from '@repo/ui/frame'
 import { Icon } from '@repo/ui/icon'
 import { Label } from '@repo/ui/label'
+import { parseQuantityText } from '@repo/ui/quantity-input'
+import { QuantityStepper } from '@repo/ui/quantity-stepper'
+import { Skeleton } from '@repo/ui/skeleton'
 import { ToggleGroup, ToggleGroupItem } from '@repo/ui/toggle-group'
 import {
 	type FormEvent,
@@ -43,6 +47,7 @@ import {
 } from 'react'
 import { useNavigate } from 'react-router'
 import { toast } from 'sonner'
+import { CreditMessageDialog } from '#app/components/inventory/credit-message-dialog.tsx'
 import {
 	useNotifyInventoryChanged,
 	useQuantityFormat,
@@ -63,15 +68,25 @@ import {
 	type DeliveryProblems,
 	deliveryTotals,
 	defaultPackChoice,
+	linesFromPrefill,
 	newLineDraft,
 	type PackChoice,
 	packChoicesFor,
 	reconcilePack,
+	shortOrderLines,
 	visiblePriceChangeBp,
 	withPack,
 } from '#app/utils/inventory/delivery-form.ts'
 import { formatMoney } from '#app/utils/inventory/format.ts'
-import { inventorySaveErrorMessage } from '#app/utils/inventory/inventory-errors.ts'
+import {
+	inventoryErrorMessage,
+	inventorySaveErrorMessage,
+} from '#app/utils/inventory/inventory-errors.ts'
+import {
+	InvoicePhotoError,
+	isAllowedInvoicePhotoType,
+	uploadInvoicePhoto,
+} from '#app/utils/inventory/invoice-photo.ts'
 import {
 	MEASURED_IN,
 	type MeasuredIn,
@@ -79,6 +94,7 @@ import {
 } from '#app/utils/inventory/item-form.ts'
 import { categoryLabel } from '#app/utils/inventory/labels.ts'
 import { inventoryTabPath } from '#app/utils/inventory/nav.ts'
+import { packsText as formatPacks } from '#app/utils/inventory/order-view.ts'
 import { newClientId } from '#app/utils/inventory/waste-form.ts'
 import { minorToMajorText } from '#app/utils/money-input.ts'
 
@@ -95,8 +111,13 @@ function today(): string {
  * Record a delivery: the supplier, the lines (packs times pack size, or the
  * real weight for goods priced by weight), and the invoice's own numbers
  * (VAT apart from prices, a total to check the lines against). Saving puts
- * the stock in, updates last prices, and says which prices moved. It needs
- * the prices on the invoice, so it needs the cost grant.
+ * the stock in, updates last prices, and says which prices moved.
+ *
+ * Opened with an order it receives against it: lines start at what is still
+ * to come, prices start at the supplier's, short lines offer a credit
+ * message, and the order can be closed short. Without the cost grant it
+ * records quantities only, and a person with the purchasing role confirms
+ * the prices later. A photo of the invoice can be attached either way.
  */
 export function RecordDeliveryScreen({
 	orgSlug,
@@ -106,6 +127,8 @@ export function RecordDeliveryScreen({
 	canEdit,
 	canSeeCost,
 	canManagePurchasing,
+	purchasingEnabled = false,
+	orderId = null,
 	search,
 }: {
 	orgSlug: string
@@ -115,6 +138,10 @@ export function RecordDeliveryScreen({
 	canEdit: boolean
 	canSeeCost: boolean
 	canManagePurchasing: boolean
+	/** The `inventory.purchasing` flag: receiving against an order needs it. */
+	purchasingEnabled?: boolean
+	/** Receive against this order. */
+	orderId?: string | null
 	search: string
 }) {
 	const { t, i18n } = useLingui()
@@ -125,6 +152,8 @@ export function RecordDeliveryScreen({
 	const notifyChanged = useNotifyInventoryChanged()
 	const idPrefix = useId()
 	const backHref = `${inventoryTabPath(orgSlug, 'purchasing')}${search}`
+	const quantityOnly = !canSeeCost
+	const receiving = orderId !== null && purchasingEnabled
 
 	const [draft, setDraft] = useState<DeliveryDraft>({
 		supplierId: '',
@@ -135,6 +164,9 @@ export function RecordDeliveryScreen({
 		zatcaReference: '',
 		paid: false,
 		lines: [],
+		orderId: receiving ? orderId : null,
+		closeOrder: false,
+		quantityOnly,
 	})
 	const [meta, setMeta] = useState<Record<string, ItemMeta>>({})
 	const [attempted, setAttempted] = useState(false)
@@ -144,6 +176,41 @@ export function RecordDeliveryScreen({
 	const [newItemOpen, setNewItemOpen] = useState(false)
 	const clientIdRef = useRef(newClientId('d'))
 	const lineCounter = useRef(0)
+	const [photo, setPhoto] = useState<File | null>(null)
+	const [photoProblem, setPhotoProblem] = useState<string | null>(null)
+	const [creditFor, setCreditFor] = useState<string | null>(null)
+	const [seeded, setSeeded] = useState(false)
+	const photoUrl = useMemo(
+		() => (photo ? URL.createObjectURL(photo) : null),
+		[photo],
+	)
+	useEffect(
+		() => () => {
+			if (photoUrl) URL.revokeObjectURL(photoUrl)
+		},
+		[photoUrl],
+	)
+
+	const prefill = useInventoryQuery(
+		receiving ? `/orders/${encodeURIComponent(orderId)}/receive-prefill` : null,
+		receivePrefillSchema,
+	)
+	// The order's lines seed the draft once; the person edits from there.
+	useEffect(() => {
+		if (!prefill.data || seeded) return
+		const data = prefill.data
+		setDraft((current) => ({
+			...current,
+			supplierId: data.supplierId,
+			orderId: data.orderId,
+			lines: linesFromPrefill(data, {
+				currency,
+				system: quantity.system,
+				withPrices: !quantityOnly,
+			}),
+		}))
+		setSeeded(true)
+	}, [prefill.data, seeded, currency, quantity.system, quantityOnly])
 
 	const suppliers = useInventoryQuery('/suppliers', listSuppliersResultSchema)
 	const supplierDetail = useInventoryQuery(
@@ -181,12 +248,15 @@ export function RecordDeliveryScreen({
 		setDraft((current) => ({
 			...current,
 			lines: current.lines.map((line) =>
-				reconcilePack(
-					line,
-					choicesFor(line),
-					meta[line.itemId]?.countUnit ?? null,
-					currency,
-				),
+				// An order line keeps the pack the order was written in.
+				line.order
+					? line
+					: reconcilePack(
+							line,
+							choicesFor(line),
+							meta[line.itemId]?.countUnit ?? null,
+							currency,
+						),
 			),
 		}))
 		// `choicesFor` closes over the same inputs as these dependencies.
@@ -254,7 +324,9 @@ export function RecordDeliveryScreen({
 		)
 	}
 
-	const computed = draft.lines.map((line) => computeLine(line, currency))
+	const computed = draft.lines.map((line) =>
+		computeLine(line, currency, { quantityOnly }),
+	)
 	const totals = deliveryTotals(computed, {
 		vatText: draft.vatText,
 		invoiceTotalText: draft.invoiceTotalText,
@@ -299,14 +371,38 @@ export function RecordDeliveryScreen({
 			notifyChanged()
 			const moved = result.priceChanges?.length ?? 0
 			toast.success(t`Delivery recorded.`, {
-				description:
-					moved > 0
+				description: quantityOnly
+					? t`Prices still need to be confirmed.`
+					: moved > 0
 						? plural(moved, {
 								one: 'Prices updated for # item',
 								other: 'Prices updated for # items',
 							})
 						: undefined,
 			})
+			if (photo) {
+				try {
+					await uploadInvoicePhoto(request, result.delivery.id, photo)
+				} catch (caught) {
+					// The delivery is saved; only the picture failed.
+					toast.warning(
+						caught instanceof InvoicePhotoError && caught.code !== 'upload'
+							? t`The delivery is saved, but the photo was not attached. Open the delivery to add it again.`
+							: t`The delivery is saved, but the photo could not be uploaded. Open the delivery to try again.`,
+					)
+				}
+			}
+			// An order that closes with lines short offers the credit message
+			// before leaving; everything else goes straight back.
+			const orderClosed = result.order?.status === 'received'
+			if (
+				receiving &&
+				orderClosed &&
+				shortOrderLines(draft, currency, { quantityOnly }).length > 0
+			) {
+				setCreditFor(result.delivery.id)
+				return
+			}
 			void navigate(backHref)
 		} catch (caught) {
 			setError(i18n._(inventorySaveErrorMessage(caught)))
@@ -315,7 +411,7 @@ export function RecordDeliveryScreen({
 		}
 	}
 
-	if (!canEdit || !canSeeCost) {
+	if (!canEdit || (orderId !== null && !purchasingEnabled)) {
 		return (
 			<div className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-4 py-8">
 				<Alert data-testid="delivery-needs-cost">
@@ -323,10 +419,7 @@ export function RecordDeliveryScreen({
 						{!canEdit ? (
 							<Trans>You can look at deliveries but not record them.</Trans>
 						) : (
-							<Trans>
-								Recording a delivery needs the prices on the invoice, so it
-								needs access to costs. Ask an owner to check your role.
-							</Trans>
+							<Trans>Orders are not turned on for your business.</Trans>
 						)}
 					</AlertDescription>
 				</Alert>
@@ -345,6 +438,11 @@ export function RecordDeliveryScreen({
 		attempted && problems?.header.includes(field)
 	const supplierRows =
 		suppliers.data?.suppliers.filter((row) => !row.archived) ?? []
+	const orderNumber = prefill.data?.number ?? 0
+	const orderSupplier = prefill.data?.supplierName ?? ''
+	const shortLines = receiving
+		? shortOrderLines(draft, currency, { quantityOnly })
+		: []
 	const moved = computed
 		.map((line, index) => ({
 			line: draft.lines[index]!,
@@ -360,11 +458,12 @@ export function RecordDeliveryScreen({
 			data-testid="record-delivery"
 		>
 			<MenuFormHeader
-				pageTitle={t`Record delivery`}
+				pageTitle={receiving ? t`Receive delivery` : t`Record delivery`}
 				backHref={backHref}
 				backLabel={t`Back to purchasing`}
 				saveButtonText={t`Save delivery`}
 				isSubmitting={submitting}
+				saveDisabled={receiving && !seeded}
 			/>
 
 			<div className="mx-auto w-full max-w-6xl px-4 py-6 md:px-6 lg:px-8">
@@ -385,32 +484,84 @@ export function RecordDeliveryScreen({
 							</Alert>
 						) : null}
 
+						{receiving && prefill.error && !prefill.data ? (
+							<Alert variant="destructive" data-testid="receive-prefill-error">
+								<AlertDescription>
+									{prefill.error.message === 'order_closed' ? (
+										<Trans>This order is already closed.</Trans>
+									) : (
+										i18n._(inventoryErrorMessage(prefill.error))
+									)}
+								</AlertDescription>
+								<Button
+									type="button"
+									className="mt-2 justify-self-start"
+									variant="outline"
+									onClick={prefill.reload}
+								>
+									<Trans>Try again</Trans>
+								</Button>
+							</Alert>
+						) : null}
+
+						{quantityOnly ? (
+							<Alert data-testid="delivery-quantity-only">
+								<AlertDescription>
+									<Trans>
+										You are recording what arrived. Prices are left for someone
+										with access to costs to confirm from the invoice.
+									</Trans>
+								</AlertDescription>
+							</Alert>
+						) : null}
+
 						<Frame>
 							<FrameHeader>
 								<FrameTitle className="text-base">
 									<Trans>Supplier</Trans>
 								</FrameTitle>
 								<FrameDescription>
-									<Trans>
-										Who delivered. Their packs and prices fill in the lines.
-									</Trans>
+									{receiving ? (
+										<Trans>
+											Received against the order below. Change how many arrived.
+										</Trans>
+									) : (
+										<Trans>
+											Who delivered. Their packs and prices fill in the lines.
+										</Trans>
+									)}
 								</FrameDescription>
 							</FrameHeader>
 							<FramePanel>
-								<SelectField
-									label={<Trans>Supplier</Trans>}
-									id={`${idPrefix}-supplier`}
-									testId="delivery-supplier"
-									options={[
-										{ value: '', label: t`No supplier` },
-										...supplierRows.map((row) => ({
-											value: row.id,
-											label: row.name,
-										})),
-									]}
-									value={draft.supplierId}
-									onValueChange={(next) => patch({ supplierId: next })}
-								/>
+								{receiving ? (
+									<div className="text-sm" data-testid="receive-order-info">
+										{prefill.data ? (
+											<Trans>
+												Order {orderNumber} from{' '}
+												<span className="font-medium wrap-anywhere">
+													{orderSupplier}
+												</span>
+											</Trans>
+										) : (
+											<Skeleton className="h-5 w-1/2" />
+										)}
+									</div>
+								) : (
+									<SelectField
+										label={<Trans>Supplier</Trans>}
+										id={`${idPrefix}-supplier`}
+										testId="delivery-supplier"
+										options={[
+											{ value: '', label: t`No supplier` },
+											...supplierRows.map((row) => ({
+												value: row.id,
+												label: row.name,
+											})),
+										]}
+										value={draft.supplierId}
+										onValueChange={(next) => patch({ supplierId: next })}
+									/>
+								)}
 							</FramePanel>
 						</Frame>
 
@@ -420,36 +571,49 @@ export function RecordDeliveryScreen({
 									<Trans>What arrived</Trans>
 								</FrameTitle>
 								<FrameDescription>
-									<Trans>
-										Search your items and enter how many packs came and what
-										each cost, before VAT.
-									</Trans>
+									{receiving ? (
+										<Trans>
+											Each line starts at what is still to come. Change it to
+											what really arrived.
+										</Trans>
+									) : quantityOnly ? (
+										<Trans>
+											Search your items and enter how many packs came.
+										</Trans>
+									) : (
+										<Trans>
+											Search your items and enter how many packs came and what
+											each cost, before VAT.
+										</Trans>
+									)}
 								</FrameDescription>
 							</FrameHeader>
 							<FramePanel className="flex flex-col gap-4">
-								<div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-									<div className="min-w-0 flex-1">
-										<ItemPicker
-											id={`${idPrefix}-add-item`}
-											label={<Trans>Add an item</Trans>}
-											client={client}
-											locationId={locationId}
-											value={null}
-											onChange={addItem}
-											placeholder={t`Search your items`}
-											testId="delivery-add-item"
-										/>
+								{receiving ? null : (
+									<div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+										<div className="min-w-0 flex-1">
+											<ItemPicker
+												id={`${idPrefix}-add-item`}
+												label={<Trans>Add an item</Trans>}
+												client={client}
+												locationId={locationId}
+												value={null}
+												onChange={addItem}
+												placeholder={t`Search your items`}
+												testId="delivery-add-item"
+											/>
+										</div>
+										<Button
+											type="button"
+											variant="outline"
+											onClick={() => setNewItemOpen(true)}
+											data-testid="delivery-new-item"
+										>
+											<Icon name="plus" />
+											<Trans>New item</Trans>
+										</Button>
 									</div>
-									<Button
-										type="button"
-										variant="outline"
-										onClick={() => setNewItemOpen(true)}
-										data-testid="delivery-new-item"
-									>
-										<Icon name="plus" />
-										<Trans>New item</Trans>
-									</Button>
-								</div>
+								)}
 
 								{headerProblem('lines') ? (
 									<p className="text-destructive text-sm" role="alert">
@@ -457,7 +621,14 @@ export function RecordDeliveryScreen({
 									</p>
 								) : null}
 
-								{draft.lines.length === 0 ? (
+								{receiving && !seeded && !prefill.error ? (
+									<div role="status" className="flex flex-col gap-2">
+										<span className="sr-only">
+											<Trans>Loading the order</Trans>
+										</span>
+										<Skeleton className="h-24 w-full rounded-xl" />
+									</div>
+								) : draft.lines.length === 0 ? (
 									<p
 										className="text-muted-foreground text-sm"
 										data-testid="delivery-no-lines"
@@ -479,6 +650,7 @@ export function RecordDeliveryScreen({
 												computedLine={computed[index]!}
 												choices={choicesFor(line)}
 												currency={currency}
+												quantityOnly={quantityOnly}
 												problems={
 													attempted ? (problems?.lines[line.key] ?? []) : []
 												}
@@ -545,37 +717,43 @@ export function RecordDeliveryScreen({
 										dir="ltr"
 										data-testid="delivery-invoice-date"
 									/>
-									<TextField
-										label={<Trans>VAT ({currency})</Trans>}
-										optional
-										value={draft.vatText}
-										onChange={(event) => patch({ vatText: event.target.value })}
-										error={
-											headerProblem('vat')
-												? t`Enter the VAT amount, for example 106.80.`
-												: null
-										}
-										inputMode="decimal"
-										dir="ltr"
-										data-testid="delivery-vat"
-									/>
-									<TextField
-										label={<Trans>Invoice total ({currency})</Trans>}
-										optional
-										value={draft.invoiceTotalText}
-										onChange={(event) =>
-											patch({ invoiceTotalText: event.target.value })
-										}
-										error={
-											headerProblem('invoiceTotal')
-												? t`Enter the total on the invoice, for example 818.80.`
-												: null
-										}
-										inputMode="decimal"
-										hint={<Trans>The grand total, VAT included.</Trans>}
-										dir="ltr"
-										data-testid="delivery-invoice-total"
-									/>
+									{quantityOnly ? null : (
+										<TextField
+											label={<Trans>VAT ({currency})</Trans>}
+											optional
+											value={draft.vatText}
+											onChange={(event) =>
+												patch({ vatText: event.target.value })
+											}
+											error={
+												headerProblem('vat')
+													? t`Enter the VAT amount, for example 106.80.`
+													: null
+											}
+											inputMode="decimal"
+											dir="ltr"
+											data-testid="delivery-vat"
+										/>
+									)}
+									{quantityOnly ? null : (
+										<TextField
+											label={<Trans>Invoice total ({currency})</Trans>}
+											optional
+											value={draft.invoiceTotalText}
+											onChange={(event) =>
+												patch({ invoiceTotalText: event.target.value })
+											}
+											error={
+												headerProblem('invoiceTotal')
+													? t`Enter the total on the invoice, for example 818.80.`
+													: null
+											}
+											inputMode="decimal"
+											hint={<Trans>The grand total, VAT included.</Trans>}
+											dir="ltr"
+											data-testid="delivery-invoice-total"
+										/>
+									)}
 								</div>
 								{dataRegion === 'ksa' ? (
 									<TextField
@@ -601,22 +779,24 @@ export function RecordDeliveryScreen({
 										data-testid="delivery-zatca"
 									/>
 								) : null}
-								<div className="flex items-center gap-2">
-									<Checkbox
-										id={`${idPrefix}-paid`}
-										checked={draft.paid}
-										disabled={!canManagePurchasing}
-										onCheckedChange={(next) => patch({ paid: next })}
-										data-testid="delivery-paid"
-									/>
-									<Label
-										htmlFor={`${idPrefix}-paid`}
-										className="cursor-pointer font-normal"
-									>
-										<Trans>Already paid</Trans>
-									</Label>
-								</div>
-								{!canManagePurchasing ? (
+								{quantityOnly ? null : (
+									<div className="flex items-center gap-2">
+										<Checkbox
+											id={`${idPrefix}-paid`}
+											checked={draft.paid}
+											disabled={!canManagePurchasing}
+											onCheckedChange={(next) => patch({ paid: next })}
+											data-testid="delivery-paid"
+										/>
+										<Label
+											htmlFor={`${idPrefix}-paid`}
+											className="cursor-pointer font-normal"
+										>
+											<Trans>Already paid</Trans>
+										</Label>
+									</div>
+								)}
+								{!quantityOnly && !canManagePurchasing ? (
 									<p className="text-muted-foreground text-xs">
 										<Trans>
 											Marking a delivery paid needs the purchasing role, so it
@@ -624,79 +804,229 @@ export function RecordDeliveryScreen({
 										</Trans>
 									</p>
 								) : null}
+								{receiving ? (
+									<div className="flex flex-col gap-1">
+										<div className="flex items-center gap-2">
+											<Checkbox
+												id={`${idPrefix}-close`}
+												checked={draft.closeOrder === true}
+												onCheckedChange={(next) => patch({ closeOrder: next })}
+												data-testid="delivery-close-order"
+											/>
+											<Label
+												htmlFor={`${idPrefix}-close`}
+												className="cursor-pointer font-normal"
+											>
+												<Trans>Nothing more is coming for this order</Trans>
+											</Label>
+										</div>
+										<p className="text-muted-foreground text-xs">
+											<Trans>
+												The order is closed even if some items came short, and
+												you can ask the supplier for credit.
+											</Trans>
+										</p>
+									</div>
+								) : null}
+							</FramePanel>
+						</Frame>
+
+						<Frame>
+							<FrameHeader>
+								<FrameTitle className="text-base">
+									<Trans>Photo of the invoice</Trans>
+								</FrameTitle>
+								<FrameDescription>
+									<Trans>
+										Optional. Keep a picture of the paper invoice with the
+										delivery.
+									</Trans>
+								</FrameDescription>
+							</FrameHeader>
+							<FramePanel className="flex flex-col gap-3">
+								{photoUrl ? (
+									<img
+										src={photoUrl}
+										alt={t`The invoice photo you chose`}
+										className="max-h-64 w-full self-start rounded-lg border object-contain sm:w-auto"
+										data-testid="delivery-photo-preview"
+									/>
+								) : null}
+								{photoProblem ? (
+									<p className="text-destructive text-sm" role="alert">
+										{photoProblem}
+									</p>
+								) : null}
+								<div className="flex flex-wrap gap-2">
+									<Button
+										type="button"
+										variant="outline"
+										render={<label htmlFor={`${idPrefix}-photo`} />}
+										nativeButton={false}
+									>
+										<Icon name="camera" />
+										{photo ? (
+											<Trans>Choose another photo</Trans>
+										) : (
+											<Trans>Add a photo</Trans>
+										)}
+									</Button>
+									{photo ? (
+										<Button
+											type="button"
+											variant="ghost"
+											onClick={() => {
+												setPhoto(null)
+												setPhotoProblem(null)
+											}}
+											data-testid="delivery-photo-remove"
+										>
+											<Trans>Remove photo</Trans>
+										</Button>
+									) : null}
+									<input
+										id={`${idPrefix}-photo`}
+										type="file"
+										accept="image/jpeg,image/png,image/webp"
+										capture="environment"
+										className="sr-only"
+										onChange={(event) => {
+											const file = event.target.files?.[0] ?? null
+											event.target.value = ''
+											if (!file) return
+											if (!isAllowedInvoicePhotoType(file.type)) {
+												setPhoto(null)
+												setPhotoProblem(t`Choose a JPEG, PNG or WebP picture.`)
+											} else {
+												setPhoto(file)
+												setPhotoProblem(null)
+											}
+										}}
+										data-testid="delivery-photo-input"
+									/>
+								</div>
 							</FramePanel>
 						</Frame>
 					</div>
 
 					<aside className="lg:col-span-4">
 						<div className="flex flex-col gap-4 lg:sticky lg:top-24">
-							<Frame>
-								<FrameHeader>
-									<FrameTitle className="text-base">
-										<Trans>Check against the invoice</Trans>
-									</FrameTitle>
-								</FrameHeader>
-								<FramePanel>
-									<dl
-										className="flex flex-col gap-2 text-sm"
-										data-testid="delivery-summary"
-									>
-										<div className="flex justify-between gap-3">
-											<dt className="text-muted-foreground">
-												<Trans>Lines</Trans>
-											</dt>
-											<dd
-												className="tabular-nums"
-												data-testid="delivery-lines-total"
-											>
-												<bdi dir="ltr">{money(totals.linesMinor)}</bdi>
-											</dd>
-										</div>
-										{totals.vatMinor !== null ? (
-											<div className="flex justify-between gap-3">
-												<dt className="text-muted-foreground">
-													<Trans>VAT</Trans>
-												</dt>
-												<dd className="tabular-nums">
-													<bdi dir="ltr">{money(totals.vatMinor)}</bdi>
-												</dd>
-											</div>
-										) : null}
-										{totals.invoiceMinor !== null ? (
-											<div className="flex justify-between gap-3">
-												<dt className="text-muted-foreground">
-													<Trans>Invoice</Trans>
-												</dt>
-												<dd className="tabular-nums">
-													<bdi dir="ltr">{money(totals.invoiceMinor)}</bdi>
-												</dd>
-											</div>
-										) : null}
-									</dl>
-									{totals.state === 'apart' &&
-									totals.differenceMinor !== null ? (
-										<p
-											className="text-warning mt-3 text-sm"
-											data-testid="delivery-total-check"
-											data-state="apart"
-										>
+							{shortLines.length > 0 ? (
+								<Frame>
+									<FrameHeader>
+										<FrameTitle className="text-base">
+											<Trans>Came short</Trans>
+										</FrameTitle>
+										<FrameDescription>
 											<Trans>
-												<bdi dir="ltr">{gapText}</bdi> apart from the invoice.
-												Check the lines.
+												After you save, you can ask the supplier for credit.
 											</Trans>
-										</p>
-									) : totals.state === 'match' ? (
-										<p
-											className="text-success mt-3 flex items-center gap-1 text-sm"
-											data-testid="delivery-total-check"
-											data-state="match"
+										</FrameDescription>
+									</FrameHeader>
+									<FramePanel>
+										<ul
+											className="flex flex-col gap-1 text-sm"
+											data-testid="delivery-short-lines"
 										>
-											<Icon name="check" className="size-4" />
-											<Trans>Matches the invoice.</Trans>
-										</p>
-									) : null}
-								</FramePanel>
-							</Frame>
+											{shortLines.map((short) => (
+												<li
+													key={short.orderLineId ?? short.itemId}
+													className="flex justify-between gap-3"
+												>
+													<span className="min-w-0 wrap-anywhere">
+														{draft.lines.find(
+															(line) => line.itemId === short.itemId,
+														)?.itemName ?? ''}
+													</span>
+													<Badge
+														variant={
+															short.kind === 'missing'
+																? 'destructive'
+																: 'warning'
+														}
+													>
+														{short.kind === 'missing' ? (
+															<Trans>Missing</Trans>
+														) : (
+															<Trans>Short</Trans>
+														)}
+													</Badge>
+												</li>
+											))}
+										</ul>
+									</FramePanel>
+								</Frame>
+							) : null}
+
+							{quantityOnly ? null : (
+								<Frame>
+									<FrameHeader>
+										<FrameTitle className="text-base">
+											<Trans>Check against the invoice</Trans>
+										</FrameTitle>
+									</FrameHeader>
+									<FramePanel>
+										<dl
+											className="flex flex-col gap-2 text-sm"
+											data-testid="delivery-summary"
+										>
+											<div className="flex justify-between gap-3">
+												<dt className="text-muted-foreground">
+													<Trans>Lines</Trans>
+												</dt>
+												<dd
+													className="tabular-nums"
+													data-testid="delivery-lines-total"
+												>
+													<bdi dir="ltr">{money(totals.linesMinor)}</bdi>
+												</dd>
+											</div>
+											{totals.vatMinor !== null ? (
+												<div className="flex justify-between gap-3">
+													<dt className="text-muted-foreground">
+														<Trans>VAT</Trans>
+													</dt>
+													<dd className="tabular-nums">
+														<bdi dir="ltr">{money(totals.vatMinor)}</bdi>
+													</dd>
+												</div>
+											) : null}
+											{totals.invoiceMinor !== null ? (
+												<div className="flex justify-between gap-3">
+													<dt className="text-muted-foreground">
+														<Trans>Invoice</Trans>
+													</dt>
+													<dd className="tabular-nums">
+														<bdi dir="ltr">{money(totals.invoiceMinor)}</bdi>
+													</dd>
+												</div>
+											) : null}
+										</dl>
+										{totals.state === 'apart' &&
+										totals.differenceMinor !== null ? (
+											<p
+												className="text-warning mt-3 text-sm"
+												data-testid="delivery-total-check"
+												data-state="apart"
+											>
+												<Trans>
+													<bdi dir="ltr">{gapText}</bdi> apart from the invoice.
+													Check the lines.
+												</Trans>
+											</p>
+										) : totals.state === 'match' ? (
+											<p
+												className="text-success mt-3 flex items-center gap-1 text-sm"
+												data-testid="delivery-total-check"
+												data-state="match"
+											>
+												<Icon name="check" className="size-4" />
+												<Trans>Matches the invoice.</Trans>
+											</p>
+										) : null}
+									</FramePanel>
+								</Frame>
+							)}
 
 							{moved.length > 0 ? (
 								<Frame>
@@ -737,6 +1067,18 @@ export function RecordDeliveryScreen({
 				</div>
 			</div>
 
+			{creditFor ? (
+				<CreditMessageDialog
+					open
+					onOpenChange={(next) => {
+						if (!next) void navigate(backHref)
+					}}
+					deliveryId={creditFor}
+					canSeeCost={canSeeCost}
+					currency={currency}
+				/>
+			) : null}
+
 			<NewItemDialog
 				open={newItemOpen}
 				onOpenChange={setNewItemOpen}
@@ -755,6 +1097,7 @@ function DeliveryLine({
 	computedLine,
 	choices,
 	currency,
+	quantityOnly,
 	problems,
 	onChange,
 	onRemove,
@@ -765,14 +1108,17 @@ function DeliveryLine({
 	computedLine: ReturnType<typeof computeLine>
 	choices: readonly PackChoice[]
 	currency: string
+	/** No prices: only how much arrived. */
+	quantityOnly: boolean
 	problems: readonly string[]
 	onChange: (update: (line: DeliveryLineDraft) => DeliveryLineDraft) => void
 	onRemove: () => void
 	moneyText: (minor: number) => string
 	percentText: (bp: number) => string
 }) {
-	const { t } = useLingui()
+	const { t, i18n } = useLingui()
 	const quantity = useQuantityFormat()
+	const order = line.order
 	const packName = line.pack.name
 	const change = visiblePriceChangeBp(computedLine.changeBp)
 	const itemName = line.itemName
@@ -782,27 +1128,66 @@ function DeliveryLine({
 			? minorToMajorText(computedLine.lineTotalMinor, currency)
 			: ''
 
+	const orderedText = order
+		? quantity.format(order.orderedQuantity, { baseUnit: line.baseUnit })
+		: null
+	const earlierText =
+		order && order.receivedQuantity > 0
+			? quantity.format(order.receivedQuantity, { baseUnit: line.baseUnit })
+			: null
+	const orderedPacks = order
+		? formatPacks(order.orderedPacks, i18n.locale)
+		: null
+
 	return (
 		<li
 			className="bg-card flex flex-col gap-3 rounded-xl border p-3"
 			data-testid={`delivery-line-${line.key}`}
 		>
 			<div className="flex items-start justify-between gap-2">
-				<span className="font-medium wrap-anywhere">{line.itemName}</span>
-				<Button
-					type="button"
-					variant="ghost"
-					size="icon"
-					className="size-11 shrink-0 md:size-8"
-					aria-label={t`Remove ${itemName}`}
-					onClick={onRemove}
-					data-testid={`delivery-line-remove-${line.key}`}
-				>
-					<Icon name="x" />
-				</Button>
+				<div className="flex min-w-0 flex-col">
+					<span className="font-medium wrap-anywhere">{line.itemName}</span>
+					{order ? (
+						<span
+							className="text-muted-foreground text-xs"
+							data-testid={`delivery-line-ordered-${line.key}`}
+						>
+							<Trans>
+								Ordered <bdi dir="ltr">{orderedPacks}</bdi> × {packName}
+							</Trans>
+							{orderedText ? (
+								<>
+									{' · '}
+									<bdi dir="ltr">{orderedText}</bdi>
+								</>
+							) : null}
+							{earlierText ? (
+								<>
+									{' · '}
+									<Trans>
+										already received <bdi dir="ltr">{earlierText}</bdi>
+									</Trans>
+								</>
+							) : null}
+						</span>
+					) : null}
+				</div>
+				{order ? null : (
+					<Button
+						type="button"
+						variant="ghost"
+						size="icon"
+						className="size-11 shrink-0 md:size-8"
+						aria-label={t`Remove ${itemName}`}
+						onClick={onRemove}
+						data-testid={`delivery-line-remove-${line.key}`}
+					>
+						<Icon name="x" />
+					</Button>
+				)}
 			</div>
 
-			{choices.length > 1 ? (
+			{choices.length > 1 && !order ? (
 				<SelectField
 					label={<Trans>Bought as</Trans>}
 					testId={`delivery-line-pack-${line.key}`}
@@ -820,45 +1205,81 @@ function DeliveryLine({
 			) : null}
 
 			<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-				<TextField
-					label={<Trans>How many {packName}</Trans>}
-					optional={line.pack.pricedByWeight}
-					value={line.packsText}
-					onChange={(event) =>
-						onChange((current) => ({
-							...current,
-							packsText: event.target.value,
-						}))
-					}
-					error={
-						problems.includes('packs') ? t`Enter a number above zero.` : null
-					}
-					inputMode="decimal"
-					dir="ltr"
-					data-testid={`delivery-line-packs-${line.key}`}
-				/>
-				<TextField
-					label={
-						<Trans>
-							Price of one {packName} ({currency})
-						</Trans>
-					}
-					value={line.priceText}
-					onChange={(event) =>
-						onChange((current) => ({
-							...current,
-							priceText: event.target.value,
-						}))
-					}
-					error={
-						problems.includes('price')
-							? t`Enter the price on the invoice, for example 28.50.`
-							: null
-					}
-					inputMode="decimal"
-					dir="ltr"
-					data-testid={`delivery-line-price-${line.key}`}
-				/>
+				{order ? (
+					<div className="flex flex-col gap-2">
+						<span className="text-sm font-medium">
+							<Trans>How many {packName} arrived</Trans>
+						</span>
+						<QuantityStepper
+							value={
+								line.packsText.trim() === ''
+									? null
+									: parseQuantityText(line.packsText)
+							}
+							onValueChange={(next) =>
+								onChange((current) => ({
+									...current,
+									packsText: next === null ? '' : String(next),
+								}))
+							}
+							step={line.pack.pricedByWeight ? 0.5 : 1}
+							min={0}
+							placeholder="0"
+							invalid={problems.includes('packs')}
+							decrementLabel={t`Fewer`}
+							incrementLabel={t`More`}
+							aria-label={t`${itemName}, ${packName} that arrived`}
+							data-testid={`delivery-line-packs-${line.key}`}
+						/>
+						{problems.includes('packs') ? (
+							<p className="text-destructive text-sm" role="alert">
+								<Trans>Enter a number above zero.</Trans>
+							</p>
+						) : null}
+					</div>
+				) : (
+					<TextField
+						label={<Trans>How many {packName}</Trans>}
+						optional={line.pack.pricedByWeight}
+						value={line.packsText}
+						onChange={(event) =>
+							onChange((current) => ({
+								...current,
+								packsText: event.target.value,
+							}))
+						}
+						error={
+							problems.includes('packs') ? t`Enter a number above zero.` : null
+						}
+						inputMode="decimal"
+						dir="ltr"
+						data-testid={`delivery-line-packs-${line.key}`}
+					/>
+				)}
+				{quantityOnly ? null : (
+					<TextField
+						label={
+							<Trans>
+								Price of one {packName} ({currency})
+							</Trans>
+						}
+						value={line.priceText}
+						onChange={(event) =>
+							onChange((current) => ({
+								...current,
+								priceText: event.target.value,
+							}))
+						}
+						error={
+							problems.includes('price')
+								? t`Enter the price on the invoice, for example 28.50.`
+								: null
+						}
+						inputMode="decimal"
+						dir="ltr"
+						data-testid={`delivery-line-price-${line.key}`}
+					/>
+				)}
 			</div>
 
 			{line.pack.pricedByWeight ? (
@@ -908,35 +1329,44 @@ function DeliveryLine({
 				</div>
 			) : null}
 
-			<TextField
-				label={<Trans>Line total on the invoice ({currency})</Trans>}
-				optional
-				value={line.totalText}
-				placeholder={computedTotal}
-				onChange={(event) =>
-					onChange((current) => ({ ...current, totalText: event.target.value }))
-				}
-				error={
-					problems.includes('total')
-						? t`Enter the line total above zero.`
-						: null
-				}
-				hint={<Trans>Only if it differs from packs times price.</Trans>}
-				inputMode="decimal"
-				dir="ltr"
-				data-testid={`delivery-line-total-${line.key}`}
-			/>
+			{quantityOnly ? null : (
+				<TextField
+					label={<Trans>Line total on the invoice ({currency})</Trans>}
+					optional
+					value={line.totalText}
+					placeholder={computedTotal}
+					onChange={(event) =>
+						onChange((current) => ({
+							...current,
+							totalText: event.target.value,
+						}))
+					}
+					error={
+						problems.includes('total')
+							? t`Enter the line total above zero.`
+							: null
+					}
+					hint={<Trans>Only if it differs from packs times price.</Trans>}
+					inputMode="decimal"
+					dir="ltr"
+					data-testid={`delivery-line-total-${line.key}`}
+				/>
+			)}
 
 			{computedLine.quantity !== null &&
-			computedLine.lineTotalMinor !== null ? (
+			(quantityOnly || computedLine.lineTotalMinor !== null) ? (
 				<p className="text-muted-foreground flex flex-wrap items-center gap-2 text-xs">
 					<bdi dir="ltr">
 						{quantity.format(computedLine.quantity, {
 							baseUnit: line.baseUnit,
 						})}
 					</bdi>
-					<span aria-hidden>·</span>
-					<bdi dir="ltr">{moneyText(computedLine.lineTotalMinor)}</bdi>
+					{computedLine.lineTotalMinor !== null ? (
+						<>
+							<span aria-hidden>·</span>
+							<bdi dir="ltr">{moneyText(computedLine.lineTotalMinor)}</bdi>
+						</>
+					) : null}
 					{change !== null ? (
 						<Badge
 							variant={change > 0 ? 'warning' : 'success'}

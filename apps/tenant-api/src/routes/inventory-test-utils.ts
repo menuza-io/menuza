@@ -6,6 +6,7 @@ import {
 	INVENTORY_PERMISSIONS,
 	INVENTORY_TOKEN_AUDIENCE,
 	INVENTORY_TOKEN_TYP,
+	type InventoryFeatures,
 	type InventoryScope,
 } from '@repo/inventory'
 import { type Hono } from 'hono'
@@ -53,6 +54,8 @@ export async function mintToken(
 		impersonated?: boolean
 		region?: 'us' | 'ksa'
 		subject?: string
+		/** Child flags of the token's `features` claim (default: purchasing on). */
+		features?: Partial<InventoryFeatures>
 	} = {},
 ): Promise<string> {
 	const now = Math.floor(Date.now() / 1000)
@@ -69,6 +72,7 @@ export async function mintToken(
 			recipes: false,
 			prep: false,
 			transfers: false,
+			...options.features,
 		},
 		impersonated: options.impersonated ?? false,
 	})

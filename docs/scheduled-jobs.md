@@ -39,34 +39,35 @@ as the Admin cache route).
 | `0 * * * *` | `/resources/jobs/reservation-payments-reconcile` | Re-check lingering reservation payments         |
 
 The hourly `0 * * * *` trigger fans out to every regional tenant-api node: the
-tenant engagement sync, the staff tick, the reservations tick and the loyalty
-tick (below), and also calls the App job that reconciles reservation payments
-(below). They are independent requests, so one failing never blocks the others.
-The same trigger runs three more App jobs: `/resources/jobs/print-sync`;
-`/resources/jobs/social-publish`, a sweep behind the per-post
-`SocialPostWorkflow` that wakes the App when a scheduled social post is due (see
-`docs/social-media.md`); and `/resources/jobs/impersonation-cleanup`, which ends
-expired admin impersonation sessions and writes each one's
-`ADMIN_IMPERSONATION_END` audit entry. The Workers free plan allows five cron
-triggers per Worker, so new daily jobs share an existing trigger (each job is
-still its own request with its own error logging).
+tenant engagement sync, the staff tick, the reservations tick, the loyalty tick
+and the inventory tick (below), and also calls the App job that reconciles
+reservation payments (below). They are independent requests, so one failing
+never blocks the others. The same trigger runs three more App jobs:
+`/resources/jobs/print-sync`; `/resources/jobs/social-publish`, a sweep behind
+the per-post `SocialPostWorkflow` that wakes the App when a scheduled social
+post is due (see `docs/social-media.md`); and
+`/resources/jobs/impersonation-cleanup`, which ends expired admin impersonation
+sessions and writes each one's `ADMIN_IMPERSONATION_END` audit entry. The
+Workers free plan allows five cron triggers per Worker, so new daily jobs share
+an existing trigger (each job is still its own request with its own error
+logging).
 
 ### Shared organization alarm (staffing and reservations)
 
 A Durable Object has a single storage alarm slot, so the US Worker cannot arm
 one alarm per module. `apps/tenant-api/src/lib/org-alarm.ts` is the generic
-scheduler: a module (`staff`, `reservations`, `loyalty`) registers its tick
-path, an activity matcher and a `run` that reports whether it needs a follow-up
-and when its next work is due. A request that shows a module is in use arms the
-alarm; the shared `alarm()` handler runs the modules and re-arms the single
-alarm for the earliest due time (clamped between 30 seconds and one hour) only
-while some module still has something to watch, and a module stops re-arming
-after six failed alarms in a row. An idle organization goes quiet and costs
-nothing; the hourly cron or the next request wakes it again. The Node (OCI)
-runtime drives the same modules from its interval loops
+scheduler: a module (`staff`, `reservations`, `loyalty`, `inventory`) registers
+its tick path, an activity matcher and a `run` that reports whether it needs a
+follow-up and when its next work is due. A request that shows a module is in use
+arms the alarm; the shared `alarm()` handler runs the modules and re-arms the
+single alarm for the earliest due time (clamped between 30 seconds and one hour)
+only while some module still has something to watch, and a module stops
+re-arming after six failed alarms in a row. An idle organization goes quiet and
+costs nothing; the hourly cron or the next request wakes it again. The Node
+(OCI) runtime drives the same modules from its interval loops
 (`STAFFING_TICK_INTERVAL_SECONDS`, `RESERVATIONS_TICK_INTERVAL_SECONDS`,
-`LOYALTY_TICK_INTERVAL_SECONDS`). Arming or firing one module therefore never
-clobbers a pending alarm of another.
+`LOYALTY_TICK_INTERVAL_SECONDS`, `INVENTORY_TICK_INTERVAL_SECONDS`). Arming or
+firing one module therefore never clobbers a pending alarm of another.
 
 ### Staff tick
 
@@ -173,6 +174,43 @@ loyalty calls), and the Node (OCI) node runs an in-process interval
 (`LOYALTY_TICK_INTERVAL_SECONDS`, default 120, minimum 60, `0` turns it off).
 Every task is idempotent, so the drivers may overlap. Details:
 [loyalty operations](loyalty.md#operations).
+
+### Inventory tick
+
+`POST /api/inventory/tick` on each tenant-api node (token:
+`INTERNAL_COMMAND_TOKEN`, empty body `{}`, `INVENTORY_TICK_PATH` in
+`@repo/inventory`) works out what a manager should hear about, per organization
+and location, and hands it to the App (`POST /resources/inventory/notify`, the
+same internal token): a **low-stock digest** (a daily count of items below their
+level, from 07:00 at the location), **counts waiting for review** (one event per
+count), **orders due today or overdue** (a daily count, from 07:00), and **price
+rises** over 5% on the latest priced delivery (one event per delivery, from the
+prices set in the last week; a quantity-only delivery counts from the day its
+prices are confirmed). It adds **no cron slot**: it is the last request in the
+hourly fan-out (`Tenant inventory tick`). The response is counts only (ids and
+counts are all an alert carries: no item name and no amount of money).
+
+Every alert is one row in the regional `inv_alert_log`, unique on
+`(kind, location, dedupe key)` (a date for the digests and due orders, a count
+id, a delivery id), so an hourly tick never resends. The App receives `eventId`,
+the SHA-256 of `inventoryNotifyDedupeKey(...)`, and drops a repeat. A post the
+App cannot take (401, 408, 425, 429, 5xx, no network) stays `pending` and is
+retried by the next tick under the same event id; any other refusal is not
+retried and counts as an error; an alert still pending after three days (or 40
+attempts) is given up. The tick reads the organization's flags from the App
+(`inventory.enabled`) and stops for the `INVENTORY_ENABLED` node kill switch; it
+skips an organization with no items. A body of `{ "orgId": "..." }` ticks one
+organization; an empty body fans out over every organization on the node with a
+50-second budget, and what is not reached is reported as `orgsDeferred`.
+
+Hourly is the safety net and does the digests. A tick that still has an alert
+waiting asks to be run again (`needsFollowUp`, in 5 minutes): the US Workers
+node registers an `inventory` module on the shared organization alarm (armed
+only by such a tick, never by plain activity), and the Node (OCI) node runs an
+in-process interval (`INVENTORY_TICK_INTERVAL_SECONDS`, default 300, minimum 60,
+`0` turns it off). Every task is idempotent, so the drivers may overlap. The
+sale-usage outbox of phase 3 will settle in the same tick (`salesSettled`, 0
+until then).
 
 ### Reservation payments reconcile
 

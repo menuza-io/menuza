@@ -4,6 +4,7 @@ import { AnnotatedLayout, AnnotatedSection } from '@repo/ui/annotated-layout'
 import { useLoaderData, type LoaderFunctionArgs } from 'react-router'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { NotificationPreferencesCard } from '#app/components/settings/cards/notification-preferences-card.tsx'
+import { inventoryAlertSettingsVisible } from '#app/utils/inventory/notification-visibility.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { reservationAlertVisibleOrgIds } from '#app/utils/reservations/notification-visibility.server.ts'
 import {
@@ -48,12 +49,17 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	const showReservationsAlerts = (
 		await reservationAlertVisibleOrgIds(userId, [org.id])
 	).has(org.id)
+	// Inventory alerts are offered where the module is on and the member holds
+	// an inventory grant; price rises also need the cost grant.
+	const inventoryAlerts = await inventoryAlertSettingsVisible(userId, org.id)
 	return {
 		organizationId: org.id,
 		showStaffingAlerts,
 		showScheduleAlerts,
 		showHiringAlerts,
 		showReservationsAlerts,
+		showInventoryAlerts: inventoryAlerts.any,
+		showInventoryPriceAlerts: inventoryAlerts.priceRise,
 	}
 }
 
@@ -64,6 +70,8 @@ export default function NotificationSettings() {
 		showScheduleAlerts,
 		showHiringAlerts,
 		showReservationsAlerts,
+		showInventoryAlerts,
+		showInventoryPriceAlerts,
 	} = useLoaderData<typeof loader>()
 	return (
 		<AnnotatedLayout>
@@ -74,6 +82,8 @@ export default function NotificationSettings() {
 					showScheduleAlerts={showScheduleAlerts}
 					showHiringAlerts={showHiringAlerts}
 					showReservationsAlerts={showReservationsAlerts}
+					showInventoryAlerts={showInventoryAlerts}
+					showInventoryPriceAlerts={showInventoryPriceAlerts}
 				/>
 			</AnnotatedSection>
 		</AnnotatedLayout>

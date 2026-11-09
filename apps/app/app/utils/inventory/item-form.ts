@@ -257,7 +257,7 @@ export function splitAreaIds(joined: string): string[] {
 }
 
 /** A typed level (in the count unit) as base thousandths, or null when empty. */
-function levelQuantity(
+export function levelQuantity(
 	text: string,
 	unit: UnitRef,
 	baseUnit: InventoryBaseUnit,
@@ -400,7 +400,7 @@ export function buildUpdatePayloads(
 	}
 }
 
-function levelText(
+export function levelText(
 	quantity: number | null,
 	unit: UnitRef,
 	baseUnit: InventoryBaseUnit,

@@ -416,22 +416,23 @@ setup versions answer 409. The order upload contract is unchanged.
 
 ## Station apps: time clock and host stand
 
-A paired terminal can also be the restaurant's time clock and its host stand,
-with no second pairing and no App login. Each app is a per-terminal setting
-(`pos_devices.timeclock_enabled`, `reservations_enabled`, tenant-db migration
-`0022_station_apps`) that a manager switches in the App (Settings, Terminals,
-Station apps, or when pairing), **and** the organization's flag
-(`staffing.timeclock`, `reservations.enabled`). Switching an app on needs that
-module's settings permission (time clock rules, or reservation settings), which
-App signs into the operator token as `stationApps`; a member limited to some
-locations may open the host stand only at those. Every switch, location binding
-and host-roster change is in the staff audit log. `/pos/me` reports the result
-as `apps: { timeclock, reservations }`, leaving out an app whose flag it cannot
-read (the till keeps what it last knew). **Apps**, the nine-dot button at the
-start of the header, opens the available apps: Register, Kitchen, and the
-enabled Time clock and Reservations. The launcher also shows the business name,
-logo and location. The current app is marked; Tab or the arrow keys move between
-choices, Enter selects, and Escape closes and returns focus.
+A paired terminal can also be the restaurant's time clock and its host stand
+(and its Stock app, below), with no second pairing and no App login. Each app is
+a per-terminal setting (`pos_devices.timeclock_enabled`, `reservations_enabled`,
+tenant-db migration `0022_station_apps`) that a manager switches in the App
+(Settings, Terminals, Station apps, or when pairing), **and** the organization's
+flag (`staffing.timeclock`, `reservations.enabled`). Switching an app on needs
+that module's settings permission (time clock rules, or reservation settings),
+which App signs into the operator token as `stationApps`; a member limited to
+some locations may open the host stand only at those. Every switch, location
+binding and host-roster change is in the staff audit log. `/pos/me` reports the
+result as `apps: { timeclock, reservations, inventory }`, leaving out an app
+whose flag it cannot read (the till keeps what it last knew). **Apps**, the
+nine-dot button at the start of the header, opens the available apps: Register,
+Kitchen, and the enabled Time clock, Reservations and Stock. The launcher also
+shows the business name, logo and location. The current app is marked; Tab or
+the arrow keys move between choices, Enter selects, and Escape closes and
+returns focus.
 
 Orders remains a direct header action, with its open-tab count. Refresh menu (on
 larger screens), Shift, Settings and staff lock share a quiet utility row. A
@@ -548,6 +549,121 @@ and resolves each name for its own language when it reads it
 (`apps/station/src/lib/menu-text.ts`, `getLocalizedMenuValue` from
 `@repo/common/menu-types`), falling back to the restaurant's default language.
 Order lines saved before this are decoded when shown.
+
+## Station apps: Stock
+
+A fifth app, **Stock** (the launcher entry; the terminal setting and the
+`/pos/me` key are `inventory`), lets staff count, log waste and receive
+deliveries on a paired tablet. Station is for doing and the App is for deciding:
+nothing in Stock shows money or what is on hand, edits an item, or approves a
+count. The plan is `docs/inventory-plan.md` (Station apps); the wire contract is
+`packages/inventory/src/contract/station.ts` (`/pos/inventory/*`, header
+`Pos-Inventory-Contract`, `INVENTORY_POS_CONTRACT_VERSION`).
+
+**Who and when.** The app is offered when `/pos/me` says `apps.inventory`
+(`pos_devices.inventory_enabled` and the organization's `inventory.enabled`
+flag; the terminal needs a location and staff sign-in). Calls carry the device
+secret and the signed-in person's `Pos-Staff-Session`, so the actor is whoever
+is signed in; a queued item names the person who made it (`madeBy`) and when
+(`madeAt`). Any signed-in person may count and log waste. Receiving a delivery
+needs a till manager unless the location allows any staff (the catalogue's
+`settings.receiveRequiresManager`). A cashier sees "A manager must sign in to
+receive a delivery". An older Station against a region without the route simply
+does not see the app.
+
+**What the tablet holds** (`apps/station/src/apps/stock`, Dexie version 7 in
+`src/lib/db.ts`):
+
+- `stockCatalog`: the catalogue per restaurant and location
+  (`GET /pos/inventory/catalog?locationId=`, items, units, areas in shelf order,
+  count lists, counts in progress, suppliers' pack products, expected
+  deliveries, waste reasons; never prices, on-hand figures or supplier
+  contacts), plus the counts this tablet is working on and what was typed in
+  them. It is asked for with `If-None-Match: "<version>"` (a 304 only moves
+  "checked at"), refreshed every five minutes while a Stock screen is open and
+  on focus. Past 24 hours the app says the list is old and still works.
+- `stockQueue`: the outbox, one row per count start, count entry, send for
+  review, waste entry, waste undo, delivery and invoice photo
+  (`stationOutboxItemSchema`). `stockBlobs` holds the photo bytes (shrunk to
+  about 1600 px JPEG, under the region's size limit).
+
+**Offline.** Everything typed is saved in the queue in one transaction before
+the screen says so, and the row beside each item says _Saved on this tablet_,
+_Sent_ or _Not sent_. The runner (`runner.ts`, also called by the till's own
+sync) sends rows oldest first, one request per row; consecutive entries of one
+count (up to 100) and consecutive waste entries (up to 50) share a request. Each
+row's id is its `clientId`, so a retry is harmless. A count entry still waiting
+(never tried) is replaced by a newer one for the same item and area instead of
+stacking; one that was tried is never edited (the same id with another body
+would be refused). Rows that name another row (the entries of a count started
+offline, the undo of a waste entry, a delivery's photo) carry `{ clientId }`
+until the row they name settles; the same transaction then swaps in the server's
+id. What each answer means is the contract's `classifyStationFailure`:
+
+- **permanent** (`count_closed`, `wrong_location`, `unit_mismatch`, ...): the
+  row is marked failed and listed on the sync screen; rows that named it fail
+  with it. "Sent after the count closed: 3 entries" is one line, cleared by a
+  person.
+- **pause** (no staff session, `staff_session_*`, `inventory_not_enabled`,
+  `inventory_disabled`, `inventory_unavailable`, `pos_disabled`,
+  `contract_too_old`): the run stops, every row stays, no attempt is counted,
+  and the app says why in plain words ("Sign in with your PIN while
+  connected...", "Stock is switched off ... goes when it is back on").
+  `receive_needs_manager` only holds deliveries and photos until a manager signs
+  in; counts and waste still go.
+- **retry** (5xx, 429, a dropped connection): back off 5 s, 15 s, 1 min, 5 min,
+  15 min and try again; nothing is ever dropped.
+- **unpair** (`device_revoked`, `invalid_device`): the same handling as the
+  till's other uploads.
+
+The queue stops taking new items at 2000 ("Too much is waiting to send"). A
+queue made for another restaurant is wiped when the tablet is set up for another
+one, like punches, and is never sent there. The header's sync badge counts Stock
+rows with the till's orders (and refused ones as "needs attention"). The Stock
+home and the sync screen show what waits.
+
+**Screens.**
+
+- **Count.** Start a count from a count list, or join one in progress (started
+  on a phone, another tablet or in the App; each device takes its areas). Area
+  tabs in shelf order ("Not in an area" last), blank fields (the first + is one
+  step, the first - is zero; Clear takes an entry back), big - and + with ¼ ½ ¾
+  and typed amounts ("2.5", "1½", Arabic digits; `@repo/ui/quantity-input`), a
+  unit switch per row that converts what was typed, and "32 of 48 counted". No
+  expected figure and no last count: only what this person typed comes back, and
+  what others counted shows as a mark. **Send for review** (after a
+  confirmation) queues the send after every entry and ends the tablet's part;
+  review and approval are in the App.
+- **Waste.** A full-screen sheet: this terminal's recent items first, or search;
+  how much and in what unit; a reason (the pickable ones); an optional note. It
+  is saved at once and sent a few seconds later, so a slip undone straight away
+  never leaves the tablet. Undo lasts a minute (`STATION_WASTE_UNDO_UI_MS`): a
+  waiting entry is removed from the queue, a sent one queues
+  `POST /waste/:id/undo` (the region accepts one for five minutes).
+- **Delivery.** Quantities only. Pick an expected delivery (open orders at the
+  location) or "Delivery without an order" and a supplier. Tick each line that
+  came, change the packs for a short line, type the real weight for a line
+  priced by weight, enter the invoice number and take an optional photo of the
+  invoice (queued as a blob, uploaded straight to the region's storage with a
+  presigned `PUT`, then confirmed; five failed uploads give up on the photo,
+  never on the delivery). "Nothing more is coming for this order" closes it. The
+  office sees "Received at the tablet by Omar, check prices" and confirms prices
+  in the App. A delivery made offline is flagged late by the region when it
+  arrives after 48 hours.
+- **Kitchen** has a **Log waste** button on its header (on a terminal with
+  Stock) that opens the same sheet and the same queue.
+
+**Demo mode** offers Stock with a sample kitchen and an in-memory region
+(`apps/stock/demo.ts`): a count and its entries work as they do online, and
+nothing leaves the tab.
+
+**Fixtures.** The tablet's recorded answers are in
+`apps/station/src/apps/stock/fixtures`, parsed with the contract's schemas by
+`contract.test.ts` (and checked for money keys). When the region's
+`pos-inventory-contract.test.ts` exists it re-records them
+(`RECORD_STATION_FIXTURES=1`), as for the host stand. The Playwright spec
+`e2e/stock.spec.ts` stands a recording region in front of the page until the
+harness serves `/pos/inventory/*`.
 
 ## Personal data
 

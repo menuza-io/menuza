@@ -1,5 +1,7 @@
 import { t } from '@lingui/macro'
 import { create } from 'zustand'
+import { wipeStock } from '../apps/stock/queue.ts'
+import { syncStock } from '../apps/stock/sync.ts'
 import {
 	expirePunches,
 	flushPunches,
@@ -219,8 +221,11 @@ const newId = () => crypto.randomUUID()
  * the tab (`apps/reservations/demo.ts`), so it needs no pairing.
  */
 const withDemoApps = (settings: PosSettings): PosSettings =>
-	settings.demo && !settings.apps.reservations
-		? { ...settings, apps: { ...settings.apps, reservations: true } }
+	settings.demo && !(settings.apps.reservations && settings.apps.inventory)
+		? {
+				...settings,
+				apps: { ...settings.apps, reservations: true, inventory: true },
+			}
 		: settings
 
 export type OtherTab = {
@@ -658,7 +663,15 @@ export const usePos = create<PosState>((set, get) => ({
 		const settings = withDemoApps({
 			...before,
 			...patch,
-			...(left ? { apps: { ...before.apps, reservations: false } } : {}),
+			...(left
+				? {
+						apps: {
+							...before.apps,
+							reservations: false,
+							inventory: false,
+						},
+					}
+				: {}),
 		})
 		// A different restaurant or workplace has different staff: never let the old
 		// ones sign in offline.
@@ -677,6 +690,12 @@ export const usePos = create<PosState>((set, get) => ({
 			await punchQueue()
 				.wipe()
 				.catch(() => {})
+		// Stock counts, waste and deliveries made for another restaurant are never sent to this one.
+		if (
+			settings.slug !== before.slug ||
+			settings.tenantApiUrl !== before.tenantApiUrl
+		)
+			await wipeStock().catch(() => {})
 		saveSettings(settings)
 		set({ settings })
 		const slugChanged =
@@ -730,6 +749,21 @@ export const usePos = create<PosState>((set, get) => ({
 			() => null,
 		)
 		if (punches?.deviceGone) void get().verifyPairing()
+		// Stock entries (counts, waste, deliveries) go out in their own queue, for whoever is signed in.
+		await syncStock(get().settings, get().session, get().online, {
+			force,
+			onUnrecognised: () => get().noteUnrecognised(),
+			onUnpaired: () => {
+				const settings = {
+					...get().settings,
+					deviceToken: null,
+					signInRequired: false,
+					apps: { timeclock: false, reservations: false, inventory: false },
+				}
+				saveSettings(settings)
+				set({ settings, pairingLost: true, session: null })
+			},
+		}).catch(() => null)
 		// Orders going through proves the server knows us.
 		if (sent > 0 && get().unrecognisedStrikes > 0) {
 			set({
@@ -772,7 +806,8 @@ export const usePos = create<PosState>((set, get) => ({
 			const after = { ...before, ...apps }
 			if (
 				after.timeclock !== before.timeclock ||
-				after.reservations !== before.reservations
+				after.reservations !== before.reservations ||
+				after.inventory !== before.inventory
 			) {
 				const settings = { ...get().settings, apps: after }
 				saveSettings(settings)

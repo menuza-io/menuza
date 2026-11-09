@@ -3,7 +3,10 @@ import {
 	type DeliverySummary,
 	deliveryDetailSchema,
 	listDeliveriesResultSchema,
+	listOrdersResultSchema,
 	listSuppliersResultSchema,
+	priceAlertsSchema,
+	suggestedOrdersSchema,
 	type Supplier,
 } from '@repo/inventory'
 import { useDirection } from '@repo/ui'
@@ -48,6 +51,13 @@ import {
 	useInventoryRevision,
 	useNotifyInventoryChanged,
 } from '#app/components/inventory/inventory-prefs.tsx'
+import {
+	NewOrderDialog,
+	OpenOrdersPanel,
+	SuggestedOrdersPanel,
+	useCreateDraft,
+} from '#app/components/inventory/order-panels.tsx'
+import { PriceAlertsPanel } from '#app/components/inventory/price-alerts-panel.tsx'
 import { type PurchasingOutletContext } from '#app/components/inventory/purchasing-context.ts'
 import { weekdayName } from '#app/components/inventory/supplier-form.tsx'
 import {
@@ -81,6 +91,7 @@ export default function InventoryPurchasingRoute() {
 		canEdit,
 		canSeeCost,
 		canManagePurchasing,
+		purchasingEnabled,
 		currency,
 	} = layout
 	const direction = useDirection()
@@ -94,6 +105,7 @@ export default function InventoryPurchasingRoute() {
 	const unpaidOnly = searchParams.get('unpaid') === '1'
 	const [limit, setLimit] = useState(PAGE_SIZE)
 	const [payingId, setPayingId] = useState<string | null>(null)
+	const [newOrderOpen, setNewOrderOpen] = useState(false)
 
 	const deliveries = useInventoryQuery(
 		`/deliveries?${new URLSearchParams({
@@ -104,12 +116,45 @@ export default function InventoryPurchasingRoute() {
 		listDeliveriesResultSchema,
 	)
 	const suppliers = useInventoryQuery('/suppliers', listSuppliersResultSchema)
+	// Suggested orders, open orders and price rises come with the purchasing
+	// flag; price rises are money, so they need the cost grant too.
+	const locationQuery = `locationId=${encodeURIComponent(activeLocationId)}`
+	const suggested = useInventoryQuery(
+		purchasingEnabled ? `/orders/suggested?${locationQuery}` : null,
+		suggestedOrdersSchema,
+	)
+	const openOrders = useInventoryQuery(
+		purchasingEnabled ? `/orders?${locationQuery}&status=open&limit=50` : null,
+		listOrdersResultSchema,
+	)
+	const priceAlerts = useInventoryQuery(
+		purchasingEnabled && canSeeCost
+			? `/price-alerts?${locationQuery}&days=30`
+			: null,
+		priceAlertsSchema,
+	)
 	const { reload: reloadDeliveries } = deliveries
 	const { reload: reloadSuppliers } = suppliers
+	const { reload: reloadSuggested } = suggested
+	const { reload: reloadOrders } = openOrders
+	const { reload: reloadAlerts } = priceAlerts
 	const reload = useCallback(() => {
 		reloadDeliveries()
 		reloadSuppliers()
-	}, [reloadDeliveries, reloadSuppliers])
+		if (purchasingEnabled) {
+			reloadSuggested()
+			reloadOrders()
+			if (canSeeCost) reloadAlerts()
+		}
+	}, [
+		reloadDeliveries,
+		reloadSuppliers,
+		reloadSuggested,
+		reloadOrders,
+		reloadAlerts,
+		purchasingEnabled,
+		canSeeCost,
+	])
 
 	const revision = useInventoryRevision()
 	const seenRevision = useRef(revision)
@@ -131,6 +176,14 @@ export default function InventoryPurchasingRoute() {
 		reload,
 		close,
 	}
+
+	const searchKept = layout.locations.length > 1 ? search : ''
+	const drafts = useCreateDraft({
+		orgSlug,
+		locationId: activeLocationId,
+		search: searchKept,
+		onCreated: notifyChanged,
+	})
 
 	const money = (minor: number, code?: string) =>
 		formatMoney(minor, code ?? currency, i18n.locale)
@@ -183,17 +236,33 @@ export default function InventoryPurchasingRoute() {
 				</Badge>
 			)
 		}
-		return delivery.paid ? null : (
-			<Badge variant="warning" data-testid={`delivery-unpaid-${delivery.id}`}>
-				<Trans>Unpaid</Trans>
-			</Badge>
+		return (
+			<>
+				{delivery.pricesPending ? (
+					<Badge
+						variant="outline"
+						data-testid={`delivery-prices-pending-${delivery.id}`}
+					>
+						<Trans>Prices to confirm</Trans>
+					</Badge>
+				) : null}
+				{delivery.paid || delivery.pricesPending ? null : (
+					<Badge
+						variant="warning"
+						data-testid={`delivery-unpaid-${delivery.id}`}
+					>
+						<Trans>Unpaid</Trans>
+					</Badge>
+				)}
+			</>
 		)
 	}
 
 	function payButton(delivery: DeliverySummary) {
 		return canManagePurchasing &&
 			delivery.status === 'received' &&
-			!delivery.paid ? (
+			!delivery.paid &&
+			!delivery.pricesPending ? (
 			<Button
 				type="button"
 				variant="outline"
@@ -212,15 +281,26 @@ export default function InventoryPurchasingRoute() {
 
 	return (
 		<div className="flex flex-col gap-6">
-			{canEdit && canSeeCost ? (
+			{canEdit || (purchasingEnabled && canManagePurchasing) ? (
 				<InventoryHeaderActions>
-					<Button
-						render={<Link to={recordHref} />}
-						data-testid="purchasing-record-delivery"
-					>
-						<Icon name="plus" />
-						<Trans>Record delivery</Trans>
-					</Button>
+					{purchasingEnabled && canManagePurchasing ? (
+						<Button
+							variant="outline"
+							onClick={() => setNewOrderOpen(true)}
+							data-testid="purchasing-new-order"
+						>
+							<Trans>New order</Trans>
+						</Button>
+					) : null}
+					{canEdit ? (
+						<Button
+							render={<Link to={recordHref} />}
+							data-testid="purchasing-record-delivery"
+						>
+							<Icon name="plus" />
+							<Trans>Record delivery</Trans>
+						</Button>
+					) : null}
 				</InventoryHeaderActions>
 			) : null}
 
@@ -228,11 +308,43 @@ export default function InventoryPurchasingRoute() {
 				<Alert data-testid="purchasing-cost-note">
 					<AlertDescription>
 						<Trans>
-							Recording a delivery needs the prices on the invoice, so it needs
-							access to costs. Ask an owner to check your role.
+							You can record what arrives. The prices on the invoice are filled
+							in later by someone with access to costs.
 						</Trans>
 					</AlertDescription>
 				</Alert>
+			) : null}
+
+			{purchasingEnabled ? (
+				<>
+					<SuggestedOrdersPanel
+						query={suggested}
+						orgSlug={orgSlug}
+						locationId={activeLocationId}
+						search={searchKept}
+						canSeeCost={canSeeCost}
+						canManagePurchasing={canManagePurchasing}
+						currency={currency}
+						suppliersHref={`${basePath}/suppliers/new${search}`}
+						onChanged={notifyChanged}
+					/>
+					<OpenOrdersPanel
+						query={openOrders}
+						orgSlug={orgSlug}
+						search={searchKept}
+						canSeeCost={canSeeCost}
+						canEdit={canEdit}
+						currency={currency}
+					/>
+					{canSeeCost ? (
+						<PriceAlertsPanel
+							query={priceAlerts}
+							basePath={basePath}
+							search={search}
+							currency={currency}
+						/>
+					) : null}
+				</>
 			) : null}
 
 			{owedMinor !== undefined && owedMinor > 0 ? (
@@ -321,7 +433,7 @@ export default function InventoryPurchasingRoute() {
 							}
 							icons={['receipt-text', 'shopping-bag', 'list']}
 						>
-							{canEdit && canSeeCost ? (
+							{canEdit ? (
 								<Button render={<Link to={recordHref} />}>
 									<Icon name="plus" />
 									<Trans>Record delivery</Trans>
@@ -560,6 +672,16 @@ export default function InventoryPurchasingRoute() {
 					</ul>
 				)}
 			</WorkspacePanel>
+
+			{purchasingEnabled && canManagePurchasing ? (
+				<NewOrderDialog
+					open={newOrderOpen}
+					onOpenChange={setNewOrderOpen}
+					suppliers={supplierRows}
+					pending={drafts.pending !== null}
+					onCreate={(supplierId) => void drafts.create(supplierId, false)}
+				/>
+			) : null}
 
 			<Sheet
 				open={outlet !== null}

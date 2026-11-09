@@ -56,6 +56,7 @@ const CONTEXT: InventoryLayoutContext = {
 	canSeeCost: false,
 	canEdit: false,
 	canManagePurchasing: false,
+	purchasingEnabled: false,
 	dataRegion: 'ksa',
 	currency: 'SAR',
 	userName: 'Sara',
@@ -371,9 +372,16 @@ describe('Inventory Today', () => {
 			)
 		})
 
-		it('offers no Record delivery without the cost grant, and no Start count without the update grant', async () => {
+		it('offers Record delivery even without the cost grant (quantities only), and nothing to someone who cannot edit', async () => {
 			renderTodayInChrome(region(today()), { canSeeCost: false, canEdit: true })
 			await screen.findByTestId('today-start-count')
+			expect(screen.getByTestId('today-record-delivery')).toBeInTheDocument()
+		})
+
+		it('offers neither Start count nor Record delivery without the update grant', async () => {
+			renderTodayInChrome(region(today()), { canSeeCost: true, canEdit: false })
+			await screen.findByTestId('inventory-today')
+			expect(screen.queryByTestId('today-start-count')).toBeNull()
 			expect(screen.queryByTestId('today-record-delivery')).toBeNull()
 		})
 	})
@@ -652,6 +660,154 @@ describe('Inventory Today', () => {
 				expect(screen.queryByTestId('today-waste-chart')).toBeNull(),
 			)
 			expect(screen.queryByTestId('inventory-today-error')).toBeNull()
+		})
+	})
+
+	describe('orders and deliveries', () => {
+		const ctx = { canSeeCost: true, canEdit: true, canManagePurchasing: true }
+		const cutoff = {
+			kind: 'order_cutoff',
+			supplierId: 's1',
+			supplierName: 'Fresh Farms',
+			cutoffDate: '2026-11-11',
+			cutoffTime: '16:00',
+			expectedDate: '2026-11-12',
+			itemCount: 4,
+			draftOrderId: null,
+		}
+
+		it('says when to order by and leads to the suggestion, or to the draft already started', async () => {
+			const first = renderToday(region(today({ attention: [cutoff] })), ctx)
+			const row = await screen.findByTestId('today-attention-order_cutoff')
+			expect(row).toHaveTextContent('Order from Fresh Farms by')
+			expect(row).toHaveTextContent(/Wed.*4:00\s?PM for Thu/)
+			expect(row).toHaveTextContent('4 items to order.')
+			expect(
+				screen.getByTestId('today-attention-link-order_cutoff'),
+			).toHaveAttribute('href', '/acme/inventory/purchasing')
+			expect(row).toHaveTextContent('Review order')
+			first.unmount()
+
+			renderToday(
+				region(today({ attention: [{ ...cutoff, draftOrderId: 'o7' }] })),
+				ctx,
+			)
+			const draft = await screen.findByTestId(
+				'today-attention-link-order_cutoff',
+			)
+			expect(draft).toHaveAttribute(
+				'href',
+				'/acme/inventory/purchasing/orders/o7',
+			)
+			expect(draft).toHaveTextContent('Continue draft')
+		})
+
+		it('says a delivery is due today and offers to receive it', async () => {
+			renderToday(
+				region(
+					today({
+						attention: [
+							{
+								kind: 'delivery_expected',
+								orderId: 'o1',
+								supplierName: 'Fresh Farms',
+								expectedDate: '2026-11-09',
+								overdue: false,
+							},
+						],
+					}),
+				),
+				ctx,
+			)
+			const row = await screen.findByTestId('today-attention-delivery_expected')
+			expect(row).toHaveTextContent('The order from Fresh Farms is due today.')
+			expect(
+				screen.getByTestId('today-attention-link-delivery_expected'),
+			).toHaveAttribute(
+				'href',
+				'/acme/inventory/purchasing/deliveries/new?orderId=o1',
+			)
+		})
+
+		it('says an overdue order has not been received, and only offers to look to a reader', async () => {
+			renderToday(
+				region(
+					today({
+						attention: [
+							{
+								kind: 'delivery_expected',
+								orderId: 'o1',
+								supplierName: 'Fresh Farms',
+								expectedDate: '2026-11-07',
+								overdue: true,
+							},
+						],
+					}),
+				),
+				{ ...ctx, canEdit: false },
+			)
+			const row = await screen.findByTestId('today-attention-delivery_expected')
+			expect(row).toHaveTextContent('was due')
+			expect(row).toHaveTextContent('has not been received')
+			expect(
+				screen.getByTestId('today-attention-link-delivery_expected'),
+			).toHaveAttribute('href', '/acme/inventory/purchasing/orders/o1')
+		})
+
+		it('asks someone with the purchasing role to confirm the prices of a delivery', async () => {
+			const pending = {
+				kind: 'prices_pending',
+				deliveryId: 'd2',
+				supplierName: 'Fresh Farms',
+				lineCount: 3,
+			}
+			const first = renderToday(region(today({ attention: [pending] })), ctx)
+			const row = await screen.findByTestId('today-attention-prices_pending')
+			expect(row).toHaveTextContent(
+				'A delivery from Fresh Farms arrived without prices.',
+			)
+			expect(row).toHaveTextContent('3 items need their prices.')
+			const link = screen.getByTestId('today-attention-link-prices_pending')
+			expect(link).toHaveTextContent('Confirm prices')
+			expect(link).toHaveAttribute(
+				'href',
+				'/acme/inventory/purchasing/deliveries/d2',
+			)
+			first.unmount()
+
+			renderToday(region(today({ attention: [pending] })), {
+				...ctx,
+				canManagePurchasing: false,
+			})
+			expect(
+				await screen.findByTestId('today-attention-link-prices_pending'),
+			).toHaveTextContent('See delivery')
+		})
+
+		it('shows what to order and from how many suppliers', async () => {
+			renderToday(
+				region(
+					today({
+						metrics: { ...WITH_MONEY, toOrderItems: 9, toOrderSuppliers: 2 },
+					}),
+				),
+				ctx,
+			)
+			await screen.findByTestId('inventory-today')
+			expect(screen.getByText('9 items')).toBeInTheDocument()
+			expect(screen.getByText('from 2 suppliers')).toBeInTheDocument()
+		})
+
+		it('shows the same without money for someone who cannot see costs', async () => {
+			renderToday(
+				region(today({ metrics: { toOrderItems: 9, toOrderSuppliers: 2 } })),
+				{ ...ctx, canSeeCost: false },
+			)
+			await screen.findByTestId('inventory-today')
+			expect(screen.getByText(/9 items to order/)).toHaveTextContent(
+				'9 items to order · 2 suppliers',
+			)
+			expect(screen.queryByText(/SAR/)).toBeNull()
 		})
 	})
 })

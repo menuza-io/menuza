@@ -1,0 +1,8 @@
+{
+	"accepted": [
+		{ "clientId": "waste-0001-aaaa", "id": "wst_1", "quantity": 1500000 }
+	],
+	"duplicates": [{ "clientId": "waste-0002-bbbb", "id": "wst_2" }],
+	"refused": [{ "clientId": "waste-0003-cccc", "code": "item_archived" }],
+	"lateSync": ["waste-0001-aaaa"]
+}

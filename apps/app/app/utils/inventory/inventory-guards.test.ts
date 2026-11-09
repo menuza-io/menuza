@@ -81,6 +81,8 @@ describe('inventory guards', () => {
 				'purchasing.suppliers.$supplierId.tsx',
 				'purchasing.deliveries.$deliveryId.tsx',
 				'purchasing_.deliveries.new.tsx',
+				'purchasing_.orders.$orderId.tsx',
+				'stock.levels.tsx',
 				'waste.tsx',
 			]),
 		)
@@ -117,6 +119,27 @@ describe('inventory guards', () => {
 				'loader',
 			)
 			expect([file, body]).toEqual([file, expect.stringMatching(grant)])
+		}
+	})
+
+	it('levels need the purchasing grant, and levels and orders need the purchasing flag', () => {
+		const levels = exportedFunctionBody(
+			read(path.join(INVENTORY_ROUTES_DIR, 'stock.levels.tsx')),
+			'loader',
+		)
+		expect(levels).toMatch(/UPDATE_INVENTORY_PURCHASING\b/)
+		for (const file of [
+			'stock.levels.tsx',
+			'purchasing_.orders.$orderId.tsx',
+		]) {
+			const body = exportedFunctionBody(
+				read(path.join(INVENTORY_ROUTES_DIR, file)),
+				'loader',
+			)
+			expect([file, body]).toEqual([
+				file,
+				expect.stringMatching(/features\.purchasing/),
+			])
 		}
 	})
 

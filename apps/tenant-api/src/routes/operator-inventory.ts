@@ -19,6 +19,8 @@ import { parseBody, parseQuery } from '../lib/inventory-route.ts'
 import { hashInventoryRequest } from '../lib/inventory-write.ts'
 import { operatorInventoryCountsRoutes } from './operator-inventory-counts.ts'
 import { operatorInventoryItemsRoutes } from './operator-inventory-items.ts'
+import { operatorInventoryLevelsRoutes } from './operator-inventory-levels.ts'
+import { operatorInventoryOrdersRoutes } from './operator-inventory-orders.ts'
 import { operatorInventoryPlacesRoutes } from './operator-inventory-places.ts'
 import { operatorInventoryPurchasingRoutes } from './operator-inventory-purchasing.ts'
 import { operatorInventoryTodayRoutes } from './operator-inventory-today.ts'
@@ -34,7 +36,8 @@ import {
  * the operator's browser with a short-lived `inv+jwt` (see `inventoryGuard`).
  * Settings and the setup status live here; the rest are mounted from the
  * `operator-inventory-*` files: items, storage areas and count lists,
- * counts, waste, purchasing (suppliers and deliveries) and Today. Writes send
+ * counts, waste, purchasing (suppliers, deliveries, credit messages, invoice
+ * photos and price alerts), levels, orders and Today. Writes send
  * `expectedVersion` (409 `stale_version`), creates a client-made `clientId`
  * (a replay answers the first result). Money fields are left out for tokens
  * without `read:inventory_cost:any` (`respond` in `lib/inventory-route.ts`).
@@ -46,6 +49,8 @@ operatorInventoryRoutes.route('/', operatorInventoryPlacesRoutes)
 operatorInventoryRoutes.route('/', operatorInventoryCountsRoutes)
 operatorInventoryRoutes.route('/', operatorInventoryWasteRoutes)
 operatorInventoryRoutes.route('/', operatorInventoryPurchasingRoutes)
+operatorInventoryRoutes.route('/', operatorInventoryLevelsRoutes)
+operatorInventoryRoutes.route('/', operatorInventoryOrdersRoutes)
 operatorInventoryRoutes.route('/', operatorInventoryTodayRoutes)
 
 const READ = INVENTORY_PERMISSIONS.READ_INVENTORY

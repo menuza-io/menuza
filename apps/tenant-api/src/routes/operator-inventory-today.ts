@@ -32,6 +32,7 @@ operatorInventoryTodayRoutes.get(
 					locationId: location.locationId,
 					caller: inventoryCaller(ctx),
 					now: Date.now(),
+					purchasing: ctx.features.purchasing,
 				}),
 			)
 		} catch (error) {

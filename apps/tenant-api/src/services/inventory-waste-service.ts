@@ -57,7 +57,29 @@ const MAX_SUMMARY_DAYS = 366
  * Each entry writes the waste row and its negative `waste` movement, valued
  * at the item's weighted average cost when it has one.
  */
-export async function logWaste(caller: InventoryCaller, body: LogWasteInput) {
+export type LogWasteOptions = {
+	/**
+	 * Waste logged on a Station tablet: the rows record the terminal
+	 * (`source: 'station'`, `device_id`), and `lateSync` / `madeAt` name, per
+	 * `clientId`, entries that arrived long after they happened (flagged for a
+	 * manager) and when the tablet made them (the business date follows it).
+	 * With a station, an entry that cannot be logged (unknown or archived item,
+	 * a unit the item cannot use, an amount out of range) is reported in
+	 * `refused` and the others are saved, instead of failing the request.
+	 */
+	station?: {
+		deviceId: string
+		lateSync?: (clientId: string) => boolean
+		madeAt?: (clientId: string) => number | undefined
+	}
+}
+
+export async function logWaste(
+	caller: InventoryCaller,
+	body: LogWasteInput,
+	options: LogWasteOptions = {},
+) {
+	const { station } = options
 	for (const entry of body.entries) {
 		assertLocationAllowed(caller.locationIds, entry.locationId)
 		if (!PICKABLE.has(entry.reason)) {
@@ -95,6 +117,8 @@ export async function logWaste(caller: InventoryCaller, body: LogWasteInput) {
 			currency?: string
 		}> = []
 		const duplicates: Array<{ clientId: string; id: string }> = []
+		const refused: Array<{ clientId: string; code: string }> = []
+		const lateSync: string[] = []
 		const usedUnits: string[] = []
 		for (const entry of body.entries) {
 			const known = byClient.get(entry.clientId)
@@ -110,14 +134,29 @@ export async function logWaste(caller: InventoryCaller, body: LogWasteInput) {
 				continue
 			}
 			const item = itemById.get(entry.itemId)
-			if (!item || item.archivedAt !== null) throw notFound()
-			const typed = typedToBase(
-				entry.amount,
-				entry.unit,
-				item.baseUnit,
-				units.get(item.id) ?? [],
-			)
-			if (typed.quantity <= 0) throw badRequest('amount')
+			if (!item || item.archivedAt !== null) {
+				if (station) {
+					refused.push({ clientId: entry.clientId, code: 'not_found' })
+					continue
+				}
+				throw notFound()
+			}
+			let typed: ReturnType<typeof typedToBase>
+			try {
+				typed = typedToBase(
+					entry.amount,
+					entry.unit,
+					item.baseUnit,
+					units.get(item.id) ?? [],
+				)
+				if (typed.quantity <= 0) throw badRequest('amount')
+			} catch (error) {
+				if (station && error instanceof InventoryError) {
+					refused.push({ clientId: entry.clientId, code: error.code })
+					continue
+				}
+				throw error
+			}
 			if (typed.named) usedUnits.push(typed.named.id)
 			const cost = costById.get(item.id)
 			const costMicro = cost?.avgCostMicro ?? cost?.lastCostMicro ?? null
@@ -125,11 +164,18 @@ export async function logWaste(caller: InventoryCaller, body: LogWasteInput) {
 				cost && costMicro !== null
 					? inventoryValueMinor(typed.quantity, costMicro)
 					: null
-			let businessDate = dates.get(entry.locationId)
+			const madeAt = Math.min(
+				station?.madeAt?.(entry.clientId) ?? ctx.now,
+				ctx.now,
+			)
+			const dateKey = `${entry.locationId}:${madeAt}`
+			let businessDate = dates.get(dateKey)
 			if (!businessDate) {
-				businessDate = await locationBusinessDate(tx, entry.locationId, ctx.now)
-				dates.set(entry.locationId, businessDate)
+				businessDate = await locationBusinessDate(tx, entry.locationId, madeAt)
+				dates.set(dateKey, businessDate)
 			}
+			const late = station?.lateSync?.(entry.clientId) === true
+			if (late) lateSync.push(entry.clientId)
 			const id = newId()
 			await tx.insert(invWaste).values({
 				id,
@@ -144,6 +190,9 @@ export async function logWaste(caller: InventoryCaller, body: LogWasteInput) {
 				actorId: caller.actor.id,
 				clientId: entry.clientId,
 				businessDate,
+				source: station ? 'station' : 'operator',
+				deviceId: station?.deviceId ?? null,
+				lateSync: late,
 				createdAt: ctx.now,
 			})
 			await tx.insert(invMovements).values({
@@ -187,7 +236,9 @@ export async function logWaste(caller: InventoryCaller, body: LogWasteInput) {
 				at: ctx.now,
 			})
 		}
-		return { accepted, duplicates }
+		return station
+			? { accepted, duplicates, refused, lateSync }
+			: { accepted, duplicates }
 	})
 }
 

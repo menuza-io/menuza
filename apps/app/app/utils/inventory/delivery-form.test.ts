@@ -1,4 +1,5 @@
 import {
+	type ReceivePrefill,
 	recordDeliveryResultSchema,
 	recordDeliverySchema,
 	type SupplierProduct,
@@ -12,10 +13,13 @@ import {
 	type DeliveryLineDraft,
 	deliveryTotals,
 	defaultPackChoice,
+	isUnreceivedOrderLine,
+	linesFromPrefill,
 	newLineDraft,
 	type PackChoice,
 	packChoicesFor,
 	reconcilePack,
+	shortOrderLines,
 	visiblePriceChangeBp,
 	withPack,
 } from './delivery-form.ts'
@@ -539,5 +543,190 @@ describe('the answer', () => {
 		expect(
 			recordDeliveryResultSchema.parse({ delivery }).priceChanges,
 		).toBeUndefined()
+	})
+})
+
+const PREFILL: ReceivePrefill = {
+	orderId: 'o1',
+	number: 12,
+	locationId: 'main',
+	supplierId: 'sup_1',
+	supplierName: 'Al Watania',
+	status: 'sent',
+	expectedDate: '2026-11-12',
+	currency: 'SAR',
+	lines: [
+		{
+			orderLineId: 'ol1',
+			itemId: 'itm_1',
+			itemName: 'Chicken thighs',
+			baseUnit: 'g',
+			countUnit: 'kg',
+			supplierProductId: 'sp_1',
+			packName: 'Box',
+			packBaseQuantity: 10_000_000,
+			pricedByWeight: false,
+			orderedPacks: 3,
+			orderedQuantity: 30_000_000,
+			receivedQuantity: 10_000_000,
+			outstandingQuantity: 20_000_000,
+			outstandingPacks: 2,
+			packPriceMinor: 28_000,
+			lineTotalMinor: 56_000,
+		},
+		{
+			orderLineId: 'ol2',
+			itemId: 'itm_2',
+			itemName: 'Garlic',
+			baseUnit: 'g',
+			countUnit: 'kg',
+			supplierProductId: null,
+			packName: 'Net',
+			packBaseQuantity: 5_000_000,
+			pricedByWeight: false,
+			orderedPacks: 1,
+			orderedQuantity: 5_000_000,
+			receivedQuantity: 5_000_000,
+			outstandingQuantity: 0,
+			outstandingPacks: 0,
+			packPriceMinor: 4_000,
+			lineTotalMinor: 0,
+		},
+	],
+}
+
+describe('receiving against an order', () => {
+	const options = {
+		currency: 'SAR',
+		system: 'metric',
+		withPrices: true,
+	} as const
+
+	it('starts every line at what is still to come, at the supplier price', () => {
+		const lines = linesFromPrefill(PREFILL, options)
+		expect(lines[0]).toMatchObject({
+			key: 'ol1',
+			packsText: '2',
+			priceText: '280.00',
+			pack: { id: 'product:sp_1', productId: 'sp_1', priceMinor: 28_000 },
+			order: { orderLineId: 'ol1', orderedQuantity: 30_000_000 },
+		})
+		// A line already complete starts at nothing, with no supplier product to point at.
+		expect(lines[1]).toMatchObject({
+			packsText: '',
+			pack: { id: 'orderline:ol2', productId: null },
+		})
+		expect(lines[0]!.previousCostMicro).toBe(2_800_000)
+	})
+
+	it('starts without prices for someone who cannot see them', () => {
+		const lines = linesFromPrefill(PREFILL, { ...options, withPrices: false })
+		expect(lines[0]).toMatchObject({ priceText: '', previousCostMicro: null })
+	})
+
+	it('builds a body that names the order and each order line, and leaves out lines nothing arrived for', () => {
+		const lines = linesFromPrefill(PREFILL, options)
+		const built = buildRecordDelivery(
+			draft({ orderId: 'o1', closeOrder: true, lines }),
+			{ clientId: 'd-12345678', locationId: 'main', currency: 'SAR' },
+		)
+		expect(built.ok).toBe(true)
+		if (!built.ok) return
+		expect(recordDeliverySchema.safeParse(built.payload).success).toBe(true)
+		expect(built.payload).toMatchObject({
+			orderId: 'o1',
+			closeOrder: true,
+			lines: [
+				{
+					itemId: 'itm_1',
+					orderLineId: 'ol1',
+					orderedQuantity: 30_000_000,
+					quantity: 20_000_000,
+					packs: 2,
+					lineTotalMinor: 56_000,
+				},
+			],
+		})
+		expect(built.payload.lines).toHaveLength(1)
+	})
+
+	it('refuses a delivery where nothing arrived', () => {
+		const lines = linesFromPrefill(PREFILL, options).map((entry) => ({
+			...entry,
+			packsText: '',
+		}))
+		const built = buildRecordDelivery(draft({ orderId: 'o1', lines }), {
+			clientId: 'd-12345678',
+			locationId: 'main',
+			currency: 'SAR',
+		})
+		expect(built).toMatchObject({ ok: false, problems: { header: ['lines'] } })
+	})
+
+	it('tells what came short or missing once this delivery is counted in', () => {
+		const lines = linesFromPrefill(PREFILL, options)
+		lines[0] = { ...lines[0]!, packsText: '1' }
+		expect(isUnreceivedOrderLine(lines[1]!)).toBe(true)
+		const short = shortOrderLines(draft({ lines }), 'SAR')
+		// 10 kg earlier + 10 kg now of 30 kg ordered.
+		expect(short).toEqual([
+			expect.objectContaining({
+				orderLineId: 'ol1',
+				kind: 'short',
+				shortQuantity: 10_000_000,
+			}),
+		])
+		lines[0] = { ...lines[0]!, packsText: '' }
+		expect(shortOrderLines(draft({ lines }), 'SAR')[0]).toMatchObject({
+			kind: 'short',
+			shortQuantity: 20_000_000,
+		})
+	})
+})
+
+describe('quantity-only recording', () => {
+	it('needs no price, and sends no money', () => {
+		const quantityLine = line({
+			priceText: '',
+			pack: { ...BOX, priceMinor: null },
+		})
+		expect(
+			computeLine(quantityLine, 'SAR', { quantityOnly: true }),
+		).toMatchObject({
+			quantity: 20_000_000,
+			packPriceMinor: null,
+			lineTotalMinor: null,
+			problems: [],
+		})
+		const built = buildRecordDelivery(
+			draft({
+				quantityOnly: true,
+				paid: true,
+				vatText: '8',
+				invoiceTotalText: '99',
+				lines: [quantityLine],
+			}),
+			{ clientId: 'd-12345678', locationId: 'main', currency: 'SAR' },
+		)
+		expect(built.ok).toBe(true)
+		if (!built.ok) return
+		expect(recordDeliverySchema.safeParse(built.payload).success).toBe(true)
+		expect(built.payload).toMatchObject({ quantityOnly: true, paid: false })
+		expect(built.payload).not.toHaveProperty('currency')
+		expect(built.payload).not.toHaveProperty('vatMinor')
+		expect(built.payload).not.toHaveProperty('totalMinor')
+		expect(built.payload.lines[0]).not.toHaveProperty('lineTotalMinor')
+		expect(built.payload.lines[0]).not.toHaveProperty('packPriceMinor')
+	})
+
+	it('still asks for the real weight on a line priced by weight', () => {
+		const weighed = line({
+			priceText: '',
+			pack: { ...BOX, pricedByWeight: true },
+			packsText: '1',
+		})
+		expect(
+			computeLine(weighed, 'SAR', { quantityOnly: true }).problems,
+		).toEqual(['weight'])
 	})
 })

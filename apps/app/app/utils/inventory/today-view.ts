@@ -1,5 +1,9 @@
 import { type AttentionItem } from '@repo/inventory'
-import { inventoryCountPath, inventoryCountReviewPath } from './nav.ts'
+import {
+	inventoryCountPath,
+	inventoryCountReviewPath,
+	inventoryOrderPath,
+} from './nav.ts'
 
 /**
  * Where each "needs attention" row leads. One sentence, one action: the
@@ -71,8 +75,23 @@ export function attentionTarget(
 		case 'unpaid_deliveries':
 			return { kind: item.kind, to: join(`${base}/purchasing`, search) }
 		case 'order_cutoff':
+			// The draft already started for this supplier, else the suggestion on Purchasing.
+			return {
+				kind: item.kind,
+				to: item.draftOrderId
+					? join(inventoryOrderPath(orgSlug, item.draftOrderId), search)
+					: join(`${base}/purchasing`, search),
+			}
 		case 'delivery_expected':
-			return { kind: item.kind, to: join(`${base}/purchasing`, search) }
+			// Someone who can record deliveries receives it; others read the order.
+			return {
+				kind: item.kind,
+				to: canEdit
+					? join(`${base}/purchasing/deliveries/new`, search, {
+							orderId: item.orderId,
+						})
+					: join(inventoryOrderPath(orgSlug, item.orderId), search),
+			}
 		case 'prices_pending':
 			return {
 				kind: item.kind,

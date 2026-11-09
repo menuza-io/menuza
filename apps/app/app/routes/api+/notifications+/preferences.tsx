@@ -5,6 +5,7 @@ import { STAFFING_NOTIFICATION_WORKFLOWS } from '@repo/staffing'
 
 import { type ActionFunctionArgs, type LoaderFunctionArgs } from 'react-router'
 import { z } from 'zod'
+import { INVENTORY_ALERT_WORKFLOWS } from '#app/utils/inventory/manager-alerts.ts'
 import { userHasOrgAccess } from '#app/utils/organization/organizations.server.ts'
 import { RESERVATION_ALERT_WORKFLOWS } from '#app/utils/reservations/manager-alerts.ts'
 
@@ -37,6 +38,7 @@ const preferenceSchema = z.object({
 		'note-comment-workflow',
 		...STAFFING_NOTIFICATION_WORKFLOWS,
 		...RESERVATION_ALERT_WORKFLOWS,
+		...INVENTORY_ALERT_WORKFLOWS,
 	]),
 	channel: z.enum(['email', 'inApp']),
 	enabled: z.string().transform((val) => val === 'true'),

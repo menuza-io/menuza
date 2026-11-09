@@ -1,5 +1,6 @@
 import { type PosFiscalDocument } from '@repo/common/pos-fiscal'
 import { type PosOrderSource } from '@repo/common/pos-orders'
+import { type StationOutboxItem } from '@repo/inventory'
 import Dexie, { type EntityTable } from 'dexie'
 import { type SaleLoyalty } from './loyalty.ts'
 import { type Adjustment, type CartLine, type Totals } from './pricing.ts'
@@ -237,6 +238,25 @@ export type ClockPerson = {
 	cachedAt: number
 }
 
+/**
+ * One row of the Stock app's outbox (`stationOutboxItemSchema` in
+ * `@repo/inventory`). `seq` keeps the order several rows made in the same
+ * millisecond; `origin` is the restaurant it was made for (a row is only ever
+ * sent to it); `claimedAt` is when a tab took it to send (a claim older than
+ * 20 s belongs to a dead tab).
+ */
+export type StockRow = StationOutboxItem & {
+	seq: number
+	origin: string
+	claimedAt?: number
+}
+
+/** The Stock app's device copies: the catalogue per location, counts and what was typed in them. */
+export type StockKeyValue = { key: string; value: unknown; savedAt: number }
+
+/** An invoice photo waiting for its delivery to reach the server. */
+export type StockBlob = { key: string; blob: Blob; savedAt: number }
+
 class PosDatabase extends Dexie {
 	orders!: EntityTable<PosOrder, 'id'>
 	catalog!: EntityTable<CatalogSnapshot, 'key'>
@@ -244,6 +264,9 @@ class PosDatabase extends Dexie {
 	staff!: EntityTable<CachedStaff, 'id'>
 	shifts!: EntityTable<Shift, 'id'>
 	clockPeople!: EntityTable<ClockPerson, 'key'>
+	stockCatalog!: EntityTable<StockKeyValue, 'key'>
+	stockQueue!: EntityTable<StockRow, 'id'>
+	stockBlobs!: EntityTable<StockBlob, 'key'>
 
 	constructor() {
 		super('pos')
@@ -309,6 +332,13 @@ class PosDatabase extends Dexie {
 		this.version(5).stores({ shifts: 'id, status, sync, openedAt' })
 		// v6: people seen at the time clock, for offline punches.
 		this.version(6).stores({ clockPeople: 'key' })
+		// v7: the Stock app (counts, waste, deliveries): its catalogue and count copies,
+		// its outbox, and invoice photos waiting to upload.
+		this.version(7).stores({
+			stockCatalog: 'key',
+			stockQueue: 'id, seq, status, createdAt, nextAttemptAt',
+			stockBlobs: 'key',
+		})
 	}
 }
 

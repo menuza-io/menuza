@@ -84,6 +84,12 @@ const CONSTRAINT_CODES: ReadonlyArray<
 	['_active_name', 'name_taken', 409],
 	['inventory waste reversal does not match', 'invalid_request', 400],
 	['uniq_inv_waste_reverses', 'invalid_request', 400],
+	// Phase 2 (tenant migration 0034): a trigger that fired means a state the
+	// service should have refused first; these keep a race from leaking a 500.
+	['inventory order is closed', 'order_closed', 409],
+	['inventory order lines are frozen', 'order_not_editable', 409],
+	['inventory order cannot go back', 'order_closed', 409],
+	['uniq_inv_orders_client', 'idempotency_conflict', 409],
 ]
 
 /**
@@ -114,6 +120,8 @@ export async function withInventoryWrite<T>(
 		db?: TenantDatabase
 		now?: number
 		idempotency?: InventoryIdempotency | null
+		/** Called when `idempotency` found an earlier result and `fn` did not run. */
+		onReplay?: () => void
 	},
 	fn: (tx: InventoryTx, ctx: InventoryWriteContext) => Promise<T>,
 ): Promise<T> {
@@ -204,6 +212,7 @@ export async function withInventoryWrite<T>(
 		})
 	})
 
+	if (outcome.replayed) options.onReplay?.()
 	if (!outcome.replayed) {
 		for (const hook of committedHooks) {
 			try {

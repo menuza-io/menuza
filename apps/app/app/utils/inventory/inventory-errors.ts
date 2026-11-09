@@ -31,6 +31,33 @@ export function inventorySaveErrorMessage(error: unknown): MessageDescriptor {
 		if (error.code === 'unit_in_use') {
 			return msg`This unit is already used by stock, so it cannot be changed.`
 		}
+		if (error.code === 'order_not_editable') {
+			return msg`This order was already sent, so its items cannot change. Start a new order instead.`
+		}
+		if (error.code === 'order_closed') {
+			return msg`This order is already closed.`
+		}
+		if (error.code === 'order_empty') {
+			return msg`Add at least one item before you send this order.`
+		}
+		if (error.code === 'supplier_mismatch') {
+			return msg`That item is not bought from this supplier.`
+		}
+		if (error.code === 'purchasing_required') {
+			return msg`This needs the purchasing role. Ask an owner to check your role.`
+		}
+		if (error.code === 'prices_confirmed') {
+			return msg`The prices on this delivery were already confirmed.`
+		}
+		if (error.code === 'upload_not_configured') {
+			return msg`Invoice photos are not set up for your business yet.`
+		}
+		if (error.code === 'email_failed') {
+			return msg`The email could not be sent. Send it by WhatsApp or copy the text instead.`
+		}
+		if (error.code === 'feature_disabled') {
+			return msg`This is not turned on for your business.`
+		}
 		if (error.code === 'stale_version' || error.status === 409) {
 			return msg`Someone else changed this first. Close it, open it again and retry.`
 		}

@@ -29,6 +29,15 @@ export function organizationRecordingPrefix(orgId: string) {
 	return `voice-recordings/${orgId}/`
 }
 
+/**
+ * Invoice photos (inventory) live in the same region bucket under their own
+ * prefix, `inventory-invoices/<orgId>/<deliveryId>/<random>.<ext>`. The trailing
+ * slash keeps one org id from matching another that extends it.
+ */
+export function organizationInvoicePrefix(orgId: string) {
+	return `inventory-invoices/${orgId}/`
+}
+
 type RecordingStorageConfig = {
 	bucket: string
 	region: string
@@ -79,7 +88,7 @@ function encodeQueryValue(value: string) {
  * path-style when a custom endpoint is set, virtual-hosted on AWS.
  */
 function signedRequest(
-	method: 'DELETE' | 'GET',
+	method: 'DELETE' | 'GET' | 'HEAD',
 	key: string,
 	config: RecordingStorageConfig,
 	query: Record<string, string> = {},
@@ -200,6 +209,169 @@ export function presignRecordingUrl(
 	return {
 		url: `${base}?${canonicalQuery}&X-Amz-Signature=${signature}`,
 		expiresAt: new Date(now.getTime() + expiresInSeconds * 1000),
+	}
+}
+
+function objectBase(key: string, config: RecordingStorageConfig): string {
+	const encodedKey = encodeKey(key)
+	return config.endpoint
+		? `${config.endpoint}/${config.bucket}/${encodedKey}`
+		: `https://${config.bucket}.s3.${config.region}.amazonaws.com/${encodedKey}`
+}
+
+/**
+ * A query-signed URL for one object (SigV4 presign). `signedHeaders` are
+ * request headers the caller must send with exactly these values (lowercase
+ * names), e.g. the content type and length of an upload. `null` when the node
+ * has no object storage configured.
+ */
+function presignObjectUrl(
+	method: 'GET' | 'PUT',
+	key: string,
+	options: {
+		expiresInSeconds: number
+		signedHeaders?: Record<string, string>
+		query?: Record<string, string>
+		now?: Date
+	},
+) {
+	const config = getRecordingStorageConfig()
+	if (!config) return null
+	const now = options.now ?? new Date()
+	const base = objectBase(key, config)
+	const target = new URL(base)
+	const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, '')
+	const dateStamp = amzDate.slice(0, 8)
+	const scope = `${dateStamp}/${config.region}/s3/aws4_request`
+	const headerValues: Record<string, string> = {
+		host: target.host,
+		...options.signedHeaders,
+	}
+	const headerNames = Object.keys(headerValues).sort()
+	const signedHeaders = headerNames.join(';')
+	const query: Record<string, string> = {
+		'X-Amz-Algorithm': 'AWS4-HMAC-SHA256',
+		'X-Amz-Credential': `${config.accessKey}/${scope}`,
+		'X-Amz-Date': amzDate,
+		'X-Amz-Expires': String(options.expiresInSeconds),
+		'X-Amz-SignedHeaders': signedHeaders,
+		...options.query,
+	}
+	const canonicalQuery = Object.keys(query)
+		.sort()
+		.map(
+			(name) => `${encodeQueryValue(name)}=${encodeQueryValue(query[name]!)}`,
+		)
+		.join('&')
+	const canonicalHeaders = headerNames
+		.map((name) => `${name}:${headerValues[name]}\n`)
+		.join('')
+	const canonicalRequest = [
+		method,
+		target.pathname,
+		canonicalQuery,
+		canonicalHeaders,
+		signedHeaders,
+		'UNSIGNED-PAYLOAD',
+	].join('\n')
+	const stringToSign = [
+		'AWS4-HMAC-SHA256',
+		amzDate,
+		scope,
+		createHash('sha256').update(canonicalRequest).digest('hex'),
+	].join('\n')
+	const signingKey = hmac(
+		hmac(hmac(hmac(`AWS4${config.secretKey}`, dateStamp), config.region), 's3'),
+		'aws4_request',
+	)
+	const signature = createHmac('sha256', signingKey)
+		.update(stringToSign)
+		.digest('hex')
+	return {
+		url: `${base}?${canonicalQuery}&X-Amz-Signature=${signature}`,
+		expiresAt: now.getTime() + options.expiresInSeconds * 1000,
+	}
+}
+
+/** How long an upload link works. */
+export const OBJECT_UPLOAD_TTL_SECONDS = 600
+
+/**
+ * A one-time upload target: the browser `PUT`s the bytes straight to the
+ * bucket with `headers` (the content type and length are signed, so the
+ * object cannot be another type or size than announced). No byte passes
+ * through App or Sites. `null` when storage is not configured on the node.
+ */
+export function presignObjectUpload(
+	key: string,
+	input: { contentType: string; sizeBytes: number },
+	now = new Date(),
+) {
+	const signed = presignObjectUrl('PUT', key, {
+		expiresInSeconds: OBJECT_UPLOAD_TTL_SECONDS,
+		signedHeaders: {
+			'content-length': String(input.sizeBytes),
+			'content-type': input.contentType,
+		},
+		now,
+	})
+	if (!signed) return null
+	return {
+		method: 'PUT' as const,
+		url: signed.url,
+		headers: {
+			'Content-Type': input.contentType,
+			'Content-Length': String(input.sizeBytes),
+		},
+		expiresAt: signed.expiresAt,
+		maxBytes: input.sizeBytes,
+	}
+}
+
+/** A short-lived read link for one stored object (the browser fetches it directly). */
+export function presignObjectRead(
+	key: string,
+	options: { contentType: string; expiresInSeconds?: number; now?: Date },
+) {
+	const expiresInSeconds = options.expiresInSeconds ?? RECORDING_URL_TTL_SECONDS
+	const signed = presignObjectUrl('GET', key, {
+		expiresInSeconds,
+		query: {
+			'response-content-type': options.contentType,
+			'response-cache-control': 'private, no-store',
+		},
+		now: options.now,
+	})
+	return signed ? { url: signed.url, expiresAt: signed.expiresAt } : null
+}
+
+export type ObjectHead =
+	| { status: 'found'; sizeBytes: number; contentType: string | null }
+	| { status: 'missing' }
+	| { status: 'not_configured' }
+	| { status: 'failed' }
+
+/** Size and type of a stored object, without downloading it. */
+export async function headStorageObject(key: string): Promise<ObjectHead> {
+	const config = getRecordingStorageConfig()
+	if (!config) return { status: 'not_configured' }
+	const request = signedRequest('HEAD', key, config)
+	try {
+		const response = await fetch(request.url, {
+			method: 'HEAD',
+			headers: request.headers,
+			signal: AbortSignal.timeout(STORAGE_REQUEST_TIMEOUT_MS),
+		})
+		if (response.status === 404) return { status: 'missing' }
+		if (!response.ok) return { status: 'failed' }
+		const length = Number(response.headers.get('content-length'))
+		return {
+			status: 'found',
+			sizeBytes: Number.isFinite(length) ? length : -1,
+			contentType: response.headers.get('content-type'),
+		}
+	} catch {
+		return { status: 'failed' }
 	}
 }
 
@@ -327,11 +499,13 @@ export async function deleteRecordingsWithPrefix(
 }
 
 /**
- * Deletes every recording of an organization whose tenant database is being
+ * Deletes everything an organization keeps in the region bucket (call
+ * recordings and inventory invoice photos) when its tenant database is being
  * destroyed. Deprovisioning never waits on storage for long (App gives the
  * whole command 15s): after `budgetMs` the rest continues through
  * `runInBackground`, and failures are only logged, because once the database
- * is gone nothing else would ever retry them.
+ * is gone nothing else would ever retry them. The answer is the worst status
+ * over the prefixes.
  */
 export async function deleteOrganizationRecordings(
 	orgId: string,
@@ -340,29 +514,42 @@ export async function deleteOrganizationRecordings(
 		runInBackground: (task: Promise<void>) => void
 	},
 ): Promise<PrefixDeleteResult['status']> {
-	const prefix = organizationRecordingPrefix(orgId)
-	const result = await deleteRecordingsWithPrefix(prefix, {
-		deadline: Date.now() + options.budgetMs,
-	})
-	if (result.status === 'failed') {
-		console.error('Could not delete every recording of a deprovisioned org', {
-			orgId,
-			prefix,
-			deleted: result.deleted,
-			failed: result.failed,
-		})
+	const deadline = Date.now() + options.budgetMs
+	const severity: PrefixDeleteResult['status'][] = [
+		'deleted',
+		'not_configured',
+		'incomplete',
+		'failed',
+	]
+	let worst: PrefixDeleteResult['status'] = 'deleted'
+	for (const prefix of [
+		organizationRecordingPrefix(orgId),
+		organizationInvoicePrefix(orgId),
+	]) {
+		const result = await deleteRecordingsWithPrefix(prefix, { deadline })
+		if (result.status === 'failed') {
+			console.error('Could not delete every recording of a deprovisioned org', {
+				orgId,
+				prefix,
+				deleted: result.deleted,
+				failed: result.failed,
+			})
+		}
+		if (result.status === 'incomplete') {
+			options.runInBackground(
+				deleteRecordingsWithPrefix(prefix).then((rest) => {
+					if (rest.status !== 'deleted') {
+						console.error(
+							'Could not delete every recording of a deprovisioned org',
+							{ orgId, prefix, ...rest },
+						)
+					}
+				}),
+			)
+		}
+		if (severity.indexOf(result.status) > severity.indexOf(worst)) {
+			worst = result.status
+		}
 	}
-	if (result.status === 'incomplete') {
-		options.runInBackground(
-			deleteRecordingsWithPrefix(prefix).then((rest) => {
-				if (rest.status !== 'deleted') {
-					console.error(
-						'Could not delete every recording of a deprovisioned org',
-						{ orgId, prefix, ...rest },
-					)
-				}
-			}),
-		)
-	}
-	return result.status
+	return worst
 }

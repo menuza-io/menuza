@@ -689,6 +689,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
+					'fulfilled',
 				])
 				const calls = fetchMock.mock.calls.map(([url, init]: any) => [
 					url,
@@ -712,6 +713,12 @@ describe('Jobs-Cron Worker Endpoints', () => {
 						],
 						['https://tenant-us.example.com/api/loyalty/tick', 'POST', token],
 						['https://tenant-ksa.example.com/api/loyalty/tick', 'POST', token],
+						['https://tenant-us.example.com/api/inventory/tick', 'POST', token],
+						[
+							'https://tenant-ksa.example.com/api/inventory/tick',
+							'POST',
+							token,
+						],
 						[
 							'https://tenant-us.example.com/api/marketing/sync-engagement',
 							'POST',
@@ -744,7 +751,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 						],
 					]),
 				)
-				expect(calls).toHaveLength(12)
+				expect(calls).toHaveLength(14)
 			})
 
 			it('posts the payments reconcile to the App once, with the internal token and no tenant node involved', async () => {
@@ -787,6 +794,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'fulfilled',
 					'fulfilled',
 					'rejected',
+					'fulfilled',
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
@@ -859,6 +867,34 @@ describe('Jobs-Cron Worker Endpoints', () => {
 				)
 			})
 
+			it('sends the inventory tick an empty body on every node, and names it when a node fails', async () => {
+				const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+				const fetchMock = vi.fn(async (url: string) =>
+					url.startsWith('https://tenant-ksa') &&
+					url.endsWith('/api/inventory/tick')
+						? new Response('down', { status: 503, statusText: 'Unavailable' })
+						: new Response(JSON.stringify({ success: true })),
+				)
+				globalThis.fetch = fetchMock as any
+				const { ctx, promises } = waited()
+				await worker.scheduled({ cron: '0 * * * *' } as any, regionalEnv(), ctx)
+				const results = await Promise.allSettled(promises)
+				const ticks = fetchMock.mock.calls.filter(([url]: any) =>
+					String(url).endsWith('/api/inventory/tick'),
+				) as any[]
+				expect(ticks).toHaveLength(2)
+				for (const [, init] of ticks) {
+					expect(JSON.parse(init.body)).toEqual({})
+					expect(init.headers['Content-Type']).toBe('application/json')
+				}
+				const rejected = results.filter((r) => r.status === 'rejected')
+				expect(rejected).toHaveLength(1)
+				expect(String((rejected[0] as PromiseRejectedResult).reason)).toContain(
+					'Tenant inventory tick failed for https://tenant-ksa.example.com',
+				)
+				errorSpy.mockRestore()
+			})
+
 			it('keeps the other hourly jobs running when the loyalty tick fails, and names it', async () => {
 				const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 				const fetchMock = vi.fn(async (url: string) =>
@@ -876,6 +912,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'fulfilled',
 					'fulfilled',
 					'rejected',
+					'fulfilled',
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
@@ -905,6 +942,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'fulfilled',
 					'fulfilled',
 					'rejected',
+					'fulfilled',
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
@@ -955,6 +993,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					)
 					const results = await Promise.allSettled(promises)
 					expect(results.map((r) => r.status)).toEqual([
+						'fulfilled',
 						'fulfilled',
 						'fulfilled',
 						'fulfilled',
@@ -1019,6 +1058,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
+					'fulfilled',
 				])
 				const reason = String((results[3] as PromiseRejectedResult).reason)
 				expect(reason).toContain(
@@ -1054,6 +1094,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 				expect(results.map((r) => r.status)).toEqual([
 					'fulfilled',
 					'rejected',
+					'fulfilled',
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
@@ -1107,6 +1148,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
+					'fulfilled',
 				])
 				// The healthy node still ran its tick.
 				expect(fetchMock.mock.calls.map(([url]) => url)).toContain(
@@ -1134,6 +1176,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'fulfilled',
 					'fulfilled',
 					'rejected',
+					'fulfilled',
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',

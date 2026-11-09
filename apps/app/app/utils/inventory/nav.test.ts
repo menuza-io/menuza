@@ -65,6 +65,7 @@ describe('isInventoryFullPage', () => {
 			'/acme/inventory/counts/c1',
 			'/acme/inventory/counts/c1/review',
 			'/acme/inventory/purchasing/deliveries/new',
+			'/acme/inventory/purchasing/orders/o1',
 		]) {
 			expect([path, isInventoryFullPage(path, 'acme')]).toEqual([path, true])
 		}

@@ -1,4 +1,8 @@
-import { type InventoryPermission, type InventoryScope } from '@repo/inventory'
+import {
+	type InventoryFeatures,
+	type InventoryPermission,
+	type InventoryScope,
+} from '@repo/inventory'
 import { type Context, type MiddlewareHandler } from 'hono'
 import {
 	hasInventoryOperatorGrant,
@@ -19,6 +23,12 @@ export type InventoryGuardOptions = {
 	scope: InventoryScope | readonly InventoryScope[]
 	/** Permission the token must carry (implied reads expanded). */
 	grant: InventoryPermission
+	/**
+	 * A child flag the route also needs on top of `inventory.enabled` (read from
+	 * the token's `features` claim): `purchasing` for levels, orders and
+	 * suggestions. Off answers 403 `feature_disabled`.
+	 */
+	feature?: Exclude<keyof InventoryFeatures, 'enabled'>
 }
 
 /**
@@ -29,7 +39,8 @@ export type InventoryGuardOptions = {
  *  3. The token's `features.enabled` claim must be on (403
  *     `inventory_disabled`).
  *  4. Enforces the route's scope and grant (403 `forbidden`), and refuses
- *     any change from an impersonated token.
+ *     any change from an impersonated token, then the route's child flag
+ *     (403 `feature_disabled`).
  *  5. Confirms the organization is still active, provisioned and on this
  *     node (a control-plane outage answers 503, never 404, so clients retry).
  *
@@ -68,6 +79,12 @@ export function inventoryGuard(
 			return inventoryDeny(403, 'forbidden', {
 				reason: 'grant',
 				required: options.grant,
+			})
+		}
+
+		if (options.feature && !ctx.features[options.feature]) {
+			return inventoryDeny(403, 'feature_disabled', {
+				feature: options.feature,
 			})
 		}
 

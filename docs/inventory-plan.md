@@ -831,6 +831,53 @@ so it picks `0034` up with `npm run generate:do-migrations`.
 10. Person-erasure column test: `inv_orders.created_by_id` and the new actor
     columns, like the other actor columns.
 
+### Phase 2 operator API: how it was built
+
+The operator routes of the table above are built in `apps/tenant-api`
+(`routes/operator-inventory-{levels,orders,purchasing}.ts`, services
+`inventory-{levels,orders,receiving,tick}-service.ts`, order and credit text in
+`inventory-order-text.ts`). Decisions the contract left open:
+
+- **Flag.** `inventoryGuard({ feature: 'purchasing' })` answers 403
+  `feature_disabled` for levels and orders. `POST /deliveries` has no flag, but
+  an `orderId` in it needs `purchasing` (the route checks the token's claim; the
+  Station route will check the region's flags).
+- **Order number** comes from `inv_settings.next_order_number`. An organization
+  that never saved its settings gets a row written at **version 0** by its first
+  order (it still reads as "never saved": the first `PUT /settings` sends
+  `expectedVersion: 0`).
+- **Cut-off.** A supplier with no cut-off time shows `cutoff: null` (a delivery
+  day is still chosen with the default cut-off of 23:59 the day before).
+  `cutoffPassed` is only true when the supplier has delivery days and none fits
+  the 14-day look-ahead.
+- **Pack steps.** `packs` must be a multiple of 1 (0.5 for a pack priced by
+  weight); anything else is 400 `pack_step`.
+- **Email.** `POST /orders/:id/send` with `channel: 'email'` delivers through
+  `sendTenantEmail` before the order is marked sent (a provider failure is 502
+  `email_failed` and nothing changes). "Can send" means OCI is configured, the
+  mock transport is on, or the Node entry registered the development file sink
+  (`canSendTenantEmail`); otherwise `emailSkipped: 'not_configured'` and a
+  `mailto`. There is no inventory email kill switch (the order is sent by a
+  person; `INVENTORY_ENABLED` already stops the routes), so
+  `emailSkipped: 'disabled'` is never produced.
+- **Quantity-only receiving** stores the delivery's currency as: what the items
+  already cost in, else the order's or supplier's currency, else the location's
+  reservations currency, else USD. The movement has no value; lines are stored
+  with a zero total and `priced_at` null. `confirm-prices` prices the lines once
+  and writes the value of the purchase as a **zero-quantity `delivery`
+  movement** (movements are append-only), so food cost counts it from the day it
+  is confirmed.
+- **Price rises** (alerts, Today, the tick) are measured on lines whose price is
+  set (`priced_at`), against the previous priced delivery of the item at the
+  location, among prices set in the window.
+- **Invoice photos** use the region's recording bucket (`RECORDING_S3_*`) under
+  `inventory-invoices/<orgId>/`; there is no local fallback (a node with no
+  bucket answers 503 `upload_not_configured`). Deprovisioning deletes both the
+  call-recording and the invoice prefix. An upload that was never confirmed
+  stays in the bucket until deprovisioning.
+- **Tick.** `inv_alert_log` rows are created from 07:00 local for the daily
+  kinds; see `docs/scheduled-jobs.md#inventory-tick`.
+
 ### Units
 
 - Every item has one base unit: **gram** (mass), **millilitre** (volume) or

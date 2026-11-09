@@ -39,6 +39,7 @@ const CONTEXT: InventoryLayoutContext = {
 	canSeeCost: true,
 	canEdit: true,
 	canManagePurchasing: true,
+	purchasingEnabled: false,
 	dataRegion: 'ksa',
 	currency: 'SAR',
 	userName: 'Sara',
@@ -293,9 +294,10 @@ describe('Inventory Purchasing', () => {
 		const row = await screen.findByTestId('delivery-row-d1')
 		expect(row.textContent).not.toMatch(/\d{2,}\.\d{2}/)
 		expect(screen.queryByTestId('purchasing-owed')).toBeNull()
-		expect(screen.queryByTestId('purchasing-record-delivery')).toBeNull()
+		// Without the cost grant a delivery is recorded as quantities only.
+		expect(screen.getByTestId('purchasing-record-delivery')).toBeInTheDocument()
 		expect(screen.getByTestId('purchasing-cost-note')).toHaveTextContent(
-			'needs access to costs',
+			'filled in later',
 		)
 		// The supplier still shows that something is unpaid, in words.
 		expect(screen.getByTestId('supplier-row-s1')).toHaveTextContent('Unpaid')

@@ -15,6 +15,7 @@ import { checkHoneypot } from '@repo/security'
 
 import { type ActionFunctionArgs, type LoaderFunctionArgs } from 'react-router'
 import { z } from 'zod'
+import { countVisibleInventoryAlerts } from '#app/utils/inventory/notification-visibility.server.ts'
 import { countVisibleReservationAlerts } from '#app/utils/reservations/notification-visibility.server.ts'
 import {
 	filterVisibleNotifications,
@@ -49,6 +50,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	)
 	const staffingType = like(Notification.type, 'staffing-%')
 	const reservationsType = like(Notification.type, 'reservations-%')
+	const inventoryType = like(Notification.type, 'inventory-%')
 	const [rows, unread, unreadAlerts] = await Promise.all([
 		db
 			.select()
@@ -67,6 +69,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 					eq(Notification.isRead, false),
 					not(staffingType),
 					not(reservationsType),
+					not(inventoryType),
 				),
 			),
 		db
@@ -79,7 +82,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 				and(
 					whereClause,
 					eq(Notification.isRead, false),
-					or(staffingType, reservationsType),
+					or(staffingType, reservationsType, inventoryType),
 				),
 			),
 	])
@@ -89,12 +92,16 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	const unreadReservations = unreadAlerts.filter((alert) =>
 		alert.type.startsWith('reservations-'),
 	)
+	const unreadInventory = unreadAlerts.filter((alert) =>
+		alert.type.startsWith('inventory-'),
+	)
 	const notifications = await filterVisibleNotifications(userId, rows)
 	let unreadCount = unread[0]?.value ?? 0
 	if (unreadStaffing.length > 0) {
 		unreadCount += await countVisibleStaffingAlerts(userId, unreadStaffing)
 	}
 	unreadCount += await countVisibleReservationAlerts(userId, unreadReservations)
+	unreadCount += await countVisibleInventoryAlerts(userId, unreadInventory)
 
 	return Response.json({ notifications, unreadCount })
 }

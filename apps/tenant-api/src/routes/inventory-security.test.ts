@@ -48,12 +48,16 @@ const LOC_B = 'loc_b'
 
 const FEATURES_ON: InventoryFeatures = {
 	enabled: true,
-	purchasing: false,
+	purchasing: true,
 	recipes: false,
 	prep: false,
 	transfers: false,
 }
 const FEATURES_OFF: InventoryFeatures = { ...FEATURES_ON, enabled: false }
+const FEATURES_NO_PURCHASING: InventoryFeatures = {
+	...FEATURES_ON,
+	purchasing: false,
+}
 
 const READ = INVENTORY_PERMISSIONS.READ_INVENTORY
 const UPDATE = INVENTORY_PERMISSIONS.UPDATE_INVENTORY
@@ -96,7 +100,7 @@ const ROUTES = (() => {
  */
 const ROUTE_GRANTS: Record<
 	string,
-	typeof READ | typeof UPDATE | typeof PURCHASING
+	typeof READ | typeof UPDATE | typeof PURCHASING | typeof COST
 > = {
 	'GET /settings': READ,
 	'PUT /settings': UPDATE,
@@ -149,6 +153,57 @@ const ROUTE_GRANTS: Record<
 	'GET /deliveries/:id': READ,
 	'POST /deliveries/:id/paid': PURCHASING,
 	'POST /deliveries/:id/cancel': UPDATE,
+	// Phase 2.
+	'POST /deliveries/:id/confirm-prices': PURCHASING,
+	'POST /deliveries/:id/credit-message': READ,
+	'POST /deliveries/:id/invoice-photo': UPDATE,
+	'POST /deliveries/:id/invoice-photo/confirm': UPDATE,
+	'GET /price-alerts': COST,
+	'GET /levels': READ,
+	'GET /levels/suggestions': READ,
+	'PUT /levels/bulk': PURCHASING,
+	'GET /orders/suggested': READ,
+	'POST /orders': PURCHASING,
+	'GET /orders': READ,
+	'GET /orders/:id': READ,
+	'PATCH /orders/:id': PURCHASING,
+	'POST /orders/:id/send': PURCHASING,
+	'POST /orders/:id/cancel': PURCHASING,
+	'GET /orders/:id/text': READ,
+	'GET /orders/:id/receive-prefill': READ,
+}
+
+/** POST routes that change nothing (they only carry a body), so a read grant and an impersonated token may call them. */
+const READ_ONLY_POSTS = new Set(['POST /deliveries/:id/credit-message'])
+
+/** Routes behind the `inventory.purchasing` flag (403 feature_disabled while it is off). */
+const PURCHASING_FLAG_ROUTES = new Set([
+	'GET /levels',
+	'GET /levels/suggestions',
+	'PUT /levels/bulk',
+	'GET /orders/suggested',
+	'POST /orders',
+	'GET /orders',
+	'GET /orders/:id',
+	'PATCH /orders/:id',
+	'POST /orders/:id/send',
+	'POST /orders/:id/cancel',
+	'GET /orders/:id/text',
+	'GET /orders/:id/receive-prefill',
+])
+
+function routeKey(route: { method: string; path: string }): string {
+	return `${route.method} ${route.path.replace('/operator/inventory', '')}`
+}
+
+function isRead(route: {
+	method: string
+	path: string
+	key?: string
+}): boolean {
+	return (
+		route.method === 'GET' || READ_ONLY_POSTS.has(route.key ?? routeKey(route))
+	)
 }
 
 function grantFor(route: { method: string; path: string }) {
@@ -444,6 +499,32 @@ describe('inventory operator routes: flags and switches', () => {
 		).toEqual([])
 	})
 
+	it('inventory.purchasing gates levels and orders (403 feature_disabled) and nothing else', async () => {
+		const token = await mintInventoryToken({ features: FEATURES_NO_PURCHASING })
+		const failures: string[] = []
+		for (const route of ROUTES) {
+			const request = validRequest(route)
+			const res = await call(route.method, request.path, {
+				token,
+				body: request.body,
+			})
+			const body = (await res.json()) as { code?: string; feature?: string }
+			const gated = PURCHASING_FLAG_ROUTES.has(routeKey(route))
+			if (gated) {
+				if (
+					res.status !== 403 ||
+					body.code !== 'feature_disabled' ||
+					body.feature !== 'purchasing'
+				) {
+					failures.push(`${routeKey(route)} -> ${res.status} ${body.code}`)
+				}
+			} else if (body.code === 'feature_disabled') {
+				failures.push(`${routeKey(route)} is gated but not listed`)
+			}
+		}
+		expect(failures).toEqual([])
+	})
+
 	it('INVENTORY_ENABLED=false answers 503 inventory_unavailable on every route, reads included', async () => {
 		const token = await mintInventoryToken()
 		for (const value of ['false', '0', 'off', 'no', 'disabled', ' FALSE ']) {
@@ -613,6 +694,8 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 		product: '',
 		delivery: '',
 		waste: '',
+		order: '',
+		draftOrder: '',
 	}
 	let admin: string
 	let seedCounts = 0
@@ -705,6 +788,30 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 				],
 			})
 		).accepted[0].id
+		// A level the item is below, so the suggestion has a line (money included).
+		const level = await seedCall('PUT', '/levels/bulk', {
+			clientId: 'sec-levels-0001',
+			locationId: LOC_B,
+			levels: [
+				{
+					itemId: seed.item,
+					orderBelowQuantity: 6_000_000,
+					fillUpToQuantity: 10_000_000,
+					expectedVersion: 0,
+				},
+			],
+		})
+		expect(level.refused).toEqual([])
+		seed.order = (
+			await seedCall('POST', '/orders', {
+				clientId: 'sec-order-00001',
+				locationId: LOC_B,
+				supplierId: seed.supplier,
+				lines: [
+					{ itemId: seed.item, supplierProductId: seed.product, packs: 2 },
+				],
+			})
+		).id
 		seedCounts = (await seedCall('GET', `/counts?locationId=${LOC_B}`)).counts
 			.length
 	})
@@ -974,6 +1081,84 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 				body: one,
 				byId: true,
 			}),
+			c(
+				'POST /deliveries/:id/confirm-prices',
+				`/deliveries/${seed.delivery}/confirm-prices`,
+				{
+					body: {
+						expectedVersion: 1,
+						currency: 'SAR',
+						lines: [{ lineId: 'line_x', lineTotalMinor: 10 }],
+					},
+					byId: true,
+				},
+			),
+			c(
+				'POST /deliveries/:id/credit-message',
+				`/deliveries/${seed.delivery}/credit-message`,
+				{ body: { locale: 'en' }, byId: true },
+			),
+			c(
+				'POST /deliveries/:id/invoice-photo',
+				`/deliveries/${seed.delivery}/invoice-photo`,
+				{ body: { contentType: 'image/jpeg', sizeBytes: 1000 }, byId: true },
+			),
+			c(
+				'POST /deliveries/:id/invoice-photo/confirm',
+				`/deliveries/${seed.delivery}/invoice-photo/confirm`,
+				{
+					body: {
+						key: `inventory-invoices/${ORG_A}/${seed.delivery}/00000000-0000-4000-8000-000000000000.jpg`,
+					},
+					byId: true,
+				},
+			),
+			c('GET /price-alerts', `/price-alerts?${q}`),
+			c('GET /levels', `/levels?${q}`),
+			c('GET /levels/suggestions', `/levels/suggestions?${q}`),
+			c('PUT /levels/bulk', '/levels/bulk', {
+				body: {
+					clientId: 'sec-levels-0002',
+					locationId: loc,
+					levels: [
+						{
+							itemId: seed.item,
+							orderBelowQuantity: 1,
+							fillUpToQuantity: 2,
+							expectedVersion: 1,
+						},
+					],
+				},
+			}),
+			c('GET /orders/suggested', `/orders/suggested?${q}`),
+			c('POST /orders', '/orders', {
+				body: {
+					clientId: 'sec-order-00002',
+					locationId: loc,
+					supplierId: seed.supplier,
+					lines: [],
+				},
+			}),
+			c('GET /orders', `/orders?${q}`),
+			c('GET /orders/:id', `/orders/${seed.order}`, { byId: true }),
+			c('PATCH /orders/:id', `/orders/${seed.order}`, {
+				body: { expectedVersion: 1, note: 'Renamed' },
+				byId: true,
+			}),
+			c('POST /orders/:id/send', `/orders/${seed.order}/send`, {
+				body: { expectedVersion: 1, channel: 'copy' },
+				byId: true,
+			}),
+			c('POST /orders/:id/cancel', `/orders/${seed.order}/cancel`, {
+				body: one,
+				byId: true,
+			}),
+			c('GET /orders/:id/text', `/orders/${seed.order}/text`, { byId: true }),
+			c(
+				'GET /orders/:id/receive-prefill',
+				`/orders/${seed.order}/receive-prefill`,
+				{ byId: true },
+			),
 		]
 	}
 
@@ -1078,7 +1263,7 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 			grants: [READ, UPDATE, COST],
 		})
 		const failures: string[] = []
-		for (const route of ROUTES.filter((item) => item.method !== 'GET')) {
+		for (const route of ROUTES.filter((item) => !isRead(item))) {
 			const required = grantFor(route)
 			const token = required === PURCHASING ? noPurchasing : noUpdate
 			const res = await call(route.method, validRequest(route).path, {
@@ -1130,7 +1315,7 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 		for (const entry of cases()) {
 			const res = await run(entry, token)
 			const body = (await res.json()) as { code?: string; reason?: string }
-			if (entry.method === 'GET') {
+			if (isRead(entry)) {
 				if (res.status !== 200)
 					failures.push(`${entry.key} -> ${res.status} ${body.code}`)
 			} else if (res.status !== 403 || body.reason !== 'scope') {
@@ -1149,7 +1334,7 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 		for (const entry of cases()) {
 			const res = await run(entry, token)
 			const body = (await res.json()) as { code?: string; reason?: string }
-			if (entry.method === 'GET') {
+			if (isRead(entry)) {
 				if (res.status !== 200)
 					failures.push(`${entry.key} -> ${res.status} ${body.code}`)
 			} else if (res.status !== 403 || body.reason !== 'impersonated') {
@@ -1164,10 +1349,13 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 			grants: [READ, UPDATE, PURCHASING],
 		})
 		const money =
-			/"(valueMinor|totalValueMinor|differenceValueMinor|costMicro|previousCostMicro|lastCostMicro|avgCostMicro|priceMinor|packPriceMinor|lineTotalMinor|linesTotalMinor|vatMinor|totalMinor|unpaidMinor|purchasesMinor|valueAtStakeMinor|stockValueMinor|wasteWeekMinor|wasteWeekShareBp|minimumOrderMinor|priceChangeBp|priceChanges|foodCost|cost)":/
+			/"(valueMinor|totalValueMinor|differenceValueMinor|costMicro|previousCostMicro|lastCostMicro|avgCostMicro|priceMinor|packPriceMinor|lineTotalMinor|linesTotalMinor|vatMinor|totalMinor|unpaidMinor|purchasesMinor|valueAtStakeMinor|stockValueMinor|wasteWeekMinor|wasteWeekShareBp|minimumOrderMinor|shortOfMinimumMinor|belowMinimum|unpricedLines|previousPackPriceMinor|priceChangeBp|priceChanges|foodCost|cost)":/
 		const failures: string[] = []
 		let reads = 0
-		for (const entry of cases().filter((item) => item.method === 'GET')) {
+		// The price alerts are all money: they need the cost grant (below).
+		for (const entry of cases().filter(
+			(item) => isRead(item) && item.key !== 'GET /price-alerts',
+		)) {
 			const res = await run(entry, token)
 			const text = await res.text()
 			reads++
@@ -1190,6 +1378,86 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 			{ token: admin },
 		)
 		expect(await items.text()).toContain('avgCostMicro')
+		const suggested = await call(
+			'GET',
+			`/operator/inventory/orders/suggested?locationId=${LOC_B}`,
+			{ token: admin },
+		)
+		const suggestedText = await suggested.text()
+		expect(suggestedText).toContain('packPriceMinor')
+		expect(suggestedText).toContain('minimumOrderMinor')
+		const order = await call(
+			'GET',
+			`/operator/inventory/orders/${seed.order}`,
+			{
+				token: admin,
+			},
+		)
+		expect(await order.text()).toContain('lineTotalMinor')
+		// … and the suggestion is not an empty one for the token without it.
+		const plain = await call(
+			'GET',
+			`/operator/inventory/orders/suggested?locationId=${LOC_B}`,
+			{ token },
+		)
+		const plainBody = (await plain.json()) as { toOrderItems: number }
+		expect(plainBody.toOrderItems).toBe(1)
+	})
+
+	it('the price alerts need the cost grant (403 forbidden, not an empty list)', async () => {
+		const noCost = await mintInventoryToken({
+			grants: [READ, UPDATE, PURCHASING],
+		})
+		const res = await call(
+			'GET',
+			`/operator/inventory/price-alerts?locationId=${LOC_B}`,
+			{ token: noCost },
+		)
+		expect(res.status).toBe(403)
+		expect(await res.json()).toMatchObject({
+			code: 'forbidden',
+			reason: 'grant',
+			required: COST,
+		})
+		const costOnly = await mintInventoryToken({
+			scope: 'read',
+			grants: [COST],
+		})
+		const ok = await call(
+			'GET',
+			`/operator/inventory/price-alerts?locationId=${LOC_B}`,
+			{ token: costOnly },
+		)
+		expect(ok.status).toBe(200)
+	})
+
+	it('receiving against an order needs the purchasing flag; a delivery without an order does not', async () => {
+		const token = await mintInventoryToken({ features: FEATURES_NO_PURCHASING })
+		const line = { itemId: seed.item, quantity: 1000, lineTotalMinor: 10 }
+		const linked = await call('POST', '/operator/inventory/deliveries', {
+			token,
+			body: {
+				clientId: 'sec-delivery-04',
+				locationId: LOC_B,
+				supplierId: seed.supplier,
+				currency: 'SAR',
+				orderId: seed.order,
+				lines: [line],
+			},
+		})
+		expect(linked.status).toBe(403)
+		expect(await linked.json()).toMatchObject({ code: 'feature_disabled' })
+		const plain = await call('POST', '/operator/inventory/deliveries', {
+			token,
+			body: {
+				clientId: 'sec-delivery-05',
+				locationId: LOC_B,
+				supplierId: null,
+				currency: 'SAR',
+				lines: [line],
+			},
+		})
+		expect(plain.status).toBe(200)
 	})
 
 	it('a replayed create by a token without the cost grant gets no money back', async () => {

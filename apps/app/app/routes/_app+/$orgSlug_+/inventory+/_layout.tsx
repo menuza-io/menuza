@@ -45,6 +45,8 @@ export type InventoryLayoutContext = {
 	canEdit: boolean
 	/** Whether the member may also set prices and suppliers. */
 	canManagePurchasing: boolean
+	/** The `inventory.purchasing` flag: levels, suggested orders and sending orders. */
+	purchasingEnabled: boolean
 	/** The data region, which sets the default unit system. */
 	dataRegion: 'us' | 'ksa'
 	/** The currency money figures are entered in. */
@@ -107,6 +109,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		canManagePurchasing:
 			!access.impersonated &&
 			access.grants.includes(INVENTORY_PERMISSIONS.UPDATE_INVENTORY_PURCHASING),
+		purchasingEnabled: access.features.purchasing,
 		dataRegion: access.dataRegion,
 		currency: access.currency,
 		userName,
@@ -121,6 +124,7 @@ export default function InventoryLayout() {
 		canSeeCost,
 		canEdit,
 		canManagePurchasing,
+		purchasingEnabled,
 		dataRegion,
 		currency,
 		userName,
@@ -149,6 +153,7 @@ export default function InventoryLayout() {
 		canSeeCost,
 		canEdit,
 		canManagePurchasing,
+		purchasingEnabled,
 		dataRegion,
 		currency,
 		userName,

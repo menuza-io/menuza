@@ -97,6 +97,15 @@ describe('record delivery (phase 1 callers keep working)', () => {
 			recordDeliveryResultSchema.shape.order.safeParse(undefined).success,
 		).toBe(true)
 	})
+
+	test('the result may say why a Station delivery was recorded without its order', () => {
+		const shape = recordDeliveryResultSchema.shape.orderLinkIgnored
+		for (const reason of ['closed', 'not_found', 'wrong_supplier', null]) {
+			expect(shape.safeParse(reason).success).toBe(true)
+		}
+		expect(shape.safeParse(undefined).success).toBe(true)
+		expect(shape.safeParse('other').success).toBe(false)
+	})
 })
 
 describe('orders', () => {
@@ -327,6 +336,23 @@ describe('notifications and the tick', () => {
 				orgs: 3,
 				orgsDeferred: 0,
 				...result,
+			}).success,
+		).toBe(true)
+		// A single organization's answer may say an alert still waits and when to look again.
+		expect(
+			inventoryTickAnswerSchema.safeParse({
+				success: true,
+				result: {
+					...result,
+					needsFollowUp: true,
+					nextDueAt: 1_700_000_000_000,
+				},
+			}).success,
+		).toBe(true)
+		expect(
+			inventoryTickAnswerSchema.safeParse({
+				success: true,
+				result: { ...result, needsFollowUp: false, nextDueAt: null },
 			}).success,
 		).toBe(true)
 	})
