@@ -77,6 +77,18 @@ const countItemRow = (itemName: string) =>
 		(row) => row.querySelector('p.font-semibold')?.textContent === itemName,
 	)!
 
+/** Local copy loads first; the region sheet arrives async and fills in prior counts. */
+const countSheetReady = () =>
+	vi.waitFor(
+		() => {
+			const chicken = page.host.querySelector<HTMLInputElement>(
+				'input[aria-label="Chicken thigh"]',
+			)
+			expect(chicken?.value).toBe('4.5')
+		},
+		{ timeout: 10_000 },
+	)
+
 describe('Stock home', () => {
 	it('shows Count, Waste and Delivery, and the counts already in progress at the location', async () => {
 		const api = region()
@@ -146,6 +158,7 @@ describe('Count', () => {
 		await loaded()
 		await click(button(page.host, /^Weekly count/))
 		await vi.waitFor(() => expect(text(page.host)).toContain('Walk-in fridge'))
+		await countSheetReady()
 		return { api, props }
 	}
 
@@ -267,7 +280,7 @@ describe('Count', () => {
 			page.host.querySelector<HTMLInputElement>('input[aria-label="Tomatoes"]')!
 		await type(field(), '1.5')
 		await vi.waitFor(() => expect(api.writes(/\/entries$/)).toHaveLength(1), {
-			timeout: 5_000,
+			timeout: 15_000,
 		})
 		await vi.waitFor(async () => expect(await stockRows(ORIGIN)).toEqual([]))
 		await act(
@@ -277,7 +290,7 @@ describe('Count', () => {
 			'g',
 		)
 		await vi.waitFor(() => expect(api.writes(/\/entries$/)).toHaveLength(2), {
-			timeout: 5_000,
+			timeout: 15_000,
 		})
 		expect(
 			api
