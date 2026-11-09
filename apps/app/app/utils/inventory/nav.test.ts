@@ -36,12 +36,52 @@ describe('computeInventoryNavAccess', () => {
 	it('shows the five tabs to a reader', () => {
 		expect(computeInventoryNavAccess(ON, new Set([P.READ_INVENTORY]))).toEqual({
 			visible: true,
+			recipes: false,
+			editRecipes: false,
+			seeCost: false,
 			today: true,
 			stock: true,
 			counts: true,
 			purchasing: true,
 			waste: true,
 		})
+	})
+})
+
+describe('computeInventoryNavAccess recipes', () => {
+	const WITH_RECIPES = foldInventoryFeatures({ enabled: true, recipes: true })
+
+	it('shows recipes to a reader only while the recipes flag is on', () => {
+		const grants = new Set([P.READ_INVENTORY])
+		expect(computeInventoryNavAccess(ON, grants).recipes).toBe(false)
+		expect(computeInventoryNavAccess(WITH_RECIPES, grants).recipes).toBe(true)
+		expect(computeInventoryNavAccess(WITH_RECIPES, grants).editRecipes).toBe(
+			false,
+		)
+	})
+
+	it('lets only the recipe grant save, and only the cost grant type a cost', () => {
+		const nav = computeInventoryNavAccess(
+			WITH_RECIPES,
+			new Set([P.READ_INVENTORY, P.UPDATE_INVENTORY_RECIPE]),
+		)
+		expect(nav.editRecipes).toBe(true)
+		expect(nav.seeCost).toBe(false)
+		expect(
+			computeInventoryNavAccess(
+				WITH_RECIPES,
+				new Set([P.READ_INVENTORY, P.READ_INVENTORY_COST]),
+			).seeCost,
+		).toBe(true)
+	})
+
+	it('never edits recipes while the flag is off', () => {
+		expect(
+			computeInventoryNavAccess(
+				ON,
+				new Set([P.READ_INVENTORY, P.UPDATE_INVENTORY_RECIPE]),
+			).editRecipes,
+		).toBe(false)
 	})
 })
 

@@ -29,6 +29,8 @@ import {
  */
 
 const UnitSystemContext = createContext<UnitSystem>('metric')
+/** The organization's target food cost in basis points; null until settings arrive. */
+const TargetFoodCostContext = createContext<number | null>(null)
 
 export function InventoryPrefsProvider({
 	dataRegion,
@@ -41,9 +43,18 @@ export function InventoryPrefsProvider({
 	const unitSystem = settings.data?.unitSystem ?? defaultUnitSystem(dataRegion)
 	return (
 		<UnitSystemContext.Provider value={unitSystem}>
-			{children}
+			<TargetFoodCostContext.Provider
+				value={settings.data?.targetFoodCostBp ?? null}
+			>
+				{children}
+			</TargetFoodCostContext.Provider>
 		</UnitSystemContext.Provider>
 	)
+}
+
+/** Target food cost (3000 = 30%) from the one settings read, or null while it loads. */
+export function useInventoryTargetFoodCostBp(): number | null {
+	return useContext(TargetFoodCostContext)
 }
 
 export function useInventoryUnitSystem(): UnitSystem {

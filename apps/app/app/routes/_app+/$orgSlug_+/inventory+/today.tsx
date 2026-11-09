@@ -1,4 +1,6 @@
 import { Plural, Trans, useLingui } from '@lingui/react/macro'
+import { getLocalizedMenuValue } from '@repo/common/menu-types'
+import { asc, db, eq, OrganizationMenuItem } from '@repo/database'
 import {
 	type AttentionItem,
 	todaySchema,
@@ -22,7 +24,7 @@ import {
 	useRef,
 	useState,
 } from 'react'
-import { Link, useLocation } from 'react-router'
+import { Link, useLoaderData, useLocation } from 'react-router'
 import { EmptyState } from '#app/components/empty-state.tsx'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { InventoryHeaderActions } from '#app/components/inventory/inventory-chrome.tsx'
@@ -30,6 +32,7 @@ import {
 	useInventoryRevision,
 	useQuantityFormat,
 } from '#app/components/inventory/inventory-prefs.tsx'
+import { MissingRecipesPanel } from '#app/components/inventory/missing-recipes-panel.tsx'
 import { InventorySetupChecklist } from '#app/components/inventory/setup-checklist.tsx'
 import { WasteBars } from '#app/components/inventory/waste-bars.tsx'
 import { useInventoryQuery } from '#app/hooks/use-inventory-client.ts'
@@ -47,12 +50,43 @@ import {
 	percentFromBp,
 } from '#app/utils/inventory/today-view.ts'
 import { resolveWasteRange } from '#app/utils/inventory/waste-range.ts'
+import { orgSiteLocales } from '#app/utils/location-name.server.ts'
 import { type Route } from './+types/today.ts'
 import { useInventoryLayoutData } from './_layout.tsx'
 
+/** Most menu items the loader names for "Dishes without a recipe". */
+const MENU_NAMES_CAP = 500
+
 export async function loader({ request, params }: Route.LoaderArgs) {
-	await requireInventoryAccess(request, params.orgSlug)
-	return null
+	const access = await requireInventoryAccess(request, params.orgSlug)
+	// The region knows dishes by id only. When recipes are on, send the names
+	// (and prices) of this organization's menu items so the browser can join
+	// them; otherwise nothing is read.
+	if (!access.features.recipes) return { dishes: [] }
+	const [{ defaultLocale }, rows] = await Promise.all([
+		orgSiteLocales(access.organizationId),
+		db
+			.select({
+				id: OrganizationMenuItem.id,
+				displayName: OrganizationMenuItem.displayName,
+				internalName: OrganizationMenuItem.internalName,
+				price: OrganizationMenuItem.price,
+			})
+			.from(OrganizationMenuItem)
+			.where(eq(OrganizationMenuItem.organizationId, access.organizationId))
+			.orderBy(asc(OrganizationMenuItem.position))
+			.limit(MENU_NAMES_CAP),
+	])
+	return {
+		dishes: rows.map((row) => ({
+			id: row.id,
+			name:
+				getLocalizedMenuValue(row.displayName, defaultLocale, defaultLocale) ||
+				row.internalName ||
+				'',
+			price: row.price,
+		})),
+	}
 }
 
 function dismissKey(orgSlug: string, locationId: string) {
@@ -86,6 +120,7 @@ export default function InventoryTodayRoute() {
 	const { t, i18n } = useLingui()
 	const {
 		orgSlug,
+		nav,
 		locations,
 		activeLocationId,
 		canEdit,
@@ -93,6 +128,10 @@ export default function InventoryTodayRoute() {
 		canManagePurchasing,
 		currency,
 	} = useInventoryLayoutData()
+	// Undefined when the route renders without its loader (tests, previews).
+	const loaderData = useLoaderData<typeof loader>() as
+		Awaited<ReturnType<typeof loader>> | undefined
+	const menuDishes = loaderData?.dishes ?? []
 	const { search } = useLocation()
 	const linkSearch = locations.length > 1 ? search : ''
 	const today = useInventoryQuery(
@@ -298,6 +337,15 @@ export default function InventoryTodayRoute() {
 						</WorkspacePanel>
 					</div>
 				</div>
+			) : null}
+
+			{nav.recipes && (hasItems || setupDone) ? (
+				<MissingRecipesPanel
+					orgSlug={orgSlug}
+					locationId={activeLocationId}
+					dishes={menuDishes}
+					currency={currency}
+				/>
 			) : null}
 		</div>
 	)

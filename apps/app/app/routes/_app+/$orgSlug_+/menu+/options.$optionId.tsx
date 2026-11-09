@@ -43,6 +43,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	const organization = await requireUserOrganization(request, params.orgSlug, {
 		id: true,
 		slug: true,
+		dataRegion: true,
 		siteLocales: true,
 		siteDefaultLocale: true,
 	})
@@ -178,6 +179,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
 	return {
 		orgSlug: organization.slug,
+		optionId: option.id,
+		dataRegion: organization.dataRegion,
 		defaultLocale,
 		supportedLocales,
 		availableModifierGroups,
@@ -411,6 +414,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
 export default function EditOptionRoute() {
 	const {
 		orgSlug,
+		optionId,
+		dataRegion,
 		initialData,
 		availableModifierGroups,
 		locations,
@@ -425,6 +430,8 @@ export default function EditOptionRoute() {
 		<div className="-mx-4 -mt-2 flex flex-1 flex-col md:-mx-2">
 			<OptionForm
 				orgSlug={orgSlug}
+				optionId={optionId}
+				dataRegion={dataRegion}
 				initialData={initialData}
 				availableModifierGroups={availableModifierGroups}
 				locations={locations}

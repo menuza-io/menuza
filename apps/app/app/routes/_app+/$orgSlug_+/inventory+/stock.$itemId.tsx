@@ -35,6 +35,7 @@ import {
 	useNotifyInventoryChanged,
 	useQuantityFormat,
 } from '#app/components/inventory/inventory-prefs.tsx'
+import { ItemRecipeSections } from '#app/components/inventory/item-recipe-sections.tsx'
 import { useStockContext } from '#app/components/inventory/stock-context.ts'
 import { SheetPanel } from '#app/components/staff/sheet-frame.tsx'
 import {
@@ -151,6 +152,8 @@ export default function InventoryItemSheetRoute() {
 			close={ctx.close}
 			locationId={activeLocationId}
 			currency={ctx.currency}
+			recipesEnabled={ctx.nav.recipes}
+			canEditRecipes={ctx.nav.editRecipes}
 		/>
 	)
 }
@@ -173,6 +176,8 @@ function ItemSheetBody({
 	close,
 	locationId,
 	currency,
+	recipesEnabled,
+	canEditRecipes,
 }: {
 	item: ItemDetail
 	canEdit: boolean
@@ -187,6 +192,8 @@ function ItemSheetBody({
 	close: () => void
 	locationId: string
 	currency: string
+	recipesEnabled: boolean
+	canEditRecipes: boolean
 }) {
 	const { t, i18n } = useLingui()
 	const { memberNames } = useLoaderData<typeof loader>()
@@ -523,6 +530,16 @@ function ItemSheetBody({
 					</ul>
 				)}
 			</section>
+
+			<ItemRecipeSections
+				item={item}
+				locationId={locationId}
+				currency={currency}
+				recipesEnabled={recipesEnabled}
+				canEditRecipes={canEditRecipes && !item.archived}
+				canEditInventory={canEdit}
+				onChanged={onChanged}
+			/>
 
 			<section className="flex flex-col gap-3" aria-labelledby="item-history">
 				<h3 id="item-history" className="text-sm font-semibold">

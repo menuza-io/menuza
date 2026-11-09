@@ -1,14 +1,18 @@
 import { createContext, type ReactNode, useMemo } from 'react'
-import { useOperatorClient } from '#app/hooks/use-operator-client.ts'
+import {
+	type OperatorRequestInit,
+	useOperatorClient,
+} from '#app/hooks/use-operator-client.ts'
 
 export type InventoryClient = {
 	orgSlug: string
 	/**
 	 * Calls `/operator/inventory<path>` on the organization's regional
 	 * tenant-api with a short-lived `inv+jwt` (read for GET, write otherwise).
-	 * Throws `OperatorRequestError` on a non-2xx answer.
+	 * Throws `OperatorRequestError` on a non-2xx answer. `readOnly: true` marks
+	 * a POST that only reads (recipe costs) so it uses the read token.
 	 */
-	request: (path: string, init?: RequestInit) => Promise<unknown>
+	request: (path: string, init?: OperatorRequestInit) => Promise<unknown>
 }
 
 export const InventoryClientContext = createContext<InventoryClient | null>(

@@ -76,3 +76,72 @@ export function inventorySaveErrorMessage(error: unknown): MessageDescriptor {
 	}
 	return msg`We could not save this. Check your connection and try again.`
 }
+
+/**
+ * Whether a failed recipe call means "this member or organization has no
+ * recipes": the panel then disappears instead of showing an error.
+ */
+export function isRecipesUnavailable(error: unknown): boolean {
+	return (
+		error instanceof OperatorRequestError &&
+		(error.code === 'feature_disabled' ||
+			error.code === 'forbidden' ||
+			error.status === 403 ||
+			error.status === 404)
+	)
+}
+
+/** One owner-language sentence for a failed recipe save or clear. */
+export function recipeSaveErrorMessage(error: unknown): MessageDescriptor {
+	if (error instanceof OperatorRequestError) {
+		if (error.code === 'recipe_cycle') {
+			return msg`An ingredient made in house uses this dish or itself, so it loops. Remove that ingredient.`
+		}
+		if (error.code === 'recipe_too_deep') {
+			return msg`Made-in-house ingredients are nested too deeply. Simplify one of them.`
+		}
+		if (error.code === 'recipe_empty') {
+			return msg`Add at least one ingredient, or use Clear recipe.`
+		}
+		if (error.code === 'not_a_made_item') {
+			return msg`Only an item made in house can have its own recipe.`
+		}
+		if (error.code === 'unit_mismatch') {
+			return msg`One of the units cannot measure its ingredient. Pick another unit.`
+		}
+		if (error.code === 'effective_from_too_old') {
+			return msg`That start date is too far in the past.`
+		}
+		if (error.code === 'feature_disabled') {
+			return msg`Recipes are not turned on for your business.`
+		}
+		if (error.code === 'forbidden' || error.status === 403) {
+			return msg`You do not have permission to change recipes. Ask an owner to check your role.`
+		}
+	}
+	return inventorySaveErrorMessage(error)
+}
+
+/** True for the 409 that means someone saved a newer version first. */
+export function isStaleVersion(error: unknown): boolean {
+	return error instanceof OperatorRequestError && error.code === 'stale_version'
+}
+
+/** One owner-language sentence for a failed "Record a batch". */
+export function batchSaveErrorMessage(error: unknown): MessageDescriptor {
+	if (error instanceof OperatorRequestError) {
+		if (error.code === 'recipe_empty') {
+			return msg`This item has no recipe yet. Add what goes into it first, then record a batch.`
+		}
+		if (error.code === 'not_a_made_item') {
+			return msg`Only an item made in house can be recorded as a batch.`
+		}
+		if (error.code === 'amount_out_of_range') {
+			return msg`That amount is too small or too large. Check it and try again.`
+		}
+		if (error.code === 'feature_disabled') {
+			return msg`Recipes are not turned on for your business.`
+		}
+	}
+	return inventorySaveErrorMessage(error)
+}

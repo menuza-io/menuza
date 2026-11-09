@@ -49,6 +49,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	const organization = await requireUserOrganization(request, params.orgSlug, {
 		id: true,
 		slug: true,
+		dataRegion: true,
 		siteDefaultLocale: true,
 		siteLocales: true,
 	})
@@ -459,6 +460,8 @@ export default function EditItemRoute() {
 			<ItemForm
 				pageTitle="Edit Item"
 				initialData={item}
+				itemId={item.id}
+				dataRegion={organization.dataRegion}
 				orgSlug={organization.slug}
 				defaultLocale={defaultLocale}
 				supportedLocales={supportedLocales}

@@ -17,10 +17,22 @@ export type InventoryTab = (typeof INVENTORY_TABS)[number]
 /** Which links of the sidebar "Inventory" group the current member should see. */
 export type InventoryNavAccess = {
 	visible: boolean
+	/**
+	 * The `inventory.recipes` flag with `read:inventory:any`: the menu editors
+	 * may show "Ingredients and cost". The region still checks every call.
+	 */
+	recipes: boolean
+	/** `update:inventory_recipe:any`: ingredients may be saved, not just read. */
+	editRecipes: boolean
+	/** `read:inventory_cost:any`: a typed cost per dish may be entered. */
+	seeCost: boolean
 } & Record<InventoryTab, boolean>
 
 export const HIDDEN_INVENTORY_NAV: InventoryNavAccess = {
 	visible: false,
+	recipes: false,
+	editRecipes: false,
+	seeCost: false,
 	today: false,
 	stock: false,
 	counts: false,
@@ -46,6 +58,11 @@ export function computeInventoryNavAccess(
 	}
 	return {
 		visible: true,
+		recipes: features.recipes,
+		editRecipes:
+			features.recipes &&
+			held.has(INVENTORY_PERMISSIONS.UPDATE_INVENTORY_RECIPE),
+		seeCost: held.has(INVENTORY_PERMISSIONS.READ_INVENTORY_COST),
 		today: true,
 		stock: true,
 		counts: true,

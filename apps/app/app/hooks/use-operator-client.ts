@@ -24,6 +24,13 @@ export function operatorTokenUrl(
 }
 
 /**
+ * A request init that may say the call only reads although it is not a GET
+ * (a POST that asks for costs): it then uses the read token, so a member
+ * without any write grant is not refused.
+ */
+export type OperatorRequestInit = RequestInit & { readOnly?: boolean }
+
+/**
  * Calls the organization's regional tenant-api straight from the browser with a
  * short-lived operator token minted by App (`/:org/orders-token`). App returns
  * credentials only: order and contact data never transit App SSR. `base` is the
@@ -64,15 +71,20 @@ export function useOperatorClient(
 	)
 
 	const request = useCallback(
-		async (path: string, init: RequestInit = {}) => {
-			const write = init.method !== undefined && init.method !== 'GET'
+		async (path: string, init: OperatorRequestInit = {}) => {
+			const write =
+				!init.readOnly && init.method !== undefined && init.method !== 'GET'
 			const send = async () => {
 				const { credentials } = credentialsFor(write)
 				const { jwt, tenantApiUrl } = await credentials
 				const headers = new Headers(init.headers)
 				headers.set('Authorization', `Bearer ${jwt}`)
 				if (init.body) headers.set('Content-Type', 'application/json')
-				return fetch(`${tenantApiUrl}${base}${path}`, { ...init, headers })
+				const { readOnly: ignoredReadOnly, ...fetchInit } = init
+				return fetch(`${tenantApiUrl}${base}${path}`, {
+					...fetchInit,
+					headers,
+				})
 			}
 			let response = await send()
 			if (response.status === 401) {
