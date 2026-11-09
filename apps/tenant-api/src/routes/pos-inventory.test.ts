@@ -18,6 +18,7 @@ import {
 import {
 	invAuditLog,
 	invCountEntries,
+	invCounts,
 	invDeliveries,
 	invDeliveryLines,
 	invItems,
@@ -568,15 +569,23 @@ describe('/pos/inventory', () => {
 		})
 
 		it('counts entries for the person who made them while they are still on the roster, and records who synced them', async () => {
-			const id = (await startCount()).body.count.id as string
+			const started = await startCount()
+			const id = started.body.count.id as string
 			const url = `/pos/inventory/counts/${id}/entries`
+			const db = await h.db(ORG_A)
+			const countRow = await db
+				.select({ createdAt: invCounts.createdAt })
+				.from(invCounts)
+				.where(eq(invCounts.id, id))
+				.get()
+			const deviceMadeAt = countRow!.createdAt + 1_000
 			const former = await h.seedStaff(ORG_A, {
 				scopeIds: [tablet.cashier.staffId ? 'loc-1' : 'loc-1'],
 				status: 'terminated',
 			})
 			const named = entry(k.items.tomato.id, 2, {
 				madeBy: tablet.manager.staffId,
-				madeAt: Date.now() - 2 * HOUR,
+				madeAt: deviceMadeAt,
 			})
 			const left = entry(k.items.chicken.id, 3, { madeBy: former.staffId })
 			const stranger = entry(k.items.oil.id, 1, {
@@ -590,7 +599,6 @@ describe('/pos/inventory', () => {
 			expect(reply.status, reply.raw).toBe(200)
 			expect(reply.body.accepted).toHaveLength(3)
 
-			const db = await h.db(ORG_A)
 			const rows = await db
 				.select()
 				.from(invCountEntries)
@@ -600,11 +608,11 @@ describe('/pos/inventory', () => {
 				counterKind: 'staff',
 				counterId: tablet.manager.staffId,
 			})
-			expect(by.get(named.clientId)!.createdAt).toBeLessThanOrEqual(
-				Date.now() - 2 * HOUR + 5_000,
+			expect(by.get(named.clientId)!.createdAt).toBeGreaterThanOrEqual(
+				countRow!.createdAt,
 			)
-			expect(by.get(named.clientId)!.createdAt).toBeGreaterThan(
-				Date.now() - 2 * HOUR - 5_000,
+			expect(by.get(named.clientId)!.createdAt).toBeLessThanOrEqual(
+				deviceMadeAt + 5_000,
 			)
 			// Someone no longer on the roster, or unknown: the signed-in person's.
 			expect(by.get(left.clientId)!.counterId).toBe(tablet.cashier.staffId)

@@ -1696,12 +1696,15 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 
 	it('saving only the unit system does not need the cost grant when food cost is unchanged', async () => {
 		const token = await mintInventoryToken({ grants: [READ, UPDATE] })
+		const current = (await (
+			await call('GET', '/operator/inventory/settings', { token })
+		).json()) as { version: number; targetFoodCostBp: number; unitSystem: string }
 		const put = await call('PUT', '/operator/inventory/settings', {
 			token,
 			body: {
-				expectedVersion: 0,
-				targetFoodCostBp: 3000,
-				unitSystem: 'metric',
+				expectedVersion: current.version,
+				targetFoodCostBp: current.targetFoodCostBp,
+				unitSystem: current.unitSystem === 'metric' ? 'us' : 'metric',
 			},
 		})
 		expect(put.status).toBe(200)
