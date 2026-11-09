@@ -14,6 +14,7 @@ import {
 	like,
 	or,
 } from '@repo/database'
+import { Alert, AlertDescription, AlertTitle } from '@repo/ui/alert'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/card'
@@ -30,12 +31,13 @@ import {
 	TableHeader,
 	TableRow,
 } from '@repo/ui/table'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import {
 	type ActionFunctionArgs,
 	type LoaderFunctionArgs,
 	useLoaderData,
 	useFetcher,
+	useLocation,
 } from 'react-router'
 import { TablePagination } from '#app/components/data-table/table-pagination.tsx'
 import { UrlFilters } from '#app/components/data-table/url-filters.tsx'
@@ -258,6 +260,45 @@ export async function action({ request }: ActionFunctionArgs) {
 				})
 				return Response.json({ success: true })
 			}
+			// The App ran nothing and reported no error or hold: another run (the
+			// scheduled job or an earlier click) got to the request first. Answer
+			// from the request's state now, not from the empty counts.
+			if (
+				outcome.ok &&
+				outcome.processed === 0 &&
+				outcome.failed === 0 &&
+				outcome.held === 0 &&
+				outcome.errors.length === 0
+			) {
+				const [current] = await db
+					.select({ status: DataSubjectRequest.status })
+					.from(DataSubjectRequest)
+					.where(eq(DataSubjectRequest.id, requestId))
+				if (current?.status === 'completed') {
+					// Record the admin's request: the run that finished it logs no
+					// admin identity.
+					await auditService.log({
+						action: AuditAction.DATA_DELETION_COMPLETED,
+						userId: adminId,
+						details: `Admin expedited deletion for user ${dsr.user?.email}; another run completed it`,
+						resourceType: 'data_subject_request',
+						resourceId: requestId,
+						request,
+						metadata: { ...metadata, completedByOtherRun: true },
+						severity: 'warning',
+					})
+					return Response.json({ success: true })
+				}
+				return Response.json(
+					{
+						error:
+							current?.status === 'processing'
+								? 'This deletion is already in progress'
+								: `The deletion did not run (status: ${current?.status ?? 'missing'})`,
+					},
+					{ status: 409 },
+				)
+			}
 
 			const errorMessage = !outcome.ok
 				? outcome.error
@@ -322,7 +363,22 @@ export async function action({ request }: ActionFunctionArgs) {
 export default function GDPRRequestsPage() {
 	const { _ } = useLingui()
 	const { requests, pagination, statistics } = useLoaderData<typeof loader>()
-	const fetcher = useFetcher()
+	const fetcher = useFetcher<{ error?: string }>()
+	const location = useLocation()
+	// An error belongs to the view it happened in: changing filters or pages
+	// hides it. The view is noted when a result arrives (state adjusted while
+	// rendering, as React recommends for derived state).
+	const [result, setResult] = useState<{
+		data: unknown
+		view: string
+	} | null>(null)
+	if (fetcher.data && result?.data !== fetcher.data) {
+		setResult({ data: fetcher.data, view: location.search })
+	}
+	const actionError =
+		fetcher.state === 'idle' && result?.view === location.search
+			? (fetcher.data?.error ?? null)
+			: null
 
 	// App's erasure run holds a request whose user would leave an organization
 	// without an admin, and records `sole_admin: <organization ids>`.
@@ -419,6 +475,17 @@ export default function GDPRRequestsPage() {
 					<Trans>Manage data export and deletion requests for compliance</Trans>
 				}
 			/>
+
+			<div aria-live="polite">
+				{actionError ? (
+					<Alert variant="destructive">
+						<AlertTitle>
+							<Trans>The request was not completed</Trans>
+						</AlertTitle>
+						<AlertDescription>{actionError}</AlertDescription>
+					</Alert>
+				) : null}
+			</div>
 
 			<div className="grid gap-4 md:grid-cols-4">
 				<Card>

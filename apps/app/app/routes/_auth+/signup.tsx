@@ -20,6 +20,7 @@ import { Field, FieldLabel, FieldError, FieldGroup } from '@repo/ui/field'
 import { Input } from '@repo/ui/input'
 import { StatusButton } from '@repo/ui/status-button'
 import { EmailSchema } from '@repo/validation'
+import { useId } from 'react'
 import { data, redirect, Form, useSearchParams, Link } from 'react-router'
 import { HoneypotInputs } from 'remix-utils/honeypot/react'
 import { z } from 'zod'
@@ -29,6 +30,7 @@ import {
 	convertErrorsToFieldFormat,
 } from '#app/components/forms.tsx'
 import {
+	TurnstileSubmitStatus,
 	TurnstileWidget,
 	useTurnstileReady,
 } from '#app/components/turnstile-widget.tsx'
@@ -186,6 +188,7 @@ export default function SignupRoute({
 	const redirectTo = searchParams.get('redirectTo')
 	const inviteToken = loaderData?.inviteToken
 	const turnstileSiteKey = loaderData?.turnstileSiteKey ?? null
+	const turnstileHintId = useId()
 	const [turnstileReady, setTurnstileReady] =
 		useTurnstileReady(turnstileSiteKey)
 	const configuredProviders = useConfiguredProviders()
@@ -275,11 +278,17 @@ export default function SignupRoute({
 							/>
 							<ErrorList errors={form.errors} id={form.errorId} />
 
+							<TurnstileSubmitStatus
+								id={turnstileHintId}
+								siteKey={turnstileSiteKey}
+								ready={turnstileReady}
+							/>
 							<StatusButton
 								className="w-full"
 								status={isPending ? 'pending' : (form.status ?? 'idle')}
 								type="submit"
 								disabled={isPending || !turnstileReady}
+								aria-describedby={turnstileReady ? undefined : turnstileHintId}
 							>
 								<Trans>Sign up</Trans>
 							</StatusButton>

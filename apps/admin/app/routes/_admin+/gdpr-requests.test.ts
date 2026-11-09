@@ -208,6 +208,54 @@ describe('expedited GDPR erasure', () => {
 		).toHaveLength(1)
 	})
 
+	it('answers from the request state when the App processed nothing', async () => {
+		const user = await createUser()
+		const dsr = await scheduleErasure(user.id)
+		let status = 'processing'
+		app.answer = async () => {
+			// Another run got to the request first.
+			await db
+				.update(DataSubjectRequest)
+				.set({ status })
+				.where(eq(DataSubjectRequest.id, dsr.id))
+			return Response.json({ processed: 0, failed: 0, held: 0, errors: [] })
+		}
+
+		const running = await expedite(dsr.id)
+		expect(running.status).toBe(409)
+		expect(await running.json()).toEqual({
+			error: 'This deletion is already in progress',
+		})
+
+		const other = await scheduleErasure(user.id)
+		status = 'completed'
+		app.answer = async () => {
+			await db
+				.update(DataSubjectRequest)
+				.set({ status })
+				.where(eq(DataSubjectRequest.id, other.id))
+			return Response.json({ processed: 0, failed: 0, held: 0, errors: [] })
+		}
+		expect((await expedite(other.id)).status).toBe(200)
+		expect(auditService.log).toHaveBeenCalledWith(
+			expect.objectContaining({
+				resourceId: other.id,
+				metadata: expect.objectContaining({ completedByOtherRun: true }),
+			}),
+		)
+
+		// Still scheduled: the App did not run it, and nothing claims otherwise.
+		const queued = await scheduleErasure(user.id)
+		app.answer = () =>
+			Response.json({ processed: 0, failed: 0, held: 0, errors: [] })
+		const notRun = await expedite(queued.id)
+		expect(notRun.status).toBe(409)
+		expect(await notRun.json()).toEqual({
+			error: 'The deletion did not run (status: scheduled)',
+		})
+		expect((await readRequest(queued.id))?.status).toBe('scheduled')
+	})
+
 	it('leaves the request due for the job when the App cannot be reached', async () => {
 		const user = await createUser()
 		const dsr = await scheduleErasure(user.id)

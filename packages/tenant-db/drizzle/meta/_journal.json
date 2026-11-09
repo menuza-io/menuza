@@ -218,6 +218,20 @@
 			"when": 1793995512691,
 			"tag": "0030_concurrency_guards",
 			"breakpoints": true
+		},
+		{
+			"idx": 31,
+			"version": "6",
+			"when": 1794192580948,
+			"tag": "0031_legacy_scheduled_drafts",
+			"breakpoints": true
+		},
+		{
+			"idx": 32,
+			"version": "6",
+			"when": 1794192581948,
+			"tag": "0032_broadcast_failures_sms_prune_index",
+			"breakpoints": true
 		}
 	]
 }

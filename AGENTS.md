@@ -109,6 +109,19 @@ copies seed data into local D1.
   files, icon sprites). Compare `git status` with what you noted at the start
   and revert only generated changes you caused.
 
+**Agent gotchas (from reviewing past sessions).**
+
+- Find a file with `rg --files -g '<name>'` before you read it. Do not guess
+  paths: past sessions lost many calls to `node_modules/...` and wrong-checkout
+  paths.
+- This template is often checked out more than once. Confirm
+  (`git rev-parse --show-toplevel`) you are in the repo the user means before
+  editing, and say so if the change belongs in another checkout.
+- Keep parallel workers few, scoped and resumable. A usage-limit message ends or
+  downgrades a worker silently: stop and report it.
+- PR review feedback: `.claude/skills/pr-review-loop`. Reviewing how agents
+  perform: `.claude/skills/session-doctor`.
+
 ### Headless Linux sandbox setup
 
 Use this only in a headless Linux sandbox. Never use it on a developer machine.

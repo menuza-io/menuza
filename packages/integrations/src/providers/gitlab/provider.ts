@@ -15,6 +15,7 @@ import {
 	type MessageData,
 	type OAuthCallbackParams,
 } from '../../types'
+import { storedGitLabInstanceUrl } from './instance-pin.js'
 
 /**
  * GitLab API response interfaces
@@ -144,14 +145,14 @@ export class GitLabProvider extends BaseIntegrationProvider {
 		return clientSecret
 	}
 
-	private getBaseUrl(integration?: Integration): string {
+	private getBaseUrl(integration?: Pick<Integration, 'config'>): string {
 		// Support for self-hosted GitLab instances
 		const config = integration?.config
 			? typeof integration.config === 'string'
 				? JSON.parse(integration.config)
 				: integration.config
 			: null
-		const instanceUrl = (config as any)?.instanceUrl as string
+		const instanceUrl = storedGitLabInstanceUrl(config)
 
 		if (instanceUrl) {
 			const validation = validateInstanceUrl(instanceUrl)
@@ -293,13 +294,18 @@ export class GitLabProvider extends BaseIntegrationProvider {
 	 * Revoke the access token on the integration's GitLab instance (best
 	 * effort, used on disconnect).
 	 */
-	async revokeToken(token: string, integration?: Integration): Promise<void> {
+	async revokeToken(
+		token: string,
+		integration?: Integration,
+		options: { signal?: AbortSignal } = {},
+	): Promise<void> {
 		const revokeUrl = this.getBaseUrl(integration).replace(
 			/\/api\/v4$/,
 			'/oauth/revoke',
 		)
-		const response = await fetch(revokeUrl, {
+		const response = await ssrfSafeFetch(revokeUrl, {
 			method: 'POST',
+			signal: options.signal,
 			headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 			body: new URLSearchParams({
 				client_id: this.clientId,
@@ -313,15 +319,35 @@ export class GitLabProvider extends BaseIntegrationProvider {
 	}
 
 	/**
-	 * Refresh GitLab access token
+	 * Refresh GitLab access token on the integration's instance: a self-hosted
+	 * refresh token must never be sent to gitlab.com.
 	 */
-	async refreshToken(refreshToken: string): Promise<TokenData> {
+	async refreshToken(
+		refreshToken: string,
+		integration?: Pick<Integration, 'config'>,
+	): Promise<TokenData> {
 		if (!refreshToken) {
 			throw new Error('Refresh token is required')
 		}
+		// The OAuth flow always stores the instance (gitlab.com included). With
+		// none recorded the token's host is unknown: never guess gitlab.com for
+		// a refresh token and the client secret; the integration must reconnect.
+		const config =
+			typeof integration?.config === 'string'
+				? (JSON.parse(integration.config) as unknown)
+				: integration?.config
+		if (!storedGitLabInstanceUrl(config)) {
+			throw new Error(
+				'GitLab token refresh failed: the instance is unknown; reconnect the integration',
+			)
+		}
 
 		try {
-			const tokenResponse = await fetch(`${this.authBaseUrl}/token`, {
+			const tokenUrl = this.getBaseUrl(integration).replace(
+				/\/api\/v4$/,
+				'/oauth/token',
+			)
+			const tokenResponse = await ssrfSafeFetch(tokenUrl, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
@@ -835,6 +861,6 @@ export class GitLabProvider extends BaseIntegrationProvider {
 			typeof integration.config === 'string'
 				? JSON.parse(integration.config)
 				: (integration.config as any)
-		return config?.instanceUrl
+		return storedGitLabInstanceUrl(config)
 	}
 }

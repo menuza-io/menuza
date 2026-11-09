@@ -24,6 +24,7 @@ import { Icon } from '@repo/ui/icon'
 import { Input } from '@repo/ui/input'
 import { StatusButton } from '@repo/ui/status-button'
 import { EmailSchema, UsernameSchema } from '@repo/validation'
+import { useId } from 'react'
 import {
 	data,
 	redirect,
@@ -40,6 +41,7 @@ import {
 	convertErrorsToFieldFormat,
 } from '#app/components/forms.tsx'
 import {
+	TurnstileSubmitStatus,
 	TurnstileWidget,
 	useTurnstileReady,
 } from '#app/components/turnstile-widget.tsx'
@@ -192,6 +194,7 @@ export const meta: Route.MetaFunction = () => {
 export default function ForgotPasswordRoute() {
 	const { turnstileSiteKey } = useLoaderData<typeof loader>()
 	const isPending = useIsPending()
+	const turnstileHintId = useId()
 	const [turnstileReady, setTurnstileReady] =
 		useTurnstileReady(turnstileSiteKey)
 	const actionData = useActionData<typeof action>() as {
@@ -275,12 +278,18 @@ export default function ForgotPasswordRoute() {
 						/>
 						<ErrorList errors={form.errors} id={form.errorId} />
 
+						<TurnstileSubmitStatus
+							id={turnstileHintId}
+							siteKey={turnstileSiteKey}
+							ready={turnstileReady}
+						/>
 						<StatusButton
 							className="w-full"
 							status={isPending ? 'pending' : (form.status ?? 'idle')}
 							type="submit"
 							// One submission at a time: a Turnstile token works only once.
 							disabled={isPending || !turnstileReady}
+							aria-describedby={turnstileReady ? undefined : turnstileHintId}
 						>
 							<Trans>Send reset instructions</Trans>
 						</StatusButton>

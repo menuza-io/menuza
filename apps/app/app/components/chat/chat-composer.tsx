@@ -6,7 +6,7 @@ import { cn } from '@repo/ui'
 import { Button } from '@repo/ui/button'
 import { Icon } from '@repo/ui/icon'
 import { Spinner } from '@repo/ui/spinner'
-import { Emoji, gitHubEmojis } from '@tiptap/extension-emoji'
+import { gitHubEmojis } from '@tiptap/extension-emoji'
 import Placeholder from '@tiptap/extension-placeholder'
 import { useEditor, EditorContent, type Editor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
@@ -26,6 +26,7 @@ import { CommentImagePreview } from '#app/components/note/comment-image-preview.
 import { CommentImageUpload } from '#app/components/note/comment-image-upload.tsx'
 import { EmojiPickerButton } from '#app/components/note/emoji-picker-button.tsx'
 import getSuggestions from '#app/components/note/suggestions.tsx'
+import { ChatEmoji } from './chat-emoji.ts'
 import { CHAT_MENTION_PLUGIN_KEY, ChatMention } from './chat-mention.ts'
 
 export type ChatComposerMember = {
@@ -155,7 +156,7 @@ export function ChatComposer({
 						'mention bg-primary/10 text-primary px-1 py-0.5 rounded text-sm font-medium',
 				},
 			}),
-			Emoji.configure({
+			ChatEmoji.configure({
 				emojis: gitHubEmojis,
 				enableEmoticons: true,
 			}),

@@ -237,6 +237,14 @@ const strongRateLimit = rateLimit({
 	limit: 100 * maxMultiple,
 })
 
+// Each passkey challenge GET writes a row to the database: the same budget as
+// the Worker (`worker-passkey-challenge` in app/utils/credential-routes.ts).
+const passkeyChallengeRateLimit = rateLimit({
+	...rateLimitDefault,
+	windowMs: 60 * 1000,
+	limit: 30 * maxMultiple,
+})
+
 const generalRateLimit = rateLimit(rateLimitDefault)
 app.use((req, res, next) => {
 	// MCP endpoints have their own rate limiting - skip express rate limiter
@@ -254,9 +262,20 @@ app.use((req, res, next) => {
 		'/settings/profile',
 		'/resources/login',
 		'/resources/verify',
+		'/webauthn/authentication',
 	]
+	// Routes match case-insensitively and decode the path, so compare it the
+	// same way: `/LOGIN` must not dodge the stricter limit.
+	// Decoded too: `/%77ebauthn/...` reaches the same route.
+	let path = req.path
+	try {
+		path = decodeURIComponent(path)
+	} catch {
+		// An undecodable path matches no route; compare it as written.
+	}
+	path = path.toLowerCase()
 	if (req.method !== 'GET' && req.method !== 'HEAD') {
-		if (strongPaths.some((p) => req.path.includes(p))) {
+		if (strongPaths.some((p) => path.includes(p))) {
 			return strongestRateLimit(req, res, next)
 		}
 		return strongRateLimit(req, res, next)
@@ -264,8 +283,11 @@ app.use((req, res, next) => {
 
 	// the verify route is a special case because it's a GET route that
 	// can have a token in the query string
-	if (req.path.includes('/verify')) {
+	if (path.includes('/verify')) {
 		return strongestRateLimit(req, res, next)
+	}
+	if (path.includes('/webauthn/authentication')) {
+		return passkeyChallengeRateLimit(req, res, next)
 	}
 
 	return generalRateLimit(req, res, next)

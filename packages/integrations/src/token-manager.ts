@@ -111,6 +111,7 @@ export class TokenManager {
 		providerName: string,
 		refreshToken: string,
 		attempt: number = 1,
+		integration?: Pick<Integration, 'config'>,
 		providerOverride?: IntegrationProvider,
 	): Promise<TokenData> {
 		const provider = providerOverride ?? providerRegistry.get(providerName)
@@ -120,7 +121,7 @@ export class TokenManager {
 		}
 
 		try {
-			const tokenData = await provider.refreshToken(refreshToken)
+			const tokenData = await provider.refreshToken(refreshToken, integration)
 			if (!tokenData.accessToken) {
 				throw new Error('Invalid token data: missing access token')
 			}
@@ -148,6 +149,7 @@ export class TokenManager {
 					providerName,
 					refreshToken,
 					attempt + 1,
+					integration,
 					providerOverride,
 				)
 			}
@@ -225,6 +227,7 @@ export class TokenManager {
 	private async readStoredTokens(integrationId: string): Promise<{
 		encryptedRefreshToken: string | null
 		providerName: string | undefined
+		config: Integration['config']
 		tokenData: TokenData
 	} | null> {
 		const [integration] = await db
@@ -258,6 +261,7 @@ export class TokenManager {
 		return {
 			encryptedRefreshToken: integration.refreshToken ?? null,
 			providerName: integration.providerName ?? undefined,
+			config: integration.config,
 			tokenData: await integrationEncryption.decryptTokenData(encryptedData),
 		}
 	}
@@ -323,6 +327,7 @@ export class TokenManager {
 						providerName,
 						tokenData.refreshToken,
 						1,
+						{ config: stored.config },
 						provider,
 					)
 				} else {

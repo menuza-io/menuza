@@ -2,6 +2,7 @@
  * Tests for GitLabProvider
  */
 
+import dns from 'node:dns'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { http, HttpResponse } from 'msw'
 import { server } from '../../setup'
@@ -29,6 +30,10 @@ describe('GitLabProvider', () => {
 
 		provider = new GitLabProvider()
 		vi.clearAllMocks()
+		// The SSRF check resolves each host it fetches: answer with a public
+		// address so no test depends on network DNS.
+		vi.spyOn(dns.promises, 'resolve4').mockResolvedValue(['93.184.216.34'])
+		vi.spyOn(dns.promises, 'resolve6').mockResolvedValue([])
 
 		// Reset the mock for decryptToken
 		vi.mocked(decryptToken).mockResolvedValue('access-token')
@@ -136,6 +141,30 @@ describe('GitLabProvider', () => {
 	})
 
 	describe('refreshToken', () => {
+		// As the OAuth flow stores a gitlab.com integration.
+		const gitlabCom = {
+			config: JSON.stringify({
+				metadata: { instanceUrl: 'https://gitlab.com' },
+			}),
+		}
+
+		it('refuses to refresh when the instance is unknown', async () => {
+			const tokenEndpoint = vi.fn()
+			server.use(
+				http.post('https://gitlab.com/oauth/token', () => {
+					tokenEndpoint()
+					return HttpResponse.json({ access_token: 'x' })
+				}),
+			)
+			await expect(
+				provider.refreshToken!('old-refresh-token', { config: '{}' }),
+			).rejects.toThrow('the instance is unknown')
+			await expect(provider.refreshToken!('old-refresh-token')).rejects.toThrow(
+				'the instance is unknown',
+			)
+			expect(tokenEndpoint).not.toHaveBeenCalled()
+		})
+
 		it('should refresh token successfully', async () => {
 			// Override MSW handler for token refresh
 			server.use(
@@ -150,12 +179,48 @@ describe('GitLabProvider', () => {
 				}),
 			)
 
-			const newTokenData = await provider.refreshToken!('old-refresh-token')
+			const newTokenData = await provider.refreshToken!(
+				'old-refresh-token',
+				gitlabCom,
+			)
 
 			expect(newTokenData.accessToken).toBe('new-gitlab-access-token')
 			expect(newTokenData.refreshToken).toBe('new-gitlab-refresh-token')
 			expect(newTokenData.expiresAt).toBeInstanceOf(Date)
 			expect(newTokenData.scope).toBe('api read_user')
+		})
+
+		it('refreshes a self-hosted integration on its own instance', async () => {
+			const gitlabComEndpoint = vi.fn()
+			server.use(
+				http.post('https://gitlab.com/oauth/token', () => {
+					gitlabComEndpoint()
+					return HttpResponse.json({ error: 'invalid_grant' }, { status: 400 })
+				}),
+				http.post('https://gitlab.example.com/oauth/token', () =>
+					HttpResponse.json({
+						access_token: 'self-hosted-access-token',
+						token_type: 'Bearer',
+						expires_in: 7200,
+						refresh_token: 'self-hosted-refresh-token',
+					}),
+				),
+			)
+
+			// As the OAuth flow stores it, and as a later config update may.
+			for (const config of [
+				{
+					scope: 'api',
+					metadata: { instanceUrl: 'https://gitlab.example.com' },
+				},
+				{ instanceUrl: 'https://gitlab.example.com' },
+			]) {
+				const newTokenData = await provider.refreshToken!('old-refresh-token', {
+					config: JSON.stringify(config),
+				})
+				expect(newTokenData.accessToken).toBe('self-hosted-access-token')
+			}
+			expect(gitlabComEndpoint).not.toHaveBeenCalled()
 		})
 
 		it('should handle refresh token errors', async () => {
@@ -173,7 +238,7 @@ describe('GitLabProvider', () => {
 			)
 
 			await expect(
-				provider.refreshToken!('invalid-refresh-token'),
+				provider.refreshToken!('invalid-refresh-token', gitlabCom),
 			).rejects.toThrow('Token refresh failed')
 		})
 	})

@@ -104,6 +104,8 @@ const COVERED: Record<string, string> = {
 		'operator note on an order refund, nulled with the scrubbed order (the only update the append-only trigger allows)',
 	'loyalty_member_bindings.token_hash':
 		'till binding deleted with the member by the erasure',
+	'sms_send_events.phone_hash':
+		'keyed HMAC used to count send-code requests; deleted by phone, and by the regional tick after 24 hours',
 }
 
 /** Whole domains that are not a customer's data, with the reason. */
@@ -120,10 +122,8 @@ const staffAtTheTill =
 /** Single columns that look like PII but are not a customer's data. */
 const ALLOWED_COLUMNS: Record<string, string> = {
 	'loyalty_rewards.name': 'reward title written by the operator',
-	'sms_send_events.phone_hash':
-		'purpose-prefixed keyed HMAC used only to count send-code requests; not linked to a customer row and deleted after 24 hours',
 	'sms_send_events.ip_hash':
-		'purpose-prefixed keyed HMAC of the requesting IP, used only for send-code limits and deleted after 24 hours',
+		'purpose-prefixed keyed HMAC of the requesting IP, used only for send-code limits and pruned by the regional tick after 24 hours',
 	'marketing_campaigns.name': 'campaign title written by the operator',
 	'marketing_journeys.name': 'journey title written by the operator',
 	'website_forms.name': 'form title written by the operator',
