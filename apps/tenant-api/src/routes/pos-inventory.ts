@@ -232,7 +232,14 @@ posInventoryRoutes.post(
 	'/counts/:id/entries',
 	stationRoute({ body: stationCountEntriesSchema }, async (ctx, body) => {
 		const id = idParam(ctx)
+		const now = posInventoryDeps.now()
 		const { actorFor } = await actorsFor(ctx, body.entries)
+		const made = new Map(
+			body.entries.map((entry) => [
+				entry.clientId,
+				clampMadeAt(entry.madeAt, now),
+			]),
+		)
 		const result = await addCountEntries(
 			ctx.caller,
 			{
@@ -243,7 +250,13 @@ posInventoryRoutes.post(
 					),
 				},
 			},
-			{ station: { actorFor, syncedBy: ctx.session.staffId } },
+			{
+				station: {
+					actorFor,
+					syncedBy: ctx.session.staffId,
+					madeAt: (clientId) => made.get(clientId)?.at,
+				},
+			},
 		)
 		return stationJson(stationCountEntriesResultSchema.parse(result))
 	}),

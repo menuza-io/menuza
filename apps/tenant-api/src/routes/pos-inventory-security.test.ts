@@ -751,7 +751,7 @@ describe('/pos/inventory security', () => {
 	})
 
 	describe('the contract version', () => {
-		it('refuses a tablet older than the oldest the region serves, and reads a missing header as 1', async () => {
+		it('refuses a tablet older than the oldest the region serves, and refuses a missing header', async () => {
 			for (const route of routes) {
 				expectRefusal(
 					await send(route, full({ contract: 0 })),
@@ -763,13 +763,17 @@ describe('/pos/inventory security', () => {
 					'invalid_request',
 					`${route.name} with a malformed header`,
 				)
-				const missing = await send(route, full({ contract: null }))
-				expect(missing.status, `${route.name}: ${missing.raw}`).toBe(
-					route.photo ? 503 : 200,
+				expectRefusal(
+					await send(route, full({ contract: null })),
+					'contract_too_old',
+					`${route.name} without a contract header`,
+				)
+				expectRefusal(
+					await send(route, full({ contract: 1 })),
+					'contract_too_old',
+					`${route.name} on contract 1`,
 				)
 			}
-			// Versions 1 and 2 are both served.
-			expect((await send(routes[0]!, full({ contract: 1 }))).status).toBe(200)
 			expect((await send(routes[0]!, full({ contract: 2 }))).status).toBe(200)
 		})
 
@@ -845,6 +849,7 @@ describe('/pos/inventory security', () => {
 						Origin: 'https://pos.example.test',
 						Authorization: `Bearer ${tablet.secret}`,
 						'Pos-Staff-Session': tablet.manager.session,
+						'Pos-Inventory-Contract': '2',
 					},
 				},
 			)

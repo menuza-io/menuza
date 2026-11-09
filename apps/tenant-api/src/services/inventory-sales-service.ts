@@ -598,7 +598,7 @@ async function settleInTx(
 				businessDate: loaded.businessDate,
 				actorKind: 'system',
 				actorId: null,
-				createdAt: ctx.now,
+				createdAt: loaded.at,
 			})
 		}
 		if (deltas.length > 0) {
@@ -636,7 +636,7 @@ async function settleInTx(
 					businessDate: loaded.businessDate,
 					source: loaded.deviceId ? 'station' : 'operator',
 					deviceId: loaded.deviceId,
-					createdAt: ctx.now,
+					createdAt: loaded.at,
 				})
 				await tx.insert(invMovements).values({
 					id: newId(),
@@ -653,7 +653,7 @@ async function settleInTx(
 					businessDate: loaded.businessDate,
 					actorKind: 'system',
 					actorId: null,
-					createdAt: ctx.now,
+					createdAt: loaded.at,
 				})
 			}
 			await storeUsage(tx, {

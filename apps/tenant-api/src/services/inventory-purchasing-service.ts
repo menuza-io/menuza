@@ -1195,7 +1195,7 @@ export async function recordDelivery(
 						businessDate,
 						actorKind: caller.actor.kind,
 						actorId: caller.actor.id,
-						createdAt: ctx.now,
+						createdAt: receivedAt,
 					})
 					continue
 				}
@@ -1262,7 +1262,7 @@ export async function recordDelivery(
 					onHandBefore: onHand,
 					avgBeforeMicro: existing?.avgCostMicro ?? null,
 					avgAfterMicro: average,
-					createdAt: ctx.now,
+					createdAt: receivedAt,
 				})
 				await tx.insert(invMovements).values({
 					locationId: body.locationId,
@@ -1277,7 +1277,7 @@ export async function recordDelivery(
 					businessDate,
 					actorKind: caller.actor.kind,
 					actorId: caller.actor.id,
-					createdAt: ctx.now,
+					createdAt: receivedAt,
 				})
 				// A remembered pack price is a purchasing decision.
 				const product = line.supplierProductId
@@ -1791,10 +1791,18 @@ async function rewoundAverage(
 	const first = events.findIndex((event) => !standing(event))
 	if (first < 0) return { rewound: false, average: null }
 	let average = events[first]!.avgBeforeMicro
-	for (const event of events.slice(first + 1)) {
+	for (let i = first + 1; i < events.length; i++) {
+		const event = events[i]!
 		if (!standing(event)) continue
+		let cancelledQty = 0
+		for (let j = 0; j < i; j++) {
+			const prior = events[j]!
+			if (prior.deliveryLineId && cancelled.has(prior.deliveryLineId)) {
+				cancelledQty += prior.quantity
+			}
+		}
 		average = weightedAverageCostMicro({
-			onHandQuantity: event.onHandBefore,
+			onHandQuantity: event.onHandBefore - cancelledQty,
 			averageCostMicro: average,
 			receivedQuantity: event.quantity,
 			receivedCostMicro: event.costMicro,

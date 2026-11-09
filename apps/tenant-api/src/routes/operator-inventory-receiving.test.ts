@@ -848,6 +848,12 @@ describe('a Station tablet’s delivery (the service the Station routes call)', 
 			receivedAt: madeAt,
 			receivedBy: { kind: 'staff', id: 'staff_1' },
 		})
+		const db = await getTenantDb(ORG)
+		const [move] = await db
+			.select()
+			.from(invMovements)
+			.where(eq(invMovements.sourceId, result.delivery.id))
+		expect(move?.createdAt).toBe(madeAt)
 		expect(result.order).toBeUndefined()
 		expect(result.orderLinkIgnored).toBeUndefined()
 		// A time in the future is no later than now.
@@ -943,5 +949,46 @@ describe('a Station tablet’s delivery (the service the Station routes call)', 
 		).rejects.toMatchObject({
 			code: 'location_forbidden',
 		})
+	})
+})
+
+describe('canceling a priced delivery rewinds average cost', () => {
+	it('drops cancelled quantity from later onHandBefore steps', async () => {
+		const supplier = await world.supplier('Rewind Sup')
+		const item = await world.item('Rewind avg item')
+		await world.ok('POST', '/deliveries', {
+			clientId: cid('del-1'),
+			locationId: LOC,
+			supplierId: supplier.id,
+			currency: 'SAR',
+			lines: [
+				{ itemId: item.id, quantity: 10_000_000, lineTotalMinor: 20_000 },
+			],
+		})
+		const dup = (
+			await world.ok('POST', '/deliveries', {
+				clientId: cid('del-dup'),
+				locationId: LOC,
+				supplierId: supplier.id,
+				currency: 'SAR',
+				lines: [
+					{ itemId: item.id, quantity: 10_000_000, lineTotalMinor: 20_000 },
+				],
+			})
+		).delivery as { id: string; version: number }
+		await world.ok('POST', '/deliveries', {
+			clientId: cid('del-3'),
+			locationId: LOC,
+			supplierId: supplier.id,
+			currency: 'SAR',
+			lines: [
+				{ itemId: item.id, quantity: 10_000_000, lineTotalMinor: 40_000 },
+			],
+		})
+		await world.ok('POST', `/deliveries/${dup.id}/cancel`, {
+			expectedVersion: dup.version,
+		})
+		const cost = await costOf(item.id)
+		expect(cost?.avgCostMicro).toBe(3_000_000)
 	})
 })

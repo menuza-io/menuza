@@ -600,6 +600,12 @@ describe('/pos/inventory', () => {
 				counterKind: 'staff',
 				counterId: tablet.manager.staffId,
 			})
+			expect(by.get(named.clientId)!.createdAt).toBeLessThanOrEqual(
+				Date.now() - 2 * HOUR + 5_000,
+			)
+			expect(by.get(named.clientId)!.createdAt).toBeGreaterThan(
+				Date.now() - 2 * HOUR - 5_000,
+			)
 			// Someone no longer on the roster, or unknown: the signed-in person's.
 			expect(by.get(left.clientId)!.counterId).toBe(tablet.cashier.staffId)
 			expect(by.get(stranger.clientId)!.counterId).toBe(tablet.cashier.staffId)
@@ -659,13 +665,12 @@ describe('/pos/inventory', () => {
 				body: { clientId },
 			})
 			expect(replay.body).toEqual(sent.body)
-			// A contract 1 tablet gets the same per-device meaning.
 			const v1 = await cashier('POST', `/pos/inventory/counts/${id}/send`, {
 				body: { clientId: uid('send') },
 				contract: 1,
 			})
-			expect(v1.status).toBe(200)
-			expect(v1.body.status).toBe('counting')
+			expect(v1.status).toBe(400)
+			expect(v1.body.error).toBe('contract_too_old')
 
 			const db = await h.db(ORG_A)
 			const audit = await db

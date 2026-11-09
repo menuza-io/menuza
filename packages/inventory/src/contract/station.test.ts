@@ -205,9 +205,8 @@ describe('Station requests', () => {
 		expect(INVENTORY_POS_PATHS.deliveryPhotoConfirm('d1')).toBe(
 			'/pos/inventory/deliveries/d1/photo/confirm',
 		)
-		// 2: `send` is per device; the region still serves 1.
 		expect(INVENTORY_POS_CONTRACT_VERSION).toBe(2)
-		expect(INVENTORY_POS_MIN_CONTRACT_VERSION).toBe(1)
+		expect(INVENTORY_POS_MIN_CONTRACT_VERSION).toBe(2)
 	})
 })
 

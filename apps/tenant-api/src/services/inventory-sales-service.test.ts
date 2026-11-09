@@ -46,6 +46,7 @@ import {
 
 const ORG = 'org_inv_sales_test'
 const DAY = 24 * 60 * 60 * 1000
+const HOUR = 60 * 60 * 1000
 
 const ON = {
 	enabled: true,
@@ -212,6 +213,33 @@ describe('inventory sales: used by sales', () => {
 	}
 
 	describe('a Station sale', () => {
+		it('stamps sale movements at rungUpAt, not settle time', async () => {
+			const rungUpAt = NOW - 2 * HOUR
+			const settleAt = NOW + 60_000
+			const id = await insertPosSale(ORG, {
+				lines: [posLine('burger', 1)],
+				rungUpAt,
+				paidAt: settleAt,
+			})
+			await queueSale('pos_order', id, settleAt)
+			await settleInventorySource(
+				ORG,
+				{ type: 'pos_order', id },
+				{ now: settleAt },
+			)
+			const [move] = await db
+				.select()
+				.from(invMovements)
+				.where(
+					and(
+						eq(invMovements.sourceType, 'pos_order'),
+						eq(invMovements.sourceId, id),
+					),
+				)
+			expect(move?.createdAt).toBe(rungUpAt)
+			expect(move?.createdAt).toBeLessThan(settleAt - 1000)
+		})
+
 		it('takes the recipe out of stock, valued at average cost', async () => {
 			const id = await insertPosSale(ORG, {
 				lines: [posLine('burger', 2)],

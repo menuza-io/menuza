@@ -2,6 +2,7 @@ import { brand } from '@repo/config/brand'
 import { POS_STAFF_SESSION_HEADER } from '@repo/common/pos-orders'
 import {
 	INVENTORY_POS_CONTRACT_HEADER,
+	INVENTORY_POS_CONTRACT_VERSION,
 	INVENTORY_PERMISSIONS,
 	INVENTORY_TOKEN_AUDIENCE,
 	INVENTORY_TOKEN_TYP,
@@ -106,7 +107,7 @@ export type RequestOptions = {
 	rawBody?: string
 	/** Extra request headers (`If-None-Match`, `Origin`). */
 	headers?: Record<string, string>
-	/** The `Pos-Inventory-Contract` header: a number, or `null` to leave it out (default 1). */
+	/** The `Pos-Inventory-Contract` header: a number, or `null` to leave it out (default current). */
 	contract?: number | string | null
 }
 
@@ -121,7 +122,9 @@ export function createStationKit(h: ClockHarness) {
 		if (options.authorization) headers.Authorization = options.authorization
 		if (options.session) headers[POS_STAFF_SESSION_HEADER] = options.session
 		if (options.contract !== null) {
-			headers[INVENTORY_POS_CONTRACT_HEADER] = String(options.contract ?? 1)
+			headers[INVENTORY_POS_CONTRACT_HEADER] = String(
+				options.contract ?? INVENTORY_POS_CONTRACT_VERSION,
+			)
 		}
 		let body: string | undefined
 		if (options.rawBody !== undefined) body = options.rawBody

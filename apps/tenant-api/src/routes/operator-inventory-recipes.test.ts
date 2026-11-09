@@ -9,6 +9,7 @@ import {
 import {
 	destroyTenantDb,
 	getTenantDb,
+	invItemCosts,
 	invRecipeLines,
 	invRecipes,
 	provisionTenantDb,
@@ -1411,6 +1412,57 @@ describe('recording a batch of a made item', () => {
 		expect(conflict.status).toBe(409)
 		expect(conflict.body.code).toBe('idempotency_conflict')
 		expect(await onHand(sauce)).toBe(3_000_000)
+	})
+
+	it('does not change the made-item average when an ingredient has no priced cost', async () => {
+		const db = await getTenantDb(ORG)
+		const beforeAvg = (
+			await db
+				.select()
+				.from(invItemCosts)
+				.where(eq(invItemCosts.itemId, sauce))
+				.get()
+		)?.avgCostMicro
+		expect(beforeAvg).toBeTruthy()
+		const milkCost = await db
+			.select()
+			.from(invItemCosts)
+			.where(eq(invItemCosts.itemId, milk))
+			.get()
+		expect(milkCost).toBeDefined()
+		await db.delete(invItemCosts).where(eq(invItemCosts.itemId, milk))
+		try {
+			const partial = await call('POST', `${BASE}/items/${sauce}/batch`, {
+				token: kitchen,
+				body: {
+					clientId: cid('batch-partial'),
+					locationId: LOC,
+					made: { kind: 'batches', count: 1 },
+				},
+			})
+			expect(partial.status, JSON.stringify(partial.body)).toBe(200)
+			const afterAvg = (
+				await db
+					.select()
+					.from(invItemCosts)
+					.where(eq(invItemCosts.itemId, sauce))
+					.get()
+			)?.avgCostMicro
+			expect(afterAvg).toBe(beforeAvg)
+		} finally {
+			await db
+				.insert(invItemCosts)
+				.values(milkCost!)
+				.onConflictDoUpdate({
+					target: invItemCosts.itemId,
+					set: {
+						currency: milkCost!.currency,
+						lastCostMicro: milkCost!.lastCostMicro,
+						avgCostMicro: milkCost!.avgCostMicro,
+						updatedAt: milkCost!.updatedAt,
+					},
+				})
+		}
 	})
 
 	it('takes a typed amount and leaves values out without the cost grant', async () => {

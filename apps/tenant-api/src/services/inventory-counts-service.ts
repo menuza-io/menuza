@@ -841,6 +841,8 @@ export type CountEntriesOptions = {
 	station?: {
 		actorFor: (clientId: string) => InventoryActor
 		syncedBy: string
+		/** Device clock when each entry was counted; bounded in the route. */
+		madeAt?: (clientId: string) => number | undefined
 	}
 }
 
@@ -952,7 +954,7 @@ export async function addCountEntries(
 				counterKind: counter.kind,
 				counterId: counter.id,
 				clientId: entry.clientId,
-				createdAt: ctx.now,
+				createdAt: station?.madeAt?.(entry.clientId) ?? ctx.now,
 			})
 			accepted.push({
 				clientId: entry.clientId,

@@ -221,7 +221,11 @@ export async function recordBatch(
 			// Weigh the batch into the made item's average cost (before its
 			// quantity enters the ledger, so on hand is what was there).
 			const madeCost = costs.currencyByItem.get(item.id)
-			if (priced > 0 && (madeCost === undefined || madeCost === currency)) {
+			const allIngredientsPriced = priced > 0 && priced === used.length
+			if (
+				allIngredientsPriced &&
+				(madeCost === undefined || madeCost === currency)
+			) {
 				const costMicro = costMicroForWrite(valueMinor, madeQuantity)
 				const onHand = await onHandTotal(tx, item.id)
 				const before = costs.average.get(item.id) ?? null

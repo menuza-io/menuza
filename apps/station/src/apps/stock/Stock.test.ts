@@ -72,6 +72,11 @@ async function cacheCatalog() {
 const loaded = () =>
 	vi.waitFor(() => expect(text(page.host)).toContain('Weekly count'))
 
+const countItemRow = (itemName: string) =>
+	[...page.host.querySelectorAll('li')].find(
+		(row) => row.querySelector('p.font-semibold')?.textContent === itemName,
+	)!
+
 describe('Stock home', () => {
 	it('shows Count, Waste and Delivery, and the counts already in progress at the location', async () => {
 		const api = region()
@@ -289,13 +294,15 @@ describe('Count', () => {
 
 	it('"Add another unit" counts 1.5 kg and 500 g of the same item, both entries live', async () => {
 		const { api } = await joinOpenCount()
+		const row = countItemRow('Tomatoes')
 		await type(
-			page.host.querySelector<HTMLInputElement>(
-				'input[aria-label="Tomatoes"]',
-			)!,
+			row.querySelector<HTMLInputElement>('input[aria-label="Tomatoes"]')!,
 			'1.5',
 		)
-		await click(buttons(page.host, 'Add another unit')[1]!)
+		await vi.waitFor(() =>
+			expect(hasButton(row, 'Add another unit')).toBe(true),
+		)
+		await click(button(row, 'Add another unit'))
 		const more = page.host.querySelector<HTMLInputElement>(
 			'input[aria-label="Tomatoes in g"]',
 		)!

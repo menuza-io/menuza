@@ -973,6 +973,87 @@ describe('counts: semantics', () => {
 		expect(byItem.has(b)).toBe(false)
 	})
 
+	it('counts a sale after the item was measured toward expected (offline count, late sale sync)', async () => {
+		at(50)
+		const w = await place('loc_cnt_sale_after')
+		const rice = await w.item('Late-sync rice')
+		await w.adjust(rice, 10_000_000)
+		at(51)
+		const count = await w.start()
+		at(52)
+		// 7 kg counted (30% under expected) so review lists the line, not only matching.
+		await w.enter(count, rice, 7)
+		const db = await getTenantDb(ORG)
+		await db.insert(invMovements).values({
+			id: cid('sale-after'),
+			locationId: 'loc_cnt_sale_after',
+			itemId: rice,
+			quantity: -2_000_000,
+			valueMinor: -560,
+			currency: 'SAR',
+			kind: 'sale',
+			sourceType: 'pos_order',
+			sourceId: 'sale_late_sync',
+			eventKey: 'sale:late:sync',
+			businessDate: '2026-01-10',
+			actorKind: 'system',
+			actorId: null,
+			createdAt: T0 + 53_000,
+		})
+		at(54)
+		await w.send(count, 1)
+		at(55)
+		const review = countReviewSchema.parse(
+			await ok('GET', `/counts/${count}/review`, sara),
+		)
+		const line = review.lines.find((row) => row.itemId === rice)!
+		expect(line).toMatchObject({
+			counted: 7_000_000,
+			expected: 10_000_000,
+			difference: -3_000_000,
+			flag: 'big_difference',
+		})
+		expect(line.movements).toMatchObject({ used: 0 })
+	})
+
+	it('ignores a sale that already happened before the count instant', async () => {
+		at(60)
+		const w = await place('loc_cnt_sale_before')
+		const rice = await w.item('Before-count rice')
+		await w.adjust(rice, 10_000_000)
+		const db = await getTenantDb(ORG)
+		await db.insert(invMovements).values({
+			id: cid('sale-before'),
+			locationId: 'loc_cnt_sale_before',
+			itemId: rice,
+			quantity: -2_000_000,
+			valueMinor: -560,
+			currency: 'SAR',
+			kind: 'sale',
+			sourceType: 'pos_order',
+			sourceId: 'sale_before_count',
+			eventKey: 'sale:before:count',
+			businessDate: '2026-01-10',
+			actorKind: 'system',
+			actorId: null,
+			createdAt: T0 + 61_000,
+		})
+		expect(await w.onHand(rice)).toBe(8_000_000)
+		at(62)
+		const count = await w.start()
+		at(63)
+		await w.enter(count, rice, 8)
+		at(64)
+		await w.send(count, 1)
+		at(65)
+		const review = countReviewSchema.parse(
+			await ok('GET', `/counts/${count}/review`, sara),
+		)
+		const line = review.lines.find((row) => row.itemId === rice)
+		expect(line).toBeUndefined()
+		expect(review.matching).toBe(1)
+	})
+
 	it('adjusts nothing when the count matched and stock arrived afterwards (10 counted at 10:00, 20 delivered at 14:00, approved at 18:00)', async () => {
 		at(20)
 		const w = await place('loc_cnt_ten')

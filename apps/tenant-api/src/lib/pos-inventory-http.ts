@@ -112,7 +112,7 @@ function invalidRequest(error?: z.ZodError): Response {
 }
 
 /**
- * `Pos-Inventory-Contract`: missing means 1. A version below the oldest the
+ * `Pos-Inventory-Contract` is required. A version below the oldest the
  * region serves is 400 `contract_too_old` (the tablet must update); one above
  * what this region speaks is 400 `contract_unsupported` (the tablet waits for
  * the region to be deployed); one that is not a whole number is
@@ -124,9 +124,7 @@ function invalidRequest(error?: z.ZodError): Response {
 function checkContractVersion(c: Context): Response | null {
 	const raw = c.req.header(INVENTORY_POS_CONTRACT_HEADER)
 	if (raw === undefined) {
-		return INVENTORY_POS_MIN_CONTRACT_VERSION > 1
-			? stationError('contract_too_old')
-			: null
+		return stationError('contract_too_old')
 	}
 	const text = raw.trim()
 	if (!/^\d{1,6}$/.test(text)) return invalidRequest()

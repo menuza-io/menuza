@@ -42,9 +42,10 @@ import { undoWasteSchema, wasteEntryInputSchema } from './waste.ts'
  *   staff sign-in required, the organization's `inventory.enabled` flag must
  *   be on and `INVENTORY_ENABLED` / `POS_ENABLED` not false (the gate codes
  *   below). The permission to count and log waste is simply being signed in.
- * - `Pos-Inventory-Contract: <INVENTORY_POS_CONTRACT_VERSION>` on every call.
- *   Missing means 1. Older than `INVENTORY_POS_MIN_CONTRACT_VERSION`: 400
- *   `contract_too_old` (a pause code: the tablet needs an update). Newer than
+ * - `Pos-Inventory-Contract: <INVENTORY_POS_CONTRACT_VERSION>` on every call
+ *   (missing is refused as `contract_too_old`). Older than
+ *   `INVENTORY_POS_MIN_CONTRACT_VERSION`: 400 `contract_too_old` (a pause code:
+ *   the tablet needs an update). Newer than
  *   `INVENTORY_POS_CONTRACT_VERSION` (the region has not been deployed yet) or
  *   not a plain positive number: 400 `contract_unsupported` (a pause code: the
  *   tablet keeps its queue and waits for the region). Every field added after
@@ -78,7 +79,7 @@ import { undoWasteSchema, wasteEntryInputSchema } from './waste.ts'
  * route's meaning or the set of routes changes; the region keeps serving every
  * version from `INVENTORY_POS_MIN_CONTRACT_VERSION`.
  *
- * 1: first contract. 2: `send` is a per-device "I'm done" (it no longer moves
+ * 2: `send` is a per-device "I'm done" (it no longer moves
  * the count to `in_review`), a count in `in_review` is not joined by a start,
  * entries are taken while the count is `counting` or `in_review` and refused
  * per entry (`count_closed`) afterwards, stable per-entry refusal codes, and
@@ -86,7 +87,7 @@ import { undoWasteSchema, wasteEntryInputSchema } from './waste.ts'
  */
 export const INVENTORY_POS_CONTRACT_VERSION = 2
 /** Oldest version the region still serves. */
-export const INVENTORY_POS_MIN_CONTRACT_VERSION = 1
+export const INVENTORY_POS_MIN_CONTRACT_VERSION = 2
 export const INVENTORY_POS_CONTRACT_HEADER = 'Pos-Inventory-Contract'
 
 /** The catalogue is refreshed this often while the app is open and on focus. */
