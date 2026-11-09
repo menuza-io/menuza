@@ -15,6 +15,10 @@ export const INVENTORY_ERROR_CODES = [
 	'count_closed',
 	'name_taken',
 	'limit_reached',
+	'count_in_progress',
+	'undo_expired',
+	'already_undone',
+	'reason_not_allowed',
 ] as const
 export type InventoryErrorCode = (typeof INVENTORY_ERROR_CODES)[number]
 

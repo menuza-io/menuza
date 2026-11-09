@@ -1,4 +1,5 @@
 export * from './cost.ts'
+export * from './contract/index.ts'
 export * from './errors.ts'
 export * from './flags.ts'
 export * from './money.ts'
