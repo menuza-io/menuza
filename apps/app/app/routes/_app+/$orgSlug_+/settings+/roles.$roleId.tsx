@@ -1,6 +1,7 @@
 import { type LoaderFunctionArgs, useLoaderData } from 'react-router'
 import { ReadOnlyRoleView } from '#app/components/roles/tenant-role-access-manager.tsx'
 import { type BreadcrumbHandle } from '#app/utils/breadcrumb.ts'
+import { isInventoryFeatureEnabled } from '#app/utils/inventory/access.server.ts'
 import { isLoyaltyFeatureEnabled } from '#app/utils/loyalty/access.server.ts'
 import { isReservationsFeatureEnabled } from '#app/utils/reservations/access.server.ts'
 import { isStaffingFeatureEnabled } from '#app/utils/staffing/access.server.ts'
@@ -28,12 +29,17 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	const role = await getRoleWithPermissions(roleId, organization.organizationId)
 	if (!role) throw new Response('Role not found', { status: 404 })
 
-	const [staffingEnabled, reservationsEnabled, loyaltyEnabled] =
-		await Promise.all([
-			isStaffingFeatureEnabled(organization.organizationId),
-			isReservationsFeatureEnabled(organization.organizationId),
-			isLoyaltyFeatureEnabled(organization.organizationId),
-		])
+	const [
+		staffingEnabled,
+		reservationsEnabled,
+		loyaltyEnabled,
+		inventoryEnabled,
+	] = await Promise.all([
+		isStaffingFeatureEnabled(organization.organizationId),
+		isReservationsFeatureEnabled(organization.organizationId),
+		isLoyaltyFeatureEnabled(organization.organizationId),
+		isInventoryFeatureEnabled(organization.organizationId),
+	])
 
 	return {
 		organization: {
@@ -46,6 +52,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		staffingEnabled,
 		reservationsEnabled,
 		loyaltyEnabled,
+		inventoryEnabled,
 	}
 }
 
@@ -57,6 +64,7 @@ export default function ViewRoleRoute() {
 		staffingEnabled,
 		reservationsEnabled,
 		loyaltyEnabled,
+		inventoryEnabled,
 	} = useLoaderData<typeof loader>()
 	const basePath = `/${organization.slug}/settings/roles`
 
@@ -68,6 +76,7 @@ export default function ViewRoleRoute() {
 			staffingEnabled={staffingEnabled}
 			reservationsEnabled={reservationsEnabled}
 			loyaltyEnabled={loyaltyEnabled}
+			inventoryEnabled={inventoryEnabled}
 		/>
 	)
 }

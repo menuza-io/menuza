@@ -232,6 +232,13 @@
 			"when": 1794192581948,
 			"tag": "0032_broadcast_failures_sms_prune_index",
 			"breakpoints": true
+		},
+		{
+			"idx": 33,
+			"version": "6",
+			"when": 1794198847837,
+			"tag": "0033_inventory",
+			"breakpoints": true
 		}
 	]
 }

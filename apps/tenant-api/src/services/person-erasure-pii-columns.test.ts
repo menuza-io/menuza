@@ -119,6 +119,15 @@ const ALLOWED_TABLES: Array<[RegExp, string]> = [
 const staffAtTheTill =
 	'staff member who worked the till, not a customer; replaced by erasePosStaffNames when that person is erased'
 
+const inventoryOperatorName =
+	'inventory catalogue or setup name typed by the operator (an item, unit, storage area or count list), not about a person'
+const inventoryStockNote =
+	'operator or staff note about stock (an item, a stock change, waste), not about a customer; the append-only triggers allow clearing a movement or waste note'
+const inventorySupplierContact =
+	'business contact of a supplier the organization buys from, typed by the operator; not a customer, edited or archived with the supplier'
+const inventoryActorId =
+	'opaque id of the operator or staff member who did it (never a name), not a customer; staff ids follow the staff module retention'
+
 /** Single columns that look like PII but are not a customer's data. */
 const ALLOWED_COLUMNS: Record<string, string> = {
 	'loyalty_rewards.name': 'reward title written by the operator',
@@ -180,6 +189,26 @@ const ALLOWED_COLUMNS: Record<string, string> = {
 		'what cash taken from or put in the drawer was for, written by staff; not about a customer',
 	'pos_zatca_settings.postal_code':
 		"the restaurant's own business address, as registered with ZATCA",
+	'inv_storage_areas.name': inventoryOperatorName,
+	'inv_items.name': inventoryOperatorName,
+	'inv_items.notes': inventoryStockNote,
+	'inv_item_units.name': inventoryOperatorName,
+	'inv_count_lists.name': inventoryOperatorName,
+	'inv_movements.note': inventoryStockNote,
+	'inv_waste.note': inventoryStockNote,
+	'inv_suppliers.name': inventorySupplierContact,
+	'inv_suppliers.contact_name': inventorySupplierContact,
+	'inv_suppliers.phone': inventorySupplierContact,
+	'inv_suppliers.email': inventorySupplierContact,
+	'inv_suppliers.notes': inventorySupplierContact,
+	// Not matched by the pattern, listed so the decision is written down.
+	'inv_movements.actor_id': inventoryActorId,
+	'inv_counts.started_by_id': inventoryActorId,
+	'inv_counts.approved_by_id': inventoryActorId,
+	'inv_count_entries.counter_id': inventoryActorId,
+	'inv_deliveries.received_by_id': inventoryActorId,
+	'inv_waste.actor_id': inventoryActorId,
+	'inv_audit_log.actor_id': inventoryActorId,
 }
 
 function listColumns() {

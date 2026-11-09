@@ -6929,3 +6929,811 @@ export const discountCodeAttempts = sqliteTable(
 		index('idx_discount_code_attempts_window').on(table.windowStart),
 	],
 )
+
+// ==========================================
+// INVENTORY (migration 0033_inventory)
+// Phase 0 and 1 tables: setup, catalogue, per-location levels, the stock
+// ledger, costs, counts, suppliers, deliveries, waste and the audit log.
+// One database per organization, so no org column. Location ids are the
+// control plane's opaque ids (`main` when the organization has none).
+//
+// Units: every quantity is an integer number of THOUSANDTHS of the item's
+// base unit (g, ml or piece): 1.5 kg is 1_500_000, a quarter piece is 250.
+// Money is integer minor units with a `currency` beside it; rates are basis
+// points. `*_at` is epoch milliseconds UTC; `*_date` is `YYYY-MM-DD` in the
+// location's business day. The value lists below mirror `@repo/inventory`
+// (kept equal by `inventory-schema-sync.test.ts` in tenant-api).
+// ==========================================
+
+export const INV_UNIT_SYSTEM_VALUES = ['metric', 'us'] as const
+export const INV_BASE_UNIT_VALUES = ['g', 'ml', 'piece'] as const
+export const INV_ITEM_KIND_VALUES = ['bought', 'made'] as const
+export const INV_ACTOR_KIND_VALUES = ['operator', 'staff', 'system'] as const
+export const INV_MOVEMENT_KIND_VALUES = [
+	'delivery',
+	'sale',
+	'waste',
+	'count',
+	'adjustment',
+	'batch_made',
+	'batch_used',
+	'transfer_in',
+	'transfer_out',
+] as const
+export const INV_COUNT_STATUS_VALUES = [
+	'counting',
+	'in_review',
+	'approved',
+	'cancelled',
+] as const
+export const INV_WASTE_REASON_VALUES = [
+	'expired',
+	'spoiled',
+	'over_prepped',
+	'dropped',
+	'returned',
+	'staff_meal',
+	'cancelled_after_cooking',
+	'remade_at_till',
+	'other',
+] as const
+export const INV_SUPPLIER_ORDER_CHANNEL_VALUES = [
+	'email',
+	'whatsapp',
+	'phone',
+	'other',
+] as const
+export const INV_DELIVERY_STATUS_VALUES = [
+	'draft',
+	'received',
+	'cancelled',
+] as const
+export const INV_DELIVERY_SOURCE_VALUES = ['operator', 'station'] as const
+
+// Organization-wide settings: one row (`id = 'default'`), created on the first
+// save. Until then the API answers defaults (version 0).
+export const invSettings = sqliteTable(
+	'inv_settings',
+	{
+		id: text('id').primaryKey().default('default'),
+		targetFoodCostBp: integer('target_food_cost_bp').notNull().default(3000),
+		unitSystem: text('unit_system', { enum: INV_UNIT_SYSTEM_VALUES }).notNull(),
+		// 0 = Sunday … 6 = Saturday; null = no weekly count scheduled.
+		countDayOfWeek: integer('count_day_of_week'),
+		version: integer('version').notNull().default(1),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+	},
+	(table) => [
+		check('chk_inv_settings_singleton', sql`${table.id} = 'default'`),
+		check(
+			'chk_inv_settings_target',
+			sql`${table.targetFoodCostBp} between 0 and 10000`,
+		),
+		check(
+			'chk_inv_settings_unit_system',
+			oneOf(table.unitSystem, INV_UNIT_SYSTEM_VALUES),
+		),
+		check(
+			'chk_inv_settings_count_day',
+			sql`${table.countDayOfWeek} is null or ${table.countDayOfWeek} between 0 and 6`,
+		),
+	],
+)
+
+// Where things are kept at a location (walk-in, freezer, dry store), in the
+// order people walk them.
+export const invStorageAreas = sqliteTable(
+	'inv_storage_areas',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		locationId: text('location_id').notNull(),
+		name: text('name').notNull(),
+		sortOrder: integer('sort_order').notNull().default(0),
+		archivedAt: integer('archived_at'),
+		version: integer('version').notNull().default(1),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+	},
+	(table) => [
+		uniqueIndex('uniq_inv_storage_areas_active_name')
+			.on(table.locationId, sql`lower(${table.name})`)
+			.where(sql`${table.archivedAt} is null`),
+		index('idx_inv_storage_areas_location').on(
+			table.locationId,
+			table.sortOrder,
+		),
+	],
+)
+
+// The organization's item catalogue: everything that is counted, bought or
+// made in house. Archived, never deleted (the ledger references it).
+export const invItems = sqliteTable(
+	'inv_items',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		name: text('name').notNull(),
+		// A built-in key (`meat`, `dairy`, …) or `custom:<typed text>`.
+		category: text('category').notNull().default('other'),
+		kind: text('kind', { enum: INV_ITEM_KIND_VALUES })
+			.notNull()
+			.default('bought'),
+		// Fixed once the item has a movement (trigger): history is in this unit.
+		baseUnit: text('base_unit', { enum: INV_BASE_UNIT_VALUES }).notNull(),
+		notes: text('notes'),
+		archivedAt: integer('archived_at'),
+		version: integer('version').notNull().default(1),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+	},
+	(table) => [
+		uniqueIndex('uniq_inv_items_active_name')
+			.on(sql`lower(${table.name})`)
+			.where(sql`${table.archivedAt} is null`),
+		index('idx_inv_items_category').on(table.category),
+		check('chk_inv_items_kind', oneOf(table.kind, INV_ITEM_KIND_VALUES)),
+		check(
+			'chk_inv_items_base_unit',
+			oneOf(table.baseUnit, INV_BASE_UNIT_VALUES),
+		),
+	],
+)
+
+// Named units of one item ("Box" = 10 kg). Once a unit has been used
+// (`used_at`), its size never changes (trigger): a new size is a new unit.
+export const invItemUnits = sqliteTable(
+	'inv_item_units',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		itemId: text('item_id')
+			.notNull()
+			.references(() => invItems.id),
+		name: text('name').notNull(),
+		// Base thousandths in one of this unit.
+		baseQuantity: integer('base_quantity').notNull(),
+		archivedAt: integer('archived_at'),
+		usedAt: integer('used_at'),
+		createdAt: integer('created_at').notNull().default(nowMs),
+	},
+	(table) => [
+		uniqueIndex('uniq_inv_item_units_active_name')
+			.on(table.itemId, sql`lower(${table.name})`)
+			.where(sql`${table.archivedAt} is null`),
+		check('chk_inv_item_units_size', sql`${table.baseQuantity} > 0`),
+	],
+)
+
+// An item at a location: how it is counted there and its levels.
+export const invItemPlaces = sqliteTable(
+	'inv_item_places',
+	{
+		itemId: text('item_id')
+			.notNull()
+			.references(() => invItems.id),
+		locationId: text('location_id').notNull(),
+		// A standard unit key (`kg`, `l`, `piece`, …) or an `inv_item_units` id;
+		// null counts in the base unit's usual display unit.
+		countUnit: text('count_unit'),
+		// "Order more when below" and "Fill up to", in base thousandths.
+		orderBelowQuantity: integer('order_below_quantity'),
+		fillUpToQuantity: integer('fill_up_to_quantity'),
+		version: integer('version').notNull().default(1),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+	},
+	(table) => [
+		primaryKey({ columns: [table.itemId, table.locationId] }),
+		index('idx_inv_item_places_location').on(table.locationId),
+		check(
+			'chk_inv_item_places_levels',
+			sql`(${table.orderBelowQuantity} is null or ${table.orderBelowQuantity} >= 0) and (${table.fillUpToQuantity} is null or ${table.fillUpToQuantity} >= 0)`,
+		),
+	],
+)
+
+// The storage areas an item is kept in at a location (it may be in several),
+// with its shelf position in each.
+export const invItemPlaceAreas = sqliteTable(
+	'inv_item_place_areas',
+	{
+		itemId: text('item_id')
+			.notNull()
+			.references(() => invItems.id),
+		locationId: text('location_id').notNull(),
+		areaId: text('area_id')
+			.notNull()
+			.references(() => invStorageAreas.id),
+		sortOrder: integer('sort_order').notNull().default(0),
+	},
+	(table) => [
+		primaryKey({ columns: [table.itemId, table.locationId, table.areaId] }),
+		index('idx_inv_item_place_areas_area').on(
+			table.locationId,
+			table.areaId,
+			table.sortOrder,
+		),
+	],
+)
+
+// Saved count lists ("Proteins daily") at a location.
+export const invCountLists = sqliteTable(
+	'inv_count_lists',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		locationId: text('location_id').notNull(),
+		name: text('name').notNull(),
+		archivedAt: integer('archived_at'),
+		version: integer('version').notNull().default(1),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+	},
+	(table) => [
+		uniqueIndex('uniq_inv_count_lists_active_name')
+			.on(table.locationId, sql`lower(${table.name})`)
+			.where(sql`${table.archivedAt} is null`),
+	],
+)
+
+export const invCountListItems = sqliteTable(
+	'inv_count_list_items',
+	{
+		listId: text('list_id')
+			.notNull()
+			.references(() => invCountLists.id),
+		itemId: text('item_id')
+			.notNull()
+			.references(() => invItems.id),
+		sortOrder: integer('sort_order').notNull().default(0),
+	},
+	(table) => [
+		primaryKey({ columns: [table.listId, table.itemId] }),
+		index('idx_inv_count_list_items_item').on(table.itemId),
+	],
+)
+
+// The stock ledger. Append-only (triggers): on hand of an item at a location
+// is the sum of `quantity`. Every stock change is one row, pointing at what
+// caused it (`source_type` / `source_id`: a delivery line, a waste entry, a
+// count, a sale…). `source_type` is an open set on purpose, so later phases
+// add sources without rebuilding this table.
+export const invMovements = sqliteTable(
+	'inv_movements',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		locationId: text('location_id').notNull(),
+		itemId: text('item_id')
+			.notNull()
+			.references(() => invItems.id),
+		// Signed base thousandths: stock in is positive, stock out negative.
+		quantity: integer('quantity').notNull(),
+		// Signed value of the change at the cost used for it; null when unknown.
+		valueMinor: integer('value_minor'),
+		currency: text('currency'),
+		kind: text('kind', { enum: INV_MOVEMENT_KIND_VALUES }).notNull(),
+		// Why, for adjustments (`@repo/inventory` ADJUSTMENT_REASONS) and waste.
+		reason: text('reason'),
+		sourceType: text('source_type').notNull(),
+		sourceId: text('source_id').notNull(),
+		// Optional de-duplication key: one movement per event, ever.
+		eventKey: text('event_key'),
+		businessDate: text('business_date').notNull(),
+		actorKind: text('actor_kind', { enum: INV_ACTOR_KIND_VALUES }).notNull(),
+		actorId: text('actor_id'),
+		note: text('note'),
+		createdAt: integer('created_at').notNull().default(nowMs),
+	},
+	(table) => [
+		index('idx_inv_movements_location_item_created').on(
+			table.locationId,
+			table.itemId,
+			table.createdAt,
+		),
+		index('idx_inv_movements_source').on(table.sourceType, table.sourceId),
+		index('idx_inv_movements_item_created').on(table.itemId, table.createdAt),
+		index('idx_inv_movements_location_date').on(
+			table.locationId,
+			table.businessDate,
+			table.kind,
+		),
+		uniqueIndex('uniq_inv_movements_event_key')
+			.on(table.eventKey)
+			.where(sql`${table.eventKey} is not null`),
+		check(
+			'chk_inv_movements_kind',
+			oneOf(table.kind, INV_MOVEMENT_KIND_VALUES),
+		),
+		check(
+			'chk_inv_movements_actor_kind',
+			oneOf(table.actorKind, INV_ACTOR_KIND_VALUES),
+		),
+		check(
+			'chk_inv_movements_value_currency',
+			sql`${table.valueMinor} is null or ${table.currency} is not null`,
+		),
+	],
+)
+
+// What one base unit of an item costs, updated on each delivery.
+//
+// Cost unit: MICRO-MINOR UNITS PER BASE UNIT, an integer. One micro-minor is
+// a millionth of a minor unit (a millionth of a halala or a cent), and the
+// base unit is one gram, one millilitre or one piece. So SAR 28.00/kg chicken
+// is 2.8 halalas per gram = 2_800_000; a SAR 10 pack of 10,000 napkins is
+// 0.1 halala each = 100_000; salt at SAR 2/kg is 200_000. Why: per-base-unit
+// prices of bulk goods are fractions of a minor unit, which an integer minor
+// column would round to zero, and a REAL would drift. A millionth keeps six
+// significant decimals for the cheapest goods while the dearest (saffron at
+// SAR 20,000/kg = 2e9) stays far from 2^53. Value of a stored quantity `q`
+// (thousandths) is `q * cost / 1e9` minor units, computed with BigInt and
+// rounded half up (`inventoryValueMinor` in `@repo/inventory`).
+//
+// `last_cost_micro`: the last delivered price (plate cost, price alerts).
+// `avg_cost_micro`: the moving weighted average (stock value, food cost).
+// Both are before VAT. One currency per organization's inventory.
+export const invItemCosts = sqliteTable(
+	'inv_item_costs',
+	{
+		itemId: text('item_id')
+			.primaryKey()
+			.references(() => invItems.id),
+		currency: text('currency').notNull(),
+		lastCostMicro: integer('last_cost_micro'),
+		lastPricedAt: integer('last_priced_at'),
+		avgCostMicro: integer('avg_cost_micro'),
+		version: integer('version').notNull().default(1),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+	},
+	(table) => [
+		check(
+			'chk_inv_item_costs_non_negative',
+			sql`(${table.lastCostMicro} is null or ${table.lastCostMicro} >= 0) and (${table.avgCostMicro} is null or ${table.avgCostMicro} >= 0)`,
+		),
+	],
+)
+
+// A stock count at one location for one business date. Approved and
+// cancelled counts are closed for good (trigger).
+export const invCounts = sqliteTable(
+	'inv_counts',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		locationId: text('location_id').notNull(),
+		// Null counts everything at the location.
+		listId: text('list_id').references(() => invCountLists.id),
+		status: text('status', { enum: INV_COUNT_STATUS_VALUES })
+			.notNull()
+			.default('counting'),
+		businessDate: text('business_date').notNull(),
+		startedByKind: text('started_by_kind', {
+			enum: INV_ACTOR_KIND_VALUES,
+		}).notNull(),
+		startedById: text('started_by_id'),
+		sentForReviewAt: integer('sent_for_review_at'),
+		approvedById: text('approved_by_id'),
+		approvedAt: integer('approved_at'),
+		cancelledAt: integer('cancelled_at'),
+		version: integer('version').notNull().default(1),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+	},
+	(table) => [
+		index('idx_inv_counts_location_status').on(table.locationId, table.status),
+		index('idx_inv_counts_location_date').on(
+			table.locationId,
+			table.businessDate,
+		),
+		check(
+			'chk_inv_counts_status',
+			oneOf(table.status, INV_COUNT_STATUS_VALUES),
+		),
+		check(
+			'chk_inv_counts_started_by_kind',
+			oneOf(table.startedByKind, INV_ACTOR_KIND_VALUES),
+		),
+		check(
+			'chk_inv_counts_approved',
+			sql`${table.status} <> 'approved' or ${table.approvedAt} is not null`,
+		),
+	],
+)
+
+// What people counted. Append-only (triggers), and only while the count is
+// open. A correction is a new entry: the live entry for an item is the latest
+// per (count, item, area, counter, entered unit), so "2 boxes and 3 kg" is two
+// live entries, and the same item counted in two areas adds up. `client_id`
+// is the device's id for the entry, so a resend after a dropped signal is
+// stored once.
+export const invCountEntries = sqliteTable(
+	'inv_count_entries',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		countId: text('count_id')
+			.notNull()
+			.references(() => invCounts.id),
+		itemId: text('item_id')
+			.notNull()
+			.references(() => invItems.id),
+		areaId: text('area_id').references(() => invStorageAreas.id),
+		// Base thousandths.
+		quantity: integer('quantity').notNull(),
+		// The amount as typed (a decimal string, e.g. "2.5") and its unit (a
+		// standard unit key or an `inv_item_units` id).
+		enteredAmount: text('entered_amount').notNull(),
+		enteredUnit: text('entered_unit').notNull(),
+		counterKind: text('counter_kind', {
+			enum: INV_ACTOR_KIND_VALUES,
+		}).notNull(),
+		counterId: text('counter_id'),
+		clientId: text('client_id').notNull(),
+		createdAt: integer('created_at').notNull().default(nowMs),
+	},
+	(table) => [
+		uniqueIndex('uniq_inv_count_entries_client').on(table.clientId),
+		index('idx_inv_count_entries_live').on(
+			table.countId,
+			table.itemId,
+			table.areaId,
+			table.counterKind,
+			table.counterId,
+			table.enteredUnit,
+			table.createdAt,
+		),
+		check('chk_inv_count_entries_quantity', sql`${table.quantity} >= 0`),
+		check(
+			'chk_inv_count_entries_counter_kind',
+			oneOf(table.counterKind, INV_ACTOR_KIND_VALUES),
+		),
+	],
+)
+
+// Suppliers: businesses, organization-wide. Contact fields are a business
+// contact the operator typed.
+export const invSuppliers = sqliteTable(
+	'inv_suppliers',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		name: text('name').notNull(),
+		contactName: text('contact_name'),
+		phone: text('phone'),
+		email: text('email'),
+		orderChannel: text('order_channel', {
+			enum: INV_SUPPLIER_ORDER_CHANNEL_VALUES,
+		})
+			.notNull()
+			.default('email'),
+		// Weekdays the supplier delivers on, a JSON array of 0 (Sunday) … 6.
+		deliveryDays: text('delivery_days', { mode: 'json' })
+			.$type<number[]>()
+			.notNull()
+			.default(sql`'[]'`),
+		// Order cut-off as local `HH:MM`, `cutoff_days_before` days before a
+		// delivery day (1 = the day before).
+		cutoffTime: text('cutoff_time'),
+		cutoffDaysBefore: integer('cutoff_days_before').notNull().default(1),
+		minimumOrderMinor: integer('minimum_order_minor'),
+		currency: text('currency'),
+		paymentTerms: text('payment_terms'),
+		vatNumber: text('vat_number'),
+		notes: text('notes'),
+		archivedAt: integer('archived_at'),
+		version: integer('version').notNull().default(1),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+	},
+	(table) => [
+		uniqueIndex('uniq_inv_suppliers_active_name')
+			.on(sql`lower(${table.name})`)
+			.where(sql`${table.archivedAt} is null`),
+		check(
+			'chk_inv_suppliers_order_channel',
+			oneOf(table.orderChannel, INV_SUPPLIER_ORDER_CHANNEL_VALUES),
+		),
+		check(
+			'chk_inv_suppliers_minimum',
+			sql`${table.minimumOrderMinor} is null or (${table.minimumOrderMinor} >= 0 and ${table.currency} is not null)`,
+		),
+		check(
+			'chk_inv_suppliers_cutoff_days',
+			sql`${table.cutoffDaysBefore} between 0 and 14`,
+		),
+		check(
+			'chk_inv_suppliers_delivery_days',
+			sql`json_valid(${table.deliveryDays})`,
+		),
+	],
+)
+
+// How an item is bought from a supplier: one pack size and its price.
+// `price_minor` is the price of one pack of `pack_base_quantity` base
+// thousandths, before VAT. Priced by weight: the invoice line is the real
+// weight times `price_minor / pack_base_quantity`.
+export const invSupplierProducts = sqliteTable(
+	'inv_supplier_products',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		supplierId: text('supplier_id')
+			.notNull()
+			.references(() => invSuppliers.id),
+		itemId: text('item_id')
+			.notNull()
+			.references(() => invItems.id),
+		packName: text('pack_name').notNull(),
+		packBaseQuantity: integer('pack_base_quantity').notNull(),
+		priceMinor: integer('price_minor'),
+		currency: text('currency'),
+		pricedByWeight: integer('priced_by_weight', { mode: 'boolean' })
+			.notNull()
+			.default(false),
+		sku: text('sku'),
+		preferred: integer('preferred', { mode: 'boolean' })
+			.notNull()
+			.default(false),
+		archivedAt: integer('archived_at'),
+		version: integer('version').notNull().default(1),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+	},
+	(table) => [
+		index('idx_inv_supplier_products_item').on(table.itemId),
+		index('idx_inv_supplier_products_supplier').on(table.supplierId),
+		// At most one preferred way to buy an item.
+		uniqueIndex('uniq_inv_supplier_products_preferred')
+			.on(table.itemId)
+			.where(sql`${table.preferred} = 1 and ${table.archivedAt} is null`),
+		check('chk_inv_supplier_products_pack', sql`${table.packBaseQuantity} > 0`),
+		check(
+			'chk_inv_supplier_products_price',
+			sql`${table.priceMinor} is null or (${table.priceMinor} >= 0 and ${table.currency} is not null)`,
+		),
+	],
+)
+
+// A delivery received at a location, with the supplier's invoice facts. VAT
+// is kept here, never folded into item costs. Lines are written once, when
+// the delivery is received.
+export const invDeliveries = sqliteTable(
+	'inv_deliveries',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		locationId: text('location_id').notNull(),
+		supplierId: text('supplier_id').references(() => invSuppliers.id),
+		status: text('status', { enum: INV_DELIVERY_STATUS_VALUES })
+			.notNull()
+			.default('received'),
+		invoiceNumber: text('invoice_number'),
+		invoiceDate: text('invoice_date'),
+		vatMinor: integer('vat_minor'),
+		// The invoice total as printed (VAT included), to check the lines against.
+		totalMinor: integer('total_minor'),
+		currency: text('currency').notNull(),
+		// The supplier's ZATCA invoice reference (text or scanned QR value).
+		zatcaReference: text('zatca_reference'),
+		// Storage key of the invoice photo (phase 2).
+		photoKey: text('photo_key'),
+		paidAt: integer('paid_at'),
+		receivedByKind: text('received_by_kind', {
+			enum: INV_ACTOR_KIND_VALUES,
+		}).notNull(),
+		receivedById: text('received_by_id'),
+		receivedAt: integer('received_at'),
+		businessDate: text('business_date').notNull(),
+		source: text('source', { enum: INV_DELIVERY_SOURCE_VALUES })
+			.notNull()
+			.default('operator'),
+		version: integer('version').notNull().default(1),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+	},
+	(table) => [
+		index('idx_inv_deliveries_location_received').on(
+			table.locationId,
+			table.receivedAt,
+		),
+		index('idx_inv_deliveries_location_date').on(
+			table.locationId,
+			table.businessDate,
+		),
+		index('idx_inv_deliveries_supplier_paid').on(
+			table.supplierId,
+			table.paidAt,
+		),
+		check(
+			'chk_inv_deliveries_status',
+			oneOf(table.status, INV_DELIVERY_STATUS_VALUES),
+		),
+		check(
+			'chk_inv_deliveries_source',
+			oneOf(table.source, INV_DELIVERY_SOURCE_VALUES),
+		),
+		check(
+			'chk_inv_deliveries_received_by_kind',
+			oneOf(table.receivedByKind, INV_ACTOR_KIND_VALUES),
+		),
+		check(
+			'chk_inv_deliveries_money',
+			sql`(${table.vatMinor} is null or ${table.vatMinor} >= 0) and (${table.totalMinor} is null or ${table.totalMinor} >= 0)`,
+		),
+	],
+)
+
+// One received line. Append-only (triggers). `quantity` is what went into
+// stock (base thousandths); `packs` is how many packs, also in thousandths
+// (2.5 boxes = 2500), of `pack_base_quantity` each. `price_minor` is per pack
+// before VAT, in the delivery's currency. A priced-by-weight line carries the
+// real weight from the invoice in `real_weight_quantity`.
+export const invDeliveryLines = sqliteTable(
+	'inv_delivery_lines',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		deliveryId: text('delivery_id')
+			.notNull()
+			.references(() => invDeliveries.id),
+		itemId: text('item_id')
+			.notNull()
+			.references(() => invItems.id),
+		supplierProductId: text('supplier_product_id').references(
+			() => invSupplierProducts.id,
+		),
+		quantity: integer('quantity').notNull(),
+		packName: text('pack_name'),
+		packBaseQuantity: integer('pack_base_quantity'),
+		packs: integer('packs'),
+		priceMinor: integer('price_minor'),
+		lineTotalMinor: integer('line_total_minor').notNull(),
+		realWeightQuantity: integer('real_weight_quantity'),
+		createdAt: integer('created_at').notNull().default(nowMs),
+	},
+	(table) => [
+		index('idx_inv_delivery_lines_delivery').on(table.deliveryId),
+		index('idx_inv_delivery_lines_item_created').on(
+			table.itemId,
+			table.createdAt,
+		),
+		check(
+			'chk_inv_delivery_lines_amounts',
+			sql`${table.quantity} >= 0 and ${table.lineTotalMinor} >= 0 and (${table.priceMinor} is null or ${table.priceMinor} >= 0) and (${table.packs} is null or ${table.packs} >= 0) and (${table.packBaseQuantity} is null or ${table.packBaseQuantity} > 0) and (${table.realWeightQuantity} is null or ${table.realWeightQuantity} >= 0)`,
+		),
+	],
+)
+
+// Waste. Append-only (triggers). An item, or (phase 3) a dish (`dish_ref`, a
+// menu item id) whose recipe says what it used. `quantity` is base
+// thousandths of the item, or thousandths of a portion for a dish. Undo is a
+// new row with `reverses_id` set that cancels the original; a row can be
+// undone once.
+export const invWaste = sqliteTable(
+	'inv_waste',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		locationId: text('location_id').notNull(),
+		itemId: text('item_id').references(() => invItems.id),
+		dishRef: text('dish_ref'),
+		quantity: integer('quantity').notNull(),
+		reason: text('reason', { enum: INV_WASTE_REASON_VALUES }).notNull(),
+		note: text('note'),
+		valueMinor: integer('value_minor'),
+		currency: text('currency'),
+		actorKind: text('actor_kind', { enum: INV_ACTOR_KIND_VALUES }).notNull(),
+		actorId: text('actor_id'),
+		clientId: text('client_id').notNull(),
+		reversesId: text('reverses_id').references(
+			(): AnySQLiteColumn => invWaste.id,
+		),
+		businessDate: text('business_date').notNull(),
+		createdAt: integer('created_at').notNull().default(nowMs),
+	},
+	(table) => [
+		uniqueIndex('uniq_inv_waste_client').on(table.clientId),
+		uniqueIndex('uniq_inv_waste_reverses')
+			.on(table.reversesId)
+			.where(sql`${table.reversesId} is not null`),
+		index('idx_inv_waste_location_date').on(
+			table.locationId,
+			table.businessDate,
+		),
+		index('idx_inv_waste_item_created').on(table.itemId, table.createdAt),
+		check('chk_inv_waste_reason', oneOf(table.reason, INV_WASTE_REASON_VALUES)),
+		check(
+			'chk_inv_waste_actor_kind',
+			oneOf(table.actorKind, INV_ACTOR_KIND_VALUES),
+		),
+		check(
+			'chk_inv_waste_what',
+			sql`${table.itemId} is not null or ${table.dishRef} is not null`,
+		),
+		check('chk_inv_waste_quantity', sql`${table.quantity} > 0`),
+		check(
+			'chk_inv_waste_value',
+			sql`${table.valueMinor} is null or (${table.valueMinor} >= 0 and ${table.currency} is not null)`,
+		),
+	],
+)
+
+// Durable idempotency records for inventory writes (`withInventoryWrite`).
+export const invIdempotencyKeys = sqliteTable(
+	'inv_idempotency_keys',
+	{
+		scope: text('scope').notNull(),
+		key: text('key').notNull(),
+		requestHash: text('request_hash').notNull(),
+		statusCode: integer('status_code').notNull(),
+		responseJson: text('response_json').notNull(),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		expiresAt: integer('expires_at').notNull(),
+	},
+	(table) => [
+		primaryKey({ columns: [table.scope, table.key] }),
+		index('idx_inv_idempotency_keys_expires').on(table.expiresAt),
+	],
+)
+
+// Who changed what in inventory setup and records. Append-only (triggers).
+// Ids and facts only: `detail` never holds a person's name, phone or email.
+export const invAuditLog = sqliteTable(
+	'inv_audit_log',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		actorKind: text('actor_kind', { enum: INV_ACTOR_KIND_VALUES }).notNull(),
+		actorId: text('actor_id'),
+		action: text('action').notNull(),
+		resourceType: text('resource_type').notNull(),
+		resourceId: text('resource_id').notNull(),
+		locationId: text('location_id'),
+		detail: text('detail', { mode: 'json' }).$type<Record<string, unknown>>(),
+		createdAt: integer('created_at').notNull().default(nowMs),
+	},
+	(table) => [
+		index('idx_inv_audit_log_created').on(table.createdAt),
+		index('idx_inv_audit_log_resource').on(
+			table.resourceType,
+			table.resourceId,
+		),
+		check(
+			'chk_inv_audit_log_actor_kind',
+			oneOf(table.actorKind, INV_ACTOR_KIND_VALUES),
+		),
+	],
+)
+
+export type InvSettingsRow = typeof invSettings.$inferSelect
+export type InvStorageAreaRow = typeof invStorageAreas.$inferSelect
+export type InvItemRow = typeof invItems.$inferSelect
+export type InvItemUnitRow = typeof invItemUnits.$inferSelect
+export type InvItemPlaceRow = typeof invItemPlaces.$inferSelect
+export type InvCountListRow = typeof invCountLists.$inferSelect
+export type InvMovementRow = typeof invMovements.$inferSelect
+export type NewInvMovementRow = typeof invMovements.$inferInsert
+export type InvItemCostRow = typeof invItemCosts.$inferSelect
+export type InvCountRow = typeof invCounts.$inferSelect
+export type InvCountEntryRow = typeof invCountEntries.$inferSelect
+export type InvSupplierRow = typeof invSuppliers.$inferSelect
+export type InvSupplierProductRow = typeof invSupplierProducts.$inferSelect
+export type InvDeliveryRow = typeof invDeliveries.$inferSelect
+export type InvDeliveryLineRow = typeof invDeliveryLines.$inferSelect
+export type InvWasteRow = typeof invWaste.$inferSelect
+export type InvAuditLogRow = typeof invAuditLog.$inferSelect

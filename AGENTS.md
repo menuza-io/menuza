@@ -684,6 +684,10 @@ git commit --no-verify -m "fix: resolve ESLint warnings (verified manually)"
   answer a request that carries a coupon code with 503 `discounts_disabled`.
   Orders already placed keep their discounts and their redemptions still settle.
   See `docs/discounts-plan.md`.
+- `INVENTORY_ENABLED` - Tenant-api only, optional (unset or `true` is on). Kill
+  switch for inventory on a node: `false` (also `0`, `off`, `no`, `disabled`)
+  answers 503 `inventory_unavailable` on operator (and later Station) inventory
+  routes. See `docs/inventory-plan.md`.
 - `PRINT_BROWSER_ACCOUNT_ID` / `PRINT_BROWSER_API_TOKEN` - App only. Cloudflare
   Browser Rendering (REST `/pdf`) for Print shop PDFs. Empty in dev: downloads
   open a print-ready page instead. `PRINT_RENDER_LIMIT_PER_HOUR` caps new
@@ -917,6 +921,10 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
   Sites: Zod schemas for every loyalty route, earning and discount math, the
   operator token contract, permissions and `loyalty.*` flag keys, error codes,
   and the frozen acceptance examples. No UI strings, no I/O.
+- `@repo/inventory` - Inventory domain code shared by App, tenant-api and
+  (later) Station: flags, permissions, the `inv+jwt` token contract, units and
+  quantities, cost math, stock vocabulary, error codes and wire schemas. No UI
+  strings, no I/O.
 - `@repo/discounts` - Discounts and coupons domain code shared by App,
   tenant-api, Sites and Station: the definition schema
   (`discountDefinitionSchema`, `discountRecordSchema`), the pure
@@ -1195,6 +1203,35 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
   resolves at checkout (`codesWithIssuedCode`). Attaching one needs the coupon
   flags and `read:discount:any`; the App checks it in
   `utils/discounts/marketing-offers.server.ts`.
+
+**Inventory (stock, counts, waste, deliveries; phase 0 built):**
+
+- Plan and status: `docs/inventory-plan.md`; placement: ADR 049. All inventory
+  data is regional (`inv_*` tables, tenant-db `0033_inventory`); the control
+  plane keeps only the `inventory.*` flags (`enabled` master, `purchasing`,
+  `recipes`, `prep`, `transfers`; default off, only a literal `true`) and five
+  permissions (`read|update:inventory:any`, `read:inventory_cost:any`,
+  `update:inventory_purchasing:any`, `update:inventory_recipe:any`; migration
+  `0040_inventory`). Money is left out of responses without the cost grant.
+- Domain code in `@repo/inventory` (no I/O): flags, permissions, the `inv+jwt`
+  token contract, units (quantities are integer thousandths of the item's base
+  unit g / ml / piece), cost math (micro-minor units per base unit), vocabulary
+  and wire schemas.
+- App mints the token at `GET /<orgSlug>/inventory-token?scope=read|write`; the
+  browser calls tenant-api `/operator/inventory/*` directly
+  (`hooks/use-inventory-client.ts`). Every App inventory loader and action
+  awaits `requireInventoryAccess` first (`utils/inventory/access.server.ts`; 404
+  while the flag is off), checked by `utils/inventory/inventory-guards.test.ts`.
+  The region reads flags from `/resources/inventory/context`.
+- tenant-api: `lib/inventory-{auth,guard,write,context,switches,http}.ts`,
+  `routes/operator-inventory.ts`; writes go through `withInventoryWrite`. The
+  Workers org router must list `INVENTORY_TOKEN_AUDIENCE` (it routes
+  `/operator/*` by audience). `services/item-sales.ts` is the one items-sold
+  reader across web/QR orders and Station sales (QR rounds rung up on Station
+  are not counted twice).
+- Product rules: owner words (no par, AvT, COGS, 86), at most five tabs, one
+  plain name per item (inventory inputs are never translated; App strings are
+  Lingui). Security gate: `routes/inventory-security.test.ts`.
 
 **Print shop (Marketing, Print shop):**
 

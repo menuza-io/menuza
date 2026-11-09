@@ -281,6 +281,13 @@
 			"when": 1794192597749,
 			"tag": "0039_impersonation_one_per_admin",
 			"breakpoints": true
+		},
+		{
+			"idx": 40,
+			"version": "6",
+			"when": 1794198507000,
+			"tag": "0040_inventory",
+			"breakpoints": true
 		}
 	]
 }

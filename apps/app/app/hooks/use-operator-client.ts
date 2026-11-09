@@ -7,6 +7,22 @@ const credentialsSchema = z.object({
 })
 export type OperatorCredentials = z.infer<typeof credentialsSchema>
 
+export type OperatorTokenRoute = 'orders-token' | 'qr-token' | 'inventory-token'
+
+/** The App URL that mints read or write credentials for a token route. */
+export function operatorTokenUrl(
+	orgSlug: string,
+	tokenRoute: OperatorTokenRoute,
+	write: boolean,
+): string {
+	const base = `/${encodeURIComponent(orgSlug)}/${tokenRoute}`
+	// The inventory token takes a scope; orders and QR take `write=1`.
+	if (tokenRoute === 'inventory-token') {
+		return `${base}?scope=${write ? 'write' : 'read'}`
+	}
+	return write ? `${base}?write=1` : base
+}
+
 /**
  * Calls the organization's regional tenant-api straight from the browser with a
  * short-lived operator token minted by App (`/:org/orders-token`). App returns
@@ -16,8 +32,8 @@ export type OperatorCredentials = z.infer<typeof credentialsSchema>
 export function useOperatorClient(
 	orgSlug: string,
 	base: string,
-	/** App route that mints the token (QR ordering has its own scope). */
-	tokenRoute: 'orders-token' | 'qr-token' = 'orders-token',
+	/** App route that mints the token (QR ordering and inventory have their own). */
+	tokenRoute: OperatorTokenRoute = 'orders-token',
 ) {
 	const cached = useRef(
 		new Map<
@@ -32,7 +48,7 @@ export function useOperatorClient(
 			let entry = cached.current.get(key)
 			if (!entry || entry.expires <= Date.now()) {
 				const credentials = fetch(
-					`/${encodeURIComponent(orgSlug)}/${tokenRoute}${write ? '?write=1' : ''}`,
+					operatorTokenUrl(orgSlug, tokenRoute, write),
 					{ headers: { Accept: 'application/json' } },
 				).then(async (response) => {
 					if (!response.ok) throw new Error('Unable to authorize this request.')

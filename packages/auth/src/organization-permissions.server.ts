@@ -262,6 +262,16 @@ export const ORG_PERMISSIONS = {
 	// org-level discounts.* feature flags (see apps/app utils/discounts).
 	READ_DISCOUNT_ANY: 'read:discount:any' as const,
 	UPDATE_DISCOUNT_ANY: 'update:discount:any' as const,
+
+	// Inventory: stock, counts, waste, deliveries, purchasing and recipes. Every
+	// inventory surface is also behind the org-level inventory.* feature flags
+	// (see apps/app utils/inventory/access.server.ts). Keep in sync with
+	// INVENTORY_PERMISSIONS in @repo/inventory.
+	READ_INVENTORY_ANY: 'read:inventory:any' as const,
+	UPDATE_INVENTORY_ANY: 'update:inventory:any' as const,
+	READ_INVENTORY_COST_ANY: 'read:inventory_cost:any' as const,
+	UPDATE_INVENTORY_PURCHASING_ANY: 'update:inventory_purchasing:any' as const,
+	UPDATE_INVENTORY_RECIPE_ANY: 'update:inventory_recipe:any' as const,
 } as const
 
 /**

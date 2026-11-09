@@ -87,6 +87,12 @@ const SEGMENT_LABELS: Record<string, ReactNode> = {
 	services: <Trans>Services</Trans>,
 	'special-days': <Trans>Special days</Trans>,
 	policies: <Trans>Payment policies</Trans>,
+	// Inventory (`today` is shared with Reservations)
+	inventory: <Trans>Inventory</Trans>,
+	stock: <Trans>Stock</Trans>,
+	counts: <Trans>Counts</Trans>,
+	purchasing: <Trans>Purchasing</Trans>,
+	waste: <Trans>Waste</Trans>,
 }
 
 // What a record id under each collection is called when its route gives no name.

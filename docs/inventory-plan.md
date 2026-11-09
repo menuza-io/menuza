@@ -1,9 +1,12 @@
 # Inventory: plan
 
-Status: proposal, nothing built. Research current as of 8 November 2026 (`main`
-at `c2f3da740`, `origin/main` at `837a5f279`). The uncommitted inventory work in
-the tree (`packages/inventory`, `inventory+/` routes, tenant `0029_inventory`)
-was rejected and is not a starting point: this plan starts from `main`.
+Status: phase 0 built on `pr/inventory` (domain package, flags and permissions,
+regional schema `0033_inventory`, tenant-api auth and the first operator routes,
+the items-sold reader, the App shell with empty tabs behind
+`inventory.enabled`); nothing is user-visible until the flag is on. Placement is
+recorded in [ADR 049](./decisions/049-inventory-data-residency.md). Research
+current as of 8 November 2026. An earlier uncommitted attempt was rejected and
+is parked on the local branch `wip/inventory-v1` for reference only.
 
 Inspiration: the Mise prep and waste product (shared as screen recordings) for
 its calm "Today" page, one-sentence insight cards, the waste dialog and the prep

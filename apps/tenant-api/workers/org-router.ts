@@ -4,6 +4,7 @@ import {
 	parsePosPairingCode,
 } from '@repo/common/pos-orders'
 import { z } from 'zod'
+import { INVENTORY_TOKEN_AUDIENCE } from '@repo/inventory'
 import { LOYALTY_TOKEN_AUDIENCE } from '@repo/loyalty'
 import { RESERVATIONS_TOKEN_AUDIENCE } from '@repo/reservations'
 import {
@@ -81,6 +82,7 @@ async function orgIdFromOperatorJwt(
 				STAFFING_TOKEN_AUDIENCE,
 				RESERVATIONS_TOKEN_AUDIENCE,
 				LOYALTY_TOKEN_AUDIENCE,
+				INVENTORY_TOKEN_AUDIENCE,
 			],
 			issuer: brand.shortName,
 			algorithms: ['HS256'],
