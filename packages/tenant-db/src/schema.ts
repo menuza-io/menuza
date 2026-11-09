@@ -6942,11 +6942,14 @@ export const discountCodeAttempts = sqliteTable(
 )
 
 // ==========================================
-// INVENTORY (migrations 0033_inventory, 0034_inventory_orders)
+// INVENTORY (migrations 0033_inventory, 0034_inventory_orders,
+// 0035_inventory_recipes)
 // Phase 0 and 1 tables: setup, catalogue, per-location levels, the stock
 // ledger, costs, counts, suppliers, deliveries, waste and the audit log.
 // Phase 2 adds purchase orders, receiving against them, the Station app's
 // terminal setting, waste from tablets and the notification dedupe log.
+// Phase 3a adds recipes (versioned, kept for history), what each sale has
+// deducted and the queue of sales waiting to be settled.
 // One database per organization, so no org column. Location ids are the
 // control plane's opaque ids (`main` when the organization has none).
 //
@@ -7024,6 +7027,19 @@ export const INV_ALERT_KIND_VALUES = [
 	'inventory_price_rise',
 ] as const
 export const INV_ALERT_STATUS_VALUES = ['sent', 'pending'] as const
+// Phase 3a (0035_inventory_recipes).
+export const INV_RECIPE_OWNER_KIND_VALUES = [
+	'menu_item',
+	'variant',
+	'option',
+	'made_item',
+] as const
+export const INV_RECIPE_LINE_MODE_VALUES = ['add', 'replace'] as const
+export const INV_SALE_SOURCE_TYPE_VALUES = [
+	'restaurant_order',
+	'pos_order',
+	'pos_void',
+] as const
 export const INV_INVOICE_PHOTO_CONTENT_TYPE_VALUES = [
 	'image/jpeg',
 	'image/png',
@@ -7112,6 +7128,16 @@ export const invItems = sqliteTable(
 		// Fixed once the item has a movement (trigger): history is in this unit.
 		baseUnit: text('base_unit', { enum: INV_BASE_UNIT_VALUES }).notNull(),
 		notes: text('notes'),
+		// "We make this in batches and count it" (made items only, trigger):
+		// off, a sale uses the item's ingredients; on, a sale uses the made
+		// item itself and recording a batch adds it and uses its ingredients.
+		batchCounted: integer('batch_counted', { mode: 'boolean' })
+			.notNull()
+			.default(false),
+		// "Mark dishes sold out when this runs out" (opt-in).
+		autoSoldOut: integer('auto_sold_out', { mode: 'boolean' })
+			.notNull()
+			.default(false),
 		archivedAt: integer('archived_at'),
 		version: integer('version').notNull().default(1),
 		createdAt: integer('created_at').notNull().default(nowMs),
@@ -7952,6 +7978,238 @@ export const invAlertLog = sqliteTable(
 	],
 )
 
+// ---------------------------------------------------------------------------
+// Recipes (0035_inventory_recipes)
+// ---------------------------------------------------------------------------
+
+// A recipe is VERSIONED and kept: a change inserts a new row (version + 1,
+// its own `effective_from`) and stamps the old one `superseded_at`; nothing is
+// updated in place and nothing is deleted. A sale is costed and deducted with
+// the version in force at the sale's time (the newest row whose
+// `effective_from` is at or before it), so history never moves when an owner
+// edits a dish. At most one row per owner is unsuperseded (the current one).
+//
+// Owners are opaque ids from the control plane (a menu item, variant or
+// option id) or an `inv_items.id` for a made item. Menu NAMES are never
+// copied here: the App joins them. `owner_id` is polymorphic, so it has no
+// foreign key; a trigger checks that a made item's owner exists and is made.
+//
+// Variants (sizes): a variant recipe is EITHER a multiple of its item's
+// current recipe (`multiplier_bp`, 10000 = 1x, no lines of its own) OR its own
+// complete recipe (`multiplier_bp` null, its own lines, the item's recipe is
+// not used). One rule, never mixed: a half of the base plus extras is an
+// option. Other owners keep `multiplier_bp` null.
+//
+// Typed cost: a dish the owner will not break down (a bought-in dessert, a
+// can) carries a fixed cost per dish in minor units of `typed_cost_currency`,
+// shown as typed. It has no lines (trigger). On a multiplier variant it
+// scales like a recipe. Made items have no typed cost.
+//
+// Made items: `makes_quantity` is how much one batch makes, in base
+// thousandths of the made item; lines are the ingredients of one batch.
+// Cycles are detected in `@repo/inventory` and the service; the trigger here
+// only refuses the direct self-reference.
+export const invRecipes = sqliteTable(
+	'inv_recipes',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		ownerKind: text('owner_kind', {
+			enum: INV_RECIPE_OWNER_KIND_VALUES,
+		}).notNull(),
+		ownerId: text('owner_id').notNull(),
+		// 1 for the first recipe of an owner, then +1 per change.
+		version: integer('version').notNull().default(1),
+		makesQuantity: integer('makes_quantity'),
+		multiplierBp: integer('multiplier_bp'),
+		typedCostMinor: integer('typed_cost_minor'),
+		typedCostCurrency: text('typed_cost_currency'),
+		// How it is made (free text from the operator). Named `method`, not
+		// `notes`, which the person-erasure column guard treats as personal data.
+		method: text('method'),
+		// Epoch ms the recipe starts to apply to sales.
+		effectiveFrom: integer('effective_from').notNull().default(nowMs),
+		// When a newer version replaced it; null on the current one.
+		supersededAt: integer('superseded_at'),
+		createdByKind: text('created_by_kind', {
+			enum: INV_ACTOR_KIND_VALUES,
+		}).notNull(),
+		createdById: text('created_by_id'),
+		createdAt: integer('created_at').notNull().default(nowMs),
+	},
+	(table) => [
+		uniqueIndex('uniq_inv_recipes_owner_version').on(
+			table.ownerKind,
+			table.ownerId,
+			table.version,
+		),
+		uniqueIndex('uniq_inv_recipes_current')
+			.on(table.ownerKind, table.ownerId)
+			.where(sql`${table.supersededAt} is null`),
+		index('idx_inv_recipes_owner_effective').on(
+			table.ownerKind,
+			table.ownerId,
+			table.effectiveFrom,
+		),
+		check(
+			'chk_inv_recipes_owner_kind',
+			oneOf(table.ownerKind, INV_RECIPE_OWNER_KIND_VALUES),
+		),
+		check(
+			'chk_inv_recipes_created_by_kind',
+			oneOf(table.createdByKind, INV_ACTOR_KIND_VALUES),
+		),
+		check('chk_inv_recipes_version', sql`${table.version} >= 1`),
+		check(
+			'chk_inv_recipes_makes',
+			sql`(${table.ownerKind} = 'made_item' and ${table.makesQuantity} > 0) or (${table.ownerKind} <> 'made_item' and ${table.makesQuantity} is null)`,
+		),
+		check(
+			'chk_inv_recipes_multiplier',
+			sql`${table.multiplierBp} is null or (${table.ownerKind} = 'variant' and ${table.multiplierBp} between 1 and 1000000)`,
+		),
+		check(
+			'chk_inv_recipes_typed_cost',
+			sql`(${table.typedCostMinor} is null and ${table.typedCostCurrency} is null) or (${table.typedCostMinor} >= 0 and ${table.typedCostCurrency} is not null and ${table.ownerKind} <> 'made_item')`,
+		),
+		check(
+			'chk_inv_recipes_effective',
+			sql`${table.effectiveFrom} >= 0 and (${table.supersededAt} is null or ${table.supersededAt} >= 0)`,
+		),
+	],
+)
+
+// One ingredient of a recipe version: `quantity` is what ends up in the dish
+// (or in one option, or in one batch), in base thousandths of the ingredient
+// item. `usable_bp` is the usable yield after trim and cooking loss, so the
+// raw quantity needed is `quantity * 10000 / usable_bp`. On an option recipe
+// `mode = 'replace'` swaps the named base ingredient (oat milk replaces
+// milk); everywhere else every line is `add`. One line per ingredient per
+// recipe. Lines of a superseded recipe never change (trigger).
+export const invRecipeLines = sqliteTable(
+	'inv_recipe_lines',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		recipeId: text('recipe_id')
+			.notNull()
+			.references(() => invRecipes.id),
+		itemId: text('item_id')
+			.notNull()
+			.references(() => invItems.id),
+		quantity: integer('quantity').notNull(),
+		usableBp: integer('usable_bp').notNull().default(10000),
+		mode: text('mode', { enum: INV_RECIPE_LINE_MODE_VALUES })
+			.notNull()
+			.default('add'),
+		replacesItemId: text('replaces_item_id').references(() => invItems.id),
+		sortOrder: integer('sort_order').notNull().default(0),
+	},
+	(table) => [
+		uniqueIndex('uniq_inv_recipe_lines_item').on(table.recipeId, table.itemId),
+		index('idx_inv_recipe_lines_recipe').on(table.recipeId, table.sortOrder),
+		index('idx_inv_recipe_lines_item').on(table.itemId),
+		check(
+			'chk_inv_recipe_lines_mode',
+			oneOf(table.mode, INV_RECIPE_LINE_MODE_VALUES),
+		),
+		check(
+			'chk_inv_recipe_lines_amounts',
+			sql`${table.quantity} between 1 and 9000000000 and ${table.usableBp} between 1 and 10000`,
+		),
+		check(
+			'chk_inv_recipe_lines_replaces',
+			sql`(${table.mode} = 'add' and ${table.replacesItemId} is null) or (${table.mode} = 'replace' and ${table.replacesItemId} is not null and ${table.replacesItemId} <> ${table.itemId})`,
+		),
+	],
+)
+
+// What each sale source has deducted so far, per item and location, in base
+// thousandths (usage is positive; the matching movements are negative).
+// Settling a source computes the desired usage from its current lines and the
+// recipes in force at the sale, diffs it against these rows and posts only the
+// difference, so a replay, a revision or a cancellation converges. Written in
+// the same transaction as the movements it explains. `source_type` is
+// `restaurant_order` (web and QR rounds), `pos_order` (a Station sale) or
+// `pos_void` (a line voided as quality waste; `source_id` is the void's id).
+export const invSaleUsage = sqliteTable(
+	'inv_sale_usage',
+	{
+		sourceType: text('source_type', {
+			enum: INV_SALE_SOURCE_TYPE_VALUES,
+		}).notNull(),
+		sourceId: text('source_id').notNull(),
+		itemId: text('item_id')
+			.notNull()
+			.references(() => invItems.id),
+		locationId: text('location_id').notNull(),
+		quantity: integer('quantity').notNull(),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+	},
+	(table) => [
+		primaryKey({
+			columns: [
+				table.sourceType,
+				table.sourceId,
+				table.itemId,
+				table.locationId,
+			],
+		}),
+		index('idx_inv_sale_usage_item_location').on(
+			table.itemId,
+			table.locationId,
+		),
+		check(
+			'chk_inv_sale_usage_source_type',
+			oneOf(table.sourceType, INV_SALE_SOURCE_TYPE_VALUES),
+		),
+		check('chk_inv_sale_usage_quantity', sql`${table.quantity} >= 0`),
+	],
+)
+
+// Sales waiting to be settled, queued in the sale's own transaction (like the
+// loyalty settle queue) and settled after commit. One unsettled row per
+// source; a source queued again after settling gets a new row. Ids and a short
+// machine reason only: `last_error` never holds a name, phone or amount.
+export const invOutbox = sqliteTable(
+	'inv_outbox',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		sourceType: text('source_type', {
+			enum: INV_SALE_SOURCE_TYPE_VALUES,
+		}).notNull(),
+		sourceId: text('source_id').notNull(),
+		locationId: text('location_id').notNull(),
+		queuedAt: integer('queued_at').notNull().default(nowMs),
+		attempts: integer('attempts').notNull().default(0),
+		nextAttemptAt: integer('next_attempt_at').notNull().default(nowMs),
+		lastError: text('last_error'),
+		settledAt: integer('settled_at'),
+	},
+	(table) => [
+		uniqueIndex('uniq_inv_outbox_unsettled')
+			.on(table.sourceType, table.sourceId)
+			.where(sql`${table.settledAt} is null`),
+		index('idx_inv_outbox_due')
+			.on(table.nextAttemptAt)
+			.where(sql`${table.settledAt} is null`),
+		index('idx_inv_outbox_settled').on(table.settledAt),
+		check(
+			'chk_inv_outbox_source_type',
+			oneOf(table.sourceType, INV_SALE_SOURCE_TYPE_VALUES),
+		),
+		check('chk_inv_outbox_attempts', sql`${table.attempts} >= 0`),
+		check(
+			'chk_inv_outbox_error',
+			sql`${table.lastError} is null or length(${table.lastError}) <= 200`,
+		),
+	],
+)
+
 export type InvSettingsRow = typeof invSettings.$inferSelect
 export type InvStorageAreaRow = typeof invStorageAreas.$inferSelect
 export type InvItemRow = typeof invItems.$inferSelect
@@ -7972,3 +8230,7 @@ export type InvAuditLogRow = typeof invAuditLog.$inferSelect
 export type InvOrderRow = typeof invOrders.$inferSelect
 export type InvOrderLineRow = typeof invOrderLines.$inferSelect
 export type InvAlertLogRow = typeof invAlertLog.$inferSelect
+export type InvRecipeRow = typeof invRecipes.$inferSelect
+export type InvRecipeLineRow = typeof invRecipeLines.$inferSelect
+export type InvSaleUsageRow = typeof invSaleUsage.$inferSelect
+export type InvOutboxRow = typeof invOutbox.$inferSelect

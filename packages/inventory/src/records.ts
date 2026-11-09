@@ -61,3 +61,38 @@ export const orderSendChannelSchema = z.enum(ORDER_SEND_CHANNELS)
 export const ORDER_TEXT_LOCALES = ['en', 'ar'] as const
 export type OrderTextLocale = (typeof ORDER_TEXT_LOCALES)[number]
 export const orderTextLocaleSchema = z.enum(ORDER_TEXT_LOCALES)
+
+// ── Phase 3: recipes and sales ──────────────────────────────────────────────
+
+/**
+ * What a recipe belongs to. Menu item, variant and option ids are the control
+ * plane's opaque ids; a made item is an inventory item id.
+ */
+export const RECIPE_OWNER_KINDS = [
+	'menu_item',
+	'variant',
+	'option',
+	'made_item',
+] as const
+export type RecipeOwnerKind = (typeof RECIPE_OWNER_KINDS)[number]
+export const recipeOwnerKindSchema = z.enum(RECIPE_OWNER_KINDS)
+
+/**
+ * How a recipe line acts: `add` puts the ingredient in; `replace` (option
+ * recipes only) swaps another ingredient of the dish for this one.
+ */
+export const RECIPE_LINE_MODES = ['add', 'replace'] as const
+export type RecipeLineMode = (typeof RECIPE_LINE_MODES)[number]
+export const recipeLineModeSchema = z.enum(RECIPE_LINE_MODES)
+
+/**
+ * Where stock used by a sale comes from: a web or QR order, a Station sale, or
+ * one line a till voided as bad food (its dish is waste).
+ */
+export const SALE_SOURCE_TYPES = [
+	'restaurant_order',
+	'pos_order',
+	'pos_void',
+] as const
+export type SaleSourceType = (typeof SALE_SOURCE_TYPES)[number]
+export const saleSourceTypeSchema = z.enum(SALE_SOURCE_TYPES)

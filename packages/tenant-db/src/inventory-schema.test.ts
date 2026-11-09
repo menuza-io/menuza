@@ -43,6 +43,10 @@ const INVENTORY_TABLES = [
 	'inv_movements',
 	'inv_order_lines',
 	'inv_orders',
+	'inv_outbox',
+	'inv_recipe_lines',
+	'inv_recipes',
+	'inv_sale_usage',
 	'inv_settings',
 	'inv_storage_areas',
 	'inv_supplier_products',
@@ -64,6 +68,8 @@ const INVENTORY_TRIGGERS = [
 	'inv_delivery_lines_no_update',
 	'inv_item_units_size_fixed',
 	'inv_items_base_unit_fixed',
+	'inv_items_batch_counted_insert',
+	'inv_items_batch_counted_update',
 	'inv_movements_no_delete',
 	'inv_movements_no_update',
 	'inv_order_lines_draft_delete',
@@ -73,13 +79,23 @@ const INVENTORY_TRIGGERS = [
 	'inv_orders_identity_fixed',
 	'inv_orders_no_delete',
 	'inv_orders_status_forward',
+	'inv_recipe_lines_frozen_delete',
+	'inv_recipe_lines_frozen_update',
+	'inv_recipe_lines_insert_valid',
+	'inv_recipe_lines_no_self',
+	'inv_recipe_lines_no_self_update',
+	'inv_recipe_lines_shape_valid',
+	'inv_recipes_effective_forward',
+	'inv_recipes_facts_fixed',
+	'inv_recipes_made_item_owner',
+	'inv_recipes_no_delete',
 	'inv_waste_no_delete',
 	'inv_waste_no_update',
 	'inv_waste_reversal_matches',
 	'inv_waste_source_valid',
 ]
 
-describe('inventory tenant schema (0033_inventory, 0034_inventory_orders)', () => {
+describe('inventory tenant schema (0033_inventory, 0034_inventory_orders, 0035_inventory_recipes)', () => {
 	const tempDirs: string[] = []
 
 	afterEach(() => {
@@ -820,5 +836,415 @@ describe('inventory tenant schema (0033_inventory, 0034_inventory_orders)', () =
 		})
 		const code = await client.execute('SELECT * FROM pos_pairing_codes')
 		expect(code.rows[0]).toMatchObject({ inventory_enabled: 0 })
+	})
+	async function insertRecipe(
+		client: Client,
+		id: string,
+		options: {
+			ownerKind?: string
+			ownerId?: string
+			version?: number
+			effectiveFrom?: number
+			makesQuantity?: number | null
+			multiplierBp?: number | null
+			typedCostMinor?: number | null
+			typedCostCurrency?: string | null
+			supersededAt?: number | null
+		} = {},
+	) {
+		const ownerKind = options.ownerKind ?? 'menu_item'
+		await client.execute({
+			sql: `INSERT INTO inv_recipes (id, owner_kind, owner_id, version, makes_quantity, multiplier_bp, typed_cost_minor, typed_cost_currency, effective_from, superseded_at, created_by_kind, created_by_id)
+				VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'operator', 'user_1')`,
+			args: [
+				id,
+				ownerKind,
+				options.ownerId ?? 'menu_1',
+				options.version ?? 1,
+				options.makesQuantity ?? (ownerKind === 'made_item' ? 4_000_000 : null),
+				options.multiplierBp ?? null,
+				options.typedCostMinor ?? null,
+				options.typedCostCurrency ?? null,
+				options.effectiveFrom ?? 1000,
+				options.supersededAt ?? null,
+			],
+		})
+	}
+
+	async function insertLine(
+		client: Client,
+		id: string,
+		recipeId: string,
+		itemId: string,
+		options: { mode?: string; replacesItemId?: string; usableBp?: number } = {},
+	) {
+		await client.execute({
+			sql: `INSERT INTO inv_recipe_lines (id, recipe_id, item_id, quantity, usable_bp, mode, replaces_item_id)
+				VALUES (?, ?, ?, 180000, ?, ?, ?)`,
+			args: [
+				id,
+				recipeId,
+				itemId,
+				options.usableBp ?? 8500,
+				options.mode ?? 'add',
+				options.replacesItemId ?? null,
+			],
+		})
+	}
+
+	it('versions recipes: one current per owner, never deleted, only superseded once', async () => {
+		const { client } = await openMigratedDb()
+		await insertItem(client, 'chicken')
+		await insertRecipe(client, 'r1')
+		await insertLine(client, 'l1', 'r1', 'chicken')
+		// A second current recipe for the same owner is refused.
+		await expectRejectsWith(
+			insertRecipe(client, 'r2', { version: 2, effectiveFrom: 2000 }),
+			'UNIQUE constraint failed: inv_recipes.owner_kind',
+		)
+		await client.execute(
+			'UPDATE inv_recipes SET superseded_at = 2000 WHERE id = ?',
+			['r1'] as never,
+		)
+		await insertRecipe(client, 'r2', { version: 2, effectiveFrom: 2000 })
+		// Versions are unique and cannot start before the one they follow.
+		await expectRejectsWith(
+			insertRecipe(client, 'r3', {
+				version: 2,
+				effectiveFrom: 3000,
+				supersededAt: 3000,
+			}),
+			'UNIQUE constraint failed: inv_recipes.owner_kind',
+		)
+		await expectRejectsWith(
+			insertRecipe(client, 'r4', {
+				version: 3,
+				effectiveFrom: 1500,
+				supersededAt: 3000,
+			}),
+			'inventory recipe versions only move forward',
+		)
+		// Nothing else changes, and nothing is deleted.
+		await expectRejectsWith(
+			client.execute("UPDATE inv_recipes SET method = 'x' WHERE id = 'r2'"),
+			'inv_recipes is append-only',
+		)
+		await expectRejectsWith(
+			client.execute(
+				"UPDATE inv_recipes SET effective_from = 5 WHERE id = 'r1'",
+			),
+			'inv_recipes is append-only',
+		)
+		await expectRejectsWith(
+			client.execute(
+				"UPDATE inv_recipes SET superseded_at = NULL WHERE id = 'r1'",
+			),
+			'inv_recipes is append-only',
+		)
+		await expectRejectsWith(
+			client.execute("DELETE FROM inv_recipes WHERE id = 'r2'"),
+			'inv_recipes is append-only',
+		)
+		// Other owners are independent.
+		await insertRecipe(client, 'o1', { ownerId: 'menu_2' })
+		await insertRecipe(client, 'v1', {
+			ownerKind: 'variant',
+			ownerId: 'menu_1',
+		})
+	})
+
+	it('checks the recipe shape: makes quantity, multiplier and typed cost', async () => {
+		const { client } = await openMigratedDb()
+		await insertItem(client, 'sauce')
+		await client.execute(
+			"UPDATE inv_items SET kind = 'made' WHERE id = 'sauce'",
+		)
+		await expectRejectsWith(
+			insertRecipe(client, 'bad1', {
+				ownerKind: 'made_item',
+				ownerId: 'sauce',
+				makesQuantity: 0,
+			}),
+			'chk_inv_recipes_makes',
+		)
+		await expectRejectsWith(
+			insertRecipe(client, 'bad2', { makesQuantity: 1000 }),
+			'chk_inv_recipes_makes',
+		)
+		await expectRejectsWith(
+			insertRecipe(client, 'bad3', { multiplierBp: 15000 }),
+			'chk_inv_recipes_multiplier',
+		)
+		await expectRejectsWith(
+			insertRecipe(client, 'bad4', {
+				ownerKind: 'variant',
+				multiplierBp: 0,
+			}),
+			'chk_inv_recipes_multiplier',
+		)
+		await expectRejectsWith(
+			insertRecipe(client, 'bad5', { typedCostMinor: 650 }),
+			'chk_inv_recipes_typed_cost',
+		)
+		await expectRejectsWith(
+			insertRecipe(client, 'bad6', {
+				ownerKind: 'made_item',
+				ownerId: 'sauce',
+				typedCostMinor: 650,
+				typedCostCurrency: 'SAR',
+			}),
+			'chk_inv_recipes_typed_cost',
+		)
+		await insertRecipe(client, 'ok1', {
+			ownerKind: 'made_item',
+			ownerId: 'sauce',
+		})
+		await insertRecipe(client, 'ok2', {
+			ownerKind: 'variant',
+			ownerId: 'var_large',
+			multiplierBp: 15000,
+		})
+		await insertRecipe(client, 'ok3', {
+			ownerId: 'menu_cola',
+			typedCostMinor: 150,
+			typedCostCurrency: 'SAR',
+		})
+	})
+
+	it('needs a made item for a made item recipe', async () => {
+		const { client } = await openMigratedDb()
+		await insertItem(client, 'bought_1')
+		await expectRejectsWith(
+			insertRecipe(client, 'm1', {
+				ownerKind: 'made_item',
+				ownerId: 'bought_1',
+			}),
+			'a made item recipe needs a made item',
+		)
+		await expectRejectsWith(
+			insertRecipe(client, 'm2', {
+				ownerKind: 'made_item',
+				ownerId: 'missing',
+			}),
+			'a made item recipe needs a made item',
+		)
+	})
+
+	it('checks recipe lines and freezes them once the recipe has a successor', async () => {
+		const { client } = await openMigratedDb()
+		for (const id of ['chicken', 'pita', 'milk', 'oat'])
+			await insertItem(client, id)
+		await insertRecipe(client, 'r1')
+		await insertLine(client, 'l1', 'r1', 'chicken')
+		await insertLine(client, 'l2', 'r1', 'pita', { usableBp: 10000 })
+		// One line per ingredient.
+		await expectRejectsWith(
+			insertLine(client, 'l3', 'r1', 'pita'),
+			'UNIQUE constraint failed: inv_recipe_lines.recipe_id',
+		)
+		// Amount and mode checks.
+		await expectRejectsWith(
+			client.execute(
+				"INSERT INTO inv_recipe_lines (id, recipe_id, item_id, quantity) VALUES ('q0', 'r1', 'milk', 0)",
+			),
+			'chk_inv_recipe_lines_amounts',
+		)
+		await expectRejectsWith(
+			insertLine(client, 'u0', 'r1', 'milk', { usableBp: 0 }),
+			'chk_inv_recipe_lines_amounts',
+		)
+		await expectRejectsWith(
+			insertLine(client, 'u1', 'r1', 'milk', { usableBp: 10001 }),
+			'chk_inv_recipe_lines_amounts',
+		)
+		await insertRecipe(client, 'opt1', {
+			ownerKind: 'option',
+			ownerId: 'opt_oat',
+		})
+		await expectRejectsWith(
+			insertLine(client, 'm0', 'opt1', 'milk', { mode: 'replace' }),
+			'chk_inv_recipe_lines_replaces',
+		)
+		await expectRejectsWith(
+			insertLine(client, 'm1', 'r1', 'milk', { replacesItemId: 'oat' }),
+			'chk_inv_recipe_lines_replaces',
+		)
+		// Replace is for options only.
+		await expectRejectsWith(
+			insertLine(client, 'm2', 'r1', 'oat', {
+				mode: 'replace',
+				replacesItemId: 'milk',
+			}),
+			'inventory recipe line does not fit its recipe',
+		)
+		await expectRejectsWith(
+			insertLine(client, 'm3', 'opt1', 'oat', {
+				mode: 'replace',
+				replacesItemId: 'oat',
+			}),
+			'chk_inv_recipe_lines_replaces',
+		)
+		await insertLine(client, 'm4', 'opt1', 'oat', {
+			mode: 'replace',
+			replacesItemId: 'milk',
+		})
+		// Editable while current; frozen once superseded.
+		await client.execute(
+			"UPDATE inv_recipe_lines SET quantity = 200000 WHERE id = 'l1'",
+		)
+		await client.execute(
+			"UPDATE inv_recipes SET superseded_at = 2000 WHERE id = 'r1'",
+		)
+		await expectRejectsWith(
+			client.execute(
+				"UPDATE inv_recipe_lines SET quantity = 1 WHERE id = 'l1'",
+			),
+			'inventory recipe lines are frozen',
+		)
+		await expectRejectsWith(
+			client.execute("DELETE FROM inv_recipe_lines WHERE id = 'l1'"),
+			'inventory recipe lines are frozen',
+		)
+		await expectRejectsWith(
+			insertLine(client, 'l9', 'r1', 'milk'),
+			'inventory recipe lines are frozen',
+		)
+		await expectRejectsWith(
+			insertLine(client, 'l10', 'nope', 'milk'),
+			'inventory recipe lines are frozen',
+		)
+	})
+
+	it('keeps typed-cost recipes and size multipliers free of lines, and refuses a made item as its own ingredient', async () => {
+		const { client } = await openMigratedDb()
+		await insertItem(client, 'sauce')
+		await insertItem(client, 'garlic')
+		await client.execute(
+			"UPDATE inv_items SET kind = 'made' WHERE id = 'sauce'",
+		)
+		await insertRecipe(client, 'typed', {
+			ownerId: 'menu_cola',
+			typedCostMinor: 150,
+			typedCostCurrency: 'SAR',
+		})
+		await expectRejectsWith(
+			insertLine(client, 'a', 'typed', 'garlic'),
+			'inventory recipe line does not fit its recipe',
+		)
+		await insertRecipe(client, 'size', {
+			ownerKind: 'variant',
+			ownerId: 'var_large',
+			multiplierBp: 15000,
+		})
+		await expectRejectsWith(
+			insertLine(client, 'b', 'size', 'garlic'),
+			'inventory recipe line does not fit its recipe',
+		)
+		await insertRecipe(client, 'own', {
+			ownerKind: 'variant',
+			ownerId: 'var_small',
+		})
+		await insertLine(client, 'c', 'own', 'garlic')
+		await insertRecipe(client, 'made', {
+			ownerKind: 'made_item',
+			ownerId: 'sauce',
+		})
+		await expectRejectsWith(
+			insertLine(client, 'd', 'made', 'sauce'),
+			'a made item cannot be its own ingredient',
+		)
+		await insertLine(client, 'e', 'made', 'garlic')
+		await expectRejectsWith(
+			client.execute(
+				"UPDATE inv_recipe_lines SET item_id = 'sauce' WHERE id = 'e'",
+			),
+			'a made item cannot be its own ingredient',
+		)
+	})
+
+	it('adds the batch and auto sold out flags, off by default, batch only for made items', async () => {
+		const { client } = await openMigratedDb()
+		await insertItem(client, 'flour')
+		const row = await client.execute(
+			"SELECT * FROM inv_items WHERE id = 'flour'",
+		)
+		expect(row.rows[0]).toMatchObject({ batch_counted: 0, auto_sold_out: 0 })
+		await client.execute(
+			"UPDATE inv_items SET auto_sold_out = 1 WHERE id = 'flour'",
+		)
+		await expectRejectsWith(
+			client.execute(
+				"UPDATE inv_items SET batch_counted = 1 WHERE id = 'flour'",
+			),
+			'only a made item can be counted in batches',
+		)
+		await expectRejectsWith(
+			client.execute(
+				"INSERT INTO inv_items (id, name, base_unit, batch_counted) VALUES ('x', 'X', 'g', 1)",
+			),
+			'only a made item can be counted in batches',
+		)
+		await client.execute(
+			"INSERT INTO inv_items (id, name, base_unit, kind, batch_counted) VALUES ('dough', 'Dough', 'g', 'made', 1)",
+		)
+		await expectRejectsWith(
+			client.execute("UPDATE inv_items SET kind = 'bought' WHERE id = 'dough'"),
+			'only a made item can be counted in batches',
+		)
+	})
+
+	it('keeps one deducted quantity per sale, item and location, and one unsettled outbox row per source', async () => {
+		const { client } = await openMigratedDb()
+		await insertItem(client, 'chicken')
+		const usage = (type: string, location = 'main', quantity = 5000) =>
+			client.execute({
+				sql: 'INSERT INTO inv_sale_usage (source_type, source_id, item_id, location_id, quantity) VALUES (?, ?, ?, ?, ?)',
+				args: [type, 'o1', 'chicken', location, quantity],
+			})
+		await usage('restaurant_order')
+		await expectRejectsWith(usage('restaurant_order'), 'UNIQUE')
+		await usage('restaurant_order', 'branch_2')
+		await usage('pos_order')
+		await expectRejectsWith(
+			usage('refund' as never),
+			'chk_inv_sale_usage_source_type',
+		)
+		await expectRejectsWith(
+			usage('pos_void', 'main', -1),
+			'chk_inv_sale_usage_quantity',
+		)
+		// Usage can be rewritten (it is the applied state, not history).
+		await client.execute(
+			"UPDATE inv_sale_usage SET quantity = 0 WHERE source_type = 'pos_order'",
+		)
+
+		const queue = (type: string, id = 'o1') =>
+			client.execute({
+				sql: "INSERT INTO inv_outbox (id, source_type, source_id, location_id) VALUES (lower(hex(randomblob(8))), ?, ?, 'main')",
+				args: [type, id],
+			})
+		await queue('restaurant_order')
+		await expectRejectsWith(
+			queue('restaurant_order'),
+			'UNIQUE constraint failed: inv_outbox.source_type',
+		)
+		await queue('pos_order')
+		await queue('restaurant_order', 'o2')
+		await client.execute(
+			"UPDATE inv_outbox SET settled_at = 5 WHERE source_type = 'restaurant_order' AND source_id = 'o1'",
+		)
+		await queue('restaurant_order')
+		await expectRejectsWith(
+			client.execute(
+				"UPDATE inv_outbox SET last_error = printf('%0201d', 1) WHERE source_id = 'o2'",
+			),
+			'chk_inv_outbox_error',
+		)
+		await expectRejectsWith(
+			client.execute(
+				"UPDATE inv_outbox SET attempts = -1 WHERE source_id = 'o2'",
+			),
+			'chk_inv_outbox_attempts',
+		)
 	})
 })

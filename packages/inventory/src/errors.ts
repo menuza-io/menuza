@@ -28,6 +28,11 @@ export const INVENTORY_ERROR_CODES = [
 	'prices_confirmed',
 	'upload_not_configured',
 	'email_failed',
+	// Phase 3 (additive).
+	'recipe_cycle',
+	'recipe_too_deep',
+	'recipe_empty',
+	'not_a_made_item',
 ] as const
 export type InventoryErrorCode = (typeof INVENTORY_ERROR_CODES)[number]
 
@@ -43,4 +48,9 @@ export const INVENTORY_LIMITS = {
 	linesPerOrder: 200,
 	openOrdersPerLocation: 100,
 	levelsPerBatch: 200,
+	// Phase 3 (additive).
+	linesPerRecipe: 60,
+	costRefsPerRequest: 200,
+	/** Made items inside made items, at most (also `MAX_RECIPE_DEPTH`). */
+	recipeDepth: 8,
 } as const

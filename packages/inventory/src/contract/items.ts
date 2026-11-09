@@ -118,6 +118,10 @@ export const updateItemSchema = z
 		category: inventoryCategorySchema.optional(),
 		baseUnit: inventoryBaseUnitSchema.optional(),
 		notes: inventoryNoteSchema.nullable().optional(),
+		/** Made items only (`invalid_request` otherwise): sales use the made item itself, not its ingredients. */
+		batchCounted: z.boolean().optional(),
+		/** "Mark dishes sold out when this runs out." */
+		autoSoldOut: z.boolean().optional(),
 	})
 	.strict()
 
@@ -202,6 +206,10 @@ export const stockItemSchema = z.object({
 	baseUnit: inventoryBaseUnitSchema,
 	archived: z.boolean(),
 	version: z.number().int(),
+	/** "We make this in batches and count it" (made items). Phase 3; absent from older regions. */
+	batchCounted: z.boolean().optional(),
+	/** "Mark dishes sold out when this runs out." Phase 3; absent from older regions. */
+	autoSoldOut: z.boolean().optional(),
 	/** On hand at the requested location, base thousandths (may be negative). */
 	onHand: z.number().int(),
 	countUnit: unitRefSchema.nullable(),
