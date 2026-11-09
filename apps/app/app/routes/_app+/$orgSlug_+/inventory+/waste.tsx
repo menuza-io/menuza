@@ -11,12 +11,6 @@ import {
 import { Alert, AlertDescription } from '@repo/ui/alert'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
-import {
-	ChartContainer,
-	ChartTooltip,
-	ChartTooltipContent,
-	type ChartConfig,
-} from '@repo/ui/chart'
 import { Frame } from '@repo/ui/frame'
 import { Input } from '@repo/ui/input'
 import {
@@ -43,7 +37,6 @@ import {
 } from '@repo/ui/workspace'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLoaderData, useSearchParams } from 'react-router'
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts'
 import { toast } from 'sonner'
 import { EmptyState } from '#app/components/empty-state.tsx'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
@@ -52,6 +45,7 @@ import {
 	useNotifyInventoryChanged,
 	useQuantityFormat,
 } from '#app/components/inventory/inventory-prefs.tsx'
+import { WasteBars } from '#app/components/inventory/waste-bars.tsx'
 import { FilterSelect } from '#app/components/staff/controls.tsx'
 import {
 	useInventoryClient,
@@ -533,97 +527,6 @@ function formatDay(date: string, locale: string): string {
 	]
 	return new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(
 		new Date(year, month - 1, day),
-	)
-}
-
-type BarRow = {
-	key: string
-	label: string
-	count: number
-	valueMinor?: number
-}
-
-/** A horizontal bar per row: money when the member may see it, else counts. */
-function WasteBars({
-	rows,
-	currency,
-	testId,
-}: {
-	rows: readonly BarRow[]
-	currency: string
-	testId: string
-}) {
-	const { t, i18n } = useLingui()
-	const withMoney =
-		rows.length > 0 && rows.every((row) => row.valueMinor !== undefined)
-	const data = rows
-		.map((row) => ({
-			key: row.key,
-			label: row.label,
-			value: withMoney ? (row.valueMinor ?? 0) / 100 : row.count,
-		}))
-		.sort((a, b) => b.value - a.value)
-	const config = {
-		value: {
-			label: withMoney ? t`Cost` : t`Times`,
-			color: 'var(--chart-1)',
-		},
-	} satisfies ChartConfig
-	const height = Math.min(Math.max(data.length * 36 + 24, 96), 400)
-	const heightClass =
-		height <= 96
-			? 'h-24'
-			: height <= 160
-				? 'h-40'
-				: height <= 240
-					? 'h-60'
-					: height <= 320
-						? 'h-80'
-						: 'h-96'
-	return (
-		<ChartContainer
-			config={config}
-			className={`aspect-auto w-full ${heightClass}`}
-			data-testid={testId}
-		>
-			<BarChart
-				accessibilityLayer
-				data={data}
-				layout="vertical"
-				margin={{ left: 8, right: 16 }}
-			>
-				<CartesianGrid horizontal={false} />
-				<YAxis
-					dataKey="label"
-					type="category"
-					tickLine={false}
-					axisLine={false}
-					width={110}
-				/>
-				<XAxis type="number" hide />
-				<ChartTooltip
-					cursor={false}
-					content={
-						<ChartTooltipContent
-							hideLabel
-							formatter={(value, _name, item) => (
-								<span className="flex w-full items-center justify-between gap-4">
-									<span className="text-muted-foreground">
-										{(item.payload as { label: string }).label}
-									</span>
-									<bdi dir="ltr" className="font-medium tabular-nums">
-										{withMoney
-											? formatMoney(Number(value) * 100, currency, i18n.locale)
-											: String(value)}
-									</bdi>
-								</span>
-							)}
-						/>
-					}
-				/>
-				<Bar dataKey="value" fill="var(--color-value)" radius={4} />
-			</BarChart>
-		</ChartContainer>
 	)
 }
 

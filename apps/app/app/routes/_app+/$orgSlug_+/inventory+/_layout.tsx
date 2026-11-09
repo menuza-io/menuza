@@ -6,6 +6,7 @@ import {
 import {
 	Outlet,
 	useLoaderData,
+	useLocation,
 	useOutletContext,
 	useSearchParams,
 } from 'react-router'
@@ -24,6 +25,7 @@ import { loadUserName } from '#app/utils/inventory/actors.server.ts'
 import {
 	computeInventoryNavAccess,
 	type InventoryNavAccess,
+	isInventoryFullPage,
 } from '#app/utils/inventory/nav.ts'
 import {
 	displayLocationName,
@@ -124,6 +126,9 @@ export default function InventoryLayout() {
 		userName,
 	} = useLoaderData<typeof loader>()
 	const [searchParams, setSearchParams] = useSearchParams()
+	const { pathname } = useLocation()
+	// Counting, a count's review and a new delivery bring their own header.
+	const fullPage = isInventoryFullPage(pathname, orgSlug)
 
 	const requested = searchParams.get('locationId')
 	const activeLocationId =
@@ -153,19 +158,23 @@ export default function InventoryLayout() {
 		<InventoryClientProvider orgSlug={orgSlug}>
 			<InventoryPrefsProvider dataRegion={dataRegion}>
 				<InventoryChangeProvider>
-					<InventoryChrome
-						orgSlug={orgSlug}
-						nav={nav}
-						locations={locations}
-						selectedLocationId={activeLocationId}
-						onLocationChange={onLocationChange}
-						canLogWaste={canEdit}
-						canSeeCost={canSeeCost}
-						currency={currency}
-						userName={userName}
-					>
+					{fullPage ? (
 						<Outlet context={context} />
-					</InventoryChrome>
+					) : (
+						<InventoryChrome
+							orgSlug={orgSlug}
+							nav={nav}
+							locations={locations}
+							selectedLocationId={activeLocationId}
+							onLocationChange={onLocationChange}
+							canLogWaste={canEdit}
+							canSeeCost={canSeeCost}
+							currency={currency}
+							userName={userName}
+						>
+							<Outlet context={context} />
+						</InventoryChrome>
+					)}
 				</InventoryChangeProvider>
 			</InventoryPrefsProvider>
 		</InventoryClientProvider>

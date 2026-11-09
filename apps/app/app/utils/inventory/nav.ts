@@ -70,3 +70,41 @@ export function inventoryTabFromPath(
 		? (segment as InventoryTab)
 		: null
 }
+
+/**
+ * Pages that take the whole screen instead of the Inventory header and tab
+ * bar: counting a count (`/counts/<id>`), its review (`/counts/<id>/review`)
+ * and recording a delivery (`/purchasing/deliveries/new`). They carry their
+ * own sticky header, like the menu editors.
+ */
+export function isInventoryFullPage(
+	pathname: string,
+	orgSlug: string,
+): boolean {
+	const base = `/${orgSlug}/inventory/`
+	if (!pathname.startsWith(base)) return false
+	const parts = pathname
+		.slice(base.length)
+		.split('/')
+		.filter((part) => part !== '')
+	if (parts[0] === 'counts' && parts.length >= 2 && parts.length <= 3) {
+		return parts.length === 2 || parts[2] === 'review'
+	}
+	return (
+		parts[0] === 'purchasing' &&
+		parts.length === 3 &&
+		parts[1] === 'deliveries' &&
+		parts[2] === 'new'
+	)
+}
+
+export function inventoryCountPath(orgSlug: string, countId: string): string {
+	return `/${orgSlug}/inventory/counts/${encodeURIComponent(countId)}`
+}
+
+export function inventoryCountReviewPath(
+	orgSlug: string,
+	countId: string,
+): string {
+	return `${inventoryCountPath(orgSlug, countId)}/review`
+}

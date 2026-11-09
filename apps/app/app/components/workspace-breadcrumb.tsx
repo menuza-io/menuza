@@ -96,6 +96,9 @@ const SEGMENT_LABELS: Record<string, ReactNode> = {
 	areas: <Trans>Storage areas</Trans>,
 	lists: <Trans>Count lists</Trans>,
 	'add-many': <Trans>Add many items</Trans>,
+	review: <Trans>Review</Trans>,
+	deliveries: <Trans>Deliveries</Trans>,
+	suppliers: <Trans>Suppliers</Trans>,
 }
 
 // What a record id under each collection is called when its route gives no name.
@@ -116,11 +119,19 @@ const RECORD_LABELS: Record<string, ReactNode> = {
 	timesheets: <Trans>Time card</Trans>,
 	experiences: <Trans>Experience</Trans>,
 	stock: <Trans>Item</Trans>,
+	counts: <Trans>Count</Trans>,
+	deliveries: <Trans>Delivery</Trans>,
+	suppliers: <Trans>Supplier</Trans>,
 }
 
 // Path prefixes with no page of their own. `notes/status` would be read as a
 // note id and show "note not found", so its crumb is text, not a link.
-const UNLINKED_PREFIXES = new Set(['notes/status'])
+const UNLINKED_PREFIXES = new Set([
+	'notes/status',
+	// Sheets of the Purchasing tab: the list lives on the tab itself.
+	'inventory/purchasing/suppliers',
+	'inventory/purchasing/deliveries',
+])
 
 function isWordSegment(segment: string) {
 	return /^[a-z]+(?:-[a-z]+)*$/.test(segment)

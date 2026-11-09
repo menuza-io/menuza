@@ -91,10 +91,13 @@ msgid "(opens in a new tab)"
 msgstr "(opens in a new tab)"
 
 #: app/components/inventory/adjust-stock-dialog.tsx:300
+#: app/components/inventory/count-review-screen.tsx:557
 #: app/components/inventory/item-form.tsx:393
 #: app/components/inventory/item-form.tsx:523
 #: app/components/inventory/item-form.tsx:567
 #: app/components/inventory/log-waste-dialog.tsx:400
+#: app/components/inventory/supplier-form.tsx:261
+#: app/components/inventory/supplier-form.tsx:300
 #: app/components/reservations/localized-fields.tsx:244
 #: app/components/staff/controls.tsx:50
 #: app/components/staff/controls.tsx:90
@@ -231,6 +234,17 @@ msgstr "{0, plural, one {# day is ready to import.} other {# days are ready to i
 msgid "{0, plural, one {# day} other {# days}}"
 msgstr "{0, plural, one {# day} other {# days}}"
 
+#. placeholder {0}: item.count
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:568
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:578
+msgid "{0, plural, one {# delivery is unpaid.} other {# deliveries are unpaid.}}"
+msgstr "{0, plural, one {# delivery is unpaid.} other {# deliveries are unpaid.}}"
+
+#. placeholder {0}: snapshot.refused.length
+#: app/components/inventory/counting-screen.tsx:448
+msgid "{0, plural, one {# entry could not be saved and was left out. Check that item and enter it again.} other {# entries could not be saved and were left out. Check those items and enter them again.}}"
+msgstr "{0, plural, one {# entry could not be saved and was left out. Check that item and enter it again.} other {# entries could not be saved and were left out. Check those items and enter them again.}}"
+
 #. placeholder {0}: conflict.partySize
 #. placeholder {0}: h.partySize
 #. placeholder {0}: notice.partySize
@@ -257,8 +271,21 @@ msgstr "{0, plural, one {# image} other {# images}}"
 msgid "{0, plural, one {# is already on the schedule and is skipped.} other {# are already on the schedule and are skipped.}}"
 msgstr "{0, plural, one {# is already on the schedule and is skipped.} other {# are already on the schedule and are skipped.}}"
 
+#. placeholder {0}: progress.total - progress.counted
+#: app/components/inventory/counting-screen.tsx:579
+msgid "{0, plural, one {# item has no count yet. You can send now and choose in the review whether it stays as it was or is none left.} other {# items have no count yet. You can send now and choose in the review whether each stays as it was or is none left.}}"
+msgstr "{0, plural, one {# item has no count yet. You can send now and choose in the review whether it stays as it was or is none left.} other {# items have no count yet. You can send now and choose in the review whether each stays as it was or is none left.}}"
+
+#. placeholder {0}: grouped.matching
+#: app/components/inventory/count-review-screen.tsx:589
+msgid "{0, plural, one {# item matches and needs no review.} other {# items match and need no review.}}"
+msgstr "{0, plural, one {# item matches and needs no review.} other {# items match and need no review.}}"
+
 #. placeholder {0}: area.itemCount
+#. placeholder {0}: count.itemsCounted
 #. placeholder {0}: list.itemIds.length
+#: app/components/inventory/start-count-dialog.tsx:211
+#: app/routes/_app+/$orgSlug_+/inventory+/counts.tsx:372
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.areas.tsx:279
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.lists.tsx:175
 msgid "{0, plural, one {# item} other {# items}}"
@@ -268,6 +295,11 @@ msgstr "{0, plural, one {# item} other {# items}}"
 #: app/components/staff/labor/sales-import-dialog.tsx:184
 msgid "{0, plural, one {# line was skipped.} other {# lines were skipped.}}"
 msgstr "{0, plural, one {# line was skipped.} other {# lines were skipped.}}"
+
+#. placeholder {0}: delivery.lineCount
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:234
+msgid "{0, plural, one {# line} other {# lines}}"
+msgstr "{0, plural, one {# line} other {# lines}}"
 
 #. placeholder {0}: shift.unpaidBreakMinutes
 #: app/components/my-schedule/shifts-view.tsx:218
@@ -463,6 +495,11 @@ msgstr "{0, plural, one {Add # item} other {Add # items}}"
 msgid "{0, plural, one {Added # table} other {Added # tables}}"
 msgstr "{0, plural, one {Added # table} other {Added # tables}}"
 
+#. placeholder {0}: item.more
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:495
+msgid "{0, plural, one {And # more item is low.} other {And # more items are low.}}"
+msgstr "{0, plural, one {And # more item is low.} other {And # more items are low.}}"
+
 #. placeholder {0}: parsed.errors.length - SHOWN_ERRORS
 #: app/components/staff/labor/sales-import-dialog.tsx:223
 msgid "{0, plural, one {and # more line} other {and # more lines}}"
@@ -517,6 +554,11 @@ msgstr "{0, plural, one {Lock # approved card} other {Lock # approved cards}}"
 #: app/components/staff/timesheets/timesheets-page.tsx:910
 msgid "{0, plural, one {Lock # card?} other {Lock # cards?}}"
 msgstr "{0, plural, one {Lock # card?} other {Lock # cards?}}"
+
+#. placeholder {0}: supplier.unpaidCount
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:133
+msgid "{0, plural, one {on # unpaid delivery.} other {on # unpaid deliveries.}}"
+msgstr "{0, plural, one {on # unpaid delivery.} other {on # unpaid deliveries.}}"
 
 #. placeholder {0}: 2
 #: app/components/inventory/inventory-prefs.tsx:86
@@ -655,6 +697,7 @@ msgid "{addedCount} added, {existingCount} already on your team, {notAddedCount}
 msgstr "{addedCount} added, {existingCount} already on your team, {notAddedCount} not added."
 
 #: app/components/inventory/item-form.tsx:210
+#: app/components/inventory/supplier-form.tsx:161
 msgid "{addedName} added."
 msgstr "{addedName} added."
 
@@ -1114,6 +1157,10 @@ msgstr "{dayName} opens"
 msgid "{dayName}: {people} people scheduled, {open} open shifts. Open this day."
 msgstr "{dayName}: {people} people scheduled, {open} open shifts. Open this day."
 
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:334
+msgid "{days, plural, one {Last count # day ago} other {Last count # days ago}}"
+msgstr "{days, plural, one {Last count # day ago} other {Last count # days ago}}"
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:814
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:826
 msgid "{days} days"
@@ -1453,6 +1500,10 @@ msgstr ""
 msgid "{minutes}m ago"
 msgstr ""
 
+#: app/components/inventory/record-delivery-screen.tsx:304
+msgid "{moved, plural, one {Prices updated for # item} other {Prices updated for # items}}"
+msgstr "{moved, plural, one {Prices updated for # item} other {Prices updated for # items}}"
+
 #: app/utils/reservations/alert-copy.ts:61
 msgid "{n, plural, one {# booking has a failed payment} other {# bookings have a failed payment}}"
 msgstr "{n, plural, one {# booking has a failed payment} other {# bookings have a failed payment}}"
@@ -1526,6 +1577,7 @@ msgid "{name} added."
 msgstr "{name} added."
 
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:224
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:70
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.areas.tsx:66
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.lists.tsx:66
 msgid "{name} archived."
@@ -1571,6 +1623,10 @@ msgstr "{name} paused."
 msgid "{name} removed"
 msgstr "{name} removed"
 
+#: app/components/inventory/supplier-products.tsx:84
+msgid "{name} removed from this supplier."
+msgstr "{name} removed from this supplier."
+
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:228
 msgid "{name} restored. It is paused."
 msgstr "{name} restored. It is paused."
@@ -1615,6 +1671,10 @@ msgstr "{name} was put back."
 msgid "{name} was rehired. Add their workplaces again."
 msgstr "{name} was rehired. Add their workplaces again."
 
+#: app/components/inventory/counting-screen.tsx:767
+msgid "{name}, amount in {unitName}"
+msgstr "{name}, amount in {unitName}"
+
 #: app/utils/reservations/setup-progress.ts:142
 msgid "{named} ends before it starts."
 msgstr "{named} ends before it starts."
@@ -1630,6 +1690,10 @@ msgstr "{named} has its last seating before it opens."
 #: app/utils/reservations/setup-progress.ts:146
 msgid "{named} runs longer than 24 hours."
 msgstr "{named} runs longer than 24 hours."
+
+#: app/components/inventory/count-review-screen.tsx:352
+msgid "{needLook, plural, one {# item needs a look.} other {# items need a look.}}"
+msgstr "{needLook, plural, one {# item needs a look.} other {# items need a look.}}"
 
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1129
 msgid "{notFoundCount} missing URLs logged"
@@ -1883,6 +1947,7 @@ msgid "{runsCount} runs"
 msgstr ""
 
 #: app/components/inventory/item-form.tsx:239
+#: app/components/inventory/supplier-form.tsx:168
 msgid "{savedName} saved."
 msgstr "{savedName} saved."
 
@@ -2011,6 +2076,10 @@ msgstr "{times}x points on the whole order"
 msgid "{told, plural, one {# person told} other {# people told}}"
 msgstr "{told, plural, one {# person told} other {# people told}}"
 
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:435
+msgid "{toOrder, plural, one {# item} other {# items}}"
+msgstr "{toOrder, plural, one {# item} other {# items}}"
+
 #: app/utils/discounts/labels.ts:579
 msgid "{total, plural, one {# code in all.} other {# codes in all.}}"
 msgstr "{total, plural, one {# code in all.} other {# codes in all.}}"
@@ -2090,6 +2159,10 @@ msgstr "{units, plural, one {Meal deal of # item} other {Meal deal of # items}}"
 msgid "{units, plural, one {Up to # item} other {Up to # items}}"
 msgstr "{units, plural, one {Up to # item} other {Up to # items}}"
 
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.tsx:254
+msgid "{unpaidCount, plural, one {on # unpaid delivery} other {on # unpaid deliveries}}"
+msgstr "{unpaidCount, plural, one {on # unpaid delivery} other {on # unpaid deliveries}}"
+
 #: app/components/chat/chat-view.tsx:374
 msgid "{unread} unread"
 msgstr "{unread} unread"
@@ -2105,6 +2178,10 @@ msgstr "{used} of {limit} characters"
 #: app/components/settings/cards/organization/verified-domain-card.tsx:110
 msgid "{verifiedDomain} is verified."
 msgstr "{verifiedDomain} is verified."
+
+#: app/components/inventory/counting-screen.tsx:424
+msgid "{waiting, plural, one {# entry waiting to send} other {# entries waiting to send}}"
+msgstr "{waiting, plural, one {# entry waiting to send} other {# entries waiting to send}}"
 
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:568
 msgid "{warningCount} warnings to review"
@@ -2230,17 +2307,80 @@ msgstr "<0>{archiveName}</0> is removed from your walk. Items kept only there mo
 msgid "<0>{archiveName}</0> is removed. The items stay in Stock."
 msgstr "<0>{archiveName}</0> is removed. The items stay in Stock."
 
+#: app/components/inventory/count-review-screen.tsx:789
+#: app/routes/_app+/$orgSlug_+/inventory+/counts.tsx:442
+msgid "<0>{counted}</0> of <1>{total}</1>"
+msgstr "<0>{counted}</0> of <1>{total}</1>"
+
+#: app/components/inventory/count-review-screen.tsx:814
+msgid "<0>{differenceText}</0> missing"
+msgstr "<0>{differenceText}</0> missing"
+
+#: app/components/inventory/count-review-screen.tsx:818
+msgid "<0>{differenceText}</0> more than expected"
+msgstr "<0>{differenceText}</0> more than expected"
+
+#: app/components/inventory/counting-screen.tsx:364
+msgid "<0>{doneCount}</0> of <1>{totalCount}</1> counted"
+msgstr "<0>{doneCount}</0> of <1>{totalCount}</1> counted"
+
+#: app/components/inventory/count-review-screen.tsx:835
+msgid "<0>{foodBpText}</0> since your last count, above your target of <1>{targetText}</1>."
+msgstr "<0>{foodBpText}</0> since your last count, above your target of <1>{targetText}</1>."
+
+#: app/components/inventory/count-review-screen.tsx:843
+msgid "<0>{foodBpText}</0> since your last count, within your target of <1>{targetText}</1>."
+msgstr "<0>{foodBpText}</0> since your last count, within your target of <1>{targetText}</1>."
+
+#: app/components/inventory/count-review-screen.tsx:711
+#: app/components/inventory/count-review-screen.tsx:726
+msgid "<0>{gap}</0> missing"
+msgstr "<0>{gap}</0> missing"
+
+#: app/components/inventory/count-review-screen.tsx:715
+#: app/components/inventory/count-review-screen.tsx:730
+msgid "<0>{gap}</0> more than expected"
+msgstr "<0>{gap}</0> more than expected"
+
+#: app/components/inventory/record-delivery-screen.tsx:683
+msgid "<0>{gapText}</0> apart from the invoice. Check the lines."
+msgstr "<0>{gapText}</0> apart from the invoice. Check the lines."
+
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:655
 msgid "<0>{itemName}</0> leaves your lists and counts. Its history is kept."
 msgstr "<0>{itemName}</0> leaves your lists and counts. Its history is kept."
+
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:478
+msgid "<0>{name}</0> is out of stock."
+msgstr "<0>{name}</0> is out of stock."
+
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:483
+msgid "<0>{name}</0> is running low: <1>{left}</1> left."
+msgstr "<0>{name}</0> is running low: <1>{left}</1> left."
+
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:543
+msgid "<0>{name}</0> went up <1>{percent}%</1> on the last delivery from <2>{supplier}</2>."
+msgstr "<0>{name}</0> went up <1>{percent}%</1> on the last delivery from <2>{supplier}</2>."
+
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:549
+msgid "<0>{name}</0> went up <1>{percent}%</1> on the last delivery."
+msgstr "<0>{name}</0> went up <1>{percent}%</1> on the last delivery."
 
 #: app/routes/_app+/$orgSlug_+/loyalty+/overview.tsx:438
 msgid "<0>{newAccounts}</0> joined in the last {REPORT_WINDOW_DAYS} days"
 msgstr "<0>{newAccounts}</0> joined in the last {REPORT_WINDOW_DAYS} days"
 
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:440
+msgid "<0>{outCount}</0> of them out of stock"
+msgstr "<0>{outCount}</0> of them out of stock"
+
 #: app/routes/_app+/$orgSlug_+/loyalty+/overview.tsx:461
 msgid "<0>{pointsRedeemed}</0> redeemed"
 msgstr "<0>{pointsRedeemed}</0> redeemed"
+
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:423
+msgid "<0>{shareText}</0> of what you bought"
+msgstr "<0>{shareText}</0> of what you bought"
 
 #: app/components/customers/people-list-screen.tsx:281
 msgid "<0>{shownCount}</0> of <1>{total}</1> {total, plural, one {person} other {people}}"
@@ -2577,9 +2717,25 @@ msgstr "A change to a bill that was already settled"
 msgid "A clean canvas with one field you can shape into anything."
 msgstr "A clean canvas with one field you can shape into anything."
 
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:513
+msgid "A count is due today."
+msgstr "A count is due today."
+
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:526
+msgid "A count is in progress: <0>{counted}</0> of <1>{total}</1> items counted."
+msgstr "A count is in progress: <0>{counted}</0> of <1>{total}</1> items counted."
+
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:535
+msgid "A count is waiting for review."
+msgstr "A count is waiting for review."
+
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.lists.tsx:157
 msgid "A count list is a shortlist of items you count together. Counting everything still works without one."
 msgstr "A count list is a shortlist of items you count together. Counting everything still works without one."
+
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:515
+msgid "A count was due on <0>{due}</0>."
+msgstr "A count was due on <0>{due}</0>."
 
 #: app/utils/people/people-errors.ts:21
 msgid "A customer's phone number is managed through sign-in and cannot be changed here."
@@ -2750,6 +2906,10 @@ msgstr "A manager turned off this schedule link. You will get a new one in your 
 #: app/components/my-schedule/time-cards-view.tsx:222
 msgid "A manager unlocked this time card."
 msgstr "A manager unlocked this time card."
+
+#: app/components/inventory/count-review-screen.tsx:339
+msgid "A manager who can see costs approves this count. You can look at it here."
+msgstr "A manager who can see costs approves this count. You can look at it here."
 
 #: app/components/my-schedule/time-off-sheet.tsx:143
 msgid "A manager will approve or decline it."
@@ -3069,6 +3229,14 @@ msgstr "A window that ends earlier than it starts runs past midnight."
 msgid "Abandoned"
 msgstr "Abandoned"
 
+#: app/components/inventory/count-review-screen.tsx:364
+msgid "About <0>{netText}</0> less than expected if you approve now."
+msgstr "About <0>{netText}</0> less than expected if you approve now."
+
+#: app/components/inventory/count-review-screen.tsx:369
+msgid "About <0>{netText}</0> more than expected if you approve now."
+msgstr "About <0>{netText}</0> more than expected if you approve now."
+
 #: app/components/menu/drop-wizard/drop-form.tsx:520
 msgid "About drop visibility"
 msgstr "About drop visibility"
@@ -3176,7 +3344,8 @@ msgstr "Across your organization"
 #: app/components/reservations/policies/policies-screen.tsx:370
 #: app/components/roles/tenant-role-access-manager.tsx:1453
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:376
-#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:722
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.tsx:366
+#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:625
 #: app/routes/_app+/$orgSlug_+/loyalty+/promotions.tsx:395
 #: app/routes/_app+/$orgSlug_+/loyalty+/rewards.tsx:271
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:976
@@ -3309,6 +3478,7 @@ msgstr ""
 #~ msgid "Add {0}"
 #~ msgstr ""
 
+#: app/components/inventory/counting-screen.tsx:766
 #: app/components/inventory/log-waste-dialog.tsx:327
 msgid "Add {fraction}"
 msgstr "Add {fraction}"
@@ -3612,10 +3782,16 @@ msgstr "Add an email address to invite them to the app."
 msgid "Add an emergency contact"
 msgstr "Add an emergency contact"
 
+#: app/components/inventory/record-delivery-screen.tsx:434
+#: app/components/inventory/supplier-products.tsx:112
 #: app/components/menu/category-form.tsx:407
 #: app/components/menu/modifier-form.tsx:1393
 msgid "Add an item"
 msgstr "Add an item"
+
+#: app/components/inventory/record-delivery-screen.tsx:1025
+msgid "Add an item that is not in Stock yet. You can fill in the rest later."
+msgstr "Add an item that is not in Stock yet. You can fill in the rest later."
 
 #: app/components/menu/modifier-form.tsx:1530
 msgid "Add an Option"
@@ -3660,6 +3836,10 @@ msgstr "Add area"
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:194
 msgid "Add at least one email block"
 msgstr "Add at least one email block"
+
+#: app/components/inventory/record-delivery-screen.tsx:456
+msgid "Add at least one item."
+msgstr "Add at least one item."
 
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:139
 msgid "Add at least one named section to the layout."
@@ -3818,6 +3998,7 @@ msgid "Add images"
 msgstr ""
 
 #: app/components/inventory/item-form.tsx:267
+#: app/components/inventory/record-delivery-screen.tsx:1104
 #: app/components/menu/category-form.tsx:406
 #: app/components/menu/menu-sortable-category.tsx:179
 #: app/components/menu/modifier-form.tsx:1392
@@ -4103,6 +4284,12 @@ msgstr "Add stats, charts and reports to build it."
 msgid "Add stock"
 msgstr "Add stock"
 
+#: app/components/inventory/supplier-form.tsx:416
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.tsx:505
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.tsx:541
+msgid "Add supplier"
+msgstr "Add supplier"
+
 #: app/utils/website/field-types.ts:75
 msgid "Add supporting information."
 msgstr "Add supporting information."
@@ -4252,6 +4439,10 @@ msgstr ""
 msgid "Add what you buy and use, one at a time or many at once. You will see how much you have, where it is kept and what it is worth."
 msgstr "Add what you buy and use, one at a time or many at once. You will see how much you have, where it is kept and what it is worth."
 
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.tsx:529
+msgid "Add who you buy from, with how they take orders and when they deliver. A delivery can then fill in their prices."
+msgstr "Add who you buy from, with how they take orders and when they deliver. A delivery can then fill in their prices."
+
 #: app/components/phone-agent/agent-details.tsx:252
 msgid "Add your business details to see what the assistant is told."
 msgstr "Add your business details to see what the assistant is told."
@@ -4336,6 +4527,7 @@ msgstr "Adding section"
 msgid "Adding..."
 msgstr "Adding..."
 
+#: app/components/inventory/record-delivery-screen.tsx:1104
 #: app/components/staff/notes-tab.tsx:111
 #: app/components/staff/onboarding/onboarding-tab.tsx:170
 #: app/components/staff/onboarding/task-form.tsx:147
@@ -4722,6 +4914,10 @@ msgstr "All locations"
 msgid "All messages in this channel are permanently deleted for everyone. This can't be undone."
 msgstr "All messages in this channel are permanently deleted for everyone. This can't be undone."
 
+#: app/components/inventory/count-review-screen.tsx:425
+msgid "All none left"
+msgstr "All none left"
+
 #: app/components/ui/notification-bell.tsx:414
 #: app/components/ui/notification-bell.tsx:514
 msgid "All Notifications"
@@ -4753,7 +4949,7 @@ msgstr "All prints"
 msgid "All purposes"
 msgstr "All purposes"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:154
+#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:148
 msgid "All reasons"
 msgstr "All reasons"
 
@@ -4764,6 +4960,10 @@ msgstr ""
 #: app/components/roles/tenant-role-access-manager.tsx:715
 msgid "All reservations, guestbook, setup & payments"
 msgstr "All reservations, guestbook, setup & payments"
+
+#: app/components/inventory/count-review-screen.tsx:407
+msgid "All same as before"
+msgstr "All same as before"
 
 #: app/components/kiosk/kiosk-chrome.tsx:124
 msgid "All saved"
@@ -4947,6 +5147,10 @@ msgstr "Already exists."
 msgid "Already have an account?"
 msgstr ""
 
+#: app/components/inventory/record-delivery-screen.tsx:616
+msgid "Already paid"
+msgstr "Already paid"
+
 #: app/components/ui/notification-bell.tsx:242
 msgid "Already read"
 msgstr ""
@@ -4959,6 +5163,10 @@ msgstr "Already refunded"
 #: app/components/staff/schedule/shift-editor-sheet.tsx:765
 msgid "Already working then"
 msgstr "Already working then"
+
+#: app/components/inventory/counting-screen.tsx:776
+msgid "Also counted:"
+msgstr "Also counted:"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:241
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3988
@@ -4981,7 +5189,7 @@ msgstr "Amber"
 
 #: app/components/inventory/adjust-stock-dialog.tsx:221
 #: app/components/inventory/log-waste-dialog.tsx:316
-#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:707
+#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:610
 #: app/routes/mock-payments+/checkout-com.dashboard.tsx:225
 #: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:89
 msgid "Amount"
@@ -5346,7 +5554,7 @@ msgid "Appetizer"
 msgstr "Appetizer"
 
 #: app/components/hiring/applicant-list.tsx:64
-#: app/components/workspace-breadcrumb.tsx:115
+#: app/components/workspace-breadcrumb.tsx:118
 msgid "Applicant"
 msgstr "Applicant"
 
@@ -5469,6 +5677,11 @@ msgstr "Approve a print, then order copies shipped to any US address."
 msgid "Approve a table card, poster or flyer first. Only approved prints in a shippable size can be ordered."
 msgstr "Approve a table card, poster or flyer first. Only approved prints in a shippable size can be ordered."
 
+#: app/components/inventory/count-review-screen.tsx:309
+#: app/components/inventory/count-review-screen.tsx:634
+msgid "Approve count"
+msgstr "Approve count"
+
 #: app/components/print/print-order-labels.ts:37
 msgid "Approve each print before ordering it."
 msgstr "Approve each print before ordering it."
@@ -5486,6 +5699,10 @@ msgstr "Approve the proof to download it."
 msgid "Approve the proof to order prints."
 msgstr "Approve the proof to order prints."
 
+#: app/components/inventory/count-review-screen.tsx:601
+msgid "Approve this count?"
+msgstr "Approve this count?"
+
 #: app/components/roles/tenant-role-access-manager.tsx:375
 msgid "Approve time cards"
 msgstr "Approve time cards"
@@ -5494,6 +5711,7 @@ msgstr "Approve time cards"
 msgid "Approve, lock, and unlock time cards. Includes View time cards."
 msgstr "Approve, lock, and unlock time cards. Includes View time cards."
 
+#: app/components/inventory/count-status-badge.tsx:9
 #: app/components/my-schedule/status-badge.tsx:13
 #: app/components/my-schedule/time-cards-view.tsx:101
 #: app/components/reservations/requests-panel.tsx:274
@@ -5504,6 +5722,10 @@ msgstr "Approve, lock, and unlock time cards. Includes View time cards."
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:927
 msgid "Approved"
 msgstr "Approved"
+
+#: app/routes/_app+/$orgSlug_+/inventory+/counts.tsx:271
+msgid "Approved and cancelled counts will show here."
+msgstr "Approved and cancelled counts will show here."
 
 #: app/components/staff/timesheets/card-sheet.tsx:227
 msgid "Approved."
@@ -5540,6 +5762,7 @@ msgstr ""
 #: app/components/reservations/policies/policies-screen.tsx:558
 #: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:156
 #: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:285
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:220
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:314
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:676
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.areas.tsx:370
@@ -5569,6 +5792,10 @@ msgstr "Archive {name}?"
 #: app/components/reservations/policies/policies-screen.tsx:434
 msgid "Archive policy"
 msgstr "Archive policy"
+
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:187
+msgid "Archive supplier"
+msgstr "Archive supplier"
 
 #: app/components/qr/tables-manager.tsx:492
 msgid "Archive table"
@@ -5608,6 +5835,10 @@ msgstr "Archive this print?"
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.areas.tsx:351
 msgid "Archive this storage area?"
 msgstr "Archive this storage area?"
+
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:201
+msgid "Archive this supplier?"
+msgstr "Archive this supplier?"
 
 #~ msgid "Archive this table?"
 #~ msgstr "Archive this table?"
@@ -6050,7 +6281,7 @@ msgstr ""
 #: app/components/discounts/discount-form.tsx:970
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:299
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:564
-#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:664
+#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:567
 #: app/utils/discounts/labels.ts:124
 msgid "Automatic"
 msgstr "Automatic"
@@ -6070,7 +6301,7 @@ msgstr "Automatic tags cannot be changed by hand."
 msgid "Automatically place new bookings on the best-fitting table or combination."
 msgstr "Automatically place new bookings on the best-fitting table or combination."
 
-#: app/components/workspace-breadcrumb.tsx:109
+#: app/components/workspace-breadcrumb.tsx:112
 msgid "Automation"
 msgstr "Automation"
 
@@ -6273,6 +6504,16 @@ msgstr "Back to calls"
 msgid "Back to channels"
 msgstr "Back to channels"
 
+#: app/components/inventory/count-review-screen.tsx:332
+msgid "Back to counting"
+msgstr "Back to counting"
+
+#: app/components/inventory/count-review-screen.tsx:135
+#: app/components/inventory/count-review-screen.tsx:262
+#: app/components/inventory/counting-screen.tsx:351
+msgid "Back to counts"
+msgstr "Back to counts"
+
 #: app/components/customers/person-profile-screen.tsx:246
 msgid "Back to customers"
 msgstr "Back to customers"
@@ -6332,6 +6573,11 @@ msgstr "Back to orders"
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:513
 msgid "Back to phone agent"
 msgstr "Back to phone agent"
+
+#: app/components/inventory/record-delivery-screen.tsx:338
+#: app/components/inventory/record-delivery-screen.tsx:365
+msgid "Back to purchasing"
+msgstr "Back to purchasing"
 
 #: app/components/reservations/requests-panel.tsx:48
 msgid "Back to reservations"
@@ -6468,6 +6714,10 @@ msgstr "Before you can publish"
 #: app/components/phone-agent/agent-details.tsx:131
 msgid "Behind the scenes"
 msgstr "Behind the scenes"
+
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:351
+msgid "Below the amount you order at"
+msgstr "Below the amount you order at"
 
 #: app/components/settings/cards/organization/billing-card.tsx:118
 msgid "Beta Access"
@@ -6783,6 +7033,10 @@ msgstr "Booth preferred, high chair..."
 msgid "Bought"
 msgstr "Bought"
 
+#: app/components/inventory/record-delivery-screen.tsx:807
+msgid "Bought as"
+msgstr "Bought as"
+
 #: app/components/inventory/item-form.tsx:442
 msgid "Bought from"
 msgstr "Bought from"
@@ -6792,6 +7046,7 @@ msgid "Bound to a sale"
 msgstr "Bound to a sale"
 
 #: app/components/inventory/item-form.tsx:403
+#: app/components/inventory/supplier-products.tsx:396
 msgid "Box"
 msgstr "Box"
 
@@ -6810,7 +7065,7 @@ msgstr "Branch on whether you're open right now."
 msgid "Branding"
 msgstr ""
 
-#: app/components/workspace-breadcrumb.tsx:147
+#: app/components/workspace-breadcrumb.tsx:158
 msgid "Breadcrumb"
 msgstr "Breadcrumb"
 
@@ -6896,7 +7151,7 @@ msgstr "Bring in a design you made in Canva. It prints exactly as designed, as a
 msgid "Bring the right people together in a group."
 msgstr "Bring the right people together in a group."
 
-#: app/components/workspace-breadcrumb.tsx:108
+#: app/components/workspace-breadcrumb.tsx:111
 msgid "Broadcast"
 msgstr "Broadcast"
 
@@ -7145,6 +7400,10 @@ msgstr "Buying from selected categories"
 msgid "Buying selected items"
 msgstr "Buying selected items"
 
+#: app/routes/_app+/$orgSlug_+/inventory+/counts.tsx:291
+msgid "By"
+msgstr "By"
+
 #: app/components/command-menu.tsx:349
 msgid "by {createdByName}"
 msgstr ""
@@ -7157,7 +7416,7 @@ msgstr "by a manager"
 msgid "By amount spent"
 msgstr "By amount spent"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:300
+#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:294
 msgid "By category"
 msgstr "By category"
 
@@ -7192,7 +7451,7 @@ msgstr "By position percentage"
 msgid "By quantity"
 msgstr "By quantity"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:288
+#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:282
 msgid "By reason"
 msgstr "By reason"
 
@@ -7434,6 +7693,10 @@ msgstr "Can't text that number"
 #: app/components/inventory/adjust-stock-dialog.tsx:320
 #: app/components/inventory/item-form.tsx:284
 #: app/components/inventory/log-waste-dialog.tsx:443
+#: app/components/inventory/record-delivery-screen.tsx:1096
+#: app/components/inventory/start-count-dialog.tsx:230
+#: app/components/inventory/supplier-form.tsx:433
+#: app/components/inventory/supplier-products.tsx:515
 #: app/components/kiosk/kiosk-screens.tsx:631
 #: app/components/locations/delivery-zones-manager.tsx:564
 #: app/components/locations/location-form.tsx:1046
@@ -7532,6 +7795,7 @@ msgstr "Can't text that number"
 #: app/components/website/create-form-dialog.tsx:292
 #: app/components/website/form-builder-sidebar.tsx:190
 #: app/components/website/translate-provider.tsx:258
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:212
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:668
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.add-many.tsx:252
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.areas.tsx:269
@@ -7587,9 +7851,19 @@ msgstr ""
 msgid "Cancel booking…"
 msgstr "Cancel booking…"
 
+#: app/components/inventory/count-review-screen.tsx:295
+#: app/components/inventory/count-review-screen.tsx:662
+msgid "Cancel count"
+msgstr "Cancel count"
+
 #: app/components/settings/cards/danger-card.tsx:92
 msgid "Cancel deletion"
 msgstr ""
+
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:352
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:404
+msgid "Cancel delivery"
+msgstr "Cancel delivery"
 
 #: app/routes/_app+/$orgSlug_+/notes-cards.tsx:456
 msgid "Cancel editing"
@@ -7629,6 +7903,14 @@ msgstr "Cancel reservation"
 msgid "Cancel Reservation"
 msgstr "Cancel Reservation"
 
+#: app/components/inventory/count-review-screen.tsx:644
+msgid "Cancel this count?"
+msgstr "Cancel this count?"
+
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:367
+msgid "Cancel this delivery?"
+msgstr "Cancel this delivery?"
+
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:406
 msgid "Cancel this order?"
 msgstr "Cancel this order?"
@@ -7661,12 +7943,15 @@ msgid "Cancellations by who"
 msgstr "Cancellations by who"
 
 #: app/components/hiring/applicant-labels.ts:42
+#: app/components/inventory/count-status-badge.tsx:10
 #: app/components/my-schedule/status-badge.tsx:17
 #: app/components/orders/order-detail.tsx:226
 #: app/components/print/print-order-labels.ts:20
 #: app/components/reservations/status-style.tsx:144
 #: app/components/reservations/status-style.tsx:211
 #: app/components/staff/schedule/time-off-page.tsx:286
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:169
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.tsx:182
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:147
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:242
 #: app/utils/orders/status-label.ts:10
@@ -7901,6 +8186,7 @@ msgstr "category"
 
 #: app/components/inventory/bulk-review-rows.tsx:101
 #: app/components/inventory/item-form.tsx:328
+#: app/components/inventory/record-delivery-screen.tsx:1051
 #: app/components/menu/menu-sortable-category.tsx:132
 #: app/components/phone-agent/training-rules-section.tsx:491
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:295
@@ -8223,6 +8509,10 @@ msgstr "Cheapest reward: <0>{rewardName}</0> for <1>{rewardCost}</1> {unitName}.
 msgid "Check"
 msgstr "Check"
 
+#: app/components/inventory/record-delivery-screen.tsx:636
+msgid "Check against the invoice"
+msgstr "Check against the invoice"
+
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:579
 msgid "Check before publishing"
 msgstr "Check before publishing"
@@ -8539,7 +8829,7 @@ msgstr "Choose a reason."
 msgid "Choose a shift"
 msgstr "Choose a shift"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:425
+#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:419
 msgid "Choose a shorter period or a reason to narrow the log."
 msgstr "Choose a shorter period or a reason to narrow the log."
 
@@ -8630,11 +8920,13 @@ msgid "Choose an existing menu..."
 msgstr "Choose an existing menu..."
 
 #: app/components/inventory/log-waste-dialog.tsx:284
+#: app/components/inventory/supplier-products.tsx:380
 #: app/components/loyalty/reward-dialog.tsx:587
 msgid "Choose an item"
 msgstr "Choose an item"
 
 #: app/components/inventory/log-waste-dialog.tsx:285
+#: app/components/inventory/supplier-products.tsx:381
 msgid "Choose an item."
 msgstr "Choose an item."
 
@@ -8697,6 +8989,10 @@ msgstr "Choose at least two combinable tables."
 #: app/components/loyalty/reward-dialog.tsx:571
 msgid "Choose categories"
 msgstr "Choose categories"
+
+#: app/components/inventory/supplier-form.tsx:103
+msgid "Choose days of the week."
+msgstr "Choose days of the week."
 
 #: app/components/website/link-inspector.tsx:577
 msgid "Choose file..."
@@ -8778,6 +9074,10 @@ msgstr "Choose supported delivery channels and estimated transit times."
 msgid "Choose the confirmations and reminders guests receive."
 msgstr "Choose the confirmations and reminders guests receive."
 
+#: app/components/inventory/record-delivery-screen.tsx:542
+msgid "Choose the date on the invoice."
+msgstr "Choose the date on the invoice."
+
 #: app/components/staff/schedule/time-off-sheet.tsx:124
 msgid "Choose the day or days."
 msgstr "Choose the day or days."
@@ -8853,6 +9153,10 @@ msgstr "Choose what guests pay or guarantee to book, and what happens when they 
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:451
 msgid "Choose what the QR codes are for."
 msgstr "Choose what the QR codes are for."
+
+#: app/components/inventory/start-count-dialog.tsx:125
+msgid "Choose what to count. You walk your storage areas in order and enter what is there."
+msgstr "Choose what to count. You walk your storage areas in order and enter what is there."
 
 #: app/components/print/print-form-errors.ts:21
 msgid "Choose what to print"
@@ -9986,6 +10290,11 @@ msgstr "Contact"
 msgid "Contact form"
 msgstr "Contact form"
 
+#: app/components/inventory/supplier-form.tsx:207
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:238
+msgid "Contact person"
+msgstr "Contact person"
+
 #: app/components/settings/cards/organization/billing-card.tsx:322
 msgid "Contact sales"
 msgstr ""
@@ -10262,10 +10571,10 @@ msgstr ""
 msgid "Correction"
 msgstr "Correction"
 
+#: app/components/inventory/waste-bars.tsx:40
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:255
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:409
-#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:568
-#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:717
+#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:620
 #: app/routes/_app+/$orgSlug_+/loyalty+/rewards.tsx:263
 msgid "Cost"
 msgstr "Cost"
@@ -10591,13 +10900,31 @@ msgstr "Couldn't send that key press. Try again."
 msgid "Couldn't start your microphone. Check it and try again."
 msgstr "Couldn't start your microphone. Check it and try again."
 
+#: app/components/workspace-breadcrumb.tsx:122
+#: app/routes/_app+/$orgSlug_+/inventory+/counts.tsx:288
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:642
+msgid "Count"
+msgstr "Count"
+
 #: app/components/roles/tenant-role-access-manager.tsx:532
 msgid "Count and manage stock"
 msgstr "Count and manage stock"
 
+#: app/components/inventory/count-review-screen.tsx:777
+msgid "Count approved"
+msgstr "Count approved"
+
 #: app/components/staff/labor-policy-editor.tsx:688
 msgid "Count as late after"
 msgstr "Count as late after"
+
+#: app/components/inventory/count-review-screen.tsx:244
+msgid "Count cancelled. Nothing was changed."
+msgstr "Count cancelled. Nothing was changed."
+
+#: app/components/inventory/counting-screen.tsx:710
+msgid "Count in <0>{unitName}</0>"
+msgstr "Count in <0>{unitName}</0>"
 
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.lists.tsx:308
 msgid "Count list saved."
@@ -10633,6 +10960,22 @@ msgstr "Count what you have now. Every number after this starts here."
 msgid "Counted"
 msgstr "Counted"
 
+#: app/components/inventory/count-review-screen.tsx:721
+msgid "Counted <0>{counted}</0>"
+msgstr "Counted <0>{counted}</0>"
+
+#: app/components/inventory/count-review-screen.tsx:495
+msgid "Counted more than a fifth away from what you should have. Check these before you approve."
+msgstr "Counted more than a fifth away from what you should have. Check these before you approve."
+
+#: app/components/inventory/count-review-screen.tsx:362
+msgid "Counted stock matches what you expected."
+msgstr "Counted stock matches what you expected."
+
+#: app/components/inventory/count-status-badge.tsx:7
+msgid "Counting"
+msgstr "Counting"
+
 #: app/components/locations/address-autocomplete.tsx:292
 msgid "Country"
 msgstr "Country"
@@ -10657,8 +11000,8 @@ msgid "Counts bookings from"
 msgstr "Counts bookings from"
 
 #: app/routes/_app+/$orgSlug_+/inventory+/counts.tsx:18
-msgid "Counts let you walk your fridges and shelves, enter what is there, and see what is missing compared with what you expected. Counting is coming soon."
-msgstr "Counts let you walk your fridges and shelves, enter what is there, and see what is missing compared with what you expected. Counting is coming soon."
+#~ msgid "Counts let you walk your fridges and shelves, enter what is there, and see what is missing compared with what you expected. Counting is coming soon."
+#~ msgstr "Counts let you walk your fridges and shelves, enter what is there, and see what is missing compared with what you expected. Counting is coming soon."
 
 #: ../../packages/marketing/src/components/coupon-offer-field.tsx:90
 #: ../../packages/marketing/src/components/coupon-offer-field.tsx:137
@@ -11374,7 +11717,7 @@ msgstr "Custom Availability Hours"
 msgid "Custom colors"
 msgstr "Custom colors"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:151
+#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:145
 msgid "Custom dates"
 msgstr "Custom dates"
 
@@ -11451,7 +11794,7 @@ msgstr ""
 
 #: app/components/orders/order-detail.tsx:363
 #: app/components/orders/order-detail.tsx:387
-#: app/components/workspace-breadcrumb.tsx:105
+#: app/components/workspace-breadcrumb.tsx:108
 #: app/routes/_app+/$orgSlug_+/orders.tsx:229
 msgid "Customer"
 msgstr "Customer"
@@ -11662,7 +12005,7 @@ msgstr ""
 #: app/components/app-sidebar.tsx:325
 #: app/components/command-menu.tsx:94
 #: app/components/user-dropdown.tsx:61
-#: app/components/workspace-breadcrumb.tsx:103
+#: app/components/workspace-breadcrumb.tsx:106
 msgid "Dashboard"
 msgstr ""
 
@@ -11688,6 +12031,8 @@ msgstr ""
 #: app/components/staff/schedule/availability-sheet.tsx:289
 #: app/components/staff/timesheets/card-fields.tsx:101
 #: app/components/staff/timesheets/timesheet-table.tsx:209
+#: app/routes/_app+/$orgSlug_+/inventory+/counts.tsx:285
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.tsx:346
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:913
 msgid "Date"
 msgstr "Date"
@@ -11765,6 +12110,10 @@ msgstr ""
 #: app/components/staff/onboarding/template-editor.tsx:290
 msgid "Days after the hire date. 0 is the day they start."
 msgstr "Days after the hire date. 0 is the day they start."
+
+#: app/components/inventory/supplier-form.tsx:325
+msgid "Days before delivery"
+msgstr "Days before delivery"
 
 #: app/components/staff/schedule/availability-sheet.tsx:281
 msgid "Days left on \"No preference\" go back to open."
@@ -12401,6 +12750,10 @@ msgstr "Delivered"
 msgid "Delivered ({lastStatus})"
 msgstr "Delivered ({lastStatus})"
 
+#: app/components/workspace-breadcrumb.tsx:100
+msgid "Deliveries"
+msgstr "Deliveries"
+
 #: app/components/inventory/inventory-chrome.tsx:45
 msgid "Deliveries, orders and the suppliers you buy from."
 msgstr "Deliveries, orders and the suppliers you buy from."
@@ -12409,18 +12762,30 @@ msgstr "Deliveries, orders and the suppliers you buy from."
 msgid "Deliveroo"
 msgstr "Deliveroo"
 
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:242
+msgid "Delivers on"
+msgstr "Delivers on"
+
 #: app/components/customers/person-orders-panel.tsx:221
 #: app/components/locations/location-form.tsx:732
 #: app/components/orders/order-detail.tsx:458
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:26
 #: app/components/reservations/messages/message-settings.tsx:530
 #: app/components/settings/cards/organization/pos-integrations-card.tsx:131
+#: app/components/workspace-breadcrumb.tsx:123
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:105
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:124
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:646
 #: app/routes/_app+/$orgSlug_+/orders.tsx:246
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:680
 #: app/routes/mock-payments+/dashboard.tsx:158
 #: app/utils/discounts/labels.ts:166
 msgid "Delivery"
 msgstr "Delivery"
+
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:644
+msgid "Delivery · {supplier}"
+msgstr "Delivery · {supplier}"
 
 #: app/components/locations/location-form.tsx:321
 msgid "Delivery & Zones"
@@ -12433,6 +12798,10 @@ msgstr "Delivery Allowed"
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:33
 msgid "Delivery areas, fees, and pickup alternatives."
 msgstr "Delivery areas, fees, and pickup alternatives."
+
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:399
+msgid "Delivery cancelled."
+msgstr "Delivery cancelled."
 
 #: app/components/orders/order-detail.tsx:624
 #: app/components/orders/order-detail.tsx:915
@@ -12472,6 +12841,10 @@ msgstr "Delivery Provider"
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:66
 msgid "Delivery radius"
 msgstr "Delivery radius"
+
+#: app/components/inventory/record-delivery-screen.tsx:301
+msgid "Delivery recorded."
+msgstr "Delivery recorded."
 
 #: app/components/locations/location-form.tsx:898
 msgid "Delivery Settings & Providers"
@@ -12640,7 +13013,7 @@ msgstr ""
 #: app/components/staff/details-tab.tsx:181
 #: app/components/staff/onboarding/template-editor.tsx:333
 #: app/components/staff/staff-profile-page.tsx:98
-#: app/components/workspace-breadcrumb.tsx:164
+#: app/components/workspace-breadcrumb.tsx:175
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:837
 #: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:498
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:628
@@ -12743,6 +13116,11 @@ msgstr "Dietary Tags"
 #: app/components/menu/option-form.tsx:616
 msgid "Dietary, Allergens & Calories"
 msgstr "Dietary, Allergens & Calories"
+
+#: app/components/inventory/count-review-screen.tsx:805
+#: app/routes/_app+/$orgSlug_+/inventory+/counts.tsx:298
+msgid "Difference"
+msgstr "Difference"
 
 #~ msgid "Difference (min)"
 #~ msgstr "Difference (min)"
@@ -13097,6 +13475,7 @@ msgstr "Don't take phone orders for"
 #: app/components/dashboard/dashboard-edit-toolbar.tsx:101
 #: app/components/hiring/applicant-labels.ts:41
 #: app/components/hiring/hire-dialog.tsx:156
+#: app/components/inventory/count-review-screen.tsx:867
 #: app/components/inventory/setup-checklist.tsx:149
 #: app/components/kiosk/kiosk-screens.tsx:720
 #: app/components/note/share-note-button.tsx:365
@@ -13778,6 +14157,10 @@ msgstr ""
 msgid "Edit \"{ruleTitle}\""
 msgstr "Edit \"{ruleTitle}\""
 
+#: app/components/inventory/supplier-products.tsx:187
+msgid "Edit {itemName}"
+msgstr "Edit {itemName}"
+
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.lists.tsx:67
 msgid "Edit {name}"
 msgstr "Edit {name}"
@@ -13986,6 +14369,10 @@ msgstr "Edit service"
 msgid "Edit shift"
 msgstr "Edit shift"
 
+#: app/components/inventory/supplier-form.tsx:416
+msgid "Edit supplier"
+msgstr "Edit supplier"
+
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:1228
 msgid "Edit table"
 msgstr "Edit table"
@@ -14080,6 +14467,8 @@ msgstr "Eligible for rehire."
 #: app/components/customers/person-profile-screen.tsx:123
 #: app/components/customers/person-profile-screen.tsx:1161
 #: app/components/hiring/candidate-parts.tsx:55
+#: app/components/inventory/supplier-form.tsx:37
+#: app/components/inventory/supplier-form.tsx:232
 #: app/components/organization-invitations.tsx:457
 #: app/components/reservations/booking-sheet.tsx:995
 #: app/components/settings/cards/notification-preferences-card.tsx:27
@@ -14089,6 +14478,7 @@ msgstr "Eligible for rehire."
 #: app/components/staff/review-rows.tsx:120
 #: app/components/website/link-inspector.tsx:368
 #: app/components/website/link-inspector.tsx:468
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:240
 #: app/routes/_app+/$orgSlug_+/staff+/team.new.tsx:188
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:237
 #: app/routes/_auth+/login.tsx:828
@@ -14426,6 +14816,7 @@ msgid "Enter a name in the default language."
 msgstr "Enter a name in the default language."
 
 #: app/components/inventory/item-form.tsx:148
+#: app/components/inventory/record-delivery-screen.tsx:1044
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.lists.tsx:352
 #: app/utils/people/people-errors.ts:11
 #: app/utils/reservations/experiences-view.ts:191
@@ -14437,9 +14828,17 @@ msgstr "Enter a name."
 msgid "Enter a new name for this dashboard."
 msgstr "Enter a new name for this dashboard."
 
+#: app/components/inventory/record-delivery-screen.tsx:834
+msgid "Enter a number above zero."
+msgstr "Enter a number above zero."
+
 #: app/components/print/print-form-errors.ts:17
 msgid "Enter a number of copies"
 msgstr "Enter a number of copies"
+
+#: app/components/inventory/supplier-form.tsx:105
+msgid "Enter a number of days from 0 to 14."
+msgstr "Enter a number of days from 0 to 14."
 
 #: app/components/inventory/item-form.tsx:159
 msgid "Enter a number, for example 8 or 2.5."
@@ -14525,6 +14924,10 @@ msgstr "Enter a time such as 14:30."
 #: app/components/loyalty/program-form.tsx:172
 msgid "Enter a time zone."
 msgstr "Enter a time zone."
+
+#: app/components/inventory/supplier-form.tsx:104
+msgid "Enter a time, for example 16:00."
+msgstr "Enter a time, for example 16:00."
 
 #: app/components/loyalty/promotion-dialog.tsx:406
 msgid "Enter a time, like 15:00."
@@ -14643,9 +15046,17 @@ msgstr "Enter an amount like 25.00."
 msgid "Enter an amount up to what is left to refund."
 msgstr "Enter an amount up to what is left to refund."
 
+#: app/components/inventory/supplier-form.tsx:107
+msgid "Enter an amount, for example 400 or 400.50."
+msgstr "Enter an amount, for example 400 or 400.50."
+
 #: app/components/organization-invitations.tsx:71
 msgid "Enter an email address"
 msgstr "Enter an email address"
+
+#: app/components/inventory/supplier-form.tsx:102
+msgid "Enter an email address, for example orders@supplier.com."
+msgstr "Enter an email address, for example orders@supplier.com."
 
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1331
 msgid "Enter an internal path (e.g. /new-page) or full external URL."
@@ -14685,6 +15096,7 @@ msgid "Enter how many times the points, above 1 and up to 10. For example 2 or 1
 msgstr "Enter how many times the points, above 1 and up to 10. For example 2 or 1.5."
 
 #: app/components/inventory/item-form.tsx:156
+#: app/components/inventory/supplier-products.tsx:452
 msgid "Enter how much one pack holds, above zero."
 msgstr "Enter how much one pack holds, above zero."
 
@@ -14766,6 +15178,10 @@ msgstr "Enter the guest's name."
 msgid "Enter the hours before the booking, from 0 to 720."
 msgstr "Enter the hours before the booking, from 0 to 720."
 
+#: app/components/inventory/record-delivery-screen.tsx:921
+msgid "Enter the line total above zero."
+msgstr "Enter the line total above zero."
+
 #: app/utils/reservations/experiences-view.ts:481
 msgid "Enter the minutes between seatings, for example 60."
 msgstr "Enter the minutes between seatings, for example 60."
@@ -14779,12 +15195,17 @@ msgid "Enter the pay, or choose not to show it."
 msgstr "Enter the pay, or choose not to show it."
 
 #: app/components/inventory/item-form.tsx:158
+#: app/components/inventory/supplier-products.tsx:465
 msgid "Enter the price of one pack, for example 28.50."
 msgstr "Enter the price of one pack, for example 28.50."
 
 #: app/components/inventory/bulk-review-rows.tsx:24
 msgid "Enter the price of one unit, for example 28.50."
 msgstr "Enter the price of one unit, for example 28.50."
+
+#: app/components/inventory/record-delivery-screen.tsx:855
+msgid "Enter the price on the invoice, for example 28.50."
+msgstr "Enter the price on the invoice, for example 28.50."
 
 #: app/components/loyalty/program-form.tsx:222
 msgid "Enter the spend that earns the points, like 10.00."
@@ -14794,6 +15215,10 @@ msgstr "Enter the spend that earns the points, like 10.00."
 msgid "Enter the start time."
 msgstr "Enter the start time."
 
+#: app/components/inventory/supplier-form.tsx:97
+msgid "Enter the supplier's name."
+msgstr "Enter the supplier's name."
+
 #: app/components/staff/timesheets/review-queue.tsx:274
 msgid "Enter the time they left."
 msgstr "Enter the time they left."
@@ -14801,6 +15226,18 @@ msgstr "Enter the time they left."
 #: app/components/qr/open-tabs.tsx:805
 msgid "Enter the tip as a plain amount, like 5 or 5.50, without thousands separators."
 msgstr "Enter the tip as a plain amount, like 5 or 5.50, without thousands separators."
+
+#: app/components/inventory/record-delivery-screen.tsx:571
+msgid "Enter the total on the invoice, for example 818.80."
+msgstr "Enter the total on the invoice, for example 818.80."
+
+#: app/components/inventory/record-delivery-screen.tsx:555
+msgid "Enter the VAT amount, for example 106.80."
+msgstr "Enter the VAT amount, for example 106.80."
+
+#: app/components/inventory/record-delivery-screen.tsx:877
+msgid "Enter the weight on the invoice."
+msgstr "Enter the weight on the invoice."
 
 #: app/utils/staffing/staff-validation.ts:97
 msgid "Enter the yearly salary."
@@ -15080,6 +15517,10 @@ msgstr "Every choice you picked gets the discount."
 msgid "Every day"
 msgstr "Every day"
 
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.tsx:309
+msgid "Every delivery here is marked as paid."
+msgstr "Every delivery here is marked as paid."
+
 #: app/routes/_app+/$orgSlug_+/loyalty+/rewards.tsx:182
 msgid "Every edit creates a new version; redemptions keep the reward they were made with."
 msgstr "Every edit creates a new version; redemptions keep the reward they were made with."
@@ -15095,6 +15536,10 @@ msgstr "Every group of {quantity}"
 #: app/components/discounts/discount-form.tsx:1271
 msgid "Every item in the categories you pick."
 msgstr "Every item in the categories you pick."
+
+#: app/components/inventory/start-count-dialog.tsx:195
+msgid "Every item you keep at this location."
+msgstr "Every item you keep at this location."
 
 #: app/components/inventory/inventory-chrome.tsx:37
 msgid "Every item, how much you have, where you keep it and what it is worth."
@@ -15197,6 +15642,7 @@ msgstr "Everyone with a PIN can take orders and use the time clock. Managers can
 msgid "Everyone you import is added to this workplace."
 msgstr "Everyone you import is added to this workplace."
 
+#: app/components/inventory/start-count-dialog.tsx:192
 #: app/components/staff/schedule/scope-picker.tsx:55
 msgid "Everything"
 msgstr "Everything"
@@ -15317,6 +15763,14 @@ msgstr "Expected {expected}"
 msgid "Expected {expected}, counted {counted}"
 msgstr "Expected {expected}, counted {counted}"
 
+#: app/components/inventory/count-review-screen.tsx:703
+msgid "Expected <0>{expected}</0>"
+msgstr "Expected <0>{expected}</0>"
+
+#: app/components/inventory/count-review-screen.tsx:448
+msgid "Expected <0>{expectedText}</0>"
+msgstr "Expected <0>{expectedText}</0>"
+
 #: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:311
 #~ msgid "Expected covers"
 #~ msgstr "Expected covers"
@@ -15331,7 +15785,7 @@ msgstr "Expected guests"
 #: app/components/hiring/job-labels.ts:41
 #: app/components/reservations/detail-sheet.tsx:700
 #: app/components/reservations/experiences/experiences-screen.tsx:289
-#: app/components/workspace-breadcrumb.tsx:117
+#: app/components/workspace-breadcrumb.tsx:120
 msgid "Experience"
 msgstr "Experience"
 
@@ -15855,6 +16309,10 @@ msgstr "False"
 msgid "FAQ answers"
 msgstr "FAQ answers"
 
+#: app/components/inventory/count-review-screen.tsx:493
+msgid "Far from what you expected"
+msgstr "Far from what you expected"
+
 #: app/components/settings/cards/organization/site-icon-card.tsx:204
 msgid "Favicon and app icon variants generated."
 msgstr ""
@@ -16029,7 +16487,7 @@ msgstr "Filter by position"
 msgid "Filter by purpose"
 msgstr "Filter by purpose"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:237
+#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:231
 msgid "Filter by reason"
 msgstr "Filter by reason"
 
@@ -16087,6 +16545,7 @@ msgstr ""
 msgid "Find the duplicate. Its bookings, tags, and notes move to this profile, and the duplicate is closed. Orders and sign-in are not affected. This cannot be undone."
 msgstr "Find the duplicate. Its bookings, tags, and notes move to this profile, and the duplicate is closed. Orders and sign-in are not affected. This cannot be undone."
 
+#: app/components/inventory/counting-screen.tsx:393
 #: app/utils/reservations/host-actions.ts:40
 msgid "Finish"
 msgstr "Finish"
@@ -16326,6 +16785,15 @@ msgstr "Follow-up text not sent"
 msgid "Follow-up text sent"
 msgstr "Follow-up text sent"
 
+#: app/components/inventory/count-review-screen.tsx:830
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:396
+msgid "Food cost"
+msgstr "Food cost"
+
+#: app/components/inventory/count-review-screen.tsx:857
+msgid "Food cost needs two approved counts. Count again next time and it will show here."
+msgstr "Food cost needs two approved counts. Count again next time and it will show here."
+
 #: app/components/staff/onboarding/onboarding-labels.ts:47
 msgid "Food handler card"
 msgstr "Food handler card"
@@ -16347,6 +16815,10 @@ msgstr "For a shift that was never punched, or a punch that went missing. It is 
 msgid "For every"
 msgstr "For every"
 
+#: app/components/inventory/supplier-form.tsx:336
+msgid "For example 16:00 and 1 day before: order by 4 PM the day before they deliver."
+msgstr "For example 16:00 and 1 day before: order by 4 PM the day before they deliver."
+
 #: app/components/loyalty/promotion-dialog.tsx:628
 msgid "For example 2 for double points, or 1.5."
 msgstr "For example 2 for double points, or 1.5."
@@ -16362,6 +16834,14 @@ msgstr "For example, add Size with Small and Medium, then Color with Black and B
 #: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:378
 msgid "For example, every 15 minutes."
 msgstr "For example, every 15 minutes."
+
+#: app/components/inventory/supplier-form.tsx:362
+msgid "For example: 30 days"
+msgstr "For example: 30 days"
+
+#: app/components/inventory/count-review-screen.tsx:574
+msgid "For example: spilled a box, counted twice"
+msgstr "For example: spilled a box, counted twice"
 
 #: app/components/qr/open-tabs.tsx:959
 msgid "For example: the guest left"
@@ -16399,7 +16879,7 @@ msgstr "Forgot to clock out"
 msgid "Forgot your password?"
 msgstr ""
 
-#: app/components/workspace-breadcrumb.tsx:112
+#: app/components/workspace-breadcrumb.tsx:115
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4117
 msgid "Form"
 msgstr "Form"
@@ -16573,7 +17053,7 @@ msgstr "Friends of chef, comp welcome drink..."
 #: app/components/my-schedule/time-off-sheet.tsx:193
 #: app/components/staff/schedule/availability-sheet.tsx:313
 #: app/components/staff/schedule/time-off-sheet.tsx:217
-#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:197
+#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:191
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:386
 msgid "From"
 msgstr "From"
@@ -16587,8 +17067,8 @@ msgstr "From {from}"
 msgid "From {min} to {max} days."
 msgstr "From {min} to {max} days."
 
-#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:472
-#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:500
+#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:466
+#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:494
 msgid "From {periodFrom} to {periodTo}"
 msgstr "From {periodFrom} to {periodTo}"
 
@@ -16623,6 +17103,10 @@ msgstr "From here the AI handles the rest of the call: questions, texted links, 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:309
 msgid "From Name (Optional)"
 msgstr ""
+
+#: app/components/inventory/record-delivery-screen.tsx:509
+msgid "From the paper invoice. VAT is kept apart from prices."
+msgstr "From the paper invoice. VAT is kept apart from prices."
 
 #: app/components/pos/terminals-manager.tsx:1398
 msgid "Front counter"
@@ -16661,6 +17145,12 @@ msgstr ""
 #: app/utils/organization/role-label.ts:10
 msgid "Full access to organization settings and members"
 msgstr "Full access to organization settings and members"
+
+#: app/components/inventory/count-review-screen.tsx:179
+#: app/components/inventory/counting-screen.tsx:339
+#: app/routes/_app+/$orgSlug_+/inventory+/counts.tsx:127
+msgid "Full count"
+msgstr "Full count"
 
 #: app/components/reservations/booking-sheet.tsx:987
 msgid "Full name"
@@ -16803,6 +17293,10 @@ msgstr "Get your agent answering calls"
 #: app/components/my-schedule/requests-view.tsx:111
 msgid "Give away {when}"
 msgstr "Give away {when}"
+
+#: app/components/inventory/supplier-form.tsx:106
+msgid "Give both the time and how many days before delivery."
+msgstr "Give both the time and how many days before delivery."
 
 #: app/components/app-sidebar.tsx:201
 #: app/components/app-sidebar.tsx:966
@@ -17715,9 +18209,9 @@ msgstr "Holidays, private events and times when tables are not available."
 #: app/components/dashboard/dashboard-switcher.tsx:57
 #: app/components/dashboard/dashboard-switcher.tsx:81
 #: app/components/website/link-inspector.tsx:455
-#: app/components/workspace-breadcrumb.tsx:130
-#: app/components/workspace-breadcrumb.tsx:172
-#: app/components/workspace-breadcrumb.tsx:186
+#: app/components/workspace-breadcrumb.tsx:141
+#: app/components/workspace-breadcrumb.tsx:183
+#: app/components/workspace-breadcrumb.tsx:197
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:394
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6021
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6043
@@ -17933,6 +18427,10 @@ msgstr "How long parties of each size stayed, from seated to finished, over the 
 #: ../../packages/reports/src/ui/report-labels.ts:141
 msgid "How long waitlist parties waited before they were seated over the last 7 days."
 msgstr "How long waitlist parties waited before they were seated over the last 7 days."
+
+#: app/components/inventory/record-delivery-screen.tsx:824
+msgid "How many {packName}"
+msgstr "How many {packName}"
 
 #: app/components/discounts/discount-form.tsx:1539
 msgid "How many of the matching items receive the discount."
@@ -18230,8 +18728,13 @@ msgid "In person"
 msgstr "In person"
 
 #: app/components/hiring/applicants-page.tsx:236
+#: app/routes/_app+/$orgSlug_+/inventory+/counts.tsx:156
 msgid "In progress"
 msgstr "In progress"
+
+#: app/components/inventory/count-status-badge.tsx:8
+msgid "In review"
+msgstr "In review"
 
 #: app/utils/discounts/labels.ts:157
 msgid "In store till"
@@ -18614,9 +19117,33 @@ msgstr ""
 msgid "Invited by {inviterName}"
 msgstr ""
 
+#: app/components/inventory/record-delivery-screen.tsx:506
+#: app/components/inventory/record-delivery-screen.tsx:668
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.tsx:352
+msgid "Invoice"
+msgstr "Invoice"
+
+#: app/components/inventory/record-delivery-screen.tsx:533
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:213
+msgid "Invoice date"
+msgstr "Invoice date"
+
 #: app/components/settings/cards/organization/invoices-card.tsx:92
 msgid "Invoice history is temporarily unavailable."
 msgstr "Invoice history is temporarily unavailable."
+
+#: app/components/inventory/record-delivery-screen.tsx:517
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:203
+msgid "Invoice number"
+msgstr "Invoice number"
+
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:310
+msgid "Invoice total"
+msgstr "Invoice total"
+
+#: app/components/inventory/record-delivery-screen.tsx:563
+msgid "Invoice total ({currency})"
+msgstr "Invoice total ({currency})"
 
 #: app/components/settings/cards/organization/invoices-card.tsx:83
 msgid "Invoices"
@@ -18747,11 +19274,12 @@ msgid "item"
 msgstr "item"
 
 #: app/components/inventory/stock-list.tsx:102
+#: app/components/inventory/supplier-products.tsx:375
 #: app/components/orders/order-detail.tsx:539
-#: app/components/workspace-breadcrumb.tsx:118
+#: app/components/workspace-breadcrumb.tsx:121
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:104
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:118
-#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:704
+#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:607
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:312
 msgid "Item"
 msgstr "Item"
@@ -18790,8 +19318,10 @@ msgstr "items"
 #: app/components/customers/person-orders-panel.tsx:172
 #: app/components/discounts/deal-groups.tsx:126
 #: app/components/discounts/discount-form.tsx:1302
+#: app/components/inventory/counting-screen.tsx:542
 #: app/components/loyalty/promotion-dialog.tsx:671
 #: app/components/orders/order-detail.tsx:525
+#: app/routes/_app+/$orgSlug_+/inventory+/counts.tsx:294
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.add-many.tsx:367
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.lists.tsx:357
 #: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:51
@@ -18804,9 +19334,17 @@ msgstr "Items"
 msgid "Items added"
 msgstr "Items added"
 
+#: app/components/inventory/count-review-screen.tsx:796
+msgid "Items adjusted"
+msgstr "Items adjusted"
+
 #: app/components/discounts/tier-steps.tsx:103
 msgid "Items bought"
 msgstr "Items bought"
+
+#: app/components/inventory/count-review-screen.tsx:786
+msgid "Items counted"
+msgstr "Items counted"
 
 #: app/components/discounts/discount-form.tsx:559
 #: app/components/discounts/discount-form.tsx:1622
@@ -18826,9 +19364,17 @@ msgstr "Items listed directly in a chosen category earn. Choose subcategories se
 msgid "Items listed directly in these categories."
 msgstr "Items listed directly in these categories."
 
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:348
+msgid "Items low"
+msgstr "Items low"
+
 #: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:113
-msgid "Items running low, counts that are due and deliveries expected today will show here."
-msgstr "Items running low, counts that are due and deliveries expected today will show here."
+#~ msgid "Items running low, counts that are due and deliveries expected today will show here."
+#~ msgstr "Items running low, counts that are due and deliveries expected today will show here."
+
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:239
+msgid "Items running low, counts that are due and deliveries to pay will show here."
+msgstr "Items running low, counts that are due and deliveries to pay will show here."
 
 #: app/components/discounts/discount-form.tsx:295
 msgid "Items sold together, such as a pizza, a side and a drink."
@@ -18878,7 +19424,7 @@ msgstr "Its tasks are copied to this person. Later changes to the template do no
 msgid "Job applicants: {applicantCount} (not included in the backup)"
 msgstr "Job applicants: {applicantCount} (not included in the backup)"
 
-#: app/components/workspace-breadcrumb.tsx:114
+#: app/components/workspace-breadcrumb.tsx:117
 msgid "Job post"
 msgstr "Job post"
 
@@ -18974,6 +19520,10 @@ msgstr "Keep"
 msgid "Keep as is"
 msgstr "Keep as is"
 
+#: app/components/inventory/counting-screen.tsx:588
+msgid "Keep counting"
+msgstr "Keep counting"
+
 #: app/components/settings/cards/organization/site-card.tsx:368
 msgid "Keep current region"
 msgstr ""
@@ -19039,11 +19589,28 @@ msgstr "Keep the camera angle"
 msgid "Keep the category under 40 characters."
 msgstr "Keep the category under 40 characters."
 
+#: app/components/inventory/supplier-form.tsx:100
+msgid "Keep the contact name under 80 characters."
+msgstr "Keep the contact name under 80 characters."
+
+#: app/components/inventory/count-review-screen.tsx:655
+msgid "Keep the count"
+msgstr "Keep the count"
+
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:389
+msgid "Keep the delivery"
+msgstr "Keep the delivery"
+
 #: app/components/loyalty/reward-dialog.tsx:203
 msgid "Keep the description under 280 characters."
 msgstr "Keep the description under 280 characters."
 
+#: app/components/inventory/record-delivery-screen.tsx:525
+msgid "Keep the invoice number under 60 characters."
+msgstr "Keep the invoice number under 60 characters."
+
 #: app/components/inventory/item-form.tsx:149
+#: app/components/inventory/supplier-form.tsx:98
 #: app/components/loyalty/program-form.tsx:157
 #: app/components/loyalty/promotion-dialog.tsx:333
 #: app/components/loyalty/reward-dialog.tsx:198
@@ -19057,6 +19624,10 @@ msgstr "Keep the name under 80 characters."
 msgid "Keep the note under 280 characters."
 msgstr "Keep the note under 280 characters."
 
+#: app/components/inventory/supplier-form.tsx:110
+msgid "Keep the note under 500 characters."
+msgstr "Keep the note under 500 characters."
+
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:419
 msgid "Keep the order"
 msgstr "Keep the order"
@@ -19065,13 +19636,29 @@ msgstr "Keep the order"
 msgid "Keep the pack name under 40 characters."
 msgstr "Keep the pack name under 40 characters."
 
+#: app/components/inventory/supplier-form.tsx:108
+msgid "Keep the payment terms under 80 characters."
+msgstr "Keep the payment terms under 80 characters."
+
+#: app/components/inventory/supplier-form.tsx:101
+msgid "Keep the phone number under 40 characters."
+msgstr "Keep the phone number under 40 characters."
+
 #: app/utils/media/photo-studio.test.ts:21
 msgid "Keep the plate from your photo"
 msgstr "Keep the plate from your photo"
 
+#: app/components/inventory/record-delivery-screen.tsx:590
+msgid "Keep the reference under 200 characters."
+msgstr "Keep the reference under 200 characters."
+
 #: app/components/loyalty/program-form.tsx:198
 msgid "Keep the terms under 4000 characters."
 msgstr "Keep the terms under 4000 characters."
+
+#: app/components/inventory/supplier-form.tsx:109
+msgid "Keep the VAT number under 40 characters."
+msgstr "Keep the VAT number under 40 characters."
 
 #: app/components/hiring/applicant-labels.ts:79
 msgid "Keep their details on file"
@@ -19391,12 +19978,12 @@ msgstr ""
 msgid "Last {REPORT_WINDOW_DAYS} days"
 msgstr "Last {REPORT_WINDOW_DAYS} days"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:149
+#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:143
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:360
 msgid "Last 30 days"
 msgstr "Last 30 days"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:148
+#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:142
 msgid "Last 7 days"
 msgstr "Last 7 days"
 
@@ -19408,6 +19995,14 @@ msgstr ""
 #: app/components/settings/cards/sessions-card.tsx:213
 msgid "Last active {lastActiveValue}"
 msgstr ""
+
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:363
+msgid "Last count"
+msgstr "Last count"
+
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:332
+msgid "Last count today"
+msgstr "Last count today"
 
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:368
 msgid "Last counted"
@@ -19757,6 +20352,7 @@ msgid "Length"
 msgstr "Length"
 
 #: app/components/inventory/adjust-stock-dialog.tsx:229
+#: app/components/inventory/counting-screen.tsx:764
 #: app/components/inventory/log-waste-dialog.tsx:325
 msgid "Less"
 msgstr "Less"
@@ -19877,6 +20473,16 @@ msgstr "Limits"
 #: app/components/staff/labor/sales-import-dialog.tsx:259
 msgid "Line {line}: "
 msgstr "Line {line}: "
+
+#: app/components/inventory/record-delivery-screen.tsx:912
+msgid "Line total on the invoice ({currency})"
+msgstr "Line total on the invoice ({currency})"
+
+#: app/components/inventory/record-delivery-screen.tsx:646
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:232
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:290
+msgid "Lines"
+msgstr "Lines"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:302
 msgid "Lines the flow uses"
@@ -20078,6 +20684,10 @@ msgstr ""
 msgid "Loading count lists"
 msgstr "Loading count lists"
 
+#: app/routes/_app+/$orgSlug_+/inventory+/counts.tsx:173
+msgid "Loading counts"
+msgstr "Loading counts"
+
 #: app/components/customers/person-profile-screen.tsx:263
 msgid "Loading customer..."
 msgstr "Loading customer..."
@@ -20085,6 +20695,10 @@ msgstr "Loading customer..."
 #: app/components/customers/people-list-screen.tsx:322
 msgid "Loading customers..."
 msgstr "Loading customers..."
+
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.tsx:299
+msgid "Loading deliveries"
+msgstr "Loading deliveries"
 
 #~ msgid "Loading dining areas…"
 #~ msgstr "Loading dining areas…"
@@ -20157,6 +20771,10 @@ msgstr "Loading order…"
 #: app/routes/_app+/$orgSlug_+/orders.tsx:159
 msgid "Loading orders…"
 msgstr "Loading orders…"
+
+#: app/routes/_app+/$orgSlug_+/inventory+/counts.tsx:251
+msgid "Loading past counts"
+msgstr "Loading past counts"
 
 #: app/components/staff/positions-tab.tsx:648
 msgid "Loading pay"
@@ -20263,6 +20881,14 @@ msgstr "Loading team"
 msgid "Loading templates"
 msgstr "Loading templates"
 
+#: app/components/inventory/counting-screen.tsx:330
+msgid "Loading the count"
+msgstr "Loading the count"
+
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:127
+msgid "Loading the delivery"
+msgstr "Loading the delivery"
+
 #: app/routes/_app+/$orgSlug_+/loyalty+/overview.tsx:193
 msgid "Loading the overview…"
 msgstr "Loading the overview…"
@@ -20275,9 +20901,17 @@ msgstr "Loading the points account…"
 msgid "Loading the program…"
 msgstr "Loading the program…"
 
+#: app/components/inventory/count-review-screen.tsx:156
+msgid "Loading the review"
+msgstr "Loading the review"
+
 #: app/routes/_app+/$orgSlug_+/loyalty+/activity.tsx:424
 msgid "Loading the review queue…"
 msgstr "Loading the review queue…"
+
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:106
+msgid "Loading the supplier"
+msgstr "Loading the supplier"
 
 #: app/components/staff/timesheets/card-sheet.tsx:106
 msgid "Loading the time card"
@@ -20291,7 +20925,7 @@ msgstr "Loading the time clock"
 msgid "Loading the waitlist..."
 msgstr "Loading the waitlist..."
 
-#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:341
+#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:335
 msgid "Loading the waste log"
 msgstr "Loading the waste log"
 
@@ -20318,7 +20952,7 @@ msgstr "Loading waitlist settings"
 #~ msgid "Loading waitlist settings..."
 #~ msgstr "Loading waitlist settings..."
 
-#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:318
+#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:312
 msgid "Loading waste"
 msgstr "Loading waste"
 
@@ -20326,9 +20960,17 @@ msgstr "Loading waste"
 msgid "Loading who is on the clock"
 msgstr "Loading who is on the clock"
 
+#: app/components/inventory/start-count-dialog.tsx:175
+msgid "Loading your count lists"
+msgstr "Loading your count lists"
+
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:136
+msgid "Loading your inventory"
+msgstr "Loading your inventory"
+
 #: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:69
-msgid "Loading your inventory setup"
-msgstr "Loading your inventory setup"
+#~ msgid "Loading your inventory setup"
+#~ msgstr "Loading your inventory setup"
 
 #: app/components/hiring/hire-dialog.tsx:233
 #: app/components/inventory/item-picker.tsx:152
@@ -21099,6 +21741,11 @@ msgstr "Mark No-Show"
 msgid "Mark on the way"
 msgstr "Mark on the way"
 
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:340
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.tsx:208
+msgid "Mark paid"
+msgstr "Mark paid"
+
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:511
 msgid "Mark read"
 msgstr "Mark read"
@@ -21114,6 +21761,10 @@ msgstr "Mark removed from tab {number}. It now earns loyalty points like any oth
 #: app/components/pos/terminals-manager.tsx:651
 msgid "Mark settled"
 msgstr "Mark settled"
+
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:338
+msgid "Mark unpaid"
+msgstr "Mark unpaid"
 
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:509
 msgid "Mark unread"
@@ -21137,6 +21788,11 @@ msgstr "Marked {0} as {lastUndoStatusLabel}."
 msgid "Marked {guest} as finished."
 msgstr "Marked {guest} as finished."
 
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:332
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.tsx:154
+msgid "Marked as paid."
+msgstr "Marked as paid."
+
 #: app/components/staff/timesheets/card-history.tsx:50
 msgid "Marked as reviewed"
 msgstr "Marked as reviewed"
@@ -21145,6 +21801,10 @@ msgstr "Marked as reviewed"
 #: app/components/staff/timesheets/review-queue.tsx:312
 msgid "Marked as reviewed."
 msgstr "Marked as reviewed."
+
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:332
+msgid "Marked as unpaid."
+msgstr "Marked as unpaid."
 
 #: app/components/staff/schedule/shift-editor-sheet.tsx:761
 msgid "Marked unavailable"
@@ -21177,6 +21837,10 @@ msgstr "Marketing messages"
 msgid "Marketplaces"
 msgstr "Marketplaces"
 
+#: app/components/inventory/record-delivery-screen.tsx:621
+msgid "Marking a delivery paid needs the purchasing role, so it is saved as unpaid."
+msgstr "Marking a delivery paid needs the purchasing role, so it is saved as unpaid."
+
 #: app/components/staff/timesheets/review-queue.tsx:188
 msgid "Marking…"
 msgstr "Marking…"
@@ -21184,6 +21848,10 @@ msgstr "Marking…"
 #: app/components/phone-agent/voice-picker.tsx:65
 msgid "Masculine"
 msgstr "Masculine"
+
+#: app/components/inventory/record-delivery-screen.tsx:695
+msgid "Matches the invoice."
+msgstr "Matches the invoice."
 
 #~ msgid "Max advance window (days)"
 #~ msgstr "Max advance window (days)"
@@ -21307,6 +21975,8 @@ msgstr "Meal deal groups"
 #~ msgstr "Meal deal of {units} items"
 
 #: app/components/inventory/item-form.tsx:354
+#: app/components/inventory/record-delivery-screen.tsx:1061
+#: app/components/inventory/record-delivery-screen.tsx:1064
 msgid "Measured in"
 msgstr "Measured in"
 
@@ -21627,6 +22297,14 @@ msgstr "Minimal"
 msgid "Minimum notice (minutes)"
 msgstr "Minimum notice (minutes)"
 
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:251
+msgid "Minimum order"
+msgstr "Minimum order"
+
+#: app/components/inventory/supplier-form.tsx:344
+msgid "Minimum order ({currency})"
+msgstr "Minimum order ({currency})"
+
 #: app/components/locations/delivery-zones-manager.tsx:530
 msgid "Minimum Order ($)"
 msgstr "Minimum Order ($)"
@@ -21863,6 +22541,7 @@ msgstr "Monthly Reservation Volume & Special Days"
 
 #: app/components/favorite-notes.tsx:89
 #: app/components/inventory/adjust-stock-dialog.tsx:230
+#: app/components/inventory/counting-screen.tsx:765
 #: app/components/inventory/log-waste-dialog.tsx:326
 #: app/components/reservations/waitlist/party-fields.tsx:181
 #: app/components/staff/schedule/schedule-toolbar.tsx:214
@@ -22157,6 +22836,8 @@ msgstr "My schedule link"
 #: app/components/inventory/bulk-review-rows.tsx:88
 #: app/components/inventory/bulk-review-rows.tsx:94
 #: app/components/inventory/item-form.tsx:315
+#: app/components/inventory/record-delivery-screen.tsx:1038
+#: app/components/inventory/supplier-form.tsx:195
 #: app/components/loyalty/promotion-dialog.tsx:604
 #: app/components/loyalty/reward-dialog.tsx:435
 #: app/components/pos/terminals-manager.tsx:1390
@@ -22220,6 +22901,10 @@ msgstr "Name on card"
 #: app/components/inventory/item-form.tsx:154
 msgid "Name the pack, for example Box or Case."
 msgstr "Name the pack, for example Box or Case."
+
+#: app/components/inventory/supplier-products.tsx:393
+msgid "Name the pack, for example Box."
+msgstr "Name the pack, for example Box."
 
 #: app/utils/staffing/onboarding-view.ts:222
 #: app/utils/staffing/onboarding-view.ts:343
@@ -22298,8 +22983,13 @@ msgstr "Needs a published schedule. Managers choose how they hear about it in th
 #: app/components/reservations/host-subnav.tsx:163
 #: app/components/staff/staff-profile-page.tsx:36
 #: app/components/staff/timeclock-today.tsx:125
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:230
 msgid "Needs attention"
 msgstr "Needs attention"
+
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:228
+msgid "Needs attention ({attentionCount})"
+msgstr "Needs attention ({attentionCount})"
 
 #: app/components/reservations/settings/setup-diagnostics.tsx:41
 msgid "Needs attention ({count})"
@@ -22526,6 +23216,11 @@ msgstr "New hourly rate"
 #: app/components/settings/cards/organization/site-icon-card.tsx:157
 msgid "New icon preview"
 msgstr ""
+
+#: app/components/inventory/record-delivery-screen.tsx:450
+#: app/components/inventory/record-delivery-screen.tsx:1022
+msgid "New item"
+msgstr "New item"
 
 #: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:360
 msgid "New Item"
@@ -23069,11 +23764,19 @@ msgstr "No contacts yet."
 msgid "No content yet"
 msgstr "No content yet"
 
+#: app/routes/_app+/$orgSlug_+/inventory+/counts.tsx:182
+msgid "No count is in progress."
+msgstr "No count is in progress."
+
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.lists.tsx:155
 msgid "No count lists yet"
 msgstr "No count lists yet"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/counts.tsx:17
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:328
+msgid "No count yet"
+msgstr "No count yet"
+
+#: app/routes/_app+/$orgSlug_+/inventory+/counts.tsx:258
 msgid "No counts yet"
 msgstr "No counts yet"
 
@@ -23106,11 +23809,15 @@ msgstr "No customers yet"
 msgid "No date"
 msgstr "No date"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:490
+#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:484
 msgid "No deliveries in this period."
 msgstr "No deliveries in this period."
 
-#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.tsx:17
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:427
+msgid "No deliveries this week to compare with."
+msgstr "No deliveries this week to compare with."
+
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.tsx:315
 msgid "No deliveries yet"
 msgstr "No deliveries yet"
 
@@ -23309,6 +24016,10 @@ msgstr "No items yet."
 #: app/components/inventory/item-picker.tsx:157
 msgid "No items yet. Add items in Stock first."
 msgstr "No items yet. Add items in Stock first."
+
+#: app/components/inventory/record-delivery-screen.tsx:465
+msgid "No items yet. Search above, or add one that is not in Stock yet."
+msgstr "No items yet. Search above, or add one that is not in Stock yet."
 
 #: app/routes/_app+/$orgSlug_+/staff+/hiring._index.tsx:128
 msgid "No jobs yet"
@@ -23919,6 +24630,10 @@ msgstr "No rules are saved for this workplace yet, so the defaults are used. Del
 msgid "No rules yet."
 msgstr "No rules yet."
 
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:411
+msgid "No sales between your last two counts."
+msgstr "No sales between your last two counts."
+
 #: app/components/staff/schedule/forecast-strip.tsx:164
 msgid "No sales guide"
 msgstr "No sales guide"
@@ -23926,6 +24641,10 @@ msgstr "No sales guide"
 #: app/components/staff/labor/labor-overview.tsx:406
 msgid "No sales to compare"
 msgstr "No sales to compare"
+
+#: app/components/inventory/count-review-screen.tsx:852
+msgid "No sales were recorded between your last two counts, so food cost cannot be worked out yet."
+msgstr "No sales were recorded between your last two counts, so food cost cannot be worked out yet."
 
 #: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:442
 msgid "No saved notes for {activeServiceName} yet."
@@ -24049,9 +24768,20 @@ msgstr "No submissions yet"
 msgid "No summary for this call."
 msgstr "No summary for this call."
 
+#: app/components/inventory/record-delivery-screen.tsx:405
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:146
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.tsx:392
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.tsx:443
+msgid "No supplier"
+msgstr "No supplier"
+
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:491
 msgid "No supplier yet. Add one in Purchasing."
 msgstr "No supplier yet. Add one in Purchasing."
+
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.tsx:527
+msgid "No suppliers yet"
+msgstr "No suppliers yet"
 
 #~ msgid "No table combinations configured yet."
 #~ msgstr "No table combinations configured yet."
@@ -24203,7 +24933,7 @@ msgstr "No wait estimate is available yet. They would be number {position} in li
 msgid "No walk-in sales on this day."
 msgstr "No walk-in sales on this day."
 
-#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:352
+#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:346
 msgid "No waste logged"
 msgstr "No waste logged"
 
@@ -24308,6 +25038,10 @@ msgstr "Nobody answered"
 msgid "Nobody assigned yet"
 msgstr "Nobody assigned yet"
 
+#: app/components/inventory/count-review-screen.tsx:382
+msgid "Nobody counted these. Choose what happens to each one."
+msgstr "Nobody counted these. Choose what happens to each one."
+
 #: app/components/staff/schedule/shift-editor-sheet.tsx:611
 msgid "Nobody else holds this position here."
 msgstr "Nobody else holds this position here."
@@ -24372,6 +25106,7 @@ msgstr "none"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:314
 #: app/components/hiring/job-summary.tsx:66
+#: app/components/inventory/count-review-screen.tsx:812
 #: app/components/menu/modifier-form.tsx:287
 #: app/components/reservations/booking-sheet.tsx:87
 #: app/components/settings/cards/organization/site-theme-card.tsx:748
@@ -24390,6 +25125,10 @@ msgstr ""
 #: app/components/menu/category-form.tsx:332
 msgid "None (Top-Level Category)"
 msgstr "None (Top-Level Category)"
+
+#: app/components/inventory/count-review-screen.tsx:480
+msgid "None left"
+msgstr "None left"
 
 #: app/routes/_app+/$orgSlug_+/media.tsx:1483
 msgid "Normal"
@@ -24463,6 +25202,10 @@ msgstr ""
 msgid "Not Contacted"
 msgstr "Not Contacted"
 
+#: app/components/inventory/count-review-screen.tsx:380
+msgid "Not counted"
+msgstr "Not counted"
+
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:373
 msgid "Not counted yet"
 msgstr "Not counted yet"
@@ -24487,6 +25230,10 @@ msgstr "Not entered"
 #: app/components/hiring/candidate-parts.tsx:80
 msgid "Not given"
 msgstr "Not given"
+
+#: app/components/inventory/counting-screen.tsx:511
+msgid "Not in an area"
+msgstr "Not in an area"
 
 #: app/components/kiosk/kiosk-screens.tsx:132
 #: app/components/kiosk/kiosk-screens.tsx:448
@@ -24520,6 +25267,10 @@ msgstr "Not reached yet"
 #: app/components/pos/terminals-manager.tsx:568
 msgid "Not required"
 msgstr "Not required"
+
+#: app/components/inventory/counting-screen.tsx:638
+msgid "Not saved yet"
+msgstr "Not saved yet"
 
 #: app/components/pos/terminals-manager.tsx:1205
 #: app/components/staff/kiosk-manager.tsx:442
@@ -24581,6 +25332,7 @@ msgstr ""
 #~ msgid "Not visited in 90 days"
 #~ msgstr "Not visited in 90 days"
 
+#: app/components/inventory/count-review-screen.tsx:628
 #: app/components/staff/timesheets/timesheets-page.tsx:932
 msgid "Not yet"
 msgstr "Not yet"
@@ -24590,7 +25342,9 @@ msgid "note"
 msgstr ""
 
 #: app/components/inventory/adjust-stock-dialog.tsx:298
+#: app/components/inventory/count-review-screen.tsx:555
 #: app/components/inventory/log-waste-dialog.tsx:398
+#: app/components/inventory/supplier-form.tsx:377
 #: app/components/loyalty/adjust-dialog.tsx:255
 #: app/components/loyalty/record-refund-dialog.tsx:277
 #: app/components/orders/record-order-refund-dialog.tsx:291
@@ -24600,7 +25354,7 @@ msgstr ""
 #: app/components/staff/schedule/time-off-page.tsx:471
 #: app/components/staff/schedule/time-off-sheet.tsx:232
 #: app/components/staff/timesheets/card-fields.tsx:210
-#: app/components/workspace-breadcrumb.tsx:106
+#: app/components/workspace-breadcrumb.tsx:109
 #: app/routes/_app+/$orgSlug_+/loyalty+/activity.tsx:783
 #: app/routes/_app+/$orgSlug_+/media.tsx:1467
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:925
@@ -24777,6 +25531,10 @@ msgstr "Nothing in this timeframe matches the report's filters."
 msgid "Nothing is added until you confirm. Fix a row here or remove it."
 msgstr "Nothing is added until you confirm. Fix a row here or remove it."
 
+#: app/components/inventory/count-review-screen.tsx:647
+msgid "Nothing is changed in your stock. The entries are kept in the list of past counts."
+msgstr "Nothing is changed in your stock. The entries are kept in the list of past counts."
+
 #: app/components/qr/open-tabs.tsx:933
 msgid "Nothing is charged. Orders the kitchen has not finished are cancelled."
 msgstr "Nothing is charged. Orders the kitchen has not finished are cancelled."
@@ -24793,6 +25551,10 @@ msgstr "Nothing is saved until you confirm. Fix a row here or remove it."
 msgid "Nothing is saved until you confirm. Members keep their login; this only adds them to your team."
 msgstr "Nothing is saved until you confirm. Members keep their login; this only adds them to your team."
 
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:616
+msgid "Nothing is scheduled for the next seven days."
+msgstr "Nothing is scheduled for the next seven days."
+
 #: app/components/staff/schedule/availability-page.tsx:208
 #: app/components/staff/schedule/time-off-page.tsx:247
 msgid "Nothing is waiting"
@@ -24806,7 +25568,7 @@ msgstr "Nothing is waiting for review."
 msgid "Nothing left with that issue."
 msgstr "Nothing left with that issue."
 
-#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:350
+#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:344
 msgid "Nothing logged for this reason"
 msgstr "Nothing logged for this reason"
 
@@ -24819,11 +25581,15 @@ msgstr "Nothing matches that search."
 msgid "Nothing matches this filter"
 msgstr "Nothing matches this filter"
 
+#: app/components/inventory/count-review-screen.tsx:350
+msgid "Nothing needs a look."
+msgstr "Nothing needs a look."
+
 #: app/components/staff/timesheets/review-queue.tsx:136
 msgid "Nothing needs review"
 msgstr "Nothing needs review"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:112
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:237
 msgid "Nothing needs you right now"
 msgstr "Nothing needs you right now"
 
@@ -24851,6 +25617,10 @@ msgstr "Nothing to ship yet"
 msgid "Nothing to show here"
 msgstr "Nothing to show here"
 
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.tsx:307
+msgid "Nothing unpaid"
+msgstr "Nothing unpaid"
+
 #: app/components/my-schedule/requests-view.tsx:239
 msgid "Nothing waiting for a manager."
 msgstr "Nothing waiting for a manager."
@@ -24875,13 +25645,21 @@ msgstr "Nothing was left to update on that sale, so it was cleared."
 msgid "Nothing was published."
 msgstr "Nothing was published."
 
-#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:359
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:292
+msgid "Nothing was thrown away in the last 7 days."
+msgstr "Nothing was thrown away in the last 7 days."
+
+#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:353
 msgid "Nothing was thrown away in this period. Use Log waste when something is."
 msgstr "Nothing was thrown away in this period. Use Log waste when something is."
 
 #: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:79
 msgid "Nothing yet."
 msgstr "Nothing yet."
+
+#: app/components/inventory/supplier-products.tsx:122
+msgid "Nothing yet. Add the items you buy from them, with the pack and its price, so a delivery fills in the price for you."
+msgstr "Nothing yet. Add the items you buy from them, with the pack and its price, so a delivery fills in the price for you."
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:908
 msgid "Notification Message"
@@ -25204,6 +25982,10 @@ msgstr "One of this item, free. The customer picks the size or variant; paid ext
 msgid "One of those positions no longer exists. Reload and try again."
 msgstr "One of those positions no longer exists. Reload and try again."
 
+#: app/components/inventory/supplier-products.tsx:404
+msgid "One pack holds"
+msgstr "One pack holds"
+
 #: app/routes/_app+/$orgSlug_+/staff+/team.bulk.tsx:266
 msgid "One person per line: name, then phone or email. A header row with Name, Phone and Email also works."
 msgstr "One person per line: name, then phone or email. A header row with Name, Phone and Email also works."
@@ -25420,6 +26202,10 @@ msgstr "Only for loyalty members."
 msgid "Only for parties of at least"
 msgstr "Only for parties of at least"
 
+#: app/components/inventory/record-delivery-screen.tsx:924
+msgid "Only if it differs from packs times price."
+msgstr "Only if it differs from packs times price."
+
 #: app/components/discounts/discount-form.tsx:537
 #: app/components/discounts/discount-form.tsx:1413
 msgid "Only in these categories"
@@ -25510,6 +26296,10 @@ msgstr "Only the items you pick."
 #: app/components/inventory/item-form.tsx:270
 msgid "Only the name and category are needed. Everything else can wait."
 msgstr "Only the name and category are needed. Everything else can wait."
+
+#: app/components/inventory/supplier-form.tsx:419
+msgid "Only the name is needed. Add what you know now and the rest later."
+msgstr "Only the name is needed. Add what you know now and the rest later."
 
 #: app/components/dashboard/dashboard-name-dialog.tsx:51
 msgid "Only the owner can rename this dashboard."
@@ -26169,6 +26959,14 @@ msgstr "Order at most {PRINT_MAX_COPIES} copies"
 msgid "Order at the table"
 msgstr "Order at the table"
 
+#: app/components/inventory/supplier-form.tsx:308
+msgid "Order by"
+msgstr "Order by"
+
+#: app/components/inventory/supplier-form.tsx:298
+msgid "Order cut-off"
+msgstr "Order cut-off"
+
 #: app/components/menu/drop-wizard/drop-drawers.tsx:345
 msgid "Order cutoff"
 msgstr "Order cutoff"
@@ -26450,6 +27248,10 @@ msgctxt "inventory stock status"
 msgid "Out"
 msgstr "Out"
 
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:354
+msgid "Out of stock"
+msgstr "Out of stock"
+
 #~ msgid "Outcome"
 #~ msgstr "Outcome"
 
@@ -26689,6 +27491,7 @@ msgstr "Pacing rule deleted."
 
 #: app/components/inventory/item-form.tsx:142
 #: app/components/inventory/item-form.tsx:398
+#: app/components/inventory/supplier-products.tsx:386
 msgid "Pack"
 msgstr "Pack"
 
@@ -26698,7 +27501,7 @@ msgstr "Packaging"
 
 #: app/components/website/link-inspector.tsx:366
 #: app/components/website/link-inspector.tsx:419
-#: app/components/workspace-breadcrumb.tsx:111
+#: app/components/workspace-breadcrumb.tsx:114
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:769
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:622
 msgid "Page"
@@ -26746,6 +27549,7 @@ msgstr ""
 #: app/components/orders/record-order-refund-dialog.tsx:241
 #: app/components/print/print-order-labels.ts:11
 #: app/components/settings/cards/organization/shop-card.tsx:45
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:173
 msgid "Paid"
 msgstr "Paid"
 
@@ -27033,6 +27837,10 @@ msgstr ""
 msgid "Password login is disabled because your organization \"{orgName}\" requires SSO."
 msgstr ""
 
+#: app/routes/_app+/$orgSlug_+/inventory+/counts.tsx:234
+msgid "Past counts"
+msgstr "Past counts"
+
 #: app/components/reservations/detail-sheet.tsx:1314
 msgid "Past Visit History"
 msgstr "Past Visit History"
@@ -27264,6 +28072,11 @@ msgstr "Payment policy"
 msgid "Payment received"
 msgstr "Payment received"
 
+#: app/components/inventory/supplier-form.tsx:355
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:257
+msgid "Payment terms"
+msgstr "Payment terms"
+
 #: app/utils/loyalty/loyalty-labels.ts:144
 msgid "Payment uncertain"
 msgstr "Payment uncertain"
@@ -27481,7 +28294,7 @@ msgstr "Percentage off"
 msgid "Performance metrics"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:174
+#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:168
 msgid "Period"
 msgstr "Period"
 
@@ -27545,6 +28358,7 @@ msgstr ""
 #: app/components/customers/person-profile-screen.tsx:1139
 #: app/components/customers/person-profile-screen.tsx:1149
 #: app/components/hiring/candidate-parts.tsx:70
+#: app/components/inventory/supplier-form.tsx:218
 #: app/components/reservations/waitlist/party-fields.tsx:126
 #: app/components/reservations/walk-in-dialog.tsx:248
 #: app/components/staff/details-tab.tsx:208
@@ -27553,6 +28367,7 @@ msgstr ""
 #: app/components/staff/timesheets/card-history.tsx:66
 #: app/components/website/link-inspector.tsx:370
 #: app/components/website/link-inspector.tsx:489
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:239
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:305
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:718
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:617
@@ -27580,6 +28395,7 @@ msgid "Phone agent settings"
 msgstr "Phone agent settings"
 
 #: app/components/hiring/applicant-labels.ts:36
+#: app/components/inventory/supplier-form.tsx:39
 msgid "Phone call"
 msgstr "Phone call"
 
@@ -28440,6 +29256,10 @@ msgstr "Potatoes"
 msgid "Preference:"
 msgstr "Preference:"
 
+#: app/components/inventory/supplier-products.tsx:170
+msgid "Preferred"
+msgstr "Preferred"
+
 #: app/components/website/link-inspector.tsx:613
 #: app/components/website/link-inspector.tsx:630
 msgid "Prefetch"
@@ -28623,7 +29443,12 @@ msgstr "Price is per guest"
 msgid "Price not configured"
 msgstr ""
 
+#: app/components/inventory/record-delivery-screen.tsx:842
+msgid "Price of one {packName} ({currency})"
+msgstr "Price of one {packName} ({currency})"
+
 #: app/components/inventory/item-form.tsx:460
+#: app/components/inventory/supplier-products.tsx:458
 msgid "Price of one pack ({currency})"
 msgstr "Price of one pack ({currency})"
 
@@ -28639,13 +29464,26 @@ msgstr "Price per unit (optional)"
 msgid "Price ready"
 msgstr "Price ready"
 
+#: app/components/inventory/supplier-products.tsx:175
+msgid "Priced by weight"
+msgstr "Priced by weight"
+
 #: app/components/inventory/item-form.tsx:480
+#: app/components/inventory/supplier-products.tsx:486
 msgid "Priced by weight (the invoice shows the real weight)"
 msgstr "Priced by weight (the invoice shows the real weight)"
 
 #: app/components/locations/location-form.tsx:459
 msgid "Prices include tax"
 msgstr "Prices include tax"
+
+#: app/components/inventory/supplier-products.tsx:216
+msgid "Prices need access to costs, so you cannot add items here."
+msgstr "Prices need access to costs, so you cannot add items here."
+
+#: app/components/inventory/record-delivery-screen.tsx:705
+msgid "Prices that moved"
+msgstr "Prices that moved"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:421
 #~ msgid "Prices, dish names or table codes on this print are out of date. Approve the proof again to refresh it, or keep printing the approved version."
@@ -29115,8 +29953,8 @@ msgid "Purchasing"
 msgstr "Purchasing"
 
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.tsx:18
-msgid "Purchasing keeps your deliveries, what to order and the suppliers you buy from in one place. Recording deliveries is coming soon."
-msgstr "Purchasing keeps your deliveries, what to order and the suppliers you buy from in one place. Recording deliveries is coming soon."
+#~ msgid "Purchasing keeps your deliveries, what to order and the suppliers you buy from in one place. Recording deliveries is coming soon."
+#~ msgstr "Purchasing keeps your deliveries, what to order and the suppliers you buy from in one place. Recording deliveries is coming soon."
 
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:1040
 msgid "Push two or more combinable tables together to seat larger parties. The same set of tables can only be saved once."
@@ -29442,6 +30280,10 @@ msgstr "Ready to take bookings"
 msgid "Ready, {suggestions}"
 msgstr "Ready, {suggestions}"
 
+#: app/components/inventory/record-delivery-screen.tsx:867
+msgid "Real weight on the invoice"
+msgstr "Real weight on the invoice"
+
 #: app/components/inventory/adjust-stock-dialog.tsx:265
 #: app/components/inventory/log-waste-dialog.tsx:365
 #: app/components/loyalty/adjust-dialog.tsx:243
@@ -29451,7 +30293,7 @@ msgstr "Ready, {suggestions}"
 #: app/components/reservations/waitlist/seat-dialog.tsx:236
 #: app/components/staff/positions-tab.tsx:848
 #: app/components/staff/timesheets/reason-field.tsx:36
-#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:710
+#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:613
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:922
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:1303
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.rehire.tsx:96
@@ -29510,6 +30352,10 @@ msgstr "Recent activity"
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:242
 msgid "Recent campaigns"
 msgstr ""
+
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.tsx:282
+msgid "Recent deliveries"
+msgstr "Recent deliveries"
 
 #: app/components/settings/cards/organization/shop-card.tsx:432
 msgid "Recent orders"
@@ -29601,6 +30447,13 @@ msgstr "Record a refund"
 msgid "Record calls"
 msgstr "Record calls"
 
+#: app/components/inventory/record-delivery-screen.tsx:363
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.tsx:222
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.tsx:327
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:200
+msgid "Record delivery"
+msgstr "Record delivery"
+
 #: app/components/loyalty/record-refund-dialog.tsx:208
 msgid "Record money you already returned, for example in your payment dashboard or in cash, and chargebacks you lost: neither reaches this tab on its own. Points earned on the refunded part are taken back, and the reward's points come back once everything paid is refunded. No money moves."
 msgstr "Record money you already returned, for example in your payment dashboard or in cash, and chargebacks you lost: neither reaches this tab on its own. Points earned on the refunded part are taken back, and the reward's points come back once everything paid is refunded. No money moves."
@@ -29618,6 +30471,10 @@ msgstr "Record refund"
 #: app/components/hiring/applicant-labels.ts:66
 msgid "Record the decision quietly."
 msgstr "Record the decision quietly."
+
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.tsx:317
+msgid "Record what arrives and what it cost. Stock goes up, prices stay current, and you see what you owe each supplier."
+msgstr "Record what arrives and what it cost. Stock goes up, prices stay current, and you see what you owe each supplier."
 
 #: app/components/inventory/log-waste-dialog.tsx:94
 msgid "Record what was thrown away so your stock and costs stay right."
@@ -29644,6 +30501,11 @@ msgstr "Recorded on the audit log."
 #: app/components/phone-agent/call-recording-player.tsx:110
 msgid "Recording"
 msgstr "Recording"
+
+#: app/components/inventory/record-delivery-screen.tsx:326
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.tsx:230
+msgid "Recording a delivery needs the prices on the invoice, so it needs access to costs. Ask an owner to check your role."
+msgstr "Recording a delivery needs the prices on the invoice, so it needs access to costs. Ask an owner to check your role."
 
 #: app/components/phone-agent/phrase-fields.tsx:43
 msgid "Recording notice"
@@ -30075,6 +30937,11 @@ msgstr "Remove {e164}?"
 msgid "Remove {guest} from the waitlist?"
 msgstr "Remove {guest} from the waitlist?"
 
+#: app/components/inventory/record-delivery-screen.tsx:797
+#: app/components/inventory/supplier-products.tsx:198
+msgid "Remove {itemName}"
+msgstr "Remove {itemName}"
+
 #: app/components/chat/chat-compose-dialog.tsx:129
 #: app/components/pos/terminals-manager.tsx:873
 #: app/components/reservations/experiences/schedule-sheet.tsx:295
@@ -30301,6 +31168,7 @@ msgid "Remove the special characters from the name."
 msgstr "Remove the special characters from the name."
 
 #: app/components/inventory/bulk-review-rows.tsx:21
+#: app/components/inventory/supplier-form.tsx:99
 msgid "Remove the special characters."
 msgstr "Remove the special characters."
 
@@ -30375,7 +31243,7 @@ msgstr "Removed"
 msgid "Removed from {name}."
 msgstr "Removed from {name}."
 
-#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:666
+#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:569
 msgid "Removed item"
 msgstr "Removed item"
 
@@ -30429,6 +31297,7 @@ msgstr "Rename, table {tableName}"
 msgid "Rendering…"
 msgstr "Rendering…"
 
+#: app/components/inventory/count-review-screen.tsx:286
 #: app/components/phone-agent/call-follow-up.tsx:151
 #: app/components/phone-agent/call-request-card.tsx:79
 #: app/components/staff/timesheets/card-sheet.tsx:467
@@ -30559,7 +31428,7 @@ msgstr "Reply…"
 #~ msgid "Replying to comment"
 #~ msgstr ""
 
-#: app/components/workspace-breadcrumb.tsx:104
+#: app/components/workspace-breadcrumb.tsx:107
 #: app/utils/dashboards/config.ts:116
 msgid "Report"
 msgstr "Report"
@@ -31077,12 +31946,18 @@ msgstr "Results"
 
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:468
 #: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:237
+#: app/routes/_app+/$orgSlug_+/inventory+/counts.tsx:222
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:531
 msgid "Resume"
 msgstr "Resume"
 
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:476
 msgid "Resume {name}"
 msgstr "Resume {name}"
+
+#: app/components/inventory/start-count-dialog.tsx:149
+msgid "Resume it"
+msgstr "Resume it"
 
 #: app/routes/_app+/$orgSlug_+/loyalty+/program.tsx:300
 msgid "Resume program"
@@ -31097,6 +31972,7 @@ msgid "Resy"
 msgstr "Resy"
 
 #: ../../packages/ai/src/components/ai-elements/prompt-input.tsx:171
+#: app/components/inventory/counting-screen.tsx:646
 #: app/components/reservations/messages/message-preview.tsx:89
 #: app/components/reservations/settings/setup-list-chrome.tsx:83
 #: app/components/reservations/waitlist/waitlist-screen.tsx:213
@@ -31138,10 +32014,14 @@ msgid "Reuse a pattern of shifts week after week."
 msgstr "Reuse a pattern of shifts week after week."
 
 #: app/components/hiring/job-editor.tsx:203
+#: app/components/inventory/counting-screen.tsx:400
 #: app/components/inventory/setup-checklist.tsx:168
 #: app/components/mailbox/reviews-tab.tsx:638
 #: app/components/reservations/settings/setup-checklist.tsx:193
+#: app/components/workspace-breadcrumb.tsx:99
 #: app/hooks/use-staff-attention.ts:117
+#: app/routes/_app+/$orgSlug_+/inventory+/counts.tsx:220
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:536
 #: app/routes/_app+/$orgSlug_+/loyalty+/activity.tsx:491
 #: app/routes/_app+/$orgSlug_+/loyalty+/activity.tsx:544
 msgid "Review"
@@ -31194,6 +32074,10 @@ msgstr "Review the time cards for the week."
 #: app/utils/staffing/alert-copy.ts:42
 msgid "Review the time cards that need a look."
 msgstr "Review the time cards that need a look."
+
+#: app/components/inventory/count-review-screen.tsx:269
+msgid "Review: {title}"
+msgstr "Review: {title}"
 
 #: app/components/mailbox/reviews-tab.tsx:350
 msgid "reviews"
@@ -31283,7 +32167,7 @@ msgstr "Ring for (seconds)"
 #: app/components/hiring/job-editor.tsx:200
 #: app/components/roles/tenant-role-access-manager.tsx:1441
 #: app/components/roles/tenant-role-access-manager.tsx:1623
-#: app/components/workspace-breadcrumb.tsx:110
+#: app/components/workspace-breadcrumb.tsx:113
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:700
 msgid "Role"
 msgstr "Role"
@@ -31618,6 +32502,10 @@ msgstr "Sales: {name}."
 msgid "Salt"
 msgstr "Salt"
 
+#: app/components/inventory/count-review-screen.tsx:473
+msgid "Same as before"
+msgstr "Same as before"
+
 #: app/components/inventory/bulk-review-rows.tsx:22
 msgid "Same name as an earlier row."
 msgstr "Same name as an earlier row."
@@ -31690,6 +32578,8 @@ msgstr ""
 #: app/components/customers/person-profile-screen.tsx:1194
 #: app/components/dashboard/dashboard-options-menu.tsx:153
 #: app/components/inventory/item-form.tsx:291
+#: app/components/inventory/supplier-form.tsx:389
+#: app/components/inventory/supplier-products.tsx:523
 #: app/components/member-location-scope.tsx:219
 #: app/components/menu/drop-wizard/drop-drawers.tsx:399
 #: app/components/menu/drop-wizard/drop-drawers.tsx:593
@@ -31801,6 +32691,10 @@ msgstr ""
 #: app/components/reservations/detail-sheet.tsx:1159
 msgid "Save Changes"
 msgstr "Save Changes"
+
+#: app/components/inventory/record-delivery-screen.tsx:366
+msgid "Save delivery"
+msgstr "Save delivery"
 
 #: app/components/discounts/discount-form.tsx:698
 msgid "Save discount"
@@ -31944,6 +32838,7 @@ msgstr "Save zone"
 
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:148
 #: app/components/dashboard/dashboard-edit-toolbar.tsx:95
+#: app/components/inventory/counting-screen.tsx:628
 #: app/components/reservations/floor-plan-canvas.tsx:773
 msgid "Saved"
 msgstr "Saved"
@@ -32009,6 +32904,7 @@ msgstr "Saved with the refund, along with who recorded it."
 
 #: app/components/discounts/discount-form.tsx:731
 #: app/components/hiring/job-editor.tsx:162
+#: app/components/inventory/supplier-products.tsx:342
 #: app/components/reservations/policies/policies-screen.tsx:209
 msgid "Saved."
 msgstr "Saved."
@@ -32053,8 +32949,12 @@ msgstr ""
 #: app/components/dashboard/dashboard-edit-toolbar.tsx:95
 #: app/components/hiring/interview-dialog.tsx:283
 #: app/components/inventory/adjust-stock-dialog.tsx:327
+#: app/components/inventory/counting-screen.tsx:377
+#: app/components/inventory/counting-screen.tsx:623
 #: app/components/inventory/item-form.tsx:291
 #: app/components/inventory/log-waste-dialog.tsx:450
+#: app/components/inventory/supplier-form.tsx:389
+#: app/components/inventory/supplier-products.tsx:523
 #: app/components/loyalty/adjust-dialog.tsx:281
 #: app/components/loyalty/program-form.tsx:615
 #: app/components/loyalty/promotion-dialog.tsx:916
@@ -32525,6 +33425,14 @@ msgstr "Search voices"
 msgid "Search your Canva designs"
 msgstr "Search your Canva designs"
 
+#: app/components/inventory/record-delivery-screen.tsx:439
+msgid "Search your items"
+msgstr "Search your items"
+
+#: app/components/inventory/record-delivery-screen.tsx:423
+msgid "Search your items and enter how many packs came and what each cost, before VAT."
+msgstr "Search your items and enter how many packs came and what each cost, before VAT."
+
 #: app/routes/_app+/organizations.tsx:206
 msgid "Search..."
 msgstr ""
@@ -32846,6 +33754,14 @@ msgstr "See automated journeys and their run history."
 msgid "See call history, caller numbers, transcripts, and recordings."
 msgstr "See call history, caller numbers, transcripts, and recordings."
 
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:531
+msgid "See count"
+msgstr "See count"
+
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:519
+msgid "See counts"
+msgstr "See counts"
+
 #: app/components/roles/tenant-role-access-manager.tsx:458
 msgid "See covers, pacing, no-show, waitlist, channel, deposit, and section reports."
 msgstr "See covers, pacing, no-show, waitlist, channel, deposit, and section reports."
@@ -32853,6 +33769,10 @@ msgstr "See covers, pacing, no-show, waitlist, channel, deposit, and section rep
 #: app/components/roles/tenant-role-access-manager.tsx:326
 msgid "See dates of birth, home addresses, and emergency contacts."
 msgstr "See dates of birth, home addresses, and emergency contacts."
+
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:554
+msgid "See delivery"
+msgstr "See delivery"
 
 #: app/components/roles/tenant-role-access-manager.tsx:435
 msgid "See dining areas, tables, combinations, services, pacing, blocks, policies, messages, sections, and experiences."
@@ -32889,6 +33809,10 @@ msgstr "See labor cost and labor percentage."
 #: app/components/roles/tenant-role-access-manager.tsx:388
 msgid "See labor rules, time clock devices, and pay periods."
 msgstr "See labor rules, time clock devices, and pay periods."
+
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:504
+msgid "See low items"
+msgstr "See low items"
 
 #: app/components/roles/tenant-role-access-manager.tsx:476
 msgid "See loyalty members, balances, point activity, and redemptions."
@@ -32932,6 +33856,10 @@ msgstr "See the staff roster, profiles, and positions. Does not include pay or p
 #: app/components/print/restaurant/vertical-ui.tsx:200
 msgid "See this discount and how often it is used"
 msgstr "See this discount and how often it is used"
+
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:584
+msgid "See unpaid"
+msgstr "See unpaid"
 
 #: app/components/roles/tenant-role-access-manager.tsx:538
 msgid "See what stock is worth, item costs, food cost, and the cost of waste. Includes View stock."
@@ -33235,6 +34163,7 @@ msgstr "Seller details saved."
 
 #: ../../packages/ai/src/components/ai-chat.tsx:1133
 #: app/components/home-prompt.tsx:373
+#: app/components/inventory/counting-screen.tsx:597
 #: app/components/my-schedule/availability-sheet.tsx:203
 msgid "Send"
 msgstr "Send"
@@ -33274,6 +34203,10 @@ msgstr "Send code"
 msgid "Send Email"
 msgstr ""
 
+#: app/components/inventory/counting-screen.tsx:597
+msgid "Send for review"
+msgstr "Send for review"
+
 #: app/components/hiring/hire-dialog.tsx:384
 #: app/components/staff/access-tab.tsx:414
 msgid "Send invitation"
@@ -33298,6 +34231,7 @@ msgid "Send new link"
 msgstr "Send new link"
 
 #: ../../packages/marketing/src/components/campaign-form.tsx:56
+#: app/components/inventory/counting-screen.tsx:438
 msgid "Send now"
 msgstr ""
 
@@ -33403,6 +34337,10 @@ msgstr "Sent by email to people who have an address on file."
 #: app/components/pos/terminals-manager.tsx:1179
 msgid "Sent for a location this terminal is not paired to"
 msgstr "Sent for a location this terminal is not paired to"
+
+#: app/components/inventory/counting-screen.tsx:273
+msgid "Sent for approval."
+msgstr "Sent for approval."
 
 #: app/components/staff/timesheets/issue-copy.ts:27
 msgid "Sent late"
@@ -33824,7 +34762,7 @@ msgstr ""
 msgid "Share of the pool for each position (%)"
 msgstr "Share of the pool for each position (%)"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:480
+#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:474
 msgid "Share of what you bought"
 msgstr "Share of what you bought"
 
@@ -34053,6 +34991,10 @@ msgstr "Show a join button on your website. Online booking must also be on for t
 msgid "Show active experiences"
 msgstr "Show active experiences"
 
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.tsx:274
+msgid "Show all deliveries"
+msgstr "Show all deliveries"
+
 #~ msgid "Show all services"
 #~ msgstr "Show all services"
 
@@ -34093,9 +35035,11 @@ msgid "Show less"
 msgstr "Show less"
 
 #: app/components/chat/chat-message.tsx:110
+#: app/routes/_app+/$orgSlug_+/inventory+/counts.tsx:410
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.tsx:486
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:629
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:390
-#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:421
+#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:415
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:504
 msgid "Show more"
 msgstr "Show more"
@@ -34150,6 +35094,10 @@ msgstr "Show the website"
 msgid "Show this banner on your public site"
 msgstr ""
 
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.tsx:276
+msgid "Show unpaid"
+msgstr "Show unpaid"
+
 #: app/components/staff/kiosk-manager.tsx:885
 msgid "Show upcoming shifts"
 msgstr "Show upcoming shifts"
@@ -34169,7 +35117,7 @@ msgstr "Showing {businessDateLabel}."
 msgid "Showing {filteredOptionsCount} of {totalCount} options"
 msgstr "Showing {filteredOptionsCount} of {totalCount} options"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:402
+#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:396
 msgid "Showing {shown} entries"
 msgstr "Showing {shown} entries"
 
@@ -34222,6 +35170,10 @@ msgstr "Shown to guests whose party is larger than you take online."
 #: ../../packages/marketing/src/components/email/merge-tag-field.tsx:353
 msgid "Shown to recipients who have no value for this field."
 msgstr "Shown to recipients who have no value for this field."
+
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:413
+msgid "Shows after two approved counts."
+msgstr "Shows after two approved counts."
 
 #: app/components/discounts/discount-form.tsx:1982
 msgid "Shows it as an offer on your online menu."
@@ -34467,6 +35419,10 @@ msgstr "Some answers differ"
 msgid "Some details need fixing. Check each step."
 msgstr "Some details need fixing. Check each step."
 
+#: app/components/inventory/counting-screen.tsx:294
+msgid "Some entries have not reached the server yet. Check your connection and try Finish again; nothing is lost."
+msgstr "Some entries have not reached the server yet. Check your connection and try Finish again; nothing is lost."
+
 #: app/components/website/translate-provider.tsx:250
 msgid "Some fields already differ from the default language. Translate everything, or only the fields that still match the default?"
 msgstr ""
@@ -34474,6 +35430,10 @@ msgstr ""
 #: app/components/website/translate-provider.tsx:247
 msgid "Some fields are already translated"
 msgstr ""
+
+#: app/components/inventory/record-delivery-screen.tsx:383
+msgid "Some fields need a look. They are marked below."
+msgstr "Some fields need a look. They are marked below."
 
 #: app/utils/reservations/policies-view.ts:262
 msgid "Some fields need another look."
@@ -34483,6 +35443,10 @@ msgstr "Some fields need another look."
 #: app/components/home-prompt.tsx:322
 msgid "Some images couldn't be added. Use PNG, JPEG, WebP or GIF under 10 MB, up to 4 per message."
 msgstr "Some images couldn't be added. Use PNG, JPEG, WebP or GIF under 10 MB, up to 4 per message."
+
+#: app/components/inventory/counting-screen.tsx:576
+msgid "Some items are not counted"
+msgstr "Some items are not counted"
 
 #: app/utils/my-schedule/my-schedule-messages.ts:26
 msgid "Some of what you entered is not right. Check it and try again."
@@ -34504,6 +35468,10 @@ msgstr "Some settings do not fit together. Check the highlighted fields."
 #: app/components/phone-agent/agent-details.tsx:321
 msgid "Someone"
 msgstr "Someone"
+
+#: app/components/inventory/counting-screen.tsx:719
+msgid "Someone else also counted <0>{othersText}</0> here."
+msgstr "Someone else also counted <0>{othersText}</0> here."
 
 #: app/components/reservations/messages/message-settings.tsx:410
 msgid "Someone else changed these settings while you were editing. The latest version is loaded and your edits are kept. Review them and save again."
@@ -34597,6 +35565,10 @@ msgstr "Someone else saved this discount while you were editing. Your changes ar
 #: app/utils/hiring/applicant-errors.ts:22
 msgid "Someone on your team already has this email or phone number. Check the team list before hiring."
 msgstr "Someone on your team already has this email or phone number. Check the team list before hiring."
+
+#: app/components/inventory/supplier-form.tsx:40
+msgid "Something else"
+msgstr "Something else"
 
 #: app/utils/inventory/inventory-errors.ts:47
 msgid "Something in this form was not accepted. Check it and try again."
@@ -34837,9 +35809,10 @@ msgstr "Staff locations for {memberName}: {summary}"
 msgid "Staff meal"
 msgstr "Staff meal"
 
-#: app/components/workspace-breadcrumb.tsx:113
+#: app/components/workspace-breadcrumb.tsx:116
+#: app/routes/_app+/$orgSlug_+/inventory+/counts.tsx:110
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:562
-#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:662
+#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:565
 msgid "Staff member"
 msgstr "Staff member"
 
@@ -34973,6 +35946,10 @@ msgstr "Start a call to see what you and your agent say in real time."
 #~ msgid "Start a conversation with someone on your team."
 #~ msgstr "Start a conversation with someone on your team."
 
+#: app/components/inventory/start-count-dialog.tsx:122
+msgid "Start a count"
+msgstr "Start a count"
+
 #: app/components/reservations/experiences/experience-create-sheet.tsx:166
 msgid "Start a draft. You add schedules and publish it on the next screen."
 msgstr "Start a draft. You add schedules and publish it on the next screen."
@@ -35002,6 +35979,13 @@ msgstr "Start break"
 #: app/components/chat/chat-compose-dialog.tsx:424
 msgid "Start conversation"
 msgstr "Start conversation"
+
+#: app/components/inventory/start-count-dialog.tsx:238
+#: app/routes/_app+/$orgSlug_+/inventory+/counts.tsx:146
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:188
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:519
+msgid "Start count"
+msgstr "Start count"
 
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:1052
 msgid "Start date"
@@ -35096,6 +36080,14 @@ msgstr "Start with table QR cards so guests can order from their phone."
 msgid "Start, continue and review stock counts."
 msgstr "Start, continue and review stock counts."
 
+#: app/routes/_app+/$orgSlug_+/inventory+/counts.tsx:457
+msgid "Started {startedAt}"
+msgstr "Started {startedAt}"
+
+#: app/routes/_app+/$orgSlug_+/inventory+/counts.tsx:453
+msgid "Started {startedAt} by <0>{by}</0>"
+msgstr "Started {startedAt} by <0>{by}</0>"
+
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:271
 msgid "Started At"
 msgstr ""
@@ -35118,6 +36110,7 @@ msgid "Starting point"
 msgstr "Starting point"
 
 #: app/components/chat/chat-compose-dialog.tsx:422
+#: app/components/inventory/start-count-dialog.tsx:238
 msgid "Starting…"
 msgstr "Starting…"
 
@@ -35185,9 +36178,11 @@ msgstr "Stats"
 #: app/components/staff/staff-roster.tsx:143
 #: app/components/staff/timesheets/timesheet-table.tsx:232
 #: app/components/workspace-breadcrumb.tsx:73
-#: app/components/workspace-breadcrumb.tsx:107
+#: app/components/workspace-breadcrumb.tsx:110
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:334
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:369
+#: app/routes/_app+/$orgSlug_+/inventory+/counts.tsx:302
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.tsx:361
 #: app/routes/_app+/$orgSlug_+/loyalty+/program.tsx:249
 #: app/routes/_app+/$orgSlug_+/loyalty+/promotions.tsx:390
 #: app/routes/_app+/$orgSlug_+/loyalty+/rewards.tsx:266
@@ -35276,6 +36271,14 @@ msgstr "Stock"
 msgid "Stock adjusted."
 msgstr "Stock adjusted."
 
+#: app/components/inventory/count-review-screen.tsx:604
+msgid "Stock is set to what was counted and the count closes. This cannot be undone."
+msgstr "Stock is set to what was counted and the count closes. This cannot be undone."
+
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:391
+msgid "Stock value"
+msgstr "Stock value"
+
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:18
 #~ msgid "Stock will list every item you buy and use: how much you have at this location, where you keep it and what it is worth. Adding items is coming soon."
 #~ msgstr "Stock will list every item you buy and use: how much you have at this location, where you keep it and what it is worth. Adding items is coming soon."
@@ -35337,6 +36340,7 @@ msgstr "Stops people from starting long before their shift."
 msgid "Storage area name"
 msgstr "Storage area name"
 
+#: app/components/inventory/counting-screen.tsx:500
 #: app/components/workspace-breadcrumb.tsx:96
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.areas.tsx:161
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:225
@@ -35601,6 +36605,20 @@ msgstr "Sunday"
 #: app/components/nav-user.tsx:207
 msgid "Super Admin"
 msgstr ""
+
+#: app/components/inventory/record-delivery-screen.tsx:391
+#: app/components/inventory/record-delivery-screen.tsx:401
+#: app/components/workspace-breadcrumb.tsx:124
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:84
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:103
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.tsx:349
+msgid "Supplier"
+msgstr "Supplier"
+
+#: app/components/workspace-breadcrumb.tsx:101
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.tsx:495
+msgid "Suppliers"
+msgstr "Suppliers"
 
 #: ../../packages/marketing/src/components/campaign-form.tsx:131
 msgid "supported"
@@ -36139,6 +37157,10 @@ msgstr "Target {target}"
 msgid "Target {target}, not applied"
 msgstr "Target {target}, not applied"
 
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:407
+msgid "Target <0>{targetText}</0>"
+msgstr "Target <0>{targetText}</0>"
+
 #~ msgid "Target Tag Name"
 #~ msgstr ""
 
@@ -36649,6 +37671,14 @@ msgstr "That file is too large. Split it into smaller files."
 #: app/routes/_app+/$orgSlug_+/staff+/team.bulk.tsx:72
 msgid "That file is too large. Use a file under 1 MB."
 msgstr "That file is too large. Use a file under 1 MB."
+
+#: app/components/inventory/count-review-screen.tsx:612
+msgid "That is about <0>{netText}</0> less than you expected."
+msgstr "That is about <0>{netText}</0> less than you expected."
+
+#: app/components/inventory/count-review-screen.tsx:617
+msgid "That is about <0>{netText}</0> more than you expected."
+msgstr "That is about <0>{netText}</0> more than you expected."
 
 #: app/utils/reservations/payments-view.ts:115
 msgid "That is more than the fee in the booking's policy. You can only lower it."
@@ -37394,6 +38424,10 @@ msgstr ""
 msgid "The general application stays open until you close it."
 msgstr "The general application stays open until you close it."
 
+#: app/components/inventory/record-delivery-screen.tsx:575
+msgid "The grand total, VAT included."
+msgstr "The grand total, VAT included."
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:718
 msgid "The greeting is used when the AI assistant answers first. The closing line ends calls when a step has no goodbye of its own."
 msgstr "The greeting is used when the AI assistant answers first. The closing line ends calls when a step has no goodbye of its own."
@@ -37689,6 +38723,10 @@ msgstr "The order must already include them before the discount applies."
 #: app/components/phone-agent/restaurant/order-handoff-details.tsx:11
 msgid "The order on this link can't be shown."
 msgstr "The order on this link can't be shown."
+
+#: app/components/inventory/supplier-products.tsx:504
+msgid "The pack you usually buy"
+msgstr "The pack you usually buy"
 
 #: app/components/hiring/job-editor.tsx:771
 msgid "The page will not mention pay. Showing a range tends to bring more applications."
@@ -38043,6 +39081,14 @@ msgstr "The steps the agent follows on each call. The standard flow works for mo
 msgid "The steps to follow while taking an order."
 msgstr "The steps to follow while taking an order."
 
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:370
+msgid "The stock it added is taken back out. Use this when a delivery was entered by mistake."
+msgstr "The stock it added is taken back out. Use this when a delivery was entered by mistake."
+
+#: app/components/inventory/record-delivery-screen.tsx:596
+msgid "The supplier's e-invoice number or the text of its QR code."
+msgstr "The supplier's e-invoice number or the text of its QR code."
+
 #: app/components/staff/timesheets/issue-copy.ts:34
 msgid "The system clocked them out. Check the time is right."
 msgstr "The system clocked them out. Check the time is right."
@@ -38306,6 +39352,10 @@ msgstr "There is no one else in this organization to share with."
 msgid "There is nothing new to publish this week."
 msgstr "There is nothing new to publish this week."
 
+#: app/components/inventory/counting-screen.tsx:533
+msgid "There is nothing to count here. Add items to a storage area, or pick another count list."
+msgstr "There is nothing to count here. Add items to a storage area, or pick another count list."
+
 #: app/routes/_auth+/login.tsx:350
 msgid "There was an issue with your login attempt. Please try again."
 msgstr ""
@@ -38390,6 +39440,10 @@ msgstr "They are on the roster."
 msgid "They become active again. Their workplaces, positions and PINs are not restored, so add them again from their profile."
 msgstr "They become active again. Their workplaces, positions and PINs are not restored, so add them again from their profile."
 
+#: app/components/inventory/supplier-form.tsx:259
+msgid "They deliver on"
+msgstr "They deliver on"
+
 #: app/components/hiring/candidate-parts.tsx:261
 msgid "They did not show"
 msgstr "They did not show"
@@ -38433,6 +39487,10 @@ msgstr "They may have been removed, or you may not have access to their workplac
 #: app/components/hiring/candidate-sheet.tsx:99
 msgid "They may have been removed, or you may not have access to them."
 msgstr "They may have been removed, or you may not have access to them."
+
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:204
+msgid "They no longer show when you record a delivery. Past deliveries stay as they are."
+msgstr "They no longer show when you record a delivery. Past deliveries stay as they are."
 
 #: app/components/staff/positions-tab.tsx:108
 msgid "They no longer work at any workplace."
@@ -38625,6 +39683,26 @@ msgstr "This code is listed twice."
 msgid "This code was removed. Make a new one."
 msgstr "This code was removed. Make a new one."
 
+#: app/components/inventory/count-review-screen.tsx:125
+msgid "This count is already closed. You can find it in Counts."
+msgstr "This count is already closed. You can find it in Counts."
+
+#: app/components/inventory/start-count-dialog.tsx:136
+msgid "This count is already in progress."
+msgstr "This count is already in progress."
+
+#: app/components/inventory/count-review-screen.tsx:326
+msgid "This count is still being counted, so these figures can change."
+msgstr "This count is still being counted, so these figures can change."
+
+#: app/components/inventory/counting-screen.tsx:466
+msgid "This count no longer takes entries. Open Counts to see where it is."
+msgstr "This count no longer takes entries. Open Counts to see where it is."
+
+#: app/components/inventory/counting-screen.tsx:477
+msgid "This count was sent for review. Open the review to check it, or reopen it to keep counting."
+msgstr "This count was sent for review. Open the review to check it, or reopen it to keep counting."
+
 #: app/components/loyalty/adjust-dialog.tsx:67
 msgid "this customer"
 msgstr "this customer"
@@ -38672,6 +39750,10 @@ msgstr "This deal chooses its own items under Quantity. The exclusions below sti
 #: app/components/dashboard/dashboard-options-menu.tsx:70
 msgid "This deletes the dashboard and its blocks for you and everyone it is shared with. This cannot be undone."
 msgstr "This deletes the dashboard and its blocks for you and everyone it is shared with. This cannot be undone."
+
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:192
+msgid "This delivery was cancelled. Its stock was taken back out."
+msgstr "This delivery was cancelled. Its stock was taken back out."
 
 #: app/components/print/artwork-labels.ts:9
 msgid "This design uses paid Canva elements that your Canva plan cannot export."
@@ -38864,7 +39946,7 @@ msgid "This modifier group is triggered when customers select these modifier ite
 msgstr "This modifier group is triggered when customers select these modifier items:"
 
 #: app/components/staff/schedule/schedule-toolbar.tsx:120
-#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:150
+#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:144
 msgid "This month"
 msgstr "This month"
 
@@ -39276,6 +40358,7 @@ msgid "This way of applying is switched off for your organization. Choose anothe
 msgstr "This way of applying is switched off for your organization. Choose another."
 
 #: app/components/staff/schedule/schedule-toolbar.tsx:117
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:272
 msgid "This week"
 msgstr "This week"
 
@@ -39339,7 +40422,7 @@ msgstr "This workplace already has several unused pairing codes. Cancel one or w
 msgid "This workplace follows the default rules. Saving gives it its own copy, so later changes to the default will not reach it."
 msgstr "This workplace follows the default rules. Saving gives it its own copy, so later changes to the default will not reach it."
 
-#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:255
+#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:249
 msgid "Those dates cannot be used. Showing the last 7 days instead."
 msgstr "Those dates cannot be used. Showing the last 7 days instead."
 
@@ -39464,7 +40547,7 @@ msgstr "Time at {placeName} ({zone})."
 
 #: app/components/staff/timesheets/card-sheet.tsx:88
 #: app/components/staff/timesheets/card-sheet.tsx:103
-#: app/components/workspace-breadcrumb.tsx:116
+#: app/components/workspace-breadcrumb.tsx:119
 msgid "Time card"
 msgstr "Time card"
 
@@ -39600,7 +40683,7 @@ msgstr "Time zone synchronized to {syncedTimeZone}. Updated {updatedReservationC
 msgid "Timeline"
 msgstr "Timeline"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:568
+#: app/components/inventory/waste-bars.tsx:40
 msgid "Times"
 msgstr "Times"
 
@@ -39620,9 +40703,13 @@ msgstr "times the normal rate"
 msgid "Times the points"
 msgstr "Times the points"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:496
+#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:490
 msgid "Times wasted"
 msgstr "Times wasted"
+
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:359
+msgid "Times wasted this week"
+msgstr "Times wasted this week"
 
 #: app/components/staff/timesheets/timesheets-page.tsx:588
 msgid "Timesheet view"
@@ -39721,12 +40808,12 @@ msgid "Titles and section headings."
 msgstr ""
 
 #: app/components/phone-agent/business-details-section.tsx:218
-#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:214
+#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:208
 msgid "to"
 msgstr "to"
 
 #: app/components/hiring/job-editor.tsx:751
-#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:218
+#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:212
 msgid "To"
 msgstr "To"
 
@@ -39750,6 +40837,10 @@ msgstr "To give away, cover or swap a shift, open it on your schedule and choose
 #: app/components/staff/schedule/schedule-dnd.tsx:237
 msgid "To move this shift, press Space to pick it up, use the arrow keys to choose a person and day, then press Space to drop. Press Escape to cancel. Press Enter to open it instead."
 msgstr "To move this shift, press Space to pick it up, use the arrow keys to choose a person and day, then press Space to drop. Press Escape to cancel. Press Enter to open it instead."
+
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:432
+msgid "To order"
+msgstr "To order"
 
 #: app/components/hiring/applicant-board.tsx:143
 msgid "To pick up an applicant, press Space. Use the arrow keys to move between columns, then press Space to drop. Press Escape to cancel."
@@ -39882,7 +40973,7 @@ msgstr "Top contributors"
 msgid "Top Contributors"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:507
+#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:501
 msgid "Top reason"
 msgstr "Top reason"
 
@@ -39910,6 +41001,7 @@ msgstr "Toppings, sauces and other choices on an item."
 #: app/components/staff/timesheets/payroll-summary.tsx:443
 #: app/components/staff/timesheets/timesheet-table.tsx:376
 #: app/components/staff/timesheets/timesheet-table.tsx:559
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.tsx:356
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:365
 msgid "Total"
 msgstr ""
@@ -40226,6 +41318,9 @@ msgstr ""
 #: app/components/customers/people-list-screen.tsx:311
 #: app/components/hiring/applicants-page.tsx:397
 #: app/components/hiring/candidate-sheet.tsx:113
+#: app/components/inventory/count-review-screen.tsx:139
+#: app/components/inventory/counting-screen.tsx:314
+#: app/components/inventory/start-count-dialog.tsx:168
 #: app/components/loyalty/customer-loyalty-panel.tsx:264
 #: app/components/mailbox/calls-tab.tsx:289
 #: app/components/mailbox/reviews-tab.tsx:418
@@ -40251,15 +41346,21 @@ msgstr ""
 #: app/components/staff/timeclock-today.tsx:232
 #: app/components/staff/timesheets/timesheets-page.tsx:692
 #: app/components/turnstile-widget.tsx:252
+#: app/routes/_app+/$orgSlug_+/inventory+/counts.tsx:167
+#: app/routes/_app+/$orgSlug_+/inventory+/counts.tsx:245
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:115
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:94
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.tsx:293
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.tsx:520
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId_.edit.tsx:59
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:128
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:541
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.areas.tsx:211
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.lists.tsx:142
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:298
-#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:85
-#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:272
-#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:335
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:153
+#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:266
+#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:329
 #: app/routes/_app+/$orgSlug_+/loyalty+/activity.tsx:153
 #: app/routes/_app+/$orgSlug_+/loyalty+/activity.tsx:602
 #: app/routes/_app+/$orgSlug_+/loyalty+/overview.tsx:179
@@ -40294,7 +41395,7 @@ msgstr "Try another answer"
 msgid "Try another name, email, or message."
 msgstr "Try another name, email, or message."
 
-#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:357
+#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:351
 msgid "Try another reason or a longer period."
 msgstr "Try another reason or a longer period."
 
@@ -40719,7 +41820,7 @@ msgstr "Under"
 #: app/components/locations/delivery-zone-map.tsx:382
 #: app/components/media-library/photo-studio-dialog.tsx:867
 #: app/components/reservations/detail-sheet.tsx:745
-#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:690
+#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:593
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:702
 #: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:598
 msgid "Undo"
@@ -40744,8 +41845,8 @@ msgstr "Undo no-show"
 msgid "Undo seating"
 msgstr "Undo seating"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:759
-#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:804
+#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:662
+#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:707
 msgid "Undone"
 msgstr "Undone"
 
@@ -40762,9 +41863,18 @@ msgstr ""
 msgid "Unit"
 msgstr ""
 
+#: app/components/inventory/counting-screen.tsx:731
+msgid "Unit for {name}"
+msgstr "Unit for {name}"
+
 #: app/components/inventory/item-form.tsx:421
+#: app/components/inventory/supplier-products.tsx:425
 msgid "Unit of the pack size"
 msgstr "Unit of the pack size"
+
+#: app/components/inventory/record-delivery-screen.tsx:885
+msgid "Unit of the weight"
+msgstr "Unit of the weight"
 
 #: app/components/settings/cards/organization/site-card.tsx:128
 msgid "United States"
@@ -40862,6 +41972,9 @@ msgid "Unnamed recipient"
 msgstr ""
 
 #: app/components/orders/order-status.tsx:30
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:177
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.tsx:188
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.tsx:616
 msgid "Unpaid"
 msgstr "Unpaid"
 
@@ -41657,7 +42770,18 @@ msgstr "variations"
 msgid "Variations"
 msgstr "Variations"
 
+#: app/components/inventory/record-delivery-screen.tsx:658
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:300
+msgid "VAT"
+msgstr "VAT"
+
+#: app/components/inventory/record-delivery-screen.tsx:549
+msgid "VAT ({currency})"
+msgstr "VAT ({currency})"
+
+#: app/components/inventory/supplier-form.tsx:366
 #: app/components/pos/zatca-settings.tsx:304
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:258
 msgid "VAT number"
 msgstr "VAT number"
 
@@ -41749,6 +42873,7 @@ msgstr "Video thumbnail"
 #: app/components/dashboard/access-labels.ts:19
 #: app/components/roles/tenant-role-access-manager.tsx:1480
 #: app/components/settings/cards/organization/invoices-card.tsx:152
+#: app/routes/_app+/$orgSlug_+/inventory+/counts.tsx:224
 #: app/routes/_app+/$orgSlug_+/notes-table.tsx:79
 msgid "View"
 msgstr ""
@@ -42066,6 +43191,10 @@ msgstr "Void tab {number} (table {label})?"
 msgid "Void, tab {number}, table {label}"
 msgstr "Void, tab {number}, table {label}"
 
+#: app/components/inventory/record-delivery-screen.tsx:946
+msgid "vs last price"
+msgstr "vs last price"
+
 #: app/routes/_app+/$orgSlug_+/index.tsx:219
 msgid "Vs prior period"
 msgstr "Vs prior period"
@@ -42153,6 +43282,7 @@ msgstr "Waiting for the terminal…"
 msgid "Waiting to be paired"
 msgstr "Waiting to be paired"
 
+#: app/components/inventory/counting-screen.tsx:633
 #: app/components/staff/schedule/publication-history.tsx:311
 msgid "Waiting to send"
 msgstr "Waiting to send"
@@ -42213,6 +43343,10 @@ msgstr "Waitlist: table is ready"
 #: app/components/reservations/booking-sheet.tsx:512
 msgid "Waive deposit / card hold"
 msgstr "Waive deposit / card hold"
+
+#: app/routes/_app+/$orgSlug_+/inventory+/counts.tsx:260
+msgid "Walk your fridges and shelves, enter what is there, and see what is missing compared with what you expected."
+msgstr "Walk your fridges and shelves, enter what is there, and see what is missing compared with what you expected."
 
 #: app/components/customers/person-profile-screen.tsx:344
 #: app/components/reservations/host-subnav.tsx:184
@@ -42310,11 +43444,15 @@ msgstr "Warnings do not stop you from saving or publishing."
 msgid "Waste"
 msgstr "Waste"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:170
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:275
+msgid "Waste by reason"
+msgstr "Waste by reason"
+
+#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:164
 msgid "Waste filters"
 msgstr "Waste filters"
 
-#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:324
+#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:318
 msgid "Waste log"
 msgstr "Waste log"
 
@@ -42326,12 +43464,16 @@ msgstr "Waste logged: {itemName}, {amountText}"
 #~ msgid "Waste shows what was thrown away and why, so you can see where food and money are lost. Logging waste is coming soon."
 #~ msgstr "Waste shows what was thrown away and why, so you can see where food and money are lost. Logging waste is coming soon."
 
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:418
+msgid "Waste this week"
+msgstr "Waste this week"
+
 #: app/components/inventory/log-waste-dialog.tsx:236
-#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:393
+#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:387
 msgid "Waste undone."
 msgstr "Waste undone."
 
-#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:469
+#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:463
 #: app/utils/inventory/labels.ts:78
 msgid "Wasted"
 msgstr "Wasted"
@@ -42727,6 +43869,10 @@ msgstr "What applicants see, like \"Evening line cook\"."
 msgid "What are the key points?"
 msgstr ""
 
+#: app/components/inventory/record-delivery-screen.tsx:420
+msgid "What arrived"
+msgstr "What arrived"
+
 #~ msgid "What callers hear before anything else, and when the assistant can't answer."
 #~ msgstr "What callers hear before anything else, and when the assistant can't answer."
 
@@ -42782,6 +43928,10 @@ msgstr "What guests read on your website."
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:1085
 msgid "What happens on these days"
 msgstr "What happens on these days"
+
+#: app/components/inventory/count-review-screen.tsx:183
+msgid "What happens to {name}"
+msgstr "What happens to {name}"
 
 #: app/components/staff/onboarding/certificate-form.tsx:102
 msgid "What is it called"
@@ -42851,6 +44001,10 @@ msgstr "What the customer gets, and how many points it costs."
 msgid "What they are asked to read and accept."
 msgstr "What they are asked to read and accept."
 
+#: app/components/inventory/supplier-products.tsx:101
+msgid "What they sell"
+msgstr "What they sell"
+
 #: app/components/discounts/discount-summary.tsx:102
 msgid "What this discount does, in plain words. It updates as you type."
 msgstr "What this discount does, in plain words. It updates as you type."
@@ -42862,6 +44016,10 @@ msgstr "What this option does"
 #: app/components/customers/person-profile-screen.tsx:980
 msgid "What this person agreed to receive. This is the only place consent is recorded; broadcasts and automations follow it."
 msgstr "What this person agreed to receive. This is the only place consent is recorded; broadcasts and automations follow it."
+
+#: app/components/inventory/start-count-dialog.tsx:185
+msgid "What to count"
+msgstr "What to count"
 
 #: app/components/phone-agent/vertical-labels.ts:35
 msgid "What to do when the agent mishears or can't help."
@@ -42911,6 +44069,10 @@ msgstr "What your hours cost against your sales, the sales you enter, and how ti
 msgid "What's missing?"
 msgstr ""
 
+#: app/components/inventory/supplier-form.tsx:38
+msgid "WhatsApp"
+msgstr "WhatsApp"
+
 #: app/components/reservations/floor-plan-canvas.tsx:1337
 msgid "Wheelchair accessible"
 msgstr "Wheelchair accessible"
@@ -42918,7 +44080,7 @@ msgstr "Wheelchair accessible"
 #: app/components/discounts/discount-form.tsx:1659
 #: app/components/loyalty/promotion-dialog.tsx:705
 #: app/components/reservations/booking-sheet.tsx:617
-#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:701
+#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:604
 #: app/routes/_app+/$orgSlug_+/loyalty+/promotions.tsx:384
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:927
 #: app/utils/discounts/summary.ts:380
@@ -43171,7 +44333,7 @@ msgstr "White marble surface, bright and premium"
 #: app/components/reservations/booking-sheet.tsx:834
 #: app/components/staff/schedule/availability-sheet.tsx:213
 #: app/components/staff/schedule/time-off-sheet.tsx:186
-#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:713
+#: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:616
 msgid "Who"
 msgstr "Who"
 
@@ -43216,6 +44378,10 @@ msgstr "Who changed the phone agent and when. Shows the last 50 changes."
 #: app/components/staff/schedule/shift-editor-sheet.tsx:604
 msgid "Who could take this shift"
 msgstr "Who could take this shift"
+
+#: app/components/inventory/record-delivery-screen.tsx:394
+msgid "Who delivered. Their packs and prices fill in the lines."
+msgstr "Who delivered. Their packs and prices fill in the lines."
 
 #: app/components/staff/schedule/shift-editor-sheet.tsx:606
 msgid "Who else could take this shift"
@@ -43305,6 +44471,14 @@ msgstr "Why are you changing this?"
 #: app/components/reservations/requests-panel.tsx:196
 msgid "Why are you declining?"
 msgstr "Why are you declining?"
+
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:384
+msgid "Why is it cancelled?"
+msgstr "Why is it cancelled?"
+
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:383
+msgid "Why? (optional)"
+msgstr "Why? (optional)"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:262
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:322
@@ -43674,6 +44848,10 @@ msgstr "You are not clocked in."
 msgid "You are not on a break."
 msgstr "You are not on a break."
 
+#: app/components/inventory/counting-screen.tsx:412
+msgid "You are offline. Keep counting: entries are kept on this device and sent when the connection returns."
+msgstr "You are offline. Keep counting: entries are kept on this device and sent when the connection returns."
+
 #: app/components/kiosk/kiosk-screens.tsx:391
 msgid "You are on a break."
 msgstr "You are on a break."
@@ -43725,6 +44903,10 @@ msgstr ""
 msgid "You can leave a note. It is kept with the request."
 msgstr "You can leave a note. It is kept with the request."
 
+#: app/components/inventory/record-delivery-screen.tsx:324
+msgid "You can look at deliveries but not record them."
+msgstr "You can look at deliveries but not record them."
+
 #: app/components/staff/labor/labor-settings.tsx:251
 msgid "You can look at these settings but not change them."
 msgstr "You can look at these settings but not change them."
@@ -43732,6 +44914,10 @@ msgstr "You can look at these settings but not change them."
 #: app/components/staff/timesheets/card-sheet.tsx:386
 msgid "You can look at this card but not change it."
 msgstr "You can look at this card but not change it."
+
+#: app/components/inventory/counting-screen.tsx:488
+msgid "You can look at this count but not change it."
+msgstr "You can look at this count but not change it."
 
 #: app/components/discounts/discount-form.tsx:815
 msgid "You can look at this discount. You don't have permission to change it."
@@ -44025,6 +45211,22 @@ msgstr "You need pay access to change tips or rates."
 #: app/components/chat/chat-view.tsx:978
 msgid "You no longer have access to this chat. Reload the page to check your channels."
 msgstr "You no longer have access to this chat. Reload the page to check your channels."
+
+#: app/components/inventory/supplier-form.tsx:246
+msgid "You order by"
+msgstr "You order by"
+
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.tsx:245
+msgid "You owe"
+msgstr "You owe"
+
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.suppliers.$supplierId.tsx:126
+msgid "You owe <0>{owed}</0>"
+msgstr "You owe <0>{owed}</0>"
+
+#: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:573
+msgid "You owe <0>{owed}</0>."
+msgstr "You owe <0>{owed}</0>."
 
 #: app/components/media-library/photo-studio-dialog.tsx:194
 msgid "You reached the hourly limit for AI photos. Try again later."
@@ -44321,6 +45523,10 @@ msgstr "Your session has ended. Sign in again to keep working."
 msgid "Your setup progress"
 msgstr ""
 
+#: app/components/inventory/count-review-screen.tsx:780
+msgid "Your stock now matches what was counted."
+msgstr "Your stock now matches what was counted."
+
 #: app/components/staff/schedule/schedule-page.tsx:624
 msgid "Your team sees none of it until you publish."
 msgstr "Your team sees none of it until you publish."
@@ -44349,6 +45555,11 @@ msgstr "Your website is not published yet, so people cannot see this job. <0>Pub
 #: app/components/pos/zatca-settings.tsx:253
 msgid "ZATCA e-invoicing"
 msgstr "ZATCA e-invoicing"
+
+#: app/components/inventory/record-delivery-screen.tsx:582
+#: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:223
+msgid "ZATCA invoice reference"
+msgstr "ZATCA invoice reference"
 
 #: app/components/roles/tenant-role-access-manager.tsx:762
 msgid "Zero permissions"

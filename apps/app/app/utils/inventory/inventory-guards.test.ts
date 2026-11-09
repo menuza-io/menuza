@@ -74,7 +74,13 @@ describe('inventory guards', () => {
 				'stock.areas.tsx',
 				'stock.lists.tsx',
 				'counts.tsx',
+				'counts_.$countId.tsx',
+				'counts_.$countId_.review.tsx',
 				'purchasing.tsx',
+				'purchasing.suppliers.new.tsx',
+				'purchasing.suppliers.$supplierId.tsx',
+				'purchasing.deliveries.$deliveryId.tsx',
+				'purchasing_.deliveries.new.tsx',
 				'waste.tsx',
 			]),
 		)
@@ -96,6 +102,21 @@ describe('inventory guards', () => {
 				file,
 				expect.stringMatching(/INVENTORY_PERMISSIONS\.UPDATE_INVENTORY\b/),
 			])
+		}
+	})
+
+	it('adding a supplier needs the purchasing grant and recording a delivery the update grant', () => {
+		const grantFor = {
+			'purchasing.suppliers.new.tsx': /UPDATE_INVENTORY_PURCHASING\b/,
+			'purchasing_.deliveries.new.tsx':
+				/INVENTORY_PERMISSIONS\.UPDATE_INVENTORY\b/,
+		}
+		for (const [file, grant] of Object.entries(grantFor)) {
+			const body = exportedFunctionBody(
+				read(path.join(INVENTORY_ROUTES_DIR, file)),
+				'loader',
+			)
+			expect([file, body]).toEqual([file, expect.stringMatching(grant)])
 		}
 	})
 
