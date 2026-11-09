@@ -38,6 +38,9 @@ export const INVENTORY_ERROR_CODES = [
 	// Phase 5 (additive).
 	'transfer_closed',
 	'transfer_same_location',
+	'reader_not_configured',
+	'reader_failed',
+	'no_photo',
 ] as const
 export type InventoryErrorCode = (typeof INVENTORY_ERROR_CODES)[number]
 

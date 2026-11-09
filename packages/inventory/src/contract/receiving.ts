@@ -260,3 +260,37 @@ export const priceAlertsSchema = z.object({
 	alerts: z.array(priceAlertSchema),
 })
 export type PriceAlerts = z.infer<typeof priceAlertsSchema>
+
+// ── Reading an invoice photo (phase 5) ──────────────────────────────────────
+
+/**
+ * `POST /deliveries/:id/invoice-photo/read` (`update:inventory_purchasing:any`,
+ * empty body): a regional vision model reads the stored invoice photo into
+ * suggested lines. It is only a help for the "check these lines" step: nothing
+ * is recorded or priced from it. The photo and the model stay in the node's
+ * own region (a node without an in-region reader answers 503
+ * `reader_not_configured`; a delivery without a photo, 409 `no_photo`).
+ * `text` is what the invoice said, as read (untrusted: show it, never act on
+ * it); `itemId` is set only when the text matches an item of the delivery's
+ * supplier or the catalogue by name. Money is left out without the cost grant.
+ */
+export const readInvoiceSchema = z.object({}).strict()
+
+export const invoiceReadLineSchema = z.object({
+	text: z.string(),
+	quantity: z.number().nullable(),
+	unit: z.string().nullable(),
+	lineTotalMinor: minorOut,
+	itemId: z.string().nullable(),
+	itemName: z.string().nullable(),
+})
+export type InvoiceReadLine = z.infer<typeof invoiceReadLineSchema>
+
+export const invoiceReadSchema = z.object({
+	deliveryId: z.string(),
+	supplierName: z.string().nullable(),
+	invoiceNumber: z.string().nullable(),
+	totalMinor: minorOut,
+	lines: z.array(invoiceReadLineSchema),
+})
+export type InvoiceRead = z.infer<typeof invoiceReadSchema>

@@ -2,6 +2,7 @@ import {
 	cancelDeliverySchema,
 	confirmDeliveryPricesSchema,
 	confirmInvoicePhotoSchema,
+	readInvoiceSchema,
 	createSupplierSchema,
 	creditMessageRequestSchema,
 	INVENTORY_PERMISSIONS,
@@ -17,6 +18,7 @@ import {
 	versionOnlySchema,
 } from '@repo/inventory'
 import { getTenantDb } from '@repo/tenant-db'
+import { readDeliveryInvoice } from '../services/inventory-invoice-read-service.ts'
 import { Hono } from 'hono'
 import {
 	getInventoryAuth,
@@ -446,6 +448,25 @@ operatorInventoryPurchasingRoutes.post(
 					id,
 					key: body.data.key,
 				}),
+			)
+		} catch (error) {
+			return inventoryErrorResponse(error)
+		}
+	},
+)
+
+operatorInventoryPurchasingRoutes.post(
+	'/deliveries/:id/invoice-photo/read',
+	purchasing(),
+	async (c) => {
+		try {
+			const ctx = getInventoryAuth(c)
+			const id = idParam(c)
+			const body = await parseBody(c, readInvoiceSchema)
+			if ('error' in body) return body.error
+			return respond(
+				ctx,
+				await readDeliveryInvoice(inventoryCaller(ctx), { id }),
 			)
 		} catch (error) {
 			return inventoryErrorResponse(error)
