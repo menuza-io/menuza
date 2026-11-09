@@ -140,7 +140,11 @@ export const putRecipeSchema = z
 			.optional(),
 		typedCost: typedCostInputSchema.optional(),
 		method: inventoryNoteSchema.optional(),
-		/** Epoch ms the version starts to apply to sales (default: now). */
+		/**
+		 * Epoch ms the version starts to apply to sales (default: now). Not before
+		 * the previous version, and not older than `STATION_LATE_SYNC_MS` (48 h):
+		 * 400 `effective_from_too_old`.
+		 */
 		effectiveFrom: z.number().int().min(0).optional(),
 	})
 	.strict()
@@ -385,8 +389,9 @@ export const dishesWithoutRecipeResultSchema = z.object({
 // ── Recording a batch of a made item ───────────────────────────────────────
 
 /**
- * `POST /items/:id/batch` (`update:inventory:any` and
- * `update:inventory_recipe:any`): record that a made item was made. It adds the
+ * `POST /items/:id/batch` (`update:inventory:any` only: cooks record batches,
+ * and the Kitchen team role has no recipe grant): record that a made item was
+ * made. It adds the
  * made item to stock and takes its ingredients out, as one idempotent write.
  * Either a number of recipe batches or the amount that came out, typed.
  */

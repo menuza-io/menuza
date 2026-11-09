@@ -1229,6 +1229,26 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
   `/operator/*` by audience). `services/item-sales.ts` is the one items-sold
   reader across web/QR orders and Station sales (QR rounds rung up on Station
   are not counted twice).
+- Recipes API (phase 3b-1, behind `inventory.recipes`, tenant-db `0035`):
+  `GET /recipes?ownerKind=&ownerId=`, `PUT /recipes`, `POST /recipes/clear`,
+  `POST /recipes/costs` (a read: up to 200 dishes by `key`),
+  `GET /recipes/missing?locationId=&days=&limit=` and `POST /items/:id/batch`
+  (`routes/operator-inventory-recipes.ts`,
+  `services/inventory-recipes-service.ts`, `-batch-service.ts`,
+  `-recipe-store.ts`). Reads need `read:inventory:any`; writing a recipe needs
+  `update:inventory_recipe:any` (`update:inventory:any` alone cannot), recording
+  a batch only `update:inventory:any`; plate cost, typed cost, food cost and
+  dish sales need `read:inventory_cost:any` and are omitted without it. A recipe
+  is never edited: each `PUT` writes the next version (`expectedVersion` 0 for
+  the first, 409 `stale_version` otherwise; the old row is stamped
+  `superseded_at` first, then the successor and its lines, in one transaction;
+  `effective_from` is now and never earlier than the version before it), a clear
+  writes an empty version, and history is kept. Made-item recipes are checked
+  with `checkMadeRecipeGraph` (409 `recipe_cycle` / `recipe_too_deep`, nothing
+  written). `PATCH /items/:id` also sets `batchCounted` (made items only) and
+  `autoSoldOut` (needs the recipe grant). Settling sales into stock (the
+  used-by-sales outbox and `inv_sale_usage`) is the next slice; nothing on the
+  order, tab or till path calls inventory yet.
 - Product rules: owner words (no par, AvT, COGS, 86), at most five tabs, one
   plain name per item (inventory inputs are never translated; App strings are
   Lingui). Security gate: `routes/inventory-security.test.ts`.

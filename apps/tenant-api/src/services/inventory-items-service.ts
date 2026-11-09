@@ -10,6 +10,7 @@ import {
 import {
 	costMicroFromPackPrice,
 	INVENTORY_LIMITS,
+	INVENTORY_PERMISSIONS,
 	inventoryValueMinor,
 	STANDARD_UNIT_SPECS,
 	stockStatus,
@@ -84,6 +85,10 @@ export type InventoryCaller = {
 	cost: boolean
 	/** The token holds `update:inventory_purchasing:any`. */
 	purchasing: boolean
+	/** The token holds `update:inventory_recipe:any` (absent: no). */
+	recipe?: boolean
+	/** The `inventory.recipes` flag is on in the token (absent: off). */
+	recipesEnabled?: boolean
 }
 
 // ── Stock rows (one item at one location) ───────────────────────────────────
@@ -226,6 +231,8 @@ export function toStockItem(row: StockRow, cost: boolean): StockItem {
 		baseUnit: row.item.baseUnit,
 		archived: row.item.archivedAt !== null,
 		version: row.item.version,
+		batchCounted: row.item.batchCounted,
+		autoSoldOut: row.item.autoSoldOut,
 		onHand: row.onHand,
 		countUnit: row.place?.countUnit ? wireUnit(row.place.countUnit) : null,
 		units: row.units.map(toItemUnit),
@@ -799,6 +806,38 @@ export async function updateItem(
 			}
 			set.baseUnit = body.baseUnit
 			changed.push('baseUnit')
+		}
+		// Recipe flags: only a change counts, so a form that resends the
+		// current values never needs the recipe grant or the recipes flag.
+		const batchChange =
+			body.batchCounted !== undefined && body.batchCounted !== item.batchCounted
+		const soldOutChange =
+			body.autoSoldOut !== undefined && body.autoSoldOut !== item.autoSoldOut
+		if (batchChange || soldOutChange) {
+			if (!caller.recipesEnabled) {
+				throw new InventoryError('feature_disabled', 403, {
+					feature: 'recipes',
+				})
+			}
+		}
+		if (batchChange) {
+			// Counting in batches is for made items (a trigger holds the line too).
+			if (body.batchCounted && item.kind !== 'made') {
+				throw new InventoryError('not_a_made_item', 400)
+			}
+			set.batchCounted = body.batchCounted
+			changed.push('batchCounted')
+		}
+		if (soldOutChange) {
+			// Settings that take dishes off the menu belong with recipes.
+			if (!caller.recipe) {
+				throw new InventoryError('forbidden', 403, {
+					reason: 'grant',
+					required: INVENTORY_PERMISSIONS.UPDATE_INVENTORY_RECIPE,
+				})
+			}
+			set.autoSoldOut = body.autoSoldOut
+			changed.push('autoSoldOut')
 		}
 		await tx.update(invItems).set(set).where(eq(invItems.id, item.id))
 		await recordInventoryAudit(tx, {

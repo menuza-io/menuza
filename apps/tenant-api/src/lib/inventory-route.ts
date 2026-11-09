@@ -61,6 +61,14 @@ const MONEY_FIELDS = [
 	'openingMinor',
 	'closingMinor',
 	'salesMinor',
+	// Phase 3: plate cost, typed cost, food cost and dish sales.
+	'plate',
+	'costMinor',
+	'typedCostMinor',
+	'typedCostCurrency',
+	'priceForTargetMinor',
+	'foodCostBp',
+	'netSalesMinor',
 ] as const
 
 export function inventoryCaller(
@@ -76,6 +84,11 @@ export function inventoryCaller(
 			ctx.grants,
 			INVENTORY_PERMISSIONS.UPDATE_INVENTORY_PURCHASING,
 		),
+		recipe: hasInventoryGrant(
+			ctx.grants,
+			INVENTORY_PERMISSIONS.UPDATE_INVENTORY_RECIPE,
+		),
+		recipesEnabled: ctx.features.recipes,
 	}
 }
 

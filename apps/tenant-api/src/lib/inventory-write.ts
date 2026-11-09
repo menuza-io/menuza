@@ -90,6 +90,14 @@ const CONSTRAINT_CODES: ReadonlyArray<
 	['inventory order lines are frozen', 'order_not_editable', 409],
 	['inventory order cannot go back', 'order_closed', 409],
 	['uniq_inv_orders_client', 'idempotency_conflict', 409],
+	// Phase 3 (tenant migration 0035): the service refuses these first; the
+	// mapping keeps a race from leaking a 500.
+	['only a made item can be counted in batches', 'not_a_made_item', 400],
+	['a made item recipe needs a made item', 'not_a_made_item', 400],
+	['a made item cannot be its own ingredient', 'recipe_cycle', 409],
+	['inventory recipe versions only move forward', 'stale_version', 409],
+	['uniq_inv_recipes_current', 'stale_version', 409],
+	['uniq_inv_recipes_owner_version', 'stale_version', 409],
 ]
 
 /**

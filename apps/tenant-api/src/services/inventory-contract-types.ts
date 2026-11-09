@@ -3,6 +3,7 @@ import {
 	type approveCountSchema,
 	type bulkCreateItemsSchema,
 	type cancelOrderSchema,
+	type clearRecipeSchema,
 	type confirmDeliveryPricesSchema,
 	type createOrderSchema,
 	type creditMessageRequestSchema,
@@ -12,6 +13,10 @@ import {
 	type listOrdersQuerySchema,
 	type priceAlertsQuerySchema,
 	type putLevelsSchema,
+	type putRecipeSchema,
+	type recipeCostsRequestSchema,
+	type recipeOwnerSchema,
+	type recordBatchSchema,
 	type sendOrderSchema,
 	type updateOrderSchema,
 	type countEntriesSchema,
@@ -75,3 +80,10 @@ export type ConfirmDeliveryPricesInput = z.infer<
 export type CreditMessageRequest = z.infer<typeof creditMessageRequestSchema>
 export type InvoicePhotoRequest = z.infer<typeof invoicePhotoRequestSchema>
 export type PriceAlertsQuery = z.infer<typeof priceAlertsQuerySchema>
+
+// Phase 3.
+export type RecipeOwnerInput = z.infer<typeof recipeOwnerSchema>
+export type PutRecipeInput = z.infer<typeof putRecipeSchema>
+export type ClearRecipeInput = z.infer<typeof clearRecipeSchema>
+export type RecipeCostsInput = z.infer<typeof recipeCostsRequestSchema>
+export type RecordBatchInput = z.infer<typeof recordBatchSchema>

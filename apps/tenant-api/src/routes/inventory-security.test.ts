@@ -49,7 +49,7 @@ const LOC_B = 'loc_b'
 const FEATURES_ON: InventoryFeatures = {
 	enabled: true,
 	purchasing: true,
-	recipes: false,
+	recipes: true,
 	prep: false,
 	transfers: false,
 }
@@ -58,11 +58,16 @@ const FEATURES_NO_PURCHASING: InventoryFeatures = {
 	...FEATURES_ON,
 	purchasing: false,
 }
+const FEATURES_NO_RECIPES: InventoryFeatures = {
+	...FEATURES_ON,
+	recipes: false,
+}
 
 const READ = INVENTORY_PERMISSIONS.READ_INVENTORY
 const UPDATE = INVENTORY_PERMISSIONS.UPDATE_INVENTORY
 const COST = INVENTORY_PERMISSIONS.READ_INVENTORY_COST
 const PURCHASING = INVENTORY_PERMISSIONS.UPDATE_INVENTORY_PURCHASING
+const RECIPE = INVENTORY_PERMISSIONS.UPDATE_INVENTORY_RECIPE
 
 const orgs = vi.hoisted(() => new Map<string, PublishedOrganization>())
 
@@ -100,7 +105,7 @@ const ROUTES = (() => {
  */
 const ROUTE_GRANTS: Record<
 	string,
-	typeof READ | typeof UPDATE | typeof PURCHASING | typeof COST
+	typeof READ | typeof UPDATE | typeof PURCHASING | typeof COST | typeof RECIPE
 > = {
 	'GET /settings': READ,
 	'PUT /settings': UPDATE,
@@ -171,10 +176,20 @@ const ROUTE_GRANTS: Record<
 	'POST /orders/:id/cancel': PURCHASING,
 	'GET /orders/:id/text': READ,
 	'GET /orders/:id/receive-prefill': READ,
+	// Phase 3: recipes (need the inventory.recipes flag).
+	'GET /recipes': READ,
+	'PUT /recipes': RECIPE,
+	'POST /recipes/clear': RECIPE,
+	'POST /recipes/costs': READ,
+	'GET /recipes/missing': READ,
+	'POST /items/:id/batch': UPDATE,
 }
 
 /** POST routes that change nothing (they only carry a body), so a read grant and an impersonated token may call them. */
-const READ_ONLY_POSTS = new Set(['POST /deliveries/:id/credit-message'])
+const READ_ONLY_POSTS = new Set([
+	'POST /deliveries/:id/credit-message',
+	'POST /recipes/costs',
+])
 
 /** Routes behind the `inventory.purchasing` flag (403 feature_disabled while it is off). */
 const PURCHASING_FLAG_ROUTES = new Set([
@@ -190,6 +205,16 @@ const PURCHASING_FLAG_ROUTES = new Set([
 	'POST /orders/:id/cancel',
 	'GET /orders/:id/text',
 	'GET /orders/:id/receive-prefill',
+])
+
+/** Routes behind the `inventory.recipes` flag (403 feature_disabled while it is off). */
+const RECIPES_FLAG_ROUTES = new Set([
+	'GET /recipes',
+	'PUT /recipes',
+	'POST /recipes/clear',
+	'POST /recipes/costs',
+	'GET /recipes/missing',
+	'POST /items/:id/batch',
 ])
 
 function routeKey(route: { method: string; path: string }): string {
@@ -254,7 +279,7 @@ async function mintInventoryToken(
 		orgId: overrides.orgId ?? ORG_A,
 		region: overrides.region ?? 'us',
 		scope: overrides.scope ?? 'write',
-		grants: overrides.grants ?? [READ, UPDATE, COST, PURCHASING],
+		grants: overrides.grants ?? [READ, UPDATE, COST, PURCHASING, RECIPE],
 		locationIds:
 			overrides.locationIds === undefined ? null : overrides.locationIds,
 		features: overrides.features ?? FEATURES_ON,
@@ -525,6 +550,32 @@ describe('inventory operator routes: flags and switches', () => {
 		expect(failures).toEqual([])
 	})
 
+	it('inventory.recipes gates the recipe routes (403 feature_disabled) and nothing else', async () => {
+		const token = await mintInventoryToken({ features: FEATURES_NO_RECIPES })
+		const failures: string[] = []
+		for (const route of ROUTES) {
+			const request = validRequest(route)
+			const res = await call(route.method, request.path, {
+				token,
+				body: request.body,
+			})
+			const body = (await res.json()) as { code?: string; feature?: string }
+			const gated = RECIPES_FLAG_ROUTES.has(routeKey(route))
+			if (gated) {
+				if (
+					res.status !== 403 ||
+					body.code !== 'feature_disabled' ||
+					body.feature !== 'recipes'
+				) {
+					failures.push(`${routeKey(route)} -> ${res.status} ${body.code}`)
+				}
+			} else if (body.code === 'feature_disabled') {
+				failures.push(`${routeKey(route)} is gated but not listed`)
+			}
+		}
+		expect(failures).toEqual([])
+	})
+
 	it('INVENTORY_ENABLED=false answers 503 inventory_unavailable on every route, reads included', async () => {
 		const token = await mintInventoryToken()
 		for (const value of ['false', '0', 'off', 'no', 'disabled', ' FALSE ']) {
@@ -696,6 +747,7 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 		waste: '',
 		order: '',
 		draftOrder: '',
+		made: '',
 	}
 	let admin: string
 	let seedCounts = 0
@@ -716,7 +768,7 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 
 	beforeAll(async () => {
 		admin = await mintInventoryToken({
-			grants: [READ, UPDATE, COST, PURCHASING],
+			grants: [READ, UPDATE, COST, PURCHASING, RECIPE],
 		})
 		seed.area = (
 			await seedCall('POST', '/storage-areas', {
@@ -812,6 +864,29 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 				],
 			})
 		).id
+		// Recipes: a priced dish, and a made item with a recipe to record a batch of.
+		await seedCall('PUT', '/recipes', {
+			ownerKind: 'menu_item',
+			ownerId: 'sec_dish',
+			expectedVersion: 0,
+			lines: [{ itemId: seed.item, amount: 100, unit: 'g' }],
+		})
+		seed.made = (
+			await seedCall('POST', '/items', {
+				clientId: 'sec-made-00001',
+				name: 'Security sauce',
+				category: 'sauces',
+				kind: 'made',
+				baseUnit: 'ml',
+			})
+		).id
+		await seedCall('PUT', '/recipes', {
+			ownerKind: 'made_item',
+			ownerId: seed.made,
+			expectedVersion: 0,
+			makes: { amount: 1, unit: 'l' },
+			lines: [{ itemId: seed.item, amount: 200, unit: 'g' }],
+		})
 		seedCounts = (await seedCall('GET', `/counts?locationId=${LOC_B}`)).counts
 			.length
 	})
@@ -1159,6 +1234,42 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 				`/orders/${seed.order}/receive-prefill`,
 				{ byId: true },
 			),
+			c('GET /recipes', '/recipes?ownerKind=menu_item&ownerId=sec_dish', {
+				location: false,
+			}),
+			c('PUT /recipes', '/recipes', {
+				body: {
+					ownerKind: 'menu_item',
+					ownerId: 'sec_dish_two',
+					expectedVersion: 0,
+					lines: [{ itemId: seed.item, amount: 10, unit: 'g' }],
+				},
+				location: false,
+			}),
+			c('POST /recipes/clear', '/recipes/clear', {
+				body: {
+					ownerKind: 'menu_item',
+					ownerId: 'sec_dish',
+					expectedVersion: 1,
+				},
+				location: false,
+			}),
+			c('POST /recipes/costs', '/recipes/costs', {
+				body: {
+					currency: 'SAR',
+					refs: [{ key: 'a', itemId: 'sec_dish', priceMinor: 500 }],
+				},
+				location: false,
+			}),
+			c('GET /recipes/missing', `/recipes/missing?${q}`),
+			c('POST /items/:id/batch', `/items/${seed.made}/batch`, {
+				body: {
+					clientId: 'sec-batch-0001',
+					locationId: loc,
+					made: { kind: 'batches', count: 1 },
+				},
+				byId: true,
+			}),
 		]
 	}
 
@@ -1186,11 +1297,11 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 	it('a token limited to other locations is refused on every location-bound route (403 location_forbidden) and nothing changes', async () => {
 		const tokens = {
 			otherLocation: await mintInventoryToken({
-				grants: [READ, UPDATE, COST, PURCHASING],
+				grants: [READ, UPDATE, COST, PURCHASING, RECIPE],
 				locationIds: [LOC_A],
 			}),
 			noLocations: await mintInventoryToken({
-				grants: [READ, UPDATE, COST, PURCHASING],
+				grants: [READ, UPDATE, COST, PURCHASING, RECIPE],
 				locationIds: [],
 			}),
 		}
@@ -1220,7 +1331,7 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 
 	it('an organization-wide route works for a token limited to one location', async () => {
 		const token = await mintInventoryToken({
-			grants: [READ, UPDATE, COST, PURCHASING],
+			grants: [READ, UPDATE, COST, PURCHASING, RECIPE],
 			locationIds: [LOC_A],
 		})
 		for (const entry of cases().filter(
@@ -1233,7 +1344,7 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 	it('a token for another organization finds nothing by id (404 not_found) and changes nothing', async () => {
 		const tokenB = await mintInventoryToken({
 			orgId: ORG_B,
-			grants: [READ, UPDATE, COST, PURCHASING],
+			grants: [READ, UPDATE, COST, PURCHASING, RECIPE],
 		})
 		const failures: string[] = []
 		for (const entry of cases().filter((item) => item.byId)) {
@@ -1262,10 +1373,19 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 		const noPurchasing = await mintInventoryToken({
 			grants: [READ, UPDATE, COST],
 		})
+		// update:inventory:any alone must not write a recipe.
+		const noRecipe = await mintInventoryToken({
+			grants: [READ, UPDATE, COST, PURCHASING],
+		})
 		const failures: string[] = []
 		for (const route of ROUTES.filter((item) => !isRead(item))) {
 			const required = grantFor(route)
-			const token = required === PURCHASING ? noPurchasing : noUpdate
+			const token =
+				required === PURCHASING
+					? noPurchasing
+					: required === RECIPE
+						? noRecipe
+						: noUpdate
 			const res = await call(route.method, validRequest(route).path, {
 				token,
 				body: {},
@@ -1349,7 +1469,7 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 			grants: [READ, UPDATE, PURCHASING],
 		})
 		const money =
-			/"(valueMinor|totalValueMinor|differenceValueMinor|costMicro|previousCostMicro|lastCostMicro|avgCostMicro|priceMinor|packPriceMinor|lineTotalMinor|linesTotalMinor|vatMinor|totalMinor|unpaidMinor|purchasesMinor|valueAtStakeMinor|stockValueMinor|wasteWeekMinor|wasteWeekShareBp|minimumOrderMinor|shortOfMinimumMinor|belowMinimum|unpricedLines|previousPackPriceMinor|priceChangeBp|priceChanges|foodCost|cost)":/
+			/"(valueMinor|totalValueMinor|differenceValueMinor|costMicro|previousCostMicro|lastCostMicro|avgCostMicro|priceMinor|packPriceMinor|lineTotalMinor|linesTotalMinor|vatMinor|totalMinor|unpaidMinor|purchasesMinor|valueAtStakeMinor|stockValueMinor|wasteWeekMinor|wasteWeekShareBp|minimumOrderMinor|shortOfMinimumMinor|belowMinimum|unpricedLines|previousPackPriceMinor|priceChangeBp|priceChanges|foodCost|cost|plate|costMinor|typedCostMinor|typedCostCurrency|priceForTargetMinor|foodCostBp|netSalesMinor)":/
 		const failures: string[] = []
 		let reads = 0
 		// The price alerts are all money: they need the cost grant (below).
@@ -1394,6 +1514,35 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 			},
 		)
 		expect(await order.text()).toContain('lineTotalMinor')
+		// Recipes: plate cost and food cost for the cost grant, structure only without it.
+		const recipe = await call(
+			'GET',
+			'/operator/inventory/recipes?ownerKind=menu_item&ownerId=sec_dish',
+			{ token: admin },
+		)
+		const recipeText = await recipe.text()
+		expect(recipeText).toContain('"plate"')
+		expect(recipeText).toContain('costMinor')
+		const costs = await call('POST', '/operator/inventory/recipes/costs', {
+			token: admin,
+			body: {
+				currency: 'SAR',
+				refs: [{ key: 'a', itemId: 'sec_dish', priceMinor: 500 }],
+			},
+		})
+		const costsText = await costs.text()
+		expect(costsText).toContain('foodCostBp')
+		expect(costsText).toContain('priceForTargetMinor')
+		const plainCosts = await call('POST', '/operator/inventory/recipes/costs', {
+			token,
+			body: {
+				currency: 'SAR',
+				refs: [{ key: 'a', itemId: 'sec_dish', priceMinor: 500 }],
+			},
+		})
+		expect(await plainCosts.json()).toMatchObject({
+			rows: [{ key: 'a', hasRecipe: true, state: 'complete' }],
+		})
 		// … and the suggestion is not an empty one for the token without it.
 		const plain = await call(
 			'GET',

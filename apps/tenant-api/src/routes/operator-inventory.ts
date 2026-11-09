@@ -23,6 +23,7 @@ import { operatorInventoryLevelsRoutes } from './operator-inventory-levels.ts'
 import { operatorInventoryOrdersRoutes } from './operator-inventory-orders.ts'
 import { operatorInventoryPlacesRoutes } from './operator-inventory-places.ts'
 import { operatorInventoryPurchasingRoutes } from './operator-inventory-purchasing.ts'
+import { operatorInventoryRecipesRoutes } from './operator-inventory-recipes.ts'
 import { operatorInventoryTodayRoutes } from './operator-inventory-today.ts'
 import { operatorInventoryWasteRoutes } from './operator-inventory-waste.ts'
 import {
@@ -37,7 +38,8 @@ import {
  * Settings and the setup status live here; the rest are mounted from the
  * `operator-inventory-*` files: items, storage areas and count lists,
  * counts, waste, purchasing (suppliers, deliveries, credit messages, invoice
- * photos and price alerts), levels, orders and Today. Writes send
+ * photos and price alerts), levels, orders, Today and recipes (recipes, plate
+ * costs, dishes without a recipe, recording a batch). Writes send
  * `expectedVersion` (409 `stale_version`), creates a client-made `clientId`
  * (a replay answers the first result). Money fields are left out for tokens
  * without `read:inventory_cost:any` (`respond` in `lib/inventory-route.ts`).
@@ -52,6 +54,7 @@ operatorInventoryRoutes.route('/', operatorInventoryPurchasingRoutes)
 operatorInventoryRoutes.route('/', operatorInventoryLevelsRoutes)
 operatorInventoryRoutes.route('/', operatorInventoryOrdersRoutes)
 operatorInventoryRoutes.route('/', operatorInventoryTodayRoutes)
+operatorInventoryRoutes.route('/', operatorInventoryRecipesRoutes)
 
 const READ = INVENTORY_PERMISSIONS.READ_INVENTORY
 const UPDATE = INVENTORY_PERMISSIONS.UPDATE_INVENTORY
