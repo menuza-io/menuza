@@ -4,7 +4,14 @@ import {
 	INVENTORY_POS_ERROR_CODES,
 	STATION_ERROR_HANDLING,
 } from '@repo/inventory'
-import { staffMembers } from '@repo/tenant-db'
+import {
+	invItems,
+	invPrepLevels,
+	invPrepTasks,
+	invRecipeLines,
+	invRecipes,
+	staffMembers,
+} from '@repo/tenant-db'
 import { eq } from 'drizzle-orm'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
@@ -140,6 +147,56 @@ describe('/pos/inventory security', () => {
 			})
 		).body.id
 
+		// A made item with a recipe and three prep tasks (start, done, skip), so
+		// every prep route has a real record to act on.
+		const seedDb = await h.db(ORG_A)
+		const day = (offset: number) =>
+			new Date(Date.now() + offset * 86_400_000).toISOString().slice(0, 10)
+		await seedDb.insert(invItems).values({
+			id: 'sec_sauce',
+			name: 'Security sauce',
+			kind: 'made',
+			baseUnit: 'ml',
+		})
+		await seedDb.insert(invRecipes).values({
+			id: 'sec_sauce_recipe',
+			ownerKind: 'made_item',
+			ownerId: 'sec_sauce',
+			version: 1,
+			makesQuantity: 1_000_000,
+			effectiveFrom: 1,
+			createdByKind: 'system',
+		})
+		await seedDb.insert(invRecipeLines).values({
+			recipeId: 'sec_sauce_recipe',
+			itemId: k.items.tomato.id,
+			quantity: 100_000,
+		})
+		// A level for every weekday, so planning today keeps the seeded tasks.
+		for (let weekday = 0; weekday < 7; weekday++) {
+			await seedDb.insert(invPrepLevels).values({
+				itemId: 'sec_sauce',
+				locationId: STOCK_LOC,
+				weekday,
+				fillUpToQuantity: 1_000_000,
+			})
+		}
+		for (const [id, offset] of [
+			['sec_task_start', -1],
+			['sec_task_done', 0],
+			['sec_task_skip', 1],
+		] as const) {
+			await seedDb.insert(invPrepTasks).values({
+				id,
+				locationId: STOCK_LOC,
+				businessDate: day(offset),
+				itemId: 'sec_sauce',
+				plannedQuantity: 1_000_000,
+				fillUpToQuantity: 1_000_000,
+				onHandQuantity: 0,
+			})
+		}
+
 		const entry = () => ({
 			clientId: uid('entry'),
 			itemId: k.items.tomato.id,
@@ -232,6 +289,46 @@ describe('/pos/inventory security', () => {
 						lines: [{ itemId: 'sec_dish', quantity: 1 }],
 					},
 				}),
+			},
+			{
+				name: 'prep plan',
+				method: 'GET',
+				path: `/pos/inventory/prep?locationId=${STOCK_LOC}`,
+				named: (location) => ({
+					path: `/pos/inventory/prep?locationId=${location}`,
+				}),
+			},
+			{
+				name: 'prep generate',
+				method: 'POST',
+				path: '/pos/inventory/prep/generate',
+				body: { locationId: STOCK_LOC },
+				named: (location) => ({
+					path: '/pos/inventory/prep/generate',
+					body: { locationId: location },
+				}),
+			},
+			{
+				name: 'prep start',
+				method: 'POST',
+				path: '/pos/inventory/prep/tasks/sec_task_start/start',
+				body: { expectedVersion: 1 },
+			},
+			{
+				name: 'prep done',
+				method: 'POST',
+				path: '/pos/inventory/prep/tasks/sec_task_done/done',
+				body: {
+					expectedVersion: 1,
+					clientId: uid('prep'),
+					made: { kind: 'batches', count: 1 },
+				},
+			},
+			{
+				name: 'prep skip',
+				method: 'POST',
+				path: '/pos/inventory/prep/tasks/sec_task_skip/skip',
+				body: { expectedVersion: 1 },
 			},
 			{
 				name: 'undo waste',
@@ -536,6 +633,8 @@ describe('/pos/inventory security', () => {
 				'start count',
 				'waste',
 				'dish waste',
+				'prep plan',
+				'prep generate',
 				'delivery',
 			])
 			for (const route of named) {

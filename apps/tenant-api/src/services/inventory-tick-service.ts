@@ -13,6 +13,7 @@ import {
 	invItemPlaces,
 	invItems,
 	invOrders,
+	invPrepLevels,
 	type TenantDatabase,
 } from '@repo/tenant-db'
 import { and, asc, eq, inArray } from 'drizzle-orm'
@@ -25,6 +26,8 @@ import {
 } from '../lib/inventory-notify.ts'
 import { locationClock } from './inventory-common.ts'
 import { syncAutoSoldOut } from './inventory-auto-sold-out.ts'
+import { generatePrep, getPrepPlan } from './inventory-prep-service.ts'
+import { getNodeRegion } from '../lib/region.ts'
 import {
 	processInventoryOutbox,
 	pruneInventoryOutbox,
@@ -112,6 +115,7 @@ async function inventoryLocationIds(db: TenantDatabase): Promise<string[]> {
 		db.selectDistinct({ id: invCounts.locationId }).from(invCounts),
 		db.selectDistinct({ id: invOrders.locationId }).from(invOrders),
 		db.selectDistinct({ id: invDeliveries.locationId }).from(invDeliveries),
+		db.selectDistinct({ id: invPrepLevels.locationId }).from(invPrepLevels),
 	])
 	return [...new Set(lists.flat().map((row) => row.id))].sort()
 }
@@ -304,6 +308,28 @@ export async function runInventoryTickForOrg(
 						result.lowStockDigests += 1
 					}
 				})
+				// The day's prep list is there when the kitchen opens: planned once
+				// per location and day, from the morning on.
+				if (features.prep) {
+					await step('prep', locationId, async () => {
+						const caller = {
+							orgId,
+							region: getNodeRegion(),
+							actor: { kind: 'system' as const, id: null },
+							locationIds: null,
+							cost: false,
+							purchasing: false,
+						}
+						const today = await getPrepPlan(db, {
+							caller,
+							locationId,
+							now,
+						})
+						if (!today.generated && today.canGenerate) {
+							await generatePrep(caller, { locationId })
+						}
+					})
+				}
 				await step('delivery_due', locationId, async () => {
 					if (
 						await record(

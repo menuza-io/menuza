@@ -173,6 +173,12 @@ export const STATION_ERROR_HANDLING = {
 	/** The count was approved or cancelled while the tablet was offline. */
 	count_closed: { status: 409, action: 'permanent' },
 	idempotency_conflict: { status: 409, action: 'permanent' },
+	/** Prep: someone else changed the task (reload the board). */
+	stale_version: { status: 409, action: 'permanent' },
+	/** Prep: the task is already done or skipped. */
+	task_closed: { status: 409, action: 'permanent' },
+	/** Prep: the made item has no recipe, so a batch cannot be recorded. */
+	recipe_empty: { status: 409, action: 'permanent' },
 	undo_expired: { status: 409, action: 'permanent' },
 	already_undone: { status: 409, action: 'permanent' },
 	/** At request level; per-entry refusals come back in `refused` with 200. */

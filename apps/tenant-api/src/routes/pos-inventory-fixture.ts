@@ -36,6 +36,7 @@ export const ON = {
 	purchasing: true,
 	// Kitchen "Log it as waste?" needs recipes; the operator token below keeps its own features.
 	recipes: true,
+	prep: true,
 }
 
 const ALL_GRANTS = [

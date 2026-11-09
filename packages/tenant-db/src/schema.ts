@@ -8260,6 +8260,120 @@ export const invSoldOut = sqliteTable(
 	],
 )
 
+// ── Phase 4: prep ───────────────────────────────────────────────────────────
+
+export const INV_PREP_STATUS_VALUES = [
+	'todo',
+	'in_progress',
+	'done',
+	'skipped',
+] as const
+
+// Which kitchen station makes a made item at a location. The stations are the
+// ones the location already named in Kitchen setup (an opaque id here); a
+// made item with no row (or no station) shows on every board.
+export const invPrepItems = sqliteTable(
+	'inv_prep_items',
+	{
+		itemId: text('item_id')
+			.notNull()
+			.references(() => invItems.id),
+		locationId: text('location_id').notNull(),
+		stationId: text('station_id'),
+		version: integer('version').notNull().default(1),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+	},
+	(table) => [primaryKey({ columns: [table.itemId, table.locationId] })],
+)
+
+// "Fill up to" per weekday (0 = Sunday ... 6 = Saturday, as `dayOfWeek`) for a
+// made item at a location, in base thousandths. A weekday without a row uses
+// the item's place level (`inv_item_places.fill_up_to_quantity`).
+export const invPrepLevels = sqliteTable(
+	'inv_prep_levels',
+	{
+		itemId: text('item_id')
+			.notNull()
+			.references(() => invItems.id),
+		locationId: text('location_id').notNull(),
+		weekday: integer('weekday').notNull(),
+		fillUpToQuantity: integer('fill_up_to_quantity').notNull(),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+	},
+	(table) => [
+		primaryKey({ columns: [table.itemId, table.locationId, table.weekday] }),
+		check('chk_inv_prep_levels_weekday', sql`${table.weekday} between 0 and 6`),
+		check(
+			'chk_inv_prep_levels_quantity',
+			sql`${table.fillUpToQuantity} between 0 and 9000000000`,
+		),
+	],
+)
+
+// One prep task: make `planned_quantity` of a made item at a location on a
+// business date. One per item and day (the plan updates it until it is
+// started). The numbers behind the suggestion are kept so the screen can
+// explain itself. Done records a batch: `batch_source_id` is the movement
+// source of what was made.
+export const invPrepTasks = sqliteTable(
+	'inv_prep_tasks',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		locationId: text('location_id').notNull(),
+		businessDate: text('business_date').notNull(),
+		itemId: text('item_id')
+			.notNull()
+			.references(() => invItems.id),
+		stationId: text('station_id'),
+		plannedQuantity: integer('planned_quantity').notNull(),
+		// What the plan was worked out from, base thousandths and basis points.
+		fillUpToQuantity: integer('fill_up_to_quantity').notNull(),
+		onHandQuantity: integer('on_hand_quantity').notNull(),
+		demandBp: integer('demand_bp').notNull().default(10000),
+		status: text('status', { enum: INV_PREP_STATUS_VALUES })
+			.notNull()
+			.default('todo'),
+		startedAt: integer('started_at'),
+		startedByKind: text('started_by_kind', { enum: INV_ACTOR_KIND_VALUES }),
+		startedById: text('started_by_id'),
+		doneAt: integer('done_at'),
+		doneByKind: text('done_by_kind', { enum: INV_ACTOR_KIND_VALUES }),
+		doneById: text('done_by_id'),
+		madeQuantity: integer('made_quantity'),
+		batchSourceId: text('batch_source_id'),
+		version: integer('version').notNull().default(1),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+	},
+	(table) => [
+		uniqueIndex('uniq_inv_prep_tasks_day_item').on(
+			table.locationId,
+			table.businessDate,
+			table.itemId,
+		),
+		index('idx_inv_prep_tasks_day').on(
+			table.locationId,
+			table.businessDate,
+			table.status,
+		),
+		check(
+			'chk_inv_prep_tasks_status',
+			oneOf(table.status, INV_PREP_STATUS_VALUES),
+		),
+		check(
+			'chk_inv_prep_tasks_quantities',
+			sql`${table.plannedQuantity} >= 0 and ${table.fillUpToQuantity} >= 0 and (${table.madeQuantity} is null or ${table.madeQuantity} >= 0)`,
+		),
+		check(
+			'chk_inv_prep_tasks_done',
+			sql`${table.status} <> 'done' or (${table.doneAt} is not null and ${table.madeQuantity} is not null)`,
+		),
+	],
+)
+
+export type InvPrepTaskRow = typeof invPrepTasks.$inferSelect
 export type InvSoldOutRow = typeof invSoldOut.$inferSelect
 export type InvSettingsRow = typeof invSettings.$inferSelect
 export type InvStorageAreaRow = typeof invStorageAreas.$inferSelect

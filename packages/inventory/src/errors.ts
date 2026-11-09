@@ -33,6 +33,8 @@ export const INVENTORY_ERROR_CODES = [
 	'recipe_too_deep',
 	'recipe_empty',
 	'not_a_made_item',
+	// Phase 4 (additive).
+	'task_closed',
 ] as const
 export type InventoryErrorCode = (typeof INVENTORY_ERROR_CODES)[number]
 

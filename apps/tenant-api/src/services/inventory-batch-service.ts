@@ -62,7 +62,11 @@ export async function recordBatch(
 	input: {
 		itemId: string
 		body: RecordBatchInput
-		idempotency: InventoryIdempotency
+		/**
+		 * Null inside a write that carries its own idempotency (a prep task done
+		 * joins this write): the batch's event keys still refuse a reused id.
+		 */
+		idempotency: InventoryIdempotency | null
 	},
 ): Promise<RecordBatchResult> {
 	const { body } = input

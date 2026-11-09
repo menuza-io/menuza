@@ -6,6 +6,8 @@ import {
 	stationCountEntriesResultSchema,
 	stationCountSheetSchema,
 	stationDeliveryResultSchema,
+	prepPlanSchema,
+	prepTaskSchema,
 	stationDishWasteResultSchema,
 	stationPhotoUploadSchema,
 	stationStartCountResultSchema,
@@ -18,7 +20,10 @@ import {
 	invCountEntries,
 	invDeliveries,
 	invDeliveryLines,
+	invItems,
 	invMovements,
+	invPrepLevels,
+	invPrepTasks,
 	invRecipeLines,
 	invRecipes,
 	invWaste,
@@ -1124,6 +1129,141 @@ describe('/pos/inventory', () => {
 	})
 
 	// ── Deliveries ────────────────────────────────────────────────────────────
+
+	describe('prep (Kitchen)', () => {
+		async function seedSauce() {
+			const db = await h.db(ORG_A)
+			await db.insert(invItems).values({
+				id: 'prep_sauce',
+				name: 'Prep sauce',
+				kind: 'made',
+				baseUnit: 'ml',
+			})
+			await db.insert(invRecipes).values({
+				id: 'prep_sauce_recipe',
+				ownerKind: 'made_item',
+				ownerId: 'prep_sauce',
+				version: 1,
+				makesQuantity: 1_000_000,
+				effectiveFrom: 1,
+				createdByKind: 'system',
+			})
+			await db.insert(invRecipeLines).values({
+				recipeId: 'prep_sauce_recipe',
+				itemId: k.items.tomato.id,
+				quantity: 100_000,
+			})
+			for (let weekday = 0; weekday < 7; weekday++) {
+				await db.insert(invPrepLevels).values({
+					itemId: 'prep_sauce',
+					locationId: STOCK_LOC,
+					weekday,
+					fillUpToQuantity: 2_000_000,
+				})
+			}
+			return db
+		}
+		const plan = (query = '') =>
+			cashier('GET', `/pos/inventory/prep?locationId=${STOCK_LOC}${query}`)
+		const generate = () =>
+			cashier('POST', '/pos/inventory/prep/generate', {
+				body: { locationId: STOCK_LOC },
+			})
+
+		it('plans the day, and a cook starts a task and records what came out', async () => {
+			const db = await seedSauce()
+			const before = await plan()
+			expect(before.status, before.raw).toBe(200)
+			expect(prepPlanSchema.parse(before.body)).toMatchObject({
+				generated: false,
+				canGenerate: true,
+				tasks: [],
+			})
+			expect(before.headers.get('cache-control')).toBe('private, no-store')
+
+			const made = await generate()
+			expect(made.status, made.raw).toBe(200)
+			const tasks = prepPlanSchema.parse(made.body).tasks
+			expect(tasks).toHaveLength(1)
+			// Fill up to 2 L, none on hand, a batch makes 1 L: two batches.
+			expect(tasks[0]).toMatchObject({
+				itemName: 'Prep sauce',
+				plannedQuantity: 2_000_000,
+				batches: 2,
+				status: 'todo',
+			})
+			expect(moneyKeys(made.body)).toEqual([])
+
+			const started = await cashier(
+				'POST',
+				`/pos/inventory/prep/tasks/${tasks[0]!.id}/start`,
+				{ body: { expectedVersion: tasks[0]!.version } },
+			)
+			expect(started.status, started.raw).toBe(200)
+			const task = prepTaskSchema.parse(started.body)
+			expect(task.status).toBe('in_progress')
+
+			const done = await cashier(
+				'POST',
+				`/pos/inventory/prep/tasks/${task.id}/done`,
+				{
+					body: {
+						expectedVersion: task.version,
+						clientId: uid('done'),
+						made: { kind: 'batches', count: 2 },
+					},
+				},
+			)
+			expect(done.status, done.raw).toBe(200)
+			expect(prepTaskSchema.parse(done.body)).toMatchObject({
+				status: 'done',
+				madeQuantity: 2_000_000,
+			})
+			const [row] = await db.select().from(invPrepTasks)
+			expect(row).toMatchObject({
+				status: 'done',
+				startedById: tablet.cashier.staffId,
+				doneById: tablet.cashier.staffId,
+				doneByKind: 'staff',
+			})
+			const sauce = await db
+				.select()
+				.from(invMovements)
+				.where(eq(invMovements.itemId, 'prep_sauce'))
+			expect(sauce.reduce((sum, move) => sum + move.quantity, 0)).toBe(
+				2_000_000,
+			)
+		})
+
+		it('shows a station only its own tasks and the ones nobody routed', async () => {
+			await seedSauce()
+			await generate()
+			const mine = prepPlanSchema.parse((await plan('&stationId=kitchen')).body)
+			expect(mine.tasks).toHaveLength(1)
+			const db = await h.db(ORG_A)
+			await db.update(invPrepTasks).set({ stationId: 'grill' })
+			expect(
+				prepPlanSchema.parse((await plan('&stationId=kitchen')).body).tasks,
+			).toHaveLength(0)
+			expect(
+				prepPlanSchema.parse((await plan('&stationId=grill')).body).tasks,
+			).toHaveLength(1)
+		})
+
+		it('needs the prep flag, and refuses another location', async () => {
+			await seedSauce()
+			const wrong = await cashier(
+				'GET',
+				'/pos/inventory/prep?locationId=loc_elsewhere',
+			)
+			expect(wrong.status).toBe(403)
+			expect(wrong.body).toMatchObject({ error: 'wrong_location' })
+			seedInventoryContextForTest(ORG_A, { ...ON, prep: false })
+			const off = await plan()
+			expect(off.status).toBe(403)
+			expect(off.body).toMatchObject({ error: 'inventory_disabled' })
+		})
+	})
 
 	describe('deliveries', () => {
 		const line = (

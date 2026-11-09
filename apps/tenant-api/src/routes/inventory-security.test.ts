@@ -13,6 +13,7 @@ import {
 import {
 	destroyTenantDb,
 	getTenantDb,
+	invPrepTasks,
 	invSoldOut,
 	provisionTenantDb,
 } from '@repo/tenant-db'
@@ -55,13 +56,17 @@ const FEATURES_ON: InventoryFeatures = {
 	enabled: true,
 	purchasing: true,
 	recipes: true,
-	prep: false,
+	prep: true,
 	transfers: false,
 }
 const FEATURES_OFF: InventoryFeatures = { ...FEATURES_ON, enabled: false }
 const FEATURES_NO_PURCHASING: InventoryFeatures = {
 	...FEATURES_ON,
 	purchasing: false,
+}
+const FEATURES_NO_PREP: InventoryFeatures = {
+	...FEATURES_ON,
+	prep: false,
 }
 const FEATURES_NO_RECIPES: InventoryFeatures = {
 	...FEATURES_ON,
@@ -190,6 +195,14 @@ const ROUTE_GRANTS: Record<
 	'POST /items/:id/batch': UPDATE,
 	'GET /sold-out': READ,
 	'POST /sold-out/:id/undo': UPDATE,
+	// Phase 4: prep (needs the inventory.prep flag).
+	'GET /prep': READ,
+	'POST /prep/generate': UPDATE,
+	'GET /prep/levels': READ,
+	'PUT /prep/levels': UPDATE,
+	'POST /prep/tasks/:id/start': UPDATE,
+	'POST /prep/tasks/:id/done': UPDATE,
+	'POST /prep/tasks/:id/skip': UPDATE,
 }
 
 /** POST routes that change nothing (they only carry a body), so a read grant and an impersonated token may call them. */
@@ -212,6 +225,17 @@ const PURCHASING_FLAG_ROUTES = new Set([
 	'POST /orders/:id/cancel',
 	'GET /orders/:id/text',
 	'GET /orders/:id/receive-prefill',
+])
+
+/** Routes behind the `inventory.prep` flag (403 feature_disabled while it is off). */
+const PREP_FLAG_ROUTES = new Set([
+	'GET /prep',
+	'POST /prep/generate',
+	'GET /prep/levels',
+	'PUT /prep/levels',
+	'POST /prep/tasks/:id/start',
+	'POST /prep/tasks/:id/done',
+	'POST /prep/tasks/:id/skip',
 ])
 
 /** Routes behind the `inventory.recipes` flag (403 feature_disabled while it is off). */
@@ -585,6 +609,32 @@ describe('inventory operator routes: flags and switches', () => {
 		expect(failures).toEqual([])
 	})
 
+	it('inventory.prep gates the prep routes (403 feature_disabled) and nothing else', async () => {
+		const token = await mintInventoryToken({ features: FEATURES_NO_PREP })
+		const failures: string[] = []
+		for (const route of ROUTES) {
+			const request = validRequest(route)
+			const res = await call(route.method, request.path, {
+				token,
+				body: request.body,
+			})
+			const body = (await res.json()) as { code?: string; feature?: string }
+			const gated = PREP_FLAG_ROUTES.has(routeKey(route))
+			if (gated) {
+				if (
+					res.status !== 403 ||
+					body.code !== 'feature_disabled' ||
+					body.feature !== 'prep'
+				) {
+					failures.push(`${routeKey(route)} -> ${res.status} ${body.code}`)
+				}
+			} else if (body.code === 'feature_disabled') {
+				failures.push(`${routeKey(route)} is gated but not listed`)
+			}
+		}
+		expect(failures).toEqual([])
+	})
+
 	it('INVENTORY_ENABLED=false answers 503 inventory_unavailable on every route, reads included', async () => {
 		const token = await mintInventoryToken()
 		for (const value of ['false', '0', 'off', 'no', 'disabled', ' FALSE ']) {
@@ -758,6 +808,7 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 		draftOrder: '',
 		made: '',
 		soldOut: '',
+		prepTask: '',
 	}
 	let admin: string
 	let seedCounts = 0
@@ -907,6 +958,17 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 			entityId: 'sec_dish',
 			causeItemId: seed.item,
 			state: 'undone',
+		})
+		// A prep task at version 1: the sweep sends version 99, so nothing changes.
+		seed.prepTask = 'sec_prep_task_1'
+		await (await getTenantDb(ORG_A)).insert(invPrepTasks).values({
+			id: seed.prepTask,
+			locationId: LOC_B,
+			businessDate: new Date().toISOString().slice(0, 10),
+			itemId: seed.made,
+			plannedQuantity: 1_000_000,
+			fillUpToQuantity: 1_000_000,
+			onHandQuantity: 0,
 		})
 		seedCounts = (await seedCall('GET', `/counts?locationId=${LOC_B}`)).counts
 			.length
@@ -1289,6 +1351,34 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 					locationId: loc,
 					made: { kind: 'batches', count: 1 },
 				},
+				byId: true,
+			}),
+			c('GET /prep', `/prep?${q}`),
+			c('POST /prep/generate', '/prep/generate', { body: { locationId: loc } }),
+			c('GET /prep/levels', `/prep/levels?${q}`),
+			c('PUT /prep/levels', '/prep/levels', {
+				body: {
+					locationId: loc,
+					itemId: seed.made,
+					stationId: null,
+					weekdays: [null, null, null, null, null, null, null],
+					expectedVersion: 0,
+				},
+			}),
+			c('POST /prep/tasks/:id/start', `/prep/tasks/${seed.prepTask}/start`, {
+				body: { expectedVersion: 99 },
+				byId: true,
+			}),
+			c('POST /prep/tasks/:id/done', `/prep/tasks/${seed.prepTask}/done`, {
+				body: {
+					expectedVersion: 99,
+					clientId: 'sec-prep-done-0001',
+					made: { kind: 'batches', count: 1 },
+				},
+				byId: true,
+			}),
+			c('POST /prep/tasks/:id/skip', `/prep/tasks/${seed.prepTask}/skip`, {
+				body: { expectedVersion: 99 },
 				byId: true,
 			}),
 			c('GET /sold-out', `/sold-out?${q}`),

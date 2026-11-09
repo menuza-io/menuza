@@ -1,6 +1,12 @@
 import { Hono } from 'hono'
 import {
 	confirmInvoicePhotoSchema,
+	doneTaskSchema,
+	generatePrepSchema,
+	prepQuerySchema,
+	prepTaskActionSchema,
+	prepPlanSchema,
+	prepTaskSchema,
 	inventoryIdSchema,
 	isLateSync,
 	stationCatalogQuerySchema,
@@ -53,6 +59,13 @@ import {
 } from '../services/inventory-receiving-service.ts'
 import { getInventorySettings } from '../services/inventory-settings-service.ts'
 import { logDishWaste } from '../services/inventory-dish-waste-service.ts'
+import {
+	donePrepTask,
+	generatePrep,
+	getPrepPlan,
+	skipPrepTask,
+	startPrepTask,
+} from '../services/inventory-prep-service.ts'
 import { logWaste, undoWaste } from '../services/inventory-waste-service.ts'
 import {
 	activeRosterIds,
@@ -346,6 +359,90 @@ posInventoryRoutes.post(
 			},
 		)
 		return stationJson(stationUndoWasteResultSchema.parse({ id: entry.id }))
+	}),
+)
+
+// ── Prep ────────────────────────────────────────────────────────────────────
+
+/** Prep needs `inventory.prep` on top of the Stock gate. */
+async function prepGate(ctx: StationCtx): Promise<Response | null> {
+	const flags = await getInventoryFlagState(ctx.pos.orgId)
+	if (flags.status === 'on' && flags.features.prep) return null
+	return stationError(
+		flags.status === 'on' || flags.status === 'off'
+			? 'inventory_disabled'
+			: 'inventory_unavailable',
+	)
+}
+
+posInventoryRoutes.get(
+	'/prep',
+	stationRoute(
+		{ query: prepQuerySchema, locations: (query) => [query.locationId] },
+		async (ctx, query) => {
+			const refused = await prepGate(ctx)
+			if (refused) return refused
+			const plan = await getPrepPlan(ctx.pos.db, {
+				caller: ctx.caller,
+				locationId: query.locationId,
+				date: query.date,
+				stationId: query.stationId,
+				now: posInventoryDeps.now(),
+			})
+			return stationJson(prepPlanSchema.parse(plan))
+		},
+	),
+)
+
+posInventoryRoutes.post(
+	'/prep/generate',
+	stationRoute(
+		{ body: generatePrepSchema, locations: (body) => [body.locationId] },
+		async (ctx, body) => {
+			const refused = await prepGate(ctx)
+			if (refused) return refused
+			const plan = await generatePrep(ctx.caller, {
+				locationId: body.locationId,
+				date: body.date,
+			})
+			return stationJson(prepPlanSchema.parse(plan))
+		},
+	),
+)
+
+posInventoryRoutes.post(
+	'/prep/tasks/:id/start',
+	stationRoute({ body: prepTaskActionSchema }, async (ctx, body) => {
+		const refused = await prepGate(ctx)
+		if (refused) return refused
+		const task = await startPrepTask(ctx.caller, {
+			id: idParam(ctx),
+			expectedVersion: body.expectedVersion,
+		})
+		return stationJson(prepTaskSchema.parse(task))
+	}),
+)
+
+posInventoryRoutes.post(
+	'/prep/tasks/:id/skip',
+	stationRoute({ body: prepTaskActionSchema }, async (ctx, body) => {
+		const refused = await prepGate(ctx)
+		if (refused) return refused
+		const task = await skipPrepTask(ctx.caller, {
+			id: idParam(ctx),
+			expectedVersion: body.expectedVersion,
+		})
+		return stationJson(prepTaskSchema.parse(task))
+	}),
+)
+
+posInventoryRoutes.post(
+	'/prep/tasks/:id/done',
+	stationRoute({ body: doneTaskSchema }, async (ctx, body) => {
+		const refused = await prepGate(ctx)
+		if (refused) return refused
+		const task = await donePrepTask(ctx.caller, { id: idParam(ctx), body })
+		return stationJson(prepTaskSchema.parse(task))
 	}),
 )
 
