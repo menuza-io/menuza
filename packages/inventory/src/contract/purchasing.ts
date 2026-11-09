@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { inventoryMinorSchema } from '../money.ts'
 import { SUPPLIER_ORDER_CHANNELS } from '../records.ts'
 import { inventoryLocationIdSchema } from '../token.ts'
 import {
@@ -49,7 +50,7 @@ const supplierFieldsSchema = z
 			.optional(),
 		/** … this many days before delivery. */
 		cutoffDaysBefore: z.number().int().min(0).max(14).nullable().optional(),
-		minimumOrderMinor: z.number().int().min(0).nullable().optional(),
+		minimumOrderMinor: inventoryMinorSchema.nullable().optional(),
 		currency: currencySchema,
 		paymentTerms: optionalText(80),
 		vatNumber: optionalText(40),
@@ -136,7 +137,7 @@ const supplierProductFieldsSchema = z
 		itemId: inventoryIdSchema,
 		packName: inventoryNameSchema,
 		packBaseQuantity: positiveQuantitySchema,
-		priceMinor: z.number().int().min(0),
+		priceMinor: inventoryMinorSchema,
 		pricedByWeight: z.boolean(),
 		sku: optionalText(60),
 		preferred: z.boolean(),
@@ -183,8 +184,8 @@ export const deliveryLineInputSchema = z
 		packs: z.number().positive().max(100_000).nullable().optional(),
 		packName: inventoryNameSchema.nullable().optional(),
 		packBaseQuantity: positiveQuantitySchema.nullable().optional(),
-		packPriceMinor: z.number().int().min(0).nullable().optional(),
-		lineTotalMinor: z.number().int().min(0).optional(),
+		packPriceMinor: inventoryMinorSchema.nullable().optional(),
+		lineTotalMinor: inventoryMinorSchema.optional(),
 		/** Real weight (base thousandths) when the line is priced by weight. */
 		realWeightQuantity: positiveQuantitySchema.nullable().optional(),
 		/** Line of `orderId` this line receives (phase 2). */
@@ -207,9 +208,9 @@ export const recordDeliveryBaseSchema = z
 		 * know the money format; the region then uses the organization's currency).
 		 */
 		currency: currencySchema.optional(),
-		vatMinor: z.number().int().min(0).nullable().optional(),
+		vatMinor: inventoryMinorSchema.nullable().optional(),
 		/** The invoice's grand total, to compare with the lines. */
-		totalMinor: z.number().int().min(0).nullable().optional(),
+		totalMinor: inventoryMinorSchema.nullable().optional(),
 		zatcaReference: optionalText(200),
 		/** Needs `update:inventory_purchasing:any` (403 `purchasing_required` otherwise). */
 		paid: z.boolean().default(false),

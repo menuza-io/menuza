@@ -1,5 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import {
+	costMicroFromPackPrice,
+	INVENTORY_MAX_COST_MICRO,
 	inventoryAllowsLocation,
 	MAX_ENTRY_QUANTITY,
 	parseUnitRef,
@@ -13,16 +15,8 @@ import {
 	type UnitRef,
 	type UnitSystem,
 } from '@repo/inventory'
-import {
-	currentBusinessDate,
-	isValidTimeZone,
-	localParts,
-} from '@repo/reservations'
-import {
-	invMovements,
-	invItemUnits,
-	rsvLocationSettings,
-} from '@repo/tenant-db'
+import { currentBusinessDate, localParts } from '@repo/reservations'
+import { invMovements, invItemUnits } from '@repo/tenant-db'
 import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
 import { forEachInChunks, queryInChunks } from '../lib/chunked-in.ts'
 import { InventoryError } from '../lib/inventory-http.ts'
@@ -30,6 +24,7 @@ import {
 	type InventoryReader,
 	type InventoryTx,
 } from '../lib/inventory-write.ts'
+import { resolveLocationTime } from './inventory-location-settings.ts'
 
 /**
  * Pieces shared by the inventory services: errors, actors, the location's
@@ -57,6 +52,26 @@ export function stateConflict(reason: string): InventoryError {
 
 export function badRequest(reason: string): InventoryError {
 	return new InventoryError('invalid_request', 400, { reason })
+}
+
+/**
+ * Cost per base unit of a priced line, for a WRITE: an amount the cost math
+ * cannot hold (or above the cost cap) is a 400 `amount_out_of_range`, never a
+ * 500 and never stored.
+ */
+export function costMicroForWrite(
+	totalMinor: number,
+	quantity: number,
+): number {
+	let cost: number
+	try {
+		cost = costMicroFromPackPrice(totalMinor, quantity)
+	} catch (error) {
+		if (error instanceof RangeError) throw badRequest('amount_out_of_range')
+		throw error
+	}
+	if (cost > INVENTORY_MAX_COST_MICRO) throw badRequest('amount_out_of_range')
+	return cost
 }
 
 export function notFound(): InventoryError {
@@ -93,24 +108,18 @@ export function locationVisible(
 
 // ── Time ────────────────────────────────────────────────────────────────────
 
-/** The business date (`YYYY-MM-DD`) of `now` at a location. */
+/**
+ * The business date (`YYYY-MM-DD`) of `now` at a location, in the location's
+ * own time zone and day start (see `inventory-location-settings.ts` for the
+ * chain; UTC with a 04:00 day start only when no zone is known anywhere).
+ */
 export async function locationBusinessDate(
 	db: InventoryReader,
 	locationId: string,
 	now: number,
 ): Promise<string> {
-	const row = await db
-		.select({
-			timeZone: rsvLocationSettings.timeZone,
-			dayStartMin: rsvLocationSettings.dayStartMin,
-		})
-		.from(rsvLocationSettings)
-		.where(eq(rsvLocationSettings.locationId, locationId))
-		.get()
-	if (row && isValidTimeZone(row.timeZone)) {
-		return currentBusinessDate(now, row.timeZone, row.dayStartMin)
-	}
-	return currentBusinessDate(now, 'UTC', 240)
+	const time = await resolveLocationTime(db, locationId)
+	return currentBusinessDate(now, time.timeZone ?? 'UTC', time.dayStartMin)
 }
 
 export type LocationClock = {
@@ -123,30 +132,18 @@ export type LocationClock = {
 
 const two = (value: number): string => String(value).padStart(2, '0')
 
-/**
- * The location's business date and wall clock at `now`. A location without
- * reservations settings has no time zone: UTC and a 04:00 day start, as
- * `locationBusinessDate`.
- */
+/** The location's business date and wall clock at `now`. */
 export async function locationClock(
 	db: InventoryReader,
 	locationId: string,
 	now: number,
 ): Promise<LocationClock> {
-	const row = await db
-		.select({
-			timeZone: rsvLocationSettings.timeZone,
-			dayStartMin: rsvLocationSettings.dayStartMin,
-		})
-		.from(rsvLocationSettings)
-		.where(eq(rsvLocationSettings.locationId, locationId))
-		.get()
-	const valid = row && isValidTimeZone(row.timeZone)
-	const timeZone = valid ? row.timeZone : 'UTC'
+	const time = await resolveLocationTime(db, locationId)
+	const timeZone = time.timeZone ?? 'UTC'
 	const parts = localParts(now, timeZone)
 	return {
 		timeZone,
-		date: currentBusinessDate(now, timeZone, valid ? row.dayStartMin : 240),
+		date: currentBusinessDate(now, timeZone, time.dayStartMin),
 		local: {
 			date: `${parts.year}-${two(parts.month)}-${two(parts.day)}`,
 			time: `${two(parts.hour)}:${two(parts.minute)}`,

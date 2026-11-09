@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import {
-	costMicroFromPackPrice,
+	costMicroFromPackPriceClamped,
 	creditLines,
 	creditTotalMinor,
 	INVOICE_PHOTO_MAX_BYTES,
@@ -48,11 +48,11 @@ import {
 	buildWhatsAppLink,
 	renderCreditText,
 } from './inventory-order-text.ts'
+import { getLocationCurrency } from './inventory-location-settings.ts'
 import { receivedByOrderLine } from './inventory-orders-service.ts'
 import {
 	deliveryDetail,
 	loadAllowedDelivery,
-	resolveInventoryCurrency,
 } from './inventory-purchasing-service.ts'
 import { getInventorySettings } from './inventory-settings-service.ts'
 
@@ -133,7 +133,10 @@ export async function getCreditMessage(
 			pricedByWeight: line.pricedByWeight,
 			costMicro:
 				caller.cost && line.priceMinor !== null
-					? costMicroFromPackPrice(line.priceMinor, line.packBaseQuantity)
+					? costMicroFromPackPriceClamped(
+							line.priceMinor,
+							line.packBaseQuantity,
+						)
 					: null,
 		})),
 	)
@@ -444,8 +447,11 @@ export async function findPriceRises(
 			)
 			.sort(newerFirst)[0]
 		if (!before) continue
-		const costMicro = costMicroFromPackPrice(line.totalMinor, line.quantity)
-		const previousCostMicro = costMicroFromPackPrice(
+		const costMicro = costMicroFromPackPriceClamped(
+			line.totalMinor,
+			line.quantity,
+		)
+		const previousCostMicro = costMicroFromPackPriceClamped(
 			before.totalMinor,
 			before.quantity,
 		)
@@ -520,9 +526,11 @@ export async function getPriceAlerts(
 		locationId: query.locationId,
 		days: query.days,
 		thresholdBp: PRICE_RISE_ALERT_BP,
+		// The location's currency, '' while none is known (there are no alerts then).
 		currency:
 			rises[0]?.currency ??
-			(await resolveInventoryCurrency(db, { locationId: query.locationId })),
+			(await getLocationCurrency(db, query.locationId)) ??
+			'',
 		alerts,
 	}
 }

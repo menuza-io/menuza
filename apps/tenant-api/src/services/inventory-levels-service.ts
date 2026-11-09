@@ -255,7 +255,7 @@ export async function suggestLevels(
 			.select({
 				itemId: invMovements.itemId,
 				used: sql<number>`coalesce(sum(case
-					when ${invMovements.kind} in ('sale', 'waste') then -${invMovements.quantity}
+					when ${invMovements.kind} in ('sale', 'waste', 'batch_used') then -${invMovements.quantity}
 					when ${invMovements.kind} = 'count' and ${invMovements.quantity} < 0 then -${invMovements.quantity}
 					else 0 end), 0)`,
 			})

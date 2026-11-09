@@ -212,6 +212,15 @@ const ALLOWED_COLUMNS: Record<string, string> = {
 	'inv_waste.actor_id': inventoryActorId,
 	'inv_audit_log.actor_id': inventoryActorId,
 	'inv_orders.created_by_id': inventoryActorId,
+	'inv_transfers.note':
+		'operator note on a stock transfer or branch request between the organization\'s own places (e.g. "send before the 9am prep"), not about a customer; the form asks for a business note, and the closed-final trigger freezes it with the record',
+	'inv_transfers.created_by_id': inventoryActorId,
+	'inv_transfers.sent_by_id': inventoryActorId,
+	'inv_transfers.received_by_id': inventoryActorId,
+	'inv_recipes.created_by_id': inventoryActorId,
+	'inv_sold_out.undone_by_id': inventoryActorId,
+	'inv_prep_tasks.started_by_id': inventoryActorId,
+	'inv_prep_tasks.done_by_id': inventoryActorId,
 	'inv_waste.device_id':
 		'opaque id of the Station terminal that logged the waste (feeds its recent-items chips), not a person',
 }

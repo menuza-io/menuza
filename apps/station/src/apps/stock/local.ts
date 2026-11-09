@@ -1,4 +1,8 @@
-import { type StationCatalog, type StationRef } from '@repo/inventory'
+import {
+	type StationCatalog,
+	type StationRef,
+	type UnitRef,
+} from '@repo/inventory'
 import { type CountValues } from './model.ts'
 import { type PosSettings } from '~/lib/config.ts'
 import { db } from '~/lib/db.ts'
@@ -60,8 +64,16 @@ export type LocalCount = {
 	ref: StationRef
 	listId: string | null
 	listName: string | null
-	/** `sent` once Send for review was tapped: this tablet adds nothing more. */
+	/**
+	 * Always `counting` now. `sent` only appears on a record made by an older
+	 * build, which closed the count on this tablet when Send was tapped; it is
+	 * read as "this person is done" (`isDone`).
+	 */
 	status: 'counting' | 'sent'
+	/** When this person tapped "I'm done counting" (a per-device note the region keeps; the count stays open). */
+	done?: number
+	/** What the region last said about the count itself, once it is known to be past `counting`. */
+	serverStatus?: CountState
 	startedAt: number
 	/** The code that refused the start, when it did. */
 	startFailed?: string
@@ -69,10 +81,22 @@ export type LocalCount = {
 	joined?: boolean
 }
 
+/** A count's state at the region (`countStatusSchema`). */
+export type CountState = 'counting' | 'in_review' | 'approved' | 'cancelled'
+
+/** The person said they are done here. The count is still the manager's to close. */
+export const isDone = (count: LocalCount) =>
+	count.done !== undefined || count.status === 'sent'
+
+/** The manager finished the count in the App: nothing can be added to it any more. */
+export const isFinished = (count: Pick<LocalCount, 'serverStatus'>) =>
+	count.serverStatus === 'approved' || count.serverStatus === 'cancelled'
+
 const countsKey = (origin: string) => `counts:${origin}`
 const mineKey = (origin: string, localId: string) => `mine:${origin}:${localId}`
 const sheetKey = (origin: string, serverId: string) =>
 	`sheet:${origin}:${serverId}`
+const liveKey = (origin: string, localId: string) => `live:${origin}:${localId}`
 const recentKey = (origin: string) => `recent-waste:${origin}`
 export const wasteKey = (origin: string, clientId: string) =>
 	`waste:${origin}:${clientId}`
@@ -104,17 +128,61 @@ export async function saveLocalValues(
 	await writeKey(mineKey(origin, localId), values)
 }
 
+/**
+ * The units a row may have a live entry in at the region, by `rowKey`. The
+ * region keeps one live entry per item, area and unit, and adds them up, so a
+ * row's unit switch has to clear the old unit's entry (`saveCountEntry`).
+ */
+export type LiveUnits = Record<string, UnitRef[]>
+
+export async function localLiveUnits(
+	origin: string,
+	localId: string,
+): Promise<LiveUnits> {
+	return (await readKey<LiveUnits>(liveKey(origin, localId))) ?? {}
+}
+
+export async function saveLiveUnits(
+	origin: string,
+	localId: string,
+	live: LiveUnits,
+): Promise<void> {
+	await writeKey(liveKey(origin, localId), live)
+}
+
+/** Forgets a count on this tablet: its record, what was typed, its cached sheet and its unit memory. */
 export async function dropLocalCount(
 	origin: string,
 	localId: string,
 ): Promise<void> {
 	await db.transaction('rw', db.stockCatalog, async () => {
+		const counts = await localCounts(origin)
+		const gone = counts.find((count) => count.localId === localId)
 		await saveLocalCounts(
 			origin,
-			(await localCounts(origin)).filter((count) => count.localId !== localId),
+			counts.filter((count) => count.localId !== localId),
 		)
 		await db.stockCatalog.delete(mineKey(origin, localId))
+		await db.stockCatalog.delete(liveKey(origin, localId))
+		if (gone && 'id' in gone.ref)
+			await db.stockCatalog.delete(sheetKey(origin, gone.ref.id))
 	})
+}
+
+/**
+ * Drops every count the manager already approved or cancelled, except the one
+ * on screen (it says "This count is finished" first). Entries still waiting
+ * for such a count stay in the outbox and end up as refusals the person reads.
+ */
+export async function dropFinishedCounts(
+	origin: string,
+	except: string | null = null,
+): Promise<number> {
+	const finished = (await localCounts(origin)).filter(
+		(count) => isFinished(count) && count.localId !== except,
+	)
+	for (const count of finished) await dropLocalCount(origin, count.localId)
+	return finished.length
 }
 
 /** The counting sheet the server last sent for a count (what this person typed there, which items someone counted). */
@@ -148,13 +216,21 @@ export async function rememberWaste(
 /** How long a settled waste entry's server id is kept for an undo (the server accepts one for five minutes). */
 const WASTE_ID_KEEP_MS = 15 * 60_000
 
-/** Forgets settled waste ids and sent counts that are no longer of use. */
+/** A cached counting sheet is read again whenever its count is opened with a connection. */
+const SHEET_KEEP_MS = 14 * 24 * 3_600_000
+
+/** Forgets settled waste ids and old cached counting sheets (a finished count is dropped by `dropFinishedCounts`). */
 export async function pruneLocal(now = Date.now()): Promise<void> {
 	await db.transaction('rw', db.stockCatalog, db.stockQueue, async () => {
 		await db.stockCatalog
 			.where('key')
 			.startsWith('waste:')
 			.filter((row) => now - row.savedAt > WASTE_ID_KEEP_MS)
+			.delete()
+		await db.stockCatalog
+			.where('key')
+			.startsWith('sheet:')
+			.filter((row) => now - row.savedAt > SHEET_KEEP_MS)
 			.delete()
 	})
 }

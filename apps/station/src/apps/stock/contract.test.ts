@@ -170,7 +170,8 @@ describe('demo mode answers in the contract’s shapes', () => {
 		const sent = await api.sendCount(first.count.id, {
 			clientId: 'send-0001-aaaa',
 		})
-		expect(sent.status).toBe('in_review')
+		// "I'm done" is a per-device note: the count stays open for the manager.
+		expect(sent.status).toBe('counting')
 		const wasted = await api.waste({
 			entries: [
 				{

@@ -32,14 +32,43 @@ const clean = (value: string, max: number) =>
 		.trim()
 		.slice(0, max)
 
+/**
+ * A number as an invoice prints it, or null when there is none ("N/A", "-",
+ * an empty cell). The LAST separator is the decimal one ("1,234.50",
+ * "1.234,50"); a lone comma followed by exactly three digits is a thousands
+ * separator ("1,234"). Never NaN: one odd cell must not fail the whole read.
+ */
+export function parseInvoiceNumber(value: number | string): number | null {
+	if (typeof value === 'number') return Number.isFinite(value) ? value : null
+	const text = value.replace(/[^0-9.,-]/g, '')
+	if (!/[0-9]/.test(text)) return null
+	const negative = text.startsWith('-')
+	const unsigned = text.replace(/-/g, '')
+	const lastDot = unsigned.lastIndexOf('.')
+	const lastComma = unsigned.lastIndexOf(',')
+	let normalized: string
+	if (lastDot === -1 && lastComma === -1) {
+		normalized = unsigned
+	} else {
+		const decimalAt = Math.max(lastDot, lastComma)
+		const digitsAfter = unsigned.length - decimalAt - 1
+		const separator = unsigned[decimalAt]!
+		const onlyThisSeparator =
+			unsigned.split(separator).length - 1 === 1 &&
+			!unsigned.includes(separator === '.' ? ',' : '.')
+		// "1,234" or "1.234" alone: thousands, not decimals.
+		const thousands = onlyThisSeparator && digitsAfter === 3 && decimalAt > 0
+		normalized = thousands
+			? unsigned.replace(/[.,]/g, '')
+			: `${unsigned.slice(0, decimalAt).replace(/[.,]/g, '')}.${unsigned.slice(decimalAt + 1)}`
+	}
+	const parsed = Number(negative ? `-${normalized}` : normalized)
+	return Number.isFinite(parsed) ? parsed : null
+}
+
 const numberish = z
 	.union([z.number(), z.string()])
-	.transform((value) =>
-		typeof value === 'number'
-			? value
-			: Number(value.replace(/[^0-9.,-]/g, '').replace(',', '.')),
-	)
-	.pipe(z.number().finite())
+	.transform((value) => parseInvoiceNumber(value))
 
 const readSchema = z.object({
 	supplier: z.string().nullish(),

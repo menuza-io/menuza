@@ -1,6 +1,7 @@
 import 'fake-indexeddb/auto'
-import { beforeEach, describe, expect, it } from 'vitest'
-import { localCounts, localValues } from './local.ts'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { type StationOutboxKind } from '@repo/inventory'
+import { localCounts, localValues, saveLocalCounts } from './local.ts'
 import {
 	canRetry,
 	CountClosedError,
@@ -17,10 +18,16 @@ import {
 	undoWaste,
 	wipeStock,
 	claimNext,
+	clampMadeAt,
 	completeRow,
 	deferRows,
+	laneOf,
+	MADE_AT_FUTURE_MS,
+	MADE_AT_PAST_MS,
+	newClientId,
 } from './queue.ts'
 import { ctx, ORIGIN, resetStock } from './testing.ts'
+import { useClock } from '~/lib/clock.ts'
 import { db } from '~/lib/db.ts'
 
 const claimOptions = (
@@ -165,7 +172,7 @@ describe('the Stock outbox', () => {
 		})
 	})
 
-	it('continues the count of the same list instead of starting two, and refuses entries after send', async () => {
+	it('continues the count of the same list instead of starting two; "I am done" does not close it, a finished count refuses entries', async () => {
 		const first = await startCount(ctx, { id: 'list_weekly', name: 'Weekly' })
 		const again = await startCount(ctx, { id: 'list_weekly', name: 'Weekly' })
 		expect(again.localId).toBe(first.localId)
@@ -173,19 +180,41 @@ describe('the Stock outbox', () => {
 			(await stockRows(ORIGIN)).filter((row) => row.kind === 'count_start'),
 		).toHaveLength(1)
 		await sendCount(ctx, first.localId)
+		// The count stays open on this tablet: late entries are still taken.
+		expect((await localCounts(ORIGIN))[0]).toMatchObject({
+			status: 'counting',
+			done: expect.any(Number),
+		})
+		await saveCountEntry(ctx, first.localId, {
+			itemId: 'a',
+			areaId: null,
+			amount: 1,
+			unit: 'kg',
+		})
+		// Saying it twice queues one note.
+		await sendCount(ctx, first.localId)
+		expect(
+			(await stockRows(ORIGIN)).filter((row) => row.kind === 'count_send'),
+		).toHaveLength(1)
+		// A manager finished it in the App: nothing more goes in.
+		const [record] = await localCounts(ORIGIN)
+		await saveLocalCounts(ORIGIN, [{ ...record!, serverStatus: 'approved' }])
 		await expect(
 			saveCountEntry(ctx, first.localId, {
-				itemId: 'a',
+				itemId: 'b',
 				areaId: null,
 				amount: 1,
 				unit: 'kg',
 			}),
 		).rejects.toBeInstanceOf(CountClosedError)
-		// Sending twice queues one send.
-		await sendCount(ctx, first.localId)
-		expect(
-			(await stockRows(ORIGIN)).filter((row) => row.kind === 'count_send'),
-		).toHaveLength(1)
+	})
+
+	it('does not continue a count the manager is already reviewing: the region makes a new one', async () => {
+		const first = await startCount(ctx, { id: 'list_weekly', name: 'Weekly' })
+		const [record] = await localCounts(ORIGIN)
+		await saveLocalCounts(ORIGIN, [{ ...record!, serverStatus: 'in_review' }])
+		const next = await startCount(ctx, { id: 'list_weekly', name: 'Weekly' })
+		expect(next.localId).not.toBe(first.localId)
 	})
 
 	it('survives a reload: closing and reopening the database loses nothing', async () => {
@@ -319,7 +348,7 @@ describe('claiming rows', () => {
 		expect(forced.length).toBeGreaterThan(0)
 	})
 
-	it('batches consecutive count entries of one count, but not across another kind', async () => {
+	it('batches the consecutive entries of one count lane, whatever waste waits between them', async () => {
 		const record = await startCount(ctx, { id: null, name: null })
 		const [start] = await stockRows(ORIGIN)
 		await completeRow(start!, { id: 'cnt_1' })
@@ -347,10 +376,13 @@ describe('claiming rows', () => {
 			'count_entry',
 			'count_entry',
 			'count_entry',
+			'count_entry',
 		])
 		expect(batch.every((row) => row.status === 'syncing')).toBe(true)
-		// Another tab sending holds the line.
-		expect(await claimNext(ORIGIN, claimOptions({ now: 1_000_010 }))).toEqual(
+		// Another tab sending the counts lane holds that lane only: the waste still goes.
+		const next = await claimNext(ORIGIN, claimOptions({ now: 1_000_010 }))
+		expect(next.map((row) => row.kind)).toEqual(['waste'])
+		expect(await claimNext(ORIGIN, claimOptions({ now: 1_000_020 }))).toEqual(
 			[],
 		)
 	})
@@ -481,5 +513,352 @@ describe('permanent failures', () => {
 		await discardRow(delivery!.id)
 		expect(await stockRows(ORIGIN)).toEqual([])
 		expect(await db.stockBlobs.count()).toBe(0)
+	})
+})
+
+const entryRows = async () =>
+	(await stockRows(ORIGIN)).flatMap((row) =>
+		row.kind === 'count_entry'
+			? [{ ...row.payload.entry, seq: row.seq, id: row.id, status: row.status }]
+			: [],
+	)
+const settled = async (...ids: string[]) => {
+	for (const id of ids) {
+		const row = await db.stockQueue.get(id)
+		await completeRow(row!, null)
+	}
+}
+
+describe('switching a row’s unit (one live entry per unit at the region, and they add up)', () => {
+	async function joined() {
+		const record = await startCount(ctx, { id: null, name: null })
+		const [start] = await stockRows(ORIGIN)
+		await completeRow(start!, { id: 'cnt_1' })
+		return record
+	}
+	const box = { itemId: 'oil', areaId: 'a1', unit: 'unit:box' } as const
+
+	it('after the first entry was SENT, clears the old unit before the new entry', async () => {
+		const record = await joined()
+		await saveCountEntry(ctx, record.localId, { ...box, amount: 2 })
+		const [sent] = await entryRows()
+		await settled(sent!.id)
+		expect(await entryRows()).toEqual([])
+
+		await saveCountEntry(ctx, record.localId, {
+			itemId: 'oil',
+			areaId: 'a1',
+			amount: 20,
+			unit: 'l',
+		})
+		const rows = await entryRows()
+		expect(rows.map((row) => [row.unit, row.amount])).toEqual([
+			['unit:box', null],
+			['l', 20],
+		])
+		expect(rows[0]!.seq).toBeLessThan(rows[1]!.seq)
+		// Both go in one request, in that order.
+		const batch = await claimNext(ORIGIN, claimOptions())
+		expect(
+			batch.map((row) =>
+				row.kind === 'count_entry'
+					? [row.payload.entry.unit, row.payload.entry.amount]
+					: null,
+			),
+		).toEqual([
+			['unit:box', null],
+			['l', 20],
+		])
+	})
+
+	it('clearing a row clears every unit that may be live, not only the one shown', async () => {
+		const record = await joined()
+		await saveCountEntry(ctx, record.localId, { ...box, amount: 2 })
+		await settled((await entryRows())[0]!.id)
+		await saveCountEntry(ctx, record.localId, {
+			itemId: 'oil',
+			areaId: 'a1',
+			amount: 20,
+			unit: 'l',
+		})
+		await settled(...(await entryRows()).map((row) => row.id))
+		await saveCountEntry(ctx, record.localId, {
+			itemId: 'oil',
+			areaId: 'a1',
+			amount: null,
+			unit: 'l',
+		})
+		expect((await entryRows()).map((row) => [row.unit, row.amount])).toEqual([
+			['l', null],
+		])
+	})
+
+	it('switching back and forth leaves the region with the last unit only', async () => {
+		const record = await joined()
+		await saveCountEntry(ctx, record.localId, { ...box, amount: 2 })
+		await settled((await entryRows())[0]!.id)
+		const litres = {
+			itemId: 'oil',
+			areaId: 'a1',
+			amount: 20,
+			unit: 'l',
+		} as const
+		await saveCountEntry(ctx, record.localId, litres)
+		await saveCountEntry(ctx, record.localId, { ...box, amount: 2 })
+		const live = new Map<string, number | null>()
+		for (const row of await entryRows()) live.set(row.unit, row.amount)
+		// Litres were never sent, so they are cleared; the box count is the live one.
+		expect(live.get('l')).toBeNull()
+		expect(live.get('unit:box')).toBe(2)
+	})
+
+	it('an unsent entry is replaced by the clear, and a joined count’s earlier unit is known from the screen', async () => {
+		const record = await joined()
+		await saveCountEntry(ctx, record.localId, { ...box, amount: 2 })
+		await saveCountEntry(ctx, record.localId, {
+			itemId: 'oil',
+			areaId: 'a1',
+			amount: 20,
+			unit: 'l',
+		})
+		expect((await entryRows()).map((row) => [row.unit, row.amount])).toEqual([
+			['unit:box', null],
+			['l', 20],
+		])
+		// Another device typed kg: this tablet only knows it from the sheet.
+		await saveCountEntry(
+			ctx,
+			record.localId,
+			{ itemId: 'rice', areaId: null, amount: 3, unit: 'piece' },
+			{ knownUnits: ['kg'] },
+		)
+		expect(
+			(await entryRows())
+				.filter((row) => row.id && row.unit !== 'unit:box' && row.unit !== 'l')
+				.map((row) => [row.unit, row.amount]),
+		).toEqual([
+			['kg', null],
+			['piece', 3],
+		])
+	})
+
+	it('"Add another unit" keeps the other unit’s entry live (2 boxes and 3 kg)', async () => {
+		const record = await joined()
+		await saveCountEntry(ctx, record.localId, { ...box, amount: 2 })
+		await settled((await entryRows())[0]!.id)
+		await saveCountEntry(
+			ctx,
+			record.localId,
+			{ itemId: 'oil', areaId: 'a1', amount: 3, unit: 'kg' },
+			{ keepUnits: ['unit:box'], knownUnits: ['unit:box'] },
+		)
+		expect((await entryRows()).map((row) => [row.unit, row.amount])).toEqual([
+			['kg', 3],
+		])
+		// The main line then changes: the added line's kg stays too.
+		await saveCountEntry(
+			ctx,
+			record.localId,
+			{ ...box, amount: 4 },
+			{ keepUnits: ['kg'], knownUnits: ['unit:box', 'kg'] },
+		)
+		const live = (await entryRows()).map((row) => [row.unit, row.amount])
+		expect(live).toContainEqual(['unit:box', 4])
+		expect(live).not.toContainEqual(['kg', null])
+	})
+})
+
+describe('lanes', () => {
+	it('a photo backing off never holds counts, waste or the next delivery', async () => {
+		await recordDelivery(
+			ctx,
+			{
+				supplierId: 's',
+				invoiceNumber: null,
+				lines: [{ itemId: 'a', quantity: 1000 }],
+			},
+			{ blob: new Blob(['x']), contentType: 'image/jpeg' },
+		)
+		const [delivery, photo] = await stockRows(ORIGIN)
+		await completeRow(delivery!, { id: 'dlv_1' })
+		await deferRows([photo!], 'photo_unreachable', 1_000_000)
+		const record = await startCount(ctx, { id: null, name: null })
+		const [, start] = await stockRows(ORIGIN)
+		await completeRow(start!, { id: 'cnt_1' })
+		await saveCountEntry(ctx, record.localId, {
+			itemId: 'a',
+			areaId: null,
+			amount: 1,
+			unit: 'kg',
+		})
+		await logWaste(ctx, {
+			itemId: 'a',
+			amount: 1,
+			unit: 'kg',
+			reason: 'spoiled',
+		})
+		await recordDelivery(
+			ctx,
+			{
+				supplierId: 's',
+				invoiceNumber: null,
+				lines: [{ itemId: 'b', quantity: 1000 }],
+			},
+			null,
+		)
+		const skipped = new Set<StationOutboxKind>()
+		const sent: string[] = []
+		for (;;) {
+			const batch = await claimNext(ORIGIN, claimOptions({ skip: skipped }))
+			if (batch.length === 0) break
+			sent.push(batch[0]!.kind)
+			for (const row of batch) await completeRow(row, { id: `srv_${row.id}` })
+		}
+		expect(sent.sort()).toEqual(['count_entry', 'delivery', 'waste'])
+		// The photo is still there, waiting its turn.
+		expect((await stockRows(ORIGIN)).map((row) => row.kind)).toEqual([
+			'delivery_photo',
+		])
+	})
+
+	it('a delivery that keeps failing holds only its own lane', async () => {
+		await recordDelivery(
+			ctx,
+			{
+				supplierId: 's',
+				invoiceNumber: null,
+				lines: [{ itemId: 'a', quantity: 1000 }],
+			},
+			null,
+		)
+		await logWaste(ctx, {
+			itemId: 'a',
+			amount: 1,
+			unit: 'kg',
+			reason: 'spoiled',
+		})
+		const [delivery] = await stockRows(ORIGIN)
+		await deferRows([delivery!], 'internal_error', 1_000_000)
+		const batch = await claimNext(ORIGIN, claimOptions())
+		expect(batch.map((row) => row.kind)).toEqual(['waste'])
+		// Its own lane waits until due.
+		await completeRow(batch[0]!, { id: 'wst_1' })
+		expect(await claimNext(ORIGIN, claimOptions())).toEqual([])
+		const later = await claimNext(
+			ORIGIN,
+			claimOptions({ now: 1_000_000 + 5_000 }),
+		)
+		expect(later.map((row) => row.id)).toEqual([delivery!.id])
+	})
+
+	it('a photo waits until the delivery it names has settled', async () => {
+		await recordDelivery(
+			ctx,
+			{
+				supplierId: 's',
+				invoiceNumber: null,
+				lines: [{ itemId: 'a', quantity: 1000 }],
+			},
+			{ blob: new Blob(['x']), contentType: 'image/jpeg' },
+		)
+		const [delivery] = await stockRows(ORIGIN)
+		// The delivery is being sent by another tab: the photo must not jump the queue.
+		await db.stockQueue.update(delivery!.id, {
+			status: 'syncing',
+			claimedAt: 1_000_000,
+		})
+		expect(await claimNext(ORIGIN, claimOptions({ now: 1_000_010 }))).toEqual(
+			[],
+		)
+		await completeRow({ ...delivery!, status: 'syncing' }, { id: 'dlv_1' })
+		const [next] = await claimNext(ORIGIN, claimOptions())
+		expect(next).toMatchObject({
+			kind: 'delivery_photo',
+			payload: { delivery: { id: 'dlv_1' } },
+		})
+	})
+
+	it('every kind has a lane, within a lane rows keep their order', async () => {
+		expect(
+			(['count_start', 'count_entry', 'count_send'] as const).map(laneOf),
+		).toEqual(['counts', 'counts', 'counts'])
+		expect(laneOf('waste_undo')).toBe(laneOf('waste'))
+		expect(laneOf('delivery_photo')).not.toBe(laneOf('delivery'))
+	})
+})
+
+describe('when things were made', () => {
+	afterEach(() => useClock.setState({ skewMs: null }))
+
+	it('stamps rows with the server’s time, not a tablet clock that is days behind', async () => {
+		useClock.setState({ skewMs: 3 * 24 * 3_600_000 })
+		const before = Date.now()
+		await logWaste(ctx, {
+			itemId: 'a',
+			amount: 1,
+			unit: 'kg',
+			reason: 'spoiled',
+		})
+		const [row] = await stockRows(ORIGIN)
+		expect(row!.madeAt).toBeGreaterThanOrEqual(before + 3 * 24 * 3_600_000)
+		expect(row!.madeAt).toBeLessThan(Date.now() + 3 * 24 * 3_600_000 + 1_000)
+	})
+
+	it('clamps what is sent to what the region accepts, once, and keeps it for retries', async () => {
+		const now = 1_800_000_000_000
+		expect(clampMadeAt(now - 30 * 24 * 3_600_000, now)).toBe(
+			now - MADE_AT_PAST_MS,
+		)
+		expect(clampMadeAt(now + 3_600_000, now)).toBe(now + MADE_AT_FUTURE_MS)
+		expect(clampMadeAt(now - 1_000, now)).toBe(now - 1_000)
+
+		await logWaste(ctx, {
+			itemId: 'a',
+			amount: 1,
+			unit: 'kg',
+			reason: 'spoiled',
+		})
+		await db.stockQueue.toCollection().modify({ madeAt: 5 })
+		const [claimed] = await claimNext(ORIGIN, claimOptions())
+		expect(claimed!.madeAt).toBeGreaterThan(
+			Date.now() - MADE_AT_PAST_MS - 5_000,
+		)
+		expect((await stockRows(ORIGIN))[0]!.madeAt).toBe(claimed!.madeAt)
+		// A retry repeats exactly what the first try sent (the region hashes the body).
+		await deferRows([claimed!], 'connection_lost', 0)
+		const [again] = await claimNext(ORIGIN, claimOptions({ force: true }))
+		expect(again!.madeAt).toBe(claimed!.madeAt)
+	})
+})
+
+describe('a double tap', () => {
+	it('records a delivery made before the tap once', async () => {
+		const id = newClientId()
+		const delivery = {
+			supplierId: null,
+			invoiceNumber: null,
+			lines: [{ itemId: 'a', quantity: 1000 }],
+		}
+		await Promise.all([
+			recordDelivery(ctx, delivery, null, id),
+			recordDelivery(ctx, delivery, null, id),
+		])
+		expect((await stockRows(ORIGIN)).map((row) => row.id)).toEqual([id])
+	})
+
+	it('logs waste made before the tap once', async () => {
+		const id = newClientId()
+		const entry = {
+			itemId: 'a',
+			amount: 1,
+			unit: 'kg',
+			reason: 'spoiled',
+		} as const
+		const results = await Promise.all([
+			logWaste(ctx, entry, id),
+			logWaste(ctx, entry, id),
+		])
+		expect(results).toEqual([id, id])
+		expect(await stockRows(ORIGIN)).toHaveLength(1)
 	})
 })

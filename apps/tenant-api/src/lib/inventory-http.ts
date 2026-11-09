@@ -50,6 +50,17 @@ export function inventoryErrorResponse(error: unknown): Response {
 		return inventoryDeny(error.status, error.code, error.details)
 	}
 	if (error instanceof HttpError) return error.toResponse()
+	// Cost math throws a plain RangeError for a number outside the safe integer
+	// range (`@repo/inventory` cost.ts). Requests are capped by the contract,
+	// so this is a last net: an absurd amount is the caller's 400, not a 500.
+	if (
+		error instanceof RangeError &&
+		/safe integer|out of range/.test(error.message)
+	) {
+		return inventoryDeny(400, 'invalid_request', {
+			reason: 'amount_out_of_range',
+		})
+	}
 	throw error
 }
 

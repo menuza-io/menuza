@@ -67,7 +67,9 @@ export function StockNotices({
 	}
 	if (
 		stock.refreshError === 'inventory_not_enabled' ||
-		stock.refreshError === 'inventory_disabled'
+		stock.refreshError === 'inventory_disabled' ||
+		stock.refreshError === 'contract_unsupported' ||
+		stock.refreshError === 'contract_too_old'
 	) {
 		notices.push({
 			key: 'off',

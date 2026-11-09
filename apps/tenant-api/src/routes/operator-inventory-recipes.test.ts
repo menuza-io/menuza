@@ -1332,6 +1332,12 @@ describe('recording a batch of a made item', () => {
 				baseUnit: 'ml',
 			})
 		).id
+		for (const id of [sauce, sauce2, plain]) {
+			await call('PATCH', `${BASE}/items/${id}`, {
+				token: kitchen,
+				body: { expectedVersion: 1, batchCounted: true },
+			})
+		}
 		expect(
 			(
 				await put({
@@ -1442,12 +1448,13 @@ describe('recording a batch of a made item', () => {
 			res.body.used.map((entry: { itemId: string }) => entry.itemId).sort(),
 		).toEqual([milk, sauce].sort())
 		expect(await onHand(sauce)).toBe(before - 1_000_000)
-		// The sauce has no delivered price: its value is unknown, milk's counts.
+		// The sauce's average cost was rolled up from its own batches (890 minor per 1 L);
+		// plus 200 ml of milk (40 minor) = 930 minor total for the 2 batches of sauce2.
 		const sauceUse = res.body.used.find(
 			(entry: { itemId: string }) => entry.itemId === sauce,
 		)
-		expect(sauceUse.valueMinor).toBeUndefined()
-		expect(res.body.valueMinor).toBe(40)
+		expect(sauceUse.valueMinor).toBe(890)
+		expect(res.body.valueMinor).toBe(930)
 	})
 
 	it('refuses a bought item, a made item without a recipe, an excluded location and a bad amount', async () => {
@@ -1518,6 +1525,20 @@ describe('recording a batch of a made item', () => {
 			expectedVersion: 0,
 			makes: { amount: 1, unit: 'kg' },
 			lines: [line(chicken, 100, 'g')],
+		})
+		const notBatchCounted = await call('POST', `${BASE}/items/${item}/batch`, {
+			token: kitchen,
+			body: {
+				clientId: cid('batch'),
+				locationId: LOC,
+				made: { kind: 'batches', count: 1 },
+			},
+		})
+		expect(notBatchCounted.status).toBe(409)
+		expect(notBatchCounted.body.code).toBe('not_batch_counted')
+		await call('PATCH', `${BASE}/items/${item}`, {
+			token: kitchen,
+			body: { expectedVersion: 1, batchCounted: true },
 		})
 		await put({
 			ownerKind: 'made_item',

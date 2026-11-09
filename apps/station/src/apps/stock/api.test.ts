@@ -6,7 +6,12 @@ import {
 	STATION_ERROR_HANDLING,
 } from '@repo/inventory'
 import { describe, expect, it, vi } from 'vitest'
-import { createStockApi, type StockApiError } from './api.ts'
+import {
+	createStockApi,
+	PHOTO_UNREACHABLE,
+	STOCK_CONTRACT_VERSION,
+	type StockApiError,
+} from './api.ts'
 import catalogFixture from './fixtures/catalog.json'
 import countEntries from './fixtures/count-entries.json'
 import countSheet from './fixtures/count-sheet.json'
@@ -37,9 +42,41 @@ describe('the Stock client', () => {
 		})
 		expect(init.headers).toEqual({
 			Authorization: 'Bearer device-secret',
-			'Pos-Inventory-Contract': String(INVENTORY_POS_CONTRACT_VERSION),
+			'Pos-Inventory-Contract': '2',
 			'Pos-Staff-Session': 'staff-session-token-aaaaaaaa',
 		})
+	})
+
+	it('speaks contract version 2 (never older than the shared package)', () => {
+		expect(STOCK_CONTRACT_VERSION).toBe(2)
+		expect(STOCK_CONTRACT_VERSION).toBeGreaterThanOrEqual(
+			INVENTORY_POS_CONTRACT_VERSION,
+		)
+	})
+
+	it('reads a contract_unsupported refusal as that code, for "Update Station"', async () => {
+		await expect(
+			api(respond({ error: 'contract_unsupported' }, { status: 400 })).catalog(
+				'main',
+				null,
+			),
+		).rejects.toMatchObject({ code: 'contract_unsupported', status: 400 })
+	})
+
+	it('a 200 answer its schemas cannot read is invalid_response, not a refusal the person did anything about', async () => {
+		await expect(
+			api(respond({ accepted: 'nope' })).countEntries('cnt_1', {
+				entries: [
+					{
+						clientId: 'entry-0001-aaaa',
+						itemId: 'item_tomato',
+						areaId: null,
+						amount: 1,
+						unit: 'kg',
+					},
+				],
+			}),
+		).rejects.toMatchObject({ code: 'invalid_response', status: 502 })
 	})
 
 	it('asks for the catalogue conditionally and understands a 304 (no body)', async () => {
@@ -214,6 +251,22 @@ describe('the Stock client', () => {
 				blob,
 			),
 		).rejects.toMatchObject({ code: 'upload_failed', status: 403 })
+	})
+
+	it('a browser PUT that fails (no network, or a bucket with no CORS) is photo_unreachable, which only the photo waits for', async () => {
+		const blocked = vi.fn(async () => {
+			throw new TypeError('Failed to fetch')
+		})
+		const error = await api(blocked as unknown as typeof fetch)
+			.putPhoto(photoUpload as never, new Blob(['bytes']))
+			.catch((failure: unknown) => failure)
+		expect(error).toMatchObject({ code: PHOTO_UNREACHABLE, status: 0 })
+		expect(
+			classifyStationFailure({
+				status: (error as StockApiError).status,
+				code: (error as StockApiError).code,
+			}),
+		).toBe('retry')
 	})
 })
 

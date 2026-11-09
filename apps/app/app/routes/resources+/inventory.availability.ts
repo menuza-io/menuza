@@ -146,38 +146,42 @@ async function applyToEntity(
 	organizationId: string,
 	change: Change,
 ): Promise<boolean> {
-	const table =
-		change.entityType === 'item' ? OrganizationMenuItem : OrganizationMenuOption
-	const row = await db
-		.select({
-			status: table.availabilityStatus,
-			updatedAt: table.updatedAt,
-		})
-		.from(table)
-		.where(
-			and(
-				eq(table.id, change.entityId),
-				eq(table.organizationId, organizationId),
-			),
-		)
-		.get()
-	if (!row) return false
-	if (!change.available) {
-		if (row.status !== 'available') return false
-		await db
+	return db.transaction(async (tx) => {
+		const table =
+			change.entityType === 'item'
+				? OrganizationMenuItem
+				: OrganizationMenuOption
+		const row = await tx
+			.select({
+				status: table.availabilityStatus,
+				updatedAt: table.updatedAt,
+			})
+			.from(table)
+			.where(
+				and(
+					eq(table.id, change.entityId),
+					eq(table.organizationId, organizationId),
+				),
+			)
+			.get()
+		if (!row) return false
+		if (!change.available) {
+			if (row.status !== 'available') return false
+			await tx
+				.update(table)
+				.set({ availabilityStatus: 'unavailable', unavailableUntil: null })
+				.where(eq(table.id, change.entityId))
+			return true
+		}
+		if (row.status !== 'unavailable' || !restorable(row.updatedAt, change)) {
+			return false
+		}
+		await tx
 			.update(table)
-			.set({ availabilityStatus: 'unavailable', unavailableUntil: null })
+			.set({ availabilityStatus: 'available', unavailableUntil: null })
 			.where(eq(table.id, change.entityId))
 		return true
-	}
-	if (row.status !== 'unavailable' || !restorable(row.updatedAt, change)) {
-		return false
-	}
-	await db
-		.update(table)
-		.set({ availabilityStatus: 'available', unavailableUntil: null })
-		.where(eq(table.id, change.entityId))
-	return true
+	})
 }
 
 /** An organization with locations: the location's override of the entity. */
@@ -186,70 +190,74 @@ async function applyToOverride(
 	locationId: string,
 	change: Change,
 ): Promise<boolean> {
-	const table =
-		change.entityType === 'item' ? OrganizationMenuItem : OrganizationMenuOption
-	// The entity must be this organization's.
-	const entity = await db
-		.select({ id: table.id })
-		.from(table)
-		.where(
-			and(
-				eq(table.id, change.entityId),
-				eq(table.organizationId, organizationId),
-			),
-		)
-		.get()
-	if (!entity) return false
-	const existing = await db
-		.select()
-		.from(OrganizationMenuLocationOverride)
-		.where(
-			and(
-				eq(OrganizationMenuLocationOverride.locationId, locationId),
-				eq(OrganizationMenuLocationOverride.entityType, change.entityType),
-				eq(OrganizationMenuLocationOverride.entityId, change.entityId),
-			),
-		)
-		.get()
-	if (!change.available) {
-		const status = existing?.availabilityStatus ?? null
-		if (status !== null && status !== 'available') return false
-		if (existing) {
-			await db
-				.update(OrganizationMenuLocationOverride)
-				.set({ availabilityStatus: 'unavailable', unavailableUntil: null })
+	return db.transaction(async (tx) => {
+		const table =
+			change.entityType === 'item'
+				? OrganizationMenuItem
+				: OrganizationMenuOption
+		// The entity must be this organization's.
+		const entity = await tx
+			.select({ id: table.id })
+			.from(table)
+			.where(
+				and(
+					eq(table.id, change.entityId),
+					eq(table.organizationId, organizationId),
+				),
+			)
+			.get()
+		if (!entity) return false
+		const existing = await tx
+			.select()
+			.from(OrganizationMenuLocationOverride)
+			.where(
+				and(
+					eq(OrganizationMenuLocationOverride.locationId, locationId),
+					eq(OrganizationMenuLocationOverride.entityType, change.entityType),
+					eq(OrganizationMenuLocationOverride.entityId, change.entityId),
+				),
+			)
+			.get()
+		if (!change.available) {
+			const status = existing?.availabilityStatus ?? null
+			if (status !== null && status !== 'available') return false
+			if (existing) {
+				await tx
+					.update(OrganizationMenuLocationOverride)
+					.set({ availabilityStatus: 'unavailable', unavailableUntil: null })
+					.where(eq(OrganizationMenuLocationOverride.id, existing.id))
+			} else {
+				await tx.insert(OrganizationMenuLocationOverride).values({
+					organizationId,
+					locationId,
+					entityType: change.entityType,
+					entityId: change.entityId,
+					availabilityStatus: 'unavailable',
+				})
+			}
+			return true
+		}
+		if (
+			!existing ||
+			existing.availabilityStatus !== 'unavailable' ||
+			!restorable(existing.updatedAt, change)
+		) {
+			return false
+		}
+		// A row that holds nothing else goes away; otherwise only the status does.
+		if (
+			(existing.isEnabled === null || existing.isEnabled === true) &&
+			existing.price === null
+		) {
+			await tx
+				.delete(OrganizationMenuLocationOverride)
 				.where(eq(OrganizationMenuLocationOverride.id, existing.id))
 		} else {
-			await db.insert(OrganizationMenuLocationOverride).values({
-				organizationId,
-				locationId,
-				entityType: change.entityType,
-				entityId: change.entityId,
-				availabilityStatus: 'unavailable',
-			})
+			await tx
+				.update(OrganizationMenuLocationOverride)
+				.set({ availabilityStatus: null, unavailableUntil: null })
+				.where(eq(OrganizationMenuLocationOverride.id, existing.id))
 		}
 		return true
-	}
-	if (
-		!existing ||
-		existing.availabilityStatus !== 'unavailable' ||
-		!restorable(existing.updatedAt, change)
-	) {
-		return false
-	}
-	// A row that holds nothing else goes away; otherwise only the status does.
-	if (
-		(existing.isEnabled === null || existing.isEnabled === true) &&
-		existing.price === null
-	) {
-		await db
-			.delete(OrganizationMenuLocationOverride)
-			.where(eq(OrganizationMenuLocationOverride.id, existing.id))
-	} else {
-		await db
-			.update(OrganizationMenuLocationOverride)
-			.set({ availabilityStatus: null, unavailableUntil: null })
-			.where(eq(OrganizationMenuLocationOverride.id, existing.id))
-	}
-	return true
+	})
 }

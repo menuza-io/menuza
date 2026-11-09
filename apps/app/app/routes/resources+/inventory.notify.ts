@@ -228,6 +228,7 @@ export async function action({ request }: ActionFunctionArgs) {
 		if (channels.inApp) inApp++
 
 		if (channels.email) {
+			let sent = false
 			try {
 				const result = await sendEmail({
 					to: recipient.email,
@@ -245,10 +246,14 @@ export async function action({ request }: ActionFunctionArgs) {
 				if (result.status === 'error') {
 					console.error('Failed to send inventory alert email')
 				} else {
+					sent = true
 					emailed++
 				}
 			} catch {
 				console.error('Failed to send inventory alert email')
+			}
+			if (!sent && !channels.inApp && claimed[0]?.id) {
+				await db.delete(Notification).where(eq(Notification.id, claimed[0].id))
 			}
 		}
 	}

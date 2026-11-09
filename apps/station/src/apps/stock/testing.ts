@@ -173,10 +173,8 @@ export function fakeApi(over: Partial<StockApi> = {}): Recorded {
 			})
 		},
 		async sendCount(...args) {
-			return record('sendCount', args, {
-				...summary(String(args[0])),
-				status: 'in_review' as const,
-			})
+			// "I'm done": the count stays `counting` (a manager finishes it in the App).
+			return record('sendCount', args, summary(String(args[0])))
 		},
 		async waste(...args) {
 			const body = args[0] as { entries: Array<{ clientId: string }> }

@@ -47,6 +47,25 @@ import { type Session } from '~/lib/signin.ts'
  * every failure is a `StockApiError` the outbox can classify.
  */
 
+/**
+ * The contract version this tablet speaks. Version 2: a count is closed by a
+ * manager in the App (Send is a per-device "I'm done"), entries are accepted
+ * while a count is `counting` or `in_review` and refused per entry after, and
+ * `madeAt` is clamped by the region. The region accepts 1 and 2 and answers
+ * `contract_unsupported` for anything else. Never lower than the shared
+ * package's own version.
+ */
+export const STOCK_CONTRACT_VERSION = Math.max(
+	INVENTORY_POS_CONTRACT_VERSION,
+	2,
+)
+
+/** Code of a 2xx answer this tablet's schemas cannot read: the region and Station speak different versions. */
+export const INVALID_RESPONSE = 'invalid_response'
+
+/** The browser could not PUT the invoice photo (network, or the storage refuses the origin). Only the photo waits; the delivery was recorded. */
+export const PHOTO_UNREACHABLE = 'photo_unreachable'
+
 export class StockApiError extends Error {
 	constructor(
 		readonly code: string,
@@ -155,7 +174,7 @@ export function createStockApi(
 	function headers(json: boolean, extra: Record<string, string> = {}) {
 		return {
 			Authorization: `Bearer ${settings.deviceToken}`,
-			[INVENTORY_POS_CONTRACT_HEADER]: String(INVENTORY_POS_CONTRACT_VERSION),
+			[INVENTORY_POS_CONTRACT_HEADER]: String(STOCK_CONTRACT_VERSION),
 			...(session?.serverSession
 				? { [POS_STAFF_SESSION_HEADER]: session.serverSession.token }
 				: {}),
@@ -211,7 +230,7 @@ export function createStockApi(
 			throw new StockApiError(await refusalCode(response), response.status)
 		const raw: unknown = await response.json().catch(() => null)
 		const parsed = answer.safeParse(raw)
-		if (!parsed.success) throw new StockApiError('invalid_response', 502)
+		if (!parsed.success) throw new StockApiError(INVALID_RESPONSE, 502)
 		return parsed.data
 	}
 
@@ -229,7 +248,7 @@ export function createStockApi(
 			const parsed = stationCatalogSchema.safeParse(
 				await response.json().catch(() => null),
 			)
-			if (!parsed.success) throw new StockApiError('invalid_response', 502)
+			if (!parsed.success) throw new StockApiError(INVALID_RESPONSE, 502)
 			return { status: 'ok', catalog: parsed.data }
 		},
 		startCount: (body) =>
@@ -355,7 +374,8 @@ export function createStockApi(
 					throw new StockApiError('upload_failed', response.status)
 			} catch (failure) {
 				if (failure instanceof StockApiError) throw failure
-				throw new StockApiError('connection_lost')
+				// A dropped network and a storage bucket that refuses a browser PUT (no CORS) look the same here. Either way only the photo is affected.
+				throw new StockApiError(PHOTO_UNREACHABLE)
 			} finally {
 				clearTimeout(timer)
 			}

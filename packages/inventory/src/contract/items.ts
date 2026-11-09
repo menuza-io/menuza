@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { inventoryCostMicroSchema, inventoryMinorSchema } from '../money.ts'
 import { inventoryLocationIdSchema } from '../token.ts'
 import { inventoryBaseUnitSchema, namedUnitSchema } from '../units.ts'
 import {
@@ -75,7 +76,7 @@ export const newItemSupplierProductSchema = z
 		supplierId: inventoryIdSchema,
 		packName: inventoryNameSchema,
 		packBaseQuantity: positiveQuantitySchema,
-		priceMinor: z.number().int().min(0),
+		priceMinor: inventoryMinorSchema,
 		currency: z.string().regex(/^[A-Z]{3}$/),
 		pricedByWeight: z.boolean(),
 	})
@@ -151,7 +152,7 @@ export const bulkCreateItemsSchema = z
 						/** Storage area by name; created at the location when missing. */
 						areaName: inventoryNameSchema.optional(),
 						/** Optional starting cost per base unit (micro-minor), for value before the first delivery. */
-						costMicro: z.number().int().min(0).optional(),
+						costMicro: inventoryCostMicroSchema.optional(),
 						currency: z
 							.string()
 							.regex(/^[A-Z]{3}$/)

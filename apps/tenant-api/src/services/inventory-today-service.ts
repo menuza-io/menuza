@@ -1,5 +1,5 @@
 import {
-	inventoryValueMinor,
+	inventoryValueMinorClamped,
 	type AttentionItem,
 	type Today,
 } from '@repo/inventory'
@@ -101,7 +101,7 @@ async function recentPriceRises(
 		itemId: rise.itemId,
 		itemName: rise.itemName,
 		changeBp: rise.changeBp,
-		money: inventoryValueMinor(
+		money: inventoryValueMinorClamped(
 			rise.quantity,
 			Math.max(rise.costMicro - rise.previousCostMicro, 0),
 		),
@@ -313,7 +313,7 @@ export async function getToday(
 				row.place?.fillUpToQuantity ?? row.place?.orderBelowQuantity ?? null
 			const avg = row.cost?.avgCostMicro ?? null
 			if (target === null || avg === null) return 0
-			return inventoryValueMinor(
+			return inventoryValueMinorClamped(
 				Math.max(0, target - Math.max(0, row.onHand)),
 				avg,
 			)

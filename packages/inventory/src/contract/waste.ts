@@ -19,6 +19,25 @@ import {
 export const WASTE_UNDO_WINDOW_MS = 24 * 60 * 60 * 1000
 
 /**
+ * Why one Station waste entry was refused (`refused[].code` of the Station
+ * answer), stable so the tablet can show it: `item_unknown`, `item_archived`,
+ * `unit_mismatch` (the unit cannot measure the item), `quantity_invalid` (out
+ * of range or not above zero), `idempotency_conflict` (the `clientId` was
+ * already used for a different entry). A `clientId` stored before, or earlier
+ * in the same request, is reported in `duplicates` with the first entry's id,
+ * never as a refusal and never as a server error. A plain string on the wire:
+ * treat an unknown code as "refused".
+ */
+export const WASTE_ENTRY_REFUSAL_CODES = [
+	'item_unknown',
+	'item_archived',
+	'unit_mismatch',
+	'quantity_invalid',
+	'idempotency_conflict',
+] as const
+export type WasteEntryRefusalCode = (typeof WASTE_ENTRY_REFUSAL_CODES)[number]
+
+/**
  * `POST /waste` (`update:inventory:any`): up to 50 entries (Station queues
  * send several). Phase 1 logs items; dishes come with recipes. The system
  * reasons (`cancelled_after_cooking`, `remade_at_till`) are refused here.

@@ -1,6 +1,8 @@
 import {
 	inventoryValueMinor,
 	needsReview,
+	STANDARD_UNITS,
+	type CountEntryRefusalCode,
 	type CountReview,
 	type CountSheet,
 	type CountSummary,
@@ -48,7 +50,7 @@ import {
 	type CountEntriesInput,
 	type ListCountsQuery,
 } from './inventory-contract-types.ts'
-import { computeFoodCost } from './inventory-food-cost.ts'
+import { computeFoodCost, countInstants } from './inventory-food-cost.ts'
 import {
 	type InventoryCaller,
 	loadLocationStock,
@@ -60,12 +62,30 @@ import { getInventorySettings } from './inventory-settings-service.ts'
 type CountRow = typeof invCounts.$inferSelect
 type EntryRow = typeof invCountEntries.$inferSelect
 
+/** Counts that are not closed: `counting` and `in_review` (both take entries). */
 const OPEN_STATUSES = ['counting', 'in_review'] as const
+/**
+ * Only a count being counted is started against or joined: one waiting for
+ * review neither blocks a new count nor captures a Station start.
+ */
+const COUNTING = 'counting' as const
 
 // ── Entries ─────────────────────────────────────────────────────────────────
 
 /** An entry that clears its counter's earlier entry has no amount. */
 const CLEARED = ''
+
+const STANDARD_UNIT_KEYS = new Set<string>(STANDARD_UNITS)
+
+/**
+ * The unit slot of an entry: every standard unit (g, kg, l, piece ...) shares
+ * one slot, so 5 kg corrected to 5000 g replaces the entry instead of adding
+ * to it; each named unit (a box, a crate) has its own slot, so "2 boxes and
+ * 3 kg" stays two live entries (see `countEntrySchema`).
+ */
+function unitSlot(enteredUnit: string): string {
+	return STANDARD_UNIT_KEYS.has(enteredUnit) ? '~standard' : enteredUnit
+}
 
 function liveKey(row: EntryRow): string {
 	return [
@@ -73,17 +93,23 @@ function liveKey(row: EntryRow): string {
 		row.areaId ?? '',
 		row.counterKind,
 		row.counterId ?? '',
-		row.enteredUnit,
+		unitSlot(row.enteredUnit),
 	].join('|')
 }
 
 /**
- * The live entries: the latest per item, area, counter and entered unit
- * (`rows` oldest first); an entry that cleared its predecessor drops out.
+ * The live entries: the latest per item, area, counter and unit slot (`rows`
+ * oldest first, returned oldest-latest first); an entry that cleared its
+ * predecessor drops out.
  */
 export function liveEntries(rows: readonly EntryRow[]): EntryRow[] {
 	const latest = new Map<string, EntryRow>()
-	for (const row of rows) latest.set(liveKey(row), row)
+	for (const row of rows) {
+		const key = liveKey(row)
+		// Delete first so the map stays in order of each slot's latest entry.
+		latest.delete(key)
+		latest.set(key, row)
+	}
 	return [...latest.values()].filter((row) => row.enteredAmount !== CLEARED)
 }
 
@@ -116,6 +142,87 @@ function countedTotals(live: readonly EntryRow[]): Map<string, number> {
 	return totals
 }
 
+// ── As-of expected ──────────────────────────────────────────────────────────
+
+/**
+ * The instant each counted item is "as of": the time of its latest live entry
+ * (the moment someone last measured it). An item nobody counted is absent.
+ */
+function countedAtByItem(live: readonly EntryRow[]): Map<string, number> {
+	const at = new Map<string, number>()
+	for (const row of live) {
+		if (row.createdAt > (at.get(row.itemId) ?? -1)) {
+			at.set(row.itemId, row.createdAt)
+		}
+	}
+	return at
+}
+
+type AsOf = {
+	/** On hand as of the item's counted instant: live on-hand minus what moved after it. */
+	expected: number
+	/** A later approved count already measured this item: this count leaves it alone. */
+	superseded: boolean
+}
+
+/**
+ * The count approval rule. Counted quantities are compared with the ledger AS
+ * OF each item's latest entry, never with the live on-hand: movements after
+ * that instant (a delivery at 14:00 after a 10:00 count, sales, waste) are not
+ * part of "expected" and survive approval. Items nobody counted are absent
+ * from the result (callers use the live on-hand for them).
+ */
+async function expectedAsOf(
+	db: InventoryReader,
+	locationId: string,
+	scope: readonly StockRow[],
+	countedAt: ReadonlyMap<string, number>,
+): Promise<Map<string, AsOf>> {
+	const result = new Map<string, AsOf>()
+	const counted = scope.filter((row) => countedAt.has(row.item.id))
+	if (counted.length === 0) return result
+	let earliest = Number.POSITIVE_INFINITY
+	for (const row of counted) {
+		earliest = Math.min(earliest, countedAt.get(row.item.id)!)
+	}
+	const after = await queryInChunks(
+		counted.map((row) => row.item.id),
+		(chunk) =>
+			db
+				.select({
+					itemId: invMovements.itemId,
+					kind: invMovements.kind,
+					createdAt: invMovements.createdAt,
+					quantity: invMovements.quantity,
+				})
+				.from(invMovements)
+				.where(
+					and(
+						eq(invMovements.locationId, locationId),
+						inArray(invMovements.itemId, chunk),
+						gt(invMovements.createdAt, earliest),
+					),
+				),
+	)
+	const movedAfter = new Map<string, number>()
+	const superseded = new Set<string>()
+	for (const move of after) {
+		if (move.createdAt <= countedAt.get(move.itemId)!) continue
+		movedAfter.set(
+			move.itemId,
+			(movedAfter.get(move.itemId) ?? 0) + move.quantity,
+		)
+		if (move.kind === 'count') superseded.add(move.itemId)
+	}
+	for (const row of counted) {
+		result.set(row.item.id, {
+			expected: row.onHand - (movedAfter.get(row.item.id) ?? 0),
+			superseded: superseded.has(row.item.id),
+		})
+	}
+	return result
+}
+
 // ── Scope and review ────────────────────────────────────────────────────────
 
 async function countScope(
@@ -139,25 +246,36 @@ type ReviewLineData = {
 	difference: number | null
 	valueMinor: number | null
 	flag: 'not_counted' | 'big_difference' | null
+	/** When the item was counted (its latest live entry), null when nobody did. */
+	countedAt: number | null
+	superseded: boolean
 }
 
 function reviewData(
 	scope: readonly StockRow[],
 	totals: ReadonlyMap<string, number>,
+	countedAt: ReadonlyMap<string, number>,
+	asOf: ReadonlyMap<string, AsOf>,
 ): ReviewLineData[] {
 	return scope.map((row) => {
 		const counted = totals.get(row.item.id) ?? null
-		const expected = row.onHand
 		if (counted === null) {
 			return {
 				row,
 				counted,
-				expected,
+				expected: row.onHand,
 				difference: null,
 				valueMinor: null,
 				flag: 'not_counted' as const,
+				countedAt: null,
+				superseded: false,
 			}
 		}
+		const found = asOf.get(row.item.id)
+		const superseded = found?.superseded === true
+		// A later approved count measured this item after this one did: nothing
+		// is left to adjust (approval skips it), so it reads as matching.
+		const expected = superseded ? counted : (found?.expected ?? row.onHand)
 		const difference = counted - expected
 		const avg = row.cost?.avgCostMicro ?? null
 		const valueMinor =
@@ -169,8 +287,37 @@ function reviewData(
 		})
 			? ('big_difference' as const)
 			: null
-		return { row, counted, expected, difference, valueMinor, flag }
+		return {
+			row,
+			counted,
+			expected,
+			difference,
+			valueMinor,
+			flag,
+			countedAt: countedAt.get(row.item.id) ?? null,
+			superseded,
+		}
 	})
+}
+
+/** Everything a review or an approval needs from one count's entries and the ledger. */
+async function reviewInputs(
+	db: InventoryReader,
+	row: CountRow,
+	entries: readonly EntryRow[],
+	stock: StockRow[],
+) {
+	const live = liveEntries(entries)
+	const totals = countedTotals(live)
+	const countedAt = countedAtByItem(live)
+	const scope = await countScope(db, row, stock)
+	const asOf = await expectedAsOf(db, row.locationId, scope, countedAt)
+	return {
+		scope,
+		totals,
+		countedAt,
+		data: reviewData(scope, totals, countedAt, asOf),
+	}
 }
 
 function netDifference(lines: readonly ReviewLineData[]): number {
@@ -247,8 +394,10 @@ async function summarize(
 			const scope = await countScope(db, row, stock)
 			itemTotal = scope.length
 			if (row.status === 'in_review' && caller.cost) {
+				const countedAt = countedAtByItem(live)
+				const asOf = await expectedAsOf(db, row.locationId, scope, countedAt)
 				difference = {
-					valueMinor: netDifference(reviewData(scope, totals)),
+					valueMinor: netDifference(reviewData(scope, totals, countedAt, asOf)),
 					currency: stockCurrency(scope),
 				}
 			}
@@ -369,11 +518,15 @@ type StartCountInput = {
 	locationId: string
 	listId: string | null
 	idempotency: InventoryIdempotency
+	/** Station: the session's person, named in the audit trail when someone else is the actor. */
+	syncedBy?: string
 }
 
 /**
- * Opens a count, or (`join`, Station) answers the one already open for the
- * location and list instead of refusing with `count_in_progress`.
+ * Opens a count, or (`join`, Station) answers the one being counted for the
+ * location and list instead of refusing with `count_in_progress`. Only a count
+ * in `counting` is joined or blocks a start: one `in_review` is left alone and
+ * a new count is created beside it.
  */
 async function openCount(
 	tx: InventoryTx,
@@ -402,12 +555,13 @@ async function openCount(
 		.where(
 			and(
 				eq(invCounts.locationId, input.locationId),
-				inArray(invCounts.status, [...OPEN_STATUSES]),
+				eq(invCounts.status, COUNTING),
 				input.listId
 					? eq(invCounts.listId, input.listId)
 					: isNull(invCounts.listId),
 			),
 		)
+		.orderBy(invCounts.createdAt, invCounts.id)
 		.limit(1)
 		.get()
 	if (open) {
@@ -438,6 +592,10 @@ async function openCount(
 		resourceType: 'count',
 		resourceId: id,
 		locationId: input.locationId,
+		detail:
+			input.syncedBy && caller.actor.id !== input.syncedBy
+				? { syncedBy: input.syncedBy }
+				: undefined,
 		at: ctx.now,
 	})
 	return {
@@ -458,9 +616,10 @@ export async function startCount(
 }
 
 /**
- * Station: starts a count, or joins the open one for the same location and
- * list so two tablets share one count. Idempotent by `clientId` (a replay
- * answers the first result, whether it started or joined).
+ * Station: starts a count, or joins the one being counted for the same
+ * location and list so two tablets share one count (a count in `in_review` is
+ * not joined: a new count starts). Idempotent by `clientId` (a replay answers
+ * the first result, whether it started or joined).
  */
 export async function startOrJoinCount(
 	caller: InventoryCaller,
@@ -474,44 +633,43 @@ export async function startOrJoinCount(
 }
 
 /**
- * Station: "Send for review". Moves a `counting` count to `in_review` for
- * every device (entries that arrive afterwards get `count_closed`; the office
- * can reopen it). Idempotent: a count already `in_review` answers its current
- * summary, and by `clientId` a replay answers the first result. An approved
- * or cancelled count is closed (409 `count_closed`).
+ * Station: "Send" is this tablet's "I'm done counting", nothing more. It
+ * records an audit row (`count.device_done`, the device id, who synced it when
+ * that is not the actor) and answers the count's UNCHANGED summary: it never
+ * moves the count to `in_review` (only the operator's `send` does, the App's
+ * "Finish"), so one tablet cannot close the count for the others. An approved
+ * or cancelled count answers its summary too and records nothing. Idempotent:
+ * by `clientId` a replay answers the first result.
  */
-export async function sendCountForReview(
+export async function markCountDeviceDone(
 	caller: InventoryCaller,
-	input: { id: string; idempotency: InventoryIdempotency },
+	input: {
+		id: string
+		deviceId: string
+		syncedBy?: string
+		idempotency: InventoryIdempotency
+	},
 ): Promise<CountSummary> {
 	return withInventoryWrite(
 		{ orgId: caller.orgId, idempotency: input.idempotency },
 		async (tx, ctx) => {
 			const row = await loadAllowedCount(tx, input.id, caller)
-			if (row.status === 'approved' || row.status === 'cancelled') {
-				throw new InventoryError('count_closed', 409)
-			}
-			if (row.status === 'counting') {
-				await tx
-					.update(invCounts)
-					.set({
-						status: 'in_review',
-						sentForReviewAt: ctx.now,
-						version: row.version + 1,
-						updatedAt: ctx.now,
-					})
-					.where(eq(invCounts.id, row.id))
+			if (row.status === 'counting' || row.status === 'in_review') {
 				await recordInventoryAudit(tx, {
 					actorKind: caller.actor.kind,
 					actorId: caller.actor.id,
-					action: 'count.send',
+					action: 'count.device_done',
 					resourceType: 'count',
 					resourceId: row.id,
 					locationId: row.locationId,
+					detail:
+						input.syncedBy && caller.actor.id !== input.syncedBy
+							? { deviceId: input.deviceId, syncedBy: input.syncedBy }
+							: { deviceId: input.deviceId },
 					at: ctx.now,
 				})
 			}
-			return (await summarize(tx, [await loadCount(tx, row.id)], caller))[0]!
+			return (await summarize(tx, [row], caller))[0]!
 		},
 	)
 }
@@ -538,6 +696,27 @@ export async function transitionCount(
 			set.sentForReviewAt = ctx.now
 		} else if (input.action === 'reopen') {
 			if (row.status !== 'in_review') throw stateConflict('not_in_review')
+			// Another count may have been started beside this one meanwhile: two
+			// counts being counted for one list would split the tablets' entries.
+			const beside = await tx
+				.select({ id: invCounts.id })
+				.from(invCounts)
+				.where(
+					and(
+						eq(invCounts.locationId, row.locationId),
+						eq(invCounts.status, COUNTING),
+						row.listId
+							? eq(invCounts.listId, row.listId)
+							: isNull(invCounts.listId),
+					),
+				)
+				.limit(1)
+				.get()
+			if (beside) {
+				throw new InventoryError('count_in_progress', 409, {
+					countId: beside.id,
+				})
+			}
 			set.status = 'counting'
 			set.sentForReviewAt = null
 		} else {
@@ -653,12 +832,11 @@ export async function getCountSheet(
 
 export type CountEntriesOptions = {
 	/**
-	 * Entries typed on a Station tablet. A count that is no longer `counting`
-	 * refuses the whole request (409 `count_closed`) instead of every entry, an
-	 * archived item is refused as `item_archived`, each entry is counted for
-	 * the person who made it (`actorFor`, the session's person unless the
-	 * tablet named another one on the roster), and the audit trail records
-	 * who synced it (`syncedBy`) when that is someone else.
+	 * Entries typed on a Station tablet: each entry is counted for the person
+	 * who made it (`actorFor`, the session's person unless the tablet named
+	 * another one on the roster), and the audit trail records who synced it
+	 * (`syncedBy`) when that is someone else. Refusals are per entry for the
+	 * App too (see `COUNT_ENTRY_REFUSAL_CODES`).
 	 */
 	station?: {
 		actorFor: (clientId: string) => InventoryActor
@@ -676,19 +854,11 @@ export async function addCountEntries(
 		const count = await loadAllowedCount(tx, input.id, caller)
 		const accepted: Array<{ clientId: string; quantity: number | null }> = []
 		const duplicates: string[] = []
-		const refused: Array<{ clientId: string; code: string }> = []
+		const refused: Array<{ clientId: string; code: CountEntryRefusalCode }> = []
 		const { entries } = input.body
-		if (count.status !== 'counting') {
-			if (station) throw new InventoryError('count_closed', 409)
-			return {
-				accepted,
-				duplicates,
-				refused: entries.map((entry) => ({
-					clientId: entry.clientId,
-					code: 'count_closed',
-				})),
-			}
-		}
+		// `counting` and `in_review` take entries (the review reads them live);
+		// only a closed count refuses, and per entry, after the replay check.
+		const closed = count.status === 'approved' || count.status === 'cancelled'
 		const clientIds = entries.map((entry) => entry.clientId)
 		const existing = await queryInChunks(clientIds, (chunk) =>
 			tx
@@ -722,20 +892,26 @@ export async function addCountEntries(
 		const rows: Array<typeof invCountEntries.$inferInsert> = []
 		const usedUnits: string[] = []
 		for (const entry of entries) {
+			// A repeat keeps its first result, even when the count has closed since.
 			if (taken.has(entry.clientId)) {
 				duplicates.push(entry.clientId)
 				continue
 			}
+			if (closed) {
+				refused.push({ clientId: entry.clientId, code: 'count_closed' })
+				continue
+			}
 			const item = byItem.get(entry.itemId)
-			if (!item || item.item.archivedAt !== null) {
-				refused.push({
-					clientId: entry.clientId,
-					code: station && item ? 'item_archived' : 'not_found',
-				})
+			if (!item) {
+				refused.push({ clientId: entry.clientId, code: 'item_unknown' })
+				continue
+			}
+			if (item.item.archivedAt !== null) {
+				refused.push({ clientId: entry.clientId, code: 'item_archived' })
 				continue
 			}
 			if (entry.areaId !== null && !areaIds.has(entry.areaId)) {
-				refused.push({ clientId: entry.clientId, code: 'not_found' })
+				refused.push({ clientId: entry.clientId, code: 'area_unknown' })
 				continue
 			}
 			let quantity = 0
@@ -751,7 +927,13 @@ export async function addCountEntries(
 					if (typed.named) usedUnits.push(typed.named.id)
 				} catch (error) {
 					if (error instanceof InventoryError) {
-						refused.push({ clientId: entry.clientId, code: error.code })
+						refused.push({
+							clientId: entry.clientId,
+							code:
+								error.code === 'unit_mismatch'
+									? 'unit_mismatch'
+									: 'quantity_invalid',
+						})
 						continue
 					}
 					throw error
@@ -819,18 +1001,24 @@ export async function addCountEntries(
 }
 
 /**
- * What moved each item since the last approved count at the location (see
- * `countReviewMovementsSchema`). One grouped read per 90 items, only for the
+ * What moved each item between the last approved count at the location (its
+ * instant, see `countInstant`) and the moment the item was counted (`until`;
+ * null = no bound, for an item nobody counted), so "expected" explains itself
+ * (see `countReviewMovementsSchema`). Movements after `until` are not part of
+ * the as-of expected and are left out. One read per 90 items, only for the
  * lines a person has to look at.
  */
 async function reviewMovements(
 	db: InventoryReader,
-	input: { locationId: string; itemIds: readonly string[] },
+	input: {
+		locationId: string
+		items: ReadonlyArray<{ itemId: string; until: number | null }>
+	},
 ): Promise<Map<string, CountReview['lines'][number]['movements']>> {
 	const result = new Map<string, CountReview['lines'][number]['movements']>()
-	if (input.itemIds.length === 0) return result
+	if (input.items.length === 0) return result
 	const last = await db
-		.select({ at: sql<number | null>`max(${invCounts.approvedAt})` })
+		.select({ id: invCounts.id, approvedAt: invCounts.approvedAt })
 		.from(invCounts)
 		.where(
 			and(
@@ -838,27 +1026,34 @@ async function reviewMovements(
 				eq(invCounts.status, 'approved'),
 			),
 		)
+		.orderBy(desc(invCounts.approvedAt), desc(invCounts.id))
+		.limit(1)
 		.get()
-	const since = last?.at ?? null
-	const rows = await queryInChunks(input.itemIds, (chunk) =>
-		db
-			.select({
-				itemId: invMovements.itemId,
-				kind: invMovements.kind,
-				total: sql<number>`coalesce(sum(${invMovements.quantity}), 0)`,
-			})
-			.from(invMovements)
-			.where(
-				and(
-					eq(invMovements.locationId, input.locationId),
-					gt(invMovements.createdAt, since ?? -1),
-					inArray(invMovements.itemId, chunk),
+	const since = last
+		? ((await countInstants(db, [last.id])).get(last.id) ?? last.approvedAt)
+		: null
+	const until = new Map(input.items.map((item) => [item.itemId, item.until]))
+	const rows = await queryInChunks(
+		input.items.map((item) => item.itemId),
+		(chunk) =>
+			db
+				.select({
+					itemId: invMovements.itemId,
+					kind: invMovements.kind,
+					quantity: invMovements.quantity,
+					createdAt: invMovements.createdAt,
+				})
+				.from(invMovements)
+				.where(
+					and(
+						eq(invMovements.locationId, input.locationId),
+						gt(invMovements.createdAt, since ?? -1),
+						inArray(invMovements.itemId, chunk),
+					),
 				),
-			)
-			.groupBy(invMovements.itemId, invMovements.kind),
 	)
-	for (const itemId of input.itemIds) {
-		result.set(itemId, {
+	for (const item of input.items) {
+		result.set(item.itemId, {
 			since,
 			delivered: 0,
 			used: 0,
@@ -867,8 +1062,10 @@ async function reviewMovements(
 		})
 	}
 	for (const row of rows) {
+		const bound = until.get(row.itemId) ?? null
+		if (bound !== null && row.createdAt > bound) continue
 		const out = result.get(row.itemId)!
-		const total = Number(row.total)
+		const total = row.quantity
 		if (row.kind === 'delivery' || row.kind === 'transfer_in') {
 			out.delivered += total
 		} else if (row.kind === 'batch_made') {
@@ -901,9 +1098,12 @@ export async function getCountReview(
 		loadEntries(db, [row.id]),
 		loadLocationStock(db, row.locationId),
 	])
-	const totals = countedTotals(liveEntries(entries.get(row.id) ?? []))
-	const scope = await countScope(db, row, stock)
-	const data = reviewData(scope, totals)
+	const { scope, data } = await reviewInputs(
+		db,
+		row,
+		entries.get(row.id) ?? [],
+		stock,
+	)
 	const flagged = data.filter((line) => line.flag !== null)
 	// Big differences first: the ones with a known money value (largest first),
 	// then the rest by how far off they are from what was expected.
@@ -925,7 +1125,10 @@ export async function getCountReview(
 	const currency = stockCurrency(scope)
 	const movements = await reviewMovements(db, {
 		locationId: row.locationId,
-		itemIds: flagged.map((line) => line.row.item.id),
+		items: flagged.map((line) => ({
+			itemId: line.row.item.id,
+			until: line.countedAt,
+		})),
 	})
 	const review: CountReview = {
 		count: (await summarize(db, [row], caller))[0]!,
@@ -977,17 +1180,30 @@ export async function approveCount(
 			loadLocationStock(tx, row.locationId),
 			getInventorySettings(tx, caller.region),
 		])
-		const totals = countedTotals(liveEntries(entries.get(row.id) ?? []))
-		const scope = await countScope(tx, row, stock)
+		// The rule: counted vs the ledger as of each item's latest entry (see
+		// `expectedAsOf`), so a delivery between counting and approving survives.
+		// An item nobody counted follows `uncounted`: `zero` removes the live
+		// on-hand as of now.
+		const { data } = await reviewInputs(
+			tx,
+			row,
+			entries.get(row.id) ?? [],
+			stock,
+		)
 		let adjusted = 0
+		let superseded = 0
 		let net = 0
 		let currency: string | undefined
-		for (const line of reviewData(scope, totals)) {
+		for (const line of data) {
 			let target: number | null = line.counted
 			if (target === null) {
 				target = input.body.uncounted[line.row.item.id] === 'zero' ? 0 : null
 			}
 			if (target === null) continue
+			if (line.superseded) {
+				superseded++
+				continue
+			}
 			const difference = target - line.expected
 			if (difference === 0) continue
 			const avg = line.row.cost?.avgCostMicro ?? null
@@ -1009,7 +1225,10 @@ export async function approveCount(
 				actorKind: caller.actor.kind,
 				actorId: caller.actor.id,
 				note: note?.length ? note : null,
-				createdAt: ctx.now,
+				// Stamped with the instant the item was counted, so the ledger up to
+				// that instant already holds the counted figure (food cost reads it
+				// so). An uncounted item set to zero is posted now.
+				createdAt: line.countedAt ?? ctx.now,
 			})
 			adjusted++
 			if (value !== null) {
@@ -1034,7 +1253,11 @@ export async function approveCount(
 			resourceType: 'count',
 			resourceId: row.id,
 			locationId: row.locationId,
-			detail: { adjustedItems: adjusted, differenceValueMinor: net },
+			detail: {
+				adjustedItems: adjusted,
+				differenceValueMinor: net,
+				supersededItems: superseded,
+			},
 			at: ctx.now,
 		})
 		const result: {

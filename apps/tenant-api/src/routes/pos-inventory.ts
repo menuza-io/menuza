@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import {
+	clampMadeAt,
 	confirmInvoicePhotoSchema,
 	doneTaskSchema,
 	generatePrepSchema,
@@ -8,7 +9,6 @@ import {
 	prepPlanSchema,
 	prepTaskSchema,
 	inventoryIdSchema,
-	isLateSync,
 	stationCatalogQuerySchema,
 	stationCountEntriesResultSchema,
 	stationCountEntriesSchema,
@@ -46,7 +46,7 @@ import { notFound, type InventoryActor } from '../services/inventory-common.ts'
 import {
 	addCountEntries,
 	getCountSheet,
-	sendCountForReview,
+	markCountDeviceDone,
 	startOrJoinCount,
 } from '../services/inventory-counts-service.ts'
 import {
@@ -204,6 +204,7 @@ posInventoryRoutes.post(
 					locationId: body.locationId,
 					listId: body.listId,
 					idempotency: idempotency(ctx, 'count_start', body.clientId, body),
+					syncedBy: ctx.session.staffId,
 				},
 			)
 			return stationJson(
@@ -255,10 +256,13 @@ posInventoryRoutes.post(
 		const { resolve } = await actorsFor(ctx, [
 			{ clientId: body.clientId, madeBy: body.madeBy },
 		])
-		const summary = await sendCountForReview(
+		// Contract 1 and 2 alike: a per-device "I'm done", never a state change.
+		const summary = await markCountDeviceDone(
 			{ ...ctx.caller, actor: resolve(body.madeBy) },
 			{
 				id,
+				deviceId: ctx.pos.device.id,
+				syncedBy: ctx.session.staffId,
 				idempotency: idempotency(ctx, 'count_send', body.clientId, {
 					id,
 					...body,
@@ -281,8 +285,12 @@ posInventoryRoutes.post(
 		async (ctx, body) => {
 			const now = posInventoryDeps.now()
 			const { actorFor } = await actorsFor(ctx, body.entries)
-			const madeAt = new Map(
-				body.entries.map((entry) => [entry.clientId, entry.madeAt]),
+			// `madeAt` is the device clock: bounded, never trusted far from now.
+			const made = new Map(
+				body.entries.map((entry) => [
+					entry.clientId,
+					clampMadeAt(entry.madeAt, now),
+				]),
 			)
 			const result = await logWaste(
 				ctx.caller,
@@ -296,11 +304,8 @@ posInventoryRoutes.post(
 						deviceId: ctx.pos.device.id,
 						actorFor,
 						syncedBy: ctx.session.staffId,
-						madeAt: (clientId) => madeAt.get(clientId),
-						lateSync: (clientId) => {
-							const at = madeAt.get(clientId)
-							return at !== undefined && isLateSync(at, now)
-						},
+						madeAt: (clientId) => made.get(clientId)?.at,
+						lateSync: (clientId) => made.get(clientId)?.late === true,
 					},
 				},
 			)
@@ -460,9 +465,10 @@ posInventoryRoutes.post(
 			const { resolve } = await actorsFor(ctx, [
 				{ clientId: body.clientId, madeBy: body.madeBy },
 			])
-			const { madeBy, madeAt, ...received } = body
-			const lateSync =
-				madeAt !== undefined && isLateSync(madeAt, posInventoryDeps.now())
+			const { madeBy, madeAt: deviceMadeAt, ...received } = body
+			const made = clampMadeAt(deviceMadeAt, posInventoryDeps.now())
+			const madeAt = deviceMadeAt === undefined ? undefined : made.at
+			const lateSync = made.late
 			let duplicate = false
 			const result = await recordDelivery(
 				{ ...ctx.caller, actor: resolve(madeBy) },

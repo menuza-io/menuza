@@ -83,6 +83,34 @@ export function readInventoryFeatures(raw: unknown): InventoryFeatures {
 	return foldInventoryFeatures(parsed.data)
 }
 
+const contextCurrencySchema = z
+	.string()
+	.regex(/^[A-Z]{3}$/)
+	.nullable()
+	.optional()
+const contextTimeZoneSchema = z.string().min(1).max(64).nullable().optional()
+
+/** The organization's own defaults, used while a location says nothing. */
+export const inventoryContextOrganizationSchema = z.object({
+	/** A hint only (the data region's usual currency); a location's own currency wins. */
+	currency: contextCurrencySchema,
+	timeZone: contextTimeZoneSchema,
+})
+
+export const inventoryContextLocationSchema = z.object({
+	id: z.string().min(1).max(64),
+	/** The location's currency when the control plane knows one; null/absent otherwise. */
+	currency: contextCurrencySchema,
+	timeZone: contextTimeZoneSchema,
+	/** Menu prices include tax (VAT). */
+	taxInclusive: z.boolean().optional(),
+	/** Tax rate as a percentage (15 = 15%). */
+	taxRatePercent: z.number().min(0).max(100).optional(),
+})
+export type InventoryContextLocation = z.infer<
+	typeof inventoryContextLocationSchema
+>
+
 /**
  * What the US App tells a region about an organization
  * (`GET /resources/inventory/context?orgId=`): its flags, nothing else.
@@ -92,5 +120,13 @@ export function readInventoryFeatures(raw: unknown): InventoryFeatures {
 export const inventoryContextSchema = z.object({
 	orgId: z.string().min(1).max(64),
 	features: inventoryFeaturesSchema,
+	/**
+	 * Additive (tenant migration 0039): what the control plane knows about the
+	 * organization's money and days. The region keeps a copy
+	 * (`inv_location_settings`); an older App sends none and the region keeps
+	 * what it has.
+	 */
+	organization: inventoryContextOrganizationSchema.optional(),
+	locations: z.array(inventoryContextLocationSchema).max(500).optional(),
 })
 export type InventoryContext = z.infer<typeof inventoryContextSchema>

@@ -269,6 +269,20 @@ describe('food cost helpers', () => {
 		expect(priceForTargetMinor(655, 0)).toBeNull()
 	})
 
+	test('strips tax from tax-inclusive menu prices and grosses up target price', () => {
+		// 23.00 SAR with 15% VAT -> net 20.00 SAR (2000 halalas). Cost 600 -> 30.00% (3000 bp).
+		expect(
+			dishFoodCostBp(2300, 600, { pricesIncludeTax: true, taxRateBp: 1500 }),
+		).toBe(3000)
+		// Cost 600 at 30% net target = 2000; grossed up by 15% VAT = 2300.
+		expect(
+			priceForTargetMinor(600, 3000, {
+				pricesIncludeTax: true,
+				taxRateBp: 1500,
+			}),
+		).toBe(2300)
+	})
+
 	test('price for target brings the dish to the target', () => {
 		for (const cost of [1, 99, 655, 12_345]) {
 			const price = priceForTargetMinor(cost, 3000)!

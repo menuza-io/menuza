@@ -41,6 +41,11 @@ export const INVENTORY_ERROR_CODES = [
 	'reader_not_configured',
 	'reader_failed',
 	'no_photo',
+	// Review fixes (additive).
+	'currency_unknown',
+	'currency_mismatch',
+	'not_batch_counted',
+	'send_in_progress',
 ] as const
 export type InventoryErrorCode = (typeof INVENTORY_ERROR_CODES)[number]
 

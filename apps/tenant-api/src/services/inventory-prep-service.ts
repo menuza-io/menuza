@@ -356,6 +356,17 @@ export async function generatePrep(
 			const fillUp =
 				levelOf.get(row.item.id) ?? row.place?.fillUpToQuantity ?? null
 			const task = taskOf.get(row.item.id)
+			// A made item that is not counted in batches is never made ahead:
+			// its sales use its ingredients directly, so a batch would take the
+			// ingredients out twice (an untouched task from before the switch
+			// went off goes too).
+			if (!row.item.batchCounted) {
+				if (task && task.status === 'todo') {
+					await tx.delete(invPrepTasks).where(eq(invPrepTasks.id, task.id))
+					changed += 1
+				}
+				continue
+			}
 			if (fillUp === null) {
 				// A level taken away: an untouched task goes with it.
 				if (task && task.status === 'todo') {
@@ -576,6 +587,16 @@ export async function putPrepLevels(
 				fillUpToQuantity: quantity,
 				updatedAt: ctx.now,
 			})
+		}
+		if (!item.batchCounted && input.weekdays.some((q) => q !== null)) {
+			await tx
+				.update(invItems)
+				.set({
+					batchCounted: true,
+					version: item.version + 1,
+					updatedAt: ctx.now,
+				})
+				.where(eq(invItems.id, item.id))
 		}
 		await recordInventoryAudit(tx, {
 			actorKind: caller.actor.kind,

@@ -8,8 +8,9 @@ import {
 	type TenantDatabase,
 	type TenantTransaction,
 } from '@repo/tenant-db'
-import { and, eq } from 'drizzle-orm'
+import { and, eq, lt } from 'drizzle-orm'
 import { syncAutoSoldOut } from '../services/inventory-auto-sold-out.ts'
+import { syncLocationSettings } from '../services/inventory-location-settings.ts'
 import { runExclusive } from '../services/order-service.ts'
 import { HttpError } from './http.ts'
 import { InventoryError } from './inventory-http.ts'
@@ -147,6 +148,9 @@ export async function withInventoryWrite<T>(
 		}
 		return fn(active.tx, active.ctx)
 	}
+	// What the App says about the location's money and days, before the lock
+	// (at most every five minutes; never throws).
+	await syncLocationSettings(orgId, { db: options.db })
 	const idempotency = options.idempotency ?? null
 	// Per-attempt state: a SQLITE_BUSY retry re-runs the whole closure.
 	let committedHooks: Array<() => void | Promise<void>> = []
@@ -242,4 +246,17 @@ export async function withInventoryWrite<T>(
 		await syncAutoSoldOut(orgId)
 	}
 	return outcome.value
+}
+
+/** Drops expired idempotency records (`inv_idempotency_keys.expires_at < now`). */
+export async function pruneInventoryIdempotencyKeys(
+	orgId: string,
+	now: number,
+): Promise<number> {
+	const db = await getTenantDb(orgId)
+	const removed = await db
+		.delete(invIdempotencyKeys)
+		.where(lt(invIdempotencyKeys.expiresAt, now))
+		.returning({ key: invIdempotencyKeys.key })
+	return removed.length
 }

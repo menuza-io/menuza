@@ -555,3 +555,25 @@ describe('GET /waste and /waste/summary', () => {
 		).toBe(403)
 	})
 })
+
+describe('POST /waste: repeated ids', () => {
+	it('answers a clientId repeated inside one batch as a duplicate once (not a 500), and conflicts when the repeat is another item', async () => {
+		const before = await onHand(chicken)
+		const one = entry(chicken, 0.5, 'kg', 'spoiled')
+		const res = await log(full, [one, { ...one }])
+		expect(res.status, JSON.stringify(res.body)).toBe(200)
+		const parsed = logWasteResultSchema.parse(res.body)
+		expect(parsed.accepted).toHaveLength(1)
+		expect(parsed.duplicates).toEqual([
+			{ clientId: one.clientId, id: parsed.accepted[0]!.id },
+		])
+		expect(await onHand(chicken)).toBe(before - 500_000)
+
+		const other = entry(chicken, 0.5, 'kg', 'spoiled')
+		const conflict = await log(full, [other, { ...other, itemId: milk }])
+		expect(conflict.status).toBe(409)
+		expect(conflict.body.code).toBe('idempotency_conflict')
+		// The whole request rolled back: nothing was written for the first entry.
+		expect(await onHand(chicken)).toBe(before - 500_000)
+	})
+})

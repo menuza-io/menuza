@@ -309,6 +309,12 @@ export const recipeCostsRequestSchema = z
 		refs: z.array(recipeCostRefSchema).min(1).max(MAX_RECIPE_COST_REFS),
 		/** Currency of every `priceMinor`; required when any price is sent. */
 		currency: inventoryCurrencySchema.optional(),
+		/** Optional location whose tax settings apply to `priceMinor`. */
+		locationId: inventoryLocationIdSchema.optional(),
+		/** Whether `priceMinor` includes tax; overrides stored location setting when sent. */
+		pricesIncludeTax: z.boolean().optional(),
+		/** Tax rate in basis points (1500 = 15%) when `pricesIncludeTax` is true. */
+		taxRateBp: z.number().int().min(0).max(10_000).nullable().optional(),
 		/** Organization time to cost at (epoch ms); default now. */
 		at: z.number().int().min(0).optional(),
 	})

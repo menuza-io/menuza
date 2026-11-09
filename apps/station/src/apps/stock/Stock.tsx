@@ -3,10 +3,16 @@ import { useLingui } from '@lingui/react'
 import { type StationCountSummary } from '@repo/inventory'
 import { Icon, type IconName } from '@repo/ui/icon'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { CountScreen } from './CountScreen.tsx'
 import { DeliverySheet } from './DeliverySheet.tsx'
-import { localCounts, type LocalCount } from './local.ts'
+import {
+	dropFinishedCounts,
+	isDone,
+	isFinished,
+	localCounts,
+	type LocalCount,
+} from './local.ts'
 import { joinCount, startCount } from './queue.ts'
 import { StockNotices } from './StockNotices.tsx'
 import { SyncSheet } from './SyncSheet.tsx'
@@ -27,6 +33,10 @@ type Card = {
 	title: string | null
 	/** Its start has not reached the office yet. */
 	pending: boolean
+	/** A manager is reviewing it (late entries are still welcome). */
+	inReview: boolean
+	/** This person said they are done; the count is still the manager's to finish. */
+	done: boolean
 }
 
 /**
@@ -60,6 +70,11 @@ export function Stock({
 		view.kind === 'count'
 			? (records.find((entry) => entry.localId === view.localId) ?? null)
 			: null
+	// A count a manager approved or cancelled is forgotten here, except while its screen says "This count is finished".
+	const openLocalId = view.kind === 'count' ? view.localId : null
+	useEffect(() => {
+		void dropFinishedCounts(stock.origin, openLocalId).catch(() => {})
+	}, [records, openLocalId, stock.origin])
 
 	if (!settings.locationId || !ctx) {
 		return (
@@ -99,7 +114,7 @@ export function Stock({
 
 	const cards: Card[] = []
 	for (const entry of records) {
-		if (entry.status !== 'counting') continue
+		if (isFinished(entry)) continue
 		const serverId = 'id' in entry.ref ? entry.ref.id : null
 		cards.push({
 			key: entry.localId,
@@ -107,6 +122,8 @@ export function Stock({
 			summary: catalog?.counts.find((count) => count.id === serverId) ?? null,
 			title: entry.listName,
 			pending: serverId === null,
+			inReview: entry.serverStatus === 'in_review',
+			done: isDone(entry),
 		})
 	}
 	for (const count of catalog?.counts ?? []) {
@@ -120,6 +137,8 @@ export function Stock({
 			summary: count,
 			title: count.listName,
 			pending: false,
+			inReview: false,
+			done: false,
 		})
 	}
 
@@ -417,6 +436,8 @@ function CountCard({
 							</bdi>{' '}
 							<Trans>counted</Trans>
 						</>
+					) : card.inReview ? (
+						<Trans>A manager is reviewing this count</Trans>
 					) : (
 						<Trans>Started on this tablet</Trans>
 					)}
@@ -426,6 +447,15 @@ function CountCard({
 				{card.pending ? (
 					<Badge tone="warning">
 						<Trans>Not sent yet</Trans>
+					</Badge>
+				) : null}
+				{card.inReview ? (
+					<Badge tone="muted">
+						<Trans>Being reviewed</Trans>
+					</Badge>
+				) : card.done ? (
+					<Badge tone="success">
+						<Trans>You are done</Trans>
 					</Badge>
 				) : null}
 				<Icon

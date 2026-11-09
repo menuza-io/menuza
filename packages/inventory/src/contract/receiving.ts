@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { inventoryMinorSchema } from '../money.ts'
 import { orderStatusSchema, orderTextLocaleSchema } from '../records.ts'
 import { inventoryLocationIdSchema } from '../token.ts'
 import { inventoryBaseUnitSchema } from '../units.ts'
@@ -141,8 +142,8 @@ export const confirmDeliveryPricesSchema = z
 		currency: currencySchema,
 		invoiceNumber: optionalText(60),
 		invoiceDate: isoDateSchema.nullable().optional(),
-		vatMinor: z.number().int().min(0).nullable().optional(),
-		totalMinor: z.number().int().min(0).nullable().optional(),
+		vatMinor: inventoryMinorSchema.nullable().optional(),
+		totalMinor: inventoryMinorSchema.nullable().optional(),
 		zatcaReference: optionalText(200),
 		paid: z.boolean().default(false),
 		lines: z
@@ -150,8 +151,8 @@ export const confirmDeliveryPricesSchema = z
 				z
 					.object({
 						lineId: inventoryIdSchema,
-						lineTotalMinor: z.number().int().min(0),
-						packPriceMinor: z.number().int().min(0).nullable().optional(),
+						lineTotalMinor: inventoryMinorSchema,
+						packPriceMinor: inventoryMinorSchema.nullable().optional(),
 					})
 					.strict(),
 			)

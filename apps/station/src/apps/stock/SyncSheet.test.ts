@@ -110,10 +110,17 @@ describe('the sync screen', () => {
 		await draw()
 		await vi.waitFor(() =>
 			expect(text(page.host)).toContain(
-				'Sent after the count closed: 3 entries',
+				'Not accepted, the count was already finished: 3 entries',
 			),
 		)
 		await click(button(page.host, 'Clear these'))
+		await vi.waitFor(() =>
+			expect(text(document.body)).toContain('Clear these entries?'),
+		)
+		const buttons = Array.from(document.body.querySelectorAll('button')).filter(
+			(el) => el.textContent?.trim() === 'Clear these',
+		)
+		await click(buttons[buttons.length - 1]!)
 		await vi.waitFor(async () =>
 			expect(
 				(await stockRows(ORIGIN)).filter((row) => row.kind === 'count_entry'),

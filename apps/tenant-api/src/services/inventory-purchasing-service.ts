@@ -1,5 +1,5 @@
 import {
-	costMicroFromPackPrice,
+	costMicroFromPackPriceClamped,
 	INVENTORY_LIMITS,
 	orderStatusAfterReceipt,
 	priceChangeBp,
@@ -12,6 +12,7 @@ import {
 	type SupplierProduct,
 } from '@repo/inventory'
 import {
+	invCostEvents,
 	invDeliveries,
 	invDeliveryLines,
 	invItemCosts,
@@ -21,7 +22,6 @@ import {
 	invOrders,
 	invSupplierProducts,
 	invSuppliers,
-	rsvLocationSettings,
 } from '@repo/tenant-db'
 import { and, count, desc, eq, inArray, isNull, ne, or, sql } from 'drizzle-orm'
 import { inJsonList, queryInChunks } from '../lib/chunked-in.ts'
@@ -37,6 +37,7 @@ import {
 	assertLocationAllowed,
 	assertVersion,
 	badRequest,
+	costMicroForWrite,
 	decodeCursor,
 	encodeCursor,
 	locationBusinessDate,
@@ -56,6 +57,11 @@ import {
 	type UpdateSupplierProductInput,
 } from './inventory-contract-types.ts'
 import { type InventoryCaller } from './inventory-items-service.ts'
+import {
+	assertLocationCurrency,
+	getLocationCurrency,
+	requireLocationCurrency,
+} from './inventory-location-settings.ts'
 import {
 	orderSummaries,
 	receivedByOrderLine,
@@ -491,7 +497,7 @@ export async function createSupplierProduct(
 			packName: input.body.packName,
 			packBaseQuantity: input.body.packBaseQuantity,
 			priceMinor: input.body.priceMinor,
-			currency: supplier.currency ?? 'USD',
+			currency: supplierCurrencyOrRefuse(supplier),
 			pricedByWeight: input.body.pricedByWeight,
 			sku: input.body.sku || null,
 			preferred: false,
@@ -516,6 +522,14 @@ export async function createSupplierProduct(
 		})
 		return productResult(tx, id, caller.cost)
 	})
+}
+
+/** A supplier's price needs its currency; one is never guessed. */
+function supplierCurrencyOrRefuse(supplier: {
+	currency: string | null
+}): string {
+	if (!supplier.currency) throw badRequest('supplier_currency_required')
+	return supplier.currency
 }
 
 async function loadProduct(
@@ -553,7 +567,7 @@ export async function updateSupplierProduct(
 				const supplier = await loadSupplier(tx, row.supplierId, {
 					archived: true,
 				})
-				set.currency = supplier.currency ?? 'USD'
+				set.currency = supplierCurrencyOrRefuse(supplier)
 			}
 		}
 		if (body.pricedByWeight !== undefined)
@@ -763,7 +777,10 @@ async function previousCosts(
 	const map = new Map<string, number>()
 	for (const row of rows) {
 		if (row.quantity > 0) {
-			map.set(row.itemId, costMicroFromPackPrice(row.total, row.quantity))
+			map.set(
+				row.itemId,
+				costMicroFromPackPriceClamped(row.total, row.quantity),
+			)
 		}
 	}
 	return map
@@ -848,14 +865,20 @@ export async function deliveryDetail(
 					line.quantity > 0
 						? priceChangeBp(
 								previous.get(line.itemId) ?? null,
-								costMicroFromPackPrice(line.lineTotalMinor, line.quantity),
+								costMicroFromPackPriceClamped(
+									line.lineTotalMinor,
+									line.quantity,
+								),
 							)
 						: null
 			}
 			return out
 		}),
 	}
-	if (options.photo) {
+	// The scanned invoice shows every price, so its read link follows the same
+	// rule as money: only a token with the cost grant gets it (`hasPhoto` stays
+	// on the summary for everyone).
+	if (options.photo && cost) {
 		const link =
 			row.photoKey && row.photoContentType
 				? presignObjectRead(row.photoKey, {
@@ -874,10 +897,10 @@ export async function deliveryDetail(
 }
 
 /**
- * The currency of the organization's inventory money, for a delivery that
- * carries none (quantity only): what its items already cost in, else the
- * order's or supplier's currency, else the location's (reservations settings),
- * else USD (as a supplier product with no supplier currency).
+ * The currency of a quantity-only delivery (one that carries no money): the
+ * location's currency, else the order's or supplier's, else the organization
+ * hint the App sent. 409 `currency_unknown` when none is known: a currency is
+ * never guessed (it used to fall back to USD).
  */
 export async function resolveInventoryCurrency(
 	db: InventoryReader,
@@ -887,20 +910,11 @@ export async function resolveInventoryCurrency(
 		supplier?: { currency: string | null } | null
 	},
 ): Promise<string> {
-	const cost = await db
-		.select({ currency: invItemCosts.currency })
-		.from(invItemCosts)
-		.limit(1)
-		.get()
-	if (cost?.currency) return cost.currency
+	const own = await getLocationCurrency(db, input.locationId)
+	if (own) return own
 	if (input.order?.currency) return input.order.currency
 	if (input.supplier?.currency) return input.supplier.currency
-	const place = await db
-		.select({ currency: rsvLocationSettings.currency })
-		.from(rsvLocationSettings)
-		.where(eq(rsvLocationSettings.locationId, input.locationId))
-		.get()
-	return place?.currency ?? 'USD'
+	return requireLocationCurrency(db, input.locationId)
 }
 
 export type RecordDeliveryOptions = {
@@ -971,6 +985,25 @@ export async function recordDelivery(
 			onReplay: options.onReplay,
 		},
 		async (tx, ctx) => {
+			// ── A replay of the same request, however long ago ──────────────────
+			// The durable idempotency record lives 48 hours; the delivery keeps
+			// its `client_id` for good, so a Station queue that retries later
+			// still gets the first result instead of a second delivery.
+			const earlier = await tx
+				.select()
+				.from(invDeliveries)
+				.where(
+					and(
+						eq(invDeliveries.locationId, body.locationId),
+						eq(invDeliveries.clientId, body.clientId),
+					),
+				)
+				.get()
+			if (earlier) {
+				options.onReplay?.()
+				return replayDeliveryResult(tx, earlier, caller)
+			}
+
 			// ── The order this delivery is against ──────────────────────────────
 			let order: OrderRow | null = null
 			let orderLinkIgnored: OrderLinkIgnored | null = null
@@ -1050,8 +1083,16 @@ export async function recordDelivery(
 					})
 				: body.currency!
 			if (!quantityOnly) {
+				// One currency per location: a priced delivery states it, the
+				// location's own wins (400 on a difference) and a location with none
+				// takes it. An item already priced in another currency is refused too.
+				await assertLocationCurrency(tx, {
+					locationId: body.locationId,
+					currency,
+					now: ctx.now,
+				})
 				for (const cost of costs) {
-					if (cost.currency !== currency) throw badRequest('currency_mismatch')
+					if (cost.currency !== currency) throw currencyMismatch()
 				}
 			}
 			const productIds = [
@@ -1105,6 +1146,7 @@ export async function recordDelivery(
 				receivedById: caller.actor.id,
 				receivedAt,
 				businessDate,
+				clientId: body.clientId,
 				source: options.source ?? 'operator',
 				createdAt: ctx.now,
 				updatedAt: ctx.now,
@@ -1158,7 +1200,7 @@ export async function recordDelivery(
 					continue
 				}
 				const lineTotalMinor = line.lineTotalMinor!
-				const costMicro = costMicroFromPackPrice(lineTotalMinor, line.quantity)
+				const costMicro = costMicroForWrite(lineTotalMinor, line.quantity)
 				const existing = costById.get(item.id) ?? null
 				const onHand = await onHandTotal(tx, item.id)
 				const average = weightedAverageCostMicro({
@@ -1207,6 +1249,19 @@ export async function recordDelivery(
 					realWeightQuantity: line.realWeightQuantity ?? null,
 					orderLineId: line.orderLineId,
 					pricedAt: ctx.now,
+					createdAt: ctx.now,
+				})
+				// The step of the average, so a cancel can rewind it exactly.
+				await tx.insert(invCostEvents).values({
+					itemId: item.id,
+					kind: 'delivery',
+					deliveryLineId: lineId,
+					locationId: body.locationId,
+					quantity: line.quantity,
+					costMicro,
+					onHandBefore: onHand,
+					avgBeforeMicro: existing?.avgCostMicro ?? null,
+					avgAfterMicro: average,
 					createdAt: ctx.now,
 				})
 				await tx.insert(invMovements).values({
@@ -1321,6 +1376,35 @@ export async function recordDelivery(
 	)
 }
 
+/** 400 `currency_mismatch`: money in a currency other than the location's (or the item's). */
+function currencyMismatch(): InventoryError {
+	return new InventoryError('currency_mismatch', 400, {
+		reason: 'currency_mismatch',
+	})
+}
+
+/** The first result of a delivery whose `clientId` was already recorded. */
+async function replayDeliveryResult(
+	tx: InventoryTx,
+	row: DeliveryRow,
+	caller: InventoryCaller,
+): Promise<RecordDeliveryResult> {
+	const result: RecordDeliveryResult = {
+		delivery: await deliveryDetail(tx, row, caller.cost),
+	}
+	if (row.orderId) {
+		const order = await tx
+			.select()
+			.from(invOrders)
+			.where(eq(invOrders.id, row.orderId))
+			.get()
+		if (order) {
+			;[result.order] = await orderSummaries(tx, [order], caller.cost)
+		}
+	}
+	return result
+}
+
 function priceChangeList(
 	rises: Map<
 		string,
@@ -1364,6 +1448,48 @@ export async function loadAllowedDelivery(
  * zero-quantity `delivery` movement now (the original movement carried no
  * value and movements are append-only).
  */
+/**
+ * Stock of an item (all locations, as `onHandTotal`) just before a delivery's
+ * first movement for it, from the ledger: the sum of every movement recorded
+ * earlier. Floored at zero (stock below zero counts as none, as the average
+ * does).
+ */
+async function onHandBeforeDelivery(
+	tx: InventoryTx,
+	deliveryId: string,
+	itemId: string,
+): Promise<number> {
+	const first = await tx
+		.select({
+			createdAt: invMovements.createdAt,
+			rowid: sql<number>`${invMovements}.rowid`,
+		})
+		.from(invMovements)
+		.where(
+			and(
+				eq(invMovements.sourceType, 'delivery'),
+				eq(invMovements.sourceId, deliveryId),
+				eq(invMovements.itemId, itemId),
+				sql`${invMovements.eventKey} like 'delivery:%'`,
+			),
+		)
+		.orderBy(invMovements.createdAt, sql`rowid`)
+		.limit(1)
+		.get()
+	if (!first) return Math.max(0, await onHandTotal(tx, itemId))
+	const before = await tx
+		.select({ total: sql<number>`coalesce(sum(${invMovements.quantity}), 0)` })
+		.from(invMovements)
+		.where(
+			and(
+				eq(invMovements.itemId, itemId),
+				sql`(${invMovements.createdAt} < ${first.createdAt} or (${invMovements.createdAt} = ${first.createdAt} and ${invMovements}.rowid < ${first.rowid}))`,
+			),
+		)
+		.get()
+	return Math.max(0, Number(before?.total ?? 0))
+}
+
 export async function confirmDeliveryPrices(
 	caller: InventoryCaller,
 	input: { id: string; body: ConfirmDeliveryPricesInput },
@@ -1392,6 +1518,12 @@ export async function confirmDeliveryPrices(
 			throw badRequest('lines')
 		}
 		const currency = body.currency
+		// The location's currency (a location with none takes this one).
+		await assertLocationCurrency(tx, {
+			locationId: row.locationId,
+			currency,
+			now: ctx.now,
+		})
 		const itemIds = [...new Set(unpriced.map((line) => line.itemId))]
 		const [items, costs] = await Promise.all([
 			queryInChunks(itemIds, (chunk) =>
@@ -1408,7 +1540,7 @@ export async function confirmDeliveryPrices(
 		const itemById = new Map(items.map((item) => [item.id, item]))
 		const costById = new Map(costs.map((cost) => [cost.itemId, cost]))
 		for (const cost of costs) {
-			if (cost.currency !== currency) throw badRequest('currency_mismatch')
+			if (cost.currency !== currency) throw currencyMismatch()
 		}
 		const productIds = [
 			...new Set(
@@ -1427,24 +1559,12 @@ export async function confirmDeliveryPrices(
 			products.map((product) => [product.id, product]),
 		)
 
-		// Stock before this delivery, per item, so the average weighs only what
-		// was on the shelf before it (floored at zero), line by line.
-		const delivered = new Map<string, number>()
-		for (const line of lines) {
-			delivered.set(
-				line.itemId,
-				(delivered.get(line.itemId) ?? 0) + line.quantity,
-			)
-		}
+		// Stock before this delivery, per item, from the ledger as it stood when
+		// the goods arrived (not today's on hand, which sales since have
+		// changed), so the average weighs what was on the shelf before it.
 		const stockBefore = new Map<string, number>()
 		for (const itemId of itemIds) {
-			stockBefore.set(
-				itemId,
-				Math.max(
-					0,
-					(await onHandTotal(tx, itemId)) - (delivered.get(itemId) ?? 0),
-				),
-			)
+			stockBefore.set(itemId, await onHandBeforeDelivery(tx, row.id, itemId))
 		}
 
 		const businessDate = await locationBusinessDate(tx, row.locationId, ctx.now)
@@ -1461,10 +1581,7 @@ export async function confirmDeliveryPrices(
 			const item = itemById.get(line.itemId)
 			if (!item) throw notFound()
 			const entry = sent.get(line.id)!
-			const costMicro = costMicroFromPackPrice(
-				entry.lineTotalMinor,
-				line.quantity,
-			)
+			const costMicro = costMicroForWrite(entry.lineTotalMinor, line.quantity)
 			const existing = costById.get(item.id) ?? null
 			const before = stockBefore.get(item.id) ?? 0
 			const average = weightedAverageCostMicro({
@@ -1505,6 +1622,18 @@ export async function confirmDeliveryPrices(
 					pricedAt: ctx.now,
 				})
 				.where(eq(invDeliveryLines.id, line.id))
+			await tx.insert(invCostEvents).values({
+				itemId: item.id,
+				kind: 'confirm',
+				deliveryLineId: line.id,
+				locationId: row.locationId,
+				quantity: line.quantity,
+				costMicro,
+				onHandBefore: before,
+				avgBeforeMicro: existing?.avgCostMicro ?? null,
+				avgAfterMicro: average,
+				createdAt: ctx.now,
+			})
 			// The money of the purchase: the first movement had no value.
 			await tx.insert(invMovements).values({
 				locationId: row.locationId,
@@ -1624,12 +1753,64 @@ export async function markDeliveryPaid(
 }
 
 /**
+ * The item's weighted average with the steps of cancelled deliveries taken
+ * out: start from the average before the earliest cancelled step, then apply
+ * every later step that still stands (each carries the stock it was weighed
+ * against). A typo delivery that is cancelled leaves no trace in the average.
+ * `rewound: false` when no cancelled step was recorded (a delivery from before
+ * migration 0039): the average is left as it is.
+ */
+async function rewoundAverage(
+	tx: InventoryTx,
+	itemId: string,
+): Promise<{ rewound: boolean; average: number | null }> {
+	const events = await tx
+		.select()
+		.from(invCostEvents)
+		.where(eq(invCostEvents.itemId, itemId))
+		.orderBy(invCostEvents.createdAt, sql`rowid`)
+	const cancelled = new Set(
+		(
+			await tx
+				.select({ id: invDeliveryLines.id })
+				.from(invDeliveryLines)
+				.innerJoin(
+					invDeliveries,
+					eq(invDeliveries.id, invDeliveryLines.deliveryId),
+				)
+				.where(
+					and(
+						eq(invDeliveryLines.itemId, itemId),
+						eq(invDeliveries.status, 'cancelled'),
+					),
+				)
+		).map((line) => line.id),
+	)
+	const standing = (event: (typeof events)[number]) =>
+		!event.deliveryLineId || !cancelled.has(event.deliveryLineId)
+	const first = events.findIndex((event) => !standing(event))
+	if (first < 0) return { rewound: false, average: null }
+	let average = events[first]!.avgBeforeMicro
+	for (const event of events.slice(first + 1)) {
+		if (!standing(event)) continue
+		average = weightedAverageCostMicro({
+			onHandQuantity: event.onHandBefore,
+			averageCostMicro: average,
+			receivedQuantity: event.quantity,
+			receivedCostMicro: event.costMicro,
+		})
+	}
+	return { rewound: true, average }
+}
+
+/**
  * Cancels a received delivery: its stock goes out again by reversing
  * movements (the lines and the original movements stay). The last cost of
- * each item goes back to the latest remaining PRICED delivery; the weighted
- * average is not rewound (it is a moving figure and the next delivery
- * rebalances it). An order it was received against keeps its status (it only
- * moves forward) but the lines read as less received.
+ * each item goes back to the latest remaining PRICED delivery, and the
+ * weighted average is rewound by replaying the recorded steps without the
+ * cancelled delivery (`rewoundAverage`), so a price typo leaves no trace. An
+ * order it was received against keeps its status (it only moves forward) but
+ * the lines read as less received.
  */
 export async function cancelDelivery(
 	caller: InventoryCaller,
@@ -1702,12 +1883,17 @@ export async function cancelDelivery(
 				.where(eq(invItemCosts.itemId, itemId))
 				.get()
 			if (!cost) continue
+			const rewound = await rewoundAverage(tx, itemId)
 			await tx
 				.update(invItemCosts)
 				.set({
+					...(rewound.rewound ? { avgCostMicro: rewound.average } : {}),
 					lastCostMicro:
 						remaining && remaining.quantity > 0
-							? costMicroFromPackPrice(remaining.total, remaining.quantity)
+							? costMicroFromPackPriceClamped(
+									remaining.total,
+									remaining.quantity,
+								)
 							: null,
 					lastPricedAt: remaining?.at ?? null,
 					version: cost.version + 1,

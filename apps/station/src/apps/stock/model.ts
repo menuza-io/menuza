@@ -193,8 +193,25 @@ export function countTabs(
 	return tabs
 }
 
-export type CountValue = { amount: number | null; unit: UnitRef }
+/** One amount in one unit. */
+export type CountLine = { amount: number | null; unit: UnitRef }
+
+/**
+ * What a row shows: its main amount and unit, plus the lines the person added
+ * with "Add another unit" ("2 boxes and 3 kg"). Switching the main unit
+ * replaces the amount in the old unit; only an added line sums with it.
+ */
+export type CountValue = CountLine & { more?: CountLine[] }
 export type CountValues = Record<string, CountValue>
+
+/** Units a row's lines use, the main one first (units of lines with no amount yet included). */
+export const lineUnits = (
+	value: CountValue | null,
+	fallback: UnitRef,
+): UnitRef[] => [
+	value?.unit ?? fallback,
+	...(value?.more ?? []).map((line) => line.unit),
+]
 
 /**
  * "32 of 48": items with a typed amount in some area (or that someone else
@@ -295,6 +312,17 @@ export type DeliveryLineDraft = {
 	packs: number | null
 	/** Whether this line came at all (an order's lines start ticked). */
 	received: boolean
+	/**
+	 * A line with no supplier product (a market or cash-and-carry purchase, or
+	 * an item this supplier has no product for): the quantity is typed in any
+	 * unit the item has, with no packs and no price.
+	 */
+	plain?: {
+		amount: number | null
+		unit: UnitRef
+		units: StationItem['units']
+		countUnit: UnitRef
+	}
 	/** The weight on the scale, in `weightUnit`, for a line priced by weight. */
 	weight: number | null
 	weightUnit: UnitRef
@@ -348,8 +376,35 @@ export function lineFromProduct(
 	}
 }
 
+/** An item received with no supplier product: only a quantity, in a unit the item has. */
+export function lineFromItem(item: StationItem): DeliveryLineDraft {
+	return {
+		key: `item:${item.id}`,
+		itemId: item.id,
+		itemName: item.name,
+		baseUnit: item.baseUnit,
+		supplierProductId: null,
+		packName: '',
+		packBaseQuantity: 0,
+		pricedByWeight: false,
+		orderLineId: null,
+		orderedPacks: null,
+		packs: null,
+		received: true,
+		weight: null,
+		weightUnit: defaultWeightUnit(item.baseUnit),
+		plain: {
+			amount: null,
+			unit: item.countUnit,
+			units: item.units,
+			countUnit: item.countUnit,
+		},
+	}
+}
+
 /**
- * What a line puts into stock, in base thousandths: the weight typed from the
+ * What a line puts into stock, in base thousandths: the amount typed in its
+ * own unit for a line with no supplier product, the weight typed from the
  * scale for a line priced by weight, otherwise packs times the pack size.
  * Null when the line did not come (or nothing usable was typed).
  */
@@ -358,6 +413,18 @@ export function lineQuantity(line: DeliveryLineDraft): {
 	realWeightQuantity: number | null
 } | null {
 	if (!line.received) return null
+	if (line.plain) {
+		const { amount, unit, units, countUnit } = line.plain
+		if (amount === null || !(amount > 0)) return null
+		const quantity = toBaseThousandths(amount, unit, {
+			baseUnit: line.baseUnit,
+			units,
+			countUnit,
+		})
+		return quantity !== null && quantity >= 1
+			? { quantity, realWeightQuantity: null }
+			: null
+	}
 	if (line.pricedByWeight && line.weight !== null && line.weight > 0) {
 		const per = thousandthsIn(line.weightUnit, line.baseUnit)
 		if (per === null) return null
@@ -390,9 +457,9 @@ export function deliveryLines(lines: readonly DeliveryLineDraft[]) {
 			itemId: line.itemId,
 			supplierProductId: line.supplierProductId,
 			quantity: amount.quantity,
-			packs: line.packs,
-			packName: line.packName || null,
-			packBaseQuantity: line.packBaseQuantity,
+			packs: line.plain ? null : line.packs,
+			packName: line.plain ? null : line.packName || null,
+			packBaseQuantity: line.plain ? null : line.packBaseQuantity,
 			realWeightQuantity: amount.realWeightQuantity,
 			orderLineId: line.orderLineId,
 		})

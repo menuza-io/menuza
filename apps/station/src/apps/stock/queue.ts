@@ -7,9 +7,12 @@ import {
 	type UnitRef,
 } from '@repo/inventory'
 import {
+	isFinished,
 	localCounts,
+	localLiveUnits,
 	localValues,
 	rememberWaste,
+	saveLiveUnits,
 	saveLocalCounts,
 	saveLocalValues,
 	wasteKey,
@@ -17,6 +20,7 @@ import {
 	type LocalCount,
 } from './local.ts'
 import { rowKey, type CountValue } from './model.ts'
+import { serverNow } from '~/lib/clock.ts'
 import { db, type StockRow } from '~/lib/db.ts'
 
 /**
@@ -50,7 +54,25 @@ export class StockQueueFullError extends Error {
 /** A claim older than this belongs to a tab that died mid-request (a request gives up after 15 s). */
 export const STALE_CLAIM_MS = 20_000
 
-const newId = () => crypto.randomUUID()
+const newId = (): string => crypto.randomUUID()
+
+/** The region ignores a `madeAt` further back than this, or further ahead than the next one. */
+export const MADE_AT_PAST_MS = 7 * 24 * 3_600_000
+export const MADE_AT_FUTURE_MS = 5 * 60_000
+
+/**
+ * When something was made, for the region: `madeAt` is stamped with the
+ * server's time as best known (the tablet's clock corrected by the offset the
+ * answers' `Date` headers gave) and clamped again when it is first sent, the
+ * way the region clamps it: a tablet with a wrong clock never books a count or
+ * waste into the wrong business day.
+ */
+export function clampMadeAt(madeAt: number, now = serverNow()): number {
+	return Math.min(
+		Math.max(madeAt, now - MADE_AT_PAST_MS),
+		now + MADE_AT_FUTURE_MS,
+	)
+}
 
 type Payload<K extends StationOutboxKind> = Extract<
 	StationOutboxItem,
@@ -143,7 +165,7 @@ async function addRow<K extends StationOutboxKind>(
 	const row = makeRow(ctx, kind, payload, {
 		id,
 		seq: await nextSeq(),
-		now: Date.now(),
+		now: serverNow(),
 	})
 	await db.stockQueue.add(row)
 	return row
@@ -154,7 +176,8 @@ async function addRow<K extends StationOutboxKind>(
 /**
  * Starts a count of `listId` (null: everything) on this tablet. A count of
  * the same list already open here is continued instead (two taps never make
- * two). The start waits in the outbox; the count can be worked on at once.
+ * two); one the manager is already reviewing is not, the region makes a new
+ * one. The start waits in the outbox; the count can be worked on at once.
  */
 export async function startCount(
 	ctx: StockContext,
@@ -169,6 +192,7 @@ export async function startCount(
 			const open = counts.find(
 				(count) =>
 					count.status === 'counting' &&
+					(count.serverStatus ?? 'counting') === 'counting' &&
 					count.listId === list.id &&
 					!count.startFailed,
 			)
@@ -222,7 +246,7 @@ export async function joinCount(
 
 export class CountClosedError extends Error {
 	constructor() {
-		super('count_sent')
+		super('count_finished')
 		this.name = 'CountClosedError'
 	}
 }
@@ -234,50 +258,117 @@ export type CountEntryInput = {
 	unit: UnitRef
 }
 
+export type SaveCountOptions = {
+	/**
+	 * Units of this row's other lines (the "Add another unit" lines: "2 boxes
+	 * and 3 kg"). Their entries stay; every other unit's live entry is cleared.
+	 */
+	keepUnits?: readonly UnitRef[]
+	/** Units this tablet showed an amount in before this change (earlier entries of a count joined from another device). */
+	knownUnits?: readonly UnitRef[]
+	/** What the row shows afterwards, when that is more than this entry (the other lines of the row). */
+	display?: CountValue
+}
+
 /**
  * Saves what was typed in one row of a count: the value is remembered for the
- * screen and one entry is queued. An entry for the same row still waiting
- * (never tried) is replaced rather than stacked, so tapping + ten times is one
- * entry, not ten. An entry that was already tried is never edited: it may
- * have reached the server, which would refuse the same id with another body.
+ * screen and entries are queued. The region keeps one live entry per item,
+ * area and UNIT and adds them up, so a row whose unit was switched (or
+ * cleared) must not leave the old unit's entry live: a clear (`amount: null`)
+ * for every other live unit is queued first, then the entry for this unit
+ * (`keepUnits` names the units of the row's other lines, which stay). An entry
+ * for the same row and unit still waiting (never tried) is replaced rather
+ * than stacked, so tapping + ten times is one entry, not ten. An entry that
+ * was already tried is never edited: it may have reached the server, which
+ * would refuse the same id with another body.
  */
 export async function saveCountEntry(
 	ctx: StockContext,
 	localId: string,
 	entry: CountEntryInput,
+	options: SaveCountOptions = {},
 ): Promise<void> {
 	await db.transaction('rw', db.stockQueue, db.stockCatalog, async () => {
 		const counts = await localCounts(ctx.origin)
 		const record = counts.find((count) => count.localId === localId)
-		if (!record || record.status === 'sent') throw new CountClosedError()
-		const waiting = await db.stockQueue
-			.where('status')
-			.equals('queued')
-			.filter(
-				(row) =>
-					row.origin === ctx.origin &&
-					row.kind === 'count_entry' &&
-					row.attempts === 0 &&
-					sameRef(row.payload.count, record.ref) &&
-					row.payload.entry.itemId === entry.itemId &&
-					row.payload.entry.areaId === entry.areaId,
-			)
-			.first()
-		if (waiting && waiting.kind === 'count_entry') {
-			await db.stockQueue.put({
-				...waiting,
-				madeBy: ctx.madeBy,
-				madeAt: Date.now(),
-				payload: {
-					...waiting.payload,
-					entry: {
-						...waiting.payload.entry,
-						amount: entry.amount,
-						unit: entry.unit,
+		if (!record || isFinished(record)) throw new CountClosedError()
+		const key = rowKey(entry.itemId, entry.areaId)
+		const liveMap = await localLiveUnits(ctx.origin, localId)
+		const keep = new Set<UnitRef>(options.keepUnits ?? [])
+		const waiting = (
+			await db.stockQueue
+				.where('status')
+				.equals('queued')
+				.filter(
+					(row) =>
+						row.origin === ctx.origin &&
+						row.kind === 'count_entry' &&
+						row.attempts === 0 &&
+						sameRef(row.payload.count, record.ref) &&
+						row.payload.entry.itemId === entry.itemId &&
+						row.payload.entry.areaId === entry.areaId,
+				)
+				.toArray()
+		).flatMap((row) => (row.kind === 'count_entry' ? [row] : []))
+		const live = new Set<UnitRef>([
+			...(liveMap[key] ?? []),
+			...(options.knownUnits ?? []),
+			...waiting.map((row) => row.payload.entry.unit),
+		])
+		const stale = [...live].filter(
+			(unit) => unit !== entry.unit && !keep.has(unit),
+		)
+		const now = serverNow()
+
+		// Clear the units this row no longer uses, before the new entry.
+		for (const unit of stale) {
+			const waits = waiting.find((row) => row.payload.entry.unit === unit)
+			if (waits) {
+				await db.stockQueue.put({
+					...waits,
+					madeBy: ctx.madeBy,
+					madeAt: now,
+					payload: {
+						...waits.payload,
+						entry: { ...waits.payload.entry, amount: null },
 					},
+				})
+				continue
+			}
+			const id = newId()
+			await addRow(
+				ctx,
+				'count_entry',
+				{
+					count: record.ref,
+					entry: {
+						clientId: id,
+						itemId: entry.itemId,
+						areaId: entry.areaId,
+						amount: null,
+						unit,
+					},
+				},
+				id,
+			)
+		}
+
+		const sameUnit = waiting.find(
+			(row) => row.payload.entry.unit === entry.unit,
+		)
+		if (sameUnit && stale.length === 0) {
+			await db.stockQueue.put({
+				...sameUnit,
+				madeBy: ctx.madeBy,
+				madeAt: now,
+				payload: {
+					...sameUnit.payload,
+					entry: { ...sameUnit.payload.entry, amount: entry.amount },
 				},
 			})
 		} else {
+			// Never tried, so the region has never heard of it: it can go. The new entry then queues after the clears above.
+			if (sameUnit) await db.stockQueue.delete(sameUnit.id)
 			const id = newId()
 			await addRow(
 				ctx,
@@ -295,16 +386,31 @@ export async function saveCountEntry(
 				id,
 			)
 		}
-		const values = await localValues(ctx.origin, localId)
-		const next: CountValue = { amount: entry.amount, unit: entry.unit }
-		await saveLocalValues(ctx.origin, localId, {
-			...values,
-			[rowKey(entry.itemId, entry.areaId)]: next,
+
+		const nextLive = new Set<UnitRef>(
+			[...live].filter((unit) => keep.has(unit) && unit !== entry.unit),
+		)
+		if (entry.amount !== null) nextLive.add(entry.unit)
+		await saveLiveUnits(ctx.origin, localId, {
+			...liveMap,
+			[key]: [...nextLive],
 		})
+		const values = await localValues(ctx.origin, localId)
+		const next: CountValue = options.display ?? {
+			amount: entry.amount,
+			unit: entry.unit,
+		}
+		await saveLocalValues(ctx.origin, localId, { ...values, [key]: next })
 	})
 }
 
-/** "Send for review": queued after every entry, and this tablet adds nothing more to the count. */
+/**
+ * "I'm done counting": a per-device note, queued after every entry (the
+ * region answers the same whenever it is repeated). It does not close the
+ * count, here or at the region: a manager finishes it in the App, and entries
+ * are still taken until then. Tapping it again while the note waits adds
+ * nothing.
+ */
 export async function sendCount(
 	ctx: StockContext,
 	localId: string,
@@ -312,12 +418,21 @@ export async function sendCount(
 	await db.transaction('rw', db.stockQueue, db.stockCatalog, async () => {
 		const counts = await localCounts(ctx.origin)
 		const record = counts.find((count) => count.localId === localId)
-		if (!record || record.status === 'sent') return
-		await addRow(ctx, 'count_send', { count: record.ref })
+		if (!record || isFinished(record)) return
+		const pending = await db.stockQueue
+			.filter(
+				(row) =>
+					row.origin === ctx.origin &&
+					row.kind === 'count_send' &&
+					row.status !== 'failed' &&
+					sameRef(row.payload.count, record.ref),
+			)
+			.count()
+		if (pending === 0) await addRow(ctx, 'count_send', { count: record.ref })
 		await saveLocalCounts(
 			ctx.origin,
 			counts.map((count) =>
-				count.localId === localId ? { ...count, status: 'sent' } : count,
+				count.localId === localId ? { ...count, done: Date.now() } : count,
 			),
 		)
 	})
@@ -333,17 +448,24 @@ export type WasteInput = {
 	note?: string
 }
 
-/** Queues one waste entry and remembers the item for the recent chips. Returns its `clientId`, for an undo. */
+/**
+ * Queues one waste entry and remembers the item for the recent chips. Returns
+ * its `clientId`, for an undo. The `clientId` can be made before the tap
+ * (`newClientId`): a second call with the same one (a double tap) queues
+ * nothing and answers the same id.
+ */
 export async function logWaste(
 	ctx: StockContext,
 	input: WasteInput,
+	clientId?: string,
 ): Promise<string> {
 	const id = await db.transaction(
 		'rw',
 		db.stockQueue,
 		db.stockCatalog,
 		async () => {
-			const id = newId()
+			const id = clientId ?? newId()
+			if (clientId && (await db.stockQueue.get(clientId))) return id
 			await addRow(
 				ctx,
 				'waste',
@@ -412,7 +534,14 @@ export async function undoWaste(
 
 export type DeliveryInput = Payload<'delivery'>
 
-/** Queues a delivery and, when there is one, its invoice photo (the bytes wait in `stockBlobs`). Returns the delivery's `clientId`. */
+/** A fresh id for a row, to make before the tap that queues it. */
+export const newClientId = newId
+
+/**
+ * Queues a delivery and, when there is one, its invoice photo (the bytes wait
+ * in `stockBlobs`). Returns the delivery's `clientId`. With a `clientId` made
+ * before the tap, a second call (a double tap) queues nothing more.
+ */
 export async function recordDelivery(
 	ctx: StockContext,
 	delivery: DeliveryInput,
@@ -420,6 +549,7 @@ export async function recordDelivery(
 		blob: Blob
 		contentType: 'image/jpeg' | 'image/png' | 'image/webp'
 	} | null,
+	clientId?: string,
 ): Promise<string> {
 	return db.transaction(
 		'rw',
@@ -427,7 +557,8 @@ export async function recordDelivery(
 		db.stockBlobs,
 		db.stockCatalog,
 		async () => {
-			const row = await addRow(ctx, 'delivery', delivery)
+			if (clientId && (await db.stockQueue.get(clientId))) return clientId
+			const row = await addRow(ctx, 'delivery', delivery, clientId)
 			if (photo) {
 				const blobKey = `photo:${row.id}`
 				await db.stockBlobs.put({
@@ -481,13 +612,35 @@ export const MAX_ENTRY_BATCH = 100
 export const MAX_WASTE_BATCH = 50
 
 /**
- * Claims the next row to send, with the rows right behind it that go in the
- * same request (consecutive entries of one count, consecutive waste). Strict
- * order: if the oldest waiting row is not due (it backs off) or another tab is
- * sending, nothing is claimed, so a newer value is never sent before an older
- * one for the same thing. `skip` kinds are passed over (a delivery waiting
- * for a manager must not hold up counts). `solo` ids go alone (a batch one of
- * them poisoned).
+ * The outbox has one lane per kind of work. Rows go oldest first WITHIN a lane
+ * (a value is never sent before an older one for the same thing), but a lane
+ * that waits (backing off, or stuck on a row) never holds up the others: a
+ * photo that cannot upload, or a delivery the region keeps answering 500 to,
+ * must not stop a cook's counts and waste from going out.
+ */
+export type Lane = 'counts' | 'waste' | 'delivery' | 'photo'
+
+export const LANE_KINDS: Record<Lane, readonly StationOutboxKind[]> = {
+	counts: ['count_start', 'count_entry', 'count_send'],
+	waste: ['waste', 'waste_undo'],
+	delivery: ['delivery'],
+	photo: ['delivery_photo'],
+}
+
+export const laneOf = (kind: StationOutboxKind): Lane =>
+	(Object.keys(LANE_KINDS) as Lane[]).find((lane) =>
+		LANE_KINDS[lane].includes(kind),
+	)!
+
+/**
+ * Claims the next row to send, with the rows right behind it in its lane that
+ * go in the same request (consecutive entries of one count, consecutive
+ * waste). The lane whose oldest waiting row is due and was queued first goes
+ * first; a lane whose oldest row is not due (it backs off), is being sent by
+ * another tab or waits for the row it names (a photo before its delivery
+ * settled) is passed over. `skip` kinds are passed over too (a delivery
+ * waiting for a manager must not hold up counts). `solo` ids go alone (a
+ * batch one of them poisoned).
  */
 export async function claimNext(
 	origin: string,
@@ -516,10 +669,27 @@ export async function claimNext(
 		const open = rows.filter(
 			(row) => row.status !== 'failed' && !skip.has(row.kind),
 		)
-		const head = open[0]
-		if (!head || head.status !== 'queued') return []
-		if (!force && head.nextAttemptAt !== null && head.nextAttemptAt > now)
-			return []
+		const ids = new Set(rows.map((row) => row.id))
+		// A row naming another row by `clientId` waits until that row has settled (the ref is then rewritten to the server's id).
+		const waitsForRow = (row: StockRow) => {
+			const ref = refOf(row)
+			return ref !== null && 'clientId' in ref && ids.has(ref.clientId)
+		}
+		let head: StockRow | undefined
+		let lane: StockRow[] = []
+		for (const name of Object.keys(LANE_KINDS) as Lane[]) {
+			const inLane = open.filter((row) => laneOf(row.kind) === name)
+			const first = inLane[0]
+			if (!first || first.status !== 'queued') continue
+			if (!force && first.nextAttemptAt !== null && first.nextAttemptAt > now)
+				continue
+			if (waitsForRow(first)) continue
+			if (!head || first.seq < head.seq) {
+				head = first
+				lane = inLane
+			}
+		}
+		if (!head) return []
 		const batch = [head]
 		const limit = head.kind === 'waste' ? MAX_WASTE_BATCH : MAX_ENTRY_BATCH
 		if (
@@ -527,7 +697,7 @@ export async function claimNext(
 			!solo.has(head.id)
 		) {
 			const headRef = refOf(head)
-			for (const next of open.slice(1)) {
+			for (const next of lane.slice(1)) {
 				if (batch.length >= limit) break
 				if (next.kind !== head.kind || next.status !== 'queued') break
 				if (solo.has(next.id)) break
@@ -538,17 +708,21 @@ export async function claimNext(
 				batch.push(next)
 			}
 		}
-		for (const row of batch) {
-			await db.stockQueue.update(row.id, {
-				status: 'syncing',
-				claimedAt: now,
-			})
-		}
-		return batch.map((row) => ({
+		// A row's time is fixed the first time it is sent (the region hashes the body: a later try must repeat it), clamped to what the region accepts.
+		const sent = batch.map((row) => ({
 			...row,
 			status: 'syncing' as const,
 			claimedAt: now,
+			madeAt: row.attempts === 0 ? clampMadeAt(row.madeAt) : row.madeAt,
 		}))
+		for (const row of sent) {
+			await db.stockQueue.update(row.id, {
+				status: 'syncing',
+				claimedAt: now,
+				madeAt: row.madeAt,
+			})
+		}
+		return sent
 	})
 }
 
@@ -689,6 +863,11 @@ const NO_RETRY = new Set([
 	'dependency_failed',
 	'payload_too_large',
 	'upload_not_configured',
+	'item_unknown',
+	'item_archived',
+	'area_unknown',
+	'quantity_invalid',
+	'duplicate',
 ])
 
 export const canRetry = (code: string | null): boolean =>

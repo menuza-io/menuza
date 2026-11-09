@@ -30,6 +30,7 @@ function toSettings(row: SettingsRow): InventorySettings {
 		targetFoodCostBp: row.targetFoodCostBp,
 		unitSystem: row.unitSystem,
 		countDayOfWeek: row.countDayOfWeek ?? null,
+		countTime: row.countTime ?? null,
 		anyStaffCanReceive: row.anyStaffCanReceive,
 		version: row.version,
 		updatedAt: row.updatedAt,
@@ -44,6 +45,7 @@ export function defaultInventorySettings(
 		targetFoodCostBp: DEFAULT_TARGET_FOOD_COST_BP,
 		unitSystem: defaultUnitSystem(region),
 		countDayOfWeek: null,
+		countTime: null,
 		anyStaffCanReceive: false,
 		version: 0,
 		updatedAt: null,
@@ -93,6 +95,10 @@ export async function updateInventorySettings(
 					input.change.countDayOfWeek === undefined
 						? current.countDayOfWeek
 						: input.change.countDayOfWeek,
+				countTime:
+					input.change.countTime === undefined
+						? (current.countTime ?? null)
+						: input.change.countTime,
 				anyStaffCanReceive:
 					input.change.anyStaffCanReceive ??
 					current.anyStaffCanReceive ??
@@ -112,6 +118,7 @@ export async function updateInventorySettings(
 				'targetFoodCostBp',
 				'unitSystem',
 				'countDayOfWeek',
+				'countTime',
 				'anyStaffCanReceive',
 			] as const) {
 				if (next[key] !== current[key]) detail[key] = next[key]

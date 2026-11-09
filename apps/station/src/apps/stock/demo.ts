@@ -257,13 +257,8 @@ export function createDemoStockApi(): StockApi {
 		async sendCount(id) {
 			const count = counts.get(id)
 			if (!count) throw new Error('not_found')
-			const next: StationCountSummary = {
-				...count,
-				status: 'in_review',
-				sentForReviewAt: NOW(),
-			}
-			counts.set(id, next)
-			return next
+			// "I'm done" is a per-device note: the count stays open for a manager to finish in the App.
+			return count
 		},
 		async waste(body) {
 			return {

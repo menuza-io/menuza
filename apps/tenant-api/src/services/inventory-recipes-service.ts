@@ -10,6 +10,7 @@ import {
 	rankDishesWithoutRecipe,
 	STATION_LATE_SYNC_MS,
 	type FoodCostStatus,
+	type MenuPriceTax,
 	type PlateCostState,
 	type RecipeItemFacts,
 	type RecipeOwnerKind,
@@ -17,7 +18,12 @@ import {
 	type SaleOption,
 } from '@repo/inventory'
 import { addDays } from '@repo/reservations'
-import { invItems, invRecipeLines, invRecipes } from '@repo/tenant-db'
+import {
+	invItems,
+	invLocationSettings,
+	invRecipeLines,
+	invRecipes,
+} from '@repo/tenant-db'
 import { and, eq, inArray, isNull } from 'drizzle-orm'
 import { chunkIds, queryInChunks } from '../lib/chunked-in.ts'
 import { InventoryError } from '../lib/inventory-http.ts'
@@ -682,7 +688,7 @@ export async function recipeCosts(
 ): Promise<{ rows: CostRowOut[]; targetBp: number }> {
 	const at = body.at ?? Date.now()
 	const optionIds = body.refs.flatMap((ref) => ref.optionIds ?? [])
-	const [{ store }, costs, settings] = await Promise.all([
+	const [{ store }, costs, settings, locationRows] = await Promise.all([
 		buildRecipeStore(db, {
 			at,
 			owners: {
@@ -695,7 +701,32 @@ export async function recipeCosts(
 		}),
 		loadItemCosts(db),
 		getInventorySettings(db, caller.region),
+		db
+			.select({
+				locationId: invLocationSettings.locationId,
+				pricesIncludeTax: invLocationSettings.pricesIncludeTax,
+				taxRateBp: invLocationSettings.taxRateBp,
+			})
+			.from(invLocationSettings),
 	])
+	const storedLoc =
+		(body.locationId
+			? locationRows.find((r) => r.locationId === body.locationId)
+			: undefined) ??
+		locationRows.find(
+			(r) =>
+				r.locationId !== '*' && r.pricesIncludeTax && (r.taxRateBp ?? 0) > 0,
+		) ??
+		locationRows.find((r) => r.locationId === '*') ??
+		locationRows[0]
+	const tax: MenuPriceTax = {
+		pricesIncludeTax:
+			body.pricesIncludeTax ?? storedLoc?.pricesIncludeTax ?? false,
+		taxRateBp:
+			body.taxRateBp !== undefined
+				? body.taxRateBp
+				: (storedLoc?.taxRateBp ?? null),
+	}
 	const currency =
 		costs.currency ?? body.currency ?? typedCostCurrency(store) ?? ''
 	const rows = body.refs.map((ref): CostRowOut => {
@@ -722,13 +753,14 @@ export async function recipeCosts(
 		const target = priceForTargetMinor(
 			result.costMinor,
 			settings.targetFoodCostBp,
+			tax,
 		)
 		if (target !== null) row.priceForTargetMinor = target
 		if (
 			ref.priceMinor !== undefined &&
 			(!body.currency || body.currency === currency)
 		) {
-			const bp = dishFoodCostBp(ref.priceMinor, result.costMinor)
+			const bp = dishFoodCostBp(ref.priceMinor, result.costMinor, tax)
 			if (bp !== null) {
 				row.foodCostBp = bp
 				row.status = foodCostStatus(bp, settings.targetFoodCostBp)

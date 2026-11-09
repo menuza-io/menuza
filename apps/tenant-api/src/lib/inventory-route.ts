@@ -29,7 +29,7 @@ import { operatorActor } from '../services/inventory-common.ts'
  */
 
 /** Every response field that carries money (or a figure derived from it). */
-const MONEY_FIELDS = [
+export const MONEY_FIELDS = [
 	'valueMinor',
 	'totalValueMinor',
 	'differenceValueMinor',
@@ -69,6 +69,8 @@ const MONEY_FIELDS = [
 	'priceForTargetMinor',
 	'foodCostBp',
 	'netSalesMinor',
+	// An unpaid-deliveries figure (Today attention) is money too.
+	'amountMinor',
 ] as const
 
 export function inventoryCaller(

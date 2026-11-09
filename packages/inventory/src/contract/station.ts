@@ -44,10 +44,16 @@ import { undoWasteSchema, wasteEntryInputSchema } from './waste.ts'
  *   below). The permission to count and log waste is simply being signed in.
  * - `Pos-Inventory-Contract: <INVENTORY_POS_CONTRACT_VERSION>` on every call.
  *   Missing means 1. Older than `INVENTORY_POS_MIN_CONTRACT_VERSION`: 400
- *   `contract_too_old` (a pause code: the tablet needs an update). Every field
- *   added after version 1 has a default or is optional, requests stay
- *   strict, and the deploy order is App, then tenant-api, then Station, so a
- *   tablet is never newer than its server.
+ *   `contract_too_old` (a pause code: the tablet needs an update). Newer than
+ *   `INVENTORY_POS_CONTRACT_VERSION` (the region has not been deployed yet) or
+ *   not a plain positive number: 400 `contract_unsupported` (a pause code: the
+ *   tablet keeps its queue and waits for the region). Every field added after
+ *   version 1 has a default or is optional, requests stay strict, and the
+ *   deploy order is App, then tenant-api, then Station.
+ *
+ *   Version 2 changed the meaning of `send` (see `stationSendCountSchema`):
+ *   the region serves versions 1 and 2 and gives a version 1 tablet the same
+ *   per-device semantics, so no tablet ever closes a count for the others.
  * - Responses are `Cache-Control: private, no-store` and carry NO money (no
  *   `*Minor`, `*Micro`, prices or costs: a test over these schemas keeps
  *   it so) and no supplier contacts. Errors are `{ error: <code>, ... }`
@@ -67,8 +73,18 @@ import { undoWasteSchema, wasteEntryInputSchema } from './waste.ts'
  * arrive are accepted and flagged `lateSync` for a manager.
  */
 
-/** Version of the Station inventory contract the tablet speaks. Bump only for an additive change. */
-export const INVENTORY_POS_CONTRACT_VERSION = 1
+/**
+ * Version of the Station inventory contract the tablet speaks. Bump when a
+ * route's meaning or the set of routes changes; the region keeps serving every
+ * version from `INVENTORY_POS_MIN_CONTRACT_VERSION`.
+ *
+ * 1: first contract. 2: `send` is a per-device "I'm done" (it no longer moves
+ * the count to `in_review`), a count in `in_review` is not joined by a start,
+ * entries are taken while the count is `counting` or `in_review` and refused
+ * per entry (`count_closed`) afterwards, stable per-entry refusal codes, and
+ * `madeAt` is bounded (`clampMadeAt`).
+ */
+export const INVENTORY_POS_CONTRACT_VERSION = 2
 /** Oldest version the region still serves. */
 export const INVENTORY_POS_MIN_CONTRACT_VERSION = 1
 export const INVENTORY_POS_CONTRACT_HEADER = 'Pos-Inventory-Contract'
@@ -158,6 +174,8 @@ export type StationFailureAction = (typeof STATION_FAILURE_ACTIONS)[number]
 export const STATION_ERROR_HANDLING = {
 	invalid_request: { status: 400, action: 'permanent' },
 	contract_too_old: { status: 400, action: 'pause' },
+	/** The tablet speaks a newer contract than this region: wait for the region to be deployed. */
+	contract_unsupported: { status: 400, action: 'pause' },
 	invalid_device: { status: 401, action: 'unpair' },
 	device_revoked: { status: 401, action: 'unpair' },
 	staff_session_required: { status: 401, action: 'pause' },
@@ -170,7 +188,10 @@ export const STATION_ERROR_HANDLING = {
 	receive_needs_manager: { status: 403, action: 'pause' },
 	wrong_location: { status: 403, action: 'permanent' },
 	not_found: { status: 404, action: 'permanent' },
-	/** The count was approved or cancelled while the tablet was offline. */
+	/**
+	 * The count was approved or cancelled. Entries answer this per entry in
+	 * `refused` (status 200); at request level it answers `send` on nothing.
+	 */
 	count_closed: { status: 409, action: 'permanent' },
 	idempotency_conflict: { status: 409, action: 'permanent' },
 	/** Prep: someone else changed the task (reload the board). */
@@ -250,6 +271,40 @@ export function isLateSync(madeAt: number, now: number): boolean {
 	return now - madeAt > STATION_LATE_SYNC_MS
 }
 
+/** The oldest `madeAt` the region believes (a dead tablet clock books to 1970 otherwise). */
+export const STATION_MADE_AT_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000
+/** The furthest `madeAt` may be ahead of the region's clock (skew), never more. */
+export const STATION_MADE_AT_MAX_AHEAD_MS = 5 * 60 * 1000
+
+/**
+ * What the region does with a tablet's `madeAt` (device clock, epoch ms):
+ *
+ * - absent, or ahead of the region's clock by any amount: the region's `now`
+ *   (a far-future value is never trusted; up to 5 minutes ahead is clock skew
+ *   and clamps to `now` as well, flagged nothing);
+ * - within the last 7 days: believed as sent, `late` when older than
+ *   `STATION_LATE_SYNC_MS`;
+ * - older than 7 days: not believed. It is booked as `now` and `late` is true,
+ *   so a manager sees it among the late syncs; `reason` says why.
+ */
+export function clampMadeAt(
+	madeAt: number | undefined,
+	now: number,
+): {
+	at: number
+	late: boolean
+	reason: 'ok' | 'absent' | 'future' | 'too_old'
+} {
+	if (madeAt === undefined) return { at: now, late: false, reason: 'absent' }
+	if (madeAt > now) {
+		return { at: now, late: false, reason: 'future' }
+	}
+	if (now - madeAt > STATION_MADE_AT_MAX_AGE_MS) {
+		return { at: now, late: true, reason: 'too_old' }
+	}
+	return { at: madeAt, late: isLateSync(madeAt, now), reason: 'ok' }
+}
+
 // ── Idempotency ─────────────────────────────────────────────────────────────
 
 /**
@@ -270,9 +325,14 @@ const staffIdSchema = inventoryIdSchema
 
 /** Who made it and when, for an item sent later than it happened. */
 const madeShape = {
-	/** The staff id the till knew (absent: the session's person). */
+	/**
+	 * The staff id the till knew (absent: the session's person). Honoured only
+	 * for the session's own id or a person active on this terminal's roster;
+	 * any other id is ignored and the item is the session person's. The audit
+	 * trail names the session person (`syncedBy`) whenever they differ.
+	 */
 	madeBy: staffIdSchema.optional(),
-	/** Device clock when made, epoch ms (absent: now). */
+	/** Device clock when made, epoch ms (absent: now). Bounded by `clampMadeAt`. */
 	madeAt: z.number().int().positive().optional(),
 }
 
@@ -395,11 +455,12 @@ export type StationCatalog = z.infer<typeof stationCatalogSchema>
 // ── Counts ──────────────────────────────────────────────────────────────────
 
 /**
- * `POST /pos/inventory/counts`: start a count, or join the one already open
- * for the same location and list: unlike the operator route (409
- * `count_in_progress`), this answers the open count with `joined: true`, so
- * two tablets share one count and each takes its areas. Idempotent by
- * `clientId`.
+ * `POST /pos/inventory/counts`: start a count, or join the one being counted
+ * (`counting`) for the same location and list: unlike the operator route (409
+ * `count_in_progress`), this answers that count with `joined: true`, so two
+ * tablets share one count. A count in `in_review` is never joined: while the
+ * office has not approved last week's count, a start makes a new count (its
+ * approval is independent). Idempotent by `clientId`.
  */
 export const stationStartCountSchema = z
 	.object({
@@ -423,13 +484,19 @@ export const stationCountSheetSchema = countSheetSchema.extend({
 /**
  * `POST /pos/inventory/counts/:id/entries`: up to 200 entries in the
  * operator shape (`countEntrySchema`) plus who and when. Each person's latest
- * entry per item and area wins; `amount: null` clears it. Idempotent per
- * entry `clientId` (`duplicates`). A count that is no longer `counting`
- * (approved or cancelled while the tablet was offline, or sent for review)
- * answers the whole request 409 `count_closed`; the tablet lists those entries
- * ("Sent after the count closed: 3 entries") until cleared. Anything else
- * refused (an unknown item, a unit the item cannot use) comes back per entry
- * in `refused` with 200. Answers `countEntriesResultSchema`.
+ * entry per item, area and unit slot wins (the live-entry rule is on
+ * `countEntrySchema`); `amount: null` clears it. Idempotent per entry
+ * `clientId`: a stored or in-request repeat is in `duplicates` and keeps its
+ * first result, even after the count has closed.
+ *
+ * Entries are taken while the count is `counting` OR `in_review` (a tablet
+ * that syncs late still lands in the review). Only an `approved` or
+ * `cancelled` count refuses, and only per entry: `refused` carries
+ * `{ clientId, code: 'count_closed' }` with status 200 and the rest of the
+ * request is handled normally (it never answers 409 for the whole request).
+ * Every refusal code is one of `COUNT_ENTRY_REFUSAL_CODES`. The tablet lists
+ * refused entries with their reason until a person clears them; the region
+ * keeps no copy of a refused entry. Answers `countEntriesResultSchema`.
  */
 export const stationCountEntrySchema = z
 	.object({ ...countEntrySchema.shape, ...madeShape })
@@ -442,12 +509,16 @@ export const stationCountEntriesSchema = z
 export const stationCountEntriesResultSchema = countEntriesResultSchema
 
 /**
- * `POST /pos/inventory/counts/:id/send`: "Send for review" moves the count
- * from `counting` to `in_review` (the count is one thing for every device:
- * entries that arrive afterwards get 409 `count_closed`; the office can
- * reopen it). Idempotent: an `in_review` count answers 200 with the current
- * summary. Review and approval are only in the App. Answers
- * `stationCountSummarySchema`.
+ * `POST /pos/inventory/counts/:id/send` (contract 2): this tablet's "I'm done
+ * counting". It is a per-device note, not a state change: the region records an
+ * audit row (`count.device_done` with the device id) and answers 200 with the
+ * count's UNCHANGED summary (`status` stays `counting` or `in_review`; an
+ * approved or cancelled count also answers 200 with its status and records
+ * nothing). One tablet therefore never closes the count for the others, and a
+ * late tablet can keep sending entries. The count moves `counting` ->
+ * `in_review` only through the operator route (the App's "Finish"), and is
+ * approved only there. Contract 1 tablets get the same behaviour. Idempotent by
+ * `clientId`. Answers `stationCountSummarySchema`.
  */
 export const stationSendCountSchema = z
 	.object({ clientId: clientIdSchema, ...madeShape })
@@ -460,8 +531,10 @@ export const stationSendCountSchema = z
  * (`wasteEntryInputSchema`, each with its `locationId`, which must be the
  * terminal's) plus who and when. Reasons are the pickable ones only. Entries
  * made more than 48 hours before arrival are accepted and listed in
- * `lateSync`; entries refused individually (an unknown or archived item, a
- * unit the item cannot use) are in `refused` with 200.
+ * `lateSync`; `madeAt` follows `clampMadeAt` (never trusted into the future or
+ * further back than 7 days). Entries refused individually are in `refused`
+ * with 200 and one of `WASTE_ENTRY_REFUSAL_CODES`. A `clientId` repeated
+ * inside one request answers `duplicates` for the later one, never a 500.
  */
 export const stationWasteEntrySchema = z
 	.object({ ...wasteEntryInputSchema.shape, ...madeShape })

@@ -2,14 +2,17 @@ import { describe, expect, test } from 'vitest'
 import { receivePrefillLineSchema } from './receiving.ts'
 import {
 	classifyStationFailure,
+	clampMadeAt,
 	INVENTORY_POS_CONTRACT_VERSION,
 	INVENTORY_POS_ERROR_CODES,
+	INVENTORY_POS_MIN_CONTRACT_VERSION,
 	INVENTORY_POS_PATHS,
 	isLateSync,
 	isStationOutage,
 	STATION_BACKOFF_MS,
 	STATION_ERROR_HANDLING,
 	STATION_LATE_SYNC_MS,
+	STATION_MADE_AT_MAX_AGE_MS,
 	stationBackoffMs,
 	stationCatalogSchema,
 	stationCountEntriesSchema,
@@ -202,7 +205,9 @@ describe('Station requests', () => {
 		expect(INVENTORY_POS_PATHS.deliveryPhotoConfirm('d1')).toBe(
 			'/pos/inventory/deliveries/d1/photo/confirm',
 		)
-		expect(INVENTORY_POS_CONTRACT_VERSION).toBe(1)
+		// 2: `send` is per device; the region still serves 1.
+		expect(INVENTORY_POS_CONTRACT_VERSION).toBe(2)
+		expect(INVENTORY_POS_MIN_CONTRACT_VERSION).toBe(1)
 	})
 })
 
@@ -252,6 +257,50 @@ describe('Station failures', () => {
 		expect(stationBackoffMs(3)).toBe(60_000)
 		expect(stationBackoffMs(50)).toBe(15 * 60_000)
 		expect(stationBackoffMs(0)).toBe(STATION_BACKOFF_MS[0])
+	})
+
+	test('a tablet newer than the region waits (pause), it does not drop its queue', () => {
+		expect(STATION_ERROR_HANDLING.contract_unsupported).toEqual({
+			status: 400,
+			action: 'pause',
+		})
+	})
+
+	test('madeAt is believed within 7 days, and never trusted into the future or far back', () => {
+		const now = 1_762_000_000_000
+		const HOUR = 60 * 60 * 1000
+		expect(clampMadeAt(undefined, now)).toEqual({
+			at: now,
+			late: false,
+			reason: 'absent',
+		})
+		// Believed as sent, late only past 48 hours.
+		expect(clampMadeAt(now - HOUR, now)).toEqual({
+			at: now - HOUR,
+			late: false,
+			reason: 'ok',
+		})
+		expect(clampMadeAt(now - 3 * 24 * HOUR, now)).toEqual({
+			at: now - 3 * 24 * HOUR,
+			late: true,
+			reason: 'ok',
+		})
+		expect(clampMadeAt(now - STATION_MADE_AT_MAX_AGE_MS, now).reason).toBe('ok')
+		// Too old: booked now and flagged for a manager.
+		expect(clampMadeAt(now - STATION_MADE_AT_MAX_AGE_MS - 1, now)).toEqual({
+			at: now,
+			late: true,
+			reason: 'too_old',
+		})
+		expect(clampMadeAt(1, now)).toMatchObject({ at: now, late: true })
+		// Ahead of the region's clock: now, never late, however far.
+		for (const ahead of [1, 60_000, 30 * 24 * HOUR]) {
+			expect(clampMadeAt(now + ahead, now)).toEqual({
+				at: now,
+				late: false,
+				reason: 'future',
+			})
+		}
 	})
 
 	test('late sync is more than 48 hours old', () => {

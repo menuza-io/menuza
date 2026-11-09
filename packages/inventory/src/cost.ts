@@ -98,3 +98,34 @@ export function weightedAverageCostMicro(input: {
 		BigInt(input.receivedQuantity) * BigInt(input.receivedCostMicro)
 	return toSafeNumber(divRoundHalfUp(weighted, total), 'average cost')
 }
+
+/**
+ * `inventoryValueMinor` for READS of stored figures: a value that cannot be
+ * held in a safe integer is clamped instead of throwing, so one absurd stored
+ * cost can never make a stock list or a report answer 500. Writes use the
+ * throwing version (and caps) so such a value is refused at the door.
+ */
+export function inventoryValueMinorClamped(
+	quantity: number,
+	costMicro: number,
+): number {
+	try {
+		return inventoryValueMinor(quantity, costMicro)
+	} catch (error) {
+		if (!(error instanceof RangeError)) throw error
+		return quantity < 0 ? Number.MIN_SAFE_INTEGER : Number.MAX_SAFE_INTEGER
+	}
+}
+
+/** `costMicroFromPackPrice` for reads of stored figures: clamps instead of throwing. */
+export function costMicroFromPackPriceClamped(
+	priceMinor: number,
+	packQuantity: number,
+): number {
+	try {
+		return costMicroFromPackPrice(priceMinor, packQuantity)
+	} catch (error) {
+		if (!(error instanceof RangeError)) throw error
+		return Number.MAX_SAFE_INTEGER
+	}
+}

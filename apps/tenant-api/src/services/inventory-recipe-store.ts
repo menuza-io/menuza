@@ -177,8 +177,14 @@ export type ItemCosts = {
 	last: Map<string, number | null>
 	/** Weighted average cost per base unit (micro-minor) by item id. */
 	average: Map<string, number | null>
-	/** The organization's inventory currency, when any item has been priced. */
+	/**
+	 * The currency of the FIRST priced item. Kept for callers that label one
+	 * total; value of an item is in `currencyByItem` (an item has one cost
+	 * currency, and a location only prices stock in its own currency).
+	 */
 	currency: string | null
+	/** The currency each priced item's cost is in. */
+	currencyByItem: Map<string, string>
 }
 
 /** Every item's costs in one unfiltered read (no `IN` list). */
@@ -194,11 +200,13 @@ export async function loadItemCosts(db: InventoryReader): Promise<ItemCosts> {
 		.orderBy(sql`rowid`)
 	const last = new Map<string, number | null>()
 	const average = new Map<string, number | null>()
+	const currencyByItem = new Map<string, string>()
 	for (const row of rows) {
 		last.set(row.itemId, row.last)
 		average.set(row.itemId, row.average)
+		currencyByItem.set(row.itemId, row.currency)
 	}
-	return { last, average, currency: rows[0]?.currency ?? null }
+	return { last, average, currency: rows[0]?.currency ?? null, currencyByItem }
 }
 
 /** The first typed-cost currency among loaded versions (a fallback when nothing is priced). */

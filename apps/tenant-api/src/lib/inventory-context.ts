@@ -2,6 +2,7 @@ import {
 	INVENTORY_FEATURES_OFF,
 	inventoryContextSchema,
 	readInventoryFeatures,
+	type InventoryContext,
 	type InventoryErrorCode,
 	type InventoryFeatures,
 } from '@repo/inventory'
@@ -25,6 +26,10 @@ import { getInternalCommandToken, syncEnvFromProcess } from './secrets.ts'
  * flags are `unknown` and everything reads as off (fail closed). One request
  * per organization is in flight at a time and a failed one is not repeated
  * for 30 seconds.
+ *
+ * The same answer also carries what the App knows about the organization's
+ * money and days (`organization`, `locations`): the region copies it into
+ * `inv_location_settings` (`services/inventory-location-settings.ts`).
  */
 
 export const INVENTORY_CONTEXT_FRESH_TTL_MS = 5 * 60 * 1000
@@ -49,10 +54,21 @@ export type InventoryFlagState = {
 	features: InventoryFeatures
 }
 
-type CacheEntry = { fetchedAt: number; features: InventoryFeatures }
+/** The App's view of the organization's money and days (additive fields). */
+export type InventoryPlaceContext = Pick<
+	InventoryContext,
+	'organization' | 'locations'
+>
+
+type CacheEntry = {
+	fetchedAt: number
+	features: InventoryFeatures
+	places?: InventoryPlaceContext
+}
 
 type FetchOutcome =
-	{ ok: true; features: InventoryFeatures } | { ok: false; reason: string }
+	| { ok: true; features: InventoryFeatures; places: InventoryPlaceContext }
+	| { ok: false; reason: string }
 
 const cache = new LRUCache<string, CacheEntry>({
 	max: 500,
@@ -107,7 +123,14 @@ async function fetchInventoryFeatures(orgId: string): Promise<FetchOutcome> {
 		if (!parsed.success || parsed.data.orgId !== orgId) {
 			return { ok: false, reason: 'invalid_response' }
 		}
-		return { ok: true, features: readInventoryFeatures(parsed.data.features) }
+		return {
+			ok: true,
+			features: readInventoryFeatures(parsed.data.features),
+			places: {
+				organization: parsed.data.organization,
+				locations: parsed.data.locations,
+			},
+		}
 	} catch {
 		return {
 			ok: false,
@@ -146,7 +169,11 @@ function refresh(orgId: string, now: number): Promise<FetchOutcome> {
 		.then((outcome) => {
 			if (startedIn !== generation) return outcome
 			if (outcome.ok) {
-				cache.set(orgId, { fetchedAt: now, features: outcome.features })
+				cache.set(orgId, {
+					fetchedAt: now,
+					features: outcome.features,
+					places: outcome.places,
+				})
 				lastFailureAt.delete(orgId)
 				return outcome
 			}
@@ -204,6 +231,35 @@ export async function getInventoryFlagState(
 	}
 }
 
+/**
+ * What the App last said about the organization's money and days, or null
+ * when it cannot be read now and nothing recent is cached. Never throws.
+ */
+export async function getInventoryPlaceContext(
+	orgId: string,
+	options?: { now?: number },
+): Promise<InventoryPlaceContext | null> {
+	if (!TENANT_ORG_ID_PATTERN.test(orgId)) return null
+	const now = options?.now ?? Date.now()
+	try {
+		const cached = cache.get(orgId)
+		if (cached && now - cached.fetchedAt < INVENTORY_CONTEXT_FRESH_TTL_MS) {
+			return cached.places ?? null
+		}
+		const failedAt = lastFailureAt.get(orgId)
+		const coolingDown =
+			failedAt !== undefined &&
+			now - failedAt < INVENTORY_CONTEXT_FAILURE_COOLDOWN_MS
+		if (!coolingDown) {
+			const outcome = await refresh(orgId, now)
+			if (outcome.ok) return outcome.places
+		}
+		return standIn(orgId, now)?.places ?? null
+	} catch {
+		return null
+	}
+}
+
 /** The organization's features now: all off unless known to be on. */
 export async function getInventoryFeatures(
 	orgId: string,
@@ -240,7 +296,8 @@ export function seedInventoryContextForTest(
 	orgId: string,
 	features: InventoryFeatures,
 	fetchedAt = Date.now(),
+	places?: InventoryPlaceContext,
 ): void {
-	cache.set(orgId, { fetchedAt, features })
+	cache.set(orgId, { fetchedAt, features, places })
 	lastFailureAt.delete(orgId)
 }

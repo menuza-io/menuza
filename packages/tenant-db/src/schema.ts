@@ -6962,6 +6962,12 @@ export const discountCodeAttempts = sqliteTable(
 // ==========================================
 
 export const INV_UNIT_SYSTEM_VALUES = ['metric', 'us'] as const
+export const INV_LOCATION_CURRENCY_SOURCE_VALUES = ['app', 'delivery'] as const
+export const INV_COST_EVENT_KIND_VALUES = [
+	'delivery',
+	'confirm',
+	'batch',
+] as const
 export const INV_BASE_UNIT_VALUES = ['g', 'ml', 'piece'] as const
 export const INV_ITEM_KIND_VALUES = ['bought', 'made'] as const
 export const INV_ACTOR_KIND_VALUES = ['operator', 'staff', 'system'] as const
@@ -7056,6 +7062,8 @@ export const invSettings = sqliteTable(
 		unitSystem: text('unit_system', { enum: INV_UNIT_SYSTEM_VALUES }).notNull(),
 		// 0 = Sunday … 6 = Saturday; null = no weekly count scheduled.
 		countDayOfWeek: integer('count_day_of_week'),
+		// Local time of the weekly count (`HH:MM`); null = no time set.
+		countTime: text('count_time'),
 		// When true any signed-in person on a Station tablet may receive a
 		// delivery; otherwise it needs a till manager.
 		anyStaffCanReceive: integer('any_staff_can_receive', { mode: 'boolean' })
@@ -7613,6 +7621,9 @@ export const invOrders = sqliteTable(
 		sentVia: text('sent_via', { enum: INV_ORDER_SEND_CHANNEL_VALUES }),
 		// When it became `received` or `cancelled`.
 		closedAt: integer('closed_at'),
+		// Set while a send is in flight (taken under the lock before the email
+		// goes out, cleared after); a second send meanwhile answers 409.
+		sendClaimAt: integer('send_claim_at'),
 		version: integer('version').notNull().default(1),
 		createdAt: integer('created_at').notNull().default(nowMs),
 		updatedAt: integer('updated_at').notNull().default(nowMs),
@@ -7735,6 +7746,10 @@ export const invDeliveries = sqliteTable(
 		receivedById: text('received_by_id'),
 		receivedAt: integer('received_at'),
 		businessDate: text('business_date').notNull(),
+		// The client-made id of the request that recorded it (the idempotency
+		// key). Kept for good, so a replay after the 48 hour key window is still
+		// recognised. Null on deliveries recorded before migration 0039.
+		clientId: text('client_id'),
 		source: text('source', { enum: INV_DELIVERY_SOURCE_VALUES })
 			.notNull()
 			.default('operator'),
@@ -7756,6 +7771,10 @@ export const invDeliveries = sqliteTable(
 			table.paidAt,
 		),
 		index('idx_inv_deliveries_order').on(table.orderId),
+		uniqueIndex('uniq_inv_deliveries_client').on(
+			table.locationId,
+			table.clientId,
+		),
 		check(
 			'chk_inv_deliveries_status',
 			oneOf(table.status, INV_DELIVERY_STATUS_VALUES),
@@ -7905,6 +7924,88 @@ export const invIdempotencyKeys = sqliteTable(
 	(table) => [
 		primaryKey({ columns: [table.scope, table.key] }),
 		index('idx_inv_idempotency_keys_expires').on(table.expiresAt),
+	],
+)
+
+// Where a location's inventory money and days come from. The App (control
+// plane) knows each location's time zone and tax settings; it tells the region
+// through the inventory context and the region keeps a copy here, so the tick,
+// Station and sale work read it with no network call. `location_id = '*'` is
+// the organization default (hints only). `currency` is the ONE currency of the
+// location's inventory money: set from the App, else by the first priced
+// delivery, and never changed once the location has valued movements.
+export const invLocationSettings = sqliteTable(
+	'inv_location_settings',
+	{
+		locationId: text('location_id').primaryKey(),
+		currency: text('currency'),
+		currencySource: text('currency_source', {
+			enum: INV_LOCATION_CURRENCY_SOURCE_VALUES,
+		}),
+		timeZone: text('time_zone'),
+		// Minutes after local midnight when the business day starts.
+		dayStartMinutes: integer('day_start_minutes').notNull().default(240),
+		pricesIncludeTax: integer('prices_include_tax', { mode: 'boolean' })
+			.notNull()
+			.default(false),
+		// Tax rate in basis points (1500 = 15%); null when unknown.
+		taxRateBp: integer('tax_rate_bp'),
+		version: integer('version').notNull().default(1),
+		syncedAt: integer('synced_at'),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+	},
+	(table) => [
+		check(
+			'chk_inv_location_settings_day_start',
+			sql`${table.dayStartMinutes} between 0 and 1439`,
+		),
+		check(
+			'chk_inv_location_settings_tax',
+			sql`${table.taxRateBp} is null or ${table.taxRateBp} between 0 and 10000`,
+		),
+		check(
+			'chk_inv_location_settings_source',
+			sql`${table.currencySource} is null or ${table.currencySource} in ('app', 'delivery')`,
+		),
+	],
+)
+
+// The steps of an item's weighted average cost, so cancelling a delivery can
+// rewind the average exactly. One row per priced delivery line (when it was
+// priced) and per recorded batch of a made item. Append-only (triggers).
+export const invCostEvents = sqliteTable(
+	'inv_cost_events',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		itemId: text('item_id')
+			.notNull()
+			.references(() => invItems.id),
+		kind: text('kind', { enum: INV_COST_EVENT_KIND_VALUES }).notNull(),
+		// The delivery line that priced it (`delivery`, `confirm`); null for a batch.
+		deliveryLineId: text('delivery_line_id').references(
+			() => invDeliveryLines.id,
+		),
+		locationId: text('location_id').notNull(),
+		quantity: integer('quantity').notNull(),
+		costMicro: integer('cost_micro').notNull(),
+		onHandBefore: integer('on_hand_before').notNull(),
+		avgBeforeMicro: integer('avg_before_micro'),
+		avgAfterMicro: integer('avg_after_micro').notNull(),
+		createdAt: integer('created_at').notNull().default(nowMs),
+	},
+	(table) => [
+		index('idx_inv_cost_events_item').on(table.itemId, table.createdAt),
+		index('idx_inv_cost_events_line').on(table.deliveryLineId),
+		check(
+			'chk_inv_cost_events_kind',
+			oneOf(table.kind, INV_COST_EVENT_KIND_VALUES),
+		),
+		check(
+			'chk_inv_cost_events_amounts',
+			sql`${table.quantity} >= 0 and ${table.costMicro} >= 0 and ${table.avgAfterMicro} >= 0 and (${table.avgBeforeMicro} is null or ${table.avgBeforeMicro} >= 0)`,
+		),
 	],
 )
 

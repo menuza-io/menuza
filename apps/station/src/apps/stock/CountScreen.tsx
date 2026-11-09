@@ -10,6 +10,8 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { BigStepper } from './BigStepper.tsx'
 import {
+	isDone,
+	isFinished,
 	loadCachedSheet,
 	localValues,
 	saveCachedSheet,
@@ -20,12 +22,14 @@ import {
 	convertAmount,
 	countProgress,
 	countTabs,
+	lineUnits,
 	rowKey,
 	tabProgress,
 	unitChoices,
 	unitLabel,
 	unitStep,
 	unitTakesFractions,
+	type CountLine,
 	type CountValue,
 	type CountValues,
 } from './model.ts'
@@ -67,10 +71,16 @@ export function CountScreen({
 	const [values, setValues] = useState<CountValues>({})
 	const [loaded, setLoaded] = useState(false)
 	const [elsewhere, setElsewhere] = useState<ReadonlySet<string>>(new Set())
+	// Items someone else counted before this person typed anything: what is typed here is added to theirs.
+	const [others, setOthers] = useState<ReadonlySet<string>>(new Set())
 	const [activeTab, setActiveTab] = useState<string | null>(null)
 	const [confirming, setConfirming] = useState(false)
+	// Shown right after "I'm done counting", until the person goes back or keeps counting.
+	const [justDone, setJustDone] = useState(false)
 	const [problem, setProblem] = useState<string | null>(null)
 	const serverId = 'id' in record.ref ? record.ref.id : null
+	const finished = isFinished(record)
+	const inReview = record.serverStatus === 'in_review'
 
 	// What was typed here before (this tablet's copy), then what the server says
 	// this person typed (a count joined from another device), without overwriting.
@@ -100,10 +110,12 @@ export function CountScreen({
 			const sheet = await fromSheet()
 			if (!alive || !sheet) return
 			const counted = new Set<string>()
+			const byOthers = new Set<string>()
 			const typed: CountValues = {}
 			for (const area of sheet.areas)
 				for (const item of area.items) {
 					if (item.quantity !== null) counted.add(item.itemId)
+					if (item.quantity !== null && !item.mine) byOthers.add(item.itemId)
 					if (item.mine)
 						typed[rowKey(item.itemId, area.areaId)] = {
 							amount: item.mine.amount,
@@ -111,6 +123,7 @@ export function CountScreen({
 						}
 				}
 			setElsewhere(counted)
+			setOthers(byOthers)
 			setValues((current) => ({ ...typed, ...current }))
 		})()
 		return () => {
@@ -157,22 +170,58 @@ export function CountScreen({
 		new Map<string, RowState>(),
 	)
 
+	// What the office refused of this count's entries, for the banner.
+	const refusals = useLiveQuery(
+		async () => {
+			const found: Array<{ itemId: string; code: string | null }> = []
+			await db.stockQueue
+				.filter(
+					(row) =>
+						row.origin === origin &&
+						row.kind === 'count_entry' &&
+						row.status === 'failed',
+				)
+				.each((row) => {
+					if (row.kind !== 'count_entry') return
+					const ref = row.payload.count
+					const mine =
+						('id' in ref && serverId !== null && ref.id === serverId) ||
+						('clientId' in ref && ref.clientId === record.localId)
+					if (mine)
+						found.push({ itemId: row.payload.entry.itemId, code: row.failure })
+				})
+			return found
+		},
+		[origin, serverId, record.localId],
+		[] as Array<{ itemId: string; code: string | null }>,
+	)
+
 	const timer = useRef<number | undefined>(undefined)
 	const chain = useRef<Promise<void>>(Promise.resolve())
 	useEffect(() => () => window.clearTimeout(timer.current), [])
 	const commit = useCallback(
-		(itemId: string, areaId: string | null, next: CountValue) => {
+		(itemId: string, areaId: string | null, edit: RowEdit) => {
 			if (!ctx) return
 			setProblem(null)
-			setValues((current) => ({ ...current, [rowKey(itemId, areaId)]: next }))
+			setValues((current) => ({
+				...current,
+				[rowKey(itemId, areaId)]: edit.display,
+			}))
+			// A line added with no amount yet is only on the screen.
+			if (!edit.entry) return
+			const entry = edit.entry
 			chain.current = chain.current
 				.then(() =>
-					saveCountEntry(ctx, record.localId, {
-						itemId,
-						areaId,
-						amount: next.amount,
-						unit: next.unit,
-					}),
+					saveCountEntry(
+						ctx,
+						record.localId,
+						{ itemId, areaId, amount: entry.amount, unit: entry.unit },
+						{
+							keepUnits: edit.keepUnits,
+							knownUnits: edit.knownUnits,
+							display: edit.display,
+						},
+					),
 				)
 				.then(() => {
 					window.clearTimeout(timer.current)
@@ -184,7 +233,7 @@ export function CountScreen({
 				.catch((failure: unknown) => {
 					setProblem(
 						failure instanceof CountClosedError
-							? _(t`This count was already sent for review.`)
+							? _(t`This count is finished, so nothing more can be added.`)
 							: failure instanceof StockQueueFullError
 								? _(
 										t`Too much is waiting to send from this tablet. Connect and let it send first.`,
@@ -203,6 +252,7 @@ export function CountScreen({
 		await chain.current
 		try {
 			await sendCount(ctx, record.localId)
+			setJustDone(true)
 			void stock.sync()
 		} catch {
 			setProblem(_(t`This could not be saved on the tablet.`))
@@ -234,19 +284,61 @@ export function CountScreen({
 		)
 	}
 
-	if (record.status === 'sent') {
+	if (finished) {
 		return (
 			<section className="mx-auto flex w-full max-w-xl flex-col gap-4 p-5">
 				<div className="flex items-center gap-3">
 					<Icon name="check-circle" className="text-success size-8" />
 					<h2 className="text-xl font-semibold">
-						<Trans>Sent for review</Trans>
+						<Trans>This count is finished</Trans>
+					</h2>
+				</div>
+				<p className="text-muted-foreground">
+					{record.serverStatus === 'cancelled' ? (
+						<Trans>
+							A manager cancelled this count. Nothing more can be added.
+						</Trans>
+					) : (
+						<Trans>
+							A manager approved this count. Nothing more can be added.
+						</Trans>
+					)}
+				</p>
+				{waitingCount > 0 || failedCount > 0 ? (
+					<p role="status" className="text-warning text-sm">
+						<Trans>
+							Some entries did not reach the office in time. See what is
+							waiting.
+						</Trans>
+					</p>
+				) : null}
+				<div className="flex flex-wrap gap-2">
+					<Button variant="primary" onClick={onBack}>
+						<Trans>Back to Stock</Trans>
+					</Button>
+					{waitingCount > 0 || failedCount > 0 ? (
+						<Button onClick={onOpenSync}>
+							<Trans>See what is waiting</Trans>
+						</Button>
+					) : null}
+				</div>
+			</section>
+		)
+	}
+
+	if (justDone) {
+		return (
+			<section className="mx-auto flex w-full max-w-xl flex-col gap-4 p-5">
+				<div className="flex items-center gap-3">
+					<Icon name="check-circle" className="text-success size-8" />
+					<h2 className="text-xl font-semibold">
+						<Trans>You are done counting</Trans>
 					</h2>
 				</div>
 				<p className="text-muted-foreground">
 					<Trans>
-						Your part of the count is done. A manager reviews and approves it in
-						the Menuza app. Nothing more can be added from this tablet.
+						Your entries are saved. A manager reviews and finishes the count in
+						the Menuza app. Until then you can still add late entries.
 					</Trans>
 				</p>
 				{waitingCount > 0 ? (
@@ -256,9 +348,12 @@ export function CountScreen({
 						</Trans>
 					</p>
 				) : null}
-				<div>
+				<div className="flex flex-wrap gap-2">
 					<Button variant="primary" onClick={onBack}>
 						<Trans>Back to Stock</Trans>
+					</Button>
+					<Button onClick={() => setJustDone(false)}>
+						<Trans>Keep counting</Trans>
 					</Button>
 				</div>
 			</section>
@@ -304,10 +399,24 @@ export function CountScreen({
 					onClick={() => setConfirming(true)}
 					disabled={!loaded}
 				>
-					<Icon name="send" className="size-5" />
-					<Trans>Send for review</Trans>
+					<Icon name="check" className="size-5" />
+					<Trans>I am done counting</Trans>
 				</Button>
 			</div>
+			{inReview ? (
+				<p role="status" className="notice-warning px-4 py-2 text-sm">
+					<Trans>
+						A manager is reviewing this count. You can still add late entries.
+					</Trans>
+				</p>
+			) : isDone(record) ? (
+				<p role="status" className="notice-warning px-4 py-2 text-sm">
+					<Trans>
+						You said you are done. You can still add or change entries until a
+						manager finishes the count.
+					</Trans>
+				</p>
+			) : null}
 			{failedCount > 0 ? (
 				<div
 					role="alert"
@@ -320,7 +429,15 @@ export function CountScreen({
 								one: '# entry was not sent.',
 								other: '# entries were not sent.',
 							}),
-						)}
+						)}{' '}
+						{refusals
+							.slice(0, 3)
+							.map((entry) => {
+								const name = items.get(entry.itemId)?.name ?? entry.itemId
+								const why = failureText(entry.code, i18n)
+								return _(t`${name}: ${why}`)
+							})
+							.join(' ')}
 					</p>
 					<Button onClick={onOpenSync}>
 						<Trans>See why</Trans>
@@ -383,6 +500,7 @@ export function CountScreen({
 										value={values[key] ?? null}
 										state={marks.get(key) ?? 'saved'}
 										countedElsewhere={elsewhere.has(itemId)}
+										countedByOthers={others.has(itemId)}
 										locale={i18n.locale}
 										onCommit={commit}
 									/>
@@ -395,7 +513,7 @@ export function CountScreen({
 			<Modal
 				open={confirming}
 				onClose={() => setConfirming(false)}
-				title={_(t`Send for review?`)}
+				title={_(t`Done counting?`)}
 				footer={
 					<div className="flex flex-col gap-2 pb-3 sm:flex-row-reverse">
 						<Button
@@ -406,7 +524,7 @@ export function CountScreen({
 								void sendNow()
 							}}
 						>
-							<Trans>Send for review</Trans>
+							<Trans>I am done counting</Trans>
 						</Button>
 						<Button size="lg" onClick={() => setConfirming(false)}>
 							<Trans>Keep counting</Trans>
@@ -429,9 +547,9 @@ export function CountScreen({
 					</p>
 					<p className="text-muted-foreground text-sm">
 						<Trans>
-							Items you did not count stay as they were. After this, nothing
-							more can be added from this tablet. A manager approves the count
-							in the Menuza app.
+							Items you did not count stay as they were. This does not close the
+							count: a manager reviews and finishes it in the Menuza app, and
+							you can still add late entries until then.
 						</Trans>
 					</p>
 				</div>
@@ -440,12 +558,25 @@ export function CountScreen({
 	)
 }
 
+/** What a change in a row asks for: the entry to queue (none for a line added with no amount yet) and what the row shows afterwards. */
+type RowEdit = {
+	entry: { amount: number | null; unit: UnitRef } | null
+	display: CountValue
+	/** Units of the row's other lines: their entries stay. */
+	keepUnits: UnitRef[]
+	/** Units that had an amount before this change: any that are no longer used get cleared at the region. */
+	knownUnits: UnitRef[]
+}
+
+const MAX_EXTRA_LINES = 2
+
 const CountRow = memo(function CountRow({
 	item,
 	areaId,
 	value,
 	state,
 	countedElsewhere,
+	countedByOthers,
 	locale,
 	onCommit,
 }: {
@@ -454,16 +585,44 @@ const CountRow = memo(function CountRow({
 	value: CountValue | null
 	state: RowState
 	countedElsewhere: boolean
+	countedByOthers: boolean
 	locale: string
-	onCommit: (itemId: string, areaId: string | null, next: CountValue) => void
+	onCommit: (itemId: string, areaId: string | null, edit: RowEdit) => void
 }) {
 	const { _, i18n } = useLingui()
 	const unit: UnitRef = value?.unit ?? item.countUnit
 	const choices = unitChoices(item)
 	const amount = value?.amount ?? null
+	const more = value?.more ?? []
 	const name = item.name
 	const category = categoryText(item.category, i18n)
 	const counted = amount !== null
+	const usedUnits = lineUnits(value, item.countUnit)
+	const spare = choices.filter((ref) => !usedUnits.includes(ref))
+
+	const before: CountLine[] = [{ amount, unit }, ...more]
+	/**
+	 * One change in the row. `changed` is the line whose entry is queued (none
+	 * for a line added with no amount yet). Every other line of the row keeps
+	 * its entry; a unit that had an amount before and is no longer used by any
+	 * line (the unit was switched, the line removed) is cleared at the region.
+	 */
+	const commitRow = (
+		primary: CountLine,
+		extras: CountLine[],
+		changed: CountLine | null,
+	) =>
+		onCommit(item.id, areaId, {
+			entry: changed ? { amount: changed.amount, unit: changed.unit } : null,
+			display: { ...primary, ...(extras.length > 0 ? { more: extras } : {}) },
+			keepUnits: [primary, ...extras]
+				.map((line) => line.unit)
+				.filter((used) => used !== changed?.unit),
+			knownUnits: before
+				.filter((line) => line.amount !== null)
+				.map((line) => line.unit),
+		})
+
 	return (
 		<li
 			className={cn(
@@ -483,6 +642,14 @@ const CountRow = memo(function CountRow({
 							</>
 						) : null}
 					</p>
+					{countedByOthers && counted ? (
+						<p className="text-warning text-sm">
+							<Trans>
+								Someone else already counted this shelf. Your count is added to
+								theirs.
+							</Trans>
+						</p>
+					) : null}
 				</div>
 				<SaveMark state={state} counted={counted} />
 			</div>
@@ -493,7 +660,10 @@ const CountRow = memo(function CountRow({
 					step={unitStep(unit)}
 					fractions={unitTakesFractions(unit)}
 					allowClear
-					onChange={(next) => onCommit(item.id, areaId, { amount: next, unit })}
+					onChange={(next) => {
+						const primary = { amount: next, unit }
+						commitRow(primary, more, primary)
+					}}
 				/>
 				{choices.length > 1 ? (
 					<Select
@@ -504,14 +674,20 @@ const CountRow = memo(function CountRow({
 							const to = event.target.value
 							const converted =
 								amount === null ? null : convertAmount(amount, unit, to, item)
-							onCommit(item.id, areaId, { amount: converted, unit: to })
+							const primary = { amount: converted, unit: to }
+							commitRow(primary, more, primary)
 						}}
 					>
-						{choices.map((ref) => (
-							<option key={ref} value={ref}>
-								{unitLabel(ref, item.units, locale)}
-							</option>
-						))}
+						{choices
+							.filter(
+								(ref) =>
+									ref === unit || !more.some((line) => line.unit === ref),
+							)
+							.map((ref) => (
+								<option key={ref} value={ref}>
+									{unitLabel(ref, item.units, locale)}
+								</option>
+							))}
 					</Select>
 				) : (
 					<span className="text-muted-foreground self-center text-base">
@@ -519,6 +695,88 @@ const CountRow = memo(function CountRow({
 					</span>
 				)}
 			</div>
+			{more.map((line, index) => {
+				const lineUnit = line.unit
+				const unitName = unitLabel(lineUnit, item.units, locale)
+				const replaceLine = (next: CountLine) =>
+					commitRow(
+						{ amount, unit },
+						more.map((other, at) => (at === index ? next : other)),
+						next,
+					)
+				return (
+					<div
+						key={lineUnit}
+						className="border-border flex flex-wrap items-start gap-3 border-t pt-3"
+					>
+						<BigStepper
+							value={line.amount}
+							label={_(t`${name} in ${unitName}`)}
+							step={unitStep(lineUnit)}
+							fractions={unitTakesFractions(lineUnit)}
+							allowClear
+							onChange={(next) => replaceLine({ amount: next, unit: lineUnit })}
+						/>
+						<Select
+							aria-label={_(t`Unit for ${name}, another unit`)}
+							containerClassName="w-40"
+							value={lineUnit}
+							onChange={(event) => {
+								const to = event.target.value
+								replaceLine({
+									amount:
+										line.amount === null
+											? null
+											: convertAmount(line.amount, lineUnit, to, item),
+									unit: to,
+								})
+							}}
+						>
+							{choices
+								.filter(
+									(ref) =>
+										ref === lineUnit ||
+										(ref !== unit && !more.some((other) => other.unit === ref)),
+								)
+								.map((ref) => (
+									<option key={ref} value={ref}>
+										{unitLabel(ref, item.units, locale)}
+									</option>
+								))}
+						</Select>
+						<Button
+							variant="ghost"
+							aria-label={_(t`Remove ${unitName} from ${name}`)}
+							onClick={() =>
+								commitRow(
+									{ amount, unit },
+									more.filter((_other, at) => at !== index),
+									{ amount: null, unit: lineUnit },
+								)
+							}
+						>
+							<Icon name="x" className="size-4" />
+						</Button>
+					</div>
+				)
+			})}
+			{counted && spare.length > 0 && more.length < MAX_EXTRA_LINES ? (
+				<div>
+					<Button
+						variant="ghost"
+						onClick={() =>
+							commitRow(
+								{ amount, unit },
+								[...more, { amount: null, unit: spare[0]! }],
+								null,
+							)
+						}
+					>
+						<Icon name="plus" className="size-4" />
+						<Trans>Add another unit</Trans>
+					</Button>
+				</div>
+			) : null}
 		</li>
 	)
 })

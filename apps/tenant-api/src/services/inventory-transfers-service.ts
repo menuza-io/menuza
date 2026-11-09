@@ -41,6 +41,7 @@ import {
 	wireUnit,
 } from './inventory-common.ts'
 import { toItemUnit, type InventoryCaller } from './inventory-items-service.ts'
+import { getLocationCurrency } from './inventory-location-settings.ts'
 import { loadItemCosts } from './inventory-recipe-store.ts'
 import { getInventorySettings } from './inventory-settings-service.ts'
 
@@ -332,6 +333,27 @@ function creatingLocation(
 	return row.kind === 'request' ? row.toLocationId : row.fromLocationId
 }
 
+/**
+ * Places that keep their money in different currencies cannot move stock
+ * between them: the cost of what leaves one is not a cost at the other.
+ * 409 `currency_mismatch`. (A place with no currency yet cannot conflict.)
+ */
+async function assertSameCurrency(
+	tx: InventoryTx,
+	fromLocationId: string,
+	toLocationId: string,
+): Promise<void> {
+	const [from, to] = await Promise.all([
+		getLocationCurrency(tx, fromLocationId),
+		getLocationCurrency(tx, toLocationId),
+	])
+	if (from !== null && to !== null && from !== to) {
+		throw new InventoryError('currency_mismatch', 409, {
+			reason: 'currency_mismatch',
+		})
+	}
+}
+
 export async function createTransfer(
 	caller: InventoryCaller,
 	input: { body: CreateTransfer; idempotency: InventoryIdempotency },
@@ -349,11 +371,27 @@ export async function createTransfer(
 		{ orgId: caller.orgId, idempotency: input.idempotency },
 		async (tx, ctx) => {
 			const existing = await tx
-				.select({ id: invTransfers.id })
+				.select({
+					id: invTransfers.id,
+					kind: invTransfers.kind,
+					fromLocationId: invTransfers.fromLocationId,
+					toLocationId: invTransfers.toLocationId,
+				})
 				.from(invTransfers)
 				.where(eq(invTransfers.clientId, body.clientId))
 				.get()
-			if (existing) return existing.id
+			if (existing) {
+				// The same id for a different transfer is a client bug, not a replay.
+				if (
+					existing.kind !== body.kind ||
+					existing.fromLocationId !== body.fromLocationId ||
+					existing.toLocationId !== body.toLocationId
+				) {
+					throw new InventoryError('idempotency_conflict', 409)
+				}
+				return existing.id
+			}
+			await assertSameCurrency(tx, body.fromLocationId, body.toLocationId)
 			const open = await tx
 				.select({ id: invTransfers.id })
 				.from(invTransfers)
@@ -499,22 +537,30 @@ export async function sendTransfer(
 		if (![...sent.values()].some((quantity) => quantity > 0)) {
 			throw badRequest('nothing_sent')
 		}
+		await assertSameCurrency(tx, row.fromLocationId, row.toLocationId)
 		const costs = await loadItemCosts(tx)
 		const businessDate = await locationBusinessDate(
 			tx,
 			row.fromLocationId,
 			ctx.now,
 		)
+		const sendCurrency = await getLocationCurrency(tx, row.fromLocationId)
 		for (const line of lines) {
 			const quantity = sent.get(line.itemId) ?? 0
 			const average = costs.average.get(line.itemId) ?? null
-			const priced = average !== null && costs.currency !== null
+			const itemCurrency = costs.currencyByItem.get(line.itemId) ?? null
+			// Valued in the item's own currency, and only when that is the sending
+			// location's (never a mixed-currency figure).
+			const priced =
+				average !== null &&
+				itemCurrency !== null &&
+				(sendCurrency === null || sendCurrency === itemCurrency)
 			await tx
 				.update(invTransferLines)
 				.set({
 					sentQuantity: quantity,
 					unitCostMicro: priced ? average : null,
-					costCurrency: priced ? costs.currency : null,
+					costCurrency: priced ? itemCurrency : null,
 				})
 				.where(
 					and(
@@ -530,7 +576,7 @@ export async function sendTransfer(
 				itemId: line.itemId,
 				quantity: -quantity,
 				valueMinor: value === null ? null : -value,
-				currency: value === null ? null : costs.currency,
+				currency: value === null ? null : itemCurrency,
 				kind: 'transfer_out',
 				sourceType: 'transfer',
 				sourceId: row.id,

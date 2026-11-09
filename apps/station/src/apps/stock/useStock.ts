@@ -7,9 +7,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { type StockApi } from './api.ts'
 import { isStale, refreshCatalog } from './catalog.ts'
 import { loadCachedCatalog, stockOrigin, type CachedCatalog } from './local.ts'
+import { reconcileCounts } from './reconcile.ts'
 import { stockStats, type StockContext, type StockQueueStats } from './queue.ts'
 import { useStockSync, type StockSyncState } from './runner.ts'
 import { stockApiFor, syncStock } from './sync.ts'
+import { clockSkewMs } from '~/lib/clock.ts'
 import { type PosSettings } from '~/lib/config.ts'
 import { type Session } from '~/lib/signin.ts'
 
@@ -93,19 +95,29 @@ export function useStock(
 	}, [origin, locationId])
 
 	const refreshing = useRef(false)
+	// The latest refresh, so the first send can wait for the server's clock (learned from its answers) before stamping times.
+	const lastRefresh = useRef<Promise<void> | null>(null)
 	const refresh = useCallback(async () => {
 		if (!locationId || !reachable || !hasSession || refreshing.current) return
 		refreshing.current = true
-		try {
-			const result = await refreshCatalog(api, origin, locationId)
-			if (result.kind === 'failed') setRefreshError(result.code)
-			else {
-				setRefreshError(null)
-				setCached(result.cached)
+		const run = (async () => {
+			try {
+				const result = await refreshCatalog(api, origin, locationId)
+				if (result.kind === 'failed') setRefreshError(result.code)
+				else {
+					setRefreshError(null)
+					setCached(result.cached)
+					// A count may have been sent for review, approved or cancelled since: ask, so a finished count leaves "In progress".
+					await reconcileCounts(api, origin, result.cached.catalog).catch(
+						() => {},
+					)
+				}
+			} finally {
+				refreshing.current = false
 			}
-		} finally {
-			refreshing.current = false
-		}
+		})()
+		lastRefresh.current = run
+		await run
 	}, [api, origin, locationId, reachable, hasSession])
 
 	useEffect(() => {
@@ -133,6 +145,8 @@ export function useStock(
 
 	const sync = useCallback(
 		async (force = false) => {
+			if (clockSkewMs() === null && lastRefresh.current)
+				await lastRefresh.current.catch(() => {})
 			await syncStock(settings, sessionRef.current, online, { force }).catch(
 				() => null,
 			)

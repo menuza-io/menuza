@@ -9,6 +9,7 @@ import {
 	type InventoryOperatorContext,
 	verifyInventoryOperatorToken,
 } from './inventory-auth.ts'
+import { syncLocationSettings } from '../services/inventory-location-settings.ts'
 import { inventoryDeny } from './inventory-http.ts'
 import { isInventoryKillSwitchOn } from './inventory-switches.ts'
 import { lookupActiveOrganization } from './origin.ts'
@@ -100,6 +101,8 @@ export function inventoryGuard(
 			return inventoryDeny(404, 'not_found')
 		}
 
+		// Keep the region's copy of the locations' money and days current.
+		await syncLocationSettings(ctx.orgId)
 		c.set(INVENTORY_AUTH_KEY, ctx)
 		await next()
 	}

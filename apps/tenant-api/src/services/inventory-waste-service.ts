@@ -3,6 +3,7 @@ import {
 	PICKABLE_WASTE_REASONS,
 	WASTE_UNDO_WINDOW_MS,
 	type WasteEntry,
+	type WasteEntryRefusalCode,
 	type WasteSummary,
 } from '@repo/inventory'
 import { daysBetween } from '@repo/reservations'
@@ -66,7 +67,8 @@ export type LogWasteOptions = {
 	 * manager) and when the tablet made them (the business date follows it).
 	 * With a station, an entry that cannot be logged (unknown or archived item,
 	 * a unit the item cannot use, an amount out of range) is reported in
-	 * `refused` and the others are saved, instead of failing the request.
+	 * `refused` with a stable code (`WASTE_ENTRY_REFUSAL_CODES`) and the others
+	 * are saved, instead of failing the request.
 	 */
 	station?: {
 		deviceId: string
@@ -122,8 +124,14 @@ export async function logWaste(
 			currency?: string
 		}> = []
 		const duplicates: Array<{ clientId: string; id: string }> = []
-		const refused: Array<{ clientId: string; code: string }> = []
+		const refused: Array<{ clientId: string; code: WasteEntryRefusalCode }> = []
 		const lateSync: string[] = []
+		// Entries stored earlier in this same request, by `clientId`: a repeat
+		// inside one batch is a duplicate, never a unique-index violation.
+		const inBatch = new Map<
+			string,
+			{ id: string; entry: (typeof body.entries)[number] }
+		>()
 		const usedUnits: string[] = []
 		const actors = new Map<
 			string,
@@ -142,12 +150,30 @@ export async function logWaste(
 				duplicates.push({ clientId: entry.clientId, id: known.id })
 				continue
 			}
+			const first = inBatch.get(entry.clientId)
+			if (first) {
+				if (
+					first.entry.itemId !== entry.itemId ||
+					first.entry.locationId !== entry.locationId
+				) {
+					if (station) {
+						refused.push({
+							clientId: entry.clientId,
+							code: 'idempotency_conflict',
+						})
+						continue
+					}
+					throw new InventoryError('idempotency_conflict', 409)
+				}
+				duplicates.push({ clientId: entry.clientId, id: first.id })
+				continue
+			}
 			const item = itemById.get(entry.itemId)
 			if (!item || item.archivedAt !== null) {
 				if (station) {
 					refused.push({
 						clientId: entry.clientId,
-						code: item ? 'item_archived' : 'not_found',
+						code: item ? 'item_archived' : 'item_unknown',
 					})
 					continue
 				}
@@ -164,7 +190,13 @@ export async function logWaste(
 				if (typed.quantity <= 0) throw badRequest('amount')
 			} catch (error) {
 				if (station && error instanceof InventoryError) {
-					refused.push({ clientId: entry.clientId, code: error.code })
+					refused.push({
+						clientId: entry.clientId,
+						code:
+							error.code === 'unit_mismatch'
+								? 'unit_mismatch'
+								: 'quantity_invalid',
+					})
 					continue
 				}
 				throw error
@@ -235,6 +267,7 @@ export async function logWaste(
 				out.currency = cost!.currency
 			}
 			accepted.push(out)
+			inBatch.set(entry.clientId, { id, entry })
 			const key = `${actor.kind}|${actor.id ?? ''}`
 			const group = actors.get(key)
 			if (group) group.entries += 1

@@ -33,6 +33,7 @@ import {
 	withInventoryWrite,
 } from '../lib/inventory-write.ts'
 import { locationBusinessDate, newId } from './inventory-common.ts'
+import { getLocationCurrency } from './inventory-location-settings.ts'
 import { buildRecipeStore, loadItemCosts } from './inventory-recipe-store.ts'
 import { orderCountsTowardSales } from './report-records.ts'
 
@@ -465,16 +466,24 @@ async function storeUsage(
 
 type Costs = Awaited<ReturnType<typeof loadItemCosts>>
 
+/**
+ * The value of a quantity at the item's average cost, in the item's own cost
+ * currency. A location only values stock in its own currency: an item priced
+ * in another one carries no value here (never a mixed-currency figure).
+ */
 function valueOf(
 	costs: Costs,
 	itemId: string,
 	quantity: number,
+	locationCurrency: string | null,
 ): { valueMinor: number; currency: string } | null {
 	const average = costs.average.get(itemId) ?? null
-	if (average === null || !costs.currency) return null
+	const currency = costs.currencyByItem.get(itemId) ?? null
+	if (average === null || currency === null) return null
+	if (locationCurrency !== null && currency !== locationCurrency) return null
 	return {
 		valueMinor: inventoryValueMinor(quantity, average),
-		currency: costs.currency,
+		currency,
 	}
 }
 
@@ -560,11 +569,19 @@ async function settleInTx(
 		wasteDeltas.some((entry) => entry.deltas.length > 0)
 	) {
 		const costs = await loadItemCosts(tx)
+		const currencies = new Map<string, string | null>()
+		const currencyAt = async (locationId: string) => {
+			if (!currencies.has(locationId)) {
+				currencies.set(locationId, await getLocationCurrency(tx, locationId))
+			}
+			return currencies.get(locationId) ?? null
+		}
 		for (const delta of deltas) {
 			const value = valueOf(
 				costs,
 				delta.itemId,
 				Math.abs(delta.movementQuantity),
+				await currencyAt(delta.locationId),
 			)
 			const sign = delta.movementQuantity < 0 ? -1 : 1
 			await tx.insert(invMovements).values({
@@ -598,7 +615,12 @@ async function settleInTx(
 			// A void is append-only, so its usage only ever grows from nothing.
 			for (const delta of entry.deltas) {
 				if (delta.usageDelta <= 0) continue
-				const value = valueOf(costs, delta.itemId, delta.usageDelta)
+				const value = valueOf(
+					costs,
+					delta.itemId,
+					delta.usageDelta,
+					await currencyAt(delta.locationId),
+				)
 				const wasteId = newId()
 				await tx.insert(invWaste).values({
 					id: wasteId,

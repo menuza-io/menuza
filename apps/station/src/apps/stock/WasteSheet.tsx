@@ -22,7 +22,12 @@ import {
 	unitStep,
 	unitTakesFractions,
 } from './model.ts'
-import { logWaste, StockQueueFullError, undoWaste } from './queue.ts'
+import {
+	logWaste,
+	newClientId,
+	StockQueueFullError,
+	undoWaste,
+} from './queue.ts'
 import { StockNotices } from './StockNotices.tsx'
 import { type StockState } from './useStock.ts'
 import { useNow } from '~/ui/hooks.ts'
@@ -83,6 +88,13 @@ export function WasteSheet({
 	const now = useNow(logged.length > 0 ? 1_000 : 60_000)
 	const sendTimer = useRef<number | undefined>(undefined)
 	useEffect(() => () => window.clearTimeout(sendTimer.current), [])
+	// The entry's id is made before the tap and kept until the form is empty again: a double tap queues one entry.
+	const draftId = useRef(newClientId())
+	const saving = useRef(false)
+	const [busy, setBusy] = useState(false)
+	useEffect(() => {
+		if (itemId === null) draftId.current = newClientId()
+	}, [itemId])
 
 	useEffect(() => {
 		if (!open) return
@@ -152,27 +164,38 @@ export function WasteSheet({
 	const submit = async () => {
 		if (!item || !unit || amount === null || amount <= 0 || !reason || !ctx)
 			return
+		if (saving.current) return
+		saving.current = true
+		setBusy(true)
 		try {
-			const clientId = await logWaste(ctx, {
-				itemId: item.id,
-				amount,
-				unit,
-				reason,
-				...(note.trim() ? { note: note.trim() } : {}),
-			})
-			setLogged((before) => [
+			const clientId = await logWaste(
+				ctx,
 				{
-					clientId,
-					name: item.name,
+					itemId: item.id,
 					amount,
 					unit,
-					units: item.units,
 					reason,
-					at: Date.now(),
-					state: 'logged',
+					...(note.trim() ? { note: note.trim() } : {}),
 				},
-				...before,
-			])
+				draftId.current,
+			)
+			setLogged((before) =>
+				before.some((entry) => entry.clientId === clientId)
+					? before
+					: [
+							{
+								clientId,
+								name: item.name,
+								amount,
+								unit,
+								units: item.units,
+								reason,
+								at: Date.now(),
+								state: 'logged',
+							},
+							...before,
+						],
+			)
 			setLocal((before) => [item.id, ...before.filter((id) => id !== item.id)])
 			setItemId(null)
 			setAmount(null)
@@ -189,6 +212,9 @@ export function WasteSheet({
 						)
 					: _(t`This could not be saved on the tablet.`),
 			)
+		} finally {
+			saving.current = false
+			setBusy(false)
 		}
 	}
 	const undo = async (entry: Logged) => {
@@ -219,7 +245,7 @@ export function WasteSheet({
 				<Button
 					variant="primary"
 					size="lg"
-					disabled={!ready}
+					disabled={!ready || busy}
 					onClick={() => void submit()}
 					className="sm:min-w-56"
 				>

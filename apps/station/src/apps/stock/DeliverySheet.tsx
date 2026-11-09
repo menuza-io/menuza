@@ -1,6 +1,11 @@
 import { plural, t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import { standardUnitsFor, type StationExpectedDelivery } from '@repo/inventory'
+import {
+	standardUnitsFor,
+	type StationExpectedDelivery,
+	type StationItem,
+	type UnitRef,
+} from '@repo/inventory'
 import { Icon } from '@repo/ui/icon'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { BigStepper } from './BigStepper.tsx'
@@ -9,15 +14,19 @@ import {
 	deliveryPayloadSchema,
 	filterItems,
 	hasShortLines,
+	lineFromItem,
 	lineFromProduct,
 	type StationSupplierProduct,
 	linesFromExpected,
 	mayReceive,
+	unitChoices,
 	unitLabel,
+	unitStep,
+	unitTakesFractions,
 	type DeliveryLineDraft,
 } from './model.ts'
 import { prepareInvoicePhoto, PhotoError, type InvoicePhoto } from './photo.ts'
-import { recordDelivery, StockQueueFullError } from './queue.ts'
+import { newClientId, recordDelivery, StockQueueFullError } from './queue.ts'
 import { StockNotices } from './StockNotices.tsx'
 import { type StockState } from './useStock.ts'
 import {
@@ -33,12 +42,18 @@ import {
 
 type Source =
 	| { kind: 'order'; delivery: StationExpectedDelivery }
-	| { kind: 'free'; supplierId: string }
+	/** `supplierId` null: a market or cash-and-carry purchase, no supplier on file. */
+	| { kind: 'free'; supplierId: string | null }
+
+/** Items offered beyond a supplier's own products; more asks for a few letters. */
+const MAX_OTHER_ITEMS = 20
 
 /**
  * Receive a delivery, quantities only: tick each line that came, change the
  * packs for a short line, type the real weight for a line priced by weight,
- * add the invoice number and a photo of the invoice. No price is shown or
+ * add the invoice number and a photo of the invoice. An item with no supplier
+ * product (or a purchase at the market) is received by quantity in any unit
+ * the item has. No price is shown or
  * typed; the office confirms prices in the Menuza app ("check prices"). It is
  * saved on the tablet and sent when it can be (a delivery made offline is
  * flagged late by the office if it arrives after two days).
@@ -65,10 +80,17 @@ export function DeliverySheet({
 	const [problem, setProblem] = useState<string | null>(null)
 	const [done, setDone] = useState(false)
 	const [query, setQuery] = useState('')
+	const [saving, setSaving] = useState(false)
 	const picker = useRef<HTMLInputElement>(null)
+	// The delivery's id is made before the tap and kept for this sheet: a double tap records it once.
+	const draftId = useRef(newClientId())
+	const submitting = useRef(false)
 
 	useEffect(() => {
 		if (open) return
+		draftId.current = newClientId()
+		submitting.current = false
+		setSaving(false)
 		setSource(null)
 		setLines([])
 		setInvoice('')
@@ -93,7 +115,7 @@ export function DeliverySheet({
 	)
 	const allowed = catalog ? mayReceive(catalog, role) : false
 	const supplier =
-		source?.kind === 'free'
+		source?.kind === 'free' && source.supplierId !== null
 			? catalog?.suppliers.find((entry) => entry.id === source.supplierId)
 			: null
 	const order = source?.kind === 'order' ? source.delivery : null
@@ -119,6 +141,13 @@ export function DeliverySheet({
 		)
 	}
 
+	const addItem = (item: StationItem) =>
+		setLines((before) =>
+			before.some((line) => line.key === `item:${item.id}`)
+				? before
+				: [...before, lineFromItem(item)],
+		)
+
 	const pickPhoto = async (file: File | undefined) => {
 		if (!file || !catalog) return
 		setPhotoProblem(null)
@@ -140,7 +169,7 @@ export function DeliverySheet({
 	}
 
 	const submit = async () => {
-		if (!source || !ctx) return
+		if (!source || !ctx || submitting.current) return
 		const received = deliveryLines(lines)
 		if (received.length === 0) return
 		const payload = {
@@ -158,15 +187,20 @@ export function DeliverySheet({
 			setProblem(_(t`Check the amounts: one of them cannot be sent.`))
 			return
 		}
+		submitting.current = true
+		setSaving(true)
 		try {
 			await recordDelivery(
 				ctx,
 				checked.data,
 				photo ? { blob: photo.blob, contentType: photo.contentType } : null,
+				draftId.current,
 			)
 			setDone(true)
 			void stock.sync()
 		} catch (failure) {
+			submitting.current = false
+			setSaving(false)
 			setProblem(
 				failure instanceof StockQueueFullError
 					? _(
@@ -188,7 +222,7 @@ export function DeliverySheet({
 			<Button
 				variant="primary"
 				size="lg"
-				disabled={!ready}
+				disabled={!ready || saving}
 				onClick={() => void submit()}
 				className="sm:min-w-56"
 			>
@@ -210,6 +244,15 @@ export function DeliverySheet({
 				query,
 			)
 		: []
+	// Items this supplier has no product for (or any item at the market): quantity only.
+	const withProduct = new Set(supplier?.products.map((entry) => entry.itemId))
+	const otherItems =
+		source?.kind === 'free' && catalog
+			? filterItems(
+					catalog.items.filter((item) => !withProduct.has(item.id)),
+					query,
+				).slice(0, MAX_OTHER_ITEMS)
+			: []
 
 	return (
 		<Modal
@@ -313,32 +356,43 @@ export function DeliverySheet({
 								<p className="text-muted-foreground">
 									<Trans>
 										No supplier is set up yet. A manager adds suppliers in the
-										Menuza app.
+										Menuza app. You can still receive what came from the market.
 									</Trans>
 								</p>
-							) : (
-								<div className="flex flex-wrap gap-2">
-									{catalog.suppliers.map((entry) => (
-										<Chip
-											key={entry.id}
-											size="lg"
-											look="outlined"
-											selected={false}
-											onClick={() =>
-												choose({ kind: 'free', supplierId: entry.id })
-											}
-										>
-											{entry.name}
-										</Chip>
-									))}
-								</div>
-							)}
+							) : null}
+							<div className="flex flex-wrap gap-2">
+								{catalog.suppliers.map((entry) => (
+									<Chip
+										key={entry.id}
+										size="lg"
+										look="outlined"
+										selected={false}
+										onClick={() =>
+											choose({ kind: 'free', supplierId: entry.id })
+										}
+									>
+										{entry.name}
+									</Chip>
+								))}
+								<Chip
+									size="lg"
+									look="outlined"
+									selected={false}
+									onClick={() => choose({ kind: 'free', supplierId: null })}
+								>
+									<Trans>Market or other supplier</Trans>
+								</Chip>
+							</div>
 						</section>
 					</div>
 				) : (
 					<div className="flex flex-col gap-5">
 						<h3 className="text-xl font-semibold break-words">
-							{order ? order.supplierName : (supplier?.name ?? '')}
+							{order
+								? order.supplierName
+								: supplier
+									? supplier.name
+									: _(t`Market or other supplier`)}
 						</h3>
 						<ul className="flex flex-col gap-3">
 							{lines.map((line) => (
@@ -358,7 +412,7 @@ export function DeliverySheet({
 								/>
 							))}
 						</ul>
-						{supplier ? (
+						{source?.kind === 'free' ? (
 							<section className="flex flex-col gap-2">
 								<h4 className="text-base font-semibold">
 									<Trans>Add an item</Trans>
@@ -371,11 +425,15 @@ export function DeliverySheet({
 									autoComplete="off"
 									onChange={(event) => setQuery(event.target.value)}
 								/>
-								{supplier.products.length === 0 ? (
+								{supplier && supplier.products.length === 0 ? (
 									<p className="text-muted-foreground text-sm">
-										<Trans>This supplier has no items set up yet.</Trans>
+										<Trans>
+											This supplier has no items set up yet. Search for any item
+											below.
+										</Trans>
 									</p>
-								) : (
+								) : null}
+								{supplier ? (
 									<ul className="flex flex-col gap-2">
 										{matches.map(({ product, name }) => {
 											const added = lines.some(
@@ -406,7 +464,42 @@ export function DeliverySheet({
 											)
 										})}
 									</ul>
-								)}
+								) : null}
+								{otherItems.length > 0 ? (
+									<>
+										{supplier ? (
+											<h5 className="text-muted-foreground pt-2 text-sm font-semibold">
+												<Trans>Other items, by quantity</Trans>
+											</h5>
+										) : null}
+										<ul className="flex flex-col gap-2">
+											{otherItems.map((item) => {
+												const added = lines.some(
+													(line) => line.key === `item:${item.id}`,
+												)
+												return (
+													<li key={item.id}>
+														<button
+															type="button"
+															disabled={added}
+															onClick={() => addItem(item)}
+															className="border-border bg-card hover:bg-accent flex min-h-14 w-full items-center justify-between gap-3 rounded-(--station-control-radius) border px-4 py-2 text-start disabled:opacity-50"
+														>
+															<span className="min-w-0 font-medium break-words">
+																{item.name}
+															</span>
+															<Icon
+																name={added ? 'check' : 'plus'}
+																className="size-5 shrink-0"
+																aria-hidden
+															/>
+														</button>
+													</li>
+												)
+											})}
+										</ul>
+									</>
+								) : null}
 							</section>
 						) : null}
 						<label className="flex flex-col gap-2">
@@ -459,6 +552,15 @@ export function DeliverySheet({
 									</>
 								) : null}
 							</div>
+							{photo ? (
+								<p className="text-muted-foreground text-sm">
+									<Trans>
+										The photo is sent after the delivery. If it cannot be
+										uploaded it tries again by itself; the delivery is never
+										held up.
+									</Trans>
+								</p>
+							) : null}
 							{photoProblem ? (
 								<p role="alert" className="text-destructive text-sm">
 									{photoProblem}
@@ -549,7 +651,9 @@ function DeliveryLine({
 					</Button>
 				) : null}
 			</div>
-			{line.received ? (
+			{line.received && line.plain ? (
+				<PlainQuantity line={line} locale={locale} onPatch={onPatch} />
+			) : line.received ? (
 				<div className="flex flex-wrap items-start gap-4">
 					<div className="flex flex-col gap-1">
 						<span className="text-muted-foreground text-sm">
@@ -604,5 +708,58 @@ function DeliveryLine({
 				</div>
 			) : null}
 		</li>
+	)
+}
+
+/** How much of an item with no supplier product came, in any unit the item has. */
+function PlainQuantity({
+	line,
+	locale,
+	onPatch,
+}: {
+	line: DeliveryLineDraft
+	locale: string
+	onPatch: (change: Partial<DeliveryLineDraft>) => void
+}) {
+	const { _ } = useLingui()
+	const plain = line.plain!
+	const name = line.itemName
+	const choices = unitChoices({
+		baseUnit: line.baseUnit,
+		units: plain.units,
+		countUnit: plain.countUnit,
+	})
+	const unit: UnitRef = plain.unit
+	return (
+		<div className="flex flex-col gap-1">
+			<span className="text-muted-foreground text-sm">
+				<Trans>How much came</Trans>
+			</span>
+			<div className="flex flex-wrap items-start gap-2">
+				<BigStepper
+					value={plain.amount}
+					label={name}
+					step={unitStep(unit)}
+					fractions={unitTakesFractions(unit)}
+					onChange={(amount) => onPatch({ plain: { ...plain, amount } })}
+				/>
+				<Select
+					aria-label={_(t`Unit for ${name}`)}
+					containerClassName="w-40"
+					value={unit}
+					onChange={(event) =>
+						onPatch({
+							plain: { ...plain, unit: event.target.value, amount: null },
+						})
+					}
+				>
+					{choices.map((ref) => (
+						<option key={ref} value={ref}>
+							{unitLabel(ref, plain.units, locale)}
+						</option>
+					))}
+				</Select>
+			</div>
+		</div>
 	)
 }

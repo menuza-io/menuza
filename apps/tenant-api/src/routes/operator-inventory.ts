@@ -12,6 +12,7 @@ import {
 	requireInventoryLocation,
 } from '../lib/inventory-guard.ts'
 import {
+	inventoryDeny,
 	inventoryErrorResponse,
 	readOptionalIdempotencyKey,
 } from '../lib/inventory-http.ts'
@@ -29,6 +30,7 @@ import { operatorInventorySoldOutRoutes } from './operator-inventory-sold-out.ts
 import { operatorInventoryTodayRoutes } from './operator-inventory-today.ts'
 import { operatorInventoryTransfersRoutes } from './operator-inventory-transfers.ts'
 import { operatorInventoryWasteRoutes } from './operator-inventory-waste.ts'
+import { listLocationSettings } from '../services/inventory-location-settings.ts'
 import {
 	getInventorySettings,
 	getInventoryStatus,
@@ -71,11 +73,11 @@ operatorInventoryRoutes.get(
 	async (c) => {
 		try {
 			const ctx = getInventoryAuth(c)
-			const settings = await getInventorySettings(
-				await getTenantDb(ctx.orgId),
-				ctx.region,
-			)
-			return json(settings)
+			const db = await getTenantDb(ctx.orgId)
+			const settings = await getInventorySettings(db, ctx.region)
+			// Read-only money and day settings of the locations the token covers.
+			const locations = await listLocationSettings(db, ctx.locationIds)
+			return json({ ...settings, locations })
 		} catch (error) {
 			return inventoryErrorResponse(error)
 		}
@@ -88,6 +90,14 @@ operatorInventoryRoutes.put(
 	async (c) => {
 		try {
 			const ctx = getInventoryAuth(c)
+			// Settings apply to every location (the target food cost, who may
+			// receive on a Station, the count day), so a token limited to some
+			// locations may not change them.
+			if (ctx.locationIds !== null) {
+				return inventoryDeny(403, 'location_forbidden', {
+					reason: 'organization_wide',
+				})
+			}
 			const body = await parseBody(c, updateInventorySettingsSchema)
 			if ('error' in body) return body.error
 			const idem = readOptionalIdempotencyKey(c)
@@ -104,7 +114,11 @@ operatorInventoryRoutes.put(
 						}
 					: null,
 			})
-			return json(settings)
+			const locations = await listLocationSettings(
+				await getTenantDb(ctx.orgId),
+				ctx.locationIds,
+			)
+			return json({ ...settings, locations })
 		} catch (error) {
 			return inventoryErrorResponse(error)
 		}

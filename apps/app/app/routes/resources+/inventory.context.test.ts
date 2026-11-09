@@ -1,4 +1,4 @@
-import { ConfigFlag, db, inArray } from '@repo/database'
+import { ConfigFlag, db, inArray, OrganizationLocation } from '@repo/database'
 import { INVENTORY_FLAG_KEYS, inventoryContextSchema } from '@repo/inventory'
 import { ENV } from 'varlock/env'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -103,7 +103,8 @@ describe('GET /resources/inventory/context', () => {
 		expect(res.headers.get('Cache-Control')).toBe('private, no-store')
 
 		const body = inventoryContextSchema.parse(await res.json())
-		expect(body).toEqual({ orgId: organization.id, features: OFF })
+		expect(body.orgId).toBe(organization.id)
+		expect(body.features).toEqual(OFF)
 	})
 
 	it('returns folded features for organization-level inventory flags', async () => {
@@ -152,5 +153,33 @@ describe('GET /resources/inventory/context', () => {
 		const res = await callLoader(contextRequest(organization.id))
 		const body = inventoryContextSchema.parse(await res.json())
 		expect(body.features).toEqual(OFF)
+	})
+
+	it('carries each location’s time zone and tax settings, and only a currency hint', async () => {
+		const { organization } = await setupTestOrgWithUser('admin')
+		const [location] = await db
+			.insert(OrganizationLocation)
+			.values({
+				organizationId: organization.id,
+				name: 'Riyadh',
+				slug: `riyadh-${organization.id.slice(-6)}`,
+				timezone: 'Asia/Riyadh',
+				taxRate: 15,
+				taxInclusive: true,
+			})
+			.returning({ id: OrganizationLocation.id })
+
+		const res = await callLoader(contextRequest(organization.id))
+		const body = inventoryContextSchema.parse(await res.json())
+		expect(body.organization?.currency).toMatch(/^[A-Z]{3}$/)
+		const mine = body.locations?.find((entry) => entry.id === location!.id)
+		expect(mine).toEqual({
+			id: location!.id,
+			// The control plane has no per-location currency yet: never invented.
+			currency: null,
+			timeZone: 'Asia/Riyadh',
+			taxInclusive: true,
+			taxRatePercent: 15,
+		})
 	})
 })

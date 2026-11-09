@@ -18,8 +18,13 @@ import {
 	type,
 	type Page,
 } from './ui-testing.ts'
+import catalogFixture from './fixtures/catalog.json'
+import countSheetFixture from './fixtures/count-sheet.json'
 import { db } from '~/lib/db.ts'
 import { type Session } from '~/lib/signin.ts'
+
+const catalogJson = () => structuredClone(catalogFixture)
+const sheetJson = () => structuredClone(countSheetFixture)
 
 let page: Page
 const issues: unknown[][] = []
@@ -90,7 +95,7 @@ describe('Stock home', () => {
 			'staff-session-token-aaaaaaaa',
 		)
 		expect(first!.headers.get('Authorization')).toBe('Bearer device-secret')
-		expect(first!.headers.get('Pos-Inventory-Contract')).toBe('1')
+		expect(first!.headers.get('Pos-Inventory-Contract')).toBe('2')
 	})
 
 	it('asks for a location when the terminal has none', async () => {
@@ -240,11 +245,78 @@ describe('Count', () => {
 		).toBe('1500')
 		await vi.waitFor(async () => {
 			const rows = await stockRows(ORIGIN)
-			const entry = rows.find((row) => row.kind === 'count_entry')
-			expect(
-				entry && entry.kind === 'count_entry' && entry.payload.entry,
-			).toMatchObject({ amount: 1500, unit: 'g' })
+			const entries = rows.flatMap((row) =>
+				row.kind === 'count_entry' ? [row.payload.entry] : [],
+			)
+			// The kg entry that was never sent is cleared, then the grams are counted: the region never adds them up.
+			expect(entries).toMatchObject([
+				{ amount: null, unit: 'kg' },
+				{ amount: 1500, unit: 'g' },
+			])
 		})
+	})
+
+	it('switching the unit AFTER the entry was sent clears the old unit first, so the region does not add 1.5 kg and 1500 g', async () => {
+		const { api } = await joinOpenCount()
+		const field = () =>
+			page.host.querySelector<HTMLInputElement>('input[aria-label="Tomatoes"]')!
+		await type(field(), '1.5')
+		await vi.waitFor(() => expect(api.writes(/\/entries$/)).toHaveLength(1), {
+			timeout: 5_000,
+		})
+		await vi.waitFor(async () => expect(await stockRows(ORIGIN)).toEqual([]))
+		await act(
+			page.host.querySelector<HTMLSelectElement>(
+				'select[aria-label="Unit for Tomatoes"]',
+			)!,
+			'g',
+		)
+		await vi.waitFor(() => expect(api.writes(/\/entries$/)).toHaveLength(2), {
+			timeout: 5_000,
+		})
+		expect(
+			api
+				.writes(/\/entries$/)[1]!
+				.body.entries.map((e: { unit: string; amount: number | null }) => [
+					e.unit,
+					e.amount,
+				]),
+		).toEqual([
+			['kg', null],
+			['g', 1500],
+		])
+	})
+
+	it('"Add another unit" counts 1.5 kg and 500 g of the same item, both entries live', async () => {
+		const { api } = await joinOpenCount()
+		await type(
+			page.host.querySelector<HTMLInputElement>(
+				'input[aria-label="Tomatoes"]',
+			)!,
+			'1.5',
+		)
+		await click(buttons(page.host, 'Add another unit')[1]!)
+		const more = page.host.querySelector<HTMLInputElement>(
+			'input[aria-label="Tomatoes in g"]',
+		)!
+		await type(more, '500')
+		await vi.waitFor(
+			async () => {
+				const rows = await stockRows(ORIGIN)
+				const entries = rows.flatMap((row) =>
+					row.kind === 'count_entry' &&
+					row.payload.entry.itemId === 'item_tomato'
+						? [[row.payload.entry.unit, row.payload.entry.amount]]
+						: [],
+				)
+				expect(entries).toEqual([
+					['kg', 1.5],
+					['g', 500],
+				])
+			},
+			{ timeout: 5_000 },
+		)
+		void api
 	})
 
 	it('offline, keeps every tap on the tablet and sends it when the connection comes back, in order', async () => {
@@ -310,21 +382,25 @@ describe('Count', () => {
 		)
 	})
 
-	it('Send for review asks first, queues the send after every entry, and ends this tablet’s part', async () => {
+	it('"I am done counting" asks first, queues a per-device note after every entry, and does not close the count', async () => {
 		const { api } = await joinOpenCount()
 		await click(button(page.host, 'One more Tomatoes'))
-		await click(button(page.host, 'Send for review'))
-		expect(text(page.host)).toContain('Send for review?')
+		await click(button(page.host, 'I am done counting'))
+		expect(text(page.host)).toContain('Done counting?')
 		expect(text(page.host)).toContain(
 			'Items you did not count stay as they were',
 		)
+		expect(text(page.host)).toContain(
+			'a manager reviews and finishes it in the Menuza app',
+		)
 		const dialog = page.host.querySelector('dialog[open]')!
-		await click(button(dialog, 'Send for review'))
+		await click(button(dialog, 'I am done counting'))
 		await vi.waitFor(
-			() => expect(text(page.host)).toContain('Your part of the count is done'),
-			{
-				timeout: 5_000,
-			},
+			() => expect(text(page.host)).toContain('You are done counting'),
+			{ timeout: 5_000 },
+		)
+		expect(text(page.host)).toContain(
+			'A manager reviews and finishes the count',
 		)
 		await vi.waitFor(() => expect(api.writes(/\/send$/)).toHaveLength(1), {
 			timeout: 5_000,
@@ -334,15 +410,134 @@ describe('Count', () => {
 			.map((request) => request.path.split('/').pop())
 		expect(order).toEqual(['entries', 'send'])
 		expect(api.writes(/\/send$/)[0]!.body).toMatchObject({ madeBy: 'stf_ana' })
+		// Nothing was closed here: the person can keep counting.
+		await click(button(page.host, 'Keep counting'))
+		await click(button(page.host, 'One more Tomatoes'))
+		await vi.waitFor(() => expect(api.writes(/\/entries$/)).toHaveLength(2), {
+			timeout: 5_000,
+		})
 	})
 
-	it('tells the person when entries were refused after the count closed, and keeps them to clear', async () => {
+	it('says a manager is reviewing the count, and still takes late entries', async () => {
 		const api = region()
 		api.install()
 		const original = api.fetchImpl.getMockImplementation()!
 		api.fetchImpl.mockImplementation(async (input, init) => {
-			if (String(input).endsWith('/entries'))
-				return Response.json({ error: 'count_closed' }, { status: 409 })
+			const url = new URL(String(input))
+			if (url.pathname === '/pos/inventory/catalog')
+				return Response.json({
+					...catalogJson(),
+					counts: [],
+					version: 'v-review',
+				})
+			if (
+				url.pathname === '/pos/inventory/counts/cnt_open1' &&
+				(!init?.method || init.method === 'GET')
+			)
+				return Response.json({
+					...sheetJson(),
+					count: { ...sheetJson().count, status: 'in_review' },
+				})
+			return original(input, init)
+		})
+		await db.stockCatalog.put({
+			key: `counts:${ORIGIN}`,
+			value: [
+				{
+					localId: 'srv-cnt_open1',
+					ref: { id: 'cnt_open1' },
+					listId: 'list_weekly',
+					listName: 'Weekly count',
+					status: 'counting',
+					startedAt: 1,
+					joined: true,
+				},
+			],
+			savedAt: Date.now(),
+		})
+		await openStock()
+		await vi.waitFor(() => expect(text(page.host)).toContain('Being reviewed'))
+		expect(text(page.host)).toContain('A manager is reviewing this count')
+		await click(button(page.host, /^Weekly count/))
+		await vi.waitFor(() =>
+			expect(text(page.host)).toContain(
+				'A manager is reviewing this count. You can still add late entries.',
+			),
+		)
+		await click(button(page.host, 'One more Tomatoes'))
+		await vi.waitFor(() => expect(api.writes(/\/entries$/)).toHaveLength(1), {
+			timeout: 5_000,
+		})
+	})
+
+	it('forgets a count the manager approved: no stale "In progress" card is left', async () => {
+		const api = region()
+		api.install()
+		const original = api.fetchImpl.getMockImplementation()!
+		api.fetchImpl.mockImplementation(async (input, init) => {
+			const url = new URL(String(input))
+			if (url.pathname === '/pos/inventory/catalog')
+				return Response.json({
+					...catalogJson(),
+					counts: [],
+					version: 'cat-v-done',
+				})
+			if (
+				url.pathname === '/pos/inventory/counts/cnt_gone' &&
+				(!init?.method || init.method === 'GET')
+			)
+				return Response.json({
+					...sheetJson(),
+					count: {
+						...sheetJson().count,
+						id: 'cnt_gone',
+						status: 'approved',
+						approvedAt: 2,
+						approvedBy: { kind: 'operator', id: 'user_mgr' },
+					},
+				})
+			return original(input, init)
+		})
+		await db.stockCatalog.put({
+			key: `counts:${ORIGIN}`,
+			value: [
+				{
+					localId: 'srv-cnt_gone',
+					ref: { id: 'cnt_gone' },
+					listId: 'list_weekly',
+					listName: 'Weekly count',
+					status: 'counting',
+					startedAt: 1,
+					joined: true,
+				},
+			],
+			savedAt: Date.now(),
+		})
+		await openStock()
+		await vi.waitFor(async () =>
+			expect(await db.stockCatalog.get(`counts:${ORIGIN}`)).toMatchObject({
+				value: [],
+			}),
+		)
+		await vi.waitFor(() => expect(text(page.host)).not.toContain('In progress'))
+	})
+
+	it('entries refused because the count was finished stay listed with the item, and clearing them asks first', async () => {
+		const api = region()
+		api.install()
+		const original = api.fetchImpl.getMockImplementation()!
+		api.fetchImpl.mockImplementation(async (input, init) => {
+			if (String(input).endsWith('/entries')) {
+				const body = JSON.parse(String(init?.body))
+				return Response.json({
+					accepted: [],
+					duplicates: [],
+					refused: body.entries.map((entry: { clientId: string }) => ({
+						clientId: entry.clientId,
+						code: 'count_closed',
+					})),
+				})
+			}
 			return original(input, init)
 		})
 		await openStock()
@@ -352,17 +547,49 @@ describe('Count', () => {
 		await click(button(page.host, 'One more Tomatoes'))
 		await vi.waitFor(
 			() => expect(text(page.host)).toContain('1 entry was not sent'),
-			{
-				timeout: 5_000,
-			},
+			{ timeout: 5_000 },
 		)
-		expect(text(page.host)).toContain('Not sent')
+		expect(text(page.host)).toContain('Tomatoes: The count was closed')
 		await click(button(page.host, 'See why'))
 		await vi.waitFor(() =>
-			expect(text(page.host)).toContain('Sent after the count closed: 1 entry'),
+			expect(text(page.host)).toContain(
+				'Not accepted, the count was already finished: 1 entry',
+			),
 		)
+		// It never promises that a manager can see them.
+		expect(text(page.host)).not.toContain('A manager can see them')
+		expect(text(page.host)).toContain('saved only on this tablet')
+		expect(text(page.host)).toContain('Tomatoes: 1 kg')
 		await click(button(page.host, 'Clear these'))
-		await vi.waitFor(async () => expect(await stockRows(ORIGIN)).toEqual([]))
+		// Asked first: nothing was deleted yet.
+		expect(text(page.host)).toContain('Clear these entries?')
+		expect(await stockRows(ORIGIN)).toHaveLength(1)
+		const confirm = [...page.host.querySelectorAll('dialog[open]')].at(-1)!
+		await click(button(confirm, 'Keep them'))
+		expect(await stockRows(ORIGIN)).toHaveLength(1)
+		await click(button(page.host, 'Clear these'))
+		const again = [...page.host.querySelectorAll('dialog[open]')].at(-1)!
+		await click(button(again, 'Clear these'))
+		await vi.waitFor(async () =>
+			expect(
+				(await stockRows(ORIGIN)).filter((r) => r.kind === 'count_entry'),
+			).toEqual([]),
+		)
+	})
+
+	it('hints that someone else already counted the shelf when a number is typed', async () => {
+		await joinOpenCount()
+		// The fixture sheet: Lemons counted by someone else (30), nothing of this person's.
+		await click(button(page.host, /^Not in an area/))
+		await vi.waitFor(() =>
+			expect(text(page.host)).toContain('Someone already counted this'),
+		)
+		await click(button(page.host, 'One more Lemons'))
+		await vi.waitFor(() =>
+			expect(text(page.host)).toContain(
+				'Someone else already counted this shelf. Your count is added to theirs.',
+			),
+		)
 	})
 })
 

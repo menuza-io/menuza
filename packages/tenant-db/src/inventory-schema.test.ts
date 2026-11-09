@@ -28,6 +28,7 @@ async function expectRejectsWith(
 const INVENTORY_TABLES = [
 	'inv_alert_log',
 	'inv_audit_log',
+	'inv_cost_events',
 	'inv_count_entries',
 	'inv_count_list_items',
 	'inv_count_lists',
@@ -40,6 +41,7 @@ const INVENTORY_TABLES = [
 	'inv_item_places',
 	'inv_item_units',
 	'inv_items',
+	'inv_location_settings',
 	'inv_movements',
 	'inv_order_lines',
 	'inv_orders',
@@ -63,6 +65,8 @@ const INVENTORY_TABLES = [
 const INVENTORY_TRIGGERS = [
 	'inv_audit_log_no_delete',
 	'inv_audit_log_no_update',
+	'inv_cost_events_no_delete',
+	'inv_cost_events_no_update',
 	'inv_count_entries_no_delete',
 	'inv_count_entries_no_update',
 	'inv_count_entries_open_count',
@@ -1256,6 +1260,78 @@ describe('inventory tenant schema (0033_inventory, 0034_inventory_orders, 0035_i
 				"UPDATE inv_outbox SET attempts = -1 WHERE source_id = 'o2'",
 			),
 			'chk_inv_outbox_attempts',
+		)
+	})
+
+	it('0039: location settings, delivery client ids, cost events and the order send claim', async () => {
+		const { client } = await openMigratedDb()
+		await insertItem(client, 'i1')
+		// One settings row per location; money, tax and day start are checked.
+		await client.execute(
+			"INSERT INTO inv_location_settings (location_id, currency, currency_source, time_zone) VALUES ('main', 'SAR', 'app', 'Asia/Riyadh')",
+		)
+		const defaults = await client.execute(
+			"SELECT day_start_minutes, prices_include_tax, tax_rate_bp, version FROM inv_location_settings WHERE location_id = 'main'",
+		)
+		expect(defaults.rows[0]).toMatchObject({
+			day_start_minutes: 240,
+			prices_include_tax: 0,
+			tax_rate_bp: null,
+			version: 1,
+		})
+		await expectRejectsWith(
+			client.execute(
+				"INSERT INTO inv_location_settings (location_id, day_start_minutes) VALUES ('x', 1440)",
+			),
+			'chk_inv_location_settings_day_start',
+		)
+		await expectRejectsWith(
+			client.execute(
+				"INSERT INTO inv_location_settings (location_id, currency_source) VALUES ('y', 'guess')",
+			),
+			'chk_inv_location_settings_source',
+		)
+		// A delivery's client id is unique per location, and old rows may have none.
+		const delivery = (id: string, location: string, clientId: string | null) =>
+			client.execute({
+				sql: "INSERT INTO inv_deliveries (id, location_id, currency, received_by_kind, business_date, client_id) VALUES (?, ?, 'SAR', 'operator', '2026-01-01', ?)",
+				args: [id, location, clientId],
+			})
+		await delivery('d1', 'main', 'c1')
+		await expectRejectsWith(
+			delivery('d2', 'main', 'c1'),
+			'UNIQUE constraint failed: inv_deliveries.location_id, inv_deliveries.client_id',
+		)
+		await delivery('d3', 'other', 'c1')
+		await delivery('d4', 'main', null)
+		await delivery('d5', 'main', null)
+		// Cost events are history.
+		await client.execute(
+			"INSERT INTO inv_cost_events (id, item_id, kind, location_id, quantity, cost_micro, on_hand_before, avg_before_micro, avg_after_micro) VALUES ('e1', 'i1', 'batch', 'main', 10, 5, 0, NULL, 5)",
+		)
+		await expectRejectsWith(
+			client.execute(
+				"UPDATE inv_cost_events SET cost_micro = 1 WHERE id = 'e1'",
+			),
+			'inv_cost_events is append-only',
+		)
+		await expectRejectsWith(
+			client.execute("DELETE FROM inv_cost_events WHERE id = 'e1'"),
+			'inv_cost_events is append-only',
+		)
+		await expectRejectsWith(
+			client.execute(
+				"INSERT INTO inv_cost_events (id, item_id, kind, location_id, quantity, cost_micro, on_hand_before, avg_after_micro) VALUES ('e2', 'i1', 'guess', 'main', 1, 1, 0, 1)",
+			),
+			'chk_inv_cost_events_kind',
+		)
+		// Settings take a count time; orders carry a send claim.
+		await client.execute(
+			"INSERT INTO inv_settings (id, unit_system, count_time) VALUES ('default', 'metric', '22:30')",
+		)
+		const columns = await client.execute('PRAGMA table_info(inv_orders)')
+		expect(columns.rows.map((row) => String(row.name))).toContain(
+			'send_claim_at',
 		)
 	})
 })

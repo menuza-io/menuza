@@ -1,17 +1,20 @@
 import { classifyStationFailure, type StationOutboxKind } from '@repo/inventory'
 import { create } from 'zustand'
-import { StockApiError, type StockApi } from './api.ts'
+import { INVALID_RESPONSE, StockApiError, type StockApi } from './api.ts'
 import { pruneLocal } from './local.ts'
 import {
 	claimNext,
 	completeRow,
 	deferRows,
 	failRow,
+	LANE_KINDS,
+	laneOf,
 	refOf,
 	releaseRows,
 	stockRows,
 	type Resolved,
 } from './queue.ts'
+import { noteCountStatus, refreshCountStatus } from './reconcile.ts'
 import { db, type StockRow } from '~/lib/db.ts'
 
 /**
@@ -29,7 +32,30 @@ import { db, type StockRow } from '~/lib/db.ts'
  * One deviation from "pause stops the run": `receive_needs_manager` only
  * holds deliveries, so a cashier's counts and waste still go out while a
  * delivery waits for a manager to sign in.
+ *
+ * Rows go in lanes (`queue.ts`): a lane that is backing off, or whose row the
+ * region answers 500 to, is passed over and the others go on. A row that is
+ * answered (not a dropped network) with an error again and again is not
+ * retried for ever: a delivery or photo after `STUCK_AFTER` tries, anything
+ * whose answer this tablet cannot read after `UNREADABLE_AFTER`, becomes a
+ * refused row the person sees ("stuck", "update Station") and can retry or
+ * remove.
  */
+
+/** Tries (with the backoff) before a delivery or photo that keeps being answered with an error is shown as stuck. */
+export const STUCK_AFTER = 6
+/** Tries before an answer this tablet cannot read is shown as "update Station". */
+export const UNREADABLE_AFTER = 3
+const STUCK_KINDS = new Set<StationOutboxKind>(['delivery', 'delivery_photo'])
+
+/** The whole network or region is down: every lane would fail the same way. */
+const isOutage = (code: string, status: number) =>
+	code !== INVALID_RESPONSE &&
+	(code === 'connection_lost' ||
+		status === 429 ||
+		status === 502 ||
+		status === 503 ||
+		status === 504)
 
 export type StockSyncState = {
 	running: boolean
@@ -82,7 +108,11 @@ const countId = (row: StockRow): string | null => {
 }
 
 /** Sends one claimed batch. Throws `StockApiError` when the request itself failed. */
-async function sendBatch(batch: StockRow[], api: StockApi): Promise<Outcome[]> {
+async function sendBatch(
+	batch: StockRow[],
+	api: StockApi,
+	origin: string,
+): Promise<Outcome[]> {
 	const head = batch[0]!
 	const envelope = (row: StockRow) => ({
 		madeBy: row.madeBy ?? undefined,
@@ -96,6 +126,11 @@ async function sendBatch(batch: StockRow[], api: StockApi): Promise<Outcome[]> {
 				listId: head.payload.listId,
 				...envelope(head),
 			})
+			await noteCountStatus(
+				origin,
+				{ id: result.count.id },
+				result.count.status,
+			)
 			return [
 				{
 					row: head,
@@ -121,6 +156,9 @@ async function sendBatch(batch: StockRow[], api: StockApi): Promise<Outcome[]> {
 			const refused = new Map(
 				result.refused.map((entry) => [entry.clientId, entry.code]),
 			)
+			// The region refuses per entry once the manager finished the count: ask how it ended so the tablet can drop the count.
+			if ([...refused.values()].includes('count_closed'))
+				await refreshCountStatus(api, origin, id)
 			return batch.map((row): Outcome => {
 				if (accepted.has(row.id)) return { row, kind: 'done', resolved: null }
 				const code = refused.get(row.id)
@@ -130,7 +168,12 @@ async function sendBatch(batch: StockRow[], api: StockApi): Promise<Outcome[]> {
 		case 'count_send': {
 			const id = countId(head)
 			if (!id) return [failed(head, 'dependency_failed')]
-			await api.sendCount(id, { clientId: head.id, ...envelope(head) })
+			// "I'm done" changes nothing about the count itself; the answer carries its state.
+			const summary = await api.sendCount(id, {
+				clientId: head.id,
+				...envelope(head),
+			})
+			await noteCountStatus(origin, { id }, summary.status)
 			return [{ row: head, kind: 'done', resolved: null }]
 		}
 		case 'waste': {
@@ -202,6 +245,36 @@ const failed = (row: StockRow, code: string): Outcome => ({
 	code,
 })
 
+/**
+ * Backs off rows that could not be sent, unless one has been answered with an
+ * error too many times: a delivery or photo that is stuck, or an answer this
+ * tablet cannot read, is refused for good so the person sees it (and the
+ * lane behind it is not held for ever). Returns when to try again, or null
+ * when every row was refused.
+ */
+async function retryOrGiveUp(
+	rows: StockRow[],
+	code: string,
+	outage: boolean,
+	now: number,
+): Promise<number | null> {
+	let soonest: number | null = null
+	for (const row of rows) {
+		const tries = row.attempts + 1
+		if (!outage && code === INVALID_RESPONSE && tries >= UNREADABLE_AFTER) {
+			await failRow(row, 'update_needed')
+			continue
+		}
+		if (!outage && STUCK_KINDS.has(row.kind) && tries >= STUCK_AFTER) {
+			await failRow(row, 'stuck')
+			continue
+		}
+		const at = await deferRows([row], code, now)
+		soonest = Math.min(soonest ?? at, at)
+	}
+	return soonest
+}
+
 /** Sends everything that is due. Safe to call from several places: one run at a time. */
 export async function flushStock(deps: FlushDeps): Promise<FlushResult> {
 	const state = useStockSync
@@ -241,12 +314,15 @@ export async function flushStock(deps: FlushDeps): Promise<FlushResult> {
 			if (batch.length === 0) break
 			let outcomes: Outcome[]
 			try {
-				outcomes = await sendBatch(batch, deps.api)
+				outcomes = await sendBatch(batch, deps.api, deps.origin)
 			} catch (failure) {
 				const code =
 					failure instanceof StockApiError ? failure.code : 'connection_lost'
 				const status = failure instanceof StockApiError ? failure.status : 0
-				const action = classifyStationFailure({ status, code })
+				const action =
+					code === 'contract_unsupported' || code === 'contract_too_old'
+						? 'pause'
+						: classifyStationFailure({ status, code })
 				if (action === 'permanent') {
 					// One bad entry must not refuse its neighbours: try them one by one.
 					if (batch.length > 1 && code === 'invalid_request') {
@@ -275,9 +351,14 @@ export async function flushStock(deps: FlushDeps): Promise<FlushResult> {
 					else deps.onUnrecognised?.()
 					break
 				}
-				retryAt = await deferRows(batch, code, clock())
+				const outage = isOutage(code, status)
+				const later = await retryOrGiveUp(batch, code, outage, clock())
+				if (later !== null) retryAt = Math.min(retryAt ?? later, later)
 				error = code
-				break
+				if (outage) break
+				// An answer came, but not a good one for this lane: pass it over for this run, the other lanes go on.
+				for (const kind of LANE_KINDS[laneOf(batch[0]!.kind)]) skip.add(kind)
+				continue
 			}
 			for (const outcome of outcomes) {
 				if (outcome.kind === 'done') {
@@ -286,11 +367,19 @@ export async function flushStock(deps: FlushDeps): Promise<FlushResult> {
 				} else if (outcome.kind === 'failed') {
 					await failRow(outcome.row, outcome.code)
 				} else {
-					retryAt = await deferRows([outcome.row], 'invalid_response', clock())
-					error = 'invalid_response'
+					// The region answered 200 without saying what became of this entry.
+					const later = await retryOrGiveUp(
+						[outcome.row],
+						INVALID_RESPONSE,
+						false,
+						clock(),
+					)
+					if (later !== null) retryAt = Math.min(retryAt ?? later, later)
+					error = INVALID_RESPONSE
+					for (const kind of LANE_KINDS[laneOf(outcome.row.kind)])
+						skip.add(kind)
 				}
 			}
-			if (error) break
 		}
 		return { sent, paused }
 	} finally {

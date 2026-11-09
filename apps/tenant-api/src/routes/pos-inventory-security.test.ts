@@ -157,6 +157,7 @@ describe('/pos/inventory security', () => {
 			name: 'Security sauce',
 			kind: 'made',
 			baseUnit: 'ml',
+			batchCounted: true,
 		})
 		await seedDb.insert(invRecipes).values({
 			id: 'sec_sauce_recipe',
@@ -767,8 +768,21 @@ describe('/pos/inventory security', () => {
 					route.photo ? 503 : 200,
 				)
 			}
-			// A newer tablet than the region is never refused on that alone.
+			// Versions 1 and 2 are both served.
+			expect((await send(routes[0]!, full({ contract: 1 }))).status).toBe(200)
 			expect((await send(routes[0]!, full({ contract: 2 }))).status).toBe(200)
+		})
+
+		it('answers contract_unsupported to a tablet newer than the region, on every route', async () => {
+			for (const route of routes) {
+				for (const contract of [3, 99, 999999]) {
+					expectRefusal(
+						await send(route, full({ contract })),
+						'contract_unsupported',
+						`${route.name} with contract ${contract}`,
+					)
+				}
+			}
 		})
 	})
 

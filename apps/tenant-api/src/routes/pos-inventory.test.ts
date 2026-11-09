@@ -171,7 +171,7 @@ describe('/pos/inventory', () => {
 			expect(reply.headers.get('cache-control')).toBe('private, no-store')
 			const parsed = stationCatalogSchema.parse(reply.body)
 			expect(parsed.locationId).toBe(STOCK_LOC)
-			expect(parsed.contractVersion).toBe(1)
+			expect(parsed.contractVersion).toBe(2)
 			expect(parsed.settings).toEqual({
 				receiveRequiresManager: true,
 				photoMaxBytes: 5 * 1024 * 1024,
@@ -549,8 +549,8 @@ describe('/pos/inventory', () => {
 			])
 			expect(batch.body.refused.map((r: { code: string }) => r.code)).toEqual([
 				'unit_mismatch',
-				'not_found',
-				'not_found',
+				'item_unknown',
+				'area_unknown',
 			])
 
 			// An archived item is refused as such.
@@ -626,66 +626,212 @@ describe('/pos/inventory', () => {
 			expect(tomato.mine).toEqual({ amount: 2, unit: 'kg' })
 		})
 
-		it('sends a count for review once, idempotently, and then answers 409 count_closed to late entries', async () => {
+		it('"send" is this tablet\'s "I\'m done": it records the device, never closes the count for the others, and replays', async () => {
 			const id = (await startCount()).body.count.id as string
 			const clientId = uid('send')
 			const sent = await cashier('POST', `/pos/inventory/counts/${id}/send`, {
 				body: { clientId },
 			})
 			expect(sent.status, sent.raw).toBe(200)
+			// The count is not touched: still being counted, not sent for review.
 			expect(sent.body).toMatchObject({
 				id,
-				status: 'in_review',
-				sentForReviewAt: expect.any(Number),
+				status: 'counting',
+				sentForReviewAt: null,
+				version: 1,
 			})
 			expect(moneyKeys(sent.body)).toEqual([])
-			// Another tablet sending too, and a replay, both answer 200.
-			const again = await manager('POST', `/pos/inventory/counts/${id}/send`, {
-				body: { clientId: uid('send') },
-			})
+
+			// Another tablet sending too, and a replay, both answer 200 unchanged.
+			const other = await kit.station(ORG_A, { terminalCode: 'K2' })
+			const again = await kit.request(
+				'POST',
+				`/pos/inventory/counts/${id}/send`,
+				{
+					secret: other.secret,
+					session: other.cashier.session,
+					body: { clientId: uid('send') },
+				},
+			)
 			expect(again.status).toBe(200)
-			expect(again.body.status).toBe('in_review')
+			expect(again.body.status).toBe('counting')
 			const replay = await cashier('POST', `/pos/inventory/counts/${id}/send`, {
 				body: { clientId },
 			})
 			expect(replay.body).toEqual(sent.body)
-			const db = await h.db(ORG_A)
-			expect(
-				(
-					await db
-						.select()
-						.from(invAuditLog)
-						.where(eq(invAuditLog.action, 'count.send'))
-				).length,
-			).toBe(1)
+			// A contract 1 tablet gets the same per-device meaning.
+			const v1 = await cashier('POST', `/pos/inventory/counts/${id}/send`, {
+				body: { clientId: uid('send') },
+				contract: 1,
+			})
+			expect(v1.status).toBe(200)
+			expect(v1.body.status).toBe('counting')
 
-			// Entries after the send: the whole request is refused, nothing is stored.
-			const late = await cashier(
+			const db = await h.db(ORG_A)
+			const audit = await db
+				.select()
+				.from(invAuditLog)
+				.where(eq(invAuditLog.action, 'count.device_done'))
+			expect(audit.map((row) => row.detail)).toEqual(
+				expect.arrayContaining([
+					{ deviceId: tablet.deviceId },
+					{ deviceId: other.deviceId },
+				]),
+			)
+			expect(audit.every((row) => row.resourceId === id)).toBe(true)
+			// No state change was audited: only the office sends a count for review.
+			expect(
+				await db
+					.select()
+					.from(invAuditLog)
+					.where(eq(invAuditLog.action, 'count.send')),
+			).toEqual([])
+
+			// Both tablets keep counting after the first one is done.
+			const more = await cashier(
 				'POST',
 				`/pos/inventory/counts/${id}/entries`,
 				{
 					body: { entries: [entry(k.items.tomato.id, 1)] },
 				},
 			)
-			expect(late.status).toBe(409)
-			expect(late.body.error).toBe('count_closed')
+			expect(more.status).toBe(200)
+			expect(more.body.accepted).toHaveLength(1)
+		})
+
+		it('only the office sends a count for review: entries keep landing while it waits, a new start is its own count, and a closed count refuses per entry', async () => {
+			const first = await startCount()
+			const id = first.body.count.id as string
+			const url = `/pos/inventory/counts/${id}/entries`
+			const early = entry(k.items.tomato.id, 2)
+			expect(
+				(await cashier('POST', url, { body: { entries: [early] } })).status,
+			).toBe(200)
+
+			// The office finishes the count (the App's "Finish").
+			await k.world.ok('POST', `/counts/${id}/send`, { expectedVersion: 1 })
+			const late = entry(k.items.chicken.id, 3)
+			const accepted = await cashier('POST', url, { body: { entries: [late] } })
+			expect(accepted.status, accepted.raw).toBe(200)
+			expect(
+				stationCountEntriesResultSchema.parse(accepted.body).accepted,
+			).toEqual([{ clientId: late.clientId, quantity: 3_000_000 }])
+			const sheet = await cashier('GET', `/pos/inventory/counts/${id}`)
+			expect(sheet.body.count).toMatchObject({
+				status: 'in_review',
+				itemsCounted: 2,
+			})
+
+			// A tablet that starts the same list now does not join the count in
+			// review: it gets a new count (which the next tablet then joins).
+			const fresh = await startCount()
+			expect(fresh.status, fresh.raw).toBe(200)
+			expect(fresh.body.joined).toBe(false)
+			expect(fresh.body.count.id).not.toBe(id)
+			expect(fresh.body.count.status).toBe('counting')
+			const joined = await manager('POST', '/pos/inventory/counts', {
+				body: {
+					clientId: uid('start'),
+					locationId: STOCK_LOC,
+					listId: k.list.id,
+				},
+			})
+			expect(joined.body).toMatchObject({
+				joined: true,
+				count: { id: fresh.body.count.id },
+			})
+			// The catalogue offers only the count being counted.
+			const catalog = await cashier(
+				'GET',
+				`/pos/inventory/catalog?locationId=${STOCK_LOC}`,
+			)
+			expect(catalog.body.counts.map((c: { id: string }) => c.id)).toEqual([
+				fresh.body.count.id,
+			])
+
+			// Approved: a new entry is refused for that entry only (status 200, the
+			// whole request is not failed) and a replay keeps its first result.
+			await k.world.ok('POST', `/counts/${id}/approve`, { expectedVersion: 2 })
+			const nextEntry = entry(k.items.tomato.id, 9)
+			const closed = await cashier('POST', url, {
+				body: { entries: [early, nextEntry] },
+			})
+			expect(closed.status, closed.raw).toBe(200)
+			expect(closed.body).toEqual({
+				accepted: [],
+				duplicates: [early.clientId],
+				refused: [{ clientId: nextEntry.clientId, code: 'count_closed' }],
+			})
+			const db = await h.db(ORG_A)
 			expect(
 				await db
 					.select()
 					.from(invCountEntries)
-					.where(eq(invCountEntries.countId, id)),
+					.where(eq(invCountEntries.clientId, nextEntry.clientId)),
 			).toEqual([])
 
-			// The office cancels it: sending is closed too.
-			const operatorRead = await k.world.ok('GET', `/counts/${id}`)
-			await k.world.ok('POST', `/counts/${id}/cancel`, {
-				expectedVersion: operatorRead.count.version,
+			// A cancelled count: "I'm done" answers its status and records nothing more.
+			const cancelledId = fresh.body.count.id as string
+			await k.world.ok('POST', `/counts/${cancelledId}/cancel`, {
+				expectedVersion: 1,
 			})
-			const closed = await cashier('POST', `/pos/inventory/counts/${id}/send`, {
-				body: { clientId: uid('send') },
+			const doneAfter = await cashier(
+				'POST',
+				`/pos/inventory/counts/${cancelledId}/send`,
+				{ body: { clientId: uid('send') } },
+			)
+			expect(doneAfter.status).toBe(200)
+			expect(doneAfter.body.status).toBe('cancelled')
+		})
+
+		it('answers a clientId repeated inside one request as a duplicate, never a server error', async () => {
+			const id = (await startCount()).body.count.id as string
+			const twice = entry(k.items.tomato.id, 2)
+			const reply = await cashier(
+				'POST',
+				`/pos/inventory/counts/${id}/entries`,
+				{
+					body: { entries: [twice, { ...twice, amount: 8 }] },
+				},
+			)
+			expect(reply.status, reply.raw).toBe(200)
+			expect(reply.body).toEqual({
+				accepted: [{ clientId: twice.clientId, quantity: 2_000_000 }],
+				duplicates: [twice.clientId],
+				refused: [],
 			})
-			expect(closed.status).toBe(409)
-			expect(closed.body.error).toBe('count_closed')
+		})
+
+		it('records who synced a count it started for another person', async () => {
+			const reply = await cashier('POST', '/pos/inventory/counts', {
+				body: {
+					clientId: uid('start'),
+					locationId: STOCK_LOC,
+					listId: k.list.id,
+					madeBy: tablet.manager.staffId,
+				},
+			})
+			expect(reply.status, reply.raw).toBe(200)
+			expect(reply.body.count.startedBy).toEqual({
+				kind: 'staff',
+				id: tablet.manager.staffId,
+			})
+			const db = await h.db(ORG_A)
+			const audit = await db
+				.select()
+				.from(invAuditLog)
+				.where(eq(invAuditLog.action, 'count.start'))
+			expect(audit[0]!.detail).toEqual({ syncedBy: tablet.cashier.staffId })
+			// A person who is not on the roster is ignored: the session's own.
+			const stranger = await manager('POST', '/pos/inventory/counts', {
+				body: {
+					clientId: uid('start'),
+					locationId: STOCK_LOC,
+					listId: null,
+					madeBy: 'stf-nobody-knows',
+				},
+			})
+			expect(stranger.body.count.startedBy.id).toBe(tablet.manager.staffId)
 		})
 
 		it('answers 404 for a count of another location, an unknown count, and an id that cannot be one', async () => {
@@ -895,7 +1041,7 @@ describe('/pos/inventory', () => {
 			])
 			expect(reply.status, reply.raw).toBe(200)
 			expect(reply.body.refused.map((r: { code: string }) => r.code)).toEqual([
-				'not_found',
+				'item_unknown',
 				'item_archived',
 				'unit_mismatch',
 			])
@@ -942,6 +1088,66 @@ describe('/pos/inventory', () => {
 			expect(
 				audit.find((row) => row.actorId === tablet.manager.staffId)?.detail,
 			).toEqual({ entries: 1, syncedBy: tablet.cashier.staffId })
+		})
+
+		it('answers a clientId repeated inside one batch as a duplicate (never a 500), and a different entry under it as a conflict', async () => {
+			const one = wasteEntry(k.items.tomato.id)
+			const reply = await waste([one, { ...one }])
+			expect(reply.status, reply.raw).toBe(200)
+			const parsed = stationWasteResultSchema.parse(reply.body)
+			expect(parsed.accepted).toHaveLength(1)
+			expect(parsed.duplicates).toEqual([
+				{ clientId: one.clientId, id: parsed.accepted[0]!.id },
+			])
+			expect(await kit.wasteRows(ORG_A)).toHaveLength(1)
+
+			const other = wasteEntry(k.items.tomato.id)
+			const conflict = await waste([
+				other,
+				{ ...other, itemId: k.items.chicken.id },
+			])
+			expect(conflict.status, conflict.raw).toBe(200)
+			expect(conflict.body.accepted).toHaveLength(1)
+			expect(conflict.body.refused).toEqual([
+				{ clientId: other.clientId, code: 'idempotency_conflict' },
+			])
+			expect(await kit.wasteRows(ORG_A)).toHaveLength(2)
+		})
+
+		it('bounds madeAt: believed within 7 days, never trusted into the future or far back (booked to now and flagged late)', async () => {
+			const now = Date.now()
+			const DAY = 24 * HOUR
+			const entries = {
+				now: wasteEntry(k.items.tomato.id),
+				future: wasteEntry(k.items.tomato.id, { madeAt: now + 30 * DAY }),
+				skew: wasteEntry(k.items.tomato.id, { madeAt: now + 60_000 }),
+				recent: wasteEntry(k.items.tomato.id, { madeAt: now - 3 * DAY }),
+				old: wasteEntry(k.items.tomato.id, { madeAt: now - 10 * DAY }),
+				epoch: wasteEntry(k.items.tomato.id, { madeAt: 1 }),
+			}
+			const reply = await waste(Object.values(entries))
+			expect(reply.status, reply.raw).toBe(200)
+			expect(reply.body.accepted).toHaveLength(6)
+			// Flagged for a manager: older than 48 hours (3 days) and the not
+			// believed ones (10 days, 1970); a far-future value is not "late".
+			expect([...reply.body.lateSync].sort()).toEqual(
+				[
+					entries.recent.clientId,
+					entries.old.clientId,
+					entries.epoch.clientId,
+				].sort(),
+			)
+			const rows = new Map(
+				(await kit.wasteRows(ORG_A)).map((row) => [row.clientId, row]),
+			)
+			const today = rows.get(entries.now.clientId)!.businessDate
+			expect(rows.get(entries.future.clientId)!.businessDate).toBe(today)
+			expect(rows.get(entries.skew.clientId)!.businessDate).toBe(today)
+			expect(rows.get(entries.old.clientId)!.businessDate).toBe(today)
+			expect(rows.get(entries.epoch.clientId)!.businessDate).toBe(today)
+			expect(rows.get(entries.recent.clientId)!.businessDate).not.toBe(today)
+			expect(rows.get(entries.epoch.clientId)!.lateSync).toBe(true)
+			expect(rows.get(entries.future.clientId)!.lateSync).toBe(false)
 		})
 
 		describe('dishes (Kitchen "Log it as waste?")', () => {
@@ -1138,6 +1344,7 @@ describe('/pos/inventory', () => {
 				name: 'Prep sauce',
 				kind: 'made',
 				baseUnit: 'ml',
+				batchCounted: true,
 			})
 			await db.insert(invRecipes).values({
 				id: 'prep_sauce_recipe',
@@ -1460,6 +1667,25 @@ describe('/pos/inventory', () => {
 			expect(seen.lateSync).toBe(true)
 			const fresh = await receive(delivery({ madeAt: Date.now() - HOUR }))
 			expect(fresh.body.lateSync).toBe(false)
+		})
+
+		it('bounds madeAt on a delivery: never into the future, and not further back than 7 days', async () => {
+			const now = Date.now()
+			const DAY = 24 * HOUR
+			const future = await receive(delivery({ madeAt: now + 30 * DAY }))
+			expect(future.status, future.raw).toBe(200)
+			expect(future.body.lateSync).toBe(false)
+			expect(future.body.receivedAt).toBeLessThanOrEqual(Date.now())
+			expect(future.body.receivedAt).toBeGreaterThanOrEqual(now - 1_000)
+			// Older than 7 days is not believed: received now, flagged late.
+			const ancient = await receive(delivery({ madeAt: 1 }))
+			expect(ancient.status, ancient.raw).toBe(200)
+			expect(ancient.body.lateSync).toBe(true)
+			expect(ancient.body.receivedAt).toBeGreaterThanOrEqual(now - 1_000)
+			// Three days old is believed as sent (and late).
+			const three = await receive(delivery({ madeAt: now - 3 * DAY }))
+			expect(three.body.lateSync).toBe(true)
+			expect(three.body.receivedAt).toBe(now - 3 * DAY)
 		})
 
 		it('is idempotent by clientId: a resend answers the first result, another body is a conflict, and stock goes in once', async () => {

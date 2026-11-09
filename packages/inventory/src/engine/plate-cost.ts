@@ -183,32 +183,66 @@ export function plateCost(input: PlateCostInput): PlateCostResult {
 	}
 }
 
+export type MenuPriceTax = {
+	pricesIncludeTax?: boolean
+	taxRateBp?: number | null
+}
+
 /**
  * Cost over price in basis points, rounded half up (the plan's "Food cost
- * 29.8%" is 2980). `null` without a positive price. A free dish is not a
- * percentage.
+ * 29.8%" is 2980). When menu prices include tax (`pricesIncludeTax: true` and
+ * `taxRateBp > 0`), tax is stripped from `priceMinor` first so net ingredient
+ * cost is compared against net selling price. `null` without a positive price.
  */
 export function dishFoodCostBp(
 	priceMinor: number,
 	costMinor: number,
+	tax?: MenuPriceTax,
 ): number | null {
 	if (!Number.isSafeInteger(priceMinor) || priceMinor <= 0) return null
 	if (!Number.isSafeInteger(costMinor) || costMinor < 0) return null
-	return mulDiv(costMinor, 10_000, priceMinor, 'half_up')
+	const rateBp =
+		tax?.pricesIncludeTax &&
+		tax.taxRateBp !== null &&
+		tax.taxRateBp !== undefined &&
+		Number.isSafeInteger(tax.taxRateBp) &&
+		tax.taxRateBp > 0
+			? tax.taxRateBp
+			: 0
+	const netPriceMinor =
+		rateBp > 0
+			? mulDiv(priceMinor, 10_000, 10_000 + rateBp, 'half_up')
+			: priceMinor
+	if (netPriceMinor <= 0) return null
+	return mulDiv(costMinor, 10_000, netPriceMinor, 'half_up')
 }
 
 /**
  * The price at which a dish costing `costMinor` runs at `targetBp` food cost:
  * `cost / target`, to the nearest minor unit (cost 6.55 at 30% is 21.83, as in
- * the menu editor). `null` without a cost or a target.
+ * the menu editor). When menu prices include tax (`pricesIncludeTax: true` and
+ * `taxRateBp > 0`), the net target price is grossed up by `1 + taxRateBp / 10000`.
+ * `null` without a cost or a target.
  */
 export function priceForTargetMinor(
 	costMinor: number,
 	targetBp: number,
+	tax?: MenuPriceTax,
 ): number | null {
 	if (!Number.isSafeInteger(costMinor) || costMinor <= 0) return null
 	if (!Number.isSafeInteger(targetBp) || targetBp <= 0) return null
-	return mulDiv(costMinor, 10_000, targetBp, 'half_up')
+	const netTarget = mulDiv(costMinor, 10_000, targetBp, 'half_up')
+	const rateBp =
+		tax?.pricesIncludeTax &&
+		tax.taxRateBp !== null &&
+		tax.taxRateBp !== undefined &&
+		Number.isSafeInteger(tax.taxRateBp) &&
+		tax.taxRateBp > 0
+			? tax.taxRateBp
+			: 0
+	return rateBp > 0
+		? mulDiv(netTarget, 10_000 + rateBp, 10_000, 'half_up')
+		: netTarget
 }
 
 /** A food cost this far (basis points) over the target is `watch`, beyond it `high`. */

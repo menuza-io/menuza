@@ -20,6 +20,7 @@ import { and, asc, eq, inArray } from 'drizzle-orm'
 import { forEachWithBudget } from '../lib/concurrency.ts'
 import { errorLogFields } from '../lib/error-log.ts'
 import { getInventoryFlagState } from '../lib/inventory-context.ts'
+import { pruneInventoryIdempotencyKeys } from '../lib/inventory-write.ts'
 import {
 	type InventoryNotifyOutcome,
 	postInventoryNotify,
@@ -161,6 +162,7 @@ export async function runInventoryTickForOrg(
 					salesFollowUp = sales.nextDueAt ?? now + INVENTORY_ALERT_RETRY_MS
 				}
 				await pruneInventoryOutbox(orgId, now)
+				await pruneInventoryIdempotencyKeys(orgId, now)
 			} catch (error) {
 				result.errors += 1
 				console.error('Inventory sales step failed', {

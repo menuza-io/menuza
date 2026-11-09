@@ -2,6 +2,7 @@ import { type Context } from 'hono'
 import { type ZodNull, type ZodTypeAny, type z } from 'zod'
 import {
 	INVENTORY_POS_CONTRACT_HEADER,
+	INVENTORY_POS_CONTRACT_VERSION,
 	INVENTORY_POS_MIN_CONTRACT_VERSION,
 	STATION_ERROR_HANDLING,
 	type InventoryErrorCode,
@@ -111,10 +112,14 @@ function invalidRequest(error?: z.ZodError): Response {
 }
 
 /**
- * `Pos-Inventory-Contract`: missing means 1. A tablet older than the oldest
- * version the region serves must update (400 `contract_too_old`, a pause
- * code). A tablet never runs ahead of its server (deploys go region first),
- * so a newer number is simply accepted.
+ * `Pos-Inventory-Contract`: missing means 1. A version below the oldest the
+ * region serves is 400 `contract_too_old` (the tablet must update); one above
+ * what this region speaks is 400 `contract_unsupported` (the tablet waits for
+ * the region to be deployed); one that is not a whole number is
+ * `invalid_request`.
+ * Every version from the minimum to the current one is served, with the same
+ * semantics (contract 2 changed what `send` means for the tablet's own use of
+ * the answer, and version 1 tablets get the new behaviour too).
  */
 function checkContractVersion(c: Context): Response | null {
 	const raw = c.req.header(INVENTORY_POS_CONTRACT_HEADER)
@@ -123,9 +128,14 @@ function checkContractVersion(c: Context): Response | null {
 			? stationError('contract_too_old')
 			: null
 	}
-	if (!/^\d{1,6}$/.test(raw.trim())) return invalidRequest()
-	return Number(raw) < INVENTORY_POS_MIN_CONTRACT_VERSION
-		? stationError('contract_too_old')
+	const text = raw.trim()
+	if (!/^\d{1,6}$/.test(text)) return invalidRequest()
+	const version = Number(text)
+	if (version < INVENTORY_POS_MIN_CONTRACT_VERSION) {
+		return stationError('contract_too_old')
+	}
+	return version > INVENTORY_POS_CONTRACT_VERSION
+		? stationError('contract_unsupported')
 		: null
 }
 

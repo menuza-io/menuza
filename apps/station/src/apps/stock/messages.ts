@@ -24,6 +24,12 @@ export const FAILURE_MESSAGES: Record<string, MessageDescriptor> = {
 	upload_not_configured: msg`The invoice photo could not be saved. The delivery itself was recorded.`,
 	upload_failed: msg`The invoice photo could not be uploaded. The delivery itself was recorded.`,
 	item_archived: msg`This item was removed from the stock list.`,
+	item_unknown: msg`The office does not know this item.`,
+	area_unknown: msg`The office does not know this storage area.`,
+	quantity_invalid: msg`The office could not use this amount.`,
+	duplicate: msg`This entry was sent twice, so the office kept only one.`,
+	stuck: msg`The office keeps answering with an error. Try again later, or remove it and tell a manager.`,
+	update_needed: msg`This tablet cannot read the office's answer. Update Station, then try again.`,
 }
 
 /** Why sending is on hold, with what to do. */
@@ -37,6 +43,7 @@ export const PAUSE_MESSAGES: Record<string, MessageDescriptor> = {
 	inventory_needs_location: msg`This tablet needs a location before it can send stock. Ask a manager to set one in the Menuza app.`,
 	inventory_needs_sign_in: msg`This tablet needs staff sign-in switched on before it can send stock. Ask a manager.`,
 	contract_too_old: msg`This tablet needs an update before it can send stock. Reload the app.`,
+	contract_unsupported: msg`Update Station: this tablet and the office no longer speak the same version. What you saved stays here.`,
 	receive_needs_manager: msg`A manager must sign in to send deliveries.`,
 	invalid_device: msg`The server did not recognise this tablet. It will try again.`,
 	device_revoked: msg`This tablet was removed. Pair it again to send what is saved.`,
@@ -49,6 +56,7 @@ export const RETRY_MESSAGES: Record<string, MessageDescriptor> = {
 	service_unavailable: msg`The server is not answering. It will try again by itself.`,
 	internal_error: msg`The server had a problem. It will try again by itself.`,
 	invalid_response: msg`The server gave an answer this tablet could not read. It will try again by itself.`,
+	photo_unreachable: msg`The photo could not be uploaded. It will try again by itself. The delivery itself was recorded.`,
 }
 
 const GENERAL = msg`The office refused this.`

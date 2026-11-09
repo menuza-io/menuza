@@ -17,6 +17,7 @@ import {
 	vi,
 } from 'vitest'
 import { type PublishedOrganization } from '../lib/origin.ts'
+import { resetInvoiceReadLimits } from '../services/inventory-invoice-read-service.ts'
 import { makeWorld } from './inventory-orders-fixture.ts'
 import {
 	BASE,
@@ -129,6 +130,7 @@ afterEach(() => {
 		process.env[key] = ''
 	}
 	fetchSpy?.mockRestore()
+	resetInvoiceReadLimits()
 })
 
 function withReader(

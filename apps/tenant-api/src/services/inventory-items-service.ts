@@ -8,10 +8,11 @@ import {
 	type UpdateItemInput,
 } from './inventory-contract-types.ts'
 import {
-	costMicroFromPackPrice,
+	costMicroFromPackPriceClamped,
 	INVENTORY_LIMITS,
 	INVENTORY_PERMISSIONS,
 	inventoryValueMinor,
+	inventoryValueMinorClamped,
 	STANDARD_UNIT_SPECS,
 	stockStatus,
 	type InventoryBaseUnit,
@@ -121,7 +122,7 @@ export function stockValueMinor(
 	cost: CostRow | null,
 ): number | null {
 	if (!cost || cost.avgCostMicro === null) return null
-	return inventoryValueMinor(Math.max(0, onHand), cost.avgCostMicro)
+	return inventoryValueMinorClamped(Math.max(0, onHand), cost.avgCostMicro)
 }
 
 /**
@@ -479,7 +480,7 @@ async function costHistory(db: InventoryReader, itemId: string) {
 		.filter((row) => row.quantity > 0)
 		.map((row) => ({
 			at: row.at ?? row.createdAt,
-			costMicro: costMicroFromPackPrice(row.total, row.quantity),
+			costMicro: costMicroFromPackPriceClamped(row.total, row.quantity),
 		}))
 		.reverse()
 }

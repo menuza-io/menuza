@@ -181,7 +181,7 @@ export function region(options: { online?: boolean } = {}) {
 					refused: [],
 				})
 			match = /^\/pos\/inventory\/counts\/([^/]+)\/send$/.exec(path)
-			if (match) return Response.json({ ...summary, status: 'in_review' })
+			if (match) return Response.json(summary)
 			match = /^\/pos\/inventory\/counts\/([^/]+)$/.exec(path)
 			if (match) return Response.json(countSheet)
 			if (path === '/pos/inventory/waste')

@@ -3,10 +3,16 @@ import {
 	inventoryValueMinor,
 	MAX_ENTRY_QUANTITY,
 	recipeInForce,
+	weightedAverageCostMicro,
 	type RecipeVersion,
 } from '@repo/inventory'
-import { invItems, invMovements } from '@repo/tenant-db'
-import { eq } from 'drizzle-orm'
+import {
+	invCostEvents,
+	invItemCosts,
+	invItems,
+	invMovements,
+} from '@repo/tenant-db'
+import { eq, sql } from 'drizzle-orm'
 import { InventoryError } from '../lib/inventory-http.ts'
 import {
 	type InventoryIdempotency,
@@ -16,15 +22,18 @@ import { recordInventoryAudit } from './inventory-audit.ts'
 import {
 	assertLocationAllowed,
 	badRequest,
+	costMicroForWrite,
 	loadItemUnits,
 	locationBusinessDate,
 	markUnitsUsed,
 	newId,
 	notFound,
+	onHandTotal,
 	typedToBase,
 } from './inventory-common.ts'
 import { type RecordBatchInput } from './inventory-contract-types.ts'
 import { type InventoryCaller } from './inventory-items-service.ts'
+import { getLocationCurrency } from './inventory-location-settings.ts'
 import { loadItemCosts, loadVersionsAt } from './inventory-recipe-store.ts'
 
 /**
@@ -40,8 +49,14 @@ import { loadItemCosts, loadVersionsAt } from './inventory-recipe-store.ts'
  *   one. The made item's `batch_made` value is the sum of the ingredient
  *   values taken out, so the batch adds no value out of nothing (when some
  *   ingredient has no cost, the made value is that of the priced ones; with
- *   none priced it is left out). The made item's own average cost is not
- *   updated here.
+ *   none priced it is left out).
+ * - The made item's own average cost IS updated: the batch's value over what
+ *   it made, weighted into what is on hand (a `batch` cost event, like a
+ *   delivery). So when the made item is later sold, wasted or counted away,
+ *   its movements carry value and the ingredients' cost does not vanish from
+ *   food cost.
+ * - Money is in the location's currency: an ingredient priced in another
+ *   currency carries no value in this batch.
  */
 
 /** `numerator / denominator` rounded half up, for positive BigInts. */
@@ -81,6 +96,10 @@ export async function recordBatch(
 				.get()
 			if (!item || item.archivedAt !== null) throw notFound()
 			if (item.kind !== 'made') throw new InventoryError('not_a_made_item', 400)
+			// A made item that is not counted in batches is expanded into its
+			// ingredients at sale time, so recording a batch would take them out
+			// a second time (and the made item would grow with nothing using it).
+			if (!item.batchCounted) throw new InventoryError('not_batch_counted', 409)
 
 			const versions = await loadVersionsAt(tx, 'made_item', [item.id], ctx.now)
 			const recipe: RecipeVersion | null = recipeInForce(
@@ -138,6 +157,18 @@ export async function recordBatch(
 			if (existing) throw new InventoryError('idempotency_conflict', 409)
 
 			const costs = await loadItemCosts(tx)
+			// The batch's money is in the location's currency, else that of the
+			// first priced ingredient; an ingredient in another one is left out.
+			let currency = await getLocationCurrency(tx, body.locationId)
+			if (currency === null) {
+				for (const line of used) {
+					const own = costs.currencyByItem.get(line.itemId)
+					if (own && (costs.average.get(line.itemId) ?? null) !== null) {
+						currency = own
+						break
+					}
+				}
+			}
 			const businessDate = await locationBusinessDate(
 				tx,
 				body.locationId,
@@ -162,14 +193,16 @@ export async function recordBatch(
 			for (const line of used) {
 				const average = costs.average.get(line.itemId) ?? null
 				const value =
-					average === null ? null : inventoryValueMinor(line.quantity, average)
+					average === null || costs.currencyByItem.get(line.itemId) !== currency
+						? null
+						: inventoryValueMinor(line.quantity, average)
 				await tx.insert(invMovements).values({
 					...base,
 					id: newId(),
 					itemId: line.itemId,
 					quantity: -line.quantity,
 					valueMinor: value === null ? null : -value,
-					currency: value === null ? null : costs.currency,
+					currency: value === null ? null : currency,
 					kind: 'batch_used',
 					eventKey: `${eventPrefix}:used:${line.itemId}`,
 				})
@@ -185,13 +218,54 @@ export async function recordBatch(
 				usedOut.push(out)
 			}
 			const madeId = newId()
+			// Weigh the batch into the made item's average cost (before its
+			// quantity enters the ledger, so on hand is what was there).
+			const madeCost = costs.currencyByItem.get(item.id)
+			if (priced > 0 && (madeCost === undefined || madeCost === currency)) {
+				const costMicro = costMicroForWrite(valueMinor, madeQuantity)
+				const onHand = await onHandTotal(tx, item.id)
+				const before = costs.average.get(item.id) ?? null
+				const average = weightedAverageCostMicro({
+					onHandQuantity: onHand,
+					averageCostMicro: before,
+					receivedQuantity: madeQuantity,
+					receivedCostMicro: costMicro,
+				})
+				await tx
+					.insert(invItemCosts)
+					.values({
+						itemId: item.id,
+						currency: currency!,
+						avgCostMicro: average,
+						updatedAt: ctx.now,
+					})
+					.onConflictDoUpdate({
+						target: invItemCosts.itemId,
+						set: {
+							avgCostMicro: average,
+							version: sql`${invItemCosts.version} + 1`,
+							updatedAt: ctx.now,
+						},
+					})
+				await tx.insert(invCostEvents).values({
+					itemId: item.id,
+					kind: 'batch',
+					locationId: body.locationId,
+					quantity: madeQuantity,
+					costMicro,
+					onHandBefore: onHand,
+					avgBeforeMicro: before,
+					avgAfterMicro: average,
+					createdAt: ctx.now,
+				})
+			}
 			await tx.insert(invMovements).values({
 				...base,
 				id: madeId,
 				itemId: item.id,
 				quantity: madeQuantity,
 				valueMinor: priced > 0 ? valueMinor : null,
-				currency: priced > 0 ? costs.currency : null,
+				currency: priced > 0 ? currency : null,
 				kind: 'batch_made',
 				eventKey: `${eventPrefix}:made`,
 			})
@@ -212,7 +286,7 @@ export async function recordBatch(
 			}
 			if (caller.cost && priced > 0) {
 				result.valueMinor = valueMinor
-				if (costs.currency) result.currency = costs.currency
+				if (currency) result.currency = currency
 			}
 			return result
 		},

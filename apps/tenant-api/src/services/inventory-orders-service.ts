@@ -1,5 +1,5 @@
 import {
-	costMicroFromPackPrice,
+	costMicroFromPackPriceClamped,
 	INVENTORY_LIMITS,
 	MAX_ENTRY_QUANTITY,
 	milliToPacks,
@@ -444,7 +444,10 @@ export async function loadProductChoices(
 function perBaseUnit(product: ProductRow): number | null {
 	return product.priceMinor === null
 		? null
-		: costMicroFromPackPrice(product.priceMinor, product.packBaseQuantity)
+		: costMicroFromPackPriceClamped(
+				product.priceMinor,
+				product.packBaseQuantity,
+			)
 }
 
 /**
@@ -479,13 +482,26 @@ export function chooseSupplierProduct(
 	)
 }
 
-/** Still to arrive on sent and partly received orders at a location, by item. */
+/**
+ * Still to arrive on sent and partly received orders at a location, by item.
+ *
+ * Goods that came in on a delivery NOT linked to the order (a Station receipt
+ * that did not pick the order) still count against it: what the same supplier
+ * delivered after the order was sent offsets that item's outstanding quantity,
+ * oldest order first. Without this the same goods would count twice (on hand
+ * and on order) and the suggestion would under-order.
+ */
 export async function onOrderByItem(
 	db: InventoryReader,
 	locationId: string,
 ): Promise<Map<string, number>> {
 	const lines = await db
-		.select({ line: invOrderLines })
+		.select({
+			line: invOrderLines,
+			supplierId: invOrders.supplierId,
+			sentAt: invOrders.sentAt,
+			createdAt: invOrders.createdAt,
+		})
 		.from(invOrderLines)
 		.innerJoin(invOrders, eq(invOrders.id, invOrderLines.orderId))
 		.where(
@@ -498,12 +514,62 @@ export async function onOrderByItem(
 		db,
 		lines.map((entry) => entry.line.id),
 	)
+	const since = Math.min(
+		...lines.map((entry) => entry.sentAt ?? entry.createdAt),
+		Number.MAX_SAFE_INTEGER,
+	)
+	const unlinked =
+		lines.length === 0
+			? []
+			: await db
+					.select({
+						itemId: invDeliveryLines.itemId,
+						supplierId: invDeliveries.supplierId,
+						quantity: invDeliveryLines.quantity,
+						at: invDeliveries.receivedAt,
+					})
+					.from(invDeliveryLines)
+					.innerJoin(
+						invDeliveries,
+						eq(invDeliveries.id, invDeliveryLines.deliveryId),
+					)
+					.where(
+						and(
+							eq(invDeliveries.locationId, locationId),
+							eq(invDeliveries.status, 'received'),
+							isNull(invDeliveries.orderId),
+							sql`${invDeliveries.supplierId} is not null`,
+							sql`${invDeliveries.receivedAt} >= ${since}`,
+							sql`${invDeliveryLines.quantity} > 0`,
+						),
+					)
+	const pool = new Map<string, { at: number; quantity: number }[]>()
+	for (const row of unlinked) {
+		const key = `${row.supplierId}:${row.itemId}`
+		const list = pool.get(key) ?? []
+		list.push({ at: row.at ?? 0, quantity: row.quantity })
+		pool.set(key, list)
+	}
 	const map = new Map<string, number>()
-	for (const { line } of lines) {
-		const outstanding = outstandingQuantity(
+	const oldestFirst = [...lines].sort(
+		(a, b) =>
+			(a.sentAt ?? a.createdAt) - (b.sentAt ?? b.createdAt) ||
+			(a.line.id < b.line.id ? -1 : 1),
+	)
+	for (const entry of oldestFirst) {
+		const { line } = entry
+		let outstanding = outstandingQuantity(
 			line.quantity,
 			received.get(line.id) ?? 0,
 		)
+		const sentAt = entry.sentAt ?? entry.createdAt
+		for (const part of pool.get(`${entry.supplierId}:${line.itemId}`) ?? []) {
+			if (outstanding <= 0) break
+			if (part.at < sentAt || part.quantity <= 0) continue
+			const take = Math.min(outstanding, part.quantity)
+			part.quantity -= take
+			outstanding -= take
+		}
 		map.set(line.itemId, (map.get(line.itemId) ?? 0) + outstanding)
 	}
 	return map
@@ -1086,11 +1152,21 @@ export async function getOrderText(
 		.text
 }
 
+/** How long a send in flight blocks another one (the email call may take a while). */
+export const ORDER_SEND_CLAIM_TTL_MS = 2 * 60 * 1000
+
 /**
- * Sends an order. The text is rendered first; an email is delivered before
- * the order is marked sent, so a provider failure (502 `email_failed`) leaves
- * the order as it was. `whatsapp`, `copy` and `pdf` are person-driven: the
- * order is marked sent and the answer carries what the App needs.
+ * Sends an order. The text is rendered first. An email send is claimed under
+ * the organization's write lock BEFORE the supplier is emailed (a second
+ * send meanwhile answers 409 `send_in_progress`, so a double click or a retry
+ * emails once), the email goes out with no lock held, and the order is then
+ * marked sent in its own transaction. A provider failure (502
+ * `email_failed`) releases the claim and leaves the order as it was, ready to
+ * try again. If the email went out but the final write fails, the failure is
+ * logged with the order id and the claim stays until it expires (two
+ * minutes); the retry then sends again with the same message id. `whatsapp`,
+ * `copy` and `pdf` are person-driven: the order is marked sent and the answer
+ * carries what the App needs.
  */
 export async function sendOrder(
 	caller: InventoryCaller,
@@ -1111,14 +1187,56 @@ export async function sendOrder(
 	const rendered = await renderFor(db, row, locale, caller.region)
 	const { supplier } = rendered
 
+	const willEmail =
+		body.channel === 'email' && !!supplier.email && canSendTenantEmail()
 	let emailSent = false
 	let emailSkipped: SendOrderResult['emailSkipped'] = null
-	if (body.channel === 'email') {
-		if (!supplier.email) emailSkipped = 'no_supplier_email'
-		else if (!canSendTenantEmail()) emailSkipped = 'not_configured'
-		else {
+	if (body.channel === 'email' && !willEmail) {
+		emailSkipped = !supplier.email ? 'no_supplier_email' : 'not_configured'
+	}
+
+	if (willEmail) {
+		// Claim the send under the lock, before anything goes out.
+		await withInventoryWrite(
+			{ orgId: caller.orgId, skipAutoSoldOut: true },
+			async (tx, ctx) => {
+				const current = await loadOrderRow(tx, row.id, caller)
+				assertVersion(current.version, body.expectedVersion)
+				if (current.status === 'received' || current.status === 'cancelled') {
+					throw new InventoryError('order_closed', 409)
+				}
+				if (
+					current.sendClaimAt !== null &&
+					ctx.now - current.sendClaimAt < ORDER_SEND_CLAIM_TTL_MS
+				) {
+					throw new InventoryError('send_in_progress', 409)
+				}
+				await tx
+					.update(invOrders)
+					.set({ sendClaimAt: ctx.now })
+					.where(eq(invOrders.id, current.id))
+			},
+		)
+		const releaseClaim = () =>
+			withInventoryWrite(
+				{ orgId: caller.orgId, skipAutoSoldOut: true },
+				async (tx) => {
+					await tx
+						.update(invOrders)
+						.set({ sendClaimAt: null })
+						.where(eq(invOrders.id, row.id))
+				},
+			).catch((error: unknown) => {
+				console.error('Inventory order send claim not released', {
+					orgId: caller.orgId,
+					orderId: row.id,
+					reason: error instanceof Error ? error.name : 'unknown',
+				})
+			})
+		let failedStatus: number | null = null
+		try {
 			const result = await sendTenantEmail({
-				to: supplier.email,
+				to: supplier.email!,
 				toName: supplier.contactName || supplier.name,
 				subject: rendered.text.subject,
 				text: rendered.text.text,
@@ -1130,24 +1248,43 @@ export async function sendOrder(
 				},
 			})
 			if (result.status === 'error') {
-				console.error('Inventory order email failed', {
-					orgId: caller.orgId,
-					orderId: row.id,
-					statusCode: result.error.statusCode ?? null,
-				})
-				throw new InventoryError('email_failed', 502)
+				failedStatus = result.error.statusCode ?? 0
+			} else {
+				emailSent = true
 			}
-			emailSent = true
+		} catch (error) {
+			failedStatus = 0
+			console.error('Inventory order email threw', {
+				orgId: caller.orgId,
+				orderId: row.id,
+				reason: error instanceof Error ? error.name : 'unknown',
+			})
+		}
+		if (!emailSent) {
+			console.error('Inventory order email failed', {
+				orgId: caller.orgId,
+				orderId: row.id,
+				statusCode: failedStatus || null,
+			})
+			await releaseClaim()
+			throw new InventoryError('email_failed', 502)
 		}
 	}
 
-	const order = await withInventoryWrite(
-		{ orgId: caller.orgId },
-		async (tx, ctx) => {
+	const markSent = () =>
+		withInventoryWrite({ orgId: caller.orgId }, async (tx, ctx) => {
 			const current = await loadOrderRow(tx, row.id, caller)
-			assertVersion(current.version, body.expectedVersion)
+			// With an email out, the claim above is this send's own.
+			if (!willEmail) assertVersion(current.version, body.expectedVersion)
 			if (current.status === 'received' || current.status === 'cancelled') {
 				throw new InventoryError('order_closed', 409)
+			}
+			if (
+				!willEmail &&
+				current.sendClaimAt !== null &&
+				ctx.now - current.sendClaimAt < ORDER_SEND_CLAIM_TTL_MS
+			) {
+				throw new InventoryError('send_in_progress', 409)
 			}
 			if (current.status === 'draft') {
 				await tx
@@ -1156,9 +1293,15 @@ export async function sendOrder(
 						status: 'sent',
 						sentAt: ctx.now,
 						sentVia: body.channel,
+						sendClaimAt: null,
 						version: current.version + 1,
 						updatedAt: ctx.now,
 					})
+					.where(eq(invOrders.id, current.id))
+			} else if (current.sendClaimAt !== null) {
+				await tx
+					.update(invOrders)
+					.set({ sendClaimAt: null })
 					.where(eq(invOrders.id, current.id))
 			}
 			await recordInventoryAudit(tx, {
@@ -1176,8 +1319,25 @@ export async function sendOrder(
 				await loadOrderRow(tx, current.id, caller),
 				caller.cost,
 			)
-		},
-	)
+		})
+	let order: Awaited<ReturnType<typeof markSent>>
+	try {
+		order = await markSent()
+	} catch (error) {
+		if (!emailSent) throw error
+		// The supplier has the order but the write failed: try once more, then
+		// leave it for the retry (the claim expires and the same message id is sent).
+		try {
+			order = await markSent()
+		} catch (again) {
+			console.error('Inventory order emailed but not marked sent', {
+				orgId: caller.orgId,
+				orderId: row.id,
+				reason: again instanceof Error ? again.name : 'unknown',
+			})
+			throw again
+		}
+	}
 	return {
 		...rendered.text,
 		waLink: body.channel === 'whatsapp' ? rendered.text.waLink : null,

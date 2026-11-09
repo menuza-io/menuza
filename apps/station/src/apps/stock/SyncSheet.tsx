@@ -2,7 +2,7 @@ import { plural, t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { Icon } from '@repo/ui/icon'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import {
 	failureText,
 	needsSignIn,
@@ -49,6 +49,8 @@ export function SyncSheet({
 	const closed = failed.filter((row) => row.failure === 'count_closed')
 	const others = failed.filter((row) => row.failure !== 'count_closed')
 	const { paused, error } = stock.syncState
+	// "Clear these" deletes the only copy: it asks first.
+	const [confirmingClear, setConfirmingClear] = useState(false)
 
 	const describe = (row: StockRow): string => {
 		switch (row.kind) {
@@ -100,175 +102,231 @@ export function SyncSheet({
 	}
 
 	return (
-		<Modal
-			open={open}
-			onClose={onClose}
-			title={_(t`Waiting to send`)}
-			size="lg"
-			footer={
-				<div className="flex flex-col gap-2 pb-3 sm:flex-row-reverse">
-					<Button
-						variant="primary"
-						size="lg"
-						disabled={!stock.reachable || waiting.length === 0}
-						onClick={() => void stock.sync(true)}
-					>
-						<Icon name="refresh-cw" className="size-5" />
-						<Trans>Try now</Trans>
-					</Button>
-					<Button size="lg" onClick={onClose}>
-						<Trans>Close</Trans>
-					</Button>
-				</div>
-			}
-		>
-			<div className="flex flex-col gap-5 p-4 sm:p-5">
-				{paused && waiting.length > 0 ? (
-					<div
-						role="status"
-						className="notice-warning flex flex-wrap items-center gap-3 rounded-(--station-panel-radius) px-4 py-3 text-sm"
-					>
-						<p className="min-w-0 flex-1">{pauseText(paused, i18n)}</p>
-						{needsSignIn(paused) ? (
-							<Button onClick={onSignIn}>
-								<Trans>Sign in again</Trans>
-							</Button>
-						) : null}
+		<>
+			<Modal
+				open={open}
+				onClose={onClose}
+				title={_(t`Waiting to send`)}
+				size="lg"
+				footer={
+					<div className="flex flex-col gap-2 pb-3 sm:flex-row-reverse">
+						<Button
+							variant="primary"
+							size="lg"
+							disabled={!stock.reachable || waiting.length === 0}
+							onClick={() => void stock.sync(true)}
+						>
+							<Icon name="refresh-cw" className="size-5" />
+							<Trans>Try now</Trans>
+						</Button>
+						<Button size="lg" onClick={onClose}>
+							<Trans>Close</Trans>
+						</Button>
 					</div>
-				) : error && waiting.length > 0 ? (
-					<p
-						role="status"
-						className="notice-warning rounded-(--station-panel-radius) px-4 py-3 text-sm"
-					>
-						{retryText(error, i18n)}
-					</p>
-				) : null}
-				<section className="flex flex-col gap-2">
-					<h3 className="text-base font-semibold">
-						<Trans>Waiting to send</Trans>
-					</h3>
-					{waiting.length === 0 ? (
-						<p className="text-muted-foreground">
-							<Trans>Everything has been sent.</Trans>
+				}
+			>
+				<div className="flex flex-col gap-5 p-4 sm:p-5">
+					{paused && waiting.length > 0 ? (
+						<div
+							role="status"
+							className="notice-warning flex flex-wrap items-center gap-3 rounded-(--station-panel-radius) px-4 py-3 text-sm"
+						>
+							<p className="min-w-0 flex-1">{pauseText(paused, i18n)}</p>
+							{needsSignIn(paused) ? (
+								<Button onClick={onSignIn}>
+									<Trans>Sign in again</Trans>
+								</Button>
+							) : null}
+						</div>
+					) : error && waiting.length > 0 ? (
+						<p
+							role="status"
+							className="notice-warning rounded-(--station-panel-radius) px-4 py-3 text-sm"
+						>
+							{retryText(error, i18n)}
 						</p>
-					) : (
-						<>
-							<p className="text-muted-foreground text-sm">
-								{_(
-									plural(waiting.length, {
-										one: '# thing is saved on this tablet and will be sent when it can.',
-										other:
-											'# things are saved on this tablet and will be sent when it can.',
-									}),
-								)}
+					) : null}
+					<section className="flex flex-col gap-2">
+						<h3 className="text-base font-semibold">
+							<Trans>Waiting to send</Trans>
+						</h3>
+						{waiting.length === 0 ? (
+							<p className="text-muted-foreground">
+								<Trans>Everything has been sent.</Trans>
 							</p>
-							<ul className="flex flex-col gap-1">
-								{waiting.slice(0, 12).map((row) => (
-									<li
-										key={row.id}
-										className="border-border flex items-center gap-2 rounded-(--station-control-radius) border px-3 py-2 text-sm"
-									>
-										<Icon
-											name={
-												row.status === 'syncing' ? 'refresh-cw' : 'hard-drive'
-											}
-											className="text-muted-foreground size-4 shrink-0"
-											aria-hidden
-										/>
-										<span className="min-w-0 flex-1 break-words">
-											{describe(row)}
-										</span>
-										{row.failure ? (
-											<Badge tone="warning">{retryOrPause(row.failure)}</Badge>
-										) : null}
-									</li>
-								))}
-							</ul>
-							{waiting.length > 12 ? (
+						) : (
+							<>
 								<p className="text-muted-foreground text-sm">
 									{_(
-										plural(waiting.length - 12, {
-											one: 'and # more',
-											other: 'and # more',
+										plural(waiting.length, {
+											one: '# thing is saved on this tablet and will be sent when it can.',
+											other:
+												'# things are saved on this tablet and will be sent when it can.',
 										}),
 									)}
 								</p>
-							) : null}
-						</>
-					)}
-				</section>
-				{closed.length > 0 ? (
-					<section className="flex flex-col gap-2">
-						<h3 className="text-base font-semibold">
-							{_(
-								plural(closed.length, {
-									one: 'Sent after the count closed: # entry',
-									other: 'Sent after the count closed: # entries',
-								}),
-							)}
-						</h3>
-						<p className="text-muted-foreground text-sm">
-							<Trans>
-								The count was approved or cancelled before these reached the
-								office. A manager can see them in the Menuza app.
-							</Trans>
-						</p>
-						<div>
-							<Button
-								onClick={() =>
-									void Promise.all(closed.map((row) => discardRow(row.id)))
-								}
-							>
-								<Trans>Clear these</Trans>
-							</Button>
-						</div>
-					</section>
-				) : null}
-				{others.length > 0 ? (
-					<section className="flex flex-col gap-2">
-						<h3 className="text-base font-semibold">
-							<Trans>Needs attention</Trans>
-						</h3>
-						<ul className="flex flex-col gap-2">
-							{others.map((row) => (
-								<li
-									key={row.id}
-									className="border-destructive/40 flex flex-col gap-2 rounded-(--station-panel-radius) border p-3"
-								>
-									<p className="font-medium break-words">{describe(row)}</p>
-									<p className="text-muted-foreground text-sm">
-										{failureText(row.failure, i18n)}
-									</p>
-									<div className="flex flex-wrap gap-2">
-										{canRetry(row.failure) ? (
-											<Button onClick={() => void retryFailed(row.id)}>
-												<Trans>Try again</Trans>
-											</Button>
-										) : null}
-										<Button
-											variant="ghost"
-											onClick={() => void discardRow(row.id)}
+								<ul className="flex flex-col gap-1">
+									{waiting.slice(0, 12).map((row) => (
+										<li
+											key={row.id}
+											className="border-border flex flex-wrap items-center gap-2 rounded-(--station-control-radius) border px-3 py-2 text-sm"
 										>
-											<Trans>Remove</Trans>
-										</Button>
-									</div>
-								</li>
-							))}
-						</ul>
-						{others.length > 1 ? (
+											<Icon
+												name={
+													row.status === 'syncing' ? 'refresh-cw' : 'hard-drive'
+												}
+												className="text-muted-foreground size-4 shrink-0"
+												aria-hidden
+											/>
+											<span className="min-w-0 flex-1 break-words">
+												{describe(row)}
+											</span>
+											{row.failure ? (
+												<Badge tone="warning">
+													{retryOrPause(row.failure)}
+												</Badge>
+											) : null}
+											{row.kind === 'delivery_photo' && row.failure ? (
+												<span className="text-muted-foreground basis-full text-xs">
+													{retryText(row.failure, i18n)}
+												</span>
+											) : null}
+										</li>
+									))}
+								</ul>
+								{waiting.length > 12 ? (
+									<p className="text-muted-foreground text-sm">
+										{_(
+											plural(waiting.length - 12, {
+												one: 'and # more',
+												other: 'and # more',
+											}),
+										)}
+									</p>
+								) : null}
+							</>
+						)}
+					</section>
+					{closed.length > 0 ? (
+						<section className="flex flex-col gap-2">
+							<h3 className="text-base font-semibold">
+								{_(
+									plural(closed.length, {
+										one: 'Not accepted, the count was already finished: # entry',
+										other:
+											'Not accepted, the count was already finished: # entries',
+									}),
+								)}
+							</h3>
+							<p className="text-muted-foreground text-sm">
+								<Trans>
+									A manager finished the count before these reached the office,
+									so the office did not keep them and cannot see them. They are
+									saved only on this tablet. Write them down, or count them
+									again in a new count, before you clear them.
+								</Trans>
+							</p>
+							<ul className="flex flex-col gap-1">
+								{closed.map((row) => (
+									<li
+										key={row.id}
+										className="border-border rounded-(--station-control-radius) border px-3 py-2 text-sm break-words"
+									>
+										{describe(row)}
+									</li>
+								))}
+							</ul>
 							<div>
-								<Button
-									variant="ghost"
-									onClick={() => void discardAllFailed(stock.origin)}
-								>
-									<Trans>Remove all</Trans>
+								<Button onClick={() => setConfirmingClear(true)}>
+									<Trans>Clear these</Trans>
 								</Button>
 							</div>
-						) : null}
-					</section>
-				) : null}
-			</div>
-		</Modal>
+						</section>
+					) : null}
+					{others.length > 0 ? (
+						<section className="flex flex-col gap-2">
+							<h3 className="text-base font-semibold">
+								<Trans>Needs attention</Trans>
+							</h3>
+							<ul className="flex flex-col gap-2">
+								{others.map((row) => (
+									<li
+										key={row.id}
+										className="border-destructive/40 flex flex-col gap-2 rounded-(--station-panel-radius) border p-3"
+									>
+										<p className="font-medium break-words">{describe(row)}</p>
+										<p className="text-muted-foreground text-sm">
+											{failureText(row.failure, i18n)}
+										</p>
+										<div className="flex flex-wrap gap-2">
+											{canRetry(row.failure) ? (
+												<Button onClick={() => void retryFailed(row.id)}>
+													<Trans>Try again</Trans>
+												</Button>
+											) : null}
+											<Button
+												variant="ghost"
+												onClick={() => void discardRow(row.id)}
+											>
+												<Trans>Remove</Trans>
+											</Button>
+										</div>
+									</li>
+								))}
+							</ul>
+							{others.length > 1 ? (
+								<div>
+									<Button
+										variant="ghost"
+										onClick={() => void discardAllFailed(stock.origin)}
+									>
+										<Trans>Remove all</Trans>
+									</Button>
+								</div>
+							) : null}
+						</section>
+					) : null}
+				</div>
+			</Modal>
+			<Modal
+				open={confirmingClear && closed.length > 0}
+				onClose={() => setConfirmingClear(false)}
+				title={_(t`Clear these entries?`)}
+				footer={
+					<div className="flex flex-col gap-2 pb-3 sm:flex-row-reverse">
+						<Button
+							variant="danger"
+							size="lg"
+							onClick={() => {
+								setConfirmingClear(false)
+								void Promise.all(closed.map((row) => discardRow(row.id)))
+							}}
+						>
+							<Trans>Clear these</Trans>
+						</Button>
+						<Button size="lg" onClick={() => setConfirmingClear(false)}>
+							<Trans>Keep them</Trans>
+						</Button>
+					</div>
+				}
+			>
+				<div className="flex flex-col gap-3 p-5">
+					<p>
+						{_(
+							plural(closed.length, {
+								one: '# entry will be deleted from this tablet.',
+								other: '# entries will be deleted from this tablet.',
+							}),
+						)}
+					</p>
+					<p className="text-muted-foreground text-sm">
+						<Trans>
+							The office does not have them, so they are gone for good.
+						</Trans>
+					</p>
+				</div>
+			</Modal>
+		</>
 	)
 
 	function retryOrPause(code: string): string {

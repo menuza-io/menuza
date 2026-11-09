@@ -253,18 +253,23 @@ async function syncOnce(
 			lastCountedAt(db, locationId, itemIds),
 		])
 		// Entities that must be off the menu now, with the item that ran out.
-		const desired = new Map<string, string>()
+		// A dish is only newly taken off when the ingredient was counted in the
+		// last 7 days, so an abandoned count does not suddenly clear the menu;
+		// once taken off, it stays off until stock is above zero again.
+		const newlyOut = new Map<string, string>()
+		const stillOut = new Map<string, string>()
 		for (const itemId of itemIds.sort()) {
+			if ((onHand.get(itemId) ?? 0) > 0) continue
 			const countedAt = counted.get(itemId)
-			const isOut =
-				(onHand.get(itemId) ?? 0) <= 0 &&
+			const recentlyCounted =
 				countedAt !== undefined &&
 				countedAt >= now - AUTO_SOLD_OUT_MAX_COUNT_AGE_MS
-			if (!isOut) continue
 			for (const key of dependents.get(itemId) ?? []) {
-				if (!desired.has(key)) desired.set(key, itemId)
+				if (!stillOut.has(key)) stillOut.set(key, itemId)
+				if (recentlyCounted && !newlyOut.has(key)) newlyOut.set(key, itemId)
 			}
 		}
+		const desired = newlyOut
 		const here = rows.filter((row) => row.locationId === locationId)
 		const known = new Map(
 			here.map((row) => [`${row.entityType}:${row.entityId}`, row]),
@@ -273,12 +278,12 @@ async function syncOnce(
 		const toRestore = here.filter(
 			(row) =>
 				row.state === 'out' &&
-				!desired.has(`${row.entityType}:${row.entityId}`),
+				!stillOut.has(`${row.entityType}:${row.entityId}`),
 		)
 		const toForget = here.filter(
 			(row) =>
 				row.state === 'undone' &&
-				!desired.has(`${row.entityType}:${row.entityId}`),
+				!stillOut.has(`${row.entityType}:${row.entityId}`),
 		)
 
 		const asked: { add: string[]; restore: typeof toRestore } = {

@@ -162,9 +162,11 @@ describe('GET and PUT /operator/inventory/settings', () => {
 			targetFoodCostBp: 3000,
 			unitSystem: 'us',
 			countDayOfWeek: null,
+			countTime: null,
 			anyStaffCanReceive: false,
 			version: 0,
 			updatedAt: null,
+			locations: [],
 		})
 
 		setNodeRegion('ksa')

@@ -1,8 +1,9 @@
 import 'fake-indexeddb/auto'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { StockApiError } from './api.ts'
-import { localCounts } from './local.ts'
+import { dropFinishedCounts, localCounts } from './local.ts'
 import {
+	retryFailed,
 	logWaste,
 	recordDelivery,
 	saveCountEntry,
@@ -11,7 +12,13 @@ import {
 	stockRows,
 	undoWaste,
 } from './queue.ts'
-import { flushStock, useStockSync, type FlushDeps } from './runner.ts'
+import {
+	flushStock,
+	STUCK_AFTER,
+	UNREADABLE_AFTER,
+	useStockSync,
+	type FlushDeps,
+} from './runner.ts'
 import { ctx, fakeApi, ORIGIN, resetStock } from './testing.ts'
 import { db } from '~/lib/db.ts'
 
@@ -69,9 +76,11 @@ describe('sending the Stock outbox', () => {
 		])
 		expect(send!.args[0]).toBe('cnt_1')
 		expect(await stockRows(ORIGIN)).toEqual([])
+		// "I'm done" does not close the count on the tablet.
 		expect((await localCounts(ORIGIN))[0]).toMatchObject({
 			ref: { id: 'cnt_1' },
-			status: 'sent',
+			status: 'counting',
+			done: expect.any(Number),
 		})
 	})
 
@@ -117,15 +126,15 @@ describe('sending the Stock outbox', () => {
 			error: 'service_unavailable',
 			retryAt: NOW + 5_000,
 		})
-		// Not due yet: nothing is tried.
+		// Not due yet: the waste is left alone, the other lane is not held by it.
 		const quiet = fakeApi()
 		await flushStock(deps({ api: quiet }))
-		expect(quiet.calls).toEqual([])
-		// Due: waste first, then the delivery.
+		expect(quiet.calls.map((call) => call.name)).toEqual(['delivery'])
+		// Due: the waste goes, once.
 		const up = fakeApi()
 		const second = await flushStock(deps({ api: up, now: () => NOW + 5_001 }))
-		expect(second.sent).toBe(2)
-		expect(up.calls.map((call) => call.name)).toEqual(['waste', 'delivery'])
+		expect(second.sent).toBe(1)
+		expect(up.calls.map((call) => call.name)).toEqual(['waste'])
 		expect(await stockRows(ORIGIN)).toEqual([])
 		expect(useStockSync.getState()).toMatchObject({ error: null, paused: null })
 	})
@@ -177,6 +186,7 @@ describe('sending the Stock outbox', () => {
 		['inventory_unavailable', 503],
 		['pos_disabled', 503],
 		['contract_too_old', 400],
+		['contract_unsupported', 400],
 	])(
 		'pauses on %s: nothing is dropped and no attempt is counted',
 		async (code, status) => {
@@ -542,5 +552,242 @@ describe('sending the Stock outbox', () => {
 		expect(second.sent).toBe(0)
 		release()
 		await run
+	})
+})
+
+const delivery = (itemId = 'a') => ({
+	supplierId: 's',
+	invoiceNumber: null,
+	lines: [{ itemId, quantity: 1000 }],
+})
+/** One run per hour, so every backoff has passed. */
+async function runsHourly(api: ReturnType<typeof fakeApi>, times: number) {
+	let clock = NOW
+	for (let i = 0; i < times; i++) {
+		await flushStock(deps({ api, now: () => clock }))
+		clock += 3_600_000
+	}
+}
+
+describe('lanes in the runner', () => {
+	it('a delivery the region answers 500 to never holds counts and waste, even in the same run', async () => {
+		await recordDelivery(ctx, delivery(), null)
+		const record = await startCount(ctx, { id: null, name: null })
+		await saveCountEntry(ctx, record.localId, entry('a'))
+		await logWaste(ctx, {
+			itemId: 'a',
+			amount: 1,
+			unit: 'kg',
+			reason: 'spoiled',
+		})
+		const api = fakeApi({
+			async delivery() {
+				throw new StockApiError('internal_error', 500)
+			},
+		})
+		const result = await flushStock(deps({ api }))
+		expect(result.sent).toBe(3)
+		expect(api.calls.map((call) => call.name).sort()).toEqual([
+			'countEntries',
+			'startCount',
+			'waste',
+		])
+		expect((await stockRows(ORIGIN)).map((row) => row.kind)).toEqual([
+			'delivery',
+		])
+		expect(useStockSync.getState()).toMatchObject({ error: 'internal_error' })
+	})
+
+	it('a delivery that always fails becomes a stuck item the person can retry or remove, not a retry for ever', async () => {
+		await recordDelivery(ctx, delivery(), {
+			blob: new Blob(['x'], { type: 'image/jpeg' }),
+			contentType: 'image/jpeg',
+		})
+		let tries = 0
+		const api = fakeApi({
+			async delivery() {
+				tries++
+				throw new StockApiError('internal_error', 500)
+			},
+		})
+		await runsHourly(api, STUCK_AFTER)
+		expect(
+			(await stockRows(ORIGIN)).map((row) => [
+				row.kind,
+				row.status,
+				row.failure,
+			]),
+		).toEqual([
+			['delivery', 'failed', 'stuck'],
+			['delivery_photo', 'failed', 'dependency_failed'],
+		])
+		expect(tries).toBe(STUCK_AFTER)
+		// It is not tried again by itself.
+		await runsHourly(api, 2)
+		expect(tries).toBe(STUCK_AFTER)
+		// "Try again" puts it, and its photo, back.
+		const [stuck] = await stockRows(ORIGIN)
+		await retryFailed(stuck!.id)
+		const fixed = fakeApi()
+		await runsHourly(fixed, 1)
+		expect(await stockRows(ORIGIN)).toEqual([])
+		expect(fixed.calls.map((call) => call.name)).toEqual([
+			'delivery',
+			'photoRequest',
+			'putPhoto',
+			'photoConfirm',
+		])
+	})
+
+	it('an outage (the network, 503) is never turned into a stuck item', async () => {
+		await recordDelivery(ctx, delivery(), null)
+		const api = fakeApi({
+			async delivery() {
+				throw new StockApiError('service_unavailable', 503)
+			},
+		})
+		await runsHourly(api, STUCK_AFTER + 2)
+		expect(await stockRows(ORIGIN)).toMatchObject([
+			{ status: 'queued', failure: 'service_unavailable' },
+		])
+	})
+
+	it('a photo that cannot be uploaded (no CORS, a dead network) never blocks the delivery or the counts', async () => {
+		await recordDelivery(ctx, delivery(), {
+			blob: new Blob(['x'], { type: 'image/jpeg' }),
+			contentType: 'image/jpeg',
+		})
+		const api = fakeApi({
+			async putPhoto() {
+				throw new StockApiError('photo_unreachable')
+			},
+		})
+		const record = await startCount(ctx, { id: null, name: null })
+		await saveCountEntry(ctx, record.localId, entry('a'))
+		await flushStock(deps({ api }))
+		// The photo is tried (its upload throws), the counts behind it still go.
+		expect(api.calls.map((call) => call.name)).toEqual([
+			'delivery',
+			'photoRequest',
+			'startCount',
+			'countEntries',
+		])
+		expect(await stockRows(ORIGIN)).toMatchObject([
+			{
+				kind: 'delivery_photo',
+				status: 'queued',
+				failure: 'photo_unreachable',
+			},
+		])
+		expect(useStockSync.getState().error).toBe('photo_unreachable')
+	})
+
+	it('an answer this tablet cannot read is retried a few times, then shown as "update Station"', async () => {
+		await logWaste(ctx, {
+			itemId: 'a',
+			amount: 1,
+			unit: 'kg',
+			reason: 'spoiled',
+		})
+		const record = await startCount(ctx, { id: null, name: null })
+		await saveCountEntry(ctx, record.localId, entry('a'))
+		let tries = 0
+		const api = fakeApi({
+			async waste() {
+				tries++
+				throw new StockApiError('invalid_response', 502)
+			},
+		})
+		await runsHourly(api, UNREADABLE_AFTER)
+		expect(
+			(await stockRows(ORIGIN)).map((row) => [
+				row.kind,
+				row.status,
+				row.failure,
+			]),
+		).toEqual([['waste', 'failed', 'update_needed']])
+		expect(tries).toBe(UNREADABLE_AFTER)
+		// The counts went out meanwhile.
+		expect(api.calls.map((call) => call.name)).toContain('countEntries')
+	})
+})
+
+describe('counts the manager owns', () => {
+	const closedAfterwards = (status: 'approved' | 'cancelled' | 'in_review') =>
+		fakeApi({
+			async countEntries(_id, body) {
+				return {
+					accepted: [],
+					duplicates: [],
+					refused: body.entries.map((e) => ({
+						clientId: e.clientId,
+						code: 'count_closed',
+					})),
+				}
+			},
+			async countSheet(id) {
+				const base = await fakeApi().countSheet(id)
+				return { ...base, count: { ...base.count, status } }
+			},
+		})
+
+	it('entries refused per entry because the count was finished stay on the tablet, listed, until the person discards them', async () => {
+		const record = await startCount(ctx, { id: null, name: null })
+		await saveCountEntry(ctx, record.localId, entry('a'))
+		await saveCountEntry(ctx, record.localId, entry('b'))
+		const api = closedAfterwards('approved')
+		await flushStock(deps({ api }))
+		expect(
+			(await stockRows(ORIGIN)).map((row) => [
+				row.kind,
+				row.status,
+				row.failure,
+			]),
+		).toEqual([
+			['count_entry', 'failed', 'count_closed'],
+			['count_entry', 'failed', 'count_closed'],
+		])
+		// The region says it was approved: the local count goes, the refused rows do not.
+		expect((await localCounts(ORIGIN))[0]).toMatchObject({
+			serverStatus: 'approved',
+		})
+		expect(await dropFinishedCounts(ORIGIN)).toBe(1)
+		expect(await localCounts(ORIGIN)).toEqual([])
+		expect(await stockRows(ORIGIN)).toHaveLength(2)
+		expect(await db.stockCatalog.get(`mine:${ORIGIN}:${record.localId}`)).toBe(
+			undefined,
+		)
+	})
+
+	it('a finished count is not dropped while its screen is open', async () => {
+		const record = await startCount(ctx, { id: null, name: null })
+		await saveCountEntry(ctx, record.localId, entry('a'))
+		await flushStock(deps({ api: closedAfterwards('cancelled') }))
+		expect(await dropFinishedCounts(ORIGIN, record.localId)).toBe(0)
+		expect(await localCounts(ORIGIN)).toHaveLength(1)
+		expect(await dropFinishedCounts(ORIGIN, null)).toBe(1)
+	})
+
+	it('"I am done" leaves the count open here and notes what the region says about it', async () => {
+		const record = await startCount(ctx, { id: null, name: null })
+		await saveCountEntry(ctx, record.localId, entry('a'))
+		await sendCount(ctx, record.localId)
+		const api = fakeApi({
+			async sendCount(id) {
+				const base = await fakeApi().sendCount(id, { clientId: 'x'.repeat(8) })
+				return { ...base, status: 'in_review' as const }
+			},
+		})
+		await flushStock(deps({ api }))
+		expect((await localCounts(ORIGIN))[0]).toMatchObject({
+			status: 'counting',
+			serverStatus: 'in_review',
+			done: expect.any(Number),
+		})
+		// Late entries are still taken while the manager reviews.
+		await saveCountEntry(ctx, record.localId, entry('late'))
+		const late = fakeApi()
+		await flushStock(deps({ api: late }))
+		expect(late.calls.map((call) => call.name)).toEqual(['countEntries'])
 	})
 })
