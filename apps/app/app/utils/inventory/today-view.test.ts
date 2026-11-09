@@ -62,6 +62,19 @@ const KINDS: Record<AttentionItem['kind'], AttentionItem> = {
 		supplierName: null,
 		lineCount: 3,
 	},
+	sold_out_by_stock: {
+		kind: 'sold_out_by_stock',
+		count: 2,
+		itemId: 'i3',
+		itemName: 'Pita',
+		more: 0,
+	},
+	ran_out_at_till: {
+		kind: 'ran_out_at_till',
+		menuItemId: 'm1',
+		times: 3,
+		more: 0,
+	},
 }
 
 describe('attentionTarget', () => {
@@ -82,6 +95,8 @@ describe('attentionTarget', () => {
 			order_cutoff: '/acme/inventory/purchasing',
 			delivery_expected: '/acme/inventory/purchasing/deliveries/new?orderId=o1',
 			prices_pending: '/acme/inventory/purchasing/deliveries/d2',
+			sold_out_by_stock: '/acme/inventory/today#sold-out',
+			ran_out_at_till: '/acme/menu/items/m1',
 		})
 	})
 

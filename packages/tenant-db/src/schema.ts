@@ -8210,6 +8210,57 @@ export const invOutbox = sqliteTable(
 	],
 )
 
+// Dishes and options taken off the menu because an ingredient ran out (phase
+// 3 "auto sold out"). One row per location and menu entity while the sold-out
+// state stands: `out` until stock comes back (the region then gives the dish
+// back and deletes the row), or `undone` when a manager put the dish back with
+// the stock still at zero (so it is not sold out again until the ingredient
+// has been back in stock). `entity_id` is a control-plane menu id (opaque, no
+// names); `cause_item_id` is the inventory item that ran out.
+export const INV_SOLD_OUT_ENTITY_VALUES = ['item', 'modifier_option'] as const
+export const INV_SOLD_OUT_STATE_VALUES = ['out', 'undone'] as const
+export const invSoldOut = sqliteTable(
+	'inv_sold_out',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		locationId: text('location_id').notNull(),
+		entityType: text('entity_type', {
+			enum: INV_SOLD_OUT_ENTITY_VALUES,
+		}).notNull(),
+		entityId: text('entity_id').notNull(),
+		causeItemId: text('cause_item_id')
+			.notNull()
+			.references(() => invItems.id),
+		state: text('state', { enum: INV_SOLD_OUT_STATE_VALUES })
+			.notNull()
+			.default('out'),
+		soldAt: integer('sold_at').notNull().default(nowMs),
+		undoneAt: integer('undone_at'),
+		undoneByKind: text('undone_by_kind', { enum: INV_ACTOR_KIND_VALUES }),
+		undoneById: text('undone_by_id'),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+	},
+	(table) => [
+		uniqueIndex('uniq_inv_sold_out_entity').on(
+			table.locationId,
+			table.entityType,
+			table.entityId,
+		),
+		index('idx_inv_sold_out_cause').on(table.causeItemId),
+		check(
+			'chk_inv_sold_out_entity_type',
+			oneOf(table.entityType, INV_SOLD_OUT_ENTITY_VALUES),
+		),
+		check(
+			'chk_inv_sold_out_state',
+			oneOf(table.state, INV_SOLD_OUT_STATE_VALUES),
+		),
+	],
+)
+
+export type InvSoldOutRow = typeof invSoldOut.$inferSelect
 export type InvSettingsRow = typeof invSettings.$inferSelect
 export type InvStorageAreaRow = typeof invStorageAreas.$inferSelect
 export type InvItemRow = typeof invItems.$inferSelect

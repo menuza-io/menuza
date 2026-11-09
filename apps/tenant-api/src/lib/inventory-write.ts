@@ -9,6 +9,7 @@ import {
 	type TenantTransaction,
 } from '@repo/tenant-db'
 import { and, eq } from 'drizzle-orm'
+import { syncAutoSoldOut } from '../services/inventory-auto-sold-out.ts'
 import { runExclusive } from '../services/order-service.ts'
 import { HttpError } from './http.ts'
 import { InventoryError } from './inventory-http.ts'
@@ -130,6 +131,8 @@ export async function withInventoryWrite<T>(
 		idempotency?: InventoryIdempotency | null
 		/** Called when `idempotency` found an earlier result and `fn` did not run. */
 		onReplay?: () => void
+		/** The write cannot change stock (it is not followed by the auto sold out check). */
+		skipAutoSoldOut?: boolean
 	},
 	fn: (tx: InventoryTx, ctx: InventoryWriteContext) => Promise<T>,
 ): Promise<T> {
@@ -232,6 +235,11 @@ export async function withInventoryWrite<T>(
 				)
 			}
 		}
+	}
+	// Stock may have moved: bring dishes that depend on an ingredient that ran
+	// out (or came back) in line. Never throws, outside the lock.
+	if (!outcome.replayed && !options.skipAutoSoldOut) {
+		await syncAutoSoldOut(orgId)
 	}
 	return outcome.value
 }

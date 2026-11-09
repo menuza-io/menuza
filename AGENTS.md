@@ -1274,8 +1274,31 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
   `salesSettled`, and prunes settled rows after 14 days. Never call
   `withInventoryWrite` from inside a sale transaction. Tests:
   `services/inventory-sales-service.test.ts` and "inventory on an upload" in
-  `routes/pos.test.ts`. Not built yet: auto sold out, the Today signals for
-  voids and expected vs counted.
+  `routes/pos.test.ts`.
+- Auto sold out (phase 3, tenant `0036_inventory_sold_out`, `inv_sold_out`): an
+  item with `autoSoldOut` that is at zero **and** was in an approved count in
+  the last 7 days takes every dish (menu item) and option whose current recipe
+  uses it, directly or through a made item not counted in batches, off the menu
+  at that location. `services/inventory-auto-sold-out.ts` (`syncAutoSoldOut`)
+  decides; it runs after every inventory write that commits
+  (`withInventoryWrite`, outside the lock, never throws; items without
+  `autoSoldOut` cost two reads) and in the tick. It posts ids only to the App
+  (`lib/inventory-availability.ts` to `POST /resources/inventory/availability`,
+  `routes/resources+/inventory.availability.ts`, internal token). The App only
+  turns an available dish unavailable and only gives back one that is
+  unavailable and not changed by hand since (60 s grace); with locations it
+  writes the location override, without locations the dish itself; giving back
+  works even when the flags are off. Only what the App confirms is recorded
+  (`out`); a dish the App did not change is recorded `undone` (not ours) until
+  stock is back. A manager's undo (`POST /sold-out/:id/undo`, list
+  `GET /sold-out`, both behind `inventory.recipes`) leaves an `undone` row so
+  the dish is not taken off again until the ingredient was in stock. Today shows
+  `sold_out_by_stock` and `ran_out_at_till` (Station `out_of_stock` voids this
+  week) and the App panel `SoldOutPanel` lists what is off with the undo. No
+  `inventory_sold_out` notification kind yet (`inv_alert_log` has a kind check).
+- Count review lines carry `movements` (delivered, used by sales, wasted,
+  adjusted since the last approved count) so "expected" explains itself. Not
+  built yet: Kitchen "log it as waste?".
 - Product rules: owner words (no par, AvT, COGS, 86), at most five tabs, one
   plain name per item (inventory inputs are never translated; App strings are
   Lingui). Security gate: `routes/inventory-security.test.ts`.

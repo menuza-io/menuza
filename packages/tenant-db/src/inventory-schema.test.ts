@@ -48,6 +48,7 @@ const INVENTORY_TABLES = [
 	'inv_recipes',
 	'inv_sale_usage',
 	'inv_settings',
+	'inv_sold_out',
 	'inv_storage_areas',
 	'inv_supplier_products',
 	'inv_suppliers',

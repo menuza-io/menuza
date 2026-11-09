@@ -4,7 +4,9 @@ import {
 	destroyTenantDb,
 	getTenantDb,
 	invCounts,
+	invItems,
 	invMovements,
+	invSoldOut,
 	provisionTenantDb,
 } from '@repo/tenant-db'
 import { Hono } from 'hono'
@@ -370,6 +372,101 @@ describe('GET /today', () => {
 			kind: 'low_stock',
 			more: view.metrics.outItems - 1,
 		})
+	})
+})
+
+describe('signals from stock and the till (inventory.recipes)', () => {
+	const location = 'loc_signals'
+
+	const voided = (
+		id: string,
+		itemId: string,
+		reason: string,
+		quantity = 1,
+	) => ({
+		id,
+		itemId,
+		name: 'Dish',
+		variantLabel: null,
+		quantity,
+		unitCents: 1000,
+		at: new Date().toISOString(),
+		by: null,
+		approvedBy: null,
+		reason,
+	})
+
+	it('lists dishes taken off by stock and dishes that ran out at the till, only with recipes on', async () => {
+		const db = await getTenantDb(ORG)
+		await db
+			.insert(invItems)
+			.values({ id: 'it_signal', name: 'Pita bread', baseUnit: 'piece' })
+		await db.insert(invSoldOut).values({
+			locationId: location,
+			entityType: 'item',
+			entityId: 'dish_shawarma',
+			causeItemId: 'it_signal',
+		})
+		await insertPosSale(ORG, {
+			locationId: location,
+			businessDate: today,
+			lineVoids: [
+				voided(
+					'00000000-0000-4000-8000-000000000001',
+					'dish_falafel',
+					'out_of_stock',
+					2,
+				),
+				voided(
+					'00000000-0000-4000-8000-000000000002',
+					'dish_falafel',
+					'out_of_stock',
+				),
+				voided(
+					'00000000-0000-4000-8000-000000000003',
+					'dish_other',
+					'out_of_stock',
+				),
+				voided(
+					'00000000-0000-4000-8000-000000000004',
+					'dish_falafel',
+					'mistake',
+					5,
+				),
+			],
+		})
+
+		const withRecipes = await mintToken(ORG, {
+			features: { recipes: true },
+		})
+		const view = await getToday(withRecipes, location)
+		expect(view.attention).toEqual(
+			expect.arrayContaining([
+				{
+					kind: 'sold_out_by_stock',
+					count: 1,
+					itemId: 'it_signal',
+					itemName: 'Pita bread',
+					more: 0,
+				},
+				// Only out-of-stock voids count: 2 + 1 falafel, one other dish.
+				{
+					kind: 'ran_out_at_till',
+					menuItemId: 'dish_falafel',
+					times: 3,
+					more: 1,
+				},
+			]),
+		)
+
+		// Without the recipes flag neither signal shows.
+		const plain = await getToday(full, location)
+		expect(plain.attention.map((row) => row.kind)).not.toContain(
+			'sold_out_by_stock',
+		)
+		expect(plain.attention.map((row) => row.kind)).not.toContain(
+			'ran_out_at_till',
+		)
 	})
 })
 

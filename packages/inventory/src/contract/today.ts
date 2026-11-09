@@ -87,6 +87,24 @@ export const attentionItemSchema = z.discriminatedUnion('kind', [
 		supplierName: z.string().nullable(),
 		lineCount: z.number().int(),
 	}),
+	/** Phase 3: dishes taken off the menu because an ingredient ran out (auto sold out). */
+	z.object({
+		kind: z.literal('sold_out_by_stock'),
+		/** Dishes and options off the menu now at this location. */
+		count: z.number().int(),
+		itemId: z.string(),
+		itemName: z.string(),
+		/** How many more items ran out beyond this one. */
+		more: z.number().int(),
+	}),
+	/** Phase 3: a till voided a dish as "out of stock" this week (`menuItemId` is a menu id; the App joins the name). */
+	z.object({
+		kind: z.literal('ran_out_at_till'),
+		menuItemId: z.string(),
+		times: z.number().int(),
+		/** How many more dishes ran out at the till beyond this one. */
+		more: z.number().int(),
+	}),
 	z.object({
 		kind: z.literal('unpaid_deliveries'),
 		count: z.number().int(),

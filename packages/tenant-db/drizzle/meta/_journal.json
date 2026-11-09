@@ -253,6 +253,13 @@
 			"when": 1794236679996,
 			"tag": "0035_inventory_recipes",
 			"breakpoints": true
+		},
+		{
+			"idx": 36,
+			"version": "6",
+			"when": 1794242349364,
+			"tag": "0036_inventory_sold_out",
+			"breakpoints": true
 		}
 	]
 }

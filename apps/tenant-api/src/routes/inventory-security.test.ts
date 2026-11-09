@@ -10,7 +10,12 @@ import {
 	type InventoryFeatures,
 	type InventoryScope,
 } from '@repo/inventory'
-import { destroyTenantDb, provisionTenantDb } from '@repo/tenant-db'
+import {
+	destroyTenantDb,
+	getTenantDb,
+	invSoldOut,
+	provisionTenantDb,
+} from '@repo/tenant-db'
 import { Hono } from 'hono'
 import * as jose from 'jose'
 import {
@@ -183,6 +188,8 @@ const ROUTE_GRANTS: Record<
 	'POST /recipes/costs': READ,
 	'GET /recipes/missing': READ,
 	'POST /items/:id/batch': UPDATE,
+	'GET /sold-out': READ,
+	'POST /sold-out/:id/undo': UPDATE,
 }
 
 /** POST routes that change nothing (they only carry a body), so a read grant and an impersonated token may call them. */
@@ -215,6 +222,8 @@ const RECIPES_FLAG_ROUTES = new Set([
 	'POST /recipes/costs',
 	'GET /recipes/missing',
 	'POST /items/:id/batch',
+	'GET /sold-out',
+	'POST /sold-out/:id/undo',
 ])
 
 function routeKey(route: { method: string; path: string }): string {
@@ -748,6 +757,7 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 		order: '',
 		draftOrder: '',
 		made: '',
+		soldOut: '',
 	}
 	let admin: string
 	let seedCounts = 0
@@ -886,6 +896,17 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 			expectedVersion: 0,
 			makes: { amount: 1, unit: 'l' },
 			lines: [{ itemId: seed.item, amount: 200, unit: 'g' }],
+		})
+		// A dish taken off by stock and already put back by a manager (so the undo
+		// answers without calling the App).
+		seed.soldOut = 'sec_soldout_1'
+		await (await getTenantDb(ORG_A)).insert(invSoldOut).values({
+			id: seed.soldOut,
+			locationId: LOC_B,
+			entityType: 'item',
+			entityId: 'sec_dish',
+			causeItemId: seed.item,
+			state: 'undone',
 		})
 		seedCounts = (await seedCall('GET', `/counts?locationId=${LOC_B}`)).counts
 			.length
@@ -1268,6 +1289,11 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 					locationId: loc,
 					made: { kind: 'batches', count: 1 },
 				},
+				byId: true,
+			}),
+			c('GET /sold-out', `/sold-out?${q}`),
+			c('POST /sold-out/:id/undo', `/sold-out/${seed.soldOut}/undo`, {
+				body: {},
 				byId: true,
 			}),
 		]

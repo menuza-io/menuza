@@ -24,6 +24,7 @@ import {
 	postInventoryNotify,
 } from '../lib/inventory-notify.ts'
 import { locationClock } from './inventory-common.ts'
+import { syncAutoSoldOut } from './inventory-auto-sold-out.ts'
 import {
 	processInventoryOutbox,
 	pruneInventoryOutbox,
@@ -159,6 +160,26 @@ export async function runInventoryTickForOrg(
 			} catch (error) {
 				result.errors += 1
 				console.error('Inventory sales step failed', {
+					orgId,
+					...errorLogFields(error),
+				})
+			}
+		}
+
+		// Dishes off the menu by stock: catches up after an App outage and
+		// gives back what stock no longer justifies.
+		if (flags.status === 'on' || flags.status === 'off') {
+			try {
+				const sold = await syncAutoSoldOut(orgId, { now })
+				if (sold.deferred) {
+					salesFollowUp = Math.min(
+						salesFollowUp ?? Number.MAX_SAFE_INTEGER,
+						now + INVENTORY_ALERT_RETRY_MS,
+					)
+				}
+			} catch (error) {
+				result.errors += 1
+				console.error('Inventory auto sold out step failed', {
 					orgId,
 					...errorLogFields(error),
 				})

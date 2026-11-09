@@ -24,6 +24,7 @@ import { operatorInventoryOrdersRoutes } from './operator-inventory-orders.ts'
 import { operatorInventoryPlacesRoutes } from './operator-inventory-places.ts'
 import { operatorInventoryPurchasingRoutes } from './operator-inventory-purchasing.ts'
 import { operatorInventoryRecipesRoutes } from './operator-inventory-recipes.ts'
+import { operatorInventorySoldOutRoutes } from './operator-inventory-sold-out.ts'
 import { operatorInventoryTodayRoutes } from './operator-inventory-today.ts'
 import { operatorInventoryWasteRoutes } from './operator-inventory-waste.ts'
 import {
@@ -55,6 +56,7 @@ operatorInventoryRoutes.route('/', operatorInventoryLevelsRoutes)
 operatorInventoryRoutes.route('/', operatorInventoryOrdersRoutes)
 operatorInventoryRoutes.route('/', operatorInventoryTodayRoutes)
 operatorInventoryRoutes.route('/', operatorInventoryRecipesRoutes)
+operatorInventoryRoutes.route('/', operatorInventorySoldOutRoutes)
 
 const READ = INVENTORY_PERMISSIONS.READ_INVENTORY
 const UPDATE = INVENTORY_PERMISSIONS.UPDATE_INVENTORY

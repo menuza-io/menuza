@@ -8,10 +8,24 @@ import {
 	invCounts,
 	invDeliveries,
 	invDeliveryLines,
+	invItems,
+	invSoldOut,
 	invSupplierProducts,
 	invSuppliers,
+	posOrders,
 } from '@repo/tenant-db'
-import { and, desc, eq, inArray, isNull, ne, sql } from 'drizzle-orm'
+import {
+	and,
+	asc,
+	desc,
+	eq,
+	gte,
+	inArray,
+	isNull,
+	like,
+	ne,
+	sql,
+} from 'drizzle-orm'
 import { queryInChunks } from '../lib/chunked-in.ts'
 import { type InventoryReader } from '../lib/inventory-write.ts'
 import { locationClock, wireUnit } from './inventory-common.ts'
@@ -32,6 +46,7 @@ import {
 	getInventorySettings,
 	getInventoryStatus,
 } from './inventory-settings-service.ts'
+import { parsePosVoids } from './inventory-sales-service.ts'
 import { wasteSummary } from './inventory-waste-service.ts'
 
 /** A price rise only matters for a delivery this recent. */
@@ -42,6 +57,7 @@ type Candidate = { item: AttentionItem; money: number; priority: number }
 /** Order of kinds when the money at stake ties (or is not known). */
 const KIND_PRIORITY: Record<AttentionItem['kind'], number> = {
 	count_in_review: 0,
+	sold_out_by_stock: 0.5,
 	low_stock: 1,
 	// Phase 2 kinds are produced by the region work that follows the contract.
 	order_cutoff: 2,
@@ -50,6 +66,7 @@ const KIND_PRIORITY: Record<AttentionItem['kind'], number> = {
 	count_in_progress: 5,
 	prices_pending: 6,
 	price_rise: 7,
+	ran_out_at_till: 7.5,
 	unpaid_deliveries: 8,
 }
 
@@ -131,6 +148,41 @@ async function oldestPricesPending(db: InventoryReader, locationId: string) {
 	}
 }
 
+/**
+ * Dishes a till voided as "out of stock" this week, most often first. Reads
+ * the voids of Station sales (ids and reasons only, no names): the App joins
+ * the dish name.
+ */
+export async function ranOutAtTill(
+	db: InventoryReader,
+	input: { locationId: string; from: string },
+): Promise<{ menuItemId: string; times: number }[]> {
+	const rows = await db
+		.select({ lineVoids: posOrders.lineVoids })
+		.from(posOrders)
+		.where(
+			and(
+				eq(posOrders.locationId, input.locationId),
+				gte(posOrders.businessDate, input.from),
+				like(posOrders.lineVoids, '%out_of_stock%'),
+			),
+		)
+		.limit(5_000)
+	const times = new Map<string, number>()
+	for (const row of rows) {
+		for (const voided of parsePosVoids(row.lineVoids)) {
+			if (voided.reason !== 'out_of_stock') continue
+			times.set(
+				voided.itemId,
+				(times.get(voided.itemId) ?? 0) + voided.quantity,
+			)
+		}
+	}
+	return [...times.entries()]
+		.map(([menuItemId, count]) => ({ menuItemId, times: count }))
+		.sort((a, b) => b.times - a.times || (a.menuItemId < b.menuItemId ? -1 : 1))
+}
+
 export async function getToday(
 	db: InventoryReader,
 	input: {
@@ -139,11 +191,14 @@ export async function getToday(
 		now: number
 		/** `inventory.purchasing` is on: orders, cut-offs and expected deliveries. */
 		purchasing?: boolean
+		/** `inventory.recipes` is on: dishes sold out by stock and ran out at the till. */
+		recipes?: boolean
 	},
 ): Promise<Today> {
 	const { locationId, caller, now } = input
 	const cost = caller.cost
 	const purchasing = input.purchasing === true
+	const recipes = input.recipes === true
 	const clock = await locationClock(db, locationId, now)
 	const date = clock.date
 	const weekFrom = addDays(date, -6)
@@ -307,6 +362,39 @@ export async function getToday(
 		}
 		if (cost) item.valueAtStakeMinor = top.money
 		push(item, top.money)
+	}
+
+	if (recipes) {
+		const sold = await db
+			.select({
+				itemId: invSoldOut.causeItemId,
+				itemName: invItems.name,
+			})
+			.from(invSoldOut)
+			.innerJoin(invItems, eq(invItems.id, invSoldOut.causeItemId))
+			.where(
+				and(eq(invSoldOut.locationId, locationId), eq(invSoldOut.state, 'out')),
+			)
+			.orderBy(asc(invSoldOut.soldAt), asc(invSoldOut.id))
+		if (sold.length > 0) {
+			const causes = [...new Set(sold.map((row) => row.itemId))]
+			push({
+				kind: 'sold_out_by_stock',
+				count: sold.length,
+				itemId: sold[0]!.itemId,
+				itemName: sold[0]!.itemName,
+				more: causes.length - 1,
+			})
+		}
+		const ran = await ranOutAtTill(db, { locationId, from: weekFrom })
+		if (ran.length > 0) {
+			push({
+				kind: 'ran_out_at_till',
+				menuItemId: ran[0]!.menuItemId,
+				times: ran[0]!.times,
+				more: ran.length - 1,
+			})
+		}
 	}
 
 	const reviewing = openCounts.counts.find(

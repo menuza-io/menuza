@@ -92,6 +92,17 @@ export function attentionTarget(
 						})
 					: join(inventoryOrderPath(orgSlug, item.orderId), search),
 			}
+		case 'sold_out_by_stock':
+			// The list of what was taken off, with its undo, sits lower on Today.
+			return {
+				kind: item.kind,
+				to: `${join(`${base}/today`, search)}#sold-out`,
+			}
+		case 'ran_out_at_till':
+			return {
+				kind: item.kind,
+				to: `/${orgSlug}/menu/items/${encodeURIComponent(item.menuItemId)}`,
+			}
 		case 'prices_pending':
 			return {
 				kind: item.kind,

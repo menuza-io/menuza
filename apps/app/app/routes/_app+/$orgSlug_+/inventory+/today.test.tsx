@@ -572,6 +572,38 @@ describe('Inventory Today', () => {
 			expect(list).not.toHaveTextContent('You owe')
 		})
 
+		it('says what stock took off the menu and where to see it', async () => {
+			const list = await renderAttention([
+				{
+					kind: 'sold_out_by_stock',
+					count: 3,
+					itemId: 'i9',
+					itemName: 'Pita bread',
+					more: 1,
+				},
+			])
+			expect(list).toHaveTextContent(
+				'Pita bread ran out, so 3 dishes and options are off the menu.',
+			)
+			expect(list).toHaveTextContent('And 1 more item ran out.')
+			expect(
+				screen.getByTestId('today-attention-link-sold_out_by_stock'),
+			).toHaveAttribute('href', '/acme/inventory/today#sold-out')
+		})
+
+		it('lists a dish that ran out at the till and opens it', async () => {
+			const list = await renderAttention([
+				{ kind: 'ran_out_at_till', menuItemId: 'm7', times: 3, more: 0 },
+			])
+			// The dish name comes from the loader's menu, which this render has not.
+			expect(list).toHaveTextContent(
+				'A dish ran out at the till 3 times this week.',
+			)
+			expect(
+				screen.getByTestId('today-attention-link-ran_out_at_till'),
+			).toHaveAttribute('href', '/acme/menu/items/m7')
+		})
+
 		it('keeps the location on every link when there are several', async () => {
 			renderToday(region(today({ attention: [attention[0]] })), {
 				...ctx,

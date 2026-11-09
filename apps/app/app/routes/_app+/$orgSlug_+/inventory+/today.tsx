@@ -1,6 +1,12 @@
 import { Plural, Trans, useLingui } from '@lingui/react/macro'
 import { getLocalizedMenuValue } from '@repo/common/menu-types'
-import { asc, db, eq, OrganizationMenuItem } from '@repo/database'
+import {
+	asc,
+	db,
+	eq,
+	OrganizationMenuItem,
+	OrganizationMenuOption,
+} from '@repo/database'
 import {
 	type AttentionItem,
 	todaySchema,
@@ -33,6 +39,7 @@ import {
 	useQuantityFormat,
 } from '#app/components/inventory/inventory-prefs.tsx'
 import { MissingRecipesPanel } from '#app/components/inventory/missing-recipes-panel.tsx'
+import { SoldOutPanel } from '#app/components/inventory/sold-out-panel.tsx'
 import { InventorySetupChecklist } from '#app/components/inventory/setup-checklist.tsx'
 import { WasteBars } from '#app/components/inventory/waste-bars.tsx'
 import { useInventoryQuery } from '#app/hooks/use-inventory-client.ts'
@@ -62,8 +69,8 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 	// The region knows dishes by id only. When recipes are on, send the names
 	// (and prices) of this organization's menu items so the browser can join
 	// them; otherwise nothing is read.
-	if (!access.features.recipes) return { dishes: [] }
-	const [{ defaultLocale }, rows] = await Promise.all([
+	if (!access.features.recipes) return { dishes: [], options: [] }
+	const [{ defaultLocale }, rows, optionRows] = await Promise.all([
 		orgSiteLocales(access.organizationId),
 		db
 			.select({
@@ -76,8 +83,24 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 			.where(eq(OrganizationMenuItem.organizationId, access.organizationId))
 			.orderBy(asc(OrganizationMenuItem.position))
 			.limit(MENU_NAMES_CAP),
+		db
+			.select({
+				id: OrganizationMenuOption.id,
+				displayName: OrganizationMenuOption.displayName,
+				internalName: OrganizationMenuOption.internalName,
+			})
+			.from(OrganizationMenuOption)
+			.where(eq(OrganizationMenuOption.organizationId, access.organizationId))
+			.limit(MENU_NAMES_CAP),
 	])
 	return {
+		options: optionRows.map((row) => ({
+			id: row.id,
+			name:
+				getLocalizedMenuValue(row.displayName, defaultLocale, defaultLocale) ||
+				row.internalName ||
+				'',
+		})),
 		dishes: rows.map((row) => ({
 			id: row.id,
 			name:
@@ -132,6 +155,11 @@ export default function InventoryTodayRoute() {
 	const loaderData = useLoaderData<typeof loader>() as
 		Awaited<ReturnType<typeof loader>> | undefined
 	const menuDishes = loaderData?.dishes ?? []
+	const menuOptions = loaderData?.options ?? []
+	const dishNames = useMemo(
+		() => new Map(menuDishes.map((dish) => [dish.id, dish.name])),
+		[menuDishes],
+	)
 	const { search } = useLocation()
 	const linkSearch = locations.length > 1 ? search : ''
 	const today = useInventoryQuery(
@@ -302,6 +330,7 @@ export default function InventoryTodayRoute() {
 										canSeeCost={canSeeCost}
 										currency={currency}
 										today={data.date}
+										dishNames={dishNames}
 									/>
 								))}
 							</ul>
@@ -337,6 +366,15 @@ export default function InventoryTodayRoute() {
 						</WorkspacePanel>
 					</div>
 				</div>
+			) : null}
+
+			{nav.recipes && (hasItems || setupDone) ? (
+				<SoldOutPanel
+					locationId={activeLocationId}
+					canEdit={canEdit}
+					dishes={menuDishes}
+					options={menuOptions}
+				/>
 			) : null}
 
 			{nav.recipes && (hasItems || setupDone) ? (
@@ -531,6 +569,7 @@ function AttentionRow({
 	canSeeCost,
 	currency,
 	today,
+	dishNames,
 }: {
 	item: AttentionItem
 	href: string
@@ -539,6 +578,7 @@ function AttentionRow({
 	canSeeCost: boolean
 	currency: string
 	today: string
+	dishNames: ReadonlyMap<string, string>
 }) {
 	const { i18n } = useLingui()
 	const quantity = useQuantityFormat()
@@ -711,6 +751,69 @@ function AttentionRow({
 				</Trans>
 			)
 			action = canEdit ? <Trans>Receive</Trans> : <Trans>See order</Trans>
+			break
+		}
+		case 'sold_out_by_stock': {
+			const name = item.itemName
+			const count = item.count
+			sentence = (
+				<>
+					<Trans>
+						<span className="font-medium wrap-anywhere">{name}</span> ran out,
+						so{' '}
+						<Plural
+							value={count}
+							one="# dish or option is"
+							other="# dishes and options are"
+						/>{' '}
+						off the menu.
+					</Trans>
+					{item.more > 0 ? (
+						<>
+							{' '}
+							<Plural
+								value={item.more}
+								one="And # more item ran out."
+								other="And # more items ran out."
+							/>
+						</>
+					) : null}
+				</>
+			)
+			action = <Trans>See what is off</Trans>
+			break
+		}
+		case 'ran_out_at_till': {
+			const dish = dishNames.get(item.menuItemId) ?? null
+			const times = item.times
+			sentence = (
+				<>
+					{dish ? (
+						<Trans>
+							<span className="font-medium wrap-anywhere">{dish}</span> ran out
+							at the till <Plural value={times} one="# time" other="# times" />{' '}
+							this week.
+						</Trans>
+					) : (
+						<Plural
+							value={times}
+							one="A dish ran out at the till # time this week."
+							other="A dish ran out at the till # times this week."
+						/>
+					)}
+					{item.more > 0 ? (
+						<>
+							{' '}
+							<Plural
+								value={item.more}
+								one="And # more dish."
+								other="And # more dishes."
+							/>
+						</>
+					) : null}
+				</>
+			)
+			action = <Trans>Open the dish</Trans>
 			break
 		}
 		case 'prices_pending': {
