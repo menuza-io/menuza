@@ -51,6 +51,8 @@ const CONTEXT: PurchasingOutletContext = {
 	canEdit: true,
 	canManagePurchasing: true,
 	purchasingEnabled: false,
+	transfersEnabled: false,
+	transferPlaces: [],
 	dataRegion: 'ksa',
 	currency: 'SAR',
 	userName: 'Sara',

@@ -33,14 +33,15 @@ import {
 import { Link, useLoaderData, useLocation } from 'react-router'
 import { EmptyState } from '#app/components/empty-state.tsx'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
+import { ComparePanel } from '#app/components/inventory/compare-panel.tsx'
 import { InventoryHeaderActions } from '#app/components/inventory/inventory-chrome.tsx'
 import {
 	useInventoryRevision,
 	useQuantityFormat,
 } from '#app/components/inventory/inventory-prefs.tsx'
 import { MissingRecipesPanel } from '#app/components/inventory/missing-recipes-panel.tsx'
-import { SoldOutPanel } from '#app/components/inventory/sold-out-panel.tsx'
 import { InventorySetupChecklist } from '#app/components/inventory/setup-checklist.tsx'
+import { SoldOutPanel } from '#app/components/inventory/sold-out-panel.tsx'
 import { WasteBars } from '#app/components/inventory/waste-bars.tsx'
 import { useInventoryQuery } from '#app/hooks/use-inventory-client.ts'
 import { requireInventoryAccess } from '#app/utils/inventory/access.server.ts'
@@ -149,6 +150,7 @@ export default function InventoryTodayRoute() {
 		canEdit,
 		canSeeCost,
 		canManagePurchasing,
+		transfersEnabled,
 		currency,
 	} = useInventoryLayoutData()
 	// Undefined when the route renders without its loader (tests, previews).
@@ -383,6 +385,15 @@ export default function InventoryTodayRoute() {
 						</WorkspacePanel>
 					</div>
 				</div>
+			) : null}
+
+			{transfersEnabled && locations.length > 1 && (hasItems || setupDone) ? (
+				<ComparePanel
+					locations={locations}
+					activeLocationId={activeLocationId}
+					canSeeCost={canSeeCost}
+					currency={currency}
+				/>
 			) : null}
 
 			{nav.recipes && (hasItems || setupDone) ? (

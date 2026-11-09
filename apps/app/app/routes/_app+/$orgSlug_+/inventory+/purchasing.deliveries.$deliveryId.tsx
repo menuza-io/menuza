@@ -25,6 +25,7 @@ import {
 	useNotifyInventoryChanged,
 	useQuantityFormat,
 } from '#app/components/inventory/inventory-prefs.tsx'
+import { InvoiceReadPanel } from '#app/components/inventory/invoice-read-panel.tsx'
 import { usePurchasingContext } from '#app/components/inventory/purchasing-context.ts'
 import { useItemBaseUnits } from '#app/components/inventory/use-item-base-units.ts'
 import { SheetPanel } from '#app/components/staff/sheet-frame.tsx'
@@ -467,6 +468,14 @@ export default function InventoryDeliveryRoute() {
 								data-testid="delivery-photo-input"
 							/>
 						</>
+					) : null}
+					{delivery.photo && ctx.canManagePurchasing ? (
+						<InvoiceReadPanel
+							key={delivery.photo.url}
+							deliveryId={delivery.id}
+							currency={delivery.currency ?? ctx.currency}
+							canSeeCost={ctx.canSeeCost}
+						/>
 					) : null}
 				</section>
 			) : null}

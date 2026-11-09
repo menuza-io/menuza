@@ -145,3 +145,27 @@ export function batchSaveErrorMessage(error: unknown): MessageDescriptor {
 	}
 	return inventorySaveErrorMessage(error)
 }
+
+/** One owner-language sentence for a failed "Read the invoice". */
+export function invoiceReadErrorMessage(error: unknown): MessageDescriptor {
+	if (error instanceof OperatorRequestError) {
+		if (error.code === 'reader_not_configured') {
+			return msg`Reading invoice photos is not set up for your business.`
+		}
+		if (error.code === 'no_photo') {
+			return msg`Add a photo of the invoice first.`
+		}
+		if (error.code === 'reader_failed') {
+			return msg`The invoice could not be read. Try a clearer, straighter photo.`
+		}
+	}
+	return inventorySaveErrorMessage(error)
+}
+
+/** True when this region cannot read invoice photos at all (the button then goes away). */
+export function isInvoiceReaderMissing(error: unknown): boolean {
+	return (
+		error instanceof OperatorRequestError &&
+		error.code === 'reader_not_configured'
+	)
+}

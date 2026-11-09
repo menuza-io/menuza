@@ -60,6 +60,7 @@ import {
 import { PriceAlertsPanel } from '#app/components/inventory/price-alerts-panel.tsx'
 import { type PurchasingOutletContext } from '#app/components/inventory/purchasing-context.ts'
 import { weekdayName } from '#app/components/inventory/supplier-form.tsx'
+import { TransfersPanel } from '#app/components/inventory/transfers-panel.tsx'
 import {
 	useInventoryClient,
 	useInventoryQuery,
@@ -92,6 +93,8 @@ export default function InventoryPurchasingRoute() {
 		canSeeCost,
 		canManagePurchasing,
 		purchasingEnabled,
+		transfersEnabled,
+		transferPlaces,
 		currency,
 	} = layout
 	const direction = useDirection()
@@ -345,6 +348,16 @@ export default function InventoryPurchasingRoute() {
 						/>
 					) : null}
 				</>
+			) : null}
+
+			{transfersEnabled && transferPlaces.length > 1 ? (
+				<TransfersPanel
+					locationId={activeLocationId}
+					places={transferPlaces}
+					canEdit={canEdit}
+					canSeeCost={canSeeCost}
+					currency={currency}
+				/>
 			) : null}
 
 			{owedMinor !== undefined && owedMinor > 0 ? (

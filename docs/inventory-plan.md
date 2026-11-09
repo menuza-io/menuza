@@ -12,7 +12,11 @@ expected vs counted (review lines show what moved); and Kitchen "log it as
 waste?" (`POST /pos/inventory/waste/dishes`): phase 3 is complete. Phase 4
 (prep: weekday levels, the day's plan with the Ramadan-aware weekday factor, the
 App tab and the Kitchen view) is built; the reservations covers nudge is not.
-The **phase 2 wire contract is written** in `@repo/inventory`
+Phase 5 is built in the region and the App (transfers and branch requests,
+`inv_transfers`, tenant `0038`; the location comparison; reading an invoice
+photo with an in-region model): Station has no transfers screen yet. See
+[Phase 5 as built](#phase-5-as-built). The **phase 2 wire contract is written**
+in `@repo/inventory`
 (`contract/{levels,orders,orders-rules,receiving, notify,station}.ts`, see
 [Phase 2 wire contract](#phase-2-wire-contract)); the region, Station and App
 implement against it. Nothing is user-visible until the flag is on. Placement is
@@ -1118,6 +1122,48 @@ the owner turns it on), demand patterns compare Ramadan days with the previous
 Ramadan's same weekdays (Hijri calendar via `Intl.DateTimeFormat` with
 `islamic-umalqura`), not with last month.
 
+## Phase 5 as built
+
+- **Transfers and branch requests** (`inventory.transfers`, tenant migration
+  `0038_inventory_transfers`, `contract/transfers.ts`,
+  `services/inventory-transfers-service.ts`,
+  `routes/operator-inventory-transfers.ts`). One record, two ways in: a
+  _request_ is made by the place that needs stock (starts `requested`), a
+  _transfer_ by the place that has it (starts `draft`). Sending confirms what
+  really left (stock leaves as `transfer_out`), receiving confirms what arrived
+  (`transfer_in`); what was sent and not received stays on the record as missing
+  in transit. Only the creating place may cancel, and only before it is sent.
+  Lines are frozen once sent (triggers). Open requests to a central kitchen feed
+  its prep list (`committed` in `prep.ts`), and transfers count as purchases in
+  food cost.
+- **Location comparison** (`GET /compare?locationIds=`): the same few numbers
+  for each place the token covers (low and out items, last count, this week's
+  waste, transfers waiting, and with the cost grant stock value, waste cost and
+  food cost). App: "All your places" on Today when transfers are on and the
+  member sees more than one place.
+- **App**: "Moving stock" on Purchasing lists the open transfers of the place in
+  view with Send, Receive and Cancel, and "Ask for stock" / "Send stock" dialogs
+  (`transfers-panel.tsx`, `transfer-dialogs.tsx`). The "other place" list is
+  every place of the organization (names only, `transferPlaces` in the layout),
+  because a branch manager may see only their own place but must be able to ask
+  the central kitchen. Untouched amounts are not sent on send/receive, so the
+  region uses its exact figures.
+- **Reading an invoice photo** (`POST /deliveries/:id/invoice-photo/read`,
+  `update:inventory_purchasing:any`, empty body). The region fetches the stored
+  photo and asks an OpenAI-compatible vision model for supplier, invoice number,
+  total and lines; the answer is parsed into a strict shape, cleaned, and
+  matched to items by name only. It is a "check these lines" help: nothing is
+  recorded or priced from it. Config on the node: `INVOICE_READER_BASE_URL`,
+  `INVOICE_READER_API_KEY`, `INVOICE_READER_MODEL`,
+  `INVOICE_READER_DATA_REGION`; it works only when the data region equals the
+  node's `DATA_REGION`, so a KSA node needs an in-region model and never falls
+  back to a public one. Without it the route answers 503 `reader_not_configured`
+  and the App hides the button.
+- **Not built**: a Station screen for transfers, editing the lines of a planned
+  transfer (cancel and make a new one), a prep list of "everything my branches
+  asked for" beyond the committed amounts, and setting prices from the read
+  lines (the person uses Confirm prices).
+
 ## What we took from Mise, and what we left
 
 | Took                                                          | Left                                                   |
@@ -1143,7 +1189,9 @@ Recommendations first; none blocks phase 0.
 3. **Invoice photo reading.** Recommend phase 5, US first through `@repo/ai`;
    KSA only with an in-region model (the tenant-api OpenAI-compatible client),
    and always with a "check these lines" step. _Phase 2 decision: photos are
-   stored and shown only; no reading, nothing in the contract._
+   stored and shown only. Phase 5 decision: read in the region by the node's own
+   OpenAI-compatible endpoint (`INVOICE_READER_*`), never through the US App,
+   and only when its region matches the node's._
 4. **Invoice photo storage.** Recommend in-region object storage (generalise
    `lib/recording-storage.ts`) rather than US App storage. _Phase 2 decision:
    yes, presigned `PUT` from the browser to the region's own bucket (see

@@ -47,6 +47,14 @@ export type InventoryLayoutContext = {
 	canManagePurchasing: boolean
 	/** The `inventory.purchasing` flag: levels, suggested orders and sending orders. */
 	purchasingEnabled: boolean
+	/** The `inventory.transfers` flag: moving stock between places, branch requests, comparison. */
+	transfersEnabled: boolean
+	/**
+	 * Every place of the organization (names only), for the "other place" of a
+	 * transfer: a member may see fewer places than they can move stock to or from.
+	 * Empty unless transfers are on.
+	 */
+	transferPlaces: InventoryChromeLocation[]
 	/** The data region, which sets the default unit system. */
 	dataRegion: 'us' | 'ksa'
 	/** The currency money figures are entered in. */
@@ -110,6 +118,13 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 			!access.impersonated &&
 			access.grants.includes(INVENTORY_PERMISSIONS.UPDATE_INVENTORY_PURCHASING),
 		purchasingEnabled: access.features.purchasing,
+		transfersEnabled: access.features.transfers,
+		transferPlaces: access.features.transfers
+			? locationRows.map((loc) => ({
+					id: loc.id,
+					name: displayLocationName(loc.name, defaultLocale, defaultLocale),
+				}))
+			: [],
 		dataRegion: access.dataRegion,
 		currency: access.currency,
 		userName,
@@ -125,6 +140,8 @@ export default function InventoryLayout() {
 		canEdit,
 		canManagePurchasing,
 		purchasingEnabled,
+		transfersEnabled,
+		transferPlaces,
 		dataRegion,
 		currency,
 		userName,
@@ -154,6 +171,8 @@ export default function InventoryLayout() {
 		canEdit,
 		canManagePurchasing,
 		purchasingEnabled,
+		transfersEnabled,
+		transferPlaces,
 		dataRegion,
 		currency,
 		userName,

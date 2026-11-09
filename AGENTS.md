@@ -684,6 +684,11 @@ git commit --no-verify -m "fix: resolve ESLint warnings (verified manually)"
   answer a request that carries a coupon code with 503 `discounts_disabled`.
   Orders already placed keep their discounts and their redemptions still settle.
   See `docs/discounts-plan.md`.
+- `INVOICE_READER_BASE_URL` / `INVOICE_READER_API_KEY` / `INVOICE_READER_MODEL`
+  / `INVOICE_READER_DATA_REGION` - Tenant-api only, optional. OpenAI-compatible
+  vision endpoint that reads an inventory invoice photo into lines to check.
+  Used only when the data region equals `DATA_REGION`. See
+  `docs/inventory-plan.md`.
 - `INVENTORY_ENABLED` - Tenant-api only, optional (unset or `true` is on). Kill
   switch for inventory on a node: `false` (also `0`, `off`, `no`, `disabled`)
   answers 503 `inventory_unavailable` on operator (and later Station) inventory
@@ -1338,6 +1343,30 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
   a write is never queued and the plan is read again after every answer. Not
   built: booked covers from reservations in the demand nudge, the tick's `prep`
   alerts.
+- Transfers and branch requests (phase 5, behind `inventory.transfers`, tenant
+  `0038_inventory_transfers`): `inv_transfers` / `inv_transfer_lines`, a request
+  is made by the place that needs stock and a transfer by the place that has it;
+  send confirms what left (`transfer_out`), receive what arrived
+  (`transfer_in`), the difference is missing in transit. Triggers keep closed
+  records final and sent lines frozen; only the creating place cancels, before
+  sending. Routes `/transfers*` and `GET /compare?locationIds=` in
+  `routes/operator-inventory-transfers.ts` (service
+  `inventory-transfers-service.ts`, `inventory-compare-service.ts`); open
+  requests to a central kitchen feed `prep.ts` (`committed`). App: "Moving
+  stock" on Purchasing and "All your places" on Today (`transfers-panel.tsx`,
+  `transfer-dialogs.tsx`, `compare-panel.tsx`); the layout exposes
+  `transfersEnabled` and `transferPlaces` (every place, names only). Not built:
+  a Station transfers screen, editing a planned transfer.
+- Reading an invoice photo (phase 5): `POST /deliveries/:id/invoice-photo/read`
+  (`update:inventory_purchasing:any`) asks the node's own OpenAI-compatible
+  vision model (`INVOICE_READER_BASE_URL` / `_API_KEY` / `_MODEL` /
+  `_DATA_REGION`; works only when the data region equals the node's
+  `DATA_REGION`, so KSA needs an in-region model) for suggested lines to check.
+  `lib/invoice-reader.ts`, `services/inventory-invoice-read-service.ts`. The
+  answer is untrusted: parsed strictly, cleaned, matched to items by name, never
+  recorded or priced automatically. 503 `reader_not_configured`, 409 `no_photo`,
+  502 `reader_failed`. App: `invoice-read-panel.tsx` on the delivery sheet
+  (hidden when the region has no reader).
 - Product rules: owner words (no par, AvT, COGS, 86), at most five tabs, one
   plain name per item (inventory inputs are never translated; App strings are
   Lingui). Security gate: `routes/inventory-security.test.ts`.
