@@ -18,12 +18,16 @@ import {
 import { and, asc, eq, inArray } from 'drizzle-orm'
 import { forEachWithBudget } from '../lib/concurrency.ts'
 import { errorLogFields } from '../lib/error-log.ts'
-import { getInventoryFeatures } from '../lib/inventory-context.ts'
+import { getInventoryFlagState } from '../lib/inventory-context.ts'
 import {
 	type InventoryNotifyOutcome,
 	postInventoryNotify,
 } from '../lib/inventory-notify.ts'
 import { locationClock } from './inventory-common.ts'
+import {
+	processInventoryOutbox,
+	pruneInventoryOutbox,
+} from './inventory-sales-service.ts'
 import { loadLocationStock } from './inventory-items-service.ts'
 import { listDueOrders } from './inventory-orders-service.ts'
 import { findPriceRises } from './inventory-receiving-service.ts'
@@ -134,9 +138,41 @@ export async function runInventoryTickForOrg(
 			.limit(1)
 			.get()
 		if (!anyItem) return result
+		const flags = await getInventoryFlagState(orgId)
+		const features = flags.features
+
+		// ── Sales waiting to take stock out (used by sales) ──────────────────
+		// Retried here when settling right after the sale failed. Flags that
+		// cannot be read (or the node kill switch) leave the queue alone; flags
+		// that are off close it without effect, so stock is not counted from
+		// sales made while inventory was off.
+		let salesFollowUp: number | null = null
+		if (flags.status === 'on' || flags.status === 'off') {
+			try {
+				const sales = await processInventoryOutbox(orgId, { now })
+				result.salesSettled += sales.processed
+				result.errors += sales.failed
+				if (sales.failed > 0 || sales.more) {
+					salesFollowUp = sales.nextDueAt ?? now + INVENTORY_ALERT_RETRY_MS
+				}
+				await pruneInventoryOutbox(orgId, now)
+			} catch (error) {
+				result.errors += 1
+				console.error('Inventory sales step failed', {
+					orgId,
+					...errorLogFields(error),
+				})
+			}
+		}
+
 		// Alerts follow the flags (the App also drops what it must not send).
-		const features = await getInventoryFeatures(orgId)
-		if (!features.enabled) return result
+		if (!features.enabled) {
+			if (salesFollowUp !== null) {
+				result.needsFollowUp = true
+				result.nextDueAt = salesFollowUp
+			}
+			return result
+		}
 
 		/**
 		 * Records an alert once. A key already in the log is not recorded again:
@@ -407,6 +443,13 @@ export async function runInventoryTickForOrg(
 			result.needsFollowUp = true
 			result.nextDueAt = now + INVENTORY_ALERT_RETRY_MS
 		}
+		if (salesFollowUp !== null) {
+			result.needsFollowUp = true
+			result.nextDueAt =
+				result.nextDueAt === null
+					? salesFollowUp
+					: Math.min(result.nextDueAt, salesFollowUp)
+		}
 		const counts = {
 			lowStockDigests: result.lowStockDigests,
 			countReviewAlerts: result.countReviewAlerts,
@@ -414,6 +457,7 @@ export async function runInventoryTickForOrg(
 			priceRiseAlerts: result.priceRiseAlerts,
 			alertsSent: result.alertsSent,
 			alertsDeferred: result.alertsDeferred,
+			salesSettled: result.salesSettled,
 		}
 		if (result.errors > 0) {
 			console.error('Inventory tick needs attention', {

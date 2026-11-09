@@ -1246,9 +1246,36 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
   writes an empty version, and history is kept. Made-item recipes are checked
   with `checkMadeRecipeGraph` (409 `recipe_cycle` / `recipe_too_deep`, nothing
   written). `PATCH /items/:id` also sets `batchCounted` (made items only) and
-  `autoSoldOut` (needs the recipe grant). Settling sales into stock (the
-  used-by-sales outbox and `inv_sale_usage`) is the next slice; nothing on the
-  order, tab or till path calls inventory yet.
+  `autoSoldOut` (needs the recipe grant).
+- Used by sales (phase 3b-2, behind `inventory.recipes`; no new migration, the
+  `inv_outbox` and `inv_sale_usage` tables are in `0035`):
+  `services/inventory-sales-service.ts`. The sale's own transaction queues
+  `(restaurant_order | pos_order, id)` with `inventorySaleQueue().queue` (only
+  while some recipe exists or the source already used stock; it never throws)
+  and `settle` runs after commit at the same call sites loyalty uses
+  (`placeOrder` when the order counts at once, `applyPaymentEvent` on paid,
+  `updateOperatorOrder`, the QR tab void, counter close rung up on Station and
+  clearing that mark, and `upsertPosOrder`'s `onStored` in `routes/pos.ts`).
+  Settling takes `withInventoryWrite`, re-reads the source, works out
+  `desiredUsage` from its current lines and the recipe versions in force at the
+  sale's time, diffs it against `inv_sale_usage` and posts only the difference
+  as `sale` movements valued at the average cost (event key
+  `sale:<outbox id>:<location>:<item>`). Rules: counted web/QR orders use stock
+  (rounds of a tab rung up on Station are left to that till sale); cancelled and
+  unpaid ones none; Station sales use stock when paid or refunded (a refund
+  never returns it); a `quality` void is the dish wasted once (`pos_void`
+  source, an `inv_waste` row `cancelled_after_cooking` against the sale's
+  terminal and a `waste` movement); `out_of_stock` voids are signals only (later
+  slice). Flags off: the row is closed without effect unless the source already
+  used stock; flags unreadable or the node kill switch on: left queued. A
+  failure backs off from 30 s to an hour with a short machine reason in
+  `last_error`; the inventory tick (`processInventoryOutbox`, hourly cron, the
+  Node interval, the DO alarm when it asks for a follow-up) retries and counts
+  `salesSettled`, and prunes settled rows after 14 days. Never call
+  `withInventoryWrite` from inside a sale transaction. Tests:
+  `services/inventory-sales-service.test.ts` and "inventory on an upload" in
+  `routes/pos.test.ts`. Not built yet: auto sold out, the Today signals for
+  voids and expected vs counted.
 - Product rules: owner words (no par, AvT, COGS, 86), at most five tabs, one
   plain name per item (inventory inputs are never translated; App strings are
   Lingui). Security gate: `routes/inventory-security.test.ts`.

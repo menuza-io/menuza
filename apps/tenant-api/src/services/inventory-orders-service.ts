@@ -289,6 +289,7 @@ async function toDetail(
 				.where(
 					and(
 						eq(invItemPlaces.locationId, row.locationId),
+						// bounded: its own statement, one chunk of at most 90 ids
 						inArray(invItemPlaces.itemId, chunk),
 					),
 				),
@@ -380,6 +381,7 @@ export async function listOrders(
 		.where(
 			and(
 				eq(invOrders.locationId, query.locationId),
+				// bounded: at most five order statuses
 				statuses ? inArray(invOrders.status, [...statuses]) : undefined,
 				query.supplierId
 					? eq(invOrders.supplierId, query.supplierId)
@@ -1221,6 +1223,7 @@ export async function getReceivePrefill(
 				.where(
 					and(
 						eq(invItemPlaces.locationId, row.locationId),
+						// bounded: its own statement, one chunk of at most 90 ids
 						inArray(invItemPlaces.itemId, chunk),
 					),
 				),

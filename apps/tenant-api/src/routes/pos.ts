@@ -29,6 +29,7 @@ import {
 	fetchOrderContext,
 	fetchTillDiscountRules,
 } from '../services/order-service.ts'
+import { inventorySaleQueue } from '../services/inventory-sales-service.ts'
 import { deviceApps } from '../services/pos-apps-service.ts'
 import {
 	requeueTillSaleLoyalty,
@@ -500,6 +501,9 @@ posRoutes.post('/orders', async (c) => {
 		deviceId: pos.device.id,
 		order,
 	})
+	// Stock leaves with a paid sale (and comes back with a cancelled one): the
+	// sale is queued in the upload's transaction and settled after it commits.
+	const inventory = inventorySaleQueue()
 
 	try {
 		const result = await upsertPosOrder(
@@ -508,7 +512,16 @@ posRoutes.post('/orders', async (c) => {
 			order,
 			review,
 			undefined,
-			{ onStored: loyalty.inTx },
+			{
+				onStored: async (tx, sale) => {
+					await loyalty.inTx(tx, sale)
+					await inventory.queue(
+						tx,
+						{ type: 'pos_order', id: sale.id, locationId: sale.locationId },
+						Date.now(),
+					)
+				},
+			},
 		)
 		if (!result.ok) {
 			// The till renumbers and resends; nothing has been stored yet.
@@ -522,6 +535,7 @@ posRoutes.post('/orders', async (c) => {
 		}
 		await touchDevice(pos.db, pos.device)
 		await loyalty.settle()
+		await inventory.settle(pos.orgId)
 		if (order.discountApplications.length > 0) {
 			try {
 				if (order.status === 'paid') {

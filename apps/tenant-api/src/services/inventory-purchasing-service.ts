@@ -641,6 +641,7 @@ async function toSummaries(
 			db
 				.select({ id: invOrders.id, number: invOrders.number })
 				.from(invOrders)
+				// bounded: its own statement, one chunk of at most 90 ids
 				.where(inArray(invOrders.id, chunk)),
 		),
 	])
@@ -1400,6 +1401,7 @@ export async function confirmDeliveryPrices(
 				tx
 					.select()
 					.from(invItemCosts)
+					// bounded: its own statement, one chunk of at most 90 ids
 					.where(inArray(invItemCosts.itemId, chunk)),
 			),
 		])

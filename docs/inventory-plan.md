@@ -4,8 +4,11 @@ Status: phase 0 built on `pr/inventory` (domain package, flags and permissions,
 regional schema `0033_inventory`, tenant-api auth and the first operator routes,
 the items-sold reader, the App shell with empty tabs behind
 `inventory.enabled`); phase 1 built behind the same flag (Stock, Counts,
-Purchasing deliveries and suppliers, Waste, Today). The **phase 2 wire contract
-is written** in `@repo/inventory`
+Purchasing deliveries and suppliers, Waste, Today); phase 3 recipes are built
+through 3c, and 3b-2 (used by sales: the sale queue, settle and tick retry in
+`services/inventory-sales-service.ts`) is built; auto sold out, the till void
+signals on Today and expected vs counted are the remaining phase 3 slices. The
+**phase 2 wire contract is written** in `@repo/inventory`
 (`contract/{levels,orders,orders-rules,receiving, notify,station}.ts`, see
 [Phase 2 wire contract](#phase-2-wire-contract)); the region, Station and App
 implement against it. Nothing is user-visible until the flag is on. Placement is
