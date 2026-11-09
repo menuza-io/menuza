@@ -95,7 +95,7 @@ msgid "(opens in a new tab)"
 msgstr "(opens in a new tab)"
 
 #: app/components/inventory/adjust-stock-dialog.tsx:300
-#: app/components/inventory/count-review-screen.tsx:557
+#: app/components/inventory/count-review-screen.tsx:560
 #: app/components/inventory/item-form.tsx:393
 #: app/components/inventory/item-form.tsx:523
 #: app/components/inventory/item-form.tsx:567
@@ -298,7 +298,7 @@ msgid "{0, plural, one {# item is low but has no supplier yet:} other {# items a
 msgstr "{0, plural, one {# item is low but has no supplier yet:} other {# items are low but have no supplier yet:}}"
 
 #. placeholder {0}: grouped.matching
-#: app/components/inventory/count-review-screen.tsx:589
+#: app/components/inventory/count-review-screen.tsx:592
 msgid "{0, plural, one {# item matches and needs no review.} other {# items match and need no review.}}"
 msgstr "{0, plural, one {# item matches and needs no review.} other {# items match and need no review.}}"
 
@@ -746,6 +746,14 @@ msgstr "{addedName} added."
 msgid "{amount, plural, one {piece} other {pieces}}"
 msgstr "{amount, plural, one {piece} other {pieces}}"
 
+#: app/components/inventory/count-review-screen.tsx:785
+msgid "{amount} added by adjustments"
+msgstr "{amount} added by adjustments"
+
+#: app/components/inventory/count-review-screen.tsx:768
+msgid "{amount} delivered"
+msgstr "{amount} delivered"
+
 #: app/utils/discounts/labels.ts:334
 msgid "{amount} off"
 msgstr "{amount} off"
@@ -783,6 +791,18 @@ msgstr "{amount} per booking"
 #: app/components/reservations/policies/policies-screen.tsx:234
 msgid "{amount} per guest"
 msgstr "{amount} per guest"
+
+#: app/components/inventory/count-review-screen.tsx:786
+msgid "{amount} removed by adjustments"
+msgstr "{amount} removed by adjustments"
+
+#: app/components/inventory/count-review-screen.tsx:773
+msgid "{amount} used by sales"
+msgstr "{amount} used by sales"
+
+#: app/components/inventory/count-review-screen.tsx:777
+msgid "{amount} wasted"
+msgstr "{amount} wasted"
 
 #: app/components/reservations/payment-panel.tsx:737
 msgid "{amount} will be charged now to the card {guest} left on file. This cannot be undone from here."
@@ -2417,16 +2437,16 @@ msgstr "<0>{archiveName}</0> is removed from your walk. Items kept only there mo
 msgid "<0>{archiveName}</0> is removed. The items stay in Stock."
 msgstr "<0>{archiveName}</0> is removed. The items stay in Stock."
 
-#: app/components/inventory/count-review-screen.tsx:789
+#: app/components/inventory/count-review-screen.tsx:853
 #: app/routes/_app+/$orgSlug_+/inventory+/counts.tsx:442
 msgid "<0>{counted}</0> of <1>{total}</1>"
 msgstr "<0>{counted}</0> of <1>{total}</1>"
 
-#: app/components/inventory/count-review-screen.tsx:814
+#: app/components/inventory/count-review-screen.tsx:878
 msgid "<0>{differenceText}</0> missing"
 msgstr "<0>{differenceText}</0> missing"
 
-#: app/components/inventory/count-review-screen.tsx:818
+#: app/components/inventory/count-review-screen.tsx:882
 msgid "<0>{differenceText}</0> more than expected"
 msgstr "<0>{differenceText}</0> more than expected"
 
@@ -2434,21 +2454,21 @@ msgstr "<0>{differenceText}</0> more than expected"
 msgid "<0>{doneCount}</0> of <1>{totalCount}</1> counted"
 msgstr "<0>{doneCount}</0> of <1>{totalCount}</1> counted"
 
-#: app/components/inventory/count-review-screen.tsx:835
+#: app/components/inventory/count-review-screen.tsx:899
 msgid "<0>{foodBpText}</0> since your last count, above your target of <1>{targetText}</1>."
 msgstr "<0>{foodBpText}</0> since your last count, above your target of <1>{targetText}</1>."
 
-#: app/components/inventory/count-review-screen.tsx:843
+#: app/components/inventory/count-review-screen.tsx:907
 msgid "<0>{foodBpText}</0> since your last count, within your target of <1>{targetText}</1>."
 msgstr "<0>{foodBpText}</0> since your last count, within your target of <1>{targetText}</1>."
 
-#: app/components/inventory/count-review-screen.tsx:711
-#: app/components/inventory/count-review-screen.tsx:726
+#: app/components/inventory/count-review-screen.tsx:714
+#: app/components/inventory/count-review-screen.tsx:729
 msgid "<0>{gap}</0> missing"
 msgstr "<0>{gap}</0> missing"
 
-#: app/components/inventory/count-review-screen.tsx:715
-#: app/components/inventory/count-review-screen.tsx:730
+#: app/components/inventory/count-review-screen.tsx:718
+#: app/components/inventory/count-review-screen.tsx:733
 msgid "<0>{gap}</0> more than expected"
 msgstr "<0>{gap}</0> more than expected"
 
@@ -5884,7 +5904,7 @@ msgid "Approve a table card, poster or flyer first. Only approved prints in a sh
 msgstr "Approve a table card, poster or flyer first. Only approved prints in a shippable size can be ordered."
 
 #: app/components/inventory/count-review-screen.tsx:309
-#: app/components/inventory/count-review-screen.tsx:634
+#: app/components/inventory/count-review-screen.tsx:637
 msgid "Approve count"
 msgstr "Approve count"
 
@@ -5905,7 +5925,7 @@ msgstr "Approve the proof to download it."
 msgid "Approve the proof to order prints."
 msgstr "Approve the proof to order prints."
 
-#: app/components/inventory/count-review-screen.tsx:601
+#: app/components/inventory/count-review-screen.tsx:604
 msgid "Approve this count?"
 msgstr "Approve this count?"
 
@@ -8094,7 +8114,7 @@ msgid "Cancel booking…"
 msgstr "Cancel booking…"
 
 #: app/components/inventory/count-review-screen.tsx:295
-#: app/components/inventory/count-review-screen.tsx:662
+#: app/components/inventory/count-review-screen.tsx:665
 msgid "Cancel count"
 msgstr "Cancel count"
 
@@ -8147,7 +8167,7 @@ msgstr "Cancel reservation"
 msgid "Cancel Reservation"
 msgstr "Cancel Reservation"
 
-#: app/components/inventory/count-review-screen.tsx:644
+#: app/components/inventory/count-review-screen.tsx:647
 msgid "Cancel this count?"
 msgstr "Cancel this count?"
 
@@ -11253,7 +11273,7 @@ msgstr "Count"
 msgid "Count and manage stock"
 msgstr "Count and manage stock"
 
-#: app/components/inventory/count-review-screen.tsx:777
+#: app/components/inventory/count-review-screen.tsx:841
 msgid "Count approved"
 msgstr "Count approved"
 
@@ -11307,7 +11327,7 @@ msgstr "Count what you have now. Every number after this starts here."
 msgid "Counted"
 msgstr "Counted"
 
-#: app/components/inventory/count-review-screen.tsx:721
+#: app/components/inventory/count-review-screen.tsx:724
 msgid "Counted <0>{counted}</0>"
 msgstr "Counted <0>{counted}</0>"
 
@@ -13470,7 +13490,7 @@ msgstr "Dietary Tags"
 msgid "Dietary, Allergens & Calories"
 msgstr "Dietary, Allergens & Calories"
 
-#: app/components/inventory/count-review-screen.tsx:805
+#: app/components/inventory/count-review-screen.tsx:869
 #: app/routes/_app+/$orgSlug_+/inventory+/counts.tsx:298
 msgid "Difference"
 msgstr "Difference"
@@ -13836,7 +13856,7 @@ msgstr "Don't take phone orders for"
 #: app/components/dashboard/dashboard-edit-toolbar.tsx:101
 #: app/components/hiring/applicant-labels.ts:41
 #: app/components/hiring/hire-dialog.tsx:156
-#: app/components/inventory/count-review-screen.tsx:867
+#: app/components/inventory/count-review-screen.tsx:931
 #: app/components/inventory/credit-message-dialog.tsx:213
 #: app/components/inventory/send-order-dialog.tsx:194
 #: app/components/inventory/setup-checklist.tsx:149
@@ -16187,7 +16207,7 @@ msgstr "Expected {expected}"
 msgid "Expected {expected}, counted {counted}"
 msgstr "Expected {expected}, counted {counted}"
 
-#: app/components/inventory/count-review-screen.tsx:703
+#: app/components/inventory/count-review-screen.tsx:706
 msgid "Expected <0>{expected}</0>"
 msgstr "Expected <0>{expected}</0>"
 
@@ -17219,7 +17239,7 @@ msgstr "Follow-up text not sent"
 msgid "Follow-up text sent"
 msgstr "Follow-up text sent"
 
-#: app/components/inventory/count-review-screen.tsx:830
+#: app/components/inventory/count-review-screen.tsx:894
 #: app/components/inventory/food-cost-column.tsx:106
 #: app/components/inventory/recipe-panel.tsx:461
 #: app/components/inventory/recipe-section.tsx:773
@@ -17227,7 +17247,7 @@ msgstr "Follow-up text sent"
 msgid "Food cost"
 msgstr "Food cost"
 
-#: app/components/inventory/count-review-screen.tsx:857
+#: app/components/inventory/count-review-screen.tsx:921
 msgid "Food cost needs two approved counts. Count again next time and it will show here."
 msgstr "Food cost needs two approved counts. Count again next time and it will show here."
 
@@ -17280,7 +17300,7 @@ msgstr "For example, every 15 minutes."
 msgid "For example: 30 days"
 msgstr "For example: 30 days"
 
-#: app/components/inventory/count-review-screen.tsx:574
+#: app/components/inventory/count-review-screen.tsx:577
 msgid "For example: spilled a box, counted twice"
 msgstr "For example: spilled a box, counted twice"
 
@@ -19844,7 +19864,7 @@ msgstr "Items"
 msgid "Items added"
 msgstr "Items added"
 
-#: app/components/inventory/count-review-screen.tsx:796
+#: app/components/inventory/count-review-screen.tsx:860
 msgid "Items adjusted"
 msgstr "Items adjusted"
 
@@ -19852,7 +19872,7 @@ msgstr "Items adjusted"
 msgid "Items bought"
 msgstr "Items bought"
 
-#: app/components/inventory/count-review-screen.tsx:786
+#: app/components/inventory/count-review-screen.tsx:850
 msgid "Items counted"
 msgstr "Items counted"
 
@@ -20103,7 +20123,7 @@ msgstr "Keep the category under 40 characters."
 msgid "Keep the contact name under 80 characters."
 msgstr "Keep the contact name under 80 characters."
 
-#: app/components/inventory/count-review-screen.tsx:655
+#: app/components/inventory/count-review-screen.tsx:658
 msgid "Keep the count"
 msgstr "Keep the count"
 
@@ -25255,7 +25275,7 @@ msgstr "No sales guide"
 msgid "No sales to compare"
 msgstr "No sales to compare"
 
-#: app/components/inventory/count-review-screen.tsx:852
+#: app/components/inventory/count-review-screen.tsx:916
 msgid "No sales were recorded between your last two counts, so food cost cannot be worked out yet."
 msgstr "No sales were recorded between your last two counts, so food cost cannot be worked out yet."
 
@@ -25719,7 +25739,7 @@ msgstr "none"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:314
 #: app/components/hiring/job-summary.tsx:66
-#: app/components/inventory/count-review-screen.tsx:812
+#: app/components/inventory/count-review-screen.tsx:876
 #: app/components/menu/modifier-form.tsx:287
 #: app/components/reservations/booking-sheet.tsx:87
 #: app/components/settings/cards/organization/site-theme-card.tsx:748
@@ -25949,7 +25969,7 @@ msgstr ""
 #~ msgid "Not visited in 90 days"
 #~ msgstr "Not visited in 90 days"
 
-#: app/components/inventory/count-review-screen.tsx:628
+#: app/components/inventory/count-review-screen.tsx:631
 #: app/components/staff/timesheets/timesheets-page.tsx:932
 msgid "Not yet"
 msgstr "Not yet"
@@ -25959,7 +25979,7 @@ msgid "note"
 msgstr ""
 
 #: app/components/inventory/adjust-stock-dialog.tsx:298
-#: app/components/inventory/count-review-screen.tsx:555
+#: app/components/inventory/count-review-screen.tsx:558
 #: app/components/inventory/log-waste-dialog.tsx:398
 #: app/components/inventory/record-batch-dialog.tsx:275
 #: app/components/inventory/supplier-form.tsx:377
@@ -26153,7 +26173,7 @@ msgstr "Nothing in this timeframe matches the report's filters."
 msgid "Nothing is added until you confirm. Fix a row here or remove it."
 msgstr "Nothing is added until you confirm. Fix a row here or remove it."
 
-#: app/components/inventory/count-review-screen.tsx:647
+#: app/components/inventory/count-review-screen.tsx:650
 msgid "Nothing is changed in your stock. The entries are kept in the list of past counts."
 msgstr "Nothing is changed in your stock. The entries are kept in the list of past counts."
 
@@ -36260,6 +36280,14 @@ msgstr "Since {since} · {elapsed}"
 msgid "Since {startedOn}"
 msgstr "Since {startedOn}"
 
+#: app/components/inventory/count-review-screen.tsx:796
+msgid "Since the first record:"
+msgstr "Since the first record:"
+
+#: app/components/inventory/count-review-screen.tsx:798
+msgid "Since the last count:"
+msgstr "Since the last count:"
+
 #: app/components/menu/option-form.tsx:791
 msgid "Single"
 msgstr "Single"
@@ -37277,7 +37305,7 @@ msgstr "Stock"
 msgid "Stock adjusted."
 msgstr "Stock adjusted."
 
-#: app/components/inventory/count-review-screen.tsx:604
+#: app/components/inventory/count-review-screen.tsx:607
 msgid "Stock is set to what was counted and the count closes. This cannot be undone."
 msgstr "Stock is set to what was counted and the count closes. This cannot be undone."
 
@@ -38714,11 +38742,11 @@ msgstr "That file is too large. Split it into smaller files."
 msgid "That file is too large. Use a file under 1 MB."
 msgstr "That file is too large. Use a file under 1 MB."
 
-#: app/components/inventory/count-review-screen.tsx:612
+#: app/components/inventory/count-review-screen.tsx:615
 msgid "That is about <0>{netText}</0> less than you expected."
 msgstr "That is about <0>{netText}</0> less than you expected."
 
-#: app/components/inventory/count-review-screen.tsx:617
+#: app/components/inventory/count-review-screen.tsx:620
 msgid "That is about <0>{netText}</0> more than you expected."
 msgstr "That is about <0>{netText}</0> more than you expected."
 
@@ -46868,7 +46896,7 @@ msgstr "Your session has ended. Sign in again to keep working."
 msgid "Your setup progress"
 msgstr ""
 
-#: app/components/inventory/count-review-screen.tsx:780
+#: app/components/inventory/count-review-screen.tsx:844
 msgid "Your stock now matches what was counted."
 msgstr "Your stock now matches what was counted."
 

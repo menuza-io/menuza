@@ -93,7 +93,7 @@ msgid "(opens in a new tab)"
 msgstr "(يُفتح في علامة تبويب جديدة)"
 
 #: app/components/inventory/adjust-stock-dialog.tsx:300
-#: app/components/inventory/count-review-screen.tsx:557
+#: app/components/inventory/count-review-screen.tsx:560
 #: app/components/inventory/item-form.tsx:393
 #: app/components/inventory/item-form.tsx:523
 #: app/components/inventory/item-form.tsx:567
@@ -296,7 +296,7 @@ msgid "{0, plural, one {# item is low but has no supplier yet:} other {# items a
 msgstr "{0, plural, one {عنصر واحد منخفض وليس له مورّد بعد:} two {عنصران منخفضان وليس لهما مورّد بعد:} few {# عناصر منخفضة وليس لها مورّد بعد:} many {# عنصرًا منخفضًا وليس لها مورّد بعد:} other {# عنصر منخفض وليس لها مورّد بعد:}}"
 
 #. placeholder {0}: grouped.matching
-#: app/components/inventory/count-review-screen.tsx:589
+#: app/components/inventory/count-review-screen.tsx:592
 msgid "{0, plural, one {# item matches and needs no review.} other {# items match and need no review.}}"
 msgstr "{0, plural, zero {لا عناصر مطابقة.} one {عنصر واحد مطابق ولا يحتاج إلى مراجعة.} two {عنصران مطابقان ولا يحتاجان إلى مراجعة.} few {# عناصر مطابقة ولا تحتاج إلى مراجعة.} many {# عنصرًا مطابقًا ولا تحتاج إلى مراجعة.} other {# عنصر مطابق ولا تحتاج إلى مراجعة.}}"
 
@@ -744,6 +744,14 @@ msgstr "تمت إضافة {addedName}."
 msgid "{amount, plural, one {piece} other {pieces}}"
 msgstr "{amount, plural, one {قطعة} two {قطعتان} few {قطع} many {قطعة} other {قطعة}}"
 
+#: app/components/inventory/count-review-screen.tsx:785
+msgid "{amount} added by adjustments"
+msgstr "{amount} أُضيفت بالتسويات"
+
+#: app/components/inventory/count-review-screen.tsx:768
+msgid "{amount} delivered"
+msgstr "{amount} تم توريدها"
+
 #: app/utils/discounts/labels.ts:334
 msgid "{amount} off"
 msgstr "خصم {amount}"
@@ -781,6 +789,18 @@ msgstr "{amount} للحجز الواحد"
 #: app/components/reservations/policies/policies-screen.tsx:234
 msgid "{amount} per guest"
 msgstr "{amount} للضيف الواحد"
+
+#: app/components/inventory/count-review-screen.tsx:786
+msgid "{amount} removed by adjustments"
+msgstr "{amount} أُزيلت بالتسويات"
+
+#: app/components/inventory/count-review-screen.tsx:773
+msgid "{amount} used by sales"
+msgstr "{amount} استُخدمت في المبيعات"
+
+#: app/components/inventory/count-review-screen.tsx:777
+msgid "{amount} wasted"
+msgstr "{amount} هدر"
 
 #: app/components/reservations/payment-panel.tsx:737
 msgid "{amount} will be charged now to the card {guest} left on file. This cannot be undone from here."
@@ -2415,16 +2435,16 @@ msgstr "ستتم إزالة <0>{archiveName}</0> من مسار جولتك. وت�
 msgid "<0>{archiveName}</0> is removed. The items stay in Stock."
 msgstr "ستتم إزالة <0>{archiveName}</0>. وتبقى العناصر في المخزون."
 
-#: app/components/inventory/count-review-screen.tsx:789
+#: app/components/inventory/count-review-screen.tsx:853
 #: app/routes/_app+/$orgSlug_+/inventory+/counts.tsx:442
 msgid "<0>{counted}</0> of <1>{total}</1>"
 msgstr "<0>{counted}</0> من <1>{total}</1>"
 
-#: app/components/inventory/count-review-screen.tsx:814
+#: app/components/inventory/count-review-screen.tsx:878
 msgid "<0>{differenceText}</0> missing"
 msgstr "<0>{differenceText}</0> ناقصة"
 
-#: app/components/inventory/count-review-screen.tsx:818
+#: app/components/inventory/count-review-screen.tsx:882
 msgid "<0>{differenceText}</0> more than expected"
 msgstr "<0>{differenceText}</0> أكثر من المتوقع"
 
@@ -2432,21 +2452,21 @@ msgstr "<0>{differenceText}</0> أكثر من المتوقع"
 msgid "<0>{doneCount}</0> of <1>{totalCount}</1> counted"
 msgstr "تم جرد <0>{doneCount}</0> من <1>{totalCount}</1>"
 
-#: app/components/inventory/count-review-screen.tsx:835
+#: app/components/inventory/count-review-screen.tsx:899
 msgid "<0>{foodBpText}</0> since your last count, above your target of <1>{targetText}</1>."
 msgstr "<0>{foodBpText}</0> منذ آخر جرد، أعلى من هدفك البالغ <1>{targetText}</1>."
 
-#: app/components/inventory/count-review-screen.tsx:843
+#: app/components/inventory/count-review-screen.tsx:907
 msgid "<0>{foodBpText}</0> since your last count, within your target of <1>{targetText}</1>."
 msgstr "<0>{foodBpText}</0> منذ آخر جرد، ضمن هدفك البالغ <1>{targetText}</1>."
 
-#: app/components/inventory/count-review-screen.tsx:711
-#: app/components/inventory/count-review-screen.tsx:726
+#: app/components/inventory/count-review-screen.tsx:714
+#: app/components/inventory/count-review-screen.tsx:729
 msgid "<0>{gap}</0> missing"
 msgstr "<0>{gap}</0> ناقصة"
 
-#: app/components/inventory/count-review-screen.tsx:715
-#: app/components/inventory/count-review-screen.tsx:730
+#: app/components/inventory/count-review-screen.tsx:718
+#: app/components/inventory/count-review-screen.tsx:733
 msgid "<0>{gap}</0> more than expected"
 msgstr "<0>{gap}</0> أكثر من المتوقع"
 
@@ -5879,7 +5899,7 @@ msgid "Approve a table card, poster or flyer first. Only approved prints in a sh
 msgstr "اعتمد بطاقة طاولة أو ملصقًا أو منشورًا أولًا. لا يمكن طلب إلا المطبوعات المعتمدة بمقاس قابل للشحن."
 
 #: app/components/inventory/count-review-screen.tsx:309
-#: app/components/inventory/count-review-screen.tsx:634
+#: app/components/inventory/count-review-screen.tsx:637
 msgid "Approve count"
 msgstr "اعتماد الجرد"
 
@@ -5900,7 +5920,7 @@ msgstr "اعتمد البروفة لتنزيلها."
 msgid "Approve the proof to order prints."
 msgstr "اعتمد البروفة لطلب المطبوعات."
 
-#: app/components/inventory/count-review-screen.tsx:601
+#: app/components/inventory/count-review-screen.tsx:604
 msgid "Approve this count?"
 msgstr "هل تريد اعتماد هذا الجرد؟"
 
@@ -8089,7 +8109,7 @@ msgid "Cancel booking…"
 msgstr "إلغاء الحجز…"
 
 #: app/components/inventory/count-review-screen.tsx:295
-#: app/components/inventory/count-review-screen.tsx:662
+#: app/components/inventory/count-review-screen.tsx:665
 msgid "Cancel count"
 msgstr "إلغاء الجرد"
 
@@ -8142,7 +8162,7 @@ msgstr "إلغاء الحجز"
 msgid "Cancel Reservation"
 msgstr "إلغاء الحجز"
 
-#: app/components/inventory/count-review-screen.tsx:644
+#: app/components/inventory/count-review-screen.tsx:647
 msgid "Cancel this count?"
 msgstr "هل تريد إلغاء هذا الجرد؟"
 
@@ -11245,7 +11265,7 @@ msgstr "الجرد"
 msgid "Count and manage stock"
 msgstr "جرد المخزون وإدارته"
 
-#: app/components/inventory/count-review-screen.tsx:777
+#: app/components/inventory/count-review-screen.tsx:841
 msgid "Count approved"
 msgstr "تم اعتماد الجرد"
 
@@ -11299,7 +11319,7 @@ msgstr "اجرد ما لديك الآن. كل رقم بعد ذلك يبدأ من
 msgid "Counted"
 msgstr "تم جرده"
 
-#: app/components/inventory/count-review-screen.tsx:721
+#: app/components/inventory/count-review-screen.tsx:724
 msgid "Counted <0>{counted}</0>"
 msgstr "المجرود <0>{counted}</0>"
 
@@ -13462,7 +13482,7 @@ msgstr "العلامات الغذائية"
 msgid "Dietary, Allergens & Calories"
 msgstr "النظام الغذائي ومسببات الحساسية والسعرات"
 
-#: app/components/inventory/count-review-screen.tsx:805
+#: app/components/inventory/count-review-screen.tsx:869
 #: app/routes/_app+/$orgSlug_+/inventory+/counts.tsx:298
 msgid "Difference"
 msgstr "الفرق"
@@ -13828,7 +13848,7 @@ msgstr "عدم قبول الطلبات الهاتفية لـ"
 #: app/components/dashboard/dashboard-edit-toolbar.tsx:101
 #: app/components/hiring/applicant-labels.ts:41
 #: app/components/hiring/hire-dialog.tsx:156
-#: app/components/inventory/count-review-screen.tsx:867
+#: app/components/inventory/count-review-screen.tsx:931
 #: app/components/inventory/credit-message-dialog.tsx:213
 #: app/components/inventory/send-order-dialog.tsx:194
 #: app/components/inventory/setup-checklist.tsx:149
@@ -16179,7 +16199,7 @@ msgstr "المتوقع {expected}"
 msgid "Expected {expected}, counted {counted}"
 msgstr "المتوقع {expected}، المعدود {counted}"
 
-#: app/components/inventory/count-review-screen.tsx:703
+#: app/components/inventory/count-review-screen.tsx:706
 msgid "Expected <0>{expected}</0>"
 msgstr "المتوقع <0>{expected}</0>"
 
@@ -17211,7 +17231,7 @@ msgstr "لم تُرسل رسالة المتابعة النصية"
 msgid "Follow-up text sent"
 msgstr "تم إرسال رسالة المتابعة النصية"
 
-#: app/components/inventory/count-review-screen.tsx:830
+#: app/components/inventory/count-review-screen.tsx:894
 #: app/components/inventory/food-cost-column.tsx:106
 #: app/components/inventory/recipe-panel.tsx:461
 #: app/components/inventory/recipe-section.tsx:773
@@ -17219,7 +17239,7 @@ msgstr "تم إرسال رسالة المتابعة النصية"
 msgid "Food cost"
 msgstr "تكلفة الطعام"
 
-#: app/components/inventory/count-review-screen.tsx:857
+#: app/components/inventory/count-review-screen.tsx:921
 msgid "Food cost needs two approved counts. Count again next time and it will show here."
 msgstr "تحتاج تكلفة الطعام إلى عمليتي جرد معتمدتين. أجرِ الجرد مرة أخرى في المرة القادمة وستظهر هنا."
 
@@ -17272,7 +17292,7 @@ msgstr "مثلًا كل 15 دقيقة."
 msgid "For example: 30 days"
 msgstr "مثلًا: 30 يومًا"
 
-#: app/components/inventory/count-review-screen.tsx:574
+#: app/components/inventory/count-review-screen.tsx:577
 msgid "For example: spilled a box, counted twice"
 msgstr "مثلًا: انسكب صندوق، جُرد مرتين"
 
@@ -19836,7 +19856,7 @@ msgstr "العناصر"
 msgid "Items added"
 msgstr "تمت إضافة العناصر"
 
-#: app/components/inventory/count-review-screen.tsx:796
+#: app/components/inventory/count-review-screen.tsx:860
 msgid "Items adjusted"
 msgstr "العناصر المعدّلة"
 
@@ -19844,7 +19864,7 @@ msgstr "العناصر المعدّلة"
 msgid "Items bought"
 msgstr "العناصر المشتراة"
 
-#: app/components/inventory/count-review-screen.tsx:786
+#: app/components/inventory/count-review-screen.tsx:850
 msgid "Items counted"
 msgstr "العناصر المجرودة"
 
@@ -20095,7 +20115,7 @@ msgstr "اجعل التصنيف أقل من 40 حرفًا."
 msgid "Keep the contact name under 80 characters."
 msgstr "اجعل اسم الشخص المسؤول أقل من 80 حرفًا."
 
-#: app/components/inventory/count-review-screen.tsx:655
+#: app/components/inventory/count-review-screen.tsx:658
 msgid "Keep the count"
 msgstr "الإبقاء على الجرد"
 
@@ -25247,7 +25267,7 @@ msgstr "لا دليل للمبيعات"
 msgid "No sales to compare"
 msgstr "لا مبيعات للمقارنة"
 
-#: app/components/inventory/count-review-screen.tsx:852
+#: app/components/inventory/count-review-screen.tsx:916
 msgid "No sales were recorded between your last two counts, so food cost cannot be worked out yet."
 msgstr "لم تُسجَّل مبيعات بين آخر عمليتي جرد، لذلك لا يمكن حساب تكلفة الطعام بعد."
 
@@ -25711,7 +25731,7 @@ msgstr "لا شيء"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:314
 #: app/components/hiring/job-summary.tsx:66
-#: app/components/inventory/count-review-screen.tsx:812
+#: app/components/inventory/count-review-screen.tsx:876
 #: app/components/menu/modifier-form.tsx:287
 #: app/components/reservations/booking-sheet.tsx:87
 #: app/components/settings/cards/organization/site-theme-card.tsx:748
@@ -25941,7 +25961,7 @@ msgstr "غير موثّق (خاطئ)"
 #~ msgid "Not visited in 90 days"
 #~ msgstr "لم يزر خلال 90 يومًا"
 
-#: app/components/inventory/count-review-screen.tsx:628
+#: app/components/inventory/count-review-screen.tsx:631
 #: app/components/staff/timesheets/timesheets-page.tsx:932
 msgid "Not yet"
 msgstr "ليس الآن"
@@ -25951,7 +25971,7 @@ msgid "note"
 msgstr "ملاحظة"
 
 #: app/components/inventory/adjust-stock-dialog.tsx:298
-#: app/components/inventory/count-review-screen.tsx:555
+#: app/components/inventory/count-review-screen.tsx:558
 #: app/components/inventory/log-waste-dialog.tsx:398
 #: app/components/inventory/record-batch-dialog.tsx:275
 #: app/components/inventory/supplier-form.tsx:377
@@ -26145,7 +26165,7 @@ msgstr "لا يوجد في هذا الإطار الزمني ما يطابق عو
 msgid "Nothing is added until you confirm. Fix a row here or remove it."
 msgstr "لن تتم إضافة شيء حتى تؤكد. أصلح صفًا هنا أو أزله."
 
-#: app/components/inventory/count-review-screen.tsx:647
+#: app/components/inventory/count-review-screen.tsx:650
 msgid "Nothing is changed in your stock. The entries are kept in the list of past counts."
 msgstr "لا يتغير شيء في مخزونك. تبقى الإدخالات في قائمة عمليات الجرد السابقة."
 
@@ -36252,6 +36272,14 @@ msgstr "منذ {since} · {elapsed}"
 msgid "Since {startedOn}"
 msgstr "منذ {startedOn}"
 
+#: app/components/inventory/count-review-screen.tsx:796
+msgid "Since the first record:"
+msgstr "منذ أول تسجيل:"
+
+#: app/components/inventory/count-review-screen.tsx:798
+msgid "Since the last count:"
+msgstr "منذ آخر جرد:"
+
 #: app/components/menu/option-form.tsx:791
 msgid "Single"
 msgstr "مفرد"
@@ -37269,7 +37297,7 @@ msgstr "المخزون الحالي"
 msgid "Stock adjusted."
 msgstr "تم تعديل المخزون."
 
-#: app/components/inventory/count-review-screen.tsx:604
+#: app/components/inventory/count-review-screen.tsx:607
 msgid "Stock is set to what was counted and the count closes. This cannot be undone."
 msgstr "يُضبط المخزون على ما تم جرده ويُغلق الجرد. لا يمكن التراجع عن ذلك."
 
@@ -38706,11 +38734,11 @@ msgstr "هذا الملف كبير جدًا. قسّمه إلى ملفات أصغ
 msgid "That file is too large. Use a file under 1 MB."
 msgstr "هذا الملف كبير جدًا. استخدم ملفًا أقل من 1 ميغابايت."
 
-#: app/components/inventory/count-review-screen.tsx:612
+#: app/components/inventory/count-review-screen.tsx:615
 msgid "That is about <0>{netText}</0> less than you expected."
 msgstr "وهذا أقل بحوالي <0>{netText}</0> مما توقعت."
 
-#: app/components/inventory/count-review-screen.tsx:617
+#: app/components/inventory/count-review-screen.tsx:620
 msgid "That is about <0>{netText}</0> more than you expected."
 msgstr "وهذا أكثر بحوالي <0>{netText}</0> مما توقعت."
 
@@ -46860,7 +46888,7 @@ msgstr "انتهت جلستك. سجّل الدخول مرة أخرى لمتاب�
 msgid "Your setup progress"
 msgstr "تقدم الإعداد"
 
-#: app/components/inventory/count-review-screen.tsx:780
+#: app/components/inventory/count-review-screen.tsx:844
 msgid "Your stock now matches what was counted."
 msgstr "أصبح مخزونك الآن مطابقًا لما تم جرده."
 

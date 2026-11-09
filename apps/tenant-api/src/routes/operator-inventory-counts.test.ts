@@ -509,6 +509,12 @@ describe('counts: review and approve', () => {
 			differenceValueMinor: -14000,
 			currency: 'SAR',
 		})
+		// What moved the item since the last approved count (none yet), so the
+		// expected figure explains itself.
+		expect(chicken.movements).toMatchObject({ since: null })
+		expect(
+			(chicken.movements!.delivered ?? 0) + (chicken.movements!.adjusted ?? 0),
+		).toBeGreaterThan(0)
 		expect(review.lines[3]).toMatchObject({ counted: null, difference: null })
 		expect(review).toMatchObject({
 			matching: 0,

@@ -15,7 +15,7 @@ import {
 	invMovements,
 	invStorageAreas,
 } from '@repo/tenant-db'
-import { and, desc, eq, inArray, isNull, or, sql } from 'drizzle-orm'
+import { and, desc, eq, gt, inArray, isNull, or, sql } from 'drizzle-orm'
 import { insertRowsInChunks, queryInChunks } from '../lib/chunked-in.ts'
 import { InventoryError } from '../lib/inventory-http.ts'
 import {
@@ -818,6 +818,74 @@ export async function addCountEntries(
 	})
 }
 
+/**
+ * What moved each item since the last approved count at the location (see
+ * `countReviewMovementsSchema`). One grouped read per 90 items, only for the
+ * lines a person has to look at.
+ */
+async function reviewMovements(
+	db: InventoryReader,
+	input: { locationId: string; itemIds: readonly string[] },
+): Promise<Map<string, CountReview['lines'][number]['movements']>> {
+	const result = new Map<string, CountReview['lines'][number]['movements']>()
+	if (input.itemIds.length === 0) return result
+	const last = await db
+		.select({ at: sql<number | null>`max(${invCounts.approvedAt})` })
+		.from(invCounts)
+		.where(
+			and(
+				eq(invCounts.locationId, input.locationId),
+				eq(invCounts.status, 'approved'),
+			),
+		)
+		.get()
+	const since = last?.at ?? null
+	const rows = await queryInChunks(input.itemIds, (chunk) =>
+		db
+			.select({
+				itemId: invMovements.itemId,
+				kind: invMovements.kind,
+				total: sql<number>`coalesce(sum(${invMovements.quantity}), 0)`,
+			})
+			.from(invMovements)
+			.where(
+				and(
+					eq(invMovements.locationId, input.locationId),
+					gt(invMovements.createdAt, since ?? -1),
+					inArray(invMovements.itemId, chunk),
+				),
+			)
+			.groupBy(invMovements.itemId, invMovements.kind),
+	)
+	for (const itemId of input.itemIds) {
+		result.set(itemId, {
+			since,
+			delivered: 0,
+			used: 0,
+			wasted: 0,
+			adjusted: 0,
+		})
+	}
+	for (const row of rows) {
+		const out = result.get(row.itemId)!
+		const total = Number(row.total)
+		if (row.kind === 'delivery' || row.kind === 'transfer_in') {
+			out.delivered += total
+		} else if (row.kind === 'batch_made') {
+			out.delivered += total
+		} else if (row.kind === 'sale' || row.kind === 'batch_used') {
+			out.used += -total
+		} else if (row.kind === 'transfer_out') {
+			out.used += -total
+		} else if (row.kind === 'waste') {
+			out.wasted += -total
+		} else if (row.kind === 'adjustment') {
+			out.adjusted += total
+		}
+	}
+	return result
+}
+
 // ── Review and approve ──────────────────────────────────────────────────────
 
 export async function getCountReview(
@@ -855,6 +923,10 @@ export async function getCountReview(
 		)
 	})
 	const currency = stockCurrency(scope)
+	const movements = await reviewMovements(db, {
+		locationId: row.locationId,
+		itemIds: flagged.map((line) => line.row.item.id),
+	})
 	const review: CountReview = {
 		count: (await summarize(db, [row], caller))[0]!,
 		lines: flagged.map((line) => {
@@ -871,6 +943,8 @@ export async function getCountReview(
 				difference: line.difference,
 				flag: line.flag!,
 			}
+			const moved = movements.get(line.row.item.id)
+			if (moved) out.movements = moved
 			if (caller.cost && line.valueMinor !== null) {
 				out.differenceValueMinor = line.valueMinor
 				if (line.row.cost) out.currency = line.row.cost.currency

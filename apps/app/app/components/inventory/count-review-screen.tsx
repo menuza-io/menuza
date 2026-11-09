@@ -549,6 +549,9 @@ export function CountReviewScreen({
 											showMoney={showMoney}
 										/>
 									</p>
+									{selected.movements ? (
+										<MovementsSince line={selected} fmt={fmt} />
+									) : null}
 									{manager && count.status === 'in_review' ? (
 										<Field>
 											<FieldLabel htmlFor={`${noteId}-${selected.itemId}`}>
@@ -740,6 +743,64 @@ function DifferenceFigures({
 				</>
 			) : null}
 		</>
+	)
+}
+
+/**
+ * Why "expected" is what it is: what moved the item since the last approved
+ * count. Quantities only; sales show as "used by sales" once recipes are on.
+ */
+function MovementsSince({
+	line,
+	fmt,
+}: {
+	line: ReviewLine
+	fmt: (line: ReviewLine, value: number) => string
+}) {
+	const { t } = useLingui()
+	const moved = line.movements
+	if (!moved) return null
+	const parts: { key: string; text: string }[] = []
+	if (moved.delivered > 0) {
+		const amount = fmt(line, moved.delivered)
+		parts.push({
+			key: 'delivered',
+			text: t`${amount} delivered`,
+		})
+	}
+	if (moved.used > 0) {
+		const amount = fmt(line, moved.used)
+		parts.push({ key: 'used', text: t`${amount} used by sales` })
+	}
+	if (moved.wasted > 0) {
+		const amount = fmt(line, moved.wasted)
+		parts.push({ key: 'wasted', text: t`${amount} wasted` })
+	}
+	if (moved.adjusted !== 0) {
+		const amount = fmt(line, Math.abs(moved.adjusted))
+		parts.push({
+			key: 'adjusted',
+			text:
+				moved.adjusted > 0
+					? t`${amount} added by adjustments`
+					: t`${amount} removed by adjustments`,
+		})
+	}
+	if (parts.length === 0) return null
+	return (
+		<p className="text-muted-foreground text-xs" data-testid="review-movements">
+			{moved.since === null ? (
+				<Trans>Since the first record:</Trans>
+			) : (
+				<Trans>Since the last count:</Trans>
+			)}{' '}
+			{parts.map((part, index) => (
+				<span key={part.key}>
+					{index > 0 ? ' · ' : null}
+					<bdi dir="ltr">{part.text}</bdi>
+				</span>
+			))}
+		</p>
 	)
 }
 

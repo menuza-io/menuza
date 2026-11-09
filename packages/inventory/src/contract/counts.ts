@@ -138,6 +138,23 @@ export const reviewFlagSchema = z.enum(REVIEW_FLAGS)
  * lines needing a look are listed in `lines`; the rest are summarised in
  * `matching`.
  */
+/**
+ * What moved an item since the last approved count at the location, in base
+ * thousandths, so "expected" explains itself: "49 kg = last count + 20
+ * delivered - 18 used by sales - 3 wasted". `used` is sales and batches made
+ * (positive), `delivered` includes transfers in and batches made, `adjusted`
+ * is the signed net of adjustments. No money.
+ */
+export const countReviewMovementsSchema = z.object({
+	/** When the last approved count was approved; null when there was none. */
+	since: z.number().int().nullable(),
+	delivered: z.number().int(),
+	used: z.number().int(),
+	wasted: z.number().int(),
+	adjusted: z.number().int(),
+})
+export type CountReviewMovements = z.infer<typeof countReviewMovementsSchema>
+
 export const countReviewLineSchema = z.object({
 	itemId: z.string(),
 	name: z.string(),
@@ -148,6 +165,7 @@ export const countReviewLineSchema = z.object({
 	expected: z.number().int(),
 	difference: z.number().int().nullable(),
 	flag: reviewFlagSchema,
+	movements: countReviewMovementsSchema.optional(),
 	differenceValueMinor: minorOut,
 	currency: currencyOut,
 })
