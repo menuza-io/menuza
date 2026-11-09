@@ -21,6 +21,8 @@ import { InventoryError } from '../lib/inventory-http.ts'
 import {
 	type InventoryIdempotency,
 	type InventoryReader,
+	type InventoryTx,
+	type InventoryWriteContext,
 	withInventoryWrite,
 } from '../lib/inventory-write.ts'
 import { recordInventoryAudit } from './inventory-audit.ts'
@@ -30,6 +32,7 @@ import {
 	decodeCursor,
 	defaultCountUnit,
 	encodeCursor,
+	type InventoryActor,
 	loadItemUnits,
 	locationBusinessDate,
 	markUnitsUsed,
@@ -361,72 +364,154 @@ export async function listCounts(
 
 // ── Start, send, reopen, cancel ─────────────────────────────────────────────
 
+type StartCountInput = {
+	clientId: string
+	locationId: string
+	listId: string | null
+	idempotency: InventoryIdempotency
+}
+
+/**
+ * Opens a count, or (`join`, Station) answers the one already open for the
+ * location and list instead of refusing with `count_in_progress`.
+ */
+async function openCount(
+	tx: InventoryTx,
+	ctx: InventoryWriteContext,
+	caller: InventoryCaller,
+	input: StartCountInput,
+	join: boolean,
+): Promise<{ count: CountSummary; joined: boolean }> {
+	if (input.listId) {
+		const list = await tx
+			.select()
+			.from(invCountLists)
+			.where(eq(invCountLists.id, input.listId))
+			.get()
+		if (
+			!list ||
+			list.archivedAt !== null ||
+			list.locationId !== input.locationId
+		) {
+			throw notFound()
+		}
+	}
+	const open = await tx
+		.select({ id: invCounts.id })
+		.from(invCounts)
+		.where(
+			and(
+				eq(invCounts.locationId, input.locationId),
+				inArray(invCounts.status, [...OPEN_STATUSES]),
+				input.listId
+					? eq(invCounts.listId, input.listId)
+					: isNull(invCounts.listId),
+			),
+		)
+		.limit(1)
+		.get()
+	if (open) {
+		if (!join) {
+			throw new InventoryError('count_in_progress', 409, { countId: open.id })
+		}
+		return {
+			count: (await summarize(tx, [await loadCount(tx, open.id)], caller))[0]!,
+			joined: true,
+		}
+	}
+	const id = newId()
+	await tx.insert(invCounts).values({
+		id,
+		locationId: input.locationId,
+		listId: input.listId,
+		status: 'counting',
+		businessDate: await locationBusinessDate(tx, input.locationId, ctx.now),
+		startedByKind: caller.actor.kind,
+		startedById: caller.actor.id,
+		createdAt: ctx.now,
+		updatedAt: ctx.now,
+	})
+	await recordInventoryAudit(tx, {
+		actorKind: caller.actor.kind,
+		actorId: caller.actor.id,
+		action: 'count.start',
+		resourceType: 'count',
+		resourceId: id,
+		locationId: input.locationId,
+		at: ctx.now,
+	})
+	return {
+		count: (await summarize(tx, [await loadCount(tx, id)], caller))[0]!,
+		joined: false,
+	}
+}
+
 export async function startCount(
 	caller: InventoryCaller,
-	input: {
-		clientId: string
-		locationId: string
-		listId: string | null
-		idempotency: InventoryIdempotency
-	},
+	input: StartCountInput,
 ): Promise<CountSummary> {
 	assertLocationAllowed(caller.locationIds, input.locationId)
 	return withInventoryWrite(
 		{ orgId: caller.orgId, idempotency: input.idempotency },
+		async (tx, ctx) => (await openCount(tx, ctx, caller, input, false)).count,
+	)
+}
+
+/**
+ * Station: starts a count, or joins the open one for the same location and
+ * list so two tablets share one count. Idempotent by `clientId` (a replay
+ * answers the first result, whether it started or joined).
+ */
+export async function startOrJoinCount(
+	caller: InventoryCaller,
+	input: StartCountInput,
+): Promise<{ count: CountSummary; joined: boolean }> {
+	assertLocationAllowed(caller.locationIds, input.locationId)
+	return withInventoryWrite(
+		{ orgId: caller.orgId, idempotency: input.idempotency },
+		(tx, ctx) => openCount(tx, ctx, caller, input, true),
+	)
+}
+
+/**
+ * Station: "Send for review". Moves a `counting` count to `in_review` for
+ * every device (entries that arrive afterwards get `count_closed`; the office
+ * can reopen it). Idempotent: a count already `in_review` answers its current
+ * summary, and by `clientId` a replay answers the first result. An approved
+ * or cancelled count is closed (409 `count_closed`).
+ */
+export async function sendCountForReview(
+	caller: InventoryCaller,
+	input: { id: string; idempotency: InventoryIdempotency },
+): Promise<CountSummary> {
+	return withInventoryWrite(
+		{ orgId: caller.orgId, idempotency: input.idempotency },
 		async (tx, ctx) => {
-			if (input.listId) {
-				const list = await tx
-					.select()
-					.from(invCountLists)
-					.where(eq(invCountLists.id, input.listId))
-					.get()
-				if (
-					!list ||
-					list.archivedAt !== null ||
-					list.locationId !== input.locationId
-				) {
-					throw notFound()
-				}
+			const row = await loadAllowedCount(tx, input.id, caller)
+			if (row.status === 'approved' || row.status === 'cancelled') {
+				throw new InventoryError('count_closed', 409)
 			}
-			const open = await tx
-				.select({ id: invCounts.id })
-				.from(invCounts)
-				.where(
-					and(
-						eq(invCounts.locationId, input.locationId),
-						inArray(invCounts.status, [...OPEN_STATUSES]),
-						input.listId
-							? eq(invCounts.listId, input.listId)
-							: isNull(invCounts.listId),
-					),
-				)
-				.limit(1)
-				.get()
-			if (open) {
-				throw new InventoryError('count_in_progress', 409, { countId: open.id })
+			if (row.status === 'counting') {
+				await tx
+					.update(invCounts)
+					.set({
+						status: 'in_review',
+						sentForReviewAt: ctx.now,
+						version: row.version + 1,
+						updatedAt: ctx.now,
+					})
+					.where(eq(invCounts.id, row.id))
+				await recordInventoryAudit(tx, {
+					actorKind: caller.actor.kind,
+					actorId: caller.actor.id,
+					action: 'count.send',
+					resourceType: 'count',
+					resourceId: row.id,
+					locationId: row.locationId,
+					at: ctx.now,
+				})
 			}
-			const id = newId()
-			await tx.insert(invCounts).values({
-				id,
-				locationId: input.locationId,
-				listId: input.listId,
-				status: 'counting',
-				businessDate: await locationBusinessDate(tx, input.locationId, ctx.now),
-				startedByKind: caller.actor.kind,
-				startedById: caller.actor.id,
-				createdAt: ctx.now,
-				updatedAt: ctx.now,
-			})
-			await recordInventoryAudit(tx, {
-				actorKind: caller.actor.kind,
-				actorId: caller.actor.id,
-				action: 'count.start',
-				resourceType: 'count',
-				resourceId: id,
-				locationId: input.locationId,
-				at: ctx.now,
-			})
-			return (await summarize(tx, [await loadCount(tx, id)], caller))[0]!
+			return (await summarize(tx, [await loadCount(tx, row.id)], caller))[0]!
 		},
 	)
 }
@@ -566,10 +651,27 @@ export async function getCountSheet(
 
 // ── Entries ─────────────────────────────────────────────────────────────────
 
+export type CountEntriesOptions = {
+	/**
+	 * Entries typed on a Station tablet. A count that is no longer `counting`
+	 * refuses the whole request (409 `count_closed`) instead of every entry, an
+	 * archived item is refused as `item_archived`, each entry is counted for
+	 * the person who made it (`actorFor`, the session's person unless the
+	 * tablet named another one on the roster), and the audit trail records
+	 * who synced it (`syncedBy`) when that is someone else.
+	 */
+	station?: {
+		actorFor: (clientId: string) => InventoryActor
+		syncedBy: string
+	}
+}
+
 export async function addCountEntries(
 	caller: InventoryCaller,
 	input: { id: string; body: CountEntriesInput },
+	options: CountEntriesOptions = {},
 ) {
+	const { station } = options
 	return withInventoryWrite({ orgId: caller.orgId }, async (tx, ctx) => {
 		const count = await loadAllowedCount(tx, input.id, caller)
 		const accepted: Array<{ clientId: string; quantity: number | null }> = []
@@ -577,6 +679,7 @@ export async function addCountEntries(
 		const refused: Array<{ clientId: string; code: string }> = []
 		const { entries } = input.body
 		if (count.status !== 'counting') {
+			if (station) throw new InventoryError('count_closed', 409)
 			return {
 				accepted,
 				duplicates,
@@ -625,7 +728,10 @@ export async function addCountEntries(
 			}
 			const item = byItem.get(entry.itemId)
 			if (!item || item.item.archivedAt !== null) {
-				refused.push({ clientId: entry.clientId, code: 'not_found' })
+				refused.push({
+					clientId: entry.clientId,
+					code: station && item ? 'item_archived' : 'not_found',
+				})
 				continue
 			}
 			if (entry.areaId !== null && !areaIds.has(entry.areaId)) {
@@ -652,6 +758,7 @@ export async function addCountEntries(
 				}
 			}
 			taken.add(entry.clientId)
+			const counter = station ? station.actorFor(entry.clientId) : caller.actor
 			rows.push({
 				id: newId(),
 				countId: count.id,
@@ -660,8 +767,8 @@ export async function addCountEntries(
 				quantity,
 				enteredAmount: entry.amount === null ? CLEARED : String(entry.amount),
 				enteredUnit: storedUnit(entry.unit),
-				counterKind: caller.actor.kind,
-				counterId: caller.actor.id,
+				counterKind: counter.kind,
+				counterId: counter.id,
 				clientId: entry.clientId,
 				createdAt: ctx.now,
 			})
@@ -675,16 +782,37 @@ export async function addCountEntries(
 		)
 		await markUnitsUsed(tx, usedUnits, ctx.now)
 		if (rows.length > 0) {
-			await recordInventoryAudit(tx, {
-				actorKind: caller.actor.kind,
-				actorId: caller.actor.id,
-				action: 'count.entries',
-				resourceType: 'count',
-				resourceId: count.id,
-				locationId: count.locationId,
-				detail: { entries: rows.length },
-				at: ctx.now,
-			})
+			// One audit row per person the entries are counted for.
+			const byCounter = new Map<
+				string,
+				{ actor: InventoryActor; entries: number }
+			>()
+			for (const row of rows) {
+				const key = `${row.counterKind}|${row.counterId ?? ''}`
+				const found = byCounter.get(key)
+				if (found) found.entries += 1
+				else {
+					byCounter.set(key, {
+						actor: { kind: row.counterKind!, id: row.counterId ?? null },
+						entries: 1,
+					})
+				}
+			}
+			for (const { actor, entries: n } of byCounter.values()) {
+				await recordInventoryAudit(tx, {
+					actorKind: actor.kind,
+					actorId: actor.id,
+					action: 'count.entries',
+					resourceType: 'count',
+					resourceId: count.id,
+					locationId: count.locationId,
+					detail:
+						station && actor.id !== station.syncedBy
+							? { entries: n, syncedBy: station.syncedBy }
+							: { entries: n },
+					at: ctx.now,
+				})
+			}
 		}
 		return { accepted, duplicates, refused }
 	})

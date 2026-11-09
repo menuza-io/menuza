@@ -43,6 +43,7 @@ import { operatorQrRoutes } from './routes/operator-qr.ts'
 import { operatorPeopleRoutes } from './routes/operator-people.ts'
 import { operatorPosRoutes } from './routes/operator-pos.ts'
 import { posRoutes } from './routes/pos.ts'
+import { posInventoryRoutes } from './routes/pos-inventory.ts'
 import { posKdsRoutes } from './routes/pos-kds.ts'
 import { posReservationsRoutes } from './routes/pos-reservations.ts'
 import { posTimeclockRoutes } from './routes/pos-timeclock.ts'
@@ -331,6 +332,7 @@ export function createTenantApiApp() {
 	app.route('/internal/staff', staffInternalRoutes)
 	app.route('/kiosk', kioskRoutes)
 	app.route('/pos/timeclock', posTimeclockRoutes)
+	app.route('/pos/inventory', posInventoryRoutes)
 	app.route('/pos/reservations', posReservationsRoutes)
 	app.route('/pos/kds', posKdsRoutes)
 	app.route('/pos', posRoutes)

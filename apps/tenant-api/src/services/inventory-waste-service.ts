@@ -31,6 +31,7 @@ import {
 	badRequest,
 	decodeCursor,
 	encodeCursor,
+	type InventoryActor,
 	loadItemUnits,
 	locationBusinessDate,
 	markUnitsUsed,
@@ -71,6 +72,10 @@ export type LogWasteOptions = {
 		deviceId: string
 		lateSync?: (clientId: string) => boolean
 		madeAt?: (clientId: string) => number | undefined
+		/** Who each entry is logged for (default the caller). */
+		actorFor?: (clientId: string) => InventoryActor
+		/** The session's person: the audit trail names them when they synced someone else's entry. */
+		syncedBy?: string
 	}
 }
 
@@ -120,6 +125,10 @@ export async function logWaste(
 		const refused: Array<{ clientId: string; code: string }> = []
 		const lateSync: string[] = []
 		const usedUnits: string[] = []
+		const actors = new Map<
+			string,
+			{ actor: InventoryActor; first: string; entries: number }
+		>()
 		for (const entry of body.entries) {
 			const known = byClient.get(entry.clientId)
 			if (known) {
@@ -136,7 +145,10 @@ export async function logWaste(
 			const item = itemById.get(entry.itemId)
 			if (!item || item.archivedAt !== null) {
 				if (station) {
-					refused.push({ clientId: entry.clientId, code: 'not_found' })
+					refused.push({
+						clientId: entry.clientId,
+						code: item ? 'item_archived' : 'not_found',
+					})
 					continue
 				}
 				throw notFound()
@@ -176,6 +188,7 @@ export async function logWaste(
 			}
 			const late = station?.lateSync?.(entry.clientId) === true
 			if (late) lateSync.push(entry.clientId)
+			const actor = station?.actorFor?.(entry.clientId) ?? caller.actor
 			const id = newId()
 			await tx.insert(invWaste).values({
 				id,
@@ -186,8 +199,8 @@ export async function logWaste(
 				note: entry.note?.length ? entry.note : null,
 				valueMinor: value,
 				currency: value === null ? null : cost!.currency,
-				actorKind: caller.actor.kind,
-				actorId: caller.actor.id,
+				actorKind: actor.kind,
+				actorId: actor.id,
 				clientId: entry.clientId,
 				businessDate,
 				source: station ? 'station' : 'operator',
@@ -207,8 +220,8 @@ export async function logWaste(
 				sourceId: id,
 				eventKey: `waste:${id}`,
 				businessDate,
-				actorKind: caller.actor.kind,
-				actorId: caller.actor.id,
+				actorKind: actor.kind,
+				actorId: actor.id,
 				note: entry.note?.length ? entry.note : null,
 				createdAt: ctx.now,
 			})
@@ -222,17 +235,25 @@ export async function logWaste(
 				out.currency = cost!.currency
 			}
 			accepted.push(out)
+			const key = `${actor.kind}|${actor.id ?? ''}`
+			const group = actors.get(key)
+			if (group) group.entries += 1
+			else actors.set(key, { actor, first: id, entries: 1 })
 		}
 		await markUnitsUsed(tx, usedUnits, ctx.now)
-		if (accepted.length > 0) {
+		// One audit row per person the waste is logged for.
+		for (const { actor, first, entries: n } of actors.values()) {
 			await recordInventoryAudit(tx, {
-				actorKind: caller.actor.kind,
-				actorId: caller.actor.id,
+				actorKind: actor.kind,
+				actorId: actor.id,
 				action: 'waste.log',
 				resourceType: 'waste',
-				resourceId: accepted[0]!.id,
+				resourceId: first,
 				locationId: body.entries[0]!.locationId,
-				detail: { entries: accepted.length },
+				detail:
+					station?.syncedBy && actor.id !== station.syncedBy
+						? { entries: n, syncedBy: station.syncedBy }
+						: { entries: n },
 				at: ctx.now,
 			})
 		}
@@ -242,11 +263,22 @@ export async function logWaste(
 	})
 }
 
+export type UndoWasteOptions = {
+	/**
+	 * Undo from a Station tablet: only the caller's own entry from this
+	 * terminal (anything else is a 404), within `windowMs` of when the region
+	 * stored it. The reversing entry names the terminal too.
+	 */
+	station?: { deviceId: string; windowMs: number }
+}
+
 /** Undoes waste within the window, once, by a reversing entry (the original stays). */
 export async function undoWaste(
 	caller: InventoryCaller,
 	input: { id: string; clientId: string },
+	options: UndoWasteOptions = {},
 ): Promise<WasteEntry> {
+	const { station } = options
 	return withInventoryWrite({ orgId: caller.orgId }, async (tx, ctx) => {
 		const replay = await tx
 			.select()
@@ -254,7 +286,13 @@ export async function undoWaste(
 			.where(eq(invWaste.clientId, input.clientId))
 			.get()
 		if (replay) {
-			if (replay.reversesId !== input.id) {
+			if (
+				replay.reversesId !== input.id ||
+				(station &&
+					(replay.deviceId !== station.deviceId ||
+						replay.actorKind !== caller.actor.kind ||
+						replay.actorId !== caller.actor.id))
+			) {
 				throw new InventoryError('idempotency_conflict', 409)
 			}
 			assertLocationAllowed(caller.locationIds, replay.locationId)
@@ -267,13 +305,25 @@ export async function undoWaste(
 			.get()
 		if (!original || original.reversesId !== null) throw notFound()
 		assertLocationAllowed(caller.locationIds, original.locationId)
+		if (
+			station &&
+			(original.source !== 'station' ||
+				original.deviceId !== station.deviceId ||
+				original.actorKind !== caller.actor.kind ||
+				original.actorId !== caller.actor.id)
+		) {
+			throw notFound()
+		}
 		const done = await tx
 			.select({ id: invWaste.id })
 			.from(invWaste)
 			.where(eq(invWaste.reversesId, original.id))
 			.get()
 		if (done) throw new InventoryError('already_undone', 409)
-		if (ctx.now - original.createdAt > WASTE_UNDO_WINDOW_MS) {
+		if (
+			ctx.now - original.createdAt >
+			(station?.windowMs ?? WASTE_UNDO_WINDOW_MS)
+		) {
 			throw new InventoryError('undo_expired', 409)
 		}
 		const id = newId()
@@ -297,6 +347,8 @@ export async function undoWaste(
 			clientId: input.clientId,
 			reversesId: original.id,
 			businessDate,
+			source: station ? 'station' : 'operator',
+			deviceId: station?.deviceId ?? null,
 			createdAt: ctx.now,
 		})
 		if (original.itemId) {

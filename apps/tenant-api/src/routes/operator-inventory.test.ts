@@ -162,6 +162,7 @@ describe('GET and PUT /operator/inventory/settings', () => {
 			targetFoodCostBp: 3000,
 			unitSystem: 'us',
 			countDayOfWeek: null,
+			anyStaffCanReceive: false,
 			version: 0,
 			updatedAt: null,
 		})
