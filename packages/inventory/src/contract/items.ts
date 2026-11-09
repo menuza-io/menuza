@@ -190,7 +190,7 @@ export const listItemsQuerySchema = listQuerySchema
 		category: z.string().max(60).optional(),
 		areaId: inventoryIdSchema.optional(),
 		status: z.enum(['all', 'low', 'out', 'attention']).default('all'),
-		includeArchived: z.coerce.boolean().default(false),
+		includeArchived: z.stringbool().default(false),
 	})
 	.strict()
 

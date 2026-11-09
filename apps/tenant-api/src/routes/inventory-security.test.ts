@@ -58,6 +58,7 @@ const FEATURES_OFF: InventoryFeatures = { ...FEATURES_ON, enabled: false }
 const READ = INVENTORY_PERMISSIONS.READ_INVENTORY
 const UPDATE = INVENTORY_PERMISSIONS.UPDATE_INVENTORY
 const COST = INVENTORY_PERMISSIONS.READ_INVENTORY_COST
+const PURCHASING = INVENTORY_PERMISSIONS.UPDATE_INVENTORY_PURCHASING
 
 const orgs = vi.hoisted(() => new Map<string, PublishedOrganization>())
 
@@ -87,6 +88,74 @@ const ROUTES = (() => {
 	}
 	return list
 })()
+
+/**
+ * Every operator route and the grant it needs (its scope follows: reads take a
+ * read or write token, everything else a write token). The discovery test
+ * compares this table with the routes the router declares.
+ */
+const ROUTE_GRANTS: Record<
+	string,
+	typeof READ | typeof UPDATE | typeof PURCHASING
+> = {
+	'GET /settings': READ,
+	'PUT /settings': UPDATE,
+	'GET /status': READ,
+	'GET /today': READ,
+	'GET /items': READ,
+	'POST /items': UPDATE,
+	'POST /items/bulk': UPDATE,
+	'GET /items/:id': READ,
+	'PATCH /items/:id': UPDATE,
+	'POST /items/:id/archive': UPDATE,
+	'POST /items/:id/restore': UPDATE,
+	'POST /items/:id/units': UPDATE,
+	'PUT /items/:id/places/:locationId': UPDATE,
+	'POST /items/:id/adjust': UPDATE,
+	'GET /items/:id/movements': READ,
+	'GET /storage-areas': READ,
+	'POST /storage-areas': UPDATE,
+	'POST /storage-areas/reorder': UPDATE,
+	'PATCH /storage-areas/:id': UPDATE,
+	'PUT /storage-areas/:id/items': UPDATE,
+	'POST /storage-areas/:id/archive': UPDATE,
+	'GET /count-lists': READ,
+	'POST /count-lists': UPDATE,
+	'PATCH /count-lists/:id': UPDATE,
+	'POST /count-lists/:id/archive': UPDATE,
+	'GET /counts': READ,
+	'POST /counts': UPDATE,
+	'GET /counts/:id': READ,
+	'POST /counts/:id/entries': UPDATE,
+	'POST /counts/:id/send': UPDATE,
+	'POST /counts/:id/reopen': UPDATE,
+	'POST /counts/:id/cancel': UPDATE,
+	'GET /counts/:id/review': READ,
+	'POST /counts/:id/approve': UPDATE,
+	'GET /waste': READ,
+	'GET /waste/summary': READ,
+	'POST /waste': UPDATE,
+	'POST /waste/:id/undo': UPDATE,
+	'GET /suppliers': READ,
+	'POST /suppliers': PURCHASING,
+	'GET /suppliers/:id': READ,
+	'PATCH /suppliers/:id': PURCHASING,
+	'POST /suppliers/:id/archive': PURCHASING,
+	'POST /suppliers/:id/products': PURCHASING,
+	'PATCH /supplier-products/:id': PURCHASING,
+	'POST /supplier-products/:id/archive': PURCHASING,
+	'GET /deliveries': READ,
+	'POST /deliveries': UPDATE,
+	'GET /deliveries/:id': READ,
+	'POST /deliveries/:id/paid': PURCHASING,
+	'POST /deliveries/:id/cancel': UPDATE,
+}
+
+function grantFor(route: { method: string; path: string }) {
+	return ROUTE_GRANTS[
+		`${route.method} ${route.path.replace('/operator/inventory', '')}`
+	]!
+}
 
 /** A request that passes validation, so only the guard can refuse it. */
 function validRequest(route: { method: string; path: string }): {
@@ -130,7 +199,7 @@ async function mintInventoryToken(
 		orgId: overrides.orgId ?? ORG_A,
 		region: overrides.region ?? 'us',
 		scope: overrides.scope ?? 'write',
-		grants: overrides.grants ?? [READ, UPDATE, COST],
+		grants: overrides.grants ?? [READ, UPDATE, COST, PURCHASING],
 		locationIds:
 			overrides.locationIds === undefined ? null : overrides.locationIds,
 		features: overrides.features ?? FEATURES_ON,
@@ -236,17 +305,17 @@ describe('inventory operator routes: discovery', () => {
 		expect(appSource).toContain(
 			"app.route('/operator/inventory', operatorInventoryRoutes)",
 		)
-		const keys = new Set(ROUTES.map((route) => `${route.method} ${route.path}`))
-		for (const key of [
-			'GET /operator/inventory/settings',
-			'PUT /operator/inventory/settings',
-			'GET /operator/inventory/status',
-		]) {
-			expect(keys.has(key), key).toBe(true)
-		}
+		const keys = ROUTES.map((route) => `${route.method} ${route.path}`).sort()
+		// Every route is classified here: a new route fails this test until its
+		// grant is listed, so it cannot ship outside the sweeps below.
+		expect(keys).toEqual(
+			Object.keys(ROUTE_GRANTS)
+				.map((key) => key.replace(' ', ' /operator/inventory'))
+				.sort(),
+		)
 	})
 
-	it('a valid token reaches every route (the sweep requests are well formed)', async () => {
+	it('a valid token passes the guard on every route (the handler answers, never the guard)', async () => {
 		const token = await mintInventoryToken()
 		for (const route of ROUTES) {
 			const request = validRequest(route)
@@ -254,8 +323,17 @@ describe('inventory operator routes: discovery', () => {
 				token,
 				body: request.body,
 			})
-			expect(res.status, `${route.method} ${route.path}`).toBe(200)
+			expect(
+				[401, 403, 503].includes(res.status),
+				`${route.method} ${route.path} -> ${res.status}`,
+			).toBe(false)
 			expect(res.headers.get('Cache-Control')).toBe('private, no-store')
+		}
+		for (const path of [
+			'/operator/inventory/settings',
+			`/operator/inventory/status?locationId=${LOC_A}`,
+		]) {
+			expect((await call('GET', path, { token })).status).toBe(200)
 		}
 	})
 })
@@ -509,6 +587,663 @@ describe('inventory operator routes: organizations and locations', () => {
 				token,
 			})
 			expect(res.status, query).toBe(400)
+		}
+	})
+})
+
+describe('inventory operator routes: items, counts, waste, purchasing and Today', () => {
+	type Case = {
+		key: string
+		method: string
+		path: string
+		body?: Record<string, unknown>
+		/** Names a location (query, body or path) or belongs to a record that does. */
+		location: boolean
+		/** Addresses a record by id in its path (a record of one organization). */
+		byId: boolean
+	}
+
+	const today = new Date().toISOString().slice(0, 10)
+	const seed = {
+		area: '',
+		item: '',
+		list: '',
+		count: '',
+		supplier: '',
+		product: '',
+		delivery: '',
+		waste: '',
+	}
+	let admin: string
+	let seedCounts = 0
+
+	async function seedCall(
+		method: string,
+		path: string,
+		body?: unknown,
+	): Promise<Record<string, any>> {
+		const res = await call(method, `/operator/inventory${path}`, {
+			token: admin,
+			body,
+		})
+		const parsed = (await res.json()) as Record<string, any>
+		expect(res.status, `${method} ${path} ${JSON.stringify(parsed)}`).toBe(200)
+		return parsed
+	}
+
+	beforeAll(async () => {
+		admin = await mintInventoryToken({
+			grants: [READ, UPDATE, COST, PURCHASING],
+		})
+		seed.area = (
+			await seedCall('POST', '/storage-areas', {
+				locationId: LOC_B,
+				name: 'Sec area',
+			})
+		).id
+		seed.item = (
+			await seedCall('POST', '/items', {
+				clientId: 'sec-item-0001',
+				name: 'Security flour',
+				category: 'dry_goods',
+				kind: 'bought',
+				baseUnit: 'g',
+			})
+		).id
+		seed.list = (
+			await seedCall('POST', '/count-lists', {
+				locationId: LOC_B,
+				name: 'Sec list',
+				itemIds: [seed.item],
+			})
+		).id
+		seed.count = (
+			await seedCall('POST', '/counts', {
+				clientId: 'sec-count-0001',
+				locationId: LOC_B,
+				listId: null,
+			})
+		).id
+		seed.supplier = (
+			await seedCall('POST', '/suppliers', {
+				clientId: 'sec-supplier-01',
+				name: 'Sec supplier',
+				currency: 'SAR',
+				minimumOrderMinor: 1000,
+			})
+		).id
+		seed.product = (
+			await seedCall('POST', `/suppliers/${seed.supplier}/products`, {
+				itemId: seed.item,
+				packName: 'Bag',
+				packBaseQuantity: 1_000_000,
+				priceMinor: 500,
+			})
+		).id
+		seed.delivery = (
+			await seedCall('POST', '/deliveries', {
+				clientId: 'sec-delivery-01',
+				locationId: LOC_B,
+				supplierId: seed.supplier,
+				currency: 'SAR',
+				lines: [
+					{ itemId: seed.item, quantity: 5_000_000, lineTotalMinor: 2500 },
+				],
+			})
+		).delivery.id
+		seed.waste = (
+			await seedCall('POST', '/waste', {
+				entries: [
+					{
+						clientId: 'sec-waste-0001',
+						locationId: LOC_B,
+						itemId: seed.item,
+						amount: 100,
+						unit: 'g',
+						reason: 'spoiled',
+					},
+				],
+			})
+		).accepted[0].id
+		seedCounts = (await seedCall('GET', `/counts?locationId=${LOC_B}`)).counts
+			.length
+	})
+
+	function cases(): Case[] {
+		const loc = LOC_B
+		const q = `locationId=${loc}`
+		const range = `from=${today}&to=${today}`
+		const one = { expectedVersion: 1 }
+		const c = (
+			key: string,
+			path: string,
+			options: {
+				body?: Record<string, unknown>
+				location?: boolean
+				byId?: boolean
+			} = {},
+		): Case => ({
+			key,
+			method: key.split(' ')[0]!,
+			path,
+			body: options.body,
+			location: options.location ?? true,
+			byId: options.byId ?? false,
+		})
+		return [
+			c('GET /settings', '/settings', { location: false }),
+			c('PUT /settings', '/settings', {
+				body: { expectedVersion: 0, targetFoodCostBp: 2800 },
+				location: false,
+			}),
+			c('GET /status', `/status?${q}`),
+			c('GET /today', `/today?${q}`),
+			c('GET /items', `/items?${q}`),
+			c('POST /items', '/items', {
+				location: true,
+				body: {
+					clientId: 'sec-item-0002',
+					name: 'Security rice',
+					category: 'dry_goods',
+					kind: 'bought',
+					baseUnit: 'g',
+					place: {
+						locationId: loc,
+						countUnit: 'kg',
+						areaIds: [],
+						orderBelowQuantity: null,
+						fillUpToQuantity: null,
+					},
+				},
+			}),
+			c('POST /items/bulk', '/items/bulk', {
+				body: {
+					clientId: 'sec-bulk-00001',
+					locationId: loc,
+					items: [
+						{
+							name: 'Bulk sec',
+							category: 'other',
+							kind: 'bought',
+							baseUnit: 'g',
+						},
+					],
+				},
+			}),
+			c('GET /items/:id', `/items/${seed.item}?${q}`, { byId: true }),
+			c('PATCH /items/:id', `/items/${seed.item}`, {
+				body: { expectedVersion: 1, name: 'Renamed' },
+				location: false,
+				byId: true,
+			}),
+			c('POST /items/:id/archive', `/items/${seed.item}/archive`, {
+				body: one,
+				location: false,
+				byId: true,
+			}),
+			c('POST /items/:id/restore', `/items/${seed.item}/restore`, {
+				body: one,
+				location: false,
+				byId: true,
+			}),
+			c('POST /items/:id/units', `/items/${seed.item}/units`, {
+				body: { name: 'Sack', baseQuantity: 25_000_000 },
+				location: false,
+				byId: true,
+			}),
+			c(
+				'PUT /items/:id/places/:locationId',
+				`/items/${seed.item}/places/${loc}`,
+				{
+					body: {
+						expectedVersion: 0,
+						countUnit: 'kg',
+						areaIds: [],
+						orderBelowQuantity: null,
+						fillUpToQuantity: null,
+					},
+					byId: true,
+				},
+			),
+			c('POST /items/:id/adjust', `/items/${seed.item}/adjust`, {
+				body: {
+					clientId: 'sec-adjust-001',
+					locationId: loc,
+					quantity: 5,
+					reason: 'found',
+				},
+				byId: true,
+			}),
+			c('GET /items/:id/movements', `/items/${seed.item}/movements?${q}`, {
+				byId: true,
+			}),
+			c('GET /storage-areas', `/storage-areas?${q}`),
+			c('POST /storage-areas', '/storage-areas', {
+				body: { locationId: loc, name: 'Another area' },
+			}),
+			c('POST /storage-areas/reorder', '/storage-areas/reorder', {
+				body: { locationId: loc, areaIds: [seed.area] },
+			}),
+			c('PATCH /storage-areas/:id', `/storage-areas/${seed.area}`, {
+				body: { expectedVersion: 1, name: 'Renamed area' },
+				byId: true,
+			}),
+			c('PUT /storage-areas/:id/items', `/storage-areas/${seed.area}/items`, {
+				body: { itemIds: [] },
+				byId: true,
+			}),
+			c(
+				'POST /storage-areas/:id/archive',
+				`/storage-areas/${seed.area}/archive`,
+				{ body: one, byId: true },
+			),
+			c('GET /count-lists', `/count-lists?${q}`),
+			c('POST /count-lists', '/count-lists', {
+				body: { locationId: loc, name: 'Other list', itemIds: [seed.item] },
+			}),
+			c('PATCH /count-lists/:id', `/count-lists/${seed.list}`, {
+				body: { expectedVersion: 1, name: 'Renamed list' },
+				byId: true,
+			}),
+			c('POST /count-lists/:id/archive', `/count-lists/${seed.list}/archive`, {
+				body: one,
+				byId: true,
+			}),
+			c('GET /counts', `/counts?${q}`),
+			c('POST /counts', '/counts', {
+				body: { clientId: 'sec-count-0002', locationId: loc, listId: null },
+			}),
+			c('GET /counts/:id', `/counts/${seed.count}`, { byId: true }),
+			c('POST /counts/:id/entries', `/counts/${seed.count}/entries`, {
+				body: {
+					entries: [
+						{
+							clientId: 'sec-entry-0001',
+							itemId: seed.item,
+							areaId: null,
+							amount: 1,
+							unit: 'kg',
+						},
+					],
+				},
+				byId: true,
+			}),
+			c('POST /counts/:id/send', `/counts/${seed.count}/send`, {
+				body: one,
+				byId: true,
+			}),
+			c('POST /counts/:id/reopen', `/counts/${seed.count}/reopen`, {
+				body: one,
+				byId: true,
+			}),
+			c('POST /counts/:id/cancel', `/counts/${seed.count}/cancel`, {
+				body: one,
+				byId: true,
+			}),
+			c('GET /counts/:id/review', `/counts/${seed.count}/review`, {
+				byId: true,
+			}),
+			c('POST /counts/:id/approve', `/counts/${seed.count}/approve`, {
+				body: one,
+				byId: true,
+			}),
+			c('GET /waste', `/waste?${q}&${range}`),
+			c('GET /waste/summary', `/waste/summary?${q}&${range}`),
+			c('POST /waste', '/waste', {
+				body: {
+					entries: [
+						{
+							clientId: 'sec-waste-0002',
+							locationId: loc,
+							itemId: seed.item,
+							amount: 1,
+							unit: 'g',
+							reason: 'dropped',
+						},
+					],
+				},
+			}),
+			c('POST /waste/:id/undo', `/waste/${seed.waste}/undo`, {
+				body: { clientId: 'sec-undo-00001' },
+				byId: true,
+			}),
+			c('GET /suppliers', '/suppliers', { location: false }),
+			c('POST /suppliers', '/suppliers', {
+				body: {
+					clientId: 'sec-supplier-02',
+					name: 'Other supplier',
+					currency: 'SAR',
+				},
+				location: false,
+			}),
+			c('GET /suppliers/:id', `/suppliers/${seed.supplier}`, {
+				location: false,
+				byId: true,
+			}),
+			c('PATCH /suppliers/:id', `/suppliers/${seed.supplier}`, {
+				body: { expectedVersion: 1, name: 'Renamed supplier' },
+				location: false,
+				byId: true,
+			}),
+			c('POST /suppliers/:id/archive', `/suppliers/${seed.supplier}/archive`, {
+				body: one,
+				location: false,
+				byId: true,
+			}),
+			c(
+				'POST /suppliers/:id/products',
+				`/suppliers/${seed.supplier}/products`,
+				{
+					body: {
+						itemId: seed.item,
+						packName: 'Box',
+						packBaseQuantity: 2_000_000,
+						priceMinor: 900,
+					},
+					location: false,
+					byId: true,
+				},
+			),
+			c('PATCH /supplier-products/:id', `/supplier-products/${seed.product}`, {
+				body: { expectedVersion: 1, priceMinor: 600 },
+				location: false,
+				byId: true,
+			}),
+			c(
+				'POST /supplier-products/:id/archive',
+				`/supplier-products/${seed.product}/archive`,
+				{ body: one, location: false, byId: true },
+			),
+			c('GET /deliveries', `/deliveries?${q}`),
+			c('POST /deliveries', '/deliveries', {
+				body: {
+					clientId: 'sec-delivery-02',
+					locationId: loc,
+					supplierId: null,
+					currency: 'SAR',
+					lines: [{ itemId: seed.item, quantity: 1000, lineTotalMinor: 10 }],
+				},
+			}),
+			c('GET /deliveries/:id', `/deliveries/${seed.delivery}`, { byId: true }),
+			c('POST /deliveries/:id/paid', `/deliveries/${seed.delivery}/paid`, {
+				body: { expectedVersion: 1, paid: true },
+				location: false,
+				byId: true,
+			}),
+			c('POST /deliveries/:id/cancel', `/deliveries/${seed.delivery}/cancel`, {
+				body: one,
+				byId: true,
+			}),
+		]
+	}
+
+	const run = (
+		testCase: Case,
+		token: string,
+		extra?: Record<string, unknown>,
+	) =>
+		call(testCase.method, `/operator/inventory${testCase.path}`, {
+			token,
+			body:
+				testCase.body === undefined && !extra
+					? undefined
+					: { ...testCase.body, ...extra },
+		})
+
+	it('has a case for every route (a new route cannot ship unswept)', () => {
+		expect(
+			cases()
+				.map((entry) => entry.key)
+				.sort(),
+		).toEqual(Object.keys(ROUTE_GRANTS).sort())
+	})
+
+	it('a token limited to other locations is refused on every location-bound route (403 location_forbidden) and nothing changes', async () => {
+		const tokens = {
+			otherLocation: await mintInventoryToken({
+				grants: [READ, UPDATE, COST, PURCHASING],
+				locationIds: [LOC_A],
+			}),
+			noLocations: await mintInventoryToken({
+				grants: [READ, UPDATE, COST, PURCHASING],
+				locationIds: [],
+			}),
+		}
+		const failures: string[] = []
+		for (const [name, token] of Object.entries(tokens)) {
+			for (const entry of cases().filter((item) => item.location)) {
+				const res = await run(entry, token)
+				const body = (await res.json()) as { code?: string }
+				if (res.status !== 403 || body.code !== 'location_forbidden') {
+					failures.push(`${name}: ${entry.key} -> ${res.status} ${body.code}`)
+				}
+			}
+		}
+		expect(failures).toEqual([])
+		const after = await seedCall('GET', `/counts?locationId=${LOC_B}`)
+		expect(after.counts).toHaveLength(seedCounts)
+		expect(after.counts[0]).toMatchObject({
+			id: seed.count,
+			status: 'counting',
+			version: 1,
+		})
+		const areas = await seedCall('GET', `/storage-areas?locationId=${LOC_B}`)
+		expect(areas.areas.map((area: { name: string }) => area.name)).toEqual([
+			'Sec area',
+		])
+	})
+
+	it('an organization-wide route works for a token limited to one location', async () => {
+		const token = await mintInventoryToken({
+			grants: [READ, UPDATE, COST, PURCHASING],
+			locationIds: [LOC_A],
+		})
+		for (const entry of cases().filter(
+			(item) => !item.location && item.method === 'GET',
+		)) {
+			expect((await run(entry, token)).status, entry.key).toBe(200)
+		}
+	})
+
+	it('a token for another organization finds nothing by id (404 not_found) and changes nothing', async () => {
+		const tokenB = await mintInventoryToken({
+			orgId: ORG_B,
+			grants: [READ, UPDATE, COST, PURCHASING],
+		})
+		const failures: string[] = []
+		for (const entry of cases().filter((item) => item.byId)) {
+			const res = await run(entry, tokenB)
+			const body = (await res.json()) as { code?: string }
+			if (res.status !== 404 || body.code !== 'not_found') {
+				failures.push(`${entry.key} -> ${res.status} ${body.code}`)
+			}
+		}
+		expect(failures).toEqual([])
+		const detail = await seedCall(
+			'GET',
+			`/items/${seed.item}?locationId=${LOC_B}`,
+		)
+		expect(detail).toMatchObject({
+			name: 'Security flour',
+			version: 1,
+			archived: false,
+		})
+	})
+
+	it('refuses every change without its grant, naming the grant (403 forbidden)', async () => {
+		const noUpdate = await mintInventoryToken({
+			grants: [READ, COST, PURCHASING],
+		})
+		const noPurchasing = await mintInventoryToken({
+			grants: [READ, UPDATE, COST],
+		})
+		const failures: string[] = []
+		for (const route of ROUTES.filter((item) => item.method !== 'GET')) {
+			const required = grantFor(route)
+			const token = required === PURCHASING ? noPurchasing : noUpdate
+			const res = await call(route.method, validRequest(route).path, {
+				token,
+				body: {},
+			})
+			const body = (await res.json()) as {
+				code?: string
+				reason?: string
+				required?: string
+			}
+			if (
+				res.status !== 403 ||
+				body.reason !== 'grant' ||
+				body.required !== required
+			) {
+				failures.push(
+					`${route.method} ${route.path} -> ${res.status} ${body.reason} ${body.required}`,
+				)
+			}
+		}
+		expect(failures).toEqual([])
+	})
+
+	it('approving a count also needs the cost grant (403 forbidden, grant read:inventory_cost:any)', async () => {
+		const token = await mintInventoryToken({ grants: [READ, UPDATE] })
+		const res = await call(
+			'POST',
+			`/operator/inventory/counts/${seed.count}/approve`,
+			{
+				token,
+				body: { expectedVersion: 1 },
+			},
+		)
+		expect(res.status).toBe(403)
+		expect(await res.json()).toMatchObject({
+			code: 'forbidden',
+			reason: 'grant',
+			required: COST,
+		})
+	})
+
+	it('a read-scope token reads, and every change is refused (403 forbidden, scope)', async () => {
+		const token = await mintInventoryToken({
+			scope: 'read',
+			grants: [READ, COST],
+		})
+		const failures: string[] = []
+		for (const entry of cases()) {
+			const res = await run(entry, token)
+			const body = (await res.json()) as { code?: string; reason?: string }
+			if (entry.method === 'GET') {
+				if (res.status !== 200)
+					failures.push(`${entry.key} -> ${res.status} ${body.code}`)
+			} else if (res.status !== 403 || body.reason !== 'scope') {
+				failures.push(`${entry.key} -> ${res.status} ${body.reason}`)
+			}
+		}
+		expect(failures).toEqual([])
+	})
+
+	it('an impersonated token reads, and every change is refused (403 forbidden, impersonated)', async () => {
+		const token = await mintInventoryToken({
+			grants: [READ, COST],
+			impersonated: true,
+		})
+		const failures: string[] = []
+		for (const entry of cases()) {
+			const res = await run(entry, token)
+			const body = (await res.json()) as { code?: string; reason?: string }
+			if (entry.method === 'GET') {
+				if (res.status !== 200)
+					failures.push(`${entry.key} -> ${res.status} ${body.code}`)
+			} else if (res.status !== 403 || body.reason !== 'impersonated') {
+				failures.push(`${entry.key} -> ${res.status} ${body.reason}`)
+			}
+		}
+		expect(failures).toEqual([])
+	})
+
+	it('a token without the cost grant gets no money from any read (omitted, not zeroed)', async () => {
+		const token = await mintInventoryToken({
+			grants: [READ, UPDATE, PURCHASING],
+		})
+		const money =
+			/"(valueMinor|totalValueMinor|differenceValueMinor|costMicro|previousCostMicro|lastCostMicro|avgCostMicro|priceMinor|packPriceMinor|lineTotalMinor|linesTotalMinor|vatMinor|totalMinor|unpaidMinor|purchasesMinor|valueAtStakeMinor|stockValueMinor|wasteWeekMinor|wasteWeekShareBp|minimumOrderMinor|priceChangeBp|priceChanges|foodCost|cost)":/
+		const failures: string[] = []
+		let reads = 0
+		for (const entry of cases().filter((item) => item.method === 'GET')) {
+			const res = await run(entry, token)
+			const text = await res.text()
+			reads++
+			if (res.status !== 200) failures.push(`${entry.key} -> ${res.status}`)
+			else if (money.test(text))
+				failures.push(`${entry.key} leaks ${money.exec(text)?.[1]}`)
+		}
+		expect(reads).toBeGreaterThan(15)
+		expect(failures).toEqual([])
+		// The same reads do carry money for the cost grant (the sweep above is not vacuous).
+		const withCost = await call(
+			'GET',
+			`/operator/inventory/deliveries/${seed.delivery}`,
+			{ token: admin },
+		)
+		expect(await withCost.text()).toContain('lineTotalMinor')
+		const items = await call(
+			'GET',
+			`/operator/inventory/items/${seed.item}?locationId=${LOC_B}`,
+			{ token: admin },
+		)
+		expect(await items.text()).toContain('avgCostMicro')
+	})
+
+	it('a replayed create by a token without the cost grant gets no money back', async () => {
+		const noCost = await mintInventoryToken({ grants: [READ, UPDATE] })
+		const body = {
+			clientId: 'sec-delivery-03',
+			locationId: LOC_B,
+			supplierId: null,
+			currency: 'SAR',
+			lines: [{ itemId: seed.item, quantity: 1000, lineTotalMinor: 10 }],
+		}
+		for (let attempt = 0; attempt < 2; attempt++) {
+			const res = await call('POST', '/operator/inventory/deliveries', {
+				token: noCost,
+				body,
+			})
+			expect(res.status).toBe(200)
+			expect(await res.text()).not.toMatch(/Minor|priceChange|currency/)
+		}
+	})
+
+	it('every write refuses unknown fields without echoing them (400)', async () => {
+		const failures: string[] = []
+		for (const entry of cases().filter((item) => item.body !== undefined)) {
+			const res = await run(entry, admin, { leakMe: 'secret-canary-value' })
+			const text = await res.text()
+			if (
+				res.status !== 400 ||
+				text.includes('secret-canary-value') ||
+				text.includes('leakMe')
+			) {
+				failures.push(`${entry.key} -> ${res.status}`)
+			}
+		}
+		expect(failures).toEqual([])
+	})
+
+	it('malformed ids and queries are 400/404, never a crash', async () => {
+		for (const [method, path] of [
+			['GET', '/items/%20?locationId=loc_b'],
+			['GET', `/items/${'a'.repeat(70)}?locationId=loc_b`],
+			['GET', '/counts/..%2Fetc'],
+			['GET', `/items?locationId=${LOC_B}&limit=0`],
+			['GET', `/items?locationId=${LOC_B}&status=bogus`],
+			['GET', `/waste?locationId=${LOC_B}&from=2026-13-45&to=today`],
+			['GET', `/deliveries?locationId=${LOC_B}&unpaid=maybe`],
+			['GET', `/suppliers?includeArchived=maybe`],
+		] as const) {
+			const res = await call(method, `/operator/inventory${path}`, {
+				token: admin,
+			})
+			expect([400, 404], `${method} ${path} -> ${res.status}`).toContain(
+				res.status,
+			)
 		}
 	})
 })

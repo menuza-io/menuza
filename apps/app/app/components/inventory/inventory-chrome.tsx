@@ -1,10 +1,13 @@
 import { msg } from '@lingui/core/macro'
-import { useLingui } from '@lingui/react/macro'
+import { Trans, useLingui } from '@lingui/react/macro'
+import { Button } from '@repo/ui/button'
+import { Icon } from '@repo/ui/icon'
 import { PageHeader } from '@repo/ui/page-header'
 import { WorkspacePage, WorkspaceTabBar } from '@repo/ui/workspace'
 import { createContext, type ReactNode, useContext, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useLocation } from 'react-router'
+import { LogWasteDialog } from '#app/components/inventory/log-waste-dialog.tsx'
 import { FilterSelect } from '#app/components/staff/controls.tsx'
 import {
 	INVENTORY_TABS,
@@ -93,6 +96,10 @@ export function InventoryChrome({
 	locations,
 	selectedLocationId,
 	onLocationChange,
+	canLogWaste = false,
+	canSeeCost = false,
+	currency = 'USD',
+	userName = '',
 	children,
 }: {
 	orgSlug: string
@@ -100,11 +107,18 @@ export function InventoryChrome({
 	locations: readonly InventoryChromeLocation[]
 	selectedLocationId: string
 	onLocationChange: (locationId: string) => void
+	/** Shows "Log waste" in every tab's header (needs `update:inventory:any`). */
+	canLogWaste?: boolean
+	canSeeCost?: boolean
+	currency?: string
+	/** The signed-in member, for "Logged as". */
+	userName?: string
 	children: ReactNode
 }) {
 	const { t, i18n } = useLingui()
 	const location = useLocation()
 	const [actionsSlot, setActionsSlot] = useState<HTMLElement | null>(null)
+	const [wasteOpen, setWasteOpen] = useState(false)
 
 	const routeKey: InventoryTab =
 		inventoryTabFromPath(location.pathname, orgSlug) ?? 'today'
@@ -126,6 +140,17 @@ export function InventoryChrome({
 						description={i18n._(header.description)}
 						actions={
 							<>
+								{canLogWaste ? (
+									<Button
+										type="button"
+										variant="outline"
+										onClick={() => setWasteOpen(true)}
+										data-testid="inventory-log-waste"
+									>
+										<Icon name="trash-2" />
+										<Trans>Log waste</Trans>
+									</Button>
+								) : null}
 								<div ref={setActionsSlot} className="contents" />
 								<InventoryHeaderControls
 									locations={locations}
@@ -142,6 +167,17 @@ export function InventoryChrome({
 					/>
 					{children}
 				</div>
+				{canLogWaste ? (
+					<LogWasteDialog
+						open={wasteOpen}
+						onOpenChange={setWasteOpen}
+						orgSlug={orgSlug}
+						locationId={selectedLocationId}
+						canSeeCost={canSeeCost}
+						currency={currency}
+						userName={userName}
+					/>
+				) : null}
 			</WorkspacePage>
 		</InventoryActionsSlotContext.Provider>
 	)

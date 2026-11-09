@@ -5,7 +5,7 @@ import {
 } from '@repo/inventory'
 import { getTenantDb } from '@repo/tenant-db'
 import { Hono } from 'hono'
-import { json, readJsonBody, readQuery } from '../lib/http.ts'
+import { json } from '../lib/http.ts'
 import {
 	getInventoryAuth,
 	inventoryGuard,
@@ -15,7 +15,14 @@ import {
 	inventoryErrorResponse,
 	readOptionalIdempotencyKey,
 } from '../lib/inventory-http.ts'
+import { parseBody, parseQuery } from '../lib/inventory-route.ts'
 import { hashInventoryRequest } from '../lib/inventory-write.ts'
+import { operatorInventoryCountsRoutes } from './operator-inventory-counts.ts'
+import { operatorInventoryItemsRoutes } from './operator-inventory-items.ts'
+import { operatorInventoryPlacesRoutes } from './operator-inventory-places.ts'
+import { operatorInventoryPurchasingRoutes } from './operator-inventory-purchasing.ts'
+import { operatorInventoryTodayRoutes } from './operator-inventory-today.ts'
+import { operatorInventoryWasteRoutes } from './operator-inventory-waste.ts'
 import {
 	getInventorySettings,
 	getInventoryStatus,
@@ -25,12 +32,21 @@ import {
 /**
  * Operator inventory routes (`/operator/inventory/*`), called from the App in
  * the operator's browser with a short-lived `inv+jwt` (see `inventoryGuard`).
- * Phase 0: settings and the setup status. Writes send `expectedVersion`
- * (409 `stale_version`) and may send an `Idempotency-Key`. Money fields are
- * left out for tokens without `read:inventory_cost:any`
- * (`omitInventoryMoney`); these routes carry none yet.
+ * Settings and the setup status live here; the rest are mounted from the
+ * `operator-inventory-*` files: items, storage areas and count lists,
+ * counts, waste, purchasing (suppliers and deliveries) and Today. Writes send
+ * `expectedVersion` (409 `stale_version`), creates a client-made `clientId`
+ * (a replay answers the first result). Money fields are left out for tokens
+ * without `read:inventory_cost:any` (`respond` in `lib/inventory-route.ts`).
  */
 export const operatorInventoryRoutes = new Hono()
+
+operatorInventoryRoutes.route('/', operatorInventoryItemsRoutes)
+operatorInventoryRoutes.route('/', operatorInventoryPlacesRoutes)
+operatorInventoryRoutes.route('/', operatorInventoryCountsRoutes)
+operatorInventoryRoutes.route('/', operatorInventoryWasteRoutes)
+operatorInventoryRoutes.route('/', operatorInventoryPurchasingRoutes)
+operatorInventoryRoutes.route('/', operatorInventoryTodayRoutes)
 
 const READ = INVENTORY_PERMISSIONS.READ_INVENTORY
 const UPDATE = INVENTORY_PERMISSIONS.UPDATE_INVENTORY
@@ -58,7 +74,7 @@ operatorInventoryRoutes.put(
 	async (c) => {
 		try {
 			const ctx = getInventoryAuth(c)
-			const body = await readJsonBody(c, updateInventorySettingsSchema)
+			const body = await parseBody(c, updateInventorySettingsSchema)
 			if ('error' in body) return body.error
 			const idem = readOptionalIdempotencyKey(c)
 			if ('error' in idem) return idem.error
@@ -87,7 +103,7 @@ operatorInventoryRoutes.get(
 	async (c) => {
 		try {
 			const ctx = getInventoryAuth(c)
-			const query = readQuery(c, inventoryStatusQuerySchema)
+			const query = parseQuery(c, inventoryStatusQuerySchema)
 			if ('error' in query) return query.error
 			const location = requireInventoryLocation(ctx, query.data.locationId)
 			if (!location.ok) return location.response

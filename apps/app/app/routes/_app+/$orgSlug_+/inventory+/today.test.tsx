@@ -25,6 +25,11 @@ const CONTEXT: InventoryLayoutContext = {
 	locations: [{ id: 'main', name: 'Acme' }],
 	activeLocationId: 'main',
 	canSeeCost: false,
+	canEdit: false,
+	canManagePurchasing: false,
+	dataRegion: 'ksa',
+	currency: 'SAR',
+	userName: 'Sara',
 }
 
 function renderToday(request: InventoryClient['request']) {

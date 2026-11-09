@@ -67,11 +67,36 @@ describe('inventory guards', () => {
 				'_index.tsx',
 				'today.tsx',
 				'stock.tsx',
+				'stock.new.tsx',
+				'stock.$itemId.tsx',
+				'stock.$itemId_.edit.tsx',
+				'stock.add-many.tsx',
+				'stock.areas.tsx',
+				'stock.lists.tsx',
 				'counts.tsx',
 				'purchasing.tsx',
 				'waste.tsx',
 			]),
 		)
+	})
+
+	it('the sheets that change stock need the update grant, not just the read grant', () => {
+		for (const file of [
+			'stock.new.tsx',
+			'stock.$itemId_.edit.tsx',
+			'stock.add-many.tsx',
+			'stock.areas.tsx',
+			'stock.lists.tsx',
+		]) {
+			const body = exportedFunctionBody(
+				read(path.join(INVENTORY_ROUTES_DIR, file)),
+				'loader',
+			)
+			expect([file, body]).toEqual([
+				file,
+				expect.stringMatching(/INVENTORY_PERMISSIONS\.UPDATE_INVENTORY\b/),
+			])
+		}
 	})
 
 	for (const file of ROUTE_FILES) {

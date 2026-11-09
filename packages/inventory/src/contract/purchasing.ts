@@ -27,16 +27,20 @@ const optionalText = (max: number) =>
 
 // ── Suppliers ───────────────────────────────────────────────────────────────
 
-/** `POST /suppliers` and `PATCH /suppliers/:id` (`update:inventory_purchasing:any`). */
-export const supplierInputSchema = z
+/**
+ * The supplier fields without defaults. `PATCH` is built from this one: Zod 4
+ * applies a field's `.default()` even under `.partial()`, which would reset a
+ * supplier's order channel and delivery days on every unrelated edit.
+ */
+const supplierFieldsSchema = z
 	.object({
 		name: inventoryNameSchema,
 		contactName: optionalText(80),
 		phone: optionalText(40),
 		email: z.email().max(200).nullable().optional(),
-		orderChannel: z.enum(SUPPLIER_ORDER_CHANNELS).default('phone'),
+		orderChannel: z.enum(SUPPLIER_ORDER_CHANNELS),
 		/** Days they deliver, 0 = Sunday … 6 = Saturday. */
-		deliveryDays: z.array(z.number().int().min(0).max(6)).max(7).default([]),
+		deliveryDays: z.array(z.number().int().min(0).max(6)).max(7),
 		/** Order by this local time … */
 		cutoffTime: z
 			.string()
@@ -53,11 +57,19 @@ export const supplierInputSchema = z
 	})
 	.strict()
 
+/** `POST /suppliers` and `PATCH /suppliers/:id` (`update:inventory_purchasing:any`). */
+export const supplierInputSchema = supplierFieldsSchema
+	.extend({
+		orderChannel: supplierFieldsSchema.shape.orderChannel.default('phone'),
+		deliveryDays: supplierFieldsSchema.shape.deliveryDays.default([]),
+	})
+	.strict()
+
 export const createSupplierSchema = supplierInputSchema
 	.extend({ clientId: clientIdSchema })
 	.strict()
 
-export const updateSupplierSchema = supplierInputSchema
+export const updateSupplierSchema = supplierFieldsSchema
 	.partial()
 	.extend({ expectedVersion: expectedVersionSchema })
 	.strict()
@@ -85,7 +97,12 @@ export const supplierSchema = z.object({
 })
 export type Supplier = z.infer<typeof supplierSchema>
 
-/** `GET /suppliers?includeArchived=` → `{ suppliers, unpaidMinor?, currency? }` (sorted by name). */
+/** `GET /suppliers?includeArchived=` */
+export const listSuppliersQuerySchema = z
+	.object({ includeArchived: z.stringbool().default(false) })
+	.strict()
+
+/** The answer: `{ suppliers, unpaidMinor?, currency? }` (sorted by name). */
 export const listSuppliersResultSchema = z.object({
 	suppliers: z.array(supplierSchema),
 	unpaidMinor: minorOut,
@@ -113,21 +130,30 @@ export const supplierDetailSchema = supplierSchema.extend({
 	products: z.array(supplierProductSchema),
 })
 
-/** `POST /suppliers/:id/products` (`update:inventory_purchasing:any`). */
-export const supplierProductInputSchema = z
+/** Product fields without defaults (see `supplierFieldsSchema`). */
+const supplierProductFieldsSchema = z
 	.object({
 		itemId: inventoryIdSchema,
 		packName: inventoryNameSchema,
 		packBaseQuantity: positiveQuantitySchema,
 		priceMinor: z.number().int().min(0),
-		pricedByWeight: z.boolean().default(false),
+		pricedByWeight: z.boolean(),
 		sku: optionalText(60),
-		preferred: z.boolean().default(false),
+		preferred: z.boolean(),
+	})
+	.strict()
+
+/** `POST /suppliers/:id/products` (`update:inventory_purchasing:any`). */
+export const supplierProductInputSchema = supplierProductFieldsSchema
+	.extend({
+		pricedByWeight:
+			supplierProductFieldsSchema.shape.pricedByWeight.default(false),
+		preferred: supplierProductFieldsSchema.shape.preferred.default(false),
 	})
 	.strict()
 
 /** `PATCH /supplier-products/:id`; archive with `versionOnlySchema`. */
-export const updateSupplierProductSchema = supplierProductInputSchema
+export const updateSupplierProductSchema = supplierProductFieldsSchema
 	.omit({ itemId: true })
 	.partial()
 	.extend({ expectedVersion: expectedVersionSchema })
@@ -227,7 +253,7 @@ export const listDeliveriesQuerySchema = listQuerySchema
 	.extend({
 		locationId: inventoryLocationIdSchema,
 		supplierId: inventoryIdSchema.optional(),
-		unpaid: z.coerce.boolean().default(false),
+		unpaid: z.stringbool().default(false),
 	})
 	.strict()
 

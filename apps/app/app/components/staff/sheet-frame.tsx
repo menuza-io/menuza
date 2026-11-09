@@ -43,6 +43,7 @@ export function SheetPanel({
 }
 
 export function SheetForm({
+	id,
 	title,
 	description,
 	onSubmit,
@@ -50,6 +51,8 @@ export function SheetForm({
 	footer,
 	headerExtra,
 }: {
+	/** The form's id, for a form library that finds its form by id (Conform). */
+	id?: string
 	title: ReactNode
 	description?: ReactNode
 	onSubmit: (event: FormEvent<HTMLFormElement>) => void
@@ -81,6 +84,7 @@ export function SheetForm({
 				)}
 			</SheetHeader>
 			<form
+				id={id}
 				onSubmit={onSubmit}
 				noValidate
 				className="flex min-h-0 flex-1 flex-col"

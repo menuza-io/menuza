@@ -15,7 +15,12 @@ import {
 	type InventoryChromeLocation,
 } from '#app/components/inventory/inventory-chrome.tsx'
 import { InventoryClientProvider } from '#app/components/inventory/inventory-client-provider.tsx'
+import {
+	InventoryChangeProvider,
+	InventoryPrefsProvider,
+} from '#app/components/inventory/inventory-prefs.tsx'
 import { requireInventoryAccess } from '#app/utils/inventory/access.server.ts'
+import { loadUserName } from '#app/utils/inventory/actors.server.ts'
 import {
 	computeInventoryNavAccess,
 	type InventoryNavAccess,
@@ -34,6 +39,16 @@ export type InventoryLayoutContext = {
 	activeLocationId: string
 	/** Whether the member may see money figures. */
 	canSeeCost: boolean
+	/** Whether the member may change items, areas, counts and waste. */
+	canEdit: boolean
+	/** Whether the member may also set prices and suppliers. */
+	canManagePurchasing: boolean
+	/** The data region, which sets the default unit system. */
+	dataRegion: 'us' | 'ksa'
+	/** The currency money figures are entered in. */
+	currency: string
+	/** The signed-in member's display name ("Logged as Sara"). */
+	userName: string
 }
 
 export function useInventoryLayoutData(): InventoryLayoutContext {
@@ -44,7 +59,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 	const access = await requireInventoryAccess(request, params.orgSlug)
 	const nav = computeInventoryNavAccess(access.features, access.grants)
 
-	const [locationRows, { defaultLocale }] = await Promise.all([
+	const [locationRows, { defaultLocale }, userName] = await Promise.all([
 		db
 			.select({
 				id: OrganizationLocation.id,
@@ -57,6 +72,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 				asc(OrganizationLocation.createdAt),
 			),
 		orgSiteLocales(access.organizationId),
+		loadUserName(access.userId),
 	])
 
 	// An organization without locations keeps its stock at the implicit
@@ -82,11 +98,31 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		canSeeCost: access.grants.includes(
 			INVENTORY_PERMISSIONS.READ_INVENTORY_COST,
 		),
+		// Support impersonation may look but never change anything.
+		canEdit:
+			!access.impersonated &&
+			access.grants.includes(INVENTORY_PERMISSIONS.UPDATE_INVENTORY),
+		canManagePurchasing:
+			!access.impersonated &&
+			access.grants.includes(INVENTORY_PERMISSIONS.UPDATE_INVENTORY_PURCHASING),
+		dataRegion: access.dataRegion,
+		currency: access.currency,
+		userName,
 	}
 }
 
 export default function InventoryLayout() {
-	const { orgSlug, nav, locations, canSeeCost } = useLoaderData<typeof loader>()
+	const {
+		orgSlug,
+		nav,
+		locations,
+		canSeeCost,
+		canEdit,
+		canManagePurchasing,
+		dataRegion,
+		currency,
+		userName,
+	} = useLoaderData<typeof loader>()
 	const [searchParams, setSearchParams] = useSearchParams()
 
 	const requested = searchParams.get('locationId')
@@ -106,19 +142,32 @@ export default function InventoryLayout() {
 		locations,
 		activeLocationId,
 		canSeeCost,
+		canEdit,
+		canManagePurchasing,
+		dataRegion,
+		currency,
+		userName,
 	}
 
 	return (
 		<InventoryClientProvider orgSlug={orgSlug}>
-			<InventoryChrome
-				orgSlug={orgSlug}
-				nav={nav}
-				locations={locations}
-				selectedLocationId={activeLocationId}
-				onLocationChange={onLocationChange}
-			>
-				<Outlet context={context} />
-			</InventoryChrome>
+			<InventoryPrefsProvider dataRegion={dataRegion}>
+				<InventoryChangeProvider>
+					<InventoryChrome
+						orgSlug={orgSlug}
+						nav={nav}
+						locations={locations}
+						selectedLocationId={activeLocationId}
+						onLocationChange={onLocationChange}
+						canLogWaste={canEdit}
+						canSeeCost={canSeeCost}
+						currency={currency}
+						userName={userName}
+					>
+						<Outlet context={context} />
+					</InventoryChrome>
+				</InventoryChangeProvider>
+			</InventoryPrefsProvider>
 		</InventoryClientProvider>
 	)
 }

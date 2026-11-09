@@ -49,6 +49,8 @@
     "./empty": "./components/ui/empty.tsx",
     "./input-group": "./components/ui/input-group.tsx",
     "./kbd": "./components/ui/kbd.tsx",
+    "./quantity-stepper": "./components/ui/quantity-stepper.tsx",
+    "./quantity-input": "./lib/quantity-input.ts",
     "./icon": "./components/icon.tsx",
     "./animated-icon": "./components/animated-icons/animated-icon.tsx",
     "./arrow-left-icon": "./components/animated-icons/arrow-left-icon.tsx",
