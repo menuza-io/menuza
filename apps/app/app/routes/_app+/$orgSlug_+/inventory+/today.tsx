@@ -341,7 +341,24 @@ export default function InventoryTodayRoute() {
 						<WorkspacePanel title={<Trans>This week</Trans>}>
 							<WeekList week={data.week} />
 						</WorkspacePanel>
-						<WorkspacePanel title={<Trans>Waste by reason</Trans>}>
+						<WorkspacePanel
+							title={<Trans>Waste by reason</Trans>}
+							action={
+								// With Prep on, Waste leaves the tab bar and lives here.
+								nav.prep ? (
+									<Button
+										variant="outline"
+										size="sm"
+										render={
+											<Link to={`/${orgSlug}/inventory/waste${linkSearch}`} />
+										}
+										data-testid="today-waste-see-all"
+									>
+										<Trans>See all</Trans>
+									</Button>
+								) : undefined
+							}
+						>
 							{summary.data && summary.data.byReason.length > 0 ? (
 								<WasteBars
 									rows={summary.data.byReason.map((row) => ({

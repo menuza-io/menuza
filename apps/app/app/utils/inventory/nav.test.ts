@@ -10,6 +10,7 @@ import {
 	inventoryCountReviewPath,
 	inventoryTabFromPath,
 	isInventoryFullPage,
+	visibleInventoryTabs,
 } from './nav.ts'
 
 const ON = foldInventoryFeatures({ enabled: true })
@@ -43,8 +44,31 @@ describe('computeInventoryNavAccess', () => {
 			stock: true,
 			counts: true,
 			purchasing: true,
+			prep: false,
 			waste: true,
 		})
+	})
+
+	it('adds Prep behind its own flag and lets Waste step out of the tab bar', () => {
+		const grants = new Set([P.READ_INVENTORY])
+		const withPrep = computeInventoryNavAccess(
+			foldInventoryFeatures({ enabled: true, prep: true }),
+			grants,
+		)
+		expect(withPrep.prep).toBe(true)
+		expect(visibleInventoryTabs(withPrep)).toEqual([
+			'today',
+			'stock',
+			'counts',
+			'purchasing',
+			'prep',
+		])
+		expect(visibleInventoryTabs(computeInventoryNavAccess(ON, grants))).toEqual(
+			['today', 'stock', 'counts', 'purchasing', 'waste'],
+		)
+		// The Waste page is still a tab as far as the path goes.
+		expect(inventoryTabFromPath('/acme/inventory/waste', 'acme')).toBe('waste')
+		expect(inventoryTabFromPath('/acme/inventory/prep', 'acme')).toBe('prep')
 	})
 })
 

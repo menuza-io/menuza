@@ -4,12 +4,17 @@ import {
 	type InventoryPermission,
 } from '@repo/inventory'
 
-/** The five Inventory tabs, in tab bar and sidebar order. */
+/**
+ * The Inventory tabs, in tab bar and sidebar order. Prep (phase 4) comes with
+ * its own flag; while it is on, Waste leaves the tab bar (the bar stays at
+ * five) and lives on Today with "See all" at `inventory/waste`.
+ */
 export const INVENTORY_TABS = [
 	'today',
 	'stock',
 	'counts',
 	'purchasing',
+	'prep',
 	'waste',
 ] as const
 export type InventoryTab = (typeof INVENTORY_TABS)[number]
@@ -37,6 +42,7 @@ export const HIDDEN_INVENTORY_NAV: InventoryNavAccess = {
 	stock: false,
 	counts: false,
 	purchasing: false,
+	prep: false,
 	waste: false,
 }
 
@@ -67,8 +73,17 @@ export function computeInventoryNavAccess(
 		stock: true,
 		counts: true,
 		purchasing: true,
+		// Behind its own flag; the region checks it on every call as well.
+		prep: features.prep,
 		waste: true,
 	}
+}
+
+/** The tabs a member sees in the tab bar: Waste steps aside while Prep is on. */
+export function visibleInventoryTabs(nav: InventoryNavAccess): InventoryTab[] {
+	return INVENTORY_TABS.filter(
+		(tab) => nav[tab] && !(tab === 'waste' && nav.prep),
+	)
 }
 
 export function inventoryTabPath(orgSlug: string, tab: InventoryTab): string {

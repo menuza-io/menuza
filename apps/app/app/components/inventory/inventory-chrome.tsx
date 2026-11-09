@@ -10,11 +10,11 @@ import { useLocation } from 'react-router'
 import { LogWasteDialog } from '#app/components/inventory/log-waste-dialog.tsx'
 import { FilterSelect } from '#app/components/staff/controls.tsx'
 import {
-	INVENTORY_TABS,
 	type InventoryNavAccess,
 	type InventoryTab,
 	inventoryTabFromPath,
 	inventoryTabPath,
+	visibleInventoryTabs,
 } from '#app/utils/inventory/nav.ts'
 
 export type InventoryChromeLocation = { id: string; name: string }
@@ -24,6 +24,7 @@ const TAB_LABELS = {
 	stock: msg`Stock`,
 	counts: msg`Counts`,
 	purchasing: msg`Purchasing`,
+	prep: msg`Prep`,
 	waste: msg`Waste`,
 } as const
 
@@ -43,6 +44,10 @@ const TAB_HEADERS = {
 	purchasing: {
 		title: msg`Purchasing`,
 		description: msg`Deliveries, orders and the suppliers you buy from.`,
+	},
+	prep: {
+		title: msg`Prep`,
+		description: msg`What to make today, and what is done.`,
 	},
 	waste: {
 		title: msg`Waste`,
@@ -125,7 +130,7 @@ export function InventoryChrome({
 	const header = TAB_HEADERS[routeKey]
 	const search = locations.length > 1 ? location.search : ''
 
-	const tabs = INVENTORY_TABS.filter((tab) => nav[tab]).map((tab) => ({
+	const tabs = visibleInventoryTabs(nav).map((tab) => ({
 		label: i18n._(TAB_LABELS[tab]),
 		href: `${inventoryTabPath(orgSlug, tab)}${search}`,
 		isActive: tab === routeKey,

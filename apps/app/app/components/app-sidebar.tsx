@@ -442,6 +442,11 @@ function OrganizationSidebar({
 					),
 				},
 				{
+					title: _(msg`Prep`),
+					url: `/${orgSlug}/inventory/prep`,
+					isActive: location.pathname.startsWith(`/${orgSlug}/inventory/prep`),
+				},
+				{
 					title: _(msg`Waste`),
 					url: `/${orgSlug}/inventory/waste`,
 					isActive: location.pathname.startsWith(`/${orgSlug}/inventory/waste`),
@@ -891,7 +896,10 @@ function OrganizationSidebar({
 					[`/${orgSlug}/inventory/stock`]: inventoryNav.stock,
 					[`/${orgSlug}/inventory/counts`]: inventoryNav.counts,
 					[`/${orgSlug}/inventory/purchasing`]: inventoryNav.purchasing,
-					[`/${orgSlug}/inventory/waste`]: inventoryNav.waste,
+					[`/${orgSlug}/inventory/prep`]: inventoryNav.prep,
+					// Waste steps aside for Prep and lives on Today then.
+					[`/${orgSlug}/inventory/waste`]:
+						inventoryNav.waste && !inventoryNav.prep,
 				}
 				const visibleItems = item.items.filter(
 					(subItem) => allowedByUrl[subItem.url] === true,

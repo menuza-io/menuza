@@ -1,5 +1,9 @@
 import { Trans, useLingui } from '@lingui/react/macro'
-import { type ItemDetail, recordBatchResultSchema } from '@repo/inventory'
+import {
+	type ItemDetail,
+	type RecordBatch,
+	recordBatchResultSchema,
+} from '@repo/inventory'
 import { Alert, AlertDescription } from '@repo/ui/alert'
 import { Button } from '@repo/ui/button'
 import {
@@ -15,7 +19,7 @@ import { Icon } from '@repo/ui/icon'
 import { QuantityStepper } from '@repo/ui/quantity-stepper'
 import { Textarea } from '@repo/ui/textarea'
 import { ToggleGroup, ToggleGroupItem } from '@repo/ui/toggle-group'
-import { useId, useRef, useState } from 'react'
+import { type ReactNode, useId, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import {
 	useNotifyInventoryChanged,
@@ -38,18 +42,35 @@ import { newClientId } from '#app/utils/inventory/waste-form.ts'
  * the amount that came out. The region adds the made item to stock and takes
  * its ingredients out as one write; a retry replays the same `clientId`.
  */
+/**
+ * The same form also closes a prep task ("How much did you make?"): the Prep
+ * screen passes where to post, how to shape the body, how to read the answer
+ * and a starting draft pre-filled with the plan.
+ */
+export type RecordBatchTarget = {
+	path: string
+	body: (batch: RecordBatch) => unknown
+	madeQuantity: (raw: unknown) => number
+	title?: ReactNode
+	description?: ReactNode
+	submitLabel?: ReactNode
+	initialDraft?: BatchDraft
+}
+
 export function RecordBatchDialog({
 	item,
 	locationId,
 	open,
 	onOpenChange,
 	onRecorded,
+	target,
 }: {
 	item: Pick<ItemDetail, 'id' | 'name' | 'baseUnit' | 'units' | 'countUnit'>
 	locationId: string
 	open: boolean
 	onOpenChange: (open: boolean) => void
 	onRecorded: () => void
+	target?: RecordBatchTarget
 }) {
 	const [submitting, setSubmitting] = useState(false)
 	return (
@@ -65,12 +86,14 @@ export function RecordBatchDialog({
 			>
 				<DialogHeader>
 					<DialogTitle>
-						<Trans>Record a batch</Trans>
+						{target?.title ?? <Trans>Record a batch</Trans>}
 					</DialogTitle>
 					<DialogDescription>
-						<Trans>
-							Adds what you made to stock and takes the ingredients out.
-						</Trans>
+						{target?.description ?? (
+							<Trans>
+								Adds what you made to stock and takes the ingredients out.
+							</Trans>
+						)}
 					</DialogDescription>
 				</DialogHeader>
 				<BatchForm
@@ -80,6 +103,7 @@ export function RecordBatchDialog({
 					onSubmittingChange={setSubmitting}
 					onClose={() => onOpenChange(false)}
 					onRecorded={onRecorded}
+					target={target}
 				/>
 			</DialogContent>
 		</Dialog>
@@ -93,6 +117,7 @@ function BatchForm({
 	onSubmittingChange,
 	onClose,
 	onRecorded,
+	target,
 }: {
 	item: Pick<ItemDetail, 'id' | 'name' | 'baseUnit' | 'units' | 'countUnit'>
 	locationId: string
@@ -100,6 +125,7 @@ function BatchForm({
 	onSubmittingChange: (submitting: boolean) => void
 	onClose: () => void
 	onRecorded: () => void
+	target?: RecordBatchTarget
 }) {
 	const { t, i18n } = useLingui()
 	const { request } = useInventoryClient()
@@ -109,8 +135,11 @@ function BatchForm({
 	const amountId = useId()
 	const noteId = useId()
 	const [draft, setDraft] = useState<BatchDraft>(() => ({
-		...emptyBatchDraft(),
-		unit: item.countUnit ?? recipeEntryUnit(item.baseUnit, quantity.system),
+		...(target?.initialDraft ?? emptyBatchDraft()),
+		unit:
+			target?.initialDraft?.unit ??
+			item.countUnit ??
+			recipeEntryUnit(item.baseUnit, quantity.system),
 	}))
 	const [attempted, setAttempted] = useState(false)
 	const [error, setError] = useState<string | null>(null)
@@ -132,14 +161,18 @@ function BatchForm({
 		onSubmittingChange(true)
 		setError(null)
 		try {
-			const result = recordBatchResultSchema.parse(
-				await request(`/items/${encodeURIComponent(item.id)}/batch`, {
+			const raw = await request(
+				target?.path ?? `/items/${encodeURIComponent(item.id)}/batch`,
+				{
 					method: 'POST',
-					body: JSON.stringify(body),
-				}),
+					body: JSON.stringify(target ? target.body(body) : body),
+				},
 			)
+			const madeQuantity = target
+				? target.madeQuantity(raw)
+				: recordBatchResultSchema.parse(raw).madeQuantity
 			clientIdRef.current = newClientId('b')
-			const added = quantity.format(result.madeQuantity, {
+			const added = quantity.format(madeQuantity, {
 				baseUnit: item.baseUnit,
 				countUnit: item.countUnit,
 				units: item.units,
@@ -302,7 +335,11 @@ function BatchForm({
 					disabled={submitting}
 					data-testid="record-batch-submit"
 				>
-					{submitting ? <Trans>Saving…</Trans> : <Trans>Record batch</Trans>}
+					{submitting ? (
+						<Trans>Saving…</Trans>
+					) : (
+						(target?.submitLabel ?? <Trans>Record batch</Trans>)
+					)}
 				</Button>
 			</DialogFooter>
 		</form>
