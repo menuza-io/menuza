@@ -68,6 +68,8 @@ export type PermissionGroup = {
 	reservations?: boolean
 	/** Loyalty module group: shown only when the organization has Loyalty turned on. */
 	loyalty?: boolean
+	/** Inventory module group: shown only when the organization has Inventory turned on. */
+	inventory?: boolean
 }
 
 export function getPermissionGroups(): PermissionGroup[] {
@@ -515,6 +517,40 @@ export function getPermissionGroups(): PermissionGroup[] {
 				},
 			],
 		},
+		{
+			title: t`Inventory`,
+			inventory: true,
+			description: t`Stock, counts, waste, deliveries, suppliers and dish recipes. Only applies when Inventory is turned on for your organization.`,
+			permissions: [
+				{
+					id: 'org_perm_read_inventory_any',
+					label: t`View stock`,
+					description: t`See stock, counts, waste, and deliveries. Quantities only, no money.`,
+				},
+				{
+					id: 'org_perm_update_inventory_any',
+					label: t`Count and manage stock`,
+					description: t`Add items and storage areas, count stock, log waste, and record deliveries. Includes View stock.`,
+				},
+				{
+					id: 'org_perm_read_inventory_cost_any',
+					label: t`View inventory costs`,
+					description: t`See what stock is worth, item costs, food cost, and the cost of waste. Includes View stock.`,
+					warning: t`Business costs`,
+				},
+				{
+					id: 'org_perm_update_inventory_purchasing_any',
+					label: t`Manage purchasing`,
+					description: t`Manage suppliers, prices, and orders, and mark deliveries paid. Includes View stock.`,
+					warning: t`Spends money`,
+				},
+				{
+					id: 'org_perm_update_inventory_recipe_any',
+					label: t`Manage dish recipes`,
+					description: t`Edit what goes into each dish, typed costs, and when dishes sell out on their own. Includes View stock.`,
+				},
+			],
+		},
 	]
 }
 
@@ -526,6 +562,8 @@ export type RolePreset = {
 	staffing?: boolean
 	/** Reservations module template: offered only when Reservations is turned on. */
 	reservations?: boolean
+	/** Inventory module template: offered only when Inventory is turned on. */
+	inventory?: boolean
 }
 
 export function getPresets(): RolePreset[] {
@@ -687,6 +725,27 @@ export function getPresets(): RolePreset[] {
 			],
 		},
 		{
+			name: t`Kitchen team`,
+			inventory: true,
+			description: t`Count stock, log waste & deliveries`,
+			permissionIds: [
+				'org_perm_read_inventory_any',
+				'org_perm_update_inventory_any',
+			],
+		},
+		{
+			name: t`Kitchen manager`,
+			inventory: true,
+			description: t`Stock, costs, purchasing & recipes`,
+			permissionIds: [
+				'org_perm_read_inventory_any',
+				'org_perm_update_inventory_any',
+				'org_perm_read_inventory_cost_any',
+				'org_perm_update_inventory_purchasing_any',
+				'org_perm_update_inventory_recipe_any',
+			],
+		},
+		{
 			name: t`Viewer`,
 			description: t`Read-only`,
 			permissionIds: [
@@ -713,6 +772,7 @@ export function RoleAccessForm({
 	staffingEnabled = false,
 	reservationsEnabled = false,
 	loyaltyEnabled = false,
+	inventoryEnabled = false,
 }: {
 	role?: TenantRole
 	cancelHref: string
@@ -725,6 +785,8 @@ export function RoleAccessForm({
 	reservationsEnabled?: boolean
 	/** Whether Loyalty is turned on for this organization. */
 	loyaltyEnabled?: boolean
+	/** Whether Inventory is turned on for this organization. */
+	inventoryEnabled?: boolean
 }) {
 	const navigation = useNavigation()
 	// Editing saves through a fetcher so the save bar's redirect to the list is
@@ -754,12 +816,14 @@ export function RoleAccessForm({
 		(group) =>
 			(staffingEnabled || !group.staffing) &&
 			(reservationsEnabled || !group.reservations) &&
-			(loyaltyEnabled || !group.loyalty),
+			(loyaltyEnabled || !group.loyalty) &&
+			(inventoryEnabled || !group.inventory),
 	)
 	const rawPresets = getPresets().filter(
 		(preset) =>
 			(staffingEnabled || !preset.staffing) &&
-			(reservationsEnabled || !preset.reservations),
+			(reservationsEnabled || !preset.reservations) &&
+			(inventoryEnabled || !preset.inventory),
 	)
 	// When both Staffing and Reservations are enabled, both define a "Shift manager"
 	// template; merge any templates sharing a name so template buttons stay unique.
@@ -783,7 +847,8 @@ export function RoleAccessForm({
 				(group) =>
 					(group.staffing && !staffingEnabled) ||
 					(group.reservations && !reservationsEnabled) ||
-					(group.loyalty && !loyaltyEnabled),
+					(group.loyalty && !loyaltyEnabled) ||
+					(group.inventory && !inventoryEnabled),
 			)
 			.flatMap((group) => group.permissions.map((p) => p.id)),
 	)
@@ -1123,6 +1188,7 @@ export function ReadOnlyRoleView({
 	staffingEnabled = false,
 	reservationsEnabled = false,
 	loyaltyEnabled = false,
+	inventoryEnabled = false,
 }: {
 	role: TenantRole
 	editHref?: string
@@ -1133,13 +1199,16 @@ export function ReadOnlyRoleView({
 	reservationsEnabled?: boolean
 	/** Whether Loyalty is turned on for this organization. */
 	loyaltyEnabled?: boolean
+	/** Whether Inventory is turned on for this organization. */
+	inventoryEnabled?: boolean
 }) {
 	const { roleName, roleDescription } = useRoleLabels()
 	const permissionGroups = getPermissionGroups().filter(
 		(group) =>
 			(staffingEnabled || !group.staffing) &&
 			(reservationsEnabled || !group.reservations) &&
-			(loyaltyEnabled || !group.loyalty),
+			(loyaltyEnabled || !group.loyalty) &&
+			(inventoryEnabled || !group.inventory),
 	)
 	const visibleIds = new Set(
 		permissionGroups.flatMap((group) => group.permissions.map((p) => p.id)),

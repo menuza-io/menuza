@@ -77,6 +77,10 @@ import {
 	memberForCustomerInTx,
 } from './loyalty-member-service.ts'
 import {
+	inventorySaleQueue,
+	queueInventoryTabRoundsInTx,
+} from './inventory-sales-service.ts'
+import {
 	claimPurchaseIfUnclaimedInTx,
 	loyaltySettleQueue,
 	purchaseForSourceInTx,
@@ -1126,6 +1130,7 @@ export async function closeTabAtCounter(
 	},
 ): Promise<QrResult<ReleasedTabPayment>> {
 	const loyalty = loyaltySettleQueue()
+	const inventory = inventorySaleQueue()
 	// Never inside the transaction: the App is a network call.
 	const locationId =
 		input.context === undefined ? await tabLocationId(orgId, tabId) : null
@@ -1213,6 +1218,11 @@ export async function closeTabAtCounter(
 				.returning()
 			// The tab earns once, now (unless a till sale earns instead).
 			await loyalty.queue(tx, tabSource(tab.id), now.getTime())
+			// A tab rung up on a Station till is that till's sale: its rounds
+			// stop using stock here so the food is not counted twice.
+			if (input.rungUpOnStation === true) {
+				await queueInventoryTabRoundsInTx(tx, tab.id, now.getTime(), inventory)
+			}
 			return {
 				ok: true as const,
 				data: {
@@ -1233,6 +1243,7 @@ export async function closeTabAtCounter(
 		throw error
 	}
 	await loyalty.settle(orgId)
+	await inventory.settle(orgId)
 	return result
 }
 
@@ -1247,6 +1258,7 @@ export async function clearStationFlag(
 	tabId: string,
 ): Promise<QrResult<OperatorQrTab>> {
 	const loyalty = loyaltySettleQueue()
+	const inventory = inventorySaleQueue()
 	const result: QrResult<OperatorQrTab> = await writeTx(orgId, async (tx) => {
 		const [tab] = await tx
 			.select()
@@ -1277,12 +1289,15 @@ export async function clearStationFlag(
 			.returning()
 		// No till sale stands in for the tab after all: it earns now.
 		await loyalty.queue(tx, tabSource(tab.id), now.getTime())
+		// ...and its rounds use stock again.
+		await queueInventoryTabRoundsInTx(tx, tab.id, now.getTime(), inventory)
 		return {
 			ok: true as const,
 			data: await loadOperatorView(tx, updated ?? tab),
 		}
 	})
 	await loyalty.settle(orgId)
+	await inventory.settle(orgId)
 	return result
 }
 
@@ -1303,6 +1318,7 @@ export async function voidTab(
 	},
 ): Promise<QrResult<ReleasedTabPayment>> {
 	const loyalty = loyaltySettleQueue()
+	const inventory = inventorySaleQueue()
 	// The dialog shows the total net of discounts. Only when staff sent a total
 	// is there anything to compare, and the App is never called in the lock.
 	const locationId =
@@ -1373,6 +1389,9 @@ export async function voidTab(
 				.where(eq(qrTabs.id, tab.id))
 				.returning()
 			await loyalty.queue(tx, tabSource(tab.id), now.getTime())
+			// Rounds the kitchen had not finished are cancelled: they give back
+			// what they used.
+			await queueInventoryTabRoundsInTx(tx, tab.id, now.getTime(), inventory)
 			return {
 				ok: true as const,
 				data: {
@@ -1393,6 +1412,7 @@ export async function voidTab(
 		throw error
 	}
 	await loyalty.settle(orgId)
+	await inventory.settle(orgId)
 	return result
 }
 

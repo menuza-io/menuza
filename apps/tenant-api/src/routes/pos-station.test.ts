@@ -1,11 +1,13 @@
 import crypto from 'node:crypto'
 import { brand } from '@repo/config/brand'
 import { POS_STAFF_SESSION_HEADER } from '@repo/common/pos-orders'
+import { INVENTORY_FEATURES_OFF } from '@repo/inventory'
 import { type ReservationsContext } from '@repo/reservations'
 import { BUILTIN_LABOR_POLICY } from '@repo/staffing'
 import {
 	getTenantDb,
 	laborPolicies,
+	posDevices,
 	posManagers,
 	timeBreaks,
 	timeEntries,
@@ -28,6 +30,10 @@ import {
 	OPERATOR_SECRET,
 	type TestOrg,
 } from '../../tests/staff-harness.ts'
+import {
+	invalidateInventoryContext,
+	seedInventoryContextForTest,
+} from '../lib/inventory-context.ts'
 import { verifyReservationsOperatorToken } from '../lib/reservations-auth.ts'
 import { policyFieldsToColumns } from '../services/labor-policy-service.ts'
 import { defaultPunchDeps } from '../services/punch-service.ts'
@@ -110,6 +116,8 @@ const mintOperator = (
 		guestDetails: true,
 		locationIds: null,
 		scopeIds: null,
+		inventory: true,
+		inventoryLocationIds: null,
 	},
 ) =>
 	new SignJWT({
@@ -140,6 +148,8 @@ describe('Station apps on a POS terminal', () => {
 		rsvContexts.set(ORG_A, publicContext(ORG_A))
 		rsvContexts.set(ORG_B, publicContext(ORG_B))
 		vi.stubEnv('POS_ENABLED', '')
+		vi.stubEnv('INVENTORY_ENABLED', '')
+		invalidateInventoryContext()
 		// Pairing checks the location against App's menu; unreachable means "trust it".
 		vi.stubGlobal(
 			'fetch',
@@ -149,6 +159,7 @@ describe('Station apps on a POS terminal', () => {
 		posTimeclockDeps.punch = { ...defaultPunchDeps, now: () => h.clock.now }
 	})
 	afterEach(async () => {
+		invalidateInventoryContext()
 		posTimeclockDeps.punch = originalPunchDeps
 		posReservationsDeps.nowSeconds = () => Math.floor(Date.now() / 1000)
 		vi.unstubAllGlobals()
@@ -192,6 +203,7 @@ describe('Station apps on a POS terminal', () => {
 			terminalCode?: string
 			timeclockEnabled?: boolean
 			reservationsEnabled?: boolean
+			inventoryEnabled?: boolean
 			locationId?: string | null
 			signInRequired?: boolean
 			/** `null` leaves the workplace to follow the location, as App pairs. */
@@ -216,6 +228,7 @@ describe('Station apps on a POS terminal', () => {
 				signInRequired: options.signInRequired ?? true,
 				timeclockEnabled: options.timeclockEnabled ?? true,
 				reservationsEnabled: options.reservationsEnabled ?? true,
+				inventoryEnabled: options.inventoryEnabled ?? false,
 			}),
 		})
 		if (created.status !== 201) {
@@ -796,7 +809,11 @@ describe('Station apps on a POS terminal', () => {
 			await h.seedStaff(ORG_A, {})
 			const { secret } = await pairTerminal()
 			const me = await request('GET', '/pos/me', { secret })
-			expect(me.body.apps).toEqual({ timeclock: true, reservations: true })
+			expect(me.body.apps).toEqual({
+				timeclock: true,
+				reservations: true,
+				inventory: false,
+			})
 
 			rsvContexts.set(ORG_A, publicContext(ORG_A, { enabled: false }))
 			staffingFlags.set(ORG_A, {
@@ -806,7 +823,37 @@ describe('Station apps on a POS terminal', () => {
 				hiring: false,
 			})
 			const off = await request('GET', '/pos/me', { secret })
-			expect(off.body.apps).toEqual({ timeclock: false, reservations: false })
+			expect(off.body.apps).toEqual({
+				timeclock: false,
+				reservations: false,
+				inventory: false,
+			})
+		})
+
+		it('offers Stock only with the terminal setting and the organization flag, and keeps what it knew when the flag cannot be read', async () => {
+			await h.seedStaff(ORG_A, {})
+			const { secret } = await pairTerminal({ inventoryEnabled: true })
+			seedInventoryContextForTest(ORG_A, { ...INVENTORY_FEATURES_OFF })
+			const flagOff = await request('GET', '/pos/me', { secret })
+			expect(flagOff.body.apps.inventory).toBe(false)
+
+			seedInventoryContextForTest(ORG_A, {
+				...INVENTORY_FEATURES_OFF,
+				enabled: true,
+			})
+			const on = await request('GET', '/pos/me', { secret })
+			expect(on.body.apps.inventory).toBe(true)
+
+			// The node's kill switch is an outage to the till: the app is left out.
+			vi.stubEnv('INVENTORY_ENABLED', 'false')
+			const stopped = await request('GET', '/pos/me', { secret })
+			expect(stopped.body.apps).not.toHaveProperty('inventory')
+			vi.stubEnv('INVENTORY_ENABLED', '')
+
+			// Nothing cached and App unreachable: unknown, never taken as on.
+			invalidateInventoryContext(ORG_A)
+			const unknown = await request('GET', '/pos/me', { secret })
+			expect(unknown.body.apps).not.toHaveProperty('inventory')
 		})
 
 		it('a terminal without the apps reports none', async () => {
@@ -816,7 +863,11 @@ describe('Station apps on a POS terminal', () => {
 				reservationsEnabled: false,
 			})
 			const me = await request('GET', '/pos/me', { secret })
-			expect(me.body.apps).toEqual({ timeclock: false, reservations: false })
+			expect(me.body.apps).toEqual({
+				timeclock: false,
+				reservations: false,
+				inventory: false,
+			})
 		})
 	})
 
@@ -866,6 +917,99 @@ describe('Station apps on a POS terminal', () => {
 				(await patch(deviceId, { reservationsEnabled: false })).status,
 			).toBe(200)
 			expect((await patch(deviceId, { signInRequired: false })).status).toBe(
+				200,
+			)
+		})
+
+		it('Stock needs a location and staff sign-in, and its own permission to switch on', async () => {
+			await h.seedStaff(ORG_A, {})
+			const created = await h.app.request('/operator/pos/pairing-codes', {
+				method: 'POST',
+				headers: {
+					authorization: `Bearer ${await mintOperator()}`,
+					'content-type': 'application/json',
+				},
+				body: JSON.stringify({
+					label: 'Stockroom',
+					terminalCode: 'S1',
+					scopeId: LOC_1,
+					locationId: null,
+					inventoryEnabled: true,
+				}),
+			})
+			expect(created.status).toBe(422)
+			expect(((await created.json()) as { error: string }).error).toBe(
+				'inventory_needs_location',
+			)
+
+			const { deviceId } = await pairTerminal({ inventoryEnabled: true })
+			const noPin = await patch(deviceId, { signInRequired: false })
+			expect(noPin.status).toBe(422)
+			// Reservations also need sign-in; Stock reports its own code when alone.
+			await patch(deviceId, { reservationsEnabled: false })
+			const alone = await patch(deviceId, { signInRequired: false })
+			expect(alone.status).toBe(422)
+			expect(((await alone.json()) as { error: string }).error).toBe(
+				'inventory_needs_sign_in',
+			)
+			expect((await patch(deviceId, { inventoryEnabled: false })).status).toBe(
+				200,
+			)
+			const db = await getTenantDb(ORG_A)
+			const [off] = await db
+				.select()
+				.from(posDevices)
+				.where(eq(posDevices.id, deviceId))
+			expect(off!.inventoryEnabled).toBe(false)
+			expect(off!.inventoryDisabledAt).not.toBeNull()
+
+			const noGrant = await mintOperator(ORG_A, {
+				timeclock: true,
+				reservations: true,
+				guestDetails: true,
+				locationIds: null,
+				scopeIds: null,
+			})
+			const denied = await h.app.request(
+				`/operator/pos/terminals/${deviceId}`,
+				{
+					method: 'PATCH',
+					headers: {
+						authorization: `Bearer ${noGrant}`,
+						'content-type': 'application/json',
+					},
+					body: JSON.stringify({ inventoryEnabled: true }),
+				},
+			)
+			expect(denied.status).toBe(403)
+			expect(((await denied.json()) as { error: string }).error).toBe(
+				'inventory_permission_required',
+			)
+			const elsewhere = await mintOperator(ORG_A, {
+				timeclock: true,
+				reservations: true,
+				guestDetails: true,
+				locationIds: null,
+				scopeIds: null,
+				inventory: true,
+				inventoryLocationIds: ['loc_elsewhere'],
+			})
+			const wrongPlace = await h.app.request(
+				`/operator/pos/terminals/${deviceId}`,
+				{
+					method: 'PATCH',
+					headers: {
+						authorization: `Bearer ${elsewhere}`,
+						'content-type': 'application/json',
+					},
+					body: JSON.stringify({ inventoryEnabled: true }),
+				},
+			)
+			expect(wrongPlace.status).toBe(403)
+			expect(((await wrongPlace.json()) as { error: string }).error).toBe(
+				'location_not_allowed',
+			)
+			expect((await patch(deviceId, { inventoryEnabled: true })).status).toBe(
 				200,
 			)
 		})

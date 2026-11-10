@@ -1,0 +1,21 @@
+{
+	"count": {
+		"id": "cnt_open1",
+		"locationId": "main",
+		"listId": "list_weekly",
+		"listName": "Weekly count",
+		"status": "counting",
+		"businessDate": "2026-01-01",
+		"startedBy": { "kind": "operator", "id": "usr_owner" },
+		"itemTotal": 5,
+		"itemsCounted": 2,
+		"counters": [{ "kind": "staff", "id": "stf_omar" }],
+		"sentForReviewAt": null,
+		"approvedAt": null,
+		"approvedBy": null,
+		"cancelledAt": null,
+		"createdAt": 1767222000000,
+		"version": 2
+	},
+	"joined": true
+}

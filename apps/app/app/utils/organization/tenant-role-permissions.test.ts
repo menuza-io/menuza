@@ -1,4 +1,11 @@
+import fs from 'node:fs'
+import path from 'node:path'
 import { ORG_PERMISSIONS } from '@repo/auth'
+import {
+	INVENTORY_FLAG_KEY_LIST,
+	INVENTORY_IMPLIED_READ,
+	INVENTORY_PERMISSION_LIST,
+} from '@repo/inventory'
 import {
 	LOYALTY_IMPLIED_READ,
 	LOYALTY_PERMISSION_LIST,
@@ -13,10 +20,12 @@ import { STAFFING_PERMISSION_LIST, STAFFING_PERMISSIONS } from '@repo/staffing'
 import { describe, expect, it } from 'vitest'
 import {
 	hasOnlyTenantRolePermissions,
+	INVENTORY_IMPLIED_PERMISSION_IDS,
 	LOYALTY_IMPLIED_PERMISSION_IDS,
 	RESERVATIONS_IMPLIED_PERMISSION_IDS,
 	STAFFING_IMPLIED_PERMISSION_IDS,
 	TENANT_ROLE_PERMISSION_IDS,
+	withImpliedInventoryPermissions,
 	withImpliedLoyaltyPermissions,
 	withImpliedReservationsPermissions,
 	withImpliedStaffingPermissions,
@@ -260,5 +269,68 @@ describe('loyalty permission lists and implied permissions', () => {
 			for (const id of implied) expect(LOYALTY_IDS).toContain(id)
 		}
 		expect(LOYALTY_PERMISSIONS.READ_LOYALTY).toBe('read:loyalty:any')
+	})
+})
+
+const INVENTORY_IDS = INVENTORY_PERMISSION_LIST.map(permissionId)
+const REPO_ROOT = path.resolve(import.meta.dirname, '../../../../..')
+
+describe('inventory permission lists and implied permissions', () => {
+	it('lets custom roles be granted exactly the 5 inventory permissions', () => {
+		const granted = TENANT_ROLE_PERMISSION_IDS.filter((id) =>
+			INVENTORY_IDS.includes(id),
+		)
+		expect([...granted].sort()).toEqual([...INVENTORY_IDS].sort())
+		expect(hasOnlyTenantRolePermissions(INVENTORY_IDS)).toBe(true)
+	})
+
+	it('ORG_PERMISSIONS, setup-roles.ts and the 0040 migration name the same grants', () => {
+		const fromAuth = Object.entries(ORG_PERMISSIONS)
+			.filter(([key]) => key.includes('INVENTORY'))
+			.map(([, value]) => value)
+			.sort()
+		expect(fromAuth).toEqual([...INVENTORY_PERMISSION_LIST].sort())
+
+		const setupRoles = fs.readFileSync(
+			path.join(REPO_ROOT, 'packages/database/setup-roles.ts'),
+			'utf8',
+		)
+		const migration = fs.readFileSync(
+			path.join(REPO_ROOT, 'packages/database/drizzle/0040_inventory.sql'),
+			'utf8',
+		)
+		for (const id of INVENTORY_IDS) {
+			expect(setupRoles).toContain(`id: '${id}'`)
+			expect(migration).toContain(`('${id}', `)
+			expect(migration).toContain(`('org_role_admin', '${id}')`)
+		}
+		// Every flag is seeded off at system level.
+		for (const key of INVENTORY_FLAG_KEY_LIST) {
+			expect(migration).toContain(`'${key}', 'false', 'system', NULL, NULL`)
+		}
+	})
+
+	it('mirrors INVENTORY_IMPLIED_READ from @repo/inventory, mapped to row ids', () => {
+		const expected = Object.fromEntries(
+			Object.entries(INVENTORY_IMPLIED_READ).map(([grant, implied]) => [
+				permissionId(grant),
+				[permissionId(implied)],
+			]),
+		)
+		expect(INVENTORY_IMPLIED_PERMISSION_IDS).toEqual(expected)
+		expect(
+			withImpliedInventoryPermissions([
+				'org_perm_update_inventory_purchasing_any',
+			]).sort(),
+		).toEqual([
+			'org_perm_read_inventory_any',
+			'org_perm_update_inventory_purchasing_any',
+		])
+		expect(
+			withImpliedTenantRolePermissions(['org_perm_read_inventory_cost_any']),
+		).toEqual([
+			'org_perm_read_inventory_cost_any',
+			'org_perm_read_inventory_any',
+		])
 	})
 })

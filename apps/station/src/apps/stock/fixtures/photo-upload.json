@@ -1,0 +1,8 @@
+{
+	"key": "inventory-invoices/org_1/dlv_9/3f9a.jpg",
+	"method": "PUT",
+	"uploadUrl": "https://storage.example.test/inventory-invoices/org_1/dlv_9/3f9a.jpg?sig=abc",
+	"headers": { "Content-Type": "image/jpeg", "Content-Length": "123456" },
+	"expiresAt": 1767229800000,
+	"maxBytes": 5242880
+}

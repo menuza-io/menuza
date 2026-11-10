@@ -16,8 +16,14 @@ import { Icon } from '@repo/ui/icon'
 import { Input } from '@repo/ui/input'
 import { Label } from '@repo/ui/label'
 import { Switch } from '@repo/ui/switch'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Form, useActionData } from 'react-router'
+import {
+	RecipeAside,
+	RecipePanel,
+	RecipeScope,
+	type RecipeVariant,
+} from '#app/components/inventory/recipe-panel.tsx'
 import {
 	MediaLibraryPicker,
 	type MediaLibraryAsset,
@@ -78,6 +84,10 @@ type ItemImage = {
 
 interface ItemFormProps {
 	initialData?: Partial<ItemFormData>
+	/** The saved item's id; absent while creating (recipes need it). */
+	itemId?: string
+	/** The organization's data region (sets the currency recipes use). */
+	dataRegion?: string | null
 	orgSlug: string
 	defaultLocale: string
 	supportedLocales?: string[]
@@ -96,8 +106,26 @@ interface ItemFormProps {
 	pageTitle: string
 }
 
-export function ItemForm({
+/**
+ * The recipe panels in the form are regional islands with their own client
+ * and Save; the scope gives them one client for the page.
+ */
+export function ItemForm(props: ItemFormProps) {
+	return (
+		<RecipeScope
+			orgSlug={props.orgSlug}
+			dataRegion={props.dataRegion}
+			active={Boolean(props.itemId)}
+		>
+			<ItemFormBody {...props} />
+		</RecipeScope>
+	)
+}
+
+function ItemFormBody({
 	initialData,
+	itemId,
+	dataRegion,
 	orgSlug,
 	defaultLocale,
 	supportedLocales = [defaultLocale],
@@ -222,6 +250,25 @@ export function ItemForm({
 
 	const primaryImage = images[0] ?? null
 	const photoCount = images.length
+
+	// Sizes as saved: a size recipe belongs to a saved variant id.
+	const recipeVariants = useMemo<RecipeVariant[]>(() => {
+		const saved = initialData?.variations
+		if (!saved) return []
+		return saved.variants.map((variant) => ({
+			id: variant.id,
+			label: variant.valueIds
+				.map(
+					(valueId) =>
+						saved.groups
+							.flatMap((group) => group.values)
+							.find((value) => value.id === valueId)?.name ?? '',
+				)
+				.filter(Boolean)
+				.join(' / '),
+			priceMajor: variant.price,
+		}))
+	}, [initialData?.variations])
 
 	return (
 		<LocaleContext.Provider
@@ -543,6 +590,14 @@ export function ItemForm({
 									initialImageUrls={initialData?.variationImageUrls}
 								/>
 
+								<RecipePanel
+									orgSlug={orgSlug}
+									itemId={itemId ?? null}
+									dataRegion={dataRegion}
+									priceMajor={price}
+									variants={recipeVariants}
+								/>
+
 								{/* Modifier Groups Assignment Frame */}
 								<AssignedSortableList
 									title={<Trans>Modifier Groups</Trans>}
@@ -718,6 +773,13 @@ export function ItemForm({
 									unavailableUntil={unavailableUntil}
 									onUnavailableUntilChange={setUnavailableUntil}
 									locations={allLocations}
+								/>
+
+								<RecipeAside
+									itemId={itemId ?? null}
+									dataRegion={dataRegion}
+									priceMajor={price}
+									hasSizes={variations.groups.length > 0}
 								/>
 
 								{/* Promotions & Highlights Frame */}

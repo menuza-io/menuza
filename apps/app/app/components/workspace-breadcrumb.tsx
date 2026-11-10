@@ -87,6 +87,20 @@ const SEGMENT_LABELS: Record<string, ReactNode> = {
 	services: <Trans>Services</Trans>,
 	'special-days': <Trans>Special days</Trans>,
 	policies: <Trans>Payment policies</Trans>,
+	// Inventory (`today` is shared with Reservations)
+	inventory: <Trans>Inventory</Trans>,
+	stock: <Trans>Stock</Trans>,
+	counts: <Trans>Counts</Trans>,
+	purchasing: <Trans>Purchasing</Trans>,
+	prep: <Trans>Prep</Trans>,
+	waste: <Trans>Waste</Trans>,
+	areas: <Trans>Storage areas</Trans>,
+	lists: <Trans>Count lists</Trans>,
+	'add-many': <Trans>Add many items</Trans>,
+	review: <Trans>Review</Trans>,
+	deliveries: <Trans>Deliveries</Trans>,
+	suppliers: <Trans>Suppliers</Trans>,
+	levels: <Trans>Levels</Trans>,
 }
 
 // What a record id under each collection is called when its route gives no name.
@@ -106,11 +120,23 @@ const RECORD_LABELS: Record<string, ReactNode> = {
 	applicants: <Trans>Applicant</Trans>,
 	timesheets: <Trans>Time card</Trans>,
 	experiences: <Trans>Experience</Trans>,
+	stock: <Trans>Item</Trans>,
+	counts: <Trans>Count</Trans>,
+	deliveries: <Trans>Delivery</Trans>,
+	suppliers: <Trans>Supplier</Trans>,
+	orders: <Trans>Order</Trans>,
 }
 
 // Path prefixes with no page of their own. `notes/status` would be read as a
 // note id and show "note not found", so its crumb is text, not a link.
-const UNLINKED_PREFIXES = new Set(['notes/status'])
+const UNLINKED_PREFIXES = new Set([
+	'notes/status',
+	// Sheets of the Purchasing tab: the list lives on the tab itself.
+	'inventory/purchasing/suppliers',
+	'inventory/purchasing/deliveries',
+	// A reviewed order is a page of its own; `orders` has no list page.
+	'inventory/purchasing/orders',
+])
 
 function isWordSegment(segment: string) {
 	return /^[a-z]+(?:-[a-z]+)*$/.test(segment)

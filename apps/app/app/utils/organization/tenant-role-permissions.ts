@@ -69,6 +69,11 @@ export const TENANT_ROLE_PERMISSION_IDS = [
 	'org_perm_read_loyalty_report_any',
 	'org_perm_read_discount_any',
 	'org_perm_update_discount_any',
+	'org_perm_read_inventory_any',
+	'org_perm_update_inventory_any',
+	'org_perm_read_inventory_cost_any',
+	'org_perm_update_inventory_purchasing_any',
+	'org_perm_update_inventory_recipe_any',
 ] as const
 
 export type TenantRolePermissionId = (typeof TENANT_ROLE_PERMISSION_IDS)[number]
@@ -142,11 +147,27 @@ export const DISCOUNT_IMPLIED_PERMISSION_IDS: Record<
 	org_perm_update_discount_any: ['org_perm_read_discount_any'],
 }
 
+/**
+ * Inventory grants that imply seeing stock, matching `INVENTORY_IMPLIED_READ`
+ * in `@repo/inventory`: every update grant and the cost grant need
+ * `read:inventory:any`.
+ */
+export const INVENTORY_IMPLIED_PERMISSION_IDS: Record<
+	string,
+	readonly string[]
+> = {
+	org_perm_update_inventory_any: ['org_perm_read_inventory_any'],
+	org_perm_read_inventory_cost_any: ['org_perm_read_inventory_any'],
+	org_perm_update_inventory_purchasing_any: ['org_perm_read_inventory_any'],
+	org_perm_update_inventory_recipe_any: ['org_perm_read_inventory_any'],
+}
+
 export const IMPLIED_PERMISSION_IDS: Record<string, readonly string[]> = {
 	...STAFFING_IMPLIED_PERMISSION_IDS,
 	...RESERVATIONS_IMPLIED_PERMISSION_IDS,
 	...LOYALTY_IMPLIED_PERMISSION_IDS,
 	...DISCOUNT_IMPLIED_PERMISSION_IDS,
+	...INVENTORY_IMPLIED_PERMISSION_IDS,
 }
 
 /**
@@ -211,17 +232,32 @@ export function withImpliedDiscountPermissions(
 	return [...result]
 }
 
+/** Add the stock read grant implied by an inventory update or cost grant. */
+export function withImpliedInventoryPermissions(
+	permissionIds: readonly string[],
+): string[] {
+	const result = new Set(permissionIds)
+	for (const id of permissionIds) {
+		for (const implied of INVENTORY_IMPLIED_PERMISSION_IDS[id] ?? []) {
+			result.add(implied)
+		}
+	}
+	return [...result]
+}
+
 /**
- * Add every read grant implied by any staffing, reservations, loyalty or
- * discount update/approve grant.
+ * Add every read grant implied by any staffing, reservations, loyalty,
+ * discount or inventory update/approve grant.
  */
 export function withImpliedTenantRolePermissions(
 	permissionIds: readonly string[],
 ): string[] {
-	return withImpliedDiscountPermissions(
-		withImpliedLoyaltyPermissions(
-			withImpliedReservationsPermissions(
-				withImpliedStaffingPermissions(permissionIds),
+	return withImpliedInventoryPermissions(
+		withImpliedDiscountPermissions(
+			withImpliedLoyaltyPermissions(
+				withImpliedReservationsPermissions(
+					withImpliedStaffingPermissions(permissionIds),
+				),
 			),
 		),
 	)

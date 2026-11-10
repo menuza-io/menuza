@@ -1,0 +1,173 @@
+import {
+	type InventoryFeatures,
+	INVENTORY_PERMISSIONS,
+	type InventoryPermission,
+} from '@repo/inventory'
+
+/**
+ * The Inventory tabs, in tab bar and sidebar order. Prep (phase 4) comes with
+ * its own flag; while it is on, Waste leaves the tab bar (the bar stays at
+ * five) and lives on Today with "See all" at `inventory/waste`.
+ */
+export const INVENTORY_TABS = [
+	'today',
+	'stock',
+	'counts',
+	'purchasing',
+	'prep',
+	'waste',
+] as const
+export type InventoryTab = (typeof INVENTORY_TABS)[number]
+
+/** Which links of the sidebar "Inventory" group the current member should see. */
+export type InventoryNavAccess = {
+	visible: boolean
+	/**
+	 * The `inventory.recipes` flag with `read:inventory:any`: the menu editors
+	 * may show "Ingredients and cost". The region still checks every call.
+	 */
+	recipes: boolean
+	/** `update:inventory_recipe:any`: ingredients may be saved, not just read. */
+	editRecipes: boolean
+	/** `read:inventory_cost:any`: a typed cost per dish may be entered. */
+	seeCost: boolean
+} & Record<InventoryTab, boolean>
+
+export const HIDDEN_INVENTORY_NAV: InventoryNavAccess = {
+	visible: false,
+	recipes: false,
+	editRecipes: false,
+	seeCost: false,
+	today: false,
+	stock: false,
+	counts: false,
+	purchasing: false,
+	prep: false,
+	waste: false,
+}
+
+/**
+ * Every tab needs the `inventory.enabled` flag and `read:inventory:any`
+ * (every other inventory grant implies it once expanded). Purchasing opens
+ * with the master flag too: deliveries and suppliers come with it, and
+ * `inventory.purchasing` only adds suggested orders inside the tab.
+ */
+export function computeInventoryNavAccess(
+	features: InventoryFeatures,
+	grants: ReadonlySet<string> | readonly InventoryPermission[],
+): InventoryNavAccess {
+	if (!features.enabled) return HIDDEN_INVENTORY_NAV
+	const held: ReadonlySet<string> =
+		grants instanceof Set ? grants : new Set<string>(grants)
+	if (!held.has(INVENTORY_PERMISSIONS.READ_INVENTORY)) {
+		return HIDDEN_INVENTORY_NAV
+	}
+	return {
+		visible: true,
+		recipes: features.recipes,
+		editRecipes:
+			features.recipes &&
+			held.has(INVENTORY_PERMISSIONS.UPDATE_INVENTORY_RECIPE),
+		seeCost: held.has(INVENTORY_PERMISSIONS.READ_INVENTORY_COST),
+		today: true,
+		stock: true,
+		counts: true,
+		purchasing: true,
+		// Behind its own flag; the region checks it on every call as well.
+		prep: features.prep,
+		waste: true,
+	}
+}
+
+/** The tabs a member sees in the tab bar: Waste steps aside while Prep is on. */
+export function visibleInventoryTabs(nav: InventoryNavAccess): InventoryTab[] {
+	return INVENTORY_TABS.filter(
+		(tab) => nav[tab] && !(tab === 'waste' && nav.prep),
+	)
+}
+
+export function inventoryTabPath(orgSlug: string, tab: InventoryTab): string {
+	return `/${orgSlug}/inventory/${tab}`
+}
+
+/** The tab a path is on, or `null` outside the five tabs. */
+export function inventoryTabFromPath(
+	pathname: string,
+	orgSlug: string,
+): InventoryTab | null {
+	const base = `/${orgSlug}/inventory/`
+	if (!pathname.startsWith(base)) return null
+	const segment = pathname.slice(base.length).split('/')[0]
+	return (INVENTORY_TABS as readonly string[]).includes(segment ?? '')
+		? (segment as InventoryTab)
+		: null
+}
+
+/**
+ * Pages that take the whole screen instead of the Inventory header and tab
+ * bar: counting a count (`/counts/<id>`), its review (`/counts/<id>/review`)
+ * recording a delivery (`/purchasing/deliveries/new`) and reviewing an order
+ * (`/purchasing/orders/<id>`). They carry their own sticky header, like the
+ * menu editors.
+ */
+export function isInventoryFullPage(
+	pathname: string,
+	orgSlug: string,
+): boolean {
+	const base = `/${orgSlug}/inventory/`
+	if (!pathname.startsWith(base)) return false
+	const parts = pathname
+		.slice(base.length)
+		.split('/')
+		.filter((part) => part !== '')
+	if (parts[0] === 'counts' && parts.length >= 2 && parts.length <= 3) {
+		return parts.length === 2 || parts[2] === 'review'
+	}
+	return (
+		parts[0] === 'purchasing' &&
+		parts.length === 3 &&
+		((parts[1] === 'deliveries' && parts[2] === 'new') || parts[1] === 'orders')
+	)
+}
+
+export function inventoryCountPath(orgSlug: string, countId: string): string {
+	return `/${orgSlug}/inventory/counts/${encodeURIComponent(countId)}`
+}
+
+export function inventoryCountReviewPath(
+	orgSlug: string,
+	countId: string,
+): string {
+	return `${inventoryCountPath(orgSlug, countId)}/review`
+}
+
+export function inventoryOrderPath(orgSlug: string, orderId: string): string {
+	return `/${orgSlug}/inventory/purchasing/orders/${encodeURIComponent(orderId)}`
+}
+
+/** Paths inside `/inventory` that do not belong to a tab (e.g. `/inventory/transfers`, `/inventory/settings`). */
+export type InventoryNonTabRoute = 'transfers' | 'settings'
+
+export type InventoryRoute = InventoryTab | InventoryNonTabRoute
+
+export function inventoryRouteFromPath(pathname: string, orgSlug: string): InventoryRoute | null {
+	const base = `/${orgSlug}/inventory/`
+	if (!pathname.startsWith(base)) return null
+	const match = /\/inventory\/([^/?#]+)/.exec(pathname)
+	if (match?.[1] === 'transfers') return 'transfers'
+	if (match?.[1] === 'settings') return 'settings'
+	return inventoryTabFromPath(pathname, orgSlug)
+}
+
+export function inventoryTransfersPath(orgSlug: string): string {
+	return `/${orgSlug}/inventory/transfers`
+}
+
+export function inventorySettingsPath(orgSlug: string): string {
+	return `/${orgSlug}/inventory/settings`
+}
+
+/** Receive a delivery against an open order. */
+export function inventoryReceivePath(orgSlug: string, orderId: string): string {
+	return `/${orgSlug}/inventory/purchasing/deliveries/new?orderId=${encodeURIComponent(orderId)}`
+}

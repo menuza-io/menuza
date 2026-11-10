@@ -347,7 +347,7 @@ describe('held uploads', () => {
 		deviceLabel: null,
 		demo: false,
 		locale: null,
-		apps: { timeclock: false, reservations: false },
+		apps: { timeclock: false, reservations: false, inventory: false },
 		activeApp: 'pos',
 	}
 

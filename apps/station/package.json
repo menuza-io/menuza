@@ -37,6 +37,7 @@
     "@playwright/test": "1.57.0",
     "@repo/common": "*",
     "@repo/config": "*",
+    "@repo/inventory": "*",
     "@repo/reservations": "*",
     "@repo/staffing": "*",
     "@repo/zatca": "*",

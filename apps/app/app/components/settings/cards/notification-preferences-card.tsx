@@ -15,6 +15,7 @@ import { Switch } from '@repo/ui/switch'
 import React, { useEffect, useId, useRef } from 'react'
 import { useFetcher } from 'react-router'
 import { HoneypotInputs } from 'remix-utils/honeypot/react'
+import { INVENTORY_ALERT_WORKFLOWS } from '#app/utils/inventory/manager-alerts.ts'
 import { RESERVATION_ALERT_WORKFLOWS } from '#app/utils/reservations/manager-alerts.ts'
 
 const channelIcons: Record<string, IconName> = {
@@ -48,6 +49,10 @@ function getWorkflowLabel(
 		'reservations.payment_review': msg`Reservations: a payment needs a review`,
 		'reservations.dispute_opened': msg`Reservations: a payment dispute was opened`,
 		'reservations.message_failed_bulk': msg`Reservations: guest messages could not be delivered`,
+		'inventory.low_stock': msg`Inventory: items are below the level you order at`,
+		'inventory.count_review': msg`Inventory: a count is waiting for review`,
+		'inventory.delivery_due': msg`Inventory: an order is due for delivery`,
+		'inventory.price_rise': msg`Inventory: an item went up in price`,
 	}
 	return _(labels[workflowName]) || workflowName
 }
@@ -110,6 +115,14 @@ const hiringWorkflows = [
 // Reservations alerts are offered where the module is on and the member can read
 // reservations or edit their settings, the members the alerts are sent to.
 const reservationsWorkflows = RESERVATION_ALERT_WORKFLOWS.map((id) => ({
+	id,
+	name: id,
+	critical: false,
+}))
+
+// Inventory alerts are offered where the module is on and the member holds an
+// inventory grant; the price-rise alert also needs the cost grant.
+const inventoryWorkflows = INVENTORY_ALERT_WORKFLOWS.map((id) => ({
 	id,
 	name: id,
 	critical: false,
@@ -245,12 +258,16 @@ export function NotificationPreferencesCard({
 	showScheduleAlerts = false,
 	showHiringAlerts = false,
 	showReservationsAlerts = false,
+	showInventoryAlerts = false,
+	showInventoryPriceAlerts = false,
 }: {
 	organizationId: string
 	showStaffingAlerts?: boolean
 	showScheduleAlerts?: boolean
 	showHiringAlerts?: boolean
 	showReservationsAlerts?: boolean
+	showInventoryAlerts?: boolean
+	showInventoryPriceAlerts?: boolean
 }) {
 	const fetcher = useFetcher<{ preferences: Preference[] }>()
 
@@ -269,6 +286,12 @@ export function NotificationPreferencesCard({
 		...(showScheduleAlerts ? scheduleWorkflows : []),
 		...(showHiringAlerts ? hiringWorkflows : []),
 		...(showReservationsAlerts ? reservationsWorkflows : []),
+		...(showInventoryAlerts
+			? inventoryWorkflows.filter(
+					(workflow) =>
+						showInventoryPriceAlerts || workflow.id !== 'inventory.price_rise',
+				)
+			: []),
 	]
 
 	const getPreference = (workflowId: string): Preference => {

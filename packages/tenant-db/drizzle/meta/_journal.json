@@ -232,6 +232,55 @@
 			"when": 1794192581948,
 			"tag": "0032_broadcast_failures_sms_prune_index",
 			"breakpoints": true
+		},
+		{
+			"idx": 33,
+			"version": "6",
+			"when": 1794198847837,
+			"tag": "0033_inventory",
+			"breakpoints": true
+		},
+		{
+			"idx": 34,
+			"version": "6",
+			"when": 1794208010195,
+			"tag": "0034_inventory_orders",
+			"breakpoints": true
+		},
+		{
+			"idx": 35,
+			"version": "6",
+			"when": 1794236679996,
+			"tag": "0035_inventory_recipes",
+			"breakpoints": true
+		},
+		{
+			"idx": 36,
+			"version": "6",
+			"when": 1794242349364,
+			"tag": "0036_inventory_sold_out",
+			"breakpoints": true
+		},
+		{
+			"idx": 37,
+			"version": "6",
+			"when": 1794243667152,
+			"tag": "0037_inventory_prep",
+			"breakpoints": true
+		},
+		{
+			"idx": 38,
+			"version": "6",
+			"when": 1794245121651,
+			"tag": "0038_inventory_transfers",
+			"breakpoints": true
+		},
+		{
+			"idx": 39,
+			"version": "6",
+			"when": 1794248866169,
+			"tag": "0039_inventory_location_settings",
+			"breakpoints": true
 		}
 	]
 }

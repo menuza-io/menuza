@@ -216,6 +216,8 @@ export async function createPairingCode(
 		timeclockEnabled?: boolean
 		/** Offer the host stand on this terminal. Default off. */
 		reservationsEnabled?: boolean
+		/** Offer the Stock app (counts, waste, receiving) on this terminal. Default off. */
+		inventoryEnabled?: boolean
 	},
 	now = Date.now(),
 ): Promise<
@@ -240,6 +242,13 @@ export async function createPairingCode(
 	})
 	if (reservationsProblem)
 		return fail(422, reservationsProblem.code, reservationsProblem.message)
+	const inventoryProblem = stationInventoryProblem({
+		inventoryEnabled: input.inventoryEnabled ?? false,
+		locationId: input.locationId,
+		signInRequired: input.signInRequired ?? true,
+	})
+	if (inventoryProblem)
+		return fail(422, inventoryProblem.code, inventoryProblem.message)
 	const dayStartMinutes = input.dayStartMinutes ?? POS_DEFAULT_DAY_START_MINUTES
 	if (!isValidDayStart(dayStartMinutes)) {
 		return fail(
@@ -321,6 +330,7 @@ export async function createPairingCode(
 			shiftsRequired: input.shiftsRequired ?? false,
 			timeclockEnabled: input.timeclockEnabled ?? false,
 			reservationsEnabled: input.reservationsEnabled ?? false,
+			inventoryEnabled: input.inventoryEnabled ?? false,
 			createdBy: input.createdBy,
 			expiresAt,
 			createdAt: now,
@@ -344,6 +354,7 @@ export type RedeemedTerminal = {
 		shiftsRequired: boolean
 		timeclockEnabled: boolean
 		reservationsEnabled: boolean
+		inventoryEnabled: boolean
 	}
 }
 
@@ -395,6 +406,7 @@ export async function redeemPairingCode(
 					shiftsRequired: row.shiftsRequired,
 					timeclockEnabled: row.timeclockEnabled,
 					reservationsEnabled: row.reservationsEnabled,
+					inventoryEnabled: row.inventoryEnabled,
 					secretHash: hashPosSecret(secret),
 					pairedBy: row.createdBy,
 					pairedAt: now,
@@ -414,6 +426,7 @@ export async function redeemPairingCode(
 						shiftsRequired: row.shiftsRequired,
 						timeclockEnabled: row.timeclockEnabled,
 						reservationsEnabled: row.reservationsEnabled,
+						inventoryEnabled: row.inventoryEnabled,
 					},
 				}
 			}),
@@ -437,6 +450,7 @@ export const serializeDevice = (row: PosDevice) => ({
 	shiftsRequired: row.shiftsRequired,
 	timeclockEnabled: row.timeclockEnabled,
 	reservationsEnabled: row.reservationsEnabled,
+	inventoryEnabled: row.inventoryEnabled,
 	pairedAt: row.pairedAt,
 	lastSeenAt: row.lastSeenAt,
 	revokedAt: row.revokedAt,
@@ -459,6 +473,7 @@ export async function listPendingCodes(db: TenantDatabase, now = Date.now()) {
 			expiresAt: posPairingCodes.expiresAt,
 			timeclockEnabled: posPairingCodes.timeclockEnabled,
 			reservationsEnabled: posPairingCodes.reservationsEnabled,
+			inventoryEnabled: posPairingCodes.inventoryEnabled,
 		})
 		.from(posPairingCodes)
 		.where(
@@ -824,6 +839,31 @@ export function stationReservationsProblem(settings: {
 	return null
 }
 
+/**
+ * The Stock app attributes counts and waste to a person and works one
+ * location, so it needs a signed-in person and the terminal's location.
+ */
+export function stationInventoryProblem(settings: {
+	inventoryEnabled: boolean
+	locationId: string | null
+	signInRequired: boolean
+}): { code: string; message: string } | null {
+	if (!settings.inventoryEnabled) return null
+	if (!settings.locationId) {
+		return {
+			code: 'inventory_needs_location',
+			message: 'Choose a location for this terminal to use Stock.',
+		}
+	}
+	if (!settings.signInRequired) {
+		return {
+			code: 'inventory_needs_sign_in',
+			message: 'Turn on staff sign-in to use Stock on this terminal.',
+		}
+	}
+	return null
+}
+
 /** A terminal's location and Station app switches, for permission checks before a change. */
 export async function deviceStationState(db: TenantDatabase, id: string) {
 	const [device] = await db
@@ -832,6 +872,7 @@ export async function deviceStationState(db: TenantDatabase, id: string) {
 			scopeId: posDevices.scopeId,
 			reservationsEnabled: posDevices.reservationsEnabled,
 			timeclockEnabled: posDevices.timeclockEnabled,
+			inventoryEnabled: posDevices.inventoryEnabled,
 		})
 		.from(posDevices)
 		.where(and(eq(posDevices.id, id), isNull(posDevices.revokedAt)))
@@ -845,6 +886,7 @@ export type DeviceSettingsPatch = {
 	shiftsRequired?: boolean
 	timeclockEnabled?: boolean
 	reservationsEnabled?: boolean
+	inventoryEnabled?: boolean
 	/**
 	 * Binds a terminal that was paired without a location (so it can run that
 	 * location's host stand). A bound terminal keeps its location: moving one
@@ -876,6 +918,7 @@ export async function updateDeviceSettings(
 			locationId: posDevices.locationId,
 			reservationsEnabled: posDevices.reservationsEnabled,
 			timeclockEnabled: posDevices.timeclockEnabled,
+			inventoryEnabled: posDevices.inventoryEnabled,
 		})
 		.from(posDevices)
 		.where(and(eq(posDevices.id, id), isNull(posDevices.revokedAt)))
@@ -898,6 +941,13 @@ export async function updateDeviceSettings(
 		signInRequired: patch.signInRequired ?? device.signInRequired,
 	})
 	if (problem) return fail(422, problem.code, problem.message)
+	const inventoryProblem = stationInventoryProblem({
+		inventoryEnabled: patch.inventoryEnabled ?? device.inventoryEnabled,
+		locationId: patch.locationId ?? device.locationId,
+		signInRequired: patch.signInRequired ?? device.signInRequired,
+	})
+	if (inventoryProblem)
+		return fail(422, inventoryProblem.code, inventoryProblem.message)
 	const set: Partial<typeof posDevices.$inferInsert> = {}
 	if (patch.signInRequired !== undefined) {
 		set.signInRequired = patch.signInRequired
@@ -917,6 +967,13 @@ export async function updateDeviceSettings(
 	}
 	if (patch.reservationsEnabled !== undefined)
 		set.reservationsEnabled = patch.reservationsEnabled
+	if (patch.inventoryEnabled !== undefined) {
+		set.inventoryEnabled = patch.inventoryEnabled
+		// Waste and deliveries the tablet queued before this still count; later
+		// ones are held for a manager.
+		if (!patch.inventoryEnabled && device.inventoryEnabled)
+			set.inventoryDisabledAt = now
+	}
 	if (patch.locationId !== undefined && device.locationId === null) {
 		set.locationId = patch.locationId
 		set.locationBoundAt = now
@@ -927,12 +984,14 @@ export async function updateDeviceSettings(
 			signInRequired: device.signInRequired,
 			timeclockEnabled: device.timeclockEnabled,
 			reservationsEnabled: device.reservationsEnabled,
+			inventoryEnabled: device.inventoryEnabled,
 			locationId: device.locationId,
 		} as Record<string, unknown>,
 		{
 			signInRequired: set.signInRequired,
 			timeclockEnabled: set.timeclockEnabled,
 			reservationsEnabled: set.reservationsEnabled,
+			inventoryEnabled: set.inventoryEnabled,
 			locationId: set.locationId,
 		},
 	)

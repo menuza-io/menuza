@@ -109,7 +109,7 @@ describe('withPairing', () => {
 		deviceLabel: null,
 		demo: false,
 		locale: null,
-		apps: { timeclock: false, reservations: false },
+		apps: { timeclock: false, reservations: false, inventory: false },
 		activeApp: 'pos',
 	}
 	const paired = (locationId: string | null) => ({

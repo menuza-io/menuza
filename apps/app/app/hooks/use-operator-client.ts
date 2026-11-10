@@ -7,6 +7,29 @@ const credentialsSchema = z.object({
 })
 export type OperatorCredentials = z.infer<typeof credentialsSchema>
 
+export type OperatorTokenRoute = 'orders-token' | 'qr-token' | 'inventory-token'
+
+/** The App URL that mints read or write credentials for a token route. */
+export function operatorTokenUrl(
+	orgSlug: string,
+	tokenRoute: OperatorTokenRoute,
+	write: boolean,
+): string {
+	const base = `/${encodeURIComponent(orgSlug)}/${tokenRoute}`
+	// The inventory token takes a scope; orders and QR take `write=1`.
+	if (tokenRoute === 'inventory-token') {
+		return `${base}?scope=${write ? 'write' : 'read'}`
+	}
+	return write ? `${base}?write=1` : base
+}
+
+/**
+ * A request init that may say the call only reads although it is not a GET
+ * (a POST that asks for costs): it then uses the read token, so a member
+ * without any write grant is not refused.
+ */
+export type OperatorRequestInit = RequestInit & { readOnly?: boolean }
+
 /**
  * Calls the organization's regional tenant-api straight from the browser with a
  * short-lived operator token minted by App (`/:org/orders-token`). App returns
@@ -16,8 +39,8 @@ export type OperatorCredentials = z.infer<typeof credentialsSchema>
 export function useOperatorClient(
 	orgSlug: string,
 	base: string,
-	/** App route that mints the token (QR ordering has its own scope). */
-	tokenRoute: 'orders-token' | 'qr-token' = 'orders-token',
+	/** App route that mints the token (QR ordering and inventory have their own). */
+	tokenRoute: OperatorTokenRoute = 'orders-token',
 ) {
 	const cached = useRef(
 		new Map<
@@ -32,7 +55,7 @@ export function useOperatorClient(
 			let entry = cached.current.get(key)
 			if (!entry || entry.expires <= Date.now()) {
 				const credentials = fetch(
-					`/${encodeURIComponent(orgSlug)}/${tokenRoute}${write ? '?write=1' : ''}`,
+					operatorTokenUrl(orgSlug, tokenRoute, write),
 					{ headers: { Accept: 'application/json' } },
 				).then(async (response) => {
 					if (!response.ok) throw new Error('Unable to authorize this request.')
@@ -48,15 +71,20 @@ export function useOperatorClient(
 	)
 
 	const request = useCallback(
-		async (path: string, init: RequestInit = {}) => {
-			const write = init.method !== undefined && init.method !== 'GET'
+		async (path: string, init: OperatorRequestInit = {}) => {
+			const write =
+				!init.readOnly && init.method !== undefined && init.method !== 'GET'
 			const send = async () => {
 				const { credentials } = credentialsFor(write)
 				const { jwt, tenantApiUrl } = await credentials
 				const headers = new Headers(init.headers)
 				headers.set('Authorization', `Bearer ${jwt}`)
 				if (init.body) headers.set('Content-Type', 'application/json')
-				return fetch(`${tenantApiUrl}${base}${path}`, { ...init, headers })
+				const { readOnly: ignoredReadOnly, ...fetchInit } = init
+				return fetch(`${tenantApiUrl}${base}${path}`, {
+					...fetchInit,
+					headers,
+				})
 			}
 			let response = await send()
 			if (response.status === 401) {

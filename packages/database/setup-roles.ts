@@ -582,6 +582,50 @@ const ORG_PERMISSIONS = [
 		context: 'organization',
 		description: 'Create, edit, pause and archive discounts and coupons',
 	},
+	// Inventory. Keep in sync with INVENTORY_PERMISSIONS in @repo/inventory and
+	// the control-plane migration that seeds these rows (0040_inventory).
+	{
+		id: 'org_perm_read_inventory_any',
+		action: 'read',
+		entity: 'inventory',
+		access: 'any',
+		context: 'organization',
+		description: 'View stock, counts, waste, and deliveries (quantities only)',
+	},
+	{
+		id: 'org_perm_update_inventory_any',
+		action: 'update',
+		entity: 'inventory',
+		access: 'any',
+		context: 'organization',
+		description:
+			'Edit items and storage areas, count stock, log waste, and record deliveries',
+	},
+	{
+		id: 'org_perm_read_inventory_cost_any',
+		action: 'read',
+		entity: 'inventory_cost',
+		access: 'any',
+		context: 'organization',
+		description: 'View inventory costs, stock value, food cost, and waste cost',
+	},
+	{
+		id: 'org_perm_update_inventory_purchasing_any',
+		action: 'update',
+		entity: 'inventory_purchasing',
+		access: 'any',
+		context: 'organization',
+		description:
+			'Manage suppliers, prices, and orders, and mark deliveries paid',
+	},
+	{
+		id: 'org_perm_update_inventory_recipe_any',
+		action: 'update',
+		entity: 'inventory_recipe',
+		access: 'any',
+		context: 'organization',
+		description: 'Edit dish recipes, typed costs, and sold out settings',
+	},
 ] as const
 
 const SYSTEM_PERMISSIONS = [

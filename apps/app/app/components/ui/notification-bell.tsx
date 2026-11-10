@@ -31,6 +31,11 @@ import { useNavigate, useFetcher, useParams } from 'react-router'
 import { HoneypotInputs } from 'remix-utils/honeypot/react'
 import { useEventSource } from 'remix-utils/sse/react'
 import { BellIcon } from '#app/components/icons/bell-icon.tsx'
+import { inventoryAlertCopy } from '#app/utils/inventory/alert-copy.ts'
+import {
+	inventoryAlertKindFromNotificationType,
+	inventoryAlertPath,
+} from '#app/utils/inventory/manager-alerts.ts'
 import {
 	PRINT_ALERT_COPY,
 	printAlertKindFromNotificationType,
@@ -117,6 +122,18 @@ function NotificationItem({
 			)
 		: null
 
+	const inventoryKind = inventoryAlertKindFromNotificationType(
+		notification.type,
+	)
+	const inventory = inventoryKind
+		? inventoryAlertCopy(
+				inventoryKind,
+				Number(payload?.count),
+				_,
+				typeof payload?.locationName === 'string' ? payload.locationName : null,
+			)
+		: null
+
 	const printKind = printAlertKindFromNotificationType(notification.type)
 	const printAlert = printKind
 		? {
@@ -129,6 +146,7 @@ function NotificationItem({
 		printAlert?.subject ??
 		staffing?.subject ??
 		reservations?.subject ??
+		inventory?.subject ??
 		(notification.type === 'mention'
 			? `**${payload?.commenterName || 'Someone'}** mentioned you`
 			: `**${payload?.commenterName || 'Someone'}** commented on your note`)
@@ -136,6 +154,7 @@ function NotificationItem({
 		printAlert?.body ??
 		staffing?.body ??
 		reservations?.body ??
+		inventory?.body ??
 		payload?.commentContent ??
 		''
 
@@ -161,6 +180,8 @@ function NotificationItem({
 			void navigate(
 				`/${payload.orgSlug}${reservationAlertPath(reservationsKind)}`,
 			)
+		} else if (inventoryKind && typeof payload?.orgSlug === 'string') {
+			void navigate(`/${payload.orgSlug}${inventoryAlertPath(inventoryKind)}`)
 		} else if (payload.noteUrl) {
 			void navigate(payload.noteUrl)
 		}
@@ -193,6 +214,8 @@ function NotificationItem({
 					<AvatarFallback>
 						{printKind ? (
 							<Icon name="printer" className="h-4 w-4" />
+						) : inventoryKind ? (
+							<Icon name="shopping-bag" className="h-4 w-4" />
 						) : reservationsKind ? (
 							<Icon name="calendar" className="h-4 w-4" />
 						) : staffingKind ? (

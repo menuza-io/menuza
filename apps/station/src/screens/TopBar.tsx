@@ -4,6 +4,8 @@ import { type PosDeviceApps } from '@repo/common/pos-orders'
 import { Icon } from '@repo/ui/icon'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { type ReactNode } from 'react'
+import { stockOrigin } from '../apps/stock/local.ts'
+import { stockStats } from '../apps/stock/queue.ts'
 import { AppLauncher } from './AppLauncher.tsx'
 import { type StationApp } from '~/lib/config.ts'
 import { db, type PosOrder } from '~/lib/db.ts'
@@ -53,7 +55,7 @@ export function TopBar({
 	const { _ } = useLingui()
 	const settings = usePos((s) => s.settings)
 	// Orders held for another restaurant (or taken in demo mode) are not "sending".
-	const waiting = useLiveQuery(
+	const waitingOrders = useLiveQuery(
 		() =>
 			db.orders
 				.where('sync')
@@ -63,6 +65,14 @@ export function TopBar({
 		[settings.slug, settings.demo],
 		0,
 	)
+	// Stock entries (counts, waste, deliveries) wait in their own queue and count here too.
+	const stockOriginKey = stockOrigin(settings)
+	const stock = useLiveQuery(
+		() => stockStats(stockOriginKey),
+		[stockOriginKey],
+		{ waiting: 0, failed: 0 },
+	)
+	const waiting = waitingOrders + stock.waiting
 	const openTabs = useLiveQuery(
 		() =>
 			db.orders
@@ -128,7 +138,7 @@ export function TopBar({
 				>
 					<SyncStatus
 						key={
-							rejected > 0 || rejectedShifts > 0
+							rejected > 0 || rejectedShifts > 0 || stock.failed > 0
 								? 'rejected'
 								: !online
 									? 'offline'
@@ -140,6 +150,7 @@ export function TopBar({
 						waiting={waiting}
 						rejected={rejected}
 						rejectedShifts={rejectedShifts}
+						rejectedStock={stock.failed}
 					/>
 				</div>
 				{app === 'pos' ? (
@@ -262,30 +273,42 @@ function SyncStatus({
 	waiting,
 	rejected,
 	rejectedShifts,
+	rejectedStock,
 }: {
 	online: boolean
 	waiting: number
 	rejected: number
 	rejectedShifts: number
+	rejectedStock: number
 }) {
 	const { _ } = useLingui()
-	if (rejected > 0 || rejectedShifts > 0) {
-		const total = rejected + rejectedShifts
+	if (rejected > 0 || rejectedShifts > 0 || rejectedStock > 0) {
+		const total = rejected + rejectedShifts + rejectedStock
 		const label =
-			rejectedShifts === 0
-				? plural(rejected, {
-						one: '# order needs attention',
-						other: '# orders need attention',
+			rejectedStock > 0 && rejected === 0 && rejectedShifts === 0
+				? plural(rejectedStock, {
+						one: '# stock entry needs attention',
+						other: '# stock entries need attention',
 					})
-				: rejected === 0
-					? plural(rejectedShifts, {
-							one: '# shift needs attention',
-							other: '# shifts need attention',
-						})
-					: plural(total, {
+				: rejectedStock > 0
+					? plural(total, {
 							one: '# upload needs attention',
 							other: '# uploads need attention',
 						})
+					: rejectedShifts === 0
+						? plural(rejected, {
+								one: '# order needs attention',
+								other: '# orders need attention',
+							})
+						: rejected === 0
+							? plural(rejectedShifts, {
+									one: '# shift needs attention',
+									other: '# shifts need attention',
+								})
+							: plural(total, {
+									one: '# upload needs attention',
+									other: '# uploads need attention',
+								})
 		return (
 			<Badge tone="danger" className="">
 				<Icon name="alert-triangle" className="size-3.5 shrink-0" aria-hidden />

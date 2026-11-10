@@ -47,6 +47,12 @@ import {
 } from 'react-router'
 import { z } from 'zod'
 import { EmptyState } from '#app/components/empty-state.tsx'
+import {
+	FoodCostCell,
+	FoodCostFooterCell,
+	FoodCostHead,
+	FoodCostProvider,
+} from '#app/components/inventory/food-cost-column.tsx'
 import { useMenuListFilters } from '#app/components/menu/menu-list-filters.tsx'
 import { MenuStatusBadge } from '#app/components/menu/menu-status-badge.tsx'
 import {
@@ -152,6 +158,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	const organization = await requireUserOrganization(request, params.orgSlug, {
 		id: true,
 		slug: true,
+		dataRegion: true,
 		siteDefaultLocale: true,
 	})
 
@@ -218,6 +225,21 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 }
 
 export default function ItemsIndexRoute() {
+	const { organization, items } = useLoaderData<typeof loader>()
+	// The Food cost column asks the region once for the whole list; it renders
+	// nothing extra while recipes are off.
+	return (
+		<FoodCostProvider
+			orgSlug={organization.slug}
+			dataRegion={organization.dataRegion}
+			items={items.map((item) => ({ id: item.id, priceMajor: item.price }))}
+		>
+			<ItemsIndexContent />
+		</FoodCostProvider>
+	)
+}
+
+function ItemsIndexContent() {
 	const { organization, defaultLocale, items } = useLoaderData<typeof loader>()
 	const { _ } = useLingui()
 	const deleteFetcher = useFetcher()
@@ -314,6 +336,7 @@ export default function ItemsIndexRoute() {
 										<TableHead className="text-right sm:text-left">
 											<Trans>Price</Trans>
 										</TableHead>
+										<FoodCostHead />
 										<TableHead className="hidden sm:table-cell">
 											<Trans>Categories</Trans>
 										</TableHead>
@@ -392,6 +415,7 @@ export default function ItemsIndexRoute() {
 														</span>
 													)}
 												</TableCell>
+												<FoodCostCell itemId={item.id} />
 												<TableCell className="hidden sm:table-cell">
 													{item.categories.length === 0 ? (
 														<span className="text-muted-foreground text-xs italic">
@@ -498,14 +522,14 @@ export default function ItemsIndexRoute() {
 								</TableBody>
 								<TableFooter>
 									<TableRow>
-										<TableCell colSpan={5}>
+										<FoodCostFooterCell>
 											{filteredItems.length === 1 ? (
 												<Trans>1 item</Trans>
 											) : (
 												// eslint-disable-next-line lingui/no-expression-in-message
 												<Trans>{filteredItems.length} items</Trans>
 											)}
-										</TableCell>
+										</FoodCostFooterCell>
 										<TableCell />
 									</TableRow>
 								</TableFooter>

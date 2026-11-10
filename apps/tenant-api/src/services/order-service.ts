@@ -82,11 +82,13 @@ import {
 	memberForCustomerInTx,
 	type MemberRow,
 } from './loyalty-member-service.ts'
+import { inventorySaleQueue } from './inventory-sales-service.ts'
 import {
 	readProgramInTx,
 	readRewardInTx,
 	type CurrentReward,
 } from './loyalty-program-service.ts'
+import { orderCountsTowardSales } from './report-records.ts'
 import {
 	claimPurchaseIfUnclaimedInTx,
 	claimPurchaseInTx,
@@ -839,6 +841,7 @@ export async function placeOrder(input: {
 	}
 
 	const loyalty = loyaltySettleQueue()
+	const inventory = inventorySaleQueue()
 	try {
 		const placed: PlaceOrderResult = await runExclusive(orgId, () =>
 			retryOnSqliteBusy(() =>
@@ -1224,6 +1227,15 @@ export async function placeOrder(input: {
 					}
 
 					const source = { type: 'restaurant_order' as const, id: inserted.id }
+					// Stock leaves with a sale that counts at once (pay at pickup, a
+					// free order); an online order waits for its payment event.
+					if (orderCountsTowardSales(inserted)) {
+						await inventory.queue(
+							tx,
+							{ ...source, locationId: inserted.locationId },
+							at,
+						)
+					}
 					if (prepared) {
 						await reserveOrderDiscounts(tx, {
 							orderId: inserted.id,
@@ -1300,6 +1312,7 @@ export async function placeOrder(input: {
 			),
 		)
 		await loyalty.settle(orgId)
+		await inventory.settle(orgId)
 		return placed
 	} catch (error) {
 		// `runTenantTransaction` commits whatever its callback returns and rolls
@@ -1557,6 +1570,7 @@ export async function applyPaymentEvent(input: {
 	} = input
 	const db = await getTenantDb(orgId)
 	const loyalty = loyaltySettleQueue()
+	const inventory = inventorySaleQueue()
 
 	const result: OrderServiceResult<PaymentEventResult> = await runExclusive(
 		orgId,
@@ -1650,6 +1664,16 @@ export async function applyPaymentEvent(input: {
 								.where(eq(restaurantOrders.id, order.id))
 							await consumeDiscountRedemptions(tx, [order.id])
 							await queueLoyalty()
+							// Paid online: the order counts now, so stock leaves.
+							await inventory.queue(
+								tx,
+								{
+									type: 'restaurant_order',
+									id: order.id,
+									locationId: order.locationId,
+								},
+								now.getTime(),
+							)
 							return {
 								ok: true,
 								data: {
@@ -1786,6 +1810,7 @@ export async function applyPaymentEvent(input: {
 			),
 	)
 	await loyalty.settle(orgId)
+	await inventory.settle(orgId)
 	return result
 }
 
@@ -1816,6 +1841,7 @@ export async function updateOperatorOrder(
 ): Promise<OrderServiceResult<RestaurantOrder>> {
 	const db = await getTenantDb(orgId)
 	const loyalty = loyaltySettleQueue()
+	const inventory = inventorySaleQueue()
 
 	const result: OrderServiceResult<RestaurantOrder> = await runExclusive(
 		orgId,
@@ -1905,6 +1931,17 @@ export async function updateOperatorOrder(
 						{ type: 'restaurant_order', id: order.id },
 						now.getTime(),
 					)
+					// A cancel returns what the order used; accepting an order held
+					// for review (or marking one paid) starts to count it.
+					await inventory.queue(
+						tx,
+						{
+							type: 'restaurant_order',
+							id: order.id,
+							locationId: order.locationId,
+						},
+						now.getTime(),
+					)
 					if (patch.status === 'cancelled') {
 						await releaseDiscountRedemptions(tx, [order.id])
 						await refundDiscountRedemptions(tx, order.id)
@@ -1927,6 +1964,7 @@ export async function updateOperatorOrder(
 			),
 	)
 	await loyalty.settle(orgId)
+	await inventory.settle(orgId)
 	return result
 }
 

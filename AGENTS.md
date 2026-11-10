@@ -684,6 +684,18 @@ git commit --no-verify -m "fix: resolve ESLint warnings (verified manually)"
   answer a request that carries a coupon code with 503 `discounts_disabled`.
   Orders already placed keep their discounts and their redemptions still settle.
   See `docs/discounts-plan.md`.
+- `INVOICE_READER_BASE_URL` / `INVOICE_READER_API_KEY` / `INVOICE_READER_MODEL`
+  / `INVOICE_READER_DATA_REGION` - Tenant-api only, optional. OpenAI-compatible
+  vision endpoint that reads an inventory invoice photo into lines to check.
+  Used only when the data region equals `DATA_REGION`. See `docs/inventory.md`.
+- `INVENTORY_ENABLED` - Tenant-api only, optional (unset or `true` is on). Kill
+  switch for inventory on a node: `false` (also `0`, `off`, `no`, `disabled`)
+  answers 503 `inventory_unavailable` on operator and Station inventory routes.
+  See `docs/inventory.md`.
+- `INVENTORY_TICK_INTERVAL_SECONDS` - Tenant-api Node (OCI) runtime only,
+  optional. Seconds between in-process inventory ticks (default 300, minimum 60,
+  `0` off). The hourly cron fan-out always runs; the Workers runtime uses
+  Durable Object alarms. See `docs/inventory.md`.
 - `PRINT_BROWSER_ACCOUNT_ID` / `PRINT_BROWSER_API_TOKEN` - App only. Cloudflare
   Browser Rendering (REST `/pdf`) for Print shop PDFs. Empty in dev: downloads
   open a print-ready page instead. `PRINT_RENDER_LIMIT_PER_HOUR` caps new
@@ -917,6 +929,10 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
   Sites: Zod schemas for every loyalty route, earning and discount math, the
   operator token contract, permissions and `loyalty.*` flag keys, error codes,
   and the frozen acceptance examples. No UI strings, no I/O.
+- `@repo/inventory` - Inventory domain code shared by App, tenant-api and
+  (later) Station: flags, permissions, the `inv+jwt` token contract, units and
+  quantities, cost math, stock vocabulary, error codes and wire schemas. No UI
+  strings, no I/O.
 - `@repo/discounts` - Discounts and coupons domain code shared by App,
   tenant-api, Sites and Station: the definition schema
   (`discountDefinitionSchema`, `discountRecordSchema`), the pure
@@ -1195,6 +1211,168 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
   resolves at checkout (`codesWithIssuedCode`). Attaching one needs the coupon
   flags and `read:discount:any`; the App checks it in
   `utils/discounts/marketing-offers.server.ts`.
+
+**Inventory (stock, counts, waste, deliveries; phase 0 built):**
+
+- Plan and status: `docs/inventory-plan.md`; placement: ADR 049. All inventory
+  data is regional (`inv_*` tables, tenant-db `0033_inventory`); the control
+  plane keeps only the `inventory.*` flags (`enabled` master, `purchasing`,
+  `recipes`, `prep`, `transfers`; default off, only a literal `true`) and five
+  permissions (`read|update:inventory:any`, `read:inventory_cost:any`,
+  `update:inventory_purchasing:any`, `update:inventory_recipe:any`; migration
+  `0040_inventory`). Money is left out of responses without the cost grant.
+- Domain code in `@repo/inventory` (no I/O): flags, permissions, the `inv+jwt`
+  token contract, units (quantities are integer thousandths of the item's base
+  unit g / ml / piece), cost math (micro-minor units per base unit), vocabulary
+  and wire schemas.
+- App mints the token at `GET /<orgSlug>/inventory-token?scope=read|write`; the
+  browser calls tenant-api `/operator/inventory/*` directly
+  (`hooks/use-inventory-client.ts`). Every App inventory loader and action
+  awaits `requireInventoryAccess` first (`utils/inventory/access.server.ts`; 404
+  while the flag is off), checked by `utils/inventory/inventory-guards.test.ts`.
+  The region reads flags from `/resources/inventory/context`.
+- tenant-api: `lib/inventory-{auth,guard,write,context,switches,http}.ts`,
+  `routes/operator-inventory.ts`; writes go through `withInventoryWrite`. The
+  Workers org router must list `INVENTORY_TOKEN_AUDIENCE` (it routes
+  `/operator/*` by audience). `services/item-sales.ts` is the one items-sold
+  reader across web/QR orders and Station sales (QR rounds rung up on Station
+  are not counted twice).
+- Recipes API (phase 3b-1, behind `inventory.recipes`, tenant-db `0035`):
+  `GET /recipes?ownerKind=&ownerId=`, `PUT /recipes`, `POST /recipes/clear`,
+  `POST /recipes/costs` (a read: up to 200 dishes by `key`),
+  `GET /recipes/missing?locationId=&days=&limit=` and `POST /items/:id/batch`
+  (`routes/operator-inventory-recipes.ts`,
+  `services/inventory-recipes-service.ts`, `-batch-service.ts`,
+  `-recipe-store.ts`). Reads need `read:inventory:any`; writing a recipe needs
+  `update:inventory_recipe:any` (`update:inventory:any` alone cannot), recording
+  a batch only `update:inventory:any`; plate cost, typed cost, food cost and
+  dish sales need `read:inventory_cost:any` and are omitted without it. A recipe
+  is never edited: each `PUT` writes the next version (`expectedVersion` 0 for
+  the first, 409 `stale_version` otherwise; the old row is stamped
+  `superseded_at` first, then the successor and its lines, in one transaction;
+  `effective_from` is now and never earlier than the version before it), a clear
+  writes an empty version, and history is kept. Made-item recipes are checked
+  with `checkMadeRecipeGraph` (409 `recipe_cycle` / `recipe_too_deep`, nothing
+  written). `PATCH /items/:id` also sets `batchCounted` (made items only) and
+  `autoSoldOut` (needs the recipe grant).
+- Used by sales (phase 3b-2, behind `inventory.recipes`; no new migration, the
+  `inv_outbox` and `inv_sale_usage` tables are in `0035`):
+  `services/inventory-sales-service.ts`. The sale's own transaction queues
+  `(restaurant_order | pos_order, id)` with `inventorySaleQueue().queue` (only
+  while some recipe exists or the source already used stock; it never throws)
+  and `settle` runs after commit at the same call sites loyalty uses
+  (`placeOrder` when the order counts at once, `applyPaymentEvent` on paid,
+  `updateOperatorOrder`, the QR tab void, counter close rung up on Station and
+  clearing that mark, and `upsertPosOrder`'s `onStored` in `routes/pos.ts`).
+  Settling takes `withInventoryWrite`, re-reads the source, works out
+  `desiredUsage` from its current lines and the recipe versions in force at the
+  sale's time, diffs it against `inv_sale_usage` and posts only the difference
+  as `sale` movements valued at the average cost (event key
+  `sale:<outbox id>:<location>:<item>`). Rules: counted web/QR orders use stock
+  (rounds of a tab rung up on Station are left to that till sale); cancelled and
+  unpaid ones none; Station sales use stock when paid or refunded (a refund
+  never returns it); a `quality` void is the dish wasted once (`pos_void`
+  source, an `inv_waste` row `cancelled_after_cooking` against the sale's
+  terminal and a `waste` movement); `out_of_stock` voids are signals only (later
+  slice). Flags off: the row is closed without effect unless the source already
+  used stock; flags unreadable or the node kill switch on: left queued. A
+  failure backs off from 30 s to an hour with a short machine reason in
+  `last_error`; the inventory tick (`processInventoryOutbox`, hourly cron, the
+  Node interval, the DO alarm when it asks for a follow-up) retries and counts
+  `salesSettled`, and prunes settled rows after 14 days. Never call
+  `withInventoryWrite` from inside a sale transaction. Tests:
+  `services/inventory-sales-service.test.ts` and "inventory on an upload" in
+  `routes/pos.test.ts`.
+- Auto sold out (phase 3, tenant `0036_inventory_sold_out`, `inv_sold_out`): an
+  item with `autoSoldOut` that is at zero **and** was in an approved count in
+  the last 7 days takes every dish (menu item) and option whose current recipe
+  uses it, directly or through a made item not counted in batches, off the menu
+  at that location. `services/inventory-auto-sold-out.ts` (`syncAutoSoldOut`)
+  decides; it runs after every inventory write that commits
+  (`withInventoryWrite`, outside the lock, never throws; items without
+  `autoSoldOut` cost two reads) and in the tick. It posts ids only to the App
+  (`lib/inventory-availability.ts` to `POST /resources/inventory/availability`,
+  `routes/resources+/inventory.availability.ts`, internal token). The App only
+  turns an available dish unavailable and only gives back one that is
+  unavailable and not changed by hand since (60 s grace); with locations it
+  writes the location override, without locations the dish itself; giving back
+  works even when the flags are off. Only what the App confirms is recorded
+  (`out`); a dish the App did not change is recorded `undone` (not ours) until
+  stock is back. A manager's undo (`POST /sold-out/:id/undo`, list
+  `GET /sold-out`, both behind `inventory.recipes`) leaves an `undone` row so
+  the dish is not taken off again until the ingredient was in stock. Today shows
+  `sold_out_by_stock` and `ran_out_at_till` (Station `out_of_stock` voids this
+  week) and the App panel `SoldOutPanel` lists what is off with the undo. No
+  `inventory_sold_out` notification kind yet (`inv_alert_log` has a kind check).
+- Count review lines carry `movements` (delivered, used by sales, wasted,
+  adjusted since the last approved count) so "expected" explains itself.
+- Kitchen "Log it as waste?" (Station): a cancelled ticket with dishes already
+  started (anything past New) offers one tap that posts
+  `POST /pos/inventory/waste/dishes` (`stationDishWasteSchema`, online only, the
+  same `clientId` per ticket so a second tap is a duplicate, needs
+  `inventory.recipes` and a signed-in person).
+  `services/inventory-dish-waste-service.ts` expands each dish with the recipe
+  in force now and writes an `inv_waste` row per ingredient ("Cancelled after
+  cooking", this terminal) plus the `waste` movement; a dish with no recipe adds
+  nothing. Phase 3 is complete.
+- Prep (phase 4, behind `inventory.prep`, tenant `0037_inventory_prep`):
+  `inv_prep_levels` (fill up to per weekday, base thousandths), `inv_prep_items`
+  (the kitchen station that makes a made item, an opaque id from Kitchen setup)
+  and `inv_prep_tasks` (one per made item and business day, with the numbers the
+  plan came from). `@repo/inventory` `prep.ts` is the pure math:
+  `suggestPrepAmount` = fill up to x weekday factor - on hand, rounded UP to
+  whole batches of the recipe; `weekdayDemand` = same weekday of the last 4
+  weeks over the mean of the 28 days (clamped 0.5x to 2x, neutral with under 7
+  days or 2 same weekdays of history, days with no sales ignored); in Ramadan
+  (`isRamadan`, Hijri month 9 through Intl) only Ramadan days are compared,
+  otherwise Ramadan days are left out. `services/inventory-prep-service.ts`:
+  `generatePrep` refreshes tasks not yet started (started, done and skipped are
+  never touched; a level taken away or enough on hand removes an untouched task;
+  the day is "planned" once `prep.generate` is audited, so an empty plan is a
+  plan), `donePrepTask` records the batch (`recordBatch` joined into the same
+  transaction, idempotent by `clientId`) and closes the task, start and skip
+  answer a repeat. Dates are limited to yesterday, today and tomorrow. Operator
+  routes `/prep`, `/prep/generate`, `/prep/levels` (GET, PUT) and
+  `/prep/tasks/:id/start|done|skip` (`routes/operator-inventory-prep.ts`); the
+  same plan and task actions under `/pos/inventory/prep` for Station (device
+  plus staff session, online only). The hourly tick plans each location once
+  from 07:00 local. No money anywhere in prep. App: the Prep tab (list and
+  board, `components/inventory/prep-screen.tsx`, levels in
+  `prep-levels-panel.tsx`, done reuses `RecordBatchDialog` with a `target`);
+  with prep on, Waste leaves the tab bar and sidebar (`visibleInventoryTabs`)
+  and Today links "See all". Station: Kitchen gets a Tickets | Prep switch when
+  the region answers (`kitchen/usePrep.ts`, `PrepView.tsx`), filtered by the
+  screen's station, Start, Done ("How much did you make?" pre-filled) and Skip;
+  a write is never queued and the plan is read again after every answer. Not
+  built: booked covers from reservations in the demand nudge, the tick's `prep`
+  alerts.
+- Transfers and branch requests (phase 5, behind `inventory.transfers`, tenant
+  `0038_inventory_transfers`): `inv_transfers` / `inv_transfer_lines`, a request
+  is made by the place that needs stock and a transfer by the place that has it;
+  send confirms what left (`transfer_out`), receive what arrived
+  (`transfer_in`), the difference is missing in transit. Triggers keep closed
+  records final and sent lines frozen; only the creating place cancels, before
+  sending. Routes `/transfers*` and `GET /compare?locationIds=` in
+  `routes/operator-inventory-transfers.ts` (service
+  `inventory-transfers-service.ts`, `inventory-compare-service.ts`); open
+  requests to a central kitchen feed `prep.ts` (`committed`). App: "Moving
+  stock" on Purchasing and "All your places" on Today (`transfers-panel.tsx`,
+  `transfer-dialogs.tsx`, `compare-panel.tsx`); the layout exposes
+  `transfersEnabled` and `transferPlaces` (every place, names only). Not built:
+  a Station transfers screen, editing a planned transfer.
+- Reading an invoice photo (phase 5): `POST /deliveries/:id/invoice-photo/read`
+  (`update:inventory_purchasing:any`) asks the node's own OpenAI-compatible
+  vision model (`INVOICE_READER_BASE_URL` / `_API_KEY` / `_MODEL` /
+  `_DATA_REGION`; works only when the data region equals the node's
+  `DATA_REGION`, so KSA needs an in-region model) for suggested lines to check.
+  `lib/invoice-reader.ts`, `services/inventory-invoice-read-service.ts`. The
+  answer is untrusted: parsed strictly, cleaned, matched to items by name, never
+  recorded or priced automatically. 503 `reader_not_configured`, 409 `no_photo`,
+  502 `reader_failed`. App: `invoice-read-panel.tsx` on the delivery sheet
+  (hidden when the region has no reader).
+- Product rules: owner words (no par, AvT, COGS, 86), at most five tabs, one
+  plain name per item (inventory inputs are never translated; App strings are
+  Lingui). Security gate: `routes/inventory-security.test.ts`.
 
 **Print shop (Marketing, Print shop):**
 

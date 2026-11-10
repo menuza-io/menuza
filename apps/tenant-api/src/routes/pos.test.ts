@@ -24,6 +24,11 @@ import {
 	destroyTenantDb,
 	customers,
 	getTenantDb,
+	invItems,
+	invMovements,
+	invOutbox,
+	invRecipeLines,
+	invRecipes,
 	loyaltyPurchases,
 	posDevices,
 	posManagers,
@@ -48,6 +53,10 @@ import { Hono } from 'hono'
 import { SignJWT } from 'jose'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import {
+	invalidateInventoryContext,
+	seedInventoryContextForTest,
+} from '../lib/inventory-context.ts'
 import {
 	invalidateLoyaltyContext,
 	seedLoyaltyContextForTest,
@@ -5171,6 +5180,106 @@ describe('POS terminals: pairing, upload and sync', () => {
 				.where(eq(posZatcaUnits.deviceId, device.id))
 			expect(unit).toMatchObject({ status: 'revoked' })
 			expect(unit!.revokedAt).toEqual(expect.any(Number))
+		})
+	})
+
+	describe('inventory on an upload', () => {
+		/** 200 g of chicken per burger; recipes apply from the day before. */
+		async function seedBurgerRecipe() {
+			const db = await getTenantDb(ORG_A)
+			await db
+				.insert(invItems)
+				.values({ id: 'it_chicken', name: 'Chicken', baseUnit: 'g' })
+			await db.insert(invRecipes).values({
+				id: 'rec_burger',
+				ownerKind: 'menu_item',
+				ownerId: 'item-burger',
+				version: 1,
+				effectiveFrom: Date.now() - 24 * 60 * 60_000,
+				createdByKind: 'system',
+			})
+			await db.insert(invRecipeLines).values({
+				recipeId: 'rec_burger',
+				itemId: 'it_chicken',
+				quantity: 200_000,
+			})
+			return db
+		}
+
+		const chickenOnHand = async (db: Awaited<ReturnType<typeof getTenantDb>>) =>
+			(
+				await db
+					.select()
+					.from(invMovements)
+					.where(eq(invMovements.itemId, 'it_chicken'))
+			).reduce((sum, row) => sum + row.quantity, 0)
+
+		beforeEach(() => {
+			invalidateInventoryContext()
+			seedInventoryContextForTest(ORG_A, {
+				enabled: true,
+				purchasing: false,
+				recipes: true,
+				prep: false,
+				transfers: false,
+			})
+		})
+		afterEach(() => invalidateInventoryContext())
+
+		it('takes the recipe out of stock once the sale is paid, and only once', async () => {
+			const db = await seedBurgerRecipe()
+			const { deviceSecret } = await pair()
+			const id = crypto.randomUUID()
+			// An open tab uses nothing yet.
+			expect(
+				(
+					await upload(
+						deviceSecret,
+						wireOrder({ id, revision: 1, lines: [BURGER] }),
+					)
+				).status,
+			).toBe(201)
+			expect(await chickenOnHand(db)).toBe(0)
+
+			const paid = wireOrder({
+				id,
+				revision: 2,
+				status: 'paid',
+				lines: [BURGER],
+				payments: [{ amountCents: 1083 }],
+			})
+			expect((await upload(deviceSecret, paid)).status).toBe(200)
+			expect(await chickenOnHand(db)).toBe(-200_000)
+
+			// The same upload again stores nothing and takes nothing more.
+			expect((await upload(deviceSecret, paid)).status).toBe(200)
+			expect(await chickenOnHand(db)).toBe(-200_000)
+			const rows = await db.select().from(invOutbox)
+			expect(rows.every((row) => row.settledAt !== null)).toBe(true)
+		})
+
+		it('never refuses a paid sale because inventory cannot be reached', async () => {
+			const db = await seedBurgerRecipe()
+			invalidateInventoryContext()
+			fetchMock.mockImplementation(async () => {
+				throw new TypeError('fetch failed')
+			})
+			const errors = vi.spyOn(console, 'error').mockImplementation(() => {})
+			try {
+				const { deviceSecret } = await pair()
+				const sale = wireOrder({
+					status: 'paid',
+					payments: [{ amountCents: 1083 }],
+				})
+				expect((await upload(deviceSecret, sale)).status).toBe(201)
+			} finally {
+				errors.mockRestore()
+			}
+			// Nothing was taken out, and the sale waits in the queue for the tick.
+			expect(await chickenOnHand(db)).toBe(0)
+			const rows = await db.select().from(invOutbox)
+			expect(rows).toHaveLength(1)
+			expect(rows[0]?.settledAt).toBeNull()
 		})
 	})
 

@@ -43,6 +43,10 @@ import {
 	type DiscountsNavAccess,
 } from '#app/utils/discounts/nav.ts'
 import {
+	HIDDEN_INVENTORY_NAV,
+	type InventoryNavAccess,
+} from '#app/utils/inventory/nav.ts'
+import {
 	HIDDEN_LOYALTY_NAV,
 	type LoyaltyNavAccess,
 } from '#app/utils/loyalty/nav.ts'
@@ -73,6 +77,7 @@ import { ExternalLinkIcon } from './icons/external-link-icon'
 import { GalleryHorizontalEndIcon } from './icons/gallery-horizontal-end-icon'
 import { MailboxIcon } from './icons/mailbox-icon'
 import { NoteIcon } from './icons/note-icon'
+import { PackageIcon } from './icons/package-icon'
 import { PhoneIcon } from './icons/phone-icon'
 import { ReceiptIcon } from './icons/receipt-icon'
 import { SendIcon } from './icons/send-icon'
@@ -285,6 +290,8 @@ function OrganizationSidebar({
 		rootData?.loyaltyNav ?? HIDDEN_LOYALTY_NAV
 	const discountsNav: DiscountsNavAccess =
 		rootData?.discountsNav ?? HIDDEN_DISCOUNTS_NAV
+	const inventoryNav: InventoryNavAccess =
+		rootData?.inventoryNav ?? HIDDEN_INVENTORY_NAV
 	const printShopNav: PrintShopNavAccess =
 		rootData?.printShopNav ?? HIDDEN_PRINT_SHOP_NAV
 	const qrOrderingNav: QrOrderingNavAccess =
@@ -403,6 +410,48 @@ function OrganizationSidebar({
 			url: `/${orgSlug}/discounts`,
 			isActive: location.pathname.startsWith(`/${orgSlug}/discounts`),
 			icon: DiscountIcon,
+		},
+		{
+			title: _(msg`Inventory`),
+			url: `/${orgSlug}/inventory`,
+			isActive: location.pathname.startsWith(`/${orgSlug}/inventory`),
+			icon: PackageIcon,
+			items: [
+				{
+					title: _(msg`Today`),
+					url: `/${orgSlug}/inventory/today`,
+					isActive: location.pathname.startsWith(`/${orgSlug}/inventory/today`),
+				},
+				{
+					title: _(msg`Stock`),
+					url: `/${orgSlug}/inventory/stock`,
+					isActive: location.pathname.startsWith(`/${orgSlug}/inventory/stock`),
+				},
+				{
+					title: _(msg`Counts`),
+					url: `/${orgSlug}/inventory/counts`,
+					isActive: location.pathname.startsWith(
+						`/${orgSlug}/inventory/counts`,
+					),
+				},
+				{
+					title: _(msg`Purchasing`),
+					url: `/${orgSlug}/inventory/purchasing`,
+					isActive: location.pathname.startsWith(
+						`/${orgSlug}/inventory/purchasing`,
+					),
+				},
+				{
+					title: _(msg`Prep`),
+					url: `/${orgSlug}/inventory/prep`,
+					isActive: location.pathname.startsWith(`/${orgSlug}/inventory/prep`),
+				},
+				{
+					title: _(msg`Waste`),
+					url: `/${orgSlug}/inventory/waste`,
+					isActive: location.pathname.startsWith(`/${orgSlug}/inventory/waste`),
+				},
+			],
 		},
 		{
 			title: _(msg`Mailbox`),
@@ -762,6 +811,9 @@ function OrganizationSidebar({
 			if (item.url === `/${orgSlug}/loyalty`) {
 				return loyaltyNav.visible
 			}
+			if (item.url === `/${orgSlug}/inventory`) {
+				return inventoryNav.visible
+			}
 			// Customers is the one people screen: contact data (settings read) or
 			// the reservation guest grant opens it.
 			if (item.url === `/${orgSlug}/customers`) {
@@ -828,6 +880,26 @@ function OrganizationSidebar({
 					[`/${orgSlug}/loyalty/program`]: loyaltyNav.program,
 					[`/${orgSlug}/loyalty/rewards`]: loyaltyNav.rewards,
 					[`/${orgSlug}/loyalty/activity`]: loyaltyNav.activity,
+				}
+				const visibleItems = item.items.filter(
+					(subItem) => allowedByUrl[subItem.url] === true,
+				)
+				return {
+					...item,
+					url: visibleItems[0]?.url ?? item.url,
+					items: visibleItems,
+				}
+			}
+			if (item.url === `/${orgSlug}/inventory`) {
+				const allowedByUrl: Record<string, boolean> = {
+					[`/${orgSlug}/inventory/today`]: inventoryNav.today,
+					[`/${orgSlug}/inventory/stock`]: inventoryNav.stock,
+					[`/${orgSlug}/inventory/counts`]: inventoryNav.counts,
+					[`/${orgSlug}/inventory/purchasing`]: inventoryNav.purchasing,
+					[`/${orgSlug}/inventory/prep`]: inventoryNav.prep,
+					// Waste steps aside for Prep and lives on Today then.
+					[`/${orgSlug}/inventory/waste`]:
+						inventoryNav.waste && !inventoryNav.prep,
 				}
 				const visibleItems = item.items.filter(
 					(subItem) => allowedByUrl[subItem.url] === true,

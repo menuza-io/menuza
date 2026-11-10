@@ -13,6 +13,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Kitchen } from './apps/kitchen/Kitchen.tsx'
 import { HostStand } from './apps/reservations/HostStand.tsx'
+import { Stock } from './apps/stock/Stock.tsx'
 import { TimeClock } from './apps/timeclock/TimeClock.tsx'
 import { applyLocale, effectiveLocale } from './i18n.ts'
 import { idleMs, lockHeld, shouldLock, touch } from '~/lib/activity.ts'
@@ -793,6 +794,19 @@ export function App() {
 						locationName={s.location?.name ?? null}
 						currency={s.location?.currency ?? 'USD'}
 						timeZone={s.location?.timezone}
+					/>
+				) : app === 'stock' ? (
+					<Stock
+						// Someone new at the till starts from the stock home, not another person's open sheet.
+						key={
+							s.session?.serverSession?.token ??
+							s.session?.staff.id ??
+							'signed-out'
+						}
+						settings={s.settings}
+						session={s.session}
+						online={s.online}
+						onSignIn={s.lock}
 					/>
 				) : app === 'reservations' ? (
 					<HostStand

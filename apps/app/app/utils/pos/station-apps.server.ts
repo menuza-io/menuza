@@ -1,6 +1,12 @@
 import { getUserId } from '@repo/auth'
+import { INVENTORY_PERMISSIONS } from '@repo/inventory'
 import { RESERVATIONS_PERMISSIONS } from '@repo/reservations'
 import { STAFFING_PERMISSIONS } from '@repo/staffing'
+import { resolveDiscountLocationIds } from '#app/utils/discounts/location-scope.server.ts'
+import {
+	getInventoryFeatureState,
+	getUserInventoryGrants,
+} from '#app/utils/inventory/access.server.ts'
 import {
 	getReservationsFeatureState,
 	getUserReservationsGrants,
@@ -15,6 +21,10 @@ import { resolveStaffingScopeIds } from '#app/utils/staffing/scope-claim.server.
 export type StationAppGrants = {
 	timeclock: boolean
 	reservations: boolean
+	/** May switch the Stock app (counts, waste, receiving) on: `update:inventory:any` with the feature on. */
+	inventory: boolean
+	/** Locations where this member may switch Stock on; null is all of them. */
+	inventoryLocationIds: string[] | null
 	/** May let a host see guests' phones, emails and allergies (the guest permission). */
 	guestDetails: boolean
 	/** Locations whose host stand this member may switch on; null is all of them. */
@@ -26,6 +36,8 @@ export type StationAppGrants = {
 export const NO_STATION_APP_GRANTS: StationAppGrants = {
 	timeclock: false,
 	reservations: false,
+	inventory: false,
+	inventoryLocationIds: [],
 	guestDetails: false,
 	locationIds: [],
 	scopeIds: [],
@@ -37,7 +49,8 @@ export const NO_STATION_APP_GRANTS: StationAppGrants = {
  * needs that module's settings permission (and its feature on), not only the
  * menu permission the Terminals page asks for. Giving a host guest details
  * needs the guest permission, and a member limited to some locations may only
- * open the host stand, or the time clock, at those. Signed into the operator token as
+ * open the host stand, the Stock app, or the time clock, at those. Stock
+ * needs `update:inventory:any` with `inventory.enabled`. Signed into the operator token as
  * `stationApps`; tenant-api refuses a change the claims do not cover.
  */
 export async function getStationAppGrants(
@@ -53,6 +66,9 @@ export async function getStationAppGrants(
 		reservationGrants,
 		locationIds,
 		scopeIds,
+		inventoryFeatures,
+		inventoryGrants,
+		inventoryLocationIds,
 	] = await Promise.all([
 		getStaffingFeatureState(organizationId),
 		getReservationsFeatureState(organizationId),
@@ -64,7 +80,13 @@ export async function getStationAppGrants(
 		getUserReservationsGrants(userId, organizationId),
 		resolveReservationsLocationIds(userId, organizationId),
 		resolveStaffingScopeIds(userId, organizationId),
+		getInventoryFeatureState(organizationId),
+		getUserInventoryGrants(userId, organizationId),
+		resolveDiscountLocationIds(userId, organizationId),
 	])
+	const canStock =
+		inventoryFeatures.enabled &&
+		inventoryGrants.includes(INVENTORY_PERMISSIONS.UPDATE_INVENTORY)
 	const canClock = staffing.timeclock && laborPolicy
 	const canHost =
 		reservations.enabled &&
@@ -74,6 +96,8 @@ export async function getStationAppGrants(
 	return {
 		timeclock: canClock,
 		reservations: canHost,
+		inventory: canStock,
+		inventoryLocationIds: canStock ? inventoryLocationIds : [],
 		guestDetails:
 			canHost &&
 			reservationGrants.includes(

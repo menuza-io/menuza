@@ -85,6 +85,10 @@ import '@fontsource-variable/geist-mono/wght.css'
 import './styles/tailwind.css'
 import { getLaunchStatus } from './utils/env.server.ts'
 import {
+	HIDDEN_INVENTORY_NAV,
+	type InventoryNavAccess,
+} from './utils/inventory/nav.ts'
+import {
 	HIDDEN_LOYALTY_NAV,
 	type LoyaltyNavAccess,
 } from './utils/loyalty/nav.ts'
@@ -570,6 +574,32 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		)
 	}
 
+	let inventoryNav: InventoryNavAccess = HIDDEN_INVENTORY_NAV
+	if (currentOrgId && userId) {
+		const inventoryAccess = await import('./utils/inventory/access.server.ts')
+		inventoryNav = await time(
+			async () => {
+				try {
+					return await cachified({
+						key: `inventory-nav:${currentOrgId}:${userId}`,
+						cache,
+						ttl: 1000 * 30,
+						getFreshValue: () =>
+							inventoryAccess.getInventoryNavAccess(userId, currentOrgId),
+					})
+				} catch (error) {
+					// Hide the section rather than fail every page, but leave a trace.
+					console.error(
+						'Inventory nav access failed',
+						error instanceof Error ? error.message : 'unknown error',
+					)
+					return HIDDEN_INVENTORY_NAV
+				}
+			},
+			{ timings, type: 'inventory nav', desc: 'inventory nav access' },
+		)
+	}
+
 	const utmHeaders = utmResponse?.headers || {}
 	const hasConfiguredProvider = ({
 		clientId,
@@ -628,6 +658,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 			printShopNav,
 			qrOrderingNav,
 			discountsNav,
+			inventoryNav,
 			env: {
 				NODE_ENV: ENV.NODE_ENV,
 				ALLOW_INDEXING: ENV.ALLOW_INDEXING,

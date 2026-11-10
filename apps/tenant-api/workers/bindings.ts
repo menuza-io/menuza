@@ -22,6 +22,7 @@ export interface TenantApiWorkerEnv {
 	QR_DINE_IN_ENABLED?: string
 	LOYALTY_ENABLED?: string
 	DISCOUNTS_ENABLED?: string
+	INVENTORY_ENABLED?: string
 	RESERVATIONS_EMAIL_ENABLED?: string
 	RESERVATIONS_SMS_ENABLED?: string
 	TWILIO_ACCOUNT_SID?: string

@@ -1,0 +1,74 @@
+import {
+	COUNT_STATUSES,
+	DELIVERY_SOURCES,
+	DELIVERY_STATUSES,
+	INVENTORY_ACTOR_KINDS,
+	INVENTORY_BASE_UNITS,
+	INVENTORY_ITEM_KINDS,
+	INVENTORY_NOTIFY_KINDS,
+	INVOICE_PHOTO_CONTENT_TYPES,
+	ORDER_SEND_CHANNELS,
+	ORDER_STATUSES,
+	MOVEMENT_KINDS,
+	RECIPE_LINE_MODES,
+	RECIPE_OWNER_KINDS,
+	SALE_SOURCE_TYPES,
+	SUPPLIER_ORDER_CHANNELS,
+	UNIT_SYSTEMS,
+	WASTE_REASONS,
+} from '@repo/inventory'
+import {
+	INV_ACTOR_KIND_VALUES,
+	INV_BASE_UNIT_VALUES,
+	INV_COUNT_STATUS_VALUES,
+	INV_DELIVERY_SOURCE_VALUES,
+	INV_DELIVERY_STATUS_VALUES,
+	INV_ALERT_KIND_VALUES,
+	INV_INVOICE_PHOTO_CONTENT_TYPE_VALUES,
+	INV_ITEM_KIND_VALUES,
+	INV_MOVEMENT_KIND_VALUES,
+	INV_ORDER_SEND_CHANNEL_VALUES,
+	INV_ORDER_STATUS_VALUES,
+	INV_RECIPE_LINE_MODE_VALUES,
+	INV_RECIPE_OWNER_KIND_VALUES,
+	INV_SALE_SOURCE_TYPE_VALUES,
+	INV_SUPPLIER_ORDER_CHANNEL_VALUES,
+	INV_UNIT_SYSTEM_VALUES,
+	INV_WASTE_REASON_VALUES,
+} from '@repo/tenant-db'
+import { describe, expect, it } from 'vitest'
+
+/**
+ * The tenant-db check constraints name these values in SQL; the domain lists
+ * live in @repo/inventory. They must be the same sets, so a new kind or reason
+ * is added in both places (and a migration) or neither.
+ */
+const PAIRS: Array<[string, readonly string[], readonly string[]]> = [
+	['unit system', INV_UNIT_SYSTEM_VALUES, UNIT_SYSTEMS],
+	['base unit', INV_BASE_UNIT_VALUES, INVENTORY_BASE_UNITS],
+	['item kind', INV_ITEM_KIND_VALUES, INVENTORY_ITEM_KINDS],
+	['actor kind', INV_ACTOR_KIND_VALUES, INVENTORY_ACTOR_KINDS],
+	['movement kind', INV_MOVEMENT_KIND_VALUES, MOVEMENT_KINDS],
+	['count status', INV_COUNT_STATUS_VALUES, COUNT_STATUSES],
+	['waste reason', INV_WASTE_REASON_VALUES, WASTE_REASONS],
+	['order channel', INV_SUPPLIER_ORDER_CHANNEL_VALUES, SUPPLIER_ORDER_CHANNELS],
+	['delivery status', INV_DELIVERY_STATUS_VALUES, DELIVERY_STATUSES],
+	['delivery source', INV_DELIVERY_SOURCE_VALUES, DELIVERY_SOURCES],
+	['order status', INV_ORDER_STATUS_VALUES, ORDER_STATUSES],
+	['order send channel', INV_ORDER_SEND_CHANNEL_VALUES, ORDER_SEND_CHANNELS],
+	['alert kind', INV_ALERT_KIND_VALUES, INVENTORY_NOTIFY_KINDS],
+	['recipe owner kind', INV_RECIPE_OWNER_KIND_VALUES, RECIPE_OWNER_KINDS],
+	['recipe line mode', INV_RECIPE_LINE_MODE_VALUES, RECIPE_LINE_MODES],
+	['sale source type', INV_SALE_SOURCE_TYPE_VALUES, SALE_SOURCE_TYPES],
+	[
+		'invoice photo type',
+		INV_INVOICE_PHOTO_CONTENT_TYPE_VALUES,
+		INVOICE_PHOTO_CONTENT_TYPES,
+	],
+]
+
+describe('inventory value lists match the tenant-db check constraints', () => {
+	it.each(PAIRS)('%s', (_name, tenantDb, domain) => {
+		expect([...tenantDb].sort()).toEqual([...domain].sort())
+	})
+})

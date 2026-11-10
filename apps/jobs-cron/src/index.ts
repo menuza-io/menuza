@@ -283,6 +283,21 @@ async function invokeTenantLoyaltyTick(env: Env) {
 	})
 }
 
+/**
+ * The inventory tick: low-stock digests, counts waiting for review, orders due
+ * and price rises, each recorded once per organization and handed to the App
+ * (retrying what the App could not take). The hourly cron does the daily
+ * digests; the Durable Object alarm and the OCI interval retry sub-hourly.
+ * Idempotent; the response is counts only.
+ */
+async function invokeTenantInventoryTick(env: Env) {
+	return invokeTenantNodes(env, {
+		path: '/api/inventory/tick',
+		body: {},
+		label: 'Tenant inventory tick',
+	})
+}
+
 async function invokeJob(env: Env, path: string) {
 	const response = await fetch(
 		`${env.APP_BASE_URL.replace(/\/$/, '')}${path}`,
@@ -597,6 +612,7 @@ export default {
 					'Impersonation cleanup',
 					(jobEnv: Env) => invokeJob(jobEnv, IMPERSONATION_CLEANUP_PATH),
 				],
+				['Tenant inventory tick', invokeTenantInventoryTick],
 			] as const) {
 				ctx.waitUntil(
 					run(env).catch((error) => {

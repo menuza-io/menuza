@@ -32,6 +32,13 @@ import {
 	reservationsPublicNotFound,
 	resolveOrgId,
 } from './org-router.ts'
+import { createInventoryTickModule } from '../src/lib/inventory-alarm.ts'
+import { registerOrgTickModule } from '../src/lib/org-alarm.ts'
+import {
+	fanOutInventoryTick,
+	runInventoryTickForOrg,
+	type InventoryTickOutcome,
+} from '../src/services/inventory-tick-service.ts'
 import {
 	fanOutLoyaltyTick,
 	type LoyaltyTickResult,
@@ -50,6 +57,15 @@ export { TenantOrg, TenantRegistry }
 registerRestaurantOrderSource()
 registerReservationVoiceActions()
 registerReservationsDemandSource()
+// The inventory alarm (retries of alerts the App could not take). Registered
+// here, in the entry both the Worker and its Durable Objects load, so the
+// object's alarm finds it next to the staff, reservations and loyalty modules
+// that `tenant-org.ts` registers.
+registerOrgTickModule(
+	createInventoryTickModule((orgId, now) =>
+		runInventoryTickForOrg(orgId, { now }),
+	),
+)
 
 const edgeApp = createTenantApiApp()
 
@@ -180,15 +196,15 @@ async function handleProvision(
 const tickBodySchema = z.object({ orgId: z.unknown().optional() })
 
 /**
- * The hourly tick on the Workers runtime, for staffing, reservations and
- * loyalty. The cron posts here without an organization; each organization's
+ * The hourly tick on the Workers runtime, for staffing, reservations,
+ * loyalty and inventory. The cron posts here without an organization; each organization's
  * data lives in its own Durable Object, so the edge asks every one of them to
  * run its own tick (which lands back in the module's `/api/<module>/tick`
  * route inside the object, behind the same token check) and folds the answers
  * into counts. Organizations without the module cost the object one local
  * query and no outbound call.
  */
-type TickModuleName = 'staff' | 'reservations' | 'loyalty'
+type TickModuleName = 'staff' | 'reservations' | 'loyalty' | 'inventory'
 
 async function handleTickFanOut(
 	request: Request,
@@ -255,10 +271,15 @@ async function handleTickFanOut(
 						orgIds,
 						run: (orgId) => runOne<ReservationsTickResult>(orgId),
 					})
-				: await fanOutLoyaltyTick({
-						orgIds,
-						run: (orgId) => runOne<LoyaltyTickResult>(orgId),
-					})
+				: module === 'inventory'
+					? await fanOutInventoryTick({
+							orgIds,
+							run: (orgId) => runOne<InventoryTickOutcome>(orgId),
+						})
+					: await fanOutLoyaltyTick({
+							orgIds,
+							run: (orgId) => runOne<LoyaltyTickResult>(orgId),
+						})
 	return Response.json({ success: totals.errors === 0, ...totals })
 }
 
@@ -373,7 +394,9 @@ async function handle(
 					? 'reservations'
 					: url.pathname === '/api/loyalty/tick'
 						? 'loyalty'
-						: null
+						: url.pathname === '/api/inventory/tick'
+							? 'inventory'
+							: null
 	if (tickModule) {
 		const tickOrgId = await resolveOrgId(request, env)
 		if (tickOrgId) {

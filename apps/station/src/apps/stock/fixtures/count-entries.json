@@ -1,0 +1,8 @@
+{
+	"accepted": [
+		{ "clientId": "entry-0001-aaaa", "quantity": 4500000 },
+		{ "clientId": "entry-0002-bbbb", "quantity": null }
+	],
+	"duplicates": ["entry-0003-cccc"],
+	"refused": [{ "clientId": "entry-0004-dddd", "code": "unit_mismatch" }]
+}

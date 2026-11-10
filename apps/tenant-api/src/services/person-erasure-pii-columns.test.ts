@@ -119,6 +119,15 @@ const ALLOWED_TABLES: Array<[RegExp, string]> = [
 const staffAtTheTill =
 	'staff member who worked the till, not a customer; replaced by erasePosStaffNames when that person is erased'
 
+const inventoryOperatorName =
+	'inventory catalogue or setup name typed by the operator (an item, unit, storage area or count list), not about a person'
+const inventoryStockNote =
+	'operator or staff note about stock (an item, a stock change, waste), not about a customer; the append-only triggers allow clearing a movement or waste note'
+const inventorySupplierContact =
+	'business contact of a supplier the organization buys from, typed by the operator; not a customer, edited or archived with the supplier'
+const inventoryActorId =
+	'opaque id of the operator or staff member who did it (never a name), not a customer; staff ids follow the staff module retention'
+
 /** Single columns that look like PII but are not a customer's data. */
 const ALLOWED_COLUMNS: Record<string, string> = {
 	'loyalty_rewards.name': 'reward title written by the operator',
@@ -180,6 +189,40 @@ const ALLOWED_COLUMNS: Record<string, string> = {
 		'what cash taken from or put in the drawer was for, written by staff; not about a customer',
 	'pos_zatca_settings.postal_code':
 		"the restaurant's own business address, as registered with ZATCA",
+	'inv_storage_areas.name': inventoryOperatorName,
+	'inv_items.name': inventoryOperatorName,
+	'inv_items.notes': inventoryStockNote,
+	'inv_item_units.name': inventoryOperatorName,
+	'inv_count_lists.name': inventoryOperatorName,
+	'inv_movements.note': inventoryStockNote,
+	'inv_waste.note': inventoryStockNote,
+	'inv_orders.note':
+		'operator note on a purchase order to a supplier (e.g. "use the back gate"), not about a customer; frozen with the closed order',
+	'inv_suppliers.name': inventorySupplierContact,
+	'inv_suppliers.contact_name': inventorySupplierContact,
+	'inv_suppliers.phone': inventorySupplierContact,
+	'inv_suppliers.email': inventorySupplierContact,
+	'inv_suppliers.notes': inventorySupplierContact,
+	// Not matched by the pattern, listed so the decision is written down.
+	'inv_movements.actor_id': inventoryActorId,
+	'inv_counts.started_by_id': inventoryActorId,
+	'inv_counts.approved_by_id': inventoryActorId,
+	'inv_count_entries.counter_id': inventoryActorId,
+	'inv_deliveries.received_by_id': inventoryActorId,
+	'inv_waste.actor_id': inventoryActorId,
+	'inv_audit_log.actor_id': inventoryActorId,
+	'inv_orders.created_by_id': inventoryActorId,
+	'inv_transfers.note':
+		'operator note on a stock transfer or branch request between the organization\'s own places (e.g. "send before the 9am prep"), not about a customer; the form asks for a business note, and the closed-final trigger freezes it with the record',
+	'inv_transfers.created_by_id': inventoryActorId,
+	'inv_transfers.sent_by_id': inventoryActorId,
+	'inv_transfers.received_by_id': inventoryActorId,
+	'inv_recipes.created_by_id': inventoryActorId,
+	'inv_sold_out.undone_by_id': inventoryActorId,
+	'inv_prep_tasks.started_by_id': inventoryActorId,
+	'inv_prep_tasks.done_by_id': inventoryActorId,
+	'inv_waste.device_id':
+		'opaque id of the Station terminal that logged the waste (feeds its recent-items chips), not a person',
 }
 
 function listColumns() {

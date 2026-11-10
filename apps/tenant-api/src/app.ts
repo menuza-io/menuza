@@ -43,6 +43,7 @@ import { operatorQrRoutes } from './routes/operator-qr.ts'
 import { operatorPeopleRoutes } from './routes/operator-people.ts'
 import { operatorPosRoutes } from './routes/operator-pos.ts'
 import { posRoutes } from './routes/pos.ts'
+import { posInventoryRoutes } from './routes/pos-inventory.ts'
 import { posKdsRoutes } from './routes/pos-kds.ts'
 import { posReservationsRoutes } from './routes/pos-reservations.ts'
 import { posTimeclockRoutes } from './routes/pos-timeclock.ts'
@@ -59,9 +60,11 @@ import {
 import { reservationsOperatorRoutes } from './routes/reservations-operator.ts'
 import { reservationsPaymentsInternalRoutes } from './routes/reservations-payments-internal.ts'
 import { reservationsPublicRoutes } from './routes/reservations-public.ts'
+import { inventoryTickRoutes } from './routes/inventory-tick.ts'
 import { loyaltyTickRoutes } from './routes/loyalty-tick.ts'
 import { loyaltyRoutes } from './routes/loyalty.ts'
 import { operatorDiscountRoutes } from './routes/operator-discounts.ts'
+import { operatorInventoryRoutes } from './routes/operator-inventory.ts'
 import { operatorLoyaltyRoutes } from './routes/operator-loyalty.ts'
 import { posLoyaltyRoutes } from './routes/pos-loyalty.ts'
 
@@ -329,6 +332,7 @@ export function createTenantApiApp() {
 	app.route('/internal/staff', staffInternalRoutes)
 	app.route('/kiosk', kioskRoutes)
 	app.route('/pos/timeclock', posTimeclockRoutes)
+	app.route('/pos/inventory', posInventoryRoutes)
 	app.route('/pos/reservations', posReservationsRoutes)
 	app.route('/pos/kds', posKdsRoutes)
 	app.route('/pos', posRoutes)
@@ -339,9 +343,11 @@ export function createTenantApiApp() {
 	app.route('/api/reservations/payments', reservationsPaymentsInternalRoutes)
 	app.route('/api/reservations', reservationsTickRoutes)
 	app.route('/api/loyalty', loyaltyTickRoutes)
+	app.route('/api/inventory', inventoryTickRoutes)
 	app.route('/loyalty', loyaltyRoutes)
 	app.route('/operator/loyalty', operatorLoyaltyRoutes)
 	app.route('/operator/discounts', operatorDiscountRoutes)
+	app.route('/operator/inventory', operatorInventoryRoutes)
 	app.route('/pos/loyalty', posLoyaltyRoutes)
 	app.route('/api/voice/actions', reservationsVoiceActionRoutes)
 

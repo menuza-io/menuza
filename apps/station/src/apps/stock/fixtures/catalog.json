@@ -1,0 +1,219 @@
+{
+	"contractVersion": 1,
+	"version": "cat-7f3a91c2e4b8",
+	"generatedAt": 1767225600000,
+	"locationId": "main",
+	"settings": {
+		"receiveRequiresManager": true,
+		"photoMaxBytes": 5242880,
+		"ordersEnabled": true
+	},
+	"items": [
+		{
+			"id": "item_tomato",
+			"name": "Tomatoes",
+			"category": "produce",
+			"kind": "bought",
+			"baseUnit": "g",
+			"countUnit": "kg",
+			"units": [],
+			"areaIds": ["area_walkin"]
+		},
+		{
+			"id": "item_chicken",
+			"name": "Chicken thigh",
+			"category": "meat",
+			"kind": "bought",
+			"baseUnit": "g",
+			"countUnit": "kg",
+			"units": [
+				{
+					"id": "box10",
+					"name": "Box",
+					"baseQuantity": 10000000,
+					"used": true,
+					"archived": false
+				}
+			],
+			"areaIds": ["area_walkin"]
+		},
+		{
+			"id": "item_oil",
+			"name": "Olive oil",
+			"category": "dry_goods",
+			"kind": "bought",
+			"baseUnit": "ml",
+			"countUnit": "l",
+			"units": [],
+			"areaIds": ["area_dry"]
+		},
+		{
+			"id": "item_pita",
+			"name": "Pita bread",
+			"category": "bakery",
+			"kind": "bought",
+			"baseUnit": "piece",
+			"countUnit": "piece",
+			"units": [
+				{
+					"id": "bag12",
+					"name": "Bag of 12",
+					"baseQuantity": 12000,
+					"used": false,
+					"archived": false
+				}
+			],
+			"areaIds": ["area_dry"]
+		},
+		{
+			"id": "item_lemon",
+			"name": "Lemons",
+			"category": "produce",
+			"kind": "bought",
+			"baseUnit": "piece",
+			"countUnit": "piece",
+			"units": [],
+			"areaIds": []
+		},
+		{
+			"id": "item_garlic_sauce",
+			"name": "Garlic sauce",
+			"category": "sauces",
+			"kind": "made",
+			"baseUnit": "ml",
+			"countUnit": "l",
+			"units": [],
+			"areaIds": ["area_walkin"]
+		}
+	],
+	"areas": [
+		{
+			"id": "area_dry",
+			"name": "Dry store",
+			"sortOrder": 2,
+			"itemIds": ["item_pita", "item_oil"]
+		},
+		{
+			"id": "area_walkin",
+			"name": "Walk-in fridge",
+			"sortOrder": 1,
+			"itemIds": ["item_chicken", "item_tomato", "item_garlic_sauce"]
+		}
+	],
+	"countLists": [
+		{
+			"id": "list_weekly",
+			"name": "Weekly count",
+			"itemIds": [
+				"item_tomato",
+				"item_chicken",
+				"item_oil",
+				"item_pita",
+				"item_lemon"
+			]
+		}
+	],
+	"counts": [
+		{
+			"id": "cnt_open1",
+			"locationId": "main",
+			"listId": "list_weekly",
+			"listName": "Weekly count",
+			"status": "counting",
+			"businessDate": "2026-01-01",
+			"startedBy": { "kind": "operator", "id": "usr_owner" },
+			"itemTotal": 5,
+			"itemsCounted": 2,
+			"counters": [{ "kind": "staff", "id": "stf_omar" }],
+			"sentForReviewAt": null,
+			"approvedAt": null,
+			"approvedBy": null,
+			"cancelledAt": null,
+			"createdAt": 1767222000000,
+			"version": 2
+		}
+	],
+	"wasteReasons": [
+		"expired",
+		"spoiled",
+		"over_prepped",
+		"dropped",
+		"returned",
+		"staff_meal",
+		"other"
+	],
+	"recentWasteItemIds": ["item_tomato", "item_pita"],
+	"suppliers": [
+		{
+			"id": "sup_fresh",
+			"name": "Fresh Produce Co",
+			"products": [
+				{
+					"id": "sp_tomato_crate",
+					"itemId": "item_tomato",
+					"packName": "Crate 6 kg",
+					"packBaseQuantity": 6000000,
+					"pricedByWeight": false
+				},
+				{
+					"id": "sp_chicken_box",
+					"itemId": "item_chicken",
+					"packName": "Box",
+					"packBaseQuantity": 10000000,
+					"pricedByWeight": true
+				},
+				{
+					"id": "sp_lemon_bag",
+					"itemId": "item_lemon",
+					"packName": "Bag of 20",
+					"packBaseQuantity": 20000,
+					"pricedByWeight": false
+				}
+			]
+		}
+	],
+	"expectedDeliveries": [
+		{
+			"orderId": "ord_41",
+			"number": 41,
+			"supplierId": "sup_fresh",
+			"supplierName": "Fresh Produce Co",
+			"status": "sent",
+			"expectedDate": "2026-01-01",
+			"lines": [
+				{
+					"orderLineId": "ol_1",
+					"itemId": "item_tomato",
+					"itemName": "Tomatoes",
+					"baseUnit": "g",
+					"countUnit": "kg",
+					"supplierProductId": "sp_tomato_crate",
+					"packName": "Crate 6 kg",
+					"packBaseQuantity": 6000000,
+					"pricedByWeight": false,
+					"orderedPacks": 3,
+					"orderedQuantity": 18000000,
+					"receivedQuantity": 0,
+					"outstandingQuantity": 18000000,
+					"outstandingPacks": 3
+				},
+				{
+					"orderLineId": "ol_2",
+					"itemId": "item_chicken",
+					"itemName": "Chicken thigh",
+					"baseUnit": "g",
+					"countUnit": "kg",
+					"supplierProductId": "sp_chicken_box",
+					"packName": "Box",
+					"packBaseQuantity": 10000000,
+					"pricedByWeight": true,
+					"orderedPacks": 2,
+					"orderedQuantity": 20000000,
+					"receivedQuantity": 0,
+					"outstandingQuantity": 20000000,
+					"outstandingPacks": 2
+				}
+			]
+		}
+	]
+}

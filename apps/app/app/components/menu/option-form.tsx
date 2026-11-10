@@ -27,6 +27,7 @@ import {
 } from '@repo/ui/item'
 import { Label } from '@repo/ui/label'
 import { Switch } from '@repo/ui/switch'
+import { OptionRecipePanel } from '#app/components/inventory/recipe-panel.tsx'
 import { MenuAvailabilityCard } from './menu-availability-card.tsx'
 import {
 	MediaLibraryPicker,
@@ -74,6 +75,10 @@ export interface OptionFormData {
 
 interface OptionFormProps {
 	orgSlug: string
+	/** The saved option's id; absent while creating (recipes need it). */
+	optionId?: string
+	/** The organization's data region (sets the currency recipes use). */
+	dataRegion?: string | null
 	initialData?: Partial<OptionFormData>
 	availableModifierGroups: Array<{
 		id: string
@@ -91,6 +96,8 @@ interface OptionFormProps {
 
 export function OptionForm({
 	orgSlug,
+	optionId,
+	dataRegion,
 	initialData,
 	availableModifierGroups,
 	locations,
@@ -888,6 +895,13 @@ export function OptionForm({
 										)}
 									</FramePanel>
 								</Frame>
+
+								<OptionRecipePanel
+									orgSlug={orgSlug}
+									optionId={optionId ?? null}
+									dataRegion={dataRegion}
+									isTopping={isTopping}
+								/>
 							</div>
 
 							{/* Sidebar Column (4 cols) */}

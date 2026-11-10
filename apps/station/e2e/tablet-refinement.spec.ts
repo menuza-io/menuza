@@ -108,7 +108,7 @@ test('the host date remains readable and tappable on narrow English and Arabic s
 					...settings,
 					locale,
 					activeApp: 'reservations',
-					apps: { timeclock: true, reservations: true },
+					apps: { timeclock: true, reservations: true, inventory: false },
 				}),
 			)
 		}, locale)
