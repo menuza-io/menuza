@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { type ScheduleDay, withCurrentAvailability } from '@repo/phone-agent'
-import { type AgentLocation, restaurantAvailability } from './location.ts'
+import {
+	type AgentLocation,
+	currentPrepMinutes,
+	restaurantAvailability,
+} from './location.ts'
 import { restaurantVertical } from './vertical.ts'
 
 const WEEKDAYS = [
@@ -44,6 +48,23 @@ describe('restaurantAvailability', () => {
 			nextOpen: null,
 			orderingOpen: true,
 		})
+	})
+
+	it('keeps the store open but stops ordering while paused', () => {
+		const paused = location({
+			orderingPause: { until: '2025-01-15T18:00:00Z' },
+		})
+		// 12:00 local is 17:00 UTC, before the pause ends at 13:00 local.
+		expect(restaurantAvailability(paused, at('12:00'))).toEqual({
+			isOpen: true,
+			nextOpen: null,
+			orderingOpen: false,
+		})
+		expect(restaurantAvailability(paused, at('13:30')).orderingOpen).toBe(true)
+		const indefinite = location({ orderingPause: { until: null } })
+		expect(restaurantAvailability(indefinite, at('12:00')).orderingOpen).toBe(
+			false,
+		)
 	})
 
 	it('evaluates the hours in the location timezone', () => {
@@ -136,5 +157,17 @@ describe('withCurrentAvailability for restaurants', () => {
 		)
 		expect(current.availability).toEqual({ isOpen: false, nextOpen: null })
 		expect(current.vertical.data).toMatchObject({ orderingOpen: false })
+	})
+})
+
+describe('currentPrepMinutes', () => {
+	it('adds busy minutes only while busy mode lasts', () => {
+		const busy = {
+			prepTime: 15,
+			busyMode: { extraPrepMinutes: 20, until: '2025-01-15T18:00:00Z' },
+		}
+		expect(currentPrepMinutes(busy, at('12:00'))).toBe(35)
+		expect(currentPrepMinutes(busy, at('13:30'))).toBe(15)
+		expect(currentPrepMinutes({ prepTime: 15 }, at('12:00'))).toBe(15)
 	})
 })
