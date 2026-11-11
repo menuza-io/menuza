@@ -97,6 +97,41 @@ nothing to configure on Sites.
    expired hold) require manual review; cancelling an online order does not
    refund — refund in the processor dashboard.
 
+## Pause online orders and busy mode
+
+When the kitchen is overwhelmed, an operator with menu write permission
+(`update:menu:any`) uses the **Online ordering** panel at the top of
+`<org> → Orders`, one row per active location:
+
+- **Pause orders** for 15 minutes, 30 minutes, 1 hour, the rest of today, or
+  until someone presses **Resume orders**. "Rest of today" ends at the
+  location's local midnight, or after an overnight stretch that continues past
+  midnight. While paused, the region refuses new web and QR orders with 422
+  `ordering_paused`. A scheduled order for a time after the pause is still
+  accepted; one inside the pause gets `schedule_unavailable`. A pause with no
+  end refuses every scheduled time. Station counter sales (`walkIn`) and drop
+  pickups are not affected.
+- **Busy mode** adds 10, 20 or 30 minutes to the prep estimate for the rest of
+  today: the menu, the order details sheet and the phone agent quote the longer
+  wait, delivery estimates move by the same amount, and the earliest scheduled
+  time moves back (Sites slots and the region's `validateScheduledFor`).
+
+Storage: four nullable columns on `OrganizationLocation` (`orderingPausedAt`,
+`orderingPausedUntil`, `busyExtraPrepMinutes`, `busyUntil`; control-plane
+migration `0041_location_order_pause`). No customer data. Only the part still in
+force is published, as `orderingPause: { until }` and
+`busyMode: { extraPrepMinutes, until }` on each location of the public menu and
+the order context; `until` null means "until turned off". Everything is
+evaluated against the clock (`isOrderingPaused`, `activeBusyExtraPrepMinutes`
+and `isLocationOpenForOrdering` in `@repo/common/location-availability`), so a
+pause ends on its own with no job, and a cached menu stops pausing when its time
+passes. Every change purges the site cache, and the region reads the order
+context live on each quote and order. `GET /orders/options` reports
+`ordering.paused` (`until`, `resumesAt`: the pause end, or the next opening when
+the pause runs past closing), `prepMinutes` and `busyExtraPrepMinutes`. Changes
+are audit logged (`location_ordering_paused`, `location_ordering_resumed`,
+`location_busy_mode_changed`).
+
 ## Customer flow states
 
 - Handoff: order is placed, capacity held durably, success page renders the

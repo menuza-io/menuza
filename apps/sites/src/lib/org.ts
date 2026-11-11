@@ -417,6 +417,13 @@ export type PublicLocationData = {
 	deliveryConfig: any
 	deliveryZones: any[]
 	isDefault: boolean
+	/**
+	 * Operator pause of web and QR ordering (null `until`: until resumed).
+	 * Absent on payloads cached before the field existed.
+	 */
+	orderingPause?: { until: string | null } | null
+	/** Busy mode: extra prep minutes while it lasts. */
+	busyMode?: { extraPrepMinutes: number; until: string | null } | null
 }
 
 export type PublicMenuOptionData = {

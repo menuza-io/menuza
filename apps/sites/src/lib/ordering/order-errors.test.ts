@@ -7,6 +7,7 @@ import {
 
 const labels: OrderErrorLabels = {
 	orderingClosed: 'orderingClosed',
+	orderingPaused: 'orderingPaused',
 	dropClosed: 'dropClosed',
 	dropNotFound: 'dropNotFound',
 	pickupSlotUnavailable: 'pickupSlotUnavailable',
@@ -34,6 +35,7 @@ describe('orderErrorLabelKey', () => {
 	it('maps every documented server code to a specific label', () => {
 		const expectations: Record<string, keyof OrderErrorLabels> = {
 			ordering_closed: 'orderingClosed',
+			ordering_paused: 'orderingPaused',
 			drop_closed: 'dropClosed',
 			drop_not_found: 'dropNotFound',
 			lead_time: 'pickupSlotUnavailable',

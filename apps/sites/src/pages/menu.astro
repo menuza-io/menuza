@@ -23,7 +23,7 @@ import PopularRow from '~/components/ordering/PopularRow.astro'
 import StickyCategoryNav from '~/components/ordering/StickyCategoryNav.astro'
 import TableTab from '~/components/ordering/TableTab.astro'
 import { resolveMediaUrl, siteContainer } from '~/lib/media'
-import { summarizeHours } from '~/lib/menu-hours'
+import { formatOrderingResume, summarizeHours } from '~/lib/menu-hours'
 import {
 	buildOrderDetailsLabels,
 	buildOrderingLabels,
@@ -130,16 +130,30 @@ const openForOrders = i18n._(msg`Open for orders`)
 const openUntil = translate(i18n, msg`Open until {time}`, { time: hours.closesAt ?? '' })
 const closedLabel = i18n._(msg`Closed`)
 const closedOpens = translate(i18n, msg`Closed · opens {time}`, { time: hours.opensAt ?? '' })
-const closedReason = hours.opensAt
+const scheduleClosedReason = hours.opensAt
 	? translate(i18n, msg`We're closed right now. Orders reopen {time}`, { time: hours.opensAt })
 	: i18n._(msg`We're closed right now.`)
-const statusText = availability.isOpen
+// An operator paused web and QR ordering ("busy kitchen"): say so, and when
+// it resumes (the end of the pause, or the next opening after it).
+const resumesAt = activeLocation
+	? formatOrderingResume(availability, activeLocation.timezone, requestedLocale)
+	: undefined
+const pausedReason = resumesAt
+	? translate(i18n, msg`Online ordering is paused. Back at {time}`, { time: resumesAt })
+	: i18n._(msg`Online ordering is paused right now.`)
+const pausedStatus = resumesAt
+	? translate(i18n, msg`Ordering paused · back {time}`, { time: resumesAt })
+	: i18n._(msg`Ordering paused`)
+const statusText = availability.paused
+	? pausedStatus
+	: availability.isOpen
 	? hours.closesAt
 		? openUntil
 		: openForOrders
 	: hours.opensAt
 		? closedOpens
 		: closedLabel
+const closedReason = availability.paused ? pausedReason : scheduleClosedReason
 const pickupLabel = i18n._(msg`Pickup`)
 const deliveryLabel = i18n._(msg`Delivery`)
 const fulfillmentLabel = i18n._(msg`Fulfillment`)
@@ -557,6 +571,9 @@ const orderDetailsLabels = buildOrderDetailsLabels(i18n)
 const scheduling = activeLocation
 	? schedulingSettings(activeLocation)
 	: { enabled: false, advanceOrderDays: 0 }
+// A pause with no end refuses scheduled orders too.
+const canScheduleWhileClosed =
+	scheduling.enabled && !(availability.paused && !availability.paused.until)
 const orgName = menuPayload?.organization?.name || organization.name
 const locationName = activeLocation?.name ? t(activeLocation.name) : orgName
 const addressLine = [
@@ -666,7 +683,7 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mt-1 size-4 shrink-0" aria-hidden="true" set:html={icons.clock} />
 					<p class="min-w-0">
 						<span class="font-semibold text-foreground">{closedReason}</span>
-						{scheduling.enabled ? (
+						{canScheduleWhileClosed ? (
 							<span class="block text-muted-foreground sm:inline">
 								<span class="hidden sm:inline" aria-hidden="true"> · </span>
 								{orderDetailsLabels.asapClosed}
