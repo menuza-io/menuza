@@ -207,6 +207,10 @@ const checkoutLabels = {
 	closedReopen: translate(i18n, msg`We're closed right now. Orders reopen {time}`, {
 		time: '{time}',
 	}),
+	paused: i18n._(msg`Online ordering is paused right now.`),
+	pausedUntil: translate(i18n, msg`Online ordering is paused. Back at {time}`, {
+		time: '{time}',
+	}),
 	ordersClose: translate(i18n, msg`Orders close {when}`, { when: '{when}' }),
 	orderPlacedPaymentFailed: i18n._(
 		msg`Your order was placed, but we couldn't start online payment. You can pay from your receipt page.`,
@@ -282,6 +286,9 @@ const checkoutLabels = {
 	},
 	errors: {
 		orderingClosed: i18n._(msg`Ordering is currently closed.`),
+		orderingPaused: i18n._(
+			msg`Online ordering is paused right now. Please try again a little later.`,
+		),
 		dropClosed: i18n._(msg`This drop is no longer accepting orders.`),
 		dropNotFound: i18n._(msg`This drop could not be found. It may have ended.`),
 		pickupSlotUnavailable: i18n._(
@@ -945,6 +952,8 @@ const tipOff = 'border-border bg-background text-foreground'
 			placeOrder: string
 			closed: string
 			closedReopen: string
+			paused: string
+			pausedUntil: string
 			ordersClose: string
 			orderPlacedPaymentFailed: string
 			viewReceipt: string
@@ -1561,6 +1570,17 @@ const tipOff = 'border-border bg-background text-foreground'
 			showOrderingClosedNotice(reason ? `${reopenText} ${reason}` : reopenText)
 		}
 
+		function showOrderingPaused(resumesAt: string | null) {
+			const at = resumesAt ? new Date(resumesAt) : null
+			showOrderingClosedNotice(
+				at && !Number.isNaN(at.getTime())
+					? fillTemplate(labels.pausedUntil, {
+							time: formatDropDateTime(at, meta.locale, activeLocation?.timezone || 'UTC'),
+						})
+					: labels.paused,
+			)
+		}
+
 		function updateHandoffLabel() {
 			const el = document.getElementById('pay-handoff-label')
 			if (el) {
@@ -1691,7 +1711,12 @@ const tipOff = 'border-border bg-background text-foreground'
 				}
 			}
 			updateTipAvailability(options)
-			if (options.ordering?.open === false) {
+			const pause = options.ordering?.paused
+			if (options.ordering?.open === false && pause) {
+				// Paused by the restaurant: a scheduled time after the pause still
+				// goes through (the region re-checks it); ASAP waits.
+				if (!currentSchedule()) showOrderingPaused(pause.resumesAt)
+			} else if (options.ordering?.open === false) {
 				showOrderingClosed(
 					options.ordering.reason ?? null,
 					options.ordering.nextOpen ?? null,

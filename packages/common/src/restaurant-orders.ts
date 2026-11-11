@@ -12,6 +12,7 @@ import {
 import { z } from 'zod'
 import { DAYS_OF_WEEK, DEFAULT_SCHEDULING } from './location-types.ts'
 import {
+	activeBusyExtraPrepMinutes,
 	isLocationOpenForOrdering,
 	localDateAndTimeToUtc,
 	type LocationOrderingAvailability,
@@ -127,6 +128,7 @@ export type RestaurantOrderErrorCode =
 	| 'invalid_pickup_slot'
 	| 'lead_time'
 	| 'ordering_closed'
+	| 'ordering_paused'
 	| 'pickup_disabled'
 	| 'delivery_disabled'
 	| 'delivery_unavailable'
@@ -918,6 +920,21 @@ export const publicLocationContextSchema = z
 		onlineHours: weeklyScheduleContextSchema.nullable().optional(),
 		storeHours: weeklyScheduleContextSchema.nullable().optional(),
 		specialHours: specialHoursContextSchema.optional(),
+		/**
+		 * Operator pause and busy mode. Optional so contexts published before
+		 * the fields existed still parse; evaluated against the clock.
+		 */
+		orderingPause: z
+			.object({ until: z.string().nullable() })
+			.nullable()
+			.optional(),
+		busyMode: z
+			.object({
+				extraPrepMinutes: z.number().int().min(0).max(240),
+				until: z.string().nullable(),
+			})
+			.nullable()
+			.optional(),
 	})
 	.loose()
 
@@ -1440,6 +1457,8 @@ export function validateScheduledFor(
 		| 'onlineHours'
 		| 'storeHours'
 		| 'specialHours'
+		| 'orderingPause'
+		| 'busyMode'
 	>,
 	scheduledFor: string,
 	now: Date,
@@ -1460,7 +1479,9 @@ export function validateScheduledFor(
 	}
 	const when = new Date(scheduledFor)
 	if (Number.isNaN(when.getTime())) return fail('Choose a valid time.')
-	const prepMinutes = Math.max(0, location.prepTime ?? 15)
+	const prepMinutes =
+		Math.max(0, location.prepTime ?? 15) +
+		activeBusyExtraPrepMinutes(location, now)
 	const earliest =
 		now.getTime() + (prepMinutes - SCHEDULE_GRACE_MINUTES) * 60 * 1000
 	if (when.getTime() < earliest) {
@@ -1472,6 +1493,9 @@ export function validateScheduledFor(
 		return fail(`Orders can be scheduled up to ${advanceDays} days in advance.`)
 	}
 	const availability = isLocationOpenForOrdering(location, when)
+	if (availability.paused) {
+		return fail('Online ordering is paused at that time.')
+	}
 	if (!availability.isOpen) {
 		return fail('The restaurant is not taking orders at that time.')
 	}
@@ -2261,6 +2285,16 @@ export function priceRestaurantOrder(
 			scheduledFor = schedule.scheduledFor.toISOString()
 		} else if (!walkIn) {
 			const availability = isLocationOpenForOrdering(location, now)
+			if (availability.paused) {
+				return {
+					ok: false,
+					error: orderError(
+						422,
+						'ordering_paused',
+						'Online ordering is paused right now. Please try again later.',
+					),
+				}
+			}
 			if (!availability.isOpen) {
 				return {
 					ok: false,
@@ -2782,6 +2816,12 @@ export type PublicOrderingOptions = {
 		status: LocationOrderingAvailability['status']
 		reason: string | null
 		nextOpen: string | null
+		/** Set while an operator has paused online ordering. */
+		paused: LocationOrderingAvailability['paused'] | null
+		/** Prep estimate in minutes, busy mode included. */
+		prepMinutes: number
+		/** Extra minutes busy mode adds right now (0 when off). */
+		busyExtraPrepMinutes: number
 	}
 	fulfillment: { pickup: boolean; delivery: boolean }
 	tips: { pickup: boolean; delivery: boolean }
@@ -2853,6 +2893,9 @@ export function buildPublicOrderingOptions(
 			status: availability.status,
 			reason: availability.reason ?? null,
 			nextOpen: availability.nextOpen ?? null,
+			paused: availability.paused ?? null,
+			prepMinutes: availability.estimatedPrepTime,
+			busyExtraPrepMinutes: availability.busyExtraPrepMinutes ?? 0,
 		},
 		fulfillment: {
 			pickup: Boolean(location.fulfillmentOptions.pickup),

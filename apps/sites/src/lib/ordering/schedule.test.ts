@@ -194,3 +194,37 @@ describe('findSlot / formatScheduledFor', () => {
 		})
 	})
 })
+
+describe('buildScheduleDays with a pause or busy mode', () => {
+	// 2026-10-08 12:03 in Chicago (CDT, UTC-5).
+	const now = new Date('2026-10-08T17:03:00Z')
+
+	it('offers no slot before a timed pause ends', () => {
+		const days = buildScheduleDays(
+			// Paused until 14:00 local.
+			{ ...chicago, orderingPause: { until: '2026-10-08T19:00:00Z' } },
+			{ now, locale: 'en', mode: 'pickup' },
+		)
+		expect(days[0]?.slots[0]?.localTime).toBe('14:00')
+	})
+
+	it('offers nothing while paused until turned back on', () => {
+		expect(
+			buildScheduleDays(
+				{ ...chicago, orderingPause: { until: null } },
+				{ now, locale: 'en', mode: 'pickup' },
+			),
+		).toEqual([])
+	})
+
+	it('adds busy minutes to the lead time', () => {
+		expect(
+			scheduleLeadMinutes(
+				{ ...chicago, busyMode: { extraPrepMinutes: 30, until: null } },
+				'pickup',
+				0,
+				now,
+			),
+		).toBe(50)
+	})
+})

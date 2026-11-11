@@ -1,4 +1,10 @@
 import {
+	activeBusyExtraPrepMinutes,
+	type BusyMode,
+	isOrderingPaused,
+	type OrderingPause,
+} from '@repo/common/location-availability'
+import {
 	type DayOfWeek,
 	type SpecialHour,
 	type TimeSlot,
@@ -21,6 +27,10 @@ export type ScheduleLocation = {
 	specialHours?: unknown
 	prepTime?: number | null
 	scheduling?: unknown
+	/** Operator pause: no slots before it ends (none at all when open-ended). */
+	orderingPause?: OrderingPause | null
+	/** Busy mode: its minutes push the earliest slot back. */
+	busyMode?: BusyMode | null
 }
 
 export type ScheduleSlot = {
@@ -192,12 +202,17 @@ export function scheduleLeadMinutes(
 	location: ScheduleLocation,
 	mode: FulfillmentMode,
 	deliveryEtaMin = 0,
+	now: Date = new Date(),
 ): number {
 	const prep =
 		typeof location.prepTime === 'number' && location.prepTime > 0
 			? location.prepTime
 			: DEFAULT_PREP_MINUTES
-	return prep + (mode === 'delivery' ? Math.max(0, deliveryEtaMin) : 0)
+	return (
+		prep +
+		activeBusyExtraPrepMinutes(location, now) +
+		(mode === 'delivery' ? Math.max(0, deliveryEtaMin) : 0)
+	)
 }
 
 export function buildScheduleDays(
@@ -219,9 +234,16 @@ export function buildScheduleDays(
 		asArray<WeeklySchedule[number]>(location.onlineHours) ??
 		asArray<WeeklySchedule[number]>(location.storeHours)
 	const special = asArray<SpecialHour>(location.specialHours) ?? []
-	const earliest =
+	let earliest =
 		now.getTime() +
-		scheduleLeadMinutes(location, options.mode, options.deliveryEtaMin) * 60_000
+		scheduleLeadMinutes(location, options.mode, options.deliveryEtaMin, now) *
+			60_000
+	if (isOrderingPaused(location, now)) {
+		// Open-ended pause: nothing can be scheduled until it is lifted.
+		const until = location.orderingPause?.until
+		if (!until) return []
+		earliest = Math.max(earliest, new Date(until).getTime())
+	}
 
 	const today = zonedParts(now, timezone).date
 	let timeFormat: Intl.DateTimeFormat

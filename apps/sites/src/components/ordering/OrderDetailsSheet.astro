@@ -67,6 +67,8 @@ const sheetLocations = locations.map((location) => {
 		storeHours: asJson(location.storeHours),
 		specialHours: asJson(location.specialHours),
 		prepTime: location.prepTime,
+		orderingPause: location.orderingPause ?? null,
+		busyMode: location.busyMode ?? null,
 		scheduling: asJson(location.scheduling),
 		fulfillmentOptions: asJson(location.fulfillmentOptions),
 		deliveryEta: {
@@ -313,7 +315,13 @@ const truckIcon =
 </style>
 
 <script>
-	import { isLocationOpenForOrdering } from '@repo/common/location-availability'
+	import {
+		activeBusyExtraPrepMinutes,
+		type BusyMode,
+		isLocationOpenForOrdering,
+		isOrderingPaused,
+		type OrderingPause,
+	} from '@repo/common/location-availability'
 	import { summarizeHours } from '~/lib/menu-hours'
 	import {
 		createPlacesSearch,
@@ -354,6 +362,8 @@ const truckIcon =
 		storeHours: any
 		specialHours: any
 		prepTime: number | null
+		orderingPause: OrderingPause | null
+		busyMode: BusyMode | null
 		scheduling: unknown
 		fulfillmentOptions: { pickup?: boolean; delivery?: boolean } | null
 		deliveryEta: { min: number; max: number }
@@ -491,6 +501,11 @@ const truckIcon =
 			})
 		}
 
+		/** Prep estimate now: the location's prep time plus any busy minutes. */
+		function prepMinutes(loc: SheetLocation) {
+			return (loc.prepTime || 15) + activeBusyExtraPrepMinutes(loc, new Date())
+		}
+
 		function openNow() {
 			const loc = location()
 			if (!loc) return true
@@ -529,7 +544,9 @@ const truckIcon =
 				head.append(el('span', 'text-sm font-semibold text-foreground', loc.name))
 				const availability = isLocationOpenForOrdering(loc as any, new Date())
 				const hours = summarizeHours(loc, availability, data.locale)
-				const status = availability.isOpen
+				const status = availability.paused
+					? L.orderingPaused
+					: availability.isOpen
 					? hours.closesAt
 						? fillTemplate(L.openUntil, { time: hours.closesAt })
 						: L.openNow
@@ -540,7 +557,7 @@ const truckIcon =
 				body.append(head)
 				if (loc.address) body.append(autoDir(el('span', 'mt-0.5 block text-sm text-muted-foreground', loc.address)))
 				body.append(
-					el('span', 'bidi-isolate mt-1 block text-xs text-muted-foreground', fillTemplate(L.readyIn, { count: loc.prepTime || 15 })),
+					el('span', 'bidi-isolate mt-1 block text-xs text-muted-foreground', fillTemplate(L.readyIn, { count: prepMinutes(loc) })),
 				)
 				label.append(input, body)
 				return label
@@ -679,11 +696,14 @@ const truckIcon =
 				b.setAttribute('aria-pressed', String(b.dataset.odWhen === whenMode))
 			}
 			const eta = deliveryEta()
+			const current = location()
 			asapHint.textContent = !open
-				? L.asapClosed
+				? current && isOrderingPaused(current, new Date())
+					? L.asapPaused
+					: L.asapClosed
 				: mode === 'delivery'
 					? fillTemplate(L.asapDelivery, ltrRange(eta.min, eta.max))
-					: fillTemplate(L.asapPickup, { count: location()?.prepTime || 15 })
+					: fillTemplate(L.asapPickup, { count: current ? prepMinutes(current) : 15 })
 			asapHint.classList.toggle('hidden', whenMode !== 'asap' && open)
 			scheduleEl.classList.toggle('hidden', whenMode !== 'schedule')
 			if (whenMode !== 'schedule') return
