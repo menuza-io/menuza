@@ -19,6 +19,9 @@ vi.mock('#app/utils/orders/customer-link.server.ts', () => ({
 vi.mock('#app/utils/loyalty/access.server.ts', () => ({
 	isLoyaltyFeatureEnabled: vi.fn().mockResolvedValue(false),
 }))
+vi.mock('#app/utils/location/ordering-controls.server.ts', () => ({
+	loadOrderingControls: vi.fn().mockResolvedValue([]),
+}))
 vi.mock('@repo/auth', () => ({
 	userHasOrganizationPermission: access.userHasOrganizationPermission,
 }))

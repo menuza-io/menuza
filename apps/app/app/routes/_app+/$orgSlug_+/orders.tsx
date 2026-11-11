@@ -20,8 +20,10 @@ import {
 	OrderStatusLabel,
 	PaymentStatusLabel,
 } from '#app/components/orders/order-status.tsx'
+import { OrderingControls } from '#app/components/orders/ordering-controls.tsx'
 import { OpenTabs } from '#app/components/qr/open-tabs.tsx'
 import { useOrdersClient } from '#app/hooks/use-orders-client.ts'
+import { loadOrderingControls } from '#app/utils/location/ordering-controls.server.ts'
 import { isLoyaltyFeatureEnabled } from '#app/utils/loyalty/access.server.ts'
 import { requireMenuRead } from '#app/utils/menu/access.server.ts'
 import { getOrderCustomerLinkAccess } from '#app/utils/orders/customer-link.server.ts'
@@ -54,6 +56,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	)
 	const link = await getOrderCustomerLinkAccess(request, orgSlug)
 	const qr = await getQrOrderingFeatures(organization.id)
+	const orderingControls = await loadOrderingControls(organization.id)
 	const loyaltyEnabled = qr.enabled
 		? await isLoyaltyFeatureEnabled(organization.id)
 		: false
@@ -68,6 +71,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			showTabs: qr.enabled,
 			// Customers links show only to members who can open Customers.
 			canViewCustomers: link.linkCustomers || link.linkGuests,
+			orderingControls,
 		},
 		{
 			headers: { 'Cache-Control': 'private, no-store' },
@@ -76,8 +80,14 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 }
 
 export default function OrdersInbox() {
-	const { orgSlug, canViewCustomers, canWrite, showTabs, loyaltyEnabled } =
-		useLoaderData<typeof loader>()
+	const {
+		orgSlug,
+		canViewCustomers,
+		canWrite,
+		showTabs,
+		loyaltyEnabled,
+		orderingControls,
+	} = useLoaderData<typeof loader>()
 	const [refreshKey, setRefreshKey] = useState(0)
 	const navigate = useNavigate()
 	const { _, i18n } = useLingui()
@@ -146,6 +156,11 @@ export default function OrdersInbox() {
 					{error}
 				</p>
 			) : null}
+			<OrderingControls
+				orgSlug={orgSlug}
+				locations={orderingControls}
+				canWrite={canWrite}
+			/>
 			{showTabs ? (
 				<OpenTabs
 					orgSlug={orgSlug}

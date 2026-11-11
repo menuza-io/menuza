@@ -1,4 +1,8 @@
 import {
+	type BusyMode,
+	type OrderingPause,
+} from '@repo/common/location-availability'
+import {
 	type DeliveryConfig,
 	type DeliveryZone,
 	type FulfillmentOptions,
@@ -49,6 +53,10 @@ export interface PublicLocationData {
 	deliveryConfig: DeliveryConfig
 	deliveryZones: DeliveryZone[]
 	isDefault: boolean
+	/** Active "pause online orders" (web and QR), or null. */
+	orderingPause: OrderingPause | null
+	/** Active busy mode (extra prep minutes), or null. */
+	busyMode: BusyMode | null
 }
 
 export interface PublicMenuOptionData {
