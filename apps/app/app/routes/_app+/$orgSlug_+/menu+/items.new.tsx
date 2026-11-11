@@ -29,6 +29,7 @@ import {
 	requireMenuRead,
 	requireMenuWrite,
 } from '#app/utils/menu/access.server.ts'
+import { autoTranslateNewItem } from '#app/utils/menu/menu-auto-translate.server.ts'
 import {
 	assertCategoryIdsInOrganization,
 	assertLocationIdsInOrganization,
@@ -111,9 +112,11 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	const organization = await requireUserOrganization(request, params.orgSlug, {
 		id: true,
 		slug: true,
+		siteDefaultLocale: true,
+		siteLocales: true,
 	})
 
-	await requireMenuWrite(request, organization.id)
+	const userId = await requireMenuWrite(request, organization.id)
 
 	const formData = await request.formData()
 	const rawData: Record<string, unknown> = {}
@@ -169,7 +172,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	)
 	const primaryImageKey = imageKeys[0] ?? null
 
-	await db.transaction(async (tx) => {
+	const newItemId = await db.transaction(async (tx) => {
 		await assertMediaKeysInOrganization(
 			organization.id,
 			[
@@ -278,9 +281,23 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				})),
 			)
 		}
+
+		return newItem.id
 	})
 
 	await purgeOrganizationSiteCache(organization.id, organization.slug)
+
+	// "Translate new dishes automatically" (Menu health, Review suggestions):
+	// fills the other languages' empty name and description. It never fails
+	// the create; it purges the cache again only when it wrote something.
+	await autoTranslateNewItem({
+		organization,
+		userId,
+		request,
+		itemId: newItemId,
+		displayName: data.displayName,
+		description: data.description || null,
+	})
 
 	return redirect(`/${organization.slug}/menu/items`)
 }
