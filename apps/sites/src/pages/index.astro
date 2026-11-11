@@ -3,7 +3,13 @@ import { ENV } from 'varlock/env'
 import { getPageTitle } from '@repo/config/brand'
 import SitePage from '~/components/SitePage.astro'
 import RenderBlocks from '~/components/blocks/RenderBlocks.astro'
-import { fetchPublishedSitePage } from '~/lib/org'
+import {
+	fetchPublishedReservations,
+	fetchPublishedSiteMenu,
+	fetchPublishedSitePage,
+} from '~/lib/org'
+import { resolveMediaUrl } from '~/lib/media'
+import { restaurantStructuredData } from '~/lib/restaurant-jsonld'
 import { buildSiteThemeCss } from '@repo/common/site-theme'
 
 const orgSlug = Astro.locals.orgSlug
@@ -14,6 +20,39 @@ const organization = Astro.locals.organization
 if (!organization) {
 	return new Response('Not Found', { status: 404, statusText: 'Not Found' })
 }
+
+const isPreview = Astro.url.searchParams.get('preview') === 'true'
+const defaultLocale = organization.defaultLocale ?? 'en'
+const locale = requestedLocale || defaultLocale
+
+// Structured data (schema.org Restaurant) for search engines. Started before
+// the page is awaited so the calls run alongside it; the menu call is
+// edge-cached and the HTML itself is cached on top. Never in preview.
+const structuredDataPromise = isPreview
+	? Promise.resolve(null)
+	: Promise.all([
+			fetchPublishedSiteMenu({ slug: orgSlug, host: customHost, lng: locale }),
+			fetchPublishedReservations({ slug: orgSlug, host: customHost }),
+		])
+			.then(([menu, reservations]) =>
+				restaurantStructuredData({
+					origin: Astro.url.origin,
+					name: menu?.organization?.name || organization.name,
+					locale,
+					locales: {
+						locales: organization.locales?.length
+							? organization.locales
+							: [defaultLocale],
+						defaultLocale,
+					},
+					// The App sends a root-relative image path; search engines need it absolute.
+					logoUrl: resolveMediaUrl(organization.siteIcon?.original),
+					locations: menu?.locations ?? [],
+					hasMenu: Boolean(menu?.menus?.length),
+					reservationsOnline: reservations?.online === true,
+				}),
+			)
+			.catch(() => null)
 
 const page = await (Astro.locals.publishedPagePromise ??
 	fetchPublishedSitePage({
@@ -115,6 +154,7 @@ const seoImageUrl = rawSeoImage
 		: `${appOrigin}${rawSeoImage}`
 	: null
 const seoNoIndex = page?.seo?.noIndex ?? false
+const structuredData = await structuredDataPromise
 ---
 
 <SitePage
@@ -125,6 +165,9 @@ const seoNoIndex = page?.seo?.noIndex ?? false
 	imageUrl={seoImageUrl}
 	noIndex={seoNoIndex}
 >
+	{structuredData ? (
+		<script slot="head" type="application/ld+json" is:inline set:html={structuredData} />
+	) : null}
 	{
 		page ? (
 			<RenderBlocks sections={page.sections} />

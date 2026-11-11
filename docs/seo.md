@@ -49,3 +49,40 @@ export const handle: SEOHandle = {
 	getSitemapEntries: () => null,
 }
 ```
+
+## Tenant sites: Restaurant structured data
+
+The home page of every restaurant website (`apps/sites`,
+`src/pages/index.astro`) carries a `<script type="application/ld+json">` block
+with schema.org [`Restaurant`](https://schema.org/Restaurant) data, built by the
+pure `buildRestaurantJsonLd` in `apps/sites/src/lib/restaurant-jsonld.ts`
+(Google's
+[local business](https://developers.google.com/search/docs/appearance/structured-data/local-business)
+format).
+
+- **Shape.** One location (or none): a single `Restaurant`. Several: a `@graph`
+  with the `Organization` (name, url, logo) and one `Restaurant` per location,
+  linked both ways with `department` and `parentOrganization`.
+- **Fields.** Name, home URL, logo and image (the site icon), telephone,
+  `PostalAddress` and `GeoCoordinates` from the location address, and
+  `openingHoursSpecification` from the weekly store hours. Days with the same
+  hours share an entry; a closed day is `00:00`–`00:00`; overnight hours, which
+  the App stores split at midnight (`18:00`–`23:59` plus `00:00`–`02:00` the
+  next day), are joined back into one `18:00`–`02:00` span.
+- **Actions.** `hasMenu` and an `OrderAction` to `/menu` when a menu is
+  published (delivery methods from the location's pickup and delivery options);
+  `acceptsReservations` and a `ReserveAction` to `/reserve` when online booking
+  is on. Links are in the page's language.
+- **Left out.** `servesCuisine` and `priceRange`: we store no cuisine, and a
+  price range would be a guess. Any field without data is omitted, never
+  invented. Only published, public facts; never customer data.
+- **Cost and safety.** The menu and reservations-gate calls start before the
+  page is awaited, so they run in parallel with it; the menu call is edge-cached
+  and the HTML is cached on top. Preview renders skip it. The JSON is escaped
+  with `serializeJsonLd` (`<`, `>`, `&`, U+2028/2029 as `\u` escapes), like the
+  careers `JobPosting` data. A JSON-LD block is data, not script, so the
+  production CSP needs no hash for it.
+
+Validate a live site with Google's
+[Rich Results Test](https://search.google.com/test/rich-results) or the
+[Schema Markup Validator](https://validator.schema.org/).
