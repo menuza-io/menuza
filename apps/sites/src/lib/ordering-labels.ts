@@ -176,6 +176,7 @@ export function buildOrderDetailsLabels(i18n: I18n) {
 		openNow: i18n._(msg`Open now`),
 		openUntil: keep(i18n, msg`Open until {time}`, 'time'),
 		closed: i18n._(msg`Closed`),
+		orderingPaused: i18n._(msg`Ordering paused`),
 		opensAt: keep(i18n, msg`Opens {time}`, 'time'),
 		readyIn: keep(i18n, msg`Ready in about {count} min`, 'count'),
 		when: i18n._(msg`When`),
@@ -184,6 +185,9 @@ export function buildOrderDetailsLabels(i18n: I18n) {
 		asapPickup: keep(i18n, msg`Ready in about {count} min`, 'count'),
 		asapDelivery: keep(i18n, msg`Arrives in {min}–{max} min`, 'min', 'max'),
 		asapClosed: i18n._(msg`Closed now. Schedule your order for later.`),
+		asapPaused: i18n._(
+			msg`Online ordering is paused right now. Schedule your order for later.`,
+		),
 		today: i18n._(msg`Today`),
 		tomorrow: i18n._(msg`Tomorrow`),
 		chooseDay: i18n._(msg`Choose a day`),

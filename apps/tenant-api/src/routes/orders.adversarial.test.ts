@@ -1234,6 +1234,58 @@ describe('Adversarial: restaurant ordering (public browser surface)', () => {
 		expect(serialized).not.toMatch(/Rana|phone|email|contact/i)
 	})
 
+	// -----------------------------------------------------------------------
+	// Operator pause of online ordering
+	// -----------------------------------------------------------------------
+
+	function pausedContext(until: string | null) {
+		const context = menuContext()
+		Object.assign(context.menu.locations[0]!, {
+			orderingPause: { until },
+			scheduling: { scheduledOrdersEnabled: true, advanceOrderDays: 3 },
+		})
+		return context
+	}
+
+	it('refuses orders while online ordering is paused', async () => {
+		activeContext = pausedContext(
+			new Date(Date.now() + 30 * 60_000).toISOString(),
+		)
+		const placed = await postOrder(orderBody())
+		expect(placed.status).toBe(422)
+		expect((await placed.json()).error).toBe('ordering_paused')
+
+		const options = await app.request(
+			'/orders/options?slug=test-org&locationId=loc-1',
+			{ headers: { origin: 'https://test-org.example.com' } },
+		)
+		expect(options.status).toBe(200)
+		const body = await options.json()
+		expect(body.ordering.open).toBe(false)
+		expect(body.ordering.paused.until).toEqual(expect.any(String))
+
+		const db = await getTenantDb(orgId)
+		expect(await db.select().from(restaurantOrders)).toHaveLength(0)
+	})
+
+	it('takes orders again once the pause has ended', async () => {
+		activeContext = pausedContext(new Date(Date.now() - 1000).toISOString())
+		const placed = await postOrder(orderBody())
+		expect(placed.status).toBe(201)
+	})
+
+	it('accepts a scheduled order for after the pause', async () => {
+		activeContext = pausedContext(
+			new Date(Date.now() + 30 * 60_000).toISOString(),
+		)
+		const placed = await postOrder(
+			orderBody({
+				scheduledFor: new Date(Date.now() + 90 * 60_000).toISOString(),
+			}),
+		)
+		expect(placed.status).toBe(201)
+	})
+
 	it('options requires a resolvable organization', async () => {
 		const response = await app.request(
 			'/orders/options?slug=other-org&locationId=loc-1',

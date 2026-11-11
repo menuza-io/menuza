@@ -38,6 +38,197 @@ export interface LocationOrderingAvailability {
 	dayOfWeek: DayOfWeek
 	estimatedPrepTime: number
 	estimatedDeliveryTime?: { min: number; max: number }
+	/**
+	 * Set while an operator has paused online ordering. `until` is the ISO end
+	 * of the pause (null: until someone resumes it); `resumesAt` is when orders
+	 * can actually be placed again: the end of the pause, or the next opening
+	 * after it when the pause runs past closing (null when unknown or never).
+	 */
+	paused?: { until: string | null; resumesAt: string | null }
+	/** Extra minutes busy mode adds to `estimatedPrepTime` right now. */
+	busyExtraPrepMinutes?: number
+}
+
+/**
+ * An operator's "pause online orders" switch as published to Sites and the
+ * region. Only an active pause is published; `until` null means it lasts until
+ * someone resumes it. Evaluated against the clock, so a cached copy stops
+ * pausing on its own when the time passes.
+ */
+export type OrderingPause = { until: string | null }
+
+/**
+ * Busy mode: extra minutes added to every prep estimate (and to the earliest
+ * scheduled time) while it lasts. `until` null means until someone turns it
+ * off.
+ */
+export type BusyMode = { extraPrepMinutes: number; until: string | null }
+
+/** Longest pause or busy period an operator can set with an end time. */
+export const MAX_ORDERING_PAUSE_MS = 7 * 24 * 60 * 60 * 1000
+/** Busy mode choices offered to operators, in minutes. */
+export const BUSY_EXTRA_PREP_CHOICES = [10, 20, 30] as const
+export const MAX_BUSY_EXTRA_PREP_MINUTES = 120
+
+type PauseSource = {
+	orderingPause?: OrderingPause | null
+	busyMode?: BusyMode | null
+}
+
+function untilMs(until: string | null | undefined): number | null {
+	if (until == null) return null
+	const ms = new Date(until).getTime()
+	return Number.isNaN(ms) ? Number.NaN : ms
+}
+
+/**
+ * True while the location's online ordering pause is in force at `now`. A
+ * malformed end time counts as no pause, so a bad value never blocks orders.
+ */
+export function isOrderingPaused(
+	location: PauseSource,
+	now: Date = new Date(),
+): boolean {
+	const pause = location.orderingPause
+	if (!pause) return false
+	const end = untilMs(pause.until)
+	if (end === null) return true
+	return !Number.isNaN(end) && end > now.getTime()
+}
+
+/** Busy mode minutes in force at `now` (0 when off or expired). */
+export function activeBusyExtraPrepMinutes(
+	location: PauseSource,
+	now: Date = new Date(),
+): number {
+	const busy = location.busyMode
+	if (!busy) return 0
+	const minutes = Math.min(
+		MAX_BUSY_EXTRA_PREP_MINUTES,
+		Math.max(0, Math.round(busy.extraPrepMinutes || 0)),
+	)
+	if (minutes === 0) return 0
+	const end = untilMs(busy.until)
+	if (end === null) return minutes
+	return !Number.isNaN(end) && end > now.getTime() ? minutes : 0
+}
+
+type ScheduleSource = {
+	timezone?: string | null
+	onlineHours?: WeeklySchedule | null
+	storeHours?: WeeklySchedule | null
+	specialHours?: SpecialHour[] | null
+	isActive?: boolean | null
+}
+
+/**
+ * The first moment at or after `from` that the location's online hours are
+ * open, looking up to eight local days ahead. Ignores any pause. Returns
+ * `from` when the location publishes no schedule (always open) and null when
+ * it is inactive or never opens in that window.
+ */
+export function nextOrderingOpenAt(
+	location: ScheduleSource,
+	from: Date,
+): Date | null {
+	if (location.isActive === false) return null
+	const timezone = location.timezone || 'UTC'
+	const schedule = location.onlineHours || location.storeHours
+	if (!Array.isArray(schedule) || schedule.length === 0) return from
+	const startDate = localDateOf(from, timezone)
+	const fromMs = from.getTime()
+	for (let offset = 0; offset <= 8; offset += 1) {
+		const day = addLocalDays(startDate, offset)
+		const special = Array.isArray(location.specialHours)
+			? location.specialHours.find((entry) => entry.date === day.date)
+			: undefined
+		let slots: SpecialHour['slots'] = []
+		if (special) {
+			slots = special.isOpen ? (special.slots ?? []) : []
+		} else {
+			const daySchedule = schedule.find((entry) => entry.day === day.day)
+			slots = daySchedule?.isOpen ? (daySchedule.slots ?? []) : []
+		}
+		const sorted = [...slots]
+			.filter((slot) => slot.start <= slot.end)
+			.sort((a, b) => a.start.localeCompare(b.start))
+		for (const slot of sorted) {
+			const start = localDateAndTimeToUtc(day.date, slot.start, timezone)
+			// Slot ends are inclusive to the minute (23:59 covers the last minute).
+			const end =
+				localDateAndTimeToUtc(day.date, slot.end, timezone).getTime() + 60_000
+			if (end <= fromMs) continue
+			return start.getTime() > fromMs ? start : from
+		}
+	}
+	return null
+}
+
+function localDateOf(instant: Date, timezone: string): string {
+	try {
+		const parts: Record<string, string> = {}
+		for (const p of new Intl.DateTimeFormat('en-US', {
+			timeZone: timezone,
+			year: 'numeric',
+			month: '2-digit',
+			day: '2-digit',
+		}).formatToParts(instant)) {
+			parts[p.type] = p.value
+		}
+		return `${parts.year}-${parts.month}-${parts.day}`
+	} catch {
+		return instant.toISOString().slice(0, 10)
+	}
+}
+
+/**
+ * End of "the rest of today" for a pause chosen now: the start of the next
+ * local day, or, when the location stays open past midnight (a slot that
+ * starts at 00:00), the end of that overnight stretch. DST-safe: built from
+ * calendar dates in the location time zone, never `now + 24h`.
+ */
+export function endOfOrderingDay(
+	location: ScheduleSource,
+	now: Date = new Date(),
+): Date {
+	const timezone = location.timezone || 'UTC'
+	const tomorrow = addLocalDays(localDateOf(now, timezone), 1)
+	const midnight = localDateAndTimeToUtc(tomorrow.date, START_OF_DAY, timezone)
+	const special = Array.isArray(location.specialHours)
+		? location.specialHours.find((entry) => entry.date === tomorrow.date)
+		: undefined
+	const schedule = location.onlineHours || location.storeHours
+	let slots: SpecialHour['slots'] = []
+	if (special) {
+		slots = special.isOpen ? (special.slots ?? []) : []
+	} else if (Array.isArray(schedule)) {
+		const daySchedule = schedule.find((entry) => entry.day === tomorrow.day)
+		slots = daySchedule?.isOpen ? (daySchedule.slots ?? []) : []
+	}
+	const overnight = slots.find(
+		(slot) => slot.start === START_OF_DAY && slot.end > START_OF_DAY,
+	)
+	if (!overnight) return midnight
+	return new Date(
+		localDateAndTimeToUtc(tomorrow.date, overnight.end, timezone).getTime() +
+			60_000,
+	)
+}
+
+/** "7:30 PM" (same day) or "Thu 7:30 PM" in the location time zone, English. */
+function formatResumeDisplay(instant: Date, now: Date, timezone: string) {
+	try {
+		const sameDay =
+			localDateOf(instant, timezone) === localDateOf(now, timezone)
+		return new Intl.DateTimeFormat('en-US', {
+			timeZone: timezone,
+			hour: 'numeric',
+			minute: '2-digit',
+			...(sameDay ? {} : { weekday: 'short' }),
+		}).format(instant)
+	} catch {
+		return instant.toISOString()
+	}
 }
 
 export function isLocationOpenForOrdering(
@@ -49,8 +240,55 @@ export function isLocationOpenForOrdering(
 		prepTime?: number | null
 		deliveryConfig?: DeliveryConfig | null
 		isActive?: boolean | null
+		orderingPause?: OrderingPause | null
+		busyMode?: BusyMode | null
 	},
 	currentTime: Date = new Date(),
+): LocationOrderingAvailability {
+	const result = scheduleAvailability(location, currentTime)
+	const busy = activeBusyExtraPrepMinutes(location, currentTime)
+	if (busy > 0) {
+		result.estimatedPrepTime += busy
+		result.busyExtraPrepMinutes = busy
+		if (result.estimatedDeliveryTime) {
+			result.estimatedDeliveryTime = {
+				min: result.estimatedDeliveryTime.min + busy,
+				max: result.estimatedDeliveryTime.max + busy,
+			}
+		}
+	}
+	if (location.isActive === false || !isOrderingPaused(location, currentTime)) {
+		return result
+	}
+	const timezone = location.timezone || 'UTC'
+	const until = location.orderingPause?.until ?? null
+	const resumes = until ? nextOrderingOpenAt(location, new Date(until)) : null
+	return {
+		...result,
+		isOpen: false,
+		status: 'closed',
+		reason: 'Online ordering is paused',
+		nextOpen: resumes
+			? `Online ordering resumes at ${formatResumeDisplay(resumes, currentTime, timezone)}`
+			: undefined,
+		paused: {
+			until: until ? new Date(until).toISOString() : null,
+			resumesAt: resumes ? resumes.toISOString() : null,
+		},
+	}
+}
+
+function scheduleAvailability(
+	location: {
+		timezone?: string | null
+		onlineHours?: WeeklySchedule | null
+		storeHours?: WeeklySchedule | null
+		specialHours?: SpecialHour[] | null
+		prepTime?: number | null
+		deliveryConfig?: DeliveryConfig | null
+		isActive?: boolean | null
+	},
+	currentTime: Date,
 ): LocationOrderingAvailability {
 	const timezone = location.timezone || 'UTC'
 	const prepTime = location.prepTime || 15

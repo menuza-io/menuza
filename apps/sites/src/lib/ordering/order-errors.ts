@@ -7,6 +7,8 @@
 export type OrderErrorLabels = {
 	/** ordering_closed */
 	orderingClosed: string
+	/** ordering_paused: an operator paused web and QR ordering */
+	orderingPaused: string
 	/** drop_closed */
 	dropClosed: string
 	/** drop_not_found */
@@ -55,6 +57,7 @@ export type OrderErrorLabelKey = keyof OrderErrorLabels
 
 const CODE_TO_LABEL: Record<string, OrderErrorLabelKey> = {
 	ordering_closed: 'orderingClosed',
+	ordering_paused: 'orderingPaused',
 	drop_closed: 'dropClosed',
 	drop_not_found: 'dropNotFound',
 	lead_time: 'pickupSlotUnavailable',

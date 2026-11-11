@@ -70,6 +70,7 @@ type Labels = Record<
 	| 'errorCoupon'
 	| 'errorDiscountChanged'
 	| 'errorClosed'
+	| 'errorPaused'
 	| 'errorRateLimited'
 	| 'errorUnavailable'
 	| 'payNow'
@@ -250,6 +251,7 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 			)
 		}
 		if (code === 'ordering_closed') return labels.errorClosed
+		if (code === 'ordering_paused') return labels.errorPaused
 		if (code === 'table_rate_limited' || code === 'rate_limit_exceeded') {
 			return labels.errorRateLimited
 		}

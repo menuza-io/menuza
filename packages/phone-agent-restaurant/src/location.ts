@@ -41,12 +41,50 @@ export interface AgentLocation {
 		zipCodes: string[]
 		radius: { value: number; unit: string }
 	}>
+	/**
+	 * Operator pause of online ordering (null `until`: until resumed). Absent
+	 * on configs published before it existed.
+	 */
+	orderingPause?: { until: string | null } | null
+	/** Busy mode: extra prep minutes while it lasts. */
+	busyMode?: { extraPrepMinutes: number; until: string | null } | null
+}
+
+function lastsAt(until: string | null, now: Date): boolean {
+	if (until === null) return true
+	const end = new Date(until).getTime()
+	return !Number.isNaN(end) && end > now.getTime()
+}
+
+/**
+ * True while an operator has paused online ordering, with the same rule as
+ * `isOrderingPaused` in `@repo/common/location-availability`.
+ */
+export function orderingPausedAt(
+	location: Pick<AgentLocation, 'orderingPause'>,
+	now: Date,
+): boolean {
+	const pause = location.orderingPause
+	return pause ? lastsAt(pause.until, now) : false
+}
+
+/** Pickup wait in minutes at `now`, busy mode included. */
+export function currentPrepMinutes(
+	location: Pick<AgentLocation, 'prepTime' | 'busyMode'>,
+	now: Date,
+): number {
+	const busy = location.busyMode
+	const extra =
+		busy && busy.extraPrepMinutes > 0 && lastsAt(busy.until, now)
+			? busy.extraPrepMinutes
+			: 0
+	return location.prepTime + extra
 }
 
 /** The location fields availability depends on. */
 export type AvailabilityLocation = Pick<
 	AgentLocation,
-	'timezone' | 'storeHours' | 'onlineHours' | 'specialHours'
+	'timezone' | 'storeHours' | 'onlineHours' | 'specialHours' | 'orderingPause'
 > & {
 	/** Present on published Sites locations; App treats inactive as closed. */
 	isActive?: boolean | null
@@ -61,7 +99,8 @@ export type RestaurantAvailability = Availability & {
  * Open/closed state at `now`, computed the way App does with
  * `isLocationOpenForOrdering` in `@repo/common/location-availability`, so
  * cached configs agree with App: `isOpen` follows store hours (falling back
- * to online hours), `orderingOpen` follows online hours.
+ * to online hours), `orderingOpen` follows online hours and is false while an
+ * operator has paused online ordering.
  */
 export function restaurantAvailability(
 	location: AvailabilityLocation,
@@ -82,7 +121,7 @@ export function restaurantAvailability(
 	return {
 		isOpen: store.isOpen,
 		nextOpen: store.nextOpen,
-		orderingOpen: ordering.isOpen,
+		orderingOpen: ordering.isOpen && !orderingPausedAt(location, now),
 	}
 }
 
@@ -137,11 +176,17 @@ export function describeRestaurantLocation(
 		options.dineIn ? 'dine-in' : null,
 	].filter(Boolean)
 	if (modes.length) lines.push(`Offers: ${modes.join(', ')}`)
-	lines.push(`Typical pickup wait: about ${location.prepTime} minutes`)
+	const prepMinutes = currentPrepMinutes(location, now)
+	const busyExtra = prepMinutes - location.prepTime
+	lines.push(
+		busyExtra > 0
+			? `Pickup wait right now: about ${prepMinutes} minutes (the kitchen is busy)`
+			: `Typical pickup wait: about ${location.prepTime} minutes`,
+	)
 
 	if (options.delivery) {
 		lines.push(
-			`Typical delivery time: ${location.deliveryConfig.estimatedDeliveryTimeMin} to ${location.deliveryConfig.estimatedDeliveryTimeMax} minutes`,
+			`Typical delivery time: ${location.deliveryConfig.estimatedDeliveryTimeMin + busyExtra} to ${location.deliveryConfig.estimatedDeliveryTimeMax + busyExtra} minutes`,
 		)
 		const zones = location.deliveryZones.filter(
 			(zone) => zone.enabled && zone.restriction === 'allowed',

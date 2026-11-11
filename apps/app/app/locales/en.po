@@ -2529,6 +2529,10 @@ msgstr ""
 msgid "+{lateMin}m late"
 msgstr "+{lateMin}m late"
 
+#: app/components/orders/ordering-controls.tsx:199
+msgid "+{minutes} minutes"
+msgstr "+{minutes} minutes"
+
 #: app/components/menu/drop-wizard/drop-drawers.tsx:310
 #: app/components/menu/drop-wizard/drop-form.tsx:1103
 msgid "+{moreSlots} more"
@@ -2745,6 +2749,10 @@ msgstr "1 drop"
 msgid "1 form"
 msgstr "1 form"
 
+#: app/components/orders/ordering-controls.tsx:117
+msgid "1 hour"
+msgstr "1 hour"
+
 #: app/components/menu/drop-wizard/drop-drawers.tsx:351
 #: app/components/menu/drop-wizard/drop-drawers.tsx:369
 msgid "1 hour prior"
@@ -2824,6 +2832,10 @@ msgstr "12 hours prior"
 msgid "15 min"
 msgstr "15 min"
 
+#: app/components/orders/ordering-controls.tsx:115
+msgid "15 minutes"
+msgstr "15 minutes"
+
 #~ msgid "15 minutes before"
 #~ msgstr "15 minutes before"
 
@@ -2870,6 +2882,10 @@ msgstr "24 hours prior"
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:672
 msgid "30 min"
 msgstr "30 min"
+
+#: app/components/orders/ordering-controls.tsx:116
+msgid "30 minutes"
+msgstr "30 minutes"
 
 #~ msgid "30 minutes before"
 #~ msgstr "30 minutes before"
@@ -4544,6 +4560,10 @@ msgstr "Add position"
 #: app/components/staff/labor/tip-settings-dialog.tsx:238
 msgid "Add positions on the Team page first."
 msgstr "Add positions on the Team page first."
+
+#: app/components/orders/ordering-controls.tsx:185
+msgid "Add prep time for the rest of today"
+msgstr "Add prep time for the rest of today"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:775
 msgid "Add pronunciation"
@@ -6634,7 +6654,7 @@ msgid "At slot time"
 msgstr "At slot time"
 
 #: app/components/orders/order-detail.tsx:460
-#: app/routes/_app+/$orgSlug_+/orders.tsx:253
+#: app/routes/_app+/$orgSlug_+/orders.tsx:268
 msgid "At the table"
 msgstr "At the table"
 
@@ -7808,6 +7828,19 @@ msgstr "Business type settings"
 #: app/utils/reservations/labels.ts:136
 msgid "Bussing"
 msgstr "Bussing"
+
+#: app/components/orders/ordering-controls.tsx:178
+msgid "Busy mode"
+msgstr "Busy mode"
+
+#: app/components/orders/ordering-controls.tsx:155
+msgid "Busy: {totalPrep} min prep (+{busyMinutes})"
+msgstr "Busy: {totalPrep} min prep (+{busyMinutes})"
+
+#: app/components/orders/ordering-controls.tsx:153
+#: app/components/orders/ordering-controls.tsx:153
+msgid "Busy: {totalPrep} min prep (+{busyMinutes}) until {busyEnd}"
+msgstr "Busy: {totalPrep} min prep (+{busyMinutes}) until {busyEnd}"
 
 #: app/utils/inventory/starter-lists.ts:212
 msgid "Butter"
@@ -12476,7 +12509,7 @@ msgstr ""
 #: app/components/orders/order-detail.tsx:363
 #: app/components/orders/order-detail.tsx:387
 #: app/components/workspace-breadcrumb.tsx:110
-#: app/routes/_app+/$orgSlug_+/orders.tsx:229
+#: app/routes/_app+/$orgSlug_+/orders.tsx:244
 msgid "Customer"
 msgstr "Customer"
 
@@ -13460,7 +13493,7 @@ msgstr "Delivers on"
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:145
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:164
 #: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:940
-#: app/routes/_app+/$orgSlug_+/orders.tsx:246
+#: app/routes/_app+/$orgSlug_+/orders.tsx:261
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:680
 #: app/routes/mock-payments+/dashboard.tsx:158
 #: app/utils/discounts/labels.ts:166
@@ -18389,7 +18422,7 @@ msgstr "Groups of a quantity"
 #: app/components/reservations/detail-sheet.tsx:927
 #: app/components/reservations/today-party-card.tsx:77
 #: app/components/reservations/waitlist/today-waitlist-card.tsx:70
-#: app/routes/_app+/$orgSlug_+/orders.tsx:220
+#: app/routes/_app+/$orgSlug_+/orders.tsx:235
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:460
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:478
 #: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:284
@@ -18400,7 +18433,7 @@ msgstr "Guest"
 
 #: app/components/orders/order-detail.tsx:388
 #: app/components/settings/cards/organization/shop-card.tsx:465
-#: app/routes/_app+/$orgSlug_+/orders.tsx:230
+#: app/routes/_app+/$orgSlug_+/orders.tsx:245
 msgid "Guest checkout"
 msgstr ""
 
@@ -21760,7 +21793,7 @@ msgstr "Loading onboarding"
 msgid "Loading order…"
 msgstr "Loading order…"
 
-#: app/routes/_app+/$orgSlug_+/orders.tsx:159
+#: app/routes/_app+/$orgSlug_+/orders.tsx:174
 msgid "Loading orders…"
 msgstr "Loading orders…"
 
@@ -25500,7 +25533,7 @@ msgstr "No options yet."
 msgid "No orders usually expected"
 msgstr "No orders usually expected"
 
-#: app/routes/_app+/$orgSlug_+/orders.tsx:164
+#: app/routes/_app+/$orgSlug_+/orders.tsx:179
 msgid "No orders yet"
 msgstr "No orders yet"
 
@@ -27373,6 +27406,10 @@ msgstr "Online order tips"
 msgid "Online order tips that join the pool"
 msgstr "Online order tips that join the pool"
 
+#: app/components/orders/ordering-controls.tsx:63
+msgid "Online ordering"
+msgstr "Online ordering"
+
 #: app/components/menu/menu-form.tsx:247
 msgid "Online Ordering, POS & Kiosk"
 msgstr "Online Ordering, POS & Kiosk"
@@ -28433,7 +28470,7 @@ msgstr "Ordering Window"
 #: app/components/customers/person-profile-screen.tsx:450
 #: app/components/orders/order-detail.tsx:280
 #: app/components/workspace-breadcrumb.tsx:12
-#: app/routes/_app+/$orgSlug_+/orders.tsx:129
+#: app/routes/_app+/$orgSlug_+/orders.tsx:139
 msgid "Orders"
 msgstr "Orders"
 
@@ -29283,6 +29320,14 @@ msgstr ""
 msgid "Pause {name}"
 msgstr "Pause {name}"
 
+#: app/components/orders/ordering-controls.tsx:245
+msgid "Pause online orders for"
+msgstr "Pause online orders for"
+
+#: app/components/orders/ordering-controls.tsx:238
+msgid "Pause orders"
+msgstr "Pause orders"
+
 #: app/routes/_app+/$orgSlug_+/loyalty+/program.tsx:315
 msgid "Pause program"
 msgstr "Pause program"
@@ -29292,6 +29337,10 @@ msgstr "Pause program"
 
 #~ msgid "Pause transfers"
 #~ msgstr "Pause transfers"
+
+#: app/components/orders/ordering-controls.tsx:66
+msgid "Pause web and QR orders when the kitchen is overwhelmed, or add prep time in busy mode. Counter sales are not affected."
+msgstr "Pause web and QR orders when the kitchen is overwhelmed, or add prep time in busy mode. Counter sales are not affected."
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:340
 msgid "paused"
@@ -29309,6 +29358,15 @@ msgstr ""
 #: app/utils/loyalty/promotions.ts:50
 msgid "Paused"
 msgstr ""
+
+#: app/components/orders/ordering-controls.tsx:140
+#: app/components/orders/ordering-controls.tsx:140
+msgid "Paused until {pauseEnd}"
+msgstr "Paused until {pauseEnd}"
+
+#: app/components/orders/ordering-controls.tsx:141
+msgid "Paused until you resume"
+msgstr "Paused until you resume"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:454
 msgid "Pausing automation..."
@@ -30066,7 +30124,7 @@ msgstr "Pickles"
 
 #: app/components/customers/person-orders-panel.tsx:222
 #: app/components/orders/order-detail.tsx:461
-#: app/routes/_app+/$orgSlug_+/orders.tsx:254
+#: app/routes/_app+/$orgSlug_+/orders.tsx:269
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:675
 #: app/utils/discounts/labels.ts:165
 msgid "Pickup"
@@ -31855,7 +31913,7 @@ msgstr "Reassigned upcoming reservations automatically"
 msgid "Receive"
 msgstr "Receive"
 
-#: app/routes/_app+/$orgSlug_+/orders.tsx:131
+#: app/routes/_app+/$orgSlug_+/orders.tsx:141
 msgid "Receive and manage menu and drop orders. Updates refresh every 15 seconds."
 msgstr "Receive and manage menu and drop orders. Updates refresh every 15 seconds."
 
@@ -32180,7 +32238,7 @@ msgstr "Reflow later parties"
 #: app/components/staff/timeclock-today.tsx:172
 #: app/routes/_app+/$orgSlug_+/loyalty+/activity.tsx:401
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:247
-#: app/routes/_app+/$orgSlug_+/orders.tsx:141
+#: app/routes/_app+/$orgSlug_+/orders.tsx:151
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:347
 msgid "Refresh"
 msgstr "Refresh"
@@ -33470,6 +33528,10 @@ msgstr "Rest (paid)"
 msgid "Rest break"
 msgstr "Rest break"
 
+#: app/components/orders/ordering-controls.tsx:118
+msgid "Rest of today"
+msgstr "Rest of today"
+
 #~ msgid "Restaurant"
 #~ msgstr "Restaurant"
 
@@ -33556,6 +33618,10 @@ msgstr "Resume {name}"
 #: app/components/inventory/start-count-dialog.tsx:149
 msgid "Resume it"
 msgstr "Resume it"
+
+#: app/components/orders/ordering-controls.tsx:225
+msgid "Resume orders"
+msgstr "Resume orders"
 
 #: app/routes/_app+/$orgSlug_+/loyalty+/program.tsx:300
 msgid "Resume program"
@@ -38358,7 +38424,7 @@ msgstr "Submit with requirements due"
 msgid "Submitted"
 msgstr "Submitted"
 
-#: app/routes/_app+/$orgSlug_+/orders.tsx:167
+#: app/routes/_app+/$orgSlug_+/orders.tsx:182
 msgid "Submitted orders will appear here."
 msgstr "Submitted orders will appear here."
 
@@ -38700,8 +38766,8 @@ msgstr "Table {createdTableLabel} created."
 #: app/components/qr/open-tabs.tsx:369
 #: app/components/qr/open-tabs.tsx:1059
 #: app/components/qr/open-tabs.tsx:1147
-#: app/routes/_app+/$orgSlug_+/orders.tsx:218
-#: app/routes/_app+/$orgSlug_+/orders.tsx:251
+#: app/routes/_app+/$orgSlug_+/orders.tsx:233
+#: app/routes/_app+/$orgSlug_+/orders.tsx:266
 msgid "Table {label}"
 msgstr "Table {label}"
 
@@ -39024,6 +39090,10 @@ msgstr "Takes a percentage off."
 #: app/components/discounts/discount-form.tsx:182
 msgid "Takes the delivery fee off."
 msgstr "Takes the delivery fee off."
+
+#: app/components/orders/ordering-controls.tsx:145
+msgid "Taking online orders"
+msgstr "Taking online orders"
 
 #: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:308
 msgid "Taking reservations"
@@ -39546,6 +39616,10 @@ msgstr "That date is already listed."
 #: app/components/print/artwork-labels.ts:10
 msgid "That design is not in your Canva account anymore."
 msgstr "That design is not in your Canva account anymore."
+
+#: app/components/orders/ordering-controls.tsx:161
+msgid "That did not save. Try again."
+msgstr "That did not save. Try again."
 
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:295
 msgid "That did not work"
@@ -43611,6 +43685,10 @@ msgstr "Turn off"
 msgid "Turn off agent audio"
 msgstr "Turn off agent audio"
 
+#: app/components/orders/ordering-controls.tsx:210
+msgid "Turn off busy mode"
+msgstr "Turn off busy mode"
+
 #: app/components/pos/terminals-manager.tsx:874
 msgid "Turn off PIN sign-in for {label}"
 msgstr "Turn off PIN sign-in for {label}"
@@ -43874,7 +43952,7 @@ msgstr "Unable to load floor plan data."
 msgid "Unable to load more calls. Try again."
 msgstr "Unable to load more calls. Try again."
 
-#: app/routes/_app+/$orgSlug_+/orders.tsx:102
+#: app/routes/_app+/$orgSlug_+/orders.tsx:112
 msgid "Unable to load orders. Try again."
 msgstr "Unable to load orders. Try again."
 
@@ -44283,6 +44361,10 @@ msgstr "Until {returnTime}"
 #: app/utils/discounts/labels.ts:522
 msgid "Until {until}"
 msgstr "Until {until}"
+
+#: app/components/orders/ordering-controls.tsx:119
+msgid "Until I turn it back on"
+msgstr "Until I turn it back on"
 
 #: app/utils/discounts/summary.ts:499
 msgid "Untitled discount"

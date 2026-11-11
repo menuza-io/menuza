@@ -2527,6 +2527,10 @@ msgstr "→ العودة إلى تسجيل الدخول بـ SSO"
 msgid "+{lateMin}m late"
 msgstr "متأخر +{lateMin} د"
 
+#: app/components/orders/ordering-controls.tsx:199
+msgid "+{minutes} minutes"
+msgstr "+{minutes} دقيقة"
+
 #: app/components/menu/drop-wizard/drop-drawers.tsx:310
 #: app/components/menu/drop-wizard/drop-form.tsx:1103
 msgid "+{moreSlots} more"
@@ -2743,6 +2747,10 @@ msgstr "طرح واحد"
 msgid "1 form"
 msgstr "نموذج واحد"
 
+#: app/components/orders/ordering-controls.tsx:117
+msgid "1 hour"
+msgstr "ساعة واحدة"
+
 #: app/components/menu/drop-wizard/drop-drawers.tsx:351
 #: app/components/menu/drop-wizard/drop-drawers.tsx:369
 msgid "1 hour prior"
@@ -2822,6 +2830,10 @@ msgstr "قبل 12 ساعة"
 msgid "15 min"
 msgstr "١٥ دقيقة"
 
+#: app/components/orders/ordering-controls.tsx:115
+msgid "15 minutes"
+msgstr "15 دقيقة"
+
 #~ msgid "15 minutes before"
 #~ msgstr "قبل 15 دقيقة"
 
@@ -2868,6 +2880,10 @@ msgstr "قبل 24 ساعة"
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:672
 msgid "30 min"
 msgstr "٣٠ دقيقة"
+
+#: app/components/orders/ordering-controls.tsx:116
+msgid "30 minutes"
+msgstr "30 دقيقة"
 
 #~ msgid "30 minutes before"
 #~ msgstr "قبل 30 دقيقة"
@@ -4539,6 +4555,10 @@ msgstr "إضافة منصب"
 #: app/components/staff/labor/tip-settings-dialog.tsx:238
 msgid "Add positions on the Team page first."
 msgstr "أضف الوظائف أولًا من صفحة الفريق."
+
+#: app/components/orders/ordering-controls.tsx:185
+msgid "Add prep time for the rest of today"
+msgstr "إضافة وقت تحضير لبقية اليوم"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:775
 msgid "Add pronunciation"
@@ -6629,7 +6649,7 @@ msgid "At slot time"
 msgstr "عند وقت الموعد"
 
 #: app/components/orders/order-detail.tsx:460
-#: app/routes/_app+/$orgSlug_+/orders.tsx:253
+#: app/routes/_app+/$orgSlug_+/orders.tsx:268
 msgid "At the table"
 msgstr "على الطاولة"
 
@@ -7803,6 +7823,19 @@ msgstr "إعدادات نوع النشاط التجاري"
 #: app/utils/reservations/labels.ts:136
 msgid "Bussing"
 msgstr "تنظيف الطاولة"
+
+#: app/components/orders/ordering-controls.tsx:178
+msgid "Busy mode"
+msgstr "وضع الانشغال"
+
+#: app/components/orders/ordering-controls.tsx:155
+msgid "Busy: {totalPrep} min prep (+{busyMinutes})"
+msgstr "مشغول: التحضير {totalPrep} دقيقة (+{busyMinutes})"
+
+#: app/components/orders/ordering-controls.tsx:153
+#: app/components/orders/ordering-controls.tsx:153
+msgid "Busy: {totalPrep} min prep (+{busyMinutes}) until {busyEnd}"
+msgstr "مشغول: التحضير {totalPrep} دقيقة (+{busyMinutes}) حتى {busyEnd}"
 
 #: app/utils/inventory/starter-lists.ts:212
 msgid "Butter"
@@ -12468,7 +12501,7 @@ msgstr "عميل"
 #: app/components/orders/order-detail.tsx:363
 #: app/components/orders/order-detail.tsx:387
 #: app/components/workspace-breadcrumb.tsx:110
-#: app/routes/_app+/$orgSlug_+/orders.tsx:229
+#: app/routes/_app+/$orgSlug_+/orders.tsx:244
 msgid "Customer"
 msgstr "عميل"
 
@@ -13452,7 +13485,7 @@ msgstr "يسلّم في"
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:145
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:164
 #: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:940
-#: app/routes/_app+/$orgSlug_+/orders.tsx:246
+#: app/routes/_app+/$orgSlug_+/orders.tsx:261
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:680
 #: app/routes/mock-payments+/dashboard.tsx:158
 #: app/utils/discounts/labels.ts:166
@@ -18381,7 +18414,7 @@ msgstr "مجموعات من كمية"
 #: app/components/reservations/detail-sheet.tsx:927
 #: app/components/reservations/today-party-card.tsx:77
 #: app/components/reservations/waitlist/today-waitlist-card.tsx:70
-#: app/routes/_app+/$orgSlug_+/orders.tsx:220
+#: app/routes/_app+/$orgSlug_+/orders.tsx:235
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:460
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:478
 #: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:284
@@ -18392,7 +18425,7 @@ msgstr "ضيف"
 
 #: app/components/orders/order-detail.tsx:388
 #: app/components/settings/cards/organization/shop-card.tsx:465
-#: app/routes/_app+/$orgSlug_+/orders.tsx:230
+#: app/routes/_app+/$orgSlug_+/orders.tsx:245
 msgid "Guest checkout"
 msgstr "الدفع كضيف"
 
@@ -21752,7 +21785,7 @@ msgstr "جارٍ تحميل التهيئة"
 msgid "Loading order…"
 msgstr "جارٍ تحميل الطلب…"
 
-#: app/routes/_app+/$orgSlug_+/orders.tsx:159
+#: app/routes/_app+/$orgSlug_+/orders.tsx:174
 msgid "Loading orders…"
 msgstr "جارٍ تحميل الطلبات…"
 
@@ -25492,7 +25525,7 @@ msgstr "لا توجد خيارات بعد."
 msgid "No orders usually expected"
 msgstr "لا يُتوقع عادة وجود طلبات"
 
-#: app/routes/_app+/$orgSlug_+/orders.tsx:164
+#: app/routes/_app+/$orgSlug_+/orders.tsx:179
 msgid "No orders yet"
 msgstr "لا توجد طلبات بعد"
 
@@ -27365,6 +27398,10 @@ msgstr "إكراميات الطلبات عبر الإنترنت"
 msgid "Online order tips that join the pool"
 msgstr "إكراميات الطلبات عبر الإنترنت التي تدخل المجموعة"
 
+#: app/components/orders/ordering-controls.tsx:63
+msgid "Online ordering"
+msgstr "الطلب عبر الإنترنت"
+
 #: app/components/menu/menu-form.tsx:247
 msgid "Online Ordering, POS & Kiosk"
 msgstr "الطلب عبر الإنترنت ونقاط البيع والأكشاك"
@@ -28425,7 +28462,7 @@ msgstr "نافذة الطلب"
 #: app/components/customers/person-profile-screen.tsx:450
 #: app/components/orders/order-detail.tsx:280
 #: app/components/workspace-breadcrumb.tsx:12
-#: app/routes/_app+/$orgSlug_+/orders.tsx:129
+#: app/routes/_app+/$orgSlug_+/orders.tsx:139
 msgid "Orders"
 msgstr "الطلبات"
 
@@ -29275,6 +29312,14 @@ msgstr "إيقاف مؤقت"
 msgid "Pause {name}"
 msgstr "إيقاف {name} مؤقتًا"
 
+#: app/components/orders/ordering-controls.tsx:245
+msgid "Pause online orders for"
+msgstr "إيقاف الطلبات عبر الإنترنت مؤقتًا لمدة"
+
+#: app/components/orders/ordering-controls.tsx:238
+msgid "Pause orders"
+msgstr "إيقاف الطلبات مؤقتًا"
+
 #: app/routes/_app+/$orgSlug_+/loyalty+/program.tsx:315
 msgid "Pause program"
 msgstr "إيقاف البرنامج مؤقتًا"
@@ -29284,6 +29329,10 @@ msgstr "إيقاف البرنامج مؤقتًا"
 
 #~ msgid "Pause transfers"
 #~ msgstr "إيقاف التحويلات مؤقتًا"
+
+#: app/components/orders/ordering-controls.tsx:66
+msgid "Pause web and QR orders when the kitchen is overwhelmed, or add prep time in busy mode. Counter sales are not affected."
+msgstr "أوقف طلبات الموقع ورمز QR مؤقتًا عندما يزدحم المطبخ، أو أضف وقت تحضير في وضع الانشغال. لا تتأثر مبيعات الكاشير."
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:340
 msgid "paused"
@@ -29301,6 +29350,15 @@ msgstr "متوقف مؤقتاً"
 #: app/utils/loyalty/promotions.ts:50
 msgid "Paused"
 msgstr "متوقف مؤقتاً"
+
+#: app/components/orders/ordering-controls.tsx:140
+#: app/components/orders/ordering-controls.tsx:140
+msgid "Paused until {pauseEnd}"
+msgstr "متوقف حتى {pauseEnd}"
+
+#: app/components/orders/ordering-controls.tsx:141
+msgid "Paused until you resume"
+msgstr "متوقف حتى تستأنفه"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:454
 msgid "Pausing automation..."
@@ -30058,7 +30116,7 @@ msgstr "مخللات"
 
 #: app/components/customers/person-orders-panel.tsx:222
 #: app/components/orders/order-detail.tsx:461
-#: app/routes/_app+/$orgSlug_+/orders.tsx:254
+#: app/routes/_app+/$orgSlug_+/orders.tsx:269
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:675
 #: app/utils/discounts/labels.ts:165
 msgid "Pickup"
@@ -31847,7 +31905,7 @@ msgstr "تمت إعادة تعيين الحجوزات القادمة تلقائ�
 msgid "Receive"
 msgstr "استلام"
 
-#: app/routes/_app+/$orgSlug_+/orders.tsx:131
+#: app/routes/_app+/$orgSlug_+/orders.tsx:141
 msgid "Receive and manage menu and drop orders. Updates refresh every 15 seconds."
 msgstr "استلم طلبات القائمة والطروحات وأدرها. تُحدَّث البيانات كل 15 ثانية."
 
@@ -32172,7 +32230,7 @@ msgstr "إعادة توزيع الحجوزات اللاحقة"
 #: app/components/staff/timeclock-today.tsx:172
 #: app/routes/_app+/$orgSlug_+/loyalty+/activity.tsx:401
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:247
-#: app/routes/_app+/$orgSlug_+/orders.tsx:141
+#: app/routes/_app+/$orgSlug_+/orders.tsx:151
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:347
 msgid "Refresh"
 msgstr "تحديث"
@@ -33462,6 +33520,10 @@ msgstr "راحة (مدفوعة)"
 msgid "Rest break"
 msgstr "استراحة قصيرة"
 
+#: app/components/orders/ordering-controls.tsx:118
+msgid "Rest of today"
+msgstr "بقية اليوم"
+
 #~ msgid "Restaurant"
 #~ msgstr "المطعم"
 
@@ -33548,6 +33610,10 @@ msgstr "استئناف {name}"
 #: app/components/inventory/start-count-dialog.tsx:149
 msgid "Resume it"
 msgstr "استئنافه"
+
+#: app/components/orders/ordering-controls.tsx:225
+msgid "Resume orders"
+msgstr "استئناف الطلبات"
 
 #: app/routes/_app+/$orgSlug_+/loyalty+/program.tsx:300
 msgid "Resume program"
@@ -38350,7 +38416,7 @@ msgstr "إرسال مع وجود متطلبات مستحقة"
 msgid "Submitted"
 msgstr "تاريخ الإرسال"
 
-#: app/routes/_app+/$orgSlug_+/orders.tsx:167
+#: app/routes/_app+/$orgSlug_+/orders.tsx:182
 msgid "Submitted orders will appear here."
 msgstr "ستظهر الطلبات المُرسلة هنا."
 
@@ -38692,8 +38758,8 @@ msgstr "تم إنشاء الطاولة {createdTableLabel}."
 #: app/components/qr/open-tabs.tsx:369
 #: app/components/qr/open-tabs.tsx:1059
 #: app/components/qr/open-tabs.tsx:1147
-#: app/routes/_app+/$orgSlug_+/orders.tsx:218
-#: app/routes/_app+/$orgSlug_+/orders.tsx:251
+#: app/routes/_app+/$orgSlug_+/orders.tsx:233
+#: app/routes/_app+/$orgSlug_+/orders.tsx:266
 msgid "Table {label}"
 msgstr "طاولة {label}"
 
@@ -39016,6 +39082,10 @@ msgstr "يخصم نسبة مئوية."
 #: app/components/discounts/discount-form.tsx:182
 msgid "Takes the delivery fee off."
 msgstr "يخصم رسوم التوصيل."
+
+#: app/components/orders/ordering-controls.tsx:145
+msgid "Taking online orders"
+msgstr "يستقبل الطلبات عبر الإنترنت"
 
 #: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:308
 msgid "Taking reservations"
@@ -39538,6 +39608,10 @@ msgstr "هذا التاريخ مضاف بالفعل."
 #: app/components/print/artwork-labels.ts:10
 msgid "That design is not in your Canva account anymore."
 msgstr "لم يعد هذا التصميم موجودًا في حسابك على Canva."
+
+#: app/components/orders/ordering-controls.tsx:161
+msgid "That did not save. Try again."
+msgstr "لم يتم الحفظ. حاول مرة أخرى."
 
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:295
 msgid "That did not work"
@@ -43603,6 +43677,10 @@ msgstr "إيقاف"
 msgid "Turn off agent audio"
 msgstr "إيقاف صوت الوكيل"
 
+#: app/components/orders/ordering-controls.tsx:210
+msgid "Turn off busy mode"
+msgstr "إيقاف وضع الانشغال"
+
 #: app/components/pos/terminals-manager.tsx:874
 msgid "Turn off PIN sign-in for {label}"
 msgstr "إيقاف تسجيل الدخول برمز PIN لـ {label}"
@@ -43866,7 +43944,7 @@ msgstr "تعذر تحميل بيانات مخطط الصالة."
 msgid "Unable to load more calls. Try again."
 msgstr "تعذّر تحميل المزيد من المكالمات. حاول مرة أخرى."
 
-#: app/routes/_app+/$orgSlug_+/orders.tsx:102
+#: app/routes/_app+/$orgSlug_+/orders.tsx:112
 msgid "Unable to load orders. Try again."
 msgstr "تعذّر تحميل الطلبات. حاول مرة أخرى."
 
@@ -44275,6 +44353,10 @@ msgstr "حتى {returnTime}"
 #: app/utils/discounts/labels.ts:522
 msgid "Until {until}"
 msgstr "حتى {until}"
+
+#: app/components/orders/ordering-controls.tsx:119
+msgid "Until I turn it back on"
+msgstr "حتى أعيد تشغيله"
 
 #: app/utils/discounts/summary.ts:499
 msgid "Untitled discount"

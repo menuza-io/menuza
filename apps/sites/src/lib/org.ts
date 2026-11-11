@@ -243,6 +243,33 @@ export async function fetchPublishedSitePage(options: {
 	)
 }
 
+export type PublicSitePageListing = {
+	slug: string
+	isHomePage: boolean
+	/** In the site's default language. */
+	title: string
+	description: string | null
+	updatedAt: string
+}
+
+/**
+ * Published pages that may appear in search results (no drafts, no pages
+ * marked "hide from search engines"), for `sitemap.xml` and `llms.txt`.
+ */
+export async function fetchPublishedSitePages(options: {
+	slug?: string | null
+	host?: string | null
+}): Promise<PublicSitePageListing[]> {
+	const params = new URLSearchParams()
+	if (options.slug) params.set('slug', options.slug)
+	if (options.host) params.set('host', options.host)
+	if (!params.size) return []
+	const data = await fetchAppJson<{ pages: PublicSitePageListing[] }>(
+		`${getAppUrl()}/resources/sites/pages?${params.toString()}`,
+	)
+	return Array.isArray(data?.pages) ? data.pages : []
+}
+
 export type PublicShopProduct = {
 	name: string
 	description: string | null
@@ -417,6 +444,13 @@ export type PublicLocationData = {
 	deliveryConfig: any
 	deliveryZones: any[]
 	isDefault: boolean
+	/**
+	 * Operator pause of web and QR ordering (null `until`: until resumed).
+	 * Absent on payloads cached before the field existed.
+	 */
+	orderingPause?: { until: string | null } | null
+	/** Busy mode: extra prep minutes while it lasts. */
+	busyMode?: { extraPrepMinutes: number; until: string | null } | null
 }
 
 export type PublicMenuOptionData = {

@@ -915,6 +915,114 @@ describe('priceRestaurantOrder: adversarial validation', () => {
 	})
 })
 
+describe('priceRestaurantOrder: paused online ordering', () => {
+	// NOW = Sunday 2025-06-15 16:00 UTC; open all day.
+	const paused = (until: string | null) => {
+		const context = makeContext()
+		context.menu.locations[0]!.orderingPause = { until }
+		context.menu.locations[0]!.scheduling = {
+			scheduledOrdersEnabled: true,
+			advanceOrderDays: 3,
+		}
+		return context
+	}
+
+	it('refuses ASAP orders while paused with ordering_paused', () => {
+		const result = priceRestaurantOrder(
+			paused('2025-06-15T17:00:00.000Z'),
+			makeRequest(),
+			{ now: NOW },
+		)
+		expect(!result.ok && result.error.code).toBe('ordering_paused')
+	})
+
+	it('accepts orders again once the pause has ended', () => {
+		const result = priceRestaurantOrder(
+			paused('2025-06-15T17:00:00.000Z'),
+			makeRequest(),
+			{ now: new Date('2025-06-15T17:00:00.000Z') },
+		)
+		expect(result.ok).toBe(true)
+	})
+
+	it('schedules after the pause but not during it', () => {
+		const context = paused('2025-06-15T17:00:00.000Z')
+		const after = priceRestaurantOrder(
+			context,
+			makeRequest({ scheduledFor: '2025-06-15T17:30:00.000Z' }),
+			{ now: NOW },
+		)
+		expect(after.ok).toBe(true)
+		const during = priceRestaurantOrder(
+			context,
+			makeRequest({ scheduledFor: '2025-06-15T16:45:00.000Z' }),
+			{ now: NOW },
+		)
+		expect(!during.ok && during.error.code).toBe('schedule_unavailable')
+	})
+
+	it('refuses every scheduled time while paused until turned back on', () => {
+		const result = priceRestaurantOrder(
+			paused(null),
+			makeRequest({ scheduledFor: '2025-06-16T12:00:00.000Z' }),
+			{ now: NOW },
+		)
+		expect(!result.ok && result.error.code).toBe('schedule_unavailable')
+	})
+
+	it('keeps walk-in (POS) sales going while paused', () => {
+		const result = priceRestaurantOrder(paused(null), makeRequest(), {
+			now: NOW,
+			walkIn: true,
+		})
+		expect(result.ok).toBe(true)
+	})
+
+	it('pushes the earliest scheduled time back in busy mode', () => {
+		const context = makeContext()
+		context.menu.locations[0]!.busyMode = { extraPrepMinutes: 30, until: null }
+		context.menu.locations[0]!.scheduling = {
+			scheduledOrdersEnabled: true,
+			advanceOrderDays: 3,
+		}
+		// prep 15 + busy 30 - grace 5 = 40 minutes from now at the earliest.
+		const tooSoon = priceRestaurantOrder(
+			context,
+			makeRequest({ scheduledFor: '2025-06-15T16:30:00.000Z' }),
+			{ now: NOW },
+		)
+		expect(!tooSoon.ok && tooSoon.error.code).toBe('schedule_unavailable')
+		const fine = priceRestaurantOrder(
+			context,
+			makeRequest({ scheduledFor: '2025-06-15T16:45:00.000Z' }),
+			{ now: NOW },
+		)
+		expect(fine.ok).toBe(true)
+	})
+
+	it('reports the pause and busy prep time in the ordering options', () => {
+		const context = paused('2025-06-15T17:00:00.000Z')
+		context.menu.locations[0]!.busyMode = { extraPrepMinutes: 20, until: null }
+		const result = buildPublicOrderingOptions(context, {
+			slug: null,
+			locationId: LOCATION_ID,
+			dropSlug: null,
+			counts: { slotOrders: new Map(), entityUsed: new Map() },
+			now: NOW,
+		})
+		expect(result.ok).toBe(true)
+		if (result.ok) {
+			expect(result.options.ordering.open).toBe(false)
+			expect(result.options.ordering.paused).toEqual({
+				until: '2025-06-15T17:00:00.000Z',
+				resumesAt: '2025-06-15T17:00:00.000Z',
+			})
+			expect(result.options.ordering.prepMinutes).toBe(35)
+			expect(result.options.ordering.busyExtraPrepMinutes).toBe(20)
+		}
+	})
+})
+
 describe('priceRestaurantOrder: walk-in (POS) mode', () => {
 	const closed = () => {
 		const context = makeContext()

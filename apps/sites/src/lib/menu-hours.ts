@@ -119,3 +119,33 @@ export function summarizeHours(
 	}
 	return {}
 }
+
+/**
+ * When paused online ordering resumes, in the location time zone and the
+ * customer's locale: "7:30 PM" today, "Thu 11:00 AM" on another day. Undefined
+ * for a pause with no end (or a malformed time).
+ */
+export function formatOrderingResume(
+	availability: Pick<LocationOrderingAvailability, 'paused'>,
+	timezone: string | null | undefined,
+	locale: string,
+	now: Date = new Date(),
+): string | undefined {
+	const iso = availability.paused?.resumesAt
+	if (!iso) return undefined
+	const instant = new Date(iso)
+	if (Number.isNaN(instant.getTime())) return undefined
+	const zone = timezone || 'UTC'
+	try {
+		const dayOf = (value: Date) =>
+			new Intl.DateTimeFormat('en-CA', { timeZone: zone }).format(value)
+		return new Intl.DateTimeFormat(locale, {
+			timeZone: zone,
+			hour: 'numeric',
+			minute: '2-digit',
+			...(dayOf(instant) === dayOf(now) ? {} : { weekday: 'short' }),
+		}).format(instant)
+	} catch {
+		return undefined
+	}
+}

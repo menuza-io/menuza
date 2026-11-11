@@ -2615,6 +2615,19 @@ export const OrganizationLocation = sqliteTable(
 		scheduling: text(),
 		deliveryConfig: text(),
 		deliveryZones: text(),
+		/**
+		 * "Pause online orders": set when an operator pauses web and QR ordering
+		 * (walk-in POS sales continue). Paused while this is set and
+		 * `orderingPausedUntil` is null (until someone resumes) or in the future.
+		 */
+		orderingPausedAt: integer({ mode: 'timestamp_ms' }),
+		orderingPausedUntil: integer({ mode: 'timestamp_ms' }),
+		/**
+		 * Busy mode: minutes added to every prep estimate while
+		 * `busyUntil` is null (until turned off) or in the future. Null is off.
+		 */
+		busyExtraPrepMinutes: integer(),
+		busyUntil: integer({ mode: 'timestamp_ms' }),
 		isActive: integer({ mode: 'boolean' }).default(true).notNull(),
 		isDefault: integer({ mode: 'boolean' }).default(false).notNull(),
 		createdAt: integer({ mode: 'timestamp_ms' })

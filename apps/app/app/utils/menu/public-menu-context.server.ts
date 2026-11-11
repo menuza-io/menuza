@@ -59,6 +59,7 @@ import {
 	buildPublicMenuDiscounts,
 	type PublicMenuPromotion,
 } from '#app/utils/discounts/order-context.server.ts'
+import { publicOrderingControls } from '#app/utils/location/ordering-pause.ts'
 import {
 	applyOptionAssignment,
 	attachNestedModifierGroups,
@@ -206,6 +207,7 @@ export async function buildPublicSiteMenuPayload(
 			),
 			deliveryZones: safeJsonParse<DeliveryZone[]>(loc.deliveryZones, []),
 			isDefault: Boolean(loc.isDefault),
+			...publicOrderingControls(loc, new Date()),
 		}
 	})
 
