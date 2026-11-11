@@ -52,6 +52,7 @@ import {
 } from 'react-router'
 import { z } from 'zod'
 import { EmptyState } from '#app/components/empty-state.tsx'
+import { MenuHealthFilterNotice } from '#app/components/menu/menu-health-card.tsx'
 import { useMenuListFilters } from '#app/components/menu/menu-list-filters.tsx'
 import { MenuStatusBadge } from '#app/components/menu/menu-status-badge.tsx'
 import {
@@ -59,6 +60,12 @@ import {
 	requireMenuWrite,
 } from '#app/utils/menu/access.server.ts'
 import { deleteMenuEntityReferences } from '#app/utils/menu/cleanup.server.ts'
+import { computeMenuHealthFor } from '#app/utils/menu/menu-health.server.ts'
+import {
+	MENU_HEALTH_CATEGORY_CHECKS,
+	MENU_HEALTH_PARAM,
+	parseMenuHealthCheckKey,
+} from '#app/utils/menu/menu-health.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 
@@ -155,6 +162,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		id: true,
 		slug: true,
 		siteDefaultLocale: true,
+		siteLocales: true,
 	})
 
 	await requireMenuRead(request, organization.id)
@@ -176,9 +184,31 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		],
 	})
 
+	// `?health=empty_category` narrows the list to the categories the Menu
+	// health card counted, using the same function as the card.
+	const healthKey = parseMenuHealthCheckKey(
+		new URL(request.url).searchParams.get(MENU_HEALTH_PARAM),
+	)
+	const healthFilter =
+		healthKey && MENU_HEALTH_CATEGORY_CHECKS.has(healthKey)
+			? {
+					key: healthKey,
+					categoryIds:
+						computeMenuHealthFor(organization, {
+							items: [],
+							categories,
+							categoryIdsWithItems: categories
+								.filter((c) => c.itemAssignments.length > 0)
+								.map((c) => c.id),
+						}).checks.find((check) => check.key === healthKey)?.categoryIds ??
+						[],
+				}
+			: null
+
 	return {
-		organization,
+		organization: { id: organization.id, slug: organization.slug },
 		defaultLocale,
+		healthFilter,
 		categories: categories.map((c) => ({
 			id: c.id,
 			parentId: c.parentId ?? null,
@@ -200,15 +230,24 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 }
 
 export default function CategoriesIndexRoute() {
-	const { organization, defaultLocale, categories } =
-		useLoaderData<typeof loader>()
+	const {
+		organization,
+		defaultLocale,
+		categories: allCategories,
+		healthFilter,
+	} = useLoaderData<typeof loader>()
 	const { _ } = useLingui()
 	const deleteFetcher = useFetcher()
 	const [deleteCategoryId, setDeleteCategoryId] = useState<string | null>(null)
 	const categoriesMap = useMemo(
-		() => new Map(categories.map((c) => [c.id, c])),
-		[categories],
+		() => new Map(allCategories.map((c) => [c.id, c])),
+		[allCategories],
 	)
+	const categories = useMemo(() => {
+		if (!healthFilter) return allCategories
+		const ids = new Set(healthFilter.categoryIds)
+		return allCategories.filter((category) => ids.has(category.id))
+	}, [allCategories, healthFilter])
 	const getFieldValue = useCallback(
 		(category: (typeof categories)[number], field: string) => {
 			switch (field) {
@@ -259,7 +298,15 @@ export default function CategoriesIndexRoute() {
 				}
 			/>
 
-			{categories.length === 0 ? (
+			{healthFilter ? (
+				<MenuHealthFilterNotice
+					checkKey={healthFilter.key}
+					count={categories.length}
+					clearTo={`/${organization.slug}/menu/categories`}
+				/>
+			) : null}
+
+			{allCategories.length === 0 ? (
 				<EmptyState
 					title={_(t`No categories yet`)}
 					description={_(
@@ -280,7 +327,7 @@ export default function CategoriesIndexRoute() {
 						<EmptyState
 							title={_(t`No categories match these filters`)}
 							description={_(
-								hasFilters
+								hasFilters || healthFilter
 									? t`Try adjusting your filters or clear them to see all categories.`
 									: t`Create a category to start organizing menu items.`,
 							)}

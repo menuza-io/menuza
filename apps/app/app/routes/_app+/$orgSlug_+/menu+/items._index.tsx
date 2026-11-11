@@ -37,7 +37,7 @@ import {
 	TableHeader,
 	TableRow,
 } from '@repo/ui/table'
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import {
 	type ActionFunctionArgs,
 	type LoaderFunctionArgs,
@@ -53,6 +53,7 @@ import {
 	FoodCostHead,
 	FoodCostProvider,
 } from '#app/components/inventory/food-cost-column.tsx'
+import { MenuHealthFilterNotice } from '#app/components/menu/menu-health-card.tsx'
 import { useMenuListFilters } from '#app/components/menu/menu-list-filters.tsx'
 import { MenuStatusBadge } from '#app/components/menu/menu-status-badge.tsx'
 import {
@@ -60,6 +61,12 @@ import {
 	requireMenuWrite,
 } from '#app/utils/menu/access.server.ts'
 import { deleteMenuEntityReferences } from '#app/utils/menu/cleanup.server.ts'
+import { computeMenuHealthFor } from '#app/utils/menu/menu-health.server.ts'
+import {
+	MENU_HEALTH_CATEGORY_CHECKS,
+	MENU_HEALTH_PARAM,
+	parseMenuHealthCheckKey,
+} from '#app/utils/menu/menu-health.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 
@@ -160,6 +167,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		slug: true,
 		dataRegion: true,
 		siteDefaultLocale: true,
+		siteLocales: true,
 	})
 
 	await requireMenuRead(request, organization.id)
@@ -185,9 +193,32 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		],
 	})
 
+	// `?health=<check>` narrows the list to the dishes a Menu health line
+	// counted, using the same function as the card.
+	const healthKey = parseMenuHealthCheckKey(
+		new URL(request.url).searchParams.get(MENU_HEALTH_PARAM),
+	)
+	const healthFilter =
+		healthKey && !MENU_HEALTH_CATEGORY_CHECKS.has(healthKey)
+			? {
+					key: healthKey,
+					itemIds:
+						computeMenuHealthFor(organization, {
+							items,
+							categories: [],
+							categoryIdsWithItems: [],
+						}).checks.find((check) => check.key === healthKey)?.itemIds ?? [],
+				}
+			: null
+
 	return {
-		organization,
+		organization: {
+			id: organization.id,
+			slug: organization.slug,
+			dataRegion: organization.dataRegion,
+		},
 		defaultLocale,
+		healthFilter,
 		items: items.map((i) => {
 			let allergens: string[] = []
 			try {
@@ -240,9 +271,19 @@ export default function ItemsIndexRoute() {
 }
 
 function ItemsIndexContent() {
-	const { organization, defaultLocale, items } = useLoaderData<typeof loader>()
+	const {
+		organization,
+		defaultLocale,
+		items: allItems,
+		healthFilter,
+	} = useLoaderData<typeof loader>()
 	const { _ } = useLingui()
 	const deleteFetcher = useFetcher()
+	const items = useMemo(() => {
+		if (!healthFilter) return allItems
+		const ids = new Set(healthFilter.itemIds)
+		return allItems.filter((item) => ids.has(item.id))
+	}, [allItems, healthFilter])
 	const [deleteItemId, setDeleteItemId] = useState<string | null>(null)
 	const getFieldValue = useCallback(
 		(item: (typeof items)[number], field: string) => {
@@ -298,7 +339,15 @@ function ItemsIndexContent() {
 				}
 			/>
 
-			{items.length === 0 ? (
+			{healthFilter ? (
+				<MenuHealthFilterNotice
+					checkKey={healthFilter.key}
+					count={items.length}
+					clearTo={`/${organization.slug}/menu/items`}
+				/>
+			) : null}
+
+			{allItems.length === 0 ? (
 				<EmptyState
 					title={_(t`No items yet`)}
 					description={_(
@@ -319,7 +368,7 @@ function ItemsIndexContent() {
 						<EmptyState
 							title={_(t`No items match these filters`)}
 							description={_(
-								hasFilters
+								hasFilters || healthFilter
 									? t`Try adjusting your filters or clear them to see all items.`
 									: t`Create an item to start building your menu.`,
 							)}

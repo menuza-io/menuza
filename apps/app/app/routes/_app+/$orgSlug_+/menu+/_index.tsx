@@ -58,12 +58,14 @@ import {
 	useSearchParams,
 } from 'react-router'
 import { EmptyState } from '#app/components/empty-state.tsx'
+import { MenuHealthCard } from '#app/components/menu/menu-health-card.tsx'
 import {
 	MenuSortableCategory,
 	type OverviewCategoryData,
 } from '#app/components/menu/menu-sortable-category.tsx'
 import { makeMenuItemDragId } from '#app/components/menu/menu-sortable-item.tsx'
 import { requireMenuRead } from '#app/utils/menu/access.server.ts'
+import { loadMenuHealth } from '#app/utils/menu/menu-health.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 
 function collisionStrategy(args: any) {
@@ -95,17 +97,24 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		id: true,
 		slug: true,
 		siteDefaultLocale: true,
+		siteLocales: true,
 	})
 
 	await requireMenuRead(request, organization.id)
 
 	const defaultLocale = organization.siteDefaultLocale ?? 'en'
 
-	// Load all menus for this organization
-	const menus = await db.query.OrganizationMenu.findMany({
-		where: eq(OrganizationMenu.organizationId, organization.id),
-		orderBy: [asc(OrganizationMenu.position), asc(OrganizationMenu.createdAt)],
-	})
+	// Load all menus for this organization, and score the whole menu.
+	const [menus, health] = await Promise.all([
+		db.query.OrganizationMenu.findMany({
+			where: eq(OrganizationMenu.organizationId, organization.id),
+			orderBy: [
+				asc(OrganizationMenu.position),
+				asc(OrganizationMenu.createdAt),
+			],
+		}),
+		loadMenuHealth(organization),
+	])
 
 	const url = new URL(request.url)
 	const requestedMenuId = url.searchParams.get('menuId')
@@ -160,8 +169,15 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	}
 
 	return {
-		organization,
+		organization: { id: organization.id, slug: organization.slug },
 		defaultLocale,
+		// The card needs counts only; the lists recompute the ids they filter by.
+		health: {
+			...health,
+			checks: health.checks.map(
+				({ itemIds: _itemIds, categoryIds: _categoryIds, ...check }) => check,
+			),
+		},
 		menus: menus.map((m) => ({
 			id: m.id,
 			displayName: m.displayName,
@@ -178,8 +194,14 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 }
 
 export default function MenuOverviewRoute() {
-	const { organization, defaultLocale, menus, activeMenuId, categories } =
-		useLoaderData<typeof loader>()
+	const {
+		organization,
+		defaultLocale,
+		health,
+		menus,
+		activeMenuId,
+		categories,
+	} = useLoaderData<typeof loader>()
 	const { _ } = useLingui()
 	const [searchParams, setSearchParams] = useSearchParams()
 	const reorderFetcher = useFetcher()
@@ -379,6 +401,10 @@ export default function MenuOverviewRoute() {
 					</DropdownMenu>
 				}
 			/>
+
+			{menus.length > 0 ? (
+				<MenuHealthCard health={health} orgSlug={organization.slug} />
+			) : null}
 
 			{menus.length === 0 ? (
 				<EmptyState
