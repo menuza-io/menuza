@@ -176,6 +176,8 @@ const PUBLIC_ROUTES: Record<string, string> = {
 	'resources+/sites.drop.ts':
 		'public published drop; rate limited, drafts only for signed-in members',
 	'resources+/sites.drops.ts': 'public published drops list; rate limited',
+	'resources+/sites.pages.ts':
+		'public list of published, indexable page slugs for sitemaps; rate limited, 404 unless published',
 	'resources+/sites.menu.ts':
 		'public published menu; rate limited, preview only on the custom domain',
 	'resources+/sites.reservations.ts':
