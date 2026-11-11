@@ -48,6 +48,8 @@ export enum AuditAction {
 	DISCOUNT_CREATED = 'discount_created',
 	DISCOUNT_UPDATED = 'discount_updated',
 	DISCOUNT_STATUS_CHANGED = 'discount_status_changed',
+	MENU_ITEM_UPDATED = 'menu_item_updated',
+	MENU_CATEGORY_UPDATED = 'menu_category_updated',
 	LOCATION_ORDERING_PAUSED = 'location_ordering_paused',
 	LOCATION_ORDERING_RESUMED = 'location_ordering_resumed',
 	LOCATION_BUSY_MODE_CHANGED = 'location_busy_mode_changed',

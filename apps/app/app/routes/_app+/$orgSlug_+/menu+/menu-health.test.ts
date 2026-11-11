@@ -91,9 +91,14 @@ const mocks = vi.hoisted(() => ({
 	select: vi.fn(),
 	selectDistinct: vi.fn(),
 	requirePermission: vi.fn(),
+	hasPermission: vi.fn(),
 }))
 
-vi.mock('@repo/auth', () => ({ requireUserId: vi.fn(async () => 'user-1') }))
+vi.mock('@repo/auth', async (importOriginal) => ({
+	...(await importOriginal<Record<string, unknown>>()),
+	requireUserId: vi.fn(async () => 'user-1'),
+	userHasOrganizationPermission: mocks.hasPermission,
+}))
 vi.mock('@repo/database', async (importOriginal) => ({
 	...(await importOriginal<Record<string, unknown>>()),
 	db: {
@@ -140,6 +145,7 @@ describe('menu health loaders', () => {
 	beforeEach(() => {
 		vi.clearAllMocks()
 		mocks.requirePermission.mockResolvedValue('user-1')
+		mocks.hasPermission.mockResolvedValue(false)
 		mocks.findMany.mockImplementation(async (table: string) => {
 			if (table === 'OrganizationMenuItem') return ITEMS
 			if (table === 'OrganizationMenuCategory') return CATEGORIES
@@ -181,6 +187,27 @@ describe('menu health loaders', () => {
 			)?.count,
 		).toBe(1)
 		expect(JSON.stringify(data.health)).not.toContain('no-photo')
+		// Read-only members get the card without Review suggestions.
+		expect(data.review).toEqual({
+			canEdit: false,
+			translationLocales: [],
+			autoTranslate: false,
+		})
+	})
+
+	it('offers Review suggestions to members who can edit the menu', async () => {
+		mocks.hasPermission.mockResolvedValue(true)
+		const data = await call(overviewLoader, '')
+		expect(mocks.hasPermission).toHaveBeenCalledWith(
+			'user-1',
+			'org-1',
+			'update:menu:any',
+		)
+		expect(data.review).toEqual({
+			canEdit: true,
+			translationLocales: [],
+			autoTranslate: false,
+		})
 	})
 
 	it('filters the items list with ?health=', async () => {

@@ -34,6 +34,7 @@ import {
 	requireMenuRead,
 	requireMenuWrite,
 } from '#app/utils/menu/access.server.ts'
+import { recordMenuChange } from '#app/utils/menu/menu-updates.server.ts'
 import {
 	assertCategoryIdsInOrganization,
 	assertItemInOrganization,
@@ -42,7 +43,6 @@ import {
 	assertModifierGroupIdsInOrganization,
 } from '#app/utils/menu/ownership.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
-import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	await requireUserId(request)
@@ -244,7 +244,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		slug: true,
 	})
 
-	await requireMenuWrite(request, organization.id)
+	const userId = await requireMenuWrite(request, organization.id)
 
 	const itemId = params.itemId
 	if (!itemId) {
@@ -437,7 +437,14 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		}
 	})
 
-	await purgeOrganizationSiteCache(organization.id, organization.slug)
+	await recordMenuChange({
+		organization,
+		userId,
+		request,
+		resourceType: 'menu_item',
+		resourceId: itemId,
+		details: 'Menu item edited.',
+	})
 
 	return redirect(`/${organization.slug}/menu/items`)
 }

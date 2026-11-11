@@ -65,6 +65,7 @@ import {
 } from '#app/components/menu/menu-sortable-category.tsx'
 import { makeMenuItemDragId } from '#app/components/menu/menu-sortable-item.tsx'
 import { requireMenuRead } from '#app/utils/menu/access.server.ts'
+import { loadMenuReviewSettings } from '#app/utils/menu/menu-auto-translate.server.ts'
 import { loadMenuHealth } from '#app/utils/menu/menu-health.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 
@@ -100,12 +101,12 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		siteLocales: true,
 	})
 
-	await requireMenuRead(request, organization.id)
+	const userId = await requireMenuRead(request, organization.id)
 
 	const defaultLocale = organization.siteDefaultLocale ?? 'en'
 
 	// Load all menus for this organization, and score the whole menu.
-	const [menus, health] = await Promise.all([
+	const [menus, health, review] = await Promise.all([
 		db.query.OrganizationMenu.findMany({
 			where: eq(OrganizationMenu.organizationId, organization.id),
 			orderBy: [
@@ -114,6 +115,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			],
 		}),
 		loadMenuHealth(organization),
+		loadMenuReviewSettings(organization, userId),
 	])
 
 	const url = new URL(request.url)
@@ -178,6 +180,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 				({ itemIds: _itemIds, categoryIds: _categoryIds, ...check }) => check,
 			),
 		},
+		review,
 		menus: menus.map((m) => ({
 			id: m.id,
 			displayName: m.displayName,
@@ -198,6 +201,7 @@ export default function MenuOverviewRoute() {
 		organization,
 		defaultLocale,
 		health,
+		review,
 		menus,
 		activeMenuId,
 		categories,
@@ -403,7 +407,11 @@ export default function MenuOverviewRoute() {
 			/>
 
 			{menus.length > 0 ? (
-				<MenuHealthCard health={health} orgSlug={organization.slug} />
+				<MenuHealthCard
+					health={health}
+					orgSlug={organization.slug}
+					review={review}
+				/>
 			) : null}
 
 			{menus.length === 0 ? (

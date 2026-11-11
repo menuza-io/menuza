@@ -20,7 +20,9 @@ import {
 	ItemTitle,
 } from '@repo/ui/item'
 import { Progress } from '@repo/ui/progress'
-import { Link } from 'react-router'
+import { useState } from 'react'
+import { Link, useRevalidator } from 'react-router'
+import { MenuReviewStack } from '#app/components/menu/menu-review-stack.tsx'
 import {
 	getMenuHealthFixes,
 	MENU_HEALTH_CATEGORY_CHECKS,
@@ -148,18 +150,40 @@ function fixHref(orgSlug: string, key: MenuHealthCheckKey) {
 	return `/${orgSlug}/menu/${list}?${MENU_HEALTH_PARAM}=${key}`
 }
 
+/** Checks the Review suggestions stack can fix; the rest stay as lists. */
+const REVIEWABLE_CHECKS: ReadonlySet<MenuHealthCheckKey> =
+	new Set<MenuHealthCheckKey>([
+		'missing_translation',
+		'no_description',
+		'empty_category',
+		'long_unavailable',
+	])
+
+export type MenuReviewSettings = {
+	canEdit: boolean
+	translationLocales: string[]
+	autoTranslate: boolean
+}
+
 /**
  * Menu health on the Menu overview: a 0-100 score and the fix-it list behind
  * it. Each line opens the Items or Categories list filtered to what it counts.
+ * Members who can edit the menu also get "Review suggestions", a card stack
+ * that fixes translations, descriptions, empty categories and long-unavailable
+ * dishes one at a time.
  */
 export function MenuHealthCard({
 	health,
 	orgSlug,
+	review,
 }: {
 	health: MenuHealth
 	orgSlug: string
+	review?: MenuReviewSettings
 }) {
 	const { _ } = useLingui()
+	const revalidator = useRevalidator()
+	const [reviewOpen, setReviewOpen] = useState(false)
 	if (health.itemCount === 0) {
 		return (
 			<Card size="sm">
@@ -188,6 +212,9 @@ export function MenuHealthCard({
 	}
 
 	const fixes = getMenuHealthFixes(health)
+	const canReview =
+		Boolean(review?.canEdit) &&
+		fixes.some((check) => REVIEWABLE_CHECKS.has(check.key))
 
 	return (
 		<Card size="sm">
@@ -216,6 +243,16 @@ export function MenuHealthCard({
 			</CardHeader>
 			<CardContent className="space-y-3">
 				<Progress value={health.score} aria-label={_(t`Menu health score`)} />
+				{canReview ? (
+					<Button
+						variant="outline"
+						size="sm"
+						onClick={() => setReviewOpen(true)}
+					>
+						<Icon name="sparkles" className="size-4" />
+						<Trans>Review suggestions</Trans>
+					</Button>
+				) : null}
 				{fixes.length === 0 ? (
 					<Item variant="muted" size="sm">
 						<ItemMedia variant="icon">
@@ -254,6 +291,16 @@ export function MenuHealthCard({
 					</ItemGroup>
 				)}
 			</CardContent>
+			{canReview && review ? (
+				<MenuReviewStack
+					orgSlug={orgSlug}
+					open={reviewOpen}
+					onOpenChange={setReviewOpen}
+					translationLocales={review.translationLocales}
+					autoTranslate={review.autoTranslate}
+					onChanged={() => void revalidator.revalidate()}
+				/>
+			) : null}
 		</Card>
 	)
 }

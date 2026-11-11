@@ -4,13 +4,16 @@ import { getClientIp } from '@repo/security'
 import { type ActionFunctionArgs } from 'react-router'
 import { z } from 'zod'
 import { sanitizeWebsiteContent } from '#app/utils/content-sanitization.server.ts'
-import { ENV } from '#app/utils/env.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import {
 	ORG_PERMISSIONS,
 	requireUserWithOrganizationPermission,
 } from '#app/utils/organization/permissions.server.ts'
 import { checkRateLimit } from '#app/utils/rate-limit.server.ts'
+import {
+	isTranslationConfigured,
+	translateTexts,
+} from '#app/utils/translate.server.ts'
 
 const translateSchema = z.object({
 	orgSlug: z.string().min(1),
@@ -81,8 +84,7 @@ export async function action({ request }: ActionFunctionArgs) {
 			ORG_PERMISSIONS.UPDATE_WEBSITE_ANY,
 		)
 
-		const apiKey = ENV.GOOGLE_API_KEY
-		if (!apiKey) {
+		if (!isTranslationConfigured()) {
 			return Response.json(
 				{ error: 'Translation is not configured.' },
 				{ status: 503 },
@@ -101,45 +103,14 @@ export async function action({ request }: ActionFunctionArgs) {
 			)
 		}
 
-		const translateTexts = async (format: 'html' | 'text') => {
-			const response = await fetch(
-				`https://translation.googleapis.com/language/translate/v2?key=${encodeURIComponent(apiKey)}`,
-				{
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({
-						q: texts,
-						source: sourceLang,
-						target: targetLang,
-						format,
-					}),
-				},
-			)
-
-			if (!response.ok) {
-				console.error('Translation API error:', response.status)
-				throw new Error('Failed to translate text.')
-			}
-
-			const payload = (await response.json()) as {
-				data?: { translations?: Array<{ translatedText?: string }> }
-			}
-			const translated =
-				payload.data?.translations?.map((item) => item.translatedText ?? '') ??
-				[]
-
-			if (translated.length !== texts.length) {
-				throw new Error('Failed to translate text.')
-			}
-
-			return translated
-		}
+		const translate = (format: 'html' | 'text') =>
+			translateTexts({ texts, sourceLang, targetLang, format })
 
 		const hasHtml = allowHtmlFlags.some(Boolean)
 		const hasPlain = allowHtmlFlags.some((flag) => !flag)
 
-		const htmlTranslations = hasHtml ? await translateTexts('html') : []
-		const plainTranslations = hasPlain ? await translateTexts('text') : []
+		const htmlTranslations = hasHtml ? await translate('html') : []
+		const plainTranslations = hasPlain ? await translate('text') : []
 
 		const translations = texts.map((_, index) => {
 			const translated = allowHtmlFlags[index]
