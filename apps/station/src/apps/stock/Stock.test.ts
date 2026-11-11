@@ -714,7 +714,9 @@ describe('Waste', () => {
 			},
 		)
 		expect(api.writes(/undo$/)[0]!.body.clientId).toBeTruthy()
-	})
+		// The waits above allow 6 s and 5 s; the default 5 s test limit cut the
+		// first one short on a busy CI runner.
+	}, 20_000)
 
 	it('finds an item by typing its name', async () => {
 		await openWaste()
