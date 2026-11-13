@@ -557,8 +557,9 @@ describe('Jobs-Cron Worker Endpoints', () => {
 		it('triggers scheduled cron jobs', async () => {
 			const fetchMock = vi
 				.fn()
-				.mockResolvedValue(
-					new Response(JSON.stringify({ success: true }), { status: 200 }),
+				.mockImplementation(
+					() =>
+						new Response(JSON.stringify({ success: true }), { status: 200 }),
 				)
 			globalThis.fetch = fetchMock
 
