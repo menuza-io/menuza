@@ -12,6 +12,12 @@ import {
 	type PosOnlineOrdersSearchQuery,
 } from '@repo/common/pos-online-orders'
 import { POS_STAFF_SESSION_HEADER } from '@repo/common/pos-orders'
+import {
+	posStationControlsSchema,
+	type PosAvailabilityCommand,
+	type PosPauseCommand,
+	type PosStationControls,
+} from '@repo/common/pos-station-controls'
 import { type ZodType } from 'zod'
 import { noteServerDate } from '~/lib/clock.ts'
 import { type PosSettings } from '~/lib/config.ts'
@@ -45,6 +51,10 @@ export type OrdersApi = {
 	contact: (id: string) => Promise<PosOnlineOrderContact>
 	/** Today's and recent orders by number, name or the phone's last digits. */
 	search: (query: PosOnlineOrdersSearchQuery) => Promise<PosOnlineOrdersSearch>
+	/** Manager controls: the location's pause and what stock holds off. */
+	controls: () => Promise<PosStationControls>
+	pause: (command: PosPauseCommand) => Promise<PosStationControls>
+	availability: (command: PosAvailabilityCommand) => Promise<PosStationControls>
 }
 
 /**
@@ -139,5 +149,10 @@ export function createOrdersApi(
 				posOnlineOrdersSearchSchema,
 			)
 		},
+		controls: () => call('GET', '/controls', posStationControlsSchema),
+		pause: (command) =>
+			call('POST', '/controls/pause', posStationControlsSchema, command),
+		availability: (command) =>
+			call('POST', '/controls/availability', posStationControlsSchema, command),
 	}
 }

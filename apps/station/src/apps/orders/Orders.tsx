@@ -14,6 +14,7 @@ import {
 	type PosOnlineOrderDetail,
 	type PosOnlineOrderSummary,
 } from '@repo/common/pos-online-orders'
+import { posStationControlsAllowed } from '@repo/common/pos-station-controls'
 import {
 	Empty,
 	EmptyDescription,
@@ -25,6 +26,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { chime, chimeReady, unlockChime } from '../kitchen/chime.ts'
 import { OrdersError } from './api.ts'
+import { ControlsSheet } from './Controls.tsx'
 import {
 	ALERT_REPEAT_MS,
 	inboxOrders,
@@ -148,6 +150,9 @@ export function Orders({
 		[feed, orders.openedHere],
 	)
 	const [searching, setSearching] = useState(false)
+	const [controlling, setControlling] = useState(false)
+	// Pause and sold out: a signed-in manager only (the region refuses anyone else).
+	const mayControl = session !== null && posStationControlsAllowed(session)
 
 	// The alert repeats while any new order waits to be opened, on every tablet
 	// here: opening it anywhere silences it everywhere at the next read.
@@ -286,6 +291,14 @@ export function Orders({
 									: _(t`Live · refreshes every 5 seconds`)}
 						</span>
 					</div>
+					{mayControl ? (
+						<IconButton
+							label={_(t`Pause and sold out`)}
+							onClick={() => setControlling(true)}
+						>
+							<Icon name="sliders-horizontal" className="size-5" />
+						</IconButton>
+					) : null}
 					<IconButton
 						label={_(t`Search orders`)}
 						onClick={() => setSearching(true)}
@@ -451,6 +464,15 @@ export function Orders({
 					</section>
 				) : null}
 			</div>
+			{mayControl ? (
+				<ControlsSheet
+					open={controlling}
+					onClose={() => setControlling(false)}
+					api={orders.api}
+					online={reachable}
+					timeZone={timeZone}
+				/>
+			) : null}
 			<SearchSheet
 				open={searching}
 				onClose={() => setSearching(false)}

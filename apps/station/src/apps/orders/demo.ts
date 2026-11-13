@@ -11,6 +11,10 @@ import {
 	type PosOnlineOrdersGrants,
 	type PosPhonePickup,
 } from '@repo/common/pos-online-orders'
+import {
+	type OrderingPauseDuration,
+	type PosStationControls,
+} from '@repo/common/pos-station-controls'
 import { OrdersError, type OrdersApi } from './api.ts'
 
 /**
@@ -359,6 +363,31 @@ export function createDemoOrders(start = Date.now()): OrdersApi & {
 	}
 	const keys = new Set<string>()
 
+	// Manager controls: the pause here and one dish that stock holds off.
+	let pause: PosStationControls['pause'] = null
+	let heldByStock: PosStationControls['heldByStock'] = [
+		{
+			id: 'demo-held-ribs',
+			entityType: 'item',
+			entityId: 'i-ribs',
+			causeItemName: 'Pork ribs',
+		},
+	]
+	const controlsNow = (): PosStationControls => ({
+		locationId: 'demo',
+		pause:
+			pause && pause.until !== null && pause.until <= Date.now() ? null : pause,
+		heldByStock,
+		serverNow: Date.now(),
+	})
+	const PAUSE_MS: Record<OrderingPauseDuration, number | null> = {
+		'15m': 15 * MIN,
+		'30m': 30 * MIN,
+		'60m': 60 * MIN,
+		rest_of_day: null,
+		until_resumed: null,
+	}
+
 	return {
 		arrive,
 		feed: () => {
@@ -375,6 +404,38 @@ export function createDemoOrders(start = Date.now()): OrdersApi & {
 		},
 		detail: async (id) => respond(find(id)),
 		contact: async (id) => findInInbox(id).contact,
+		controls: async () => controlsNow(),
+		pause: async (command) => {
+			const now = Date.now()
+			if (command.action === 'resume') pause = null
+			else {
+				const length = PAUSE_MS[command.duration]
+				const midnight = new Date(now)
+				midnight.setHours(24, 0, 0, 0)
+				pause = {
+					pausedAt: now,
+					until:
+						length !== null
+							? now + length
+							: command.duration === 'rest_of_day'
+								? midnight.getTime()
+								: null,
+				}
+			}
+			return controlsNow()
+		},
+		availability: async (command) => {
+			const held = heldByStock.find(
+				(entry) =>
+					entry.entityType === command.entityType &&
+					entry.entityId === command.entityId,
+			)
+			if (command.available && held) {
+				if (!command.overrideStock) throw new OrdersError('held_by_stock', 409)
+				heldByStock = heldByStock.filter((entry) => entry !== held)
+			}
+			return { ...controlsNow(), changed: true }
+		},
 		search: async (query) => {
 			const now = Date.now()
 			const since = Math.max(onlineOrdersSearchSince(now), query.since ?? 0)

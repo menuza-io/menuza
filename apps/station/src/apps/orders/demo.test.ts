@@ -97,4 +97,30 @@ describe('demo online orders', () => {
 			demo.command(old.id, { action: 'reprint', target: 'guest' } as never),
 		).rejects.toMatchObject({ code: 'order_not_found' })
 	})
+
+	it('pauses, marks sold out and says when stock holds a dish off', async () => {
+		const demo = createDemoOrders()
+		expect((await demo.controls()).pause).toBeNull()
+		const paused = await demo.pause({ action: 'pause', duration: '15m' })
+		expect(paused.pause?.until).toBeGreaterThan(Date.now())
+		expect((await demo.pause({ action: 'resume' })).pause).toBeNull()
+		expect((await demo.controls()).heldByStock[0]).toMatchObject({
+			entityId: 'i-ribs',
+			causeItemName: 'Pork ribs',
+		})
+		await expect(
+			demo.availability({
+				entityType: 'item',
+				entityId: 'i-ribs',
+				available: true,
+			}),
+		).rejects.toMatchObject({ code: 'held_by_stock' })
+		const back = await demo.availability({
+			entityType: 'item',
+			entityId: 'i-ribs',
+			available: true,
+			overrideStock: true,
+		})
+		expect(back.heldByStock).toEqual([])
+	})
 })

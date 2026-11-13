@@ -319,6 +319,8 @@ export function useOrders(
 		open,
 		view,
 		close,
+		/** For the manager controls sheet (pause, sold out); nothing there is kept. */
+		api,
 		/** Searches the region; nothing is kept beyond the screen that asked. */
 		search: (query: PosOnlineOrdersSearchQuery) => {
 			if (!online) return Promise.reject(new OrdersError('connection_lost'))

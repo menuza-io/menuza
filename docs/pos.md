@@ -564,8 +564,9 @@ some locations may switch it on only at theirs. `/pos/me` reports it as
 The tablet calls the regional `/pos/online-orders` API directly (`/pos/orders`
 is the till's own order upload): `GET /` (the inbox), `GET /:id`,
 `POST /:id/command` (`open`, `ready`, `handed_over`, `cancel`, `reprint`),
-`POST /:id/refunds` (with an `Idempotency-Key`) and `POST /:id/contact`. Every
-call verifies the device, the switch, the server-bound location and a current
+`POST /:id/refunds` (with an `Idempotency-Key`), `POST /:id/contact`,
+`GET /search` and the manager controls under `/controls`. Every call verifies
+the device, the switch, the server-bound location and a current
 `Pos-Staff-Session`; `POS_ENABLED=false` and terminal revocation stop it.
 Responses are `no-store`; nothing is written to IndexedDB, writes are never
 queued, and after a failed write the screen reads the order back.
@@ -609,9 +610,10 @@ queued, and after a failed write the screen reads the order back.
   masked to its last four digits and the email left out until someone allowed
   taps **Show contact**, one order at a time, held in memory only while that
   order is open. Each person may reveal 30 contacts an hour (429
-  `contact_limit`). Every route reaches only what the inbox shows (open orders
-  and those finished in the last four hours): older orders, their guests and
-  their refunds are the App's.
+  `contact_limit`). Every change, contact and reprint reaches only what the
+  inbox shows (open orders and those finished in the last four hours): older
+  orders, their guests and their refunds are the App's. Search may open older
+  orders read-only (below).
 - **History.** Every action (opened, ready, handed over, payment taken,
   cancelled, refund recorded, contact shown, reprinted) is one append-only
   `pos_online_order_events` row with the terminal, the staff member, a reason
@@ -619,10 +621,44 @@ queued, and after a failed write the screen reads the order back.
   their actor. The order sheet lists them with the person's first name and
   initial.
 
+- **Search** (`GET /search?q=|phone=&state=&fulfillment=&since=`). "Where is my
+  order?": the location's online orders from today and the previous seven local
+  days by order number, guest name or the phone's last digits (four or more),
+  filtered by state (in progress, ready, handed over, cancelled) and order type.
+  The tablet sends the start of that window; the server never reaches further
+  back than eight days, whatever it is sent. A phone search needs the contact
+  permission: the field is hidden without it and the region answers 403
+  `permission_required`. Results are the inbox's own summaries (name, never a
+  phone or email), newest first, at most 50, with `truncated` set when more
+  matched. They live only while the search sheet is open: never stored,
+  `no-store`. An order found there that is no longer in the inbox opens
+  read-only, with the masked phone and no contact, actions or refunds.
+- **Pause and sold out** (`GET /controls`, `POST /controls/pause`,
+  `POST /controls/availability`). Mid-service manager controls, a signed-in
+  manager only (the till role that may cancel and refund; 403
+  `permission_required` for anyone else, and the button is hidden). Pause takes
+  the App's presets (15, 30 or 60 minutes, rest of today, until resumed) and
+  pauses web and QR ordering at the terminal's location only. Sold out marks a
+  dish or an option off at that location (its location override) and brings it
+  back. The region asks the App with ids, a duration and a boolean only
+  (`POST /resources/pos/station-controls`, internal token, contract
+  `@repo/common/pos-station-controls`): the App's own pause writer
+  (`applyOrderingControl`) and the same availability writer inventory's auto
+  sold out uses, so both purge the site cache (web and QR within seconds) and
+  write the activity log with the terminal and staff ids. A dish that stock took
+  off (inventory auto sold out) says which ingredient ran out; bringing it back
+  answers 409 `held_by_stock` until the manager confirms, and then goes through
+  inventory's own undo, so stock leaves it on until the ingredient has been
+  counted in stock again. Offline the controls are shown as unavailable and
+  nothing is queued; if the App cannot be reached the region answers 503
+  `controls_unavailable` and nothing changed. Busy mode stays in the App.
+
 In demo mode the app needs no pairing or network: a sample service with a new
 pickup, a QR table round, a delivery, a late ready order and a finished paid
 order lives in the tab with the same rules, and a new order arrives after half a
-minute so the alert can be seen.
+minute so the alert can be seen. Search finds two older orders (a pickup for
+"Maya" yesterday, a cancelled delivery three days ago, phone ending 0177), and
+the controls hold Smoked Ribs off as out of stock.
 
 ## Station apps: Stock
 
