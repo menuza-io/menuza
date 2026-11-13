@@ -46,15 +46,18 @@ async function published(organization: {
 	name: string
 	slug: string
 }) {
-	const { payload } = await buildPublicSiteMenuPayload({
-		id: organization.id,
-		name: organization.name,
-		slug: organization.slug,
-		currency: 'USD',
-		siteDefaultLocale: 'en',
-		siteLocales: null,
-		customDomain: null,
-	} as never)
+	const { payload } = await buildPublicSiteMenuPayload(
+		{
+			id: organization.id,
+			name: organization.name,
+			slug: organization.slug,
+			currency: 'USD',
+			siteDefaultLocale: 'en',
+			siteLocales: null,
+			customDomain: null,
+		} as never,
+		null,
+	)
 	return payload.locations
 }
 

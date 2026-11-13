@@ -91,6 +91,8 @@ export type OrderDraft = {
 	customerName: string
 	/** A counter order's "Text me when it's ready" number (empty: none). */
 	readyTextPhone?: string | null
+	/** A phone order's caller agreed to one text on the callback number. */
+	readyTextOptIn?: boolean
 	tableLabel: string
 	lines: CartLine[]
 	adjustments: Adjustment[]
@@ -239,6 +241,7 @@ const contactDetails = (draft: OrderDraft) =>
 				pickupAt: draft.pickupAt ?? null,
 				pickupTimeZone: draft.pickupTimeZone ?? null,
 				readyTextPhone: null,
+				readyTextOptIn: draft.readyTextOptIn === true,
 			}
 		: {
 				orderSource: 'counter' as const,
@@ -246,6 +249,7 @@ const contactDetails = (draft: OrderDraft) =>
 				pickupAt: null,
 				pickupTimeZone: null,
 				readyTextPhone: readyTextOf(draft),
+				readyTextOptIn: false,
 			}
 
 /**
@@ -755,6 +759,7 @@ export type ServerTab = {
 	pickupTimeZone?: string | null
 	customerName: string | null
 	readyTextPhone?: string | null
+	readyTextOptIn?: boolean
 	tableLabel: string | null
 	staff: StaffRef | null
 	signIn: SignInMode | null
@@ -801,6 +806,7 @@ export async function adoptTab(
 		orderSource: tab.orderSource ?? 'counter',
 		customerPhone: tab.customerPhone ?? null,
 		readyTextPhone: tab.readyTextPhone ?? null,
+		readyTextOptIn: tab.readyTextOptIn === true,
 		pickupAt: tab.pickupAt ? Date.parse(tab.pickupAt) : null,
 		pickupTimeZone: tab.pickupTimeZone ?? null,
 		customerName: tab.customerName ?? '',

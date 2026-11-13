@@ -98,6 +98,8 @@ export function toWireOrder(order: PosOrder) {
 		customerName: order.customerName || null,
 		readyTextPhone:
 			order.orderSource === 'phone' ? null : order.readyTextPhone || null,
+		readyTextOptIn:
+			order.orderSource === 'phone' && order.readyTextOptIn === true,
 		tableLabel: order.tableLabel || null,
 		staff: order.staff ?? null,
 		signIn: order.signIn ?? null,

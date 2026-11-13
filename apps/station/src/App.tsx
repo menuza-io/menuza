@@ -364,6 +364,7 @@ export function App() {
 						s.location.readyText && s.orderType === 'takeaway'
 							? s.readyTextPhone
 							: '',
+					readyTextOptIn: s.location.readyText ? s.readyTextOptIn : false,
 					tableLabel: s.tableLabel,
 					lines: s.lines,
 					adjustments: s.adjustments,
@@ -389,6 +390,7 @@ export function App() {
 		pickupTimeZone: o.pickupTimeZone,
 		customerName: o.customerName,
 		readyTextPhone: o.readyTextPhone ?? null,
+		readyTextOptIn: o.readyTextOptIn === true,
 		tableLabel: o.tableLabel,
 		lines: o.lines,
 		adjustments: o.adjustments,
@@ -604,7 +606,11 @@ export function App() {
 			onCustomer={s.setCustomerName}
 			readyText={
 				s.location?.readyText
-					? { phone: s.readyTextPhone, onPhone: s.setReadyTextPhone }
+					? {
+							phone: s.readyTextPhone,
+							onPhone: s.setReadyTextPhone,
+							optIn: s.readyTextOptIn,
+						}
 					: undefined
 			}
 			onTable={s.setTableLabel}

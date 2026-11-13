@@ -13,6 +13,7 @@ import { Input, Button, Modal, Reveal, Segmented } from '~/ui/primitives.tsx'
 export function PhoneOrderSheet({
 	details,
 	timeZone,
+	readyTextOffered = false,
 	onSave,
 	onClose,
 }: {
@@ -21,8 +22,11 @@ export function PhoneOrderSheet({
 		customerPhone: string
 		pickupAt: number | null
 		pickupTimeZone: string | null
+		readyTextOptIn?: boolean
 	}
 	timeZone?: string
+	/** The location texts guests when their order is ready: ask the caller. */
+	readyTextOffered?: boolean
 	onSave: (details: PhonePickup) => void
 	onClose: () => void
 }) {
@@ -41,6 +45,8 @@ export function PhoneOrderSheet({
 		details.pickupAt == null ? '' : pickupLocalValue(details.pickupAt, zone),
 	)
 	const [error, setError] = useState<string | null>(null)
+	// Ticked by default where the location texts guests; the caller may say no.
+	const [textMe, setTextMe] = useState(details.readyTextOptIn ?? true)
 	return (
 		<Modal
 			open
@@ -88,6 +94,7 @@ export function PhoneOrderSheet({
 						customerPhone: parsed.data,
 						pickupAt,
 						pickupTimeZone: zone,
+						readyTextOptIn: readyTextOffered && textMe,
 					})
 				}}
 			>
@@ -128,6 +135,29 @@ export function PhoneOrderSheet({
 						onChange={(e) => setPhone(e.target.value)}
 					/>
 				</div>
+				{readyTextOffered ? (
+					<div className="space-y-1">
+						<label className="flex min-h-11 items-center gap-3 text-sm font-semibold">
+							<input
+								type="checkbox"
+								className="size-5"
+								checked={textMe}
+								onChange={(e) => setTextMe(e.target.checked)}
+								aria-describedby={`${id}-text-notice`}
+							/>
+							<Trans>Text when it’s ready</Trans>
+						</label>
+						<p
+							id={`${id}-text-notice`}
+							className="text-muted-foreground text-sm"
+						>
+							<Trans>
+								Tell the caller: we’ll text this number once, about this order
+								only. Untick if they would rather not.
+							</Trans>
+						</p>
+					</div>
+				) : null}
 				<div className="space-y-3">
 					<Segmented
 						label={_(t`Pickup time`)}

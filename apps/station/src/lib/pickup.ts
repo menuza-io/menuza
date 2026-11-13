@@ -52,4 +52,6 @@ export type PhonePickup = {
 	customerPhone: string
 	pickupAt: number | null
 	pickupTimeZone: string
+	/** The guest agreed to one text on this number when the order is ready. */
+	readyTextOptIn?: boolean
 }

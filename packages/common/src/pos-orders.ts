@@ -97,7 +97,8 @@ export const posPairingCodeHashMessage = (code: string) => `pos-pair:${code}`
  * (optional, see `posOrderLoyaltySchema`). Version 6 added
  * `discountApplications` (optional, default empty) so a contract 5 upload
  * still parses. Version 7 added `readyTextPhone` (optional, default null) on
- * counter orders.
+ * counter orders and `readyTextOptIn` (optional, default false) on phone
+ * orders.
  */
 export const POS_CONTRACT_VERSION = 7
 export const POS_CONTRACT_HEADER = 'Pos-Contract'
@@ -448,6 +449,11 @@ export const posOrderRequestSchema = z
 		 * still parses. Phone orders use `customerPhone` instead.
 		 */
 		readyTextPhone: posCustomerPhoneSchema.nullable().default(null),
+		/**
+		 * Contract 7. A phone order's guest agreed at the till to one text on
+		 * the callback number when it is ready. Missing means no.
+		 */
+		readyTextOptIn: z.boolean().default(false),
 		tableLabel: z.string().trim().max(40).nullable(),
 		/** Who rang the order up. Null when the terminal does not require sign-in. */
 		staff: posStaffSchema.nullable(),
@@ -503,6 +509,10 @@ export const posOrderRequestSchema = z
 		} else if (order.customerPhone || order.pickupAt || order.pickupTimeZone) {
 			issue('pickup contact details belong to phone orders', ['orderSource'])
 		}
+		if (order.orderSource !== 'phone' && order.readyTextOptIn)
+			issue('only phone orders agree to a text on their callback number', [
+				'readyTextOptIn',
+			])
 		const subtotal = order.lines.reduce((s, l) => s + posLineTotalCents(l), 0)
 		if (subtotal !== order.totals.subtotalCents) {
 			issue('subtotal does not match the lines', ['totals', 'subtotalCents'])

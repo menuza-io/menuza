@@ -2144,6 +2144,10 @@ export const posOrders = sqliteTable(
 			table.number,
 		),
 		index('idx_pos_orders_status_rung_up').on(table.status, table.rungUpAt),
+		// The ready-text daily cap counts sent texts of the last 24 hours.
+		index('idx_pos_orders_ready_text_sent')
+			.on(table.readyTextAt)
+			.where(sql`${table.readyTextStatus} = 'sent'`),
 		index('idx_pos_orders_business_date').on(
 			table.businessDate,
 			table.locationId,

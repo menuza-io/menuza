@@ -2046,20 +2046,31 @@ function readyTextFields(
 		'readyTextPhone' | 'readyTextStatus' | 'readyTextAt'
 	> | null,
 	order: PosOrderRequest,
+	contactRedacted: boolean,
 ): Pick<PosOrderRow, 'readyTextPhone' | 'readyTextStatus' | 'readyTextAt'> {
+	// Its one attempt is recorded: the number is gone and stays gone.
 	if (existing?.readyTextStatus)
 		return {
-			readyTextPhone: existing.readyTextPhone,
+			readyTextPhone: null,
 			readyTextStatus: existing.readyTextStatus,
 			readyTextAt: existing.readyTextAt,
 		}
-	if (order.readyTextPhone && !readyTextRouteAvailable())
-		return { readyTextPhone: null, readyTextStatus: 'unavailable', readyTextAt: null }
-	return {
-		readyTextPhone: order.readyTextPhone,
-		readyTextStatus: null,
-		readyTextAt: null,
-	}
+	// A phone order is texted on its callback number only when the guest
+	// agreed at the till (`readyTextOptIn`); a counter order on the number
+	// typed for it.
+	const phone =
+		order.orderSource === 'phone'
+			? order.readyTextOptIn && !contactRedacted
+				? order.customerPhone
+				: null
+			: order.readyTextPhone
+	if (phone && !readyTextRouteAvailable())
+		return {
+			readyTextPhone: null,
+			readyTextStatus: 'unavailable',
+			readyTextAt: null,
+		}
+	return { readyTextPhone: phone, readyTextStatus: null, readyTextAt: null }
 }
 
 export async function upsertPosOrder(
@@ -2327,7 +2338,11 @@ export async function upsertPosOrder(
 					// The ready-text number is taken once: after its one text (or the
 					// reason there was none) a later revision cannot put it back.
 					// Without an SMS route here it is refused (recorded, never kept).
-					const readyText = readyTextFields(existing ?? null, order)
+					const readyText = readyTextFields(
+						existing ?? null,
+						order,
+						contactRedacted,
+					)
 					const values = {
 						deviceId: device.id,
 						number: order.number,
@@ -2660,7 +2675,10 @@ export function toTerminalOrder(row: PosOrderRow, money: PosPaymentRow[]) {
 		orderType: row.orderType,
 		orderSource: row.orderSource,
 		customerPhone: row.customerPhone,
-		readyTextPhone: row.readyTextPhone,
+		// Back to the shape the till uploads: a counter order's number, or a
+		// phone order's agreement (its number is the callback one).
+		readyTextPhone: row.orderSource === 'phone' ? null : row.readyTextPhone,
+		readyTextOptIn: row.orderSource === 'phone' && row.readyTextPhone !== null,
 		pickupAt:
 			row.pickupAt !== null ? new Date(row.pickupAt).toISOString() : null,
 		pickupTimeZone: row.pickupTimeZone,

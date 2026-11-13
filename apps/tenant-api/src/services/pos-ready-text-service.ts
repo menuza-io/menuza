@@ -56,9 +56,62 @@ async function liveContext(orgId: string, locationId: string) {
 	return result.ok ? result.data : null
 }
 
+/** A location's ready-text policy as the App last said it (no guest data). */
+type Policy = { readyText: boolean; restaurant: string; at: number }
+const POLICY_FRESH_MS = 60_000
+/** While the App cannot be reached, the last answer this old still decides. */
+const POLICY_STALE_MS = 6 * 60 * 60_000
+const policies = new Map<string, Policy>()
+
+export function resetReadyTextPolicyCache(): void {
+	policies.clear()
+}
+
+async function policyFor(
+	orgId: string,
+	locationId: string,
+	now: number,
+	context: NonNullable<Deps['context']>,
+): Promise<Policy | null> {
+	const key = `${orgId}:${locationId}`
+	const known = policies.get(key)
+	if (known && now - known.at < POLICY_FRESH_MS) return known
+	const live = await context(orgId, locationId).catch(() => null)
+	if (live) {
+		const location = live.menu.locations.find(
+			(entry) => entry.id === locationId,
+		)
+		const policy = {
+			readyText: location?.readyText === true,
+			restaurant:
+				(typeof live.menu.organization.name === 'string' &&
+					live.menu.organization.name.trim()) ||
+				location?.name ||
+				'',
+			at: now,
+		}
+		if (policies.size > 500) policies.clear()
+		policies.set(key, policy)
+		return policy
+	}
+	return known && now - known.at < POLICY_STALE_MS ? known : null
+}
+
+/** The name as it goes in the text: short, and in plain SMS characters where it can be. */
+export function smsRestaurantName(name: string): string {
+	const plain = name
+		.replace(/[\u2018\u2019\u201B\u2032]/g, "'")
+		.replace(/[\u201C\u201D\u2033]/g, '"')
+		.replace(/[\u2013\u2014]/g, '-')
+		.replace(/\s+/g, ' ')
+		.trim()
+	const chars = [...plain]
+	return chars.length > 30 ? `${chars.slice(0, 29).join('').trimEnd()}…` : plain
+}
+
 export function readyTextMessage(number: string, restaurant: string): string {
 	const label = number.replace(/^#/, '')
-	return `Your order #${label} at ${restaurant} is ready for pickup.`
+	return `Your order #${label} at ${smsRestaurantName(restaurant)} is ready for pickup.`
 }
 
 export async function sendReadyTextIfDue(
@@ -71,8 +124,6 @@ export async function sendReadyTextIfDue(
 		.select({
 			number: posOrders.number,
 			status: posOrders.status,
-			orderSource: posOrders.orderSource,
-			customerPhone: posOrders.customerPhone,
 			readyTextPhone: posOrders.readyTextPhone,
 			readyTextStatus: posOrders.readyTextStatus,
 			locationId: posOrders.locationId,
@@ -82,24 +133,19 @@ export async function sendReadyTextIfDue(
 		.limit(1)
 	if (!order || order.readyTextStatus !== null) return 'skipped'
 	if (order.status === 'void' || order.status === 'refunded') return 'skipped'
-	const phone =
-		order.orderSource === 'phone' ? order.customerPhone : order.readyTextPhone
+	// Counter orders carry the number typed for this text; phone orders carry
+	// their callback number only when the guest agreed at the till.
+	const phone = order.readyTextPhone
 	if (!phone) return 'skipped'
 
-	const context = await (deps.context ?? liveContext)(
+	const policy = await policyFor(
 		input.orgId,
 		order.locationId,
+		now,
+		deps.context ?? liveContext,
 	)
-	// Unknown policy (the App unreachable): leave it untried rather than guess.
-	if (!context) return 'skipped'
-	const location = context.menu.locations.find(
-		(entry) => entry.id === order.locationId,
-	)
-	if (!location?.readyText) return 'skipped'
-	const restaurant =
-		(typeof context.menu.organization.name === 'string' &&
-			context.menu.organization.name.trim()) ||
-		location.name
+	if (policy && !policy.readyText) return 'skipped'
+	const restaurant = policy?.restaurant ?? ''
 
 	const to = normalizePhone(phone)
 	const route = smsRouteAvailable()
@@ -109,6 +155,9 @@ export async function sendReadyTextIfDue(
 			const tx = rawTx as unknown as TenantDatabase
 			let status: 'sent' | 'limit' | 'unavailable' | 'failed' = 'sent'
 			if (!route) status = 'unavailable'
+			// Whether the location texts guests cannot be known (the App has been
+			// unreachable for hours): recorded, so it shows, rather than dropped.
+			else if (!policy || !restaurant) status = 'failed'
 			else if (!isValidPhone(to)) status = 'failed'
 			else {
 				const [sent] = await tx
@@ -124,7 +173,13 @@ export async function sendReadyTextIfDue(
 			}
 			const rows = await tx
 				.update(posOrders)
-				.set({ readyTextStatus: status, readyTextAt: now })
+				// The number was for this one attempt: it goes as the attempt is
+				// recorded (the send below uses its own copy).
+				.set({
+					readyTextStatus: status,
+					readyTextAt: now,
+					readyTextPhone: null,
+				})
 				.where(
 					and(
 						eq(posOrders.id, input.orderId),

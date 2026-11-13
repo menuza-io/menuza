@@ -737,4 +737,21 @@ describe('contract v7: ready text', () => {
 			'callback number',
 		)
 	})
+
+	it('lets only a phone order carry the caller’s agreement, off by default', () => {
+		const phone = {
+			...base(),
+			orderType: 'takeaway',
+			tableLabel: null,
+			orderSource: 'phone',
+			customerName: 'Sam',
+			customerPhone: '+15551234567',
+			pickupTimeZone: 'America/New_York',
+		}
+		expect(parse(phone).data?.readyTextOptIn).toBe(false)
+		expect(parse({ ...phone, readyTextOptIn: true }).success).toBe(true)
+		expect(message({ ...base(), readyTextOptIn: true })).toContain(
+			'only phone orders',
+		)
+	})
 })

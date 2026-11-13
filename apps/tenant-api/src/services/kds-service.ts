@@ -504,6 +504,7 @@ export async function kitchenCommand(
 				const ticket = project(source, saved ?? null, config, version)
 				if (ticket.version !== command.expectedVersion)
 					throw new HttpError(409, 'stale_ticket')
+				const wasReady = kdsTicketStage(ticket.lines) === 'ready'
 				if (command.action === 'stage') {
 					if (ticket.completedAt !== null)
 						throw new HttpError(409, 'ticket_done')
@@ -599,12 +600,13 @@ export async function kitchenCommand(
 							: command.action,
 					at: now,
 				})
-				// Whether a till order's whole ticket is now Ready (its one ready
-				// text goes out after this commits; see pos-ready-text-service).
+				// Whether this command made a till order's whole ticket Ready (it
+				// was not before): its one ready text goes out after this commits.
 				return {
-					tillReady:
+					tillBecameReady:
 						command.source === 'pos' &&
 						command.action === 'stage' &&
+						!wasReady &&
 						kdsTicketStage(ticket.lines) === 'ready',
 				}
 			}),

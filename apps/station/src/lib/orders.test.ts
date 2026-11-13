@@ -141,6 +141,25 @@ describe('pay later (open tabs)', () => {
 			pickupTimeZone: 'America/New_York',
 		})
 		expect(toWireOrder(phone).readyTextPhone).toBeNull()
+		expect(toWireOrder(phone).readyTextOptIn).toBe(false)
+		// The caller agreed at the till: the agreement travels, never a second number.
+		const agreed = await createOrder({
+			...counter,
+			orderSource: 'phone',
+			customerName: 'Sam',
+			customerPhone: '+15559876543',
+			pickupTimeZone: 'America/New_York',
+			readyTextOptIn: true,
+		})
+		expect(toWireOrder(agreed)).toMatchObject({
+			readyTextOptIn: true,
+			readyTextPhone: null,
+		})
+		expect(
+			(await adoptTab(toWireOrder(agreed), 'restaurant')).readyTextOptIn,
+		).toBe(true)
+		// A counter order never carries an agreement.
+		expect(toWireOrder(tab).readyTextOptIn).toBe(false)
 	})
 
 	it('requires contact details and pickup-only fulfillment before saving or taking money', async () => {

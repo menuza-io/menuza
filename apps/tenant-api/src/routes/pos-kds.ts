@@ -58,7 +58,7 @@ for (const method of ['get', 'post', 'put'] as const) {
 				const result = await kitchenCommand(pos.db, actor, body.data)
 				// The till order's one ready text, after the stage is recorded. It
 				// never holds up or fails the kitchen's answer.
-				if (result.tillReady)
+				if (result.tillBecameReady)
 					runInBackground(
 						sendReadyTextIfDue(pos.db, {
 							orgId: pos.orgId,

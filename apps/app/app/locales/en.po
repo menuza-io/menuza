@@ -39499,7 +39499,7 @@ msgstr "Text field"
 #~ msgid "Text guests at {0} when their order is ready"
 #~ msgstr "Text guests at {0} when their order is ready"
 
-#: app/components/pos/ready-text-settings.tsx:93
+#: app/components/pos/ready-text-settings.tsx:104
 msgid "Text guests at {name} when their order is ready"
 msgstr "Text guests at {name} when their order is ready"
 
@@ -39543,6 +39543,7 @@ msgstr "Text this guest when their table is ready."
 #~ msgstr "Texted links"
 
 #: app/components/pos/ready-text-settings.tsx:53
+#: app/components/pos/ready-text-settings.tsx:91
 msgid "Texts are not available in your data region yet."
 msgstr "Texts are not available in your data region yet."
 
@@ -39660,6 +39661,7 @@ msgid "That design is not in your Canva account anymore."
 msgstr "That design is not in your Canva account anymore."
 
 #: app/components/orders/ordering-controls.tsx:161
+#: app/components/pos/ready-text-settings.tsx:94
 msgid "That did not save. Try again."
 msgstr "That did not save. Try again."
 
@@ -42097,6 +42099,10 @@ msgstr "This link was turned off"
 #: app/utils/reservations/host-errors.ts:23
 msgid "This location is no longer available."
 msgstr "This location is no longer available."
+
+#: app/components/pos/ready-text-settings.tsx:93
+msgid "This location no longer exists. Reload the page."
+msgstr "This location no longer exists. Reload the page."
 
 #: app/components/menu/drop-wizard/drop-form.tsx:856
 msgid "This menu has no categories assigned yet. Go to Menus to add categories and items."

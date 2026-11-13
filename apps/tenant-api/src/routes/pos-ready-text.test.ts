@@ -19,7 +19,10 @@ import { ORG_A, stubStaffEnv } from '../../tests/staff-harness.ts'
 import { hashPosSecret } from '../lib/pos-auth.ts'
 import {
 	READY_TEXT_DAILY_LIMIT,
+	readyTextMessage,
+	resetReadyTextPolicyCache,
 	sendReadyTextIfDue,
+	smsRestaurantName,
 } from '../services/pos-ready-text-service.ts'
 import { posKdsRoutes } from './pos-kds.ts'
 
@@ -153,6 +156,7 @@ describe('ready texts for counter and phone orders (#250)', () => {
 		sms.send.mockResolvedValue(undefined)
 		context.readyText = true
 		context.reachable = true
+		resetReadyTextPolicyCache()
 		await provisionTenantDb(ORG_A)
 		const db = await getTenantDb(ORG_A)
 		deviceId = crypto.randomUUID()
@@ -185,6 +189,8 @@ describe('ready texts for counter and phone orders (#250)', () => {
 		})
 		expect(after.readyTextStatus).toBe('sent')
 		expect(after.readyTextAt).toEqual(expect.any(Number))
+		// The number was for this one text: it is gone once the attempt is recorded.
+		expect(after.readyTextPhone).toBeNull()
 		// The kitchen feed never carries the number.
 		const feed = await (
 			await app.request('/pos/kds', {
@@ -230,31 +236,78 @@ describe('ready texts for counter and phone orders (#250)', () => {
 			expect((await row(id)).readyTextStatus).toBeNull()
 	})
 
-	it('leaves the text untried while the App cannot be reached, and sends it at the next Ready', async () => {
-		context.reachable = false
-		const id = await addOrder()
+	it('while the App cannot be reached, uses what it last said, and otherwise records the text as failed', async () => {
 		const db = await getTenantDb(ORG_A)
-		expect(await sendReadyTextIfDue(db, { orgId: ORG_A, orderId: id })).toBe(
-			'skipped',
-		)
-		context.reachable = true
-		expect(await sendReadyTextIfDue(db, { orgId: ORG_A, orderId: id })).toBe(
+		// Known from a recent answer: the outage changes nothing.
+		const first = await addOrder()
+		expect(await sendReadyTextIfDue(db, { orgId: ORG_A, orderId: first })).toBe(
 			'sent',
+		)
+		context.reachable = false
+		const during = await addOrder({ number: 'T1-0044' })
+		expect(
+			await sendReadyTextIfDue(db, { orgId: ORG_A, orderId: during }),
+		).toBe('sent')
+		// Never known: recorded (visible to operators), not silently dropped.
+		resetReadyTextPolicyCache()
+		const unknown = await addOrder({ number: 'T1-0045' })
+		expect(
+			await sendReadyTextIfDue(db, { orgId: ORG_A, orderId: unknown }),
+		).toBe('failed')
+		expect(await row(unknown)).toMatchObject({
+			readyTextStatus: 'failed',
+			readyTextPhone: null,
+		})
+	})
+
+	it('texts only when the ticket becomes Ready, not when an all-ready ticket is staged again', async () => {
+		context.readyText = false
+		const id = await addOrder()
+		await stage(id, 'ready')
+		await new Promise((resolve) => setTimeout(resolve, 50))
+		expect((await row(id)).readyTextStatus).toBeNull()
+		// Switched on later: re-staging a ticket that is already all ready is
+		// not the moment it became ready, so nothing is sent.
+		context.readyText = true
+		resetReadyTextPolicyCache()
+		await stage(id, 'preparing')
+		await new Promise((resolve) => setTimeout(resolve, 50))
+		expect(sms.send).not.toHaveBeenCalled()
+	})
+
+	it('keeps the restaurant name short and in plain SMS characters', () => {
+		expect(
+			smsRestaurantName('Luna’s “Best” Café — Downtown and Uptown Branch'),
+		).toBe('Luna\'s "Best" Café - Downtown…')
+		expect(readyTextMessage('T1-0042', 'Cafe Luna')).toBe(
+			'Your order #T1-0042 at Cafe Luna is ready for pickup.',
 		)
 	})
 
-	it('texts a phone order on its callback number', async () => {
-		const id = await addOrder({
+	it('texts a phone order on its callback number only when the caller agreed', async () => {
+		// The upload copies the callback number here only with `readyTextOptIn`.
+		const agreed = await addOrder({
 			orderSource: 'phone',
-			readyTextPhone: null,
+			readyTextPhone: '(555) 987-6543',
 			customerPhone: '(555) 987-6543',
 			guestName: 'Sam',
 		})
-		await stage(id, 'ready')
-		await settled(id)
+		const declined = await addOrder({
+			number: 'T1-0060',
+			orderSource: 'phone',
+			readyTextPhone: null,
+			customerPhone: '(555) 987-0000',
+			guestName: 'Lee',
+		})
+		await stage(agreed, 'ready')
+		await stage(declined, 'ready')
+		await settled(agreed)
+		await new Promise((resolve) => setTimeout(resolve, 50))
+		expect(sms.send).toHaveBeenCalledTimes(1)
 		expect(sms.send).toHaveBeenCalledWith(
 			expect.objectContaining({ to: '+15559876543' }),
 		)
+		expect((await row(declined)).readyTextStatus).toBeNull()
 	})
 
 	it('over the daily organization cap: no text, the ticket still moves on, and the order records the limit', async () => {
@@ -282,7 +335,10 @@ describe('ready texts for counter and phone orders (#250)', () => {
 			})
 		const id = await addOrder()
 		await stage(id, 'ready')
-		expect((await settled(id)).readyTextStatus).toBe('limit')
+		expect(await settled(id)).toMatchObject({
+			readyTextStatus: 'limit',
+			readyTextPhone: null,
+		})
 		expect(sms.send).not.toHaveBeenCalled()
 		expect(
 			(await ticketOf(id)).lines.every((line) => line.stage === 'ready'),
@@ -296,6 +352,7 @@ describe('ready texts for counter and phone orders (#250)', () => {
 		await vi.waitFor(async () =>
 			expect((await row(id)).readyTextStatus).toBe('failed'),
 		)
+		expect((await row(id)).readyTextPhone).toBeNull()
 		const db = await getTenantDb(ORG_A)
 		expect(await sendReadyTextIfDue(db, { orgId: ORG_A, orderId: id })).toBe(
 			'skipped',

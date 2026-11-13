@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "c324dc31-d91e-4f0e-afcd-f2fcd1a139c1",
+  "id": "c81d0b80-e594-4902-bb00-19ccf04d1b7f",
   "prevId": "fa75b01c-8654-479e-9665-9d734c318458",
   "tables": {
     "customer_payment_methods": {
@@ -12051,6 +12051,14 @@
             "rung_up_at"
           ],
           "isUnique": false
+        },
+        "idx_pos_orders_ready_text_sent": {
+          "name": "idx_pos_orders_ready_text_sent",
+          "columns": [
+            "ready_text_sent_at"
+          ],
+          "isUnique": false,
+          "where": "\"pos_orders\".\"ready_text_status\" = 'sent'"
         },
         "idx_pos_orders_business_date": {
           "name": "idx_pos_orders_business_date",

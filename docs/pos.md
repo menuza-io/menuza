@@ -138,36 +138,47 @@ on there).
 - **Station.** On a counter pickup order, the guest sheet (where the name is
   typed) shows an optional **Text me when it's ready (optional)** number with
   "We'll text this number once, about this order only." Empty changes nothing; a
-  number that is not one is refused before the order is saved. It travels as
-  `readyTextPhone` (contract 7, optional, default null, so a contract 6 upload
-  still parses). Phone orders are texted on their callback number; the contract
-  refuses `readyTextPhone` on them, and the phone-order contact rule is
-  unchanged.
-- **When.** When Kitchen marks a till order's whole ticket **Ready**
-  (`kitchenCommand` returns `tillReady`), the region sends one text after the
-  stage commits: "Your order #<number> at <restaurant> is ready for pickup." No
-  link, no marketing, no replies. A Kitchen screen that was offline sends the
-  stage when it reconnects, and the text goes out then.
+  number that is not one is refused when **Done** is tapped (the field is
+  focused and the message announced), and a number left on another order type is
+  neither checked nor sent. It travels as `readyTextPhone` (contract 7,
+  optional, default null, so a contract 6 upload still parses). A phone order is
+  texted on its callback number only when the caller agreed: the phone-order
+  sheet shows **Text when it's ready**, ticked by default, with the same notice
+  for staff to read out, and sends `readyTextOptIn` (contract 7, default false,
+  phone orders only). An older Station never sends it, so its phone orders are
+  never texted. The phone-order contact rule is unchanged.
+- **When.** When Kitchen's command makes a till order's whole ticket **Ready**
+  (it was not before; `kitchenCommand` returns `tillBecameReady`), the region
+  sends one text after the stage commits: "Your order #<number> at <restaurant>
+  is ready for pickup." No link, no marketing, no replies. The restaurant name
+  is cut to 30 characters and curly quotes and dashes become plain ones, so the
+  text stays one SMS segment where it can. A Kitchen screen that was offline
+  sends the stage when it reconnects, and the text goes out then.
 - **Once.** `pos_orders.ready_text_status` / `ready_text_sent_at` (tenant-db
-  migration `0041_pos_order_ready_text`) record the one attempt: `sent`,
-  `limit`, `unavailable` (no SMS route on this node) or `failed`. The row is
-  claimed before sending, so reopening and re-readying, or two kitchens racing,
-  send nothing more, and a failed send is not retried. A cancelled, voided or
-  refunded order, an order without a number, or a location with the switch off
-  sends nothing; if the App cannot be reached the policy is unknown and nothing
-  is recorded, so the next Ready tries again. Operators see the outcome as
-  `readyTextStatus` / `readyTextAt` on `/operator/pos/orders`.
+  migration `0041_pos_order_ready_text`, with a partial index on sent texts for
+  the daily count) record the one attempt: `sent`, `limit`, `unavailable` (no
+  SMS route on this node) or `failed`. The row is claimed before sending, so
+  reopening and re-readying, or two kitchens racing, send nothing more, and a
+  failed send is not retried. A cancelled, voided or refunded order, an order
+  without a number, or a location with the switch off sends nothing. The
+  location's switch is read from the order context and kept for a minute; while
+  the App cannot be reached, the last answer from the past six hours still
+  decides, and with none the text is recorded as `failed` rather than dropped.
+  Operators see the outcome as `readyTextStatus` / `readyTextAt` on
+  `/operator/pos/orders` (no App screen lists till orders yet).
 - **Limit.** A transactional cap of 300 ready texts per organization per 24
   hours (`READY_TEXT_DAILY_LIMIT`), counted from the orders themselves and
   separate from the sign-in code limiter. Over it the ticket still moves on and
   the order records `limit` ("Text not sent (limit)").
 - **The number.** Used for this one text only: it never creates or updates a
   customer, never sets consent and never joins an audience. It stays in the
-  regional `pos_orders.ready_text_phone`, never in logs (ids and outcomes only),
-  the Kitchen feed, revision history, held uploads, cross-plane calls or the
-  control plane. A later upload cannot change it once its attempt is recorded. A
-  KSA node records `unavailable` and keeps no number. Person erasure clears it
-  and keeps the sent time; it also expires with guest names.
+  regional `pos_orders.ready_text_phone` only until the attempt is recorded
+  (sent, limit, unavailable or failed), when it is cleared; later uploads cannot
+  put it back. It is never in logs (ids and outcomes only), the Kitchen feed,
+  revision history, held uploads, cross-plane calls or the control plane. A KSA
+  node records `unavailable` and keeps no number. Person erasure clears a number
+  still waiting and keeps the time of the attempt; it also expires with guest
+  names.
 
 Deploy order: App (migration `0042`, the switch and `readyText` in the menu and
 order context), then tenant-api (migration `0041`, contract 7), then Station. A

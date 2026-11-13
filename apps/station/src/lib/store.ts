@@ -124,6 +124,8 @@ export type PosState = {
 	customerName: string
 	/** "Text me when it's ready" on a counter order (empty: none). */
 	readyTextPhone: string
+	/** A phone order's caller agreed to the ready text. */
+	readyTextOptIn: boolean
 	tableLabel: string
 	lines: CartLine[]
 	/** Set while the cart is an open tab being added to, rather than a new order. */
@@ -615,6 +617,7 @@ export const usePos = create<PosState>((set, get) => ({
 	pickupTimeZone: null,
 	customerName: '',
 	readyTextPhone: '',
+	readyTextOptIn: false,
 	tableLabel: '',
 	lines: [],
 	activeOrderId: null,
@@ -1043,6 +1046,7 @@ export const usePos = create<PosState>((set, get) => ({
 			orderType: 'takeaway',
 			tableLabel: '',
 			readyTextPhone: '',
+			readyTextOptIn: details.readyTextOptIn === true,
 		}),
 	setCounterOrder: () =>
 		set({
@@ -1051,6 +1055,7 @@ export const usePos = create<PosState>((set, get) => ({
 			customerPhone: '',
 			pickupAt: null,
 			pickupTimeZone: null,
+			readyTextOptIn: false,
 		}),
 	setCustomerName: (customerName) => set({ customerName }),
 	setReadyTextPhone: (readyTextPhone) => set({ readyTextPhone }),
@@ -1220,6 +1225,7 @@ export const usePos = create<PosState>((set, get) => ({
 				pickupTimeZone: order.pickupTimeZone ?? null,
 				customerName: order.customerName,
 				readyTextPhone: order.readyTextPhone ?? '',
+				readyTextOptIn: order.readyTextOptIn === true,
 				tableLabel: order.tableLabel,
 				// A tab opened before (or on a till in another language) continues in
 				// the language of record, so its documents read one language.
@@ -1257,6 +1263,7 @@ export const usePos = create<PosState>((set, get) => ({
 			pickupTimeZone: null,
 			customerName: '',
 			readyTextPhone: '',
+			readyTextOptIn: false,
 			tableLabel: '',
 			adjustments: [],
 			discountNotice: null,
