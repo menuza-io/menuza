@@ -1,3 +1,4 @@
+import { type OrderMarketingConsentResult } from '@repo/common/marketing-consent'
 import {
 	createdOrderSchema,
 	orderCapabilitySchema,
@@ -207,7 +208,26 @@ export async function fetchOrderingOptions(input: {
  */
 export async function submitRegionalOrder(
 	body: Record<string, unknown>,
-): Promise<CreatedOrder> {
+): Promise<CreatedOrder & { marketingConsent?: OrderMarketingConsentResult }> {
+	return withMarketingConsent(await placeRegionalOrder(body))
+}
+
+type PlacedOrderAnswer = { created: CreatedOrder; raw: unknown }
+
+/** The placement answer carries what became of the ticked boxes beside the order. */
+function withMarketingConsent({ created, raw }: PlacedOrderAnswer) {
+	const result =
+		raw && typeof raw === 'object' && 'marketingConsent' in raw
+			? (raw.marketingConsent as OrderMarketingConsentResult | null)
+			: null
+	return result && typeof result === 'object'
+		? { ...created, marketingConsent: result }
+		: created
+}
+
+async function placeRegionalOrder(
+	body: Record<string, unknown>,
+): Promise<PlacedOrderAnswer> {
 	const url = `${regionalUrl()}/orders`
 	const init: RequestInit = {
 		method: 'POST',
@@ -215,7 +235,8 @@ export async function submitRegionalOrder(
 		body: JSON.stringify({ ...body, ...getOrgBinding() }),
 	}
 	if (!getAccessToken()) {
-		return createdOrderSchema.parse(await responseJson(await fetch(url, init)))
+		const raw = await responseJson(await fetch(url, init))
+		return { created: createdOrderSchema.parse(raw), raw }
 	}
 	const { session, response } = await tenantFetch('/orders', init)
 	if (session === 'transient') {
@@ -225,7 +246,8 @@ export async function submitRegionalOrder(
 		clearSessionTokens()
 		throw new OrderRequestError('unauthorized', 401)
 	}
-	return createdOrderSchema.parse(await responseJson(response))
+	const raw = await responseJson(response)
+	return { created: createdOrderSchema.parse(raw), raw }
 }
 /**
  * The discount quote for the order a checkout would place

@@ -272,6 +272,11 @@ export const ORG_PERMISSIONS = {
 	READ_INVENTORY_COST_ANY: 'read:inventory_cost:any' as const,
 	UPDATE_INVENTORY_PURCHASING_ANY: 'update:inventory_purchasing:any' as const,
 	UPDATE_INVENTORY_RECIPE_ANY: 'update:inventory_recipe:any' as const,
+
+	// Recording a guest's marketing consent on their behalf (Customers, person
+	// profile). Acts only with READ_SETTINGS_ANY (the customers facet) and never
+	// while impersonating.
+	UPDATE_MARKETING_CONSENT_ANY: 'update:marketing_consent:any' as const,
 } as const
 
 /**

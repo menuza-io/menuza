@@ -13,6 +13,9 @@ import {
  *  - `dining`: the reservation facet. `full` is the guest read grant
  *    (allergy text, sensitive tags, notes); `flags` is counters and
  *    non-sensitive tags for customer readers who only hold `read:reservation`.
+ *  - `canUpdateMarketingConsent`: record a guest's marketing consent on their
+ *    behalf (`update:marketing_consent:any`, with the customers facet, never
+ *    while impersonating).
  */
 export type PeopleAccess = {
 	customers: boolean
@@ -20,6 +23,11 @@ export type PeopleAccess = {
 	canUpdateCustomers: boolean
 	canUpdateDining: boolean
 	canDelete: boolean
+	/**
+	 * Always set by `computePeopleAccess`; optional only so older fixtures
+	 * still type. Read it as `=== true`.
+	 */
+	canUpdateMarketingConsent?: boolean
 }
 
 export const NO_PEOPLE_ACCESS: PeopleAccess = {
@@ -28,11 +36,14 @@ export const NO_PEOPLE_ACCESS: PeopleAccess = {
 	canUpdateCustomers: false,
 	canUpdateDining: false,
 	canDelete: false,
+	canUpdateMarketingConsent: false,
 }
 
 export function computePeopleAccess(input: {
 	canReadSettings: boolean
 	canUpdateSettings: boolean
+	/** Holds `update:marketing_consent:any`. Optional: absent is no grant. */
+	canUpdateMarketingConsent?: boolean
 	/** `reservations.enabled` and the member has a reservation location. */
 	reservationsEnabled: boolean
 	grants: readonly ReservationsPermission[]
@@ -60,7 +71,18 @@ export function computePeopleAccess(input: {
 		!input.impersonated &&
 		canUpdateCustomers &&
 		(dining === 'none' || canUpdateDining)
-	return { customers, dining, canUpdateCustomers, canUpdateDining, canDelete }
+	// Recording consent for a guest speaks for them: like a customer edit, it
+	// needs the customers facet and is never available while impersonating.
+	const canUpdateMarketingConsent =
+		customers && input.canUpdateMarketingConsent === true && !input.impersonated
+	return {
+		customers,
+		dining,
+		canUpdateCustomers,
+		canUpdateDining,
+		canDelete,
+		canUpdateMarketingConsent,
+	}
 }
 
 export function hasPeopleAccess(access: PeopleAccess): boolean {

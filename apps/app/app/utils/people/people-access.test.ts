@@ -65,6 +65,7 @@ describe('computePeopleAccess', () => {
 			canUpdateCustomers: true,
 			canUpdateDining: true,
 			canDelete: true,
+			canUpdateMarketingConsent: false,
 		})
 		expect(computePeopleAccess({ ...admin, impersonated: true })).toEqual({
 			customers: true,
@@ -72,6 +73,7 @@ describe('computePeopleAccess', () => {
 			canUpdateCustomers: false,
 			canUpdateDining: false,
 			canDelete: false,
+			canUpdateMarketingConsent: false,
 		})
 	})
 
@@ -90,5 +92,28 @@ describe('computePeopleAccess', () => {
 			reservationsEnabled: false,
 		})
 		expect(noReservations.canDelete).toBe(true)
+	})
+
+	it('records marketing consent only with the grant, the customers facet, and not impersonating', () => {
+		const granted = {
+			...base,
+			canReadSettings: true,
+			canUpdateMarketingConsent: true,
+		}
+		expect(computePeopleAccess(granted).canUpdateMarketingConsent).toBe(true)
+		// The grant alone does not need settings write access.
+		expect(computePeopleAccess(granted).canUpdateCustomers).toBe(false)
+		expect(
+			computePeopleAccess({ ...granted, canUpdateMarketingConsent: false })
+				.canUpdateMarketingConsent,
+		).toBe(false)
+		expect(
+			computePeopleAccess({ ...granted, canReadSettings: false })
+				.canUpdateMarketingConsent,
+		).toBe(false)
+		expect(
+			computePeopleAccess({ ...granted, impersonated: true })
+				.canUpdateMarketingConsent,
+		).toBe(false)
 	})
 })

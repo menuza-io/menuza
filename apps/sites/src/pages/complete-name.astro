@@ -1,5 +1,6 @@
 ---
 import { msg } from '@lingui/core/macro'
+import MarketingConsentBoxes from '~/components/marketing/MarketingConsentBoxes.astro'
 import SitePage from '~/components/SitePage.astro'
 
 const organization = Astro.locals.organization
@@ -56,6 +57,9 @@ if (!organization) {
 						class="field"
 					/>
 				</div>
+
+				{/* This step collects no email, so only the text box is offered. */}
+				<MarketingConsentBoxes channels={['sms']} />
 
 				<div id="error-message" class="hidden text-sm font-medium text-destructive"></div>
 

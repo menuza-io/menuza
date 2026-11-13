@@ -110,6 +110,10 @@ msgstr "Environ {count} min"
 msgid "acme or acme.example.com"
 msgstr "acme ou acme.example.com"
 
+#: components/profile/messages-section.tsx:97
+msgid "Add an email address first"
+msgstr "Ajoutez d'abord une adresse e-mail"
+
 #: lib/loyalty/labels.ts:113
 msgid "Adjusted by staff"
 msgstr "Ajustement par l’équipe"
@@ -214,6 +218,10 @@ msgstr "Vérifier les demandes"
 msgid "Check the menu for what we are serving today."
 msgstr "Consultez le menu pour découvrir ce que nous servons aujourd'hui."
 
+#: components/profile/messages-section.tsx:121
+msgid "Check your inbox to confirm"
+msgstr "Consultez votre boîte de réception pour confirmer"
+
 #: lib/reservations/messages.ts:72
 msgid "Checking your payment…"
 msgstr "Vérification du paiement…"
@@ -225,6 +233,10 @@ msgstr "Paiement"
 #: lib/reservations/messages.ts:26
 msgid "Choose a location"
 msgstr "Choisir un lieu"
+
+#: components/profile/messages-section.tsx:117
+msgid "Choose what you hear from us, and how."
+msgstr "Choisissez ce que vous recevez de nous, et comment."
 
 #: components/ordering/drops-screen.tsx:136
 #: components/ordering/drops-screen.tsx:215
@@ -316,7 +328,8 @@ msgstr "Gain"
 msgid "Edit details"
 msgstr "Modifier les informations"
 
-#: components/profile/profile-screen.tsx:91
+#: components/profile/messages-section.tsx:72
+#: components/profile/profile-screen.tsx:92
 msgid "Email"
 msgstr "E-mail"
 
@@ -426,7 +439,7 @@ msgid "In store"
 msgstr "Sur place"
 
 #: components/auth/complete-name-screen.tsx:26
-#: components/profile/profile-screen.tsx:83
+#: components/profile/profile-screen.tsx:84
 msgid "Jane Doe"
 msgstr "Marie Dupont"
 
@@ -443,7 +456,7 @@ msgstr "Rejoindre la liste d'attente"
 msgid "Keep it"
 msgstr "La conserver"
 
-#: components/profile/profile-screen.tsx:149
+#: components/profile/profile-screen.tsx:152
 msgid "Language"
 msgstr "Langue"
 
@@ -479,7 +492,7 @@ msgstr "Chargement des offres limitées"
 msgid "Loading the menu"
 msgstr "Chargement du menu"
 
-#: components/profile/profile-screen.tsx:63
+#: components/profile/profile-screen.tsx:64
 msgid "Loading your profile…"
 msgstr "Chargement de votre profil…"
 
@@ -498,6 +511,10 @@ msgstr "Chargement…"
 msgid "Menu"
 msgstr "Menu"
 
+#: components/profile/messages-section.tsx:115
+msgid "Messages from {name}"
+msgstr "Messages de {name}"
+
 #: components/reservations/parts.tsx:205
 msgid "More guests"
 msgstr "Plus de personnes"
@@ -507,7 +524,7 @@ msgid "My reservations"
 msgstr "Mes réservations"
 
 #: components/auth/complete-name-screen.tsx:25
-#: components/profile/profile-screen.tsx:82
+#: components/profile/profile-screen.tsx:83
 #: lib/reservations/messages.ts:60
 #: lib/reservations/messages.ts:112
 msgid "Name"
@@ -576,6 +593,10 @@ msgstr "Rien au menu pour le moment."
 #: lib/reservations/messages.ts:47
 msgid "Occasion"
 msgstr "Occasion"
+
+#: components/profile/messages-section.tsx:66
+msgid "Offers and news"
+msgstr "Offres et actualités"
 
 #: lib/reservations/messages.ts:25
 msgid "OK"
@@ -664,7 +685,7 @@ msgid "Payments aren't available right now."
 msgstr "Les paiements ne sont pas disponibles pour le moment."
 
 #: components/auth/login-screen.tsx:24
-#: components/profile/profile-screen.tsx:102
+#: components/profile/profile-screen.tsx:103
 #: lib/reservations/messages.ts:16
 msgid "Phone number"
 msgstr "Numéro de téléphone"
@@ -690,7 +711,7 @@ msgstr "Heure souhaitée"
 msgid "Profile"
 msgstr "Profil"
 
-#: components/profile/profile-screen.tsx:110
+#: components/profile/profile-screen.tsx:111
 msgid "Profile saved."
 msgstr "Profil enregistré."
 
@@ -734,6 +755,10 @@ msgstr "Demandes d’utilisation de vos récompenses"
 msgid "Reservation"
 msgstr "Réservation"
 
+#: components/profile/messages-section.tsx:68
+msgid "Reservation news"
+msgstr "Actualités des réservations"
+
 #: app/(tabs)/_layout.tsx:71
 #: lib/reservations/messages.ts:17
 msgid "Reservations"
@@ -776,7 +801,7 @@ msgstr "Les récompenses ne peuvent pas être utilisées pour le moment."
 msgid "Running late"
 msgstr "Je suis en retard"
 
-#: components/profile/profile-screen.tsx:114
+#: components/profile/profile-screen.tsx:115
 msgid "Save changes"
 msgstr "Enregistrer les modifications"
 
@@ -833,7 +858,7 @@ msgstr "Connectez-vous pour voir vos récompenses"
 msgid "Sign in with your phone number to see your points and use your rewards."
 msgstr "Connectez-vous avec votre numéro de téléphone pour consulter vos points et utiliser vos récompenses."
 
-#: components/profile/profile-screen.tsx:121
+#: components/profile/profile-screen.tsx:124
 msgid "Sign out"
 msgstr "Se déconnecter"
 
@@ -859,7 +884,7 @@ msgstr "Demandes particulières"
 msgid "Spends {points} for {amount} off"
 msgstr "Utilise {points} pour {amount} de réduction"
 
-#: components/profile/profile-screen.tsx:139
+#: components/profile/profile-screen.tsx:142
 msgid "System default"
 msgstr "Par défaut du système"
 
@@ -874,6 +899,10 @@ msgstr "Les taxes, pourboires et frais de livraison ne comptent pas dans le cumu
 #: components/auth/complete-name-screen.tsx:23
 msgid "Tell us what to call you."
 msgstr "Dites-nous comment vous appeler."
+
+#: components/profile/messages-section.tsx:72
+msgid "Text"
+msgstr "SMS"
 
 #: lib/reservations/messages.ts:53
 msgid "Text me reminders"
@@ -993,11 +1022,15 @@ msgstr "Réessayer"
 msgid "Try one of these times instead"
 msgstr "Essayez plutôt l'un de ces horaires"
 
+#: components/profile/messages-section.tsx:160
+msgid "Turning a switch off never affects receipts or booking confirmations."
+msgstr "Désactiver un interrupteur n'affecte jamais les reçus ni les confirmations de réservation."
+
 #: lib/loyalty/labels.ts:58
 msgid "Up to {amount} off"
 msgstr "Jusqu’à {amount} de réduction"
 
-#: components/profile/profile-screen.tsx:79
+#: components/profile/profile-screen.tsx:80
 msgid "Update your basic details below."
 msgstr "Mettez à jour vos informations ci-dessous."
 
@@ -1014,7 +1047,7 @@ msgid "Use a different number"
 msgstr "Utiliser un autre numéro"
 
 #: components/auth/site-unavailable-screen.tsx:34
-#: components/profile/profile-screen.tsx:125
+#: components/profile/profile-screen.tsx:128
 msgid "Use a different site"
 msgstr "Utiliser un autre site"
 
@@ -1034,6 +1067,10 @@ msgstr "Code de vérification"
 msgid "Verify"
 msgstr "Vérifier"
 
+#: components/profile/messages-section.tsx:99
+msgid "Verify your phone first"
+msgstr "Vérifiez d'abord votre téléphone"
+
 #: lib/reservations/messages.ts:83
 msgid "View reservation"
 msgstr "Voir la réservation"
@@ -1049,6 +1086,10 @@ msgstr "Nous n'avons pas trouvé ce site. Vérifiez l'adresse et réessayez."
 #: lib/reservations/messages.ts:135
 msgid "We couldn't find that."
 msgstr "Nous n'avons pas trouvé cela."
+
+#: components/profile/messages-section.tsx:100
+msgid "We couldn't save that. Try again."
+msgstr "Impossible d'enregistrer. Réessayez."
 
 #: lib/reservations/messages.ts:121
 msgid "We couldn't update your place in line. We'll keep trying."
@@ -1170,7 +1211,7 @@ msgstr "Votre nouveau code est prêt."
 msgid "Your payment is being checked. We'll confirm shortly."
 msgstr "Votre paiement est en cours de vérification. Confirmation sous peu."
 
-#: components/profile/profile-screen.tsx:105
+#: components/profile/profile-screen.tsx:106
 msgid "Your phone number can't be changed here."
 msgstr "Votre numéro de téléphone ne peut pas être modifié ici."
 
@@ -1178,7 +1219,7 @@ msgstr "Votre numéro de téléphone ne peut pas être modifié ici."
 msgid "Your points"
 msgstr "Vos points"
 
-#: components/profile/profile-screen.tsx:77
+#: components/profile/profile-screen.tsx:78
 msgid "Your profile"
 msgstr "Votre profil"
 

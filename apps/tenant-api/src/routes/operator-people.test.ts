@@ -9,6 +9,7 @@ import {
 	getTenantDb,
 	provisionTenantDb,
 	restaurantOrders,
+	rsvAuditLog,
 	rsvGuestNotes,
 	rsvGuests,
 	rsvGuestTags,
@@ -16,11 +17,17 @@ import {
 	rsvReservations,
 	rsvTags,
 } from '@repo/tenant-db'
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import { Hono } from 'hono'
 import * as jose from 'jose'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { type PublishedOrganization } from '../lib/origin.ts'
+import { syncEnvFromProcess } from '../lib/secrets.ts'
+import { sendTenantEmail } from '../lib/tenant-email.ts'
+import {
+	emailConsentHash,
+	setCustomerSubscription,
+} from '../services/marketing-audience.ts'
 import { operatorPeopleRoutes } from './operator-people.ts'
 
 const SECRET = 'test-operator-secret-key-for-people-routes-32chars!!'
@@ -33,6 +40,12 @@ const orgs = vi.hoisted(() => new Map<string, PublishedOrganization>())
 vi.mock('../lib/origin.ts', async (importOriginal) => ({
 	...(await importOriginal<typeof import('../lib/origin.ts')>()),
 	findActiveOrganizationById: vi.fn(async (id: string) => orgs.get(id) ?? null),
+}))
+
+const sms = vi.hoisted(() => ({ send: vi.fn() }))
+vi.mock('@repo/sms', () => ({ sendSms: sms.send }))
+vi.mock('../lib/tenant-email.ts', () => ({
+	sendTenantEmail: vi.fn().mockResolvedValue({ status: 'success' }),
 }))
 
 let tempDir: string
@@ -667,6 +680,769 @@ describe('POST /operator/people/:key/erase', () => {
 	})
 })
 
+type Summary = {
+	guests: { total: number; change30d: number }
+	returningGuests: { total: number; change30d: number; share: number }
+	emailSubscribers: { total: number; change30d: number }
+	textSubscribers: { total: number; change30d: number }
+	locationScoped: boolean
+	asOf: string
+}
+
+const LOC_B = 'loc_people_b'
+
+async function summary(claims: Claims = FULL, orgId = ORG) {
+	const res = await call('/summary', await token(claims, orgId))
+	return { res, body: (await res.json()) as Summary & { error?: string } }
+}
+
+let orderSeq = 0
+async function addOrder(
+	customerId: string,
+	opts: {
+		at: number
+		locationId?: string
+		status?: 'accepted' | 'completed' | 'cancelled'
+		paymentMethod?: 'handoff' | 'online'
+		paymentStatus?: 'unpaid' | 'pending' | 'paid'
+	},
+) {
+	orderSeq += 1
+	const db = await getTenantDb(ORG)
+	await db.insert(restaurantOrders).values({
+		id: `ord_s_${orderSeq}`,
+		orgId: ORG,
+		number: `S-${orderSeq}`,
+		customerId,
+		status: opts.status ?? 'completed',
+		paymentMethod: opts.paymentMethod ?? 'handoff',
+		paymentStatus: opts.paymentStatus ?? 'unpaid',
+		fulfillment: 'pickup',
+		locationId: opts.locationId ?? LOC,
+		locationName: 'Downtown',
+		contactName: 'x',
+		contactPhone: '+14155550000',
+		currency: 'usd',
+		subtotalCents: 1000,
+		taxCents: 0,
+		totalCents: 1000,
+		lines: [],
+		idempotencyKey: `idem_s_${orderSeq}`,
+		requestHash: `hash_s_${orderSeq}`,
+		receiptTokenHash: `rcpt_s_${orderSeq}`,
+		createdAt: new Date(opts.at),
+	} as typeof restaurantOrders.$inferInsert)
+}
+
+let visitSeq = 0
+async function addVisit(
+	guestId: string,
+	opts: { at: number; locationId?: string; status?: 'finished' | 'cancelled' },
+) {
+	visitSeq += 1
+	const db = await getTenantDb(ORG)
+	await db.insert(rsvReservations).values({
+		id: `res_s_${visitSeq}`,
+		confirmationCode: `S${visitSeq}`,
+		locationId: opts.locationId ?? LOC,
+		guestId,
+		businessDate: '2026-01-01',
+		localStartMin: 1140,
+		timeZone: 'UTC',
+		startAt: opts.at - 90 * 60_000,
+		endAt: opts.at,
+		durationMin: 90,
+		partySize: 2,
+		channel: 'online',
+		status: opts.status ?? 'finished',
+		finishedAt: opts.at,
+	} as typeof rsvReservations.$inferInsert)
+}
+
+describe('GET /operator/people/summary', () => {
+	const now = Date.now()
+	const ago = (days: number) => now - days * DAY
+
+	beforeEach(async () => {
+		process.env.AUTH_HMAC_SECRET = 'people-summary-test-hmac-secret-0123456789'
+		const db = await getTenantDb(ORG)
+		await db
+			.update(customers)
+			.set({ createdAt: new Date(ago(60)) })
+			.where(eq(customers.id, 'cus_u'))
+		await db.insert(customers).values([
+			{
+				id: 'cus_changed',
+				name: 'Cam Changed',
+				phone: '+14155550201',
+				phoneVerified: true,
+				email: 'new@example.com',
+				createdAt: new Date(ago(60)),
+			},
+			{
+				id: 'cus_lost',
+				name: 'Lou Left',
+				phone: '+14155550202',
+				phoneVerified: true,
+				email: 'lou@example.com',
+				createdAt: new Date(ago(60)),
+			},
+		])
+		const sub = (
+			customerId: string,
+			channel: 'email' | 'sms',
+			subscribedDaysAgo: number,
+			extra: Partial<typeof customerSubscriptions.$inferInsert> = {},
+		) => ({
+			customerId,
+			topic: 'marketing' as const,
+			channel,
+			source: 'website' as const,
+			subscribedAt: new Date(ago(subscribedDaysAgo)),
+			...extra,
+		})
+		await db.insert(customerSubscriptions).values([
+			// Vera: text gained in the window, email confirmed long ago.
+			sub('cus_v', 'sms', 1),
+			sub('cus_v', 'email', 60, {
+				confirmedEmailHash: emailConsentHash('vera@example.com'),
+			}),
+			// Una: unverified phone, email still pending (no confirmation).
+			sub('cus_u', 'sms', 1),
+			sub('cus_u', 'email', 1),
+			// Cam: confirmed an address he no longer has; text still valid.
+			sub('cus_changed', 'email', 60, {
+				confirmedEmailHash: emailConsentHash('old@example.com'),
+			}),
+			sub('cus_changed', 'sms', 60),
+			// Lou: subscribed long ago, left inside the window on both channels.
+			sub('cus_lost', 'sms', 90, { unsubscribedAt: new Date(ago(10)) }),
+			sub('cus_lost', 'email', 90, {
+				confirmedEmailHash: emailConsentHash('lou@example.com'),
+				unsubscribedAt: new Date(ago(5)),
+			}),
+		])
+		// Vera: ord_1 (counted, today) + a visit 40 days ago: returning, but
+		// only since the order, so she is new to the group this month.
+		await addVisit('gst_linked', { at: ago(40) })
+		// Gus: two visits before the window: returning both now and then.
+		await addVisit('gst_only', { at: ago(50) })
+		await addVisit('gst_only', { at: ago(45) })
+		// Una: cancelled and unpaid online orders and a cancelled visit never count.
+		await addOrder('cus_u', { at: ago(3), status: 'cancelled' })
+		await addOrder('cus_u', {
+			at: ago(2),
+			status: 'accepted',
+			paymentMethod: 'online',
+			paymentStatus: 'pending',
+		})
+		await addOrder('cus_u', { at: ago(1) })
+		// Lou: one order at the second location only.
+		await addOrder('cus_lost', { at: ago(2), locationId: LOC_B })
+	})
+
+	it('counts guests, returning guests and deliverable subscribers with their 30-day change', async () => {
+		const { res, body } = await summary()
+		expect(res.status).toBe(200)
+		expect(res.headers.get('Cache-Control')).toBe('private, no-store')
+		expect(body).toMatchObject({
+			// cus_u, cus_v, cus_changed, cus_lost, gst_only, gst_shadow (no walk-in)
+			guests: { total: 6, change30d: 3 },
+			returningGuests: { total: 2, change30d: 1 },
+			// Vera only: Una pending, Cam's address changed, Lou left (-1).
+			emailSubscribers: { total: 1, change30d: -1 },
+			// Vera (gained) and Cam; Una's phone is unverified; Lou left.
+			textSubscribers: { total: 2, change30d: 0 },
+			locationScoped: false,
+		})
+		expect(body.returningGuests.share).toBeCloseTo(2 / 6)
+		expect(Date.parse(body.asOf)).not.toBeNaN()
+		// Counts only.
+		const text = JSON.stringify(body)
+		for (const leak of ['cus_', 'gst_', 'Vera', 'example.com', '+1415']) {
+			expect(text).not.toContain(leak)
+		}
+	})
+
+	it('each tile filters the list to exactly its count', async () => {
+		const { body: s } = await summary()
+		const total = async (q: string) => (await list(q)).body.total
+		expect(await total('')).toBe(s.guests.total)
+		expect(await total('?returning=1')).toBe(s.returningGuests.total)
+		expect(await total('?subscribed=email')).toBe(s.emailSubscribers.total)
+		expect(await total('?subscribed=sms')).toBe(s.textSubscribers.total)
+		const keys = async (q: string) =>
+			(await list(q)).body.people.map((p) => p.key).sort()
+		expect(await keys('?returning=1')).toEqual(['c_cus_v', 'g_gst_only'])
+		expect(await keys('?subscribed=email')).toEqual(['c_cus_v'])
+		expect(await keys('?subscribed=sms')).toEqual(['c_cus_changed', 'c_cus_v'])
+		expect((await call('?subscribed=fax', await token())).status).toBe(400)
+	})
+
+	it('a third counted order makes Una returning; erasing a guest drops them from every count', async () => {
+		await addOrder('cus_u', { at: ago(1), status: 'accepted' })
+		expect((await summary()).body.returningGuests.total).toBe(3)
+
+		const jwt = await token(FULL, ORG, { canDelete: true })
+		expect((await call('/c_cus_v/erase', jwt, { method: 'POST' })).status).toBe(
+			200,
+		)
+		expect(
+			(await call('/g_gst_only/erase', jwt, { method: 'POST' })).status,
+		).toBe(200)
+		const { body } = await summary()
+		expect(body).toMatchObject({
+			guests: { total: 4 },
+			returningGuests: { total: 1 },
+			emailSubscribers: { total: 0 },
+			textSubscribers: { total: 1 },
+		})
+		expect((await list('?returning=1')).body.total).toBe(1)
+	})
+
+	it('scopes every count to the token locations; [] is zeros; no claim is everyone', async () => {
+		const scoped = await summary({ ...FULL, locationIds: [LOC] })
+		// In scope at LOC: Vera (order + visit), Gus (visits), Una (orders).
+		expect(scoped.body).toMatchObject({
+			guests: { total: 3 },
+			returningGuests: { total: 2 },
+			emailSubscribers: { total: 1 },
+			textSubscribers: { total: 1 },
+			locationScoped: true,
+		})
+		const other = await summary({ ...FULL, locationIds: [LOC_B] })
+		expect(other.body).toMatchObject({
+			guests: { total: 1 },
+			returningGuests: { total: 0 },
+			emailSubscribers: { total: 0, change30d: -1 },
+			textSubscribers: { total: 0, change30d: -1 },
+		})
+		const none = await summary({ ...FULL, locationIds: [] })
+		expect(none.body).toMatchObject({
+			guests: { total: 0, change30d: 0 },
+			returningGuests: { total: 0, change30d: 0, share: 0 },
+			emailSubscribers: { total: 0 },
+			textSubscribers: { total: 0 },
+			locationScoped: true,
+		})
+		const all = await summary({ ...FULL, locationIds: null })
+		expect(all.body.guests.total).toBe(6)
+		expect(all.body.locationScoped).toBe(false)
+
+		// The tile filters follow the same scope; the plain list does not.
+		const scopedList = async (q: string) =>
+			(await list(q, { ...FULL, locationIds: [LOC] })).body.total
+		expect(await scopedList('?returning=1')).toBe(2)
+		expect(await scopedList('?subscribed=sms')).toBe(1)
+		expect(await scopedList('')).toBe(6)
+		expect(
+			(await list('?returning=1', { ...FULL, locationIds: [] })).body.total,
+		).toBe(0)
+	})
+
+	it('fails closed on a malformed location claim', async () => {
+		for (const bad of ['loc_people', [42], ['ok', 'bad id!'], { a: 1 }]) {
+			const { body } = await summary({ ...FULL, locationIds: bad })
+			expect(body.guests.total).toBe(0)
+			expect(body.locationScoped).toBe(true)
+		}
+	})
+
+	it('a customers-only token counts orders only, never reservations', async () => {
+		await addOrder('cus_u', { at: ago(1), status: 'accepted' })
+		const { body } = await summary(CUSTOMERS_ONLY)
+		// Customer rows only (cus_shadow shows as its own unverified customer).
+		expect(body.guests.total).toBe(5)
+		// Una's two counted orders; Vera has one order and her visit is not read.
+		expect(body.returningGuests.total).toBe(1)
+		expect(
+			(await list('?returning=1', CUSTOMERS_ONLY)).body.people.map(
+				(p) => p.key,
+			),
+		).toEqual(['c_cus_u'])
+	})
+
+	it('refuses tokens without the customers facet, and never counts another organization', async () => {
+		expect((await summary(HOST)).res.status).toBe(403)
+		const guestOnly = await summary({ scope: 'people', peopleDining: 'full' })
+		expect(guestOnly.res.status).toBe(403)
+		expect(guestOnly.body.error).toBe('insufficient_permissions')
+		expect((await call('?returning=1', await token(HOST))).status).toBe(403)
+		expect((await call('?subscribed=email', await token(HOST))).status).toBe(
+			403,
+		)
+
+		const other = await summary(FULL, ORG_B)
+		expect(other.res.status).toBe(200)
+		expect(other.body).toMatchObject({
+			guests: { total: 0 },
+			returningGuests: { total: 0 },
+			emailSubscribers: { total: 0, change30d: 0 },
+			textSubscribers: { total: 0, change30d: 0 },
+		})
+	})
+
+	it('an impersonated token reads the counts like the list (claims decide, not the flag)', async () => {
+		const { res } = await summary({ ...FULL, impersonated: true })
+		expect(res.status).toBe(200)
+	})
+})
+
+describe('POST /operator/people/:key/consent', () => {
+	const MANAGER: Claims = { ...CUSTOMERS_ONLY, canUpdateMarketingConsent: true }
+	const ON = { subscribed: true, method: 'in_person', attested: true }
+	const send = vi.mocked(sendTenantEmail)
+
+	beforeEach(() => {
+		vi.stubEnv('TENANT_API_URL', 'https://tenant.example.com')
+		vi.stubEnv('AUTH_HMAC_SECRET', 'test-hmac-secret-123456789')
+		syncEnvFromProcess()
+		send.mockClear()
+		sms.send.mockReset()
+		sms.send.mockResolvedValue({ success: true, mock: true })
+		orgs.set(ORG, { ...orgs.get(ORG)!, name: 'Cafe Luna' } as never)
+	})
+	afterEach(() => {
+		vi.unstubAllEnvs()
+		process.env.DATA_REGION = 'us'
+		syncEnvFromProcess()
+	})
+
+	async function consent(
+		key: string,
+		body: Record<string, unknown>,
+		claims: Claims = MANAGER,
+		orgId = ORG,
+	) {
+		const res = await call(`/${key}/consent`, await token(claims, orgId), {
+			method: 'POST',
+			body,
+		})
+		return { res, body: (await res.json()) as Record<string, any> }
+	}
+
+	async function row(customerId: string, channel: 'email' | 'sms') {
+		const db = await getTenantDb(ORG)
+		return db
+			.select()
+			.from(customerSubscriptions)
+			.where(
+				and(
+					eq(customerSubscriptions.customerId, customerId),
+					eq(customerSubscriptions.topic, 'marketing'),
+					eq(customerSubscriptions.channel, channel),
+				),
+			)
+			.get()
+	}
+
+	async function auditRows() {
+		const db = await getTenantDb(ORG)
+		return db
+			.select()
+			.from(rsvAuditLog)
+			.where(eq(rsvAuditLog.action, 'customer.marketing_consent'))
+			.all()
+	}
+
+	it('records email as pending (never confirmed), with provenance, and sends one link', async () => {
+		const { res, body } = await consent('c_cus_v', {
+			channel: 'email',
+			...ON,
+			method: 'paper_form',
+		})
+		expect(res.status).toBe(200)
+		expect(res.headers.get('Cache-Control')).toContain('no-store')
+		expect(body).toMatchObject({
+			ok: true,
+			confirmationEmail: 'sent',
+			subscription: {
+				topic: 'marketing',
+				channel: 'email',
+				subscribed: true,
+				source: 'staff',
+				pending: true,
+				unsubscribedSource: null,
+				coolingOffUntil: null,
+				staff: {
+					recordedBy: 'usr_1',
+					method: 'paper_form',
+					textVersion: 'staff-2026-11',
+				},
+			},
+		})
+		expect(body.confirmationSms).toBeUndefined()
+		const stored = await row('cus_v', 'email')
+		expect(stored).toMatchObject({
+			source: 'staff',
+			recordedBy: 'usr_1',
+			consentMethod: 'paper_form',
+			consentTextVersion: 'staff-2026-11',
+			confirmedEmailHash: null,
+			unsubscribedAt: null,
+		})
+		expect(send).toHaveBeenCalledTimes(1)
+		expect(send.mock.calls[0]![0].to).toBe('vera@example.com')
+		expect(sms.send).not.toHaveBeenCalled()
+		const audits = await auditRows()
+		expect(audits).toHaveLength(1)
+		expect(audits[0]).toMatchObject({
+			actorKind: 'operator',
+			actorId: 'usr_1',
+			entityType: 'customer',
+			entityId: 'cus_v',
+			changes: {
+				topic: 'marketing',
+				channel: 'email',
+				subscribed: true,
+				method: 'paper_form',
+				source: 'staff',
+			},
+		})
+		expect(JSON.stringify(audits)).not.toContain('vera@')
+
+		// Again at once: nothing rewritten, the resend is throttled.
+		const again = await consent('c_cus_v', { channel: 'email', ...ON })
+		expect(again.res.status).toBe(200)
+		expect(again.body.confirmationEmail).toBe('throttled')
+		expect(send).toHaveBeenCalledTimes(1)
+		expect((await row('cus_v', 'email'))!.consentMethod).toBe('paper_form')
+		expect(await auditRows()).toHaveLength(1)
+	})
+
+	it('keeps an already confirmed email subscription as it is', async () => {
+		const db = await getTenantDb(ORG)
+		await setCustomerSubscription(db, {
+			customerId: 'cus_v',
+			topic: 'marketing',
+			channel: 'email',
+			subscribed: true,
+			source: 'profile',
+			confirmedEmail: 'vera@example.com',
+		})
+		const before = await row('cus_v', 'email')
+		const { res, body } = await consent('c_cus_v', { channel: 'email', ...ON })
+		expect(res.status).toBe(200)
+		expect(body.subscription).toMatchObject({
+			source: 'profile',
+			pending: false,
+			staff: null,
+		})
+		expect(body.confirmationEmail).toBe('skipped')
+		const after = await row('cus_v', 'email')
+		expect(after!.confirmedEmailHash).toBe(emailConsentHash('vera@example.com'))
+		expect(after!.updatedAt).toEqual(before!.updatedAt)
+		expect(send).not.toHaveBeenCalled()
+	})
+
+	it('records texts active at once and sends exactly one confirmation text on the US node', async () => {
+		const { res, body } = await consent('c_cus_v', { channel: 'sms', ...ON })
+		expect(res.status).toBe(200)
+		expect(body).toMatchObject({
+			confirmationSms: 'sent',
+			deliverable: true,
+			subscription: {
+				channel: 'sms',
+				subscribed: true,
+				pending: false,
+				source: 'staff',
+				staff: { recordedBy: 'usr_1', method: 'in_person' },
+			},
+		})
+		expect(sms.send).toHaveBeenCalledTimes(1)
+		expect(sms.send.mock.calls[0]![0]).toEqual({
+			to: '+14155550101',
+			message:
+				"You're subscribed to Cafe Luna offers. Reply STOP to unsubscribe.",
+		})
+		expect(send).not.toHaveBeenCalled()
+
+		// A repeat is idempotent: no rewrite, no second text.
+		const again = await consent('c_cus_v', { channel: 'sms', ...ON })
+		expect(again.body.confirmationSms).toBe('skipped')
+		// Off then on again within a day: recorded, but no second text.
+		await consent('c_cus_v', { channel: 'sms', subscribed: false })
+		const back = await consent('c_cus_v', { channel: 'sms', ...ON })
+		expect(back.res.status).toBe(200)
+		expect(back.body.subscription.subscribed).toBe(true)
+		expect(back.body.confirmationSms).toBe('skipped')
+		expect(sms.send).toHaveBeenCalledTimes(1)
+	})
+
+	it('records a text opt-in for an unverified phone without texting; not deliverable yet', async () => {
+		const { res, body } = await consent('c_cus_u', { channel: 'sms', ...ON })
+		expect(res.status).toBe(200)
+		expect(body).toMatchObject({
+			confirmationSms: 'skipped',
+			deliverable: false,
+			subscription: { subscribed: true, source: 'staff' },
+		})
+		expect(sms.send).not.toHaveBeenCalled()
+	})
+
+	it('a failed text never fails the request and logs no number', async () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+		sms.send.mockRejectedValueOnce(new Error('+14155550101 unreachable'))
+		const { res, body } = await consent('c_cus_v', { channel: 'sms', ...ON })
+		expect(res.status).toBe(200)
+		expect(body.confirmationSms).toBe('skipped')
+		expect((await row('cus_v', 'sms'))!.unsubscribedAt).toBeNull()
+		expect(JSON.stringify(warn.mock.calls)).not.toContain('4155550101')
+		warn.mockRestore()
+	})
+
+	it('sends no text on a KSA node but still records the consent', async () => {
+		process.env.DATA_REGION = 'ksa'
+		orgs.set(ORG, { ...orgs.get(ORG)!, dataRegion: 'ksa' } as never)
+		const { res, body } = await consent('c_cus_v', { channel: 'sms', ...ON })
+		expect(res.status).toBe(200)
+		expect(body.confirmationSms).toBe('skipped')
+		expect((await row('cus_v', 'sms'))!.source).toBe('staff')
+		expect(sms.send).not.toHaveBeenCalled()
+	})
+
+	it('turns off in one call as an operator opt-out, silently and idempotently', async () => {
+		await consent('c_cus_v', { channel: 'sms', ...ON })
+		sms.send.mockClear()
+		const { res, body } = await consent('c_cus_v', {
+			channel: 'sms',
+			subscribed: false,
+		})
+		expect(res.status).toBe(200)
+		expect(body.subscription).toMatchObject({
+			subscribed: false,
+			unsubscribedSource: 'operator',
+			coolingOffUntil: null,
+		})
+		expect(body.confirmationSms).toBeUndefined()
+		expect((await row('cus_v', 'sms'))!.unsubscribedSource).toBe('operator')
+		expect(sms.send).not.toHaveBeenCalled()
+		expect(await auditRows()).toHaveLength(2)
+
+		// Off again, or off with no row at all: nothing written.
+		const again = await consent('c_cus_v', {
+			channel: 'sms',
+			subscribed: false,
+		})
+		expect(again.res.status).toBe(200)
+		const none = await consent('c_cus_v', {
+			channel: 'email',
+			subscribed: false,
+		})
+		expect(none.res.status).toBe(200)
+		expect(none.body.subscription).toBeNull()
+		expect(await auditRows()).toHaveLength(2)
+	})
+
+	it("a staff opt-out never overwrites the guest's own opt-out", async () => {
+		const db = await getTenantDb(ORG)
+		await setCustomerSubscription(db, {
+			customerId: 'cus_v',
+			topic: 'marketing',
+			channel: 'sms',
+			subscribed: true,
+			source: 'profile',
+		})
+		await setCustomerSubscription(db, {
+			customerId: 'cus_v',
+			topic: 'marketing',
+			channel: 'sms',
+			subscribed: false,
+			source: 'profile',
+		})
+		await consent('c_cus_v', { channel: 'sms', subscribed: false })
+		expect((await row('cus_v', 'sms'))!.unsubscribedSource).toBe('self')
+	})
+
+	it("cooling-off: a guest's own opt-out within 30 days refuses a staff opt-in and writes nothing", async () => {
+		const db = await getTenantDb(ORG)
+		await setCustomerSubscription(db, {
+			customerId: 'cus_v',
+			topic: 'marketing',
+			channel: 'sms',
+			subscribed: true,
+			source: 'profile',
+			now: new Date(Date.now() - 40 * DAY),
+		})
+		// Stored in whole seconds.
+		const optOutAt = new Date(Math.floor((Date.now() - 10 * DAY) / 1000) * 1000)
+		await setCustomerSubscription(db, {
+			customerId: 'cus_v',
+			topic: 'marketing',
+			channel: 'sms',
+			subscribed: false,
+			source: 'profile',
+			now: optOutAt,
+		})
+		const before = await row('cus_v', 'sms')
+		const { res, body } = await consent('c_cus_v', { channel: 'sms', ...ON })
+		expect(res.status).toBe(409)
+		expect(body.error).toBe('cooling_off')
+		expect(body.until).toBe(
+			new Date(optOutAt.getTime() + 30 * DAY).toISOString(),
+		)
+		expect(await row('cus_v', 'sms')).toEqual(before)
+		expect(await auditRows()).toHaveLength(0)
+		expect(sms.send).not.toHaveBeenCalled()
+
+		// The profile shows until when.
+		const profile = await (await call('/c_cus_v', await token(MANAGER))).json()
+		const sub = profile.marketing.subscriptions.find(
+			(s: { topic: string; channel: string }) =>
+				s.topic === 'marketing' && s.channel === 'sms',
+		)
+		expect(sub).toMatchObject({
+			subscribed: false,
+			unsubscribedSource: 'self',
+			coolingOffUntil: body.until,
+		})
+		expect(profile.access.canUpdateMarketingConsent).toBe(true)
+	})
+
+	it('cooling-off ends after 30 days and never follows a staff opt-out', async () => {
+		const db = await getTenantDb(ORG)
+		await setCustomerSubscription(db, {
+			customerId: 'cus_v',
+			topic: 'marketing',
+			channel: 'sms',
+			subscribed: false,
+			source: 'profile',
+			now: new Date(Date.now() - 31 * DAY),
+		})
+		const late = await consent('c_cus_v', { channel: 'sms', ...ON })
+		expect(late.res.status).toBe(200)
+		expect(late.body.subscription.subscribed).toBe(true)
+
+		await consent('c_cus_v', { channel: 'sms', subscribed: false })
+		const back = await consent('c_cus_v', { channel: 'sms', ...ON })
+		expect(back.res.status).toBe(200)
+		expect(back.body.subscription.subscribed).toBe(true)
+	})
+
+	it('needs a method and the attestation to turn on, and refuses bad input without echoing it', async () => {
+		const noMethod = await consent('c_cus_v', {
+			channel: 'sms',
+			subscribed: true,
+			attested: true,
+		})
+		expect(noMethod.res.status).toBe(400)
+		expect(noMethod.body.error).toBe('method_required')
+		const noAttest = await consent('c_cus_v', {
+			channel: 'sms',
+			subscribed: true,
+			method: 'phone',
+		})
+		expect(noAttest.res.status).toBe(400)
+		expect(noAttest.body.error).toBe('attestation_required')
+		const falseAttest = await consent('c_cus_v', {
+			channel: 'sms',
+			...ON,
+			attested: false,
+		})
+		expect(falseAttest.body.error).toBe('attestation_required')
+		const bad = await call('/c_cus_v/consent', await token(MANAGER), {
+			method: 'POST',
+			body: { channel: 'fax', ...ON, textVersion: '<b>evil</b>', extra: 1 },
+		})
+		expect(bad.status).toBe(400)
+		expect(await bad.text()).not.toMatch(/evil|fax/)
+		expect(await row('cus_v', 'sms')).toBeUndefined()
+	})
+
+	it('needs an address or a phone on the customer', async () => {
+		const noEmail = await consent('c_cus_u', { channel: 'email', ...ON })
+		expect(noEmail.res.status).toBe(409)
+		expect(noEmail.body.error).toBe('email_required')
+		const db = await getTenantDb(ORG)
+		await db.insert(customers).values({ id: 'cus_np', name: 'No Phone' })
+		const noPhone = await consent('c_cus_np', { channel: 'sms', ...ON })
+		expect(noPhone.res.status).toBe(409)
+		expect(noPhone.body.error).toBe('phone_required')
+	})
+
+	it('refuses a token without the claim, a customers-less token, and an impersonation-style token', async () => {
+		// Write rights on customers alone are not enough.
+		const plain = await consent('c_cus_v', { channel: 'sms', ...ON }, FULL)
+		expect(plain.res.status).toBe(403)
+		expect(plain.body.error).toBe('insufficient_permissions')
+		// The App never mints the claim while impersonating: such a token
+		// carries the facets but not the claim.
+		const impersonated = await consent(
+			'c_cus_v',
+			{ channel: 'sms', ...ON },
+			{ scope: 'people', peopleCustomers: true, peopleDining: 'flags' },
+		)
+		expect(impersonated.res.status).toBe(403)
+		// The claim without the customers facet.
+		const diningOnly = await consent(
+			'g_gst_only',
+			{ channel: 'sms', ...ON },
+			{
+				scope: 'people',
+				peopleDining: 'full',
+				canUpdateGuest: true,
+				canUpdateMarketingConsent: true,
+			},
+		)
+		expect(diningOnly.res.status).toBe(403)
+		// Only a literal true counts.
+		const stringy = await consent(
+			'c_cus_v',
+			{ channel: 'sms', ...ON },
+			{ ...CUSTOMERS_ONLY, canUpdateMarketingConsent: 'true' },
+		)
+		expect(stringy.res.status).toBe(403)
+		expect(await row('cus_v', 'sms')).toBeUndefined()
+	})
+
+	it('404s unknown, erased and cross-organization people', async () => {
+		expect(
+			(await consent('c_nope', { channel: 'sms', ...ON })).res.status,
+		).toBe(404)
+		expect((await consent('x_bad', { channel: 'sms', ...ON })).res.status).toBe(
+			404,
+		)
+		const other = await consent(
+			'c_cus_v',
+			{ channel: 'sms', ...ON },
+			MANAGER,
+			ORG_B,
+		)
+		expect(other.res.status).toBe(404)
+		expect(await row('cus_v', 'sms')).toBeUndefined()
+
+		const eraser = await token(MANAGER, ORG, { canDelete: true })
+		expect(
+			(await call('/c_cus_v/erase', eraser, { method: 'POST' })).status,
+		).toBe(200)
+		expect(
+			(await consent('c_cus_v', { channel: 'sms', ...ON })).res.status,
+		).toBe(404)
+	})
+
+	it('a guest-only person without a customer record is 409 no_customer; a booking shadow takes the consent', async () => {
+		const withDining: Claims = { ...MANAGER, peopleDining: 'full' }
+		const none = await consent(
+			'g_gst_only',
+			{ channel: 'sms', ...ON },
+			withDining,
+		)
+		expect(none.res.status).toBe(409)
+		expect(none.body.error).toBe('no_customer')
+
+		const shadow = await consent(
+			'g_gst_shadow',
+			{ channel: 'sms', ...ON },
+			withDining,
+		)
+		expect(shadow.res.status).toBe(200)
+		expect(shadow.body.deliverable).toBe(false)
+		expect((await row('cus_shadow', 'sms'))!.source).toBe('staff')
+		const db = await getTenantDb(ORG)
+		expect(await db.select().from(customers).all()).toHaveLength(3)
+	})
+})
+
 describe('security sweep: every people route', () => {
 	const routes = operatorPeopleRoutes.routes
 		.filter((r) => r.method !== 'ALL')
@@ -679,7 +1455,12 @@ describe('security sweep: every people route', () => {
 		}))
 
 	it('covers the whole surface', () => {
-		expect(routes.length).toBeGreaterThanOrEqual(13)
+		expect(routes.length).toBeGreaterThanOrEqual(15)
+		expect(routes).toContainEqual({ method: 'GET', path: '/summary' })
+		expect(routes).toContainEqual({
+			method: 'POST',
+			path: '/c_cus_v/consent',
+		})
 	})
 
 	it.each(routes)(

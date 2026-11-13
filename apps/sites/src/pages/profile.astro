@@ -1,6 +1,7 @@
 ---
 import { msg } from '@lingui/core/macro'
 import { getLocaleHref } from '@repo/common/site-locales'
+import MessagesSection from '~/components/marketing/MessagesSection.astro'
 import SitePage from '~/components/SitePage.astro'
 import DropAlertsSignup from '~/components/drops/DropAlertsSignup.astro'
 import UpcomingReservations from '~/components/reservations/UpcomingReservations.astro'
@@ -158,6 +159,8 @@ const reservationsGate = await fetchPublishedReservations({
 				{viewRewards}
 			</a>
 		</div>
+
+		<MessagesSection reservations={Boolean(reservationsGate)} />
 
 		<DropAlertsSignup source="profile" layout="toggle" class="w-full" />
 

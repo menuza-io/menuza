@@ -1,0 +1,85 @@
+---
+import { msg } from '@lingui/core/macro'
+import { getLocaleHref } from '@repo/common/site-locales'
+import { translate } from '~/lib/ordering-labels'
+
+/**
+ * Two unticked opt-in boxes (email, text) for signed-in guests, or a sign-in
+ * link for everyone else. Which one shows is decided in the browser by the
+ * session marker (`data-auth`), so nothing about a guest is rendered here.
+ * The wording is fixed: a restaurant cannot edit it, and
+ * `MARKETING_CONSENT_TEXT_VERSION` is bumped when it changes.
+ *
+ * Checkout reads the ticked boxes into the order request; sign-up records them
+ * after the name step. See `~/lib/marketing-consent-client`.
+ */
+interface Props {
+	channels?: ('email' | 'sms')[]
+	/** Offer a sign-in link to guests who are not signed in. */
+	showSignIn?: boolean
+	class?: string
+}
+
+const { channels = ['email', 'sms'], showSignIn = false, class: className } = Astro.props
+const i18n = Astro.locals.i18n
+const organization = Astro.locals.organization
+const org = organization?.name ?? ''
+const loginHref = getLocaleHref(
+	'/login',
+	Astro.locals.requestedLocale,
+	Astro.locals.requestedLocale,
+	Astro.locals.defaultLocale,
+)
+// The Msg and data rates line is a US text-message disclosure; the KSA region
+// sends no marketing texts, so its guests are not shown it.
+const showSmsDisclosure = channels.includes('sms') && organization?.dataRegion !== 'ksa'
+
+const labels = {
+	legend: i18n._(msg`Offers and news`),
+	email: translate(i18n, msg`Email me offers and news from {org}`, { org }),
+	sms: translate(i18n, msg`Text me offers from {org}`, { org }),
+	frequency: i18n._(msg`A few messages a month. You can opt out anytime.`),
+	rates: i18n._(msg`Msg and data rates may apply. Reply STOP to opt out.`),
+	signIn: i18n._(msg`Sign in to hear about offers`),
+}
+const boxClass = 'mt-0.5 size-5 shrink-0 accent-primary'
+---
+
+<div data-marketing-consent class:list={[className]}>
+	<fieldset data-auth="signed-in" data-consent-fieldset class="min-w-0 space-y-3">
+		<legend class="mb-2 text-sm font-semibold text-foreground">{labels.legend}</legend>
+		{channels.includes('email') ? (
+			<label class="flex items-start gap-3 text-sm text-foreground" data-consent-row="email">
+				<input type="checkbox" data-consent-channel="email" class={boxClass} />
+				<span class="min-w-0 flex-1 text-pretty">{labels.email}</span>
+			</label>
+		) : null}
+		{channels.includes('sms') ? (
+			<label class="flex items-start gap-3 text-sm text-foreground" data-consent-row="sms">
+				<input type="checkbox" data-consent-channel="sms" class={boxClass} />
+				<span class="min-w-0 flex-1 text-pretty">{labels.sms}</span>
+			</label>
+		) : null}
+		<p class="text-xs text-pretty text-muted-foreground">
+			{labels.frequency}
+			{showSmsDisclosure ? ` ${labels.rates}` : ''}
+		</p>
+	</fieldset>
+	{showSignIn ? (
+		<a
+			data-auth="signed-out"
+			href={loginHref}
+			class="focus-ring inline-flex min-h-11 items-center rounded-md text-sm font-semibold text-foreground underline underline-offset-4"
+		>
+			{labels.signIn}
+		</a>
+	) : null}
+</div>
+
+<script>
+	import { mountMarketingConsent } from '~/lib/marketing-consent-client'
+
+	for (const root of document.querySelectorAll<HTMLElement>('[data-marketing-consent]')) {
+		mountMarketingConsent(root)
+	}
+</script>

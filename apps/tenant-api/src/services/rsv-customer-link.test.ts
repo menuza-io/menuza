@@ -254,6 +254,11 @@ describe('one consent source: customer_subscriptions', () => {
 				subscribedAt: 5000,
 				unsubscribedAt: 6000,
 				source: 'profile',
+				// A legacy opt-out (no source) long past its cooling-off.
+				unsubscribedSource: null,
+				pending: false,
+				staff: null,
+				coolingOffUntil: null,
 			},
 		])
 	})

@@ -19,6 +19,10 @@ import {
 import { WorkspacePage, WorkspaceToolbar } from '@repo/ui/workspace'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router'
+import {
+	PeopleSummaryRow,
+	type PeopleSummaryGroup,
+} from '#app/components/customers/people-summary-row.tsx'
 import { PersonTagBadge } from '#app/components/customers/person-tag-badge.tsx'
 import { EmptyState } from '#app/components/empty-state.tsx'
 import { FilterSelect } from '#app/components/staff/controls.tsx'
@@ -90,6 +94,7 @@ export function PeopleListScreen({
 	const [filters, setFilters] = useState<ReadonlySet<PeopleQuickFilter>>(
 		new Set<PeopleQuickFilter>(),
 	)
+	const [group, setGroup] = useState<PeopleSummaryGroup | null>(null)
 	const [people, setPeople] = useState<PersonRow[]>([])
 	const [nextCursor, setNextCursor] = useState<string | null>(null)
 	const [total, setTotal] = useState(0)
@@ -114,7 +119,15 @@ export function PeopleListScreen({
 			try {
 				const page = await fetchPeoplePage(
 					client,
-					{ q: debouncedQuery, filters, sort, cursor },
+					{
+						q: debouncedQuery,
+						filters,
+						sort,
+						cursor,
+						returning: group === 'returning',
+						subscribed:
+							group === 'email' || group === 'sms' ? group : undefined,
+					},
 					signal,
 				)
 				if (current !== requestId.current) return
@@ -134,7 +147,7 @@ export function PeopleListScreen({
 				}
 			}
 		},
-		[client, debouncedQuery, filters, sort],
+		[client, debouncedQuery, filters, group, sort],
 	)
 
 	useEffect(() => {
@@ -179,7 +192,8 @@ export function PeopleListScreen({
 				]
 			: []),
 	]
-	const filtering = debouncedQuery.trim() !== '' || filters.size > 0
+	const filtering =
+		debouncedQuery.trim() !== '' || filters.size > 0 || group !== null
 	const sortOptions = PEOPLE_SORTS.filter(
 		(value) => dining || (value !== 'visits' && value !== 'last_visit'),
 	).map((value) => ({ value, label: _(PEOPLE_SORT_LABELS[value]) }))
@@ -209,6 +223,9 @@ export function PeopleListScreen({
 				}
 			/>
 			<div className="flex flex-col gap-6" data-testid="customers-screen">
+				{access.customers ? (
+					<PeopleSummaryRow client={client} group={group} onSelect={setGroup} />
+				) : null}
 				<WorkspaceToolbar>
 					<div
 						role="search"
@@ -266,6 +283,7 @@ export function PeopleListScreen({
 									setQuery('')
 									setDebouncedQuery('')
 									setFilters(new Set<PeopleQuickFilter>())
+									setGroup(null)
 								}}
 								data-testid="customers-clear-filters"
 							>

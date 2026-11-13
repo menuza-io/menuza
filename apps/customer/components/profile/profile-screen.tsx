@@ -14,6 +14,7 @@ import {
 	Text,
 	TextField,
 } from '../ui'
+import { MessagesSection } from './messages-section'
 
 /**
  * The signed-in customer's details. Name and email are editable; the phone
@@ -114,6 +115,8 @@ export function ProfileScreen() {
 						{t`Save changes`}
 					</Button>
 				</Card>
+
+				<MessagesSection />
 
 				<LanguagePicker />
 

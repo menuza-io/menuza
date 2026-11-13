@@ -16,6 +16,8 @@ export function checkoutOrderPayload(
 		reward: unknown
 		/** `{code?, expectedDiscountMinor}` from the confirmed discount quote; null sends none. */
 		discounts?: Record<string, unknown> | null
+		/** Only the boxes the signed-in guest ticked; undefined sends none. */
+		marketingConsent?: Record<string, unknown> | null
 	},
 ): Record<string, unknown> {
 	const notes = extra.deliveryNotes?.trim()
@@ -27,5 +29,8 @@ export function checkoutOrderPayload(
 			: {}),
 		...(extra.reward ? { loyalty: extra.reward } : {}),
 		...(extra.discounts ? { discounts: extra.discounts } : {}),
+		...(extra.marketingConsent
+			? { marketingConsent: extra.marketingConsent }
+			: {}),
 	}
 }

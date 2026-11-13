@@ -424,6 +424,11 @@ const valueClass = 'price font-medium text-foreground'
 					</div>
 				</section>
 
+				{/* Set by checkout when an email opt-in is waiting for its link. */}
+				<p id="marketing-email-note" class="hidden text-center text-sm text-muted-foreground [&:not(.hidden)]:block" role="status">
+					{i18n._(msg`We sent a link to confirm your email`)}
+				</p>
+
 				<DropAlertsSignup source="order_success" title={dropAlertsTitle} />
 
 				<div class="flex flex-col items-center gap-3 pt-2 sm:flex-row sm:justify-center">
@@ -450,6 +455,7 @@ const valueClass = 'price font-medium text-foreground'
 
 	<script>
 		import { buildIcsDataUrl } from '~/lib/ordering/calendar'
+		import { takeEmailConfirmationPending } from '~/lib/marketing-consent-client'
 		import { getLocalizedMenuValue } from '@repo/common/menu-types'
 		import { createMoneyFormatter, fillTemplate } from '~/lib/ordering/money'
 		import {
@@ -1063,6 +1069,8 @@ const valueClass = 'price font-medium text-foreground'
 				return
 			}
 			show('order-view')
+			// Once: checkout left a flag when an email opt-in awaits its link.
+			if (takeEmailConfirmationPending()) show('marketing-email-note')
 
 			// Retry after a failure and "Complete payment" during a hold share
 			// one action: start a hosted payment session for this order.

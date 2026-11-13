@@ -1,10 +1,13 @@
+import { STAFF_CONSENT_COOLING_OFF_DAYS } from '@repo/common/marketing-consent'
 import {
 	customers,
 	customerSubscriptions,
 	type Customer,
+	type CustomerConsentMethod,
 	type CustomerSubscriptionChannel,
 	type CustomerSubscriptionSource,
 	type CustomerSubscriptionTopic,
+	type CustomerUnsubscribeSource,
 	type TenantDatabase,
 	type TenantTransaction,
 } from '@repo/tenant-db'
@@ -122,11 +125,25 @@ export async function hasMarketingConsent(
 	return audience.length > 0
 }
 
+/** Who opted out when the caller does not say: staff paths are `operator`. */
+function defaultUnsubscribedSource(
+	source: CustomerSubscriptionSource,
+): CustomerUnsubscribeSource {
+	if (source === 'operator' || source === 'staff') return 'operator'
+	if (source === 'import') return 'import'
+	return 'self'
+}
+
 /**
- * Records a consent change for one customer, topic and channel. Opting out
- * keeps the row as the record; opting in again clears it. `source: 'import'`
- * is the path for backfilling consent a business already holds (for example
- * from a previous mailing list); only import addresses whose owners agreed.
+ * Records a consent change for one customer, topic and channel. The ONLY
+ * writer of `customer_subscriptions` consent state.
+ *
+ * Opting in writes the provenance (source, wording version, the staff member
+ * and method for a staff-recorded consent) and clears any opt-out. Opting out
+ * sets `unsubscribed_at` and who did it, and keeps the opt-in provenance on
+ * the row as the record. `source: 'import'` is the path for backfilling
+ * consent a business already holds (for example from a previous mailing
+ * list); only import addresses whose owners agreed.
  */
 export async function setCustomerSubscription(
 	db: TenantDatabase | TenantTransaction,
@@ -140,14 +157,45 @@ export async function setCustomerSubscription(
 		/**
 		 * The address to bind an email subscription to as already confirmed.
 		 * Default: the customer's current address for `operator` and `import`
-		 * (someone vouching for it), none otherwise: a customer-made email
-		 * subscription stays pending until the owner confirms (see
-		 * `confirmCustomerSubscription`).
+		 * (someone vouching for it), none otherwise: a customer-made or
+		 * staff-recorded (`staff`) email subscription stays pending until the
+		 * owner confirms (see `confirmCustomerSubscription`).
 		 */
 		confirmedEmail?: string | null
+		/** Opt-in only: version id of the consent wording shown. */
+		consentTextVersion?: string | null
+		/** Opt-in only: opaque operator user id that recorded a `staff` consent. */
+		recordedBy?: string | null
+		/** Opt-in only: how the guest gave a `staff` consent. */
+		consentMethod?: CustomerConsentMethod | null
+		/**
+		 * Opt-out only: who opted out. Default: `operator` for the `operator`
+		 * and `staff` sources, `import` for `import`, `self` (the guest) for
+		 * every other source.
+		 */
+		unsubscribedSource?: CustomerUnsubscribeSource
 	},
 ): Promise<void> {
 	const now = params.now ?? new Date()
+	if (!params.subscribed) {
+		await db
+			.update(customerSubscriptions)
+			.set({
+				unsubscribedAt: now,
+				unsubscribedSource:
+					params.unsubscribedSource ?? defaultUnsubscribedSource(params.source),
+				updatedAt: now,
+			})
+			.where(
+				and(
+					eq(customerSubscriptions.customerId, params.customerId),
+					eq(customerSubscriptions.topic, params.topic),
+					eq(customerSubscriptions.channel, params.channel),
+				),
+			)
+			.run()
+		return
+	}
 	let confirmedEmail = params.confirmedEmail
 	if (
 		confirmedEmail === undefined &&
@@ -165,41 +213,61 @@ export async function setCustomerSubscription(
 		params.channel === 'email' && confirmedEmail?.trim()
 			? emailConsentHash(confirmedEmail)
 			: null
-	if (params.subscribed) {
-		await db
-			.insert(customerSubscriptions)
-			.values({
-				customerId: params.customerId,
-				topic: params.topic,
-				channel: params.channel,
-				source: params.source,
-				subscribedAt: now,
-				unsubscribedAt: null,
-				confirmedEmailHash,
-				updatedAt: now,
-			})
-			.onConflictDoUpdate({
-				target: [
-					customerSubscriptions.customerId,
-					customerSubscriptions.topic,
-					customerSubscriptions.channel,
-				],
-				set: {
-					source: params.source,
-					subscribedAt: now,
-					unsubscribedAt: null,
-					confirmedEmailHash,
-					// The confirmation send clock (confirmationSentAt/Hash) is kept:
-					// it throttles resends to one address across opt-in cycles.
-					updatedAt: now,
-				},
-			})
-			.run()
-		return
+	const provenance = {
+		source: params.source,
+		subscribedAt: now,
+		unsubscribedAt: null,
+		unsubscribedSource: null,
+		consentTextVersion: params.consentTextVersion ?? null,
+		recordedBy: params.recordedBy ?? null,
+		consentMethod: params.consentMethod ?? null,
+		confirmedEmailHash,
+		updatedAt: now,
 	}
 	await db
-		.update(customerSubscriptions)
-		.set({ unsubscribedAt: now, updatedAt: now })
+		.insert(customerSubscriptions)
+		.values({
+			customerId: params.customerId,
+			topic: params.topic,
+			channel: params.channel,
+			...provenance,
+		})
+		.onConflictDoUpdate({
+			target: [
+				customerSubscriptions.customerId,
+				customerSubscriptions.topic,
+				customerSubscriptions.channel,
+			],
+			// The confirmation send clock (confirmationSentAt/Hash) is kept: it
+			// throttles resends to one address across opt-in cycles.
+			set: provenance,
+		})
+		.run()
+}
+
+/**
+ * Whether a guest's own opt-out still blocks a staff-recorded opt-in on this
+ * topic and channel: the subscription is opted out, by the guest
+ * (`unsubscribed_source = 'self'`), less than `STAFF_CONSENT_COOLING_OFF_DAYS`
+ * ago. An opt-out from before the source was recorded (null) counts as the
+ * guest's own, so the check fails closed. Opt-outs by staff or an import do
+ * not block.
+ */
+export async function isInStaffConsentCoolingOff(
+	db: TenantDatabase | TenantTransaction,
+	params: {
+		customerId: string
+		topic: CustomerSubscriptionTopic
+		channel: CustomerSubscriptionChannel
+		now?: Date
+	},
+): Promise<boolean> {
+	const row = await db
+		.select({
+			unsubscribedAt: customerSubscriptions.unsubscribedAt,
+			unsubscribedSource: customerSubscriptions.unsubscribedSource,
+		})
+		.from(customerSubscriptions)
 		.where(
 			and(
 				eq(customerSubscriptions.customerId, params.customerId),
@@ -207,7 +275,12 @@ export async function setCustomerSubscription(
 				eq(customerSubscriptions.channel, params.channel),
 			),
 		)
-		.run()
+		.get()
+	if (!row?.unsubscribedAt) return false
+	if (row.unsubscribedSource && row.unsubscribedSource !== 'self') return false
+	const now = (params.now ?? new Date()).getTime()
+	const coolingOffMs = STAFF_CONSENT_COOLING_OFF_DAYS * 24 * 60 * 60 * 1000
+	return now - row.unsubscribedAt.getTime() < coolingOffMs
 }
 
 /**

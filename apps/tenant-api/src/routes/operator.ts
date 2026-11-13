@@ -80,6 +80,8 @@ export async function authenticateOperator(
 		peopleDining?: string
 		/** `people` scope: may edit the dining facet (`update:reservation_guest:any`). */
 		canUpdateGuest?: boolean
+		/** `people` scope: may record a guest's marketing consent (`update:marketing_consent:any`). */
+		canUpdateMarketingConsent?: boolean
 	}
 	try {
 		const secret = new TextEncoder().encode(operatorToken)

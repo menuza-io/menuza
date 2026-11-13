@@ -907,6 +907,7 @@ const textSubscriberFields: ReportField[] = [
 			{ value: 'drop_page', label: 'Drop page' },
 			{ value: 'order_success', label: 'Order confirmation' },
 			{ value: 'profile', label: 'Profile' },
+			{ value: 'staff', label: 'Recorded by staff' },
 		],
 	},
 	{

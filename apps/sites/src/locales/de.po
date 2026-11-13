@@ -188,6 +188,10 @@ msgstr "Verbleibende Zeit zum Abschließen der Zahlung: {time}."
 msgid "{time}, sold out"
 msgstr "{time}, ausverkauft"
 
+#: src/components/marketing/MessagesSection.astro.ts:3
+msgid "{topic}: {channel}"
+msgstr "{topic}: {channel}"
+
 #: src/lib/reservations/labels.ts:340
 msgid "{unit} per guest for {count} guests."
 msgstr "{unit} pro Gast für {count} Gäste."
@@ -230,6 +234,10 @@ msgstr "1 Aktion jetzt bestellbar"
 #: src/lib/reservations/labels.ts:40
 msgid "1 guest"
 msgstr "1 Gast"
+
+#: src/components/marketing/MarketingConsentBoxes.astro.ts:3
+msgid "A few messages a month. You can opt out anytime."
+msgstr "Ein paar Nachrichten im Monat. Sie können sich jederzeit abmelden."
 
 #: src/lib/loyalty/labels.ts:151
 msgid "A free item"
@@ -274,6 +282,10 @@ msgstr "Gib eine Lieferadresse in unserem Liefergebiet an, bevor du bestellst."
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "Add a tip"
 msgstr "Trinkgeld hinzufügen"
+
+#: src/components/marketing/MessagesSection.astro.ts:3
+msgid "Add an email address first"
+msgstr "Fügen Sie zuerst eine E-Mail-Adresse hinzu"
 
 #: src/lib/ordering-labels.ts:201
 msgid "Add delivery address"
@@ -631,6 +643,10 @@ msgstr "Prüfe Hausnummer und Schreibweise oder wähle einen Vorschlag aus der L
 msgid "Check your connection and try again."
 msgstr "Prüfe deine Verbindung und versuche es erneut."
 
+#: src/components/marketing/MessagesSection.astro.ts:3
+msgid "Check your inbox to confirm"
+msgstr "Bestätigen Sie in Ihrem Posteingang"
+
 #: src/pages/verify.astro.ts:3
 msgid "Check your phone"
 msgstr "Prüfen Sie Ihr Telefon"
@@ -715,6 +731,10 @@ msgstr "Wähle mindestens einen Standort."
 #: src/components/careers/ApplyPanel.astro.ts:3
 msgid "Choose every location that suits you."
 msgstr "Wähle jeden Standort, der zu dir passt."
+
+#: src/components/marketing/MessagesSection.astro.ts:3
+msgid "Choose what you hear from us, and how."
+msgstr "Wählen Sie, was Sie von uns hören und wie."
 
 #: src/components/drops/PickupPicker.astro.ts:3
 msgid "Choose your pickup"
@@ -1008,6 +1028,7 @@ msgid "Earned"
 msgstr "Gesammelt"
 
 #: src/components/careers/ApplyPanel.astro.ts:3
+#: src/components/marketing/MessagesSection.astro.ts:3
 #: src/lib/reservations/labels.ts:92
 #: src/pages/profile.astro.ts:3
 msgid "Email"
@@ -1020,6 +1041,10 @@ msgstr "E-Mail-Adresse"
 #: src/lib/reservations/labels.ts:103
 msgid "Email me news and offers from {name}"
 msgstr "Senden Sie mir Neuigkeiten und Angebote von {name} per E-Mail"
+
+#: src/components/marketing/MarketingConsentBoxes.astro.ts:3
+msgid "Email me offers and news from {org}"
+msgstr "Senden Sie mir Angebote und Neuigkeiten von {org} per E-Mail"
 
 #: src/components/drops/DropCard.astro.ts:3
 #: src/components/drops/DropStatusChip.astro.ts:3
@@ -1546,6 +1571,10 @@ msgstr "Menükategorien"
 msgid "Menu coming soon"
 msgstr "Menü bald verfügbar"
 
+#: src/components/marketing/MessagesSection.astro.ts:3
+msgid "Messages from {org}"
+msgstr "Nachrichten von {org}"
+
 #: src/lib/ordering-labels.ts:153
 msgid "Minimum order"
 msgstr "Mindestbestellwert"
@@ -1569,6 +1598,10 @@ msgstr "Weitere Aktionen"
 #: src/pages/menu.astro.ts:3
 msgid "Most ordered"
 msgstr "Am häufigsten bestellt"
+
+#: src/components/marketing/MarketingConsentBoxes.astro.ts:3
+msgid "Msg and data rates may apply. Reply STOP to opt out."
+msgstr "Es können Nachrichten- und Datengebühren anfallen. Antworten Sie STOP zum Abmelden."
 
 #: src/lib/reservations/labels.ts:219
 #: src/pages/profile.astro.ts:3
@@ -1738,6 +1771,11 @@ msgstr "Anlass"
 #: src/pages/menu.astro.ts:3
 msgid "Offers"
 msgstr "Angebote"
+
+#: src/components/marketing/MarketingConsentBoxes.astro.ts:3
+#: src/components/marketing/MessagesSection.astro.ts:3
+msgid "Offers and news"
+msgstr "Angebote und Neuigkeiten"
 
 #: src/lib/loyalty/labels.ts:152
 msgid "One item. Paid extras are still charged."
@@ -2372,6 +2410,10 @@ msgstr "Anfragen zur Nutzung Ihrer Prämien"
 msgid "Required"
 msgstr "Erforderlich"
 
+#: src/components/marketing/MessagesSection.astro.ts:3
+msgid "Reservation news"
+msgstr "Neuigkeiten zu Reservierungen"
+
 #: src/components/blocks/ReservationBlock.astro.ts:3
 #: src/lib/reservations/labels.ts:22
 #: src/pages/reserve/index.astro.ts:3
@@ -2564,6 +2606,10 @@ msgstr "Das Vorzeigen des Codes kostet keine Punkte. Jede Prämie bestätigen Si
 msgid "Sign in"
 msgstr "Anmelden"
 
+#: src/components/marketing/MarketingConsentBoxes.astro.ts:3
+msgid "Sign in to hear about offers"
+msgstr "Melden Sie sich an, um Angebote zu erhalten"
+
 #: src/lib/loyalty/labels.ts:67
 msgid "Sign in to see your rewards"
 msgstr "Melden Sie sich an, um Ihre Prämien zu sehen"
@@ -2697,6 +2743,10 @@ msgstr "Sagen Sie uns, wann Sie essen möchten. Wir melden uns, wenn ein Tisch f
 msgid "Temporary"
 msgstr "Befristet"
 
+#: src/components/marketing/MessagesSection.astro.ts:3
+msgid "Text"
+msgstr "SMS"
+
 #: src/components/drops/DropAlertsSignup.astro.ts:3
 msgid "Text me"
 msgstr "SMS an mich"
@@ -2708,6 +2758,10 @@ msgstr "Neue Aktionen per SMS"
 #: src/lib/reservations/labels.ts:106
 msgid "Text me news and offers from {name}"
 msgstr "Senden Sie mir Neuigkeiten und Angebote von {name} per SMS"
+
+#: src/components/marketing/MarketingConsentBoxes.astro.ts:3
+msgid "Text me offers from {org}"
+msgstr "Senden Sie mir Angebote von {org} per SMS"
 
 #: src/lib/reservations/labels.ts:100
 msgid "Text me reminders about this reservation"
@@ -3144,6 +3198,10 @@ msgstr "Probieren Sie stattdessen eine dieser Zeiten oder Daten oder ändern Sie
 msgid "Try payment again"
 msgstr "Zahlung erneut versuchen"
 
+#: src/components/marketing/MessagesSection.astro.ts:3
+msgid "Turning a switch off never affects receipts or booking confirmations."
+msgstr "Das Ausschalten eines Schalters betrifft nie Belege oder Buchungsbestätigungen."
+
 #: src/pages/shop.astro.ts:3
 msgid "Unable to start checkout. Please try again."
 msgstr "Checkout konnte nicht gestartet werden. Bitte versuchen Sie es erneut."
@@ -3221,6 +3279,10 @@ msgstr "Bestätigungscode"
 #: src/pages/verify.astro.ts:3
 msgid "Verify"
 msgstr "Bestätigen"
+
+#: src/components/marketing/MessagesSection.astro.ts:3
+msgid "Verify your phone first"
+msgstr "Bestätigen Sie zuerst Ihr Telefon"
 
 #: src/pages/verify.astro.ts:3
 msgid "Verifying..."
@@ -3386,6 +3448,10 @@ msgstr "Ihre telefonische Bestellung konnte nicht geladen werden."
 msgid "We couldn't load your receipt"
 msgstr "Wir konnten Ihren Beleg nicht laden"
 
+#: src/components/marketing/MessagesSection.astro.ts:3
+msgid "We couldn't save that. Try again."
+msgstr "Das konnte nicht gespeichert werden. Bitte versuchen Sie es erneut."
+
 #: src/pages/menu/success.astro.ts:3
 msgid "We couldn't start payment. Please try again."
 msgstr "Wir konnten die Zahlung nicht starten. Bitte versuchen Sie es erneut."
@@ -3429,6 +3495,10 @@ msgstr "Hierhin senden wir Ihre Bestätigung."
 #: src/lib/reservations/labels.ts:143
 msgid "We sent a confirmation to your email or phone."
 msgstr "Wir haben eine Bestätigung an Ihre E-Mail-Adresse oder Telefonnummer gesendet."
+
+#: src/pages/menu/success.astro.ts:3
+msgid "We sent a link to confirm your email"
+msgstr "Wir haben Ihnen einen Link zur Bestätigung Ihrer E-Mail gesendet"
 
 #: src/components/drops/DropAlertsSignup.astro.ts:3
 msgid "We texted a 6-digit code to {phone}."

@@ -2,6 +2,7 @@ import { and, eq } from 'drizzle-orm'
 import { type Context, Hono } from 'hono'
 import { z } from 'zod'
 
+import { consentTextVersionSchema } from '@repo/common/marketing-consent'
 import {
 	CUSTOMER_SUBSCRIPTION_CHANNELS,
 	CUSTOMER_SUBSCRIPTION_TOPICS,
@@ -52,6 +53,8 @@ const updateSchema = z.object({
 			'order_success',
 		])
 		.default('profile'),
+	// Version id of the consent wording the guest was shown; stored on opt-in.
+	textVersion: consentTextVersionSchema.optional(),
 })
 
 const paramsSchema = z.object({
@@ -125,7 +128,7 @@ subscriptionRoutes.put(
 		}
 		const { db, customerId } = auth
 		const { topic, channel } = params.data
-		const { subscribed, source } = parsed.data
+		const { subscribed, source, textVersion } = parsed.data
 
 		const customer = await db
 			.select({
@@ -178,6 +181,7 @@ subscriptionRoutes.put(
 					subscribed,
 					source,
 					confirmedEmail: null,
+					consentTextVersion: textVersion ?? null,
 				})
 			}
 			// A repeat request for the SAME address resends the link, at most once
@@ -244,6 +248,10 @@ subscriptionRoutes.put(
 			channel,
 			subscribed,
 			source,
+			consentTextVersion: textVersion ?? null,
+			// The guest's own switch: a staff member may not opt them back in
+			// during the cooling-off period.
+			unsubscribedSource: 'self',
 		})
 		return c.json({ topic, channel, subscribed })
 	},
@@ -348,6 +356,7 @@ subscriptionRoutes.post('/unsubscribe', publicLimit, async (c) => {
 			channel: 'email',
 			subscribed: false,
 			source: 'profile',
+			unsubscribedSource: 'self',
 		})
 	}
 	return page(

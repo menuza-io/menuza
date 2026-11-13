@@ -3,6 +3,7 @@ import os from 'node:os'
 import path from 'node:path'
 import {
 	customers,
+	customerSubscriptions,
 	destroyTenantDb,
 	getTenantDb,
 	provisionTenantDb,
@@ -11,6 +12,8 @@ import { eq } from 'drizzle-orm'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
 	confirmCustomerSubscription,
+	emailConsentHash,
+	isInStaffConsentCoolingOff,
 	loadBroadcastAudience,
 	setCustomerSubscription,
 } from './marketing-audience.ts'
@@ -257,5 +260,191 @@ describe('loadBroadcastAudience', () => {
 				email: 'out@example.com',
 			}),
 		).resolves.toBe(false)
+	})
+
+	describe('consent provenance', () => {
+		const rowOf = (customerId: string) =>
+			db
+				.select()
+				.from(customerSubscriptions)
+				.where(eq(customerSubscriptions.customerId, customerId))
+				.get()
+
+		it('does not auto-confirm a staff-recorded email, unlike an operator one', async () => {
+			const staff = await customer({ email: 'staff@example.com' })
+			const operator = await customer({ email: 'op@example.com' })
+			await setCustomerSubscription(db, {
+				customerId: staff.id,
+				topic: 'marketing',
+				channel: 'email',
+				subscribed: true,
+				source: 'staff',
+				consentTextVersion: 'staff-2026-11',
+				recordedBy: 'user_123',
+				consentMethod: 'paper_form',
+			})
+			await setCustomerSubscription(db, {
+				customerId: operator.id,
+				topic: 'marketing',
+				channel: 'email',
+				subscribed: true,
+				source: 'operator',
+			})
+			expect(await rowOf(staff.id)).toMatchObject({
+				source: 'staff',
+				confirmedEmailHash: null,
+				consentTextVersion: 'staff-2026-11',
+				recordedBy: 'user_123',
+				consentMethod: 'paper_form',
+			})
+			expect((await rowOf(operator.id))!.confirmedEmailHash).toBe(
+				emailConsentHash('op@example.com'),
+			)
+			// An explicit address still wins for staff.
+			await setCustomerSubscription(db, {
+				customerId: staff.id,
+				topic: 'marketing',
+				channel: 'email',
+				subscribed: true,
+				source: 'staff',
+				confirmedEmail: 'staff@example.com',
+			})
+			expect((await rowOf(staff.id))!.confirmedEmailHash).toBe(
+				emailConsentHash('staff@example.com'),
+			)
+		})
+
+		it('keeps the opt-in record on opt-out and clears it on the next opt-in', async () => {
+			const c = await customer({ phone: '+15550000201', phoneVerified: true })
+			const base = {
+				customerId: c.id,
+				topic: 'marketing' as const,
+				channel: 'sms' as const,
+			}
+			await setCustomerSubscription(db, {
+				...base,
+				subscribed: true,
+				source: 'staff',
+				consentTextVersion: 'staff-2026-11',
+				recordedBy: 'user_9',
+				consentMethod: 'in_person',
+			})
+			await setCustomerSubscription(db, {
+				...base,
+				subscribed: false,
+				source: 'profile',
+			})
+			const out = await rowOf(c.id)
+			expect(out).toMatchObject({
+				source: 'staff',
+				consentTextVersion: 'staff-2026-11',
+				recordedBy: 'user_9',
+				consentMethod: 'in_person',
+				unsubscribedSource: 'self',
+			})
+			expect(out!.unsubscribedAt).toBeInstanceOf(Date)
+
+			await setCustomerSubscription(db, {
+				...base,
+				subscribed: true,
+				source: 'checkout',
+			})
+			expect(await rowOf(c.id)).toMatchObject({
+				source: 'checkout',
+				consentTextVersion: null,
+				recordedBy: null,
+				consentMethod: null,
+				unsubscribedAt: null,
+				unsubscribedSource: null,
+			})
+		})
+
+		it.each([
+			['operator', 'operator'],
+			['staff', 'operator'],
+			['import', 'import'],
+			['profile', 'self'],
+			['checkout', 'self'],
+		] as const)(
+			'an opt-out with source %s defaults to unsubscribed_source %s',
+			async (source, expected) => {
+				const c = await customer({ phone: '+15550000202', phoneVerified: true })
+				const base = {
+					customerId: c.id,
+					topic: 'marketing' as const,
+					channel: 'sms' as const,
+				}
+				await setCustomerSubscription(db, {
+					...base,
+					subscribed: true,
+					source: 'signup',
+				})
+				await setCustomerSubscription(db, {
+					...base,
+					subscribed: false,
+					source,
+				})
+				expect((await rowOf(c.id))!.unsubscribedSource).toBe(expected)
+			},
+		)
+
+		it('blocks a staff opt-in only within the cooling-off after a self opt-out', async () => {
+			const c = await customer({ phone: '+15550000203', phoneVerified: true })
+			const base = {
+				customerId: c.id,
+				topic: 'marketing' as const,
+				channel: 'sms' as const,
+			}
+			const day = 24 * 60 * 60 * 1000
+			const outAt = new Date('2026-11-01T00:00:00Z')
+			await expect(isInStaffConsentCoolingOff(db, base)).resolves.toBe(false)
+			await setCustomerSubscription(db, {
+				...base,
+				subscribed: true,
+				source: 'signup',
+			})
+			await setCustomerSubscription(db, {
+				...base,
+				subscribed: false,
+				source: 'profile',
+				now: outAt,
+			})
+			await expect(
+				isInStaffConsentCoolingOff(db, {
+					...base,
+					now: new Date(outAt.getTime() + 29 * day),
+				}),
+			).resolves.toBe(true)
+			await expect(
+				isInStaffConsentCoolingOff(db, {
+					...base,
+					now: new Date(outAt.getTime() + 30 * day),
+				}),
+			).resolves.toBe(false)
+
+			// A staff opt-out does not block; a legacy one (no source) does.
+			await setCustomerSubscription(db, {
+				...base,
+				subscribed: false,
+				source: 'operator',
+				now: outAt,
+			})
+			await expect(
+				isInStaffConsentCoolingOff(db, {
+					...base,
+					now: new Date(outAt.getTime() + day),
+				}),
+			).resolves.toBe(false)
+			await db
+				.update(customerSubscriptions)
+				.set({ unsubscribedSource: null })
+				.where(eq(customerSubscriptions.customerId, c.id))
+			await expect(
+				isInStaffConsentCoolingOff(db, {
+					...base,
+					now: new Date(outAt.getTime() + day),
+				}),
+			).resolves.toBe(true)
+		})
 	})
 })

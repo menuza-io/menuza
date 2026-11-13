@@ -1,3 +1,7 @@
+import {
+	consentTextVersionSchema,
+	STAFF_CONSENT_METHODS,
+} from '@repo/common/marketing-consent'
 import { getTenantDb } from '@repo/tenant-db'
 import { Hono, type Context } from 'hono'
 import { z } from 'zod'
@@ -17,6 +21,7 @@ import {
 	PEOPLE_ACCOUNT_FILTERS,
 	PEOPLE_PAGE_SIZE,
 	PEOPLE_SORTS,
+	PEOPLE_SUBSCRIBED_FILTERS,
 	parsePersonKey,
 	requireDiningFacet,
 	requireDiningWrite,
@@ -25,7 +30,13 @@ import {
 	updatePerson,
 	type PeopleAccess,
 } from '../services/people-service.ts'
+import { recordPersonConsent } from '../services/people-consent-service.ts'
 import { listPersonOrders } from '../services/people-orders-service.ts'
+import {
+	readPeopleLocationIds,
+	type PeopleLocationScope,
+} from '../services/people-stats.ts'
+import { getPeopleSummary } from '../services/people-summary-service.ts'
 import { erasePerson } from '../services/person-erasure-service.ts'
 import {
 	exportGuestProfile,
@@ -51,11 +62,18 @@ import { authenticateOperator } from './operator.ts'
  *    reservation guest read grant: allergy, sensitive tags, notes);
  *  - `canUpdate`, `canUpdateGuest`, `canDelete`: the matching writes.
  * No claim means no facet; the request can never widen it. Guestbook data is
- * organization-wide, so location scoping does not apply (as on the guests API).
+ * organization-wide, so location scoping does not apply to the list, profiles
+ * or writes (as on the guests API). The `locationIds` claim (the member's
+ * location scope, null or absent for all) narrows only the summary counts and
+ * the `returning` / `subscribed` list filters the summary tiles link to.
  */
 export const operatorPeopleRoutes = new Hono()
 
-type PeopleContext = { access: PeopleAccess; orgId: string }
+type PeopleContext = {
+	access: PeopleAccess
+	orgId: string
+	locationIds: PeopleLocationScope
+}
 
 async function authenticate(
 	c: Context,
@@ -78,13 +96,24 @@ async function authenticate(
 			auth.peopleCustomers === true && auth.canUpdate === true,
 		canUpdateDining: dining === 'full' && auth.canUpdateGuest === true,
 		canDelete: auth.canDelete === true,
+		// Recording consent speaks for the guest and names the staff member, so
+		// it needs the customers facet, the claim, and a subject.
+		canUpdateMarketingConsent:
+			auth.peopleCustomers === true &&
+			auth.canUpdateMarketingConsent === true &&
+			typeof auth.sub === 'string' &&
+			auth.sub.length > 0,
 	}
 	if (!access.customers && access.dining === 'none') {
 		return { response: json({ error: 'insufficient_permissions' }, 403) }
 	}
 	const orgErr = await ensureActiveOrgInNodeRegion({ orgId: auth.orgId })
 	if (orgErr) return { response: orgErr }
-	return { access, orgId: auth.orgId }
+	return {
+		access,
+		orgId: auth.orgId,
+		locationIds: readPeopleLocationIds(auth as Record<string, unknown>),
+	}
 }
 
 function fail(error: unknown): Response {
@@ -107,6 +136,8 @@ const listQuerySchema = z.object({
 	hasDining: flag,
 	account: z.enum(PEOPLE_ACCOUNT_FILTERS).optional(),
 	includeWalkIns: flag,
+	returning: flag,
+	subscribed: z.enum(PEOPLE_SUBSCRIBED_FILTERS).optional(),
 	sort: z.enum(PEOPLE_SORTS).optional(),
 	cursor: z.string().trim().max(512).optional(),
 	limit: z.coerce.number().int().min(1).max(100).optional(),
@@ -123,8 +154,32 @@ operatorPeopleRoutes.get('/', async (c) => {
 			...q.data,
 			lapsedDays: q.data.lapsedDays ?? DEFAULT_LAPSED_DAYS,
 			limit: q.data.limit ?? PEOPLE_PAGE_SIZE,
+			locationIds: ctx.locationIds,
 		})
 		return json({ ok: true, orgId: ctx.orgId, ...page })
+	} catch (error) {
+		return fail(error)
+	}
+})
+
+/**
+ * Counts for the Customers tiles (guests, returning guests, email and text
+ * subscribers, each with its 30-day change). Counts only; needs the customers
+ * facet. Before `/:key` so `summary` is not read as a key. Definitions:
+ * `getPeopleSummary`.
+ */
+operatorPeopleRoutes.get('/summary', async (c) => {
+	const ctx = await authenticate(c)
+	if ('response' in ctx) return ctx.response
+	if (!ctx.access.customers) {
+		return json({ error: 'insufficient_permissions' }, 403)
+	}
+	try {
+		const db = await getTenantDb(ctx.orgId)
+		const summary = await getPeopleSummary(db, ctx.access, {
+			locationIds: ctx.locationIds,
+		})
+		return json({ ok: true, orgId: ctx.orgId, ...summary })
 	} catch (error) {
 		return fail(error)
 	}
@@ -294,6 +349,44 @@ operatorPeopleRoutes.patch('/:key', async (c) => {
 		const key = await updatePerson(db, ctx.access, c.req.param('key'), patch)
 		const profile = await getPersonProfile(db, ctx.access, key)
 		return json({ ok: true, orgId: ctx.orgId, ...profile })
+	} catch (error) {
+		return fail(error)
+	}
+})
+
+const consentSchema = z.strictObject({
+	channel: z.enum(['email', 'sms']),
+	subscribed: z.boolean(),
+	method: z.enum(STAFF_CONSENT_METHODS).optional(),
+	attested: z.boolean().optional(),
+	textVersion: consentTextVersionSchema.optional(),
+})
+
+/**
+ * Staff record a guest's marketing consent (topic `marketing`) on their
+ * behalf: on needs `method` and `attested: true`; off is one call. Needs the
+ * customers facet and the `canUpdateMarketingConsent` claim (never minted
+ * while impersonating). Rules and outcomes: `recordPersonConsent`.
+ */
+operatorPeopleRoutes.post('/:key/consent', async (c) => {
+	const ctx = await authenticate(c)
+	if ('response' in ctx) return ctx.response
+	if (!ctx.access.customers || !ctx.access.canUpdateMarketingConsent) {
+		return json({ error: 'insufficient_permissions' }, 403)
+	}
+	// Validation errors name fields and codes only, never the rejected value.
+	const body = await readJsonBody(c, consentSchema)
+	if ('error' in body) return body.error
+	try {
+		const db = await getTenantDb(ctx.orgId)
+		const result = await recordPersonConsent(
+			db,
+			ctx.access,
+			c.req.param('key'),
+			body.data,
+			{ orgId: ctx.orgId },
+		)
+		return json({ ok: true, orgId: ctx.orgId, ...result })
 	} catch (error) {
 		return fail(error)
 	}

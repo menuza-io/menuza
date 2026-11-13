@@ -48,4 +48,23 @@ describe('checkoutOrderPayload', () => {
 		)
 		expect(payload).not.toHaveProperty('delivery')
 	})
+
+	it('carries only the marketing consent it is given, so a retry with other boxes gets a new key', () => {
+		const priced = { fulfillment: 'pickup', lines: [] }
+		const consent = { sms: true, textVersion: 'guest-2026-11' }
+		expect(
+			checkoutOrderPayload(priced, {
+				contact,
+				reward: null,
+				marketingConsent: consent,
+			}),
+		).toEqual({ ...priced, contact, marketingConsent: consent })
+		expect(
+			checkoutOrderPayload(priced, {
+				contact,
+				reward: null,
+				marketingConsent: undefined,
+			}),
+		).not.toHaveProperty('marketingConsent')
+	})
 })

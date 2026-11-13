@@ -239,6 +239,12 @@ export function getPermissionGroups(): PermissionGroup[] {
 					description: t`Create, edit, publish, pause, and delete automated journeys.`,
 					warning: t`High impact`,
 				},
+				{
+					id: 'org_perm_update_marketing_consent_any',
+					label: t`Record marketing consent`,
+					description: t`Sign a guest up for offers or take them off on their behalf, when they agreed in person, on a paper form, or by phone. Needs View organization settings.`,
+					warning: t`Adds people to marketing lists`,
+				},
 			],
 		},
 		{

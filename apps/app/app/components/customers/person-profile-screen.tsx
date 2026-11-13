@@ -59,6 +59,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { toast } from 'sonner'
 import { StatusBadge } from '#app/components/customers/people-list-screen.tsx'
+import { PersonMarketingCard } from '#app/components/customers/person-marketing-card.tsx'
 import { PersonMergeDialog } from '#app/components/customers/person-merge-dialog.tsx'
 import { PersonNotesPanel } from '#app/components/customers/person-notes-panel.tsx'
 import { PersonOrdersPanel } from '#app/components/customers/person-orders-panel.tsx'
@@ -114,23 +115,6 @@ const FAIL_NOTE = msg`The note could not be saved. Try again.`
 const FAIL_SAVE = msg`The details could not be saved. Try again.`
 const FAIL_ERASE = msg`The customer could not be erased. Try again.`
 
-const TOPIC_LABELS: Record<string, MessageDescriptor> = {
-	drops: msg`Drops`,
-	reservations: msg`Reservations`,
-}
-const CHANNEL_NAMES: Record<string, MessageDescriptor> = {
-	sms: msg`SMS`,
-	email: msg`Email`,
-}
-const SOURCE_LABELS: Record<string, MessageDescriptor> = {
-	menu: msg`Menu`,
-	drops_page: msg`Drops page`,
-	drop_page: msg`Drop page`,
-	order_success: msg`After an order`,
-	profile: msg`Profile`,
-	reservation_booking: msg`Booking form`,
-}
-
 function Stat({
 	label,
 	value,
@@ -155,12 +139,17 @@ export function PersonProfileScreen({
 	orgSlug,
 	personKey,
 	loyalty = NO_LOYALTY_CAPABILITIES,
+	memberNames = {},
+	currentUserId = null,
 }: {
 	client: PeopleClient
 	orgSlug: string
 	personKey: string
 	/** Loyalty flag and grants for the signed-in user; never any points. */
 	loyalty?: LoyaltyCapabilities
+	/** Operator user id to display name, for "recorded by" lines. */
+	memberNames?: Record<string, string>
+	currentUserId?: string | null
 }) {
 	const { _, i18n } = useLingui()
 	const navigate = useNavigate()
@@ -236,6 +225,24 @@ export function PersonProfileScreen({
 			}
 		},
 		[_, personKey, profile?.canonicalKey, reload],
+	)
+
+	const applySubscription = useCallback(
+		(channel: 'email' | 'sms', subscription: PersonSubscription | null) => {
+			setProfile((prev) => {
+				if (!prev) return prev
+				const rest = (prev.marketing?.subscriptions ?? []).filter(
+					(row) => !(row.topic === 'marketing' && row.channel === channel),
+				)
+				return {
+					...prev,
+					marketing: {
+						subscriptions: subscription ? [...rest, subscription] : rest,
+					},
+				}
+			})
+		},
+		[],
 	)
 
 	const backLink = (
@@ -816,7 +823,18 @@ export function PersonProfileScreen({
 				) : null}
 
 				{customer || marketing ? (
-					<MarketingSection marketing={marketing?.subscriptions ?? null} />
+					<PersonMarketingCard
+						client={client}
+						personKey={key}
+						subscriptions={marketing?.subscriptions ?? []}
+						email={profile.email}
+						phone={profile.phone}
+						hasCustomer={customer !== null}
+						canRecord={access.canUpdateMarketingConsent === true}
+						memberNames={memberNames}
+						currentUserId={currentUserId}
+						onSubscription={applySubscription}
+					/>
 				) : null}
 
 				{canEdit || access.canDelete || (guest && access.canUpdateDining) ? (
@@ -957,106 +975,6 @@ export function PersonProfileScreen({
 				/>
 			</div>
 		</WorkspacePage>
-	)
-}
-
-function MarketingSection({
-	marketing,
-}: {
-	marketing: PersonSubscription[] | null
-}) {
-	const { _, i18n } = useLingui()
-	return (
-		<Frame
-			role="region"
-			aria-labelledby="person-marketing-title"
-			data-testid="person-marketing"
-		>
-			<FrameHeader>
-				<FrameTitle id="person-marketing-title">
-					<Trans>Marketing messages</Trans>
-				</FrameTitle>
-				<FrameDescription>
-					<Trans>
-						What this person agreed to receive. This is the only place consent
-						is recorded; broadcasts and automations follow it.
-					</Trans>
-				</FrameDescription>
-			</FrameHeader>
-			{marketing && marketing.length > 0 ? (
-				<Table variant="card">
-					<TableHeader>
-						<TableRow>
-							<TableHead>
-								<Trans>Topic</Trans>
-							</TableHead>
-							<TableHead>
-								<Trans>Channel</Trans>
-							</TableHead>
-							<TableHead>
-								<Trans>Status</Trans>
-							</TableHead>
-							<TableHead>
-								<Trans>Since</Trans>
-							</TableHead>
-							<TableHead>
-								<Trans>Source</Trans>
-							</TableHead>
-						</TableRow>
-					</TableHeader>
-					<TableBody>
-						{marketing.map((row) => (
-							<TableRow
-								key={`${row.topic}:${row.channel}`}
-								data-testid={`person-subscription-${row.topic}-${row.channel}`}
-							>
-								<TableCell>
-									{TOPIC_LABELS[row.topic]
-										? _(TOPIC_LABELS[row.topic]!)
-										: row.topic}
-								</TableCell>
-								<TableCell>
-									{CHANNEL_NAMES[row.channel]
-										? _(CHANNEL_NAMES[row.channel]!)
-										: row.channel}
-								</TableCell>
-								<TableCell>
-									{row.subscribed ? (
-										<Badge variant="success">
-											<Trans>Subscribed</Trans>
-										</Badge>
-									) : (
-										<Badge variant="outline">
-											<Trans>Unsubscribed</Trans>
-										</Badge>
-									)}
-								</TableCell>
-								<TableCell className="text-muted-foreground text-sm">
-									{formatInstantDate(
-										row.unsubscribedAt ?? row.subscribedAt,
-										i18n.locale,
-									) ?? '—'}
-								</TableCell>
-								<TableCell className="text-muted-foreground text-sm">
-									{SOURCE_LABELS[row.source]
-										? _(SOURCE_LABELS[row.source]!)
-										: row.source}
-								</TableCell>
-							</TableRow>
-						))}
-					</TableBody>
-				</Table>
-			) : (
-				<FramePanel>
-					<p
-						className="text-muted-foreground text-sm"
-						data-testid="person-marketing-empty"
-					>
-						<Trans>No marketing choices recorded.</Trans>
-					</p>
-				</FramePanel>
-			)}
-		</Frame>
 	)
 }
 

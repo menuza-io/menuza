@@ -188,6 +188,10 @@ msgstr "完成付款的剩余时间：{time}。"
 msgid "{time}, sold out"
 msgstr "{time}，已售罄"
 
+#: src/components/marketing/MessagesSection.astro.ts:3
+msgid "{topic}: {channel}"
+msgstr "{topic}：{channel}"
+
 #: src/lib/reservations/labels.ts:340
 msgid "{unit} per guest for {count} guests."
 msgstr "每位 {unit}，共 {count} 位客人。"
@@ -230,6 +234,10 @@ msgstr "1 个限量活动正在接受下单"
 #: src/lib/reservations/labels.ts:40
 msgid "1 guest"
 msgstr "1 位"
+
+#: src/components/marketing/MarketingConsentBoxes.astro.ts:3
+msgid "A few messages a month. You can opt out anytime."
+msgstr "每月几条消息。你可以随时退订。"
 
 #: src/lib/loyalty/labels.ts:151
 msgid "A free item"
@@ -274,6 +282,10 @@ msgstr "请先添加我们可配送的地址，再提交订单。"
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "Add a tip"
 msgstr "添加小费"
+
+#: src/components/marketing/MessagesSection.astro.ts:3
+msgid "Add an email address first"
+msgstr "请先添加电子邮件地址"
 
 #: src/lib/ordering-labels.ts:201
 msgid "Add delivery address"
@@ -631,6 +643,10 @@ msgstr "请检查门牌号和拼写，或从列表中选择一个建议地址。
 msgid "Check your connection and try again."
 msgstr "请检查网络连接后重试。"
 
+#: src/components/marketing/MessagesSection.astro.ts:3
+msgid "Check your inbox to confirm"
+msgstr "请查看收件箱以确认"
+
 #: src/pages/verify.astro.ts:3
 msgid "Check your phone"
 msgstr "请查看手机"
@@ -715,6 +731,10 @@ msgstr "请至少选择一家门店。"
 #: src/components/careers/ApplyPanel.astro.ts:3
 msgid "Choose every location that suits you."
 msgstr "请选择所有适合你的门店。"
+
+#: src/components/marketing/MessagesSection.astro.ts:3
+msgid "Choose what you hear from us, and how."
+msgstr "选择你想收到的消息和接收方式。"
 
 #: src/components/drops/PickupPicker.astro.ts:3
 msgid "Choose your pickup"
@@ -1008,6 +1028,7 @@ msgid "Earned"
 msgstr "获得"
 
 #: src/components/careers/ApplyPanel.astro.ts:3
+#: src/components/marketing/MessagesSection.astro.ts:3
 #: src/lib/reservations/labels.ts:92
 #: src/pages/profile.astro.ts:3
 msgid "Email"
@@ -1020,6 +1041,10 @@ msgstr "电子邮箱"
 #: src/lib/reservations/labels.ts:103
 msgid "Email me news and offers from {name}"
 msgstr "通过电子邮件向我发送 {name} 的资讯和优惠"
+
+#: src/components/marketing/MarketingConsentBoxes.astro.ts:3
+msgid "Email me offers and news from {org}"
+msgstr "通过电子邮件向我发送 {org} 的优惠和动态"
 
 #: src/components/drops/DropCard.astro.ts:3
 #: src/components/drops/DropStatusChip.astro.ts:3
@@ -1546,6 +1571,10 @@ msgstr "菜单分类"
 msgid "Menu coming soon"
 msgstr "菜单即将上线"
 
+#: src/components/marketing/MessagesSection.astro.ts:3
+msgid "Messages from {org}"
+msgstr "来自 {org} 的消息"
+
 #: src/lib/ordering-labels.ts:153
 msgid "Minimum order"
 msgstr "起送金额"
@@ -1569,6 +1598,10 @@ msgstr "更多活动"
 #: src/pages/menu.astro.ts:3
 msgid "Most ordered"
 msgstr "最受欢迎"
+
+#: src/components/marketing/MarketingConsentBoxes.astro.ts:3
+msgid "Msg and data rates may apply. Reply STOP to opt out."
+msgstr "可能产生短信和数据费用。回复 STOP 即可退订。"
 
 #: src/lib/reservations/labels.ts:219
 #: src/pages/profile.astro.ts:3
@@ -1738,6 +1771,11 @@ msgstr "场合"
 #: src/pages/menu.astro.ts:3
 msgid "Offers"
 msgstr "优惠"
+
+#: src/components/marketing/MarketingConsentBoxes.astro.ts:3
+#: src/components/marketing/MessagesSection.astro.ts:3
+msgid "Offers and news"
+msgstr "优惠和动态"
 
 #: src/lib/loyalty/labels.ts:152
 msgid "One item. Paid extras are still charged."
@@ -2372,6 +2410,10 @@ msgstr "奖励使用请求"
 msgid "Required"
 msgstr "必填"
 
+#: src/components/marketing/MessagesSection.astro.ts:3
+msgid "Reservation news"
+msgstr "预订动态"
+
 #: src/components/blocks/ReservationBlock.astro.ts:3
 #: src/lib/reservations/labels.ts:22
 #: src/pages/reserve/index.astro.ts:3
@@ -2564,6 +2606,10 @@ msgstr "出示会员码不会消耗积分。每次使用奖励都需您本人同
 msgid "Sign in"
 msgstr "登录"
 
+#: src/components/marketing/MarketingConsentBoxes.astro.ts:3
+msgid "Sign in to hear about offers"
+msgstr "登录以接收优惠信息"
+
 #: src/lib/loyalty/labels.ts:67
 msgid "Sign in to see your rewards"
 msgstr "登录以查看您的奖励"
@@ -2697,6 +2743,10 @@ msgstr "告诉我们您想用餐的时间。如果有餐位空出，我们会联
 msgid "Temporary"
 msgstr "临时工"
 
+#: src/components/marketing/MessagesSection.astro.ts:3
+msgid "Text"
+msgstr "短信"
+
 #: src/components/drops/DropAlertsSignup.astro.ts:3
 msgid "Text me"
 msgstr "短信通知我"
@@ -2708,6 +2758,10 @@ msgstr "短信通知新活动"
 #: src/lib/reservations/labels.ts:106
 msgid "Text me news and offers from {name}"
 msgstr "通过短信向我发送 {name} 的资讯和优惠"
+
+#: src/components/marketing/MarketingConsentBoxes.astro.ts:3
+msgid "Text me offers from {org}"
+msgstr "通过短信向我发送 {org} 的优惠"
 
 #: src/lib/reservations/labels.ts:100
 msgid "Text me reminders about this reservation"
@@ -3144,6 +3198,10 @@ msgstr "请试试这些时间或日期，或更改搜索条件。"
 msgid "Try payment again"
 msgstr "重新支付"
 
+#: src/components/marketing/MessagesSection.astro.ts:3
+msgid "Turning a switch off never affects receipts or booking confirmations."
+msgstr "关闭开关不会影响收据或预订确认。"
+
 #: src/pages/shop.astro.ts:3
 msgid "Unable to start checkout. Please try again."
 msgstr "无法开始结账，请重试。"
@@ -3221,6 +3279,10 @@ msgstr "验证码"
 #: src/pages/verify.astro.ts:3
 msgid "Verify"
 msgstr "验证"
+
+#: src/components/marketing/MessagesSection.astro.ts:3
+msgid "Verify your phone first"
+msgstr "请先验证你的手机"
 
 #: src/pages/verify.astro.ts:3
 msgid "Verifying..."
@@ -3386,6 +3448,10 @@ msgstr "无法加载您的电话订单。"
 msgid "We couldn't load your receipt"
 msgstr "无法加载您的收据"
 
+#: src/components/marketing/MessagesSection.astro.ts:3
+msgid "We couldn't save that. Try again."
+msgstr "无法保存，请重试。"
+
 #: src/pages/menu/success.astro.ts:3
 msgid "We couldn't start payment. Please try again."
 msgstr "无法发起支付。请重试。"
@@ -3429,6 +3495,10 @@ msgstr "我们会把确认信息发送到这里。"
 #: src/lib/reservations/labels.ts:143
 msgid "We sent a confirmation to your email or phone."
 msgstr "我们已向您的邮箱或手机发送了确认信息。"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "We sent a link to confirm your email"
+msgstr "我们已发送确认邮箱的链接"
 
 #: src/components/drops/DropAlertsSignup.astro.ts:3
 msgid "We texted a 6-digit code to {phone}."

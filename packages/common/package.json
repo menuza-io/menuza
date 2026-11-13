@@ -139,6 +139,11 @@
       "import": "./src/email-unsubscribe.ts",
       "default": "./src/email-unsubscribe.ts"
     },
+    "./marketing-consent": {
+      "types": "./src/marketing-consent.ts",
+      "import": "./src/marketing-consent.ts",
+      "default": "./src/marketing-consent.ts"
+    },
     "./merge-tags": {
       "types": "./src/merge-tags.ts",
       "import": "./src/merge-tags.ts",
