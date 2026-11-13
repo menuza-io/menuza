@@ -105,6 +105,44 @@ describe('pay later (open tabs)', () => {
 		expect(await phoneOrders()).toHaveLength(1)
 	})
 
+	it('carries a counter order’s ready-text number to the upload, never a phone order’s', async () => {
+		const counter: OrderDraft = {
+			...draft,
+			orderType: 'takeaway',
+			tableLabel: '',
+			readyTextPhone: '(555) 123-4567',
+		}
+		const tab = await createOrder(counter)
+		expect(tab.readyTextPhone).toBe('5551234567')
+		const wire = toWireOrder(tab)
+		expect(wire.readyTextPhone).toBe('5551234567')
+		// It survives a later revision and a transfer to another till.
+		const edited = await updateTab(tab.id, {
+			...counter,
+			readyTextPhone: tab.readyTextPhone,
+		})
+		expect(
+			(await adoptTab(toWireOrder(edited), 'restaurant')).readyTextPhone,
+		).toBe('5551234567')
+		// Left empty: none.
+		expect(
+			(await createOrder({ ...counter, readyTextPhone: '  ' })).readyTextPhone,
+		).toBeNull()
+		// Not a number: the till refuses it before saving.
+		await expect(
+			createOrder({ ...counter, readyTextPhone: 'call me' }),
+		).rejects.toThrow('valid number to text')
+		// A phone order is texted on its callback number, never this field.
+		const phone = await createOrder({
+			...counter,
+			orderSource: 'phone',
+			customerName: 'Sam',
+			customerPhone: '+15559876543',
+			pickupTimeZone: 'America/New_York',
+		})
+		expect(toWireOrder(phone).readyTextPhone).toBeNull()
+	})
+
 	it('requires contact details and pickup-only fulfillment before saving or taking money', async () => {
 		const phone: OrderDraft = { ...draft, orderSource: 'phone' }
 		await expect(createOrder(phone, cash(3300))).rejects.toThrow('pickup only')

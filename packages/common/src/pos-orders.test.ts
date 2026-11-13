@@ -700,3 +700,41 @@ describe('contract v2: refunds, voids and fiscal documents', () => {
 		).toBe('the signed ZATCA document does not match its fiscal document')
 	})
 })
+
+describe('contract v7: ready text', () => {
+	it('is optional: a contract 6 upload without it parses as none', () => {
+		const order = parse(base())
+		expect(order.success).toBe(true)
+		expect(order.data?.readyTextPhone).toBeNull()
+	})
+
+	it('takes a counter order’s number and normalizes it', () => {
+		const order = parse({
+			...base(),
+			orderType: 'takeaway',
+			tableLabel: null,
+			readyTextPhone: '(555) 123-4567',
+		})
+		expect(order.success).toBe(true)
+		expect(order.data?.readyTextPhone).toBe('5551234567')
+		expect(parse({ ...base(), readyTextPhone: 'call me later' }).success).toBe(
+			false,
+		)
+	})
+
+	it('is refused on a phone order, which is texted on its callback number', () => {
+		const phone = {
+			...base(),
+			orderType: 'takeaway',
+			tableLabel: null,
+			orderSource: 'phone',
+			customerName: 'Sam',
+			customerPhone: '+15551234567',
+			pickupTimeZone: 'America/New_York',
+		}
+		expect(parse(phone).success).toBe(true)
+		expect(message({ ...phone, readyTextPhone: '+15550000000' })).toContain(
+			'callback number',
+		)
+	})
+})

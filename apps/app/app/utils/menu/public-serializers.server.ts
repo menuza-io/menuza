@@ -53,6 +53,11 @@ export interface PublicLocationData {
 	deliveryConfig: DeliveryConfig
 	deliveryZones: DeliveryZone[]
 	isDefault: boolean
+	/**
+	 * Station offers "Text me when it's ready" here and the region texts counter
+	 * and phone orders when Kitchen marks them ready (US organizations only).
+	 */
+	readyText: boolean
 	/** Active "pause online orders" (web and QR), or null. */
 	orderingPause: OrderingPause | null
 	/** Active busy mode (extra prep minutes), or null. */

@@ -18,6 +18,8 @@ const PII_COLUMN =
 
 /** Columns the erasure removes or scrubs, and how. */
 const COVERED: Record<string, string> = {
+	'pos_orders.ready_text_phone':
+		'scrubbed by normalised phone (ready_text_sent_at and the status stay); omitted from revision history and held records, also expires after 30 days',
 	'pos_orders.customer_phone':
 		'scrubbed by normalised phone; omitted from revision history and held records, also expires after 30 days',
 	'customers.name': 'row deleted',

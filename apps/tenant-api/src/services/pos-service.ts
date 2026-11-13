@@ -77,6 +77,7 @@ import { cancelPendingTillApprovalsInTx } from './loyalty-code-service.ts'
 import { fetchOrderContext } from './order-service.ts'
 import { hashPosSecret, posStaffScopeId } from '../lib/pos-auth.ts'
 import { hmacHash } from '../lib/secrets.ts'
+import { smsRouteAvailable as readyTextRouteAvailable } from '../lib/sms-route.ts'
 import { retryOnSqliteBusy } from '../lib/sqlite-retry.ts'
 import {
 	diffFields,
@@ -1086,10 +1087,14 @@ export async function purgePosGuestNames(
 	const abandoned = now - POS_ABANDONED_TAB_RETENTION_DAYS * day
 	const cleared = await db
 		.update(posOrders)
-		.set({ guestName: null, customerPhone: null })
+		.set({ guestName: null, customerPhone: null, readyTextPhone: null })
 		.where(
 			and(
-				or(isNotNull(posOrders.guestName), isNotNull(posOrders.customerPhone)),
+				or(
+					isNotNull(posOrders.guestName),
+					isNotNull(posOrders.customerPhone),
+					isNotNull(posOrders.readyTextPhone),
+				),
 				or(isNull(posOrders.pickupAt), lt(posOrders.pickupAt, cutoff)),
 				or(
 					and(ne(posOrders.status, 'open'), lt(posOrders.updatedAt, cutoff)),
@@ -1738,6 +1743,7 @@ export function revisionSnapshot(order: PosOrderRequest) {
 		...order,
 		customerName: null,
 		customerPhone: null,
+		readyTextPhone: null,
 		loyalty: order.loyalty ? { ...order.loyalty, binding: null } : null,
 		staff: ref(order.staff),
 		voidedBy: ref(order.voidedBy),
@@ -2028,6 +2034,34 @@ function startedBeforeBinding(
 	)
 }
 
+/**
+ * The ready-text columns an upload writes. The number is kept only until its
+ * one attempt is recorded, and only where this node can send texts; a node
+ * without an SMS route (KSA, until an in-kingdom provider exists) records
+ * `unavailable` instead of keeping the number.
+ */
+function readyTextFields(
+	existing: Pick<
+		PosOrderRow,
+		'readyTextPhone' | 'readyTextStatus' | 'readyTextAt'
+	> | null,
+	order: PosOrderRequest,
+): Pick<PosOrderRow, 'readyTextPhone' | 'readyTextStatus' | 'readyTextAt'> {
+	if (existing?.readyTextStatus)
+		return {
+			readyTextPhone: existing.readyTextPhone,
+			readyTextStatus: existing.readyTextStatus,
+			readyTextAt: existing.readyTextAt,
+		}
+	if (order.readyTextPhone && !readyTextRouteAvailable())
+		return { readyTextPhone: null, readyTextStatus: 'unavailable', readyTextAt: null }
+	return {
+		readyTextPhone: order.readyTextPhone,
+		readyTextStatus: null,
+		readyTextAt: null,
+	}
+}
+
 export async function upsertPosOrder(
 	db: TenantDatabase,
 	device: PosDevice,
@@ -2290,6 +2324,10 @@ export async function upsertPosOrder(
 					// must not restore it when taking a payment or recording a refund.
 					const contactRedacted =
 						existing?.orderSource === 'phone' && existing.customerPhone === null
+					// The ready-text number is taken once: after its one text (or the
+					// reason there was none) a later revision cannot put it back.
+					// Without an SMS route here it is refused (recorded, never kept).
+					const readyText = readyTextFields(existing ?? null, order)
 					const values = {
 						deviceId: device.id,
 						number: order.number,
@@ -2299,6 +2337,7 @@ export async function upsertPosOrder(
 						orderType: order.orderType,
 						orderSource: order.orderSource,
 						customerPhone: contactRedacted ? null : order.customerPhone,
+						...readyText,
 						pickupAt: order.pickupAt ? Date.parse(order.pickupAt) : null,
 						pickupTimeZone: order.pickupTimeZone,
 						guestName: contactRedacted ? null : order.customerName || null,
@@ -2491,6 +2530,9 @@ export const serializePosOrder = (
 	pickupAt: row.pickupAt,
 	pickupTimeZone: row.pickupTimeZone,
 	guestName: row.guestName,
+	// What became of the ready text (the number itself stays on the region).
+	readyTextStatus: row.readyTextStatus,
+	readyTextAt: row.readyTextAt,
 	tableLabel: row.tableLabel,
 	staff: staffRef(row.staffId, row.staffName),
 	signIn: row.signIn,
@@ -2618,6 +2660,7 @@ export function toTerminalOrder(row: PosOrderRow, money: PosPaymentRow[]) {
 		orderType: row.orderType,
 		orderSource: row.orderSource,
 		customerPhone: row.customerPhone,
+		readyTextPhone: row.readyTextPhone,
 		pickupAt:
 			row.pickupAt !== null ? new Date(row.pickupAt).toISOString() : null,
 		pickupTimeZone: row.pickupTimeZone,
@@ -2861,6 +2904,7 @@ const HELD_STAFF_KEYS = new Set([
 const HELD_GUEST_KEYS = new Set([
 	'customerName',
 	'customerPhone',
+	'readyTextPhone',
 	'guestName',
 	'tableLabel',
 	'binding',

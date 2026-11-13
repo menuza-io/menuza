@@ -865,6 +865,12 @@ export const publicLocationContextSchema = z
 		prepTime: z.number().int().min(0).default(15),
 		currency: z.enum(['USD', 'CAD', 'SAR']).default('USD'),
 		isDefault: z.boolean().optional(),
+		/**
+		 * Text guests of counter and phone orders when Kitchen marks them ready
+		 * (Settings, Terminals). Off when missing, so an older App never turns
+		 * it on. Policy only: no guest data.
+		 */
+		readyText: z.boolean().default(false),
 		fulfillmentOptions: z
 			.object({
 				pickup: z.boolean().default(true),

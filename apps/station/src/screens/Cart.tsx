@@ -1,5 +1,6 @@
 import { plural, t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
+import { posCustomerPhoneSchema } from '@repo/common/pos-orders'
 import {
 	Empty,
 	EmptyHeader,
@@ -66,6 +67,7 @@ export function Cart({
 	money,
 	onOrderType,
 	onCustomer,
+	readyText,
 	onTable,
 	onQuantity,
 	onEdit,
@@ -103,6 +105,11 @@ export function Cart({
 	money: MoneyFormatter
 	onOrderType: (type: OrderType) => void
 	onCustomer: (name: string) => void
+	/**
+	 * "Text me when it's ready": offered on a counter pickup order where the
+	 * location texts guests. Absent: not offered.
+	 */
+	readyText?: { phone: string; onPhone: (phone: string) => void }
 	onTable: (label: string) => void
 	onQuantity: (id: string, quantity: number) => void
 	onEdit: (line: CartLine) => void
@@ -116,6 +123,10 @@ export function Cart({
 }) {
 	const { _ } = useLingui()
 	const [naming, setNaming] = useState(false)
+	const readyTextInvalid = Boolean(
+		readyText?.phone.trim() &&
+		!posCustomerPhoneSchema.safeParse(readyText.phone).success,
+	)
 	const [phoneDetailsOpen, setPhoneDetailsOpen] = useState(false)
 	const totals = computeTotals({
 		lines,
@@ -429,6 +440,7 @@ export function Cart({
 					className="space-y-4 p-5"
 					onSubmit={(event) => {
 						event.preventDefault()
+						if (readyTextInvalid) return
 						setNaming(false)
 					}}
 				>
@@ -451,6 +463,48 @@ export function Cart({
 						}
 						className="h-14 px-4"
 					/>
+					{readyText &&
+					orderType === 'takeaway' &&
+					orderSource === 'counter' ? (
+						<div className="space-y-2">
+							<label
+								htmlFor="ready-text-phone"
+								className="block text-sm font-medium"
+							>
+								<Trans>Text me when it’s ready (optional)</Trans>
+							</label>
+							<Input
+								id="ready-text-phone"
+								type="tel"
+								inputMode="tel"
+								autoComplete="off"
+								value={readyText.phone}
+								onChange={(e) => readyText.onPhone(e.target.value)}
+								maxLength={32}
+								placeholder={_(t`Guest’s mobile number`)}
+								aria-invalid={readyTextInvalid || undefined}
+								aria-describedby="ready-text-notice"
+								className="h-14 px-4"
+							/>
+							<p
+								id="ready-text-notice"
+								className={cn(
+									'text-sm',
+									readyTextInvalid
+										? 'text-destructive'
+										: 'text-muted-foreground',
+								)}
+							>
+								{readyTextInvalid ? (
+									<Trans>Enter a valid number, or leave it empty.</Trans>
+								) : (
+									<Trans>
+										We’ll text this number once, about this order only.
+									</Trans>
+								)}
+							</p>
+						</div>
+					) : null}
 					<Button type="submit" variant="primary" size="lg" className="w-full">
 						<Trans>Done</Trans>
 					</Button>

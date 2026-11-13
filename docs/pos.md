@@ -124,6 +124,55 @@ contacts expire after 30 days (not before a scheduled pickup), using the same
 terminal check-in housekeeping as guest names. The till keeps settled, synced
 orders for 14 days, but never prunes an upcoming pickup or an open/unsent order.
 
+## Ready texts (counter and phone orders)
+
+A location can text guests when their order is ready (Settings, Terminals,
+**Text guests when their order is ready**;
+`OrganizationLocation.readyTextEnabled`, control-plane migration
+`0042_location_ready_text`, default off). The switch is policy only: it reaches
+Station in the published menu and the region in the order context as
+`locations[].readyText`, which is on only for US organizations (the KSA node has
+no SMS route until an in-kingdom provider ships, #78; the App refuses to turn it
+on there).
+
+- **Station.** On a counter pickup order, the guest sheet (where the name is
+  typed) shows an optional **Text me when it's ready (optional)** number with
+  "We'll text this number once, about this order only." Empty changes nothing; a
+  number that is not one is refused before the order is saved. It travels as
+  `readyTextPhone` (contract 7, optional, default null, so a contract 6 upload
+  still parses). Phone orders are texted on their callback number; the contract
+  refuses `readyTextPhone` on them, and the phone-order contact rule is
+  unchanged.
+- **When.** When Kitchen marks a till order's whole ticket **Ready**
+  (`kitchenCommand` returns `tillReady`), the region sends one text after the
+  stage commits: "Your order #<number> at <restaurant> is ready for pickup." No
+  link, no marketing, no replies. A Kitchen screen that was offline sends the
+  stage when it reconnects, and the text goes out then.
+- **Once.** `pos_orders.ready_text_status` / `ready_text_sent_at` (tenant-db
+  migration `0041_pos_order_ready_text`) record the one attempt: `sent`,
+  `limit`, `unavailable` (no SMS route on this node) or `failed`. The row is
+  claimed before sending, so reopening and re-readying, or two kitchens racing,
+  send nothing more, and a failed send is not retried. A cancelled, voided or
+  refunded order, an order without a number, or a location with the switch off
+  sends nothing; if the App cannot be reached the policy is unknown and nothing
+  is recorded, so the next Ready tries again. Operators see the outcome as
+  `readyTextStatus` / `readyTextAt` on `/operator/pos/orders`.
+- **Limit.** A transactional cap of 300 ready texts per organization per 24
+  hours (`READY_TEXT_DAILY_LIMIT`), counted from the orders themselves and
+  separate from the sign-in code limiter. Over it the ticket still moves on and
+  the order records `limit` ("Text not sent (limit)").
+- **The number.** Used for this one text only: it never creates or updates a
+  customer, never sets consent and never joins an audience. It stays in the
+  regional `pos_orders.ready_text_phone`, never in logs (ids and outcomes only),
+  the Kitchen feed, revision history, held uploads, cross-plane calls or the
+  control plane. A later upload cannot change it once its attempt is recorded. A
+  KSA node records `unavailable` and keeps no number. Person erasure clears it
+  and keeps the sent time; it also expires with guest names.
+
+Deploy order: App (migration `0042`, the switch and `readyText` in the menu and
+order context), then tenant-api (migration `0041`, contract 7), then Station. A
+Station that does not know the field never sends it.
+
 ## Money and history are append-only
 
 - **`pos_payments`** holds payments and refunds (`kind`), and neither can be
@@ -784,6 +833,8 @@ harness serves `/pos/inventory/*`.
   before a scheduled pickup.
 - **Staff names** recorded at the till are replaced when that person is erased
   (`erasePosStaffNames`, called from `eraseLinkedUser`).
+- **Ready-text numbers** (`pos_orders.ready_text_phone`) expire with guest names
+  and are cleared by person erasure, which keeps the time the text was sent.
 - **Held uploads** are covered by the purge and by both erasure paths.
 
 ## Languages

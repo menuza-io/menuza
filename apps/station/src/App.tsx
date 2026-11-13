@@ -359,6 +359,11 @@ export function App() {
 					pickupAt: s.pickupAt,
 					pickupTimeZone: s.pickupTimeZone,
 					customerName: s.customerName,
+					// Only where the location texts guests (and never for a phone order).
+					readyTextPhone:
+						s.location.readyText && s.orderType === 'takeaway'
+							? s.readyTextPhone
+							: '',
 					tableLabel: s.tableLabel,
 					lines: s.lines,
 					adjustments: s.adjustments,
@@ -383,6 +388,7 @@ export function App() {
 		pickupAt: o.pickupAt,
 		pickupTimeZone: o.pickupTimeZone,
 		customerName: o.customerName,
+		readyTextPhone: o.readyTextPhone ?? null,
 		tableLabel: o.tableLabel,
 		lines: o.lines,
 		adjustments: o.adjustments,
@@ -596,6 +602,11 @@ export function App() {
 			money={money}
 			onOrderType={s.setOrderType}
 			onCustomer={s.setCustomerName}
+			readyText={
+				s.location?.readyText
+					? { phone: s.readyTextPhone, onPhone: s.setReadyTextPhone }
+					: undefined
+			}
 			onTable={s.setTableLabel}
 			onQuantity={s.setQuantity}
 			onEdit={(line) => {

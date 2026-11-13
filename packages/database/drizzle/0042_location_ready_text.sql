@@ -1,0 +1,1 @@
+ALTER TABLE `OrganizationLocation` ADD `readyTextEnabled` integer DEFAULT false NOT NULL;

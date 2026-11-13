@@ -599,6 +599,14 @@ export async function kitchenCommand(
 							: command.action,
 					at: now,
 				})
+				// Whether a till order's whole ticket is now Ready (its one ready
+				// text goes out after this commits; see pos-ready-text-service).
+				return {
+					tillReady:
+						command.source === 'pos' &&
+						command.action === 'stage' &&
+						kdsTicketStage(ticket.lines) === 'ready',
+				}
 			}),
 		),
 	)

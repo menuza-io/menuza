@@ -96,9 +96,10 @@ export const posPairingCodeHashMessage = (code: string) => `pos-pair:${code}`
  * id and when it was sent (both optional). Version 5 added the sale's loyalty
  * (optional, see `posOrderLoyaltySchema`). Version 6 added
  * `discountApplications` (optional, default empty) so a contract 5 upload
- * still parses.
+ * still parses. Version 7 added `readyTextPhone` (optional, default null) on
+ * counter orders.
  */
-export const POS_CONTRACT_VERSION = 6
+export const POS_CONTRACT_VERSION = 7
 export const POS_CONTRACT_HEADER = 'Pos-Contract'
 
 export const POS_ORDER_STATUS_VALUES = [
@@ -440,6 +441,13 @@ export const posOrderRequestSchema = z
 		pickupAt: instant.nullable().default(null),
 		pickupTimeZone: posPickupTimeZoneSchema.nullable().default(null),
 		customerName: z.string().trim().max(120).nullable(),
+		/**
+		 * Contract 7. A counter order's "Text me when it's ready" number: one
+		 * text when Kitchen marks the ticket ready, nothing else (no customer,
+		 * no consent, no audience). Missing means none, so a contract 6 upload
+		 * still parses. Phone orders use `customerPhone` instead.
+		 */
+		readyTextPhone: posCustomerPhoneSchema.nullable().default(null),
 		tableLabel: z.string().trim().max(40).nullable(),
 		/** Who rang the order up. Null when the terminal does not require sign-in. */
 		staff: posStaffSchema.nullable(),
@@ -488,6 +496,10 @@ export const posOrderRequestSchema = z
 				issue('phone order contact is incomplete', ['customerPhone'])
 			if (!order.pickupTimeZone)
 				issue('phone orders need a pickup time zone', ['pickupTimeZone'])
+			if (order.readyTextPhone)
+				issue('phone orders are texted on their callback number', [
+					'readyTextPhone',
+				])
 		} else if (order.customerPhone || order.pickupAt || order.pickupTimeZone) {
 			issue('pickup contact details belong to phone orders', ['orderSource'])
 		}
