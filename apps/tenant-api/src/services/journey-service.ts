@@ -1982,58 +1982,146 @@ export async function deleteJourney(orgId: string, journeyId: string) {
 }
 
 /**
- * Lists execution runs for a specific journey. A Marketing browser token reads
- * this, so it carries the customer id only: no name, email or phone.
+ * Error texts tenant-api writes itself. They name no person, so the runs view
+ * (an Automations browser token) may show them as they are.
+ */
+const PUBLIC_JOURNEY_ERRORS = new Set([
+	'Skipped: the customer has not subscribed to marketing texts',
+	'Skipped: the customer has not confirmed marketing email',
+	'Skipped: no unsubscribe link could be made (TENANT_API_URL is not set)',
+	'Customer has no email address',
+	'Customer has no phone number',
+	'Invalid email journey configuration',
+	'Invalid coupon configuration',
+	'Journey no longer exists',
+])
+const PUBLIC_JOURNEY_ERROR_PATTERNS = [
+	/^Journey run is [a-z_]+$/,
+	/^Journey is [a-z_]+$/,
+	/^Workflow worker returned status \d{3}$/,
+]
+
+/**
+ * What the runs view may show of a stored run or step error. Provider and
+ * coupon errors, and the workflow's copy of a failed step's response, can
+ * echo the recipient's address, so anything not written by tenant-api itself
+ * is replaced by a fixed label. The full text stays in the regional row.
+ */
+export function publicJourneyError(
+	message: string | null | undefined,
+	fallback: 'Step failed' | 'Run failed',
+): string | null {
+	if (!message) return null
+	if (PUBLIC_JOURNEY_ERRORS.has(message)) return message
+	if (PUBLIC_JOURNEY_ERROR_PATTERNS.some((pattern) => pattern.test(message))) {
+		return message
+	}
+	if (message.startsWith('Dispatch outcome unknown')) {
+		return 'Dispatch outcome unknown, not resent'
+	}
+	if (message.startsWith('Workflow worker dispatch error')) {
+		return 'Workflow worker dispatch error'
+	}
+	return fallback
+}
+
+/**
+ * The step details the runs view may show. A condition step keeps its field,
+ * operator and result but never the compared values: `actualValue` is the
+ * customer's own data (only some fields are redacted when stored).
+ */
+const PUBLIC_STEP_DETAIL_KEYS = [
+	'channel',
+	'skipped',
+	'skipReason',
+	'messageId',
+	'sid',
+	'dispatched',
+	'outcomeUnknown',
+	'dispatchedAt',
+	'deliveredAt',
+	'field',
+	'operator',
+	'result',
+	'evaluatedAt',
+] as const
+
+function publicStepDetails(raw: unknown): Record<string, unknown> {
+	let parsed: unknown = raw
+	if (typeof raw === 'string') {
+		try {
+			parsed = JSON.parse(raw)
+		} catch {
+			return {}
+		}
+	}
+	if (!parsed || typeof parsed !== 'object') return {}
+	const source = parsed as Record<string, unknown>
+	const details: Record<string, unknown> = {}
+	for (const key of PUBLIC_STEP_DETAIL_KEYS) {
+		const value = source[key]
+		if (
+			typeof value === 'string' ||
+			typeof value === 'number' ||
+			typeof value === 'boolean'
+		) {
+			details[key] = value
+		}
+	}
+	return details
+}
+
+const PUBLIC_RUN_COLUMNS = {
+	id: journeyRuns.id,
+	journeyId: journeyRuns.journeyId,
+	customerId: journeyRuns.customerId,
+	workflowInstanceId: journeyRuns.workflowInstanceId,
+	status: journeyRuns.status,
+	currentNodeId: journeyRuns.currentNodeId,
+	currentStepNodeId: journeyRuns.currentStepNodeId,
+	triggerEvent: journeyRuns.triggerEvent,
+	errorMessage: journeyRuns.errorMessage,
+	startedAt: journeyRuns.startedAt,
+	completedAt: journeyRuns.completedAt,
+	createdAt: journeyRuns.createdAt,
+	updatedAt: journeyRuns.updatedAt,
+}
+
+function publicRun<T extends { errorMessage: string | null }>(run: T): T {
+	return {
+		...run,
+		errorMessage: publicJourneyError(run.errorMessage, 'Run failed'),
+	}
+}
+
+/**
+ * Lists execution runs for a specific journey. An Automations browser token
+ * reads this, so it carries the customer id only (no name, email or phone)
+ * and no provider error text (`publicJourneyError`).
  */
 export async function listJourneyRuns(orgId: string, journeyId: string) {
 	const db = await getTenantDb(orgId)
 	const runs = await db
-		.select({
-			id: journeyRuns.id,
-			journeyId: journeyRuns.journeyId,
-			customerId: journeyRuns.customerId,
-			workflowInstanceId: journeyRuns.workflowInstanceId,
-			status: journeyRuns.status,
-			currentNodeId: journeyRuns.currentNodeId,
-			currentStepNodeId: journeyRuns.currentStepNodeId,
-			triggerEvent: journeyRuns.triggerEvent,
-			errorMessage: journeyRuns.errorMessage,
-			startedAt: journeyRuns.startedAt,
-			completedAt: journeyRuns.completedAt,
-			createdAt: journeyRuns.createdAt,
-			updatedAt: journeyRuns.updatedAt,
-		})
+		.select(PUBLIC_RUN_COLUMNS)
 		.from(journeyRuns)
 		.where(eq(journeyRuns.journeyId, journeyId))
 		.orderBy(desc(journeyRuns.startedAt))
 		.limit(JOURNEY_LIST_LIMIT)
 		.all()
 
-	return { runs }
+	return { runs: runs.map(publicRun) }
 }
 
 /**
  * Gets step execution timeline for a specific journey run. Like the run list,
- * it carries the customer id only, never a contact.
+ * it carries the customer id only, never a contact: steps are an explicit
+ * column list, their details an allowlist (no compared condition values) and
+ * their errors pass `publicJourneyError`.
  */
 export async function getJourneyRunTimeline(orgId: string, runId: string) {
 	const db = await getTenantDb(orgId)
 	const run = await db
-		.select({
-			id: journeyRuns.id,
-			journeyId: journeyRuns.journeyId,
-			customerId: journeyRuns.customerId,
-			workflowInstanceId: journeyRuns.workflowInstanceId,
-			status: journeyRuns.status,
-			currentNodeId: journeyRuns.currentNodeId,
-			currentStepNodeId: journeyRuns.currentStepNodeId,
-			triggerEvent: journeyRuns.triggerEvent,
-			errorMessage: journeyRuns.errorMessage,
-			startedAt: journeyRuns.startedAt,
-			completedAt: journeyRuns.completedAt,
-			createdAt: journeyRuns.createdAt,
-			updatedAt: journeyRuns.updatedAt,
-		})
+		.select(PUBLIC_RUN_COLUMNS)
 		.from(journeyRuns)
 		.where(eq(journeyRuns.id, runId))
 		.get()
@@ -2046,16 +2134,37 @@ export async function getJourneyRunTimeline(orgId: string, runId: string) {
 		}
 	}
 
-	const steps = await db
-		.select()
+	const rows = await db
+		.select({
+			id: journeyStepExecutions.id,
+			runId: journeyStepExecutions.runId,
+			journeyId: journeyStepExecutions.journeyId,
+			customerId: journeyStepExecutions.customerId,
+			nodeId: journeyStepExecutions.nodeId,
+			nodeType: journeyStepExecutions.nodeType,
+			stepType: journeyStepExecutions.stepType,
+			status: journeyStepExecutions.status,
+			retryCount: journeyStepExecutions.retryCount,
+			executionDetails: journeyStepExecutions.executionDetails,
+			errorMessage: journeyStepExecutions.errorMessage,
+			executedAt: journeyStepExecutions.executedAt,
+			completedAt: journeyStepExecutions.completedAt,
+		})
 		.from(journeyStepExecutions)
 		.where(eq(journeyStepExecutions.runId, runId))
 		.orderBy(journeyStepExecutions.executedAt)
 		.all()
 
+	const steps = rows.map((step) => ({
+		...step,
+		attempt: step.retryCount + 1,
+		executionDetails: publicStepDetails(step.executionDetails),
+		errorMessage: publicJourneyError(step.errorMessage, 'Step failed'),
+	}))
+
 	return {
 		success: true,
-		run,
+		run: publicRun(run),
 		steps,
 	}
 }

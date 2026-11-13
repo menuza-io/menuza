@@ -1283,11 +1283,11 @@ msgstr "منذ {days} يوم"
 msgid "{deviceName} was removed."
 msgstr "تمت إزالة {deviceName}."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:163
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:169
 msgid "{diffSec}s"
 msgstr "{diffSec} ث"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:160
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:166
 msgid "{diffSec}s (running)"
 msgstr "{diffSec} ث (قيد التشغيل)"
 
@@ -1641,7 +1641,7 @@ msgstr "{minutes} د"
 msgid "{minutes} minutes"
 msgstr "{minutes} دقيقة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:166
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:172
 msgid "{minutes}m {remainingSec}s"
 msgstr "{minutes} د {remainingSec} ث"
 
@@ -3737,7 +3737,7 @@ msgstr "نشط"
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:90
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:60
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:263
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:138
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:144
 #: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:339
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1006
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:983
@@ -5264,7 +5264,7 @@ msgstr "اجتازت جميع الفحوصات. سير العمل هذا جاه�
 msgid "All core features included"
 msgstr "جميع الميزات الأساسية مضمنة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:271
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:306
 msgid "All customer automation workflows orchestrated durably by Cloudflare Workflows and executed by the regional data engine."
 msgstr "جميع سير عمل أتمتة العملاء تُنسَّق بشكل دائم عبر Cloudflare Workflows وتُنفَّذ بواسطة محرك البيانات الإقليمي."
 
@@ -6304,7 +6304,7 @@ msgstr "مؤرشف"
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:341
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:282
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:62
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:140
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:146
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:204
 #: app/utils/discounts/labels.ts:28
 #: app/utils/discounts/labels.ts:44
@@ -6674,7 +6674,7 @@ msgstr "إرفاق مجموعات معدِّلات فرعية تظهر عندم�
 msgid "Attached images"
 msgstr "الصور المرفقة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:456
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:509
 msgid "Attempt: {attempt} • Executed: {executedAtLabel}"
 msgstr "المحاولة: {attempt} • التنفيذ: {executedAtLabel}"
 
@@ -6685,7 +6685,7 @@ msgstr "المحاولات"
 #~ msgid "Attention Needed"
 #~ msgstr "يتطلب الانتباه"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:316
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:359
 msgid "Audit Trail"
 msgstr "سجل التدقيق"
 
@@ -6784,7 +6784,7 @@ msgstr "أتمتة"
 msgid "Automation menu"
 msgstr "قائمة الأتمتة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:81
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:84
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:117
 msgid "Automation not found"
 msgstr "لم يتم العثور على الأتمتة"
@@ -7649,7 +7649,7 @@ msgstr "اجمع الأشخاص المناسبين في مجموعة."
 msgid "Broadcast"
 msgstr "بثّ"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId.tsx:116
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId.tsx:135
 msgid "Broadcast not found"
 msgstr "لم يتم العثور على البث"
 
@@ -8478,7 +8478,7 @@ msgstr "الإلغاءات حسب الجهة"
 #: app/components/staff/schedule/time-off-page.tsx:286
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:215
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.tsx:238
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:147
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:153
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:242
 #: app/utils/inventory/order-view.ts:27
 #: app/utils/inventory/transfer-form.ts:127
@@ -10518,7 +10518,7 @@ msgstr "أكمل التسجيل للانضمام إلى المنظمة"
 #: app/components/onboarding-checklist.tsx:249
 #: app/components/orders/order-detail.tsx:221
 #: app/components/reservations/status-style.tsx:143
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:144
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:150
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:67
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:237
 #: app/utils/loyalty/loyalty-labels.ts:123
@@ -11562,6 +11562,10 @@ msgstr "تعذر تحميل المساعد."
 msgid "Couldn't load the recording. Try again."
 msgstr "تعذّر تحميل التسجيل. حاول مرة أخرى."
 
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:470
+msgid "Couldn't load the steps of this run. Close it and try again."
+msgstr "تعذّر تحميل خطوات هذا التشغيل. أغلقه وحاول مرة أخرى."
+
 #: app/components/phone-agent/voice-picker.tsx:447
 msgid "Couldn't load voices"
 msgstr "تعذّر تحميل الأصوات"
@@ -12575,7 +12579,7 @@ msgstr "تقييمات العملاء"
 msgid "Customer since"
 msgstr "عميل منذ"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:311
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:354
 msgid "Customer UUID"
 msgstr "معرّف العميل الفريد"
 
@@ -14312,7 +14316,7 @@ msgstr "مسودة"
 #: app/components/staff/schedule/shift-block.tsx:33
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:59
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:264
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:137
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:143
 #: app/routes/_app+/$orgSlug_+/marketing+/print._index.tsx:142
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:929
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:413
@@ -14578,7 +14582,7 @@ msgid "Duplicates and data"
 msgstr "التكرارات والبيانات"
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:235
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:314
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:357
 msgid "Duration"
 msgstr "المدة"
 
@@ -16551,11 +16555,11 @@ msgstr "جلوس حصري"
 #~ msgid "Execution History ({0})"
 #~ msgstr "سجل التنفيذ ({0})"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:267
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:302
 msgid "Execution History ({runCount})"
 msgstr "سجل التنفيذ ({runCount})"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:248
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:283
 msgid "Execution runs and step history, triggered by \"{triggerLabel}\"."
 msgstr "عمليات التشغيل وسجل الخطوات، المُطلقة بواسطة \"{triggerLabel}\"."
 
@@ -16786,7 +16790,7 @@ msgstr "فشل المصادقة"
 #: app/components/settings/cards/organization/shop-card.tsx:49
 #: app/components/social/social-labels.ts:27
 #: app/components/social/social-labels.ts:37
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:146
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:152
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:69
 #: app/utils/reservations/payments-view.ts:72
 msgid "Failed"
@@ -16947,7 +16951,7 @@ msgstr "فشل تحميل مساعد الذكاء الاصطناعي"
 #~ msgid "Failed to load areas, tables, and combinations."
 #~ msgstr "فشل في تحميل المناطق والطاولات والمجموعات."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId.tsx:117
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId.tsx:136
 msgid "Failed to load broadcast"
 msgstr "فشل تحميل البث"
 
@@ -16980,7 +16984,7 @@ msgstr "فشل تحميل تفاصيل الحجز."
 msgid "Failed to load reservation setup for this location."
 msgstr "فشل في تحميل إعدادات الحجوزات لهذا الفرع."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:284
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:327
 msgid "Failed to load runs"
 msgstr "تعذّر تحميل عمليات التشغيل"
 
@@ -21137,7 +21141,7 @@ msgstr "أحدث زيارة"
 msgid "Launch run"
 msgstr "بدء التشغيل"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:300
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:343
 msgid "Launch Test Run in Builder"
 msgstr "بدء تشغيل اختباري في المُنشئ"
 
@@ -21670,6 +21674,10 @@ msgstr "جارٍ تحميل المتقدّم"
 msgid "Loading assistant…"
 msgstr "جارٍ تحميل المساعد…"
 
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId.tsx:123
+msgid "Loading broadcast…"
+msgstr "جارٍ تحميل البث…"
+
 #: app/components/phone-agent/call-detail-sheet.tsx:350
 msgid "Loading call"
 msgstr "جارٍ تحميل المكالمة"
@@ -21853,6 +21861,10 @@ msgstr "جارٍ تحميل التقييمات"
 msgid "Loading rewards…"
 msgstr "جارٍ تحميل المكافآت…"
 
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:313
+msgid "Loading runs…"
+msgstr "جارٍ تحميل عمليات التشغيل…"
+
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:441
 msgid "Loading section layouts…"
 msgstr "جارٍ تحميل تخطيطات الأقسام…"
@@ -21868,7 +21880,7 @@ msgstr "جارٍ تحميل الإعدادات…"
 msgid "Loading special days…"
 msgstr "جارٍ تحميل الأيام الخاصة…"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:417
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:463
 msgid "Loading step executions from regional SQLite outbox..."
 msgstr "جارٍ تحميل تنفيذات الخطوات من صندوق الصادر SQLite الإقليمي..."
 
@@ -25012,7 +25024,7 @@ msgstr "لا توجد خصومات تطابق هذه التصفيات"
 msgid "No discounts yet"
 msgstr "لا توجد خصومات بعد"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:422
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:475
 msgid "No discrete action step dispatches recorded for this run."
 msgstr "لم تُسجَّل إرسالات خطوات إجراء منفصلة لهذا التشغيل."
 
@@ -25064,7 +25076,7 @@ msgstr "لم يتم العثور على رموز تعبيرية"
 msgid "No events yet."
 msgstr "لا توجد أحداث بعد."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:289
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:332
 msgid "No execution runs recorded yet for this automation."
 msgstr "لم تُسجَّل عمليات تنفيذ بعد لهذه الأتمتة."
 
@@ -28009,7 +28021,7 @@ msgstr "افتح «اليوم» للاطمئنان على الضيوف المت�
 msgid "Open Today to review the bookings."
 msgstr "افتح «اليوم» لمراجعة الحجوزات."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:259
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:294
 msgid "Open visual builder"
 msgstr "فتح المنشئ المرئي"
 
@@ -29361,7 +29373,7 @@ msgstr "متوقف مؤقتاً"
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:340
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:61
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:265
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:139
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:145
 #: app/utils/discounts/labels.ts:27
 #: app/utils/discounts/labels.ts:43
 #: app/utils/loyalty/loyalty-labels.ts:31
@@ -29608,7 +29620,7 @@ msgstr "حساسية الفول السوداني"
 
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:44
 #: app/components/settings/cards/organization/shop-card.tsx:47
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:435
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:488
 msgid "Pending"
 msgstr "قيد الانتظار"
 
@@ -33958,7 +33970,7 @@ msgstr "تعلّم القواعد الوكيلَ كيف يعمل نشاطك ال
 msgid "Run double points on a slow Tuesday, a bonus on a new dish, or a boost at one location."
 msgstr "قدّم نقاطًا مضاعفة في يوم ثلاثاء هادئ، أو مكافأة على طبق جديد، أو دفعة إضافية في فرع واحد."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:383
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:426
 msgid "Run Execution Timeline"
 msgstr "الجدول الزمني لتنفيذ التشغيل"
 
@@ -33966,11 +33978,11 @@ msgstr "الجدول الزمني لتنفيذ التشغيل"
 msgid "Run history"
 msgstr "سجل التشغيل"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:309
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:352
 msgid "Run ID"
 msgstr "معرّف التشغيل"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:403
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:446
 msgid "Run ID: {selectedRunId}"
 msgstr "معرّف التشغيل: {selectedRunId}"
 
@@ -33987,7 +33999,7 @@ msgstr "سُجّل على جهاز Station"
 #~ msgstr "معرّف التشغيل مطلوب"
 
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:45
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:145
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:151
 msgid "Running"
 msgstr "قيد التشغيل"
 
@@ -38002,7 +38014,7 @@ msgstr "بدأ {startedAt}"
 msgid "Started {startedAt} by <0>{by}</0>"
 msgstr "بدأ {startedAt} بواسطة <0>{by}</0>"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:313
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:356
 msgid "Started At"
 msgstr "بدأ في"
 
@@ -38101,7 +38113,7 @@ msgstr "الإحصائيات"
 #: app/routes/_app+/$orgSlug_+/loyalty+/program.tsx:249
 #: app/routes/_app+/$orgSlug_+/loyalty+/promotions.tsx:390
 #: app/routes/_app+/$orgSlug_+/loyalty+/rewards.tsx:266
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:312
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:355
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:973
 #: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:535
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:351
@@ -38154,7 +38166,7 @@ msgstr "تم البقاء في الصفحة الحالية"
 msgid "Step {currentStep} of {totalSteps}"
 msgstr "الخطوة {currentStep} من {totalSteps}"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:428
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:481
 msgid "Step Executions ({timelineCount})"
 msgstr "تنفيذات الخطوات ({timelineCount})"
 
@@ -45394,7 +45406,7 @@ msgstr "عرض جدول الفريق"
 msgid "View time cards"
 msgstr "عرض بطاقات الدوام"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:362
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:405
 msgid "View Timeline →"
 msgstr "عرض الجدول الزمني ←"
 
@@ -47025,7 +47037,7 @@ msgstr "أمثلة محسوبة من الإعدادات الحالية."
 msgid "Worker type"
 msgstr "نوع العامل"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:410
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:453
 msgid "Workflow Error:"
 msgstr "خطأ في سير العمل:"
 

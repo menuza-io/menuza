@@ -353,8 +353,9 @@ describe('Marketing Journeys Routes Loaders & Actions', () => {
 
 	describe('automations.$journeyId.runs.tsx', () => {
 		// Runs and timelines name customers and are read by the browser; the
-		// server reads only the journey definition and mints a Marketing token.
-		it('loader returns the journey and a Marketing token, never runs', async () => {
+		// server reads only the journey definition and mints an Automations
+		// token (not the broadcasts one, which reads recipient contacts).
+		it('loader returns the journey and an Automations token, never runs', async () => {
 			mockFetchTenant.mockResolvedValueOnce(
 				new Response(
 					JSON.stringify({
@@ -387,10 +388,36 @@ describe('Marketing Journeys Routes Loaders & Actions', () => {
 			expect(tenantApiServer.getOperatorTenantClient).toHaveBeenCalledWith(
 				request,
 				'test-org',
+				{ area: 'automations' },
+			)
+			expect(tenantApiServer.getOperatorTenantClient).not.toHaveBeenCalledWith(
+				request,
+				'test-org',
 				{ area: 'marketing' },
 			)
 			expect(mockFetchTenant).toHaveBeenCalledTimes(1)
 			expect(mockFetchTenant).toHaveBeenCalledWith('/operator/journeys/j1')
+		})
+
+		it('loader mints no browser token without read:automation:any', async () => {
+			vi.mocked(requireUserWithOrganizationPermission).mockRejectedValueOnce(
+				new Response('Forbidden', { status: 403 }),
+			)
+			const request = new Request(
+				'http://localhost:3001/test-org/marketing/journeys/j1/runs',
+			)
+			await expect(
+				runsLoader({
+					request,
+					params: { orgSlug: 'test-org', journeyId: 'j1' },
+					context: {},
+				} as any),
+			).rejects.toMatchObject({ status: 403 })
+			expect(tenantApiServer.getOperatorTenantClient).not.toHaveBeenCalledWith(
+				request,
+				'test-org',
+				expect.objectContaining({ area: expect.anything() }),
+			)
 		})
 
 		it('loader answers 404 when the journey is missing', async () => {

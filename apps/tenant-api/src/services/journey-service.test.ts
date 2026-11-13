@@ -1345,6 +1345,130 @@ describe('Journey Service & Regional Message Dispatching', () => {
 			expect(JSON.stringify(timelineRes)).not.toContain('Samir')
 		})
 
+		it('the timeline and run list carry no provider error text or compared values', async () => {
+			const db = await getTenantDb(orgId)
+			const customer = (
+				await db
+					.insert(customers)
+					.values({
+						name: 'Layla Haddad',
+						email: 'layla@example.com',
+						phone: '+15550001111',
+					})
+					.returning()
+			)[0]!
+			const { journeyId } = await createJourney(orgId, {
+				name: 'Redaction Flow',
+				nodes: validGraph.nodes,
+				edges: validGraph.edges,
+			})
+			const run = (
+				await db
+					.insert(journeyRuns)
+					.values({
+						journeyId: journeyId!,
+						customerId: customer.id,
+						status: 'failed',
+						errorMessage:
+							'Action step execution (email-1) failed with HTTP 500: {"error":"Invalid `to` field: layla@example.com"}',
+					})
+					.returning()
+			)[0]!
+			await db.insert(journeyStepExecutions).values([
+				{
+					runId: run.id,
+					journeyId,
+					customerId: customer.id,
+					nodeId: 'email-1',
+					nodeType: 'action_email',
+					stepType: 'email',
+					status: 'failed',
+					retryCount: 1,
+					errorMessage: 'Invalid `to` field: layla@example.com',
+					executionDetails: JSON.stringify({ channel: 'email' }),
+				},
+				{
+					runId: run.id,
+					journeyId,
+					customerId: customer.id,
+					nodeId: 'sms-1',
+					nodeType: 'action_sms',
+					stepType: 'sms',
+					status: 'failed',
+					errorMessage:
+						'Dispatch outcome unknown, not resent: timeout sending to +15550001111',
+					executionDetails: JSON.stringify({
+						channel: 'sms',
+						outcomeUnknown: true,
+						dispatched: true,
+					}),
+				},
+				{
+					runId: run.id,
+					journeyId,
+					customerId: customer.id,
+					nodeId: 'cond-1',
+					nodeType: 'condition',
+					stepType: 'condition',
+					status: 'completed',
+					executionDetails: JSON.stringify({
+						field: 'notes',
+						operator: 'contains',
+						expectedValue: 'sesame',
+						actualValue: 'Allergic to sesame',
+						result: true,
+					}),
+				},
+				{
+					runId: run.id,
+					journeyId,
+					customerId: customer.id,
+					nodeId: 'email-2',
+					nodeType: 'action_email',
+					stepType: 'email',
+					status: 'skipped',
+					errorMessage:
+						'Skipped: the customer has not confirmed marketing email',
+					executionDetails: JSON.stringify({
+						skipReason: 'no_consent',
+						channel: 'email',
+					}),
+				},
+			])
+
+			const timeline = await getJourneyRunTimeline(orgId, run.id)
+			const listed = await listJourneyRuns(orgId, journeyId!)
+			for (const body of [JSON.stringify(timeline), JSON.stringify(listed)]) {
+				expect(body).not.toContain('layla@example.com')
+				expect(body).not.toContain('+15550001111')
+				expect(body).not.toContain('Layla')
+				expect(body).not.toContain('sesame')
+			}
+
+			expect(timeline.run?.errorMessage).toBe('Run failed')
+			const byNode = new Map(timeline.steps?.map((step) => [step.nodeId, step]))
+			expect(byNode.get('email-1')).toMatchObject({
+				errorMessage: 'Step failed',
+				attempt: 2,
+				executionDetails: { channel: 'email' },
+			})
+			expect(byNode.get('sms-1')).toMatchObject({
+				errorMessage: 'Dispatch outcome unknown, not resent',
+				executionDetails: { outcomeUnknown: true },
+			})
+			expect(byNode.get('cond-1')?.executionDetails).toEqual({
+				field: 'notes',
+				operator: 'contains',
+				result: true,
+			})
+			// tenant-api's own fixed texts are kept.
+			expect(byNode.get('email-2')).toMatchObject({
+				errorMessage: 'Skipped: the customer has not confirmed marketing email',
+				executionDetails: { skipReason: 'no_consent' },
+			})
+			expect(byNode.get('email-1')).not.toHaveProperty('metadata')
+		})
+
 		it('triggers a test journey run for a customer', async () => {
 			const db = await getTenantDb(orgId)
 

@@ -226,11 +226,13 @@ journeySystemRoutes.get('/definitions/:journeyId', async (c) => {
 // Authenticated via Operator JWT minted with audience: 'tenant-api-operator',
 // verified by the one operator verifier in operator.ts. The two reads the
 // Automations Runs page makes from the browser (`GET /:id/runs` and
-// `GET /runs/:runId`) name the `marketing` area, so the Marketing browser
-// token reaches them; they carry customer ids, never contacts. Every other
-// journey route names no `area`, so a browser token (Marketing, Customers) or
-// a scoped one (mailbox, phone calls) is refused there: only the server-side
-// tokens App signs per request reach the definition and journey writes.
+// `GET /runs/:runId`) name the `automations` area, which App mints only after
+// `read:automation:any`; they carry customer ids, never contacts, and no
+// provider error text. The broadcasts (`marketing`) token is refused there,
+// and the `automations` token is refused on broadcasts. Every other journey
+// route names no `area`, so a browser token or a scoped one (mailbox, phone
+// calls) is refused there: only the server-side tokens App signs per request
+// reach the definition and journey writes.
 // =========================================================================
 
 export const journeyOperatorRoutes = new Hono()
@@ -455,7 +457,7 @@ journeyOperatorRoutes.delete('/:id', async (c) => {
 journeyOperatorRoutes.get('/:id/runs', async (c) => {
 	let auth
 	try {
-		auth = await authenticateOperator(c, undefined, 'marketing')
+		auth = await authenticateOperator(c, undefined, 'automations')
 	} catch (response) {
 		return response as Response
 	}
@@ -473,7 +475,7 @@ journeyOperatorRoutes.get('/:id/runs', async (c) => {
 journeyOperatorRoutes.get('/runs/:runId', async (c) => {
 	let auth
 	try {
-		auth = await authenticateOperator(c, undefined, 'marketing')
+		auth = await authenticateOperator(c, undefined, 'automations')
 	} catch (response) {
 		return response as Response
 	}

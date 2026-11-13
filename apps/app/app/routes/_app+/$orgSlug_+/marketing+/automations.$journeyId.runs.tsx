@@ -35,6 +35,7 @@ import {
 } from '@repo/ui/table'
 import { useEffect, useState } from 'react'
 import { Link, useLoaderData, type LoaderFunctionArgs } from 'react-router'
+import { useLoaderToken } from '#app/hooks/use-loader-token.ts'
 import { type BreadcrumbHandle } from '#app/utils/breadcrumb.ts'
 import {
 	ORG_PERMISSIONS,
@@ -51,19 +52,17 @@ type RunStatus = 'completed' | 'running' | 'failed' | 'cancelled'
 
 /**
  * Runs and their step timelines are read by the browser from tenant-api with
- * the Marketing token. Run records name the customer by id only; the App
- * server never receives them (docs/tenant-data-residency.md). The server reads
- * only the journey definition (name, status, trigger), which holds no guest
- * data.
+ * an Automations token, minted only after `read:automation:any`. That token
+ * reaches the two run reads and nothing else (not broadcasts, not the
+ * definition). Run records name the customer by id only and carry no provider
+ * error text; the App server never receives them
+ * (docs/tenant-data-residency.md). The server reads only the journey
+ * definition (name, status, trigger), which holds no guest data.
  */
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const orgSlug = params.orgSlug || ''
 	const journeyId = params.journeyId || ''
-	const { orgId, jwt, tenantApiUrl } = await getOperatorTenantClient(
-		request,
-		orgSlug,
-		{ area: 'marketing' },
-	)
+	const { orgId, fetchTenant } = await getOperatorTenantClient(request, orgSlug)
 
 	await requireUserWithOrganizationPermission(
 		request,
@@ -71,9 +70,13 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		ORG_PERMISSIONS.READ_AUTOMATION_ANY,
 	)
 
-	// The definition needs the server-side token: a Marketing token is refused
-	// on it.
-	const { fetchTenant } = await getOperatorTenantClient(request, orgSlug)
+	// Minted only after the permission check. The definition below is read
+	// with the server-side token: the Automations token is refused on it.
+	const { jwt, tenantApiUrl } = await getOperatorTenantClient(
+		request,
+		orgSlug,
+		{ area: 'automations' },
+	)
 	const journeyRes = await fetchTenant(
 		`/operator/journeys/${encodeURIComponent(journeyId)}`,
 	)
@@ -125,13 +128,16 @@ function toRunRecord(r: RawRun): JourneyRunRecord {
 export default function JourneyRunsRoute() {
 	const { _ } = useLingui()
 	const { jwt, tenantApiUrl, orgSlug, journey } = useLoaderData<typeof loader>()
+	const { token, refreshIfExpired, reloadKey } = useLoaderToken(jwt)
 	const [runs, setRuns] = useState<JourneyRunRecord[]>([])
 	const [runsState, setRunsState] = useState<'loading' | 'ready' | 'failed'>(
 		'loading',
 	)
 	const [selectedRun, setSelectedRun] = useState<JourneyRunRecord | null>(null)
 	const [timeline, setTimeline] = useState<JourneyStepExecutionRecord[]>([])
-	const [loadingTimeline, setLoadingTimeline] = useState(false)
+	const [timelineState, setTimelineState] = useState<
+		'loading' | 'ready' | 'failed'
+	>('loading')
 
 	const journeyStatusLabels: Record<JourneyStatus, string> = {
 		draft: _(msg`Draft`),
@@ -166,20 +172,24 @@ export default function JourneyRunsRoute() {
 		return _(msg`${minutes}m ${remainingSec}s`)
 	}
 
+	// Keyed on the journey, not the token: a loader revalidation signs a new
+	// token and must not blank the list or fetch it again. A 401 on an expired
+	// token asks the loader for a new one; `reloadKey` fetches again once it
+	// arrives, keeping the list on screen.
 	useEffect(() => {
 		const controller = new AbortController()
-		setRunsState('loading')
 		async function loadRuns() {
+			const used = token()
 			try {
 				const res = await fetch(
 					`${tenantApiUrl}/operator/journeys/${encodeURIComponent(journey.id)}/runs`,
 					{
-						headers: { Authorization: `Bearer ${jwt}` },
+						headers: { Authorization: `Bearer ${used}` },
 						signal: controller.signal,
 					},
 				)
+				if (res.status === 401 && refreshIfExpired(used)) return
 				if (!res.ok) {
-					setRuns([])
 					setRunsState('failed')
 					return
 				}
@@ -188,41 +198,66 @@ export default function JourneyRunsRoute() {
 				setRunsState('ready')
 			} catch {
 				if (controller.signal.aborted) return
-				setRuns([])
 				setRunsState('failed')
 			}
 		}
 		void loadRuns()
 		return () => controller.abort()
-	}, [jwt, tenantApiUrl, journey.id])
+	}, [tenantApiUrl, journey.id, reloadKey, token, refreshIfExpired])
 
-	const openTimeline = async (run: JourneyRunRecord) => {
+	// Another automation: show the skeleton, not the previous one's runs.
+	const [shownJourneyId, setShownJourneyId] = useState(journey.id)
+	if (shownJourneyId !== journey.id) {
+		setShownJourneyId(journey.id)
+		setRuns([])
+		setRunsState('loading')
+	}
+
+	// One request per opened run. Opening another run (or closing the dialog)
+	// aborts the previous request, so a slow answer for run A can never fill
+	// run B's dialog.
+	const selectedRunId = selectedRun?.id ?? ''
+	useEffect(() => {
+		if (!selectedRunId) return
+		const controller = new AbortController()
+		async function loadTimeline() {
+			const used = token()
+			try {
+				const res = await fetch(
+					`${tenantApiUrl}/operator/journeys/runs/${encodeURIComponent(selectedRunId)}`,
+					{
+						headers: { Authorization: `Bearer ${used}` },
+						signal: controller.signal,
+					},
+				)
+				if (res.status === 401 && refreshIfExpired(used)) return
+				if (!res.ok) {
+					setTimelineState('failed')
+					return
+				}
+				const data = (await res.json()) as {
+					timeline?: JourneyStepExecutionRecord[]
+					steps?: JourneyStepExecutionRecord[]
+				}
+				setTimeline(data.timeline || data.steps || [])
+				setTimelineState('ready')
+			} catch {
+				if (!controller.signal.aborted) setTimelineState('failed')
+			}
+		}
+		void loadTimeline()
+		return () => controller.abort()
+	}, [selectedRunId, tenantApiUrl, reloadKey, token, refreshIfExpired])
+
+	const openTimeline = (run: JourneyRunRecord) => {
 		setSelectedRun(run)
 		setTimeline([])
-		setLoadingTimeline(true)
-		try {
-			const res = await fetch(
-				`${tenantApiUrl}/operator/journeys/runs/${encodeURIComponent(run.id)}`,
-				{ headers: { Authorization: `Bearer ${jwt}` } },
-			)
-			const data = res.ok
-				? ((await res.json()) as {
-						timeline?: JourneyStepExecutionRecord[]
-						steps?: JourneyStepExecutionRecord[]
-					})
-				: {}
-			setTimeline(data.timeline || data.steps || [])
-		} catch {
-			setTimeline([])
-		} finally {
-			setLoadingTimeline(false)
-		}
+		setTimelineState('loading')
 	}
 
 	const journeyStatus = journey.status as JourneyStatus
 	const triggerLabel = journey.triggerType.replace('_', ' ')
 	const runCount = runs.length
-	const selectedRunId = selectedRun?.id ?? ''
 	const timelineCount = timeline.length
 
 	return (
@@ -274,13 +309,21 @@ export default function JourneyRunsRoute() {
 				</CardHeader>
 				<CardContent>
 					{runsState === 'loading' ? (
-						<div className="space-y-2" aria-busy="true">
+						<div className="space-y-2" role="status" aria-busy="true">
+							<span className="sr-only">{_(msg`Loading runs…`)}</span>
 							{Array.from({ length: 3 }).map((_item, i) => (
-								<Skeleton key={i} className="h-10 w-full rounded-lg" />
+								<Skeleton
+									key={i}
+									className="h-10 w-full rounded-lg"
+									aria-hidden
+								/>
 							))}
 						</div>
 					) : runsState === 'failed' ? (
-						<p className="text-destructive py-6 text-center text-sm">
+						<p
+							role="alert"
+							className="text-destructive py-6 text-center text-sm"
+						>
 							{_(msg`Failed to load runs`)}
 						</p>
 					) : runs.length === 0 ? (
@@ -412,9 +455,21 @@ export default function JourneyRunsRoute() {
 							</div>
 						)}
 
-						{loadingTimeline ? (
-							<p className="text-muted-foreground py-6 text-center text-sm">
+						{timelineState === 'loading' ? (
+							<p
+								role="status"
+								className="text-muted-foreground py-6 text-center text-sm"
+							>
 								{_(msg`Loading step executions from regional SQLite outbox...`)}
+							</p>
+						) : timelineState === 'failed' ? (
+							<p
+								role="alert"
+								className="text-destructive py-6 text-center text-sm"
+							>
+								{_(
+									msg`Couldn't load the steps of this run. Close it and try again.`,
+								)}
 							</p>
 						) : timeline.length === 0 ? (
 							<div className="text-muted-foreground py-6 text-center text-sm">

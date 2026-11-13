@@ -49,7 +49,7 @@ const OPERATOR_LIST_LIMIT = 100
  * a scope is refused by default on any route that does not name it
  * (`operator.area-binding.test.ts` walks every route).
  */
-export type OperatorArea = 'marketing' | 'customers'
+export type OperatorArea = 'marketing' | 'customers' | 'automations'
 
 export async function authenticateOperator(
 	c: Context,

@@ -4,6 +4,7 @@ import { CampaignDetailView, type CampaignDetail } from '@repo/marketing'
 import { Skeleton } from '@repo/ui/skeleton'
 import { useEffect, useState } from 'react'
 import { useLoaderData, type LoaderFunctionArgs } from 'react-router'
+import { useLoaderToken } from '#app/hooks/use-loader-token.ts'
 import { type BreadcrumbHandle } from '#app/utils/breadcrumb.ts'
 import { describeCampaignCoupon } from '#app/utils/discounts/marketing-offers.server.ts'
 import {
@@ -58,26 +59,32 @@ type CampaignState =
 	| { status: 'loading' }
 	| { status: 'not_found' }
 	| { status: 'failed' }
-	| { status: 'ready'; campaign: CampaignDetail }
+	| { status: 'ready'; campaign: Omit<CampaignDetail, 'coupon'> }
 
 export default function CampaignDetailRoute() {
 	const { _ } = useLingui()
 	const { jwt, tenantApiUrl, campaignId, coupon } =
 		useLoaderData<typeof loader>()
+	const { token, refreshIfExpired, reloadKey } = useLoaderToken(jwt)
 	const [state, setState] = useState<CampaignState>({ status: 'loading' })
 
+	// Keyed on the campaign, not on the token or coupon: a loader revalidation
+	// signs a new token and must not blank the page or download the recipients
+	// again. A 401 on an expired token asks the loader for a new one, and
+	// `reloadKey` fetches again once it arrives, keeping what is on screen.
 	useEffect(() => {
 		const controller = new AbortController()
-		setState({ status: 'loading' })
 		async function load() {
+			const used = token()
 			try {
 				const res = await fetch(
 					`${tenantApiUrl}/operator/marketing/campaigns/${encodeURIComponent(campaignId)}`,
 					{
-						headers: { Authorization: `Bearer ${jwt}` },
+						headers: { Authorization: `Bearer ${used}` },
 						signal: controller.signal,
 					},
 				)
+				if (res.status === 401 && refreshIfExpired(used)) return
 				if (!res.ok) {
 					setState({ status: res.status === 404 ? 'not_found' : 'failed' })
 					return
@@ -89,29 +96,41 @@ export default function CampaignDetailRoute() {
 					setState({ status: 'not_found' })
 					return
 				}
-				const { discountOffer: _offer, ...campaign } = data.campaign
-				setState({ status: 'ready', campaign: { ...campaign, coupon } })
+				const {
+					discountOffer: _offer,
+					coupon: _coupon,
+					...campaign
+				} = data.campaign
+				setState({ status: 'ready', campaign })
 			} catch {
 				if (!controller.signal.aborted) setState({ status: 'failed' })
 			}
 		}
 		void load()
 		return () => controller.abort()
-	}, [jwt, tenantApiUrl, campaignId, coupon])
+	}, [tenantApiUrl, campaignId, reloadKey, token, refreshIfExpired])
+
+	// Another campaign: show the skeleton, not the previous one's recipients.
+	const [shownCampaignId, setShownCampaignId] = useState(campaignId)
+	if (shownCampaignId !== campaignId) {
+		setShownCampaignId(campaignId)
+		setState({ status: 'loading' })
+	}
 
 	if (state.status === 'loading') {
 		return (
-			<div className="space-y-4" aria-busy="true">
-				<Skeleton className="h-8 w-64" />
-				<Skeleton className="h-32 w-full rounded-lg" />
-				<Skeleton className="h-48 w-full rounded-lg" />
+			<div className="space-y-4" role="status" aria-busy="true">
+				<span className="sr-only">{_(msg`Loading broadcast…`)}</span>
+				<Skeleton className="h-8 w-64" aria-hidden />
+				<Skeleton className="h-32 w-full rounded-lg" aria-hidden />
+				<Skeleton className="h-48 w-full rounded-lg" aria-hidden />
 			</div>
 		)
 	}
 
 	if (state.status !== 'ready') {
 		return (
-			<p className="text-destructive text-sm">
+			<p role="alert" className="text-destructive text-sm">
 				{state.status === 'not_found'
 					? _(msg`Broadcast not found`)
 					: _(msg`Failed to load broadcast`)}
@@ -119,5 +138,5 @@ export default function CampaignDetailRoute() {
 		)
 	}
 
-	return <CampaignDetailView campaign={state.campaign} />
+	return <CampaignDetailView campaign={{ ...state.campaign, coupon }} />
 }

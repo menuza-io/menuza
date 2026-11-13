@@ -1285,11 +1285,11 @@ msgstr ""
 msgid "{deviceName} was removed."
 msgstr "{deviceName} was removed."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:163
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:169
 msgid "{diffSec}s"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:160
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:166
 msgid "{diffSec}s (running)"
 msgstr ""
 
@@ -1643,7 +1643,7 @@ msgstr "{minutes} min"
 msgid "{minutes} minutes"
 msgstr "{minutes} minutes"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:166
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:172
 msgid "{minutes}m {remainingSec}s"
 msgstr ""
 
@@ -3742,7 +3742,7 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:90
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:60
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:263
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:138
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:144
 #: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:339
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1006
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:983
@@ -5269,7 +5269,7 @@ msgstr ""
 msgid "All core features included"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:271
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:306
 msgid "All customer automation workflows orchestrated durably by Cloudflare Workflows and executed by the regional data engine."
 msgstr ""
 
@@ -6309,7 +6309,7 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:341
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:282
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:62
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:140
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:146
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:204
 #: app/utils/discounts/labels.ts:28
 #: app/utils/discounts/labels.ts:44
@@ -6679,7 +6679,7 @@ msgstr "Attach secondary modifier groups that appear when this modifier item is 
 msgid "Attached images"
 msgstr "Attached images"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:456
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:509
 msgid "Attempt: {attempt} • Executed: {executedAtLabel}"
 msgstr ""
 
@@ -6690,7 +6690,7 @@ msgstr "Attempts"
 #~ msgid "Attention Needed"
 #~ msgstr "Attention Needed"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:316
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:359
 msgid "Audit Trail"
 msgstr ""
 
@@ -6789,7 +6789,7 @@ msgstr "Automation"
 msgid "Automation menu"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:81
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:84
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:117
 msgid "Automation not found"
 msgstr ""
@@ -7654,7 +7654,7 @@ msgstr "Bring the right people together in a group."
 msgid "Broadcast"
 msgstr "Broadcast"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId.tsx:116
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId.tsx:135
 msgid "Broadcast not found"
 msgstr ""
 
@@ -8483,7 +8483,7 @@ msgstr "Cancellations by who"
 #: app/components/staff/schedule/time-off-page.tsx:286
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:215
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.tsx:238
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:147
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:153
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:242
 #: app/utils/inventory/order-view.ts:27
 #: app/utils/inventory/transfer-form.ts:127
@@ -10526,7 +10526,7 @@ msgstr ""
 #: app/components/onboarding-checklist.tsx:249
 #: app/components/orders/order-detail.tsx:221
 #: app/components/reservations/status-style.tsx:143
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:144
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:150
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:67
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:237
 #: app/utils/loyalty/loyalty-labels.ts:123
@@ -11570,6 +11570,10 @@ msgstr "Couldn't load the assistant."
 msgid "Couldn't load the recording. Try again."
 msgstr "Couldn't load the recording. Try again."
 
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:470
+msgid "Couldn't load the steps of this run. Close it and try again."
+msgstr "Couldn't load the steps of this run. Close it and try again."
+
 #: app/components/phone-agent/voice-picker.tsx:447
 msgid "Couldn't load voices"
 msgstr "Couldn't load voices"
@@ -12583,7 +12587,7 @@ msgstr "Customer reviews"
 msgid "Customer since"
 msgstr "Customer since"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:311
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:354
 msgid "Customer UUID"
 msgstr ""
 
@@ -14320,7 +14324,7 @@ msgstr ""
 #: app/components/staff/schedule/shift-block.tsx:33
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:59
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:264
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:137
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:143
 #: app/routes/_app+/$orgSlug_+/marketing+/print._index.tsx:142
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:929
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:413
@@ -14586,7 +14590,7 @@ msgid "Duplicates and data"
 msgstr "Duplicates and data"
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:235
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:314
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:357
 msgid "Duration"
 msgstr ""
 
@@ -16559,11 +16563,11 @@ msgstr "Exclusive seating"
 #~ msgid "Execution History ({0})"
 #~ msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:267
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:302
 msgid "Execution History ({runCount})"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:248
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:283
 msgid "Execution runs and step history, triggered by \"{triggerLabel}\"."
 msgstr "Execution runs and step history, triggered by \"{triggerLabel}\"."
 
@@ -16794,7 +16798,7 @@ msgstr "Fail authentication"
 #: app/components/settings/cards/organization/shop-card.tsx:49
 #: app/components/social/social-labels.ts:27
 #: app/components/social/social-labels.ts:37
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:146
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:152
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:69
 #: app/utils/reservations/payments-view.ts:72
 msgid "Failed"
@@ -16955,7 +16959,7 @@ msgstr ""
 #~ msgid "Failed to load areas, tables, and combinations."
 #~ msgstr "Failed to load areas, tables, and combinations."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId.tsx:117
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId.tsx:136
 msgid "Failed to load broadcast"
 msgstr ""
 
@@ -16988,7 +16992,7 @@ msgstr "Failed to load reservation details."
 msgid "Failed to load reservation setup for this location."
 msgstr "Failed to load reservation setup for this location."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:284
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:327
 msgid "Failed to load runs"
 msgstr "Failed to load runs"
 
@@ -21145,7 +21149,7 @@ msgstr "Latest visit"
 msgid "Launch run"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:300
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:343
 msgid "Launch Test Run in Builder"
 msgstr ""
 
@@ -21678,6 +21682,10 @@ msgstr "Loading applicant"
 msgid "Loading assistant…"
 msgstr "Loading assistant…"
 
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId.tsx:123
+msgid "Loading broadcast…"
+msgstr "Loading broadcast…"
+
 #: app/components/phone-agent/call-detail-sheet.tsx:350
 msgid "Loading call"
 msgstr "Loading call"
@@ -21861,6 +21869,10 @@ msgstr "Loading reviews"
 msgid "Loading rewards…"
 msgstr "Loading rewards…"
 
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:313
+msgid "Loading runs…"
+msgstr "Loading runs…"
+
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:441
 msgid "Loading section layouts…"
 msgstr "Loading section layouts…"
@@ -21876,7 +21888,7 @@ msgstr "Loading settings…"
 msgid "Loading special days…"
 msgstr "Loading special days…"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:417
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:463
 msgid "Loading step executions from regional SQLite outbox..."
 msgstr ""
 
@@ -25020,7 +25032,7 @@ msgstr "No discounts match these filters"
 msgid "No discounts yet"
 msgstr "No discounts yet"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:422
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:475
 msgid "No discrete action step dispatches recorded for this run."
 msgstr ""
 
@@ -25072,7 +25084,7 @@ msgstr ""
 msgid "No events yet."
 msgstr "No events yet."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:289
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:332
 msgid "No execution runs recorded yet for this automation."
 msgstr ""
 
@@ -28017,7 +28029,7 @@ msgstr "Open Today to check on the affected guests."
 msgid "Open Today to review the bookings."
 msgstr "Open Today to review the bookings."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:259
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:294
 msgid "Open visual builder"
 msgstr "Open visual builder"
 
@@ -29369,7 +29381,7 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:340
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:61
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:265
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:139
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:145
 #: app/utils/discounts/labels.ts:27
 #: app/utils/discounts/labels.ts:43
 #: app/utils/loyalty/loyalty-labels.ts:31
@@ -29616,7 +29628,7 @@ msgstr "Peanut Allergy"
 
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:44
 #: app/components/settings/cards/organization/shop-card.tsx:47
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:435
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:488
 msgid "Pending"
 msgstr ""
 
@@ -33966,7 +33978,7 @@ msgstr "Rules teach the agent how your business works, the way you'd explain it 
 msgid "Run double points on a slow Tuesday, a bonus on a new dish, or a boost at one location."
 msgstr "Run double points on a slow Tuesday, a bonus on a new dish, or a boost at one location."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:383
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:426
 msgid "Run Execution Timeline"
 msgstr ""
 
@@ -33974,11 +33986,11 @@ msgstr ""
 msgid "Run history"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:309
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:352
 msgid "Run ID"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:403
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:446
 msgid "Run ID: {selectedRunId}"
 msgstr ""
 
@@ -33995,7 +34007,7 @@ msgstr "Rung up on a Station till"
 #~ msgstr ""
 
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:45
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:145
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:151
 msgid "Running"
 msgstr ""
 
@@ -38010,7 +38022,7 @@ msgstr "Started {startedAt}"
 msgid "Started {startedAt} by <0>{by}</0>"
 msgstr "Started {startedAt} by <0>{by}</0>"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:313
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:356
 msgid "Started At"
 msgstr ""
 
@@ -38109,7 +38121,7 @@ msgstr "Stats"
 #: app/routes/_app+/$orgSlug_+/loyalty+/program.tsx:249
 #: app/routes/_app+/$orgSlug_+/loyalty+/promotions.tsx:390
 #: app/routes/_app+/$orgSlug_+/loyalty+/rewards.tsx:266
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:312
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:355
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:973
 #: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:535
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:351
@@ -38162,7 +38174,7 @@ msgstr "Stayed on current page"
 msgid "Step {currentStep} of {totalSteps}"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:428
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:481
 msgid "Step Executions ({timelineCount})"
 msgstr ""
 
@@ -45402,7 +45414,7 @@ msgstr "View team schedule"
 msgid "View time cards"
 msgstr "View time cards"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:362
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:405
 msgid "View Timeline →"
 msgstr ""
 
@@ -47033,7 +47045,7 @@ msgstr "Worked examples from the live configuration."
 msgid "Worker type"
 msgstr "Worker type"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:410
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:453
 msgid "Workflow Error:"
 msgstr ""
 
