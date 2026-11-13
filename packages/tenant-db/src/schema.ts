@@ -2027,6 +2027,9 @@ export const posOnlineOrderEvents = sqliteTable(
 				'refunded',
 				'contact_viewed',
 				'reprinted',
+				// A search by the phone's last digits (order_id 'search'): counted
+				// per person and hour, never tied to an order.
+				'phone_searched',
 			],
 		}).notNull(),
 		reason: text('reason'),

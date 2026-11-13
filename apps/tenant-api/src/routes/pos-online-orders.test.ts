@@ -40,6 +40,7 @@ import {
 	makeMember,
 	NOW,
 } from '../services/loyalty-test-fixture.ts'
+import { PHONE_SEARCHES_PER_HOUR } from '../services/pos-online-orders-service.ts'
 import { posKdsRoutes } from './pos-kds.ts'
 import { posOnlineOrdersRoutes } from './pos-online-orders.ts'
 
@@ -660,10 +661,45 @@ describe('Station Orders app API (/pos/online-orders)', () => {
 					(o) => o.number,
 				),
 			).toEqual(['W-8'])
-			expect((await found({ q: '%' })).results.map((o) => o.id)).toEqual([
+			expect((await found({ q: '0%' })).results.map((o) => o.id)).toEqual([
 				ready,
 			])
-			expect((await found({ q: '_' })).results).toHaveLength(0)
+			expect((await found({ q: 'r_' })).results).toHaveLength(0)
+			// One character would list everyone.
+			expect((await search({ q: 'o' })).status).toBe(400)
+		})
+
+		it('finds names with accented capitals as typed, and ASCII names in any case', async () => {
+			const id = await insertOrder({ contactName: 'Émile Durand' })
+			expect((await found({ q: 'Émile' })).results.map((o) => o.id)).toEqual([
+				id,
+			])
+			expect((await found({ q: 'DURAND' })).results.map((o) => o.id)).toEqual([
+				id,
+			])
+		})
+
+		it('opens an order past the inbox without its address or notes, unless the person may see contacts', async () => {
+			const days = (n: number) => new Date(Date.now() - n * 86_400_000)
+			const id = await insertOrder({
+				number: 'W-OLDDEL',
+				status: 'completed',
+				fulfillment: 'delivery',
+				deliveryAddress: '9 Private Lane',
+				createdAt: days(3),
+				completedAt: days(3),
+			})
+			const asCashier = (await detail(id)).order
+			expect(asCashier.delivery).toBeNull()
+			expect(asCashier.lines.every((line) => line.instructions === null)).toBe(
+				true,
+			)
+			const response = await call('GET', `/${id}`, { staff: manager })
+			const asManager = (
+				(await response.json()) as PosOnlineOrderDetailResponse
+			).order
+			expect(asManager.delivery?.address).toBe('9 Private Lane')
+			expect(asManager.lines[0]?.instructions).toBe('No onion')
 		})
 
 		it('searches the phone’s last digits only with the contact permission', async () => {
@@ -679,8 +715,37 @@ describe('Station Orders app API (/pos/online-orders)', () => {
 			const data = await found({ phone: '0111' }, manager)
 			expect(data.results.map((order) => order.id)).toEqual([id])
 			expect(JSON.stringify(data)).not.toMatch(/555|0111/)
-			// Too few digits would sweep the guest list.
+			// Exactly the four digits the masked phone shows: no fewer (a sweep),
+			// no more (rebuilding the number digit by digit).
 			expect((await search({ phone: '11' }, manager)).status).toBe(400)
+			expect((await search({ phone: '30111' }, manager)).status).toBe(400)
+			const db = await getTenantDb(ORG_A)
+			const recorded = await db
+				.select()
+				.from(posOnlineOrderEvents)
+				.where(eq(posOnlineOrderEvents.action, 'phone_searched'))
+			expect(recorded).toHaveLength(1)
+			expect(recorded[0]).toMatchObject({
+				staffId: managerId,
+				orderId: 'search',
+			})
+		})
+
+		it('limits how many phone searches one person may run in an hour', async () => {
+			const db = await getTenantDb(ORG_A)
+			await db.insert(posOnlineOrderEvents).values(
+				Array.from({ length: PHONE_SEARCHES_PER_HOUR }, () => ({
+					orderId: 'search',
+					locationId: LOCATION,
+					deviceId,
+					staffId: managerId,
+					action: 'phone_searched' as const,
+					at: Date.now() - 60_000,
+				})),
+			)
+			const limited = await search({ phone: '0111' }, manager)
+			expect(limited.status).toBe(429)
+			expect(await limited.json()).toMatchObject({ error: 'search_limit' })
 		})
 
 		it('asks for one of text or phone, and never reaches further back than eight days', async () => {
@@ -688,13 +753,21 @@ describe('Station Orders app API (/pos/online-orders)', () => {
 			expect((await search({ q: 'w', phone: '1234' }, manager)).status).toBe(
 				400,
 			)
+			const nineDays = new Date(Date.now() - 9 * 86_400_000)
 			await insertOrder({
 				number: 'W-OLD',
-				createdAt: new Date(Date.now() - 9 * 86_400_000),
+				status: 'completed',
+				createdAt: nineDays,
+				completedAt: nineDays,
 			})
 			const data = await found({ q: 'w-old', since: '0' })
 			expect(data.results).toHaveLength(0)
 			expect(data.since).toBeGreaterThan(Date.now() - 8 * 86_400_000 - 60_000)
+			// Still open (placed long ago for pickup now): in the inbox, so found.
+			const open = await insertOrder({ number: 'W-LATER', createdAt: nineDays })
+			expect(
+				(await found({ q: 'w-later' })).results.map((order) => order.id),
+			).toEqual([open])
 		})
 
 		it('caps the results and says so', async () => {
