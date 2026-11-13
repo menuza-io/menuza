@@ -1835,7 +1835,7 @@ msgstr "تغيّر"
 msgid "Changes reach the website and QR menus within seconds and are recorded in the activity log."
 msgstr "تظهر التغييرات في الموقع وقوائم رمز QR خلال ثوانٍ وتُسجَّل في سجل النشاط."
 
-#: src/screens/Cart.tsx:425
+#: src/screens/Cart.tsx:401
 #: src/screens/Checkout.tsx:294
 msgid "Charge"
 msgstr "تحصيل"
@@ -2402,7 +2402,7 @@ msgstr "نظام غذائي: {dietLine}"
 #: src/apps/orders/Orders.tsx:534
 #: src/apps/orders/Orders.tsx:1249
 #: src/apps/orders/Orders.tsx:1557
-#: src/screens/Cart.tsx:218
+#: src/screens/Cart.tsx:194
 #: src/screens/OrdersSheet.tsx:83
 #: src/screens/Receipt.tsx:97
 msgid "Dine in"
@@ -4122,7 +4122,7 @@ msgstr "الطلبات عبر الإنترنت في هذا الفرع من ال�
 msgid "Only a manager can change this."
 msgstr "يمكن للمدير فقط تغيير هذا."
 
-#: src/lib/orders.ts:577
+#: src/lib/orders.ts:556
 msgid "Only a paid order can be refunded"
 msgstr "لا يمكن استرداد إلا طلب مدفوع"
 
@@ -4264,7 +4264,7 @@ msgstr "ملخص الطلب"
 
 #: src/apps/orders/Orders.tsx:248
 #: src/apps/orders/Orders.tsx:1238
-#: src/screens/Cart.tsx:212
+#: src/screens/Cart.tsx:188
 msgid "Order type"
 msgstr "نوع الطلب"
 
@@ -5061,7 +5061,7 @@ msgstr "استراحة قصيرة"
 msgid "Rest of today"
 msgstr "بقية اليوم"
 
-#: src/screens/PhoneOrderSheet.tsx:192
+#: src/screens/PhoneOrderSheet.tsx:162
 msgid "Restaurant time: {zone}"
 msgstr "توقيت المطعم: {zone}"
 
@@ -5650,7 +5650,7 @@ msgstr "نفد"
 msgid "Sold out here"
 msgstr "نفد هنا"
 
-#: src/App.tsx:586
+#: src/App.tsx:578
 msgid "Sold out, not added: {names}"
 msgstr "نفد، لم يُضف: {names}"
 
@@ -6180,7 +6180,7 @@ msgid "tap to put back in line"
 msgstr "اضغط لإعادتهم إلى القائمة"
 
 #: src/apps/orders/Orders.tsx:998
-#: src/screens/Cart.tsx:180
+#: src/screens/Cart.tsx:156
 #: src/screens/Checkout.tsx:364
 #: src/screens/OrdersSheet.tsx:679
 #: src/screens/Receipt.tsx:174
@@ -6964,7 +6964,7 @@ msgstr "لا يحتوي هذا الطلب على الأصناف التي يحت�
 msgid "This order finished more than four hours ago. It is shown for reference: record refunds and see the guest’s contact in the App."
 msgstr "انتهى هذا الطلب منذ أكثر من أربع ساعات. يُعرض للاطلاع فقط: سجّل المبالغ المستردة واطّلع على بيانات اتصال الضيف في التطبيق."
 
-#: src/screens/Cart.tsx:363
+#: src/screens/Cart.tsx:339
 msgid "This order has more than {MAX_ORDER_LINES} lines and cannot be saved. Take off the newest items and ring them up as a new order."
 msgstr "يحتوي هذا الطلب على أكثر من {MAX_ORDER_LINES} سطرًا ولا يمكن حفظه. احذف أحدث الأصناف وأدخلها في طلب جديد."
 

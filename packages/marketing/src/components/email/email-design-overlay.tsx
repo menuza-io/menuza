@@ -41,6 +41,11 @@ export type EmailDesignOverlayProps = {
 	onChooseImageFromLibrary?: (
 		onSelect: (url: string, alt: string) => void,
 	) => void
+	/**
+	 * Preview the footer "Unsubscribe" link the regional send path adds (a
+	 * placeholder, never a signed link). Tenant broadcasts and journey emails.
+	 */
+	unsubscribeLinkPreview?: boolean
 }
 
 /**
@@ -64,6 +69,7 @@ export function EmailDesignOverlay({
 	onSave,
 	className,
 	onChooseImageFromLibrary,
+	unsubscribeLinkPreview,
 }: EmailDesignOverlayProps) {
 	const { _ } = useLingui()
 	const [draft, setDraft] = useState<EmailBlock[]>(initialBlocks)
@@ -179,6 +185,7 @@ export function EmailDesignOverlay({
 							subject={subject ?? ''}
 							className="h-full min-h-0 flex-1"
 							onChooseImageFromLibrary={onChooseImageFromLibrary}
+							unsubscribeLinkPreview={unsubscribeLinkPreview}
 						/>
 					</div>
 				</DialogContent>

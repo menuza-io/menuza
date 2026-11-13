@@ -714,7 +714,8 @@ describe('Station Orders app API (/pos/online-orders)', () => {
 			expect((await search({ phone: 'x' })).status).toBe(403)
 			const data = await found({ phone: '0111' }, manager)
 			expect(data.results.map((order) => order.id)).toEqual([id])
-			expect(JSON.stringify(data)).not.toMatch(/555|0111/)
+			// Timestamps in since/serverNow can contain the same digit runs by chance.
+			expect(JSON.stringify(data.results)).not.toMatch(/555|0111/)
 			// Exactly the four digits the masked phone shows: no fewer (a sweep),
 			// no more (rebuilding the number digit by digit).
 			expect((await search({ phone: '11' }, manager)).status).toBe(400)

@@ -6,6 +6,7 @@ import { hydrateRoot } from 'react-dom/client'
 import { HydratedRouter } from 'react-router/dom'
 import { ENV } from 'varlock/env'
 import { loadCatalog } from './modules/lingui/lingui'
+import { posthogInitOptions } from './utils/posthog-config.ts'
 
 const posthogProjectToken = ENV.POSTHOG_PROJECT_TOKEN
 const posthogEnabled = Boolean(
@@ -13,22 +14,15 @@ const posthogEnabled = Boolean(
 )
 
 if (posthogEnabled && posthogProjectToken) {
-	posthog.init(posthogProjectToken, {
-		api_host: ENV.POSTHOG_HOST,
-		defaults: '2026-05-30',
-		capture_exceptions: true,
-		capture_pageview: 'history_change',
-		capture_pageleave: true,
-		opt_out_capturing_by_default: true,
-		person_profiles: 'identified_only',
-		tracing_headers: [window.location.hostname, 'localhost'],
-		logs: {
-			serviceName: 'app-web',
-			environment: ENV.NODE_ENV,
-			serviceVersion: ENV.COMMIT_SHA || undefined,
-			captureConsoleLogs: false,
-		},
-	})
+	posthog.init(
+		posthogProjectToken,
+		posthogInitOptions({
+			apiHost: ENV.POSTHOG_HOST,
+			hostname: window.location.hostname,
+			nodeEnv: ENV.NODE_ENV,
+			commitSha: ENV.COMMIT_SHA,
+		}),
+	)
 }
 
 // Logged-out visitors get `204 X-Remix-Reload-Document` from `/__manifest` for

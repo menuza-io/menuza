@@ -11,6 +11,7 @@ import {
 	or,
 	sql,
 } from 'drizzle-orm'
+import { withUnsubscribeFooter } from '@repo/common/email-unsubscribe'
 import { type MarketingOffer, parseMarketingOffer } from '@repo/discounts'
 import { sendSms } from '@repo/sms'
 import {
@@ -464,7 +465,7 @@ async function sendOne(params: {
 			toName: customer.name,
 			subject: parsedSubject || 'Notification',
 			text: `${parsedContent}\n\nUnsubscribe: ${optOutUrl}`,
-			html: `${bodyHtml}<p style="font-size:12px;color:#666"><a href="${optOutUrl}">Unsubscribe</a></p>`,
+			html: withUnsubscribeFooter(bodyHtml, optOutUrl),
 			extraHeaders: listUnsubscribeHeaders(optOutUrl),
 			context: { orgId, campaignId, customerId: customer.id, messageId },
 		})

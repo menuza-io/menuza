@@ -10,16 +10,35 @@ the Cloudflare destination setting described below.
 
 ## What is collected
 
-| Surface   | Browser analytics                                                                            | Error tracking                                        | Logs                                                                                           |
-| --------- | -------------------------------------------------------------------------------------------- | ----------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| App       | Page views, page leaves, authenticated user and organization context after analytics consent | Browser exceptions and React Router server exceptions | Browser SDK structured logs; Worker logs through Cloudflare's native OpenTelemetry destination |
-| Marketing | Cookieless page views, page leaves, and Web Vitals                                           | Browser exceptions                                    | Browser SDK structured logs; Worker logs through Cloudflare's native OpenTelemetry destination |
+| Surface   | Browser analytics                                                                                                                           | Error tracking                                        | Logs                                                                                           |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| App       | Page views, page leaves, authenticated user and organization context after analytics consent; no autocapture, heatmaps or session recording | Browser exceptions and React Router server exceptions | Browser SDK structured logs; Worker logs through Cloudflare's native OpenTelemetry destination |
+| Marketing | Cookieless page views, page leaves, and Web Vitals                                                                                          | Browser exceptions                                    | Browser SDK structured logs; Worker logs through Cloudflare's native OpenTelemetry destination |
 
 The App SDK starts opted out. `PostHogAnalytics` only opts in after the existing
 analytics consent cookie is explicitly accepted, then identifies the signed-in
 operator and assigns the organization group. It resets identity after logout. Do
 not attach email, name, phone number, request bodies, query-string secrets, or
 tenant customer PII to events and logs.
+
+App pages show guest names, phones and emails (Customers, Reservations,
+Marketing), and PostHog is not a regional host. So the App collects nothing it
+reads off the screen: `apps/app/app/utils/posthog-config.ts` sets
+`autocapture: false` (`$autocapture` events carry the clicked element's text as
+`$el_text`), `rageclick: false` and `capture_dead_clicks: false` (same element
+text), `capture_heatmaps: false`, and `disable_session_recording: true`. They
+are set explicitly, not left to `defaults`, and `posthog-config.test.ts` checks
+the installed SDK keeps them off, so an upgrade cannot turn one back on. Product
+events, when we add them, are named events with ids only.
+
+Exception capture stays on. An exception message is sent as written, so error
+messages must never echo rejected input (a phone, an email, a name); say what
+was wrong, not what was typed.
+
+In the PostHog project settings keep autocapture, heatmaps and session replay
+off as well (if replay is ever wanted, only with every input and all text
+masked). The SDK options win for this App, but project settings also apply to
+any other SDK pointed at the same project.
 
 Marketing uses PostHog's cookieless mode and
 `person_profiles: 'identified_only'`. Its loader runs in a Partytown web worker

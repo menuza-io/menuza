@@ -407,6 +407,23 @@ node’s `DATA_REGION` (slug subdomain or published custom domain).
 Access tokens last 15 minutes. Refresh tokens last 30 days (stored hashed with
 `AUTH_HMAC_SECRET`).
 
+App operator pages that show guest contacts read them in the browser too. The
+Marketing broadcast detail (its recipients) calls
+`/operator/marketing/campaigns/:id` with the `marketing` area token (minted
+after `read:campaign:any`). Automations Runs calls `/operator/journeys/:id/runs`
+and `/operator/journeys/runs/:runId` with the `automations` area token (minted
+after `read:automation:any`), which reaches nothing else. Runs and step
+timelines carry customer ids only: step details are an allowlist (a condition
+keeps its field, operator and result, never the compared values) and provider
+error text is replaced by a fixed label (`publicJourneyError` in
+`journey-service.ts`). The App server reads only PII-free paths there (the
+campaign `/summary`, the journey definition), checked by
+`apps/app/app/utils/marketing/marketing-pii-guards.test.ts`.
+
+App PostHog must not capture element text: autocapture, rage and dead clicks,
+heatmaps and session recording are off (`apps/app/app/utils/posthog-config.ts`;
+see [Monitoring](./monitoring.md#what-is-collected)).
+
 ## Auth model (do not “fix” this)
 
 Login, verify, profile, and logout run in **page JavaScript** against the

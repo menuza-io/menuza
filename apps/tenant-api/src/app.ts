@@ -5,6 +5,7 @@ import { installRequiredMessage } from '@repo/common/zod-defaults'
 import { logger } from '@repo/observability'
 import { withBackground } from './lib/background.ts'
 import { errorLogFields } from './lib/error-log.ts'
+import { consentBaseUrl } from './lib/email-consent.ts'
 import { isAllowedAnalyticsOrigin, isPosOrigin } from './lib/origin.ts'
 import { requestLoggingMiddleware } from './lib/request-logging.ts'
 import { getNodeRegion } from './lib/region.ts'
@@ -75,11 +76,18 @@ import { rateLimit } from './lib/rate-limit.ts'
 // says "Required" here as it does in App and Admin.
 installRequiredMessage()
 
+/**
+ * `emailLinks` is `not_configured` on a production node without a usable
+ * `TENANT_API_URL`: it keeps serving, but skips every email that needs a
+ * signed link (broadcasts, journey email steps, confirmations), so deploy
+ * checks should treat it as a failure.
+ */
 function healthHandler(c: Context) {
 	return c.json({
 		status: 'ok',
 		service: 'tenant-api',
 		region: getNodeRegion(),
+		emailLinks: consentBaseUrl() ? 'ok' : 'not_configured',
 		timestamp: new Date().toISOString(),
 	})
 }

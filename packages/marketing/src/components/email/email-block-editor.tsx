@@ -57,6 +57,11 @@ export type EmailBlockEditorProps = {
 	onChooseImageFromLibrary?: (
 		onSelect: (url: string, alt: string) => void,
 	) => void
+	/**
+	 * Preview the footer "Unsubscribe" link the regional send path adds (a
+	 * placeholder, never a signed link). Tenant broadcasts and journey emails.
+	 */
+	unsubscribeLinkPreview?: boolean
 }
 
 function SortableEmailBlockCard({
@@ -317,6 +322,7 @@ export function EmailBlockEditor({
 	subject,
 	className,
 	onChooseImageFromLibrary,
+	unsubscribeLinkPreview,
 }: EmailBlockEditorProps) {
 	const [selectedId, setSelectedId] = useState<string | null>(null)
 	const selected = blocks.find((block) => block.id === selectedId) ?? null
@@ -452,6 +458,7 @@ export function EmailBlockEditor({
 					html={previewHtml}
 					loading={previewFetcher.state !== 'idle'}
 					framed={false}
+					unsubscribeLinkPreview={unsubscribeLinkPreview}
 				/>
 			</div>
 		</div>

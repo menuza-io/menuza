@@ -1835,7 +1835,7 @@ msgstr "Changed"
 msgid "Changes reach the website and QR menus within seconds and are recorded in the activity log."
 msgstr "Changes reach the website and QR menus within seconds and are recorded in the activity log."
 
-#: src/screens/Cart.tsx:425
+#: src/screens/Cart.tsx:401
 #: src/screens/Checkout.tsx:294
 msgid "Charge"
 msgstr "Charge"
@@ -2402,7 +2402,7 @@ msgstr "Dietary: {dietLine}"
 #: src/apps/orders/Orders.tsx:534
 #: src/apps/orders/Orders.tsx:1249
 #: src/apps/orders/Orders.tsx:1557
-#: src/screens/Cart.tsx:218
+#: src/screens/Cart.tsx:194
 #: src/screens/OrdersSheet.tsx:83
 #: src/screens/Receipt.tsx:97
 msgid "Dine in"
@@ -4122,7 +4122,7 @@ msgstr "Online orders at this location from today and the last {days} days."
 msgid "Only a manager can change this."
 msgstr "Only a manager can change this."
 
-#: src/lib/orders.ts:577
+#: src/lib/orders.ts:556
 msgid "Only a paid order can be refunded"
 msgstr "Only a paid order can be refunded"
 
@@ -4264,7 +4264,7 @@ msgstr "Order summary"
 
 #: src/apps/orders/Orders.tsx:248
 #: src/apps/orders/Orders.tsx:1238
-#: src/screens/Cart.tsx:212
+#: src/screens/Cart.tsx:188
 msgid "Order type"
 msgstr "Order type"
 
@@ -5061,7 +5061,7 @@ msgstr "Rest break"
 msgid "Rest of today"
 msgstr "Rest of today"
 
-#: src/screens/PhoneOrderSheet.tsx:192
+#: src/screens/PhoneOrderSheet.tsx:162
 msgid "Restaurant time: {zone}"
 msgstr "Restaurant time: {zone}"
 
@@ -5650,7 +5650,7 @@ msgstr "Sold out"
 msgid "Sold out here"
 msgstr "Sold out here"
 
-#: src/App.tsx:586
+#: src/App.tsx:578
 msgid "Sold out, not added: {names}"
 msgstr "Sold out, not added: {names}"
 
@@ -6180,7 +6180,7 @@ msgid "tap to put back in line"
 msgstr "tap to put back in line"
 
 #: src/apps/orders/Orders.tsx:998
-#: src/screens/Cart.tsx:180
+#: src/screens/Cart.tsx:156
 #: src/screens/Checkout.tsx:364
 #: src/screens/OrdersSheet.tsx:679
 #: src/screens/Receipt.tsx:174
@@ -6964,7 +6964,7 @@ msgstr "This order does not have the items that discount needs."
 msgid "This order finished more than four hours ago. It is shown for reference: record refunds and see the guest’s contact in the App."
 msgstr "This order finished more than four hours ago. It is shown for reference: record refunds and see the guest’s contact in the App."
 
-#: src/screens/Cart.tsx:363
+#: src/screens/Cart.tsx:339
 msgid "This order has more than {MAX_ORDER_LINES} lines and cannot be saved. Take off the newest items and ring them up as a new order."
 msgstr "This order has more than {MAX_ORDER_LINES} lines and cannot be saved. Take off the newest items and ring them up as a new order."
 

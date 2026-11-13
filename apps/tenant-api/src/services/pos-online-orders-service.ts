@@ -357,6 +357,7 @@ export async function onlineOrdersSearch(
 	]
 	if (query.state !== 'all')
 		conditions.push(
+			// bounded: each search filter allows at most two statuses
 			inArray(restaurantOrders.status, SEARCH_STATES[query.state]),
 		)
 	if (query.fulfillment !== 'all')
