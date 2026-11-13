@@ -528,6 +528,76 @@ describe('Station Orders app API (/pos/online-orders)', () => {
 		})
 	})
 
+	it('opens an order with a very long, multi-language dish name', async () => {
+		const longName = JSON.stringify(
+			Object.fromEntries(
+				['en', 'ar', 'es', 'fr', 'de', 'zh'].map((locale) => [
+					locale,
+					'Slow-roasted '.repeat(10),
+				]),
+			),
+		)
+		expect(longName.length).toBeGreaterThan(400)
+		const id = await insertOrder({
+			lines: [
+				{
+					itemId: 'dish',
+					itemName: longName,
+					quantity: 1,
+					totalCents: 1500,
+					instructions: null,
+					options: [],
+				},
+			],
+		})
+		expect((await detail(id)).order.lines[0]!.name).toBe(longName)
+	})
+
+	it('reaches only what the inbox shows: an order finished hours ago is the App’s', async () => {
+		const old = new Date(Date.now() - 5 * 3_600_000)
+		const id = await insertOrder({ status: 'completed', completedAt: old })
+		const db = await getTenantDb(ORG_A)
+		await db
+			.insert(posHosts)
+			.values({ staffId: cashierId, guestDetails: true, addedBy: 'operator' })
+		expect((await call('GET', `/${id}`)).status).toBe(404)
+		expect((await call('POST', `/${id}/contact`)).status).toBe(404)
+		expect(
+			(
+				await refund(id, {
+					expectedVersion: 'a'.repeat(64),
+					full: true,
+					note: 'Whole order',
+				})
+			).status,
+		).toBe(404)
+	})
+
+	it('limits how many contacts one person may reveal in an hour', async () => {
+		const db = await getTenantDb(ORG_A)
+		await db
+			.insert(posHosts)
+			.values({ staffId: cashierId, guestDetails: true, addedBy: 'operator' })
+		const id = await insertOrder()
+		await db.insert(posOnlineOrderEvents).values(
+			Array.from({ length: 30 }, () => ({
+				orderId: id,
+				locationId: LOCATION,
+				deviceId,
+				staffId: cashierId,
+				action: 'contact_viewed' as const,
+				at: Date.now() - 60_000,
+			})),
+		)
+		const limited = await call('POST', `/${id}/contact`)
+		expect(limited.status).toBe(429)
+		expect(await limited.json()).toMatchObject({ error: 'contact_limit' })
+		// Someone else still can.
+		expect(
+			(await call('POST', `/${id}/contact`, { staff: manager })).status,
+		).toBe(200)
+	})
+
 	it('records reprints without changing the order', async () => {
 		const id = await insertOrder()
 		const before = (await detail(id)).order.version

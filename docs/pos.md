@@ -608,7 +608,10 @@ queued, and after a failed write the screen reads the order back.
   cancel and refund are for managers. The guest's name shows; the phone is
   masked to its last four digits and the email left out until someone allowed
   taps **Show contact**, one order at a time, held in memory only while that
-  order is open.
+  order is open. Each person may reveal 30 contacts an hour (429
+  `contact_limit`). Every route reaches only what the inbox shows (open orders
+  and those finished in the last four hours): older orders, their guests and
+  their refunds are the App's.
 - **History.** Every action (opened, ready, handed over, payment taken,
   cancelled, refund recorded, contact shown, reprinted) is one append-only
   `pos_online_order_events` row with the terminal, the staff member, a reason

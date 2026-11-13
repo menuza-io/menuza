@@ -132,16 +132,18 @@ export const posOnlineOrdersFeedSchema = z.strictObject({
 })
 export type PosOnlineOrdersFeed = z.infer<typeof posOnlineOrdersFeedSchema>
 
+/** Dish, variant and option names may be JSON maps of every menu language. */
+const menuText = z.string().max(4000)
 const lineSchema = z.strictObject({
-	name: z.string().max(400),
+	name: menuText,
 	/** Variant names ("Large"); may be JSON language maps like the menu's. */
-	variantNames: z.array(z.string().max(400)),
+	variantNames: z.array(menuText),
 	quantity: z.number().int(),
 	totalCents: z.number().int(),
 	instructions: z.string().max(400).nullable(),
 	options: z.array(
 		z.strictObject({
-			name: z.string().max(400),
+			name: menuText,
 			quantity: z.number().int(),
 			half: z.enum(['whole', 'left', 'right']).nullable(),
 		}),

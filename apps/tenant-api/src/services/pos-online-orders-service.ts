@@ -66,7 +66,17 @@ export type OnlineOrdersActor = {
 
 /** Finished orders stay in the inbox this long (recall, refunds at the counter). */
 const FINISHED_MS = 4 * 3_600_000
+/** How often one person may reveal a guest's contact: each is recorded, and this stops a sweep. */
+export const CONTACT_REVEALS_PER_HOUR = 30
+
+/** Text as the wire schema allows it: an over-long value is cut, never a reason the tablet cannot open the order. */
+const clip = <T extends string | null | undefined>(value: T, max: number) =>
+	(typeof value === 'string'
+		? value.slice(0, max)
+		: (value ?? null)) as T extends string ? string : string | null
 const ACTIVE = ['accepted', 'preparing', 'ready'] as const
+/** Dish, variant and option names may be JSON maps of every menu language. */
+const MENU_TEXT_MAX = 4000
 
 const ms = (value: Date | null | undefined) => (value ? value.getTime() : null)
 
@@ -106,14 +116,14 @@ function summary(
 	const lines = (order.lines ?? []) as PricedOrderLine[]
 	return {
 		id: order.id,
-		number: order.number,
+		number: clip(order.number, 40),
 		version: onlineOrderVersion(order),
 		status: order.status as PosOnlineOrderSummary['status'],
 		fulfillment: order.fulfillment,
 		channel: order.source ? 'qr' : 'web',
 		tableLabel:
-			order.fulfillment === 'dine_in' ? (order.tableLabel ?? null) : null,
-		guestName: order.contactName.slice(0, 200),
+			order.fulfillment === 'dine_in' ? clip(order.tableLabel, 60) : null,
+		guestName: clip(order.contactName, 200),
 		createdAt: ms(order.createdAt) ?? 0,
 		dueAt: dueAt(order),
 		paymentMethod: order.paymentMethod,
@@ -169,21 +179,11 @@ export async function onlineOrdersFeed(
 	actor: Pick<OnlineOrdersActor, 'orgId' | 'locationId' | 'grants'>,
 	now = Date.now(),
 ): Promise<PosOnlineOrdersFeed> {
-	const since = new Date(now - FINISHED_MS)
 	const [rows, phones] = await Promise.all([
 		db
 			.select()
 			.from(restaurantOrders)
-			.where(
-				and(
-					atLocation(actor.orgId, actor.locationId),
-					or(
-						inArray(restaurantOrders.status, [...ACTIVE]),
-						gte(restaurantOrders.completedAt, since),
-						gte(restaurantOrders.cancelledAt, since),
-					),
-				),
-			)
+			.where(and(atLocation(actor.orgId, actor.locationId), inInbox(now)))
 			.orderBy(
 				sql`case when ${restaurantOrders.status} in ('accepted', 'preparing', 'ready') then 0 else 1 end`,
 				asc(restaurantOrders.createdAt),
@@ -234,10 +234,25 @@ export async function onlineOrdersFeed(
 	}
 }
 
+/** The inbox's reach: open orders, and those finished in the last four hours. */
+function inInbox(now: number) {
+	const since = new Date(now - FINISHED_MS)
+	return or(
+		inArray(restaurantOrders.status, [...ACTIVE]),
+		gte(restaurantOrders.completedAt, since),
+		gte(restaurantOrders.cancelledAt, since),
+	)
+}
+
+/**
+ * One order the counter may open: this location's, and in the inbox. Older
+ * orders (and their guests' details) are the App's, however their id is known.
+ */
 async function loadAtLocation(
 	db: TenantDatabase,
 	actor: Pick<OnlineOrdersActor, 'orgId' | 'locationId'>,
 	orderId: string,
+	now = Date.now(),
 ): Promise<RestaurantOrder | null> {
 	const [order] = await db
 		.select()
@@ -246,6 +261,7 @@ async function loadAtLocation(
 			and(
 				eq(restaurantOrders.id, orderId),
 				atLocation(actor.orgId, actor.locationId),
+				inInbox(now),
 			),
 		)
 		.limit(1)
@@ -292,13 +308,15 @@ export async function onlineOrderDetail(
 	return {
 		...summary(order, opened.get(order.id) ?? null),
 		lines: lines.map((line) => ({
-			name: line.itemName,
-			variantNames: line.variantNames ?? [],
+			name: clip(line.itemName, MENU_TEXT_MAX),
+			variantNames: (line.variantNames ?? []).map((name) =>
+				clip(name, MENU_TEXT_MAX),
+			),
 			quantity: line.quantity,
 			totalCents: line.totalCents,
-			instructions: line.instructions ?? null,
+			instructions: clip(line.instructions, 400),
 			options: (line.options ?? []).map((option) => ({
-				name: option.optionName,
+				name: clip(option.optionName, MENU_TEXT_MAX),
 				quantity: option.quantity,
 				half: option.half,
 			})),
@@ -308,11 +326,11 @@ export async function onlineOrderDetail(
 		delivery:
 			order.fulfillment === 'delivery' && order.deliveryAddress
 				? {
-						address: order.deliveryAddress,
-						city: order.deliveryCity,
-						unit: order.deliveryUnit,
-						postalCode: order.deliveryPostalCode,
-						notes: order.deliveryNotes,
+						address: clip(order.deliveryAddress, 400),
+						city: clip(order.deliveryCity, 200),
+						unit: clip(order.deliveryUnit, 100),
+						postalCode: clip(order.deliveryPostalCode, 40),
+						notes: clip(order.deliveryNotes, 600),
 					}
 				: null,
 		subtotalCents: order.subtotalCents,
@@ -325,7 +343,7 @@ export async function onlineOrderDetail(
 		refundableCents: refundable,
 		refunds: refunds.map((refund) => ({
 			amountCents: refund.amountCents,
-			note: refund.note ?? '',
+			note: clip(refund.note ?? '', 400),
 			at: refund.createdAt,
 		})),
 		history: history.map(({ event, firstName, lastName }) => ({
@@ -539,12 +557,28 @@ export async function onlineOrderContact(
 		}
 	const order = await loadAtLocation(db, actor, orderId)
 	if (!order) return NOT_FOUND()
+	const [recent] = await db
+		.select({ count: sql<number>`count(*)` })
+		.from(posOnlineOrderEvents)
+		.where(
+			and(
+				eq(posOnlineOrderEvents.staffId, actor.staffId),
+				eq(posOnlineOrderEvents.action, 'contact_viewed'),
+				gte(posOnlineOrderEvents.at, Date.now() - 3_600_000),
+			),
+		)
+	if (Number(recent?.count ?? 0) >= CONTACT_REVEALS_PER_HOUR)
+		return orderFailure(
+			429,
+			'contact_limit',
+			'Too many contacts shown this hour. Try again later.',
+		)
 	await record(db, actor, order.id, 'contact_viewed')
 	return {
 		ok: true,
 		data: {
-			phone: order.contactPhone.slice(0, 40),
-			email: order.contactEmail ? order.contactEmail.slice(0, 320) : null,
+			phone: clip(order.contactPhone, 40),
+			email: clip(order.contactEmail, 320),
 		},
 	}
 }
