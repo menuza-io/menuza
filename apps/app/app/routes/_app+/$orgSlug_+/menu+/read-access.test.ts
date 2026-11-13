@@ -75,6 +75,12 @@ vi.mock('#app/utils/menu/drops.server.ts', () => ({
 vi.mock('#app/utils/sites/kv-cache.server.ts', () => ({
 	purgeOrganizationSiteCache: vi.fn(),
 }))
+vi.mock('#app/utils/menu/menu-feature-access.server.ts', () => ({
+	getMenuHistoryEnabled: vi.fn().mockResolvedValue(false),
+	getMenuBulkEditEnabled: vi.fn().mockResolvedValue(false),
+	requireMenuHistoryAccess: mocks.requirePermission,
+	requireMenuBulkEditAccess: mocks.requirePermission,
+}))
 vi.mock('#app/components/menu/category-form.tsx', () => ({
 	CategoryForm: () => null,
 }))
@@ -92,6 +98,12 @@ vi.mock('#app/components/menu/option-form.tsx', () => ({
 }))
 vi.mock('#app/components/menu/drop-wizard/drop-form.tsx', () => ({
 	DropForm: () => null,
+}))
+vi.mock('#app/components/menu/menu-duplicate-trigger.tsx', () => ({
+	MenuDuplicateTrigger: () => null,
+}))
+vi.mock('@repo/common/location-availability', () => ({
+	ORDERING_PAUSE_DURATIONS: ['30m', '1h', 'rest_of_day'],
 }))
 
 const MENU_LOADERS: Array<[string, LoaderFunction]> = [

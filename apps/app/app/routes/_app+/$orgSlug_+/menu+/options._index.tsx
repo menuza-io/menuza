@@ -15,6 +15,7 @@ import {
 	inArray,
 	OrganizationMenuOption,
 	OrganizationMediaAsset,
+	OrganizationLocation,
 } from '@repo/database'
 import {
 	AlertDialog,
@@ -27,6 +28,7 @@ import {
 } from '@repo/ui/alert-dialog'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
+import { Checkbox } from '@repo/ui/checkbox'
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -53,16 +55,25 @@ import {
 	Link,
 	useFetcher,
 	useLoaderData,
+	useRevalidator,
 } from 'react-router'
 import { z } from 'zod'
 import { EmptyState } from '#app/components/empty-state.tsx'
 import { MenuDeleteEffects } from '#app/components/menu/delete-effects.tsx'
 import { useMenuListFilters } from '#app/components/menu/menu-list-filters.tsx'
+import { MenuBulkBar } from '#app/components/menu/menu-bulk-bar.tsx'
+import { MenuBulkEditSheet } from '#app/components/menu/menu-bulk-edit-sheet.tsx'
+import { useMenuListSelection } from '#app/components/menu/use-menu-list-selection.ts'
 import { MenuStatusBadge } from '#app/components/menu/menu-status-badge.tsx'
 import {
 	requireMenuRead,
 	requireMenuWrite,
 } from '#app/utils/menu/access.server.ts'
+import { currencyExponentFor } from '#app/utils/menu/bulk-apply.server.ts'
+import {
+	getMenuBulkEditEnabled,
+	getMenuHistoryEnabled,
+} from '#app/utils/menu/menu-feature-access.server.ts'
 import { deleteMenuEntityReferences } from '#app/utils/menu/cleanup.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
@@ -162,11 +173,26 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		id: true,
 		slug: true,
 		siteDefaultLocale: true,
+		currency: true,
 	})
 
 	await requireMenuRead(request, organization.id)
+	const [menuBulkEditEnabled, menuHistoryEnabled] = await Promise.all([
+		getMenuBulkEditEnabled(organization.id),
+		getMenuHistoryEnabled(organization.id),
+	])
 
 	const defaultLocale = organization.siteDefaultLocale ?? 'en'
+	const bulkLocations = menuBulkEditEnabled
+		? await db
+				.select({
+					id: OrganizationLocation.id,
+					name: OrganizationLocation.name,
+				})
+				.from(OrganizationLocation)
+				.where(eq(OrganizationLocation.organizationId, organization.id))
+				.orderBy(OrganizationLocation.name)
+		: []
 	// 1. Fetch options with modifier group assignments
 	const options = await db.query.OrganizationMenuOption.findMany({
 		where: eq(OrganizationMenuOption.organizationId, organization.id),
@@ -247,16 +273,33 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	return {
 		orgSlug: organization.slug,
 		defaultLocale,
+		menuBulkEditEnabled,
+		menuHistoryEnabled,
+		currencyExponent: currencyExponentFor(organization.currency ?? 'USD'),
+		bulkLocations: bulkLocations.map((row) => ({
+			id: row.id,
+			label: row.name,
+		})),
 		options: enrichedOptions,
 		totalCount: options.length,
 	}
 }
 
 export default function OptionsIndexRoute() {
-	const { orgSlug, defaultLocale, options, totalCount } =
-		useLoaderData<typeof loader>()
+	const {
+		orgSlug,
+		defaultLocale,
+		options,
+		totalCount,
+		menuBulkEditEnabled,
+		menuHistoryEnabled,
+		currencyExponent,
+		bulkLocations,
+	} = useLoaderData<typeof loader>()
 	const { _ } = useLingui()
 	const fetcher = useFetcher()
+	const revalidator = useRevalidator()
+	const [bulkOpen, setBulkOpen] = useState(false)
 
 	const [deleteOptionId, setDeleteOptionId] = useState<string | null>(null)
 	const getFieldValue = useCallback(
@@ -292,6 +335,31 @@ export default function OptionsIndexRoute() {
 		setFilterQuery,
 	} = useMenuListFilters(options, OPTION_FILTER_FIELDS, getFieldValue)
 	const filteredOptionsCount = filteredOptions.length
+
+	const {
+		selectedIds,
+		toggle,
+		selectAllFiltered,
+		clearSelection,
+		allFilteredSelected,
+		hasSelection,
+	} = useMenuListSelection(filteredOptions)
+
+	const undoBulkSnapshot = useCallback(
+		async (snapshotId: string) => {
+			if (!menuHistoryEnabled) return
+			await fetch(`/${orgSlug}/menu/history`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+				body: new URLSearchParams({
+					intent: 'restore',
+					snapshotId,
+				}),
+			})
+			revalidator.revalidate()
+		},
+		[menuHistoryEnabled, orgSlug, revalidator],
+	)
 
 	const confirmDelete = () => {
 		if (!deleteOptionId) return
@@ -357,6 +425,13 @@ export default function OptionsIndexRoute() {
 					<Table variant="card">
 						<TableHeader>
 							<TableRow>
+								{menuBulkEditEnabled ? (
+									<TableHead className="w-10">
+										<span className="sr-only">
+											<Trans>Select</Trans>
+										</span>
+									</TableHead>
+								) : null}
 								<TableHead>
 									<Trans>Option</Trans>
 								</TableHead>
@@ -387,6 +462,19 @@ export default function OptionsIndexRoute() {
 
 								return (
 									<TableRow key={option.id}>
+										{menuBulkEditEnabled ? (
+											<TableCell className="w-10">
+												<Checkbox
+													checked={selectedIds.includes(option.id)}
+													onCheckedChange={(value) =>
+														toggle(option.id, value === true)
+													}
+													aria-label={_(t`Select {name}`, {
+														name: displayName,
+													})}
+												/>
+											</TableCell>
+										) : null}
 										{/* Option with Image & Name */}
 										<TableCell>
 											<div className="flex items-center gap-3">
@@ -606,8 +694,50 @@ export default function OptionsIndexRoute() {
 							</TableRow>
 						</TableFooter>
 					</Table>
+					{menuBulkEditEnabled ? (
+						<MenuBulkBar
+							selectedCount={selectedIds.length}
+							allFilteredSelected={allFilteredSelected}
+							onToggleSelectAll={(checked) =>
+								checked ? selectAllFiltered() : clearSelection()
+							}
+							onBulkEdit={() => setBulkOpen(true)}
+							onClear={clearSelection}
+						/>
+					) : null}
 				</Frame>
 			)}
+
+			{menuBulkEditEnabled ? (
+				<MenuBulkEditSheet
+					orgSlug={orgSlug}
+					open={bulkOpen && hasSelection}
+					onOpenChange={(open) => {
+						setBulkOpen(open)
+						if (!open) clearSelection()
+					}}
+					targetType="option"
+					selectedIds={selectedIds}
+					defaultLocale={defaultLocale}
+					currencyExponent={currencyExponent}
+					locations={bulkLocations}
+					rows={filteredOptions
+						.filter((row) => selectedIds.includes(row.id))
+						.map((row) => ({
+							id: row.id,
+							displayName: getLocalizedMenuValue(
+								row.displayName,
+								defaultLocale,
+								defaultLocale,
+							),
+							price: row.price,
+							updatedAt: row.updatedAt.toISOString(),
+						}))}
+					onUndoSnapshot={
+						menuHistoryEnabled ? (snapshotId) => void undoBulkSnapshot(snapshotId) : undefined
+					}
+				/>
+			) : null}
 
 			{/* Delete Confirmation Dialog */}
 			<AlertDialog

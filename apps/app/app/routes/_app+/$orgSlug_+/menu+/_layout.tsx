@@ -5,18 +5,29 @@ import { WorkspacePage, WorkspaceTabBar } from '@repo/ui/workspace'
 import {
 	type LoaderFunctionArgs,
 	Outlet,
+	useLoaderData,
 	useLocation,
 	useParams,
 } from 'react-router'
 import { requireMenuRead } from '#app/utils/menu/access.server.ts'
+import {
+	getMenuBulkEditEnabled,
+	getMenuHistoryEnabled,
+} from '#app/utils/menu/menu-feature-access.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
+
+export const MENU_LAYOUT_ROUTE_ID = 'routes/_app+/$orgSlug_+/menu+/_layout'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const organization = await requireUserOrganization(request, params.orgSlug, {
 		id: true,
 	})
 	await requireMenuRead(request, organization.id)
-	return null
+	const [menuHistoryEnabled, menuBulkEditEnabled] = await Promise.all([
+		getMenuHistoryEnabled(organization.id),
+		getMenuBulkEditEnabled(organization.id),
+	])
+	return { menuHistoryEnabled, menuBulkEditEnabled }
 }
 
 export default function MenuLayout() {
@@ -24,6 +35,7 @@ export default function MenuLayout() {
 	const location = useLocation()
 	const params = useParams()
 	const orgSlug = params.orgSlug
+	const { menuHistoryEnabled } = useLoaderData<typeof loader>()
 
 	const tabs = [
 		{
@@ -76,6 +88,17 @@ export default function MenuLayout() {
 				location.pathname === `/${orgSlug}/menu/drops/` ||
 				location.pathname.startsWith(`/${orgSlug}/menu/drops/`),
 		},
+		...(menuHistoryEnabled
+			? [
+					{
+						label: _(t`History`),
+						href: `/${orgSlug}/menu/history`,
+						isActive:
+							location.pathname === `/${orgSlug}/menu/history` ||
+							location.pathname.startsWith(`/${orgSlug}/menu/history/`),
+					},
+				]
+			: []),
 	]
 
 	// Create and Edit views render full-page Shopify-style chrome

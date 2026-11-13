@@ -582,6 +582,13 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					headers: { Authorization: `Bearer ${mockInternalToken}` },
 				}),
 			)
+			expect(fetchMock).toHaveBeenCalledWith(
+				'https://app.example.com/resources/jobs/menu-snapshot-prune',
+				expect.objectContaining({
+					method: 'POST',
+					headers: { Authorization: `Bearer ${mockInternalToken}` },
+				}),
+			)
 		})
 
 		it('runs MCP token cleanup, job postings expiry and the seat reconcile from the shared 0 3 trigger', async () => {

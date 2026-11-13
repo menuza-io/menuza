@@ -7,7 +7,7 @@ import {
 	DEFAULT_DELIVERY_ZONE,
 } from '@repo/common/location-types'
 import { redirectWithToast } from '@repo/common/toast'
-import { and, db, eq, ne, OrganizationLocation } from '@repo/database'
+import { and, asc, db, eq, ne, OrganizationLocation } from '@repo/database'
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -36,6 +36,7 @@ import {
 	useLoaderData,
 } from 'react-router'
 import { z } from 'zod'
+import { CopyLocationOverridesDialog } from '#app/components/menu/copy-location-overrides-dialog.tsx'
 import {
 	type InitialLocationData,
 	LocationForm,
@@ -178,10 +179,20 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		'enabled',
 	)
 
+	const allLocations = await db
+		.select({
+			id: OrganizationLocation.id,
+			name: OrganizationLocation.name,
+		})
+		.from(OrganizationLocation)
+		.where(eq(OrganizationLocation.organizationId, organization.id))
+		.orderBy(asc(OrganizationLocation.name))
+
 	return {
 		organization,
 		location,
 		reservationsEnabled,
+		allLocations,
 	}
 }
 
@@ -350,13 +361,15 @@ export async function action({ request, params }: ActionFunctionArgs) {
 }
 
 export default function EditLocationRoute() {
-	const { organization, location, reservationsEnabled } =
+	const { organization, location, reservationsEnabled, allLocations } =
 		useLoaderData<typeof loader>()
 	const deleteFetcher = useFetcher<{
 		error?: string
 		futureReservations?: number
 	}>()
 	const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
+	const [copyOverridesOpen, setCopyOverridesOpen] = useState(false)
+	const canCopyMenuOverrides = allLocations.length > 1 && location.id
 
 	const handleConfirmDelete = () => {
 		setConfirmDeleteOpen(false)
@@ -450,6 +463,39 @@ export default function EditLocationRoute() {
 							({location.timezone ?? 'America/New_York'})
 						</p>
 					</CardContent>
+				</Card>
+			) : null}
+
+			{canCopyMenuOverrides ? (
+				<Card>
+					<CardHeader className="flex flex-row flex-wrap items-center justify-between gap-4">
+						<div>
+							<CardTitle className="text-base">
+								<Trans>Menu location overrides</Trans>
+							</CardTitle>
+							<CardDescription>
+								<Trans>
+									Copy this location&apos;s menu prices and availability
+									overrides to another location.
+								</Trans>
+							</CardDescription>
+						</div>
+						<Button
+							type="button"
+							variant="outline"
+							onClick={() => setCopyOverridesOpen(true)}
+						>
+							<Icon name="copy" className="size-4" />
+							<Trans>Copy overrides</Trans>
+						</Button>
+					</CardHeader>
+					<CopyLocationOverridesDialog
+						orgSlug={organization.slug}
+						open={copyOverridesOpen}
+						onOpenChange={setCopyOverridesOpen}
+						sourceLocationId={location.id}
+						locations={allLocations}
+					/>
 				</Card>
 			) : null}
 

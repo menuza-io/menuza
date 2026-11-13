@@ -5,7 +5,17 @@ import {
 	getLocalizedMenuValue,
 	parseMenuVariations,
 } from '@repo/common/menu-types'
-import { db, eq, asc, desc, and, OrganizationMenuItem } from '@repo/database'
+import {
+	db,
+	eq,
+	asc,
+	desc,
+	and,
+	OrganizationMenuItem,
+	OrganizationMenuCategory,
+	OrganizationMenuModifierGroup,
+	OrganizationLocation,
+} from '@repo/database'
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -17,6 +27,7 @@ import {
 } from '@repo/ui/alert-dialog'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
+import { Checkbox } from '@repo/ui/checkbox'
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -43,24 +54,37 @@ import {
 	Link,
 	useFetcher,
 	useLoaderData,
+	useRevalidator,
 } from 'react-router'
 import { z } from 'zod'
 import { EmptyState } from '#app/components/empty-state.tsx'
-import { MenuDeleteEffects } from '#app/components/menu/delete-effects.tsx'
 import {
 	FoodCostCell,
 	FoodCostFooterCell,
 	FoodCostHead,
 	FoodCostProvider,
 } from '#app/components/inventory/food-cost-column.tsx'
+import { MenuDeleteEffects } from '#app/components/menu/delete-effects.tsx'
+import { MenuBulkBar } from '#app/components/menu/menu-bulk-bar.tsx'
+import { MenuBulkEditSheet } from '#app/components/menu/menu-bulk-edit-sheet.tsx'
+import {
+	MenuDuplicateDialog,
+	type MenuDuplicateEntity,
+} from '#app/components/menu/menu-duplicate-dialog.tsx'
 import { MenuHealthFilterNotice } from '#app/components/menu/menu-health-card.tsx'
 import { useMenuListFilters } from '#app/components/menu/menu-list-filters.tsx'
 import { MenuStatusBadge } from '#app/components/menu/menu-status-badge.tsx'
+import { useMenuListSelection } from '#app/components/menu/use-menu-list-selection.ts'
 import {
 	requireMenuRead,
 	requireMenuWrite,
 } from '#app/utils/menu/access.server.ts'
+import { currencyExponentFor } from '#app/utils/menu/bulk-apply.server.ts'
 import { deleteMenuEntityReferences } from '#app/utils/menu/cleanup.server.ts'
+import {
+	getMenuBulkEditEnabled,
+	getMenuHistoryEnabled,
+} from '#app/utils/menu/menu-feature-access.server.ts'
 import { computeMenuHealthFor } from '#app/utils/menu/menu-health.server.ts'
 import {
 	MENU_HEALTH_CATEGORY_CHECKS,
@@ -168,11 +192,46 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		dataRegion: true,
 		siteDefaultLocale: true,
 		siteLocales: true,
+		currency: true,
 	})
 
 	await requireMenuRead(request, organization.id)
+	const [menuBulkEditEnabled, menuHistoryEnabled] = await Promise.all([
+		getMenuBulkEditEnabled(organization.id),
+		getMenuHistoryEnabled(organization.id),
+	])
 
 	const defaultLocale = organization.siteDefaultLocale ?? 'en'
+	const bulkCatalogPromise = menuBulkEditEnabled
+		? Promise.all([
+				db
+					.select({
+						id: OrganizationLocation.id,
+						name: OrganizationLocation.name,
+					})
+					.from(OrganizationLocation)
+					.where(eq(OrganizationLocation.organizationId, organization.id))
+					.orderBy(OrganizationLocation.name),
+				db
+					.select({
+						id: OrganizationMenuCategory.id,
+						displayName: OrganizationMenuCategory.displayName,
+					})
+					.from(OrganizationMenuCategory)
+					.where(eq(OrganizationMenuCategory.organizationId, organization.id))
+					.orderBy(asc(OrganizationMenuCategory.position)),
+				db
+					.select({
+						id: OrganizationMenuModifierGroup.id,
+						name: OrganizationMenuModifierGroup.name,
+					})
+					.from(OrganizationMenuModifierGroup)
+					.where(
+						eq(OrganizationMenuModifierGroup.organizationId, organization.id),
+					)
+					.orderBy(asc(OrganizationMenuModifierGroup.position)),
+			])
+		: null
 	const items = await db.query.OrganizationMenuItem.findMany({
 		where: eq(OrganizationMenuItem.organizationId, organization.id),
 		with: {
@@ -211,6 +270,11 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 				}
 			: null
 
+	const bulkCatalog = bulkCatalogPromise
+		? await bulkCatalogPromise
+		: [[], [], []]
+	const [bulkLocations, bulkCategories, bulkModifierGroups] = bulkCatalog
+
 	return {
 		organization: {
 			id: organization.id,
@@ -219,6 +283,21 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		},
 		defaultLocale,
 		healthFilter,
+		menuBulkEditEnabled,
+		menuHistoryEnabled,
+		currencyExponent: currencyExponentFor(organization.currency ?? 'USD'),
+		bulkLocations: bulkLocations.map((row) => ({
+			id: row.id,
+			label: row.name,
+		})),
+		bulkCategories: bulkCategories.map((row) => ({
+			id: row.id,
+			label: getLocalizedMenuValue(row.displayName, defaultLocale, defaultLocale),
+		})),
+		bulkModifierGroups: bulkModifierGroups.map((row) => ({
+			id: row.id,
+			label: getLocalizedMenuValue(row.name, defaultLocale, defaultLocale),
+		})),
 		items: items.map((i) => {
 			let allergens: string[] = []
 			try {
@@ -276,9 +355,20 @@ function ItemsIndexContent() {
 		defaultLocale,
 		items: allItems,
 		healthFilter,
+		menuBulkEditEnabled,
+		menuHistoryEnabled,
+		currencyExponent,
+		bulkLocations,
+		bulkCategories,
+		bulkModifierGroups,
 	} = useLoaderData<typeof loader>()
 	const { _ } = useLingui()
 	const deleteFetcher = useFetcher()
+	const revalidator = useRevalidator()
+	const [bulkOpen, setBulkOpen] = useState(false)
+	const [duplicateEntity, setDuplicateEntity] = useState<MenuDuplicateEntity | null>(
+		null,
+	)
 	const items = useMemo(() => {
 		if (!healthFilter) return allItems
 		const ids = new Set(healthFilter.itemIds)
@@ -318,6 +408,31 @@ function ItemsIndexContent() {
 		hasFilters,
 		setFilterQuery,
 	} = useMenuListFilters(items, ITEM_FILTER_FIELDS, getFieldValue)
+
+	const {
+		selectedIds,
+		toggle,
+		selectAllFiltered,
+		clearSelection,
+		allFilteredSelected,
+		hasSelection,
+	} = useMenuListSelection(filteredItems)
+
+	const undoBulkSnapshot = useCallback(
+		async (snapshotId: string) => {
+			if (!menuHistoryEnabled) return
+			await fetch(`/${organization.slug}/menu/history`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+				body: new URLSearchParams({
+					intent: 'restore',
+					snapshotId,
+				}),
+			})
+			void revalidator.revalidate()
+		},
+		[menuHistoryEnabled, organization.slug, revalidator],
+	)
 
 	return (
 		<div className="space-y-8">
@@ -379,6 +494,13 @@ function ItemsIndexContent() {
 							<Table variant="card">
 								<TableHeader>
 									<TableRow>
+										{menuBulkEditEnabled ? (
+											<TableHead className="w-10">
+												<span className="sr-only">
+													<Trans>Select</Trans>
+												</span>
+											</TableHead>
+										) : null}
 										<TableHead>
 											<Trans>Item</Trans>
 										</TableHead>
@@ -415,6 +537,19 @@ function ItemsIndexContent() {
 
 										return (
 											<TableRow key={item.id}>
+												{menuBulkEditEnabled ? (
+													<TableCell className="w-10">
+														<Checkbox
+															checked={selectedIds.includes(item.id)}
+															onCheckedChange={(value) =>
+																toggle(item.id, value === true)
+															}
+															aria-label={_(t`Select {name}`, {
+																name: itemTitle,
+															})}
+														/>
+													</TableCell>
+												) : null}
 												<TableCell className="max-w-[200px] sm:max-w-none">
 													<div className="flex min-w-0 items-center gap-3">
 														<div className="bg-muted flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-md border">
@@ -556,6 +691,17 @@ function ItemsIndexContent() {
 																}
 															/>
 															<DropdownMenuItem
+																onClick={() =>
+																	setDuplicateEntity({
+																		entityType: 'item',
+																		entityId: item.id,
+																	})
+																}
+															>
+																<Icon name="copy" className="mr-2 size-4" />
+																<Trans>Duplicate</Trans>
+															</DropdownMenuItem>
+															<DropdownMenuItem
 																className="text-destructive focus:text-destructive"
 																onClick={() => setDeleteItemId(item.id)}
 															>
@@ -583,10 +729,61 @@ function ItemsIndexContent() {
 									</TableRow>
 								</TableFooter>
 							</Table>
+							{menuBulkEditEnabled ? (
+								<MenuBulkBar
+									selectedCount={selectedIds.length}
+									allFilteredSelected={allFilteredSelected}
+									onToggleSelectAll={(checked) =>
+										checked ? selectAllFiltered() : clearSelection()
+									}
+									onBulkEdit={() => setBulkOpen(true)}
+									onClear={clearSelection}
+								/>
+							) : null}
 						</Frame>
 					)}
 				</div>
 			)}
+
+			{menuBulkEditEnabled ? (
+				<MenuBulkEditSheet
+					orgSlug={organization.slug}
+					open={bulkOpen && hasSelection}
+					onOpenChange={(open) => {
+						setBulkOpen(open)
+						if (!open) clearSelection()
+					}}
+					targetType="item"
+					selectedIds={selectedIds}
+					defaultLocale={defaultLocale}
+					currencyExponent={currencyExponent}
+					locations={bulkLocations}
+					categories={bulkCategories}
+					modifierGroups={bulkModifierGroups}
+					rows={filteredItems
+						.filter((row) => selectedIds.includes(row.id))
+						.map((row) => ({
+							id: row.id,
+							displayName: getLocalizedMenuValue(
+								row.displayName,
+								defaultLocale,
+								defaultLocale,
+							),
+							price: row.price,
+							updatedAt: row.updatedAt,
+						}))}
+					onUndoSnapshot={
+						menuHistoryEnabled ? (snapshotId) => void undoBulkSnapshot(snapshotId) : undefined
+					}
+				/>
+			) : null}
+
+			<MenuDuplicateDialog
+				orgSlug={organization.slug}
+				open={Boolean(duplicateEntity)}
+				onOpenChange={(open) => !open && setDuplicateEntity(null)}
+				entity={duplicateEntity}
+			/>
 
 			{/* Delete confirmation dialog */}
 			<AlertDialog

@@ -53,6 +53,10 @@ import {
 import { z } from 'zod'
 import { EmptyState } from '#app/components/empty-state.tsx'
 import { MenuDeleteEffects } from '#app/components/menu/delete-effects.tsx'
+import {
+	MenuDuplicateDialog,
+	type MenuDuplicateEntity,
+} from '#app/components/menu/menu-duplicate-dialog.tsx'
 import { useMenuListFilters } from '#app/components/menu/menu-list-filters.tsx'
 import { MenuStatusBadge } from '#app/components/menu/menu-status-badge.tsx'
 import {
@@ -208,6 +212,9 @@ export default function MenusIndexRoute() {
 	const deleteFetcher = useFetcher<{ success?: boolean; error?: string }>()
 	const [deleteMenuId, setDeleteMenuId] = useState<string | null>(null)
 	const [deleteError, setDeleteError] = useState<string | null>(null)
+	const [duplicateEntity, setDuplicateEntity] = useState<MenuDuplicateEntity | null>(
+		null,
+	)
 
 	useEffect(() => {
 		if (deleteFetcher.state !== 'idle' || !deleteFetcher.data) return
@@ -407,6 +414,17 @@ export default function MenusIndexRoute() {
 																}
 															/>
 															<DropdownMenuItem
+																onClick={() =>
+																	setDuplicateEntity({
+																		entityType: 'menu',
+																		entityId: menu.id,
+																	})
+																}
+															>
+																<Icon name="copy" className="mr-2 size-4" />
+																<Trans>Duplicate</Trans>
+															</DropdownMenuItem>
+															<DropdownMenuItem
 																className="text-destructive focus:text-destructive"
 																onClick={() => {
 																	setDeleteError(null)
@@ -441,6 +459,13 @@ export default function MenusIndexRoute() {
 					)}
 				</div>
 			)}
+
+			<MenuDuplicateDialog
+				orgSlug={organization.slug}
+				open={Boolean(duplicateEntity)}
+				onOpenChange={(open) => !open && setDuplicateEntity(null)}
+				entity={duplicateEntity}
+			/>
 
 			{/* Delete confirmation dialog */}
 			<AlertDialog

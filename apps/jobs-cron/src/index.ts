@@ -20,7 +20,10 @@ export interface Env {
 // The Workers free plan allows five cron triggers per Worker, so daily jobs
 // share a trigger instead of each getting its own.
 export const JOB_ROUTES: Record<string, readonly string[]> = {
-	'0 2 * * *': ['/resources/jobs/audit-log-archival'],
+	'0 2 * * *': [
+		'/resources/jobs/audit-log-archival',
+		'/resources/jobs/menu-snapshot-prune',
+	],
 	'0 3 * * *': [
 		'/resources/jobs/mcp-token-cleanup',
 		'/resources/jobs/job-postings-expiry',

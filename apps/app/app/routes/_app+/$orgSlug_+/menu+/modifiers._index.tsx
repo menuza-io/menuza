@@ -54,6 +54,10 @@ import {
 import { z } from 'zod'
 import { EmptyState } from '#app/components/empty-state.tsx'
 import { MenuDeleteEffects } from '#app/components/menu/delete-effects.tsx'
+import {
+	MenuDuplicateDialog,
+	type MenuDuplicateEntity,
+} from '#app/components/menu/menu-duplicate-dialog.tsx'
 import { useMenuListFilters } from '#app/components/menu/menu-list-filters.tsx'
 import { MenuStatusBadge } from '#app/components/menu/menu-status-badge.tsx'
 import {
@@ -258,6 +262,9 @@ export default function ModifiersIndexRoute() {
 	const { _ } = useLingui()
 	const deleteFetcher = useFetcher()
 	const [deleteGroupId, setDeleteGroupId] = useState<string | null>(null)
+	const [duplicateEntity, setDuplicateEntity] = useState<MenuDuplicateEntity | null>(
+		null,
+	)
 	const getFieldValue = useCallback(
 		(group: (typeof groups)[number], field: string) => {
 			switch (field) {
@@ -477,6 +484,17 @@ export default function ModifiersIndexRoute() {
 																}
 															/>
 															<DropdownMenuItem
+																onClick={() =>
+																	setDuplicateEntity({
+																		entityType: 'modifier_group',
+																		entityId: group.id,
+																	})
+																}
+															>
+																<Icon name="copy" className="mr-2 size-4" />
+																<Trans>Duplicate</Trans>
+															</DropdownMenuItem>
+															<DropdownMenuItem
 																className="text-destructive focus:text-destructive"
 																onClick={() => setDeleteGroupId(group.id)}
 															>
@@ -508,6 +526,13 @@ export default function ModifiersIndexRoute() {
 					)}
 				</div>
 			)}
+
+			<MenuDuplicateDialog
+				orgSlug={organization.slug}
+				open={Boolean(duplicateEntity)}
+				onOpenChange={(open) => !open && setDuplicateEntity(null)}
+				entity={duplicateEntity}
+			/>
 
 			{/* Delete confirmation dialog */}
 			<AlertDialog

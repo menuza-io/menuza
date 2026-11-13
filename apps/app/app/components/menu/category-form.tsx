@@ -47,6 +47,7 @@ import {
 } from './location-overrides-card.tsx'
 import { MenuAvailabilityCard } from './menu-availability-card.tsx'
 import { MenuFormHeader } from './menu-form-header.tsx'
+import { MenuDuplicateTrigger } from './menu-duplicate-trigger.tsx'
 
 export interface CategoryFormData {
 	parentId?: string | null
@@ -286,6 +287,15 @@ function CategoryFormBody({
 						backLabel="Back to categories"
 						saveButtonText="Save Category"
 						isSubmitting={isSubmitting}
+						secondaryAction={
+							categoryId ? (
+								<MenuDuplicateTrigger
+									orgSlug={orgSlug}
+									entity={{ entityType: 'category', entityId: categoryId }}
+									variant="outline"
+								/>
+							) : null
+						}
 					/>
 
 					{/* 2-Column Shopify Layout */}
