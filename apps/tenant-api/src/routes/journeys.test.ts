@@ -849,7 +849,10 @@ describe('Journey API Routes (System & Operator)', () => {
 				expect(runsRes.status).toBe(200)
 				const runsJson = await runsRes.json()
 				expect(runsJson.runs).toHaveLength(1)
-				expect(runsJson.runs[0].customerName).toBe('Run Observer')
+				// Customer id only: the Marketing browser token reads this route.
+				expect(runsJson.runs[0].customerId).toBeTruthy()
+				expect(JSON.stringify(runsJson)).not.toContain('Run Observer')
+				expect(JSON.stringify(runsJson)).not.toContain('observer@example.com')
 
 				// 2. Get timeline
 				const timelineRes = await app.request(
@@ -862,6 +865,10 @@ describe('Journey API Routes (System & Operator)', () => {
 				const timelineJson = await timelineRes.json()
 				expect(timelineJson.success).toBe(true)
 				expect(timelineJson.run.id).toBe(run.id)
+				expect(JSON.stringify(timelineJson)).not.toContain('Run Observer')
+				expect(JSON.stringify(timelineJson)).not.toContain(
+					'observer@example.com',
+				)
 			})
 
 			it('triggers test journey run for customer', async () => {

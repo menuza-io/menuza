@@ -6,10 +6,7 @@ import {
 } from '#app/utils/organization/permissions.server.ts'
 import { isReservationsFeatureEnabled } from '#app/utils/reservations/access.server.ts'
 import * as tenantApiServer from '#app/utils/tenant-api.server.ts'
-import {
-	loader as runsLoader,
-	action as runsAction,
-} from './automations.$journeyId.runs.tsx'
+import { loader as runsLoader } from './automations.$journeyId.runs.tsx'
 import {
 	loader as detailLoader,
 	action as detailAction,
@@ -355,38 +352,22 @@ describe('Marketing Journeys Routes Loaders & Actions', () => {
 	})
 
 	describe('automations.$journeyId.runs.tsx', () => {
-		it('loader fetches runs history and journey details', async () => {
-			mockFetchTenant
-				.mockResolvedValueOnce(
-					new Response(
-						JSON.stringify({
-							journey: {
-								id: 'j1',
-								name: 'Welcome Journey',
-								status: 'active',
-								triggerType: 'phone_verified',
-							},
-						}),
-						{ status: 200 },
-					),
-				)
-				.mockResolvedValueOnce(
-					new Response(
-						JSON.stringify({
-							runs: [
-								{
-									id: 'run_1',
-									journeyId: 'j1',
-									customerId: 'cust_1',
-									status: 'completed',
-									startedAt: '2026-08-24T00:00:00Z',
-									completedAt: '2026-08-24T00:01:00Z',
-								},
-							],
-						}),
-						{ status: 200 },
-					),
-				)
+		// Runs and timelines name customers and are read by the browser; the
+		// server reads only the journey definition and mints a Marketing token.
+		it('loader returns the journey and a Marketing token, never runs', async () => {
+			mockFetchTenant.mockResolvedValueOnce(
+				new Response(
+					JSON.stringify({
+						journey: {
+							id: 'j1',
+							name: 'Welcome Journey',
+							status: 'active',
+							triggerType: 'phone_verified',
+						},
+					}),
+					{ status: 200 },
+				),
+			)
 
 			const request = new Request(
 				'http://localhost:3001/test-org/marketing/journeys/j1/runs',
@@ -398,51 +379,33 @@ describe('Marketing Journeys Routes Loaders & Actions', () => {
 			} as any)
 
 			expect(result.journey.name).toBe('Welcome Journey')
-			expect(result.runs).toHaveLength(1)
-			expect(result.runs[0]!.id).toBe('run_1')
-			expect(result.runs[0]!.status).toBe('completed')
+			expect(result).toMatchObject({
+				jwt: 'mock-jwt-token',
+				tenantApiUrl: 'http://localhost:3007',
+			})
+			expect(result).not.toHaveProperty('runs')
+			expect(tenantApiServer.getOperatorTenantClient).toHaveBeenCalledWith(
+				request,
+				'test-org',
+				{ area: 'marketing' },
+			)
+			expect(mockFetchTenant).toHaveBeenCalledTimes(1)
+			expect(mockFetchTenant).toHaveBeenCalledWith('/operator/journeys/j1')
 		})
 
-		it('action loads execution timeline for a specific run', async () => {
+		it('loader answers 404 when the journey is missing', async () => {
 			mockFetchTenant.mockResolvedValueOnce(
-				new Response(
-					JSON.stringify({
-						timeline: [
-							{
-								id: 'step_1',
-								nodeId: 'node_email_1',
-								nodeType: 'action_email',
-								status: 'completed',
-								attempt: 1,
-							},
-						],
-					}),
-					{ status: 200 },
-				),
+				new Response(JSON.stringify({ error: 'nope' }), { status: 404 }),
 			)
-
-			const formData = new FormData()
-			formData.set('runId', 'run_1')
-
-			const request = new Request(
-				'http://localhost:3001/test-org/marketing/journeys/j1/runs',
-				{
-					method: 'POST',
-					body: formData,
-				},
-			)
-
-			const result = await runsAction({
-				request,
-				params: { orgSlug: 'test-org', journeyId: 'j1' },
-				context: {},
-			} as any)
-
-			expect(mockFetchTenant).toHaveBeenCalledWith(
-				'/operator/journeys/runs/run_1',
-			)
-			expect((result as any).timeline).toHaveLength(1)
-			expect((result as any).timeline[0]!.nodeId).toBe('node_email_1')
+			await expect(
+				runsLoader({
+					request: new Request(
+						'http://localhost:3001/test-org/marketing/journeys/j1/runs',
+					),
+					params: { orgSlug: 'test-org', journeyId: 'j1' },
+					context: {},
+				} as any),
+			).rejects.toMatchObject({ status: 404 })
 		})
 	})
 	describe('reservation triggers (flag-gated)', () => {

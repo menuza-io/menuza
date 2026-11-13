@@ -24,6 +24,7 @@ import {
 } from '@repo/ui/dialog'
 import { Icon } from '@repo/ui/icon'
 import { PageHeader } from '@repo/ui/page-header'
+import { Skeleton } from '@repo/ui/skeleton'
 import {
 	Table,
 	TableBody,
@@ -32,13 +33,8 @@ import {
 	TableHeader,
 	TableRow,
 } from '@repo/ui/table'
-import { useState } from 'react'
-import {
-	Link,
-	useLoaderData,
-	type LoaderFunctionArgs,
-	type ActionFunctionArgs,
-} from 'react-router'
+import { useEffect, useState } from 'react'
+import { Link, useLoaderData, type LoaderFunctionArgs } from 'react-router'
 import { type BreadcrumbHandle } from '#app/utils/breadcrumb.ts'
 import {
 	ORG_PERMISSIONS,
@@ -53,10 +49,21 @@ export const handle: BreadcrumbHandle<Awaited<ReturnType<typeof loader>>> = {
 type JourneyStatus = 'draft' | 'active' | 'paused' | 'archived'
 type RunStatus = 'completed' | 'running' | 'failed' | 'cancelled'
 
+/**
+ * Runs and their step timelines are read by the browser from tenant-api with
+ * the Marketing token. Run records name the customer by id only; the App
+ * server never receives them (docs/tenant-data-residency.md). The server reads
+ * only the journey definition (name, status, trigger), which holds no guest
+ * data.
+ */
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const orgSlug = params.orgSlug || ''
 	const journeyId = params.journeyId || ''
-	const { orgId, fetchTenant } = await getOperatorTenantClient(request, orgSlug)
+	const { orgId, jwt, tenantApiUrl } = await getOperatorTenantClient(
+		request,
+		orgSlug,
+		{ area: 'marketing' },
+	)
 
 	await requireUserWithOrganizationPermission(
 		request,
@@ -64,31 +71,28 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		ORG_PERMISSIONS.READ_AUTOMATION_ANY,
 	)
 
-	const [journeyRes, runsRes] = await Promise.all([
-		fetchTenant(`/operator/journeys/${journeyId}`),
-		fetchTenant(`/operator/journeys/${journeyId}/runs`),
-	])
-
+	// The definition needs the server-side token: a Marketing token is refused
+	// on it.
+	const { fetchTenant } = await getOperatorTenantClient(request, orgSlug)
+	const journeyRes = await fetchTenant(
+		`/operator/journeys/${encodeURIComponent(journeyId)}`,
+	)
 	if (!journeyRes.ok) {
 		throw new Response(i18n._(t`Automation not found`), { status: 404 })
 	}
 
-	const journeyData = (await journeyRes.json()) as any
-	const runsData = runsRes.ok ? ((await runsRes.json()) as any) : { runs: [] }
-
-	const runs: JourneyRunRecord[] = (runsData.runs || []).map((r: any) => ({
-		id: r.id,
-		journeyId: r.journeyId,
-		customerId: r.customerId,
-		status: r.status,
-		startedAt: r.startedAt || r.createdAt,
-		completedAt: r.completedAt,
-		currentStepNodeId: r.currentStepNodeId,
-		errorMessage: r.errorMessage,
-		createdAt: r.createdAt,
-	}))
+	const journeyData = (await journeyRes.json()) as {
+		journey: {
+			id: string
+			name: string
+			status: string
+			triggerType: string
+		}
+	}
 
 	return {
+		jwt,
+		tenantApiUrl,
 		orgSlug,
 		journey: {
 			id: journeyData.journey.id,
@@ -96,39 +100,35 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			status: journeyData.journey.status,
 			triggerType: journeyData.journey.triggerType,
 		},
-		runs,
 	}
 }
 
-export async function action({ request, params }: ActionFunctionArgs) {
-	const orgSlug = params.orgSlug || ''
-	const { orgId, fetchTenant } = await getOperatorTenantClient(request, orgSlug)
+type RawRun = Partial<JourneyRunRecord> & {
+	id: string
+	createdAt?: string | Date
+}
 
-	await requireUserWithOrganizationPermission(
-		request,
-		orgId,
-		ORG_PERMISSIONS.READ_AUTOMATION_ANY,
-	)
-
-	const formData = await request.formData()
-	const runId = formData.get('runId')
-
-	if (typeof runId !== 'string' || !runId) {
-		return { error: i18n._(t`runId is required`) }
-	}
-
-	const res = await fetchTenant(`/operator/journeys/runs/${encodeURIComponent(runId)}`)
-	if (!res.ok) {
-		return { error: i18n._(t`Failed to load timeline`) }
-	}
-
-	const data = (await res.json()) as any
-	return { timeline: data.timeline || data.steps || [] }
+function toRunRecord(r: RawRun): JourneyRunRecord {
+	return {
+		id: r.id,
+		journeyId: r.journeyId ?? '',
+		customerId: r.customerId ?? '',
+		status: r.status ?? 'running',
+		startedAt: r.startedAt || r.createdAt || '',
+		completedAt: r.completedAt,
+		currentStepNodeId: r.currentStepNodeId,
+		errorMessage: r.errorMessage,
+		createdAt: r.createdAt ?? '',
+	} as JourneyRunRecord
 }
 
 export default function JourneyRunsRoute() {
 	const { _ } = useLingui()
-	const { orgSlug, journey, runs } = useLoaderData<typeof loader>()
+	const { jwt, tenantApiUrl, orgSlug, journey } = useLoaderData<typeof loader>()
+	const [runs, setRuns] = useState<JourneyRunRecord[]>([])
+	const [runsState, setRunsState] = useState<'loading' | 'ready' | 'failed'>(
+		'loading',
+	)
 	const [selectedRun, setSelectedRun] = useState<JourneyRunRecord | null>(null)
 	const [timeline, setTimeline] = useState<JourneyStepExecutionRecord[]>([])
 	const [loadingTimeline, setLoadingTimeline] = useState(false)
@@ -166,20 +166,52 @@ export default function JourneyRunsRoute() {
 		return _(msg`${minutes}m ${remainingSec}s`)
 	}
 
+	useEffect(() => {
+		const controller = new AbortController()
+		setRunsState('loading')
+		async function loadRuns() {
+			try {
+				const res = await fetch(
+					`${tenantApiUrl}/operator/journeys/${encodeURIComponent(journey.id)}/runs`,
+					{
+						headers: { Authorization: `Bearer ${jwt}` },
+						signal: controller.signal,
+					},
+				)
+				if (!res.ok) {
+					setRuns([])
+					setRunsState('failed')
+					return
+				}
+				const data = (await res.json()) as { runs?: RawRun[] }
+				setRuns((data.runs ?? []).map(toRunRecord))
+				setRunsState('ready')
+			} catch {
+				if (controller.signal.aborted) return
+				setRuns([])
+				setRunsState('failed')
+			}
+		}
+		void loadRuns()
+		return () => controller.abort()
+	}, [jwt, tenantApiUrl, journey.id])
+
 	const openTimeline = async (run: JourneyRunRecord) => {
 		setSelectedRun(run)
+		setTimeline([])
 		setLoadingTimeline(true)
 		try {
 			const res = await fetch(
-				`/${orgSlug}/marketing/automations/${journey.id}/runs`,
-				{
-					method: 'POST',
-					headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-					body: new URLSearchParams({ runId: run.id }),
-				},
+				`${tenantApiUrl}/operator/journeys/runs/${encodeURIComponent(run.id)}`,
+				{ headers: { Authorization: `Bearer ${jwt}` } },
 			)
-			const data = (await res.json()) as any
-			setTimeline(data.timeline || [])
+			const data = res.ok
+				? ((await res.json()) as {
+						timeline?: JourneyStepExecutionRecord[]
+						steps?: JourneyStepExecutionRecord[]
+					})
+				: {}
+			setTimeline(data.timeline || data.steps || [])
 		} catch {
 			setTimeline([])
 		} finally {
@@ -241,7 +273,17 @@ export default function JourneyRunsRoute() {
 					</CardDescription>
 				</CardHeader>
 				<CardContent>
-					{runs.length === 0 ? (
+					{runsState === 'loading' ? (
+						<div className="space-y-2" aria-busy="true">
+							{Array.from({ length: 3 }).map((_item, i) => (
+								<Skeleton key={i} className="h-10 w-full rounded-lg" />
+							))}
+						</div>
+					) : runsState === 'failed' ? (
+						<p className="text-destructive py-6 text-center text-sm">
+							{_(msg`Failed to load runs`)}
+						</p>
+					) : runs.length === 0 ? (
 						<div className="text-muted-foreground space-y-3 py-12 text-center text-sm">
 							<p>
 								{_(msg`No execution runs recorded yet for this automation.`)}

@@ -16,6 +16,7 @@ import {
 	marketingMessages,
 	customerSubscriptions,
 } from '@repo/tenant-db'
+import { verifyConsentToken } from '../lib/email-consent.ts'
 import {
 	interpolateMergeTags,
 	JOURNEY_PROCESSING_LEASE_MS,
@@ -602,6 +603,183 @@ describe('Journey Service & Regional Message Dispatching', () => {
 		})
 	})
 
+	describe('journey email unsubscribe link', () => {
+		const ENV_KEYS = ['NODE_ENV', 'TENANT_API_URL'] as const
+		let savedEnv: Record<string, string | undefined>
+
+		beforeEach(() => {
+			savedEnv = Object.fromEntries(
+				ENV_KEYS.map((key) => [key, process.env[key]]),
+			)
+			process.env.TENANT_API_URL = 'https://tenant-us.example.com'
+		})
+
+		afterEach(() => {
+			for (const key of ENV_KEYS) process.env[key] = savedEnv[key] ?? ''
+		})
+
+		async function setup(triggerType = 'manual') {
+			const db = await getTenantDb(orgId)
+			const [customer] = await db
+				.insert(customers)
+				.values({ name: 'Lina', email: 'lina@example.com' })
+				.returning()
+			const [journey] = await db
+				.insert(marketingJourneys)
+				.values({ name: 'Follow-up', triggerType, status: 'active' })
+				.returning()
+			const [run] = await db
+				.insert(journeyRuns)
+				.values({
+					journeyId: journey!.id,
+					customerId: customer!.id,
+					status: 'running',
+				})
+				.returning()
+			const step = (nodeId: string, config: Record<string, unknown>) =>
+				executeJourneyStep(orgId, {
+					orgId,
+					journeyId: journey!.id,
+					runId: run!.id,
+					customerId: customer!.id,
+					nodeId,
+					nodeType: 'action_email',
+					config,
+				})
+			return { db, customer: customer!, run: run!, step }
+		}
+
+		function lastSent() {
+			const sent = vi.mocked(sendOciEmail).mock.calls.at(-1)?.[0]
+			expect(sent).toBeDefined()
+			const url = sent!.headerFields?.['List-Unsubscribe']?.slice(1, -1)
+			expect(url).toMatch(
+				/^https:\/\/tenant-us\.example\.com\/subscriptions\/unsubscribe\?token=/,
+			)
+			return { sent: sent!, url: url! }
+		}
+
+		function tokenOf(url: string) {
+			const token = new URL(url).searchParams.get('token')!
+			return verifyConsentToken(token, 'unsubscribe')
+		}
+
+		it('a legacy email carries the link in its body, text and one-click headers', async () => {
+			const { customer, step } = await setup()
+			await consent(customer, 'email')
+			vi.mocked(sendOciEmail).mockClear()
+
+			expect(
+				await step('n1', { subject: 'News', content: 'Hello {{firstName}}' }),
+			).toMatchObject({ status: 'delivered' })
+
+			const { sent, url } = lastSent()
+			expect(sent.headerFields?.['List-Unsubscribe-Post']).toBe(
+				'List-Unsubscribe=One-Click',
+			)
+			expect(sent.html).toContain(`<a href="${url}">Unsubscribe</a>`)
+			expect(sent.text).toContain(`Unsubscribe: ${url}`)
+			expect(tokenOf(url)).toMatchObject({
+				o: orgId,
+				c: customer.id,
+				t: 'marketing',
+			})
+		})
+
+		it('a designed email gets the link inside its body', async () => {
+			const { customer, step } = await setup()
+			await consent(customer, 'email')
+			vi.mocked(sendOciEmail).mockClear()
+
+			await step('n1', {
+				subject: 'News',
+				emailFormat: 'designed',
+				bodyHtml: '<!DOCTYPE html><html><body><p>Hi</p></body></html>',
+				bodyText: 'Hi',
+				blocks: [],
+			})
+
+			const { sent, url } = lastSent()
+			expect(sent.html).toMatch(
+				new RegExp(`<a href="[^"]+">Unsubscribe</a></p></body></html>$`),
+			)
+			expect(sent.html).toContain(url)
+			expect(sent.text).toContain(`Unsubscribe: ${url}`)
+		})
+
+		it('a reservation journey opts out of the reservations topic', async () => {
+			const { db, customer, step } = await setup('reservation_booked')
+			await db.insert(customerSubscriptions).values({
+				customerId: customer.id,
+				topic: 'reservations',
+				channel: 'email',
+				source: 'reservation_booking',
+				subscribedAt: new Date(),
+				confirmedEmailHash: emailConsentHash('lina@example.com'),
+			})
+			vi.mocked(sendOciEmail).mockClear()
+
+			expect(
+				await step('n1', { subject: 'Hi', content: 'Thanks' }),
+			).toMatchObject({ status: 'delivered' })
+			expect(tokenOf(lastSent().url)).toMatchObject({ t: 'reservations' })
+		})
+
+		it('after the customer follows the link, the next email step is skipped as no_consent', async () => {
+			const { db, customer, step } = await setup()
+			await consent(customer, 'email')
+			vi.mocked(sendOciEmail).mockClear()
+			await step('n1', { subject: 'One', content: 'First' })
+			const payload = tokenOf(lastSent().url)!
+
+			// What POST /subscriptions/unsubscribe does with the token.
+			await setCustomerSubscription(db, {
+				customerId: payload.c,
+				topic: payload.t as 'marketing',
+				channel: 'email',
+				subscribed: false,
+				source: 'profile',
+			})
+			vi.mocked(sendOciEmail).mockClear()
+
+			expect(await step('n2', { subject: 'Two', content: 'Second' })).toEqual(
+				expect.objectContaining({
+					success: true,
+					status: 'skipped',
+					reason: 'no_consent',
+				}),
+			)
+			expect(sendOciEmail).not.toHaveBeenCalled()
+		})
+
+		it('skips the step as no_unsubscribe_origin when production has no TENANT_API_URL', async () => {
+			const { db, customer, step } = await setup()
+			await consent(customer, 'email')
+			process.env.NODE_ENV = 'production'
+			process.env.TENANT_API_URL = ''
+			vi.mocked(sendOciEmail).mockClear()
+
+			const result = await step('n1', { subject: 'News', content: 'Hello' })
+
+			expect(result).toMatchObject({
+				success: true,
+				status: 'skipped',
+				reason: 'no_unsubscribe_origin',
+			})
+			expect(sendOciEmail).not.toHaveBeenCalled()
+			const row = await db
+				.select()
+				.from(journeyStepExecutions)
+				.where(eq(journeyStepExecutions.id, result.executionId!))
+				.get()
+			expect(row?.status).toBe('skipped')
+			expect(JSON.parse(String(row?.executionDetails))).toMatchObject({
+				skipReason: 'no_unsubscribe_origin',
+			})
+			expect(await db.select().from(marketingMessages).all()).toEqual([])
+		})
+	})
+
 	describe('executeJourneyStep reservation consent', () => {
 		async function setup(triggerType: 'reservation_booked' | 'manual') {
 			const db = await getTenantDb(orgId)
@@ -1146,7 +1324,14 @@ describe('Journey Service & Regional Message Dispatching', () => {
 			// 2. List runs
 			const runsRes = await listJourneyRuns(orgId, journeyId)
 			expect(runsRes.runs).toHaveLength(3)
-			expect(runsRes.runs[0]?.customerName).toBe('Samir')
+			// A Marketing browser token reads runs: customer ids, never contacts.
+			for (const listed of runsRes.runs) {
+				expect(listed.customerId).toBe(customer.id)
+				expect(listed).not.toHaveProperty('customerName')
+				expect(listed).not.toHaveProperty('customerEmail')
+				expect(listed).not.toHaveProperty('customerPhone')
+			}
+			expect(JSON.stringify(runsRes)).not.toContain('Samir')
 
 			// 3. Get run timeline
 			const timelineRes = await getJourneyRunTimeline(orgId, run1.id)
@@ -1154,6 +1339,10 @@ describe('Journey Service & Regional Message Dispatching', () => {
 			expect(timelineRes.run?.id).toBe(run1.id)
 			expect(timelineRes.steps).toHaveLength(1)
 			expect(timelineRes.steps?.[0]?.nodeId).toBe('delay-1')
+			expect(timelineRes.run).not.toHaveProperty('customerName')
+			expect(timelineRes.run).not.toHaveProperty('customerEmail')
+			expect(timelineRes.run).not.toHaveProperty('customerPhone')
+			expect(JSON.stringify(timelineRes)).not.toContain('Samir')
 		})
 
 		it('triggers a test journey run for a customer', async () => {

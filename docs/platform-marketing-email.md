@@ -194,10 +194,9 @@ endpoint must verify the token without routing tenant customer PII through the
 App or Sites control plane. Platform-operator marketing needs an equivalent
 US-control-plane preference flow.
 
-Not yet implemented (follow-ups): the unsubscribe link in journey emails
-(broadcasts have it, see Broadcast consent), per-locale email content, and AI
-tools that read or edit the journey/email design. The AI assistant is reachable
-in the automation editor but its server-side tools
+Not yet implemented (follow-ups): per-locale email content, and AI tools that
+read or edit the journey/email design. The AI assistant is reachable in the
+automation editor but its server-side tools
 (`packages/ai/src/route-handlers/chat.ts`) are still website-editor only.
 
 ## Broadcast consent
@@ -236,8 +235,16 @@ variable is unset in development or test.
 **Rollout order:** set `TENANT_API_URL` on the node (Worker `vars` of that
 environment or the dashboard; `apps/tenant-api/wrangler.jsonc` deliberately does
 not declare an empty value, which would overwrite it on deploy), then deploy.
-Without it consent emails are skipped, not the whole node. Journey emails do not
-carry the link yet.
+Without it consent emails are skipped, not the whole node.
+
+Journey (automation) email steps carry the same link, body footer and headers,
+test sends from the editor included. The topic is `reservations` for a
+reservation-triggered journey and `marketing` for every other one, so after
+unsubscribing the next email step of any such journey is skipped as
+`no_consent`. Without a trusted origin (no `TENANT_API_URL` in production) the
+step is skipped as `no_unsubscribe_origin`, before a coupon is minted, and
+nothing is sent. The editor's preview shows an "Unsubscribe" placeholder where
+the signed link goes. Journey text steps do not carry an opt-out yet.
 
 To backfill consent a business already holds (for example an existing mailing
 list), insert rows with `source = 'import'` through `setCustomerSubscription()`

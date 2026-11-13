@@ -2,7 +2,11 @@ import { randomUUID } from 'node:crypto'
 import { eq, and, desc, count } from 'drizzle-orm'
 import { ENV } from 'varlock/env'
 import { retryOnSqliteBusy } from '../lib/sqlite-retry.ts'
-import { hasDeliverableSubscription } from './marketing-audience.ts'
+import {
+	BROADCAST_TOPIC,
+	hasDeliverableSubscription,
+	hasMarketingConsent,
+} from './marketing-audience.ts'
 import { z } from 'zod'
 import {
 	getTenantDb,
@@ -24,14 +28,19 @@ import {
 	type EvaluateConditionPayload,
 	runTenantTransaction,
 } from '@repo/tenant-db'
+import { withUnsubscribeFooter } from '@repo/common/email-unsubscribe'
 import { parseMarketingOffer } from '@repo/discounts'
 import { sendSms } from '@repo/sms'
+import {
+	consentBaseUrl,
+	listUnsubscribeHeaders,
+	unsubscribeUrl,
+} from '../lib/email-consent.ts'
 import { getNodeRegion } from '../lib/region.ts'
 import { syncEnvFromProcess } from '../lib/secrets.ts'
 import { sendTenantEmail } from '../lib/tenant-email.ts'
 import { couponCodeForRecipient } from './discount-marketing-codes.ts'
 import { loyaltyMergeValues } from './loyalty-merge-values.ts'
-import { hasMarketingConsent } from './marketing-audience.ts'
 
 export const JOURNEY_PROCESSING_LEASE_MS = 5 * 60 * 1000
 export const JOURNEY_LIST_LIMIT = 100
@@ -344,8 +353,10 @@ async function skipWithoutReservationConsent(
  * Recorded as `executionDetails.skipReason` on a skipped step, so the runs view
  * can say why nothing was sent. `no_consent`: the customer has no marketing
  * consent for the step's channel (see `hasMarketingConsent`).
+ * `no_unsubscribe_origin`: an email step with no trusted origin for its
+ * unsubscribe link (`TENANT_API_URL` unset in production), so it is not sent.
  */
-export type JourneySkipReason = 'no_consent'
+export type JourneySkipReason = 'no_consent' | 'no_unsubscribe_origin'
 
 /**
  * The provider may have accepted the message (timeout, dropped connection,
@@ -662,8 +673,11 @@ export async function executeJourneyStep(
 					.get()
 			)?.triggerType
 		: undefined
+	const isReservationJourney = isReservationJourneyTrigger(
+		journeyTrigger ?? run.triggerEvent,
+	)
 	if (
-		!isReservationJourneyTrigger(journeyTrigger ?? run.triggerEvent) &&
+		!isReservationJourney &&
 		!(await hasMarketingConsent(db, customer.id, stepType))
 	) {
 		await db
@@ -686,6 +700,37 @@ export async function executeJourneyStep(
 			executionId: stepExecutionId,
 			status: 'skipped',
 			reason: 'no_consent',
+		}
+	}
+
+	// Every journey email carries a signed unsubscribe link, like a broadcast.
+	// The link's origin must be the configured one: without it the step is
+	// skipped before anything is sent or a coupon is minted. Ids only in the log.
+	const consentOrigin = stepType === 'email' ? consentBaseUrl() : null
+	if (stepType === 'email' && !consentOrigin) {
+		console.error('Journey email skipped: TENANT_API_URL is not set', {
+			orgId,
+			journeyId: payload.journeyId,
+			runId: payload.runId,
+		})
+		await db
+			.update(journeyStepExecutions)
+			.set({
+				status: 'skipped',
+				errorMessage:
+					'Skipped: no unsubscribe link could be made (TENANT_API_URL is not set)',
+				executionDetails: JSON.stringify({
+					skipReason: 'no_unsubscribe_origin' satisfies JourneySkipReason,
+					channel: stepType,
+				}),
+				completedAt: new Date(),
+			})
+			.where(eq(journeyStepExecutions.id, stepExecutionId))
+		return {
+			success: true,
+			executionId: stepExecutionId,
+			status: 'skipped',
+			reason: 'no_unsubscribe_origin',
 		}
 	}
 
@@ -807,11 +852,21 @@ export async function executeJourneyStep(
 			: interpolateMergeTags(rawHtml, customer, contextData)
 		// Designed emails already hold a full HTML document; legacy nodes get the
 		// historical <p> wrapper.
-		const html = isDesigned
+		const bodyHtml = isDesigned
 			? renderedHtml
 			: renderedHtml
 				? `<p>${renderedHtml}</p>`
 				: `<p>${text}</p>`
+		// The signed opt-out link, in the body and as List-Unsubscribe /
+		// one-click headers. Reservation journeys opt out of the `reservations`
+		// topic, every other journey of `marketing` (the broadcast topic).
+		const optOutUrl = unsubscribeUrl(consentOrigin!, {
+			orgId,
+			customerId: customer.id,
+			topic: isReservationJourney ? 'reservations' : BROADCAST_TOPIC,
+		})
+		const html = withUnsubscribeFooter(bodyHtml, optOutUrl)
+		const plainText = `${text || subject}\n\nUnsubscribe: ${optOutUrl}`
 
 		try {
 			// Stable across retries of this step: a reclaimed step keeps its
@@ -822,7 +877,8 @@ export async function executeJourneyStep(
 				toName: customer.name,
 				subject,
 				html,
-				text: text || subject,
+				text: plainText,
+				extraHeaders: listUnsubscribeHeaders(optOutUrl),
 				context: {
 					orgId,
 					journeyId: payload.journeyId,
@@ -1926,7 +1982,8 @@ export async function deleteJourney(orgId: string, journeyId: string) {
 }
 
 /**
- * Lists execution runs for a specific journey.
+ * Lists execution runs for a specific journey. A Marketing browser token reads
+ * this, so it carries the customer id only: no name, email or phone.
  */
 export async function listJourneyRuns(orgId: string, journeyId: string) {
 	const db = await getTenantDb(orgId)
@@ -1935,9 +1992,6 @@ export async function listJourneyRuns(orgId: string, journeyId: string) {
 			id: journeyRuns.id,
 			journeyId: journeyRuns.journeyId,
 			customerId: journeyRuns.customerId,
-			customerName: customers.name,
-			customerEmail: customers.email,
-			customerPhone: customers.phone,
 			workflowInstanceId: journeyRuns.workflowInstanceId,
 			status: journeyRuns.status,
 			currentNodeId: journeyRuns.currentNodeId,
@@ -1950,7 +2004,6 @@ export async function listJourneyRuns(orgId: string, journeyId: string) {
 			updatedAt: journeyRuns.updatedAt,
 		})
 		.from(journeyRuns)
-		.leftJoin(customers, eq(journeyRuns.customerId, customers.id))
 		.where(eq(journeyRuns.journeyId, journeyId))
 		.orderBy(desc(journeyRuns.startedAt))
 		.limit(JOURNEY_LIST_LIMIT)
@@ -1960,7 +2013,8 @@ export async function listJourneyRuns(orgId: string, journeyId: string) {
 }
 
 /**
- * Gets step execution timeline for a specific journey run.
+ * Gets step execution timeline for a specific journey run. Like the run list,
+ * it carries the customer id only, never a contact.
  */
 export async function getJourneyRunTimeline(orgId: string, runId: string) {
 	const db = await getTenantDb(orgId)
@@ -1969,9 +2023,6 @@ export async function getJourneyRunTimeline(orgId: string, runId: string) {
 			id: journeyRuns.id,
 			journeyId: journeyRuns.journeyId,
 			customerId: journeyRuns.customerId,
-			customerName: customers.name,
-			customerEmail: customers.email,
-			customerPhone: customers.phone,
 			workflowInstanceId: journeyRuns.workflowInstanceId,
 			status: journeyRuns.status,
 			currentNodeId: journeyRuns.currentNodeId,
@@ -1984,7 +2035,6 @@ export async function getJourneyRunTimeline(orgId: string, runId: string) {
 			updatedAt: journeyRuns.updatedAt,
 		})
 		.from(journeyRuns)
-		.leftJoin(customers, eq(journeyRuns.customerId, customers.id))
 		.where(eq(journeyRuns.id, runId))
 		.get()
 
