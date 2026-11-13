@@ -1,13 +1,22 @@
 import { type MessageDescriptor } from '@lingui/core'
-import { msg, t, Trans } from '@lingui/macro'
+import { msg, plural, t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
+import { toAsciiDigits } from '@repo/common/ascii-digits'
 import {
 	handoffNeedsPayment,
+	onlineOrderInInbox,
+	onlineOrdersSearchSince,
+	POS_ONLINE_ORDERS_PHONE_DIGITS,
+	POS_ONLINE_ORDERS_SEARCH_TEXT_MIN,
+	POS_ONLINE_ORDERS_SEARCH_DAYS,
+	type PosOnlineOrdersSearch,
+	type PosOnlineOrdersSearchState,
 	POS_ONLINE_ORDER_CANCEL_REASONS,
 	type PosOnlineOrderCancelReason,
 	type PosOnlineOrderDetail,
 	type PosOnlineOrderSummary,
 } from '@repo/common/pos-online-orders'
+import { posStationControlsAllowed } from '@repo/common/pos-station-controls'
 import {
 	Empty,
 	EmptyDescription,
@@ -18,7 +27,8 @@ import { Icon } from '@repo/ui/icon'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { chime, chimeReady, unlockChime } from '../kitchen/chime.ts'
-import { type OrdersError } from './api.ts'
+import { OrdersError } from './api.ts'
+import { ControlsSheet } from './Controls.tsx'
 import {
 	ALERT_REPEAT_MS,
 	inboxOrders,
@@ -141,6 +151,10 @@ export function Orders({
 		() => (feed ? unopenedOrders(feed.orders, orders.openedHere) : []),
 		[feed, orders.openedHere],
 	)
+	const [searching, setSearching] = useState(false)
+	const [controlling, setControlling] = useState(false)
+	// Pause and sold out: a signed-in manager only (the region refuses anyone else).
+	const mayControl = session !== null && posStationControlsAllowed(session)
 
 	// The alert repeats while any new order waits to be opened, on every tablet
 	// here: opening it anywhere silences it everywhere at the next read.
@@ -279,6 +293,20 @@ export function Orders({
 									: _(t`Live · refreshes every 5 seconds`)}
 						</span>
 					</div>
+					{mayControl ? (
+						<IconButton
+							label={_(t`Pause and sold out`)}
+							onClick={() => setControlling(true)}
+						>
+							<Icon name="sliders-horizontal" className="size-5" />
+						</IconButton>
+					) : null}
+					<IconButton
+						label={_(t`Search orders`)}
+						onClick={() => setSearching(true)}
+					>
+						<Icon name="search" className="size-5" />
+					</IconButton>
 					<IconButton
 						label={_(t`Sound for new orders`)}
 						aria-pressed={preference.sound}
@@ -438,6 +466,29 @@ export function Orders({
 					</section>
 				) : null}
 			</div>
+			{mayControl ? (
+				<ControlsSheet
+					open={controlling}
+					onClose={() => setControlling(false)}
+					api={orders.api}
+					online={reachable}
+					timeZone={timeZone}
+				/>
+			) : null}
+			<SearchSheet
+				open={searching}
+				onClose={() => setSearching(false)}
+				orders={orders}
+				reachable={reachable}
+				timeZone={timeZone}
+				onPick={(order) => {
+					setSearching(false)
+					// Only the inbox records an opening (and silences the alert).
+					void (onlineOrderInInbox(order, orders.now)
+						? orders.open(order.id)
+						: orders.view(order.id))
+				}}
+			/>
 			<OrderSheet
 				orders={orders}
 				stale={stale}
@@ -629,6 +680,8 @@ function OrderSheet({
 	const money = moneyFormatter(detail?.currency ?? 'USD')
 	const done = detail?.status === 'completed' || detail?.status === 'cancelled'
 	const needsPayment = detail ? handoffNeedsPayment(detail) : false
+	// Found by search and past the inbox: read here, changed only in the App.
+	const readOnly = detail ? !onlineOrderInInbox(detail, orders.now) : false
 	const locked = busy || stale || !detail
 	return (
 		<Modal
@@ -637,7 +690,14 @@ function OrderSheet({
 			title={detail ? _(t`Order ${detail.number}`) : _(t`Order`)}
 			size="lg"
 			footer={
-				detail ? (
+				detail && readOnly ? (
+					<p className="text-muted-foreground text-sm">
+						<Trans>
+							This order finished more than four hours ago. It is shown for
+							reference: record refunds and see the guest’s contact in the App.
+						</Trans>
+					</p>
+				) : detail ? (
 					<div className="flex w-full flex-col gap-3">
 						{needsPayment && !done && grants?.manage ? (
 							<label className="flex items-center gap-2 text-sm">
@@ -743,7 +803,7 @@ function OrderSheet({
 					<OrderDetailBody
 						detail={detail}
 						contact={contact}
-						canSeeContact={grants?.contact === true}
+						canSeeContact={grants?.contact === true && !readOnly}
 						onReveal={() => void orders.revealContact()}
 						revealing={orders.revealing}
 						now={orders.now}
@@ -994,6 +1054,285 @@ function OrderDetailBody({
 				</section>
 			) : null}
 		</div>
+	)
+}
+
+const SEARCH_STATES: Record<PosOnlineOrdersSearchState, MessageDescriptor> = {
+	all: msg`Any state`,
+	open: msg`In progress`,
+	ready: msg`Ready`,
+	completed: msg`Handed over`,
+	cancelled: msg`Cancelled`,
+}
+
+/**
+ * "Where is my order?": today's and the last seven days' orders at this
+ * location by number, guest name or, for people allowed to see contacts, the
+ * phone's last digits. Results live only while this sheet is open.
+ */
+function SearchSheet({
+	open,
+	onClose,
+	orders,
+	reachable,
+	timeZone,
+	onPick,
+}: {
+	open: boolean
+	onClose: () => void
+	orders: OrdersState
+	reachable: boolean
+	timeZone?: string
+	onPick: (order: PosOnlineOrdersSearch['results'][number]) => void
+}) {
+	const { _, i18n } = useLingui()
+	const canPhone = orders.grants?.contact === true
+	const [by, setBy] = useState<'text' | 'phone'>('text')
+	const [text, setText] = useState('')
+	const [state, setState] = useState<PosOnlineOrdersSearchState>('all')
+	const [fulfillment, setFulfillment] = useState<
+		'all' | 'pickup' | 'delivery' | 'dine_in'
+	>('all')
+	const [answer, setAnswer] = useState<PosOnlineOrdersSearch | null>(null)
+	const [failure, setFailure] = useState<string | null>(null)
+	const [loading, setLoading] = useState(false)
+	const asked = useRef(0)
+	/** Drops whatever is on screen and any answer still on its way. */
+	const forget = () => {
+		asked.current += 1
+		setLoading(false)
+		setAnswer(null)
+		setFailure(null)
+	}
+	// Nothing found is kept once the sheet closes; the phone mode leaves with the grant.
+	useEffect(() => {
+		if (open) return
+		asked.current += 1
+		setLoading(false)
+		setText('')
+		setAnswer(null)
+		setFailure(null)
+	}, [open])
+	useEffect(() => {
+		if (canPhone) return
+		// A phone search started by someone else never lands for this person.
+		asked.current += 1
+		setLoading(false)
+		setAnswer(null)
+		if (by === 'phone') setBy('text')
+	}, [canPhone, by])
+	const when = useMemo(
+		() =>
+			new Intl.DateTimeFormat(i18n.locale, {
+				weekday: 'short',
+				day: 'numeric',
+				month: 'short',
+				hour: 'numeric',
+				minute: '2-digit',
+				...(timeZone ? { timeZone } : {}),
+			}),
+		[i18n.locale, timeZone],
+	)
+	// Arabic-Indic and Persian digits read as 0-9, in both modes.
+	const typed = toAsciiDigits(text).trim()
+	const digits = typed.replace(/\D/g, '')
+	const ready =
+		by === 'phone'
+			? digits.length === POS_ONLINE_ORDERS_PHONE_DIGITS
+			: typed.length >= POS_ONLINE_ORDERS_SEARCH_TEXT_MIN
+	const run = async () => {
+		if (!ready || !reachable) return
+		const ask = ++asked.current
+		setLoading(true)
+		setFailure(null)
+		try {
+			const data = await orders.search({
+				...(by === 'phone' ? { phone: digits } : { q: typed }),
+				state,
+				fulfillment,
+				since: onlineOrdersSearchSince(Date.now()),
+			})
+			if (ask === asked.current) setAnswer(data)
+		} catch (error) {
+			if (ask !== asked.current) return
+			setAnswer(null)
+			setFailure(
+				error instanceof OrdersError && error.code === 'permission_required'
+					? _(t`You do not have permission to search by phone.`)
+					: error instanceof OrdersError && error.code === 'search_limit'
+						? _(t`Too many phone searches this hour. Try again later.`)
+						: error instanceof OrdersError && error.code === 'connection_lost'
+							? _(t`Search needs a connection. Reconnect and try again.`)
+							: _(t`The search did not work. Try again.`),
+			)
+		} finally {
+			if (ask === asked.current) setLoading(false)
+		}
+	}
+	const days = POS_ONLINE_ORDERS_SEARCH_DAYS
+	return (
+		<Modal open={open} onClose={onClose} title={_(t`Search orders`)} size="lg">
+			<form
+				className="flex flex-col gap-4 p-4 sm:p-5"
+				onSubmit={(event) => {
+					event.preventDefault()
+					void run()
+				}}
+			>
+				<p className="text-muted-foreground text-sm">
+					<Trans>
+						Online orders at this location from today and the last {days} days.
+					</Trans>
+				</p>
+				{canPhone ? (
+					<Segmented
+						label={_(t`Search by`)}
+						value={by}
+						onChange={(value) => {
+							forget()
+							setBy(value)
+							setText('')
+						}}
+						options={[
+							{ value: 'text', label: _(t`Number or name`) },
+							{ value: 'phone', label: _(t`Phone`) },
+						]}
+					/>
+				) : null}
+				<div className="flex flex-wrap items-center gap-2">
+					<Input
+						type="search"
+						autoFocus
+						inputMode={by === 'phone' ? 'numeric' : undefined}
+						aria-label={
+							by === 'phone'
+								? _(t`Last 4 digits of the guest’s phone`)
+								: _(t`Order number or guest name`)
+						}
+						placeholder={
+							by === 'phone' ? _(t`Last 4 digits`) : _(t`Order number or name`)
+						}
+						className="h-11 min-w-0 flex-1"
+						value={text}
+						maxLength={60}
+						onChange={(event) => setText(event.target.value)}
+					/>
+					<Select
+						aria-label={_(t`State`)}
+						className="h-11"
+						containerClassName="w-40"
+						value={state}
+						onChange={(event) =>
+							setState(event.target.value as PosOnlineOrdersSearchState)
+						}
+					>
+						{(Object.keys(SEARCH_STATES) as PosOnlineOrdersSearchState[]).map(
+							(value) => (
+								<option key={value} value={value}>
+									{_(SEARCH_STATES[value])}
+								</option>
+							),
+						)}
+					</Select>
+					<Select
+						aria-label={_(t`Order type`)}
+						className="h-11"
+						containerClassName="w-36"
+						value={fulfillment}
+						onChange={(event) =>
+							setFulfillment(event.target.value as typeof fulfillment)
+						}
+					>
+						<option value="all">{_(t`All types`)}</option>
+						<option value="pickup">{_(t`Pickup`)}</option>
+						<option value="delivery">{_(t`Delivery`)}</option>
+						<option value="dine_in">{_(t`Dine in`)}</option>
+					</Select>
+					<Button
+						type="submit"
+						variant="primary"
+						disabled={!ready || !reachable || loading}
+					>
+						<Icon name="search" className="size-4" />
+						<Trans>Search</Trans>
+					</Button>
+				</div>
+				{!reachable ? (
+					<p role="status" className="notice-warning px-4 py-2 text-sm">
+						<Trans>Search needs a connection. Reconnect and try again.</Trans>
+					</p>
+				) : null}
+				{failure ? (
+					<p role="alert" className="notice-warning px-4 py-2 text-sm">
+						{failure}
+					</p>
+				) : null}
+				{/* Mounted from the start, so screen readers announce each change. */}
+				<p role="status" className="sr-only">
+					{loading
+						? _(t`Searching…`)
+						: answer
+							? answer.results.length === 0
+								? _(t`No orders match.`)
+								: _(
+										plural(answer.results.length, {
+											one: '# order found',
+											other: '# orders found',
+										}),
+									)
+							: ''}
+				</p>
+				{answer ? (
+					<section aria-label={_(t`Search results`)}>
+						{answer.results.length === 0 ? (
+							<p className="text-muted-foreground py-4 text-center">
+								<Trans>No orders match.</Trans>
+							</p>
+						) : (
+							<ul className="divide-border border-border divide-y rounded-(--station-control-radius) border">
+								{answer.results.map((order) => (
+									<li key={order.id}>
+										<button
+											type="button"
+											className="hover:bg-muted flex w-full flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3 text-start"
+											onClick={() => onPick(order)}
+										>
+											<span className="tnum font-semibold">{order.number}</span>
+											<bdi className="min-w-0 truncate">{order.guestName}</bdi>
+											<span className="text-muted-foreground me-auto text-sm">
+												{when.format(order.createdAt)}
+											</span>
+											<Badge
+												tone={
+													order.status === 'cancelled'
+														? 'danger'
+														: order.status === 'ready'
+															? 'success'
+															: 'muted'
+												}
+											>
+												{_(STATUS[order.status])}
+											</Badge>
+											<span className="tnum text-sm">
+												{moneyFormatter(order.currency)(order.totalCents)}
+											</span>
+										</button>
+									</li>
+								))}
+							</ul>
+						)}
+						{answer.truncated ? (
+							<p role="status" className="text-muted-foreground mt-2 text-sm">
+								<Trans>
+									Showing the newest {answer.results.length} matches. Type more
+									of the number or name to narrow it down.
+								</Trans>
+							</p>
+						) : null}
+					</section>
+				) : null}
+			</form>
+		</Modal>
 	)
 }
 

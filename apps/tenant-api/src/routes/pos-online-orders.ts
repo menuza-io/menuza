@@ -3,7 +3,13 @@ import {
 	posOnlineOrderCommandSchema,
 	posOnlineOrderRefundSchema,
 	posOnlineOrdersGrants,
+	posOnlineOrdersSearchQuerySchema,
 } from '@repo/common/pos-online-orders'
+import {
+	posAvailabilityCommandSchema,
+	posPauseCommandSchema,
+	posStationControlsAllowed,
+} from '@repo/common/pos-station-controls'
 import { authenticatePosDevice, posError } from '../lib/pos-auth.ts'
 import { verifyPosStaffSession } from '../lib/pos-staff-session.ts'
 import { HttpError, json, readJsonBody } from '../lib/http.ts'
@@ -15,9 +21,17 @@ import {
 	onlineOrderDetail,
 	onlineOrderRefund,
 	onlineOrdersFeed,
+	onlineOrdersSearch,
 	type OnlineOrdersActor,
 } from '../services/pos-online-orders-service.ts'
 import { touchDevice } from '../services/pos-service.ts'
+import {
+	stationAvailability,
+	stationControlsState,
+	stationPause,
+	type StationControlsActor,
+	type StationControlsFailure,
+} from '../services/pos-station-controls-service.ts'
 import { type OrderServiceFailure } from '../services/order-service.ts'
 
 /**
@@ -39,10 +53,12 @@ posOnlineOrdersRoutes.onError((error) => {
 	return posError(500, 'orders_unavailable')
 })
 
-async function authorize(
-	c: Context,
-): Promise<
-	| { actor: OnlineOrdersActor; db: Parameters<typeof onlineOrdersFeed>[0] }
+async function authorize(c: Context): Promise<
+	| {
+			actor: OnlineOrdersActor
+			db: Parameters<typeof onlineOrdersFeed>[0]
+			role: 'cashier' | 'manager'
+	  }
 	| { error: Response }
 > {
 	const auth = await authenticatePosDevice(c)
@@ -55,6 +71,7 @@ async function authorize(
 	await touchDevice(pos.db, pos.device).catch(() => {})
 	return {
 		db: pos.db,
+		role: verified.session.role,
 		actor: {
 			orgId: pos.orgId,
 			locationId: gate.locationId,
@@ -84,6 +101,80 @@ posOnlineOrdersRoutes.get('/', async (c) => {
 	const auth = await authorize(c)
 	if ('error' in auth) return auth.error
 	return json(await onlineOrdersFeed(auth.db, auth.actor))
+})
+
+/**
+ * Today's and recent orders at this location by number, name or the phone's
+ * last digits. A phone search needs the contact grant; results carry the same
+ * summary as the inbox (a name, never a phone).
+ */
+posOnlineOrdersRoutes.get('/search', async (c) => {
+	const auth = await authorize(c)
+	if ('error' in auth) return auth.error
+	const raw = c.req.query()
+	// Before parsing: a person without the grant learns nothing from a phone search.
+	if ('phone' in raw && !auth.actor.grants.contact)
+		return posError(403, 'permission_required')
+	const parsed = posOnlineOrdersSearchQuerySchema.safeParse(raw)
+	if (!parsed.success) return posError(400, 'invalid_search')
+	const result = await onlineOrdersSearch(auth.db, auth.actor, parsed.data)
+	return result.ok ? json(result.data) : failure(result.failure)
+})
+
+/**
+ * Manager controls at this terminal's location: online ordering's pause and a
+ * dish's sold-out switch. A signed-in manager only (the till role that may
+ * cancel and refund); the App makes the change from ids, so its presets, menu,
+ * site cache purge and activity log are the same as the App's own pages.
+ */
+async function authorizeControls(
+	c: Context,
+): Promise<
+	| { db: Parameters<typeof onlineOrdersFeed>[0]; actor: StationControlsActor }
+	| { error: Response }
+> {
+	const auth = await authorize(c)
+	if ('error' in auth) return auth
+	if (!posStationControlsAllowed({ role: auth.role }))
+		return { error: posError(403, 'permission_required') }
+	return {
+		db: auth.db,
+		actor: {
+			orgId: auth.actor.orgId,
+			locationId: auth.actor.locationId,
+			deviceId: auth.actor.deviceId,
+			staffId: auth.actor.staffId,
+		},
+	}
+}
+
+function controlsFailure(failure: StationControlsFailure) {
+	return posError(failure.status, failure.code)
+}
+
+posOnlineOrdersRoutes.get('/controls', async (c) => {
+	const auth = await authorizeControls(c)
+	if ('error' in auth) return auth.error
+	const result = await stationControlsState(auth.db, auth.actor)
+	return result.ok ? json(result.data) : controlsFailure(result.failure)
+})
+
+posOnlineOrdersRoutes.post('/controls/pause', async (c) => {
+	const auth = await authorizeControls(c)
+	if ('error' in auth) return auth.error
+	const body = await readJsonBody(c, posPauseCommandSchema)
+	if ('error' in body) return body.error
+	const result = await stationPause(auth.db, auth.actor, body.data)
+	return result.ok ? json(result.data) : controlsFailure(result.failure)
+})
+
+posOnlineOrdersRoutes.post('/controls/availability', async (c) => {
+	const auth = await authorizeControls(c)
+	if ('error' in auth) return auth.error
+	const body = await readJsonBody(c, posAvailabilityCommandSchema)
+	if ('error' in body) return body.error
+	const result = await stationAvailability(auth.db, auth.actor, body.data)
+	return result.ok ? json(result.data) : controlsFailure(result.failure)
 })
 
 async function detailResponse(

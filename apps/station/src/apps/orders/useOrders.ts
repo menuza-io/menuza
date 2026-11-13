@@ -5,6 +5,7 @@ import {
 	type PosOnlineOrderRefund,
 	type PosOnlineOrdersFeed,
 	type PosOnlineOrdersGrants,
+	type PosOnlineOrdersSearchQuery,
 } from '@repo/common/pos-online-orders'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createOrdersApi, OrdersError } from './api.ts'
@@ -273,6 +274,22 @@ export function useOrders(
 		},
 		[api, online, readBack, refresh],
 	)
+	/** Opens an order found by search without recording an opening (older ones are read-only). */
+	const view = useCallback(
+		async (id: string) => {
+			opening.current += 1
+			setSelected(id)
+			setDetail(null)
+			setContact(null)
+			setActionError(null)
+			const gen = generation.current
+			if (!(await readBack(id, gen)) && gen === generation.current)
+				setActionError(
+					new OrdersError(online ? 'order_not_found' : 'connection_lost'),
+				)
+		},
+		[readBack, online],
+	)
 	const close = useCallback(() => {
 		opening.current += 1
 		setSelected(null)
@@ -300,7 +317,15 @@ export function useOrders(
 		detail,
 		contact,
 		open,
+		view,
 		close,
+		/** For the manager controls sheet (pause, sold out); nothing there is kept. */
+		api,
+		/** Searches the region; nothing is kept beyond the screen that asked. */
+		search: (query: PosOnlineOrdersSearchQuery) => {
+			if (!online) return Promise.reject(new OrdersError('connection_lost'))
+			return api.search(query)
+		},
 		command: (command: Exclude<PosOnlineOrderCommand, { action: 'open' }>) =>
 			selected
 				? write(selected, () => api.command(selected, command))
