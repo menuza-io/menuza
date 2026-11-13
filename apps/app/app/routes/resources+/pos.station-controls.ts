@@ -88,6 +88,8 @@ export async function action({ request }: ActionFunctionArgs) {
 		where: and(
 			eq(OrganizationLocation.id, input.locationId),
 			eq(OrganizationLocation.organizationId, organization.id),
+			// A deactivated location takes no pause or sold-out marks.
+			eq(OrganizationLocation.isActive, true),
 		),
 		columns: { id: true },
 	})

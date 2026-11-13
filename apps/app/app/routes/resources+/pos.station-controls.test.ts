@@ -4,6 +4,7 @@ import {
 	Organization,
 	OrganizationLocation,
 	OrganizationMenuItem,
+	OrganizationMenuLocationOverride,
 	OrganizationMenuOption,
 } from '@repo/database'
 import { RouterContextProvider } from 'react-router'
@@ -245,5 +246,77 @@ describe('POST /resources/pos/station-controls', () => {
 		})
 		expect(await response.json()).toMatchObject({ changed: false })
 		expect(await overrideOf(here, theirs.id)).toBeUndefined()
+	})
+
+	it('by hand: never un-hides a hidden dish, treats an expired timed hold as on sale, and leaves a dish that is off everywhere to the App', async () => {
+		const { organization } = await setupTestOrgWithUser('admin')
+		await provisioned(organization.id)
+		const here = await location(organization.id)
+		const set = (entityId: string, available: boolean) =>
+			call({
+				kind: 'availability',
+				orgId: organization.id,
+				locationId: here,
+				entityType: 'item',
+				entityId,
+				available,
+				actor: ACTOR,
+			}).then((response) => response.json())
+
+		const hidden = await menuItem(organization.id)
+		await db.insert(OrganizationMenuLocationOverride).values({
+			organizationId: organization.id,
+			locationId: here,
+			entityType: 'item',
+			entityId: hidden.id,
+			availabilityStatus: 'hidden',
+		})
+		expect(await set(hidden.id, true)).toMatchObject({ changed: false })
+		expect((await overrideOf(here, hidden.id))?.availabilityStatus).toBe(
+			'hidden',
+		)
+
+		const expired = await menuItem(organization.id)
+		await db.insert(OrganizationMenuLocationOverride).values({
+			organizationId: organization.id,
+			locationId: here,
+			entityType: 'item',
+			entityId: expired.id,
+			availabilityStatus: 'unavailable_until',
+			unavailableUntil: new Date(Date.now() - 60_000),
+		})
+		expect(await set(expired.id, false)).toMatchObject({ changed: true })
+		expect((await overrideOf(here, expired.id))?.availabilityStatus).toBe(
+			'unavailable',
+		)
+
+		const offEverywhere = await menuItem(organization.id)
+		await db
+			.update(OrganizationMenuItem)
+			.set({ availabilityStatus: 'unavailable' })
+			.where(eq(OrganizationMenuItem.id, offEverywhere.id))
+		expect(await set(offEverywhere.id, false)).toMatchObject({
+			changed: false,
+		})
+		expect(await overrideOf(here, offEverywhere.id)).toBeUndefined()
+	})
+
+	it('refuses a deactivated location', async () => {
+		const { organization } = await setupTestOrgWithUser('admin')
+		await provisioned(organization.id)
+		const here = await location(organization.id)
+		await db
+			.update(OrganizationLocation)
+			.set({ isActive: false })
+			.where(eq(OrganizationLocation.id, here))
+		const response = await call({
+			kind: 'pause',
+			orgId: organization.id,
+			locationId: here,
+			duration: '15m',
+			actor: ACTOR,
+		})
+		expect(response.status).toBe(404)
+		expect((await pauseOf(here)).at).toBeNull()
 	})
 })

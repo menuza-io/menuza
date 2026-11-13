@@ -623,16 +623,24 @@ queued, and after a failed write the screen reads the order back.
 
 - **Search** (`GET /search?q=|phone=&state=&fulfillment=&since=`). "Where is my
   order?": the location's online orders from today and the previous seven local
-  days by order number, guest name or the phone's last digits (four or more),
-  filtered by state (in progress, ready, handed over, cancelled) and order type.
-  The tablet sends the start of that window; the server never reaches further
-  back than eight days, whatever it is sent. A phone search needs the contact
-  permission: the field is hidden without it and the region answers 403
-  `permission_required`. Results are the inbox's own summaries (name, never a
-  phone or email), newest first, at most 50, with `truncated` set when more
-  matched. They live only while the search sheet is open: never stored,
-  `no-store`. An order found there that is no longer in the inbox opens
-  read-only, with the masked phone and no contact, actions or refunds.
+  days, plus anything still in the inbox, by order number or guest name (two
+  characters or more; SQLite's `LIKE`, so ASCII letters match in any case and
+  accented names match as typed) or by the phone's last four digits, exactly the
+  digits the masked phone already shows, so a search never reveals more of a
+  number. Filters: state (in progress, ready, handed over, cancelled) and order
+  type. Arabic-Indic digits are read as 0-9. The tablet sends the start of the
+  window; the server never reaches further back than eight days. A phone search
+  needs the contact permission (the field is hidden without it, and the region
+  answers 403 `permission_required`); each one is recorded
+  (`pos_online_order_events` `phone_searched`, order id `search`, ids only) and
+  one person may run 30 an hour (429 `search_limit`). Results are the inbox's
+  own summaries (name, never a phone or email), newest first, at most 50, with
+  `truncated` set when more matched. They live only while the search sheet is
+  open: never stored, `no-store`, and an answer still on its way when the sheet
+  closes, the mode changes or the person changes is dropped. An order found
+  there that is no longer in the inbox opens read-only, with the masked phone
+  and no actions, contact or refunds; without the contact permission it also
+  leaves out the delivery address and line notes.
 - **Pause and sold out** (`GET /controls`, `POST /controls/pause`,
   `POST /controls/availability`). Mid-service manager controls, a signed-in
   manager only (the till role that may cancel and refund; 403
@@ -645,13 +653,22 @@ queued, and after a failed write the screen reads the order back.
   `@repo/common/pos-station-controls`): the App's own pause writer
   (`applyOrderingControl`) and the same availability writer inventory's auto
   sold out uses, so both purge the site cache (web and QR within seconds) and
-  write the activity log with the terminal and staff ids. A dish that stock took
-  off (inventory auto sold out) says which ingredient ran out; bringing it back
-  answers 409 `held_by_stock` until the manager confirms, and then goes through
-  inventory's own undo, so stock leaves it on until the ingredient has been
-  counted in stock again. Offline the controls are shown as unavailable and
-  nothing is queued; if the App cannot be reached the region answers 503
-  `controls_unavailable` and nothing changed. Busy mode stays in the App.
+  write the activity log with the terminal and staff ids. By hand, Station only
+  marks a dish sold out and back: it never un-hides a dish hidden in the App,
+  and a dish off for every location stays the App's (nothing changes). A dish
+  that stock took off (inventory auto sold out) says which ingredient ran out;
+  bringing it back answers 409 `held_by_stock` until the manager confirms, and
+  then goes through inventory's own undo (refused with 503
+  `inventory_unavailable` while `INVENTORY_ENABLED` is off or the
+  `inventory.recipes` flag is off; the till's manager role is the permission),
+  so stock leaves it on until the ingredient has been counted in stock again.
+  Marking sold out a dish stock already holds makes the hold the manager's, so
+  stock coming back does not put it on sale. Offline the controls are shown as
+  unavailable and nothing is queued. If the App cannot be reached the region
+  answers 503 `controls_unavailable`; a request the App refuses (contract skew,
+  token, unknown organization) answers 503 `controls_misconfigured`. Station
+  then reads the state again rather than claiming nothing changed. Busy mode
+  stays in the App.
 
 In demo mode the app needs no pairing or network: a sample service with a new
 pickup, a QR table round, a delivery, a late ready order and a finished paid

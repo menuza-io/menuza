@@ -81,9 +81,15 @@ function failureText(
 	const code = error instanceof OrdersError ? error.code : ''
 	if (code === 'permission_required')
 		return _(msg`Only a manager can change this.`)
-	if (code === 'connection_lost')
-		return _(msg`No connection. Nothing was changed: try again when online.`)
-	return _(msg`That did not work. Nothing was changed: try again.`)
+	if (code === 'inventory_unavailable')
+		return _(
+			msg`Stock is switched off right now, so a dish it took off cannot be brought back here. Use the App.`,
+		)
+	// A write that timed out or lost its connection may still have gone
+	// through: never claim it did not. The sheet reads the state again.
+	return _(
+		msg`That may not have gone through. Check what is shown below before trying again.`,
+	)
 }
 
 /**
@@ -134,6 +140,8 @@ export function ControlsSheet({
 	useEffect(() => {
 		if (!open) {
 			asked.current += 1
+			// Never show the last opening's pause or stock holds as current.
+			setState(null)
 			setQuery('')
 			setConfirm(null)
 			setFailure(null)
@@ -169,6 +177,8 @@ export function ControlsSheet({
 				(entry) =>
 					!entry.available ||
 					held.has(entry.key) ||
+					// Changed here: stays in view (and keeps focus) until the sheet closes.
+					changed.has(entry.key) ||
 					entry.entityType === 'item',
 			)
 			.sort((a, b) => Number(a.available) - Number(b.available))
@@ -185,7 +195,10 @@ export function ControlsSheet({
 		[i18n.locale, timeZone],
 	)
 
-	const run = async (key: string, write: () => Promise<PosStationControls>) => {
+	const run = async (
+		key: string,
+		write: () => Promise<PosStationControls>,
+	): Promise<boolean | 'held'> => {
 		if (!online || busy) return false
 		setBusy(key)
 		setFailure(null)
@@ -195,9 +208,11 @@ export function ControlsSheet({
 		} catch (error) {
 			if (error instanceof OrdersError && error.code === 'held_by_stock') {
 				await load()
-				return false
+				return 'held' as const
 			}
 			setFailure(failureText(_, error))
+			// Whatever happened, show what is true now.
+			if (online) void load()
 			return false
 		} finally {
 			setBusy(null)
@@ -212,6 +227,11 @@ export function ControlsSheet({
 			...(overrideStock ? { overrideStock: true } : {}),
 		}
 		const ok = await run(entry.key, () => api.availability(command))
+		// Stock took it off since the sheet loaded: ask, as for any held dish.
+		if (ok === 'held') {
+			setConfirm(entry)
+			return
+		}
 		if (!ok) return
 		setChanged((previous) => new Map(previous).set(entry.key, !entry.available))
 		setConfirm(null)
@@ -237,9 +257,14 @@ export function ControlsSheet({
 							</Trans>
 						</p>
 					) : null}
-					{failure ? (
+					{failure && !confirm ? (
 						<p role="alert" className="notice-warning px-4 py-2 text-sm">
 							{failure}
+						</p>
+					) : null}
+					{online && state === null && !failure ? (
+						<p role="status" className="text-muted-foreground text-sm">
+							<Trans>Loading…</Trans>
 						</p>
 					) : null}
 					<section
@@ -350,10 +375,11 @@ export function ControlsSheet({
 											<Button
 												variant={entry.available ? 'outline' : 'primary'}
 												disabled={disabled || busy !== null}
+												// The visible words lead the name (voice control: "Back on").
 												aria-label={
 													entry.available
-														? _(t`Mark ${entry.name} sold out`)
-														: _(t`Bring back ${entry.name}`)
+														? _(t`Sold out: ${entry.name}`)
+														: _(t`Back on: ${entry.name}`)
 												}
 												onClick={() =>
 													!entry.available && stock
@@ -403,6 +429,15 @@ export function ControlsSheet({
 					</div>
 				}
 			>
+				{failure && confirm ? (
+					// The sheet behind is inert while this is open: say it here.
+					<p
+						role="alert"
+						className="notice-warning mx-4 mt-4 px-4 py-2 text-sm sm:mx-5"
+					>
+						{failure}
+					</p>
+				) : null}
 				<p className="p-4 text-sm sm:p-5">
 					{confirm
 						? _(

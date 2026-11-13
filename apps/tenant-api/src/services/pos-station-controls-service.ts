@@ -5,12 +5,16 @@ import {
 } from '@repo/common/pos-station-controls'
 import { type TenantDatabase, invItems, invSoldOut } from '@repo/tenant-db'
 import { and, asc, eq } from 'drizzle-orm'
+import {
+	getInventoryFlagState,
+	type InventoryFlagState,
+} from '../lib/inventory-context.ts'
 import { getNodeRegion } from '../lib/region.ts'
 import {
 	postStationControls,
 	type StationControlsOutcome,
 } from '../lib/station-controls.ts'
-import { undoSoldOut } from './inventory-sold-out-service.ts'
+import { handOverSoldOut, undoSoldOut } from './inventory-sold-out-service.ts'
 
 /**
  * Station's manager controls at the terminal's location: online ordering's
@@ -27,7 +31,12 @@ export type StationControlsActor = {
 
 export type StationControlsFailure = {
 	status: 404 | 409 | 503
-	code: 'controls_unavailable' | 'location_not_found' | 'held_by_stock'
+	code:
+		| 'controls_unavailable'
+		| 'controls_misconfigured'
+		| 'location_not_found'
+		| 'held_by_stock'
+		| 'inventory_unavailable'
 }
 
 type Post = typeof postStationControls
@@ -119,10 +128,17 @@ export async function stationPause(
 }
 
 /**
- * Marks a dish or option sold out here, or brings it back. One that stock
- * took off comes back only with `overrideStock`, and then through
- * inventory's own undo, so the next stock sync leaves it on until the
- * ingredient has been in stock again.
+ * Marks a dish or option sold out here, or brings it back.
+ *
+ * - One that stock took off comes back only with `overrideStock`, and then
+ *   through inventory's own undo (with inventory on: the node's kill switch
+ *   and the `inventory.recipes` flag gate it like the operator route), so the
+ *   next stock sync leaves it on until the ingredient has been in stock again.
+ * - Marking sold out by hand a dish stock already holds makes the hold the
+ *   person's, so stock coming back does not put it on sale again.
+ * - When the undo already put the dish back and only the App's record of the
+ *   person's own change fails, the answer is still a success: the dish is on
+ *   sale, and saying "nothing changed" would be wrong.
  */
 export async function stationAvailability(
 	db: TenantDatabase,
@@ -131,47 +147,50 @@ export async function stationAvailability(
 	options: {
 		post?: Post
 		undo?: typeof undoSoldOut
+		handOver?: typeof handOverSoldOut
+		inventory?: (orgId: string) => Promise<InventoryFlagState>
 	} = {},
 ): Promise<Result<PosStationControls & { changed: boolean }>> {
 	const post = options.post ?? postStationControls
+	const caller = {
+		orgId: actor.orgId,
+		region: getNodeRegion(),
+		actor: { kind: 'staff' as const, id: actor.staffId },
+		locationIds: [actor.locationId],
+		cost: false,
+		purchasing: false,
+	}
+	const [held] = await db
+		.select({ id: invSoldOut.id })
+		.from(invSoldOut)
+		.where(
+			and(
+				eq(invSoldOut.locationId, actor.locationId),
+				eq(invSoldOut.entityType, command.entityType),
+				eq(invSoldOut.entityId, command.entityId),
+				eq(invSoldOut.state, 'out'),
+			),
+		)
+		.limit(1)
 	let undone = false
-	if (command.available) {
-		const [held] = await db
-			.select({ id: invSoldOut.id })
-			.from(invSoldOut)
-			.where(
-				and(
-					eq(invSoldOut.locationId, actor.locationId),
-					eq(invSoldOut.entityType, command.entityType),
-					eq(invSoldOut.entityId, command.entityId),
-					eq(invSoldOut.state, 'out'),
-				),
-			)
-			.limit(1)
-		if (held) {
-			if (!command.overrideStock)
-				return {
-					ok: false,
-					failure: { status: 409, code: 'held_by_stock' },
-				}
-			try {
-				await (options.undo ?? undoSoldOut)(
-					{
-						orgId: actor.orgId,
-						region: getNodeRegion(),
-						actor: { kind: 'staff', id: actor.staffId },
-						locationIds: [actor.locationId],
-						cost: false,
-						purchasing: false,
-					},
-					{ id: held.id },
-				)
-				undone = true
-			} catch {
-				return {
-					ok: false,
-					failure: { status: 503, code: 'controls_unavailable' },
-				}
+	if (held && command.available) {
+		if (!command.overrideStock)
+			return { ok: false, failure: { status: 409, code: 'held_by_stock' } }
+		const inventory = await (options.inventory ?? getInventoryFlagState)(
+			actor.orgId,
+		)
+		if (inventory.status !== 'on' || !inventory.features.recipes)
+			return {
+				ok: false,
+				failure: { status: 503, code: 'inventory_unavailable' },
+			}
+		try {
+			await (options.undo ?? undoSoldOut)(caller, { id: held.id })
+			undone = true
+		} catch {
+			return {
+				ok: false,
+				failure: { status: 503, code: 'controls_unavailable' },
 			}
 		}
 	}
@@ -186,12 +205,32 @@ export async function stationAvailability(
 		available: command.available,
 		actor: { deviceId: actor.deviceId, staffId: actor.staffId },
 	})
-	if (!outcome.ok) return failed(outcome)
+	if (!outcome.ok && !undone) return failed(outcome)
+	if (!outcome.ok)
+		console.warn(
+			'Station availability: undone, App record failed',
+			outcome.code,
+		)
+	// Best effort: the dish is off either way; only who owns the hold moves.
+	const handedOver =
+		held && !command.available
+			? await (options.handOver ?? handOverSoldOut)(caller, {
+					locationId: actor.locationId,
+					entityType: command.entityType,
+					entityId: command.entityId,
+				}).catch(() => false)
+			: false
+	const pause = outcome.ok
+		? outcome.result.pause
+		: await stationControlsState(db, actor, post).then((state) =>
+				state.ok ? state.data.pause : null,
+			)
 	return {
 		ok: true,
 		data: {
-			...(await controls(db, actor, outcome.result.pause)),
-			changed: undone || outcome.result.changed === true,
+			...(await controls(db, actor, pause)),
+			changed:
+				undone || handedOver || (outcome.ok && outcome.result.changed === true),
 		},
 	}
 }

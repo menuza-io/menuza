@@ -17,7 +17,15 @@ import { getInternalCommandToken, syncEnvFromProcess } from './secrets.ts'
  */
 export type StationControlsOutcome =
 	| { ok: true; result: StationControlsResult }
-	| { ok: false; code: 'controls_unavailable' | 'location_not_found' }
+	| {
+			ok: false
+			/**
+			 * `controls_misconfigured`: the App refused the request itself (contract
+			 * skew, token mismatch, unknown organization): asking again cannot help.
+			 */
+			code:
+				'controls_unavailable' | 'controls_misconfigured' | 'location_not_found'
+	  }
 
 function appUrl(): string {
 	syncEnvFromProcess()
@@ -50,14 +58,17 @@ export async function postStationControls(
 			signal: AbortSignal.timeout(8_000),
 		})
 		if (!response.ok) {
-			void response.body?.cancel().catch(() => undefined)
-			return {
-				ok: false,
-				code:
-					response.status === 404
-						? 'location_not_found'
-						: 'controls_unavailable',
-			}
+			const answer = (await response.json().catch(() => null)) as {
+				error?: unknown
+			} | null
+			const error = typeof answer?.error === 'string' ? answer.error : null
+			// Status and code only: the request carries no guest data, the answer none.
+			console.warn('Station controls: App answered', response.status, error)
+			if (response.status === 404 && error === 'location_not_found')
+				return { ok: false, code: 'location_not_found' }
+			if ([400, 401, 403, 404].includes(response.status))
+				return { ok: false, code: 'controls_misconfigured' }
+			return { ok: false, code: 'controls_unavailable' }
 		}
 		const answer = stationControlsResultSchema.safeParse(
 			await response.json().catch(() => null),
