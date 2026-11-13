@@ -175,7 +175,7 @@ export function useSaveBar({
 }
 
 /** Whether an action response reports a failed save (edits must be kept). */
-function isFailedSave(data: unknown) {
+export function isFailedSave(data: unknown) {
 	if (!data || typeof data !== 'object') return false
 	const { result, error } = data as {
 		result?: { status?: string }
@@ -184,16 +184,21 @@ function isFailedSave(data: unknown) {
 	return result?.status === 'error' || Boolean(error)
 }
 
-/** What the browser would submit right now, for "did anything change since". */
-function snapshotForm(id: string) {
-	const element = document.getElementById(id)
-	if (!(element instanceof HTMLFormElement)) return null
+/** What the browser would submit from this form right now. */
+export function snapshotFormElement(form: HTMLFormElement) {
 	return JSON.stringify(
-		Array.from(new FormData(element)).map(([key, value]) => [
+		Array.from(new FormData(form)).map(([key, value]) => [
 			key,
 			typeof value === 'string' ? value : value.name,
 		]),
 	)
+}
+
+/** What the browser would submit right now, for "did anything change since". */
+function snapshotForm(id: string) {
+	const element = document.getElementById(id)
+	if (!(element instanceof HTMLFormElement)) return null
+	return snapshotFormElement(element)
 }
 
 /**

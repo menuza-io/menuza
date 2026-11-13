@@ -32,8 +32,13 @@ import {
 import {
 	assertItemIdsInOrganization,
 	assertLocationIdsInOrganization,
+	assertModifierGroupIdsInOrganization,
 	assertModifierGroupInOrganization,
 } from '#app/utils/menu/ownership.server.ts'
+import {
+	checkModifierGraphChange,
+	modifierGraphErrorResponse,
+} from '#app/utils/menu/modifier-graph.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 
@@ -337,7 +342,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			: null
 	const overrideEntries = Object.values(data.locationOverrides ?? {})
 
-	await db.transaction(async (tx) => {
+	// Options without an id are created by this save; give the check a stand-in.
+	const graphOptionIds = options.map((opt, i) => opt.id || `new-option:${i}`)
+	const graphFailure = await db.transaction(async (tx) => {
 		await assertItemIdsInOrganization(organization.id, assignedItemIds, tx)
 		await assertLocationIdsInOrganization(
 			organization.id,
@@ -346,6 +353,24 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				.filter((id): id is string => typeof id === 'string'),
 			tx,
 		)
+		await assertModifierGroupIdsInOrganization(
+			organization.id,
+			[...new Set(options.flatMap((opt) => opt.nestedModifierGroupIds ?? []))],
+			tx,
+		)
+		// Refuse loops and over-deep nesting before anything is written.
+		const failure = await checkModifierGraphChange(
+			organization.id,
+			{
+				groups: [{ id: modifierGroupId, name, optionIds: graphOptionIds }],
+				options: options.map((opt, i) => ({
+					id: graphOptionIds[i]!,
+					nestedGroupIds: opt.nestedModifierGroupIds ?? [],
+				})),
+			},
+			tx,
+		)
+		if (failure) return failure
 
 		// Update Group
 		await tx
@@ -526,7 +551,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				})),
 			)
 		}
+		return null
 	})
+	if (graphFailure) return modifierGraphErrorResponse(graphFailure)
 
 	await purgeOrganizationSiteCache(organization.id, organization.slug)
 

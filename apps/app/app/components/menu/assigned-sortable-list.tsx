@@ -53,6 +53,12 @@ interface AssignedSortableListProps {
 	entries: AssignableEntry[]
 	selectedIds: string[]
 	onChange: (ids: string[]) => void
+	/**
+	 * Offers "create new" next to the existing entries (for members who may
+	 * create one). The caller opens its own create sheet and selects the result.
+	 */
+	onCreate?: () => void
+	createLabel?: React.ReactNode
 }
 
 function AssignedRow({
@@ -131,6 +137,8 @@ export function AssignedSortableList({
 	entries,
 	selectedIds,
 	onChange,
+	onCreate,
+	createLabel,
 }: AssignedSortableListProps) {
 	const generatedId = useId()
 	const dndId = idProp ?? generatedId
@@ -221,7 +229,7 @@ export function AssignedSortableList({
 						className="w-full"
 						variant="outline"
 						onClick={() => setIsPickerOpen(true)}
-						disabled={availableEntries.length === 0}
+						disabled={availableEntries.length === 0 && !onCreate}
 					>
 						<Icon name="plus" className="size-4" />
 						{addLabel}
@@ -236,6 +244,19 @@ export function AssignedSortableList({
 						<DialogDescription>{selectionDescription}</DialogDescription>
 					</DialogHeader>
 					<div className="max-h-80 space-y-1 overflow-y-auto py-2">
+						{onCreate ? (
+							<button
+								type="button"
+								className="hover:bg-muted focus-visible:ring-ring text-primary flex w-full items-center gap-3 rounded-md px-3 py-3 text-left text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none"
+								onClick={() => {
+									setIsPickerOpen(false)
+									onCreate()
+								}}
+							>
+								<Icon name="plus" className="size-4" />
+								{createLabel ?? <Trans>Create new</Trans>}
+							</button>
+						) : null}
 						{availableEntries.map((entry) => (
 							<button
 								key={entry.id}

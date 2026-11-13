@@ -22,12 +22,6 @@ import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
 import { Checkbox } from '@repo/ui/checkbox'
 import {
-	ChoiceCard,
-	ChoiceCardContent,
-	ChoiceCardDescription,
-	ChoiceCardTitle,
-} from '@repo/ui/choice-card'
-import {
 	Dialog,
 	DialogContent,
 	DialogDescription,
@@ -46,7 +40,6 @@ import {
 import { Icon } from '@repo/ui/icon'
 import { Input } from '@repo/ui/input'
 import { Label } from '@repo/ui/label'
-import { RadioGroup, RadioGroupItem } from '@repo/ui/radio-group'
 import {
 	Select,
 	SelectContent,
@@ -54,9 +47,12 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@repo/ui/select'
-import { Switch } from '@repo/ui/switch'
-import { useId, useState, useMemo } from 'react'
-import { Form } from 'react-router'
+import { useId, useMemo, useRef, useState } from 'react'
+import { Form, useActionData, useNavigation } from 'react-router'
+import {
+	useDiscardKey,
+	useFormSnapshotSaveBar,
+} from '#app/components/use-native-form-save-bar.ts'
 import {
 	LocaleContext,
 	LocalizedInput,
@@ -71,6 +67,11 @@ import {
 import { MenuAvailabilityCard } from './menu-availability-card.tsx'
 import { MenuFormHeader } from './menu-form-header.tsx'
 import { ModifierGuestPreview } from './modifier-guest-preview.tsx'
+import {
+	ModifierRequiredSelectionField,
+	ModifierSelectionLimitsFields,
+	ModifierSelectionModeField,
+} from './modifier-selection-fields.tsx'
 
 export interface ModifierOptionData {
 	id: string
@@ -139,28 +140,6 @@ function SortableOptionRow({
 		option.priceLeft ??
 		option.priceRight ??
 		(priceWhole > 0 ? priceWhole / 2 : 0)
-
-	const nestedGroupNames = useMemo(() => {
-		if (
-			!option.nestedModifierGroupIds ||
-			option.nestedModifierGroupIds.length === 0
-		)
-			return []
-		return option.nestedModifierGroupIds
-			.map((gId) => {
-				const found = availableModifierGroups.find((g) => g.id === gId)
-				return found
-					? getLocalizedMenuValue(found.name, activeLocale, defaultLocale) ||
-							found.name
-					: null
-			})
-			.filter(Boolean) as string[]
-	}, [
-		option.nestedModifierGroupIds,
-		availableModifierGroups,
-		activeLocale,
-		defaultLocale,
-	])
 
 	return (
 		<FramePanel
@@ -437,7 +416,13 @@ interface ModifierFormProps {
 	pageTitle: string
 }
 
-export function ModifierForm({
+export function ModifierForm(props: ModifierFormProps) {
+	// Discard remounts the form with the values it opened with.
+	const { discardKey, discard } = useDiscardKey()
+	return <ModifierFormBody key={discardKey} {...props} onDiscard={discard} />
+}
+
+function ModifierFormBody({
 	initialData,
 	availableModifierGroups = [],
 	orgSlug,
@@ -450,8 +435,23 @@ export function ModifierForm({
 	availableParentOptions = [],
 	isSubmitting,
 	pageTitle,
-}: ModifierFormProps) {
+	onDiscard,
+}: ModifierFormProps & { onDiscard: () => void }) {
 	const { _ } = useLingui()
+	const formRef = useRef<HTMLFormElement>(null)
+	const navigation = useNavigation()
+	const actionData = useActionData<{
+		error?: Record<string, string[] | undefined>
+	}>()
+	useFormSnapshotSaveBar(formRef, {
+		// The submission and the redirect that follows a successful save.
+		saving: navigation.state !== 'idle' && navigation.formMethod != null,
+		result: actionData,
+		onDiscard,
+	})
+	const actionErrorMessages = Object.values(actionData?.error ?? {})
+		.flat()
+		.filter((message): message is string => typeof message === 'string')
 	const [activeLocale, setActiveLocale] = useState(defaultLocale)
 
 	const handleAddOptionNestedGroup = (
@@ -857,7 +857,15 @@ export function ModifierForm({
 				activeLocale={activeLocale}
 				defaultLocale={defaultLocale}
 			>
-				<Form method="POST" className="flex flex-1 flex-col">
+				<Form ref={formRef} method="POST" className="flex flex-1 flex-col">
+					{actionErrorMessages.length > 0 ? (
+						<div
+							role="alert"
+							className="border-destructive text-destructive mx-auto mt-4 w-full max-w-6xl rounded-md border p-3 text-sm"
+						>
+							{actionErrorMessages.join(' ')}
+						</div>
+					) : null}
 					{/* Hidden inputs to submit values */}
 					<input type="hidden" name="name" value={name} />
 					<input type="hidden" name="selectionType" value={selectionType} />
@@ -947,132 +955,29 @@ export function ModifierForm({
 										</FrameDescription>
 									</FrameHeader>
 									<FramePanel className="p-5">
-										<div className="space-y-3">
-											<Label>
-												<Trans>Selection Mode</Trans>
-											</Label>
-											<RadioGroup
-												value={selectionType}
-												onValueChange={(val: any) =>
-													handleSelectionTypeChange(val)
-												}
-												className="grid grid-cols-1 gap-3 sm:grid-cols-2"
-											>
-												<ChoiceCard htmlFor="st_single">
-													<RadioGroupItem value="single" id="st_single" />
-													<ChoiceCardContent>
-														<ChoiceCardTitle>
-															<Trans>Single Choice (Radio)</Trans>
-														</ChoiceCardTitle>
-														<ChoiceCardDescription>
-															<Trans>Guests can pick up to 1 option.</Trans>
-														</ChoiceCardDescription>
-													</ChoiceCardContent>
-												</ChoiceCard>
-
-												<ChoiceCard htmlFor="st_multiple">
-													<RadioGroupItem value="multiple" id="st_multiple" />
-													<ChoiceCardContent>
-														<ChoiceCardTitle>
-															<Trans>Multiple Choice (Checkboxes)</Trans>
-														</ChoiceCardTitle>
-														<ChoiceCardDescription>
-															<Trans>Guests can pick multiple options.</Trans>
-														</ChoiceCardDescription>
-													</ChoiceCardContent>
-												</ChoiceCard>
-
-												<ChoiceCard htmlFor="st_quantity">
-													<RadioGroupItem value="quantity" id="st_quantity" />
-													<ChoiceCardContent>
-														<ChoiceCardTitle>
-															<Trans>Quantity Counter (+/-)</Trans>
-														</ChoiceCardTitle>
-														<ChoiceCardDescription>
-															<Trans>Guests choose counts per option.</Trans>
-														</ChoiceCardDescription>
-													</ChoiceCardContent>
-												</ChoiceCard>
-
-												<ChoiceCard htmlFor="st_pizza">
-													<RadioGroupItem value="pizza" id="st_pizza" />
-													<ChoiceCardContent>
-														<ChoiceCardTitle>
-															<Trans>Pizza Toppings (Whole / Halves)</Trans>
-														</ChoiceCardTitle>
-														<ChoiceCardDescription>
-															<Trans>
-																Whole pizza, left half, or right half pricing.
-															</Trans>
-														</ChoiceCardDescription>
-													</ChoiceCardContent>
-												</ChoiceCard>
-											</RadioGroup>
-										</div>
+										<ModifierSelectionModeField
+											value={selectionType}
+											onChange={handleSelectionTypeChange}
+										/>
 									</FramePanel>
 
 									{isSingleSelection ? (
 										<FramePanel className="flex items-center justify-between gap-4 p-5">
-											<Label
-												htmlFor="single-choice-required"
-												className="block min-w-0 cursor-pointer space-y-0.5 font-normal"
-											>
-												<div className="text-foreground text-sm">
-													<Trans>Required selection</Trans>
-												</div>
-												<p className="text-muted-foreground text-xs">
-													{effectiveMinSelections === 1 ? (
-														<Trans>
-															Guests must choose one option before continuing.
-														</Trans>
-													) : (
-														<Trans>Guests can skip this selection.</Trans>
-													)}
-												</p>
-											</Label>
-											<Switch
-												id="single-choice-required"
-												checked={effectiveMinSelections === 1}
-												onCheckedChange={(isRequired) =>
+											<ModifierRequiredSelectionField
+												required={effectiveMinSelections === 1}
+												onChange={(isRequired) =>
 													setMinSelections(isRequired ? 1 : 0)
 												}
 											/>
 										</FramePanel>
 									) : (
 										<FramePanel className="p-5">
-											<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-												<div className="space-y-1.5">
-													<Label>
-														<Trans>Minimum Selections</Trans>
-													</Label>
-													<Input
-														type="number"
-														min="0"
-														value={minSelections}
-														onChange={(e) =>
-															setMinSelections(
-																parseInt(e.target.value, 10) || 0,
-															)
-														}
-													/>
-													<span className="text-muted-foreground text-xs">
-														0 = optional choice, 1+ = required
-													</span>
-												</div>
-
-												<div className="space-y-1.5">
-													<Label>
-														<Trans>Maximum Selections (Optional)</Trans>
-													</Label>
-													<Input
-														type="number"
-														min="1"
-														placeholder="Leave blank for unlimited"
-														value={maxSelections}
-														onChange={(e) => setMaxSelections(e.target.value)}
-													/>
-												</div>
-											</div>
+											<ModifierSelectionLimitsFields
+												minSelections={minSelections}
+												maxSelections={maxSelections}
+												onMinChange={setMinSelections}
+												onMaxChange={setMaxSelections}
+											/>
 										</FramePanel>
 									)}
 								</Frame>

@@ -17,7 +17,6 @@ import {
 	AlertDialogAction,
 	AlertDialogCancel,
 	AlertDialogContent,
-	AlertDialogDescription,
 	AlertDialogFooter,
 	AlertDialogHeader,
 	AlertDialogTitle,
@@ -53,6 +52,7 @@ import {
 } from 'react-router'
 import { z } from 'zod'
 import { EmptyState } from '#app/components/empty-state.tsx'
+import { MenuDeleteEffects } from '#app/components/menu/delete-effects.tsx'
 import { useMenuListFilters } from '#app/components/menu/menu-list-filters.tsx'
 import { MenuStatusBadge } from '#app/components/menu/menu-status-badge.tsx'
 import {
@@ -456,12 +456,11 @@ export default function MenusIndexRoute() {
 						<AlertDialogTitle>
 							<Trans>Delete menu?</Trans>
 						</AlertDialogTitle>
-						<AlertDialogDescription>
-							<Trans>
-								This will permanently delete this menu. Categories and items
-								associated with it will remain intact.
-							</Trans>
-						</AlertDialogDescription>
+						<MenuDeleteEffects
+							orgSlug={organization.slug}
+							entityType="menu"
+							entityId={deleteMenuId}
+						/>
 						{deleteError ? (
 							<p className="text-destructive text-sm">{deleteError}</p>
 						) : null}

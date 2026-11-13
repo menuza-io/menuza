@@ -21,7 +21,6 @@ import {
 	AlertDialogAction,
 	AlertDialogCancel,
 	AlertDialogContent,
-	AlertDialogDescription,
 	AlertDialogFooter,
 	AlertDialogHeader,
 	AlertDialogTitle,
@@ -57,6 +56,7 @@ import {
 } from 'react-router'
 import { z } from 'zod'
 import { EmptyState } from '#app/components/empty-state.tsx'
+import { MenuDeleteEffects } from '#app/components/menu/delete-effects.tsx'
 import { useMenuListFilters } from '#app/components/menu/menu-list-filters.tsx'
 import { MenuStatusBadge } from '#app/components/menu/menu-status-badge.tsx'
 import {
@@ -619,12 +619,11 @@ export default function OptionsIndexRoute() {
 						<AlertDialogTitle>
 							<Trans>Delete Menu Option?</Trans>
 						</AlertDialogTitle>
-						<AlertDialogDescription>
-							<Trans>
-								This will permanently remove this option and unassign it from
-								all modifier groups. This action cannot be undone.
-							</Trans>
-						</AlertDialogDescription>
+						<MenuDeleteEffects
+							orgSlug={orgSlug}
+							entityType="modifier_option"
+							entityId={deleteOptionId}
+						/>
 					</AlertDialogHeader>
 					<AlertDialogFooter>
 						<AlertDialogCancel>

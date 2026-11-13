@@ -40,8 +40,12 @@ import {
 import { StatusButton } from '@repo/ui/status-button'
 import { Switch } from '@repo/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@repo/ui/tabs'
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { Link, useFetcher } from 'react-router'
+import {
+	useDiscardKey,
+	useFormSnapshotSaveBar,
+} from '#app/components/use-native-form-save-bar.ts'
 import {
 	LocaleContext,
 	LocaleSwitcher,
@@ -101,16 +105,30 @@ interface LocationFormProps {
 	isEditing?: boolean
 }
 
-export function LocationForm({
+export function LocationForm(props: LocationFormProps) {
+	// Discard remounts the form with the values it opened with.
+	const { discardKey, discard } = useDiscardKey()
+	return <LocationFormBody key={discardKey} {...props} onDiscard={discard} />
+}
+
+function LocationFormBody({
 	orgSlug,
 	initialData,
 	siteLocalesRaw,
 	siteDefaultLocaleRaw,
 	isEditing = false,
-}: LocationFormProps) {
+	onDiscard,
+}: LocationFormProps & { onDiscard: () => void }) {
 	const { _ } = useLingui()
 	const fetcher = useFetcher<{ error?: string }>()
+	// The fetcher stays busy through the redirect that follows a save.
 	const isSubmitting = fetcher.state !== 'idle'
+	const formRef = useRef<HTMLFormElement>(null)
+	useFormSnapshotSaveBar(formRef, {
+		saving: isSubmitting,
+		result: fetcher.data,
+		onDiscard,
+	})
 
 	// Parse site locales for internationalization
 	const localesConfig = parseSiteLocalesConfig(
@@ -244,34 +262,35 @@ export function LocationForm({
 		}
 	}
 
+	// What a save sends. The fields are React state, mostly without named
+	// inputs, so the form also carries it in a hidden field for the save bar.
+	const payload: Record<string, string | number | boolean> = {
+		name,
+		slug: slug.trim().toLowerCase(),
+		phone: phone.trim(),
+		timezone,
+		taxRate,
+		taxInclusive,
+		vatNumber: vatNumber.trim(),
+		isActive,
+		isDefault,
+		address: JSON.stringify(address),
+		storeHours: JSON.stringify(storeHours),
+		onlineHours: JSON.stringify(onlineHours),
+		specialHours: JSON.stringify(specialHours),
+		prepTime,
+		largeOrderThreshold,
+		largeOrderThresholdType,
+		largeOrderExtraPrepTime,
+		fulfillmentOptions: JSON.stringify(fulfillment),
+		inHouseTips: JSON.stringify(tips),
+		scheduling: JSON.stringify(scheduling),
+		deliveryConfig: JSON.stringify(deliveryConfig),
+		deliveryZones: JSON.stringify(deliveryZones),
+	}
+
 	const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault()
-
-		const payload: Record<string, string | number | boolean> = {
-			name,
-			slug: slug.trim().toLowerCase(),
-			phone: phone.trim(),
-			timezone,
-			taxRate,
-			taxInclusive,
-			vatNumber: vatNumber.trim(),
-			isActive,
-			isDefault,
-			address: JSON.stringify(address),
-			storeHours: JSON.stringify(storeHours),
-			onlineHours: JSON.stringify(onlineHours),
-			specialHours: JSON.stringify(specialHours),
-			prepTime,
-			largeOrderThreshold,
-			largeOrderThresholdType,
-			largeOrderExtraPrepTime,
-			fulfillmentOptions: JSON.stringify(fulfillment),
-			inHouseTips: JSON.stringify(tips),
-			scheduling: JSON.stringify(scheduling),
-			deliveryConfig: JSON.stringify(deliveryConfig),
-			deliveryZones: JSON.stringify(deliveryZones),
-		}
-
 		void fetcher.submit(payload, { method: 'POST' })
 	}
 
@@ -300,7 +319,17 @@ export function LocationForm({
 					setActiveLocale,
 				}}
 			>
-				<form onSubmit={handleSubmit} noValidate className="space-y-6">
+				<form
+					ref={formRef}
+					onSubmit={handleSubmit}
+					noValidate
+					className="space-y-6"
+				>
+					<input
+						type="hidden"
+						name="locationDraft"
+						value={JSON.stringify(payload)}
+					/>
 					{fetcher.data?.error ? (
 						<div className="bg-destructive/10 border-destructive/20 text-destructive rounded-md border p-3 text-sm">
 							{fetcher.data.error}

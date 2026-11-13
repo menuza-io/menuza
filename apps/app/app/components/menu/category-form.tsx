@@ -26,8 +26,12 @@ import { Input } from '@repo/ui/input'
 import { Item, ItemContent, ItemGroup, ItemTitle } from '@repo/ui/item'
 import { Label } from '@repo/ui/label'
 import { Switch } from '@repo/ui/switch'
-import { useState, useMemo } from 'react'
-import { Form } from 'react-router'
+import { useMemo, useRef, useState } from 'react'
+import { Form, useActionData, useNavigation } from 'react-router'
+import {
+	useDiscardKey,
+	useFormSnapshotSaveBar,
+} from '#app/components/use-native-form-save-bar.ts'
 import {
 	LocaleContext,
 	LocalizedInput,
@@ -89,7 +93,14 @@ interface CategoryFormProps {
 	pageTitle: string
 }
 
-export function CategoryForm({
+export function CategoryForm(props: CategoryFormProps) {
+	// Discard remounts the form with the values it opened with.
+	const { discardKey, discard } = useDiscardKey()
+	return <CategoryFormBody key={discardKey} {...props} onDiscard={discard} />
+}
+
+function CategoryFormBody({
+	onDiscard,
 	categoryId,
 	initialData,
 	orgSlug,
@@ -101,7 +112,16 @@ export function CategoryForm({
 	allLocations,
 	isSubmitting,
 	pageTitle,
-}: CategoryFormProps) {
+}: CategoryFormProps & { onDiscard: () => void }) {
+	const formRef = useRef<HTMLFormElement>(null)
+	const navigation = useNavigation()
+	const actionData = useActionData()
+	useFormSnapshotSaveBar(formRef, {
+		// The submission and the redirect that follows a successful save.
+		saving: navigation.state !== 'idle' && navigation.formMethod != null,
+		result: actionData,
+		onDiscard,
+	})
 	const [activeLocale, setActiveLocale] = useState(defaultLocale)
 	const [parentId, setParentId] = useState<string | null>(
 		initialData?.parentId ?? null,
@@ -223,7 +243,7 @@ export function CategoryForm({
 				activeLocale={activeLocale}
 				defaultLocale={defaultLocale}
 			>
-				<Form method="POST" className="flex flex-1 flex-col">
+				<Form ref={formRef} method="POST" className="flex flex-1 flex-col">
 					{/* Hidden inputs to submit values */}
 					<input type="hidden" name="parentId" value={parentId ?? ''} />
 					<input type="hidden" name="displayName" value={displayName} />

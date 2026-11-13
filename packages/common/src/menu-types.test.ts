@@ -14,6 +14,9 @@ import {
 	MenuOptionInputSchema,
 	getCategoryDepth,
 	isValidParentCategory,
+	validateModifierGraph,
+	findBlockedNestedGroups,
+	applyModifierGraphChange,
 	ModifierGroupInputSchema,
 	ModifierOptionInputSchema,
 	getLocalizedMenuValue,
@@ -614,5 +617,171 @@ describe('menu-types', () => {
 				requireFutureClose: false,
 			}),
 		).toEqual({})
+	})
+})
+
+describe('validateModifierGraph', () => {
+	// Each group gets one option `<group>-opt`; `links` nests groups under it.
+	function graph(links: Record<string, string[]>, groups: string[] = []) {
+		const ids = new Set([...groups, ...Object.keys(links)])
+		for (const targets of Object.values(links)) {
+			for (const id of targets) ids.add(id)
+		}
+		return {
+			groupOptions: Object.fromEntries(
+				[...ids].map((id) => [id, [`${id}-opt`]]),
+			),
+			optionNestedGroups: Object.fromEntries(
+				Object.entries(links).map(([id, targets]) => [`${id}-opt`, targets]),
+			),
+		}
+	}
+
+	it('accepts groups without nesting', () => {
+		expect(validateModifierGraph(graph({}, ['size', 'extras']))).toEqual({
+			ok: true,
+		})
+	})
+
+	it('refuses a group nested under one of its own options', () => {
+		expect(validateModifierGraph(graph({ size: ['size'] }))).toEqual({
+			ok: false,
+			reason: 'modifier_cycle',
+			path: ['size', 'size'],
+		})
+	})
+
+	it('refuses a two-step loop', () => {
+		const result = validateModifierGraph(
+			graph({ size: ['extras'], extras: ['size'] }),
+		)
+		expect(result).toMatchObject({ ok: false, reason: 'modifier_cycle' })
+		if (!result.ok) {
+			expect(result.path[0]).toBe(result.path.at(-1))
+			expect(new Set(result.path)).toEqual(new Set(['size', 'extras']))
+		}
+	})
+
+	it('finds a loop through an option shared by two groups', () => {
+		// `cheese` sits in both groups; nesting `sauce` under it loops back.
+		const result = validateModifierGraph({
+			groupOptions: { toppings: ['cheese'], sauce: ['cheese'] },
+			optionNestedGroups: { cheese: ['sauce'] },
+		})
+		expect(result).toEqual({
+			ok: false,
+			reason: 'modifier_cycle',
+			path: ['sauce', 'sauce'],
+		})
+	})
+
+	it('allows three nested levels and refuses four', () => {
+		expect(
+			validateModifierGraph(graph({ a: ['b'], b: ['c'], c: ['d'] })),
+		).toEqual({ ok: true })
+		expect(
+			validateModifierGraph(graph({ a: ['b'], b: ['c'], c: ['d'], d: ['e'] })),
+		).toEqual({
+			ok: false,
+			reason: 'modifier_too_deep',
+			path: ['a', 'b', 'c', 'd', 'e'],
+		})
+	})
+
+	it('respects a custom depth', () => {
+		expect(
+			validateModifierGraph({ ...graph({ a: ['b'], b: ['c'] }), maxDepth: 1 }),
+		).toMatchObject({ ok: false, reason: 'modifier_too_deep' })
+	})
+
+	it('only blames links the edit adds when given the previous graph', () => {
+		// An old loop elsewhere must not block an unrelated save.
+		const previous = graph({ x: ['y'], y: ['x'] }, ['size', 'extras'])
+		const next = graph({ x: ['y'], y: ['x'], size: ['extras'] })
+		expect(validateModifierGraph({ ...next, previous })).toEqual({ ok: true })
+		// Without the previous graph the old loop is reported.
+		expect(validateModifierGraph(next)).toMatchObject({
+			ok: false,
+			reason: 'modifier_cycle',
+		})
+	})
+
+	it('refuses an edit that closes a loop through another group', () => {
+		const previous = graph({ a: ['b'] }, ['b'])
+		const next = graph({ a: ['b'], b: ['a'] })
+		expect(validateModifierGraph({ ...next, previous })).toEqual({
+			ok: false,
+			reason: 'modifier_cycle',
+			path: ['b', 'a', 'b'],
+		})
+	})
+
+	it('counts the levels above an edited link', () => {
+		const previous = graph({ a: ['b'], b: ['c'] }, ['d', 'e'])
+		const next = graph({ a: ['b'], b: ['c'], d: ['e'], c: ['d'] })
+		expect(validateModifierGraph({ ...next, previous })).toEqual({
+			ok: false,
+			reason: 'modifier_too_deep',
+			path: ['a', 'b', 'c', 'd', 'e'],
+		})
+	})
+
+	it('lets an edit remove links from bad data', () => {
+		const previous = graph({ a: ['b'], b: ['a'] })
+		const next = graph({ a: ['b'] }, ['b'])
+		expect(validateModifierGraph({ ...next, previous })).toEqual({ ok: true })
+	})
+})
+
+describe('findBlockedNestedGroups', () => {
+	const graph = {
+		groupOptions: {
+			size: ['large'],
+			extras: ['bacon'],
+			sauce: ['mayo'],
+			a: ['a1'],
+			b: ['b1'],
+			c: ['c1'],
+		},
+		optionNestedGroups: { bacon: ['size'], a1: ['b'], b1: ['c'] },
+	}
+
+	it('blocks groups that would loop back to the option own group', () => {
+		// `large` sits in Size; Extras already nests Size under bacon.
+		expect(
+			findBlockedNestedGroups({
+				graph,
+				optionId: 'large',
+				groupIds: ['size'],
+				nestedGroupIds: [],
+				candidateIds: ['size', 'extras', 'sauce'],
+			}),
+		).toEqual({ size: 'modifier_cycle', extras: 'modifier_cycle' })
+	})
+
+	it('blocks groups that would nest too deep and judges the form state', () => {
+		// a -> b -> c already: Size (no nesting) fits as a third level, while
+		// Extras (-> Size) and Sauce (-> Extras -> Size) would go deeper.
+		const deep = {
+			...graph,
+			optionNestedGroups: { ...graph.optionNestedGroups, mayo: ['extras'] },
+		}
+		expect(
+			findBlockedNestedGroups({
+				graph: deep,
+				optionId: 'c1',
+				groupIds: ['c'],
+				nestedGroupIds: [],
+				candidateIds: ['size', 'sauce', 'extras'],
+			}),
+		).toEqual({ sauce: 'modifier_too_deep', extras: 'modifier_too_deep' })
+	})
+
+	it('applies membership changes for a new option', () => {
+		expect(
+			applyModifierGraphChange(graph, {
+				options: [{ id: 'new', nestedGroupIds: ['sauce'], groupIds: ['c'] }],
+			}).groupOptions.c,
+		).toEqual(['c1', 'new'])
 	})
 })

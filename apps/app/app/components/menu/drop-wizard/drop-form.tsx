@@ -44,7 +44,7 @@ import { Switch } from '@repo/ui/switch'
 import { ToggleGroup, ToggleGroupItem } from '@repo/ui/toggle-group'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@repo/ui/tooltip'
 import slugify from '@sindresorhus/slugify'
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { Form, useActionData, useNavigation } from 'react-router'
 import {
 	MediaLibraryPicker,
@@ -52,6 +52,10 @@ import {
 } from '#app/components/media-library/media-library-picker.tsx'
 import { MenuFormHeader } from '#app/components/menu/menu-form-header.tsx'
 import { MenuStatusBadge } from '#app/components/menu/menu-status-badge.tsx'
+import {
+	useDiscardKey,
+	useFormSnapshotSaveBar,
+} from '#app/components/use-native-form-save-bar.ts'
 import {
 	LocaleContext,
 	LocalizedInput,
@@ -172,6 +176,8 @@ export function DropForm({
 	...props
 }: DropFormProps) {
 	const [activeLocale, setActiveLocale] = useState(defaultLocale)
+	// Discard remounts the form with the values it opened with.
+	const { discardKey, discard } = useDiscardKey()
 
 	return (
 		<LocaleContext.Provider
@@ -187,9 +193,11 @@ export function DropForm({
 				defaultLocale={defaultLocale}
 			>
 				<DropFormContent
+					key={discardKey}
 					{...props}
 					activeLocale={activeLocale}
 					defaultLocale={defaultLocale}
+					onDiscard={discard}
 				/>
 			</TranslateProvider>
 		</LocaleContext.Provider>
@@ -206,13 +214,26 @@ function DropFormContent({
 	currency = 'USD',
 	defaultLocale = 'en',
 	activeLocale,
-}: DropFormProps & { activeLocale: string }) {
+	onDiscard,
+}: DropFormProps & { activeLocale: string; onDiscard: () => void }) {
 	const { _ } = useLingui()
 	const navigation = useNavigation()
 	const actionData = useActionData<{
 		errors?: Record<string, string[] | undefined>
 	}>()
 	const isSubmitting = navigation.state === 'submitting'
+	const formRef = useRef<HTMLFormElement>(null)
+	// Drop actions report failures as `errors`; the save bar reads `error`.
+	const saveResult = useMemo(
+		() => (actionData?.errors ? { error: actionData.errors } : actionData),
+		[actionData],
+	)
+	useFormSnapshotSaveBar(formRef, {
+		// The submission and the redirect that follows a successful save.
+		saving: navigation.state !== 'idle' && navigation.formMethod != null,
+		result: saveResult,
+		onDiscard,
+	})
 	const saveErrors = Object.values(actionData?.errors ?? {})
 		.flat()
 		.filter((message): message is string => Boolean(message))
@@ -444,7 +465,24 @@ function DropFormContent({
 
 	return (
 		<div className="flex min-h-screen flex-col">
-			<Form method="post" className="flex flex-1 flex-col">
+			<Form
+				ref={formRef}
+				method="post"
+				className="flex flex-1 flex-col"
+				onSubmit={(event) => {
+					// The save bar (and Ctrl/Cmd+S) submits without a button, but the
+					// action needs an intent: save the way the drop is now, keeping a
+					// live drop published and anything else a draft.
+					if ((event.nativeEvent as SubmitEvent).submitter) return
+					const keepsPublished = isEdit && isPublished && !isLegacyEnded
+					const button = event.currentTarget.querySelector<HTMLButtonElement>(
+						`button[type="submit"][name="intent"][value="${keepsPublished ? 'publish' : 'draft'}"]`,
+					)
+					if (!button) return
+					event.preventDefault()
+					event.currentTarget.requestSubmit(button)
+				}}
+			>
 				<MenuFormHeader
 					pageTitle={
 						pageTitle || (isEdit ? _(msg`Edit Drop`) : _(msg`Create Drop`))

@@ -1,8 +1,12 @@
 import { t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import { useMemo, useState } from 'react'
-import { Form } from 'react-router'
-import { getLocalizedMenuValue, type Allergen } from '@repo/common/menu-types'
+import {
+	findBlockedNestedGroups,
+	getLocalizedMenuValue,
+	MAX_NESTED_MODIFIER_DEPTH,
+	type Allergen,
+	type ModifierGraph,
+} from '@repo/common/menu-types'
 import { cn } from '@repo/ui'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
@@ -27,12 +31,17 @@ import {
 } from '@repo/ui/item'
 import { Label } from '@repo/ui/label'
 import { Switch } from '@repo/ui/switch'
+import { useMemo, useRef, useState } from 'react'
+import { Form, useNavigation, useRevalidator } from 'react-router'
 import { OptionRecipePanel } from '#app/components/inventory/recipe-panel.tsx'
-import { MenuAvailabilityCard } from './menu-availability-card.tsx'
 import {
 	MediaLibraryPicker,
 	type MediaLibraryAsset,
 } from '#app/components/media-library/media-library-picker.tsx'
+import {
+	useDiscardKey,
+	useFormSnapshotSaveBar,
+} from '#app/components/use-native-form-save-bar.ts'
 import {
 	LocaleContext,
 	LocalizedInput,
@@ -45,7 +54,13 @@ import {
 	type LocationOverrideState,
 } from './location-overrides-card.tsx'
 import { MenuAllergenSelector } from './menu-allergen-selector.tsx'
+import { MenuAvailabilityCard } from './menu-availability-card.tsx'
 import { MenuFormHeader } from './menu-form-header.tsx'
+import {
+	QuickModifierGroupSheet,
+	useCanCreateModifierGroup,
+	type QuickCreatedModifierGroup,
+} from './quick-modifier-group-sheet.tsx'
 
 export interface OptionFormData {
 	displayName: string
@@ -92,9 +107,23 @@ interface OptionFormProps {
 	isSubmitting?: boolean
 	pageTitle: React.ReactNode
 	actionError?: unknown
+	/**
+	 * The organization's nested modifier graph, to disable nested groups that
+	 * would loop or nest too deep (the server refuses them as well).
+	 */
+	modifierGraph?: ModifierGraph
 }
 
-export function OptionForm({
+/** Stand-in id for an option that is not saved yet, as the server uses. */
+const NEW_OPTION_ID = 'new-option'
+
+export function OptionForm(props: OptionFormProps) {
+	// Discard remounts the form with the values it opened with.
+	const { discardKey, discard } = useDiscardKey()
+	return <OptionFormBody key={discardKey} {...props} onDiscard={discard} />
+}
+
+function OptionFormBody({
 	orgSlug,
 	optionId,
 	dataRegion,
@@ -106,8 +135,18 @@ export function OptionForm({
 	isSubmitting,
 	pageTitle,
 	actionError,
-}: OptionFormProps) {
+	modifierGraph,
+	onDiscard,
+}: OptionFormProps & { onDiscard: () => void }) {
 	const { _ } = useLingui()
+	const formRef = useRef<HTMLFormElement>(null)
+	const navigation = useNavigation()
+	useFormSnapshotSaveBar(formRef, {
+		// The submission and the redirect that follows a successful save.
+		saving: navigation.state !== 'idle' && navigation.formMethod != null,
+		result: actionError ? { error: actionError } : undefined,
+		onDiscard,
+	})
 	const [activeLocale, setActiveLocale] = useState(defaultLocale)
 
 	// Form state
@@ -123,7 +162,7 @@ export function OptionForm({
 		}
 		return base
 	})
-	const [priceWhole, setPriceWhole] = useState<number | null>(
+	const [_priceWhole, setPriceWhole] = useState<number | null>(
 		initialData?.priceWhole ?? null,
 	)
 	const [priceLeft, setPriceLeft] = useState<number | null>(
@@ -214,7 +253,57 @@ export function OptionForm({
 		string[]
 	>(initialData?.nestedModifierGroupIds ?? [])
 
+	// Groups made in the create sheet: saved already, listed until the loader
+	// catches up. Creating one is not a save of this option.
+	const canCreateGroup = useCanCreateModifierGroup()
+	const revalidator = useRevalidator()
+	const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false)
+	const [createdGroups, setCreatedGroups] = useState<
+		QuickCreatedModifierGroup[]
+	>([])
+	const createdGroupIds = new Set(createdGroups.map((group) => group.id))
+	// Nested Modifiers lists the new groups; Modifier Group Assignment keeps
+	// the loader's list, so a group made for nesting is not offered as a parent
+	// until the page reloads.
+	const nestableGroups = [
+		...availableModifierGroups,
+		...createdGroups
+			.filter(
+				(created) =>
+					!availableModifierGroups.some((group) => group.id === created.id),
+			)
+			.map((created) => ({ ...created, internalName: null })),
+	].filter((group) => !selectedGroupIds.has(group.id))
+	const handleGroupCreated = (group: QuickCreatedModifierGroup) => {
+		setCreatedGroups((current) => [...current, group])
+		setNestedModifierGroupIds((current) =>
+			current.includes(group.id) ? current : [...current, group.id],
+		)
+		void revalidator.revalidate()
+	}
+
+	// Groups that cannot be nested here: picking one would loop or go too deep.
+	const blockedNestedGroups = useMemo(
+		() =>
+			modifierGraph
+				? findBlockedNestedGroups({
+						graph: modifierGraph,
+						optionId: optionId ?? NEW_OPTION_ID,
+						groupIds: Array.from(selectedGroupIds),
+						nestedGroupIds: nestedModifierGroupIds,
+						candidateIds: Object.keys(modifierGraph.groupOptions),
+					})
+				: {},
+		[modifierGraph, optionId, selectedGroupIds, nestedModifierGroupIds],
+	)
+
 	const toggleNestedModifierGroup = (groupId: string) => {
+		if (
+			blockedNestedGroups[groupId] &&
+			!nestedModifierGroupIds.includes(groupId)
+		) {
+			return
+		}
 		setNestedModifierGroupIds((prev) =>
 			prev.includes(groupId)
 				? prev.filter((id) => id !== groupId)
@@ -233,6 +322,13 @@ export function OptionForm({
 			return next
 		})
 	}
+
+	const actionErrorMessages =
+		actionError && typeof actionError === 'object'
+			? Object.values(actionError as Record<string, unknown>)
+					.flat()
+					.filter((message): message is string => typeof message === 'string')
+			: []
 
 	const handleImageSelected = (asset: MediaLibraryAsset) => {
 		setImageKey(asset.id)
@@ -253,7 +349,7 @@ export function OptionForm({
 				activeLocale={activeLocale}
 				defaultLocale={defaultLocale}
 			>
-				<Form method="POST" className="flex flex-1 flex-col">
+				<Form ref={formRef} method="POST" className="flex flex-1 flex-col">
 					{/* Hidden inputs to submit complex values */}
 					<input type="hidden" name="displayName" value={displayName} />
 					<input type="hidden" name="description" value={description} />
@@ -312,12 +408,18 @@ export function OptionForm({
 					{/* 2-Column Shopify Layout */}
 					<div className="mx-auto w-full max-w-6xl px-4 py-6 md:px-6 lg:px-8">
 						{actionError ? (
-							<div className="border-destructive/20 bg-destructive/10 text-destructive mb-6 rounded-lg border p-4 text-sm">
+							<div
+								role="alert"
+								className="border-destructive/20 bg-destructive/10 text-destructive mb-6 rounded-lg border p-4 text-sm"
+							>
 								<p className="font-semibold">
 									<Trans>
 										Failed to save option. Please check the fields below.
 									</Trans>
 								</p>
+								{actionErrorMessages.length > 0 ? (
+									<p className="mt-1">{actionErrorMessages.join(' ')}</p>
+								) : null}
 							</div>
 						) : null}
 						<div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
@@ -831,9 +933,7 @@ export function OptionForm({
 										</FrameDescription>
 									</FrameHeader>
 									<FramePanel className="space-y-3">
-										{availableModifierGroups.filter(
-											(g) => !selectedGroupIds.has(g.id),
-										).length === 0 ? (
+										{nestableGroups.length === 0 ? (
 											<p className="text-muted-foreground py-4 text-center text-xs">
 												<Trans>
 													No other modifier groups available to nest.
@@ -841,58 +941,95 @@ export function OptionForm({
 											</p>
 										) : (
 											<ItemGroup className="divide-border/60 divide-y rounded-md border">
-												{availableModifierGroups
-													.filter((g) => !selectedGroupIds.has(g.id))
-													.map((group) => {
-														const isSelected = nestedModifierGroupIds.includes(
-															group.id,
-														)
-														return (
-															<Item
-																key={group.id}
-																className={cn(
-																	'flex cursor-pointer items-center justify-between p-3 transition-colors',
-																	isSelected &&
-																		'border-primary/60 bg-primary/5 ring-primary/20 ring-1',
-																)}
-																onClick={() =>
-																	toggleNestedModifierGroup(group.id)
-																}
-															>
-																<div className="flex min-w-0 flex-1 items-center gap-2.5">
-																	<Checkbox
-																		id={`nested-group-${group.id}`}
-																		checked={isSelected}
-																		onCheckedChange={() =>
-																			toggleNestedModifierGroup(group.id)
-																		}
-																	/>
-																	<ItemContent className="min-w-0">
-																		<ItemTitle className="truncate text-xs font-medium">
-																			{getLocalizedMenuValue(
-																				group.name,
-																				activeLocale,
-																				defaultLocale,
-																			)}
-																		</ItemTitle>
-																		{group.internalName && (
-																			<ItemDescription className="truncate text-[11px]">
-																				{group.internalName}
-																			</ItemDescription>
+												{nestableGroups.map((group) => {
+													const isSelected = nestedModifierGroupIds.includes(
+														group.id,
+													)
+													// A group already picked can always be taken off.
+													const blockedReason = isSelected
+														? undefined
+														: blockedNestedGroups[group.id]
+													return (
+														<Item
+															key={group.id}
+															aria-disabled={blockedReason ? true : undefined}
+															className={cn(
+																'flex cursor-pointer items-center justify-between p-3 transition-colors',
+																isSelected &&
+																	'border-primary/60 bg-primary/5 ring-primary/20 ring-1',
+																blockedReason &&
+																	'cursor-not-allowed opacity-60',
+															)}
+															onClick={() =>
+																toggleNestedModifierGroup(group.id)
+															}
+														>
+															<div className="flex min-w-0 flex-1 items-center gap-2.5">
+																<Checkbox
+																	id={`nested-group-${group.id}`}
+																	checked={isSelected}
+																	disabled={Boolean(blockedReason)}
+																	onCheckedChange={() =>
+																		toggleNestedModifierGroup(group.id)
+																	}
+																/>
+																<ItemContent className="min-w-0">
+																	<ItemTitle className="truncate text-xs font-medium">
+																		{getLocalizedMenuValue(
+																			group.name,
+																			activeLocale,
+																			defaultLocale,
 																		)}
-																	</ItemContent>
-																</div>
-																<Badge
-																	variant="outline"
-																	className="text-muted-foreground text-[10px] capitalize"
-																>
-																	{group.selectionType ?? 'standard'}
-																</Badge>
-															</Item>
-														)
-													})}
+																	</ItemTitle>
+																	{blockedReason ? (
+																		<ItemDescription className="text-[11px]">
+																			{blockedReason === 'modifier_cycle' ? (
+																				<Trans>
+																					Can't nest: it would loop back to this
+																					option.
+																				</Trans>
+																			) : (
+																				<Trans>
+																					Can't nest: choices would go more than{' '}
+																					{MAX_NESTED_MODIFIER_DEPTH} levels
+																					deep.
+																				</Trans>
+																			)}
+																		</ItemDescription>
+																	) : createdGroupIds.has(group.id) ? (
+																		<ItemDescription className="truncate text-[11px]">
+																			<Trans>Not used anywhere else yet</Trans>
+																		</ItemDescription>
+																	) : group.internalName ? (
+																		<ItemDescription className="truncate text-[11px]">
+																			{group.internalName}
+																		</ItemDescription>
+																	) : null}
+																</ItemContent>
+															</div>
+															<Badge
+																variant="outline"
+																className="text-muted-foreground text-[10px] capitalize"
+															>
+																{group.selectionType ?? 'standard'}
+															</Badge>
+														</Item>
+													)
+												})}
 											</ItemGroup>
 										)}
+										{canCreateGroup ? (
+											<Button
+												type="button"
+												variant="outline"
+												size="sm"
+												className="w-full"
+												onClick={() => setIsCreateGroupOpen(true)}
+											>
+												<Icon name="plus" className="size-4" />
+												<Trans>Create new group</Trans>
+											</Button>
+										) : null}
 									</FramePanel>
 								</Frame>
 
@@ -927,6 +1064,14 @@ export function OptionForm({
 						</div>
 					</div>
 				</Form>
+				{canCreateGroup ? (
+					<QuickModifierGroupSheet
+						orgSlug={orgSlug}
+						open={isCreateGroupOpen}
+						onOpenChange={setIsCreateGroupOpen}
+						onCreated={handleGroupCreated}
+					/>
+				) : null}
 
 				{/* Media Library Picker Modal */}
 				<MediaLibraryPicker
