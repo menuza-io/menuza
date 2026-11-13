@@ -493,7 +493,7 @@ export default function EditLocationRoute() {
 						orgSlug={organization.slug}
 						open={copyOverridesOpen}
 						onOpenChange={setCopyOverridesOpen}
-						sourceLocationId={location.id}
+						sourceLocationId={location.id!}
 						locations={allLocations}
 					/>
 				</Card>

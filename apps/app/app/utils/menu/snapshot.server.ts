@@ -39,13 +39,14 @@ const SNAPSHOT_RETENTION_COUNT = 50
 const SNAPSHOT_RETENTION_MS = 90 * 24 * 60 * 60 * 1000
 
 type DbClient = typeof db
+type MenuDbClient = Parameters<Parameters<typeof db.transaction>[0]>[0]
 
-function reviveDates<T extends Record<string, unknown>>(row: T): T {
-	const out = { ...row }
+function reviveDates(row: Record<string, unknown>): Record<string, unknown> {
+	const out: Record<string, unknown> = { ...row }
 	for (const key of ['createdAt', 'updatedAt', 'unavailableUntil'] as const) {
 		const value = out[key]
 		if (typeof value === 'string') {
-			out[key] = new Date(value) as T[typeof key]
+			out[key] = new Date(value)
 		}
 	}
 	return out
@@ -299,7 +300,11 @@ async function setRestoreLock(organizationId: string, locked: boolean) {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function upsertTable(tx: typeof db, table: any, rows: Record<string, unknown>[]) {
+async function upsertTable(
+	tx: MenuDbClient,
+	table: any,
+	rows: Record<string, unknown>[],
+) {
 	for (const row of rows) {
 		const values = reviveDates(row)
 		await tx
@@ -313,7 +318,7 @@ async function upsertTable(tx: typeof db, table: any, rows: Record<string, unkno
 }
 
 async function removeAddedRecords(
-	tx: typeof db,
+	tx: MenuDbClient,
 	organizationId: string,
 	content: MenuSnapshotContent,
 ) {
@@ -324,7 +329,8 @@ async function removeAddedRecords(
 	const optionIds = new Set(content.options.map((row) => row.id))
 
 	const assignmentFilters = async (
-		table: typeof OrganizationMenuCategoryAssignment,
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		table: any,
 		snapIds: Set<string>,
 		liveJoin: () => Promise<string[]>,
 	) => {

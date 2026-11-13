@@ -1,4 +1,5 @@
 import { type InferSelectModel } from 'drizzle-orm'
+import { type SQLiteTable } from 'drizzle-orm/sqlite-core'
 import {
 	OrganizationMenu,
 	OrganizationMenuCategory,
@@ -16,7 +17,7 @@ import {
 
 export const MENU_SNAPSHOT_VERSION = 1 as const
 
-type Row<T extends { $inferSelect: unknown }> = InferSelectModel<T>
+type Row<T extends SQLiteTable> = InferSelectModel<T>
 
 export type MenuSnapshotContent = {
 	version: typeof MENU_SNAPSHOT_VERSION

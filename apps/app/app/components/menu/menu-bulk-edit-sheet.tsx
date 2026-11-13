@@ -687,9 +687,10 @@ export function MenuBulkEditSheet({
 								</Label>
 								<Select
 									value={locationId || '__all__'}
-									onValueChange={(value) =>
+									onValueChange={(value) => {
+										if (!value) return
 										setLocationId(value === '__all__' ? '' : value)
-									}
+									}}
 								>
 									<SelectTrigger>
 										<SelectValue />

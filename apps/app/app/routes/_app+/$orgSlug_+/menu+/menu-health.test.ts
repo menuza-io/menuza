@@ -129,6 +129,10 @@ vi.mock('#app/utils/organization/permissions.server.ts', () => ({
 vi.mock('#app/utils/sites/kv-cache.server.ts', () => ({
 	purgeOrganizationSiteCache: vi.fn(),
 }))
+vi.mock('#app/utils/menu/menu-feature-access.server.ts', () => ({
+	getMenuHistoryEnabled: vi.fn().mockResolvedValue(false),
+	getMenuBulkEditEnabled: vi.fn().mockResolvedValue(false),
+}))
 
 function call(loader: LoaderFunction, path: string) {
 	const request = new Request(`https://app.example/cafe/menu/${path}`)
