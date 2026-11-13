@@ -243,8 +243,10 @@ reservation-triggered journey and `marketing` for every other one, so after
 unsubscribing the next email step of any such journey is skipped as
 `no_consent`. Without a trusted origin (no `TENANT_API_URL` in production) the
 step is skipped as `no_unsubscribe_origin`, before a coupon is minted, and
-nothing is sent. The editor's preview shows an "Unsubscribe" placeholder where
-the signed link goes. Journey text steps do not carry an opt-out yet.
+nothing is sent; the run's timeline names the reason, and the node's `/health`
+answers `"emailLinks":"not_configured"` so deploy checks catch it. The editor's
+preview shows an "Unsubscribe" placeholder where the signed link goes. Journey
+text steps do not carry an opt-out yet.
 
 To backfill consent a business already holds (for example an existing mailing
 list), insert rows with `source = 'import'` through `setCustomerSubscription()`

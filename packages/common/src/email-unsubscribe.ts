@@ -21,11 +21,13 @@ export function unsubscribeFooterHtml(url: string): string {
 
 /**
  * Adds the unsubscribe link to an email body. A full HTML document (a designed
- * email) gets it just before `</body>`; a fragment gets it appended.
+ * email) gets it just before the last `</body>` (any case, optional spaces);
+ * a fragment gets it appended. The index comes from the original string, so
+ * text whose lowercase form changes length (Turkish `İ`) cannot shift it.
  */
 export function withUnsubscribeFooter(html: string, url: string): string {
 	const footer = unsubscribeFooterHtml(url)
-	const bodyClose = html.toLowerCase().lastIndexOf('</body>')
-	if (bodyClose === -1) return `${html}${footer}`
+	const bodyClose = [...html.matchAll(/<\/body\s*>/gi)].at(-1)?.index
+	if (bodyClose === undefined) return `${html}${footer}`
 	return `${html.slice(0, bodyClose)}${footer}${html.slice(bodyClose)}`
 }

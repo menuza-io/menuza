@@ -154,9 +154,11 @@ Deep checks (App/Admin only — D1 + self-reachability):
 - [ ] `curl -fsS https://<marketing-host>/api/health`
 - [ ] `curl -fsS https://<tenant-site-host>/api/health`
 - [ ] `curl -fsS https://jobs.<apex>/api/health`
-- [ ] `curl -fsS $TENANT_API_URL/api/health` → `"region":"us"`
-- [ ] `curl -fsS $TENANT_API_URL_KSA/api/health` → `"region":"ksa"` (if KSA
-      deployed)
+- [ ] `curl -fsS $TENANT_API_URL/api/health` → `"region":"us"` and
+      `"emailLinks":"ok"` (`not_configured` means `TENANT_API_URL` is missing on
+      that node: it keeps serving but skips every broadcast and journey email)
+- [ ] `curl -fsS $TENANT_API_URL_KSA/api/health` → `"region":"ksa"` and
+      `"emailLinks":"ok"` (if KSA deployed)
 - [ ] Staging (flat hostnames): `curl -fsS $APP_BASE_URL_STAGING/api/health`,
       etc. — see [ADR 046](./decisions/046-staging-hostnames-and-cookies.md)
 - [ ] App signup smoke test

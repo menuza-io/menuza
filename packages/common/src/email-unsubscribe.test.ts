@@ -14,6 +14,20 @@ describe('withUnsubscribeFooter', () => {
 		).toBe(`<html><body><p>Hi</p>${unsubscribeFooterHtml(url)}</BODY></html>`)
 	})
 
+	it('matches a closing body tag with spaces before >', () => {
+		expect(withUnsubscribeFooter('<body><p>Hi</p></body ></html>', url)).toBe(
+			`<body><p>Hi</p>${unsubscribeFooterHtml(url)}</body ></html>`,
+		)
+	})
+
+	it('is not shifted by text whose lowercase form is longer', () => {
+		expect(
+			withUnsubscribeFooter('<body><p>İİİ İstanbul</p></body></html>', url),
+		).toBe(
+			`<body><p>İİİ İstanbul</p>${unsubscribeFooterHtml(url)}</body></html>`,
+		)
+	})
+
 	it('appends the link to a fragment', () => {
 		expect(withUnsubscribeFooter('<p>Hi</p>', url)).toBe(
 			`<p>Hi</p><p style="font-size:12px;color:#666"><a href="${url}">Unsubscribe</a></p>`,
