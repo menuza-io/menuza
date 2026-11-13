@@ -134,6 +134,11 @@
       "import": "./src/email-blocks.ts",
       "default": "./src/email-blocks.ts"
     },
+    "./email-unsubscribe": {
+      "types": "./src/email-unsubscribe.ts",
+      "import": "./src/email-unsubscribe.ts",
+      "default": "./src/email-unsubscribe.ts"
+    },
     "./merge-tags": {
       "types": "./src/merge-tags.ts",
       "import": "./src/merge-tags.ts",

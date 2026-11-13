@@ -7,10 +7,7 @@ import {
 	requireUserWithOrganizationPermission,
 } from '#app/utils/organization/permissions.server.ts'
 import * as tenantApiServer from '#app/utils/tenant-api.server.ts'
-import {
-	loader as runsLoader,
-	action as runsAction,
-} from './automations.$journeyId.runs.tsx'
+import * as runsRoute from './automations.$journeyId.runs.tsx'
 import {
 	loader as detailLoader,
 	action as detailAction,
@@ -697,69 +694,22 @@ describe('Adversarial Security & Robustness Suite: Marketing Journey Builder', (
 		})
 
 		describe('automations.$journeyId.runs.tsx Action & Boundary Conditions', () => {
-			it('action rejects missing runId', async () => {
-				const formData = new FormData()
-
-				const request = new Request(
-					'http://localhost:3001/test-org/marketing/journeys/j1/runs',
-					{
-						method: 'POST',
-						body: formData,
-					},
-				)
-
-				const result = await runsAction({
-					request,
-					params: { orgSlug: 'test-org', journeyId: 'j1' },
-					context: {},
-				} as any)
-
-				expect(result).toEqual({ error: 'runId is required' })
-			})
-
-			it('action handles non-existent or invalid runId (404 from tenant API)', async () => {
-				mockFetchTenant.mockResolvedValueOnce(
-					new Response(JSON.stringify({ error: 'Run not found' }), {
-						status: 404,
-					}),
-				)
-
-				const formData = new FormData()
-				formData.set('runId', 'run_invalid_999')
-
-				const request = new Request(
-					'http://localhost:3001/test-org/marketing/journeys/j1/runs',
-					{
-						method: 'POST',
-						body: formData,
-					},
-				)
-
-				const result = await runsAction({
-					request,
-					params: { orgSlug: 'test-org', journeyId: 'j1' },
-					context: {},
-				} as any)
-
-				expect(result).toEqual({ error: 'Failed to load timeline' })
+			it('has no server action: the browser reads run timelines', () => {
+				expect('action' in runsRoute).toBe(false)
 			})
 
 			it('loader handles missing journey with 404 response', async () => {
-				mockFetchTenant
-					.mockResolvedValueOnce(
-						new Response(JSON.stringify({ error: 'Journey not found' }), {
-							status: 404,
-						}),
-					)
-					.mockResolvedValueOnce(
-						new Response(JSON.stringify({ runs: [] }), { status: 200 }),
-					)
+				mockFetchTenant.mockResolvedValueOnce(
+					new Response(JSON.stringify({ error: 'Journey not found' }), {
+						status: 404,
+					}),
+				)
 
 				const request = new Request(
 					'http://localhost:3001/test-org/marketing/journeys/j_ghost/runs',
 				)
 				await expect(
-					runsLoader({
+					runsRoute.loader({
 						request,
 						params: { orgSlug: 'test-org', journeyId: 'j_ghost' },
 						context: {},
@@ -767,38 +717,33 @@ describe('Adversarial Security & Robustness Suite: Marketing Journey Builder', (
 				).rejects.toThrow()
 			})
 
-			it('loader handles runs endpoint degradation gracefully when journey exists', async () => {
-				mockFetchTenant
-					.mockResolvedValueOnce(
-						new Response(
-							JSON.stringify({
-								journey: {
-									id: 'j1',
-									name: 'Active Journey',
-									status: 'active',
-									triggerType: 'phone_verified',
-								},
-							}),
-							{ status: 200 },
-						),
-					)
-					.mockResolvedValueOnce(
-						new Response(JSON.stringify({ error: 'Runs table locked' }), {
-							status: 500,
+			it('loader never reads runs, so a runs outage cannot fail the page', async () => {
+				mockFetchTenant.mockResolvedValueOnce(
+					new Response(
+						JSON.stringify({
+							journey: {
+								id: 'j1',
+								name: 'Active Journey',
+								status: 'active',
+								triggerType: 'phone_verified',
+							},
 						}),
-					)
+						{ status: 200 },
+					),
+				)
 
 				const request = new Request(
 					'http://localhost:3001/test-org/marketing/journeys/j1/runs',
 				)
-				const result = await runsLoader({
+				const result = await runsRoute.loader({
 					request,
 					params: { orgSlug: 'test-org', journeyId: 'j1' },
 					context: {},
 				} as any)
 
 				expect(result.journey.name).toBe('Active Journey')
-				expect(result.runs).toEqual([])
+				expect(result).not.toHaveProperty('runs')
+				expect(mockFetchTenant).toHaveBeenCalledTimes(1)
 			})
 		})
 	})

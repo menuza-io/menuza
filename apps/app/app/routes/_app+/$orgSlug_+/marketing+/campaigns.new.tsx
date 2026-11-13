@@ -84,6 +84,8 @@ function EmailDesignerField({ orgSlug }: { orgSlug: string }) {
 				blocks={blocks}
 				onChange={setBlocks}
 				onChooseImageFromLibrary={orgSlug ? handleChooseImage : undefined}
+				// Sent broadcast emails carry a signed unsubscribe link.
+				unsubscribeLinkPreview
 			/>
 			{orgSlug ? (
 				<MediaLibraryPicker

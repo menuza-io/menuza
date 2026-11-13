@@ -24,6 +24,7 @@ import {
 } from '@repo/ui/dialog'
 import { Icon } from '@repo/ui/icon'
 import { PageHeader } from '@repo/ui/page-header'
+import { Skeleton } from '@repo/ui/skeleton'
 import {
 	Table,
 	TableBody,
@@ -32,13 +33,9 @@ import {
 	TableHeader,
 	TableRow,
 } from '@repo/ui/table'
-import { useState } from 'react'
-import {
-	Link,
-	useLoaderData,
-	type LoaderFunctionArgs,
-	type ActionFunctionArgs,
-} from 'react-router'
+import { useEffect, useState } from 'react'
+import { Link, useLoaderData, type LoaderFunctionArgs } from 'react-router'
+import { useLoaderToken } from '#app/hooks/use-loader-token.ts'
 import { type BreadcrumbHandle } from '#app/utils/breadcrumb.ts'
 import {
 	ORG_PERMISSIONS,
@@ -53,6 +50,15 @@ export const handle: BreadcrumbHandle<Awaited<ReturnType<typeof loader>>> = {
 type JourneyStatus = 'draft' | 'active' | 'paused' | 'archived'
 type RunStatus = 'completed' | 'running' | 'failed' | 'cancelled'
 
+/**
+ * Runs and their step timelines are read by the browser from tenant-api with
+ * an Automations token, minted only after `read:automation:any`. That token
+ * reaches the two run reads and nothing else (not broadcasts, not the
+ * definition). Run records name the customer by id only and carry no provider
+ * error text; the App server never receives them
+ * (docs/tenant-data-residency.md). The server reads only the journey
+ * definition (name, status, trigger), which holds no guest data.
+ */
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const orgSlug = params.orgSlug || ''
 	const journeyId = params.journeyId || ''
@@ -64,31 +70,32 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		ORG_PERMISSIONS.READ_AUTOMATION_ANY,
 	)
 
-	const [journeyRes, runsRes] = await Promise.all([
-		fetchTenant(`/operator/journeys/${journeyId}`),
-		fetchTenant(`/operator/journeys/${journeyId}/runs`),
-	])
-
+	// Minted only after the permission check. The definition below is read
+	// with the server-side token: the Automations token is refused on it.
+	const { jwt, tenantApiUrl } = await getOperatorTenantClient(
+		request,
+		orgSlug,
+		{ area: 'automations' },
+	)
+	const journeyRes = await fetchTenant(
+		`/operator/journeys/${encodeURIComponent(journeyId)}`,
+	)
 	if (!journeyRes.ok) {
 		throw new Response(i18n._(t`Automation not found`), { status: 404 })
 	}
 
-	const journeyData = (await journeyRes.json()) as any
-	const runsData = runsRes.ok ? ((await runsRes.json()) as any) : { runs: [] }
-
-	const runs: JourneyRunRecord[] = (runsData.runs || []).map((r: any) => ({
-		id: r.id,
-		journeyId: r.journeyId,
-		customerId: r.customerId,
-		status: r.status,
-		startedAt: r.startedAt || r.createdAt,
-		completedAt: r.completedAt,
-		currentStepNodeId: r.currentStepNodeId,
-		errorMessage: r.errorMessage,
-		createdAt: r.createdAt,
-	}))
+	const journeyData = (await journeyRes.json()) as {
+		journey: {
+			id: string
+			name: string
+			status: string
+			triggerType: string
+		}
+	}
 
 	return {
+		jwt,
+		tenantApiUrl,
 		orgSlug,
 		journey: {
 			id: journeyData.journey.id,
@@ -96,42 +103,41 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			status: journeyData.journey.status,
 			triggerType: journeyData.journey.triggerType,
 		},
-		runs,
 	}
 }
 
-export async function action({ request, params }: ActionFunctionArgs) {
-	const orgSlug = params.orgSlug || ''
-	const { orgId, fetchTenant } = await getOperatorTenantClient(request, orgSlug)
+type RawRun = Partial<JourneyRunRecord> & {
+	id: string
+	createdAt?: string | Date
+}
 
-	await requireUserWithOrganizationPermission(
-		request,
-		orgId,
-		ORG_PERMISSIONS.READ_AUTOMATION_ANY,
-	)
-
-	const formData = await request.formData()
-	const runId = formData.get('runId')
-
-	if (typeof runId !== 'string' || !runId) {
-		return { error: i18n._(t`runId is required`) }
-	}
-
-	const res = await fetchTenant(`/operator/journeys/runs/${encodeURIComponent(runId)}`)
-	if (!res.ok) {
-		return { error: i18n._(t`Failed to load timeline`) }
-	}
-
-	const data = (await res.json()) as any
-	return { timeline: data.timeline || data.steps || [] }
+function toRunRecord(r: RawRun): JourneyRunRecord {
+	return {
+		id: r.id,
+		journeyId: r.journeyId ?? '',
+		customerId: r.customerId ?? '',
+		status: r.status ?? 'running',
+		startedAt: r.startedAt || r.createdAt || '',
+		completedAt: r.completedAt,
+		currentStepNodeId: r.currentStepNodeId,
+		errorMessage: r.errorMessage,
+		createdAt: r.createdAt ?? '',
+	} as JourneyRunRecord
 }
 
 export default function JourneyRunsRoute() {
 	const { _ } = useLingui()
-	const { orgSlug, journey, runs } = useLoaderData<typeof loader>()
+	const { jwt, tenantApiUrl, orgSlug, journey } = useLoaderData<typeof loader>()
+	const { token, refreshIfExpired, reloadKey } = useLoaderToken(jwt)
+	const [runs, setRuns] = useState<JourneyRunRecord[]>([])
+	const [runsState, setRunsState] = useState<'loading' | 'ready' | 'failed'>(
+		'loading',
+	)
 	const [selectedRun, setSelectedRun] = useState<JourneyRunRecord | null>(null)
 	const [timeline, setTimeline] = useState<JourneyStepExecutionRecord[]>([])
-	const [loadingTimeline, setLoadingTimeline] = useState(false)
+	const [timelineState, setTimelineState] = useState<
+		'loading' | 'ready' | 'failed'
+	>('loading')
 
 	const journeyStatusLabels: Record<JourneyStatus, string> = {
 		draft: _(msg`Draft`),
@@ -166,31 +172,92 @@ export default function JourneyRunsRoute() {
 		return _(msg`${minutes}m ${remainingSec}s`)
 	}
 
-	const openTimeline = async (run: JourneyRunRecord) => {
-		setSelectedRun(run)
-		setLoadingTimeline(true)
-		try {
-			const res = await fetch(
-				`/${orgSlug}/marketing/automations/${journey.id}/runs`,
-				{
-					method: 'POST',
-					headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-					body: new URLSearchParams({ runId: run.id }),
-				},
-			)
-			const data = (await res.json()) as any
-			setTimeline(data.timeline || [])
-		} catch {
-			setTimeline([])
-		} finally {
-			setLoadingTimeline(false)
+	// Keyed on the journey, not the token: a loader revalidation signs a new
+	// token and must not blank the list or fetch it again. A 401 on an expired
+	// token asks the loader for a new one; `reloadKey` fetches again once it
+	// arrives, keeping the list on screen.
+	useEffect(() => {
+		const controller = new AbortController()
+		async function loadRuns() {
+			const used = token()
+			try {
+				const res = await fetch(
+					`${tenantApiUrl}/operator/journeys/${encodeURIComponent(journey.id)}/runs`,
+					{
+						headers: { Authorization: `Bearer ${used}` },
+						signal: controller.signal,
+					},
+				)
+				if (res.status === 401 && refreshIfExpired(used)) return
+				if (!res.ok) {
+					setRunsState('failed')
+					return
+				}
+				const data = (await res.json()) as { runs?: RawRun[] }
+				setRuns((data.runs ?? []).map(toRunRecord))
+				setRunsState('ready')
+			} catch {
+				if (controller.signal.aborted) return
+				setRunsState('failed')
+			}
 		}
+		void loadRuns()
+		return () => controller.abort()
+	}, [tenantApiUrl, journey.id, reloadKey, token, refreshIfExpired])
+
+	// Another automation: show the skeleton, not the previous one's runs.
+	const [shownJourneyId, setShownJourneyId] = useState(journey.id)
+	if (shownJourneyId !== journey.id) {
+		setShownJourneyId(journey.id)
+		setRuns([])
+		setRunsState('loading')
+	}
+
+	// One request per opened run. Opening another run (or closing the dialog)
+	// aborts the previous request, so a slow answer for run A can never fill
+	// run B's dialog.
+	const selectedRunId = selectedRun?.id ?? ''
+	useEffect(() => {
+		if (!selectedRunId) return
+		const controller = new AbortController()
+		async function loadTimeline() {
+			const used = token()
+			try {
+				const res = await fetch(
+					`${tenantApiUrl}/operator/journeys/runs/${encodeURIComponent(selectedRunId)}`,
+					{
+						headers: { Authorization: `Bearer ${used}` },
+						signal: controller.signal,
+					},
+				)
+				if (res.status === 401 && refreshIfExpired(used)) return
+				if (!res.ok) {
+					setTimelineState('failed')
+					return
+				}
+				const data = (await res.json()) as {
+					timeline?: JourneyStepExecutionRecord[]
+					steps?: JourneyStepExecutionRecord[]
+				}
+				setTimeline(data.timeline || data.steps || [])
+				setTimelineState('ready')
+			} catch {
+				if (!controller.signal.aborted) setTimelineState('failed')
+			}
+		}
+		void loadTimeline()
+		return () => controller.abort()
+	}, [selectedRunId, tenantApiUrl, reloadKey, token, refreshIfExpired])
+
+	const openTimeline = (run: JourneyRunRecord) => {
+		setSelectedRun(run)
+		setTimeline([])
+		setTimelineState('loading')
 	}
 
 	const journeyStatus = journey.status as JourneyStatus
 	const triggerLabel = journey.triggerType.replace('_', ' ')
 	const runCount = runs.length
-	const selectedRunId = selectedRun?.id ?? ''
 	const timelineCount = timeline.length
 
 	return (
@@ -241,7 +308,25 @@ export default function JourneyRunsRoute() {
 					</CardDescription>
 				</CardHeader>
 				<CardContent>
-					{runs.length === 0 ? (
+					{runsState === 'loading' ? (
+						<div className="space-y-2" role="status" aria-busy="true">
+							<span className="sr-only">{_(msg`Loading runs…`)}</span>
+							{Array.from({ length: 3 }).map((_item, i) => (
+								<Skeleton
+									key={i}
+									className="h-10 w-full rounded-lg"
+									aria-hidden
+								/>
+							))}
+						</div>
+					) : runsState === 'failed' ? (
+						<p
+							role="alert"
+							className="text-destructive py-6 text-center text-sm"
+						>
+							{_(msg`Failed to load runs`)}
+						</p>
+					) : runs.length === 0 ? (
 						<div className="text-muted-foreground space-y-3 py-12 text-center text-sm">
 							<p>
 								{_(msg`No execution runs recorded yet for this automation.`)}
@@ -370,9 +455,21 @@ export default function JourneyRunsRoute() {
 							</div>
 						)}
 
-						{loadingTimeline ? (
-							<p className="text-muted-foreground py-6 text-center text-sm">
+						{timelineState === 'loading' ? (
+							<p
+								role="status"
+								className="text-muted-foreground py-6 text-center text-sm"
+							>
 								{_(msg`Loading step executions from regional SQLite outbox...`)}
+							</p>
+						) : timelineState === 'failed' ? (
+							<p
+								role="alert"
+								className="text-destructive py-6 text-center text-sm"
+							>
+								{_(
+									msg`Couldn't load the steps of this run. Close it and try again.`,
+								)}
 							</p>
 						) : timeline.length === 0 ? (
 							<div className="text-muted-foreground py-6 text-center text-sm">

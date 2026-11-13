@@ -667,7 +667,7 @@ msgstr "{0, plural, one {Your photo} other {Your # photos}}"
 #~ msgstr "{0} · Here's what's happening in {1}"
 
 #. placeholder {0}: data.messageText?.length || 0
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:437
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:439
 msgid "{0} / 1600 chars"
 msgstr ""
 
@@ -1172,7 +1172,7 @@ msgstr "{created, plural, one {# task added.} other {# tasks added.}}"
 msgid "{created} imported, {existing} already on your team, {notImported} not imported."
 msgstr "{created} imported, {existing} already on your team, {notImported} not imported."
 
-#: app/components/pos/terminals-manager.tsx:1770
+#: app/components/pos/terminals-manager.tsx:1768
 msgid "{createdLabel} is ready to take orders."
 msgstr "{createdLabel} is ready to take orders."
 
@@ -1285,11 +1285,11 @@ msgstr ""
 msgid "{deviceName} was removed."
 msgstr "{deviceName} was removed."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:163
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:169
 msgid "{diffSec}s"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:160
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:166
 msgid "{diffSec}s (running)"
 msgstr ""
 
@@ -1643,7 +1643,7 @@ msgstr "{minutes} min"
 msgid "{minutes} minutes"
 msgstr "{minutes} minutes"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:166
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:172
 msgid "{minutes}m {remainingSec}s"
 msgstr ""
 
@@ -2506,11 +2506,11 @@ msgstr "**Your prints are on the way**"
 #. placeholder {0}: data.field === 'phoneVerified' ? 'Verification Status' : conditionFieldLabel(data.field || 'email')
 #. placeholder {1}: data.field === 'phoneVerified' ? ' is ' : data.operator === 'equals' ? ' equals ' : data.operator === 'not_equals' ? ' does not equal ' : ' contains '
 #. placeholder {2}: data.field === 'phoneVerified' ? data.value === 'true' ? 'Verified' : 'Not Verified' : data.value || '...'
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:577
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:579
 msgid "• If Customer {0}{1}<0>{2}</0> → <1>True branch</1>"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:603
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:605
 msgid "• Otherwise → <0>False branch</0>"
 msgstr ""
 
@@ -3021,7 +3021,7 @@ msgstr "A cap on what one purchase can get from this promotion."
 msgid "A change applies the next time their Staff session refreshes, within 15 minutes."
 msgstr "A change applies the next time their Staff session refreshes, within 15 minutes."
 
-#: app/components/pos/terminals-manager.tsx:1238
+#: app/components/pos/terminals-manager.tsx:1236
 msgid "A change to a bill that was already settled"
 msgstr "A change to a bill that was already settled"
 
@@ -3511,7 +3511,7 @@ msgstr "A template can hold up to 30 tasks."
 msgid "A template with that name already exists."
 msgstr "A template with that name already exists."
 
-#: app/components/pos/terminals-manager.tsx:1520
+#: app/components/pos/terminals-manager.tsx:1518
 msgid "A terminal bound to a location sells only there and can run its host stand."
 msgstr "A terminal bound to a location sells only there and can run its host stand."
 
@@ -3742,7 +3742,7 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:90
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:60
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:263
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:138
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:144
 #: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:339
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1006
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:983
@@ -3832,7 +3832,7 @@ msgstr "Add {tag} to the message so customers see their code."
 msgid "Add a {categoryLabel} rule"
 msgstr "Add a {categoryLabel} rule"
 
-#: ../../packages/marketing/src/components/email/email-preview.tsx:138
+#: ../../packages/marketing/src/components/email/email-preview.tsx:154
 msgid "Add a block to see your email come to life."
 msgstr "Add a block to see your email come to life."
 
@@ -4190,7 +4190,7 @@ msgstr "Add area"
 #~ msgid "Add at least one code."
 #~ msgstr "Add at least one code."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:194
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:196
 msgid "Add at least one email block"
 msgstr "Add at least one email block"
 
@@ -5269,7 +5269,7 @@ msgstr ""
 msgid "All core features included"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:239
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:306
 msgid "All customer automation workflows orchestrated durably by Cloudflare Workflows and executed by the regional data engine."
 msgstr ""
 
@@ -5931,8 +5931,8 @@ msgstr "Any cash tips this shift?"
 msgid "Any language"
 msgstr "Any language"
 
-#: app/components/pos/terminals-manager.tsx:1505
-#: app/components/pos/terminals-manager.tsx:1510
+#: app/components/pos/terminals-manager.tsx:1503
+#: app/components/pos/terminals-manager.tsx:1508
 msgid "Any location"
 msgstr "Any location"
 
@@ -6309,7 +6309,7 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:341
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:282
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:62
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:140
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:146
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:204
 #: app/utils/discounts/labels.ts:28
 #: app/utils/discounts/labels.ts:44
@@ -6679,7 +6679,7 @@ msgstr "Attach secondary modifier groups that appear when this modifier item is 
 msgid "Attached images"
 msgstr "Attached images"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:414
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:509
 msgid "Attempt: {attempt} • Executed: {executedAtLabel}"
 msgstr ""
 
@@ -6690,7 +6690,7 @@ msgstr "Attempts"
 #~ msgid "Attention Needed"
 #~ msgstr "Attention Needed"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:274
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:359
 msgid "Audit Trail"
 msgstr ""
 
@@ -6789,7 +6789,7 @@ msgstr "Automation"
 msgid "Automation menu"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:73
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:84
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:117
 msgid "Automation not found"
 msgstr ""
@@ -7295,7 +7295,7 @@ msgstr "Blocked"
 msgid "Blocked table {tableLabel} for the rest of the service."
 msgstr "Blocked table {tableLabel} for the rest of the service."
 
-#: ../../packages/marketing/src/components/email/email-block-editor.tsx:244
+#: ../../packages/marketing/src/components/email/email-block-editor.tsx:249
 msgid "Blocks"
 msgstr "Blocks"
 
@@ -7654,8 +7654,7 @@ msgstr "Bring the right people together in a group."
 msgid "Broadcast"
 msgstr "Broadcast"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId.tsx:38
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId.tsx:65
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId.tsx:135
 msgid "Broadcast not found"
 msgstr ""
 
@@ -7778,7 +7777,7 @@ msgstr "Business date"
 
 #: app/components/pos/pos-day-report.tsx:137
 #: app/components/pos/terminals-manager.tsx:586
-#: app/components/pos/terminals-manager.tsx:1529
+#: app/components/pos/terminals-manager.tsx:1527
 msgid "Business day"
 msgstr "Business day"
 
@@ -8192,7 +8191,7 @@ msgstr "Can't text that number"
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:410
 #: ../../packages/marketing/src/components/campaign-form.tsx:173
 #: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:132
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:162
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:168
 #: app/components/chat/chat-compose-dialog.tsx:411
 #: app/components/chat/chat-composer.tsx:350
 #: app/components/chat/chat-view.tsx:1021
@@ -8261,7 +8260,7 @@ msgstr "Can't text that number"
 #: app/components/phone-agent/training-rules-section.tsx:639
 #: app/components/phone-agent/training-rules-section.tsx:691
 #: app/components/pos/terminals-manager.tsx:695
-#: app/components/pos/terminals-manager.tsx:1664
+#: app/components/pos/terminals-manager.tsx:1662
 #: app/components/pos/zatca-settings.tsx:562
 #: app/components/qr/open-tabs.tsx:306
 #: app/components/qr/open-tabs.tsx:574
@@ -8484,7 +8483,7 @@ msgstr "Cancellations by who"
 #: app/components/staff/schedule/time-off-page.tsx:286
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:215
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.tsx:238
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:147
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:153
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:242
 #: app/utils/inventory/order-view.ts:27
 #: app/utils/inventory/transfer-form.ts:127
@@ -9351,7 +9350,7 @@ msgstr "Choose a JPEG, PNG or WebP picture."
 msgid "Choose a JPEG, PNG, GIF, WebP, or AVIF image."
 msgstr "Choose a JPEG, PNG, GIF, WebP, or AVIF image."
 
-#: app/components/pos/terminals-manager.tsx:1132
+#: app/components/pos/terminals-manager.tsx:1130
 msgid "Choose a location"
 msgstr "Choose a location"
 
@@ -9724,7 +9723,7 @@ msgid "Choose the terminal's location to use Stock."
 msgstr "Choose the terminal's location to use Stock."
 
 #: app/components/pos/terminals-manager.tsx:1010
-#: app/components/pos/terminals-manager.tsx:1583
+#: app/components/pos/terminals-manager.tsx:1581
 msgid "Choose the terminal's location to use the time clock."
 msgstr "Choose the terminal's location to use the time clock."
 
@@ -10095,7 +10094,7 @@ msgstr "Clocked out, {firstName}"
 #: app/components/kiosk/kiosk-chrome.tsx:255
 #: app/components/onboarding-checklist.tsx:177
 #: app/components/phone-agent/voice-picker.tsx:559
-#: app/components/pos/terminals-manager.tsx:1858
+#: app/components/pos/terminals-manager.tsx:1856
 #: app/components/staff/kiosk-manager.tsx:792
 #: app/components/staff/timesheets/card-sheet.tsx:275
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.levels.tsx:248
@@ -10115,7 +10114,7 @@ msgstr "Close at counter"
 msgid "Close at counter, tab {number}, table {label}"
 msgstr "Close at counter, tab {number}, table {label}"
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:127
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:133
 msgid "Close email design"
 msgstr "Close email design"
 
@@ -10170,7 +10169,7 @@ msgstr "Close thread"
 msgid "Close to a Reward"
 msgstr "Close to a Reward"
 
-#: app/components/pos/terminals-manager.tsx:1860
+#: app/components/pos/terminals-manager.tsx:1858
 #: app/components/staff/kiosk-manager.tsx:794
 msgid "Close, I'll finish later"
 msgstr "Close, I'll finish later"
@@ -10266,7 +10265,7 @@ msgstr "Code {number}"
 #~ msgid "Code added. {total} codes."
 #~ msgstr "Code added. {total} codes."
 
-#: app/components/pos/terminals-manager.tsx:1756
+#: app/components/pos/terminals-manager.tsx:1754
 msgid "Code copied."
 msgstr "Code copied."
 
@@ -10527,7 +10526,7 @@ msgstr ""
 #: app/components/onboarding-checklist.tsx:249
 #: app/components/orders/order-detail.tsx:221
 #: app/components/reservations/status-style.tsx:143
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:144
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:150
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:67
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:237
 #: app/utils/loyalty/loyalty-labels.ts:123
@@ -10551,7 +10550,7 @@ msgstr ""
 msgid "Condition comparison field is required."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:532
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:534
 msgid "Condition Logic"
 msgstr ""
 
@@ -10842,7 +10841,7 @@ msgstr ""
 msgid "Connect your POS"
 msgstr "Connect your POS"
 
-#: app/components/pos/terminals-manager.tsx:1775
+#: app/components/pos/terminals-manager.tsx:1773
 #: app/components/pos/zatca-settings.tsx:378
 #: app/components/settings/cards/organization/pos-integrations-card.tsx:102
 #: app/components/settings/cards/organization/review-integrations-card.tsx:54
@@ -10965,7 +10964,7 @@ msgstr ""
 msgid "Contacts"
 msgstr "Contacts"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:551
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:553
 msgid "Contains (Partial Match)"
 msgstr ""
 
@@ -11158,7 +11157,7 @@ msgid "Copy All"
 msgstr ""
 
 #: ../../packages/ai/src/components/ai-elements/code-block.tsx:145
-#: app/components/pos/terminals-manager.tsx:1848
+#: app/components/pos/terminals-manager.tsx:1846
 msgid "Copy code"
 msgstr ""
 
@@ -11175,7 +11174,7 @@ msgid "Copy into this week"
 msgstr "Copy into this week"
 
 #: app/components/hiring/job-share-panel.tsx:87
-#: app/components/pos/terminals-manager.tsx:1848
+#: app/components/pos/terminals-manager.tsx:1846
 #: app/components/staff/kiosk-manager.tsx:782
 #: app/routes/_app+/$orgSlug_+/media.tsx:1136
 #: app/routes/_app+/$orgSlug_+/notes-cards.tsx:220
@@ -11318,7 +11317,7 @@ msgstr "Could not change who runs the host stand."
 msgid "Could not connect the terminal."
 msgstr "Could not connect the terminal."
 
-#: app/components/pos/terminals-manager.tsx:1758
+#: app/components/pos/terminals-manager.tsx:1756
 msgid "Could not copy. Select it and copy it by hand."
 msgstr "Could not copy. Select it and copy it by hand."
 
@@ -11342,7 +11341,7 @@ msgstr "Could not copy. Select the text and copy it."
 msgid "Could not create a draft. Try again."
 msgstr "Could not create a draft. Try again."
 
-#: app/components/pos/terminals-manager.tsx:1418
+#: app/components/pos/terminals-manager.tsx:1416
 msgid "Could not create a pairing code. Try again."
 msgstr "Could not create a pairing code. Try again."
 
@@ -11571,6 +11570,10 @@ msgstr "Couldn't load the assistant."
 msgid "Couldn't load the recording. Try again."
 msgstr "Couldn't load the recording. Try again."
 
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:470
+msgid "Couldn't load the steps of this run. Close it and try again."
+msgstr "Couldn't load the steps of this run. Close it and try again."
+
 #: app/components/phone-agent/voice-picker.tsx:447
 msgid "Couldn't load voices"
 msgstr "Couldn't load voices"
@@ -11660,7 +11663,7 @@ msgstr "Count paid online orders as sales. The share is shown but never judged a
 msgid "Count stock, log waste & deliveries"
 msgstr "Count stock, log waste & deliveries"
 
-#: app/components/pos/terminals-manager.tsx:1638
+#: app/components/pos/terminals-manager.tsx:1636
 msgid "Count stock, log waste and receive deliveries on this terminal."
 msgstr "Count stock, log waste and receive deliveries on this terminal."
 
@@ -12156,7 +12159,7 @@ msgstr "Create notes"
 msgid "Create Option"
 msgstr "Create Option"
 
-#: app/components/pos/terminals-manager.tsx:1673
+#: app/components/pos/terminals-manager.tsx:1671
 #: app/components/staff/kiosk-manager.tsx:616
 msgid "Create pairing code"
 msgstr "Create pairing code"
@@ -12314,7 +12317,7 @@ msgstr "Creating page"
 msgid "Creating..."
 msgstr ""
 
-#: app/components/pos/terminals-manager.tsx:1671
+#: app/components/pos/terminals-manager.tsx:1669
 #: app/components/reservations/experiences/experience-create-sheet.tsx:178
 #: app/components/staff/kiosk-manager.tsx:614
 #: app/components/website/create-form-dialog.tsx:305
@@ -12525,7 +12528,7 @@ msgstr "Customer and business data"
 msgid "Customer app"
 msgstr "Customer app"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:471
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:473
 msgid "Customer Attribute"
 msgstr ""
 
@@ -12584,7 +12587,7 @@ msgstr "Customer reviews"
 msgid "Customer since"
 msgstr "Customer since"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:269
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:354
 msgid "Customer UUID"
 msgstr ""
 
@@ -13961,7 +13964,7 @@ msgstr ""
 msgid "Disabled for this location"
 msgstr "Disabled for this location"
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:211
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:218
 #: app/components/reservations/settings/save-bar.tsx:76
 #: app/components/save-bar.tsx:345
 msgid "Discard"
@@ -13987,7 +13990,7 @@ msgstr "Discard changes"
 #~ msgid "Discard draft"
 #~ msgstr "Discard draft"
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:191
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:198
 #: app/components/staff/labor-policy-editor.tsx:280
 msgid "Discard unsaved changes?"
 msgstr "Discard unsaved changes?"
@@ -14173,7 +14176,7 @@ msgstr "Do your first count"
 msgid "Documents ZATCA rejected"
 msgstr "Documents ZATCA rejected"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:548
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:550
 msgid "Does Not Equal"
 msgstr ""
 
@@ -14222,7 +14225,7 @@ msgstr "Don't take phone orders for"
 #: app/components/menu/menu-review-stack.tsx:535
 #: app/components/note/share-note-button.tsx:365
 #: app/components/phone-agent/call-request-card.tsx:41
-#: app/components/pos/terminals-manager.tsx:1779
+#: app/components/pos/terminals-manager.tsx:1777
 #: app/components/reservations/settings/setup-checklist.tsx:173
 #: app/components/settings/backup-codes-display.tsx:108
 #: app/components/staff/kiosk-manager.tsx:722
@@ -14321,7 +14324,7 @@ msgstr ""
 #: app/components/staff/schedule/shift-block.tsx:33
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:59
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:264
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:137
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:143
 #: app/routes/_app+/$orgSlug_+/marketing+/print._index.tsx:142
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:929
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:413
@@ -14447,7 +14450,7 @@ msgstr "Drag the slider to compare."
 msgid "Drag to move"
 msgstr "Drag to move"
 
-#: ../../packages/marketing/src/components/email/email-block-editor.tsx:120
+#: ../../packages/marketing/src/components/email/email-block-editor.tsx:125
 #: app/components/website/form-builder-sidebar.tsx:335
 msgid "Drag to reorder"
 msgstr ""
@@ -14587,7 +14590,7 @@ msgid "Duplicates and data"
 msgstr "Duplicates and data"
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:235
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:272
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:357
 msgid "Duration"
 msgstr ""
 
@@ -14614,7 +14617,7 @@ msgstr "Duration must be between 15 and 720 minutes in 15-min steps."
 msgid "During this service"
 msgstr "During this service"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:563
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:565
 msgid "e.g. @gmail.com"
 msgstr ""
 
@@ -15254,7 +15257,7 @@ msgstr "Eligible for rehire."
 msgid "Email"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:491
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:493
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:345
 msgid "Email Address"
 msgstr ""
@@ -15270,8 +15273,8 @@ msgstr "Email cannot be sent from here yet."
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:322
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:410
 #: ../../packages/marketing/src/components/campaign-form.tsx:118
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:111
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:135
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:117
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:141
 msgid "Email design"
 msgstr "Email design"
 
@@ -15296,7 +15299,7 @@ msgstr "Email is turned off, so nothing was sent"
 msgid "Email or Username"
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-preview.tsx:107
+#: ../../packages/marketing/src/components/email/email-preview.tsx:123
 msgid "Email preview"
 msgstr "Email preview"
 
@@ -16059,7 +16062,7 @@ msgstr "Enter their first day."
 #~ msgid "Enter this code in the POS app's settings on the device. It works once."
 #~ msgstr "Enter this code in the POS app's settings on the device. It works once."
 
-#: app/components/pos/terminals-manager.tsx:1799
+#: app/components/pos/terminals-manager.tsx:1797
 msgid "Enter this code in the Station app's settings on the device. It works once."
 msgstr "Enter this code in the Station app's settings on the device. It works once."
 
@@ -16493,7 +16496,7 @@ msgstr "Everywhere"
 msgid "Exact time (no rounding)"
 msgstr "Exact time (no rounding)"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:545
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:547
 msgid "Exactly Equals"
 msgstr ""
 
@@ -16560,11 +16563,11 @@ msgstr "Exclusive seating"
 #~ msgid "Execution History ({0})"
 #~ msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:235
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:302
 msgid "Execution History ({runCount})"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:216
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:283
 msgid "Execution runs and step history, triggered by \"{triggerLabel}\"."
 msgstr "Execution runs and step history, triggered by \"{triggerLabel}\"."
 
@@ -16685,7 +16688,7 @@ msgstr "Expires at {expiresAt}"
 #~ msgid "Expires at <0>{0}</0>"
 #~ msgstr "Expires at <0>{0}</0>"
 
-#: app/components/pos/terminals-manager.tsx:1825
+#: app/components/pos/terminals-manager.tsx:1823
 #: app/components/staff/kiosk-manager.tsx:367
 #: app/components/staff/kiosk-manager.tsx:759
 msgid "Expires in {left}"
@@ -16795,7 +16798,7 @@ msgstr "Fail authentication"
 #: app/components/settings/cards/organization/shop-card.tsx:49
 #: app/components/social/social-labels.ts:27
 #: app/components/social/social-labels.ts:37
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:146
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:152
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:69
 #: app/utils/reservations/payments-view.ts:72
 msgid "Failed"
@@ -16826,7 +16829,7 @@ msgstr ""
 msgid "Failed to copy account ID"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:247
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:249
 msgid "Failed to create and dispatch campaign"
 msgstr ""
 
@@ -16956,7 +16959,7 @@ msgstr ""
 #~ msgid "Failed to load areas, tables, and combinations."
 #~ msgstr "Failed to load areas, tables, and combinations."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId.tsx:39
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId.tsx:136
 msgid "Failed to load broadcast"
 msgstr ""
 
@@ -16989,6 +16992,10 @@ msgstr "Failed to load reservation details."
 msgid "Failed to load reservation setup for this location."
 msgstr "Failed to load reservation setup for this location."
 
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:327
+msgid "Failed to load runs"
+msgstr "Failed to load runs"
+
 #~ msgid "Failed to load section layouts for this location."
 #~ msgstr "Failed to load section layouts for this location."
 
@@ -16999,8 +17006,8 @@ msgstr "Failed to load reservation setup for this location."
 #~ msgstr "Failed to load special days and table blocks."
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:122
-msgid "Failed to load timeline"
-msgstr ""
+#~ msgid "Failed to load timeline"
+#~ msgstr ""
 
 #~ msgid "Failed to mark running late."
 #~ msgstr "Failed to mark running late."
@@ -17976,7 +17983,7 @@ msgstr "From now on it has no ingredients and no cost. Sales made before keep th
 msgid "From the paper invoice. VAT is kept apart from prices."
 msgstr "From the paper invoice. VAT is kept apart from prices."
 
-#: app/components/pos/terminals-manager.tsx:1473
+#: app/components/pos/terminals-manager.tsx:1471
 msgid "Front counter"
 msgstr "Front counter"
 
@@ -18872,7 +18879,7 @@ msgstr "Hi {NAME_TAG}, your account update is ready!"
 msgid "Hi {NAME_TAG}, your Menuza account is ready."
 msgstr "Hi {NAME_TAG}, your Menuza account is ready."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:445
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:447
 msgid "Hi {NAME_TAG}, your order has been confirmed!"
 msgstr "Hi {NAME_TAG}, your order has been confirmed!"
 
@@ -20143,7 +20150,7 @@ msgstr "iOS app"
 msgid "IP Address"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:520
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:522
 msgid "Is Verified (True)"
 msgstr ""
 
@@ -20528,7 +20535,7 @@ msgstr ""
 msgid "Keep dishware"
 msgstr "Keep dishware"
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:202
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:209
 #: app/components/reservations/floor-plan-canvas.tsx:819
 #: app/components/reservations/settings/setup-list-chrome.tsx:214
 #: app/components/staff/labor-policy-editor.tsx:291
@@ -21142,7 +21149,7 @@ msgstr "Latest visit"
 msgid "Launch run"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:258
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:343
 msgid "Launch Test Run in Builder"
 msgstr ""
 
@@ -21522,7 +21529,7 @@ msgid "Link copied!"
 msgstr ""
 
 #: app/components/hiring/job-share-panel.tsx:49
-#: app/components/pos/terminals-manager.tsx:1756
+#: app/components/pos/terminals-manager.tsx:1754
 #: app/components/staff/kiosk-manager.tsx:697
 msgid "Link copied."
 msgstr "Link copied."
@@ -21674,6 +21681,10 @@ msgstr "Loading applicant"
 #: app/components/ai/global-ai-panel.tsx:74
 msgid "Loading assistant…"
 msgstr "Loading assistant…"
+
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId.tsx:123
+msgid "Loading broadcast…"
+msgstr "Loading broadcast…"
 
 #: app/components/phone-agent/call-detail-sheet.tsx:350
 msgid "Loading call"
@@ -21858,6 +21869,10 @@ msgstr "Loading reviews"
 msgid "Loading rewards…"
 msgstr "Loading rewards…"
 
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:313
+msgid "Loading runs…"
+msgstr "Loading runs…"
+
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:441
 msgid "Loading section layouts…"
 msgstr "Loading section layouts…"
@@ -21873,7 +21888,7 @@ msgstr "Loading settings…"
 msgid "Loading special days…"
 msgstr "Loading special days…"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:375
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:463
 msgid "Loading step executions from regional SQLite outbox..."
 msgstr ""
 
@@ -22030,8 +22045,8 @@ msgstr "Local emulator"
 #: app/components/menu/drop-wizard/drop-drawers.tsx:249
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:37
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:43
-#: app/components/pos/terminals-manager.tsx:1493
-#: app/components/pos/terminals-manager.tsx:1501
+#: app/components/pos/terminals-manager.tsx:1491
+#: app/components/pos/terminals-manager.tsx:1499
 #: app/components/print/restaurant/vertical-ui.tsx:217
 #: app/components/print/restaurant/vertical-ui.tsx:278
 #: app/components/qr/tables-manager.tsx:174
@@ -22067,7 +22082,7 @@ msgstr "Location Details"
 msgid "Location Name"
 msgstr "Location Name"
 
-#: app/components/pos/terminals-manager.tsx:1129
+#: app/components/pos/terminals-manager.tsx:1127
 msgid "Location of {label}"
 msgstr "Location of {label}"
 
@@ -23294,7 +23309,7 @@ msgstr "Message actions"
 msgid "Message composer"
 msgstr "Message composer"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:208
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:210
 msgid "Message content is required"
 msgstr "Message content is required"
 
@@ -23961,7 +23976,7 @@ msgstr "My schedule"
 msgid "My schedule link"
 msgstr "My schedule link"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:500
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:502
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:348
 #: app/components/customers/people-list-screen.tsx:391
 #: app/components/customers/person-profile-screen.tsx:1129
@@ -23975,7 +23990,7 @@ msgstr "My schedule link"
 #: app/components/inventory/supplier-form.tsx:195
 #: app/components/loyalty/promotion-dialog.tsx:604
 #: app/components/loyalty/reward-dialog.tsx:435
-#: app/components/pos/terminals-manager.tsx:1465
+#: app/components/pos/terminals-manager.tsx:1463
 #: app/components/reservations/policies/policy-sheet.tsx:217
 #: app/components/reservations/waitlist/party-fields.tsx:62
 #: app/components/reservations/walk-in-dialog.tsx:239
@@ -24018,7 +24033,7 @@ msgstr "Name (guest-facing)"
 #~ msgid "Name in Arabic"
 #~ msgstr "Name in Arabic"
 
-#: app/components/pos/terminals-manager.tsx:1457
+#: app/components/pos/terminals-manager.tsx:1455
 msgid "Name it so you can tell it apart. The code prefixes its order numbers."
 msgstr "Name it so you can tell it apart. The code prefixes its order numbers."
 
@@ -24102,11 +24117,11 @@ msgstr ""
 msgid "Need an integration but don't see it here?"
 msgstr ""
 
-#: app/components/pos/terminals-manager.tsx:1643
+#: app/components/pos/terminals-manager.tsx:1641
 msgid "Needs a location and a staff PIN, so every count and waste entry records who made it."
 msgstr "Needs a location and a staff PIN, so every count and waste entry records who made it."
 
-#: app/components/pos/terminals-manager.tsx:1614
+#: app/components/pos/terminals-manager.tsx:1612
 msgid "Needs a location and a staff PIN, so guests’ details only open for someone signed in."
 msgstr "Needs a location and a staff PIN, so guests’ details only open for someone signed in."
 
@@ -24288,7 +24303,7 @@ msgid "New bookings stop using it. Bookings that already accepted it keep their 
 msgstr "New bookings stop using it. Bookings that already accepted it keep their terms."
 
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:95
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:265
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:267
 msgid "New broadcast"
 msgstr ""
 
@@ -25017,7 +25032,7 @@ msgstr "No discounts match these filters"
 msgid "No discounts yet"
 msgstr "No discounts yet"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:380
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:475
 msgid "No discrete action step dispatches recorded for this run."
 msgstr ""
 
@@ -25069,7 +25084,7 @@ msgstr ""
 msgid "No events yet."
 msgstr "No events yet."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:247
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:332
 msgid "No execution runs recorded yet for this automation."
 msgstr ""
 
@@ -26505,7 +26520,7 @@ msgstr "Not required"
 msgid "Not saved yet"
 msgstr "Not saved yet"
 
-#: app/components/pos/terminals-manager.tsx:1266
+#: app/components/pos/terminals-manager.tsx:1264
 #: app/components/staff/kiosk-manager.tsx:442
 msgid "Not seen yet"
 msgstr "Not seen yet"
@@ -26558,7 +26573,7 @@ msgstr "Not used in any notes, comments, or pages"
 msgid "Not verified"
 msgstr "Not verified"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:523
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:525
 msgid "Not Verified (False)"
 msgstr ""
 
@@ -27993,7 +28008,7 @@ msgstr "Open the waitlist to see who is waiting."
 msgid "Open this on the tablet"
 msgstr "Open this on the tablet"
 
-#: app/components/pos/terminals-manager.tsx:1790
+#: app/components/pos/terminals-manager.tsx:1788
 msgid "Open this on the terminal"
 msgstr "Open this on the terminal"
 
@@ -28014,7 +28029,7 @@ msgstr "Open Today to check on the affected guests."
 msgid "Open Today to review the bookings."
 msgstr "Open Today to review the bookings."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:227
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:294
 msgid "Open visual builder"
 msgstr "Open visual builder"
 
@@ -28489,7 +28504,7 @@ msgstr "Ordering Window"
 msgid "Orders"
 msgstr "Orders"
 
-#: app/components/pos/terminals-manager.tsx:1537
+#: app/components/pos/terminals-manager.tsx:1535
 msgid "Orders after midnight count towards the previous day until then, so a late service keeps one day's numbers and takings."
 msgstr "Orders after midnight count towards the previous day until then, so a late service keeps one day's numbers and takings."
 
@@ -29061,7 +29076,7 @@ msgid "Pair a tablet"
 msgstr "Pair a tablet"
 
 #: app/components/pos/terminals-manager.tsx:426
-#: app/components/pos/terminals-manager.tsx:1454
+#: app/components/pos/terminals-manager.tsx:1452
 msgid "Pair a terminal"
 msgstr "Pair a terminal"
 
@@ -29082,11 +29097,11 @@ msgstr "Pair your first terminal to start taking walk-in orders."
 msgid "Paired terminals"
 msgstr "Paired terminals"
 
-#: app/components/pos/terminals-manager.tsx:1830
+#: app/components/pos/terminals-manager.tsx:1828
 msgid "Pairing code"
 msgstr "Pairing code"
 
-#: app/components/pos/terminals-manager.tsx:1830
+#: app/components/pos/terminals-manager.tsx:1828
 #: app/components/staff/kiosk-manager.tsx:764
 msgid "Pairing link"
 msgstr "Pairing link"
@@ -29366,7 +29381,7 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:340
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:61
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:265
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:139
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:145
 #: app/utils/discounts/labels.ts:27
 #: app/utils/discounts/labels.ts:43
 #: app/utils/loyalty/loyalty-labels.ts:31
@@ -29613,7 +29628,7 @@ msgstr "Peanut Allergy"
 
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:44
 #: app/components/settings/cards/organization/shop-card.tsx:47
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:393
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:488
 msgid "Pending"
 msgstr ""
 
@@ -29887,7 +29902,7 @@ msgstr "phone number"
 msgid "Phone number"
 msgstr "Phone number"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:494
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:496
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:346
 #: app/components/locations/location-form.tsx:379
 #: app/components/reservations/booking-sheet.tsx:966
@@ -29905,7 +29920,7 @@ msgstr "Phone numbers"
 msgid "Phone ordering"
 msgstr "Phone ordering"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:497
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:499
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:347
 msgid "Phone Verification Status"
 msgstr ""
@@ -30028,7 +30043,7 @@ msgstr "Pick a field to add to your form."
 msgid "Pick a group below to reveal it after a guest selects a triggering option."
 msgstr "Pick a group below to reveal it after a guest selects a triggering option."
 
-#: ../../packages/marketing/src/components/email/email-block-editor.tsx:175
+#: ../../packages/marketing/src/components/email/email-block-editor.tsx:180
 msgid "Pick a layout, then customize the blocks."
 msgstr "Pick a layout, then customize the blocks."
 
@@ -31544,7 +31559,7 @@ msgstr "QR code that opens the pairing page"
 msgid "QR code that opens this job"
 msgstr "QR code that opens this job"
 
-#: app/components/pos/terminals-manager.tsx:1811
+#: app/components/pos/terminals-manager.tsx:1809
 msgid "QR code that pairs the terminal"
 msgstr "QR code that pairs the terminal"
 
@@ -32626,7 +32641,7 @@ msgstr ""
 msgid "Remove availability override"
 msgstr "Remove availability override"
 
-#: ../../packages/marketing/src/components/email/email-block-editor.tsx:149
+#: ../../packages/marketing/src/components/email/email-block-editor.tsx:154
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:152
 #: app/components/dashboard/dashboard-block-frame.tsx:51
 #: app/components/dashboard/dashboard-block-frame.tsx:52
@@ -32943,7 +32958,7 @@ msgstr "Rename dashboard"
 msgid "Rename, table {tableName}"
 msgstr "Rename, table {tableName}"
 
-#: ../../packages/marketing/src/components/email/email-preview.tsx:111
+#: ../../packages/marketing/src/components/email/email-preview.tsx:127
 msgid "Rendering…"
 msgstr "Rendering…"
 
@@ -33184,7 +33199,7 @@ msgid "Require a manager at the till"
 msgstr "Require a manager at the till"
 
 #: app/components/pos/terminals-manager.tsx:508
-#: app/components/pos/terminals-manager.tsx:1552
+#: app/components/pos/terminals-manager.tsx:1550
 msgid "Require a staff PIN"
 msgstr "Require a staff PIN"
 
@@ -33313,7 +33328,7 @@ msgstr "Reservation records will be deleted too"
 #: app/components/app-sidebar.tsx:527
 #: app/components/customers/person-profile-screen.tsx:119
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:40
-#: app/components/pos/terminals-manager.tsx:1605
+#: app/components/pos/terminals-manager.tsx:1603
 #: app/components/roles/tenant-role-access-manager.tsx:418
 #: app/components/settings/cards/organization/integrations-card.tsx:63
 #: app/components/workspace-breadcrumb.tsx:75
@@ -33931,7 +33946,7 @@ msgstr "Rounds clock-in and clock-out when hours are added up. The exact punch t
 msgid "Route incoming traffic from an old path to a new destination."
 msgstr "Route incoming traffic from an old path to a new destination."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:574
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:576
 msgid "Routing Logic:"
 msgstr ""
 
@@ -33963,7 +33978,7 @@ msgstr "Rules teach the agent how your business works, the way you'd explain it 
 msgid "Run double points on a slow Tuesday, a bonus on a new dish, or a boost at one location."
 msgstr "Run double points on a slow Tuesday, a bonus on a new dish, or a boost at one location."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:341
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:426
 msgid "Run Execution Timeline"
 msgstr ""
 
@@ -33971,11 +33986,11 @@ msgstr ""
 msgid "Run history"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:267
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:352
 msgid "Run ID"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:361
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:446
 msgid "Run ID: {selectedRunId}"
 msgstr ""
 
@@ -33988,11 +34003,11 @@ msgid "Rung up on a Station till"
 msgstr "Rung up on a Station till"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:117
-msgid "runId is required"
-msgstr ""
+#~ msgid "runId is required"
+#~ msgstr ""
 
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:45
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:145
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:151
 msgid "Running"
 msgstr ""
 
@@ -34268,7 +34283,7 @@ msgstr "Sauces"
 msgid "Saudi Arabia (KSA)"
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:170
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:176
 #: ../../packages/marketing/src/components/email/merge-tag-field.tsx:349
 #: app/components/chat/chat-message.tsx:222
 #: app/components/customers/person-notes-panel.tsx:112
@@ -34556,7 +34571,7 @@ msgstr "Save your edits before changing the status."
 msgid "Save zone"
 msgstr "Save zone"
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:148
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:154
 #: app/components/dashboard/dashboard-edit-toolbar.tsx:95
 #: app/components/inventory/counting-screen.tsx:661
 #: app/components/reservations/floor-plan-canvas.tsx:773
@@ -34665,7 +34680,7 @@ msgstr ""
 msgid "Saving..."
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:170
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:176
 #: app/components/dashboard/dashboard-edit-toolbar.tsx:95
 #: app/components/hiring/interview-dialog.tsx:283
 #: app/components/inventory/adjust-stock-dialog.tsx:327
@@ -34784,7 +34799,7 @@ msgstr "Say why. It is kept with the card."
 msgid "Scan QR Code or Enter Setup Key"
 msgstr ""
 
-#: app/components/pos/terminals-manager.tsx:1794
+#: app/components/pos/terminals-manager.tsx:1792
 msgid "Scan the code with the device's camera, or open the link in its browser. It works once."
 msgstr "Scan the code with the device's camera, or open the link in its browser. It works once."
 
@@ -35638,7 +35653,7 @@ msgstr "See your jobs"
 msgid "See your own published shifts. Only useful for people who also work shifts."
 msgstr "See your own published shifts. Only useful for people who also work shifts."
 
-#: app/components/pos/terminals-manager.tsx:1281
+#: app/components/pos/terminals-manager.tsx:1279
 msgid "Seen {label}"
 msgstr "Seen {label}"
 
@@ -35646,7 +35661,7 @@ msgstr "Seen {label}"
 msgid "Seen {seen}"
 msgstr "Seen {seen}"
 
-#: app/components/pos/terminals-manager.tsx:1268
+#: app/components/pos/terminals-manager.tsx:1266
 msgid "Seen just now"
 msgstr "Seen just now"
 
@@ -35790,7 +35805,7 @@ msgstr "Select at least one active day of the week."
 msgid "Select at least one language."
 msgstr "Select at least one language."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:487
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:489
 msgid "Select attribute"
 msgstr ""
 
@@ -35812,7 +35827,7 @@ msgstr ""
 #~ msgid "Select month"
 #~ msgstr "Select month"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:541
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:543
 msgid "Select operator"
 msgstr ""
 
@@ -35831,7 +35846,7 @@ msgstr "Select Photos"
 #~ msgid "Select row"
 #~ msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:516
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:518
 msgid "Select status"
 msgstr ""
 
@@ -35956,7 +35971,7 @@ msgstr "Send a new code"
 msgid "Send a new manage link?"
 msgstr "Send a new manage link?"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:266
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:268
 msgid "Send a one-time email or SMS to your audience."
 msgstr ""
 
@@ -36129,7 +36144,7 @@ msgstr "sent <0>{sent}</0>"
 msgid "Sent <0>{sent}</0>"
 msgstr "Sent <0>{sent}</0>"
 
-#: app/components/pos/terminals-manager.tsx:1232
+#: app/components/pos/terminals-manager.tsx:1230
 msgid "Sent after another terminal took the tab over"
 msgstr "Sent after another terminal took the tab over"
 
@@ -36150,7 +36165,7 @@ msgstr "Sent ahead of the booking, at the lead time set below."
 msgid "Sent by email to people who have an address on file."
 msgstr "Sent by email to people who have an address on file."
 
-#: app/components/pos/terminals-manager.tsx:1240
+#: app/components/pos/terminals-manager.tsx:1238
 msgid "Sent for a location this terminal is not paired to"
 msgstr "Sent for a location this terminal is not paired to"
 
@@ -37268,7 +37283,7 @@ msgstr ""
 msgid "SMS message exceeds 1600 characters maximum."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:425
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:427
 msgid "SMS Message Text"
 msgstr ""
 
@@ -37276,7 +37291,7 @@ msgstr ""
 msgid "SMS message text is required."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:457
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:459
 msgid "SMS messages over 160 characters will be segmented according to standard GSM telecommunication protocols."
 msgstr ""
 
@@ -37691,7 +37706,7 @@ msgstr "Staff alerts"
 msgid "Staff at a terminal"
 msgstr "Staff at a terminal"
 
-#: app/components/pos/terminals-manager.tsx:1577
+#: app/components/pos/terminals-manager.tsx:1575
 msgid "Staff clock in and out on this terminal with their PIN, even while it is locked."
 msgstr "Staff clock in and out on this terminal with their PIN, even while it is locked."
 
@@ -37983,7 +37998,7 @@ msgstr "Start typing an address, city, or zip code..."
 msgid "Start with a poster for your door or window."
 msgstr "Start with a poster for your door or window."
 
-#: ../../packages/marketing/src/components/email/email-block-editor.tsx:172
+#: ../../packages/marketing/src/components/email/email-block-editor.tsx:177
 msgid "Start with a template"
 msgstr "Start with a template"
 
@@ -38007,7 +38022,7 @@ msgstr "Started {startedAt}"
 msgid "Started {startedAt} by <0>{by}</0>"
 msgstr "Started {startedAt} by <0>{by}</0>"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:271
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:356
 msgid "Started At"
 msgstr ""
 
@@ -38106,7 +38121,7 @@ msgstr "Stats"
 #: app/routes/_app+/$orgSlug_+/loyalty+/program.tsx:249
 #: app/routes/_app+/$orgSlug_+/loyalty+/promotions.tsx:390
 #: app/routes/_app+/$orgSlug_+/loyalty+/rewards.tsx:266
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:270
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:355
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:973
 #: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:535
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:351
@@ -38159,7 +38174,7 @@ msgstr "Stayed on current page"
 msgid "Step {currentStep} of {totalSteps}"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:386
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:481
 msgid "Step Executions ({timelineCount})"
 msgstr ""
 
@@ -38183,7 +38198,7 @@ msgstr "Still needed: {missingList}"
 #: app/components/app-sidebar.tsx:426
 #: app/components/inventory/inventory-chrome.tsx:27
 #: app/components/inventory/inventory-chrome.tsx:43
-#: app/components/pos/terminals-manager.tsx:1634
+#: app/components/pos/terminals-manager.tsx:1632
 #: app/components/workspace-breadcrumb.tsx:92
 msgid "Stock"
 msgstr "Stock"
@@ -39156,7 +39171,7 @@ msgstr "Target food cost (%)"
 #~ msgid "Target type"
 #~ msgstr "Target type"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:559
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:561
 msgid "Target Value"
 msgstr ""
 
@@ -39355,11 +39370,11 @@ msgstr "Temporary (302) keeps original search indexing. Best for short-term prom
 msgid "Temporary forward"
 msgstr "Temporary forward"
 
-#: app/components/pos/terminals-manager.tsx:1479
+#: app/components/pos/terminals-manager.tsx:1477
 msgid "Terminal code"
 msgstr "Terminal code"
 
-#: app/components/pos/terminals-manager.tsx:1767
+#: app/components/pos/terminals-manager.tsx:1765
 msgid "Terminal paired"
 msgstr "Terminal paired"
 
@@ -40550,7 +40565,7 @@ msgstr "The guest was sent a link to confirm this charge with their bank."
 msgid "The header is shared across every page."
 msgstr ""
 
-#: app/components/pos/terminals-manager.tsx:1609
+#: app/components/pos/terminals-manager.tsx:1607
 msgid "The host stand for this location: today’s floor, arrivals, walk-ins and the waitlist."
 msgstr "The host stand for this location: today’s floor, arrivals, walk-ins and the waitlist."
 
@@ -41123,7 +41138,7 @@ msgstr "The security check could not load. Turn off content blockers or check yo
 msgid "The security check failed. Please try again."
 msgstr "The security check failed. Please try again."
 
-#: app/components/pos/terminals-manager.tsx:1242
+#: app/components/pos/terminals-manager.tsx:1240
 msgid "The server could not apply it"
 msgstr "The server could not apply it"
 
@@ -41269,11 +41284,11 @@ msgstr "The tag could not be changed. Try again."
 msgid "The tasks a new hire starts with. Due dates count from the day they are hired."
 msgstr "The tasks a new hire starts with. Due dates count from the day they are hired."
 
-#: app/components/pos/terminals-manager.tsx:1555
+#: app/components/pos/terminals-manager.tsx:1553
 msgid "The terminal locks when idle and each order records who took it. Staff need a PIN set under Staff."
 msgstr "The terminal locks when idle and each order records who took it. Staff need a PIN set under Staff."
 
-#: app/components/pos/terminals-manager.tsx:1230
+#: app/components/pos/terminals-manager.tsx:1228
 msgid "The terminal's app may be out of date"
 msgstr "The terminal's app may be out of date"
 
@@ -41783,7 +41798,7 @@ msgstr "This Checkout Session is no longer active"
 msgid "This client will have access to:"
 msgstr ""
 
-#: app/components/pos/terminals-manager.tsx:1823
+#: app/components/pos/terminals-manager.tsx:1821
 #: app/components/staff/kiosk-manager.tsx:757
 msgid "This code expired. Make a new one."
 msgstr "This code expired. Make a new one."
@@ -41792,7 +41807,7 @@ msgstr "This code expired. Make a new one."
 msgid "This code is listed twice."
 msgstr "This code is listed twice."
 
-#: app/components/pos/terminals-manager.tsx:1821
+#: app/components/pos/terminals-manager.tsx:1819
 msgid "This code was removed. Make a new one."
 msgstr "This code was removed. Make a new one."
 
@@ -42781,7 +42796,7 @@ msgstr "Time cards: {timeCardCount} (not included in the backup)"
 
 #: app/components/app-sidebar.tsx:612
 #: app/components/command-menu.tsx:145
-#: app/components/pos/terminals-manager.tsx:1573
+#: app/components/pos/terminals-manager.tsx:1571
 #: app/components/workspace-breadcrumb.tsx:30
 #: app/routes/_app+/$orgSlug_+/staff+/timeclock.tsx:54
 msgid "Time clock"
@@ -43818,7 +43833,7 @@ msgstr "Turned on training rule \"{title}\""
 #~ msgid "Turning an app on needs permission to change its settings (time clock rules, or reservation settings)."
 #~ msgstr "Turning an app on needs permission to change its settings (time clock rules, or reservation settings)."
 
-#: app/components/pos/terminals-manager.tsx:1174
+#: app/components/pos/terminals-manager.tsx:1172
 msgid "Turning an app on needs permission to change its settings (time clock rules, reservation settings, or stock)."
 msgstr "Turning an app on needs permission to change its settings (time clock rules, reservation settings, or stock)."
 
@@ -44329,7 +44344,7 @@ msgstr ""
 msgid "Unread only"
 msgstr "Unread only"
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:146
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:152
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:496
 #: app/components/reservations/experiences/experience-editor.tsx:499
 #: app/components/reservations/floor-plan-canvas.tsx:770
@@ -45162,7 +45177,7 @@ msgstr "Verification code"
 msgid "Verification Code"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:509
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:511
 msgid "Verification Status"
 msgstr ""
 
@@ -45399,7 +45414,7 @@ msgstr "View team schedule"
 msgid "View time cards"
 msgstr "View time cards"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:320
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:405
 msgid "View Timeline →"
 msgstr ""
 
@@ -45625,7 +45640,7 @@ msgstr "Waiting for review"
 msgid "Waiting for the tablet…"
 msgstr "Waiting for the tablet…"
 
-#: app/components/pos/terminals-manager.tsx:1853
+#: app/components/pos/terminals-manager.tsx:1851
 msgid "Waiting for the terminal…"
 msgstr "Waiting for the terminal…"
 
@@ -46616,7 +46631,7 @@ msgstr "When someone orders a pizza, offer garlic knots once."
 #~ msgid "When the agent can't help, it transfers to your staff phone number from Setup."
 #~ msgstr "When the agent can't help, it transfers to your staff phone number from Setup."
 
-#: app/components/pos/terminals-manager.tsx:1533
+#: app/components/pos/terminals-manager.tsx:1531
 msgid "When the business day ends"
 msgstr "When the business day ends"
 
@@ -47030,7 +47045,7 @@ msgstr "Worked examples from the live configuration."
 msgid "Worker type"
 msgstr "Worker type"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:368
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:453
 msgid "Workflow Error:"
 msgstr ""
 
@@ -47410,7 +47425,7 @@ msgid "You can turn on Stock only at your own locations."
 msgstr "You can turn on Stock only at your own locations."
 
 #: app/components/pos/terminals-manager.tsx:1012
-#: app/components/pos/terminals-manager.tsx:1587
+#: app/components/pos/terminals-manager.tsx:1585
 msgid "You can turn on the time clock only at your own locations."
 msgstr "You can turn on the time clock only at your own locations."
 
@@ -47861,7 +47876,7 @@ msgstr "Your dashboard changes could not be saved."
 msgid "Your department"
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:194
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:201
 msgid "Your email design has changes that haven't been saved. Leaving now will lose them."
 msgstr "Your email design has changes that haven't been saved. Leaving now will lose them."
 
