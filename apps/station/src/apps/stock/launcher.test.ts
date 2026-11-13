@@ -25,6 +25,7 @@ const draw = (apps: {
 	timeclock: boolean
 	reservations: boolean
 	inventory: boolean
+	orders: boolean
 }) =>
 	page.draw(
 		h(AppLauncher, {
@@ -40,7 +41,12 @@ const onApp = vi.fn()
 
 describe('Stock in the launcher', () => {
 	it('is offered only when the terminal has it switched on', async () => {
-		await draw({ timeclock: false, reservations: false, inventory: false })
+		await draw({
+			timeclock: false,
+			reservations: false,
+			inventory: false,
+			orders: false,
+		})
 		await click(button(page.host, 'Apps'))
 		expect(hasButton(page.host, 'Register')).toBe(true)
 		expect(hasButton(page.host, 'Kitchen')).toBe(true)
@@ -49,7 +55,12 @@ describe('Stock in the launcher', () => {
 
 	it('shows it beside the others when on, and picking it says so', async () => {
 		onApp.mockClear()
-		await draw({ timeclock: true, reservations: true, inventory: true })
+		await draw({
+			timeclock: true,
+			reservations: true,
+			inventory: true,
+			orders: false,
+		})
 		await click(button(page.host, 'Apps'))
 		const names = [...page.host.querySelectorAll('nav button')].map((entry) =>
 			entry.textContent?.trim(),

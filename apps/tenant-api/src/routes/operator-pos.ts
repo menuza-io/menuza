@@ -335,6 +335,7 @@ const patchTerminalSchema = z
 		timeclockEnabled: z.boolean().optional(),
 		reservationsEnabled: z.boolean().optional(),
 		inventoryEnabled: z.boolean().optional(),
+		ordersEnabled: z.boolean().optional(),
 		locationId: z.string().trim().min(1).max(100).optional(),
 	})
 	.refine((p) => Object.values(p).some((value) => value !== undefined))
@@ -387,6 +388,20 @@ operatorPosRoutes.patch('/terminals/:id', async (c) => {
 		workplace,
 	)
 	if (denied) return denied
+	// Orders shows that location's guests: a member limited to some locations
+	// may switch it on (or bind a till with it on) only at theirs.
+	const opensOrders =
+		parsed.data.ordersEnabled === true ||
+		(current.ordersEnabled &&
+			parsed.data.ordersEnabled !== false &&
+			parsed.data.locationId !== undefined &&
+			current.locationId === null)
+	if (
+		opensOrders &&
+		g.auth.locationIds !== null &&
+		(hostLocationId === null || !g.auth.locationIds.includes(hostLocationId))
+	)
+		return posError(403, 'location_not_allowed')
 	if (parsed.data.locationId !== undefined) {
 		// Binding is permanent: it waits for App to confirm the location exists.
 		const found = await checkLocation(g.auth.orgId, parsed.data.locationId)

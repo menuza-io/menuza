@@ -33,13 +33,23 @@ describe('Stock is an app of the terminal', () => {
 		expect(
 			shownApp({
 				...base,
-				apps: { timeclock: false, reservations: false, inventory: true },
+				apps: {
+					timeclock: false,
+					reservations: false,
+					inventory: true,
+					orders: false,
+				},
 			}),
 		).toBe('stock')
 		expect(
 			shownApp({
 				...base,
-				apps: { timeclock: false, reservations: false, inventory: false },
+				apps: {
+					timeclock: false,
+					reservations: false,
+					inventory: false,
+					orders: false,
+				},
 			}),
 		).toBe('pos')
 		// The other apps are unchanged.
@@ -47,7 +57,12 @@ describe('Stock is an app of the terminal', () => {
 			shownApp({
 				...base,
 				activeApp: 'kitchen',
-				apps: { timeclock: false, reservations: false, inventory: false },
+				apps: {
+					timeclock: false,
+					reservations: false,
+					inventory: false,
+					orders: false,
+				},
 			}),
 		).toBe('kitchen')
 	})
@@ -59,14 +74,24 @@ describe('Stock is an app of the terminal', () => {
 				vi.fn().mockResolvedValue(
 					Response.json({
 						device: { signInRequired: true, scopeId: 'main' },
-						apps: { timeclock: false, reservations: false, inventory },
+						apps: {
+							timeclock: false,
+							reservations: false,
+							inventory,
+							orders: false,
+						},
 					}),
 				),
 			)
 		usePos.setState({
 			settings: {
 				...usePos.getState().settings,
-				apps: { timeclock: false, reservations: false, inventory: false },
+				apps: {
+					timeclock: false,
+					reservations: false,
+					inventory: false,
+					orders: false,
+				},
 			},
 		})
 		answer(true)
@@ -167,7 +192,12 @@ describe('the till’s own sync', () => {
 			session: session(),
 			settings: {
 				...usePos.getState().settings,
-				apps: { timeclock: false, reservations: false, inventory: false },
+				apps: {
+					timeclock: false,
+					reservations: false,
+					inventory: false,
+					orders: false,
+				},
 			},
 		})
 		await usePos.getState().sync()

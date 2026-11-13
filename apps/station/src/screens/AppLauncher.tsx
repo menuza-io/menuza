@@ -70,6 +70,15 @@ export function AppLauncher({
 					},
 				]
 			: []),
+		...(apps?.orders
+			? [
+					{
+						value: 'orders' as const,
+						label: _(t`Online orders`),
+						icon: 'receipt-text' as const,
+					},
+				]
+			: []),
 	]
 	const current = options.find((option) => option.value === app) ?? options[0]!
 	const dismiss = useCallback((restoreFocus = false) => {

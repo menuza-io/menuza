@@ -62,6 +62,7 @@ const {
 	posHeldUploads,
 	posHosts,
 	posManagers,
+	posOnlineOrderEvents,
 	posOrderLines,
 	posOrderRevisions,
 	posOrders,
@@ -414,14 +415,14 @@ root.post('/__test/reset', async (c) => {
 async function clearReservations() {
 	const triggers = (await db.all(
 		sql.raw(
-			"select name, sql from sqlite_master where type = 'trigger' and (tbl_name like 'rsv_%' or tbl_name like 'time_%' or tbl_name like 'kds_%' or tbl_name = 'staff_audit_log')",
+			"select name, sql from sqlite_master where type = 'trigger' and (tbl_name like 'rsv_%' or tbl_name like 'time_%' or tbl_name like 'kds_%' or tbl_name in ('staff_audit_log', 'pos_online_order_events', 'restaurant_order_refunds'))",
 		),
 	)) as Array<{ name: string; sql: string }>
 	for (const trigger of triggers)
 		await db.run(sql.raw(`DROP TRIGGER IF EXISTS \`${trigger.name}\``))
 	const tables = (await db.all(
 		sql.raw(
-			"select name from sqlite_master where type = 'table' and (name like 'rsv_%' or name like 'kds_%' or name in ('time_punches','time_breaks','time_entries','time_entry_edits','staff_audit_log'))",
+			"select name from sqlite_master where type = 'table' and (name like 'rsv_%' or name like 'kds_%' or name in ('time_punches','time_breaks','time_entries','time_entry_edits','staff_audit_log','pos_online_order_events','restaurant_order_refunds'))",
 		),
 	)) as Array<{ name: string }>
 	await db.run(sql.raw('PRAGMA foreign_keys = OFF'))
@@ -544,10 +545,14 @@ root.post('/__test/terminal', async (c) => {
 		shiftsRequired?: boolean
 		timeclockEnabled?: boolean
 		reservationsEnabled?: boolean
+		ordersEnabled?: boolean
 	}
 	await db
 		.update(posDevices)
 		.set({
+			...(b.ordersEnabled === undefined
+				? {}
+				: { ordersEnabled: b.ordersEnabled }),
 			...(b.timeclockEnabled === undefined
 				? {}
 				: { timeclockEnabled: b.timeclockEnabled }),
@@ -604,6 +609,95 @@ root.post('/__test/kitchen-orders', async (c) => {
 	})
 	return c.json({ ok: true })
 })
+/** Online orders for Station's Orders app: a new pay-at-handoff pickup and a paid delivery. */
+root.post('/__test/online-orders', async (c) => {
+	const base = {
+		orgId: ORG_ID,
+		status: 'accepted' as const,
+		fulfillment: 'pickup' as const,
+		locationId: 'loc-1',
+		locationName: 'Downtown',
+		contactPhone: '+15555550199',
+		contactEmail: 'guest@example.test',
+		currency: 'USD',
+		taxCents: 0,
+		requestHash: 'test',
+		receiptTokenHash: 'test',
+	}
+	await db.insert(restaurantOrders).values([
+		{
+			...base,
+			id: crypto.randomUUID(),
+			number: 'WEB-0100',
+			paymentMethod: 'handoff',
+			paymentStatus: 'unpaid',
+			contactName: 'Maya Guest',
+			subtotalCents: 1500,
+			totalCents: 1500,
+			lines: [
+				{
+					itemId: 'i-burger',
+					itemName: 'Classic Burger',
+					variantId: null,
+					quantity: 2,
+					totalCents: 1500,
+					instructions: 'No onion',
+					options: [],
+				},
+			],
+			idempotencyKey: crypto.randomUUID(),
+		},
+		{
+			...base,
+			id: crypto.randomUUID(),
+			number: 'WEB-0101',
+			status: 'preparing',
+			fulfillment: 'delivery',
+			paymentMethod: 'online',
+			paymentStatus: 'paid',
+			paidAt: new Date(),
+			contactName: 'Daniel Guest',
+			deliveryAddress: '12 Harbor Street',
+			deliveryCity: 'Springfield',
+			deliveryNotes: 'Ring the side door',
+			subtotalCents: 2000,
+			totalCents: 2000,
+			lines: [
+				{
+					itemId: 'i-fries',
+					itemName: 'Truffle Fries',
+					variantId: null,
+					quantity: 1,
+					totalCents: 2000,
+					instructions: null,
+					options: [],
+				},
+			],
+			idempotencyKey: crypto.randomUUID(),
+		},
+	])
+	return c.json({ ok: true })
+})
+root.get('/__test/online-orders', async (c) =>
+	c.json({
+		orders: await db
+			.select({
+				number: restaurantOrders.number,
+				status: restaurantOrders.status,
+				paymentStatus: restaurantOrders.paymentStatus,
+				refundedCents: restaurantOrders.refundedCents,
+			})
+			.from(restaurantOrders),
+		events: await db
+			.select({
+				action: posOnlineOrderEvents.action,
+				staffId: posOnlineOrderEvents.staffId,
+				reason: posOnlineOrderEvents.reason,
+				amountCents: posOnlineOrderEvents.amountCents,
+			})
+			.from(posOnlineOrderEvents),
+	}),
+)
 root.get('/__test/devices', async (c) =>
 	c.json({ devices: await listDevices(db) }),
 )

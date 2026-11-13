@@ -46,9 +46,9 @@ export type PosSettings = {
 	activeApp: StationApp
 }
 
-/** The apps a Station tablet can show: the till, the time clock, the host stand, the kitchen, Stock. */
+/** The apps a Station tablet can show: the till, the time clock, the host stand, the kitchen, Stock, Orders. */
 export type StationApp =
-	'pos' | 'timeclock' | 'reservations' | 'kitchen' | 'stock'
+	'pos' | 'timeclock' | 'reservations' | 'kitchen' | 'stock' | 'orders'
 
 /**
  * The active app if the terminal still offers it, else the till. A till where
@@ -65,6 +65,7 @@ export function shownApp(
 	if (s.activeApp === 'kitchen') return 'kitchen'
 	// Stock is offered by the terminal's `inventory` setting (and the organization's flag).
 	if (s.activeApp === 'stock' && s.apps.inventory) return 'stock'
+	if (s.activeApp === 'orders' && s.apps.orders) return 'orders'
 	return 'pos'
 }
 
@@ -93,8 +94,15 @@ const defaults = (): PosSettings => ({
 export function loadSettings(): PosSettings {
 	try {
 		const raw = localStorage.getItem(KEY)
-		if (raw)
-			return { ...defaults(), ...(JSON.parse(raw) as Partial<PosSettings>) }
+		if (raw) {
+			const saved = JSON.parse(raw) as Partial<PosSettings>
+			// Settings saved before an app existed read that app as off.
+			return {
+				...defaults(),
+				...saved,
+				apps: { ...NO_POS_DEVICE_APPS, ...saved.apps },
+			}
+		}
 	} catch {
 		/* private mode or corrupt value: fall back to defaults */
 	}

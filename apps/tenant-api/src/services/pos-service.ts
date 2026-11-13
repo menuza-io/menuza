@@ -451,6 +451,7 @@ export const serializeDevice = (row: PosDevice) => ({
 	timeclockEnabled: row.timeclockEnabled,
 	reservationsEnabled: row.reservationsEnabled,
 	inventoryEnabled: row.inventoryEnabled,
+	ordersEnabled: row.ordersEnabled,
 	pairedAt: row.pairedAt,
 	lastSeenAt: row.lastSeenAt,
 	revokedAt: row.revokedAt,
@@ -864,6 +865,29 @@ export function stationInventoryProblem(settings: {
 	return null
 }
 
+/**
+ * The Orders app shows guest names and records who acted, at one location, so
+ * it needs a signed-in person and the terminal's location.
+ */
+export function stationOrdersProblem(settings: {
+	ordersEnabled: boolean
+	locationId: string | null
+	signInRequired: boolean
+}): { code: string; message: string } | null {
+	if (!settings.ordersEnabled) return null
+	if (!settings.locationId)
+		return {
+			code: 'orders_needs_location',
+			message: 'Choose a location for this terminal to use Orders.',
+		}
+	if (!settings.signInRequired)
+		return {
+			code: 'orders_needs_sign_in',
+			message: 'Turn on staff sign-in to use Orders on this terminal.',
+		}
+	return null
+}
+
 /** A terminal's location and Station app switches, for permission checks before a change. */
 export async function deviceStationState(db: TenantDatabase, id: string) {
 	const [device] = await db
@@ -873,6 +897,7 @@ export async function deviceStationState(db: TenantDatabase, id: string) {
 			reservationsEnabled: posDevices.reservationsEnabled,
 			timeclockEnabled: posDevices.timeclockEnabled,
 			inventoryEnabled: posDevices.inventoryEnabled,
+			ordersEnabled: posDevices.ordersEnabled,
 		})
 		.from(posDevices)
 		.where(and(eq(posDevices.id, id), isNull(posDevices.revokedAt)))
@@ -887,6 +912,7 @@ export type DeviceSettingsPatch = {
 	timeclockEnabled?: boolean
 	reservationsEnabled?: boolean
 	inventoryEnabled?: boolean
+	ordersEnabled?: boolean
 	/**
 	 * Binds a terminal that was paired without a location (so it can run that
 	 * location's host stand). A bound terminal keeps its location: moving one
@@ -919,6 +945,7 @@ export async function updateDeviceSettings(
 			reservationsEnabled: posDevices.reservationsEnabled,
 			timeclockEnabled: posDevices.timeclockEnabled,
 			inventoryEnabled: posDevices.inventoryEnabled,
+			ordersEnabled: posDevices.ordersEnabled,
 		})
 		.from(posDevices)
 		.where(and(eq(posDevices.id, id), isNull(posDevices.revokedAt)))
@@ -948,6 +975,12 @@ export async function updateDeviceSettings(
 	})
 	if (inventoryProblem)
 		return fail(422, inventoryProblem.code, inventoryProblem.message)
+	const ordersProblem = stationOrdersProblem({
+		ordersEnabled: patch.ordersEnabled ?? device.ordersEnabled,
+		locationId: patch.locationId ?? device.locationId,
+		signInRequired: patch.signInRequired ?? device.signInRequired,
+	})
+	if (ordersProblem) return fail(422, ordersProblem.code, ordersProblem.message)
 	const set: Partial<typeof posDevices.$inferInsert> = {}
 	if (patch.signInRequired !== undefined) {
 		set.signInRequired = patch.signInRequired
@@ -974,6 +1007,7 @@ export async function updateDeviceSettings(
 		if (!patch.inventoryEnabled && device.inventoryEnabled)
 			set.inventoryDisabledAt = now
 	}
+	if (patch.ordersEnabled !== undefined) set.ordersEnabled = patch.ordersEnabled
 	if (patch.locationId !== undefined && device.locationId === null) {
 		set.locationId = patch.locationId
 		set.locationBoundAt = now
@@ -985,6 +1019,7 @@ export async function updateDeviceSettings(
 			timeclockEnabled: device.timeclockEnabled,
 			reservationsEnabled: device.reservationsEnabled,
 			inventoryEnabled: device.inventoryEnabled,
+			ordersEnabled: device.ordersEnabled,
 			locationId: device.locationId,
 		} as Record<string, unknown>,
 		{
@@ -992,6 +1027,7 @@ export async function updateDeviceSettings(
 			timeclockEnabled: set.timeclockEnabled,
 			reservationsEnabled: set.reservationsEnabled,
 			inventoryEnabled: set.inventoryEnabled,
+			ordersEnabled: set.ordersEnabled,
 			locationId: set.locationId,
 		},
 	)

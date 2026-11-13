@@ -21,6 +21,7 @@ import {
 	orderFailure,
 	runExclusive,
 	type OrderServiceResult,
+	type OrderWriteHooks,
 } from './order-service.ts'
 
 /**
@@ -106,6 +107,8 @@ export async function recordOrderRefund(
 		 */
 		loyaltyAccess: RefundLoyaltyAccess
 		now?: number
+		/** Station's checks and record, in the refund's own transaction. */
+		hooks?: OrderWriteHooks
 	},
 ): Promise<OrderServiceResult<OrderRefundRecorded>> {
 	const db = await getTenantDb(orgId)
@@ -173,6 +176,9 @@ export async function recordOrderRefund(
 							data: { order, refund: previous, replayed: true },
 						}
 					}
+
+					const refused = input.hooks?.guard?.(order)
+					if (refused) return { ok: false, failure: refused }
 
 					// A tab's rounds are handed over and paid with the tab, never online.
 					if (order.paymentMethod !== 'online') {
@@ -244,6 +250,7 @@ export async function recordOrderRefund(
 						{ type: 'restaurant_order', id: order.id },
 						now,
 					)
+					await input.hooks?.afterWrite?.(tx, order, updated ?? order)
 					return {
 						ok: true,
 						data: { order: updated ?? order, refund: refund!, replayed: false },

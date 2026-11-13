@@ -199,6 +199,11 @@
       "import": "./src/kds.ts",
       "default": "./src/kds.ts"
     },
+    "./pos-online-orders": {
+      "types": "./src/pos-online-orders.ts",
+      "import": "./src/pos-online-orders.ts",
+      "default": "./src/pos-online-orders.ts"
+    },
     "./pos-orders": {
       "types": "./src/pos-orders.ts",
       "import": "./src/pos-orders.ts",

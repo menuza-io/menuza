@@ -454,6 +454,56 @@ describe('TerminalsManager', () => {
 		})
 	})
 
+	it('switches Online orders on a terminal with a location and a PIN, and off again', async () => {
+		const api = stubApi({
+			devices: [
+				terminal({ signInRequired: true }),
+				terminal({
+					id: 'd2',
+					label: 'Counter',
+					terminalCode: 'T2',
+					locationId: 'loc_1',
+					signInRequired: true,
+				}),
+				terminal({
+					id: 'd3',
+					label: 'Pass',
+					terminalCode: 'T3',
+					locationId: 'loc_1',
+					signInRequired: true,
+					ordersEnabled: true,
+				}),
+			],
+		})
+		render({ locations: [{ id: 'loc_1', name: 'Downtown' }] })
+		await screen.findByText('Counter')
+		// No organization flag: Online orders is offered like Kitchen, per terminal.
+		expect(
+			screen.getByRole('button', {
+				name: 'Online orders on Front counter, off',
+			}),
+		).toBeDisabled()
+		expect(
+			screen.getByText("Choose the terminal's location to use Online orders."),
+		).toBeTruthy()
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Online orders on Counter, off' }),
+		)
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Online orders on Pass, on' }),
+		)
+		await waitFor(() =>
+			expect(
+				api.calls
+					.filter((c) => c.method === 'PATCH')
+					.map((c) => [c.url.split('/').pop(), c.body]),
+			).toEqual([
+				['d2', { ordersEnabled: true }],
+				['d3', { ordersEnabled: false }],
+			]),
+		)
+	})
+
 	it('a member limited to other locations cannot open the host stand here', async () => {
 		stubApi({
 			devices: [

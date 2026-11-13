@@ -144,6 +144,26 @@ export async function inventoryGate(
 	return { ok: true, locationId }
 }
 
+export type OrdersGate =
+	| { ok: true; locationId: string }
+	| {
+			ok: false
+			code:
+				'orders_not_enabled' | 'orders_needs_sign_in' | 'orders_needs_location'
+	  }
+
+/**
+ * The Orders app on a terminal: its own switch, a signed-in person (guest
+ * names and every action are attributed) and the terminal's location. Online
+ * ordering has no organization flag (like Kitchen), so nothing else is read.
+ */
+export function ordersGate(device: PosDevice): OrdersGate {
+	if (!device.ordersEnabled) return { ok: false, code: 'orders_not_enabled' }
+	if (!device.signInRequired) return { ok: false, code: 'orders_needs_sign_in' }
+	if (!device.locationId) return { ok: false, code: 'orders_needs_location' }
+	return { ok: true, locationId: device.locationId }
+}
+
 /**
  * What `/pos/me` tells the till to show. An app whose flag cannot be read right
  * now is left out, and the till keeps what it last knew: a short App outage
@@ -180,5 +200,6 @@ export async function deviceApps(
 		)
 			apps.inventory = false
 	}
+	apps.orders = ordersGate(device).ok
 	return apps
 }

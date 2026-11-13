@@ -111,7 +111,9 @@ import {
 
 /** Tenant database + transaction handle types. */
 type TenantDatabase = Awaited<ReturnType<typeof getTenantDb>>
-type OrderTx = Parameters<Parameters<TenantDatabase['transaction']>[0]>[0]
+export type OrderTx = Parameters<
+	Parameters<TenantDatabase['transaction']>[0]
+>[0]
 
 // ---------------------------------------------------------------------------
 // Failure shape shared by all order operations
@@ -1834,10 +1836,25 @@ export type OperatorPatchInput = {
 	markPaid?: boolean
 }
 
+/**
+ * Extra checks a caller runs on the order inside the write's transaction, and
+ * a record it adds in that same transaction when the order changed (Station's
+ * Orders app: the order's location and version, and who did it).
+ */
+export type OrderWriteHooks = {
+	guard?: (order: RestaurantOrder) => OrderServiceFailure | null
+	afterWrite?: (
+		tx: OrderTx,
+		before: RestaurantOrder,
+		after: RestaurantOrder,
+	) => Promise<void>
+}
+
 export async function updateOperatorOrder(
 	orgId: string,
 	orderId: string,
 	input: OperatorPatchInput,
+	hooks: OrderWriteHooks = {},
 ): Promise<OrderServiceResult<RestaurantOrder>> {
 	const db = await getTenantDb(orgId)
 	const loyalty = loyaltySettleQueue()
@@ -1862,6 +1879,8 @@ export async function updateOperatorOrder(
 					if (!order) {
 						return orderFailure(404, 'order_not_found', 'Order not found.')
 					}
+					const refused = hooks.guard?.(order)
+					if (refused) return { ok: false, failure: refused }
 
 					const now = new Date()
 					const patch: Partial<RestaurantOrder> = {}
@@ -1959,6 +1978,7 @@ export async function updateOperatorOrder(
 						}
 						await consumeDiscountRedemptions(tx, [order.id])
 					}
+					await hooks.afterWrite?.(tx, order, updated ?? order)
 					return { ok: true, data: updated ?? order }
 				}),
 			),

@@ -759,12 +759,15 @@ export type PosDeviceApps = {
 	reservations: boolean
 	/** The Stock app (counts, waste, receiving); the launcher tile is `stock`. */
 	inventory: boolean
+	/** The Orders app: the location's online orders, from arrival to handed over. */
+	orders: boolean
 }
 
 export const NO_POS_DEVICE_APPS: PosDeviceApps = {
 	timeclock: false,
 	reservations: false,
 	inventory: false,
+	orders: false,
 }
 
 /**
