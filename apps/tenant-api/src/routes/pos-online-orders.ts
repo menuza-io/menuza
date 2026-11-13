@@ -3,6 +3,7 @@ import {
 	posOnlineOrderCommandSchema,
 	posOnlineOrderRefundSchema,
 	posOnlineOrdersGrants,
+	posOnlineOrdersSearchQuerySchema,
 } from '@repo/common/pos-online-orders'
 import { authenticatePosDevice, posError } from '../lib/pos-auth.ts'
 import { verifyPosStaffSession } from '../lib/pos-staff-session.ts'
@@ -15,6 +16,7 @@ import {
 	onlineOrderDetail,
 	onlineOrderRefund,
 	onlineOrdersFeed,
+	onlineOrdersSearch,
 	type OnlineOrdersActor,
 } from '../services/pos-online-orders-service.ts'
 import { touchDevice } from '../services/pos-service.ts'
@@ -84,6 +86,23 @@ posOnlineOrdersRoutes.get('/', async (c) => {
 	const auth = await authorize(c)
 	if ('error' in auth) return auth.error
 	return json(await onlineOrdersFeed(auth.db, auth.actor))
+})
+
+/**
+ * Today's and recent orders at this location by number, name or the phone's
+ * last digits. A phone search needs the contact grant; results carry the same
+ * summary as the inbox (a name, never a phone).
+ */
+posOnlineOrdersRoutes.get('/search', async (c) => {
+	const auth = await authorize(c)
+	if ('error' in auth) return auth.error
+	const raw = c.req.query()
+	// Before parsing: a person without the grant learns nothing from a phone search.
+	if ('phone' in raw && !auth.actor.grants.contact)
+		return posError(403, 'permission_required')
+	const parsed = posOnlineOrdersSearchQuerySchema.safeParse(raw)
+	if (!parsed.success) return posError(400, 'invalid_search')
+	return json(await onlineOrdersSearch(auth.db, auth.actor, parsed.data))
 })
 
 async function detailResponse(

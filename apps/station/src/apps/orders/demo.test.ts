@@ -73,4 +73,28 @@ describe('demo online orders', () => {
 			feed.orders.filter((o) => o.status === 'accepted' && !o.openedAt),
 		).toHaveLength(2)
 	})
+
+	it('searches past the inbox by number, name and phone digits, and keeps older orders read-only', async () => {
+		const demo = createDemoOrders()
+		const feed = await demo.feed()
+		expect(feed.orders.some((o) => o.number === 'W-0988')).toBe(false)
+		const byName = await demo.search({ q: 'maya' })
+		expect(byName.results.map((o) => o.number)).toContain('W-0988')
+		const byPhone = await demo.search({ phone: '0177' })
+		expect(byPhone.results.map((o) => o.number)).toEqual(['W-0951'])
+		expect(JSON.stringify(byPhone)).not.toContain('555')
+		const delivery = await demo.search({
+			q: 'W-',
+			fulfillment: 'delivery',
+			state: 'cancelled',
+		})
+		expect(delivery.results.every((o) => o.status === 'cancelled')).toBe(true)
+		await expect(demo.contact('demo-0951')).rejects.toMatchObject({
+			code: 'order_not_found',
+		})
+		const old = (await demo.detail('demo-0951')).order
+		await expect(
+			demo.command(old.id, { action: 'reprint', target: 'guest' } as never),
+		).rejects.toMatchObject({ code: 'order_not_found' })
+	})
 })

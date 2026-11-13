@@ -1,5 +1,9 @@
 import {
 	handoffNeedsPayment,
+	onlineOrderInInbox,
+	onlineOrdersSearchSince,
+	POS_ONLINE_ORDERS_SEARCH_LIMIT,
+	type PosOnlineOrderSummary,
 	type PosOnlineOrderCommand,
 	type PosOnlineOrderContact,
 	type PosOnlineOrderDetail,
@@ -218,6 +222,49 @@ export function createDemoOrders(start = Date.now()): OrdersApi & {
 			start,
 		),
 	)
+	// Past the inbox: only search finds these, and they open read-only.
+	const DAY = 24 * 60 * MIN
+	add(
+		sample(
+			'demo-0988',
+			{
+				number: 'W-0988',
+				guestName: 'Maya',
+				status: 'completed',
+				openedAt: start - DAY - 40 * MIN,
+				createdAt: start - DAY - 45 * MIN,
+				completedAt: start - DAY - 20 * MIN,
+				lines: [line('Classic Burger', 1, 1200), line('Lemonade', 1, 450)],
+			},
+			start,
+		),
+	)
+	add(
+		sample(
+			'demo-0951',
+			{
+				number: 'W-0951',
+				guestName: 'Jordan',
+				fulfillment: 'delivery',
+				status: 'cancelled',
+				openedAt: start - 3 * DAY - 30 * MIN,
+				createdAt: start - 3 * DAY - 35 * MIN,
+				cancelledAt: start - 3 * DAY - 25 * MIN,
+				phoneMasked: '•••• 0177',
+				hasEmail: false,
+				contact: { phone: '+1 555 010 0177', email: null },
+				delivery: {
+					address: '4 Elm Road',
+					city: 'Springfield',
+					unit: null,
+					postalCode: null,
+					notes: null,
+				},
+				lines: [line('Margherita Pizza', 2, 2800)],
+			},
+			start,
+		),
+	)
 	const phones: PosPhonePickup[] = [
 		{
 			id: 'demo-phone-1',
@@ -260,6 +307,32 @@ export function createDemoOrders(start = Date.now()): OrdersApi & {
 		if (!order) throw new OrdersError('order_not_found', 404)
 		return order
 	}
+	/** Changes, contacts and reprints reach only the inbox, like the region. */
+	const findInInbox = (id: string) => {
+		const order = find(id)
+		if (!onlineOrderInInbox(order, Date.now()))
+			throw new OrdersError('order_not_found', 404)
+		return order
+	}
+	const summaryOf = ({
+		contact: _c,
+		revision: _r,
+		lines: _l,
+		phoneMasked: _p,
+		hasEmail: _e,
+		delivery: _d,
+		subtotalCents: _s,
+		taxCents: _t,
+		deliveryFeeCents: _f,
+		tipCents: _tip,
+		discountCents: _dc,
+		loyaltyDiscountCents: _ldc,
+		paidAt: _paid,
+		refundableCents: _rc,
+		refunds: _refunds,
+		history: _h,
+		...summary
+	}: DemoOrder): PosOnlineOrderSummary => summary
 	const change = (
 		order: DemoOrder,
 		patch: Partial<DemoOrder>,
@@ -291,27 +364,9 @@ export function createDemoOrders(start = Date.now()): OrdersApi & {
 		feed: () => {
 			if (Date.now() - start > 30_000) arrive()
 			return Promise.resolve({
-				orders: [...orders.values()].map(
-					({
-						contact: _c,
-						revision: _r,
-						lines: _l,
-						phoneMasked: _p,
-						hasEmail: _e,
-						delivery: _d,
-						subtotalCents: _s,
-						taxCents: _t,
-						deliveryFeeCents: _f,
-						tipCents: _tip,
-						discountCents: _dc,
-						loyaltyDiscountCents: _ldc,
-						paidAt: _paid,
-						refundableCents: _rc,
-						refunds: _refunds,
-						history: _h,
-						...summary
-					}) => summary,
-				),
+				orders: [...orders.values()]
+					.filter((order) => onlineOrderInInbox(order, Date.now()))
+					.map(summaryOf),
 				phonePickups: phones,
 				grants: DEMO_GRANTS,
 				serverNow: Date.now(),
@@ -319,9 +374,49 @@ export function createDemoOrders(start = Date.now()): OrdersApi & {
 			})
 		},
 		detail: async (id) => respond(find(id)),
-		contact: async (id) => find(id).contact,
+		contact: async (id) => findInInbox(id).contact,
+		search: async (query) => {
+			const now = Date.now()
+			const since = Math.max(onlineOrdersSearchSince(now), query.since ?? 0)
+			const text = query.q?.trim().toLocaleLowerCase()
+			const digits = query.phone?.trim()
+			if (digits && !DEMO_GRANTS.contact)
+				throw new OrdersError('permission_required', 403)
+			const states: Record<string, string[]> = {
+				open: ['accepted', 'preparing'],
+				ready: ['ready'],
+				completed: ['completed'],
+				cancelled: ['cancelled'],
+			}
+			const matches = [...orders.values()]
+				.filter(
+					(order) =>
+						order.createdAt >= since &&
+						(!query.state ||
+							query.state === 'all' ||
+							states[query.state]!.includes(order.status)) &&
+						(!query.fulfillment ||
+							query.fulfillment === 'all' ||
+							order.fulfillment === query.fulfillment) &&
+						(text
+							? order.number.toLocaleLowerCase().includes(text) ||
+								order.guestName.toLocaleLowerCase().includes(text)
+							: digits
+								? order.contact.phone.replace(/\D/g, '').endsWith(digits)
+								: false),
+				)
+				.sort((a, b) => b.createdAt - a.createdAt)
+			return {
+				results: matches
+					.slice(0, POS_ONLINE_ORDERS_SEARCH_LIMIT)
+					.map(summaryOf),
+				truncated: matches.length > POS_ONLINE_ORDERS_SEARCH_LIMIT,
+				since,
+				serverNow: now,
+			}
+		},
 		command: async (id, command: PosOnlineOrderCommand) => {
-			const order = find(id)
+			const order = findInInbox(id)
 			if (command.action === 'open') {
 				const next = order.openedAt
 					? order
@@ -367,7 +462,7 @@ export function createDemoOrders(start = Date.now()): OrdersApi & {
 			)
 		},
 		refund: async (id, refund: PosOnlineOrderRefund, key) => {
-			const order = find(id)
+			const order = findInInbox(id)
 			if (keys.has(key)) return respond(order)
 			if (refund.expectedVersion !== order.version)
 				throw new OrdersError('stale_version', 409)

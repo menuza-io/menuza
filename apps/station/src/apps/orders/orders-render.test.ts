@@ -150,6 +150,13 @@ function draw(
 		detail: null,
 		contact: null,
 		open: vi.fn(async () => {}),
+		view: vi.fn(async () => {}),
+		search: vi.fn(async () => ({
+			results: [],
+			truncated: false,
+			since: NOW,
+			serverNow: NOW,
+		})),
 		close: vi.fn(),
 		command,
 		refund: vi.fn(async () => true),

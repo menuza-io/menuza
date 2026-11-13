@@ -6,8 +6,10 @@ import { eq } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
+	POS_ONLINE_ORDERS_SEARCH_LIMIT,
 	type PosOnlineOrderDetailResponse,
 	type PosOnlineOrdersFeed,
+	type PosOnlineOrdersSearch,
 } from '@repo/common/pos-online-orders'
 import {
 	formatPosDeviceSecret,
@@ -553,15 +555,41 @@ describe('Station Orders app API (/pos/online-orders)', () => {
 		expect((await detail(id)).order.lines[0]!.name).toBe(longName)
 	})
 
-	it('reaches only what the inbox shows: an order finished hours ago is the App’s', async () => {
+	it('changes only what the inbox shows: an order finished hours ago opens read-only, its contact and refunds are the App’s', async () => {
 		const old = new Date(Date.now() - 5 * 3_600_000)
 		const id = await insertOrder({ status: 'completed', completedAt: old })
+		const ancient = await insertOrder({
+			number: 'W-9',
+			status: 'completed',
+			createdAt: new Date(Date.now() - 10 * 86_400_000),
+			completedAt: new Date(Date.now() - 10 * 86_400_000),
+		})
 		const db = await getTenantDb(ORG_A)
 		await db
 			.insert(posHosts)
 			.values({ staffId: cashierId, guestDetails: true, addedBy: 'operator' })
-		expect((await call('GET', `/${id}`)).status).toBe(404)
+		const read = await detail(id)
+		expect(read.order.phoneMasked).toBe('•••• 4567')
+		expect(JSON.stringify(read)).not.toMatch(/15551234567|layla@example/)
+		// Past what search reaches, it is the App's alone.
+		expect((await call('GET', `/${ancient}`)).status).toBe(404)
 		expect((await call('POST', `/${id}/contact`)).status).toBe(404)
+		expect(
+			(
+				await command(
+					id,
+					{
+						action: 'cancel',
+						expectedVersion: read.order.version,
+						reason: 'other',
+					},
+					manager,
+				)
+			).status,
+		).toBe(404)
+		expect(
+			(await command(id, { action: 'reprint', ticket: 'guest' })).status,
+		).toBe(404)
 		expect(
 			(
 				await refund(id, {
@@ -571,6 +599,121 @@ describe('Station Orders app API (/pos/online-orders)', () => {
 				})
 			).status,
 		).toBe(404)
+	})
+
+	describe('search (today and the last 7 days)', () => {
+		async function search(params: Record<string, string>, staff = cashier) {
+			return call('GET', `/search?${new URLSearchParams(params).toString()}`, {
+				staff,
+			})
+		}
+		async function found(params: Record<string, string>, staff = cashier) {
+			const response = await search(params, staff)
+			expect(response.status).toBe(200)
+			expect(response.headers.get('cache-control')).toContain('no-store')
+			return (await response.json()) as PosOnlineOrdersSearch
+		}
+
+		it('finds an order by its number, past the inbox, newest first, never with a phone or email', async () => {
+			const days = (n: number) => new Date(Date.now() - n * 86_400_000)
+			const today = await insertOrder({ number: 'W-1042' })
+			const lastWeek = await insertOrder({
+				number: 'W-1041',
+				status: 'completed',
+				createdAt: days(6),
+				completedAt: days(6),
+			})
+			await insertOrder({
+				number: 'W-1040',
+				status: 'completed',
+				createdAt: days(12),
+				completedAt: days(12),
+			})
+			await insertOrder({ number: 'W-1043', locationId: 'elsewhere' })
+			const response = await search({ q: '104' })
+			const raw = await response.text()
+			expect(raw).not.toMatch(/15551234567|layla@example/)
+			const data = JSON.parse(raw) as PosOnlineOrdersSearch
+			expect(data.results.map((order) => order.id)).toEqual([today, lastWeek])
+			expect(data.truncated).toBe(false)
+			expect((await found({ q: 'w-1041' })).results[0]?.number).toBe('W-1041')
+		})
+
+		it('finds by guest name, filters by state and order type, and takes wildcards literally', async () => {
+			const ready = await insertOrder({
+				number: 'W-7',
+				status: 'ready',
+				contactName: 'Omar 100%',
+			})
+			await insertOrder({
+				number: 'W-8',
+				fulfillment: 'delivery',
+				contactName: 'Omar Two',
+				deliveryAddress: '1 Road',
+			})
+			expect((await found({ q: 'omar' })).results).toHaveLength(2)
+			expect(
+				(await found({ q: 'omar', state: 'ready' })).results.map((o) => o.id),
+			).toEqual([ready])
+			expect(
+				(await found({ q: 'omar', fulfillment: 'delivery' })).results.map(
+					(o) => o.number,
+				),
+			).toEqual(['W-8'])
+			expect((await found({ q: '%' })).results.map((o) => o.id)).toEqual([
+				ready,
+			])
+			expect((await found({ q: '_' })).results).toHaveLength(0)
+		})
+
+		it('searches the phone’s last digits only with the contact permission', async () => {
+			const id = await insertOrder({ contactPhone: '+1 (555) 123-0111' })
+			await insertOrder({ number: 'W-2' })
+			const refused = await search({ phone: '0111' })
+			expect(refused.status).toBe(403)
+			expect(await refused.json()).toMatchObject({
+				error: 'permission_required',
+			})
+			// Even a malformed phone search is refused the same way.
+			expect((await search({ phone: 'x' })).status).toBe(403)
+			const data = await found({ phone: '0111' }, manager)
+			expect(data.results.map((order) => order.id)).toEqual([id])
+			expect(JSON.stringify(data)).not.toMatch(/555|0111/)
+			// Too few digits would sweep the guest list.
+			expect((await search({ phone: '11' }, manager)).status).toBe(400)
+		})
+
+		it('asks for one of text or phone, and never reaches further back than eight days', async () => {
+			expect((await search({})).status).toBe(400)
+			expect((await search({ q: 'w', phone: '1234' }, manager)).status).toBe(
+				400,
+			)
+			await insertOrder({
+				number: 'W-OLD',
+				createdAt: new Date(Date.now() - 9 * 86_400_000),
+			})
+			const data = await found({ q: 'w-old', since: '0' })
+			expect(data.results).toHaveLength(0)
+			expect(data.since).toBeGreaterThan(Date.now() - 8 * 86_400_000 - 60_000)
+		})
+
+		it('caps the results and says so', async () => {
+			for (let index = 0; index < POS_ONLINE_ORDERS_SEARCH_LIMIT + 2; index++)
+				await insertOrder({ number: `W-${index}` })
+			const data = await found({ q: 'w-' })
+			expect(data.results).toHaveLength(POS_ONLINE_ORDERS_SEARCH_LIMIT)
+			expect(data.truncated).toBe(true)
+		})
+
+		it('keeps device, switch and staff-session checks', async () => {
+			expect((await search({ q: 'w' }, null as never)).status).toBe(401)
+			const db = await getTenantDb(ORG_A)
+			await db
+				.update(posDevices)
+				.set({ ordersEnabled: false })
+				.where(eq(posDevices.id, deviceId))
+			expect((await search({ q: 'w' })).status).toBe(403)
+		})
 	})
 
 	it('limits how many contacts one person may reveal in an hour', async () => {

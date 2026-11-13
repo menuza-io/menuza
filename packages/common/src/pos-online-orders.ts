@@ -15,6 +15,21 @@ export const POS_ONLINE_ORDERS_FEED_LIMIT = 200
 export const POS_ONLINE_ORDERS_PHONE_LIMIT = 100
 /** The inbox starts here: older open orders still show, finished ones drop off. */
 export const POS_ONLINE_ORDERS_RECENT_MS = 24 * 60 * 60_000
+/** Finished orders stay in the inbox (and open to every action) this long. */
+export const POS_ONLINE_ORDERS_FINISHED_MS = 4 * 3_600_000
+
+/**
+ * Search reaches today and this many days before it at the location. The
+ * tablet sends the start of that local day; the server never reaches further
+ * back than this many days plus one, whatever it is sent.
+ */
+export const POS_ONLINE_ORDERS_SEARCH_DAYS = 7
+export const POS_ONLINE_ORDERS_SEARCH_MAX_MS =
+	(POS_ONLINE_ORDERS_SEARCH_DAYS + 1) * 24 * 3_600_000
+/** At most this many results; the answer says when more matched. */
+export const POS_ONLINE_ORDERS_SEARCH_LIMIT = 50
+/** A phone search needs at least this many trailing digits. */
+export const POS_ONLINE_ORDERS_PHONE_DIGITS_MIN = 4
 
 /**
  * What a signed-in person may do in the Orders app. The till's own roles
@@ -131,6 +146,79 @@ export const posOnlineOrdersFeedSchema = z.strictObject({
 	truncated: z.boolean(),
 })
 export type PosOnlineOrdersFeed = z.infer<typeof posOnlineOrdersFeedSchema>
+
+/** What a search may ask: one of text (order number or name) or trailing phone digits. */
+export const POS_ONLINE_ORDERS_SEARCH_STATES = [
+	'all',
+	'open',
+	'ready',
+	'completed',
+	'cancelled',
+] as const
+export type PosOnlineOrdersSearchState =
+	(typeof POS_ONLINE_ORDERS_SEARCH_STATES)[number]
+
+export const posOnlineOrdersSearchQuerySchema = z
+	.strictObject({
+		/** Order number or guest name. */
+		q: z.string().trim().max(60).optional(),
+		/** The last digits of the guest's phone (contact permission only). */
+		phone: z
+			.string()
+			.trim()
+			.regex(new RegExp(`^[0-9]{${POS_ONLINE_ORDERS_PHONE_DIGITS_MIN},15}$`))
+			.optional(),
+		state: z.enum(POS_ONLINE_ORDERS_SEARCH_STATES).default('all'),
+		fulfillment: z
+			.enum(['all', 'pickup', 'delivery', 'dine_in'])
+			.default('all'),
+		/** Start of the window (epoch ms): the tablet's local midnight seven days ago. */
+		since: z.coerce.number().int().nonnegative().optional(),
+	})
+	.refine((query) => Boolean(query.q) !== Boolean(query.phone), {
+		message: 'search by text or by phone digits',
+	})
+/** What the tablet sends (the server parses the query string with the schema above). */
+export type PosOnlineOrdersSearchQuery = {
+	q?: string
+	phone?: string
+	state?: PosOnlineOrdersSearchState
+	fulfillment?: 'all' | 'pickup' | 'delivery' | 'dine_in'
+	since?: number
+}
+
+export const posOnlineOrdersSearchSchema = z.strictObject({
+	/** Newest first. Same summaries as the inbox: the name, never a phone. */
+	results: z.array(posOnlineOrderSummarySchema),
+	/** More orders matched than the answer carries. */
+	truncated: z.boolean(),
+	/** Where the search really started (the server may have moved it later). */
+	since: z.number().int(),
+	serverNow: z.number().int(),
+})
+export type PosOnlineOrdersSearch = z.infer<typeof posOnlineOrdersSearchSchema>
+
+/** The search window's start: local midnight `POS_ONLINE_ORDERS_SEARCH_DAYS` days before today. */
+export function onlineOrdersSearchSince(now: number): number {
+	const start = new Date(now)
+	start.setHours(0, 0, 0, 0)
+	start.setDate(start.getDate() - POS_ONLINE_ORDERS_SEARCH_DAYS)
+	return start.getTime()
+}
+
+/**
+ * Whether the inbox still holds an order: open, or finished in the last four
+ * hours. Only such orders take actions on Station; older ones found by search
+ * are read-only there (their refunds and contacts are the App's).
+ */
+export function onlineOrderInInbox(
+	order: Pick<PosOnlineOrderSummary, 'status' | 'completedAt' | 'cancelledAt'>,
+	now: number,
+): boolean {
+	if (order.status !== 'completed' && order.status !== 'cancelled') return true
+	const finished = order.completedAt ?? order.cancelledAt
+	return finished !== null && finished >= now - POS_ONLINE_ORDERS_FINISHED_MS
+}
 
 /** Dish, variant and option names may be JSON maps of every menu language. */
 const menuText = z.string().max(4000)
