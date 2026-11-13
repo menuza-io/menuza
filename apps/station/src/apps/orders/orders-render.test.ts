@@ -10,6 +10,7 @@ import {
 import { act, createElement as h } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { createDemoOrders } from './demo.ts'
 import { Orders } from './Orders.tsx'
 import { useOrders } from './useOrders.ts'
 import { loadSettings } from '~/lib/config.ts'
@@ -25,6 +26,7 @@ vi.mock('../kitchen/chime.ts', () => ({
 ).IS_REACT_ACT_ENVIRONMENT = true
 
 const NOW = 50_000_000
+const demoApi = createDemoOrders()
 const CASHIER: PosOnlineOrdersGrants = {
 	view: true,
 	manage: true,
@@ -128,6 +130,7 @@ function draw(
 	over: Partial<ReturnType<typeof useOrders>> = {},
 	orders: PosOnlineOrderSummary[] = [summary()],
 	grants = CASHIER,
+	role: 'cashier' | 'manager' | null = null,
 ) {
 	const feed: PosOnlineOrdersFeed = {
 		orders,
@@ -150,6 +153,14 @@ function draw(
 		detail: null,
 		contact: null,
 		open: vi.fn(async () => {}),
+		view: vi.fn(async () => {}),
+		api: demoApi,
+		search: vi.fn(async () => ({
+			results: [],
+			truncated: false,
+			since: NOW,
+			serverNow: NOW,
+		})),
 		close: vi.fn(),
 		command,
 		refund: vi.fn(async () => true),
@@ -171,7 +182,14 @@ function draw(
 						signInRequired: true,
 						slug: 'test',
 					},
-					session: null,
+					session: role
+						? {
+								staff: { id: 's1', name: 'Mona' },
+								role,
+								mode: 'online',
+								at: NOW,
+							}
+						: null,
 					online: true,
 					businessName: 'Cafe',
 					onSignIn: vi.fn(),
@@ -199,6 +217,17 @@ describe('Station online orders screen', () => {
 		const late = document.querySelector('article[aria-label="Order W-2"]')!
 		expect(late.className).toContain('border-destructive')
 		expect(late.textContent).toContain('Late')
+	})
+
+	it('shows pause and sold out only to a signed-in manager', () => {
+		draw({}, [summary()], CASHIER, 'cashier')
+		expect(
+			document.querySelector('[aria-label="Pause and sold out"]'),
+		).toBeNull()
+		draw({}, [summary()], MANAGER, 'manager')
+		expect(
+			document.querySelector('[aria-label="Pause and sold out"]'),
+		).not.toBeNull()
 	})
 
 	it('a cashier sees a masked phone, no contact, cancel or refund actions', () => {

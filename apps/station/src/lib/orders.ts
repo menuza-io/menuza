@@ -89,6 +89,10 @@ export type OrderDraft = {
 	pickupAt?: number | null
 	pickupTimeZone?: string | null
 	customerName: string
+	/** A counter order's "Text me when it's ready" number (empty: none). */
+	readyTextPhone?: string | null
+	/** A phone order's caller agreed to one text on the callback number. */
+	readyTextOptIn?: boolean
 	tableLabel: string
 	lines: CartLine[]
 	adjustments: Adjustment[]
@@ -213,7 +217,20 @@ export function validateOrderDraft(draft: OrderDraft) {
 			!Number.isFinite(new Date(draft.pickupAt).getTime())
 		)
 			throw new Error(t`Choose a valid pickup time`)
+	} else if (
+		draft.readyTextPhone?.trim() &&
+		!posCustomerPhoneSchema.safeParse(draft.readyTextPhone).success
+	) {
+		throw new Error(t`Enter a valid number to text, or leave it empty`)
 	}
+}
+
+/** The number to text when the order is ready: counter orders only, valid or none. */
+function readyTextOf(draft: OrderDraft): string | null {
+	if (draft.orderSource === 'phone' || !draft.readyTextPhone?.trim())
+		return null
+	const parsed = posCustomerPhoneSchema.safeParse(draft.readyTextPhone)
+	return parsed.success ? parsed.data : null
 }
 
 const contactDetails = (draft: OrderDraft) =>
@@ -223,12 +240,16 @@ const contactDetails = (draft: OrderDraft) =>
 				customerPhone: posCustomerPhoneSchema.parse(draft.customerPhone),
 				pickupAt: draft.pickupAt ?? null,
 				pickupTimeZone: draft.pickupTimeZone ?? null,
+				readyTextPhone: null,
+				readyTextOptIn: draft.readyTextOptIn === true,
 			}
 		: {
 				orderSource: 'counter' as const,
 				customerPhone: null,
 				pickupAt: null,
 				pickupTimeZone: null,
+				readyTextPhone: readyTextOf(draft),
+				readyTextOptIn: false,
 			}
 
 /**
@@ -737,6 +758,8 @@ export type ServerTab = {
 	pickupAt?: string | null
 	pickupTimeZone?: string | null
 	customerName: string | null
+	readyTextPhone?: string | null
+	readyTextOptIn?: boolean
 	tableLabel: string | null
 	staff: StaffRef | null
 	signIn: SignInMode | null
@@ -782,6 +805,8 @@ export async function adoptTab(
 		orderType: tab.orderType,
 		orderSource: tab.orderSource ?? 'counter',
 		customerPhone: tab.customerPhone ?? null,
+		readyTextPhone: tab.readyTextPhone ?? null,
+		readyTextOptIn: tab.readyTextOptIn === true,
 		pickupAt: tab.pickupAt ? Date.parse(tab.pickupAt) : null,
 		pickupTimeZone: tab.pickupTimeZone ?? null,
 		customerName: tab.customerName ?? '',

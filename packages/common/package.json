@@ -209,6 +209,11 @@
       "import": "./src/pos-online-orders.ts",
       "default": "./src/pos-online-orders.ts"
     },
+    "./pos-station-controls": {
+      "types": "./src/pos-station-controls.ts",
+      "import": "./src/pos-station-controls.ts",
+      "default": "./src/pos-station-controls.ts"
+    },
     "./pos-orders": {
       "types": "./src/pos-orders.ts",
       "import": "./src/pos-orders.ts",

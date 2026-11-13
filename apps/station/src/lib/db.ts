@@ -109,6 +109,10 @@ export type PosOrder = {
 	pickupAt?: number | null
 	pickupTimeZone?: string | null
 	customerName: string
+	/** Contract 7: a counter order's "Text me when it's ready" number. Absent: none. */
+	readyTextPhone?: string | null
+	/** Contract 7: a phone order's caller agreed to the ready text. */
+	readyTextOptIn?: boolean
 	tableLabel: string
 	locationId: string
 	currency: string

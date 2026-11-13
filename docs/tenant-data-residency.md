@@ -161,6 +161,10 @@ payment references exist **only** in the regional database, and the rules are:
   links put the token in the URL fragment.
 - Guest SMS is US node only (never KSA); email works in both regions. Validation
   errors never echo values.
+- Station's ready texts (counter and phone orders, `docs/pos.md`) follow the
+  same rule: the number stays in the regional `pos_orders` row, the US App holds
+  only the per-location switch, and a KSA node records the text as unavailable
+  instead of keeping the number.
 - Payments: the region decides amounts and state, the US App is the only
   provider caller, and provider webhooks terminate at the App and forward ids
   and amounts only (ADR 048 section 8).

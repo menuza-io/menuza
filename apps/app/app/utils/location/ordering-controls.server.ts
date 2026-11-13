@@ -76,7 +76,10 @@ export type ApplyOrderingControlResult =
  */
 export async function applyOrderingControl(input: {
 	organization: { id: string; slug: string }
-	userId: string
+	/** The member who did it; null for a Station terminal (see `source`). */
+	userId: string | null
+	/** Where it came from when not the App: opaque regional ids for the activity log. */
+	source?: { kind: 'station'; deviceId: string; staffId: string }
 	control: OrderingControlInput
 	request: Request
 	now?: Date
@@ -161,6 +164,10 @@ export async function applyOrderingControl(input: {
 			),
 		)
 	await purgeOrganizationSiteCache(organization.id, organization.slug)
+	if (input.source) {
+		details = `${details} from Station`
+		metadata = { ...metadata, source: input.source }
+	}
 	await auditService.log({
 		action,
 		userId: input.userId,

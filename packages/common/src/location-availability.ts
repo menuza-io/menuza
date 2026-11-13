@@ -64,6 +64,20 @@ export type OrderingPause = { until: string | null }
  */
 export type BusyMode = { extraPrepMinutes: number; until: string | null }
 
+/**
+ * How long a pause lasts, as offered in the App's Orders page and on Station.
+ * The end time is worked out on the App from the location's time zone and
+ * hours (`resolveControlUntil`).
+ */
+export const ORDERING_PAUSE_DURATIONS = [
+	'15m',
+	'30m',
+	'60m',
+	'rest_of_day',
+	'until_resumed',
+] as const
+export type OrderingPauseDuration = (typeof ORDERING_PAUSE_DURATIONS)[number]
+
 /** Longest pause or busy period an operator can set with an end time. */
 export const MAX_ORDERING_PAUSE_MS = 7 * 24 * 60 * 60 * 1000
 /** Busy mode choices offered to operators, in minutes. */

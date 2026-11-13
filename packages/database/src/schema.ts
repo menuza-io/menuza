@@ -2628,6 +2628,12 @@ export const OrganizationLocation = sqliteTable(
 		 */
 		busyExtraPrepMinutes: integer(),
 		busyUntil: integer({ mode: 'timestamp_ms' }),
+		/**
+		 * "Text guests when their order is ready" (Settings, Terminals): counter
+		 * and phone orders taken on Station get one text when Kitchen marks them
+		 * ready. Policy only; the number lives in the regional database.
+		 */
+		readyTextEnabled: integer({ mode: 'boolean' }).default(false).notNull(),
 		isActive: integer({ mode: 'boolean' }).default(true).notNull(),
 		isDefault: integer({ mode: 'boolean' }).default(false).notNull(),
 		createdAt: integer({ mode: 'timestamp_ms' })

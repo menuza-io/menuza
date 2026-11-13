@@ -124,6 +124,66 @@ contacts expire after 30 days (not before a scheduled pickup), using the same
 terminal check-in housekeeping as guest names. The till keeps settled, synced
 orders for 14 days, but never prunes an upcoming pickup or an open/unsent order.
 
+## Ready texts (counter and phone orders)
+
+A location can text guests when their order is ready (Settings, Terminals,
+**Text guests when their order is ready**;
+`OrganizationLocation.readyTextEnabled`, control-plane migration
+`0042_location_ready_text`, default off). The switch is policy only: it reaches
+Station in the published menu and the region in the order context as
+`locations[].readyText`, which is on only for US organizations (the KSA node has
+no SMS route until an in-kingdom provider ships, #78; the App refuses to turn it
+on there).
+
+- **Station.** On a counter pickup order, the guest sheet (where the name is
+  typed) shows an optional **Text me when it's ready (optional)** number with
+  "We'll text this number once, about this order only." Empty changes nothing; a
+  number that is not one is refused when **Done** is tapped (the field is
+  focused and the message announced), and a number left on another order type is
+  neither checked nor sent. It travels as `readyTextPhone` (contract 7,
+  optional, default null, so a contract 6 upload still parses). A phone order is
+  texted on its callback number only when the caller agreed: the phone-order
+  sheet shows **Text when it's ready**, ticked by default, with the same notice
+  for staff to read out, and sends `readyTextOptIn` (contract 7, default false,
+  phone orders only). An older Station never sends it, so its phone orders are
+  never texted. The phone-order contact rule is unchanged.
+- **When.** When Kitchen's command makes a till order's whole ticket **Ready**
+  (it was not before; `kitchenCommand` returns `tillBecameReady`), the region
+  sends one text after the stage commits: "Your order #<number> at <restaurant>
+  is ready for pickup." No link, no marketing, no replies. The restaurant name
+  is cut to 30 characters and curly quotes and dashes become plain ones, so the
+  text stays one SMS segment where it can. A Kitchen screen that was offline
+  sends the stage when it reconnects, and the text goes out then.
+- **Once.** `pos_orders.ready_text_status` / `ready_text_sent_at` (tenant-db
+  migration `0041_pos_order_ready_text`, with a partial index on sent texts for
+  the daily count) record the one attempt: `sent`, `limit`, `unavailable` (no
+  SMS route on this node) or `failed`. The row is claimed before sending, so
+  reopening and re-readying, or two kitchens racing, send nothing more, and a
+  failed send is not retried. A cancelled, voided or refunded order, an order
+  without a number, or a location with the switch off sends nothing. The
+  location's switch is read from the order context and kept for a minute; while
+  the App cannot be reached, the last answer from the past six hours still
+  decides, and with none the text is recorded as `failed` rather than dropped.
+  Operators see the outcome as `readyTextStatus` / `readyTextAt` on
+  `/operator/pos/orders` (no App screen lists till orders yet).
+- **Limit.** A transactional cap of 300 ready texts per organization per 24
+  hours (`READY_TEXT_DAILY_LIMIT`), counted from the orders themselves and
+  separate from the sign-in code limiter. Over it the ticket still moves on and
+  the order records `limit` ("Text not sent (limit)").
+- **The number.** Used for this one text only: it never creates or updates a
+  customer, never sets consent and never joins an audience. It stays in the
+  regional `pos_orders.ready_text_phone` only until the attempt is recorded
+  (sent, limit, unavailable or failed), when it is cleared; later uploads cannot
+  put it back. It is never in logs (ids and outcomes only), the Kitchen feed,
+  revision history, held uploads, cross-plane calls or the control plane. A KSA
+  node records `unavailable` and keeps no number. Person erasure clears a number
+  still waiting and keeps the time of the attempt; it also expires with guest
+  names.
+
+Deploy order: App (migration `0042`, the switch and `readyText` in the menu and
+order context), then tenant-api (migration `0041`, contract 7), then Station. A
+Station that does not know the field never sends it.
+
 ## Money and history are append-only
 
 - **`pos_payments`** holds payments and refunds (`kind`), and neither can be
@@ -564,8 +624,9 @@ some locations may switch it on only at theirs. `/pos/me` reports it as
 The tablet calls the regional `/pos/online-orders` API directly (`/pos/orders`
 is the till's own order upload): `GET /` (the inbox), `GET /:id`,
 `POST /:id/command` (`open`, `ready`, `handed_over`, `cancel`, `reprint`),
-`POST /:id/refunds` (with an `Idempotency-Key`) and `POST /:id/contact`. Every
-call verifies the device, the switch, the server-bound location and a current
+`POST /:id/refunds` (with an `Idempotency-Key`), `POST /:id/contact`,
+`GET /search` and the manager controls under `/controls`. Every call verifies
+the device, the switch, the server-bound location and a current
 `Pos-Staff-Session`; `POS_ENABLED=false` and terminal revocation stop it.
 Responses are `no-store`; nothing is written to IndexedDB, writes are never
 queued, and after a failed write the screen reads the order back.
@@ -609,9 +670,10 @@ queued, and after a failed write the screen reads the order back.
   masked to its last four digits and the email left out until someone allowed
   taps **Show contact**, one order at a time, held in memory only while that
   order is open. Each person may reveal 30 contacts an hour (429
-  `contact_limit`). Every route reaches only what the inbox shows (open orders
-  and those finished in the last four hours): older orders, their guests and
-  their refunds are the App's.
+  `contact_limit`). Every change, contact and reprint reaches only what the
+  inbox shows (open orders and those finished in the last four hours): older
+  orders, their guests and their refunds are the App's. Search may open older
+  orders read-only (below).
 - **History.** Every action (opened, ready, handed over, payment taken,
   cancelled, refund recorded, contact shown, reprinted) is one append-only
   `pos_online_order_events` row with the terminal, the staff member, a reason
@@ -619,10 +681,61 @@ queued, and after a failed write the screen reads the order back.
   their actor. The order sheet lists them with the person's first name and
   initial.
 
+- **Search** (`GET /search?q=|phone=&state=&fulfillment=&since=`). "Where is my
+  order?": the location's online orders from today and the previous seven local
+  days, plus anything still in the inbox, by order number or guest name (two
+  characters or more; SQLite's `LIKE`, so ASCII letters match in any case and
+  accented names match as typed) or by the phone's last four digits, exactly the
+  digits the masked phone already shows, so a search never reveals more of a
+  number. Filters: state (in progress, ready, handed over, cancelled) and order
+  type. Arabic-Indic digits are read as 0-9. The tablet sends the start of the
+  window; the server never reaches further back than eight days. A phone search
+  needs the contact permission (the field is hidden without it, and the region
+  answers 403 `permission_required`); each one is recorded
+  (`pos_online_order_events` `phone_searched`, order id `search`, ids only) and
+  one person may run 30 an hour (429 `search_limit`). Results are the inbox's
+  own summaries (name, never a phone or email), newest first, at most 50, with
+  `truncated` set when more matched. They live only while the search sheet is
+  open: never stored, `no-store`, and an answer still on its way when the sheet
+  closes, the mode changes or the person changes is dropped. An order found
+  there that is no longer in the inbox opens read-only, with the masked phone
+  and no actions, contact or refunds; without the contact permission it also
+  leaves out the delivery address and line notes.
+- **Pause and sold out** (`GET /controls`, `POST /controls/pause`,
+  `POST /controls/availability`). Mid-service manager controls, a signed-in
+  manager only (the till role that may cancel and refund; 403
+  `permission_required` for anyone else, and the button is hidden). Pause takes
+  the App's presets (15, 30 or 60 minutes, rest of today, until resumed) and
+  pauses web and QR ordering at the terminal's location only. Sold out marks a
+  dish or an option off at that location (its location override) and brings it
+  back. The region asks the App with ids, a duration and a boolean only
+  (`POST /resources/pos/station-controls`, internal token, contract
+  `@repo/common/pos-station-controls`): the App's own pause writer
+  (`applyOrderingControl`) and the same availability writer inventory's auto
+  sold out uses, so both purge the site cache (web and QR within seconds) and
+  write the activity log with the terminal and staff ids. By hand, Station only
+  marks a dish sold out and back: it never un-hides a dish hidden in the App,
+  and a dish off for every location stays the App's (nothing changes). A dish
+  that stock took off (inventory auto sold out) says which ingredient ran out;
+  bringing it back answers 409 `held_by_stock` until the manager confirms, and
+  then goes through inventory's own undo (refused with 503
+  `inventory_unavailable` while `INVENTORY_ENABLED` is off or the
+  `inventory.recipes` flag is off; the till's manager role is the permission),
+  so stock leaves it on until the ingredient has been counted in stock again.
+  Marking sold out a dish stock already holds makes the hold the manager's, so
+  stock coming back does not put it on sale. Offline the controls are shown as
+  unavailable and nothing is queued. If the App cannot be reached the region
+  answers 503 `controls_unavailable`; a request the App refuses (contract skew,
+  token, unknown organization) answers 503 `controls_misconfigured`. Station
+  then reads the state again rather than claiming nothing changed. Busy mode
+  stays in the App.
+
 In demo mode the app needs no pairing or network: a sample service with a new
 pickup, a QR table round, a delivery, a late ready order and a finished paid
 order lives in the tab with the same rules, and a new order arrives after half a
-minute so the alert can be seen.
+minute so the alert can be seen. Search finds two older orders (a pickup for
+"Maya" yesterday, a cancelled delivery three days ago, phone ending 0177), and
+the controls hold Smoked Ribs off as out of stock.
 
 ## Station apps: Stock
 
@@ -748,6 +861,8 @@ harness serves `/pos/inventory/*`.
   before a scheduled pickup.
 - **Staff names** recorded at the till are replaced when that person is erased
   (`erasePosStaffNames`, called from `eraseLinkedUser`).
+- **Ready-text numbers** (`pos_orders.ready_text_phone`) expire with guest names
+  and are cleared by person erasure, which keeps the time the text was sent.
 - **Held uploads** are covered by the purge and by both erasure paths.
 
 ## Languages

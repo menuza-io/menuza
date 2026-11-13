@@ -3,6 +3,8 @@ import {
 	type BusyMode,
 	endOfOrderingDay,
 	type OrderingPause,
+	ORDERING_PAUSE_DURATIONS,
+	type OrderingPauseDuration,
 } from '@repo/common/location-availability'
 import {
 	type SpecialHour,
@@ -11,17 +13,11 @@ import {
 import { z } from 'zod'
 
 /**
- * How long a pause or busy mode lasts, as offered on the Orders page. Durations
- * are worked out on the server from the location's time zone and hours.
+ * How long a pause or busy mode lasts, as offered on the Orders page (and, for
+ * a pause, on Station). Durations are worked out on the server from the
+ * location's time zone and hours.
  */
-export const ORDERING_PAUSE_DURATIONS = [
-	'15m',
-	'30m',
-	'60m',
-	'rest_of_day',
-	'until_resumed',
-] as const
-export type OrderingPauseDuration = (typeof ORDERING_PAUSE_DURATIONS)[number]
+export { ORDERING_PAUSE_DURATIONS, type OrderingPauseDuration }
 
 export const BUSY_MODE_DURATIONS = [
 	'30m',

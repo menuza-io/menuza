@@ -169,6 +169,11 @@ let published = baseCatalog()
 let live = structuredClone(published)
 let themeOverride: Json | null = null
 let contextDown = false
+/** What Station's manager controls asked the App (ids only), and the pause they set. */
+const stationControls: { asked: Json[]; pause: Json | null } = {
+	asked: [],
+	pause: null,
+}
 
 const walkItems = (menu: Json, visit: (item: Json) => void) => {
 	const walk = (category: Json) => {
@@ -277,6 +282,25 @@ const appServer = createServer((req, res) => {
 		if (req.headers.authorization !== `Bearer ${INTERNAL_TOKEN}`)
 			return json(res, 401, { error: 'unauthorized' })
 		return json(res, 200, reservationsContext())
+	}
+	if (url.pathname === '/resources/pos/station-controls') {
+		if (req.headers.authorization !== `Bearer ${INTERNAL_TOKEN}`)
+			return json(res, 401, { error: 'unauthorized' })
+		let raw = ''
+		req.on('data', (chunk) => (raw += chunk))
+		req.on('end', () => {
+			const body = JSON.parse(raw || '{}') as Json
+			stationControls.asked.push(body)
+			const now = Date.now()
+			if (body.kind === 'pause')
+				stationControls.pause = { pausedAt: now, until: now + 15 * 60_000 }
+			if (body.kind === 'resume') stationControls.pause = null
+			json(res, 200, {
+				pause: stationControls.pause,
+				...(body.kind === 'availability' ? { changed: true } : {}),
+			})
+		})
+		return
 	}
 	if (url.pathname === '/resources/order-context') {
 		if (contextDown) return json(res, 503, { error: 'down' })
@@ -675,9 +699,38 @@ root.post('/__test/online-orders', async (c) => {
 			],
 			idempotencyKey: crypto.randomUUID(),
 		},
+		// Handed over two days ago: only search finds it, and it opens read-only.
+		{
+			...base,
+			id: crypto.randomUUID(),
+			number: 'WEB-0090',
+			status: 'completed',
+			paymentMethod: 'online',
+			paymentStatus: 'paid',
+			paidAt: new Date(Date.now() - 2 * 86_400_000),
+			createdAt: new Date(Date.now() - 2 * 86_400_000 - 30 * 60_000),
+			completedAt: new Date(Date.now() - 2 * 86_400_000),
+			contactName: 'Maya Guest',
+			contactPhone: '+15555550123',
+			subtotalCents: 900,
+			totalCents: 900,
+			lines: [
+				{
+					itemId: 'i-soup',
+					itemName: 'Tomato Soup',
+					variantId: null,
+					quantity: 1,
+					totalCents: 900,
+					instructions: null,
+					options: [],
+				},
+			],
+			idempotencyKey: crypto.randomUUID(),
+		},
 	])
 	return c.json({ ok: true })
 })
+root.get('/__test/station-controls', (c) => c.json(stationControls))
 root.get('/__test/online-orders', async (c) =>
 	c.json({
 		orders: await db

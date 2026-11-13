@@ -990,6 +990,20 @@ export async function erasePerson(
 										inJsonList(digitsOnly(posOrders.customerPhone), phoneForms),
 									)
 									.returning({ id: posOrders.id })
+							).length +
+							// A counter order's ready-text number: the number goes, the
+							// record that a text was (or was not) sent stays.
+							(
+								await tx
+									.update(posOrders)
+									.set({ readyTextPhone: null })
+									.where(
+										inJsonList(
+											digitsOnly(posOrders.readyTextPhone),
+											phoneForms,
+										),
+									)
+									.returning({ id: posOrders.id })
 							).length
 						: 0
 				// Held uploads are redacted on arrival; this catches a record kept

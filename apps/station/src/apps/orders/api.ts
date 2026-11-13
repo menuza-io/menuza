@@ -2,13 +2,22 @@ import {
 	posOnlineOrderContactSchema,
 	posOnlineOrderDetailSchema,
 	posOnlineOrdersFeedSchema,
+	posOnlineOrdersSearchSchema,
 	type PosOnlineOrderCommand,
 	type PosOnlineOrderContact,
 	type PosOnlineOrderDetailResponse,
 	type PosOnlineOrderRefund,
 	type PosOnlineOrdersFeed,
+	type PosOnlineOrdersSearch,
+	type PosOnlineOrdersSearchQuery,
 } from '@repo/common/pos-online-orders'
 import { POS_STAFF_SESSION_HEADER } from '@repo/common/pos-orders'
+import {
+	posStationControlsSchema,
+	type PosAvailabilityCommand,
+	type PosPauseCommand,
+	type PosStationControls,
+} from '@repo/common/pos-station-controls'
 import { type ZodType } from 'zod'
 import { noteServerDate } from '~/lib/clock.ts'
 import { type PosSettings } from '~/lib/config.ts'
@@ -40,6 +49,12 @@ export type OrdersApi = {
 		idempotencyKey: string,
 	) => Promise<PosOnlineOrderDetailResponse>
 	contact: (id: string) => Promise<PosOnlineOrderContact>
+	/** Today's and recent orders by number, name or the phone's last digits. */
+	search: (query: PosOnlineOrdersSearchQuery) => Promise<PosOnlineOrdersSearch>
+	/** Manager controls: the location's pause and what stock holds off. */
+	controls: () => Promise<PosStationControls>
+	pause: (command: PosPauseCommand) => Promise<PosStationControls>
+	availability: (command: PosAvailabilityCommand) => Promise<PosStationControls>
 }
 
 /**
@@ -124,5 +139,20 @@ export function createOrdersApi(
 			}),
 		contact: (id) =>
 			call('POST', `${one(id)}/contact`, posOnlineOrderContactSchema, {}),
+		search: (query) => {
+			const params = new URLSearchParams()
+			for (const [key, value] of Object.entries(query))
+				if (value !== undefined && value !== '') params.set(key, String(value))
+			return call(
+				'GET',
+				`/search?${params.toString()}`,
+				posOnlineOrdersSearchSchema,
+			)
+		},
+		controls: () => call('GET', '/controls', posStationControlsSchema),
+		pause: (command) =>
+			call('POST', '/controls/pause', posStationControlsSchema, command),
+		availability: (command) =>
+			call('POST', '/controls/availability', posStationControlsSchema, command),
 	}
 }

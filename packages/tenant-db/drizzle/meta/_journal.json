@@ -288,6 +288,13 @@
 			"when": 1794545172911,
 			"tag": "0040_station_orders_app",
 			"breakpoints": true
+		},
+		{
+			"idx": 41,
+			"version": "6",
+			"when": 1794581241380,
+			"tag": "0041_pos_order_ready_text",
+			"breakpoints": true
 		}
 	]
 }

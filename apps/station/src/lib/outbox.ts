@@ -96,6 +96,10 @@ export function toWireOrder(order: PosOrder) {
 			order.pickupAt != null ? new Date(order.pickupAt).toISOString() : null,
 		pickupTimeZone: order.pickupTimeZone ?? null,
 		customerName: order.customerName || null,
+		readyTextPhone:
+			order.orderSource === 'phone' ? null : order.readyTextPhone || null,
+		readyTextOptIn:
+			order.orderSource === 'phone' && order.readyTextOptIn === true,
 		tableLabel: order.tableLabel || null,
 		staff: order.staff ?? null,
 		signIn: order.signIn ?? null,

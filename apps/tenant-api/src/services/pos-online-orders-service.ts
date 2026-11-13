@@ -14,7 +14,13 @@ import { localDateAndTimeToUtc } from '@repo/common/location-availability'
 import {
 	handoffNeedsPayment,
 	POS_ONLINE_ORDERS_FEED_LIMIT,
+	POS_ONLINE_ORDERS_FINISHED_MS,
 	POS_ONLINE_ORDERS_PHONE_LIMIT,
+	POS_ONLINE_ORDERS_SEARCH_LIMIT,
+	POS_ONLINE_ORDERS_SEARCH_MAX_MS,
+	onlineOrderInInbox,
+	type PosOnlineOrdersSearch,
+	type PosOnlineOrdersSearchState,
 	type PosOnlineOrderCommand,
 	type PosOnlineOrderContact,
 	type PosOnlineOrderDetail,
@@ -65,9 +71,11 @@ export type OnlineOrdersActor = {
 }
 
 /** Finished orders stay in the inbox this long (recall, refunds at the counter). */
-const FINISHED_MS = 4 * 3_600_000
+const FINISHED_MS = POS_ONLINE_ORDERS_FINISHED_MS
 /** How often one person may reveal a guest's contact: each is recorded, and this stops a sweep. */
 export const CONTACT_REVEALS_PER_HOUR = 30
+/** How many phone searches one person may run in an hour (each is recorded). */
+export const PHONE_SEARCHES_PER_HOUR = 30
 
 /** Text as the wire schema allows it: an over-long value is cut, never a reason the tablet cannot open the order. */
 const clip = <T extends string | null | undefined>(value: T, max: number) =>
@@ -244,15 +252,26 @@ function inInbox(now: number) {
 	)
 }
 
+/** What search reaches: orders placed since the window's start (never more than eight days back). */
+function inSearchWindow(now: number) {
+	return gte(
+		restaurantOrders.createdAt,
+		new Date(now - POS_ONLINE_ORDERS_SEARCH_MAX_MS),
+	)
+}
+
 /**
  * One order the counter may open: this location's, and in the inbox. Older
  * orders (and their guests' details) are the App's, however their id is known.
+ * `search` widens a read (never a change) to what search can find, so an order
+ * found there opens read-only, with the same masked phone as any detail.
  */
 async function loadAtLocation(
 	db: TenantDatabase,
 	actor: Pick<OnlineOrdersActor, 'orgId' | 'locationId'>,
 	orderId: string,
 	now = Date.now(),
+	reach: 'inbox' | 'search' = 'inbox',
 ): Promise<RestaurantOrder | null> {
 	const [order] = await db
 		.select()
@@ -261,11 +280,121 @@ async function loadAtLocation(
 			and(
 				eq(restaurantOrders.id, orderId),
 				atLocation(actor.orgId, actor.locationId),
-				inInbox(now),
+				reach === 'search'
+					? or(inInbox(now), inSearchWindow(now))
+					: inInbox(now),
 			),
 		)
 		.limit(1)
 	return order ?? null
+}
+
+/** `LIKE` text with its wildcards taken literally (`escape '\\'`). */
+function likeText(value: string) {
+	return `%${value.replace(/[\\%_]/g, (char) => `\\${char}`)}%`
+}
+
+/** The phone with the usual separators removed, so trailing digits match however it was typed. */
+const phoneDigits = sql`replace(replace(replace(replace(replace(replace(coalesce(${restaurantOrders.contactPhone}, ''), ' ', ''), '-', ''), '(', ''), ')', ''), '.', ''), '+', '')`
+
+const SEARCH_STATES: Record<
+	Exclude<PosOnlineOrdersSearchState, 'all'>,
+	RestaurantOrder['status'][]
+> = {
+	open: ['accepted', 'preparing'],
+	ready: ['ready'],
+	completed: ['completed'],
+	cancelled: ['cancelled'],
+}
+
+/**
+ * Today's and recent orders at this location by number, guest name or the
+ * phone's last digits (the caller checked the contact grant for a phone
+ * search). Results are inbox summaries: a name, never a phone or an email.
+ */
+export async function onlineOrdersSearch(
+	db: TenantDatabase,
+	actor: OnlineOrdersActor,
+	query: {
+		q?: string
+		phone?: string
+		state: PosOnlineOrdersSearchState
+		fulfillment: 'all' | 'pickup' | 'delivery' | 'dine_in'
+		since?: number
+	},
+	now = Date.now(),
+): Promise<OrderServiceResult<PosOnlineOrdersSearch>> {
+	if (query.phone) {
+		// Each phone search is recorded and counted, like showing a contact.
+		const [recent] = await db
+			.select({ count: sql<number>`count(*)` })
+			.from(posOnlineOrderEvents)
+			.where(
+				and(
+					eq(posOnlineOrderEvents.staffId, actor.staffId),
+					eq(posOnlineOrderEvents.action, 'phone_searched'),
+					gte(posOnlineOrderEvents.at, now - 3_600_000),
+				),
+			)
+		if (Number(recent?.count ?? 0) >= PHONE_SEARCHES_PER_HOUR)
+			return orderFailure(
+				429,
+				'search_limit',
+				'Too many phone searches this hour. Try again later.',
+			)
+		await record(db, actor, 'search', 'phone_searched', {}, now)
+	}
+	const floor = now - POS_ONLINE_ORDERS_SEARCH_MAX_MS
+	const since = Math.min(now, Math.max(floor, query.since ?? floor))
+	// As typed: SQLite's LIKE ignores case for ASCII letters only, so a name
+	// with accented capitals still matches when typed the way it was entered.
+	const text = query.q?.trim()
+	const conditions = [
+		atLocation(actor.orgId, actor.locationId),
+		// The window, and anything still in the inbox (an order placed earlier
+		// for pickup now).
+		or(gte(restaurantOrders.createdAt, new Date(since)), inInbox(now))!,
+	]
+	if (query.state !== 'all')
+		conditions.push(
+			// bounded: each search filter allows at most two statuses
+			inArray(restaurantOrders.status, SEARCH_STATES[query.state]),
+		)
+	if (query.fulfillment !== 'all')
+		conditions.push(eq(restaurantOrders.fulfillment, query.fulfillment))
+	if (text) {
+		const pattern = likeText(text)
+		conditions.push(
+			or(
+				sql`${restaurantOrders.number} like ${pattern} escape '\\'`,
+				sql`coalesce(${restaurantOrders.contactName}, '') like ${pattern} escape '\\'`,
+			)!,
+		)
+	}
+	if (query.phone)
+		conditions.push(sql`${phoneDigits} like ${`%${query.phone}`}`)
+	const rows = await db
+		.select()
+		.from(restaurantOrders)
+		.where(and(...conditions))
+		.orderBy(desc(restaurantOrders.createdAt))
+		.limit(POS_ONLINE_ORDERS_SEARCH_LIMIT + 1)
+	const kept = rows.slice(0, POS_ONLINE_ORDERS_SEARCH_LIMIT)
+	const opened = await firstOpened(
+		db,
+		kept.map((order) => order.id),
+	)
+	return {
+		ok: true,
+		data: {
+			results: kept.map((order) =>
+				summary(order, opened.get(order.id) ?? null),
+			),
+			truncated: rows.length > POS_ONLINE_ORDERS_SEARCH_LIMIT,
+			since,
+			serverNow: now,
+		},
+	}
 }
 
 const NOT_FOUND = () => orderFailure(404, 'order_not_found', 'Order not found.')
@@ -278,11 +407,24 @@ const STALE = () =>
 
 export async function onlineOrderDetail(
 	db: TenantDatabase,
-	actor: Pick<OnlineOrdersActor, 'orgId' | 'locationId'>,
+	actor: Pick<OnlineOrdersActor, 'orgId' | 'locationId' | 'grants'>,
 	orderId: string,
 ): Promise<PosOnlineOrderDetail | null> {
-	const order = await loadAtLocation(db, actor, orderId)
+	const now = Date.now()
+	const order = await loadAtLocation(db, actor, orderId, now, 'search')
 	if (!order) return null
+	// Past the inbox (found by search) the order is for reference: without
+	// the contact permission it carries no address and no notes.
+	const reduced =
+		!actor.grants.contact &&
+		!onlineOrderInInbox(
+			{
+				status: summary(order, null).status,
+				completedAt: ms(order.completedAt),
+				cancelledAt: ms(order.cancelledAt),
+			},
+			now,
+		)
 	const [opened, refunds, history] = await Promise.all([
 		firstOpened(db, [order.id]),
 		listOrderRefunds(actor.orgId, order.id),
@@ -314,7 +456,7 @@ export async function onlineOrderDetail(
 			),
 			quantity: line.quantity,
 			totalCents: line.totalCents,
-			instructions: clip(line.instructions, 400),
+			instructions: reduced ? null : clip(line.instructions, 400),
 			options: (line.options ?? []).map((option) => ({
 				name: clip(option.optionName, MENU_TEXT_MAX),
 				quantity: option.quantity,
@@ -324,7 +466,7 @@ export async function onlineOrderDetail(
 		phoneMasked: maskPhone(order.contactPhone),
 		hasEmail: Boolean(order.contactEmail),
 		delivery:
-			order.fulfillment === 'delivery' && order.deliveryAddress
+			!reduced && order.fulfillment === 'delivery' && order.deliveryAddress
 				? {
 						address: clip(order.deliveryAddress, 400),
 						city: clip(order.deliveryCity, 200),

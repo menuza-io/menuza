@@ -94,6 +94,8 @@ export type MenuLocation = {
 	vatNumber?: string | null
 	/** Whether the restaurant takes tips in the house. Absent in older payloads: treat as allowed. */
 	inHouseTips?: { pickupTips?: boolean; dineInTips?: boolean }
+	/** "Text me when it's ready" is offered at checkout. Absent in older payloads: off. */
+	readyText?: boolean
 }
 
 export type MenuPayload = {
