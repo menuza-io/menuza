@@ -27143,6 +27143,10 @@ msgstr "Olive oil"
 #~ msgid "On"
 #~ msgstr "On"
 
+#: app/components/pos/ready-text-settings.tsx:46
+msgid "On a pickup order, Station asks for an optional number next to the guest’s name. When the kitchen marks the order ready, the guest gets one text. Phone orders are texted on their callback number. The number is used for that order only."
+msgstr "On a pickup order, Station asks for an optional number next to the guest’s name. When the kitchen marks the order ready, the guest gets one text. Phone orders are texted on their callback number. The number is used for that order only."
+
 #: app/components/staff/timeclock-today.tsx:124
 #: app/components/staff/timeclock-today.tsx:336
 msgid "On break"
@@ -31868,6 +31872,10 @@ msgstr "Ready"
 #: app/components/reservations/settings/setup-diagnostics.tsx:122
 msgid "Ready for guests. A few things could be better"
 msgstr "Ready for guests. A few things could be better"
+
+#: app/components/pos/ready-text-settings.tsx:37
+msgid "Ready texts"
+msgstr "Ready texts"
 
 #~ msgid "Ready to call"
 #~ msgstr "Ready to call"
@@ -38093,6 +38101,10 @@ msgstr "Station"
 msgid "Station apps"
 msgstr "Station apps"
 
+#: app/components/pos/ready-text-settings.tsx:46
+#~ msgid "Station asks for an optional number at checkout. When the kitchen marks the order ready, the guest gets one text. Phone orders are texted on their callback number. The number is used for that order only."
+#~ msgstr "Station asks for an optional number at checkout. When the kitchen marks the order ready, the guest gets one text. Phone orders are texted on their callback number. The number is used for that order only."
+
 #: app/components/pos/terminals-manager.tsx:410
 msgid "Station terminals"
 msgstr "Station terminals"
@@ -39498,6 +39510,18 @@ msgstr "Text a link"
 msgid "Text field"
 msgstr "Text field"
 
+#: app/components/pos/ready-text-settings.tsx:93
+#~ msgid "Text guests at {0} when their order is ready"
+#~ msgstr "Text guests at {0} when their order is ready"
+
+#: app/components/pos/ready-text-settings.tsx:104
+msgid "Text guests at {name} when their order is ready"
+msgstr "Text guests at {name} when their order is ready"
+
+#: app/components/pos/ready-text-settings.tsx:42
+msgid "Text guests when their order is ready"
+msgstr "Text guests when their order is ready"
+
 #: app/components/phone-agent/phone-number-dialogs.tsx:534
 msgid "Text message"
 msgstr "Text message"
@@ -39532,6 +39556,11 @@ msgstr "Text this guest when their table is ready."
 
 #~ msgid "Texted links"
 #~ msgstr "Texted links"
+
+#: app/components/pos/ready-text-settings.tsx:53
+#: app/components/pos/ready-text-settings.tsx:91
+msgid "Texts are not available in your data region yet."
+msgstr "Texts are not available in your data region yet."
 
 #: app/components/reservations/waitlist/party-fields.tsx:156
 msgid "Texts are only sent to US phone numbers. For other numbers, tell the guest in person."
@@ -39647,6 +39676,7 @@ msgid "That design is not in your Canva account anymore."
 msgstr "That design is not in your Canva account anymore."
 
 #: app/components/orders/ordering-controls.tsx:161
+#: app/components/pos/ready-text-settings.tsx:94
 msgid "That did not save. Try again."
 msgstr "That did not save. Try again."
 
@@ -42084,6 +42114,10 @@ msgstr "This link was turned off"
 #: app/utils/reservations/host-errors.ts:23
 msgid "This location is no longer available."
 msgstr "This location is no longer available."
+
+#: app/components/pos/ready-text-settings.tsx:93
+msgid "This location no longer exists. Reload the page."
+msgstr "This location no longer exists. Reload the page."
 
 #: app/components/menu/drop-wizard/drop-form.tsx:856
 msgid "This menu has no categories assigned yet. Go to Menus to add categories and items."

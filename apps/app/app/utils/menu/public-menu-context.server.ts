@@ -40,6 +40,7 @@ import {
 	lte,
 	ne,
 	or,
+	Organization,
 	OrganizationLocation,
 	OrganizationMediaAsset,
 	OrganizationMenu,
@@ -162,6 +163,18 @@ export async function buildPublicSiteMenuPayload(
 			asc(OrganizationLocation.name),
 		)
 
+	// Ready texts need an SMS route: the US data region only (KSA waits for an
+	// in-kingdom provider), so a KSA organization never shows the field.
+	const textsGuests =
+		rawLocations.some((loc) => loc.readyTextEnabled) &&
+		(
+			await db
+				.select({ dataRegion: Organization.dataRegion })
+				.from(Organization)
+				.where(eq(Organization.id, orgId))
+				.limit(1)
+		)[0]?.dataRegion === 'us'
+
 	const locations: PublicLocationData[] = rawLocations.map((loc) => {
 		const parsedAddress = safeJsonParse<LocationAddress | null>(
 			loc.address,
@@ -207,6 +220,7 @@ export async function buildPublicSiteMenuPayload(
 			),
 			deliveryZones: safeJsonParse<DeliveryZone[]>(loc.deliveryZones, []),
 			isDefault: Boolean(loc.isDefault),
+			readyText: textsGuests && Boolean(loc.readyTextEnabled),
 			...publicOrderingControls(loc, new Date()),
 		}
 	})

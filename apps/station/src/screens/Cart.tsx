@@ -1,5 +1,6 @@
 import { plural, t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
+import { posCustomerPhoneSchema } from '@repo/common/pos-orders'
 import {
 	Empty,
 	EmptyHeader,
@@ -66,6 +67,7 @@ export function Cart({
 	money,
 	onOrderType,
 	onCustomer,
+	readyText,
 	onTable,
 	onQuantity,
 	onEdit,
@@ -103,6 +105,16 @@ export function Cart({
 	money: MoneyFormatter
 	onOrderType: (type: OrderType) => void
 	onCustomer: (name: string) => void
+	/**
+	 * "Text me when it's ready": offered on a counter pickup order where the
+	 * location texts guests. Absent: not offered.
+	 */
+	readyText?: {
+		phone: string
+		onPhone: (phone: string) => void
+		/** A phone order's caller agreed to the text (their callback number). */
+		optIn: boolean
+	}
 	onTable: (label: string) => void
 	onQuantity: (id: string, quantity: number) => void
 	onEdit: (line: CartLine) => void
@@ -116,6 +128,18 @@ export function Cart({
 }) {
 	const { _ } = useLingui()
 	const [naming, setNaming] = useState(false)
+	// Checked only where the field shows: a number left behind on another
+	// order type never blocks the sheet unseen (and is not sent).
+	const readyTextShown = Boolean(
+		readyText && orderType === 'takeaway' && orderSource === 'counter',
+	)
+	const readyTextInvalid = Boolean(
+		readyTextShown &&
+		readyText?.phone.trim() &&
+		!posCustomerPhoneSchema.safeParse(readyText.phone).success,
+	)
+	/** Shown after a Done that it blocked, not while the number is being typed. */
+	const [readyTextTried, setReadyTextTried] = useState(false)
 	const [phoneDetailsOpen, setPhoneDetailsOpen] = useState(false)
 	const totals = computeTotals({
 		lines,
@@ -411,8 +435,15 @@ export function Cart({
 
 			{phoneDetailsOpen ? (
 				<PhoneOrderSheet
-					details={{ customerName, customerPhone, pickupAt, pickupTimeZone }}
+					details={{
+						customerName,
+						customerPhone,
+						pickupAt,
+						pickupTimeZone,
+						readyTextOptIn: readyText?.optIn,
+					}}
 					timeZone={timeZone}
+					readyTextOffered={readyText !== undefined}
 					onClose={() => setPhoneDetailsOpen(false)}
 					onSave={(details) => {
 						onPhoneOrder(details)
@@ -429,6 +460,12 @@ export function Cart({
 					className="space-y-4 p-5"
 					onSubmit={(event) => {
 						event.preventDefault()
+						if (readyTextInvalid) {
+							setReadyTextTried(true)
+							document.getElementById('ready-text-phone')?.focus()
+							return
+						}
+						setReadyTextTried(false)
 						setNaming(false)
 					}}
 				>
@@ -451,6 +488,48 @@ export function Cart({
 						}
 						className="h-14 px-4"
 					/>
+					{readyText && readyTextShown ? (
+						<div className="space-y-2">
+							<label
+								htmlFor="ready-text-phone"
+								className="block text-sm font-medium"
+							>
+								<Trans>Text me when it’s ready (optional)</Trans>
+							</label>
+							<Input
+								id="ready-text-phone"
+								type="tel"
+								inputMode="tel"
+								autoComplete="off"
+								value={readyText.phone}
+								onChange={(e) => readyText.onPhone(e.target.value)}
+								maxLength={32}
+								placeholder={_(t`Guest’s mobile number`)}
+								aria-invalid={(readyTextTried && readyTextInvalid) || undefined}
+								aria-describedby="ready-text-notice"
+								className="h-14 px-4"
+							/>
+							<p
+								id="ready-text-notice"
+								// Announced when Done was refused for it.
+								role={readyTextTried && readyTextInvalid ? 'alert' : undefined}
+								className={cn(
+									'text-sm',
+									readyTextTried && readyTextInvalid
+										? 'text-destructive'
+										: 'text-muted-foreground',
+								)}
+							>
+								{readyTextTried && readyTextInvalid ? (
+									<Trans>Enter a valid number, or leave it empty.</Trans>
+								) : (
+									<Trans>
+										We’ll text this number once, about this order only.
+									</Trans>
+								)}
+							</p>
+						</div>
+					) : null}
 					<Button type="submit" variant="primary" size="lg" className="w-full">
 						<Trans>Done</Trans>
 					</Button>

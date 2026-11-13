@@ -3,6 +3,8 @@ import { kdsCommandSchema, kdsConfigRequestSchema } from '@repo/common/kds'
 import { authenticatePosDevice, posError } from '../lib/pos-auth.ts'
 import { verifyPosStaffSession } from '../lib/pos-staff-session.ts'
 import { HttpError, json, readJsonBody } from '../lib/http.ts'
+import { runInBackground } from '../lib/background.ts'
+import { sendReadyTextIfDue } from '../services/pos-ready-text-service.ts'
 import { touchDevice } from '../services/pos-service.ts'
 import {
 	configureKitchen,
@@ -53,7 +55,16 @@ for (const method of ['get', 'post', 'put'] as const) {
 			if (method === 'post') {
 				const body = await readJsonBody(c, kdsCommandSchema)
 				if ('error' in body) return body.error
-				await kitchenCommand(pos.db, actor, body.data)
+				const result = await kitchenCommand(pos.db, actor, body.data)
+				// The till order's one ready text, after the stage is recorded. It
+				// never holds up or fails the kitchen's answer.
+				if (result.tillBecameReady)
+					runInBackground(
+						sendReadyTextIfDue(pos.db, {
+							orgId: pos.orgId,
+							orderId: body.data.orderId,
+						}),
+					)
 			} else if (method === 'put') {
 				const body = await readJsonBody(c, kdsConfigRequestSchema)
 				if ('error' in body) return body.error

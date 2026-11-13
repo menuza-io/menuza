@@ -2047,6 +2047,15 @@ export const posOnlineOrderEvents = sqliteTable(
 
 export type PosOnlineOrderEvent = typeof posOnlineOrderEvents.$inferSelect
 
+/** What became of an order's one ready text. */
+export const POS_READY_TEXT_STATUSES = [
+	'sent',
+	'limit',
+	'unavailable',
+	'failed',
+] as const
+export type PosReadyTextStatus = (typeof POS_READY_TEXT_STATUSES)[number]
+
 // `id` is the terminal's own UUID, which doubles as the idempotency key.
 export const posOrders = sqliteTable(
 	'pos_orders',
@@ -2071,6 +2080,15 @@ export const posOrders = sqliteTable(
 		pickupAt: integer('pickup_at'),
 		pickupTimeZone: text('pickup_time_zone'),
 		guestName: text('guest_name'),
+		// "Text me when it's ready" on a counter order (contract 7): used for this
+		// order's one ready text only, cleared by person erasure and with guest
+		// names after 30 days. `ready_text_at` / `ready_text_status` record the one
+		// attempt (sent, or why not) and survive erasure.
+		readyTextPhone: text('ready_text_phone'),
+		readyTextAt: integer('ready_text_sent_at'),
+		readyTextStatus: text('ready_text_status', {
+			enum: [...POS_READY_TEXT_STATUSES],
+		}),
 		tableLabel: text('table_label'),
 		// Who rang the order up, as signed in at the till (id plus the name as it was
 		// then, so history survives a rename or a departure). Null when the terminal
@@ -2126,6 +2144,10 @@ export const posOrders = sqliteTable(
 			table.number,
 		),
 		index('idx_pos_orders_status_rung_up').on(table.status, table.rungUpAt),
+		// The ready-text daily cap counts sent texts of the last 24 hours.
+		index('idx_pos_orders_ready_text_sent')
+			.on(table.readyTextAt)
+			.where(sql`${table.readyTextStatus} = 'sent'`),
 		index('idx_pos_orders_business_date').on(
 			table.businessDate,
 			table.locationId,

@@ -1,7 +1,9 @@
 import { userHasOrganizationPermission } from '@repo/auth'
+import { and, asc, db, eq, OrganizationLocation } from '@repo/database'
 import { data, type LoaderFunctionArgs, useLoaderData } from 'react-router'
 import { ENV } from 'varlock/env'
 import { PosDayReport } from '#app/components/pos/pos-day-report.tsx'
+import { ReadyTextSettings } from '#app/components/pos/ready-text-settings.tsx'
 import { TerminalsManager } from '#app/components/pos/terminals-manager.tsx'
 import { ZatcaSettings } from '#app/components/pos/zatca-settings.tsx'
 import { getInventoryFeatureState } from '#app/utils/inventory/access.server.ts'
@@ -18,10 +20,10 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	const organization = await requireUserOrganization(
 		request,
 		params.orgSlug || '',
-		{ id: true },
+		{ id: true, dataRegion: true },
 	)
 	const userId = await requireMenuRead(request, organization.id)
-	const [canWrite, locations, staffing, reservations, inventory] =
+	const [canWrite, locations, staffing, reservations, inventory, readyText] =
 		await Promise.all([
 			userHasOrganizationPermission(
 				userId,
@@ -32,6 +34,20 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			getStaffingFeatureState(organization.id),
 			getReservationsFeatureState(organization.id),
 			getInventoryFeatureState(organization.id),
+			db
+				.select({
+					id: OrganizationLocation.id,
+					name: OrganizationLocation.name,
+					enabled: OrganizationLocation.readyTextEnabled,
+				})
+				.from(OrganizationLocation)
+				.where(
+					and(
+						eq(OrganizationLocation.organizationId, organization.id!),
+						eq(OrganizationLocation.isActive, true),
+					),
+				)
+				.orderBy(asc(OrganizationLocation.name)),
 		])
 	return data(
 		{
@@ -45,6 +61,11 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			},
 			// Whether this member may switch each one on (its own module's setting).
 			stationGrants: await getStationAppGrants(request, organization.id),
+			// "Text guests when their order is ready": policy per location, US only.
+			readyText: {
+				smsAvailable: organization.dataRegion === 'us',
+				locations: readyText,
+			},
 			orgSlug: params.orgSlug || '',
 			canWrite,
 			posUrl: resolvePosUrl(ENV.POS_URL, process.env.NODE_ENV),
@@ -65,6 +86,7 @@ export default function TerminalsPage() {
 		locations,
 		stationFeatures,
 		stationGrants,
+		readyText,
 	} = useLoaderData<typeof loader>()
 	return (
 		<div className="flex min-w-0 flex-col gap-8">
@@ -76,6 +98,12 @@ export default function TerminalsPage() {
 				locations={locations}
 				stationFeatures={stationFeatures}
 				stationGrants={stationGrants}
+			/>
+			<ReadyTextSettings
+				orgSlug={orgSlug}
+				canWrite={canWrite}
+				smsAvailable={readyText.smsAvailable}
+				locations={readyText.locations}
 			/>
 			<PosDayReport orgSlug={orgSlug} />
 			<ZatcaSettings orgSlug={orgSlug} canWrite={canWrite} />

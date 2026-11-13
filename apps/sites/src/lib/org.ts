@@ -444,6 +444,8 @@ export type PublicLocationData = {
 	deliveryConfig: any
 	deliveryZones: any[]
 	isDefault: boolean
+	/** Station's ready texts (not used by Sites). Absent in older payloads. */
+	readyText?: boolean
 	/**
 	 * Operator pause of web and QR ordering (null `until`: until resumed).
 	 * Absent on payloads cached before the field existed.
