@@ -11,7 +11,6 @@ import {
 	AlertDialogAction,
 	AlertDialogCancel,
 	AlertDialogContent,
-	AlertDialogDescription,
 	AlertDialogFooter,
 	AlertDialogHeader,
 	AlertDialogTitle,
@@ -47,6 +46,7 @@ import {
 } from 'react-router'
 import { z } from 'zod'
 import { EmptyState } from '#app/components/empty-state.tsx'
+import { MenuDeleteEffects } from '#app/components/menu/delete-effects.tsx'
 import {
 	FoodCostCell,
 	FoodCostFooterCell,
@@ -598,12 +598,11 @@ function ItemsIndexContent() {
 						<AlertDialogTitle>
 							<Trans>Delete item?</Trans>
 						</AlertDialogTitle>
-						<AlertDialogDescription>
-							<Trans>
-								This will permanently delete this menu item and remove it from
-								all menus and categories.
-							</Trans>
-						</AlertDialogDescription>
+						<MenuDeleteEffects
+							orgSlug={organization.slug}
+							entityType="item"
+							entityId={deleteItemId}
+						/>
 					</AlertDialogHeader>
 					<AlertDialogFooter>
 						<AlertDialogCancel>

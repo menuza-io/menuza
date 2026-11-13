@@ -116,6 +116,7 @@ import {
 } from '#app/components/ai/ai-panel-context.tsx'
 import { GlobalAIToggle } from '#app/components/ai/global-ai-panel.tsx'
 import { MediaLibraryPicker } from '#app/components/media-library/media-library-picker.tsx'
+import { useSaveBar } from '#app/components/save-bar.tsx'
 import {
 	deleteSiteIconActionIntent,
 	uploadSiteIconActionIntent,
@@ -144,6 +145,7 @@ import {
 	useSectionTranslator,
 } from '#app/components/website/translate-provider.tsx'
 import { displayLocationName } from '#app/utils/location-name.server.ts'
+import { useDirtyBeforeUnload } from '#app/utils/navigation-guards.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import {
 	requireUserWithOrganizationPermission,
@@ -2266,6 +2268,7 @@ function PageSettingsPanel({
 	uploadedImageUrl,
 	uploadError,
 	slugError,
+	isSaving,
 }: {
 	page: {
 		title: string
@@ -2289,6 +2292,7 @@ function PageSettingsPanel({
 	uploadedImageUrl?: string | null
 	uploadError?: string | null
 	slugError?: string | null
+	isSaving: boolean
 }) {
 	const { activeLocale, defaultLocale } = useContext(LocaleContext)
 	const { orgSlug = '' } = useParams<{ orgSlug: string }>()
@@ -2310,6 +2314,18 @@ function PageSettingsPanel({
 	useEffect(() => {
 		setDismissedSlugError(false)
 	}, [slugError])
+
+	const commitSlugRef = useRef<(value: string) => void>(() => {})
+	// Everything here saves as it changes except the URL, which saves when the
+	// field loses focus: a typed or refused URL is the only edit that leaving
+	// can lose, so it asks first. There is nothing for the bar to save.
+	useSaveBar({
+		dirty: slug !== displayPageSlug(page),
+		saving: isSaving,
+		showBar: false,
+		onSave: () => commitSlugRef.current(slug),
+		onDiscard: () => setSlug(displayPageSlug(page)),
+	})
 
 	useEffect(() => {
 		setSeoTitle(page.seoTitle ?? '')
@@ -2381,6 +2397,9 @@ function PageSettingsPanel({
 		},
 		[page.isHomePage, page.slug, persist],
 	)
+	useEffect(() => {
+		commitSlugRef.current = commitSlug
+	})
 
 	const displayTitle =
 		pickLocalized(seoTitle, activeLocale, defaultLocale) ||
@@ -5510,6 +5529,26 @@ export default function PageBuilderRoute() {
 		setEditingTitle(false)
 	}, [titleValue, page.title, titleFetcher])
 
+	// The builder saves each change as it is made, so it has no Save button.
+	// A title still being typed is the one edit kept only in the browser.
+	useSaveBar({
+		dirty:
+			editingTitle && titleValue.trim() !== '' && titleValue !== page.title,
+		saving: titleFetcher.state !== 'idle',
+		showBar: false,
+		onSave: handleSaveTitle,
+		onDiscard: () => {
+			setTitleValue(page.title)
+			setEditingTitle(false)
+		},
+	})
+	// Closing the tab can cut a save short; in-app links let it finish.
+	useDirtyBeforeUnload(
+		titleFetcher.state !== 'idle' ||
+			sectionFetcher.state !== 'idle' ||
+			pageSettingsFetcher.state !== 'idle',
+	)
+
 	const selectedSection = useMemo(
 		() => page.sections.find((s) => s.id === selectedSectionId) ?? null,
 		[page.sections, selectedSectionId],
@@ -5701,6 +5740,7 @@ export default function PageBuilderRoute() {
 						page={page}
 						previewHost={previewHost || `${organization.slug}.site`}
 						onSave={handleUpdatePageSettings}
+						isSaving={pageSettingsFetcher.state !== 'idle'}
 						onUploadImage={handleUploadPageImage}
 						isUploadingImage={pageImageFetcher.state !== 'idle'}
 						uploadedImageUrl={

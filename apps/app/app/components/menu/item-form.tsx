@@ -16,8 +16,13 @@ import { Icon } from '@repo/ui/icon'
 import { Input } from '@repo/ui/input'
 import { Label } from '@repo/ui/label'
 import { Switch } from '@repo/ui/switch'
-import { useMemo, useState } from 'react'
-import { Form, useActionData } from 'react-router'
+import { useMemo, useRef, useState } from 'react'
+import {
+	Form,
+	useActionData,
+	useNavigation,
+	useRevalidator,
+} from 'react-router'
 import {
 	RecipeAside,
 	RecipePanel,
@@ -34,6 +39,10 @@ import {
 	LocalizedTextarea,
 } from '#app/components/website/locale-fields.tsx'
 import { TranslateProvider } from '#app/components/website/translate-provider.tsx'
+import {
+	useDiscardKey,
+	useFormSnapshotSaveBar,
+} from '#app/components/use-native-form-save-bar.ts'
 import { AssignedSortableList } from './assigned-sortable-list.tsx'
 import { ItemVariations } from './item-variations.tsx'
 import {
@@ -44,6 +53,11 @@ import {
 import { MenuAllergenSelector } from './menu-allergen-selector.tsx'
 import { MenuAvailabilityCard } from './menu-availability-card.tsx'
 import { MenuFormHeader } from './menu-form-header.tsx'
+import {
+	QuickModifierGroupSheet,
+	useCanCreateModifierGroup,
+	type QuickCreatedModifierGroup,
+} from './quick-modifier-group-sheet.tsx'
 
 export interface ItemFormData {
 	displayName: string
@@ -111,13 +125,15 @@ interface ItemFormProps {
  * and Save; the scope gives them one client for the page.
  */
 export function ItemForm(props: ItemFormProps) {
+	// Discard remounts the form with the values it opened with.
+	const { discardKey, discard } = useDiscardKey()
 	return (
 		<RecipeScope
 			orgSlug={props.orgSlug}
 			dataRegion={props.dataRegion}
 			active={Boolean(props.itemId)}
 		>
-			<ItemFormBody {...props} />
+			<ItemFormBody key={discardKey} {...props} onDiscard={discard} />
 		</RecipeScope>
 	)
 }
@@ -134,9 +150,39 @@ function ItemFormBody({
 	allLocations,
 	isSubmitting,
 	pageTitle,
-}: ItemFormProps) {
+	onDiscard,
+}: ItemFormProps & { onDiscard: () => void }) {
 	const { _ } = useLingui()
 	const actionData = useActionData<{ error?: Record<string, string[]> }>()
+	const formRef = useRef<HTMLFormElement>(null)
+	const navigation = useNavigation()
+	useFormSnapshotSaveBar(formRef, {
+		// The submission and the redirect that follows a successful save.
+		saving: navigation.state !== 'idle' && navigation.formMethod != null,
+		result: actionData,
+		onDiscard,
+	})
+	// Groups made in the create sheet: saved already, listed until the loader
+	// catches up. Creating one is not a save of this dish.
+	const canCreateGroup = useCanCreateModifierGroup()
+	const revalidator = useRevalidator()
+	const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false)
+	const [createdGroups, setCreatedGroups] = useState<
+		QuickCreatedModifierGroup[]
+	>([])
+	const modifierGroups = [
+		...allModifierGroups,
+		...createdGroups.filter(
+			(created) => !allModifierGroups.some((group) => group.id === created.id),
+		),
+	]
+	const handleGroupCreated = (group: QuickCreatedModifierGroup) => {
+		setCreatedGroups((current) => [...current, group])
+		setSelectedModifierGroupIds((current) =>
+			current.includes(group.id) ? current : [...current, group.id],
+		)
+		void revalidator.revalidate()
+	}
 	const [activeLocale, setActiveLocale] = useState(defaultLocale)
 
 	// State
@@ -283,7 +329,7 @@ function ItemFormBody({
 				activeLocale={activeLocale}
 				defaultLocale={defaultLocale}
 			>
-				<Form method="POST" className="flex flex-1 flex-col">
+				<Form ref={formRef} method="POST" className="flex flex-1 flex-col">
 					{actionData?.error && (
 						<div
 							role="alert"
@@ -617,7 +663,7 @@ function ItemFormBody({
 											No modifier groups assigned yet. Add one to get started.
 										</Trans>
 									}
-									entries={allModifierGroups.map((group) => ({
+									entries={modifierGroups.map((group) => ({
 										id: group.id,
 										name:
 											getLocalizedMenuValue(
@@ -625,10 +671,21 @@ function ItemFormBody({
 												defaultLocale,
 												defaultLocale,
 											) || 'Modifier Group',
+										description: createdGroups.some(
+											(created) => created.id === group.id,
+										)
+											? _(t`Not used anywhere else yet`)
+											: undefined,
 										meta: group.selectionType,
 									}))}
 									selectedIds={selectedModifierGroupIds}
 									onChange={setSelectedModifierGroupIds}
+									onCreate={
+										canCreateGroup
+											? () => setIsCreateGroupOpen(true)
+											: undefined
+									}
+									createLabel={<Trans>Create new group</Trans>}
 								/>
 
 								{/* Nutrition, Dietary & Allergens Frame */}
@@ -884,6 +941,14 @@ function ItemFormBody({
 						</div>
 					</div>
 				</Form>
+				{canCreateGroup ? (
+					<QuickModifierGroupSheet
+						orgSlug={orgSlug}
+						open={isCreateGroupOpen}
+						onOpenChange={setIsCreateGroupOpen}
+						onCreated={handleGroupCreated}
+					/>
+				) : null}
 				<MediaLibraryPicker
 					className="hidden"
 					orgSlug={orgSlug}

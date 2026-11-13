@@ -35,6 +35,10 @@ import {
 	assertModifierGroupIdsInOrganization,
 	assertOptionIdsInOrganization,
 } from '#app/utils/menu/ownership.server.ts'
+import {
+	checkModifierGraphChange,
+	modifierGraphErrorResponse,
+} from '#app/utils/menu/modifier-graph.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 
@@ -294,7 +298,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		isTopping = pizzaGroups.length > 0
 	}
 
-	await db.transaction(async (tx) => {
+	const graphFailure = await db.transaction(async (tx) => {
 		await assertMediaKeysInOrganization(
 			organization.id,
 			data.imageKey ? [data.imageKey] : [],
@@ -315,6 +319,21 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			Object.keys(data.locationOverrides ?? {}),
 			tx,
 		)
+		// Refuse loops and over-deep nesting before anything is written.
+		const failure = await checkModifierGraphChange(
+			organization.id,
+			{
+				options: [
+					{
+						id: optionId,
+						nestedGroupIds: data.nestedModifierGroupIds ?? [],
+						groupIds: data.modifierGroupIds ?? [],
+					},
+				],
+			},
+			tx,
+		)
+		if (failure) return failure
 
 		// 1. Update OrganizationMenuOption
 		await tx
@@ -403,7 +422,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				await tx.insert(OrganizationMenuLocationOverride).values(overrideRows)
 			}
 		}
+		return null
 	})
+	if (graphFailure) return modifierGraphErrorResponse(graphFailure)
 
 	// Purge site KV cache
 	await purgeOrganizationSiteCache(organization.id, organization.slug)

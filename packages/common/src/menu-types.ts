@@ -801,3 +801,240 @@ export function isValidParentCategory(
 
 	return { valid: true }
 }
+
+/** Nested modifier levels below a dish's own group; readers walk this far. */
+export const MAX_NESTED_MODIFIER_DEPTH = 3
+
+export type ModifierGraphErrorReason = 'modifier_cycle' | 'modifier_too_deep'
+
+export type ModifierGraphResult =
+	{ ok: true } | { ok: false; reason: ModifierGraphErrorReason; path: string[] }
+
+export interface ModifierGraph {
+	/** Group id -> the option ids in that group. */
+	groupOptions: Record<string, readonly string[]>
+	/** Option id -> the group ids nested under that option. */
+	optionNestedGroups: Record<string, readonly string[]>
+}
+
+function modifierGroupEdges(graph: ModifierGraph) {
+	const nested = new Map<string, readonly string[]>(
+		Object.entries(graph.optionNestedGroups),
+	)
+	const edges = new Map<string, string[]>()
+	for (const [groupId, optionIds] of Object.entries(graph.groupOptions)) {
+		const targets = new Set<string>()
+		for (const optionId of optionIds) {
+			for (const target of nested.get(optionId) ?? []) targets.add(target)
+		}
+		edges.set(groupId, [...targets])
+	}
+	return edges
+}
+
+/** Group ids from `from` to `to` (inclusive) following edges, or null. */
+function findGroupPath(
+	edges: Map<string, string[]>,
+	from: string,
+	to: string,
+): string[] | null {
+	const parent = new Map<string, string | null>([[from, null]])
+	const queue = [from]
+	for (let i = 0; i < queue.length; i++) {
+		const current = queue[i]!
+		if (current === to) {
+			const path: string[] = []
+			for (let at: string | null = current; at !== null;) {
+				path.unshift(at)
+				at = parent.get(at) ?? null
+			}
+			return path
+		}
+		for (const next of edges.get(current) ?? []) {
+			if (!parent.has(next)) {
+				parent.set(next, current)
+				queue.push(next)
+			}
+		}
+	}
+	return null
+}
+
+/**
+ * Longest chain of groups from `start` along `edges`, at most `limit` edges
+ * long (the limit also ends walks that go round a loop).
+ */
+function longestGroupChain(
+	edges: Map<string, string[]>,
+	start: string,
+	limit: number,
+	memo: Map<string, string[]>,
+): string[] {
+	if (limit <= 0) return [start]
+	const key = `${limit}\u0000${start}`
+	const cached = memo.get(key)
+	if (cached) return cached
+	let best: string[] = [start]
+	for (const next of edges.get(start) ?? []) {
+		const chain = longestGroupChain(edges, next, limit - 1, memo)
+		if (chain.length + 1 > best.length) best = [start, ...chain]
+		if (best.length > limit) break
+	}
+	memo.set(key, best)
+	return best
+}
+
+/**
+ * Checks nested modifier groups: option -> nested group -> its options ->
+ * nested group ... must never come back to a group already on the path, and
+ * must not go more than `maxDepth` levels below the group a dish uses (any
+ * group can be a dish's own group).
+ *
+ * With `previous` (the graph before an edit), only loops and over-deep chains
+ * that use a link the edit adds are reported, so existing bad data elsewhere
+ * in the organization never blocks an unrelated save. Without it the whole
+ * graph is checked. `path` lists group ids along the offending chain.
+ */
+export function validateModifierGraph({
+	groupOptions,
+	optionNestedGroups,
+	maxDepth = MAX_NESTED_MODIFIER_DEPTH,
+	previous,
+}: ModifierGraph & {
+	maxDepth?: number
+	previous?: ModifierGraph
+}): ModifierGraphResult {
+	const edges = modifierGroupEdges({ groupOptions, optionNestedGroups })
+	const before = previous ? modifierGroupEdges(previous) : null
+	const added: Array<[string, string]> = []
+	for (const [from, targets] of edges) {
+		const old = before?.get(from)
+		for (const to of targets) {
+			if (!old?.includes(to)) added.push([from, to])
+		}
+	}
+	if (added.length === 0) return { ok: true }
+
+	for (const [from, to] of added) {
+		const back = findGroupPath(edges, to, from)
+		if (back) {
+			return { ok: false, reason: 'modifier_cycle', path: [from, ...back] }
+		}
+	}
+
+	const reverse = new Map<string, string[]>()
+	for (const [from, targets] of edges) {
+		for (const to of targets) {
+			const list = reverse.get(to)
+			if (list) list.push(from)
+			else reverse.set(to, [from])
+		}
+	}
+	const forwardMemo = new Map<string, string[]>()
+	const reverseMemo = new Map<string, string[]>()
+	const limit = maxDepth + 1
+	for (const [from, to] of added) {
+		const above = longestGroupChain(reverse, from, limit, reverseMemo)
+		const below = longestGroupChain(edges, to, limit, forwardMemo)
+		const chain = [...[...above].reverse(), ...below]
+		if (chain.length - 1 > maxDepth) {
+			return { ok: false, reason: 'modifier_too_deep', path: chain }
+		}
+	}
+	return { ok: true }
+}
+
+export interface ModifierGraphChange {
+	/** Groups whose option list a save replaces (new groups use a stand-in id). */
+	groups?: Array<{ id: string; optionIds: readonly string[] }>
+	/**
+	 * Options whose nested groups a save replaces. With `groupIds` the save
+	 * also replaces which groups the option sits in.
+	 */
+	options?: Array<{
+		id: string
+		nestedGroupIds: readonly string[]
+		groupIds?: readonly string[]
+	}>
+}
+
+/** The graph after a save, without touching the input. */
+export function applyModifierGraphChange(
+	graph: ModifierGraph,
+	change: ModifierGraphChange,
+): ModifierGraph {
+	const groupOptions: Record<string, string[]> = {}
+	for (const [id, optionIds] of Object.entries(graph.groupOptions)) {
+		groupOptions[id] = [...optionIds]
+	}
+	const optionNestedGroups: Record<string, string[]> = {}
+	for (const [id, groupIds] of Object.entries(graph.optionNestedGroups)) {
+		optionNestedGroups[id] = [...groupIds]
+	}
+	for (const group of change.groups ?? []) {
+		groupOptions[group.id] = [...group.optionIds]
+	}
+	for (const option of change.options ?? []) {
+		optionNestedGroups[option.id] = [...option.nestedGroupIds]
+		if (!option.groupIds) continue
+		const target = new Set(option.groupIds)
+		for (const groupId of target) groupOptions[groupId] ??= []
+		for (const [groupId, optionIds] of Object.entries(groupOptions)) {
+			const has = optionIds.includes(option.id)
+			if (has && !target.has(groupId)) {
+				groupOptions[groupId] = optionIds.filter((id) => id !== option.id)
+			} else if (!has && target.has(groupId)) {
+				groupOptions[groupId] = [...optionIds, option.id]
+			}
+		}
+	}
+	return { groupOptions, optionNestedGroups }
+}
+
+/**
+ * For an option being edited, which candidate groups could not be nested under
+ * it: picking one would close a loop or nest too deep. Computed against the
+ * option as the form holds it now, so only the extra pick is judged.
+ */
+export function findBlockedNestedGroups({
+	graph,
+	optionId,
+	groupIds,
+	nestedGroupIds,
+	candidateIds,
+	maxDepth = MAX_NESTED_MODIFIER_DEPTH,
+}: {
+	graph: ModifierGraph
+	optionId: string
+	groupIds: readonly string[]
+	nestedGroupIds: readonly string[]
+	candidateIds: readonly string[]
+	maxDepth?: number
+}): Record<string, ModifierGraphErrorReason> {
+	const current = applyModifierGraphChange(graph, {
+		options: [{ id: optionId, nestedGroupIds, groupIds }],
+	})
+	const blocked: Record<string, ModifierGraphErrorReason> = {}
+	for (const candidateId of candidateIds) {
+		if (nestedGroupIds.includes(candidateId)) continue
+		if (groupIds.includes(candidateId)) {
+			blocked[candidateId] = 'modifier_cycle'
+			continue
+		}
+		const next = applyModifierGraphChange(current, {
+			options: [
+				{
+					id: optionId,
+					nestedGroupIds: [...nestedGroupIds, candidateId],
+				},
+			],
+		})
+		const result = validateModifierGraph({
+			...next,
+			maxDepth,
+			previous: current,
+		})
+		if (!result.ok) blocked[candidateId] = result.reason
+	}
+	return blocked
+}

@@ -343,6 +343,11 @@ msgstr "{0, plural, one {# line was skipped.} other {# lines were skipped.}}"
 msgid "{0, plural, one {# line} other {# lines}}"
 msgstr "{0, plural, one {# line} other {# lines}}"
 
+#. placeholder {0}: row.count
+#: app/components/menu/delete-effects.tsx:354
+msgid "{0, plural, one {# link} other {# links}}"
+msgstr "{0, plural, one {# link} other {# links}}"
+
 #. placeholder {0}: shift.unpaidBreakMinutes
 #: app/components/my-schedule/shifts-view.tsx:218
 msgid "{0, plural, one {# minute unpaid break} other {# minutes unpaid break}}"
@@ -424,6 +429,11 @@ msgstr "{0, plural, one {# person} other {# people}}"
 #: app/routes/_app+/$orgSlug_+/loyalty+/activity.tsx:469
 msgid "{0, plural, one {# point} other {# points}}"
 msgstr "{0, plural, one {# point} other {# points}}"
+
+#. placeholder {0}: recipes.count
+#: app/components/menu/delete-effects.tsx:384
+msgid "{0, plural, one {# recipe in inventory uses it} other {# recipes in inventory use it}}"
+msgstr "{0, plural, one {# recipe in inventory uses it} other {# recipes in inventory use it}}"
 
 #. placeholder {0}: selectedIds.length
 #: app/components/media-library/photo-studio-dialog.tsx:493
@@ -1452,6 +1462,10 @@ msgstr "{guestName}, party of {partySize}, {startTime}, {durationMin} minutes, t
 msgid "{heldTables} is held by a guest who is checking out. The booking uses another table."
 msgstr "{heldTables} is held by a guest who is checking out. The booking uses another table."
 
+#: app/components/menu/delete-effects.tsx:362
+msgid "{hidden, plural, one {and # more} other {and # more}}"
+msgstr "{hidden, plural, one {and # more} other {and # more}}"
+
 #: app/components/print/restaurant/vertical-ui.tsx:115
 msgid "{hidden, plural, one {One active discount is not listed: it ended, has no code yet, or works only at the till, so a printed QR could not use it.} other {# active discounts are not listed: they ended, have no code yet, or work only at the till, so a printed QR could not use them.}}"
 msgstr "{hidden, plural, one {One active discount is not listed: it ended, has no code yet, or works only at the till, so a printed QR could not use it.} other {# active discounts are not listed: they ended, have no code yet, or work only at the till, so a printed QR could not use them.}}"
@@ -1624,8 +1638,8 @@ msgstr "{min}-{max} guests"
 #~ msgid "{minCovers}–{maxCovers} covers"
 #~ msgstr "{minCovers}–{maxCovers} covers"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1328
-#: app/components/menu/drop-wizard/drop-form.tsx:1345
+#: app/components/menu/drop-wizard/drop-form.tsx:1366
+#: app/components/menu/drop-wizard/drop-form.tsx:1383
 msgid "{mins} mins"
 msgstr "{mins} mins"
 
@@ -1787,6 +1801,10 @@ msgstr "{name} added."
 msgid "{name} archived."
 msgstr "{name} archived."
 
+#: app/components/menu/delete-effects.tsx:450
+msgid "{name} cannot be deleted while a drop uses it. This is what uses it now:"
+msgstr "{name} cannot be deleted while a drop uses it. This is what uses it now:"
+
 #: app/components/reservations/waitlist/waitlist-queue.tsx:499
 msgid "{name} dropped at position {place} of {total}."
 msgstr "{name} dropped at position {place} of {total}."
@@ -1874,6 +1892,14 @@ msgstr "{name} was put back."
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.rehire.tsx:65
 msgid "{name} was rehired. Add their workplaces again."
 msgstr "{name} was rehired. Add their workplaces again."
+
+#: app/components/menu/delete-effects.tsx:459
+msgid "{name} will be permanently deleted. Nothing else uses it."
+msgstr "{name} will be permanently deleted. Nothing else uses it."
+
+#: app/components/menu/delete-effects.tsx:455
+msgid "{name} will be permanently deleted. This is what uses it now:"
+msgstr "{name} will be permanently deleted. This is what uses it now:"
 
 #: app/components/inventory/counting-screen.tsx:805
 msgid "{name}, amount in {unitName}"
@@ -2035,7 +2061,7 @@ msgstr "{percent}% (up to {max})"
 #~ msgid "{percent}% off (up to {max})"
 #~ msgstr "{percent}% off (up to {max})"
 
-#: app/components/menu/item-form.tsx:458
+#: app/components/menu/item-form.tsx:499
 msgid "{photoCount}/5 photos"
 msgstr "{photoCount}/5 photos"
 
@@ -2063,7 +2089,7 @@ msgstr "{points, plural, one {# bonus point} other {# bonus points}} on every pu
 msgid "{pointsCount} points"
 msgstr "{pointsCount} points"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:891
+#: app/components/menu/drop-wizard/drop-form.tsx:929
 msgid "{pooledCount} pooled"
 msgstr "{pooledCount} pooled"
 
@@ -2262,7 +2288,7 @@ msgstr "{shown} of {total} reviewed"
 #~ msgstr "{shownCount, plural, one {# guest matches} other {# guests match}} among the <0>{loadedCount}</0> loaded"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:302
-#: app/components/menu/drop-wizard/drop-form.tsx:1093
+#: app/components/menu/drop-wizard/drop-form.tsx:1131
 msgid "{slotCount} pickup slots"
 msgstr "{slotCount} pickup slots"
 
@@ -2391,7 +2417,7 @@ msgstr ""
 msgid "{trend}%"
 msgstr ""
 
-#: app/components/menu/modifier-form.tsx:1268
+#: app/components/menu/modifier-form.tsx:1196
 msgid "{triggerCount} of {optionCount}"
 msgstr "{triggerCount} of {optionCount}"
 
@@ -2479,7 +2505,7 @@ msgstr "{who} resumed it"
 msgid "{who} to cover {when}"
 msgstr "{who} to cover {when}"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1083
+#: app/components/menu/drop-wizard/drop-form.tsx:1121
 msgid "{windowCapacity} orders max in this window"
 msgstr "{windowCapacity} orders max in this window"
 
@@ -2530,7 +2556,7 @@ msgid "+{minutes} minutes"
 msgstr "+{minutes} minutes"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:310
-#: app/components/menu/drop-wizard/drop-form.tsx:1103
+#: app/components/menu/drop-wizard/drop-form.tsx:1141
 msgid "+{moreSlots} more"
 msgstr "+{moreSlots} more"
 
@@ -2705,6 +2731,10 @@ msgstr ""
 msgid "${basePriceValue} billed annually"
 msgstr ""
 
+#: app/components/menu/modifier-selection-fields.tsx:152
+msgid "0 = optional choice, 1+ = required"
+msgstr "0 = optional choice, 1+ = required"
+
 #: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:400
 msgid "0 allows bookings up to the last minute."
 msgstr "0 allows bookings up to the last minute."
@@ -2791,7 +2821,7 @@ msgid "1 page"
 msgstr "1 page"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:301
-#: app/components/menu/drop-wizard/drop-form.tsx:1092
+#: app/components/menu/drop-wizard/drop-form.tsx:1130
 msgid "1 pickup slot"
 msgstr "1 pickup slot"
 
@@ -3565,7 +3595,7 @@ msgstr "About <0>{netText}</0> less than expected if you approve now."
 msgid "About <0>{netText}</0> more than expected if you approve now."
 msgstr "About <0>{netText}</0> more than expected if you approve now."
 
-#: app/components/menu/drop-wizard/drop-form.tsx:520
+#: app/components/menu/drop-wizard/drop-form.tsx:558
 msgid "About drop visibility"
 msgstr "About drop visibility"
 
@@ -3591,7 +3621,7 @@ msgstr "Accept guest reservations from your public website and apps."
 msgid "Accept online payments for your orders. Payments are taken through Checkout.com and paid out to you."
 msgstr "Accept online payments for your orders. Payments are taken through Checkout.com and paid out to you."
 
-#: app/components/locations/location-form.tsx:482
+#: app/components/locations/location-form.tsx:511
 msgid "Accept orders and show this location on the website."
 msgstr "Accept orders and show this location on the website."
 
@@ -3599,7 +3629,7 @@ msgstr "Accept orders and show this location on the website."
 msgid "Accept what looks right and skip the rest. Nothing changes until you accept."
 msgstr "Accept what looks right and skip the rest. Nothing changes until you accept."
 
-#: app/components/menu/item-form.tsx:462
+#: app/components/menu/item-form.tsx:503
 msgid "Accepts JPG, PNG, WebP up to 5MB. Uploads go directly to your media library."
 msgstr "Accepts JPG, PNG, WebP up to 5MB. Uploads go directly to your media library."
 
@@ -3772,7 +3802,7 @@ msgstr "Active customers"
 msgid "Active holds: {holdsCount}"
 msgstr "Active holds: {holdsCount}"
 
-#: app/components/locations/location-form.tsx:479
+#: app/components/locations/location-form.tsx:508
 msgid "Active Location"
 msgstr "Active Location"
 
@@ -3803,7 +3833,7 @@ msgstr "Activity at other locations is hidden."
 #: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:363
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1677
 #: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:815
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:1800
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:1802
 msgid "Add"
 msgstr ""
 
@@ -3840,8 +3870,8 @@ msgstr "Add a block to see your email come to life."
 msgid "Add a break"
 msgstr "Add a break"
 
-#: app/components/menu/item-form.tsx:741
-#: app/components/menu/menu-form.tsx:324
+#: app/components/menu/item-form.tsx:793
+#: app/components/menu/menu-form.tsx:344
 msgid "Add a category"
 msgstr "Add a category"
 
@@ -3914,7 +3944,7 @@ msgstr "Add a group"
 msgid "Add a heading"
 msgstr "Add a heading"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5775
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5815
 msgid "Add a hero, gallery, or any block between the header and footer."
 msgstr ""
 
@@ -3950,11 +3980,11 @@ msgstr "Add a location to set up payment policies."
 msgid "Add a location to set up the waitlist."
 msgstr "Add a location to set up the waitlist."
 
-#: app/components/menu/category-form.tsx:554
+#: app/components/menu/category-form.tsx:574
 msgid "Add a menu"
 msgstr "Add a menu"
 
-#: app/components/menu/item-form.tsx:611
+#: app/components/menu/item-form.tsx:652
 msgid "Add a modifier group"
 msgstr "Add a modifier group"
 
@@ -4026,7 +4056,7 @@ msgstr "Add a rule to teach the agent how your business works."
 msgid "Add a second shift later the same day, like lunch and dinner."
 msgstr "Add a second shift later the same day, like lunch and dinner."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5883
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5923
 msgid "Add a section from the left to see a live preview."
 msgstr ""
 
@@ -4141,8 +4171,8 @@ msgstr "Add an emergency contact"
 #: app/components/inventory/record-delivery-screen.tsx:597
 #: app/components/inventory/review-order-screen.tsx:540
 #: app/components/inventory/supplier-products.tsx:112
-#: app/components/menu/category-form.tsx:407
-#: app/components/menu/modifier-form.tsx:1393
+#: app/components/menu/category-form.tsx:427
+#: app/components/menu/modifier-form.tsx:1321
 msgid "Add an item"
 msgstr "Add an item"
 
@@ -4150,7 +4180,7 @@ msgstr "Add an item"
 msgid "Add an item that is not in Stock yet. You can fill in the rest later."
 msgstr "Add an item that is not in Stock yet. You can fill in the rest later."
 
-#: app/components/menu/modifier-form.tsx:1530
+#: app/components/menu/modifier-form.tsx:1458
 msgid "Add an Option"
 msgstr "Add an Option"
 
@@ -4273,12 +4303,12 @@ msgstr "Add bonus points"
 #~ msgid "Add bucket"
 #~ msgstr "Add bucket"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4057
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4076
 msgid "Add card"
 msgstr ""
 
-#: app/components/menu/item-form.tsx:740
-#: app/components/menu/menu-form.tsx:323
+#: app/components/menu/item-form.tsx:792
+#: app/components/menu/menu-form.tsx:343
 msgid "Add category"
 msgstr "Add category"
 
@@ -4296,7 +4326,7 @@ msgid "Add choice"
 msgstr "Add choice"
 
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:933
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4527
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4546
 msgid "Add column"
 msgstr ""
 
@@ -4312,7 +4342,7 @@ msgstr "Add contact"
 msgid "Add date override"
 msgstr "Add date override"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1022
+#: app/components/menu/drop-wizard/drop-form.tsx:1060
 msgid "Add dates and collection time slots when customers can pick up their orders."
 msgstr "Add dates and collection time slots when customers can pick up their orders."
 
@@ -4334,7 +4364,7 @@ msgstr "Add Delivery Zone"
 #~ msgid "Add element"
 #~ msgstr "Add element"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3747
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3766
 msgid "Add feature"
 msgstr ""
 
@@ -4344,7 +4374,7 @@ msgstr ""
 msgid "Add field"
 msgstr "Add field"
 
-#: app/components/menu/item-form.tsx:610
+#: app/components/menu/item-form.tsx:651
 msgid "Add group"
 msgstr "Add group"
 
@@ -4377,9 +4407,9 @@ msgstr "Add ingredient"
 #: app/components/inventory/item-form.tsx:267
 #: app/components/inventory/record-delivery-screen.tsx:1534
 #: app/components/inventory/transfer-dialogs.tsx:269
-#: app/components/menu/category-form.tsx:406
+#: app/components/menu/category-form.tsx:426
 #: app/components/menu/menu-sortable-category.tsx:179
-#: app/components/menu/modifier-form.tsx:1392
+#: app/components/menu/modifier-form.tsx:1320
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:209
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:365
 msgid "Add item"
@@ -4389,8 +4419,8 @@ msgstr "Add item"
 msgid "Add items and storage areas, count stock, log waste, and record deliveries. Includes View stock."
 msgstr "Add items and storage areas, count stock, log waste, and record deliveries. Includes View stock."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3251
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4590
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3270
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4609
 msgid "Add link"
 msgstr ""
 
@@ -4419,7 +4449,7 @@ msgstr ""
 msgid "Add Members"
 msgstr ""
 
-#: app/components/menu/category-form.tsx:553
+#: app/components/menu/category-form.tsx:573
 msgid "Add menu"
 msgstr "Add menu"
 
@@ -4439,11 +4469,11 @@ msgstr ""
 msgid "Add name, email, choices, and more to start collecting responses."
 msgstr "Add name, email, choices, and more to start collecting responses."
 
-#: app/components/menu/modifier-form.tsx:1366
+#: app/components/menu/modifier-form.tsx:1294
 msgid "Add nested modifier group"
 msgstr "Add nested modifier group"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6034
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6074
 msgid "Add new page"
 msgstr ""
 
@@ -4471,12 +4501,13 @@ msgid "Add one in your business settings first."
 msgstr "Add one in your business settings first."
 
 #: app/components/menu/item-variations.tsx:284
-#: app/components/menu/modifier-form.tsx:1141
+#: app/components/menu/modifier-form.tsx:1069
+#: app/components/menu/quick-modifier-group-sheet.tsx:419
 #: app/components/phone-agent/flow-editor/node-inspector.tsx:304
 msgid "Add option"
 msgstr "Add option"
 
-#: app/components/menu/modifier-form.tsx:1791
+#: app/components/menu/modifier-form.tsx:1719
 msgid "Add Option"
 msgstr "Add Option"
 
@@ -4484,7 +4515,7 @@ msgstr "Add Option"
 msgid "Add option type"
 msgstr "Add option type"
 
-#: app/components/menu/modifier-form.tsx:1244
+#: app/components/menu/modifier-form.tsx:1172
 msgid "Add options to this group first."
 msgstr "Add options to this group first."
 
@@ -4502,6 +4533,10 @@ msgstr "Add or take away"
 
 #~ msgid "Add organization"
 #~ msgstr ""
+
+#: app/components/menu/quick-modifier-group-sheet.tsx:329
+msgid "Add other languages later on the group's page with Translate."
+msgstr "Add other languages later on the group's page with Translate."
 
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1338
 msgid "Add override"
@@ -4528,11 +4563,11 @@ msgstr "Add people"
 msgid "Add phone number"
 msgstr "Add phone number"
 
-#: app/components/menu/item-form.tsx:454
+#: app/components/menu/item-form.tsx:495
 msgid "Add Photo"
 msgstr "Add Photo"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3915
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3934
 msgid "Add photo or video"
 msgstr ""
 
@@ -4540,8 +4575,8 @@ msgstr ""
 msgid "Add pickup window"
 msgstr "Add pickup window"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1034
-#: app/components/menu/drop-wizard/drop-form.tsx:1145
+#: app/components/menu/drop-wizard/drop-form.tsx:1072
+#: app/components/menu/drop-wizard/drop-form.tsx:1183
 msgid "Add Pickup Window"
 msgstr "Add Pickup Window"
 
@@ -4565,7 +4600,7 @@ msgstr "Add prep time for the rest of today"
 msgid "Add pronunciation"
 msgstr "Add pronunciation"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3678
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3697
 msgid "Add question"
 msgstr ""
 
@@ -4579,8 +4614,8 @@ msgstr "Add reaction"
 msgid "Add recipe"
 msgstr "Add recipe"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1234
-#: app/components/menu/drop-wizard/drop-form.tsx:1290
+#: app/components/menu/drop-wizard/drop-form.tsx:1272
+#: app/components/menu/drop-wizard/drop-form.tsx:1328
 msgid "Add reminder"
 msgstr "Add reminder"
 
@@ -4598,7 +4633,7 @@ msgstr "Add rest break"
 msgid "Add restaurant"
 msgstr "Add restaurant"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4455
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4474
 msgid "Add review"
 msgstr ""
 
@@ -4620,8 +4655,8 @@ msgid "Add seating times."
 msgstr "Add seating times."
 
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:674
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:1725
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:1731
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:1727
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:1733
 msgid "Add section"
 msgstr ""
 
@@ -4640,7 +4675,7 @@ msgstr "Add service"
 msgid "Add shift"
 msgstr "Add shift"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4624
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4643
 msgid "Add social link"
 msgstr ""
 
@@ -4730,7 +4765,7 @@ msgstr ""
 msgid "Add the hours and meal periods guests can book."
 msgstr "Add the hours and meal periods guests can book."
 
-#: app/components/menu/modifier-form.tsx:1087
+#: app/components/menu/modifier-form.tsx:1015
 msgid "Add the individual choices, prices, and dietary tags."
 msgstr "Add the individual choices, prices, and dietary tags."
 
@@ -4807,11 +4842,11 @@ msgstr "Add to waitlist"
 msgid "Add transfer case"
 msgstr "Add transfer case"
 
-#: app/components/menu/item-form.tsx:391
+#: app/components/menu/item-form.tsx:432
 msgid "Add up to five high-resolution photos. The first photo is used on menu cards. Photos are stored in your organization's Media Library."
 msgstr "Add up to five high-resolution photos. The first photo is used on menu cards. Photos are stored in your organization's Media Library."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2696
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2715
 msgid "Add URL"
 msgstr ""
 
@@ -4962,7 +4997,7 @@ msgstr "Address from"
 msgid "Address line 2"
 msgstr "Address line 2"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2734
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2753
 msgid "Adds a noindex tag so this page stays off Google and Bing."
 msgstr ""
 
@@ -5021,7 +5056,7 @@ msgstr ""
 msgid "Admin impersonation active"
 msgstr "Admin impersonation active"
 
-#: app/components/locations/location-form.tsx:848
+#: app/components/locations/location-form.tsx:877
 msgid "Advance Scheduled Orders"
 msgstr "Advance Scheduled Orders"
 
@@ -5163,12 +5198,12 @@ msgstr "AI photos are not set up for this workspace."
 msgid "AI studio"
 msgstr "AI studio"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2577
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2596
 msgid "Aim for one or two sentences that make someone click."
 msgstr ""
 
-#: app/components/menu/modifier-form.tsx:1701
-#: app/components/menu/modifier-form.tsx:2056
+#: app/components/menu/modifier-form.tsx:1629
+#: app/components/menu/modifier-form.tsx:1984
 msgid "Alcohol (21+)"
 msgstr "Alcohol (21+)"
 
@@ -5176,8 +5211,8 @@ msgstr "Alcohol (21+)"
 msgid "Alcohol service permit"
 msgstr "Alcohol service permit"
 
-#: app/components/menu/item-form.tsx:686
-#: app/components/menu/option-form.tsx:671
+#: app/components/menu/item-form.tsx:738
+#: app/components/menu/option-form.tsx:772
 msgid "Alcoholic"
 msgstr "Alcoholic"
 
@@ -5494,7 +5529,7 @@ msgstr "Allow any signed-in Station staff member to record deliveries"
 msgid "Allow at least one Page you manage when Facebook asks."
 msgstr "Allow at least one Page you manage when Facebook asks."
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1386
+#: app/components/menu/drop-wizard/drop-form.tsx:1424
 msgid "Allow browsing items before launch"
 msgstr "Allow browsing items before launch"
 
@@ -5502,7 +5537,7 @@ msgstr "Allow browsing items before launch"
 msgid "Allow clock-in without a scheduled shift"
 msgstr "Allow clock-in without a scheduled shift"
 
-#: app/components/locations/location-form.tsx:851
+#: app/components/locations/location-form.tsx:880
 msgid "Allow customers to schedule orders for future dates."
 msgstr "Allow customers to schedule orders for future dates."
 
@@ -5518,7 +5553,7 @@ msgstr "Allow double-booking a table"
 msgid "Allow double-booking this table?"
 msgstr "Allow double-booking this table?"
 
-#: app/components/menu/menu-form.tsx:305
+#: app/components/menu/menu-form.tsx:325
 msgid "Allow guests to add custom preparation notes to items."
 msgstr "Allow guests to add custom preparation notes to items."
 
@@ -5544,7 +5579,7 @@ msgstr "Allow overbooking"
 #~ msgid "Allow overbooking / seating on blocked or tight table"
 #~ msgstr "Allow overbooking / seating on blocked or tight table"
 
-#: app/components/menu/menu-form.tsx:302
+#: app/components/menu/menu-form.tsx:322
 msgid "Allow Special Instructions"
 msgstr "Allow Special Instructions"
 
@@ -5600,7 +5635,7 @@ msgid "Also counted:"
 msgstr "Also counted:"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:241
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3988
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4007
 msgid "Alt text"
 msgstr ""
 
@@ -5868,7 +5903,7 @@ msgid "another position"
 msgstr "another position"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:589
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3694
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3713
 msgid "Answer"
 msgstr ""
 
@@ -6089,8 +6124,8 @@ msgstr "Applies when a customer enters a code."
 msgid "Apply automatically"
 msgstr "Apply automatically"
 
-#: app/components/menu/item-form.tsx:569
-#: app/components/menu/option-form.tsx:603
+#: app/components/menu/item-form.tsx:610
+#: app/components/menu/option-form.tsx:704
 msgid "Apply Sales Tax"
 msgstr "Apply Sales Tax"
 
@@ -6380,7 +6415,7 @@ msgstr "Area Boundary Type"
 msgid "Arrange tables as they are in your room."
 msgstr "Arrange tables as they are in your room."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3533
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3552
 msgid "Arrangement"
 msgstr ""
 
@@ -6596,8 +6631,8 @@ msgstr "Assigned {guest} to {tableLabel} and reflowed overlapping parties."
 msgid "Assigned {guest} to {tableLabel}."
 msgstr "Assigned {guest} to {tableLabel}."
 
-#: app/components/menu/item-form.tsx:734
-#: app/components/menu/menu-form.tsx:319
+#: app/components/menu/item-form.tsx:786
+#: app/components/menu/menu-form.tsx:339
 msgid "Assigned Categories"
 msgstr "Assigned Categories"
 
@@ -6605,16 +6640,16 @@ msgstr "Assigned Categories"
 msgid "Assigned Groups"
 msgstr "Assigned Groups"
 
-#: app/components/menu/category-form.tsx:402
-#: app/components/menu/modifier-form.tsx:1388
+#: app/components/menu/category-form.tsx:422
+#: app/components/menu/modifier-form.tsx:1316
 msgid "Assigned Items"
 msgstr "Assigned Items"
 
-#: app/components/menu/category-form.tsx:551
+#: app/components/menu/category-form.tsx:571
 msgid "Assigned Menus"
 msgstr "Assigned Menus"
 
-#: app/components/menu/option-form.tsx:714
+#: app/components/menu/option-form.tsx:815
 msgid "Assigned Modifier Groups"
 msgstr "Assigned Modifier Groups"
 
@@ -6671,7 +6706,7 @@ msgstr "Attach an image"
 msgid "Attach at most {SOCIAL_MAX_MEDIA} images."
 msgstr "Attach at most {SOCIAL_MAX_MEDIA} images."
 
-#: app/components/menu/option-form.tsx:826
+#: app/components/menu/option-form.tsx:927
 msgid "Attach secondary modifier groups that appear when this modifier item is selected by a customer (e.g. selecting \"French Fries\" prompts for \"Fry Size\")."
 msgstr "Attach secondary modifier groups that appear when this modifier item is selected by a customer (e.g. selecting \"French Fries\" prompts for \"Fry Size\")."
 
@@ -6814,7 +6849,7 @@ msgstr ""
 msgid "Automations"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4290
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4309
 msgid "Autoplay"
 msgstr ""
 
@@ -7006,7 +7041,7 @@ msgstr "Back to details"
 msgid "Back to discounts"
 msgstr "Back to discounts"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:453
+#: app/components/menu/drop-wizard/drop-form.tsx:491
 msgid "Back to drops"
 msgstr "Back to drops"
 
@@ -7025,7 +7060,7 @@ msgstr "Back to fields"
 msgid "Back to latest"
 msgstr "Back to latest"
 
-#: app/components/menu/modifier-form.tsx:1787
+#: app/components/menu/modifier-form.tsx:1715
 msgid "Back to list"
 msgstr "Back to list"
 
@@ -7034,7 +7069,7 @@ msgstr "Back to list"
 msgid "Back to login"
 msgstr ""
 
-#: app/components/menu/modifier-form.tsx:890
+#: app/components/menu/modifier-form.tsx:921
 msgid "Back to modifier groups"
 msgstr "Back to modifier groups"
 
@@ -7042,7 +7077,7 @@ msgstr "Back to modifier groups"
 msgid "Back to nodes"
 msgstr ""
 
-#: app/components/menu/option-form.tsx:307
+#: app/components/menu/option-form.tsx:403
 msgid "Back to options"
 msgstr "Back to options"
 
@@ -7091,8 +7126,8 @@ msgstr "Back to the list"
 msgid "Back to waiting"
 msgstr "Back to waiting"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3373
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4951
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3392
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4970
 msgid "Background"
 msgstr ""
 
@@ -7139,19 +7174,19 @@ msgstr "Bar seat"
 msgid "Base it on"
 msgstr "Base it on"
 
-#: app/components/locations/location-form.tsx:598
+#: app/components/locations/location-form.tsx:627
 msgid "Base Preparation Time (minutes)"
 msgstr "Base Preparation Time (minutes)"
 
-#: app/components/menu/item-form.tsx:545
+#: app/components/menu/item-form.tsx:586
 msgid "Base Price ($)"
 msgstr "Base Price ($)"
 
-#: app/components/menu/option-form.tsx:475
+#: app/components/menu/option-form.tsx:576
 msgid "Base Price Delta ($)"
 msgstr "Base Price Delta ($)"
 
-#: app/components/locations/location-form.tsx:335
+#: app/components/locations/location-form.tsx:364
 msgid "Basic identifiers, URL slug, and regional settings."
 msgstr "Basic identifiers, URL slug, and regional settings."
 
@@ -7442,7 +7477,7 @@ msgstr "Booked over the pacing party limit."
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:818
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:773
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:947
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4200
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4219
 msgid "Booking"
 msgstr "Booking"
 
@@ -7559,8 +7594,8 @@ msgstr "Branch on whether you're open right now."
 
 #: app/components/app-sidebar.tsx:662
 #: app/components/website/branding-panel.tsx:244
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5263
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5264
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5282
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5283
 msgid "Branding"
 msgstr ""
 
@@ -7685,7 +7720,7 @@ msgstr ""
 msgid "Browse the voices your agent can use."
 msgstr "Browse the voices your agent can use."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3496
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3515
 msgid "Browsers only autoplay video when it is muted."
 msgstr ""
 
@@ -7697,7 +7732,7 @@ msgid "Bucket Name"
 msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:540
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6069
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6109
 msgid "Build"
 msgstr ""
 
@@ -7713,7 +7748,7 @@ msgstr "Build a landing page"
 msgid "Builder"
 msgstr "Builder"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5284
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5303
 msgid "Builder panels"
 msgstr "Builder panels"
 
@@ -7841,20 +7876,20 @@ msgid "Butter"
 msgstr "Butter"
 
 #: ../../packages/marketing/src/components/email/block-meta.ts:38
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3628
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4260
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3647
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4279
 msgid "Button"
 msgstr ""
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:300
 #: app/components/website/create-form-dialog.tsx:258
 #: app/components/website/form-builder-sidebar.tsx:696
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4195
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4214
 msgid "Button label"
 msgstr "Button label"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3336
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4385
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3355
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4404
 msgid "Buttons"
 msgstr ""
 
@@ -8141,8 +8176,8 @@ msgstr "Calls with an important tag always stay open."
 msgid "Calls your agent answers will appear here. Try a test call from your browser to see how it sounds."
 msgstr "Calls your agent answers will appear here. Try a test call from your browser to see how it sounds."
 
-#: app/components/menu/item-form.tsx:699
-#: app/components/menu/option-form.tsx:684
+#: app/components/menu/item-form.tsx:751
+#: app/components/menu/option-form.tsx:785
 msgid "Calories (kCal)"
 msgstr "Calories (kCal)"
 
@@ -8183,6 +8218,14 @@ msgstr "Can edit teammate notes"
 #: app/routes/_app+/$orgSlug_+/marketing+/print.new.tsx:157
 msgid "Can ship"
 msgstr "Can ship"
+
+#: app/components/menu/option-form.tsx:991
+msgid "Can't nest: choices would go more than {MAX_NESTED_MODIFIER_DEPTH} levels deep."
+msgstr "Can't nest: choices would go more than {MAX_NESTED_MODIFIER_DEPTH} levels deep."
+
+#: app/components/menu/option-form.tsx:986
+msgid "Can't nest: it would loop back to this option."
+msgstr "Can't nest: it would loop back to this option."
 
 #: app/components/phone-agent/phrase-fields.tsx:99
 msgid "Can't text that number"
@@ -8226,7 +8269,7 @@ msgstr "Can't text that number"
 #: app/components/inventory/transfers-panel.tsx:263
 #: app/components/kiosk/kiosk-screens.tsx:631
 #: app/components/locations/delivery-zones-manager.tsx:564
-#: app/components/locations/location-form.tsx:1046
+#: app/components/locations/location-form.tsx:1075
 #: app/components/locations/special-hours-picker.tsx:225
 #: app/components/loyalty/adjust-dialog.tsx:274
 #: app/components/loyalty/promotion-dialog.tsx:908
@@ -8242,7 +8285,8 @@ msgstr "Can't text that number"
 #: app/components/menu/drop-wizard/drop-drawers.tsx:930
 #: app/components/menu/menu-form-header.tsx:80
 #: app/components/menu/menu-review-stack.tsx:569
-#: app/components/menu/modifier-form.tsx:2139
+#: app/components/menu/modifier-form.tsx:2067
+#: app/components/menu/quick-modifier-group-sheet.tsx:431
 #: app/components/my-schedule/availability-sheet.tsx:200
 #: app/components/my-schedule/requests-view.tsx:261
 #: app/components/my-schedule/shift-change-sheet.tsx:257
@@ -8334,12 +8378,12 @@ msgstr "Can't text that number"
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:478
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1103
 #: app/routes/_app+/$orgSlug_+/media.tsx:1877
-#: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:535
+#: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:534
 #: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:445
-#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:610
-#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:471
-#: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:532
-#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:631
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:609
+#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:470
+#: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:530
+#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:630
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:866
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:922
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1116
@@ -8365,7 +8409,7 @@ msgstr "Can't text that number"
 #: app/routes/_app+/$orgSlug_+/staff+/team.new.tsx:144
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:513
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:510
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:1795
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:1797
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1459
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1497
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1543
@@ -8570,7 +8614,7 @@ msgstr "Canva was not connected"
 msgid "Canva's file could not be read. Try again, or open the design in Canva and save it again."
 msgstr "Canva's file could not be read. Try again, or open the design in Canva and save it again."
 
-#: app/components/menu/drop-wizard/drop-form.tsx:967
+#: app/components/menu/drop-wizard/drop-form.tsx:1005
 msgid "Cap"
 msgstr "Cap"
 
@@ -8589,7 +8633,7 @@ msgstr "Cap on the discount, for example 20.00."
 #~ msgstr "Capacity"
 
 #: app/routes/_app+/$orgSlug_+/media.tsx:1726
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3998
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4017
 msgid "Caption"
 msgstr ""
 
@@ -8634,13 +8678,13 @@ msgstr "Card on file, nothing charged"
 msgid "Card only"
 msgstr "Card only"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4360
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4379
 msgid "Card position"
 msgstr ""
 
 #: app/components/staff/timesheets/payroll-summary.tsx:168
 #: app/routes/_app+/$orgSlug_+/notes.tsx:326
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4041
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4060
 msgid "Cards"
 msgstr ""
 
@@ -8690,7 +8734,7 @@ msgstr "Cash tips: {from} to {to}"
 msgid "Casual dining"
 msgstr "Casual dining"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:731
+#: app/components/menu/drop-wizard/drop-form.tsx:769
 msgid "categories"
 msgstr "categories"
 
@@ -8705,11 +8749,11 @@ msgstr "categories"
 msgid "Categories"
 msgstr "Categories"
 
-#: app/components/menu/menu-form.tsx:321
+#: app/components/menu/menu-form.tsx:341
 msgid "Categories that belong to this menu."
 msgstr "Categories that belong to this menu."
 
-#: app/components/menu/item-form.tsx:736
+#: app/components/menu/item-form.tsx:788
 msgid "Categories that display this item on the menu."
 msgstr "Categories that display this item on the menu."
 
@@ -8717,7 +8761,11 @@ msgstr "Categories that display this item on the menu."
 msgid "Categories that earn"
 msgstr "Categories that earn"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:730
+#: app/components/menu/delete-effects.tsx:268
+msgid "Categories that will be unassigned"
+msgstr "Categories that will be unassigned"
+
+#: app/components/menu/drop-wizard/drop-form.tsx:768
 msgid "category"
 msgstr "category"
 
@@ -8739,7 +8787,7 @@ msgstr "Category actions"
 msgid "Category discount"
 msgstr "Category discount"
 
-#: app/components/menu/category-form.tsx:280
+#: app/components/menu/category-form.tsx:300
 msgid "Category Information"
 msgstr "Category Information"
 
@@ -8747,7 +8795,7 @@ msgstr "Category Information"
 msgid "Category name"
 msgstr "Category name"
 
-#: app/components/menu/category-form.tsx:365
+#: app/components/menu/category-form.tsx:385
 msgid "Category Name (Guest-Facing)"
 msgstr "Category Name (Guest-Facing)"
 
@@ -8755,7 +8803,7 @@ msgstr "Category Name (Guest-Facing)"
 msgid "Catering"
 msgstr "Catering"
 
-#: app/components/menu/menu-form.tsx:262
+#: app/components/menu/menu-form.tsx:282
 msgid "Catering & Large Events"
 msgstr "Catering & Large Events"
 
@@ -8769,8 +8817,8 @@ msgid "Celebration"
 msgstr "Celebration"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:94
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3397
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4371
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3416
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4390
 msgid "Center"
 msgstr ""
 
@@ -8854,7 +8902,7 @@ msgstr ""
 msgid "Change pay rates"
 msgstr "Change pay rates"
 
-#: app/components/menu/option-form.tsx:369
+#: app/components/menu/option-form.tsx:470
 msgid "Change Photo"
 msgstr "Change Photo"
 
@@ -8956,7 +9004,7 @@ msgstr "Changes what customers pay"
 msgid "Changing the party size can change the wait you quoted."
 msgstr "Changing the party size can change the wait you quoted."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2480
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2499
 msgid "Changing this URL will break existing links to the page."
 msgstr ""
 
@@ -8994,11 +9042,11 @@ msgstr "Charge late-cancel fee"
 msgid "Charge no-show fee"
 msgstr "Charge no-show fee"
 
-#: app/components/menu/option-form.tsx:606
+#: app/components/menu/option-form.tsx:707
 msgid "Charge sales tax on this option at checkout."
 msgstr "Charge sales tax on this option at checkout."
 
-#: app/components/menu/item-form.tsx:572
+#: app/components/menu/item-form.tsx:613
 msgid "Charge tax at checkout."
 msgstr "Charge tax at checkout."
 
@@ -9102,7 +9150,7 @@ msgstr "Check the amount and try again."
 #~ msgid "Check the dates and try again."
 #~ msgstr "Check the dates and try again."
 
-#: app/components/menu/drop-wizard/drop-form.tsx:544
+#: app/components/menu/drop-wizard/drop-form.tsx:582
 msgid "Check the drop details and try saving again."
 msgstr "Check the drop details and try saving again."
 
@@ -9189,6 +9237,10 @@ msgstr "Checking for reservation records…"
 msgid "Checking for staff records…"
 msgstr "Checking for staff records…"
 
+#: app/components/menu/delete-effects.tsx:380
+msgid "Checking recipes…"
+msgstr "Checking recipes…"
+
 #: app/routes/_app+/$orgSlug_+/media.tsx:1764
 msgid "Checking references…"
 msgstr "Checking references…"
@@ -9199,6 +9251,10 @@ msgstr "Checking references…"
 #: app/components/reservations/booking-sheet.tsx:703
 msgid "Checking times..."
 msgstr "Checking times..."
+
+#: app/components/menu/delete-effects.tsx:448
+msgid "Checking what uses this…"
+msgstr "Checking what uses this…"
 
 #: app/components/settings/cards/organization/verified-domain-card.tsx:177
 msgid "Checking…"
@@ -9212,7 +9268,7 @@ msgstr "Checklist to add"
 msgid "Checklists for new hires. Pick one to add automatically when you hire someone."
 msgstr "Checklists for new hires. Pick one to add automatically when you hire someone."
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1311
+#: app/components/menu/drop-wizard/drop-form.tsx:1349
 msgid "Checkout hold"
 msgstr "Checkout hold"
 
@@ -9487,8 +9543,8 @@ msgstr "Choose an account to preview"
 msgid "Choose an active member of this organization."
 msgstr "Choose an active member of this organization."
 
-#: app/components/menu/drop-wizard/drop-form.tsx:759
-#: app/components/menu/drop-wizard/drop-form.tsx:781
+#: app/components/menu/drop-wizard/drop-form.tsx:797
+#: app/components/menu/drop-wizard/drop-form.tsx:819
 msgid "Choose an existing menu..."
 msgstr "Choose an existing menu..."
 
@@ -9658,7 +9714,7 @@ msgstr "Choose photo for {name}"
 msgid "Choose something for at least one day."
 msgstr "Choose something for at least one day."
 
-#: app/components/locations/location-form.tsx:901
+#: app/components/locations/location-form.tsx:930
 msgid "Choose supported delivery channels and estimated transit times."
 msgstr "Choose supported delivery channels and estimated transit times."
 
@@ -9774,7 +9830,7 @@ msgstr "Choose what to print"
 msgid "Choose what you are doing. It is saved on this tablet and recorded as soon as the connection is back."
 msgstr "Choose what you are doing. It is saved on this tablet and recorded as soon as the connection is back."
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1007
+#: app/components/menu/drop-wizard/drop-form.tsx:1045
 msgid "Choose when and where customers can collect their orders."
 msgstr "Choose when and where customers can collect their orders."
 
@@ -9850,8 +9906,8 @@ msgstr "Choosing none gives no access to Staff."
 msgid "Chosen"
 msgstr "Chosen"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3615
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3855
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3634
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3874
 msgid "Circle"
 msgstr ""
 
@@ -9969,7 +10025,7 @@ msgstr ""
 msgid "Click the first day, then the last day. For one day, click it and close."
 msgstr "Click the first day, then the last day. For one day, click it and close."
 
-#: app/components/menu/drop-wizard/drop-form.tsx:691
+#: app/components/menu/drop-wizard/drop-form.tsx:729
 msgid "Click to choose a cover image"
 msgstr "Click to choose a cover image"
 
@@ -10342,7 +10398,7 @@ msgstr ""
 
 #: app/components/staff/timesheets/payroll-summary.tsx:114
 #: app/components/staff/timesheets/payroll-summary.tsx:121
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3822
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3841
 msgid "Columns"
 msgstr ""
 
@@ -10363,7 +10419,7 @@ msgstr "Combination"
 msgid "Combination name is required."
 msgstr "Combination name is required."
 
-#: app/components/menu/item-form.tsx:530
+#: app/components/menu/item-form.tsx:571
 msgid "Combination prices are set below. Sales tax applies to every combination."
 msgstr "Combination prices are set below. Sales tax applies to every combination."
 
@@ -10573,7 +10629,7 @@ msgstr ""
 #~ msgid "Configuration valid"
 #~ msgstr "Configuration valid"
 
-#: app/components/locations/location-form.tsx:1021
+#: app/components/locations/location-form.tsx:1050
 msgid "Configure allowed and restricted areas via Radius, Zip Codes, or Drawn Polygons."
 msgstr "Configure allowed and restricted areas via Radius, Zip Codes, or Drawn Polygons."
 
@@ -10591,7 +10647,7 @@ msgstr "Configure dining areas, floor plan tables, service periods, turn times, 
 #~ msgid "Configure drop announcements, visibility, and checkout limits."
 #~ msgstr "Configure drop announcements, visibility, and checkout limits."
 
-#: app/components/menu/modifier-form.tsx:944
+#: app/components/menu/modifier-form.tsx:975
 msgid "Configure how guests interact with these options."
 msgstr "Configure how guests interact with these options."
 
@@ -10602,7 +10658,7 @@ msgstr "Configure how guests interact with these options."
 msgid "Configure the report"
 msgstr "Configure the report"
 
-#: app/components/locations/location-form.tsx:557
+#: app/components/locations/location-form.tsx:586
 msgid "Configure weekly opening times for dine-in store hours and online ordering."
 msgstr "Configure weekly opening times for dine-in store hours and online ordering."
 
@@ -10869,13 +10925,17 @@ msgstr ""
 msgid "Connected domain"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4120
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4139
 msgid "Connected form"
 msgstr "Connected form"
 
 #: app/components/settings/connections.tsx:48
 msgid "Connected on {createdAtDate}"
 msgstr ""
+
+#: app/components/menu/delete-effects.tsx:276
+msgid "Connected platforms"
+msgstr "Connected platforms"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:276
 msgid "Connected to Canva as {who}."
@@ -10971,11 +11031,11 @@ msgstr ""
 #: app/components/settings/cards/organization/announcement-sheet.tsx:435
 #: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:423
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:627
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3321
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3511
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3807
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4182
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4307
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3340
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3530
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3826
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4201
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4326
 msgid "Content"
 msgstr ""
 
@@ -11040,7 +11100,7 @@ msgstr "Contributors"
 msgid "Control availability and custom pricing per location."
 msgstr "Control availability and custom pricing per location."
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1303
+#: app/components/menu/drop-wizard/drop-form.tsx:1341
 msgid "Control checkout timing and what customers see."
 msgstr "Control checkout timing and what customers see."
 
@@ -11313,6 +11373,18 @@ msgstr "Could not change who can manage terminals."
 msgid "Could not change who runs the host stand."
 msgstr "Could not change who runs the host stand."
 
+#: app/components/menu/delete-effects.tsx:382
+msgid "Could not check recipes"
+msgstr "Could not check recipes"
+
+#: app/components/menu/delete-effects.tsx:444
+msgid "Could not check what uses this. You can still delete it."
+msgstr "Could not check what uses this. You can still delete it."
+
+#: app/components/menu/delete-effects.tsx:538
+msgid "Could not check where this is used."
+msgstr "Could not check where this is used."
+
 #: app/components/pos/zatca-settings.tsx:512
 msgid "Could not connect the terminal."
 msgstr "Could not connect the terminal."
@@ -11348,6 +11420,14 @@ msgstr "Could not create a pairing code. Try again."
 #: app/components/mailbox/reviews-tab.tsx:270
 msgid "Could not create a reply suggestion. Try again."
 msgstr "Could not create a reply suggestion. Try again."
+
+#: app/components/menu/quick-modifier-group-sheet.tsx:273
+msgid "Could not create the group. Check your connection and try again."
+msgstr "Could not create the group. Check your connection and try again."
+
+#: app/components/menu/quick-modifier-group-sheet.tsx:264
+msgid "Could not create the group. Try again."
+msgstr "Could not create the group. Try again."
 
 #: app/components/reservations/use-reservation-requests.ts:76
 msgid "Could not decline the request."
@@ -11772,7 +11852,7 @@ msgstr "Course stage:"
 msgid "Cover"
 msgstr "Cover"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:649
+#: app/components/menu/drop-wizard/drop-form.tsx:687
 msgid "Cover image"
 msgstr "Cover image"
 
@@ -11910,7 +11990,7 @@ msgstr "Create a modifier group to start offering custom choices."
 msgid "Create a new API key to connect your AI assistants to {orgName} data."
 msgstr ""
 
-#: app/components/menu/modifier-form.tsx:1535
+#: app/components/menu/modifier-form.tsx:1463
 msgid "Create a new choice for this modifier group."
 msgstr "Create a new choice for this modifier group."
 
@@ -12011,7 +12091,7 @@ msgstr "Create and manage your dishes, beverages, sides, and retail products."
 msgid "Create and manage your menus for dine-in, online ordering, POS, and catering."
 msgstr "Create and manage your menus for dine-in, online ordering, POS, and catering."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4145
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4164
 msgid "Create and publish a form from Website → Forms first."
 msgstr "Create and publish a form from Website → Forms first."
 
@@ -12085,7 +12165,7 @@ msgstr "Create draft"
 #~ msgid "Create drop"
 #~ msgstr "Create drop"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:450
+#: app/components/menu/drop-wizard/drop-form.tsx:488
 #: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:213
 msgid "Create Drop"
 msgstr "Create Drop"
@@ -12097,6 +12177,7 @@ msgid "Create form"
 msgstr "Create form"
 
 #: app/components/chat/chat-compose-dialog.tsx:426
+#: app/components/menu/quick-modifier-group-sheet.tsx:434
 msgid "Create group"
 msgstr "Create group"
 
@@ -12116,7 +12197,7 @@ msgstr "Create layout"
 msgid "Create Link"
 msgstr ""
 
-#: app/components/locations/location-form.tsx:1057
+#: app/components/locations/location-form.tsx:1086
 msgid "Create Location"
 msgstr "Create Location"
 
@@ -12132,6 +12213,16 @@ msgstr "Create Modifier Group"
 msgid "Create modifier groups like \"Meat Temperature\", \"Choice of Dressing\", or \"Pizza Toppings\"."
 msgstr "Create modifier groups like \"Meat Temperature\", \"Choice of Dressing\", or \"Pizza Toppings\"."
 
+#: app/components/menu/assigned-sortable-list.tsx:257
+msgid "Create new"
+msgstr "Create new"
+
+#: app/components/menu/item-form.tsx:683
+#: app/components/menu/option-form.tsx:1029
+#: app/components/menu/quick-modifier-group-sheet.tsx:297
+msgid "Create new group"
+msgstr "Create new group"
+
 #: app/components/command-menu.tsx:319
 msgid "Create new note"
 msgstr ""
@@ -12140,8 +12231,8 @@ msgstr ""
 msgid "Create New Note"
 msgstr ""
 
-#: app/components/menu/modifier-form.tsx:1528
-#: app/components/menu/modifier-form.tsx:1804
+#: app/components/menu/modifier-form.tsx:1456
+#: app/components/menu/modifier-form.tsx:1732
 msgid "Create New Option"
 msgstr "Create New Option"
 
@@ -12301,7 +12392,7 @@ msgstr ""
 msgid "Created by {0}"
 msgstr "Created by {0}"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:624
+#: app/components/menu/drop-wizard/drop-form.tsx:662
 msgid "Created from the name. You can change it before saving."
 msgstr "Created from the name. You can change it before saving."
 
@@ -12317,6 +12408,7 @@ msgstr "Creating page"
 msgid "Creating..."
 msgstr ""
 
+#: app/components/menu/quick-modifier-group-sheet.tsx:434
 #: app/components/pos/terminals-manager.tsx:1669
 #: app/components/reservations/experiences/experience-create-sheet.tsx:178
 #: app/components/staff/kiosk-manager.tsx:614
@@ -12353,7 +12445,7 @@ msgstr "Cucumbers"
 msgid "Curbside"
 msgstr "Curbside"
 
-#: app/components/locations/location-form.tsx:770
+#: app/components/locations/location-form.tsx:799
 msgid "Curbside Pickup"
 msgstr "Curbside Pickup"
 
@@ -12471,7 +12563,7 @@ msgstr "Custom maximum"
 msgid "Custom notes"
 msgstr "Custom notes"
 
-#: app/components/menu/item-form.tsx:605
+#: app/components/menu/item-form.tsx:646
 msgid "Custom options, toppings, sides, and choices offered with this item."
 msgstr "Custom options, toppings, sides, and choices offered with this item."
 
@@ -12626,7 +12718,7 @@ msgstr "Customers merged."
 msgid "Customers pay this amount. You receive {orgSharePercent}% after the platform fee."
 msgstr ""
 
-#: app/components/locations/location-form.tsx:717
+#: app/components/locations/location-form.tsx:746
 msgid "Customers pick up orders in-store."
 msgstr "Customers pick up orders in-store."
 
@@ -12705,7 +12797,7 @@ msgid "Danger"
 msgstr ""
 
 #: app/components/settings/cards/organization/site-theme-card.tsx:738
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3415
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3434
 msgid "Dark"
 msgstr ""
 
@@ -13021,7 +13113,7 @@ msgstr ""
 #~ msgid "Default max parties / slot"
 #~ msgstr "Default max parties / slot"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4227
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4246
 msgid "Default party size"
 msgstr "Default party size"
 
@@ -13047,7 +13139,7 @@ msgstr "Define allowed and restricted delivery areas by radius, zip codes, or po
 msgid "Define role details and select what permissions members receive."
 msgstr "Define role details and select what permissions members receive."
 
-#: app/components/menu/menu-form.tsx:223
+#: app/components/menu/menu-form.tsx:243
 msgid "Define the ordering channel and guest information options."
 msgstr "Define the ordering channel and guest information options."
 
@@ -13079,15 +13171,15 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/marketing+/social.$postId.tsx:194
 #: app/routes/_app+/$orgSlug_+/media.tsx:1865
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:488
-#: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:547
+#: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:546
 #: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:398
 #: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:457
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:563
-#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:622
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:621
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:417
-#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:484
+#: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:483
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:484
-#: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:547
+#: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:545
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1053
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1128
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:836
@@ -13170,7 +13262,7 @@ msgstr "Delete calls"
 
 #: app/components/staff/timesheets/card-sheet.tsx:266
 #: app/components/staff/timesheets/card-sheet.tsx:436
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4058
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4077
 msgid "Delete card"
 msgstr ""
 
@@ -13182,7 +13274,7 @@ msgstr "Delete category?"
 msgid "Delete channel"
 msgstr "Delete channel"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4528
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4547
 msgid "Delete column"
 msgstr ""
 
@@ -13226,7 +13318,7 @@ msgstr "Delete dining time for {range} guests"
 msgid "Delete drop?"
 msgstr "Delete drop?"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3748
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3767
 msgid "Delete feature"
 msgstr ""
 
@@ -13234,7 +13326,7 @@ msgstr ""
 msgid "Delete invitation"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3916
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3935
 msgid "Delete item"
 msgstr ""
 
@@ -13250,7 +13342,7 @@ msgstr "Delete last digit"
 msgid "Delete layout"
 msgstr "Delete layout"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3252
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3271
 msgid "Delete link"
 msgstr ""
 
@@ -13293,9 +13385,13 @@ msgid "Delete note?"
 msgstr "Delete note?"
 
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:587
-#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:634
+#: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:633
 msgid "Delete Option"
 msgstr "Delete Option"
+
+#: app/components/menu/delete-effects.tsx:318
+msgid "Delete or move this drop before deleting the menu"
+msgstr "Delete or move this drop before deleting the menu"
 
 #~ msgid "Delete organization"
 #~ msgstr ""
@@ -13319,7 +13415,7 @@ msgstr ""
 msgid "Delete post"
 msgstr "Delete post"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3679
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3698
 msgid "Delete question"
 msgstr ""
 
@@ -13341,7 +13437,7 @@ msgstr "Delete restaurant location?"
 msgid "Delete restaurant?"
 msgstr "Delete restaurant?"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4456
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4475
 msgid "Delete review"
 msgstr ""
 
@@ -13349,7 +13445,7 @@ msgstr ""
 msgid "Delete rule"
 msgstr "Delete rule"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4625
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4644
 msgid "Delete social link"
 msgstr ""
 
@@ -13486,7 +13582,7 @@ msgstr "Delivers on"
 
 #: app/components/customers/person-orders-panel.tsx:221
 #: app/components/inventory/review-order-screen.tsx:727
-#: app/components/locations/location-form.tsx:732
+#: app/components/locations/location-form.tsx:761
 #: app/components/orders/order-detail.tsx:458
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:26
 #: app/components/reservations/messages/message-settings.tsx:530
@@ -13506,7 +13602,7 @@ msgstr "Delivery"
 msgid "Delivery · {supplier}"
 msgstr "Delivery · {supplier}"
 
-#: app/components/locations/location-form.tsx:321
+#: app/components/locations/location-form.tsx:350
 msgid "Delivery & Zones"
 msgstr "Delivery & Zones"
 
@@ -13569,7 +13665,7 @@ msgstr "Delivery radius"
 msgid "Delivery recorded."
 msgstr "Delivery recorded."
 
-#: app/components/locations/location-form.tsx:898
+#: app/components/locations/location-form.tsx:927
 msgid "Delivery Settings & Providers"
 msgstr "Delivery Settings & Providers"
 
@@ -13577,7 +13673,7 @@ msgstr "Delivery Settings & Providers"
 msgid "delivery tips"
 msgstr "delivery tips"
 
-#: app/components/locations/location-form.tsx:826
+#: app/components/locations/location-form.tsx:855
 msgid "Delivery Tips"
 msgstr "Delivery Tips"
 
@@ -13585,7 +13681,7 @@ msgstr "Delivery Tips"
 msgid "Delivery Zones"
 msgstr "Delivery Zones"
 
-#: app/components/locations/location-form.tsx:1018
+#: app/components/locations/location-form.tsx:1047
 msgid "Delivery Zones & Geo-Fencing"
 msgstr "Delivery Zones & Geo-Fencing"
 
@@ -13643,9 +13739,9 @@ msgstr "Describe when the agent should transfer to a specific contact. For examp
 #: app/components/website/create-form-dialog.tsx:124
 #: app/components/website/form-builder-sidebar.tsx:683
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:297
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3763
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4073
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4189
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3782
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4092
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4208
 #: app/routes/organizations+/create.tsx:1061
 msgid "Description"
 msgstr ""
@@ -13654,9 +13750,9 @@ msgstr ""
 msgid "Description (guest-facing)"
 msgstr "Description (guest-facing)"
 
-#: app/components/menu/category-form.tsx:389
-#: app/components/menu/item-form.tsx:510
-#: app/components/menu/option-form.tsx:440
+#: app/components/menu/category-form.tsx:409
+#: app/components/menu/item-form.tsx:551
+#: app/components/menu/option-form.tsx:541
 msgid "Description (Guest-Facing)"
 msgstr "Description (Guest-Facing)"
 
@@ -13692,7 +13788,7 @@ msgstr "Design branded table cards, posters and flyers. Download a print-ready P
 msgid "Design email"
 msgstr "Design email"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5824
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5864
 msgid "Desktop"
 msgstr ""
 
@@ -13750,7 +13846,7 @@ msgstr ""
 msgid "Details"
 msgstr "Details"
 
-#: app/components/locations/location-form.tsx:312
+#: app/components/locations/location-form.tsx:341
 msgid "Details & Address"
 msgstr "Details & Address"
 
@@ -13833,14 +13929,14 @@ msgstr "Dietary notes"
 #~ msgid "Dietary notes, e.g. no sesame, severe peanut allergy"
 #~ msgstr "Dietary notes, e.g. no sesame, severe peanut allergy"
 
-#: app/components/menu/modifier-form.tsx:1647
-#: app/components/menu/modifier-form.tsx:2002
+#: app/components/menu/modifier-form.tsx:1575
+#: app/components/menu/modifier-form.tsx:1930
 #: app/components/reservations/booking-sheet.tsx:1048
 msgid "Dietary Tags"
 msgstr "Dietary Tags"
 
-#: app/components/menu/item-form.tsx:638
-#: app/components/menu/option-form.tsx:623
+#: app/components/menu/item-form.tsx:690
+#: app/components/menu/option-form.tsx:724
 msgid "Dietary, Allergens & Calories"
 msgstr "Dietary, Allergens & Calories"
 
@@ -13864,11 +13960,11 @@ msgstr "Dine in"
 msgid "Dine-in"
 msgstr "Dine-in"
 
-#: app/components/locations/location-form.tsx:752
+#: app/components/locations/location-form.tsx:781
 msgid "Dine-In / In-House"
 msgstr "Dine-In / In-House"
 
-#: app/components/locations/location-form.tsx:838
+#: app/components/locations/location-form.tsx:867
 msgid "Dine-In Tips"
 msgstr "Dine-In Tips"
 
@@ -13966,7 +14062,7 @@ msgstr "Disabled for this location"
 
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:218
 #: app/components/reservations/settings/save-bar.tsx:76
-#: app/components/save-bar.tsx:345
+#: app/components/save-bar.tsx:350
 msgid "Discard"
 msgstr "Discard"
 
@@ -14066,6 +14162,7 @@ msgid "Discounted quantity"
 msgstr "Discounted quantity"
 
 #: app/components/app-sidebar.tsx:409
+#: app/components/menu/delete-effects.tsx:273
 #: app/components/roles/tenant-role-access-manager.tsx:504
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:256
 msgid "Discounts"
@@ -14079,7 +14176,7 @@ msgstr "Discounts"
 msgid "Discounts, coupon codes and how often they were used. Only applies when Discounts is turned on for your organization."
 msgstr "Discounts, coupon codes and how often they were used. Only applies when Discounts is turned on for your organization."
 
-#: app/components/menu/item-form.tsx:478
+#: app/components/menu/item-form.tsx:519
 msgid "Dish or drink title, description, and internal SKU/code."
 msgstr "Dish or drink title, description, and internal SKU/code."
 
@@ -14091,7 +14188,7 @@ msgstr "Dish soap"
 msgid "Dishes above this percentage are highlighted in Recipes & menu cost."
 msgstr "Dishes above this percentage are highlighted in Recipes & menu cost."
 
-#: app/components/menu/category-form.tsx:404
+#: app/components/menu/category-form.tsx:424
 msgid "Dishes and beverages in this category."
 msgstr "Dishes and beverages in this category."
 
@@ -14121,15 +14218,15 @@ msgstr ""
 msgid "Dispatch text message with merge tags"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4152
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4171
 msgid "Display"
 msgstr "Display"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1409
+#: app/components/menu/drop-wizard/drop-form.tsx:1447
 msgid "Display live stock counters on items"
 msgstr "Display live stock counters on items"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1361
+#: app/components/menu/drop-wizard/drop-form.tsx:1399
 msgid "Display the opening date below the countdown"
 msgstr "Display the opening date below the countdown"
 
@@ -14249,7 +14346,7 @@ msgstr "Done {when}"
 msgid "Door"
 msgstr "Door"
 
-#: app/components/locations/location-form.tsx:962
+#: app/components/locations/location-form.tsx:991
 msgid "DoorDash Drive"
 msgstr "DoorDash Drive"
 
@@ -14266,7 +14363,7 @@ msgid "Double time must start after daily overtime."
 msgstr "Double time must start after daily overtime."
 
 #: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:128
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:1791
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:1793
 msgid "Double-click a block to add it instantly"
 msgstr ""
 
@@ -14330,7 +14427,7 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:413
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:254
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:416
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5986
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6026
 #: app/utils/inventory/order-view.ts:23
 #: app/utils/loyalty/loyalty-labels.ts:29
 #: app/utils/reservations/experiences-view.ts:37
@@ -14459,6 +14556,10 @@ msgstr ""
 msgid "Drag to reorder column"
 msgstr ""
 
+#: app/components/menu/quick-modifier-group-sheet.tsx:105
+msgid "Drag to reorder option {position}"
+msgstr "Drag to reorder option {position}"
+
 #: app/components/locations/delivery-zones-manager.tsx:494
 msgid "Draw Delivery Zone on Map"
 msgstr "Draw Delivery Zone on Map"
@@ -14480,11 +14581,11 @@ msgstr "Drop"
 msgid "Drop actions"
 msgstr "Drop actions"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:585
+#: app/components/menu/drop-wizard/drop-form.tsx:623
 msgid "Drop Information"
 msgstr "Drop Information"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:596
+#: app/components/menu/drop-wizard/drop-form.tsx:634
 msgid "Drop name (customer-facing)"
 msgstr "Drop name (customer-facing)"
 
@@ -14538,6 +14639,7 @@ msgstr "Dropped. Nothing changed."
 
 #: app/components/app-sidebar.tsx:396
 #: app/components/customers/person-profile-screen.tsx:118
+#: app/components/menu/delete-effects.tsx:274
 #: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:72
 #: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:201
 msgid "Drops"
@@ -14645,6 +14747,10 @@ msgstr ""
 msgid "e.g. checkout_abandoned, tier_upgraded"
 msgstr ""
 
+#: app/components/menu/quick-modifier-group-sheet.tsx:324
+msgid "e.g. Choice of Protein, Sides"
+msgstr "e.g. Choice of Protein, Sides"
+
 #: app/components/locations/special-hours-picker.tsx:139
 msgid "e.g. Christmas Day, Summer Festival"
 msgstr "e.g. Christmas Day, Summer Festival"
@@ -14661,7 +14767,7 @@ msgstr "e.g. Dinner 3-server"
 msgid "e.g. Downtown Express, Zone 1"
 msgstr "e.g. Downtown Express, Zone 1"
 
-#: app/components/locations/location-form.tsx:353
+#: app/components/locations/location-form.tsx:382
 msgid "e.g. Downtown Flagship"
 msgstr "e.g. Downtown Flagship"
 
@@ -14708,7 +14814,7 @@ msgstr ""
 msgid "e.g. Section A"
 msgstr "e.g. Section A"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:602
+#: app/components/menu/drop-wizard/drop-form.tsx:640
 msgid "e.g. Sourdough Saturday Drop #12"
 msgstr "e.g. Sourdough Saturday Drop #12"
 
@@ -14884,7 +14990,7 @@ msgstr "Earning reversed"
 #: app/components/customers/person-notes-panel.tsx:170
 #: app/components/dashboard/access-labels.ts:20
 #: app/components/favorite-notes.tsx:116
-#: app/components/menu/drop-wizard/drop-form.tsx:965
+#: app/components/menu/drop-wizard/drop-form.tsx:1003
 #: app/components/note/comment-item.tsx:232
 #: app/components/phone-agent/summary-card.tsx:55
 #: app/components/reservations/experiences/experience-editor.tsx:940
@@ -14999,7 +15105,7 @@ msgstr "Edit dining area"
 msgid "Edit dining areas, tables, combinations, services, pacing, blocks, policies, messages, sections, and experiences. Includes View reservation settings & experiences."
 msgstr "Edit dining areas, tables, combinations, services, pacing, blocks, policies, messages, sections, and experiences. Includes View reservation settings & experiences."
 
-#: app/components/menu/drop-wizard/drop-form.tsx:450
+#: app/components/menu/drop-wizard/drop-form.tsx:488
 msgid "Edit Drop"
 msgstr "Edit Drop"
 
@@ -15047,11 +15153,11 @@ msgstr "Edit note"
 msgid "Edit Note"
 msgstr ""
 
-#: app/components/menu/modifier-form.tsx:361
+#: app/components/menu/modifier-form.tsx:363
 msgid "Edit option"
 msgstr "Edit option"
 
-#: app/components/menu/modifier-form.tsx:1893
+#: app/components/menu/modifier-form.tsx:1821
 msgid "Edit Option"
 msgstr "Edit Option"
 
@@ -15064,7 +15170,7 @@ msgstr "Edit own notes"
 msgid "Edit party"
 msgstr "Edit party"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1117
+#: app/components/menu/drop-wizard/drop-form.tsx:1155
 msgid "Edit pickup window"
 msgstr "Edit pickup window"
 
@@ -15092,7 +15198,7 @@ msgstr "Edit promotion"
 msgid "Edit redirect"
 msgstr "Edit redirect"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1263
+#: app/components/menu/drop-wizard/drop-form.tsx:1301
 msgid "Edit reminder"
 msgstr "Edit reminder"
 
@@ -15116,7 +15222,7 @@ msgstr "Edit rule"
 msgid "Edit schedule"
 msgstr "Edit schedule"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:906
+#: app/components/menu/drop-wizard/drop-form.tsx:944
 msgid "Edit section cap"
 msgstr "Edit section cap"
 
@@ -15366,7 +15472,7 @@ msgstr ""
 msgid "Enable Custom S3 Storage"
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1432
+#: app/components/menu/drop-wizard/drop-form.tsx:1470
 msgid "Enable gift card redemptions on this drop"
 msgstr "Enable gift card redemptions on this drop"
 
@@ -15374,7 +15480,7 @@ msgstr "Enable gift card redemptions on this drop"
 msgid "Enable hosted checkout"
 msgstr "Enable hosted checkout"
 
-#: app/components/locations/location-form.tsx:703
+#: app/components/locations/location-form.tsx:732
 msgid "Enable or disable available fulfillment channels for this location."
 msgstr "Enable or disable available fulfillment channels for this location."
 
@@ -15503,7 +15609,7 @@ msgstr "Enhanced"
 msgid "Enter 0 or more copies"
 msgstr "Enter 0 or more copies"
 
-#: app/components/menu/option-form.tsx:501
+#: app/components/menu/option-form.tsx:602
 msgid "Enter 0.00 for no extra charge (e.g. Free choice)."
 msgstr "Enter 0.00 for no extra charge (e.g. Free choice)."
 
@@ -16243,7 +16349,7 @@ msgstr "Est. labor {labor}"
 msgid "Est. pay"
 msgstr "Est. pay"
 
-#: app/components/locations/location-form.tsx:588
+#: app/components/locations/location-form.tsx:617
 msgid "Estimated kitchen lead time and extra time for high-volume orders."
 msgstr "Estimated kitchen lead time and extra time for high-volume orders."
 
@@ -16252,11 +16358,11 @@ msgstr "Estimated kitchen lead time and extra time for high-volume orders."
 msgid "Estimated labor cost"
 msgstr "Estimated labor cost"
 
-#: app/components/locations/location-form.tsx:994
+#: app/components/locations/location-form.tsx:1023
 msgid "Estimated Max Delivery Time (minutes)"
 msgstr "Estimated Max Delivery Time (minutes)"
 
-#: app/components/locations/location-form.tsx:975
+#: app/components/locations/location-form.tsx:1004
 msgid "Estimated Min Delivery Time (minutes)"
 msgstr "Estimated Min Delivery Time (minutes)"
 
@@ -16474,7 +16580,7 @@ msgstr "Everyone you import is added to this workplace."
 msgid "Everything"
 msgstr "Everything"
 
-#: app/components/menu/assigned-sortable-list.tsx:266
+#: app/components/menu/assigned-sortable-list.tsx:287
 msgid "Everything available is already assigned."
 msgstr "Everything available is already assigned."
 
@@ -16526,7 +16632,7 @@ msgstr "Exclude {name} from discounts"
 msgid "Exclude categories"
 msgstr "Exclude categories"
 
-#: app/components/menu/item-form.tsx:859
+#: app/components/menu/item-form.tsx:911
 msgid "Exclude from discounts"
 msgstr "Exclude from discounts"
 
@@ -16534,7 +16640,7 @@ msgstr "Exclude from discounts"
 msgid "Exclude from discounts. Never receives a discount, for example gift cards."
 msgstr "Exclude from discounts. Never receives a discount, for example gift cards."
 
-#: app/components/menu/item-form.tsx:839
+#: app/components/menu/item-form.tsx:891
 msgid "Exclude from Throttling"
 msgstr "Exclude from Throttling"
 
@@ -16543,7 +16649,7 @@ msgstr "Exclude from Throttling"
 msgid "Exclude items"
 msgstr "Exclude items"
 
-#: app/components/menu/category-form.tsx:520
+#: app/components/menu/category-form.tsx:540
 msgid "Exclude items in this category from kitchen throttling and large order prep time delays (e.g. retail items, bottled drinks)."
 msgstr "Exclude items in this category from kitchen throttling and large order prep time delays (e.g. retail items, bottled drinks)."
 
@@ -16571,11 +16677,11 @@ msgstr ""
 msgid "Execution runs and step history, triggered by \"{triggerLabel}\"."
 msgstr "Execution runs and step history, triggered by \"{triggerLabel}\"."
 
-#: app/components/menu/item-form.tsx:842
+#: app/components/menu/item-form.tsx:894
 msgid "Exempt from kitchen prep delay calculations."
 msgstr "Exempt from kitchen prep delay calculations."
 
-#: app/components/menu/category-form.tsx:533
+#: app/components/menu/category-form.tsx:553
 msgid "Exempt from Throttling"
 msgstr "Exempt from Throttling"
 
@@ -16748,7 +16854,7 @@ msgstr "Exported {exportedCount} people."
 msgid "Extend turn by 15m"
 msgstr "Extend turn by 15m"
 
-#: app/components/menu/option-form.tsx:496
+#: app/components/menu/option-form.tsx:597
 msgid "Extra charge when this topping is added to the whole pizza."
 msgstr "Extra charge when this topping is added to the whole pizza."
 
@@ -16784,7 +16890,7 @@ msgstr "Facebook Pixel ID"
 msgid "Facebook takes at most {SOCIAL_MAX_MEDIA} images."
 msgstr "Facebook takes at most {SOCIAL_MAX_MEDIA} images."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3420
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3439
 msgid "Fade up"
 msgstr ""
 
@@ -17061,7 +17167,7 @@ msgstr "Failed to save availability rule."
 msgid "Failed to save floor plan."
 msgstr "Failed to save floor plan."
 
-#: app/components/menu/option-form.tsx:317
+#: app/components/menu/option-form.tsx:415
 msgid "Failed to save option. Please check the fields below."
 msgstr "Failed to save option. Please check the fields below."
 
@@ -17169,7 +17275,7 @@ msgstr ""
 msgid "Feature Preview"
 msgstr ""
 
-#: app/components/menu/item-form.tsx:792
+#: app/components/menu/item-form.tsx:844
 msgid "Feature this item prominently in ordering flows."
 msgstr "Feature this item prominently in ordering flows."
 
@@ -17181,7 +17287,7 @@ msgstr "Featured dishes"
 msgid "Featured items"
 msgstr "Featured items"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3736
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3755
 msgid "Features"
 msgstr ""
 
@@ -17746,7 +17852,7 @@ msgid "Forgot your password?"
 msgstr ""
 
 #: app/components/workspace-breadcrumb.tsx:117
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4117
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4136
 msgid "Form"
 msgstr "Form"
 
@@ -17803,7 +17909,7 @@ msgstr "Forwarding"
 msgid "Found more than expected"
 msgstr "Found more than expected"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3838
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3857
 msgid "Four"
 msgstr ""
 
@@ -18005,11 +18111,11 @@ msgstr "Frying oil"
 msgid "Fulfillment"
 msgstr "Fulfillment"
 
-#: app/components/locations/location-form.tsx:318
+#: app/components/locations/location-form.tsx:347
 msgid "Fulfillment & Timing"
 msgstr "Fulfillment & Timing"
 
-#: app/components/locations/location-form.tsx:700
+#: app/components/locations/location-form.tsx:729
 msgid "Fulfillment Options"
 msgstr "Fulfillment Options"
 
@@ -18173,6 +18279,10 @@ msgstr "Give away {when}"
 msgid "Give both the time and how many days before delivery."
 msgstr "Give both the time and how many days before delivery."
 
+#: app/components/menu/quick-modifier-group-sheet.tsx:215
+msgid "Give every option a name, or remove the empty row."
+msgstr "Give every option a name, or remove the empty row."
+
 #: app/components/app-sidebar.tsx:201
 #: app/components/app-sidebar.tsx:974
 #: app/components/core/feedback-modal.tsx:69
@@ -18186,6 +18296,10 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/loyalty+/promotions.tsx:506
 msgid "Give only the biggest bonus"
 msgstr "Give only the biggest bonus"
+
+#: app/components/menu/quick-modifier-group-sheet.tsx:208
+msgid "Give the group a name."
+msgstr "Give the group a name."
 
 #: app/components/hiring/job-editor.tsx:472
 msgid "Give the job a title."
@@ -18216,10 +18330,10 @@ msgstr "Give visitors room to share thoughtful feedback."
 msgid "Give your group a name"
 msgstr "Give your group a name"
 
-#: app/components/menu/item-form.tsx:654
-#: app/components/menu/modifier-form.tsx:1665
-#: app/components/menu/modifier-form.tsx:2020
-#: app/components/menu/option-form.tsx:639
+#: app/components/menu/item-form.tsx:706
+#: app/components/menu/modifier-form.tsx:1593
+#: app/components/menu/modifier-form.tsx:1948
+#: app/components/menu/option-form.tsx:740
 #: app/components/reservations/booking-sheet.tsx:62
 #: app/utils/reservations/labels.ts:103
 msgid "Gluten-Free"
@@ -18380,10 +18494,11 @@ msgid "Group conversation"
 msgstr "Group conversation"
 
 #: app/components/chat/chat-compose-dialog.tsx:297
+#: app/components/menu/quick-modifier-group-sheet.tsx:318
 msgid "Group name"
 msgstr "Group name"
 
-#: app/components/menu/modifier-form.tsx:913
+#: app/components/menu/modifier-form.tsx:944
 msgid "Group Name (Guest-Facing)"
 msgstr "Group Name (Guest-Facing)"
 
@@ -18449,8 +18564,8 @@ msgstr ""
 #~ msgid "Guest details saved."
 #~ msgstr "Guest details saved."
 
-#: app/components/menu/item-form.tsx:641
-#: app/components/menu/option-form.tsx:626
+#: app/components/menu/item-form.tsx:693
+#: app/components/menu/option-form.tsx:727
 msgid "Guest dietary tags and allergen disclosure information."
 msgstr "Guest dietary tags and allergen disclosure information."
 
@@ -18542,16 +18657,16 @@ msgstr "Guest Request / Notes"
 msgid "Guest tags"
 msgstr "Guest tags"
 
-#: app/components/menu/menu-form.tsx:186
-#: app/components/menu/modifier-form.tsx:907
+#: app/components/menu/menu-form.tsx:206
+#: app/components/menu/modifier-form.tsx:938
 msgid "Guest-facing name and internal identifier."
 msgstr "Guest-facing name and internal identifier."
 
-#: app/components/menu/category-form.tsx:283
+#: app/components/menu/category-form.tsx:303
 msgid "Guest-facing name, internal identifier, and description."
 msgstr "Guest-facing name, internal identifier, and description."
 
-#: app/components/menu/option-form.tsx:408
+#: app/components/menu/option-form.tsx:509
 msgid "Guest-facing name, internal SKU, and description."
 msgstr "Guest-facing name, internal SKU, and description."
 
@@ -18603,15 +18718,15 @@ msgstr "Guests can join online"
 msgid "Guests can no longer book its seatings. Bookings already made are kept."
 msgstr "Guests can no longer book its seatings. Bookings already made are kept."
 
-#: app/components/menu/modifier-form.tsx:980
+#: app/components/menu/modifier-selection-fields.tsx:58
 msgid "Guests can pick multiple options."
 msgstr "Guests can pick multiple options."
 
-#: app/components/menu/modifier-form.tsx:968
+#: app/components/menu/modifier-selection-fields.tsx:46
 msgid "Guests can pick up to 1 option."
 msgstr "Guests can pick up to 1 option."
 
-#: app/components/menu/modifier-form.tsx:1029
+#: app/components/menu/modifier-selection-fields.tsx:114
 msgid "Guests can skip this selection."
 msgstr "Guests can skip this selection."
 
@@ -18631,7 +18746,7 @@ msgstr "Guests cancel and change freely until this long before the booking."
 msgid "Guests cannot book until this is fixed"
 msgstr "Guests cannot book until this is fixed"
 
-#: app/components/menu/modifier-form.tsx:992
+#: app/components/menu/modifier-selection-fields.tsx:70
 msgid "Guests choose counts per option."
 msgstr "Guests choose counts per option."
 
@@ -18650,7 +18765,7 @@ msgstr "Guests leave a card. Nothing is charged unless you charge a fee."
 #~ msgid "Guests merged."
 #~ msgstr "Guests merged."
 
-#: app/components/menu/modifier-form.tsx:1025
+#: app/components/menu/modifier-selection-fields.tsx:112
 msgid "Guests must choose one option before continuing."
 msgstr "Guests must choose one option before continuing."
 
@@ -18738,7 +18853,7 @@ msgstr "Halal"
 msgid "Half"
 msgstr "Half"
 
-#: app/components/menu/option-form.tsx:529
+#: app/components/menu/option-form.tsx:630
 msgid "Half pizza price ($)"
 msgstr "Half pizza price ($)"
 
@@ -18785,7 +18900,7 @@ msgstr "Have it printed"
 #: ../../packages/marketing/src/components/email/block-meta.ts:18
 #: app/components/hiring/description-editor.tsx:115
 #: app/components/hiring/description-editor.tsx:116
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4184
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4203
 #: app/utils/website/field-types.ts:61
 #: app/utils/website/field-types.ts:64
 msgid "Heading"
@@ -18941,7 +19056,7 @@ msgstr "Hide details"
 msgid "Hide from menu"
 msgstr "Hide from menu"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2731
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2750
 msgid "Hide from search engines"
 msgstr ""
 
@@ -18981,7 +19096,7 @@ msgstr "High contrast"
 msgid "High impact"
 msgstr "High impact"
 
-#: app/components/menu/option-form.tsx:333
+#: app/components/menu/option-form.tsx:434
 msgid "High-resolution photos increase ordering conversion by over 30%. Stored in your organization's Media Library."
 msgstr "High-resolution photos increase ordering conversion by over 30%. Stored in your organization's Media Library."
 
@@ -19108,8 +19223,8 @@ msgstr "Holidays, private events and times when tables are not available."
 #: app/components/workspace-breadcrumb.tsx:188
 #: app/components/workspace-breadcrumb.tsx:202
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:394
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6021
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6043
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6061
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6083
 msgid "Home"
 msgstr ""
 
@@ -19520,7 +19635,7 @@ msgid "Image to crop"
 msgstr ""
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:217
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4084
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4103
 msgid "Image URL"
 msgstr ""
 
@@ -19632,6 +19747,10 @@ msgstr "In {since}"
 msgid "In 15-minute steps."
 msgstr "In 15-minute steps."
 
+#: app/components/menu/delete-effects.tsx:266
+msgid "In categories"
+msgstr "In categories"
+
 #: app/components/staff/schedule/availability-page.tsx:149
 msgid "In force"
 msgstr "In force"
@@ -19642,6 +19761,10 @@ msgstr "In line"
 
 #~ msgid "In line: {activeCount}"
 #~ msgstr "In line: {activeCount}"
+
+#: app/components/menu/delete-effects.tsx:267
+msgid "In modifier groups"
+msgstr "In modifier groups"
 
 #: app/components/hiring/applicant-labels.ts:35
 msgid "In person"
@@ -19682,7 +19805,7 @@ msgstr "In your manager account, open Staff, Time clock, then Tablets."
 msgid "In-App"
 msgstr ""
 
-#: app/components/locations/location-form.tsx:924
+#: app/components/locations/location-form.tsx:953
 msgid "In-House Delivery"
 msgstr "In-House Delivery"
 
@@ -19690,7 +19813,7 @@ msgstr "In-House Delivery"
 msgid "In-House Delivery Fee ($)"
 msgstr "In-House Delivery Fee ($)"
 
-#: app/components/locations/location-form.tsx:735
+#: app/components/locations/location-form.tsx:764
 msgid "In-house fleet, Uber Eats, or DoorDash delivery."
 msgstr "In-house fleet, Uber Eats, or DoorDash delivery."
 
@@ -19698,7 +19821,7 @@ msgstr "In-house fleet, Uber Eats, or DoorDash delivery."
 msgid "In-house only"
 msgstr "In-house only"
 
-#: app/components/locations/location-form.tsx:803
+#: app/components/locations/location-form.tsx:832
 msgid "In-House Tips"
 msgstr "In-House Tips"
 
@@ -19714,7 +19837,7 @@ msgstr "Include a link to the call"
 msgid "Include drop orders"
 msgstr "Include drop orders"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1429
+#: app/components/menu/drop-wizard/drop-form.tsx:1467
 msgid "Include Gift Cards"
 msgstr "Include Gift Cards"
 
@@ -19798,7 +19921,7 @@ msgstr "Ingredients for {label}"
 msgid "Ingredients saved."
 msgstr "Ingredients saved."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4258
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4277
 msgid "Inline"
 msgstr "Inline"
 
@@ -19897,16 +20020,16 @@ msgstr "Internal name"
 msgid "Internal notes"
 msgstr "Internal notes"
 
-#: app/components/menu/category-form.tsx:377
-#: app/components/menu/menu-form.tsx:204
-#: app/components/menu/modifier-form.tsx:925
-#: app/components/menu/modifier-form.tsx:1560
-#: app/components/menu/modifier-form.tsx:1915
+#: app/components/menu/category-form.tsx:397
+#: app/components/menu/menu-form.tsx:224
+#: app/components/menu/modifier-form.tsx:956
+#: app/components/menu/modifier-form.tsx:1488
+#: app/components/menu/modifier-form.tsx:1843
 msgid "Internal Reference (Optional)"
 msgstr "Internal Reference (Optional)"
 
-#: app/components/menu/item-form.tsx:498
-#: app/components/menu/option-form.tsx:428
+#: app/components/menu/item-form.tsx:539
+#: app/components/menu/option-form.tsx:529
 msgid "Internal Reference / SKU (Optional)"
 msgstr "Internal Reference / SKU (Optional)"
 
@@ -19982,7 +20105,7 @@ msgstr "Inventory"
 msgid "Inventory is paused right now. Try again in a few minutes."
 msgstr "Inventory is paused right now. Try again in a few minutes."
 
-#: app/components/menu/drop-wizard/drop-form.tsx:842
+#: app/components/menu/drop-wizard/drop-form.tsx:880
 msgid "Inventory limits"
 msgstr "Inventory limits"
 
@@ -20018,7 +20141,7 @@ msgstr "Inventory: an order is due for delivery"
 msgid "Inventory: items are below the level you order at"
 msgstr "Inventory: items are below the level you order at"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4967
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4986
 msgid "Inverted"
 msgstr ""
 
@@ -20266,7 +20389,7 @@ msgstr "It will not be published."
 msgid "Italic"
 msgstr "Italic"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:886
+#: app/components/menu/drop-wizard/drop-form.tsx:924
 msgid "item"
 msgstr "item"
 
@@ -20298,20 +20421,20 @@ msgstr "Item discount"
 msgid "Item discounts"
 msgstr "Item discounts"
 
-#: app/components/menu/item-form.tsx:475
+#: app/components/menu/item-form.tsx:516
 msgid "Item Information"
 msgstr "Item Information"
 
-#: app/components/menu/item-form.tsx:486
+#: app/components/menu/item-form.tsx:527
 msgid "Item Name (Guest-Facing)"
 msgstr "Item Name (Guest-Facing)"
 
-#: app/components/menu/item-form.tsx:388
+#: app/components/menu/item-form.tsx:429
 msgid "Item Photos"
 msgstr "Item Photos"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:739
-#: app/components/menu/drop-wizard/drop-form.tsx:887
+#: app/components/menu/drop-wizard/drop-form.tsx:777
+#: app/components/menu/drop-wizard/drop-form.tsx:925
 msgid "items"
 msgstr "items"
 
@@ -20355,7 +20478,7 @@ msgstr "Items counted"
 msgid "Items discounted per use"
 msgstr "Items discounted per use"
 
-#: app/components/menu/category-form.tsx:536
+#: app/components/menu/category-form.tsx:556
 msgid "Items in this category will not add preparation delay to orders."
 msgstr "Items in this category will not add preparation delay to orders."
 
@@ -20391,13 +20514,21 @@ msgstr "Items taken off tabs"
 msgid "Items that earn"
 msgstr "Items that earn"
 
-#: app/components/menu/modifier-form.tsx:1390
+#: app/components/menu/modifier-form.tsx:1318
 msgid "Items that offer this modifier group."
 msgstr "Items that offer this modifier group."
+
+#: app/components/menu/delete-effects.tsx:269
+msgid "Items that will be unassigned"
+msgstr "Items that will be unassigned"
 
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.add-many.tsx:323
 msgid "Items to add"
 msgstr "Items to add"
+
+#: app/components/menu/delete-effects.tsx:271
+msgid "Items using it"
+msgstr "Items using it"
 
 #: app/components/discounts/discount-form.tsx:768
 msgid "Its coupon codes are not brought back: add new ones before you turn it on."
@@ -20774,7 +20905,7 @@ msgstr "Kitchen manager"
 msgid "Kitchen team"
 msgstr "Kitchen team"
 
-#: app/components/menu/category-form.tsx:517
+#: app/components/menu/category-form.tsx:537
 msgid "Kitchen Throttling Exemption"
 msgstr "Kitchen Throttling Exemption"
 
@@ -20892,11 +21023,11 @@ msgstr "Lapsed 90d"
 msgid "Large"
 msgstr ""
 
-#: app/components/locations/location-form.tsx:614
+#: app/components/locations/location-form.tsx:643
 msgid "Large Order Extra Prep Time (minutes)"
 msgstr "Large Order Extra Prep Time (minutes)"
 
-#: app/components/locations/location-form.tsx:632
+#: app/components/locations/location-form.tsx:661
 msgid "Large Order Threshold Rule"
 msgstr "Large Order Threshold Rule"
 
@@ -21154,10 +21285,10 @@ msgid "Launch Test Run in Builder"
 msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:471
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3371
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3531
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3820
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4251
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3390
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3550
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3839
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4270
 msgid "Layout"
 msgstr ""
 
@@ -21237,7 +21368,7 @@ msgstr "Leave empty to charge the policy fee. You can only lower it."
 msgid "Leave empty to keep existing secret key, or enter a new one to update."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2476
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2495
 msgid "Leave empty to keep this page at the root of your site."
 msgstr ""
 
@@ -21302,9 +21433,9 @@ msgstr "Leave this page?"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:93
 #: app/components/reservations/status-style.tsx:212
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3392
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3588
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4366
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3411
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3607
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4385
 #: app/utils/reservations/waitlist-view.ts:17
 msgid "Left"
 msgstr ""
@@ -21329,8 +21460,8 @@ msgstr "Left Message"
 msgid "Left on {leftOn}"
 msgstr "Left on {leftOn}"
 
-#: app/components/menu/modifier-form.tsx:1590
-#: app/components/menu/modifier-form.tsx:1945
+#: app/components/menu/modifier-form.tsx:1518
+#: app/components/menu/modifier-form.tsx:1873
 msgid "Left or right ($)"
 msgstr "Left or right ($)"
 
@@ -21373,7 +21504,7 @@ msgstr "Less"
 msgid "Less than the minimum rest since their last shift"
 msgstr "Less than the minimum rest since their last shift"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4215
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4234
 msgid "Let guests choose"
 msgstr "Let guests choose"
 
@@ -21406,7 +21537,7 @@ msgid "Lettuce"
 msgstr "Lettuce"
 
 #. placeholder {0}: currentParentDepth + 1
-#: app/components/menu/category-form.tsx:296
+#: app/components/menu/category-form.tsx:316
 msgid "Level {0} Subcategory"
 msgstr "Level {0} Subcategory"
 
@@ -21520,7 +21651,7 @@ msgstr ""
 msgid "Link (optional)"
 msgstr "Link (optional)"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4513
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4532
 msgid "Link columns"
 msgstr ""
 
@@ -22053,7 +22184,7 @@ msgstr "Local emulator"
 #: app/components/reservations/header-controls.tsx:39
 #: app/routes/_app+/$orgSlug_+/media.tsx:1681
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:611
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4204
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4223
 msgid "Location"
 msgstr "Location"
 
@@ -22074,11 +22205,11 @@ msgstr "Location default"
 msgid "Location defaults"
 msgstr "Location defaults"
 
-#: app/components/locations/location-form.tsx:332
+#: app/components/locations/location-form.tsx:361
 msgid "Location Details"
 msgstr "Location Details"
 
-#: app/components/locations/location-form.tsx:347
+#: app/components/locations/location-form.tsx:376
 msgid "Location Name"
 msgstr "Location Name"
 
@@ -22186,7 +22317,7 @@ msgstr "Locked: the program has been active, so the currency cannot change."
 msgid "Locking is off for this workplace. Turn it on in Labor rules."
 msgstr "Locking is off for this workplace. Turn it on in Labor rules."
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1317
+#: app/components/menu/drop-wizard/drop-form.tsx:1355
 msgid "Locks inventory while customer fills in checkout details."
 msgstr "Locks inventory while customer fills in checkout details."
 
@@ -22218,11 +22349,11 @@ msgstr ""
 msgid "Logo"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3212
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3231
 msgid "Logo & colors"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3549
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3568
 msgid "Logo panel"
 msgstr ""
 
@@ -22259,7 +22390,7 @@ msgstr "Longer than usual."
 msgid "Longer than your long-shift limit. Check it is not a missed clock-out."
 msgstr "Longer than your long-shift limit. Check it is not a missed clock-out."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4323
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4342
 msgid "Look"
 msgstr ""
 
@@ -22283,7 +22414,7 @@ msgstr "Looks right ({reviewCount})"
 #~ msgid "Lookup Returning Guest (Phone or Name)"
 #~ msgstr "Lookup Returning Guest (Phone or Name)"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3887
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3906
 msgid "Loose"
 msgstr ""
 
@@ -22508,7 +22639,7 @@ msgstr ""
 msgid "Make request"
 msgstr "Make request"
 
-#: app/components/locations/location-form.tsx:500
+#: app/components/locations/location-form.tsx:529
 msgid "Make this the primary location for your restaurant."
 msgstr "Make this the primary location for your restaurant."
 
@@ -22771,7 +22902,7 @@ msgstr "Mark as done"
 msgid "Mark as not done"
 msgstr "Mark as not done"
 
-#: app/components/menu/modifier-form.tsx:192
+#: app/components/menu/modifier-form.tsx:194
 msgid "Mark as preselected"
 msgstr "Mark as preselected"
 
@@ -23003,7 +23134,7 @@ msgstr "Max per order"
 msgid "Max per pickup slot"
 msgstr "Max per pickup slot"
 
-#: app/components/locations/location-form.tsx:871
+#: app/components/locations/location-form.tsx:900
 msgid "Maximum advance ordering window (days)"
 msgstr "Maximum advance ordering window (days)"
 
@@ -23025,10 +23156,14 @@ msgstr "Maximum discount"
 msgid "Maximum off"
 msgstr "Maximum off"
 
-#: app/components/menu/modifier-form.tsx:1065
-#: app/components/menu/option-form.tsx:580
+#: app/components/menu/modifier-selection-fields.tsx:158
+#: app/components/menu/option-form.tsx:681
 msgid "Maximum Selections (Optional)"
 msgstr "Maximum Selections (Optional)"
+
+#: app/components/menu/quick-modifier-group-sheet.tsx:220
+msgid "Maximum selections must be a whole number of 1 or more."
+msgstr "Maximum selections must be a whole number of 1 or more."
 
 #: app/components/discounts/discount-form.tsx:587
 #: app/components/discounts/discount-form.tsx:1815
@@ -23089,7 +23224,7 @@ msgstr "Measured in"
 msgid "Meat"
 msgstr "Meat"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3439
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3458
 msgid "Media"
 msgstr ""
 
@@ -23110,14 +23245,14 @@ msgstr "Media details saved"
 msgid "Media library"
 msgstr "Media library"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3945
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3964
 msgid "Media URL"
 msgstr ""
 
 #: app/components/phone-agent/training-rules-section.tsx:65
 #: app/components/settings/cards/organization/site-theme-card.tsx:747
 #: app/components/settings/cards/organization/site-theme-card.tsx:750
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5076
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5095
 msgid "Medium"
 msgstr ""
 
@@ -23164,8 +23299,8 @@ msgstr "Members who created the most notes."
 
 #: app/components/app-sidebar.tsx:358
 #: app/components/customers/person-profile-screen.tsx:126
-#: app/components/menu/drop-wizard/drop-form.tsx:706
-#: app/components/menu/drop-wizard/drop-form.tsx:722
+#: app/components/menu/drop-wizard/drop-form.tsx:744
+#: app/components/menu/drop-wizard/drop-form.tsx:760
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:38
 #: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:94
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:300
@@ -23197,7 +23332,7 @@ msgstr "Menu health score"
 msgid "Menu info"
 msgstr "Menu info"
 
-#: app/components/menu/menu-form.tsx:183
+#: app/components/menu/menu-form.tsx:203
 msgid "Menu Information"
 msgstr "Menu Information"
 
@@ -23205,7 +23340,7 @@ msgstr "Menu Information"
 msgid "Menu item"
 msgstr "Menu item"
 
-#: app/components/menu/menu-form.tsx:192
+#: app/components/menu/menu-form.tsx:212
 msgid "Menu Name (Guest-Facing)"
 msgstr "Menu Name (Guest-Facing)"
 
@@ -23217,7 +23352,7 @@ msgstr "Menu Options"
 msgid "Menu Overview"
 msgstr "Menu Overview"
 
-#: app/components/locations/location-form.tsx:462
+#: app/components/locations/location-form.tsx:491
 msgid "Menu prices already include tax (VAT), as required in Saudi Arabia, the EU and the UK. Tax is shown on receipts but not added at checkout."
 msgstr "Menu prices already include tax (VAT), as required in Saudi Arabia, the EU and the UK. Tax is shown on receipts but not added at checkout."
 
@@ -23229,11 +23364,11 @@ msgstr "Menu Settings"
 msgid "Menu tax"
 msgstr "Menu tax"
 
-#: app/components/menu/menu-form.tsx:232
+#: app/components/menu/menu-form.tsx:252
 msgid "Menu Type"
 msgstr "Menu Type"
 
-#: app/components/menu/menu-form.tsx:220
+#: app/components/menu/menu-form.tsx:240
 msgid "Menu Type & Capabilities"
 msgstr "Menu Type & Capabilities"
 
@@ -23244,7 +23379,7 @@ msgstr "Menu Type & Capabilities"
 msgid "Menus"
 msgstr "Menus"
 
-#: app/components/menu/category-form.tsx:552
+#: app/components/menu/category-form.tsx:572
 msgid "Menus that display this category."
 msgstr "Menus that display this category."
 
@@ -23347,7 +23482,7 @@ msgstr "Messages and call records tied to this phone number."
 msgid "Messages to send"
 msgstr "Messages to send"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2549
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2568
 msgid "Meta description"
 msgstr ""
 
@@ -23401,7 +23536,7 @@ msgstr "Milk"
 #~ msgid "Min covers"
 #~ msgstr "Min covers"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1063
+#: app/components/menu/drop-wizard/drop-form.tsx:1101
 msgid "min intervals"
 msgstr "min intervals"
 
@@ -23441,10 +23576,14 @@ msgstr "Minimum party size cannot exceed maximum."
 msgid "Minimum qualifying spend"
 msgstr "Minimum qualifying spend"
 
-#: app/components/menu/modifier-form.tsx:1046
-#: app/components/menu/option-form.tsx:565
+#: app/components/menu/modifier-selection-fields.tsx:142
+#: app/components/menu/option-form.tsx:666
 msgid "Minimum Selections"
 msgstr "Minimum Selections"
+
+#: app/components/menu/quick-modifier-group-sheet.tsx:225
+msgid "Minimum selections cannot be more than the maximum."
+msgstr "Minimum selections cannot be more than the maximum."
 
 #: app/components/discounts/discount-form.tsx:526
 #: app/components/discounts/discount-form.tsx:1863
@@ -23518,7 +23657,7 @@ msgstr "Missing required segmentation field"
 msgid "Missing something the job needs"
 msgstr "Missing something the job needs"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5847
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5887
 msgid "Mobile"
 msgstr ""
 
@@ -23593,7 +23732,7 @@ msgstr "Modifier Group"
 msgid "Modifier group actions"
 msgstr "Modifier group actions"
 
-#: app/components/menu/modifier-form.tsx:904
+#: app/components/menu/modifier-form.tsx:935
 msgid "Modifier Group Information"
 msgstr "Modifier Group Information"
 
@@ -23606,7 +23745,7 @@ msgid "Modifier groups"
 msgstr "Modifier groups"
 
 #: app/components/app-sidebar.tsx:386
-#: app/components/menu/item-form.tsx:603
+#: app/components/menu/item-form.tsx:644
 #: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:58
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:292
 msgid "Modifier Groups"
@@ -23617,7 +23756,7 @@ msgstr "Modifier Groups"
 msgid "Modifier options"
 msgstr "Modifier options"
 
-#: app/components/menu/modifier-form.tsx:1084
+#: app/components/menu/modifier-form.tsx:1012
 msgid "Modifier Options"
 msgstr "Modifier Options"
 
@@ -23934,7 +24073,7 @@ msgstr "Mozzarella"
 msgid "Multi-factor authentication"
 msgstr ""
 
-#: app/components/menu/option-form.tsx:793
+#: app/components/menu/option-form.tsx:894
 msgid "Multiple"
 msgstr "Multiple"
 
@@ -23943,7 +24082,7 @@ msgstr "Multiple"
 msgid "Multiple choice"
 msgstr "Multiple choice"
 
-#: app/components/menu/modifier-form.tsx:977
+#: app/components/menu/modifier-selection-fields.tsx:55
 msgid "Multiple Choice (Checkboxes)"
 msgstr "Multiple Choice (Checkboxes)"
 
@@ -23959,7 +24098,7 @@ msgstr "Mute"
 msgid "Mute microphone"
 msgstr "Mute microphone"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4962
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4981
 msgid "Muted"
 msgstr ""
 
@@ -24015,7 +24154,7 @@ msgstr "My schedule link"
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:387
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:235
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:201
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4472
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4491
 #: app/routes/organizations+/create.tsx:978
 #: app/utils/people/people-view.ts:14
 #: app/utils/website/field-types.ts:25
@@ -24029,6 +24168,14 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:1184
 msgid "Name (guest-facing)"
 msgstr "Name (guest-facing)"
+
+#: app/components/menu/quick-modifier-group-sheet.tsx:370
+msgid "Name and extra price. Drag to reorder."
+msgstr "Name and extra price. Drag to reorder."
+
+#: app/components/menu/quick-modifier-group-sheet.tsx:366
+msgid "Name and whole-pizza price. Each half costs half of it."
+msgstr "Name and whole-pizza price. Each half costs half of it."
 
 #~ msgid "Name in Arabic"
 #~ msgstr "Name in Arabic"
@@ -24105,7 +24252,7 @@ msgstr ""
 msgid "Navigate to MCP Servers configuration"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3240
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3259
 msgid "Navigation links"
 msgstr ""
 
@@ -24200,11 +24347,11 @@ msgstr "Negative"
 msgid "Negative feedback"
 msgstr ""
 
-#: app/components/menu/category-form.tsx:356
+#: app/components/menu/category-form.tsx:376
 msgid "Nest up to 3 levels deep (e.g. Drinks > Hot Coffees > Americanos)."
 msgstr "Nest up to 3 levels deep (e.g. Drinks > Hot Coffees > Americanos)."
 
-#: app/components/menu/modifier-form.tsx:252
+#: app/components/menu/modifier-form.tsx:254
 msgid "Nested Groups:"
 msgstr "Nested Groups:"
 
@@ -24212,7 +24359,7 @@ msgstr "Nested Groups:"
 msgid "Nested Modifier"
 msgstr "Nested Modifier"
 
-#: app/components/menu/modifier-form.tsx:1150
+#: app/components/menu/modifier-form.tsx:1078
 msgid "Nested Modifier Groups"
 msgstr "Nested Modifier Groups"
 
@@ -24220,11 +24367,11 @@ msgstr "Nested Modifier Groups"
 msgid "Nested modifier groups:"
 msgstr "Nested modifier groups:"
 
-#: app/components/menu/modifier-form.tsx:1442
+#: app/components/menu/modifier-form.tsx:1370
 msgid "Nested Modifier Usage"
 msgstr "Nested Modifier Usage"
 
-#: app/components/menu/option-form.tsx:814
+#: app/components/menu/option-form.tsx:915
 msgid "Nested Modifiers"
 msgstr "Nested Modifiers"
 
@@ -24271,7 +24418,7 @@ msgstr "Never discounted"
 msgid "Never free"
 msgstr "Never free"
 
-#: app/components/menu/item-form.tsx:862
+#: app/components/menu/item-form.tsx:914
 msgid "Never receives a discount, for example gift cards."
 msgstr "Never receives a discount, for example gift cards."
 
@@ -24835,8 +24982,8 @@ msgstr "No card is saved for this booking."
 msgid "No categories assigned to this menu"
 msgstr "No categories assigned to this menu"
 
-#: app/components/menu/item-form.tsx:746
-#: app/components/menu/menu-form.tsx:329
+#: app/components/menu/item-form.tsx:798
+#: app/components/menu/menu-form.tsx:349
 msgid "No categories assigned yet. Add a category to get started."
 msgstr "No categories assigned yet. Add a category to get started."
 
@@ -25064,7 +25211,7 @@ msgstr "No drops match these filters"
 msgid "No drops scheduled yet"
 msgstr "No drops scheduled yet"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2873
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2892
 msgid "No editor available for this block type."
 msgstr ""
 
@@ -25179,8 +25326,8 @@ msgstr "No issues found"
 msgid "No item selected"
 msgstr "No item selected"
 
-#: app/components/menu/category-form.tsx:412
-#: app/components/menu/modifier-form.tsx:1398
+#: app/components/menu/category-form.tsx:432
+#: app/components/menu/modifier-form.tsx:1326
 msgid "No items assigned yet. Add one to get started."
 msgstr "No items assigned yet. Add one to get started."
 
@@ -25188,7 +25335,7 @@ msgstr "No items assigned yet. Add one to get started."
 msgid "No items in this category yet."
 msgstr "No items in this category yet."
 
-#: app/components/menu/drop-wizard/drop-form.tsx:915
+#: app/components/menu/drop-wizard/drop-form.tsx:953
 msgid "No items in this section."
 msgstr "No items in this section."
 
@@ -25317,7 +25464,7 @@ msgstr "No matching images"
 msgid "No matching locations"
 msgstr "No matching locations"
 
-#: app/components/menu/modifier-form.tsx:1825
+#: app/components/menu/modifier-form.tsx:1753
 msgid "No matching options found."
 msgstr "No matching options found."
 
@@ -25353,11 +25500,11 @@ msgstr ""
 msgid "No members have been given direct access."
 msgstr "No members have been given direct access."
 
-#: app/components/menu/drop-wizard/drop-form.tsx:988
+#: app/components/menu/drop-wizard/drop-form.tsx:1026
 msgid "No menu selected"
 msgstr "No menu selected"
 
-#: app/components/menu/category-form.tsx:559
+#: app/components/menu/category-form.tsx:579
 msgid "No menus assigned yet. Add a menu to make this category visible."
 msgstr "No menus assigned yet. Add a menu to make this category visible."
 
@@ -25365,7 +25512,7 @@ msgstr "No menus assigned yet. Add a menu to make this category visible."
 msgid "No menus created yet"
 msgstr "No menus created yet"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:788
+#: app/components/menu/drop-wizard/drop-form.tsx:826
 msgid "No menus found. Please create a menu first."
 msgstr "No menus found. Please create a menu first."
 
@@ -25401,11 +25548,11 @@ msgstr "No messages yet"
 msgid "No microphone was found. Connect one and try again."
 msgstr "No microphone was found. Connect one and try again."
 
-#: app/components/menu/item-form.tsx:616
+#: app/components/menu/item-form.tsx:657
 msgid "No modifier groups assigned yet. Add one to get started."
 msgstr "No modifier groups assigned yet. Add one to get started."
 
-#: app/components/menu/option-form.tsx:732
+#: app/components/menu/option-form.tsx:833
 msgid "No modifier groups found. You can create modifier groups first in the Modifier Groups tab."
 msgstr "No modifier groups found. You can create modifier groups first in the Modifier Groups tab."
 
@@ -25433,7 +25580,7 @@ msgstr "No more arrivals expected."
 msgid "No names to show. Ask a manager to set up your PIN."
 msgstr "No names to show. Ask a manager to set up your PIN."
 
-#: app/components/menu/modifier-form.tsx:1167
+#: app/components/menu/modifier-form.tsx:1095
 msgid "No nested groups yet"
 msgstr "No nested groups yet"
 
@@ -25527,7 +25674,7 @@ msgstr "No open requests"
 msgid "No open times for this date and party size. Enter another time below, or change the date."
 msgstr "No open times for this date and party size. Enter another time below, or change the date."
 
-#: app/components/menu/modifier-form.tsx:1095
+#: app/components/menu/modifier-form.tsx:1023
 msgid "No options added yet. Click “Add option” to get started."
 msgstr "No options added yet. Click “Add option” to get started."
 
@@ -25562,7 +25709,7 @@ msgstr "No orders yet."
 msgid "No organization with the slug \"{orgSlug}\" exists"
 msgstr ""
 
-#: app/components/menu/category-form.tsx:454
+#: app/components/menu/category-form.tsx:474
 msgid "No other categories available for upsell."
 msgstr "No other categories available for upsell."
 
@@ -25577,13 +25724,13 @@ msgstr "No other customers with reservation history match."
 msgid "No other members to share with"
 msgstr ""
 
-#: app/components/menu/modifier-form.tsx:1365
+#: app/components/menu/modifier-form.tsx:1293
 msgid "No other modifier groups available"
 msgstr "No other modifier groups available"
 
-#: app/components/menu/modifier-form.tsx:1722
-#: app/components/menu/modifier-form.tsx:2077
-#: app/components/menu/option-form.tsx:838
+#: app/components/menu/modifier-form.tsx:1650
+#: app/components/menu/modifier-form.tsx:2005
+#: app/components/menu/option-form.tsx:937
 msgid "No other modifier groups available to nest."
 msgstr "No other modifier groups available to nest."
 
@@ -25688,7 +25835,7 @@ msgstr "No photo yet."
 #~ msgid "No pickup window added yet"
 #~ msgstr "No pickup window added yet"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1019
+#: app/components/menu/drop-wizard/drop-form.tsx:1057
 msgid "No pickup windows scheduled"
 msgstr "No pickup windows scheduled"
 
@@ -25791,7 +25938,7 @@ msgstr "No redirects match that search"
 msgid "No refund"
 msgstr "No refund"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1225
+#: app/components/menu/drop-wizard/drop-form.tsx:1263
 msgid "No reminder notifications set."
 msgstr "No reminder notifications set."
 
@@ -25916,7 +26063,7 @@ msgstr "No section layouts yet"
 #~ msgid "No sections added to this drop yet"
 #~ msgstr "No sections added to this drop yet"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5772
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5812
 msgid "No sections yet"
 msgstr ""
 
@@ -26343,7 +26490,7 @@ msgstr "none"
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:314
 #: app/components/hiring/job-summary.tsx:66
 #: app/components/inventory/count-review-screen.tsx:882
-#: app/components/menu/modifier-form.tsx:287
+#: app/components/menu/modifier-form.tsx:289
 #: app/components/reservations/booking-sheet.tsx:87
 #: app/components/settings/cards/organization/site-theme-card.tsx:748
 #: app/components/staff/empty-value.tsx:14
@@ -26352,13 +26499,13 @@ msgstr "none"
 #: app/components/website/link-inspector.tsx:615
 #: app/components/website/link-inspector.tsx:634
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:649
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3380
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3410
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3872
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3399
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3429
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3891
 msgid "None"
 msgstr ""
 
-#: app/components/menu/category-form.tsx:332
+#: app/components/menu/category-form.tsx:352
 msgid "None (Top-Level Category)"
 msgstr "None (Top-Level Category)"
 
@@ -26541,7 +26688,7 @@ msgstr "Not shared with anyone yet."
 msgid "Not shown"
 msgstr "Not shown"
 
-#: app/components/menu/modifier-form.tsx:1263
+#: app/components/menu/modifier-form.tsx:1191
 msgid "Not shown yet"
 msgstr "Not shown yet"
 
@@ -26564,6 +26711,15 @@ msgstr "Not this guest"
 #: app/routes/_app+/$orgSlug_+/loyalty+/activity.tsx:561
 msgid "Not updated"
 msgstr "Not updated"
+
+#: app/components/menu/item-form.tsx:672
+#: app/components/menu/option-form.tsx:1000
+msgid "Not used anywhere else yet"
+msgstr "Not used anywhere else yet"
+
+#: app/components/menu/delete-effects.tsx:566
+msgid "Not used anywhere yet."
+msgstr "Not used anywhere yet."
 
 #: app/routes/_app+/$orgSlug_+/media.tsx:1769
 msgid "Not used in any notes, comments, or pages"
@@ -26653,7 +26809,7 @@ msgstr "Note removed"
 msgid "Note title..."
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-form.tsx:632
+#: app/components/menu/drop-wizard/drop-form.tsx:670
 msgid "Note to Customers"
 msgstr "Note to Customers"
 
@@ -27009,7 +27165,7 @@ msgstr "Notify me when a table opens"
 msgid "Notify me: a table opened up"
 msgstr "Notify me: a table opened up"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1217
+#: app/components/menu/drop-wizard/drop-form.tsx:1255
 msgid "Notify subscribed guests before open or close."
 msgstr "Notify subscribed guests before open or close."
 
@@ -27042,7 +27198,7 @@ msgstr "Nut Allergy"
 msgid "Nutrition Info"
 msgstr "Nutrition Info"
 
-#: app/components/menu/menu-form.tsx:281
+#: app/components/menu/menu-form.tsx:301
 msgid "Nutritional Information"
 msgstr "Nutritional Information"
 
@@ -27177,6 +27333,10 @@ msgstr "On hold"
 #: app/utils/staffing/schedule-errors.ts:70
 msgid "On leave"
 msgstr "On leave"
+
+#: app/components/menu/delete-effects.tsx:265
+msgid "On menus"
+msgstr "On menus"
 
 #: app/components/staff/labor-core-rules.tsx:354
 msgid "On shifts longer than"
@@ -27428,7 +27588,7 @@ msgstr "Online order tips that join the pool"
 msgid "Online ordering"
 msgstr "Online ordering"
 
-#: app/components/menu/menu-form.tsx:247
+#: app/components/menu/menu-form.tsx:267
 msgid "Online Ordering, POS & Kiosk"
 msgstr "Online Ordering, POS & Kiosk"
 
@@ -27792,7 +27952,7 @@ msgstr "Open email"
 msgid "Open for online booking"
 msgstr "Open for online booking"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2586
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2605
 msgid "Open Graph image"
 msgstr ""
 
@@ -27879,7 +28039,7 @@ msgstr "Open pages, forms, and themes in the site builder."
 msgid "Open payout dashboard"
 msgstr "Open payout dashboard"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6135
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6175
 msgid "Open preview"
 msgstr ""
 
@@ -28081,8 +28241,8 @@ msgstr "Opens:"
 msgid "OpenTable"
 msgstr "OpenTable"
 
-#: app/components/locations/location-form.tsx:315
-#: app/components/locations/location-form.tsx:554
+#: app/components/locations/location-form.tsx:344
+#: app/components/locations/location-form.tsx:583
 msgid "Operating Hours"
 msgstr "Operating Hours"
 
@@ -28114,32 +28274,41 @@ msgstr "Option"
 msgid "Option {nextKey}"
 msgstr "Option {nextKey}"
 
+#: app/components/menu/quick-modifier-group-sheet.tsx:113
+msgid "Option {position} name"
+msgstr "Option {position} name"
+
+#: app/components/menu/quick-modifier-group-sheet.tsx:125
+msgid "Option {position} price"
+msgstr "Option {position} price"
+
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:565
 msgid "Option actions"
 msgstr "Option actions"
 
-#: app/components/menu/modifier-form.tsx:1548
-#: app/components/menu/modifier-form.tsx:1903
+#: app/components/menu/modifier-form.tsx:1476
+#: app/components/menu/modifier-form.tsx:1831
 msgid "Option Display Name (Guest-Facing)"
 msgstr "Option Display Name (Guest-Facing)"
 
-#: app/components/menu/option-form.tsx:405
+#: app/components/menu/option-form.tsx:506
 msgid "Option Information"
 msgstr "Option Information"
 
 #: app/components/menu/item-variations.tsx:178
+#: app/components/menu/quick-modifier-group-sheet.tsx:112
 msgid "Option name"
 msgstr "Option name"
 
-#: app/components/menu/option-form.tsx:416
+#: app/components/menu/option-form.tsx:517
 msgid "Option Name (Guest-Facing)"
 msgstr "Option Name (Guest-Facing)"
 
-#: app/components/menu/option-form.tsx:330
+#: app/components/menu/option-form.tsx:431
 msgid "Option Photo"
 msgstr "Option Photo"
 
-#: app/components/menu/option-form.tsx:391
+#: app/components/menu/option-form.tsx:492
 msgid "Option photos are displayed in online ordering menus and modifier trays."
 msgstr "Option photos are displayed in online ordering menus and modifier trays."
 
@@ -28175,7 +28344,7 @@ msgstr "Optional cap for one order, in <0>{currency}</0>."
 #~ msgid "Optional cap for one order."
 #~ msgstr "Optional cap for one order."
 
-#: app/components/menu/drop-wizard/drop-form.tsx:845
+#: app/components/menu/drop-wizard/drop-form.tsx:883
 msgid "Optional caps per category or item"
 msgstr "Optional caps per category or item"
 
@@ -28296,6 +28465,7 @@ msgstr "Optional. The most items discounted in one order."
 #: app/components/discounts/discount-form.tsx:1937
 #: app/components/discounts/variant-filter.tsx:152
 #: app/components/discounts/variant-filter.tsx:169
+#: app/components/menu/quick-modifier-group-sheet.tsx:362
 #: app/components/phone-agent/flow-editor/node-inspector.tsx:259
 #: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:65
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:350
@@ -28309,6 +28479,14 @@ msgstr "Options for option type {number}"
 #: app/components/menu/item-variations.tsx:146
 msgid "Options like size or color. Price and availability per combination."
 msgstr "Options like size or color. Price and availability per combination."
+
+#: app/components/menu/delete-effects.tsx:272
+msgid "Options that open it"
+msgstr "Options that open it"
+
+#: app/components/menu/delete-effects.tsx:270
+msgid "Options that will be unassigned"
+msgstr "Options that will be unassigned"
 
 #: app/routes/_auth+/signup.tsx:244
 msgid "Or continue with"
@@ -28432,7 +28610,7 @@ msgstr "Order must include"
 msgid "Order of {date}"
 msgstr "Order of {date}"
 
-#: app/components/locations/location-form.tsx:585
+#: app/components/locations/location-form.tsx:614
 msgid "Order Preparation Time"
 msgstr "Order Preparation Time"
 
@@ -28494,7 +28672,7 @@ msgstr "Ordering options"
 msgid "Ordering this print also needs permission to see its QR codes."
 msgstr "Ordering this print also needs permission to see its QR codes."
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1176
+#: app/components/menu/drop-wizard/drop-form.tsx:1214
 msgid "Ordering Window"
 msgstr "Ordering Window"
 
@@ -28532,7 +28710,7 @@ msgstr "Orders below this do not earn. Merchandise after discounts, without tax 
 msgid "Orders can be delivered inside this zone"
 msgstr "Orders can be delivered inside this zone"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1197
+#: app/components/menu/drop-wizard/drop-form.tsx:1235
 msgid "Orders close"
 msgstr "Orders close"
 
@@ -28550,11 +28728,11 @@ msgstr "Orders could not be loaded. Try again."
 msgid "Orders one person handles in an hour"
 msgstr "Orders one person handles in an hour"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1185
+#: app/components/menu/drop-wizard/drop-form.tsx:1223
 msgid "Orders open"
 msgstr "Orders open"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1065
+#: app/components/menu/drop-wizard/drop-form.tsx:1103
 msgid "orders per slot"
 msgstr "orders per slot"
 
@@ -28973,15 +29151,15 @@ msgstr "Page {pageNumber}"
 msgid "Page actions"
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-form.tsx:609
+#: app/components/menu/drop-wizard/drop-form.tsx:647
 msgid "Page address"
 msgstr "Page address"
 
 #~ msgid "Page settings"
 #~ msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2431
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5270
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2450
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5289
 msgid "Page Settings"
 msgstr ""
 
@@ -28990,7 +29168,7 @@ msgid "Page Title"
 msgstr ""
 
 #: app/components/website/create-page-dialog.tsx:170
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2442
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2461
 msgid "Page URL"
 msgstr ""
 
@@ -29144,7 +29322,7 @@ msgstr ""
 msgid "Parameters"
 msgstr ""
 
-#: app/components/menu/category-form.tsx:292
+#: app/components/menu/category-form.tsx:312
 msgid "Parent Category (Hierarchy)"
 msgstr "Parent Category (Hierarchy)"
 
@@ -29908,7 +30086,7 @@ msgstr "Phone number"
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:496
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:346
-#: app/components/locations/location-form.tsx:379
+#: app/components/locations/location-form.tsx:408
 #: app/components/reservations/booking-sheet.tsx:966
 msgid "Phone Number"
 msgstr ""
@@ -29938,17 +30116,17 @@ msgid "Phone Verified (OTP Success)"
 msgstr ""
 
 #: app/components/media-library/photo-studio-dialog.tsx:512
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3381
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3561
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3963
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3400
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3580
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3982
 msgid "Photo"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4329
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4348
 msgid "Photo + card"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3544
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3563
 msgid "Photo + text"
 msgstr ""
 
@@ -29958,7 +30136,7 @@ msgstr ""
 msgid "Photo of the invoice"
 msgstr "Photo of the invoice"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3404
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3423
 msgid "Photo overlay"
 msgstr ""
 
@@ -29966,12 +30144,12 @@ msgstr ""
 msgid "Photo saved."
 msgstr "Photo saved."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3604
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3844
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3623
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3863
 msgid "Photo shape"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3582
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3601
 msgid "Photo side"
 msgstr ""
 
@@ -29979,7 +30157,7 @@ msgstr ""
 msgid "Photos"
 msgstr "Photos"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3898
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3917
 msgid "Photos and videos"
 msgstr ""
 
@@ -29988,7 +30166,7 @@ msgstr ""
 msgid "Phrases"
 msgstr "Phrases"
 
-#: app/components/locations/location-form.tsx:519
+#: app/components/locations/location-form.tsx:548
 msgid "Physical Address"
 msgstr "Physical Address"
 
@@ -29996,7 +30174,7 @@ msgstr "Physical Address"
 msgid "Pick a block to add to your email."
 msgstr "Pick a block to add to your email."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:1734
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:1736
 msgid "Pick a block to insert into your page."
 msgstr ""
 
@@ -30043,7 +30221,7 @@ msgstr "Pick a different place: stock cannot move to the same place."
 msgid "Pick a field to add to your form."
 msgstr "Pick a field to add to your form."
 
-#: app/components/menu/modifier-form.tsx:1170
+#: app/components/menu/modifier-form.tsx:1098
 msgid "Pick a group below to reveal it after a guest selects a triggering option."
 msgstr "Pick a group below to reveal it after a guest selects a triggering option."
 
@@ -30171,7 +30349,7 @@ msgstr "pickup and delivery tips"
 msgid "Pickup orders"
 msgstr "Pickup orders"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1004
+#: app/components/menu/drop-wizard/drop-form.tsx:1042
 msgid "Pickup Schedule & Fulfillment"
 msgstr "Pickup Schedule & Fulfillment"
 
@@ -30179,7 +30357,7 @@ msgstr "Pickup Schedule & Fulfillment"
 msgid "pickup tips"
 msgstr "pickup tips"
 
-#: app/components/locations/location-form.tsx:814
+#: app/components/locations/location-form.tsx:843
 msgid "Pickup Tips"
 msgstr "Pickup Tips"
 
@@ -30277,11 +30455,11 @@ msgstr "Pizza dough"
 msgid "Pizza sizes"
 msgstr "Pizza sizes"
 
-#: app/components/menu/option-form.tsx:783
+#: app/components/menu/option-form.tsx:884
 msgid "Pizza Topping"
 msgstr "Pizza Topping"
 
-#: app/components/menu/modifier-form.tsx:1001
+#: app/components/menu/modifier-selection-fields.tsx:79
 msgid "Pizza Toppings (Whole / Halves)"
 msgstr "Pizza Toppings (Whole / Halves)"
 
@@ -30296,7 +30474,7 @@ msgstr "Place"
 msgid "Placed"
 msgstr "Placed"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4957
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4976
 msgid "Plain"
 msgstr ""
 
@@ -30337,7 +30515,7 @@ msgstr "Planning it now."
 msgid "Plant"
 msgstr "Plant"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4630
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4649
 msgid "Platform"
 msgstr ""
 
@@ -30349,7 +30527,7 @@ msgstr "Platform-provided role."
 msgid "Platinum"
 msgstr "Platinum"
 
-#: app/components/menu/menu-form.tsx:265
+#: app/components/menu/menu-form.tsx:285
 msgid "Platters, party bundles, and advanced lead-time catering menus."
 msgstr "Platters, party bundles, and advanced lead-time catering menus."
 
@@ -30614,7 +30792,7 @@ msgstr "Pool by day"
 msgid "Pooled total"
 msgstr "Pooled total"
 
-#: app/components/menu/item-form.tsx:803
+#: app/components/menu/item-form.tsx:855
 msgid "Popular Item"
 msgstr "Popular Item"
 
@@ -30840,17 +31018,17 @@ msgstr "Prepayment"
 msgid "Prerender"
 msgstr ""
 
-#: app/components/menu/modifier-form.tsx:199
-#: app/components/menu/modifier-form.tsx:205
+#: app/components/menu/modifier-form.tsx:201
+#: app/components/menu/modifier-form.tsx:207
 msgid "Preselected"
 msgstr "Preselected"
 
-#: app/components/menu/modifier-form.tsx:192
+#: app/components/menu/modifier-form.tsx:194
 msgid "Preselected (default)"
 msgstr "Preselected (default)"
 
-#: app/components/menu/modifier-form.tsx:1639
-#: app/components/menu/modifier-form.tsx:1994
+#: app/components/menu/modifier-form.tsx:1567
+#: app/components/menu/modifier-form.tsx:1922
 msgid "Preselected (Included when guests first open this group)"
 msgstr "Preselected (Included when guests first open this group)"
 
@@ -30890,11 +31068,11 @@ msgstr "Prev"
 #: app/components/social/post-composer.tsx:361
 #: app/components/staff/schedule/recommend-dialog.tsx:241
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:549
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6084
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6124
 msgid "Preview"
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1383
+#: app/components/menu/drop-wizard/drop-form.tsx:1421
 msgid "Preview Menu in Advance"
 msgstr "Preview Menu in Advance"
 
@@ -30940,8 +31118,8 @@ msgstr "Price ({currency})"
 
 #: app/components/menu/item-variations.tsx:302
 #: app/components/menu/item-variations.tsx:369
-#: app/components/menu/modifier-form.tsx:1612
-#: app/components/menu/modifier-form.tsx:1967
+#: app/components/menu/modifier-form.tsx:1540
+#: app/components/menu/modifier-form.tsx:1895
 msgid "Price ($)"
 msgstr "Price ($)"
 
@@ -31018,7 +31196,7 @@ msgstr "Priced by weight (the invoice shows the real weight)"
 msgid "Prices confirmed."
 msgstr "Prices confirmed."
 
-#: app/components/locations/location-form.tsx:459
+#: app/components/locations/location-form.tsx:488
 msgid "Prices include tax"
 msgstr "Prices include tax"
 
@@ -31056,8 +31234,8 @@ msgstr "Prices, names or QR codes on this print are out of date. Approve the pro
 msgid "Pricing"
 msgstr "Pricing"
 
-#: app/components/menu/item-form.tsx:526
-#: app/components/menu/option-form.tsx:455
+#: app/components/menu/item-form.tsx:567
+#: app/components/menu/option-form.tsx:556
 msgid "Pricing & Tax"
 msgstr "Pricing & Tax"
 
@@ -31065,17 +31243,17 @@ msgstr "Pricing & Tax"
 msgid "Pricing not available"
 msgstr ""
 
-#: app/components/menu/item-form.tsx:418
+#: app/components/menu/item-form.tsx:459
 #: app/components/website/link-inspector.tsx:394
 msgid "Primary"
 msgstr ""
 
-#: app/components/locations/location-form.tsx:497
+#: app/components/locations/location-form.tsx:526
 msgid "Primary / Default Location"
 msgstr "Primary / Default Location"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3339
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4388
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3358
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4407
 msgid "Primary button"
 msgstr ""
 
@@ -31100,6 +31278,10 @@ msgstr "Print at home (US Letter)"
 #: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:262
 msgid "Print coupons"
 msgstr "Print coupons"
+
+#: app/components/menu/delete-effects.tsx:275
+msgid "Print designs"
+msgstr "Print designs"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:373
 msgid "Print it as"
@@ -31144,7 +31326,7 @@ msgstr "Print this view"
 msgid "Printed and shipped to your door. You can cancel until production starts."
 msgstr "Printed and shipped to your door. You can cancel until production starts."
 
-#: app/components/locations/location-form.tsx:444
+#: app/components/locations/location-form.tsx:473
 msgid "Printed on receipts. Letters and digits only; leave empty if not registered."
 msgstr "Printed on receipts. Letters and digits only; leave empty if not registered."
 
@@ -31274,7 +31456,7 @@ msgstr "Progress"
 msgid "Project management"
 msgstr "Project management"
 
-#: app/components/menu/item-form.tsx:821
+#: app/components/menu/item-form.tsx:873
 msgid "Promote as Upsell"
 msgstr "Promote as Upsell"
 
@@ -31291,7 +31473,7 @@ msgstr "Promotion"
 msgid "Promotions"
 msgstr "Promotions"
 
-#: app/components/menu/item-form.tsx:789
+#: app/components/menu/item-form.tsx:841
 msgid "Promotions & Highlights"
 msgstr "Promotions & Highlights"
 
@@ -31329,7 +31511,7 @@ msgstr "Provider"
 msgid "Provider calls go to the built-in emulators. No real money moves and no real keys are used."
 msgstr "Provider calls go to the built-in emulators. No real money moves and no real keys are used."
 
-#: app/components/menu/drop-wizard/drop-form.tsx:502
+#: app/components/menu/drop-wizard/drop-form.tsx:540
 msgid "Public"
 msgstr "Public"
 
@@ -31359,14 +31541,14 @@ msgstr "Public note"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:215
 #: app/components/hiring/job-editor.tsx:451
-#: app/components/menu/drop-wizard/drop-form.tsx:459
+#: app/components/menu/drop-wizard/drop-form.tsx:497
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:699
 #: app/components/reservations/experiences/experience-editor.tsx:516
 #: app/components/staff/schedule/publish-dialog.tsx:273
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:430
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:491
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:460
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6098
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6138
 msgid "Publish"
 msgstr ""
 
@@ -31414,7 +31596,7 @@ msgid "Publish this week"
 msgstr "Publish this week"
 
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:493
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6105
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6145
 msgid "Publish updates"
 msgstr ""
 
@@ -31432,7 +31614,7 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:411
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:252
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:414
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5984
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6024
 #: app/utils/reservations/experiences-view.ts:38
 msgid "Published"
 msgstr ""
@@ -31608,12 +31790,12 @@ msgstr "Quantities are in packs, the way the supplier sells them."
 #: app/components/discounts/discount-form.tsx:551
 #: app/components/discounts/discount-form.tsx:1537
 #: app/components/discounts/discount-form.tsx:1559
-#: app/components/menu/option-form.tsx:795
+#: app/components/menu/option-form.tsx:896
 #: app/utils/discounts/summary.ts:292
 msgid "Quantity"
 msgstr "Quantity"
 
-#: app/components/menu/modifier-form.tsx:989
+#: app/components/menu/modifier-selection-fields.tsx:67
 msgid "Quantity Counter (+/-)"
 msgstr "Quantity Counter (+/-)"
 
@@ -31629,7 +31811,7 @@ msgstr "Quantity rule"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:558
 #: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:559
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3684
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3703
 msgid "Question"
 msgstr ""
 
@@ -31640,7 +31822,7 @@ msgstr "Question {number}"
 
 #: app/components/hiring/job-editor.tsx:202
 #: app/components/hiring/job-summary.tsx:64
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3667
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3686
 msgid "Questions"
 msgstr ""
 
@@ -31689,7 +31871,7 @@ msgstr "Quiet hours must start and end at different times."
 msgid "Quiet hours start"
 msgstr "Quiet hours start"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4461
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4480
 msgid "Quote"
 msgstr ""
 
@@ -31748,7 +31930,7 @@ msgstr "Rated"
 msgid "Rated {rating} out of 5"
 msgstr "Rated {rating} out of 5"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4481
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4500
 msgid "Rating"
 msgstr ""
 
@@ -32020,6 +32202,10 @@ msgstr "Recipe cleared."
 msgid "Recipe set"
 msgstr "Recipe set"
 
+#: app/components/menu/delete-effects.tsx:376
+msgid "Recipes"
+msgstr "Recipes"
+
 #: app/utils/inventory/inventory-errors.ts:158
 #: app/utils/inventory/inventory-errors.ts:188
 msgid "Recipes are not turned on for your business."
@@ -32057,11 +32243,11 @@ msgstr "Recommended for SEO"
 #~ msgid "Recommended setup improvements"
 #~ msgstr "Recommended setup improvements"
 
-#: app/components/menu/category-form.tsx:437
+#: app/components/menu/category-form.tsx:457
 msgid "Recommended Upsells & Pairings"
 msgstr "Recommended Upsells & Pairings"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:694
+#: app/components/menu/drop-wizard/drop-form.tsx:732
 msgid "Recommended wide banner (21:9)"
 msgstr "Recommended wide banner (21:9)"
 
@@ -32290,7 +32476,7 @@ msgstr "Refresh calls"
 msgid "Refresh Checkout setup"
 msgstr "Refresh Checkout setup"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6126
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6166
 msgid "Refresh preview"
 msgstr ""
 
@@ -32419,7 +32605,7 @@ msgid "Registered {timeAgo} ago"
 msgstr ""
 
 #: app/components/staff/timesheets/payroll-summary.tsx:169
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3882
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3901
 #: app/utils/reservations/labels.ts:96
 msgid "Regular"
 msgstr ""
@@ -32555,9 +32741,9 @@ msgid "Removal not published"
 msgstr "Removal not published"
 
 #: app/components/inventory/transfer-dialogs.tsx:423
-#: app/components/menu/drop-wizard/drop-form.tsx:676
+#: app/components/menu/drop-wizard/drop-form.tsx:714
 #: app/components/menu/item-variations.tsx:202
-#: app/components/menu/option-form.tsx:386
+#: app/components/menu/option-form.tsx:487
 #: app/components/note/share-note-button.tsx:265
 #: app/components/phone-agent/phone-number-dialogs.tsx:178
 #: app/components/pos/terminals-manager.tsx:499
@@ -32575,7 +32761,7 @@ msgstr "Removal not published"
 #: app/components/staff/schedule/shift-editor-sheet.tsx:710
 #: app/components/staff/schedule/shift-editor-sheet.tsx:743
 #: app/components/website/branding-panel.tsx:314
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2663
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2682
 msgid "Remove"
 msgstr ""
 
@@ -32721,7 +32907,7 @@ msgstr "Remove ingredient {rowNumber}"
 msgid "Remove invite"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4577
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4596
 msgid "Remove link"
 msgstr ""
 
@@ -32737,7 +32923,7 @@ msgstr ""
 msgid "Remove member"
 msgstr ""
 
-#: app/components/menu/modifier-form.tsx:1222
+#: app/components/menu/modifier-form.tsx:1150
 msgid "Remove nested modifier group"
 msgstr "Remove nested modifier group"
 
@@ -32745,22 +32931,26 @@ msgstr "Remove nested modifier group"
 msgid "Remove number"
 msgstr "Remove number"
 
-#: app/components/menu/modifier-form.tsx:370
+#: app/components/menu/modifier-form.tsx:372
 #: app/components/phone-agent/flow-editor/node-inspector.tsx:213
 msgid "Remove option"
 msgstr "Remove option"
+
+#: app/components/menu/quick-modifier-group-sheet.tsx:133
+msgid "Remove option {position}"
+msgstr "Remove option {position}"
 
 #: app/components/discounts/variant-filter.tsx:175
 msgid "Remove option type {number}"
 msgstr "Remove option type {number}"
 
 #: app/components/inventory/record-delivery-screen.tsx:884
-#: app/components/menu/item-form.tsx:427
+#: app/components/menu/item-form.tsx:468
 #: app/components/menu/item-variations.tsx:358
 msgid "Remove photo"
 msgstr "Remove photo"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1127
+#: app/components/menu/drop-wizard/drop-form.tsx:1165
 msgid "Remove pickup window"
 msgstr "Remove pickup window"
 
@@ -32781,7 +32971,7 @@ msgstr "Remove question"
 msgid "Remove question {number}"
 msgstr "Remove question {number}"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1273
+#: app/components/menu/drop-wizard/drop-form.tsx:1311
 msgid "Remove reminder"
 msgstr "Remove reminder"
 
@@ -33026,9 +33216,9 @@ msgstr "Repeat on other days"
 msgid "Repeat-purchase rate"
 msgstr "Repeat-purchase rate"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:665
+#: app/components/menu/drop-wizard/drop-form.tsx:703
 #: app/components/settings/cards/organization/site-theme-card.tsx:289
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2637
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2656
 msgid "Replace"
 msgstr ""
 
@@ -33151,7 +33341,7 @@ msgstr ""
 msgid "Reports you save on the Reports page appear here."
 msgstr "Reports you save on the Reports page appear here."
 
-#: app/components/menu/drop-wizard/drop-form.tsx:458
+#: app/components/menu/drop-wizard/drop-form.tsx:496
 msgid "Republish"
 msgstr "Republish"
 
@@ -33253,7 +33443,7 @@ msgstr "Required categories"
 msgid "Required items"
 msgstr "Required items"
 
-#: app/components/menu/modifier-form.tsx:1021
+#: app/components/menu/modifier-selection-fields.tsx:108
 msgid "Required selection"
 msgstr "Required selection"
 
@@ -33795,7 +33985,7 @@ msgid "reviews"
 msgstr "reviews"
 
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:48
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4443
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4462
 msgid "Reviews"
 msgstr ""
 
@@ -33862,8 +34052,8 @@ msgid "Rice"
 msgstr "Rice"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:95
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3593
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4376
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3612
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4395
 msgid "Right"
 msgstr ""
 
@@ -33933,8 +34123,8 @@ msgstr "Round"
 msgid "Round hours"
 msgstr "Round hours"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3610
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3850
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3629
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3869
 msgid "Rounded"
 msgstr ""
 
@@ -34205,7 +34395,7 @@ msgstr "Sales per labor hour"
 msgid "Sales tax"
 msgstr "Sales tax"
 
-#: app/components/locations/location-form.tsx:414
+#: app/components/locations/location-form.tsx:443
 msgid "Sales Tax Rate (%)"
 msgstr "Sales Tax Rate (%)"
 
@@ -34229,7 +34419,7 @@ msgstr "Same name as an earlier row."
 msgid "Same phone or email as an earlier row."
 msgstr "Same phone or email as an earlier row."
 
-#: app/components/menu/option-form.tsx:547
+#: app/components/menu/option-form.tsx:648
 msgid "Same price for left or right half."
 msgstr "Same price for left or right half."
 
@@ -34311,7 +34501,7 @@ msgstr ""
 #: app/components/reservations/floor-plan-canvas.tsx:799
 #: app/components/reservations/policies/policy-sheet.tsx:186
 #: app/components/reservations/waitlist/edit-party-dialog.tsx:149
-#: app/components/save-bar.tsx:346
+#: app/components/save-bar.tsx:351
 #: app/components/settings/email-form.tsx:98
 #: app/components/staff/kiosk-manager.tsx:910
 #: app/components/staff/labor/labor-sales.tsx:203
@@ -34365,7 +34555,7 @@ msgstr "Save and update proof"
 msgid "Save as copy"
 msgstr "Save as copy"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:482
+#: app/components/menu/drop-wizard/drop-form.tsx:520
 msgid "Save as draft"
 msgstr "Save as draft"
 
@@ -34390,7 +34580,7 @@ msgstr "Save card for later charges"
 #: app/components/loyalty/program-form.tsx:617
 #: app/components/loyalty/promotion-dialog.tsx:918
 #: app/components/loyalty/reward-dialog.tsx:611
-#: app/components/menu/drop-wizard/drop-form.tsx:456
+#: app/components/menu/drop-wizard/drop-form.tsx:494
 #: app/components/phone-agent/training-rules-section.tsx:645
 #: app/components/reservations/experiences/experience-editor.tsx:545
 #: app/components/reservations/messages/message-settings.tsx:783
@@ -34407,9 +34597,9 @@ msgstr "Save card for later charges"
 msgid "Save changes"
 msgstr ""
 
-#: app/components/locations/location-form.tsx:1055
+#: app/components/locations/location-form.tsx:1084
 #: app/components/menu/drop-wizard/drop-drawers.tsx:939
-#: app/components/menu/modifier-form.tsx:2142
+#: app/components/menu/modifier-form.tsx:2070
 #: app/components/reservations/detail-sheet.tsx:1159
 msgid "Save Changes"
 msgstr "Save Changes"
@@ -34457,7 +34647,7 @@ msgstr "Save ingredients"
 msgid "Save levels"
 msgstr "Save levels"
 
-#: app/components/menu/modifier-form.tsx:891
+#: app/components/menu/modifier-form.tsx:922
 msgid "Save Modifier Group"
 msgstr "Save Modifier Group"
 
@@ -34465,7 +34655,7 @@ msgstr "Save Modifier Group"
 msgid "Save my changes on top"
 msgstr "Save my changes on top"
 
-#: app/components/menu/option-form.tsx:308
+#: app/components/menu/option-form.tsx:404
 msgid "Save Option"
 msgstr "Save Option"
 
@@ -34719,7 +34909,7 @@ msgstr ""
 #: app/components/reservations/policies/policy-sheet.tsx:186
 #: app/components/reservations/settings/save-bar.tsx:87
 #: app/components/roles/tenant-role-access-manager.tsx:1171
-#: app/components/save-bar.tsx:343
+#: app/components/save-bar.tsx:348
 #: app/components/staff/kiosk-manager.tsx:910
 #: app/components/staff/labor/tip-settings-dialog.tsx:291
 #: app/components/staff/onboarding/certificate-form.tsx:146
@@ -34918,7 +35108,7 @@ msgstr "Scheduled for {date}"
 msgid "Scheduled hours"
 msgstr "Scheduled hours"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1214
+#: app/components/menu/drop-wizard/drop-form.tsx:1252
 msgid "Scheduled Reminders"
 msgstr "Scheduled Reminders"
 
@@ -34969,7 +35159,7 @@ msgstr ""
 msgid "Search Address (Google Autocomplete)"
 msgstr "Search Address (Google Autocomplete)"
 
-#: app/components/locations/location-form.tsx:522
+#: app/components/locations/location-form.tsx:551
 msgid "Search and select location address with Google Autocomplete."
 msgstr "Search and select location address with Google Autocomplete."
 
@@ -34981,7 +35171,7 @@ msgstr "Search applicants"
 msgid "Search automations..."
 msgstr ""
 
-#: app/components/menu/modifier-form.tsx:1814
+#: app/components/menu/modifier-form.tsx:1742
 msgid "Search available options..."
 msgstr "Search available options..."
 
@@ -35131,7 +35321,7 @@ msgstr "Search people"
 #~ msgid "Search people to add"
 #~ msgstr "Search people to add"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2490
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2509
 msgid "Search preview"
 msgstr ""
 
@@ -35393,8 +35583,8 @@ msgstr "Second shift starts"
 msgid "Secondary"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3355
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4401
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3374
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4420
 msgid "Secondary button"
 msgstr ""
 
@@ -35417,7 +35607,7 @@ msgstr "Section A"
 msgid "Section B"
 msgstr "Section B"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:908
+#: app/components/menu/drop-wizard/drop-form.tsx:946
 msgid "Section cap"
 msgstr "Section cap"
 
@@ -35425,7 +35615,7 @@ msgstr "Section cap"
 msgid "Section color"
 msgstr "Section color"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3427
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3446
 msgid "Section height"
 msgstr ""
 
@@ -35485,9 +35675,9 @@ msgstr "Section overlay & server assignments"
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:477
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:663
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tsx:436
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5257
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5258
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5755
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5276
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5277
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5795
 msgid "Sections"
 msgstr ""
 
@@ -35686,18 +35876,18 @@ msgstr "Select {name}, {primary}"
 msgid "Select a call to read the summary and transcript, call the customer back, and mark it complete."
 msgstr "Select a call to read the summary and transcript, call the customer back, and mark it complete."
 
-#: app/components/menu/menu-form.tsx:326
+#: app/components/menu/menu-form.tsx:346
 msgid "Select a category to add to this menu."
 msgstr "Select a category to add to this menu."
 
-#: app/components/menu/item-form.tsx:743
+#: app/components/menu/item-form.tsx:795
 msgid "Select a category to display this item."
 msgstr "Select a category to display this item."
 
 #~ msgid "Select a channel to start."
 #~ msgstr "Select a channel to start."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4135
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4154
 msgid "Select a form"
 msgstr "Select a form"
 
@@ -35705,11 +35895,11 @@ msgstr "Select a form"
 msgid "Select a location"
 msgstr "Select a location"
 
-#: app/components/menu/category-form.tsx:556
+#: app/components/menu/category-form.tsx:576
 msgid "Select a menu to display this category."
 msgstr "Select a menu to display this category."
 
-#: app/components/menu/item-form.tsx:613
+#: app/components/menu/item-form.tsx:654
 msgid "Select a modifier group for this item."
 msgstr "Select a modifier group for this item."
 
@@ -35756,7 +35946,7 @@ msgstr "Select a website page"
 msgid "Select all"
 msgstr ""
 
-#: app/components/menu/option-form.tsx:717
+#: app/components/menu/option-form.tsx:818
 msgid "Select all modifier groups where this option should appear. Assigning to a Pizza Topping group automatically enables whole/half split pricing."
 msgstr "Select all modifier groups where this option should appear. Assigning to a Pizza Topping group automatically enables whole/half split pricing."
 
@@ -35765,7 +35955,7 @@ msgstr "Select all modifier groups where this option should appear. Assigning to
 msgid "Select all of {title}"
 msgstr "Select all of {title}"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:991
+#: app/components/menu/drop-wizard/drop-form.tsx:1029
 msgid "Select an existing menu above to attach to this drop."
 msgstr "Select an existing menu above to attach to this drop."
 
@@ -35777,15 +35967,15 @@ msgstr "Select an image from your library or upload a new one."
 msgid "Select an issue to jump to its step."
 msgstr "Select an issue to jump to its step."
 
-#: app/components/menu/category-form.tsx:409
+#: app/components/menu/category-form.tsx:429
 msgid "Select an item to add to this category."
 msgstr "Select an item to add to this category."
 
-#: app/components/menu/modifier-form.tsx:1395
+#: app/components/menu/modifier-form.tsx:1323
 msgid "Select an item to offer this modifier group."
 msgstr "Select an item to offer this modifier group."
 
-#: app/components/menu/modifier-form.tsx:1537
+#: app/components/menu/modifier-form.tsx:1465
 msgid "Select an option to add to this modifier group."
 msgstr "Select an option to add to this modifier group."
 
@@ -35824,7 +36014,7 @@ msgstr ""
 msgid "Select default language"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2688
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2707
 msgid "Select image"
 msgstr ""
 
@@ -35843,11 +36033,11 @@ msgstr ""
 msgid "Select Organization"
 msgstr ""
 
-#: app/components/menu/option-form.tsx:371
+#: app/components/menu/option-form.tsx:472
 msgid "Select Photo"
 msgstr "Select Photo"
 
-#: app/components/menu/item-form.tsx:452
+#: app/components/menu/item-form.tsx:493
 msgid "Select Photos"
 msgstr "Select Photos"
 
@@ -35858,7 +36048,7 @@ msgstr "Select Photos"
 msgid "Select status"
 msgstr ""
 
-#: app/components/menu/modifier-form.tsx:310
+#: app/components/menu/modifier-form.tsx:312
 msgid "Select sub-modifier group..."
 msgstr "Select sub-modifier group..."
 
@@ -35928,11 +36118,11 @@ msgstr ""
 msgid "Selected members have direct access."
 msgstr "Selected members have direct access."
 
-#: app/components/menu/modifier-form.tsx:941
+#: app/components/menu/modifier-form.tsx:972
 msgid "Selection Behavior & Limits"
 msgstr "Selection Behavior & Limits"
 
-#: app/components/menu/modifier-form.tsx:952
+#: app/components/menu/modifier-selection-fields.tsx:32
 msgid "Selection Mode"
 msgstr "Selection Mode"
 
@@ -36217,7 +36407,7 @@ msgstr "Sent when a manager approves a request."
 msgid "Sent when a manager declines a request."
 msgstr "Sent when a manager declines a request."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2509
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2528
 msgid "SEO title"
 msgstr ""
 
@@ -36393,11 +36583,11 @@ msgstr "Set as Default"
 msgid "Set at least one day."
 msgstr "Set at least one day."
 
-#: app/components/menu/item-form.tsx:535
+#: app/components/menu/item-form.tsx:576
 msgid "Set baseline dish price and sales tax settings."
 msgstr "Set baseline dish price and sales tax settings."
 
-#: app/components/menu/option-form.tsx:458
+#: app/components/menu/option-form.tsx:559
 msgid "Set baseline option price delta and sales tax settings."
 msgstr "Set baseline option price delta and sales tax settings."
 
@@ -36541,7 +36731,7 @@ msgstr "Set when online ordering, pickup, and delivery are accepted for this loc
 #: app/components/staff/labor/labor-page.tsx:199
 #: app/components/workspace-breadcrumb.tsx:13
 #: app/routes/_app+/$orgSlug_+/settings+/_layout.tsx:13
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5269
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5288
 msgid "Settings"
 msgstr ""
 
@@ -36634,7 +36824,7 @@ msgstr "Share of what you bought"
 msgid "Share on WhatsApp"
 msgstr "Share on WhatsApp"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:639
+#: app/components/menu/drop-wizard/drop-form.tsx:677
 msgid "Share pickup instructions, special reheating tips, or what makes this drop special..."
 msgstr "Share pickup instructions, special reheating tips, or what makes this drop special..."
 
@@ -36654,7 +36844,7 @@ msgstr "Share this link to let people join your organization. They'll see you in
 msgid "Share with others"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3215
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3234
 msgid "Shared across every page"
 msgstr ""
 
@@ -36802,7 +36992,7 @@ msgstr "Shop order reports are only available for US organizations."
 #~ msgid "Shop payouts are available for US organizations only. KSA checkout will be supported separately."
 #~ msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5075
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5094
 msgid "Short"
 msgstr ""
 
@@ -36844,7 +37034,7 @@ msgstr "Shorten turn by 15m"
 msgid "Show"
 msgstr "Show"
 
-#: app/components/menu/item-form.tsx:806
+#: app/components/menu/item-form.tsx:858
 msgid "Show \"Popular\" badge on menus."
 msgstr "Show \"Popular\" badge on menus."
 
@@ -36879,7 +37069,7 @@ msgstr "Show archived"
 msgid "Show availability"
 msgstr "Show availability"
 
-#: app/components/menu/menu-form.tsx:284
+#: app/components/menu/menu-form.tsx:304
 msgid "Show calorie counts and allergen warnings on this menu."
 msgstr "Show calorie counts and allergen warnings on this menu."
 
@@ -36895,7 +37085,7 @@ msgstr "Show conflicts"
 msgid "Show details"
 msgstr "Show details"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4155
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4174
 msgid "Show form title"
 msgstr "Show form title"
 
@@ -36918,7 +37108,7 @@ msgstr "Show less"
 msgid "Show more"
 msgstr "Show more"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1358
+#: app/components/menu/drop-wizard/drop-form.tsx:1396
 msgid "Show opening date"
 msgstr "Show opening date"
 
@@ -36926,7 +37116,7 @@ msgstr "Show opening date"
 msgid "Show product on your public site"
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1406
+#: app/components/menu/drop-wizard/drop-form.tsx:1444
 msgid "Show Remaining Inventory"
 msgstr "Show Remaining Inventory"
 
@@ -37047,7 +37237,7 @@ msgstr "Showing the newest {shown} of {total}. Search or filter to narrow the li
 msgid "Shown as typed. It is not worked out from ingredients."
 msgstr "Shown as typed. It is not worked out from ingredients."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2539
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2558
 msgid "Shown in browser tabs and search results. Falls back to the page title when empty."
 msgstr ""
 
@@ -37182,7 +37372,7 @@ msgstr "Since the first record:"
 msgid "Since the last count:"
 msgstr "Since the last count:"
 
-#: app/components/menu/option-form.tsx:791
+#: app/components/menu/option-form.tsx:892
 msgid "Single"
 msgstr "Single"
 
@@ -37191,7 +37381,7 @@ msgstr "Single"
 msgid "Single choice"
 msgstr "Single choice"
 
-#: app/components/menu/modifier-form.tsx:965
+#: app/components/menu/modifier-selection-fields.tsx:43
 msgid "Single Choice (Radio)"
 msgstr "Single Choice (Radio)"
 
@@ -37310,7 +37500,7 @@ msgstr ""
 msgid "Social accounts"
 msgstr "Social accounts"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4612
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4631
 msgid "Social links"
 msgstr ""
 
@@ -37328,7 +37518,7 @@ msgstr "Soft gray"
 msgid "Solid"
 msgstr "Solid"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4334
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4353
 msgid "Solid banner"
 msgstr ""
 
@@ -37560,7 +37750,7 @@ msgstr "Source"
 msgid "Soy Allergy"
 msgstr "Soy Allergy"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3866
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3885
 msgid "Spacing"
 msgstr ""
 
@@ -37687,8 +37877,8 @@ msgstr "Spoiled"
 
 #: app/components/reservations/floor-plan-canvas.tsx:112
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:98
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3620
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3860
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3639
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3879
 msgid "Square"
 msgstr ""
 
@@ -37845,7 +38035,7 @@ msgstr "Standard platform roles. Click any role to review its active permissions
 msgid "Standard policy"
 msgstr "Standard policy"
 
-#: app/components/menu/menu-form.tsx:250
+#: app/components/menu/menu-form.tsx:270
 msgid "Standard restaurant menus for dine-in, takeout, and delivery."
 msgstr "Standard restaurant menus for dine-in, takeout, and delivery."
 
@@ -38329,7 +38519,7 @@ msgstr "Store Hours"
 msgid "Store info"
 msgstr "Store info"
 
-#: app/components/locations/location-form.tsx:714
+#: app/components/locations/location-form.tsx:743
 msgid "Store Pickup"
 msgstr "Store Pickup"
 
@@ -38341,7 +38531,7 @@ msgstr "Store Pickup"
 msgid "Stored for the in-store till. It has no effect online."
 msgstr "Stored for the in-store till. It has no effect online."
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1300
+#: app/components/menu/drop-wizard/drop-form.tsx:1338
 msgid "Storefront & Checkout"
 msgstr "Storefront & Checkout"
 
@@ -38392,17 +38582,17 @@ msgstr "Studio"
 #: app/components/website/link-inspector.tsx:383
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:590
 #: app/routes/_app+/$orgSlug_+/marketing+/print.new.tsx:196
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3659
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3728
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4033
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4282
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4321
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4435
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3678
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3747
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4052
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4301
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4340
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4454
 msgid "Style"
 msgstr ""
 
-#: app/components/menu/modifier-form.tsx:1710
-#: app/components/menu/modifier-form.tsx:2065
+#: app/components/menu/modifier-form.tsx:1638
+#: app/components/menu/modifier-form.tsx:1993
 msgid "Sub / Nested Modifier Groups"
 msgstr "Sub / Nested Modifier Groups"
 
@@ -38515,7 +38705,7 @@ msgstr "Sugar"
 msgid "Suggest add-ons"
 msgstr "Suggest add-ons"
 
-#: app/components/menu/item-form.tsx:824
+#: app/components/menu/item-form.tsx:876
 msgid "Suggest as an add-on at checkout."
 msgstr "Suggest as an add-on at checkout."
 
@@ -38527,7 +38717,7 @@ msgstr "Suggest from use"
 msgid "Suggest improvements"
 msgstr ""
 
-#: app/components/menu/category-form.tsx:440
+#: app/components/menu/category-form.tsx:460
 msgid "Suggest other categories as add-ons when guests browse this section (e.g. Sides, Wine Pairings)."
 msgstr "Suggest other categories as add-ons when guests browse this section (e.g. Sides, Wine Pairings)."
 
@@ -38627,7 +38817,7 @@ msgstr "Suppliers"
 msgid "supported"
 msgstr ""
 
-#: app/components/locations/location-form.tsx:910
+#: app/components/locations/location-form.tsx:939
 msgid "Supported Delivery Providers"
 msgstr "Supported Delivery Providers"
 
@@ -38951,7 +39141,7 @@ msgstr "Table label is required."
 msgid "Table locked"
 msgstr "Table locked"
 
-#: app/components/locations/location-form.tsx:755
+#: app/components/locations/location-form.tsx:784
 msgid "Table ordering and in-house steps."
 msgstr "Table ordering and in-house steps."
 
@@ -39152,7 +39342,7 @@ msgstr "Talk to your agent from this browser before callers do."
 msgid "Talks to customers"
 msgstr "Talks to customers"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5077
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5096
 msgid "Tall"
 msgstr ""
 
@@ -39530,11 +39720,11 @@ msgstr "Text message"
 msgid "Text messages are sent only to guests who opted in, and only from the US region. Guests of locations in Saudi Arabia receive email only."
 msgstr "Text messages are sent only to guests who opted in, and only from the US region. Guests of locations in Saudi Arabia receive email only."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3539
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3558
 msgid "Text only"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3386
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3405
 msgid "Text position"
 msgstr ""
 
@@ -40506,7 +40696,7 @@ msgstr "The floor plan places your tables inside dining areas. Create an area an
 msgid "The floor plan was saved, but the latest version could not be reloaded."
 msgstr "The floor plan was saved, but the latest version could not be reloaded."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4506
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4525
 msgid "The footer is shared across every page. Leave copyright blank to use the organization name and current year."
 msgstr ""
 
@@ -40591,7 +40781,7 @@ msgstr "The guest was sent a link to confirm this charge with their bank."
 #~ msgid "The guests could not be merged. Try again."
 #~ msgstr "The guests could not be merged. Try again."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3225
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3244
 msgid "The header is shared across every page."
 msgstr ""
 
@@ -41349,7 +41539,7 @@ msgstr "The times do not add up. Fix the start or the end."
 msgid "The tip is more than the bill. Check it: the guest pays {total} in total."
 msgstr "The tip is more than the bill. Check it: the guest pays {total} in total."
 
-#: app/components/menu/drop-wizard/drop-form.tsx:588
+#: app/components/menu/drop-wizard/drop-form.tsx:626
 msgid "The title, image, and note customers will see."
 msgstr "The title, image, and note customers will see."
 
@@ -41984,6 +42174,10 @@ msgstr "This discount needs a fix before it can apply."
 msgid "This discount was saved in a form the editor can't open. Archive it, then create it again."
 msgstr "This discount was saved in a form the editor can't open. Archive it, then create it again."
 
+#: app/components/menu/delete-effects.tsx:311
+msgid "This discount will no longer apply to anything"
+msgstr "This discount will no longer apply to anything"
+
 #: app/components/staff/schedule/shift-editor-sheet.tsx:731
 msgid "This draft shift is deleted straight away."
 msgstr "This draft shift is deleted straight away."
@@ -42012,6 +42206,10 @@ msgstr "This floor plan was changed by someone else"
 #: app/utils/loyalty/loyalty-errors.ts:23
 msgid "This goes over the most points one person can add in 24 hours. Add fewer points, or ask someone else who can adjust points."
 msgstr "This goes over the most points one person can add in 24 hours. Add fewer points, or ask someone else who can adjust points."
+
+#: app/components/menu/quick-modifier-group-sheet.tsx:300
+msgid "This group is saved now and can be reused on other dishes."
+msgstr "This group is saved now and can be reused on other dishes."
 
 #~ msgid "This group will be revealed whenever a customer chooses the selected parent option."
 #~ msgstr "This group will be revealed whenever a customer chooses the selected parent option."
@@ -42119,7 +42317,7 @@ msgstr "This location is no longer available."
 msgid "This location no longer exists. Reload the page."
 msgstr "This location no longer exists. Reload the page."
 
-#: app/components/menu/drop-wizard/drop-form.tsx:856
+#: app/components/menu/drop-wizard/drop-form.tsx:894
 msgid "This menu has no categories assigned yet. Go to Menus to add categories and items."
 msgstr "This menu has no categories assigned yet. Go to Menus to add categories and items."
 
@@ -42131,7 +42329,7 @@ msgstr "This message uses the Coupon code tag. Choose a coupon, or remove the ta
 msgid "This message was deleted."
 msgstr "This message was deleted."
 
-#: app/components/menu/modifier-form.tsx:1445
+#: app/components/menu/modifier-form.tsx:1373
 msgid "This modifier group is triggered when customers select these modifier items:"
 msgstr "This modifier group is triggered when customers select these modifier items:"
 
@@ -42638,28 +42836,28 @@ msgid "This will permanently delete the redirect from <0>{deleteRedirectFrom}</0
 msgstr "This will permanently delete the redirect from <0>{deleteRedirectFrom}</0> to <1>{deleteRedirectTo}</1>. Visitors requesting this old URL will no longer be forwarded."
 
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:527
-msgid "This will permanently delete this category. Items in this category will not be deleted, but will become unassigned."
-msgstr "This will permanently delete this category. Items in this category will not be deleted, but will become unassigned."
+#~ msgid "This will permanently delete this category. Items in this category will not be deleted, but will become unassigned."
+#~ msgstr "This will permanently delete this category. Items in this category will not be deleted, but will become unassigned."
 
 #: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:437
 msgid "This will permanently delete this drop and remove its pickup schedule and inventory limits. This action cannot be undone."
 msgstr "This will permanently delete this drop and remove its pickup schedule and inventory limits. This action cannot be undone."
 
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:602
-msgid "This will permanently delete this menu item and remove it from all menus and categories."
-msgstr "This will permanently delete this menu item and remove it from all menus and categories."
+#~ msgid "This will permanently delete this menu item and remove it from all menus and categories."
+#~ msgstr "This will permanently delete this menu item and remove it from all menus and categories."
 
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:460
-msgid "This will permanently delete this menu. Categories and items associated with it will remain intact."
-msgstr "This will permanently delete this menu. Categories and items associated with it will remain intact."
+#~ msgid "This will permanently delete this menu. Categories and items associated with it will remain intact."
+#~ msgstr "This will permanently delete this menu. Categories and items associated with it will remain intact."
 
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:523
-msgid "This will permanently delete this modifier group and its options. Items using this modifier group will no longer offer these choices."
-msgstr "This will permanently delete this modifier group and its options. Items using this modifier group will no longer offer these choices."
+#~ msgid "This will permanently delete this modifier group and its options. Items using this modifier group will no longer offer these choices."
+#~ msgstr "This will permanently delete this modifier group and its options. Items using this modifier group will no longer offer these choices."
 
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:623
-msgid "This will permanently remove this option and unassign it from all modifier groups. This action cannot be undone."
-msgstr "This will permanently remove this option and unassign it from all modifier groups. This action cannot be undone."
+#~ msgid "This will permanently remove this option and unassign it from all modifier groups. This action cannot be undone."
+#~ msgstr "This will permanently remove this option and unassign it from all modifier groups. This action cannot be undone."
 
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1080
 msgid "This will:"
@@ -42690,7 +42888,7 @@ msgstr ""
 msgid "Thread"
 msgstr "Thread"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3833
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3852
 msgid "Three"
 msgstr ""
 
@@ -42698,7 +42896,7 @@ msgstr ""
 msgid "Three-letter ISO code. It locks once the program has been active."
 msgstr "Three-letter ISO code. It locks once the program has been active."
 
-#: app/components/locations/location-form.tsx:637
+#: app/components/locations/location-form.tsx:666
 msgid "Threshold Unit"
 msgstr "Threshold Unit"
 
@@ -42766,7 +42964,7 @@ msgstr "Tiers go up by"
 msgid "Tiers go with a plain item or order discount. They are not available at the till, with a quantity rule, a meal deal or modifier choices."
 msgstr "Tiers go with a plain item or order discount. They are not available at the till, with a quantity rule, a meal deal or modifier choices."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3877
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3896
 msgid "Tight"
 msgstr ""
 
@@ -42980,7 +43178,7 @@ msgstr "Timesheet view"
 msgid "Timesheets"
 msgstr "Timesheets"
 
-#: app/components/locations/location-form.tsx:392
+#: app/components/locations/location-form.tsx:421
 msgid "Timezone"
 msgstr "Timezone"
 
@@ -43014,7 +43212,7 @@ msgstr "Tip in {currency} (optional)"
 msgid "Tip pool: tips by day"
 msgstr "Tip pool: tips by day"
 
-#: app/components/locations/location-form.tsx:795
+#: app/components/locations/location-form.tsx:824
 msgid "Tip prompt options and advance order scheduling rules."
 msgstr "Tip prompt options and advance order scheduling rules."
 
@@ -43041,7 +43239,7 @@ msgstr "Tip: give printed cards a code of their own (for example FLYER10) to see
 msgid "Tips"
 msgstr "Tips"
 
-#: app/components/locations/location-form.tsx:792
+#: app/components/locations/location-form.tsx:821
 msgid "Tips & Order Scheduling"
 msgstr "Tips & Order Scheduling"
 
@@ -43054,9 +43252,9 @@ msgid "Tips on online orders that count toward sales, by business day. How a poo
 msgstr "Tips on online orders that count toward sales, by business day. How a pool is split between people is set on the Labor page."
 
 #: app/components/phone-agent/training-rules-section.tsx:516
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3753
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4063
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4533
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3772
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4082
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4552
 msgid "Title"
 msgstr ""
 
@@ -43211,6 +43409,10 @@ msgstr "Too many changes at once. Wait a minute and try again."
 #: app/components/social/social-labels.ts:52
 msgid "Too many hashtags for Facebook."
 msgstr "Too many hashtags for Facebook."
+
+#: app/components/menu/quick-modifier-group-sheet.tsx:263
+msgid "Too many menu changes. Try again shortly."
+msgstr "Too many menu changes. Try again shortly."
 
 #: app/routes/_auth+/forgot-password.tsx:239
 msgid "Too Many Requests"
@@ -43428,7 +43630,7 @@ msgstr "Transfers unavailable"
 msgid "Transform"
 msgstr "Transform"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2232
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2234
 msgid "Translate"
 msgstr ""
 
@@ -43474,11 +43676,11 @@ msgid "Trial period active"
 msgstr ""
 
 #: ../../packages/marketing-workflow/src/nodes/trigger-node.tsx:23
-#: app/components/menu/modifier-form.tsx:1494
+#: app/components/menu/modifier-form.tsx:1422
 msgid "Trigger"
 msgstr ""
 
-#: app/components/menu/modifier-form.tsx:1153
+#: app/components/menu/modifier-form.tsx:1081
 msgid "Trigger a child modifier group when a guest selects one of these options."
 msgstr "Trigger a child modifier group when a guest selects one of these options."
 
@@ -43505,11 +43707,11 @@ msgstr ""
 msgid "Trigger Timing"
 msgstr "Trigger Timing"
 
-#: app/components/locations/location-form.tsx:674
+#: app/components/locations/location-form.tsx:703
 msgid "Trigger when order exceeds ({thresholdUnit})"
 msgstr "Trigger when order exceeds ({thresholdUnit})"
 
-#: app/components/menu/modifier-form.tsx:1252
+#: app/components/menu/modifier-form.tsx:1180
 msgid "Triggered by"
 msgstr "Triggered by"
 
@@ -43629,6 +43831,8 @@ msgstr ""
 #: app/components/mailbox/calls-tab.tsx:289
 #: app/components/mailbox/reviews-tab.tsx:418
 #: app/components/media-library/photo-studio-dialog.tsx:944
+#: app/components/menu/delete-effects.tsx:472
+#: app/components/menu/delete-effects.tsx:547
 #: app/components/menu/menu-review-stack.tsx:476
 #: app/components/phone-agent/call-detail-sheet.tsx:367
 #: app/components/phone-agent/call-recording-player.tsx:154
@@ -43886,7 +44090,7 @@ msgstr "Turning on…"
 msgid "Twice a month"
 msgstr "Twice a month"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3828
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3847
 msgid "Two"
 msgstr ""
 
@@ -43934,7 +44138,7 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:347
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1356
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:630
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3959
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3978
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:870
 #: app/routes/mock-payments+/dashboard.tsx:155
 msgid "Type"
@@ -43997,7 +44201,7 @@ msgstr "Typical online orders"
 msgid "Typical online orders by hour"
 msgstr "Typical online orders by hour"
 
-#: app/components/locations/location-form.tsx:943
+#: app/components/locations/location-form.tsx:972
 msgid "Uber Eats"
 msgstr "Uber Eats"
 
@@ -44287,7 +44491,7 @@ msgstr "Unknown terminal"
 msgid "Unlimited"
 msgstr "Unlimited"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:505
+#: app/components/menu/drop-wizard/drop-form.tsx:543
 msgid "Unlisted"
 msgstr "Unlisted"
 
@@ -44358,10 +44562,10 @@ msgstr "Unpaid time off"
 msgid "Unpin"
 msgstr "Unpin"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:480
+#: app/components/menu/drop-wizard/drop-form.tsx:518
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:515
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:475
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6155
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6195
 msgid "Unpublish"
 msgstr ""
 
@@ -44384,8 +44588,8 @@ msgstr "Unread only"
 #: app/components/reservations/floor-plan-canvas.tsx:770
 #: app/components/reservations/messages/message-settings.tsx:761
 #: app/components/reservations/settings/save-bar.tsx:63
-#: app/components/save-bar.tsx:342
-#: app/components/save-bar.tsx:344
+#: app/components/save-bar.tsx:347
+#: app/components/save-bar.tsx:349
 msgid "Unsaved changes"
 msgstr "Unsaved changes"
 
@@ -44511,7 +44715,7 @@ msgid "Upcoming reservations need manual attention after this floor-plan change"
 msgstr "Upcoming reservations need manual attention after this floor-plan change"
 
 #: app/components/media-library/photo-studio-dialog.tsx:922
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6102
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6142
 msgid "Update"
 msgstr ""
 
@@ -44535,7 +44739,7 @@ msgstr "Update location details, hours, and fulfillment preferences."
 msgid "Update my availability"
 msgstr "Update my availability"
 
-#: app/components/menu/modifier-form.tsx:1896
+#: app/components/menu/modifier-form.tsx:1824
 msgid "Update option details and pricing."
 msgstr "Update option details and pricing."
 
@@ -44673,7 +44877,7 @@ msgstr "Upload failed."
 msgid "Upload failed. Please try again."
 msgstr "Upload failed. Please try again."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5224
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5243
 msgid "Upload file"
 msgstr ""
 
@@ -44725,7 +44929,7 @@ msgstr "Upsells & add-ons"
 
 #: app/components/website/link-inspector.tsx:364
 #: app/components/website/link-inspector.tsx:406
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2645
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2664
 msgid "URL"
 msgstr ""
 
@@ -44737,7 +44941,7 @@ msgstr "URL copied to clipboard"
 msgid "URL Redirects"
 msgstr "URL Redirects"
 
-#: app/components/locations/location-form.tsx:360
+#: app/components/locations/location-form.tsx:389
 msgid "URL Slug"
 msgstr "URL Slug"
 
@@ -44893,11 +45097,11 @@ msgstr "Use Add block to put stats, charts and reports on it."
 msgid "Use all suggestions"
 msgstr "Use all suggestions"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:709
+#: app/components/menu/drop-wizard/drop-form.tsx:747
 msgid "Use an existing menu, then set optional inventory limits."
 msgstr "Use an existing menu, then set optional inventory limits."
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2589
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2608
 msgid "Use an image that's at least 1200px by 630px (1.91:1) for the best results."
 msgstr ""
 
@@ -45034,6 +45238,7 @@ msgstr "Used by a transfer case"
 msgid "Used by sales"
 msgstr "Used by sales"
 
+#: app/components/menu/delete-effects.tsx:531
 #: app/routes/_app+/$orgSlug_+/media.tsx:1742
 msgid "Used in"
 msgstr "Used in"
@@ -45043,7 +45248,7 @@ msgstr "Used in"
 msgid "Used in the web address of the page. Lowercase letters, numbers and dashes."
 msgstr "Used in the web address of the page. Lowercase letters, numbers and dashes."
 
-#: app/components/locations/location-form.tsx:371
+#: app/components/locations/location-form.tsx:400
 msgid "Used on the public online ordering website."
 msgstr "Used on the public online ordering website."
 
@@ -45181,7 +45386,7 @@ msgstr "VAT ({currency})"
 msgid "VAT number"
 msgstr "VAT number"
 
-#: app/components/locations/location-form.tsx:431
+#: app/components/locations/location-form.tsx:460
 msgid "VAT Registration Number"
 msgstr "VAT Registration Number"
 
@@ -45190,16 +45395,16 @@ msgstr "VAT Registration Number"
 msgid "Vegan"
 msgstr "Vegan"
 
-#: app/components/menu/item-form.tsx:670
-#: app/components/menu/modifier-form.tsx:1683
-#: app/components/menu/modifier-form.tsx:2038
-#: app/components/menu/option-form.tsx:655
+#: app/components/menu/item-form.tsx:722
+#: app/components/menu/modifier-form.tsx:1611
+#: app/components/menu/modifier-form.tsx:1966
+#: app/components/menu/option-form.tsx:756
 #: app/components/reservations/booking-sheet.tsx:60
 #: app/utils/reservations/labels.ts:101
 msgid "Vegetarian"
 msgstr "Vegetarian"
 
-#: app/components/locations/location-form.tsx:773
+#: app/components/locations/location-form.tsx:802
 msgid "Vehicle pickup with car details."
 msgstr "Vehicle pickup with car details."
 
@@ -45253,8 +45458,8 @@ msgstr "Version {flowVersion}, published {publishedOn}"
 msgid "Version {versionCount}"
 msgstr "Version {versionCount}"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3382
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3964
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3401
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3983
 msgid "Video"
 msgstr ""
 
@@ -45344,7 +45549,7 @@ msgstr "View labor cost"
 msgid "View labor policy"
 msgstr "View labor policy"
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6144
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6184
 msgid "View live site"
 msgstr ""
 
@@ -45494,7 +45699,7 @@ msgstr "VIP & Tagged Bookings"
 msgid "VIP hold"
 msgstr "VIP hold"
 
-#: app/components/menu/drop-wizard/drop-form.tsx:498
+#: app/components/menu/drop-wizard/drop-form.tsx:536
 msgid "Visibility"
 msgstr "Visibility"
 
@@ -46568,8 +46773,8 @@ msgstr "When a call connects"
 msgid "When a caller asks for a callback, leaves a message, or needs help your agent couldn’t give, the call appears here."
 msgstr "When a caller asks for a callback, leaves a message, or needs help your agent couldn’t give, the call appears here."
 
-#: app/components/menu/modifier-form.tsx:1714
-#: app/components/menu/modifier-form.tsx:2069
+#: app/components/menu/modifier-form.tsx:1642
+#: app/components/menu/modifier-form.tsx:1997
 msgid "When a customer selects this option, reveal these conditional modifier groups (e.g. selecting \"French Fries\" unlocks \"Fry Size\")."
 msgstr "When a customer selects this option, reveal these conditional modifier groups (e.g. selecting \"French Fries\" unlocks \"Fry Size\")."
 
@@ -46613,7 +46818,7 @@ msgstr "When off, people with no shift cannot clock in and need a manager."
 msgid "When off, the agent takes a message instead of transferring."
 msgstr "When off, the agent takes a message instead of transferring."
 
-#: app/components/menu/drop-wizard/drop-form.tsx:1179
+#: app/components/menu/drop-wizard/drop-form.tsx:1217
 msgid "When orders open and close for customers."
 msgstr "When orders open and close for customers."
 
@@ -46633,8 +46838,8 @@ msgstr "When people have hours they can or cannot work, the schedule warns you i
 msgid "When prompted, authorize the connection in your browser"
 msgstr ""
 
-#: app/components/menu/drop-wizard/drop-form.tsx:509
-#: app/components/menu/drop-wizard/drop-form.tsx:527
+#: app/components/menu/drop-wizard/drop-form.tsx:547
+#: app/components/menu/drop-wizard/drop-form.tsx:565
 msgid "When published, Public drops appear on your site. Unlisted drops are only available by link."
 msgstr "When published, Public drops appear on your site. Unlisted drops are only available by link."
 
@@ -46913,11 +47118,11 @@ msgstr "Who works"
 msgid "Whole"
 msgstr "Whole"
 
-#: app/components/menu/option-form.tsx:555
+#: app/components/menu/option-form.tsx:656
 msgid "Whole / half pricing is on because this option is assigned to a pizza-style modifier group."
 msgstr "Whole / half pricing is on because this option is assigned to a pizza-style modifier group."
 
-#: app/components/menu/modifier-form.tsx:340
+#: app/components/menu/modifier-form.tsx:342
 msgid "Whole / Left or right"
 msgstr "Whole / Left or right"
 
@@ -46932,16 +47137,16 @@ msgstr "Whole order"
 msgid "Whole order discount"
 msgstr "Whole order discount"
 
-#: app/components/menu/modifier-form.tsx:1573
-#: app/components/menu/modifier-form.tsx:1928
+#: app/components/menu/modifier-form.tsx:1501
+#: app/components/menu/modifier-form.tsx:1856
 msgid "Whole pizza ($)"
 msgstr "Whole pizza ($)"
 
-#: app/components/menu/option-form.tsx:473
+#: app/components/menu/option-form.tsx:574
 msgid "Whole pizza price ($)"
 msgstr "Whole pizza price ($)"
 
-#: app/components/menu/modifier-form.tsx:1004
+#: app/components/menu/modifier-selection-fields.tsx:82
 msgid "Whole pizza, left half, or right half pricing."
 msgstr "Whole pizza, left half, or right half pricing."
 
@@ -47590,6 +47795,10 @@ msgstr "You do not have permission to change payments."
 msgid "You do not have permission to change recipes. Ask an owner to check your role."
 msgstr "You do not have permission to change recipes. Ask an owner to check your role."
 
+#: app/components/menu/quick-modifier-group-sheet.tsx:261
+msgid "You do not have permission to create modifier groups."
+msgstr "You do not have permission to create modifier groups."
+
 #: app/utils/loyalty/loyalty-errors.ts:26
 #: app/utils/loyalty/loyalty-errors.ts:27
 #: app/utils/loyalty/loyalty-errors.ts:38
@@ -47698,7 +47907,7 @@ msgstr "You have unsaved changes to this experience. Leave without saving?"
 #~ msgstr "You have unsaved changes."
 
 #: app/components/phone-agent/settings-page.tsx:191
-#: app/components/save-bar.tsx:313
+#: app/components/save-bar.tsx:318
 msgid "You have unsaved changes. Leave this page and lose them?"
 msgstr "You have unsaved changes. Leave this page and lose them?"
 
@@ -47985,7 +48194,7 @@ msgstr "Your organization made many new print files this hour. Try again in abou
 #~ msgid "Your organizations"
 #~ msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5880
+#: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5920
 msgid "Your page will appear here"
 msgstr ""
 

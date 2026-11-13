@@ -18,8 +18,12 @@ import { Input } from '@repo/ui/input'
 import { Label } from '@repo/ui/label'
 import { RadioGroup, RadioGroupItem } from '@repo/ui/radio-group'
 import { Switch } from '@repo/ui/switch'
-import { useState } from 'react'
-import { Form } from 'react-router'
+import { useRef, useState } from 'react'
+import { Form, useActionData, useNavigation } from 'react-router'
+import {
+	useDiscardKey,
+	useFormSnapshotSaveBar,
+} from '#app/components/use-native-form-save-bar.ts'
 import {
 	LocaleContext,
 	LocalizedInput,
@@ -67,7 +71,14 @@ interface MenuFormProps {
 	pageTitle: string
 }
 
-export function MenuForm({
+export function MenuForm(props: MenuFormProps) {
+	// Discard remounts the form with the values it opened with.
+	const { discardKey, discard } = useDiscardKey()
+	return <MenuFormBody key={discardKey} {...props} onDiscard={discard} />
+}
+
+function MenuFormBody({
+	onDiscard,
 	initialData,
 	orgSlug,
 	defaultLocale,
@@ -76,8 +87,17 @@ export function MenuForm({
 	allLocations,
 	isSubmitting,
 	pageTitle,
-}: MenuFormProps) {
+}: MenuFormProps & { onDiscard: () => void }) {
 	const { _ } = useLingui()
+	const formRef = useRef<HTMLFormElement>(null)
+	const navigation = useNavigation()
+	const actionData = useActionData()
+	useFormSnapshotSaveBar(formRef, {
+		// The submission and the redirect that follows a successful save.
+		saving: navigation.state !== 'idle' && navigation.formMethod != null,
+		result: actionData,
+		onDiscard,
+	})
 	const [activeLocale, setActiveLocale] = useState(defaultLocale)
 
 	// State
@@ -133,7 +153,7 @@ export function MenuForm({
 				activeLocale={activeLocale}
 				defaultLocale={defaultLocale}
 			>
-				<Form method="POST" className="flex flex-1 flex-col">
+				<Form ref={formRef} method="POST" className="flex flex-1 flex-col">
 					{/* Hidden inputs to submit values */}
 					<input type="hidden" name="displayName" value={displayName} />
 					<input
