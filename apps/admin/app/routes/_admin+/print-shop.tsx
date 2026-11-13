@@ -543,7 +543,7 @@ function OrderActions({
 		}
 		// Dialog close and fetcher reload can hand focus back slowly on CI.
 		window.requestAnimationFrame(check)
-		for (const delay of [100, 300, 750]) {
+		for (const delay of [50, 150, 400, 900, 2_000, 4_000, 8_000]) {
 			window.setTimeout(check, delay)
 		}
 	}
