@@ -29,6 +29,12 @@ const sheetJson = () => structuredClone(countSheetFixture)
 let page: Page
 const issues: unknown[][] = []
 
+// These tests wait up to 15 s for IndexedDB and the region's answers (see
+// `countSheetReady` and the entry waits). The default 5 s test limit is shorter
+// than those waits, so a slow CI runner timed a test out mid-sync, and its
+// leftover sync emptied the next test's queue.
+vi.setConfig({ testTimeout: 30_000 })
+
 beforeEach(async () => {
 	issues.length = 0
 	// Data arrives from IndexedDB and the network after the test's own calls: those updates are not ours to wrap.
