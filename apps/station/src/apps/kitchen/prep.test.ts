@@ -60,7 +60,12 @@ function drawKitchen(inventory: boolean) {
 		h(Kitchen, {
 			settings: {
 				...settings,
-				apps: { timeclock: false, reservations: false, inventory },
+				apps: {
+					timeclock: false,
+					reservations: false,
+					inventory,
+					orders: false,
+				},
 			},
 			session: session(),
 			online: true,

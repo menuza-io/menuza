@@ -966,12 +966,15 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
   (`/pos/timeclock/*`, PIN every punch) and the host stand for its location (a
   `book`-scope reservations token minted at `/pos/reservations/token` from the
   terminal and the signed-in staff session); both are per-terminal settings plus
-  the organization's flag. A terminal bound to a location uses that location's
-  staffing scope (an organization with locations has no `main`). Deploy App
-  before tenant-api when the `stationApps` claim gains a field: a missing one
-  fails closed and refuses switching an app on. Read `docs/pos.md` before
-  changing the order contract (`@repo/common/pos-orders`,
-  `POS_CONTRACT_VERSION`)
+  the organization's flag. It can also run the location's online orders
+  (`/pos/online-orders`, not `/pos/orders`, which is the till's upload; a
+  per-terminal switch, sign-in and a location, no organization flag; see
+  "Station apps: Online orders" in `docs/pos.md`). A terminal bound to a
+  location uses that location's staffing scope (an organization with locations
+  has no `main`). Deploy App before tenant-api when the `stationApps` claim
+  gains a field: a missing one fails closed and refuses switching an app on.
+  Read `docs/pos.md` before changing the order contract
+  (`@repo/common/pos-orders`, `POS_CONTRACT_VERSION`)
 - `apps/voice-agent` - LiveKit worker that answers phone-agent calls (US only);
   loads config from App and logs calls through tenant-api
 - `apps/customer` - Tenant customer app (Expo, iOS and Android): branded shell

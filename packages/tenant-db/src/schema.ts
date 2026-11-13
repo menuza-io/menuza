@@ -1893,6 +1893,12 @@ export const posDevices = sqliteTable(
 			.notNull()
 			.default(false),
 		inventoryDisabledAt: integer('inventory_disabled_at'),
+		// The Orders app: the location's online orders (web, QR) from arrival to
+		// handed over, with cancel, refund and reprint. Needs sign-in and a
+		// location; every action records the signed-in person.
+		ordersEnabled: integer('orders_enabled', { mode: 'boolean' })
+			.notNull()
+			.default(false),
 		// Keyed hash of the device secret. The secret itself is never stored.
 		secretHash: text('secret_hash').notNull(),
 		pairedBy: text('paired_by').notNull(),
@@ -1995,6 +2001,48 @@ export const kdsEvents = sqliteTable('kds_events', {
 	action: text('action').notNull(),
 	at: integer('at').notNull(),
 })
+
+// What Station's Orders app did to an online order, and who did it: opening it
+// (which silences the new-order alert on every tablet at the location),
+// marking it ready, handing it over, taking payment at handoff, cancelling,
+// recording a refund, revealing the guest's contact and reprinting. Append-only
+// (migration triggers); no guest data, only ids, a reason code and an amount.
+export const posOnlineOrderEvents = sqliteTable(
+	'pos_online_order_events',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		orderId: text('order_id').notNull(),
+		locationId: text('location_id').notNull(),
+		deviceId: text('device_id').notNull(),
+		staffId: text('staff_id'),
+		action: text('action', {
+			enum: [
+				'opened',
+				'ready',
+				'handed_over',
+				'paid',
+				'cancelled',
+				'refunded',
+				'contact_viewed',
+				'reprinted',
+			],
+		}).notNull(),
+		reason: text('reason'),
+		amountCents: integer('amount_cents'),
+		at: integer('at').notNull(),
+	},
+	(table) => [
+		index('idx_pos_online_order_events_order').on(table.orderId, table.action),
+		index('idx_pos_online_order_events_location').on(
+			table.locationId,
+			table.at,
+		),
+	],
+)
+
+export type PosOnlineOrderEvent = typeof posOnlineOrderEvents.$inferSelect
 
 // `id` is the terminal's own UUID, which doubles as the idempotency key.
 export const posOrders = sqliteTable(

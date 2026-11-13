@@ -45,6 +45,7 @@ import { operatorPosRoutes } from './routes/operator-pos.ts'
 import { posRoutes } from './routes/pos.ts'
 import { posInventoryRoutes } from './routes/pos-inventory.ts'
 import { posKdsRoutes } from './routes/pos-kds.ts'
+import { posOnlineOrdersRoutes } from './routes/pos-online-orders.ts'
 import { posReservationsRoutes } from './routes/pos-reservations.ts'
 import { posTimeclockRoutes } from './routes/pos-timeclock.ts'
 import {
@@ -335,6 +336,7 @@ export function createTenantApiApp() {
 	app.route('/pos/inventory', posInventoryRoutes)
 	app.route('/pos/reservations', posReservationsRoutes)
 	app.route('/pos/kds', posKdsRoutes)
+	app.route('/pos/online-orders', posOnlineOrdersRoutes)
 	app.route('/pos', posRoutes)
 	app.route('/schedule-link', scheduleLinkRoutes)
 	app.route('/operator/reservations', reservationsOperatorRoutes)

@@ -426,8 +426,8 @@ that module's settings permission (time clock rules, or reservation settings),
 which App signs into the operator token as `stationApps`; a member limited to
 some locations may open the host stand only at those. Every switch, location
 binding and host-roster change is in the staff audit log. `/pos/me` reports the
-result as `apps: { timeclock, reservations, inventory }`, leaving out an app
-whose flag it cannot read (the till keeps what it last knew). **Apps**, the
+result as `apps: { timeclock, reservations, inventory, orders }`, leaving out an
+app whose flag it cannot read (the till keeps what it last knew). **Apps**, the
 nine-dot button at the start of the header, opens the available apps: Register,
 Kitchen, and the enabled Time clock, Reservations and Stock. The launcher also
 shows the business name, logo and location. The current app is marked; Tab or
@@ -549,6 +549,80 @@ and resolves each name for its own language when it reads it
 (`apps/station/src/lib/menu-text.ts`, `getLocalizedMenuValue` from
 `@repo/common/menu-types`), falling back to the restaurant's default language.
 Order lines saved before this are decoded when shown.
+
+## Station apps: Online orders
+
+A paired terminal bound to a location, with staff sign-in on, can run the
+location's online orders (web and QR) from arrival to handed over, with no App
+login. A manager switches it per terminal in the App (Settings, Terminals,
+Station apps, **Online orders**; `pos_devices.orders_enabled`, tenant-db
+migration `0040_station_orders_app`). Online ordering has no organization flag,
+so, like Kitchen, the terminal's switch is the only one; a member limited to
+some locations may switch it on only at theirs. `/pos/me` reports it as
+`apps.orders`, and the launcher shows **Online orders**.
+
+The tablet calls the regional `/pos/online-orders` API directly (`/pos/orders`
+is the till's own order upload): `GET /` (the inbox), `GET /:id`,
+`POST /:id/command` (`open`, `ready`, `handed_over`, `cancel`, `reprint`),
+`POST /:id/refunds` (with an `Idempotency-Key`) and `POST /:id/contact`. Every
+call verifies the device, the switch, the server-bound location and a current
+`Pos-Staff-Session`; `POS_ENABLED=false` and terminal revocation stop it.
+Responses are `no-store`; nothing is written to IndexedDB, writes are never
+queued, and after a failed write the screen reads the order back.
+
+- **Inbox.** Payable online orders at the location: new (nobody opened it on a
+  Station yet), in progress (accepted and opened, or preparing), ready, and
+  those finished in the last four hours; phone orders rung up on a till and
+  awaiting pickup are listed read-only. Order type, source (web or QR), promised
+  time and payment show on each card; an order past its promised time (or 20
+  minutes after an as-soon-as-possible order came in) is marked late. The list
+  polls every five seconds while visible; offline, a failed read or a feed older
+  than 15 seconds pauses every action and says so. The feed is bounded to 200
+  orders and warns when more exist.
+- **Alert.** A new order rings and shows a banner, repeating every ten seconds,
+  until it is opened. Accepting and rejecting do not exist yet (orders arrive
+  accepted), so opening is the response: it is recorded on the server, which
+  silences the alert on every tablet at that location at their next read, so two
+  counters are not both pinged for one order. The sound is on by default; iPad
+  Safari plays it only after one tap on the page.
+- **Detail and actions.** Items with options and notes, fulfilment, table or
+  delivery address and notes, payment and totals. Mark ready and Hand over use
+  the operator's own transitions (`updateOperatorOrder`), so the App, the
+  guest's receipt and Kitchen see the change. Hand over is the only way Station
+  completes an order, and a pay-at-handoff order (not a QR tab round, which is
+  paid when the tab closes) is handed over only with "I have received payment at
+  handoff" ticked, recorded the same way as in the App. Cancel takes a reason
+  (guest asked, out of stock, too busy, duplicate, something else) and shows the
+  stop-prep warning in Kitchen. A refund is the App's record of money returned
+  (`recordOrderRefund`): full or partial, never more than was paid. A refund on
+  an order loyalty tracks takes points back, which needs the App's
+  `update:loyalty_redemption:any`: no till session carries it, so such refunds
+  are recorded in the App. Guest and kitchen tickets reprint on the tablet's
+  printer; the guest ticket shows the phone masked and never an email.
+- **Versions.** Each order carries a version (a hash of its status, payment,
+  refunds and update time); every change names the one the screen saw, and an
+  outdated one answers 409 `stale_version` and the screen reads the order back.
+- **Who may do what.** The till's own roles decide: everyone signed in views
+  orders and manages them (ready, hand over, payment at handoff); the guest's
+  full phone and email are for managers and for hosts given guest details;
+  cancel and refund are for managers. The guest's name shows; the phone is
+  masked to its last four digits and the email left out until someone allowed
+  taps **Show contact**, one order at a time, held in memory only while that
+  order is open. Each person may reveal 30 contacts an hour (429
+  `contact_limit`). Every route reaches only what the inbox shows (open orders
+  and those finished in the last four hours): older orders, their guests and
+  their refunds are the App's.
+- **History.** Every action (opened, ready, handed over, payment taken,
+  cancelled, refund recorded, contact shown, reprinted) is one append-only
+  `pos_online_order_events` row with the terminal, the staff member, a reason
+  code and an amount, never guest data; refunds also record `staff:<id>` as
+  their actor. The order sheet lists them with the person's first name and
+  initial.
+
+In demo mode the app needs no pairing or network: a sample service with a new
+pickup, a QR table round, a delivery, a late ready order and a finished paid
+order lives in the tab with the same rules, and a new order arrives after half a
+minute so the alert can be seen.
 
 ## Station apps: Stock
 

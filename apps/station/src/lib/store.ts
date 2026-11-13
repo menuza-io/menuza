@@ -1,4 +1,5 @@
 import { t } from '@lingui/macro'
+import { NO_POS_DEVICE_APPS } from '@repo/common/pos-orders'
 import { create } from 'zustand'
 import { wipeStock } from '../apps/stock/queue.ts'
 import { syncStock } from '../apps/stock/sync.ts'
@@ -221,10 +222,20 @@ const newId = () => crypto.randomUUID()
  * the tab (`apps/reservations/demo.ts`), so it needs no pairing.
  */
 const withDemoApps = (settings: PosSettings): PosSettings =>
-	settings.demo && !(settings.apps.reservations && settings.apps.inventory)
+	settings.demo &&
+	!(
+		settings.apps.reservations &&
+		settings.apps.inventory &&
+		settings.apps.orders
+	)
 		? {
 				...settings,
-				apps: { ...settings.apps, reservations: true, inventory: true },
+				apps: {
+					...settings.apps,
+					reservations: true,
+					inventory: true,
+					orders: true,
+				},
 			}
 		: settings
 
@@ -669,6 +680,7 @@ export const usePos = create<PosState>((set, get) => ({
 							...before.apps,
 							reservations: false,
 							inventory: false,
+							orders: false,
 						},
 					}
 				: {}),
@@ -734,7 +746,7 @@ export const usePos = create<PosState>((set, get) => ({
 					...get().settings,
 					deviceToken: null,
 					signInRequired: false,
-					apps: { timeclock: false, reservations: false, inventory: false },
+					apps: { ...NO_POS_DEVICE_APPS },
 				}
 				saveSettings(settings)
 				set({ settings, pairingLost: true, session: null })
@@ -758,7 +770,7 @@ export const usePos = create<PosState>((set, get) => ({
 					...get().settings,
 					deviceToken: null,
 					signInRequired: false,
-					apps: { timeclock: false, reservations: false, inventory: false },
+					apps: { ...NO_POS_DEVICE_APPS },
 				}
 				saveSettings(settings)
 				set({ settings, pairingLost: true, session: null })
@@ -807,7 +819,8 @@ export const usePos = create<PosState>((set, get) => ({
 			if (
 				after.timeclock !== before.timeclock ||
 				after.reservations !== before.reservations ||
-				after.inventory !== before.inventory
+				after.inventory !== before.inventory ||
+				after.orders !== before.orders
 			) {
 				const settings = { ...get().settings, apps: after }
 				saveSettings(settings)
@@ -829,7 +842,7 @@ export const usePos = create<PosState>((set, get) => ({
 			...get().settings,
 			deviceToken: null,
 			signInRequired: false,
-			apps: { timeclock: false, reservations: false, inventory: false },
+			apps: { ...NO_POS_DEVICE_APPS },
 		}
 		saveSettings(settings)
 		set({ settings, pairingLost: true, session: null })
@@ -998,7 +1011,7 @@ export const usePos = create<PosState>((set, get) => ({
 			deviceLabel: null,
 			locationLocked: false,
 			signInRequired: false,
-			apps: { timeclock: false, reservations: false, inventory: false },
+			apps: { ...NO_POS_DEVICE_APPS },
 		}
 		saveSettings(settings)
 		set({ settings, pairingLost: false, session: null })

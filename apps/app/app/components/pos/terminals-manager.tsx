@@ -67,6 +67,7 @@ const terminalSchema = z.object({
 	timeclockEnabled: z.boolean().default(false),
 	reservationsEnabled: z.boolean().default(false),
 	inventoryEnabled: z.boolean().default(false),
+	ordersEnabled: z.boolean().default(false),
 	pairedAt: z.number(),
 	lastSeenAt: z.number().nullable(),
 	revokedAt: z.number().nullable(),
@@ -1003,8 +1004,6 @@ function StationApps({
 }) {
 	const { _ } = useLingui()
 	const label = device.label
-	if (!features.timeclock && !features.reservations && !features.inventory)
-		return null
 	// Where staff work by location, the clock needs the terminal's own (its workplace).
 	const timeclockBlocked =
 		!device.locationId && locations.length > 0
@@ -1028,6 +1027,12 @@ function StationApps({
 				  !grants.inventoryLocationIds.includes(device.locationId)
 				? _(t`You can turn on Stock only at your own locations.`)
 				: null
+	// Online orders show guests' names at one location and record who acted.
+	const ordersBlocked = !device.locationId
+		? _(t`Choose the terminal's location to use Online orders.`)
+		: !device.signInRequired
+			? _(t`Turn on the staff PIN to use Online orders.`)
+			: null
 	const toggle = (
 		on: boolean,
 		label: string,
@@ -1097,15 +1102,22 @@ function StationApps({
 							!grants.inventory || inventoryBlocked !== null,
 						)
 					: null}
+				{toggle(
+					device.ordersEnabled,
+					device.ordersEnabled
+						? _(t`Online orders on ${label}, on`)
+						: _(t`Online orders on ${label}, off`),
+					<Trans>Online orders on</Trans>,
+					<Trans>Online orders off</Trans>,
+					() => onChange({ ordersEnabled: !device.ordersEnabled }),
+					ordersBlocked !== null,
+				)}
 				{features.reservations && locationName ? (
 					<span className="text-muted-foreground text-sm">
 						<Trans>Host stand for {locationName}</Trans>
 					</span>
 				) : null}
-				{(features.reservations || features.timeclock || features.inventory) &&
-				canWrite &&
-				!device.locationId &&
-				locations.length > 0 ? (
+				{canWrite && !device.locationId && locations.length > 0 ? (
 					<Select
 						value=""
 						onValueChange={(next) => next && onChange({ locationId: next })}
@@ -1145,6 +1157,9 @@ function StationApps({
 			inventoryBlocked ? (
 				<p className="text-muted-foreground text-sm">{inventoryBlocked}</p>
 			) : null}
+			{canWrite && !device.ordersEnabled && ordersBlocked ? (
+				<p className="text-muted-foreground text-sm">{ordersBlocked}</p>
+			) : null}
 			{canWrite &&
 			((features.timeclock && !grants.timeclock && !device.timeclockEnabled) ||
 				(features.reservations &&
@@ -1168,6 +1183,7 @@ type StationAppPatch =
 	| { timeclockEnabled: boolean }
 	| { reservationsEnabled: boolean }
 	| { inventoryEnabled: boolean }
+	| { ordersEnabled: boolean }
 	| { locationId: string }
 
 function DayStartSelect({

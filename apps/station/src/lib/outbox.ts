@@ -705,13 +705,20 @@ export async function checkDeviceDetailed(
 function readApps(raw: unknown): Partial<PosDeviceApps> {
 	// An older node reports no apps: it offers none.
 	if (!raw || typeof raw !== 'object')
-		return { timeclock: false, reservations: false, inventory: false }
+		return {
+			timeclock: false,
+			reservations: false,
+			inventory: false,
+			orders: false,
+		}
 	const apps: Partial<PosDeviceApps> = {}
 	const body = raw as Record<string, unknown>
 	if (typeof body.timeclock === 'boolean') apps.timeclock = body.timeclock
 	if (typeof body.reservations === 'boolean')
 		apps.reservations = body.reservations
 	if (typeof body.inventory === 'boolean') apps.inventory = body.inventory
+	// A node that predates the Orders app does not offer it.
+	apps.orders = body.orders === true
 	return apps
 }
 

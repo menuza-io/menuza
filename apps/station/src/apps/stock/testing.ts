@@ -35,7 +35,12 @@ export const settings = {
 	deviceLabel: 'Kitchen tablet',
 	demo: false,
 	locale: null,
-	apps: { timeclock: false, reservations: false, inventory: true },
+	apps: {
+		timeclock: false,
+		reservations: false,
+		inventory: true,
+		orders: false,
+	},
 	activeApp: 'stock',
 } satisfies PosSettings
 

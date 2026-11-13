@@ -119,12 +119,14 @@ const mintOperator = (
 		inventory: true,
 		inventoryLocationIds: null,
 	},
+	extra: Record<string, unknown> = {},
 ) =>
 	new SignJWT({
 		orgId,
 		role: 'operator',
 		scope: 'orders:write',
 		...(stationApps ? { stationApps } : {}),
+		...extra,
 	})
 		.setSubject('user_manager_1')
 		.setProtectedHeader({ alg: 'HS256' })
@@ -813,6 +815,7 @@ describe('Station apps on a POS terminal', () => {
 				timeclock: true,
 				reservations: true,
 				inventory: false,
+				orders: false,
 			})
 
 			rsvContexts.set(ORG_A, publicContext(ORG_A, { enabled: false }))
@@ -827,6 +830,7 @@ describe('Station apps on a POS terminal', () => {
 				timeclock: false,
 				reservations: false,
 				inventory: false,
+				orders: false,
 			})
 		})
 
@@ -867,7 +871,24 @@ describe('Station apps on a POS terminal', () => {
 				timeclock: false,
 				reservations: false,
 				inventory: false,
+				orders: false,
 			})
+		})
+
+		it('reports Orders once a manager switches it on for a signed-in terminal at a location', async () => {
+			await h.seedStaff(ORG_A, {})
+			const { secret, deviceId } = await pairTerminal()
+			const on = await h.app.request(`/operator/pos/terminals/${deviceId}`, {
+				method: 'PATCH',
+				headers: {
+					authorization: `Bearer ${await mintOperator()}`,
+					'content-type': 'application/json',
+				},
+				body: JSON.stringify({ ordersEnabled: true }),
+			})
+			expect(on.status).toBe(200)
+			const me = await request('GET', '/pos/me', { secret })
+			expect(me.body.apps.orders).toBe(true)
 		})
 	})
 
@@ -1012,6 +1033,47 @@ describe('Station apps on a POS terminal', () => {
 			expect((await patch(deviceId, { inventoryEnabled: true })).status).toBe(
 				200,
 			)
+		})
+
+		it('Orders needs a location and staff sign-in, and a scoped member may switch it on only at their locations', async () => {
+			await h.seedStaff(ORG_A, {})
+			const { deviceId } = await pairTerminal({ reservationsEnabled: false })
+			expect((await patch(deviceId, { ordersEnabled: true })).status).toBe(200)
+			const noPin = await patch(deviceId, { signInRequired: false })
+			expect(noPin.status).toBe(422)
+			expect(((await noPin.json()) as { error: string }).error).toBe(
+				'orders_needs_sign_in',
+			)
+			expect((await patch(deviceId, { ordersEnabled: false })).status).toBe(200)
+			const scoped = await mintOperator(ORG_A, undefined, {
+				locationIds: ['loc_elsewhere'],
+			})
+			const flip = async (token: string, body: unknown) =>
+				h.app.request(`/operator/pos/terminals/${deviceId}`, {
+					method: 'PATCH',
+					headers: {
+						authorization: `Bearer ${token}`,
+						'content-type': 'application/json',
+					},
+					body: JSON.stringify(body),
+				})
+			const denied = await flip(scoped, { ordersEnabled: true })
+			expect(denied.status).toBe(403)
+			expect(((await denied.json()) as { error: string }).error).toBe(
+				'location_not_allowed',
+			)
+			// Switching off is never refused.
+			expect((await flip(scoped, { ordersEnabled: false })).status).toBe(200)
+			const here = await mintOperator(ORG_A, undefined, {
+				locationIds: [PUBLIC_LOC],
+			})
+			expect((await flip(here, { ordersEnabled: true })).status).toBe(200)
+			const db = await getTenantDb(ORG_A)
+			const [row] = await db
+				.select()
+				.from(posDevices)
+				.where(eq(posDevices.id, deviceId))
+			expect(row!.ordersEnabled).toBe(true)
 		})
 
 		it('switching an app on needs its own module’s permission; switching off never does', async () => {

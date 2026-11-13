@@ -281,6 +281,13 @@
 			"when": 1794248866169,
 			"tag": "0039_inventory_location_settings",
 			"breakpoints": true
+		},
+		{
+			"idx": 40,
+			"version": "6",
+			"when": 1794545172911,
+			"tag": "0040_station_orders_app",
+			"breakpoints": true
 		}
 	]
 }

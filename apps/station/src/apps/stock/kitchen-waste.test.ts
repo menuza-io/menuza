@@ -95,7 +95,12 @@ function drawKitchen(inventory: boolean, tickets: KdsFeed['tickets'] = []) {
 		h(Kitchen, {
 			settings: {
 				...settings,
-				apps: { timeclock: false, reservations: false, inventory },
+				apps: {
+					timeclock: false,
+					reservations: false,
+					inventory,
+					orders: false,
+				},
 			},
 			session: session(),
 			online: true,
