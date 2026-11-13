@@ -216,7 +216,11 @@ describe('ready texts for counter and phone orders (#250)', () => {
 		const noNumber = await addOrder({ readyTextPhone: null })
 		const cancelled = await addOrder({ number: 'T1-0050', status: 'void' })
 		await stage(noNumber, 'ready')
-		await stage(cancelled, 'ready')
+		// A voided order leaves the kitchen screen; asked directly, it sends nothing.
+		const db = await getTenantDb(ORG_A)
+		expect(
+			await sendReadyTextIfDue(db, { orgId: ORG_A, orderId: cancelled }),
+		).toBe('skipped')
 		context.readyText = false
 		const switchedOff = await addOrder({ number: 'T1-0051' })
 		await stage(switchedOff, 'ready')
