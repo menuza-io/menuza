@@ -566,6 +566,28 @@ describe('Operator Routes', () => {
 				discountId: 'disc_welcome',
 				prefix: 'HELLO',
 			})
+
+			// The summary the App server reads carries the offer but no
+			// recipients: no customer name, email or phone.
+			const summary = await app.request(
+				`/operator/marketing/campaigns/${campaignId}/summary`,
+				{ headers: { Authorization: `Bearer ${validToken}` } },
+			)
+			expect(summary.status).toBe(200)
+			const summaryBody = await summary.json()
+			expect(Object.keys(summaryBody.campaign).sort()).toEqual([
+				'discountOffer',
+				'id',
+				'name',
+			])
+			expect(summaryBody.campaign.discountOffer).toMatchObject({
+				mode: 'unique',
+				discountId: 'disc_welcome',
+			})
+			const summaryText = JSON.stringify(summaryBody)
+			for (const email of ['a@example.com', 'b@example.com']) {
+				expect(summaryText).not.toContain(email)
+			}
 		})
 
 		it('sends everyone the same code for a shared coupon', async () => {

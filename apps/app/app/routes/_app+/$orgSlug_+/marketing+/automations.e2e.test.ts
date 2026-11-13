@@ -5,10 +5,7 @@ import {
 	requireUserWithOrganizationPermission,
 } from '#app/utils/organization/permissions.server.ts'
 import * as tenantApiServer from '#app/utils/tenant-api.server.ts'
-import {
-	loader as runsLoader,
-	action as runsAction,
-} from './automations.$journeyId.runs.tsx'
+import * as runsRoute from './automations.$journeyId.runs.tsx'
 import {
 	loader as detailLoader,
 	action as detailAction,
@@ -381,96 +378,42 @@ describe('Marketing Journeys UI & Route End-to-End Integration Suite', () => {
 	})
 
 	describe('4. Journey Runs & Step Execution Audit History (automations.$journeyId.runs.tsx)', () => {
-		it('loader fetches runs history and journey details', async () => {
-			mockFetchTenant
-				.mockResolvedValueOnce(
-					new Response(
-						JSON.stringify({
-							journey: {
-								id: testJourneyId,
-								name: 'Onboarding Campaign',
-								status: 'active',
-								triggerType: 'phone_verified',
-							},
-						}),
-						{ status: 200 },
-					),
-				)
-				.mockResolvedValueOnce(
-					new Response(
-						JSON.stringify({
-							runs: [
-								{
-									id: 'run_001',
-									journeyId: testJourneyId,
-									customerId: 'cust_001',
-									status: 'completed',
-									startedAt: '2026-08-24T00:00:00Z',
-									completedAt: '2026-08-24T00:01:00Z',
-								},
-							],
-						}),
-						{ status: 200 },
-					),
-				)
+		// Runs and step timelines are read by the browser with the Marketing
+		// token (#70); the App server reads the PII-free definition only.
+		it('loader fetches the journey details only', async () => {
+			mockFetchTenant.mockResolvedValueOnce(
+				new Response(
+					JSON.stringify({
+						journey: {
+							id: testJourneyId,
+							name: 'Onboarding Campaign',
+							status: 'active',
+							triggerType: 'phone_verified',
+						},
+					}),
+					{ status: 200 },
+				),
+			)
 
 			const request = new Request(
 				`http://localhost:3001/${testOrgSlug}/marketing/journeys/${testJourneyId}/runs`,
 			)
-			const result = await runsLoader({
+			const result = await runsRoute.loader({
 				request,
 				params: { orgSlug: testOrgSlug, journeyId: testJourneyId },
 				context: {},
 			} as any)
 
 			expect(result.journey.name).toBe('Onboarding Campaign')
-			expect(result.runs).toHaveLength(1)
-			expect(result.runs[0]!.id).toBe('run_001')
-			expect(result.runs[0]!.status).toBe('completed')
+			expect(result).not.toHaveProperty('runs')
+			expect(mockFetchTenant).toHaveBeenCalledTimes(1)
+			expect(mockFetchTenant).toHaveBeenCalledWith(
+				`/operator/journeys/${testJourneyId}`,
+			)
 		})
 
-		it('action loads step execution timeline for a specific run', async () => {
-			mockFetchTenant.mockResolvedValueOnce(
-				new Response(
-					JSON.stringify({
-						steps: [
-							{
-								id: 'step_1',
-								nodeId: 'node_email_1',
-								nodeType: 'action_email',
-								status: 'delivered',
-								executedAt: '2026-08-24T00:00:10Z',
-								executionDetails: '{"messageId":"resend-123"}',
-							},
-						],
-					}),
-					{ status: 200 },
-				),
-			)
-
-			const formData = new FormData()
-			formData.set('runId', 'run_001')
-
-			const request = new Request(
-				`http://localhost:3001/${testOrgSlug}/marketing/journeys/${testJourneyId}/runs`,
-				{
-					method: 'POST',
-					body: formData,
-				},
-			)
-
-			const result = await runsAction({
-				request,
-				params: { orgSlug: testOrgSlug, journeyId: testJourneyId },
-				context: {},
-			} as any)
-
-			expect(mockFetchTenant).toHaveBeenCalledWith(
-				'/operator/journeys/runs/run_001',
-			)
-			expect((result as any).timeline).toHaveLength(1)
-			expect((result as any).timeline[0]!.nodeId).toBe('node_email_1')
-			expect((result as any).timeline[0]!.status).toBe('delivered')
+		it('has no server action that could read a run timeline', () => {
+			expect('action' in runsRoute).toBe(false)
 		})
 	})
 })

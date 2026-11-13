@@ -80,7 +80,7 @@ export async function getOperatorTenantClient(
 		 * it only on that area's routes, so the permission checked before minting
 		 * cannot unlock another area. Omit for tokens that stay on the server.
 		 */
-		area?: 'marketing' | 'customers'
+		area?: 'marketing' | 'customers' | 'automations'
 		/** Lets tenant-api accept changes (e.g. completing or tagging calls). */
 		canUpdate?: boolean
 		/** Lets tenant-api accept destructive calls (e.g. deleting call logs). */

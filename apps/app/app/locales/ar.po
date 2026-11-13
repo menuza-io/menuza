@@ -675,7 +675,7 @@ msgstr "{0, plural, one {صورتك} two {صورتاك} few {صورك الـ #} 
 #~ msgstr "{0} · إليك ما يحدث في {1}"
 
 #. placeholder {0}: data.messageText?.length || 0
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:437
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:439
 msgid "{0} / 1600 chars"
 msgstr "{0} / 1600 حرف"
 
@@ -1293,11 +1293,11 @@ msgstr "منذ {days} يوم"
 msgid "{deviceName} was removed."
 msgstr "تمت إزالة {deviceName}."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:163
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:169
 msgid "{diffSec}s"
 msgstr "{diffSec} ث"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:160
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:166
 msgid "{diffSec}s (running)"
 msgstr "{diffSec} ث (قيد التشغيل)"
 
@@ -1655,7 +1655,7 @@ msgstr "{minutes} د"
 msgid "{minutes} minutes"
 msgstr "{minutes} دقيقة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:166
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:172
 msgid "{minutes}m {remainingSec}s"
 msgstr "{minutes} د {remainingSec} ث"
 
@@ -2530,11 +2530,11 @@ msgstr "**مطبوعاتك في الطريق**"
 #. placeholder {0}: data.field === 'phoneVerified' ? 'Verification Status' : conditionFieldLabel(data.field || 'email')
 #. placeholder {1}: data.field === 'phoneVerified' ? ' is ' : data.operator === 'equals' ? ' equals ' : data.operator === 'not_equals' ? ' does not equal ' : ' contains '
 #. placeholder {2}: data.field === 'phoneVerified' ? data.value === 'true' ? 'Verified' : 'Not Verified' : data.value || '...'
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:577
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:579
 msgid "• If Customer {0}{1}<0>{2}</0> → <1>True branch</1>"
 msgstr "• إذا كان العميل {0}{1}<0>{2}</0> → <1>فرع صحيح</1>"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:603
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:605
 msgid "• Otherwise → <0>False branch</0>"
 msgstr "• وإلا → <0>فرع خاطئ</0>"
 
@@ -3767,7 +3767,7 @@ msgstr "نشط"
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:90
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:60
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:263
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:138
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:144
 #: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:339
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1006
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:983
@@ -3857,7 +3857,7 @@ msgstr "أضف {tag} إلى الرسالة ليرى العملاء رمزهم."
 msgid "Add a {categoryLabel} rule"
 msgstr "إضافة قاعدة {categoryLabel}"
 
-#: ../../packages/marketing/src/components/email/email-preview.tsx:138
+#: ../../packages/marketing/src/components/email/email-preview.tsx:154
 msgid "Add a block to see your email come to life."
 msgstr "أضف كتلة لترى بريدك الإلكتروني يتشكّل."
 
@@ -4215,7 +4215,7 @@ msgstr "إضافة منطقة"
 #~ msgid "Add at least one code."
 #~ msgstr "أضف رمزًا واحدًا على الأقل."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:194
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:196
 msgid "Add at least one email block"
 msgstr "أضف كتلة بريد إلكتروني واحدة على الأقل"
 
@@ -5299,7 +5299,7 @@ msgstr "اجتازت جميع الفحوصات. سير العمل هذا جاه�
 msgid "All core features included"
 msgstr "جميع الميزات الأساسية مضمنة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:239
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:306
 msgid "All customer automation workflows orchestrated durably by Cloudflare Workflows and executed by the regional data engine."
 msgstr "جميع سير عمل أتمتة العملاء تُنسَّق بشكل دائم عبر Cloudflare Workflows وتُنفَّذ بواسطة محرك البيانات الإقليمي."
 
@@ -6339,7 +6339,7 @@ msgstr "مؤرشف"
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:341
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:282
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:62
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:140
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:146
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:204
 #: app/utils/discounts/labels.ts:28
 #: app/utils/discounts/labels.ts:44
@@ -6709,7 +6709,7 @@ msgstr "إرفاق مجموعات معدِّلات فرعية تظهر عندم�
 msgid "Attached images"
 msgstr "الصور المرفقة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:414
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:509
 msgid "Attempt: {attempt} • Executed: {executedAtLabel}"
 msgstr "المحاولة: {attempt} • التنفيذ: {executedAtLabel}"
 
@@ -6720,7 +6720,7 @@ msgstr "المحاولات"
 #~ msgid "Attention Needed"
 #~ msgstr "يتطلب الانتباه"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:274
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:359
 msgid "Audit Trail"
 msgstr "سجل التدقيق"
 
@@ -6819,7 +6819,7 @@ msgstr "أتمتة"
 msgid "Automation menu"
 msgstr "قائمة الأتمتة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:73
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:84
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:117
 msgid "Automation not found"
 msgstr "لم يتم العثور على الأتمتة"
@@ -7325,7 +7325,7 @@ msgstr "محظورة"
 msgid "Blocked table {tableLabel} for the rest of the service."
 msgstr "تم حظر الطاولة {tableLabel} لبقية الخدمة."
 
-#: ../../packages/marketing/src/components/email/email-block-editor.tsx:244
+#: ../../packages/marketing/src/components/email/email-block-editor.tsx:249
 msgid "Blocks"
 msgstr "الكتل"
 
@@ -7684,8 +7684,7 @@ msgstr "اجمع الأشخاص المناسبين في مجموعة."
 msgid "Broadcast"
 msgstr "بثّ"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId.tsx:38
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId.tsx:65
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId.tsx:135
 msgid "Broadcast not found"
 msgstr "لم يتم العثور على البث"
 
@@ -8230,7 +8229,7 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:410
 #: ../../packages/marketing/src/components/campaign-form.tsx:173
 #: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:132
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:162
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:168
 #: app/components/chat/chat-compose-dialog.tsx:411
 #: app/components/chat/chat-composer.tsx:350
 #: app/components/chat/chat-view.tsx:1021
@@ -8523,7 +8522,7 @@ msgstr "الإلغاءات حسب الجهة"
 #: app/components/staff/schedule/time-off-page.tsx:286
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:215
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.tsx:238
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:147
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:153
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:242
 #: app/utils/inventory/order-view.ts:27
 #: app/utils/inventory/transfer-form.ts:127
@@ -10166,7 +10165,7 @@ msgstr "الإغلاق عند الكاونتر"
 msgid "Close at counter, tab {number}, table {label}"
 msgstr "الإغلاق عند الكاونتر، الحساب {number}، الطاولة {label}"
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:127
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:133
 msgid "Close email design"
 msgstr "إغلاق تصميم البريد"
 
@@ -10575,7 +10574,7 @@ msgstr "أكمل التسجيل للانضمام إلى المنظمة"
 #: app/components/onboarding-checklist.tsx:249
 #: app/components/orders/order-detail.tsx:221
 #: app/components/reservations/status-style.tsx:143
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:144
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:150
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:67
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:237
 #: app/utils/loyalty/loyalty-labels.ts:123
@@ -10599,7 +10598,7 @@ msgstr "فرع شرطي"
 msgid "Condition comparison field is required."
 msgstr "حقل مقارنة الشرط مطلوب."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:532
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:534
 msgid "Condition Logic"
 msgstr "منطق الشرط"
 
@@ -11017,7 +11016,7 @@ msgstr "اتصل بالدعم للحصول على الأسعار"
 msgid "Contacts"
 msgstr "جهات الاتصال"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:551
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:553
 msgid "Contains (Partial Match)"
 msgstr "يحتوي (تطابق جزئي)"
 
@@ -11642,6 +11641,10 @@ msgstr "تعذر تحميل المساعد."
 #: app/components/phone-agent/call-recording-player.tsx:73
 msgid "Couldn't load the recording. Try again."
 msgstr "تعذّر تحميل التسجيل. حاول مرة أخرى."
+
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:470
+msgid "Couldn't load the steps of this run. Close it and try again."
+msgstr "تعذّر تحميل خطوات هذا التشغيل. أغلقه وحاول مرة أخرى."
 
 #: app/components/phone-agent/voice-picker.tsx:447
 msgid "Couldn't load voices"
@@ -12609,7 +12612,7 @@ msgstr "بيانات العملاء والأعمال"
 msgid "Customer app"
 msgstr "تطبيق العملاء"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:471
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:473
 msgid "Customer Attribute"
 msgstr "سمة العميل"
 
@@ -12668,7 +12671,7 @@ msgstr "تقييمات العملاء"
 msgid "Customer since"
 msgstr "عميل منذ"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:269
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:354
 msgid "Customer UUID"
 msgstr "معرّف العميل الفريد"
 
@@ -14049,7 +14052,7 @@ msgstr "تعطيل المصادقة الثنائية"
 msgid "Disabled for this location"
 msgstr "معطّل لهذا الفرع"
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:211
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:218
 #: app/components/reservations/settings/save-bar.tsx:76
 #: app/components/save-bar.tsx:350
 msgid "Discard"
@@ -14075,7 +14078,7 @@ msgstr "تجاهل التغييرات"
 #~ msgid "Discard draft"
 #~ msgstr "تجاهل المسودة"
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:191
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:198
 #: app/components/staff/labor-policy-editor.tsx:280
 msgid "Discard unsaved changes?"
 msgstr "تجاهل التغييرات غير المحفوظة؟"
@@ -14262,7 +14265,7 @@ msgstr "أجرِ أول جرد"
 msgid "Documents ZATCA rejected"
 msgstr "مستندات رفضتها الهيئة"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:548
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:550
 msgid "Does Not Equal"
 msgstr "لا يساوي"
 
@@ -14410,7 +14413,7 @@ msgstr "مسودة"
 #: app/components/staff/schedule/shift-block.tsx:33
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:59
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:264
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:137
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:143
 #: app/routes/_app+/$orgSlug_+/marketing+/print._index.tsx:142
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:929
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:413
@@ -14536,7 +14539,7 @@ msgstr "اسحب المؤشر للمقارنة."
 msgid "Drag to move"
 msgstr "اسحب للنقل"
 
-#: ../../packages/marketing/src/components/email/email-block-editor.tsx:120
+#: ../../packages/marketing/src/components/email/email-block-editor.tsx:125
 #: app/components/website/form-builder-sidebar.tsx:335
 msgid "Drag to reorder"
 msgstr "اسحب لإعادة الترتيب"
@@ -14681,7 +14684,7 @@ msgid "Duplicates and data"
 msgstr "التكرارات والبيانات"
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:235
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:272
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:357
 msgid "Duration"
 msgstr "المدة"
 
@@ -14708,7 +14711,7 @@ msgstr "يجب أن تكون المدة بين 15 و720 دقيقة وبفواص�
 msgid "During this service"
 msgstr "خلال هذه الخدمة"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:563
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:565
 msgid "e.g. @gmail.com"
 msgstr "مثال: @gmail.com"
 
@@ -15352,7 +15355,7 @@ msgstr "مؤهل لإعادة التوظيف."
 msgid "Email"
 msgstr "البريد الإلكتروني"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:491
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:493
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:345
 msgid "Email Address"
 msgstr "عنوان البريد الإلكتروني"
@@ -15368,8 +15371,8 @@ msgstr "لا يمكن إرسال البريد الإلكتروني من هنا �
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:322
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:410
 #: ../../packages/marketing/src/components/campaign-form.tsx:118
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:111
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:135
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:117
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:141
 msgid "Email design"
 msgstr "تصميم البريد"
 
@@ -15394,7 +15397,7 @@ msgstr "البريد الإلكتروني متوقف، لذا لم يُرسل ش
 msgid "Email or Username"
 msgstr "البريد الإلكتروني / اسم المستخدم"
 
-#: ../../packages/marketing/src/components/email/email-preview.tsx:107
+#: ../../packages/marketing/src/components/email/email-preview.tsx:123
 msgid "Email preview"
 msgstr "معاينة البريد"
 
@@ -16591,7 +16594,7 @@ msgstr "في كل مكان"
 msgid "Exact time (no rounding)"
 msgstr "الوقت الدقيق (بدون تقريب)"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:545
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:547
 msgid "Exactly Equals"
 msgstr "يساوي تماماً"
 
@@ -16658,11 +16661,11 @@ msgstr "جلوس حصري"
 #~ msgid "Execution History ({0})"
 #~ msgstr "سجل التنفيذ ({0})"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:235
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:302
 msgid "Execution History ({runCount})"
 msgstr "سجل التنفيذ ({runCount})"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:216
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:283
 msgid "Execution runs and step history, triggered by \"{triggerLabel}\"."
 msgstr "عمليات التشغيل وسجل الخطوات، المُطلقة بواسطة \"{triggerLabel}\"."
 
@@ -16893,7 +16896,7 @@ msgstr "فشل المصادقة"
 #: app/components/settings/cards/organization/shop-card.tsx:49
 #: app/components/social/social-labels.ts:27
 #: app/components/social/social-labels.ts:37
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:146
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:152
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:69
 #: app/utils/reservations/payments-view.ts:72
 msgid "Failed"
@@ -16924,7 +16927,7 @@ msgstr "فشل التحقق باستخدام مفتاح المرور: {errorMess
 msgid "Failed to copy account ID"
 msgstr "فشل نسخ معرف الحساب"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:247
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:249
 msgid "Failed to create and dispatch campaign"
 msgstr "فشل إنشاء الحملة وإرسالها"
 
@@ -17054,7 +17057,7 @@ msgstr "فشل تحميل مساعد الذكاء الاصطناعي"
 #~ msgid "Failed to load areas, tables, and combinations."
 #~ msgstr "فشل في تحميل المناطق والطاولات والمجموعات."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId.tsx:39
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId.tsx:136
 msgid "Failed to load broadcast"
 msgstr "فشل تحميل البث"
 
@@ -17087,6 +17090,10 @@ msgstr "فشل تحميل تفاصيل الحجز."
 msgid "Failed to load reservation setup for this location."
 msgstr "فشل في تحميل إعدادات الحجوزات لهذا الفرع."
 
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:327
+msgid "Failed to load runs"
+msgstr "تعذّر تحميل عمليات التشغيل"
+
 #~ msgid "Failed to load section layouts for this location."
 #~ msgstr "فشل تحميل تخطيطات الأقسام لهذا الفرع."
 
@@ -17097,8 +17104,8 @@ msgstr "فشل في تحميل إعدادات الحجوزات لهذا الفر
 #~ msgstr "فشل في تحميل الأيام الخاصة وحظر الطاولات."
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:122
-msgid "Failed to load timeline"
-msgstr "فشل تحميل الجدول الزمني"
+#~ msgid "Failed to load timeline"
+#~ msgstr "فشل تحميل الجدول الزمني"
 
 #~ msgid "Failed to mark running late."
 #~ msgstr "فشل تسجيل التأخير."
@@ -18979,7 +18986,7 @@ msgstr "مرحباً {NAME_TAG}، تحديث حسابك جاهز!"
 msgid "Hi {NAME_TAG}, your Menuza account is ready."
 msgstr "مرحباً {NAME_TAG}، حسابك في Menuza جاهز."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:445
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:447
 msgid "Hi {NAME_TAG}, your order has been confirmed!"
 msgstr "مرحباً {NAME_TAG}، تم تأكيد طلبك!"
 
@@ -20258,7 +20265,7 @@ msgstr "تطبيق iOS"
 msgid "IP Address"
 msgstr "عنوان IP"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:520
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:522
 msgid "Is Verified (True)"
 msgstr "موثّق (صحيح)"
 
@@ -20651,7 +20658,7 @@ msgstr "الإبقاء على المنطقة الحالية"
 msgid "Keep dishware"
 msgstr "الاحتفاظ بالأواني"
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:202
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:209
 #: app/components/reservations/floor-plan-canvas.tsx:819
 #: app/components/reservations/settings/setup-list-chrome.tsx:214
 #: app/components/staff/labor-policy-editor.tsx:291
@@ -21265,7 +21272,7 @@ msgstr "أحدث زيارة"
 msgid "Launch run"
 msgstr "بدء التشغيل"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:258
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:343
 msgid "Launch Test Run in Builder"
 msgstr "بدء تشغيل اختباري في المُنشئ"
 
@@ -21798,6 +21805,10 @@ msgstr "جارٍ تحميل المتقدّم"
 msgid "Loading assistant…"
 msgstr "جارٍ تحميل المساعد…"
 
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.$campaignId.tsx:123
+msgid "Loading broadcast…"
+msgstr "جارٍ تحميل البث…"
+
 #: app/components/phone-agent/call-detail-sheet.tsx:350
 msgid "Loading call"
 msgstr "جارٍ تحميل المكالمة"
@@ -21981,6 +21992,10 @@ msgstr "جارٍ تحميل التقييمات"
 msgid "Loading rewards…"
 msgstr "جارٍ تحميل المكافآت…"
 
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:313
+msgid "Loading runs…"
+msgstr "جارٍ تحميل عمليات التشغيل…"
+
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:441
 msgid "Loading section layouts…"
 msgstr "جارٍ تحميل تخطيطات الأقسام…"
@@ -21996,7 +22011,7 @@ msgstr "جارٍ تحميل الإعدادات…"
 msgid "Loading special days…"
 msgstr "جارٍ تحميل الأيام الخاصة…"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:375
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:463
 msgid "Loading step executions from regional SQLite outbox..."
 msgstr "جارٍ تحميل تنفيذات الخطوات من صندوق الصادر SQLite الإقليمي..."
 
@@ -23421,7 +23436,7 @@ msgstr "إجراءات الرسالة"
 msgid "Message composer"
 msgstr "محرر الرسائل"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:208
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:210
 msgid "Message content is required"
 msgstr "محتوى الرسالة مطلوب"
 
@@ -24092,7 +24107,7 @@ msgstr "جدولي"
 msgid "My schedule link"
 msgstr "رابط جدولي"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:500
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:502
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:348
 #: app/components/customers/people-list-screen.tsx:391
 #: app/components/customers/person-profile-screen.tsx:1129
@@ -24427,7 +24442,7 @@ msgid "New bookings stop using it. Bookings that already accepted it keep their 
 msgstr "تتوقف الحجوزات الجديدة عن استخدامها. الحجوزات التي وافقت عليها سابقًا تحتفظ بشروطها."
 
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:95
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:265
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:267
 msgid "New broadcast"
 msgstr "بث جديد"
 
@@ -25156,7 +25171,7 @@ msgstr "لا توجد خصومات تطابق هذه التصفيات"
 msgid "No discounts yet"
 msgstr "لا توجد خصومات بعد"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:380
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:475
 msgid "No discrete action step dispatches recorded for this run."
 msgstr "لم تُسجَّل إرسالات خطوات إجراء منفصلة لهذا التشغيل."
 
@@ -25208,7 +25223,7 @@ msgstr "لم يتم العثور على رموز تعبيرية"
 msgid "No events yet."
 msgstr "لا توجد أحداث بعد."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:247
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:332
 msgid "No execution runs recorded yet for this automation."
 msgstr "لم تُسجَّل عمليات تنفيذ بعد لهذه الأتمتة."
 
@@ -26706,7 +26721,7 @@ msgstr "غير مستخدم في أي ملاحظات أو تعليقات أو ص
 msgid "Not verified"
 msgstr "غير مُوثَّق"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:523
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:525
 msgid "Not Verified (False)"
 msgstr "غير موثّق (خاطئ)"
 
@@ -28166,7 +28181,7 @@ msgstr "افتح «اليوم» للاطمئنان على الضيوف المت�
 msgid "Open Today to review the bookings."
 msgstr "افتح «اليوم» لمراجعة الحجوزات."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:227
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:294
 msgid "Open visual builder"
 msgstr "فتح المنشئ المرئي"
 
@@ -29536,7 +29551,7 @@ msgstr "متوقف مؤقتاً"
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:340
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:61
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:265
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:139
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:145
 #: app/utils/discounts/labels.ts:27
 #: app/utils/discounts/labels.ts:43
 #: app/utils/loyalty/loyalty-labels.ts:31
@@ -29783,7 +29798,7 @@ msgstr "حساسية الفول السوداني"
 
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:44
 #: app/components/settings/cards/organization/shop-card.tsx:47
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:393
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:488
 msgid "Pending"
 msgstr "قيد الانتظار"
 
@@ -30057,7 +30072,7 @@ msgstr "رقم الهاتف"
 msgid "Phone number"
 msgstr "رقم الهاتف"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:494
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:496
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:346
 #: app/components/locations/location-form.tsx:408
 #: app/components/reservations/booking-sheet.tsx:966
@@ -30075,7 +30090,7 @@ msgstr "أرقام الهاتف"
 msgid "Phone ordering"
 msgstr "الطلب عبر الهاتف"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:497
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:499
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:347
 msgid "Phone Verification Status"
 msgstr "حالة توثيق الهاتف"
@@ -30198,7 +30213,7 @@ msgstr "اختر حقلاً لإضافته إلى نموذجك."
 msgid "Pick a group below to reveal it after a guest selects a triggering option."
 msgstr "اختر مجموعة أدناه لعرضها بعد أن يختار الضيف خياراً محفِّزاً."
 
-#: ../../packages/marketing/src/components/email/email-block-editor.tsx:175
+#: ../../packages/marketing/src/components/email/email-block-editor.tsx:180
 msgid "Pick a layout, then customize the blocks."
 msgstr "اختر تخطيطًا ثم خصّص الكتل."
 
@@ -32804,7 +32819,7 @@ msgstr "إزالة الوصول من جميع الأجهزة عدا هذا ال�
 msgid "Remove availability override"
 msgstr "إزالة استثناء التوفر"
 
-#: ../../packages/marketing/src/components/email/email-block-editor.tsx:149
+#: ../../packages/marketing/src/components/email/email-block-editor.tsx:154
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:152
 #: app/components/dashboard/dashboard-block-frame.tsx:51
 #: app/components/dashboard/dashboard-block-frame.tsx:52
@@ -33125,7 +33140,7 @@ msgstr "إعادة تسمية لوحة التحكم"
 msgid "Rename, table {tableName}"
 msgstr "إعادة تسمية، الطاولة {tableName}"
 
-#: ../../packages/marketing/src/components/email/email-preview.tsx:111
+#: ../../packages/marketing/src/components/email/email-preview.tsx:127
 msgid "Rendering…"
 msgstr "جارٍ العرض…"
 
@@ -34113,7 +34128,7 @@ msgstr "يقرّب وقت الحضور والانصراف عند جمع السا
 msgid "Route incoming traffic from an old path to a new destination."
 msgstr "وجّه الزيارات الواردة من مسار قديم إلى وجهة جديدة."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:574
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:576
 msgid "Routing Logic:"
 msgstr "منطق التوجيه:"
 
@@ -34145,7 +34160,7 @@ msgstr "تعلّم القواعد الوكيلَ كيف يعمل نشاطك ال
 msgid "Run double points on a slow Tuesday, a bonus on a new dish, or a boost at one location."
 msgstr "قدّم نقاطًا مضاعفة في يوم ثلاثاء هادئ، أو مكافأة على طبق جديد، أو دفعة إضافية في فرع واحد."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:341
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:426
 msgid "Run Execution Timeline"
 msgstr "الجدول الزمني لتنفيذ التشغيل"
 
@@ -34153,11 +34168,11 @@ msgstr "الجدول الزمني لتنفيذ التشغيل"
 msgid "Run history"
 msgstr "سجل التشغيل"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:267
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:352
 msgid "Run ID"
 msgstr "معرّف التشغيل"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:361
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:446
 msgid "Run ID: {selectedRunId}"
 msgstr "معرّف التشغيل: {selectedRunId}"
 
@@ -34170,11 +34185,11 @@ msgid "Rung up on a Station till"
 msgstr "سُجّل على جهاز Station"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:117
-msgid "runId is required"
-msgstr "معرّف التشغيل مطلوب"
+#~ msgid "runId is required"
+#~ msgstr "معرّف التشغيل مطلوب"
 
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:45
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:145
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:151
 msgid "Running"
 msgstr "قيد التشغيل"
 
@@ -34450,7 +34465,7 @@ msgstr "صلصات"
 msgid "Saudi Arabia (KSA)"
 msgstr "المملكة العربية السعودية (KSA)"
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:170
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:176
 #: ../../packages/marketing/src/components/email/merge-tag-field.tsx:349
 #: app/components/chat/chat-message.tsx:222
 #: app/components/customers/person-notes-panel.tsx:112
@@ -34738,7 +34753,7 @@ msgstr "احفظ تعديلاتك قبل تغيير الحالة."
 msgid "Save zone"
 msgstr "حفظ المنطقة"
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:148
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:154
 #: app/components/dashboard/dashboard-edit-toolbar.tsx:95
 #: app/components/inventory/counting-screen.tsx:661
 #: app/components/reservations/floor-plan-canvas.tsx:773
@@ -34847,7 +34862,7 @@ msgstr "جارٍ حفظ مسودة الرحلة الجديدة..."
 msgid "Saving..."
 msgstr "جارٍ الحفظ..."
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:170
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:176
 #: app/components/dashboard/dashboard-edit-toolbar.tsx:95
 #: app/components/hiring/interview-dialog.tsx:283
 #: app/components/inventory/adjust-stock-dialog.tsx:327
@@ -35972,7 +35987,7 @@ msgstr "حدد يوماً نشطاً واحداً على الأقل من أيا�
 msgid "Select at least one language."
 msgstr "اختر لغة واحدة على الأقل."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:487
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:489
 msgid "Select attribute"
 msgstr "اختر السمة"
 
@@ -35994,7 +36009,7 @@ msgstr "اختر اللغات"
 #~ msgid "Select month"
 #~ msgstr "اختر الشهر"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:541
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:543
 msgid "Select operator"
 msgstr "اختر العامل"
 
@@ -36013,7 +36028,7 @@ msgstr "اختيار صور"
 #~ msgid "Select row"
 #~ msgstr "تحديد صف"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:516
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:518
 msgid "Select status"
 msgstr "اختر الحالة"
 
@@ -36138,7 +36153,7 @@ msgstr "إرسال رمز جديد"
 msgid "Send a new manage link?"
 msgstr "إرسال رابط إدارة جديد؟"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:266
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:268
 msgid "Send a one-time email or SMS to your audience."
 msgstr "أرسل بريداً إلكترونياً أو رسالة نصية لمرة واحدة إلى جمهورك."
 
@@ -37450,7 +37465,7 @@ msgstr "الرسائل النصية"
 msgid "SMS message exceeds 1600 characters maximum."
 msgstr "تتجاوز الرسالة النصية الحد الأقصى 1600 حرفاً."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:425
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:427
 msgid "SMS Message Text"
 msgstr "نص الرسالة النصية"
 
@@ -37458,7 +37473,7 @@ msgstr "نص الرسالة النصية"
 msgid "SMS message text is required."
 msgstr "نص الرسالة النصية مطلوب."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:457
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:459
 msgid "SMS messages over 160 characters will be segmented according to standard GSM telecommunication protocols."
 msgstr "ستُقسَّم الرسائل النصية التي تتجاوز 160 حرفاً وفق بروتوكولات GSM الاتصالية القياسية."
 
@@ -38165,7 +38180,7 @@ msgstr "ابدأ بكتابة عنوان أو مدينة أو رمز بريدي.
 msgid "Start with a poster for your door or window."
 msgstr "ابدأ بملصق لبابك أو نافذتك."
 
-#: ../../packages/marketing/src/components/email/email-block-editor.tsx:172
+#: ../../packages/marketing/src/components/email/email-block-editor.tsx:177
 msgid "Start with a template"
 msgstr "ابدأ بقالب"
 
@@ -38189,7 +38204,7 @@ msgstr "بدأ {startedAt}"
 msgid "Started {startedAt} by <0>{by}</0>"
 msgstr "بدأ {startedAt} بواسطة <0>{by}</0>"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:271
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:356
 msgid "Started At"
 msgstr "بدأ في"
 
@@ -38288,7 +38303,7 @@ msgstr "الإحصائيات"
 #: app/routes/_app+/$orgSlug_+/loyalty+/program.tsx:249
 #: app/routes/_app+/$orgSlug_+/loyalty+/promotions.tsx:390
 #: app/routes/_app+/$orgSlug_+/loyalty+/rewards.tsx:266
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:270
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:355
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:973
 #: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:535
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:351
@@ -38341,7 +38356,7 @@ msgstr "تم البقاء في الصفحة الحالية"
 msgid "Step {currentStep} of {totalSteps}"
 msgstr "الخطوة {currentStep} من {totalSteps}"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:386
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:481
 msgid "Step Executions ({timelineCount})"
 msgstr "تنفيذات الخطوات ({timelineCount})"
 
@@ -39338,7 +39353,7 @@ msgstr "تكلفة الغذاء المستهدفة (%)"
 #~ msgid "Target type"
 #~ msgstr "نوع الهدف"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:559
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:561
 msgid "Target Value"
 msgstr "القيمة المستهدفة"
 
@@ -44525,7 +44540,7 @@ msgstr "الإشعارات غير المقروءة"
 msgid "Unread only"
 msgstr "غير المقروء فقط"
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:146
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:152
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:496
 #: app/components/reservations/experiences/experience-editor.tsx:499
 #: app/components/reservations/floor-plan-canvas.tsx:770
@@ -45359,7 +45374,7 @@ msgstr "رمز التحقق"
 msgid "Verification Code"
 msgstr "رمز التحقق"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:509
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:511
 msgid "Verification Status"
 msgstr "حالة التوثيق"
 
@@ -45596,7 +45611,7 @@ msgstr "عرض جدول الفريق"
 msgid "View time cards"
 msgstr "عرض بطاقات الدوام"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:320
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:405
 msgid "View Timeline →"
 msgstr "عرض الجدول الزمني ←"
 
@@ -47227,7 +47242,7 @@ msgstr "أمثلة محسوبة من الإعدادات الحالية."
 msgid "Worker type"
 msgstr "نوع العامل"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:368
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:453
 msgid "Workflow Error:"
 msgstr "خطأ في سير العمل:"
 
@@ -48062,7 +48077,7 @@ msgstr "تعذّر حفظ تغييرات لوحة التحكم."
 msgid "Your department"
 msgstr "قسمك"
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:194
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:201
 msgid "Your email design has changes that haven't been saved. Leaving now will lose them."
 msgstr "تصميم بريدك يحتوي على تغييرات لم تُحفظ. المغادرة الآن ستفقدها."
 

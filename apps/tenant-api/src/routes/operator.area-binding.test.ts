@@ -58,12 +58,57 @@ describe('browser operator tokens are bound to the area they were minted for', (
 	it('a marketing token reads marketing data but not customers or forms', async () => {
 		const token = await mint({ area: 'marketing' })
 		expect((await get('/marketing/campaigns', token)).status).toBe(200)
+		expect((await get('/marketing/campaigns/c1/summary', token)).status).toBe(
+			404,
+		)
 		expect((await get('/customers', token)).status).toBe(401)
 		expect((await get('/forms', token)).status).toBe(401)
 		expect((await get('/forms/f1/submissions', token)).status).toBe(401)
 		expect((await get('/journeys', token)).status).toBe(401)
+		// Automation runs need the Automations token, minted after
+		// read:automation:any, which the broadcasts permission does not imply.
 		expect((await get('/journeys/j1/runs', token)).status).toBe(401)
 		expect((await get('/journeys/runs/r1', token)).status).toBe(401)
+	})
+
+	// The Automations Runs page reads a journey's runs and a run's timeline
+	// from the browser. Those reads carry customer ids only. The definition,
+	// every write and every broadcast stay out of reach.
+	it('an automations token reads journey runs but not definitions, writes or broadcasts', async () => {
+		const token = await mint({
+			area: 'automations',
+			canUpdate: true,
+			canDelete: true,
+		})
+		expect((await get('/marketing/campaigns', token)).status).toBe(401)
+		expect((await get('/marketing/campaigns/c1', token)).status).toBe(401)
+		expect((await get('/marketing/campaigns/c1/summary', token)).status).toBe(
+			401,
+		)
+		expect((await get('/marketing/metrics', token)).status).toBe(401)
+		expect((await get('/customers', token)).status).toBe(401)
+		expect((await get('/journeys/j1', token)).status).toBe(401)
+		expect((await get('/journeys/j1/runs', token)).status).toBe(200)
+		expect((await get('/journeys/runs/r1', token)).status).toBe(404)
+		for (const [method, route] of [
+			['POST', '/journeys'],
+			['PATCH', '/journeys/j1'],
+			['PUT', '/journeys/j1'],
+			['POST', '/journeys/j1/publish'],
+			['POST', '/journeys/j1/pause'],
+			['POST', '/journeys/trigger-test'],
+			['DELETE', '/journeys/j1'],
+		] as const) {
+			const res = await app.request(`/operator${route}`, {
+				method,
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json',
+				},
+				body: method === 'DELETE' ? undefined : '{}',
+			})
+			expect(res.status, `${method} ${route}`).toBe(401)
+		}
 	})
 
 	it('a customers token reads customers but not marketing or forms', async () => {
@@ -74,6 +119,10 @@ describe('browser operator tokens are bound to the area they were minted for', (
 		})
 		expect((await get('/customers', token)).status).toBe(200)
 		expect((await get('/marketing/campaigns', token)).status).toBe(401)
+		expect((await get('/marketing/campaigns/c1/summary', token)).status).toBe(
+			401,
+		)
+		expect((await get('/journeys/j1/runs', token)).status).toBe(401)
 		const send = await app.request('/operator/marketing/campaigns', {
 			method: 'POST',
 			headers: {
@@ -176,6 +225,7 @@ describe('every /operator route refuses a token bound to another area', () => {
 		expect(reached).toEqual([
 			'GET /operator/marketing/campaigns',
 			'GET /operator/marketing/campaigns/x',
+			'GET /operator/marketing/campaigns/x/summary',
 			'GET /operator/marketing/metrics',
 			'POST /operator/marketing/campaigns',
 		])
@@ -192,7 +242,17 @@ describe('every /operator route refuses a token bound to another area', () => {
 		])
 	})
 
+	it('an automations token reaches only the journey run reads', async () => {
+		const reached = await reachedRoutes(
+			await mint({ area: 'automations', canUpdate: true, canDelete: true }),
+		)
+		expect(reached).toEqual([
+			'GET /operator/journeys/runs/x',
+			'GET /operator/journeys/x/runs',
+		])
+	})
+
 	it('a token bound to an unknown area reaches nothing', async () => {
-		expect(await reachedRoutes(await mint({ area: 'automations' }))).toEqual([])
+		expect(await reachedRoutes(await mint({ area: 'reports' }))).toEqual([])
 	})
 })

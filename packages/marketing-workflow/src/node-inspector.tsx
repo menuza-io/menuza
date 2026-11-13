@@ -413,6 +413,8 @@ export function NodeInspector({
 								// eslint-disable-next-line shadcn/require-static-classes -- callers forward a static content inset
 								contentClassName={emailDesignerContentClassName}
 								onSave={(blocks) => onSaveNodeData(node.id, { blocks })}
+								// Sent journey emails carry a signed unsubscribe link.
+								unsubscribeLinkPreview
 							/>
 						</div>
 					)}

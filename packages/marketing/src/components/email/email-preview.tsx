@@ -1,4 +1,8 @@
 import { Trans } from '@lingui/macro'
+import {
+	UNSUBSCRIBE_PREVIEW_HREF,
+	withUnsubscribeFooter,
+} from '@repo/common/email-unsubscribe'
 import { cn } from '@repo/ui'
 import { Icon } from '@repo/ui/icon'
 import { useCallback, useMemo, useRef, useState } from 'react'
@@ -52,6 +56,12 @@ export type EmailPreviewProps = {
 	 */
 	framed?: boolean
 	className?: string
+	/**
+	 * Shows the footer "Unsubscribe" link the regional send path adds, with a
+	 * placeholder `href` (never a signed link). For tenant broadcasts and
+	 * journey emails, which carry a working link when sent.
+	 */
+	unsubscribeLinkPreview?: boolean
 }
 
 /**
@@ -68,11 +78,17 @@ export function EmailPreview({
 	loading = false,
 	framed = true,
 	className,
+	unsubscribeLinkPreview = false,
 }: EmailPreviewProps) {
 	const iframeRef = useRef<HTMLIFrameElement>(null)
 	const [scale, setScale] = useState(1)
 	const [contentHeight, setContentHeight] = useState(480)
-	const previewHtml = useMemo(() => rewriteExternalImageSources(html), [html])
+	const previewHtml = useMemo(() => {
+		const rewritten = rewriteExternalImageSources(html)
+		return rewritten && unsubscribeLinkPreview
+			? withUnsubscribeFooter(rewritten, UNSUBSCRIBE_PREVIEW_HREF)
+			: rewritten
+	}, [html, unsubscribeLinkPreview])
 
 	const setContainerRef = useCallback((element: HTMLDivElement | null) => {
 		if (!element) return

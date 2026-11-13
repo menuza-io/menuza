@@ -422,7 +422,9 @@ describe('Marketing Automation End-to-End Integration Suite (Milestones 1 - 5)',
 			expect.objectContaining({
 				to: 'sarah.connor@sky.net',
 				subject: 'Welcome to our platform, Sarah Connor!',
-				html: '<p><p>Hi Sarah, your email is sarah.connor@sky.net.</p></p>',
+				html: expect.stringMatching(
+					/^<p><p>Hi Sarah, your email is sarah\.connor@sky\.net\.<\/p><\/p><p style="font-size:12px;color:#666"><a href="[^"]+">Unsubscribe<\/a><\/p>$/,
+				),
 				headerFields: expect.objectContaining({
 					[marketingHeaders.orgId]: testOrgId,
 				}),
@@ -509,8 +511,10 @@ describe('Marketing Automation End-to-End Integration Suite (Milestones 1 - 5)',
 		expect(timelineData.success).toBe(true)
 		expect(timelineData.run.status).toBe('completed')
 		expect(timelineData.run.customerId).toBe(customerId)
-		expect(timelineData.run.customerName).toBe('Sarah Connor')
-		expect(timelineData.run.customerEmail).toBe('sarah.connor@sky.net')
+		// The timeline is read by the Marketing browser token: ids, no contacts.
+		expect(timelineData.run).not.toHaveProperty('customerName')
+		expect(timelineData.run).not.toHaveProperty('customerEmail')
+		expect(timelineData.run).not.toHaveProperty('customerPhone')
 
 		// Verify all step execution records
 		expect(timelineData.steps.length).toBeGreaterThanOrEqual(3)
@@ -716,7 +720,9 @@ describe('Marketing Automation End-to-End Integration Suite (Milestones 1 - 5)',
 		expect(emailModule.sendOciEmail).toHaveBeenCalledWith(
 			expect.objectContaining({
 				to: 'john.wick@continental.hotel',
-				html: '<p>Hi Johnathan, use promo code CONTINENTAL50 after verifying your phone!</p>',
+				html: expect.stringMatching(
+					/^<p>Hi Johnathan, use promo code CONTINENTAL50 after verifying your phone!<\/p><p style="font-size:12px;color:#666"><a href="[^"]+">Unsubscribe<\/a><\/p>$/,
+				),
 			}),
 		)
 	})

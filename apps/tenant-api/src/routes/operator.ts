@@ -49,7 +49,7 @@ const OPERATOR_LIST_LIMIT = 100
  * a scope is refused by default on any route that does not name it
  * (`operator.area-binding.test.ts` walks every route).
  */
-export type OperatorArea = 'marketing' | 'customers'
+export type OperatorArea = 'marketing' | 'customers' | 'automations'
 
 export async function authenticateOperator(
 	c: Context,
@@ -377,6 +377,47 @@ operatorRoutes.get('/marketing/campaigns', async (c) => {
 		})
 	} catch (error) {
 		console.error('Error fetching marketing campaigns:', error)
+		return c.json({ error: 'Tenant Database unavailable' }, 500)
+	}
+})
+
+/**
+ * The campaign without its recipients: no customer name, email or phone. The
+ * App server reads this (for the coupon description and the breadcrumb); the
+ * recipient list is read by the browser from the detail route below.
+ */
+operatorRoutes.get('/marketing/campaigns/:campaignId/summary', async (c) => {
+	let auth
+	try {
+		auth = await authenticateOperator(c, undefined, 'marketing')
+	} catch (response) {
+		return response as Response
+	}
+
+	try {
+		const db = await getTenantDb(auth.orgId)
+		const [campaign] = await db
+			.select({
+				id: marketingCampaigns.id,
+				name: marketingCampaigns.name,
+				discountOffer: marketingCampaigns.discountOffer,
+			})
+			.from(marketingCampaigns)
+			.where(eq(marketingCampaigns.id, c.req.param('campaignId')))
+
+		if (!campaign) {
+			return c.json({ error: 'Campaign not found' }, 404)
+		}
+
+		return c.json({
+			campaign: {
+				id: campaign.id,
+				name: campaign.name,
+				discountOffer: parseMarketingOffer(campaign.discountOffer),
+			},
+		})
+	} catch (error) {
+		console.error('Error fetching marketing campaign summary:', error)
 		return c.json({ error: 'Tenant Database unavailable' }, 500)
 	}
 })
