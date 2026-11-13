@@ -10,6 +10,15 @@ import { and, count, desc, eq, isNull, max, sql, type SQL } from 'drizzle-orm'
 import { badRequest, conflict, forbidden, notFound } from '../lib/http.ts'
 import { withSetupWrite } from '../lib/reservations-write.ts'
 import {
+	inScopePredicate,
+	loadEmailConsentMatches,
+	peopleStatsCtes,
+	returningPredicate,
+	subscribedPredicate,
+	type PeopleLocationScope,
+	type SubscribedChannel,
+} from './people-stats.ts'
+import {
 	FREQUENT_NO_SHOW_THRESHOLD,
 	loadGuestTagsMap,
 	type DbOrTx,
@@ -57,6 +66,12 @@ export type PeopleAccess = {
 	canUpdateCustomers: boolean
 	canUpdateDining: boolean
 	canDelete: boolean
+	/**
+	 * May record a guest's marketing consent on their behalf (the token's
+	 * `canUpdateMarketingConsent` claim, with the customers facet). Optional so
+	 * callers that build access for reads need not name it; absent is false.
+	 */
+	canUpdateMarketingConsent?: boolean
 }
 
 export const PEOPLE_PAGE_SIZE = 50
@@ -64,8 +79,11 @@ export const PEOPLE_SORTS = ['recent', 'name', 'visits', 'last_visit'] as const
 export type PeopleSort = (typeof PEOPLE_SORTS)[number]
 export const PEOPLE_ACCOUNT_FILTERS = ['signed_in', 'guest_only'] as const
 export type PeopleAccountFilter = (typeof PEOPLE_ACCOUNT_FILTERS)[number]
+export const PEOPLE_SUBSCRIBED_FILTERS = ['email', 'sms'] as const
 export const DEFAULT_LAPSED_DAYS = 90
 const DAY_MS = 86_400_000
+/** The summary's "change" window, and the returning count's cutoff. */
+export const PEOPLE_CHANGE_WINDOW_DAYS = 30
 
 export type PersonStatus = 'signed_in' | 'guest_no_sign_in' | 'unverified'
 
@@ -160,6 +178,16 @@ export type PeopleListInput = {
 	hasDining?: boolean
 	account?: PeopleAccountFilter
 	includeWalkIns?: boolean
+	/** Returning guests only (the summary's "Returning guests" tile). */
+	returning?: boolean
+	/** Marketing subscribers on this channel (the summary's subscriber tiles). */
+	subscribed?: SubscribedChannel
+	/**
+	 * The token's location scope (never from the request). It narrows only the
+	 * `returning` and `subscribed` filters, exactly as it narrows the summary;
+	 * the plain list stays organization-wide as before (see `listPeople`).
+	 */
+	locationIds?: PeopleLocationScope
 	sort?: PeopleSort
 	cursor?: string
 	limit?: number
@@ -202,8 +230,25 @@ const WALK_IN_EXPR = (alias: string) =>
 		`CASE WHEN (${alias}.phone_e164 IS NULL OR ${alias}.phone_e164 = '') AND (${alias}.email_norm IS NULL OR ${alias}.email_norm = '') THEN 1 ELSE 0 END`,
 	)
 
-/** The source CTEs: next booking per guest, orders per customer, and the people union. */
-function peopleCte(access: PeopleAccess, now: number): SQL {
+/**
+ * Whose marketing consent a guest-only row carries: the unverified consent
+ * shadow a booking form created (`marketing_customer_id`). A verified customer
+ * is a row of its own and is never counted twice.
+ */
+const CONSENT_SHADOW_EXPR = (alias: string) =>
+	sql.raw(
+		`CASE WHEN ${alias}.marketing_customer_id IS NOT NULL AND EXISTS (SELECT 1 FROM customers mc WHERE mc.id = ${alias}.marketing_customer_id AND COALESCE(mc.phone_verified, 0) = 0) THEN ${alias}.marketing_customer_id ELSE NULL END`,
+	)
+
+/**
+ * The source CTEs: next booking per guest, orders per customer, and the people
+ * union `p`. `extra` appends more CTEs to the same WITH (the summary stats).
+ */
+export function peopleCte(
+	access: PeopleAccess,
+	now: number,
+	extra?: SQL | null,
+): SQL {
 	const dining = hasDiningFacet(access)
 	const halves: SQL[] = []
 	if (access.customers) {
@@ -234,7 +279,8 @@ function peopleCte(access: PeopleAccess, now: number): SQL {
 				COALESCE(c.created_at, 0) * 1000 AS created_at,
 				${guestCols},
 				ord.n AS order_count, ord.last_at AS last_order_at,
-				0 AS walk_in
+				0 AS walk_in,
+				c.id AS consent_customer_id
 			FROM customers c
 			${guestJoin}
 			LEFT JOIN ord ON ord.customer_id = c.id
@@ -253,7 +299,8 @@ function peopleCte(access: PeopleAccess, now: number): SQL {
 				trim(g.first_name || ' ' || g.last_name) AS guest_name,
 				g.phone_e164 AS guest_phone, g.email_norm AS guest_email,
 				NULL AS order_count, NULL AS last_order_at,
-				${WALK_IN_EXPR('g')} AS walk_in
+				${WALK_IN_EXPR('g')} AS walk_in,
+				${CONSENT_SHADOW_EXPR('g')} AS consent_customer_id
 			FROM rsv_guests g
 			LEFT JOIN nb ON nb.guest_id = g.id
 			WHERE ${GUEST_LIVE('g')} ${access.customers ? sql`AND g.customer_id IS NULL` : sql``}`)
@@ -271,10 +318,10 @@ function peopleCte(access: PeopleAccess, now: number): SQL {
 			) GROUP BY customer_id
 		), p AS (
 			${sql.join(halves, sql` UNION ALL `)}
-		)`
+		)${extra ? sql`, ${extra}` : sql``}`
 }
 
-function listFilters(
+export function listFilters(
 	access: PeopleAccess,
 	input: PeopleListInput,
 	now: number,
@@ -334,7 +381,33 @@ function listFilters(
 	if (input.hasDining) filters.push(sql`p.guest_id IS NOT NULL`)
 	if (input.account === 'signed_in') filters.push(sql`p.signed_in = 1`)
 	if (input.account === 'guest_only') filters.push(sql`p.kind = 'g'`)
+
+	// The summary tiles' groups: same CTEs and predicates as
+	// `getPeopleSummary`, so a tile and its filtered list agree.
+	if (input.returning || input.subscribed) {
+		requireCustomersFacet(access)
+		const scoped = inScopePredicate(input.locationIds ?? null)
+		if (scoped) filters.push(scoped)
+		if (input.returning) filters.push(returningPredicate('now'))
+		if (input.subscribed) filters.push(subscribedPredicate(input.subscribed))
+	}
 	return filters
+}
+
+/** The stats CTEs the `returning` / `subscribed` filters read, if any. */
+async function listStatsCtes(
+	db: TenantDatabase,
+	access: PeopleAccess,
+	input: PeopleListInput,
+	now: number,
+): Promise<SQL | null> {
+	if (!input.returning && !input.subscribed) return null
+	return peopleStatsCtes(access, {
+		locationIds: input.locationIds ?? null,
+		cutoffMs: now - PEOPLE_CHANGE_WINDOW_DAYS * DAY_MS,
+		emailMatches:
+			input.subscribed === 'email' ? await loadEmailConsentMatches(db) : [],
+	})
 }
 
 type RawPerson = {
@@ -463,7 +536,11 @@ export async function listPeople(
 	const filters = listFilters(access, input, now)
 	const where =
 		filters.length > 0 ? sql`WHERE ${sql.join(filters, sql` AND `)}` : sql``
-	const cte = peopleCte(access, now)
+	const cte = peopleCte(
+		access,
+		now,
+		await listStatsCtes(db, access, input, now),
+	)
 
 	const totalRows = await db.all<{ n: number }>(
 		sql`${cte} SELECT COUNT(*) AS n FROM p ${where}`,
@@ -941,6 +1018,7 @@ export async function getPersonProfile(
 			canUpdateCustomers: access.canUpdateCustomers,
 			canUpdateDining: access.canUpdateDining,
 			canDelete: access.canDelete,
+			canUpdateMarketingConsent: access.canUpdateMarketingConsent === true,
 		},
 	}
 }

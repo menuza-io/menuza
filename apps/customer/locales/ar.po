@@ -42,6 +42,10 @@ msgstr "{count, plural, zero {إلغاء مجاني حتى الموعد.} one {�
 msgid "{count} min"
 msgstr "{count} د"
 
+#: components/profile/messages-section.tsx:110
+msgid "{label}: {channel}"
+msgstr "{label}: {channel}"
+
 #: lib/loyalty/labels.ts:16
 msgid "{n, plural, one {{count} point} other {{count} points}}"
 msgstr "{n, plural, zero {{count} نقطة} one {نقطة واحدة} two {نقطتان} few {{count} نقاط} many {{count} نقطة} other {{count} نقطة}}"
@@ -98,6 +102,10 @@ msgstr "يلزم بطاقة لضمان هذا الحجز."
 msgid "A deposit of {amount} is due to confirm this booking."
 msgstr "يلزم دفع عربون بقيمة {amount} لتأكيد هذا الحجز."
 
+#: components/profile/messages-section.tsx:217
+msgid "A few messages a month. You can opt out anytime."
+msgstr "رسائل قليلة في الشهر. يمكنك إلغاء الاشتراك في أي وقت."
+
 #: lib/loyalty/labels.ts:65
 msgid "A free item"
 msgstr "منتج مجاني"
@@ -109,6 +117,10 @@ msgstr "حوالي {count} دقيقة"
 #: components/auth/connect-site-screen.tsx:24
 msgid "acme or acme.example.com"
 msgstr "acme أو acme.example.com"
+
+#: components/profile/messages-section.tsx:154
+msgid "Add an email address first"
+msgstr "أضف عنوان بريد إلكتروني أولاً"
 
 #: lib/loyalty/labels.ts:113
 msgid "Adjusted by staff"
@@ -214,6 +226,10 @@ msgstr "التحقق من وجود طلبات"
 msgid "Check the menu for what we are serving today."
 msgstr "تصفّح القائمة لمعرفة ما نقدّمه اليوم."
 
+#: components/profile/messages-section.tsx:179
+msgid "Check your inbox to confirm"
+msgstr "تحقق من بريدك الوارد للتأكيد"
+
 #: lib/reservations/messages.ts:72
 msgid "Checking your payment…"
 msgstr "جارٍ التحقق من الدفع…"
@@ -225,6 +241,10 @@ msgstr "إتمام الطلب"
 #: lib/reservations/messages.ts:26
 msgid "Choose a location"
 msgstr "اختر الفرع"
+
+#: components/profile/messages-section.tsx:174
+msgid "Choose what you hear from us, and how."
+msgstr "اختر ما تتلقاه منا وكيف."
 
 #: components/ordering/drops-screen.tsx:136
 #: components/ordering/drops-screen.tsx:215
@@ -316,7 +336,8 @@ msgstr "اكتساب"
 msgid "Edit details"
 msgstr "تعديل البيانات"
 
-#: components/profile/profile-screen.tsx:91
+#: components/profile/messages-section.tsx:107
+#: components/profile/profile-screen.tsx:92
 msgid "Email"
 msgstr "البريد الإلكتروني"
 
@@ -426,7 +447,7 @@ msgid "In store"
 msgstr "في المتجر"
 
 #: components/auth/complete-name-screen.tsx:26
-#: components/profile/profile-screen.tsx:83
+#: components/profile/profile-screen.tsx:84
 msgid "Jane Doe"
 msgstr "سارة أحمد"
 
@@ -443,7 +464,7 @@ msgstr "انضم إلى قائمة الانتظار"
 msgid "Keep it"
 msgstr "الاحتفاظ به"
 
-#: components/profile/profile-screen.tsx:149
+#: components/profile/profile-screen.tsx:152
 msgid "Language"
 msgstr "اللغة"
 
@@ -479,7 +500,7 @@ msgstr "جارٍ تحميل الطروحات"
 msgid "Loading the menu"
 msgstr "جارٍ تحميل القائمة"
 
-#: components/profile/profile-screen.tsx:63
+#: components/profile/profile-screen.tsx:64
 msgid "Loading your profile…"
 msgstr "جارٍ تحميل ملفك الشخصي…"
 
@@ -498,16 +519,24 @@ msgstr "جارٍ التحميل…"
 msgid "Menu"
 msgstr "القائمة"
 
+#: components/profile/messages-section.tsx:172
+msgid "Messages from {name}"
+msgstr "رسائل من {name}"
+
 #: components/reservations/parts.tsx:205
 msgid "More guests"
 msgstr "عدد أكبر من الأشخاص"
+
+#: components/profile/messages-section.tsx:220
+msgid "Msg and data rates may apply. Reply STOP to opt out."
+msgstr "قد تُطبَّق رسوم الرسائل والبيانات. أرسل STOP لإلغاء الاشتراك."
 
 #: lib/reservations/messages.ts:19
 msgid "My reservations"
 msgstr "حجوزاتي"
 
 #: components/auth/complete-name-screen.tsx:25
-#: components/profile/profile-screen.tsx:82
+#: components/profile/profile-screen.tsx:83
 #: lib/reservations/messages.ts:60
 #: lib/reservations/messages.ts:112
 msgid "Name"
@@ -576,6 +605,10 @@ msgstr "لا يوجد شيء في القائمة حاليًا."
 #: lib/reservations/messages.ts:47
 msgid "Occasion"
 msgstr "المناسبة"
+
+#: components/profile/messages-section.tsx:101
+msgid "Offers and news"
+msgstr "العروض والأخبار"
 
 #: lib/reservations/messages.ts:25
 msgid "OK"
@@ -664,7 +697,7 @@ msgid "Payments aren't available right now."
 msgstr "الدفع غير متاح حاليًا."
 
 #: components/auth/login-screen.tsx:24
-#: components/profile/profile-screen.tsx:102
+#: components/profile/profile-screen.tsx:103
 #: lib/reservations/messages.ts:16
 msgid "Phone number"
 msgstr "رقم الهاتف"
@@ -690,7 +723,7 @@ msgstr "الوقت المفضل"
 msgid "Profile"
 msgstr "الملف الشخصي"
 
-#: components/profile/profile-screen.tsx:110
+#: components/profile/profile-screen.tsx:111
 msgid "Profile saved."
 msgstr "تم حفظ الملف الشخصي."
 
@@ -734,6 +767,10 @@ msgstr "طلبات استخدام مكافآتك"
 msgid "Reservation"
 msgstr "الحجز"
 
+#: components/profile/messages-section.tsx:103
+msgid "Reservation news"
+msgstr "أخبار الحجوزات"
+
 #: app/(tabs)/_layout.tsx:71
 #: lib/reservations/messages.ts:17
 msgid "Reservations"
@@ -776,7 +813,7 @@ msgstr "لا يمكن استخدام المكافآت حاليًا."
 msgid "Running late"
 msgstr "سأتأخر"
 
-#: components/profile/profile-screen.tsx:114
+#: components/profile/profile-screen.tsx:115
 msgid "Save changes"
 msgstr "حفظ التغييرات"
 
@@ -833,7 +870,7 @@ msgstr "سجّل الدخول لعرض مكافآتك"
 msgid "Sign in with your phone number to see your points and use your rewards."
 msgstr "سجّل الدخول برقم هاتفك لمعرفة نقاطك واستخدام مكافآتك."
 
-#: components/profile/profile-screen.tsx:121
+#: components/profile/profile-screen.tsx:124
 msgid "Sign out"
 msgstr "تسجيل الخروج"
 
@@ -859,7 +896,7 @@ msgstr "طلبات خاصة"
 msgid "Spends {points} for {amount} off"
 msgstr "يستخدم {points} مقابل خصم {amount}"
 
-#: components/profile/profile-screen.tsx:139
+#: components/profile/profile-screen.tsx:142
 msgid "System default"
 msgstr "افتراضي النظام"
 
@@ -874,6 +911,10 @@ msgstr "لا تُحتسب الضرائب والإكراميات ورسوم ال�
 #: components/auth/complete-name-screen.tsx:23
 msgid "Tell us what to call you."
 msgstr "أخبرنا بالاسم الذي نناديك به."
+
+#: components/profile/messages-section.tsx:107
+msgid "Text"
+msgstr "رسالة نصية"
 
 #: lib/reservations/messages.ts:53
 msgid "Text me reminders"
@@ -993,11 +1034,15 @@ msgstr "حاول مرة أخرى"
 msgid "Try one of these times instead"
 msgstr "جرّب أحد هذه الأوقات"
 
+#: components/profile/messages-section.tsx:228
+msgid "Turning a switch off never affects receipts or booking confirmations."
+msgstr "إيقاف أي مفتاح لا يؤثر أبداً على الإيصالات أو تأكيدات الحجز."
+
 #: lib/loyalty/labels.ts:58
 msgid "Up to {amount} off"
 msgstr "خصم حتى {amount}"
 
-#: components/profile/profile-screen.tsx:79
+#: components/profile/profile-screen.tsx:80
 msgid "Update your basic details below."
 msgstr "حدّث بياناتك الأساسية أدناه."
 
@@ -1014,7 +1059,7 @@ msgid "Use a different number"
 msgstr "استخدم رقمًا آخر"
 
 #: components/auth/site-unavailable-screen.tsx:34
-#: components/profile/profile-screen.tsx:125
+#: components/profile/profile-screen.tsx:128
 msgid "Use a different site"
 msgstr "استخدم موقعًا آخر"
 
@@ -1034,6 +1079,10 @@ msgstr "رمز التحقق"
 msgid "Verify"
 msgstr "تحقق"
 
+#: components/profile/messages-section.tsx:156
+msgid "Verify your phone first"
+msgstr "تحقق من هاتفك أولاً"
+
 #: lib/reservations/messages.ts:83
 msgid "View reservation"
 msgstr "عرض الحجز"
@@ -1049,6 +1098,10 @@ msgstr "لم نتمكن من العثور على هذا الموقع. تحقق �
 #: lib/reservations/messages.ts:135
 msgid "We couldn't find that."
 msgstr "لم نعثر على ذلك."
+
+#: components/profile/messages-section.tsx:157
+msgid "We couldn't save that. Try again."
+msgstr "تعذّر الحفظ. حاول مرة أخرى."
 
 #: lib/reservations/messages.ts:121
 msgid "We couldn't update your place in line. We'll keep trying."
@@ -1170,7 +1223,7 @@ msgstr "رمزك الجديد جاهز."
 msgid "Your payment is being checked. We'll confirm shortly."
 msgstr "يجري التحقق من دفعتك وسنؤكد قريبًا."
 
-#: components/profile/profile-screen.tsx:105
+#: components/profile/profile-screen.tsx:106
 msgid "Your phone number can't be changed here."
 msgstr "لا يمكن تغيير رقم هاتفك هنا."
 
@@ -1178,7 +1231,7 @@ msgstr "لا يمكن تغيير رقم هاتفك هنا."
 msgid "Your points"
 msgstr "نقاطك"
 
-#: components/profile/profile-screen.tsx:77
+#: components/profile/profile-screen.tsx:78
 msgid "Your profile"
 msgstr "ملفك الشخصي"
 

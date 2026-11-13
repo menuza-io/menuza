@@ -6,6 +6,11 @@ import {
 	tenantFetch,
 } from '~/lib/client-auth'
 import { browserLocaleHref } from '~/lib/locale'
+import {
+	readConsentChoice,
+	readConsentTextVersion,
+	recordSignupConsent,
+} from '~/lib/marketing-consent-client'
 
 export function initCompleteNamePage() {
 	if (!getAccessToken()) {
@@ -24,7 +29,8 @@ export function initCompleteNamePage() {
 	const continueLabel = form.dataset.continue || 'Continue'
 	const savingLabel = form.dataset.saving || 'Saving...'
 	const errorLabel = form.dataset.error || 'Something went wrong.'
-	const networkLabel = form.dataset.network || 'Network error. Please try again.'
+	const networkLabel =
+		form.dataset.network || 'Network error. Please try again.'
 
 	const showError = (message: string) => {
 		errorMessage.textContent = message
@@ -87,6 +93,12 @@ export function initCompleteNamePage() {
 							? data.refreshToken
 							: undefined,
 				})
+				// Ticked boxes only; a refused or failed call never fails the name step.
+				const consentRoot = form.querySelector('[data-marketing-consent]')
+				await recordSignupConsent(
+					readConsentChoice(consentRoot),
+					readConsentTextVersion(consentRoot),
+				)
 				window.location.href = browserLocaleHref('/')
 			} else {
 				showError(tenantErrorMessage(data, errorLabel))

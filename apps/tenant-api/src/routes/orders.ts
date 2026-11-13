@@ -472,6 +472,9 @@ publicOrderRoutes.post('/', async (c) => {
 				? { paymentToken: result.data.paymentToken }
 				: {}),
 			...(result.data.tab ? { tab: result.data.tab } : {}),
+			...(result.data.marketingConsent
+				? { marketingConsent: result.data.marketingConsent }
+				: {}),
 		}
 		return c.json(body, result.data.status, noStoreHeaders())
 	} catch (error) {

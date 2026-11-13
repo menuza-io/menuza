@@ -18,6 +18,7 @@ import {
 	type LocationOrderingAvailability,
 } from './location-availability.ts'
 import { generatePickupSlots, getDropDisplayStatus } from './menu-types.ts'
+import { orderMarketingConsentSchema } from './marketing-consent.ts'
 import { discountedTaxableCents } from './pos-discount-base.ts'
 import {
 	orderLoyaltySelectionSchema,
@@ -254,6 +255,12 @@ const restaurantOrderObjectSchema = z.strictObject({
 	 * (409 `discount_changed`), never trusted.
 	 */
 	discounts: orderDiscountsRequestSchema.optional(),
+	/**
+	 * Marketing boxes the guest ticked. Recorded with the order only for a
+	 * signed-in customer, ignored otherwise; not part of the idempotency hash
+	 * (a retry places the same order and records nothing again).
+	 */
+	marketingConsent: orderMarketingConsentSchema.optional(),
 	delivery: z
 		.strictObject({
 			// Free-text address + city are required only without a quote
@@ -400,7 +407,7 @@ export type RestaurantOrderRequest = z.infer<
  */
 export const restaurantOrderQuoteSchema = z
 	.object({ ...restaurantOrderObjectSchema.shape })
-	.omit({ idempotencyKey: true, loyalty: true })
+	.omit({ idempotencyKey: true, loyalty: true, marketingConsent: true })
 	.extend({ contact: restaurantOrderContactSchema.optional() })
 	.superRefine((value, context) =>
 		refineOrderRequest(value, context, { requireContact: false }),
@@ -418,7 +425,7 @@ export type RestaurantOrderQuoteRequest = z.infer<
  */
 export const restaurantOrderDiscountQuoteSchema = z
 	.object({ ...restaurantOrderObjectSchema.shape })
-	.omit({ idempotencyKey: true })
+	.omit({ idempotencyKey: true, marketingConsent: true })
 	.extend({ contact: restaurantOrderContactSchema.optional() })
 	.superRefine((value, context) =>
 		refineOrderRequest(value, context, { requireContact: false }),

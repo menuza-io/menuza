@@ -21,6 +21,12 @@ export type PeopleContext = {
 	organizationId: string
 	userId: string
 	access: PeopleAccess
+	/**
+	 * The member's location scope (`UserOrganization.locationScope`): null is
+	 * every location, `[]` none. Signed into the people token as `locationIds`
+	 * so the regional summary counts and tile filters follow it.
+	 */
+	locationIds: string[] | null
 	/** Reservations are on and the member may create bookings. */
 	canBook: boolean
 	reservationsEnabled: boolean
@@ -36,28 +42,40 @@ export async function requirePeopleAccess(
 	})
 	const userId = await requireUserId(request)
 	const organizationId = organization.id
-	const [canReadSettings, canUpdateSettings, features, grants, locationIds] =
-		await Promise.all([
-			userHasOrganizationPermission(
-				userId,
-				organizationId,
-				ORG_PERMISSIONS.READ_SETTINGS_ANY,
-			),
-			userHasOrganizationPermission(
-				userId,
-				organizationId,
-				ORG_PERMISSIONS.UPDATE_SETTINGS_ANY,
-			),
-			getReservationsFeatureState(organizationId),
-			getUserReservationsGrants(userId, organizationId),
-			resolveReservationsLocationIds(userId, organizationId),
-		])
+	const [
+		canReadSettings,
+		canUpdateSettings,
+		canUpdateMarketingConsent,
+		features,
+		grants,
+		locationIds,
+	] = await Promise.all([
+		userHasOrganizationPermission(
+			userId,
+			organizationId,
+			ORG_PERMISSIONS.READ_SETTINGS_ANY,
+		),
+		userHasOrganizationPermission(
+			userId,
+			organizationId,
+			ORG_PERMISSIONS.UPDATE_SETTINGS_ANY,
+		),
+		userHasOrganizationPermission(
+			userId,
+			organizationId,
+			ORG_PERMISSIONS.UPDATE_MARKETING_CONSENT_ANY,
+		),
+		getReservationsFeatureState(organizationId),
+		getUserReservationsGrants(userId, organizationId),
+		resolveReservationsLocationIds(userId, organizationId),
+	])
 	const reservationsEnabled =
 		features.enabled && !(locationIds !== null && locationIds.length === 0)
 	const impersonated = await isImpersonating(request)
 	const access = computePeopleAccess({
 		canReadSettings,
 		canUpdateSettings,
+		canUpdateMarketingConsent,
 		reservationsEnabled,
 		grants,
 		impersonated,
@@ -77,6 +95,7 @@ export async function requirePeopleAccess(
 		organizationId,
 		userId,
 		access,
+		locationIds,
 		canBook: Boolean(nav?.book),
 		reservationsEnabled,
 	}

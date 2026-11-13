@@ -334,3 +334,43 @@ describe('inventory permission lists and implied permissions', () => {
 		])
 	})
 })
+
+describe('marketing consent permission', () => {
+	const ID = 'org_perm_update_marketing_consent_any'
+
+	it('is assignable to custom roles and implies nothing', () => {
+		expect(TENANT_ROLE_PERMISSION_IDS).toContain(ID)
+		expect(hasOnlyTenantRolePermissions([ID])).toBe(true)
+		expect(withImpliedTenantRolePermissions([ID])).toEqual([ID])
+	})
+
+	it('ORG_PERMISSIONS, setup-roles.ts and the 0044 migration name the same grant', () => {
+		expect(ORG_PERMISSIONS.UPDATE_MARKETING_CONSENT_ANY).toBe(
+			'update:marketing_consent:any',
+		)
+		expect(permissionId(ORG_PERMISSIONS.UPDATE_MARKETING_CONSENT_ANY)).toBe(ID)
+		const setupRoles = fs.readFileSync(
+			path.join(REPO_ROOT, 'packages/database/setup-roles.ts'),
+			'utf8',
+		)
+		const migration = fs.readFileSync(
+			path.join(
+				REPO_ROOT,
+				'packages/database/drizzle/0044_marketing_consent_permission.sql',
+			),
+			'utf8',
+		)
+		expect(setupRoles).toContain(`id: '${ID}'`)
+		expect(migration).toContain(
+			`('${ID}', 'update', 'marketing_consent', 'any'`,
+		)
+		// Built-in admins only: plain members are not granted it.
+		expect(migration).toContain(`('org_role_admin', '${ID}')`)
+		expect(migration).not.toContain('org_role_member')
+		const memberIds = setupRoles.slice(
+			setupRoles.indexOf('const MEMBER_PERMISSION_IDS'),
+			setupRoles.indexOf('const VIEWER_PERMISSION_IDS'),
+		)
+		expect(memberIds).not.toContain(ID)
+	})
+})

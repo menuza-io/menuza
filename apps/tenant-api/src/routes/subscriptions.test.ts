@@ -651,6 +651,94 @@ describe('customer subscription routes', () => {
 			expect(await audience()).toEqual([])
 			const [row] = await db.select().from(customerSubscriptions).all()
 			expect(row!.unsubscribedAt).toBeInstanceOf(Date)
+			// The guest's own link: it starts the staff cooling-off period.
+			expect(row!.unsubscribedSource).toBe('self')
 		})
+	})
+
+	describe('consent wording version', () => {
+		const row = async () => {
+			const db = await getTenantDb(orgId)
+			return db
+				.select()
+				.from(customerSubscriptions)
+				.where(eq(customerSubscriptions.customerId, customerId))
+				.get()
+		}
+
+		it('stores the version on opt-in, keeps it on opt-out, replaces it on re-opt-in', async () => {
+			expect(
+				(
+					await put('marketing/sms', {
+						subscribed: true,
+						textVersion: 'guest-2026-11',
+					})
+				).status,
+			).toBe(200)
+			expect(await row()).toMatchObject({
+				consentTextVersion: 'guest-2026-11',
+				unsubscribedAt: null,
+				unsubscribedSource: null,
+				recordedBy: null,
+				consentMethod: null,
+			})
+
+			await put('marketing/sms', { subscribed: false })
+			expect(await row()).toMatchObject({
+				consentTextVersion: 'guest-2026-11',
+				source: 'profile',
+				unsubscribedSource: 'self',
+			})
+			expect((await row())!.unsubscribedAt).toBeInstanceOf(Date)
+
+			await put('marketing/sms', {
+				subscribed: true,
+				source: 'checkout',
+				textVersion: 'guest-2027-01',
+			})
+			expect(await row()).toMatchObject({
+				consentTextVersion: 'guest-2027-01',
+				source: 'checkout',
+				unsubscribedAt: null,
+				unsubscribedSource: null,
+			})
+
+			// An opt-in without a version records none.
+			await put('marketing/sms', { subscribed: true })
+			expect((await row())!.consentTextVersion).toBeNull()
+		})
+
+		it('stores the version on a pending email opt-in', async () => {
+			await put('marketing/email', {
+				subscribed: true,
+				textVersion: 'guest-2026-11',
+			})
+			expect(await row()).toMatchObject({
+				channel: 'email',
+				consentTextVersion: 'guest-2026-11',
+				confirmedEmailHash: null,
+			})
+		})
+
+		it.each([
+			['too long', 'v'.repeat(65)],
+			['unsafe characters', '<script>alert(1)</script>'],
+			['empty', '   '],
+			['not a string', 42],
+		])(
+			'rejects a version that is %s without echoing it',
+			async (_name, textVersion) => {
+				const res = await put('marketing/sms', {
+					subscribed: true,
+					textVersion,
+				})
+				expect(res.status).toBe(400)
+				const text = await res.text()
+				expect(text).not.toContain('script')
+				expect(text).not.toContain('vvvv')
+				expect(text).not.toContain('42')
+				expect(await row()).toBeUndefined()
+			},
+		)
 	})
 })

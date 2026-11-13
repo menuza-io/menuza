@@ -22,6 +22,7 @@ import {
 	QR_TAB_PAYMENT_STATUS_VALUES,
 	QR_TAB_STATUS_VALUES,
 } from '@repo/common/qr-ordering'
+import { STAFF_CONSENT_METHODS } from '@repo/common/marketing-consent'
 import { SITE_CONTENT_LOCALES } from '@repo/common/site-locales'
 
 // ==========================================
@@ -107,7 +108,31 @@ export const CUSTOMER_SUBSCRIPTION_SOURCES = [
 	'order_success',
 	// Reservations: the marketing box on a booking form.
 	'reservation_booking',
+	// A staff member recorded consent the guest gave in person, on a paper
+	// form or by phone (`recorded_by` and `consent_method` say who and how).
+	// Email stays pending until the owner confirms, unlike `operator`.
+	'staff',
 ] as const
+
+/**
+ * Who ended a subscription (`unsubscribed_source`): `self` is the guest
+ * (profile switch, email unsubscribe link, any guest-facing route),
+ * `operator` a member of staff through the App, `import` a list import. A
+ * guest's own opt-out blocks a staff-recorded opt-in for a cooling-off period
+ * (`STAFF_CONSENT_COOLING_OFF_DAYS` in `@repo/common/marketing-consent`).
+ * Null on rows opted out before this was recorded.
+ */
+export const CUSTOMER_UNSUBSCRIBE_SOURCES = [
+	'self',
+	'operator',
+	'import',
+] as const
+export type CustomerUnsubscribeSource =
+	(typeof CUSTOMER_UNSUBSCRIBE_SOURCES)[number]
+
+/** How a guest gave the consent a staff member records (`consent_method`). */
+export const CUSTOMER_CONSENT_METHODS = STAFF_CONSENT_METHODS
+export type CustomerConsentMethod = (typeof CUSTOMER_CONSENT_METHODS)[number]
 
 export type CustomerSubscriptionTopic =
 	(typeof CUSTOMER_SUBSCRIPTION_TOPICS)[number]
@@ -148,6 +173,23 @@ export const customerSubscriptions = sqliteTable(
 		 */
 		confirmationSentAt: integer('confirmation_sent_at', { mode: 'timestamp' }),
 		confirmationSentHash: text('confirmation_sent_hash'),
+		/**
+		 * Version id of the consent wording the guest (or the staff member
+		 * recording it) was shown (`@repo/common/marketing-consent`). Written on
+		 * opt-in, kept on opt-out as the record. Null when the client sent none.
+		 */
+		consentTextVersion: text('consent_text_version'),
+		/**
+		 * Opaque operator user id of the staff member who recorded the consent
+		 * (source `staff`). Never a name or address. Null for guest-made rows.
+		 */
+		recordedBy: text('recorded_by'),
+		/** How the guest gave a staff-recorded consent; null otherwise. */
+		consentMethod: text('consent_method', { enum: CUSTOMER_CONSENT_METHODS }),
+		/** Who opted out (see `CUSTOMER_UNSUBSCRIBE_SOURCES`); cleared on opt-in. */
+		unsubscribedSource: text('unsubscribed_source', {
+			enum: CUSTOMER_UNSUBSCRIBE_SOURCES,
+		}),
 		updatedAt: integer('updated_at', { mode: 'timestamp' }).default(
 			sql`(strftime('%s', 'now'))`,
 		),

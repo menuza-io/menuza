@@ -49,16 +49,28 @@ function row(
 	}
 }
 
+const SUMMARY = {
+	guests: { total: 120, change30d: 12 },
+	returningGuests: { total: 45, change30d: -3, share: 0.375 },
+	emailSubscribers: { total: 30, change30d: 0 },
+	textSubscribers: { total: 1234, change30d: 1 },
+	locationScoped: false,
+	asOf: '2026-11-13T00:00:00.000Z',
+}
+
 function client(
 	people: PersonRow[],
 	meta: { hasOrders?: boolean; walkInCount?: number | null } = {},
 ) {
-	const request = vi.fn(async (_path: string, _options?: unknown) => ({
-		people,
-		nextCursor: null,
-		total: people.length,
-		meta: { hasOrders: false, walkInCount: 0, ...meta },
-	}))
+	const request = vi.fn(async (path: string, _options?: unknown) => {
+		if (path === '/summary') return SUMMARY
+		return {
+			people,
+			nextCursor: null,
+			total: people.length,
+			meta: { hasOrders: false, walkInCount: 0, ...meta },
+		}
+	})
 	return { client: { request } as unknown as PeopleClient, request }
 }
 
@@ -82,8 +94,10 @@ function renderList(
 	return request
 }
 
+const listCalls = (request: ReturnType<typeof vi.fn>) =>
+	request.mock.calls.filter((call) => call[0] !== '/summary')
 const lastQuery = (request: ReturnType<typeof vi.fn>) =>
-	(request.mock.calls.at(-1)?.[1] as { query: Record<string, unknown> }).query
+	(listCalls(request).at(-1)?.[1] as { query: Record<string, unknown> }).query
 
 describe('PeopleListScreen', () => {
 	it('shows a neutral "Guest, no sign-in" badge next to signed-in customers, and links to the profile', async () => {
@@ -104,7 +118,7 @@ describe('PeopleListScreen', () => {
 	it('loads from the server and searches and filters there, not in the browser', async () => {
 		const request = renderList([row('g_1', 'Gus Guest')])
 		await screen.findByTestId('person-row-g_1')
-		expect(request.mock.calls[0]?.[0]).toBe('')
+		expect(listCalls(request)[0]?.[0]).toBe('')
 		expect(lastQuery(request)).toMatchObject({ limit: 50 })
 		fireEvent.click(screen.getByTestId('customers-filter-vip'))
 		await waitFor(() => expect(lastQuery(request)).toMatchObject({ vip: 1 }))
@@ -187,5 +201,151 @@ describe('PeopleListScreen', () => {
 		expect(
 			screen.getByText(/Walk-ins without contact details are hidden/),
 		).toBeInTheDocument()
+	})
+
+	describe('summary row', () => {
+		it('shows the four totals with their 30-day change', async () => {
+			renderList([row('g_1', 'Gus')])
+			expect(await screen.findByTestId('customers-summary')).toBeInTheDocument()
+			expect(
+				screen.getByTestId('customers-summary-guests-total'),
+			).toHaveTextContent('120')
+			expect(
+				screen.getByTestId('customers-summary-guests-change'),
+			).toHaveTextContent('+12 in the last 30 days')
+			expect(
+				screen.getByTestId('customers-summary-returning-change'),
+			).toHaveTextContent('−3 in the last 30 days')
+			expect(
+				screen.getByTestId('customers-summary-returning'),
+			).toHaveTextContent('38% of guests')
+			expect(
+				screen.getByTestId('customers-summary-email-change'),
+			).toHaveTextContent('No change in the last 30 days')
+			expect(
+				screen.getByTestId('customers-summary-sms-total'),
+			).toHaveTextContent('1,234')
+			expect(screen.queryByTestId('customers-summary-scoped')).toBeNull()
+		})
+
+		it('makes no request and shows no row without the customers facet', async () => {
+			const request = renderList([row('c_1', 'Vera', { dining: null })], {
+				access: { ...FULL, customers: false },
+			})
+			await screen.findByTestId('person-row-c_1')
+			expect(screen.queryByTestId('customers-summary')).toBeNull()
+			expect(screen.queryByTestId('customers-summary-loading')).toBeNull()
+			expect(request.mock.calls.some((call) => call[0] === '/summary')).toBe(
+				false,
+			)
+		})
+
+		it('keeps the list usable when the totals fail, and Retry refetches', async () => {
+			const { client: c, request } = client([row('g_1', 'Gus')])
+			let fail = true
+			request.mockImplementation(async (path: string) => {
+				if (path === '/summary') {
+					if (fail) throw new Error('boom')
+					return SUMMARY
+				}
+				return {
+					people: [row('g_1', 'Gus')],
+					nextCursor: null,
+					total: 1,
+					meta: { hasOrders: false, walkInCount: 0 },
+				}
+			})
+			renderStaff(
+				<PeopleListScreen
+					client={c}
+					orgSlug="acme"
+					access={FULL}
+					canBook={false}
+				/>,
+			)
+			const errorState = await screen.findByTestId('customers-summary-error')
+			expect(errorState).toHaveAttribute('role', 'status')
+			expect(errorState).toHaveAttribute('aria-live', 'polite')
+			expect(await screen.findByTestId('person-row-g_1')).toBeInTheDocument()
+			fail = false
+			fireEvent.click(screen.getByRole('button', { name: 'Retry' }))
+			expect(await screen.findByTestId('customers-summary')).toBeInTheDocument()
+		})
+
+		it('filters the list from a tile, and clicking it again clears it', async () => {
+			const request = renderList([row('g_1', 'Gus')])
+			await screen.findByTestId('customers-summary')
+			await screen.findByTestId('person-row-g_1')
+			const tile = (id: string) => screen.getByTestId(`customers-summary-${id}`)
+			// Guests is a plain "show all" button, not a toggle.
+			expect(tile('guests')).not.toHaveAttribute('aria-pressed')
+			expect(tile('returning')).toHaveAttribute('aria-pressed', 'false')
+
+			fireEvent.click(tile('returning'))
+			await waitFor(() =>
+				expect(lastQuery(request)).toMatchObject({ returning: 1 }),
+			)
+			expect(tile('returning')).toHaveAttribute('aria-pressed', 'true')
+
+			fireEvent.click(tile('email'))
+			await waitFor(() =>
+				expect(lastQuery(request)).toMatchObject({ subscribed: 'email' }),
+			)
+			expect(lastQuery(request).returning).toBeUndefined()
+
+			fireEvent.click(tile('sms'))
+			await waitFor(() =>
+				expect(lastQuery(request)).toMatchObject({ subscribed: 'sms' }),
+			)
+
+			// Composes with a quick filter, and the same tile again clears it.
+			fireEvent.click(screen.getByTestId('customers-filter-vip'))
+			await waitFor(() =>
+				expect(lastQuery(request)).toMatchObject({ vip: 1, subscribed: 'sms' }),
+			)
+			fireEvent.click(tile('sms'))
+			await waitFor(() => expect(lastQuery(request).subscribed).toBeUndefined())
+			expect(lastQuery(request)).toMatchObject({ vip: 1 })
+
+			// Guests clears a group; the list Clear button clears it too.
+			fireEvent.click(tile('returning'))
+			await waitFor(() =>
+				expect(lastQuery(request)).toMatchObject({ returning: 1 }),
+			)
+			fireEvent.click(tile('guests'))
+			await waitFor(() => expect(lastQuery(request).returning).toBeUndefined())
+			fireEvent.click(tile('email'))
+			await waitFor(() =>
+				expect(lastQuery(request)).toMatchObject({ subscribed: 'email' }),
+			)
+			fireEvent.click(screen.getByTestId('customers-clear-filters'))
+			await waitFor(() => expect(lastQuery(request).subscribed).toBeUndefined())
+			expect(tile('email')).toHaveAttribute('aria-pressed', 'false')
+		})
+
+		it('notes when the totals follow the member locations', async () => {
+			const { client: c, request } = client([row('g_1', 'Gus')])
+			request.mockImplementation(async (path: string) =>
+				path === '/summary'
+					? { ...SUMMARY, locationScoped: true }
+					: {
+							people: [],
+							nextCursor: null,
+							total: 0,
+							meta: { hasOrders: false, walkInCount: 0 },
+						},
+			)
+			renderStaff(
+				<PeopleListScreen
+					client={c}
+					orgSlug="acme"
+					access={FULL}
+					canBook={false}
+				/>,
+			)
+			expect(
+				await screen.findByTestId('customers-summary-scoped'),
+			).toHaveTextContent('Totals for your locations')
+		})
 	})
 })

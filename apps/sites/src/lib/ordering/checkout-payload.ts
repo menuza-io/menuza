@@ -29,3 +29,21 @@ export function checkoutOrderPayload(
 		...(extra.discounts ? { discounts: extra.discounts } : {}),
 	}
 }
+
+/**
+ * The request body: the core payload, the attempt key and the boxes the
+ * signed-in guest ticked (undefined sends none). The attempt key is derived
+ * from `core` alone, so consent is added only here, after the key exists:
+ * changing a box on a retry must replay the first order, not place a second.
+ */
+export function checkoutOrderRequest(
+	core: Record<string, unknown>,
+	idempotencyKey: string,
+	marketingConsent?: Record<string, unknown> | null,
+): Record<string, unknown> {
+	return {
+		...core,
+		...(marketingConsent ? { marketingConsent } : {}),
+		idempotencyKey,
+	}
+}

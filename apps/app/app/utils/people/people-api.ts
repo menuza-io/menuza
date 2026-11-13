@@ -64,11 +64,24 @@ export type PeopleQuickFilter =
 	| 'guest_only'
 	| 'walk_ins'
 
+/** The summary tiles' subscriber groups (`subscribed=` on the list). */
+export type PeopleSubscribedFilter = 'email' | 'sms'
+
 export type PeopleListParams = {
 	q?: string
 	filters: ReadonlySet<PeopleQuickFilter>
 	/** Only people with reservation history (merge candidates). */
 	hasDining?: boolean
+	/**
+	 * Only returning guests (the "Returning guests" tile). Needs the customers
+	 * facet; follows the token's location scope like the summary.
+	 */
+	returning?: boolean
+	/**
+	 * Only deliverable marketing subscribers on this channel (the subscriber
+	 * tiles). Needs the customers facet; follows the token's location scope.
+	 */
+	subscribed?: PeopleSubscribedFilter
 	sort?: PeopleSort
 	cursor?: string | null
 }
@@ -94,13 +107,38 @@ export type PersonVisit = {
 	dietaryNotes: string | null
 }
 
+/** How a guest gave the consent a staff member records (`@repo/common/marketing-consent`). */
+export type StaffConsentMethod = 'in_person' | 'paper_form' | 'phone'
+
 export type PersonSubscription = {
 	topic: string
 	channel: string
+	/** Active (not unsubscribed). An email one may still be `pending`. */
 	subscribed: boolean
+	/** Epoch ms of the last opt-in. */
 	subscribedAt: number
+	/** Epoch ms of the opt-out; null while active. */
 	unsubscribedAt: number | null
+	/** Where the opt-in came from; `staff` when a staff member recorded it. */
 	source: string
+	/** Who opted out: the guest (`self`), staff (`operator`), or an `import`. */
+	unsubscribedSource: 'self' | 'operator' | 'import' | null
+	/** An active email opt-in waiting for its owner to follow the emailed link. */
+	pending: boolean
+	/**
+	 * Set when `source` is `staff`. `recordedBy` is the opaque user id of the
+	 * member who recorded it (resolve the name on the App side).
+	 */
+	staff: {
+		recordedBy: string
+		method: StaffConsentMethod | null
+		textVersion: string | null
+	} | null
+	/**
+	 * ISO time until which recording an opt-in is refused, because the guest
+	 * unsubscribed themselves recently; null when not blocked.
+	 */
+	coolingOffUntil: string | null
 }
 
 export type PersonProfile = {
@@ -157,12 +195,20 @@ export class PeopleApiError extends Error {
 	code: string | null
 	/** The error body, in the shape the shared error helpers read. */
 	body: { error: string } | null
-	constructor(message: string, status: number, code: string | null) {
+	/** `cooling_off` only: ISO time the guest's own opt-out stops blocking. */
+	until: string | null
+	constructor(
+		message: string,
+		status: number,
+		code: string | null,
+		until: string | null = null,
+	) {
 		super(message)
 		this.name = 'PeopleApiError'
 		this.status = status
 		this.code = code
 		this.body = code ? { error: code } : null
+		this.until = until
 	}
 }
 
@@ -254,6 +300,7 @@ export function createPeopleClient({
 				const detail = (await response.json().catch(() => null)) as {
 					error?: unknown
 					message?: unknown
+					until?: unknown
 				} | null
 				const code = typeof detail?.error === 'string' ? detail.error : null
 				throw new PeopleApiError(
@@ -262,6 +309,7 @@ export function createPeopleClient({
 						: (code ?? `People API error (${response.status})`),
 					response.status,
 					code,
+					typeof detail?.until === 'string' ? detail.until : null,
 				)
 			}
 			return (await response.json()) as T
@@ -297,6 +345,8 @@ export function listQuery(params: PeopleListParams) {
 				: undefined,
 		includeWalkIns: f.has('walk_ins') ? 1 : undefined,
 		hasDining: params.hasDining ? 1 : undefined,
+		returning: params.returning ? 1 : undefined,
+		subscribed: params.subscribed,
 		sort: params.sort,
 		cursor: params.cursor || undefined,
 		limit: PEOPLE_PAGE_SIZE,
@@ -320,6 +370,48 @@ export async function fetchPeoplePage(
 		total: raw.total ?? 0,
 		hasOrders: Boolean(raw.meta?.hasOrders),
 		walkInCount: raw.meta?.walkInCount ?? null,
+	}
+}
+
+/**
+ * Counts for the Customers tiles (`GET /operator/people/summary`). Counts only,
+ * no people. Needs the customers facet (403 otherwise). Each `change30d` is
+ * the net change over the last 30 days; `share` is returning / guests (0..1).
+ * `locationScoped` is true when the numbers follow the member's location
+ * scope (then the Guests tile can differ from the unfiltered list, which
+ * stays organization-wide; the returning and subscriber filters match).
+ */
+export type PeopleSummary = {
+	guests: { total: number; change30d: number }
+	returningGuests: { total: number; change30d: number; share: number }
+	emailSubscribers: { total: number; change30d: number }
+	textSubscribers: { total: number; change30d: number }
+	locationScoped: boolean
+	/** ISO time the counts were taken. */
+	asOf: string
+}
+
+export async function fetchPeopleSummary(
+	client: PeopleClient,
+	signal?: AbortSignal,
+): Promise<PeopleSummary> {
+	const raw = await client.request<Partial<PeopleSummary>>('/summary', {
+		signal,
+	})
+	const tile = (value: { total?: number; change30d?: number } | undefined) => ({
+		total: Number(value?.total ?? 0),
+		change30d: Number(value?.change30d ?? 0),
+	})
+	return {
+		guests: tile(raw.guests),
+		returningGuests: {
+			...tile(raw.returningGuests),
+			share: Number(raw.returningGuests?.share ?? 0),
+		},
+		emailSubscribers: tile(raw.emailSubscribers),
+		textSubscribers: tile(raw.textSubscribers),
+		locationScoped: raw.locationScoped === true,
+		asOf: raw.asOf ?? new Date().toISOString(),
 	}
 }
 
@@ -350,6 +442,67 @@ export async function updatePerson(
 		method: 'PATCH',
 		body: patch,
 	})
+}
+
+export type PersonConsentInput = {
+	channel: 'email' | 'sms'
+	subscribed: boolean
+	/** Required to turn on. */
+	method?: StaffConsentMethod
+	/** Must be `true` to turn on: the member confirms the guest agreed. */
+	attested?: boolean
+}
+
+export type PersonConsentResult = {
+	/** The marketing subscription after the call; null when none exists (off, never on). */
+	subscription: PersonSubscription | null
+	/** Texts only: a broadcast would reach the guest now (needs a verified phone). */
+	deliverable?: boolean
+	/** Turning texts on: whether the one "You're subscribed" text went out. */
+	confirmationSms?: 'sent' | 'skipped'
+	/** Turning email on: whether the confirmation link went out. */
+	confirmationEmail?: 'sent' | 'throttled' | 'skipped'
+}
+
+/**
+ * Error codes of `recordPersonConsent` (`PeopleApiError.code`): 400
+ * `method_required` / `attestation_required` (an invalid body is 400 with
+ * `Invalid request`); 403 `insufficient_permissions`; 409 `no_customer`,
+ * `email_required`, `phone_required`, `cooling_off` (see
+ * `PeopleApiError.until`). An unknown, erased or other-organization person is
+ * a 404 (check `status`, not the code).
+ */
+export type PersonConsentErrorCode =
+	| 'method_required'
+	| 'attestation_required'
+	| 'insufficient_permissions'
+	| 'no_customer'
+	| 'email_required'
+	| 'phone_required'
+	| 'cooling_off'
+
+/**
+ * Records a guest's marketing consent (topic `marketing`) on their behalf.
+ * Needs `access.canUpdateMarketingConsent`. Email stays pending until the guest
+ * confirms by email; texts are recorded at once.
+ */
+export async function recordPersonConsent(
+	client: PeopleClient,
+	key: string,
+	input: PersonConsentInput,
+): Promise<PersonConsentResult> {
+	const raw = await client.request<PersonConsentResult>(
+		`/${encodeURIComponent(key)}/consent`,
+		{ method: 'POST', body: input },
+	)
+	return {
+		subscription: raw.subscription ?? null,
+		...(raw.deliverable !== undefined ? { deliverable: raw.deliverable } : {}),
+		...(raw.confirmationSms ? { confirmationSms: raw.confirmationSms } : {}),
+		...(raw.confirmationEmail
+			? { confirmationEmail: raw.confirmationEmail }
+			: {}),
+	}
 }
 
 export async function fetchPeopleTags(

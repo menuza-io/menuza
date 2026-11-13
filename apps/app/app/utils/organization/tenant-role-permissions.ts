@@ -27,6 +27,7 @@ export const TENANT_ROLE_PERMISSION_IDS = [
 	'org_perm_update_campaign_any',
 	'org_perm_read_automation_any',
 	'org_perm_update_automation_any',
+	'org_perm_update_marketing_consent_any',
 	'org_perm_read_menu_any',
 	'org_perm_update_menu_any',
 	'org_perm_update_chat_any',

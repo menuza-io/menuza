@@ -15,6 +15,7 @@ const full = {
 	canUpdateCustomers: true,
 	canUpdateDining: true,
 	canDelete: true,
+	canUpdateMarketingConsent: false,
 }
 
 async function run() {
@@ -35,7 +36,7 @@ describe('people credentials', () => {
 	})
 
 	it('signs one token with both facets, short-lived when it carries the guest read grant', async () => {
-		mocks.access.mockResolvedValue({ access: full })
+		mocks.access.mockResolvedValue({ access: full, locationIds: null })
 		const result = await run()
 		expect(mocks.client).toHaveBeenCalledWith(expect.any(Request), 'cafe', {
 			scope: 'people',
@@ -46,6 +47,7 @@ describe('people credentials', () => {
 				peopleCustomers: true,
 				peopleDining: 'full',
 				canUpdateGuest: true,
+				locationIds: null,
 			},
 		})
 		expect(result.data).toMatchObject({
@@ -67,6 +69,7 @@ describe('people credentials', () => {
 				canUpdateDining: false,
 				canDelete: false,
 			},
+			locationIds: ['loc_1'],
 		})
 		await run()
 		expect(mocks.client).toHaveBeenCalledWith(expect.any(Request), 'cafe', {
@@ -74,8 +77,43 @@ describe('people credentials', () => {
 			canUpdate: false,
 			canDelete: false,
 			expiresIn: '15m',
-			claims: { peopleCustomers: true },
+			claims: { peopleCustomers: true, locationIds: ['loc_1'] },
 		})
+	})
+
+	it('signs an empty location scope as [] (reaches none), never as all', async () => {
+		mocks.access.mockResolvedValue({ access: full, locationIds: [] })
+		await run()
+		expect(mocks.client).toHaveBeenCalledWith(
+			expect.any(Request),
+			'cafe',
+			expect.objectContaining({
+				claims: expect.objectContaining({ locationIds: [] }),
+			}),
+		)
+	})
+
+	it('signs canUpdateMarketingConsent only when granted', async () => {
+		mocks.access.mockResolvedValue({
+			access: { ...full, canUpdateMarketingConsent: true },
+			locationIds: null,
+		})
+		const result = await run()
+		expect(mocks.client).toHaveBeenCalledWith(
+			expect.any(Request),
+			'cafe',
+			expect.objectContaining({
+				claims: expect.objectContaining({ canUpdateMarketingConsent: true }),
+			}),
+		)
+		expect(result.data.access.canUpdateMarketingConsent).toBe(true)
+	})
+
+	it('leaves the consent claim out without the grant (and while impersonating, where access never carries it)', async () => {
+		mocks.access.mockResolvedValue({ access: full, locationIds: null })
+		await run()
+		const claims = mocks.client.mock.calls[0]![2].claims
+		expect(claims).not.toHaveProperty('canUpdateMarketingConsent')
 	})
 
 	it('mints nothing when access is refused', async () => {

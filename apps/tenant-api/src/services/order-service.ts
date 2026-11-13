@@ -17,6 +17,7 @@ import {
 	type RestaurantOrderRequest,
 	type VerifiedDeliveryQuote,
 } from '@repo/common/restaurant-orders'
+import { type OrderMarketingConsentResult } from '@repo/common/marketing-consent'
 import { readQrOrderingFeatures } from '@repo/common/qr-ordering'
 import {
 	hashLoyaltyCart,
@@ -88,6 +89,11 @@ import {
 	readRewardInTx,
 	type CurrentReward,
 } from './loyalty-program-service.ts'
+import {
+	queueOrderConsentConfirmation,
+	recordOrderMarketingConsentInTx,
+	type OrderConsentConfirmation,
+} from './order-marketing-consent.ts'
 import { orderCountsTowardSales } from './report-records.ts'
 import {
 	claimPurchaseIfUnclaimedInTx,
@@ -632,6 +638,12 @@ export type PlaceOrderSuccess = {
 	paymentToken: string | null
 	/** Dine-in rounds only: the tab the round joined or opened. */
 	tab: { id: string; tabNumber: string; tabToken: string } | null
+	/**
+	 * What became of the marketing boxes a signed-in customer ticked, per
+	 * ticked channel. Absent for a guest, when nothing was ticked, and on an
+	 * idempotent replay (nothing is recorded again).
+	 */
+	marketingConsent?: OrderMarketingConsentResult
 }
 
 export type PlaceOrderResult =
@@ -844,10 +856,13 @@ export async function placeOrder(input: {
 
 	const loyalty = loyaltySettleQueue()
 	const inventory = inventorySaleQueue()
+	// Set only by the attempt that inserted the order (a busy retry resets it).
+	let consentConfirmation: OrderConsentConfirmation | null = null
 	try {
 		const placed: PlaceOrderResult = await runExclusive(orgId, () =>
 			retryOnSqliteBusy(() =>
 				runTenantTransaction(db, async (tx) => {
+					consentConfirmation = null
 					const [existingInTx] = await tx
 						.select()
 						.from(restaurantOrders)
@@ -1290,6 +1305,20 @@ export async function placeOrder(input: {
 						})
 					}
 
+					// Last, so every refusal above returns (and commits) before it:
+					// only a placed order records the consent ticked with it. A
+					// replay returned earlier and records nothing again.
+					const consent =
+						customerId && request.marketingConsent
+							? await recordOrderMarketingConsentInTx(tx, {
+									customerId,
+									consent: request.marketingConsent,
+									now,
+									contactEmail: request.contact.email ?? null,
+								})
+							: null
+					consentConfirmation = consent?.confirmation ?? null
+
 					return {
 						ok: true,
 						data: {
@@ -1297,6 +1326,7 @@ export async function placeOrder(input: {
 							order: inserted,
 							receiptToken,
 							paymentToken,
+							...(consent ? { marketingConsent: consent.result } : {}),
 							tab: tabRow
 								? {
 										id: tabRow.id,
@@ -1315,6 +1345,10 @@ export async function placeOrder(input: {
 		)
 		await loyalty.settle(orgId)
 		await inventory.settle(orgId)
+		const confirmation = consentConfirmation as OrderConsentConfirmation | null
+		if (placed.ok && placed.data.status === 201 && confirmation) {
+			queueOrderConsentConfirmation(orgId, confirmation)
+		}
 		return placed
 	} catch (error) {
 		// `runTenantTransaction` commits whatever its callback returns and rolls

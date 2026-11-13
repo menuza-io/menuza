@@ -1,8 +1,12 @@
+import { STAFF_CONSENT_COOLING_OFF_DAYS } from '@repo/common/marketing-consent'
 import {
 	customers,
 	customerSubscriptions,
 	getTenantDb,
 	rsvGuests,
+	type CustomerConsentMethod,
+	type CustomerSubscription,
+	type CustomerUnsubscribeSource,
 	type RsvGuestRow,
 } from '@repo/tenant-db'
 import { and, eq } from 'drizzle-orm'
@@ -28,6 +32,9 @@ import { requestSubscriptionConfirmation } from './subscription-confirmation.ts'
  */
 export const RESERVATION_CONSENT_TOPIC = 'reservations' as const
 export const RESERVATION_CONSENT_SOURCE = 'reservation_booking' as const
+
+const STAFF_CONSENT_COOLING_OFF_MS =
+	STAFF_CONSENT_COOLING_OFF_DAYS * 24 * 60 * 60 * 1000
 
 type ConsentChannel = 'email' | 'sms'
 
@@ -113,7 +120,13 @@ export async function recordReservationMarketingConsent(
 	}
 
 	if (guest.marketingCustomerId) {
-		await recordSubscriptions(tx, guest.marketingCustomerId, channels, now, params.email)
+		await recordSubscriptions(
+			tx,
+			guest.marketingCustomerId,
+			channels,
+			now,
+			params.email,
+		)
 		return guest.marketingCustomerId
 	}
 
@@ -196,16 +209,86 @@ export function queueConsentConfirmation(
 	})
 }
 
+/**
+ * One subscription as the operator profile shows it. Additive over the older
+ * shape (`topic` .. `source`): who opted out, whether an email opt-in still
+ * waits for its owner's confirmation, who recorded a staff consent and how,
+ * and until when a guest's own opt-out blocks a staff opt-in. No contact
+ * details: `staff.recordedBy` is an opaque operator user id the App resolves
+ * to a name.
+ */
+export type PersonSubscription = {
+	topic: string
+	channel: string
+	/** True while the subscription is active (not unsubscribed). */
+	subscribed: boolean
+	subscribedAt: number
+	unsubscribedAt: number | null
+	source: string
+	/** Who opted out (`self`, `operator`, `import`); null while active or unknown. */
+	unsubscribedSource: CustomerUnsubscribeSource | null
+	/** An active email opt-in not yet confirmed for the address on file. */
+	pending: boolean
+	/** Present when a staff member recorded the consent (`source: 'staff'`). */
+	staff: {
+		recordedBy: string
+		method: CustomerConsentMethod | null
+		textVersion: string | null
+	} | null
+	/**
+	 * ISO time until which a staff opt-in is refused because the guest opted
+	 * out themselves (`STAFF_CONSENT_COOLING_OFF_DAYS`); null when not blocked.
+	 */
+	coolingOffUntil: string | null
+}
+
 export type GuestMarketingConsent = {
-	subscriptions: Array<{
-		topic: string
-		channel: string
-		/** True while the subscription is active (not unsubscribed). */
-		subscribed: boolean
-		subscribedAt: number
-		unsubscribedAt: number | null
-		source: string
-	}>
+	subscriptions: PersonSubscription[]
+}
+
+/** The end of a guest's own opt-out's cooling-off, or null when none applies. */
+export function staffCoolingOffUntil(
+	row: Pick<CustomerSubscription, 'unsubscribedAt' | 'unsubscribedSource'>,
+	now: number = Date.now(),
+): Date | null {
+	if (!row.unsubscribedAt) return null
+	// A null source predates the column and counts as the guest's own.
+	if (row.unsubscribedSource && row.unsubscribedSource !== 'self') return null
+	const until = row.unsubscribedAt.getTime() + STAFF_CONSENT_COOLING_OFF_MS
+	return until > now ? new Date(until) : null
+}
+
+export function serializePersonSubscription(
+	row: CustomerSubscription,
+	customerEmail: string | null | undefined,
+	now: number = Date.now(),
+): PersonSubscription {
+	const active = row.unsubscribedAt === null
+	const email = customerEmail?.trim()
+	const pending =
+		active &&
+		row.channel === 'email' &&
+		!(email && row.confirmedEmailHash === emailConsentHash(email))
+	const coolingOff = staffCoolingOffUntil(row, now)
+	return {
+		topic: row.topic,
+		channel: row.channel,
+		subscribed: active,
+		subscribedAt: row.subscribedAt.getTime(),
+		unsubscribedAt: row.unsubscribedAt?.getTime() ?? null,
+		source: row.source,
+		unsubscribedSource: active ? null : (row.unsubscribedSource ?? null),
+		pending,
+		staff:
+			row.source === 'staff'
+				? {
+						recordedBy: row.recordedBy ?? '',
+						method: row.consentMethod ?? null,
+						textVersion: row.consentTextVersion ?? null,
+					}
+				: null,
+		coolingOffUntil: coolingOff ? coolingOff.toISOString() : null,
+	}
 }
 
 /**
@@ -221,6 +304,7 @@ export async function loadGuestMarketingConsent(
 		customerId: string | null
 		marketingCustomerId: string | null
 	} | null,
+	opts?: { now?: number },
 ): Promise<GuestMarketingConsent | null> {
 	const customerId = guest?.customerId ?? guest?.marketingCustomerId ?? null
 	if (!customerId) return null
@@ -229,16 +313,18 @@ export async function loadGuestMarketingConsent(
 		.from(customerSubscriptions)
 		.where(eq(customerSubscriptions.customerId, customerId))
 		.all()
+	const customer =
+		rows.length > 0
+			? await db
+					.select({ email: customers.email })
+					.from(customers)
+					.where(eq(customers.id, customerId))
+					.get()
+			: undefined
+	const now = opts?.now ?? Date.now()
 	return {
 		subscriptions: rows
-			.map((row) => ({
-				topic: row.topic,
-				channel: row.channel,
-				subscribed: row.unsubscribedAt === null,
-				subscribedAt: row.subscribedAt.getTime(),
-				unsubscribedAt: row.unsubscribedAt?.getTime() ?? null,
-				source: row.source,
-			}))
+			.map((row) => serializePersonSubscription(row, customer?.email, now))
 			.sort((a, b) =>
 				`${a.topic}:${a.channel}`.localeCompare(`${b.topic}:${b.channel}`),
 			),

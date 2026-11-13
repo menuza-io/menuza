@@ -3,6 +3,7 @@ import { msg } from '@lingui/core/macro'
 import { getLocalizedMenuValue } from '@repo/common/menu-types'
 import { getLocaleHref } from '@repo/common/site-locales'
 import LoyaltyLabels from '~/components/loyalty/LoyaltyLabels.astro'
+import MarketingConsentBoxes from '~/components/marketing/MarketingConsentBoxes.astro'
 import OrderDetailsSheet from '~/components/ordering/OrderDetailsSheet.astro'
 import SitePage from '~/components/SitePage.astro'
 import { buildLoyaltyLabels } from '~/lib/loyalty/labels'
@@ -528,6 +529,8 @@ const tipOff = 'border-border bg-background text-foreground'
 								<input type="email" id="cust-email" autocomplete="email" inputmode="email" dir="ltr" placeholder={emailPlaceholder} required class="field text-start rtl:text-end" />
 							</div>
 						</div>
+						{/* Signed-in guests get two unticked boxes; everyone else a sign-in link. */}
+						<MarketingConsentBoxes showSignIn class="mt-5 border-t border-border pt-4" />
 					</section>
 
 					{/* Delivery address (shown when delivery is selected) */}
@@ -826,6 +829,10 @@ const tipOff = 'border-border bg-background text-foreground'
 			zonedTimeToUtc,
 		} from '~/lib/drops/format'
 		import { getAccessToken } from '~/lib/client-auth'
+		import {
+			checkoutMarketingConsent,
+			flagEmailConfirmationPending,
+		} from '~/lib/marketing-consent-client'
 		import { createLoyaltyClient } from '~/lib/loyalty-client'
 		import { readLoyaltyLabels } from '~/lib/loyalty/read-labels'
 		import { orderLineName } from '~/lib/loyalty/reward-picker'
@@ -835,7 +842,7 @@ const tipOff = 'border-border bg-background text-foreground'
 			type RewardQuotes,
 		} from '~/lib/loyalty/reward-quotes'
 		import { formatRemaining, startCountdown } from '~/lib/ordering/countdown'
-		import { checkoutOrderPayload } from '~/lib/ordering/checkout-payload'
+		import { checkoutOrderPayload, checkoutOrderRequest } from '~/lib/ordering/checkout-payload'
 		import { orderErrorMessage } from '~/lib/ordering/order-errors'
 		import {
 			adoptCouponFromUrl,
@@ -2272,12 +2279,18 @@ const tipOff = 'border-border bg-background text-foreground'
 					reward: sentReward,
 					discounts: sentDiscounts,
 				})
+				// The attempt key is derived from the core payload only. The consent
+				// boxes ride in the body but stay out of it: the region leaves them
+				// out of its request hash too, so a retry after a timed-out POST with
+				// a box changed still replays the first order instead of placing and
+				// charging a second one.
 				const idempotencyKey = await checkoutAttemptKey(orgId, corePayload)
-				const created = await submitRegionalOrder({
-					...corePayload,
-					idempotencyKey,
-				})
+				const marketingConsent = checkoutMarketingConsent()
+				const created = await submitRegionalOrder(
+					checkoutOrderRequest(corePayload, idempotencyKey, marketingConsent),
+				)
 				saveOrderCapability(orgId, created)
+				flagEmailConfirmationPending(created.marketingConsent, created.order.id)
 				try {
 					localStorage.removeItem(storageKey)
 					if (isDrop && drop) clearPickupSelection(drop.id)

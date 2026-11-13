@@ -626,6 +626,17 @@ const ORG_PERMISSIONS = [
 		context: 'organization',
 		description: 'Edit dish recipes, typed costs, and sold out settings',
 	},
+	// Marketing consent recorded by staff on a guest's behalf. Keep in sync
+	// with 0044_marketing_consent_permission. Admins only by default.
+	{
+		id: 'org_perm_update_marketing_consent_any',
+		action: 'update',
+		entity: 'marketing_consent',
+		access: 'any',
+		context: 'organization',
+		description:
+			"Record a guest's marketing consent given in person, on a paper form, or by phone",
+	},
 ] as const
 
 const SYSTEM_PERMISSIONS = [

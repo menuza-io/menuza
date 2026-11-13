@@ -87,6 +87,10 @@ function profile(over: Partial<PersonProfile> = {}): PersonProfile {
 					subscribedAt: 1,
 					unsubscribedAt: null,
 					source: 'reservation_booking',
+					unsubscribedSource: null,
+					pending: false,
+					staff: null,
+					coolingOffUntil: null,
 				},
 			],
 		},
@@ -271,5 +275,39 @@ describe('PersonProfileScreen', () => {
 		expect(await screen.findByTestId('person-merge-error')).toHaveTextContent(
 			'both signed in as different customers',
 		)
+	})
+
+	it('shows the Marketing preferences card with the recorder resolved from member names', async () => {
+		const p = profile({ access: { ...FULL, canUpdateMarketingConsent: true } })
+		p.marketing!.subscriptions.push({
+			topic: 'marketing',
+			channel: 'sms',
+			subscribed: true,
+			subscribedAt: 1,
+			unsubscribedAt: null,
+			source: 'staff',
+			unsubscribedSource: null,
+			pending: false,
+			staff: { recordedBy: 'u1', method: 'in_person', textVersion: null },
+			coolingOffUntil: null,
+		})
+		const request = vi.fn(async (path: string) =>
+			path === '/tags' ? { tags: [] } : p,
+		)
+		renderStaff(
+			<PersonProfileScreen
+				client={{ request } as unknown as PeopleClient}
+				orgSlug="acme"
+				personKey="c_1"
+				memberNames={{ u1: 'Maya Manager' }}
+			/>,
+		)
+		expect(await screen.findByText('Marketing preferences')).toBeInTheDocument()
+		expect(screen.getByTestId('person-consent-sms-staff')).toHaveTextContent(
+			'Recorded by Maya Manager',
+		)
+		expect(
+			screen.getByRole('switch', { name: 'Text marketing' }),
+		).not.toHaveAttribute('aria-disabled', 'true')
 	})
 })
