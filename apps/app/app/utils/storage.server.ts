@@ -602,3 +602,28 @@ export async function readPrintFile(
 export function getPrintFileUrl(key: string, expiresInSeconds = 3600) {
 	return _getPresignedGetUrl(key, DEFAULT_STORAGE_CONFIG, expiresInSeconds)
 }
+
+export function menuSnapshotObjectKey(organizationId: string, snapshotId: string) {
+	return `menu-snapshots/${organizationId}/${snapshotId}.json`
+}
+
+export async function uploadMenuSnapshotJson(
+	organizationId: string,
+	snapshotId: string,
+	json: string,
+) {
+	const key = menuSnapshotObjectKey(organizationId, snapshotId)
+	const bytes = new TextEncoder().encode(json)
+	await uploadPrintFile(key, bytes, 'application/json; charset=utf-8')
+	return key
+}
+
+export async function readMenuSnapshotJson(key: string): Promise<string | null> {
+	const bytes = await readPrintFile(key)
+	if (!bytes) return null
+	return new TextDecoder().decode(bytes)
+}
+
+export async function deleteMenuSnapshotJson(key: string) {
+	await deleteFromStorage(key, DEFAULT_STORAGE_CONFIG)
+}

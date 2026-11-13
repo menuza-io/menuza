@@ -38,8 +38,10 @@ import {
 } from './location-overrides-card.tsx'
 import { MenuAvailabilityCard } from './menu-availability-card.tsx'
 import { MenuFormHeader } from './menu-form-header.tsx'
+import { MenuDuplicateTrigger } from './menu-duplicate-trigger.tsx'
 
 export interface MenuFormData {
+	id?: string
 	displayName: string
 	internalName: string
 	menuType: 'online_pos_kiosk' | 'catering'
@@ -189,6 +191,15 @@ function MenuFormBody({
 						backLabel="Back to menus"
 						saveButtonText="Save Menu"
 						isSubmitting={isSubmitting}
+						secondaryAction={
+							initialData?.id ? (
+								<MenuDuplicateTrigger
+									orgSlug={orgSlug}
+									entity={{ entityType: 'menu', entityId: initialData.id }}
+									variant="outline"
+								/>
+							) : null
+						}
 					/>
 
 					{/* 2-Column Shopify Layout */}

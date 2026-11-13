@@ -52,6 +52,7 @@ import {
 } from './location-overrides-card.tsx'
 import { MenuAllergenSelector } from './menu-allergen-selector.tsx'
 import { MenuAvailabilityCard } from './menu-availability-card.tsx'
+import { MenuDuplicateTrigger } from './menu-duplicate-trigger.tsx'
 import { MenuFormHeader } from './menu-form-header.tsx'
 import {
 	QuickModifierGroupSheet,
@@ -420,6 +421,15 @@ function ItemFormBody({
 						backLabel="Back to items"
 						saveButtonText="Save Item"
 						isSubmitting={isSubmitting}
+						secondaryAction={
+							itemId ? (
+								<MenuDuplicateTrigger
+									orgSlug={orgSlug}
+									entity={{ entityType: 'item', entityId: itemId }}
+									variant="outline"
+								/>
+							) : null
+						}
 					/>
 
 					{/* 2-Column Shopify Layout */}

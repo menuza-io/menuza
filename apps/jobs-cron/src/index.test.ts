@@ -557,8 +557,9 @@ describe('Jobs-Cron Worker Endpoints', () => {
 		it('triggers scheduled cron jobs', async () => {
 			const fetchMock = vi
 				.fn()
-				.mockResolvedValue(
-					new Response(JSON.stringify({ success: true }), { status: 200 }),
+				.mockImplementation(
+					() =>
+						new Response(JSON.stringify({ success: true }), { status: 200 }),
 				)
 			globalThis.fetch = fetchMock
 
@@ -577,6 +578,13 @@ describe('Jobs-Cron Worker Endpoints', () => {
 
 			expect(fetchMock).toHaveBeenCalledWith(
 				'https://app.example.com/resources/jobs/audit-log-archival',
+				expect.objectContaining({
+					method: 'POST',
+					headers: { Authorization: `Bearer ${mockInternalToken}` },
+				}),
+			)
+			expect(fetchMock).toHaveBeenCalledWith(
+				'https://app.example.com/resources/jobs/menu-snapshot-prune',
 				expect.objectContaining({
 					method: 'POST',
 					headers: { Authorization: `Bearer ${mockInternalToken}` },

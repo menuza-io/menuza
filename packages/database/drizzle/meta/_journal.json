@@ -302,6 +302,13 @@
 			"when": 1794577959846,
 			"tag": "0042_location_ready_text",
 			"breakpoints": true
+		},
+		{
+			"idx": 43,
+			"version": "6",
+			"when": 1794650000000,
+			"tag": "0043_menu_snapshots",
+			"breakpoints": true
 		}
 	]
 }

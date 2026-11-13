@@ -73,6 +73,22 @@ function cloudflareWorkerAliasPlugin(): Plugin | null {
 	}
 }
 
+/** Vitest may resolve `@repo/database` through a foreign `node_modules` symlink. */
+function testDatabasePackagePlugin(): Plugin | null {
+	if (MODE !== 'test') return null
+	const worktreeDatabase = fileURLToPath(
+		new URL('../../packages/database/db.server.ts', import.meta.url),
+	)
+	return {
+		name: 'test-database-package',
+		enforce: 'pre',
+		resolveId(id) {
+			if (id === '@repo/database') return worktreeDatabase
+			return null
+		},
+	}
+}
+
 // Plugin to stub out cache.server.ts in test mode to avoid node:sqlite in jsdom
 function stubCacheServerPlugin(): Plugin {
 	return {
@@ -250,6 +266,7 @@ export default defineConfig((config) => ({
 					cloudflare({ viteEnvironment: { name: 'ssr' } }),
 				]
 			: [varlockVitePlugin()]),
+		testDatabasePackagePlugin(),
 		MODE === 'test' ? stubCacheServerPlugin() : null,
 		envOnlyMacros(),
 		tailwindcss(),

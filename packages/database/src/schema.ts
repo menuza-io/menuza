@@ -3407,6 +3407,50 @@ export const OrganizationMenuPosLink = sqliteTable(
 	],
 )
 
+export const MENU_SNAPSHOT_REASONS = [
+	'manual',
+	'before_bulk_edit',
+	'before_restore',
+	'before_import',
+] as const
+export type MenuSnapshotReason = (typeof MENU_SNAPSHOT_REASONS)[number]
+
+/** Immutable whole-menu JSON in R2; row holds metadata and the object key. */
+export const MenuSnapshot = sqliteTable(
+	'MenuSnapshot',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		reason: text().notNull(),
+		label: text(),
+		createdById: text().references(() => User.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		itemCount: integer().default(0).notNull(),
+		contentKey: text().notNull(),
+		contentHash: text().notNull(),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('MenuSnapshot_organizationId_idx').on(table.organizationId),
+		index('MenuSnapshot_organizationId_createdAt_idx').on(
+			table.organizationId,
+			table.createdAt,
+		),
+	],
+)
+
 // --- Menu Drops System ---
 
 export const OrganizationDrop = sqliteTable(

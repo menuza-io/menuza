@@ -66,6 +66,7 @@ import {
 } from './location-overrides-card.tsx'
 import { MenuAvailabilityCard } from './menu-availability-card.tsx'
 import { MenuFormHeader } from './menu-form-header.tsx'
+import { MenuDuplicateTrigger } from './menu-duplicate-trigger.tsx'
 import { ModifierGuestPreview } from './modifier-guest-preview.tsx'
 import {
 	ModifierRequiredSelectionField,
@@ -898,6 +899,18 @@ function ModifierFormBody({
 						backLabel={t`Back to modifier groups`}
 						saveButtonText={t`Save Modifier Group`}
 						isSubmitting={isSubmitting}
+						secondaryAction={
+							initialData?.id ? (
+								<MenuDuplicateTrigger
+									orgSlug={orgSlug}
+									entity={{
+										entityType: 'modifier_group',
+										entityId: initialData.id,
+									}}
+									variant="outline"
+								/>
+							) : null
+						}
 					/>
 
 					{/* 2-Column Shopify Layout */}

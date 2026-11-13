@@ -52,6 +52,10 @@ import {
 import { z } from 'zod'
 import { EmptyState } from '#app/components/empty-state.tsx'
 import { MenuDeleteEffects } from '#app/components/menu/delete-effects.tsx'
+import {
+	MenuDuplicateDialog,
+	type MenuDuplicateEntity,
+} from '#app/components/menu/menu-duplicate-dialog.tsx'
 import { MenuHealthFilterNotice } from '#app/components/menu/menu-health-card.tsx'
 import { useMenuListFilters } from '#app/components/menu/menu-list-filters.tsx'
 import { MenuStatusBadge } from '#app/components/menu/menu-status-badge.tsx'
@@ -239,6 +243,9 @@ export default function CategoriesIndexRoute() {
 	const { _ } = useLingui()
 	const deleteFetcher = useFetcher()
 	const [deleteCategoryId, setDeleteCategoryId] = useState<string | null>(null)
+	const [duplicateEntity, setDuplicateEntity] = useState<MenuDuplicateEntity | null>(
+		null,
+	)
 	const categoriesMap = useMemo(
 		() => new Map(allCategories.map((c) => [c.id, c])),
 		[allCategories],
@@ -481,6 +488,17 @@ export default function CategoriesIndexRoute() {
 																}
 															/>
 															<DropdownMenuItem
+																onClick={() =>
+																	setDuplicateEntity({
+																		entityType: 'category',
+																		entityId: cat.id,
+																	})
+																}
+															>
+																<Icon name="copy" className="mr-2 size-4" />
+																<Trans>Duplicate</Trans>
+															</DropdownMenuItem>
+															<DropdownMenuItem
 																className="text-destructive focus:text-destructive"
 																onClick={() => setDeleteCategoryId(cat.id)}
 															>
@@ -512,6 +530,13 @@ export default function CategoriesIndexRoute() {
 					)}
 				</div>
 			)}
+
+			<MenuDuplicateDialog
+				orgSlug={organization.slug}
+				open={Boolean(duplicateEntity)}
+				onOpenChange={(open) => !open && setDuplicateEntity(null)}
+				entity={duplicateEntity}
+			/>
 
 			{/* Delete confirmation dialog */}
 			<AlertDialog

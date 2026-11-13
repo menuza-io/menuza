@@ -11,10 +11,14 @@ import {
 	redirect,
 	RouterProvider,
 } from 'react-router'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { LeavePageDialog } from '#app/components/leave-page-dialog.tsx'
 import { SaveBar, SaveBarGuard } from '#app/components/save-bar.tsx'
 import { CategoryForm } from './category-form.tsx'
+
+vi.mock('./menu-duplicate-trigger.tsx', () => ({
+	MenuDuplicateTrigger: () => null,
+}))
 
 let saved: FormData[]
 let fail: boolean
