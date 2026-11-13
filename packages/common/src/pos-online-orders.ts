@@ -28,8 +28,13 @@ export const POS_ONLINE_ORDERS_SEARCH_MAX_MS =
 	(POS_ONLINE_ORDERS_SEARCH_DAYS + 1) * 24 * 3_600_000
 /** At most this many results; the answer says when more matched. */
 export const POS_ONLINE_ORDERS_SEARCH_LIMIT = 50
-/** A phone search needs at least this many trailing digits. */
-export const POS_ONLINE_ORDERS_PHONE_DIGITS_MIN = 4
+/**
+ * A phone search takes exactly the last four digits: what the masked phone
+ * already shows, so searching never reveals more of a number than that.
+ */
+export const POS_ONLINE_ORDERS_PHONE_DIGITS = 4
+/** Text searches need at least this many characters. */
+export const POS_ONLINE_ORDERS_SEARCH_TEXT_MIN = 2
 
 /**
  * What a signed-in person may do in the Orders app. The till's own roles
@@ -161,12 +166,17 @@ export type PosOnlineOrdersSearchState =
 export const posOnlineOrdersSearchQuerySchema = z
 	.strictObject({
 		/** Order number or guest name. */
-		q: z.string().trim().max(60).optional(),
-		/** The last digits of the guest's phone (contact permission only). */
+		q: z
+			.string()
+			.trim()
+			.min(POS_ONLINE_ORDERS_SEARCH_TEXT_MIN)
+			.max(60)
+			.optional(),
+		/** The phone's last four digits (contact permission only). */
 		phone: z
 			.string()
 			.trim()
-			.regex(new RegExp(`^[0-9]{${POS_ONLINE_ORDERS_PHONE_DIGITS_MIN},15}$`))
+			.regex(new RegExp(`^[0-9]{${POS_ONLINE_ORDERS_PHONE_DIGITS}}$`))
 			.optional(),
 		state: z.enum(POS_ONLINE_ORDERS_SEARCH_STATES).default('all'),
 		fulfillment: z

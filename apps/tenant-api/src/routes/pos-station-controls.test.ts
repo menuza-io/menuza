@@ -18,6 +18,7 @@ import {
 	destroyTenantDb,
 	getTenantDb,
 	invItems,
+	invAuditLog,
 	invSoldOut,
 	posDevices,
 	posManagers,
@@ -26,18 +27,32 @@ import {
 	staffScopeAssignments,
 } from '@repo/tenant-db'
 import { ORG_A, ORG_B, stubStaffEnv } from '../../tests/staff-harness.ts'
+import {
+	invalidateInventoryContext,
+	seedInventoryContextForTest,
+} from '../lib/inventory-context.ts'
 import { hashPosSecret } from '../lib/pos-auth.ts'
 import { mintPosStaffSession } from '../lib/pos-staff-session.ts'
 import { posOnlineOrdersRoutes } from './pos-online-orders.ts'
 
 const LOCATION = 'loc-1'
 const PAUSED_AT = 1_800_000_000_000
+const INVENTORY_ON = {
+	enabled: true,
+	purchasing: false,
+	recipes: true,
+	prep: false,
+	transfers: false,
+}
 
 /** The App, as the region sees it: what it was asked, and its answers. */
 function fakeApp() {
 	const asked: Array<{ path: string; body: any; auth: string | null }> = []
 	let paused: { pausedAt: number; until: number | null } | null = null
 	let status = 200
+	/** Fail only the App's record of a person's availability change. */
+	let failAvailability: number | null = null
+	let errorBody = '{}'
 	const fetchMock = vi.fn(
 		async (input: RequestInfo | URL, init?: RequestInit) => {
 			const url = new URL(String(input))
@@ -47,7 +62,13 @@ function fakeApp() {
 				body,
 				auth: new Headers(init?.headers).get('authorization'),
 			})
-			if (status !== 200) return new Response('{}', { status })
+			if (status !== 200) return new Response(errorBody, { status })
+			if (
+				failAvailability !== null &&
+				url.pathname === STATION_CONTROLS_PATH &&
+				body.kind === 'availability'
+			)
+				return new Response('{}', { status: failAvailability })
 			if (url.pathname === INVENTORY_AVAILABILITY_PATH)
 				return Response.json({
 					applied: body.changes.map((change: any) => change.entityId),
@@ -65,8 +86,12 @@ function fakeApp() {
 	return {
 		fetchMock,
 		asked,
-		fail: (next: number) => {
+		fail: (next: number, body = '{}') => {
 			status = next
+			errorBody = body
+		},
+		failAvailability: (next: number | null) => {
+			failAvailability = next
 		},
 	}
 }
@@ -166,6 +191,8 @@ describe('Station manager controls (/pos/online-orders/controls)', () => {
 		dir = fs.mkdtempSync(path.join(os.tmpdir(), 'station-controls-'))
 		stubStaffEnv(dir)
 		vi.stubEnv('POS_ENABLED', '')
+		vi.stubEnv('INVENTORY_ENABLED', '')
+		seedInventoryContextForTest(ORG_A, INVENTORY_ON)
 		fake = fakeApp()
 		vi.stubGlobal('fetch', fake.fetchMock)
 		for (const org of [ORG_A, ORG_B]) await provisionTenantDb(org)
@@ -180,6 +207,7 @@ describe('Station manager controls (/pos/online-orders/controls)', () => {
 		fs.rmSync(dir, { recursive: true, force: true })
 		vi.unstubAllGlobals()
 		vi.unstubAllEnvs()
+		invalidateInventoryContext()
 	})
 
 	it('pauses online ordering at this terminal’s location only, with an App preset, and resumes it', async () => {
@@ -264,14 +292,14 @@ describe('Station manager controls (/pos/online-orders/controls)', () => {
 				},
 			],
 		})
+		const before = fake.asked.length
 		const refused = await call('POST', '/availability', {
 			body: { entityType: 'item', entityId: 'burger', available: true },
 		})
 		expect(refused.status).toBe(409)
 		expect(await refused.json()).toMatchObject({ error: 'held_by_stock' })
-		expect(
-			fake.asked.filter((a) => a.path !== STATION_CONTROLS_PATH),
-		).toHaveLength(0)
+		// Refused before anything reached the App or inventory.
+		expect(fake.asked.slice(before)).toEqual([])
 
 		const override = await call('POST', '/availability', {
 			body: {
@@ -293,12 +321,107 @@ describe('Station manager controls (/pos/online-orders/controls)', () => {
 			.from(invSoldOut)
 			.where(eq(invSoldOut.id, id))
 			.get()
-		// Undone, so the next stock sync leaves the dish on.
-		expect(row).toMatchObject({
-			state: 'undone',
-			undoneByKind: 'staff',
-			undoneById: managerId,
+		// Undone (and then forgotten by the stock sync once the ingredient is
+		// not at zero), never "out" again: the next sync leaves the dish on.
+		expect(row?.state).not.toBe('out')
+		const audit = await db
+			.select()
+			.from(invAuditLog)
+			.where(eq(invAuditLog.action, 'sold_out.undo'))
+		expect(audit[0]).toMatchObject({ actorKind: 'staff', actorId: managerId })
+	})
+
+	it('refuses the stock override while inventory is stopped on this node or its recipes are off', async () => {
+		const id = await holdByStock('burger')
+		const body = {
+			entityType: 'item',
+			entityId: 'burger',
+			available: true,
+			overrideStock: true,
+		}
+		vi.stubEnv('INVENTORY_ENABLED', 'false')
+		const stopped = await call('POST', '/availability', { body })
+		expect(stopped.status).toBe(503)
+		expect(await stopped.json()).toMatchObject({
+			error: 'inventory_unavailable',
 		})
+		vi.stubEnv('INVENTORY_ENABLED', '')
+		seedInventoryContextForTest(ORG_A, {
+			...INVENTORY_ON,
+			recipes: false,
+		})
+		expect((await call('POST', '/availability', { body })).status).toBe(503)
+		const db = await getTenantDb(ORG_A)
+		expect(
+			(await db.select().from(invSoldOut).where(eq(invSoldOut.id, id)).get())
+				?.state,
+		).toBe('out')
+		expect(fake.asked).toHaveLength(0)
+	})
+
+	it('reports success when the undo put the dish back and only the App’s record of it failed', async () => {
+		await holdByStock('burger')
+		fake.failAvailability(502)
+		const response = await call('POST', '/availability', {
+			body: {
+				entityType: 'item',
+				entityId: 'burger',
+				available: true,
+				overrideStock: true,
+			},
+		})
+		expect(response.status).toBe(200)
+		expect(await response.json()).toMatchObject({
+			changed: true,
+			heldByStock: [],
+		})
+	})
+
+	it('a sold-out tap on a dish stock already holds makes the hold the person’s', async () => {
+		const id = await holdByStock('burger')
+		const response = await call('POST', '/availability', {
+			body: { entityType: 'item', entityId: 'burger', available: false },
+		})
+		expect(response.status).toBe(200)
+		expect(await response.json()).toMatchObject({ heldByStock: [] })
+		const db = await getTenantDb(ORG_A)
+		// The hold is the person's now: stock coming back forgets the entry
+		// without ever putting the dish back on sale.
+		expect(
+			(await db.select().from(invSoldOut).where(eq(invSoldOut.id, id)).get())
+				?.state,
+		).not.toBe('out')
+		expect(
+			fake.asked.filter(
+				(a) =>
+					a.path === INVENTORY_AVAILABILITY_PATH &&
+					a.body.changes.some((change: any) => change.available),
+			),
+		).toEqual([])
+		const audit = await db
+			.select()
+			.from(invAuditLog)
+			.where(eq(invAuditLog.action, 'sold_out.by_hand'))
+		expect(audit[0]).toMatchObject({ actorKind: 'staff', actorId: managerId })
+	})
+
+	it('tells a refused request apart from an outage', async () => {
+		fake.fail(401)
+		expect(
+			await (
+				await call('POST', '/pause', { body: { action: 'resume' } })
+			).json(),
+		).toMatchObject({ error: 'controls_misconfigured' })
+		fake.fail(404, JSON.stringify({ error: 'org_not_found' }))
+		expect(
+			await (
+				await call('POST', '/pause', { body: { action: 'resume' } })
+			).json(),
+		).toMatchObject({ error: 'controls_misconfigured' })
+		fake.fail(404, JSON.stringify({ error: 'location_not_found' }))
+		const missing = await call('POST', '/pause', { body: { action: 'resume' } })
+		expect(missing.status).toBe(404)
+		expect(await missing.json()).toMatchObject({ error: 'location_not_found' })
 	})
 
 	it('answers 503 and changes nothing here when the App cannot be reached (never queued)', async () => {

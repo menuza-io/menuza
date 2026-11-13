@@ -123,3 +123,53 @@ export async function undoSoldOut(
 		}
 	})
 }
+
+/**
+ * A person marked sold out by hand a dish that stock already took off: the
+ * hold becomes theirs (`undone`), so stock coming back never puts the dish on
+ * sale against that decision. The entry is forgotten once the ingredient is
+ * in stock again; the dish stays off until someone brings it back. Returns
+ * whether an entry changed hands.
+ */
+export async function handOverSoldOut(
+	caller: InventoryCaller,
+	input: {
+		locationId: string
+		entityType: SoldOutList['entries'][number]['entityType']
+		entityId: string
+	},
+): Promise<boolean> {
+	assertLocationAllowed(caller.locationIds, input.locationId)
+	return withInventoryWrite({ orgId: caller.orgId }, async (tx, ctx) => {
+		const rows = await tx
+			.update(invSoldOut)
+			.set({
+				state: 'undone',
+				undoneAt: ctx.now,
+				undoneByKind: caller.actor.kind,
+				undoneById: caller.actor.id,
+				updatedAt: ctx.now,
+			})
+			.where(
+				and(
+					eq(invSoldOut.locationId, input.locationId),
+					eq(invSoldOut.entityType, input.entityType),
+					eq(invSoldOut.entityId, input.entityId),
+					eq(invSoldOut.state, 'out'),
+				),
+			)
+			.returning({ id: invSoldOut.id, causeItemId: invSoldOut.causeItemId })
+		for (const row of rows)
+			await recordInventoryAudit(tx, {
+				actorKind: caller.actor.kind,
+				actorId: caller.actor.id,
+				action: 'sold_out.by_hand',
+				resourceType: 'item',
+				resourceId: row.causeItemId,
+				locationId: input.locationId,
+				detail: { entityType: input.entityType },
+				at: ctx.now,
+			})
+		return rows.length > 0
+	})
+}

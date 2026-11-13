@@ -1,11 +1,13 @@
 import { type MessageDescriptor } from '@lingui/core'
-import { msg, t, Trans } from '@lingui/macro'
+import { msg, plural, t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
+import { toAsciiDigits } from '@repo/common/ascii-digits'
 import {
 	handoffNeedsPayment,
 	onlineOrderInInbox,
 	onlineOrdersSearchSince,
-	POS_ONLINE_ORDERS_PHONE_DIGITS_MIN,
+	POS_ONLINE_ORDERS_PHONE_DIGITS,
+	POS_ONLINE_ORDERS_SEARCH_TEXT_MIN,
 	POS_ONLINE_ORDERS_SEARCH_DAYS,
 	type PosOnlineOrdersSearch,
 	type PosOnlineOrdersSearchState,
@@ -1095,15 +1097,29 @@ function SearchSheet({
 	const [failure, setFailure] = useState<string | null>(null)
 	const [loading, setLoading] = useState(false)
 	const asked = useRef(0)
+	/** Drops whatever is on screen and any answer still on its way. */
+	const forget = () => {
+		asked.current += 1
+		setLoading(false)
+		setAnswer(null)
+		setFailure(null)
+	}
 	// Nothing found is kept once the sheet closes; the phone mode leaves with the grant.
 	useEffect(() => {
 		if (open) return
+		asked.current += 1
+		setLoading(false)
 		setText('')
 		setAnswer(null)
 		setFailure(null)
 	}, [open])
 	useEffect(() => {
-		if (!canPhone && by === 'phone') setBy('text')
+		if (canPhone) return
+		// A phone search started by someone else never lands for this person.
+		asked.current += 1
+		setLoading(false)
+		setAnswer(null)
+		if (by === 'phone') setBy('text')
 	}, [canPhone, by])
 	const when = useMemo(
 		() =>
@@ -1117,12 +1133,13 @@ function SearchSheet({
 			}),
 		[i18n.locale, timeZone],
 	)
-	const typed = text.trim()
+	// Arabic-Indic and Persian digits read as 0-9, in both modes.
+	const typed = toAsciiDigits(text).trim()
 	const digits = typed.replace(/\D/g, '')
 	const ready =
 		by === 'phone'
-			? digits.length >= POS_ONLINE_ORDERS_PHONE_DIGITS_MIN
-			: typed.length > 0
+			? digits.length === POS_ONLINE_ORDERS_PHONE_DIGITS
+			: typed.length >= POS_ONLINE_ORDERS_SEARCH_TEXT_MIN
 	const run = async () => {
 		if (!ready || !reachable) return
 		const ask = ++asked.current
@@ -1130,7 +1147,7 @@ function SearchSheet({
 		setFailure(null)
 		try {
 			const data = await orders.search({
-				...(by === 'phone' ? { phone: digits.slice(-15) } : { q: typed }),
+				...(by === 'phone' ? { phone: digits } : { q: typed }),
 				state,
 				fulfillment,
 				since: onlineOrdersSearchSince(Date.now()),
@@ -1142,9 +1159,11 @@ function SearchSheet({
 			setFailure(
 				error instanceof OrdersError && error.code === 'permission_required'
 					? _(t`You do not have permission to search by phone.`)
-					: error instanceof OrdersError && error.code === 'connection_lost'
-						? _(t`Search needs a connection. Reconnect and try again.`)
-						: _(t`The search did not work. Try again.`),
+					: error instanceof OrdersError && error.code === 'search_limit'
+						? _(t`Too many phone searches this hour. Try again later.`)
+						: error instanceof OrdersError && error.code === 'connection_lost'
+							? _(t`Search needs a connection. Reconnect and try again.`)
+							: _(t`The search did not work. Try again.`),
 			)
 		} finally {
 			if (ask === asked.current) setLoading(false)
@@ -1170,9 +1189,9 @@ function SearchSheet({
 						label={_(t`Search by`)}
 						value={by}
 						onChange={(value) => {
+							forget()
 							setBy(value)
 							setText('')
-							setAnswer(null)
 						}}
 						options={[
 							{ value: 'text', label: _(t`Number or name`) },
@@ -1187,13 +1206,11 @@ function SearchSheet({
 						inputMode={by === 'phone' ? 'numeric' : undefined}
 						aria-label={
 							by === 'phone'
-								? _(t`Last digits of the guest’s phone`)
+								? _(t`Last 4 digits of the guest’s phone`)
 								: _(t`Order number or guest name`)
 						}
 						placeholder={
-							by === 'phone'
-								? _(t`Last 4 or more digits`)
-								: _(t`Order number or name`)
+							by === 'phone' ? _(t`Last 4 digits`) : _(t`Order number or name`)
 						}
 						className="h-11 min-w-0 flex-1"
 						value={text}
@@ -1250,8 +1267,23 @@ function SearchSheet({
 						{failure}
 					</p>
 				) : null}
+				{/* Mounted from the start, so screen readers announce each change. */}
+				<p role="status" className="sr-only">
+					{loading
+						? _(t`Searching…`)
+						: answer
+							? answer.results.length === 0
+								? _(t`No orders match.`)
+								: _(
+										plural(answer.results.length, {
+											one: '# order found',
+											other: '# orders found',
+										}),
+									)
+							: ''}
+				</p>
 				{answer ? (
-					<section aria-label={_(t`Search results`)} aria-live="polite">
+					<section aria-label={_(t`Search results`)}>
 						{answer.results.length === 0 ? (
 							<p className="text-muted-foreground py-4 text-center">
 								<Trans>No orders match.</Trans>

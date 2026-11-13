@@ -1,3 +1,4 @@
+import { isUnavailableUntilExpired } from '@repo/common/location-availability'
 import {
 	and,
 	db,
@@ -27,9 +28,11 @@ export type MenuAvailabilityChange = {
  *
  * - `stock` (inventory): only an available entity is taken off, and only one
  *   still `unavailable` and untouched by hand since `since` is given back.
- * - `hand` (a person on Station): taken off whenever it is not already off;
- *   given back whenever this location's own setting holds it off. An entity
- *   switched off for every location in the App stays off: that is the App's.
+ * - `hand` (a person on Station): taken off whenever it is on sale now (an
+ *   expired "unavailable until" counts as on sale); given back only from
+ *   "unavailable" or "unavailable until", never from "hidden". An entity
+ *   switched off for every location in the App stays off: that is the App's,
+ *   and bringing it back at one location answers that nothing changed.
  *
  * Returns whether anything changed. The caller purges the site cache.
  */
@@ -59,8 +62,19 @@ function restorable(
 	return updatedAt.getTime() <= change.since + AVAILABILITY_RESTORE_GRACE_MS
 }
 
-const isOff = (status: string | null | undefined) =>
-	status !== null && status !== undefined && status !== 'available'
+/** Off sale right now: hidden, unavailable, or a timed hold not yet over. */
+const isOff = (
+	status: string | null | undefined,
+	until: Date | null | undefined,
+	now: Date,
+) => !isUnavailableUntilExpired(status, until, now)
+
+/** What a person may bring back: a sold-out mark, never a hidden dish. */
+const isSoldOut = (
+	status: string | null | undefined,
+	until: Date | null | undefined,
+	now: Date,
+) => status !== 'hidden' && isOff(status, until, now)
 
 /** An organization without locations: the entity's own availability. */
 async function applyToEntity(
@@ -73,9 +87,11 @@ async function applyToEntity(
 			change.entityType === 'item'
 				? OrganizationMenuItem
 				: OrganizationMenuOption
+		const now = new Date()
 		const row = await tx
 			.select({
 				status: table.availabilityStatus,
+				until: table.unavailableUntil,
 				updatedAt: table.updatedAt,
 			})
 			.from(table)
@@ -88,7 +104,11 @@ async function applyToEntity(
 			.get()
 		if (!row) return false
 		if (!change.available) {
-			if (by === 'stock' ? row.status !== 'available' : isOff(row.status))
+			if (
+				by === 'stock'
+					? row.status !== 'available'
+					: isOff(row.status, row.until, now)
+			)
 				return false
 			await tx
 				.update(table)
@@ -99,7 +119,7 @@ async function applyToEntity(
 		if (
 			by === 'stock'
 				? row.status !== 'unavailable' || !restorable(row.updatedAt, change)
-				: !isOff(row.status)
+				: !isSoldOut(row.status, row.until, now)
 		) {
 			return false
 		}
@@ -124,8 +144,13 @@ async function applyToOverride(
 				? OrganizationMenuItem
 				: OrganizationMenuOption
 		// The entity must be this organization's.
+		const now = new Date()
 		const entity = await tx
-			.select({ id: table.id })
+			.select({
+				id: table.id,
+				status: table.availabilityStatus,
+				until: table.unavailableUntil,
+			})
 			.from(table)
 			.where(
 				and(
@@ -152,23 +177,30 @@ async function applyToOverride(
 			if (
 				by === 'stock'
 					? status !== null && status !== 'available'
-					: isOff(status)
+					: isOff(status, existing?.unavailableUntil, now) ||
+						// Off for every location already: nothing to take off here.
+						isOff(entity.status, entity.until, now)
 			)
 				return false
-			if (existing) {
-				await tx
-					.update(OrganizationMenuLocationOverride)
-					.set({ availabilityStatus: 'unavailable', unavailableUntil: null })
-					.where(eq(OrganizationMenuLocationOverride.id, existing.id))
-			} else {
-				await tx.insert(OrganizationMenuLocationOverride).values({
+			// One row per location and entity: a stock change and a tap racing
+			// for it both end as "unavailable", never as a unique-key error.
+			await tx
+				.insert(OrganizationMenuLocationOverride)
+				.values({
 					organizationId,
 					locationId,
 					entityType: change.entityType,
 					entityId: change.entityId,
 					availabilityStatus: 'unavailable',
 				})
-			}
+				.onConflictDoUpdate({
+					target: [
+						OrganizationMenuLocationOverride.locationId,
+						OrganizationMenuLocationOverride.entityType,
+						OrganizationMenuLocationOverride.entityId,
+					],
+					set: { availabilityStatus: 'unavailable', unavailableUntil: null },
+				})
 			return true
 		}
 		if (
@@ -176,7 +208,14 @@ async function applyToOverride(
 			(by === 'stock'
 				? existing.availabilityStatus !== 'unavailable' ||
 					!restorable(existing.updatedAt, change)
-				: !isOff(existing.availabilityStatus))
+				: !isSoldOut(
+						existing.availabilityStatus,
+						existing.unavailableUntil,
+						now,
+					) ||
+					// Off for every location in the App: lifting this location's
+					// mark would not put it on sale, so say nothing changed.
+					isOff(entity.status, entity.until, now))
 		) {
 			return false
 		}

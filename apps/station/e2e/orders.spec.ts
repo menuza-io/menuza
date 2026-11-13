@@ -197,7 +197,7 @@ test('searches today’s and recent orders by name, and by phone digits only wit
 	const managerSearch = page.getByRole('dialog', { name: 'Search orders' })
 	await managerSearch.getByRole('radio', { name: 'Phone' }).click()
 	await managerSearch
-		.getByLabel('Last digits of the guest’s phone')
+		.getByLabel('Last 4 digits of the guest’s phone')
 		.fill('0123')
 	await managerSearch.getByRole('button', { name: 'Search' }).click()
 	const found = managerSearch.getByRole('region', { name: 'Search results' })
@@ -227,7 +227,7 @@ test('a manager pauses online ordering here and marks a dish sold out; a cashier
 
 	await controls.getByLabel('Find a dish or option').fill('Truffle')
 	await controls
-		.getByRole('button', { name: 'Mark Truffle Fries sold out' })
+		.getByRole('button', { name: 'Sold out: Truffle Fries' })
 		.click()
 	await expect
 		.poll(

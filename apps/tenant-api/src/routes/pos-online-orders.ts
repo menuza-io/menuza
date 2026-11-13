@@ -117,7 +117,8 @@ posOnlineOrdersRoutes.get('/search', async (c) => {
 		return posError(403, 'permission_required')
 	const parsed = posOnlineOrdersSearchQuerySchema.safeParse(raw)
 	if (!parsed.success) return posError(400, 'invalid_search')
-	return json(await onlineOrdersSearch(auth.db, auth.actor, parsed.data))
+	const result = await onlineOrdersSearch(auth.db, auth.actor, parsed.data)
+	return result.ok ? json(result.data) : failure(result.failure)
 })
 
 /**
