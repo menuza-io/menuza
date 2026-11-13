@@ -55,6 +55,20 @@ afterEach(async () => {
 	}
 })
 
+/**
+ * Waits until the queue holds `count` rows and returns that same read. Rows
+ * can leave the queue right after (an online tablet sends them a few seconds
+ * later): a second read on a slow runner may already find them gone.
+ */
+async function queuedRows(count: number) {
+	let rows: Awaited<ReturnType<typeof stockRows>> = []
+	await vi.waitFor(async () => {
+		rows = await stockRows(ORIGIN)
+		expect(rows).toHaveLength(count)
+	})
+	return rows
+}
+
 async function openStock(
 	node: { online?: boolean; session?: Session | null } = {},
 ) {
@@ -357,11 +371,9 @@ describe('Count', () => {
 		await click(button(page.host, 'One more Chicken thigh'))
 		await click(button(page.host, /^Dry store/))
 		await click(button(page.host, 'One more Olive oil'))
-		await vi.waitFor(async () =>
-			expect(await stockRows(ORIGIN)).toHaveLength(3),
-		)
+		const queued = await queuedRows(3)
 		expect(offline.writes(/entries/)).toEqual([])
-		expect((await stockRows(ORIGIN)).map((row) => row.kind)).toEqual([
+		expect(queued.map((row) => row.kind)).toEqual([
 			'count_entry',
 			'count_entry',
 			'count_entry',
@@ -395,10 +407,7 @@ describe('Count', () => {
 		await click(buttons(dialog, /^Weekly count/).at(-1)!)
 		await vi.waitFor(() => expect(text(page.host)).toContain('Walk-in fridge'))
 		await click(button(page.host, 'One more Tomatoes'))
-		await vi.waitFor(async () =>
-			expect(await stockRows(ORIGIN)).toHaveLength(2),
-		)
-		const rows = await stockRows(ORIGIN)
+		const rows = await queuedRows(2)
 		expect(rows.map((row) => row.kind)).toEqual(['count_start', 'count_entry'])
 		expect(rows[1]).toMatchObject({
 			payload: { count: { clientId: rows[0]!.id } },
@@ -659,10 +668,7 @@ describe('Waste', () => {
 		await click(button(dialog(), 'Spoiled'))
 		expect(submit().disabled).toBe(false)
 		await click(submit())
-		await vi.waitFor(async () =>
-			expect(await stockRows(ORIGIN)).toHaveLength(1),
-		)
-		const rows = await stockRows(ORIGIN)
+		const rows = await queuedRows(1)
 		expect(rows[0]).toMatchObject({
 			kind: 'waste',
 			madeBy: 'stf_ana',
@@ -676,7 +682,10 @@ describe('Waste', () => {
 				},
 			},
 		})
-		expect(text(dialog())).toContain('Tomatoes · 1.5 kg · Spoiled')
+		// The dialog lists it once the queue's answer reaches the screen.
+		await vi.waitFor(() =>
+			expect(text(dialog())).toContain('Tomatoes · 1.5 kg · Spoiled'),
+		)
 	})
 
 	it('undoing straight away takes it out of the queue before it ever leaves the tablet', async () => {
