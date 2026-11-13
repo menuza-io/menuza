@@ -161,3 +161,97 @@ test('a manager shows the contact, records a partial refund and cancels with a r
 		(await stored()).events.find((event) => event.action === 'cancelled'),
 	).toMatchObject({ reason: 'out_of_stock', staffId: ids.lina })
 })
+
+test('searches today’s and recent orders by name, and by phone digits only with the contact permission', async ({
+	unpaired: page,
+}) => {
+	await counter(page)
+	await signInWithPin(page, ANA.pin)
+	await selectStationApp(page, 'Online orders')
+	await expect(card(page, 'WEB-0101')).toBeVisible()
+	// Handed over two days ago: not in the inbox.
+	await expect(card(page, 'WEB-0090')).toHaveCount(0)
+
+	await page.getByRole('button', { name: 'Search orders' }).click()
+	const search = page.getByRole('dialog', { name: 'Search orders' })
+	// A cashier has no phone search.
+	await expect(search.getByRole('radio', { name: 'Phone' })).toHaveCount(0)
+	await search.getByLabel('Order number or guest name').fill('maya')
+	await search.getByRole('button', { name: 'Search' }).click()
+	const results = search.getByRole('region', { name: 'Search results' })
+	await expect(results).toContainText('WEB-0100')
+	await expect(results).toContainText('WEB-0090')
+	await expect(results).not.toContainText('0199')
+
+	await results.getByRole('button', { name: /WEB-0090/ }).click()
+	const old = sheet(page, 'WEB-0090')
+	await expect(old).toContainText('shown for reference')
+	await expect(old.getByRole('button', { name: 'Hand over' })).toHaveCount(0)
+	await old.getByRole('button', { name: 'Close' }).click()
+
+	// A manager may search by the phone's last digits.
+	await page.getByRole('button', { name: /^Lock the till/ }).click()
+	await signInWithPin(page, LINA.pin)
+	await selectStationApp(page, 'Online orders')
+	await page.getByRole('button', { name: 'Search orders' }).click()
+	const managerSearch = page.getByRole('dialog', { name: 'Search orders' })
+	await managerSearch.getByRole('radio', { name: 'Phone' }).click()
+	await managerSearch
+		.getByLabel('Last digits of the guest’s phone')
+		.fill('0123')
+	await managerSearch.getByRole('button', { name: 'Search' }).click()
+	const found = managerSearch.getByRole('region', { name: 'Search results' })
+	await expect(found).toContainText('WEB-0090')
+	await expect(found).not.toContainText('WEB-0100')
+})
+
+test('a manager pauses online ordering here and marks a dish sold out; a cashier has no such controls', async ({
+	unpaired: page,
+}) => {
+	const ids = await counter(page)
+	await signInWithPin(page, ANA.pin)
+	await selectStationApp(page, 'Online orders')
+	await expect(screen(page)).toBeVisible()
+	await expect(
+		page.getByRole('button', { name: 'Pause and sold out' }),
+	).toHaveCount(0)
+
+	await page.getByRole('button', { name: /^Lock the till/ }).click()
+	await signInWithPin(page, LINA.pin)
+	await selectStationApp(page, 'Online orders')
+	await page.getByRole('button', { name: 'Pause and sold out' }).click()
+	const controls = page.getByRole('dialog', { name: 'Pause and sold out' })
+	await expect(controls).toContainText('Taking orders')
+	await controls.getByRole('button', { name: '15 minutes' }).click()
+	await expect(controls).toContainText('Paused until')
+
+	await controls.getByLabel('Find a dish or option').fill('Truffle')
+	await controls
+		.getByRole('button', { name: 'Mark Truffle Fries sold out' })
+		.click()
+	await expect
+		.poll(
+			async () =>
+				(
+					await backend.get<{ asked: Array<Record<string, unknown>> }>(
+						'/__test/station-controls',
+					)
+				).asked,
+		)
+		.toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					kind: 'pause',
+					duration: '15m',
+					locationId: 'loc-1',
+					actor: expect.objectContaining({ staffId: ids.lina }),
+				}),
+				expect.objectContaining({
+					kind: 'availability',
+					entityType: 'item',
+					entityId: 'i-fries',
+					available: false,
+				}),
+			]),
+		)
+})
