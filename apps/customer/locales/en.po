@@ -42,6 +42,10 @@ msgstr "{count, plural, one {Free cancellation until # hour before.} other {Free
 msgid "{count} min"
 msgstr "{count} min"
 
+#: components/profile/messages-section.tsx:110
+msgid "{label}: {channel}"
+msgstr "{label}: {channel}"
+
 #: lib/loyalty/labels.ts:16
 msgid "{n, plural, one {{count} point} other {{count} points}}"
 msgstr "{n, plural, one {{count} point} other {{count} points}}"
@@ -98,6 +102,10 @@ msgstr "A card is needed to guarantee this booking."
 msgid "A deposit of {amount} is due to confirm this booking."
 msgstr "A deposit of {amount} is due to confirm this booking."
 
+#: components/profile/messages-section.tsx:217
+msgid "A few messages a month. You can opt out anytime."
+msgstr "A few messages a month. You can opt out anytime."
+
 #: lib/loyalty/labels.ts:65
 msgid "A free item"
 msgstr "A free item"
@@ -110,7 +118,7 @@ msgstr "About {count} min"
 msgid "acme or acme.example.com"
 msgstr "acme or acme.example.com"
 
-#: components/profile/messages-section.tsx:97
+#: components/profile/messages-section.tsx:154
 msgid "Add an email address first"
 msgstr "Add an email address first"
 
@@ -218,7 +226,7 @@ msgstr "Check for requests"
 msgid "Check the menu for what we are serving today."
 msgstr "Check the menu for what we are serving today."
 
-#: components/profile/messages-section.tsx:121
+#: components/profile/messages-section.tsx:179
 msgid "Check your inbox to confirm"
 msgstr "Check your inbox to confirm"
 
@@ -234,7 +242,7 @@ msgstr "Checkout"
 msgid "Choose a location"
 msgstr "Choose a location"
 
-#: components/profile/messages-section.tsx:117
+#: components/profile/messages-section.tsx:174
 msgid "Choose what you hear from us, and how."
 msgstr "Choose what you hear from us, and how."
 
@@ -328,7 +336,7 @@ msgstr "Earned"
 msgid "Edit details"
 msgstr "Edit details"
 
-#: components/profile/messages-section.tsx:72
+#: components/profile/messages-section.tsx:107
 #: components/profile/profile-screen.tsx:92
 msgid "Email"
 msgstr "Email"
@@ -511,13 +519,17 @@ msgstr "Loading…"
 msgid "Menu"
 msgstr "Menu"
 
-#: components/profile/messages-section.tsx:115
+#: components/profile/messages-section.tsx:172
 msgid "Messages from {name}"
 msgstr "Messages from {name}"
 
 #: components/reservations/parts.tsx:205
 msgid "More guests"
 msgstr "More guests"
+
+#: components/profile/messages-section.tsx:220
+msgid "Msg and data rates may apply. Reply STOP to opt out."
+msgstr "Msg and data rates may apply. Reply STOP to opt out."
 
 #: lib/reservations/messages.ts:19
 msgid "My reservations"
@@ -594,7 +606,7 @@ msgstr "Nothing on the menu right now."
 msgid "Occasion"
 msgstr "Occasion"
 
-#: components/profile/messages-section.tsx:66
+#: components/profile/messages-section.tsx:101
 msgid "Offers and news"
 msgstr "Offers and news"
 
@@ -755,7 +767,7 @@ msgstr "Requests to use your rewards"
 msgid "Reservation"
 msgstr "Reservation"
 
-#: components/profile/messages-section.tsx:68
+#: components/profile/messages-section.tsx:103
 msgid "Reservation news"
 msgstr "Reservation news"
 
@@ -900,7 +912,7 @@ msgstr "Tax, tips and delivery fees do not count toward earning."
 msgid "Tell us what to call you."
 msgstr "Tell us what to call you."
 
-#: components/profile/messages-section.tsx:72
+#: components/profile/messages-section.tsx:107
 msgid "Text"
 msgstr "Text"
 
@@ -1022,7 +1034,7 @@ msgstr "Try again"
 msgid "Try one of these times instead"
 msgstr "Try one of these times instead"
 
-#: components/profile/messages-section.tsx:160
+#: components/profile/messages-section.tsx:228
 msgid "Turning a switch off never affects receipts or booking confirmations."
 msgstr "Turning a switch off never affects receipts or booking confirmations."
 
@@ -1067,7 +1079,7 @@ msgstr "Verification code"
 msgid "Verify"
 msgstr "Verify"
 
-#: components/profile/messages-section.tsx:99
+#: components/profile/messages-section.tsx:156
 msgid "Verify your phone first"
 msgstr "Verify your phone first"
 
@@ -1087,7 +1099,7 @@ msgstr "We couldn't find that site. Check the address and try again."
 msgid "We couldn't find that."
 msgstr "We couldn't find that."
 
-#: components/profile/messages-section.tsx:100
+#: components/profile/messages-section.tsx:157
 msgid "We couldn't save that. Try again."
 msgstr "We couldn't save that. Try again."
 

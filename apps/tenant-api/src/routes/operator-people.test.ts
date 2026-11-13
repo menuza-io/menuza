@@ -1,6 +1,7 @@
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
+import { STAFF_CONSENT_TEXT_VERSION } from '@repo/common/marketing-consent'
 import { brand } from '@repo/config/brand'
 import {
 	customers,
@@ -22,12 +23,18 @@ import { Hono } from 'hono'
 import * as jose from 'jose'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { type PublishedOrganization } from '../lib/origin.ts'
+import {
+	countPeopleConsentAttempt,
+	PEOPLE_CONSENT_LIMITS,
+} from '../lib/people-consent-limits.ts'
+import { checkGlobalSendCap } from '../lib/rate-limit.ts'
 import { syncEnvFromProcess } from '../lib/secrets.ts'
 import { sendTenantEmail } from '../lib/tenant-email.ts'
 import {
 	emailConsentHash,
 	setCustomerSubscription,
 } from '../services/marketing-audience.ts'
+import { PEOPLE_STATS_JSON_LIST } from '../services/people-stats.ts'
 import { operatorPeopleRoutes } from './operator-people.ts'
 
 const SECRET = 'test-operator-secret-key-for-people-routes-32chars!!'
@@ -41,6 +48,11 @@ vi.mock('../lib/origin.ts', async (importOriginal) => ({
 	...(await importOriginal<typeof import('../lib/origin.ts')>()),
 	findActiveOrganizationById: vi.fn(async (id: string) => orgs.get(id) ?? null),
 }))
+
+vi.mock('../lib/rate-limit.ts', async (importOriginal) => {
+	const actual = await importOriginal<typeof import('../lib/rate-limit.ts')>()
+	return { ...actual, checkGlobalSendCap: vi.fn(actual.checkGlobalSendCap) }
+})
 
 const sms = vi.hoisted(() => ({ send: vi.fn() }))
 vi.mock('@repo/sms', () => ({ sendSms: sms.send }))
@@ -986,6 +998,75 @@ describe('GET /operator/people/summary', () => {
 		const { res } = await summary({ ...FULL, impersonated: true })
 		expect(res.status).toBe(200)
 	})
+
+	describe('many confirmed email subscribers', () => {
+		const saved = { ...PEOPLE_STATS_JSON_LIST }
+		beforeEach(async () => {
+			const db = await getTenantDb(ORG)
+			for (const n of [1, 2]) {
+				await db.insert(customers).values({
+					id: `cus_e${n}`,
+					name: `Eve ${n}`,
+					phone: `+1415555030${n}`,
+					phoneVerified: true,
+					email: `eve${n}@example.com`,
+					createdAt: new Date(ago(60)),
+				})
+				await db.insert(customerSubscriptions).values({
+					customerId: `cus_e${n}`,
+					topic: 'marketing',
+					channel: 'email',
+					source: 'website',
+					subscribedAt: new Date(ago(60)),
+					confirmedEmailHash: emailConsentHash(`eve${n}@example.com`),
+				})
+			}
+		})
+		afterEach(() => {
+			Object.assign(PEOPLE_STATS_JSON_LIST, saved)
+		})
+
+		it('counts and lists across several JSON chunks', async () => {
+			PEOPLE_STATS_JSON_LIST.chunk = 1
+			const { res, body } = await summary()
+			expect(res.status).toBe(200)
+			expect(body.emailSubscribers.total).toBe(3)
+			const listed = await list('?subscribed=email')
+			expect(listed.res.status).toBe(200)
+			expect(listed.body.total).toBe(3)
+			expect(listed.body.people.map((p) => p.key).sort()).toEqual([
+				'c_cus_e1',
+				'c_cus_e2',
+				'c_cus_v',
+			])
+		})
+
+		it('answers 503 summary_unavailable past the limit; other lists still work', async () => {
+			const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+			PEOPLE_STATS_JSON_LIST.chunk = 1
+			PEOPLE_STATS_JSON_LIST.maxChunks = 2
+			const over = await summary()
+			expect(over.res.status).toBe(503)
+			expect(over.res.headers.get('Cache-Control')).toBe('private, no-store')
+			expect(over.body).toEqual({
+				error: 'summary_unavailable',
+				message: 'Subscriber counts are unavailable for this organization',
+			})
+			const listed = await call('?subscribed=email', await token())
+			expect(listed.status).toBe(503)
+			const text = await listed.text()
+			expect(JSON.parse(text)).toEqual(over.body)
+			for (const leak of ['cus_', 'example.com', 'Error', ' at ']) {
+				expect(text).not.toContain(leak)
+			}
+			expect(JSON.stringify(warn.mock.calls)).not.toContain('example.com')
+			// Requests without the email predicate never load the email matches.
+			expect((await list('')).res.status).toBe(200)
+			expect((await list('?subscribed=sms')).res.status).toBe(200)
+			expect((await list('?returning=1')).res.status).toBe(200)
+			warn.mockRestore()
+		})
+	})
 })
 
 describe('POST /operator/people/:key/consent', () => {
@@ -1347,6 +1428,96 @@ describe('POST /operator/people/:key/consent', () => {
 		expect(bad.status).toBe(400)
 		expect(await bad.text()).not.toMatch(/evil|fax/)
 		expect(await row('cus_v', 'sms')).toBeUndefined()
+	})
+
+	it('stores the server staff wording version; an old client sending textVersion is accepted and ignored', async () => {
+		const { res, body } = await consent('c_cus_v', {
+			channel: 'sms',
+			...ON,
+			textVersion: 'guest-2026-11',
+		})
+		expect(res.status).toBe(200)
+		expect(body.subscription.staff.textVersion).toBe(STAFF_CONSENT_TEXT_VERSION)
+		expect((await row('cus_v', 'sms'))!.consentTextVersion).toBe(
+			STAFF_CONSENT_TEXT_VERSION,
+		)
+		const [audit] = await auditRows()
+		expect((audit!.changes as Record<string, unknown>).textVersion).toBe(
+			STAFF_CONSENT_TEXT_VERSION,
+		)
+		// Any value is ignored, never stored or echoed; other keys stay strict.
+		const odd = await consent('c_cus_v', {
+			channel: 'email',
+			...ON,
+			textVersion: 42,
+		})
+		expect(odd.res.status).toBe(200)
+		expect((await row('cus_v', 'email'))!.consentTextVersion).toBe(
+			STAFF_CONSENT_TEXT_VERSION,
+		)
+		const extra = await consent('c_cus_v', {
+			channel: 'sms',
+			...ON,
+			textVersion: 'x',
+			other: 1,
+		})
+		expect(extra.res.status).toBe(400)
+	})
+
+	it('caps confirmation texts per organization per hour; consent is still recorded and the sign-in cap is untouched', async () => {
+		vi.mocked(checkGlobalSendCap).mockClear()
+		const db = await getTenantDb(ORG)
+		for (let i = 0; i < PEOPLE_CONSENT_LIMITS.smsConfirmations.max; i += 1) {
+			expect(
+				(await countPeopleConsentAttempt(db, 'smsConfirmations', ORG)).ok,
+			).toBe(true)
+		}
+		const { res, body } = await consent('c_cus_v', { channel: 'sms', ...ON })
+		expect(res.status).toBe(200)
+		expect(body).toMatchObject({
+			confirmationSms: 'skipped',
+			deliverable: true,
+			subscription: { subscribed: true, source: 'staff' },
+		})
+		expect((await row('cus_v', 'sms'))!.unsubscribedAt).toBeNull()
+		expect(await auditRows()).toHaveLength(1)
+		expect(sms.send).not.toHaveBeenCalled()
+		expect(checkGlobalSendCap).not.toHaveBeenCalled()
+		// Another organization has its own budget.
+		const other = await getTenantDb(ORG_B)
+		expect(
+			(await countPeopleConsentAttempt(other, 'smsConfirmations', ORG_B)).ok,
+		).toBe(true)
+	})
+
+	it('a sent confirmation text does not draw on the sign-in code cap', async () => {
+		vi.mocked(checkGlobalSendCap).mockClear()
+		const { body } = await consent('c_cus_v', { channel: 'sms', ...ON })
+		expect(body.confirmationSms).toBe('sent')
+		expect(checkGlobalSendCap).not.toHaveBeenCalled()
+	})
+
+	it('limits consent writes per staff member with a bare 429', async () => {
+		const { max } = PEOPLE_CONSENT_LIMITS.actorWrites
+		for (let i = 0; i < max; i += 1) {
+			const ok = await consent('c_cus_v', { channel: 'sms', subscribed: false })
+			expect(ok.res.status).toBe(200)
+		}
+		const limited = await consent('c_cus_v', { channel: 'sms', ...ON })
+		expect(limited.res.status).toBe(429)
+		expect(limited.body).toEqual({ error: 'rate_limited' })
+		expect(limited.res.headers.get('Cache-Control')).toBe('private, no-store')
+		expect(Number(limited.res.headers.get('Retry-After'))).toBeGreaterThan(0)
+		expect(await row('cus_v', 'sms')).toBeUndefined()
+		expect(sms.send).not.toHaveBeenCalled()
+		// Another organization's counters are its own.
+		const elsewhere = await consent(
+			'c_cus_v',
+			{ channel: 'sms', subscribed: false },
+			MANAGER,
+			ORG_B,
+		)
+		expect(elsewhere.res.status).not.toBe(429)
 	})
 
 	it('needs an address or a phone on the customer', async () => {

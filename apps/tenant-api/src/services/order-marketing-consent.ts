@@ -34,7 +34,8 @@ export type OrderConsentConfirmation = {
  *
  * Only a ticked box acts: an unticked one never unsubscribes. Texts need a
  * verified phone on the customer (the OTP sign-in is the double opt-in) and
- * are active at once. Email uses the address on file; when there is none, the
+ * are active at once; a text subscription already active is left as it is (its
+ * original provenance, such as a staff-recorded one, is the record). Email uses the address on file; when there is none, the
  * address typed at checkout (`contactEmail`) is saved onto the customer in
  * this same transaction and used (an address on file is never overwritten
  * from checkout). Either way it is unverified: the subscription stays pending
@@ -73,16 +74,33 @@ export async function recordOrderMarketingConsentInTx(
 
 	if (consent.sms) {
 		if (customer?.phone && customer.phoneVerified) {
-			await setCustomerSubscription(tx, {
-				customerId,
-				topic: ORDER_CONSENT_TOPIC,
-				channel: 'sms',
-				subscribed: true,
-				source: 'checkout',
-				now,
-				consentTextVersion: consent.textVersion,
-			})
-			result.sms = 'subscribed'
+			const existing = await tx
+				.select({ unsubscribedAt: customerSubscriptions.unsubscribedAt })
+				.from(customerSubscriptions)
+				.where(
+					and(
+						eq(customerSubscriptions.customerId, customerId),
+						eq(customerSubscriptions.topic, ORDER_CONSENT_TOPIC),
+						eq(customerSubscriptions.channel, 'sms'),
+					),
+				)
+				.get()
+			// Already active: leave it as it is. A re-tick must not reset
+			// `subscribed_at` or replace who recorded it (staff provenance).
+			if (existing && !existing.unsubscribedAt) {
+				result.sms = 'subscribed'
+			} else {
+				await setCustomerSubscription(tx, {
+					customerId,
+					topic: ORDER_CONSENT_TOPIC,
+					channel: 'sms',
+					subscribed: true,
+					source: 'checkout',
+					now,
+					consentTextVersion: consent.textVersion,
+				})
+				result.sms = 'subscribed'
+			}
 		} else {
 			result.sms = 'skipped'
 		}

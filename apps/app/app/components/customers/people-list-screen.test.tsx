@@ -263,9 +263,9 @@ describe('PeopleListScreen', () => {
 					canBook={false}
 				/>,
 			)
-			expect(
-				await screen.findByTestId('customers-summary-error'),
-			).toBeInTheDocument()
+			const errorState = await screen.findByTestId('customers-summary-error')
+			expect(errorState).toHaveAttribute('role', 'status')
+			expect(errorState).toHaveAttribute('aria-live', 'polite')
 			expect(await screen.findByTestId('person-row-g_1')).toBeInTheDocument()
 			fail = false
 			fireEvent.click(screen.getByRole('button', { name: 'Retry' }))
@@ -277,14 +277,15 @@ describe('PeopleListScreen', () => {
 			await screen.findByTestId('customers-summary')
 			await screen.findByTestId('person-row-g_1')
 			const tile = (id: string) => screen.getByTestId(`customers-summary-${id}`)
-			expect(tile('guests')).toHaveAttribute('aria-pressed', 'true')
+			// Guests is a plain "show all" button, not a toggle.
+			expect(tile('guests')).not.toHaveAttribute('aria-pressed')
+			expect(tile('returning')).toHaveAttribute('aria-pressed', 'false')
 
 			fireEvent.click(tile('returning'))
 			await waitFor(() =>
 				expect(lastQuery(request)).toMatchObject({ returning: 1 }),
 			)
 			expect(tile('returning')).toHaveAttribute('aria-pressed', 'true')
-			expect(tile('guests')).toHaveAttribute('aria-pressed', 'false')
 
 			fireEvent.click(tile('email'))
 			await waitFor(() =>
@@ -319,7 +320,7 @@ describe('PeopleListScreen', () => {
 			)
 			fireEvent.click(screen.getByTestId('customers-clear-filters'))
 			await waitFor(() => expect(lastQuery(request).subscribed).toBeUndefined())
-			expect(tile('guests')).toHaveAttribute('aria-pressed', 'true')
+			expect(tile('email')).toHaveAttribute('aria-pressed', 'false')
 		})
 
 		it('notes when the totals follow the member locations', async () => {

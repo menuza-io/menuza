@@ -842,7 +842,7 @@ const tipOff = 'border-border bg-background text-foreground'
 			type RewardQuotes,
 		} from '~/lib/loyalty/reward-quotes'
 		import { formatRemaining, startCountdown } from '~/lib/ordering/countdown'
-		import { checkoutOrderPayload } from '~/lib/ordering/checkout-payload'
+		import { checkoutOrderPayload, checkoutOrderRequest } from '~/lib/ordering/checkout-payload'
 		import { orderErrorMessage } from '~/lib/ordering/order-errors'
 		import {
 			adoptCouponFromUrl,
@@ -2278,16 +2278,19 @@ const tipOff = 'border-border bg-background text-foreground'
 					deliveryNotes: notesInput?.value,
 					reward: sentReward,
 					discounts: sentDiscounts,
-					// Part of the payload so a retry with other boxes gets a new key.
-					marketingConsent: checkoutMarketingConsent(),
 				})
+				// The attempt key is derived from the core payload only. The consent
+				// boxes ride in the body but stay out of it: the region leaves them
+				// out of its request hash too, so a retry after a timed-out POST with
+				// a box changed still replays the first order instead of placing and
+				// charging a second one.
 				const idempotencyKey = await checkoutAttemptKey(orgId, corePayload)
-				const created = await submitRegionalOrder({
-					...corePayload,
-					idempotencyKey,
-				})
+				const marketingConsent = checkoutMarketingConsent()
+				const created = await submitRegionalOrder(
+					checkoutOrderRequest(corePayload, idempotencyKey, marketingConsent),
+				)
 				saveOrderCapability(orgId, created)
-				flagEmailConfirmationPending(created.marketingConsent)
+				flagEmailConfirmationPending(created.marketingConsent, created.order.id)
 				try {
 					localStorage.removeItem(storageKey)
 					if (isDrop && drop) clearPickupSelection(drop.id)

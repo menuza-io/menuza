@@ -1,5 +1,6 @@
 ---
 import { msg } from '@lingui/core/macro'
+import { marketingConsentTextVersion } from '@repo/common/marketing-consent'
 import { getLocaleHref } from '@repo/common/site-locales'
 import { translate } from '~/lib/ordering-labels'
 
@@ -7,8 +8,13 @@ import { translate } from '~/lib/ordering-labels'
  * Two unticked opt-in boxes (email, text) for signed-in guests, or a sign-in
  * link for everyone else. Which one shows is decided in the browser by the
  * session marker (`data-auth`), so nothing about a guest is rendered here.
- * The wording is fixed: a restaurant cannot edit it, and
- * `MARKETING_CONSENT_TEXT_VERSION` is bumped when it changes.
+ * The wording is fixed: a restaurant cannot edit it. EDITORS: when any wording
+ * below changes, bump `MARKETING_CONSENT_TEXT_VERSIONS.boxes` and
+ * `.boxesDisclosure` in `@repo/common/marketing-consent`. The id of what was
+ * rendered travels in `data-text-version` and is what the client sends.
+ *
+ * KSA sends no marketing texts, so the text box is dropped there; with no box
+ * left (sign-up) nothing renders.
  *
  * Checkout reads the ticked boxes into the order request; sign-up records them
  * after the name step. See `~/lib/marketing-consent-client`.
@@ -20,7 +26,7 @@ interface Props {
 	class?: string
 }
 
-const { channels = ['email', 'sms'], showSignIn = false, class: className } = Astro.props
+const { channels: requested = ['email', 'sms'], showSignIn = false, class: className } = Astro.props
 const i18n = Astro.locals.i18n
 const organization = Astro.locals.organization
 const org = organization?.name ?? ''
@@ -30,9 +36,12 @@ const loginHref = getLocaleHref(
 	Astro.locals.requestedLocale,
 	Astro.locals.defaultLocale,
 )
-// The Msg and data rates line is a US text-message disclosure; the KSA region
-// sends no marketing texts, so its guests are not shown it.
-const showSmsDisclosure = channels.includes('sms') && organization?.dataRegion !== 'ksa'
+const ksa = organization?.dataRegion === 'ksa'
+const channels = ksa ? requested.filter((channel) => channel !== 'sms') : requested
+// The Msg and data rates line is a US text-message disclosure; it shows only
+// next to a text box.
+const showSmsDisclosure = channels.includes('sms')
+const textVersion = marketingConsentTextVersion('boxes', showSmsDisclosure)
 
 const labels = {
 	legend: i18n._(msg`Offers and news`),
@@ -45,7 +54,9 @@ const labels = {
 const boxClass = 'mt-0.5 size-5 shrink-0 accent-primary'
 ---
 
-<div data-marketing-consent class:list={[className]}>
+{channels.length > 0 || showSignIn ? (
+<div data-marketing-consent data-text-version={textVersion} class:list={[className]}>
+	{channels.length > 0 ? (
 	<fieldset data-auth="signed-in" data-consent-fieldset class="min-w-0 space-y-3">
 		<legend class="mb-2 text-sm font-semibold text-foreground">{labels.legend}</legend>
 		{channels.includes('email') ? (
@@ -65,6 +76,7 @@ const boxClass = 'mt-0.5 size-5 shrink-0 accent-primary'
 			{showSmsDisclosure ? ` ${labels.rates}` : ''}
 		</p>
 	</fieldset>
+	) : null}
 	{showSignIn ? (
 		<a
 			data-auth="signed-out"
@@ -75,6 +87,7 @@ const boxClass = 'mt-0.5 size-5 shrink-0 accent-primary'
 		</a>
 	) : null}
 </div>
+) : null}
 
 <script>
 	import { mountMarketingConsent } from '~/lib/marketing-consent-client'

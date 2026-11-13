@@ -1,7 +1,4 @@
-import {
-	consentTextVersionSchema,
-	STAFF_CONSENT_METHODS,
-} from '@repo/common/marketing-consent'
+import { STAFF_CONSENT_METHODS } from '@repo/common/marketing-consent'
 import { getTenantDb } from '@repo/tenant-db'
 import { Hono, type Context } from 'hono'
 import { z } from 'zod'
@@ -9,9 +6,11 @@ import {
 	handleRouteError,
 	HttpError,
 	json,
+	NO_STORE,
 	readJsonBody,
 	readQuery,
 } from '../lib/http.ts'
+import { countPeopleConsentAttempt } from '../lib/people-consent-limits.ts'
 import { ensureActiveOrgInNodeRegion } from '../lib/reservations-guard.ts'
 import {
 	DEFAULT_LAPSED_DAYS,
@@ -354,19 +353,30 @@ operatorPeopleRoutes.patch('/:key', async (c) => {
 	}
 })
 
-const consentSchema = z.strictObject({
-	channel: z.enum(['email', 'sms']),
-	subscribed: z.boolean(),
-	method: z.enum(STAFF_CONSENT_METHODS).optional(),
-	attested: z.boolean().optional(),
-	textVersion: consentTextVersionSchema.optional(),
-})
+/**
+ * Strict, except `textVersion`: the server always stores its own staff wording
+ * version, so the field is accepted and dropped. An App deployed before this
+ * node may still send it (App deploys after tenant-api); refusing it would
+ * break recording consent during the rollout.
+ */
+const consentSchema = z
+	.strictObject({
+		channel: z.enum(['email', 'sms']),
+		subscribed: z.boolean(),
+		method: z.enum(STAFF_CONSENT_METHODS).optional(),
+		attested: z.boolean().optional(),
+		textVersion: z.unknown().optional(),
+	})
+	.transform(({ textVersion: ignoredTextVersion, ...rest }) => rest)
 
 /**
  * Staff record a guest's marketing consent (topic `marketing`) on their
  * behalf: on needs `method` and `attested: true`; off is one call. Needs the
  * customers facet and the `canUpdateMarketingConsent` claim (never minted
- * while impersonating). Rules and outcomes: `recordPersonConsent`.
+ * while impersonating). Each staff member gets
+ * `PEOPLE_CONSENT_LIMITS.actorWrites` calls (durable, counted before the body
+ * is read); past it: 429 `{ error: 'rate_limited' }` with `Retry-After`.
+ * Rules and outcomes: `recordPersonConsent`.
  */
 operatorPeopleRoutes.post('/:key/consent', async (c) => {
 	const ctx = await authenticate(c)
@@ -374,11 +384,28 @@ operatorPeopleRoutes.post('/:key/consent', async (c) => {
 	if (!ctx.access.customers || !ctx.access.canUpdateMarketingConsent) {
 		return json({ error: 'insufficient_permissions' }, 403)
 	}
-	// Validation errors name fields and codes only, never the rejected value.
-	const body = await readJsonBody(c, consentSchema)
-	if ('error' in body) return body.error
 	try {
 		const db = await getTenantDb(ctx.orgId)
+		const limit = await countPeopleConsentAttempt(
+			db,
+			'actorWrites',
+			ctx.access.actorId,
+		)
+		if (!limit.ok) {
+			return Response.json(
+				{ error: 'rate_limited' },
+				{
+					status: 429,
+					headers: {
+						...NO_STORE,
+						'Retry-After': String(limit.retryAfterSeconds),
+					},
+				},
+			)
+		}
+		// Validation errors name fields and codes only, never the rejected value.
+		const body = await readJsonBody(c, consentSchema)
+		if ('error' in body) return body.error
 		const result = await recordPersonConsent(
 			db,
 			ctx.access,

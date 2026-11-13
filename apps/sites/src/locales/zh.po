@@ -236,6 +236,7 @@ msgid "1 guest"
 msgstr "1 位"
 
 #: src/components/marketing/MarketingConsentBoxes.astro.ts:3
+#: src/components/marketing/MessagesSection.astro.ts:3
 msgid "A few messages a month. You can opt out anytime."
 msgstr "每月几条消息。你可以随时退订。"
 
@@ -1600,6 +1601,7 @@ msgid "Most ordered"
 msgstr "最受欢迎"
 
 #: src/components/marketing/MarketingConsentBoxes.astro.ts:3
+#: src/components/marketing/MessagesSection.astro.ts:3
 msgid "Msg and data rates may apply. Reply STOP to opt out."
 msgstr "可能产生短信和数据费用。回复 STOP 即可退订。"
 

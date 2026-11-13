@@ -5,7 +5,7 @@ import {
 } from '@repo/tenant-db'
 import { and, eq, isNotNull, sql, type SQL } from 'drizzle-orm'
 import { chunkIds, inJsonList } from '../lib/chunked-in.ts'
-import { OPAQUE_ID_PATTERN } from '../lib/http.ts'
+import { OPAQUE_ID_PATTERN, serviceUnavailable } from '../lib/http.ts'
 import { BROADCAST_TOPIC, emailConsentHash } from './marketing-audience.ts'
 import { type PeopleAccess } from './people-service.ts'
 import { countedOrderCondition } from './report-records.ts'
@@ -100,15 +100,30 @@ export async function loadEmailConsentMatches(
 /**
  * One JSON array per bound parameter (DO SQLite allows 100 parameters and
  * 2 MB per string): `column IN (json_each(?) UNION ALL json_each(?) ...)`.
+ * `chunk` ids per array, at most `maxChunks` arrays (800,000 ids). Mutable
+ * only so tests can lower it; nothing else writes it.
  */
-const JSON_LIST_CHUNK = 20_000
-const MAX_JSON_LIST_CHUNKS = 40
+export const PEOPLE_STATS_JSON_LIST = { chunk: 20_000, maxChunks: 40 }
+
+/**
+ * The error code (HTTP 503) when an organization has more confirmed email
+ * subscribers than one statement can carry: the summary and the
+ * `subscribed=email` list filter are unavailable, everything else works.
+ */
+export const PEOPLE_STATS_UNAVAILABLE = 'summary_unavailable'
 
 function inLargeJsonList(column: SQL, ids: readonly string[]): SQL {
 	if (ids.length === 0) return sql`0`
-	const chunks = chunkIds(ids, JSON_LIST_CHUNK)
-	if (chunks.length > MAX_JSON_LIST_CHUNKS) {
-		throw new Error('people_stats_too_many_subscribers')
+	const chunks = chunkIds(ids, PEOPLE_STATS_JSON_LIST.chunk)
+	if (chunks.length > PEOPLE_STATS_JSON_LIST.maxChunks) {
+		// Counts only: no ids or addresses in the log or the answer.
+		console.warn('People stats: too many confirmed email subscribers', {
+			chunks: chunks.length,
+		})
+		throw serviceUnavailable(
+			PEOPLE_STATS_UNAVAILABLE,
+			'Subscriber counts are unavailable for this organization',
+		)
 	}
 	const parts = chunks.map(
 		(chunk) => sql`SELECT value FROM json_each(${JSON.stringify(chunk)})`,

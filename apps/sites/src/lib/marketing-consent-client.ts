@@ -1,7 +1,4 @@
-import {
-	MARKETING_CONSENT_TEXT_VERSION,
-	type OrderMarketingConsentResult,
-} from '@repo/common/marketing-consent'
+import { type OrderMarketingConsentResult } from '@repo/common/marketing-consent'
 import { getAccessToken, tenantFetchResponse } from '~/lib/client-auth'
 
 /**
@@ -64,6 +61,8 @@ export async function setSubscription(
 	channel: ConsentChannel,
 	subscribed: boolean,
 	source: ConsentSource,
+	/** The id of the wording the guest was shown; omit when none covers this switch. */
+	textVersion?: string,
 ): Promise<SetSubscriptionResult> {
 	try {
 		const res = await tenantFetchResponse(
@@ -73,9 +72,7 @@ export async function setSubscription(
 				body: JSON.stringify({
 					subscribed,
 					source,
-					...(subscribed
-						? { textVersion: MARKETING_CONSENT_TEXT_VERSION }
-						: {}),
+					...(subscribed && textVersion ? { textVersion } : {}),
 				}),
 			},
 		)
@@ -101,12 +98,14 @@ export async function setSubscription(
 export function buildMarketingConsent(
 	choice: { email?: boolean; sms?: boolean },
 	signedIn: boolean,
+	textVersion: string | undefined,
 ): MarketingConsentPayload | undefined {
-	if (!signedIn || (!choice.email && !choice.sms)) return undefined
+	if (!signedIn || !textVersion || (!choice.email && !choice.sms))
+		return undefined
 	return {
 		...(choice.email ? { email: true as const } : {}),
 		...(choice.sms ? { sms: true as const } : {}),
-		textVersion: MARKETING_CONSENT_TEXT_VERSION,
+		textVersion,
 	}
 }
 
@@ -124,12 +123,23 @@ export function readConsentChoice(root: ParentNode | null): {
 	return { email: ticked('email'), sms: ticked('sms') }
 }
 
+/** The wording id the boxes were rendered with (`data-text-version`). */
+export function readConsentTextVersion(root: ParentNode | null) {
+	return (
+		root?.querySelector<HTMLElement>('[data-text-version]')?.dataset
+			.textVersion ||
+		(root as HTMLElement | null)?.dataset?.textVersion ||
+		undefined
+	)
+}
+
 export function checkoutMarketingConsent(
 	root: ParentNode | null = document.querySelector('[data-marketing-consent]'),
 ): MarketingConsentPayload | undefined {
 	return buildMarketingConsent(
 		readConsentChoice(root),
 		Boolean(getAccessToken()),
+		readConsentTextVersion(root),
 	)
 }
 
@@ -137,41 +147,50 @@ export function checkoutMarketingConsent(
  * Sign-up: the boxes ticked after the first phone check. One failed call
  * (no email on file, an offline region) never fails the step it rides on.
  */
-export async function recordSignupConsent(choice: {
-	email?: boolean
-	sms?: boolean
-}): Promise<void> {
+export async function recordSignupConsent(
+	choice: { email?: boolean; sms?: boolean },
+	textVersion: string | undefined,
+): Promise<void> {
 	const calls: Promise<unknown>[] = []
 	if (choice.email)
-		calls.push(setSubscription('marketing', 'email', true, 'signup'))
+		calls.push(
+			setSubscription('marketing', 'email', true, 'signup', textVersion),
+		)
 	if (choice.sms)
-		calls.push(setSubscription('marketing', 'sms', true, 'signup'))
+		calls.push(setSubscription('marketing', 'sms', true, 'signup', textVersion))
 	await Promise.allSettled(calls)
 }
 
 const EMAIL_PENDING_KEY = 'menuza_marketing_email_pending'
 
-/** Checkout hands this to the success page; no contact data is stored. */
+/**
+ * Checkout hands this to the success page; no contact data is stored. The flag
+ * names the order it belongs to, so a success page for another order (or one
+ * that returned early and never read it) can never show it.
+ */
 export function flagEmailConfirmationPending(
 	result: OrderMarketingConsentResult | undefined,
+	orderId: string,
 	storage: Pick<Storage, 'setItem'> = sessionStorage,
 ) {
-	if (result?.email !== 'pending') return
+	if (result?.email !== 'pending' || !orderId) return
 	try {
-		storage.setItem(EMAIL_PENDING_KEY, '1')
+		storage.setItem(EMAIL_PENDING_KEY, orderId)
 	} catch {
 		// Storage can be off; the note is a nicety.
 	}
 }
 
-/** True once: the flag is cleared as it is read. */
+/** True once, for the flagged order only: the flag is cleared on any read. */
 export function takeEmailConfirmationPending(
+	orderId: string,
 	storage: Pick<Storage, 'getItem' | 'removeItem'> = sessionStorage,
 ): boolean {
 	try {
-		const set = storage.getItem(EMAIL_PENDING_KEY) === '1'
-		if (set) storage.removeItem(EMAIL_PENDING_KEY)
-		return set
+		const flagged = storage.getItem(EMAIL_PENDING_KEY)
+		if (flagged === null) return false
+		storage.removeItem(EMAIL_PENDING_KEY)
+		return flagged === orderId
 	} catch {
 		return false
 	}

@@ -42,6 +42,10 @@ msgstr "{count, plural, other {可在预订前 # 小时免费取消。}}"
 msgid "{count} min"
 msgstr "{count} 分钟"
 
+#: components/profile/messages-section.tsx:110
+msgid "{label}: {channel}"
+msgstr "{label}：{channel}"
+
 #: lib/loyalty/labels.ts:16
 msgid "{n, plural, one {{count} point} other {{count} points}}"
 msgstr "{n, plural, other {{count} 积分}}"
@@ -98,6 +102,10 @@ msgstr "需要银行卡来担保此预订。"
 msgid "A deposit of {amount} is due to confirm this booking."
 msgstr "需支付 {amount} 订金以确认此预订。"
 
+#: components/profile/messages-section.tsx:217
+msgid "A few messages a month. You can opt out anytime."
+msgstr "每月只发几条消息，你可以随时退订。"
+
 #: lib/loyalty/labels.ts:65
 msgid "A free item"
 msgstr "一件免费商品"
@@ -110,7 +118,7 @@ msgstr "约 {count} 分钟"
 msgid "acme or acme.example.com"
 msgstr "acme 或 acme.example.com"
 
-#: components/profile/messages-section.tsx:97
+#: components/profile/messages-section.tsx:154
 msgid "Add an email address first"
 msgstr "请先添加电子邮件地址"
 
@@ -218,7 +226,7 @@ msgstr "查看请求"
 msgid "Check the menu for what we are serving today."
 msgstr "查看菜单，了解我们今天供应的菜品。"
 
-#: components/profile/messages-section.tsx:121
+#: components/profile/messages-section.tsx:179
 msgid "Check your inbox to confirm"
 msgstr "请查看收件箱以确认"
 
@@ -234,7 +242,7 @@ msgstr "结账"
 msgid "Choose a location"
 msgstr "选择门店"
 
-#: components/profile/messages-section.tsx:117
+#: components/profile/messages-section.tsx:174
 msgid "Choose what you hear from us, and how."
 msgstr "选择你想收到的消息和接收方式。"
 
@@ -328,7 +336,7 @@ msgstr "获得"
 msgid "Edit details"
 msgstr "修改信息"
 
-#: components/profile/messages-section.tsx:72
+#: components/profile/messages-section.tsx:107
 #: components/profile/profile-screen.tsx:92
 msgid "Email"
 msgstr "电子邮件"
@@ -511,13 +519,17 @@ msgstr "加载中…"
 msgid "Menu"
 msgstr "菜单"
 
-#: components/profile/messages-section.tsx:115
+#: components/profile/messages-section.tsx:172
 msgid "Messages from {name}"
 msgstr "来自 {name} 的消息"
 
 #: components/reservations/parts.tsx:205
 msgid "More guests"
 msgstr "增加人数"
+
+#: components/profile/messages-section.tsx:220
+msgid "Msg and data rates may apply. Reply STOP to opt out."
+msgstr "可能会产生短信和数据费用。回复 STOP 即可退订。"
 
 #: lib/reservations/messages.ts:19
 msgid "My reservations"
@@ -594,7 +606,7 @@ msgstr "菜单上现在没有内容。"
 msgid "Occasion"
 msgstr "场合"
 
-#: components/profile/messages-section.tsx:66
+#: components/profile/messages-section.tsx:101
 msgid "Offers and news"
 msgstr "优惠和动态"
 
@@ -755,7 +767,7 @@ msgstr "奖励使用请求"
 msgid "Reservation"
 msgstr "预订详情"
 
-#: components/profile/messages-section.tsx:68
+#: components/profile/messages-section.tsx:103
 msgid "Reservation news"
 msgstr "预订动态"
 
@@ -900,7 +912,7 @@ msgstr "税费、小费和配送费不计入累积。"
 msgid "Tell us what to call you."
 msgstr "告诉我们如何称呼您。"
 
-#: components/profile/messages-section.tsx:72
+#: components/profile/messages-section.tsx:107
 msgid "Text"
 msgstr "短信"
 
@@ -1022,7 +1034,7 @@ msgstr "重试"
 msgid "Try one of these times instead"
 msgstr "试试这些时间"
 
-#: components/profile/messages-section.tsx:160
+#: components/profile/messages-section.tsx:228
 msgid "Turning a switch off never affects receipts or booking confirmations."
 msgstr "关闭开关不会影响收据或预订确认。"
 
@@ -1067,7 +1079,7 @@ msgstr "验证码"
 msgid "Verify"
 msgstr "验证"
 
-#: components/profile/messages-section.tsx:99
+#: components/profile/messages-section.tsx:156
 msgid "Verify your phone first"
 msgstr "请先验证你的手机"
 
@@ -1087,7 +1099,7 @@ msgstr "找不到该网站，请检查地址后重试。"
 msgid "We couldn't find that."
 msgstr "未找到相关内容。"
 
-#: components/profile/messages-section.tsx:100
+#: components/profile/messages-section.tsx:157
 msgid "We couldn't save that. Try again."
 msgstr "无法保存，请重试。"
 

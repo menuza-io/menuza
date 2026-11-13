@@ -451,8 +451,6 @@ export type PersonConsentInput = {
 	method?: StaffConsentMethod
 	/** Must be `true` to turn on: the member confirms the guest agreed. */
 	attested?: boolean
-	/** Wording version shown; defaults to the server's current staff version. */
-	textVersion?: string
 }
 
 export type PersonConsentResult = {

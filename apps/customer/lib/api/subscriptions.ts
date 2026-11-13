@@ -1,4 +1,3 @@
-import { MARKETING_CONSENT_TEXT_VERSION } from '@repo/common/marketing-consent'
 import { z } from 'zod'
 import { type CustomerSession } from '../session/customer-session'
 import { ApiError } from './api-error'
@@ -83,12 +82,14 @@ export class SubscriptionsClient {
 		topic: SubscriptionTopic,
 		channel: SubscriptionChannel,
 		subscribed: boolean,
+		/** Id of the wording shown for this switch; omit when none covers it. */
+		textVersion?: string,
 	): Promise<SubscriptionState> {
 		const path = `/subscriptions/${topic}/${channel}`
 		const json = {
 			subscribed,
 			source: 'profile',
-			...(subscribed ? { textVersion: MARKETING_CONSENT_TEXT_VERSION } : {}),
+			...(subscribed && textVersion ? { textVersion } : {}),
 		}
 		const response = await this.#session.authorized((token) =>
 			this.#send('PUT', path, token, json),

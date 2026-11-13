@@ -1,10 +1,7 @@
 import { type MessageDescriptor } from '@lingui/core'
 import { Trans, msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import {
-	STAFF_CONSENT_TEXT_VERSION,
-	type StaffConsentMethod,
-} from '@repo/common/marketing-consent'
+import { type StaffConsentMethod } from '@repo/common/marketing-consent'
 import { Alert, AlertDescription } from '@repo/ui/alert'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
@@ -129,6 +126,9 @@ export function PersonMarketingCard({
 	const emailSwitch = useRef<HTMLElement | null>(null)
 	const smsSwitch = useRef<HTMLElement | null>(null)
 	const switches = { email: emailSwitch, sms: smsSwitch }
+	// The channel whose switch opened the dialog. Outlives the close, so Base UI
+	// can return focus to the right switch when `dialogChannel` is already null.
+	const lastChannel = useRef<Channel>('email')
 
 	const others = subscriptions.filter((s) => s.topic !== 'marketing')
 
@@ -189,7 +189,10 @@ export function PersonMarketingCard({
 							memberNames={memberNames}
 							currentUserId={currentUserId ?? null}
 							switchRef={switches[channel]}
-							onTurnOn={() => setDialogChannel(channel)}
+							onTurnOn={() => {
+									lastChannel.current = channel
+									setDialogChannel(channel)
+								}}
 							onTurnOff={() => void turnOff(channel)}
 						/>
 					))}
@@ -263,7 +266,7 @@ export function PersonMarketingCard({
 				channel={dialogChannel}
 				client={client}
 				personKey={personKey}
-				finalFocus={dialogChannel ? switches[dialogChannel] : undefined}
+				finalFocus={switches[lastChannel.current]}
 				onClose={() => setDialogChannel(null)}
 				onRecorded={(channel, result) => {
 					onSubscription(channel, result.subscription)
@@ -343,11 +346,19 @@ function ChannelRow({
 		const staff = row.staff
 		const subscribedOn = date(row.subscribedAt)
 		if (staff) {
-			const name =
-				staff.recordedBy === currentUserId
-					? _(msg`you`)
-					: (memberNames[staff.recordedBy] ?? _(msg`a staff member`))
-			const line = _(msg`Recorded by ${name} on ${subscribedOn}`)
+			const isYou = staff.recordedBy === currentUserId
+			const name = memberNames[staff.recordedBy] ?? _(msg`a staff member`)
+			const method = staff.method ? _(METHOD_LABELS[staff.method]) : null
+			let line: string
+			if (isYou) {
+				line = method
+					? _(msg`Recorded by you on ${subscribedOn} (${method})`)
+					: _(msg`Recorded by you on ${subscribedOn}`)
+			} else {
+				line = method
+					? _(msg`Recorded by ${name} on ${subscribedOn} (${method})`)
+					: _(msg`Recorded by ${name} on ${subscribedOn}`)
+			}
 			status = (
 				<>
 					<span className="inline-flex flex-wrap items-center gap-2">
@@ -362,7 +373,6 @@ function ChannelRow({
 					</span>
 					<span data-testid={`person-consent-${channel}-staff`}>
 						{line}
-						{staff.method ? ` · ${_(METHOD_LABELS[staff.method])}` : ''}
 					</span>
 					{row.pending ? (
 						<span>
@@ -385,7 +395,7 @@ function ChannelRow({
 						</span>
 					) : null}
 					<span>
-						{_(msg`Subscribed on ${subscribedOn}`)} · {source}
+						{_(msg`Subscribed on ${subscribedOn} (${source})`)}
 					</span>
 					{row.pending ? (
 						<span>
@@ -492,7 +502,8 @@ function consentErrorMessage(
  * Confirmation before staff record consent on a guest's behalf. The wording of
  * the checkbox and the notes here is what `STAFF_CONSENT_TEXT_VERSION` (in
  * `@repo/common/marketing-consent`) identifies: bump that constant whenever
- * this wording changes in a way that matters.
+ * this wording changes in a way that matters. The server stores that version
+ * itself; the request carries no version.
  */
 function ConsentDialog({
 	channel,
@@ -541,14 +552,21 @@ function ConsentDialog({
 				subscribed: true,
 				method,
 				attested: true,
-				textVersion: STAFF_CONSENT_TEXT_VERSION,
 			})
 			if (channel === 'email') {
-				toast.success(
-					result.confirmationEmail === 'throttled'
-						? _(msg`Recorded. A confirmation email was sent recently.`)
-						: _(msg`Confirmation email sent`),
-				)
+				if (result.confirmationEmail === 'sent') {
+					toast.success(_(msg`Confirmation email sent`))
+				} else if (result.confirmationEmail === 'throttled') {
+					toast.success(_(msg`Recorded. A confirmation email was sent recently.`))
+				} else if (result.subscription?.pending) {
+					toast.warning(
+						_(
+							msg`Consent recorded, but we couldn't send the confirmation email. Try again later.`,
+						),
+					)
+				} else {
+					toast.success(_(msg`Consent recorded`))
+				}
 			} else {
 				toast.success(
 					_(msg`Consent recorded`),

@@ -17,15 +17,16 @@ vi.mock('~/lib/marketing-consent-client', async () => {
 
 import { mountMessagesSection } from './messages-section-client'
 
-function section() {
-	document.body.innerHTML = `<section data-messages hidden
+function section(extra = '', wrapSms = '') {
+	document.body.innerHTML = `<section data-messages hidden ${extra}
+		data-text-version-marketing="guest-profile-us-2026-11"
 		data-label-pending="Check your inbox to confirm"
 		data-label-needs-email="Add an email address first"
 		data-label-needs-phone="Verify your phone first"
 		data-label-error="Could not save">
 		<ul><li>
 			<button role="switch" aria-checked="false" data-topic="marketing" data-channel="email" disabled></button>
-			<button role="switch" aria-checked="false" data-topic="marketing" data-channel="sms" disabled></button>
+			<div data-switch-row ${wrapSms}><button role="switch" aria-checked="false" data-topic="marketing" data-channel="sms" disabled></button></div>
 			<p data-status></p>
 		</li></ul></section>`
 	return document.querySelector<HTMLElement>('[data-messages]')!
@@ -77,6 +78,7 @@ describe('mountMessagesSection', () => {
 			'email',
 			true,
 			'profile',
+			'guest-profile-us-2026-11',
 		)
 		expect(sw('email').getAttribute('aria-checked')).toBe('true')
 	})
@@ -100,5 +102,67 @@ describe('mountMessagesSection', () => {
 		sw('sms').click()
 		await vi.waitFor(() => expect(status()).toBe('Could not save'))
 		expect(sw('sms').getAttribute('aria-checked')).toBe('true')
+	})
+
+	it('keeps focus and ignores presses while a save is in flight', async () => {
+		mocks.fetchSubscriptions.mockResolvedValue([])
+		let finish!: (v: unknown) => void
+		mocks.setSubscription.mockReturnValue(
+			new Promise((resolve) => {
+				finish = resolve
+			}),
+		)
+		await mountMessagesSection(section())
+		const button = sw('sms')
+		button.focus()
+		button.click()
+		expect(button.disabled).toBe(false)
+		expect(button.getAttribute('aria-disabled')).toBe('true')
+		expect(button.getAttribute('aria-busy')).toBe('true')
+		expect(document.activeElement).toBe(button)
+		button.click()
+		expect(mocks.setSubscription).toHaveBeenCalledTimes(1)
+		finish({ status: 'ok', state: 'on' })
+		await vi.waitFor(() =>
+			expect(button.hasAttribute('aria-disabled')).toBe(false),
+		)
+		expect(button.hasAttribute('aria-busy')).toBe(false)
+		expect(document.activeElement).toBe(button)
+	})
+
+	it('sends no text version for a topic outside the offers wording', async () => {
+		mocks.fetchSubscriptions.mockResolvedValue([])
+		mocks.setSubscription.mockResolvedValue({ status: 'ok', state: 'on' })
+		document.body.innerHTML = `<section data-messages hidden data-text-version-marketing="v1"><ul><li>
+			<button role="switch" aria-checked="false" data-topic="reservations" data-channel="email" disabled></button>
+			<p data-status></p></li></ul></section>`
+		await mountMessagesSection(
+			document.querySelector<HTMLElement>('[data-messages]')!,
+		)
+		sw('email').click()
+		await vi.waitFor(() => expect(mocks.setSubscription).toHaveBeenCalled())
+		expect(mocks.setSubscription.mock.calls[0]?.[4]).toBeUndefined()
+	})
+
+	it('in KSA shows the Text switch only for an active subscription and never opts in', async () => {
+		mocks.fetchSubscriptions.mockResolvedValue([])
+		const root = section('data-ksa="true"', 'hidden')
+		await mountMessagesSection(root)
+		expect(
+			document.querySelector<HTMLElement>('[data-switch-row]')!.hidden,
+		).toBe(true)
+		sw('sms').click()
+		expect(mocks.setSubscription).not.toHaveBeenCalled()
+
+		mocks.fetchSubscriptions.mockResolvedValue([
+			{ topic: 'marketing', channel: 'sms', subscribed: true },
+		])
+		mocks.setSubscription.mockResolvedValue({ status: 'ok', state: 'off' })
+		await mountMessagesSection(section('data-ksa="true"', 'hidden'))
+		expect(
+			document.querySelector<HTMLElement>('[data-switch-row]')!.hidden,
+		).toBe(false)
+		sw('sms').click()
+		await vi.waitFor(() => expect(mocks.setSubscription).toHaveBeenCalled())
 	})
 })

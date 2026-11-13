@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { MARKETING_CONSENT_TEXT_VERSION } from '@repo/common/marketing-consent'
+import { MARKETING_CONSENT_TEXT_VERSIONS } from '@repo/common/marketing-consent'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { setSessionTokens } from './client-auth'
 import {
@@ -14,25 +14,27 @@ import {
 	takeEmailConfirmationPending,
 } from './marketing-consent-client'
 
+const BOXES = MARKETING_CONSENT_TEXT_VERSIONS.boxesDisclosure
+
 describe('buildMarketingConsent', () => {
 	it('sends only the ticked channels with the text version', () => {
-		expect(buildMarketingConsent({ email: true, sms: false }, true)).toEqual({
-			email: true,
-			textVersion: MARKETING_CONSENT_TEXT_VERSION,
-		})
-		expect(buildMarketingConsent({ email: true, sms: true }, true)).toEqual({
-			email: true,
-			sms: true,
-			textVersion: MARKETING_CONSENT_TEXT_VERSION,
-		})
+		expect(
+			buildMarketingConsent({ email: true, sms: false }, true, BOXES),
+		).toEqual({ email: true, textVersion: BOXES })
+		expect(
+			buildMarketingConsent({ email: true, sms: true }, true, BOXES),
+		).toEqual({ email: true, sms: true, textVersion: BOXES })
 	})
 
 	it('sends nothing when no box is ticked or the guest is signed out', () => {
 		expect(
-			buildMarketingConsent({ email: false, sms: false }, true),
+			buildMarketingConsent({ email: false, sms: false }, true, BOXES),
 		).toBeUndefined()
 		expect(
-			buildMarketingConsent({ email: true, sms: true }, false),
+			buildMarketingConsent({ email: true, sms: true }, false, BOXES),
+		).toBeUndefined()
+		expect(
+			buildMarketingConsent({ email: true }, true, undefined),
 		).toBeUndefined()
 	})
 })
@@ -98,7 +100,7 @@ describe('the boxes and the region', () => {
 	})
 
 	const boxes = (ticked: { email?: boolean; sms?: boolean }) => {
-		document.body.innerHTML = `<div data-marketing-consent>
+		document.body.innerHTML = `<div data-marketing-consent data-text-version="${BOXES}">
 			<input type="checkbox" data-consent-channel="email" ${ticked.email ? 'checked' : ''}>
 			<input type="checkbox" data-consent-channel="sms" ${ticked.sms ? 'checked' : ''}>
 		</div>`
@@ -110,7 +112,7 @@ describe('the boxes and the region', () => {
 		expect(readConsentChoice(root)).toEqual({ email: false, sms: true })
 		expect(checkoutMarketingConsent(root)).toEqual({
 			sms: true,
-			textVersion: MARKETING_CONSENT_TEXT_VERSION,
+			textVersion: BOXES,
 		})
 	})
 
@@ -125,7 +127,13 @@ describe('the boxes and the region', () => {
 
 	it('PUTs an opt-in with the source and text version, and reports pending', async () => {
 		answers = [Response.json({ pending: true })]
-		const result = await setSubscription('marketing', 'email', true, 'profile')
+		const result = await setSubscription(
+			'marketing',
+			'email',
+			true,
+			'profile',
+			MARKETING_CONSENT_TEXT_VERSIONS.profileDisclosure,
+		)
 		expect(result).toEqual({ status: 'ok', state: 'pending' })
 		expect(calls[0]?.url).toBe(
 			'https://regional.example/subscriptions/marketing/email',
@@ -134,7 +142,16 @@ describe('the boxes and the region', () => {
 		expect(JSON.parse(String(calls[0]?.init?.body))).toEqual({
 			subscribed: true,
 			source: 'profile',
-			textVersion: MARKETING_CONSENT_TEXT_VERSION,
+			textVersion: MARKETING_CONSENT_TEXT_VERSIONS.profileDisclosure,
+		})
+	})
+
+	it('sends no text version when none covers the switch', async () => {
+		answers = [Response.json({ subscribed: true })]
+		await setSubscription('reservations', 'email', true, 'profile')
+		expect(JSON.parse(String(calls[0]?.init?.body))).toEqual({
+			subscribed: true,
+			source: 'profile',
 		})
 	})
 
@@ -185,12 +202,14 @@ describe('the boxes and the region', () => {
 
 	it('records sign-up consent per ticked box and never throws', async () => {
 		answers = [Response.json({ error: 'x' }, { status: 409 })]
-		await expect(recordSignupConsent({ sms: true })).resolves.toBeUndefined()
+		await expect(recordSignupConsent({ sms: true }, BOXES)).resolves.toBeUndefined()
 		expect(calls).toHaveLength(1)
 		expect(calls[0]?.url).toContain('/subscriptions/marketing/sms')
-		expect(JSON.parse(String(calls[0]?.init?.body)).source).toBe('signup')
+		const body = JSON.parse(String(calls[0]?.init?.body))
+		expect(body.source).toBe('signup')
+		expect(body.textVersion).toBe(BOXES)
 
-		await recordSignupConsent({})
+		await recordSignupConsent({}, BOXES)
 		expect(calls).toHaveLength(1)
 	})
 })
@@ -207,10 +226,18 @@ describe('the pending email flag', () => {
 
 	it('is set only for a pending email and read once', () => {
 		const s = store()
-		flagEmailConfirmationPending({ email: 'subscribed' }, s)
-		expect(takeEmailConfirmationPending(s)).toBe(false)
-		flagEmailConfirmationPending({ email: 'pending' }, s)
-		expect(takeEmailConfirmationPending(s)).toBe(true)
-		expect(takeEmailConfirmationPending(s)).toBe(false)
+		flagEmailConfirmationPending({ email: 'subscribed' }, 'ord_1', s)
+		expect(takeEmailConfirmationPending('ord_1', s)).toBe(false)
+		flagEmailConfirmationPending({ email: 'pending' }, 'ord_1', s)
+		expect(takeEmailConfirmationPending('ord_1', s)).toBe(true)
+		expect(takeEmailConfirmationPending('ord_1', s)).toBe(false)
+	})
+
+	it('shows only on the order it was set for and is cleared on a mismatch', () => {
+		const s = store()
+		flagEmailConfirmationPending({ email: 'pending' }, 'ord_1', s)
+		expect(takeEmailConfirmationPending('ord_2', s)).toBe(false)
+		// The stale flag is gone, so the original order no longer shows it either.
+		expect(takeEmailConfirmationPending('ord_1', s)).toBe(false)
 	})
 })

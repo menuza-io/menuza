@@ -42,6 +42,10 @@ msgstr "{count, plural, zero {إلغاء مجاني حتى الموعد.} one {�
 msgid "{count} min"
 msgstr "{count} د"
 
+#: components/profile/messages-section.tsx:110
+msgid "{label}: {channel}"
+msgstr "{label}: {channel}"
+
 #: lib/loyalty/labels.ts:16
 msgid "{n, plural, one {{count} point} other {{count} points}}"
 msgstr "{n, plural, zero {{count} نقطة} one {نقطة واحدة} two {نقطتان} few {{count} نقاط} many {{count} نقطة} other {{count} نقطة}}"
@@ -98,6 +102,10 @@ msgstr "يلزم بطاقة لضمان هذا الحجز."
 msgid "A deposit of {amount} is due to confirm this booking."
 msgstr "يلزم دفع عربون بقيمة {amount} لتأكيد هذا الحجز."
 
+#: components/profile/messages-section.tsx:217
+msgid "A few messages a month. You can opt out anytime."
+msgstr "رسائل قليلة في الشهر. يمكنك إلغاء الاشتراك في أي وقت."
+
 #: lib/loyalty/labels.ts:65
 msgid "A free item"
 msgstr "منتج مجاني"
@@ -110,7 +118,7 @@ msgstr "حوالي {count} دقيقة"
 msgid "acme or acme.example.com"
 msgstr "acme أو acme.example.com"
 
-#: components/profile/messages-section.tsx:97
+#: components/profile/messages-section.tsx:154
 msgid "Add an email address first"
 msgstr "أضف عنوان بريد إلكتروني أولاً"
 
@@ -218,7 +226,7 @@ msgstr "التحقق من وجود طلبات"
 msgid "Check the menu for what we are serving today."
 msgstr "تصفّح القائمة لمعرفة ما نقدّمه اليوم."
 
-#: components/profile/messages-section.tsx:121
+#: components/profile/messages-section.tsx:179
 msgid "Check your inbox to confirm"
 msgstr "تحقق من بريدك الوارد للتأكيد"
 
@@ -234,7 +242,7 @@ msgstr "إتمام الطلب"
 msgid "Choose a location"
 msgstr "اختر الفرع"
 
-#: components/profile/messages-section.tsx:117
+#: components/profile/messages-section.tsx:174
 msgid "Choose what you hear from us, and how."
 msgstr "اختر ما تتلقاه منا وكيف."
 
@@ -328,7 +336,7 @@ msgstr "اكتساب"
 msgid "Edit details"
 msgstr "تعديل البيانات"
 
-#: components/profile/messages-section.tsx:72
+#: components/profile/messages-section.tsx:107
 #: components/profile/profile-screen.tsx:92
 msgid "Email"
 msgstr "البريد الإلكتروني"
@@ -511,13 +519,17 @@ msgstr "جارٍ التحميل…"
 msgid "Menu"
 msgstr "القائمة"
 
-#: components/profile/messages-section.tsx:115
+#: components/profile/messages-section.tsx:172
 msgid "Messages from {name}"
 msgstr "رسائل من {name}"
 
 #: components/reservations/parts.tsx:205
 msgid "More guests"
 msgstr "عدد أكبر من الأشخاص"
+
+#: components/profile/messages-section.tsx:220
+msgid "Msg and data rates may apply. Reply STOP to opt out."
+msgstr "قد تُطبَّق رسوم الرسائل والبيانات. أرسل STOP لإلغاء الاشتراك."
 
 #: lib/reservations/messages.ts:19
 msgid "My reservations"
@@ -594,7 +606,7 @@ msgstr "لا يوجد شيء في القائمة حاليًا."
 msgid "Occasion"
 msgstr "المناسبة"
 
-#: components/profile/messages-section.tsx:66
+#: components/profile/messages-section.tsx:101
 msgid "Offers and news"
 msgstr "العروض والأخبار"
 
@@ -755,7 +767,7 @@ msgstr "طلبات استخدام مكافآتك"
 msgid "Reservation"
 msgstr "الحجز"
 
-#: components/profile/messages-section.tsx:68
+#: components/profile/messages-section.tsx:103
 msgid "Reservation news"
 msgstr "أخبار الحجوزات"
 
@@ -900,7 +912,7 @@ msgstr "لا تُحتسب الضرائب والإكراميات ورسوم ال�
 msgid "Tell us what to call you."
 msgstr "أخبرنا بالاسم الذي نناديك به."
 
-#: components/profile/messages-section.tsx:72
+#: components/profile/messages-section.tsx:107
 msgid "Text"
 msgstr "رسالة نصية"
 
@@ -1022,7 +1034,7 @@ msgstr "حاول مرة أخرى"
 msgid "Try one of these times instead"
 msgstr "جرّب أحد هذه الأوقات"
 
-#: components/profile/messages-section.tsx:160
+#: components/profile/messages-section.tsx:228
 msgid "Turning a switch off never affects receipts or booking confirmations."
 msgstr "إيقاف أي مفتاح لا يؤثر أبداً على الإيصالات أو تأكيدات الحجز."
 
@@ -1067,7 +1079,7 @@ msgstr "رمز التحقق"
 msgid "Verify"
 msgstr "تحقق"
 
-#: components/profile/messages-section.tsx:99
+#: components/profile/messages-section.tsx:156
 msgid "Verify your phone first"
 msgstr "تحقق من هاتفك أولاً"
 
@@ -1087,7 +1099,7 @@ msgstr "لم نتمكن من العثور على هذا الموقع. تحقق �
 msgid "We couldn't find that."
 msgstr "لم نعثر على ذلك."
 
-#: components/profile/messages-section.tsx:100
+#: components/profile/messages-section.tsx:157
 msgid "We couldn't save that. Try again."
 msgstr "تعذّر الحفظ. حاول مرة أخرى."
 

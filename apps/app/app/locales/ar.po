@@ -2701,9 +2701,13 @@ msgstr "<0>{outCount}</0> منها نفد من المخزون"
 msgid "<0>{pointsRedeemed}</0> redeemed"
 msgstr "تم استبدال <0>{pointsRedeemed}</0>"
 
+#: app/components/customers/people-summary-row.tsx:192
+msgid "<0>{share}</0> of guests"
+msgstr ""
+
 #: app/components/customers/people-summary-row.tsx:182
-msgid "<0>{sharePercent}%</0> of guests"
-msgstr "<0>{sharePercent}%</0> من الضيوف"
+#~ msgid "<0>{sharePercent}%</0> of guests"
+#~ msgstr "<0>{sharePercent}%</0> من الضيوف"
 
 #: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:564
 msgid "<0>{shareText}</0> of what you bought"
@@ -3495,7 +3499,7 @@ msgstr "عضو محدد في الفريق"
 msgid "A square QR sign for the door or window. Print it yourself."
 msgstr "لافتة QR مربعة للباب أو الواجهة. اطبعها بنفسك."
 
-#: app/components/customers/person-marketing-card.tsx:349
+#: app/components/customers/person-marketing-card.tsx:350
 msgid "a staff member"
 msgstr "أحد الموظفين"
 
@@ -4032,8 +4036,8 @@ msgstr "إضافة رقم"
 msgid "Add a number or email to start sending alerts."
 msgstr "أضف رقمًا أو بريدًا إلكترونيًا لبدء إرسال التنبيهات."
 
-#: app/components/customers/person-marketing-card.tsx:332
-#: app/components/customers/person-marketing-card.tsx:480
+#: app/components/customers/person-marketing-card.tsx:335
+#: app/components/customers/person-marketing-card.tsx:490
 msgid "Add a phone number first"
 msgstr "أضف رقم هاتف أولاً"
 
@@ -4191,8 +4195,8 @@ msgstr "أضف إعلاناً لمشاركة التحديثات أو إشعار�
 msgid "Add an area such as Main dining or Patio to start."
 msgstr "أضف منطقة مثل القاعة الرئيسية أو الشرفة للبدء."
 
-#: app/components/customers/person-marketing-card.tsx:331
-#: app/components/customers/person-marketing-card.tsx:478
+#: app/components/customers/person-marketing-card.tsx:334
+#: app/components/customers/person-marketing-card.tsx:488
 msgid "Add an email address first"
 msgstr "أضف عنوان بريد إلكتروني أولاً"
 
@@ -5150,7 +5154,7 @@ msgstr "بعد {days} يوم"
 msgid "After a table-ready message, the party has this long to answer before the offer expires."
 msgstr "بعد رسالة جاهزية الطاولة، تملك المجموعة هذه المدة للرد قبل انتهاء العرض."
 
-#: app/components/customers/person-marketing-card.tsx:63
+#: app/components/customers/person-marketing-card.tsx:60
 msgid "After an order"
 msgstr "بعد الطلب"
 
@@ -7578,7 +7582,7 @@ msgstr "تعديل الحجز"
 msgid "Booking confirmation"
 msgstr "تأكيد الحجز"
 
-#: app/components/customers/person-marketing-card.tsx:65
+#: app/components/customers/person-marketing-card.tsx:62
 msgid "Booking form"
 msgstr "نموذج الحجز"
 
@@ -8082,7 +8086,7 @@ msgstr "حسب ساعات العمل"
 #~ msgid "By party size"
 #~ msgstr "حسب عدد الأشخاص"
 
-#: app/components/customers/person-marketing-card.tsx:76
+#: app/components/customers/person-marketing-card.tsx:73
 msgid "By phone"
 msgstr "عبر الهاتف"
 
@@ -8333,7 +8337,7 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/components/chat/chat-composer.tsx:350
 #: app/components/chat/chat-view.tsx:1021
 #: app/components/core/feedback-modal.tsx:109
-#: app/components/customers/person-marketing-card.tsx:662
+#: app/components/customers/person-marketing-card.tsx:680
 #: app/components/customers/person-merge-dialog.tsx:195
 #: app/components/customers/person-notes-panel.tsx:119
 #: app/components/customers/person-profile-screen.tsx:1105
@@ -9119,7 +9123,7 @@ msgid "Changing this URL will break existing links to the page."
 msgstr "تغيير هذا الرابط سيؤدي إلى تعطيل الروابط الحالية لهذه الصفحة."
 
 #: ../../packages/marketing/src/components/campaign-form.tsx:64
-#: app/components/customers/person-marketing-card.tsx:206
+#: app/components/customers/person-marketing-card.tsx:209
 #: app/components/note/integration-controls.tsx:333
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1185
 msgid "Channel"
@@ -9378,7 +9382,7 @@ msgstr "القائمة المراد إضافتها"
 msgid "Checklists for new hires. Pick one to add automatically when you hire someone."
 msgstr "قوائم مهام للموظفين الجدد. اختر واحدة لتُضاف تلقائيًا عند توظيف شخص."
 
-#: app/components/customers/person-marketing-card.tsx:67
+#: app/components/customers/person-marketing-card.tsx:64
 msgid "Checkout"
 msgstr "الدفع"
 
@@ -9783,7 +9787,7 @@ msgstr "اختر طريقة احتساب العمل الإضافي قبل الح
 msgid "Choose how overtime is counted for people who work at more than one workplace."
 msgstr "اختر طريقة احتساب الساعات الإضافية لمن يعمل في أكثر من مكان عمل."
 
-#: app/components/customers/person-marketing-card.tsx:470
+#: app/components/customers/person-marketing-card.tsx:480
 msgid "Choose how the guest gave consent."
 msgstr "اختر كيف أعطى الضيف موافقته."
 
@@ -10858,7 +10862,7 @@ msgstr "تأكيد الاستلام"
 msgid "Confirm sent"
 msgstr "تأكيد الإرسال"
 
-#: app/components/customers/person-marketing-card.tsx:472
+#: app/components/customers/person-marketing-card.tsx:482
 msgid "Confirm that the guest asked to receive marketing."
 msgstr "أكّد أن الضيف طلب تلقي الرسائل التسويقية."
 
@@ -10886,7 +10890,7 @@ msgstr "أكد كلمة المرور الجديدة"
 msgid "Confirm your password"
 msgstr "أكد كلمة المرور"
 
-#: app/components/customers/person-marketing-card.tsx:550
+#: app/components/customers/person-marketing-card.tsx:558
 msgid "Confirmation email sent"
 msgstr "تم إرسال بريد التأكيد"
 
@@ -11112,14 +11116,19 @@ msgstr "انقطع الاتصال. جارٍ إعادة الاتصال…"
 msgid "Connections"
 msgstr "الاتصالات"
 
-#: app/components/customers/person-marketing-card.tsx:321
-#: app/components/customers/person-marketing-card.tsx:475
+#: app/components/customers/person-marketing-card.tsx:324
+#: app/components/customers/person-marketing-card.tsx:485
 msgid "Consent can be recorded once this guest has a customer account."
 msgstr "يمكن تسجيل الموافقة بعد أن يصبح لهذا الضيف حساب عميل."
 
-#: app/components/customers/person-marketing-card.tsx:554
+#: app/components/customers/person-marketing-card.tsx:568
+#: app/components/customers/person-marketing-card.tsx:572
 msgid "Consent recorded"
 msgstr "تم تسجيل الموافقة"
+
+#: app/components/customers/person-marketing-card.tsx:564
+msgid "Consent recorded, but we couldn't send the confirmation email. Try again later."
+msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/loyalty+/activity.tsx:822
 msgid "Consume"
@@ -11827,7 +11836,7 @@ msgstr "تعذّر تحميل التسجيل. حاول مرة أخرى."
 msgid "Couldn't load the steps of this run. Close it and try again."
 msgstr "تعذّر تحميل خطوات هذا التشغيل. أغلقه وحاول مرة أخرى."
 
-#: app/components/customers/people-summary-row.tsx:136
+#: app/components/customers/people-summary-row.tsx:142
 msgid "Couldn't load totals"
 msgstr "تعذر تحميل الإجماليات"
 
@@ -14789,7 +14798,7 @@ msgstr "طلبات الطروحات مستثناة من هذا الخصم."
 msgid "Drop orders skip discounts unless this is on."
 msgstr "طلبات الطروحات لا تحصل على الخصم إلا عند تفعيل هذا."
 
-#: app/components/customers/person-marketing-card.tsx:62
+#: app/components/customers/person-marketing-card.tsx:59
 msgid "Drop page"
 msgstr "صفحة الإصدار"
 
@@ -14826,14 +14835,14 @@ msgid "Dropped. Nothing changed."
 msgstr "تم الإفلات. لم يتغير شيء."
 
 #: app/components/app-sidebar.tsx:396
-#: app/components/customers/person-marketing-card.tsx:52
+#: app/components/customers/person-marketing-card.tsx:49
 #: app/components/menu/delete-effects.tsx:270
 #: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:84
 #: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:201
 msgid "Drops"
 msgstr "الطروحات"
 
-#: app/components/customers/person-marketing-card.tsx:61
+#: app/components/customers/person-marketing-card.tsx:58
 msgid "Drops page"
 msgstr "صفحة الإصدارات"
 
@@ -15532,7 +15541,7 @@ msgstr "مؤهل لإعادة التوظيف."
 
 #: ../../packages/marketing-workflow/src/nodes/action-email-node.tsx:21
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:14
-#: app/components/customers/person-marketing-card.tsx:57
+#: app/components/customers/person-marketing-card.tsx:54
 #: app/components/customers/person-marketing-card.tsx:156
 #: app/components/customers/person-profile-screen.tsx:1079
 #: app/components/hiring/candidate-parts.tsx:55
@@ -15596,7 +15605,7 @@ msgstr "البريد الإلكتروني هو القناة الافتراضية
 msgid "Email is turned off, so nothing was sent"
 msgstr "البريد الإلكتروني متوقف، لذا لم يُرسل شيء"
 
-#: app/components/customers/person-marketing-card.tsx:437
+#: app/components/customers/person-marketing-card.tsx:447
 msgid "Email marketing"
 msgstr "التسويق عبر البريد الإلكتروني"
 
@@ -15617,7 +15626,7 @@ msgstr "موضوع البريد الإلكتروني"
 msgid "Email subject line is required."
 msgstr "سطر موضوع البريد الإلكتروني مطلوب."
 
-#: app/components/customers/people-summary-row.tsx:191
+#: app/components/customers/people-summary-row.tsx:201
 msgid "Email subscribers"
 msgstr "مشتركو البريد الإلكتروني"
 
@@ -18061,7 +18070,7 @@ msgstr "نسي تسجيل الانصراف"
 msgid "Forgot your password?"
 msgstr "هل نسيت كلمة المرور؟"
 
-#: app/components/customers/person-marketing-card.tsx:69
+#: app/components/customers/person-marketing-card.tsx:66
 #: app/components/workspace-breadcrumb.tsx:117
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4136
 msgid "Form"
@@ -18902,7 +18911,7 @@ msgstr "ملفات سجل الضيوف والدمج"
 #~ msgid "guests"
 #~ msgstr "ضيوف"
 
-#: app/components/customers/people-summary-row.tsx:170
+#: app/components/customers/people-summary-row.tsx:179
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:362
 msgid "Guests"
 msgstr "الضيوف"
@@ -19602,7 +19611,7 @@ msgstr "كيف يمكنني تنفيذ هذا؟"
 msgid "How dates are written in the file"
 msgstr "كيف تُكتب التواريخ في الملف"
 
-#: app/components/customers/person-marketing-card.tsx:606
+#: app/components/customers/person-marketing-card.tsx:624
 msgid "How did the guest give consent?"
 msgstr "كيف أعطى الضيف موافقته؟"
 
@@ -19723,7 +19732,7 @@ msgstr "مدى التزام الساعة بالجدول المنشور. تبدأ
 msgid "How the call flow works"
 msgstr "كيف يعمل مسار المكالمة"
 
-#: app/components/customers/person-marketing-card.tsx:612
+#: app/components/customers/person-marketing-card.tsx:630
 msgid "How the guest gave consent"
 msgstr "كيف أعطى الضيف موافقته"
 
@@ -19994,7 +20003,7 @@ msgstr "في الانتظار"
 msgid "In modifier groups"
 msgstr "في مجموعات المعدّلات"
 
-#: app/components/customers/person-marketing-card.tsx:74
+#: app/components/customers/person-marketing-card.tsx:71
 #: app/components/hiring/applicant-labels.ts:35
 msgid "In person"
 msgstr "حضوريًا"
@@ -21955,7 +21964,7 @@ msgstr "الروابط المرسلة"
 msgid "List"
 msgstr "قائمة"
 
-#: app/components/customers/person-marketing-card.tsx:71
+#: app/components/customers/person-marketing-card.tsx:68
 msgid "List import"
 msgstr "استيراد قائمة"
 
@@ -22358,7 +22367,7 @@ msgstr "جارٍ تحميل بطاقات الدوام"
 msgid "Loading today"
 msgstr "جارٍ تحميل اليوم"
 
-#: app/components/customers/people-summary-row.tsx:152
+#: app/components/customers/people-summary-row.tsx:158
 msgid "Loading totals..."
 msgstr "جارٍ تحميل الإجماليات..."
 
@@ -23560,7 +23569,7 @@ msgid "Members who created the most notes."
 msgstr "الأعضاء الذين أنشأوا أكبر عدد من الملاحظات."
 
 #: app/components/app-sidebar.tsx:358
-#: app/components/customers/person-marketing-card.tsx:60
+#: app/components/customers/person-marketing-card.tsx:57
 #: app/components/menu/drop-wizard/drop-form.tsx:744
 #: app/components/menu/drop-wizard/drop-form.tsx:760
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:38
@@ -26977,7 +26986,7 @@ msgstr "غير معروضة بعد"
 msgid "Not started"
 msgstr "لم يبدأ"
 
-#: app/components/customers/person-marketing-card.tsx:412
+#: app/components/customers/person-marketing-card.tsx:422
 msgid "Not subscribed"
 msgstr "غير مشترك"
 
@@ -29593,7 +29602,7 @@ msgstr "جارٍ الربط…"
 msgid "Paper cups"
 msgstr "أكواب ورقية"
 
-#: app/components/customers/person-marketing-card.tsx:75
+#: app/components/customers/person-marketing-card.tsx:72
 msgid "Paper form"
 msgstr "نموذج ورقي"
 
@@ -30102,8 +30111,8 @@ msgid "Peanut Allergy"
 msgstr "حساسية الفول السوداني"
 
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:44
-#: app/components/customers/person-marketing-card.tsx:359
-#: app/components/customers/person-marketing-card.tsx:383
+#: app/components/customers/person-marketing-card.tsx:370
+#: app/components/customers/person-marketing-card.tsx:393
 #: app/components/settings/cards/organization/shop-card.tsx:47
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:490
 msgid "Pending"
@@ -31728,7 +31737,7 @@ msgid "Production has started, so this order can no longer be cancelled."
 msgstr "بدأ الإنتاج، لذلك لم يعد بالإمكان إلغاء هذا الطلب."
 
 #: app/components/app-sidebar.tsx:170
-#: app/components/customers/person-marketing-card.tsx:64
+#: app/components/customers/person-marketing-card.tsx:61
 #: app/components/staff/staff-profile-page.tsx:97
 #: app/components/user-dropdown.tsx:54
 #: app/routes/_auth+/onboarding_.$provider.tsx:284
@@ -32617,15 +32626,15 @@ msgstr "تسجيل الدفعة"
 msgid "Record calls"
 msgstr "تسجيل المكالمات"
 
-#: app/components/customers/person-marketing-card.tsx:669
+#: app/components/customers/person-marketing-card.tsx:687
 msgid "Record consent"
 msgstr "تسجيل الموافقة"
 
-#: app/components/customers/person-marketing-card.tsx:585
+#: app/components/customers/person-marketing-card.tsx:603
 msgid "Record consent for email offers"
 msgstr "تسجيل الموافقة على العروض عبر البريد الإلكتروني"
 
-#: app/components/customers/person-marketing-card.tsx:587
+#: app/components/customers/person-marketing-card.tsx:605
 msgid "Record consent for text offers"
 msgstr "تسجيل الموافقة على العروض عبر الرسائل النصية"
 
@@ -32675,14 +32684,26 @@ msgstr "سجّل ما إذا تواصلت مع الضيف بشأن هذا الح
 msgid "Recorded"
 msgstr "مُسجَّلة"
 
-#: app/components/customers/person-marketing-card.tsx:350
+#: app/components/customers/person-marketing-card.tsx:360
 msgid "Recorded by {name} on {subscribedOn}"
 msgstr "سجّلها {name} في {subscribedOn}"
 
-#: app/components/customers/person-marketing-card.tsx:66
-#: app/components/customers/person-marketing-card.tsx:355
+#: app/components/customers/person-marketing-card.tsx:359
+msgid "Recorded by {name} on {subscribedOn} ({method})"
+msgstr ""
+
+#: app/components/customers/person-marketing-card.tsx:63
+#: app/components/customers/person-marketing-card.tsx:366
 msgid "Recorded by staff"
 msgstr "سجّلها الموظفون"
+
+#: app/components/customers/person-marketing-card.tsx:356
+msgid "Recorded by you on {subscribedOn}"
+msgstr ""
+
+#: app/components/customers/person-marketing-card.tsx:355
+msgid "Recorded by you on {subscribedOn} ({method})"
+msgstr ""
 
 #: app/components/staff/schedule/availability-sheet.tsx:194
 #: app/components/staff/schedule/time-off-sheet.tsx:167
@@ -32693,7 +32714,7 @@ msgstr "سجّلته أنت، لذا تتم الموافقة عليه فورًا
 msgid "Recorded on the audit log."
 msgstr "يُسجَّل في سجل التدقيق."
 
-#: app/components/customers/person-marketing-card.tsx:549
+#: app/components/customers/person-marketing-card.tsx:560
 msgid "Recorded. A confirmation email was sent recently."
 msgstr "تم التسجيل. أُرسل بريد تأكيد مؤخراً."
 
@@ -33463,7 +33484,7 @@ msgstr "إزالة المتغير"
 msgid "Removed"
 msgstr "تمت الإزالة"
 
-#: app/components/customers/person-marketing-card.tsx:407
+#: app/components/customers/person-marketing-card.tsx:417
 msgid "Removed by a list import on {when}"
 msgstr "أُزيل عبر استيراد قائمة في {when}"
 
@@ -33896,7 +33917,7 @@ msgstr "سيتم حذف سجلات الحجوزات أيضاً"
 
 #: ../../packages/reports/src/ui/report-labels.ts:148
 #: app/components/app-sidebar.tsx:527
-#: app/components/customers/person-marketing-card.tsx:53
+#: app/components/customers/person-marketing-card.tsx:50
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:40
 #: app/components/pos/terminals-manager.tsx:1603
 #: app/components/roles/tenant-role-access-manager.tsx:424
@@ -34239,7 +34260,7 @@ msgid "Resy"
 msgstr "Resy"
 
 #: ../../packages/ai/src/components/ai-elements/prompt-input.tsx:171
-#: app/components/customers/people-summary-row.tsx:138
+#: app/components/customers/people-summary-row.tsx:144
 #: app/components/inventory/counting-screen.tsx:684
 #: app/components/reservations/messages/message-preview.tsx:89
 #: app/components/reservations/settings/setup-list-chrome.tsx:83
@@ -34273,7 +34294,7 @@ msgstr "وقت عودة {name}"
 msgid "Returned plate"
 msgstr "طبق مُرجَع"
 
-#: app/components/customers/people-summary-row.tsx:178
+#: app/components/customers/people-summary-row.tsx:188
 msgid "Returning guests"
 msgstr "الضيوف العائدون"
 
@@ -37740,7 +37761,7 @@ msgstr "إنشاء حساب"
 msgid "Sign up with your social account or email"
 msgstr "أنشئ حساباً باستخدام حساب التواصل الاجتماعي أو البريد الإلكتروني"
 
-#: app/components/customers/person-marketing-card.tsx:68
+#: app/components/customers/person-marketing-card.tsx:65
 msgid "Sign-up"
 msgstr "التسجيل"
 
@@ -37779,7 +37800,7 @@ msgstr "فضي"
 msgid "Simulation"
 msgstr "بيئة المحاكاة"
 
-#: app/components/customers/person-marketing-card.tsx:212
+#: app/components/customers/person-marketing-card.tsx:215
 msgid "Since"
 msgstr "منذ"
 
@@ -37900,7 +37921,7 @@ msgstr "أصغر مجموعة"
 
 #: ../../packages/marketing-workflow/src/nodes/action-sms-node.tsx:19
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:15
-#: app/components/customers/person-marketing-card.tsx:56
+#: app/components/customers/person-marketing-card.tsx:53
 msgid "SMS"
 msgstr "الرسائل النصية"
 
@@ -38178,7 +38199,7 @@ msgstr "حدث خطأ ما. حاول مرة أخرى."
 msgid "Sort by"
 msgstr "الترتيب حسب"
 
-#: app/components/customers/person-marketing-card.tsx:215
+#: app/components/customers/person-marketing-card.tsx:218
 #: app/components/customers/person-profile-screen.tsx:776
 #: app/components/reservations/detail-sheet.tsx:863
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:393
@@ -38329,7 +38350,7 @@ msgstr "مربع"
 
 #: app/components/app-sidebar.tsx:601
 #: app/components/command-menu.tsx:140
-#: app/components/customers/person-marketing-card.tsx:70
+#: app/components/customers/person-marketing-card.tsx:67
 #: app/components/roles/tenant-role-access-manager.tsx:302
 #: app/components/workspace-breadcrumb.tsx:17
 #: app/routes/_app+/$orgSlug_+/staff+/_index.tsx:20
@@ -38743,7 +38764,7 @@ msgstr "أجهزة Station"
 msgid "Stats"
 msgstr "الإحصائيات"
 
-#: app/components/customers/person-marketing-card.tsx:209
+#: app/components/customers/person-marketing-card.tsx:212
 #: app/components/customers/person-orders-panel.tsx:166
 #: app/components/customers/person-profile-screen.tsx:779
 #: app/components/inventory/stock-list.tsx:114
@@ -39104,13 +39125,17 @@ msgstr "ستظهر الطلبات المُرسلة هنا."
 msgid "Subscribe"
 msgstr "اشتراك"
 
-#: app/components/customers/person-marketing-card.tsx:238
+#: app/components/customers/person-marketing-card.tsx:241
 msgid "Subscribed"
 msgstr "مشترك"
 
 #: app/components/customers/person-marketing-card.tsx:388
-msgid "Subscribed on {subscribedOn}"
-msgstr "مشترك منذ {subscribedOn}"
+#~ msgid "Subscribed on {subscribedOn}"
+#~ msgstr "مشترك منذ {subscribedOn}"
+
+#: app/components/customers/person-marketing-card.tsx:398
+msgid "Subscribed on {subscribedOn} ({source})"
+msgstr ""
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:98
 msgid "Subscription Cancelled"
@@ -40174,7 +40199,7 @@ msgstr "أرسل رسالة إلى الضيوف في {name} عندما يجهز 
 msgid "Text guests when their order is ready"
 msgstr "أرسل رسالة إلى الضيوف عندما يجهز طلبهم"
 
-#: app/components/customers/person-marketing-card.tsx:437
+#: app/components/customers/person-marketing-card.tsx:447
 msgid "Text marketing"
 msgstr "التسويق عبر الرسائل النصية"
 
@@ -40194,7 +40219,7 @@ msgstr "نص فقط"
 msgid "Text position"
 msgstr "موضع النص"
 
-#: app/components/customers/people-summary-row.tsx:199
+#: app/components/customers/people-summary-row.tsx:209
 msgid "Text subscribers"
 msgstr "مشتركو الرسائل النصية"
 
@@ -40226,7 +40251,7 @@ msgstr "الرسائل النصية غير متاحة في منطقة بيانا
 msgid "Texts are only sent to US phone numbers. For other numbers, tell the guest in person."
 msgstr "تُرسل الرسائل النصية إلى أرقام الهواتف الأمريكية فقط. للأرقام الأخرى، أخبر الضيف شخصيًا."
 
-#: app/components/customers/person-marketing-card.tsx:558
+#: app/components/customers/person-marketing-card.tsx:576
 msgid "Texts start once the guest verifies their phone number."
 msgstr "تبدأ الرسائل النصية بمجرد أن يتحقق الضيف من رقم هاتفه."
 
@@ -40860,7 +40885,7 @@ msgstr "تم إلغاء الربط في فيسبوك."
 msgid "The connection was not allowed in Canva."
 msgstr "لم يُسمح بالربط في Canva."
 
-#: app/components/customers/person-marketing-card.tsx:487
+#: app/components/customers/person-marketing-card.tsx:497
 msgid "The consent could not be recorded. Try again."
 msgstr "تعذّر تسجيل الموافقة. حاول مرة أخرى."
 
@@ -41202,11 +41227,11 @@ msgstr "يُستخدم الترحيب عندما يرد المساعد الذك�
 msgid "the guest"
 msgstr "الضيف"
 
-#: app/components/customers/person-marketing-card.tsx:643
+#: app/components/customers/person-marketing-card.tsx:661
 msgid "The guest asked to receive marketing by email"
 msgstr "طلب الضيف تلقي الرسائل التسويقية عبر البريد الإلكتروني"
 
-#: app/components/customers/person-marketing-card.tsx:645
+#: app/components/customers/person-marketing-card.tsx:663
 msgid "The guest asked to receive marketing by text"
 msgstr "طلب الضيف تلقي الرسائل التسويقية عبر الرسائل النصية"
 
@@ -41227,7 +41252,7 @@ msgstr "لا يكسب الضيف أي نقاط على هذا الحساب. إذ�
 msgid "The guest gets a new confirmation with a new manage link. The link in every earlier message stops working."
 msgstr "يتلقى الضيف تأكيداً جديداً مع رابط إدارة جديد. يتوقف الرابط في كل رسالة سابقة عن العمل."
 
-#: app/components/customers/person-marketing-card.tsx:597
+#: app/components/customers/person-marketing-card.tsx:615
 msgid "The guest gets one text confirming the subscription."
 msgstr "يتلقى الضيف رسالة نصية واحدة تؤكد الاشتراك."
 
@@ -41268,15 +41293,15 @@ msgstr "يدفع الضيف {total} إجمالًا، شاملًا الإكرام
 #~ msgid "The guest profile could not be loaded."
 #~ msgstr "تعذّر تحميل ملف الضيف."
 
-#: app/components/customers/person-marketing-card.tsx:467
+#: app/components/customers/person-marketing-card.tsx:477
 msgid "The guest unsubscribed recently. Try again later."
 msgstr "ألغى الضيف اشتراكه مؤخراً. حاول مرة أخرى لاحقاً."
 
-#: app/components/customers/person-marketing-card.tsx:326
+#: app/components/customers/person-marketing-card.tsx:329
 msgid "The guest unsubscribed recently. You can record consent again after {until}."
 msgstr "ألغى الضيف اشتراكه مؤخراً. يمكنك تسجيل الموافقة مرة أخرى بعد {until}."
 
-#: app/components/customers/person-marketing-card.tsx:465
+#: app/components/customers/person-marketing-card.tsx:475
 msgid "The guest unsubscribed recently. You can record consent again after {when}."
 msgstr "ألغى الضيف اشتراكه مؤخراً. يمكنك تسجيل الموافقة مرة أخرى بعد {when}."
 
@@ -42577,7 +42602,7 @@ msgstr "هذا العميل غير موجود."
 msgid "This customer has no reservation history yet."
 msgstr "ليس لهذا العميل سجل حجوزات بعد."
 
-#: app/components/customers/person-marketing-card.tsx:486
+#: app/components/customers/person-marketing-card.tsx:496
 msgid "This customer no longer exists."
 msgstr "هذا العميل لم يعد موجوداً."
 
@@ -43968,7 +43993,7 @@ msgstr "أكثر الأسباب"
 #~ msgid "Top-Level Group"
 #~ msgstr "مجموعة رئيسية"
 
-#: app/components/customers/person-marketing-card.tsx:203
+#: app/components/customers/person-marketing-card.tsx:206
 #: app/components/hiring/screener-editor.tsx:178
 msgid "Topic"
 msgstr "الموضوع"
@@ -44035,7 +44060,7 @@ msgstr "إجمالي الوحدات"
 #~ msgid "Total uses"
 #~ msgstr "إجمالي الاستخدامات"
 
-#: app/components/customers/people-summary-row.tsx:211
+#: app/components/customers/people-summary-row.tsx:221
 msgid "Totals for your locations"
 msgstr "إجماليات فروعك"
 
@@ -44572,7 +44597,7 @@ msgstr "تم حذف شريحة وقت الدوران."
 #~ msgid "Turn-Time Buckets"
 #~ msgstr "شرائح وقت الدوران"
 
-#: app/components/customers/person-marketing-card.tsx:405
+#: app/components/customers/person-marketing-card.tsx:415
 msgid "Turned off by staff on {when}"
 msgstr "أوقفه الموظفون في {when}"
 
@@ -45133,15 +45158,15 @@ msgstr "المدفوعات غير المسواة: {unsettledPaymentsCount}"
 msgid "Unstar"
 msgstr "إلغاء التفضيل"
 
-#: app/components/customers/person-marketing-card.tsx:242
+#: app/components/customers/person-marketing-card.tsx:245
 msgid "Unsubscribed"
 msgstr "غير مشترك"
 
-#: app/components/customers/person-marketing-card.tsx:403
+#: app/components/customers/person-marketing-card.tsx:413
 msgid "Unsubscribed by the guest on {when}"
 msgstr "ألغى الضيف الاشتراك في {when}"
 
-#: app/components/customers/person-marketing-card.tsx:408
+#: app/components/customers/person-marketing-card.tsx:418
 msgid "Unsubscribed on {when}"
 msgstr "أُلغي الاشتراك في {when}"
 
@@ -46420,8 +46445,8 @@ msgstr "بانتظار الدفع"
 msgid "Waiting for review"
 msgstr "بانتظار المراجعة"
 
-#: app/components/customers/person-marketing-card.tsx:369
-#: app/components/customers/person-marketing-card.tsx:392
+#: app/components/customers/person-marketing-card.tsx:379
+#: app/components/customers/person-marketing-card.tsx:402
 msgid "Waiting for the guest to confirm by email"
 msgstr "بانتظار تأكيد الضيف عبر البريد الإلكتروني"
 
@@ -46897,7 +46922,7 @@ msgstr "سنرسل إلى {email} رابطًا لإنشاء حساب دخول. �
 msgid "We'd love to hear what went well or how we can improve the product experience."
 msgstr "نود أن نسمع ما سار على ما يرام أو كيف يمكننا تحسين تجربة المنتج."
 
-#: app/components/customers/person-marketing-card.tsx:592
+#: app/components/customers/person-marketing-card.tsx:610
 msgid "We'll email the guest a link to confirm. It stays pending until they do."
 msgstr "سنرسل إلى الضيف رابط تأكيد عبر البريد الإلكتروني. يبقى الاشتراك معلقاً حتى يؤكد."
 
@@ -48059,8 +48084,8 @@ msgid "Yesterday"
 msgstr "أمس"
 
 #: app/components/customers/person-marketing-card.tsx:348
-msgid "you"
-msgstr "أنت"
+#~ msgid "you"
+#~ msgstr "أنت"
 
 #: app/components/hiring/candidate-parts.tsx:374
 #: app/components/organization-members.tsx:223
@@ -48374,8 +48399,8 @@ msgstr "ليست لديك صلاحية إنشاء مجموعات المعدّل�
 msgid "You do not have permission to do that."
 msgstr "ليست لديك صلاحية لتنفيذ ذلك."
 
-#: app/components/customers/person-marketing-card.tsx:482
-#: app/components/customers/person-marketing-card.tsx:485
+#: app/components/customers/person-marketing-card.tsx:492
+#: app/components/customers/person-marketing-card.tsx:495
 msgid "You do not have permission to record consent."
 msgstr "ليس لديك إذن بتسجيل الموافقة."
 

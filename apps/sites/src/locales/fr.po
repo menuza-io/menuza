@@ -236,6 +236,7 @@ msgid "1 guest"
 msgstr "1 personne"
 
 #: src/components/marketing/MarketingConsentBoxes.astro.ts:3
+#: src/components/marketing/MessagesSection.astro.ts:3
 msgid "A few messages a month. You can opt out anytime."
 msgstr "Quelques messages par mois. Vous pouvez vous désabonner à tout moment."
 
@@ -1600,6 +1601,7 @@ msgid "Most ordered"
 msgstr "Les plus commandés"
 
 #: src/components/marketing/MarketingConsentBoxes.astro.ts:3
+#: src/components/marketing/MessagesSection.astro.ts:3
 msgid "Msg and data rates may apply. Reply STOP to opt out."
 msgstr "Des frais de messages et de données peuvent s'appliquer. Répondez STOP pour vous désabonner."
 

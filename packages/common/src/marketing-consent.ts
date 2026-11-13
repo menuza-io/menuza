@@ -9,8 +9,35 @@
 
 import { z } from 'zod'
 
-/** The opt-in boxes and switches a guest sees on Sites and in the customer app. */
-export const MARKETING_CONSENT_TEXT_VERSION = 'guest-2026-11'
+/**
+ * One id per wording a guest can actually be shown, so a stored row proves
+ * which text was on screen. "Us" variants carry the text-message disclosure
+ * (frequency line plus "Msg and data rates may apply. Reply STOP to opt out.");
+ * the plain variants are for the KSA region, which is never shown it. Bump the
+ * matching id whenever that surface's wording changes.
+ */
+export const MARKETING_CONSENT_TEXT_VERSIONS = {
+	/** Checkout and sign-up boxes, with the rates/STOP disclosure. */
+	boxesDisclosure: 'guest-boxes-us-2026-11',
+	/** Checkout and sign-up boxes, frequency line only. */
+	boxes: 'guest-boxes-2026-11',
+	/** Profile switches (offers and news), with the rates/STOP disclosure. */
+	profileDisclosure: 'guest-profile-us-2026-11',
+	/** Profile switches (offers and news), frequency line only. */
+	profile: 'guest-profile-2026-11',
+} as const
+
+export type MarketingConsentSurface = 'boxes' | 'profile'
+
+/** The version id of the wording a surface rendered. */
+export function marketingConsentTextVersion(
+	surface: MarketingConsentSurface,
+	smsDisclosure: boolean,
+): string {
+	const v = MARKETING_CONSENT_TEXT_VERSIONS
+	if (surface === 'boxes') return smsDisclosure ? v.boxesDisclosure : v.boxes
+	return smsDisclosure ? v.profileDisclosure : v.profile
+}
 
 /** The confirmation a staff member accepts when recording a guest's consent. */
 export const STAFF_CONSENT_TEXT_VERSION = 'staff-2026-11'

@@ -1,5 +1,6 @@
 ---
 import { msg } from '@lingui/core/macro'
+import { marketingConsentTextVersion } from '@repo/common/marketing-consent'
 import { translate } from '~/lib/ordering-labels'
 
 /**
@@ -7,6 +8,17 @@ import { translate } from '~/lib/ordering-labels'
  * message. Rendered without any guest data; the browser loads the
  * subscriptions from tenant-api after sign-in and each switch writes straight
  * back (optimistic, rolled back on an error).
+ *
+ * EDITORS: the offers row carries the consent wording (switch labels, the
+ * frequency line and, outside KSA, the rates/STOP line). When that wording
+ * changes, bump `MARKETING_CONSENT_TEXT_VERSIONS.profile` and
+ * `.profileDisclosure` in `@repo/common/marketing-consent`. Only the offers
+ * topic sends a version (`data-text-version-marketing`); the reservation news
+ * row sits outside that wording, so it sends none.
+ *
+ * KSA sends no marketing texts: the offers Text switch is rendered hidden and
+ * the browser shows it only for a guest who already has an active text
+ * subscription, so they can turn it off.
  */
 interface Props {
 	/** Show the reservation news row (only while online booking is on). */
@@ -17,6 +29,8 @@ interface Props {
 const { reservations = false, class: className } = Astro.props
 const i18n = Astro.locals.i18n
 const org = Astro.locals.organization?.name ?? ''
+const ksa = Astro.locals.organization?.dataRegion === 'ksa'
+const textVersion = marketingConsentTextVersion('profile', !ksa)
 
 const topicLabels = {
 	marketing: i18n._(msg`Offers and news`),
@@ -37,6 +51,8 @@ const labels = {
 	needsEmail: i18n._(msg`Add an email address first`),
 	needsPhone: i18n._(msg`Verify your phone first`),
 	error: i18n._(msg`We couldn't save that. Try again.`),
+	frequency: i18n._(msg`A few messages a month. You can opt out anytime.`),
+	rates: i18n._(msg`Msg and data rates may apply. Reply STOP to opt out.`),
 }
 const ariaLabel = (topic: keyof typeof topicLabels, channel: (typeof channels)[number]) =>
 	translate(i18n, msg`{topic}: {channel}`, {
@@ -52,6 +68,8 @@ const ariaLabel = (topic: keyof typeof topicLabels, channel: (typeof channels)[n
 	data-label-needs-email={labels.needsEmail}
 	data-label-needs-phone={labels.needsPhone}
 	data-label-error={labels.error}
+	data-text-version-marketing={textVersion}
+	data-ksa={ksa ? 'true' : undefined}
 	aria-labelledby="messages-title"
 	hidden
 	class:list={['surface w-full p-6 sm:p-8', className]}
@@ -66,7 +84,11 @@ const ariaLabel = (topic: keyof typeof topicLabels, channel: (typeof channels)[n
 				<p class="text-sm font-semibold text-foreground">{topicLabels[topic]}</p>
 				<div class="mt-2 flex flex-wrap gap-x-6 gap-y-2">
 					{channels.map((channel) => (
-						<div class="flex items-center gap-3">
+						<div
+							class="flex items-center gap-3"
+							data-switch-row
+							hidden={ksa && topic === 'marketing' && channel === 'sms'}
+						>
 							<button
 								type="button"
 								role="switch"
@@ -75,7 +97,7 @@ const ariaLabel = (topic: keyof typeof topicLabels, channel: (typeof channels)[n
 								data-topic={topic}
 								data-channel={channel}
 								disabled
-								class="group focus-ring relative inline-flex h-6 w-11 shrink-0 items-center rounded-full bg-muted transition-colors duration-150 ease-out aria-checked:bg-primary disabled:opacity-50 motion-reduce:transition-none"
+								class="group focus-ring relative inline-flex h-6 w-11 shrink-0 items-center rounded-full bg-muted transition-colors duration-150 ease-out aria-checked:bg-primary disabled:opacity-50 aria-disabled:opacity-50 motion-reduce:transition-none"
 							>
 								<span class="ms-0.5 size-5 rounded-full bg-background shadow-elev-1 transition-transform duration-150 ease-out group-aria-checked:translate-x-5 rtl:group-aria-checked:-translate-x-5 motion-reduce:transition-none" />
 							</button>
@@ -83,6 +105,12 @@ const ariaLabel = (topic: keyof typeof topicLabels, channel: (typeof channels)[n
 						</div>
 					))}
 				</div>
+				{topic === 'marketing' ? (
+					<p class="mt-2 text-xs text-pretty text-muted-foreground">
+						{labels.frequency}
+						{ksa ? '' : ` ${labels.rates}`}
+					</p>
+				) : null}
 				<p data-status role="status" class="mt-2 text-xs text-muted-foreground empty:hidden"></p>
 			</li>
 		))}

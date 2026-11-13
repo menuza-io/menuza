@@ -42,6 +42,10 @@ msgstr "{count, plural, one {Cancelación gratuita hasta # hora antes.} other {C
 msgid "{count} min"
 msgstr "{count} min"
 
+#: components/profile/messages-section.tsx:110
+msgid "{label}: {channel}"
+msgstr "{label}: {channel}"
+
 #: lib/loyalty/labels.ts:16
 msgid "{n, plural, one {{count} point} other {{count} points}}"
 msgstr "{n, plural, one {{count} punto} other {{count} puntos}}"
@@ -98,6 +102,10 @@ msgstr "Se necesita una tarjeta para garantizar esta reserva."
 msgid "A deposit of {amount} is due to confirm this booking."
 msgstr "Se requiere un depósito de {amount} para confirmar esta reserva."
 
+#: components/profile/messages-section.tsx:217
+msgid "A few messages a month. You can opt out anytime."
+msgstr "Unos pocos mensajes al mes. Puedes darte de baja cuando quieras."
+
 #: lib/loyalty/labels.ts:65
 msgid "A free item"
 msgstr "Un artículo gratis"
@@ -110,7 +118,7 @@ msgstr "Unos {count} min"
 msgid "acme or acme.example.com"
 msgstr "acme o acme.example.com"
 
-#: components/profile/messages-section.tsx:97
+#: components/profile/messages-section.tsx:154
 msgid "Add an email address first"
 msgstr "Añade primero una dirección de correo"
 
@@ -218,7 +226,7 @@ msgstr "Buscar solicitudes"
 msgid "Check the menu for what we are serving today."
 msgstr "Consulta el menú para ver qué servimos hoy."
 
-#: components/profile/messages-section.tsx:121
+#: components/profile/messages-section.tsx:179
 msgid "Check your inbox to confirm"
 msgstr "Revisa tu bandeja de entrada para confirmar"
 
@@ -234,7 +242,7 @@ msgstr "Pagar"
 msgid "Choose a location"
 msgstr "Elige un local"
 
-#: components/profile/messages-section.tsx:117
+#: components/profile/messages-section.tsx:174
 msgid "Choose what you hear from us, and how."
 msgstr "Elige qué recibes de nosotros y cómo."
 
@@ -328,7 +336,7 @@ msgstr "Acumulado"
 msgid "Edit details"
 msgstr "Editar datos"
 
-#: components/profile/messages-section.tsx:72
+#: components/profile/messages-section.tsx:107
 #: components/profile/profile-screen.tsx:92
 msgid "Email"
 msgstr "Correo electrónico"
@@ -511,13 +519,17 @@ msgstr "Cargando…"
 msgid "Menu"
 msgstr "Menú"
 
-#: components/profile/messages-section.tsx:115
+#: components/profile/messages-section.tsx:172
 msgid "Messages from {name}"
 msgstr "Mensajes de {name}"
 
 #: components/reservations/parts.tsx:205
 msgid "More guests"
 msgstr "Más personas"
+
+#: components/profile/messages-section.tsx:220
+msgid "Msg and data rates may apply. Reply STOP to opt out."
+msgstr "Pueden aplicarse tarifas de mensajes y datos. Responde STOP para darte de baja."
 
 #: lib/reservations/messages.ts:19
 msgid "My reservations"
@@ -594,7 +606,7 @@ msgstr "Ahora mismo no hay nada en el menú."
 msgid "Occasion"
 msgstr "Ocasión"
 
-#: components/profile/messages-section.tsx:66
+#: components/profile/messages-section.tsx:101
 msgid "Offers and news"
 msgstr "Ofertas y novedades"
 
@@ -755,7 +767,7 @@ msgstr "Solicitudes para usar tus recompensas"
 msgid "Reservation"
 msgstr "Reserva"
 
-#: components/profile/messages-section.tsx:68
+#: components/profile/messages-section.tsx:103
 msgid "Reservation news"
 msgstr "Novedades de reservas"
 
@@ -900,7 +912,7 @@ msgstr "Los impuestos, las propinas y los gastos de envío no cuentan para acumu
 msgid "Tell us what to call you."
 msgstr "Dinos cómo quieres que te llamemos."
 
-#: components/profile/messages-section.tsx:72
+#: components/profile/messages-section.tsx:107
 msgid "Text"
 msgstr "SMS"
 
@@ -1022,7 +1034,7 @@ msgstr "Intentar de nuevo"
 msgid "Try one of these times instead"
 msgstr "Prueba una de estas horas"
 
-#: components/profile/messages-section.tsx:160
+#: components/profile/messages-section.tsx:228
 msgid "Turning a switch off never affects receipts or booking confirmations."
 msgstr "Desactivar un interruptor nunca afecta a los recibos ni a las confirmaciones de reserva."
 
@@ -1067,7 +1079,7 @@ msgstr "Código de verificación"
 msgid "Verify"
 msgstr "Verificar"
 
-#: components/profile/messages-section.tsx:99
+#: components/profile/messages-section.tsx:156
 msgid "Verify your phone first"
 msgstr "Verifica primero tu teléfono"
 
@@ -1087,7 +1099,7 @@ msgstr "No encontramos ese sitio. Revisa la dirección e inténtalo de nuevo."
 msgid "We couldn't find that."
 msgstr "No hemos encontrado eso."
 
-#: components/profile/messages-section.tsx:100
+#: components/profile/messages-section.tsx:157
 msgid "We couldn't save that. Try again."
 msgstr "No pudimos guardarlo. Inténtalo de nuevo."
 

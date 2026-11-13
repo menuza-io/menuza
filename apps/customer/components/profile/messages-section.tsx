@@ -1,6 +1,7 @@
+import { marketingConsentTextVersion } from '@repo/common/marketing-consent'
 import { useLingui } from '@lingui/react/macro'
 import { useEffect, useMemo, useState } from 'react'
-import { Pressable, View } from 'react-native'
+import { AccessibilityInfo, Pressable, View } from 'react-native'
 import {
 	type SubscriptionChannel,
 	SubscriptionsClient,
@@ -19,15 +20,49 @@ const CHANNELS: readonly SubscriptionChannel[] = ['email', 'sms']
 const keyOf = (topic: SubscriptionTopic, channel: SubscriptionChannel) =>
 	`${topic}:${channel}`
 
+/** Joins class names, skipping falsy parts (no `cn` helper in this app). */
+export const rowClass = (disabled: boolean) =>
+	['min-h-11 flex-row items-center gap-3 py-2', disabled && 'opacity-50']
+		.filter(Boolean)
+		.join(' ')
+
+/**
+ * A topic's pending or error line. Android reads the live region; iOS ignores
+ * it, so the note is also announced when it appears or changes.
+ */
+function TopicNote({ note }: { note: string }) {
+	useEffect(() => {
+		if (note) AccessibilityInfo.announceForAccessibility(note)
+	}, [note])
+	if (!note) return null
+	return (
+		<Text variant="muted" accessibilityLiveRegion="polite">
+			{note}
+		</Text>
+	)
+}
+
 /**
  * "Messages from <Restaurant>": one switch per channel for offers and for
  * reservation news, saved straight to the regional tenant-api with the
  * customer token (optimistic, rolled back on an error). Drop alerts are not
  * offered here: the app has no drops screen.
+ *
+ * EDITORS: the offers topic carries the consent wording (switch labels, the
+ * frequency line and, outside KSA, the rates/STOP line). When that wording
+ * changes, bump `MARKETING_CONSENT_TEXT_VERSIONS.profile` and
+ * `.profileDisclosure` in `@repo/common/marketing-consent`. Only the offers
+ * topic sends a version; reservation news sits outside that wording, so it
+ * sends none.
+ *
+ * KSA (`configuration.dataRegion`) sends no marketing texts: the offers Text
+ * switch is hidden, and shown only while a guest still has an active text
+ * subscription so they can turn it off. It can never be turned on there.
  */
 export function MessagesSection() {
 	const { t } = useLingui()
-	const { session, organization } = useAppSnapshot()
+	const { session, organization, configuration } = useAppSnapshot()
+	const ksa = configuration.dataRegion === 'ksa'
 	const reservations = useReservations()
 	const client = useMemo(
 		() => (session ? new SubscriptionsClient(session) : null),
@@ -71,22 +106,44 @@ export function MessagesSection() {
 	const channelLabel = (channel: SubscriptionChannel) =>
 		channel === 'email' ? t`Email` : t`Text`
 
+	const switchLabel = (label: string, channel: string) =>
+		t`${label}: ${channel}`
+
 	const stateOf = (topic: Topic, channel: SubscriptionChannel) =>
 		overrides[keyOf(topic, channel)] ?? subscriptionState(rows, topic, channel)
 
 	const setNote = (topic: Topic, text: string) =>
 		setNotes((current) => ({ ...current, [topic]: text }))
 
+	// KSA: the offers Text switch exists only to turn an existing opt-in off.
+	const hiddenChannel = (topic: Topic, channel: SubscriptionChannel) =>
+		ksa &&
+		topic === 'marketing' &&
+		channel === 'sms' &&
+		!rows.some(
+			(row) =>
+				row.topic === 'marketing' && row.channel === 'sms' && row.subscribed,
+		) &&
+		overrides[keyOf(topic, channel)] === undefined
+
 	const toggle = async (topic: Topic, channel: SubscriptionChannel) => {
 		const key = keyOf(topic, channel)
 		if (busy.has(key)) return
 		const before = stateOf(topic, channel)
 		const next = before === 'off'
+		if (next && ksa && topic === 'marketing' && channel === 'sms') return
 		setBusy((current) => new Set(current).add(key))
 		setOverrides((current) => ({ ...current, [key]: next ? 'on' : 'off' }))
 		setNote(topic, '')
 		try {
-			const state = await client.set(topic, channel, next)
+			const state = await client.set(
+				topic,
+				channel,
+				next,
+				topic === 'marketing'
+					? marketingConsentTextVersion('profile', !ksa)
+					: undefined,
+			)
 			setOverrides((current) => ({ ...current, [key]: state }))
 		} catch (error) {
 			setOverrides((current) => ({ ...current, [key]: before }))
@@ -124,36 +181,46 @@ export function MessagesSection() {
 					<View key={topic} className="gap-1">
 						<Text variant="label">{label}</Text>
 						<View className="flex-row flex-wrap gap-x-6">
-							{CHANNELS.map((channel) => {
-								const checked = stateOf(topic, channel) !== 'off'
-								const disabled = busy.has(keyOf(topic, channel))
-								return (
-									<Pressable
-										key={channel}
-										accessibilityRole="switch"
-										accessibilityLabel={`${label}: ${channelLabel(channel)}`}
-										accessibilityState={{ checked, disabled }}
-										disabled={disabled}
-										onPress={() => void toggle(topic, channel)}
-										className={`flex-row items-center gap-3 py-2${disabled ? 'opacity-50' : ''}`}
-									>
-										<View
-											className={`h-6 w-11 justify-center rounded-full px-0.5 ${checked ? 'bg-primary items-end' : 'bg-input items-start'}`}
+							{CHANNELS.filter((channel) => !hiddenChannel(topic, channel)).map(
+								(channel) => {
+									const checked = stateOf(topic, channel) !== 'off'
+									const disabled = busy.has(keyOf(topic, channel))
+									return (
+										<Pressable
+											key={channel}
+											accessibilityRole="switch"
+											accessibilityLabel={switchLabel(
+												label,
+												channelLabel(channel),
+											)}
+											accessibilityState={{ checked, disabled }}
+											disabled={disabled}
+											onPress={() => void toggle(topic, channel)}
+											hitSlop={8}
+											className={rowClass(disabled)}
 										>
-											<View className="bg-background h-5 w-5 rounded-full" />
-										</View>
-										<Text importantForAccessibility="no">
-											{channelLabel(channel)}
-										</Text>
-									</Pressable>
-								)
-							})}
+											<View
+												className={`h-6 w-11 justify-center rounded-full px-0.5 ${checked ? 'bg-primary items-end' : 'bg-input items-start'}`}
+											>
+												<View className="bg-background h-5 w-5 rounded-full" />
+											</View>
+											<Text importantForAccessibility="no">
+												{channelLabel(channel)}
+											</Text>
+										</Pressable>
+									)
+								},
+							)}
 						</View>
-						{note ? (
-							<Text variant="muted" accessibilityLiveRegion="polite">
-								{note}
+						{topic === 'marketing' ? (
+							<Text variant="muted">
+								{t`A few messages a month. You can opt out anytime.`}
+								{ksa
+									? ''
+									: ` ${t`Msg and data rates may apply. Reply STOP to opt out.`}`}
 							</Text>
 						) : null}
+						<TopicNote note={note} />
 					</View>
 				)
 			})}

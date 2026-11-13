@@ -425,9 +425,13 @@ const valueClass = 'price font-medium text-foreground'
 				</section>
 
 				{/* Set by checkout when an email opt-in is waiting for its link. */}
-				<p id="marketing-email-note" class="hidden text-center text-sm text-muted-foreground [&:not(.hidden)]:block" role="status">
-					{i18n._(msg`We sent a link to confirm your email`)}
-				</p>
+				{/* Empty live region: the text is inserted when it should show, so screen readers announce it. */}
+				<p
+					id="marketing-email-note"
+					role="status"
+					data-text={i18n._(msg`We sent a link to confirm your email`)}
+					class="text-center text-sm text-muted-foreground empty:hidden"
+				></p>
 
 				<DropAlertsSignup source="order_success" title={dropAlertsTitle} />
 
@@ -1070,7 +1074,10 @@ const valueClass = 'price font-medium text-foreground'
 			}
 			show('order-view')
 			// Once: checkout left a flag when an email opt-in awaits its link.
-			if (takeEmailConfirmationPending()) show('marketing-email-note')
+			if (takeEmailConfirmationPending(orderId)) {
+				const note = document.getElementById('marketing-email-note')
+				if (note) note.textContent = note.dataset.text ?? ''
+			}
 
 			// Retry after a failure and "Complete payment" during a hold share
 			// one action: start a hosted payment session for this order.

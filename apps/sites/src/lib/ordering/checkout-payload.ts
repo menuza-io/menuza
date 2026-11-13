@@ -16,8 +16,6 @@ export function checkoutOrderPayload(
 		reward: unknown
 		/** `{code?, expectedDiscountMinor}` from the confirmed discount quote; null sends none. */
 		discounts?: Record<string, unknown> | null
-		/** Only the boxes the signed-in guest ticked; undefined sends none. */
-		marketingConsent?: Record<string, unknown> | null
 	},
 ): Record<string, unknown> {
 	const notes = extra.deliveryNotes?.trim()
@@ -29,8 +27,23 @@ export function checkoutOrderPayload(
 			: {}),
 		...(extra.reward ? { loyalty: extra.reward } : {}),
 		...(extra.discounts ? { discounts: extra.discounts } : {}),
-		...(extra.marketingConsent
-			? { marketingConsent: extra.marketingConsent }
-			: {}),
+	}
+}
+
+/**
+ * The request body: the core payload, the attempt key and the boxes the
+ * signed-in guest ticked (undefined sends none). The attempt key is derived
+ * from `core` alone, so consent is added only here, after the key exists:
+ * changing a box on a retry must replay the first order, not place a second.
+ */
+export function checkoutOrderRequest(
+	core: Record<string, unknown>,
+	idempotencyKey: string,
+	marketingConsent?: Record<string, unknown> | null,
+): Record<string, unknown> {
+	return {
+		...core,
+		...(marketingConsent ? { marketingConsent } : {}),
+		idempotencyKey,
 	}
 }

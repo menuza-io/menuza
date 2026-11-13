@@ -42,6 +42,7 @@ function Tile({
 	change,
 	extra,
 	active,
+	toggle = true,
 	onClick,
 }: {
 	id: string
@@ -50,13 +51,15 @@ function Tile({
 	change: number
 	extra?: ReactNode
 	active: boolean
+	/** False for the "show all" tile, which is a plain button, not a toggle. */
+	toggle?: boolean
 	onClick: () => void
 }) {
 	const { i18n } = useLingui()
 	return (
 		<button
 			type="button"
-			aria-pressed={active}
+			aria-pressed={toggle ? active : undefined}
 			onClick={onClick}
 			data-testid={`customers-summary-${id}`}
 			className={cn(
@@ -105,6 +108,7 @@ export function PeopleSummaryRow({
 	/** Called with the group to show, or null for the default list. */
 	onSelect: (group: PeopleSummaryGroup | null) => void
 }) {
+	const { i18n } = useLingui()
 	const [summary, setSummary] = useState<PeopleSummary | null>(null)
 	const [failed, setFailed] = useState(false)
 	const [attempt, setAttempt] = useState(0)
@@ -131,6 +135,8 @@ export function PeopleSummaryRow({
 		return (
 			<div
 				className="text-muted-foreground flex min-h-24 flex-wrap items-center gap-3 rounded-lg border p-3 text-sm"
+				role="status"
+				aria-live="polite"
 				data-testid="customers-summary-error"
 			>
 				<Trans>Couldn't load totals</Trans>
@@ -160,7 +166,10 @@ export function PeopleSummaryRow({
 
 	const toggle = (next: PeopleSummaryGroup) =>
 		onSelect(group === next ? null : next)
-	const sharePercent = Math.round(summary.returningGuests.share * 100)
+	const share = new Intl.NumberFormat(i18n.locale, {
+		style: 'percent',
+		maximumFractionDigits: 0,
+	}).format(summary.returningGuests.share)
 
 	return (
 		<div className="flex flex-col gap-2" data-testid="customers-summary">
@@ -171,6 +180,7 @@ export function PeopleSummaryRow({
 					total={summary.guests.total}
 					change={summary.guests.change30d}
 					active={group === null}
+					toggle={false}
 					onClick={() => onSelect(null)}
 				/>
 				<Tile
@@ -180,7 +190,7 @@ export function PeopleSummaryRow({
 					change={summary.returningGuests.change30d}
 					extra={
 						<Trans>
-							<bdi>{sharePercent}%</bdi> of guests
+							<bdi>{share}</bdi> of guests
 						</Trans>
 					}
 					active={group === 'returning'}

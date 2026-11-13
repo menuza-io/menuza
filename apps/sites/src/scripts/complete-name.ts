@@ -8,6 +8,7 @@ import {
 import { browserLocaleHref } from '~/lib/locale'
 import {
 	readConsentChoice,
+	readConsentTextVersion,
 	recordSignupConsent,
 } from '~/lib/marketing-consent-client'
 
@@ -93,8 +94,10 @@ export function initCompleteNamePage() {
 							: undefined,
 				})
 				// Ticked boxes only; a refused or failed call never fails the name step.
+				const consentRoot = form.querySelector('[data-marketing-consent]')
 				await recordSignupConsent(
-					readConsentChoice(form.querySelector('[data-marketing-consent]')),
+					readConsentChoice(consentRoot),
+					readConsentTextVersion(consentRoot),
 				)
 				window.location.href = browserLocaleHref('/')
 			} else {

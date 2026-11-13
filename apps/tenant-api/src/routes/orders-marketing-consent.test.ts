@@ -409,6 +409,63 @@ describe('marketing consent ticked at checkout', () => {
 		expect(send).not.toHaveBeenCalled()
 	})
 
+	it('keeps a staff-recorded text subscription and its provenance on a re-tick', async () => {
+		const db = await getTenantDb(orgId)
+		await setCustomerSubscription(db, {
+			customerId: 'cust_1',
+			topic: 'marketing',
+			channel: 'sms',
+			subscribed: true,
+			source: 'staff',
+			now: new Date(Date.now() - 10 * 86_400_000),
+			recordedBy: 'usr_staff',
+			consentMethod: 'paper_form',
+			consentTextVersion: 'staff-2026-11',
+		})
+		const before = await subscription('sms')
+		const res = await postOrder(
+			orderBody({ marketingConsent: { sms: true, textVersion: 'v2' } }),
+		)
+		expect(res.status).toBe(201)
+		expect(
+			((await res.json()) as Record<string, unknown>).marketingConsent,
+		).toEqual({ sms: 'subscribed' })
+		const after = await subscription('sms')
+		expect(after).toMatchObject({
+			source: 'staff',
+			recordedBy: 'usr_staff',
+			consentMethod: 'paper_form',
+			consentTextVersion: 'staff-2026-11',
+			unsubscribedAt: null,
+		})
+		expect(after!.subscribedAt).toEqual(before!.subscribedAt)
+		expect(after!.updatedAt).toEqual(before!.updatedAt)
+	})
+
+	it('re-subscribes a text opt-out from checkout', async () => {
+		const db = await getTenantDb(orgId)
+		for (const subscribed of [true, false]) {
+			await setCustomerSubscription(db, {
+				customerId: 'cust_1',
+				topic: 'marketing',
+				channel: 'sms',
+				subscribed,
+				source: 'profile',
+			})
+		}
+		const res = await postOrder(
+			orderBody({ marketingConsent: { sms: true, textVersion: 'v2' } }),
+		)
+		expect(
+			((await res.json()) as Record<string, unknown>).marketingConsent,
+		).toEqual({ sms: 'subscribed' })
+		expect(await subscription('sms')).toMatchObject({
+			source: 'checkout',
+			consentTextVersion: 'v2',
+			unsubscribedAt: null,
+		})
+	})
+
 	it('skips a channel the customer cannot receive', async () => {
 		const db = await getTenantDb(orgId)
 		await db.insert(customers).values({

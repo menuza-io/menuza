@@ -13,7 +13,7 @@ import {
 import { and, eq } from 'drizzle-orm'
 import { badRequest, conflict, forbidden } from '../lib/http.ts'
 import { findActiveOrganizationById } from '../lib/origin.ts'
-import { checkGlobalSendCap } from '../lib/rate-limit.ts'
+import { countPeopleConsentAttempt } from '../lib/people-consent-limits.ts'
 import { withSetupWrite } from '../lib/reservations-write.ts'
 import { smsRouteAvailable } from '../lib/sms-route.ts'
 import {
@@ -55,8 +55,19 @@ import {
  *   opt-out as `operator`, which does not start a cooling-off. Opting out a
  *   subscription that is already off (or absent) writes nothing, so a guest's
  *   own opt-out keeps its source.
+ * - The wording version stored as evidence is always the server's
+ *   `STAFF_CONSENT_TEXT_VERSION`: staff cannot choose it (a guest-facing
+ *   version would misstate what the guest saw).
  * Every change writes an `rsv_audit_log` row (actor, channel, on or off,
  * method): ids and vocabulary only, never contact details.
+ *
+ * Limits (`lib/people-consent-limits.ts`, durable in the organization's own
+ * database): the route allows `PEOPLE_CONSENT_LIMITS.actorWrites` (60 consent
+ * writes per staff member per 10 minutes, 429 `rate_limited` past it), and
+ * confirmation texts are capped by `PEOPLE_CONSENT_LIMITS.smsConfirmations`
+ * (100 per organization per hour). Past the text cap the consent is still
+ * recorded and the text is skipped. These texts never draw on the node-wide
+ * sign-in code cap (`checkGlobalSendCap`).
  */
 
 export const STAFF_CONSENT_TOPIC = 'marketing' as const
@@ -66,7 +77,6 @@ export type PersonConsentInput = {
 	subscribed: boolean
 	method?: StaffConsentMethod
 	attested?: boolean
-	textVersion?: string
 }
 
 export type PersonConsentResult = {
@@ -248,7 +258,7 @@ export async function recordPersonConsent(
 				confirmedEmail: null,
 				recordedBy: access.actorId,
 				consentMethod: input.method!,
-				consentTextVersion: input.textVersion ?? STAFF_CONSENT_TEXT_VERSION,
+				consentTextVersion: STAFF_CONSENT_TEXT_VERSION,
 			})
 			result.emailToConfirm = email
 		} else {
@@ -265,7 +275,7 @@ export async function recordPersonConsent(
 				now: at,
 				recordedBy: access.actorId,
 				consentMethod: input.method!,
-				consentTextVersion: input.textVersion ?? STAFF_CONSENT_TEXT_VERSION,
+				consentTextVersion: STAFF_CONSENT_TEXT_VERSION,
 			})
 			// One confirmation text per new opt-in, but not again for an
 			// on-off-on within a day (each text costs money and reaches the guest).
@@ -282,7 +292,7 @@ export async function recordPersonConsent(
 				channel,
 				subscribed: true,
 				method: input.method!,
-				textVersion: input.textVersion ?? STAFF_CONSENT_TEXT_VERSION,
+				textVersion: STAFF_CONSENT_TEXT_VERSION,
 			},
 		})
 		result.changed = true
@@ -312,11 +322,13 @@ export async function recordPersonConsent(
 		result.confirmationSms =
 			outcome.newSmsOptIn && after
 				? await sendConsentText(
+						db,
 						{
 							orgId: opts.orgId,
 							customerId: customer.id,
 							phone: after.phone,
 							phoneVerified: Boolean(after.phoneVerified),
+							now,
 						},
 						opts.sendSms ?? sendSms,
 					)
@@ -391,14 +403,18 @@ async function confirmEmail(
  * Skipped (consent stays recorded) when: this node cannot text guests (only
  * the US node can), the phone is not verified (a number only counts once its
  * owner proved control of it), the restaurant name is unknown, or the
- * node-wide send cap is reached. A failed send is logged by id only.
+ * organization's hourly confirmation-text cap is reached
+ * (`PEOPLE_CONSENT_LIMITS.smsConfirmations`, durable). A failed send is logged
+ * by id only.
  */
 async function sendConsentText(
+	db: TenantDatabase,
 	params: {
 		orgId: string
 		customerId: string
 		phone: string | null
 		phoneVerified: boolean
+		now: number
 	},
 	send: (input: { to: string; message: string }) => Promise<unknown>,
 ): Promise<'sent' | 'skipped'> {
@@ -411,7 +427,13 @@ async function sendConsentText(
 				? (organization.name ?? '').trim()
 				: ''
 		if (!restaurant) return 'skipped'
-		if (checkGlobalSendCap().limited) return 'skipped'
+		const cap = await countPeopleConsentAttempt(
+			db,
+			'smsConfirmations',
+			params.orgId,
+			params.now,
+		)
+		if (!cap.ok) return 'skipped'
 		await send({ to: phone, message: consentConfirmationText(restaurant) })
 		return 'sent'
 	} catch (error) {

@@ -1,4 +1,6 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react-native'
+import { AccessibilityInfo } from 'react-native'
+import { rowClass } from './messages-section'
 import { ProfileScreen } from './profile-screen'
 import {
 	makeApp,
@@ -12,10 +14,11 @@ import { type StubReply } from '@/test/stub-transport'
 async function signedInProfile(
 	subscriptions: StubReply,
 	put: StubReply | StubReply[] = { json: { subscribed: true } },
+	organization: Record<string, unknown> = ORGANIZATION,
 ) {
 	const app = makeApp(
 		{
-			'/resources/sites': { json: ORGANIZATION },
+			'/resources/sites': { json: organization },
 			'/auth/me': { json: PROFILE },
 			'/subscriptions': subscriptions,
 			'/subscriptions/marketing/email': put,
@@ -100,5 +103,68 @@ describe('MessagesSection', () => {
 				screen.getByRole('switch', { name: 'Offers and news: Text' }),
 			).not.toBeChecked(),
 		)
+	})
+
+	it('puts a space between the row classes and dims a busy row', () => {
+		expect(rowClass(false)).toBe('min-h-11 flex-row items-center gap-3 py-2')
+		expect(rowClass(true)).toBe(
+			'min-h-11 flex-row items-center gap-3 py-2 opacity-50',
+		)
+	})
+
+	it('announces a note when it appears', async () => {
+		const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility')
+		await signedInProfile(rows([]), {
+			status: 409,
+			json: { error: 'A verified phone number is required' },
+		})
+		fireEvent.press(
+			await screen.findByRole('switch', { name: 'Offers and news: Text' }),
+		)
+		await screen.findByText('Verify your phone first')
+		expect(announce).toHaveBeenCalledWith('Verify your phone first')
+		announce.mockRestore()
+	})
+
+	it('shows the frequency and rates disclosure and sends the profile wording id outside KSA', async () => {
+		const { transport } = await signedInProfile(rows([]))
+		expect(
+			await screen.findByText(
+				/A few messages a month\. You can opt out anytime\. Msg and data rates may apply\. Reply STOP to opt out\./,
+			),
+		).toBeTruthy()
+		fireEvent.press(
+			screen.getByRole('switch', { name: 'Offers and news: Text' }),
+		)
+		await waitFor(() =>
+			expect(transport.recorded.some((r) => r.request.method === 'PUT')).toBe(
+				true,
+			),
+		)
+		const put = transport.recorded.find((r) => r.request.method === 'PUT')!
+		expect(put.body.textVersion).toBe('guest-profile-us-2026-11')
+	})
+
+	it('in KSA hides the offers Text switch and the rates line', async () => {
+		await signedInProfile(rows([]), undefined, {
+			...ORGANIZATION,
+			dataRegion: 'ksa',
+		})
+		await screen.findByRole('switch', { name: 'Offers and news: Email' })
+		expect(
+			screen.queryByRole('switch', { name: 'Offers and news: Text' }),
+		).toBeNull()
+		expect(screen.queryByText(/Reply STOP/)).toBeNull()
+	})
+
+	it('in KSA still shows the Text switch for an active text subscription', async () => {
+		await signedInProfile(
+			rows([{ topic: 'marketing', channel: 'sms', subscribed: true }]),
+			undefined,
+			{ ...ORGANIZATION, dataRegion: 'ksa' },
+		)
+		expect(
+			await screen.findByRole('switch', { name: 'Offers and news: Text' }),
+		).toBeChecked()
 	})
 })

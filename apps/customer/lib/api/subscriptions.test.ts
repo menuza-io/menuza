@@ -1,4 +1,4 @@
-import { MARKETING_CONSENT_TEXT_VERSION } from '@repo/common/marketing-consent'
+import { MARKETING_CONSENT_TEXT_VERSIONS } from '@repo/common/marketing-consent'
 import { ApiError } from '@/lib/api/api-error'
 import {
 	SubscriptionsClient,
@@ -40,7 +40,14 @@ describe('SubscriptionsClient', () => {
 
 	it('opts in with the source and text version, and maps pending', async () => {
 		const transport = new StubTransport([{ json: { pending: true } }])
-		const state = await (await setup(transport)).set('marketing', 'email', true)
+		const state = await (
+			await setup(transport)
+		).set(
+			'marketing',
+			'email',
+			true,
+			MARKETING_CONSENT_TEXT_VERSIONS.profileDisclosure,
+		)
 		expect(state).toBe('pending')
 		const sent = transport.recorded[0]!
 		expect(sent.request.method).toBe('PUT')
@@ -48,7 +55,16 @@ describe('SubscriptionsClient', () => {
 		expect(sent.body).toEqual({
 			subscribed: true,
 			source: 'profile',
-			textVersion: MARKETING_CONSENT_TEXT_VERSION,
+			textVersion: MARKETING_CONSENT_TEXT_VERSIONS.profileDisclosure,
+		})
+	})
+
+	it('opts in without a text version when none covers the switch', async () => {
+		const transport = new StubTransport([{ json: {} }])
+		await (await setup(transport)).set('reservations', 'email', true)
+		expect(transport.recorded[0]!.body).toEqual({
+			subscribed: true,
+			source: 'profile',
 		})
 	})
 

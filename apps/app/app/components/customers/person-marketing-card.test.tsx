@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { useState } from 'react'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { PersonMarketingCard } from '#app/components/customers/person-marketing-card.tsx'
 import {
 	PeopleApiError,
@@ -10,6 +10,19 @@ import {
 	type PersonSubscription,
 } from '#app/utils/people/people-api.ts'
 import { renderStaff } from '#tests/staff-render.tsx'
+
+const toasts = vi.hoisted(() => ({
+	success: vi.fn(),
+	error: vi.fn(),
+	warning: vi.fn(),
+}))
+vi.mock('sonner', () => ({ toast: toasts }))
+
+beforeEach(() => {
+	toasts.success.mockClear()
+	toasts.error.mockClear()
+	toasts.warning.mockClear()
+})
 
 const DAY = 24 * 60 * 60 * 1000
 
@@ -257,7 +270,6 @@ describe('PersonMarketingCard turning on', () => {
 					subscribed: true,
 					method: 'phone',
 					attested: true,
-					textVersion: 'staff-2026-11',
 				},
 			}),
 		)
@@ -267,6 +279,53 @@ describe('PersonMarketingCard turning on', () => {
 			'Recorded by you on',
 		)
 	})
+
+	it('returns focus to the switch after cancel and after success', async () => {
+		setup([], (path) => (path === '/c_1/consent' ? ok : undefined))
+		fireEvent.click(textSwitch())
+		await screen.findByTestId('person-consent-dialog')
+		fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+		await waitFor(() => expect(textSwitch()).toHaveFocus())
+
+		fireEvent.click(textSwitch())
+		await screen.findByTestId('person-consent-dialog')
+		fireEvent.click(screen.getByRole('radio', { name: 'By phone' }))
+		fireEvent.click(screen.getByRole('checkbox'))
+		fireEvent.click(screen.getByTestId('person-consent-confirm'))
+		await waitFor(() =>
+			expect(screen.queryByTestId('person-consent-dialog')).toBeNull(),
+		)
+		await waitFor(() => expect(textSwitch()).toHaveFocus())
+	})
+
+	it.each([
+		['sent', true, 'success', 'Confirmation email sent'],
+		['throttled', true, 'success', 'sent recently'],
+		['skipped', false, 'success', 'Consent recorded'],
+		['skipped', true, 'warning', "couldn't send the confirmation email"],
+	])(
+		'email confirmation %s (pending %s) toasts %s',
+		async (confirmationEmail, pending, kind, text) => {
+			setup([], (path) =>
+				path === '/c_1/consent'
+					? { subscription: sub({ pending }), confirmationEmail }
+					: undefined,
+			)
+			fireEvent.click(emailSwitch())
+			await screen.findByTestId('person-consent-dialog')
+			fireEvent.click(screen.getByRole('radio', { name: 'In person' }))
+			fireEvent.click(screen.getByRole('checkbox'))
+			fireEvent.click(screen.getByTestId('person-consent-confirm'))
+			await waitFor(() =>
+				expect(toasts[kind as 'success' | 'warning']).toHaveBeenCalled(),
+			)
+			expect(toasts[kind as 'success' | 'warning'].mock.calls[0]![0]).toContain(
+				text,
+			)
+			const other = kind === 'success' ? 'warning' : 'success'
+			expect(toasts[other]).not.toHaveBeenCalled()
+		},
+	)
 
 	it('Cancel leaves the switch off and sends nothing', async () => {
 		const request = setup([])
