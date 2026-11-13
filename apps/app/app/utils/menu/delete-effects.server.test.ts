@@ -521,8 +521,8 @@ describe('discountReferences', () => {
 			quantityRule: {
 				kind: 'buy_get',
 				buy: { itemIds: ['a'], categoryIds: [] },
-				get: { itemIds: ['b', 'c'], categoryIds: [] },
-			} as DiscountDefinition['quantityRule'],
+				get: { itemIds: ['b', 'c'], categoryIds: [], quantity: 1 },
+			},
 		}
 		expect(discountReferences(value, 'item', 'a').losesAllTargets).toBe(true)
 		expect(discountReferences(value, 'item', 'b').losesAllTargets).toBe(false)

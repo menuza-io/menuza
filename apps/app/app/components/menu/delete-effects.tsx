@@ -487,7 +487,7 @@ export function MenuDeleteEffects({
 }
 
 /** What a Used in card lists: where the record is used, not what it holds. */
-const USED_IN_KINDS: ReadonlySet<EffectKind> = new Set([
+const USED_IN_KINDS: ReadonlySet<EffectKind> = new Set<EffectKind>([
 	'in_menus',
 	'in_categories',
 	'in_modifier_groups',
