@@ -5,6 +5,7 @@ import { requireMenuWrite } from '#app/utils/menu/access.server.ts'
 import {
 	applyBulkItemEdit,
 	applyBulkOptionEdit,
+	currencyCodeForDataRegion,
 	currencyExponentFor,
 } from '#app/utils/menu/bulk-apply.server.ts'
 import {
@@ -122,6 +123,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	const organization = await requireUserOrganization(request, params.orgSlug, {
 		id: true,
 		slug: true,
+		dataRegion: true,
 	})
 	await requireMenuBulkEditAccess(request, organization.id)
 
@@ -136,11 +138,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		return Response.json({ error: 'invalid_body' }, { status: 400 })
 	}
 
-	const org = await db.query.Organization.findFirst({
-		where: (fields, { eq: equals }) => equals(fields.id, organization.id),
-		columns: { currency: true },
-	})
-	const exponent = currencyExponentFor(org?.currency ?? 'USD')
+	const exponent = currencyExponentFor(
+		currencyCodeForDataRegion(organization.dataRegion),
+	)
 
 	if (parsed.data.intent === 'preview') {
 		const { targetType, ids, operation } = parsed.data

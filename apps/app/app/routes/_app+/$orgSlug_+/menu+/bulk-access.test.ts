@@ -57,7 +57,7 @@ describe('menu bulk access', () => {
 			}),
 			params: { orgSlug: 'cafe' },
 			context: new RouterContextProvider(),
-		} as ActionFunctionArgs)
+		} as unknown as ActionFunctionArgs)
 		expect(response.status).toBe(503)
 		expect(mocks.requireMenuBulkEditAccess).not.toHaveBeenCalled()
 	})

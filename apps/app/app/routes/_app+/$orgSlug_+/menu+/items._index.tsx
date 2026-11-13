@@ -79,7 +79,10 @@ import {
 	requireMenuRead,
 	requireMenuWrite,
 } from '#app/utils/menu/access.server.ts'
-import { currencyExponentFor } from '#app/utils/menu/bulk-apply.server.ts'
+import {
+	currencyCodeForDataRegion,
+	currencyExponentFor,
+} from '#app/utils/menu/bulk-apply.server.ts'
 import { deleteMenuEntityReferences } from '#app/utils/menu/cleanup.server.ts'
 import {
 	getMenuBulkEditEnabled,
@@ -192,7 +195,6 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		dataRegion: true,
 		siteDefaultLocale: true,
 		siteLocales: true,
-		currency: true,
 	})
 
 	await requireMenuRead(request, organization.id)
@@ -285,7 +287,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		healthFilter,
 		menuBulkEditEnabled,
 		menuHistoryEnabled,
-		currencyExponent: currencyExponentFor(organization.currency ?? 'USD'),
+		currencyExponent: currencyExponentFor(
+			currencyCodeForDataRegion(organization.dataRegion),
+		),
 		bulkLocations: bulkLocations.map((row) => ({
 			id: row.id,
 			label: row.name,

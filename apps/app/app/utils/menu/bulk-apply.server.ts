@@ -27,6 +27,10 @@ export function currencyExponentFor(currency: string) {
 	return zero.has(currency.toUpperCase()) ? 0 : 2
 }
 
+export function currencyCodeForDataRegion(dataRegion: string | null | undefined) {
+	return dataRegion === 'ksa' ? 'SAR' : 'USD'
+}
+
 export async function applyBulkItemEdit({
 	organizationId,
 	organizationSlug,
@@ -104,9 +108,9 @@ export async function applyBulkItemEdit({
 
 	const org = await db.query.Organization.findFirst({
 		where: (fields, { eq: equals }) => equals(fields.id, organizationId),
-		columns: { currency: true },
+		columns: { dataRegion: true },
 	})
-	const exponent = currencyExponentFor(org?.currency ?? 'USD')
+	const exponent = currencyExponentFor(currencyCodeForDataRegion(org?.dataRegion))
 
 	const rowInputs = items.map((row) => ({
 		id: row.id,
@@ -336,9 +340,9 @@ export async function applyBulkOptionEdit({
 
 	const org = await db.query.Organization.findFirst({
 		where: (fields, { eq: equals }) => equals(fields.id, organizationId),
-		columns: { currency: true },
+		columns: { dataRegion: true },
 	})
-	const exponent = currencyExponentFor(org?.currency ?? 'USD')
+	const exponent = currencyExponentFor(currencyCodeForDataRegion(org?.dataRegion))
 	const rows = options.map((row) => ({
 		id: row.id,
 		updatedAt: row.updatedAt,

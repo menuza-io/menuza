@@ -634,7 +634,12 @@ export function MenuBulkEditSheet({
 								<Label>
 									<Trans>Category</Trans>
 								</Label>
-								<Select value={categoryId} onValueChange={setCategoryId}>
+								<Select
+									value={categoryId}
+									onValueChange={(value) => {
+										if (value) setCategoryId(value)
+									}}
+								>
 									<SelectTrigger>
 										<SelectValue placeholder={_(t`Choose a category`)} />
 									</SelectTrigger>
@@ -656,7 +661,9 @@ export function MenuBulkEditSheet({
 								</Label>
 								<Select
 									value={modifierGroupId}
-									onValueChange={setModifierGroupId}
+									onValueChange={(value) => {
+										if (value) setModifierGroupId(value)
+									}}
 								>
 									<SelectTrigger>
 										<SelectValue placeholder={_(t`Choose a group`)} />

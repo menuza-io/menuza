@@ -86,7 +86,12 @@ export function CopyLocationOverridesDialog({
 						<Label>
 							<Trans>Target location</Trans>
 						</Label>
-						<Select value={targetId} onValueChange={setTargetId}>
+						<Select
+							value={targetId}
+							onValueChange={(value) => {
+								if (value) setTargetId(value)
+							}}
+						>
 							<SelectTrigger>
 								<SelectValue placeholder={_(t`Choose a location`)} />
 							</SelectTrigger>

@@ -54,11 +54,11 @@ describe('menu history access', () => {
 		mocks.requireMenuHistoryAccess.mockRejectedValue(
 			new Response('Not Found', { status: 404 }),
 		)
-		const args: LoaderFunctionArgs = {
+		const args = {
 			request,
 			params: { orgSlug: 'cafe' },
 			context: new RouterContextProvider(),
-		}
+		} as unknown as LoaderFunctionArgs
 		await expect(historyLoader(args)).rejects.toMatchObject({ status: 404 })
 		expect(mocks.select).not.toHaveBeenCalled()
 	})

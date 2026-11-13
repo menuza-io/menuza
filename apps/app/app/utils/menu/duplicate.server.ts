@@ -6,6 +6,7 @@ import {
 	asc,
 	eq,
 	inArray,
+	isNull,
 	OrganizationMenu,
 	OrganizationMenuCategory,
 	OrganizationMenuCategoryAssignment,
@@ -35,6 +36,8 @@ function copyName(displayName: string, defaultLocale = 'en') {
 }
 
 const UNAVAILABLE = 'unavailable' as const
+
+type MenuDbClient = Parameters<Parameters<typeof db.transaction>[0]>[0]
 
 export async function duplicateMenu({
 	organizationId,
@@ -189,7 +192,7 @@ export async function duplicateCategory({
 }
 
 async function cloneModifierGroupDeep(
-	tx: typeof db,
+	tx: MenuDbClient,
 	organizationId: string,
 	groupId: string,
 	visited: Map<string, string>,
@@ -249,7 +252,9 @@ async function cloneModifierGroupDeep(
 				and(
 					eq(OrganizationMenuOption.organizationId, organizationId),
 					eq(OrganizationMenuOption.displayName, option.displayName),
-					eq(OrganizationMenuOption.internalName, option.internalName ?? null),
+					option.internalName
+						? eq(OrganizationMenuOption.internalName, option.internalName)
+						: isNull(OrganizationMenuOption.internalName),
 				),
 			)
 			.limit(1)

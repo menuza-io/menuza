@@ -38,7 +38,7 @@ const RESTORE_LOCK_KEY = 'menu.restore_in_progress'
 const SNAPSHOT_RETENTION_COUNT = 50
 const SNAPSHOT_RETENTION_MS = 90 * 24 * 60 * 60 * 1000
 
-type DbClient = Pick<typeof db, 'select' | 'insert' | 'update' | 'delete'>
+type DbClient = typeof db
 
 function reviveDates<T extends Record<string, unknown>>(row: T): T {
 	const out = { ...row }

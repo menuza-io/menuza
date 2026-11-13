@@ -69,7 +69,10 @@ import {
 	requireMenuRead,
 	requireMenuWrite,
 } from '#app/utils/menu/access.server.ts'
-import { currencyExponentFor } from '#app/utils/menu/bulk-apply.server.ts'
+import {
+	currencyCodeForDataRegion,
+	currencyExponentFor,
+} from '#app/utils/menu/bulk-apply.server.ts'
 import {
 	getMenuBulkEditEnabled,
 	getMenuHistoryEnabled,
@@ -172,8 +175,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	const organization = await requireUserOrganization(request, params.orgSlug, {
 		id: true,
 		slug: true,
+		dataRegion: true,
 		siteDefaultLocale: true,
-		currency: true,
 	})
 
 	await requireMenuRead(request, organization.id)
@@ -275,7 +278,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		defaultLocale,
 		menuBulkEditEnabled,
 		menuHistoryEnabled,
-		currencyExponent: currencyExponentFor(organization.currency ?? 'USD'),
+		currencyExponent: currencyExponentFor(
+			currencyCodeForDataRegion(organization.dataRegion),
+		),
 		bulkLocations: bulkLocations.map((row) => ({
 			id: row.id,
 			label: row.name,

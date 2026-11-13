@@ -29,7 +29,7 @@ describe('planBulkEditItem', () => {
 				ending: { to: '99', direction: 'up' },
 			},
 		})
-		expect(plan.after.price).toBe(13.99)
+		expect(plan?.after.price).toBe(13.99)
 	})
 
 	it('floors price at zero and marks row skipped', () => {
@@ -38,7 +38,7 @@ describe('planBulkEditItem', () => {
 			currencyExponent: 2,
 			operation: { type: 'price', change: { kind: 'amount', value: -5 } },
 		})
-		expect(plan.skipped).toBe('price_below_zero')
+		expect(plan?.skipped).toBe('price_below_zero')
 	})
 
 	it('refuses more than 500 rows', () => {
@@ -75,6 +75,6 @@ describe('planBulkEditOption', () => {
 			currencyExponent: 0,
 			operation: { type: 'price', change: { kind: 'percent', value: 10 } },
 		})
-		expect(plan.after.price).toBe(5)
+		expect(plan?.after.price).toBe(5)
 	})
 })
