@@ -99,6 +99,7 @@ async function pruneOld(db: TenantDatabase | TenantTransaction, now: number) {
 		.delete(loyaltyRateCounters)
 		.where(
 			and(
+				// bounded: two people_consent bucket names only
 				inArray(loyaltyRateCounters.bucket, Object.values(BUCKET_NAMES)),
 				lt(loyaltyRateCounters.windowStart, now - 2 * longest),
 			),
