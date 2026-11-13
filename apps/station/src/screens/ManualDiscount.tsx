@@ -1,7 +1,7 @@
 import { plural, t } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { useMemo, useState } from 'react'
-import { toCents, type MoneyFormatter } from '~/lib/money.ts'
+import { parseDecimal, toCents, type MoneyFormatter } from '~/lib/money.ts'
 import { usePos } from '~/lib/store.ts'
 import {
 	limitedAutomaticRules,
@@ -12,22 +12,7 @@ import {
 } from '~/lib/till-discounts.ts'
 import { Button, Input, Select } from '~/ui/primitives.tsx'
 
-/**
- * Accepts 10.5, 10,5, Arabic-Indic digits and the Arabic decimal separator
- * (U+066B, `٫`; its thousands separator U+066C is ignored). Null when it is not
- * a number.
- */
-export function parseDecimal(raw: string): number | null {
-	const normalized = raw
-		.trim()
-		.replace(/[٠-٩]/g, (digit) => String('٠١٢٣٤٥٦٧٨٩'.indexOf(digit)))
-		.replace(/[۰-۹]/g, (digit) => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(digit)))
-		.replace(/\u066C/g, '')
-		.replace(/[\u066B,]/, '.')
-	if (!/^\d+(\.\d+)?$/.test(normalized)) return null
-	const value = Number(normalized)
-	return Number.isFinite(value) ? value : null
-}
+export { parseDecimal }
 
 export type ManualValue =
 	| { ok: true; amountMinor: number }

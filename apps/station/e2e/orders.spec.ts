@@ -67,7 +67,7 @@ test('a cashier sees new orders with an alert, opens one, marks ready and hands 
 	await expect(screen(page)).toBeVisible()
 
 	// A new order rings and shows until someone opens it.
-	const alert = page.getByRole('alert', { name: 'New orders waiting' })
+	const alert = page.getByRole('region', { name: 'New orders waiting' })
 	await expect(alert).toContainText('WEB-0100')
 	await expect(card(page, 'WEB-0101')).toContainText('Delivery')
 	await expect(screen(page)).not.toContainText('+15555550199')

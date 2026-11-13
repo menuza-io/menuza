@@ -51,6 +51,10 @@ export function useOrders(
 	const offset = useRef(0)
 	const selectedRef = useRef<string | null>(null)
 	selectedRef.current = selected
+	/** Bumped on every open and close: an answer for an earlier opening is dropped. */
+	const opening = useRef(0)
+	const [revealing, setRevealing] = useState(false)
+	const revealingRef = useRef(false)
 
 	const accept = useCallback((data: PosOnlineOrdersFeed) => {
 		offset.current = data.serverNow - Date.now()
@@ -59,6 +63,17 @@ export function useOrders(
 		setReceivedAt(Date.now())
 		setNow(data.serverNow)
 		setError(null)
+		// Once the server knows an order was opened, this tablet need not remember it.
+		setOpenedHere((previous) => {
+			if (previous.size === 0) return previous
+			const recorded = new Set(
+				data.orders
+					.filter((order) => order.openedAt !== null)
+					.map((order) => order.id),
+			)
+			const next = new Set([...previous].filter((id) => !recorded.has(id)))
+			return next.size === previous.size ? previous : next
+		})
 	}, [])
 	const refuse = useCallback((value: unknown) => {
 		const failure =
@@ -67,6 +82,9 @@ export function useOrders(
 				: new OrdersError('orders_unavailable')
 		setError(failure)
 		if (failure.status === 401 || failure.status === 403) {
+			// Close the sheet too: its modal would hide the "Sign in again" banner.
+			opening.current += 1
+			setSelected(null)
 			setFeed(null)
 			setDetail(null)
 			setContact(null)
@@ -150,6 +168,21 @@ export function useOrders(
 		[api],
 	)
 
+	// The open order follows the inbox: when another screen changed it, read it
+	// again; when it left the inbox, its guest's contact goes too.
+	const detailVersion = detail?.version ?? null
+	useEffect(() => {
+		const id = selectedRef.current
+		if (!feed || !id || writing.current) return
+		const listed = feed.orders.find((order) => order.id === id)
+		if (!listed) {
+			setContact(null)
+			return
+		}
+		if (detailVersion !== null && listed.version !== detailVersion)
+			void readBack(id, generation.current)
+	}, [feed, detailVersion, readBack])
+
 	/** One write at a time; the open order and the inbox are read back after it, whatever happened. */
 	const write = useCallback(
 		async (
@@ -200,13 +233,20 @@ export function useOrders(
 
 	const open = useCallback(
 		async (id: string) => {
+			opening.current += 1
 			setSelected(id)
 			setDetail(null)
 			setContact(null)
 			setActionError(null)
+			const gen = generation.current
+			if (!online) {
+				// Not recorded on the server: the alert keeps ringing here.
+				if (!(await readBack(id, gen)))
+					setActionError(new OrdersError('connection_lost'))
+				return
+			}
 			// Silences the alert here at once; the server silences every other tablet.
 			setOpenedHere((previous) => new Set(previous).add(id))
-			const gen = generation.current
 			try {
 				const data = await api.command(id, { action: 'open' })
 				if (gen === generation.current && selectedRef.current === id) {
@@ -215,6 +255,12 @@ export function useOrders(
 				}
 			} catch (failure) {
 				if (gen !== generation.current) return
+				// The opening was not recorded: keep alerting until it is.
+				setOpenedHere((previous) => {
+					const next = new Set(previous)
+					next.delete(id)
+					return next
+				})
 				// Reading it is still useful when recording the opening failed.
 				if (!(await readBack(id, gen)))
 					setActionError(
@@ -225,9 +271,10 @@ export function useOrders(
 			}
 			void refresh()
 		},
-		[api, readBack, refresh],
+		[api, online, readBack, refresh],
 	)
 	const close = useCallback(() => {
+		opening.current += 1
 		setSelected(null)
 		setDetail(null)
 		setContact(null)
@@ -262,19 +309,32 @@ export function useOrders(
 			selected
 				? write(selected, () => api.refund(selected, refund, idempotencyKey))
 				: Promise.resolve(false),
+		revealing,
 		/** The guest's full phone and email, held only while this order is open. */
 		revealContact: async () => {
 			const id = selected
-			if (!id || !online) return
+			if (!id || !online || revealingRef.current) return
+			revealingRef.current = true
+			setRevealing(true)
+			const gen = generation.current
+			const opened = opening.current
+			const current = () =>
+				gen === generation.current &&
+				opened === opening.current &&
+				selectedRef.current === id
 			try {
 				const data = await api.contact(id)
-				if (selectedRef.current === id) setContact(data)
+				if (current()) setContact(data)
 			} catch (failure) {
-				setActionError(
-					failure instanceof OrdersError
-						? failure
-						: new OrdersError('orders_unavailable'),
-				)
+				if (current())
+					setActionError(
+						failure instanceof OrdersError
+							? failure
+							: new OrdersError('orders_unavailable'),
+					)
+			} finally {
+				revealingRef.current = false
+				setRevealing(false)
 			}
 		},
 		/** Records a reprint after the tablet printed the ticket. */

@@ -155,6 +155,7 @@ function draw(
 		refund: vi.fn(async () => true),
 		revealContact: vi.fn(async () => {}),
 		recordReprint: vi.fn(),
+		revealing: false,
 		...over,
 	})
 	// eslint-disable-next-line testing-library/no-unnecessary-act

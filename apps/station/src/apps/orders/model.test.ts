@@ -115,5 +115,10 @@ describe('online orders inbox', () => {
 		expect(refundCents('10.01', 1000)).toBeNull()
 		expect(refundCents('0', 1000)).toBeNull()
 		expect(refundCents('abc', 1000)).toBeNull()
+		// Arabic input is read, never stripped into a larger amount.
+		expect(refundCents('12٫50', 10_000)).toBe(1250)
+		expect(refundCents('١٢٫٥', 10_000)).toBe(1250)
+		expect(refundCents('12 50', 10_000)).toBeNull()
+		expect(refundCents('1.234', 10_000)).toBeNull()
 	})
 })

@@ -3,6 +3,7 @@ import {
 	onlineOrderLate,
 	type PosOnlineOrderSummary,
 } from '@repo/common/pos-online-orders'
+import { parseDecimal, toCents } from '~/lib/money.ts'
 
 /** The inbox's columns, in the order the counter works them. */
 export type InboxSection = 'new' | 'in_progress' | 'ready' | 'done'
@@ -79,13 +80,21 @@ export function unopenedOrders(
 /** How often the new-order sound repeats while an order waits to be opened. */
 export const ALERT_REPEAT_MS = 10_000
 
-/** A refund amount typed at the counter, in cents, or null when it is not a valid one. */
+/**
+ * A refund amount typed at the counter, in cents, or null when it is not a
+ * valid one. Arabic-Indic digits and the Arabic decimal separator are read
+ * (`12٫50`); anything else is refused rather than stripped, so a stray
+ * character can never turn 12.50 into 1250.
+ */
 export function refundCents(typed: string, refundableCents: number) {
-	const cleaned = typed.replace(/[^\d.,]/g, '').replace(',', '.')
-	if (!/^\d+(\.\d{0,2})?$/.test(cleaned)) return null
-	const cents = Math.round(Number(cleaned) * 100)
-	if (!Number.isFinite(cents) || cents < 1 || cents > refundableCents)
+	const normalized = typed.trim()
+	const value = parseDecimal(normalized)
+	if (value === null) return null
+	// At most two decimals: 10.005 is not an amount of money.
+	if (!/^[^.,\u066B]*([.,\u066B][^.,\u066B]{0,2})?$/.test(normalized))
 		return null
+	const cents = toCents(value)
+	if (cents < 1 || cents > refundableCents) return null
 	return cents
 }
 

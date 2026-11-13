@@ -8,6 +8,23 @@ const PDI = '⁩'
 
 export const toCents = (amount: number): number => Math.round(amount * 100)
 
+/**
+ * Accepts 10.5, 10,5, Arabic-Indic digits and the Arabic decimal separator
+ * (U+066B, `٫`; its thousands separator U+066C is ignored). Null when it is not
+ * a number.
+ */
+export function parseDecimal(raw: string): number | null {
+	const normalized = raw
+		.trim()
+		.replace(/[٠-٩]/g, (digit) => String('٠١٢٣٤٥٦٧٨٩'.indexOf(digit)))
+		.replace(/[۰-۹]/g, (digit) => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(digit)))
+		.replace(/\u066C/g, '')
+		.replace(/[\u066B,]/, '.')
+	if (!/^\d+(\.\d+)?$/.test(normalized)) return null
+	const value = Number(normalized)
+	return Number.isFinite(value) ? value : null
+}
+
 const isRtl = (locale: string) => /^(ar|fa|he|ur)\b/i.test(locale)
 
 /**

@@ -146,16 +146,27 @@ export function Orders({
 	// here: opening it anywhere silences it everywhere at the next read.
 	const waitingKey = waiting.map((order) => order.id).join(',')
 	const [soundBlocked, setSoundBlocked] = useState(false)
+	const ringing = waitingKey !== '' && preference.sound
+	// Rings at once only for an order that was not waiting before: one opened
+	// at another counter shrinks the list, and that is not news.
+	const heard = useRef<ReadonlySet<string>>(new Set())
 	useEffect(() => {
-		if (!waitingKey || !preference.sound) return
-		const ring = () => {
+		const ids = new Set(waitingKey ? waitingKey.split(',') : [])
+		const arrived = [...ids].some((id) => !heard.current.has(id))
+		heard.current = ids
+		if (arrived && preference.sound) {
 			chime()
 			setSoundBlocked(!chimeReady())
 		}
-		ring()
-		const timer = window.setInterval(ring, ALERT_REPEAT_MS)
-		return () => window.clearInterval(timer)
 	}, [waitingKey, preference.sound])
+	useEffect(() => {
+		if (!ringing) return
+		const timer = window.setInterval(() => {
+			chime()
+			setSoundBlocked(!chimeReady())
+		}, ALERT_REPEAT_MS)
+		return () => window.clearInterval(timer)
+	}, [ringing])
 	// iPad Safari plays sound only after a tap on this page load.
 	useEffect(() => {
 		if (!preference.sound) return
@@ -295,13 +306,13 @@ export function Orders({
 				</div>,
 			)}
 			<Reveal open={waiting.length > 0}>
-				<div
-					role="alert"
+				<section
 					aria-label={_(t`New orders waiting`)}
 					className="notice-danger flex flex-wrap items-center gap-3 px-5 py-3"
 				>
 					<Icon name="bell-ring" className="size-5 shrink-0" />
-					<p className="min-w-0 flex-1 font-semibold">
+					{/* The live region holds the text itself: a label would be read instead. */}
+					<p role="alert" className="min-w-0 flex-1 font-semibold">
 						{waiting.length === 1
 							? _(
 									t`New order ${waiting[0]!.number} · open it to stop the alert`,
@@ -324,7 +335,7 @@ export function Orders({
 							<Trans>Open {order.number}</Trans>
 						</Button>
 					))}
-				</div>
+				</section>
 			</Reveal>
 			<Reveal open={Boolean(error) || Boolean(feed && offline)}>
 				<div
@@ -658,7 +669,8 @@ function OrderSheet({
 							) : null}
 							<Button
 								variant="ghost"
-								disabled={!detail}
+								// A reprint is recorded on the order: only while connected.
+								disabled={!detail || stale}
 								onClick={() => setPrinting('guest')}
 							>
 								<Icon name="printer" className="size-4" />
@@ -666,7 +678,7 @@ function OrderSheet({
 							</Button>
 							<Button
 								variant="ghost"
-								disabled={!detail}
+								disabled={!detail || stale}
 								onClick={() => setPrinting('kitchen')}
 							>
 								<Icon name="printer" className="size-4" />
@@ -733,6 +745,8 @@ function OrderSheet({
 						contact={contact}
 						canSeeContact={grants?.contact === true}
 						onReveal={() => void orders.revealContact()}
+						revealing={orders.revealing}
+						now={orders.now}
 						time={time}
 						money={money}
 					/>
@@ -788,6 +802,8 @@ function OrderDetailBody({
 	contact,
 	canSeeContact,
 	onReveal,
+	revealing,
+	now,
 	time,
 	money,
 }: {
@@ -795,13 +811,16 @@ function OrderDetailBody({
 	contact: { phone: string; email: string | null } | null
 	canSeeContact: boolean
 	onReveal: () => void
+	revealing: boolean
+	/** The server's time, as the inbox uses it. */
+	now: number
 	time: Intl.DateTimeFormat
 	money: (cents: number) => string
 }) {
 	const { _ } = useLingui()
 	return (
 		<div className="flex flex-col gap-5">
-			<OrderBadges order={detail} now={Date.now()} time={time} />
+			<OrderBadges order={detail} now={now} time={time} />
 			<section aria-label={_(t`Guest`)} className="flex flex-col gap-1">
 				<bdi className="text-xl font-semibold">{detail.guestName}</bdi>
 				<div className="flex flex-wrap items-center gap-3 text-sm">
@@ -817,7 +836,7 @@ function OrderDetailBody({
 						</span>
 					) : null}
 					{canSeeContact && !contact ? (
-						<Button variant="ghost" onClick={onReveal}>
+						<Button variant="ghost" onClick={onReveal} disabled={revealing}>
 							<Trans>Show contact</Trans>
 						</Button>
 					) : null}
