@@ -152,6 +152,7 @@ function draw(
 		selected: null,
 		detail: null,
 		contact: null,
+		refundOutcome: undefined,
 		open: vi.fn(async () => {}),
 		view: vi.fn(async () => {}),
 		api: demoApi,
@@ -261,8 +262,104 @@ describe('Station online orders screen', () => {
 			MANAGER,
 		)
 		expect(buttons()).toEqual(
-			expect.arrayContaining(['Show contact', 'Cancel order', 'Record refund']),
+			expect.arrayContaining(['Show contact', 'Cancel order', 'Refund']),
 		)
+		expect(buttons()).not.toContain('Record refund')
+	})
+
+	it('keeps "Record refund" for an order paid at handoff', () => {
+		draw(
+			{
+				selected: 'o1',
+				grants: MANAGER,
+				detail: detailOf({
+					paymentMethod: 'handoff',
+					paymentStatus: 'paid',
+					refundableCents: 1500,
+				}),
+			},
+			[summary()],
+			MANAGER,
+		)
+		expect(buttons()).toContain('Record refund')
+		expect(buttons()).not.toContain('Refund')
+	})
+
+	it('shows Disputed and offers no refund while the payment is disputed', () => {
+		draw(
+			{
+				selected: 'o1',
+				grants: MANAGER,
+				detail: detailOf({
+					paymentMethod: 'online',
+					paymentStatus: 'paid',
+					refundableCents: 1500,
+					disputed: true,
+				}),
+			},
+			[summary()],
+			MANAGER,
+		)
+		expect(document.body.textContent).toContain('Disputed')
+		expect(buttons()).not.toContain('Refund')
+	})
+
+	it('shows a pending refund with its amount, and no second refund', () => {
+		draw(
+			{
+				selected: 'o1',
+				grants: MANAGER,
+				detail: detailOf({
+					paymentMethod: 'online',
+					paymentStatus: 'paid',
+					refundableCents: 500,
+					refundStatus: 'pending',
+					refundPendingCents: 1000,
+				}),
+			},
+			[summary()],
+			MANAGER,
+		)
+		expect(document.body.textContent).toContain('Refund pending')
+		expect(document.body.textContent).toContain('10.00')
+		expect((button('Refund') as HTMLButtonElement).disabled).toBe(true)
+	})
+
+	it('asks "Refund the guest?" only for an online-paid order and a refund grant', () => {
+		const paid = detailOf({
+			paymentMethod: 'online',
+			paymentStatus: 'paid',
+			refundableCents: 1500,
+		})
+		draw(
+			{ selected: 'o1', grants: MANAGER, detail: paid },
+			[summary()],
+			MANAGER,
+		)
+		act(() => button('Cancel order').click())
+		expect(document.body.textContent).toContain('Refund the guest?')
+		expect(document.body.textContent).toContain('No refund')
+		const withoutGrant = { ...MANAGER, refund: false }
+		draw(
+			{ selected: 'o1', grants: withoutGrant, detail: paid },
+			[summary()],
+			withoutGrant,
+		)
+		expect(document.body.textContent).not.toContain('Refund the guest?')
+	})
+
+	it('says what a cancel with a refund came to', () => {
+		draw(
+			{
+				selected: 'o1',
+				grants: MANAGER,
+				detail: detailOf({ status: 'cancelled', cancelledAt: NOW }),
+				refundOutcome: { started: false, code: 'payment_disputed' },
+			},
+			[summary()],
+			MANAGER,
+		)
+		expect(document.body.textContent).toContain('payment is disputed')
 	})
 
 	it('hands a pay-at-handoff order over only once payment is ticked', () => {

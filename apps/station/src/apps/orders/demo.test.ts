@@ -1,6 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { OrdersError } from './api.ts'
-import { createDemoOrders } from './demo.ts'
+import { createDemoOrders, DEMO_REFUND_SETTLE_MS } from './demo.ts'
+
+afterEach(() => vi.useRealTimers())
 
 describe('demo online orders', () => {
 	it('starts with a new order and silences it once opened', async () => {
@@ -58,11 +60,80 @@ describe('demo online orders', () => {
 			{ expectedVersion: paid.version, amountCents: 500, note: 'Cold' },
 			'k2',
 		)
-		expect(partial.order.refundedCents).toBe(500)
+		// A provider refund is pending first: reserved, not yet refunded.
+		expect(partial.order).toMatchObject({
+			refundedCents: 0,
+			refundPendingCents: 500,
+			refundStatus: 'pending',
+			refundableCents: paid.refundableCents - 500,
+		})
 		expect(partial.order.history[0]).toMatchObject({
 			action: 'refunded',
 			amountCents: 500,
 		})
+		await expect(
+			demo.refund(
+				paid.id,
+				{
+					expectedVersion: partial.order.version,
+					amountCents: 100,
+					note: 'Again',
+				},
+				'k3',
+			),
+		).rejects.toMatchObject({ code: 'refund_pending' })
+		vi.useFakeTimers()
+		vi.setSystemTime(Date.now() + DEMO_REFUND_SETTLE_MS + 1)
+		const settled = (await demo.detail(paid.id)).order
+		expect(settled).toMatchObject({
+			refundedCents: 500,
+			refundPendingCents: 0,
+			refundStatus: 'partial',
+		})
+		expect(settled.refunds[0]).toMatchObject({
+			kind: 'provider',
+			status: 'succeeded',
+		})
+	})
+
+	it('refuses to refund a disputed payment', async () => {
+		const demo = createDemoOrders()
+		const disputed = (await demo.detail('demo-1037')).order
+		expect(disputed.disputed).toBe(true)
+		await expect(
+			demo.refund(
+				disputed.id,
+				{ expectedVersion: disputed.version, full: true, note: 'Cold' },
+				'kd',
+			),
+		).rejects.toMatchObject({ code: 'payment_disputed' })
+	})
+
+	it('cancels with a full refund and reports the outcome', async () => {
+		const demo = createDemoOrders()
+		const order = (await demo.detail('demo-1039')).order
+		const answer = await demo.command(order.id, {
+			action: 'cancel',
+			expectedVersion: order.version,
+			reason: 'out_of_stock',
+			refund: 'full',
+		})
+		expect(answer.refundOutcome).toEqual({ started: true, code: null })
+		expect(answer.order).toMatchObject({
+			status: 'cancelled',
+			refundStatus: 'pending',
+			refundPendingCents: order.totalCents,
+			refundableCents: 0,
+		})
+		const handoff = (await demo.detail('demo-1041')).order
+		await expect(
+			demo.command(handoff.id, {
+				action: 'cancel',
+				expectedVersion: handoff.version,
+				reason: 'other',
+				refund: 'full',
+			}),
+		).rejects.toMatchObject({ code: 'order_not_refundable' })
 	})
 
 	it('brings in a new order for the alert', async () => {

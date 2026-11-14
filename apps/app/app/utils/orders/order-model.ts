@@ -41,9 +41,32 @@ export const orderSchema = z.object({
 				amountCents: z.number().int(),
 				note: z.string().nullable(),
 				createdAt: z.string(),
+				/** Missing from an older region: a record that already succeeded. */
+				kind: z.enum(['record', 'provider']).optional().catch(undefined),
+				status: z
+					.enum(['pending', 'succeeded', 'failed'])
+					.optional()
+					.catch(undefined),
+				failureCode: z.string().nullable().optional().catch(undefined),
 			}),
 		)
 		.optional(),
+	/** Provider refunds started but not yet settled; they reserve money. */
+	refundPendingCents: z.number().int().optional().catch(undefined),
+	/** Paid minus refunded minus pending; the region's figure wins. */
+	refundableCents: z.number().int().optional().catch(undefined),
+	refundStatus: z
+		.enum(['none', 'pending', 'failed', 'partial', 'full'])
+		.optional()
+		.catch(undefined),
+	/** Short provider code of the newest failed refund. */
+	refundFailureCode: z.string().nullable().optional().catch(undefined),
+	/** The card issuer is disputing the payment. */
+	disputed: z.boolean().optional().catch(undefined),
+	disputeStatus: z.string().nullable().optional().catch(undefined),
+	/** Why the order was cancelled (an internal value) and by whom. */
+	cancelReason: z.string().nullable().optional().catch(undefined),
+	cancelledBy: z.string().nullable().optional().catch(undefined),
 	currency: z.string(),
 	createdAt: z.string().nullable(),
 	paidAt: z.string().nullable().optional(),
@@ -169,6 +192,25 @@ export function refundableCents(order: {
 	refundedCents: number
 }): number {
 	return Math.max(0, order.totalCents - order.refundedCents)
+}
+
+/**
+ * What a provider refund can still take, in cents: the region's figure, or
+ * paid minus refunded minus pending when an older region sends none.
+ */
+export function providerRefundableCents(order: {
+	totalCents: number
+	refundedCents: number
+	refundPendingCents?: number
+	refundableCents?: number
+}): number {
+	if (typeof order.refundableCents === 'number') {
+		return Math.max(0, order.refundableCents)
+	}
+	return Math.max(
+		0,
+		order.totalCents - order.refundedCents - (order.refundPendingCents ?? 0),
+	)
 }
 
 /**

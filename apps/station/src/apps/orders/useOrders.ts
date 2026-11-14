@@ -2,6 +2,7 @@ import {
 	type PosOnlineOrderCommand,
 	type PosOnlineOrderContact,
 	type PosOnlineOrderDetail,
+	type PosOnlineOrderDetailResponse,
 	type PosOnlineOrderRefund,
 	type PosOnlineOrdersFeed,
 	type PosOnlineOrdersGrants,
@@ -42,6 +43,9 @@ export function useOrders(
 	const [detail, setDetail] = useState<PosOnlineOrderDetail | null>(null)
 	const [grants, setGrants] = useState<PosOnlineOrdersGrants | null>(null)
 	const [contact, setContact] = useState<PosOnlineOrderContact | null>(null)
+	/** What a cancel that asked for a refund came to; shown until the sheet closes. */
+	const [refundOutcome, setRefundOutcome] =
+		useState<PosOnlineOrderDetailResponse['refundOutcome']>(undefined)
 	const [openedHere, setOpenedHere] = useState<ReadonlySet<string>>(
 		() => new Set(),
 	)
@@ -191,11 +195,13 @@ export function useOrders(
 			send: () => Promise<{
 				order: PosOnlineOrderDetail
 				grants: PosOnlineOrdersGrants
+				refundOutcome?: PosOnlineOrderDetailResponse['refundOutcome']
 			}>,
 		) => {
 			if (writing.current || !online) return false
 			writing.current = true
 			setActionError(null)
+			setRefundOutcome(undefined)
 			setBusy(true)
 			++sequence.current
 			const gen = generation.current
@@ -204,6 +210,7 @@ export function useOrders(
 				if (gen === generation.current && selectedRef.current === id) {
 					setDetail(data.order)
 					setGrants(data.grants)
+					setRefundOutcome(data.refundOutcome)
 				}
 				return true
 			} catch (failure) {
@@ -238,6 +245,7 @@ export function useOrders(
 			setSelected(id)
 			setDetail(null)
 			setContact(null)
+			setRefundOutcome(undefined)
 			setActionError(null)
 			const gen = generation.current
 			if (!online) {
@@ -281,6 +289,7 @@ export function useOrders(
 			setSelected(id)
 			setDetail(null)
 			setContact(null)
+			setRefundOutcome(undefined)
 			setActionError(null)
 			const gen = generation.current
 			if (!(await readBack(id, gen)) && gen === generation.current)
@@ -295,6 +304,7 @@ export function useOrders(
 		setSelected(null)
 		setDetail(null)
 		setContact(null)
+		setRefundOutcome(undefined)
 		setActionError(null)
 	}, [])
 
@@ -316,6 +326,7 @@ export function useOrders(
 		selected,
 		detail,
 		contact,
+		refundOutcome,
 		open,
 		view,
 		close,

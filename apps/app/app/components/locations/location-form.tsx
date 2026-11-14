@@ -56,6 +56,11 @@ import { AddressAutocomplete } from './address-autocomplete'
 import { LocationHoursSection } from './availability-picker'
 import { DeliveryZoneMap } from './delivery-zone-map'
 import { DeliveryZonesManager } from './delivery-zones-manager'
+import {
+	type OrderPolicyFlags,
+	type OrderPolicyValues,
+	OrderPoliciesCard,
+} from './order-policies-card'
 import { SpecialHoursPicker } from './special-hours-picker'
 
 const TIMEZONE_OPTIONS = [
@@ -103,6 +108,12 @@ interface LocationFormProps {
 	siteLocalesRaw?: string | null
 	siteDefaultLocaleRaw?: string | null
 	isEditing?: boolean
+	/** Guest cancel and acceptance settings; omitted while both flags are off. */
+	orderPolicies?: {
+		flags: OrderPolicyFlags
+		currency: string
+		initial: OrderPolicyValues
+	}
 }
 
 export function LocationForm(props: LocationFormProps) {
@@ -117,6 +128,7 @@ function LocationFormBody({
 	siteLocalesRaw,
 	siteDefaultLocaleRaw,
 	isEditing = false,
+	orderPolicies,
 	onDiscard,
 }: LocationFormProps & { onDiscard: () => void }) {
 	const { _ } = useLingui()
@@ -182,6 +194,9 @@ function LocationFormBody({
 	)
 
 	// Timing & Prep Time
+	const [policyValues, setPolicyValues] = useState<OrderPolicyValues | null>(
+		orderPolicies?.initial ?? null,
+	)
 	const [prepTime, setPrepTime] = useState(initialData?.prepTime ?? 15)
 	const [largeOrderThreshold, setLargeOrderThreshold] = useState(
 		initialData?.largeOrderThreshold ?? 100,
@@ -287,6 +302,7 @@ function LocationFormBody({
 		scheduling: JSON.stringify(scheduling),
 		deliveryConfig: JSON.stringify(deliveryConfig),
 		deliveryZones: JSON.stringify(deliveryZones),
+		...(orderPolicies && policyValues ? policyValues : {}),
 	}
 
 	const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -721,6 +737,15 @@ function LocationFormBody({
 									</div>
 								</CardContent>
 							</Card>
+
+							{orderPolicies && policyValues ? (
+								<OrderPoliciesCard
+									flags={orderPolicies.flags}
+									currency={orderPolicies.currency}
+									values={policyValues}
+									onChange={setPolicyValues}
+								/>
+							) : null}
 
 							{/* Fulfillment Channels */}
 							<Card>

@@ -13,7 +13,10 @@ import {
 	useLoaderData,
 } from 'react-router'
 import { z } from 'zod'
-import { OrderDetail } from '#app/components/orders/order-detail.tsx'
+import {
+	type CancelOptions,
+	OrderDetail,
+} from '#app/components/orders/order-detail.tsx'
 import { useOrdersClient } from '#app/hooks/use-orders-client.ts'
 import { requireMenuRead } from '#app/utils/menu/access.server.ts'
 import { getOrderCustomerLinkAccess } from '#app/utils/orders/customer-link.server.ts'
@@ -69,7 +72,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 type State = 'loading' | 'ready' | 'missing' | 'failed'
 
 export default function OrderPage() {
-	const { orgSlug, orderId, canWrite, canViewCustomers } =
+	const { orgSlug, orderId, canWrite, canRefund, canViewCustomers } =
 		useLoaderData<typeof loader>()
 	const { _ } = useLingui()
 	const request = useOrdersClient(orgSlug)
@@ -77,6 +80,7 @@ export default function OrderPage() {
 	const [state, setState] = useState<State>('loading')
 	const [busy, setBusy] = useState(false)
 	const [actionError, setActionError] = useState<string | null>(null)
+	const [notice, setNotice] = useState<string | null>(null)
 
 	const load = useCallback(
 		async (signal?: AbortSignal) => {
@@ -104,15 +108,33 @@ export default function OrderPage() {
 		return () => controller.abort()
 	}, [load])
 
-	const update = async (status: string, markPaid: boolean) => {
+	const update = async (
+		status: string,
+		markPaid: boolean,
+		cancel?: CancelOptions,
+	) => {
 		if (!order || busy || !canWrite) return
 		setBusy(true)
 		setActionError(null)
+		setNotice(null)
 		try {
-			await request(`/${encodeURIComponent(order.id)}`, {
+			const response = await request(`/${encodeURIComponent(order.id)}`, {
 				method: 'PATCH',
-				body: JSON.stringify({ status, markPaid }),
+				body: JSON.stringify({
+					status,
+					markPaid,
+					...(cancel
+						? {
+								cancelReason: cancel.cancelReason,
+								// Without the permission there is no refund choice.
+								refund: canRefund ? cancel.refund : 'none',
+							}
+						: {}),
+				}),
 			})
+			if (cancel?.refund === 'full' && canRefund) {
+				setNotice(cancelRefundNotice(response))
+			}
 			await load()
 		} catch {
 			setActionError(
@@ -120,6 +142,42 @@ export default function OrderPage() {
 			)
 		} finally {
 			setBusy(false)
+		}
+	}
+
+	/** What happened to the refund that was asked for with the cancellation. */
+	const cancelRefundNotice = (response: unknown): string | null => {
+		const parsed = z
+			.object({
+				refundIntent: z.unknown().nullable().optional(),
+				refundError: z.string().nullable().optional(),
+			})
+			.safeParse(response)
+		if (!parsed.success) return null
+		const { refundIntent, refundError } = parsed.data
+		if (refundIntent) {
+			return _(
+				msg`Order cancelled. Refund pending: it is being sent to the guest's card.`,
+			)
+		}
+		switch (refundError) {
+			case undefined:
+			case null:
+				return null
+			case 'payment_disputed':
+				return _(
+					msg`Order cancelled. It was not refunded because the payment is disputed.`,
+				)
+			case 'refund_pending':
+				return _(
+					msg`Order cancelled. Another refund is still being processed, so none was started.`,
+				)
+			case 'refund_complete':
+				return _(msg`Order cancelled. It was already fully refunded.`)
+			default:
+				return _(
+					msg`Order cancelled, but the refund could not be started. Refund it from this order.`,
+				)
 		}
 	}
 
@@ -222,8 +280,12 @@ export default function OrderPage() {
 				orgSlug={orgSlug}
 				canWrite={canWrite}
 				canViewCustomers={canViewCustomers}
+				canRefund={canRefund}
 				busy={busy}
-				onUpdate={(status, markPaid) => void update(status, markPaid)}
+				notice={notice}
+				onUpdate={(status, markPaid, cancel) =>
+					void update(status, markPaid, cancel)
+				}
 				onRecordRefund={canWrite ? recordRefund : undefined}
 				onPushBack={canWrite ? pushBack : undefined}
 				onReload={() => void load()}

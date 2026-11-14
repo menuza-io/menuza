@@ -2058,9 +2058,7 @@ export async function updateOperatorOrderWithRefund(
 	}>
 > {
 	const db = await getTenantDb(orgId)
-	const loyalty = loyaltySettleQueue()
-	const inventory = inventorySaleQueue()
-	const messages = orderMessageBatch()
+	const queues = orderWriteQueues()
 	let refundOutcome: CancelRefundOutcome | null = null
 
 	const result: OrderServiceResult<RestaurantOrder> = await runExclusive(
@@ -2068,7 +2066,7 @@ export async function updateOperatorOrderWithRefund(
 		() =>
 			retryOnSqliteBusy(() =>
 				runTenantTransaction(db, async (tx) => {
-					await expireHolds(tx, new Date(), loyalty)
+					await expireHolds(tx, new Date(), queues.loyalty)
 					const [order] = await tx
 						.select()
 						.from(restaurantOrders)
@@ -2095,7 +2093,7 @@ export async function updateOperatorOrderWithRefund(
 								expectedVersion: input.expectedPromisedVersion,
 							},
 							now,
-							messages.context(now.getTime()),
+							queues.messages.context(now.getTime()),
 						)
 						if (!delayed.ok) {
 							return orderFailure(delayed.status, delayed.code, delayed.message)
@@ -2103,190 +2101,18 @@ export async function updateOperatorOrderWithRefund(
 						await hooks.afterWrite?.(tx, order, delayed.order)
 						return { ok: true, data: delayed.order }
 					}
-					refundOutcome = null
-					const patch: Partial<RestaurantOrder> = {}
-
-					if (input.status !== order.status) {
-						const allowed = OPERATOR_STATUS_TRANSITIONS[order.status] ?? []
-						if (!allowed.includes(input.status)) {
-							return orderFailure(
-								422,
-								'invalid_transition',
-								`An order that is ${order.status} cannot move to ${input.status}.`,
-							)
-						}
-						patch.status = input.status
-						if (input.status === 'completed') patch.completedAt = now
-						if (input.status === 'cancelled') patch.cancelledAt = now
-					}
-
-					const wantsRefund = input.refund === 'full'
-					const paidOnline =
-						order.paymentMethod === 'online' && order.paymentStatus === 'paid'
-					if (
-						input.status === 'cancelled' &&
-						order.status === 'cancelled' &&
-						wantsRefund
-					) {
-						if (!cancel.mayRefund) {
-							return orderFailure(
-								403,
-								'refund_forbidden',
-								'Refunding through the payment provider needs the refund permission.',
-							)
-						}
-						// A repeated cancel (a lost answer): answer the refund it booked.
-						const [booked] = await tx
-							.select()
-							.from(restaurantOrderRefunds)
-							.where(
-								and(
-									eq(restaurantOrderRefunds.orderId, order.id),
-									eq(
-										restaurantOrderRefunds.idempotencyKey,
-										cancelRefundKey(order.id),
-									),
-								),
-							)
-							.limit(1)
-						refundOutcome = booked
-							? {
-									refund: orderProviderRefundView(booked, order),
-									replayed: true,
-									code: null,
-								}
-							: { refund: null, replayed: false, code: 'order_not_refundable' }
-					}
-					if (patch.status === 'cancelled') {
-						if (wantsRefund && order.paymentMethod !== 'online') {
-							return orderFailure(
-								400,
-								'order_not_refundable',
-								'An order paid at handoff is not refunded with the cancel. Record the refund instead.',
-							)
-						}
-						if (wantsRefund && !cancel.mayRefund) {
-							return orderFailure(
-								403,
-								'refund_forbidden',
-								'Refunding through the payment provider needs the refund permission.',
-							)
-						}
-						const reason = input.cancelReason ?? input.rejectReason ?? null
-						if (paidOnline && !reason) {
-							return orderFailure(
-								422,
-								'cancel_reason_required',
-								'Say why this paid order is cancelled.',
-							)
-						}
-						patch.cancelReason = reason
-						patch.cancelledBy = cancel.cancelledBy ?? 'operator'
-					}
-
-					if (input.markPaid) {
-						// A tab is paid once, at close: settling one round alone would
-						// leave the tab total and the rounds disagreeing.
-						if (order.tabId) {
-							return orderFailure(
-								409,
-								'tab_settlement_required',
-								'This order is on a table tab. Close the tab to take payment.',
-							)
-						}
-						if (order.paymentMethod !== 'online') {
-							// A free order (not_required) has nothing to collect: marking
-							// it paid is a no-op, so a stale client tap neither fails nor
-							// invents a payment.
-							if (order.paymentStatus !== 'not_required') {
-								if (
-									order.paymentStatus !== 'unpaid' &&
-									order.paymentStatus !== 'paid'
-								) {
-									return orderFailure(
-										409,
-										'payment_state_conflict',
-										'This order cannot be marked paid.',
-									)
-								}
-								patch.paymentStatus = 'paid'
-								patch.paidAt = now
-							}
-						} else {
-							return orderFailure(
-								409,
-								'payment_not_markable',
-								'Online order payment status is controlled by payment events.',
-							)
-						}
-					}
-
-					if (Object.keys(patch).length === 0) {
-						return { ok: true, data: order }
-					}
-
-					const [updated] = await tx
-						.update(restaurantOrders)
-						.set({ ...patch, updatedAt: now })
-						.where(eq(restaurantOrders.id, order.id))
-						.returning()
-					if (patch.status === 'cancelled' && input.refund === 'full') {
-						refundOutcome = await bookCancelRefund(
-							tx,
-							updated ?? { ...order, ...patch },
-							cancel,
-							now.getTime(),
-						)
-					}
-					await loyalty.queue(
-						loyaltyTx(tx),
-						{ type: 'restaurant_order', id: order.id },
-						now.getTime(),
-					)
-					// A cancel returns what the order used; accepting an order held
-					// for review (or marking one paid) starts to count it.
-					await inventory.queue(
-						tx,
-						{
-							type: 'restaurant_order',
-							id: order.id,
-							locationId: order.locationId,
-						},
-						now.getTime(),
-					)
-					if (patch.status === 'cancelled') {
-						await releaseDiscountRedemptions(tx, [order.id])
-						await refundDiscountRedemptions(tx, order.id)
-					} else if (
-						patch.status === 'completed' ||
-						patch.paymentStatus === 'paid' ||
-						// An operator accepting a paid order that was held for review
-						// (it was paid after its hold lapsed) honors the sale.
-						(order.status === 'payment_review' && patch.status !== undefined)
-					) {
-						if (order.status === 'payment_review') {
-							// Orders that reached review before the use was re-recorded
-							// at that moment have only a released row: record it now.
-							await reReserveReleasedDiscounts(tx, order.id)
-						}
-						await consumeDiscountRedemptions(tx, [order.id])
-					}
-					// Ready and cancelled tell the guest (once per kind and channel).
-					await queueOrderStatusMessages(
-						tx,
-						updated ?? { ...order, ...patch },
-						order.status,
-						patch.status ?? null,
-						messages.context(now.getTime()),
-					)
-					await hooks.afterWrite?.(tx, order, updated ?? order)
-					return { ok: true, data: updated ?? order }
+					const applied = await applyOrderStatusPatchInTx(tx, order, input, {
+						hooks,
+						cancel,
+						queues,
+						now,
+					})
+					refundOutcome = applied.refund
+					return applied.result
 				}),
 			),
 	)
-	await loyalty.settle(orgId)
-	await inventory.settle(orgId)
-	messages.deliver(orgId)
+	await settleOrderWriteQueues(orgId, queues)
 	if (!result.ok) return result
 	const booked = refundOutcome as CancelRefundOutcome | null
 	if (booked?.refund && !booked.replayed) {
@@ -2294,6 +2120,282 @@ export async function updateOperatorOrderWithRefund(
 		kickOrderRefundExecute(orgId, [booked.refund.refundId])
 	}
 	return { ok: true, data: { order: result.data, refund: booked } }
+}
+
+/**
+ * The work an order write leaves for after its commit: loyalty and inventory
+ * settlement and guest messages, queued inside the transaction.
+ */
+export type OrderWriteQueues = {
+	loyalty: LoyaltySettleQueue
+	inventory: ReturnType<typeof inventorySaleQueue>
+	messages: ReturnType<typeof orderMessageBatch>
+}
+
+export function orderWriteQueues(): OrderWriteQueues {
+	return {
+		loyalty: loyaltySettleQueue(),
+		inventory: inventorySaleQueue(),
+		messages: orderMessageBatch(),
+	}
+}
+
+/** Runs what an order write queued, after its transaction committed. */
+export async function settleOrderWriteQueues(
+	orgId: string,
+	queues: OrderWriteQueues,
+): Promise<void> {
+	await queues.loyalty.settle(orgId)
+	await queues.inventory.settle(orgId)
+	queues.messages.deliver(orgId)
+}
+
+/**
+ * The hold sweep an order write runs first in its own transaction, so a
+ * lapsed online hold is expired before the order is read.
+ */
+export async function expireHoldsInTx(
+	tx: OrderTx,
+	now: Date,
+	loyalty: LoyaltySettleQueue,
+): Promise<void> {
+	await expireHolds(tx, now, loyalty)
+}
+
+/**
+ * Statuses a guest may cancel from (#111). The guest's window check
+ * (`guestCancelWindow`) decides whether they may; this only lets the write
+ * leave `pending_acceptance`, which has no operator transition of its own.
+ */
+const GUEST_CANCEL_FROM_STATUSES: ReadonlySet<string> = new Set([
+	'accepted',
+	'pending_acceptance',
+])
+
+/**
+ * One status write (`OperatorPatchInput` status branch) on an order already
+ * read inside the caller's transaction: the transition, cancel reason and
+ * who cancelled, mark paid, the provider refund a cancel asks for, and the
+ * cancel side effects (loyalty and inventory queued, discount uses released
+ * and refunded, the guest's status message queued). The operator PATCH,
+ * Station's Orders app and the guest's own cancel all go through here; the
+ * caller runs `settleOrderWriteQueues` (and the refund kick) after commit.
+ */
+export async function applyOrderStatusPatchInTx(
+	tx: OrderTx,
+	order: RestaurantOrder,
+	input: Extract<OperatorPatchInput, { status: unknown }>,
+	options: {
+		hooks?: OrderWriteHooks
+		cancel: CancelRefundOptions
+		queues: OrderWriteQueues
+		now: Date
+	},
+): Promise<{
+	result: OrderServiceResult<RestaurantOrder>
+	refund: CancelRefundOutcome | null
+}> {
+	const { cancel, queues, now } = options
+	const hooks = options.hooks ?? {}
+	const done = (
+		result: OrderServiceResult<RestaurantOrder>,
+		refund: CancelRefundOutcome | null = null,
+	) => ({ result, refund })
+	let refundOutcome: CancelRefundOutcome | null = null
+	const patch: Partial<RestaurantOrder> = {}
+
+	if (input.status !== order.status) {
+		const allowed = OPERATOR_STATUS_TRANSITIONS[order.status] ?? []
+		const guestCancel =
+			cancel.cancelledBy === 'guest' &&
+			input.status === 'cancelled' &&
+			GUEST_CANCEL_FROM_STATUSES.has(order.status)
+		if (!allowed.includes(input.status) && !guestCancel) {
+			return done(
+				orderFailure(
+					422,
+					'invalid_transition',
+					`An order that is ${order.status} cannot move to ${input.status}.`,
+				),
+			)
+		}
+		patch.status = input.status
+		if (input.status === 'completed') patch.completedAt = now
+		if (input.status === 'cancelled') patch.cancelledAt = now
+	}
+
+	const wantsRefund = input.refund === 'full'
+	const paidOnline =
+		order.paymentMethod === 'online' && order.paymentStatus === 'paid'
+	if (
+		input.status === 'cancelled' &&
+		order.status === 'cancelled' &&
+		wantsRefund
+	) {
+		if (!cancel.mayRefund) {
+			return done(
+				orderFailure(
+					403,
+					'refund_forbidden',
+					'Refunding through the payment provider needs the refund permission.',
+				),
+			)
+		}
+		// A repeated cancel (a lost answer): answer the refund it booked.
+		const [booked] = await tx
+			.select()
+			.from(restaurantOrderRefunds)
+			.where(
+				and(
+					eq(restaurantOrderRefunds.orderId, order.id),
+					eq(restaurantOrderRefunds.idempotencyKey, cancelRefundKey(order.id)),
+				),
+			)
+			.limit(1)
+		refundOutcome = booked
+			? {
+					refund: orderProviderRefundView(booked, order),
+					replayed: true,
+					code: null,
+				}
+			: { refund: null, replayed: false, code: 'order_not_refundable' }
+	}
+	if (patch.status === 'cancelled') {
+		if (wantsRefund && order.paymentMethod !== 'online') {
+			return done(
+				orderFailure(
+					400,
+					'order_not_refundable',
+					'An order paid at handoff is not refunded with the cancel. Record the refund instead.',
+				),
+			)
+		}
+		if (wantsRefund && !cancel.mayRefund) {
+			return done(
+				orderFailure(
+					403,
+					'refund_forbidden',
+					'Refunding through the payment provider needs the refund permission.',
+				),
+			)
+		}
+		const reason = input.cancelReason ?? input.rejectReason ?? null
+		if (paidOnline && !reason) {
+			return done(
+				orderFailure(
+					422,
+					'cancel_reason_required',
+					'Say why this paid order is cancelled.',
+				),
+			)
+		}
+		patch.cancelReason = reason
+		patch.cancelledBy = cancel.cancelledBy ?? 'operator'
+	}
+
+	if (input.markPaid) {
+		// A tab is paid once, at close: settling one round alone would
+		// leave the tab total and the rounds disagreeing.
+		if (order.tabId) {
+			return done(
+				orderFailure(
+					409,
+					'tab_settlement_required',
+					'This order is on a table tab. Close the tab to take payment.',
+				),
+			)
+		}
+		if (order.paymentMethod !== 'online') {
+			// A free order (not_required) has nothing to collect: marking
+			// it paid is a no-op, so a stale client tap neither fails nor
+			// invents a payment.
+			if (order.paymentStatus !== 'not_required') {
+				if (
+					order.paymentStatus !== 'unpaid' &&
+					order.paymentStatus !== 'paid'
+				) {
+					return done(
+						orderFailure(
+							409,
+							'payment_state_conflict',
+							'This order cannot be marked paid.',
+						),
+					)
+				}
+				patch.paymentStatus = 'paid'
+				patch.paidAt = now
+			}
+		} else {
+			return done(
+				orderFailure(
+					409,
+					'payment_not_markable',
+					'Online order payment status is controlled by payment events.',
+				),
+			)
+		}
+	}
+
+	if (Object.keys(patch).length === 0) {
+		return done({ ok: true, data: order }, refundOutcome)
+	}
+
+	const [updated] = await tx
+		.update(restaurantOrders)
+		.set({ ...patch, updatedAt: now })
+		.where(eq(restaurantOrders.id, order.id))
+		.returning()
+	if (patch.status === 'cancelled' && input.refund === 'full') {
+		refundOutcome = await bookCancelRefund(
+			tx,
+			updated ?? { ...order, ...patch },
+			cancel,
+			now.getTime(),
+		)
+	}
+	await queues.loyalty.queue(
+		loyaltyTx(tx),
+		{ type: 'restaurant_order', id: order.id },
+		now.getTime(),
+	)
+	// A cancel returns what the order used; accepting an order held
+	// for review (or marking one paid) starts to count it.
+	await queues.inventory.queue(
+		tx,
+		{
+			type: 'restaurant_order',
+			id: order.id,
+			locationId: order.locationId,
+		},
+		now.getTime(),
+	)
+	if (patch.status === 'cancelled') {
+		await releaseDiscountRedemptions(tx, [order.id])
+		await refundDiscountRedemptions(tx, order.id)
+	} else if (
+		patch.status === 'completed' ||
+		patch.paymentStatus === 'paid' ||
+		// An operator accepting a paid order that was held for review
+		// (it was paid after its hold lapsed) honors the sale.
+		(order.status === 'payment_review' && patch.status !== undefined)
+	) {
+		if (order.status === 'payment_review') {
+			// Orders that reached review before the use was re-recorded
+			// at that moment have only a released row: record it now.
+			await reReserveReleasedDiscounts(tx, order.id)
+		}
+		await consumeDiscountRedemptions(tx, [order.id])
+	}
+	// Ready and cancelled tell the guest (once per kind and channel).
+	await queueOrderStatusMessages(
+		tx,
+		updated ?? { ...order, ...patch },
+		order.status,
+		patch.status ?? null,
+		queues.messages.context(now.getTime()),
+	)
+	await hooks.afterWrite?.(tx, order, updated ?? order)
+	return done({ ok: true, data: updated ?? order }, refundOutcome)
 }
 
 /**
@@ -2556,9 +2658,16 @@ export type OrderRefundGlance = {
 	pendingCents: number
 }
 
+/**
+ * Whether the guest may cancel the order themselves now (#111), and until
+ * when: `guestCancelGlance` (`services/order-guest-cancel.ts`). No PII.
+ */
+export type OrderGuestCancelGlance = { allowed: boolean; until: string | null }
+
 export function receiptOrder(
 	order: RestaurantOrder,
 	refunds: OrderRefundGlance | null = null,
+	cancel: OrderGuestCancelGlance | null = null,
 ) {
 	const glance = refunds ?? {
 		refundStatus: orderRefundSummary(order, []).refundStatus,
@@ -2577,6 +2686,13 @@ export function receiptOrder(
 		cancelledBy: order.cancelledBy ?? null,
 		/** Only `out_of_stock` / `kitchen_closed` are told to the guest. */
 		cancelReason: guestVisibleCancelReason(order.cancelReason),
+		/**
+		 * "Cancel order" on the success page and the order link: present only
+		 * on the guest's own reads (the operator view never computes it).
+		 */
+		...(cancel
+			? { cancel: { allowed: cancel.allowed, until: cancel.until } }
+			: {}),
 		fulfillment: order.fulfillment,
 		locale: order.locale,
 		createdAt: order.createdAt ? order.createdAt.toISOString() : null,

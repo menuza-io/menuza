@@ -11,6 +11,7 @@ import {
 	receiptOrder,
 	sweepExpiredHolds,
 	verifyReceiptToken,
+	type OrderGuestCancelGlance,
 	type OrderRefundGlance,
 } from './order-service.ts'
 
@@ -18,11 +19,12 @@ import {
  * Guest access to one order by either of its capabilities: the receipt token
  * (`Authorization: Bearer`, returned at placement) or the "View your order"
  * link token (`X-Order-Link`, from the URL fragment of the email link; see
- * `lib/order-link.ts`). Either one grants read-only access to that order's
- * receipt and the receipt re-send; neither signs anyone in, and the link token
- * opens nothing else (payment, tabs, quotes and every write keep their own
- * capabilities). A link-token read gets `linkReceiptOrder`: no contact
- * details, no delivery address, no free-text line instructions.
+ * `lib/order-link.ts`). Either one grants access to that order's receipt,
+ * the receipt re-send and the guest's own cancel while the location allows it
+ * (`GET`/`POST /orders/:id/cancel`, #111); neither signs anyone in, and the
+ * link token opens nothing else (payment, tabs, quotes and every other write
+ * keep their own capabilities). A link-token read gets `linkReceiptOrder`: no
+ * contact details, no delivery address, no free-text line instructions.
  */
 
 export const ORDER_LINK_HEADER = 'X-Order-Link'
@@ -135,8 +137,9 @@ export async function authorizeGuestOrder(
 export function linkReceiptOrder(
 	order: RestaurantOrder,
 	refunds: OrderRefundGlance | null = null,
+	cancel: OrderGuestCancelGlance | null = null,
 ) {
-	const full = receiptOrder(order, refunds)
+	const full = receiptOrder(order, refunds, cancel)
 	return {
 		id: full.id,
 		number: full.number,
@@ -163,6 +166,12 @@ export function linkReceiptOrder(
 		refundPendingCents: full.refundPendingCents,
 		cancelledBy: full.cancelledBy,
 		cancelReason: full.cancelReason,
+		// Whether the guest may still cancel, and until when (#111): a yes/no
+		// and a time, nothing about the guest. The link holder may cancel too
+		// (`POST /orders/:id/cancel` takes either capability).
+		...(cancel
+			? { cancel: { allowed: cancel.allowed, until: cancel.until } }
+			: {}),
 		fulfillment: full.fulfillment,
 		locale: full.locale,
 		createdAt: full.createdAt,

@@ -543,12 +543,43 @@ function OrderBadges({
 							? _(t`Nothing to pay`)
 							: _(t`Pay at handoff`)}
 			</Badge>
+			{order.disputed ? (
+				<Badge tone="danger">
+					<Trans>Disputed</Trans>
+				</Badge>
+			) : null}
+			{order.refundStatus === 'pending' ? (
+				<Badge tone="warning">
+					<Trans>Refund pending</Trans>
+				</Badge>
+			) : order.refundStatus === 'failed' ? (
+				<Badge tone="danger">
+					<Trans>Refund failed</Trans>
+				</Badge>
+			) : order.refundStatus === 'full' ? (
+				<Badge tone="muted">
+					<Trans>Refunded</Trans>
+				</Badge>
+			) : order.refundStatus === 'partial' ? (
+				<Badge tone="muted">
+					<Trans>Partly refunded</Trans>
+				</Badge>
+			) : null}
 			<Badge tone={late ? 'danger' : 'muted'}>
 				{order.dueAt
 					? _(t`Due ${time.format(order.dueAt)}`)
 					: _(t`As soon as possible`)}
 			</Badge>
 		</div>
+	)
+}
+
+/** Paid online (not at handoff, not on a table tab): a refund goes through the payment provider. */
+function isPaidOnline(order: PosOnlineOrderSummary): boolean {
+	return (
+		order.paymentMethod === 'online' &&
+		order.paymentStatus === 'paid' &&
+		!order.onTab
 	)
 }
 
@@ -609,6 +640,7 @@ function OrderCard({
 function actionMessage(
 	_: (descriptor: MessageDescriptor) => string,
 	error: OrdersError,
+	money?: (cents: number) => string,
 ): string {
 	switch (error.code) {
 		case 'stale_version':
@@ -621,10 +653,24 @@ function actionMessage(
 			return _(msg`You do not have permission to do that.`)
 		case 'loyalty_refund_forbidden':
 			return _(
-				msg`This refund takes loyalty points back. Record it in the App, where a manager with the loyalty permission can approve it.`,
+				msg`This refund takes loyalty points back. Do it in the App, where a manager with the loyalty permission can approve it.`,
 			)
 		case 'refund_exceeds_payment':
-			return _(msg`That is more than is left to refund.`)
+			return money && error.refundableCents !== undefined
+				? _(
+						msg`That is more than is left to refund. At most ${money(error.refundableCents)} can be refunded.`,
+					)
+				: _(msg`That is more than is left to refund.`)
+		case 'refund_pending':
+			return _(
+				msg`A refund for this order is already on its way. Wait until it finishes before refunding again.`,
+			)
+		case 'payment_disputed':
+			return _(
+				msg`The guest disputed this payment with their bank, so it cannot be refunded here. Handle it in your payment provider's dashboard.`,
+			)
+		case 'order_not_refundable':
+			return _(msg`There is nothing to refund on this order.`)
 		case 'refund_complete':
 			return _(msg`This order is already fully refunded.`)
 		case 'invalid_transition':
@@ -642,6 +688,36 @@ function actionMessage(
 	}
 }
 
+function refundOutcomeMessage(
+	_: (descriptor: MessageDescriptor) => string,
+	outcome: { started: boolean; code: string | null },
+): string {
+	if (outcome.started)
+		return _(
+			msg`The order is cancelled and the refund has started. The money goes back to the guest's card.`,
+		)
+	switch (outcome.code) {
+		case 'payment_disputed':
+			return _(
+				msg`The order is cancelled, but the payment is disputed, so it was not refunded.`,
+			)
+		case 'refund_pending':
+			return _(
+				msg`The order is cancelled. A refund for it was already on its way.`,
+			)
+		case 'refund_complete':
+			return _(msg`The order is cancelled. It was already fully refunded.`)
+		case 'loyalty_refund_forbidden':
+			return _(
+				msg`The order is cancelled, but not refunded: this refund takes loyalty points back. Refund it in the App.`,
+			)
+		default:
+			return _(
+				msg`The order is cancelled, but the refund did not start. Open the order and try Refund.`,
+			)
+	}
+}
+
 function OrderSheet({
 	orders,
 	stale,
@@ -654,7 +730,15 @@ function OrderSheet({
 	businessName: string
 }) {
 	const { _ } = useLingui()
-	const { detail, grants, busy, actionError, selected, contact } = orders
+	const {
+		detail,
+		grants,
+		busy,
+		actionError,
+		selected,
+		contact,
+		refundOutcome,
+	} = orders
 	const [markPaid, setMarkPaid] = useState(false)
 	const [cancelling, setCancelling] = useState(false)
 	const [refunding, setRefunding] = useState(false)
@@ -683,6 +767,7 @@ function OrderSheet({
 	// Found by search and past the inbox: read here, changed only in the App.
 	const readOnly = detail ? !onlineOrderInInbox(detail, orders.now) : false
 	const locked = busy || stale || !detail
+	const paidOnline = detail ? isPaidOnline(detail) : false
 	return (
 		<Modal
 			open={selected !== null}
@@ -718,13 +803,19 @@ function OrderSheet({
 									<Trans>Cancel order</Trans>
 								</Button>
 							) : null}
-							{grants?.refund && detail.refundableCents > 0 ? (
+							{grants?.refund &&
+							detail.refundableCents > 0 &&
+							!detail.disputed ? (
 								<Button
 									variant="outline"
-									disabled={locked}
+									disabled={locked || (detail.refundPendingCents ?? 0) > 0}
 									onClick={() => setRefunding(true)}
 								>
-									<Trans>Record refund</Trans>
+									{paidOnline ? (
+										<Trans>Refund</Trans>
+									) : (
+										<Trans>Record refund</Trans>
+									)}
 								</Button>
 							) : null}
 							<Button
@@ -785,7 +876,18 @@ function OrderSheet({
 			<div className="p-4 sm:p-5">
 				{actionError ? (
 					<p role="alert" className="notice-warning mb-3 px-4 py-2 text-sm">
-						{actionMessage(_, actionError)}
+						{actionMessage(_, actionError, money)}
+					</p>
+				) : null}
+				{refundOutcome && !actionError ? (
+					<p
+						role="status"
+						className={cn(
+							'mb-3 px-4 py-2 text-sm',
+							refundOutcome.started ? 'notice-success' : 'notice-warning',
+						)}
+					>
+						{refundOutcomeMessage(_, refundOutcome)}
 					</p>
 				) : null}
 				{stale && detail ? (
@@ -818,13 +920,22 @@ function OrderSheet({
 						open={cancelling}
 						number={detail.number}
 						paid={detail.paymentStatus === 'paid' && !detail.onTab}
+						canRefund={
+							paidOnline &&
+							grants?.refund === true &&
+							!detail.disputed &&
+							detail.refundableCents > 0 &&
+							(detail.refundPendingCents ?? 0) === 0
+						}
+						refundableLabel={money(detail.refundableCents)}
 						busy={busy}
 						onClose={() => setCancelling(false)}
-						onConfirm={async (reason) => {
+						onConfirm={async (reason, refund) => {
 							const ok = await orders.command({
 								action: 'cancel',
 								expectedVersion: detail.version,
 								reason,
+								...(refund ? { refund } : {}),
 							})
 							if (ok) setCancelling(false)
 						}}
@@ -834,6 +945,7 @@ function OrderSheet({
 						detail={detail}
 						busy={busy}
 						error={actionError}
+						paidOnline={paidOnline}
 						onClose={() => setRefunding(false)}
 						onConfirm={async (refund, key) => {
 							const ok = await orders.refund(
@@ -1022,7 +1134,41 @@ function OrderDetailBody({
 							<dd className="tnum text-end">−{money(detail.refundedCents)}</dd>
 						</>
 					) : null}
+					{(detail.refundPendingCents ?? 0) > 0 ? (
+						<>
+							<dt>
+								<Trans>Refund pending</Trans>
+							</dt>
+							<dd className="tnum text-end">
+								−{money(detail.refundPendingCents ?? 0)}
+							</dd>
+						</>
+					) : null}
 				</dl>
+				{detail.disputed ? (
+					<p role="status" className="notice-warning mt-3 px-4 py-2">
+						<Trans>
+							The guest disputed this payment. It cannot be refunded here until
+							the dispute is settled.
+						</Trans>
+					</p>
+				) : null}
+				{detail.refundStatus === 'pending' ? (
+					<p role="status" className="text-muted-foreground mt-3">
+						<Trans>
+							A refund is on its way to the guest's card. It can take a few days
+							to show on their statement.
+						</Trans>
+					</p>
+				) : null}
+				{detail.refundStatus === 'failed' ? (
+					<p role="alert" className="notice-warning mt-3 px-4 py-2">
+						<Trans>
+							The last refund failed, so nothing was returned. The amount can be
+							refunded again.
+						</Trans>
+					</p>
+				) : null}
 			</section>
 			{detail.history.length > 0 ? (
 				<section aria-label={_(t`On Station`)} className="text-sm">
@@ -1340,6 +1486,8 @@ function CancelDialog({
 	open,
 	number,
 	paid,
+	canRefund,
+	refundableLabel,
 	busy,
 	onClose,
 	onConfirm,
@@ -1347,14 +1495,24 @@ function CancelDialog({
 	open: boolean
 	number: string
 	paid: boolean
+	/** Paid online, and this person may refund: ask whether to refund the guest. */
+	canRefund: boolean
+	refundableLabel: string
 	busy: boolean
 	onClose: () => void
-	onConfirm: (reason: PosOnlineOrderCancelReason) => Promise<void>
+	onConfirm: (
+		reason: PosOnlineOrderCancelReason,
+		refund?: 'none' | 'full',
+	) => Promise<void>
 }) {
 	const { _ } = useLingui()
 	const [reason, setReason] = useState<PosOnlineOrderCancelReason | null>(null)
+	const [refund, setRefund] = useState<'none' | 'full'>('full')
 	useEffect(() => {
-		if (open) setReason(null)
+		if (open) {
+			setReason(null)
+			setRefund('full')
+		}
 	}, [open])
 	return (
 		<Modal
@@ -1369,7 +1527,9 @@ function CancelDialog({
 					<Button
 						variant="danger"
 						disabled={!reason || busy}
-						onClick={() => reason && void onConfirm(reason)}
+						onClick={() =>
+							reason && void onConfirm(reason, canRefund ? refund : undefined)
+						}
 					>
 						<Trans>Cancel order</Trans>
 					</Button>
@@ -1379,11 +1539,44 @@ function CancelDialog({
 			<div className="p-4 sm:p-5">
 				<p className="mb-3 text-sm">
 					{paid
-						? _(
-								t`It was paid online. Cancelling does not refund it: record the refund after you refund it with your payment provider.`,
-							)
+						? canRefund
+							? _(
+									t`It was paid online. The kitchen stops preparing it and it cannot be reopened. Choose whether to refund the guest.`,
+								)
+							: _(
+									t`It was paid online. Cancelling does not refund it: a manager can refund it afterwards from the order or in the App.`,
+								)
 						: _(t`The kitchen stops preparing it. It cannot be reopened.`)}
 				</p>
+				{canRefund ? (
+					<fieldset className="mb-3 flex flex-col gap-2">
+						<legend className="mb-1 text-sm font-semibold">
+							<Trans>Refund the guest?</Trans>
+						</legend>
+						<Segmented
+							label={_(t`Refund the guest?`)}
+							value={refund}
+							onChange={(value) =>
+								setRefund(value === 'none' ? 'none' : 'full')
+							}
+							options={[
+								{
+									value: 'full',
+									label: _(t`Full refund (${refundableLabel})`),
+								},
+								{ value: 'none', label: _(t`No refund`) },
+							]}
+						/>
+						{refund === 'full' ? (
+							<p className="text-muted-foreground text-xs">
+								<Trans>
+									The money goes back to the guest's card. Card fees are usually
+									not returned to you.
+								</Trans>
+							</p>
+						) : null}
+					</fieldset>
+				) : null}
 				<fieldset className="flex flex-col gap-2">
 					<legend className="mb-1 text-sm font-semibold">
 						<Trans>Why?</Trans>
@@ -1409,6 +1602,7 @@ function RefundDialog({
 	detail,
 	busy,
 	error,
+	paidOnline,
 	onClose,
 	onConfirm,
 }: {
@@ -1416,6 +1610,8 @@ function RefundDialog({
 	detail: PosOnlineOrderDetail
 	busy: boolean
 	error: OrdersError | null
+	/** Refunded through the payment provider, not just recorded. */
+	paidOnline: boolean
 	onClose: () => void
 	onConfirm: (
 		refund:
@@ -1445,7 +1641,11 @@ function RefundDialog({
 		<Modal
 			open={open}
 			onClose={onClose}
-			title={_(t`Record a refund for ${detail.number}`)}
+			title={
+				paidOnline
+					? _(t`Refund ${detail.number}`)
+					: _(t`Record a refund for ${detail.number}`)
+			}
 			footer={
 				<div className="flex w-full justify-end gap-2">
 					<Button onClick={onClose} disabled={busy}>
@@ -1464,24 +1664,35 @@ function RefundDialog({
 							)
 						}
 					>
-						{cents !== null
-							? _(t`Record ${money(cents)} refund`)
-							: _(t`Record refund`)}
+						{paidOnline
+							? cents !== null
+								? _(t`Refund ${money(cents)}`)
+								: _(t`Refund`)
+							: cents !== null
+								? _(t`Record ${money(cents)} refund`)
+								: _(t`Record refund`)}
 					</Button>
 				</div>
 			}
 		>
 			<div className="p-4 sm:p-5">
 				<p className="mb-3 text-sm">
-					<Trans>
-						This records money you returned with your payment provider. It does
-						not move money by itself.
-					</Trans>{' '}
+					{paidOnline ? (
+						<Trans>
+							The money goes back to the guest's card through your payment
+							provider. Card fees are usually not returned to you.
+						</Trans>
+					) : (
+						<Trans>
+							This records money you returned with your payment provider. It
+							does not move money by itself.
+						</Trans>
+					)}{' '}
 					{_(t`Up to ${money(detail.refundableCents)} can be refunded.`)}
 				</p>
 				{error && open ? (
 					<p role="alert" className="notice-warning mb-3 px-4 py-2 text-sm">
-						{actionMessage(_, error)}
+						{actionMessage(_, error, money)}
 					</p>
 				) : null}
 				<Segmented

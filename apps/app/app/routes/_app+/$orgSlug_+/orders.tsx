@@ -286,6 +286,23 @@ export default function OrdersInbox() {
 											<PaymentStatusLabel
 												status={paymentDisplayStatus(order)}
 											/>
+											{order.disputed ? (
+												<Badge
+													variant="destructive"
+													data-testid="order-row-disputed"
+												>
+													<Trans>Disputed</Trans>
+												</Badge>
+											) : null}
+											{order.refundStatus === 'pending' ? (
+												<span className="text-warning text-xs">
+													<Trans>Refund pending</Trans>
+												</span>
+											) : order.refundStatus === 'failed' ? (
+												<span className="text-destructive text-xs">
+													<Trans>Refund failed</Trans>
+												</span>
+											) : null}
 										</span>
 										<span className="text-muted-foreground text-xs">{ago}</span>
 									</div>

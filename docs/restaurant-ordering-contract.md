@@ -63,7 +63,8 @@ order (`lib/order-link.ts`): 64 lowercase hex characters, never the receipt or
 payment token. It rides in the URL fragment only, so Sites SSR never sees it;
 the page reads it from `location.hash` and sends it from the browser. It lapses
 90 days after the order was placed and dies when the order's person is erased.
-It is read-only and never signs anyone in.
+It never signs anyone in; besides reads and the re-send below, its only write is
+the guest's own cancel while the location allows it (see "Guest cancel").
 
 `GET /orders/:id?slug=...` also accepts `X-Order-Link: <token>`:
 
@@ -92,9 +93,9 @@ It is read-only and never signs anyone in.
   Bearer (a link token included) is `403 invalid_receipt_token`.
 - The organization still comes from the browser `Origin` plus `slug`/`host`.
 
-The link token opens nothing else: tabs and tab payment keep `X-Tab-Token`,
-placement keeps the customer token, the App's quote and payment session keep the
-payment token.
+The link token opens nothing else (except the guest cancel below): tabs and tab
+payment keep `X-Tab-Token`, placement keeps the customer token, the App's quote
+and payment session keep the payment token.
 
 `POST /orders/:id/resend-link` e-mails the receipt (with its link) again:
 
@@ -111,6 +112,69 @@ payment token.
   guest emails are on, or the send succeeds; the send runs after the response.
   Dine-in and tab rounds get nothing.
 - All answers are `Cache-Control: no-store`.
+
+### Guest cancel (#111)
+
+The guest may cancel their own order for a few minutes after placing (handoff)
+or paying (online), while the location offers it. The policy comes from the
+CURRENT order context (`guestCancel[locationId]`, present only while
+`ordering.guest_cancel` is on and the location has a window of 1, 2, 5 or 10
+minutes), so switching it off stops cancels at once. The rule is
+`guestCancelWindow` in `@repo/common/restaurant-orders`: only `accepted` or
+`pending_acceptance`, not dine-in, QR table rounds or tab rounds, an online
+order must be `paid` or `not_required`, no kitchen ticket dish past New
+(`kds_tickets`, source `online`), scheduled orders until `scheduledLeadMinutes`
+before their time (never less than the ASAP window), drop orders never after the
+drop's `ordersCloseAt` (a closed or missing drop closes it).
+
+Both routes take the same credential and organization as the order link: the
+`Origin` plus `slug`/`host`, and `Authorization: Bearer <receiptToken>` or
+`X-Order-Link: <token>`. Every refusal (none, forged, expired, erased, another
+order, another organization, a malformed link) is the uniform
+`404 order_not_found`, refused before any limit is counted, and a malformed link
+before any database work. Answers are `Cache-Control: no-store`, with no
+personal data.
+
+`GET /orders/:id/cancel?slug=...` answers
+`200 { allowed: boolean, until: string | null, reason: null | "disabled" | "not_cancellable" | "cancel_window_closed" | "order_in_preparation" }`
+(`guestCancelResponseSchema`). Limits: 60 per order and 300 per client address
+per sliding 10 minutes (`429 rate_limit_exceeded` with `retryAfterSeconds` and
+`Retry-After`). `503 ordering_unavailable` when the order context cannot be
+read.
+
+`POST /orders/:id/cancel`:
+
+- Body `{ slug?: string; host?: string }` (strict, max 2 kB, as resend-link).
+- Header `Idempotency-Key`: 8 to 200 visible ASCII characters, one per tap
+  (reuse it on a network retry). Missing or malformed:
+  `400 idempotency_key_required`.
+- Limits: 5 per order and 30 per client address per sliding 10 minutes, counted
+  after the credential verified (refusals count). Over: `429` as above.
+- Success:
+  `200 { allowed: false, until, reason: null, status: "cancelled", refund: { status: "none" | "pending" | "succeeded" | "failed", amountCents } }`.
+  The order is `cancelled` with `cancelled_by = guest` and
+  `cancel_reason = guest_asked`, through the operator cancel's own write
+  (discount uses released, loyalty and inventory settled, the `cancelled` guest
+  message queued). A paid online order books a full provider refund in the same
+  transaction (`kind = provider`, `origin = guest`, actor `guest`, idempotency
+  key `cancel:<orderId>`) and the region kicks the App with ids only; the
+  answer's `refund` is `pending` with the amount. Handoff and free orders:
+  `refund: { status: "none", amountCents: 0 }`.
+- The same `Idempotency-Key` again (24 hours) returns the stored answer byte for
+  byte with `Idempotent-Replayed: true`: no second cancel, refund, kick or
+  message. A new key on a cancelled order is `409 not_cancellable`.
+- Refused by the rule: `409 { error, message, allowed: false, until, reason }`
+  with `error` = `guest_cancel_disabled` (flag off or location Off),
+  `not_cancellable`, `cancel_window_closed` or `order_in_preparation`. Nothing
+  is written.
+- `503 ordering_unavailable` when the order context cannot be read.
+
+The guest's receipt reads (`GET /orders/:id` by receipt token or link) carry
+`cancel: { allowed, until }` so the page can show "Cancel order" and a countdown
+without a second request. It may be up to 30 seconds behind the settings (the
+cancel itself always checks fresh); an order past any possible window answers
+`{ allowed: false, until: null }` without asking the App. The operator view
+never carries `cancel`; it shows `cancelledBy: "guest"`.
 
 ## App → regional API (internal command token)
 

@@ -38,12 +38,21 @@ import {
 	resolveOrganizationForBrowserAuth,
 	type PublishedOrganization,
 } from '../lib/origin.ts'
+import {
+	countOrderGuestCancelAttempt,
+	type OrderGuestCancelBucket,
+} from '../lib/order-guest-cancel-limits.ts'
 import { countOrderResendAttempt } from '../lib/order-link-limits.ts'
 import { isQrDineInDisabled } from '../lib/qr-tokens.ts'
 import { rateLimitByKey } from '../lib/rate-limit.ts'
 import { orgMatchesNodeRegion } from '../lib/region.ts'
 import { getBearerToken, syncEnvFromProcess } from '../lib/secrets.ts'
 import { quoteOrderDiscounts } from '../services/discount-quote.ts'
+import {
+	cancelOrderAsGuest,
+	guestCancelGlance,
+	readGuestCancel,
+} from '../services/order-guest-cancel.ts'
 import { orderRefundGlance } from '../services/order-refund-service.ts'
 import {
 	authorizeGuestOrder,
@@ -854,10 +863,11 @@ async function guestReceiptResponse(
 		// Only the placing device's receipt token reads the guest's contact
 		// details and address; the forwardable link gets the reduced body.
 		const refunds = await orderRefundGlance(orgId, access.order)
+		const cancel = await guestCancelGlance(orgId, access.order)
 		const order =
 			access.via === 'receipt'
-				? receiptOrder(access.order, refunds)
-				: linkReceiptOrder(access.order, refunds)
+				? receiptOrder(access.order, refunds, cancel)
+				: linkReceiptOrder(access.order, refunds, cancel)
 		return c.json({ order }, 200, noStoreHeaders())
 	} catch (error) {
 		console.error(
@@ -915,8 +925,12 @@ publicOrderRoutes.get('/:id', async (c) => {
 			organization.organization.id,
 			result.data.order,
 		)
+		const cancel = await guestCancelGlance(
+			organization.organization.id,
+			result.data.order,
+		)
 		return c.json(
-			{ order: receiptOrder(result.data.order, refunds) },
+			{ order: receiptOrder(result.data.order, refunds, cancel) },
 			200,
 			noStoreHeaders(),
 		)
@@ -1000,6 +1014,190 @@ publicOrderRoutes.post('/:id/resend-link', async (c) => {
 		)
 		return c.json(
 			{ error: 'internal_error', message: 'We could not send this order.' },
+			500,
+			noStoreHeaders(),
+		)
+	}
+})
+
+// ---------------------------------------------------------------------------
+// GET / POST /orders/:id/cancel — the guest cancels their own order (#111)
+// ---------------------------------------------------------------------------
+
+/**
+ * `Idempotency-Key` of a guest cancel: 8 to 200 visible ASCII characters (one
+ * per tap of "Cancel order"; a network retry sends the same one).
+ */
+const GUEST_CANCEL_IDEMPOTENCY_KEY = /^[\x21-\x7e]{8,200}$/
+
+const MAX_GUEST_CANCEL_BODY_BYTES = 2_000
+
+function rateLimitedResponse(retryAfterSeconds: number) {
+	return Response.json(
+		{
+			error: 'rate_limit_exceeded',
+			message: 'Too many requests. Please try again later.',
+			retryAfterSeconds,
+		},
+		{
+			status: 429,
+			headers: {
+				...noStoreHeaders(),
+				'Retry-After': String(Math.max(1, retryAfterSeconds)),
+			},
+		},
+	)
+}
+
+/**
+ * Counts the attempt against the order's budget and, when the node knows the
+ * client's address, the address's budget in this organization. Run only after
+ * the capability verified, so a forged one never spends the real order's.
+ */
+async function limitGuestCancel(
+	c: Context,
+	orgId: string,
+	orderId: string,
+	buckets: { order: OrderGuestCancelBucket; address: OrderGuestCancelBucket },
+): Promise<Response | null> {
+	const db = await getTenantDb(orgId)
+	const perOrder = await countOrderGuestCancelAttempt(
+		db,
+		buckets.order,
+		`${orgId}:${orderId}`,
+	)
+	if (!perOrder.ok) return rateLimitedResponse(perOrder.retryAfterSeconds)
+	const address = clientBucket(c)
+	if (address) {
+		const perAddress = await countOrderGuestCancelAttempt(
+			db,
+			buckets.address,
+			`${orgId}:${address}`,
+		)
+		if (!perAddress.ok) {
+			return rateLimitedResponse(perAddress.retryAfterSeconds)
+		}
+	}
+	return null
+}
+
+publicOrderRoutes.get('/:id/cancel', async (c) => {
+	const identitySchema = z.object({
+		slug: z.string().trim().min(1).max(100).optional(),
+		host: z.string().trim().min(1).max(253).optional(),
+	})
+	const identity = identitySchema.safeParse(c.req.query())
+	if (!identity.success) {
+		return c.json({ error: 'Organization not found' }, 404, noStoreHeaders())
+	}
+	const organization = await resolveOrderingOrganization(c, identity.data)
+	if ('error' in organization) return organization.error
+	const orgId = organization.organization.id
+	const orderId = c.req.param('id')
+
+	try {
+		// The receipt token or the order link; every refusal (missing, forged,
+		// expired, malformed, another order's or organization's) is the uniform
+		// 404 of an unknown order, and a malformed link costs no database work.
+		const access = await authorizeGuestOrder(orgId, orderId, {
+			receiptToken: getBearerToken(c.req.header('Authorization')),
+			linkToken: readOrderLinkHeader(c.req.header(ORDER_LINK_HEADER)),
+		})
+		if (!access.ok) return orderNotFoundResponse()
+		const limited = await limitGuestCancel(c, orgId, orderId, {
+			order: 'checkOrder',
+			address: 'checkAddress',
+		})
+		if (limited) return limited
+		const result = await readGuestCancel(orgId, access.order)
+		if (!result.ok) return orderFailureResponse(result.failure)
+		return c.json(result.data, 200, noStoreHeaders())
+	} catch (error) {
+		console.error(
+			`Failed to read the cancel window for org ${orgId}:`,
+			error instanceof Error ? error.message : error,
+		)
+		return c.json(
+			{ error: 'internal_error', message: 'We could not load this order.' },
+			500,
+			noStoreHeaders(),
+		)
+	}
+})
+
+publicOrderRoutes.post('/:id/cancel', async (c) => {
+	const contentLength = Number(c.req.header('content-length') ?? 0)
+	if (contentLength > MAX_GUEST_CANCEL_BODY_BYTES) {
+		return c.json({ error: 'Payload too large' }, 413, noStoreHeaders())
+	}
+	// The identity rides in the JSON body (as on every order POST), so the
+	// Worker can route the request to the organization's Durable Object.
+	const identity = resendLinkBodySchema.safeParse(
+		(await c.req.json().catch(() => null)) ?? {},
+	)
+	if (!identity.success) {
+		return c.json({ error: 'Organization not found' }, 404, noStoreHeaders())
+	}
+	const organization = await resolveOrderingOrganization(c, identity.data)
+	if ('error' in organization) return organization.error
+	const orgId = organization.organization.id
+	const orderId = c.req.param('id')
+
+	const idempotencyKey = c.req.header('Idempotency-Key')?.trim() ?? ''
+	if (!GUEST_CANCEL_IDEMPOTENCY_KEY.test(idempotencyKey)) {
+		return c.json(
+			{
+				error: 'idempotency_key_required',
+				message: 'An Idempotency-Key header is required.',
+			},
+			400,
+			noStoreHeaders(),
+		)
+	}
+
+	try {
+		const access = await authorizeGuestOrder(orgId, orderId, {
+			receiptToken: getBearerToken(c.req.header('Authorization')),
+			linkToken: readOrderLinkHeader(c.req.header(ORDER_LINK_HEADER)),
+		})
+		if (!access.ok) return orderNotFoundResponse()
+		const limited = await limitGuestCancel(c, orgId, orderId, {
+			order: 'cancelOrder',
+			address: 'cancelAddress',
+		})
+		if (limited) return limited
+
+		const result = await cancelOrderAsGuest(orgId, access.order, {
+			idempotencyKey,
+		})
+		if (!result.ok) {
+			const { failure } = result
+			if (failure.window) {
+				// The rule refused: the window as it stands, so the page can
+				// take the button away (`guestCancelResponseSchema` plus the code).
+				return c.json(
+					{
+						error: failure.code,
+						message: failure.message,
+						...failure.window,
+					},
+					409,
+					noStoreHeaders(),
+				)
+			}
+			return orderFailureResponse(failure)
+		}
+		return c.json(result.data, 200, {
+			...noStoreHeaders(),
+			...(result.replayed ? { 'Idempotent-Replayed': 'true' } : {}),
+		})
+	} catch (error) {
+		console.error(
+			`Failed to cancel an order for a guest in org ${orgId}:`,
+			error instanceof Error ? error.message : error,
+		)
+		return c.json(
+			{ error: 'internal_error', message: 'We could not cancel this order.' },
 			500,
 			noStoreHeaders(),
 		)

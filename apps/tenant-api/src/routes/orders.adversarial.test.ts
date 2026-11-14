@@ -1512,6 +1512,15 @@ describe('Adversarial: restaurant ordering (public browser surface)', () => {
 				'contact',
 			])
 			expect(linkKeys.filter((key) => !fullKeys.includes(key))).toEqual([])
+			// The guest-cancel glance (#111) is on both, deliberately.
+			const cancel = { allowed: true, until: '2026-01-01T00:00:00.000Z' }
+			const fullWithCancel = Object.keys(receiptOrder(row!, null, cancel))
+			const linkWithCancel = Object.keys(linkReceiptOrder(row!, null, cancel))
+			expect(
+				fullWithCancel.filter((key) => !linkWithCancel.includes(key)),
+			).toEqual(['contact'])
+			expect(linkWithCancel).toContain('cancel')
+			expect(linkReceiptOrder(row!, null, cancel).cancel).toEqual(cancel)
 			expect(Object.keys(linkReceiptOrder(row!).delivery ?? {}).sort()).toEqual(
 				['feeCents', 'zoneId'],
 			)
