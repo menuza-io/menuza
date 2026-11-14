@@ -1,8 +1,12 @@
 /**
  * The "View your order" link: `/menu/success?order=<id>#link=<token>`. The
- * token lives in the URL fragment only, so Sites SSR never sees it; the
- * browser sends it to the regional tenant-api as `X-Order-Link`. Nothing here
- * logs, stores or rewrites it.
+ * token arrives in the URL fragment only, so Sites SSR never sees it; the
+ * browser sends it to the regional tenant-api as `X-Order-Link`. Scripts on
+ * the page (analytics), history sync and screenshots can read the fragment,
+ * so the page strips it as its first act: an inline head script parks the raw
+ * fragment in sessionStorage (`PENDING_HASH_KEY`) and rewrites the URL, then
+ * `claimOrderLink` keeps the token per order in sessionStorage (this tab
+ * only; never localStorage, cookies or a query string).
  */
 
 /** A link token is 64 hex characters; anything else is not one of ours. */
@@ -59,4 +63,87 @@ export function credentialHeaders(
 	return credential.kind === 'link'
 		? { 'X-Order-Link': credential.token }
 		: { Authorization: `Bearer ${credential.token}` }
+}
+
+/** Where the inline head script parks the raw fragment until it is claimed. */
+export const PENDING_HASH_KEY = 'menuza_order_link_pending'
+
+export const orderLinkKey = (orgId: string, orderId: string) =>
+	`menuza_order_link_${orgId}_${orderId}`
+
+type LinkStorage = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>
+
+/** Tokens kept in memory for this page view when sessionStorage throws. */
+const memoryTokens = new Map<string, string>()
+
+export type ClaimOrderLinkInput = {
+	orgId: string
+	orderId: string | null
+	location: Pick<Location, 'hash' | 'pathname' | 'search'>
+	history: Pick<History, 'replaceState'>
+	/** Resolved lazily: reading `sessionStorage` itself can throw. */
+	storage: () => LinkStorage | null
+	memory?: Map<string, string>
+}
+
+/**
+ * Takes the link token out of the fragment (or the parked copy), stores it
+ * for this order, removes the fragment from the address bar and returns what
+ * was found. Without a fragment it returns the token stored earlier for this
+ * order, so a reload in the same tab keeps working.
+ */
+export function claimOrderLink(input: ClaimOrderLinkInput): OrderLinkRead {
+	const memory = input.memory ?? memoryTokens
+	let storage: LinkStorage | null = null
+	try {
+		storage = input.storage()
+	} catch {
+		storage = null
+	}
+	let hash = input.location.hash
+	try {
+		const parked = storage?.getItem(PENDING_HASH_KEY)
+		if (parked) {
+			if (!hash) hash = parked
+			storage?.removeItem(PENDING_HASH_KEY)
+		}
+	} catch {
+		/* Nothing parked. */
+	}
+	if (input.location.hash) {
+		try {
+			input.history.replaceState(
+				null,
+				'',
+				input.location.pathname + input.location.search,
+			)
+		} catch {
+			/* Leave the address as it is. */
+		}
+	}
+	const read = readOrderLink(hash)
+	if (read.status !== 'absent') {
+		if (read.status === 'valid' && input.orderId) {
+			const key = orderLinkKey(input.orgId, input.orderId)
+			memory.set(key, read.token)
+			try {
+				storage?.setItem(key, read.token)
+			} catch {
+				/* Memory copy only. */
+			}
+		}
+		return read
+	}
+	if (!input.orderId) return read
+	const key = orderLinkKey(input.orgId, input.orderId)
+	let stored: string | null = null
+	try {
+		stored = storage?.getItem(key) ?? null
+	} catch {
+		stored = null
+	}
+	stored ??= memory.get(key) ?? null
+	return stored && LINK_TOKEN_PATTERN.test(stored)
+		? { status: 'valid', token: stored }
+		: read
 }

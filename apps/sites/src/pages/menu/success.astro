@@ -207,6 +207,23 @@ const valueClass = 'price font-medium text-foreground'
 	page={{ id: 'success', title: successTitle, slug: 'menu/success', isHomePage: false, sections: [] }}
 	title={`${successTitle} - ${organization.name}`}
 >
+	{/* The emailed link's token rides in the URL fragment. Park it and clear the
+	    address before any other script can read it: this runs from the head
+	    slot, ahead of the analytics integrations the layout adds after it. */}
+	<script is:inline slot="head">
+		(function () {
+			try {
+				var hash = window.location.hash
+				if (hash.indexOf('link=') === -1) return
+				if (hash.length <= 512) {
+					try {
+						sessionStorage.setItem('menuza_order_link_pending', hash)
+					} catch (e) {}
+				}
+				history.replaceState(null, '', window.location.pathname + window.location.search)
+			} catch (e) {}
+		})()
+	</script>
 	<div class="min-h-screen bg-background pt-8 pb-16 sm:pt-12 sm:pb-24">
 		<div class="mx-auto w-full max-w-2xl px-5 sm:px-8">
 			{/* Loading state (only while a receipt fetch is in flight) */}
@@ -514,7 +531,7 @@ const valueClass = 'price font-medium text-foreground'
 		} from '~/lib/ordering/order-client'
 		import {
 			chooseOrderCredential,
-			readOrderLink,
+			claimOrderLink,
 			type OrderCredential,
 		} from '~/lib/ordering/order-link'
 		import { createStatusPoller, isTerminalStatus } from '~/lib/ordering/status-poll'
@@ -535,6 +552,7 @@ const valueClass = 'price font-medium text-foreground'
 		} from '~/lib/ordering/hold-timer'
 		import { receiptDiscounts } from '~/lib/ordering/discount-view'
 		import { formatPickupAddress, formatSlot } from '~/lib/ordering/pickup'
+		import { receiptLineNote, receiptRecipientText } from '~/lib/ordering/order-view'
 		import { zonedTimeToUtc } from '~/lib/drops/format'
 		import { getOrgBinding } from '~/lib/client-auth'
 
@@ -604,12 +622,14 @@ const valueClass = 'price font-medium text-foreground'
 			} | null
 			drop: { slug: string } | null
 			lines: ReceiptLine[]
-			contact: { name: string; phone: string; email: string | null }
+			/** Absent on a read authorised by the emailed link. */
+			contact?: { name: string; phone: string; email: string | null }
+			/** Link reads carry only `feeCents` and `zoneId`. */
 			delivery: {
-				address: string
-				city: string | null
-				unit: string | null
-				notes: string | null
+				address?: string
+				city?: string | null
+				unit?: string | null
+				notes?: string | null
 				feeCents: number
 				zoneId: string | null
 			} | null
@@ -623,8 +643,16 @@ const valueClass = 'price font-medium text-foreground'
 			document.documentElement.dataset.defaultLocale || 'en'
 		// The emailed link carries its token in the fragment only, so Sites SSR
 		// never sees it; it goes to the regional tenant-api from this browser.
-		// The fragment is left in place so the guest can bookmark the page.
-		const orderLink = readOrderLink(window.location.hash)
+		// The head script already cleared the fragment; the token now lives in
+		// this tab's sessionStorage (memory if that throws). The emailed link
+		// still brings the guest back later.
+		const orderLink = claimOrderLink({
+			orgId,
+			orderId,
+			location: window.location,
+			history: window.history,
+			storage: () => window.sessionStorage,
+		})
 		const hasPaymentToken = Boolean(
 			orderId && loadOrderCapability(orgId, orderId)?.paymentToken,
 		)
@@ -743,22 +771,13 @@ const valueClass = 'price font-medium text-foreground'
 					: labels.pickupOrder || 'Pickup order'
 			}
 			if (recipientTextEl) {
-				let text = [order.contact?.name, order.contact?.phone]
-					.filter(Boolean)
-					.join(' • ')
-				if (isDelivery && order.delivery) {
-					const address = [
-						order.delivery.address,
-						order.delivery.unit,
-						order.delivery.city,
-					]
-						.filter(Boolean)
-						.join(', ')
-					if (address) {
-						text += ` • ${fillTemplate(labels.deliverTo || 'Deliver to: {address}', { address })}`
-					}
-				}
+				// The link view has no contact or address: show only the mode label.
+				const text = receiptRecipientText(
+					order,
+					labels.deliverTo || 'Deliver to: {address}',
+				)
 				recipientTextEl.textContent = text
+				recipientTextEl.classList.toggle('hidden', !text)
 			}
 
 			// Pickup orders (all drop orders): show the slot, not an estimate.
@@ -858,9 +877,10 @@ const valueClass = 'price font-medium text-foreground'
 							),
 						)
 					}
-					if (line.instructions) {
+					const lineNote = receiptLineNote(line.instructions)
+					if (lineNote) {
 						info.appendChild(
-							createEl('p', 'mt-0.5 text-xs italic leading-relaxed text-muted-foreground', `“${line.instructions}”`),
+							createEl('p', 'mt-0.5 text-xs italic leading-relaxed text-muted-foreground', `“${lineNote}”`),
 						)
 					}
 					row.appendChild(info)
