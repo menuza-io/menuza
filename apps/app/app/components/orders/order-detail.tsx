@@ -601,7 +601,7 @@ export function OrderDetail({
 											{delayLeft <= 0
 												? _(msg`This order can't be pushed back any further.`)
 												: _(
-														msg`Push the time back. The guest's page updates. The first push-back of 10 minutes or more also sends them the new time.`,
+														msg`Push the time back. The guest's page updates, and 10 minutes or more also sends them the new time.`,
 													)}
 										</p>
 										{pushError ? (

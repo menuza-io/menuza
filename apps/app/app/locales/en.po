@@ -2190,7 +2190,7 @@ msgstr "{referenceCount, plural, one {# place} other {# places}}"
 msgid "{referralCount, plural, one {# person joined using your link!} other {# people joined using your link!}}"
 msgstr ""
 
-#: app/components/orders/order-detail.tsx:854
+#: app/components/orders/order-detail.tsx:855
 msgid "{refundedMoney} of {totalMoney}"
 msgstr "{refundedMoney} of {totalMoney}"
 
@@ -2420,11 +2420,11 @@ msgstr "{total} submissions"
 msgid "{totalLimit, plural, one {Up to # use} other {Up to # uses}}"
 msgstr "{totalLimit, plural, one {Up to # use} other {Up to # uses}}"
 
-#: app/components/orders/order-detail.tsx:980
+#: app/components/orders/order-detail.tsx:981
 msgid "{totalMoney} was received for this order. Cancelling does not refund it: refund it separately with your payment processor."
 msgstr "{totalMoney} was received for this order. Cancelling does not refund it: refund it separately with your payment processor."
 
-#: app/components/orders/order-detail.tsx:976
+#: app/components/orders/order-detail.tsx:977
 msgid "{totalMoney} was received for this order. Cancelling does not refund it: refund it with your payment processor, then record the refund on this order."
 msgstr "{totalMoney} was received for this order. Cancelling does not refund it: refund it with your payment processor, then record the refund on this order."
 
@@ -2570,7 +2570,7 @@ msgstr ""
 msgid "+{lateMin}m late"
 msgstr "+{lateMin}m late"
 
-#: app/components/orders/order-detail.tsx:595
+#: app/components/orders/order-detail.tsx:596
 msgid "+{minutes} min"
 msgstr "+{minutes} min"
 
@@ -3142,7 +3142,7 @@ msgstr "A dining time has a party range that is backwards."
 msgid "A discount can have up to 90 codes. Make another discount for more."
 msgstr "A discount can have up to 90 codes. Make another discount for more."
 
-#: app/components/orders/order-detail.tsx:283
+#: app/components/orders/order-detail.tsx:284
 msgid "A discount on this order reached its use limit before the payment arrived. The customer was charged the discounted price, so honoring the order means accepting that overrun."
 msgstr "A discount on this order reached its use limit before the payment arrived. The customer was charged the discounted price, so honoring the order means accepting that overrun."
 
@@ -3644,7 +3644,7 @@ msgstr ""
 msgid "Accept"
 msgstr ""
 
-#: app/components/orders/order-detail.tsx:329
+#: app/components/orders/order-detail.tsx:330
 msgid "Accept and start preparing"
 msgstr "Accept and start preparing"
 
@@ -3847,7 +3847,7 @@ msgstr "Active Location"
 
 #: app/components/app-sidebar.tsx:594
 #: app/components/loyalty/loyalty-chrome.tsx:72
-#: app/components/orders/order-detail.tsx:891
+#: app/components/orders/order-detail.tsx:892
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:690
 msgid "Activity"
 msgstr ""
@@ -6532,11 +6532,11 @@ msgstr "Arrived"
 msgid "Arrived, waiting"
 msgstr "Arrived, waiting"
 
-#: app/components/orders/order-detail.tsx:229
+#: app/components/orders/order-detail.tsx:230
 msgid "Arriving {promisedFrom} to {promisedTo}"
 msgstr "Arriving {promisedFrom} to {promisedTo}"
 
-#: app/components/orders/order-detail.tsx:231
+#: app/components/orders/order-detail.tsx:232
 msgid "Arriving around {promisedFrom}"
 msgstr "Arriving around {promisedFrom}"
 
@@ -6776,7 +6776,7 @@ msgstr "At most {most} can still be refunded."
 msgid "At slot time"
 msgstr "At slot time"
 
-#: app/components/orders/order-detail.tsx:536
+#: app/components/orders/order-detail.tsx:537
 #: app/routes/_app+/$orgSlug_+/orders.tsx:268
 msgid "At the table"
 msgstr "At the table"
@@ -8565,7 +8565,7 @@ msgstr "Cancel interview"
 
 #: app/components/inventory/review-order-screen.tsx:775
 #: app/components/inventory/review-order-screen.tsx:840
-#: app/components/orders/order-detail.tsx:945
+#: app/components/orders/order-detail.tsx:946
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:399
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:429
 msgid "Cancel order"
@@ -8574,7 +8574,7 @@ msgstr "Cancel order"
 #~ msgid "Cancel order {0}?"
 #~ msgstr "Cancel order {0}?"
 
-#: app/components/orders/order-detail.tsx:971
+#: app/components/orders/order-detail.tsx:972
 msgid "Cancel order {orderNumber}?"
 msgstr "Cancel order {orderNumber}?"
 
@@ -8638,7 +8638,7 @@ msgstr "Cancellations by who"
 #: app/components/hiring/applicant-labels.ts:42
 #: app/components/inventory/count-status-badge.tsx:10
 #: app/components/my-schedule/status-badge.tsx:17
-#: app/components/orders/order-detail.tsx:302
+#: app/components/orders/order-detail.tsx:303
 #: app/components/print/print-order-labels.ts:20
 #: app/components/reservations/status-style.tsx:144
 #: app/components/reservations/status-style.tsx:211
@@ -10683,7 +10683,7 @@ msgstr "Complete and reopen calls and requests, and tag calls. Needs View calls.
 msgid "Complete authentication"
 msgstr "Complete authentication"
 
-#: app/components/orders/order-detail.tsx:333
+#: app/components/orders/order-detail.tsx:334
 msgid "Complete order"
 msgstr "Complete order"
 
@@ -10731,7 +10731,7 @@ msgstr ""
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:46
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:9
 #: app/components/onboarding-checklist.tsx:249
-#: app/components/orders/order-detail.tsx:297
+#: app/components/orders/order-detail.tsx:298
 #: app/components/reservations/status-style.tsx:143
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:150
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:67
@@ -10833,7 +10833,7 @@ msgstr ""
 msgid "Confirm accepting all translations"
 msgstr "Confirm accepting all translations"
 
-#: app/components/orders/order-detail.tsx:999
+#: app/components/orders/order-detail.tsx:1000
 msgid "Confirm cancellation"
 msgstr "Confirm cancellation"
 
@@ -11406,7 +11406,7 @@ msgstr "Copy categories as new categories"
 msgid "Copy code"
 msgstr ""
 
-#: app/components/orders/order-detail.tsx:493
+#: app/components/orders/order-detail.tsx:494
 msgid "Copy email address"
 msgstr "Copy email address"
 
@@ -11430,7 +11430,7 @@ msgstr ""
 msgid "Copy modifier groups as new groups"
 msgstr "Copy modifier groups as new groups"
 
-#: app/components/orders/order-detail.tsx:380
+#: app/components/orders/order-detail.tsx:381
 msgid "Copy order number"
 msgstr "Copy order number"
 
@@ -11443,7 +11443,7 @@ msgstr "Copy overrides"
 msgid "Copy overrides to another location"
 msgstr "Copy overrides to another location"
 
-#: app/components/orders/order-detail.tsx:479
+#: app/components/orders/order-detail.tsx:480
 msgid "Copy phone number"
 msgstr "Copy phone number"
 
@@ -12806,8 +12806,8 @@ msgstr "Custom: what you have now"
 msgid "customer"
 msgstr ""
 
-#: app/components/orders/order-detail.tsx:439
-#: app/components/orders/order-detail.tsx:463
+#: app/components/orders/order-detail.tsx:440
+#: app/components/orders/order-detail.tsx:464
 #: app/components/workspace-breadcrumb.tsx:110
 #: app/routes/_app+/$orgSlug_+/orders.tsx:244
 msgid "Customer"
@@ -13789,7 +13789,7 @@ msgstr "Delivers on"
 #: app/components/customers/person-orders-panel.tsx:221
 #: app/components/inventory/review-order-screen.tsx:727
 #: app/components/locations/location-form.tsx:761
-#: app/components/orders/order-detail.tsx:534
+#: app/components/orders/order-detail.tsx:535
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:26
 #: app/components/reservations/messages/message-settings.tsx:530
 #: app/components/settings/cards/organization/pos-integrations-card.tsx:131
@@ -13828,8 +13828,8 @@ msgstr "Delivery areas, fees, and pickup alternatives."
 msgid "Delivery cancelled."
 msgstr "Delivery cancelled."
 
-#: app/components/orders/order-detail.tsx:746
-#: app/components/orders/order-detail.tsx:1037
+#: app/components/orders/order-detail.tsx:747
+#: app/components/orders/order-detail.tsx:1038
 msgid "Delivery discount"
 msgstr "Delivery discount"
 
@@ -13837,7 +13837,7 @@ msgstr "Delivery discount"
 msgid "Delivery discounts"
 msgstr "Delivery discounts"
 
-#: app/components/orders/order-detail.tsx:763
+#: app/components/orders/order-detail.tsx:764
 #: app/utils/discounts/labels.ts:354
 #: app/utils/discounts/summary.ts:222
 msgid "Delivery fee"
@@ -13851,7 +13851,7 @@ msgstr "Delivery fee limit"
 msgid "Delivery is blocked or disallowed for this specific zone"
 msgstr "Delivery is blocked or disallowed for this specific zone"
 
-#: app/components/orders/order-detail.tsx:631
+#: app/components/orders/order-detail.tsx:632
 msgid "Delivery notes:"
 msgstr "Delivery notes:"
 
@@ -14342,8 +14342,8 @@ msgstr "Disconnect Canva"
 #: app/components/discounts/discount-form.tsx:1007
 #: app/components/discounts/discount-form.tsx:1590
 #: app/components/loyalty/reward-dialog.tsx:482
-#: app/components/orders/order-detail.tsx:738
-#: app/components/orders/order-detail.tsx:1039
+#: app/components/orders/order-detail.tsx:739
+#: app/components/orders/order-detail.tsx:1040
 #: app/components/print/restaurant/vertical-ui.tsx:143
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:366
 msgid "Discount"
@@ -14838,7 +14838,7 @@ msgstr "Drop title"
 #~ msgid "Drop visibility"
 #~ msgstr "Drop visibility"
 
-#: app/components/orders/order-detail.tsx:638
+#: app/components/orders/order-detail.tsx:639
 msgid "Drop:"
 msgstr "Drop:"
 
@@ -18211,7 +18211,7 @@ msgstr "Free delivery takes the delivery fee off the order."
 msgid "Free item"
 msgstr "Free item"
 
-#: app/components/orders/order-detail.tsx:375
+#: app/components/orders/order-detail.tsx:376
 msgid "Free order"
 msgstr "Free order"
 
@@ -18346,7 +18346,7 @@ msgid "Frying oil"
 msgstr "Frying oil"
 
 #: app/components/customers/person-orders-panel.tsx:169
-#: app/components/orders/order-detail.tsx:522
+#: app/components/orders/order-detail.tsx:523
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:620
 msgid "Fulfillment"
 msgstr "Fulfillment"
@@ -18801,7 +18801,7 @@ msgstr "Groups of a quantity"
 msgid "Guest"
 msgstr "Guest"
 
-#: app/components/orders/order-detail.tsx:464
+#: app/components/orders/order-detail.tsx:465
 #: app/components/settings/cards/organization/shop-card.tsx:465
 #: app/routes/_app+/$orgSlug_+/orders.tsx:245
 msgid "Guest checkout"
@@ -19814,7 +19814,7 @@ msgstr "I cannot work it"
 msgid "I checked the online payment for this tab in the payment dashboard and will refund or keep it."
 msgstr "I checked the online payment for this tab in the payment dashboard and will refund or keep it."
 
-#: app/components/orders/order-detail.tsx:935
+#: app/components/orders/order-detail.tsx:936
 msgid "I have received payment at handoff"
 msgstr "I have received payment at handoff"
 
@@ -20674,7 +20674,7 @@ msgstr "item"
 
 #: app/components/inventory/stock-list.tsx:102
 #: app/components/inventory/supplier-products.tsx:375
-#: app/components/orders/order-detail.tsx:661
+#: app/components/orders/order-detail.tsx:662
 #: app/components/workspace-breadcrumb.tsx:123
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:105
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:119
@@ -20725,7 +20725,7 @@ msgstr "items"
 #: app/components/inventory/review-order-screen.tsx:485
 #: app/components/inventory/review-order-screen.tsx:627
 #: app/components/loyalty/promotion-dialog.tsx:671
-#: app/components/orders/order-detail.tsx:647
+#: app/components/orders/order-detail.tsx:648
 #: app/routes/_app+/$orgSlug_+/inventory+/counts.tsx:322
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.add-many.tsx:370
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.lists.tsx:357
@@ -20969,7 +20969,7 @@ msgstr "Keep editing"
 msgid "Keep it"
 msgstr "Keep it"
 
-#: app/components/orders/order-detail.tsx:989
+#: app/components/orders/order-detail.tsx:990
 msgid "Keep order"
 msgstr "Keep order"
 
@@ -21469,7 +21469,7 @@ msgstr "Last paid, per unit"
 msgid "Last seating"
 msgstr "Last seating"
 
-#: app/components/orders/order-detail.tsx:911
+#: app/components/orders/order-detail.tsx:912
 msgid "Last updated"
 msgstr "Last updated"
 
@@ -22784,7 +22784,7 @@ msgstr "Loyalty program, members and points, redemptions waiting for review, and
 msgid "Loyalty promotions"
 msgstr "Loyalty promotions"
 
-#: app/components/orders/order-detail.tsx:758
+#: app/components/orders/order-detail.tsx:759
 msgid "Loyalty reward"
 msgstr "Loyalty reward"
 
@@ -23275,7 +23275,7 @@ msgstr "Mark paid"
 msgid "Mark read"
 msgstr "Mark read"
 
-#: app/components/orders/order-detail.tsx:332
+#: app/components/orders/order-detail.tsx:333
 msgid "Mark ready"
 msgstr "Mark ready"
 
@@ -23814,7 +23814,7 @@ msgstr "Meta no longer accepts its access. Posts to it will fail until you conne
 msgid "Meta no longer accepts this account’s access. Connect it again, then retry."
 msgstr "Meta no longer accepts this account’s access. Connect it again, then retry."
 
-#: app/components/orders/order-detail.tsx:817
+#: app/components/orders/order-detail.tsx:818
 msgid "Method"
 msgstr "Method"
 
@@ -25434,7 +25434,7 @@ msgstr "No custom note. This is the default text with sample guest details."
 msgid "No custom roles created yet."
 msgstr "No custom roles created yet."
 
-#: app/components/orders/order-detail.tsx:512
+#: app/components/orders/order-detail.tsx:513
 msgid "No customer profile"
 msgstr "No customer profile"
 
@@ -26113,11 +26113,11 @@ msgstr "No pay is set yet."
 msgid "No payment"
 msgstr "No payment"
 
-#: app/components/orders/order-detail.tsx:983
+#: app/components/orders/order-detail.tsx:984
 msgid "No payment has been received, so there is nothing to refund. The order moves to Cancelled and cannot be reopened."
 msgstr "No payment has been received, so there is nothing to refund. The order moves to Cancelled and cannot be reopened."
 
-#: app/components/orders/order-detail.tsx:833
+#: app/components/orders/order-detail.tsx:834
 #: app/components/orders/order-status.tsx:36
 msgid "No payment needed"
 msgstr "No payment needed"
@@ -27830,7 +27830,7 @@ msgstr "Onions"
 
 #: app/components/chat/chat-view.tsx:609
 #: app/components/kiosk/kiosk-chrome.tsx:126
-#: app/components/orders/order-detail.tsx:824
+#: app/components/orders/order-detail.tsx:825
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:864
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:803
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:982
@@ -27842,7 +27842,7 @@ msgstr "Online"
 #~ msgid "Online ({0})"
 #~ msgstr "Online ({0})"
 
-#: app/components/orders/order-detail.tsx:823
+#: app/components/orders/order-detail.tsx:824
 msgid "Online ({processor})"
 msgstr "Online ({processor})"
 
@@ -28849,7 +28849,7 @@ msgid "Orange juice"
 msgstr "Orange juice"
 
 #: app/components/customers/person-orders-panel.tsx:160
-#: app/components/orders/order-detail.tsx:393
+#: app/components/orders/order-detail.tsx:394
 #: app/components/workspace-breadcrumb.tsx:127
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:272
 msgid "Order"
@@ -28912,7 +28912,7 @@ msgstr "Order cut-off"
 msgid "Order cutoff"
 msgstr "Order cutoff"
 
-#: app/components/orders/order-detail.tsx:348
+#: app/components/orders/order-detail.tsx:349
 msgid "Order details"
 msgstr "Order details"
 
@@ -29027,7 +29027,7 @@ msgstr "Ordering Window"
 #: app/components/customers/people-list-screen.tsx:429
 #: app/components/customers/person-orders-panel.tsx:112
 #: app/components/customers/person-profile-screen.tsx:457
-#: app/components/orders/order-detail.tsx:356
+#: app/components/orders/order-detail.tsx:357
 #: app/components/workspace-breadcrumb.tsx:12
 #: app/routes/_app+/$orgSlug_+/orders.tsx:139
 msgid "Orders"
@@ -29539,7 +29539,7 @@ msgstr "Paid"
 #~ msgid "Paid {0}"
 #~ msgstr "Paid {0}"
 
-#: app/components/orders/order-detail.tsx:831
+#: app/components/orders/order-detail.tsx:832
 msgid "Paid {totalMoney}"
 msgstr "Paid {totalMoney}"
 
@@ -29547,7 +29547,7 @@ msgstr "Paid {totalMoney}"
 msgid "Paid <0>{paid}</0>"
 msgstr "Paid <0>{paid}</0>"
 
-#: app/components/orders/order-detail.tsx:843
+#: app/components/orders/order-detail.tsx:844
 msgid "Paid at"
 msgstr "Paid at"
 
@@ -29594,7 +29594,7 @@ msgstr "Paid time <0>{totalLabel}</0>"
 msgid "Paid time off"
 msgstr "Paid time off"
 
-#: app/components/orders/order-detail.tsx:551
+#: app/components/orders/order-detail.tsx:552
 msgid "Paid when the tab closes"
 msgstr "Paid when the tab closes"
 
@@ -29947,7 +29947,7 @@ msgstr "Pay"
 msgid "Pay and rates"
 msgstr "Pay and rates"
 
-#: app/components/orders/order-detail.tsx:821
+#: app/components/orders/order-detail.tsx:822
 msgid "Pay at handoff"
 msgstr "Pay at handoff"
 
@@ -30000,8 +30000,8 @@ msgstr "Paying from the phone always asks for a name and phone number."
 msgid "Paying online"
 msgstr "Paying online"
 
-#: app/components/orders/order-detail.tsx:405
-#: app/components/orders/order-detail.tsx:811
+#: app/components/orders/order-detail.tsx:406
+#: app/components/orders/order-detail.tsx:812
 #: app/routes/mock-payments+/checkout-com.dashboard.tsx:219
 msgid "Payment"
 msgstr "Payment"
@@ -30010,7 +30010,7 @@ msgstr "Payment"
 #~ msgid "Payment arrived after the hold on this order ran out, so it was not confirmed automatically. The money was received: start preparing to honor the order, or cancel it and refund through your payment processor."
 #~ msgstr "Payment arrived after the hold on this order ran out, so it was not confirmed automatically. The money was received: start preparing to honor the order, or cancel it and refund through your payment processor."
 
-#: app/components/orders/order-detail.tsx:273
+#: app/components/orders/order-detail.tsx:274
 msgid "Payment arrived after the hold on this order ran out, so it was not confirmed automatically. The money was received: start preparing to honor the order, or cancel it, refund it through your payment processor and record the refund on this order."
 msgstr "Payment arrived after the hold on this order ran out, so it was not confirmed automatically. The money was received: start preparing to honor the order, or cancel it, refund it through your payment processor and record the refund on this order."
 
@@ -30026,7 +30026,7 @@ msgstr "Payment expired"
 msgid "Payment failed"
 msgstr "Payment failed"
 
-#: app/components/orders/order-detail.tsx:835
+#: app/components/orders/order-detail.tsx:836
 msgid "Payment failed. Nothing was charged."
 msgstr "Payment failed. Nothing was charged."
 
@@ -30057,7 +30057,7 @@ msgstr "Payment needs review"
 msgid "Payment not finished"
 msgstr "Payment not finished"
 
-#: app/components/orders/order-detail.tsx:838
+#: app/components/orders/order-detail.tsx:839
 msgid "Payment not yet received"
 msgstr "Payment not yet received"
 
@@ -30078,7 +30078,7 @@ msgstr "Payment policies"
 msgid "Payment policy"
 msgstr "Payment policy"
 
-#: app/components/orders/order-detail.tsx:294
+#: app/components/orders/order-detail.tsx:295
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:230
 msgid "Payment received"
 msgstr "Payment received"
@@ -30096,7 +30096,7 @@ msgstr "Payment uncertain"
 msgid "Payment under review"
 msgstr "Payment under review"
 
-#: app/components/orders/order-detail.tsx:837
+#: app/components/orders/order-detail.tsx:838
 msgid "Payment window expired before it was paid."
 msgstr "Payment window expired before it was paid."
 
@@ -30699,7 +30699,7 @@ msgid "Pickles"
 msgstr "Pickles"
 
 #: app/components/customers/person-orders-panel.tsx:222
-#: app/components/orders/order-detail.tsx:537
+#: app/components/orders/order-detail.tsx:538
 #: app/routes/_app+/$orgSlug_+/orders.tsx:269
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:675
 #: app/utils/discounts/labels.ts:165
@@ -30835,7 +30835,7 @@ msgstr "Place"
 #~ msgid "Place temporary holds on a specific table or entire dining area for maintenance, private events, weather, or staff holds."
 #~ msgstr "Place temporary holds on a specific table or entire dining area for maintenance, private events, weather, or staff holds."
 
-#: app/components/orders/order-detail.tsx:293
+#: app/components/orders/order-detail.tsx:294
 msgid "Placed"
 msgstr "Placed"
 
@@ -31481,7 +31481,7 @@ msgstr "Previous week"
 
 #: app/components/inventory/recipe-section.tsx:763
 #: app/components/menu/location-overrides-card.tsx:145
-#: app/components/orders/order-detail.tsx:664
+#: app/components/orders/order-detail.tsx:665
 #: app/components/reservations/experiences/experiences-screen.tsx:295
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:512
 msgid "Price"
@@ -32090,13 +32090,13 @@ msgstr "Purchasing"
 #~ msgid "Purchasing keeps your deliveries, what to order and the suppliers you buy from in one place. Recording deliveries is coming soon."
 #~ msgstr "Purchasing keeps your deliveries, what to order and the suppliers you buy from in one place. Recording deliveries is coming soon."
 
-#: app/components/orders/order-detail.tsx:583
+#: app/components/orders/order-detail.tsx:584
 msgid "Push the promised time back"
 msgstr "Push the promised time back"
 
-#: app/components/orders/order-detail.tsx:603
-msgid "Push the time back. The guest's page updates. The first push-back of 10 minutes or more also sends them the new time."
-msgstr "Push the time back. The guest's page updates. The first push-back of 10 minutes or more also sends them the new time."
+#: app/components/orders/order-detail.tsx:604
+msgid "Push the time back. The guest's page updates, and 10 minutes or more also sends them the new time."
+msgstr "Push the time back. The guest's page updates, and 10 minutes or more also sends them the new time."
 
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:1040
 msgid "Push two or more combinable tables together to seat larger parties. The same set of tables can only be saved once."
@@ -32170,7 +32170,7 @@ msgstr "QR tables"
 msgid "qt"
 msgstr "qt"
 
-#: app/components/orders/order-detail.tsx:655
+#: app/components/orders/order-detail.tsx:656
 msgid "Qty"
 msgstr "Qty"
 
@@ -32443,7 +32443,7 @@ msgstr "Reading page details"
 msgid "Ready"
 msgstr "Ready"
 
-#: app/components/orders/order-detail.tsx:232
+#: app/components/orders/order-detail.tsx:233
 msgid "Ready around {promisedFrom}"
 msgstr "Ready around {promisedFrom}"
 
@@ -32679,7 +32679,7 @@ msgid "Record a message for your team to follow up."
 msgstr "Record a message for your team to follow up."
 
 #: app/components/loyalty/record-refund-dialog.tsx:205
-#: app/components/orders/order-detail.tsx:871
+#: app/components/orders/order-detail.tsx:872
 #: app/components/orders/record-order-refund-dialog.tsx:212
 msgid "Record a refund"
 msgstr "Record a refund"
@@ -32951,11 +32951,11 @@ msgstr "Refund processing"
 msgid "Refund queued"
 msgstr "Refund queued"
 
-#: app/components/orders/order-detail.tsx:309
+#: app/components/orders/order-detail.tsx:310
 msgid "Refund recorded: {amount}"
 msgstr "Refund recorded: {amount}"
 
-#: app/components/orders/order-detail.tsx:1018
+#: app/components/orders/order-detail.tsx:1019
 msgid "Refund recorded."
 msgstr "Refund recorded."
 
@@ -32971,7 +32971,7 @@ msgstr "Refund recorded. Points taken back: {taken}."
 msgid "Refund this booking?"
 msgstr "Refund this booking?"
 
-#: app/components/orders/order-detail.tsx:851
+#: app/components/orders/order-detail.tsx:852
 #: app/components/orders/order-status.tsx:38
 #: app/components/print/print-order-labels.ts:21
 #: app/components/settings/cards/organization/shop-card.tsx:51
@@ -34348,7 +34348,7 @@ msgstr "Retry charge"
 msgid "Retry failed accounts"
 msgstr "Retry failed accounts"
 
-#: app/components/orders/order-detail.tsx:874
+#: app/components/orders/order-detail.tsx:875
 msgid "Return the money in your payment provider first, then record it here."
 msgstr "Return the money in your payment provider first, then record it here."
 
@@ -38700,7 +38700,7 @@ msgstr ""
 msgid "Start order"
 msgstr "Start order"
 
-#: app/components/orders/order-detail.tsx:330
+#: app/components/orders/order-detail.tsx:331
 msgid "Start preparing"
 msgstr "Start preparing"
 
@@ -38839,7 +38839,7 @@ msgstr "Stats"
 #: app/components/customers/person-profile-screen.tsx:779
 #: app/components/inventory/stock-list.tsx:114
 #: app/components/menu/menu-bulk-edit-sheet.tsx:548
-#: app/components/orders/order-detail.tsx:827
+#: app/components/orders/order-detail.tsx:828
 #: app/components/reservations/experiences/experiences-screen.tsx:292
 #: app/components/roles/tenant-role-access-manager.tsx:1294
 #: app/components/settings/cards/sessions-card.tsx:239
@@ -39219,7 +39219,7 @@ msgstr ""
 msgid "Subscription Started"
 msgstr ""
 
-#: app/components/orders/order-detail.tsx:710
+#: app/components/orders/order-detail.tsx:711
 msgid "Subtotal"
 msgstr "Subtotal"
 
@@ -39533,7 +39533,7 @@ msgstr "Table {0} is occupied by {1} ({2}p)"
 msgid "Table {createdTableLabel} created."
 msgstr "Table {createdTableLabel} created."
 
-#: app/components/orders/order-detail.tsx:547
+#: app/components/orders/order-detail.tsx:548
 #: app/components/qr/open-tabs.tsx:369
 #: app/components/qr/open-tabs.tsx:1059
 #: app/components/qr/open-tabs.tsx:1147
@@ -39946,7 +39946,7 @@ msgstr "Tasks"
 msgid "Tasks to finish when someone joins."
 msgstr "Tasks to finish when someone joins."
 
-#: app/components/orders/order-detail.tsx:768
+#: app/components/orders/order-detail.tsx:769
 #: app/components/pos/pos-day-report.tsx:206
 msgid "Tax"
 msgstr "Tax"
@@ -42976,12 +42976,12 @@ msgstr "This one uses a cost somebody typed. You need cost access to see or chan
 msgid "this option"
 msgstr "this option"
 
-#: app/components/orders/order-detail.tsx:256
-#: app/components/orders/order-detail.tsx:601
+#: app/components/orders/order-detail.tsx:257
+#: app/components/orders/order-detail.tsx:602
 msgid "This order can't be pushed back any further."
 msgstr "This order can't be pushed back any further."
 
-#: app/components/orders/order-detail.tsx:252
+#: app/components/orders/order-detail.tsx:253
 msgid "This order changed on another screen. Check the new time and try again."
 msgstr "This order changed on another screen. Check the new time and try again."
 
@@ -43014,7 +43014,7 @@ msgstr "This order is being sent right now. Wait a moment and refresh."
 msgid "This order is changing right now. Refresh and try again."
 msgstr "This order is changing right now. Refresh and try again."
 
-#: app/components/orders/order-detail.tsx:258
+#: app/components/orders/order-detail.tsx:259
 msgid "This order is finished, so its time can't change."
 msgstr "This order is finished, so its time can't change."
 
@@ -43022,7 +43022,7 @@ msgstr "This order is finished, so its time can't change."
 msgid "This order is too long for a WhatsApp link. Copy the text and paste it into the chat."
 msgstr "This order is too long for a WhatsApp link. Copy the text and paste it into the chat."
 
-#: app/components/orders/order-detail.tsx:276
+#: app/components/orders/order-detail.tsx:277
 msgid "This order needs a manual check before it goes ahead. Start preparing to accept it, or cancel it."
 msgstr "This order needs a manual check before it goes ahead. Start preparing to accept it, or cancel it."
 
@@ -43816,14 +43816,14 @@ msgstr "Timezone"
 msgid "Timing and notes"
 msgstr "Timing and notes"
 
-#: app/components/orders/order-detail.tsx:777
+#: app/components/orders/order-detail.tsx:778
 msgid "Tip"
 msgstr "Tip"
 
 #~ msgid "Tip ({0}%)"
 #~ msgstr "Tip ({0}%)"
 
-#: app/components/orders/order-detail.tsx:776
+#: app/components/orders/order-detail.tsx:777
 msgid "Tip ({tipPercent}%)"
 msgstr "Tip ({tipPercent}%)"
 
@@ -44097,7 +44097,7 @@ msgstr "Toppings, sauces and other choices on an item."
 #: app/components/customers/person-orders-panel.tsx:175
 #: app/components/inventory/review-order-screen.tsx:639
 #: app/components/notes-chart.tsx:69
-#: app/components/orders/order-detail.tsx:796
+#: app/components/orders/order-detail.tsx:797
 #: app/components/staff/labor/labor-overview.tsx:219
 #: app/components/staff/labor/labor-tips.tsx:276
 #: app/components/staff/timesheets/payroll-summary.tsx:443
@@ -44891,7 +44891,7 @@ msgstr "Unable to load tables. Try again."
 msgid "Unable to load this call. Try again."
 msgstr "Unable to load this call. Try again."
 
-#: app/components/orders/order-detail.tsx:261
+#: app/components/orders/order-detail.tsx:262
 #: app/routes/_app+/$orgSlug_+/orders_.$orderId.tsx:108
 msgid "Unable to update this order. Refresh and try again."
 msgstr "Unable to update this order. Refresh and try again."
@@ -46144,7 +46144,7 @@ msgstr ""
 msgid "View all"
 msgstr ""
 
-#: app/components/orders/order-detail.tsx:505
+#: app/components/orders/order-detail.tsx:506
 msgid "View all orders"
 msgstr "View all orders"
 
