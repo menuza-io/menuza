@@ -1,15 +1,13 @@
 import { listTenantOrgIds } from '@repo/tenant-db'
-import {
-	fanOutOrderMessagesTick,
-	runOrderMessagesTickLogged,
-} from '../services/order-message-send.ts'
+import { runOrdersTickLogged } from '../services/order-acceptance.ts'
+import { fanOutOrderMessagesTick } from '../services/order-message-send.ts'
 import { syncEnvFromProcess } from './secrets.ts'
 
 /**
- * Sub-hourly guest order messages tick on the Node (OCI) runtime: an
- * in-process interval over every organization on this node that retries
- * receipts and status messages whose send failed (an organization with no
- * queued row costs one indexed read). The hourly cron still reaches the node,
+ * Sub-hourly orders tick on the Node (OCI) runtime: an in-process interval
+ * over every organization on this node that turns down orders past their
+ * acceptance deadline (#107) and retries receipts and status messages whose
+ * send failed (an organization with nothing waiting costs two indexed reads). The hourly cron still reaches the node,
  * and a doubled run is harmless (each row is claimed before it is sent).
  * `ORDER_MESSAGES_TICK_INTERVAL_SECONDS` sets the period (default 120, minimum
  * 60, `0` off). The Durable Object runtime uses alarms instead.
@@ -49,7 +47,7 @@ export function startOrderMessagesTickInterval(
 		(async () =>
 			fanOutOrderMessagesTick({
 				orgIds: await listTenantOrgIds(),
-				run: (orgId) => runOrderMessagesTickLogged(orgId),
+				run: (orgId) => runOrdersTickLogged(orgId),
 			}))
 	const timer = (options.setIntervalFn ?? setInterval)(() => {
 		// A slow pass is never overlapped by the next one.

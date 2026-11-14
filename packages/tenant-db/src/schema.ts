@@ -2264,6 +2264,10 @@ export const posOnlineOrderEvents = sqliteTable(
 				// A search by the phone's last digits (order_id 'search'): counted
 				// per person and hour, never tied to an order.
 				'phone_searched',
+				// Manual acceptance (#107): accepted, or turned down (reason =
+				// the reject reason). No CHECK on the column: no migration.
+				'accepted',
+				'rejected',
 			],
 		}).notNull(),
 		reason: text('reason'),

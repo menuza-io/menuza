@@ -217,24 +217,31 @@ until then).
 ### Order messages tick
 
 `POST /api/order-messages/tick` on each tenant-api node (token:
-`INTERNAL_COMMAND_TOKEN`, empty body `{}`) sends guest order messages (#79:
-receipts, ready, cancelled; `order_messages`) that are still `queued`: in
-practice the retries of a send that failed. Messages are queued in the order's
-own transaction and first sent right after it commits; a failed send is retried
-after 1, 5, 30 and 120 minutes, then ends `failed` with a machine code. A row
-found while `ORDERS_EMAIL_ENABLED` / `ORDERS_SMS_ENABLED` is off ends `dropped`
-(no backlog when switched back on). It adds **no cron slot**: it rides the
-hourly fan-out (`Tenant order messages tick`). The response is counts only. A
-body of `{ "orgId": "..." }` ticks one organization; an empty body fans out over
-every organization on the node with a 50-second budget.
+`INTERNAL_COMMAND_TOKEN`, empty body `{}`) first turns down orders still
+`pending_acceptance` past their `acceptance_deadline_at` (#107,
+`processOrderAcceptance` in `services/order-acceptance.ts`: reason
+`not_accepted_in_time`, `cancelled_by = 'system'`, a full provider refund with
+origin `system` for a paid online order and the ids-only kick to the App, the
+guest's `cancelled` message; each order in its own transaction, only while it
+still waits, so an accept that won is left alone), then sends guest order
+messages (#79: receipts, ready, cancelled; `order_messages`) that are still
+`queued`: in practice the retries of a send that failed. Messages are queued in
+the order's own transaction and first sent right after it commits; a failed send
+is retried after 1, 5, 30 and 120 minutes, then ends `failed` with a machine
+code. A row found while `ORDERS_EMAIL_ENABLED` / `ORDERS_SMS_ENABLED` is off
+ends `dropped` (no backlog when switched back on). It adds **no cron slot**: it
+rides the hourly fan-out (`Tenant order messages tick`). The response is counts
+only. A body of `{ "orgId": "..." }` ticks one organization; an empty body fans
+out over every organization on the node with a 50-second budget.
 
 Hourly is the safety net. The US Workers node registers an `orders` module on
 the shared organization alarm (2 minutes, armed by order writes: placing an
 order, a payment event, a status change in the App, Station's Orders app or the
-kitchen screen; the tick asks for a follow-up only while queued rows remain),
-and the Node (OCI) node runs an in-process interval
-(`ORDER_MESSAGES_TICK_INTERVAL_SECONDS`, default 120, minimum 60, `0` turns it
-off). Each row is claimed before it is sent, so the drivers may overlap.
+kitchen screen; the tick asks for a follow-up while queued rows remain or an
+order waits for acceptance, at the earliest retry or deadline), and the Node
+(OCI) node runs an in-process interval (`ORDER_MESSAGES_TICK_INTERVAL_SECONDS`,
+default 120, minimum 60, `0` turns it off). Each row is claimed before it is
+sent, so the drivers may overlap.
 
 Updated times (`eta_changed`): every push-back of 10 minutes or more queues one
 row per channel, keyed by the order's new `promised_version` (every other kind

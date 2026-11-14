@@ -562,9 +562,17 @@ msgstr "致电 {phone}"
 msgid "Call the restaurant"
 msgstr "致电餐厅"
 
+#: src/pages/menu/success.astro.ts:3
+msgid "Cancel order"
+msgstr "取消订单"
+
 #: src/lib/reservations/labels.ts:183
 msgid "Cancel reservation"
 msgstr "取消预订"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Cancel this order?"
+msgstr "要取消此订单吗?"
 
 #: src/lib/reservations/labels.ts:312
 msgid "Cancel this request"
@@ -1449,6 +1457,10 @@ msgstr "保留我的位置"
 msgid "Keep my reservation"
 msgstr "保留我的预订"
 
+#: src/pages/menu/success.astro.ts:3
+msgid "Keep order"
+msgstr "保留订单"
+
 #: src/lib/reservations/labels.ts:154
 msgid "Keep the manage link. Anyone who has it can change or cancel this booking."
 msgstr "请保存管理链接。任何拥有该链接的人都可以修改或取消此预订。"
@@ -1802,6 +1814,10 @@ msgstr "优惠"
 #: src/components/marketing/MessagesSection.astro.ts:3
 msgid "Offers and news"
 msgstr "优惠和动态"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Once the restaurant confirms"
+msgstr "餐厅确认后"
 
 #: src/lib/loyalty/labels.ts:152
 msgid "One item. Paid extras are still charged."
@@ -2405,7 +2421,12 @@ msgstr "兑换奖励"
 msgid "Refund adjustment"
 msgstr "退款调整"
 
+#: src/pages/menu/success.astro.ts:3
+msgid "Refund of {amount} on its way"
+msgstr "{amount} 的退款正在处理中"
+
 #: src/lib/reservations/labels.ts:434
+#: src/pages/menu/success.astro.ts:3
 msgid "Refund on its way"
 msgstr "退款处理中"
 
@@ -2678,6 +2699,10 @@ msgstr "订单中的部分商品已变更或售罄。请检查购物车后重试
 msgid "Some items just sold out. Please review your order."
 msgstr "部分商品刚刚售罄。请检查您的订单。"
 
+#: src/pages/menu/success.astro.ts:3
+msgid "Some of the items you ordered ran out."
+msgstr "您订购的部分商品已售罄。"
+
 #: src/pages/menu.astro.ts:3
 msgid "Some prices changed since your call. Your cart shows the current prices."
 msgstr "自您通话以来部分价格已变动。购物车显示的是当前价格。"
@@ -2902,9 +2927,17 @@ msgstr "您的订单保留已释放。请重新下单。"
 msgid "The items from your call are no longer available. You can still order from the menu."
 msgstr "您通话中的商品已无货。您仍可从菜单中点餐。"
 
+#: src/pages/menu/success.astro.ts:3
+msgid "The kitchen has already started your order, so it can't be cancelled here."
+msgstr "厨房已开始制作您的订单,因此无法在此取消。"
+
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "The kitchen has paused new orders for a moment. Please ask a team member."
 msgstr "厨房暂时停止接收新订单。请咨询工作人员。"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "The kitchen is closed right now."
+msgstr "厨房目前已关闭。"
 
 #: src/lib/reservations/labels.ts:301
 msgid "The latest time must be after the earliest time."
@@ -2930,9 +2963,17 @@ msgstr "付款未成功"
 msgid "The program is paused right now."
 msgstr "该计划目前已暂停。"
 
+#: src/pages/menu/success.astro.ts:3
+msgid "The restaurant accepted your order."
+msgstr "餐厅已接受您的订单。"
+
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "The restaurant asks for this once per tab."
 msgstr "每张账单餐厅只会询问一次。"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "The restaurant could not take your order"
+msgstr "餐厅无法接受您的订单"
 
 #: src/lib/reservations/labels.ts:57
 msgid "The restaurant is closed on this date."
@@ -2953,6 +2994,10 @@ msgstr "如需其他信息，餐厅会与您联系。"
 #: src/lib/loyalty/labels.ts:65
 msgid "The rewards program is paused. Your balance is safe, but you cannot earn or redeem right now."
 msgstr "奖励计划已暂停。您的余额不受影响，但目前无法累积或兑换。"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "The time to cancel has passed. Call the restaurant if you need help."
+msgstr "取消时间已过。如需帮助,请致电餐厅。"
 
 #: src/lib/reservations/labels.ts:377
 msgid "The time to pay ran out and the table was released."
@@ -3107,6 +3152,10 @@ msgstr "此链接已过期或无效。"
 msgid "This location is not available for ordering."
 msgstr "该门店暂不支持下单。"
 
+#: src/pages/menu/success.astro.ts:3
+msgid "This order can't be cancelled here."
+msgstr "此订单无法在此取消。"
+
 #: src/pages/menu/checkout.astro.ts:3
 msgid "This order is below the minimum for delivery."
 msgstr "此订单未达到配送起送金额。"
@@ -3214,6 +3263,10 @@ msgstr "尝试次数过多。请稍后重试。"
 #: src/lib/reservations/labels.ts:491
 msgid "Too many attempts. Please wait a moment and try again."
 msgstr "尝试次数过多，请稍候再试。"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Too many attempts. Try again in a moment."
+msgstr "尝试次数过多,请稍后再试。"
 
 #: src/pages/menu/success.astro.ts:3
 msgid "Too many requests. Try again later."
@@ -3388,6 +3441,10 @@ msgstr "查看您的预订"
 msgid "View your rewards"
 msgstr "查看您的奖励"
 
+#: src/pages/menu/success.astro.ts:3
+msgid "Waiting for confirmation"
+msgstr "等待确认"
+
 #: src/lib/reservations/labels.ts:433
 msgid "Waiting for payment"
 msgstr "等待付款"
@@ -3395,6 +3452,10 @@ msgstr "等待付款"
 #: src/pages/menu/success.astro.ts:3
 msgid "Waiting for payment confirmation"
 msgstr "等待支付确认"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Waiting for the restaurant to confirm"
+msgstr "等待餐厅确认"
 
 #: src/lib/reservations/labels.ts:401
 msgid "Waiting for your payment"
@@ -3474,6 +3535,10 @@ msgstr "无法发送您的订单。请重试。"
 msgid "We couldn't apply your coupon code. Please check it and try again."
 msgstr "无法使用您的优惠码。请核对后重试。"
 
+#: src/pages/menu/success.astro.ts:3
+msgid "We couldn't cancel the order. Please try again."
+msgstr "无法取消订单,请重试。"
+
 #: src/lib/ordering-labels.ts:173
 msgid "We couldn't check this address"
 msgstr "无法核实此地址"
@@ -3513,6 +3578,10 @@ msgstr "无法保存，请重试。"
 #: src/pages/menu/success.astro.ts:3
 msgid "We couldn't send that. Please try again later."
 msgstr "无法发送，请稍后再试。"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "We couldn't send your refund automatically. Please call the restaurant."
+msgstr "我们无法自动发送您的退款。请致电餐厅。"
 
 #: src/pages/menu/success.astro.ts:3
 msgid "We couldn't start payment. Please try again."
@@ -3585,6 +3654,10 @@ msgstr "订单信息填写完整后，我们会核对您的优惠码。"
 #: src/pages/drop/[slug].astro.ts:3
 msgid "We'll text you when this drop and future ones open."
 msgstr "本场及以后的限量活动开始时，我们会短信通知您。"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "We'll update this page as soon as they reply. You don't need to do anything."
+msgstr "餐厅回复后,我们会立即更新此页面。您无需进行任何操作。"
 
 #: src/pages/complete-name.astro.ts:3
 msgid "We'll use this on your profile. You can change it later."
@@ -3670,6 +3743,10 @@ msgstr "是"
 msgid "Yes, cancel it"
 msgstr "是，取消"
 
+#: src/pages/menu/success.astro.ts:3
+msgid "Yes, cancel order"
+msgstr "是,取消订单"
+
 #: src/lib/reservations/labels.ts:279
 msgid "Yes, leave"
 msgstr "是，退出"
@@ -3689,6 +3766,10 @@ msgstr "您已在候位名单中"
 #: src/lib/loyalty/labels.ts:266
 msgid "You are signed in to a different site. Please sign in again here."
 msgstr "您已登录其他网站。请在此重新登录。"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "You can cancel this order for another {time}."
+msgstr "您还可以在 {time} 内取消此订单。"
 
 #: src/lib/reservations/labels.ts:188
 msgid "You can cancel until {time}."
@@ -3892,6 +3973,10 @@ msgstr "您的付款正在审核"
 #: src/lib/reservations/labels.ts:447
 msgid "Your payment was refunded."
 msgstr "您的付款已退款。"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Your payment will be refunded in full to your card."
+msgstr "您的付款将全额退回到您的银行卡。"
 
 #: src/pages/menu/success.astro.ts:3
 msgid "Your payment window expired"

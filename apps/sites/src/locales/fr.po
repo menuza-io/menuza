@@ -562,9 +562,17 @@ msgstr "Appeler le {phone}"
 msgid "Call the restaurant"
 msgstr "Appeler le restaurant"
 
+#: src/pages/menu/success.astro.ts:3
+msgid "Cancel order"
+msgstr "Annuler la commande"
+
 #: src/lib/reservations/labels.ts:183
 msgid "Cancel reservation"
 msgstr "Annuler la réservation"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Cancel this order?"
+msgstr "Annuler cette commande ?"
 
 #: src/lib/reservations/labels.ts:312
 msgid "Cancel this request"
@@ -1449,6 +1457,10 @@ msgstr "Garder ma place"
 msgid "Keep my reservation"
 msgstr "Garder ma réservation"
 
+#: src/pages/menu/success.astro.ts:3
+msgid "Keep order"
+msgstr "Garder la commande"
+
 #: src/lib/reservations/labels.ts:154
 msgid "Keep the manage link. Anyone who has it can change or cancel this booking."
 msgstr "Conservez le lien de gestion. Toute personne qui l'a peut modifier ou annuler cette réservation."
@@ -1802,6 +1814,10 @@ msgstr "Offres"
 #: src/components/marketing/MessagesSection.astro.ts:3
 msgid "Offers and news"
 msgstr "Offres et actualités"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Once the restaurant confirms"
+msgstr "Une fois confirmée par le restaurant"
 
 #: src/lib/loyalty/labels.ts:152
 msgid "One item. Paid extras are still charged."
@@ -2405,7 +2421,12 @@ msgstr "Échange d’une récompense"
 msgid "Refund adjustment"
 msgstr "Ajustement après remboursement"
 
+#: src/pages/menu/success.astro.ts:3
+msgid "Refund of {amount} on its way"
+msgstr "Le remboursement de {amount} est en route"
+
 #: src/lib/reservations/labels.ts:434
+#: src/pages/menu/success.astro.ts:3
 msgid "Refund on its way"
 msgstr "Remboursement en cours"
 
@@ -2678,6 +2699,10 @@ msgstr "Certains articles de votre commande ont changé ou sont épuisés. Véri
 msgid "Some items just sold out. Please review your order."
 msgstr "Certains articles viennent d'être épuisés. Vérifiez votre commande."
 
+#: src/pages/menu/success.astro.ts:3
+msgid "Some of the items you ordered ran out."
+msgstr "Certains des articles commandés sont épuisés."
+
 #: src/pages/menu.astro.ts:3
 msgid "Some prices changed since your call. Your cart shows the current prices."
 msgstr "Certains prix ont changé depuis votre appel. Votre panier affiche les prix actuels."
@@ -2902,9 +2927,17 @@ msgstr "La réservation de votre commande a été libérée. Veuillez passer une
 msgid "The items from your call are no longer available. You can still order from the menu."
 msgstr "Les articles de votre appel ne sont plus disponibles. Vous pouvez toujours commander depuis le menu."
 
+#: src/pages/menu/success.astro.ts:3
+msgid "The kitchen has already started your order, so it can't be cancelled here."
+msgstr "La cuisine a déjà commencé votre commande, elle ne peut donc plus être annulée ici."
+
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "The kitchen has paused new orders for a moment. Please ask a team member."
 msgstr "La cuisine a suspendu les nouvelles commandes pour un moment. Demandez à un membre de l'équipe."
+
+#: src/pages/menu/success.astro.ts:3
+msgid "The kitchen is closed right now."
+msgstr "La cuisine est fermée pour le moment."
 
 #: src/lib/reservations/labels.ts:301
 msgid "The latest time must be after the earliest time."
@@ -2930,9 +2963,17 @@ msgstr "Le paiement n’a pas abouti"
 msgid "The program is paused right now."
 msgstr "Le programme est actuellement en pause."
 
+#: src/pages/menu/success.astro.ts:3
+msgid "The restaurant accepted your order."
+msgstr "Le restaurant a accepté votre commande."
+
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "The restaurant asks for this once per tab."
 msgstr "Le restaurant le demande une fois par note."
+
+#: src/pages/menu/success.astro.ts:3
+msgid "The restaurant could not take your order"
+msgstr "Le restaurant n'a pas pu prendre votre commande"
 
 #: src/lib/reservations/labels.ts:57
 msgid "The restaurant is closed on this date."
@@ -2953,6 +2994,10 @@ msgstr "Le restaurant vous contactera si besoin."
 #: src/lib/loyalty/labels.ts:65
 msgid "The rewards program is paused. Your balance is safe, but you cannot earn or redeem right now."
 msgstr "Le programme de récompenses est en pause. Votre solde est conservé, mais vous ne pouvez ni cumuler ni échanger pour le moment."
+
+#: src/pages/menu/success.astro.ts:3
+msgid "The time to cancel has passed. Call the restaurant if you need help."
+msgstr "Le délai d'annulation est dépassé. Appelez le restaurant si vous avez besoin d'aide."
 
 #: src/lib/reservations/labels.ts:377
 msgid "The time to pay ran out and the table was released."
@@ -3107,6 +3152,10 @@ msgstr "Ce lien a expiré ou n'est pas valide."
 msgid "This location is not available for ordering."
 msgstr "Ce lieu n'est pas disponible pour les commandes."
 
+#: src/pages/menu/success.astro.ts:3
+msgid "This order can't be cancelled here."
+msgstr "Cette commande ne peut pas être annulée ici."
+
 #: src/pages/menu/checkout.astro.ts:3
 msgid "This order is below the minimum for delivery."
 msgstr "Cette commande est inférieure au minimum requis pour la livraison."
@@ -3214,6 +3263,10 @@ msgstr "Trop de tentatives. Veuillez réessayer plus tard."
 #: src/lib/reservations/labels.ts:491
 msgid "Too many attempts. Please wait a moment and try again."
 msgstr "Trop de tentatives. Patientez un instant puis réessayez."
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Too many attempts. Try again in a moment."
+msgstr "Trop de tentatives. Réessayez dans un instant."
 
 #: src/pages/menu/success.astro.ts:3
 msgid "Too many requests. Try again later."
@@ -3388,6 +3441,10 @@ msgstr "Voir votre réservation"
 msgid "View your rewards"
 msgstr "Voir vos récompenses"
 
+#: src/pages/menu/success.astro.ts:3
+msgid "Waiting for confirmation"
+msgstr "En attente de confirmation"
+
 #: src/lib/reservations/labels.ts:433
 msgid "Waiting for payment"
 msgstr "En attente de paiement"
@@ -3395,6 +3452,10 @@ msgstr "En attente de paiement"
 #: src/pages/menu/success.astro.ts:3
 msgid "Waiting for payment confirmation"
 msgstr "En attente de la confirmation du paiement"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Waiting for the restaurant to confirm"
+msgstr "En attente de la confirmation du restaurant"
 
 #: src/lib/reservations/labels.ts:401
 msgid "Waiting for your payment"
@@ -3474,6 +3535,10 @@ msgstr "Nous n’avons pas pu envoyer votre commande. Veuillez réessayer."
 msgid "We couldn't apply your coupon code. Please check it and try again."
 msgstr "Nous n'avons pas pu appliquer votre code promo. Vérifiez-le et réessayez."
 
+#: src/pages/menu/success.astro.ts:3
+msgid "We couldn't cancel the order. Please try again."
+msgstr "Nous n'avons pas pu annuler la commande. Veuillez réessayer."
+
 #: src/lib/ordering-labels.ts:173
 msgid "We couldn't check this address"
 msgstr "Impossible de vérifier cette adresse"
@@ -3513,6 +3578,10 @@ msgstr "Impossible d'enregistrer. Réessayez."
 #: src/pages/menu/success.astro.ts:3
 msgid "We couldn't send that. Please try again later."
 msgstr "Nous n'avons pas pu l'envoyer. Veuillez réessayer plus tard."
+
+#: src/pages/menu/success.astro.ts:3
+msgid "We couldn't send your refund automatically. Please call the restaurant."
+msgstr "Nous n'avons pas pu envoyer votre remboursement automatiquement. Veuillez appeler le restaurant."
 
 #: src/pages/menu/success.astro.ts:3
 msgid "We couldn't start payment. Please try again."
@@ -3585,6 +3654,10 @@ msgstr "Nous vérifierons votre code une fois les détails de la commande comple
 #: src/pages/drop/[slug].astro.ts:3
 msgid "We'll text you when this drop and future ones open."
 msgstr "Nous vous enverrons un SMS à l'ouverture de cette offre et des suivantes."
+
+#: src/pages/menu/success.astro.ts:3
+msgid "We'll update this page as soon as they reply. You don't need to do anything."
+msgstr "Nous mettrons cette page à jour dès leur réponse. Vous n'avez rien à faire."
 
 #: src/pages/complete-name.astro.ts:3
 msgid "We'll use this on your profile. You can change it later."
@@ -3670,6 +3743,10 @@ msgstr "Oui"
 msgid "Yes, cancel it"
 msgstr "Oui, annuler"
 
+#: src/pages/menu/success.astro.ts:3
+msgid "Yes, cancel order"
+msgstr "Oui, annuler la commande"
+
 #: src/lib/reservations/labels.ts:279
 msgid "Yes, leave"
 msgstr "Oui, quitter"
@@ -3689,6 +3766,10 @@ msgstr "Vous êtes sur la liste d’attente"
 #: src/lib/loyalty/labels.ts:266
 msgid "You are signed in to a different site. Please sign in again here."
 msgstr "Vous êtes connecté à un autre site. Veuillez vous reconnecter ici."
+
+#: src/pages/menu/success.astro.ts:3
+msgid "You can cancel this order for another {time}."
+msgstr "Vous pouvez annuler cette commande encore pendant {time}."
 
 #: src/lib/reservations/labels.ts:188
 msgid "You can cancel until {time}."
@@ -3892,6 +3973,10 @@ msgstr "Votre paiement est en cours d’examen"
 #: src/lib/reservations/labels.ts:447
 msgid "Your payment was refunded."
 msgstr "Votre paiement a été remboursé."
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Your payment will be refunded in full to your card."
+msgstr "Votre paiement sera intégralement remboursé sur votre carte."
 
 #: src/pages/menu/success.astro.ts:3
 msgid "Your payment window expired"

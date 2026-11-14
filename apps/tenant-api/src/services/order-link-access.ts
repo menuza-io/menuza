@@ -166,6 +166,11 @@ export function linkReceiptOrder(
 		refundPendingCents: full.refundPendingCents,
 		cancelledBy: full.cancelledBy,
 		cancelReason: full.cancelReason,
+		// Waiting for the restaurant to accept (#107): when it is turned down
+		// automatically, and whether it was turned down. Times and a yes/no;
+		// the reason itself is only ever the guest-visible one above.
+		acceptanceDeadlineAt: full.acceptanceDeadlineAt,
+		rejected: full.rejected,
 		// Whether the guest may still cancel, and until when (#111): a yes/no
 		// and a time, nothing about the guest. The link holder may cancel too
 		// (`POST /orders/:id/cancel` takes either capability).

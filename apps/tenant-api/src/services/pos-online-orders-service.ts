@@ -94,7 +94,8 @@ const clip = <T extends string | null | undefined>(value: T, max: number) =>
 	(typeof value === 'string'
 		? value.slice(0, max)
 		: (value ?? null)) as T extends string ? string : string | null
-const ACTIVE = ['accepted', 'preparing', 'ready'] as const
+/** Open orders, a waiting one (#107) included: it holds its slot and needs a decision. */
+const ACTIVE = ['pending_acceptance', 'accepted', 'preparing', 'ready'] as const
 /** Dish, variant and option names may be JSON maps of every menu language. */
 const MENU_TEXT_MAX = 4000
 
@@ -161,7 +162,25 @@ function summary(
 		refundStatus: refundState.refundStatus,
 		refundPendingCents: refundState.pendingCents,
 		disputed: disputeBlocksRefund(order.disputeStatus),
+		// Only on orders that waited for acceptance (#107), so every other
+		// summary keeps its shape for a Station build that predates them.
+		...(waitedForAcceptance(order)
+			? { acceptanceDeadlineAt: ms(order.acceptanceDeadlineAt) }
+			: {}),
+		...(order.rejectedReason
+			? { rejectedReason: clip(order.rejectedReason, 40) }
+			: {}),
 	}
+}
+
+/** A paid (or free, or pay at handoff) order placed while acceptance was manual. */
+function waitedForAcceptance(order: RestaurantOrder): boolean {
+	return (
+		order.acceptanceDeadlineAt !== null &&
+		(order.status === 'pending_acceptance' ||
+			order.acceptedAt !== null ||
+			order.rejectedReason !== null)
+	)
 }
 
 async function firstOpened(
@@ -210,7 +229,8 @@ export async function onlineOrdersFeed(
 			.from(restaurantOrders)
 			.where(and(atLocation(actor.orgId, actor.locationId), inInbox(now)))
 			.orderBy(
-				sql`case when ${restaurantOrders.status} in ('accepted', 'preparing', 'ready') then 0 else 1 end`,
+				// Orders waiting for a decision first (#107), then open ones.
+				sql`case when ${restaurantOrders.status} = 'pending_acceptance' then 0 when ${restaurantOrders.status} in ('accepted', 'preparing', 'ready') then 1 else 2 end`,
 				asc(restaurantOrders.createdAt),
 			)
 			.limit(POS_ONLINE_ORDERS_FEED_LIMIT + 1),
@@ -326,7 +346,7 @@ const SEARCH_STATES: Record<
 	Exclude<PosOnlineOrdersSearchState, 'all'>,
 	RestaurantOrder['status'][]
 > = {
-	open: ['accepted', 'preparing'],
+	open: ['pending_acceptance', 'accepted', 'preparing'],
 	ready: ['ready'],
 	completed: ['completed'],
 	cancelled: ['cancelled'],
@@ -625,16 +645,32 @@ export async function onlineOrderCommand(
 
 	let failure: OrderServiceFailure | null = null
 	let patch: {
-		status: 'ready' | 'completed' | 'cancelled'
+		status: 'accepted' | 'ready' | 'completed' | 'cancelled'
 		markPaid?: boolean
 		cancelReason?: OrderStoredCancelReason
 		refund?: 'none' | 'full'
+		rejectReason?: OrderStoredCancelReason
 	}
 	let actions: Array<{
 		action: PosOnlineOrderEvent['action']
 		reason?: string
 	}>
-	if (command.action === 'ready') {
+	if (command.action === 'accept') {
+		// The operator's own accept (#107): it sends the order to the kitchen.
+		if (!actor.grants.manage)
+			failure = forbidden('permission_required', 'You cannot manage orders.')
+		patch = { status: 'accepted' }
+		actions = [{ action: 'accepted' }]
+	} else if (command.action === 'reject') {
+		// The operator's own reject: a paid online order is refunded in full.
+		if (!actor.grants.cancel)
+			failure = forbidden(
+				'permission_required',
+				'Ask a manager to turn down this order.',
+			)
+		patch = { status: 'cancelled', rejectReason: command.reason }
+		actions = [{ action: 'rejected', reason: command.reason }]
+	} else if (command.action === 'ready') {
 		if (!actor.grants.manage)
 			failure = forbidden('permission_required', 'You cannot manage orders.')
 		patch = { status: 'ready' }

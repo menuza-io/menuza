@@ -163,6 +163,35 @@ describe('createStatusPoller', () => {
 		t.poller.stop()
 	})
 
+	it('keeps polling a cancelled order while isSettled says its refund is pending', async () => {
+		const fetchOnce = vi
+			.fn<() => Promise<StatusFetchResult<{ refundStatus: string }>>>()
+			.mockResolvedValueOnce({
+				kind: 'order',
+				order: { status: 'cancelled', refundStatus: 'pending' },
+			})
+			.mockResolvedValueOnce({
+				kind: 'order',
+				order: { status: 'cancelled', refundStatus: 'full' },
+			})
+			.mockResolvedValue({
+				kind: 'order',
+				order: { status: 'cancelled', refundStatus: 'full' },
+			})
+		const poller = createStatusPoller<{ refundStatus: string }>({
+			fetchOnce,
+			onOrder: () => {},
+			isSettled: (o) => !(o.status === 'cancelled' && o.refundStatus === 'pending'),
+			isHidden: () => false,
+			onVisibilityChange: () => () => {},
+		})
+		poller.start({ immediate: false })
+		await vi.advanceTimersByTimeAsync(15_000)
+		await vi.advanceTimersByTimeAsync(15_000)
+		await vi.advanceTimersByTimeAsync(60_000)
+		expect(fetchOnce).toHaveBeenCalledTimes(2)
+	})
+
 	it('does nothing after stop', async () => {
 		const t = setup([order('accepted')])
 		t.poller.start({ immediate: false })

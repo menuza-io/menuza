@@ -408,7 +408,10 @@ bound to a location. No second pairing or App login is needed. The kitchen
 combines uploaded Station orders (counter and phone, saved or paid) with online
 orders at that location. Unsynced offline sales appear only after upload. Online
 orders must be accepted, preparing or ready, and either paid or payable at
-handoff. Checkout attempts awaiting online payment are not kitchen tickets.
+handoff. Checkout attempts awaiting online payment are not kitchen tickets, nor
+are orders waiting for acceptance (`pending_acceptance`, #107): they reach the
+kitchen when a person accepts them, and one turned down (or cancelled by the
+guest) while it waited never shows, not even as a cancelled ticket.
 
 **Kitchen setup** is shared by the location. Choose whole-ticket or individual
 item preparation, optionally skip Preparing for quick service, name up to 12
@@ -623,12 +626,12 @@ some locations may switch it on only at theirs. `/pos/me` reports it as
 
 The tablet calls the regional `/pos/online-orders` API directly (`/pos/orders`
 is the till's own order upload): `GET /` (the inbox), `GET /:id`,
-`POST /:id/command` (`open`, `ready`, `handed_over`, `cancel`, `reprint`),
-`POST /:id/refunds` (with an `Idempotency-Key`), `POST /:id/contact`,
-`GET /search` and the manager controls under `/controls`. Every call verifies
-the device, the switch, the server-bound location and a current
-`Pos-Staff-Session`; `POS_ENABLED=false` and terminal revocation stop it.
-Responses are `no-store`; nothing is written to IndexedDB, writes are never
+`POST /:id/command` (`open`, `ready`, `handed_over`, `cancel`, `reprint`,
+`accept`, `reject`), `POST /:id/refunds` (with an `Idempotency-Key`),
+`POST /:id/contact`, `GET /search` and the manager controls under `/controls`.
+Every call verifies the device, the switch, the server-bound location and a
+current `Pos-Staff-Session`; `POS_ENABLED=false` and terminal revocation stop
+it. Responses are `no-store`; nothing is written to IndexedDB, writes are never
 queued, and after a failed write the screen reads the order back.
 
 - **Inbox.** Payable online orders at the location: new (nobody opened it on a
@@ -641,11 +644,11 @@ queued, and after a failed write the screen reads the order back.
   than 15 seconds pauses every action and says so. The feed is bounded to 200
   orders and warns when more exist.
 - **Alert.** A new order rings and shows a banner, repeating every ten seconds,
-  until it is opened. Accepting and rejecting do not exist yet (orders arrive
-  accepted), so opening is the response: it is recorded on the server, which
-  silences the alert on every tablet at that location at their next read, so two
-  counters are not both pinged for one order. The sound is on by default; iPad
-  Safari plays it only after one tap on the page.
+  until it is opened. Unless the location accepts orders by hand (below), orders
+  arrive accepted, so opening is the response: it is recorded on the server,
+  which silences the alert on every tablet at that location at their next read,
+  so two counters are not both pinged for one order. The sound is on by default;
+  iPad Safari plays it only after one tap on the page.
 - **Detail and actions.** Items with options and notes, fulfilment, table or
   delivery address and notes, payment and totals. Mark ready and Hand over use
   the operator's own transitions (`updateOperatorOrder`), so the App, the
@@ -660,6 +663,19 @@ queued, and after a failed write the screen reads the order back.
   `update:loyalty_redemption:any`: no till session carries it, so such refunds
   are recorded in the App. Guest and kitchen tickets reprint on the tablet's
   printer; the guest ticket shows the phone masked and never an email.
+- **Accept and reject (#107).** With manual acceptance on for the location, an
+  order waiting for a decision is `pending_acceptance` in the inbox, listed
+  first, with `acceptanceDeadlineAt` (epoch ms; the key is present only on
+  orders that waited, and `rejectedReason` only on rejected ones).
+  `{ action: 'accept', expectedVersion }` (anyone signed in) sends it to the
+  kitchen; `{ action: 'reject', expectedVersion, reason }` (managers; reason
+  `out_of_stock | kitchen_closed | too_busy | other`) turns it down and refunds
+  a paid online order in full through the payment provider (`refundOutcome` in
+  the answer). Both are the operator PATCH's own accept and reject; history
+  records `accepted` / `rejected`. A decision on an order no longer waiting
+  answers 409 `stale_version` or `order_not_pending`. A Station build that
+  predates these fields rejects a feed holding a waiting order (strict schemas):
+  ship Station with this tenant-api.
 - **Versions.** Each order carries a version (a hash of its status, payment,
   refunds and update time); every change names the one the screen saw, and an
   outdated one answers 409 `stale_version` and the screen reads the order back.

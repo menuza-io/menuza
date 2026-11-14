@@ -562,9 +562,17 @@ msgstr "اتصل على {phone}"
 msgid "Call the restaurant"
 msgstr "اتصل بالمطعم"
 
+#: src/pages/menu/success.astro.ts:3
+msgid "Cancel order"
+msgstr "إلغاء الطلب"
+
 #: src/lib/reservations/labels.ts:183
 msgid "Cancel reservation"
 msgstr "إلغاء الحجز"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Cancel this order?"
+msgstr "هل تريد إلغاء هذا الطلب؟"
 
 #: src/lib/reservations/labels.ts:312
 msgid "Cancel this request"
@@ -1449,6 +1457,10 @@ msgstr "الاحتفاظ بدوري"
 msgid "Keep my reservation"
 msgstr "الإبقاء على حجزي"
 
+#: src/pages/menu/success.astro.ts:3
+msgid "Keep order"
+msgstr "الإبقاء على الطلب"
+
 #: src/lib/reservations/labels.ts:154
 msgid "Keep the manage link. Anyone who has it can change or cancel this booking."
 msgstr "احتفظ برابط الإدارة. يمكن لأي شخص يملكه تعديل هذا الحجز أو إلغاؤه."
@@ -1802,6 +1814,10 @@ msgstr "عروض"
 #: src/components/marketing/MessagesSection.astro.ts:3
 msgid "Offers and news"
 msgstr "العروض والأخبار"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Once the restaurant confirms"
+msgstr "بعد تأكيد المطعم"
 
 #: src/lib/loyalty/labels.ts:152
 msgid "One item. Paid extras are still charged."
@@ -2405,7 +2421,12 @@ msgstr "استبدال مكافأة"
 msgid "Refund adjustment"
 msgstr "تعديل بسبب استرداد"
 
+#: src/pages/menu/success.astro.ts:3
+msgid "Refund of {amount} on its way"
+msgstr "استرداد بقيمة {amount} في الطريق إليك"
+
 #: src/lib/reservations/labels.ts:434
+#: src/pages/menu/success.astro.ts:3
 msgid "Refund on its way"
 msgstr "الاسترداد في الطريق"
 
@@ -2678,6 +2699,10 @@ msgstr "بعض الأصناف في طلبك تغيّرت أو نفدت. راجع
 msgid "Some items just sold out. Please review your order."
 msgstr "بعض الأصناف نفدت للتو. راجع طلبك."
 
+#: src/pages/menu/success.astro.ts:3
+msgid "Some of the items you ordered ran out."
+msgstr "نفدت بعض العناصر التي طلبتها."
+
 #: src/pages/menu.astro.ts:3
 msgid "Some prices changed since your call. Your cart shows the current prices."
 msgstr "تغيّرت بعض الأسعار منذ مكالمتك. تعرض سلتك الأسعار الحالية."
@@ -2902,9 +2927,17 @@ msgstr "انتهت مهلة حجز طلبك. يرجى تقديم طلب جديد
 msgid "The items from your call are no longer available. You can still order from the menu."
 msgstr "الأصناف من مكالمتك لم تعد متوفرة. لا يزال بإمكانك الطلب من القائمة."
 
+#: src/pages/menu/success.astro.ts:3
+msgid "The kitchen has already started your order, so it can't be cancelled here."
+msgstr "بدأ المطبخ بتحضير طلبك بالفعل، لذا لا يمكن إلغاؤه من هنا."
+
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "The kitchen has paused new orders for a moment. Please ask a team member."
 msgstr "أوقف المطبخ الطلبات الجديدة مؤقتًا. يُرجى سؤال أحد أفراد الفريق."
+
+#: src/pages/menu/success.astro.ts:3
+msgid "The kitchen is closed right now."
+msgstr "المطبخ مغلق حاليًا."
 
 #: src/lib/reservations/labels.ts:301
 msgid "The latest time must be after the earliest time."
@@ -2930,9 +2963,17 @@ msgstr "لم تتم عملية الدفع"
 msgid "The program is paused right now."
 msgstr "البرنامج متوقف مؤقتًا الآن."
 
+#: src/pages/menu/success.astro.ts:3
+msgid "The restaurant accepted your order."
+msgstr "قبل المطعم طلبك."
+
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "The restaurant asks for this once per tab."
 msgstr "يطلب المطعم هذا مرة واحدة لكل حساب."
+
+#: src/pages/menu/success.astro.ts:3
+msgid "The restaurant could not take your order"
+msgstr "تعذّر على المطعم قبول طلبك"
 
 #: src/lib/reservations/labels.ts:57
 msgid "The restaurant is closed on this date."
@@ -2953,6 +2994,10 @@ msgstr "سيتواصل معك المطعم إذا لزم أي شيء آخر."
 #: src/lib/loyalty/labels.ts:65
 msgid "The rewards program is paused. Your balance is safe, but you cannot earn or redeem right now."
 msgstr "برنامج المكافآت متوقف مؤقتًا. رصيدك محفوظ، لكن لا يمكنك الكسب أو الاستبدال حاليًا."
+
+#: src/pages/menu/success.astro.ts:3
+msgid "The time to cancel has passed. Call the restaurant if you need help."
+msgstr "انتهى وقت الإلغاء. اتصل بالمطعم إذا احتجت إلى مساعدة."
 
 #: src/lib/reservations/labels.ts:377
 msgid "The time to pay ran out and the table was released."
@@ -3107,6 +3152,10 @@ msgstr "انتهت صلاحية هذا الرابط أو أنه غير صالح.
 msgid "This location is not available for ordering."
 msgstr "هذا الموقع غير متاح للطلب."
 
+#: src/pages/menu/success.astro.ts:3
+msgid "This order can't be cancelled here."
+msgstr "لا يمكن إلغاء هذا الطلب من هنا."
+
 #: src/pages/menu/checkout.astro.ts:3
 msgid "This order is below the minimum for delivery."
 msgstr "هذا الطلب أقل من الحد الأدنى للتوصيل."
@@ -3214,6 +3263,10 @@ msgstr "محاولات كثيرة جدًا. حاول مرة أخرى لاحقً�
 #: src/lib/reservations/labels.ts:491
 msgid "Too many attempts. Please wait a moment and try again."
 msgstr "محاولات كثيرة جدًا. يرجى الانتظار قليلًا ثم المحاولة مرة أخرى."
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Too many attempts. Try again in a moment."
+msgstr "محاولات كثيرة جدًا. حاول مرة أخرى بعد قليل."
 
 #: src/pages/menu/success.astro.ts:3
 msgid "Too many requests. Try again later."
@@ -3388,6 +3441,10 @@ msgstr "عرض حجزك"
 msgid "View your rewards"
 msgstr "عرض مكافآتك"
 
+#: src/pages/menu/success.astro.ts:3
+msgid "Waiting for confirmation"
+msgstr "بانتظار التأكيد"
+
 #: src/lib/reservations/labels.ts:433
 msgid "Waiting for payment"
 msgstr "في انتظار الدفع"
@@ -3395,6 +3452,10 @@ msgstr "في انتظار الدفع"
 #: src/pages/menu/success.astro.ts:3
 msgid "Waiting for payment confirmation"
 msgstr "بانتظار تأكيد الدفع"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Waiting for the restaurant to confirm"
+msgstr "بانتظار تأكيد المطعم"
 
 #: src/lib/reservations/labels.ts:401
 msgid "Waiting for your payment"
@@ -3474,6 +3535,10 @@ msgstr "تعذّر إرسال طلبك. يُرجى المحاولة مرة أخ�
 msgid "We couldn't apply your coupon code. Please check it and try again."
 msgstr "تعذر تطبيق رمز القسيمة. راجعْه وحاول مرة أخرى."
 
+#: src/pages/menu/success.astro.ts:3
+msgid "We couldn't cancel the order. Please try again."
+msgstr "تعذّر إلغاء الطلب. يرجى المحاولة مرة أخرى."
+
 #: src/lib/ordering-labels.ts:173
 msgid "We couldn't check this address"
 msgstr "تعذّر التحقق من هذا العنوان"
@@ -3513,6 +3578,10 @@ msgstr "تعذّر الحفظ. حاول مرة أخرى."
 #: src/pages/menu/success.astro.ts:3
 msgid "We couldn't send that. Please try again later."
 msgstr "تعذر الإرسال. يرجى المحاولة لاحقًا."
+
+#: src/pages/menu/success.astro.ts:3
+msgid "We couldn't send your refund automatically. Please call the restaurant."
+msgstr "تعذّر إرسال المبلغ المسترد تلقائيًا. يرجى الاتصال بالمطعم."
 
 #: src/pages/menu/success.astro.ts:3
 msgid "We couldn't start payment. Please try again."
@@ -3585,6 +3654,10 @@ msgstr "سنتحقق من رمزك بعد اكتمال تفاصيل الطلب."
 #: src/pages/drop/[slug].astro.ts:3
 msgid "We'll text you when this drop and future ones open."
 msgstr "سنرسل لك رسالة عند فتح هذا الطرح والطروحات القادمة."
+
+#: src/pages/menu/success.astro.ts:3
+msgid "We'll update this page as soon as they reply. You don't need to do anything."
+msgstr "سنحدّث هذه الصفحة فور ردّهم. لا تحتاج إلى فعل أي شيء."
 
 #: src/pages/complete-name.astro.ts:3
 msgid "We'll use this on your profile. You can change it later."
@@ -3670,6 +3743,10 @@ msgstr "نعم"
 msgid "Yes, cancel it"
 msgstr "نعم، ألغِه"
 
+#: src/pages/menu/success.astro.ts:3
+msgid "Yes, cancel order"
+msgstr "نعم، ألغِ الطلب"
+
 #: src/lib/reservations/labels.ts:279
 msgid "Yes, leave"
 msgstr "نعم، مغادرة"
@@ -3689,6 +3766,10 @@ msgstr "أنت في قائمة الانتظار"
 #: src/lib/loyalty/labels.ts:266
 msgid "You are signed in to a different site. Please sign in again here."
 msgstr "أنت مسجّل الدخول إلى موقع آخر. يُرجى تسجيل الدخول مرة أخرى هنا."
+
+#: src/pages/menu/success.astro.ts:3
+msgid "You can cancel this order for another {time}."
+msgstr "يمكنك إلغاء هذا الطلب خلال {time} أخرى."
 
 #: src/lib/reservations/labels.ts:188
 msgid "You can cancel until {time}."
@@ -3892,6 +3973,10 @@ msgstr "دفعتك قيد المراجعة"
 #: src/lib/reservations/labels.ts:447
 msgid "Your payment was refunded."
 msgstr "تم استرداد دفعتك."
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Your payment will be refunded in full to your card."
+msgstr "سيتم رد مبلغ الدفع بالكامل إلى بطاقتك."
 
 #: src/pages/menu/success.astro.ts:3
 msgid "Your payment window expired"

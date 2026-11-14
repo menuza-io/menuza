@@ -301,6 +301,59 @@ provisioned organization, and uses `private, no-store`.
   first). Loyalty takes earned points back from `refundedCents`
   ([loyalty.md](./loyalty.md#refunds)).
 
+### Manual acceptance (#107)
+
+While `ordering.manual_acceptance` is on, the order context carries
+`acceptance[locationId]`
+(`{ mode: 'manual', timeoutMinutes: 3|5|10, minTotalCents, scheduledOnly }`;
+anything missing or malformed reads as Automatic, which places orders exactly as
+before). `orderNeedsAcceptance` decides at placement: never dine-in, QR table
+rounds or tab rounds; only orders whose total is strictly over `minTotalCents`;
+with `scheduledOnly`, only scheduled orders (a chosen time or a drop's pickup
+slot). The deadline is `acceptanceDeadline`: now plus the minutes, or for a
+scheduled order 30 minutes before the kitchen starts it (scheduled time minus
+the location's prep time) when that is later.
+
+- A pay-at-handoff or free order is placed `pending_acceptance` with
+  `acceptance_deadline_at`. An online order that still has to be paid is placed
+  as before (`accepted`, payment `pending`) with the deadline as a mark only
+  (not shown in operator or guest views); its paid event moves it to
+  `pending_acceptance` with the deadline `max(placed deadline, paid + minutes)`.
+  A payment that arrives after the hold lapsed still goes to `payment_review`
+  and never waits.
+- A waiting order holds slot and drop capacity like `accepted`, is not a kitchen
+  ticket, not a sale (reports, customer spend, stock) and earns no loyalty; its
+  discount use stays reserved. The receipt message goes out as usual ("we
+  received your order").
+- `PATCH /operator/orders/:id` `{ status: 'accepted' }` accepts (sets
+  `accepted_at`): stock, loyalty and the discount use (online paid or free)
+  settle exactly as for an order accepted at placement, the kitchen sees it, and
+  the guest gets the `accepted` message (only ever on this manual accept).
+  `{ status: 'cancelled', rejectReason }`
+  (`out_of_stock | kitchen_closed | too_busy | other`; a `cancelReason` alone is
+  taken as the reason) rejects: `rejected_reason` and `cancel_reason` set,
+  `cancelled_by = 'operator'`, discount use released, `cancelled` message; a
+  paid online order is refunded in full through the payment provider
+  (`refundIntent` / `refundError` in the answer, no refund claim needed, the App
+  is kicked). Errors: 422 `reject_reason_required`, 403 `refund_forbidden`
+  (impersonating, paid online order), 409 `order_not_pending` (accepting an
+  order that waited but is no longer waiting, or rejecting one already
+  accepted), 404 for another location's or organization's order. A repeat of the
+  same decision answers the order as it is (200); two decisions at once are
+  serialized and the second is refused. Accepting after the deadline is allowed
+  while the order still waits.
+- `GET /operator/orders?status=pending_acceptance` lists the waiting orders
+  (badge). Operator orders carry `acceptanceDeadlineAt`, `acceptedAt` and
+  `rejectedReason`.
+- Timeout: `processOrderAcceptance` (orders tick, see
+  [scheduled-jobs.md](./scheduled-jobs.md#order-messages-tick)) rejects with
+  `not_accepted_in_time`, `cancelled_by = 'system'`, a full refund with origin
+  `system` for a paid online order.
+- Guest views (`receiptOrder`, `linkReceiptOrder`): `acceptanceDeadlineAt` (only
+  while `pending_acceptance`, else null) and `rejected` (boolean). The reason
+  shown is only the guest-visible `cancelReason`. The guest may still cancel a
+  waiting order (#111); that is not a rejection.
+
 Money remains integer cents. Orders with handoff payment hold capacity durably
 immediately. Online orders reserve capacity until their configured hold expiry;
 expiration and capacity checks run in the same transaction. Never reset used

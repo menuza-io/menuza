@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { ORDER_REJECT_REASONS } from './order-lifecycle.ts'
 
 /**
  * Station's Orders app: the location's online orders (web and QR) from arrival
@@ -87,6 +88,12 @@ export const posOnlineOrderStatusSchema = z.enum([
 	'ready',
 	'completed',
 	'cancelled',
+	/**
+	 * Waiting for a person to accept or reject it (#107, the location's
+	 * manual acceptance). Only organizations with `ordering.manual_acceptance`
+	 * on ever have one; listed first in the inbox.
+	 */
+	'pending_acceptance',
 ])
 export type PosOnlineOrderStatus = z.infer<typeof posOnlineOrderStatusSchema>
 
@@ -133,6 +140,18 @@ export const posOnlineOrderSummarySchema = z.strictObject({
 	refundPendingCents: z.number().int().nonnegative().optional(),
 	/** An open or lost payment dispute: refunds are refused. */
 	disputed: z.boolean().optional(),
+	/**
+	 * Manual acceptance (#107): when the order is (or was) turned down
+	 * automatically if nobody decides (epoch ms). Present only on orders that
+	 * waited for acceptance.
+	 */
+	acceptanceDeadlineAt: z.number().int().nullable().optional(),
+	/**
+	 * Why it was turned down while it waited (`out_of_stock`,
+	 * `kitchen_closed`, `too_busy`, `other`, or `not_accepted_in_time` when
+	 * nobody decided). Present only on rejected orders.
+	 */
+	rejectedReason: z.string().max(40).nullable().optional(),
 })
 export type PosOnlineOrderSummary = z.infer<typeof posOnlineOrderSummarySchema>
 
@@ -368,6 +387,24 @@ export const posOnlineOrderCommandSchema = z.discriminatedUnion('action', [
 	z.strictObject({
 		action: z.literal('reprint'),
 		ticket: z.enum(['guest', 'kitchen']),
+	}),
+	/**
+	 * Manual acceptance (#107): an order waiting for acceptance goes to the
+	 * kitchen (everyone signed in, like marking it ready).
+	 */
+	z.strictObject({
+		action: z.literal('accept'),
+		expectedVersion: versionSchema,
+	}),
+	/**
+	 * Turns down an order waiting for acceptance (cancel permission). A paid
+	 * online order is refunded in full through the payment provider; the
+	 * answer's `refundOutcome` says whether the refund started.
+	 */
+	z.strictObject({
+		action: z.literal('reject'),
+		expectedVersion: versionSchema,
+		reason: z.enum(ORDER_REJECT_REASONS),
 	}),
 ])
 export type PosOnlineOrderCommand = z.infer<typeof posOnlineOrderCommandSchema>

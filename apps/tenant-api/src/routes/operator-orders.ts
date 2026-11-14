@@ -314,6 +314,8 @@ function orderStatus(value: string): RestaurantOrder['status'] | null {
 		'cancelled',
 		'expired',
 		'payment_review',
+		// Waiting for a person to accept (#107): the Orders page badge.
+		'pending_acceptance',
 	]
 	return allowed.includes(value as RestaurantOrder['status'])
 		? (value as RestaurantOrder['status'])
@@ -431,6 +433,7 @@ operatorOrderRoutes.patch('/:id', async (c) => {
 				origin: 'operator',
 				actorId: auth.auth.userId,
 				cancelledBy: 'operator',
+				impersonated: auth.auth.impersonated,
 			},
 		)
 		if (!result.ok) {

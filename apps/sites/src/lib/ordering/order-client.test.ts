@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
 	acceptCheckoutUrl,
+	cancelOrder,
 	checkoutAttemptKey,
 	clearCheckoutAttempt,
 	fetchOrderReceipt,
@@ -10,6 +11,7 @@ import {
 	resendOrderLink,
 	submitRegionalOrder,
 } from './order-client.ts'
+import { createCancelAttempt } from './guest-cancel.ts'
 import { type CartItem } from './types.ts'
 
 function setup() {
@@ -500,5 +502,57 @@ describe('order link credential', () => {
 		await expect(
 			resendOrderLink('o1', { kind: 'receipt', token: 'r'.repeat(20) }),
 		).rejects.toMatchObject({ code: 'rate_limit_exceeded', status: 429 })
+	})
+
+	it('posts the cancel with the credential, the key and the organization', async () => {
+		using ignoredSetup = setup()
+		const fetchMock = stubFetch(200, { allowed: false, status: 'cancelled' })
+		await cancelOrder('o1', { kind: 'receipt', token: 'r'.repeat(20) }, 'cancel-key-0001')
+		const [url, init] = fetchMock.mock.calls[0]!
+		expect(url).toBe('https://regional.example/orders/o1/cancel')
+		expect(init?.method).toBe('POST')
+		expect(init?.headers).toMatchObject({
+			Authorization: `Bearer ${'r'.repeat(20)}`,
+			'Idempotency-Key': 'cancel-key-0001',
+		})
+		expect(JSON.parse(String(init?.body))).toEqual({ slug: 'cafe' })
+	})
+
+	it('sends the link token for an emailed-link guest', async () => {
+		using ignoredSetup = setup()
+		const fetchMock = stubFetch(200, { status: 'cancelled' })
+		await cancelOrder('o1', { kind: 'link', token: TOKEN }, 'cancel-key-0002')
+		expect(fetchMock.mock.calls[0]![1]?.headers).toMatchObject({
+			'X-Order-Link': TOKEN,
+		})
+	})
+
+	it('surfaces a refusal by code and status', async () => {
+		using ignoredSetup = setup()
+		stubFetch(409, { error: 'cancel_window_closed', allowed: false })
+		await expect(
+			cancelOrder('o1', { kind: 'link', token: TOKEN }, 'cancel-key-0003'),
+		).rejects.toMatchObject({ code: 'cancel_window_closed', status: 409 })
+	})
+
+	it('reuses the same key on a network retry through one attempt', async () => {
+		using ignoredSetup = setup()
+		const attempt = createCancelAttempt(() => 'cancel-key-0004')
+		const fetchMock = vi
+			.fn()
+			.mockRejectedValueOnce(new TypeError('network'))
+			.mockResolvedValueOnce(
+				new Response(JSON.stringify({ status: 'cancelled' }), { status: 200 }),
+			)
+		vi.stubGlobal('fetch', fetchMock)
+		const credential = { kind: 'link', token: TOKEN } as const
+		await expect(
+			cancelOrder('o1', credential, attempt.current()),
+		).rejects.toBeInstanceOf(TypeError)
+		await cancelOrder('o1', credential, attempt.current())
+		const keys = fetchMock.mock.calls.map(
+			(call) => (call[1]?.headers as Record<string, string>)['Idempotency-Key'],
+		)
+		expect(keys).toEqual(['cancel-key-0004', 'cancel-key-0004'])
 	})
 })

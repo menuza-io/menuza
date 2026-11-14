@@ -8,14 +8,16 @@ import {
 	timingSafeEqualString,
 } from '../lib/secrets.ts'
 import {
-	fanOutOrderMessagesTick,
-	runOrderMessagesTickForOrg,
-	runOrderMessagesTickLogged,
-} from '../services/order-message-send.ts'
+	runOrdersTickForOrg,
+	runOrdersTickLogged,
+} from '../services/order-acceptance.ts'
+import { fanOutOrderMessagesTick } from '../services/order-message-send.ts'
 
 /**
- * `POST /api/order-messages/tick`: sends guest order messages that are due
- * (retries of a failed receipt or status message), driven by the hourly cron
+ * `POST /api/order-messages/tick`: turns down orders that waited past their
+ * acceptance deadline (#107, `processOrderAcceptance`) and sends guest order
+ * messages that are due (retries of a failed receipt or status message),
+ * driven by the hourly cron
  * fan-out, the Durable Object alarm and the Node interval. Authenticated with
  * `INTERNAL_COMMAND_TOKEN` only. With an `orgId` it runs that organization;
  * without one every organization on this node (on the Workers runtime the edge
@@ -60,12 +62,12 @@ orderMessagesTickRoutes.post('/tick', async (c) => {
 		return c.json({ error: 'validation_error' }, 400, NO_STORE)
 	}
 	if (parsed.data.orgId) {
-		const result = await runOrderMessagesTickForOrg(parsed.data.orgId)
+		const result = await runOrdersTickForOrg(parsed.data.orgId)
 		return c.json({ success: true, result }, 200, NO_STORE)
 	}
 	const totals = await fanOutOrderMessagesTick({
 		orgIds: await listTenantOrgIds(),
-		run: (orgId) => runOrderMessagesTickLogged(orgId),
+		run: (orgId) => runOrdersTickLogged(orgId),
 	})
 	return c.json({ success: totals.errors === 0, ...totals }, 200, NO_STORE)
 })

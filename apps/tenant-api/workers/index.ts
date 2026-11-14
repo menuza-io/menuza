@@ -47,9 +47,9 @@ import {
 	fanOutLoyaltyTick,
 	type LoyaltyTickResult,
 } from '../src/services/loyalty-tick-service.ts'
+import { runOrdersTickForOrg } from '../src/services/order-acceptance.ts'
 import {
 	fanOutOrderMessagesTick,
-	runOrderMessagesTickForOrg,
 	type OrderMessagesTickResult,
 } from '../src/services/order-message-send.ts'
 import { fanOutReservationsTick } from '../src/services/rsv-tick-fanout.ts'
@@ -75,10 +75,12 @@ registerOrgTickModule(
 		runInventoryTickForOrg(orgId, { now }),
 	),
 )
-// Guest order messages (#79): retries of failed receipts and status messages.
+// Orders: the acceptance timeout (#107, re-armed at the earliest deadline)
+// and guest order messages (#79, retries of failed receipts and status
+// messages).
 registerOrgTickModule(
 	createOrderMessagesTickModule((orgId, now) =>
-		runOrderMessagesTickForOrg(orgId, { now }),
+		runOrdersTickForOrg(orgId, { now }),
 	),
 )
 
