@@ -96,6 +96,20 @@ export const orderSchema = z.object({
 			feeCents: z.number().int().nullable().optional(),
 		})
 		.nullable(),
+	/** IANA zone of the order's location; null when the region sent none. */
+	timeZone: z
+		.string()
+		.refine((zone) => {
+			try {
+				new Intl.DateTimeFormat('en', { timeZone: zone })
+				return true
+			} catch {
+				return false
+			}
+		})
+		.nullable()
+		.default(null)
+		.catch(null),
 	/** The time promised to the guest (ISO); null when none was promised. */
 	promisedAt: z.string().nullable().default(null).catch(null),
 	/** End of an ASAP delivery range (ISO); null otherwise. */

@@ -135,3 +135,13 @@ describe('promised time fields', () => {
 		)
 	})
 })
+
+describe('order time zone', () => {
+	it('defaults to null when absent or invalid', () => {
+		const shape = orderSchema.shape
+		expect(shape.timeZone.parse(undefined)).toBeNull()
+		expect(shape.timeZone.parse('Not/AZone')).toBeNull()
+		expect(shape.timeZone.parse(null)).toBeNull()
+		expect(shape.timeZone.parse('Asia/Riyadh')).toBe('Asia/Riyadh')
+	})
+})

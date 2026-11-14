@@ -217,11 +217,12 @@ export function OrderDetail({
 		: null
 	const name = order.contact.name
 
+	const orderZone = order.timeZone ?? order.pickup?.timezone ?? undefined
 	const promisedFrom = order.promisedAt
-		? promisedClock(order.promisedAt, locale, order.pickup?.timezone)
+		? promisedClock(order.promisedAt, locale, orderZone)
 		: ''
 	const promisedTo = order.promisedUntil
-		? promisedClock(order.promisedUntil, locale, order.pickup?.timezone)
+		? promisedClock(order.promisedUntil, locale, orderZone)
 		: ''
 	const promisedLabel = !promisedFrom
 		? null

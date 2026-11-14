@@ -43,6 +43,7 @@ function order(over: Partial<Order> = {}): Order {
 		pickup: { date: '2026-10-19', time: '18:30', timezone: 'UTC' },
 		drop: null,
 		delivery: null,
+		timeZone: null,
 		promisedAt: null,
 		promisedUntil: null,
 		promisedVersion: 0,
@@ -442,6 +443,15 @@ describe('OrderDetail refunds', () => {
 			show(order(promised), { onPushBack: vi.fn() })
 			expect(screen.getByTestId('order-promised')).toHaveTextContent(
 				/Ready around 6:40\sPM/,
+			)
+		})
+
+		it('uses the location zone for an ASAP order with no pickup window', () => {
+			show(order({ ...promised, pickup: null, timeZone: 'Asia/Riyadh' }), {
+				onPushBack: vi.fn(),
+			})
+			expect(screen.getByTestId('order-promised')).toHaveTextContent(
+				/Ready around 9:40\sPM/,
 			)
 		})
 
