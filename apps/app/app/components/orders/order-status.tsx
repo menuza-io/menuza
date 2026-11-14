@@ -17,6 +17,7 @@ const TONES: Record<Tone, { dot: string; text: string }> = {
 }
 
 const ORDER_TONES: Record<string, Tone> = {
+	pending_acceptance: 'warning',
 	accepted: 'primary',
 	preparing: 'warning',
 	ready: 'success',

@@ -83,6 +83,24 @@ Guest order messages (receipt, ready and cancelled emails to guests):
   `dollars` maps to `amount`; locations without a positive threshold and extra
   time are left out). Deploy App before tenant-api.
 
+Guest self-cancel and manual order acceptance (#111, #107; in progress):
+
+- Flags per organization: `ordering.guest_cancel` and
+  `ordering.manual_acceptance` (default off, only a literal `true`). Location
+  settings live on `OrganizationLocation` (control-plane migration `0045`):
+  `guestCancelMinutes` / `guestCancelScheduledLeadMinutes` and
+  `orderAcceptanceMode` / `orderAcceptanceTimeoutMinutes` /
+  `orderAcceptanceMinTotalCents` / `orderAcceptanceScheduledOnly`.
+- `GET /resources/order-context` carries `guestCancel` (per location id
+  `{minutes, scheduledLeadMinutes}`, only while the flag is on and the location
+  offers a window) and `acceptance` (per location id, only `manual` locations
+  while the flag is on). The region reads anything missing as off / Automatic.
+  Deploy App before tenant-api.
+- Provider refunds (#80) add `update:order_refund:any` (built-in admins) and
+  tenant-db migration `0044` (`restaurant_order_refunds.kind` / `status`, the
+  new `qr_tab_refunds`, cancel, acceptance and dispute columns on
+  `restaurant_orders`).
+
 ## Processor onboarding per organization
 
 Online payment availability is resolved per org in

@@ -286,5 +286,29 @@ export function operatorOrderRefund(refund: RestaurantOrderRefund) {
 		note: refund.note,
 		actorId: refund.actorId,
 		createdAt: new Date(refund.createdAt).toISOString(),
+		/** `record` (money returned outside Menuza) or `provider`. */
+		kind: refund.kind,
+		/** Only `succeeded` refunds count in `refundedCents`. */
+		status: refund.status,
+		origin: refund.origin,
+		failureCode: refund.failureCode ?? null,
+		settledAt:
+			refund.settledAt != null
+				? new Date(refund.settledAt).toISOString()
+				: null,
 	}
+}
+
+/**
+ * Provider refunds still pending on the order (their amounts are reserved:
+ * not refundable again, not yet in `refundedCents`).
+ */
+export function pendingRefundCents(
+	refunds: readonly Pick<RestaurantOrderRefund, 'amountCents' | 'status'>[],
+): number {
+	let total = 0
+	for (const refund of refunds) {
+		if (refund.status === 'pending') total += refund.amountCents
+	}
+	return total
 }

@@ -167,8 +167,18 @@ describe('POST /operator/orders/:id/refunds', () => {
 				note: NOTE,
 				actorId: 'usr_1',
 				createdAt: expect.any(String),
+				// A recorded refund: final at once, no provider involved.
+				kind: 'record',
+				status: 'succeeded',
+				origin: 'operator',
+				failureCode: null,
+				settledAt: null,
 			},
 		])
+		expect(
+			(body.order as unknown as { refundPendingCents: number })
+				.refundPendingCents,
+		).toBe(0)
 
 		const replay = await postRefund(
 			orderId,

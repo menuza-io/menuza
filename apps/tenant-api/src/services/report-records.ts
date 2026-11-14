@@ -10,7 +10,7 @@ import {
 	type SQL,
 } from 'drizzle-orm'
 import { getLocalizedMenuValue } from '@repo/common/menu-types'
-import { RESTAURANT_ACTIVE_ORDER_STATUSES } from '@repo/common/restaurant-orders'
+import { RESTAURANT_SALES_ORDER_STATUSES } from '@repo/common/restaurant-orders'
 import {
 	type ReportDefinition,
 	type ReportRecord,
@@ -48,7 +48,8 @@ export type LoadedRecords = { records: ReportRecord[]; truncated: boolean }
 
 type OrderStatus = (typeof restaurantOrders.$inferSelect)['status']
 
-const ACTIVE_STATUSES: readonly OrderStatus[] = RESTAURANT_ACTIVE_ORDER_STATUSES
+// An order waiting for acceptance may still be rejected: not a sale yet.
+const ACTIVE_STATUSES: readonly OrderStatus[] = RESTAURANT_SALES_ORDER_STATUSES
 
 type OrderSalesState = {
 	status: OrderStatus
@@ -69,7 +70,7 @@ export function orderCountsTowardSales(order: OrderSalesState) {
 /** The same rule as {@link orderCountsTowardSales}, as a WHERE clause. */
 export function countedOrderCondition(): SQL {
 	return and(
-		inArray(restaurantOrders.status, [...RESTAURANT_ACTIVE_ORDER_STATUSES]),
+		inArray(restaurantOrders.status, [...RESTAURANT_SALES_ORDER_STATUSES]),
 		payableOrderCondition(),
 	)!
 }

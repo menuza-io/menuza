@@ -13,6 +13,13 @@ import { sql, relations } from 'drizzle-orm'
 import { randomUUID } from 'node:crypto'
 
 import {
+	ORDER_CANCELLED_BY_VALUES,
+	ORDER_DISPUTE_STATUSES,
+	ORDER_PAYMENT_PROCESSORS,
+	ORDER_REFUND_KINDS,
+	ORDER_REFUND_ORIGINS,
+	ORDER_REFUND_STATUSES,
+	ORDER_STORED_CANCEL_REASONS,
 	RESTAURANT_ACTIVE_ORDER_STATUSES,
 	RESTAURANT_ORDER_STATUS_VALUES,
 	RESTAURANT_PAYMENT_STATUS_VALUES,
@@ -786,8 +793,9 @@ export const mailboxReadReceipts = sqliteTable(
 
 // Server-repriced restaurant orders. All money is integer cents. Contact and
 // delivery fields are customer PII and must never leave this regional DB.
-// `status` states that consume capacity: accepted | preparing | ready |
-// completed. cancelled / expired / payment_review release capacity.
+// `status` states that consume capacity: pending_acceptance | accepted |
+// preparing | ready | completed. cancelled / expired / payment_review release
+// capacity. `status` has no CHECK constraint: the value list is TypeScript only.
 // Canonical status values live in @repo/common/restaurant-orders.
 export const RESTAURANT_ORDER_STATUSES = RESTAURANT_ORDER_STATUS_VALUES
 
@@ -852,6 +860,11 @@ export const restaurantOrders = sqliteTable(
 			enum: ['connect', 'checkout'],
 		}),
 		paymentSessionId: text('payment_session_id'),
+		// The provider's id of the payment that settled the order (Stripe
+		// PaymentIntent `pi_…`, Checkout.com payment `pay_…`), when the paid
+		// event names it (0044; null for older orders). Provider refunds use it;
+		// without it the App resolves the payment from `payment_session_id`.
+		paymentId: text('payment_id'),
 		paymentEventAt: integer('payment_event_at', { mode: 'timestamp' }),
 		fulfillment: text('fulfillment', {
 			enum: ['pickup', 'delivery', 'dine_in'],
@@ -949,6 +962,31 @@ export const restaurantOrders = sqliteTable(
 		paidAt: integer('paid_at', { mode: 'timestamp' }),
 		completedAt: integer('completed_at', { mode: 'timestamp' }),
 		cancelledAt: integer('cancelled_at', { mode: 'timestamp' }),
+		// Why and by whom the order was cancelled (#80, #111, #107). Null for
+		// orders cancelled before 0044 and for every other status. Machine
+		// values only (`ORDER_STORED_CANCEL_REASONS`); the guest is told only
+		// `guestVisibleCancelReason()`.
+		cancelReason: text('cancel_reason', {
+			enum: [...ORDER_STORED_CANCEL_REASONS],
+		}),
+		cancelledBy: text('cancelled_by', { enum: [...ORDER_CANCELLED_BY_VALUES] }),
+		// Manual acceptance (#107). `acceptance_deadline_at` is set when the order
+		// is placed `pending_acceptance`; `accepted_at` when a person accepts it;
+		// `rejected_reason` (same values as `cancel_reason`) only when it was
+		// turned down while waiting (by a person or `not_accepted_in_time`).
+		acceptanceDeadlineAt: integer('acceptance_deadline_at', {
+			mode: 'timestamp',
+		}),
+		acceptedAt: integer('accepted_at', { mode: 'timestamp' }),
+		rejectedReason: text('rejected_reason', {
+			enum: [...ORDER_STORED_CANCEL_REASONS],
+		}),
+		// A payment dispute (chargeback) reported by the provider (#80): when it
+		// was first opened and its latest state. `open` and `lost` block refunds.
+		disputedAt: integer('disputed_at', { mode: 'timestamp' }),
+		disputeStatus: text('dispute_status', {
+			enum: [...ORDER_DISPUTE_STATUSES],
+		}),
 		createdAt: integer('created_at', { mode: 'timestamp' }).default(
 			sql`(strftime('%s', 'now'))`,
 		),
@@ -958,6 +996,10 @@ export const restaurantOrders = sqliteTable(
 	},
 	(table) => [
 		uniqueIndex('restaurant_orders_number_unique').on(table.number),
+		// The acceptance tick's scan: orders waiting, by deadline.
+		index('idx_restaurant_orders_acceptance_deadline')
+			.on(table.acceptanceDeadlineAt)
+			.where(sql`${table.status} = 'pending_acceptance'`),
 		uniqueIndex('restaurant_orders_idempotency_key_unique').on(
 			table.idempotencyKey,
 		),
@@ -1018,9 +1060,16 @@ export const restaurantOrderReservations = sqliteTable(
 	],
 )
 
-// Money an operator recorded as returned for a paid online order. No provider
-// refund event reaches the region and the region never calls a provider, so
-// this is the record. Append-only; erasure may clear the note.
+// Money returned on an order. `kind = record`: an operator's record of money
+// returned outside Menuza (written `succeeded`). `kind = provider`: a refund
+// through the payment provider, booked `pending` by the region and finished by
+// the App (the region never calls a provider) as `succeeded` or `failed`. Only
+// `succeeded` rows add to `restaurant_orders.refunded_cents`; a `pending` one
+// reserves its amount; at most one provider refund is pending per order.
+// Append-only (0044 triggers): no delete; an update may only erase the note,
+// record `provider_refund_id` while pending, or settle a pending row once
+// (`status`, `failure_code`, `settled_at`, `updated_at`). Rows from before
+// 0044 read `record` / `succeeded` / `operator`.
 export const restaurantOrderRefunds = sqliteTable(
 	'restaurant_order_refunds',
 	{
@@ -1041,12 +1090,45 @@ export const restaurantOrderRefunds = sqliteTable(
 		createdAt: integer('created_at')
 			.notNull()
 			.default(sql`(cast(strftime('%s', 'now') as integer) * 1000)`),
+		kind: text('kind', { enum: [...ORDER_REFUND_KINDS] })
+			.notNull()
+			.default('record'),
+		status: text('status', { enum: [...ORDER_REFUND_STATUSES] })
+			.notNull()
+			.default('succeeded'),
+		// Who started it; `actor_id` holds the user id (operator), `staff:<id>`
+		// (Station), or `guest` / `system`.
+		origin: text('origin', { enum: [...ORDER_REFUND_ORIGINS] })
+			.notNull()
+			.default('operator'),
+		// Provider rows only: the processor and the payment reference the money
+		// came in on (copied from the order at booking), the provider's refund id
+		// once known, and a short machine failure code.
+		processor: text('processor', { enum: [...ORDER_PAYMENT_PROCESSORS] }),
+		sessionId: text('session_id'),
+		providerRefundId: text('provider_refund_id'),
+		failureCode: text('failure_code'),
+		// Epoch ms: when a provider row reached `succeeded` / `failed` (null for
+		// `record` rows, final from `created_at`), and the last status write.
+		settledAt: integer('settled_at'),
+		updatedAt: integer('updated_at'),
 	},
 	(table) => [
 		uniqueIndex('restaurant_order_refunds_idempotency_unique').on(
 			table.orderId,
 			table.idempotencyKey,
 		),
+		// One provider refund in flight per order (409 `refund_pending`).
+		uniqueIndex('restaurant_order_refunds_one_pending')
+			.on(table.orderId)
+			.where(sql`${table.kind} = 'provider' and ${table.status} = 'pending'`),
+		uniqueIndex('restaurant_order_refunds_provider_refund_unique')
+			.on(table.providerRefundId)
+			.where(sql`${table.providerRefundId} is not null`),
+		// The App's execute and reconcile scans.
+		index('idx_restaurant_order_refunds_pending')
+			.on(table.createdAt)
+			.where(sql`${table.status} = 'pending'`),
 		index('idx_restaurant_order_refunds_order').on(
 			table.orderId,
 			table.createdAt,
@@ -5846,6 +5928,12 @@ export const qrTabs = sqliteTable(
 		/** Staff locked the tab: guests can neither add rounds nor pay. */
 		lockedAt: integer('locked_at'),
 		closedBy: text('closed_by'),
+		// A payment dispute on the tab's settling payment or one of its review
+		// payments (#80). Epoch ms; `open` and `lost` block tab refunds.
+		disputedAt: integer('disputed_at'),
+		disputeStatus: text('dispute_status', {
+			enum: [...ORDER_DISPUTE_STATUSES],
+		}),
 		version: integer('version').notNull().default(1),
 		openedAt: integer('opened_at').notNull().default(nowMs),
 		closedAt: integer('closed_at'),
@@ -5885,6 +5973,64 @@ export const qrTabPayments = sqliteTable(
 			table.sessionId,
 		),
 		index('idx_qr_tab_payments_tab').on(table.tabId),
+	],
+)
+
+// Provider refunds of online money a tab took (#80): the tab's own settling
+// payment (`tab_payment_id` null: `qr_tabs.payment_session_id`) or one
+// `qr_tab_payments` row. A tab is refunded per payment, never per round.
+// Same rules as provider rows of `restaurant_order_refunds`: inserted
+// `pending`, one pending per tab, settled once to `succeeded` / `failed`, no
+// delete. What a payment has had back is the sum of its `succeeded` rows
+// (`qr_tab_payments` stays strictly append-only). Times are epoch ms.
+export const qrTabRefunds = sqliteTable(
+	'qr_tab_refunds',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		tabId: text('tab_id')
+			.notNull()
+			.references(() => qrTabs.id),
+		tabPaymentId: text('tab_payment_id').references(() => qrTabPayments.id),
+		amountCents: integer('amount_cents').notNull(),
+		currency: text('currency').notNull(),
+		// This refund brought the payment's refunded total up to its amount.
+		full: integer('full', { mode: 'boolean' }).notNull().default(false),
+		note: text('note'),
+		actorId: text('actor_id').notNull(),
+		origin: text('origin', { enum: [...ORDER_REFUND_ORIGINS] }).notNull(),
+		status: text('status', { enum: [...ORDER_REFUND_STATUSES] })
+			.notNull()
+			.default('pending'),
+		processor: text('processor', {
+			enum: [...ORDER_PAYMENT_PROCESSORS],
+		}).notNull(),
+		sessionId: text('session_id').notNull(),
+		providerRefundId: text('provider_refund_id'),
+		failureCode: text('failure_code'),
+		idempotencyKey: text('idempotency_key').notNull(),
+		requestHash: text('request_hash').notNull(),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		settledAt: integer('settled_at'),
+		updatedAt: integer('updated_at'),
+	},
+	(table) => [
+		uniqueIndex('qr_tab_refunds_idempotency_unique').on(
+			table.tabId,
+			table.idempotencyKey,
+		),
+		uniqueIndex('qr_tab_refunds_one_pending')
+			.on(table.tabId)
+			.where(sql`${table.status} = 'pending'`),
+		uniqueIndex('qr_tab_refunds_provider_refund_unique')
+			.on(table.providerRefundId)
+			.where(sql`${table.providerRefundId} is not null`),
+		index('idx_qr_tab_refunds_tab').on(table.tabId, table.createdAt),
+		index('idx_qr_tab_refunds_pending')
+			.on(table.createdAt)
+			.where(sql`${table.status} = 'pending'`),
+		check('chk_qr_tab_refunds_amount', sql`${table.amountCents} > 0`),
 	],
 )
 
@@ -6820,6 +6966,7 @@ export type WebsiteFormSubmission = typeof websiteFormSubmissions.$inferSelect
 export type RestaurantOrder = typeof restaurantOrders.$inferSelect
 export type NewRestaurantOrder = typeof restaurantOrders.$inferInsert
 export type RestaurantOrderRefund = typeof restaurantOrderRefunds.$inferSelect
+export type QrTabRefund = typeof qrTabRefunds.$inferSelect
 export type RestaurantOrderReservation =
 	typeof restaurantOrderReservations.$inferSelect
 export type NewRestaurantOrderReservation =

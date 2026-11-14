@@ -20,6 +20,17 @@ import {
 import { generatePickupSlots, getDropDisplayStatus } from './menu-types.ts'
 import { orderMarketingConsentSchema } from './marketing-consent.ts'
 import {
+	ORDER_CANCELLED_BY_VALUES,
+	ORDER_STORED_CANCEL_REASONS,
+	orderCancelReasonSchema,
+	orderRejectReasonSchema,
+} from './order-lifecycle.ts'
+import {
+	ORDER_DISPUTE_STATUSES,
+	operatorOrderRefundSchema,
+	refundNoteSchema,
+} from './order-refunds.ts'
+import {
 	readLargeOrderRule,
 	promisedDelayMinutesSchema,
 	type LargeOrderRule,
@@ -55,12 +66,33 @@ export const RESTAURANT_ORDER_STATUS_VALUES = [
 	'cancelled',
 	'expired',
 	'payment_review',
+	/**
+	 * Waiting for a person to accept it (#107, manual acceptance). Holds slot
+	 * and drop capacity like `accepted`, but is not a kitchen ticket and does
+	 * not count as a sale, for inventory, loyalty or discounts until accepted.
+	 */
+	'pending_acceptance',
 ] as const
 export type RestaurantOrderStatus =
 	(typeof RESTAURANT_ORDER_STATUS_VALUES)[number]
 
-/** Statuses that consume capacity. cancelled / expired / payment_review release it. */
+/**
+ * Statuses that consume capacity (slots, drop inventory).
+ * cancelled / expired / payment_review release it.
+ */
 export const RESTAURANT_ACTIVE_ORDER_STATUSES = [
+	'pending_acceptance',
+	'accepted',
+	'preparing',
+	'ready',
+	'completed',
+] as const
+
+/**
+ * Statuses that count as a sale (reports): the capacity-holding ones minus
+ * `pending_acceptance`, which may still be rejected.
+ */
+export const RESTAURANT_SALES_ORDER_STATUSES = [
 	'accepted',
 	'preparing',
 	'ready',
@@ -536,10 +568,57 @@ export const orderPaymentStatusRequestSchema = z.strictObject({
  * handoff order paid), or a push-back of the promised time. The two never mix:
  * a body with both is refused (400), so each write has one meaning.
  */
-export const operatorOrderStatusPatchSchema = z.strictObject({
-	status: z.enum(['accepted', 'preparing', 'ready', 'completed', 'cancelled']),
-	markPaid: z.boolean().optional(),
-})
+export const operatorOrderStatusPatchSchema = z
+	.strictObject({
+		status: z.enum([
+			'accepted',
+			'preparing',
+			'ready',
+			'completed',
+			'cancelled',
+		]),
+		markPaid: z.boolean().optional(),
+		/**
+		 * Why the order is cancelled (`status: 'cancelled'` only). Optional in
+		 * the schema so older callers (Station, App before the cancel dialog)
+		 * keep working; the region may require it for paid online orders and
+		 * stores none otherwise. Not for an order waiting for acceptance: that
+		 * takes `rejectReason`.
+		 */
+		cancelReason: orderCancelReasonSchema.optional(),
+		/**
+		 * Cancelling a paid online order: `full` books a provider refund of
+		 * everything still refundable (the region answers the refund intent for
+		 * the App to complete); `none` keeps the money. `status: 'cancelled'`
+		 * only.
+		 */
+		refund: z.enum(['none', 'full']).optional(),
+		/**
+		 * Rejecting an order waiting for acceptance (`pending_acceptance` →
+		 * `cancelled`). `status: 'cancelled'` only, never with `cancelReason`.
+		 */
+		rejectReason: orderRejectReasonSchema.optional(),
+	})
+	.superRefine((body, ctx) => {
+		if (body.status !== 'cancelled') {
+			for (const key of ['cancelReason', 'refund', 'rejectReason'] as const) {
+				if (body[key] !== undefined) {
+					ctx.addIssue({
+						code: 'custom',
+						path: [key],
+						message: 'Only when cancelling.',
+					})
+				}
+			}
+		}
+		if (body.cancelReason !== undefined && body.rejectReason !== undefined) {
+			ctx.addIssue({
+				code: 'custom',
+				path: ['rejectReason'],
+				message: 'Send cancelReason or rejectReason, not both.',
+			})
+		}
+	})
 
 /** Pushes the promised time back by 5, 10 or 15 minutes (never earlier). */
 export const operatorOrderDelayPatchSchema = z.strictObject({
@@ -555,13 +634,13 @@ export const operatorOrderPatchSchema = z.union([
 
 export type OperatorOrderPatch = z.infer<typeof operatorOrderPatchSchema>
 
-const refundNoteSchema = z.string().trim().min(3).max(280)
-
 /**
  * Money an operator records as returned for a paid online order
  * (POST /operator/orders/:id/refunds, with an `Idempotency-Key`). It is a
  * record only: the region never calls a payment provider. Either an amount,
- * or `full` for everything not refunded yet.
+ * or `full` for everything not refunded yet. Stored as `kind = record`,
+ * `status = succeeded`. Provider refunds use
+ * `orderProviderRefundRequestSchema` (same shape) through the App.
  */
 export const operatorOrderRefundRequestSchema = z.union([
 	z.strictObject({
@@ -589,6 +668,47 @@ export function orderRefundState(order: {
 	if (refunded <= 0) return 'none'
 	return refunded >= order.totalCents ? 'full' : 'partial'
 }
+
+/**
+ * Cancel, acceptance, dispute and refund fields the operator order JSON
+ * (`operatorOrder()` in tenant-api, plus `refunds` / `refundPendingCents` on
+ * the single-order routes) carries. Every field has a default so an older
+ * region still parses.
+ */
+export const operatorOrderLifecycleSchema = z.object({
+	cancelReason: z
+		.enum(ORDER_STORED_CANCEL_REASONS)
+		.nullable()
+		.default(null)
+		.catch(null),
+	cancelledBy: z
+		.enum(ORDER_CANCELLED_BY_VALUES)
+		.nullable()
+		.default(null)
+		.catch(null),
+	/** Set when the order was rejected (manually or by the timeout). */
+	rejectedReason: z
+		.enum(ORDER_STORED_CANCEL_REASONS)
+		.nullable()
+		.default(null)
+		.catch(null),
+	acceptanceDeadlineAt: z.string().nullable().default(null).catch(null),
+	acceptedAt: z.string().nullable().default(null).catch(null),
+	/** The payment has an open or lost dispute (refunds are refused). */
+	disputed: z.boolean().default(false).catch(false),
+	disputeStatus: z
+		.enum(ORDER_DISPUTE_STATUSES)
+		.nullable()
+		.default(null)
+		.catch(null),
+	disputedAt: z.string().nullable().default(null).catch(null),
+	/** Provider refunds still pending (single-order routes). */
+	refundPendingCents: z.number().int().min(0).optional().catch(undefined),
+	refunds: z.array(operatorOrderRefundSchema).optional().catch(undefined),
+})
+export type OperatorOrderLifecycle = z.infer<
+	typeof operatorOrderLifecycleSchema
+>
 
 /**
  * Canonical, PII-scrubbing-free fingerprint of the order semantics. The same
@@ -1125,6 +1245,19 @@ export const restaurantOrderContextSchema = z
 		 * it never blocks ordering.
 		 */
 		largeOrder: z.unknown().optional(),
+		/**
+		 * Guest self-cancel per location id (`ordering.guest_cancel`, #111):
+		 * only locations that offer a window, only while the flag is on. Read
+		 * with `readGuestCancelPolicy`, never parsed here: missing or bad is off.
+		 */
+		guestCancel: z.unknown().optional(),
+		/**
+		 * Manual order acceptance per location id
+		 * (`ordering.manual_acceptance`, #107): only `manual` locations, only
+		 * while the flag is on. Read with `readOrderAcceptancePolicy`: missing
+		 * or bad is Automatic.
+		 */
+		acceptance: z.unknown().optional(),
 	})
 	.loose()
 
@@ -1149,6 +1282,101 @@ export {
 	type PromisedDelayRefusal,
 	type PromisedTime,
 } from './promised-time.ts'
+
+export {
+	acceptanceDeadline,
+	DEFAULT_ORDER_ACCEPTANCE_TIMEOUT_MINUTES,
+	GUEST_CANCEL_MAX_SCHEDULED_LEAD_MINUTES,
+	GUEST_CANCEL_MINUTES_CHOICES,
+	GUEST_CANCEL_REFUSAL_REASONS,
+	GUEST_VISIBLE_CANCEL_REASONS,
+	guestCancelPolicySchema,
+	guestCancelResponseSchema,
+	guestCancelWindow,
+	guestVisibleCancelReason,
+	ORDER_ACCEPTANCE_AUTO,
+	ORDER_ACCEPTANCE_MODES,
+	ORDER_ACCEPTANCE_SCHEDULED_BUFFER_MINUTES,
+	ORDER_ACCEPTANCE_TIMEOUT_CHOICES,
+	ORDER_CANCEL_REASONS,
+	ORDER_CANCELLED_BY_VALUES,
+	ORDER_REJECT_REASONS,
+	ORDER_STORED_CANCEL_REASONS,
+	ORDER_SYSTEM_CANCEL_REASONS,
+	orderAcceptancePolicySchema,
+	orderCancelReasonSchema,
+	orderNeedsAcceptance,
+	orderRejectReasonSchema,
+	publicOrderLifecycleSchema,
+	readGuestCancelPolicy,
+	readOrderAcceptancePolicy,
+	readStoredCancelReason,
+	type GuestCancelContext,
+	type GuestCancelMinutes,
+	type GuestCancelPolicy,
+	type GuestCancelRefusalReason,
+	type GuestCancelResponse,
+	type GuestCancelWindow,
+	type GuestCancelWindowInput,
+	type GuestVisibleCancelReason,
+	type OrderAcceptanceContext,
+	type OrderAcceptanceMode,
+	type OrderAcceptancePolicy,
+	type OrderAcceptanceTimeoutMinutes,
+	type OrderCancelledBy,
+	type OrderCancelReason,
+	type OrderRejectReason,
+	type OrderStoredCancelReason,
+	type OrderSystemCancelReason,
+	type PublicOrderLifecycle,
+} from './order-lifecycle.ts'
+
+export {
+	disputeBlocksRefund,
+	ORDER_DISPUTE_STATUSES,
+	ORDER_PAYMENT_PROCESSORS,
+	ORDER_REFUND_ERROR_CODES,
+	ORDER_REFUND_KINDS,
+	ORDER_REFUND_ORIGINS,
+	ORDER_REFUND_STATUSES,
+	ORDER_REFUND_SUMMARY_STATUSES,
+	operatorOrderRefundSchema,
+	orderDisputeStatusRequestSchema,
+	orderProviderRefundRequestSchema,
+	orderProviderRefundSchema,
+	orderRefundActorSchema,
+	orderRefundExecuteRequestSchema,
+	orderRefundIntentRequestSchema,
+	orderRefundIntentResponseSchema,
+	orderRefundsPendingRequestSchema,
+	orderRefundsPendingResponseSchema,
+	orderRefundStatusRequestSchema,
+	orderRefundStatusResponseSchema,
+	refundFailureCodeSchema,
+	refundIdempotencyKeySchema,
+	refundNoteSchema,
+	summarizeOrderRefunds,
+	type OperatorOrderRefund,
+	type OrderDisputeStatus,
+	type OrderDisputeStatusRequest,
+	type OrderPaymentProcessor,
+	type OrderProviderRefund,
+	type OrderProviderRefundRequest,
+	type OrderRefundActor,
+	type OrderRefundErrorCode,
+	type OrderRefundExecuteRequest,
+	type OrderRefundIntentRequest,
+	type OrderRefundIntentResponse,
+	type OrderRefundKind,
+	type OrderRefundOrigin,
+	type OrderRefundsPendingRequest,
+	type OrderRefundsPendingResponse,
+	type OrderRefundStatus,
+	type OrderRefundStatusRequest,
+	type OrderRefundStatusResponse,
+	type OrderRefundSummary,
+	type OrderRefundSummaryStatus,
+} from './order-refunds.ts'
 
 /**
  * `guestMessages` in the order context (`GET /resources/order-context`).

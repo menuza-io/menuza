@@ -187,6 +187,10 @@ describe('internal restaurant order context', () => {
 			},
 			// No locations: nothing extra to prep.
 			largeOrder: {},
+			// Guest cancel and manual acceptance flags default off: the region
+			// reads every location as no cancel and Automatic.
+			guestCancel: {},
+			acceptance: {},
 			// Discount flags default off too: nothing to evaluate.
 			discounts: {
 				features: { automatic: false, coupons: false },
@@ -409,5 +413,129 @@ describe('order context: guest messages and large orders', () => {
 			},
 			loc_items: { threshold: 8, thresholdType: 'items', extraPrepMinutes: 10 },
 		})
+	})
+})
+
+describe('order context: guest cancel and order acceptance', () => {
+	beforeEach(async () => {
+		resetMockDb()
+		findOrg.mockReset().mockResolvedValue(orgRow())
+		buildMenu.mockReset().mockResolvedValue({
+			payload: MENU_PAYLOAD,
+			secondsUntilVariationReturn: null,
+		})
+		buildDrop.mockReset().mockResolvedValue(null)
+		featureFlag.mockReset().mockResolvedValue(null)
+	})
+
+	type Extra = {
+		guestCancel: Record<string, unknown>
+		acceptance: Record<string, unknown>
+	}
+
+	function policyRow(
+		id: string,
+		overrides: Partial<{
+			guestCancelMinutes: number | null
+			guestCancelScheduledLeadMinutes: number | null
+			orderAcceptanceMode: string
+			orderAcceptanceTimeoutMinutes: number
+			orderAcceptanceMinTotalCents: number | null
+			orderAcceptanceScheduledOnly: boolean
+		}> = {},
+	) {
+		return {
+			id,
+			// Large-order fields left unset: no extra prep.
+			largeOrderThreshold: null,
+			largeOrderThresholdType: 'dollars',
+			largeOrderExtraPrepTime: 0,
+			guestCancelMinutes: null,
+			guestCancelScheduledLeadMinutes: null,
+			orderAcceptanceMode: 'auto',
+			orderAcceptanceTimeoutMinutes: 5,
+			orderAcceptanceMinTotalCents: null,
+			orderAcceptanceScheduledOnly: false,
+			...overrides,
+		}
+	}
+
+	const ROWS = [
+		policyRow('loc_cancel', {
+			guestCancelMinutes: 2,
+			guestCancelScheduledLeadMinutes: 60,
+			orderAcceptanceMode: 'manual',
+			orderAcceptanceTimeoutMinutes: 10,
+			orderAcceptanceMinTotalCents: 5000,
+			orderAcceptanceScheduledOnly: true,
+		}),
+		policyRow('loc_off', { guestCancelMinutes: 0 }),
+		policyRow('loc_odd', {
+			guestCancelMinutes: 7,
+			orderAcceptanceMode: 'manual',
+			orderAcceptanceTimeoutMinutes: 4,
+			orderAcceptanceMinTotalCents: -1,
+		}),
+		policyRow('loc_no_lead', {
+			guestCancelMinutes: 10,
+			guestCancelScheduledLeadMinutes: 99_999,
+		}),
+	]
+
+	async function withRows() {
+		const { OrganizationLocation } = await import('@repo/database')
+		selectRows(new Map([[OrganizationLocation, ROWS]]))
+	}
+
+	it('sends no policy and reads no location while both flags are off', async () => {
+		await withRows()
+		const payload = (await loadContext()) as unknown as Extra
+		expect(payload.guestCancel).toEqual({})
+		expect(payload.acceptance).toEqual({})
+	})
+
+	it('sends guest cancel windows only for locations that offer one', async () => {
+		featureFlag.mockImplementation(async (key: string) =>
+			key === 'ordering.guest_cancel' ? true : null,
+		)
+		await withRows()
+		const payload = (await loadContext()) as unknown as Extra
+		expect(payload.guestCancel).toEqual({
+			loc_cancel: { minutes: 2, scheduledLeadMinutes: 60 },
+			loc_no_lead: { minutes: 10, scheduledLeadMinutes: null },
+		})
+		// Manual acceptance stays Automatic while its own flag is off.
+		expect(payload.acceptance).toEqual({})
+	})
+
+	it('sends manual acceptance only for manual locations, with safe defaults', async () => {
+		featureFlag.mockImplementation(async (key: string) =>
+			key === 'ordering.manual_acceptance' ? true : null,
+		)
+		await withRows()
+		const payload = (await loadContext()) as unknown as Extra
+		expect(payload.acceptance).toEqual({
+			loc_cancel: {
+				mode: 'manual',
+				timeoutMinutes: 10,
+				minTotalCents: 5000,
+				scheduledOnly: true,
+			},
+			loc_odd: {
+				mode: 'manual',
+				timeoutMinutes: 5,
+				minTotalCents: null,
+				scheduledOnly: false,
+			},
+		})
+		expect(payload.guestCancel).toEqual({})
+	})
+
+	it('only a literal true turns a flag on', async () => {
+		featureFlag.mockImplementation(async () => 'true')
+		await withRows()
+		const payload = (await loadContext()) as unknown as Extra
+		expect(payload.guestCancel).toEqual({})
+		expect(payload.acceptance).toEqual({})
 	})
 })

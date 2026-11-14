@@ -6,6 +6,7 @@ import {
 	buildPublicOrderingOptions,
 	canonicalOrderRequest,
 	computePromisedTime,
+	disputeBlocksRefund,
 	priceRestaurantOrder,
 	readGuestMessagesPolicy,
 	readLargeOrderRule,
@@ -1930,6 +1931,9 @@ const OPERATOR_STATUS_TRANSITIONS: Record<RestaurantOrder['status'], string[]> =
 		cancelled: [],
 		expired: [],
 		payment_review: ['preparing', 'ready', 'completed', 'cancelled'],
+		// Manual acceptance (#107) is not built yet: nothing writes this status,
+		// so no operator transition leaves it. Accept and reject land with it.
+		pending_acceptance: [],
 	}
 
 export type OperatorPatchInput =
@@ -2428,5 +2432,18 @@ export function operatorOrder(
 		 * unknown.
 		 */
 		timeZone: order.locationTimezone ?? order.pickupTimezone ?? null,
+		/** Why and by whom it was cancelled (internal reasons included). */
+		cancelReason: order.cancelReason ?? null,
+		cancelledBy: order.cancelledBy ?? null,
+		/** Set when it was turned down while waiting for acceptance. */
+		rejectedReason: order.rejectedReason ?? null,
+		acceptanceDeadlineAt: order.acceptanceDeadlineAt
+			? order.acceptanceDeadlineAt.toISOString()
+			: null,
+		acceptedAt: order.acceptedAt ? order.acceptedAt.toISOString() : null,
+		/** An open or lost dispute: refunds are refused. */
+		disputed: disputeBlocksRefund(order.disputeStatus),
+		disputeStatus: order.disputeStatus ?? null,
+		disputedAt: order.disputedAt ? order.disputedAt.toISOString() : null,
 	}
 }

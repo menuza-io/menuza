@@ -2634,6 +2634,30 @@ export const OrganizationLocation = sqliteTable(
 		 * ready. Policy only; the number lives in the regional database.
 		 */
 		readyTextEnabled: integer({ mode: 'boolean' }).default(false).notNull(),
+		/**
+		 * "Guests can cancel within" (Settings, Locations, Online ordering;
+		 * `ordering.guest_cancel`): minutes after payment (or placement) a guest
+		 * may cancel their own ASAP order, one of 1, 2, 5 or 10. Null or 0 is
+		 * off. `guestCancelScheduledLeadMinutes`: a scheduled order may be
+		 * cancelled until this many minutes before its time (null: same window
+		 * as ASAP). Policy only.
+		 */
+		guestCancelMinutes: integer(),
+		guestCancelScheduledLeadMinutes: integer(),
+		/**
+		 * "Order acceptance" (`ordering.manual_acceptance`): `auto` (every order
+		 * is accepted when placed) or `manual` (a person accepts or rejects it).
+		 * Manual orders not decided in `orderAcceptanceTimeoutMinutes` (3, 5 or
+		 * 10) are rejected automatically. `orderAcceptanceMinTotalCents` (order
+		 * total, minor units; null: every order) and
+		 * `orderAcceptanceScheduledOnly` narrow which orders wait.
+		 */
+		orderAcceptanceMode: text().default('auto').notNull(),
+		orderAcceptanceTimeoutMinutes: integer().default(5).notNull(),
+		orderAcceptanceMinTotalCents: integer(),
+		orderAcceptanceScheduledOnly: integer({ mode: 'boolean' })
+			.default(false)
+			.notNull(),
 		isActive: integer({ mode: 'boolean' }).default(true).notNull(),
 		isDefault: integer({ mode: 'boolean' }).default(false).notNull(),
 		createdAt: integer({ mode: 'timestamp_ms' })

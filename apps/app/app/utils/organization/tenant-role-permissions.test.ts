@@ -374,3 +374,42 @@ describe('marketing consent permission', () => {
 		expect(memberIds).not.toContain(ID)
 	})
 })
+
+describe('order refund permission', () => {
+	const ID = 'org_perm_update_order_refund_any'
+
+	it('is assignable to custom roles and implies nothing', () => {
+		expect(TENANT_ROLE_PERMISSION_IDS).toContain(ID)
+		expect(hasOnlyTenantRolePermissions([ID])).toBe(true)
+		expect(withImpliedTenantRolePermissions([ID])).toEqual([ID])
+	})
+
+	it('ORG_PERMISSIONS, setup-roles.ts and the 0045 migration name the same grant', () => {
+		expect(ORG_PERMISSIONS.UPDATE_ORDER_REFUND_ANY).toBe(
+			'update:order_refund:any',
+		)
+		expect(permissionId(ORG_PERMISSIONS.UPDATE_ORDER_REFUND_ANY)).toBe(ID)
+		const setupRoles = fs.readFileSync(
+			path.join(REPO_ROOT, 'packages/database/setup-roles.ts'),
+			'utf8',
+		)
+		const migration = fs.readFileSync(
+			path.join(
+				REPO_ROOT,
+				'packages/database/drizzle/0045_order_refunds_and_acceptance.sql',
+			),
+			'utf8',
+		)
+		expect(setupRoles).toContain(`id: '${ID}'`)
+		expect(migration).toContain(`('${ID}', 'update', 'order_refund', 'any'`)
+		// Built-in admins (the owner's preset) only.
+		expect(migration).toContain(`('org_role_admin', '${ID}')`)
+		expect(migration).not.toContain('org_role_member')
+		expect(migration).not.toContain('org_role_viewer')
+		const memberIds = setupRoles.slice(
+			setupRoles.indexOf('const MEMBER_PERMISSION_IDS'),
+			setupRoles.indexOf('const VIEWER_PERMISSION_IDS'),
+		)
+		expect(memberIds).not.toContain(ID)
+	})
+})

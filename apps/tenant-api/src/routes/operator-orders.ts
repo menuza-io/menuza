@@ -21,6 +21,7 @@ import { getBearerToken, getOperatorToken } from '../lib/secrets.ts'
 import {
 	listOrderRefunds,
 	operatorOrderRefund,
+	pendingRefundCents,
 	recordOrderRefund,
 } from '../services/order-refund-service.ts'
 import {
@@ -353,7 +354,13 @@ operatorOrderRoutes.get('/:id', async (c) => {
 		const [order] = await withCustomerKeys(auth.auth, [result.data])
 		const refunds = await listOrderRefunds(auth.auth.orgId, result.data.id)
 		return c.json(
-			{ order: { ...order, refunds: refunds.map(operatorOrderRefund) } },
+			{
+				order: {
+					...order,
+					refunds: refunds.map(operatorOrderRefund),
+					refundPendingCents: pendingRefundCents(refunds),
+				},
+			},
 			200,
 			noStoreHeaders(),
 		)
@@ -489,7 +496,11 @@ operatorOrderRoutes.post('/:id/refunds', async (c) => {
 		)
 		return c.json(
 			{
-				order: { ...order, refunds: refunds.map(operatorOrderRefund) },
+				order: {
+					...order,
+					refunds: refunds.map(operatorOrderRefund),
+					refundPendingCents: pendingRefundCents(refunds),
+				},
 				refund: operatorOrderRefund(result.data.refund),
 				replayed: result.data.replayed,
 			},
