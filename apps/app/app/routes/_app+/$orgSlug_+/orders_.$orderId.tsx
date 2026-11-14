@@ -19,6 +19,12 @@ import {
 } from '#app/components/orders/order-detail.tsx'
 import { useOrdersClient } from '#app/hooks/use-orders-client.ts'
 import { requireMenuRead } from '#app/utils/menu/access.server.ts'
+import {
+	decideOrder,
+	decisionErrorMessage,
+	type OrderDecision,
+	rejectNotice,
+} from '#app/utils/orders/acceptance.ts'
 import { getOrderCustomerLinkAccess } from '#app/utils/orders/customer-link.server.ts'
 import {
 	type Order,
@@ -214,6 +220,23 @@ export default function OrderPage() {
 		setOrder(z.object({ order: orderSchema }).parse(response).order)
 	}
 
+	/** Accept or reject a waiting order (manual acceptance). */
+	const decide = async (decision: OrderDecision) => {
+		if (!order || busy || !canWrite) return
+		setBusy(true)
+		setActionError(null)
+		setNotice(null)
+		try {
+			const response = await decideOrder(request, order.id, decision)
+			if (decision.kind === 'reject') setNotice(rejectNotice(response, _))
+		} catch (error) {
+			setActionError(decisionErrorMessage(error, _))
+		} finally {
+			setBusy(false)
+		}
+		await load()
+	}
+
 	const shell = 'mx-auto w-full max-w-5xl py-8 md:px-6 lg:px-8'
 	const backHref = ordersHref(orgSlug)
 
@@ -286,6 +309,8 @@ export default function OrderPage() {
 				onUpdate={(status, markPaid, cancel) =>
 					void update(status, markPaid, cancel)
 				}
+				onAccept={() => void decide({ kind: 'accept' })}
+				onReject={(reason) => void decide({ kind: 'reject', reason })}
 				onRecordRefund={canWrite ? recordRefund : undefined}
 				onPushBack={canWrite ? pushBack : undefined}
 				onReload={() => void load()}

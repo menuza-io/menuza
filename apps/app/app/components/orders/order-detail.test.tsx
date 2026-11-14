@@ -691,4 +691,119 @@ describe('OrderDetail provider refunds', () => {
 		expect(await screen.findByTestId('provider-refund-dialog')).toBeVisible()
 		expect(screen.queryByTestId('order-refund-dialog')).toBeNull()
 	})
+
+	describe('waiting for acceptance', () => {
+		const deadline = new Date(Date.now() + 192_000).toISOString()
+		const waitingOrder = (over: Partial<Order> = {}) =>
+			order({
+				status: 'pending_acceptance',
+				acceptanceDeadlineAt: deadline,
+				...over,
+			})
+
+		it('shows the countdown and Accept / Reject instead of the status buttons', () => {
+			show(waitingOrder(), { onAccept: vi.fn(), onReject: vi.fn() })
+			expect(screen.getByTestId('order-acceptance-banner')).toBeInTheDocument()
+			expect(screen.getByTestId('acceptance-countdown')).toHaveTextContent(
+				/Accept within 3:1\d/,
+			)
+			expect(screen.getByTestId('order-accept')).toBeInTheDocument()
+			expect(screen.queryByTestId('order-actions')).toBeNull()
+			expect(screen.queryByText('Cancel order')).toBeNull()
+			expect(screen.queryByText('Start preparing')).toBeNull()
+		})
+
+		it('says time is up past the deadline but keeps Accept', () => {
+			show(
+				waitingOrder({
+					acceptanceDeadlineAt: new Date(Date.now() - 5000).toISOString(),
+				}),
+				{ onAccept: vi.fn(), onReject: vi.fn() },
+			)
+			expect(screen.getByTestId('acceptance-countdown')).toHaveTextContent(
+				'Time is up',
+			)
+			expect(screen.getByTestId('order-accept')).toBeEnabled()
+		})
+
+		it('accepts with one tap', async () => {
+			const onAccept = vi.fn()
+			show(waitingOrder(), { onAccept, onReject: vi.fn() })
+			await userEvent.click(screen.getByTestId('order-accept'))
+			expect(onAccept).toHaveBeenCalledTimes(1)
+		})
+
+		it('rejects only with a reason and tells about the refund', async () => {
+			const onReject = vi.fn()
+			show(waitingOrder(), { onAccept: vi.fn(), onReject })
+			await userEvent.click(screen.getByTestId('order-reject'))
+			expect(
+				await screen.findByTestId('order-reject-refund-note'),
+			).toHaveTextContent('The guest is refunded in full.')
+			expect(
+				screen.getByRole('button', { name: 'Reject order' }),
+			).toBeDisabled()
+			await userEvent.click(screen.getByTestId('order-reject-reason'))
+			await userEvent.click(
+				await screen.findByRole('option', { name: 'Kitchen closed' }),
+			)
+			await userEvent.click(
+				screen.getByRole('button', { name: 'Reject order' }),
+			)
+			expect(onReject).toHaveBeenCalledWith('kitchen_closed')
+		})
+
+		it('does not promise a refund for an unpaid order', async () => {
+			show(
+				waitingOrder({ paymentStatus: 'unpaid', paymentMethod: 'handoff' }),
+				{
+					onAccept: vi.fn(),
+					onReject: vi.fn(),
+				},
+			)
+			await userEvent.click(screen.getByTestId('order-reject'))
+			await screen.findByTestId('order-reject-reason')
+			expect(screen.queryByTestId('order-reject-refund-note')).toBeNull()
+		})
+
+		it('hides the buttons without write access', () => {
+			show(waitingOrder(), { canWrite: false })
+			expect(screen.getByTestId('order-acceptance-banner')).toBeInTheDocument()
+			expect(screen.queryByTestId('order-accept')).toBeNull()
+		})
+
+		it('reads Rejected with the reason, and Not accepted in time', () => {
+			const { unmount } = renderStaff(
+				<OrderDetail
+					order={order({
+						status: 'cancelled',
+						cancelReason: 'out_of_stock',
+						rejectedReason: 'out_of_stock',
+						cancelledBy: 'operator',
+					})}
+					orgSlug="acme"
+					canWrite
+					canViewCustomers
+					busy={false}
+					backHref="/acme/orders"
+					onUpdate={vi.fn()}
+				/>,
+			)
+			expect(screen.getByTestId('order-cancel-info')).toHaveTextContent(
+				'Rejected: Out of stock',
+			)
+			unmount()
+			show(
+				order({
+					status: 'cancelled',
+					cancelReason: 'not_accepted_in_time',
+					rejectedReason: 'not_accepted_in_time',
+					cancelledBy: 'system',
+				}),
+			)
+			expect(screen.getByTestId('order-cancel-info')).toHaveTextContent(
+				'Not accepted in time',
+			)
+		})
+	})
 })

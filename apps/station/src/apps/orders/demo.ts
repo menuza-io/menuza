@@ -50,6 +50,8 @@ const version = (id: string, revision: number) =>
 		.slice(0, 64)
 
 const MIN = 60_000
+/** The region's tick runs a little after the deadline: "Time is up" shows in between. */
+const EXPIRY_GRACE_MS = 20_000
 
 function sample(
 	id: string,
@@ -172,6 +174,24 @@ export function createDemoOrders(start = Date.now()): OrdersApi & {
 						instructions: 'No onion',
 					}),
 					line('Truffle Fries', 1, 650),
+				],
+			},
+			start,
+		),
+	)
+	// Waits for a person to accept or reject it (manual acceptance), paid online.
+	add(
+		sample(
+			'demo-1043',
+			{
+				number: 'W-1043',
+				guestName: 'Noor',
+				status: 'pending_acceptance',
+				createdAt: start - MIN,
+				acceptanceDeadlineAt: start + 4 * MIN,
+				lines: [
+					line('Lamb Kofta Plate', 2, 3200, { instructions: 'Extra sauce' }),
+					line('Mint Lemonade', 2, 700),
 				],
 			},
 			start,
@@ -365,6 +385,60 @@ export function createDemoOrders(start = Date.now()): OrdersApi & {
 			)
 		}
 	}
+	/**
+	 * Turns down an order waiting for acceptance, refunding a paid online order
+	 * in full like the region does (the answer says whether the refund started).
+	 */
+	const turnDown = (order: DemoOrder, reason: string, action: string) => {
+		const rejected = change(
+			order,
+			{
+				status: 'cancelled',
+				cancelledAt: Date.now(),
+				rejectedReason: reason,
+			},
+			action,
+			{ reason },
+		)
+		if (!isOnlinePaid(rejected)) return { order: rejected, outcome: undefined }
+		const block = refundBlock(rejected)
+		if (block)
+			return { order: rejected, outcome: { started: false, code: block } }
+		const amount = rejected.refundableCents
+		settleAt.set(order.id, Date.now() + DEMO_REFUND_SETTLE_MS)
+		return {
+			order: change(
+				rejected,
+				{
+					refunds: [
+						...rejected.refunds,
+						{
+							amountCents: amount,
+							note: '',
+							at: Date.now(),
+							kind: 'provider',
+							status: 'pending',
+							failureCode: null,
+						},
+					],
+				},
+				'refunded',
+				{ amountCents: amount, reason: 'full' },
+			),
+			outcome: { started: true, code: null },
+		}
+	}
+	/** Past its deadline the region's tick turns an order down: so does the demo. */
+	const expireDue = () => {
+		const now = Date.now()
+		for (const order of orders.values())
+			if (
+				order.status === 'pending_acceptance' &&
+				order.acceptanceDeadlineAt != null &&
+				order.acceptanceDeadlineAt + EXPIRY_GRACE_MS <= now
+			)
+				turnDown(order, 'not_accepted_in_time', 'rejected')
+	}
 	/** Why a provider refund cannot start now, or null. */
 	const refundBlock = (order: DemoOrder) => {
 		if (!isOnlinePaid(order)) return 'order_not_refundable'
@@ -374,6 +448,7 @@ export function createDemoOrders(start = Date.now()): OrdersApi & {
 		return null
 	}
 	const find = (id: string) => {
+		expireDue()
 		settleDue()
 		const order = orders.get(id)
 		if (!order) throw new OrdersError('order_not_found', 404)
@@ -459,6 +534,7 @@ export function createDemoOrders(start = Date.now()): OrdersApi & {
 	return {
 		arrive,
 		feed: () => {
+			expireDue()
 			settleDue()
 			if (Date.now() - start > 30_000) arrive()
 			return Promise.resolve({
@@ -513,7 +589,7 @@ export function createDemoOrders(start = Date.now()): OrdersApi & {
 			if (digits && !DEMO_GRANTS.contact)
 				throw new OrdersError('permission_required', 403)
 			const states: Record<string, string[]> = {
-				open: ['accepted', 'preparing'],
+				open: ['pending_acceptance', 'accepted', 'preparing'],
 				ready: ['ready'],
 				completed: ['completed'],
 				cancelled: ['cancelled'],
@@ -581,6 +657,19 @@ export function createDemoOrders(start = Date.now()): OrdersApi & {
 					),
 				)
 			}
+			if (command.action === 'accept') {
+				if (order.status !== 'pending_acceptance')
+					throw new OrdersError('order_not_pending', 409)
+				return respond(change(order, { status: 'accepted' }, 'accepted'))
+			}
+			if (command.action === 'reject') {
+				if (order.status !== 'pending_acceptance')
+					throw new OrdersError('order_not_pending', 409)
+				const result = turnDown(order, command.reason, 'rejected')
+				return respond(result.order, result.outcome)
+			}
+			if (command.action !== 'cancel')
+				throw new OrdersError('invalid_transition', 422)
 			if (done) throw new OrdersError('invalid_transition', 422)
 			if (command.refund === 'full' && !isOnlinePaid(order))
 				throw new OrdersError('order_not_refundable', 400)

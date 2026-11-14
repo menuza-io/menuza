@@ -283,6 +283,103 @@ describe('regional restaurant order command client', () => {
 		})
 	})
 
+	it('forwards the payment id of an order from either provider', async () => {
+		for (const [processor, sessionId, paymentId] of [
+			['connect', 'cs_1', 'pi_1'],
+			['checkout', 'restaurant_order:org_1:ord_1', 'pay_1'],
+		] as const) {
+			fetchMock
+				.mockReset()
+				.mockImplementation(async () => jsonResponse({ ok: true }))
+			await notifyRestaurantOrderPaymentStatus({
+				dataRegion: 'us',
+				orgId: 'org_1',
+				orderId: 'ord_1',
+				sessionId,
+				processor,
+				status: 'paid',
+				amountCents: 4250,
+				currency: 'usd',
+				paymentId,
+			})
+			expect(fetchMock).toHaveBeenCalledTimes(1)
+			const [, init] = fetchMock.mock.calls[0] as [string, { body: string }]
+			expect(JSON.parse(init.body)).toMatchObject({ processor, paymentId })
+		}
+	})
+
+	it('keeps a QR tab’s payment id for Checkout.com only', async () => {
+		const send = async (
+			processor: 'connect' | 'checkout',
+			paymentId: string,
+		) => {
+			fetchMock
+				.mockReset()
+				.mockImplementation(async () => jsonResponse({ ok: true }))
+			await notifyRestaurantOrderPaymentStatus({
+				dataRegion: 'us',
+				orgId: 'org_1',
+				orderId: 'tab:tab-1',
+				sessionId: processor === 'connect' ? 'cs_tab_1' : 'ref_tab_1',
+				processor,
+				status: 'paid',
+				amountCents: 4250,
+				currency: 'usd',
+				paymentId,
+			})
+			const [, init] = fetchMock.mock.calls[0] as [string, { body: string }]
+			return JSON.parse(init.body) as Record<string, unknown>
+		}
+		expect(await send('checkout', 'pay_tab_1')).toMatchObject({
+			paymentId: 'pay_tab_1',
+		})
+		expect(await send('connect', 'pi_tab_1')).not.toHaveProperty('paymentId')
+	})
+
+	it('sends a payment again without its id to a region that refuses the field', async () => {
+		fetchMock
+			.mockReset()
+			.mockResolvedValueOnce(
+				jsonResponse({ error: 'invalid_request', message: 'Invalid' }, 400),
+			)
+			.mockResolvedValueOnce(jsonResponse({ ok: true }))
+		await notifyRestaurantOrderPaymentStatus({
+			dataRegion: 'us',
+			orgId: 'org_1',
+			orderId: 'ord_1',
+			sessionId: 'cs_1',
+			processor: 'connect',
+			status: 'paid',
+			amountCents: 4250,
+			currency: 'usd',
+			paymentId: 'pi_1',
+		})
+		expect(fetchMock).toHaveBeenCalledTimes(2)
+		const bodies = fetchMock.mock.calls.map(
+			(call) => JSON.parse((call[1] as { body: string }).body) as object,
+		)
+		expect(bodies[0]).toHaveProperty('paymentId', 'pi_1')
+		expect(bodies[1]).not.toHaveProperty('paymentId')
+
+		// Without an id there is nothing to drop: a 400 stays a 400.
+		fetchMock
+			.mockReset()
+			.mockResolvedValue(jsonResponse({ error: 'invalid_request' }, 400))
+		await expect(
+			notifyRestaurantOrderPaymentStatus({
+				dataRegion: 'us',
+				orgId: 'org_1',
+				orderId: 'ord_1',
+				sessionId: 'cs_1',
+				processor: 'connect',
+				status: 'paid',
+				amountCents: 4250,
+				currency: 'usd',
+			}),
+		).rejects.toMatchObject({ httpStatus: 400 })
+		expect(fetchMock).toHaveBeenCalledTimes(1)
+	})
+
 	it('rejects malformed quote payloads', async () => {
 		fetchMock.mockResolvedValue(jsonResponse({ nope: true }))
 		await expect(
@@ -396,6 +493,102 @@ describe('regional refund and dispute client (#80)', () => {
 			expect(refused).toMatchObject({ code, httpStatus: status })
 			expect(refused.refundableCents).toBeUndefined()
 		}
+	})
+
+	describe('members limited to some locations', () => {
+		const SCOPED = { ...INTENT, locationIds: ['loc_a'] }
+
+		it('sends the location ids and accepts an answer that confirms the check', async () => {
+			fetchMock.mockResolvedValue(
+				jsonResponse({ ...REFUND, replayed: false, locationScoped: true }),
+			)
+			const intent = await requestRestaurantOrderRefundIntent({
+				dataRegion: 'us',
+				...SCOPED,
+			})
+			expect(intent).toMatchObject({ refundId: 'rf_1', locationScoped: true })
+			expect(sent().body).toEqual(SCOPED)
+			expect(fetchMock).toHaveBeenCalledTimes(1)
+		})
+
+		it('treats a region that refuses the field (400) as unsupported', async () => {
+			fetchMock.mockImplementation(async () =>
+				jsonResponse({ error: 'invalid_request' }, 400),
+			)
+			const error = await expectRegionalError(
+				requestRestaurantOrderRefundIntent({ dataRegion: 'us', ...SCOPED }),
+			)
+			expect(error).toMatchObject({
+				code: 'location_scope_unsupported',
+				httpStatus: 403,
+			})
+			// An unscoped 400 stays what it was.
+			const plain = await expectRegionalError(
+				requestRestaurantOrderRefundIntent({ dataRegion: 'us', ...INTENT }),
+			)
+			expect(plain).toMatchObject({ code: 'invalid_request', httpStatus: 400 })
+		})
+
+		it('releases a refund booked without the check and refuses it', async () => {
+			fetchMock
+				.mockResolvedValueOnce(jsonResponse({ ...REFUND, replayed: false }))
+				.mockResolvedValueOnce(
+					jsonResponse({
+						refundId: 'rf_1',
+						orderId: 'ord_1',
+						status: 'failed',
+						applied: true,
+					}),
+				)
+			const error = await expectRegionalError(
+				requestRestaurantOrderRefundIntent({ dataRegion: 'us', ...SCOPED }),
+			)
+			expect(error).toMatchObject({
+				code: 'location_scope_unsupported',
+				httpStatus: 403,
+			})
+			expect(fetchMock).toHaveBeenCalledTimes(2)
+			expect(sent()).toEqual({
+				url: 'http://us-tenant-api.test/api/orders/refund-status',
+				body: {
+					orgId: 'org_1',
+					orderId: 'ord_1',
+					refundId: 'rf_1',
+					processor: 'connect',
+					status: 'failed',
+					failureCode: 'location_scope_unsupported',
+					amountCents: 1000,
+					currency: 'USD',
+				},
+			})
+		})
+
+		it('never releases a replayed or already sent refund, but still refuses', async () => {
+			for (const answer of [
+				{ ...REFUND, replayed: true },
+				{ ...REFUND, replayed: false, providerRefundId: 're_1' },
+				{ ...REFUND, replayed: false, status: 'succeeded' },
+			]) {
+				fetchMock.mockReset().mockResolvedValue(jsonResponse(answer))
+				const error = await expectRegionalError(
+					requestRestaurantOrderRefundIntent({ dataRegion: 'us', ...SCOPED }),
+				)
+				expect(error.code).toBe('location_scope_unsupported')
+				expect(fetchMock).toHaveBeenCalledTimes(1)
+			}
+		})
+
+		it('refuses more locations than the contract allows without calling the region', async () => {
+			const error = await expectRegionalError(
+				requestRestaurantOrderRefundIntent({
+					dataRegion: 'us',
+					...INTENT,
+					locationIds: Array.from({ length: 201 }, (_, i) => `loc_${i}`),
+				}),
+			)
+			expect(error.code).toBe('location_scope_unsupported')
+			expect(fetchMock).not.toHaveBeenCalled()
+		})
 	})
 
 	it('refuses an answer for another order or a malformed one', async () => {

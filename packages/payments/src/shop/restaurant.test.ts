@@ -142,6 +142,42 @@ describe('mapConnectSessionToRestaurantOrder', () => {
 		})
 	})
 
+	it("carries a paid session's PaymentIntent id, never an unpaid one's", () => {
+		expect(
+			mapConnectSessionToRestaurantOrder(
+				stripeSession({
+					status: 'complete',
+					payment_status: 'paid',
+					payment_intent: 'pi_test_123',
+				}),
+			)?.paymentId,
+		).toBe('pi_test_123')
+		expect(
+			mapConnectSessionToRestaurantOrder(
+				stripeSession({
+					status: 'complete',
+					payment_status: 'paid',
+					payment_intent: { id: 'pi_test_456' } as Stripe.PaymentIntent,
+				}),
+			)?.paymentId,
+		).toBe('pi_test_456')
+		expect(
+			mapConnectSessionToRestaurantOrder(
+				stripeSession({ payment_intent: 'pi_test_789' }),
+				{ failed: true },
+			),
+		).not.toHaveProperty('paymentId')
+		expect(
+			mapConnectSessionToRestaurantOrder(
+				stripeSession({
+					status: 'complete',
+					payment_status: 'no_payment_required',
+					payment_intent: null,
+				}),
+			),
+		).not.toHaveProperty('paymentId')
+	})
+
 	it('maps an expired session', () => {
 		expect(
 			mapConnectSessionToRestaurantOrder(stripeSession({ status: 'expired' }))

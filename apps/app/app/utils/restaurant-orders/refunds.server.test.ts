@@ -736,6 +736,47 @@ describe('restaurant order provider refunds on the payment emulators', () => {
 			expect(payment.balances.total_refunded).toBe(3333)
 		})
 
+		it('two approved payments on one reference: the stored payment id picks the right one', async () => {
+			const org = await createOrg('ksa', 'checkout')
+			const orderId = `ord_${Math.random().toString(36).slice(2, 10)}`
+			const first = await paidOrder(org, 'checkout', { orderId })
+			const second = await paidOrder(org, 'checkout', { orderId })
+			expect(second.paymentId).not.toBe(first.paymentId)
+			const template = fake.refunds.get(`template_${orderId}`)!
+			const refundsOf = async (paymentId: string) =>
+				(
+					await getShopCommerce().listReservationCheckoutPaymentActions(
+						paymentId,
+					)
+				).filter((action) => action.type === 'Refund')
+
+			// Without the payment id the reference names two payments: nothing is
+			// refunded, the refund fails and its amount is free again.
+			const blind = await book(orderId, { full: true })
+			expect(
+				await executeRestaurantOrderRefund({
+					orgId: org.id,
+					refundId: blind.refundId,
+				}),
+			).toMatchObject({ status: 'failed', failureCode: 'payment_not_found' })
+			expect(await refundsOf(first.paymentId)).toHaveLength(0)
+			expect(await refundsOf(second.paymentId)).toHaveLength(0)
+
+			// With the id the region stored from the paid event, exactly that
+			// payment is refunded.
+			template.paymentId = first.paymentId
+			const named = await book(orderId, { full: true })
+			expect(named.paymentId).toBe(first.paymentId)
+			expect(
+				await executeRestaurantOrderRefund({
+					orgId: org.id,
+					refundId: named.refundId,
+				}),
+			).toMatchObject({ status: 'pending' })
+			expect(await refundsOf(first.paymentId)).toHaveLength(1)
+			expect(await refundsOf(second.paymentId)).toHaveLength(0)
+		})
+
 		it('a declined refund is reported failed by the webhook', async () => {
 			const org = await createOrg('ksa', 'checkout')
 			const order = await paidOrder(org, 'checkout')

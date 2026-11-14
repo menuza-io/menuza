@@ -1,6 +1,9 @@
 import { msg, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import { ORDER_CANCEL_REASONS } from '@repo/common/restaurant-orders'
+import {
+	ORDER_CANCEL_REASONS,
+	type OrderRejectReason,
+} from '@repo/common/restaurant-orders'
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -32,8 +35,10 @@ import { Link } from 'react-router'
 import { SelectField } from '#app/components/staff/controls.tsx'
 import { OperatorRequestError } from '#app/hooks/use-operator-client.ts'
 import { useSettledFocus } from '#app/hooks/use-settled-focus.ts'
+import { isRejectedOrder } from '#app/utils/orders/acceptance.ts'
 import {
 	CLOSED_ORDER_STATUSES,
+	WAITING_ORDER_STATUS,
 	formatDateTime,
 	appliedDiscounts,
 	formatMoney,
@@ -54,6 +59,7 @@ import {
 	relativeTime,
 } from '#app/utils/orders/order-model.ts'
 import { customersHref } from '#app/utils/people/customers-link.ts'
+import { AcceptanceCountdown, RejectOrderDialog } from './acceptance.tsx'
 import { OrderStatusLabel, PaymentStatusLabel } from './order-status.tsx'
 import {
 	ProviderRefundDialog,
@@ -163,6 +169,8 @@ export function OrderDetail({
 	busy,
 	notice,
 	onUpdate,
+	onAccept,
+	onReject,
 	onRecordRefund,
 	onReload,
 	onPushBack,
@@ -178,6 +186,10 @@ export function OrderDetail({
 	/** The answer to the last action (for example the refund of a cancel). */
 	notice?: string | null
 	onUpdate: (status: string, markPaid: boolean, cancel?: CancelOptions) => void
+	/** Accepts a waiting order (manual acceptance). */
+	onAccept?: () => void
+	/** Rejects a waiting order with a reason; a paid online order is refunded. */
+	onReject?: (reason: OrderRejectReason) => void
 	/** Records money returned at the counter (pay at handoff orders only). */
 	onRecordRefund?: (
 		body: OrderRefundBody,
@@ -193,6 +205,7 @@ export function OrderDetail({
 	const locale = i18n.locale
 	const [markPaid, setMarkPaid] = useState(false)
 	const [cancelOpen, setCancelOpen] = useState(false)
+	const [rejectOpen, setRejectOpen] = useState(false)
 	const [refundOpen, setRefundOpen] = useState(false)
 	const [providerRefundOpen, setProviderRefundOpen] = useState(false)
 	const [refundNotice, setRefundNotice] = useState<string | null>(null)
@@ -209,6 +222,13 @@ export function OrderDetail({
 	const orderNumber = order.number
 	const next = nextOrderStatus(order.status)
 	const closed = CLOSED_ORDER_STATUSES.includes(order.status)
+	const waiting = order.status === WAITING_ORDER_STATUS
+	const rejected = isRejectedOrder(order)
+	const rejectedReasonLabel = rejected
+		? CANCEL_REASON_LABELS[
+				order.rejectedReason || order.cancelReason || 'other'
+			]
+		: undefined
 	const paid = order.paymentStatus === 'paid'
 	const paymentNotRequired = isPaymentNotRequired(order)
 	const discounts = appliedDiscounts(order)
@@ -499,8 +519,22 @@ export function OrderDetail({
 								/>
 							</dd>
 						</div>
-						{order.status === 'cancelled' &&
-						(cancelledByLabel || cancelReasonLabel) ? (
+						{rejected && rejectedReasonLabel ? (
+							<div className="flex flex-col gap-1">
+								<dt className="text-muted-foreground text-xs">
+									<Trans>Cancelled</Trans>
+								</dt>
+								<dd data-testid="order-cancel-info">
+									{order.cancelReason === 'not_accepted_in_time'
+										? _(msg`Not accepted in time`)
+										: (() => {
+												const reason = _(rejectedReasonLabel)
+												return _(msg`Rejected: ${reason}`)
+											})()}
+								</dd>
+							</div>
+						) : order.status === 'cancelled' &&
+						  (cancelledByLabel || cancelReasonLabel) ? (
 							<div className="flex flex-col gap-1">
 								<dt className="text-muted-foreground text-xs">
 									<Trans>Cancelled</Trans>
@@ -535,6 +569,45 @@ export function OrderDetail({
 					</p>
 				) : null}
 			</header>
+
+			{waiting ? (
+				<section
+					className="border-warning/50 bg-warning/5 flex flex-wrap items-center justify-between gap-3 rounded-lg border p-4"
+					aria-label={_(msg`Waiting for you`)}
+					data-testid="order-acceptance-banner"
+				>
+					<div className="flex flex-col gap-0.5">
+						<p className="text-sm font-medium">
+							<Trans>This order is waiting for you to accept it.</Trans>
+						</p>
+						<AcceptanceCountdown
+							deadline={order.acceptanceDeadlineAt}
+							className="text-warning text-sm tabular-nums"
+						/>
+					</div>
+					{canWrite ? (
+						<div className="flex items-center gap-2">
+							<Button
+								type="button"
+								variant="outline"
+								disabled={busy || !onReject}
+								data-testid="order-reject"
+								onClick={() => setRejectOpen(true)}
+							>
+								<Trans>Reject</Trans>
+							</Button>
+							<Button
+								type="button"
+								disabled={busy || !onAccept}
+								data-testid="order-accept"
+								onClick={() => onAccept?.()}
+							>
+								<Trans>Accept</Trans>
+							</Button>
+						</div>
+					) : null}
+				</section>
+			) : null}
 
 			<div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
 				<Card className="lg:col-start-2 lg:row-start-1">
@@ -1087,7 +1160,7 @@ export function OrderDetail({
 				</Card>
 			</div>
 
-			{canWrite && !closed ? (
+			{canWrite && !closed && !waiting ? (
 				<footer
 					className="bg-background/95 border-input sticky bottom-0 z-10 flex flex-col gap-3 border-t border-dashed py-3 backdrop-blur-sm"
 					data-testid="order-actions"
@@ -1132,6 +1205,17 @@ export function OrderDetail({
 						) : null}
 					</div>
 				</footer>
+			) : null}
+
+			{waiting && canWrite ? (
+				<RejectOrderDialog
+					open={rejectOpen}
+					onOpenChange={setRejectOpen}
+					orderNumber={orderNumber}
+					refundsGuest={paidOnline}
+					busy={busy}
+					onConfirm={(reason) => onReject?.(reason)}
+				/>
 			) : null}
 
 			<AlertDialog open={cancelOpen} onOpenChange={setCancelOpen}>

@@ -97,6 +97,18 @@ const refundIdSchema = z.string().min(1).max(100)
 const providerIdSchema = z.string().min(1).max(200)
 const amountCentsSchema = z.number().int().min(1).max(100_000_000)
 
+/** Most locations one refund request may be limited to. */
+export const ORDER_REFUND_MAX_LOCATION_IDS = 200
+
+/**
+ * The locations a member limited to some locations may refund in (their
+ * `UserOrganizationLocation` ids). Opaque ids, bounded; the region never
+ * echoes them.
+ */
+export const orderRefundLocationIdsSchema = z
+	.array(z.string().regex(/^[A-Za-z0-9_-]{1,64}$/))
+	.max(ORDER_REFUND_MAX_LOCATION_IDS)
+
 /**
  * Body of the App's operator action `POST /:orgSlug/orders/:orderId/refund`
  * (a provider refund): an amount, or `full` for everything still refundable,
@@ -146,6 +158,13 @@ export const orderRefundIntentRequestSchema = z
 		note: refundNoteSchema,
 		idempotencyKey: refundIdempotencyKeySchema,
 		actor: orderRefundActorSchema,
+		/**
+		 * A member limited to some locations: the region answers the uniform
+		 * 404 for an order (or tab) at any other location, and confirms the
+		 * check with `locationScoped: true`. Null or absent: every location.
+		 * An empty list reaches nothing.
+		 */
+		locationIds: orderRefundLocationIdsSchema.nullable().optional(),
 	})
 	.refine(
 		(body) => (body.amountCents === undefined) !== (body.full === undefined),
@@ -197,6 +216,13 @@ export type OrderProviderRefund = z.infer<typeof orderProviderRefundSchema>
 export const orderRefundIntentResponseSchema = orderProviderRefundSchema.extend(
 	{
 		replayed: z.boolean(),
+		/**
+		 * True when the request carried `locationIds` and the region checked
+		 * the order's location against them. A region that predates the field
+		 * leaves it out, so a caller that sent `locationIds` must refuse an
+		 * answer without it (the scope was not enforced).
+		 */
+		locationScoped: z.boolean().optional(),
 	},
 )
 export type OrderRefundIntentResponse = z.infer<

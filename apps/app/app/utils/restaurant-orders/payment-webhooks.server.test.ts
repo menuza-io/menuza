@@ -103,6 +103,21 @@ describe('restaurant order webhook dispatch', () => {
 		})
 	})
 
+	it('forwards the paid session’s PaymentIntent id for the region to keep', async () => {
+		await handleRestaurantOrderStripeSessionEvent(
+			stripeSession({ payment_intent: 'pi_1' }) as never,
+			'checkout.session.completed',
+		)
+		expect(notify).toHaveBeenCalledWith(
+			expect.objectContaining({
+				orderId: 'ord_1',
+				sessionId: 'cs_1',
+				status: 'paid',
+				paymentId: 'pi_1',
+			}),
+		)
+	})
+
 	it('maps async failures as failed', async () => {
 		await handleRestaurantOrderStripeSessionEvent(
 			stripeSession({ status: 'open', payment_status: 'unpaid' }) as never,

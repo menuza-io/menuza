@@ -9,6 +9,7 @@
 
 import { parseTabOrderRef } from '@repo/common/qr-ordering'
 import {
+	ORDER_REFUND_MAX_LOCATION_IDS,
 	type OrderDisputeStatusRequest,
 	orderDisputeStatusRequestSchema,
 	type OrderProviderRefund,
@@ -287,24 +288,49 @@ export async function notifyRestaurantOrderPaymentStatus(options: {
 	currency: string
 	paymentId?: string
 }): Promise<void> {
-	await callRegionalOrderCommand({
-		dataRegion: options.dataRegion,
-		path: '/api/orders/payment-status',
-		body: {
-			orgId: options.orgId,
-			orderId: options.orderId,
-			sessionId: options.sessionId,
-			processor: options.processor,
-			status: options.status,
-			amountCents: options.amountCents,
-			currency: options.currency,
-			// Only QR tabs use it, and a region that predates the field refuses
-			// unknown keys: pickup and delivery events never carry it.
-			...(options.paymentId && parseTabOrderRef(options.orderId)
-				? { paymentId: options.paymentId }
-				: {}),
-		},
-	})
+	const isTab = parseTabOrderRef(options.orderId) !== null
+	// The payment's own id (`pi_…`, `pay_…`): the region stores it on the
+	// order so a refund names the exact payment. A QR tab keys each payment by
+	// it, which only Checkout.com needs (a Stripe session is one payment, and
+	// the tab's refund and dispute paths read its session id).
+	const paymentId =
+		options.paymentId && (!isTab || options.processor === 'checkout')
+			? options.paymentId
+			: undefined
+	const body = {
+		orgId: options.orgId,
+		orderId: options.orderId,
+		sessionId: options.sessionId,
+		processor: options.processor,
+		status: options.status,
+		amountCents: options.amountCents,
+		currency: options.currency,
+	}
+	try {
+		await callRegionalOrderCommand({
+			dataRegion: options.dataRegion,
+			path: '/api/orders/payment-status',
+			body: paymentId ? { ...body, paymentId } : body,
+		})
+	} catch (error) {
+		// A region that predates `paymentId` refuses unknown keys (400). The
+		// payment itself must still count there: send it again without the id,
+		// which is only a refund convenience. Tabs always needed the field.
+		if (
+			paymentId &&
+			!isTab &&
+			error instanceof RegionalOrderApiError &&
+			error.httpStatus === 400
+		) {
+			await callRegionalOrderCommand({
+				dataRegion: options.dataRegion,
+				path: '/api/orders/payment-status',
+				body,
+			})
+			return
+		}
+		throw error
+	}
 }
 
 /* ------------------------------------------------------------------ */
@@ -336,12 +362,37 @@ export async function requestRestaurantOrderRefundIntent(
 	options: { dataRegion: string | null | undefined } & OrderRefundIntentRequest,
 ): Promise<OrderRefundIntentResponse> {
 	const { dataRegion, ...request } = options
+	// A member limited to some locations: the region must check the order's
+	// location itself (the App cannot see it). Anything short of the region
+	// confirming that check is `location_scope_unsupported` (403), never a
+	// refund made on trust.
+	const scoped = request.locationIds != null
+	if (
+		scoped &&
+		(request.locationIds?.length ?? 0) > ORDER_REFUND_MAX_LOCATION_IDS
+	) {
+		throw locationScopeUnsupported()
+	}
 	const body = outgoing(orderRefundIntentRequestSchema, request)
-	const raw = await callRegionalOrderCommand({
-		dataRegion,
-		path: '/api/orders/refund-intent',
-		body,
-	})
+	let raw: unknown
+	try {
+		raw = await callRegionalOrderCommand({
+			dataRegion,
+			path: '/api/orders/refund-intent',
+			body,
+		})
+	} catch (error) {
+		// A region that predates `locationIds` refuses the unknown key (strict
+		// body, 400): it cannot enforce the scope, so nothing was booked.
+		if (
+			scoped &&
+			error instanceof RegionalOrderApiError &&
+			error.httpStatus === 400
+		) {
+			throw locationScopeUnsupported()
+		}
+		throw error
+	}
 	const parsed = orderRefundIntentResponseSchema.safeParse(raw)
 	if (!parsed.success) {
 		throw new RegionalOrderApiError('invalid_refund_response', 502)
@@ -349,7 +400,41 @@ export async function requestRestaurantOrderRefundIntent(
 	if (parsed.data.orderId !== request.orderId) {
 		throw new RegionalOrderApiError('org_mismatch', 502)
 	}
+	if (scoped && parsed.data.locationScoped !== true) {
+		// Booked without the location check (a region that ignores the field).
+		// Release a refund this call just booked and never sent, so neither
+		// this action nor the reconcile job executes it; anything older is left
+		// to finish as it was.
+		const intent = parsed.data
+		if (
+			intent.status === 'pending' &&
+			!intent.replayed &&
+			intent.providerRefundId === null
+		) {
+			await reportRestaurantOrderRefundStatus({
+				dataRegion,
+				orgId: request.orgId,
+				orderId: intent.orderId,
+				refundId: intent.refundId,
+				processor: intent.processor,
+				status: 'failed',
+				failureCode: 'location_scope_unsupported',
+				amountCents: intent.amountCents,
+				currency: intent.currency,
+			}).catch((error: unknown) => {
+				console.error(
+					`Could not release unscoped refund ${intent.refundId}:`,
+					error instanceof RegionalOrderApiError ? error.code : 'unknown',
+				)
+			})
+		}
+		throw locationScopeUnsupported()
+	}
 	return parsed.data
+}
+
+function locationScopeUnsupported() {
+	return new RegionalOrderApiError('location_scope_unsupported', 403)
 }
 
 /**

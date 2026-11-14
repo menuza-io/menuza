@@ -1782,6 +1782,26 @@ export type PaymentEventResult = {
 	paymentStatus: string
 }
 
+/**
+ * The payment id to keep on an order: the stored one when there is one (a
+ * different id in a later event is logged by order id and ignored), else the
+ * event's, else none.
+ */
+function keepFirstPaymentId(
+	orderId: string,
+	stored: string | null,
+	incoming: string | undefined,
+): string | null {
+	if (!incoming) return stored
+	if (stored && stored !== incoming) {
+		console.warn(
+			`Payment event for order ${orderId} names another payment id; the stored one is kept`,
+		)
+		return stored
+	}
+	return stored ?? incoming
+}
+
 export async function applyPaymentEvent(input: {
 	orgId: string
 	orderId: string
@@ -1883,9 +1903,25 @@ export async function applyPaymentEvent(input: {
 						paymentStatus: order.paymentStatus,
 					}
 
+					// The provider's payment id is written once: a replay may fill
+					// it in (an order paid before the field was sent), but a
+					// different id never replaces the one that paid the order.
+					const storedPaymentId = keepFirstPaymentId(
+						order.id,
+						order.paymentId,
+						status === 'paid' ? input.paymentId : undefined,
+					)
+
 					if (status === 'paid') {
-						if (order.paymentStatus === 'paid')
+						if (order.paymentStatus === 'paid') {
+							if (storedPaymentId !== order.paymentId) {
+								await tx
+									.update(restaurantOrders)
+									.set({ paymentId: storedPaymentId })
+									.where(eq(restaurantOrders.id, order.id))
+							}
 							return { ok: true, data: idempotent }
+						}
 						const lateArrival =
 							order.status === 'expired' || order.status === 'cancelled'
 						if (
@@ -1905,7 +1941,7 @@ export async function applyPaymentEvent(input: {
 									paymentStatus: 'paid',
 									paidAt: now,
 									paymentEventAt: now,
-									paymentId: input.paymentId ?? order.paymentId,
+									paymentId: storedPaymentId,
 									...(waits
 										? {
 												acceptanceDeadlineAt: paidAcceptanceDeadline(
@@ -1968,7 +2004,7 @@ export async function applyPaymentEvent(input: {
 									paymentStatus: 'paid',
 									paidAt: now,
 									paymentEventAt: now,
-									paymentId: input.paymentId ?? order.paymentId,
+									paymentId: storedPaymentId,
 									// An operator decides a late payment from review: it
 									// never also waits for acceptance.
 									acceptanceDeadlineAt: null,

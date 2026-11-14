@@ -316,7 +316,10 @@ async function systemRequest<T extends { orgId: string }>(
  * Books a `pending` provider refund of a paid online order (or of one online
  * payment of a QR tab: `orderId = 'tab:<id>'`, `tabPaymentId` for a payment
  * kept for review). Answers the refund (`orderRefundIntentResponseSchema`),
- * 201 when new and 200 for a replay of the same key and body.
+ * 201 when new and 200 for a replay of the same key and body. With
+ * `locationIds` (a member limited to some locations) an order or tab at any
+ * other location is the uniform 404, and the answer carries
+ * `locationScoped: true`.
  */
 orderSystemRoutes.post('/refund-intent', async (c) => {
 	const request = await systemRequest(
@@ -339,10 +342,18 @@ orderSystemRoutes.post('/refund-intent', async (c) => {
 			idempotencyKey: body.idempotencyKey,
 			origin: body.actor.origin,
 			actorId: body.actor.actorId ?? body.actor.origin,
+			locationIds: body.locationIds ?? null,
 		})
 		if (!result.ok) return failureResponse(c, result.failure)
 		return c.json(
-			{ ...result.data.refund, replayed: result.data.replayed },
+			{
+				...result.data.refund,
+				replayed: result.data.replayed,
+				// Tells the App the location limit was checked here: a region
+				// that predates `locationIds` never says so, and the App then
+				// refuses to refund for a member limited to some locations.
+				...(body.locationIds != null ? { locationScoped: true } : {}),
+			},
 			result.data.replayed ? 200 : 201,
 		)
 	} catch (error) {

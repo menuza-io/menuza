@@ -36,6 +36,11 @@ function regionalRefusal(error: RegionalOrderApiError): Response {
 		return refuse(503, 'regional_unavailable', { retryable: true })
 	}
 	if (error.httpStatus === 404) return refuse(404, 'order_not_found')
+	// The region could not check a location-limited member's scope (an older
+	// region): nothing was refunded.
+	if (error.code === 'location_scope_unsupported') {
+		return refuse(403, 'location_scope_unsupported')
+	}
 	if (PASS_THROUGH_CODES.has(error.code)) {
 		const status = error.httpStatus >= 400 && error.httpStatus < 500
 		return refuse(status ? error.httpStatus : 409, error.code, {
@@ -76,12 +81,14 @@ function view(intent: OrderRefundIntentResponse): RefundView {
  *
  * Checks, in this order, before anything reaches the region or a provider:
  * signed in (401), member of the organization (404), `update:order_refund:any`
- * (403), not impersonating (403 `impersonation_forbidden`), not limited to
- * some locations (403 `location_scope_unsupported`: the region cannot check an
- * order's location on this path yet, so a member limited to some locations is
- * refused rather than trusted), an `Idempotency-Key` header (400
- * `idempotency_key_required`) and the body (400 `invalid_request`, never
- * echoing what was sent).
+ * (403), not impersonating (403 `impersonation_forbidden`), an
+ * `Idempotency-Key` header (400 `idempotency_key_required`) and the body (400
+ * `invalid_request`, never echoing what was sent).
+ *
+ * A member limited to some locations sends their location ids with the
+ * intent: the region answers the uniform 404 for an order elsewhere and
+ * confirms the check (`locationScoped`). A region that cannot confirm it (an
+ * older one) gets 403 `location_scope_unsupported` and nothing is refunded.
  *
  * Then: the region books the refund (`pending`), the App refunds at the
  * provider with the refund's own key, and reports the answer. A replayed key
@@ -107,10 +114,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	if (await isImpersonating(request)) {
 		return refuse(403, 'impersonation_forbidden')
 	}
+	// Null: every location. A list (possibly empty) limits the refund to
+	// orders at those locations; the region enforces it.
 	const locationIds = await resolveLoyaltyLocationIds(userId, organizationId)
-	if (locationIds !== null) {
-		return refuse(403, 'location_scope_unsupported')
-	}
 
 	const key = refundIdempotencyKeySchema.safeParse(
 		request.headers.get('Idempotency-Key') ?? undefined,
@@ -138,6 +144,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			note: body.data.note,
 			idempotencyKey: key.data,
 			actor: { origin: 'operator', actorId: userId },
+			...(locationIds !== null ? { locationIds } : {}),
 		})
 	try {
 		intent = await book()

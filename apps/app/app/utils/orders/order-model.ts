@@ -67,6 +67,11 @@ export const orderSchema = z.object({
 	/** Why the order was cancelled (an internal value) and by whom. */
 	cancelReason: z.string().nullable().optional().catch(undefined),
 	cancelledBy: z.string().nullable().optional().catch(undefined),
+	/** Manual acceptance (#107): when a waiting order is turned down by itself. */
+	acceptanceDeadlineAt: z.string().nullable().optional().catch(undefined),
+	acceptedAt: z.string().nullable().optional().catch(undefined),
+	/** Set when the order was turned down while it waited (or timed out). */
+	rejectedReason: z.string().nullable().optional().catch(undefined),
 	currency: z.string(),
 	createdAt: z.string().nullable(),
 	paidAt: z.string().nullable().optional(),
@@ -287,6 +292,9 @@ export const PUSH_BACK_MINUTES = [5, 10, 15] as const
 export type PushBackMinutes = (typeof PUSH_BACK_MINUTES)[number]
 /** Statuses where the promised time can still move. */
 export const PUSHABLE_ORDER_STATUSES = ['accepted', 'preparing', 'ready']
+
+/** An order placed under manual acceptance that nobody has decided yet. */
+export const WAITING_ORDER_STATUS = 'pending_acceptance'
 
 export const CLOSED_ORDER_STATUSES = ['completed', 'cancelled', 'expired']
 

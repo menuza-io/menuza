@@ -10,6 +10,7 @@ import {
 import { act, createElement as h } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { OrdersError } from './api.ts'
 import { createDemoOrders } from './demo.ts'
 import { Orders } from './Orders.tsx'
 import { useOrders } from './useOrders.ts'
@@ -388,5 +389,112 @@ describe('Station online orders screen', () => {
 		expect((button('Hand over') as HTMLButtonElement).disabled).toBe(true)
 		expect(document.body.textContent).toContain('Updates are paused')
 		expect(document.body.textContent).toContain('Connection lost')
+	})
+
+	describe('acceptance', () => {
+		const pending = (values: Partial<PosOnlineOrderSummary> = {}) =>
+			summary({
+				id: 'p1',
+				number: 'W-7',
+				status: 'pending_acceptance',
+				openedAt: null,
+				paymentMethod: 'online',
+				paymentStatus: 'paid',
+				acceptanceDeadlineAt: NOW + 192_000,
+				...values,
+			})
+
+		it('puts a waiting order first with its countdown and alerts for it', () => {
+			draw({}, [summary({ id: 'o2', number: 'W-2' }), pending()])
+			const cards = [...document.querySelectorAll('article')].map((a) =>
+				a.getAttribute('aria-label'),
+			)
+			expect(cards[0]).toBe('Order W-7')
+			const card = document.querySelector('article[aria-label="Order W-7"]')!
+			expect(card.textContent).toContain('Accept within 3:12')
+			expect(card.textContent).toContain('Waiting for you')
+			expect(card.textContent).not.toContain('Late')
+			expect(
+				document.querySelector('[aria-label="Orders waiting for you"]')
+					?.textContent,
+			).toContain('W-7')
+			expect(buttons()).toContain('Waiting for you 1')
+		})
+
+		it('says the time is up once the deadline has passed but keeps Accept', () => {
+			draw(
+				{
+					selected: 'p1',
+					grants: MANAGER,
+					detail: detailOf({
+						...pending({ acceptanceDeadlineAt: NOW - 1_000 }),
+					}),
+				},
+				[pending({ acceptanceDeadlineAt: NOW - 1_000 })],
+				MANAGER,
+			)
+			expect(document.body.textContent).toContain('Time is up')
+			expect(buttons()).toEqual(
+				expect.arrayContaining(['Accept order', 'Reject']),
+			)
+			expect(buttons()).not.toContain('Hand over')
+			expect(buttons()).not.toContain('Cancel order')
+		})
+
+		it('sends accept with the order version, and gates Reject by the cancel grant', () => {
+			draw(
+				{
+					selected: 'p1',
+					detail: detailOf({ ...pending(), version: 'b'.repeat(64) }),
+				},
+				[pending()],
+			)
+			expect(buttons()).toContain('Accept order')
+			expect(buttons()).not.toContain('Reject')
+			act(() => button('Accept order').click())
+			expect(command).toHaveBeenCalledWith({
+				action: 'accept',
+				expectedVersion: 'b'.repeat(64),
+			})
+		})
+
+		it('rejects with a reason and tells a paid order is refunded in full', () => {
+			draw(
+				{
+					selected: 'p1',
+					grants: MANAGER,
+					detail: detailOf({ ...pending(), version: 'b'.repeat(64) }),
+				},
+				[pending()],
+				MANAGER,
+			)
+			act(() => button('Reject').click())
+			expect(document.body.textContent).toContain('refunded in full')
+			expect(document.body.textContent).toContain('out of stock')
+			act(() => button('Kitchen closed').click())
+			act(() => button('Reject order').click())
+			expect(command).toHaveBeenCalledWith({
+				action: 'reject',
+				expectedVersion: 'b'.repeat(64),
+				reason: 'kitchen_closed',
+			})
+		})
+
+		it('shows the reason on a rejected order and says someone else decided', () => {
+			draw({
+				selected: 'p1',
+				actionError: new OrdersError('order_not_pending', 409),
+				detail: detailOf({
+					...pending(),
+					status: 'cancelled',
+					cancelledAt: NOW,
+					rejectedReason: 'out_of_stock',
+				}),
+			})
+			expect(document.body.textContent).toContain('Rejected: Out of stock')
+			expect(document.body.textContent).toContain(
+				'Someone else already decided on this order',
+			)
+		})
 	})
 })

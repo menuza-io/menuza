@@ -194,4 +194,65 @@ describe('demo online orders', () => {
 		})
 		expect(back.heldByStock).toEqual([])
 	})
+
+	describe('acceptance', () => {
+		it('starts with an order that waits, and accepting moves it on', async () => {
+			const demo = createDemoOrders()
+			const feed = await demo.feed()
+			const waiting = feed.orders.find(
+				(o) => o.status === 'pending_acceptance',
+			)!
+			expect(waiting.acceptanceDeadlineAt).toBeGreaterThan(Date.now())
+			const { order } = await demo.detail(waiting.id)
+			await expect(
+				demo.command(order.id, {
+					action: 'accept',
+					expectedVersion: 'f'.repeat(64),
+				}),
+			).rejects.toMatchObject({ code: 'stale_version' })
+			const accepted = await demo.command(order.id, {
+				action: 'accept',
+				expectedVersion: order.version,
+			})
+			expect(accepted.order.status).toBe('accepted')
+			expect(accepted.order.history[0]!.action).toBe('accepted')
+			await expect(
+				demo.command(order.id, {
+					action: 'accept',
+					expectedVersion: accepted.order.version,
+				}),
+			).rejects.toMatchObject({ code: 'order_not_pending' })
+		})
+
+		it('rejecting records the reason and refunds a paid online order in full', async () => {
+			const demo = createDemoOrders()
+			const { order } = await demo.detail('demo-1043')
+			const rejected = await demo.command(order.id, {
+				action: 'reject',
+				expectedVersion: order.version,
+				reason: 'out_of_stock',
+			})
+			expect(rejected.order).toMatchObject({
+				status: 'cancelled',
+				rejectedReason: 'out_of_stock',
+			})
+			expect(rejected.refundOutcome).toEqual({ started: true, code: null })
+			expect(rejected.order.refunds[0]).toMatchObject({
+				amountCents: order.totalCents,
+				status: 'pending',
+			})
+			expect(rejected.order.history.map((h) => h.action)).toContain('rejected')
+		})
+
+		it('turns an order down once its deadline has passed', async () => {
+			vi.useFakeTimers()
+			const demo = createDemoOrders()
+			vi.advanceTimersByTime(10 * 60_000)
+			const { order } = await demo.detail('demo-1043')
+			expect(order).toMatchObject({
+				status: 'cancelled',
+				rejectedReason: 'not_accepted_in_time',
+			})
+		})
+	})
 })

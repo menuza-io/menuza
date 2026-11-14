@@ -58,6 +58,8 @@ vi.mock(
 )
 
 const { action } = await import('./orders_.$orderId_.refund.ts')
+const { RegionalOrderApiError } =
+	await import('#app/utils/restaurant-orders/regional-order-api.server.ts')
 
 const INTENT = {
 	refundId: 'rf_1',
@@ -202,14 +204,48 @@ describe('POST /:orgSlug/orders/:orderId/refund guards', () => {
 		expect(mocks.intent).not.toHaveBeenCalled()
 	})
 
-	it('refuses a member limited to some locations (the region cannot check the order’s location here)', async () => {
+	it('sends a location-limited member’s location ids for the region to enforce', async () => {
+		mocks.locations.mockResolvedValue(['loc_a', 'loc_b'])
+		const response = await post(VALID)
+		expect(response.status).toBe(200)
+		expect(mocks.intent).toHaveBeenCalledWith(
+			expect.objectContaining({
+				orgId: 'org_1',
+				orderId: 'ord_1',
+				locationIds: ['loc_a', 'loc_b'],
+			}),
+		)
+		expect(mocks.execute).toHaveBeenCalled()
+	})
+
+	it('leaves the location ids out for a member who reaches every location', async () => {
+		await post(VALID)
+		expect(mocks.intent.mock.calls[0]![0]).not.toHaveProperty('locationIds')
+	})
+
+	it('sends an empty scope as is (the region reaches nothing with it)', async () => {
+		mocks.locations.mockResolvedValue([])
+		mocks.intent.mockRejectedValue(
+			new RegionalOrderApiError('order_not_found', 404),
+		)
+		const response = await outcome(post(VALID))
+		expect(mocks.intent.mock.calls[0]![0]).toMatchObject({ locationIds: [] })
+		expect(response.status).toBe(404)
+		expect(await response.json()).toEqual({ error: 'order_not_found' })
+		expect(mocks.execute).not.toHaveBeenCalled()
+	})
+
+	it('refuses with 403 when the region cannot confirm the location check', async () => {
 		mocks.locations.mockResolvedValue(['loc_a'])
+		mocks.intent.mockRejectedValue(
+			new RegionalOrderApiError('location_scope_unsupported', 403),
+		)
 		const response = await outcome(post(VALID))
 		expect(response.status).toBe(403)
 		expect(await response.json()).toEqual({
 			error: 'location_scope_unsupported',
 		})
-		expect(mocks.intent).not.toHaveBeenCalled()
+		expect(mocks.execute).not.toHaveBeenCalled()
 	})
 
 	it('needs an Idempotency-Key header', async () => {

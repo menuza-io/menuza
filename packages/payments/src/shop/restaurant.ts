@@ -55,7 +55,8 @@ export type RestaurantOrderPaymentEvent = {
 	/** Lowercase ISO currency code, e.g. 'usd', 'cad', 'sar'. */
 	currency: string
 	/**
-	 * The provider's id for this one payment. Checkout.com binds the order
+	 * The provider's id for this one payment: Checkout.com `pay_…`, Stripe
+	 * PaymentIntent `pi_…` (paid sessions only). Checkout.com binds the order
 	 * reference as its session, so two payments on one order share it: this
 	 * tells them apart (Stripe sessions are already one payment each).
 	 */
@@ -142,6 +143,13 @@ export function mapConnectSessionToRestaurantOrder(
 					? 'expired'
 					: 'pending'
 
+	// The PaymentIntent that took the money (a destination charge on the
+	// platform), so a refund can name it without reading the session back.
+	const paymentIntent =
+		typeof session.payment_intent === 'string'
+			? session.payment_intent
+			: (session.payment_intent?.id ?? null)
+
 	return {
 		orgId,
 		orderId,
@@ -150,6 +158,9 @@ export function mapConnectSessionToRestaurantOrder(
 		status,
 		amountCents: session.amount_total,
 		currency: (session.currency || 'usd').toLowerCase(),
+		...(status === 'paid' && paymentIntent?.startsWith('pi_')
+			? { paymentId: paymentIntent }
+			: {}),
 	}
 }
 

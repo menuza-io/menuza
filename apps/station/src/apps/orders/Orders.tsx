@@ -13,6 +13,7 @@ import {
 	type PosOnlineOrdersSearchState,
 	POS_ONLINE_ORDER_CANCEL_REASONS,
 	type PosOnlineOrderCancelReason,
+	type PosOnlineOrderCommand,
 	type PosOnlineOrderDetail,
 	type PosOnlineOrderSummary,
 } from '@repo/common/pos-online-orders'
@@ -30,13 +31,16 @@ import { chime, chimeReady, unlockChime } from '../kitchen/chime.ts'
 import { OrdersError } from './api.ts'
 import { ControlsSheet } from './Controls.tsx'
 import {
+	acceptanceRemainingMs,
 	ALERT_REPEAT_MS,
+	countdownClock,
 	inboxOrders,
 	inboxSection,
 	onlineOrderLate,
 	refundCents,
 	sectionCounts,
 	unopenedOrders,
+	waitingOrders,
 	type OrderFilter,
 } from './model.ts'
 import { useOrders, type OrdersState } from './useOrders.ts'
@@ -65,8 +69,35 @@ const CANCEL_REASON: Record<PosOnlineOrderCancelReason, MessageDescriptor> = {
 	other: msg`Something else`,
 }
 
+type OrderRejectReason = Extract<
+	PosOnlineOrderCommand,
+	{ action: 'reject' }
+>['reason']
+/** The reasons the region accepts when an order is rejected (typed against its contract). */
+const ORDER_REJECT_REASONS = [
+	'out_of_stock',
+	'kitchen_closed',
+	'too_busy',
+	'other',
+] as const satisfies readonly OrderRejectReason[]
+
+/** What the operator picks when turning an order down, in plain words. */
+const REJECT_REASON: Record<OrderRejectReason, MessageDescriptor> = {
+	out_of_stock: msg`Out of stock`,
+	kitchen_closed: msg`Kitchen closed`,
+	too_busy: msg`Too busy to make it`,
+	other: msg`Something else`,
+}
+/** Reasons an order can carry once turned down, including the system's. */
+const REJECTED_REASON_LABEL: Record<string, MessageDescriptor> = {
+	...REJECT_REASON,
+	not_accepted_in_time: msg`Nobody answered in time`,
+}
+
 const HISTORY: Record<string, MessageDescriptor> = {
 	opened: msg`Opened`,
+	accepted: msg`Accepted`,
+	rejected: msg`Rejected`,
 	ready: msg`Marked ready`,
 	handed_over: msg`Handed over`,
 	paid: msg`Payment taken at handoff`,
@@ -143,13 +174,19 @@ export function Orders({
 		[feed, filter, now],
 	)
 	const counts = useMemo(() => sectionCounts(feed?.orders ?? []), [feed])
+	const waitingCount = counts.waiting
 	const newCount = counts.new
 	const progressCount = counts.in_progress
 	const readyCount = counts.ready
-	const openCount = newCount + progressCount + readyCount
+	const openCount = waitingCount + newCount + progressCount + readyCount
 	const waiting = useMemo(
 		() => (feed ? unopenedOrders(feed.orders, orders.openedHere) : []),
 		[feed, orders.openedHere],
+	)
+	// Orders that need a decision keep the alert ringing until someone accepts or rejects them.
+	const deciding = useMemo(
+		() => (feed ? waitingOrders(feed.orders) : []),
+		[feed],
 	)
 	const [searching, setSearching] = useState(false)
 	const [controlling, setControlling] = useState(false)
@@ -158,7 +195,9 @@ export function Orders({
 
 	// The alert repeats while any new order waits to be opened, on every tablet
 	// here: opening it anywhere silences it everywhere at the next read.
-	const waitingKey = waiting.map((order) => order.id).join(',')
+	const waitingKey = [...waiting, ...deciding]
+		.map((order) => order.id)
+		.join(',')
 	const [soundBlocked, setSoundBlocked] = useState(false)
 	const ringing = waitingKey !== '' && preference.sound
 	// Rings at once only for an order that was not waiting before: one opened
@@ -235,6 +274,14 @@ export function Orders({
 						onChange={(section) => setFilter({ ...filter, section })}
 						options={[
 							{ value: 'all', label: _(t`All open ${openCount}`) },
+							...(waitingCount > 0 || filter.section === 'waiting'
+								? [
+										{
+											value: 'waiting' as const,
+											label: _(t`Waiting for you ${waitingCount}`),
+										},
+									]
+								: []),
 							{ value: 'new', label: _(t`New ${newCount}`) },
 							{
 								value: 'in_progress',
@@ -333,6 +380,45 @@ export function Orders({
 					</IconButton>
 				</div>,
 			)}
+			<Reveal open={deciding.length > 0}>
+				<section
+					aria-label={_(t`Orders waiting for you`)}
+					className="notice-danger flex flex-wrap items-center gap-3 px-5 py-3"
+				>
+					<Icon name="bell-ring" className="size-5 shrink-0" />
+					<p role="alert" className="min-w-0 flex-1 font-semibold">
+						{deciding.length === 1
+							? _(
+									t`Order ${deciding[0]!.number} is waiting for you · accept or reject it`,
+								)
+							: _(
+									t`${deciding.length} orders are waiting for you · accept or reject each one`,
+								)}
+					</p>
+					{soundBlocked && preference.sound ? (
+						<Button
+							variant="outline"
+							onClick={() => {
+								unlockChime()
+								chime()
+								setSoundBlocked(!chimeReady())
+							}}
+						>
+							<Icon name="bell-ring" className="size-4" />
+							<Trans>Turn on sound</Trans>
+						</Button>
+					) : null}
+					{deciding.slice(0, 3).map((order) => (
+						<Button
+							key={order.id}
+							variant="primary"
+							onClick={() => void orders.open(order.id)}
+						>
+							<Trans>Review {order.number}</Trans>
+						</Button>
+					))}
+				</section>
+			</Reveal>
 			<Reveal open={waiting.length > 0}>
 				<section
 					aria-label={_(t`New orders waiting`)}
@@ -512,6 +598,11 @@ function OrderBadges({
 	const late = onlineOrderLate(order, now)
 	return (
 		<div className="flex flex-wrap gap-1.5">
+			{inboxSection(order) === 'waiting' ? (
+				<Badge tone="danger">
+					<Trans>Waiting for you</Trans>
+				</Badge>
+			) : null}
 			{inboxSection(order) === 'new' ? (
 				<Badge tone="danger">
 					<Trans>New</Trans>
@@ -584,11 +675,41 @@ function isPaidOnline(order: PosOnlineOrderSummary): boolean {
 }
 
 const STATUS: Record<PosOnlineOrderSummary['status'], MessageDescriptor> = {
+	pending_acceptance: msg`Waiting for you`,
 	accepted: msg`Accepted`,
 	preparing: msg`Preparing`,
 	ready: msg`Ready`,
 	completed: msg`Handed over`,
 	cancelled: msg`Cancelled`,
+}
+
+/** "Accept within 3:12", then "Time is up" once the deadline has passed. */
+function AcceptanceCountdown({
+	order,
+	now,
+	className,
+}: {
+	order: Pick<PosOnlineOrderSummary, 'acceptanceDeadlineAt'>
+	now: number
+	className?: string
+}) {
+	const { _ } = useLingui()
+	const remaining = acceptanceRemainingMs(order, now)
+	if (remaining === null) return null
+	const over = remaining <= 0
+	return (
+		<span
+			className={cn(
+				'tnum text-sm font-semibold',
+				over ? 'text-destructive' : 'text-foreground',
+				className,
+			)}
+		>
+			{over
+				? _(t`Time is up`)
+				: _(t`Accept within ${countdownClock(remaining)}`)}
+		</span>
+	)
 }
 
 function OrderCard({
@@ -607,13 +728,14 @@ function OrderCard({
 	const { _ } = useLingui()
 	const late = onlineOrderLate(order, now)
 	const isNew = inboxSection(order) === 'new' && !opened
+	const isWaiting = inboxSection(order) === 'waiting'
 	return (
 		<article
 			aria-label={_(t`Order ${order.number}`)}
 			className={cn(
 				'bg-card border-border flex h-full flex-col gap-2 rounded-(--station-control-radius) border p-3',
 				late && 'border-destructive border-2',
-				isNew && 'ring-destructive ring-2',
+				(isNew || isWaiting) && 'ring-destructive ring-2',
 			)}
 		>
 			<div className="flex items-baseline justify-between gap-2">
@@ -623,6 +745,12 @@ function OrderCard({
 				</span>
 			</div>
 			<bdi className="truncate font-medium">{order.guestName}</bdi>
+			{isWaiting ? <AcceptanceCountdown order={order} now={now} /> : null}
+			{order.rejectedReason ? (
+				<span className="text-muted-foreground text-sm">
+					{_(t`Rejected: ${rejectedReasonText(_, order.rejectedReason)}`)}
+				</span>
+			) : null}
 			<OrderBadges order={order} now={now} time={time} />
 			<div className="text-muted-foreground mt-auto flex items-center justify-between text-sm">
 				<span>{_(t`${order.itemCount} items`)}</span>
@@ -630,20 +758,41 @@ function OrderCard({
 					{moneyFormatter(order.currency)(order.totalCents)}
 				</span>
 			</div>
-			<Button variant={isNew ? 'primary' : 'outline'} onClick={onOpen}>
-				<Trans>Open</Trans>
+			<Button
+				variant={isNew || isWaiting ? 'primary' : 'outline'}
+				onClick={onOpen}
+			>
+				{isWaiting ? <Trans>Review</Trans> : <Trans>Open</Trans>}
 			</Button>
 		</article>
 	)
+}
+
+function rejectedReasonText(
+	_: (descriptor: MessageDescriptor) => string,
+	reason: string,
+): string {
+	const label = REJECTED_REASON_LABEL[reason]
+	return label ? _(label) : reason
 }
 
 function actionMessage(
 	_: (descriptor: MessageDescriptor) => string,
 	error: OrdersError,
 	money?: (cents: number) => string,
+	/** The order had been waiting for acceptance and no longer is. */
+	decidedElsewhere = false,
 ): string {
 	switch (error.code) {
+		case 'order_not_pending':
+			return _(
+				msg`Someone else already decided on this order. It was read again.`,
+			)
 		case 'stale_version':
+			if (decidedElsewhere)
+				return _(
+					msg`Someone else already decided on this order. It was read again.`,
+				)
 			return _(
 				msg`This order changed on another screen. Check it, then try again.`,
 			)
@@ -718,6 +867,29 @@ function refundOutcomeMessage(
 	}
 }
 
+function rejectOutcomeMessage(
+	_: (descriptor: MessageDescriptor) => string,
+	outcome: { started: boolean; code: string | null },
+): string {
+	if (outcome.started)
+		return _(
+			msg`The order is rejected and the guest is being refunded in full. The money goes back to their card.`,
+		)
+	switch (outcome.code) {
+		case 'payment_disputed':
+			return _(
+				msg`The order is rejected, but the payment is disputed, so it was not refunded.`,
+			)
+		case 'refund_pending':
+		case 'refund_complete':
+			return _(msg`The order is rejected. It was already refunded.`)
+		default:
+			return _(
+				msg`The order is rejected, but the refund did not start. Open the order and try Refund.`,
+			)
+	}
+}
+
 function OrderSheet({
 	orders,
 	stale,
@@ -741,12 +913,14 @@ function OrderSheet({
 	} = orders
 	const [markPaid, setMarkPaid] = useState(false)
 	const [cancelling, setCancelling] = useState(false)
+	const [rejecting, setRejecting] = useState(false)
 	const [refunding, setRefunding] = useState(false)
 	const [printing, setPrinting] = useState<'guest' | 'kitchen' | null>(null)
 	// Each order starts unticked: payment is confirmed for this order, not the last.
 	useEffect(() => {
 		setMarkPaid(false)
 		setCancelling(false)
+		setRejecting(false)
 		setRefunding(false)
 	}, [selected])
 	const recordReprint = useRef(orders.recordReprint)
@@ -768,6 +942,12 @@ function OrderSheet({
 	const readOnly = detail ? !onlineOrderInInbox(detail, orders.now) : false
 	const locked = busy || stale || !detail
 	const paidOnline = detail ? isPaidOnline(detail) : false
+	const waitingForDecision = detail?.status === 'pending_acceptance'
+	// Waited for a decision once and is not waiting now: another screen decided first.
+	const decidedElsewhere =
+		detail != null &&
+		detail.acceptanceDeadlineAt != null &&
+		detail.status !== 'pending_acceptance'
 	return (
 		<Modal
 			open={selected !== null}
@@ -784,7 +964,7 @@ function OrderSheet({
 					</p>
 				) : detail ? (
 					<div className="flex w-full flex-col gap-3">
-						{needsPayment && !done && grants?.manage ? (
+						{needsPayment && !done && !waitingForDecision && grants?.manage ? (
 							<label className="flex items-center gap-2 text-sm">
 								<Checkbox
 									checked={markPaid}
@@ -794,7 +974,16 @@ function OrderSheet({
 							</label>
 						) : null}
 						<div className="flex flex-wrap items-center gap-2">
-							{!done && grants?.cancel ? (
+							{waitingForDecision && grants?.cancel ? (
+								<Button
+									variant="danger"
+									disabled={locked}
+									onClick={() => setRejecting(true)}
+								>
+									<Trans>Reject</Trans>
+								</Button>
+							) : null}
+							{!done && !waitingForDecision && grants?.cancel ? (
 								<Button
 									variant="danger"
 									disabled={locked}
@@ -804,6 +993,7 @@ function OrderSheet({
 								</Button>
 							) : null}
 							{grants?.refund &&
+							!waitingForDecision &&
 							detail.refundableCents > 0 &&
 							!detail.disputed ? (
 								<Button
@@ -836,7 +1026,22 @@ function OrderSheet({
 								<Trans>Kitchen ticket</Trans>
 							</Button>
 							<span className="me-auto" />
+							{waitingForDecision && grants?.manage ? (
+								<Button
+									variant="primary"
+									disabled={locked}
+									onClick={() =>
+										void orders.command({
+											action: 'accept',
+											expectedVersion: detail.version,
+										})
+									}
+								>
+									<Trans>Accept order</Trans>
+								</Button>
+							) : null}
 							{!done &&
+							!waitingForDecision &&
 							grants?.manage &&
 							(detail.status === 'accepted' ||
 								detail.status === 'preparing') ? (
@@ -853,7 +1058,7 @@ function OrderSheet({
 									<Trans>Mark ready</Trans>
 								</Button>
 							) : null}
-							{!done && grants?.manage ? (
+							{!done && !waitingForDecision && grants?.manage ? (
 								<Button
 									variant="primary"
 									disabled={locked || (needsPayment && !markPaid)}
@@ -876,7 +1081,7 @@ function OrderSheet({
 			<div className="p-4 sm:p-5">
 				{actionError ? (
 					<p role="alert" className="notice-warning mb-3 px-4 py-2 text-sm">
-						{actionMessage(_, actionError, money)}
+						{actionMessage(_, actionError, money, decidedElsewhere)}
 					</p>
 				) : null}
 				{refundOutcome && !actionError ? (
@@ -887,7 +1092,9 @@ function OrderSheet({
 							refundOutcome.started ? 'notice-success' : 'notice-warning',
 						)}
 					>
-						{refundOutcomeMessage(_, refundOutcome)}
+						{detail?.rejectedReason
+							? rejectOutcomeMessage(_, refundOutcome)
+							: refundOutcomeMessage(_, refundOutcome)}
 					</p>
 				) : null}
 				{stale && detail ? (
@@ -916,6 +1123,21 @@ function OrderSheet({
 			</div>
 			{detail ? (
 				<>
+					<RejectDialog
+						open={rejecting}
+						number={detail.number}
+						paidOnline={paidOnline}
+						busy={busy}
+						onClose={() => setRejecting(false)}
+						onConfirm={async (reason) => {
+							const ok = await orders.command({
+								action: 'reject',
+								expectedVersion: detail.version,
+								reason,
+							})
+							if (ok) setRejecting(false)
+						}}
+					/>
 					<CancelDialog
 						open={cancelling}
 						number={detail.number}
@@ -992,6 +1214,39 @@ function OrderDetailBody({
 	const { _ } = useLingui()
 	return (
 		<div className="flex flex-col gap-5">
+			{detail.status === 'pending_acceptance' ? (
+				<section
+					aria-label={_(t`Waiting for you`)}
+					className="notice-danger flex flex-col gap-1 px-4 py-3"
+				>
+					<p className="font-semibold">
+						<Trans>This order is waiting for you</Trans>
+					</p>
+					<AcceptanceCountdown order={detail} now={now} />
+					<p className="text-sm">
+						{acceptanceRemainingMs(detail, now) !== null &&
+						acceptanceRemainingMs(detail, now)! <= 0 ? (
+							<Trans>
+								The time to answer has passed. If nobody accepts it, the order
+								is turned down automatically.
+							</Trans>
+						) : (
+							<Trans>
+								Accept it to send it to the kitchen, or reject it. If nobody
+								answers in time, it is turned down automatically.
+							</Trans>
+						)}
+					</p>
+				</section>
+			) : null}
+			{detail.rejectedReason ? (
+				<p
+					role="status"
+					className="notice-warning px-4 py-2 text-sm font-semibold"
+				>
+					{_(t`Rejected: ${rejectedReasonText(_, detail.rejectedReason)}`)}
+				</p>
+			) : null}
 			<OrderBadges order={detail} now={now} time={time} />
 			<section aria-label={_(t`Guest`)} className="flex flex-col gap-1">
 				<bdi className="text-xl font-semibold">{detail.guestName}</bdi>
@@ -1187,7 +1442,9 @@ function OrderDetailBody({
 									: ''}
 								{entry.reason && entry.reason in CANCEL_REASON
 									? ` · ${_(CANCEL_REASON[entry.reason as PosOnlineOrderCancelReason])}`
-									: ''}
+									: entry.action === 'rejected' && entry.reason
+										? ` · ${rejectedReasonText(_, entry.reason)}`
+										: ''}
 								{entry.staffName ? (
 									<>
 										{' · '}
@@ -1478,6 +1735,83 @@ function SearchSheet({
 					</section>
 				) : null}
 			</form>
+		</Modal>
+	)
+}
+
+function RejectDialog({
+	open,
+	number,
+	paidOnline,
+	busy,
+	onClose,
+	onConfirm,
+}: {
+	open: boolean
+	number: string
+	/** Paid online: rejecting refunds the guest in full. */
+	paidOnline: boolean
+	busy: boolean
+	onClose: () => void
+	onConfirm: (reason: OrderRejectReason) => Promise<void>
+}) {
+	const { _ } = useLingui()
+	const [reason, setReason] = useState<OrderRejectReason | null>(null)
+	useEffect(() => {
+		if (open) setReason(null)
+	}, [open])
+	return (
+		<Modal
+			open={open}
+			onClose={onClose}
+			title={_(t`Reject order ${number}?`)}
+			footer={
+				<div className="flex w-full justify-end gap-2">
+					<Button onClick={onClose} disabled={busy}>
+						<Trans>Keep waiting</Trans>
+					</Button>
+					<Button
+						variant="danger"
+						disabled={!reason || busy}
+						onClick={() => reason && void onConfirm(reason)}
+					>
+						<Trans>Reject order</Trans>
+					</Button>
+				</div>
+			}
+		>
+			<div className="p-4 sm:p-5">
+				<p className="mb-3 text-sm">
+					{paidOnline
+						? _(
+								t`The kitchen never gets this order. It was paid online, so the guest is refunded in full. Card fees are usually not returned to you.`,
+							)
+						: _(
+								t`The kitchen never gets this order and nothing is charged. It cannot be reopened.`,
+							)}
+				</p>
+				<p className="text-muted-foreground mb-3 text-sm">
+					<Trans>
+						The guest only sees "out of stock" or "kitchen closed". Other
+						reasons stay with you.
+					</Trans>
+				</p>
+				<fieldset className="flex flex-col gap-2">
+					<legend className="mb-1 text-sm font-semibold">
+						<Trans>Why?</Trans>
+					</legend>
+					{ORDER_REJECT_REASONS.map((value) => (
+						<Button
+							key={value}
+							variant={reason === value ? 'primary' : 'outline'}
+							aria-pressed={reason === value}
+							onClick={() => setReason(value)}
+						>
+							{_(REJECT_REASON[value])}
+						</Button>
+					))}
+				</fieldset>
+			</div>
 		</Modal>
 	)
 }

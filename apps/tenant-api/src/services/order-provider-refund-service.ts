@@ -100,6 +100,20 @@ export type ProviderRefundIntentInput = {
 	loyaltyAccess?: RefundLoyaltyAccess
 	/** Tell the App to execute it now (region-initiated refunds). */
 	kick?: boolean
+	/**
+	 * A member limited to some locations (the App's refund action): an order
+	 * or tab at any other location is the uniform 404, before anything about
+	 * it is checked. Null or absent: every location.
+	 */
+	locationIds?: readonly string[] | null
+}
+
+/** Null scope reaches every location; a list reaches only its own. */
+function inLocationScope(
+	locationIds: readonly string[] | null | undefined,
+	locationId: string,
+): boolean {
+	return locationIds == null || locationIds.includes(locationId)
 }
 
 /** Books a pending provider refund of an order or a tab payment. */
@@ -149,7 +163,7 @@ async function bookIntent(
 							.from(qrTabs)
 							.where(eq(qrTabs.id, tabId))
 							.limit(1)
-						if (!tab) {
+						if (!tab || !inLocationScope(input.locationIds, tab.locationId)) {
 							return orderFailure(404, 'order_not_found', 'Order not found.')
 						}
 						const booked = await bookTabProviderRefundInTx(tx, tab, {
@@ -178,7 +192,7 @@ async function bookIntent(
 							),
 						)
 						.limit(1)
-					if (!order) {
+					if (!order || !inLocationScope(input.locationIds, order.locationId)) {
 						return orderFailure(404, 'order_not_found', 'Order not found.')
 					}
 					const refused = input.guard?.(order)

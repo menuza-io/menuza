@@ -28,6 +28,8 @@ import {
 	insertCustomer,
 	insertOrder,
 	insertTab,
+	LOC_1,
+	LOC_2,
 	makeMember,
 	NOW,
 } from '../services/loyalty-test-fixture.ts'
@@ -146,12 +148,16 @@ async function intent(
 		orgId?: string
 		note?: string
 		tabPaymentId?: string
+		locationIds?: string[] | null
 	} = {},
 ) {
 	return system('/refund-intent', {
 		orgId: options.orgId ?? ORG,
 		orderId,
 		...(options.tabPaymentId ? { tabPaymentId: options.tabPaymentId } : {}),
+		...(options.locationIds !== undefined
+			? { locationIds: options.locationIds }
+			: {}),
 		...amount,
 		note: options.note ?? NOTE,
 		idempotencyKey: options.idempotencyKey ?? key(),
@@ -524,6 +530,195 @@ describe('POST /api/orders/refund-intent and refund-status', () => {
 		expect((await orderRow(orderId)).paymentId).toBe('pi_test_1')
 		const res = await intent(orderId, { amountCents: 100 })
 		expect(await res.json()).toMatchObject({ paymentId: 'pi_test_1' })
+	})
+
+	it('keeps the first payment id: a replay fills an empty one, never replaces one', async () => {
+		const paidEvent = (orderId: string, paymentId?: string) =>
+			system('/payment-status', {
+				orgId: ORG,
+				orderId,
+				sessionId: `cs_test_${orderId}`,
+				processor: 'connect',
+				status: 'paid',
+				amountCents: 1000,
+				currency: 'USD',
+				...(paymentId ? { paymentId } : {}),
+			})
+		const pendingOrder = async () => {
+			const id = `ord_pid_${++counter}`
+			await onlineOrder({
+				id,
+				status: 'accepted',
+				paymentStatus: 'pending',
+				paidAt: null,
+				completedAt: null,
+				paymentSessionId: `cs_test_${id}`,
+			})
+			return id
+		}
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+		// Paid before the id was sent: a later replay that carries it fills it.
+		const legacy = await pendingOrder()
+		expect((await paidEvent(legacy)).status).toBe(200)
+		expect((await orderRow(legacy)).paymentId).toBeNull()
+		const before = await orderRow(legacy)
+		expect((await paidEvent(legacy, 'pi_late_1')).status).toBe(200)
+		const filled = await orderRow(legacy)
+		expect(filled.paymentId).toBe('pi_late_1')
+		// Only the id: the order's version (updated_at) does not move.
+		expect(filled.updatedAt).toEqual(before.updatedAt)
+
+		// A second payment on the same order never replaces the first.
+		const twice = await pendingOrder()
+		expect((await paidEvent(twice, 'pay_first_1')).status).toBe(200)
+		expect((await paidEvent(twice, 'pay_second_1')).status).toBe(200)
+		expect((await orderRow(twice)).paymentId).toBe('pay_first_1')
+		// A replay without an id leaves it alone.
+		expect((await paidEvent(twice)).status).toBe(200)
+		expect((await orderRow(twice)).paymentId).toBe('pay_first_1')
+		// Logged by order id only, never the payment ids.
+		const logged = warn.mock.calls.map((call) => call.join(' ')).join('\n')
+		expect(logged).toContain(twice)
+		expect(logged).not.toContain('pay_second_1')
+		expect(logged).not.toContain('pay_first_1')
+		warn.mockRestore()
+
+		const res = await intent(twice, { full: true })
+		expect(await res.json()).toMatchObject({ paymentId: 'pay_first_1' })
+	})
+})
+
+describe('refund-intent: members limited to some locations', () => {
+	it('books inside the scope and says it checked; outside is the uniform 404', async () => {
+		const here = await onlineOrder({ locationId: LOC_1 })
+		const there = await onlineOrder({ locationId: LOC_2 })
+
+		const ok = await intent(
+			here,
+			{ amountCents: 100 },
+			{ locationIds: [LOC_1] },
+		)
+		expect(ok.status).toBe(201)
+		expect(await ok.json()).toMatchObject({
+			orderId: here,
+			status: 'pending',
+			locationScoped: true,
+		})
+
+		const refusedKey = key()
+		const outside = await intent(
+			there,
+			{ amountCents: 100 },
+			{ locationIds: [LOC_1], idempotencyKey: refusedKey },
+		)
+		expect(outside.status).toBe(404)
+		const outsideBody = await outside.json()
+		expect(outsideBody).toEqual({
+			error: 'order_not_found',
+			message: 'Order not found.',
+		})
+		// Same answer as an order that does not exist: nothing about it leaks.
+		const missing = await intent(
+			'ord_does_not_exist',
+			{ amountCents: 100 },
+			{ locationIds: [LOC_1] },
+		)
+		expect(missing.status).toBe(404)
+		expect(await missing.json()).toEqual(outsideBody)
+		// Nothing was booked for the order outside the scope.
+		const db = await getTenantDb(ORG)
+		expect(
+			await db
+				.select()
+				.from(restaurantOrderRefunds)
+				.where(eq(restaurantOrderRefunds.orderId, there)),
+		).toHaveLength(0)
+
+		// An empty list reaches no location at all.
+		const none = await intent(here, { amountCents: 100 }, { locationIds: [] })
+		expect(none.status).toBe(404)
+	})
+
+	it('a replayed key outside the scope is still the 404', async () => {
+		const orderId = await onlineOrder({ locationId: LOC_2 })
+		const replayKey = key()
+		const unscoped = await intent(
+			orderId,
+			{ amountCents: 100 },
+			{ idempotencyKey: replayKey },
+		)
+		expect(unscoped.status).toBe(201)
+		const scoped = await intent(
+			orderId,
+			{ amountCents: 100 },
+			{ idempotencyKey: replayKey, locationIds: [LOC_1] },
+		)
+		expect(scoped.status).toBe(404)
+	})
+
+	it('unscoped requests (absent or null) behave as before and claim no check', async () => {
+		const orderId = await onlineOrder({ locationId: LOC_2 })
+		const absent = await intent(orderId, { amountCents: 100 })
+		expect(absent.status).toBe(201)
+		const absentBody = (await absent.json()) as Record<string, unknown>
+		expect(absentBody).not.toHaveProperty('locationScoped')
+		await settle(absentBody.refundId as string, 'succeeded')
+
+		const nulled = await intent(
+			orderId,
+			{ amountCents: 100 },
+			{ locationIds: null },
+		)
+		expect(nulled.status).toBe(201)
+		expect(await nulled.json()).not.toHaveProperty('locationScoped')
+	})
+
+	it('scopes a tab by its location too', async () => {
+		const tabId = await insertTab(ORG, {
+			id: 'tab-scope-1',
+			locationId: LOC_2,
+			paymentProcessor: 'checkout',
+			paymentSessionId: 'pay_scope_1',
+			paymentAmountCents: 1000,
+		})
+		const outside = await intent(
+			`tab:${tabId}`,
+			{ amountCents: 100 },
+			{ locationIds: [LOC_1] },
+		)
+		expect(outside.status).toBe(404)
+		const inside = await intent(
+			`tab:${tabId}`,
+			{ amountCents: 100 },
+			{ locationIds: [LOC_2] },
+		)
+		expect(inside.status).toBe(201)
+		expect(await inside.json()).toMatchObject({ locationScoped: true })
+	})
+
+	it('refuses malformed or oversized location lists without echoing them', async () => {
+		const orderId = await onlineOrder()
+		for (const locationIds of [
+			['bad id with spaces'],
+			['x'.repeat(65)],
+			Array.from({ length: 201 }, (_, index) => `loc_${index}`),
+			'loc_1',
+		]) {
+			const res = await system('/refund-intent', {
+				orgId: ORG,
+				orderId,
+				amountCents: 100,
+				note: NOTE,
+				idempotencyKey: key(),
+				actor: { origin: 'operator', actorId: 'usr_1' },
+				locationIds,
+			})
+			expect(res.status).toBe(400)
+			const text = await res.text()
+			expect(text).not.toContain('bad id')
+			expect(text).not.toContain('loc_200')
+		}
 	})
 })
 

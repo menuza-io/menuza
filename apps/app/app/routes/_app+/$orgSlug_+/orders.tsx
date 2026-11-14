@@ -21,6 +21,7 @@ import {
 	PaymentStatusLabel,
 } from '#app/components/orders/order-status.tsx'
 import { OrderingControls } from '#app/components/orders/ordering-controls.tsx'
+import { WaitingLane } from '#app/components/orders/waiting-lane.tsx'
 import { OpenTabs } from '#app/components/qr/open-tabs.tsx'
 import { useOrdersClient } from '#app/hooks/use-orders-client.ts'
 import { loadOrderingControls } from '#app/utils/location/ordering-controls.server.ts'
@@ -32,6 +33,7 @@ import {
 	type Order,
 	orderSchema,
 	paymentDisplayStatus,
+	WAITING_ORDER_STATUS,
 	relativeTime,
 } from '#app/utils/orders/order-model.ts'
 import { ordersHref } from '#app/utils/orders/orders-link.ts'
@@ -143,6 +145,11 @@ export default function OrdersInbox() {
 		}
 	}, [refresh])
 
+	const waiting = orders.filter(
+		(order) => order.status === WAITING_ORDER_STATUS,
+	)
+	const others = orders.filter((order) => order.status !== WAITING_ORDER_STATUS)
+
 	return (
 		<div className="mx-auto w-full max-w-4xl space-y-6 py-8 md:px-6 lg:px-8">
 			<div className="flex items-start justify-between gap-4">
@@ -167,6 +174,13 @@ export default function OrdersInbox() {
 					{error}
 				</p>
 			) : null}
+			<WaitingLane
+				orgSlug={orgSlug}
+				orders={waiting}
+				canWrite={canWrite}
+				request={request}
+				onChanged={() => void refresh()}
+			/>
 			<OrderingControls
 				orgSlug={orgSlug}
 				locations={orderingControls}
@@ -193,12 +207,12 @@ export default function OrdersInbox() {
 						<Trans>Submitted orders will appear here.</Trans>
 					</p>
 				</div>
-			) : (
+			) : others.length === 0 ? null : (
 				<ul
 					className="divide-border divide-y rounded-lg border"
 					data-testid="orders-list"
 				>
-					{orders.map((order) => {
+					{others.map((order) => {
 						const ago = relativeTime(order.createdAt, i18n.locale)
 						const href = ordersHref(orgSlug, { orderId: order.id })
 						return (

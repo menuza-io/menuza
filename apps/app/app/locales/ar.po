@@ -2193,7 +2193,7 @@ msgstr "{referenceCount, plural, zero {لا أماكن} one {مكان واحد} 
 msgid "{referralCount, plural, one {# person joined using your link!} other {# people joined using your link!}}"
 msgstr "{referralCount, plural, one {شخص واحد انضم باستخدام رابطك!} other {# أشخاص انضموا باستخدام رابطك!}}"
 
-#: app/components/orders/order-detail.tsx:957
+#: app/components/orders/order-detail.tsx:1030
 msgid "{refundedMoney} of {totalMoney}"
 msgstr "{refundedMoney} من {totalMoney}"
 
@@ -2423,7 +2423,7 @@ msgstr "عدد الردود: {total}"
 msgid "{totalLimit, plural, one {Up to # use} other {Up to # uses}}"
 msgstr "{totalLimit, plural, zero {حتى # استخدامات} one {حتى استخدام واحد} two {حتى استخدامين} few {حتى # استخدامات} many {حتى # استخدامًا} other {حتى # استخدام}}"
 
-#: app/components/orders/order-detail.tsx:1154
+#: app/components/orders/order-detail.tsx:1238
 msgid "{totalMoney} was received for this order. Cancelling does not refund it: give the money back at the counter, then record the refund on this order."
 msgstr "تم استلام {totalMoney} مقابل هذا الطلب. الإلغاء لا يردّ المبلغ: أعد المال للضيف عند الكاشير، ثم سجّل الاسترداد على هذا الطلب."
 
@@ -2435,11 +2435,11 @@ msgstr "تم استلام {totalMoney} مقابل هذا الطلب. الإلغ�
 #~ msgid "{totalMoney} was received for this order. Cancelling does not refund it: refund it with your payment processor, then record the refund on this order."
 #~ msgstr "تم استلام {totalMoney} لهذا الطلب. إلغاء الطلب لا يسترد المبلغ: استرده عبر معالج الدفع، ثم سجّل الاسترداد في هذا الطلب."
 
-#: app/components/orders/order-detail.tsx:1150
+#: app/components/orders/order-detail.tsx:1234
 msgid "{totalMoney} was received for this order. Cancelling does not refund it. The order moves to Cancelled and cannot be reopened."
 msgstr "تم استلام {totalMoney} مقابل هذا الطلب. الإلغاء لا يردّ المبلغ. سينتقل الطلب إلى «ملغى» ولا يمكن إعادة فتحه."
 
-#: app/components/orders/order-detail.tsx:1146
+#: app/components/orders/order-detail.tsx:1230
 msgid "{totalMoney} was received for this order. The order is cancelled right away. Choose whether the guest gets their money back."
 msgstr "تم استلام {totalMoney} مقابل هذا الطلب. سيُلغى الطلب فورًا. اختر ما إذا كان الضيف سيسترد أمواله."
 
@@ -2585,7 +2585,7 @@ msgstr "→ العودة إلى تسجيل الدخول بـ SSO"
 msgid "+{lateMin}m late"
 msgstr "متأخر +{lateMin} د"
 
-#: app/components/orders/order-detail.tsx:698
+#: app/components/orders/order-detail.tsx:771
 msgid "+{minutes} min"
 msgstr "+{minutes} دقيقة"
 
@@ -3161,7 +3161,7 @@ msgstr "مدة جلوس نطاق حجمها معكوس."
 msgid "A discount can have up to 90 codes. Make another discount for more."
 msgstr "يمكن أن يحتوي الخصم على 90 رمزًا كحد أقصى. أنشئ خصمًا آخر للمزيد."
 
-#: app/components/orders/order-detail.tsx:349
+#: app/components/orders/order-detail.tsx:369
 msgid "A discount on this order reached its use limit before the payment arrived. The customer was charged the discounted price, so honoring the order means accepting that overrun."
 msgstr "وصل خصم في هذا الطلب إلى حد استخدامه قبل وصول الدفعة. تم تحصيل السعر بعد الخصم من العميل، لذا فإن تنفيذ الطلب يعني قبول هذا التجاوز."
 
@@ -3659,12 +3659,14 @@ msgid "Accent color"
 msgstr "لون التمييز"
 
 #: app/components/menu/menu-review-stack.tsx:847
+#: app/components/orders/order-detail.tsx:605
+#: app/components/orders/waiting-lane.tsx:183
 #: app/components/privacy-banner.tsx:60
 #: app/routes/_app+/organizations.tsx:302
 msgid "Accept"
 msgstr "قبول"
 
-#: app/components/orders/order-detail.tsx:411
+#: app/components/orders/order-detail.tsx:431
 msgid "Accept and start preparing"
 msgstr "قبول وبدء التحضير"
 
@@ -3683,6 +3685,10 @@ msgstr "استقبال الطلبات وإظهار هذا الفرع على ال
 #: app/components/menu/menu-review-stack.tsx:443
 msgid "Accept what looks right and skip the rest. Nothing changes until you accept."
 msgstr "اقبل ما يبدو صحيحًا وتخطَّ الباقي. لا يتغير شيء حتى تقبل."
+
+#: app/components/orders/acceptance.tsx:53
+msgid "Accept within {clock}"
+msgstr "اقبله خلال {clock}"
 
 #: app/components/menu/item-form.tsx:518
 msgid "Accepts JPG, PNG, WebP up to 5MB. Uploads go directly to your media library."
@@ -3867,7 +3873,7 @@ msgstr "فرع نشط"
 
 #: app/components/app-sidebar.tsx:594
 #: app/components/loyalty/loyalty-chrome.tsx:72
-#: app/components/orders/order-detail.tsx:1057
+#: app/components/orders/order-detail.tsx:1130
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:690
 msgid "Activity"
 msgstr "النشاط"
@@ -6565,11 +6571,11 @@ msgstr "وصل"
 msgid "Arrived, waiting"
 msgstr "وصل، في الانتظار"
 
-#: app/components/orders/order-detail.tsx:295
+#: app/components/orders/order-detail.tsx:315
 msgid "Arriving {promisedFrom} to {promisedTo}"
 msgstr "الوصول من {promisedFrom} إلى {promisedTo}"
 
-#: app/components/orders/order-detail.tsx:297
+#: app/components/orders/order-detail.tsx:317
 msgid "Arriving around {promisedFrom}"
 msgstr "الوصول تقريبًا في {promisedFrom}"
 
@@ -6810,8 +6816,8 @@ msgstr "يمكن استرداد {most} كحد أقصى."
 msgid "At slot time"
 msgstr "عند وقت الموعد"
 
-#: app/components/orders/order-detail.tsx:639
-#: app/routes/_app+/$orgSlug_+/orders.tsx:279
+#: app/components/orders/order-detail.tsx:712
+#: app/routes/_app+/$orgSlug_+/orders.tsx:293
 msgid "At the table"
 msgstr "على الطاولة"
 
@@ -7217,7 +7223,7 @@ msgstr "العودة إلى العُقد"
 msgid "Back to options"
 msgstr "العودة إلى الخيارات"
 
-#: app/routes/_app+/$orgSlug_+/orders_.$orderId.tsx:255
+#: app/routes/_app+/$orgSlug_+/orders_.$orderId.tsx:278
 msgid "Back to orders"
 msgstr "العودة إلى الطلبات"
 
@@ -8605,7 +8611,7 @@ msgstr "إلغاء المقابلة"
 
 #: app/components/inventory/review-order-screen.tsx:775
 #: app/components/inventory/review-order-screen.tsx:840
-#: app/components/orders/order-detail.tsx:1115
+#: app/components/orders/order-detail.tsx:1188
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:399
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:429
 msgid "Cancel order"
@@ -8614,7 +8620,7 @@ msgstr "إلغاء الطلب"
 #~ msgid "Cancel order {0}?"
 #~ msgstr "إلغاء الطلب {0}؟"
 
-#: app/components/orders/order-detail.tsx:1141
+#: app/components/orders/order-detail.tsx:1225
 msgid "Cancel order {orderNumber}?"
 msgstr "إلغاء الطلب {orderNumber}؟"
 
@@ -8678,8 +8684,9 @@ msgstr "الإلغاءات حسب الجهة"
 #: app/components/hiring/applicant-labels.ts:42
 #: app/components/inventory/count-status-badge.tsx:10
 #: app/components/my-schedule/status-badge.tsx:17
-#: app/components/orders/order-detail.tsx:368
-#: app/components/orders/order-detail.tsx:506
+#: app/components/orders/order-detail.tsx:388
+#: app/components/orders/order-detail.tsx:525
+#: app/components/orders/order-detail.tsx:540
 #: app/components/print/print-order-labels.ts:20
 #: app/components/reservations/status-style.tsx:144
 #: app/components/reservations/status-style.tsx:211
@@ -9628,7 +9635,8 @@ msgstr "اختر منصبًا"
 msgid "Choose a position."
 msgstr "اختر منصبًا."
 
-#: app/components/orders/order-detail.tsx:1172
+#: app/components/orders/acceptance.tsx:108
+#: app/components/orders/order-detail.tsx:1256
 msgid "Choose a reason"
 msgstr "اختر سببًا"
 
@@ -10083,6 +10091,10 @@ msgstr "اختر من تشتريه منه، أو امسح السعر."
 #: app/components/inventory/log-waste-dialog.tsx:391
 msgid "Choose why it was wasted."
 msgstr "اختر سبب الهدر."
+
+#: app/utils/orders/acceptance.ts:60
+msgid "Choose why the order is rejected."
+msgstr "اختر سبب رفض الطلب."
 
 #: app/routes/organizations+/create.tsx:1137
 msgid "Choose your plan"
@@ -10729,7 +10741,7 @@ msgstr "إكمال المكالمات والطلبات وإعادة فتحها،
 msgid "Complete authentication"
 msgstr "إكمال المصادقة"
 
-#: app/components/orders/order-detail.tsx:415
+#: app/components/orders/order-detail.tsx:435
 msgid "Complete order"
 msgstr "إكمال الطلب"
 
@@ -10777,7 +10789,7 @@ msgstr "أكمل التسجيل للانضمام إلى المنظمة"
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:46
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:9
 #: app/components/onboarding-checklist.tsx:249
-#: app/components/orders/order-detail.tsx:363
+#: app/components/orders/order-detail.tsx:383
 #: app/components/reservations/status-style.tsx:143
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:150
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:67
@@ -10879,7 +10891,7 @@ msgstr "تأكيد"
 msgid "Confirm accepting all translations"
 msgstr "تأكيد قبول كل الترجمات"
 
-#: app/components/orders/order-detail.tsx:1223
+#: app/components/orders/order-detail.tsx:1307
 msgid "Confirm cancellation"
 msgstr "تأكيد الإلغاء"
 
@@ -11452,7 +11464,7 @@ msgstr "نسخ التصنيفات كتصنيفات جديدة"
 msgid "Copy code"
 msgstr "نسخ الكود"
 
-#: app/components/orders/order-detail.tsx:596
+#: app/components/orders/order-detail.tsx:669
 msgid "Copy email address"
 msgstr "نسخ البريد الإلكتروني"
 
@@ -11476,7 +11488,7 @@ msgstr "نسخ الرابط"
 msgid "Copy modifier groups as new groups"
 msgstr "نسخ مجموعات الإضافات كمجموعات جديدة"
 
-#: app/components/orders/order-detail.tsx:467
+#: app/components/orders/order-detail.tsx:487
 msgid "Copy order number"
 msgstr "نسخ رقم الطلب"
 
@@ -11489,7 +11501,7 @@ msgstr "نسخ التجاوزات"
 msgid "Copy overrides to another location"
 msgstr "نسخ التجاوزات إلى موقع آخر"
 
-#: app/components/orders/order-detail.tsx:582
+#: app/components/orders/order-detail.tsx:655
 msgid "Copy phone number"
 msgstr "نسخ رقم الهاتف"
 
@@ -12852,10 +12864,10 @@ msgstr "مخصص: ما لديك الآن"
 msgid "customer"
 msgstr "عميل"
 
-#: app/components/orders/order-detail.tsx:542
-#: app/components/orders/order-detail.tsx:566
+#: app/components/orders/order-detail.tsx:615
+#: app/components/orders/order-detail.tsx:639
 #: app/components/workspace-breadcrumb.tsx:110
-#: app/routes/_app+/$orgSlug_+/orders.tsx:255
+#: app/routes/_app+/$orgSlug_+/orders.tsx:269
 msgid "Customer"
 msgstr "عميل"
 
@@ -13835,7 +13847,7 @@ msgstr "يسلّم في"
 #: app/components/customers/person-orders-panel.tsx:221
 #: app/components/inventory/review-order-screen.tsx:727
 #: app/components/locations/location-form.tsx:786
-#: app/components/orders/order-detail.tsx:637
+#: app/components/orders/order-detail.tsx:710
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:26
 #: app/components/reservations/messages/message-settings.tsx:530
 #: app/components/settings/cards/organization/pos-integrations-card.tsx:131
@@ -13843,7 +13855,7 @@ msgstr "يسلّم في"
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:145
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:164
 #: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:940
-#: app/routes/_app+/$orgSlug_+/orders.tsx:272
+#: app/routes/_app+/$orgSlug_+/orders.tsx:286
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:680
 #: app/routes/mock-payments+/dashboard.tsx:158
 #: app/utils/discounts/labels.ts:166
@@ -13874,8 +13886,8 @@ msgstr "مناطق التوصيل والرسوم وبدائل الاستلام."
 msgid "Delivery cancelled."
 msgstr "تم إلغاء الشحنة."
 
-#: app/components/orders/order-detail.tsx:849
-#: app/components/orders/order-detail.tsx:1283
+#: app/components/orders/order-detail.tsx:922
+#: app/components/orders/order-detail.tsx:1367
 msgid "Delivery discount"
 msgstr "خصم التوصيل"
 
@@ -13883,7 +13895,7 @@ msgstr "خصم التوصيل"
 msgid "Delivery discounts"
 msgstr "خصومات التوصيل"
 
-#: app/components/orders/order-detail.tsx:866
+#: app/components/orders/order-detail.tsx:939
 #: app/utils/discounts/labels.ts:354
 #: app/utils/discounts/summary.ts:222
 msgid "Delivery fee"
@@ -13897,7 +13909,7 @@ msgstr "حد رسوم التوصيل"
 msgid "Delivery is blocked or disallowed for this specific zone"
 msgstr "التوصيل محظور أو غير مسموح في هذه المنطقة تحديدًا"
 
-#: app/components/orders/order-detail.tsx:734
+#: app/components/orders/order-detail.tsx:807
 msgid "Delivery notes:"
 msgstr "ملاحظات التوصيل:"
 
@@ -14388,8 +14400,8 @@ msgstr "إلغاء ربط Canva"
 #: app/components/discounts/discount-form.tsx:1007
 #: app/components/discounts/discount-form.tsx:1590
 #: app/components/loyalty/reward-dialog.tsx:482
-#: app/components/orders/order-detail.tsx:841
-#: app/components/orders/order-detail.tsx:1285
+#: app/components/orders/order-detail.tsx:914
+#: app/components/orders/order-detail.tsx:1369
 #: app/components/print/restaurant/vertical-ui.tsx:143
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:366
 msgid "Discount"
@@ -14496,10 +14508,10 @@ msgstr "اعرض تاريخ الفتح أسفل العد التنازلي"
 msgid "Displayed"
 msgstr "معروض"
 
-#: app/components/orders/order-detail.tsx:462
+#: app/components/orders/order-detail.tsx:482
 #: app/components/reservations/status-style.tsx:148
 #: app/components/settings/cards/organization/shop-card.tsx:53
-#: app/routes/_app+/$orgSlug_+/orders.tsx:294
+#: app/routes/_app+/$orgSlug_+/orders.tsx:308
 #: app/utils/reservations/payments-view.ts:49
 #: app/utils/reservations/payments-view.ts:79
 msgid "Disputed"
@@ -14886,7 +14898,7 @@ msgstr "عنوان الطرح"
 #~ msgid "Drop visibility"
 #~ msgstr "ظهور الطرح"
 
-#: app/components/orders/order-detail.tsx:741
+#: app/components/orders/order-detail.tsx:814
 msgid "Drop:"
 msgstr "الإطلاق:"
 
@@ -18268,7 +18280,7 @@ msgstr "التوصيل المجاني يخصم رسوم التوصيل من ال
 msgid "Free item"
 msgstr "عنصر مجاني"
 
-#: app/components/orders/order-detail.tsx:457
+#: app/components/orders/order-detail.tsx:477
 msgid "Free order"
 msgstr "طلب مجاني"
 
@@ -18403,7 +18415,7 @@ msgid "Frying oil"
 msgstr "زيت القلي"
 
 #: app/components/customers/person-orders-panel.tsx:169
-#: app/components/orders/order-detail.tsx:625
+#: app/components/orders/order-detail.tsx:698
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:620
 msgid "Fulfillment"
 msgstr "التنفيذ"
@@ -18439,7 +18451,7 @@ msgstr "الاسم الكامل"
 msgid "Full Name"
 msgstr "الاسم الكامل"
 
-#: app/components/orders/order-detail.tsx:1188
+#: app/components/orders/order-detail.tsx:1272
 msgid "Full refund"
 msgstr "استرداد كامل"
 
@@ -18610,7 +18622,7 @@ msgstr "أعطِ المجموعة اسمًا."
 msgid "Give the job a title."
 msgstr "أعطِ الوظيفة مسمى."
 
-#: app/components/orders/order-detail.tsx:1040
+#: app/components/orders/order-detail.tsx:1113
 msgid "Give the money back at the counter first, then record it here."
 msgstr "أعد المال للضيف عند الكاشير أولًا، ثم سجّله هنا."
 
@@ -18862,7 +18874,7 @@ msgstr "مجموعات من كمية"
 #: app/components/reservations/detail-sheet.tsx:927
 #: app/components/reservations/today-party-card.tsx:77
 #: app/components/reservations/waitlist/today-waitlist-card.tsx:70
-#: app/routes/_app+/$orgSlug_+/orders.tsx:246
+#: app/routes/_app+/$orgSlug_+/orders.tsx:260
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:460
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:478
 #: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:284
@@ -18875,9 +18887,9 @@ msgstr "ضيف"
 msgid "Guest asked"
 msgstr "طلب الضيف"
 
-#: app/components/orders/order-detail.tsx:567
+#: app/components/orders/order-detail.tsx:640
 #: app/components/settings/cards/organization/shop-card.tsx:465
-#: app/routes/_app+/$orgSlug_+/orders.tsx:256
+#: app/routes/_app+/$orgSlug_+/orders.tsx:270
 msgid "Guest checkout"
 msgstr "الدفع كضيف"
 
@@ -19892,7 +19904,7 @@ msgstr "لا أستطيع العمل فيها"
 msgid "I checked the online payment for this tab in the payment dashboard and will refund or keep it."
 msgstr "تحققت من الدفعة الإلكترونية لهذا الحساب في لوحة المدفوعات، وسأستردها أو أحتفظ بها."
 
-#: app/components/orders/order-detail.tsx:1101
+#: app/components/orders/order-detail.tsx:1174
 msgid "I have received payment at handoff"
 msgstr "لقد استلمت الدفع عند التسليم"
 
@@ -20752,7 +20764,7 @@ msgstr "عنصر"
 
 #: app/components/inventory/stock-list.tsx:102
 #: app/components/inventory/supplier-products.tsx:375
-#: app/components/orders/order-detail.tsx:764
+#: app/components/orders/order-detail.tsx:837
 #: app/components/workspace-breadcrumb.tsx:123
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:105
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:119
@@ -20803,7 +20815,7 @@ msgstr "عناصر"
 #: app/components/inventory/review-order-screen.tsx:485
 #: app/components/inventory/review-order-screen.tsx:627
 #: app/components/loyalty/promotion-dialog.tsx:671
-#: app/components/orders/order-detail.tsx:750
+#: app/components/orders/order-detail.tsx:823
 #: app/routes/_app+/$orgSlug_+/inventory+/counts.tsx:322
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.add-many.tsx:370
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.lists.tsx:357
@@ -21047,7 +21059,7 @@ msgstr "متابعة التعديل"
 msgid "Keep it"
 msgstr "إبقاؤه"
 
-#: app/components/orders/order-detail.tsx:1209
+#: app/components/orders/order-detail.tsx:1293
 msgid "Keep order"
 msgstr "الاحتفاظ بالطلب"
 
@@ -21169,6 +21181,7 @@ msgstr "تابع التراخيص والشهادات، واحصل على تذك�
 msgid "Keep transferred calls open"
 msgstr "إبقاء المكالمات المحوّلة مفتوحة"
 
+#: app/components/orders/acceptance.tsx:121
 #: app/components/qr/open-tabs.tsx:624
 #: app/components/staff/schedule/availability-page.tsx:363
 #: app/components/staff/schedule/time-off-page.tsx:484
@@ -21552,7 +21565,7 @@ msgstr "آخر سعر مدفوع، للوحدة"
 msgid "Last seating"
 msgstr "آخر جلوس"
 
-#: app/components/orders/order-detail.tsx:1077
+#: app/components/orders/order-detail.tsx:1150
 msgid "Last updated"
 msgstr "آخر تحديث"
 
@@ -22306,11 +22319,11 @@ msgstr "جارٍ تحميل الملاحظات"
 msgid "Loading onboarding"
 msgstr "جارٍ تحميل التهيئة"
 
-#: app/routes/_app+/$orgSlug_+/orders_.$orderId.tsx:229
+#: app/routes/_app+/$orgSlug_+/orders_.$orderId.tsx:252
 msgid "Loading order…"
 msgstr "جارٍ تحميل الطلب…"
 
-#: app/routes/_app+/$orgSlug_+/orders.tsx:185
+#: app/routes/_app+/$orgSlug_+/orders.tsx:199
 msgid "Loading orders…"
 msgstr "جارٍ تحميل الطلبات…"
 
@@ -22876,7 +22889,7 @@ msgstr "برنامج الولاء والأعضاء والنقاط وعمليات
 msgid "Loyalty promotions"
 msgstr "العروض الترويجية للولاء"
 
-#: app/components/orders/order-detail.tsx:861
+#: app/components/orders/order-detail.tsx:934
 msgid "Loyalty reward"
 msgstr "مكافأة الولاء"
 
@@ -23367,7 +23380,7 @@ msgstr "تحديد كمدفوعة"
 msgid "Mark read"
 msgstr "تحديد كمقروء"
 
-#: app/components/orders/order-detail.tsx:414
+#: app/components/orders/order-detail.tsx:434
 msgid "Mark ready"
 msgstr "تمييز كجاهز"
 
@@ -23906,7 +23919,7 @@ msgstr "لم تعد Meta تقبل صلاحية الوصول الخاصة به. �
 msgid "Meta no longer accepts this account’s access. Connect it again, then retry."
 msgstr "لم تعد Meta تقبل صلاحية الوصول لهذا الحساب. أعد ربطه ثم حاول مرة أخرى."
 
-#: app/components/orders/order-detail.tsx:920
+#: app/components/orders/order-detail.tsx:993
 msgid "Method"
 msgstr "الطريقة"
 
@@ -25530,7 +25543,7 @@ msgstr "لا توجد ملاحظة مخصصة. هذا هو النص الافتر
 msgid "No custom roles created yet."
 msgstr "لم يتم إنشاء أدوار مخصصة بعد."
 
-#: app/components/orders/order-detail.tsx:615
+#: app/components/orders/order-detail.tsx:688
 msgid "No customer profile"
 msgstr "لا يوجد ملف عميل"
 
@@ -26112,7 +26125,7 @@ msgstr "لا توجد خيارات بعد."
 msgid "No orders usually expected"
 msgstr "لا يُتوقع عادة وجود طلبات"
 
-#: app/routes/_app+/$orgSlug_+/orders.tsx:190
+#: app/routes/_app+/$orgSlug_+/orders.tsx:204
 msgid "No orders yet"
 msgstr "لا توجد طلبات بعد"
 
@@ -26209,11 +26222,11 @@ msgstr "لم يتم تحديد أي أجر بعد."
 msgid "No payment"
 msgstr "بدون دفع"
 
-#: app/components/orders/order-detail.tsx:1157
+#: app/components/orders/order-detail.tsx:1241
 msgid "No payment has been received, so there is nothing to refund. The order moves to Cancelled and cannot be reopened."
 msgstr "لم يتم استلام أي دفعة، لذا لا يوجد ما يُسترد. سيصبح الطلب ملغى ولا يمكن إعادة فتحه."
 
-#: app/components/orders/order-detail.tsx:936
+#: app/components/orders/order-detail.tsx:1009
 #: app/components/orders/order-status.tsx:37
 msgid "No payment needed"
 msgstr "لا حاجة للدفع"
@@ -26352,7 +26365,7 @@ msgstr "لا توجد عمليات إعادة توجيه بعد"
 msgid "No redirects match that search"
 msgstr "لا توجد عمليات إعادة توجيه تطابق هذا البحث"
 
-#: app/components/orders/order-detail.tsx:1192
+#: app/components/orders/order-detail.tsx:1276
 #: app/utils/reservations/policies-view.ts:40
 msgid "No refund"
 msgstr "بدون استرداد"
@@ -26937,6 +26950,7 @@ msgstr "لم يتبقَّ شيء"
 msgid "Normal"
 msgstr "عادي"
 
+#: app/components/orders/order-detail.tsx:529
 #: app/components/orders/refund-labels.ts:25
 msgid "Not accepted in time"
 msgstr "لم يُقبل في الوقت المحدد"
@@ -27933,7 +27947,7 @@ msgstr "بصل"
 
 #: app/components/chat/chat-view.tsx:609
 #: app/components/kiosk/kiosk-chrome.tsx:126
-#: app/components/orders/order-detail.tsx:927
+#: app/components/orders/order-detail.tsx:1000
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:864
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:803
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:982
@@ -27945,7 +27959,7 @@ msgstr "متصل"
 #~ msgid "Online ({0})"
 #~ msgstr "عبر الإنترنت ({0})"
 
-#: app/components/orders/order-detail.tsx:926
+#: app/components/orders/order-detail.tsx:999
 msgid "Online ({processor})"
 msgstr "عبر الإنترنت ({processor})"
 
@@ -28964,7 +28978,7 @@ msgid "Orange juice"
 msgstr "عصير برتقال"
 
 #: app/components/customers/person-orders-panel.tsx:160
-#: app/components/orders/order-detail.tsx:480
+#: app/components/orders/order-detail.tsx:500
 #: app/components/workspace-breadcrumb.tsx:127
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:272
 msgid "Order"
@@ -29019,7 +29033,7 @@ msgstr "اطلب قبل <0>{cutoff}</0>"
 msgid "Order cancelled"
 msgstr "تم إلغاء الطلب"
 
-#: app/routes/_app+/$orgSlug_+/orders_.$orderId.tsx:179
+#: app/routes/_app+/$orgSlug_+/orders_.$orderId.tsx:185
 msgid "Order cancelled, but the refund could not be started. Refund it from this order."
 msgstr "تم إلغاء الطلب، لكن تعذّر بدء الاسترداد. استرد المبلغ من هذا الطلب."
 
@@ -29027,19 +29041,19 @@ msgstr "تم إلغاء الطلب، لكن تعذّر بدء الاسترداد
 msgid "Order cancelled."
 msgstr "تم إلغاء الطلب."
 
-#: app/routes/_app+/$orgSlug_+/orders_.$orderId.tsx:173
+#: app/routes/_app+/$orgSlug_+/orders_.$orderId.tsx:179
 msgid "Order cancelled. Another refund is still being processed, so none was started."
 msgstr "تم إلغاء الطلب. هناك عملية استرداد أخرى قيد المعالجة، لذا لم تبدأ عملية جديدة."
 
-#: app/routes/_app+/$orgSlug_+/orders_.$orderId.tsx:176
+#: app/routes/_app+/$orgSlug_+/orders_.$orderId.tsx:182
 msgid "Order cancelled. It was already fully refunded."
 msgstr "تم إلغاء الطلب. وقد سبق استرداد مبلغه بالكامل."
 
-#: app/routes/_app+/$orgSlug_+/orders_.$orderId.tsx:169
+#: app/routes/_app+/$orgSlug_+/orders_.$orderId.tsx:175
 msgid "Order cancelled. It was not refunded because the payment is disputed."
 msgstr "تم إلغاء الطلب. لم يُسترد المبلغ لأن الدفعة محل نزاع."
 
-#: app/routes/_app+/$orgSlug_+/orders_.$orderId.tsx:160
+#: app/routes/_app+/$orgSlug_+/orders_.$orderId.tsx:166
 msgid "Order cancelled. Refund pending: it is being sent to the guest's card."
 msgstr "تم إلغاء الطلب. الاسترداد قيد الانتظار: يجري إرساله إلى بطاقة الضيف."
 
@@ -29051,7 +29065,7 @@ msgstr "موعد إغلاق الطلب"
 msgid "Order cutoff"
 msgstr "موعد إيقاف الطلب"
 
-#: app/components/orders/order-detail.tsx:430
+#: app/components/orders/order-detail.tsx:450
 msgid "Order details"
 msgstr "تفاصيل الطلب"
 
@@ -29107,6 +29121,19 @@ msgstr "الطلب جاهز"
 #: app/components/settings/cards/guest-messages-card.tsx:49
 msgid "Order receipt"
 msgstr "إيصال الطلب"
+
+#: app/utils/orders/acceptance.ts:83
+msgid "Order rejected, but the refund could not be started. Refund it from this order."
+msgstr "تم رفض الطلب، لكن تعذّر بدء الاسترداد. استرد المبلغ من هذا الطلب."
+
+#: app/utils/orders/acceptance.ts:74
+#: app/utils/orders/acceptance.ts:86
+msgid "Order rejected."
+msgstr "تم رفض الطلب."
+
+#: app/utils/orders/acceptance.ts:78
+msgid "Order rejected. Refund pending: it is being sent to the guest's card."
+msgstr "تم رفض الطلب. الاسترداد قيد المعالجة: يُرسل إلى بطاقة الضيف."
 
 #: app/components/inventory/send-order-dialog.tsx:102
 msgid "Order sent"
@@ -29166,10 +29193,10 @@ msgstr "نافذة الطلب"
 #: app/components/customers/people-list-screen.tsx:429
 #: app/components/customers/person-orders-panel.tsx:112
 #: app/components/customers/person-profile-screen.tsx:457
-#: app/components/orders/order-detail.tsx:438
+#: app/components/orders/order-detail.tsx:458
 #: app/components/roles/tenant-role-access-manager.tsx:160
 #: app/components/workspace-breadcrumb.tsx:12
-#: app/routes/_app+/$orgSlug_+/orders.tsx:150
+#: app/routes/_app+/$orgSlug_+/orders.tsx:157
 msgid "Orders"
 msgstr "الطلبات"
 
@@ -29690,7 +29717,7 @@ msgstr "مدفوع"
 #~ msgid "Paid {0}"
 #~ msgstr "تم دفع {0}"
 
-#: app/components/orders/order-detail.tsx:934
+#: app/components/orders/order-detail.tsx:1007
 msgid "Paid {totalMoney}"
 msgstr "تم دفع {totalMoney}"
 
@@ -29698,7 +29725,7 @@ msgstr "تم دفع {totalMoney}"
 msgid "Paid <0>{paid}</0>"
 msgstr "مدفوع <0>{paid}</0>"
 
-#: app/components/orders/order-detail.tsx:946
+#: app/components/orders/order-detail.tsx:1019
 msgid "Paid at"
 msgstr "تاريخ الدفع"
 
@@ -29745,7 +29772,7 @@ msgstr "الوقت المدفوع <0>{totalLabel}</0>"
 msgid "Paid time off"
 msgstr "إجازة مدفوعة"
 
-#: app/components/orders/order-detail.tsx:654
+#: app/components/orders/order-detail.tsx:727
 msgid "Paid when the tab closes"
 msgstr "يُدفع عند إغلاق الحساب"
 
@@ -30099,7 +30126,7 @@ msgstr "الأجر"
 msgid "Pay and rates"
 msgstr "الأجر والمعدلات"
 
-#: app/components/orders/order-detail.tsx:924
+#: app/components/orders/order-detail.tsx:997
 msgid "Pay at handoff"
 msgstr "الدفع عند التسليم"
 
@@ -30152,8 +30179,8 @@ msgstr "الدفع من الهاتف يطلب دائمًا الاسم ورقم �
 msgid "Paying online"
 msgstr "يدفع إلكترونيًا"
 
-#: app/components/orders/order-detail.tsx:492
-#: app/components/orders/order-detail.tsx:914
+#: app/components/orders/order-detail.tsx:512
+#: app/components/orders/order-detail.tsx:987
 #: app/routes/mock-payments+/checkout-com.dashboard.tsx:219
 msgid "Payment"
 msgstr "الدفعة"
@@ -30162,7 +30189,7 @@ msgstr "الدفعة"
 #~ msgid "Payment arrived after the hold on this order ran out, so it was not confirmed automatically. The money was received: start preparing to honor the order, or cancel it and refund through your payment processor."
 #~ msgstr "وصلت الدفعة بعد انتهاء مدة حجز الطلب، لذلك لم يتم تأكيده تلقائيًا. تم استلام المبلغ: ابدأ التحضير لتنفيذ الطلب، أو ألغِه واسترد المبلغ عبر معالج الدفع."
 
-#: app/components/orders/order-detail.tsx:339
+#: app/components/orders/order-detail.tsx:359
 msgid "Payment arrived after the hold on this order ran out, so it was not confirmed automatically. The money was received: start preparing to honor the order, or cancel it, refund it through your payment processor and record the refund on this order."
 msgstr "وصل الدفع بعد انتهاء مهلة الحجز لهذا الطلب، لذا لم يُؤكَّد تلقائيًا. تم استلام المبلغ: ابدأ التحضير للوفاء بالطلب، أو ألغِه واسترد المبلغ عبر معالج الدفع ثم سجّل الاسترداد في هذا الطلب."
 
@@ -30178,7 +30205,7 @@ msgstr "انتهت صلاحية الدفع"
 msgid "Payment failed"
 msgstr "فشل الدفع"
 
-#: app/components/orders/order-detail.tsx:938
+#: app/components/orders/order-detail.tsx:1011
 msgid "Payment failed. Nothing was charged."
 msgstr "فشل الدفع. لم يتم خصم أي مبلغ."
 
@@ -30209,7 +30236,7 @@ msgstr "الدفع يحتاج إلى مراجعة"
 msgid "Payment not finished"
 msgstr "لم يكتمل الدفع"
 
-#: app/components/orders/order-detail.tsx:941
+#: app/components/orders/order-detail.tsx:1014
 msgid "Payment not yet received"
 msgstr "لم يُستلم الدفع بعد"
 
@@ -30230,7 +30257,7 @@ msgstr "سياسات الدفع"
 msgid "Payment policy"
 msgstr "سياسة الدفع"
 
-#: app/components/orders/order-detail.tsx:360
+#: app/components/orders/order-detail.tsx:380
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:230
 msgid "Payment received"
 msgstr "تم استلام الدفعة"
@@ -30248,7 +30275,7 @@ msgstr "الدفع غير مؤكد"
 msgid "Payment under review"
 msgstr "الدفع قيد المراجعة"
 
-#: app/components/orders/order-detail.tsx:940
+#: app/components/orders/order-detail.tsx:1013
 msgid "Payment window expired before it was paid."
 msgstr "انتهت مهلة الدفع قبل إتمامه."
 
@@ -30851,8 +30878,8 @@ msgid "Pickles"
 msgstr "مخللات"
 
 #: app/components/customers/person-orders-panel.tsx:222
-#: app/components/orders/order-detail.tsx:640
-#: app/routes/_app+/$orgSlug_+/orders.tsx:280
+#: app/components/orders/order-detail.tsx:713
+#: app/routes/_app+/$orgSlug_+/orders.tsx:294
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:675
 #: app/utils/discounts/labels.ts:165
 msgid "Pickup"
@@ -30987,7 +31014,7 @@ msgstr "المكان"
 #~ msgid "Place temporary holds on a specific table or entire dining area for maintenance, private events, weather, or staff holds."
 #~ msgstr "وضع حظر مؤقت على طاولة محددة أو منطقة طعام كاملة للصيانة أو المناسبات الخاصة أو الطقس أو حجوزات الموظفين."
 
-#: app/components/orders/order-detail.tsx:359
+#: app/components/orders/order-detail.tsx:379
 msgid "Placed"
 msgstr "تم الطلب"
 
@@ -31633,7 +31660,7 @@ msgstr "الأسبوع السابق"
 
 #: app/components/inventory/recipe-section.tsx:763
 #: app/components/menu/location-overrides-card.tsx:145
-#: app/components/orders/order-detail.tsx:767
+#: app/components/orders/order-detail.tsx:840
 #: app/components/reservations/experiences/experiences-screen.tsx:295
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:512
 msgid "Price"
@@ -32242,11 +32269,11 @@ msgstr "المشتريات"
 #~ msgid "Purchasing keeps your deliveries, what to order and the suppliers you buy from in one place. Recording deliveries is coming soon."
 #~ msgstr "تجمع المشتريات توريداتك وما يجب طلبه والموردين الذين تشتري منهم في مكان واحد. تسجيل التوريدات قادم قريبًا."
 
-#: app/components/orders/order-detail.tsx:686
+#: app/components/orders/order-detail.tsx:759
 msgid "Push the promised time back"
 msgstr "تأجيل الوقت الموعود"
 
-#: app/components/orders/order-detail.tsx:706
+#: app/components/orders/order-detail.tsx:779
 msgid "Push the time back. The guest's page updates, and 10 minutes or more also sends them the new time."
 msgstr "أجّل الوقت. تتحدّث صفحة الضيف، وإذا كان التأجيل 10 دقائق أو أكثر يصله الوقت الجديد أيضًا."
 
@@ -32322,7 +32349,7 @@ msgstr "طاولات QR"
 msgid "qt"
 msgstr "ربع غالون"
 
-#: app/components/orders/order-detail.tsx:758
+#: app/components/orders/order-detail.tsx:831
 msgid "Qty"
 msgstr "الكمية"
 
@@ -32595,7 +32622,7 @@ msgstr "قراءة تفاصيل الصفحة"
 msgid "Ready"
 msgstr "جاهز"
 
-#: app/components/orders/order-detail.tsx:298
+#: app/components/orders/order-detail.tsx:318
 msgid "Ready around {promisedFrom}"
 msgstr "جاهز تقريبًا في {promisedFrom}"
 
@@ -32681,7 +32708,7 @@ msgstr "تمت إعادة تعيين الحجوزات القادمة تلقائ�
 msgid "Receive"
 msgstr "استلام"
 
-#: app/routes/_app+/$orgSlug_+/orders.tsx:152
+#: app/routes/_app+/$orgSlug_+/orders.tsx:159
 msgid "Receive and manage menu and drop orders. Updates refresh every 15 seconds."
 msgstr "استلم طلبات القائمة والطروحات وأدرها. تُحدَّث البيانات كل 15 ثانية."
 
@@ -32831,7 +32858,7 @@ msgid "Record a message for your team to follow up."
 msgstr "تسجيل رسالة ليتابعها فريقك."
 
 #: app/components/loyalty/record-refund-dialog.tsx:205
-#: app/components/orders/order-detail.tsx:1037
+#: app/components/orders/order-detail.tsx:1110
 #: app/components/orders/record-order-refund-dialog.tsx:212
 msgid "Record a refund"
 msgstr "تسجيل استرداد"
@@ -33051,7 +33078,7 @@ msgstr "إعادة توزيع الحجوزات اللاحقة"
 #: app/components/staff/timeclock-today.tsx:172
 #: app/routes/_app+/$orgSlug_+/loyalty+/activity.tsx:401
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:247
-#: app/routes/_app+/$orgSlug_+/orders.tsx:162
+#: app/routes/_app+/$orgSlug_+/orders.tsx:169
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:347
 msgid "Refresh"
 msgstr "تحديث"
@@ -33083,9 +33110,9 @@ msgid "Refresh. {updated}"
 msgstr "تحديث. {updated}"
 
 #: app/components/loyalty/record-refund-dialog.tsx:252
-#: app/components/orders/order-detail.tsx:964
-#: app/components/orders/order-detail.tsx:976
-#: app/components/orders/order-detail.tsx:1014
+#: app/components/orders/order-detail.tsx:1037
+#: app/components/orders/order-detail.tsx:1049
+#: app/components/orders/order-detail.tsx:1087
 #: app/components/orders/provider-refund-dialog.tsx:342
 #: app/components/orders/record-order-refund-dialog.tsx:266
 #: app/components/reservations/payment-panel.tsx:625
@@ -33094,19 +33121,19 @@ msgstr "تحديث. {updated}"
 msgid "Refund"
 msgstr "استرداد"
 
-#: app/routes/_app+/$orgSlug_+/orders.tsx:303
+#: app/routes/_app+/$orgSlug_+/orders.tsx:317
 msgid "Refund failed"
 msgstr "فشل الاسترداد"
 
-#: app/components/orders/order-detail.tsx:379
+#: app/components/orders/order-detail.tsx:399
 msgid "Refund failed: {amount}"
 msgstr "فشل الاسترداد: {amount}"
 
-#: app/components/orders/order-detail.tsx:982
+#: app/components/orders/order-detail.tsx:1055
 msgid "Refund failed."
 msgstr "فشل الاسترداد."
 
-#: app/components/orders/order-detail.tsx:1244
+#: app/components/orders/order-detail.tsx:1328
 msgid "Refund failed. You can try again."
 msgstr "فشل الاسترداد. يمكنك المحاولة مرة أخرى."
 
@@ -33114,20 +33141,20 @@ msgstr "فشل الاسترداد. يمكنك المحاولة مرة أخرى."
 msgid "Refund online orders"
 msgstr "استرداد مبالغ الطلبات عبر الإنترنت"
 
-#: app/routes/_app+/$orgSlug_+/orders.tsx:299
+#: app/routes/_app+/$orgSlug_+/orders.tsx:313
 #: app/utils/reservations/payments-view.ts:35
 msgid "Refund pending"
 msgstr "استرداد قيد الانتظار"
 
-#: app/components/orders/order-detail.tsx:968
+#: app/components/orders/order-detail.tsx:1041
 msgid "Refund pending ({refundPendingMoney})"
 msgstr "استرداد قيد الانتظار ({refundPendingMoney})"
 
-#: app/components/orders/order-detail.tsx:377
+#: app/components/orders/order-detail.tsx:397
 msgid "Refund pending: {amount}"
 msgstr "استرداد قيد الانتظار: {amount}"
 
-#: app/components/orders/order-detail.tsx:1242
+#: app/components/orders/order-detail.tsx:1326
 msgid "Refund pending. It is still being processed."
 msgstr "الاسترداد قيد الانتظار. ما زال قيد المعالجة."
 
@@ -33140,11 +33167,11 @@ msgstr "استرداد قيد المعالجة"
 msgid "Refund queued"
 msgstr "استرداد في قائمة الانتظار"
 
-#: app/components/orders/order-detail.tsx:375
+#: app/components/orders/order-detail.tsx:395
 msgid "Refund recorded: {amount}"
 msgstr "تم تسجيل استرداد: {amount}"
 
-#: app/components/orders/order-detail.tsx:1264
+#: app/components/orders/order-detail.tsx:1348
 msgid "Refund recorded."
 msgstr "تم تسجيل الاسترداد."
 
@@ -33156,11 +33183,11 @@ msgstr "تم تسجيل الاسترداد. لم تكن هناك نقاط يجب
 msgid "Refund recorded. Points taken back: {taken}."
 msgstr "تم تسجيل الاسترداد. النقاط المسحوبة: {taken}."
 
-#: app/components/orders/order-detail.tsx:1245
+#: app/components/orders/order-detail.tsx:1329
 msgid "Refund sent to the guest's card."
 msgstr "تم إرسال المبلغ المسترد إلى بطاقة الضيف."
 
-#: app/components/orders/order-detail.tsx:1177
+#: app/components/orders/order-detail.tsx:1261
 msgid "Refund the guest?"
 msgstr "استرداد المبلغ للضيف؟"
 
@@ -33176,7 +33203,7 @@ msgstr "استرداد مبلغ هذا الطلب"
 msgid "Refund to card"
 msgstr "استرداد إلى البطاقة"
 
-#: app/components/orders/order-detail.tsx:954
+#: app/components/orders/order-detail.tsx:1027
 #: app/components/orders/order-status.tsx:39
 #: app/components/print/print-order-labels.ts:21
 #: app/components/settings/cards/organization/shop-card.tsx:51
@@ -33202,7 +33229,7 @@ msgstr "تم استرداد <0>{amount}</0>"
 msgid "Refunded after the deadline (%)"
 msgstr "المسترد بعد الموعد النهائي (%)"
 
-#: app/components/orders/order-detail.tsx:380
+#: app/components/orders/order-detail.tsx:400
 msgid "Refunded to card: {amount}"
 msgstr "تم الاسترداد إلى البطاقة: {amount}"
 
@@ -33288,6 +33315,8 @@ msgstr "إعادة توظيف {name}"
 msgid "Rehiring…"
 msgstr "جارٍ إعادة التوظيف…"
 
+#: app/components/orders/order-detail.tsx:597
+#: app/components/orders/waiting-lane.tsx:175
 #: app/components/privacy-banner.tsx:48
 msgid "Reject"
 msgstr "رفض"
@@ -33296,9 +33325,25 @@ msgstr "رفض"
 msgid "Reject automatically after"
 msgstr "الرفض تلقائيًا بعد"
 
+#: app/components/orders/acceptance.tsx:132
+msgid "Reject order"
+msgstr "رفض الطلب"
+
+#: app/components/orders/acceptance.tsx:89
+msgid "Reject order {orderNumber}?"
+msgstr "هل تريد رفض الطلب {orderNumber}؟"
+
 #: app/components/pos/zatca-settings.tsx:430
 msgid "Rejected {refused}"
 msgstr "مرفوضة {refused}"
+
+#: app/components/orders/order-detail.tsx:532
+msgid "Rejected: {reason}"
+msgstr "مرفوض: {reason}"
+
+#: app/utils/orders/acceptance.ts:56
+msgid "Rejecting a paid order refunds it, which is not available while impersonating."
+msgstr "رفض طلب مدفوع يستردّ مبلغه، وهذا غير متاح أثناء انتحال هوية مستخدم."
 
 #: app/components/staff/details-tab.tsx:417
 msgid "Relationship"
@@ -34557,7 +34602,7 @@ msgstr "Resy"
 #: app/components/reservations/settings/setup-list-chrome.tsx:83
 #: app/components/reservations/waitlist/waitlist-screen.tsx:213
 #: app/components/reservations/waitlist/waitlist-settings.tsx:227
-#: app/routes/_app+/$orgSlug_+/orders_.$orderId.tsx:264
+#: app/routes/_app+/$orgSlug_+/orders_.$orderId.tsx:287
 #: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:240
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.floor-plan.tsx:199
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:743
@@ -35499,7 +35544,7 @@ msgstr "يُحفظ في سجل التدقيق باسمك."
 msgid "Saved offline and sent more than 12 hours later. Check the times."
 msgstr "حُفظ دون اتصال وأُرسل بعد أكثر من 12 ساعة. راجع الأوقات."
 
-#: app/components/orders/order-detail.tsx:1165
+#: app/components/orders/order-detail.tsx:1249
 msgid "Saved on the order. The guest is told only when an item ran out or the kitchen is closed."
 msgstr "يُحفظ على الطلب. يُبلَّغ الضيف فقط عند نفاد صنف أو إغلاق المطبخ."
 
@@ -38942,7 +38987,7 @@ msgstr "بدء الرحلة عند حدث دورة الحياة"
 msgid "Start order"
 msgstr "بدء الطلب"
 
-#: app/components/orders/order-detail.tsx:412
+#: app/components/orders/order-detail.tsx:432
 msgid "Start preparing"
 msgstr "بدء التحضير"
 
@@ -39081,7 +39126,7 @@ msgstr "الإحصائيات"
 #: app/components/customers/person-profile-screen.tsx:779
 #: app/components/inventory/stock-list.tsx:114
 #: app/components/menu/menu-bulk-edit-sheet.tsx:548
-#: app/components/orders/order-detail.tsx:930
+#: app/components/orders/order-detail.tsx:1003
 #: app/components/reservations/experiences/experiences-screen.tsx:292
 #: app/components/roles/tenant-role-access-manager.tsx:1306
 #: app/components/settings/cards/sessions-card.tsx:239
@@ -39429,7 +39474,7 @@ msgstr "إرسال مع وجود متطلبات مستحقة"
 msgid "Submitted"
 msgstr "تاريخ الإرسال"
 
-#: app/routes/_app+/$orgSlug_+/orders.tsx:193
+#: app/routes/_app+/$orgSlug_+/orders.tsx:207
 msgid "Submitted orders will appear here."
 msgstr "ستظهر الطلبات المُرسلة هنا."
 
@@ -39461,7 +39506,7 @@ msgstr "الاشتراك غير نشط"
 msgid "Subscription Started"
 msgstr "بدأ الاشتراك"
 
-#: app/components/orders/order-detail.tsx:813
+#: app/components/orders/order-detail.tsx:886
 msgid "Subtotal"
 msgstr "المجموع الفرعي"
 
@@ -39775,12 +39820,12 @@ msgstr "الطاولة {0} مشغولة بواسطة {1} ({2} أشخاص)"
 msgid "Table {createdTableLabel} created."
 msgstr "تم إنشاء الطاولة {createdTableLabel}."
 
-#: app/components/orders/order-detail.tsx:650
+#: app/components/orders/order-detail.tsx:723
 #: app/components/qr/open-tabs.tsx:369
 #: app/components/qr/open-tabs.tsx:1059
 #: app/components/qr/open-tabs.tsx:1147
-#: app/routes/_app+/$orgSlug_+/orders.tsx:244
-#: app/routes/_app+/$orgSlug_+/orders.tsx:277
+#: app/routes/_app+/$orgSlug_+/orders.tsx:258
+#: app/routes/_app+/$orgSlug_+/orders.tsx:291
 msgid "Table {label}"
 msgstr "طاولة {label}"
 
@@ -40188,7 +40233,7 @@ msgstr "المهام"
 msgid "Tasks to finish when someone joins."
 msgstr "مهام يجب إنجازها عند انضمام شخص جديد."
 
-#: app/components/orders/order-detail.tsx:871
+#: app/components/orders/order-detail.tsx:944
 #: app/components/pos/pos-day-report.tsx:206
 msgid "Tax"
 msgstr "الضريبة"
@@ -41563,7 +41608,7 @@ msgstr "طلب الضيف تلقي الرسائل التسويقية عبر ال
 #~ msgid "The guest details could not be saved. Try again."
 #~ msgstr "تعذّر حفظ تفاصيل الضيف. حاول مرة أخرى."
 
-#: app/components/orders/order-detail.tsx:993
+#: app/components/orders/order-detail.tsx:1066
 msgid "The guest disputed this payment with their card issuer, so it cannot be refunded here until the dispute is settled."
 msgstr "اعترض الضيف على هذه الدفعة لدى مُصدر بطاقته، لذا لا يمكن استردادها من هنا حتى تُسوّى المنازعة."
 
@@ -41594,6 +41639,10 @@ msgstr "الضيف يدفع عبر الإنترنت. ينتظر الإغلاق �
 #~ msgid "The guest is paying online. Close and void wait until the payment finishes."
 #~ msgstr "الضيف يدفع إلكترونيًا. ينتظر الإغلاق والإلغاء حتى ينتهي الدفع."
 
+#: app/components/orders/acceptance.tsx:115
+msgid "The guest is refunded in full."
+msgstr "يُسترد للضيف المبلغ كاملاً."
+
 #: app/components/reservations/detail-sheet.tsx:1401
 msgid "The guest is told about a cancellation. Both are recorded in the history."
 msgstr "يُبلَّغ الضيف بالإلغاء. يُسجَّل الإجراءان في السجل."
@@ -41618,6 +41667,10 @@ msgstr "يدفع الضيف {total} إجمالًا، شاملًا الإكرام
 
 #~ msgid "The guest profile could not be loaded."
 #~ msgstr "تعذّر تحميل ملف الضيف."
+
+#: app/components/orders/acceptance.tsx:101
+msgid "The guest sees only \"out of stock\" or \"kitchen closed\". Other reasons stay with you."
+msgstr "يرى الضيف فقط \"نفدت الكمية\" أو \"المطبخ مغلق\". تبقى الأسباب الأخرى لديك."
 
 #: app/components/customers/person-marketing-card.tsx:477
 msgid "The guest unsubscribed recently. Try again later."
@@ -41809,11 +41862,11 @@ msgstr "تستخدم الرسالة {tag}. اختر قسيمة أو احذف ا�
 msgid "The Meta emulator refused this post (it contains #fail)."
 msgstr "رفض محاكي Meta هذا المنشور (يحتوي على #fail)."
 
-#: app/components/orders/order-detail.tsx:1018
+#: app/components/orders/order-detail.tsx:1091
 msgid "The money goes back to the guest's card through your payment provider."
 msgstr "يعود المبلغ إلى بطاقة الضيف عبر مزوّد الدفع الخاص بك."
 
-#: app/components/orders/order-detail.tsx:1197
+#: app/components/orders/order-detail.tsx:1281
 #: app/components/orders/provider-refund-dialog.tsx:288
 msgid "The money goes back to the guest's card through your payment provider. Card and payment provider fees are usually not returned to you."
 msgstr "يعود المبلغ إلى بطاقة الضيف عبر مزوّد الدفع الخاص بك. وعادةً لا تُردّ إليك رسوم البطاقة ومزوّد الدفع."
@@ -41889,6 +41942,10 @@ msgstr "طلب <0>{supplier}</0> كان موعده <1>{due}</1> ولم يُست�
 #: app/utils/discounts/labels.ts:207
 msgid "The order is below the minimum spend."
 msgstr "الطلب أقل من الحد الأدنى للإنفاق."
+
+#: app/components/orders/acceptance.tsx:92
+msgid "The order is cancelled right away and nothing is cooked."
+msgstr "يُلغى الطلب فوراً ولا يُطهى شيء."
 
 #: app/components/inventory/review-order-screen.tsx:812
 msgid "The order is closed and cannot be received any more. Stock you already received stays. If you already sent it, tell the supplier."
@@ -43280,8 +43337,8 @@ msgstr "هذا يستخدم تكلفة أدخلها شخص ما يدويًا. ت
 msgid "this option"
 msgstr "هذا الخيار"
 
-#: app/components/orders/order-detail.tsx:322
-#: app/components/orders/order-detail.tsx:704
+#: app/components/orders/order-detail.tsx:342
+#: app/components/orders/order-detail.tsx:777
 msgid "This order can't be pushed back any further."
 msgstr "لا يمكن تأجيل هذا الطلب أكثر من ذلك."
 
@@ -43289,15 +43346,15 @@ msgstr "لا يمكن تأجيل هذا الطلب أكثر من ذلك."
 msgid "This order cannot be refunded through the payment provider."
 msgstr "لا يمكن استرداد مبلغ هذا الطلب عبر مزوّد الدفع."
 
-#: app/components/orders/order-detail.tsx:318
+#: app/components/orders/order-detail.tsx:338
 msgid "This order changed on another screen. Check the new time and try again."
 msgstr "تغيّر هذا الطلب على شاشة أخرى. تحقق من الوقت الجديد وحاول مرة أخرى."
 
-#: app/routes/_app+/$orgSlug_+/orders_.$orderId.tsx:249
+#: app/routes/_app+/$orgSlug_+/orders_.$orderId.tsx:272
 msgid "This order could not be loaded."
 msgstr "تعذر تحميل هذا الطلب."
 
-#: app/routes/_app+/$orgSlug_+/orders_.$orderId.tsx:247
+#: app/routes/_app+/$orgSlug_+/orders_.$orderId.tsx:270
 msgid "This order does not exist or was removed."
 msgstr "هذا الطلب غير موجود أو تمت إزالته."
 
@@ -43323,7 +43380,7 @@ msgstr "يتم إرسال هذا الطلب الآن. انتظر لحظة ثم �
 msgid "This order is changing right now. Refresh and try again."
 msgstr "هذا الطلب يتغيّر الآن. حدّث الصفحة وحاول مجددًا."
 
-#: app/components/orders/order-detail.tsx:324
+#: app/components/orders/order-detail.tsx:344
 msgid "This order is finished, so its time can't change."
 msgstr "انتهى هذا الطلب، لذا لا يمكن تغيير وقته."
 
@@ -43331,7 +43388,11 @@ msgstr "انتهى هذا الطلب، لذا لا يمكن تغيير وقته.
 msgid "This order is too long for a WhatsApp link. Copy the text and paste it into the chat."
 msgstr "هذا الطلب أطول من أن يُرسل برابط واتساب. انسخ النص والصقه في المحادثة."
 
-#: app/components/orders/order-detail.tsx:342
+#: app/components/orders/order-detail.tsx:581
+msgid "This order is waiting for you to accept it."
+msgstr "هذا الطلب ينتظر قبولك."
+
+#: app/components/orders/order-detail.tsx:362
 msgid "This order needs a manual check before it goes ahead. Start preparing to accept it, or cancel it."
 msgstr "يحتاج هذا الطلب إلى مراجعة يدوية قبل المتابعة. ابدأ التحضير لقبوله، أو ألغِه."
 
@@ -43339,6 +43400,10 @@ msgstr "يحتاج هذا الطلب إلى مراجعة يدوية قبل ال�
 #: app/components/orders/record-order-refund-dialog.tsx:136
 msgid "This order no longer exists."
 msgstr "لم يعد هذا الطلب موجودًا."
+
+#: app/utils/orders/acceptance.ts:50
+msgid "This order was already decided or it timed out. The list is updated."
+msgstr "سبق البتّ في هذا الطلب أو انتهت مهلته. تم تحديث القائمة."
 
 #: app/utils/inventory/inventory-errors.ts:77
 msgid "This order was already sent, so its items cannot change. Start a new order instead."
@@ -44015,6 +44080,10 @@ msgstr "تأخير زمني"
 msgid "Time Delay"
 msgstr "تأخير زمني"
 
+#: app/components/orders/acceptance.tsx:53
+msgid "Time is up"
+msgstr "انتهى الوقت"
+
 #: app/components/my-schedule/requests-view.tsx:154
 #: app/components/staff/schedule/week-grid.tsx:101
 #: app/components/workspace-breadcrumb.tsx:35
@@ -44134,14 +44203,14 @@ msgstr "المنطقة الزمنية"
 msgid "Timing and notes"
 msgstr "التوقيت والملاحظات"
 
-#: app/components/orders/order-detail.tsx:880
+#: app/components/orders/order-detail.tsx:953
 msgid "Tip"
 msgstr "البقشيش"
 
 #~ msgid "Tip ({0}%)"
 #~ msgstr "البقشيش ({0}%)"
 
-#: app/components/orders/order-detail.tsx:879
+#: app/components/orders/order-detail.tsx:952
 msgid "Tip ({tipPercent}%)"
 msgstr "البقشيش ({tipPercent}%)"
 
@@ -44419,7 +44488,7 @@ msgstr "الإضافات والصلصات وخيارات أخرى على الع�
 #: app/components/customers/person-orders-panel.tsx:175
 #: app/components/inventory/review-order-screen.tsx:639
 #: app/components/notes-chart.tsx:69
-#: app/components/orders/order-detail.tsx:899
+#: app/components/orders/order-detail.tsx:972
 #: app/components/staff/labor/labor-overview.tsx:219
 #: app/components/staff/labor/labor-tips.tsx:276
 #: app/components/staff/timesheets/payroll-summary.tsx:443
@@ -44787,7 +44856,7 @@ msgstr "جرّب تعديل البحث أو الفلتر."
 #: app/components/menu/delete-effects.tsx:468
 #: app/components/menu/delete-effects.tsx:543
 #: app/components/menu/menu-review-stack.tsx:476
-#: app/components/orders/order-detail.tsx:1012
+#: app/components/orders/order-detail.tsx:1085
 #: app/components/phone-agent/call-detail-sheet.tsx:367
 #: app/components/phone-agent/call-recording-player.tsx:154
 #: app/components/phone-agent/voice-picker.tsx:456
@@ -44968,6 +45037,10 @@ msgstr "تفعيل تسجيل الدخول برمز PIN لـ {label}"
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:158
 msgid "Turn on Reservations to use this trigger"
 msgstr "فعّل الحجوزات لاستخدام هذا المشغّل"
+
+#: app/components/orders/waiting-lane.tsx:120
+msgid "Turn on sound"
+msgstr "تشغيل الصوت"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:353
 msgid "Turn on the agent"
@@ -45181,7 +45254,7 @@ msgstr "تعذر تحميل بيانات مخطط الصالة."
 msgid "Unable to load more calls. Try again."
 msgstr "تعذّر تحميل المزيد من المكالمات. حاول مرة أخرى."
 
-#: app/routes/_app+/$orgSlug_+/orders.tsx:123
+#: app/routes/_app+/$orgSlug_+/orders.tsx:125
 msgid "Unable to load orders. Try again."
 msgstr "تعذّر تحميل الطلبات. حاول مرة أخرى."
 
@@ -45214,8 +45287,9 @@ msgstr "تعذّر تحميل الطاولات. حاول مجددًا."
 msgid "Unable to load this call. Try again."
 msgstr "تعذّر تحميل هذه المكالمة. حاول مرة أخرى."
 
-#: app/components/orders/order-detail.tsx:327
-#: app/routes/_app+/$orgSlug_+/orders_.$orderId.tsx:141
+#: app/components/orders/order-detail.tsx:347
+#: app/routes/_app+/$orgSlug_+/orders_.$orderId.tsx:147
+#: app/utils/orders/acceptance.ts:63
 msgid "Unable to update this order. Refresh and try again."
 msgstr "تعذّر تحديث هذا الطلب. حدّث الصفحة وحاول مرة أخرى."
 
@@ -46467,7 +46541,7 @@ msgstr "عرض"
 msgid "View all"
 msgstr "عرض الكل"
 
-#: app/components/orders/order-detail.tsx:608
+#: app/components/orders/order-detail.tsx:681
 msgid "View all orders"
 msgstr "عرض كل الطلبات"
 
@@ -46873,6 +46947,11 @@ msgstr "بانتظار الجهاز اللوحي…"
 #: app/components/pos/terminals-manager.tsx:1851
 msgid "Waiting for the terminal…"
 msgstr "في انتظار الجهاز…"
+
+#: app/components/orders/order-detail.tsx:576
+#: app/components/orders/waiting-lane.tsx:102
+msgid "Waiting for you"
+msgstr "بانتظارك"
 
 #: app/components/pos/terminals-manager.tsx:673
 #: app/components/pos/terminals-manager.tsx:677
@@ -48166,8 +48245,12 @@ msgstr "لماذا تغيّر هذه؟"
 msgid "Why are you declining?"
 msgstr "ما سبب الرفض؟"
 
+#: app/components/orders/acceptance.tsx:99
+msgid "Why are you rejecting it?"
+msgstr "لماذا ترفضه؟"
+
 #: app/components/inventory/review-order-screen.tsx:827
-#: app/components/orders/order-detail.tsx:1163
+#: app/components/orders/order-detail.tsx:1247
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:580
 msgid "Why is it cancelled?"
 msgstr "لماذا أُلغيت؟"
