@@ -124,12 +124,23 @@ describe('restaurant order dispute states', () => {
 				closed,
 			)
 		expect(status('needs_response', false)).toBe('open')
-		expect(status('warning_needs_response', false)).toBe('open')
 		expect(status('under_review', false)).toBe('open')
 		expect(status('won', true)).toBe('won')
-		expect(status('warning_closed', true)).toBe('won')
 		expect(status('lost', true)).toBe('lost')
 		expect(status('lost', false)).toBe('lost')
+	})
+
+	it('does not report a Stripe inquiry as a blocking dispute', () => {
+		const status = (value: string, closed: boolean) =>
+			mapStripeDisputeStatusToRestaurantOrder(
+				{ status: value as never },
+				closed,
+			)
+		expect(status('warning_needs_response', false)).toBeNull()
+		expect(status('warning_under_review', false)).toBeNull()
+		expect(status('warning_closed', true)).toBeNull()
+		// Escalated to a chargeback: the same dispute now needs a response.
+		expect(status('needs_response', false)).toBe('open')
 	})
 
 	it('maps Checkout.com dispute events and ignores other events', () => {

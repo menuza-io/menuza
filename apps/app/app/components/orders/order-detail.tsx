@@ -30,7 +30,7 @@ import { Checkbox } from '@repo/ui/checkbox'
 import { Icon } from '@repo/ui/icon'
 import { RadioGroup, RadioGroupItem } from '@repo/ui/radio-group'
 import { Separator } from '@repo/ui/separator'
-import { Fragment, type ReactNode, useState } from 'react'
+import { Fragment, type ReactNode, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { SelectField } from '#app/components/staff/controls.tsx'
 import { OperatorRequestError } from '#app/hooks/use-operator-client.ts'
@@ -223,6 +223,17 @@ export function OrderDetail({
 	const next = nextOrderStatus(order.status)
 	const closed = CLOSED_ORDER_STATUSES.includes(order.status)
 	const waiting = order.status === WAITING_ORDER_STATUS
+	// Accept and Reject leave with the waiting banner, and focus would fall to
+	// the page: bring it to the order's heading, unless it is already elsewhere.
+	const headingRef = useRef<HTMLHeadingElement>(null)
+	const wasWaiting = useRef(waiting)
+	useEffect(() => {
+		if (wasWaiting.current && !waiting) {
+			const active = document.activeElement
+			if (!active || active === document.body) headingRef.current?.focus()
+		}
+		wasWaiting.current = waiting
+	}, [waiting])
 	const rejected = isRejectedOrder(order)
 	const rejectedReasonLabel = rejected
 		? CANCEL_REASON_LABELS[
@@ -469,7 +480,11 @@ export function OrderDetail({
 				<div className="flex flex-wrap items-start justify-between gap-4">
 					<div className="flex min-w-0 flex-col gap-1">
 						<div className="flex items-center gap-1">
-							<h1 className="text-2xl font-semibold tabular-nums">
+							<h1
+								ref={headingRef}
+								tabIndex={-1}
+								className="text-2xl font-semibold tabular-nums outline-none"
+							>
 								<bdi dir="ltr">{order.number}</bdi>
 							</h1>
 							{paymentNotRequired ? (

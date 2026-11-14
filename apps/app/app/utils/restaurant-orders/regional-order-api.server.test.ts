@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { consoleError } from '#tests/setup/setup-test-env.ts'
 import {
 	bindRestaurantOrderPaymentSession,
 	fetchPendingRestaurantOrderRefunds,
@@ -563,11 +564,38 @@ describe('regional refund and dispute client (#80)', () => {
 			})
 		})
 
-		it('never releases a replayed or already sent refund, but still refuses', async () => {
+		const RELEASED = {
+			refundId: 'rf_1',
+			orderId: 'ord_1',
+			status: 'failed',
+			applied: true,
+		}
+
+		it('releases a replayed refund booked without the check too', async () => {
+			fetchMock
+				.mockResolvedValueOnce(jsonResponse({ ...REFUND, replayed: true }))
+				.mockResolvedValueOnce(jsonResponse(RELEASED))
+			const error = await expectRegionalError(
+				requestRestaurantOrderRefundIntent({ dataRegion: 'us', ...SCOPED }),
+			)
+			expect(error).toMatchObject({
+				code: 'location_scope_unsupported',
+				httpStatus: 403,
+			})
+			expect(fetchMock).toHaveBeenCalledTimes(2)
+			expect(sent().body).toMatchObject({
+				refundId: 'rf_1',
+				status: 'failed',
+				failureCode: 'location_scope_unsupported',
+			})
+		})
+
+		it('never releases an already sent or settled refund, but still refuses', async () => {
 			for (const answer of [
-				{ ...REFUND, replayed: true },
+				{ ...REFUND, replayed: true, providerRefundId: 're_1' },
 				{ ...REFUND, replayed: false, providerRefundId: 're_1' },
 				{ ...REFUND, replayed: false, status: 'succeeded' },
+				{ ...REFUND, replayed: true, status: 'failed' },
 			]) {
 				fetchMock.mockReset().mockResolvedValue(jsonResponse(answer))
 				const error = await expectRegionalError(
@@ -576,6 +604,80 @@ describe('regional refund and dispute client (#80)', () => {
 				expect(error.code).toBe('location_scope_unsupported')
 				expect(fetchMock).toHaveBeenCalledTimes(1)
 			}
+		})
+
+		it('retries the release and refuses once it goes through', async () => {
+			consoleError.mockImplementation(() => {})
+			fetchMock
+				.mockResolvedValueOnce(jsonResponse({ ...REFUND, replayed: false }))
+				.mockResolvedValueOnce(jsonResponse({ error: 'unavailable' }, 503))
+				.mockResolvedValueOnce(jsonResponse({ error: 'unavailable' }, 502))
+				.mockResolvedValueOnce(jsonResponse(RELEASED))
+			const error = await expectRegionalError(
+				requestRestaurantOrderRefundIntent({ dataRegion: 'us', ...SCOPED }),
+			)
+			expect(error).toMatchObject({
+				code: 'location_scope_unsupported',
+				httpStatus: 403,
+			})
+			// One booking and three release attempts.
+			expect(fetchMock).toHaveBeenCalledTimes(4)
+		})
+
+		it('answers a retryable 503, not 403, when the release never goes through', async () => {
+			consoleError.mockImplementation(() => {})
+			fetchMock
+				.mockResolvedValueOnce(jsonResponse({ ...REFUND, replayed: false }))
+				.mockImplementation(async () =>
+					jsonResponse({ error: 'unavailable' }, 503),
+				)
+			const error = await expectRegionalError(
+				requestRestaurantOrderRefundIntent({ dataRegion: 'us', ...SCOPED }),
+			)
+			expect(error).toMatchObject({
+				code: 'refund_release_failed',
+				httpStatus: 503,
+				retryable: true,
+			})
+			expect(fetchMock).toHaveBeenCalledTimes(4)
+		})
+
+		it('does not retry a release the region refuses outright, and still answers 503', async () => {
+			consoleError.mockImplementation(() => {})
+			fetchMock
+				.mockResolvedValueOnce(jsonResponse({ ...REFUND, replayed: false }))
+				.mockResolvedValueOnce(jsonResponse({ error: 'invalid_request' }, 400))
+			const error = await expectRegionalError(
+				requestRestaurantOrderRefundIntent({ dataRegion: 'us', ...SCOPED }),
+			)
+			expect(error).toMatchObject({
+				code: 'refund_release_failed',
+				httpStatus: 503,
+			})
+			expect(fetchMock).toHaveBeenCalledTimes(2)
+		})
+
+		it('releases on the retry after a failed release (same key replays)', async () => {
+			consoleError.mockImplementation(() => {})
+			// First call: booked unchecked, release fails.
+			fetchMock
+				.mockResolvedValueOnce(jsonResponse({ ...REFUND, replayed: false }))
+				.mockImplementation(async () =>
+					jsonResponse({ error: 'unavailable' }, 503),
+				)
+			await expectRegionalError(
+				requestRestaurantOrderRefundIntent({ dataRegion: 'us', ...SCOPED }),
+			)
+			// Retry: the region answers the same pending row as a replay.
+			fetchMock
+				.mockReset()
+				.mockResolvedValueOnce(jsonResponse({ ...REFUND, replayed: true }))
+				.mockResolvedValueOnce(jsonResponse(RELEASED))
+			const error = await expectRegionalError(
+				requestRestaurantOrderRefundIntent({ dataRegion: 'us', ...SCOPED }),
+			)
+			expect(error.code).toBe('location_scope_unsupported')
+			expect(sent().body).toMatchObject({ refundId: 'rf_1', status: 'failed' })
 		})
 
 		it('refuses more locations than the contract allows without calling the region', async () => {
@@ -667,6 +769,42 @@ describe('regional refund and dispute client (#80)', () => {
 				refundId: 'rf_1',
 				status: 'failed',
 				failureCode: 'loyalty_check_unsupported',
+			})
+		})
+
+		it('releases a replay, and answers a retryable 503 when the release fails', async () => {
+			consoleError.mockImplementation(() => {})
+			fetchMock
+				.mockResolvedValueOnce(jsonResponse({ ...REFUND, replayed: true }))
+				.mockResolvedValueOnce(
+					jsonResponse({
+						refundId: 'rf_1',
+						orderId: 'ord_1',
+						status: 'failed',
+						applied: true,
+					}),
+				)
+			expect(
+				await expectRegionalError(
+					requestRestaurantOrderRefundIntent({ dataRegion: 'us', ...LIMITED }),
+				),
+			).toMatchObject({ code: 'loyalty_check_unsupported', httpStatus: 403 })
+			expect(fetchMock).toHaveBeenCalledTimes(2)
+
+			fetchMock
+				.mockReset()
+				.mockResolvedValueOnce(jsonResponse({ ...REFUND, replayed: true }))
+				.mockImplementation(async () =>
+					jsonResponse({ error: 'unavailable' }, 503),
+				)
+			expect(
+				await expectRegionalError(
+					requestRestaurantOrderRefundIntent({ dataRegion: 'us', ...LIMITED }),
+				),
+			).toMatchObject({
+				code: 'refund_release_failed',
+				httpStatus: 503,
+				retryable: true,
 			})
 		})
 	})

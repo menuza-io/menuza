@@ -122,10 +122,12 @@ CURRENT order context (`guestCancel[locationId]`, present only while
 minutes), so switching it off stops cancels at once. The rule is
 `guestCancelWindow` in `@repo/common/restaurant-orders`: only `accepted` or
 `pending_acceptance`, not dine-in, QR table rounds or tab rounds, an online
-order must be `paid` or `not_required`, no kitchen ticket dish past New
-(`kds_tickets`, source `online`), scheduled orders until `scheduledLeadMinutes`
-before their time (never less than the ASAP window), drop orders never after the
-drop's `ordersCloseAt` (a closed or missing drop closes it).
+order must be `paid` or `not_required`, a pay-at-handoff order already marked
+`paid` (counter or phone) is `not_cancellable` (no refund is booked for it), no
+kitchen ticket dish past New (`kds_tickets`, source `online`), scheduled orders
+until `scheduledLeadMinutes` before their time (never less than the ASAP
+window), drop orders never after the drop's `ordersCloseAt` (a closed or missing
+drop closes it).
 
 Both routes take the same credential and organization as the order link: the
 `Origin` plus `slug`/`host`, and `Authorization: Bearer <receiptToken>` or
@@ -161,7 +163,8 @@ read.
   answer's `refund` is `pending` with the amount. When another provider refund
   of the order is still pending, the full refund is owed instead (see "Provider
   refunds" below) and the answer's `refund` is `pending` with everything not yet
-  back. Handoff and free orders: `refund: { status: "none", amountCents: 0 }`.
+  back. Free orders (and handoff orders not yet paid):
+  `refund: { status: "none", amountCents: 0 }`.
 - The same `Idempotency-Key` again (24 hours) returns the stored answer byte for
   byte with `Idempotent-Replayed: true`: no second cancel, refund, kick or
   message. A new key on a cancelled order is `409 not_cancellable`.
@@ -176,7 +179,10 @@ The guest's receipt reads (`GET /orders/:id` by receipt token or link) carry
 without a second request. It may be up to 30 seconds behind the settings (the
 cancel itself always checks fresh); an order past any possible window answers
 `{ allowed: false, until: null }` without asking the App. The operator view
-never carries `cancel`; it shows `cancelledBy: "guest"`.
+never carries `cancel`; it shows `cancelledBy: "guest"`. Both reads also carry
+`refundsOnCancel: boolean` (true only for an order paid online): Sites words the
+confirm box from it and promises a refund only then. Optional on the wire
+(`publicOrderLifecycleSchema`), so an older region simply omits it.
 
 ## App → regional API (internal command token)
 

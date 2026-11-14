@@ -155,19 +155,30 @@ export function mapStripeRefundToRestaurantOrder(
 }
 
 /**
- * Stripe dispute state for the region. `created` (and `updated` while not
- * decided) is `open`; a closed dispute is `lost` only when Stripe says so:
- * `won`, `warning_closed` (an inquiry that never became a chargeback) and
- * anything else closed leave the money with the restaurant.
+ * Stripe dispute state for the region, or null when it is not a chargeback.
+ * `needs_response` and `under_review` are `open` (blocks refunds); a closed
+ * chargeback is `lost` only when Stripe says so, and `won` otherwise.
+ *
+ * A Stripe inquiry (`warning_needs_response`, `warning_under_review`,
+ * `warning_closed`) is not a chargeback: Stripe allows refunding during one,
+ * and refunding is usually the cheapest way to settle it, so it must not block
+ * the refund (409 `payment_disputed`) nor mark the order disputed. It reports
+ * null. If the inquiry escalates, Stripe moves the same dispute to
+ * `needs_response` and the next event reports `open`.
  */
 export function mapStripeDisputeStatusToRestaurantOrder(
 	dispute: Pick<Stripe.Dispute, 'status'>,
 	closed: boolean,
-): RestaurantOrderDisputeStatus {
-	if (dispute.status === 'lost') return 'lost'
-	if (dispute.status === 'won' || dispute.status === 'warning_closed') {
-		return 'won'
+): RestaurantOrderDisputeStatus | null {
+	if (
+		dispute.status === 'warning_needs_response' ||
+		dispute.status === 'warning_under_review' ||
+		dispute.status === 'warning_closed'
+	) {
+		return null
 	}
+	if (dispute.status === 'lost') return 'lost'
+	if (dispute.status === 'won') return 'won'
 	return closed ? 'won' : 'open'
 }
 

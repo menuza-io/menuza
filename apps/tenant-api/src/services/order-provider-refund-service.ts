@@ -7,6 +7,7 @@ import {
 	isNull,
 	lte,
 	ne,
+	notExists,
 	or,
 	sql,
 } from 'drizzle-orm'
@@ -38,12 +39,16 @@ import { queryInChunks } from '../lib/chunked-in.ts'
 import { type LoyaltyTx } from '../lib/loyalty-write.ts'
 import { kickOrderRefundExecute } from '../lib/order-refund-kick.ts'
 import { retryOnSqliteBusy } from '../lib/sqlite-retry.ts'
-import { refundDiscountRedemptions } from './discount-apply.ts'
+import {
+	refundDiscountRedemptions,
+	refundDiscountSource,
+} from './discount-apply.ts'
 import { loyaltySettleQueue } from './loyalty-purchase-service.ts'
 import {
 	bookOrderProviderRefundInTx,
 	bookOwedCancelRefundInTx,
 	bookTabProviderRefundInTx,
+	cancelRefundKey,
 	isUniqueConstraintError,
 	orderCarriesLoyalty,
 	orderRefundedNetCents,
@@ -325,13 +330,60 @@ function refundRef(found: FoundRefund): string {
 }
 
 /**
+ * A succeeded refund of a cancel (its own key, or the rest of it) that the
+ * provider reversed: the cancel still owes it, so the order is marked
+ * (`cancel_refund_due_at`) and the owed machinery books it again at once (or
+ * when what blocks it ends). Returns the new refund's id to kick the App
+ * with. Nothing for another kind of refund, or an order that is not cancelled.
+ */
+async function rebookReversedCancelRefund(
+	tx: OrderTx,
+	row: RestaurantOrderRefund,
+	orgId: string,
+	now: number,
+): Promise<string | null> {
+	const cancelKey = cancelRefundKey(row.orderId)
+	if (
+		row.idempotencyKey !== cancelKey &&
+		!row.idempotencyKey.startsWith(`${cancelKey}:`)
+	) {
+		return null
+	}
+	const [order] = await tx
+		.select()
+		.from(restaurantOrders)
+		.where(
+			and(
+				eq(restaurantOrders.id, row.orderId),
+				eq(restaurantOrders.orgId, orgId),
+			),
+		)
+		.limit(1)
+	if (!order || order.status !== 'cancelled') return null
+	const marked = new Date(now)
+	await tx
+		.update(restaurantOrders)
+		.set({ cancelRefundDueAt: marked, updatedAt: marked })
+		.where(eq(restaurantOrders.id, order.id))
+	const owed = await bookOwedCancelRefundInTx(
+		tx,
+		{ ...order, cancelRefundDueAt: marked },
+		now,
+	)
+	return owed.refund?.id ?? null
+}
+
+/**
  * The provider's answer for one refund. Idempotent: the first `succeeded`
  * adds the amount to the order's `refunded_cents` and starts what a
  * succeeded refund does (loyalty takes its share of the points back; a full
  * refund gives discount uses back) in the same transaction; any later report
  * changes nothing (`applied: false`). `failed` releases the reservation.
- * Final states win: a `succeeded` after `failed` (or the reverse) is logged
- * by id and answered `applied: false`.
+ * Final states win: a `succeeded` after `failed` is logged by id and answered
+ * `applied: false` (see the review note below). The one exception is the
+ * provider taking a succeeded refund back, a reversal, which needs the
+ * provider's own refund id (a `failed` report without it never moves money
+ * back: it comes from an App path that did not reach the provider).
  */
 export async function applyProviderRefundStatus(
 	input: ProviderRefundStatusInput,
@@ -399,6 +451,28 @@ export async function applyProviderRefundStatus(
 								return answer('failed', false)
 							}
 							if (row.status === 'succeeded' && input.status === 'failed') {
+								// A reversal needs the provider's own word: its refund id
+								// (the webhook's, or a provider read), equal to the one
+								// stored on the row. A `failed` without it is the App
+								// reporting a run that never reached the provider (payment
+								// not found, processor unavailable) beside another run that
+								// did refund; reversing then would make the money
+								// refundable again and the guest could be paid twice.
+								const providerConfirmed =
+									input.providerRefundId !== undefined &&
+									row.providerRefundId !== null &&
+									input.providerRefundId === row.providerRefundId
+								if (!providerConfirmed) {
+									console.warn(
+										'Order refund failure report without a matching provider refund ignored',
+										{
+											orgId,
+											refundId: row.id,
+											orderId: refundRef(found),
+										},
+									)
+									return answer(row.status, false)
+								}
 								// The provider took a succeeded refund back (Stripe can
 								// move a refund from succeeded to failed). Nothing shrinks:
 								// the row stays succeeded and is marked reversed, the
@@ -433,6 +507,19 @@ export async function applyProviderRefundStatus(
 												eq(restaurantOrders.orgId, orgId),
 											),
 										)
+									// The refund of a cancel (the guest was told it is coming
+									// back) is booked again: the order owes it, and the owed
+									// machinery (`bookOwedCancelRefundInTx`, with the orders
+									// tick as backstop) books it now, or once what blocks it
+									// (another pending refund, an open dispute) is over. Other
+									// reversals are refunded by hand.
+									const rebook = await rebookReversedCancelRefund(
+										tx,
+										found.row,
+										orgId,
+										now,
+									)
+									if (rebook) owedRefundIds.push(rebook)
 								}
 								console.warn('Order refund reversed by the provider', {
 									orgId,
@@ -443,20 +530,53 @@ export async function applyProviderRefundStatus(
 							}
 							if (input.status !== row.status && input.status !== 'pending') {
 								// Final states win otherwise: a failed refund never
-								// turns into a success.
-								console.warn('Order refund already settled', {
-									orgId,
-									refundId: row.id,
-									orderId: refundRef(found),
-									stored: row.status,
-									reported: input.status,
-								})
+								// turns into a success (the append-only trigger allows
+								// only pending -> succeeded | failed, so the row cannot
+								// be rewritten). A `succeeded` that carries a provider
+								// refund id for a row settled `failed` means money moved
+								// that the region released (a failure report that raced
+								// the provider's answer, before the row knew its id). It
+								// is flagged for the operator by id, loudly, and never
+								// applied: counting it needs a person to look at the
+								// order (it may also have been refunded again since).
+								const moneyMovedAfterFailure =
+									row.status === 'failed' &&
+									input.status === 'succeeded' &&
+									input.providerRefundId !== undefined
+								console.warn(
+									moneyMovedAfterFailure
+										? 'Order refund succeeded at the provider after it was settled failed: needs review'
+										: 'Order refund already settled',
+									{
+										orgId,
+										refundId: row.id,
+										orderId: refundRef(found),
+										stored: row.status,
+										reported: input.status,
+									},
+								)
 							}
 							return answer(row.status, false)
 						}
 
 						const providerRefundId =
 							row.providerRefundId ?? input.providerRefundId ?? null
+						if (
+							input.status === 'failed' &&
+							row.providerRefundId !== null &&
+							input.providerRefundId !== row.providerRefundId
+						) {
+							// The provider already accepted this refund (it is pending
+							// at the bank). Only the provider's own failure, naming its
+							// refund id, releases the reservation: a report without it
+							// comes from a run that never reached the provider, and
+							// releasing would let the real success go uncounted.
+							console.warn(
+								'Order refund failure report without the accepted provider refund ignored',
+								{ orgId, refundId: row.id, orderId: refundRef(found) },
+							)
+							return answer('pending', false)
+						}
 						if (input.status === 'pending') {
 							if (row.providerRefundId || !input.providerRefundId) {
 								return answer('pending', false)
@@ -526,6 +646,42 @@ export async function applyProviderRefundStatus(
 								const owed = await bookOwedCancelRefundInTx(tx, current, now)
 								if (owed.refund) owedRefundIds.push(owed.refund.id)
 							}
+						} else if (input.status === 'succeeded') {
+							// A tab refund does what an order's does once it is final:
+							// loyalty takes its share of the points back (the tab's
+							// source counts succeeded, non-reversed tab refunds) and a
+							// full refund gives the tab's discount uses back.
+							const tabId = found.row.tabId
+							const [tab] = await tx
+								.select({ id: qrTabs.id, totalCents: qrTabs.totalCents })
+								.from(qrTabs)
+								.where(eq(qrTabs.id, tabId))
+								.limit(1)
+							if (tab) {
+								const [net] = await tx
+									.select({
+										total: sql<number>`coalesce(sum(${qrTabRefunds.amountCents}), 0)`,
+									})
+									.from(qrTabRefunds)
+									.where(
+										and(
+											eq(qrTabRefunds.tabId, tab.id),
+											eq(qrTabRefunds.status, 'succeeded'),
+											isNull(qrTabRefunds.reversedAt),
+										),
+									)
+								if (
+									tab.totalCents > 0 &&
+									Number(net?.total ?? 0) >= tab.totalCents
+								) {
+									await refundDiscountSource(tx, 'tab', tab.id)
+								}
+								await loyalty.queue(
+									tx as unknown as LoyaltyTx,
+									{ type: 'qr_tab', id: tab.id },
+									now,
+								)
+							}
 						}
 						return answer(input.status, true)
 					},
@@ -581,6 +737,23 @@ export async function processOwedCancelRefunds(
 				or(
 					isNull(restaurantOrders.disputeStatus),
 					ne(restaurantOrders.disputeStatus, 'open'),
+				),
+				// Nor does an order whose other refund is still pending (a
+				// Checkout.com refund can stay so for days): settling that refund
+				// books the rest (`applyProviderRefundStatus`), and until then
+				// the sweep only re-read it first on every pass, so enough of
+				// them would starve the newer marks behind them.
+				notExists(
+					db
+						.select({ one: sql`1` })
+						.from(restaurantOrderRefunds)
+						.where(
+							and(
+								eq(restaurantOrderRefunds.orderId, restaurantOrders.id),
+								eq(restaurantOrderRefunds.kind, 'provider'),
+								eq(restaurantOrderRefunds.status, 'pending'),
+							),
+						),
 				),
 			),
 		)
@@ -805,6 +978,27 @@ export async function applyDisputeStatus(
 						}
 					}
 					if (tab) {
+						// As for an order: a report for another processor than the one
+						// that took the money is the uniform 404. A tab can also hold
+						// payments taken by the other processor (a payment that settled
+						// after the tab was paid), so one of its payments counts too.
+						if (
+							input.orderId &&
+							input.processor &&
+							tab.paymentProcessor !== input.processor
+						) {
+							const [other] = await tx
+								.select({ id: qrTabPayments.id })
+								.from(qrTabPayments)
+								.where(
+									and(
+										eq(qrTabPayments.tabId, tab.id),
+										eq(qrTabPayments.processor, input.processor),
+									),
+								)
+								.limit(1)
+							if (!other) return notFound()
+						}
 						const status = nextDisputeStatus(tab.disputeStatus, input.status)
 						if (status !== input.status) {
 							console.warn('Late dispute report ignored: the dispute closed', {

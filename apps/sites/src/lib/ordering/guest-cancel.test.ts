@@ -1,9 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import {
+	cancelAnnounceKey,
+	cancelHiddenKey,
 	cancelRefusalKey,
 	cancelWindowEnd,
+	clockOffsetMs,
 	createCancelAttempt,
 	formatCancelRemaining,
+	nextCancelAnnouncement,
 	orderStage,
 	paidOnline,
 	refundView,
@@ -146,6 +150,150 @@ describe('order stage and refund view', () => {
 	it('knows a paid online order from a pay-at-handoff one', () => {
 		expect(paidOnline({ paymentStatus: 'paid' })).toBe(true)
 		expect(paidOnline({ paymentStatus: 'not_required' })).toBe(false)
+	})
+
+	it('promises a refund only for an online payment, never for a handoff order marked paid', () => {
+		expect(paidOnline({ paymentMethod: 'online', paymentStatus: 'paid' })).toBe(
+			true,
+		)
+		expect(
+			paidOnline({ paymentMethod: 'handoff', paymentStatus: 'paid' }),
+		).toBe(false)
+		expect(
+			paidOnline({ paymentMethod: 'online', paymentStatus: 'pending' }),
+		).toBe(false)
+	})
+
+	it('lets the region decide with refundsOnCancel when it sends it', () => {
+		expect(paidOnline({ refundsOnCancel: false, paymentStatus: 'paid' })).toBe(
+			false,
+		)
+		expect(
+			paidOnline({
+				refundsOnCancel: true,
+				paymentMethod: 'handoff',
+				paymentStatus: 'paid',
+			}),
+		).toBe(true)
+	})
+})
+
+describe('clockOffsetMs', () => {
+	it('is the region clock minus this device clock', () => {
+		expect(clockOffsetMs(new Date(NOW + 90_000).toISOString(), NOW)).toBe(
+			90_000,
+		)
+		expect(clockOffsetMs(NOW - 5_000, NOW)).toBe(-5_000)
+	})
+
+	it('is 0 when the region sent no usable time', () => {
+		expect(clockOffsetMs(undefined, NOW)).toBe(0)
+		expect(clockOffsetMs(null, NOW)).toBe(0)
+		expect(clockOffsetMs('soon', NOW)).toBe(0)
+		expect(clockOffsetMs(Number.NaN, NOW)).toBe(0)
+	})
+})
+
+describe('cancelWindowEnd with a skewed clock', () => {
+	const order = {
+		status: 'accepted',
+		cancel: { allowed: true, until: until(120) },
+	}
+
+	it('keeps the button for a phone whose clock runs fast', () => {
+		// The phone is 5 minutes ahead: by its own clock the window already ended.
+		const phoneNow = NOW + 5 * 60_000
+		const offset = -5 * 60_000
+		expect(cancelWindowEnd(order, phoneNow)).toBeNull()
+		expect(cancelWindowEnd(order, phoneNow, offset)).toBe(phoneNow + 120_000)
+	})
+
+	it('closes on the region clock for a phone whose clock runs slow', () => {
+		const phoneNow = NOW - 5 * 60_000
+		const offset = 5 * 60_000
+		expect(cancelWindowEnd(order, phoneNow)).not.toBeNull()
+		expect(cancelWindowEnd(order, phoneNow + 119_999, offset)).not.toBeNull()
+		expect(cancelWindowEnd(order, phoneNow + 120_000, offset)).toBeNull()
+	})
+})
+
+describe('cancel countdown announcements', () => {
+	it('rounds up to whole minutes and uses 0 for the last minute', () => {
+		expect(cancelAnnounceKey(5 * 60_000)).toBe(5)
+		expect(cancelAnnounceKey(4 * 60_000 + 1)).toBe(5)
+		expect(cancelAnnounceKey(61_000)).toBe(2)
+		expect(cancelAnnounceKey(60_000)).toBe(0)
+		expect(cancelAnnounceKey(1)).toBe(0)
+		expect(cancelAnnounceKey(-10)).toBe(0)
+	})
+
+	it('speaks once per minute mark and once for the last minute, not every second', () => {
+		const spoken: number[] = []
+		let last: number | null = null
+		for (let ms = 3 * 60_000; ms > 0; ms -= 1000) {
+			const next = nextCancelAnnouncement(last, ms)
+			last = next.key
+			if (next.announce) spoken.push(next.key)
+		}
+		expect(spoken).toEqual([3, 2, 0])
+	})
+
+	it('speaks again after the box was hidden and shown anew (key reset)', () => {
+		expect(nextCancelAnnouncement(null, 90_000)).toEqual({
+			key: 2,
+			announce: true,
+		})
+		expect(nextCancelAnnouncement(2, 89_000)).toEqual({
+			key: 2,
+			announce: false,
+		})
+	})
+})
+
+describe('cancelHiddenKey', () => {
+	it('says nothing when the heading already shows the order is cancelled', () => {
+		expect(cancelHiddenKey({ status: 'cancelled' }, NOW)).toBeNull()
+		expect(cancelHiddenKey({ status: 'expired' }, NOW)).toBeNull()
+	})
+
+	it('explains a kitchen that started, a closed window, or no reason known', () => {
+		expect(cancelHiddenKey({ status: 'preparing' }, NOW)).toBe('preparing')
+		expect(
+			cancelHiddenKey(
+				{
+					status: 'accepted',
+					cancel: { allowed: false, until: until(-30) },
+				},
+				NOW,
+			),
+		).toBe('closed')
+		expect(
+			cancelHiddenKey(
+				{
+					status: 'accepted',
+					cancel: { allowed: false, until: until(300) },
+				},
+				NOW,
+			),
+		).toBe('unavailable')
+		expect(
+			cancelHiddenKey(
+				{ status: 'accepted', cancel: { allowed: false, until: null } },
+				NOW,
+			),
+		).toBe('unavailable')
+	})
+
+	it('judges the end on the region clock', () => {
+		const order = {
+			status: 'accepted',
+			cancel: { allowed: false, until: until(30) },
+		}
+		// Phone 2 minutes behind the region: by its own clock the end is 150 s away.
+		expect(cancelHiddenKey(order, NOW - 120_000, 120_000)).toBe('unavailable')
+		expect(cancelHiddenKey(order, NOW - 120_000 + 31_000, 120_000)).toBe(
+			'closed',
+		)
 	})
 })
 

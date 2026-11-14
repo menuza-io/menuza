@@ -36,6 +36,10 @@ export function useOrders(
 	const [feed, setFeed] = useState<PosOnlineOrdersFeed | null>(null)
 	const [error, setError] = useState<OrdersError | null>(null)
 	const [actionError, setActionError] = useState<OrdersError | null>(null)
+	/** The command that produced `actionError`, so a message can name what failed. */
+	const [actionName, setActionName] = useState<string | null>(null)
+	/** A dialog is showing the error: it stays until the dialog closes. */
+	const [errorPinned, setErrorPinned] = useState(false)
 	const [busy, setBusy] = useState(false)
 	const [receivedAt, setReceivedAt] = useState(0)
 	const [now, setNow] = useState(Date.now)
@@ -146,10 +150,10 @@ export function useOrders(
 		return () => window.clearInterval(timer)
 	}, [])
 	useEffect(() => {
-		if (!actionError) return
+		if (!actionError || errorPinned) return
 		const timer = window.setTimeout(() => setActionError(null), 8_000)
 		return () => window.clearTimeout(timer)
-	}, [actionError])
+	}, [actionError, errorPinned])
 
 	const readBack = useCallback(
 		async (id: string, gen: number) => {
@@ -197,10 +201,12 @@ export function useOrders(
 				grants: PosOnlineOrdersGrants
 				refundOutcome?: PosOnlineOrderDetailResponse['refundOutcome']
 			}>,
+			action: string,
 		) => {
 			if (writing.current || !online) return false
 			writing.current = true
 			setActionError(null)
+			setActionName(null)
 			setRefundOutcome(undefined)
 			setBusy(true)
 			++sequence.current
@@ -217,6 +223,7 @@ export function useOrders(
 				if (gen === generation.current) {
 					// A timed-out write may have landed: read back, never replay it blindly.
 					await readBack(id, gen)
+					setActionName(action)
 					setActionError(
 						failure instanceof OrdersError
 							? failure
@@ -247,6 +254,7 @@ export function useOrders(
 			setContact(null)
 			setRefundOutcome(undefined)
 			setActionError(null)
+			setActionName(null)
 			const gen = generation.current
 			if (!online) {
 				// Not recorded on the server: the alert keeps ringing here.
@@ -291,6 +299,7 @@ export function useOrders(
 			setContact(null)
 			setRefundOutcome(undefined)
 			setActionError(null)
+			setActionName(null)
 			const gen = generation.current
 			if (!(await readBack(id, gen)) && gen === generation.current)
 				setActionError(
@@ -306,6 +315,7 @@ export function useOrders(
 		setContact(null)
 		setRefundOutcome(undefined)
 		setActionError(null)
+		setActionName(null)
 	}, [])
 
 	const stale =
@@ -318,6 +328,10 @@ export function useOrders(
 		grants,
 		error,
 		actionError,
+		/** The command that failed (`accept`, `reject`, `refund`, ...), or null. */
+		actionName,
+		/** Keeps the error up while a dialog shows it (it clears 8 s after unpinning). */
+		pinActionError: setErrorPinned,
 		busy,
 		now,
 		stale,
@@ -339,11 +353,15 @@ export function useOrders(
 		},
 		command: (command: Exclude<PosOnlineOrderCommand, { action: 'open' }>) =>
 			selected
-				? write(selected, () => api.command(selected, command))
+				? write(selected, () => api.command(selected, command), command.action)
 				: Promise.resolve(false),
 		refund: (refund: PosOnlineOrderRefund, idempotencyKey: string) =>
 			selected
-				? write(selected, () => api.refund(selected, refund, idempotencyKey))
+				? write(
+						selected,
+						() => api.refund(selected, refund, idempotencyKey),
+						'refund',
+					)
 				: Promise.resolve(false),
 		revealing,
 		/** The guest's full phone and email, held only while this order is open. */
@@ -362,12 +380,14 @@ export function useOrders(
 				const data = await api.contact(id)
 				if (current()) setContact(data)
 			} catch (failure) {
-				if (current())
+				if (current()) {
+					setActionName(null)
 					setActionError(
 						failure instanceof OrdersError
 							? failure
 							: new OrdersError('orders_unavailable'),
 					)
+				}
 			} finally {
 				revealingRef.current = false
 				setRevealing(false)

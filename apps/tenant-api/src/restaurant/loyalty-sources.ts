@@ -13,6 +13,7 @@ import {
 	loyaltyOutbox,
 	loyaltyRedemptions,
 	loyaltyRefunds,
+	qrTabRefunds,
 	qrTabs,
 	restaurantOrders,
 	type QrTabRow,
@@ -23,6 +24,7 @@ import {
 	asc,
 	eq,
 	inArray,
+	isNull,
 	like,
 	lte,
 	ne,
@@ -679,8 +681,12 @@ export const qrTabLoyaltySource: LoyaltySourceAdapter = {
 			.where(eq(qrTabs.id, sourceId))
 			.get()
 		if (!tab) return null
-		// A tab's refunds are recorded through loyalty, one row each.
-		const refunded = await db
+		// What came back is the sum of two ledgers: refunds recorded through
+		// loyalty (one row each, for money refunded outside the region) and the
+		// provider refunds the region booked (#80), counted once they succeeded
+		// and the provider did not take them back (a reversed refund keeps
+		// `status = 'succeeded'`; loyalty never gives points back for it).
+		const recorded = await db
 			.select({
 				total: sql<number>`coalesce(sum(${loyaltyRefunds.amountMinor}), 0)`,
 			})
@@ -692,10 +698,26 @@ export const qrTabLoyaltySource: LoyaltySourceAdapter = {
 				),
 			)
 			.get()
+		const provider = await db
+			.select({
+				total: sql<number>`coalesce(sum(${qrTabRefunds.amountCents}), 0)`,
+			})
+			.from(qrTabRefunds)
+			.where(
+				and(
+					eq(qrTabRefunds.tabId, sourceId),
+					eq(qrTabRefunds.status, 'succeeded'),
+					isNull(qrTabRefunds.reversedAt),
+				),
+			)
+			.get()
 		return {
 			currency: tab.currency,
 			totalMinor: tab.totalCents,
-			refundedMinor: Number(refunded?.total ?? 0),
+			refundedMinor: Math.min(
+				tab.totalCents,
+				Number(recorded?.total ?? 0) + Number(provider?.total ?? 0),
+			),
 			locationId: tab.locationId,
 			verdict: await qrTabVerdict(db, tab, redemption, now),
 		}

@@ -1,10 +1,10 @@
-import { Trans } from '@lingui/macro'
+import { msg, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { type OrderRejectReason } from '@repo/common/restaurant-orders'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
 import { Icon } from '@repo/ui/icon'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import {
 	decideOrder,
@@ -16,6 +16,7 @@ import { formatMoney, type Order } from '#app/utils/orders/order-model.ts'
 import { ordersHref } from '#app/utils/orders/orders-link.ts'
 import {
 	chimeReady,
+	clearSoundChoice,
 	playChime,
 	readSoundChoice,
 	unlockChime,
@@ -24,11 +25,15 @@ import {
 import { AcceptanceCountdown, RejectOrderDialog } from './acceptance.tsx'
 
 const CHIME_EVERY_MS = 6000
+/** How long "Order accepted" stays once nothing else waits. */
+const NOTICE_MS = 10000
 
 /**
  * Orders that wait for a person to accept them. Shows nothing while none
  * waits. A repeating chime plays while any order waits, once the browser has
- * been allowed to make sound ("Turn on sound").
+ * been allowed to make sound; the "Sound" button turns it on and off again.
+ * After a decision the answer is announced here and focus moves to the lane
+ * heading, because the row that had focus is gone.
  */
 export function WaitingLane({
 	orgSlug,
@@ -49,11 +54,19 @@ export function WaitingLane({
 	const [busyId, setBusyId] = useState<string | null>(null)
 	const [rejecting, setRejecting] = useState<Order | null>(null)
 	const [message, setMessage] = useState<string | null>(null)
+	const headingRef = useRef<HTMLHeadingElement>(null)
 	const waiting = orders.length > 0
 
 	useEffect(() => {
 		if (readSoundChoice() && chimeReady()) setSoundOn(true)
 	}, [])
+
+	// With nothing left to accept, the lane stays just long enough to say so.
+	useEffect(() => {
+		if (waiting || !message) return
+		const timer = window.setTimeout(() => setMessage(null), NOTICE_MS)
+		return () => window.clearTimeout(timer)
+	}, [waiting, message])
 
 	useEffect(() => {
 		if (!waiting || !soundOn) return
@@ -62,7 +75,7 @@ export function WaitingLane({
 		return () => window.clearInterval(timer)
 	}, [waiting, soundOn])
 
-	if (!waiting) return null
+	if (!waiting && !message) return null
 
 	const decide = async (
 		order: Order,
@@ -74,9 +87,11 @@ export function WaitingLane({
 		setMessage(null)
 		try {
 			const response = await decideOrder(request, order.id, decision)
-			if (decision.kind === 'reject') {
-				setMessage(rejectNotice(response, _))
-			}
+			setMessage(
+				decision.kind === 'reject'
+					? rejectNotice(response, _)
+					: _(msg`Order accepted.`),
+			)
 		} catch (error) {
 			setMessage(decisionErrorMessage(error, _))
 			if (!isAlreadyDecided(error)) {
@@ -85,6 +100,8 @@ export function WaitingLane({
 			}
 		}
 		setBusyId(null)
+		// The decided row disappears with the next list: do not leave focus on it.
+		headingRef.current?.focus()
 		onChanged()
 	}
 
@@ -97,39 +114,43 @@ export function WaitingLane({
 			<div className="flex flex-wrap items-center justify-between gap-2 p-4 pb-2">
 				<h2
 					id="waiting-lane-title"
-					className="flex items-center gap-2 text-sm font-semibold"
+					ref={headingRef}
+					tabIndex={-1}
+					className="flex items-center gap-2 rounded-sm text-sm font-semibold outline-none focus-visible:ring-2"
 				>
 					<Trans>Waiting for you</Trans>
 					<Badge variant="outline" data-testid="waiting-count">
 						{orders.length}
 					</Badge>
 				</h2>
-				{!soundOn ? (
-					<Button
-						type="button"
-						variant="outline"
-						size="sm"
-						data-testid="waiting-sound-button"
-						onClick={() => {
-							unlockChime()
-							writeSoundChoice()
-							setSoundOn(true)
-						}}
-					>
-						<Icon name="bell" />
-						<Trans>Turn on sound</Trans>
-					</Button>
-				) : null}
-			</div>
-			{message ? (
-				<p
-					role="status"
-					className="text-muted-foreground px-4 pb-2 text-sm"
-					data-testid="waiting-message"
+				<Button
+					type="button"
+					variant="outline"
+					size="sm"
+					aria-pressed={soundOn}
+					data-testid="waiting-sound-button"
+					onClick={() => {
+						if (soundOn) {
+							clearSoundChoice()
+							setSoundOn(false)
+							return
+						}
+						unlockChime()
+						writeSoundChoice()
+						setSoundOn(true)
+					}}
 				>
-					{message}
-				</p>
-			) : null}
+					<Icon name={soundOn ? 'volume-2' : 'volume-x'} />
+					{soundOn ? <Trans>Sound on</Trans> : <Trans>Sound off</Trans>}
+				</Button>
+			</div>
+			<p
+				role="status"
+				className="text-muted-foreground px-4 pb-2 text-sm empty:hidden"
+				data-testid="waiting-message"
+			>
+				{message}
+			</p>
 			<ul className="divide-border divide-y">
 				{orders.map((order) => {
 					const href = ordersHref(orgSlug, { orderId: order.id })

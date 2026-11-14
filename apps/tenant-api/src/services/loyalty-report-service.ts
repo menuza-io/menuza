@@ -22,6 +22,7 @@ import {
 	gte,
 	inArray,
 	isNotNull,
+	isNull,
 	lt,
 	ne,
 	sql,
@@ -284,6 +285,8 @@ export async function getLoyaltyReport(
 			and(
 				inWindow(restaurantOrderRefunds.createdAt),
 				eq(restaurantOrderRefunds.status, 'succeeded'),
+				// A refund the provider reversed keeps `succeeded`: not counted.
+				isNull(restaurantOrderRefunds.reversedAt),
 				sql`(${purchaseLink} or ${redemptionLink})`,
 			),
 		)

@@ -144,6 +144,27 @@ describe('guestCancelWindow', () => {
 		).toBe(true)
 	})
 
+	it('refuses a pay-at-handoff order that is already paid: a guest cancel books no refund for it', () => {
+		const handoff = {
+			...base,
+			paymentMethod: 'handoff',
+			paidAt: null,
+			now: at(1),
+		}
+		expect(guestCancelWindow({ ...handoff, paymentStatus: 'paid' })).toEqual({
+			allowed: false,
+			until: null,
+			reason: 'not_cancellable',
+		})
+		// Not yet paid (or nothing to pay) stays cancellable.
+		for (const paymentStatus of ['unpaid', 'not_required'])
+			expect(guestCancelWindow({ ...handoff, paymentStatus }).allowed).toBe(
+				true,
+			)
+		// A paid online order is still cancellable (the refund is booked).
+		expect(guestCancelWindow(base).allowed).toBe(true)
+	})
+
 	it('lets a scheduled order be cancelled until the lead before its time', () => {
 		const scheduled = { ...base, scheduledFor: at(180) }
 		expect(guestCancelWindow({ ...scheduled, now: at(100) })).toEqual({
@@ -363,7 +384,11 @@ describe('publicOrderLifecycleSchema', () => {
 				refundStatus: 'pending',
 				refundPendingCents: 1200,
 				cancel: { allowed: false, until: null },
+				refundsOnCancel: false,
 			}).success,
 		).toBe(true)
+		expect(
+			publicOrderLifecycleSchema.safeParse({ refundsOnCancel: 'yes' }).success,
+		).toBe(false)
 	})
 })

@@ -326,6 +326,39 @@ export function owedCancelRefundKey(orderId: string): string {
 	return `cancel:${orderId}:rest`
 }
 
+/** How many times the rest of a cancel's refund is booked again after the provider reversed it. */
+const OWED_CANCEL_REFUND_ATTEMPTS = 5
+
+/**
+ * The key the next owed refund of a cancel books under: `cancel:<id>:rest`,
+ * and `cancel:<id>:rest:2`, `:3`... once an earlier one succeeded and was then
+ * reversed by the provider (a reversed refund keeps its key, so the next try
+ * needs its own). A key whose refund is not reversed is returned as is: the
+ * booking replays it, which is what keeps a repeated pass from booking twice.
+ * Null once every attempt was reversed.
+ */
+async function nextOwedCancelRefundKey(
+	tx: OrderTx,
+	orderId: string,
+): Promise<string | null> {
+	const base = owedCancelRefundKey(orderId)
+	for (let attempt = 1; attempt <= OWED_CANCEL_REFUND_ATTEMPTS; attempt += 1) {
+		const key = attempt === 1 ? base : `${base}:${attempt}`
+		const [row] = await tx
+			.select({ reversedAt: restaurantOrderRefunds.reversedAt })
+			.from(restaurantOrderRefunds)
+			.where(
+				and(
+					eq(restaurantOrderRefunds.orderId, orderId),
+					eq(restaurantOrderRefunds.idempotencyKey, key),
+				),
+			)
+			.limit(1)
+		if (!row || row.reversedAt == null) return key
+	}
+	return null
+}
+
 export type OwedCancelRefund = {
 	/** The refund booked now (the caller kicks the App after commit). */
 	refund: RestaurantOrderRefund | null
@@ -364,10 +397,22 @@ export async function bookOwedCancelRefundInTx(
 	now: number,
 ): Promise<OwedCancelRefund> {
 	if (!order.cancelRefundDueAt) return { refund: null, code: null }
+	const key = await nextOwedCancelRefundKey(tx, order.id)
+	if (!key) {
+		// Reversed again and again: stop owing it, a person looks at the order.
+		await tx
+			.update(restaurantOrders)
+			.set({ cancelRefundDueAt: null, updatedAt: new Date(now) })
+			.where(eq(restaurantOrders.id, order.id))
+		console.warn('Owed cancel refund reversed too often', {
+			orderId: order.id,
+		})
+		return { refund: null, code: 'reversal_limit' }
+	}
 	const booked = await bookOrderProviderRefundInTx(tx, order, {
 		amount: { full: true },
 		note: null,
-		idempotencyKey: owedCancelRefundKey(order.id),
+		idempotencyKey: key,
 		origin: 'system',
 		actorId: 'system',
 		now,

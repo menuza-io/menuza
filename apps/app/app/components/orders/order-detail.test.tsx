@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { fireEvent, screen, waitFor } from '@testing-library/react'
 import { userEvent } from '@testing-library/user-event'
+import { useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import { OrderDetail } from '#app/components/orders/order-detail.tsx'
 import { OperatorRequestError } from '#app/hooks/use-operator-client.ts'
@@ -732,6 +733,74 @@ describe('OrderDetail provider refunds', () => {
 			show(waitingOrder(), { onAccept, onReject: vi.fn() })
 			await userEvent.click(screen.getByTestId('order-accept'))
 			expect(onAccept).toHaveBeenCalledTimes(1)
+		})
+
+		it('moves focus to the order heading when Accept removes the banner', async () => {
+			function Harness() {
+				const [current, setCurrent] = useState(waitingOrder())
+				return (
+					<OrderDetail
+						order={current}
+						orgSlug="acme"
+						canWrite
+						canViewCustomers
+						busy={false}
+						notice={current.status === 'accepted' ? 'Order accepted.' : null}
+						backHref="/acme/orders"
+						onUpdate={vi.fn()}
+						onAccept={() => setCurrent({ ...current, status: 'accepted' })}
+						onReject={vi.fn()}
+					/>
+				)
+			}
+			renderStaff(<Harness />)
+			const accept = screen.getByTestId('order-accept')
+			accept.focus()
+			await userEvent.click(accept)
+			await waitFor(() =>
+				expect(screen.queryByTestId('order-acceptance-banner')).toBeNull(),
+			)
+			expect(screen.getByRole('heading', { level: 1 })).toHaveFocus()
+			// The notice sits in the live region that was already on the page.
+			expect(screen.getByTestId('order-refund-notice')).toHaveAttribute(
+				'aria-live',
+				'polite',
+			)
+			expect(screen.getByTestId('order-refund-notice')).toHaveTextContent(
+				'Order accepted.',
+			)
+		})
+
+		it('leaves focus alone when it is already elsewhere as the banner goes', async () => {
+			function Harness() {
+				const [current, setCurrent] = useState(waitingOrder())
+				return (
+					<>
+						<button
+							type="button"
+							data-testid="elsewhere"
+							onClick={() => setCurrent({ ...current, status: 'accepted' })}
+						>
+							Someone else accepted
+						</button>
+						<OrderDetail
+							order={current}
+							orgSlug="acme"
+							canWrite
+							canViewCustomers
+							busy={false}
+							backHref="/acme/orders"
+							onUpdate={vi.fn()}
+						/>
+					</>
+				)
+			}
+			renderStaff(<Harness />)
+			await userEvent.click(screen.getByTestId('elsewhere'))
+			await waitFor(() =>
+				expect(screen.queryByTestId('order-acceptance-banner')).toBeNull(),
+			)
+			expect(screen.getByTestId('elsewhere')).toHaveFocus()
 		})
 
 		it('rejects only with a reason and tells about the refund', async () => {

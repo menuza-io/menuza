@@ -296,6 +296,20 @@ describe('POST /:orgSlug/orders/:orderId/refund guards', () => {
 		expect(mocks.execute).not.toHaveBeenCalled()
 	})
 
+	it('answers a retryable 503 when an unchecked refund could not be released', async () => {
+		mocks.locations.mockResolvedValue(['loc_a'])
+		mocks.intent.mockRejectedValue(
+			new RegionalOrderApiError('refund_release_failed', 503),
+		)
+		const response = await outcome(post(VALID))
+		expect(response.status).toBe(503)
+		expect(await response.json()).toEqual({
+			error: 'regional_unavailable',
+			retryable: true,
+		})
+		expect(mocks.execute).not.toHaveBeenCalled()
+	})
+
 	it('needs an Idempotency-Key header', async () => {
 		for (const headers of [{}, { 'Idempotency-Key': 'short' }] as Record<
 			string,

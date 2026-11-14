@@ -21,6 +21,7 @@ import {
 	extractCheckoutRefundWebhook,
 	findReservationCheckoutPaymentsByReference,
 	isCheckoutDefinitiveRejection,
+	isCheckoutRefundRejection,
 	listReservationCheckoutActions,
 	mapCheckoutDisputeToReservation,
 	mapCheckoutPaymentToReservationPayment,
@@ -335,6 +336,16 @@ describe('Checkout.com card guarantees and merchant-initiated fees (VAL-PAY-024,
 			expect(isCheckoutDefinitiveRejection({ http_code: code })).toBe(false)
 		}
 		expect(isCheckoutDefinitiveRejection(new TypeError('network'))).toBe(false)
+	})
+
+	it('classifies refund errors: a 403 is an authorization problem, never a final refund failure', () => {
+		for (const code of [400, 404, 422]) {
+			expect(isCheckoutRefundRejection({ http_code: code })).toBe(true)
+		}
+		for (const code of [401, 403, 408, 409, 429, 500, 502]) {
+			expect(isCheckoutRefundRejection({ http_code: code })).toBe(false)
+		}
+		expect(isCheckoutRefundRejection(new TypeError('network'))).toBe(false)
 	})
 })
 

@@ -466,7 +466,9 @@ export async function cancelOrderAsGuest(
 						status: 'cancelled',
 						cancelReason: 'guest_asked',
 						// Only a paid online order has money to send back; a free
-						// one (`not_required`) books nothing and the cancel stands.
+						// one (`not_required`) books nothing and the cancel stands. A
+						// handoff order already paid never gets here: the window
+						// refuses it (`guestCancelWindow`).
 						refund: current.paymentMethod === 'online' ? 'full' : 'none',
 					},
 					{

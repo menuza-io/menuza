@@ -241,6 +241,19 @@ export function isCheckoutDefinitiveRejection(error: unknown): boolean {
 	return code === 400 || code === 403 || code === 404 || code === 422
 }
 
+/**
+ * A refund request the provider rejected for good (validation, not found).
+ * Unlike a charge, a 403 is not final here: it is an authorization or
+ * configuration problem (a sub-entity or key that may not refund), not an
+ * answer about this refund, and the refunds the region books itself (guest
+ * cancel, a timeout reject) would be dropped for good. It is rethrown so the
+ * refund stays pending and is retried.
+ */
+export function isCheckoutRefundRejection(error: unknown): boolean {
+	const code = (error as { http_code?: unknown } | null)?.http_code
+	return code === 400 || code === 404 || code === 422
+}
+
 /** Stable, PII-free error code for logs and responses. */
 export function checkoutErrorCode(error: unknown): string {
 	const body = (error as { body?: { error_codes?: unknown } } | null)?.body
@@ -410,7 +423,7 @@ export async function createReservationCheckoutRefund(
 			amountMinor: input.amountMinor,
 		}
 	} catch (error) {
-		if (isCheckoutDefinitiveRejection(error)) {
+		if (isCheckoutRefundRejection(error)) {
 			return {
 				status: 'failed',
 				refundRef: null,

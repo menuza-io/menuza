@@ -95,4 +95,41 @@ describe('useOrders', () => {
 		await act(async () => answer({ phone: '+1', email: null }))
 		expect(state.contact).toEqual({ phone: '+1', email: null })
 	})
+	describe('a failed write', () => {
+		const opened = { order: { id: 'o1' }, grants: feed.grants, serverNow: 1 }
+		const version = 'a'.repeat(64)
+		async function failAccept() {
+			api.command.mockResolvedValueOnce(opened)
+			await act(async () => state.open('o1'))
+			api.command.mockRejectedValueOnce(new OrdersError('stale_version', 409))
+			api.detail.mockResolvedValue(opened)
+			await act(async () => {
+				await state.command({ action: 'accept', expectedVersion: version })
+			})
+		}
+
+		it('records which command failed, and forgets it when the error goes', async () => {
+			await failAccept()
+			expect(state.actionError?.code).toBe('stale_version')
+			expect(state.actionName).toBe('accept')
+			act(() => state.close())
+			expect(state.actionError).toBeNull()
+			expect(state.actionName).toBeNull()
+		})
+
+		it('clears its error after 8 s, but not while a dialog shows it', async () => {
+			vi.useFakeTimers()
+			try {
+				await failAccept()
+				act(() => state.pinActionError(true))
+				await act(async () => vi.advanceTimersByTime(20_000))
+				expect(state.actionError?.code).toBe('stale_version')
+				act(() => state.pinActionError(false))
+				await act(async () => vi.advanceTimersByTime(8_100))
+				expect(state.actionError).toBeNull()
+			} finally {
+				vi.useRealTimers()
+			}
+		})
+	})
 })

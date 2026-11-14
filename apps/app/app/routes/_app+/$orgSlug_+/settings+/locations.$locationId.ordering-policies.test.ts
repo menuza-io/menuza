@@ -134,6 +134,22 @@ describe('location order policies', () => {
 		expect(orderPolicies.initial.orderAcceptanceMinTotal).toBe('25.50')
 	})
 
+	it('saves an amount and minutes typed with Arabic-Indic digits', async () => {
+		flags.on.add('ordering.guest_cancel')
+		flags.on.add('ordering.manual_acceptance')
+		const { save, row } = await setup()
+		await save({
+			...CANCEL,
+			...ACCEPT,
+			guestCancelScheduledLeadMinutes: '٤٥',
+			orderAcceptanceMinTotal: '٢٥٫٥٠',
+		})
+		expect(await row()).toMatchObject({
+			guestCancelScheduledLeadMinutes: 45,
+			orderAcceptanceMinTotalCents: 2550,
+		})
+	})
+
 	it('Off clears the scheduled lead; a blank amount means every order', async () => {
 		flags.on.add('ordering.guest_cancel')
 		flags.on.add('ordering.manual_acceptance')
@@ -203,6 +219,11 @@ describe('location order policies', () => {
 		const { save, row } = await setup()
 		const result = await save({ ...ACCEPT, ...fields })
 		expect(typeof result.error).toBe('string')
+		// The form words the refusal itself: a field name and a code, no text.
+		expect(result.orderPolicyError).toEqual({
+			field: expect.any(String),
+			code: expect.stringMatching(/^invalid_(choice|minutes|amount)$/),
+		})
 		for (const value of Object.values(fields)) {
 			expect(result.error).not.toContain(value)
 		}

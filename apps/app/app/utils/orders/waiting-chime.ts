@@ -1,6 +1,6 @@
 /**
  * A short two-note chime for an order waiting to be accepted. Browsers only
- * let a page play sound after a tap, so "Turn on sound" primes the audio.
+ * let a page play sound after a tap, so "Sound on" primes the audio.
  */
 let context: AudioContext | null = null
 
@@ -57,4 +57,25 @@ export function writeSoundChoice() {
 	} catch {
 		// Private mode: the button simply shows again next time.
 	}
+}
+
+/** Sound turned off: the choice is forgotten, so it stays off after a reload. */
+export function clearSoundChoice() {
+	try {
+		window.sessionStorage.removeItem(KEY)
+	} catch {
+		// Nothing was stored.
+	}
+}
+
+/**
+ * Whether the orders inbox should refresh on its timer: while the tab shows,
+ * and also while it is hidden if the chime is on, so a new order that waits
+ * for acceptance is heard from another tab.
+ */
+export function shouldPollOrders(
+	visibility: DocumentVisibilityState,
+	soundOn: boolean,
+): boolean {
+	return visibility === 'visible' || soundOn
 }

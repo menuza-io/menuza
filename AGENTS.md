@@ -672,8 +672,15 @@ git commit --no-verify -m "fix: resolve ESLint warnings (verified manually)"
   order itself is never affected. See `docs/scheduled-jobs.md`.
 - `ORDER_MESSAGES_TICK_INTERVAL_SECONDS` - Tenant-api Node (OCI) runtime only,
   optional. Seconds between in-process retries of guest order messages (default
-  120, minimum 60, `0` off). The hourly cron fan-out always runs; the Workers
-  runtime uses Durable Object alarms.
+  120, minimum 60, `0` off). `0` stops only these retries, never the acceptance
+  timeout. The hourly cron fan-out always runs; the Workers runtime uses Durable
+  Object alarms.
+- `ORDER_ACCEPTANCE_TICK_INTERVAL_SECONDS` - Tenant-api Node (OCI) runtime only,
+  optional. Seconds between in-process passes that turn down orders still
+  waiting for manual acceptance past the deadline the guest was shown (#107),
+  then book cancel refunds still owed (default 60, minimum 30). It cannot be
+  switched off: `0`, a negative or an unreadable value means the default. The
+  Workers runtime uses the `orders` Durable Object alarm module.
 - `QR_DINE_IN_ENABLED` - Tenant-api only, optional (unset or `true` is on). Kill
   switch for QR table ordering: `false` (also `0`, `off`, `no`, `disabled`)
   answers 503 on dine-in placement, the table and tab context, starting a tab

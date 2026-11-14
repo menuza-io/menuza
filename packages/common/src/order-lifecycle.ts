@@ -194,7 +194,9 @@ const GUEST_CANCELLABLE_STATUSES = new Set(['accepted', 'pending_acceptance'])
  * - QR table rounds, tab rounds and dine-in: `not_cancellable`.
  * - Status: only `accepted` or `pending_acceptance`; `preparing` reads as
  *   `order_in_preparation`, anything else `not_cancellable`.
- * - An online order must be paid (an unpaid one simply expires).
+ * - An online order must be paid (an unpaid one simply expires). A pay at
+ *   handoff order already marked paid is refused (`not_cancellable`): a
+ *   guest cancel books no refund for it.
  * - A kitchen ticket past New: `order_in_preparation`.
  * - Window: ASAP orders from payment (online) or placement (handoff) for
  *   `minutes`; scheduled orders until `scheduledLeadMinutes` before the
@@ -226,6 +228,11 @@ export function guestCancelWindow(
 		input.paymentStatus !== 'paid' &&
 		input.paymentStatus !== 'not_required'
 	) {
+		return refuse('not_cancellable')
+	}
+	// Money taken at the counter or by phone comes back by hand, never with a
+	// guest cancel: a paid pay-at-handoff order is not cancellable online.
+	if (input.paymentMethod !== 'online' && input.paymentStatus === 'paid') {
 		return refuse('not_cancellable')
 	}
 
@@ -411,5 +418,13 @@ export const publicOrderLifecycleSchema = z.object({
 	cancel: z
 		.object({ allowed: z.boolean(), until: z.string().nullable() })
 		.optional(),
+	/**
+	 * A guest cancel refunds a card payment in full: true only for an order
+	 * paid online. Sites words the confirm box from it (never "refunded" for
+	 * an order paid at handoff). Absent from an older region.
+	 */
+	refundsOnCancel: z.boolean().optional(),
+	/** The region's clock at the read (ISO); deadlines are compared with it. */
+	serverNow: z.string().optional(),
 })
 export type PublicOrderLifecycle = z.infer<typeof publicOrderLifecycleSchema>

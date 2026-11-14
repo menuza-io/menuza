@@ -228,7 +228,11 @@ export default function OrderPage() {
 		setNotice(null)
 		try {
 			const response = await decideOrder(request, order.id, decision)
-			if (decision.kind === 'reject') setNotice(rejectNotice(response, _))
+			setNotice(
+				decision.kind === 'reject'
+					? rejectNotice(response, _)
+					: _(msg`Order accepted.`),
+			)
 		} catch (error) {
 			setActionError(decisionErrorMessage(error, _))
 		} finally {

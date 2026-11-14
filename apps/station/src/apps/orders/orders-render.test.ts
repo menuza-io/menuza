@@ -99,9 +99,11 @@ const detailOf = (
 let host: HTMLDivElement
 let root: Root
 const command = vi.fn(async () => true)
+const pinActionError = vi.fn()
 beforeEach(() => {
 	localStorage.clear()
 	command.mockClear()
+	pinActionError.mockClear()
 	vi.stubGlobal(
 		'ResizeObserver',
 		class {
@@ -145,6 +147,8 @@ function draw(
 		grants,
 		error: null,
 		actionError: null,
+		actionName: null,
+		pinActionError,
 		busy: false,
 		now: NOW,
 		stale: false,
@@ -202,6 +206,13 @@ function draw(
 }
 const buttons = () =>
 	[...document.querySelectorAll('button')].map((b) => b.textContent?.trim())
+/** The open dialog with this title (a dialog nested in another counts on its own). */
+const openDialog = (title: string) =>
+	[...document.querySelectorAll('dialog[open]')].find(
+		(d) =>
+			document.getElementById(d.getAttribute('aria-labelledby') ?? '')
+				?.textContent === title,
+	)
 const button = (name: string) =>
 	[...document.querySelectorAll('button')].find(
 		(b) => b.textContent?.trim() === name,
@@ -492,6 +503,87 @@ describe('Station online orders screen', () => {
 				}),
 			})
 			expect(document.body.textContent).toContain('Rejected: Out of stock')
+			expect(document.body.textContent).toContain(
+				'Someone else already decided on this order',
+			)
+		})
+
+		it('says "changed on another screen" for a stale Mark ready on an order that once waited', () => {
+			draw({
+				selected: 'p1',
+				actionName: 'ready',
+				actionError: new OrdersError('stale_version', 409),
+				detail: detailOf({
+					...pending({
+						status: 'accepted',
+						acceptanceDeadlineAt: NOW - 60_000,
+					}),
+				}),
+			})
+			expect(document.body.textContent).toContain(
+				'This order changed on another screen',
+			)
+			expect(document.body.textContent).not.toContain(
+				'Someone else already decided',
+			)
+		})
+
+		it('says someone else decided when a stale accept finds the order no longer waiting', () => {
+			draw({
+				selected: 'p1',
+				actionName: 'accept',
+				actionError: new OrdersError('stale_version', 409),
+				detail: detailOf({
+					...pending({
+						status: 'accepted',
+						acceptanceDeadlineAt: NOW - 60_000,
+					}),
+				}),
+			})
+			expect(document.body.textContent).toContain(
+				'Someone else already decided on this order',
+			)
+		})
+
+		it('shows a failed reject inside the reject dialog, keeps it up, and closes the dialog once the order is decided', () => {
+			const waiting = detailOf({ ...pending(), version: 'b'.repeat(64) })
+			draw(
+				{ selected: 'p1', grants: MANAGER, detail: waiting },
+				[pending()],
+				MANAGER,
+			)
+			act(() => button('Reject').click())
+			expect(pinActionError).toHaveBeenLastCalledWith(true)
+			const failure = new OrdersError('connection_lost')
+			draw(
+				{
+					selected: 'p1',
+					grants: MANAGER,
+					detail: waiting,
+					actionName: 'reject',
+					actionError: failure,
+				},
+				[pending()],
+				MANAGER,
+			)
+			const dialog = openDialog('Reject order W-7?')!
+			expect(dialog.querySelector('[role="alert"]')?.textContent).toContain(
+				'connection',
+			)
+			// Another screen accepted it: the dialog closes, the sheet explains.
+			draw(
+				{
+					selected: 'p1',
+					grants: MANAGER,
+					detail: detailOf({ ...pending({ status: 'accepted' }) }),
+					actionName: 'reject',
+					actionError: new OrdersError('stale_version', 409),
+				},
+				[pending({ status: 'accepted' })],
+				MANAGER,
+			)
+			expect(pinActionError).toHaveBeenLastCalledWith(false)
+			expect(openDialog('Reject order W-7?')).toBeUndefined()
 			expect(document.body.textContent).toContain(
 				'Someone else already decided on this order',
 			)

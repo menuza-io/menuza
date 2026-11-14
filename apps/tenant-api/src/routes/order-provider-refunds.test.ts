@@ -4,6 +4,7 @@ import path from 'node:path'
 import { brand } from '@repo/config/brand'
 import {
 	destroyTenantDb,
+	discountRedemptions,
 	getTenantDb,
 	provisionTenantDb,
 	qrTabPayments,
@@ -11,7 +12,7 @@ import {
 	restaurantOrderRefunds,
 	restaurantOrders,
 } from '@repo/tenant-db'
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import { Hono } from 'hono'
 import * as jose from 'jose'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -21,12 +22,14 @@ import {
 	setOrderRefundKickForTest,
 } from '../lib/order-refund-kick.ts'
 import { reconcileLoyaltySource } from '../services/loyalty-purchase-service.ts'
+import { getLoyaltyReport } from '../services/loyalty-report-service.ts'
 import {
 	activateProgram,
 	balanceOf,
 	claimAndQueue,
 	insertCustomer,
 	insertOrder,
+	insertRound,
 	insertTab,
 	LOC_1,
 	LOC_2,
@@ -35,7 +38,10 @@ import {
 } from '../services/loyalty-test-fixture.ts'
 import { runOrdersTickForOrg } from '../services/order-acceptance.ts'
 import { linkReceiptOrder } from '../services/order-link-access.ts'
-import { processOwedCancelRefunds } from '../services/order-provider-refund-service.ts'
+import {
+	OWED_CANCEL_REFUNDS_BATCH,
+	processOwedCancelRefunds,
+} from '../services/order-provider-refund-service.ts'
 import { receiptOrder } from '../services/order-service.ts'
 import { operatorOrderRoutes } from './operator-orders.ts'
 import { orderSystemRoutes } from './order-system.ts'
@@ -610,11 +616,16 @@ describe('POST /api/orders/refund-intent and refund-status', () => {
 		const first = (await (
 			await intent(orderId, { amountCents: 500 })
 		).json()) as IntentBody
-		await settle(first.refundId, 'succeeded')
+		await settle(first.refundId, 'succeeded', {
+			providerRefundId: 're_points_rev',
+		})
 		expect((await balanceOf(ORG, memberId)).points).toBe(5)
 		// The provider reverses it: the points stay taken (never handed back
 		// for money that may still come back), and the amount is refundable.
-		await settle(first.refundId, 'failed', { failureCode: 'card_closed' })
+		await settle(first.refundId, 'failed', {
+			failureCode: 'card_closed',
+			providerRefundId: 're_points_rev',
+		})
 		await reconcileLoyaltySource(ORG, source, { now: NOW })
 		expect((await balanceOf(ORG, memberId)).points).toBe(5)
 
@@ -1133,12 +1144,13 @@ describe('QR tab refunds', () => {
 		const first = (await (
 			await intent(`tab:${tabId}`, { full: true })
 		).json()) as IntentBody
-		await settle(first.refundId, 'succeeded')
+		await settle(first.refundId, 'succeeded', { providerRefundId: 'act_rev' })
 		expect(
 			await (await intent(`tab:${tabId}`, { amountCents: 1 })).json(),
 		).toMatchObject({ error: 'refund_complete' })
 		const reversed = await settle(first.refundId, 'failed', {
 			failureCode: 'refund_failed',
+			providerRefundId: 'act_rev',
 		})
 		expect(await reversed.json()).toMatchObject({
 			orderId: `tab:${tabId}`,
@@ -1675,6 +1687,516 @@ describe('cancel with a full refund while another refund is pending', () => {
 		await orderRefundKicksIdle()
 		expect(kicks).toEqual([{ orgId: ORG, refundId: rest!.id }])
 		expect(await processOwedCancelRefunds(ORG)).toEqual({ booked: 0 })
+	})
+})
+
+describe('reports that cannot be trusted to move money', () => {
+	async function refundRow(refundId: string) {
+		const db = await getTenantDb(ORG)
+		const [row] = await db
+			.select()
+			.from(restaurantOrderRefunds)
+			.where(eq(restaurantOrderRefunds.id, refundId))
+		return row!
+	}
+
+	it('failed without id after succeeded: nothing reverses, nothing is refundable again', async () => {
+		const orderId = await onlineOrder()
+		const booked = (await (
+			await intent(orderId, { amountCents: 400 })
+		).json()) as IntentBody
+		await settle(booked.refundId, 'succeeded', { providerRefundId: 're_ok' })
+
+		// A run that never reached the provider (payment not found).
+		const blind = await settle(booked.refundId, 'failed', {
+			failureCode: 'payment_not_found',
+		})
+		expect(blind.status).toBe(200)
+		expect(await blind.json()).toEqual({
+			refundId: booked.refundId,
+			orderId,
+			status: 'succeeded',
+			applied: false,
+		})
+		// The same by another route: found by order id only.
+		const withOrder = await settle(booked.refundId, 'failed', { orderId })
+		expect(await withOrder.json()).toMatchObject({
+			status: 'succeeded',
+			applied: false,
+		})
+		expect(await orderRow(orderId)).toMatchObject({
+			refundedCents: 400,
+			refundReversedCents: 0,
+		})
+		expect((await refundRow(booked.refundId)).reversedAt).toBeNull()
+		const detail = await operator('GET', `/${orderId}`, {
+			scope: 'orders:read',
+		})
+		expect(await detail.json()).toMatchObject({
+			order: {
+				refundedCents: 400,
+				refundableCents: 600,
+				refundStatus: 'partial',
+			},
+		})
+		// Only 600 can go back: no second refund of the 400.
+		const tooMuch = await intent(orderId, { amountCents: 601 })
+		expect(await tooMuch.json()).toMatchObject({
+			error: 'refund_exceeds_payment',
+			refundableCents: 600,
+		})
+	})
+
+	it('a failure naming a provider id the row never stored does not reverse a success either', async () => {
+		const orderId = await onlineOrder()
+		const booked = (await (
+			await intent(orderId, { amountCents: 400 })
+		).json()) as IntentBody
+		// Succeeded without the provider id on record.
+		await settle(booked.refundId, 'succeeded')
+		const res = await settle(booked.refundId, 'failed', {
+			providerRefundId: 're_unknown',
+		})
+		expect(await res.json()).toMatchObject({
+			status: 'succeeded',
+			applied: false,
+		})
+		expect(await orderRow(orderId)).toMatchObject({
+			refundedCents: 400,
+			refundReversedCents: 0,
+		})
+	})
+
+	it('the same rule holds for a tab refund', async () => {
+		const tabId = await insertTab(ORG, {
+			id: 'tab-blind-failed',
+			paymentProcessor: 'checkout',
+			paymentSessionId: 'pay_blind_failed',
+			paymentAmountCents: 1000,
+		})
+		const first = (await (
+			await intent(`tab:${tabId}`, { amountCents: 400 })
+		).json()) as IntentBody
+		await settle(first.refundId, 'succeeded', { providerRefundId: 'act_ok' })
+		const blind = await settle(first.refundId, 'failed', {
+			failureCode: 'processor_unavailable',
+		})
+		expect(await blind.json()).toEqual({
+			refundId: first.refundId,
+			orderId: `tab:${tabId}`,
+			status: 'succeeded',
+			applied: false,
+		})
+		const db = await getTenantDb(ORG)
+		const [row] = await db
+			.select()
+			.from(qrTabRefunds)
+			.where(eq(qrTabRefunds.id, first.refundId))
+		expect(row).toMatchObject({ status: 'succeeded', reversedAt: null })
+		const tooMuch = await intent(`tab:${tabId}`, { amountCents: 601 })
+		expect(await tooMuch.json()).toMatchObject({ refundableCents: 600 })
+		// With the provider's own id it is a reversal.
+		const real = await settle(first.refundId, 'failed', {
+			providerRefundId: 'act_ok',
+		})
+		expect(await real.json()).toMatchObject({ status: 'failed', applied: true })
+	})
+
+	it('a refund the provider accepted is never released by a report without its id', async () => {
+		const orderId = await onlineOrder()
+		const booked = (await (
+			await intent(orderId, { amountCents: 250 })
+		).json()) as IntentBody
+		await settle(booked.refundId, 'pending', { providerRefundId: 're_held' })
+
+		const blind = await settle(booked.refundId, 'failed', {
+			failureCode: 'payment_not_found',
+		})
+		expect(await blind.json()).toMatchObject({
+			status: 'pending',
+			applied: false,
+		})
+		expect((await refundRow(booked.refundId)).status).toBe('pending')
+		// The reservation holds: another refund is still refused.
+		const busy = await intent(orderId, { amountCents: 10 })
+		expect(await busy.json()).toMatchObject({ error: 'refund_pending' })
+
+		// The webhook's real success then counts, once.
+		const done = await system('/refund-status', {
+			orgId: ORG,
+			providerRefundId: 're_held',
+			status: 'succeeded',
+		})
+		expect(await done.json()).toMatchObject({
+			status: 'succeeded',
+			applied: true,
+		})
+		expect((await orderRow(orderId)).refundedCents).toBe(250)
+	})
+
+	it('the provider’s own failure, naming its id, still releases a pending refund', async () => {
+		const orderId = await onlineOrder()
+		const booked = (await (
+			await intent(orderId, { amountCents: 250 })
+		).json()) as IntentBody
+		await settle(booked.refundId, 'pending', { providerRefundId: 're_bad' })
+		const failed = await settle(booked.refundId, 'failed', {
+			providerRefundId: 're_bad',
+			failureCode: 'declined',
+		})
+		expect(await failed.json()).toMatchObject({
+			status: 'failed',
+			applied: true,
+		})
+		expect((await orderRow(orderId)).refundedCents).toBe(0)
+		expect((await intent(orderId, { full: true })).status).toBe(201)
+	})
+
+	it('a success with a provider id after a failure with none is flagged for review, never applied', async () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+		try {
+			const orderId = await onlineOrder()
+			const booked = (await (
+				await intent(orderId, { amountCents: 250 })
+			).json()) as IntentBody
+			// A run that never reached the provider released the reservation.
+			await settle(booked.refundId, 'failed', {
+				failureCode: 'payment_not_found',
+			})
+			const late = await settle(booked.refundId, 'succeeded', {
+				providerRefundId: 're_late',
+			})
+			expect(await late.json()).toMatchObject({
+				status: 'failed',
+				applied: false,
+			})
+			expect((await orderRow(orderId)).refundedCents).toBe(0)
+			const flagged = warn.mock.calls.find(([message]) =>
+				String(message).includes('needs review'),
+			)
+			expect(flagged).toBeDefined()
+			// Ids only.
+			expect(JSON.stringify(flagged)).toContain(booked.refundId)
+			expect(JSON.stringify(flagged)).not.toContain('re_late')
+		} finally {
+			warn.mockRestore()
+		}
+	})
+})
+
+describe('a succeeded tab refund does what an order refund does', () => {
+	async function loyalTab(customerId: string, id: string) {
+		await activateProgram(ORG)
+		await insertCustomer(ORG, { id: customerId })
+		const memberId = await makeMember(ORG, { customerId })
+		const tabId = await insertTab(ORG, {
+			id,
+			paymentProcessor: 'checkout',
+			paymentSessionId: `pay_${customerId}`,
+			paymentAmountCents: 1000,
+		})
+		await insertRound(ORG, tabId)
+		const source = { type: 'qr_tab' as const, id: tabId }
+		await claimAndQueue(ORG, { memberId, source })
+		await reconcileLoyaltySource(ORG, source, { now: NOW })
+		const db = await getTenantDb(ORG)
+		await db.insert(discountRedemptions).values({
+			discountId: 'dsc_tab',
+			discountVersion: 1,
+			sourceType: 'tab',
+			sourceId: tabId,
+			state: 'reserved',
+			amountMinor: 100,
+			allocation: [],
+			snapshot: { name: 'Tab promo' },
+			localDay: '2026-01-10',
+			localWeek: '2026-W02',
+		})
+		// Used when the tab was paid.
+		await db
+			.update(discountRedemptions)
+			.set({ state: 'consumed' })
+			.where(eq(discountRedemptions.sourceId, tabId))
+		return { memberId, tabId, source }
+	}
+
+	async function redemptionState(tabId: string) {
+		const db = await getTenantDb(ORG)
+		const [row] = await db
+			.select({ state: discountRedemptions.state })
+			.from(discountRedemptions)
+			.where(
+				and(
+					eq(discountRedemptions.sourceType, 'tab'),
+					eq(discountRedemptions.sourceId, tabId),
+				),
+			)
+		return row?.state
+	}
+
+	it('takes points back for a partial refund and returns the discount use on a full one', async () => {
+		const { memberId, tabId } = await loyalTab(
+			'cus_tab_refund',
+			'tab-loyal-refund',
+		)
+		expect((await balanceOf(ORG, memberId)).points).toBe(10)
+
+		// Pending moves nothing.
+		const half = (await (
+			await intent(`tab:${tabId}`, { amountCents: 500 })
+		).json()) as IntentBody
+		expect((await balanceOf(ORG, memberId)).points).toBe(10)
+		await settle(half.refundId, 'succeeded', { providerRefundId: 'act_half' })
+		// Settled by the region itself: no manual loyalty refund, no reconcile call.
+		expect((await balanceOf(ORG, memberId)).points).toBe(5)
+		expect(await redemptionState(tabId)).toBe('consumed')
+
+		const rest = (await (
+			await intent(`tab:${tabId}`, { full: true })
+		).json()) as IntentBody
+		expect(rest.amountCents).toBe(500)
+		await settle(rest.refundId, 'succeeded', { providerRefundId: 'act_rest' })
+		expect((await balanceOf(ORG, memberId)).points).toBe(0)
+		expect(await redemptionState(tabId)).toBe('refunded')
+
+		// Replays count nothing twice.
+		await settle(rest.refundId, 'succeeded', { providerRefundId: 'act_rest' })
+		expect((await balanceOf(ORG, memberId)).points).toBe(0)
+	})
+
+	it('a failed or reversed tab refund takes no points and returns no use', async () => {
+		const { memberId, tabId, source } = await loyalTab(
+			'cus_tab_failed',
+			'tab-loyal-failed',
+		)
+		const failing = (await (
+			await intent(`tab:${tabId}`, { full: true })
+		).json()) as IntentBody
+		await settle(failing.refundId, 'failed')
+		expect((await balanceOf(ORG, memberId)).points).toBe(10)
+		expect(await redemptionState(tabId)).toBe('consumed')
+
+		const working = (await (
+			await intent(`tab:${tabId}`, { amountCents: 500 })
+		).json()) as IntentBody
+		await settle(working.refundId, 'succeeded', { providerRefundId: 'act_w' })
+		expect((await balanceOf(ORG, memberId)).points).toBe(5)
+		await settle(working.refundId, 'failed', { providerRefundId: 'act_w' })
+		await reconcileLoyaltySource(ORG, source, { now: NOW })
+		// Points stay taken, and a reversed refund no longer counts as refunded.
+		expect((await balanceOf(ORG, memberId)).points).toBe(5)
+		expect(await redemptionState(tabId)).toBe('consumed')
+	})
+})
+
+describe('the loyalty report counts only refunds that stood', () => {
+	it('leaves out a refund the provider reversed', async () => {
+		await activateProgram(ORG)
+		await insertCustomer(ORG, { id: 'cus_report' })
+		const memberId = await makeMember(ORG, { customerId: 'cus_report' })
+		const orderId = await onlineOrder()
+		const source = { type: 'restaurant_order' as const, id: orderId }
+		await claimAndQueue(ORG, { memberId, source })
+		await reconcileLoyaltySource(ORG, source, { now: NOW })
+		const booked = (await (
+			await intent(orderId, { amountCents: 500 })
+		).json()) as IntentBody
+		await settle(booked.refundId, 'succeeded', { providerRefundId: 're_rep' })
+		// A window around the refund's real creation time.
+		const day = (offsetDays: number) =>
+			new Date(Date.now() + offsetDays * 86_400_000).toISOString().slice(0, 10)
+		const query = { from: day(-1), to: day(1) }
+		const db = await getTenantDb(ORG)
+		expect((await getLoyaltyReport(db, query)).operations.refundsRecorded).toBe(
+			1,
+		)
+		await settle(booked.refundId, 'failed', { providerRefundId: 're_rep' })
+		expect((await getLoyaltyReport(db, query)).operations.refundsRecorded).toBe(
+			0,
+		)
+	})
+})
+
+describe('QR tab disputes check the processor', () => {
+	it('answers the uniform 404 for another processor, like an order', async () => {
+		const tabId = await insertTab(ORG, {
+			id: 'tab-dispute-processor',
+			paymentProcessor: 'checkout',
+			paymentSessionId: 'pay_tab_processor',
+			paymentAmountCents: 1000,
+		})
+		const wrong = await system('/dispute-status', {
+			orgId: ORG,
+			orderId: `tab:${tabId}`,
+			processor: 'connect',
+			status: 'open',
+		})
+		expect(wrong.status).toBe(404)
+		expect(await wrong.json()).toMatchObject({ error: 'order_not_found' })
+		const blocked = await intent(`tab:${tabId}`, { full: true })
+		expect(blocked.status).toBe(201)
+
+		const right = await system('/dispute-status', {
+			orgId: ORG,
+			orderId: `tab:${tabId}`,
+			processor: 'checkout',
+			status: 'open',
+		})
+		expect(right.status).toBe(200)
+	})
+})
+
+describe('a cancel’s refund the provider reversed', () => {
+	const accepted = { status: 'accepted' as const, completedAt: null }
+
+	async function refundsOf(orderId: string) {
+		const db = await getTenantDb(ORG)
+		return db
+			.select()
+			.from(restaurantOrderRefunds)
+			.where(eq(restaurantOrderRefunds.orderId, orderId))
+	}
+
+	async function cancelWithRefund(orderId: string) {
+		return operator('PATCH', `/${orderId}`, REFUNDER, {
+			status: 'cancelled',
+			cancelReason: 'out_of_stock',
+			refund: 'full',
+		})
+	}
+
+	it('is booked again, under its own key each time, and the App is kicked', async () => {
+		const orderId = await onlineOrder(accepted)
+		await cancelWithRefund(orderId)
+		const [first] = await refundsOf(orderId)
+		expect(first).toMatchObject({
+			status: 'pending',
+			idempotencyKey: `cancel:${orderId}`,
+		})
+		await settle(first!.id, 'succeeded', { providerRefundId: 're_cancel_1' })
+		await orderRefundKicksIdle()
+		kicks.length = 0
+
+		// The provider takes it back: the guest was told it is coming.
+		const reversed = await settle(first!.id, 'failed', {
+			providerRefundId: 're_cancel_1',
+			failureCode: 'expired_or_canceled_card',
+		})
+		expect(await reversed.json()).toMatchObject({
+			status: 'failed',
+			applied: true,
+		})
+		const second = (await refundsOf(orderId)).find(
+			(row) => row.id !== first!.id,
+		)
+		expect(second).toMatchObject({
+			amountCents: 1000,
+			status: 'pending',
+			origin: 'system',
+			idempotencyKey: `cancel:${orderId}:rest`,
+		})
+		expect((await orderRow(orderId)).cancelRefundDueAt).toBeNull()
+		await orderRefundKicksIdle()
+		expect(kicks).toEqual([{ orgId: ORG, refundId: second!.id }])
+		// Replays and ticks book nothing more.
+		await settle(first!.id, 'failed', { providerRefundId: 're_cancel_1' })
+		expect(await processOwedCancelRefunds(ORG)).toEqual({ booked: 0 })
+		expect(await refundsOf(orderId)).toHaveLength(2)
+
+		// Reversed again: the next try has its own key.
+		await settle(second!.id, 'succeeded', { providerRefundId: 're_cancel_2' })
+		await settle(second!.id, 'failed', { providerRefundId: 're_cancel_2' })
+		const third = (await refundsOf(orderId)).find(
+			(row) => row.idempotencyKey === `cancel:${orderId}:rest:2`,
+		)
+		expect(third).toMatchObject({ amountCents: 1000, status: 'pending' })
+		await settle(third!.id, 'succeeded', { providerRefundId: 're_cancel_3' })
+		expect(await orderRow(orderId)).toMatchObject({
+			refundedCents: 3000,
+			refundReversedCents: 2000,
+		})
+		expect(await processOwedCancelRefunds(ORG)).toEqual({ booked: 0 })
+		expect(await refundsOf(orderId)).toHaveLength(3)
+	})
+
+	it('waits for what blocks it: an open dispute, then books it once won', async () => {
+		const orderId = await onlineOrder(accepted)
+		await cancelWithRefund(orderId)
+		const [first] = await refundsOf(orderId)
+		await settle(first!.id, 'succeeded', { providerRefundId: 're_wait_1' })
+		await system('/dispute-status', { orgId: ORG, orderId, status: 'open' })
+		await settle(first!.id, 'failed', { providerRefundId: 're_wait_1' })
+		// Marked owed, nothing booked while the dispute is open.
+		expect((await orderRow(orderId)).cancelRefundDueAt).toBeInstanceOf(Date)
+		expect(await refundsOf(orderId)).toHaveLength(1)
+		expect(await processOwedCancelRefunds(ORG)).toEqual({ booked: 0 })
+
+		await system('/dispute-status', { orgId: ORG, orderId, status: 'won' })
+		const rest = (await refundsOf(orderId)).find(
+			(row) => row.idempotencyKey === `cancel:${orderId}:rest`,
+		)
+		expect(rest).toMatchObject({ amountCents: 1000, status: 'pending' })
+		expect((await orderRow(orderId)).cancelRefundDueAt).toBeNull()
+	})
+
+	it('a reversal of any other refund is left to a person', async () => {
+		const orderId = await onlineOrder(accepted)
+		const booked = (await (
+			await intent(orderId, { amountCents: 300 })
+		).json()) as IntentBody
+		await settle(booked.refundId, 'succeeded', { providerRefundId: 're_hand' })
+		await cancelWithRefund(orderId)
+		await settle(booked.refundId, 'failed', { providerRefundId: 're_hand' })
+		// The cancel booked its own refund of the 700 left; the reversed manual
+		// refund is not owed by the cancel.
+		expect((await orderRow(orderId)).cancelRefundDueAt).toBeNull()
+		expect(await refundsOf(orderId)).toHaveLength(2)
+
+		// An order that is not cancelled is never marked.
+		const open = await onlineOrder(accepted)
+		const refund = (await (
+			await intent(open, { amountCents: 300 })
+		).json()) as IntentBody
+		await settle(refund.refundId, 'succeeded', { providerRefundId: 're_open' })
+		await settle(refund.refundId, 'failed', { providerRefundId: 're_open' })
+		expect((await orderRow(open)).cancelRefundDueAt).toBeNull()
+		expect(await refundsOf(open)).toHaveLength(1)
+	})
+})
+
+describe('the owed-refund sweep', () => {
+	it('is not starved by orders whose refund is still pending', async () => {
+		const db = await getTenantDb(ORG)
+		const stuck: string[] = []
+		// More stuck orders (older marks) than one pass reads.
+		for (let index = 0; index < OWED_CANCEL_REFUNDS_BATCH; index += 1) {
+			const orderId = await onlineOrder({
+				status: 'cancelled',
+				completedAt: null,
+			})
+			await intent(orderId, { amountCents: 100 })
+			await db
+				.update(restaurantOrders)
+				.set({ cancelRefundDueAt: new Date(NOW + index) })
+				.where(eq(restaurantOrders.id, orderId))
+			stuck.push(orderId)
+		}
+		// A newer owed order whose other refund is final: the crash backstop.
+		const newer = await onlineOrder({ status: 'cancelled', completedAt: null })
+		await db
+			.update(restaurantOrders)
+			.set({ cancelRefundDueAt: new Date(NOW + 10_000) })
+			.where(eq(restaurantOrders.id, newer))
+
+		expect(await processOwedCancelRefunds(ORG)).toEqual({ booked: 1 })
+		const rows = await db
+			.select()
+			.from(restaurantOrderRefunds)
+			.where(eq(restaurantOrderRefunds.orderId, newer))
+		expect(rows).toHaveLength(1)
+		expect(rows[0]).toMatchObject({ amountCents: 1000, status: 'pending' })
+		// The stuck ones keep their marks for when their refund settles.
+		expect((await orderRow(stuck[0]!)).cancelRefundDueAt).toBeInstanceOf(Date)
 	})
 })
 

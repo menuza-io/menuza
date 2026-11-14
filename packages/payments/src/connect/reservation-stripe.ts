@@ -301,11 +301,35 @@ export type ReservationRefundOutcome = {
 }
 
 /**
- * The same idempotency key is still being processed by Stripe (two executions
- * of one refund at once). Never a terminal failure: the other request decides.
+ * Stripe's codes for a rejection of the refund itself: no retry can change
+ * the answer. Anything else (a rotated or restricted key, a missing
+ * permission, a lock, an unknown object, a code Stripe adds later) says
+ * nothing about this refund, so it is not reported failed.
  */
-function isStripeIdempotencyInFlight(error: unknown): boolean {
-	return (error as { code?: unknown } | null)?.code === 'idempotency_key_in_use'
+const STRIPE_REFUND_REJECTION_CODES = new Set([
+	'charge_already_refunded',
+	'charge_disputed',
+	'charge_expired_for_capture',
+	'refund_disputed_payment',
+	'amount_too_large',
+	'amount_too_small',
+])
+
+/** Only an invalid-request error that names a refund-specific code is final. */
+function isStripeDefinitiveRefundRejection(error: unknown): boolean {
+	if (!(error instanceof Stripe.errors.StripeInvalidRequestError)) return false
+	const statusCode = (error as { statusCode?: number }).statusCode
+	// Authentication, permission, conflict and rate limit: never about the refund.
+	if (
+		statusCode === 401 ||
+		statusCode === 403 ||
+		statusCode === 409 ||
+		statusCode === 429
+	) {
+		return false
+	}
+	const code = (error as { code?: unknown }).code
+	return typeof code === 'string' && STRIPE_REFUND_REJECTION_CODES.has(code)
 }
 
 function mapStripeRefundStatus(
@@ -318,9 +342,13 @@ function mapStripeRefundStatus(
 
 /**
  * Refund a destination charge, reversing the transfer and the platform fee
- * proportionally (Stripe computes the split). A definitive provider rejection
- * (invalid request, card error) is reported as `failed`; transient failures are
- * rethrown for the caller to retry.
+ * proportionally (Stripe computes the split). Only a rejection of the refund
+ * itself (`StripeInvalidRequestError` with a refund-specific code such as
+ * `charge_already_refunded` or `amount_too_large`) is reported as `failed`.
+ * Everything else is rethrown for the caller to retry, so the refund stays
+ * pending: transient errors, authentication (401), permission (403), conflict
+ * (409) and rate limit (429) errors, and invalid requests with any other code.
+ * A rotated or restricted key must not drop a refund the region booked itself.
  */
 export async function createReservationStripeRefund(
 	stripe: Stripe,
@@ -353,9 +381,7 @@ export async function createReservationStripeRefund(
 				: {}),
 		}
 	} catch (error) {
-		if (isStripeTransientError(error)) throw error
-		if (error instanceof Stripe.errors.StripeIdempotencyError) throw error
-		if (isStripeIdempotencyInFlight(error)) throw error
+		if (!isStripeDefinitiveRefundRejection(error)) throw error
 		return {
 			status: 'failed',
 			refundRef: null,

@@ -287,13 +287,16 @@ export async function handleRestaurantOrderStripeDisputeEvent(
 	}
 	const order = restaurantOrderFromMetadata(intent.metadata ?? undefined)
 	if (!order) return
+	const status = mapStripeDisputeStatusToRestaurantOrder(
+		dispute,
+		eventType === 'charge.dispute.closed',
+	)
+	// A Stripe inquiry is not a chargeback: it never blocks a refund.
+	if (!status) return
 	await reportDisputeFromProvider({
 		...order,
 		processor: 'connect',
-		status: mapStripeDisputeStatusToRestaurantOrder(
-			dispute,
-			eventType === 'charge.dispute.closed',
-		),
+		status,
 	})
 }
 

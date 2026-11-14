@@ -164,12 +164,14 @@ export function linkReceiptOrder(
 		// ever a guest-visible one (out of stock, kitchen closed) or null.
 		refundStatus: full.refundStatus,
 		refundPendingCents: full.refundPendingCents,
+		refundsOnCancel: full.refundsOnCancel,
 		cancelledBy: full.cancelledBy,
 		cancelReason: full.cancelReason,
 		// Waiting for the restaurant to accept (#107): when it is turned down
 		// automatically, and whether it was turned down. Times and a yes/no;
 		// the reason itself is only ever the guest-visible one above.
 		acceptanceDeadlineAt: full.acceptanceDeadlineAt,
+		serverNow: full.serverNow,
 		rejected: full.rejected,
 		// Whether the guest may still cancel, and until when (#111): a yes/no
 		// and a time, nothing about the guest. The link holder may cancel too

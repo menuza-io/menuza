@@ -239,9 +239,15 @@ the shared organization alarm (2 minutes, armed by order writes: placing an
 order, a payment event, a status change in the App, Station's Orders app or the
 kitchen screen; the tick asks for a follow-up while queued rows remain or an
 order waits for acceptance, at the earliest retry or deadline), and the Node
-(OCI) node runs an in-process interval (`ORDER_MESSAGES_TICK_INTERVAL_SECONDS`,
-default 120, minimum 60, `0` turns it off). Each row is claimed before it is
-sent, so the drivers may overlap.
+(OCI) node runs two in-process intervals. Message retries use
+`ORDER_MESSAGES_TICK_INTERVAL_SECONDS` (default 120, minimum 60, `0` turns it
+off). The acceptance timeout (#107) and the owed cancel refund sweep have their
+own, `ORDER_ACCEPTANCE_TICK_INTERVAL_SECONDS` (default 60, minimum 30), which
+cannot be turned off (`0`, a negative or an unreadable value means the default)
+and which `ORDER_MESSAGES_TICK_INTERVAL_SECONDS=0` does not touch, so a waiting
+order is turned down at the deadline the guest was shown, not up to an hour
+later. Each row is claimed before it is sent and each waiting order is decided
+only while it still waits, so the drivers may overlap.
 
 Updated times (`eta_changed`): every push-back of 10 minutes or more queues one
 row per channel, keyed by the order's new `promised_version` (every other kind

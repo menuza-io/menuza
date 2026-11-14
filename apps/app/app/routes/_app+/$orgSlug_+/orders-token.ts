@@ -81,7 +81,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		{ scope, claims },
 	)
 	return data(
-		{ jwt, tenantApiUrl },
+		// `serverNow` lets the browser follow the server's clock for deadlines
+		// such as the time left to accept an order.
+		{ jwt, tenantApiUrl, serverNow: Date.now() },
 		{
 			headers: { 'Cache-Control': 'private, no-store' },
 		},

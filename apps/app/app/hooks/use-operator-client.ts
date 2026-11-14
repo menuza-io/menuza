@@ -1,9 +1,12 @@
 import { useCallback, useRef } from 'react'
 import { z } from 'zod'
+import { recordServerClock } from '#app/utils/server-clock.ts'
 
 const credentialsSchema = z.object({
 	jwt: z.string(),
 	tenantApiUrl: z.string().url(),
+	/** App's clock when it answered (ms); lets countdowns follow the server. */
+	serverNow: z.number().optional(),
 })
 export type OperatorCredentials = z.infer<typeof credentialsSchema>
 
@@ -54,12 +57,17 @@ export function useOperatorClient(
 			const key = `${tokenRoute}:${orgSlug}:${write ? 'write' : 'read'}`
 			let entry = cached.current.get(key)
 			if (!entry || entry.expires <= Date.now()) {
+				const sentAt = Date.now()
 				const credentials = fetch(
 					operatorTokenUrl(orgSlug, tokenRoute, write),
 					{ headers: { Accept: 'application/json' } },
 				).then(async (response) => {
 					if (!response.ok) throw new Error('Unable to authorize this request.')
-					return credentialsSchema.parse(await response.json())
+					const parsed = credentialsSchema.parse(await response.json())
+					if (parsed.serverNow !== undefined) {
+						recordServerClock(parsed.serverNow, sentAt)
+					}
+					return parsed
 				})
 				entry = { credentials, expires: Date.now() + 10 * 60000 }
 				cached.current.set(key, entry)

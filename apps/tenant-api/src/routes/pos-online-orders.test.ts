@@ -46,6 +46,10 @@ import {
 	NOW,
 } from '../services/loyalty-test-fixture.ts'
 import { PHONE_SEARCHES_PER_HOUR } from '../services/pos-online-orders-service.ts'
+import {
+	baseOrderDetailSchema,
+	baseOrdersFeedSchema,
+} from './pos-online-orders-base-schema.fixture.ts'
 import { posKdsRoutes } from './pos-kds.ts'
 import { posOnlineOrdersRoutes } from './pos-online-orders.ts'
 
@@ -520,15 +524,17 @@ describe('Station Orders app API (/pos/online-orders)', () => {
 			orgId: ORG_A,
 			refundId: row!.id,
 			status: 'succeeded',
+			providerRefundId: 're_station_1',
 		})
 		expect(settled.ok).toBe(true)
 		seen = (await detail(id, manager)).order
 		expect(seen).toMatchObject({
 			refundedCents: 500,
-			refundPendingCents: 0,
 			refundableCents: 1000,
 			refundStatus: 'partial',
 		})
+		// Nothing waits on the provider: the key is left out, not 0.
+		expect(seen).not.toHaveProperty('refundPendingCents')
 		const before = seen.version
 		// The provider takes it back later (succeeded, then failed): Station
 		// reads "failed", the 500 is refundable again, and the version moves.
@@ -536,6 +542,7 @@ describe('Station Orders app API (/pos/online-orders)', () => {
 			orgId: ORG_A,
 			refundId: row!.id,
 			status: 'failed',
+			providerRefundId: 're_station_1',
 			failureCode: 'card_closed',
 		})
 		expect(reversed.ok).toBe(true)
@@ -1005,6 +1012,38 @@ describe('Station Orders app API (/pos/online-orders)', () => {
 		).toBe(200)
 	})
 
+	describe('older Station build (strict base schema)', () => {
+		it('parses a default feed and detail: a new key is sent only off its default', async () => {
+			const id = await insertOrder()
+			await insertOrder({
+				number: 'W-2',
+				paymentMethod: 'handoff',
+				paymentStatus: 'unpaid',
+				paymentProcessor: null,
+				paymentSessionId: null,
+			})
+			const data = await feed()
+			expect(() => baseOrdersFeedSchema.parse(data)).not.toThrow()
+			for (const order of data.orders) {
+				expect(order).not.toHaveProperty('refundStatus')
+				expect(order).not.toHaveProperty('refundPendingCents')
+				expect(order).not.toHaveProperty('disputed')
+				expect(order).not.toHaveProperty('acceptanceDeadlineAt')
+				expect(order).not.toHaveProperty('rejectedReason')
+			}
+			const one = await detail(id)
+			expect(() => baseOrderDetailSchema.parse(one)).not.toThrow()
+		})
+
+		it('sends the new keys once they differ from their defaults', async () => {
+			await insertOrder({ disputeStatus: 'open' })
+			const [order] = (await feed()).orders
+			expect(order).toMatchObject({ disputed: true })
+			const list = await feed()
+			expect(baseOrdersFeedSchema.safeParse(list).success).toBe(false)
+		})
+	})
+
 	describe('manual acceptance (#107)', () => {
 		const waiting = (
 			values: Partial<typeof restaurantOrders.$inferInsert> = {},
@@ -1130,6 +1169,42 @@ describe('Station Orders app API (/pos/online-orders)', () => {
 			})
 			expect(accept.status).toBe(409)
 			expect(await accept.json()).toMatchObject({ error: 'order_not_pending' })
+		})
+
+		it('answers 409 order_not_pending to a plain cancel of a waiting order: only reject turns it down', async () => {
+			const id = await waiting()
+			const version = (await detail(id)).order.version
+			for (const body of [
+				{ action: 'cancel', expectedVersion: version, reason: 'guest_request' },
+				{
+					action: 'cancel',
+					expectedVersion: version,
+					reason: 'other',
+					refund: 'none',
+				},
+			]) {
+				const response = await command(id, body, manager)
+				expect(response.status).toBe(409)
+				expect(await response.json()).toMatchObject({
+					error: 'order_not_pending',
+				})
+			}
+			const db = await getTenantDb(ORG_A)
+			const [order] = await db
+				.select()
+				.from(restaurantOrders)
+				.where(eq(restaurantOrders.id, id))
+			expect(order).toMatchObject({
+				status: 'pending_acceptance',
+				rejectedReason: null,
+				cancelReason: null,
+			})
+			expect(
+				await db
+					.select()
+					.from(restaurantOrderRefunds)
+					.where(eq(restaurantOrderRefunds.orderId, id)),
+			).toEqual([])
 		})
 
 		it('refuses reject reasons outside the list, and a reject once it was accepted', async () => {

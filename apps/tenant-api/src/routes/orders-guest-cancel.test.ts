@@ -757,6 +757,70 @@ describe('guest cancel: the rule', () => {
 		expect(await unpaidRes.json()).toMatchObject({ error: 'not_cancellable' })
 	})
 
+	it('a pay-at-handoff order already marked paid is refused (no refund would be booked), and no read promises one', async () => {
+		const orderId = await handoffOrder({
+			paymentStatus: 'paid',
+			paidAt: new Date(),
+		})
+		for (const headers of [receipt(orderId), link(orderId)]) {
+			const read = await app.request(`/orders/${orderId}?slug=test-org`, {
+				headers: { origin: ORIGIN, ...headers },
+			})
+			const { order } = (await read.json()) as {
+				order: {
+					cancel?: { allowed: boolean }
+					refundsOnCancel?: boolean
+				}
+			}
+			expect(order.cancel).toMatchObject({ allowed: false })
+			expect(order.refundsOnCancel).toBe(false)
+		}
+		const state = await check(orderId, receipt(orderId))
+		expect(state.status).toBe(200)
+		expect(await state.json()).toMatchObject({
+			allowed: false,
+			reason: 'not_cancellable',
+		})
+		const res = await cancel(orderId, receipt(orderId))
+		expect(res.status).toBe(409)
+		expect(await res.json()).toMatchObject({ error: 'not_cancellable' })
+		expect((await orderRow(orderId)).status).toBe('accepted')
+		expect(await refundRows(orderId)).toEqual([])
+		expect(await cancelledMessages(orderId)).toHaveLength(0)
+	})
+
+	it('refundsOnCancel is true only for an order paid online', async () => {
+		const online = await onlineOrder()
+		const handoff = await handoffOrder()
+		const read = async (orderId: string, headers: Record<string, string>) =>
+			(
+				(await (
+					await app.request(`/orders/${orderId}?slug=test-org`, {
+						headers: { origin: ORIGIN, ...headers },
+					})
+				).json()) as { order: { refundsOnCancel?: boolean } }
+			).order.refundsOnCancel
+		expect(await read(online, receipt(online))).toBe(true)
+		expect(await read(online, link(online))).toBe(true)
+		expect(await read(handoff, receipt(handoff))).toBe(false)
+		expect(await read(handoff, link(handoff))).toBe(false)
+	})
+
+	it('sends the region clock on both reads, so a fast phone clock cannot shorten the countdown', async () => {
+		const orderId = await onlineOrder()
+		for (const headers of [receipt(orderId), link(orderId)]) {
+			const before = Date.now()
+			const { order } = (await (
+				await app.request(`/orders/${orderId}?slug=test-org`, {
+					headers: { origin: ORIGIN, ...headers },
+				})
+			).json()) as { order: { serverNow?: string } }
+			const now = Date.parse(order.serverNow ?? '')
+			expect(now).toBeGreaterThanOrEqual(before - 1000)
+			expect(now).toBeLessThanOrEqual(Date.now() + 1000)
+		}
+	})
+
 	it('a scheduled order: until the lead before its time, never less than the ASAP window', async () => {
 		guestCancel = { 'loc-1': { minutes: 2, scheduledLeadMinutes: 60 } }
 		const paidAt = new Date(Date.now() - 30 * MIN)

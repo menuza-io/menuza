@@ -164,11 +164,16 @@ function summary(
 		openedAt,
 		completedAt: ms(order.completedAt),
 		cancelledAt: ms(order.cancelledAt),
-		refundStatus: refundState.refundStatus,
-		refundPendingCents: refundState.pendingCents,
-		disputed: disputeBlocksRefund(order.disputeStatus),
-		// Only on orders that waited for acceptance (#107), so every other
-		// summary keeps its shape for a Station build that predates them.
+		// Each key below is left out while it holds its default, so a default
+		// summary parses with the strict schema of a Station build that predates
+		// them (deploy order is tenant-api first; see the contract test).
+		...(refundState.refundStatus !== 'none'
+			? { refundStatus: refundState.refundStatus }
+			: {}),
+		...(refundState.pendingCents > 0
+			? { refundPendingCents: refundState.pendingCents }
+			: {}),
+		...(disputeBlocksRefund(order.disputeStatus) ? { disputed: true } : {}),
 		...(waitedForAcceptance(order)
 			? { acceptanceDeadlineAt: ms(order.acceptanceDeadlineAt) }
 			: {}),

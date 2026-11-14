@@ -547,6 +547,8 @@ const valueClass = 'price font-medium text-foreground'
 			<p id="payment-hold-live" class="sr-only" aria-live="polite" aria-atomic="true"></p>
 			{/* Status changes (accepted, turned down, cancelled). */}
 			<p id="order-live" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
+			{/* Minute marks of the cancel countdown (the visible text ticks every second and is not live). */}
+			<p id="cancel-live" class="sr-only" aria-live="polite" aria-atomic="true"></p>
 		</div>
 	</div>
 
@@ -585,10 +587,13 @@ const valueClass = 'price font-medium text-foreground'
 		} from '~/lib/ordering/payment-poll'
 		import { startCountdown } from '~/lib/ordering/countdown'
 		import {
+			cancelHiddenKey,
 			cancelRefusalKey,
 			cancelWindowEnd,
+			clockOffsetMs,
 			createCancelAttempt,
 			formatCancelRemaining,
+			nextCancelAnnouncement,
 			orderStage,
 			paidOnline,
 			refundView,
@@ -636,6 +641,12 @@ const valueClass = 'price font-medium text-foreground'
 			number: string
 			status: string
 			paymentStatus: string
+			/** `online` or `handoff`, when the region sends it. */
+			paymentMethod?: string
+			/** A cancel refunds a card payment (the region's own answer), when it sends it. */
+			refundsOnCancel?: boolean
+			/** The region's clock when it answered (ISO text or epoch ms), to judge `cancel.until`. */
+			serverNow?: string | number | null
 			currency: string
 			subtotalCents: number
 			/** A loyalty reward's saving. */
@@ -1152,6 +1163,33 @@ const valueClass = 'price font-medium text-foreground'
 		/** The region refused a cancel: keep the button away until the page reloads. */
 		let cancelRefused = false
 		let lastStage: OrderStage | null = null
+		/** Region clock minus this device clock (ms), from the order read. */
+		let clockOffset = 0
+		/** The last minute mark spoken (`cancelAnnounceKey`), null before the first. */
+		let lastCancelKey: number | null = null
+
+		function setCancelNote(text: string) {
+			const note = document.getElementById('cancel-note')
+			if (note) note.textContent = text
+		}
+
+		function cancelNoteFor(key: 'closed' | 'preparing' | 'unavailable'): string {
+			return key === 'closed'
+				? labels.cancelClosed
+				: key === 'preparing'
+					? labels.cancelPreparing
+					: labels.cancelUnavailable
+		}
+
+		function announceCancel(text: string) {
+			const live = document.getElementById('cancel-live')
+			if (!live) return
+			// Clear first so a repeated sentence is still spoken.
+			live.textContent = ''
+			window.setTimeout(() => {
+				live.textContent = text
+			}, 100)
+		}
 
 		function announceOrder(text: string) {
 			const live = document.getElementById('order-live')
@@ -1165,17 +1203,27 @@ const valueClass = 'price font-medium text-foreground'
 		function hideCancel() {
 			stopCancelTimer?.()
 			stopCancelTimer = null
+			lastCancelKey = null
 			hide('order-cancel')
 			hide('cancel-confirm')
 		}
 
 		/** Shows the cancel button with its countdown while the window is open. */
 		function renderCancel(order: ReceiptOrder) {
-			const end = cancelRefused ? null : cancelWindowEnd(order, Date.now())
+			if (order.serverNow != null) clockOffset = clockOffsetMs(order.serverNow, Date.now())
+			const end = cancelRefused ? null : cancelWindowEnd(order, Date.now(), clockOffset)
 			stopCancelTimer?.()
 			stopCancelTimer = null
 			if (end === null) {
+				// Hiding the box under the guest's focus would drop it on <body>
+				// and say nothing: move it to the heading and say why.
+				const hadFocus = document.getElementById('order-cancel')?.contains(document.activeElement)
 				hideCancel()
+				if (hadFocus) {
+					const key = cancelRefused ? null : cancelHiddenKey(order, Date.now(), clockOffset)
+					if (key) setCancelNote(cancelNoteFor(key))
+					document.getElementById('success-heading')?.focus()
+				}
 				return
 			}
 			document.getElementById('cancel-confirm-refund')?.classList.toggle('hidden', !paidOnline(order))
@@ -1184,10 +1232,14 @@ const valueClass = 'price font-medium text-foreground'
 			stopCancelTimer = startCountdown(
 				end,
 				(ms) => {
-					if (countdownEl) {
-						countdownEl.textContent = fillTemplate(labels.cancelCountdown, {
-							time: formatCancelRemaining(ms, labels.locale || 'en'),
-						})
+					const text = fillTemplate(labels.cancelCountdown, {
+						time: formatCancelRemaining(ms, labels.locale || 'en'),
+					})
+					if (countdownEl) countdownEl.textContent = text
+					const next = nextCancelAnnouncement(lastCancelKey, ms)
+					if (next.announce) {
+						lastCancelKey = next.key
+						announceCancel(text)
 					}
 				},
 				() => {
@@ -1195,6 +1247,7 @@ const valueClass = 'price font-medium text-foreground'
 					stopCancelTimer = null
 					const hadFocus = document.getElementById('order-cancel')?.contains(document.activeElement)
 					hideCancel()
+					setCancelNote(labels.cancelClosed)
 					if (hadFocus) document.getElementById('success-heading')?.focus()
 				},
 			)
@@ -1497,10 +1550,7 @@ const valueClass = 'price font-medium text-foreground'
 			const trigger = document.getElementById('cancel-order-btn') as HTMLButtonElement | null
 			const yes = document.getElementById('cancel-confirm-yes') as HTMLButtonElement | null
 			const keep = document.getElementById('cancel-confirm-keep') as HTMLButtonElement | null
-			const note = document.getElementById('cancel-note')
-			const setNote = (text: string) => {
-				if (note) note.textContent = text
-			}
+			const setNote = setCancelNote
 			trigger?.addEventListener('click', () => {
 				setNote('')
 				show('cancel-confirm')
@@ -1530,14 +1580,7 @@ const valueClass = 'price font-medium text-foreground'
 							cancelAttempt.settle()
 							if (error.status === 409) {
 								cancelRefused = true
-								const key = cancelRefusalKey(error.code)
-								setNote(
-									key === 'closed'
-										? labels.cancelClosed
-										: key === 'preparing'
-											? labels.cancelPreparing
-											: labels.cancelUnavailable,
-								)
+								setNote(cancelNoteFor(cancelRefusalKey(error.code)))
 								hideCancel()
 							} else if (error.status === 429) {
 								setNote(labels.cancelLimited)

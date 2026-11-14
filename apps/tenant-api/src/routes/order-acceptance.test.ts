@@ -32,6 +32,7 @@ import { syncEnvFromProcess } from '../lib/secrets.ts'
 import { kitchenFeed } from '../services/kds-service.ts'
 import { insertOrder } from '../services/loyalty-test-fixture.ts'
 import {
+	fanOutOrderAcceptanceTick,
 	processOrderAcceptance,
 	runOrdersTickForOrg,
 } from '../services/order-acceptance.ts'
@@ -833,7 +834,7 @@ describe('manual order acceptance (#107)', () => {
 			expect(operatorOrder(order).cancelReason).toBe('too_busy')
 		})
 
-		it('reject a pay-at-handoff order: simply cancelled, a reason is required', async () => {
+		it('reject a pay-at-handoff order: simply cancelled, a reject reason is required', async () => {
 			discounts = {
 				features: { automatic: true, coupons: true },
 				discounts: [
@@ -842,12 +843,21 @@ describe('manual order acceptance (#107)', () => {
 				codes: [],
 			}
 			const id = await place({ discounts: { expectedDiscountMinor: 200 } })
-			const missing = await patch(id, { status: 'cancelled' })
-			expect(missing.status).toBe(422)
-			expect(await missing.json()).toMatchObject({
-				error: 'reject_reason_required',
-			})
+			// A plain cancel of a waiting order is not a reject: the caller must
+			// use `rejectReason` (a cancel reason alone is refused the same way).
+			for (const body of [
+				{ status: 'cancelled' },
+				{ status: 'cancelled', cancelReason: 'guest_asked' },
+				{ status: 'cancelled', cancelReason: 'duplicate', refund: 'none' },
+			]) {
+				const missing = await patch(id, body)
+				expect(missing.status).toBe(409)
+				expect(await missing.json()).toMatchObject({
+					error: 'order_not_pending',
+				})
+			}
 			expect((await row(id)).status).toBe('pending_acceptance')
+			expect((await row(id)).rejectedReason).toBeNull()
 
 			const res = await patch(id, {
 				status: 'cancelled',
@@ -1018,6 +1028,25 @@ describe('manual order acceptance (#107)', () => {
 				nextDeadlineAt: null,
 			})
 			expect(await refunds(id)).toHaveLength(1)
+		})
+
+		it('the acceptance sweep (the Node interval) turns a waiting order down and refunds it', async () => {
+			const id = await placePaid()
+			vi.setSystemTime(at(6))
+			const swept = await fanOutOrderAcceptanceTick({ orgIds: [ORG] })
+			await orderRefundKicksIdle()
+			expect(swept).toMatchObject({ orgs: 1, errors: 0, rejected: 1 })
+			expect(await row(id)).toMatchObject({
+				status: 'cancelled',
+				rejectedReason: 'not_accepted_in_time',
+				cancelledBy: 'system',
+			})
+			expect(await refunds(id)).toHaveLength(1)
+			expect(kicks).toHaveLength(1)
+			// A second pass has nothing to do.
+			expect(await fanOutOrderAcceptanceTick({ orgIds: [ORG] })).toMatchObject({
+				rejected: 0,
+			})
 		})
 
 		it('asks for the next run at the earliest deadline', async () => {

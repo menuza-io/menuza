@@ -2447,6 +2447,18 @@ export async function applyOrderStatusPatchInTx(
 		fromPending &&
 		input.status === 'cancelled' &&
 		cancel.cancelledBy !== 'guest'
+	// A plain cancel (no reject reason) of a waiting order is not a reject: a
+	// reject forces a full refund and tells the guest the restaurant could not
+	// take the order. The caller says which it means.
+	if (isReject && input.rejectReason === undefined) {
+		return done(
+			orderFailure(
+				409,
+				'order_not_pending',
+				'This order is waiting for acceptance. Reject it with a reason instead of cancelling it.',
+			),
+		)
+	}
 	let rejectRefund = false
 
 	if (input.status !== order.status) {
@@ -2537,7 +2549,7 @@ export async function applyOrderStatusPatchInTx(
 				),
 			)
 		}
-		const reason = input.rejectReason ?? input.cancelReason ?? null
+		const reason = input.rejectReason ?? null
 		if (!reason) {
 			return done(
 				orderFailure(
@@ -3051,6 +3063,13 @@ export function receiptOrder(
 		refundStatus: glance.refundStatus,
 		/** A provider refund on its way (not in `refundedCents` yet). */
 		refundPendingCents: glance.pendingCents,
+		/**
+		 * A guest cancel refunds the card in full: only a paid online order.
+		 * Sites words the confirm box from it, so an order paid at handoff is
+		 * never promised a refund the region does not book.
+		 */
+		refundsOnCancel:
+			order.paymentMethod === 'online' && order.paymentStatus === 'paid',
 		/** Who cancelled: `operator`, `guest` or `system`; null otherwise. */
 		cancelledBy: order.cancelledBy ?? null,
 		/** Only `out_of_stock` / `kitchen_closed` are told to the guest. */
@@ -3064,6 +3083,12 @@ export function receiptOrder(
 			order.status === 'pending_acceptance' && order.acceptanceDeadlineAt
 				? order.acceptanceDeadlineAt.toISOString()
 				: null,
+		/**
+		 * The region's clock when this was read. Sites compares the cancel and
+		 * acceptance deadlines with it, so a guest whose phone clock is off
+		 * still sees the right countdown.
+		 */
+		serverNow: new Date().toISOString(),
 		/** The restaurant turned it down while it waited (or nobody decided in time). */
 		rejected: order.rejectedReason != null,
 		/**

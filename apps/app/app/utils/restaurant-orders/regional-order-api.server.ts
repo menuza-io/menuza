@@ -414,38 +414,73 @@ export async function requestRestaurantOrderRefundIntent(
 				? 'loyalty_check_unsupported'
 				: null
 	if (unchecked) {
-		// Booked without the check (a region that ignores the field). Release
-		// a refund this call just booked and never sent, so neither this
-		// action nor the reconcile job executes it; anything older is left to
-		// finish as it was.
+		// Booked without the check (a region that ignores the field). A refund
+		// still `pending` with no provider id would be executed by the reconcile
+		// job, so it is released here, replay or not: a replay from the same
+		// region was booked without the check too. One the provider already has
+		// (or a settled one) is left to finish as it was. If the release does
+		// not go through the refund must stay refusable, so the caller gets a
+		// retryable 503 (the retry replays and releases it), never a 403.
 		const intent = parsed.data
-		if (
-			intent.status === 'pending' &&
-			!intent.replayed &&
-			intent.providerRefundId === null
-		) {
-			await reportRestaurantOrderRefundStatus({
+		if (intent.status === 'pending' && intent.providerRefundId === null) {
+			const released = await releaseUncheckedRefund({
 				dataRegion,
 				orgId: request.orgId,
-				orderId: intent.orderId,
-				refundId: intent.refundId,
-				processor: intent.processor,
-				status: 'failed',
+				intent,
 				failureCode: unchecked,
-				amountCents: intent.amountCents,
-				currency: intent.currency,
-			}).catch((error: unknown) => {
-				console.error(
-					`Could not release unchecked refund ${intent.refundId}:`,
-					error instanceof RegionalOrderApiError ? error.code : 'unknown',
-				)
 			})
+			if (!released)
+				throw new RegionalOrderApiError('refund_release_failed', 503)
 		}
 		throw unchecked === 'location_scope_unsupported'
 			? locationScopeUnsupported()
 			: loyaltyCheckUnsupported()
 	}
 	return parsed.data
+}
+
+const RELEASE_ATTEMPTS = 3
+
+/**
+ * Settle a refund booked without a confirmed check as `failed`, so it holds no
+ * amount and is never executed. Retries a transient regional failure; true
+ * once the region has the release.
+ */
+async function releaseUncheckedRefund(options: {
+	dataRegion: string | null | undefined
+	orgId: string
+	intent: OrderRefundIntentResponse
+	failureCode: 'location_scope_unsupported' | 'loyalty_check_unsupported'
+}): Promise<boolean> {
+	const { dataRegion, orgId, intent, failureCode } = options
+	for (let attempt = 0; attempt < RELEASE_ATTEMPTS; attempt += 1) {
+		try {
+			await reportRestaurantOrderRefundStatus({
+				dataRegion,
+				orgId,
+				orderId: intent.orderId,
+				refundId: intent.refundId,
+				processor: intent.processor,
+				status: 'failed',
+				failureCode,
+				amountCents: intent.amountCents,
+				currency: intent.currency,
+			})
+			return true
+		} catch (error) {
+			console.error(
+				`Could not release unchecked refund ${intent.refundId}:`,
+				error instanceof RegionalOrderApiError ? error.code : 'unknown',
+			)
+			if (!(error instanceof RegionalOrderApiError) || !error.retryable) {
+				return false
+			}
+			if (attempt < RELEASE_ATTEMPTS - 1) {
+				await new Promise((resolve) => setTimeout(resolve, 150 * (attempt + 1)))
+			}
+		}
+	}
+	return false
 }
 
 function locationScopeUnsupported() {

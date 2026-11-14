@@ -1,10 +1,12 @@
 // @vitest-environment jsdom
 import { screen, waitFor } from '@testing-library/react'
 import { userEvent } from '@testing-library/user-event'
+import { useState } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { WaitingLane } from '#app/components/orders/waiting-lane.tsx'
 import { OperatorRequestError } from '#app/hooks/use-operator-client.ts'
 import { type Order, orderSchema } from '#app/utils/orders/order-model.ts'
+import { recordServerClock, resetServerClock } from '#app/utils/server-clock.ts'
 import { renderStaff } from '#tests/staff-render.tsx'
 
 const chime = vi.hoisted(() => ({
@@ -13,6 +15,7 @@ const chime = vi.hoisted(() => ({
 	chimeReady: vi.fn(() => false),
 	readSoundChoice: vi.fn(() => false),
 	writeSoundChoice: vi.fn(),
+	clearSoundChoice: vi.fn(),
 }))
 vi.mock('#app/utils/orders/waiting-chime.ts', () => chime)
 
@@ -40,14 +43,45 @@ function waitingOrder(over: Partial<Order> = {}): Order {
 	})
 }
 
-function show(orders: Order[], request = vi.fn(), onChanged = vi.fn()) {
-	renderStaff(
+/** `emptyAfterChange` plays the refreshed list: nothing waits any more. */
+function Harness({
+	initial,
+	request,
+	onChanged,
+	emptyAfterChange,
+}: {
+	initial: Order[]
+	request: Parameters<typeof WaitingLane>[0]['request']
+	onChanged: () => void
+	emptyAfterChange: boolean
+}) {
+	const [orders, setOrders] = useState(initial)
+	return (
 		<WaitingLane
 			orgSlug="acme"
 			orders={orders}
 			canWrite
 			request={request}
+			onChanged={() => {
+				onChanged()
+				if (emptyAfterChange) setOrders([])
+			}}
+		/>
+	)
+}
+
+function show(
+	orders: Order[],
+	request = vi.fn(),
+	onChanged = vi.fn(),
+	emptyAfterChange = false,
+) {
+	renderStaff(
+		<Harness
+			initial={orders}
+			request={request}
 			onChanged={onChanged}
+			emptyAfterChange={emptyAfterChange}
 		/>,
 	)
 	return { request, onChanged }
@@ -56,6 +90,7 @@ function show(orders: Order[], request = vi.fn(), onChanged = vi.fn()) {
 describe('WaitingLane', () => {
 	beforeEach(() => {
 		vi.clearAllMocks()
+		resetServerClock()
 		chime.chimeReady.mockReturnValue(false)
 		chime.readSoundChoice.mockReturnValue(false)
 	})
@@ -73,6 +108,22 @@ describe('WaitingLane', () => {
 		)
 	})
 
+	it('counts down on the server clock when this computer is minutes off', () => {
+		// This computer is 5 minutes fast: the server's "now" is 5 minutes behind
+		// what the computer reads. Without the offset this would say time is up.
+		const local = Date.now()
+		const serverTime = local - 5 * 60_000
+		recordServerClock(serverTime, local, local)
+		show([
+			waitingOrder({
+				acceptanceDeadlineAt: new Date(serverTime + 192_000).toISOString(),
+			}),
+		])
+		const countdown = screen.getByTestId('acceptance-countdown')
+		expect(countdown).toHaveTextContent(/Accept within 3:1\d/)
+		expect(countdown).toHaveAttribute('data-expired', 'false')
+	})
+
 	it('accepts through the region', async () => {
 		const request = vi.fn().mockResolvedValue({})
 		const { onChanged } = show([waitingOrder()], request)
@@ -82,6 +133,33 @@ describe('WaitingLane', () => {
 			method: 'PATCH',
 			body: JSON.stringify({ status: 'accepted' }),
 		})
+	})
+
+	it('announces the accepted order and moves focus to the lane heading', async () => {
+		const request = vi.fn().mockResolvedValue({})
+		show([waitingOrder()], request)
+		const accept = screen.getByTestId('waiting-accept')
+		accept.focus()
+		await userEvent.click(accept)
+		const message = await screen.findByTestId('waiting-message')
+		await waitFor(() => expect(message).toHaveTextContent('Order accepted.'))
+		expect(message).toHaveAttribute('role', 'status')
+		expect(
+			screen.getByRole('heading', { name: /Waiting for you/ }),
+		).toHaveFocus()
+	})
+
+	it('keeps the lane and its notice when the last waiting order is accepted', async () => {
+		const request = vi.fn().mockResolvedValue({})
+		show([waitingOrder()], request, vi.fn(), true)
+		await userEvent.click(screen.getByTestId('waiting-accept'))
+		// The refreshed list is empty: the lane stays just to say so.
+		await screen.findByText('Order accepted.')
+		expect(screen.getByTestId('waiting-lane')).toBeInTheDocument()
+		expect(screen.getByTestId('waiting-message')).toHaveTextContent(
+			'Order accepted.',
+		)
+		expect(screen.queryByTestId('waiting-row')).toBeNull()
 	})
 
 	it('rejects with the chosen reason', async () => {
@@ -117,22 +195,52 @@ describe('WaitingLane', () => {
 		)
 	})
 
-	it('offers sound once and chimes only after it is on', async () => {
+	it('turns the sound on and off with a toggle that says which it is', async () => {
 		show([waitingOrder()])
+		const toggle = screen.getByTestId('waiting-sound-button')
+		expect(toggle).toHaveAttribute('aria-pressed', 'false')
+		expect(toggle).toHaveTextContent('Sound off')
 		expect(chime.playChime).not.toHaveBeenCalled()
-		await userEvent.click(screen.getByTestId('waiting-sound-button'))
+
+		await userEvent.click(toggle)
 		expect(chime.unlockChime).toHaveBeenCalled()
 		expect(chime.writeSoundChoice).toHaveBeenCalled()
-		expect(screen.queryByTestId('waiting-sound-button')).toBeNull()
-		expect(chime.playChime).toHaveBeenCalled()
+		expect(toggle).toHaveAttribute('aria-pressed', 'true')
+		expect(toggle).toHaveTextContent('Sound on')
+		expect(chime.playChime).toHaveBeenCalledTimes(1)
+
+		await userEvent.click(toggle)
+		expect(chime.clearSoundChoice).toHaveBeenCalled()
+		expect(toggle).toHaveAttribute('aria-pressed', 'false')
+		expect(toggle).toHaveTextContent('Sound off')
 	})
 
-	it('hides the sound button when the audio is already allowed', async () => {
+	it('stops the repeating chime when the sound is turned off', async () => {
+		vi.useFakeTimers({ shouldAdvanceTime: true })
+		try {
+			show([waitingOrder()])
+			const toggle = screen.getByTestId('waiting-sound-button')
+			await userEvent.click(toggle)
+			expect(chime.playChime).toHaveBeenCalledTimes(1)
+			await vi.advanceTimersByTimeAsync(6000)
+			expect(chime.playChime).toHaveBeenCalledTimes(2)
+			await userEvent.click(toggle)
+			await vi.advanceTimersByTimeAsync(30_000)
+			expect(chime.playChime).toHaveBeenCalledTimes(2)
+		} finally {
+			vi.useRealTimers()
+		}
+	})
+
+	it('shows the sound as on when the audio is already allowed', async () => {
 		chime.readSoundChoice.mockReturnValue(true)
 		chime.chimeReady.mockReturnValue(true)
 		show([waitingOrder()])
 		await waitFor(() =>
-			expect(screen.queryByTestId('waiting-sound-button')).toBeNull(),
+			expect(screen.getByTestId('waiting-sound-button')).toHaveAttribute(
+				'aria-pressed',
+				'true',
+			),
 		)
 		expect(chime.playChime).toHaveBeenCalled()
 	})

@@ -425,6 +425,30 @@ describe('restaurant order refund and dispute webhooks (#80)', () => {
 		])
 	})
 
+	it('does not report a Stripe inquiry, which never blocks a refund; its escalation does', async () => {
+		commerce.retrieveReservationPaymentIntent.mockResolvedValue({
+			id: 'pi_1',
+			metadata: { type: 'restaurant_order', orgId: 'org_1', orderId: 'ord_1' },
+		})
+		for (const [status, event] of [
+			['warning_needs_response', 'charge.dispute.created'],
+			['warning_under_review', 'charge.dispute.updated'],
+			['warning_closed', 'charge.dispute.closed'],
+		] as const) {
+			await handleRestaurantOrderStripeDisputeEvent(
+				{ id: 'dp_1', payment_intent: 'pi_1', status } as never,
+				event,
+			)
+		}
+		expect(reportDispute).not.toHaveBeenCalled()
+		await handleRestaurantOrderStripeDisputeEvent(
+			{ id: 'dp_1', payment_intent: 'pi_1', status: 'needs_response' } as never,
+			'charge.dispute.updated',
+		)
+		expect(reportDispute).toHaveBeenCalledTimes(1)
+		expect(reportDispute.mock.calls[0]![0]).toMatchObject({ status: 'open' })
+	})
+
 	it('ignores disputes of other payments and of payments it cannot find', async () => {
 		commerce.retrieveReservationPaymentIntent.mockResolvedValueOnce({
 			id: 'pi_2',

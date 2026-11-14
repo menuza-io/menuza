@@ -907,6 +907,8 @@ function OrderSheet({
 		grants,
 		busy,
 		actionError,
+		actionName,
+		pinActionError,
 		selected,
 		contact,
 		refundOutcome,
@@ -943,11 +945,25 @@ function OrderSheet({
 	const locked = busy || stale || !detail
 	const paidOnline = detail ? isPaidOnline(detail) : false
 	const waitingForDecision = detail?.status === 'pending_acceptance'
-	// Waited for a decision once and is not waiting now: another screen decided first.
+	// Only a failed accept or reject can mean another screen decided first. An
+	// order that once waited keeps `acceptanceDeadlineAt`, so that alone says
+	// nothing about a later command (Mark ready, Hand over).
 	const decidedElsewhere =
+		(actionName === 'accept' || actionName === 'reject') &&
 		detail != null &&
-		detail.acceptanceDeadlineAt != null &&
 		detail.status !== 'pending_acceptance'
+	// A dialog shows the error itself: keep it up until the dialog closes.
+	const dialogOpen = rejecting || cancelling || refunding
+	useEffect(() => {
+		pinActionError(dialogOpen)
+		return () => pinActionError(false)
+	}, [dialogOpen, pinActionError])
+	// Another screen decided while the reject dialog was open: close it, the
+	// sheet behind explains what happened.
+	const stillWaiting = detail?.status === 'pending_acceptance'
+	useEffect(() => {
+		if (rejecting && !stillWaiting) setRejecting(false)
+	}, [rejecting, stillWaiting])
 	return (
 		<Modal
 			open={selected !== null}
@@ -1128,6 +1144,8 @@ function OrderSheet({
 						number={detail.number}
 						paidOnline={paidOnline}
 						busy={busy}
+						error={actionError}
+						decidedElsewhere={decidedElsewhere}
 						onClose={() => setRejecting(false)}
 						onConfirm={async (reason) => {
 							const ok = await orders.command({
@@ -1151,6 +1169,8 @@ function OrderSheet({
 						}
 						refundableLabel={money(detail.refundableCents)}
 						busy={busy}
+						error={actionError}
+						money={money}
 						onClose={() => setCancelling(false)}
 						onConfirm={async (reason, refund) => {
 							const ok = await orders.command({
@@ -1744,6 +1764,8 @@ function RejectDialog({
 	number,
 	paidOnline,
 	busy,
+	error,
+	decidedElsewhere,
 	onClose,
 	onConfirm,
 }: {
@@ -1752,6 +1774,9 @@ function RejectDialog({
 	/** Paid online: rejecting refunds the guest in full. */
 	paidOnline: boolean
 	busy: boolean
+	/** The last failed command, shown here because this modal covers the sheet. */
+	error: OrdersError | null
+	decidedElsewhere: boolean
 	onClose: () => void
 	onConfirm: (reason: OrderRejectReason) => Promise<void>
 }) {
@@ -1781,6 +1806,11 @@ function RejectDialog({
 			}
 		>
 			<div className="p-4 sm:p-5">
+				{error && open ? (
+					<p role="alert" className="notice-warning mb-3 px-4 py-2 text-sm">
+						{actionMessage(_, error, undefined, decidedElsewhere)}
+					</p>
+				) : null}
 				<p className="mb-3 text-sm">
 					{paidOnline
 						? _(
@@ -1823,6 +1853,8 @@ function CancelDialog({
 	canRefund,
 	refundableLabel,
 	busy,
+	error,
+	money,
 	onClose,
 	onConfirm,
 }: {
@@ -1833,6 +1865,9 @@ function CancelDialog({
 	canRefund: boolean
 	refundableLabel: string
 	busy: boolean
+	/** The last failed command, shown here because this modal covers the sheet. */
+	error: OrdersError | null
+	money: (cents: number) => string
 	onClose: () => void
 	onConfirm: (
 		reason: PosOnlineOrderCancelReason,
@@ -1871,6 +1906,11 @@ function CancelDialog({
 			}
 		>
 			<div className="p-4 sm:p-5">
+				{error && open ? (
+					<p role="alert" className="notice-warning mb-3 px-4 py-2 text-sm">
+						{actionMessage(_, error, money)}
+					</p>
+				) : null}
 				<p className="mb-3 text-sm">
 					{paid
 						? canRefund

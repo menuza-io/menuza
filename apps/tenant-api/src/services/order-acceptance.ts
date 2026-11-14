@@ -6,6 +6,7 @@ import {
 	type TenantDatabase,
 } from '@repo/tenant-db'
 
+import { forEachWithBudget } from '../lib/concurrency.ts'
 import { errorLogFields } from '../lib/error-log.ts'
 import { kickOrderRefundExecute } from '../lib/order-refund-kick.ts'
 import { retryOnSqliteBusy } from '../lib/sqlite-retry.ts'
@@ -13,6 +14,7 @@ import {
 	runOrderMessagesTickForOrg,
 	type OrderMessagesTickResult,
 } from './order-message-send.ts'
+import { rotateOrgIds } from './loyalty-tick-service.ts'
 import { processOwedCancelRefunds } from './order-provider-refund-service.ts'
 import {
 	applyOrderStatusPatchInTx,
@@ -221,4 +223,92 @@ export async function runOrdersTickLogged(
 		)
 		return null
 	}
+}
+
+export type OrderAcceptanceSweepResult = {
+	rejected: number
+	owedRefundsBooked: number
+}
+
+/**
+ * Only the time-critical half of the orders tick for one organization: the
+ * acceptance timeout, then cancel refunds still owed. It leaves guest order
+ * messages alone, so the Node acceptance interval keeps the deadline the guest
+ * was shown even when message retries are switched off
+ * (`ORDER_MESSAGES_TICK_INTERVAL_SECONDS=0`). Counts only; never throws.
+ */
+export async function runOrderAcceptanceTickLogged(
+	orgId: string,
+	options: { now?: number } = {},
+): Promise<OrderAcceptanceSweepResult | null> {
+	try {
+		const now = options.now ?? Date.now()
+		const db = await getTenantDb(orgId)
+		const acceptance = await processOrderAcceptance(orgId, {
+			now: new Date(now),
+			db,
+		})
+		const owed = await processOwedCancelRefunds(orgId, { now, db }).catch(
+			(error: unknown) => {
+				console.error(
+					'Owed cancel refunds sweep failed',
+					orgId,
+					errorLogFields(error),
+				)
+				return { booked: 0 }
+			},
+		)
+		return {
+			rejected: acceptance.rejected,
+			owedRefundsBooked: owed.booked,
+		}
+	} catch (error) {
+		console.error(
+			'Order acceptance tick failed for organization',
+			orgId,
+			errorLogFields(error),
+		)
+		return null
+	}
+}
+
+/**
+ * Runs the acceptance sweep for many organizations with bounded concurrency
+ * and a time budget, starting at a different organization each pass so a slow
+ * one never starves the rest. Counts only.
+ */
+export async function fanOutOrderAcceptanceTick(options: {
+	orgIds: readonly string[]
+	run?: (orgId: string) => Promise<OrderAcceptanceSweepResult | null>
+	budgetMs?: number
+	concurrency?: number
+	now?: () => number
+}): Promise<{
+	orgs: number
+	orgsDeferred: number
+	errors: number
+	rejected: number
+}> {
+	const now = options.now ?? Date.now
+	const run = options.run ?? ((orgId) => runOrderAcceptanceTickLogged(orgId))
+	const total = { orgs: 0, orgsDeferred: 0, errors: 0, rejected: 0 }
+	const result = await forEachWithBudget(
+		rotateOrgIds(options.orgIds, Math.floor(now() / 60_000)),
+		{
+			concurrency: options.concurrency ?? 4,
+			deadline: now() + (options.budgetMs ?? 25_000),
+			now,
+		},
+		async (orgId) => {
+			const swept = await run(orgId)
+			if (!swept) {
+				total.errors++
+				return
+			}
+			total.orgs++
+			total.rejected += swept.rejected
+		},
+	)
+	total.orgsDeferred = result.skipped
+	return total
 }

@@ -17,16 +17,21 @@ import {
 import { useEffect, useState } from 'react'
 import { SelectField } from '#app/components/staff/controls.tsx'
 import { formatClock, secondsUntil } from '#app/utils/orders/acceptance.ts'
+import { serverNow } from '#app/utils/server-clock.ts'
 import { CANCEL_REASON_LABELS } from './refund-labels.ts'
 
-/** Seconds left until the deadline, ticking every second; null without one. */
+/**
+ * Seconds left until the deadline, ticking every second; null without one.
+ * The deadline is the server's time, so it is counted on the server's clock
+ * (see `server-clock.ts`), not on this computer's.
+ */
 export function useSecondsLeft(deadline: string | null | undefined) {
-	const [now, setNow] = useState(() => Date.now())
+	const [now, setNow] = useState(() => serverNow())
 	const active = secondsUntil(deadline, 0) !== null
 	useEffect(() => {
 		if (!active) return
-		setNow(Date.now())
-		const timer = window.setInterval(() => setNow(Date.now()), 1000)
+		setNow(serverNow())
+		const timer = window.setInterval(() => setNow(serverNow()), 1000)
 		return () => window.clearInterval(timer)
 	}, [active, deadline])
 	return secondsUntil(deadline, now)

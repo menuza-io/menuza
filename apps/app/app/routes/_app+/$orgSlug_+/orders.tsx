@@ -37,6 +37,10 @@ import {
 	relativeTime,
 } from '#app/utils/orders/order-model.ts'
 import { ordersHref } from '#app/utils/orders/orders-link.ts'
+import {
+	readSoundChoice,
+	shouldPollOrders,
+} from '#app/utils/orders/waiting-chime.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { ORG_PERMISSIONS } from '#app/utils/organization/permissions.server.ts'
 import { customersHref } from '#app/utils/people/customers-link.ts'
@@ -135,13 +139,22 @@ export default function OrdersInbox() {
 		setOrders([])
 		setLoading(true)
 		void refresh(controller.signal)
+		// A hidden tab keeps polling while the waiting lane's chime is on: that
+		// is exactly when an order that arrives has to be heard. Browsers slow a
+		// hidden tab's timer down, so coming back refreshes at once too.
 		const timer = window.setInterval(() => {
-			if (document.visibilityState === 'visible')
+			if (shouldPollOrders(document.visibilityState, readSoundChoice()))
 				void refresh(controller.signal)
 		}, 15000)
+		const onVisible = () => {
+			if (document.visibilityState === 'visible')
+				void refresh(controller.signal)
+		}
+		document.addEventListener('visibilitychange', onVisible)
 		return () => {
 			controller.abort()
 			window.clearInterval(timer)
+			document.removeEventListener('visibilitychange', onVisible)
 		}
 	}, [refresh])
 

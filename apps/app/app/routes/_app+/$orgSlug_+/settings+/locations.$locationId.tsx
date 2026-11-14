@@ -332,7 +332,13 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		guestCancel: await isGuestCancelEnabled(organization.id),
 		acceptance: await isManualAcceptanceEnabled(organization.id),
 	})
-	if (!policy.ok) return { error: policy.error }
+	if (!policy.ok) {
+		// The form words the code in the reader's language and marks the field.
+		return {
+			error: policy.error,
+			orderPolicyError: { field: policy.field, code: policy.code },
+		}
+	}
 
 	// Check if another location has this slug
 	const [existingWithSlug] = await db

@@ -132,6 +132,57 @@ describe('online orders regional client', () => {
 		expect(answer.order.refundStatus).toBe('pending')
 	})
 
+	it('parses a summary without refundStatus, refundPendingCents and disputed (the region omits them by default)', async () => {
+		const bare = {
+			id: 'o1',
+			number: 'W-1',
+			version: 'a'.repeat(64),
+			status: 'accepted',
+			fulfillment: 'pickup',
+			channel: 'web',
+			tableLabel: null,
+			guestName: 'Maya',
+			createdAt: 1,
+			dueAt: null,
+			paymentMethod: 'online',
+			paymentStatus: 'paid',
+			onTab: false,
+			currency: 'USD',
+			totalCents: 1000,
+			refundedCents: 0,
+			itemCount: 1,
+			openedAt: 1,
+			completedAt: null,
+			cancelledAt: null,
+		}
+		const answer = await createOrdersApi(settings, session, async () =>
+			Response.json({ ...feed, orders: [bare] }),
+		).feed()
+		expect(answer.orders[0]).toEqual(bare)
+		expect(answer.orders[0]?.refundStatus).toBeUndefined()
+		expect(answer.orders[0]?.refundPendingCents ?? 0).toBe(0)
+		expect(answer.orders[0]?.disputed ?? false).toBe(false)
+		// The same order with the keys present still parses.
+		const full = await createOrdersApi(settings, session, async () =>
+			Response.json({
+				...feed,
+				orders: [
+					{
+						...bare,
+						refundStatus: 'pending',
+						refundPendingCents: 500,
+						disputed: true,
+					},
+				],
+			}),
+		).feed()
+		expect(full.orders[0]).toMatchObject({
+			refundStatus: 'pending',
+			refundPendingCents: 500,
+			disputed: true,
+		})
+	})
+
 	it('treats a network failure as a lost connection and an odd answer as invalid', async () => {
 		await expect(
 			createOrdersApi(settings, session, async () => {
