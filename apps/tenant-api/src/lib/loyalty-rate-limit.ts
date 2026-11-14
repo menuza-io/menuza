@@ -4,7 +4,8 @@ import {
 	type TenantDatabase,
 	type TenantTransaction,
 } from '@repo/tenant-db'
-import { and, eq, lt, sql } from 'drizzle-orm'
+import { and, eq, lt, ne, sql } from 'drizzle-orm'
+import { ORDER_SMS_CAP_BUCKET } from './order-messages-sms-cap.ts'
 import { hmacHash } from './secrets.ts'
 import { retryOnSqliteBusy } from './sqlite-retry.ts'
 
@@ -87,7 +88,11 @@ export async function enforceLoyaltyLimit(
 	}
 }
 
-/** Drops counter windows that can no longer matter (the tick calls it). */
+/**
+ * Drops counter windows that can no longer matter (the tick calls it), in
+ * every bucket but the order-text cap, whose 24-hour window outlives this
+ * purge's horizon (it prunes its own rows).
+ */
 export async function purgeLoyaltyRateCounters(
 	db: TenantDatabase,
 	now = Date.now(),
@@ -97,5 +102,10 @@ export async function purgeLoyaltyRateCounters(
 	)
 	await db
 		.delete(loyaltyRateCounters)
-		.where(lt(loyaltyRateCounters.windowStart, now - 2 * longest))
+		.where(
+			and(
+				lt(loyaltyRateCounters.windowStart, now - 2 * longest),
+				ne(loyaltyRateCounters.bucket, ORDER_SMS_CAP_BUCKET),
+			),
+		)
 }

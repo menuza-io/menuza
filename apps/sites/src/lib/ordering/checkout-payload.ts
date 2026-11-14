@@ -16,6 +16,11 @@ export function checkoutOrderPayload(
 		reward: unknown
 		/** `{code?, expectedDiscountMinor}` from the confirmed discount quote; null sends none. */
 		discounts?: Record<string, unknown> | null
+		/**
+		 * "Text me order updates": whether the region offered the box and the
+		 * guest ticked it. Transactional, never marketing consent.
+		 */
+		smsUpdates?: { offered: boolean; ticked: boolean }
 	},
 ): Record<string, unknown> {
 	const notes = extra.deliveryNotes?.trim()
@@ -27,7 +32,28 @@ export function checkoutOrderPayload(
 			: {}),
 		...(extra.reward ? { loyalty: extra.reward } : {}),
 		...(extra.discounts ? { discounts: extra.discounts } : {}),
+		...(wantsSmsUpdates(priced, extra) ? { smsUpdates: true } : {}),
 	}
+}
+
+/**
+ * `true` only when the box was offered, ticked and a phone was typed, and the
+ * order is not a table (dine-in) round; otherwise the key is left out.
+ */
+function wantsSmsUpdates(
+	priced: PricedOrder,
+	extra: {
+		contact: { phone: string }
+		smsUpdates?: { offered: boolean; ticked: boolean }
+	},
+): boolean {
+	const choice = extra.smsUpdates
+	return Boolean(
+		choice?.offered &&
+		choice.ticked &&
+		extra.contact.phone.trim() !== '' &&
+		priced.fulfillment !== 'dine_in',
+	)
 }
 
 /**

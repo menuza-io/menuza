@@ -795,6 +795,17 @@ export const RESTAURANT_ORDER_ACTIVE_STATUSES = RESTAURANT_ACTIVE_ORDER_STATUSES
 
 export const RESTAURANT_PAYMENT_STATUSES = RESTAURANT_PAYMENT_STATUS_VALUES
 
+/**
+ * Which guest order messages may go out for one order (snapshot of the order
+ * context's `guestMessages` at placement, stored only while enabled). Kinds
+ * without a switch (out for delivery, a changed time) follow `enabled`.
+ */
+export type OrderGuestMessagesPolicy = {
+	receipt: boolean
+	ready: boolean
+	cancelled: boolean
+}
+
 /** One applied discount, as stored on the order (`restaurant_orders.discounts`). */
 export type OrderDiscountSnapshot = {
 	discountId: string
@@ -868,6 +879,34 @@ export const restaurantOrders = sqliteTable(
 		deliveryLng: real('delivery_lng'),
 		// Customer-chosen fulfilment time; null = ASAP.
 		scheduledFor: integer('scheduled_for', { mode: 'timestamp' }),
+		// When the restaurant says the order will be ready (pickup) or start
+		// arriving (delivery), and for delivery the end of that range. Null until
+		// set; `promised_version` counts the changes. Not personal data.
+		promisedAt: integer('promised_at', { mode: 'timestamp' }),
+		promisedUntil: integer('promised_until', { mode: 'timestamp' }),
+		promisedVersion: integer('promised_version').notNull().default(0),
+		// Minutes the kitchen has pushed the promised time back in total (capped
+		// at 90 per order). Not personal data.
+		promisedDelayMinutes: integer('promised_delay_minutes')
+			.notNull()
+			.default(0),
+		// IANA time zone of the order's location when it was placed, so readers
+		// (the Orders page, messages) show the promised time in the restaurant's
+		// zone without a network call. `pickup_timezone` is set only for pickup
+		// windows. Not personal data.
+		locationTimezone: text('location_timezone'),
+		// The guest ticked "Text me order updates" (transactional texts about this
+		// order only; never marketing consent). Stored true only on the US node,
+		// with a phone, for pickup or delivery.
+		smsUpdatesOptIn: integer('sms_updates_opt_in', { mode: 'boolean' })
+			.notNull()
+			.default(false),
+		// Guest order messages policy as the control plane sent it when the order
+		// was placed (`ordering.guest_messages` and the per-message switches).
+		// Null when the flag was off or unreadable: nothing is queued for it.
+		guestMessages: text('guest_messages', {
+			mode: 'json',
+		}).$type<OrderGuestMessagesPolicy>(),
 		currency: text('currency').notNull(),
 		subtotalCents: integer('subtotal_cents').notNull(),
 		taxCents: integer('tax_cents').notNull(),
@@ -1014,6 +1053,77 @@ export const restaurantOrderRefunds = sqliteTable(
 		),
 		index('idx_restaurant_order_refunds_created').on(table.createdAt),
 		check('chk_restaurant_order_refunds_amount', sql`${table.amountCents} > 0`),
+	],
+)
+
+export const ORDER_MESSAGE_KINDS = [
+	'receipt',
+	'accepted',
+	'ready',
+	'out_for_delivery',
+	'cancelled',
+	'eta_changed',
+] as const
+export type OrderMessageKind = (typeof ORDER_MESSAGE_KINDS)[number]
+export const ORDER_MESSAGE_CHANNELS = ['email', 'sms'] as const
+export type OrderMessageChannel = (typeof ORDER_MESSAGE_CHANNELS)[number]
+export const ORDER_MESSAGE_STATUSES = [
+	'queued',
+	'sent',
+	'failed',
+	'dropped',
+] as const
+export type OrderMessageStatus = (typeof ORDER_MESSAGE_STATUSES)[number]
+
+// Transactional guest messages about one online order (receipt, ready, ...),
+// at most one per order, kind, channel and `dedupe_key`. The key is '' for
+// every kind but `eta_changed`, which uses the order's `promised_version`, so
+// each push-back of the promised time gets its own row while every other kind
+// goes out at most once. No contact data and no message body: the address or
+// number is read from the order when the message is sent, so a person erased
+// later leaves rows that name no one. `last_error` holds a short machine code
+// only. Times are epoch ms.
+export const orderMessages = sqliteTable(
+	'order_messages',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		orderId: text('order_id')
+			.notNull()
+			.references(() => restaurantOrders.id, { onDelete: 'cascade' }),
+		kind: text('kind', { enum: [...ORDER_MESSAGE_KINDS] }).notNull(),
+		channel: text('channel', { enum: [...ORDER_MESSAGE_CHANNELS] }).notNull(),
+		dedupeKey: text('dedupe_key').notNull().default(''),
+		status: text('status', { enum: [...ORDER_MESSAGE_STATUSES] })
+			.notNull()
+			.default('queued'),
+		attempts: integer('attempts').notNull().default(0),
+		nextAttemptAt: integer('next_attempt_at').notNull(),
+		lastError: text('last_error'),
+		createdAt: integer('created_at').notNull(),
+		sentAt: integer('sent_at'),
+	},
+	(table) => [
+		uniqueIndex('order_messages_order_kind_channel_key_unique').on(
+			table.orderId,
+			table.kind,
+			table.channel,
+			table.dedupeKey,
+		),
+		index('idx_order_messages_due').on(table.status, table.nextAttemptAt),
+		check(
+			'chk_order_messages_kind',
+			sql`${table.kind} in ('receipt', 'accepted', 'ready', 'out_for_delivery', 'cancelled', 'eta_changed')`,
+		),
+		check(
+			'chk_order_messages_channel',
+			sql`${table.channel} in ('email', 'sms')`,
+		),
+		check(
+			'chk_order_messages_status',
+			sql`${table.status} in ('queued', 'sent', 'failed', 'dropped')`,
+		),
 	],
 )
 

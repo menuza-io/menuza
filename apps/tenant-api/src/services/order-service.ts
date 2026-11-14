@@ -5,7 +5,11 @@ import { ENV } from 'varlock/env'
 import {
 	buildPublicOrderingOptions,
 	canonicalOrderRequest,
+	computePromisedTime,
 	priceRestaurantOrder,
+	readGuestMessagesPolicy,
+	readLargeOrderRule,
+	type PromisedDelayMinutes,
 	restaurantOrderContextSchema,
 	type OrderCapacitySpec,
 	type PricedOrderLine,
@@ -84,6 +88,13 @@ import {
 	type MemberRow,
 } from './loyalty-member-service.ts'
 import { inventorySaleQueue } from './inventory-sales-service.ts'
+import {
+	orderMessageBatch,
+	queueOrderPaidMessages,
+	queueOrderPlacedMessages,
+	queueOrderStatusMessages,
+} from './order-messages.ts'
+import { applyPromisedDelay } from './order-promised-time.ts'
 import {
 	readProgramInTx,
 	readRewardInTx,
@@ -854,8 +865,48 @@ export async function placeOrder(input: {
 		if (!precheck.ok) return { ok: false, failure: precheck.failure }
 	}
 
+	// Guest order messages: the policy is stored with the order (fail closed),
+	// and update texts only with a phone, off table rounds, on the US node.
+	const guestMessages = readGuestMessagesPolicy(context.guestMessages)
+	const orderGuestMessages =
+		guestMessages.enabled && !isDineIn
+			? {
+					receipt: guestMessages.receipt,
+					ready: guestMessages.ready,
+					cancelled: guestMessages.cancelled,
+				}
+			: null
+	const smsUpdatesOptIn =
+		request.smsUpdates === true &&
+		orderGuestMessages !== null &&
+		Boolean(request.contact.phone) &&
+		context.dataRegion === 'us'
+
+	// The promised ready (pickup) or arrival (delivery) time (#109): the same
+	// estimate the ordering page shows, plus large-order prep. None for table
+	// rounds and drops. Not personal data.
+	const promiseLocation = context.menu.locations.find(
+		(location) => location.id === request.locationId,
+	)
+	const promised = promiseLocation
+		? computePromisedTime({
+				now,
+				fulfillment: request.fulfillment,
+				scheduledFor: result.scheduledFor,
+				drop: Boolean(result.drop),
+				location: promiseLocation,
+				largeOrder: readLargeOrderRule(
+					(context as { largeOrder?: unknown }).largeOrder,
+					request.locationId,
+				),
+				subtotalCents: result.subtotalCents,
+				itemCount: result.lines.reduce((sum, line) => sum + line.quantity, 0),
+			})
+		: { promisedAt: null, promisedUntil: null }
+
 	const loyalty = loyaltySettleQueue()
 	const inventory = inventorySaleQueue()
+	const messages = orderMessageBatch()
 	// Set only by the attempt that inserted the order (a busy retry resets it).
 	let consentConfirmation: OrderConsentConfirmation | null = null
 	try {
@@ -1193,6 +1244,11 @@ export async function placeOrder(input: {
 									scheduledFor: result.scheduledFor
 										? new Date(result.scheduledFor)
 										: null,
+									promisedAt: promised.promisedAt,
+									promisedUntil: promised.promisedUntil,
+									locationTimezone: promiseLocation?.timezone || null,
+									smsUpdatesOptIn,
+									guestMessages: orderGuestMessages,
 									currency: result.currency,
 									subtotalCents: result.subtotalCents,
 									taxCents: totals.taxCents,
@@ -1253,6 +1309,9 @@ export async function placeOrder(input: {
 							at,
 						)
 					}
+					// The receipt, for an order that stands at once (pay at
+					// handoff, free); an online order waits for its payment.
+					await queueOrderPlacedMessages(tx, inserted, messages.context(at))
 					if (prepared) {
 						await reserveOrderDiscounts(tx, {
 							orderId: inserted.id,
@@ -1345,6 +1404,7 @@ export async function placeOrder(input: {
 		)
 		await loyalty.settle(orgId)
 		await inventory.settle(orgId)
+		messages.deliver(orgId)
 		const confirmation = consentConfirmation as OrderConsentConfirmation | null
 		if (placed.ok && placed.data.status === 201 && confirmation) {
 			queueOrderConsentConfirmation(orgId, confirmation)
@@ -1607,6 +1667,7 @@ export async function applyPaymentEvent(input: {
 	const db = await getTenantDb(orgId)
 	const loyalty = loyaltySettleQueue()
 	const inventory = inventorySaleQueue()
+	const messages = orderMessageBatch()
 
 	const result: OrderServiceResult<PaymentEventResult> = await runExclusive(
 		orgId,
@@ -1698,6 +1759,11 @@ export async function applyPaymentEvent(input: {
 									updatedAt: now,
 								})
 								.where(eq(restaurantOrders.id, order.id))
+							await queueOrderPaidMessages(
+								tx,
+								{ ...order, paymentStatus: 'paid' },
+								messages.context(now.getTime()),
+							)
 							await consumeDiscountRedemptions(tx, [order.id])
 							await queueLoyalty()
 							// Paid online: the order counts now, so stock leaves.
@@ -1847,6 +1913,7 @@ export async function applyPaymentEvent(input: {
 	)
 	await loyalty.settle(orgId)
 	await inventory.settle(orgId)
+	messages.deliver(orgId)
 	return result
 }
 
@@ -1865,10 +1932,16 @@ const OPERATOR_STATUS_TRANSITIONS: Record<RestaurantOrder['status'], string[]> =
 		payment_review: ['preparing', 'ready', 'completed', 'cancelled'],
 	}
 
-export type OperatorPatchInput = {
-	status: RestaurantOrder['status']
-	markPaid?: boolean
-}
+export type OperatorPatchInput =
+	| {
+			status: RestaurantOrder['status']
+			markPaid?: boolean
+	  }
+	| {
+			/** Push the promised time back (#109); never mixed with a status. */
+			delayMinutes: PromisedDelayMinutes
+			expectedPromisedVersion: number
+	  }
 
 /**
  * Extra checks a caller runs on the order inside the write's transaction, and
@@ -1893,6 +1966,7 @@ export async function updateOperatorOrder(
 	const db = await getTenantDb(orgId)
 	const loyalty = loyaltySettleQueue()
 	const inventory = inventorySaleQueue()
+	const messages = orderMessageBatch()
 
 	const result: OrderServiceResult<RestaurantOrder> = await runExclusive(
 		orgId,
@@ -1917,6 +1991,23 @@ export async function updateOperatorOrder(
 					if (refused) return { ok: false, failure: refused }
 
 					const now = new Date()
+					if ('delayMinutes' in input) {
+						const delayed = await applyPromisedDelay(
+							tx,
+							order,
+							{
+								minutes: input.delayMinutes,
+								expectedVersion: input.expectedPromisedVersion,
+							},
+							now,
+							messages.context(now.getTime()),
+						)
+						if (!delayed.ok) {
+							return orderFailure(delayed.status, delayed.code, delayed.message)
+						}
+						await hooks.afterWrite?.(tx, order, delayed.order)
+						return { ok: true, data: delayed.order }
+					}
 					const patch: Partial<RestaurantOrder> = {}
 
 					if (input.status !== order.status) {
@@ -2012,6 +2103,14 @@ export async function updateOperatorOrder(
 						}
 						await consumeDiscountRedemptions(tx, [order.id])
 					}
+					// Ready and cancelled tell the guest (once per kind and channel).
+					await queueOrderStatusMessages(
+						tx,
+						updated ?? { ...order, ...patch },
+						order.status,
+						patch.status ?? null,
+						messages.context(now.getTime()),
+					)
 					await hooks.afterWrite?.(tx, order, updated ?? order)
 					return { ok: true, data: updated ?? order }
 				}),
@@ -2019,6 +2118,7 @@ export async function updateOperatorOrder(
 	)
 	await loyalty.settle(orgId)
 	await inventory.settle(orgId)
+	messages.deliver(orgId)
 	return result
 }
 
@@ -2223,6 +2323,15 @@ export function publicOrderSummary(order: RestaurantOrder) {
 		holdExpiresAt: order.holdExpiresAt
 			? order.holdExpiresAt.toISOString()
 			: null,
+		/**
+		 * When the order should be ready (pickup) or start arriving (delivery),
+		 * and the end of a delivery range. Null when there is none (table
+		 * rounds, drops, orders placed before #109).
+		 */
+		promisedAt: order.promisedAt ? order.promisedAt.toISOString() : null,
+		promisedUntil: order.promisedUntil
+			? order.promisedUntil.toISOString()
+			: null,
 	}
 }
 
@@ -2230,6 +2339,8 @@ export function receiptOrder(order: RestaurantOrder) {
 	return {
 		...publicOrderSummary(order),
 		tipPercent: order.tipPercent,
+		/** Amount recorded as returned (the payment status stays `paid`). */
+		refundedCents: order.refundedCents,
 		fulfillment: order.fulfillment,
 		locale: order.locale,
 		createdAt: order.createdAt ? order.createdAt.toISOString() : null,
@@ -2306,5 +2417,16 @@ export function operatorOrder(
 		completedAt: order.completedAt ? order.completedAt.toISOString() : null,
 		cancelledAt: order.cancelledAt ? order.cancelledAt.toISOString() : null,
 		updatedAt: order.updatedAt ? order.updatedAt.toISOString() : null,
+		/** Names the promised time a push-back (`delayMinutes`) expects. */
+		promisedVersion: order.promisedVersion,
+		/** Minutes already pushed back (the limit is 90 in total). */
+		promisedDelayMinutes: order.promisedDelayMinutes,
+		/**
+		 * IANA time zone of the order's location, stored at placement (the
+		 * pickup window's zone when that is all there is), for showing the
+		 * promised and scheduled times in the restaurant's zone. Null when
+		 * unknown.
+		 */
+		timeZone: order.locationTimezone ?? order.pickupTimezone ?? null,
 	}
 }

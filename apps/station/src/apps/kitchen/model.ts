@@ -1,6 +1,7 @@
 import {
 	kdsFireAt,
 	kdsTicketStage,
+	type KdsCommand,
 	type KdsConfig,
 	type KdsLine,
 	type KdsTicket,
@@ -167,4 +168,57 @@ export function averageTicketMinutes(
 	return Math.round(
 		times.reduce((sum, ms) => sum + ms, 0) / times.length / 60_000,
 	)
+}
+
+/** Push-back steps the kitchen offers (the contract's `PROMISED_DELAY_CHOICES`). */
+export const DELAY_CHOICES = [5, 10, 15] as const
+/** Most minutes a promised time may be pushed back in total (the server's cap). */
+export const MAX_DELAY_MINUTES = 90
+
+/**
+ * The promised time of an online ticket that has one: when it is ready
+ * (pickup) or starts arriving (delivery), the end of a delivery range, and
+ * the version a delay names. Walk-in tickets and online ones without a
+ * promise answer null.
+ */
+export function promisedTime(ticket: KdsTicket) {
+	if (ticket.source !== 'online') return null
+	if (ticket.promisedAt == null || ticket.promisedVersion === undefined)
+		return null
+	return {
+		at: ticket.promisedAt,
+		until:
+			ticket.promisedUntil != null && ticket.promisedUntil > ticket.promisedAt
+				? ticket.promisedUntil
+				: null,
+		version: ticket.promisedVersion,
+	}
+}
+
+/** The push-back buttons show on a live online ticket with a promised time. */
+export function canDelay(ticket: KdsTicket) {
+	return (
+		promisedTime(ticket) !== null &&
+		ticket.completedAt === null &&
+		!ticket.cancelled
+	)
+}
+
+/** The command a push-back tap sends. Never queued, never replayed. */
+export function delayCommand(
+	ticket: KdsTicket,
+	minutes: (typeof DELAY_CHOICES)[number],
+): KdsCommand | null {
+	const promised = promisedTime(ticket)
+	if (!promised) return null
+	return {
+		source: ticket.source,
+		orderId: ticket.id,
+		expectedVersion: ticket.version,
+		action: 'delay',
+		stationId: null,
+		lineId: null,
+		minutes,
+		expectedPromisedVersion: promised.version,
+	}
 }

@@ -429,6 +429,14 @@ msgstr "وصل"
 msgid "Arrives in {min}–{max} min"
 msgstr "يصل خلال {min}–{max} دقيقة"
 
+#: src/pages/menu/success.astro.ts:3
+msgid "Arriving {range}"
+msgstr "الوصول {range}"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Arriving around {time}"
+msgstr "الوصول حوالي {time}"
+
 #: src/lib/ordering-labels.ts:183
 msgid "ASAP"
 msgstr "في أقرب وقت"
@@ -549,6 +557,10 @@ msgstr "اتصل"
 #: src/lib/reservations/labels.ts:203
 msgid "Call {phone}"
 msgstr "اتصل على {phone}"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Call the restaurant"
+msgstr "اتصل بالمطعم"
 
 #: src/lib/reservations/labels.ts:183
 msgid "Cancel reservation"
@@ -846,6 +858,10 @@ msgstr "جهة الاتصال"
 msgid "Contact details"
 msgstr "بيانات التواصل"
 
+#: src/pages/menu/success.astro.ts:3
+msgid "Contact the restaurant for help with your order."
+msgstr "تواصل مع المطعم للحصول على مساعدة بخصوص طلبك."
+
 #: src/pages/complete-name.astro.ts:3
 msgid "Continue"
 msgstr "متابعة"
@@ -1046,6 +1062,10 @@ msgstr "أرسلوا لي أخبار وعروض {name} عبر البريد ال�
 #: src/components/marketing/MarketingConsentBoxes.astro.ts:3
 msgid "Email me offers and news from {org}"
 msgstr "أرسلوا لي عروض وأخبار {org} بالبريد الإلكتروني"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Email me this receipt again"
+msgstr "أرسل لي هذا الإيصال بالبريد مرة أخرى"
 
 #: src/components/drops/DropCard.astro.ts:3
 #: src/components/drops/DropStatusChip.astro.ts:3
@@ -1345,6 +1365,10 @@ msgstr "سأتأخر"
 #: src/lib/reservations/labels.ts:310
 msgid "If a table opens up, we will contact you. You can cancel this request at any time."
 msgstr "إذا توفرت طاولة، فسنتواصل معك. يمكنك إلغاء هذا الطلب في أي وقت."
+
+#: src/pages/menu/success.astro.ts:3
+msgid "If we have your email, the receipt is on its way."
+msgstr "إذا كان لدينا بريدك الإلكتروني، فالإيصال في طريقه إليك."
 
 #: src/components/drops/DropCard.astro.ts:3
 #: src/pages/drop/[slug].astro.ts:3
@@ -2344,6 +2368,10 @@ msgstr "اقرأ المزيد"
 msgid "Ready"
 msgstr "جاهز"
 
+#: src/pages/menu/success.astro.ts:3
+msgid "Ready around {time}"
+msgstr "سيكون جاهزًا حوالي {time}"
+
 #: src/lib/ordering-labels.ts:181
 #: src/lib/ordering-labels.ts:185
 msgid "Ready in about {count} min"
@@ -2384,6 +2412,10 @@ msgstr "الاسترداد في الطريق"
 #: src/lib/reservations/labels.ts:435
 msgid "Refunded"
 msgstr "تم الاسترداد"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Refunded {amount}"
+msgstr "تم استرداد {amount}"
 
 #: src/lib/ordering-labels.ts:94
 #: src/lib/ordering-labels.ts:117
@@ -2765,6 +2797,10 @@ msgstr "أرسلوا لي أخبار وعروض {name} عبر الرسائل ا�
 msgid "Text me offers from {org}"
 msgstr "أرسلوا لي عروض {org} برسالة نصية"
 
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Text me order updates"
+msgstr "أرسلوا لي رسائل نصية بتحديثات الطلب"
+
 #: src/lib/reservations/labels.ts:100
 msgid "Text me reminders about this reservation"
 msgstr "أرسلوا لي تذكيرات نصية بشأن هذا الحجز"
@@ -2772,6 +2808,10 @@ msgstr "أرسلوا لي تذكيرات نصية بشأن هذا الحجز"
 #: src/lib/reservations/labels.ts:222
 msgid "Text me when my table is ready"
 msgstr "أرسل لي رسالة نصية عندما تصبح طاولتي جاهزة"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Texts about this order only: when it's ready, or if the time changes. Not marketing."
+msgstr "رسائل نصية عن هذا الطلب فقط: عندما يجهز أو إذا تغيّر الوقت. ليست رسائل تسويقية."
 
 #: src/pages/menu/success.astro.ts:3
 msgid "Thank you for your order!"
@@ -3059,6 +3099,10 @@ msgstr "هذه الوظيفة لم تعد متاحة."
 msgid "This job is no longer taking applications."
 msgstr "لم تعد هذه الوظيفة تستقبل طلبات."
 
+#: src/pages/menu/success.astro.ts:3
+msgid "This link has expired or isn't valid."
+msgstr "انتهت صلاحية هذا الرابط أو أنه غير صالح."
+
 #: src/pages/menu/checkout.astro.ts:3
 msgid "This location is not available for ordering."
 msgstr "هذا الموقع غير متاح للطلب."
@@ -3067,9 +3111,17 @@ msgstr "هذا الموقع غير متاح للطلب."
 msgid "This order is below the minimum for delivery."
 msgstr "هذا الطلب أقل من الحد الأدنى للتوصيل."
 
+#: src/pages/menu/success.astro.ts:3
+msgid "This order is complete."
+msgstr "اكتمل هذا الطلب."
+
 #: src/pages/menu.astro.ts:3
 msgid "This order link has expired. You can still order from the menu."
 msgstr "انتهت صلاحية رابط الطلب هذا. لا يزال بإمكانك الطلب من القائمة."
+
+#: src/pages/menu/success.astro.ts:3
+msgid "This order was cancelled"
+msgstr "تم إلغاء هذا الطلب"
 
 #: src/lib/reservations/labels.ts:412
 msgid "This payment is no longer open"
@@ -3162,6 +3214,10 @@ msgstr "محاولات كثيرة جدًا. حاول مرة أخرى لاحقً�
 #: src/lib/reservations/labels.ts:491
 msgid "Too many attempts. Please wait a moment and try again."
 msgstr "محاولات كثيرة جدًا. يرجى الانتظار قليلًا ثم المحاولة مرة أخرى."
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Too many requests. Try again later."
+msgstr "طلبات كثيرة جدًا. حاول مرة أخرى لاحقًا."
 
 #: src/components/ordering/TableTab.astro.ts:3
 #: src/pages/drop/[slug].astro.ts:3
@@ -3453,6 +3509,10 @@ msgstr "تعذّر تحميل إيصالك"
 #: src/components/marketing/MessagesSection.astro.ts:3
 msgid "We couldn't save that. Try again."
 msgstr "تعذّر الحفظ. حاول مرة أخرى."
+
+#: src/pages/menu/success.astro.ts:3
+msgid "We couldn't send that. Please try again later."
+msgstr "تعذر الإرسال. يرجى المحاولة لاحقًا."
 
 #: src/pages/menu/success.astro.ts:3
 msgid "We couldn't start payment. Please try again."
@@ -3808,6 +3868,10 @@ msgstr "طلبك أقل من الحد الأدنى للإنفاق لهذا ال�
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Your order is empty"
 msgstr "طلبك فارغ"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Your order is ready."
+msgstr "طلبك جاهز."
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Your order was placed, but we couldn't start online payment. You can pay from your receipt page."

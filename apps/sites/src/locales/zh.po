@@ -429,6 +429,14 @@ msgstr "已到达"
 msgid "Arrives in {min}–{max} min"
 msgstr "{min}–{max} 分钟送达"
 
+#: src/pages/menu/success.astro.ts:3
+msgid "Arriving {range}"
+msgstr "预计送达 {range}"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Arriving around {time}"
+msgstr "预计 {time} 左右送达"
+
 #: src/lib/ordering-labels.ts:183
 msgid "ASAP"
 msgstr "尽快"
@@ -549,6 +557,10 @@ msgstr "致电"
 #: src/lib/reservations/labels.ts:203
 msgid "Call {phone}"
 msgstr "致电 {phone}"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Call the restaurant"
+msgstr "致电餐厅"
 
 #: src/lib/reservations/labels.ts:183
 msgid "Cancel reservation"
@@ -846,6 +858,10 @@ msgstr "联系方式"
 msgid "Contact details"
 msgstr "联系方式"
 
+#: src/pages/menu/success.astro.ts:3
+msgid "Contact the restaurant for help with your order."
+msgstr "如需订单帮助，请联系餐厅。"
+
 #: src/pages/complete-name.astro.ts:3
 msgid "Continue"
 msgstr "继续"
@@ -1046,6 +1062,10 @@ msgstr "通过电子邮件向我发送 {name} 的资讯和优惠"
 #: src/components/marketing/MarketingConsentBoxes.astro.ts:3
 msgid "Email me offers and news from {org}"
 msgstr "通过电子邮件向我发送 {org} 的优惠和动态"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Email me this receipt again"
+msgstr "再次通过邮件发送此收据"
 
 #: src/components/drops/DropCard.astro.ts:3
 #: src/components/drops/DropStatusChip.astro.ts:3
@@ -1345,6 +1365,10 @@ msgstr "我会晚到"
 #: src/lib/reservations/labels.ts:310
 msgid "If a table opens up, we will contact you. You can cancel this request at any time."
 msgstr "如果有餐位空出，我们会联系您。您可以随时取消此请求。"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "If we have your email, the receipt is on its way."
+msgstr "如果我们有您的邮箱，收据已在发送途中。"
 
 #: src/components/drops/DropCard.astro.ts:3
 #: src/pages/drop/[slug].astro.ts:3
@@ -2344,6 +2368,10 @@ msgstr "阅读更多"
 msgid "Ready"
 msgstr "已备好"
 
+#: src/pages/menu/success.astro.ts:3
+msgid "Ready around {time}"
+msgstr "预计 {time} 左右备好"
+
 #: src/lib/ordering-labels.ts:181
 #: src/lib/ordering-labels.ts:185
 msgid "Ready in about {count} min"
@@ -2384,6 +2412,10 @@ msgstr "退款处理中"
 #: src/lib/reservations/labels.ts:435
 msgid "Refunded"
 msgstr "已退款"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Refunded {amount}"
+msgstr "已退款 {amount}"
 
 #: src/lib/ordering-labels.ts:94
 #: src/lib/ordering-labels.ts:117
@@ -2765,6 +2797,10 @@ msgstr "通过短信向我发送 {name} 的资讯和优惠"
 msgid "Text me offers from {org}"
 msgstr "通过短信向我发送 {org} 的优惠"
 
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Text me order updates"
+msgstr "通过短信通知我订单动态"
+
 #: src/lib/reservations/labels.ts:100
 msgid "Text me reminders about this reservation"
 msgstr "通过短信向我发送本次预订的提醒"
@@ -2772,6 +2808,10 @@ msgstr "通过短信向我发送本次预订的提醒"
 #: src/lib/reservations/labels.ts:222
 msgid "Text me when my table is ready"
 msgstr "餐位准备好时发短信通知我"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Texts about this order only: when it's ready, or if the time changes. Not marketing."
+msgstr "仅发送与此订单相关的短信：订单准备好时，或时间有变时。不是营销信息。"
 
 #: src/pages/menu/success.astro.ts:3
 msgid "Thank you for your order!"
@@ -3059,6 +3099,10 @@ msgstr "此职位已不再招聘。"
 msgid "This job is no longer taking applications."
 msgstr "该职位已不再接受申请。"
 
+#: src/pages/menu/success.astro.ts:3
+msgid "This link has expired or isn't valid."
+msgstr "此链接已过期或无效。"
+
 #: src/pages/menu/checkout.astro.ts:3
 msgid "This location is not available for ordering."
 msgstr "该门店暂不支持下单。"
@@ -3067,9 +3111,17 @@ msgstr "该门店暂不支持下单。"
 msgid "This order is below the minimum for delivery."
 msgstr "此订单未达到配送起送金额。"
 
+#: src/pages/menu/success.astro.ts:3
+msgid "This order is complete."
+msgstr "此订单已完成。"
+
 #: src/pages/menu.astro.ts:3
 msgid "This order link has expired. You can still order from the menu."
 msgstr "此订单链接已过期。您仍可从菜单中点餐。"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "This order was cancelled"
+msgstr "此订单已取消"
 
 #: src/lib/reservations/labels.ts:412
 msgid "This payment is no longer open"
@@ -3162,6 +3214,10 @@ msgstr "尝试次数过多。请稍后重试。"
 #: src/lib/reservations/labels.ts:491
 msgid "Too many attempts. Please wait a moment and try again."
 msgstr "尝试次数过多，请稍候再试。"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Too many requests. Try again later."
+msgstr "请求过多，请稍后再试。"
 
 #: src/components/ordering/TableTab.astro.ts:3
 #: src/pages/drop/[slug].astro.ts:3
@@ -3453,6 +3509,10 @@ msgstr "无法加载您的收据"
 #: src/components/marketing/MessagesSection.astro.ts:3
 msgid "We couldn't save that. Try again."
 msgstr "无法保存，请重试。"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "We couldn't send that. Please try again later."
+msgstr "无法发送，请稍后再试。"
 
 #: src/pages/menu/success.astro.ts:3
 msgid "We couldn't start payment. Please try again."
@@ -3808,6 +3868,10 @@ msgstr "您的订单未达到此优惠码的最低消费。"
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Your order is empty"
 msgstr "您的订单是空的"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Your order is ready."
+msgstr "您的订单已备好。"
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Your order was placed, but we couldn't start online payment. You can pay from your receipt page."

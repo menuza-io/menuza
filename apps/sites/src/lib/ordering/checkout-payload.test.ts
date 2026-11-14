@@ -107,3 +107,88 @@ describe('checkoutOrderRequest', () => {
 		}
 	})
 })
+
+describe('checkoutOrderPayload smsUpdates', () => {
+	const pickup = { fulfillment: 'pickup', lines: [] }
+	const build = (
+		priced: Record<string, unknown>,
+		smsUpdates?: { offered: boolean; ticked: boolean },
+		phone = contact.phone,
+	) =>
+		checkoutOrderPayload(priced, {
+			contact: { ...contact, phone },
+			reward: null,
+			smsUpdates,
+		})
+
+	it('sends true only when offered, ticked and a phone is entered', () => {
+		expect(build(pickup, { offered: true, ticked: true }).smsUpdates).toBe(true)
+	})
+
+	it('omits the key when the box is unticked', () => {
+		expect(
+			'smsUpdates' in build(pickup, { offered: true, ticked: false }),
+		).toBe(false)
+	})
+
+	it('omits the key when the box is hidden, even if it was ticked', () => {
+		expect(
+			'smsUpdates' in build(pickup, { offered: false, ticked: true }),
+		).toBe(false)
+	})
+
+	it('omits the key when no choice is passed', () => {
+		expect('smsUpdates' in build(pickup)).toBe(false)
+	})
+
+	it('omits the key without a phone', () => {
+		expect(
+			'smsUpdates' in build(pickup, { offered: true, ticked: true }, '  '),
+		).toBe(false)
+	})
+
+	it('never sends it for a dine-in table round', () => {
+		expect(
+			'smsUpdates' in
+				build(
+					{ fulfillment: 'dine_in', lines: [] },
+					{ offered: true, ticked: true },
+				),
+		).toBe(false)
+	})
+
+	it('still sends it for delivery', () => {
+		expect(
+			build({ fulfillment: 'delivery' }, { offered: true, ticked: true })
+				.smsUpdates,
+		).toBe(true)
+	})
+
+	it('never touches marketingConsent', () => {
+		const core = build(pickup, { offered: true, ticked: true })
+		expect('marketingConsent' in core).toBe(false)
+		const consent = { email: true }
+		const request = checkoutOrderRequest(core, 'key', consent)
+		expect(request.marketingConsent).toBe(consent)
+		expect(request.smsUpdates).toBe(true)
+		expect(
+			checkoutOrderRequest(build(pickup), 'key', consent).marketingConsent,
+		).toBe(consent)
+	})
+
+	it('keeps the attempt key tied to the ticked box', async () => {
+		const store = new Map<string, string>()
+		vi.stubGlobal('sessionStorage', {
+			getItem: (k: string) => store.get(k) ?? null,
+			setItem: (k: string, v: string) => void store.set(k, v),
+			removeItem: (k: string) => void store.delete(k),
+		})
+		const off = await checkoutAttemptKey('org', build(pickup))
+		const on = await checkoutAttemptKey(
+			'org',
+			build(pickup, { offered: true, ticked: true }),
+		)
+		expect(on).not.toBe(off)
+		vi.unstubAllGlobals()
+	})
+})

@@ -128,6 +128,8 @@ const contactTitle = i18n._(msg`Contact details`)
 const fullNameLabel = i18n._(msg`Full name`)
 const phoneLabel = i18n._(msg`Phone number`)
 const phonePlaceholder = i18n._(msg`+1 555 000 0000`)
+const smsUpdatesLabel = i18n._(msg`Text me order updates`)
+const smsUpdatesHelp = i18n._(msg`Texts about this order only: when it's ready, or if the time changes. Not marketing.`)
 const emailLabel = i18n._(msg`Email address`)
 const emailPlaceholder = i18n._(msg`name@example.com`)
 const deliveryTitle = i18n._(msg`Delivery address`)
@@ -523,6 +525,16 @@ const tipOff = 'border-border bg-background text-foreground'
 							<div>
 								<label for="cust-phone" class={labelClass}>{phoneLabel}<span class="ms-0.5 text-destructive" aria-hidden="true">*</span></label>
 								<input type="tel" id="cust-phone" autocomplete="tel" inputmode="tel" dir="ltr" placeholder={phonePlaceholder} required class="field text-start rtl:text-end" />
+								{/* Transactional order texts, not marketing: never ticked for the guest,
+								    shown only when the region says the US texts are on (see
+								    applyOrderingOptions). Separate from the consent boxes below. */}
+								<label id="sms-updates-row" class="mt-3 hidden min-h-11 items-start gap-3 text-sm text-foreground [&:not(.hidden)]:flex">
+									<input type="checkbox" id="sms-updates" autocomplete="off" class="mt-0.5 size-5 shrink-0 accent-primary" />
+									<span class="min-w-0 flex-1">
+										<span class="block font-medium">{smsUpdatesLabel}</span>
+										<span class="block text-xs text-pretty text-muted-foreground">{smsUpdatesHelp}</span>
+									</span>
+								</label>
 							</div>
 							<div>
 								<label for="cust-email" class={labelClass}>{emailLabel}<span class="ms-0.5 text-destructive" aria-hidden="true">*</span></label>
@@ -919,6 +931,7 @@ const tipOff = 'border-border bg-background text-foreground'
 		import { type FulfillmentMode } from '~/lib/ordering/types'
 		import { type CartItem } from '~/lib/ordering/types'
 		import { type PublicOrderingOptions } from '@repo/common/restaurant-orders'
+		import { asapEstimate } from '~/lib/ordering/asap-estimate'
 		import { type OrderErrorLabels } from '~/lib/ordering/order-errors'
 
 		type PickupLocationMeta = {
@@ -1353,6 +1366,25 @@ const tipOff = 'border-border bg-background text-foreground'
 			updateHoldNote()
 		}
 
+		/**
+		 * What the guest is shown for ASAP: prep + busy (+ delivery range) and the
+		 * large-order extra once the cart is over the location's threshold, the
+		 * same rule the region stores the promise with. The cart is read live, so
+		 * labels follow it (renderCheckout re-renders on every cart change).
+		 */
+		function asapNow(travel?: { min: number; max: number } | null) {
+			return asapEstimate({
+				location: activeLocation ?? {},
+				now: new Date(),
+				travel,
+				largeOrder: orderingOptions?.ordering?.largeOrder ?? null,
+				subtotal: cart.reduce((acc, it) => acc + it.unitPrice * it.quantity, 0),
+				itemCount: cart.reduce((acc, it) => acc + it.quantity, 0),
+			})
+		}
+		const deliveryWindow = (travel: { min: number; max: number } | null | undefined) =>
+			asapNow(travel).delivery
+
 		const minutesRange = (eta: { min: number; max: number }) =>
 			eta.min === eta.max
 				? fillTemplate(odLabels.minutes, { count: eta.min })
@@ -1379,7 +1411,7 @@ const tipOff = 'border-border bg-background text-foreground'
 			if (metaLine) {
 				metaLine.textContent = [
 					delivery.zoneName,
-					minutesRange(delivery.eta),
+					minutesRange(deliveryWindow(delivery.eta)),
 					delivery.minimumOrder > 0
 						? `${odLabels.minimumOrder} ${formatCurrency(delivery.minimumOrder)}`
 						: odLabels.noMinimum,
@@ -1431,8 +1463,8 @@ const tipOff = 'border-border bg-background text-foreground'
 			const delivery = validDelivery()
 			value.textContent =
 				mode === 'delivery'
-					? `${odLabels.asap} · ${minutesRange(delivery?.eta ?? { min: activeLocation?.deliveryConfig?.estimatedDeliveryTimeMin || 25, max: activeLocation?.deliveryConfig?.estimatedDeliveryTimeMax || 45 })}`
-					: `${odLabels.asap} · ${fillTemplate(odLabels.minutes, { count: activeLocation?.prepTime || 15 })}`
+					? `${odLabels.asap} · ${minutesRange(deliveryWindow(delivery?.eta))}`
+					: `${odLabels.asap} · ${fillTemplate(odLabels.minutes, { count: asapNow().pickupMinutes })}`
 		}
 
 		/** Why the order cannot be placed yet (delivery address / minimum / time). */
@@ -1691,6 +1723,13 @@ const tipOff = 'border-border bg-background text-foreground'
 		let orderingOptions: PublicOrderingOptions | null = null
 
 		function applyOrderingOptions(options: PublicOrderingOptions) {
+			// "Text me order updates": the region decides (US node + flag on);
+			// a missing field (older node) means hidden. Never pre-ticked.
+			smsUpdatesOffered = options.guestMessages?.smsUpdates === true
+			const smsRow = document.getElementById('sms-updates-row')
+			const smsBox = document.getElementById('sms-updates') as HTMLInputElement | null
+			smsRow?.classList.toggle('hidden', !smsUpdatesOffered)
+			if (smsBox && !smsUpdatesOffered) smsBox.checked = false
 			// Online payment is offered only when the region says it is enabled;
 			// otherwise the handoff option stays the only (and default) choice.
 			const onlineRow = document.getElementById('pay-online-row')
@@ -1733,6 +1772,8 @@ const tipOff = 'border-border bg-background text-foreground'
 			}
 		}
 
+		let smsUpdatesOffered = false
+
 		async function loadOrderingOptions() {
 			const locationId = isDrop
 				? (pickupSelection?.locationId ?? null)
@@ -1744,6 +1785,9 @@ const tipOff = 'border-border bg-background text-foreground'
 					dropSlug: isDrop ? drop!.slug : null,
 				})
 				applyOrderingOptions(orderingOptions)
+				// The large-order rule arrives with the options: refresh the times.
+				renderWhen()
+				renderDeliveryDetails()
 			} catch {
 				// The region is unreachable or options are malformed: stay quiet,
 				// keep handoff as the only choice, and let the server judge the
@@ -2278,7 +2322,13 @@ const tipOff = 'border-border bg-background text-foreground'
 					deliveryNotes: notesInput?.value,
 					reward: sentReward,
 					discounts: sentDiscounts,
+					smsUpdates: {
+						offered: smsUpdatesOffered,
+						ticked: (document.getElementById('sms-updates') as HTMLInputElement | null)?.checked === true,
+					},
 				})
+				// smsUpdates is part of the core payload: the region hashes it into
+				// the order, so a changed box must get a new attempt key.
 				// The attempt key is derived from the core payload only. The consent
 				// boxes ride in the body but stay out of it: the region leaves them
 				// out of its request hash too, so a retry after a timed-out POST with

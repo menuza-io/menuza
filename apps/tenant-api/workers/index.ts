@@ -35,6 +35,10 @@ import {
 import { createInventoryTickModule } from '../src/lib/inventory-alarm.ts'
 import { registerOrgTickModule } from '../src/lib/org-alarm.ts'
 import {
+	createOrderMessagesTickModule,
+	ORDER_MESSAGES_TICK_PATH,
+} from '../src/lib/orders-alarm.ts'
+import {
 	fanOutInventoryTick,
 	runInventoryTickForOrg,
 	type InventoryTickOutcome,
@@ -43,6 +47,11 @@ import {
 	fanOutLoyaltyTick,
 	type LoyaltyTickResult,
 } from '../src/services/loyalty-tick-service.ts'
+import {
+	fanOutOrderMessagesTick,
+	runOrderMessagesTickForOrg,
+	type OrderMessagesTickResult,
+} from '../src/services/order-message-send.ts'
 import { fanOutReservationsTick } from '../src/services/rsv-tick-fanout.ts'
 import type { ReservationsTickResult } from '../src/services/rsv-tick-service.ts'
 import { fanOutStaffTick } from '../src/services/staff-tick-fanout.ts'
@@ -64,6 +73,12 @@ registerReservationsDemandSource()
 registerOrgTickModule(
 	createInventoryTickModule((orgId, now) =>
 		runInventoryTickForOrg(orgId, { now }),
+	),
+)
+// Guest order messages (#79): retries of failed receipts and status messages.
+registerOrgTickModule(
+	createOrderMessagesTickModule((orgId, now) =>
+		runOrderMessagesTickForOrg(orgId, { now }),
 	),
 )
 
@@ -204,7 +219,8 @@ const tickBodySchema = z.object({ orgId: z.unknown().optional() })
  * into counts. Organizations without the module cost the object one local
  * query and no outbound call.
  */
-type TickModuleName = 'staff' | 'reservations' | 'loyalty' | 'inventory'
+type TickModuleName =
+	'staff' | 'reservations' | 'loyalty' | 'inventory' | 'order-messages'
 
 async function handleTickFanOut(
 	request: Request,
@@ -276,10 +292,15 @@ async function handleTickFanOut(
 							orgIds,
 							run: (orgId) => runOne<InventoryTickOutcome>(orgId),
 						})
-					: await fanOutLoyaltyTick({
-							orgIds,
-							run: (orgId) => runOne<LoyaltyTickResult>(orgId),
-						})
+					: module === 'order-messages'
+						? await fanOutOrderMessagesTick({
+								orgIds,
+								run: (orgId) => runOne<OrderMessagesTickResult>(orgId),
+							})
+						: await fanOutLoyaltyTick({
+								orgIds,
+								run: (orgId) => runOne<LoyaltyTickResult>(orgId),
+							})
 	return Response.json({ success: totals.errors === 0, ...totals })
 }
 
@@ -396,7 +417,9 @@ async function handle(
 						? 'loyalty'
 						: url.pathname === '/api/inventory/tick'
 							? 'inventory'
-							: null
+							: url.pathname === ORDER_MESSAGES_TICK_PATH
+								? 'order-messages'
+								: null
 	if (tickModule) {
 		const tickOrgId = await resolveOrgId(request, env)
 		if (tickOrgId) {

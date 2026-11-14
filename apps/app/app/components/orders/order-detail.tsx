@@ -27,6 +27,7 @@ import { Icon } from '@repo/ui/icon'
 import { Separator } from '@repo/ui/separator'
 import { Fragment, type ReactNode, useState } from 'react'
 import { Link } from 'react-router'
+import { OperatorRequestError } from '#app/hooks/use-operator-client.ts'
 import { useSettledFocus } from '#app/hooks/use-settled-focus.ts'
 import {
 	CLOSED_ORDER_STATUSES,
@@ -36,7 +37,11 @@ import {
 	initialsOf,
 	isPaymentNotRequired,
 	localizedName,
+	MAX_PROMISED_DELAY_MINUTES,
 	nextOrderStatus,
+	PUSH_BACK_MINUTES,
+	PUSHABLE_ORDER_STATUSES,
+	type PushBackMinutes,
 	type AppliedOrderDiscount,
 	type Order,
 	type OrderRefundBody,
@@ -106,6 +111,23 @@ function pickupDate(date: string, locale: string): string {
 	}
 }
 
+function promisedClock(
+	iso: string,
+	locale: string,
+	timeZone: string | undefined,
+): string {
+	const date = new Date(iso)
+	if (Number.isNaN(date.getTime())) return ''
+	try {
+		return new Intl.DateTimeFormat(locale, {
+			timeStyle: 'short',
+			timeZone,
+		}).format(date)
+	} catch {
+		return new Intl.DateTimeFormat(locale, { timeStyle: 'short' }).format(date)
+	}
+}
+
 /**
  * One order, read top to bottom: what it is and where it stands, who it is
  * for, how it gets to them, what is in it, what it costs, how it was paid.
@@ -121,6 +143,7 @@ export function OrderDetail({
 	onUpdate,
 	onRecordRefund,
 	onReload,
+	onPushBack,
 	backHref,
 }: {
 	order: Order
@@ -136,6 +159,8 @@ export function OrderDetail({
 	) => Promise<void>
 	/** Loads the order again, when a refund answer shows it changed. */
 	onReload?: () => void
+	/** Pushes the promised time back; omit to hide the control. */
+	onPushBack?: (delayMinutes: PushBackMinutes) => Promise<void>
 	backHref: string
 }) {
 	const { _, i18n } = useLingui()
@@ -144,6 +169,8 @@ export function OrderDetail({
 	const [cancelOpen, setCancelOpen] = useState(false)
 	const [refundOpen, setRefundOpen] = useState(false)
 	const [refundNotice, setRefundNotice] = useState<string | null>(null)
+	const [pushing, setPushing] = useState(false)
+	const [pushError, setPushError] = useState<string | null>(null)
 	// A full refund removes the Record a refund button.
 	const refundFocus = useSettledFocus('order-payment-heading')
 	const money = (cents: number) => formatMoney(cents, order.currency, locale)
@@ -189,6 +216,56 @@ export function OrderDetail({
 		? customersHref(orgSlug, { personKey: order.customerKey })
 		: null
 	const name = order.contact.name
+
+	const orderZone = order.timeZone ?? order.pickup?.timezone ?? undefined
+	const promisedFrom = order.promisedAt
+		? promisedClock(order.promisedAt, locale, orderZone)
+		: ''
+	const promisedTo = order.promisedUntil
+		? promisedClock(order.promisedUntil, locale, orderZone)
+		: ''
+	const promisedLabel = !promisedFrom
+		? null
+		: promisedTo
+			? _(msg`Arriving ${promisedFrom} to ${promisedTo}`)
+			: order.fulfillment === 'delivery'
+				? _(msg`Arriving around ${promisedFrom}`)
+				: _(msg`Ready around ${promisedFrom}`)
+	const delayLeft = MAX_PROMISED_DELAY_MINUTES - order.promisedDelayMinutes
+	const canPushBack =
+		canWrite &&
+		Boolean(onPushBack) &&
+		Boolean(promisedLabel) &&
+		PUSHABLE_ORDER_STATUSES.includes(order.status)
+
+	const pushBack = async (minutes: PushBackMinutes) => {
+		if (!onPushBack || pushing) return
+		setPushing(true)
+		setPushError(null)
+		try {
+			await onPushBack(minutes)
+		} catch (err) {
+			const code = err instanceof OperatorRequestError ? err.code : ''
+			if (code === 'stale_version') {
+				onReload?.()
+				setPushError(
+					_(
+						msg`This order changed on another screen. Check the new time and try again.`,
+					),
+				)
+			} else if (code === 'delay_limit') {
+				setPushError(_(msg`This order can't be pushed back any further.`))
+			} else if (code === 'order_closed') {
+				setPushError(_(msg`This order is finished, so its time can't change.`))
+			} else {
+				setPushError(
+					_(msg`Unable to update this order. Refresh and try again.`),
+				)
+			}
+		} finally {
+			setPushing(false)
+		}
+	}
 
 	const paymentExplanation =
 		order.status === 'payment_review'
@@ -492,6 +569,52 @@ export function OrderDetail({
 										{localizedName(order.location.name, locale)}
 									</p>
 								)}
+								{promisedLabel ? (
+									<p data-testid="order-promised" className="font-medium">
+										{promisedLabel}
+									</p>
+								) : null}
+								{canPushBack ? (
+									<div
+										className="flex flex-col gap-2 pt-1"
+										data-testid="order-push-back"
+									>
+										<div
+											role="group"
+											aria-label={_(msg`Push the promised time back`)}
+											className="flex flex-wrap gap-2"
+										>
+											{PUSH_BACK_MINUTES.map((minutes) => (
+												<Button
+													key={minutes}
+													type="button"
+													variant="outline"
+													size="sm"
+													disabled={busy || pushing || minutes > delayLeft}
+													onClick={() => void pushBack(minutes)}
+												>
+													{_(msg`+${minutes} min`)}
+												</Button>
+											))}
+										</div>
+										<p className="text-muted-foreground text-xs">
+											{delayLeft <= 0
+												? _(msg`This order can't be pushed back any further.`)
+												: _(
+														msg`Push the time back. The guest's page updates, and 10 minutes or more also sends them the new time.`,
+													)}
+										</p>
+										{pushError ? (
+											<p
+												role="alert"
+												className="text-destructive text-xs"
+												data-testid="order-push-back-error"
+											>
+												{pushError}
+											</p>
+										) : null}
+									</div>
+								) : null}
 								{order.delivery ? (
 									<>
 										<p className="wrap-anywhere">

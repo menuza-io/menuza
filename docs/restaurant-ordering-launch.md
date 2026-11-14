@@ -68,6 +68,21 @@ QR table ordering (see [qr-ordering.md](./qr-ordering.md)):
   with `paymentId` (strict schema): deploy tenant-api on every node before
   turning on `qr_ordering.online` for an organization there.
 
+Guest order messages (receipt, ready and cancelled emails to guests):
+
+- Flag per organization: `ordering.guest_messages` (default off, only a literal
+  `true`). The operator switches (Order receipt, Order ready, Order cancelled;
+  all on by default) are Settings, Notifications, and live in one org-level
+  `ConfigFlag` row `ordering.guest_messages.settings` (JSON, policy only, no
+  migration). The action refuses (404) while the flag is off and needs
+  `update:settings:any`.
+- `GET /resources/order-context` carries `guestMessages`
+  (`{enabled, receipt, ready, cancelled}`, all false while the flag is off) and
+  `largeOrder` (per location id: `threshold` in major currency units for
+  `amount`, an item count for `items`, plus `extraPrepMinutes`; the form's
+  `dollars` maps to `amount`; locations without a positive threshold and extra
+  time are left out). Deploy App before tenant-api.
+
 ## Processor onboarding per organization
 
 Online payment availability is resolved per org in

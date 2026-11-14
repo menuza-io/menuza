@@ -77,7 +77,9 @@ Where we go further:
                        "Pickup time ▾" chips → OrderDetailsSheet. No card or band around it.
 [Closed notice]        only when closed: "We're closed right now. Orders reopen Thu 11:00 AM"
 [MenuMeta]             one muted line: "● Open until 10:00 PM" (open only) · "Pickup ~15 min" ·
-                       "Delivery 25–45 min" · "Downtown Flagship · Chicago"
+                       "Delivery 40–60 min" · "Downtown Flagship · Chicago"
+                       (ASAP delivery = prep + busy minutes + the delivery range: 15 min prep
+                       and a 25–45 min range is 40–60 min, the same window the order is promised)
 [DropNudge]            only when a drop is live/upcoming: stacked covers, "2 drops ordering
                        now · 1 drop coming up", explainer, "View drops →" (whole row → /drops)
                        search field "Search the menu" (below lg; on lg+ it tops the rail)
@@ -164,6 +166,48 @@ Checkout detects `?drop=<slug>`:
 
 Success shows pickup details for drop orders and an "Add to calendar" button for
 the pickup slot. Menu orders keep the current receipt.
+
+**Order status page (`/menu/success`).** The same page is the live status page
+and the target of the emailed or texted "View your order" link
+(`/menu/success?order=<id>#link=<token>`). The token arrives in the URL fragment
+only, so Sites SSR never sees it. Because every script on the page (the
+restaurant's analytics), history sync and screenshots can read the fragment, the
+page strips it first: an inline script in the head slot (before the analytics
+integrations the layout adds) parks the raw fragment in `sessionStorage` and
+calls `history.replaceState`, and `claimOrderLink` (`order-link.ts`) then keeps
+the token per organization and order in `sessionStorage` (this tab only, never
+`localStorage`, a cookie or a query string; in memory for the page view when
+storage throws). A reload in the same tab still works; the emailed link brings
+the guest back later. The browser sends the token to the regional tenant-api as
+`X-Order-Link` (the saved receipt token still works as before, as
+`Authorization: Bearer`). A link read returns a reduced body: no `contact`,
+`delivery` is only `{ feeCents, zoneId }` and line notes are null, so the page
+hides the contact and delivery-address line and keeps "Delivery order" and the
+fee in the totals (`order-view.ts`); the same-device receipt view is unchanged.
+Checkout and the stored promise share one rule for ASAP times (prep + busy + the
+delivery range, plus the location's large-order extra when the cart is over its
+threshold, from `ordering.largeOrder` in the options payload and
+`largeOrderExtraMinutes` in `@repo/common/promised-time`; `asap-estimate.ts`).
+The page re-reads the order every 15 seconds (`status-poll.ts`: one request at a
+time, paused while the tab is hidden, immediate refresh when visible again,
+stopped at `completed`, `cancelled` or `expired`) and redraws the timeline,
+promised time (`promised-time.ts`, in the location's time zone: "Ready around
+6:40 PM", "Arriving 7:05 to 7:20 PM") and payment blocks in place. A cancelled
+order says so and shows "Refunded {amount}" from the receipt's `refundedCents`.
+A 404 with a link token (expired after 90 days, forged, erased) shows "This link
+has expired or isn't valid." with the restaurant's phone from the public
+location data; the poll stops. "Email me this receipt again" calls
+`POST /orders/:id/resend-link` (202 ok, 429 after 3 per hour). There is no
+out-for-delivery status in the API, so the timeline stays received, preparing,
+ready.
+
+**"Text me order updates" (checkout).** A box next to the phone field, unticked
+every time and never remembered, shown only when the options payload says
+`guestMessages.smsUpdates` (US node and the org flag on). It sends
+`smsUpdates: true` in the order request only when shown, ticked and a phone is
+entered (`checkoutOrderPayload`), and it is part of the core payload, so the
+attempt key changes with it. It is transactional, separate from the marketing
+consent boxes and never merged with `marketingConsent`.
 
 Known gap (unchanged by this work): order placement is client-side only. There
 is no backend POST yet; see PRODUCT.md "Open item".

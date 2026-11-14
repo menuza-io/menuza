@@ -9,6 +9,7 @@ import {
 import { act, createElement as h, type ComponentProps } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { KitchenError } from './api.ts'
 import { Kitchen } from './Kitchen.tsx'
 import { useKitchen } from './useKitchen.ts'
 import { loadSettings } from '~/lib/config.ts'
@@ -206,5 +207,123 @@ describe('new work on the board', () => {
 		}
 		draw({ feed: feedOf([ticket, later]) })
 		expect(fresh()).toEqual([])
+	})
+})
+
+describe('promised time and push-back on a ticket', () => {
+	const onlineTicket = (patch: Partial<KdsTicket> = {}): KdsTicket => ({
+		...ticket,
+		id: 'web',
+		source: 'online',
+		channel: 'online',
+		fulfillment: 'takeaway',
+		tableLabel: null,
+		number: 'W-1',
+		promisedAt: Date.UTC(2026, 0, 1, 18, 40),
+		promisedUntil: null,
+		promisedVersion: 2,
+		...patch,
+	})
+	const feedOf = (tickets: KdsTicket[]): KdsFeed => ({
+		config: DEFAULT_KDS_CONFIG,
+		configVersion: 1,
+		tickets,
+		serverNow: NOW,
+		truncated: false,
+	})
+	const group = () => host.querySelector('[data-kitchen-delay]')
+
+	it('shows nothing for a walk-in ticket', () => {
+		draw({ feed: feedOf([ticket]) }, { timeZone: 'UTC' })
+		expect(host.querySelector('[data-kitchen-promised]')).toBeNull()
+		expect(group()).toBeNull()
+	})
+
+	it('says when a pickup is ready and sends +10 with the promised version', () => {
+		draw({ feed: feedOf([onlineTicket()]) }, { timeZone: 'UTC' })
+		expect(host.querySelector('[data-kitchen-promised]')!.textContent).toMatch(
+			/^Ready around 6:40\sPM$/,
+		)
+		const buttons = [...group()!.querySelectorAll('button')]
+		expect(buttons.map((button) => button.textContent)).toEqual([
+			'+5',
+			'+10',
+			'+15',
+		])
+		expect(group()!.textContent).toContain('Push time back')
+		act(() => buttons[1]!.click())
+		expect(command).toHaveBeenCalledExactlyOnceWith(
+			expect.objectContaining({
+				source: 'online',
+				orderId: 'web',
+				expectedVersion: ticket.version,
+				action: 'delay',
+				stationId: null,
+				lineId: null,
+				minutes: 10,
+				expectedPromisedVersion: 2,
+			}),
+		)
+	})
+
+	it('shows an arrival range for delivery', () => {
+		draw(
+			{
+				feed: feedOf([
+					onlineTicket({
+						fulfillment: 'delivery',
+						promisedAt: Date.UTC(2026, 0, 1, 19, 5),
+						promisedUntil: Date.UTC(2026, 0, 1, 19, 20),
+					}),
+				]),
+			},
+			{ timeZone: 'UTC' },
+		)
+		const text = host.querySelector('[data-kitchen-promised]')!.textContent!
+		expect(text).toContain('Arriving')
+		expect(text).toContain('7:05')
+		expect(text).toContain('7:20')
+	})
+
+	it('hides the buttons on finished, cancelled and promise-less online tickets and disables them offline', () => {
+		draw({
+			feed: feedOf([
+				onlineTicket({ id: 'a', completedAt: NOW }),
+				onlineTicket({ id: 'b', cancelled: true }),
+				onlineTicket({
+					id: 'c',
+					promisedAt: undefined,
+					promisedVersion: undefined,
+				}),
+			]),
+		})
+		expect(group()).toBeNull()
+		draw({ feed: feedOf([onlineTicket()]), stale: true })
+		for (const button of group()!.querySelectorAll('button'))
+			expect(button.disabled).toBe(true)
+	})
+
+	it.each([
+		['stale_version', 'The time was already changed. Check it and try again.'],
+		['delay_limit', "This order can't be pushed back any further."],
+		['order_closed', 'This order is finished.'],
+	])('says %s in kitchen words', (code, message) => {
+		draw({
+			feed: feedOf([onlineTicket()]),
+			error: new KitchenError(code, 409),
+		})
+		expect(host.querySelector('[role="alert"]')!.textContent).toContain(message)
+	})
+
+	it('words a manager refusal for the time after a push-back tap', () => {
+		draw({ feed: feedOf([onlineTicket()]) })
+		act(() => group()!.querySelectorAll('button')[0]!.click())
+		draw({
+			feed: feedOf([onlineTicket()]),
+			error: new KitchenError('manager_required', 403),
+		})
+		expect(host.querySelector('[role="alert"]')!.textContent).toContain(
+			'A manager needs to sign in to change the time.',
+		)
 	})
 })

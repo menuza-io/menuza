@@ -13,6 +13,10 @@ export const orderSummarySchema = z.object({
 	tipCents: cents,
 	totalCents: cents,
 	holdExpiresAt: z.string().datetime().nullable(),
+	/** When the order should be ready / start arriving; absent on older nodes. */
+	promisedAt: z.string().datetime().nullable().optional(),
+	/** End of an ASAP delivery range; absent or null otherwise. */
+	promisedUntil: z.string().datetime().nullable().optional(),
 })
 export const createdOrderSchema = z.object({
 	order: orderSummarySchema,

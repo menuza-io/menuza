@@ -118,7 +118,9 @@ describe('isLocationOpenForOrdering with a pause', () => {
 		expect(result.isOpen).toBe(true)
 		expect(result.estimatedPrepTime).toBe(40)
 		expect(result.busyExtraPrepMinutes).toBe(20)
-		expect(result.estimatedDeliveryTime).toEqual({ min: 45, max: 65 })
+		// Delivery: prep (20) + busy (20, once) + the 25-45 min range.
+		expect(result.estimatedDeliveryTime).toEqual({ min: 65, max: 85 })
+		expect(result.deliveryTravelTime).toEqual({ min: 25, max: 45 })
 	})
 
 	it('keeps an inactive location inactive', () => {

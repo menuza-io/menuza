@@ -185,8 +185,11 @@ export function describeRestaurantLocation(
 	)
 
 	if (options.delivery) {
+		// Prep (busy minutes included) plus the delivery range: the same rule as
+		// `deliveryArrivalWindowMinutes` in @repo/common, which ordering pages,
+		// checkout and the order's promised time use.
 		lines.push(
-			`Typical delivery time: ${location.deliveryConfig.estimatedDeliveryTimeMin + busyExtra} to ${location.deliveryConfig.estimatedDeliveryTimeMax + busyExtra} minutes`,
+			`Typical delivery time: ${prepMinutes + location.deliveryConfig.estimatedDeliveryTimeMin} to ${prepMinutes + Math.max(location.deliveryConfig.estimatedDeliveryTimeMin, location.deliveryConfig.estimatedDeliveryTimeMax)} minutes`,
 		)
 		const zones = location.deliveryZones.filter(
 			(zone) => zone.enabled && zone.restriction === 'allowed',

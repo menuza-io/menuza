@@ -43,6 +43,11 @@ function order(over: Partial<Order> = {}): Order {
 		pickup: { date: '2026-10-19', time: '18:30', timezone: 'UTC' },
 		drop: null,
 		delivery: null,
+		timeZone: null,
+		promisedAt: null,
+		promisedUntil: null,
+		promisedVersion: 0,
+		promisedDelayMinutes: 0,
 		...over,
 	}
 }
@@ -426,5 +431,122 @@ describe('OrderDetail refunds', () => {
 		)
 		const [first, second] = onRecordRefund.mock.calls
 		expect(second?.[1]).toBe(first?.[1])
+	})
+
+	describe('push back', () => {
+		const promised = {
+			promisedAt: '2026-10-19T18:40:00.000Z',
+			promisedVersion: 3,
+		}
+
+		it('shows the promised time in the order time zone', () => {
+			show(order(promised), { onPushBack: vi.fn() })
+			expect(screen.getByTestId('order-promised')).toHaveTextContent(
+				/Ready around 6:40\sPM/,
+			)
+		})
+
+		it('uses the location zone for an ASAP order with no pickup window', () => {
+			show(order({ ...promised, pickup: null, timeZone: 'Asia/Riyadh' }), {
+				onPushBack: vi.fn(),
+			})
+			expect(screen.getByTestId('order-promised')).toHaveTextContent(
+				/Ready around 9:40\sPM/,
+			)
+		})
+
+		it('shows a delivery range', () => {
+			show(
+				order({
+					...promised,
+					fulfillment: 'delivery',
+					promisedUntil: '2026-10-19T18:55:00.000Z',
+				}),
+				{ onPushBack: vi.fn() },
+			)
+			expect(screen.getByTestId('order-promised')).toHaveTextContent(
+				/Arriving 6:40\sPM to 6:55\sPM/,
+			)
+		})
+
+		it('is hidden without a promised time, when closed, or without write access', () => {
+			const onPushBack = vi.fn()
+			show(order(), { onPushBack })
+			expect(screen.queryByTestId('order-push-back')).toBeNull()
+			expect(screen.queryByTestId('order-promised')).toBeNull()
+		})
+
+		it.each(['completed', 'cancelled'])('is hidden when %s', (status) => {
+			show(order({ ...promised, status }), { onPushBack: vi.fn() })
+			expect(screen.queryByTestId('order-push-back')).toBeNull()
+		})
+
+		it('is hidden without write permission', () => {
+			show(order(promised), { onPushBack: vi.fn(), canWrite: false })
+			expect(screen.queryByTestId('order-push-back')).toBeNull()
+		})
+
+		it('sends the minutes for the order as it is shown', async () => {
+			const onPushBack = vi.fn().mockResolvedValue(undefined)
+			show(order(promised), { onPushBack })
+			await userEvent.click(screen.getByRole('button', { name: '+10 min' }))
+			expect(onPushBack).toHaveBeenCalledWith(10)
+		})
+
+		it('disables a step that would pass the 90 minute cap', () => {
+			show(order({ ...promised, promisedDelayMinutes: 80 }), {
+				onPushBack: vi.fn(),
+			})
+			expect(screen.getByRole('button', { name: '+5 min' })).toBeEnabled()
+			expect(screen.getByRole('button', { name: '+10 min' })).toBeEnabled()
+			expect(screen.getByRole('button', { name: '+15 min' })).toBeDisabled()
+		})
+
+		it('says so when nothing more can be added', () => {
+			show(order({ ...promised, promisedDelayMinutes: 90 }), {
+				onPushBack: vi.fn(),
+			})
+			expect(screen.getByTestId('order-push-back')).toHaveTextContent(
+				"This order can't be pushed back any further.",
+			)
+			expect(screen.getByRole('button', { name: '+5 min' })).toBeDisabled()
+		})
+
+		it('reloads and explains a stale version', async () => {
+			const onReload = vi.fn()
+			const onPushBack = vi
+				.fn()
+				.mockRejectedValue(
+					new OperatorRequestError('Conflict', 'stale_version', 409),
+				)
+			show(order(promised), { onPushBack, onReload })
+			await userEvent.click(screen.getByRole('button', { name: '+5 min' }))
+			expect(
+				await screen.findByTestId('order-push-back-error'),
+			).toHaveTextContent(
+				'This order changed on another screen. Check the new time and try again.',
+			)
+			expect(onReload).toHaveBeenCalled()
+		})
+
+		it('explains a closed order and a generic failure', async () => {
+			const onPushBack = vi
+				.fn()
+				.mockRejectedValueOnce(
+					new OperatorRequestError('Conflict', 'order_closed', 409),
+				)
+				.mockRejectedValueOnce(new TypeError('Failed to fetch'))
+			show(order(promised), { onPushBack })
+			await userEvent.click(screen.getByRole('button', { name: '+5 min' }))
+			expect(
+				await screen.findByTestId('order-push-back-error'),
+			).toHaveTextContent("This order is finished, so its time can't change.")
+			await userEvent.click(screen.getByRole('button', { name: '+5 min' }))
+			await waitFor(() =>
+				expect(screen.getByTestId('order-push-back-error')).toHaveTextContent(
+					'Unable to update this order',
+				),
+			)
+		})
 	})
 })

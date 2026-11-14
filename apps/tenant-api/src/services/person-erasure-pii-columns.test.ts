@@ -301,6 +301,32 @@ describe('person erasure covers every PII column of the tenant schema', () => {
 		).toEqual([])
 	})
 
+	it('leaves guest order message rows in place: they hold no contact or text', () => {
+		// The erasure does not touch `order_messages`: the address or number is
+		// read from the (scrubbed) order at send time, so a kept row names no one.
+		const messageColumns = columns
+			.filter(({ table }) => table === 'order_messages')
+			.map(({ column }) => column)
+		expect(messageColumns.sort()).toEqual(
+			[
+				'id',
+				'order_id',
+				'kind',
+				'channel',
+				'dedupe_key',
+				'status',
+				'attempts',
+				'next_attempt_at',
+				'last_error',
+				'created_at',
+				'sent_at',
+			].sort(),
+		)
+		expect(messageColumns.filter((column) => PII_COLUMN.test(column))).toEqual(
+			[],
+		)
+	})
+
 	it('keeps COVERED and ALLOWED_COLUMNS free of stale entries', () => {
 		const stale = [
 			...Object.keys(COVERED),

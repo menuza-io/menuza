@@ -29,6 +29,12 @@ import { runExclusive } from '../lib/concurrency.ts'
 import { HttpError } from '../lib/http.ts'
 import { retryOnSqliteBusy } from '../lib/sqlite-retry.ts'
 import { payableOrderCondition } from './order-payable.ts'
+import {
+	orderMessageBatch,
+	queueOrderStatusMessages,
+	type OrderMessageTx,
+} from './order-messages.ts'
+import { applyPromisedDelay } from './order-promised-time.ts'
 
 const hash = (value: unknown) =>
 	createHash('sha256').update(JSON.stringify(value)).digest('hex')
@@ -107,6 +113,11 @@ type SourceOrder = {
 	initialStage: KdsLine['stage']
 	cancelled: boolean
 	lines: unknown
+	/**
+	 * Online orders with a promised time only (left out otherwise, so other
+	 * tickets keep their fingerprints). A push-back changes the fingerprint.
+	 */
+	promised?: { at: number; until: number | null; version: number }
 }
 
 async function settings(db: KitchenDb, locationId: string) {
@@ -197,6 +208,13 @@ function project(
 		completedAt: complete ? (saved?.completedAt ?? null) : null,
 		cancelled: order.cancelled,
 		lines,
+		...(order.promised
+			? {
+					promisedAt: order.promised.at,
+					promisedUntil: order.promised.until,
+					promisedVersion: order.promised.version,
+				}
+			: {}),
 	}
 }
 
@@ -288,6 +306,15 @@ function onlineSource(row: typeof restaurantOrders.$inferSelect): SourceOrder {
 					? 'preparing'
 					: 'new',
 		cancelled: row.status === 'cancelled',
+		...(row.promisedAt
+			? {
+					promised: {
+						at: row.promisedAt.getTime(),
+						until: row.promisedUntil?.getTime() ?? null,
+						version: row.promisedVersion,
+					},
+				}
+			: {}),
 	}
 }
 
@@ -479,10 +506,27 @@ export async function kitchenCommand(
 	actor: Actor,
 	command: KdsCommand,
 ) {
+	const messages = orderMessageBatch()
+	const result = await kitchenCommandInTx(db, actor, command, messages)
+	// An online order the kitchen made Ready tells its guest (#79), after commit.
+	messages.deliver(actor.orgId)
+	return result
+}
+
+function kitchenCommandInTx(
+	db: KitchenDb,
+	actor: Actor,
+	command: KdsCommand,
+	messages: ReturnType<typeof orderMessageBatch>,
+) {
 	return runExclusive(actor.orgId, () =>
 		retryOnSqliteBusy(() =>
 			runTenantTransaction(db, async (rawTx) => {
 				const tx = rawTx as unknown as KitchenDb
+				if (command.action === 'delay') {
+					await delayTicket(tx, actor, command, messages)
+					return { tillBecameReady: false }
+				}
 				const { config, version } = await settings(tx, actor.locationId)
 				const source = await loadSource(
 					tx,
@@ -569,8 +613,8 @@ export async function kitchenCommand(
 				// means off the pass, NOT collected/delivered and never marked paid.
 				if (command.source === 'online' && command.action === 'stage') {
 					const stage = kdsTicketStage(ticket.lines)
-					if (stage !== 'new')
-						await tx
+					if (stage !== 'new') {
+						const moved = await tx
 							.update(restaurantOrders)
 							.set({ status: stage, updatedAt: new Date(now) })
 							.where(
@@ -587,6 +631,16 @@ export async function kitchenCommand(
 									),
 								),
 							)
+							.returning()
+						for (const order of moved)
+							await queueOrderStatusMessages(
+								tx as unknown as OrderMessageTx,
+								order,
+								null,
+								stage,
+								messages.context(now),
+							)
+					}
 				}
 				await tx.insert(kdsEvents).values({
 					locationId: actor.locationId,
@@ -612,6 +666,57 @@ export async function kitchenCommand(
 			}),
 		),
 	)
+}
+
+/**
+ * Pushes an online ticket's promised time back. Guarded by the promised
+ * version the screen saw, not the ticket fingerprint: a dish moving on another
+ * screen does not block it, and a replay after it applied is `stale_version`,
+ * so a lost response never pushes the time twice. Same rules and code as the
+ * Orders page (`applyPromisedDelay`).
+ */
+async function delayTicket(
+	tx: KitchenDb,
+	actor: Actor,
+	command: KdsCommand,
+	messages: ReturnType<typeof orderMessageBatch>,
+) {
+	// A walk-in ticket was never promised a time.
+	if (command.source !== 'online') throw new HttpError(409, 'no_promised_time')
+	const [order] = await tx
+		.select()
+		.from(restaurantOrders)
+		.where(
+			and(
+				eq(restaurantOrders.id, command.orderId),
+				eq(restaurantOrders.orgId, actor.orgId),
+				eq(restaurantOrders.locationId, actor.locationId),
+				payableOrderCondition(),
+			),
+		)
+		.limit(1)
+	if (!order) throw new HttpError(404, 'ticket_not_found')
+	const now = Date.now()
+	const delayed = await applyPromisedDelay(
+		tx as unknown as OrderMessageTx,
+		order,
+		{
+			minutes: command.minutes!,
+			expectedVersion: command.expectedPromisedVersion!,
+		},
+		new Date(now),
+		messages.context(now),
+	)
+	if (!delayed.ok) throw new HttpError(delayed.status, delayed.code)
+	await tx.insert(kdsEvents).values({
+		locationId: actor.locationId,
+		deviceId: actor.deviceId,
+		staffId: actor.staffId,
+		source: command.source,
+		orderId: command.orderId,
+		action: `delay:${command.minutes}`,
+		at: now,
+	})
 }
 
 export async function configureKitchen(

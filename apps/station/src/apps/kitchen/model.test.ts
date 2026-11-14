@@ -3,8 +3,11 @@ import { describe, expect, it } from 'vitest'
 import {
 	allDayCounts,
 	averageTicketMinutes,
+	canDelay,
+	delayCommand,
 	laterRound,
 	nextKitchenStage,
+	promisedTime,
 	stationStage,
 	visibleTickets,
 	workFiredAt,
@@ -264,5 +267,57 @@ describe('the average ticket time', () => {
 				now,
 			),
 		).toBeNull()
+	})
+})
+
+describe('promised time and push-back', () => {
+	const online = (patch: Partial<KdsTicket> = {}) =>
+		ticket({
+			source: 'online',
+			channel: 'online',
+			fulfillment: 'takeaway',
+			version: 'f'.repeat(64),
+			promisedAt: 5_000,
+			promisedUntil: null,
+			promisedVersion: 3,
+			...patch,
+		})
+
+	it('reads the promised time of online tickets only', () => {
+		expect(promisedTime(online())).toEqual({
+			at: 5_000,
+			until: null,
+			version: 3,
+		})
+		expect(
+			promisedTime(online({ promisedAt: 5_000, promisedUntil: 9_000 }))?.until,
+		).toBe(9_000)
+		expect(promisedTime(ticket())).toBeNull()
+		expect(
+			promisedTime(ticket({ promisedAt: 5_000, promisedVersion: 0 })),
+		).toBeNull()
+		expect(promisedTime(online({ promisedAt: undefined }))).toBeNull()
+	})
+
+	it('offers push-back on live online tickets with a promise', () => {
+		expect(canDelay(online())).toBe(true)
+		expect(canDelay(ticket())).toBe(false)
+		expect(canDelay(online({ promisedAt: undefined }))).toBe(false)
+		expect(canDelay(online({ completedAt: 4_000 }))).toBe(false)
+		expect(canDelay(online({ cancelled: true }))).toBe(false)
+	})
+
+	it('builds the delay command with the promised version, never a station or line', () => {
+		expect(delayCommand(online(), 10)).toEqual({
+			source: 'online',
+			orderId: 'ticket',
+			expectedVersion: 'f'.repeat(64),
+			action: 'delay',
+			stationId: null,
+			lineId: null,
+			minutes: 10,
+			expectedPromisedVersion: 3,
+		})
+		expect(delayCommand(ticket(), 5)).toBeNull()
 	})
 })

@@ -301,6 +301,19 @@ async function invokeTenantInventoryTick(env: Env) {
 	})
 }
 
+/**
+ * The guest order messages tick: retries receipts and status messages whose
+ * send failed. The hourly safety net for the Durable Object alarms (US) and the
+ * in-process interval (OCI). Idempotent; the response is counts only.
+ */
+async function invokeTenantOrderMessagesTick(env: Env) {
+	return invokeTenantNodes(env, {
+		path: '/api/order-messages/tick',
+		body: {},
+		label: 'Tenant order messages tick',
+	})
+}
+
 async function invokeJob(env: Env, path: string) {
 	const response = await fetch(
 		`${env.APP_BASE_URL.replace(/\/$/, '')}${path}`,
@@ -616,6 +629,7 @@ export default {
 					(jobEnv: Env) => invokeJob(jobEnv, IMPERSONATION_CLEANUP_PATH),
 				],
 				['Tenant inventory tick', invokeTenantInventoryTick],
+				['Tenant order messages tick', invokeTenantOrderMessagesTick],
 			] as const) {
 				ctx.waitUntil(
 					run(env).catch((error) => {

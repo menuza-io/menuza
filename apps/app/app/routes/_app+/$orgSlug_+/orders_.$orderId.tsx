@@ -21,6 +21,7 @@ import {
 	type Order,
 	type OrderRefundBody,
 	orderSchema,
+	type PushBackMinutes,
 } from '#app/utils/orders/order-model.ts'
 import { ordersHref } from '#app/utils/orders/orders-link.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
@@ -127,6 +128,23 @@ export default function OrderPage() {
 		setOrder(z.object({ order: orderSchema }).parse(response).order)
 	}
 
+	/**
+	 * Pushes the promised time back. The region checks the version we saw, so a
+	 * second screen cannot silently stack another delay; errors reach the
+	 * detail, which words them.
+	 */
+	const pushBack = async (delayMinutes: PushBackMinutes) => {
+		if (!order || !canWrite) return
+		const response = await request(`/${encodeURIComponent(order.id)}`, {
+			method: 'PATCH',
+			body: JSON.stringify({
+				delayMinutes,
+				expectedPromisedVersion: order.promisedVersion,
+			}),
+		})
+		setOrder(z.object({ order: orderSchema }).parse(response).order)
+	}
+
 	const shell = 'mx-auto w-full max-w-5xl py-8 md:px-6 lg:px-8'
 	const backHref = ordersHref(orgSlug)
 
@@ -196,6 +214,7 @@ export default function OrderPage() {
 				busy={busy}
 				onUpdate={(status, markPaid) => void update(status, markPaid)}
 				onRecordRefund={canWrite ? recordRefund : undefined}
+				onPushBack={canWrite ? pushBack : undefined}
 				onReload={() => void load()}
 				backHref={backHref}
 			/>

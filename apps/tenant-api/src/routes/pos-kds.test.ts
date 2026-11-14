@@ -14,6 +14,7 @@ import {
 	destroyTenantDb,
 	getTenantDb,
 	kdsEvents,
+	orderMessages,
 	posManagers,
 	posDevices,
 	posOrderRevisions,
@@ -26,6 +27,7 @@ import {
 import { ORG_A, ORG_B, stubStaffEnv } from '../../tests/staff-harness.ts'
 import { hashPosSecret } from '../lib/pos-auth.ts'
 import { mintPosStaffSession } from '../lib/pos-staff-session.ts'
+import { orderMessagesIdle } from '../services/order-messages.ts'
 import { posKdsRoutes } from './pos-kds.ts'
 
 describe('Station kitchen API', () => {
@@ -84,6 +86,7 @@ describe('Station kitchen API', () => {
 		})
 	})
 	afterEach(async () => {
+		await orderMessagesIdle()
 		for (const org of [ORG_A, ORG_B]) await destroyTenantDb(org)
 		fs.rmSync(dir, { recursive: true, force: true })
 		vi.unstubAllEnvs()
@@ -717,5 +720,208 @@ describe('Station kitchen API', () => {
 			.where(eq(posOrders.id, orderId))
 		expect((await feed()).tickets[0]?.cancelled).toBe(true)
 		expect((await stage('ready')).status).toBe(404)
+	})
+	describe('pushing an online ticket back (delay)', () => {
+		const PROMISED = Date.parse('2026-11-13T18:40:00Z')
+		async function onlineOrder(
+			overrides: Partial<typeof restaurantOrders.$inferInsert> = {},
+		) {
+			const db = await getTenantDb(ORG_A)
+			const id = crypto.randomUUID()
+			await db.insert(restaurantOrders).values({
+				id,
+				orgId: ORG_A,
+				number: `WEB-${crypto.randomUUID().slice(0, 8)}`,
+				status: 'accepted',
+				paymentMethod: 'handoff',
+				paymentStatus: 'unpaid',
+				fulfillment: 'delivery',
+				locationId: 'loc-1',
+				locationName: 'Main',
+				contactName: 'Private online guest',
+				contactPhone: '+15550000000',
+				contactEmail: 'private@example.com',
+				deliveryAddress: '1 Private Lane',
+				deliveryCity: 'Secret City',
+				currency: 'USD',
+				subtotalCents: 1000,
+				taxCents: 0,
+				totalCents: 1000,
+				lines: [
+					{ itemId: 'coffee', itemName: 'Coffee', quantity: 1, options: [] },
+				],
+				idempotencyKey: crypto.randomUUID(),
+				requestHash: 'x',
+				receiptTokenHash: 'y',
+				promisedAt: new Date(PROMISED),
+				promisedUntil: new Date(PROMISED + 15 * 60_000),
+				guestMessages: { receipt: true, ready: true, cancelled: true },
+				...overrides,
+			})
+			return id
+		}
+		async function ticketOf(id: string) {
+			return (await feed()).tickets.find((ticket) => ticket.id === id)!
+		}
+		function delay(
+			ticket: { id: string; source: string; version: string },
+			minutes: number,
+			expectedPromisedVersion: number,
+			staffSession?: string,
+		) {
+			return request(
+				'POST',
+				'/command',
+				{
+					source: ticket.source,
+					orderId: ticket.id,
+					expectedVersion: ticket.version,
+					action: 'delay',
+					minutes,
+					expectedPromisedVersion,
+				},
+				secret,
+				staffSession,
+			)
+		}
+		async function stored(id: string) {
+			const db = await getTenantDb(ORG_A)
+			const [row] = await db
+				.select()
+				.from(restaurantOrders)
+				.where(eq(restaurantOrders.id, id))
+			return row!
+		}
+		async function etaRows(id: string) {
+			const db = await getTenantDb(ORG_A)
+			return (await db.select().from(orderMessages)).filter(
+				(row) => row.orderId === id && row.kind === 'eta_changed',
+			)
+		}
+
+		it('shows the promised time on online tickets only, with no contacts, addresses or prices', async () => {
+			const id = await onlineOrder()
+			const response = await request()
+			const raw = await response.text()
+			expect(raw).not.toMatch(
+				/Private|15550000000|private@example|Secret City|subtotalCents|totalCents|currency|contact/,
+			)
+			const data = JSON.parse(raw) as KdsFeed
+			expect(data.tickets.find((t) => t.id === id)).toMatchObject({
+				promisedAt: PROMISED,
+				promisedUntil: PROMISED + 15 * 60_000,
+				promisedVersion: 0,
+			})
+			const walkIn = data.tickets.find((t) => t.source === 'pos')!
+			expect(walkIn).not.toHaveProperty('promisedAt')
+			expect(walkIn).not.toHaveProperty('promisedVersion')
+		})
+
+		it('moves the time later, once per command: a replay is stale and never pushes twice', async () => {
+			const id = await onlineOrder()
+			const ticket = await ticketOf(id)
+			const first = await delay(ticket, 10, 0)
+			expect(first.status).toBe(200)
+			const after = (await first.json()) as KdsFeed
+			expect(after.tickets.find((t) => t.id === id)).toMatchObject({
+				promisedAt: PROMISED + 10 * 60_000,
+				promisedUntil: PROMISED + 25 * 60_000,
+				promisedVersion: 1,
+			})
+			// The same command again (a lost response, a second tap).
+			const replay = await delay(ticket, 10, 0)
+			expect(replay.status).toBe(409)
+			expect(await replay.json()).toMatchObject({ error: 'stale_version' })
+			const row = await stored(id)
+			expect(row.promisedAt?.getTime()).toBe(PROMISED + 10 * 60_000)
+			expect(row.promisedVersion).toBe(1)
+			expect(row.promisedDelayMinutes).toBe(10)
+			// +10 told the guest once; the row reads the time when it is sent.
+			await orderMessagesIdle()
+			expect(await etaRows(id)).toHaveLength(1)
+			const db = await getTenantDb(ORG_A)
+			expect(
+				(await db.select().from(kdsEvents)).map((event) => event.action),
+			).toEqual(['delay:10'])
+		})
+
+		it('does not tell the guest about +5, and caps the total at 90 minutes', async () => {
+			const id = await onlineOrder({ promisedDelayMinutes: 80 })
+			let ticket = await ticketOf(id)
+			expect((await delay(ticket, 5, 0)).status).toBe(200)
+			expect(await etaRows(id)).toHaveLength(0)
+			ticket = await ticketOf(id)
+			const over = await delay(ticket, 10, 1)
+			expect(over.status).toBe(409)
+			expect(await over.json()).toMatchObject({ error: 'delay_limit' })
+			expect((await stored(id)).promisedDelayMinutes).toBe(85)
+		})
+
+		it('refuses walk-in tickets, orders with no promised time, closed orders and bad minutes', async () => {
+			const walkIn = (await feed()).tickets.find((t) => t.source === 'pos')!
+			const refused = await delay(walkIn, 10, 0)
+			expect(refused.status).toBe(409)
+			expect(await refused.json()).toMatchObject({ error: 'no_promised_time' })
+
+			const round = await onlineOrder({
+				fulfillment: 'dine_in',
+				promisedAt: null,
+				promisedUntil: null,
+			})
+			const none = await delay(await ticketOf(round), 10, 0)
+			expect(none.status).toBe(409)
+			expect(await none.json()).toMatchObject({ error: 'no_promised_time' })
+
+			const done = await onlineOrder({ status: 'completed' })
+			const closed = await request('POST', '/command', {
+				source: 'online',
+				orderId: done,
+				expectedVersion: 'a'.repeat(64),
+				action: 'delay',
+				minutes: 10,
+				expectedPromisedVersion: 0,
+			})
+			expect(closed.status).toBe(409)
+			expect(await closed.json()).toMatchObject({ error: 'order_closed' })
+
+			const id = await onlineOrder()
+			const ticket = await ticketOf(id)
+			for (const minutes of [-10, 0, 20])
+				expect((await delay(ticket, minutes, 0)).status).toBe(400)
+			expect((await stored(id)).promisedVersion).toBe(0)
+		})
+
+		it('needs a manager when staff sign in on the terminal', async () => {
+			const id = await onlineOrder()
+			const db = await getTenantDb(ORG_A)
+			const staffId = crypto.randomUUID()
+			await db
+				.update(posDevices)
+				.set({ signInRequired: true })
+				.where(eq(posDevices.id, deviceId))
+			await db
+				.insert(staffMembers)
+				.values({ id: staffId, firstName: 'Private', lastName: 'Staff' })
+			await db
+				.insert(staffScopeAssignments)
+				.values({ staffId, scopeId: 'loc-1', pinLookup: 'set' })
+			const session = await mintPosStaffSession({
+				orgId: ORG_A,
+				deviceId,
+				staffId,
+				role: 'manager',
+			})
+			const data = (await (
+				await request('GET', '', undefined, secret, session.token)
+			).json()) as KdsFeed
+			const ticket = data.tickets.find((t) => t.id === id)!
+			const denied = await delay(ticket, 10, 0, session.token)
+			expect(denied.status).toBe(403)
+			expect(await denied.json()).toMatchObject({ error: 'manager_required' })
+			expect((await stored(id)).promisedVersion).toBe(0)
+			await db.insert(posManagers).values({ staffId, addedBy: 'operator' })
+			expect((await delay(ticket, 10, 0, session.token)).status).toBe(200)
+			expect((await stored(id)).promisedVersion).toBe(1)
+		})
 	})
 })

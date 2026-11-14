@@ -85,4 +85,52 @@ describe('kitchen contract', () => {
 			kdsCommandSchema.safeParse({ ...input, action: 'recall' }).success,
 		).toBe(true)
 	})
+	it('delays by 5, 10 or 15 minutes, naming the promised version it saw', () => {
+		const input = {
+			source: 'online',
+			orderId: 'one',
+			expectedVersion: 'a'.repeat(64),
+			action: 'delay',
+		}
+		for (const minutes of [5, 10, 15])
+			expect(
+				kdsCommandSchema.safeParse({
+					...input,
+					minutes,
+					expectedPromisedVersion: 0,
+				}).success,
+			).toBe(true)
+		for (const minutes of [0, -5, 20, 7.5, '10'])
+			expect(
+				kdsCommandSchema.safeParse({
+					...input,
+					minutes,
+					expectedPromisedVersion: 0,
+				}).success,
+			).toBe(false)
+		// Both the minutes and the version are required.
+		expect(kdsCommandSchema.safeParse({ ...input, minutes: 10 }).success).toBe(
+			false,
+		)
+		expect(
+			kdsCommandSchema.safeParse({ ...input, expectedPromisedVersion: 0 })
+				.success,
+		).toBe(false)
+		// A delay is whole-ticket; other actions take no minutes.
+		expect(
+			kdsCommandSchema.safeParse({
+				...input,
+				minutes: 10,
+				expectedPromisedVersion: 0,
+				stationId: 'grill',
+			}).success,
+		).toBe(false)
+		expect(
+			kdsCommandSchema.safeParse({
+				...input,
+				action: 'done',
+				minutes: 10,
+			}).success,
+		).toBe(false)
+	})
 })

@@ -3,8 +3,11 @@ import {
 	acceptCheckoutUrl,
 	checkoutAttemptKey,
 	clearCheckoutAttempt,
+	fetchOrderReceipt,
 	fetchOrderingOptions,
+	fetchOrderWithCredential,
 	orderLines,
+	resendOrderLink,
 	submitRegionalOrder,
 } from './order-client.ts'
 import { type CartItem } from './types.ts'
@@ -327,7 +330,10 @@ describe('signed-in checkout', () => {
 	})
 
 	it.each([
-		['a refresh refused with a plain 403', [expired, () => Response.json({ error: 'Forbidden' }, { status: 403 })]],
+		[
+			'a refresh refused with a plain 403',
+			[expired, () => Response.json({ error: 'Forbidden' }, { status: 403 })],
+		],
 		[
 			'the region unable to check the session',
 			[
@@ -418,5 +424,81 @@ describe('checkout url (VAL-PMOCK-038)', () => {
 		expect(acceptCheckoutUrl('http://localhost:3001/x')).toBe(
 			'http://localhost:3001/x',
 		)
+	})
+})
+
+describe('order link credential', () => {
+	const TOKEN = 'b'.repeat(64)
+
+	function stubFetch(status: number, body: unknown) {
+		const fetchMock = vi.fn(
+			async (..._args: [string, RequestInit?]) =>
+				new Response(JSON.stringify(body), { status }),
+		)
+		vi.stubGlobal('fetch', fetchMock)
+		return fetchMock
+	}
+
+	it('reads an order with X-Order-Link and no Authorization header', async () => {
+		using ignoredSetup = setup()
+		const fetchMock = stubFetch(200, { order: { id: 'o1' } })
+		const value = await fetchOrderWithCredential('o1', {
+			kind: 'link',
+			token: TOKEN,
+		})
+		expect(value).toEqual({ order: { id: 'o1' } })
+		const [url, init] = fetchMock.mock.calls[0]!
+		expect(url).toBe('https://regional.example/orders/o1?slug=cafe')
+		expect(init?.headers).toEqual({ 'X-Order-Link': TOKEN })
+		expect(url).not.toContain(TOKEN)
+	})
+
+	it('uses the saved receipt token as a Bearer when there is no link', async () => {
+		using ignoredSetup = setup()
+		sessionStorage.setItem(
+			'menuza_order_receipt_org_o1',
+			JSON.stringify({ receiptToken: 'r'.repeat(20) }),
+		)
+		const fetchMock = stubFetch(200, { order: { id: 'o1' } })
+		await fetchOrderReceipt('org', 'o1')
+		expect(fetchMock.mock.calls[0]![1]?.headers).toEqual({
+			Authorization: `Bearer ${'r'.repeat(20)}`,
+		})
+	})
+
+	it('prefers a link token over the saved receipt', async () => {
+		using ignoredSetup = setup()
+		const fetchMock = stubFetch(200, { order: { id: 'o1' } })
+		await fetchOrderReceipt('org', 'o1', TOKEN)
+		expect(fetchMock.mock.calls[0]![1]?.headers).toEqual({
+			'X-Order-Link': TOKEN,
+		})
+	})
+
+	it('surfaces a refused link as order_not_found with status 404', async () => {
+		using ignoredSetup = setup()
+		stubFetch(404, { error: 'order_not_found' })
+		await expect(
+			fetchOrderWithCredential('o1', { kind: 'link', token: TOKEN }),
+		).rejects.toMatchObject({ code: 'order_not_found', status: 404 })
+	})
+
+	it('posts the resend with the credential and the organization only', async () => {
+		using ignoredSetup = setup()
+		const fetchMock = stubFetch(202, { ok: true })
+		await resendOrderLink('o1', { kind: 'link', token: TOKEN })
+		const [url, init] = fetchMock.mock.calls[0]!
+		expect(url).toBe('https://regional.example/orders/o1/resend-link')
+		expect(init?.method).toBe('POST')
+		expect(init?.headers).toMatchObject({ 'X-Order-Link': TOKEN })
+		expect(JSON.parse(String(init?.body))).toEqual({ slug: 'cafe' })
+	})
+
+	it('reports a rate limit by code', async () => {
+		using ignoredSetup = setup()
+		stubFetch(429, { error: 'rate_limit_exceeded' })
+		await expect(
+			resendOrderLink('o1', { kind: 'receipt', token: 'r'.repeat(20) }),
+		).rejects.toMatchObject({ code: 'rate_limit_exceeded', status: 429 })
 	})
 })

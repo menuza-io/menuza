@@ -429,6 +429,14 @@ msgstr "Eingetroffen"
 msgid "Arrives in {min}–{max} min"
 msgstr "Ankunft in {min}–{max} Min."
 
+#: src/pages/menu/success.astro.ts:3
+msgid "Arriving {range}"
+msgstr "Ankunft {range}"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Arriving around {time}"
+msgstr "Ankunft gegen {time}"
+
 #: src/lib/ordering-labels.ts:183
 msgid "ASAP"
 msgstr "So bald wie möglich"
@@ -549,6 +557,10 @@ msgstr "Anrufen"
 #: src/lib/reservations/labels.ts:203
 msgid "Call {phone}"
 msgstr "{phone} anrufen"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Call the restaurant"
+msgstr "Restaurant anrufen"
 
 #: src/lib/reservations/labels.ts:183
 msgid "Cancel reservation"
@@ -846,6 +858,10 @@ msgstr "Kontakt"
 msgid "Contact details"
 msgstr "Kontaktdaten"
 
+#: src/pages/menu/success.astro.ts:3
+msgid "Contact the restaurant for help with your order."
+msgstr "Wende dich für Hilfe zu deiner Bestellung an das Restaurant."
+
 #: src/pages/complete-name.astro.ts:3
 msgid "Continue"
 msgstr "Weiter"
@@ -1046,6 +1062,10 @@ msgstr "Senden Sie mir Neuigkeiten und Angebote von {name} per E-Mail"
 #: src/components/marketing/MarketingConsentBoxes.astro.ts:3
 msgid "Email me offers and news from {org}"
 msgstr "Senden Sie mir Angebote und Neuigkeiten von {org} per E-Mail"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Email me this receipt again"
+msgstr "Diesen Beleg erneut per E-Mail senden"
 
 #: src/components/drops/DropCard.astro.ts:3
 #: src/components/drops/DropStatusChip.astro.ts:3
@@ -1345,6 +1365,10 @@ msgstr "Ich komme später"
 #: src/lib/reservations/labels.ts:310
 msgid "If a table opens up, we will contact you. You can cancel this request at any time."
 msgstr "Wenn ein Tisch frei wird, melden wir uns bei Ihnen. Sie können diese Anfrage jederzeit stornieren."
+
+#: src/pages/menu/success.astro.ts:3
+msgid "If we have your email, the receipt is on its way."
+msgstr "Falls uns deine E-Mail-Adresse vorliegt, ist der Beleg unterwegs."
 
 #: src/components/drops/DropCard.astro.ts:3
 #: src/pages/drop/[slug].astro.ts:3
@@ -2344,6 +2368,10 @@ msgstr "Mehr anzeigen"
 msgid "Ready"
 msgstr "Bereit"
 
+#: src/pages/menu/success.astro.ts:3
+msgid "Ready around {time}"
+msgstr "Fertig gegen {time}"
+
 #: src/lib/ordering-labels.ts:181
 #: src/lib/ordering-labels.ts:185
 msgid "Ready in about {count} min"
@@ -2384,6 +2412,10 @@ msgstr "Erstattung unterwegs"
 #: src/lib/reservations/labels.ts:435
 msgid "Refunded"
 msgstr "Erstattet"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Refunded {amount}"
+msgstr "Erstattet: {amount}"
 
 #: src/lib/ordering-labels.ts:94
 #: src/lib/ordering-labels.ts:117
@@ -2765,6 +2797,10 @@ msgstr "Senden Sie mir Neuigkeiten und Angebote von {name} per SMS"
 msgid "Text me offers from {org}"
 msgstr "Senden Sie mir Angebote von {org} per SMS"
 
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Text me order updates"
+msgstr "SMS zu meiner Bestellung senden"
+
 #: src/lib/reservations/labels.ts:100
 msgid "Text me reminders about this reservation"
 msgstr "Senden Sie mir SMS-Erinnerungen zu dieser Reservierung"
@@ -2772,6 +2808,10 @@ msgstr "Senden Sie mir SMS-Erinnerungen zu dieser Reservierung"
 #: src/lib/reservations/labels.ts:222
 msgid "Text me when my table is ready"
 msgstr "Per SMS benachrichtigen, wenn mein Tisch bereit ist"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Texts about this order only: when it's ready, or if the time changes. Not marketing."
+msgstr "SMS nur zu dieser Bestellung: wenn sie fertig ist oder sich die Zeit ändert. Keine Werbung."
 
 #: src/pages/menu/success.astro.ts:3
 msgid "Thank you for your order!"
@@ -3059,6 +3099,10 @@ msgstr "Diese Stelle ist nicht mehr offen."
 msgid "This job is no longer taking applications."
 msgstr "Für diese Stelle werden keine Bewerbungen mehr angenommen."
 
+#: src/pages/menu/success.astro.ts:3
+msgid "This link has expired or isn't valid."
+msgstr "Dieser Link ist abgelaufen oder ungültig."
+
 #: src/pages/menu/checkout.astro.ts:3
 msgid "This location is not available for ordering."
 msgstr "Dieser Standort ist nicht für Bestellungen verfügbar."
@@ -3067,9 +3111,17 @@ msgstr "Dieser Standort ist nicht für Bestellungen verfügbar."
 msgid "This order is below the minimum for delivery."
 msgstr "Diese Bestellung liegt unter dem Mindestbestellwert für Lieferung."
 
+#: src/pages/menu/success.astro.ts:3
+msgid "This order is complete."
+msgstr "Diese Bestellung ist abgeschlossen."
+
 #: src/pages/menu.astro.ts:3
 msgid "This order link has expired. You can still order from the menu."
 msgstr "Dieser Bestelllink ist abgelaufen. Sie können weiterhin über die Speisekarte bestellen."
+
+#: src/pages/menu/success.astro.ts:3
+msgid "This order was cancelled"
+msgstr "Diese Bestellung wurde storniert"
 
 #: src/lib/reservations/labels.ts:412
 msgid "This payment is no longer open"
@@ -3162,6 +3214,10 @@ msgstr "Zu viele Versuche. Bitte versuchen Sie es später erneut."
 #: src/lib/reservations/labels.ts:491
 msgid "Too many attempts. Please wait a moment and try again."
 msgstr "Zu viele Versuche. Bitte warten Sie einen Moment und versuchen Sie es erneut."
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Too many requests. Try again later."
+msgstr "Zu viele Anfragen. Versuche es später erneut."
 
 #: src/components/ordering/TableTab.astro.ts:3
 #: src/pages/drop/[slug].astro.ts:3
@@ -3453,6 +3509,10 @@ msgstr "Wir konnten Ihren Beleg nicht laden"
 #: src/components/marketing/MessagesSection.astro.ts:3
 msgid "We couldn't save that. Try again."
 msgstr "Das konnte nicht gespeichert werden. Bitte versuchen Sie es erneut."
+
+#: src/pages/menu/success.astro.ts:3
+msgid "We couldn't send that. Please try again later."
+msgstr "Das konnte nicht gesendet werden. Bitte versuche es später erneut."
 
 #: src/pages/menu/success.astro.ts:3
 msgid "We couldn't start payment. Please try again."
@@ -3808,6 +3868,10 @@ msgstr "Ihre Bestellung liegt unter dem Mindestbetrag für diesen Code."
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Your order is empty"
 msgstr "Ihre Bestellung ist leer"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Your order is ready."
+msgstr "Deine Bestellung ist fertig."
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Your order was placed, but we couldn't start online payment. You can pay from your receipt page."

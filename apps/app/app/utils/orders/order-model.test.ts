@@ -121,3 +121,27 @@ describe('appliedDiscounts', () => {
 		expect(shape.discounts.parse('x')).toBeUndefined()
 	})
 })
+
+describe('promised time fields', () => {
+	it('default to none when an older region leaves them out', () => {
+		const shape = orderSchema.shape
+		expect(shape.promisedAt.parse(undefined)).toBeNull()
+		expect(shape.promisedUntil.parse(undefined)).toBeNull()
+		expect(shape.promisedVersion.parse(undefined)).toBe(0)
+		expect(shape.promisedDelayMinutes.parse(undefined)).toBe(0)
+		expect(shape.promisedDelayMinutes.parse(25)).toBe(25)
+		expect(shape.promisedAt.parse('2026-10-19T18:40:00.000Z')).toBe(
+			'2026-10-19T18:40:00.000Z',
+		)
+	})
+})
+
+describe('order time zone', () => {
+	it('defaults to null when absent or invalid', () => {
+		const shape = orderSchema.shape
+		expect(shape.timeZone.parse(undefined)).toBeNull()
+		expect(shape.timeZone.parse('Not/AZone')).toBeNull()
+		expect(shape.timeZone.parse(null)).toBeNull()
+		expect(shape.timeZone.parse('Asia/Riyadh')).toBe('Asia/Riyadh')
+	})
+})

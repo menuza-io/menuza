@@ -1302,12 +1302,9 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 					: (barLabels.labelPickupTime ?? '')
 			}
 			const scheduled = details.scheduledFor ? scheduledText(details.scheduledFor) : null
-			const eta =
-				delivery && quoted && details.delivery
-					? fillTemplate(data.timeLabels.minutesRange, details.delivery.eta)
-					: delivery
-						? (barLabels.deliveryEstimate ?? '')
-						: (barLabels.pickupEstimate ?? '')
+			// The ASAP delivery window (prep + busy + delivery range) was worked out
+			// for this location at render; a quote's `eta` is the travel range only.
+			const eta = delivery ? (barLabels.deliveryEstimate ?? '') : (barLabels.pickupEstimate ?? '')
 			setValue(
 				timeValue,
 				() => {
