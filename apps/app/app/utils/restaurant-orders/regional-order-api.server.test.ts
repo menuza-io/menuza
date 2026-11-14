@@ -591,6 +591,86 @@ describe('regional refund and dispute client (#80)', () => {
 		})
 	})
 
+	describe('members without the loyalty refund grant', () => {
+		const LIMITED = { ...INTENT, loyaltyAccess: { refundLoyalty: false } }
+
+		it('sends nothing for a member who holds the grant', async () => {
+			fetchMock.mockResolvedValue(jsonResponse({ ...REFUND, replayed: false }))
+			const intent = await requestRestaurantOrderRefundIntent({
+				dataRegion: 'us',
+				...INTENT,
+				loyaltyAccess: { refundLoyalty: true },
+			})
+			expect(intent).toMatchObject({ refundId: 'rf_1' })
+			expect(sent().body).toEqual(INTENT)
+		})
+
+		it('sends the missing grant and accepts an answer that confirms the check', async () => {
+			fetchMock.mockResolvedValue(
+				jsonResponse({ ...REFUND, replayed: false, loyaltyChecked: true }),
+			)
+			const intent = await requestRestaurantOrderRefundIntent({
+				dataRegion: 'us',
+				...LIMITED,
+			})
+			expect(intent).toMatchObject({ refundId: 'rf_1', loyaltyChecked: true })
+			expect(sent().body).toEqual(LIMITED)
+			expect(fetchMock).toHaveBeenCalledTimes(1)
+		})
+
+		it('keeps the region’s loyalty refusal', async () => {
+			fetchMock.mockResolvedValue(
+				jsonResponse({ error: 'loyalty_refund_forbidden' }, 403),
+			)
+			const error = await expectRegionalError(
+				requestRestaurantOrderRefundIntent({ dataRegion: 'us', ...LIMITED }),
+			)
+			expect(error).toMatchObject({
+				code: 'loyalty_refund_forbidden',
+				httpStatus: 403,
+			})
+		})
+
+		it('treats a region that refuses the field (400) as unsupported', async () => {
+			fetchMock.mockResolvedValue(
+				jsonResponse({ error: 'invalid_request' }, 400),
+			)
+			const error = await expectRegionalError(
+				requestRestaurantOrderRefundIntent({ dataRegion: 'us', ...LIMITED }),
+			)
+			expect(error).toMatchObject({
+				code: 'loyalty_check_unsupported',
+				httpStatus: 403,
+			})
+		})
+
+		it('releases a refund booked without the check and refuses it', async () => {
+			fetchMock
+				.mockResolvedValueOnce(jsonResponse({ ...REFUND, replayed: false }))
+				.mockResolvedValueOnce(
+					jsonResponse({
+						refundId: 'rf_1',
+						orderId: 'ord_1',
+						status: 'failed',
+						applied: true,
+					}),
+				)
+			const error = await expectRegionalError(
+				requestRestaurantOrderRefundIntent({ dataRegion: 'us', ...LIMITED }),
+			)
+			expect(error).toMatchObject({
+				code: 'loyalty_check_unsupported',
+				httpStatus: 403,
+			})
+			expect(fetchMock).toHaveBeenCalledTimes(2)
+			expect(sent().body).toMatchObject({
+				refundId: 'rf_1',
+				status: 'failed',
+				failureCode: 'loyalty_check_unsupported',
+			})
+		})
+	})
+
 	it('refuses an answer for another order or a malformed one', async () => {
 		fetchMock.mockResolvedValue(
 			jsonResponse({ ...REFUND, orderId: 'ord_2', replayed: false }),

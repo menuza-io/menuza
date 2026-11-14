@@ -5,8 +5,12 @@ import {
 	refundIdempotencyKeySchema,
 	type OrderRefundIntentResponse,
 } from '@repo/common/restaurant-orders'
+import { LOYALTY_PERMISSIONS } from '@repo/loyalty'
 import { type ActionFunctionArgs } from 'react-router'
-import { resolveLoyaltyLocationIds } from '#app/utils/loyalty/access.server.ts'
+import {
+	getUserLoyaltyGrants,
+	resolveLoyaltyLocationIds,
+} from '#app/utils/loyalty/access.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import {
 	ORG_PERMISSIONS,
@@ -40,6 +44,11 @@ function regionalRefusal(error: RegionalOrderApiError): Response {
 	// region): nothing was refunded.
 	if (error.code === 'location_scope_unsupported') {
 		return refuse(403, 'location_scope_unsupported')
+	}
+	// The member may not move loyalty points and the region could not check
+	// whether the order carries any (an older region): nothing was refunded.
+	if (error.code === 'loyalty_check_unsupported') {
+		return refuse(403, 'loyalty_check_unsupported')
 	}
 	if (PASS_THROUGH_CODES.has(error.code)) {
 		const status = error.httpStatus >= 400 && error.httpStatus < 500
@@ -91,6 +100,10 @@ function view(intent: OrderRefundIntentResponse): RefundView {
  * intent: the region answers the uniform 404 for an order elsewhere and
  * confirms the check (`locationScoped`). A region that cannot confirm it (an
  * older one) gets 403 `location_scope_unsupported` and nothing is refunded.
+ * Likewise a member without `update:loyalty_redemption:any`: the region
+ * refuses an order loyalty tracks (403 `loyalty_refund_forbidden`) and
+ * confirms the check (`loyaltyChecked`); an older region gets 403
+ * `loyalty_check_unsupported`.
  *
  * Then: the region books the refund (`pending`), the App refunds at the
  * provider with the refund's own key, and reports the answer. A replayed key
@@ -119,6 +132,12 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	// Null: every location. A list (possibly empty) limits the refund to
 	// orders at those locations; the region enforces it.
 	const locationIds = await resolveLoyaltyLocationIds(userId, organizationId)
+	// A refund on an order loyalty tracks takes points back, so it also needs
+	// the loyalty redemption grant (as a recorded refund does): the region
+	// refuses such an order (403 `loyalty_refund_forbidden`) without it.
+	const refundLoyalty = (
+		await getUserLoyaltyGrants(userId, organizationId)
+	).includes(LOYALTY_PERMISSIONS.UPDATE_LOYALTY_REDEMPTION)
 
 	const key = refundIdempotencyKeySchema.safeParse(
 		request.headers.get('Idempotency-Key') ?? undefined,
@@ -147,6 +166,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			idempotencyKey: key.data,
 			actor: { origin: 'operator', actorId: userId },
 			...(locationIds !== null ? { locationIds } : {}),
+			loyaltyAccess: { refundLoyalty },
 		})
 	try {
 		intent = await book()

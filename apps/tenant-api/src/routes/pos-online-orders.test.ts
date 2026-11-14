@@ -529,6 +529,26 @@ describe('Station Orders app API (/pos/online-orders)', () => {
 			refundableCents: 1000,
 			refundStatus: 'partial',
 		})
+		const before = seen.version
+		// The provider takes it back later (succeeded, then failed): Station
+		// reads "failed", the 500 is refundable again, and the version moves.
+		const reversed = await applyProviderRefundStatus({
+			orgId: ORG_A,
+			refundId: row!.id,
+			status: 'failed',
+			failureCode: 'card_closed',
+		})
+		expect(reversed.ok).toBe(true)
+		seen = (await detail(id, manager)).order
+		expect(seen.version).not.toBe(before)
+		expect(seen).toMatchObject({
+			refundedCents: 0,
+			refundableCents: 1500,
+			refundStatus: 'failed',
+			refunds: [
+				{ amountCents: 500, status: 'failed', failureCode: 'card_closed' },
+			],
+		})
 		expect(
 			(
 				await refund(id, {

@@ -13,6 +13,9 @@ import {
 	orderRefundsPendingRequestSchema,
 	orderRefundStatusRequestSchema,
 	orderRefundState,
+	effectiveRefundRow,
+	refundableAmountCents,
+	refundRowReversed,
 	summarizeOrderRefunds,
 } from './restaurant-orders.ts'
 
@@ -68,6 +71,21 @@ describe('region system contracts', () => {
 		expect(
 			orderRefundIntentRequestSchema.safeParse({ ...intent, full: true })
 				.success,
+		).toBe(false)
+	})
+
+	it('carries the member loyalty grant and the region confirms it', () => {
+		expect(
+			orderRefundIntentRequestSchema.safeParse({
+				...intent,
+				loyaltyAccess: { refundLoyalty: false },
+			}).success,
+		).toBe(true)
+		expect(
+			orderRefundIntentRequestSchema.safeParse({
+				...intent,
+				loyaltyAccess: { refundLoyalty: true, impersonated: false },
+			}).success,
 		).toBe(false)
 	})
 
@@ -197,6 +215,7 @@ describe('summarizeOrderRefunds', () => {
 	it('reads none with no refunds', () => {
 		expect(summarizeOrderRefunds(paid, [])).toEqual({
 			refundedCents: 0,
+			reversedCents: 0,
 			pendingCents: 0,
 			refundableCents: 2000,
 			refundStatus: 'none',
@@ -212,6 +231,7 @@ describe('summarizeOrderRefunds', () => {
 			]),
 		).toEqual({
 			refundedCents: 500,
+			reversedCents: 0,
 			pendingCents: 700,
 			refundableCents: 800,
 			refundStatus: 'pending',
@@ -231,6 +251,7 @@ describe('summarizeOrderRefunds', () => {
 			]),
 		).toEqual({
 			refundedCents: 0,
+			reversedCents: 0,
 			pendingCents: 0,
 			refundableCents: 2000,
 			refundStatus: 'failed',
@@ -256,6 +277,80 @@ describe('summarizeOrderRefunds', () => {
 		expect(orderRefundState({ totalCents: 2000, refundedCents: 2000 })).toBe(
 			'full',
 		)
+	})
+
+	it('reads a refund the provider reversed after it succeeded as failed, refundable again', () => {
+		const rows = [
+			{ amountCents: 500, status: 'succeeded', kind: 'provider', createdAt: 1 },
+			{
+				amountCents: 1500,
+				status: 'succeeded',
+				kind: 'provider',
+				createdAt: 2,
+				reversedAt: '2026-11-14T13:00:00Z',
+				reversalCode: 'expired_or_canceled_card',
+			},
+		]
+		const summary = summarizeOrderRefunds(
+			{ paidCents: 2000, refundedCents: 2000, reversedCents: 1500 },
+			rows,
+		)
+		expect(summary).toEqual({
+			refundedCents: 500,
+			reversedCents: 1500,
+			pendingCents: 0,
+			refundableCents: 1500,
+			refundStatus: 'failed',
+			failureCode: 'expired_or_canceled_card',
+		})
+		// Without the stored total the rows say the same.
+		expect(
+			summarizeOrderRefunds({ paidCents: 2000, refundedCents: 2000 }, rows),
+		).toEqual(summary)
+		// Refunded again afterwards: the newest event wins, nothing over-refunds.
+		const again = summarizeOrderRefunds(
+			{ paidCents: 2000, refundedCents: 3500, reversedCents: 1500 },
+			[
+				...rows,
+				{
+					amountCents: 1500,
+					status: 'succeeded',
+					kind: 'provider',
+					createdAt: Date.parse('2026-11-14T14:00:00Z'),
+				},
+			],
+		)
+		expect(again).toMatchObject({
+			refundedCents: 2000,
+			refundableCents: 0,
+			refundStatus: 'full',
+			failureCode: null,
+		})
+		expect(effectiveRefundRow(rows[1]!)).toEqual({
+			status: 'failed',
+			failureCode: 'expired_or_canceled_card',
+			at: Date.parse('2026-11-14T13:00:00Z'),
+		})
+		expect(refundRowReversed(rows[0]!)).toBe(false)
+	})
+
+	it('never makes more refundable than was paid', () => {
+		expect(
+			refundableAmountCents({
+				paidCents: 1000,
+				refundedCents: 0,
+				reversedCents: 500,
+				pendingCents: 0,
+			}),
+		).toBe(1000)
+		expect(
+			refundableAmountCents({
+				paidCents: 1000,
+				refundedCents: 1000,
+				reversedCents: 400,
+				pendingCents: 300,
+			}),
+		).toBe(100)
 	})
 })
 

@@ -175,6 +175,7 @@ describe('POST /operator/orders/:id/refunds', () => {
 				origin: 'operator',
 				failureCode: null,
 				settledAt: null,
+				reversedAt: null,
 			},
 		])
 		expect(

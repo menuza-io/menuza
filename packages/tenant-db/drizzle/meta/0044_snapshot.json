@@ -12550,6 +12550,20 @@
 					"primaryKey": false,
 					"notNull": false,
 					"autoincrement": false
+				},
+				"reversed_at": {
+					"name": "reversed_at",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"reversal_code": {
+					"name": "reversal_code",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
 				}
 			},
 			"indexes": {
@@ -13150,6 +13164,20 @@
 					"primaryKey": false,
 					"notNull": false,
 					"autoincrement": false
+				},
+				"reversed_at": {
+					"name": "reversed_at",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"reversal_code": {
+					"name": "reversal_code",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
 				}
 			},
 			"indexes": {
@@ -13680,6 +13708,21 @@
 					"autoincrement": false,
 					"default": 0
 				},
+				"refund_reversed_cents": {
+					"name": "refund_reversed_cents",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false,
+					"default": 0
+				},
+				"cancel_refund_due_at": {
+					"name": "cancel_refund_due_at",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
 				"lines": {
 					"name": "lines",
 					"type": "text",
@@ -13848,6 +13891,12 @@
 					"columns": ["acceptance_deadline_at"],
 					"isUnique": false,
 					"where": "\"restaurant_orders\".\"status\" = 'pending_acceptance'"
+				},
+				"idx_restaurant_orders_cancel_refund_due": {
+					"name": "idx_restaurant_orders_cancel_refund_due",
+					"columns": ["cancel_refund_due_at"],
+					"isUnique": false,
+					"where": "\"restaurant_orders\".\"cancel_refund_due_at\" is not null"
 				},
 				"restaurant_orders_idempotency_key_unique": {
 					"name": "restaurant_orders_idempotency_key_unique",

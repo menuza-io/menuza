@@ -831,6 +831,8 @@ describe('restaurant order provider refunds on the payment emulators', () => {
 				note: 'Cold food',
 				idempotencyKey: 'idem_key_0001',
 				actor: { origin: 'operator', actorId: 'user_1' },
+				// This member has no loyalty grant: the region checks the order.
+				loyaltyAccess: { refundLoyalty: false },
 			})
 
 			// The same key replays the same refund; nothing more is refunded.

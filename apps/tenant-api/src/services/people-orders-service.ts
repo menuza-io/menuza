@@ -180,7 +180,10 @@ export async function listPersonOrders(
 			fulfillment: order.fulfillment,
 			currency: order.currency,
 			totalCents: order.totalCents,
-			refundedCents: order.refundedCents,
+			refundedCents: Math.max(
+				0,
+				order.refundedCents - (order.refundReversedCents ?? 0),
+			),
 			itemCount: itemCount(order.lines),
 			createdAt: order.createdAt ? order.createdAt.toISOString() : null,
 			matchedBy: order.customerId === customer.id ? 'customer' : 'phone',

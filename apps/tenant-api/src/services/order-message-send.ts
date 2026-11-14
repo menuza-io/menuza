@@ -31,6 +31,7 @@ import { getReservationsContext } from '../lib/reservations-context.ts'
 import { normalizeReservationLocale } from '../lib/reservations-email.ts'
 import { sendTenantEmail } from '../lib/tenant-email.ts'
 import { rotateOrgIds } from './loyalty-tick-service.ts'
+import { orderPaidCents, orderRefundedNetCents } from './order-refund-book.ts'
 import {
 	ORDER_MESSAGE_SENDING,
 	ORDER_MESSAGE_SUPERSEDED,
@@ -204,9 +205,16 @@ async function sendForOrder(input: {
 		linkUrl,
 		// A cancel with a refund books it in the same write: the message says
 		// the money is on its way while the provider has not answered yet.
+		// A cancel that still owes the rest of its refund (another refund was
+		// pending) says the whole remainder is on its way.
 		refundPendingCents:
 			kind === 'cancelled'
-				? await pendingRefundCentsOf(orgId, order.id)
+				? Math.max(
+						await pendingRefundCentsOf(orgId, order.id),
+						order.cancelRefundDueAt && order.disputeStatus !== 'open'
+							? orderPaidCents(order) - orderRefundedNetCents(order)
+							: 0,
+					)
 				: undefined,
 	})
 	const result = await sendTenantEmail({

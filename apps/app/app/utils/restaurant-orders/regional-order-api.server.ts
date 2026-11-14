@@ -373,6 +373,15 @@ export async function requestRestaurantOrderRefundIntent(
 	) {
 		throw locationScopeUnsupported()
 	}
+	// A member without the loyalty grant: the region must refuse an order
+	// loyalty tracks (the App cannot see that). Anything short of the region
+	// confirming the check is refused here, never a refund made on trust. A
+	// member with the grant sends nothing: there is nothing to check.
+	const loyaltyLimited = request.loyaltyAccess?.refundLoyalty === false
+	if (request.loyaltyAccess && !loyaltyLimited) {
+		const { loyaltyAccess: ignoredAccess, ...rest } = request
+		return requestRestaurantOrderRefundIntent({ dataRegion, ...rest })
+	}
 	const body = outgoing(orderRefundIntentRequestSchema, request)
 	let raw: unknown
 	try {
@@ -382,14 +391,12 @@ export async function requestRestaurantOrderRefundIntent(
 			body,
 		})
 	} catch (error) {
-		// A region that predates `locationIds` refuses the unknown key (strict
-		// body, 400): it cannot enforce the scope, so nothing was booked.
-		if (
-			scoped &&
-			error instanceof RegionalOrderApiError &&
-			error.httpStatus === 400
-		) {
-			throw locationScopeUnsupported()
+		// A region that predates `locationIds` (or `loyaltyAccess`) refuses the
+		// unknown key (strict body, 400): it cannot enforce the check, so
+		// nothing was booked.
+		if (error instanceof RegionalOrderApiError && error.httpStatus === 400) {
+			if (scoped) throw locationScopeUnsupported()
+			if (loyaltyLimited) throw loyaltyCheckUnsupported()
 		}
 		throw error
 	}
@@ -400,11 +407,17 @@ export async function requestRestaurantOrderRefundIntent(
 	if (parsed.data.orderId !== request.orderId) {
 		throw new RegionalOrderApiError('org_mismatch', 502)
 	}
-	if (scoped && parsed.data.locationScoped !== true) {
-		// Booked without the location check (a region that ignores the field).
-		// Release a refund this call just booked and never sent, so neither
-		// this action nor the reconcile job executes it; anything older is left
-		// to finish as it was.
+	const unchecked =
+		scoped && parsed.data.locationScoped !== true
+			? 'location_scope_unsupported'
+			: loyaltyLimited && parsed.data.loyaltyChecked !== true
+				? 'loyalty_check_unsupported'
+				: null
+	if (unchecked) {
+		// Booked without the check (a region that ignores the field). Release
+		// a refund this call just booked and never sent, so neither this
+		// action nor the reconcile job executes it; anything older is left to
+		// finish as it was.
 		const intent = parsed.data
 		if (
 			intent.status === 'pending' &&
@@ -418,23 +431,29 @@ export async function requestRestaurantOrderRefundIntent(
 				refundId: intent.refundId,
 				processor: intent.processor,
 				status: 'failed',
-				failureCode: 'location_scope_unsupported',
+				failureCode: unchecked,
 				amountCents: intent.amountCents,
 				currency: intent.currency,
 			}).catch((error: unknown) => {
 				console.error(
-					`Could not release unscoped refund ${intent.refundId}:`,
+					`Could not release unchecked refund ${intent.refundId}:`,
 					error instanceof RegionalOrderApiError ? error.code : 'unknown',
 				)
 			})
 		}
-		throw locationScopeUnsupported()
+		throw unchecked === 'location_scope_unsupported'
+			? locationScopeUnsupported()
+			: loyaltyCheckUnsupported()
 	}
 	return parsed.data
 }
 
 function locationScopeUnsupported() {
 	return new RegionalOrderApiError('location_scope_unsupported', 403)
+}
+
+function loyaltyCheckUnsupported() {
+	return new RegionalOrderApiError('loyalty_check_unsupported', 403)
 }
 
 /**

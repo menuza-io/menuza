@@ -531,6 +531,156 @@ describe('order refunds tenant schema (0025_loyalty, 0044)', () => {
 		)
 	})
 
+	it('marks a succeeded provider refund reversed once, and nothing else (0044)', async () => {
+		const { client } = await openMigratedDb()
+		await insertOrder(client, 'o_1')
+		await insertRefund(client, {
+			id: 'rec_1',
+			orderId: 'o_1',
+			amount: 100,
+			key: 'rk1',
+		})
+		await insertProviderRefund(client, {
+			id: 'rf_1',
+			orderId: 'o_1',
+			amount: 300,
+			key: 'k1',
+		})
+		// A new row is never born reversed.
+		await expectRejectsWith(
+			client.execute(
+				"INSERT INTO restaurant_order_refunds (id, order_id, amount_cents, currency, actor_id, idempotency_key, request_hash, reversed_at) VALUES ('rec_x', 'o_1', 5, 'USD', 'u', 'kx', 'h', 1)",
+			),
+			'invalid new refund',
+		)
+		// Pending: no reversal (it is not succeeded yet), not even with the settle.
+		await expectRejectsWith(
+			client.execute(
+				"UPDATE restaurant_order_refunds SET reversed_at = 5, reversal_code = 'x' WHERE id = 'rf_1'",
+			),
+			'append-only',
+		)
+		await expectRejectsWith(
+			client.execute(
+				"UPDATE restaurant_order_refunds SET status = 'succeeded', settled_at = 9, reversed_at = 9 WHERE id = 'rf_1'",
+			),
+			'append-only',
+		)
+		await client.execute(
+			"UPDATE restaurant_order_refunds SET status = 'succeeded', provider_refund_id = 're_1', settled_at = 9 WHERE id = 'rf_1'",
+		)
+		// A record row is never reversed (no provider reported it).
+		await expectRejectsWith(
+			client.execute(
+				"UPDATE restaurant_order_refunds SET reversed_at = 10 WHERE id = 'rec_1'",
+			),
+			'append-only',
+		)
+		// The reversal may not touch the status, the settle or the provider id.
+		for (const change of [
+			"reversed_at = 10, status = 'failed', failure_code = 'x'",
+			'reversed_at = 10, settled_at = 11',
+			"reversed_at = 10, provider_refund_id = 're_2'",
+			"reversed_at = 10, failure_code = 'x'",
+			"reversal_code = 'x'",
+		]) {
+			await expectRejectsWith(
+				client.execute(
+					`UPDATE restaurant_order_refunds SET ${change} WHERE id = 'rf_1'`,
+				),
+				'append-only',
+			)
+		}
+		await client.execute(
+			"UPDATE restaurant_order_refunds SET reversed_at = 10, reversal_code = 'expired_or_canceled_card', updated_at = 10 WHERE id = 'rf_1'",
+		)
+		expect(await refundRow(client, 'rf_1')).toMatchObject({
+			status: 'succeeded',
+			reversed_at: 10,
+			reversal_code: 'expired_or_canceled_card',
+			settled_at: 9,
+		})
+		// Once: never cleared, moved or recoded.
+		for (const change of [
+			'reversed_at = NULL',
+			'reversed_at = 11',
+			"reversal_code = 'other'",
+			'reversal_code = NULL',
+		]) {
+			await expectRejectsWith(
+				client.execute(
+					`UPDATE restaurant_order_refunds SET ${change} WHERE id = 'rf_1'`,
+				),
+				'append-only',
+			)
+		}
+		// The note may still be erased.
+		await client.execute(
+			"UPDATE restaurant_order_refunds SET note = NULL WHERE id = 'rf_1'",
+		)
+	})
+
+	it('keeps the refunded total and its reversals growing, and what is back within the total (0044)', async () => {
+		const { client } = await openMigratedDb()
+		await insertOrder(client, 'o_1', 1000)
+		await client.execute(
+			"UPDATE restaurant_orders SET refunded_cents = 1000 WHERE id = 'o_1'",
+		)
+		// Nothing reversed: the total is the cap.
+		await expectRejectsWith(
+			client.execute(
+				"UPDATE restaurant_orders SET refunded_cents = 1100 WHERE id = 'o_1'",
+			),
+			'only add up to the total',
+		)
+		// Never more reversed than was refunded.
+		await expectRejectsWith(
+			client.execute(
+				"UPDATE restaurant_orders SET refund_reversed_cents = 1001 WHERE id = 'o_1'",
+			),
+			'only add up to the total',
+		)
+		await client.execute(
+			"UPDATE restaurant_orders SET refund_reversed_cents = 400 WHERE id = 'o_1'",
+		)
+		// The reversed money may be refunded again, up to the total net.
+		await client.execute(
+			"UPDATE restaurant_orders SET refunded_cents = 1400 WHERE id = 'o_1'",
+		)
+		await expectRejectsWith(
+			client.execute(
+				"UPDATE restaurant_orders SET refunded_cents = 1401 WHERE id = 'o_1'",
+			),
+			'only add up to the total',
+		)
+		// Neither shrinks.
+		for (const change of [
+			'refunded_cents = 1300',
+			'refund_reversed_cents = 300',
+		]) {
+			await expectRejectsWith(
+				client.execute(
+					`UPDATE restaurant_orders SET ${change} WHERE id = 'o_1'`,
+				),
+				'only add up to the total',
+			)
+		}
+		await client.execute(
+			"UPDATE restaurant_orders SET cancel_refund_due_at = 5 WHERE id = 'o_1'",
+		)
+		await client.execute(
+			"UPDATE restaurant_orders SET cancel_refund_due_at = NULL WHERE id = 'o_1'",
+		)
+		const order = await client.execute(
+			"SELECT refunded_cents, refund_reversed_cents, cancel_refund_due_at FROM restaurant_orders WHERE id = 'o_1'",
+		)
+		expect(order.rows[0]).toMatchObject({
+			refunded_cents: 1400,
+			refund_reversed_cents: 400,
+			cancel_refund_due_at: null,
+		})
+	})
+
 	it('validates cancel, reject and dispute values on orders', async () => {
 		const { client } = await openMigratedDb()
 		await insertOrder(client, 'o_1')
@@ -734,6 +884,42 @@ describe('QR tab refunds (0044)', () => {
 		)
 		// The tab's own payment (no review row) may be refunded next.
 		await insertTabRefund(client, { id: 'tr_3', key: 'k3', tabPaymentId: null })
+		client.close()
+	})
+
+	it('marks a succeeded tab refund reversed once (0044)', async () => {
+		const client = await openWithTab()
+		await insertTabRefund(client, { id: 'tr_1', key: 'k1' })
+		await expectRejectsWith(
+			client.execute(
+				"UPDATE qr_tab_refunds SET reversed_at = 5 WHERE id = 'tr_1'",
+			),
+			'append-only',
+		)
+		await client.execute(
+			"UPDATE qr_tab_refunds SET status = 'succeeded', settled_at = 3 WHERE id = 'tr_1'",
+		)
+		await expectRejectsWith(
+			client.execute(
+				"UPDATE qr_tab_refunds SET reversed_at = 5, status = 'failed' WHERE id = 'tr_1'",
+			),
+			'append-only',
+		)
+		await client.execute(
+			"UPDATE qr_tab_refunds SET reversed_at = 5, reversal_code = 'refund_failed', updated_at = 5 WHERE id = 'tr_1'",
+		)
+		for (const change of ['reversed_at = NULL', "reversal_code = 'x'"]) {
+			await expectRejectsWith(
+				client.execute(`UPDATE qr_tab_refunds SET ${change} WHERE id = 'tr_1'`),
+				'append-only',
+			)
+		}
+		await expectRejectsWith(
+			client.execute(
+				"INSERT INTO qr_tab_refunds (id, tab_id, tab_payment_id, amount_cents, currency, actor_id, origin, status, processor, session_id, idempotency_key, request_hash, reversed_at) VALUES ('tr_9', 'tab_1', NULL, 5, 'USD', 'u', 'operator', 'pending', 'checkout', 'pay_1', 'k9', 'h', 1)",
+			),
+			'invalid new refund',
+		)
 		client.close()
 	})
 })

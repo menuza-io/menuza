@@ -1333,6 +1333,7 @@ export {
 
 export {
 	disputeBlocksRefund,
+	effectiveRefundRow,
 	ORDER_DISPUTE_STATUSES,
 	ORDER_PAYMENT_PROCESSORS,
 	ORDER_REFUND_ERROR_CODES,
@@ -1358,6 +1359,8 @@ export {
 	refundFailureCodeSchema,
 	refundIdempotencyKeySchema,
 	refundNoteSchema,
+	refundableAmountCents,
+	refundRowReversed,
 	summarizeOrderRefunds,
 	type OperatorOrderRefund,
 	type OrderDisputeStatus,

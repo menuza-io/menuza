@@ -1,4 +1,15 @@
-import { and, asc, eq, inArray, lte, or, sql } from 'drizzle-orm'
+import {
+	and,
+	asc,
+	eq,
+	inArray,
+	isNotNull,
+	isNull,
+	lte,
+	ne,
+	or,
+	sql,
+} from 'drizzle-orm'
 
 import { parseTabOrderRef, tabOrderRef } from '@repo/common/qr-ordering'
 import {
@@ -11,6 +22,7 @@ import {
 } from '@repo/common/restaurant-orders'
 import {
 	getTenantDb,
+	type TenantDatabase,
 	qrTabPayments,
 	qrTabRefunds,
 	qrTabs,
@@ -30,9 +42,11 @@ import { refundDiscountRedemptions } from './discount-apply.ts'
 import { loyaltySettleQueue } from './loyalty-purchase-service.ts'
 import {
 	bookOrderProviderRefundInTx,
+	bookOwedCancelRefundInTx,
 	bookTabProviderRefundInTx,
 	isUniqueConstraintError,
 	orderCarriesLoyalty,
+	orderRefundedNetCents,
 	orderProviderRefundView,
 	tabProviderRefundView,
 	type BookFailure,
@@ -72,6 +86,8 @@ function fromBook(failure: BookFailure): {
 export type ProviderRefundIntent = {
 	refund: OrderProviderRefund
 	replayed: boolean
+	/** The caller's `loyaltyAccess` was applied (always, when it sent one). */
+	loyaltyChecked?: boolean
 }
 
 export type ProviderRefundIntentInput = {
@@ -94,8 +110,9 @@ export type ProviderRefundIntentInput = {
 		refund: RestaurantOrderRefund,
 	) => Promise<void>
 	/**
-	 * Refuses orders loyalty tracks unless allowed (Station has no loyalty
-	 * grant). Absent: the caller (the App) already decided.
+	 * Refuses orders loyalty tracks unless allowed: Station has no loyalty
+	 * grant; the App sends the member's `update:loyalty_redemption:any`.
+	 * Absent: a system refund, no grant asked for.
 	 */
 	loyaltyAccess?: RefundLoyaltyAccess
 	/** Tell the App to execute it now (region-initiated refunds). */
@@ -133,6 +150,9 @@ export async function createProviderRefundIntent(
 	}
 	if (result.ok && !result.data.replayed && input.kick) {
 		kickOrderRefundExecute(input.orgId, [result.data.refund.refundId])
+	}
+	if (result.ok && input.loyaltyAccess) {
+		return { ok: true, data: { ...result.data, loyaltyChecked: true } }
 	}
 	return result
 }
@@ -320,6 +340,7 @@ export async function applyProviderRefundStatus(
 	const db = await getTenantDb(orgId)
 	const loyalty = loyaltySettleQueue()
 	const now = input.now ?? Date.now()
+	let owedRefundIds: string[] = []
 	let result: OrderServiceResult<OrderRefundStatusResponse>
 	try {
 		result = await runExclusive(orgId, () =>
@@ -329,6 +350,7 @@ export async function applyProviderRefundStatus(
 					async (
 						tx,
 					): Promise<OrderServiceResult<OrderRefundStatusResponse>> => {
+						owedRefundIds = []
 						const found = await findProviderRefund(tx, input)
 						if (!found) {
 							return orderFailure(404, 'refund_not_found', 'Refund not found.')
@@ -369,9 +391,59 @@ export async function applyProviderRefundStatus(
 							)
 						}
 
+						const table =
+							found.ledger === 'order' ? restaurantOrderRefunds : qrTabRefunds
 						if (row.status !== 'pending') {
+							if (row.reversedAt != null) {
+								// Reversed already: it reads failed, once and for all.
+								return answer('failed', false)
+							}
+							if (row.status === 'succeeded' && input.status === 'failed') {
+								// The provider took a succeeded refund back (Stripe can
+								// move a refund from succeeded to failed). Nothing shrinks:
+								// the row stays succeeded and is marked reversed, the
+								// amount becomes refundable again and reads failed with
+								// its code. Loyalty and discounts are not re-credited.
+								const reversed = await tx
+									.update(table)
+									.set({
+										reversedAt: now,
+										reversalCode: input.failureCode ?? 'refund_reversed',
+										updatedAt: now,
+									})
+									.where(
+										and(
+											eq(table.id, row.id),
+											eq(table.status, 'succeeded'),
+											isNull(table.reversedAt),
+										),
+									)
+									.returning({ id: table.id })
+								if (reversed.length === 0) return answer('failed', false)
+								if (found.ledger === 'order') {
+									await tx
+										.update(restaurantOrders)
+										.set({
+											refundReversedCents: sql`${restaurantOrders.refundReversedCents} + ${row.amountCents}`,
+											updatedAt: new Date(now),
+										})
+										.where(
+											and(
+												eq(restaurantOrders.id, found.row.orderId),
+												eq(restaurantOrders.orgId, orgId),
+											),
+										)
+								}
+								console.warn('Order refund reversed by the provider', {
+									orgId,
+									refundId: row.id,
+									orderId: refundRef(found),
+								})
+								return answer('failed', true)
+							}
 							if (input.status !== row.status && input.status !== 'pending') {
-								// Final states win: never undo a settled refund.
+								// Final states win otherwise: a failed refund never
+								// turns into a success.
 								console.warn('Order refund already settled', {
 									orgId,
 									refundId: row.id,
@@ -385,8 +457,6 @@ export async function applyProviderRefundStatus(
 
 						const providerRefundId =
 							row.providerRefundId ?? input.providerRefundId ?? null
-						const table =
-							found.ledger === 'order' ? restaurantOrderRefunds : qrTabRefunds
 						if (input.status === 'pending') {
 							if (row.providerRefundId || !input.providerRefundId) {
 								return answer('pending', false)
@@ -426,14 +496,16 @@ export async function applyProviderRefundStatus(
 								)
 								.limit(1)
 							if (order) {
+								let current: RestaurantOrder = order
 								if (input.status === 'succeeded') {
 									const refundedCents = order.refundedCents + row.amountCents
+									current = { ...order, refundedCents }
 									await tx
 										.update(restaurantOrders)
 										.set({ refundedCents, updatedAt: new Date(now) })
 										.where(eq(restaurantOrders.id, order.id))
 									// Exactly what a recorded refund does once it is final.
-									if (refundedCents >= order.totalCents) {
+									if (orderRefundedNetCents(current) >= order.totalCents) {
 										await refundDiscountRedemptions(tx, order.id)
 									}
 									await loyalty.queue(
@@ -449,6 +521,10 @@ export async function applyProviderRefundStatus(
 										.set({ updatedAt: new Date(now) })
 										.where(eq(restaurantOrders.id, order.id))
 								}
+								// A cancel that asked for a full refund while this one
+								// was pending: book the rest now.
+								const owed = await bookOwedCancelRefundInTx(tx, current, now)
+								if (owed.refund) owedRefundIds.push(owed.refund.id)
 							}
 						}
 						return answer(input.status, true)
@@ -470,7 +546,79 @@ export async function applyProviderRefundStatus(
 		)
 	}
 	await loyalty.settle(orgId, { now })
+	// The App executes the rest of a cancel's refund; ids only leave the region.
+	if (result.ok && owedRefundIds.length > 0) {
+		kickOrderRefundExecute(orgId, owedRefundIds)
+	}
 	return result
+}
+
+/** Orders the owed-refund sweep looks at per pass. */
+export const OWED_CANCEL_REFUNDS_BATCH = 50
+
+/**
+ * The orders tick's backstop for cancels that still owe a refund
+ * (`cancel_refund_due_at`): each marked order whose other refund is final by
+ * now gets the rest booked (and the App kicked); one still waiting stays
+ * marked. Normally `applyProviderRefundStatus` books it the moment the other
+ * refund settles. Ids only in logs; a failure is left for the next pass.
+ */
+export async function processOwedCancelRefunds(
+	orgId: string,
+	options: { now?: number; db?: TenantDatabase } = {},
+): Promise<{ booked: number }> {
+	const now = options.now ?? Date.now()
+	const db = options.db ?? (await getTenantDb(orgId))
+	const marked = await db
+		.select({ id: restaurantOrders.id })
+		.from(restaurantOrders)
+		.where(
+			and(
+				eq(restaurantOrders.orgId, orgId),
+				isNotNull(restaurantOrders.cancelRefundDueAt),
+				// An open dispute keeps it owed until the dispute closes
+				// (`applyDisputeStatus`), so it never takes the sweep's room.
+				or(
+					isNull(restaurantOrders.disputeStatus),
+					ne(restaurantOrders.disputeStatus, 'open'),
+				),
+			),
+		)
+		.orderBy(asc(restaurantOrders.cancelRefundDueAt))
+		.limit(OWED_CANCEL_REFUNDS_BATCH)
+	const refundIds: string[] = []
+	for (const { id } of marked) {
+		try {
+			const refundId = await runExclusive(orgId, () =>
+				retryOnSqliteBusy(() =>
+					runTenantTransaction(db, async (tx) => {
+						const [order] = await tx
+							.select()
+							.from(restaurantOrders)
+							.where(
+								and(
+									eq(restaurantOrders.id, id),
+									eq(restaurantOrders.orgId, orgId),
+								),
+							)
+							.limit(1)
+						if (!order) return null
+						const owed = await bookOwedCancelRefundInTx(tx, order, now)
+						return owed.refund?.id ?? null
+					}),
+				),
+			)
+			if (refundId) refundIds.push(refundId)
+		} catch (error) {
+			console.error('Owed cancel refund failed', {
+				orgId,
+				orderId: id,
+				error: error instanceof Error ? error.name : 'unknown',
+			})
+		}
+	}
+	if (refundIds.length > 0) kickOrderRefundExecute(orgId, refundIds)
+	return { booked: refundIds.length }
 }
 
 // ---------------------------------------------------------------------------
@@ -487,9 +635,28 @@ export type DisputeStatusInput = {
 }
 
 /**
+ * The dispute state after a report. A charge has one dispute: once it closed
+ * (`won` or `lost`), a late or redelivered `open` never reopens it; a closed
+ * state may still change to the other closed state (the provider's final
+ * word). Everything else takes the reported state.
+ */
+export function nextDisputeStatus(
+	stored: OrderDisputeStatus | null | undefined,
+	reported: OrderDisputeStatus,
+): OrderDisputeStatus {
+	if (reported === 'open' && (stored === 'won' || stored === 'lost')) {
+		return stored
+	}
+	return reported
+}
+
+/**
  * Records a provider dispute on an order or a tab: `disputed_at` the first
- * time, and the latest state. `open` and `lost` block refunds; `won` clears
- * the block. Unknown order or payment: the uniform 404.
+ * time, and the state (`nextDisputeStatus`: a closed dispute never reopens).
+ * `open` and `lost` block refunds; `won` clears the block. Unknown order or
+ * payment: the uniform 404. The answer carries the state as stored. A
+ * cancel's refund owed while the dispute was open (`cancel_refund_due_at`)
+ * is booked when it is won and dropped when it is lost.
  */
 export async function applyDisputeStatus(
 	input: DisputeStatusInput,
@@ -499,11 +666,13 @@ export async function applyDisputeStatus(
 	const now = input.now ?? Date.now()
 	const notFound = () =>
 		orderFailure(404, 'order_not_found', 'Order not found.')
-	return runExclusive(orgId, () =>
+	let owedRefundIds: string[] = []
+	const result = await runExclusive(orgId, () =>
 		retryOnSqliteBusy(() =>
 			runTenantTransaction(
 				db,
 				async (tx): Promise<OrderServiceResult<OrderDisputeStatusResponse>> => {
+					owedRefundIds = []
 					let order: RestaurantOrder | null = null
 					let tab: QrTab | null = null
 					const tabId = input.orderId ? parseTabOrderRef(input.orderId) : null
@@ -592,36 +761,63 @@ export async function applyDisputeStatus(
 						) {
 							return notFound()
 						}
-						const applied =
-							order.disputeStatus !== input.status || !order.disputedAt
+						const status = nextDisputeStatus(order.disputeStatus, input.status)
+						if (status !== input.status) {
+							console.warn('Late dispute report ignored: the dispute closed', {
+								orgId,
+								orderId: order.id,
+							})
+						}
+						const applied = order.disputeStatus !== status || !order.disputedAt
 						if (applied) {
 							await tx
 								.update(restaurantOrders)
 								.set({
-									disputeStatus: input.status,
+									disputeStatus: status,
 									disputedAt: order.disputedAt ?? new Date(now),
 									updatedAt: new Date(now),
 								})
 								.where(eq(restaurantOrders.id, order.id))
+							// A cancel that owes its refund waited on this dispute:
+							// won, it is booked now; lost, the chargeback gave the
+							// money back and the mark is dropped.
+							if (status !== 'open') {
+								const owed = await bookOwedCancelRefundInTx(
+									tx,
+									{
+										...order,
+										disputeStatus: status,
+										disputedAt: order.disputedAt ?? new Date(now),
+									},
+									now,
+								)
+								if (owed.refund) owedRefundIds.push(owed.refund.id)
+							}
 						}
 						return {
 							ok: true,
 							data: {
 								orderId: order.id,
-								disputeStatus: input.status,
-								disputed: disputeBlocksRefund(input.status),
+								disputeStatus: status,
+								disputed: disputeBlocksRefund(status),
 								applied,
 							},
 						}
 					}
 					if (tab) {
-						const applied =
-							tab.disputeStatus !== input.status || !tab.disputedAt
+						const status = nextDisputeStatus(tab.disputeStatus, input.status)
+						if (status !== input.status) {
+							console.warn('Late dispute report ignored: the dispute closed', {
+								orgId,
+								orderId: tabOrderRef(tab.id),
+							})
+						}
+						const applied = tab.disputeStatus !== status || !tab.disputedAt
 						if (applied) {
 							await tx
 								.update(qrTabs)
 								.set({
-									disputeStatus: input.status,
+									disputeStatus: status,
 									disputedAt: tab.disputedAt ?? now,
 									updatedAt: now,
 								})
@@ -631,8 +827,8 @@ export async function applyDisputeStatus(
 							ok: true,
 							data: {
 								orderId: tabOrderRef(tab.id),
-								disputeStatus: input.status,
-								disputed: disputeBlocksRefund(input.status),
+								disputeStatus: status,
+								disputed: disputeBlocksRefund(status),
 								applied,
 							},
 						}
@@ -642,6 +838,11 @@ export async function applyDisputeStatus(
 			),
 		),
 	)
+	// The App executes a cancel's refund the closed dispute let through.
+	if (result.ok && owedRefundIds.length > 0) {
+		kickOrderRefundExecute(orgId, owedRefundIds)
+	}
+	return result
 }
 
 // ---------------------------------------------------------------------------

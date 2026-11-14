@@ -13,6 +13,7 @@ import {
 	runOrderMessagesTickForOrg,
 	type OrderMessagesTickResult,
 } from './order-message-send.ts'
+import { processOwedCancelRefunds } from './order-provider-refund-service.ts'
 import {
 	applyOrderStatusPatchInTx,
 	orderWriteQueues,
@@ -159,12 +160,15 @@ async function decideTimeout(
 
 export type OrdersTickResult = OrderMessagesTickResult & {
 	acceptanceRejected: number
+	/** Cancel refunds still owed that were booked now (backstop sweep). */
+	owedRefundsBooked: number
 }
 
 /**
  * The orders tick for one organization (`POST /api/order-messages/tick`, the
  * Durable Object alarm, the Node interval and the hourly fan-out): the
- * acceptance timeout first, then guest order messages. Asks for a follow-up at
+ * acceptance timeout first, then cancel refunds still owed, then guest order
+ * messages. Asks for a follow-up at
  * the earliest of the next message retry and the next acceptance deadline.
  * Counts only.
  */
@@ -178,6 +182,18 @@ export async function runOrdersTickForOrg(
 		now: new Date(now),
 		db,
 	})
+	// A cancel that asked for a full refund while another one was pending:
+	// normally booked when that refund settles; this catches any left over.
+	const owed = await processOwedCancelRefunds(orgId, { now, db }).catch(
+		(error: unknown) => {
+			console.error(
+				'Owed cancel refunds sweep failed',
+				orgId,
+				errorLogFields(error),
+			)
+			return { booked: 0 }
+		},
+	)
 	const messages = await runOrderMessagesTickForOrg(orgId, { now, db })
 	const due = [messages.nextDueAt, acceptance.nextDeadlineAt].filter(
 		(at): at is number => at !== null,
@@ -186,6 +202,7 @@ export async function runOrdersTickForOrg(
 	return {
 		...messages,
 		acceptanceRejected: acceptance.rejected,
+		owedRefundsBooked: owed.booked,
 		needsFollowUp: nextDueAt !== null,
 		nextDueAt,
 	}

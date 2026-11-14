@@ -42,6 +42,7 @@ export type OrderEmailOrder = Pick<
 	| 'discountCents'
 	| 'loyaltyDiscountCents'
 	| 'refundedCents'
+	| 'refundReversedCents'
 	| 'lines'
 	| 'scheduledFor'
 	| 'pickupDate'
@@ -236,10 +237,15 @@ export function renderOrderEmail(input: OrderEmailInput): RenderedOrderEmail {
 			])
 		}
 		const pending = Math.max(0, input.refundPendingCents ?? 0)
+		// What is really back: a refund the provider reversed does not count.
+		const back = Math.max(
+			0,
+			order.refundedCents - (order.refundReversedCents ?? 0),
+		)
 		if (pending > 0) {
-			rows.push([labels.refundPending, money(order.refundedCents + pending)])
-		} else if (order.refundedCents > 0) {
-			rows.push([labels.refunded, money(order.refundedCents)])
+			rows.push([labels.refundPending, money(back + pending)])
+		} else if (back > 0) {
+			rows.push([labels.refunded, money(back)])
 		}
 	}
 

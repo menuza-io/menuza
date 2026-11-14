@@ -114,9 +114,14 @@ import {
 import { applyPromisedDelay } from './order-promised-time.ts'
 import {
 	bookOrderProviderRefundInTx,
+	cancelRefundKey,
+	cancelRefundStaysOwed,
 	orderCarriesLoyalty,
+	orderPaidCents,
 	orderProviderRefundView,
+	orderRefundedNetCents,
 	orderRefundSummary,
+	owedCancelRefundKey,
 } from './order-refund-book.ts'
 import {
 	readProgramInTx,
@@ -2214,12 +2219,17 @@ export type CancelRefundOutcome = {
 	refund: OrderProviderRefund | null
 	replayed: boolean
 	code: string | null
+	/**
+	 * With `code: 'refund_pending'` (another provider refund was still
+	 * waiting) or `'payment_disputed'` (an open dispute): the order is marked
+	 * (`cancel_refund_due_at`) and the rest is booked once that refund is
+	 * final or the dispute is won (`bookOwedCancelRefundInTx`). What the guest
+	 * gets back in all: paid less what is back already. 0 otherwise.
+	 */
+	owedCents: number
 }
 
-/** The idempotency key of the refund a cancel books (one per order). */
-export function cancelRefundKey(orderId: string): string {
-	return `cancel:${orderId}`
-}
+export { cancelRefundKey }
 
 export async function updateOperatorOrder(
 	orgId: string,
@@ -2477,24 +2487,45 @@ export async function applyOrderStatusPatchInTx(
 				),
 			)
 		}
-		// A repeated cancel (a lost answer): answer the refund it booked.
-		const [booked] = await tx
+		// A repeated cancel (a lost answer): answer the refund it booked (or
+		// the rest it booked later), or that the rest is still owed.
+		const booked = await tx
 			.select()
 			.from(restaurantOrderRefunds)
 			.where(
 				and(
 					eq(restaurantOrderRefunds.orderId, order.id),
-					eq(restaurantOrderRefunds.idempotencyKey, cancelRefundKey(order.id)),
+					inArray(restaurantOrderRefunds.idempotencyKey, [
+						cancelRefundKey(order.id),
+						owedCancelRefundKey(order.id),
+					]),
 				),
 			)
+			.orderBy(desc(restaurantOrderRefunds.createdAt))
 			.limit(1)
-		refundOutcome = booked
+		refundOutcome = booked[0]
 			? {
-					refund: orderProviderRefundView(booked, order),
+					refund: orderProviderRefundView(booked[0], order),
 					replayed: true,
 					code: null,
+					owedCents: 0,
 				}
-			: { refund: null, replayed: false, code: 'order_not_refundable' }
+			: order.cancelRefundDueAt
+				? {
+						refund: null,
+						replayed: false,
+						code:
+							order.disputeStatus === 'open'
+								? 'payment_disputed'
+								: 'refund_pending',
+						owedCents: owedCents(order),
+					}
+				: {
+						refund: null,
+						replayed: false,
+						code: 'order_not_refundable',
+						owedCents: 0,
+					}
 	}
 	if (patch.status === 'cancelled' && isReject) {
 		if (wantsRefund && order.paymentMethod !== 'online') {
@@ -2716,12 +2747,18 @@ async function bookCancelRefund(
 	cancel: CancelRefundOptions,
 	now: number,
 ): Promise<CancelRefundOutcome> {
+	const none = (code: string) => ({
+		refund: null,
+		replayed: false,
+		code,
+		owedCents: 0,
+	})
 	if (cancel.loyaltyAccess && (await orderCarriesLoyalty(tx, order.id))) {
 		if (cancel.loyaltyAccess.impersonated) {
-			return { refund: null, replayed: false, code: 'impersonation_forbidden' }
+			return none('impersonation_forbidden')
 		}
 		if (!cancel.loyaltyAccess.refundLoyalty) {
-			return { refund: null, replayed: false, code: 'loyalty_refund_forbidden' }
+			return none('loyalty_refund_forbidden')
 		}
 	}
 	const booked = await bookOrderProviderRefundInTx(tx, order, {
@@ -2732,12 +2769,35 @@ async function bookCancelRefund(
 		actorId: cancel.actorId,
 		now,
 	})
-	if (!booked.ok) return { refund: null, replayed: false, code: booked.code }
+	if (!booked.ok && cancelRefundStaysOwed(booked.code, order)) {
+		// Another refund still waits on the provider (one at a time), or the
+		// payment has an open dispute: the full refund the cancel asked for is
+		// owed, and booked for whatever is left once that refund is final
+		// (`applyProviderRefundStatus`, the orders tick) or the dispute is won
+		// (`applyDisputeStatus`; a lost one drops it).
+		await tx
+			.update(restaurantOrders)
+			.set({ cancelRefundDueAt: new Date(now) })
+			.where(eq(restaurantOrders.id, order.id))
+		return {
+			refund: null,
+			replayed: false,
+			code: booked.code,
+			owedCents: owedCents(order),
+		}
+	}
+	if (!booked.ok) return none(booked.code)
 	return {
 		refund: orderProviderRefundView(booked.refund, order),
 		replayed: booked.replayed,
 		code: null,
+		owedCents: 0,
 	}
+}
+
+/** What a cancel's full refund gives back in all: paid less what is back. */
+function owedCents(order: RestaurantOrder): number {
+	return Math.max(0, orderPaidCents(order) - orderRefundedNetCents(order))
 }
 
 export async function listOperatorOrders(
@@ -2982,8 +3042,11 @@ export function receiptOrder(
 	return {
 		...publicOrderSummary(order),
 		tipPercent: order.tipPercent,
-		/** Amount returned so far (succeeded refunds; the payment status stays `paid`). */
-		refundedCents: order.refundedCents,
+		/**
+		 * Amount returned so far (succeeded refunds less any the provider
+		 * reversed; the payment status stays `paid`).
+		 */
+		refundedCents: orderRefundedNetCents(order),
 		/** `pending` while a provider refund waits; `failed`, `partial`, `full`, `none`. */
 		refundStatus: glance.refundStatus,
 		/** A provider refund on its way (not in `refundedCents` yet). */
@@ -3089,8 +3152,8 @@ export function operatorOrder(
 			(order.discounts ?? []).some((discount) => discount.limitExceeded)
 				? ('discount_limit_exceeded' as const)
 				: null,
-		/** Recorded as returned; the payment status stays `paid`. */
-		refundedCents: order.refundedCents,
+		/** Returned (less reversals); the payment status stays `paid`. */
+		refundedCents: orderRefundedNetCents(order),
 		dropId: order.dropId,
 		deliveryZoneId: order.deliveryZoneId,
 		deliveryPoint:

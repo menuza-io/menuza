@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
 	organization: vi.fn(),
 	permission: vi.fn(),
 	locations: vi.fn(),
+	loyaltyGrants: vi.fn(),
 	intent: vi.fn(),
 	execute: vi.fn(),
 }))
@@ -40,6 +41,10 @@ vi.mock('#app/utils/loyalty/access.server.ts', () => ({
 	resolveLoyaltyLocationIds: async (...args: unknown[]) => {
 		mocks.order.push('locations')
 		return mocks.locations(...args)
+	},
+	getUserLoyaltyGrants: async (...args: unknown[]) => {
+		mocks.order.push('loyalty grant')
+		return mocks.loyaltyGrants(...args)
 	},
 }))
 vi.mock(
@@ -116,6 +121,7 @@ describe('POST /:orgSlug/orders/:orderId/refund guards', () => {
 		})
 		mocks.permission.mockReset().mockResolvedValue('user_1')
 		mocks.locations.mockReset().mockResolvedValue(null)
+		mocks.loyaltyGrants.mockReset().mockResolvedValue([])
 		mocks.intent.mockReset().mockResolvedValue(INTENT)
 		mocks.execute.mockReset().mockResolvedValue({
 			outcome: 'executed',
@@ -129,7 +135,7 @@ describe('POST /:orgSlug/orders/:orderId/refund guards', () => {
 		})
 	})
 
-	it('checks session, membership, the refund permission, impersonation and locations in that order', async () => {
+	it('checks session, membership, the refund permission, impersonation, locations and the loyalty grant in that order', async () => {
 		const response = await post(VALID)
 		expect(response.status).toBe(200)
 		expect(mocks.order).toEqual([
@@ -138,6 +144,7 @@ describe('POST /:orgSlug/orders/:orderId/refund guards', () => {
 			'permission',
 			'impersonation',
 			'locations',
+			'loyalty grant',
 		])
 		expect(mocks.permission).toHaveBeenCalledWith(
 			expect.any(Request),
@@ -164,7 +171,48 @@ describe('POST /:orgSlug/orders/:orderId/refund guards', () => {
 			note: 'Cold food',
 			idempotencyKey: 'idem_key_0001',
 			actor: { origin: 'operator', actorId: 'user_1' },
+			loyaltyAccess: { refundLoyalty: false },
 		})
+	})
+
+	it('sends whether the member holds the loyalty refund grant', async () => {
+		mocks.loyaltyGrants.mockResolvedValue([
+			'read:loyalty:any',
+			'update:loyalty_redemption:any',
+		])
+		await post(VALID)
+		expect(mocks.loyaltyGrants).toHaveBeenCalledWith('user_1', 'org_1')
+		expect(mocks.intent.mock.calls[0]![0]).toMatchObject({
+			loyaltyAccess: { refundLoyalty: true },
+		})
+		mocks.intent.mockClear()
+		mocks.loyaltyGrants.mockResolvedValue(['read:loyalty:any'])
+		await post(VALID)
+		expect(mocks.intent.mock.calls[0]![0]).toMatchObject({
+			loyaltyAccess: { refundLoyalty: false },
+		})
+	})
+
+	it('passes the region’s loyalty refusal through and refunds nothing', async () => {
+		mocks.intent.mockRejectedValue(
+			new RegionalOrderApiError('loyalty_refund_forbidden', 403),
+		)
+		const response = await outcome(post(VALID))
+		expect(response.status).toBe(403)
+		expect(await response.json()).toEqual({ error: 'loyalty_refund_forbidden' })
+		expect(mocks.execute).not.toHaveBeenCalled()
+	})
+
+	it('refuses with 403 when the region cannot confirm the loyalty check', async () => {
+		mocks.intent.mockRejectedValue(
+			new RegionalOrderApiError('loyalty_check_unsupported', 403),
+		)
+		const response = await outcome(post(VALID))
+		expect(response.status).toBe(403)
+		expect(await response.json()).toEqual({
+			error: 'loyalty_check_unsupported',
+		})
+		expect(mocks.execute).not.toHaveBeenCalled()
 	})
 
 	it('refuses a signed-out request with 401 before anything else', async () => {

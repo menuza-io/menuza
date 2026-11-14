@@ -34,6 +34,7 @@ import {
 import { posStaffDisplayName } from '@repo/common/pos-orders'
 import {
 	disputeBlocksRefund,
+	effectiveRefundRow,
 	type OrderStoredCancelReason,
 	type PricedOrderLine,
 } from '@repo/common/restaurant-orders'
@@ -50,7 +51,10 @@ import {
 import { queryInChunks } from '../lib/chunked-in.ts'
 import { maskPhone } from '../lib/reservations-station.ts'
 import { createProviderRefundIntent } from './order-provider-refund-service.ts'
-import { orderRefundSummary } from './order-refund-book.ts'
+import {
+	orderRefundedNetCents,
+	orderRefundSummary,
+} from './order-refund-book.ts'
 import {
 	listOrderRefunds,
 	listRefundsForOrders,
@@ -110,6 +114,7 @@ export function onlineOrderVersion(order: RestaurantOrder): string {
 				order.status,
 				order.paymentStatus,
 				order.refundedCents,
+				order.refundReversedCents,
 				ms(order.updatedAt),
 				ms(order.completedAt),
 				ms(order.cancelledAt),
@@ -154,7 +159,7 @@ function summary(
 		onTab: Boolean(order.tabId),
 		currency: order.currency,
 		totalCents: order.totalCents,
-		refundedCents: order.refundedCents,
+		refundedCents: refundState.refundedCents,
 		itemCount: lines.reduce((sum, line) => sum + line.quantity, 0),
 		openedAt,
 		completedAt: ms(order.completedAt),
@@ -539,8 +544,9 @@ export async function onlineOrderDetail(
 			note: clip(refund.note ?? '', 400),
 			at: refund.createdAt,
 			kind: refund.kind,
-			status: refund.status,
-			failureCode: clip(refund.failureCode, 64),
+			// A refund the provider reversed after it succeeded reads failed.
+			status: effectiveRefundRow(refund).status as typeof refund.status,
+			failureCode: clip(effectiveRefundRow(refund).failureCode, 64),
 		})),
 		history: history.map(({ event, firstName, lastName }) => ({
 			action: event.action,
@@ -808,7 +814,8 @@ export async function onlineOrderRefund(
 			afterBook: async (tx, current, refund) => {
 				await record(tx, actor, order.id, 'refunded', {
 					reason:
-						current.refundedCents + refund.amountCents >= current.totalCents
+						orderRefundedNetCents(current) + refund.amountCents >=
+						current.totalCents
 							? 'full'
 							: 'partial',
 					amountCents: refund.amountCents,
@@ -835,7 +842,10 @@ export async function onlineOrderRefund(
 			guard,
 			afterWrite: async (tx, before, after) => {
 				await record(tx, actor, order.id, 'refunded', {
-					reason: after.refundedCents >= after.totalCents ? 'full' : 'partial',
+					reason:
+						orderRefundedNetCents(after) >= after.totalCents
+							? 'full'
+							: 'partial',
 					amountCents: after.refundedCents - before.refundedCents,
 				})
 			},

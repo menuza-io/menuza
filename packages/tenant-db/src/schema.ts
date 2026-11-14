@@ -947,6 +947,16 @@ export const restaurantOrders = sqliteTable(
 		// Money an operator recorded as returned (`restaurant_order_refunds`
 		// adds up to it). The payment status stays `paid`.
 		refundedCents: integer('refunded_cents').notNull().default(0),
+		// Provider refunds the provider reversed after reporting them succeeded
+		// (0044): their sum. `refunded_cents` never shrinks, so what is really
+		// back is `refunded_cents - refund_reversed_cents`. Only grows, never past
+		// `refunded_cents` (trigger).
+		refundReversedCents: integer('refund_reversed_cents').notNull().default(0),
+		// A cancel asked for a full provider refund while another refund of the
+		// order still waited on the provider (0044): the rest is owed. Set when
+		// the cancel could not book it; cleared once it is booked (when that
+		// refund settles, or by the orders tick), or when nothing is left.
+		cancelRefundDueAt: integer('cancel_refund_due_at', { mode: 'timestamp' }),
 		lines: text('lines', { mode: 'json' }).notNull(),
 		// QR ordering: a dine-in round belongs to a tab at a table; the label is
 		// a snapshot so history reads right after a table is renamed.
@@ -1000,6 +1010,10 @@ export const restaurantOrders = sqliteTable(
 		index('idx_restaurant_orders_acceptance_deadline')
 			.on(table.acceptanceDeadlineAt)
 			.where(sql`${table.status} = 'pending_acceptance'`),
+		// The orders tick's sweep of cancel refunds still owed.
+		index('idx_restaurant_orders_cancel_refund_due')
+			.on(table.cancelRefundDueAt)
+			.where(sql`${table.cancelRefundDueAt} is not null`),
 		uniqueIndex('restaurant_orders_idempotency_key_unique').on(
 			table.idempotencyKey,
 		),
@@ -1066,10 +1080,11 @@ export const restaurantOrderReservations = sqliteTable(
 // the App (the region never calls a provider) as `succeeded` or `failed`. Only
 // `succeeded` rows add to `restaurant_orders.refunded_cents`; a `pending` one
 // reserves its amount; at most one provider refund is pending per order.
-// Append-only (0044 triggers): no delete; an update may only erase the note,
-// record `provider_refund_id` while pending, or settle a pending row once
-// (`status`, `failure_code`, `settled_at`, `updated_at`). Rows from before
-// 0044 read `record` / `succeeded` / `operator`.
+// Append-only (0044 triggers): no delete; an update may only erase the
+// note, record `provider_refund_id` while pending, settle a pending row once
+// (`status`, `failure_code`, `settled_at`, `updated_at`), or mark a succeeded
+// provider row reversed once (`reversed_at`, `reversal_code`). Rows from
+// before 0044 read `record` / `succeeded` / `operator`.
 export const restaurantOrderRefunds = sqliteTable(
 	'restaurant_order_refunds',
 	{
@@ -1112,6 +1127,12 @@ export const restaurantOrderRefunds = sqliteTable(
 		// `record` rows, final from `created_at`), and the last status write.
 		settledAt: integer('settled_at'),
 		updatedAt: integer('updated_at'),
+		// Epoch ms and a short machine code: the provider reported a `succeeded`
+		// provider refund failed afterwards (0044). The row stays `succeeded` and
+		// `refunded_cents` keeps it; `refund_reversed_cents` takes it back out.
+		// Set once, never cleared.
+		reversedAt: integer('reversed_at'),
+		reversalCode: text('reversal_code'),
 	},
 	(table) => [
 		uniqueIndex('restaurant_order_refunds_idempotency_unique').on(
@@ -6018,6 +6039,10 @@ export const qrTabRefunds = sqliteTable(
 		createdAt: integer('created_at').notNull().default(nowMs),
 		settledAt: integer('settled_at'),
 		updatedAt: integer('updated_at'),
+		// A `succeeded` refund the provider reported failed afterwards (0044):
+		// when and why. The amount is refundable again; set once.
+		reversedAt: integer('reversed_at'),
+		reversalCode: text('reversal_code'),
 	},
 	(table) => [
 		uniqueIndex('qr_tab_refunds_idempotency_unique').on(

@@ -22,6 +22,7 @@ import {
 
 import { kickOrderRefundExecute } from '../lib/order-refund-kick.ts'
 import { retryOnSqliteBusy } from '../lib/sqlite-retry.ts'
+import { orderRefundedNetCents } from './order-refund-book.ts'
 import {
 	applyOrderStatusPatchInTx,
 	expireHoldsInTx,
@@ -371,8 +372,14 @@ function refundAnswer(
 			amountCents: outcome.refund.amountCents,
 		}
 	}
-	if (order.refundedCents > 0) {
-		return { status: 'succeeded', amountCents: order.refundedCents }
+	// Another refund was still waiting: the rest follows once it is final, so
+	// everything not yet back is on its way.
+	if (outcome?.code === 'refund_pending' && outcome.owedCents > 0) {
+		return { status: 'pending', amountCents: outcome.owedCents }
+	}
+	const back = orderRefundedNetCents(order)
+	if (back > 0) {
+		return { status: 'succeeded', amountCents: back }
 	}
 	return { status: 'none', amountCents: 0 }
 }

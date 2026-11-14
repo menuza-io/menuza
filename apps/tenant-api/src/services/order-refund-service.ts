@@ -2,6 +2,7 @@ import crypto from 'node:crypto'
 import { and, asc, eq, inArray } from 'drizzle-orm'
 
 import {
+	effectiveRefundRow,
 	type OperatorOrderRefundRequest,
 	type OrderRefundSummary,
 } from '@repo/common/restaurant-orders'
@@ -21,7 +22,8 @@ import { refundDiscountRedemptions } from './discount-apply.ts'
 import { loyaltySettleQueue } from './loyalty-purchase-service.ts'
 import {
 	orderCarriesLoyalty,
-	orderPaidCents,
+	orderRefundableCents,
+	orderRefundedNetCents,
 	orderRefundSummary,
 	pendingOrderRefundCentsInTx,
 } from './order-refund-book.ts'
@@ -189,10 +191,7 @@ export async function recordOrderRefund(
 						tx as unknown as OrderTx,
 						order.id,
 					)
-					const refundableCents = Math.max(
-						0,
-						orderPaidCents(order) - order.refundedCents - pendingCents,
-					)
+					const refundableCents = orderRefundableCents(order, pendingCents)
 					if (refundableCents === 0) {
 						return orderFailure(
 							409,
@@ -217,13 +216,16 @@ export async function recordOrderRefund(
 					}
 
 					const refundedCents = order.refundedCents + amountCents
+					const fullyBack =
+						orderRefundedNetCents({ ...order, refundedCents }) >=
+						order.totalCents
 					const [refund] = await tx
 						.insert(restaurantOrderRefunds)
 						.values({
 							orderId: order.id,
 							amountCents,
 							currency: order.currency,
-							full: refundedCents >= order.totalCents,
+							full: fullyBack,
 							note: input.request.note,
 							actorId: input.actorId,
 							idempotencyKey: input.idempotencyKey,
@@ -236,7 +238,7 @@ export async function recordOrderRefund(
 						.set({ refundedCents, updatedAt: new Date(now) })
 						.where(eq(restaurantOrders.id, order.id))
 						.returning()
-					if (refundedCents >= order.totalCents) {
+					if (fullyBack) {
 						await refundDiscountRedemptions(tx, order.id)
 					}
 					await loyalty.queue(
@@ -272,6 +274,9 @@ export async function listOrderRefunds(
 }
 
 export function operatorOrderRefund(refund: RestaurantOrderRefund) {
+	// A provider refund reversed after it succeeded reads failed, with the
+	// reversal's code, so screens offer to refund it again.
+	const effective = effectiveRefundRow(refund)
 	return {
 		id: refund.id,
 		amountCents: refund.amountCents,
@@ -283,12 +288,17 @@ export function operatorOrderRefund(refund: RestaurantOrderRefund) {
 		/** `record` (money returned outside Menuza) or `provider`. */
 		kind: refund.kind,
 		/** Only `succeeded` refunds count in `refundedCents`. */
-		status: refund.status,
+		status: effective.status as RestaurantOrderRefund['status'],
 		origin: refund.origin,
-		failureCode: refund.failureCode ?? null,
+		failureCode: effective.failureCode,
 		settledAt:
 			refund.settledAt != null
 				? new Date(refund.settledAt).toISOString()
+				: null,
+		/** When the provider reversed it after it succeeded; null otherwise. */
+		reversedAt:
+			refund.reversedAt != null
+				? new Date(refund.reversedAt).toISOString()
 				: null,
 	}
 }

@@ -434,6 +434,12 @@ operatorOrderRoutes.patch('/:id', async (c) => {
 				actorId: auth.auth.userId,
 				cancelledBy: 'operator',
 				impersonated: auth.auth.impersonated,
+				// A refund that moves loyalty points needs the loyalty grant, as
+				// a recorded refund does (a rejection's refund never asks).
+				loyaltyAccess: {
+					refundLoyalty: auth.auth.refundLoyalty,
+					impersonated: auth.auth.impersonated,
+				},
 			},
 		)
 		if (!result.ok) {

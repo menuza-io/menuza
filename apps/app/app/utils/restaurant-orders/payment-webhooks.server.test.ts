@@ -321,6 +321,32 @@ describe('restaurant order refund and dispute webhooks (#80)', () => {
 		expect(reportRefund).not.toHaveBeenCalled()
 	})
 
+	it('forwards a refund Stripe fails after it succeeded, for the region to reverse', async () => {
+		await handleRestaurantOrderStripeRefundEvent(REFUND as never)
+		expect(reportRefund).toHaveBeenLastCalledWith(
+			expect.objectContaining({ status: 'succeeded' }),
+		)
+		// `refund.failed` / `refund.updated` later on the same refund.
+		await handleRestaurantOrderStripeRefundEvent({
+			...REFUND,
+			status: 'failed',
+			failure_reason: 'expired_or_canceled_card',
+		} as never)
+		expect(reportRefund).toHaveBeenCalledTimes(2)
+		expect(reportRefund).toHaveBeenLastCalledWith({
+			dataRegion: 'us',
+			orgId: 'org_1',
+			orderId: 'ord_1',
+			refundId: 'rf_1',
+			providerRefundId: 're_1',
+			processor: 'connect',
+			status: 'failed',
+			failureCode: 'expired_or_canceled_card',
+			amountCents: 1000,
+			currency: 'USD',
+		})
+	})
+
 	it('ignores refunds of anything else (reservations, the shop, a refund made outside Menuza)', async () => {
 		for (const metadata of [
 			{ type: 'reservation_refund', orgId: 'org_1', refundRequestId: 'rr_1' },

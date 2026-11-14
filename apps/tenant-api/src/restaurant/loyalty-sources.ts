@@ -267,6 +267,11 @@ export function qrTabPayableUntil(
 /** `restaurantOrderPayableUntil` in SQL (the order's times are in seconds). */
 const payableUntilSql = sql<number>`(coalesce(${restaurantOrders.holdExpiresAt}, ${restaurantOrders.createdAt}) * 1000 + case when ${restaurantOrders.paymentSessionId} is null then 0 when ${restaurantOrders.paymentProcessor} = 'checkout' then ${ONLINE_PAYABLE_AFTER_HOLD_MS.checkout} when ${restaurantOrders.paymentProcessor} = 'connect' then ${ONLINE_PAYABLE_AFTER_HOLD_MS.connect} else 0 end)`
 
+/** Succeeded refunds less those the provider reversed afterwards. */
+function netRefundedCents(order: RestaurantOrder): number {
+	return Math.max(0, order.refundedCents - (order.refundReversedCents ?? 0))
+}
+
 /**
  * Paid and completed earns; cancelled or expired unpaid releases, and so does
  * a paid one that never went ahead (cancelled, expired, or a late payment
@@ -294,7 +299,7 @@ export function restaurantOrderVerdict(
 		order.status === 'payment_review'
 	// Paid, never fulfilled and every cent back (or none was due, the reward
 	// covered it all): nothing is left for an operator to decide.
-	if (stopped && paid && order.refundedCents >= order.totalCents) {
+	if (stopped && paid && netRefundedCents(order) >= order.totalCents) {
 		return { kind: 'cancelled', releaseReason: 'order_refunded' }
 	}
 	if (order.paymentStatus === 'review' || order.status === 'payment_review') {
@@ -386,7 +391,9 @@ export const restaurantOrderLoyaltySource: LoyaltySourceAdapter = {
 		return {
 			currency: order.currency,
 			totalMinor: order.totalCents,
-			refundedMinor: order.refundedCents,
+			// What is really back: a refund the provider reversed afterwards
+			// stops counting (loyalty never gives points back for it).
+			refundedMinor: netRefundedCents(order),
 			locationId: order.locationId,
 			verdict: restaurantOrderVerdict(order, redemption, now),
 		}

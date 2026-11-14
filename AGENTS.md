@@ -1182,11 +1182,18 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
   reports `refund-status`; webhooks, the region's ids-only kick
   (`/resources/orders/refund-execute`) and the hourly reconcile job finish it.
   `refunded_cents` counts succeeded refunds only and never shrinks; a pending
-  row reserves the amount, a failed one releases it; one pending refund per
-  order (409 `refund_pending`), none while disputed (409 `payment_disputed`). QR
-  tab payments refund per `qr_tab_refunds` row. Handoff orders keep the
-  record-only `recordOrderRefund`. Permission `update:order_refund:any` (owner,
-  admin), never while impersonating. The region never calls a provider.
+  row reserves the amount, a failed one releases it; a succeeded refund the
+  provider fails later is marked reversed and counted in
+  `refund_reversed_cents`, so readers use the net figure (never `refunded_cents`
+  alone). One pending refund per order (409 `refund_pending`), none while
+  disputed (409 `payment_disputed`); a cancel with a full refund that hits
+  either is marked `cancel_refund_due_at` and the rest is booked when the other
+  refund settles or the dispute is won (orders tick as backstop). A closed
+  dispute never reopens. QR tab payments refund per `qr_tab_refunds` row.
+  Handoff orders keep the record-only `recordOrderRefund`. Permission
+  `update:order_refund:any` (owner, admin), never while impersonating; an order
+  loyalty tracks also needs the loyalty refund grant (403
+  `loyalty_refund_forbidden`). The region never calls a provider.
 - Guest cancel (#111, flag `ordering.guest_cancel`, per-location window) and
   order acceptance (#107, flag `ordering.manual_acceptance`, per-location Manual
   mode) reach the region as `guestCancel` / `acceptance` in the order context;

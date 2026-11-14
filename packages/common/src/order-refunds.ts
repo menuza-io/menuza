@@ -75,6 +75,8 @@ export const ORDER_REFUND_ERROR_CODES = [
 	'refund_forbidden',
 	/** A status report names a refund with another amount, currency or provider. */
 	'refund_mismatch',
+	/** The order carries loyalty points and the member may not move them. */
+	'loyalty_refund_forbidden',
 ] as const
 export type OrderRefundErrorCode = (typeof ORDER_REFUND_ERROR_CODES)[number]
 
@@ -165,6 +167,14 @@ export const orderRefundIntentRequestSchema = z
 		 * An empty list reaches nothing.
 		 */
 		locationIds: orderRefundLocationIdsSchema.nullable().optional(),
+		/**
+		 * Whether the member may move loyalty points (`update:loyalty_redemption:any`,
+		 * never while impersonating). Present: the region refuses an order loyalty
+		 * tracks with 403 `loyalty_refund_forbidden` unless `refundLoyalty`, and
+		 * confirms the check with `loyaltyChecked: true`. Absent: the caller
+		 * decided (system refunds).
+		 */
+		loyaltyAccess: z.strictObject({ refundLoyalty: z.boolean() }).optional(),
 	})
 	.refine(
 		(body) => (body.amountCents === undefined) !== (body.full === undefined),
@@ -223,6 +233,12 @@ export const orderRefundIntentResponseSchema = orderProviderRefundSchema.extend(
 		 * answer without it (the scope was not enforced).
 		 */
 		locationScoped: z.boolean().optional(),
+		/**
+		 * True when the request carried `loyaltyAccess` and the region applied
+		 * it. A region that predates the field leaves it out; a caller whose
+		 * member lacks the loyalty grant must then refuse the answer.
+		 */
+		loyaltyChecked: z.boolean().optional(),
 	},
 )
 export type OrderRefundIntentResponse = z.infer<
@@ -377,14 +393,22 @@ export type OrderRefundSummaryStatus =
 	(typeof ORDER_REFUND_SUMMARY_STATUSES)[number]
 
 export type OrderRefundSummary = {
-	/** Succeeded refunds (equals `restaurant_orders.refunded_cents`). */
+	/**
+	 * What is really back: succeeded refunds (`restaurant_orders.refunded_cents`)
+	 * less those the provider reversed afterwards.
+	 */
 	refundedCents: number
+	/** Succeeded refunds the provider reported failed afterwards. */
+	reversedCents: number
 	/** Provider refunds still pending. */
 	pendingCents: number
-	/** paid - refunded - pending, never below 0. */
+	/** paid - refunded - pending + reversed, never below 0. */
 	refundableCents: number
 	refundStatus: OrderRefundSummaryStatus
-	/** The newest failed provider refund's code, when `refundStatus` is `failed`. */
+	/**
+	 * The newest failed (or reversed) provider refund's code, when
+	 * `refundStatus` is `failed`.
+	 */
 	failureCode: string | null
 }
 
@@ -395,6 +419,9 @@ type RefundRowLike = {
 	failureCode?: string | null
 	/** Epoch ms, a Date or an ISO string; orders the rows. */
 	createdAt?: number | string | Date | null
+	/** Set when the provider reversed this succeeded refund afterwards. */
+	reversedAt?: number | string | Date | null
+	reversalCode?: string | null
 }
 
 function timeOf(value: RefundRowLike['createdAt']): number {
@@ -405,35 +432,98 @@ function timeOf(value: RefundRowLike['createdAt']): number {
 	return Number.isFinite(parsed) ? parsed : 0
 }
 
+/** A succeeded refund the provider reported failed afterwards. */
+export function refundRowReversed(refund: {
+	status: string
+	reversedAt?: RefundRowLike['reversedAt']
+}): boolean {
+	return refund.status === 'succeeded' && refund.reversedAt != null
+}
+
+/**
+ * How a refund row reads: a reversed one is `failed` with its reversal code,
+ * as of when it was reversed. Every other row as stored.
+ */
+export function effectiveRefundRow(refund: RefundRowLike): {
+	status: string
+	failureCode: string | null
+	at: number
+} {
+	if (refundRowReversed(refund)) {
+		return {
+			status: 'failed',
+			failureCode: refund.reversalCode ?? null,
+			at: timeOf(refund.reversedAt),
+		}
+	}
+	return {
+		status: refund.status,
+		failureCode: refund.failureCode ?? null,
+		at: timeOf(refund.createdAt),
+	}
+}
+
+/**
+ * What a payment can still give back: paid - refunded - pending + reversed,
+ * never below 0 and never above what was paid. `refunded_cents` never
+ * shrinks, so a refund the provider reversed after it succeeded is added back
+ * here instead.
+ */
+export function refundableAmountCents(input: {
+	paidCents: number
+	refundedCents: number
+	reversedCents?: number
+	pendingCents: number
+}): number {
+	const back = Math.max(0, input.refundedCents - (input.reversedCents ?? 0))
+	return Math.min(
+		Math.max(0, input.paidCents),
+		Math.max(0, input.paidCents - back - input.pendingCents),
+	)
+}
+
 /**
  * Folds an order's refund rows. `paidCents` is what was captured (the order
  * total for a paid online order, 0 when nothing was paid). `refundedCents` is
- * the order's stored total of succeeded refunds, which wins over the rows.
+ * the order's stored total of succeeded refunds, which wins over the rows;
+ * `reversedCents` its stored total of reversals (summed from the rows when
+ * absent).
  */
 export function summarizeOrderRefunds(
-	order: { paidCents: number; refundedCents: number },
+	order: { paidCents: number; refundedCents: number; reversedCents?: number },
 	refunds: readonly RefundRowLike[],
 ): OrderRefundSummary {
 	let pendingCents = 0
+	let rowsReversed = 0
 	for (const refund of refunds) {
 		if (refund.status === 'pending') pendingCents += refund.amountCents
+		if (refundRowReversed(refund)) rowsReversed += refund.amountCents
 	}
-	const refundedCents = Math.max(0, order.refundedCents)
-	const refundableCents = Math.max(
-		0,
-		order.paidCents - refundedCents - pendingCents,
+	const grossCents = Math.max(0, order.refundedCents)
+	const reversedCents = Math.min(
+		grossCents,
+		Math.max(0, order.reversedCents ?? rowsReversed),
 	)
+	const refundedCents = grossCents - reversedCents
+	const refundableCents = refundableAmountCents({
+		paidCents: order.paidCents,
+		refundedCents: grossCents,
+		reversedCents,
+		pendingCents,
+	})
 	let refundStatus: OrderRefundSummaryStatus
 	let failureCode: string | null = null
 	if (pendingCents > 0) {
 		refundStatus = 'pending'
 	} else {
-		const newest = [...refunds]
+		// The newest thing that happened: a refund settling, or one reversed.
+		const newest = refunds
 			.filter((refund) => refund.status !== 'pending')
-			.sort((a, b) => timeOf(b.createdAt) - timeOf(a.createdAt))[0]
+			.map(effectiveRefundRow)
+			.sort((a, b) => b.at - a.at)[0]
 		if (newest?.status === 'failed') {
 			refundStatus = 'failed'
-			failureCode = newest.failureCode ?? null
+			failureCode = newest.failureCode
 		} else if (refundedCents <= 0) {
 			refundStatus = 'none'
 		} else {
@@ -442,6 +532,7 @@ export function summarizeOrderRefunds(
 	}
 	return {
 		refundedCents,
+		reversedCents,
 		pendingCents,
 		refundableCents,
 		refundStatus,
@@ -464,5 +555,11 @@ export const operatorOrderRefundSchema = z.object({
 	origin: z.enum(ORDER_REFUND_ORIGINS).default('operator').catch('operator'),
 	failureCode: z.string().nullable().default(null).catch(null),
 	settledAt: z.string().nullable().default(null).catch(null),
+	/**
+	 * When the provider reversed this refund after it succeeded (then
+	 * `status` reads `failed` and `failureCode` is the reversal's code).
+	 * Missing from an older region: null.
+	 */
+	reversedAt: z.string().nullable().default(null).catch(null),
 })
 export type OperatorOrderRefund = z.infer<typeof operatorOrderRefundSchema>

@@ -158,8 +158,10 @@ read.
   message queued). A paid online order books a full provider refund in the same
   transaction (`kind = provider`, `origin = guest`, actor `guest`, idempotency
   key `cancel:<orderId>`) and the region kicks the App with ids only; the
-  answer's `refund` is `pending` with the amount. Handoff and free orders:
-  `refund: { status: "none", amountCents: 0 }`.
+  answer's `refund` is `pending` with the amount. When another provider refund
+  of the order is still pending, the full refund is owed instead (see "Provider
+  refunds" below) and the answer's `refund` is `pending` with everything not yet
+  back. Handoff and free orders: `refund: { status: "none", amountCents: 0 }`.
 - The same `Idempotency-Key` again (24 hours) returns the stored answer byte for
   byte with `Idempotent-Replayed: true`: no second cancel, refund, kick or
   message. A new key on a cancelled order is `409 not_cancellable`.
@@ -300,6 +302,50 @@ provisioned organization, and uses `private, no-store`.
   (`{ id, amountCents, currency, full, note, actorId, createdAt }`, oldest
   first). Loyalty takes earned points back from `refundedCents`
   ([loyalty.md](./loyalty.md#refunds)).
+
+### Provider refunds (#80)
+
+The App books a provider refund with `POST /api/orders/refund-intent` (internal
+token) and reports the provider's answer with `POST /api/orders/refund-status`;
+`POST /api/orders/dispute-status` records disputes. Rules that callers rely on:
+
+- What is back: `refunded_cents` counts succeeded refunds and never shrinks. A
+  refund the provider moves from `succeeded` to `failed` later (Stripe
+  `refund.failed` / `refund.updated`) is reported as `failed` on the same
+  refund: the row stays `succeeded` and is marked reversed (`reversed_at`,
+  `reversal_code`, once; a replay answers `applied: false`), and
+  `restaurant_orders.refund_reversed_cents` grows by its amount. Every read
+  (operator, Station, guest receipt and link, person orders, the cancelled
+  email, loyalty) uses the net `refunded_cents - refund_reversed_cents`; the
+  refund reads `failed` with the reversal's code and `reversedAt`, and the
+  amount is refundable again (paid − succeeded − pending + reversed). Loyalty
+  points taken back and discount uses given back stay as they are: a retry that
+  succeeds returns the same money and takes nothing back a second time.
+- Loyalty grant: the App sends `loyaltyAccess: { refundLoyalty: false }` for a
+  member without `update:loyalty_redemption:any`; the region then refuses an
+  order loyalty tracks with 403 `loyalty_refund_forbidden` and confirms the
+  check with `loyaltyChecked: true` (the App refuses an answer without it, 403
+  `loyalty_check_unsupported`, releasing what was booked). A member with the
+  grant sends nothing. The operator cancel with `refund: 'full'` checks the
+  orders token's `refundLoyalty` claim the same way (`refundError`, the cancel
+  stands). Rejections, the acceptance timeout and the guest's cancel are not
+  gated.
+- A cancel that asks for a full refund (operator `refund: 'full'`, a rejection,
+  the timeout, the guest's cancel) while another provider refund of the order is
+  pending, or while its payment has an open dispute, cannot book it (one at a
+  time; none while disputed). The order is marked `cancel_refund_due_at` and the
+  answer says `refund_pending` / `payment_disputed`. Once the other refund is
+  final (succeeded or failed), or the dispute is won, the region books whatever
+  is refundable then (key `cancel:<orderId>:rest`, origin `system`) and kicks
+  the App; the orders tick does the same as a backstop (open disputes are
+  skipped). The mark is dropped when nothing is left, or when the dispute is
+  lost (the chargeback returned the money). If that refund fails later, it is
+  shown as failed like any other and a person refunds again.
+- Disputes are monotonic: once a dispute closed (`won` or `lost`), a late or
+  redelivered `open` is ignored (logged by id; the answer carries the stored
+  state with `applied: false`). A closed state may still change to the other
+  closed state. A payment has one dispute at both providers, so no dispute id is
+  carried.
 
 ### Manual acceptance (#107)
 

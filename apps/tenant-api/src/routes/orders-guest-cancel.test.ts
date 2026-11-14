@@ -34,6 +34,7 @@ import { clearGuestCancelViewCacheForTest } from '../services/order-guest-cancel
 import { orderLinkResendsIdle } from '../services/order-link-access.ts'
 import { setOrderMessageSendDepsForTest } from '../services/order-message-send.ts'
 import { orderMessagesIdle } from '../services/order-messages.ts'
+import { applyProviderRefundStatus } from '../services/order-provider-refund-service.ts'
 import { deriveReceiptToken } from '../services/order-service.ts'
 import { publicOrderRoutes } from './orders.ts'
 
@@ -493,6 +494,58 @@ describe('guest cancel: happy paths', () => {
 			cancel: { allowed: false, until: null },
 		})
 		expect(viewBody.order).not.toHaveProperty('contact')
+	})
+
+	it('a refund already waiting on the provider: the rest is owed, and the guest is told all of it is on its way', async () => {
+		const orderId = await onlineOrder()
+		const db = await getTenantDb(ORG)
+		const now = Date.now()
+		await db.insert(restaurantOrderRefunds).values({
+			id: `rf_wait_${orderId}`,
+			orderId,
+			amountCents: 300,
+			currency: 'USD',
+			note: 'Cold food',
+			actorId: 'usr_1',
+			idempotencyKey: `wait-${orderId}`,
+			requestHash: 'hash',
+			createdAt: now,
+			kind: 'provider',
+			status: 'pending',
+			origin: 'operator',
+			processor: 'connect',
+			sessionId: `cs_wait_${orderId}`,
+		})
+		const res = await cancel(orderId, receipt(orderId))
+		expect(res.status).toBe(200)
+		expect(await res.json()).toMatchObject({
+			status: 'cancelled',
+			refund: { status: 'pending', amountCents: 1000 },
+		})
+		// Nothing new yet (one refund at a time), but the order owes the rest.
+		expect(await refundRows(orderId)).toHaveLength(1)
+		expect((await orderRow(orderId)).cancelRefundDueAt).toBeInstanceOf(Date)
+		await orderRefundKicksIdle()
+		expect(kicks).toEqual([])
+
+		// The waiting refund succeeds: the rest is booked and the App kicked.
+		const settled = await applyProviderRefundStatus({
+			orgId: ORG,
+			refundId: `rf_wait_${orderId}`,
+			status: 'succeeded',
+		})
+		expect(settled.ok).toBe(true)
+		const rest = (await refundRows(orderId)).find(
+			(row) => row.id !== `rf_wait_${orderId}`,
+		)
+		expect(rest).toMatchObject({
+			amountCents: 700,
+			status: 'pending',
+			origin: 'system',
+		})
+		expect((await orderRow(orderId)).cancelRefundDueAt).toBeNull()
+		await orderRefundKicksIdle()
+		expect(kicks).toEqual([{ orgId: ORG, refundId: rest!.id }])
 	})
 
 	it('a free online order (nothing paid) is cancelled with no refund', async () => {

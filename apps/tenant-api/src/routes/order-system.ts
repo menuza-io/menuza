@@ -343,6 +343,16 @@ orderSystemRoutes.post('/refund-intent', async (c) => {
 			origin: body.actor.origin,
 			actorId: body.actor.actorId ?? body.actor.origin,
 			locationIds: body.locationIds ?? null,
+			// The member's loyalty grant (the App never sends an impersonated
+			// refund): an order loyalty tracks needs it, as a recorded refund does.
+			...(body.loyaltyAccess
+				? {
+						loyaltyAccess: {
+							refundLoyalty: body.loyaltyAccess.refundLoyalty,
+							impersonated: false,
+						},
+					}
+				: {}),
 		})
 		if (!result.ok) return failureResponse(c, result.failure)
 		return c.json(
@@ -353,6 +363,8 @@ orderSystemRoutes.post('/refund-intent', async (c) => {
 				// that predates `locationIds` never says so, and the App then
 				// refuses to refund for a member limited to some locations.
 				...(body.locationIds != null ? { locationScoped: true } : {}),
+				// Likewise for the loyalty grant.
+				...(result.data.loyaltyChecked ? { loyaltyChecked: true } : {}),
 			},
 			result.data.replayed ? 200 : 201,
 		)
