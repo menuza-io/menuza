@@ -68,11 +68,26 @@ It is read-only and never signs anyone in.
 `GET /orders/:id?slug=...` also accepts `X-Order-Link: <token>`:
 
 - With the header, either a valid receipt token (Bearer) or a valid link token
-  opens the order and returns `200 { order }`, byte for byte the receipt body
-  above. Every refusal (forged, tampered, expired, erased, another order,
-  another organization, a receipt or payment token in the header, an over-long
-  value) is `404 { "error": "order_not_found", "message": "Order not found." }`,
-  the same answer as an order that does not exist.
+  opens the order and returns `200 { order }`. Which body depends on the
+  credential that verified:
+  - A valid receipt token (with or without a link header): the full receipt body
+    above.
+  - A valid link token and no valid receipt token (missing, forged, another
+    order's): the link body. The link is emailed and texted, so it gets
+    forwarded and kept; its body carries nothing that names, reaches or locates
+    the guest. Against the receipt body: there is no `contact` key; `delivery`
+    is `{ feeCents, zoneId }` (no `address`, `city`, `unit`, `postalCode` or
+    `notes`) on a delivery order and `null` otherwise (`fulfillment` still says
+    `delivery`); every line's `instructions` is `null`. Every other key is the
+    same. A page opened from the link shows the order, its status and promised
+    time, not who it is for or where it goes.
+- Every refusal (forged, tampered, expired, erased, another order, another
+  organization, a receipt or payment token in the header, a value that is not 64
+  lowercase hex characters) is
+  `404 { "error": "order_not_found", "message": "Order not found." }`, the same
+  answer as an order that does not exist. A header that is not 64 lowercase hex
+  characters is refused before any database work; a well-formed one costs one
+  order read, and expired holds are swept only after it verified.
 - Without the header nothing changes: no Bearer is `401 unauthorized`, a wrong
   Bearer (a link token included) is `403 invalid_receipt_token`.
 - The organization still comes from the browser `Origin` plus `slug`/`host`.

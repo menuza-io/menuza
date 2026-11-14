@@ -46,6 +46,7 @@ import { getBearerToken, syncEnvFromProcess } from '../lib/secrets.ts'
 import { quoteOrderDiscounts } from '../services/discount-quote.ts'
 import {
 	authorizeGuestOrder,
+	linkReceiptOrder,
 	ORDER_LINK_HEADER,
 	readOrderLinkHeader,
 	resendReceiptInBackground,
@@ -849,7 +850,13 @@ async function guestReceiptResponse(
 			credentials,
 		)
 		if (!access.ok) return orderNotFoundResponse()
-		return c.json({ order: receiptOrder(access.order) }, 200, noStoreHeaders())
+		// Only the placing device's receipt token reads the guest's contact
+		// details and address; the forwardable link gets the reduced body.
+		const order =
+			access.via === 'receipt'
+				? receiptOrder(access.order)
+				: linkReceiptOrder(access.order)
+		return c.json({ order }, 200, noStoreHeaders())
 	} catch (error) {
 		console.error(
 			`Failed to load order receipt for org ${orgId}:`,
@@ -878,9 +885,10 @@ publicOrderRoutes.get('/:id', async (c) => {
 	const receiptToken = getBearerToken(c.req.header('Authorization'))
 	const linkToken = readOrderLinkHeader(c.req.header(ORDER_LINK_HEADER))
 	if (linkToken !== null) {
-		// The "View your order" link: read-only, the same receipt body. Either
-		// a valid receipt token or a valid link token opens it; every refusal
-		// is the uniform 404 of an unknown order.
+		// The "View your order" link: read-only. A valid receipt token gets the
+		// full receipt; a valid link token alone gets `linkReceiptOrder` (no
+		// contact, no address). Every refusal is the uniform 404 of an
+		// unknown order.
 		return guestReceiptResponse(c, organization.organization.id, {
 			receiptToken,
 			linkToken,

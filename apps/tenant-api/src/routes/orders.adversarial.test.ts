@@ -22,15 +22,32 @@ import {
 	resolveOrganizationForBrowserAuth,
 } from '../lib/origin.ts'
 import { deriveOrderLinkToken } from '../lib/order-link.ts'
-import { orderLinkResendsIdle } from '../services/order-link-access.ts'
+import {
+	linkReceiptOrder,
+	orderLinkResendsIdle,
+} from '../services/order-link-access.ts'
 import {
 	applyPaymentEvent,
 	bindPaymentSession,
 	deriveReceiptToken,
 	getOrderQuote,
 	placeOrder,
+	receiptOrder,
+	sweepExpiredHolds,
 } from '../services/order-service.ts'
 import { publicOrderRoutes } from './orders.ts'
+
+// Pass-through spies: the link-token checks prove a malformed header does no
+// database work (no tenant database opened, no hold sweep).
+vi.mock('@repo/tenant-db', async (importOriginal) => {
+	const actual = await importOriginal<typeof import('@repo/tenant-db')>()
+	return { ...actual, getTenantDb: vi.fn(actual.getTenantDb) }
+})
+vi.mock('../services/order-service.ts', async (importOriginal) => {
+	const actual =
+		await importOriginal<typeof import('../services/order-service.ts')>()
+	return { ...actual, sweepExpiredHolds: vi.fn(actual.sweepExpiredHolds) }
+})
 
 vi.mock('../lib/origin.ts', () => {
 	const findActiveOrganizationById = vi.fn()
@@ -1364,8 +1381,56 @@ describe('Adversarial: restaurant ordering (public browser surface)', () => {
 			}
 		}
 
-		it('reads the same receipt body with a valid link token as with the receipt token', async () => {
+		/**
+		 * A delivery order with every contact, address and free-text field
+		 * filled in (written to the row: placing a real delivery needs zones
+		 * and geocoding, which this suite does not set up).
+		 */
+		const PII = {
+			name: 'Rana Khalid',
+			phone: '+15551234567',
+			email: 'rana.private@example.com',
+			address: '742 Evergreen Terrace',
+			city: 'Springfield',
+			unit: 'Apt 9B',
+			postalCode: '49007',
+			notes: 'Gate code 4321, call Rana on arrival',
+			instructions: 'Nut allergy - Rana 555 987 6543',
+		}
+
+		async function placedDeliveryOrder() {
 			const placed = await placedOrder()
+			const id = placed.order.id
+			const db = await getTenantDb(orgId)
+			const [row] = await db
+				.select()
+				.from(restaurantOrders)
+				.where(eq(restaurantOrders.id, id))
+			await db
+				.update(restaurantOrders)
+				.set({
+					fulfillment: 'delivery',
+					contactEmail: PII.email,
+					deliveryAddress: PII.address,
+					deliveryCity: PII.city,
+					deliveryUnit: PII.unit,
+					deliveryPostalCode: PII.postalCode,
+					deliveryNotes: PII.notes,
+					deliveryZoneId: 'zone-1',
+					deliveryFeeCents: 499,
+					deliveryLat: 42.1234567,
+					deliveryLng: -87.7654321,
+					lines: (row!.lines as Array<Record<string, unknown>>).map((line) => ({
+						...line,
+						instructions: PII.instructions,
+					})) as never,
+				})
+				.where(eq(restaurantOrders.id, id))
+			return placed
+		}
+
+		it('a link read gets the reduced body: no contact, no address, no notes; the receipt token still reads them', async () => {
+			const placed = await placedDeliveryOrder()
 			const id = placed.order.id
 			const byReceipt = await readReceipt(id, {
 				Authorization: `Bearer ${placed.receiptToken}`,
@@ -1373,9 +1438,184 @@ describe('Adversarial: restaurant ordering (public browser surface)', () => {
 			const byLink = await readReceipt(id, {
 				'X-Order-Link': deriveOrderLinkToken(orgId, id),
 			})
+			expect(byReceipt.status).toBe(200)
 			expect(byLink.status).toBe(200)
 			expect(byLink.headers.get('cache-control')).toBe('no-store')
-			expect(await byLink.json()).toEqual(await byReceipt.json())
+			const full = (await byReceipt.json()).order
+			const linkText = await byLink.text()
+			const reduced = JSON.parse(linkText).order
+
+			// The receipt token (the placing device) still reads everything.
+			expect(full.contact).toEqual({
+				name: PII.name,
+				phone: PII.phone,
+				email: PII.email,
+			})
+			expect(full.delivery).toEqual({
+				address: PII.address,
+				city: PII.city,
+				unit: PII.unit,
+				postalCode: PII.postalCode,
+				notes: PII.notes,
+				feeCents: 499,
+				zoneId: 'zone-1',
+			})
+			expect(full.lines[0].instructions).toBe(PII.instructions)
+
+			// The link: no contact key, only the non-identifying delivery
+			// fields, no line instructions.
+			expect('contact' in reduced).toBe(false)
+			expect(reduced.delivery).toEqual({ feeCents: 499, zoneId: 'zone-1' })
+			expect(reduced.fulfillment).toBe('delivery')
+			for (const line of reduced.lines) expect(line.instructions).toBeNull()
+			// Nothing identifying anywhere in the serialized response.
+			for (const value of [
+				...Object.values(PII),
+				'5551234567',
+				'555 123 4567',
+				'rana',
+				'Rana',
+				'42.123',
+				'87.765',
+			]) {
+				expect(linkText).not.toContain(value)
+			}
+			// Everything else is the same as the full receipt.
+			const {
+				contact: _contact,
+				delivery: _delivery,
+				lines: fullLines,
+				...fullRest
+			} = full
+			const { delivery: _d, lines: linkLines, ...linkRest } = reduced
+			expect(linkRest).toEqual(fullRest)
+			expect(linkLines).toEqual(
+				fullLines.map((line: Record<string, unknown>) => ({
+					...line,
+					instructions: null,
+				})),
+			)
+		})
+
+		it('the link body leaves out exactly `contact`: a new receipt key fails here until it is classified', async () => {
+			const placed = await placedDeliveryOrder()
+			const db = await getTenantDb(orgId)
+			const [row] = await db
+				.select()
+				.from(restaurantOrders)
+				.where(eq(restaurantOrders.id, placed.order.id))
+			const fullKeys = Object.keys(receiptOrder(row!)).sort()
+			const linkKeys = Object.keys(linkReceiptOrder(row!)).sort()
+			// If `receiptOrder` gains a key, decide whether a forwarded link may
+			// see it and add it to `linkReceiptOrder` (or to this list).
+			expect(fullKeys.filter((key) => !linkKeys.includes(key))).toEqual([
+				'contact',
+			])
+			expect(linkKeys.filter((key) => !fullKeys.includes(key))).toEqual([])
+			expect(Object.keys(linkReceiptOrder(row!).delivery ?? {}).sort()).toEqual(
+				['feeCents', 'zoneId'],
+			)
+			// A non-delivery order has no delivery block at all.
+			const pickup = await placedOrder()
+			const [pickupRow] = await db
+				.select()
+				.from(restaurantOrders)
+				.where(eq(restaurantOrders.id, pickup.order.id))
+			expect(linkReceiptOrder(pickupRow!).delivery).toBeNull()
+		})
+
+		it('a valid receipt token with a link reads the full body; a valid link with a bad or missing receipt token reads the reduced one', async () => {
+			const placed = await placedDeliveryOrder()
+			const id = placed.order.id
+			const link = deriveOrderLinkToken(orgId, id)
+			const bothValid = await readReceipt(id, {
+				Authorization: `Bearer ${placed.receiptToken}`,
+				'X-Order-Link': link,
+			})
+			expect(bothValid.status).toBe(200)
+			expect((await bothValid.json()).order.contact.email).toBe(PII.email)
+
+			for (const headers of [
+				{ Authorization: 'Bearer forged', 'X-Order-Link': link },
+				{
+					Authorization: `Bearer ${deriveReceiptToken(orgId, 'ord_other')}`,
+					'X-Order-Link': link,
+				},
+				{ 'X-Order-Link': link },
+			]) {
+				const res = await readReceipt(id, headers)
+				expect(res.status).toBe(200)
+				const text = await res.text()
+				expect('contact' in JSON.parse(text).order).toBe(false)
+				expect(text).not.toContain(PII.email)
+				expect(text).not.toContain(PII.address)
+			}
+		})
+
+		it('derived link tokens are 64 lowercase hex characters (the shape checked before any database work)', () => {
+			for (const id of ['ord_1', 'ord_2', crypto.randomUUID()]) {
+				expect(deriveOrderLinkToken(orgId, id)).toMatch(/^[0-9a-f]{64}$/)
+			}
+		})
+
+		it('a malformed link header is refused with the uniform 404 before any database work', async () => {
+			const placed = await placedOrder()
+			const id = placed.order.id
+			const real = deriveOrderLinkToken(orgId, id)
+			const expected = await unknownOrderAnswer()
+			for (const presented of [
+				real.toUpperCase(),
+				real.slice(0, 63),
+				`${real}0`,
+				`${real.slice(0, 63)}g`,
+				'not-a-token',
+				'a'.repeat(128),
+				'a'.repeat(10_000),
+			]) {
+				vi.mocked(getTenantDb).mockClear()
+				vi.mocked(sweepExpiredHolds).mockClear()
+				for (const res of [
+					await readReceipt(id, { 'X-Order-Link': presented }),
+					await readReceipt(id, {
+						Authorization: 'Bearer forged',
+						'X-Order-Link': presented,
+					}),
+					await resendLink(id, { 'X-Order-Link': presented }),
+				]) {
+					expect({
+						status: res.status,
+						body: await res.text(),
+						type: res.headers.get('content-type'),
+						cache: res.headers.get('cache-control'),
+					}).toEqual(expected)
+				}
+				expect(vi.mocked(getTenantDb)).not.toHaveBeenCalled()
+				expect(vi.mocked(sweepExpiredHolds)).not.toHaveBeenCalled()
+			}
+		})
+
+		it('a well-formed but wrong link token never sweeps holds; a valid one sweeps after it verified', async () => {
+			const placed = await placedOrder()
+			const id = placed.order.id
+			vi.mocked(sweepExpiredHolds).mockClear()
+			const wrong = await readReceipt(id, {
+				'X-Order-Link': crypto.randomBytes(32).toString('hex'),
+			})
+			const wrongResend = await resendLink(id, {
+				'X-Order-Link': crypto.randomBytes(32).toString('hex'),
+			})
+			expect(vi.mocked(sweepExpiredHolds)).not.toHaveBeenCalled()
+			// (`expectUniform404` reads an unknown order by receipt token, which
+			// sweeps, so it runs after the count.)
+			await expectUniform404(wrong)
+			await expectUniform404(wrongResend)
+			vi.mocked(sweepExpiredHolds).mockClear()
+			// A valid link sweeps after it verified, so the status is current.
+			const ok = await readReceipt(id, {
+				'X-Order-Link': deriveOrderLinkToken(orgId, id),
+			})
+			expect(ok.status).toBe(200)
+			expect(vi.mocked(sweepExpiredHolds)).toHaveBeenCalledTimes(1)
 		})
 
 		it('answers the uniform 404 to forged, tampered, malformed and over-long link tokens', async () => {
