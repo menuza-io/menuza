@@ -1,9 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
 	bindRestaurantOrderPaymentSession,
+	fetchPendingRestaurantOrderRefunds,
 	fetchRestaurantOrderQuote,
 	notifyRestaurantOrderPaymentStatus,
 	RegionalOrderApiError,
+	reportRestaurantOrderDisputeStatus,
+	reportRestaurantOrderRefundStatus,
+	requestRestaurantOrderRefundIntent,
 } from './regional-order-api.server.ts'
 
 const getRegionalTenantApiUrl = vi.hoisted(() => vi.fn())
@@ -289,5 +293,211 @@ describe('regional restaurant order command client', () => {
 				paymentToken: 'tok_1',
 			}),
 		).rejects.toMatchObject({ code: 'invalid_quote_response' })
+	})
+})
+
+describe('regional refund and dispute client (#80)', () => {
+	const REFUND = {
+		refundId: 'rf_1',
+		orderId: 'ord_1',
+		tabPaymentId: null,
+		amountCents: 1000,
+		currency: 'USD',
+		processor: 'connect',
+		sessionId: 'cs_1',
+		paymentId: null,
+		status: 'pending',
+		providerRefundId: null,
+		createdAt: '2026-11-14T10:00:00.000Z',
+		updatedAt: '2026-11-14T10:00:00.000Z',
+	}
+	const INTENT = {
+		orgId: 'org_1',
+		orderId: 'ord_1',
+		amountCents: 1000,
+		note: 'Cold food',
+		idempotencyKey: 'idem_key_0001',
+		actor: { origin: 'operator' as const, actorId: 'user_1' },
+	}
+
+	beforeEach(() => {
+		getRegionalTenantApiUrl
+			.mockReset()
+			.mockImplementation((region: string | null) =>
+				(region || 'us') === 'ksa'
+					? 'http://ksa-tenant-api.test'
+					: 'http://us-tenant-api.test',
+			)
+		fetchMock.mockReset()
+	})
+
+	function sent() {
+		const [url, init] = fetchMock.mock.calls.at(-1) as [
+			string,
+			{ body: string },
+		]
+		return { url, body: JSON.parse(init.body) as Record<string, unknown> }
+	}
+
+	it('books a refund intent in the org’s region and parses the answer', async () => {
+		fetchMock.mockResolvedValue(jsonResponse({ ...REFUND, replayed: false }))
+		const intent = await requestRestaurantOrderRefundIntent({
+			dataRegion: 'ksa',
+			...INTENT,
+		})
+		expect(intent).toEqual({ ...REFUND, replayed: false })
+		expect(sent()).toEqual({
+			url: 'http://ksa-tenant-api.test/api/orders/refund-intent',
+			body: INTENT,
+		})
+	})
+
+	it('refuses to send a body the contract does not allow', async () => {
+		const error = await expectRegionalError(
+			requestRestaurantOrderRefundIntent({
+				dataRegion: 'us',
+				...INTENT,
+				full: true,
+			}),
+		)
+		expect(error).toMatchObject({ code: 'invalid_request', httpStatus: 400 })
+		expect(fetchMock).not.toHaveBeenCalled()
+	})
+
+	it('keeps the region’s refusal code and status, plus refundableCents only', async () => {
+		fetchMock.mockResolvedValue(
+			jsonResponse(
+				{
+					error: 'refund_exceeds_payment',
+					refundableCents: 250,
+					contact: 'never read',
+				},
+				409,
+			),
+		)
+		const error = await expectRegionalError(
+			requestRestaurantOrderRefundIntent({ dataRegion: 'us', ...INTENT }),
+		)
+		expect(error).toMatchObject({
+			code: 'refund_exceeds_payment',
+			httpStatus: 409,
+			refundableCents: 250,
+			retryable: false,
+		})
+		for (const [code, status] of [
+			['refund_pending', 409],
+			['payment_disputed', 409],
+			['order_not_found', 404],
+		] as const) {
+			fetchMock.mockResolvedValue(jsonResponse({ error: code }, status))
+			const refused = await expectRegionalError(
+				requestRestaurantOrderRefundIntent({ dataRegion: 'us', ...INTENT }),
+			)
+			expect(refused).toMatchObject({ code, httpStatus: status })
+			expect(refused.refundableCents).toBeUndefined()
+		}
+	})
+
+	it('refuses an answer for another order or a malformed one', async () => {
+		fetchMock.mockResolvedValue(
+			jsonResponse({ ...REFUND, orderId: 'ord_2', replayed: false }),
+		)
+		expect(
+			await expectRegionalError(
+				requestRestaurantOrderRefundIntent({ dataRegion: 'us', ...INTENT }),
+			),
+		).toMatchObject({ code: 'org_mismatch' })
+		fetchMock.mockResolvedValue(jsonResponse({ refundId: 'rf_1' }))
+		expect(
+			await expectRegionalError(
+				requestRestaurantOrderRefundIntent({ dataRegion: 'us', ...INTENT }),
+			),
+		).toMatchObject({ code: 'invalid_refund_response' })
+	})
+
+	it('reports a refund status and a dispute with ids only', async () => {
+		fetchMock.mockResolvedValue(
+			jsonResponse({
+				refundId: 'rf_1',
+				orderId: 'ord_1',
+				status: 'succeeded',
+				applied: true,
+			}),
+		)
+		expect(
+			await reportRestaurantOrderRefundStatus({
+				dataRegion: 'us',
+				orgId: 'org_1',
+				refundId: 'rf_1',
+				providerRefundId: 're_1',
+				status: 'succeeded',
+				amountCents: 1000,
+				currency: 'USD',
+			}),
+		).toMatchObject({ applied: true })
+		expect(sent()).toEqual({
+			url: 'http://us-tenant-api.test/api/orders/refund-status',
+			body: {
+				orgId: 'org_1',
+				refundId: 'rf_1',
+				providerRefundId: 're_1',
+				status: 'succeeded',
+				amountCents: 1000,
+				currency: 'USD',
+			},
+		})
+
+		fetchMock.mockResolvedValue(
+			jsonResponse({
+				orderId: 'ord_1',
+				disputeStatus: 'open',
+				disputed: true,
+				applied: true,
+			}),
+		)
+		await reportRestaurantOrderDisputeStatus({
+			dataRegion: 'us',
+			orgId: 'org_1',
+			orderId: 'ord_1',
+			processor: 'connect',
+			status: 'open',
+		})
+		expect(sent()).toEqual({
+			url: 'http://us-tenant-api.test/api/orders/dispute-status',
+			body: {
+				orgId: 'org_1',
+				orderId: 'ord_1',
+				processor: 'connect',
+				status: 'open',
+			},
+		})
+	})
+
+	it('reads pending refunds', async () => {
+		fetchMock.mockResolvedValue(jsonResponse({ refunds: [REFUND] }))
+		expect(
+			await fetchPendingRestaurantOrderRefunds({
+				dataRegion: 'us',
+				orgId: 'org_1',
+				refundId: 'rf_1',
+				limit: 1,
+			}),
+		).toEqual([REFUND])
+		expect(sent()).toEqual({
+			url: 'http://us-tenant-api.test/api/orders/refunds-pending',
+			body: { orgId: 'org_1', refundId: 'rf_1', limit: 1 },
+		})
+	})
+
+	it('marks unreachable and 5xx regions retryable', async () => {
+		fetchMock.mockRejectedValue(new Error('ECONNREFUSED'))
+		expect(
+			await expectRegionalError(
+				fetchPendingRestaurantOrderRefunds({
+					dataRegion: 'us',
+					orgId: 'org_1',
+				}),
+			),
+		).toMatchObject({ code: 'regional_unreachable', retryable: true })
 	})
 })

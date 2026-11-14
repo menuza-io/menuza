@@ -11,6 +11,7 @@ import {
 	receiptOrder,
 	sweepExpiredHolds,
 	verifyReceiptToken,
+	type OrderRefundGlance,
 } from './order-service.ts'
 
 /**
@@ -131,8 +132,11 @@ export async function authorizeGuestOrder(
  * (guests write allergies, names and phone numbers there). Everything else is
  * the same.
  */
-export function linkReceiptOrder(order: RestaurantOrder) {
-	const full = receiptOrder(order)
+export function linkReceiptOrder(
+	order: RestaurantOrder,
+	refunds: OrderRefundGlance | null = null,
+) {
+	const full = receiptOrder(order, refunds)
 	return {
 		id: full.id,
 		number: full.number,
@@ -153,6 +157,12 @@ export function linkReceiptOrder(order: RestaurantOrder) {
 		promisedUntil: full.promisedUntil,
 		tipPercent: full.tipPercent,
 		refundedCents: full.refundedCents,
+		// Refund progress and who cancelled carry no PII; the reason is only
+		// ever a guest-visible one (out of stock, kitchen closed) or null.
+		refundStatus: full.refundStatus,
+		refundPendingCents: full.refundPendingCents,
+		cancelledBy: full.cancelledBy,
+		cancelReason: full.cancelReason,
 		fulfillment: full.fulfillment,
 		locale: full.locale,
 		createdAt: full.createdAt,

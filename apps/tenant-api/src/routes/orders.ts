@@ -44,6 +44,7 @@ import { rateLimitByKey } from '../lib/rate-limit.ts'
 import { orgMatchesNodeRegion } from '../lib/region.ts'
 import { getBearerToken, syncEnvFromProcess } from '../lib/secrets.ts'
 import { quoteOrderDiscounts } from '../services/discount-quote.ts'
+import { orderRefundGlance } from '../services/order-refund-service.ts'
 import {
 	authorizeGuestOrder,
 	linkReceiptOrder,
@@ -852,10 +853,11 @@ async function guestReceiptResponse(
 		if (!access.ok) return orderNotFoundResponse()
 		// Only the placing device's receipt token reads the guest's contact
 		// details and address; the forwardable link gets the reduced body.
+		const refunds = await orderRefundGlance(orgId, access.order)
 		const order =
 			access.via === 'receipt'
-				? receiptOrder(access.order)
-				: linkReceiptOrder(access.order)
+				? receiptOrder(access.order, refunds)
+				: linkReceiptOrder(access.order, refunds)
 		return c.json({ order }, 200, noStoreHeaders())
 	} catch (error) {
 		console.error(
@@ -909,8 +911,12 @@ publicOrderRoutes.get('/:id', async (c) => {
 			receiptToken,
 		)
 		if (!result.ok) return orderFailureResponse(result.failure)
+		const refunds = await orderRefundGlance(
+			organization.organization.id,
+			result.data.order,
+		)
 		return c.json(
-			{ order: receiptOrder(result.data.order) },
+			{ order: receiptOrder(result.data.order, refunds) },
 			200,
 			noStoreHeaders(),
 		)

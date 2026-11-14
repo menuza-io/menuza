@@ -2,13 +2,14 @@ import { type ReservationsContext } from '@repo/reservations'
 import {
 	getTenantDb,
 	orderMessages,
+	restaurantOrderRefunds,
 	restaurantOrders,
 	type OrderMessageKind,
 	type RestaurantOrder,
 	type TenantDatabase,
 } from '@repo/tenant-db'
 import { sendSms } from '@repo/sms'
-import { and, asc, eq, gt, inArray, lte, min, ne } from 'drizzle-orm'
+import { and, asc, eq, gt, inArray, lte, min, ne, sql } from 'drizzle-orm'
 import { forEachWithBudget } from '../lib/concurrency.ts'
 import { errorLogFields } from '../lib/error-log.ts'
 import { queryInChunks } from '../lib/chunked-in.ts'
@@ -201,6 +202,12 @@ async function sendForOrder(input: {
 		order,
 		timeZone,
 		linkUrl,
+		// A cancel with a refund books it in the same write: the message says
+		// the money is on its way while the provider has not answered yet.
+		refundPendingCents:
+			kind === 'cancelled'
+				? await pendingRefundCentsOf(orgId, order.id)
+				: undefined,
 	})
 	const result = await sendTenantEmail({
 		to: order.contactEmail!,
@@ -214,6 +221,26 @@ async function sendForOrder(input: {
 		},
 	})
 	if (result.status === 'error') throw new SendFailure('email_failed')
+}
+
+/** Provider refunds of the order still waiting (amounts only). */
+async function pendingRefundCentsOf(
+	orgId: string,
+	orderId: string,
+): Promise<number> {
+	const db = await getTenantDb(orgId)
+	const [row] = await db
+		.select({
+			total: sql<number>`coalesce(sum(${restaurantOrderRefunds.amountCents}), 0)`,
+		})
+		.from(restaurantOrderRefunds)
+		.where(
+			and(
+				eq(restaurantOrderRefunds.orderId, orderId),
+				eq(restaurantOrderRefunds.status, 'pending'),
+			),
+		)
+	return Number(row?.total ?? 0)
 }
 
 async function setRow(

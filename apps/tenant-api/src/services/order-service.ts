@@ -7,6 +7,7 @@ import {
 	canonicalOrderRequest,
 	computePromisedTime,
 	disputeBlocksRefund,
+	guestVisibleCancelReason,
 	priceRestaurantOrder,
 	readGuestMessagesPolicy,
 	readLargeOrderRule,
@@ -18,6 +19,10 @@ import {
 	type PublicOrderingOptions,
 	type RestaurantOrderContext,
 	type OrderLoyaltySelection,
+	type OrderProviderRefund,
+	type OrderRefundOrigin,
+	type OrderRefundSummaryStatus,
+	type OrderStoredCancelReason,
 	type RestaurantOrderError,
 	type RestaurantOrderRequest,
 	type VerifiedDeliveryQuote,
@@ -37,6 +42,7 @@ import {
 	qrTabs,
 	RESTAURANT_ORDER_ACTIVE_STATUSES,
 	runTenantTransaction,
+	restaurantOrderRefunds,
 	restaurantOrders,
 	restaurantOrderReservations,
 	type RestaurantOrder,
@@ -52,6 +58,7 @@ import {
 	syncEnvFromProcess,
 	timingSafeEqualString,
 } from '../lib/secrets.ts'
+import { kickOrderRefundExecute } from '../lib/order-refund-kick.ts'
 import { deriveTabToken } from '../lib/qr-tokens.ts'
 import { retryOnSqliteBusy } from '../lib/sqlite-retry.ts'
 import { createOrgLock } from '../lib/concurrency.ts'
@@ -96,6 +103,12 @@ import {
 	queueOrderStatusMessages,
 } from './order-messages.ts'
 import { applyPromisedDelay } from './order-promised-time.ts'
+import {
+	bookOrderProviderRefundInTx,
+	orderCarriesLoyalty,
+	orderProviderRefundView,
+	orderRefundSummary,
+} from './order-refund-book.ts'
 import {
 	readProgramInTx,
 	readRewardInTx,
@@ -1655,6 +1668,12 @@ export async function applyPaymentEvent(input: {
 	status: 'paid' | 'failed' | 'expired'
 	amountCents: number
 	currency: string
+	/**
+	 * The provider's id of the payment (Stripe PaymentIntent `pi_…`,
+	 * Checkout.com `pay_…`) when the event carries one; stored on a paid
+	 * event so a refund can name the payment.
+	 */
+	paymentId?: string
 }): Promise<OrderServiceResult<PaymentEventResult>> {
 	const {
 		orgId,
@@ -1757,6 +1776,7 @@ export async function applyPaymentEvent(input: {
 									paymentStatus: 'paid',
 									paidAt: now,
 									paymentEventAt: now,
+									paymentId: input.paymentId ?? order.paymentId,
 									updatedAt: now,
 								})
 								.where(eq(restaurantOrders.id, order.id))
@@ -1801,6 +1821,7 @@ export async function applyPaymentEvent(input: {
 									paymentStatus: 'paid',
 									paidAt: now,
 									paymentEventAt: now,
+									paymentId: input.paymentId ?? order.paymentId,
 									updatedAt: now,
 								})
 								.where(eq(restaurantOrders.id, order.id))
@@ -1940,6 +1961,18 @@ export type OperatorPatchInput =
 	| {
 			status: RestaurantOrder['status']
 			markPaid?: boolean
+			/**
+			 * Why it is cancelled (`status: 'cancelled'` only); required for a
+			 * paid online order (`cancel_reason_required`).
+			 */
+			cancelReason?: OrderStoredCancelReason
+			/**
+			 * Cancelling a paid online order: `full` books a provider refund of
+			 * everything still refundable in the cancel's own transaction.
+			 */
+			refund?: 'none' | 'full'
+			/** Reserved for turning down an order waiting for acceptance (#107). */
+			rejectReason?: OrderStoredCancelReason
 	  }
 	| {
 			/** Push the promised time back (#109); never mixed with a status. */
@@ -1961,16 +1994,74 @@ export type OrderWriteHooks = {
 	) => Promise<void>
 }
 
+/** Who cancels, and whether they may start a provider refund with it. */
+export type CancelRefundOptions = {
+	/**
+	 * May start a provider refund (`refund: 'full'`): the App's
+	 * `refundProvider` token claim, Station's refund grant. Without it a cancel
+	 * asking for a refund is refused (403 `refund_forbidden`), not cancelled.
+	 */
+	mayRefund: boolean
+	origin: OrderRefundOrigin
+	/** User id (operator), `staff:<id>` (Station), `guest` or `system`. */
+	actorId: string
+	/** Station has no loyalty grant: an order loyalty tracks is not refunded there. */
+	loyaltyAccess?: { refundLoyalty: boolean; impersonated: boolean }
+	cancelledBy?: 'operator' | 'guest' | 'system'
+}
+
+/**
+ * What became of `refund: 'full'` on a cancel: the booked provider refund
+ * (the App completes it; the region also kicks the App), or the code saying
+ * why none was started. The cancel stands either way.
+ */
+export type CancelRefundOutcome = {
+	refund: OrderProviderRefund | null
+	replayed: boolean
+	code: string | null
+}
+
+/** The idempotency key of the refund a cancel books (one per order). */
+export function cancelRefundKey(orderId: string): string {
+	return `cancel:${orderId}`
+}
+
 export async function updateOperatorOrder(
 	orgId: string,
 	orderId: string,
 	input: OperatorPatchInput,
 	hooks: OrderWriteHooks = {},
 ): Promise<OrderServiceResult<RestaurantOrder>> {
+	const result = await updateOperatorOrderWithRefund(
+		orgId,
+		orderId,
+		input,
+		hooks,
+	)
+	return result.ok ? { ok: true, data: result.data.order } : result
+}
+
+export async function updateOperatorOrderWithRefund(
+	orgId: string,
+	orderId: string,
+	input: OperatorPatchInput,
+	hooks: OrderWriteHooks = {},
+	cancel: CancelRefundOptions = {
+		mayRefund: false,
+		origin: 'operator',
+		actorId: 'operator',
+	},
+): Promise<
+	OrderServiceResult<{
+		order: RestaurantOrder
+		refund: CancelRefundOutcome | null
+	}>
+> {
 	const db = await getTenantDb(orgId)
 	const loyalty = loyaltySettleQueue()
 	const inventory = inventorySaleQueue()
 	const messages = orderMessageBatch()
+	let refundOutcome: CancelRefundOutcome | null = null
 
 	const result: OrderServiceResult<RestaurantOrder> = await runExclusive(
 		orgId,
@@ -2012,6 +2103,7 @@ export async function updateOperatorOrder(
 						await hooks.afterWrite?.(tx, order, delayed.order)
 						return { ok: true, data: delayed.order }
 					}
+					refundOutcome = null
 					const patch: Partial<RestaurantOrder> = {}
 
 					if (input.status !== order.status) {
@@ -2026,6 +2118,70 @@ export async function updateOperatorOrder(
 						patch.status = input.status
 						if (input.status === 'completed') patch.completedAt = now
 						if (input.status === 'cancelled') patch.cancelledAt = now
+					}
+
+					const wantsRefund = input.refund === 'full'
+					const paidOnline =
+						order.paymentMethod === 'online' && order.paymentStatus === 'paid'
+					if (
+						input.status === 'cancelled' &&
+						order.status === 'cancelled' &&
+						wantsRefund
+					) {
+						if (!cancel.mayRefund) {
+							return orderFailure(
+								403,
+								'refund_forbidden',
+								'Refunding through the payment provider needs the refund permission.',
+							)
+						}
+						// A repeated cancel (a lost answer): answer the refund it booked.
+						const [booked] = await tx
+							.select()
+							.from(restaurantOrderRefunds)
+							.where(
+								and(
+									eq(restaurantOrderRefunds.orderId, order.id),
+									eq(
+										restaurantOrderRefunds.idempotencyKey,
+										cancelRefundKey(order.id),
+									),
+								),
+							)
+							.limit(1)
+						refundOutcome = booked
+							? {
+									refund: orderProviderRefundView(booked, order),
+									replayed: true,
+									code: null,
+								}
+							: { refund: null, replayed: false, code: 'order_not_refundable' }
+					}
+					if (patch.status === 'cancelled') {
+						if (wantsRefund && order.paymentMethod !== 'online') {
+							return orderFailure(
+								400,
+								'order_not_refundable',
+								'An order paid at handoff is not refunded with the cancel. Record the refund instead.',
+							)
+						}
+						if (wantsRefund && !cancel.mayRefund) {
+							return orderFailure(
+								403,
+								'refund_forbidden',
+								'Refunding through the payment provider needs the refund permission.',
+							)
+						}
+						const reason = input.cancelReason ?? input.rejectReason ?? null
+						if (paidOnline && !reason) {
+							return orderFailure(
+								422,
+								'cancel_reason_required',
+								'Say why this paid order is cancelled.',
+							)
+						}
+						patch.cancelReason = reason
+						patch.cancelledBy = cancel.cancelledBy ?? 'operator'
 					}
 
 					if (input.markPaid) {
@@ -2074,6 +2230,14 @@ export async function updateOperatorOrder(
 						.set({ ...patch, updatedAt: now })
 						.where(eq(restaurantOrders.id, order.id))
 						.returning()
+					if (patch.status === 'cancelled' && input.refund === 'full') {
+						refundOutcome = await bookCancelRefund(
+							tx,
+							updated ?? { ...order, ...patch },
+							cancel,
+							now.getTime(),
+						)
+					}
 					await loyalty.queue(
 						loyaltyTx(tx),
 						{ type: 'restaurant_order', id: order.id },
@@ -2123,7 +2287,49 @@ export async function updateOperatorOrder(
 	await loyalty.settle(orgId)
 	await inventory.settle(orgId)
 	messages.deliver(orgId)
-	return result
+	if (!result.ok) return result
+	const booked = refundOutcome as CancelRefundOutcome | null
+	if (booked?.refund && !booked.replayed) {
+		// The App caller completes it from the answer; the kick covers a lost one.
+		kickOrderRefundExecute(orgId, [booked.refund.refundId])
+	}
+	return { ok: true, data: { order: result.data, refund: booked } }
+}
+
+/**
+ * Books the full provider refund a cancel asked for, inside the cancel's
+ * transaction (the order is already `cancelled` in it). Never fails the
+ * cancel: what stops the refund (a dispute, a refund already waiting, nothing
+ * left, loyalty the caller may not move) comes back as a code.
+ */
+async function bookCancelRefund(
+	tx: OrderTx,
+	order: RestaurantOrder,
+	cancel: CancelRefundOptions,
+	now: number,
+): Promise<CancelRefundOutcome> {
+	if (cancel.loyaltyAccess && (await orderCarriesLoyalty(tx, order.id))) {
+		if (cancel.loyaltyAccess.impersonated) {
+			return { refund: null, replayed: false, code: 'impersonation_forbidden' }
+		}
+		if (!cancel.loyaltyAccess.refundLoyalty) {
+			return { refund: null, replayed: false, code: 'loyalty_refund_forbidden' }
+		}
+	}
+	const booked = await bookOrderProviderRefundInTx(tx, order, {
+		amount: { full: true },
+		note: null,
+		idempotencyKey: cancelRefundKey(order.id),
+		origin: cancel.origin,
+		actorId: cancel.actorId,
+		now,
+	})
+	if (!booked.ok) return { refund: null, replayed: false, code: booked.code }
+	return {
+		refund: orderProviderRefundView(booked.refund, order),
+		replayed: booked.replayed,
+		code: null,
+	}
 }
 
 export async function listOperatorOrders(
@@ -2339,12 +2545,38 @@ export function publicOrderSummary(order: RestaurantOrder) {
 	}
 }
 
-export function receiptOrder(order: RestaurantOrder) {
+/**
+ * The order's refunds at a glance for the guest and operator views: the
+ * summary status and what still waits on the payment provider. Built from the
+ * refund rows (`orderRefundSummary`); without them only `refundedCents` is
+ * known and nothing reads as waiting.
+ */
+export type OrderRefundGlance = {
+	refundStatus: OrderRefundSummaryStatus
+	pendingCents: number
+}
+
+export function receiptOrder(
+	order: RestaurantOrder,
+	refunds: OrderRefundGlance | null = null,
+) {
+	const glance = refunds ?? {
+		refundStatus: orderRefundSummary(order, []).refundStatus,
+		pendingCents: 0,
+	}
 	return {
 		...publicOrderSummary(order),
 		tipPercent: order.tipPercent,
-		/** Amount recorded as returned (the payment status stays `paid`). */
+		/** Amount returned so far (succeeded refunds; the payment status stays `paid`). */
 		refundedCents: order.refundedCents,
+		/** `pending` while a provider refund waits; `failed`, `partial`, `full`, `none`. */
+		refundStatus: glance.refundStatus,
+		/** A provider refund on its way (not in `refundedCents` yet). */
+		refundPendingCents: glance.pendingCents,
+		/** Who cancelled: `operator`, `guest` or `system`; null otherwise. */
+		cancelledBy: order.cancelledBy ?? null,
+		/** Only `out_of_stock` / `kitchen_closed` are told to the guest. */
+		cancelReason: guestVisibleCancelReason(order.cancelReason),
 		fulfillment: order.fulfillment,
 		locale: order.locale,
 		createdAt: order.createdAt ? order.createdAt.toISOString() : null,
@@ -2389,9 +2621,10 @@ export function receiptOrder(order: RestaurantOrder) {
 export function operatorOrder(
 	order: RestaurantOrder,
 	customerKey: string | null = null,
+	refunds: OrderRefundGlance | null = null,
 ) {
 	return {
-		...receiptOrder(order),
+		...receiptOrder(order, refunds),
 		id: order.id,
 		orgId: order.orgId,
 		customerId: order.customerId,

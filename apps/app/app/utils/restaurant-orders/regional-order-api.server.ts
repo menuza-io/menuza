@@ -8,6 +8,21 @@
  */
 
 import { parseTabOrderRef } from '@repo/common/qr-ordering'
+import {
+	type OrderDisputeStatusRequest,
+	orderDisputeStatusRequestSchema,
+	type OrderProviderRefund,
+	type OrderRefundIntentRequest,
+	orderRefundIntentRequestSchema,
+	type OrderRefundIntentResponse,
+	orderRefundIntentResponseSchema,
+	orderRefundsPendingRequestSchema,
+	orderRefundsPendingResponseSchema,
+	type OrderRefundStatusRequest,
+	orderRefundStatusRequestSchema,
+	type OrderRefundStatusResponse,
+	orderRefundStatusResponseSchema,
+} from '@repo/common/restaurant-orders'
 import { ENV } from 'varlock/env'
 import { z } from 'zod'
 import { getRegionalTenantApiUrl } from '#app/utils/sites/tenant-api.server.ts'
@@ -17,6 +32,12 @@ const COMMAND_TIMEOUT_MS = 10_000
 
 /** Error raised when the regional tenant-api rejects or cannot serve a call. */
 export class RegionalOrderApiError extends Error {
+	/**
+	 * What is still refundable, when the region refused an over-refund
+	 * (`refund_exceeds_payment`). The only detail ever read from an error body.
+	 */
+	public refundableCents?: number
+
 	constructor(
 		public readonly code: string,
 		public readonly httpStatus: number,
@@ -78,6 +99,10 @@ async function callRegionalOrderCommand(options: {
 		| '/api/orders/quote'
 		| '/api/orders/payment-session'
 		| '/api/orders/payment-status'
+		| '/api/orders/refund-intent'
+		| '/api/orders/refund-status'
+		| '/api/orders/dispute-status'
+		| '/api/orders/refunds-pending'
 	body: Record<string, unknown>
 }): Promise<unknown> {
 	// Resolves (and validates) the regional URL; throws when the region has no
@@ -130,11 +155,21 @@ async function callRegionalOrderCommand(options: {
 		const payload = (await response.json().catch(() => null)) as {
 			error?: string
 			message?: string
+			refundableCents?: unknown
 		} | null
-		throw new RegionalOrderApiError(
+		const error = new RegionalOrderApiError(
 			payload?.error || payload?.message || `http_${response.status}`,
 			response.status,
 		)
+		const refundable = payload?.refundableCents
+		if (
+			typeof refundable === 'number' &&
+			Number.isInteger(refundable) &&
+			refundable >= 0
+		) {
+			error.refundableCents = refundable
+		}
+		throw error
 	}
 
 	return response.json().catch(() => {
@@ -270,4 +305,110 @@ export async function notifyRestaurantOrderPaymentStatus(options: {
 				: {}),
 		},
 	})
+}
+
+/* ------------------------------------------------------------------ */
+/* Provider refunds and disputes (#80)                                 */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Parse an outgoing system body with its shared contract before it leaves:
+ * the region refuses unknown keys, so a caller bug fails here, loudly, and
+ * never reaches the region with something it did not mean to send.
+ */
+function outgoing<T>(
+	schema: { safeParse: (value: unknown) => { success: boolean; data?: T } },
+	body: unknown,
+): T {
+	const parsed = schema.safeParse(body)
+	if (!parsed.success) throw new RegionalOrderApiError('invalid_request', 400)
+	return parsed.data as T
+}
+
+/**
+ * Book a provider refund in the region (`pending`, a reservation of the
+ * amount). A replay with the same idempotency key returns the same refund,
+ * whatever its status now. Region refusals keep their code and status
+ * (`refund_pending`, `payment_disputed`, `refund_exceeds_payment` with
+ * `refundableCents`, `order_not_refundable`, `idempotency_conflict`, 404).
+ */
+export async function requestRestaurantOrderRefundIntent(
+	options: { dataRegion: string | null | undefined } & OrderRefundIntentRequest,
+): Promise<OrderRefundIntentResponse> {
+	const { dataRegion, ...request } = options
+	const body = outgoing(orderRefundIntentRequestSchema, request)
+	const raw = await callRegionalOrderCommand({
+		dataRegion,
+		path: '/api/orders/refund-intent',
+		body,
+	})
+	const parsed = orderRefundIntentResponseSchema.safeParse(raw)
+	if (!parsed.success) {
+		throw new RegionalOrderApiError('invalid_refund_response', 502)
+	}
+	if (parsed.data.orderId !== request.orderId) {
+		throw new RegionalOrderApiError('org_mismatch', 502)
+	}
+	return parsed.data
+}
+
+/**
+ * Report a provider's answer for one refund. Idempotent in the region: only
+ * the first final status moves money, a replay answers `applied: false`.
+ */
+export async function reportRestaurantOrderRefundStatus(
+	options: { dataRegion: string | null | undefined } & OrderRefundStatusRequest,
+): Promise<OrderRefundStatusResponse> {
+	const { dataRegion, ...request } = options
+	const body = outgoing(orderRefundStatusRequestSchema, request)
+	const raw = await callRegionalOrderCommand({
+		dataRegion,
+		path: '/api/orders/refund-status',
+		body,
+	})
+	const parsed = orderRefundStatusResponseSchema.safeParse(raw)
+	if (!parsed.success) {
+		throw new RegionalOrderApiError('invalid_refund_response', 502)
+	}
+	return parsed.data
+}
+
+/** Report a dispute opening or closing on an order's (or a tab's) payment. */
+export async function reportRestaurantOrderDisputeStatus(
+	options: {
+		dataRegion: string | null | undefined
+	} & OrderDisputeStatusRequest,
+): Promise<void> {
+	const { dataRegion, ...request } = options
+	const body = outgoing(orderDisputeStatusRequestSchema, request)
+	await callRegionalOrderCommand({
+		dataRegion,
+		path: '/api/orders/dispute-status',
+		body,
+	})
+}
+
+/**
+ * Provider refunds the region still has `pending` (ids and amounts only),
+ * oldest first. `refundId` narrows to one refund.
+ */
+export async function fetchPendingRestaurantOrderRefunds(options: {
+	dataRegion: string | null | undefined
+	orgId: string
+	refundId?: string
+	olderThanMs?: number
+	limit?: number
+}): Promise<OrderProviderRefund[]> {
+	const { dataRegion, ...request } = options
+	const body = outgoing(orderRefundsPendingRequestSchema, request)
+	const raw = await callRegionalOrderCommand({
+		dataRegion,
+		path: '/api/orders/refunds-pending',
+		body,
+	})
+	const parsed = orderRefundsPendingResponseSchema.safeParse(raw)
+	if (!parsed.success) {
+		throw new RegionalOrderApiError('invalid_refund_response', 502)
+	}
+	return parsed.data.refunds
 }

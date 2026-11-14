@@ -19,16 +19,16 @@ import { getNodeRegion, orgMatchesNodeRegion } from '../lib/region.ts'
 import { readIdempotencyKey } from '../lib/reservations-public-auth.ts'
 import { getBearerToken, getOperatorToken } from '../lib/secrets.ts'
 import {
-	listOrderRefunds,
+	listRefundsForOrders,
 	operatorOrderRefund,
-	pendingRefundCents,
+	operatorOrderRefundFields,
 	recordOrderRefund,
 } from '../services/order-refund-service.ts'
 import {
 	getOperatorOrder,
 	listOperatorOrders,
 	operatorOrder,
-	updateOperatorOrder,
+	updateOperatorOrderWithRefund,
 } from '../services/order-service.ts'
 import {
 	resolveOrderCustomerKeys,
@@ -64,6 +64,13 @@ export type OperatorOrderAuth = {
 	 * `update:loyalty_redemption:any`, never when impersonating.
 	 */
 	refundLoyalty: boolean
+	/**
+	 * May start a refund through the payment provider with a cancel
+	 * (`refund: 'full'` on PATCH): App signs it only for holders of
+	 * `update:order_refund:any`, never when impersonating. Absent reads as
+	 * false (fail closed).
+	 */
+	refundProvider: boolean
 	impersonated: boolean
 }
 
@@ -162,6 +169,7 @@ export async function authenticateOrdersOperator(
 		stationApps?: unknown
 		locationIds?: unknown
 		refundLoyalty?: boolean
+		refundProvider?: boolean
 		impersonated?: boolean
 	}
 	try {
@@ -214,21 +222,44 @@ export async function authenticateOrdersOperator(
 			stationApps: readStationApps(decoded.stationApps),
 			locationIds: readOrderLocationIds(decoded),
 			refundLoyalty: decoded.refundLoyalty === true,
+			// Never with impersonation, whatever the token says.
+			refundProvider:
+				decoded.refundProvider === true && decoded.impersonated !== true,
 			impersonated: decoded.impersonated === true,
 		},
 	}
 }
 
+/**
+ * The operator JSON of each order with its refunds: the rows, what waits on
+ * the payment provider, what is still refundable and the summary status.
+ */
 async function withCustomerKeys(
 	auth: OperatorOrderAuth,
 	orders: RestaurantOrder[],
 ) {
-	if (!auth.link.linkCustomers && !auth.link.linkGuests) {
-		return orders.map((order) => operatorOrder(order))
-	}
-	const db = await getTenantDb(auth.orgId)
-	const keys = await resolveOrderCustomerKeys(db, orders, auth.link)
-	return orders.map((order) => operatorOrder(order, keys.get(order.id) ?? null))
+	const refunds = await listRefundsForOrders(
+		auth.orgId,
+		orders.map((order) => order.id),
+	)
+	const keys =
+		auth.link.linkCustomers || auth.link.linkGuests
+			? await resolveOrderCustomerKeys(
+					await getTenantDb(auth.orgId),
+					orders,
+					auth.link,
+				)
+			: null
+	return orders.map((order) => {
+		const fields = operatorOrderRefundFields(order, refunds.get(order.id) ?? [])
+		return {
+			...operatorOrder(order, keys?.get(order.id) ?? null, {
+				refundStatus: fields.refundStatus,
+				pendingCents: fields.refundPendingCents,
+			}),
+			...fields,
+		}
+	})
 }
 
 /**
@@ -352,18 +383,7 @@ operatorOrderRoutes.get('/:id', async (c) => {
 			return c.json(ORDER_NOT_FOUND, 404, noStoreHeaders())
 		}
 		const [order] = await withCustomerKeys(auth.auth, [result.data])
-		const refunds = await listOrderRefunds(auth.auth.orgId, result.data.id)
-		return c.json(
-			{
-				order: {
-					...order,
-					refunds: refunds.map(operatorOrderRefund),
-					refundPendingCents: pendingRefundCents(refunds),
-				},
-			},
-			200,
-			noStoreHeaders(),
-		)
+		return c.json({ order }, 200, noStoreHeaders())
 	} catch (error) {
 		console.error(
 			`Failed to load order for org ${auth.auth.orgId}:`,
@@ -401,20 +421,45 @@ operatorOrderRoutes.patch('/:id', async (c) => {
 				return c.json(ORDER_NOT_FOUND, 404, noStoreHeaders())
 			}
 		}
-		const result = await updateOperatorOrder(
+		const result = await updateOperatorOrderWithRefund(
 			auth.auth.orgId,
 			c.req.param('id'),
 			parsed.data,
+			{},
+			{
+				mayRefund: auth.auth.refundProvider,
+				origin: 'operator',
+				actorId: auth.auth.userId,
+				cancelledBy: 'operator',
+			},
 		)
 		if (!result.ok) {
 			return c.json(
 				{ error: result.failure.code, message: result.failure.message },
-				result.failure.status as 400 | 404 | 409 | 422 | 500,
+				result.failure.status as 400 | 403 | 404 | 409 | 422 | 500,
 				noStoreHeaders(),
 			)
 		}
-		const [order] = await withCustomerKeys(auth.auth, [result.data])
-		return c.json({ order }, 200, noStoreHeaders())
+		const [order] = await withCustomerKeys(auth.auth, [result.data.order])
+		const refund = result.data.refund
+		return c.json(
+			{
+				order,
+				// Only when the request asked for `refund: 'full'`: the booked
+				// provider refund for the App to complete (ids and amounts), or
+				// why none was started (the cancel stands either way).
+				...(refund
+					? {
+							refundIntent: refund.refund
+								? { ...refund.refund, replayed: refund.replayed }
+								: null,
+							refundError: refund.code,
+						}
+					: {}),
+			},
+			200,
+			noStoreHeaders(),
+		)
 	} catch (error) {
 		console.error(
 			`Failed to update order for org ${auth.auth.orgId}:`,
@@ -429,9 +474,11 @@ operatorOrderRoutes.patch('/:id', async (c) => {
 })
 
 /**
- * Records money returned for a paid online order. A record only: the refund
- * itself happens in the payment provider's dashboard. Loyalty takes its
- * points back from the order's refunded total, whatever its flags say.
+ * Records money returned for an order paid at handoff (cash or card at the
+ * counter). A record only: no provider is called. An order paid online is
+ * refused with 409 `refund_requires_provider` (the App's refund action goes
+ * through the payment provider). Loyalty takes its points back from the
+ * order's refunded total, whatever its flags say.
  */
 operatorOrderRoutes.post('/:id/refunds', async (c) => {
 	const auth = await authenticateOrdersOperator(c, 'orders:write')
@@ -490,17 +537,9 @@ operatorOrderRoutes.post('/:id/refunds', async (c) => {
 			)
 		}
 		const [order] = await withCustomerKeys(auth.auth, [result.data.order])
-		const refunds = await listOrderRefunds(
-			auth.auth.orgId,
-			result.data.order.id,
-		)
 		return c.json(
 			{
-				order: {
-					...order,
-					refunds: refunds.map(operatorOrderRefund),
-					refundPendingCents: pendingRefundCents(refunds),
-				},
+				order,
 				refund: operatorOrderRefund(result.data.refund),
 				replayed: result.data.replayed,
 			},

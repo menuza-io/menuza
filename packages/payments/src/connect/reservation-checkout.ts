@@ -365,6 +365,8 @@ export type ReservationCheckoutRefundOutcome = {
 	status: 'succeeded' | 'pending' | 'failed'
 	refundRef: string | null
 	amountMinor: number
+	/** Checkout.com's first error code for a definitive rejection. */
+	failureCode?: string | null
 }
 
 /**
@@ -413,6 +415,7 @@ export async function createReservationCheckoutRefund(
 				status: 'failed',
 				refundRef: null,
 				amountMinor: input.amountMinor,
+				failureCode: checkoutErrorCode(error),
 			}
 		}
 		throw error

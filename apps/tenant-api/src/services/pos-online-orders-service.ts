@@ -21,6 +21,7 @@ import {
 	onlineOrderInInbox,
 	type PosOnlineOrdersSearch,
 	type PosOnlineOrdersSearchState,
+	type PosOnlineOrderCancelReason,
 	type PosOnlineOrderCommand,
 	type PosOnlineOrderContact,
 	type PosOnlineOrderDetail,
@@ -31,7 +32,11 @@ import {
 	type PosPhonePickup,
 } from '@repo/common/pos-online-orders'
 import { posStaffDisplayName } from '@repo/common/pos-orders'
-import { type PricedOrderLine } from '@repo/common/restaurant-orders'
+import {
+	disputeBlocksRefund,
+	type OrderStoredCancelReason,
+	type PricedOrderLine,
+} from '@repo/common/restaurant-orders'
 import {
 	posOnlineOrderEvents,
 	posOrders,
@@ -39,14 +44,21 @@ import {
 	staffMembers,
 	type PosOnlineOrderEvent,
 	type RestaurantOrder,
+	type RestaurantOrderRefund,
 	type TenantDatabase,
 } from '@repo/tenant-db'
 import { queryInChunks } from '../lib/chunked-in.ts'
 import { maskPhone } from '../lib/reservations-station.ts'
-import { listOrderRefunds, recordOrderRefund } from './order-refund-service.ts'
+import { createProviderRefundIntent } from './order-provider-refund-service.ts'
+import { orderRefundSummary } from './order-refund-book.ts'
+import {
+	listOrderRefunds,
+	listRefundsForOrders,
+	recordOrderRefund,
+} from './order-refund-service.ts'
 import {
 	orderFailure,
-	updateOperatorOrder,
+	updateOperatorOrderWithRefund,
 	type OrderServiceFailure,
 	type OrderServiceResult,
 	type OrderTx,
@@ -120,8 +132,10 @@ function dueAt(order: RestaurantOrder): number | null {
 function summary(
 	order: RestaurantOrder,
 	openedAt: number | null,
+	refunds: readonly RestaurantOrderRefund[] = [],
 ): PosOnlineOrderSummary {
 	const lines = (order.lines ?? []) as PricedOrderLine[]
+	const refundState = orderRefundSummary(order, refunds)
 	return {
 		id: order.id,
 		number: clip(order.number, 40),
@@ -144,6 +158,9 @@ function summary(
 		openedAt,
 		completedAt: ms(order.completedAt),
 		cancelledAt: ms(order.cancelledAt),
+		refundStatus: refundState.refundStatus,
+		refundPendingCents: refundState.pendingCents,
+		disputed: disputeBlocksRefund(order.disputeStatus),
 	}
 }
 
@@ -221,12 +238,20 @@ export async function onlineOrdersFeed(
 			.limit(POS_ONLINE_ORDERS_PHONE_LIMIT),
 	])
 	const kept = rows.slice(0, POS_ONLINE_ORDERS_FEED_LIMIT)
-	const opened = await firstOpened(
-		db,
-		kept.map((order) => order.id),
-	)
+	const [opened, refunds] = await Promise.all([
+		firstOpened(
+			db,
+			kept.map((order) => order.id),
+		),
+		listRefundsForOrders(
+			actor.orgId,
+			kept.map((order) => order.id),
+		),
+	])
 	return {
-		orders: kept.map((order) => summary(order, opened.get(order.id) ?? null)),
+		orders: kept.map((order) =>
+			summary(order, opened.get(order.id) ?? null, refunds.get(order.id)),
+		),
 		phonePickups: phones.map((row): PosPhonePickup => ({
 			id: row.id,
 			number: row.number,
@@ -380,15 +405,21 @@ export async function onlineOrdersSearch(
 		.orderBy(desc(restaurantOrders.createdAt))
 		.limit(POS_ONLINE_ORDERS_SEARCH_LIMIT + 1)
 	const kept = rows.slice(0, POS_ONLINE_ORDERS_SEARCH_LIMIT)
-	const opened = await firstOpened(
-		db,
-		kept.map((order) => order.id),
-	)
+	const [opened, refunds] = await Promise.all([
+		firstOpened(
+			db,
+			kept.map((order) => order.id),
+		),
+		listRefundsForOrders(
+			actor.orgId,
+			kept.map((order) => order.id),
+		),
+	])
 	return {
 		ok: true,
 		data: {
 			results: kept.map((order) =>
-				summary(order, opened.get(order.id) ?? null),
+				summary(order, opened.get(order.id) ?? null, refunds.get(order.id)),
 			),
 			truncated: rows.length > POS_ONLINE_ORDERS_SEARCH_LIMIT,
 			since,
@@ -441,14 +472,14 @@ export async function onlineOrderDetail(
 			.limit(50),
 	])
 	const lines = (order.lines ?? []) as PricedOrderLine[]
+	// Paid online (through the provider) or at handoff (recorded); a tab's
+	// rounds are refunded with the tab. Net of provider refunds still waiting.
 	const refundable =
-		order.paymentMethod === 'online' &&
-		order.paymentStatus === 'paid' &&
-		!order.tabId
-			? Math.max(0, order.totalCents - order.refundedCents)
+		order.paymentStatus === 'paid' && !order.tabId
+			? orderRefundSummary(order, refunds).refundableCents
 			: 0
 	return {
-		...summary(order, opened.get(order.id) ?? null),
+		...summary(order, opened.get(order.id) ?? null, refunds),
 		lines: lines.map((line) => ({
 			name: clip(line.itemName, MENU_TEXT_MAX),
 			variantNames: (line.variantNames ?? []).map((name) =>
@@ -487,6 +518,9 @@ export async function onlineOrderDetail(
 			amountCents: refund.amountCents,
 			note: clip(refund.note ?? '', 400),
 			at: refund.createdAt,
+			kind: refund.kind,
+			status: refund.status,
+			failureCode: clip(refund.failureCode, 64),
 		})),
 		history: history.map(({ event, firstName, lastName }) => ({
 			action: event.action,
@@ -536,16 +570,35 @@ function versionGuard(
 	}
 }
 
+/** Station's cancel reasons as the order stores them (`cancel_reason`). */
+const STATION_CANCEL_REASON: Record<
+	PosOnlineOrderCancelReason,
+	OrderStoredCancelReason
+> = {
+	guest_request: 'guest_asked',
+	out_of_stock: 'out_of_stock',
+	too_busy: 'too_busy',
+	duplicate: 'duplicate',
+	other: 'other',
+}
+
+/** What a cancel asking for a refund answers (absent otherwise). */
+export type OnlineOrderCommandResult = {
+	refundOutcome?: { started: boolean; code: string | null }
+}
+
 /**
  * Opening silences the alert on every tablet at the location; marking ready,
- * handing over and cancelling go through the operator's own transitions.
+ * handing over and cancelling go through the operator's own transitions. A
+ * cancel of a paid online order may also start a full refund through the
+ * payment provider (`refund: 'full'`, refund grant needed).
  */
 export async function onlineOrderCommand(
 	db: TenantDatabase,
 	actor: OnlineOrdersActor,
 	orderId: string,
 	command: PosOnlineOrderCommand,
-): Promise<OrderServiceResult<null>> {
+): Promise<OrderServiceResult<OnlineOrderCommandResult>> {
 	const order = await loadAtLocation(db, actor, orderId)
 	if (!order) return NOT_FOUND()
 
@@ -563,15 +616,20 @@ export async function onlineOrderCommand(
 			)
 			.limit(1)
 		if (!seen) await record(db, actor, order.id, 'opened')
-		return { ok: true, data: null }
+		return { ok: true, data: {} }
 	}
 	if (command.action === 'reprint') {
 		await record(db, actor, order.id, 'reprinted', { reason: command.ticket })
-		return { ok: true, data: null }
+		return { ok: true, data: {} }
 	}
 
 	let failure: OrderServiceFailure | null = null
-	let patch: { status: 'ready' | 'completed' | 'cancelled'; markPaid?: boolean }
+	let patch: {
+		status: 'ready' | 'completed' | 'cancelled'
+		markPaid?: boolean
+		cancelReason?: OrderStoredCancelReason
+		refund?: 'none' | 'full'
+	}
 	let actions: Array<{
 		action: PosOnlineOrderEvent['action']
 		reason?: string
@@ -592,55 +650,94 @@ export async function onlineOrderCommand(
 				'permission_required',
 				'Ask a manager to cancel this order.',
 			)
-		patch = { status: 'cancelled' }
+		else if (command.refund === 'full' && !actor.grants.refund)
+			failure = forbidden(
+				'permission_required',
+				'Ask a manager to refund this order.',
+			)
+		patch = {
+			status: 'cancelled',
+			cancelReason: STATION_CANCEL_REASON[command.reason],
+			...(command.refund ? { refund: command.refund } : {}),
+		}
 		actions = [{ action: 'cancelled', reason: command.reason }]
 	}
 	if (failure) return { ok: false, failure }
 
 	const guard = versionGuard(actor, command.expectedVersion)
-	const result = await updateOperatorOrder(actor.orgId, order.id, patch, {
-		guard: (current) => {
-			const refused = guard?.(current)
-			if (refused) return refused
-			// Handed over is the only way Station completes an order, and one paid at
-			// handoff is never handed over before the payment is recorded.
-			if (
-				patch.status === 'completed' &&
-				!patch.markPaid &&
-				handoffNeedsPayment({
-					paymentMethod: current.paymentMethod,
-					paymentStatus: current.paymentStatus,
-					onTab: Boolean(current.tabId),
-				})
-			)
-				return orderFailure(
-					409,
-					'payment_required',
-					'Record the payment taken at handoff first.',
-				).failure
-			if (patch.status === current.status) return STALE()
-			return null
-		},
-		afterWrite: async (tx, before, after) => {
-			const at = Date.now()
-			if (before.paymentStatus !== 'paid' && after.paymentStatus === 'paid')
-				await record(tx, actor, order.id, 'paid', {}, at)
-			for (const entry of actions)
-				await record(
-					tx,
-					actor,
-					order.id,
-					entry.action,
-					{ reason: entry.reason ?? null },
-					at,
+	const result = await updateOperatorOrderWithRefund(
+		actor.orgId,
+		order.id,
+		patch,
+		{
+			guard: (current) => {
+				const refused = guard?.(current)
+				if (refused) return refused
+				// Handed over is the only way Station completes an order, and one paid at
+				// handoff is never handed over before the payment is recorded.
+				if (
+					patch.status === 'completed' &&
+					!patch.markPaid &&
+					handoffNeedsPayment({
+						paymentMethod: current.paymentMethod,
+						paymentStatus: current.paymentStatus,
+						onTab: Boolean(current.tabId),
+					})
 				)
+					return orderFailure(
+						409,
+						'payment_required',
+						'Record the payment taken at handoff first.',
+					).failure
+				if (patch.status === current.status) return STALE()
+				return null
+			},
+			afterWrite: async (tx, before, after) => {
+				const at = Date.now()
+				if (before.paymentStatus !== 'paid' && after.paymentStatus === 'paid')
+					await record(tx, actor, order.id, 'paid', {}, at)
+				for (const entry of actions)
+					await record(
+						tx,
+						actor,
+						order.id,
+						entry.action,
+						{ reason: entry.reason ?? null },
+						at,
+					)
+			},
 		},
-	})
+		{
+			mayRefund: actor.grants.refund,
+			origin: 'station',
+			// A Station person, never an App user id: `staff:<id>` like the host stand.
+			actorId: `staff:${actor.staffId}`,
+			// Taking points back needs an App loyalty grant no till session carries.
+			loyaltyAccess: { refundLoyalty: false, impersonated: false },
+			cancelledBy: 'operator',
+		},
+	)
 	if (!result.ok) return result
-	return { ok: true, data: null }
+	const refund = result.data.refund
+	return {
+		ok: true,
+		data: refund
+			? {
+					refundOutcome: {
+						started: Boolean(refund.refund),
+						code: refund.code,
+					},
+				}
+			: {},
+	}
 }
 
-/** Records a refund with the operator's rules; loyalty never moves from a till. */
+/**
+ * A refund from the till, with the operator's rules; loyalty never moves from
+ * a till. An order paid online goes back through the payment provider: the
+ * region books the refund (`pending`) and tells the App to execute it. Payment
+ * taken at handoff is recorded (`record`, final at once).
+ */
 export async function onlineOrderRefund(
 	db: TenantDatabase,
 	actor: OnlineOrdersActor,
@@ -658,6 +755,35 @@ export async function onlineOrderRefund(
 		}
 	const order = await loadAtLocation(db, actor, orderId)
 	if (!order) return NOT_FOUND()
+	const guard = versionGuard(actor, request.expectedVersion)
+	if (order.paymentMethod === 'online') {
+		const result = await createProviderRefundIntent({
+			orgId: actor.orgId,
+			orderRef: order.id,
+			amount:
+				'full' in request
+					? { full: true }
+					: { amountCents: request.amountCents },
+			note: request.note,
+			idempotencyKey: `station:${idempotencyKey}`,
+			origin: 'station',
+			actorId: `staff:${actor.staffId}`,
+			guard: (current) => guard?.(current) ?? null,
+			afterBook: async (tx, current, refund) => {
+				await record(tx, actor, order.id, 'refunded', {
+					reason:
+						current.refundedCents + refund.amountCents >= current.totalCents
+							? 'full'
+							: 'partial',
+					amountCents: refund.amountCents,
+				})
+			},
+			loyaltyAccess: { refundLoyalty: false, impersonated: false },
+			kick: true,
+		})
+		if (!result.ok) return result
+		return { ok: true, data: { replayed: result.data.replayed } }
+	}
 	const result = await recordOrderRefund(actor.orgId, order.id, {
 		request:
 			'full' in request
@@ -670,7 +796,7 @@ export async function onlineOrderRefund(
 		// no till session carries: such refunds are recorded in the App.
 		loyaltyAccess: { refundLoyalty: false, impersonated: false },
 		hooks: {
-			guard: versionGuard(actor, request.expectedVersion),
+			guard,
 			afterWrite: async (tx, before, after) => {
 				await record(tx, actor, order.id, 'refunded', {
 					reason: after.refundedCents >= after.totalCents ? 'full' : 'partial',

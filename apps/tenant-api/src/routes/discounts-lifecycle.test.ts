@@ -685,8 +685,10 @@ describe('discount lifecycle', () => {
 		it('gives the use back when the operator cancels the order', async () => {
 			activeContext = menuContext(autoDiscounts({ totalLimit: 1 }))
 			const orderId = await lapsedPaidOrder()
+			// A paid online order is cancelled with a reason (#80).
 			const cancelled = await updateOperatorOrder(orgId, orderId, {
 				status: 'cancelled',
+				cancelReason: 'other',
 			})
 			expect(cancelled.ok).toBe(true)
 			expect((await redemptions(orderId)).map((row) => row.state)).toEqual([

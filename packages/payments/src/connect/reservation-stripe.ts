@@ -292,6 +292,20 @@ export type ReservationRefundOutcome = {
 	status: 'succeeded' | 'pending' | 'failed'
 	refundRef: string | null
 	amountMinor: number
+	/**
+	 * Stripe's code for a definitive rejection (`charge_already_refunded`,
+	 * `charge_disputed`, `amount_too_large`, ...) or a failed refund's
+	 * `failure_reason`. Absent otherwise.
+	 */
+	failureCode?: string | null
+}
+
+/**
+ * The same idempotency key is still being processed by Stripe (two executions
+ * of one refund at once). Never a terminal failure: the other request decides.
+ */
+function isStripeIdempotencyInFlight(error: unknown): boolean {
+	return (error as { code?: unknown } | null)?.code === 'idempotency_key_in_use'
 }
 
 function mapStripeRefundStatus(
@@ -329,15 +343,25 @@ export async function createReservationStripeRefund(
 			},
 			{ idempotencyKey: input.idempotencyKey },
 		)
+		const status = mapStripeRefundStatus(refund.status)
 		return {
-			status: mapStripeRefundStatus(refund.status),
+			status,
 			refundRef: refund.id,
 			amountMinor: refund.amount,
+			...(status === 'failed'
+				? { failureCode: refund.failure_reason ?? 'refund_failed' }
+				: {}),
 		}
 	} catch (error) {
 		if (isStripeTransientError(error)) throw error
 		if (error instanceof Stripe.errors.StripeIdempotencyError) throw error
-		return { status: 'failed', refundRef: null, amountMinor: input.amountMinor }
+		if (isStripeIdempotencyInFlight(error)) throw error
+		return {
+			status: 'failed',
+			refundRef: null,
+			amountMinor: input.amountMinor,
+			failureCode: stripeErrorCode(error),
+		}
 	}
 }
 

@@ -6,6 +6,10 @@ const constructEvent = vi.hoisted(() => vi.fn())
 const restaurantDispatch = vi.hoisted(() => vi.fn())
 const recordShopOrder = vi.hoisted(() => vi.fn())
 const accountUpdated = vi.hoisted(() => vi.fn())
+const restaurantRefund = vi.hoisted(() => vi.fn())
+const restaurantDispute = vi.hoisted(() => vi.fn())
+const reservationRefund = vi.hoisted(() => vi.fn())
+const reservationDispute = vi.hoisted(() => vi.fn())
 
 vi.mock('#app/utils/payments.server.ts', () => ({
 	stripe: { webhooks: { constructEvent } },
@@ -15,8 +19,20 @@ vi.mock('#app/utils/payments.server.ts', () => ({
 
 vi.mock('#app/utils/restaurant-orders/payment-webhooks.server.ts', () => ({
 	handleRestaurantOrderStripeSessionEvent: restaurantDispatch,
+	handleRestaurantOrderStripeRefundEvent: restaurantRefund,
+	handleRestaurantOrderStripeDisputeEvent: restaurantDispute,
 	isRestaurantStripeMetadata: (metadata: Record<string, string> | null) =>
 		metadata?.type === 'restaurant_order',
+	isRestaurantStripeRefund: (refund: { metadata?: Record<string, string> }) =>
+		refund.metadata?.type === 'restaurant_order' &&
+		Boolean(refund.metadata.refundId),
+}))
+vi.mock('#app/utils/reservations/payment-webhooks.server.ts', () => ({
+	handleReservationStripeSessionEvent: vi.fn(),
+	handleReservationStripeRefundEvent: reservationRefund,
+	handleReservationStripeDisputeEvent: reservationDispute,
+	isReservationStripeMetadata: (metadata: Record<string, string> | null) =>
+		metadata?.type?.startsWith('reservation_') ?? false,
 }))
 
 vi.mock('#app/utils/shop.server.ts', () => ({
@@ -68,6 +84,14 @@ describe('stripe webhook restaurant order dispatch', () => {
 		restaurantDispatch.mockReset().mockResolvedValue(undefined)
 		recordShopOrder.mockReset().mockResolvedValue(undefined)
 		accountUpdated.mockReset().mockResolvedValue(undefined)
+		for (const fn of [
+			restaurantRefund,
+			restaurantDispute,
+			reservationRefund,
+			reservationDispute,
+		]) {
+			fn.mockReset().mockResolvedValue(undefined)
+		}
 	})
 
 	it('rejects forged signatures without dispatching anything', async () => {
@@ -216,5 +240,81 @@ describe('stripe webhook restaurant order dispatch', () => {
 			data: { object: { id: 'acct_1' } },
 		})
 		expect(accountUpdated).toHaveBeenCalled()
+	})
+
+	describe('refunds and disputes (#80)', () => {
+		const RESTAURANT_REFUND = {
+			id: 're_1',
+			object: 'refund',
+			amount: 1000,
+			currency: 'usd',
+			status: 'succeeded',
+			payment_intent: 'pi_1',
+			metadata: {
+				type: 'restaurant_order',
+				orgId: 'org_1',
+				orderId: 'ord_1',
+				refundId: 'rf_1',
+			},
+		}
+		const RESERVATION_REFUND = {
+			...RESTAURANT_REFUND,
+			id: 're_2',
+			metadata: {
+				type: 'reservation_refund',
+				orgId: 'org_1',
+				reservationId: 'rsv_1',
+				refundRequestId: 'rr_1',
+			},
+		}
+
+		async function send(type: string, object: unknown, account?: string) {
+			const event = { id: 'evt_r', type, data: { object }, account }
+			constructEvent.mockReturnValue(event)
+			return postEvent(event)
+		}
+
+		it('sends restaurant order refunds to the order handler and reservation refunds to theirs', async () => {
+			for (const type of [
+				'refund.updated',
+				'refund.failed',
+				'charge.refund.updated',
+			]) {
+				restaurantRefund.mockClear()
+				reservationRefund.mockClear()
+				expect((await send(type, RESTAURANT_REFUND)).status).toBe(200)
+				expect(restaurantRefund).toHaveBeenCalledWith(RESTAURANT_REFUND)
+				expect(reservationRefund).not.toHaveBeenCalled()
+
+				restaurantRefund.mockClear()
+				expect((await send(type, RESERVATION_REFUND)).status).toBe(200)
+				expect(reservationRefund).toHaveBeenCalledWith(RESERVATION_REFUND)
+				expect(restaurantRefund).not.toHaveBeenCalled()
+			}
+		})
+
+		it('ignores a restaurant refund reported by a connected account', async () => {
+			expect(
+				(await send('refund.updated', RESTAURANT_REFUND, 'acct_x')).status,
+			).toBe(200)
+			expect(restaurantRefund).not.toHaveBeenCalled()
+			expect(reservationRefund).not.toHaveBeenCalled()
+		})
+
+		it('gives every platform dispute to both handlers (each ignores the others)', async () => {
+			const dispute = { id: 'dp_1', payment_intent: 'pi_1', status: 'lost' }
+			for (const type of ['charge.dispute.created', 'charge.dispute.closed']) {
+				restaurantDispute.mockClear()
+				reservationDispute.mockClear()
+				expect((await send(type, dispute)).status).toBe(200)
+				expect(reservationDispute).toHaveBeenCalledWith(dispute, type)
+				expect(restaurantDispute).toHaveBeenCalledWith(dispute, type)
+			}
+		})
+
+		it('answers 500 when the region could not be reached, so Stripe retries', async () => {
+			restaurantRefund.mockRejectedValue(new Error('regional_unreachable'))
+			expect((await send('refund.updated', RESTAURANT_REFUND)).status).toBe(500)
+		})
 	})
 })

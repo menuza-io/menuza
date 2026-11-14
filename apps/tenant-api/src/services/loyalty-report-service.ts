@@ -267,7 +267,8 @@ export async function getLoyaltyReport(
 			),
 		)
 		.get()
-	// Refunds recorded on orders count when loyalty tracks the order.
+	// Refunds of orders loyalty tracks count once they succeeded (a provider
+	// refund still pending or one that failed moved no points).
 	const purchaseLink =
 		locationIds === null
 			? sql`exists (select 1 from ${loyaltyPurchases} where ${loyaltyPurchases.sourceType} = 'restaurant_order' and ${loyaltyPurchases.sourceId} = ${restaurantOrderRefunds.orderId})`
@@ -282,6 +283,7 @@ export async function getLoyaltyReport(
 		.where(
 			and(
 				inWindow(restaurantOrderRefunds.createdAt),
+				eq(restaurantOrderRefunds.status, 'succeeded'),
 				sql`(${purchaseLink} or ${redemptionLink})`,
 			),
 		)

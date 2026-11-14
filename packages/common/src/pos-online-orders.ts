@@ -120,6 +120,19 @@ export const posOnlineOrderSummarySchema = z.strictObject({
 	openedAt: z.number().int().nullable(),
 	completedAt: z.number().int().nullable(),
 	cancelledAt: z.number().int().nullable(),
+	/**
+	 * Refunds at a glance (#80): `pending` while the payment provider has not
+	 * answered, `failed` when the newest one failed (the amount is refundable
+	 * again), else `none` / `partial` / `full` by what came back. Absent from
+	 * an older region.
+	 */
+	refundStatus: z
+		.enum(['none', 'pending', 'failed', 'partial', 'full'])
+		.optional(),
+	/** Provider refunds still waiting (not in `refundedCents` yet). */
+	refundPendingCents: z.number().int().nonnegative().optional(),
+	/** An open or lost payment dispute: refunds are refused. */
+	disputed: z.boolean().optional(),
 })
 export type PosOnlineOrderSummary = z.infer<typeof posOnlineOrderSummarySchema>
 
@@ -271,13 +284,23 @@ export const posOnlineOrderDetailSchema = z.strictObject({
 		discountCents: z.number().int(),
 		loyaltyDiscountCents: z.number().int(),
 		paidAt: z.number().int().nullable(),
-		/** What a refund may still return (online payments only). */
+		/**
+		 * What a refund may still return: what was paid, less what came back and
+		 * what a provider refund still waits on. Online payments are refunded
+		 * through the payment provider; payment taken at handoff is recorded.
+		 */
 		refundableCents: z.number().int().nonnegative(),
 		refunds: z.array(
 			z.strictObject({
 				amountCents: z.number().int(),
 				note: z.string().max(400),
 				at: z.number().int(),
+				/** `record` (money given back at the counter) or `provider`. */
+				kind: z.enum(['record', 'provider']).optional(),
+				/** Only `succeeded` refunds count in `refundedCents`. */
+				status: z.enum(['pending', 'succeeded', 'failed']).optional(),
+				/** A failed provider refund's short machine code. */
+				failureCode: z.string().max(64).nullable().optional(),
 			}),
 		),
 		/** Who did what on Station: first names only. */
@@ -293,6 +316,18 @@ export const posOnlineOrderDetailSchema = z.strictObject({
 	}),
 	grants: grantsSchema,
 	serverNow: z.number().int(),
+	/**
+	 * Answer of a cancel that asked for `refund: 'full'`: whether the provider
+	 * refund started, or the code saying why not (`payment_disputed`,
+	 * `refund_pending`, `refund_complete`, `order_not_refundable`,
+	 * `loyalty_refund_forbidden`). The order is cancelled either way.
+	 */
+	refundOutcome: z
+		.strictObject({
+			started: z.boolean(),
+			code: z.string().max(40).nullable(),
+		})
+		.optional(),
 })
 export type PosOnlineOrderDetail = z.infer<
 	typeof posOnlineOrderDetailSchema
@@ -323,6 +358,12 @@ export const posOnlineOrderCommandSchema = z.discriminatedUnion('action', [
 		action: z.literal('cancel'),
 		expectedVersion: versionSchema,
 		reason: z.enum(POS_ONLINE_ORDER_CANCEL_REASONS),
+		/**
+		 * A paid online order: `full` also starts a refund of everything still
+		 * refundable through the payment provider (refund permission needed);
+		 * `none` or absent keeps the money. Not for orders paid at handoff.
+		 */
+		refund: z.enum(['none', 'full']).optional(),
 	}),
 	z.strictObject({
 		action: z.literal('reprint'),

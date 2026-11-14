@@ -1,4 +1,8 @@
-import { isImpersonating } from '@repo/auth'
+import {
+	isImpersonating,
+	ORG_PERMISSIONS,
+	userHasOrganizationPermission,
+} from '@repo/auth'
 import { LOYALTY_PERMISSIONS } from '@repo/loyalty'
 import { data, type LoaderFunctionArgs } from 'react-router'
 import {
@@ -49,6 +53,17 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		(await getUserLoyaltyGrants(userId, organization.id)).includes(
 			LOYALTY_PERMISSIONS.UPDATE_LOYALTY_REDEMPTION,
 		)
+	// Cancelling a paid online order with a refund returns money through the
+	// payment provider: only for holders of the order refund permission, and
+	// never while an admin is impersonating.
+	const refundProvider =
+		scope === 'orders:write' &&
+		!impersonated &&
+		(await userHasOrganizationPermission(
+			userId,
+			organization.id,
+			ORG_PERMISSIONS.UPDATE_ORDER_REFUND_ANY,
+		))
 	const claims = {
 		...(link.linkCustomers || link.linkGuests ? link : {}),
 		...(stationApps &&
@@ -58,6 +73,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		locationIds,
 		...(impersonated ? { impersonated: true } : {}),
 		...(refundLoyalty ? { refundLoyalty: true } : {}),
+		...(refundProvider ? { refundProvider: true } : {}),
 	}
 	const { jwt, tenantApiUrl } = await getOperatorTenantClient(
 		request,

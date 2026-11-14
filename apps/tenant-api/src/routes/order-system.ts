@@ -2,9 +2,13 @@ import { Hono, type Context } from 'hono'
 
 import { parseTabOrderRef } from '@repo/common/qr-ordering'
 import {
+	orderDisputeStatusRequestSchema,
 	orderPaymentSessionRequestSchema,
 	orderPaymentStatusRequestSchema,
 	orderQuoteRequestSchema,
+	orderRefundIntentRequestSchema,
+	orderRefundsPendingRequestSchema,
+	orderRefundStatusRequestSchema,
 } from '@repo/common/restaurant-orders'
 import { TENANT_ORG_ID_PATTERN } from '@repo/tenant-db'
 
@@ -16,6 +20,12 @@ import {
 	getInternalCommandToken,
 	timingSafeEqualString,
 } from '../lib/secrets.ts'
+import {
+	applyDisputeStatus,
+	applyProviderRefundStatus,
+	createProviderRefundIntent,
+	listPendingProviderRefunds,
+} from '../services/order-provider-refund-service.ts'
 import {
 	applyPaymentEvent,
 	bindPaymentSession,
@@ -97,10 +107,18 @@ function failureResponse(
 		status: number
 		code: string
 		message: string
+		details?: Record<string, unknown>
 	},
 ) {
 	return c.json(
-		{ error: failure.code, message: failure.message },
+		{
+			error: failure.code,
+			message: failure.message,
+			// Machine extras only (e.g. `refundableCents`), never request input.
+			...(failure.details && typeof failure.details.refundableCents === 'number'
+				? { refundableCents: failure.details.refundableCents }
+				: {}),
+		},
 		failure.status as 400 | 401 | 403 | 404 | 409 | 422 | 500 | 503,
 	)
 }
@@ -241,6 +259,7 @@ orderSystemRoutes.post('/payment-status', async (c) => {
 					status: parsed.data.status,
 					amountCents: parsed.data.amountCents,
 					currency: parsed.data.currency,
+					paymentId: parsed.data.paymentId,
 				})
 		if (!result.ok) return failureResponse(c, result.failure)
 		return c.json({
@@ -253,6 +272,172 @@ orderSystemRoutes.post('/payment-status', async (c) => {
 		console.error(
 			`Payment status failed for org ${parsed.data.orgId}:`,
 			error instanceof Error ? error.message : error,
+		)
+		return c.json({ error: 'internal_error' }, 500)
+	}
+})
+
+// ---------------------------------------------------------------------------
+// Provider refunds (#80). The region books and settles; the App calls the
+// provider. Ids, amounts, currency, processor and provider ids only, in every
+// answer and log line. Payment money is never stopped by the QR kill switch.
+// ---------------------------------------------------------------------------
+
+/** Parses, checks the token, the org id and the org's region. */
+async function systemRequest<T extends { orgId: string }>(
+	c: Context,
+	schema: {
+		safeParse: (
+			value: unknown,
+		) => { success: true; data: T } | { success: false }
+	},
+	message: string,
+): Promise<{ data: T } | { error: Response }> {
+	const denied = checkSystemAuth(c)
+	if (denied) return { error: denied }
+	const parsed = schema.safeParse(await c.req.json().catch(() => null))
+	if (!parsed.success) {
+		return { error: c.json({ error: 'invalid_request', message }, 400) }
+	}
+	if (!orgIdSchema.test(parsed.data.orgId)) {
+		return {
+			error: c.json(
+				{ error: 'invalid_request', message: 'Invalid orgId' },
+				400,
+			),
+		}
+	}
+	const regionDenied = await assertOrgRegion(c, parsed.data.orgId)
+	if (regionDenied) return { error: regionDenied }
+	return { data: parsed.data }
+}
+
+/**
+ * Books a `pending` provider refund of a paid online order (or of one online
+ * payment of a QR tab: `orderId = 'tab:<id>'`, `tabPaymentId` for a payment
+ * kept for review). Answers the refund (`orderRefundIntentResponseSchema`),
+ * 201 when new and 200 for a replay of the same key and body.
+ */
+orderSystemRoutes.post('/refund-intent', async (c) => {
+	const request = await systemRequest(
+		c,
+		orderRefundIntentRequestSchema,
+		'Invalid refund request',
+	)
+	if ('error' in request) return request.error
+	const body = request.data
+	try {
+		const result = await createProviderRefundIntent({
+			orgId: body.orgId,
+			orderRef: body.orderId,
+			tabPaymentId: body.tabPaymentId,
+			amount:
+				body.full === true
+					? { full: true }
+					: { amountCents: body.amountCents ?? 0 },
+			note: body.note,
+			idempotencyKey: body.idempotencyKey,
+			origin: body.actor.origin,
+			actorId: body.actor.actorId ?? body.actor.origin,
+		})
+		if (!result.ok) return failureResponse(c, result.failure)
+		return c.json(
+			{ ...result.data.refund, replayed: result.data.replayed },
+			result.data.replayed ? 200 : 201,
+		)
+	} catch (error) {
+		console.error(
+			`Order refund intent failed for org ${body.orgId}:`,
+			error instanceof Error ? error.name : 'unknown',
+		)
+		return c.json({ error: 'internal_error' }, 500)
+	}
+})
+
+/**
+ * The provider's answer for one refund, by `refundId` or `providerRefundId`.
+ * Idempotent: `applied` is true only for the write that moved it.
+ */
+orderSystemRoutes.post('/refund-status', async (c) => {
+	const request = await systemRequest(
+		c,
+		orderRefundStatusRequestSchema,
+		'Invalid refund status',
+	)
+	if ('error' in request) return request.error
+	const body = request.data
+	try {
+		const result = await applyProviderRefundStatus({
+			orgId: body.orgId,
+			orderId: body.orderId,
+			refundId: body.refundId,
+			providerRefundId: body.providerRefundId,
+			processor: body.processor,
+			status: body.status,
+			failureCode: body.failureCode,
+			amountCents: body.amountCents,
+			currency: body.currency,
+		})
+		if (!result.ok) return failureResponse(c, result.failure)
+		return c.json(result.data)
+	} catch (error) {
+		console.error(
+			`Order refund status failed for org ${body.orgId}:`,
+			error instanceof Error ? error.name : 'unknown',
+		)
+		return c.json({ error: 'internal_error' }, 500)
+	}
+})
+
+/** A dispute on an order or tab payment opened, was won or was lost. */
+orderSystemRoutes.post('/dispute-status', async (c) => {
+	const request = await systemRequest(
+		c,
+		orderDisputeStatusRequestSchema,
+		'Invalid dispute status',
+	)
+	if ('error' in request) return request.error
+	const body = request.data
+	try {
+		const result = await applyDisputeStatus({
+			orgId: body.orgId,
+			orderId: body.orderId,
+			sessionId: body.sessionId,
+			processor: body.processor,
+			status: body.status,
+		})
+		if (!result.ok) return failureResponse(c, result.failure)
+		return c.json(result.data)
+	} catch (error) {
+		console.error(
+			`Order dispute status failed for org ${body.orgId}:`,
+			error instanceof Error ? error.name : 'unknown',
+		)
+		return c.json({ error: 'internal_error' }, 500)
+	}
+})
+
+/** Provider refunds still pending, oldest first (execute and reconcile). */
+orderSystemRoutes.post('/refunds-pending', async (c) => {
+	const request = await systemRequest(
+		c,
+		orderRefundsPendingRequestSchema,
+		'Invalid pending refunds request',
+	)
+	if ('error' in request) return request.error
+	const body = request.data
+	try {
+		const refunds = await listPendingProviderRefunds({
+			orgId: body.orgId,
+			refundId: body.refundId,
+			olderThanMs: body.olderThanMs,
+			limit: body.limit,
+		})
+		return c.json({ refunds })
+	} catch (error) {
+		console.error(
+			`Pending order refunds failed for org ${body.orgId}:`,
+			error instanceof Error ? error.name : 'unknown',
 		)
 		return c.json({ error: 'internal_error' }, 500)
 	}

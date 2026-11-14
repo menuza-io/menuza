@@ -15,6 +15,7 @@ vi.hoisted(() => {
 
 const reservationDispatch = vi.hoisted(() => vi.fn())
 const restaurantDispatch = vi.hoisted(() => vi.fn())
+const restaurantRefundDispatch = vi.hoisted(() => vi.fn())
 const recordShopOrder = vi.hoisted(() => vi.fn())
 
 vi.mock('#app/utils/reservations/payment-webhooks.server.ts', () => ({
@@ -22,6 +23,7 @@ vi.mock('#app/utils/reservations/payment-webhooks.server.ts', () => ({
 }))
 vi.mock('#app/utils/restaurant-orders/payment-webhooks.server.ts', () => ({
 	handleRestaurantOrderCheckoutWebhookEvent: restaurantDispatch,
+	handleRestaurantOrderCheckoutRefundOrDisputeEvent: restaurantRefundDispatch,
 }))
 vi.mock('#app/utils/shop.server.ts', async () => {
 	const { createShopCommerce, createShopCommerceConfigFromEnv } =
@@ -85,6 +87,7 @@ describe('checkout.com webhook reservation dispatch', () => {
 		consoleError.mockImplementation(() => {})
 		reservationDispatch.mockReset().mockResolvedValue(undefined)
 		restaurantDispatch.mockReset().mockResolvedValue(undefined)
+		restaurantRefundDispatch.mockReset().mockResolvedValue(undefined)
 		recordShopOrder.mockReset().mockResolvedValue(undefined)
 	})
 

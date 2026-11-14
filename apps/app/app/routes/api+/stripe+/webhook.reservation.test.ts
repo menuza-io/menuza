@@ -18,8 +18,13 @@ vi.mock('#app/utils/payments.server.ts', () => ({
 }))
 vi.mock('#app/utils/restaurant-orders/payment-webhooks.server.ts', () => ({
 	handleRestaurantOrderStripeSessionEvent: restaurantDispatch,
+	handleRestaurantOrderStripeRefundEvent: vi.fn(),
+	handleRestaurantOrderStripeDisputeEvent: vi.fn(),
 	isRestaurantStripeMetadata: (metadata: Record<string, string> | null) =>
 		metadata?.type === 'restaurant_order',
+	isRestaurantStripeRefund: (refund: { metadata?: Record<string, string> }) =>
+		refund.metadata?.type === 'restaurant_order' &&
+		Boolean(refund.metadata.refundId),
 }))
 vi.mock('#app/utils/reservations/payment-webhooks.server.ts', () => ({
 	handleReservationStripeSessionEvent: reservation.session,

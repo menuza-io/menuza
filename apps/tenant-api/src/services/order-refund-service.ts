@@ -1,11 +1,12 @@
 import crypto from 'node:crypto'
-import { and, asc, eq, ne } from 'drizzle-orm'
+import { and, asc, eq, inArray } from 'drizzle-orm'
 
-import { type OperatorOrderRefundRequest } from '@repo/common/restaurant-orders'
+import {
+	type OperatorOrderRefundRequest,
+	type OrderRefundSummary,
+} from '@repo/common/restaurant-orders'
 import {
 	getTenantDb,
-	loyaltyPurchases,
-	loyaltyRedemptions,
 	restaurantOrderRefunds,
 	restaurantOrders,
 	runTenantTransaction,
@@ -14,22 +15,33 @@ import {
 } from '@repo/tenant-db'
 
 import { type LoyaltyTx } from '../lib/loyalty-write.ts'
+import { queryInChunks } from '../lib/chunked-in.ts'
 import { retryOnSqliteBusy } from '../lib/sqlite-retry.ts'
 import { refundDiscountRedemptions } from './discount-apply.ts'
 import { loyaltySettleQueue } from './loyalty-purchase-service.ts'
 import {
+	orderCarriesLoyalty,
+	orderPaidCents,
+	orderRefundSummary,
+	pendingOrderRefundCentsInTx,
+} from './order-refund-book.ts'
+import {
 	orderFailure,
 	runExclusive,
 	type OrderServiceResult,
+	type OrderTx,
 	type OrderWriteHooks,
 } from './order-service.ts'
 
 /**
- * Refunds of paid online orders, recorded by an operator. The money moves in
- * the payment provider's dashboard: no refund event reaches the region and the
- * region never calls a provider, so this record is the evidence. Each refund
- * adds to `restaurant_orders.refunded_cents`, never past what was paid, and
- * the payment status stays `paid`.
+ * Refunds recorded by a person for orders paid at handoff (cash or card at the
+ * counter, `markPaid`): the money went back outside Menuza, so the record is
+ * the evidence (`kind = record`, `status = succeeded` at once). The region
+ * never calls a provider. Orders paid online are refunded through the payment
+ * provider instead (`order-provider-refund-service.ts`, decision 4): a record
+ * of one is refused with `refund_requires_provider`. Each refund adds to
+ * `restaurant_orders.refunded_cents`, never past what was paid, and the
+ * payment status stays `paid`.
  *
  * Loyalty reads the order's refunded total whenever it reconciles the order,
  * so points come back whatever the loyalty flags say.
@@ -49,37 +61,7 @@ export type RefundLoyaltyAccess = {
 	impersonated: boolean
 }
 
-type TenantTx = Parameters<Parameters<typeof runTenantTransaction>[1]>[0]
-
-/** Whether loyalty earned or spent points on the order. */
-async function orderCarriesLoyalty(
-	tx: TenantTx,
-	orderId: string,
-): Promise<boolean> {
-	const [purchase] = await tx
-		.select({ id: loyaltyPurchases.id })
-		.from(loyaltyPurchases)
-		.where(
-			and(
-				eq(loyaltyPurchases.sourceType, 'restaurant_order'),
-				eq(loyaltyPurchases.sourceId, orderId),
-			),
-		)
-		.limit(1)
-	if (purchase) return true
-	const [redemption] = await tx
-		.select({ id: loyaltyRedemptions.id })
-		.from(loyaltyRedemptions)
-		.where(
-			and(
-				eq(loyaltyRedemptions.sourceType, 'restaurant_order'),
-				eq(loyaltyRedemptions.sourceId, orderId),
-				ne(loyaltyRedemptions.state, 'released'),
-			),
-		)
-		.limit(1)
-	return Boolean(redemption)
-}
+export { orderCarriesLoyalty }
 
 function refundRequestHash(request: OperatorOrderRefundRequest): string {
 	return crypto
@@ -180,12 +162,20 @@ export async function recordOrderRefund(
 					const refused = input.hooks?.guard?.(order)
 					if (refused) return { ok: false, failure: refused }
 
-					// A tab's rounds are handed over and paid with the tab, never online.
-					if (order.paymentMethod !== 'online') {
+					// Online money goes back through the payment provider.
+					if (order.paymentMethod === 'online') {
 						return orderFailure(
 							409,
-							'refund_not_online',
-							'Only orders paid online can be refunded here.',
+							'refund_requires_provider',
+							'This order was paid online. Refund it through the payment provider.',
+						)
+					}
+					// A tab's rounds are paid with the tab, never one round alone.
+					if (order.tabId) {
+						return orderFailure(
+							409,
+							'order_not_refundable',
+							'This order is on a table tab. Refund the tab instead.',
 						)
 					}
 					if (order.paymentStatus !== 'paid') {
@@ -195,9 +185,13 @@ export async function recordOrderRefund(
 							'Only a paid order can be refunded.',
 						)
 					}
+					const pendingCents = await pendingOrderRefundCentsInTx(
+						tx as unknown as OrderTx,
+						order.id,
+					)
 					const refundableCents = Math.max(
 						0,
-						order.totalCents - order.refundedCents,
+						orderPaidCents(order) - order.refundedCents - pendingCents,
 					)
 					if (refundableCents === 0) {
 						return orderFailure(
@@ -311,4 +305,66 @@ export function pendingRefundCents(
 		if (refund.status === 'pending') total += refund.amountCents
 	}
 	return total
+}
+
+/** Refund rows of many orders (a list page), by order id. */
+export async function listRefundsForOrders(
+	orgId: string,
+	orderIds: readonly string[],
+): Promise<Map<string, RestaurantOrderRefund[]>> {
+	const byOrder = new Map<string, RestaurantOrderRefund[]>()
+	if (orderIds.length === 0) return byOrder
+	const db = await getTenantDb(orgId)
+	const rows = await queryInChunks([...new Set(orderIds)], (chunk) =>
+		db
+			.select()
+			.from(restaurantOrderRefunds)
+			.where(inArray(restaurantOrderRefunds.orderId, chunk))
+			.orderBy(
+				asc(restaurantOrderRefunds.createdAt),
+				asc(restaurantOrderRefunds.id),
+			),
+	)
+	for (const row of rows) {
+		const list = byOrder.get(row.orderId) ?? []
+		list.push(row)
+		byOrder.set(row.orderId, list)
+	}
+	return byOrder
+}
+
+/**
+ * The refund fields of the operator order JSON (list rows and detail): the
+ * rows, what waits on the provider, what is still refundable and a summary.
+ */
+export function operatorOrderRefundFields(
+	order: RestaurantOrder,
+	refunds: readonly RestaurantOrderRefund[],
+) {
+	const summary = orderRefundSummary(order, refunds)
+	return {
+		refunds: refunds.map(operatorOrderRefund),
+		refundPendingCents: summary.pendingCents,
+		refundableCents: summary.refundableCents,
+		refundStatus: summary.refundStatus,
+		refundFailureCode: summary.failureCode,
+	}
+}
+
+/** What the guest and operator views show of an order's refunds. */
+export async function orderRefundGlance(
+	orgId: string,
+	order: RestaurantOrder,
+): Promise<{
+	refundStatus: OrderRefundSummary['refundStatus']
+	pendingCents: number
+}> {
+	const summary = orderRefundSummary(
+		order,
+		await listOrderRefunds(orgId, order.id),
+	)
+	return {
+		refundStatus: summary.refundStatus,
+		pendingCents: summary.pendingCents,
+	}
 }

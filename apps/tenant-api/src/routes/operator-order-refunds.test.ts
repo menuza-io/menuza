@@ -114,6 +114,8 @@ type RefundBody = {
 }
 
 const NOTE = 'Customer returned it'
+/** Recorded refunds are for payment taken at handoff (decision 4). */
+const HANDOFF = { paymentMethod: 'handoff' as const }
 
 beforeEach(async () => {
 	tempDir = mkdtempSync(path.join(tmpdir(), 'op-order-refunds-'))
@@ -141,7 +143,7 @@ afterEach(async () => {
 
 describe('POST /operator/orders/:id/refunds', () => {
 	it('records a refund, replays the same key and lists refunds on the order', async () => {
-		const orderId = await insertOrder(ORG)
+		const orderId = await insertOrder(ORG, HANDOFF)
 		const idempotencyKey = newKey()
 		const res = await postRefund(
 			orderId,
@@ -220,7 +222,7 @@ describe('POST /operator/orders/:id/refunds', () => {
 	})
 
 	it('answers with what is left to refund and refuses orders it cannot refund', async () => {
-		const orderId = await insertOrder(ORG)
+		const orderId = await insertOrder(ORG, HANDOFF)
 		const tooMuch = await postRefund(orderId, { amountCents: 1001, note: NOTE })
 		expect(tooMuch.status).toBe(422)
 		expect(await tooMuch.json()).toMatchObject({
@@ -232,24 +234,34 @@ describe('POST /operator/orders/:id/refunds', () => {
 		expect(missing.status).toBe(404)
 		expect(await missing.json()).toMatchObject({ error: 'order_not_found' })
 
-		const handoff = await insertOrder(ORG, { paymentMethod: 'handoff' })
-		const notOnline = await postRefund(handoff, { full: true, note: NOTE })
-		expect(notOnline.status).toBe(409)
-		expect(await notOnline.json()).toMatchObject({ error: 'refund_not_online' })
+		// Paid online: the money goes back through the payment provider.
+		const online = await insertOrder(ORG, {
+			paymentProcessor: 'connect',
+			paymentSessionId: 'cs_test_online',
+		})
+		const notRecorded = await postRefund(online, { full: true, note: NOTE })
+		expect(notRecorded.status).toBe(409)
+		expect(await notRecorded.json()).toMatchObject({
+			error: 'refund_requires_provider',
+		})
 
 		const unpaid = await insertOrder(ORG, {
+			...HANDOFF,
 			status: 'accepted',
-			paymentStatus: 'pending',
+			paymentStatus: 'unpaid',
 			paidAt: null,
 			completedAt: null,
 		})
 		const notPaid = await postRefund(unpaid, { full: true, note: NOTE })
 		expect(notPaid.status).toBe(409)
 		expect(await notPaid.json()).toMatchObject({ error: 'refund_not_paid' })
+
+		const db = await getTenantDb(ORG)
+		expect(await db.select().from(restaurantOrderRefunds)).toEqual([])
 	})
 
 	it('needs an idempotency key and a valid body', async () => {
-		const orderId = await insertOrder(ORG)
+		const orderId = await insertOrder(ORG, HANDOFF)
 		const noKey = await postRefund(
 			orderId,
 			{ amountCents: 100, note: NOTE },
@@ -287,7 +299,7 @@ describe('POST /operator/orders/:id/refunds', () => {
 	})
 
 	it('refuses a missing, forged, wrong-audience or read-only token', async () => {
-		const orderId = await insertOrder(ORG)
+		const orderId = await insertOrder(ORG, HANDOFF)
 		const body = JSON.stringify({ amountCents: 100, note: NOTE })
 		const anonymous = await app.request(`/operator/orders/${orderId}/refunds`, {
 			method: 'POST',
@@ -329,7 +341,7 @@ describe('POST /operator/orders/:id/refunds', () => {
 	})
 
 	it('never reaches another organization or an unprovisioned one', async () => {
-		const orderId = await insertOrder(ORG)
+		const orderId = await insertOrder(ORG, HANDOFF)
 		const crossOrg = await postRefund(
 			orderId,
 			{ amountCents: 100, note: NOTE },
@@ -363,7 +375,7 @@ describe('POST /operator/orders/:id/refunds', () => {
 		await activateProgram(ORG)
 		await insertCustomer(ORG, { id: 'cus_1' })
 		const memberId = await makeMember(ORG, { customerId: 'cus_1' })
-		const orderId = await insertOrder(ORG)
+		const orderId = await insertOrder(ORG, HANDOFF)
 		const source = { type: 'restaurant_order' as const, id: orderId }
 		await claimAndQueue(ORG, { memberId, source })
 		await reconcileLoyaltySource(ORG, source, { now: NOW })
@@ -383,13 +395,13 @@ describe('POST /operator/orders/:id/refunds', () => {
 		await activateProgram(ORG)
 		await insertCustomer(ORG, { id: 'cus_1' })
 		const memberId = await makeMember(ORG, { customerId: 'cus_1' })
-		const earned = await insertOrder(ORG)
+		const earned = await insertOrder(ORG, HANDOFF)
 		const source = { type: 'restaurant_order' as const, id: earned }
 		await claimAndQueue(ORG, { memberId, source })
 		await reconcileLoyaltySource(ORG, source, { now: NOW })
 		expect((await balanceOf(ORG, memberId)).points).toBe(10)
 
-		const redeemed = await insertOrder(ORG)
+		const redeemed = await insertOrder(ORG, HANDOFF)
 		const reward = await makeReward(ORG)
 		await reserveReward(ORG, {
 			memberId,
@@ -426,7 +438,7 @@ describe('POST /operator/orders/:id/refunds', () => {
 		expect((await balanceOf(ORG, memberId)).points).toBe(7)
 
 		// An order loyalty never touched needs only the orders write scope.
-		const plainOrder = await insertOrder(ORG)
+		const plainOrder = await insertOrder(ORG, HANDOFF)
 		const plainRefund = await postRefund(
 			plainOrder,
 			{ amountCents: 100, note: NOTE },
@@ -465,8 +477,11 @@ describe('location-scoped order tokens', () => {
 	}
 
 	it('lists, reads, changes and refunds only the orders at the token’s locations', async () => {
-		const here = await insertOrder(ORG, { locationId: 'loc_here' })
-		const there = await insertOrder(ORG, { locationId: 'loc_there' })
+		const here = await insertOrder(ORG, { ...HANDOFF, locationId: 'loc_here' })
+		const there = await insertOrder(ORG, {
+			...HANDOFF,
+			locationId: 'loc_there',
+		})
 		const scopedRead = { ...READ, locationIds: ['loc_here'] }
 		const scopedWrite = { ...WRITE, locationIds: ['loc_here'] }
 

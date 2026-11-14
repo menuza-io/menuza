@@ -5,6 +5,7 @@ const access = vi.hoisted(() => ({
 	requireMenuRead: vi.fn(),
 	userHasOrganizationPermission: vi.fn(),
 	getOrderCustomerLinkAccess: vi.fn(),
+	isImpersonating: vi.fn(),
 }))
 
 vi.mock('#app/utils/organization/loader.server.ts', () => ({
@@ -24,9 +25,13 @@ vi.mock('#app/utils/location/ordering-controls.server.ts', () => ({
 }))
 vi.mock('@repo/auth', () => ({
 	userHasOrganizationPermission: access.userHasOrganizationPermission,
+	isImpersonating: access.isImpersonating,
 }))
 vi.mock('#app/utils/organization/permissions.server.ts', () => ({
-	ORG_PERMISSIONS: { UPDATE_MENU_ANY: 'update:menu:any' },
+	ORG_PERMISSIONS: {
+		UPDATE_MENU_ANY: 'update:menu:any',
+		UPDATE_ORDER_REFUND_ANY: 'update:order_refund:any',
+	},
 }))
 
 import { loader as listLoader } from './orders.tsx'
@@ -40,6 +45,7 @@ describe('orders routes', () => {
 		access.requireUserOrganization.mockResolvedValue({ id: 'org1' })
 		access.requireMenuRead.mockResolvedValue('u1')
 		access.userHasOrganizationPermission.mockResolvedValue(true)
+		access.isImpersonating.mockResolvedValue(false)
 		access.getOrderCustomerLinkAccess.mockResolvedValue({
 			linkCustomers: true,
 			linkGuests: false,
@@ -85,6 +91,7 @@ describe('orders routes', () => {
 			orgSlug: 'acme',
 			orderId: 'o1',
 			canWrite: true,
+			canRefund: true,
 			canViewCustomers: true,
 		})
 	})
@@ -103,5 +110,31 @@ describe('orders routes', () => {
 			'org1',
 			'update:menu:any',
 		)
+	})
+
+	it('offers provider refunds only with the order refund permission and never while impersonating', async () => {
+		const detail = async () =>
+			(
+				(await detailLoader(
+					args('https://app.test/acme/orders/o1', {
+						orgSlug: 'acme',
+						orderId: 'o1',
+					}),
+				)) as { data: { canRefund: boolean } }
+			).data.canRefund
+		expect(await detail()).toBe(true)
+		expect(access.userHasOrganizationPermission).toHaveBeenCalledWith(
+			'u1',
+			'org1',
+			'update:order_refund:any',
+		)
+		access.isImpersonating.mockResolvedValue(true)
+		expect(await detail()).toBe(false)
+		access.isImpersonating.mockResolvedValue(false)
+		access.userHasOrganizationPermission.mockImplementation(
+			async (_user: string, _org: string, permission: string) =>
+				permission !== 'update:order_refund:any',
+		)
+		expect(await detail()).toBe(false)
 	})
 })

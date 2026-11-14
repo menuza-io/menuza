@@ -1,6 +1,6 @@
 import { msg, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import { userHasOrganizationPermission } from '@repo/auth'
+import { isImpersonating, userHasOrganizationPermission } from '@repo/auth'
 import { cn } from '@repo/ui'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
@@ -54,6 +54,16 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		organization.id,
 		ORG_PERMISSIONS.UPDATE_MENU_ANY,
 	)
+	// Provider refunds (and cancelling a paid order with a refund) need their
+	// own permission and are never offered while impersonating. The action
+	// and the region check again; this only shows or hides the entry points.
+	const canRefund =
+		!(await isImpersonating(request)) &&
+		(await userHasOrganizationPermission(
+			userId,
+			organization.id,
+			ORG_PERMISSIONS.UPDATE_ORDER_REFUND_ANY,
+		))
 	const link = await getOrderCustomerLinkAccess(request, orgSlug)
 	const qr = await getQrOrderingFeatures(organization.id)
 	const orderingControls = await loadOrderingControls(organization.id)
@@ -64,6 +74,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		{
 			orgSlug,
 			canWrite,
+			canRefund,
 			loyaltyEnabled,
 			// Tabs show while QR ordering is on, even with dine-in switched off,
 			// so tabs still open (and payments to check) can be settled. The

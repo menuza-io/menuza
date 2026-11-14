@@ -1,6 +1,6 @@
 import { msg, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import { userHasOrganizationPermission } from '@repo/auth'
+import { isImpersonating, userHasOrganizationPermission } from '@repo/auth'
 import { Alert, AlertDescription } from '@repo/ui/alert'
 import { Button } from '@repo/ui/button'
 import { Icon } from '@repo/ui/icon'
@@ -43,12 +43,23 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		organization.id,
 		ORG_PERMISSIONS.UPDATE_MENU_ANY,
 	)
+	// Provider refunds (and cancelling a paid order with a refund) need their
+	// own permission and are never offered while impersonating. The action
+	// and the region check again; this only shows or hides the entry points.
+	const canRefund =
+		!(await isImpersonating(request)) &&
+		(await userHasOrganizationPermission(
+			userId,
+			organization.id,
+			ORG_PERMISSIONS.UPDATE_ORDER_REFUND_ANY,
+		))
 	const link = await getOrderCustomerLinkAccess(request, orgSlug)
 	return data(
 		{
 			orgSlug,
 			orderId: params.orderId || '',
 			canWrite,
+			canRefund,
 			canViewCustomers: link.linkCustomers || link.linkGuests,
 		},
 		{ headers: { 'Cache-Control': 'private, no-store' } },

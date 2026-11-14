@@ -20,6 +20,7 @@ export {
 	type RestaurantTerminalPaymentStatus,
 } from './restaurant'
 
+export * from './restaurant-refunds'
 export * from './reservation'
 export * from './reservation-consent'
 

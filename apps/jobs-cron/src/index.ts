@@ -50,6 +50,10 @@ const TENANT_HOURLY_CRON = '0 * * * *'
 // to be a handler or ExportedHandler, and a string constant fails startup.
 const RESERVATION_PAYMENTS_RECONCILE_PATH =
 	'/resources/jobs/reservation-payments-reconcile'
+// Hourly App job: re-drives restaurant order provider refunds the regions
+// still list as pending (executes unsent ones, reads back stale ones).
+const RESTAURANT_ORDER_REFUNDS_RECONCILE_PATH =
+	'/resources/jobs/restaurant-order-refunds-reconcile'
 // Hourly App job: fetches the status of shipped print orders whose vendor
 // webhook may have been missed.
 const PRINT_SYNC_PATH = '/resources/jobs/print-sync'
@@ -630,6 +634,11 @@ export default {
 				],
 				['Tenant inventory tick', invokeTenantInventoryTick],
 				['Tenant order messages tick', invokeTenantOrderMessagesTick],
+				[
+					'Restaurant order refunds reconcile',
+					(jobEnv: Env) =>
+						invokeJob(jobEnv, RESTAURANT_ORDER_REFUNDS_RECONCILE_PATH),
+				],
 			] as const) {
 				ctx.waitUntil(
 					run(env).catch((error) => {

@@ -18,8 +18,11 @@ import {
 	isReservationStripeMetadata,
 } from '#app/utils/reservations/payment-webhooks.server.ts'
 import {
+	handleRestaurantOrderStripeDisputeEvent,
+	handleRestaurantOrderStripeRefundEvent,
 	handleRestaurantOrderStripeSessionEvent,
 	isRestaurantStripeMetadata,
+	isRestaurantStripeRefund,
 } from '#app/utils/restaurant-orders/payment-webhooks.server.ts'
 import {
 	handleConnectAccountUpdated,
@@ -214,9 +217,16 @@ export async function action({ request, context }: ActionFunctionArgs) {
 			case 'refund.updated':
 			case 'refund.failed':
 			case 'charge.refund.updated': {
-				await handleReservationStripeRefundEvent(
-					event.data.object as Stripe.Refund,
-				)
+				const refund = event.data.object as Stripe.Refund
+				if (isRestaurantStripeRefund(refund)) {
+					// Restaurant order refunds live on the platform account; the
+					// same metadata on a connected account's refund is its own.
+					if (!event.account) {
+						await handleRestaurantOrderStripeRefundEvent(refund)
+					}
+					break
+				}
+				await handleReservationStripeRefundEvent(refund)
 				break
 			}
 
@@ -227,6 +237,13 @@ export async function action({ request, context }: ActionFunctionArgs) {
 					event.data.object as Stripe.Dispute,
 					event.type,
 				)
+				if (!event.account) {
+					// Restaurant order payments are platform PaymentIntents.
+					await handleRestaurantOrderStripeDisputeEvent(
+						event.data.object as Stripe.Dispute,
+						event.type,
+					)
+				}
 				await recordShopOrderAdjustmentFromConnectWebhook(
 					event.data.object,
 					event.type,

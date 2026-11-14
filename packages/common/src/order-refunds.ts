@@ -69,6 +69,12 @@ export const ORDER_REFUND_ERROR_CODES = [
 	'refund_complete',
 	'idempotency_conflict',
 	'refund_not_found',
+	/** A record-only refund of an order paid online: use the provider path. */
+	'refund_requires_provider',
+	/** Cancel with a refund without the token's `refundProvider` claim. */
+	'refund_forbidden',
+	/** A status report names a refund with another amount, currency or provider. */
+	'refund_mismatch',
 ] as const
 export type OrderRefundErrorCode = (typeof ORDER_REFUND_ERROR_CODES)[number]
 
@@ -264,6 +270,21 @@ export const orderDisputeStatusRequestSchema = z
 	)
 export type OrderDisputeStatusRequest = z.infer<
 	typeof orderDisputeStatusRequestSchema
+>
+
+/**
+ * Answer of `POST /api/orders/dispute-status`: the order (or `tab:<id>`) the
+ * dispute was recorded on, its state now, whether refunds are blocked, and
+ * whether this report changed anything.
+ */
+export const orderDisputeStatusResponseSchema = z.object({
+	orderId: orderRefSchema,
+	disputeStatus: z.enum(ORDER_DISPUTE_STATUSES),
+	disputed: z.boolean(),
+	applied: z.boolean(),
+})
+export type OrderDisputeStatusResponse = z.infer<
+	typeof orderDisputeStatusResponseSchema
 >
 
 /**

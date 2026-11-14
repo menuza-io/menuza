@@ -44,7 +44,7 @@ import {
 	NOW,
 	rewardDefinition,
 } from './loyalty-test-fixture.ts'
-import { recordOrderRefund } from './order-refund-service.ts'
+import { refundOrderThroughProvider } from './order-refund-test-fixture.ts'
 
 vi.mock('@repo/sms', () => ({
 	sendSms: vi.fn().mockResolvedValue({ success: true, sid: 'sid', mock: true }),
@@ -196,7 +196,7 @@ describe('reward journeys', () => {
 		const third = await earnTen(memberId) // 30: fires
 		await vi.waitFor(() => expect(spawn).toHaveBeenCalledTimes(1))
 
-		const refund = await recordOrderRefund(ORG, third, {
+		const refund = await refundOrderThroughProvider(ORG, third, {
 			request: { full: true, note: 'Returned' },
 			actorId: 'op_test',
 			idempotencyKey: `journeys-refund-${++keyCounter}`,
@@ -234,7 +234,7 @@ describe('reward journeys', () => {
 			.update(marketingJourneys)
 			.set({ status: 'paused' })
 			.where(eq(marketingJourneys.triggerType, 'loyalty_reward_available'))
-		await recordOrderRefund(ORG, third, {
+		await refundOrderThroughProvider(ORG, third, {
 			request: { full: true, note: 'Returned' },
 			actorId: 'op_test',
 			idempotencyKey: `journeys-refund-${++keyCounter}`,
