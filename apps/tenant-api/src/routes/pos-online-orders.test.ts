@@ -46,10 +46,6 @@ import {
 	NOW,
 } from '../services/loyalty-test-fixture.ts'
 import { PHONE_SEARCHES_PER_HOUR } from '../services/pos-online-orders-service.ts'
-import {
-	baseOrderDetailSchema,
-	baseOrdersFeedSchema,
-} from './pos-online-orders-base-schema.fixture.ts'
 import { posKdsRoutes } from './pos-kds.ts'
 import { posOnlineOrdersRoutes } from './pos-online-orders.ts'
 
@@ -1012,18 +1008,10 @@ describe('Station Orders app API (/pos/online-orders)', () => {
 		).toBe(200)
 	})
 
-	describe('older Station build (strict base schema)', () => {
-		it('parses a default feed and detail: a new key is sent only off its default', async () => {
+	describe('summary keys', () => {
+		it('leaves a key out while it holds its default', async () => {
 			const id = await insertOrder()
-			await insertOrder({
-				number: 'W-2',
-				paymentMethod: 'handoff',
-				paymentStatus: 'unpaid',
-				paymentProcessor: null,
-				paymentSessionId: null,
-			})
 			const data = await feed()
-			expect(() => baseOrdersFeedSchema.parse(data)).not.toThrow()
 			for (const order of data.orders) {
 				expect(order).not.toHaveProperty('refundStatus')
 				expect(order).not.toHaveProperty('refundPendingCents')
@@ -1031,16 +1019,13 @@ describe('Station Orders app API (/pos/online-orders)', () => {
 				expect(order).not.toHaveProperty('acceptanceDeadlineAt')
 				expect(order).not.toHaveProperty('rejectedReason')
 			}
-			const one = await detail(id)
-			expect(() => baseOrderDetailSchema.parse(one)).not.toThrow()
+			expect((await detail(id)).order).not.toHaveProperty('disputed')
 		})
 
-		it('sends the new keys once they differ from their defaults', async () => {
+		it('sends a key once it differs from its default', async () => {
 			await insertOrder({ disputeStatus: 'open' })
 			const [order] = (await feed()).orders
 			expect(order).toMatchObject({ disputed: true })
-			const list = await feed()
-			expect(baseOrdersFeedSchema.safeParse(list).success).toBe(false)
 		})
 	})
 

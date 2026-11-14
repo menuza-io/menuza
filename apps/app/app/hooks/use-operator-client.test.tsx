@@ -10,20 +10,26 @@ afterEach(() => {
 	vi.useRealTimers()
 })
 
+const tokenAnswer = Response.json({
+	jwt: 'jwt',
+	tenantApiUrl: 'https://regional.example',
+})
+
 describe('useOperatorClient server clock', () => {
-	it('learns the server clock from the credentials answer', async () => {
+	it('learns the region clock from an answer that carries serverNow', async () => {
 		const local = Date.now()
-		const fetchMock = vi.fn(async (url: string) =>
-			url.startsWith('/acme/orders-token')
-				? Response.json({
-						jwt: 'jwt',
-						tenantApiUrl: 'https://regional.example',
-						// This computer runs 5 minutes fast.
-						serverNow: local - 5 * 60_000,
-					})
-				: Response.json({ orders: [] }),
+		vi.stubGlobal(
+			'fetch',
+			vi.fn(async (url: string) =>
+				url.startsWith('/acme/orders-token')
+					? tokenAnswer.clone()
+					: Response.json({
+							orders: [],
+							// This computer runs 5 minutes fast.
+							serverNow: local - 5 * 60_000,
+						}),
+			),
 		)
-		vi.stubGlobal('fetch', fetchMock)
 		const { result } = renderHook(() =>
 			useOperatorClient('acme', '/operator/orders'),
 		)
@@ -37,10 +43,7 @@ describe('useOperatorClient server clock', () => {
 			'fetch',
 			vi.fn(async (url: string) =>
 				url.startsWith('/acme/orders-token')
-					? Response.json({
-							jwt: 'jwt',
-							tenantApiUrl: 'https://regional.example',
-						})
+					? tokenAnswer.clone()
 					: Response.json({ orders: [] }),
 			),
 		)

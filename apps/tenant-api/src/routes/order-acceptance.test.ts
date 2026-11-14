@@ -574,8 +574,21 @@ describe('manual order acceptance (#107)', () => {
 				},
 			)
 			expect(listed.status).toBe(200)
-			const body = (await listed.json()) as { orders: Array<{ id: string }> }
+			const body = (await listed.json()) as {
+				orders: Array<{ id: string }>
+				serverNow: number
+			}
 			expect(body.orders.map((entry) => entry.id)).toEqual([id])
+			// The region's clock rides along, for the countdown to the deadline.
+			expect(body.serverNow).toBe(Date.now())
+			const one = await app.request(`/operator/orders/${id}`, {
+				headers: {
+					Authorization: `Bearer ${await operatorToken({ scope: 'orders:read' })}`,
+				},
+			})
+			expect(((await one.json()) as { serverNow: number }).serverNow).toBe(
+				Date.now(),
+			)
 		})
 
 		it('an online order waits from its paid event, with the minutes counted from payment', async () => {

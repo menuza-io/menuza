@@ -79,9 +79,7 @@ describe('order credentials', () => {
 		expect(result.data).toEqual({
 			jwt: 'scoped-credential',
 			tenantApiUrl: 'https://regional.example',
-			serverNow: expect.any(Number),
 		})
-		expect(Math.abs(result.data.serverNow - Date.now())).toBeLessThan(5000)
 	})
 
 	it('requires menu mutation authorization before minting write credentials', async () => {

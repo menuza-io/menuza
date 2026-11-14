@@ -5,8 +5,6 @@ import { recordServerClock } from '#app/utils/server-clock.ts'
 const credentialsSchema = z.object({
 	jwt: z.string(),
 	tenantApiUrl: z.string().url(),
-	/** App's clock when it answered (ms); lets countdowns follow the server. */
-	serverNow: z.number().optional(),
 })
 export type OperatorCredentials = z.infer<typeof credentialsSchema>
 
@@ -57,17 +55,12 @@ export function useOperatorClient(
 			const key = `${tokenRoute}:${orgSlug}:${write ? 'write' : 'read'}`
 			let entry = cached.current.get(key)
 			if (!entry || entry.expires <= Date.now()) {
-				const sentAt = Date.now()
 				const credentials = fetch(
 					operatorTokenUrl(orgSlug, tokenRoute, write),
 					{ headers: { Accept: 'application/json' } },
 				).then(async (response) => {
 					if (!response.ok) throw new Error('Unable to authorize this request.')
-					const parsed = credentialsSchema.parse(await response.json())
-					if (parsed.serverNow !== undefined) {
-						recordServerClock(parsed.serverNow, sentAt)
-					}
-					return parsed
+					return credentialsSchema.parse(await response.json())
 				})
 				entry = { credentials, expires: Date.now() + 10 * 60000 }
 				cached.current.set(key, entry)
@@ -94,6 +87,7 @@ export function useOperatorClient(
 					headers,
 				})
 			}
+			const sentAt = Date.now()
 			let response = await send()
 			if (response.status === 401) {
 				cached.current.delete(credentialsFor(write).key)
@@ -113,7 +107,18 @@ export function useOperatorClient(
 					error.success ? (body as Record<string, unknown>) : null,
 				)
 			}
-			return response.json() as Promise<unknown>
+			const body: unknown = await response.json()
+			// The region's list and detail reads carry its clock (`serverNow`, ms):
+			// deadlines it set are counted down against it (see `server-clock.ts`).
+			if (
+				typeof body === 'object' &&
+				body !== null &&
+				'serverNow' in body &&
+				typeof body.serverNow === 'number'
+			) {
+				recordServerClock(body.serverNow, sentAt)
+			}
+			return body
 		},
 		[base, credentialsFor],
 	)

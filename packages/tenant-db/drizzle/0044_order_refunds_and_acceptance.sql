@@ -123,6 +123,14 @@ WHEN NOT coalesce((
 			AND NEW.settled_at IS NOT NULL
 			AND NEW.reversed_at IS NULL AND NEW.reversal_code IS NULL)
 		OR
+		(OLD.kind = 'provider' AND OLD.status = 'failed' AND NEW.status = 'succeeded'
+			AND NEW.provider_refund_id IS NOT NULL
+			AND (OLD.provider_refund_id IS NULL OR NEW.provider_refund_id IS OLD.provider_refund_id)
+			AND NEW.failure_code IS NULL
+			AND NEW.settled_at IS NOT NULL
+			AND OLD.reversed_at IS NULL AND OLD.reversal_code IS NULL
+			AND NEW.reversed_at IS NULL AND NEW.reversal_code IS NULL)
+		OR
 		(OLD.kind = 'provider' AND OLD.status = 'succeeded' AND NEW.status = 'succeeded'
 			AND NEW.provider_refund_id IS OLD.provider_refund_id
 			AND NEW.failure_code IS OLD.failure_code
@@ -181,6 +189,14 @@ WHEN NOT coalesce((
 			AND (OLD.provider_refund_id IS NULL OR NEW.provider_refund_id IS OLD.provider_refund_id)
 			AND (NEW.status = 'failed' OR NEW.failure_code IS NULL)
 			AND NEW.settled_at IS NOT NULL
+			AND NEW.reversed_at IS NULL AND NEW.reversal_code IS NULL)
+		OR
+		(OLD.status = 'failed' AND NEW.status = 'succeeded'
+			AND NEW.provider_refund_id IS NOT NULL
+			AND (OLD.provider_refund_id IS NULL OR NEW.provider_refund_id IS OLD.provider_refund_id)
+			AND NEW.failure_code IS NULL
+			AND NEW.settled_at IS NOT NULL
+			AND OLD.reversed_at IS NULL AND OLD.reversal_code IS NULL
 			AND NEW.reversed_at IS NULL AND NEW.reversal_code IS NULL)
 		OR
 		(OLD.status = 'succeeded' AND NEW.status = 'succeeded'

@@ -164,9 +164,8 @@ function summary(
 		openedAt,
 		completedAt: ms(order.completedAt),
 		cancelledAt: ms(order.cancelledAt),
-		// Each key below is left out while it holds its default, so a default
-		// summary parses with the strict schema of a Station build that predates
-		// them (deploy order is tenant-api first; see the contract test).
+		// Each key below is left out while it holds its default (they are
+		// optional in the shared Station schema).
 		...(refundState.refundStatus !== 'none'
 			? { refundStatus: refundState.refundStatus }
 			: {}),

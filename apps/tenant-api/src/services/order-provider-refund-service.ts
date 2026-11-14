@@ -53,6 +53,8 @@ import {
 	orderCarriesLoyalty,
 	orderRefundedNetCents,
 	orderProviderRefundView,
+	orderRefundableCents,
+	pendingOrderRefundCentsInTx,
 	tabProviderRefundView,
 	type BookFailure,
 	type QrTab,
@@ -330,6 +332,60 @@ function refundRef(found: FoundRefund): string {
 }
 
 /**
+ * Whether a refund settled `failed` that the provider later reports
+ * `succeeded` still fits: with it back, what is returned and what waits on the
+ * provider must not pass what was paid. Otherwise another refund took its
+ * room after the release, and counting it would break the order's total (a
+ * person decides).
+ */
+async function lateSuccessFits(
+	tx: OrderTx,
+	found: FoundRefund,
+	orgId: string,
+): Promise<boolean> {
+	if (found.ledger === 'order') {
+		const [order] = await tx
+			.select()
+			.from(restaurantOrders)
+			.where(
+				and(
+					eq(restaurantOrders.id, found.row.orderId),
+					eq(restaurantOrders.orgId, orgId),
+				),
+			)
+			.limit(1)
+		if (!order) return false
+		const pending = await pendingOrderRefundCentsInTx(tx, order.id)
+		return orderRefundableCents(order, pending) >= found.row.amountCents
+	}
+	const [tab] = await tx
+		.select({ totalCents: qrTabs.totalCents })
+		.from(qrTabs)
+		.where(eq(qrTabs.id, found.row.tabId))
+		.limit(1)
+	if (!tab) return false
+	const [held] = await tx
+		.select({
+			total: sql<number>`coalesce(sum(${qrTabRefunds.amountCents}), 0)`,
+		})
+		.from(qrTabRefunds)
+		.where(
+			and(
+				eq(qrTabRefunds.tabId, found.row.tabId),
+				ne(qrTabRefunds.id, found.row.id),
+				or(
+					eq(qrTabRefunds.status, 'pending'),
+					and(
+						eq(qrTabRefunds.status, 'succeeded'),
+						isNull(qrTabRefunds.reversedAt),
+					),
+				),
+			),
+		)
+	return Number(held?.total ?? 0) + found.row.amountCents <= tab.totalCents
+}
+
+/**
  * A succeeded refund of a cancel (its own key, or the rest of it) that the
  * provider reversed: the cancel still owes it, so the order is marked
  * (`cancel_refund_due_at`) and the owed machinery books it again at once (or
@@ -379,11 +435,13 @@ async function rebookReversedCancelRefund(
  * succeeded refund does (loyalty takes its share of the points back; a full
  * refund gives discount uses back) in the same transaction; any later report
  * changes nothing (`applied: false`). `failed` releases the reservation.
- * Final states win: a `succeeded` after `failed` is logged by id and answered
- * `applied: false` (see the review note below). The one exception is the
- * provider taking a succeeded refund back, a reversal, which needs the
- * provider's own refund id (a `failed` report without it never moves money
- * back: it comes from an App path that did not reach the provider).
+ * A settled row mostly stays settled, with two exceptions that need the
+ * provider's own refund id: it taking a succeeded refund back (a reversal; a
+ * `failed` report without the id never moves money back, it comes from an App
+ * path that did not reach the provider), and it reporting `succeeded` for a
+ * row settled `failed` (a failure report raced its answer): the row takes the
+ * success and does what one does, when the amount still fits (`lateSuccessFits`),
+ * and is otherwise logged by id for review and answered `applied: false`.
  */
 export async function applyProviderRefundStatus(
 	input: ProviderRefundStatusInput,
@@ -445,7 +503,24 @@ export async function applyProviderRefundStatus(
 
 						const table =
 							found.ledger === 'order' ? restaurantOrderRefunds : qrTabRefunds
-						if (row.status !== 'pending') {
+						// The provider's own `succeeded` (its refund id, equal to the one
+						// stored when there is one) for a row settled `failed`: money
+						// moved that the region released, because a failure report raced
+						// the provider's answer. The row takes the success and does what
+						// a success does, but only when the amount still fits (what was
+						// refunded since, or waits on the provider, may already cover
+						// it); otherwise it is flagged below for a person to look at.
+						let lateSuccess = false
+						if (
+							row.status === 'failed' &&
+							row.reversedAt == null &&
+							input.status === 'succeeded' &&
+							input.providerRefundId !== undefined &&
+							(await lateSuccessFits(tx, found, orgId))
+						) {
+							lateSuccess = true
+						}
+						if (row.status !== 'pending' && !lateSuccess) {
 							if (row.reversedAt != null) {
 								// Reversed already: it reads failed, once and for all.
 								return answer('failed', false)
@@ -529,16 +604,14 @@ export async function applyProviderRefundStatus(
 								return answer('failed', true)
 							}
 							if (input.status !== row.status && input.status !== 'pending') {
-								// Final states win otherwise: a failed refund never
-								// turns into a success (the append-only trigger allows
-								// only pending -> succeeded | failed, so the row cannot
-								// be rewritten). A `succeeded` that carries a provider
-								// refund id for a row settled `failed` means money moved
-								// that the region released (a failure report that raced
-								// the provider's answer, before the row knew its id). It
-								// is flagged for the operator by id, loudly, and never
-								// applied: counting it needs a person to look at the
-								// order (it may also have been refunded again since).
+								// Otherwise a settled row stays settled: a failed refund turns
+								// into a success only through `lateSuccess` above (the
+								// append-only trigger allows nothing else). A `succeeded` with
+								// a provider refund id for a row settled `failed` that did
+								// not fit means money moved that the region released and
+								// the order no longer has room for it. It is flagged for the
+								// operator by id, loudly, and never applied: counting it
+								// needs a person to look at the order.
 								const moneyMovedAfterFailure =
 									row.status === 'failed' &&
 									input.status === 'succeeded' &&
@@ -600,9 +673,24 @@ export async function applyProviderRefundStatus(
 								settledAt: now,
 								updatedAt: now,
 							})
-							.where(and(eq(table.id, row.id), eq(table.status, 'pending')))
+							.where(
+								and(
+									eq(table.id, row.id),
+									eq(table.status, lateSuccess ? 'failed' : 'pending'),
+								),
+							)
 							.returning({ id: table.id })
 						if (settled.length === 0) return answer(row.status, false)
+						if (lateSuccess) {
+							console.warn(
+								'Order refund succeeded after it was settled failed',
+								{
+									orgId,
+									refundId: row.id,
+									orderId: refundRef(found),
+								},
+							)
+						}
 
 						if (found.ledger === 'order') {
 							const [order] = await tx

@@ -349,7 +349,13 @@ operatorOrderRoutes.get('/', async (c) => {
 			locationIds: auth.auth.locationIds,
 		})
 		return c.json(
-			{ orders: await withCustomerKeys(auth.auth, orders) },
+			{
+				orders: await withCustomerKeys(auth.auth, orders),
+				// This node's clock: the operator screens count down to deadlines
+				// it set (such as the time left to accept) against it, not against
+				// a computer clock that may be minutes off.
+				serverNow: Date.now(),
+			},
 			200,
 			noStoreHeaders(),
 		)
@@ -385,7 +391,7 @@ operatorOrderRoutes.get('/:id', async (c) => {
 			return c.json(ORDER_NOT_FOUND, 404, noStoreHeaders())
 		}
 		const [order] = await withCustomerKeys(auth.auth, [result.data])
-		return c.json({ order }, 200, noStoreHeaders())
+		return c.json({ order, serverNow: Date.now() }, 200, noStoreHeaders())
 	} catch (error) {
 		console.error(
 			`Failed to load order for org ${auth.auth.orgId}:`,

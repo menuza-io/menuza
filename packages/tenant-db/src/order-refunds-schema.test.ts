@@ -477,15 +477,27 @@ describe('order refunds tenant schema (0025_loyalty, 0044)', () => {
 		await client.execute(
 			"UPDATE restaurant_order_refunds SET status = 'failed', failure_code = 'provider_error', settled_at = 7, updated_at = 7 WHERE id = 'rf_1'",
 		)
-		await expectRejectsWith(
-			client.execute(
-				"UPDATE restaurant_order_refunds SET status = 'succeeded', failure_code = NULL WHERE id = 'rf_1'",
-			),
-			'append-only',
+		// A success needs the provider's own refund id, and nothing else moves.
+		for (const change of [
+			"status = 'succeeded', failure_code = NULL",
+			"provider_refund_id = 're_late'",
+			"status = 'succeeded', provider_refund_id = 're_late', failure_code = 'x'",
+			"status = 'succeeded', provider_refund_id = 're_late', failure_code = NULL, settled_at = NULL",
+		]) {
+			await expectRejectsWith(
+				client.execute(
+					`UPDATE restaurant_order_refunds SET ${change} WHERE id = 'rf_1'`,
+				),
+				'append-only',
+			)
+		}
+		// The provider's late success is the one way a failure turns around.
+		await client.execute(
+			"UPDATE restaurant_order_refunds SET status = 'succeeded', provider_refund_id = 're_late', failure_code = NULL, updated_at = 8 WHERE id = 'rf_1'",
 		)
 		await expectRejectsWith(
 			client.execute(
-				"UPDATE restaurant_order_refunds SET provider_refund_id = 're_late' WHERE id = 'rf_1'",
+				"UPDATE restaurant_order_refunds SET status = 'failed', failure_code = 'x' WHERE id = 'rf_1'",
 			),
 			'append-only',
 		)

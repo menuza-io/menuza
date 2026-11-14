@@ -676,16 +676,13 @@ queued, and after a failed write the screen reads the order back.
   answers 409 `stale_version` or `order_not_pending`. A plain `cancel` of an
   order that is still waiting is also 409 `order_not_pending`: use `reject` (the
   reason list, the forced full refund and the guest's wording differ). Station
-  parses the feed with strict schemas, so tenant-api leaves each new summary key
-  out while it holds its default: `refundStatus` (only when not `none`),
-  `refundPendingCents` (only above 0), `disputed` (only when `true`),
-  `acceptanceDeadlineAt` and `rejectedReason` (only on orders that waited or
-  were rejected). A default summary therefore parses with the schema of a
-  Station build that predates them (`pos-online-orders.test.ts` parses with a
-  frozen copy of that schema). A build that predates them still rejects a feed
-  holding an order that is waiting, disputed, rejected or refunded (`partial`,
-  `full`, `pending`, `failed`; a refund row also carries `kind` and `status`),
-  so ship Station with this tenant-api.
+  parses the feed with the shared strict schema in
+  `@repo/common/pos-online-orders`, where the refund, dispute and acceptance
+  keys are optional. tenant-api leaves each one out while it holds its default:
+  `refundStatus` (only when not `none`), `refundPendingCents` (only above 0),
+  `disputed` (only when `true`), `acceptanceDeadlineAt` and `rejectedReason`
+  (only on orders that waited or were rejected). Station and tenant-api share
+  that schema, so they ship together.
 - **Versions.** Each order carries a version (a hash of its status, payment,
   refunds and update time); every change names the one the screen saw, and an
   outdated one answers 409 `stale_version` and the screen reads the order back.

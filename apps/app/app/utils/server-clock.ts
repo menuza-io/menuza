@@ -4,9 +4,10 @@
  * clock a few minutes off would otherwise say "Time is up" while the order can
  * still be accepted, or the other way round.
  *
- * The browser learns the gap whenever it fetches operator credentials: App
- * answers with its own `serverNow`, and the gap is measured against the middle
- * of the round trip. Without a reading the offset is 0 (the local clock).
+ * The browser learns the gap from the region's own clock: the operator orders
+ * list and detail answers carry `serverNow`, and the gap is measured against
+ * the middle of the round trip. Without a reading the offset is 0 (the local
+ * clock).
  */
 let offsetMs = 0
 

@@ -1802,6 +1802,49 @@ describe('reports that cannot be trusted to move money', () => {
 		expect(await real.json()).toMatchObject({ status: 'failed', applied: true })
 	})
 
+	it('a tab refund the provider confirms after a failure is counted while it fits, never beyond the payment', async () => {
+		const tabId = await insertTab(ORG, {
+			id: 'tab-late-success',
+			paymentProcessor: 'checkout',
+			paymentSessionId: 'pay_late_success',
+			paymentAmountCents: 1000,
+		})
+		const first = (await (
+			await intent(`tab:${tabId}`, { amountCents: 400 })
+		).json()) as IntentBody
+		await settle(first.refundId, 'failed', { failureCode: 'payment_not_found' })
+		const late = await settle(first.refundId, 'succeeded', {
+			providerRefundId: 'act_late',
+		})
+		expect(await late.json()).toMatchObject({
+			status: 'succeeded',
+			applied: true,
+		})
+		expect(
+			await (await intent(`tab:${tabId}`, { amountCents: 601 })).json(),
+		).toMatchObject({ refundableCents: 600 })
+
+		// A second refund fails, the room is refunded since, and its late
+		// success no longer fits.
+		const second = (await (
+			await intent(`tab:${tabId}`, { amountCents: 300 })
+		).json()) as IntentBody
+		await settle(second.refundId, 'failed', {
+			failureCode: 'payment_not_found',
+		})
+		const rest = (await (
+			await intent(`tab:${tabId}`, { full: true })
+		).json()) as IntentBody
+		await settle(rest.refundId, 'succeeded', { providerRefundId: 'act_rest' })
+		const tooLate = await settle(second.refundId, 'succeeded', {
+			providerRefundId: 'act_toolate',
+		})
+		expect(await tooLate.json()).toMatchObject({
+			status: 'failed',
+			applied: false,
+		})
+	})
+
 	it('a refund the provider accepted is never released by a report without its id', async () => {
 		const orderId = await onlineOrder()
 		const booked = (await (
@@ -1852,17 +1895,62 @@ describe('reports that cannot be trusted to move money', () => {
 		expect((await intent(orderId, { full: true })).status).toBe(201)
 	})
 
-	it('a success with a provider id after a failure with none is flagged for review, never applied', async () => {
+	it('a success with a provider id after a failure with none is counted, once, when it still fits', async () => {
+		const orderId = await onlineOrder()
+		const booked = (await (
+			await intent(orderId, { amountCents: 250 })
+		).json()) as IntentBody
+		// A run that never reached the provider released the reservation.
+		await settle(booked.refundId, 'failed', {
+			failureCode: 'payment_not_found',
+		})
+		expect((await orderRow(orderId)).refundedCents).toBe(0)
+		const late = await settle(booked.refundId, 'succeeded', {
+			providerRefundId: 're_late',
+		})
+		expect(await late.json()).toMatchObject({
+			status: 'succeeded',
+			applied: true,
+		})
+		expect((await orderRow(orderId)).refundedCents).toBe(250)
+		// Redelivered: nothing more.
+		const again = await settle(booked.refundId, 'succeeded', {
+			providerRefundId: 're_late',
+		})
+		expect(await again.json()).toMatchObject({
+			status: 'succeeded',
+			applied: false,
+		})
+		expect((await orderRow(orderId)).refundedCents).toBe(250)
+		// A success without the provider's id is never taken for it.
+		const other = (await (
+			await intent(orderId, { amountCents: 100 })
+		).json()) as IntentBody
+		await settle(other.refundId, 'failed', { failureCode: 'declined' })
+		const noId = await settle(other.refundId, 'succeeded')
+		expect(await noId.json()).toMatchObject({
+			status: 'failed',
+			applied: false,
+		})
+		expect((await orderRow(orderId)).refundedCents).toBe(250)
+	})
+
+	it('a late success that no longer fits is flagged for review, never applied', async () => {
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
 		try {
 			const orderId = await onlineOrder()
 			const booked = (await (
 				await intent(orderId, { amountCents: 250 })
 			).json()) as IntentBody
-			// A run that never reached the provider released the reservation.
 			await settle(booked.refundId, 'failed', {
 				failureCode: 'payment_not_found',
 			})
+			// The released room was refunded in full since.
+			const rest = (await (
+				await intent(orderId, { full: true })
+			).json()) as IntentBody
+			await settle(rest.refundId, 'succeeded', { providerRefundId: 're_all' })
+			const refunded = (await orderRow(orderId)).refundedCents
 			const late = await settle(booked.refundId, 'succeeded', {
 				providerRefundId: 're_late',
 			})
@@ -1870,7 +1958,7 @@ describe('reports that cannot be trusted to move money', () => {
 				status: 'failed',
 				applied: false,
 			})
-			expect((await orderRow(orderId)).refundedCents).toBe(0)
+			expect((await orderRow(orderId)).refundedCents).toBe(refunded)
 			const flagged = warn.mock.calls.find(([message]) =>
 				String(message).includes('needs review'),
 			)
