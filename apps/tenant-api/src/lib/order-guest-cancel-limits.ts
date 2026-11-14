@@ -106,12 +106,11 @@ export async function countOrderGuestCancelAttempt(
 }
 
 async function pruneOld(db: TenantDatabase | TenantTransaction, now: number) {
-	await db
-		.delete(loyaltyRateCounters)
-		.where(
-			and(
-				inArray(loyaltyRateCounters.bucket, Object.values(BUCKET_NAMES)),
-				lt(loyaltyRateCounters.windowStart, now - PRUNE_AFTER_MS),
-			),
-		)
+	await db.delete(loyaltyRateCounters).where(
+		and(
+			// bounded: the guest-cancel bucket names, a handful of fixed values.
+			inArray(loyaltyRateCounters.bucket, Object.values(BUCKET_NAMES)),
+			lt(loyaltyRateCounters.windowStart, now - PRUNE_AFTER_MS),
+		),
+	)
 }
