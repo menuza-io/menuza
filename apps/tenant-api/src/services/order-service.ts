@@ -1246,6 +1246,7 @@ export async function placeOrder(input: {
 										: null,
 									promisedAt: promised.promisedAt,
 									promisedUntil: promised.promisedUntil,
+									locationTimezone: promiseLocation?.timezone || null,
 									smsUpdatesOptIn,
 									guestMessages: orderGuestMessages,
 									currency: result.currency,
@@ -2420,5 +2421,12 @@ export function operatorOrder(
 		promisedVersion: order.promisedVersion,
 		/** Minutes already pushed back (the limit is 90 in total). */
 		promisedDelayMinutes: order.promisedDelayMinutes,
+		/**
+		 * IANA time zone of the order's location, stored at placement (the
+		 * pickup window's zone when that is all there is), for showing the
+		 * promised and scheduled times in the restaurant's zone. Null when
+		 * unknown.
+		 */
+		timeZone: order.locationTimezone ?? order.pickupTimezone ?? null,
 	}
 }

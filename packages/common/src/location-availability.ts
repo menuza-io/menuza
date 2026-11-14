@@ -36,8 +36,17 @@ export interface LocationOrderingAvailability {
 	currentLocalTime: string // "HH:MM"
 	currentLocalDate: string // "YYYY-MM-DD"
 	dayOfWeek: DayOfWeek
+	/** Minutes until an ASAP pickup is ready: prep time plus busy minutes. */
 	estimatedPrepTime: number
+	/**
+	 * Minutes until an ASAP delivery arrives, as a range: prep time plus busy
+	 * minutes plus the location's delivery time range
+	 * (`deliveryArrivalWindowMinutes`). The window the guest is shown and the
+	 * one the order is promised (before any large-order extra).
+	 */
 	estimatedDeliveryTime?: { min: number; max: number }
+	/** The location's delivery time range alone (travel, no prep, no busy). */
+	deliveryTravelTime?: { min: number; max: number }
 	/**
 	 * Set while an operator has paused online ordering. `until` is the ISO end
 	 * of the pause (null: until someone resumes it); `resumesAt` is when orders
@@ -125,6 +134,82 @@ export function activeBusyExtraPrepMinutes(
 	const end = untilMs(busy.until)
 	if (end === null) return minutes
 	return !Number.isNaN(end) && end > now.getTime() ? minutes : 0
+}
+
+/** Prep minutes when a location sets none. */
+export const DEFAULT_PREP_MINUTES = 15
+/** Delivery time range when a location sets none. */
+export const DEFAULT_DELIVERY_TRAVEL_MINUTES = { min: 25, max: 45 } as const
+
+/**
+ * The ONE rule for an ASAP delivery window (#109), shared by the ordering
+ * pages, checkout and the promise stored on the order: prep time + busy
+ * minutes (counted once) + the large-order extra (only when the cart is known
+ * to be over the threshold) + the delivery time range. Minutes from now.
+ * Example: 15 min prep and a 25-45 min range is 40-60 min.
+ */
+export function deliveryArrivalWindowMinutes(input: {
+	/** The location's prep time, without busy minutes. */
+	prepMinutes: number
+	/** Busy mode minutes in force (0 when off). */
+	busyMinutes?: number
+	/** Large-order extra prep (0 unless the order is over the threshold). */
+	largeOrderExtraMinutes?: number
+	deliveryMin: number
+	deliveryMax: number
+}): { min: number; max: number } {
+	const before =
+		Math.max(0, input.prepMinutes) +
+		Math.max(0, input.busyMinutes ?? 0) +
+		Math.max(0, input.largeOrderExtraMinutes ?? 0)
+	const min = Math.max(0, input.deliveryMin)
+	return { min: before + min, max: before + Math.max(min, input.deliveryMax) }
+}
+
+type DeliveryEstimateSource = {
+	prepTime?: number | null
+	deliveryConfig?: Pick<
+		DeliveryConfig,
+		'estimatedDeliveryTimeMin' | 'estimatedDeliveryTimeMax'
+	> | null
+	busyMode?: BusyMode | null
+}
+
+/** A location's delivery time range alone (travel), defaults applied. */
+export function deliveryTravelMinutes(location: DeliveryEstimateSource): {
+	min: number
+	max: number
+} {
+	const config = location.deliveryConfig
+	return {
+		min:
+			config?.estimatedDeliveryTimeMin || DEFAULT_DELIVERY_TRAVEL_MINUTES.min,
+		max:
+			config?.estimatedDeliveryTimeMax || DEFAULT_DELIVERY_TRAVEL_MINUTES.max,
+	}
+}
+
+/**
+ * `deliveryArrivalWindowMinutes` for a location at `now`: its prep time, the
+ * busy minutes in force and its delivery range (or `travel`, a range a
+ * delivery quote returned for the same location).
+ */
+export function locationDeliveryArrivalMinutes(
+	location: DeliveryEstimateSource,
+	now: Date = new Date(),
+	options: {
+		travel?: { min: number; max: number } | null
+		largeOrderExtraMinutes?: number
+	} = {},
+): { min: number; max: number } {
+	const travel = options.travel ?? deliveryTravelMinutes(location)
+	return deliveryArrivalWindowMinutes({
+		prepMinutes: location.prepTime || DEFAULT_PREP_MINUTES,
+		busyMinutes: activeBusyExtraPrepMinutes(location, now),
+		largeOrderExtraMinutes: options.largeOrderExtraMinutes ?? 0,
+		deliveryMin: travel.min,
+		deliveryMax: travel.max,
+	})
 }
 
 type ScheduleSource = {
@@ -264,13 +349,11 @@ export function isLocationOpenForOrdering(
 	if (busy > 0) {
 		result.estimatedPrepTime += busy
 		result.busyExtraPrepMinutes = busy
-		if (result.estimatedDeliveryTime) {
-			result.estimatedDeliveryTime = {
-				min: result.estimatedDeliveryTime.min + busy,
-				max: result.estimatedDeliveryTime.max + busy,
-			}
-		}
 	}
+	result.estimatedDeliveryTime = locationDeliveryArrivalMinutes(
+		location,
+		currentTime,
+	)
 	if (location.isActive === false || !isOrderingPaused(location, currentTime)) {
 		return result
 	}
@@ -305,13 +388,8 @@ function scheduleAvailability(
 	currentTime: Date,
 ): LocationOrderingAvailability {
 	const timezone = location.timezone || 'UTC'
-	const prepTime = location.prepTime || 15
-	const deliveryTime = location.deliveryConfig
-		? {
-				min: location.deliveryConfig.estimatedDeliveryTimeMin || 25,
-				max: location.deliveryConfig.estimatedDeliveryTimeMax || 45,
-			}
-		: { min: 25, max: 45 }
+	const prepTime = location.prepTime || DEFAULT_PREP_MINUTES
+	const travel = deliveryTravelMinutes(location)
 
 	// Format current time into location's timezone
 	const parts: Record<string, string> = {}
@@ -355,7 +433,13 @@ function scheduleAvailability(
 		currentLocalDate,
 		dayOfWeek,
 		estimatedPrepTime: prepTime,
-		estimatedDeliveryTime: deliveryTime,
+		// Without busy minutes here; `isLocationOpenForOrdering` adds them.
+		estimatedDeliveryTime: deliveryArrivalWindowMinutes({
+			prepMinutes: prepTime,
+			deliveryMin: travel.min,
+			deliveryMax: travel.max,
+		}),
+		deliveryTravelTime: travel,
 	}
 
 	if (location.isActive === false) {

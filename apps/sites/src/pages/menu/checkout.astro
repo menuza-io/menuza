@@ -931,6 +931,7 @@ const tipOff = 'border-border bg-background text-foreground'
 		import { type FulfillmentMode } from '~/lib/ordering/types'
 		import { type CartItem } from '~/lib/ordering/types'
 		import { type PublicOrderingOptions } from '@repo/common/restaurant-orders'
+		import { asapEstimate } from '~/lib/ordering/asap-estimate'
 		import { type OrderErrorLabels } from '~/lib/ordering/order-errors'
 
 		type PickupLocationMeta = {
@@ -1365,6 +1366,25 @@ const tipOff = 'border-border bg-background text-foreground'
 			updateHoldNote()
 		}
 
+		/**
+		 * What the guest is shown for ASAP: prep + busy (+ delivery range) and the
+		 * large-order extra once the cart is over the location's threshold, the
+		 * same rule the region stores the promise with. The cart is read live, so
+		 * labels follow it (renderCheckout re-renders on every cart change).
+		 */
+		function asapNow(travel?: { min: number; max: number } | null) {
+			return asapEstimate({
+				location: activeLocation ?? {},
+				now: new Date(),
+				travel,
+				largeOrder: orderingOptions?.ordering?.largeOrder ?? null,
+				subtotal: cart.reduce((acc, it) => acc + it.unitPrice * it.quantity, 0),
+				itemCount: cart.reduce((acc, it) => acc + it.quantity, 0),
+			})
+		}
+		const deliveryWindow = (travel: { min: number; max: number } | null | undefined) =>
+			asapNow(travel).delivery
+
 		const minutesRange = (eta: { min: number; max: number }) =>
 			eta.min === eta.max
 				? fillTemplate(odLabels.minutes, { count: eta.min })
@@ -1391,7 +1411,7 @@ const tipOff = 'border-border bg-background text-foreground'
 			if (metaLine) {
 				metaLine.textContent = [
 					delivery.zoneName,
-					minutesRange(delivery.eta),
+					minutesRange(deliveryWindow(delivery.eta)),
 					delivery.minimumOrder > 0
 						? `${odLabels.minimumOrder} ${formatCurrency(delivery.minimumOrder)}`
 						: odLabels.noMinimum,
@@ -1443,8 +1463,8 @@ const tipOff = 'border-border bg-background text-foreground'
 			const delivery = validDelivery()
 			value.textContent =
 				mode === 'delivery'
-					? `${odLabels.asap} · ${minutesRange(delivery?.eta ?? { min: activeLocation?.deliveryConfig?.estimatedDeliveryTimeMin || 25, max: activeLocation?.deliveryConfig?.estimatedDeliveryTimeMax || 45 })}`
-					: `${odLabels.asap} · ${fillTemplate(odLabels.minutes, { count: activeLocation?.prepTime || 15 })}`
+					? `${odLabels.asap} · ${minutesRange(deliveryWindow(delivery?.eta))}`
+					: `${odLabels.asap} · ${fillTemplate(odLabels.minutes, { count: asapNow().pickupMinutes })}`
 		}
 
 		/** Why the order cannot be placed yet (delivery address / minimum / time). */
@@ -1765,6 +1785,9 @@ const tipOff = 'border-border bg-background text-foreground'
 					dropSlug: isDrop ? drop!.slug : null,
 				})
 				applyOrderingOptions(orderingOptions)
+				// The large-order rule arrives with the options: refresh the times.
+				renderWhen()
+				renderDeliveryDetails()
 			} catch {
 				// The region is unreachable or options are malformed: stay quiet,
 				// keep handoff as the only choice, and let the server judge the

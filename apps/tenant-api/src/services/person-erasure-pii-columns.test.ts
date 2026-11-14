@@ -313,6 +313,7 @@ describe('person erasure covers every PII column of the tenant schema', () => {
 				'order_id',
 				'kind',
 				'channel',
+				'dedupe_key',
 				'status',
 				'attempts',
 				'next_attempt_at',

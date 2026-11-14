@@ -6,6 +6,7 @@ import {
 	type TenantDatabase,
 	type TenantTransaction,
 } from '@repo/tenant-db'
+import { and, eq, isNull, lte, ne, or } from 'drizzle-orm'
 import { runInBackground } from '../lib/background.ts'
 import { getNodeRegion } from '../lib/region.ts'
 import {
@@ -33,6 +34,10 @@ import {
  *   is the US node. The KSA node never inserts a text row.
  * - At most one row per order, kind and channel (unique key; inserts that hit
  *   it do nothing), so a status that goes back and forth sends nothing again.
+ *   The exception is `eta_changed`: its dedupe key is the order's
+ *   `promised_version`, so every qualifying push-back gets its own row, and a
+ *   newer one supersedes any older one still waiting (see
+ *   `queueEtaChangedMessage`).
  * - A kill switch that is off records the row `dropped` at once, so switching
  *   it back on sends no backlog.
  */
@@ -59,7 +64,7 @@ type OrderForMessages = Pick<
 	| 'contactPhone'
 	| 'smsUpdatesOptIn'
 	| 'guestMessages'
->
+> & { promisedVersion?: number }
 
 /** Kinds that may go out as a text as well as an email. */
 const SMS_KINDS = new Set<OrderMessageKind>(['ready', 'eta_changed'])
@@ -141,6 +146,52 @@ function switchOff(channel: OrderMessageChannel): string | null {
 }
 
 /**
+ * `last_error` while a sender holds the row's lease (claimed, mid-send). Every
+ * outcome overwrites it; a sender that dies leaves it behind with a lease that
+ * lapses, which no longer counts as in flight.
+ */
+export const ORDER_MESSAGE_SENDING = 'sending'
+/** `last_error` of an `eta_changed` row replaced by a newer push-back. */
+export const ORDER_MESSAGE_SUPERSEDED = 'superseded'
+
+/** Dedupe key of an `eta_changed` row: the promised version it announces. */
+export function etaDedupeKey(promisedVersion: number): string {
+	return String(promisedVersion)
+}
+
+/**
+ * Drops the older `eta_changed` rows of one order and channel that still wait
+ * (queued and not mid-send), so a backlog never sends two updated times. A row
+ * that a sender holds right now is left alone: the sender's own check drops it
+ * if it has not sent yet, and the newer row waits for it (`order-message-send`).
+ */
+async function supersedeOlderEta(
+	tx: OrderMessageTx,
+	orderId: string,
+	channel: OrderMessageChannel,
+	dedupeKey: string,
+	now: number,
+): Promise<void> {
+	await tx
+		.update(orderMessages)
+		.set({ status: 'dropped', lastError: ORDER_MESSAGE_SUPERSEDED })
+		.where(
+			and(
+				eq(orderMessages.orderId, orderId),
+				eq(orderMessages.kind, 'eta_changed'),
+				eq(orderMessages.channel, channel),
+				eq(orderMessages.status, 'queued'),
+				ne(orderMessages.dedupeKey, dedupeKey),
+				or(
+					isNull(orderMessages.lastError),
+					ne(orderMessages.lastError, ORDER_MESSAGE_SENDING),
+					lte(orderMessages.nextAttemptAt, now),
+				),
+			),
+		)
+}
+
+/**
  * Queues one message kind for an order (every channel it qualifies for).
  * Returns the ids of the rows queued to send. Never throws for anything but a
  * database error, which rolls the order write back like any other.
@@ -152,9 +203,14 @@ export async function queueOrderMessage(
 	ctx: OrderMessageContext,
 ): Promise<string[]> {
 	let channels: OrderMessageChannel[]
+	let dedupeKey = ''
 	try {
 		if (!isMessageableOrder(order) || !orderStands(order)) return []
 		if (!kindAllowed(order, kind)) return []
+		if (kind === 'eta_changed') {
+			if (typeof order.promisedVersion !== 'number') return []
+			dedupeKey = etaDedupeKey(order.promisedVersion)
+		}
 		channels = orderMessageChannels(order, kind)
 	} catch {
 		return []
@@ -162,12 +218,16 @@ export async function queueOrderMessage(
 	const queued: string[] = []
 	for (const channel of channels) {
 		const dropped = switchOff(channel)
+		if (kind === 'eta_changed') {
+			await supersedeOlderEta(tx, order.id, channel, dedupeKey, ctx.now)
+		}
 		const rows = await tx
 			.insert(orderMessages)
 			.values({
 				orderId: order.id,
 				kind,
 				channel,
+				dedupeKey,
 				status: dropped ? 'dropped' : 'queued',
 				attempts: 0,
 				nextAttemptAt: ctx.now,
@@ -179,6 +239,7 @@ export async function queueOrderMessage(
 					orderMessages.orderId,
 					orderMessages.kind,
 					orderMessages.channel,
+					orderMessages.dedupeKey,
 				],
 			})
 			.returning({ id: orderMessages.id })
@@ -246,13 +307,16 @@ export async function queueOrderStatusMessages(
 }
 
 /**
- * A changed ready or arrival time (`promised_at` / `promised_until` already
- * written on `order`). For the "changed time" flow (#109); nothing calls it
- * yet. Like every kind, it goes out at most once per order and channel.
+ * A changed ready or arrival time (#109): `applyPromisedDelay` calls it for
+ * every push-back of 10 minutes or more, with `promised_at` / `promised_until`
+ * and the new `promised_version` already written on `order`. Each version gets
+ * its own row per channel (the 90-minute cap bounds how many); queueing it
+ * drops older ones still waiting, and the sender renders the time from the
+ * order as it is when it sends, so the guest only ever hears the newest time.
  */
 export async function queueEtaChangedMessage(
 	tx: OrderMessageTx,
-	order: OrderForMessages,
+	order: OrderForMessages & { promisedVersion: number },
 	ctx: OrderMessageContext,
 ): Promise<string[]> {
 	if (order.status === 'cancelled' || order.status === 'completed') return []

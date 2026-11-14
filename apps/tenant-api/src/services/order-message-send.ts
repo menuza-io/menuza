@@ -8,11 +8,15 @@ import {
 	type TenantDatabase,
 } from '@repo/tenant-db'
 import { sendSms } from '@repo/sms'
-import { and, asc, count, eq, gte, inArray, lte, min } from 'drizzle-orm'
+import { and, asc, eq, gt, inArray, lte, min, ne } from 'drizzle-orm'
 import { forEachWithBudget } from '../lib/concurrency.ts'
 import { errorLogFields } from '../lib/error-log.ts'
 import { queryInChunks } from '../lib/chunked-in.ts'
 import { buildOrderLinkUrl } from '../lib/order-link.ts'
+import {
+	ORDER_SMS_CAP,
+	reserveOrderSmsSlot,
+} from '../lib/order-messages-sms-cap.ts'
 import {
 	renderOrderEmail,
 	renderOrderSms,
@@ -26,6 +30,10 @@ import { getReservationsContext } from '../lib/reservations-context.ts'
 import { normalizeReservationLocale } from '../lib/reservations-email.ts'
 import { sendTenantEmail } from '../lib/tenant-email.ts'
 import { rotateOrgIds } from './loyalty-tick-service.ts'
+import {
+	ORDER_MESSAGE_SENDING,
+	ORDER_MESSAGE_SUPERSEDED,
+} from './order-messages.ts'
 
 /**
  * Sends `order_messages` rows (queued by `order-messages.ts`). A row is
@@ -35,6 +43,16 @@ import { rotateOrgIds } from './loyalty-tick-service.ts'
  * and 120 minutes and then ends `failed`; only a machine code is stored.
  * Logs carry ids and codes, never an address, a number or a message body.
  *
+ * Texts draw on a per-organization cap (`ORDER_SMS_CAP`), reserved atomically
+ * right before the first attempt of each row; a retry of the same row does not
+ * reserve again (`attempts > 0` marks a row that already holds its unit).
+ *
+ * Updated times (`eta_changed`, one row per push-back): a row whose promised
+ * version is older than the order's ends `dropped` / `superseded` instead of
+ * sending, and a row waits while another `eta_changed` row of the same order
+ * and channel is mid-send, so the guest's last updated-time message always
+ * carries the newest time.
+ *
  * The organization's name, email theme, site origin (for the "View your
  * order" link) and location time zones come from the control plane's cached,
  * non-PII organization context (`GET /resources/reservations/context`, served
@@ -43,10 +61,14 @@ import { rotateOrgIds } from './loyalty-tick-service.ts'
 
 export const ORDER_MESSAGE_BACKOFF_MIN = [1, 5, 30, 120] as const
 export const ORDER_MESSAGE_BATCH_LIMIT = 100
-/** Order texts sent per organization in any rolling 24 hours. */
-export const ORDER_SMS_DAILY_CAP = 200
-export const ORDER_SMS_CAP_WINDOW_MS = 24 * 60 * 60 * 1000
+/**
+ * Order texts per organization in any rolling 24 hours: counted in hourly
+ * slots, so a text weighs for 24 to 25 hours (`ORDER_SMS_CAP`).
+ */
+export const ORDER_SMS_DAILY_CAP = ORDER_SMS_CAP.max
 const CLAIM_LEASE_MS = 5 * 60 * 1000
+/** How long an updated-time row waits for an older one that is mid-send. */
+export const ETA_WAIT_MS = 30_000
 const DEFAULT_TICK_BUDGET_MS = 50_000
 
 export type OrderMessageTotals = {
@@ -125,7 +147,10 @@ function settingFrom(context: ReservationsContext): MessageSetting {
 		theme: context.organization.emailTheme,
 		siteOrigin: context.organization.siteOrigin,
 		timeZoneFor: (locationId, order) =>
-			order.pickupTimezone || zones.get(locationId) || null,
+			order.pickupTimezone ||
+			order.locationTimezone ||
+			zones.get(locationId) ||
+			null,
 	}
 }
 
@@ -199,21 +224,34 @@ async function setRow(
 	await db.update(orderMessages).set(patch).where(eq(orderMessages.id, id))
 }
 
-async function smsSentInWindow(
+/** Another `eta_changed` row of the same order and channel is mid-send. */
+async function etaSendInFlight(
 	db: TenantDatabase,
+	row: MessageRow,
 	now: number,
-): Promise<number> {
-	const [row] = await db
-		.select({ value: count() })
+): Promise<boolean> {
+	const [other] = await db
+		.select({ id: orderMessages.id })
 		.from(orderMessages)
 		.where(
 			and(
-				eq(orderMessages.channel, 'sms'),
-				eq(orderMessages.status, 'sent'),
-				gte(orderMessages.sentAt, now - ORDER_SMS_CAP_WINDOW_MS),
+				eq(orderMessages.orderId, row.orderId),
+				eq(orderMessages.kind, 'eta_changed'),
+				eq(orderMessages.channel, row.channel),
+				ne(orderMessages.id, row.id),
+				eq(orderMessages.status, 'queued'),
+				eq(orderMessages.lastError, ORDER_MESSAGE_SENDING),
+				gt(orderMessages.nextAttemptAt, now),
 			),
 		)
-	return Number(row?.value ?? 0)
+		.limit(1)
+	return Boolean(other)
+}
+
+/** The `eta_changed` row announces an older promised time than the order's. */
+function etaSuperseded(row: MessageRow, order: RestaurantOrder): boolean {
+	const version = Number.parseInt(row.dedupeKey, 10)
+	return !Number.isFinite(version) || version < order.promisedVersion
 }
 
 async function processRow(options: {
@@ -224,10 +262,31 @@ async function processRow(options: {
 	setting: () => Promise<MessageSetting | null>
 }): Promise<Outcome | null> {
 	const { db, orgId, row, now } = options
+	// Updated times go out one at a time per order and channel. Race: an older
+	// row may be mid-send (claimed, past its version check) when a new push-back
+	// commits; the new row then waits for it here, and sends after it, rendered
+	// from the order at that moment, so the guest's last message is the newest.
+	if (row.kind === 'eta_changed' && (await etaSendInFlight(db, row, now))) {
+		await db
+			.update(orderMessages)
+			.set({ nextAttemptAt: now + ETA_WAIT_MS })
+			.where(
+				and(
+					eq(orderMessages.id, row.id),
+					eq(orderMessages.status, 'queued'),
+					lte(orderMessages.nextAttemptAt, now),
+				),
+			)
+		return null
+	}
 	// Claim: a lease, so the after-commit send and a tick never both send it.
+	// `last_error = 'sending'` marks it in flight until an outcome replaces it.
 	const claimed = await db
 		.update(orderMessages)
-		.set({ nextAttemptAt: now + CLAIM_LEASE_MS })
+		.set({
+			nextAttemptAt: now + CLAIM_LEASE_MS,
+			lastError: ORDER_MESSAGE_SENDING,
+		})
 		.where(
 			and(
 				eq(orderMessages.id, row.id),
@@ -255,11 +314,19 @@ async function processRow(options: {
 		.where(eq(restaurantOrders.id, row.orderId))
 		.limit(1)
 	if (!order) return drop('no_contact')
+	// A newer push-back replaced this one: its own row carries the newest time.
+	if (row.kind === 'eta_changed' && etaSuperseded(row, order)) {
+		return drop(ORDER_MESSAGE_SUPERSEDED)
+	}
 	if (row.channel === 'email' && !order.contactEmail) return drop('no_contact')
 	if (row.channel === 'sms') {
 		if (nodeRegion() !== 'us') return drop('sms_not_allowed')
 		if (!order.smsUpdatesOptIn || !order.contactPhone) return drop('no_contact')
-		if ((await smsSentInWindow(db, now)) >= deps().smsDailyCap) {
+		// One unit per row, reserved before its first attempt; retries reuse it.
+		if (
+			row.attempts === 0 &&
+			!(await reserveOrderSmsSlot(db, { orgId, max: deps().smsDailyCap }, now))
+		) {
 			console.warn('Order text over the daily cap', orgId, row.id)
 			return drop('sms_daily_cap')
 		}

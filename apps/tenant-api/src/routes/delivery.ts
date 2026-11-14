@@ -1,6 +1,7 @@
 import { Hono, type Context } from 'hono'
 import { LRUCache } from 'lru-cache'
 
+import { deliveryTravelMinutes } from '@repo/common/location-availability'
 import {
 	locationCountryCode,
 	resolveDeliveryZoneForPoint,
@@ -29,7 +30,6 @@ import { resolveOrderingOrganization } from './orders.ts'
  */
 export const publicDeliveryRoutes = new Hono()
 
-const ETA_DEFAULT = { min: 25, max: 45 }
 const LOCATION_CACHE_TTL_MS = 5 * 60 * 1000
 
 function noStore() {
@@ -352,14 +352,11 @@ publicDeliveryRoutes.post('/quote', async (c) => {
 		exp: expiresAt.getTime(),
 	})
 	const zone = coverage.zone
-	const eta = location.deliveryConfig
-		? {
-				min:
-					location.deliveryConfig.estimatedDeliveryTimeMin || ETA_DEFAULT.min,
-				max:
-					location.deliveryConfig.estimatedDeliveryTimeMax || ETA_DEFAULT.max,
-			}
-		: ETA_DEFAULT
+	// The delivery time range alone (travel, no prep, no busy minutes): Sites
+	// adds the schedule lead to it, and shows the guest the ASAP window
+	// `locationDeliveryArrivalMinutes(location, now, { travel: eta })` (prep +
+	// busy + this range), the same rule the order's promised time uses.
+	const eta = deliveryTravelMinutes(location)
 
 	return c.json(
 		{

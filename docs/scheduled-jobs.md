@@ -234,6 +234,27 @@ and the Node (OCI) node runs an in-process interval
 (`ORDER_MESSAGES_TICK_INTERVAL_SECONDS`, default 120, minimum 60, `0` turns it
 off). Each row is claimed before it is sent, so the drivers may overlap.
 
+Updated times (`eta_changed`): every push-back of 10 minutes or more queues one
+row per channel, keyed by the order's new `promised_version` (every other kind
+is still sent at most once per order and channel). Queueing one drops the older
+updated-time rows of that order and channel that still wait (`dropped`,
+`superseded`), and a row whose version is older than the order's when it is
+reached is dropped the same way, so a backlog sends only the newest time. A row
+that finds an older one mid-send waits 30 seconds and goes after it, so the
+guest's last message always carries the newest time.
+
+Order texts are capped at **200 per organization in any rolling 24 hours**
+(`ORDER_SMS_CAP` in `apps/tenant-api/src/lib/order-messages-sms-cap.ts`). A text
+reserves its unit atomically before it is handed to the provider, in the
+organization's `loyalty_rate_counters` (bucket `order_sms_daily`, one row per
+hour): a reservation counts every hourly slot that overlaps the last 24 hours,
+so a text weighs against the cap for 24 to 25 hours. Over the cap, the row ends
+`dropped` with `sms_daily_cap` and nothing is sent; parallel senders cannot both
+take the last unit. A unit is reserved once per row, before its first attempt: a
+retry of the same row after a provider error does not count again (a unit stays
+counted when the provider then fails for good). The bucket prunes its own rows
+after 26 hours; the loyalty tick's two-hour purge skips it.
+
 ### Reservation payments reconcile
 
 `/resources/jobs/reservation-payments-reconcile` (App, hourly, rides the

@@ -16,6 +16,7 @@ import { Hono } from 'hono'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { seedLoyaltyContextForTest } from '../lib/loyalty-context.ts'
+import { purgeLoyaltyRateCounters } from '../lib/loyalty-rate-limit.ts'
 import {
 	deriveOrderLinkToken,
 	verifyOrderLinkToken,
@@ -26,6 +27,7 @@ import { syncEnvFromProcess } from '../lib/secrets.ts'
 import { sendTenantEmail } from '../lib/tenant-email.ts'
 import { publicOrderRoutes } from '../routes/orders.ts'
 import {
+	deliverOrderMessagesByIds,
 	ORDER_SMS_DAILY_CAP,
 	runOrderMessagesTickForOrg,
 	sendOrderReceiptNow,
@@ -663,6 +665,106 @@ describe('guest order messages', () => {
 		])
 		expect(sms).toHaveBeenCalledTimes(1)
 		expect((await orderRow(second)).status).toBe('ready')
+	})
+
+	/** Queues a ready text (and email) for `orderId` at `now`; returns ids by channel. */
+	async function queueReady(orderId: string, now: number) {
+		const db = await getTenantDb(orgId)
+		const ids = await queueOrderMessage(db, await orderRow(orderId), 'ready', {
+			now,
+		})
+		const queued = (await rows(orderId)).filter((row) => ids.includes(row.id))
+		return {
+			sms: queued.filter((row) => row.channel === 'sms').map((row) => row.id),
+			email: queued
+				.filter((row) => row.channel === 'email')
+				.map((row) => row.id),
+		}
+	}
+
+	async function smsOutcome(orderId: string) {
+		const row = (await rows(orderId)).find(
+			(candidate) => candidate.kind === 'ready' && candidate.channel === 'sms',
+		)
+		return [row?.status, row?.lastError]
+	}
+
+	it('reserves order texts atomically: at the cap minus one, two parallel sends make one text', async () => {
+		setOrderMessageSendDepsForTest({
+			getContext: async () => ORG_CONTEXT,
+			sendSms: sms,
+			smsDailyCap: 2,
+		})
+		const first = await placed({ smsUpdates: true })
+		await setStatus(first, 'ready')
+		expect(sms).toHaveBeenCalledTimes(1)
+		const a = await placed({ smsUpdates: true })
+		const b = await placed({ smsUpdates: true })
+		const now = Date.now()
+		const queuedA = await queueReady(a, now)
+		const queuedB = await queueReady(b, now)
+		await Promise.all(
+			[...queuedA.sms, ...queuedB.sms].map((id) =>
+				deliverOrderMessagesByIds(orgId, [id], { now }),
+			),
+		)
+		expect(sms).toHaveBeenCalledTimes(2)
+		expect([await smsOutcome(a), await smsOutcome(b)].sort()).toEqual([
+			['dropped', 'sms_daily_cap'],
+			['sent', null],
+		])
+		// Email never draws on the text cap.
+		await deliverOrderMessagesByIds(
+			orgId,
+			[...queuedA.email, ...queuedB.email],
+			{ now },
+		)
+		for (const orderId of [a, b]) {
+			expect(
+				(await rows(orderId)).find(
+					(row) => row.kind === 'ready' && row.channel === 'email',
+				),
+			).toMatchObject({ status: 'sent' })
+		}
+	})
+
+	it('counts a text against the cap for a rolling day, even through the loyalty purge', async () => {
+		setOrderMessageSendDepsForTest({
+			getContext: async () => ORG_CONTEXT,
+			sendSms: sms,
+			smsDailyCap: 1,
+		})
+		const hour = 60 * 60_000
+		const start = Date.now()
+		const sendAt = async (offset: number) => {
+			const orderId = await placed({ smsUpdates: true })
+			const { sms: ids } = await queueReady(orderId, start + offset)
+			await deliverOrderMessagesByIds(orgId, ids, { now: start + offset })
+			return smsOutcome(orderId)
+		}
+		expect(await sendAt(0)).toEqual(['sent', null])
+		// The loyalty tick's purge (two hours) must not shorten the day.
+		await purgeLoyaltyRateCounters(await getTenantDb(orgId), start + 3 * hour)
+		expect(await sendAt(3 * hour)).toEqual(['dropped', 'sms_daily_cap'])
+		expect(await sendAt(23 * hour)).toEqual(['dropped', 'sms_daily_cap'])
+		// Counted in hourly slots: gone 24 to 25 hours after it was sent.
+		expect(await sendAt(25 * hour + 60_000)).toEqual(['sent', null])
+		expect(sms).toHaveBeenCalledTimes(2)
+	})
+
+	it('keeps one cap unit per text across retries of the same row', async () => {
+		setOrderMessageSendDepsForTest({
+			getContext: async () => ORG_CONTEXT,
+			sendSms: sms,
+			smsDailyCap: 1,
+		})
+		sms.mockRejectedValueOnce(new Error('provider down'))
+		const orderId = await placed({ smsUpdates: true })
+		await setStatus(orderId, 'ready')
+		expect(await smsOutcome(orderId)).toEqual(['queued', 'sms_failed'])
+		await runOrderMessagesTickForOrg(orgId, { now: Date.now() + 2 * 60_000 })
+		expect(await smsOutcome(orderId)).toEqual(['sent', null])
+		expect(sms).toHaveBeenCalledTimes(2)
 	})
 
 	it('drops a message whose order lost its contact (erased) before it went out', async () => {

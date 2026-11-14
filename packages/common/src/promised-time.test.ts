@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import {
 	computePromisedTime,
+	deliveryArrivalWindowMinutes,
 	isLargeOrder,
+	largeOrderExtraMinutes,
+	locationDeliveryArrivalMinutes,
 	MAX_PROMISED_DELAY_MINUTES,
 	planPromisedDelay,
 	readLargeOrderRule,
@@ -106,10 +109,11 @@ describe('computePromisedTime', () => {
 		}
 	})
 
-	it('promises delivery as the delivery estimate range, busy and large order included', () => {
+	it('promises delivery as prep plus the delivery range, busy and large order included', () => {
+		// 20 min prep + a 30-45 min range.
 		expect(computePromisedTime(input({ fulfillment: 'delivery' }))).toEqual({
-			promisedAt: at(30),
-			promisedUntil: at(45),
+			promisedAt: at(50),
+			promisedUntil: at(65),
 		})
 		expect(
 			computePromisedTime(
@@ -126,7 +130,16 @@ describe('computePromisedTime', () => {
 					},
 				}),
 			),
-		).toEqual({ promisedAt: at(45), promisedUntil: at(60) })
+			// + 10 busy (once) + 5 large-order extra.
+		).toEqual({ promisedAt: at(65), promisedUntil: at(80) })
+	})
+
+	it('promises a scheduled delivery at its slot, without prep or range', () => {
+		expect(
+			computePromisedTime(
+				input({ fulfillment: 'delivery', scheduledFor: at(120).toISOString() }),
+			),
+		).toEqual({ promisedAt: at(120), promisedUntil: null })
 	})
 
 	it('has no promised time for table rounds and drops', () => {
@@ -164,6 +177,63 @@ describe('readLargeOrderRule / isLargeOrder', () => {
 		expect(isLargeOrder(null, { subtotalCents: 1e9, itemCount: 1e3 })).toBe(
 			false,
 		)
+	})
+})
+
+describe('largeOrderExtraMinutes', () => {
+	const amount = {
+		threshold: 50,
+		thresholdType: 'amount' as const,
+		extraPrepMinutes: 10,
+	}
+	const items = {
+		threshold: 3,
+		thresholdType: 'items' as const,
+		extraPrepMinutes: 15,
+	}
+
+	it('is strictly over the amount threshold (major units x100)', () => {
+		expect(
+			largeOrderExtraMinutes(amount, { subtotalCents: 4999, itemCount: 1 }),
+		).toBe(0)
+		expect(
+			largeOrderExtraMinutes(amount, { subtotalCents: 5000, itemCount: 1 }),
+		).toBe(0)
+		expect(
+			largeOrderExtraMinutes(amount, { subtotalCents: 5001, itemCount: 1 }),
+		).toBe(10)
+	})
+
+	it('is strictly over the item count threshold', () => {
+		expect(
+			largeOrderExtraMinutes(items, { subtotalCents: 1e6, itemCount: 2 }),
+		).toBe(0)
+		expect(
+			largeOrderExtraMinutes(items, { subtotalCents: 1e6, itemCount: 3 }),
+		).toBe(0)
+		expect(
+			largeOrderExtraMinutes(items, { subtotalCents: 0, itemCount: 4 }),
+		).toBe(15)
+	})
+
+	it('is 0 without a rule', () => {
+		expect(
+			largeOrderExtraMinutes(null, { subtotalCents: 1e9, itemCount: 99 }),
+		).toBe(0)
+	})
+
+	it('equals what placement stores, for pickup and delivery', () => {
+		const cart = { subtotalCents: 6000, itemCount: 2 }
+		const extra = largeOrderExtraMinutes(amount, cart)
+		const base = input({ largeOrder: amount, ...cart })
+		const pickup = computePromisedTime(base)
+		expect(pickup.promisedAt).toEqual(at(20 + extra))
+		const delivery = computePromisedTime({ ...base, fulfillment: 'delivery' })
+		const window = locationDeliveryArrivalMinutes(base.location, NOW, {
+			largeOrderExtraMinutes: extra,
+		})
+		expect(delivery.promisedAt).toEqual(at(window.min))
+		expect(delivery.promisedUntil).toEqual(at(window.max))
 	})
 })
 
@@ -219,5 +289,94 @@ describe('planPromisedDelay', () => {
 	it('never moves earlier: only the offered choices are accepted', () => {
 		expect(() => planPromisedDelay(order, -5 as never, 0)).toThrow(RangeError)
 		expect(() => planPromisedDelay(order, 20 as never, 0)).toThrow(RangeError)
+	})
+})
+
+describe('deliveryArrivalWindowMinutes', () => {
+	it('is prep + busy + large-order extra + the delivery range', () => {
+		expect(
+			deliveryArrivalWindowMinutes({
+				prepMinutes: 15,
+				deliveryMin: 25,
+				deliveryMax: 45,
+			}),
+		).toEqual({ min: 40, max: 60 })
+		expect(
+			deliveryArrivalWindowMinutes({
+				prepMinutes: 15,
+				busyMinutes: 10,
+				largeOrderExtraMinutes: 5,
+				deliveryMin: 25,
+				deliveryMax: 45,
+			}),
+		).toEqual({ min: 55, max: 75 })
+	})
+
+	it('never inverts the range and ignores negative inputs', () => {
+		expect(
+			deliveryArrivalWindowMinutes({
+				prepMinutes: 15,
+				busyMinutes: -5,
+				deliveryMin: 30,
+				deliveryMax: 20,
+			}),
+		).toEqual({ min: 45, max: 45 })
+	})
+})
+
+describe('locationDeliveryArrivalMinutes', () => {
+	const location = input().location
+
+	it('reads prep, busy minutes in force and the delivery range from the location', () => {
+		expect(locationDeliveryArrivalMinutes(location, NOW)).toEqual({
+			min: 50,
+			max: 65,
+		})
+		expect(
+			locationDeliveryArrivalMinutes(
+				{ ...location, busyMode: { extraPrepMinutes: 10, until: null } },
+				NOW,
+			),
+		).toEqual({ min: 60, max: 75 })
+		// Busy mode that has ended adds nothing.
+		expect(
+			locationDeliveryArrivalMinutes(
+				{
+					...location,
+					busyMode: {
+						extraPrepMinutes: 10,
+						until: '2026-11-13T17:00:00.000Z',
+					},
+				},
+				NOW,
+			),
+		).toEqual({ min: 50, max: 65 })
+	})
+
+	it('uses defaults (15 min prep, 25-45 min) and a quoted travel range when given', () => {
+		expect(locationDeliveryArrivalMinutes({}, NOW)).toEqual({
+			min: 40,
+			max: 60,
+		})
+		expect(
+			locationDeliveryArrivalMinutes(location, NOW, {
+				travel: { min: 10, max: 20 },
+			}),
+		).toEqual({ min: 30, max: 40 })
+	})
+
+	it('is the window the ordering pages show and the promise stores', () => {
+		const busy = {
+			...location,
+			busyMode: { extraPrepMinutes: 10, until: null },
+		}
+		const promised = computePromisedTime(
+			input({ fulfillment: 'delivery', location: busy }),
+		)
+		const window = locationDeliveryArrivalMinutes(busy, NOW)
+		expect({
+			min: (promised.promisedAt!.getTime() - NOW.getTime()) / MIN,
+			max: (promised.promisedUntil!.getTime() - NOW.getTime()) / MIN,
+		}).toEqual(window)
 	})
 })

@@ -1,5 +1,11 @@
 import { z } from 'zod'
-import { isLocationOpenForOrdering } from './location-availability.ts'
+import {
+	deliveryArrivalWindowMinutes,
+	isLocationOpenForOrdering,
+	locationDeliveryArrivalMinutes,
+} from './location-availability.ts'
+
+export { deliveryArrivalWindowMinutes, locationDeliveryArrivalMinutes }
 
 /**
  * Promised ready (pickup) or arrival (delivery) time of an online order (#109),
@@ -8,14 +14,16 @@ import { isLocationOpenForOrdering } from './location-availability.ts'
  * At placement:
  * - Scheduled: the time the guest chose (`scheduledFor`, the pickup time or
  *   the delivery time), one time, no range.
- * - As soon as possible, pickup: now + the location's prep estimate (busy
- *   minutes included, from `isLocationOpenForOrdering`, the same estimate the
- *   ordering page shows) + the large-order extra prep when the order is over
- *   the location's large-order threshold. One time, no range.
- * - As soon as possible, delivery: now + the location's delivery estimate
- *   range (busy minutes included, the same "25-45 min" the checkout shows) +
- *   the large-order extra prep. `promisedAt` is the earliest arrival,
- *   `promisedUntil` the latest.
+ * - As soon as possible, pickup: now + the location's prep time + busy
+ *   minutes (`estimatedPrepTime` of `isLocationOpenForOrdering`, the same
+ *   estimate the ordering page shows) + the large-order extra prep when the
+ *   order is over the location's large-order threshold. One time, no range.
+ * - As soon as possible, delivery: now + prep time + busy minutes (once) +
+ *   the large-order extra + the location's delivery time range, from
+ *   `deliveryArrivalWindowMinutes`, the one rule the ordering pages and
+ *   checkout show too (15 min prep and a 25-45 min range is 40-60 min; they
+ *   show it without the large-order extra, which needs the cart).
+ *   `promisedAt` is the earliest arrival, `promisedUntil` the latest.
  * - Table rounds and drops: no promised time.
  * Times are rounded up to the whole minute.
  */
@@ -77,6 +85,18 @@ export function isLargeOrder(
 	return order.subtotalCents > Math.round(rule.threshold * 100)
 }
 
+/**
+ * The large-order extra prep minutes for a cart: the rule's extra when the
+ * cart is over its threshold, otherwise 0. The one function placement
+ * (`computePromisedTime`) and checkout use, so they cannot drift.
+ */
+export function largeOrderExtraMinutes(
+	rule: LargeOrderRule | null,
+	order: { subtotalCents: number; itemCount: number },
+): number {
+	return rule && isLargeOrder(rule, order) ? rule.extraPrepMinutes : 0
+}
+
 type PromiseLocation = Parameters<typeof isLocationOpenForOrdering>[0]
 
 export type PromisedTimeInput = {
@@ -114,15 +134,13 @@ export function computePromisedTime(input: PromisedTimeInput): PromisedTime {
 	}
 	const now = input.now.getTime()
 	const availability = isLocationOpenForOrdering(input.location, input.now)
-	const extra = isLargeOrder(input.largeOrder, input)
-		? input.largeOrder!.extraPrepMinutes
-		: 0
+	const extra = largeOrderExtraMinutes(input.largeOrder, input)
 	if (input.fulfillment === 'delivery') {
-		const range = availability.estimatedDeliveryTime ?? { min: 25, max: 45 }
-		const from = ceilToMinute(now + (range.min + extra) * MINUTE)
-		const to = ceilToMinute(
-			now + (Math.max(range.min, range.max) + extra) * MINUTE,
-		)
+		const range = locationDeliveryArrivalMinutes(input.location, input.now, {
+			largeOrderExtraMinutes: extra,
+		})
+		const from = ceilToMinute(now + range.min * MINUTE)
+		const to = ceilToMinute(now + range.max * MINUTE)
 		return {
 			promisedAt: new Date(from),
 			promisedUntil: to > from ? new Date(to) : null,

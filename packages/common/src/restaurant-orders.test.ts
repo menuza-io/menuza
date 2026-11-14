@@ -374,6 +374,7 @@ function makeContext(
 		}
 		dataRegion?: 'us' | 'ksa'
 		guestMessages?: unknown
+		largeOrder?: unknown
 	} = {},
 ): RestaurantOrderContext {
 	return restaurantOrderContextSchema.parse({
@@ -381,6 +382,9 @@ function makeContext(
 		dataRegion: overrides.dataRegion ?? 'us',
 		...(overrides.guestMessages !== undefined
 			? { guestMessages: overrides.guestMessages }
+			: {}),
+		...(overrides.largeOrder !== undefined
+			? { largeOrder: overrides.largeOrder }
 			: {}),
 		menu: overrides.menu ?? makeMenu(),
 		drop: overrides.drop === undefined ? null : overrides.drop,
@@ -1026,6 +1030,11 @@ describe('priceRestaurantOrder: paused online ordering', () => {
 			})
 			expect(result.options.ordering.prepMinutes).toBe(35)
 			expect(result.options.ordering.busyExtraPrepMinutes).toBe(20)
+			// ASAP delivery: prep 15 + busy 20 (once) + the 30-60 min range.
+			expect(result.options.ordering.deliveryMinutes).toEqual({
+				min: 65,
+				max: 95,
+			})
 		}
 	})
 })
@@ -1666,6 +1675,40 @@ describe('applyOrderDiscounts', () => {
 // ---------------------------------------------------------------------------
 
 describe('buildPublicOrderingOptions', () => {
+	describe('ordering.largeOrder', () => {
+		const rule = {
+			threshold: 50,
+			thresholdType: 'amount',
+			extraPrepMinutes: 10,
+		}
+		const largeOrder = (overrides: Parameters<typeof makeContext>[0]) => {
+			const built = buildPublicOrderingOptions(makeContext(overrides), {
+				slug: 'test-org',
+				locationId: LOCATION_ID,
+				dropSlug: null,
+				counts: { slotOrders: new Map(), entityUsed: new Map() },
+				now: NOW,
+			})
+			expect(built.ok).toBe(true)
+			return built.ok ? built.options.ordering.largeOrder : undefined
+		}
+
+		it('carries the selected location rule', () => {
+			expect(largeOrder({ largeOrder: { [LOCATION_ID]: rule } })).toEqual(rule)
+		})
+
+		it('fails closed when absent, for another location or malformed', () => {
+			expect(largeOrder({})).toBeNull()
+			expect(largeOrder({ largeOrder: { other: rule } })).toBeNull()
+			expect(
+				largeOrder({
+					largeOrder: { [LOCATION_ID]: { ...rule, extraPrepMinutes: -1 } },
+				}),
+			).toBeNull()
+			expect(largeOrder({ largeOrder: 'nope' })).toBeNull()
+		})
+	})
+
 	describe('guestMessages.smsUpdates', () => {
 		const on = { enabled: true, receipt: true, ready: true, cancelled: true }
 		const smsUpdates = (

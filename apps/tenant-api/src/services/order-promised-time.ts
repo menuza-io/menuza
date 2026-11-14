@@ -19,9 +19,11 @@ import {
  *
  * Rules: only a live order (accepted, preparing, ready) with a promised time;
  * the caller names the `promisedVersion` it saw; at most 90 minutes in total.
- * Both ends of a delivery range move. A single push-back of 10 minutes or more
- * queues the guest's `eta_changed` message (at most one per order and channel,
- * rendered from the order when it is sent, so it carries the newest time).
+ * Both ends of a delivery range move. Every push-back of 10 minutes or more
+ * queues an `eta_changed` message for the guest, keyed by the new promised
+ * version (one per push-back and channel; a newer one replaces an older one
+ * still waiting, and it is rendered from the order when it is sent, so it
+ * carries the newest time). A 5-minute push-back tells nobody.
  */
 
 export const PROMISED_DELAY_MESSAGES: Record<PromisedDelayRefusal, string> = {

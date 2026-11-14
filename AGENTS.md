@@ -1139,24 +1139,37 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
   (`restaurant_orders.guest_messages`), so a later change affects new orders
   only; the node kill switches stop sends at once.
 - Outbox: `order_messages` (tenant-db `0043_order_messages`), unique per
-  `(order_id, kind, channel)`, no contact data and no body (contact is read from
-  the order at send time; erasure leaves the rows). Rows are queued in the
-  order's own transaction (`services/order-messages.ts`) from `placeOrder` (pay
-  at handoff), `applyPaymentEvent` (paid), `updateOperatorOrder` and the kitchen
+  `(order_id, kind, channel, dedupe_key)` (the key is the promised version for
+  `eta_changed` and empty otherwise, so every other kind goes out once and each
+  push-back of 10 minutes or more sends its own message; an older one still
+  queued is `superseded`), no contact data and no body (contact is read from the
+  order at send time; erasure leaves the rows). Rows are queued in the order's
+  own transaction (`services/order-messages.ts`) from `placeOrder` (pay at
+  handoff), `applyPaymentEvent` (paid), `updateOperatorOrder` and the kitchen
   command, and sent after commit (`services/order-message-send.ts`); the
   order-messages tick retries. Texts: only "ready" and a changed time, only with
   `smsUpdates` on that order, only on the US node, with a cap of 200 per
-  organization per day (`sms_daily_cap`). No messages for table rounds or
-  Station sales. Do not use the Station ready-text path for this.
+  organization per rolling day, reserved atomically before the send
+  (`lib/order-messages-sms-cap.ts`, `sms_daily_cap`). No messages for table
+  rounds or Station sales. Do not use the Station ready-text path for this.
 - Order link: `lib/order-link.ts`, an HMAC with the purpose `order-link:v1`,
   valid 90 days from placement, read-only, carried in the URL fragment
   (`/menu/success?order=<id>#link=<token>`) and the `X-Order-Link` header of
   `GET /orders/:id` and `POST /orders/:id/resend-link` (3 per order per hour).
-  Every refusal is the uniform 404.
+  Every refusal is the uniform 404, and a value that is not 64 hex characters is
+  refused before any database work. A read by link returns a reduced body
+  (`linkReceiptOrder`: no `contact`, no delivery address, no line notes); only
+  the receipt token of the placing browser gets the full receipt. Sites moves
+  the token from the fragment to `sessionStorage` and strips the URL before
+  analytics loads.
 - Promised time: `promised_at` / `promised_until` / `promised_version` /
   `promised_delay_minutes`, computed at placement by `@repo/common`
   `promised-time.ts` (prep, busy minutes, large-order extra from `largeOrder` in
-  the order context). A push-back (5, 10 or 15 minutes, 90 in total,
+  the order context). ASAP delivery is prep plus the delivery range
+  (`deliveryArrivalWindowMinutes`); checkout uses the same helpers and
+  `largeOrderExtraMinutes`, so the shown window equals the stored promise. The
+  location's zone is stored on the order (`location_timezone`) and returned to
+  operators as `timeZone`. A push-back (5, 10 or 15 minutes, 90 in total,
   `expectedPromisedVersion`, 409 `stale_version`) is
   `PATCH /operator/orders/:id` or the kitchen command `delay`; both use
   `applyPromisedDelay`. 10 minutes or more queues `eta_changed`.

@@ -320,6 +320,7 @@ const truckIcon =
 		type BusyMode,
 		isLocationOpenForOrdering,
 		isOrderingPaused,
+		locationDeliveryArrivalMinutes,
 		type OrderingPause,
 	} from '@repo/common/location-availability'
 	import { summarizeHours } from '~/lib/menu-hours'
@@ -486,6 +487,11 @@ const truckIcon =
 			return quote.status === 'deliverable' ? quote.quote.eta : location()?.deliveryEta ?? { min: 25, max: 45 }
 		}
 
+		/** What the guest is shown for ASAP delivery: prep + busy + the delivery range. */
+		function deliveryWindow() {
+			return locationDeliveryArrivalMinutes(location() ?? {}, new Date(), { travel: deliveryEta() })
+		}
+
 		function schedulingEnabled() {
 			const loc = location()
 			return loc ? schedulingSettings(loc).enabled : false
@@ -625,7 +631,7 @@ const truckIcon =
 					dl.append(
 						stat(L.deliveryFee, dq.deliveryFee > 0 ? money(dq.deliveryFee) : L.free),
 						stat(L.minimumOrder, dq.minimumOrder > 0 ? money(dq.minimumOrder) : L.noMinimum),
-						stat(L.estimatedTime, minutesRange(dq.eta.min, dq.eta.max)),
+						stat(L.estimatedTime, minutesRange(deliveryWindow().min, deliveryWindow().max)),
 					)
 					wrap.append(dl)
 					node = wrap
@@ -695,7 +701,7 @@ const truckIcon =
 			for (const b of dialog.querySelectorAll<HTMLElement>('[data-od-when]')) {
 				b.setAttribute('aria-pressed', String(b.dataset.odWhen === whenMode))
 			}
-			const eta = deliveryEta()
+			const eta = deliveryWindow()
 			const current = location()
 			asapHint.textContent = !open
 				? current && isOrderingPaused(current, new Date())

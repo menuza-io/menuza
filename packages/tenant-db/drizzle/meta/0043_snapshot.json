@@ -1,7 +1,7 @@
 {
 	"version": "6",
 	"dialect": "sqlite",
-	"id": "ab71ee5c-8438-4940-8536-ba0b1c3763d8",
+	"id": "0dc4673d-5a01-4999-95c3-bbdce984ef99",
 	"prevId": "99068395-6618-4df2-aa76-0f0b14d29818",
 	"tables": {
 		"customer_payment_methods": {
@@ -9940,6 +9940,14 @@
 					"notNull": true,
 					"autoincrement": false
 				},
+				"dedupe_key": {
+					"name": "dedupe_key",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false,
+					"default": "''"
+				},
 				"status": {
 					"name": "status",
 					"type": "text",
@@ -9986,19 +9994,14 @@
 				}
 			},
 			"indexes": {
-				"order_messages_order_kind_channel_unique": {
-					"name": "order_messages_order_kind_channel_unique",
-					"columns": ["order_id", "kind", "channel"],
+				"order_messages_order_kind_channel_key_unique": {
+					"name": "order_messages_order_kind_channel_key_unique",
+					"columns": ["order_id", "kind", "channel", "dedupe_key"],
 					"isUnique": true
 				},
 				"idx_order_messages_due": {
 					"name": "idx_order_messages_due",
 					"columns": ["status", "next_attempt_at"],
-					"isUnique": false
-				},
-				"idx_order_messages_sent": {
-					"name": "idx_order_messages_sent",
-					"columns": ["channel", "status", "sent_at"],
 					"isUnique": false
 				}
 			},
@@ -13258,6 +13261,13 @@
 					"notNull": true,
 					"autoincrement": false,
 					"default": 0
+				},
+				"location_timezone": {
+					"name": "location_timezone",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
 				},
 				"sms_updates_opt_in": {
 					"name": "sms_updates_opt_in",

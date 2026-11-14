@@ -19,7 +19,11 @@ import {
 } from './location-availability.ts'
 import { generatePickupSlots, getDropDisplayStatus } from './menu-types.ts'
 import { orderMarketingConsentSchema } from './marketing-consent.ts'
-import { promisedDelayMinutesSchema } from './promised-time.ts'
+import {
+	readLargeOrderRule,
+	promisedDelayMinutesSchema,
+	type LargeOrderRule,
+} from './promised-time.ts'
 import { discountedTaxableCents } from './pos-discount-base.ts'
 import {
 	orderLoyaltySelectionSchema,
@@ -1131,6 +1135,7 @@ export type RestaurantOrderContext = z.infer<
 export {
 	computePromisedTime,
 	isLargeOrder,
+	largeOrderExtraMinutes,
 	largeOrderRuleSchema,
 	MAX_PROMISED_DELAY_MINUTES,
 	planPromisedDelay,
@@ -2936,6 +2941,21 @@ export type PublicOrderingOptions = {
 		prepMinutes: number
 		/** Extra minutes busy mode adds right now (0 when off). */
 		busyExtraPrepMinutes: number
+		/**
+		 * ASAP delivery window in minutes from now: prep + busy minutes + the
+		 * delivery time range (`deliveryArrivalWindowMinutes`), the same window
+		 * an ASAP delivery order is promised (plus the large-order extra when
+		 * the cart is over the threshold). Null when the location does not
+		 * deliver.
+		 */
+		deliveryMinutes: { min: number; max: number } | null
+		/**
+		 * The location's large-order rule (not personal data): checkout adds
+		 * `extraPrepMinutes` with `largeOrderExtraMinutes` when the cart is
+		 * over the threshold, as the region does at placement. Null when
+		 * there is none (or it is malformed).
+		 */
+		largeOrder: LargeOrderRule | null
 	}
 	fulfillment: { pickup: boolean; delivery: boolean }
 	tips: { pickup: boolean; delivery: boolean }
@@ -3015,6 +3035,12 @@ export function buildPublicOrderingOptions(
 			paused: availability.paused ?? null,
 			prepMinutes: availability.estimatedPrepTime,
 			busyExtraPrepMinutes: availability.busyExtraPrepMinutes ?? 0,
+			deliveryMinutes:
+				location.fulfillmentOptions.delivery &&
+				availability.estimatedDeliveryTime
+					? availability.estimatedDeliveryTime
+					: null,
+			largeOrder: readLargeOrderRule(context.largeOrder, location.id),
 		},
 		fulfillment: {
 			pickup: Boolean(location.fulfillmentOptions.pickup),

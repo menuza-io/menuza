@@ -179,6 +179,11 @@
       "import": "./src/location-availability.ts",
       "default": "./src/location-availability.ts"
     },
+    "./promised-time": {
+      "types": "./src/promised-time.ts",
+      "import": "./src/promised-time.ts",
+      "default": "./src/promised-time.ts"
+    },
     "./restaurant-orders": {
       "types": "./src/restaurant-orders.ts",
       "import": "./src/restaurant-orders.ts",

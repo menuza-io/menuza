@@ -12,6 +12,7 @@ import {
 	restaurantOrders,
 	type RestaurantOrder,
 } from '@repo/tenant-db'
+import { locationDeliveryArrivalMinutes } from '@repo/common/location-availability'
 import { eq } from 'drizzle-orm'
 import { Hono } from 'hono'
 import * as jose from 'jose'
@@ -24,7 +25,11 @@ import {
 } from '../lib/origin.ts'
 import { syncEnvFromProcess } from '../lib/secrets.ts'
 import { sendTenantEmail } from '../lib/tenant-email.ts'
-import { setOrderMessageSendDepsForTest } from '../services/order-message-send.ts'
+import {
+	ETA_WAIT_MS,
+	runOrderMessagesTickForOrg,
+	setOrderMessageSendDepsForTest,
+} from '../services/order-message-send.ts'
 import { orderMessagesIdle } from '../services/order-messages.ts'
 import { operatorOrderRoutes } from './operator-orders.ts'
 import { publicOrderRoutes } from './orders.ts'
@@ -66,6 +71,11 @@ const ALL_DAYS = [
 
 let busyMode: unknown = null
 let largeOrder: unknown = undefined
+let locationTimezone = 'America/Chicago'
+
+function contextLocation() {
+	return menuContext().menu.locations[0]!
+}
 
 function menuContext() {
 	return {
@@ -77,7 +87,7 @@ function menuContext() {
 				{
 					id: 'loc-1',
 					name: 'Main Street',
-					timezone: 'America/Chicago',
+					timezone: locationTimezone,
 					taxRate: 0,
 					prepTime: 15,
 					currency: 'USD',
@@ -295,6 +305,7 @@ describe('promised time', () => {
 		vi.setSystemTime(NOW)
 		busyMode = null
 		largeOrder = undefined
+		locationTimezone = 'America/Chicago'
 		directory = fs.mkdtempSync(path.join(os.tmpdir(), 'promised-time-'))
 		vi.stubEnv('TENANT_DB_DIR', directory)
 		vi.stubEnv('DATA_REGION', 'us')
@@ -428,14 +439,114 @@ describe('promised time', () => {
 			})
 		})
 
-		it('promises an ASAP delivery as the delivery estimate range', async () => {
-			const placed = await place({
-				fulfillment: 'delivery',
-				delivery: { address: '100 Congress Ave 78701', city: 'Austin' },
-			})
+		const delivery = {
+			fulfillment: 'delivery',
+			delivery: { address: '100 Congress Ave 78701', city: 'Austin' },
+		}
+
+		async function options() {
+			const res = await app.request(
+				'/orders/options?slug=test-org&locationId=loc-1',
+				{ headers: { origin: 'https://test-org.example.com' } },
+			)
+			expect(res.status).toBe(200)
+			return (await res.json()) as {
+				ordering: {
+					prepMinutes: number
+					deliveryMinutes: { min: number; max: number } | null
+				}
+			}
+		}
+
+		const minutesFromNow = (iso: string | null) =>
+			iso === null ? null : (new Date(iso).getTime() - NOW.getTime()) / MIN
+
+		it('promises an ASAP delivery as prep time plus the delivery range', async () => {
+			// 15 min prep + a 30-45 min range.
+			const placed = await place(delivery)
 			expect(placed.order).toMatchObject({
-				promisedAt: at(30),
-				promisedUntil: at(45),
+				promisedAt: at(45),
+				promisedUntil: at(60),
+			})
+		})
+
+		it('promises an ASAP delivery the same window checkout shows, busy minutes counted once', async () => {
+			for (const busy of [null, { extraPrepMinutes: 10, until: null }]) {
+				busyMode = busy
+				const shown = (await options()).ordering.deliveryMinutes
+				// What the Sites checkout shows: the shared helper over the
+				// location and the delivery quote's travel range.
+				const checkout = locationDeliveryArrivalMinutes(
+					contextLocation(),
+					NOW,
+					{
+						travel: { min: 30, max: 45 },
+					},
+				)
+				expect(checkout).toEqual(shown)
+				const placed = await place(delivery)
+				expect({
+					min: minutesFromNow(placed.order.promisedAt),
+					max: minutesFromNow(placed.order.promisedUntil),
+				}).toEqual(shown)
+				expect(shown).toEqual(
+					busy ? { min: 55, max: 70 } : { min: 45, max: 60 },
+				)
+			}
+		})
+
+		it('adds the large-order extra to a delivery promise only for a cart over the threshold', async () => {
+			largeOrder = {
+				'loc-1': { threshold: 2, thresholdType: 'items', extraPrepMinutes: 10 },
+			}
+			// The cart-free window (menu, checkout label) leaves it out.
+			expect((await options()).ordering.deliveryMinutes).toEqual({
+				min: 45,
+				max: 60,
+			})
+			expect((await place(delivery)).order).toMatchObject({
+				promisedAt: at(45),
+				promisedUntil: at(60),
+			})
+			const big = await place({
+				...delivery,
+				lines: [{ itemId: 'item-burger', quantity: 3, options: [] }],
+			})
+			expect(big.order).toMatchObject({
+				promisedAt: at(55),
+				promisedUntil: at(70),
+			})
+		})
+
+		it('keeps a pickup promise at prep time and a scheduled delivery at its slot', async () => {
+			expect((await options()).ordering.prepMinutes).toBe(15)
+			expect((await place()).order).toMatchObject({
+				promisedAt: at(15),
+				promisedUntil: null,
+			})
+			const scheduledFor = at(180)
+			expect((await place({ ...delivery, scheduledFor })).order).toMatchObject({
+				promisedAt: scheduledFor,
+				promisedUntil: null,
+			})
+		})
+
+		it('stores the location time zone so the operator order carries it for an ASAP pickup', async () => {
+			locationTimezone = 'Asia/Riyadh'
+			const { order } = await place()
+			expect((await orderRow(order.id)).locationTimezone).toBe('Asia/Riyadh')
+			const res = await app.request(`/operator/orders/${order.id}`, {
+				headers: {
+					Authorization: `Bearer ${await operatorToken('orders:read')}`,
+				},
+			})
+			expect(res.status).toBe(200)
+			const body = (await res.json()) as {
+				order: { timeZone: string | null; pickup: unknown }
+			}
+			expect(body.order).toMatchObject({
+				timeZone: 'Asia/Riyadh',
+				pickup: null,
 			})
 		})
 	})
@@ -477,11 +588,17 @@ describe('promised time', () => {
 			})
 			expect(res.status).toBe(200)
 			const row = await orderRow(order.id)
-			expect(row.promisedAt?.toISOString()).toBe(at(45))
-			expect(row.promisedUntil?.toISOString()).toBe(at(60))
+			expect(row.promisedAt?.toISOString()).toBe(at(60))
+			expect(row.promisedUntil?.toISOString()).toBe(at(75))
 		})
 
-		it('sends one updated-time message for +10, never a second one, with the new time', async () => {
+		const newTimeMails = () =>
+			vi
+				.mocked(sendTenantEmail)
+				.mock.calls.map((call) => call[0])
+				.filter((mail) => mail.subject.startsWith('New time'))
+
+		it('sends an updated-time message for every push-back of 10 minutes or more, with its time', async () => {
 			const { order } = await place()
 			expect(
 				(
@@ -491,29 +608,140 @@ describe('promised time', () => {
 					})
 				).status,
 			).toBe(200)
-			expect(await etaRows(order.id)).toEqual([
-				expect.objectContaining({ channel: 'email', status: 'sent' }),
-			])
-			const mails = vi
-				.mocked(sendTenantEmail)
-				.mock.calls.map((call) => call[0])
-				.filter((mail) => mail.subject.startsWith('New time'))
-			expect(mails).toHaveLength(1)
-			// 18:25 UTC is 12:25 PM in Chicago.
-			expect(mails[0]!.text).toMatch(/Ready around 12:25\sPM/)
 			expect(
 				(
 					await patch(order.id, {
-						delayMinutes: 10,
+						delayMinutes: 15,
 						expectedPromisedVersion: 1,
 					})
 				).status,
 			).toBe(200)
-			expect(await etaRows(order.id)).toHaveLength(1)
+			expect(
+				(await etaRows(order.id))
+					.map((row) => [row.dedupeKey, row.channel, row.status])
+					.sort(),
+			).toEqual([
+				['1', 'email', 'sent'],
+				['2', 'email', 'sent'],
+			])
+			const mails = newTimeMails()
+			expect(mails).toHaveLength(2)
+			// 18:25 and 18:40 UTC are 12:25 and 12:40 PM in Chicago.
+			expect(mails[0]!.text).toMatch(/Ready around 12:25\sPM/)
+			expect(mails[1]!.text).toMatch(/Ready around 12:40\sPM/)
 			expect(sms).not.toHaveBeenCalled()
 		})
 
-		it('also texts a guest who opted in (US node)', async () => {
+		it('tells nobody about a 5-minute push-back after a 10-minute one', async () => {
+			const { order } = await place()
+			await patch(order.id, { delayMinutes: 10, expectedPromisedVersion: 0 })
+			await patch(order.id, { delayMinutes: 5, expectedPromisedVersion: 1 })
+			expect(await etaRows(order.id)).toHaveLength(1)
+			expect(newTimeMails()).toHaveLength(1)
+			expect(newTimeMails()[0]!.text).toMatch(/Ready around 12:25\sPM/)
+		})
+
+		it('sends one message, with the newest time, for two push-backs while the transport is down', async () => {
+			const { order } = await place()
+			vi.mocked(sendTenantEmail).mockResolvedValue({ status: 'error' } as never)
+			await patch(order.id, { delayMinutes: 10, expectedPromisedVersion: 0 })
+			expect(await etaRows(order.id)).toEqual([
+				expect.objectContaining({
+					dedupeKey: '1',
+					status: 'queued',
+					lastError: 'email_failed',
+				}),
+			])
+			vi.mocked(sendTenantEmail).mockClear()
+			vi.mocked(sendTenantEmail).mockResolvedValue({
+				status: 'success',
+			} as never)
+			await patch(order.id, { delayMinutes: 10, expectedPromisedVersion: 1 })
+			// The backlog is gone too: the tick has nothing left to send.
+			await runOrderMessagesTickForOrg(orgId, {
+				now: NOW.getTime() + 3 * 60 * 60_000,
+			})
+			expect(
+				(await etaRows(order.id))
+					.map((row) => [row.dedupeKey, row.status, row.lastError])
+					.sort(),
+			).toEqual([
+				['1', 'dropped', 'superseded'],
+				['2', 'sent', null],
+			])
+			const mails = newTimeMails()
+			expect(mails).toHaveLength(1)
+			expect(mails[0]!.text).toMatch(/Ready around 12:35\sPM/)
+		})
+
+		it('lets an updated time that is mid-send finish, then sends the newer one last', async () => {
+			const { order } = await place()
+			let release: () => void = () => {}
+			vi.mocked(sendTenantEmail).mockImplementationOnce(
+				() =>
+					new Promise((resolve) => {
+						release = () => resolve({ status: 'success' } as never)
+					}),
+			)
+			// +10: its send starts and hangs (rendered with 12:25 PM).
+			const first = await app.request(`/operator/orders/${order.id}`, {
+				method: 'PATCH',
+				headers: {
+					'content-type': 'application/json',
+					Authorization: `Bearer ${await operatorToken('orders:write')}`,
+				},
+				body: JSON.stringify({ delayMinutes: 10, expectedPromisedVersion: 0 }),
+			})
+			expect(first.status).toBe(200)
+			await vi.waitFor(() => expect(newTimeMails()).toHaveLength(1))
+			// +15 commits while it is in flight: the new row waits for it.
+			const second = await app.request(`/operator/orders/${order.id}`, {
+				method: 'PATCH',
+				headers: {
+					'content-type': 'application/json',
+					Authorization: `Bearer ${await operatorToken('orders:write')}`,
+				},
+				body: JSON.stringify({ delayMinutes: 15, expectedPromisedVersion: 1 }),
+			})
+			expect(second.status).toBe(200)
+			await vi.waitFor(async () =>
+				expect(
+					(await etaRows(order.id)).find((row) => row.dedupeKey === '2'),
+				).toMatchObject({ status: 'queued', attempts: 0 }),
+			)
+			// Give the after-commit delivery of the new row its chance to run.
+			await new Promise((resolve) => setTimeout(resolve, 50))
+			expect(newTimeMails()).toHaveLength(1)
+			release()
+			await orderMessagesIdle()
+			const waiting = (await etaRows(order.id)).find(
+				(row) => row.dedupeKey === '2',
+			)!
+			expect(waiting).toMatchObject({ status: 'queued', attempts: 0 })
+			expect(waiting.nextAttemptAt).toBeGreaterThan(NOW.getTime())
+			// It waits a short while (not a backoff step) for the tick or alarm.
+			expect(waiting.nextAttemptAt).toBeLessThanOrEqual(
+				Date.now() + ETA_WAIT_MS,
+			)
+			await runOrderMessagesTickForOrg(orgId, {
+				now: waiting.nextAttemptAt,
+			})
+			expect(
+				(await etaRows(order.id))
+					.map((row) => [row.dedupeKey, row.status])
+					.sort(),
+			).toEqual([
+				['1', 'sent'],
+				['2', 'sent'],
+			])
+			const mails = newTimeMails()
+			expect(mails).toHaveLength(2)
+			expect(mails[0]!.text).toMatch(/Ready around 12:25\sPM/)
+			// The guest's last message carries the newest time.
+			expect(mails[1]!.text).toMatch(/Ready around 12:40\sPM/)
+		})
+
+		it('also texts a guest who opted in (US node), once per qualifying push-back', async () => {
 			const { order } = await place({ smsUpdates: true })
 			await patch(order.id, { delayMinutes: 15, expectedPromisedVersion: 0 })
 			expect(
@@ -523,6 +751,32 @@ describe('promised time', () => {
 			expect(sms.mock.calls[0]![0].message).toMatch(
 				/^New time for your order \S+ from Rana’s Kitchen: Ready around 12:30\sPM\./,
 			)
+			await patch(order.id, { delayMinutes: 5, expectedPromisedVersion: 1 })
+			await patch(order.id, { delayMinutes: 10, expectedPromisedVersion: 2 })
+			expect(sms).toHaveBeenCalledTimes(2)
+			expect(sms.mock.calls[1]![0].message).toMatch(/Ready around 12:45\sPM\./)
+		})
+
+		it('still applies the order-text cap to updated times', async () => {
+			setOrderMessageSendDepsForTest({
+				getContext: async () => ORG_CONTEXT,
+				sendSms: sms,
+				smsDailyCap: 1,
+			})
+			const { order } = await place({ smsUpdates: true })
+			await patch(order.id, { delayMinutes: 10, expectedPromisedVersion: 0 })
+			await patch(order.id, { delayMinutes: 10, expectedPromisedVersion: 1 })
+			expect(sms).toHaveBeenCalledTimes(1)
+			expect(
+				(await etaRows(order.id))
+					.map((row) => [row.dedupeKey, row.channel, row.status, row.lastError])
+					.sort(),
+			).toEqual([
+				['1', 'email', 'sent', null],
+				['1', 'sms', 'sent', null],
+				['2', 'email', 'sent', null],
+				['2', 'sms', 'dropped', 'sms_daily_cap'],
+			])
 		})
 
 		it('refuses earlier or odd minutes, a status in the same body, and stale versions', async () => {
