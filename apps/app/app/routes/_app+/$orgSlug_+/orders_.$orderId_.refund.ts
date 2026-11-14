@@ -43,12 +43,14 @@ function regionalRefusal(error: RegionalOrderApiError): Response {
 	}
 	if (PASS_THROUGH_CODES.has(error.code)) {
 		const status = error.httpStatus >= 400 && error.httpStatus < 500
-		return refuse(status ? error.httpStatus : 409, error.code, {
-			...(error.code === 'refund_exceeds_payment' &&
-			error.refundableCents !== undefined
+		return refuse(
+			status ? error.httpStatus : 409,
+			error.code,
+			error.code === 'refund_exceeds_payment' &&
+				error.refundableCents !== undefined
 				? { refundableCents: error.refundableCents }
-				: {}),
-		})
+				: {},
+		)
 	}
 	if (error.httpStatus === 400) return refuse(400, 'invalid_request')
 	return refuse(502, 'refund_unavailable', { retryable: true })

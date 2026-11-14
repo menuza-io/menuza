@@ -693,11 +693,12 @@ describe('OrderDetail provider refunds', () => {
 	})
 
 	describe('waiting for acceptance', () => {
-		const deadline = new Date(Date.now() + 192_000).toISOString()
+		// Computed per call: a deadline taken when the file loads drifts by
+		// the time the suite reaches this test.
 		const waitingOrder = (over: Partial<Order> = {}) =>
 			order({
 				status: 'pending_acceptance',
-				acceptanceDeadlineAt: deadline,
+				acceptanceDeadlineAt: new Date(Date.now() + 192_500).toISOString(),
 				...over,
 			})
 

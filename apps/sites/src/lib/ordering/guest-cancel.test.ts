@@ -99,15 +99,18 @@ describe('order stage and refund view', () => {
 	it('tells waiting, turned down and cancelled apart', () => {
 		expect(orderStage({ status: 'pending_acceptance' })).toBe('waiting')
 		expect(orderStage({ status: 'cancelled', rejected: true })).toBe('rejected')
-		expect(orderStage({ status: 'cancelled', cancelledBy: 'guest' } as never)).toBe(
-			'cancelled',
-		)
+		expect(
+			orderStage({ status: 'cancelled', cancelledBy: 'guest' } as never),
+		).toBe('cancelled')
 		expect(orderStage({ status: 'accepted' })).toBe('normal')
 	})
 
 	it('shows a reason only when it is guest-visible', () => {
 		expect(
-			visibleCancelReason({ status: 'cancelled', cancelReason: 'out_of_stock' }),
+			visibleCancelReason({
+				status: 'cancelled',
+				cancelReason: 'out_of_stock',
+			}),
 		).toBe('out_of_stock')
 		expect(
 			visibleCancelReason({ status: 'cancelled', cancelReason: 'too_busy' }),
@@ -124,11 +127,17 @@ describe('order stage and refund view', () => {
 			}),
 		).toEqual({ kind: 'pending', amountCents: 1250 })
 		expect(
-			refundView({ status: 'cancelled', refundStatus: 'full', refundedCents: 900 }),
+			refundView({
+				status: 'cancelled',
+				refundStatus: 'full',
+				refundedCents: 900,
+			}),
 		).toEqual({ kind: 'refunded', amountCents: 900 })
-		expect(refundView({ status: 'cancelled', refundStatus: 'failed' })).toEqual({
-			kind: 'failed',
-		})
+		expect(refundView({ status: 'cancelled', refundStatus: 'failed' })).toEqual(
+			{
+				kind: 'failed',
+			},
+		)
 		expect(refundView({ status: 'cancelled', refundStatus: 'none' })).toEqual({
 			kind: 'none',
 		})

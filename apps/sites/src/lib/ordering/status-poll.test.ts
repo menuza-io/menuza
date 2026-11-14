@@ -181,7 +181,8 @@ describe('createStatusPoller', () => {
 		const poller = createStatusPoller<{ refundStatus: string }>({
 			fetchOnce,
 			onOrder: () => {},
-			isSettled: (o) => !(o.status === 'cancelled' && o.refundStatus === 'pending'),
+			isSettled: (o) =>
+				!(o.status === 'cancelled' && o.refundStatus === 'pending'),
 			isHidden: () => false,
 			onVisibilityChange: () => () => {},
 		})

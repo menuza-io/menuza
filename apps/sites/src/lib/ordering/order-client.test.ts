@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
+import { createCancelAttempt } from './guest-cancel.ts'
 import {
 	acceptCheckoutUrl,
 	cancelOrder,
@@ -11,7 +12,6 @@ import {
 	resendOrderLink,
 	submitRegionalOrder,
 } from './order-client.ts'
-import { createCancelAttempt } from './guest-cancel.ts'
 import { type CartItem } from './types.ts'
 
 function setup() {
@@ -507,7 +507,11 @@ describe('order link credential', () => {
 	it('posts the cancel with the credential, the key and the organization', async () => {
 		using ignoredSetup = setup()
 		const fetchMock = stubFetch(200, { allowed: false, status: 'cancelled' })
-		await cancelOrder('o1', { kind: 'receipt', token: 'r'.repeat(20) }, 'cancel-key-0001')
+		await cancelOrder(
+			'o1',
+			{ kind: 'receipt', token: 'r'.repeat(20) },
+			'cancel-key-0001',
+		)
 		const [url, init] = fetchMock.mock.calls[0]!
 		expect(url).toBe('https://regional.example/orders/o1/cancel')
 		expect(init?.method).toBe('POST')

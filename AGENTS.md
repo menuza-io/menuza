@@ -1153,15 +1153,16 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
   (`lib/order-messages-sms-cap.ts`, `sms_daily_cap`). No messages for table
   rounds or Station sales. Do not use the Station ready-text path for this.
 - Order link: `lib/order-link.ts`, an HMAC with the purpose `order-link:v1`,
-  valid 90 days from placement, read-only, carried in the URL fragment
+  valid 90 days from placement, carried in the URL fragment
   (`/menu/success?order=<id>#link=<token>`) and the `X-Order-Link` header of
-  `GET /orders/:id` and `POST /orders/:id/resend-link` (3 per order per hour).
-  Every refusal is the uniform 404, and a value that is not 64 hex characters is
-  refused before any database work. A read by link returns a reduced body
-  (`linkReceiptOrder`: no `contact`, no delivery address, no line notes); only
-  the receipt token of the placing browser gets the full receipt. Sites moves
-  the token from the fragment to `sessionStorage` and strips the URL before
-  analytics loads.
+  `GET /orders/:id`, `POST /orders/:id/resend-link` (3 per order per hour) and
+  guest cancel (`GET`/`POST /orders/:id/cancel`). It never signs the guest in
+  and never edits the order beyond that cancel. Every refusal is the uniform
+  404, and a value that is not 64 hex characters is refused before any database
+  work. A read by link returns a reduced body (`linkReceiptOrder`: no `contact`,
+  no delivery address, no line notes); only the receipt token of the placing
+  browser gets the full receipt. Sites moves the token from the fragment to
+  `sessionStorage` and strips the URL before analytics loads.
 - Promised time: `promised_at` / `promised_until` / `promised_version` /
   `promised_delay_minutes`, computed at placement by `@repo/common`
   `promised-time.ts` (prep, busy minutes, large-order extra from `largeOrder` in
@@ -1173,6 +1174,30 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
   `expectedPromisedVersion`, 409 `stale_version`) is
   `PATCH /operator/orders/:id` or the kitchen command `delay`; both use
   `applyPromisedDelay`. 10 minutes or more queues `eta_changed`.
+- Provider refunds (#80): an online-paid order is refunded through its payment
+  provider. The region books a `pending` `provider` row in
+  `restaurant_order_refunds` (`POST /api/orders/refund-intent`,
+  `services/order-refund-book.ts`, `order-provider-refund-service.ts`); the App
+  calls Stripe or Checkout.com (`utils/restaurant-orders/refunds.server.ts`) and
+  reports `refund-status`; webhooks, the region's ids-only kick
+  (`/resources/orders/refund-execute`) and the hourly reconcile job finish it.
+  `refunded_cents` counts succeeded refunds only and never shrinks; a pending
+  row reserves the amount, a failed one releases it; one pending refund per
+  order (409 `refund_pending`), none while disputed (409 `payment_disputed`). QR
+  tab payments refund per `qr_tab_refunds` row. Handoff orders keep the
+  record-only `recordOrderRefund`. Permission `update:order_refund:any` (owner,
+  admin), never while impersonating. The region never calls a provider.
+- Guest cancel (#111, flag `ordering.guest_cancel`, per-location window) and
+  order acceptance (#107, flag `ordering.manual_acceptance`, per-location Manual
+  mode) reach the region as `guestCancel` / `acceptance` in the order context;
+  the shared rules are `@repo/common` `order-lifecycle.ts`. A
+  `pending_acceptance` order holds capacity, has no kitchen ticket and settles
+  inventory, loyalty and discounts only on accept; the orders tick
+  (`processOrderAcceptance`, with the order-messages tick) rejects it as
+  `not_accepted_in_time` and refunds a paid online order in full. `accepted` is
+  queued only on a manual accept. Cancels and rejects share
+  `applyOrderStatusPatchInTx` in `order-service.ts`. Docs:
+  `docs/restaurant-ordering-contract.md`.
 
 **Loyalty Rewards (points, rewards, member codes):**
 
