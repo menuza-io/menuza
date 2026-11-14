@@ -429,6 +429,14 @@ msgstr "Arrivé"
 msgid "Arrives in {min}–{max} min"
 msgstr "Arrive dans {min}–{max} min"
 
+#: src/pages/menu/success.astro.ts:3
+msgid "Arriving {range}"
+msgstr "Arrivée {range}"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Arriving around {time}"
+msgstr "Arrivée vers {time}"
+
 #: src/lib/ordering-labels.ts:183
 msgid "ASAP"
 msgstr "Dès que possible"
@@ -549,6 +557,10 @@ msgstr "Appeler"
 #: src/lib/reservations/labels.ts:203
 msgid "Call {phone}"
 msgstr "Appeler le {phone}"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Call the restaurant"
+msgstr "Appeler le restaurant"
 
 #: src/lib/reservations/labels.ts:183
 msgid "Cancel reservation"
@@ -846,6 +858,10 @@ msgstr "Contact"
 msgid "Contact details"
 msgstr "Coordonnées"
 
+#: src/pages/menu/success.astro.ts:3
+msgid "Contact the restaurant for help with your order."
+msgstr "Contactez le restaurant pour obtenir de l'aide concernant votre commande."
+
 #: src/pages/complete-name.astro.ts:3
 msgid "Continue"
 msgstr "Continuer"
@@ -1046,6 +1062,10 @@ msgstr "Envoyez-moi par e-mail les actualités et offres de {name}"
 #: src/components/marketing/MarketingConsentBoxes.astro.ts:3
 msgid "Email me offers and news from {org}"
 msgstr "Envoyez-moi par e-mail les offres et actualités de {org}"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Email me this receipt again"
+msgstr "Me renvoyer ce reçu par e-mail"
 
 #: src/components/drops/DropCard.astro.ts:3
 #: src/components/drops/DropStatusChip.astro.ts:3
@@ -1345,6 +1365,10 @@ msgstr "Je suis en retard"
 #: src/lib/reservations/labels.ts:310
 msgid "If a table opens up, we will contact you. You can cancel this request at any time."
 msgstr "Si une table se libère, nous vous contacterons. Vous pouvez annuler cette demande à tout moment."
+
+#: src/pages/menu/success.astro.ts:3
+msgid "If we have your email, the receipt is on its way."
+msgstr "Si nous avons votre e-mail, le reçu est en route."
 
 #: src/components/drops/DropCard.astro.ts:3
 #: src/pages/drop/[slug].astro.ts:3
@@ -2344,6 +2368,10 @@ msgstr "Lire la suite"
 msgid "Ready"
 msgstr "Prête"
 
+#: src/pages/menu/success.astro.ts:3
+msgid "Ready around {time}"
+msgstr "Prêt vers {time}"
+
 #: src/lib/ordering-labels.ts:181
 #: src/lib/ordering-labels.ts:185
 msgid "Ready in about {count} min"
@@ -2384,6 +2412,10 @@ msgstr "Remboursement en cours"
 #: src/lib/reservations/labels.ts:435
 msgid "Refunded"
 msgstr "Remboursé"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Refunded {amount}"
+msgstr "Remboursé : {amount}"
 
 #: src/lib/ordering-labels.ts:94
 #: src/lib/ordering-labels.ts:117
@@ -2765,6 +2797,10 @@ msgstr "Envoyez-moi par SMS les actualités et offres de {name}"
 msgid "Text me offers from {org}"
 msgstr "Envoyez-moi par SMS les offres de {org}"
 
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Text me order updates"
+msgstr "M'envoyer des SMS sur ma commande"
+
 #: src/lib/reservations/labels.ts:100
 msgid "Text me reminders about this reservation"
 msgstr "Envoyez-moi des rappels par SMS pour cette réservation"
@@ -2772,6 +2808,10 @@ msgstr "Envoyez-moi des rappels par SMS pour cette réservation"
 #: src/lib/reservations/labels.ts:222
 msgid "Text me when my table is ready"
 msgstr "M’envoyer un SMS quand ma table est prête"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Texts about this order only: when it's ready, or if the time changes. Not marketing."
+msgstr "Des SMS uniquement pour cette commande : quand elle est prête ou si l'heure change. Pas de publicité."
 
 #: src/pages/menu/success.astro.ts:3
 msgid "Thank you for your order!"
@@ -3059,6 +3099,10 @@ msgstr "Cette offre n'est plus ouverte."
 msgid "This job is no longer taking applications."
 msgstr "Ce poste n'accepte plus de candidatures."
 
+#: src/pages/menu/success.astro.ts:3
+msgid "This link has expired or isn't valid."
+msgstr "Ce lien a expiré ou n'est pas valide."
+
 #: src/pages/menu/checkout.astro.ts:3
 msgid "This location is not available for ordering."
 msgstr "Ce lieu n'est pas disponible pour les commandes."
@@ -3067,9 +3111,17 @@ msgstr "Ce lieu n'est pas disponible pour les commandes."
 msgid "This order is below the minimum for delivery."
 msgstr "Cette commande est inférieure au minimum requis pour la livraison."
 
+#: src/pages/menu/success.astro.ts:3
+msgid "This order is complete."
+msgstr "Cette commande est terminée."
+
 #: src/pages/menu.astro.ts:3
 msgid "This order link has expired. You can still order from the menu."
 msgstr "Ce lien de commande a expiré. Vous pouvez toujours commander depuis le menu."
+
+#: src/pages/menu/success.astro.ts:3
+msgid "This order was cancelled"
+msgstr "Cette commande a été annulée"
 
 #: src/lib/reservations/labels.ts:412
 msgid "This payment is no longer open"
@@ -3162,6 +3214,10 @@ msgstr "Trop de tentatives. Veuillez réessayer plus tard."
 #: src/lib/reservations/labels.ts:491
 msgid "Too many attempts. Please wait a moment and try again."
 msgstr "Trop de tentatives. Patientez un instant puis réessayez."
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Too many requests. Try again later."
+msgstr "Trop de demandes. Réessayez plus tard."
 
 #: src/components/ordering/TableTab.astro.ts:3
 #: src/pages/drop/[slug].astro.ts:3
@@ -3453,6 +3509,10 @@ msgstr "Nous n'avons pas pu charger votre reçu"
 #: src/components/marketing/MessagesSection.astro.ts:3
 msgid "We couldn't save that. Try again."
 msgstr "Impossible d'enregistrer. Réessayez."
+
+#: src/pages/menu/success.astro.ts:3
+msgid "We couldn't send that. Please try again later."
+msgstr "Nous n'avons pas pu l'envoyer. Veuillez réessayer plus tard."
 
 #: src/pages/menu/success.astro.ts:3
 msgid "We couldn't start payment. Please try again."
@@ -3808,6 +3868,10 @@ msgstr "Votre commande est inférieure au montant minimum de ce code."
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Your order is empty"
 msgstr "Votre commande est vide"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Your order is ready."
+msgstr "Votre commande est prête."
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Your order was placed, but we couldn't start online payment. You can pay from your receipt page."

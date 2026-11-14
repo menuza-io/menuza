@@ -24,6 +24,14 @@ import { TENANT_ORG_ID_PATTERN } from '@repo/tenant-db'
 import { type LoaderFunctionArgs } from 'react-router'
 import { z } from 'zod'
 import { buildOrderContextDiscounts } from '#app/utils/discounts/order-context.server.ts'
+import {
+	buildGuestMessagesContext,
+	buildLargeOrderContext,
+} from '#app/utils/guest-messages/settings.server.ts'
+import {
+	type GuestMessagesContext,
+	type LargeOrderContext,
+} from '#app/utils/guest-messages/settings.ts'
 import { requireInternalCommandAuth } from '#app/utils/internal-command-auth.server.ts'
 import {
 	buildPublicSiteDropPayload,
@@ -58,6 +66,14 @@ export type OrderContextResponse = {
 	 * as built by `serializePublicMenuItem`). The region reads a missing field as off.
 	 */
 	discounts: OrderContextDiscounts
+	/** Guest transactional order messages: the org flag and the operator switches. */
+	guestMessages: GuestMessagesContext
+	/**
+	 * Large-order extra prep per location id; only locations that have a
+	 * threshold. `threshold` is in MAJOR currency units for `amount` (as stored,
+	 * 100 is 100.00) and an item count for `items`.
+	 */
+	largeOrder: LargeOrderContext
 }
 
 async function readQrOrderingFeatures(
@@ -155,6 +171,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		onlinePayment: resolveRestaurantOnlinePayment(org),
 		qrOrdering: await readQrOrderingFeatures(org.id),
 		discounts: await buildOrderContextDiscounts(org.id),
+		guestMessages: await buildGuestMessagesContext(org.id),
+		largeOrder: await buildLargeOrderContext(
+			org.id,
+			parsed.data.locationId ?? null,
+		),
 	}
 
 	return Response.json(response, {

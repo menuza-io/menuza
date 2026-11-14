@@ -39,11 +39,13 @@ for (const method of ['get', 'post', 'put'] as const) {
 			// A kitchen screen on the pass shows as in use on the Terminals page.
 			await touchDevice(pos.db, pos.device).catch(() => {})
 			let staffId: string | null = null
+			let manager = true
 			if (pos.device.signInRequired) {
 				const verified = await verifyPosStaffSession(c, pos)
 				if ('error' in verified) return verified.error
 				staffId = verified.session.staffId
-				if (method === 'put' && verified.session.role !== 'manager')
+				manager = verified.session.role === 'manager'
+				if (method === 'put' && !manager)
 					return posError(403, 'manager_required')
 			}
 			const actor = {
@@ -55,6 +57,10 @@ for (const method of ['get', 'post', 'put'] as const) {
 			if (method === 'post') {
 				const body = await readJsonBody(c, kdsCommandSchema)
 				if ('error' in body) return body.error
+				// Pushing a guest's promised time back is a manager's call when
+				// staff sign in on this terminal (like kitchen settings).
+				if (body.data.action === 'delay' && !manager)
+					return posError(403, 'manager_required')
 				const result = await kitchenCommand(pos.db, actor, body.data)
 				// The till order's one ready text, after the stage is recorded. It
 				// never holds up or fails the kitchen's answer.

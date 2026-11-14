@@ -16,6 +16,7 @@ import { assertTenantApiSecrets } from './lib/secrets.ts'
 import { setTenantEmailDevCapture } from './lib/tenant-email.ts'
 import { assertZatcaSealKey } from './lib/zatca-seal.ts'
 import { startInventoryTickInterval } from './lib/inventory-tick-interval.ts'
+import { startOrderMessagesTickInterval } from './lib/order-messages-tick-interval.ts'
 import { startLoyaltyTickInterval } from './lib/loyalty-tick-interval.ts'
 import { startReservationsTickInterval } from './lib/reservations-tick-interval.ts'
 import { startStaffTickInterval } from './lib/staff-tick-interval.ts'
@@ -64,3 +65,7 @@ startLoyaltyTickInterval()
 
 // Sub-hourly inventory tick (retries alerts the App could not take) on this node.
 startInventoryTickInterval()
+
+// Sub-hourly guest order messages tick (retries of failed receipts and status
+// messages) on this node.
+startOrderMessagesTickInterval()

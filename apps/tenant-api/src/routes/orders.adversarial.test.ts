@@ -21,9 +21,12 @@ import {
 	findActiveOrganizationById,
 	resolveOrganizationForBrowserAuth,
 } from '../lib/origin.ts'
+import { deriveOrderLinkToken } from '../lib/order-link.ts'
+import { orderLinkResendsIdle } from '../services/order-link-access.ts'
 import {
 	applyPaymentEvent,
 	bindPaymentSession,
+	deriveReceiptToken,
 	getOrderQuote,
 	placeOrder,
 } from '../services/order-service.ts'
@@ -1291,5 +1294,360 @@ describe('Adversarial: restaurant ordering (public browser surface)', () => {
 			'/orders/options?slug=other-org&locationId=loc-1',
 		)
 		expect(response.status).toBe(404)
+	})
+
+	// -----------------------------------------------------------------------
+	// "View your order" link (X-Order-Link): read-only, receipt only
+	// -----------------------------------------------------------------------
+
+	describe('order link capability', () => {
+		const ORIGIN = 'https://test-org.example.com'
+
+		async function readReceipt(
+			orderId: string,
+			headers: Record<string, string> = {},
+			slug = 'test-org',
+		) {
+			return app.request(`/orders/${orderId}?slug=${slug}`, {
+				headers: { origin: ORIGIN, ...headers },
+			})
+		}
+
+		async function resendLink(
+			orderId: string,
+			headers: Record<string, string> = {},
+			slug = 'test-org',
+		) {
+			return app.request(`/orders/${orderId}/resend-link`, {
+				method: 'POST',
+				headers: {
+					'content-type': 'application/json',
+					origin: ORIGIN,
+					...headers,
+				},
+				body: JSON.stringify({ slug }),
+			})
+		}
+
+		/** What a receipt read of an order that does not exist answers. */
+		async function unknownOrderAnswer() {
+			const missing = 'ord_does_not_exist'
+			const res = await readReceipt(missing, {
+				Authorization: `Bearer ${deriveReceiptToken(orgId, missing)}`,
+			})
+			expect(res.status).toBe(404)
+			return {
+				status: res.status,
+				body: await res.text(),
+				type: res.headers.get('content-type'),
+				cache: res.headers.get('cache-control'),
+			}
+		}
+
+		async function expectUniform404(res: Response) {
+			const expected = await unknownOrderAnswer()
+			expect({
+				status: res.status,
+				body: await res.text(),
+				type: res.headers.get('content-type'),
+				cache: res.headers.get('cache-control'),
+			}).toEqual(expected)
+		}
+
+		async function placedOrder(overrides: Record<string, unknown> = {}) {
+			const res = await postOrder(orderBody(overrides))
+			expect(res.status).toBe(201)
+			return (await res.json()) as {
+				order: { id: string }
+				receiptToken: string
+				paymentToken?: string
+			}
+		}
+
+		it('reads the same receipt body with a valid link token as with the receipt token', async () => {
+			const placed = await placedOrder()
+			const id = placed.order.id
+			const byReceipt = await readReceipt(id, {
+				Authorization: `Bearer ${placed.receiptToken}`,
+			})
+			const byLink = await readReceipt(id, {
+				'X-Order-Link': deriveOrderLinkToken(orgId, id),
+			})
+			expect(byLink.status).toBe(200)
+			expect(byLink.headers.get('cache-control')).toBe('no-store')
+			expect(await byLink.json()).toEqual(await byReceipt.json())
+		})
+
+		it('answers the uniform 404 to forged, tampered, malformed and over-long link tokens', async () => {
+			const placed = await placedOrder()
+			const id = placed.order.id
+			const real = deriveOrderLinkToken(orgId, id)
+			const tampered = `${real.slice(0, -1)}${real.endsWith('0') ? '1' : '0'}`
+			for (const presented of [
+				crypto.randomBytes(32).toString('hex'),
+				tampered,
+				real.toUpperCase(),
+				real.slice(0, 63),
+				`${real}0`,
+				'not-a-token',
+				real.repeat(3),
+				'a'.repeat(10_000),
+			]) {
+				await expectUniform404(
+					await readReceipt(id, { 'X-Order-Link': presented }),
+				)
+			}
+			// An unknown order with a well-formed link token: the same answer.
+			await expectUniform404(
+				await readReceipt('ord_missing', {
+					'X-Order-Link': deriveOrderLinkToken(orgId, 'ord_missing'),
+				}),
+			)
+		})
+
+		it('a link token for one order does not open another order', async () => {
+			const first = await placedOrder()
+			const second = await placedOrder()
+			await expectUniform404(
+				await readReceipt(second.order.id, {
+					'X-Order-Link': deriveOrderLinkToken(orgId, first.order.id),
+				}),
+			)
+		})
+
+		it('expires 90 days after the order was placed', async () => {
+			const placed = await placedOrder()
+			const id = placed.order.id
+			const link = { 'X-Order-Link': deriveOrderLinkToken(orgId, id) }
+			const db = await getTenantDb(orgId)
+			const day = 24 * 60 * 60 * 1000
+			await db
+				.update(restaurantOrders)
+				.set({ createdAt: new Date(Date.now() - 89 * day) })
+				.where(eq(restaurantOrders.id, id))
+			expect((await readReceipt(id, link)).status).toBe(200)
+			await db
+				.update(restaurantOrders)
+				.set({ createdAt: new Date(Date.now() - 91 * day) })
+				.where(eq(restaurantOrders.id, id))
+			await expectUniform404(await readReceipt(id, link))
+			// The receipt token itself is unchanged by the link's lifetime.
+			expect(
+				(
+					await readReceipt(id, {
+						Authorization: `Bearer ${placed.receiptToken}`,
+					})
+				).status,
+			).toBe(200)
+		})
+
+		it('dies with the order when the person is erased (receipt hash replaced)', async () => {
+			const placed = await placedOrder()
+			const id = placed.order.id
+			const db = await getTenantDb(orgId)
+			await db
+				.update(restaurantOrders)
+				.set({ receiptTokenHash: crypto.randomUUID() })
+				.where(eq(restaurantOrders.id, id))
+			await expectUniform404(
+				await readReceipt(id, {
+					'X-Order-Link': deriveOrderLinkToken(orgId, id),
+				}),
+			)
+		})
+
+		it('refuses wrong-purpose tokens: receipt or payment token as a link, link as the receipt token', async () => {
+			const placed = await placedOrder({ paymentMethod: 'online' })
+			const id = placed.order.id
+			expect(placed.paymentToken).toBeTruthy()
+			await expectUniform404(
+				await readReceipt(id, { 'X-Order-Link': placed.receiptToken }),
+			)
+			await expectUniform404(
+				await readReceipt(id, { 'X-Order-Link': placed.paymentToken! }),
+			)
+			// The link token as the Bearer receipt token: refused, with the
+			// receipt route's own refusal when no link header is sent...
+			const linkAsBearer = await readReceipt(id, {
+				Authorization: `Bearer ${deriveOrderLinkToken(orgId, id)}`,
+			})
+			expect(linkAsBearer.status).toBe(403)
+			expect((await linkAsBearer.json()).error).toBe('invalid_receipt_token')
+			// ...and the uniform 404 when a (wrong) link header is sent too.
+			await expectUniform404(
+				await readReceipt(id, {
+					Authorization: `Bearer ${deriveOrderLinkToken(orgId, id)}`,
+					'X-Order-Link': placed.receiptToken,
+				}),
+			)
+		})
+
+		it('either valid credential opens the receipt when both are sent', async () => {
+			const placed = await placedOrder()
+			const id = placed.order.id
+			const link = deriveOrderLinkToken(orgId, id)
+			expect(
+				(
+					await readReceipt(id, {
+						Authorization: `Bearer ${placed.receiptToken}`,
+						'X-Order-Link': 'f'.repeat(64),
+					})
+				).status,
+			).toBe(200)
+			expect(
+				(
+					await readReceipt(id, {
+						Authorization: 'Bearer forged',
+						'X-Order-Link': link,
+					})
+				).status,
+			).toBe(200)
+			await expectUniform404(
+				await readReceipt(id, {
+					Authorization: 'Bearer forged',
+					'X-Order-Link': 'f'.repeat(64),
+				}),
+			)
+		})
+
+		it('a link token never crosses organizations', async () => {
+			const otherOrgId = 'org_orders_adversarial_2'
+			const OTHER = { ...ORG, id: otherOrgId, slug: 'other-org' }
+			await provisionTenantDb(otherOrgId)
+			try {
+				vi.mocked(resolveOrganizationForBrowserAuth).mockImplementation(
+					async (_origin, identity) =>
+						identity?.slug === 'test-org'
+							? (ORG as never)
+							: identity?.slug === 'other-org'
+								? (OTHER as never)
+								: null,
+				)
+				const placed = await placedOrder()
+				const id = placed.order.id
+				// Org A's link presented through org B's site.
+				await expectUniform404(
+					await readReceipt(
+						id,
+						{ 'X-Order-Link': deriveOrderLinkToken(orgId, id) },
+						'other-org',
+					),
+				)
+				// A link minted for org B with org A's order id, presented to A.
+				await expectUniform404(
+					await readReceipt(id, {
+						'X-Order-Link': deriveOrderLinkToken(otherOrgId, id),
+					}),
+				)
+				// Neither spends nor sends anything through org B.
+				await expectUniform404(
+					await resendLink(
+						id,
+						{ 'X-Order-Link': deriveOrderLinkToken(orgId, id) },
+						'other-org',
+					),
+				)
+			} finally {
+				await destroyTenantDb(otherOrgId).catch(() => {})
+			}
+		})
+
+		it('opens nothing but the receipt: tabs, tab payment, placement, payment quotes', async () => {
+			const placed = await placedOrder({ paymentMethod: 'online' })
+			const id = placed.order.id
+			const link = deriveOrderLinkToken(orgId, id)
+
+			// Tab view and tab payment take their own X-Tab-Token only.
+			for (const headers of [
+				{ 'X-Order-Link': link },
+				{ Authorization: `Bearer ${link}`, 'X-Tab-Token': link },
+				{ 'X-Order-Link': link, 'X-Tab-Token': link },
+			]) {
+				const tab = await app.request('/orders/tab?slug=test-org', {
+					headers: { origin: ORIGIN, ...headers },
+				})
+				expect([401, 404]).toContain(tab.status)
+				const pay = await app.request('/orders/tab/pay', {
+					method: 'POST',
+					headers: {
+						'content-type': 'application/json',
+						origin: ORIGIN,
+						...headers,
+					},
+					body: JSON.stringify({
+						slug: 'test-org',
+						tipPercent: 0,
+						contact: { name: 'Rana', phone: '+15551234567' },
+					}),
+				})
+				expect([401, 404]).toContain(pay.status)
+				expect(pay.status).not.toBe(200)
+			}
+
+			// The link token is not a customer token: placement refuses it.
+			const asCustomer = await postOrder(orderBody(), {
+				Authorization: `Bearer ${link}`,
+			})
+			expect(asCustomer.status).toBe(401)
+
+			// Nor a payment capability (the App's quote and payment flow).
+			const quote = await getOrderQuote(orgId, id, link)
+			expect(quote.ok).toBe(false)
+			if (!quote.ok) expect(quote.failure.status).toBe(403)
+
+			// No other method or sub-path under /orders/:id exists for it.
+			for (const [method, suffix] of [
+				['POST', ''],
+				['PATCH', ''],
+				['DELETE', ''],
+				['POST', '/cancel'],
+				['GET', '/resend-link'],
+			] as const) {
+				const res = await app.request(`/orders/${id}${suffix}?slug=test-org`, {
+					method,
+					headers: { origin: ORIGIN, 'X-Order-Link': link },
+				})
+				expect(res.status).toBe(404)
+			}
+		})
+
+		it('resend-link answers the uniform 404 without a valid credential, and forged calls spend nothing', async () => {
+			const placed = await placedOrder()
+			const id = placed.order.id
+			const other = await placedOrder()
+
+			await expectUniform404(await resendLink(id))
+			for (let i = 0; i < 5; i++) {
+				await expectUniform404(
+					await resendLink(id, {
+						'X-Order-Link': crypto.randomBytes(32).toString('hex'),
+					}),
+				)
+				await expectUniform404(
+					await resendLink(id, { Authorization: 'Bearer forged' }),
+				)
+				await expectUniform404(
+					await resendLink(id, {
+						'X-Order-Link': deriveOrderLinkToken(orgId, other.order.id),
+					}),
+				)
+				await expectUniform404(
+					await resendLink(id, { 'X-Order-Link': placed.receiptToken }),
+				)
+			}
+			// The real order still has its whole budget.
+			for (let i = 0; i < 3; i++) {
+				const res = await resendLink(id, {
+					'X-Order-Link': deriveOrderLinkToken(orgId, id),
+				})
+				expect(res.status).toBe(202)
+				expect(await res.json()).toEqual({ ok: true })
+			}
+			const limited = await resendLink(id, {
+				Authorization: `Bearer ${placed.receiptToken}`,
+			})
+			expect(limited.status).toBe(429)
+			await orderLinkResendsIdle()
+		})
 	})
 })

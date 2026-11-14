@@ -165,6 +165,33 @@ Checkout detects `?drop=<slug>`:
 Success shows pickup details for drop orders and an "Add to calendar" button for
 the pickup slot. Menu orders keep the current receipt.
 
+**Order status page (`/menu/success`).** The same page is the live status page
+and the target of the emailed or texted "View your order" link
+(`/menu/success?order=<id>#link=<token>`). The token lives in the URL fragment
+only, so Sites SSR never sees it; the browser reads it (`order-link.ts`) and
+sends it to the regional tenant-api as `X-Order-Link` (the saved receipt token
+still works as before, as `Authorization: Bearer`). The page re-reads the order
+every 15 seconds (`status-poll.ts`: one request at a time, paused while the tab
+is hidden, immediate refresh when visible again, stopped at `completed`,
+`cancelled` or `expired`) and redraws the timeline, promised time
+(`promised-time.ts`, in the location's time zone: "Ready around 6:40 PM",
+"Arriving 7:05 to 7:20 PM") and payment blocks in place. A cancelled order says
+so and shows "Refunded {amount}" from the receipt's `refundedCents`. A 404 with
+a link token (expired after 90 days, forged, erased) shows "This link has
+expired or isn't valid." with the restaurant's phone from the public location
+data; the poll stops. "Email me this receipt again" calls
+`POST /orders/:id/resend-link` (202 ok, 429 after 3 per hour). There is no
+out-for-delivery status in the API, so the timeline stays received, preparing,
+ready.
+
+**"Text me order updates" (checkout).** A box next to the phone field, unticked
+every time and never remembered, shown only when the options payload says
+`guestMessages.smsUpdates` (US node and the org flag on). It sends
+`smsUpdates: true` in the order request only when shown, ticked and a phone is
+entered (`checkoutOrderPayload`), and it is part of the core payload, so the
+attempt key changes with it. It is transactional, separate from the marketing
+consent boxes and never merged with `marketingConsent`.
+
 Known gap (unchanged by this work): order placement is client-side only. There
 is no backend POST yet; see PRODUCT.md "Open item".
 

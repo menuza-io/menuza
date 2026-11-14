@@ -96,6 +96,14 @@ export const orderSchema = z.object({
 			feeCents: z.number().int().nullable().optional(),
 		})
 		.nullable(),
+	/** The time promised to the guest (ISO); null when none was promised. */
+	promisedAt: z.string().nullable().default(null).catch(null),
+	/** End of an ASAP delivery range (ISO); null otherwise. */
+	promisedUntil: z.string().nullable().default(null).catch(null),
+	/** Bumped by every push-back; sent back so a stale screen is refused. */
+	promisedVersion: z.number().int().default(0).catch(0),
+	/** Minutes already pushed back (the region caps the total). */
+	promisedDelayMinutes: z.number().int().default(0).catch(0),
 })
 export type Order = z.infer<typeof orderSchema>
 
@@ -216,6 +224,13 @@ export function nextOrderStatus(status: string): string | undefined {
 		} as Record<string, string>
 	)[status]
 }
+
+/** Total minutes an order's promised time can be pushed back. */
+export const MAX_PROMISED_DELAY_MINUTES = 90
+export const PUSH_BACK_MINUTES = [5, 10, 15] as const
+export type PushBackMinutes = (typeof PUSH_BACK_MINUTES)[number]
+/** Statuses where the promised time can still move. */
+export const PUSHABLE_ORDER_STATUSES = ['accepted', 'preparing', 'ready']
 
 export const CLOSED_ORDER_STATUSES = ['completed', 'cancelled', 'expired']
 

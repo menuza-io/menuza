@@ -38,11 +38,19 @@ import {
 	resolveOrganizationForBrowserAuth,
 	type PublishedOrganization,
 } from '../lib/origin.ts'
+import { countOrderResendAttempt } from '../lib/order-link-limits.ts'
 import { isQrDineInDisabled } from '../lib/qr-tokens.ts'
 import { rateLimitByKey } from '../lib/rate-limit.ts'
 import { orgMatchesNodeRegion } from '../lib/region.ts'
 import { getBearerToken, syncEnvFromProcess } from '../lib/secrets.ts'
 import { quoteOrderDiscounts } from '../services/discount-quote.ts'
+import {
+	authorizeGuestOrder,
+	ORDER_LINK_HEADER,
+	readOrderLinkHeader,
+	resendReceiptInBackground,
+	type GuestOrderCredentials,
+} from '../services/order-link-access.ts'
 import {
 	buildOrderingOptionsWithContext,
 	fetchOrderContext,
@@ -817,6 +825,44 @@ publicOrderRoutes.post('/tab/pay', async (c) => {
 // GET /orders/:id — authoritative receipt (secret capability, origin checked)
 // ---------------------------------------------------------------------------
 
+/**
+ * What every refused order-link request gets: byte for byte what a receipt
+ * read of an order that does not exist answers.
+ */
+function orderNotFoundResponse() {
+	return orderFailureResponse({
+		status: 404,
+		code: 'order_not_found',
+		message: 'Order not found.',
+	})
+}
+
+async function guestReceiptResponse(
+	c: Context,
+	orgId: string,
+	credentials: GuestOrderCredentials,
+) {
+	try {
+		const access = await authorizeGuestOrder(
+			orgId,
+			c.req.param('id') ?? '',
+			credentials,
+		)
+		if (!access.ok) return orderNotFoundResponse()
+		return c.json({ order: receiptOrder(access.order) }, 200, noStoreHeaders())
+	} catch (error) {
+		console.error(
+			`Failed to load order receipt for org ${orgId}:`,
+			error instanceof Error ? error.message : error,
+		)
+		return c.json(
+			{ error: 'internal_error', message: 'We could not load this order.' },
+			500,
+			noStoreHeaders(),
+		)
+	}
+}
+
 publicOrderRoutes.get('/:id', async (c) => {
 	const identitySchema = z.object({
 		slug: z.string().trim().min(1).max(100).optional(),
@@ -830,6 +876,16 @@ publicOrderRoutes.get('/:id', async (c) => {
 	if ('error' in organization) return organization.error
 
 	const receiptToken = getBearerToken(c.req.header('Authorization'))
+	const linkToken = readOrderLinkHeader(c.req.header(ORDER_LINK_HEADER))
+	if (linkToken !== null) {
+		// The "View your order" link: read-only, the same receipt body. Either
+		// a valid receipt token or a valid link token opens it; every refusal
+		// is the uniform 404 of an unknown order.
+		return guestReceiptResponse(c, organization.organization.id, {
+			receiptToken,
+			linkToken,
+		})
+	}
 	if (!receiptToken) {
 		return c.json(
 			{ error: 'unauthorized', message: 'A receipt token is required.' },
@@ -857,6 +913,79 @@ publicOrderRoutes.get('/:id', async (c) => {
 		)
 		return c.json(
 			{ error: 'internal_error', message: 'We could not load this order.' },
+			500,
+			noStoreHeaders(),
+		)
+	}
+})
+
+// ---------------------------------------------------------------------------
+// POST /orders/:id/resend-link — e-mail the receipt (and its link) again
+// ---------------------------------------------------------------------------
+
+const resendLinkBodySchema = z
+	.object({
+		slug: z.string().trim().min(1).max(100).optional(),
+		host: z.string().trim().min(1).max(253).optional(),
+	})
+	.strict()
+
+const MAX_RESEND_LINK_BODY_BYTES = 2_000
+
+publicOrderRoutes.post('/:id/resend-link', async (c) => {
+	const contentLength = Number(c.req.header('content-length') ?? 0)
+	if (contentLength > MAX_RESEND_LINK_BODY_BYTES) {
+		return c.json({ error: 'Payload too large' }, 413, noStoreHeaders())
+	}
+	// The identity rides in the JSON body (as on every order POST), so the
+	// Worker can route the request to the organization's Durable Object.
+	const identity = resendLinkBodySchema.safeParse(
+		(await c.req.json().catch(() => null)) ?? {},
+	)
+	if (!identity.success) {
+		return c.json({ error: 'Organization not found' }, 404, noStoreHeaders())
+	}
+	const organization = await resolveOrderingOrganization(c, identity.data)
+	if ('error' in organization) return organization.error
+	const orgId = organization.organization.id
+	const orderId = c.req.param('id')
+
+	try {
+		// Authenticated first: a forged or missing credential never spends the
+		// real order's budget.
+		const access = await authorizeGuestOrder(orgId, orderId, {
+			receiptToken: getBearerToken(c.req.header('Authorization')),
+			linkToken: readOrderLinkHeader(c.req.header(ORDER_LINK_HEADER)),
+		})
+		if (!access.ok) return orderNotFoundResponse()
+
+		const db = await getTenantDb(orgId)
+		const limit = await countOrderResendAttempt(db, { orgId, orderId })
+		if (!limit.ok) {
+			return c.json(
+				{
+					error: 'rate_limit_exceeded',
+					message: 'Too many requests. Please try again later.',
+					retryAfterSeconds: limit.retryAfterSeconds,
+				},
+				429,
+				{
+					...noStoreHeaders(),
+					'Retry-After': String(limit.retryAfterSeconds),
+				},
+			)
+		}
+		// The same answer whether or not the order has an email address, the
+		// emails are switched off, or the send fails.
+		resendReceiptInBackground(orgId, orderId)
+		return c.json({ ok: true }, 202, noStoreHeaders())
+	} catch (error) {
+		console.error(
+			`Failed to resend an order link for org ${orgId}:`,
+			error instanceof Error ? error.message : error,
+		)
+		return c.json(
+			{ error: 'internal_error', message: 'We could not send this order.' },
 			500,
 			noStoreHeaders(),
 		)

@@ -78,4 +78,40 @@ describe('kitchen regional client', () => {
 		expect(await result).toMatchObject({ code: 'connection_lost' })
 		expect(fetchImpl).toHaveBeenCalledTimes(1)
 	})
+
+	it('posts a delay as one command and surfaces its refusals without resending', async () => {
+		const command = {
+			source: 'online',
+			orderId: 'o1',
+			expectedVersion: 'a'.repeat(64),
+			action: 'delay',
+			stationId: null,
+			lineId: null,
+			minutes: 10,
+			expectedPromisedVersion: 2,
+		} as const
+		const fetchImpl = vi.fn(async () => Response.json(feed))
+		await createKitchenApi(settings, null, fetchImpl).command(command)
+		expect(fetchImpl).toHaveBeenCalledTimes(1)
+		const call = fetchImpl.mock.calls[0] as unknown as [string, RequestInit]
+		expect(call[0]).toBe('https://us.node.test/pos/kds/command')
+		expect(call[1].method).toBe('POST')
+		expect(JSON.parse(call[1].body as string)).toEqual(command)
+		for (const code of ['stale_version', 'delay_limit', 'order_closed']) {
+			const refused = vi.fn(async () =>
+				Response.json({ error: code }, { status: 409 }),
+			)
+			await expect(
+				createKitchenApi(settings, null, refused).command(command),
+			).rejects.toMatchObject({ code, status: 409 })
+			expect(refused).toHaveBeenCalledTimes(1)
+		}
+		const lost = vi.fn(async () => {
+			throw new Error('network')
+		})
+		await expect(
+			createKitchenApi(settings, null, lost).command(command),
+		).rejects.toMatchObject({ code: 'connection_lost' })
+		expect(lost).toHaveBeenCalledTimes(1)
+	})
 })

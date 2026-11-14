@@ -253,6 +253,34 @@ describe('resolveOrgId for consent, subscription and public form routes', () => 
 		expect(await resolveOrgId(foreign, env)).toBeNull()
 	})
 
+	it('routes order links (X-Order-Link reads and resend-link posts) by Origin and slug only', async () => {
+		resolveOrganizationForBrowserAuth.mockImplementation(
+			async (origin, identity) =>
+				origin === 'https://acme.example' && identity.slug === 'acme'
+					? { id: ORG }
+					: null,
+		)
+		const link = 'a'.repeat(64)
+		const read = new Request(`${base}/orders/ord_1?slug=acme`, {
+			headers: { Origin: 'https://acme.example', 'X-Order-Link': link },
+		})
+		expect(await resolveOrgId(read, env)).toBe(ORG)
+		const body = JSON.stringify({ slug: 'acme' })
+		const resend = (origin: string, orderId = 'ord_1') =>
+			new Request(`${base}/orders/${orderId}/resend-link`, {
+				method: 'POST',
+				headers: {
+					Origin: origin,
+					'Content-Type': 'application/json',
+					'Content-Length': String(body.length),
+					'X-Order-Link': link,
+				},
+				body,
+			})
+		expect(await resolveOrgId(resend('https://acme.example'), env)).toBe(ORG)
+		expect(await resolveOrgId(resend('https://evil.example'), env)).toBeNull()
+	})
+
 	it('refuses an oversized post even when the query names the organization', async () => {
 		resolveOrganizationForBrowserAuth.mockResolvedValue({ id: ORG })
 		const request = new Request(`${base}/forms/f1/submissions?slug=acme`, {

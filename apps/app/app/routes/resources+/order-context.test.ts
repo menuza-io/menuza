@@ -2,12 +2,23 @@ import type * as DatabaseModule from '@repo/database'
 import { RouterContextProvider } from 'react-router'
 import { ENV } from 'varlock/env'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { drizzleTable, mockDb, resetMockDb } from '#tests/setup/drizzle-mock.ts'
+import {
+	drizzleTable,
+	mockDb,
+	queryChain,
+	resetMockDb,
+} from '#tests/setup/drizzle-mock.ts'
 import { loader } from './order-context.ts'
 
 const findOrg = vi.hoisted(() => vi.fn())
 const buildMenu = vi.hoisted(() => vi.fn())
 const buildDrop = vi.hoisted(() => vi.fn())
+const featureFlag = vi.hoisted(() => vi.fn())
+
+// Flags default off (null); tests turn one on by key.
+vi.mock('@repo/common/feature-flags', () => ({
+	getFeatureFlag: featureFlag,
+}))
 
 vi.mock('@repo/database', async (importOriginal) => {
 	const actual = await importOriginal<typeof DatabaseModule>()
@@ -135,6 +146,7 @@ describe('internal restaurant order context', () => {
 			secondsUntilVariationReturn: null,
 		})
 		buildDrop.mockReset().mockResolvedValue(null)
+		featureFlag.mockReset().mockResolvedValue(null)
 	})
 
 	it('requires internal command authentication (401, not a redirect)', async () => {
@@ -166,6 +178,15 @@ describe('internal restaurant order context', () => {
 			onlinePayment: { enabled: true, processor: 'connect' },
 			// QR flags default off (no ConfigFlag rows): the region fails closed.
 			qrOrdering: { enabled: false, dineIn: false, online: false },
+			// Guest messages are off by default, so no switch is on.
+			guestMessages: {
+				enabled: false,
+				receipt: false,
+				ready: false,
+				cancelled: false,
+			},
+			// No locations: nothing extra to prep.
+			largeOrder: {},
 			// Discount flags default off too: nothing to evaluate.
 			discounts: {
 				features: { automatic: false, coupons: false },
@@ -267,5 +288,126 @@ describe('internal restaurant order context', () => {
 	it('treats a missing drop as null rather than an error', async () => {
 		buildDrop.mockResolvedValue(null)
 		expect((await loadContext({ drop: 'ghost' })).drop).toBeNull()
+	})
+})
+
+/** Rows per table for `db.select().from(table)`; `where` is not evaluated. */
+function selectRows(rows: Map<unknown, unknown[]>) {
+	mockDb.select.mockImplementation((() => ({
+		from: (table: unknown) => queryChain(rows.get(table) ?? []),
+	})) as never)
+}
+
+describe('order context: guest messages and large orders', () => {
+	beforeEach(async () => {
+		resetMockDb()
+		findOrg.mockReset().mockResolvedValue(orgRow())
+		buildMenu.mockReset().mockResolvedValue({
+			payload: MENU_PAYLOAD,
+			secondsUntilVariationReturn: null,
+		})
+		buildDrop.mockReset().mockResolvedValue(null)
+		featureFlag.mockReset().mockResolvedValue(null)
+	})
+
+	type Extra = {
+		guestMessages: {
+			enabled: boolean
+			receipt: boolean
+			ready: boolean
+			cancelled: boolean
+		}
+		largeOrder: Record<
+			string,
+			{ threshold: number; thresholdType: string; extraPrepMinutes: number }
+		>
+	}
+
+	it('sends every switch off while the flag is off, whatever is stored', async () => {
+		const { ConfigFlag } = await import('@repo/database')
+		selectRows(
+			new Map([
+				[
+					ConfigFlag,
+					[{ value: { receipt: true, ready: true, cancelled: true } }],
+				],
+			]),
+		)
+		const payload = (await loadContext()) as unknown as Extra
+		expect(payload.guestMessages).toEqual({
+			enabled: false,
+			receipt: false,
+			ready: false,
+			cancelled: false,
+		})
+	})
+
+	it('defaults all switches on when the flag is on and nothing is stored', async () => {
+		featureFlag.mockImplementation(async (key: string) =>
+			key === 'ordering.guest_messages' ? true : null,
+		)
+		const payload = (await loadContext()) as unknown as Extra
+		expect(payload.guestMessages).toEqual({
+			enabled: true,
+			receipt: true,
+			ready: true,
+			cancelled: true,
+		})
+	})
+
+	it('reads the operator switches, treating a missing one as on', async () => {
+		featureFlag.mockImplementation(async (key: string) =>
+			key === 'ordering.guest_messages' ? true : null,
+		)
+		const { ConfigFlag } = await import('@repo/database')
+		selectRows(
+			new Map([[ConfigFlag, [{ value: { receipt: false, ready: false } }]]]),
+		)
+		const payload = (await loadContext()) as unknown as Extra
+		expect(payload.guestMessages).toEqual({
+			enabled: true,
+			receipt: false,
+			ready: false,
+			cancelled: true,
+		})
+	})
+
+	it('maps stored large-order fields to the wire vocabulary and skips unset ones', async () => {
+		const { OrganizationLocation } = await import('@repo/database')
+		const row = (
+			id: string,
+			threshold: number | null,
+			type: string,
+			minutes: number,
+		) => ({
+			id,
+			largeOrderThreshold: threshold,
+			largeOrderThresholdType: type,
+			largeOrderExtraPrepTime: minutes,
+		})
+		selectRows(
+			new Map([
+				[
+					OrganizationLocation,
+					[
+						row('loc_amount', 120.5, 'dollars', 20),
+						row('loc_items', 8, 'items', 10),
+						row('loc_no_threshold', null, 'dollars', 15),
+						row('loc_zero_threshold', 0, 'items', 15),
+						row('loc_no_minutes', 50, 'dollars', 0),
+						row('loc_unknown', 50, 'bananas', 15),
+					],
+				],
+			]),
+		)
+		const payload = (await loadContext()) as unknown as Extra
+		expect(payload.largeOrder).toEqual({
+			loc_amount: {
+				threshold: 120.5,
+				thresholdType: 'amount',
+				extraPrepMinutes: 20,
+			},
+			loc_items: { threshold: 8, thresholdType: 'items', extraPrepMinutes: 10 },
+		})
 	})
 })

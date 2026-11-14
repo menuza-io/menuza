@@ -54,6 +54,49 @@ refused with the loyalty error code, never applied silently
 the authoritative receipt including contact, priced lines and pickup summary. An
 existing authenticated customer token is not a receipt capability.
 
+### Order link ("View your order")
+
+Guest order emails link to
+`<site origin>/menu/success?order=<orderId>#link=<token>`. The token is an HMAC
+of `AUTH_HMAC_SECRET` over the purpose `order-link:v1`, the organization and the
+order (`lib/order-link.ts`): 64 lowercase hex characters, never the receipt or
+payment token. It rides in the URL fragment only, so Sites SSR never sees it;
+the page reads it from `location.hash` and sends it from the browser. It lapses
+90 days after the order was placed and dies when the order's person is erased.
+It is read-only and never signs anyone in.
+
+`GET /orders/:id?slug=...` also accepts `X-Order-Link: <token>`:
+
+- With the header, either a valid receipt token (Bearer) or a valid link token
+  opens the order and returns `200 { order }`, byte for byte the receipt body
+  above. Every refusal (forged, tampered, expired, erased, another order,
+  another organization, a receipt or payment token in the header, an over-long
+  value) is `404 { "error": "order_not_found", "message": "Order not found." }`,
+  the same answer as an order that does not exist.
+- Without the header nothing changes: no Bearer is `401 unauthorized`, a wrong
+  Bearer (a link token included) is `403 invalid_receipt_token`.
+- The organization still comes from the browser `Origin` plus `slug`/`host`.
+
+The link token opens nothing else: tabs and tab payment keep `X-Tab-Token`,
+placement keeps the customer token, the App's quote and payment session keep the
+payment token.
+
+`POST /orders/:id/resend-link` e-mails the receipt (with its link) again:
+
+- Body: `{ slug?: string; host?: string }` (strict, used with `Origin` to find
+  the organization and route the Worker; max 2 kB).
+- Credential: `Authorization: Bearer <receiptToken>` or `X-Order-Link: <token>`.
+  None or an invalid one: the same `404 order_not_found` as above, and nothing
+  is counted.
+- Limit: 3 per order per sliding hour, counted durably in the organization's
+  database before sending (refused attempts count too). Over it:
+  `429 { "error": "rate_limit_exceeded", "message": string, "retryAfterSeconds": number }`
+  with `Retry-After`.
+- Otherwise always `202 { "ok": true }`, whether or not the order has an email,
+  guest emails are on, or the send succeeds; the send runs after the response.
+  Dine-in and tab rounds get nothing.
+- All answers are `Cache-Control: no-store`.
+
 ## App → regional API (internal command token)
 
 `POST /api/orders/quote`: `{ orgId, orderId, paymentToken }`. Return only:

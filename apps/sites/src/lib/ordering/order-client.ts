@@ -7,6 +7,7 @@ import {
 	type OrderCapability,
 } from '@repo/common/order-receipt'
 import { type PublicOrderingOptions } from '@repo/common/restaurant-orders'
+import { type OrderCredential, credentialHeaders } from './order-link.ts'
 import { type CartItem } from './types.ts'
 import {
 	clearSessionTokens,
@@ -287,22 +288,63 @@ export async function postDiscountQuote(
 	}
 }
 
+/**
+ * Reads one order with a credential: the emailed link token (`X-Order-Link`)
+ * or this browser's receipt token (`Authorization: Bearer`). The credential
+ * goes to the region only, never to App or Sites SSR. A refused link is
+ * always `order_not_found` (404).
+ */
+export async function fetchOrderWithCredential(
+	orderId: string,
+	credential: OrderCredential,
+): Promise<unknown> {
+	const params = new URLSearchParams(getOrgBinding())
+	const response = await fetch(
+		`${regionalUrl()}/orders/${encodeURIComponent(orderId)}?${params}`,
+		{ headers: credentialHeaders(credential), cache: 'no-store' },
+	)
+	return responseJson(response)
+}
+
 /** Receipt capability is sent to the region only, never to App or Sites SSR. */
 export async function fetchOrderReceipt(
 	orgId: string,
 	orderId: string,
+	linkToken?: string | null,
 ): Promise<unknown> {
+	if (linkToken) {
+		return fetchOrderWithCredential(orderId, { kind: 'link', token: linkToken })
+	}
 	const capability = loadOrderCapability(orgId, orderId)
 	if (!capability) throw new OrderRequestError('receipt_unavailable', 401)
-	const params = new URLSearchParams(getOrgBinding())
+	return fetchOrderWithCredential(orderId, {
+		kind: 'receipt',
+		token: capability.receiptToken,
+	})
+}
+
+/**
+ * "Email me this receipt again". The answer is the same whether or not the
+ * order has an email address: 202 ok, 429 `rate_limit_exceeded` (3 per order
+ * per hour), 404 `order_not_found`.
+ */
+export async function resendOrderLink(
+	orderId: string,
+	credential: OrderCredential,
+): Promise<void> {
 	const response = await fetch(
-		`${regionalUrl()}/orders/${encodeURIComponent(orderId)}?${params}`,
+		`${regionalUrl()}/orders/${encodeURIComponent(orderId)}/resend-link`,
 		{
-			headers: { Authorization: `Bearer ${capability.receiptToken}` },
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				...credentialHeaders(credential),
+			},
+			body: JSON.stringify(getOrgBinding()),
 			cache: 'no-store',
 		},
 	)
-	return responseJson(response)
+	await responseJson(response)
 }
 
 /** Opaque payment reference only. Explicit projection prevents PII transit. */

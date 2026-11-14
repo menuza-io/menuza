@@ -178,7 +178,8 @@ export class TenantOrg extends DurableObject<TenantApiWorkerEnv> {
 				pathname === '/api/staff/tick' ||
 				pathname === '/api/reservations/tick' ||
 				pathname === '/api/loyalty/tick' ||
-				pathname === '/api/inventory/tick'
+				pathname === '/api/inventory/tick' ||
+				pathname === '/api/order-messages/tick'
 			const body = isTick
 				? ((await response
 						.clone()

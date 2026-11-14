@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { promisedDelayMinutesSchema } from './promised-time.ts'
 
 /** Kitchen-only contract. No contacts, prices, payment credentials or staff names. */
 const id = z.string().min(1).max(100)
@@ -62,15 +63,24 @@ export const kdsConfigRequestSchema = z.strictObject({
 	expectedVersion: z.number().int().nonnegative(),
 	config: kdsConfigSchema,
 })
+/**
+ * A kitchen command. `delay` pushes an online ticket's promised time back by
+ * `minutes` (5, 10 or 15) and names the `promisedVersion` it saw in
+ * `expectedPromisedVersion`; that version, not the ticket fingerprint, guards
+ * it (a replay after it applied is 409 `stale_version`, so it never pushes
+ * twice). Walk-in tickets have no promised time (409 `no_promised_time`).
+ */
 export const kdsCommandSchema = z
 	.strictObject({
 		source: kdsSourceSchema,
 		orderId: id,
 		expectedVersion: z.string().regex(/^[a-f0-9]{64}$/),
-		action: z.enum(['stage', 'done', 'recall']),
+		action: z.enum(['stage', 'done', 'recall', 'delay']),
 		stationId: id.nullable().default(null),
 		lineId: id.nullable().default(null),
 		stage: kdsStageSchema.optional(),
+		minutes: promisedDelayMinutesSchema.optional(),
+		expectedPromisedVersion: z.number().int().nonnegative().optional(),
 	})
 	.superRefine((command, ctx) => {
 		if (command.action === 'stage' && !command.stage)
@@ -82,6 +92,24 @@ export const kdsCommandSchema = z
 			ctx.addIssue({
 				code: 'custom',
 				message: 'Done and recall apply to the entire ticket.',
+			})
+		if (
+			command.action === 'delay' &&
+			(command.minutes === undefined ||
+				command.expectedPromisedVersion === undefined)
+		)
+			ctx.addIssue({
+				code: 'custom',
+				message: 'Choose how many minutes to add.',
+			})
+		if (
+			command.action !== 'delay' &&
+			(command.minutes !== undefined ||
+				command.expectedPromisedVersion !== undefined)
+		)
+			ctx.addIssue({
+				code: 'custom',
+				message: 'Only a delay adds minutes.',
 			})
 	})
 export type KdsCommand = z.infer<typeof kdsCommandSchema>
@@ -128,6 +156,14 @@ export const kdsTicketSchema = z.object({
 	completedAt: z.number().nullable(),
 	cancelled: z.boolean(),
 	lines: z.array(kdsLineSchema),
+	/**
+	 * Online tickets with a promised time only (absent otherwise): when the
+	 * guest was told it is ready (pickup) or starts arriving (delivery), the
+	 * end of a delivery range, and the version a `delay` command names.
+	 */
+	promisedAt: z.number().nullable().optional(),
+	promisedUntil: z.number().nullable().optional(),
+	promisedVersion: z.number().int().nonnegative().optional(),
 })
 export type KdsTicket = z.infer<typeof kdsTicketSchema>
 export const kdsFeedSchema = z.object({

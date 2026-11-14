@@ -309,6 +309,18 @@ describe('marketing consent ticked at checkout', () => {
 		expect(send).not.toHaveBeenCalled()
 	})
 
+	it('never records marketing consent for "Text me order updates"', async () => {
+		const res = await postOrder(orderBody({ smsUpdates: true }))
+		expect(res.status).toBe(201)
+		expect(
+			((await res.json()) as Record<string, unknown>).marketingConsent,
+		).toBeUndefined()
+		expect(await subscriptions()).toEqual([])
+		const db = await getTenantDb(orgId)
+		expect(await db.select().from(customerSubscriptions).all()).toEqual([])
+		expect(send).not.toHaveBeenCalled()
+	})
+
 	it('records nothing when the order is refused', async () => {
 		const res = await postOrder(
 			orderBody({

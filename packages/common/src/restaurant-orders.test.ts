@@ -7,8 +7,10 @@ import {
 	deliveryCoverageVerifiable,
 	extractPostalCode,
 	inclusiveTaxCents,
+	operatorOrderPatchSchema,
 	resolveDeliveryZoneForPoint,
 	priceRestaurantOrder,
+	readGuestMessagesPolicy,
 	restaurantOrderContextSchema,
 	restaurantOrderRequestSchema,
 	RESTAURANT_PAYMENT_STATUS_VALUES,
@@ -370,11 +372,16 @@ function makeContext(
 			enabled: boolean
 			processor: 'connect' | 'checkout' | null
 		}
+		dataRegion?: 'us' | 'ksa'
+		guestMessages?: unknown
 	} = {},
 ): RestaurantOrderContext {
 	return restaurantOrderContextSchema.parse({
 		orgId: ORG_ID,
-		dataRegion: 'us',
+		dataRegion: overrides.dataRegion ?? 'us',
+		...(overrides.guestMessages !== undefined
+			? { guestMessages: overrides.guestMessages }
+			: {}),
 		menu: overrides.menu ?? makeMenu(),
 		drop: overrides.drop === undefined ? null : overrides.drop,
 		onlinePayment: overrides.onlinePayment ?? {
@@ -1397,6 +1404,56 @@ describe('canonicalOrderRequest', () => {
 	})
 })
 
+describe('guest order messages in the request and the context', () => {
+	it('accepts smsUpdates on pickup and refuses it on a table round', () => {
+		expect(
+			restaurantOrderRequestSchema.safeParse(makeRequest({ smsUpdates: true }))
+				.success,
+		).toBe(true)
+		const dineIn = restaurantOrderRequestSchema.safeParse({
+			...makeRequest(),
+			fulfillment: 'dine_in',
+			smsUpdates: true,
+		})
+		expect(dineIn.success).toBe(false)
+		expect(
+			dineIn.error?.issues.some((issue) => issue.path[0] === 'smsUpdates'),
+		).toBe(true)
+		expect(
+			restaurantOrderRequestSchema.safeParse(rawRequest({ smsUpdates: 'yes' }))
+				.success,
+		).toBe(false)
+	})
+
+	it('hashes smsUpdates only when ticked, so older hashes never change', () => {
+		const base = canonicalOrderRequest(makeRequest())
+		expect(canonicalOrderRequest(makeRequest({ smsUpdates: false }))).toBe(base)
+		expect(canonicalOrderRequest(makeRequest({ smsUpdates: true }))).not.toBe(
+			base,
+		)
+	})
+
+	it('reads the context policy fail closed and never rejects the context', () => {
+		const on = { enabled: true, receipt: true, ready: false, cancelled: true }
+		expect(readGuestMessagesPolicy(on)).toEqual(on)
+		for (const bad of [
+			undefined,
+			null,
+			'on',
+			{ enabled: true },
+			{ ...on, enabled: false },
+			{ ...on, ready: 'yes' },
+		]) {
+			expect(readGuestMessagesPolicy(bad)).toEqual({
+				enabled: false,
+				receipt: false,
+				ready: false,
+				cancelled: false,
+			})
+		}
+	})
+})
+
 describe('canonicalOrderRequest: discounts', () => {
 	it('is unchanged when no discounts are sent, and changes with a code', () => {
 		const base = canonicalOrderRequest(makeRequest())
@@ -1609,6 +1666,39 @@ describe('applyOrderDiscounts', () => {
 // ---------------------------------------------------------------------------
 
 describe('buildPublicOrderingOptions', () => {
+	describe('guestMessages.smsUpdates', () => {
+		const on = { enabled: true, receipt: true, ready: true, cancelled: true }
+		const smsUpdates = (
+			overrides: Parameters<typeof makeContext>[0],
+		): boolean | undefined => {
+			const built = buildPublicOrderingOptions(makeContext(overrides), {
+				slug: 'test-org',
+				locationId: LOCATION_ID,
+				dropSlug: null,
+				counts: { slotOrders: new Map(), entityUsed: new Map() },
+				now: NOW,
+			})
+			expect(built.ok).toBe(true)
+			return built.ok ? built.options.guestMessages.smsUpdates : undefined
+		}
+
+		it('is true only for the US node with the flag on', () => {
+			expect(smsUpdates({ guestMessages: on })).toBe(true)
+		})
+
+		it('is false on the KSA node', () => {
+			expect(smsUpdates({ guestMessages: on, dataRegion: 'ksa' })).toBe(false)
+		})
+
+		it('fails closed when the policy is off, missing or malformed', () => {
+			expect(smsUpdates({ guestMessages: { ...on, enabled: false } })).toBe(
+				false,
+			)
+			expect(smsUpdates({})).toBe(false)
+			expect(smsUpdates({ guestMessages: 'yes' })).toBe(false)
+		})
+	})
+
 	it('reports slot remaining counts and entity remaining without PII', () => {
 		const context = makeContext({ drop: makeDrop() })
 		const built = buildPublicOrderingOptions(context, {
@@ -2320,5 +2410,55 @@ describe('order context discounts tolerance', () => {
 	it('reads an unusable field as off without failing the context', () => {
 		expect(parse({ features: 'x' }).discounts).toBeUndefined()
 		expect(parse(undefined).discounts).toBeUndefined()
+	})
+})
+
+describe('operatorOrderPatchSchema', () => {
+	it('takes a status change or a push-back, never both', () => {
+		expect(
+			operatorOrderPatchSchema.safeParse({ status: 'ready' }).success,
+		).toBe(true)
+		expect(
+			operatorOrderPatchSchema.safeParse({
+				delayMinutes: 10,
+				expectedPromisedVersion: 2,
+			}).success,
+		).toBe(true)
+		expect(
+			operatorOrderPatchSchema.safeParse({
+				status: 'ready',
+				delayMinutes: 10,
+				expectedPromisedVersion: 2,
+			}).success,
+		).toBe(false)
+	})
+
+	it('only pushes later, by 5, 10 or 15 minutes, with a version', () => {
+		for (const delayMinutes of [0, -5, 20, 3, 10.5])
+			expect(
+				operatorOrderPatchSchema.safeParse({
+					delayMinutes,
+					expectedPromisedVersion: 0,
+				}).success,
+			).toBe(false)
+		expect(
+			operatorOrderPatchSchema.safeParse({ delayMinutes: 5 }).success,
+		).toBe(false)
+		expect(
+			operatorOrderPatchSchema.safeParse({
+				delayMinutes: 5,
+				expectedPromisedVersion: -1,
+			}).success,
+		).toBe(false)
+	})
+})
+
+describe('large-order rules in the context', () => {
+	it('keeps the context readable whatever `largeOrder` holds', () => {
+		const base = makeContext()
+		for (const largeOrder of [undefined, 'x', { loc: 1 }])
+			expect(
+				restaurantOrderContextSchema.safeParse({ ...base, largeOrder }).success,
+			).toBe(true)
 	})
 })

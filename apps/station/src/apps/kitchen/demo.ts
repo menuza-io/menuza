@@ -11,6 +11,7 @@ import {
 	type KdsTicket,
 } from '@repo/common/kds'
 import { KitchenError } from './api.ts'
+import { MAX_DELAY_MINUTES } from './model.ts'
 import { db, type PosOrder } from '~/lib/db.ts'
 import { DEMO_ORIGIN } from '~/lib/orders.ts'
 
@@ -29,7 +30,17 @@ const RECALL_MS = 4 * 3_600_000
 const CANCELLED_MS = 30 * MINUTE
 
 type DemoLine = Omit<KdsLine, 'id' | 'stationId' | 'stage' | 'servedAt'>
-type DemoOrder = Omit<KdsTicket, 'version' | 'completedAt' | 'lines'> & {
+type DemoOrder = Omit<
+	KdsTicket,
+	| 'version'
+	| 'completedAt'
+	| 'lines'
+	| 'promisedAt'
+	| 'promisedUntil'
+	| 'promisedVersion'
+> & {
+	/** Online samples: the promised time the guest was told, as offsets from the open. */
+	promised?: { at: number; until?: number }
 	lines: DemoLine[]
 	/** A cancelled sample leaves the screen then, like a voided sale. */
 	hiddenAt?: number
@@ -44,6 +55,8 @@ type Progress = {
 	completedAt: number | null
 	/** As on the server: when a dish left the pass, until it is made again. */
 	served?: Record<string, number>
+	/** Minutes the promised time was pushed back, and how many times. */
+	delayed?: { minutes: number; version: number }
 }
 
 /** Stations for the demo menu (`demo-catalog.ts`); anything else goes to the kitchen. */
@@ -121,7 +134,18 @@ function project(
 	})
 	const complete =
 		lines.length > 0 && lines.every((line) => line.stage === 'ready')
+	const shift = (saved?.delayed?.minutes ?? 0) * MINUTE
 	return {
+		...(order.promised
+			? {
+					promisedAt: order.promised.at + shift,
+					promisedUntil:
+						order.promised.until === undefined
+							? null
+							: order.promised.until + shift,
+					promisedVersion: saved?.delayed?.version ?? 0,
+				}
+			: {}),
 		id: order.id,
 		source: order.source,
 		number: order.number,
@@ -199,6 +223,7 @@ function samples(t0: number): Sample[] {
 			number: web(18),
 			fulfillment: 'takeaway',
 			createdAt: ago(4),
+			promised: { at: ahead(18) },
 			lines: [
 				dish('i-marg', 'Margherita', 1, {
 					variant: 'Large',
@@ -269,6 +294,7 @@ function samples(t0: number): Sample[] {
 			number: web(16),
 			fulfillment: 'delivery',
 			createdAt: ago(16),
+			promised: { at: ahead(5), until: ahead(20) },
 			lines: [
 				dish('i-chicken', 'Crispy Chicken Sandwich', 1, {
 					options: [option('Avocado')],
@@ -321,6 +347,7 @@ function samples(t0: number): Sample[] {
 			fulfillment: 'delivery',
 			createdAt: ago(10),
 			dueAt: ahead(95),
+			promised: { at: ahead(95), until: ahead(110) },
 			lines: [
 				dish('i-steak', 'Steak Frites', 1, { options: [option('Medium')] }),
 				dish('i-cheese', 'Basque Cheesecake'),
@@ -534,6 +561,33 @@ export function createDemoKitchen(
 		const ticket = project(order, saved, current.config, current.configVersion)
 		if (ticket.version !== command.expectedVersion)
 			throw new KitchenError('stale_ticket', 409)
+		if (command.action === 'delay') {
+			// As on the server: the promised time's own version guards a push-back.
+			if (order.cancelled || ticket.completedAt !== null)
+				throw new KitchenError('order_closed', 409)
+			if (!order.promised) throw new KitchenError('no_promised_time', 409)
+			if (!command.minutes || command.expectedPromisedVersion === undefined)
+				throw new KitchenError('invalid_request', 400)
+			const delayed = saved?.delayed ?? { minutes: 0, version: 0 }
+			if (command.expectedPromisedVersion !== delayed.version)
+				throw new KitchenError('stale_version', 409)
+			if (delayed.minutes + command.minutes > MAX_DELAY_MINUTES)
+				throw new KitchenError('delay_limit', 409)
+			current.progress.set(keyOf(order), {
+				revision: (saved?.revision ?? 0) + 1,
+				stages: Object.fromEntries(
+					ticket.lines.map((line) => [line.id, line.stage]),
+				),
+				completedAt: saved?.completedAt ?? null,
+				served: saved?.served,
+				delayed: {
+					minutes: delayed.minutes + command.minutes,
+					version: delayed.version + 1,
+				},
+			})
+			remember()
+			return feed()
+		}
 		if (command.action === 'stage') {
 			if (ticket.completedAt !== null)
 				throw new KitchenError('ticket_done', 409)
@@ -576,6 +630,7 @@ export function createDemoKitchen(
 			),
 			completedAt: command.action === 'done' ? now : null,
 			served,
+			...(saved?.delayed ? { delayed: saved.delayed } : {}),
 		})
 		remember()
 		return feed()

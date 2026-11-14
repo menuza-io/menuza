@@ -23,7 +23,11 @@ import { TicketWaste } from './TicketWaste.tsx'
 import {
 	allDayCounts,
 	averageTicketMinutes,
+	canDelay,
+	DELAY_CHOICES,
+	delayCommand,
 	nextKitchenStage,
+	promisedTime,
 	stationStage,
 	visibleTickets,
 	workFiredAt,
@@ -121,6 +125,8 @@ export function Kitchen({
 		readPreference(preferenceKey(settings)),
 	)
 	const [configuring, setConfiguring] = useState(false)
+	// The last tap was a push-back, so a manager refusal reads as about the time.
+	const [lastDelay, setLastDelay] = useState(false)
 	// Prep sits beside the tickets when the organization has it (`available`).
 	const [section, setSection] = useState<'tickets' | 'prep'>('tickets')
 	// Cooks waste food in the kitchen, not at a desk: the Stock app's waste sheet, from here.
@@ -276,8 +282,20 @@ export function Kitchen({
 	const needsSignIn =
 		error?.code === 'staff_session_required' ||
 		error?.code === 'staff_session_invalid'
-	const errorMessage =
-		error?.status === 409
+	// Only a push-back tap has these answers; the setup shares `manager_required`.
+	const delayMessage =
+		error?.code === 'stale_version'
+			? _(t`The time was already changed. Check it and try again.`)
+			: error?.code === 'delay_limit'
+				? _(t`This order can't be pushed back any further.`)
+				: error?.code === 'order_closed'
+					? _(t`This order is finished.`)
+					: error?.code === 'manager_required' && lastDelay
+						? _(t`A manager needs to sign in to change the time.`)
+						: null
+	const errorMessage = delayMessage
+		? delayMessage
+		: error?.status === 409
 			? _(
 					t`This ticket or setup changed on another screen. Review the latest version, then try again.`,
 				)
@@ -294,6 +312,7 @@ export function Kitchen({
 							)
 	const command = (ticket: KdsTicket, extra: Partial<KdsCommand>) => {
 		if (stale || busy) return
+		setLastDelay(extra.action === 'delay')
 		void kitchen.command({
 			source: ticket.source,
 			orderId: ticket.id,
@@ -800,6 +819,15 @@ function Ticket({
 				? _(t`Delivery`)
 				: _(t`Takeaway`)
 	const number = ticket.number
+	// Online tickets with a promised time only: when the guest was told it is ready.
+	const promised = promisedTime(ticket)
+	const promisedLabel = promised
+		? promised.until
+			? _(t`Arriving ${time.formatRange(promised.at, promised.until)}`)
+			: ticket.fulfillment === 'delivery'
+				? _(t`Arriving around ${time.format(promised.at)}`)
+				: _(t`Ready around ${time.format(promised.at)}`)
+		: ''
 	// Dishes from a later round (a tab added to): marked so the line does not start them late.
 	// One save sends a round at one time, so any later time is a later round.
 	const firstFire = Math.min(
@@ -861,6 +889,14 @@ function Ticket({
 					{ticket.dueAt ? (
 						<p className="mt-2 text-sm font-semibold">
 							<Trans>Due {time.format(ticket.dueAt)}</Trans>
+						</p>
+					) : null}
+					{promised ? (
+						<p
+							className="tnum mt-2 text-sm font-semibold"
+							data-kitchen-promised
+						>
+							{promisedLabel}
 						</p>
 					) : null}
 				</div>
@@ -1035,6 +1071,34 @@ function Ticket({
 							{actionLabel}
 						</Button>
 					)}
+					{canDelay(ticket) ? (
+						<div
+							role="group"
+							aria-label={_(t`Push time back`)}
+							className="grid gap-2"
+							data-kitchen-delay
+						>
+							<p className="text-muted-foreground text-sm font-medium">
+								<Trans>Push time back</Trans>
+							</p>
+							<div className="grid grid-cols-3 gap-2">
+								{DELAY_CHOICES.map((minutes) => (
+									<Button
+										key={minutes}
+										variant="outline"
+										className="h-auto min-h-11 py-2 leading-snug"
+										disabled={disabled}
+										onClick={() => {
+											const send = delayCommand(ticket, minutes)
+											if (send) onCommand(send)
+										}}
+									>
+										+{minutes}
+									</Button>
+								))}
+							</div>
+						</div>
+					) : null}
 					{stage !== 'new' && ticket.completedAt === null ? (
 						<Button
 							variant="ghost"

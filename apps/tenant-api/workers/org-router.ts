@@ -436,6 +436,11 @@ export async function resolveOrgId(
 		return orgIdFromJsonBody(request)
 	}
 
+	// Guest order messages tick: same shape.
+	if (pathname === '/api/order-messages/tick') {
+		return orgIdFromJsonBody(request)
+	}
+
 	// App -> regional staff commands (link, unlink, erase, summary, export): body
 	// orgId, authenticated by INTERNAL_COMMAND_TOKEN inside the route handler.
 	if (pathname.startsWith('/internal/staff/')) {

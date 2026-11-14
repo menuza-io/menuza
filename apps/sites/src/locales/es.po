@@ -429,6 +429,14 @@ msgstr "Ha llegado"
 msgid "Arrives in {min}–{max} min"
 msgstr "Llega en {min}–{max} min"
 
+#: src/pages/menu/success.astro.ts:3
+msgid "Arriving {range}"
+msgstr "Llega {range}"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Arriving around {time}"
+msgstr "Llega alrededor de las {time}"
+
 #: src/lib/ordering-labels.ts:183
 msgid "ASAP"
 msgstr "Lo antes posible"
@@ -549,6 +557,10 @@ msgstr "Llamar"
 #: src/lib/reservations/labels.ts:203
 msgid "Call {phone}"
 msgstr "Llamar al {phone}"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Call the restaurant"
+msgstr "Llamar al restaurante"
 
 #: src/lib/reservations/labels.ts:183
 msgid "Cancel reservation"
@@ -846,6 +858,10 @@ msgstr "Contacto"
 msgid "Contact details"
 msgstr "Datos de contacto"
 
+#: src/pages/menu/success.astro.ts:3
+msgid "Contact the restaurant for help with your order."
+msgstr "Contacta con el restaurante para recibir ayuda con tu pedido."
+
 #: src/pages/complete-name.astro.ts:3
 msgid "Continue"
 msgstr "Continuar"
@@ -1046,6 +1062,10 @@ msgstr "Envíame novedades y ofertas de {name} por correo"
 #: src/components/marketing/MarketingConsentBoxes.astro.ts:3
 msgid "Email me offers and news from {org}"
 msgstr "Envíame ofertas y novedades de {org} por correo"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Email me this receipt again"
+msgstr "Enviarme este recibo por correo otra vez"
 
 #: src/components/drops/DropCard.astro.ts:3
 #: src/components/drops/DropStatusChip.astro.ts:3
@@ -1345,6 +1365,10 @@ msgstr "Voy a llegar tarde"
 #: src/lib/reservations/labels.ts:310
 msgid "If a table opens up, we will contact you. You can cancel this request at any time."
 msgstr "Si se libera una mesa, nos pondremos en contacto contigo. Puedes cancelar esta solicitud en cualquier momento."
+
+#: src/pages/menu/success.astro.ts:3
+msgid "If we have your email, the receipt is on its way."
+msgstr "Si tenemos tu correo electrónico, el recibo ya va en camino."
 
 #: src/components/drops/DropCard.astro.ts:3
 #: src/pages/drop/[slug].astro.ts:3
@@ -2344,6 +2368,10 @@ msgstr "Leer más"
 msgid "Ready"
 msgstr "Listo"
 
+#: src/pages/menu/success.astro.ts:3
+msgid "Ready around {time}"
+msgstr "Listo alrededor de las {time}"
+
 #: src/lib/ordering-labels.ts:181
 #: src/lib/ordering-labels.ts:185
 msgid "Ready in about {count} min"
@@ -2384,6 +2412,10 @@ msgstr "Reembolso en camino"
 #: src/lib/reservations/labels.ts:435
 msgid "Refunded"
 msgstr "Reembolsado"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Refunded {amount}"
+msgstr "Reembolsado: {amount}"
 
 #: src/lib/ordering-labels.ts:94
 #: src/lib/ordering-labels.ts:117
@@ -2765,6 +2797,10 @@ msgstr "Envíame novedades y ofertas de {name} por SMS"
 msgid "Text me offers from {org}"
 msgstr "Envíame ofertas de {org} por SMS"
 
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Text me order updates"
+msgstr "Enviarme mensajes de texto sobre el pedido"
+
 #: src/lib/reservations/labels.ts:100
 msgid "Text me reminders about this reservation"
 msgstr "Envíame recordatorios por SMS sobre esta reserva"
@@ -2772,6 +2808,10 @@ msgstr "Envíame recordatorios por SMS sobre esta reserva"
 #: src/lib/reservations/labels.ts:222
 msgid "Text me when my table is ready"
 msgstr "Envíame un SMS cuando mi mesa esté lista"
+
+#: src/pages/menu/checkout.astro.ts:3
+msgid "Texts about this order only: when it's ready, or if the time changes. Not marketing."
+msgstr "Mensajes de texto solo sobre este pedido: cuando esté listo o si cambia la hora. No es publicidad."
 
 #: src/pages/menu/success.astro.ts:3
 msgid "Thank you for your order!"
@@ -3059,6 +3099,10 @@ msgstr "Este empleo ya no está abierto."
 msgid "This job is no longer taking applications."
 msgstr "Este puesto ya no acepta solicitudes."
 
+#: src/pages/menu/success.astro.ts:3
+msgid "This link has expired or isn't valid."
+msgstr "Este enlace ha caducado o no es válido."
+
 #: src/pages/menu/checkout.astro.ts:3
 msgid "This location is not available for ordering."
 msgstr "Esta ubicación no está disponible para pedidos."
@@ -3067,9 +3111,17 @@ msgstr "Esta ubicación no está disponible para pedidos."
 msgid "This order is below the minimum for delivery."
 msgstr "Este pedido está por debajo del mínimo para entrega a domicilio."
 
+#: src/pages/menu/success.astro.ts:3
+msgid "This order is complete."
+msgstr "Este pedido está completado."
+
 #: src/pages/menu.astro.ts:3
 msgid "This order link has expired. You can still order from the menu."
 msgstr "Este enlace de pedido ha caducado. Aún puede ordenar desde el menú."
+
+#: src/pages/menu/success.astro.ts:3
+msgid "This order was cancelled"
+msgstr "Este pedido fue cancelado"
 
 #: src/lib/reservations/labels.ts:412
 msgid "This payment is no longer open"
@@ -3162,6 +3214,10 @@ msgstr "Demasiados intentos. Inténtalo de nuevo más tarde."
 #: src/lib/reservations/labels.ts:491
 msgid "Too many attempts. Please wait a moment and try again."
 msgstr "Demasiados intentos. Espera un momento e inténtalo de nuevo."
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Too many requests. Try again later."
+msgstr "Demasiadas solicitudes. Inténtalo de nuevo más tarde."
 
 #: src/components/ordering/TableTab.astro.ts:3
 #: src/pages/drop/[slug].astro.ts:3
@@ -3453,6 +3509,10 @@ msgstr "No pudimos cargar tu recibo"
 #: src/components/marketing/MessagesSection.astro.ts:3
 msgid "We couldn't save that. Try again."
 msgstr "No pudimos guardarlo. Inténtalo de nuevo."
+
+#: src/pages/menu/success.astro.ts:3
+msgid "We couldn't send that. Please try again later."
+msgstr "No pudimos enviarlo. Inténtalo de nuevo más tarde."
 
 #: src/pages/menu/success.astro.ts:3
 msgid "We couldn't start payment. Please try again."
@@ -3808,6 +3868,10 @@ msgstr "Tu pedido está por debajo del gasto mínimo de este código."
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Your order is empty"
 msgstr "Tu pedido está vacío"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "Your order is ready."
+msgstr "Tu pedido está listo."
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Your order was placed, but we couldn't start online payment. You can pay from your receipt page."

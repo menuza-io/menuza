@@ -306,4 +306,84 @@ describe('demo kitchen', () => {
 		expect(line.stage).toBe('ready')
 		expect(line.servedAt).toBe(T0 + 1)
 	})
+
+	it('gives online tickets a promised time and pushes it back with the server rules', async () => {
+		const k = kitchen()
+		const feed = await k.feed()
+		const promised = feed.tickets.filter((ticket) => ticket.promisedAt != null)
+		expect(promised.length).toBeGreaterThan(0)
+		expect(promised.every((ticket) => ticket.source === 'online')).toBe(true)
+		for (const ticket of feed.tickets.filter((x) => x.source === 'pos'))
+			expect('promisedAt' in ticket).toBe(false)
+		const ticket = promised.find((entry) => entry.promisedUntil != null)!
+		const delay = (
+			from: KdsTicket,
+			minutes: 5 | 10 | 15,
+			version = from.promisedVersion!,
+		): KdsCommand => ({
+			source: from.source,
+			orderId: from.id,
+			expectedVersion: from.version,
+			action: 'delay',
+			stationId: null,
+			lineId: null,
+			minutes,
+			expectedPromisedVersion: version,
+		})
+		const after = (await k.command(delay(ticket, 10))).tickets.find(
+			(entry) => entry.id === ticket.id,
+		)!
+		expect(after.promisedAt).toBe(ticket.promisedAt! + 10 * 60_000)
+		expect(after.promisedUntil).toBe(ticket.promisedUntil! + 10 * 60_000)
+		expect(after.promisedVersion).toBe(ticket.promisedVersion! + 1)
+		// A replay of the same tap names the old version.
+		expect(
+			await refusal(k.command(delay(after, 10, ticket.promisedVersion!))),
+		).toEqual([409, 'stale_version'])
+		// 10 + 15 * 5 = 85; one more 10 passes 90.
+		let current = after
+		for (let i = 0; i < 5; i++)
+			current = (await k.command(delay(current, 15))).tickets.find(
+				(entry) => entry.id === ticket.id,
+			)!
+		expect(await refusal(k.command(delay(current, 10)))).toEqual([
+			409,
+			'delay_limit',
+		])
+		// Walk-in tickets have no promised time.
+		const walkIn = feed.tickets.find(
+			(entry) =>
+				entry.source === 'pos' && !entry.cancelled && !entry.completedAt,
+		)!
+		expect(await refusal(k.command(delay(walkIn, 5, 0)))).toEqual([
+			409,
+			'no_promised_time',
+		])
+		// A finished ticket is closed.
+		const done = feed.tickets.find(
+			(entry) => entry.source === 'online' && entry.completedAt,
+		)!
+		expect(await refusal(k.command(delay(done, 5, 0)))).toEqual([
+			409,
+			'order_closed',
+		])
+	})
+
+	it('keeps contacts, addresses and prices out of the kitchen contract', async () => {
+		const feed = await kitchen().feed()
+		const keys = new Set<string>()
+		for (const ticket of feed.tickets) {
+			Object.keys(ticket).forEach((key) => keys.add(key))
+			ticket.lines.forEach((line) =>
+				Object.keys(line).forEach((key) => keys.add(key)),
+			)
+		}
+		expect(
+			[...keys].filter((key) =>
+				/phone|email|address|name$|price|total|cents|tip|customer|staff/i.test(
+					key,
+				),
+			),
+		).toEqual(['name'])
+	})
 })

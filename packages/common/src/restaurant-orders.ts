@@ -19,6 +19,7 @@ import {
 } from './location-availability.ts'
 import { generatePickupSlots, getDropDisplayStatus } from './menu-types.ts'
 import { orderMarketingConsentSchema } from './marketing-consent.ts'
+import { promisedDelayMinutesSchema } from './promised-time.ts'
 import { discountedTaxableCents } from './pos-discount-base.ts'
 import {
 	orderLoyaltySelectionSchema,
@@ -261,6 +262,12 @@ const restaurantOrderObjectSchema = z.strictObject({
 	 * (a retry places the same order and records nothing again).
 	 */
 	marketingConsent: orderMarketingConsentSchema.optional(),
+	/**
+	 * "Text me order updates": transactional texts about this order only, never
+	 * marketing consent. Refused on a table round; ignored without a phone or
+	 * off the US node (stored false).
+	 */
+	smsUpdates: z.boolean().optional(),
 	delivery: z
 		.strictObject({
 			// Free-text address + city are required only without a quote
@@ -300,6 +307,7 @@ type OrderRefinementValue = {
 	delivery?: { address?: string; city?: string; quoteToken?: string }
 	scheduledFor?: string | null
 	source?: 'qr_poster' | null
+	smsUpdates?: boolean
 	lines: Array<{ quantity: number }>
 }
 
@@ -310,6 +318,13 @@ function refineOrderRequest(
 ) {
 	if (value.fulfillment === 'dine_in') {
 		refineDineInRequest(value, context)
+		if (value.smsUpdates === true) {
+			context.addIssue({
+				code: z.ZodIssueCode.custom,
+				path: ['smsUpdates'],
+				message: 'Order update texts are not available for table orders',
+			})
+		}
 	} else if (options.requireContact) {
 		if (!value.contact?.name) {
 			context.addIssue({
@@ -407,7 +422,12 @@ export type RestaurantOrderRequest = z.infer<
  */
 export const restaurantOrderQuoteSchema = z
 	.object({ ...restaurantOrderObjectSchema.shape })
-	.omit({ idempotencyKey: true, loyalty: true, marketingConsent: true })
+	.omit({
+		idempotencyKey: true,
+		loyalty: true,
+		marketingConsent: true,
+		smsUpdates: true,
+	})
 	.extend({ contact: restaurantOrderContactSchema.optional() })
 	.superRefine((value, context) =>
 		refineOrderRequest(value, context, { requireContact: false }),
@@ -425,7 +445,7 @@ export type RestaurantOrderQuoteRequest = z.infer<
  */
 export const restaurantOrderDiscountQuoteSchema = z
 	.object({ ...restaurantOrderObjectSchema.shape })
-	.omit({ idempotencyKey: true, marketingConsent: true })
+	.omit({ idempotencyKey: true, marketingConsent: true, smsUpdates: true })
 	.extend({ contact: restaurantOrderContactSchema.optional() })
 	.superRefine((value, context) =>
 		refineOrderRequest(value, context, { requireContact: false }),
@@ -507,10 +527,27 @@ export const orderPaymentStatusRequestSchema = z.strictObject({
  * allows forward service states plus cancel; `expired` and `payment_review`
  * are system-owned and can never be set directly.
  */
-export const operatorOrderPatchSchema = z.strictObject({
+/**
+ * `PATCH /operator/orders/:id`: either a status change (optionally marking a
+ * handoff order paid), or a push-back of the promised time. The two never mix:
+ * a body with both is refused (400), so each write has one meaning.
+ */
+export const operatorOrderStatusPatchSchema = z.strictObject({
 	status: z.enum(['accepted', 'preparing', 'ready', 'completed', 'cancelled']),
 	markPaid: z.boolean().optional(),
 })
+
+/** Pushes the promised time back by 5, 10 or 15 minutes (never earlier). */
+export const operatorOrderDelayPatchSchema = z.strictObject({
+	delayMinutes: promisedDelayMinutesSchema,
+	/** The `promisedVersion` the screen showed; another value is 409 `stale_version`. */
+	expectedPromisedVersion: z.number().int().nonnegative(),
+})
+
+export const operatorOrderPatchSchema = z.union([
+	operatorOrderStatusPatchSchema,
+	operatorOrderDelayPatchSchema,
+])
 
 export type OperatorOrderPatch = z.infer<typeof operatorOrderPatchSchema>
 
@@ -575,6 +612,7 @@ export function canonicalOrderRequest(request: RestaurantOrderRequest): string {
 		...(request.source ? { source: request.source } : {}),
 		...(request.loyalty ? { loyalty: request.loyalty } : {}),
 		...(request.discounts ? { discounts: request.discounts } : {}),
+		...(request.smsUpdates ? { smsUpdates: true } : {}),
 		delivery: request.delivery
 			? {
 					address: request.delivery.address ?? null,
@@ -1071,12 +1109,75 @@ export const restaurantOrderContextSchema = z
 		 * discount payload never blocks ordering.
 		 */
 		discounts: orderContextDiscountsTolerantSchema.optional(),
+		/**
+		 * Guest order messages policy (`ordering.guest_messages` and the
+		 * operator's switches). Read with `readGuestMessagesPolicy`, never parsed
+		 * here: a bad value turns messages off, it never blocks ordering.
+		 */
+		guestMessages: z.unknown().optional(),
+		/**
+		 * Large-order extra prep per location id (`largeOrderRuleSchema`). Read
+		 * with `readLargeOrderRule`, never parsed here: a bad value adds no time,
+		 * it never blocks ordering.
+		 */
+		largeOrder: z.unknown().optional(),
 	})
 	.loose()
 
 export type RestaurantOrderContext = z.infer<
 	typeof restaurantOrderContextSchema
 >
+
+export {
+	computePromisedTime,
+	isLargeOrder,
+	largeOrderRuleSchema,
+	MAX_PROMISED_DELAY_MINUTES,
+	planPromisedDelay,
+	PROMISED_DELAY_CHOICES,
+	PROMISED_DELAY_NOTIFY_MINUTES,
+	PROMISED_DELAY_STATUSES,
+	promisedDelayMinutesSchema,
+	readLargeOrderRule,
+	type LargeOrderRule,
+	type PromisedDelayMinutes,
+	type PromisedDelayRefusal,
+	type PromisedTime,
+} from './promised-time.ts'
+
+/**
+ * `guestMessages` in the order context (`GET /resources/order-context`).
+ * `enabled` is the organization flag `ordering.guest_messages`; `receipt`,
+ * `ready` and `cancelled` are the operator's switches for those messages. Out
+ * for delivery and a changed time have no switch and follow `enabled`. No PII.
+ */
+export const guestMessagesContextSchema = z.object({
+	enabled: z.boolean(),
+	receipt: z.boolean(),
+	ready: z.boolean(),
+	cancelled: z.boolean(),
+})
+
+export type GuestMessagesContext = z.infer<typeof guestMessagesContextSchema>
+
+export const GUEST_MESSAGES_OFF: GuestMessagesContext = Object.freeze({
+	enabled: false,
+	receipt: false,
+	ready: false,
+	cancelled: false,
+})
+
+/** Fails closed: anything missing or malformed reads as everything off. */
+export function readGuestMessagesPolicy(value: unknown): GuestMessagesContext {
+	const parsed = guestMessagesContextSchema.safeParse(value)
+	if (!parsed.success || !parsed.data.enabled) return { ...GUEST_MESSAGES_OFF }
+	return {
+		enabled: true,
+		receipt: parsed.data.receipt,
+		ready: parsed.data.ready,
+		cancelled: parsed.data.cancelled,
+	}
+}
 export type DropInventoryOverride = NonNullable<
 	RestaurantOrderContext['drop']
 >['inventoryOverrides'][number]
@@ -2839,6 +2940,11 @@ export type PublicOrderingOptions = {
 	fulfillment: { pickup: boolean; delivery: boolean }
 	tips: { pickup: boolean; delivery: boolean }
 	delivery: { available: boolean }
+	/**
+	 * Whether the checkout may offer "Text me order updates": the guest
+	 * messages flag is on and this is the US node. Policy only, no PII.
+	 */
+	guestMessages: { smsUpdates: boolean }
 	drop: null | {
 		slug: string
 		title: string
@@ -2924,6 +3030,11 @@ export function buildPublicOrderingOptions(
 				deliveryCoverageVerifiable(location, {
 					geocoderAvailable: input.geocoderAvailable ?? false,
 				}),
+		},
+		guestMessages: {
+			smsUpdates:
+				readGuestMessagesPolicy(context.guestMessages).enabled &&
+				context.dataRegion === 'us',
 		},
 		drop: null,
 	}

@@ -41,6 +41,8 @@ const receiptLocations = (menuPayload?.locations ?? []).map((location) => ({
 	timezone: location.timezone ?? 'UTC',
 	// Seller's VAT registration number, printed on the receipt.
 	vatNumber: location.vatNumber?.trim() || null,
+	// Public location data (not guest data): the "Call the restaurant" link.
+	phone: location.phone?.trim() || null,
 }))
 
 // Receipts carry only the drop slug; titles come from the public drop listing.
@@ -106,6 +108,10 @@ const paymentFailedTitle = i18n._(msg`Payment failed`)
 const paymentFailedDesc = i18n._(msg`Your payment didn't go through. Your order is held for a short time — you can try again.`)
 const tryPaymentAgainLabel = i18n._(msg`Try payment again`)
 const paymentExpiredTitle = i18n._(msg`Your payment window expired`)
+const linkInvalidTitle = i18n._(msg`This link has expired or isn't valid.`)
+const linkInvalidDesc = i18n._(msg`Contact the restaurant for help with your order.`)
+const callRestaurantLabel = i18n._(msg`Call the restaurant`)
+const resendLabel = i18n._(msg`Email me this receipt again`)
 const paymentExpiredDesc = i18n._(msg`The hold on your order was released. Please place a new order.`)
 
 // ---------- checkout hold (pending online payment) ----------
@@ -151,6 +157,17 @@ const successLabels = {
 	deliveryDiscount: deliveryDiscountTemplate,
 	deliveryDiscountPlain: deliveryDiscountText,
 	freeOrder: freeOrderText,
+	readyAround: translate(i18n, msg`Ready around {time}`, { time: '{time}' }),
+	arrivingAround: translate(i18n, msg`Arriving around {time}`, { time: '{time}' }),
+	arriving: translate(i18n, msg`Arriving {range}`, { range: '{range}' }),
+	cancelledTitle: i18n._(msg`This order was cancelled`),
+	callRestaurant: callRestaurantLabel,
+	refunded: translate(i18n, msg`Refunded {amount}`, { amount: '{amount}' }),
+	readyDesc: i18n._(msg`Your order is ready.`),
+	completedDesc: i18n._(msg`This order is complete.`),
+	resendSent: i18n._(msg`If we have your email, the receipt is on its way.`),
+	resendLimited: i18n._(msg`Too many requests. Try again later.`),
+	resendFailed: i18n._(msg`We couldn't send that. Please try again later.`),
 	statuses: {
 		pending: i18n._(msg`Order received`),
 		accepted: i18n._(msg`Accepted`),
@@ -228,6 +245,17 @@ const valueClass = 'price font-medium text-foreground'
 				<a href={menuHref} class="btn-cta mt-2">{backToMenuLabel}</a>
 			</div>
 
+			{/* The emailed link is expired, forged or erased: one uniform answer. */}
+			<div id="success-link-invalid" class:list={[emptyClass, 'hidden']} role="alert">
+				<span class={emptyIconClass}>
+					<svg xmlns="http://www.w3.org/2000/svg" class="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+				</span>
+				<h1 class="text-xl font-bold tracking-tight text-foreground">{linkInvalidTitle}</h1>
+				<p class="max-w-sm text-sm text-muted-foreground">{linkInvalidDesc}</p>
+				<ul id="link-invalid-contacts" class="w-full max-w-sm space-y-2 empty:hidden"></ul>
+				<a href={menuHref} class="btn-cta mt-2">{backToMenuLabel}</a>
+			</div>
+
 			{/* Receipt fetch failed (network/region) */}
 			<div id="success-error" class:list={[emptyClass, 'hidden']}>
 				<span class="flex size-12 items-center justify-center rounded-xl bg-destructive/10 text-destructive">
@@ -275,6 +303,9 @@ const valueClass = 'price font-medium text-foreground'
 						))}
 					</ol>
 					<span id="order-status-badge" class="badge tone-neutral mt-4"></span>
+					{/* Live: filled and cleared by the status poll. */}
+					<p id="order-promised" class="mt-4 hidden text-base font-semibold text-balance text-foreground [&:not(.hidden)]:block" role="status" dir="auto"></p>
+					<p id="order-refund-note" class="mt-3 hidden text-sm font-medium text-foreground [&:not(.hidden)]:block" dir="auto"></p>
 				</section>
 
 				{/* Online payment states */}
@@ -435,6 +466,18 @@ const valueClass = 'price font-medium text-foreground'
 
 				<DropAlertsSignup source="order_success" title={dropAlertsTitle} />
 
+				{/* Help: the restaurant's phone (public location data) and a re-send
+				    of the receipt email. Shown only when they can work. */}
+				<div class="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+					<a id="order-call" href="tel:" class="btn-secondary hidden w-full sm:w-auto [&.hidden]:hidden">
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-4" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+						<span>{callRestaurantLabel}</span>
+						<span id="order-call-number" dir="ltr" class="bidi-isolate font-normal text-muted-foreground"></span>
+					</a>
+					<button type="button" id="resend-receipt" class="btn-secondary w-full sm:w-auto">{resendLabel}</button>
+				</div>
+				<p id="resend-status" role="status" class="text-center text-sm text-muted-foreground empty:hidden"></p>
+
 				<div class="flex flex-col items-center gap-3 pt-2 sm:flex-row sm:justify-center">
 					<a href={menuHref} class="btn-secondary w-full sm:w-auto">
 						{backToMenuLabel}
@@ -464,10 +507,18 @@ const valueClass = 'price font-medium text-foreground'
 		import { createMoneyFormatter, fillTemplate } from '~/lib/ordering/money'
 		import {
 			OrderRequestError,
-			fetchOrderReceipt,
+			fetchOrderWithCredential,
 			loadOrderCapability,
+			resendOrderLink,
 			startOrderPayment,
 		} from '~/lib/ordering/order-client'
+		import {
+			chooseOrderCredential,
+			readOrderLink,
+			type OrderCredential,
+		} from '~/lib/ordering/order-link'
+		import { createStatusPoller, isTerminalStatus } from '~/lib/ordering/status-poll'
+		import { formatPromisedTime } from '~/lib/ordering/promised-time'
 		import {
 			interpretPaymentStatus,
 			shouldContinuePolling,
@@ -535,6 +586,12 @@ const valueClass = 'price font-medium text-foreground'
 			totalCents: number
 			holdExpiresAt: string | null
 			tipPercent: number
+			/** Amount recorded as returned; absent on older nodes. */
+			refundedCents?: number
+			/** When the order should be ready / start arriving. */
+			promisedAt?: string | null
+			/** End of an ASAP delivery range. */
+			promisedUntil?: string | null
 			fulfillment: string
 			locale: string
 			createdAt: string | null
@@ -564,6 +621,22 @@ const valueClass = 'price font-medium text-foreground'
 		const orderId = new URLSearchParams(window.location.search).get('order')
 		const defaultLocale =
 			document.documentElement.dataset.defaultLocale || 'en'
+		// The emailed link carries its token in the fragment only, so Sites SSR
+		// never sees it; it goes to the regional tenant-api from this browser.
+		// The fragment is left in place so the guest can bookmark the page.
+		const orderLink = readOrderLink(window.location.hash)
+		const hasPaymentToken = Boolean(
+			orderId && loadOrderCapability(orgId, orderId)?.paymentToken,
+		)
+
+		function currentCredential(): OrderCredential | null {
+			return chooseOrderCredential({
+				link: orderLink,
+				receiptToken: orderId
+					? (loadOrderCapability(orgId, orderId)?.receiptToken ?? null)
+					: null,
+			})
+		}
 
 		// Catalog names arrive as locale maps ({"en":…,"ar":…}); pick the page locale.
 		const localize = (value: string | null | undefined): string =>
@@ -614,6 +687,8 @@ const valueClass = 'price font-medium text-foreground'
 			iconWrap?.classList.toggle('text-destructive', attention)
 			iconWrap?.classList.toggle('border-destructive/30', attention)
 		}
+
+		let latestOrder: ReceiptOrder | null = null
 
 		function renderReceipt(order: ReceiptOrder) {
 			const money = createMoneyFormatter(order.currency || labels.currency || 'USD', labels.locale)
@@ -870,6 +945,50 @@ const valueClass = 'price font-medium text-foreground'
 			}
 			if (tipEl) tipEl.textContent = formatCents(order.tipCents)
 			if (totalEl) totalEl.textContent = formatCents(order.totalCents)
+
+			latestOrder = order
+
+			// Promised time: live orders only, in the location's time zone.
+			const locationFacts = (labels.locations as Array<{ id: string; timezone?: string; phone?: string | null }>).find(
+				(l) => l.id === order.location?.id,
+			)
+			const promised = formatPromisedTime(
+				{
+					promisedAt: order.promisedAt,
+					promisedUntil: order.promisedUntil,
+					fulfillment: order.fulfillment,
+					status: order.status,
+					paymentStatus: order.paymentStatus,
+					timeZone: locationFacts?.timezone || 'UTC',
+					locale: labels.locale || 'en',
+				},
+				labels,
+			)
+			const promisedEl = document.getElementById('order-promised')
+			if (promisedEl) {
+				promisedEl.textContent = promised ?? ''
+				promisedEl.classList.toggle('hidden', !promised)
+			}
+
+			// A recorded refund, cancelled or not.
+			const refunded = Number.isFinite(order.refundedCents) ? (order.refundedCents ?? 0) : 0
+			const refundEl = document.getElementById('order-refund-note')
+			if (refundEl) {
+				refundEl.textContent =
+					refunded > 0 ? fillTemplate(labels.refunded, { amount: formatCents(refunded) }) : ''
+				refundEl.classList.toggle('hidden', refunded <= 0)
+			}
+
+			// "Call the restaurant": the location's public phone.
+			const callEl = document.getElementById('order-call') as HTMLAnchorElement | null
+			const phone = locationFacts?.phone ?? null
+			if (callEl) {
+				const dial = phone ? phone.replace(/[^\d+]/g, '') : ''
+				if (dial) callEl.href = `tel:${dial}`
+				const numberEl = document.getElementById('order-call-number')
+				if (numberEl) numberEl.textContent = phone ?? ''
+				callEl.classList.toggle('hidden', !dial)
+			}
 		}
 
 		// ---------- checkout hold countdown ----------
@@ -934,15 +1053,46 @@ const valueClass = 'price font-medium text-foreground'
 			return true
 		}
 
+		/** Whether the payment banner state is "paid / nothing to pay". */
+		let confirmedView = false
+
+		/**
+		 * The headline follows the order's own status once payment is settled:
+		 * cancelled says so plainly; ready and completed say so too.
+		 */
+		function applyStatusHeading() {
+			const order = latestOrder
+			if (!order) return
+			if (order.status === 'cancelled') {
+				stopHoldCountdown()
+				hide('payment-pending')
+				hide('payment-failed')
+				hide('payment-expired')
+				setHeading(labels.statuses.cancelled, labels.cancelledTitle, '', 'danger')
+				return
+			}
+			if (!confirmedView) return
+			const desc =
+				order.status === 'ready'
+					? labels.readyDesc
+					: order.status === 'completed'
+						? labels.completedDesc
+						: labels.confirmedDesc
+			setHeading(labels.confirmedBadge, labels.confirmedTitle, desc)
+		}
+
 		function showConfirmed() {
+			confirmedView = true
 			stopHoldCountdown()
 			hide('payment-pending')
 			hide('payment-failed')
 			hide('payment-expired')
 			setHeading(labels.confirmedBadge, labels.confirmedTitle, labels.confirmedDesc)
+			applyStatusHeading()
 		}
 
 		function showPending(order: ReceiptOrder) {
+			confirmedView = false
 			hide('payment-failed')
 			hide('payment-expired')
 			setHeading(labels.statuses.pending, labels.pendingTitle, labels.pendingDesc, 'warning')
@@ -971,16 +1121,19 @@ const valueClass = 'price font-medium text-foreground'
 		}
 
 		function showFailed(canRetry: boolean) {
+			confirmedView = false
 			stopHoldCountdown()
 			hide('payment-pending')
 			hide('payment-expired')
 			setHeading(labels.failedTitle, labels.failedTitle, labels.failedDesc, 'danger')
 			const retryBtn = document.getElementById('retry-payment-btn')
-			retryBtn?.classList.toggle('hidden', !canRetry)
+			// Opened from the emailed link there is no payment token to retry with.
+			retryBtn?.classList.toggle('hidden', !canRetry || !hasPaymentToken)
 			show('payment-failed')
 		}
 
 		function showExpired(order: ReceiptOrder) {
+			confirmedView = false
 			stopHoldCountdown()
 			hide('payment-pending')
 			hide('payment-failed')
@@ -1042,16 +1195,134 @@ const valueClass = 'price font-medium text-foreground'
 			await tick()
 		}
 
-		async function loadReceipt(): Promise<ReceiptOrder | null> {
-			if (!orderId) return null
+		type ReadResult =
+			| { kind: 'order'; order: ReceiptOrder }
+			| { kind: 'gone' }
+			| { kind: 'error' }
+
+		/** Reads the order with the link token or this browser's receipt token. */
+		async function readOrder(): Promise<ReadResult> {
+			const credential = currentCredential()
+			if (!orderId || !credential) return { kind: 'error' }
 			try {
-				const value: any = await fetchOrderReceipt(orgId, orderId)
+				const value: any = await fetchOrderWithCredential(orderId, credential)
 				const order = (value?.order ?? null) as ReceiptOrder | null
-				if (order) renderReceipt(order)
-				return order
-			} catch {
-				return null
+				return order ? { kind: 'order', order } : { kind: 'error' }
+			} catch (error) {
+				// A refused link is always a 404: expired, forged, erased or not ours.
+				if (error instanceof OrderRequestError && error.status === 404) {
+					return { kind: 'gone' }
+				}
+				return { kind: 'error' }
 			}
+		}
+
+		let linkRefused = false
+
+		async function loadReceipt(): Promise<ReceiptOrder | null> {
+			const result = await readOrder()
+			if (result.kind === 'gone') linkRefused = true
+			if (result.kind !== 'order') return null
+			renderReceipt(result.order)
+			return result.order
+		}
+
+		function showLinkInvalid() {
+			hide('success-loading')
+			hide('order-view')
+			const list = document.getElementById('link-invalid-contacts')
+			const withPhone = (labels.locations as Array<{ name: string; phone?: string | null }>).filter(
+				(l) => l.phone && l.phone.replace(/[^\d+]/g, ''),
+			)
+			if (list) {
+				list.replaceChildren(
+					...withPhone.map((l) => {
+						const item = createEl('li')
+						const link = createEl(
+							'a',
+							'btn-secondary w-full justify-between gap-3',
+						) as HTMLAnchorElement
+						link.href = `tel:${(l.phone as string).replace(/[^\d+]/g, '')}`
+						if (withPhone.length > 1) link.appendChild(createEl('span', undefined, l.name))
+						else link.appendChild(createEl('span', undefined, labels.callRestaurant))
+						const number = createEl('span', 'bidi-isolate font-normal text-muted-foreground', l.phone as string)
+						number.setAttribute('dir', 'ltr')
+						link.appendChild(number)
+						item.appendChild(link)
+						return item
+					}),
+				)
+			}
+			show('success-link-invalid')
+		}
+
+		// ---------- live status ----------
+
+		/** Payment state last drawn, so a poll only redraws it when it changed. */
+		let paymentKey = ''
+
+		function syncPaymentView(order: ReceiptOrder) {
+			const key = `${order.status}|${order.paymentStatus}`
+			if (key === paymentKey) return
+			paymentKey = key
+			if (order.paymentStatus === 'pending') showPending(order)
+			else if (order.paymentStatus === 'failed') {
+				showFailed(!order.holdExpiresAt || Date.parse(order.holdExpiresAt) > Date.now())
+			} else if (order.paymentStatus === 'expired' || order.status === 'expired') {
+				showExpired(order)
+			} else showConfirmed()
+		}
+
+		function startLiveStatus(initial: ReceiptOrder) {
+			if (isTerminalStatus(initial.status)) return
+			const poller = createStatusPoller<ReceiptOrder>({
+				fetchOnce: async () => {
+					const result = await readOrder()
+					if (result.kind === 'gone') return { kind: 'gone' }
+					if (result.kind === 'error') throw new Error('status_unavailable')
+					return result
+				},
+				onOrder: (order) => {
+					renderReceipt(order)
+					syncPaymentView(order)
+					applyStatusHeading()
+				},
+				onGone: () => {
+					// An expired or invalid link says so; a receipt stays as last drawn.
+					if (currentCredential()?.kind === 'link') showLinkInvalid()
+				},
+				isHidden: () => document.visibilityState === 'hidden',
+				onVisibilityChange: (listener) => {
+					document.addEventListener('visibilitychange', listener)
+					return () => document.removeEventListener('visibilitychange', listener)
+				},
+			})
+			poller.start({ immediate: false })
+		}
+
+		function wireResend() {
+			const button = document.getElementById('resend-receipt') as HTMLButtonElement | null
+			const status = document.getElementById('resend-status')
+			button?.addEventListener('click', () => {
+				const credential = currentCredential()
+				if (!orderId || !credential) return
+				button.disabled = true
+				if (status) status.textContent = ''
+				void (async () => {
+					let message: string = labels.resendSent
+					try {
+						await resendOrderLink(orderId, credential)
+					} catch (error) {
+						message =
+							error instanceof OrderRequestError &&
+							(error.status === 429 || error.code === 'rate_limit_exceeded')
+								? labels.resendLimited
+								: labels.resendFailed
+					}
+					if (status) status.textContent = message
+					button.disabled = false
+				})()
+			})
 		}
 
 		async function init() {
@@ -1060,19 +1331,23 @@ const valueClass = 'price font-medium text-foreground'
 				show('success-missing')
 				return
 			}
-			// The receipt capability never leaves this device's sessionStorage.
-			if (!loadOrderCapability(orgId, orderId)) {
+			// Without the emailed link, the receipt capability lives only in this
+			// device's sessionStorage.
+			if (!currentCredential()) {
 				hide('success-loading')
-				show('success-device')
+				if (orderLink.status === 'invalid') showLinkInvalid()
+				else show('success-device')
 				return
 			}
 			const order = await loadReceipt()
 			hide('success-loading')
 			if (!order) {
-				show('success-error')
+				if (linkRefused && currentCredential()?.kind === 'link') showLinkInvalid()
+				else show('success-error')
 				return
 			}
 			show('order-view')
+			if (!hasPaymentToken) hide('hold-pay-btn')
 			// Once: checkout left a flag when an email opt-in awaits its link.
 			if (takeEmailConfirmationPending(orderId)) {
 				const note = document.getElementById('marketing-email-note')
@@ -1113,6 +1388,7 @@ const valueClass = 'price font-medium text-foreground'
 				void pollPaymentStatus(order)
 			})
 
+			paymentKey = `${order.status}|${order.paymentStatus}`
 			if (order.paymentStatus === 'pending') {
 				showPending(order)
 				void pollPaymentStatus(order)
@@ -1125,6 +1401,9 @@ const valueClass = 'price font-medium text-foreground'
 			} else {
 				showConfirmed()
 			}
+			applyStatusHeading()
+			wireResend()
+			startLiveStatus(order)
 		}
 
 		document.getElementById('success-retry')?.addEventListener('click', () => {

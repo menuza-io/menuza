@@ -664,6 +664,16 @@ git commit --no-verify -m "fix: resolve ESLint warnings (verified manually)"
 - `RESERVATIONS_SMS_ENABLED` - Tenant-api only, optional (unset or `true` is
   on). Kill switch for guest reservation SMS (US node only; the KSA node never
   sends it): `false` drops texts instead of holding them.
+- `ORDERS_EMAIL_ENABLED` / `ORDERS_SMS_ENABLED` - Tenant-api only, optional
+  (unset or `true` is on). Kill switches for guest order messages (receipt,
+  ready, cancelled and changed-time emails; the "order is ready" text, US node
+  only): `false` (also `0`, `off`, `no`, `disabled`) records the message as
+  `dropped` instead of holding it, so switching back on sends no backlog. The
+  order itself is never affected. See `docs/scheduled-jobs.md`.
+- `ORDER_MESSAGES_TICK_INTERVAL_SECONDS` - Tenant-api Node (OCI) runtime only,
+  optional. Seconds between in-process retries of guest order messages (default
+  120, minimum 60, `0` off). The hourly cron fan-out always runs; the Workers
+  runtime uses Durable Object alarms.
 - `QR_DINE_IN_ENABLED` - Tenant-api only, optional (unset or `true` is on). Kill
   switch for QR table ordering: `false` (also `0`, `off`, `no`, `disabled`)
   answers 503 on dine-in placement, the table and tab context, starting a tab
@@ -1118,6 +1128,38 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
 - Tests: `apps/tenant-api/src/routes/qr-ordering.test.ts` (guest flow, codes,
   flags, kill switch, tabs, payment bridge and the `/operator/qr` sweep). Demo
   data: `npm run seed:qr -w tenant-api -- acme`. Docs: `docs/qr-ordering.md`.
+
+**Guest order messages, order link and promised time:**
+
+- Transactional only, never marketing consent. Flag `ordering.guest_messages`
+  (default off) plus three operator switches (receipt, ready, cancelled; one
+  `ConfigFlag` row `ordering.guest_messages.settings`, edited at Settings,
+  Notifications with `update:settings:any`) reach the region as `guestMessages`
+  in the order context. The policy is stored on the order at placement
+  (`restaurant_orders.guest_messages`), so a later change affects new orders
+  only; the node kill switches stop sends at once.
+- Outbox: `order_messages` (tenant-db `0043_order_messages`), unique per
+  `(order_id, kind, channel)`, no contact data and no body (contact is read from
+  the order at send time; erasure leaves the rows). Rows are queued in the
+  order's own transaction (`services/order-messages.ts`) from `placeOrder` (pay
+  at handoff), `applyPaymentEvent` (paid), `updateOperatorOrder` and the kitchen
+  command, and sent after commit (`services/order-message-send.ts`); the
+  order-messages tick retries. Texts: only "ready" and a changed time, only with
+  `smsUpdates` on that order, only on the US node, with a cap of 200 per
+  organization per day (`sms_daily_cap`). No messages for table rounds or
+  Station sales. Do not use the Station ready-text path for this.
+- Order link: `lib/order-link.ts`, an HMAC with the purpose `order-link:v1`,
+  valid 90 days from placement, read-only, carried in the URL fragment
+  (`/menu/success?order=<id>#link=<token>`) and the `X-Order-Link` header of
+  `GET /orders/:id` and `POST /orders/:id/resend-link` (3 per order per hour).
+  Every refusal is the uniform 404.
+- Promised time: `promised_at` / `promised_until` / `promised_version` /
+  `promised_delay_minutes`, computed at placement by `@repo/common`
+  `promised-time.ts` (prep, busy minutes, large-order extra from `largeOrder` in
+  the order context). A push-back (5, 10 or 15 minutes, 90 in total,
+  `expectedPromisedVersion`, 409 `stale_version`) is
+  `PATCH /operator/orders/:id` or the kitchen command `delay`; both use
+  `applyPromisedDelay`. 10 minutes or more queues `eta_changed`.
 
 **Loyalty Rewards (points, rewards, member codes):**
 
