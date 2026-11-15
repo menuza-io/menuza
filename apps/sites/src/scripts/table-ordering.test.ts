@@ -136,6 +136,13 @@ const LABELS = Object.fromEntries(
 		'errorClosed',
 		'errorRateLimited',
 		'errorUnavailable',
+		'noTip',
+		'customTip',
+		'customTipInvalid',
+		'customTipTooLarge',
+		'serviceFee',
+		'errorServiceFeeChanged',
+		'errorTipTooLarge',
 		'payNow',
 		'paying',
 		'checkingPayment',
@@ -202,8 +209,17 @@ function mount() {
 				<input name="name" />
 				<input name="phone" />
 				<fieldset>
-					<input type="radio" name="tipPercent" value="0" checked />
+					<div id="tab-tip-choices"></div>
+					<div id="tab-tip-custom" class="hidden">
+						<input id="tab-tip-custom-input" />
+						<p id="tab-tip-custom-error" class="hidden"></p>
+					</div>
 				</fieldset>
+				<div id="tab-pay-fee" class="hidden">
+					<button id="tab-pay-fee-label" type="button" disabled></button>
+					<span id="tab-pay-fee-amount"></span>
+					<p id="tab-pay-fee-explanation" class="hidden"></p>
+				</div>
 				<div id="tab-rewards" class="hidden">
 					<div id="tab-rewards-options"></div>
 				</div>
@@ -232,6 +248,19 @@ function mount() {
 		rewardOptions: byId('tab-rewards-options'),
 		error: byId('tab-pay-error'),
 		coupon: form.elements.namedItem('coupon') as HTMLInputElement,
+		/** The tip radios, by their labels. */
+		tipRadios: () =>
+			[...form.querySelectorAll<HTMLInputElement>('input[name="tipChoice"]')].map(
+				(input) => ({
+					input,
+					label: input.closest('label')?.textContent ?? '',
+				}),
+			),
+		typeCustomTip(text: string) {
+			const input = byId('tab-tip-custom-input') as HTMLInputElement
+			input.value = text
+			input.dispatchEvent(new Event('input', { bubbles: true }))
+		},
 		/** Opens the tab drawer, then the pay sheet from its Pay button. */
 		async openSheet() {
 			byId('open-tab-btn').click()
@@ -267,6 +296,7 @@ beforeEach(() => {
 	mocks.mountTabRewards.mockImplementation(() => ({
 		open: () => {},
 		amountMinor: (total: number, tip: number) => total + tip,
+		discountMinor: () => 0,
 		placement: mocks.placement,
 		refused: () => null,
 	}))
@@ -593,5 +623,174 @@ describe('paying the tab from the phone', () => {
 		)
 		await vi.waitFor(() => expect(t.tip).toBeEnabled())
 		expect(t.rewardOptions.inert).toBe(false)
+	})
+})
+
+
+describe('tip choices and the service fee on the pay sheet', () => {
+	const choices = (patch = {}) => ({
+		enabled: true,
+		currency: 'USD',
+		settings: {
+			choices: [{ percent: 12 }, { amountMinor: 300 }],
+			defaultIndex: 1,
+			allowCustom: true,
+		},
+		...patch,
+	})
+	const fee = (patch = {}) => ({
+		settings: {
+			enabled: true,
+			percentBp: 300,
+			fixedMinor: 0,
+			capMinor: null,
+			smallOrderBelowMinor: null,
+			smallOrderFeeMinor: null,
+			fulfillments: ['dine_in'],
+			label: 'Service fee',
+			explanation: null,
+			taxable: false,
+			...patch,
+		},
+		taxRatePercent: 0,
+	})
+
+	async function open(extra: Partial<QrPublicTab>) {
+		mocks.tab.value = { ...openTab(), ...extra }
+		const t = mount()
+		await vi.waitFor(() =>
+			expect(document.documentElement.dataset.tableMode).toBe('true'),
+		)
+		await t.openSheet()
+		return t
+	}
+
+	it('builds the location’s own buttons with its default selected', async () => {
+		const t = await open({ tipChoices: choices() })
+		expect(t.tipRadios().map((radio) => radio.label)).toEqual([
+			'noTip',
+			'12%',
+			'$3.00',
+			'customTip',
+		])
+		expect(t.tipRadios().map((radio) => radio.input.checked)).toEqual([
+			false,
+			false,
+			true,
+			false,
+		])
+		// 21.65 plus the preselected 3.00 tip.
+		expect(t.submit).toHaveTextContent('Pay $24.65')
+	})
+
+	it('keeps the old 10, 15 and 20 percent buttons when the region sends none', async () => {
+		const t = await open({})
+		expect(t.tipRadios().map((radio) => radio.label)).toEqual([
+			'noTip',
+			'10%',
+			'15%',
+			'20%',
+		])
+		expect(t.submit).toHaveTextContent('Pay $21.65')
+	})
+
+	it('works out a share on the subtotal when picked', async () => {
+		const t = await open({ tipChoices: choices() })
+		t.tipRadios()[1]!.input.click()
+		// 12 % of 20.00 is 2.40.
+		expect(t.submit).toHaveTextContent('Pay $24.05')
+	})
+
+	it('charges a typed custom amount exactly and sends it as an amount', async () => {
+		const t = await open({ tipChoices: choices() })
+		t.tipRadios()[3]!.input.click()
+		expect(document.getElementById('tab-tip-custom')).not.toHaveClass('hidden')
+		t.typeCustomTip('4.50')
+		expect(t.submit).toHaveTextContent('Pay $26.15')
+		mocks.placement.mockResolvedValueOnce({ ok: true, loyalty: null })
+		mocks.startTabPayment.mockReturnValueOnce(new Promise(() => {}))
+		t.pay()
+		await vi.waitFor(() =>
+			expect(mocks.startTabPayment).toHaveBeenCalledTimes(1),
+		)
+		expect(mocks.startTabPayment.mock.calls[0]?.[2]).toMatchObject({
+			tipPercent: 0,
+			tip: { amountMinor: 450 },
+		})
+	})
+
+	it('does not send a custom tip that is not an amount, and says why', async () => {
+		const t = await open({ tipChoices: choices() })
+		t.tipRadios()[3]!.input.click()
+		t.typeCustomTip('abc')
+		const error = document.getElementById('tab-tip-custom-error')!
+		expect(error).not.toHaveClass('hidden')
+		expect(error).toHaveTextContent('customTipInvalid')
+		t.pay()
+		await Promise.resolve()
+		expect(mocks.startTabPayment).not.toHaveBeenCalled()
+		t.typeCustomTip('9999')
+		expect(error).toHaveTextContent('customTipTooLarge')
+	})
+
+	it('hides the tip section when table tips are switched off', async () => {
+		const t = await open({ tipChoices: choices({ enabled: false }) })
+		expect(t.tip).toHaveClass('hidden')
+		expect(t.submit).toHaveTextContent('Pay $21.65')
+	})
+
+	it('shows the service fee as its own line and adds it to the button', async () => {
+		const t = await open({ serviceFee: fee({ label: 'Online fee' }) })
+		const row = document.getElementById('tab-pay-fee')!
+		expect(row).not.toHaveClass('hidden')
+		expect(document.getElementById('tab-pay-fee-label')).toHaveTextContent(
+			'Online fee',
+		)
+		expect(document.getElementById('tab-pay-fee-amount')).toHaveTextContent(
+			'$0.60',
+		)
+		// 21.65 plus 3 % of the 20.00 subtotal.
+		expect(t.submit).toHaveTextContent('Pay $22.25')
+		mocks.placement.mockResolvedValueOnce({ ok: true, loyalty: null })
+		mocks.startTabPayment.mockReturnValueOnce(new Promise(() => {}))
+		t.pay()
+		await vi.waitFor(() =>
+			expect(mocks.startTabPayment).toHaveBeenCalledTimes(1),
+		)
+		expect(mocks.startTabPayment.mock.calls[0]?.[2]).toMatchObject({
+			expectedServiceFeeMinor: 60,
+		})
+	})
+
+	it('shows the fee’s explanation on tap and uses the default name in the guest’s language', async () => {
+		const t = await open({
+			serviceFee: fee({ explanation: 'Covers card and ordering costs.' }),
+		})
+		const label = document.getElementById('tab-pay-fee-label') as HTMLButtonElement
+		expect(label).toHaveTextContent('serviceFee')
+		expect(label).toBeEnabled()
+		const explanation = document.getElementById('tab-pay-fee-explanation')!
+		expect(explanation).toHaveClass('hidden')
+		label.click()
+		expect(explanation).not.toHaveClass('hidden')
+		expect(explanation).toHaveTextContent('Covers card and ordering costs.')
+		expect(label).toHaveAttribute('aria-expanded', 'true')
+		expect(t.submit).toHaveTextContent('Pay $22.25')
+	})
+
+	it('shows no fee line when the location has none or the order type is not covered', async () => {
+		await open({ serviceFee: null })
+		expect(document.getElementById('tab-pay-fee')).toHaveClass('hidden')
+	})
+
+	it('adds the tax on a taxable fee when prices exclude tax', async () => {
+		const t = await open({
+			serviceFee: { ...fee({ taxable: true }), taxRatePercent: 10 },
+		})
+		// Fee 0.60, its tax 0.06: 21.65 + 0.66.
+		expect(t.submit).toHaveTextContent('Pay $22.31')
+		expect(document.getElementById('tab-pay-fee-amount')).toHaveTextContent(
+			'$0.60',
+		)
 	})
 })

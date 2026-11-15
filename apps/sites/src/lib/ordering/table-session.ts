@@ -520,11 +520,22 @@ function discountMinorOf(body: unknown): number | null {
 		: null
 }
 
+/** The service fee the region priced, from a `service_fee_changed` answer. */
+function serviceFeeMinorOf(body: unknown): number | null {
+	if (!isRecord(body) || !isRecord(body.details)) return null
+	const value = body.details.serviceFeeMinor
+	return typeof value === 'number' && Number.isInteger(value) && value >= 0
+		? value
+		: null
+}
+
 export type TabPaymentStart = {
 	url: string
 	/** What the region fixed for the hosted page. */
 	amountCents: number
 	tipCents: number
+	/** The service fee the region added, before its tax (0 when none). */
+	serviceFeeCents: number
 	loyaltyDiscountCents: number
 	currency: string
 }
@@ -533,18 +544,22 @@ export async function startTabPayment(
 	orgId: string,
 	session: TableSession,
 	input: {
+		/** The tip: a share (`tipPercent`) or an exact amount (`tip`). */
 		tipPercent: number
+		tip?: { amountMinor: number }
 		contact: { name: string; phone: string }
 		locale: string
 		loyalty?: QrTabPayRequest['loyalty'] | null
 		coupon?: string | null
 		/** The discount total the tab showed (`totals.discountCents`). */
 		expectedDiscountMinor?: number
+		/** The service fee the page showed (#123); a missing value is 0. */
+		expectedServiceFeeMinor?: number
 	},
 ): Promise<TabPaymentStart> {
 	if (!session.tabToken) throw new TableRequestError('tab_not_found', 404)
 	const tabToken = session.tabToken
-	const send = (expectedDiscountMinor: number) =>
+	const send = (expectedDiscountMinor: number, expectedServiceFeeMinor: number) =>
 		sendAsCustomer(
 			'/orders/tab/pay',
 			{
@@ -555,7 +570,9 @@ export async function startTabPayment(
 				},
 				body: JSON.stringify({
 					...getOrgBinding(),
-					tipPercent: input.tipPercent,
+					tipPercent: input.tip ? 0 : input.tipPercent,
+					...(input.tip ? { tip: input.tip } : {}),
+					...(expectedServiceFeeMinor > 0 ? { expectedServiceFeeMinor } : {}),
 					contact: input.contact,
 					...(input.loyalty ? { loyalty: input.loyalty } : {}),
 					// Always asks for discounts, so the automatic ones apply; the
@@ -569,19 +586,26 @@ export async function startTabPayment(
 			{ memberOnly: Boolean(input.loyalty) },
 		)
 	let value: unknown
-	try {
-		value = await readJson(await send(input.expectedDiscountMinor ?? 0))
-	} catch (error) {
-		// The region priced a different discount than the tab showed (a coupon
-		// it could not know, or a limit that was reached). It says what it
-		// priced; ask once more with that. The guest still confirms the
-		// final amount before the hosted page opens.
-		const priced =
-			error instanceof TableRequestError && error.code === 'discount_changed'
-				? discountMinorOf(error.body)
-				: null
-		if (priced === null) throw error
-		value = await readJson(await send(priced))
+	let expectedDiscount = input.expectedDiscountMinor ?? 0
+	let expectedFee = input.expectedServiceFeeMinor ?? 0
+	// The region priced a different discount (a coupon it could not know, or a
+	// limit that was reached) or service fee than the tab showed. It says what
+	// it priced; ask again with that, at most twice. The guest still confirms
+	// the final amount before the hosted page opens.
+	for (let attempt = 0; ; attempt += 1) {
+		try {
+			value = await readJson(await send(expectedDiscount, expectedFee))
+			break
+		} catch (error) {
+			if (attempt >= 2 || !(error instanceof TableRequestError)) throw error
+			const discount =
+				error.code === 'discount_changed' ? discountMinorOf(error.body) : null
+			const fee =
+				error.code === 'service_fee_changed' ? serviceFeeMinorOf(error.body) : null
+			if (discount === null && fee === null) throw error
+			if (discount !== null) expectedDiscount = discount
+			if (fee !== null) expectedFee = fee
+		}
 	}
 	const amount = (key: string) =>
 		isRecord(value) &&
@@ -591,6 +615,8 @@ export async function startTabPayment(
 			: null
 	const amountCents = amount('amountCents')
 	const tipCents = amount('tipCents')
+	// An older region sends no fee: none was charged.
+	const serviceFeeCents = amount('serviceFeeCents') ?? 0
 	const loyaltyDiscountCents = amount('loyaltyDiscountCents')
 	if (
 		!isRecord(value) ||
@@ -635,6 +661,7 @@ export async function startTabPayment(
 		url: result.checkoutUrl,
 		amountCents,
 		tipCents,
+		serviceFeeCents,
 		loyaltyDiscountCents,
 		currency: value.currency,
 	}

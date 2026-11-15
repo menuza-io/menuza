@@ -78,6 +78,7 @@ import {
 	getTableContext,
 	prepareTabPayment,
 	tabServiceFeeView,
+	tabTipChoicesView,
 	withTabDiscounts,
 } from '../services/qr-tab-service.ts'
 import { authenticateCustomer } from './auth.ts'
@@ -724,8 +725,17 @@ publicOrderRoutes.get('/tab', async (c) => {
 		const serviceFee = feeContext.ok
 			? tabServiceFeeView(feeContext.data, result.data.table.locationId)
 			: null
+		const tipChoices = feeContext.ok
+			? tabTipChoicesView(feeContext.data, result.data.table.locationId)
+			: undefined
 		return c.json(
-			{ tab: { ...(shown ?? result.data), serviceFee } },
+			{
+				tab: {
+					...(shown ?? result.data),
+					serviceFee,
+					...(tipChoices ? { tipChoices } : {}),
+				},
+			},
 			200,
 			noStoreHeaders(),
 		)

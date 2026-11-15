@@ -177,6 +177,8 @@ export type SummaryTotals = {
 	deliveryFeeMinor: number
 	deliveryDiscountMinor: number
 	tipMinor: number
+	/** The guest service fee before its tax (the tax is in `taxMinor`). */
+	serviceFeeMinor: number
 	totalMinor: number
 	/** Priced by the region for the order on screen. */
 	source: 'quote' | 'estimate'
@@ -192,6 +194,7 @@ export function totalsFromQuote(quote: DiscountQuote): SummaryTotals {
 		deliveryFeeMinor: quote.deliveryFeeMinor,
 		deliveryDiscountMinor: quote.deliveryDiscountMinor,
 		tipMinor: quote.tipMinor,
+		serviceFeeMinor: quote.serviceFeeMinor ?? 0,
 		totalMinor: quote.totalMinor,
 		source: 'quote',
 	}

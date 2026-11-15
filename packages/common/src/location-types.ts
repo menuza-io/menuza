@@ -348,11 +348,23 @@ export function defaultTipOrderTypeSettings(
 	}
 }
 
+/**
+ * A table tab keeps the buttons it always had (10, 15 and 20 percent, none
+ * selected) until an operator saves others.
+ */
+export function defaultQrTabTipSettings(): TipOrderTypeSettings {
+	return {
+		choices: [{ percent: 10 }, { percent: 15 }, { percent: 20 }],
+		defaultIndex: null,
+		allowCustom: false,
+	}
+}
+
 export function defaultTipSettings(currency: string): TipSettings {
 	return {
 		pickup: defaultTipOrderTypeSettings(currency),
 		delivery: defaultTipOrderTypeSettings(currency),
-		qrTab: defaultTipOrderTypeSettings(currency),
+		qrTab: defaultQrTabTipSettings(),
 	}
 }
 
@@ -377,7 +389,10 @@ export function resolveTipSettings(
 		value && typeof value === 'object' ? (value as Record<string, unknown>) : {}
 	const pick = (key: TipOrderType) => {
 		const parsed = TipOrderTypeSettingsSchema.safeParse(record[key])
-		return parsed.success ? parsed.data : defaultTipOrderTypeSettings(currency)
+		if (parsed.success) return parsed.data
+		return key === 'qrTab'
+			? defaultQrTabTipSettings()
+			: defaultTipOrderTypeSettings(currency)
 	}
 	return { pickup: pick('pickup'), delivery: pick('delivery'), qrTab: pick('qrTab') }
 }

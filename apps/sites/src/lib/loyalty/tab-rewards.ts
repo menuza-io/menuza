@@ -34,6 +34,11 @@ export type TabRewardsDeps = {
 	tipPercent: () => number
 	/** The tip chosen now, in minor units, as the pay button adds it. */
 	tipMinor: () => number
+	/**
+	 * The service fee the pay button adds when no reward is picked (a picked
+	 * reward's quote carries the fee priced on what the reward left).
+	 */
+	feeMinor?: () => number
 	/** The quote or the pick changed: repaint the pay button. */
 	onChange: () => void
 	labels?: LoyaltyLabels
@@ -130,11 +135,12 @@ export function mountTabRewards(deps: TabRewardsDeps) {
 		 * pick, the region's total with one, and null while a pick is priced.
 		 */
 		amountMinor(totalMinor: number, tipMinor: number): number | null {
-			if (!quotes) return totalMinor + tipMinor
+			const feeMinor = deps.feeMinor?.() ?? 0
+			if (!quotes) return totalMinor + tipMinor + feeMinor
 			const pick = quotes.placementPick()
 			if (!pick.ok) return null
 			const fresh = quotes.freshQuote()
-			if (!pick.selection || !fresh) return totalMinor + tipMinor
+			if (!pick.selection || !fresh) return totalMinor + tipMinor + feeMinor
 			return fresh.totals.totalMinor - fresh.totals.tipMinor + tipMinor
 		},
 
@@ -150,6 +156,18 @@ export function mountTabRewards(deps: TabRewardsDeps) {
 				return { ok: false, message: labels.pickerCoversTotal }
 			}
 			return { ok: true, loyalty: pick.selection }
+		},
+
+		/**
+		 * What the picked reward takes off, in minor units, as the region priced
+		 * it; 0 without a pick or while it is priced. The service fee is worked
+		 * out on what is left.
+		 */
+		discountMinor(): number {
+			if (!quotes) return 0
+			const pick = quotes.placementPick()
+			const fresh = quotes.freshQuote()
+			return pick.ok && pick.selection && fresh ? fresh.totals.discountMinor : 0
 		},
 
 		/** A refused payment: the message when it was about the reward, else null. */

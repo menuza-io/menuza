@@ -14,6 +14,7 @@ import {
 	type QrTabStatus,
 	type QrTabTotals,
 } from '@repo/common/qr-ordering'
+import { resolveTipSettings } from '@repo/common/location-types'
 import {
 	computeServiceFee,
 	computeTip,
@@ -1578,6 +1579,23 @@ export function tabServiceFeeView(
 	return { settings: policy.settings, taxRatePercent: location?.taxRate ?? 0 }
 }
 
+/**
+ * The tip buttons a tab page shows (#118): the location's table-tab choices
+ * and its "dine-in tips" switch. Undefined when the location is unknown.
+ */
+export function tabTipChoicesView(
+	context: RestaurantOrderContext,
+	locationId: string,
+): QrPublicTab['tipChoices'] {
+	const location = context.menu.locations.find((entry) => entry.id === locationId)
+	if (!location) return undefined
+	return {
+		enabled: location.inHouseTips.dineInTips !== false,
+		currency: location.currency,
+		settings: resolveTipSettings(location.tipSettings, location.currency).qrTab,
+	}
+}
+
 export type TabPayIntent = {
 	orderRef: string
 	tabPaymentToken: string
@@ -1721,6 +1739,17 @@ export async function prepareTabPayment(
 					422,
 					'tip_too_large',
 					'That tip is more than we can accept. Please enter a smaller amount.',
+				)
+			}
+			// Tips switched off for table tabs refuse any tip (the page hides them).
+			const tipLocation = input.context.menu.locations.find(
+				(entry) => entry.id === tab.locationId,
+			)
+			if (tip.tipCents > 0 && tipLocation?.inHouseTips.dineInTips === false) {
+				return fail(
+					422,
+					'tips_disabled',
+					'Tips are not accepted for this order.',
 				)
 			}
 			const tabPaymentToken = deriveTabPaymentToken(orgId, tab.id)

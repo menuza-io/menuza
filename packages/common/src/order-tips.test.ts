@@ -183,6 +183,13 @@ describe('tip settings', () => {
 		expect(resolved.pickup.choices).toEqual([{ percent: 5 }])
 		expect(resolved.delivery).toEqual(defaultTipSettings('USD').delivery)
 		expect(resolved.qrTab).toEqual(defaultTipSettings('USD').qrTab)
+		// A table tab keeps its old buttons: 10, 15 and 20, none selected.
+		expect(resolved.qrTab.choices).toEqual([
+			{ percent: 10 },
+			{ percent: 15 },
+			{ percent: 20 },
+		])
+		expect(resolved.qrTab.defaultIndex).toBeNull()
 		expect(resolveTipSettings('{not json', 'SAR').pickup.defaultIndex).toBeNull()
 		expect(resolveTipSettings(null, 'USD')).toEqual(defaultTipSettings('USD'))
 	})

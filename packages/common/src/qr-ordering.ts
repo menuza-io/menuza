@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { orderDiscountsRequestSchema } from '@repo/discounts'
 import { orderLoyaltySelectionSchema } from './order-loyalty.ts'
 import { orderTipSchema } from './order-tips.ts'
+import { type TipOrderTypeSettings } from './location-types.ts'
 import { type ServiceFeeSettings } from './service-fee.ts'
 
 /**
@@ -353,6 +354,12 @@ export type QrPublicTab = {
 	 * absent when there is none. Sent by `GET /orders/tab` only.
 	 */
 	serviceFee?: { settings: ServiceFeeSettings; taxRatePercent: number } | null
+	/**
+	 * The tip buttons of a table tab (#118): `enabled` is the location's
+	 * "dine-in tips" switch (off hides the section and refuses a tip). Absent
+	 * on older nodes: the page shows the old 10, 15 and 20 percent buttons.
+	 */
+	tipChoices?: { enabled: boolean; currency: string; settings: TipOrderTypeSettings }
 }
 
 // ---------------------------------------------------------------------------

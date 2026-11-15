@@ -23,6 +23,37 @@ describe('checkoutOrderPayload', () => {
 		})
 	})
 
+	it('sends the service fee the page showed, only when there is one', () => {
+		const priced = { fulfillment: 'pickup', tipPercent: 0 }
+		expect(
+			checkoutOrderPayload(priced, {
+				contact,
+				reward: null,
+				expectedServiceFeeMinor: 150,
+			}).expectedServiceFeeMinor,
+		).toBe(150)
+		for (const none of [0, undefined]) {
+			expect(
+				checkoutOrderPayload(priced, {
+					contact,
+					reward: null,
+					expectedServiceFeeMinor: none,
+				}),
+			).not.toHaveProperty('expectedServiceFeeMinor')
+		}
+	})
+
+	it('carries an exact tip amount untouched, next to a zero percent', () => {
+		const priced = {
+			fulfillment: 'pickup',
+			tipPercent: 0,
+			tip: { amountMinor: 437 },
+		}
+		expect(checkoutOrderPayload(priced, { contact, reward: null })).toMatchObject(
+			{ tipPercent: 0, tip: { amountMinor: 437 } },
+		)
+	})
+
 	it('adds delivery notes to the priced address without touching the quote', () => {
 		const priced = {
 			fulfillment: 'delivery',
