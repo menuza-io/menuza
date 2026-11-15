@@ -77,8 +77,7 @@ import {
 	getPublicTab,
 	getTableContext,
 	prepareTabPayment,
-	tabServiceFeeView,
-	tabTipChoicesView,
+	tabCheckoutView,
 	withTabDiscounts,
 } from '../services/qr-tab-service.ts'
 import { authenticateCustomer } from './auth.ts'
@@ -717,17 +716,10 @@ publicOrderRoutes.get('/tab', async (c) => {
 		// The service fee the page shows before the guest pays (#123): the
 		// location's settings while the fee is on for tables. Not readable here
 		// reads as none; the pay request itself refuses a fee it cannot read.
-		const feeContext = await fetchOrderContext(
+		const { serviceFee, tipChoices } = await tabCheckoutView(
 			organization.organization.id,
 			result.data.table.locationId,
-			null,
 		)
-		const serviceFee = feeContext.ok
-			? tabServiceFeeView(feeContext.data, result.data.table.locationId)
-			: null
-		const tipChoices = feeContext.ok
-			? tabTipChoicesView(feeContext.data, result.data.table.locationId)
-			: undefined
 		return c.json(
 			{
 				tab: {

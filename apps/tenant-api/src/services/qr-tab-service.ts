@@ -942,9 +942,13 @@ const viewContexts = new Map<
 	{ at: number; context: RestaurantOrderContext }
 >()
 
+/** One fetch at a time per location: concurrent polls share it. */
+const viewContextFetches = new Map<string, Promise<RestaurantOrderContext | null>>()
+
 /** Test hook: forget every cached order context. */
 export function resetTabViewContextCache() {
 	viewContexts.clear()
+	viewContextFetches.clear()
 }
 
 async function tabContext(
@@ -957,11 +961,24 @@ async function tabContext(
 		const hit = viewContexts.get(key)
 		if (hit && Date.now() - hit.at < VIEW_CONTEXT_TTL_MS) return hit.context
 	}
-	const result = await fetchOrderContext(orgId, locationId, null)
-	if (!result.ok) return null
-	if (viewContexts.size > 500) viewContexts.clear()
-	viewContexts.set(key, { at: Date.now(), context: result.data })
-	return result.data
+	// A page that polls its tab every few seconds must not turn into one
+	// call to the App per poll: share the fetch already on its way.
+	const pending = !options.fresh ? viewContextFetches.get(key) : undefined
+	if (pending) return pending
+	const fetching = (async () => {
+		const result = await fetchOrderContext(orgId, locationId, null)
+		if (!result.ok) return null
+		if (viewContexts.size > 500) viewContexts.clear()
+		viewContexts.set(key, { at: Date.now(), context: result.data })
+		return result.data
+	})()
+	if (!options.fresh) {
+		viewContextFetches.set(key, fetching)
+		void fetching.finally(() => {
+			if (viewContextFetches.get(key) === fetching) viewContextFetches.delete(key)
+		})
+	}
+	return fetching
 }
 
 async function tabLocationId(orgId: string, tabId: string) {
@@ -1588,11 +1605,33 @@ export function tabTipChoicesView(
 	locationId: string,
 ): QrPublicTab['tipChoices'] {
 	const location = context.menu.locations.find((entry) => entry.id === locationId)
-	if (!location) return undefined
+	if (!location) {
+		// Ids only. The page then shows the old buttons and no fee while the pay
+		// path prices what it finds, so say so where an operator can look.
+		console.warn(`Tab view: location ${locationId} is not in the order context`)
+		return undefined
+	}
 	return {
 		enabled: location.inHouseTips.dineInTips !== false,
 		currency: location.currency,
 		settings: resolveTipSettings(location.tipSettings, location.currency).qrTab,
+	}
+}
+
+/**
+ * What a tab page needs from the order context: the fee and the tip buttons.
+ * Read through the short-lived cache the discount view uses, so the 20-second
+ * poll of every open tab is not a call to the App each time. Nothing readable
+ * means no fee and the old buttons; the pay request prices the fee itself.
+ */
+export async function tabCheckoutView(orgId: string, locationId: string) {
+	const context = await tabContext(orgId, locationId, { fresh: false })
+	if (!context) {
+		return { serviceFee: null, tipChoices: undefined }
+	}
+	return {
+		serviceFee: tabServiceFeeView(context, locationId),
+		tipChoices: tabTipChoicesView(context, locationId),
 	}
 }
 
@@ -1785,6 +1824,24 @@ export async function prepareTabPayment(
 						liveReward.rewardId === selection.rewardId &&
 						liveReward.rewardVersion === selection.rewardVersion
 					: liveReward === null
+				// The fee the page showed against the fee this session was bound
+				// with: settings changed while a session is live must not charge
+				// an amount the guest never saw.
+				if (
+					(input.expectedServiceFeeMinor ?? 0) !==
+					(tab.paymentServiceFeeCents ?? 0)
+				) {
+					return {
+						ok: false as const,
+						failure: {
+							status: 409,
+							code: 'service_fee_changed',
+							message:
+								'The service fee changed. Review the new total and pay again.',
+							details: { serviceFeeMinor: tab.paymentServiceFeeCents ?? 0 },
+						},
+					}
+				}
 				if (
 					askedTip !== (tab.paymentTipCents ?? 0) ||
 					!sameReward ||

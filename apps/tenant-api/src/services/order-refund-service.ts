@@ -222,7 +222,7 @@ export async function recordOrderRefund(
 								status: 422,
 								code: 'refund_exceeds_payment',
 								message: 'That is more than is left to refund.',
-								details: { refundableCents },
+								details: { refundableCents, serviceFeeCents },
 							},
 						}
 					}

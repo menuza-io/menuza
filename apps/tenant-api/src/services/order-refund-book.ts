@@ -378,11 +378,14 @@ export async function bookOrderProviderRefundInTx(
 		feeRefundedCents: await serviceFeeRefundedCentsInTx(tx, order.id),
 	})
 	if (amountCents > refundableCents) {
+		// `serviceFeeCents` says how much of the amount asked for was the fee the
+		// tick added, so the dialog can explain a refusal the typed amount alone
+		// would not have caused.
 		return bookFailure(
 			422,
 			'refund_exceeds_payment',
 			'That is more than is left to refund.',
-			{ refundableCents },
+			{ refundableCents, serviceFeeCents },
 		)
 	}
 

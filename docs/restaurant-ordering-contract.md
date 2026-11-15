@@ -98,6 +98,16 @@ does not parse, or a `version` newer than the node knows) is 503
 without its fee. Nodes that predate the fee refuse `tip` and
 `expectedServiceFeeMinor` (strict body), so deploy tenant-api before Sites.
 
+Rollout: a client that does not send `expectedServiceFeeMinor` (a cached Sites
+page, an older build) is refused with 409 where a fee is due, and cannot act on
+`details.serviceFeeMinor`. Deploy App, then tenant-api, then Sites, and turn
+`ordering.service_fee` on for an organization only after Sites has shipped.
+Customer and Station apps do not place these orders (the customer app opens the
+website's checkout), so nothing else has to ship first. A table tab polls
+`GET /orders/tab` every 20 seconds; the fee and tip view it adds is read through
+the same 10-second shared cache as the tab's discounts, one fetch at a time per
+location.
+
 Placed orders keep what they were charged: `restaurant_orders.service_fee_cents`
 (before tax), `service_fee_tax_cents`, `service_fee_label`; changing or turning
 off the fee never rewrites them. A table round carries no fee: a tab pays it

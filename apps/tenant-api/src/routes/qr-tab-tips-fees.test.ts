@@ -19,6 +19,8 @@ import {
 	findActiveOrganizationById,
 	resolveOrganizationForBrowserAuth,
 } from '../lib/origin.ts'
+import { makeDiscount } from '../../../../packages/discounts/src/test-fixtures.ts'
+import { resetTabViewContextCache } from '../services/qr-tab-service.ts'
 import { operatorQrRoutes } from './operator-qr.ts'
 import { orderSystemRoutes } from './order-system.ts'
 import { publicOrderRoutes } from './orders.ts'
@@ -296,7 +298,9 @@ describe('table tab payment: tip choices and the service fee', () => {
 		vi.stubEnv('AUTH_HMAC_SECRET', 'test-hmac-secret-123456789')
 		vi.stubEnv('APP_URL', 'https://app.test')
 		vi.stubEnv('QR_DINE_IN_ENABLED', '')
+		vi.stubEnv('DISCOUNTS_ENABLED', 'true')
 		active = context()
+		resetTabViewContextCache()
 		vi.stubGlobal(
 			'fetch',
 			vi.fn(async (input: RequestInfo | URL) => {
@@ -495,6 +499,60 @@ describe('table tab payment: tip choices and the service fee', () => {
 			expect((await refused.json()).error).toBe('service_fee_unavailable')
 		})
 
+		it('refuses a live session when the fee changed since it was bound', async () => {
+			active = withFee()
+			const tab = await servedTab()
+			const first = await intent(tab.tabToken, { expectedServiceFeeMinor: 24 })
+			// The hosted page is open: a payment session is bound to the tab.
+			const bound = await system('/payment-session', {
+				orgId,
+				orderId: first.orderRef,
+				sessionId: 'cs_test_live',
+				processor: 'connect',
+			})
+			expect(bound.status).toBe(200)
+			// The operator raises the fee while the guest's session is live.
+			active = withFee(feeSettings({ percentBp: 500 }))
+			resetTabViewContextCache()
+			const again = await pay(tab.tabToken, { expectedServiceFeeMinor: 24 })
+			// The same page, the same fee it was shown: the session still stands.
+			expect(again.status).toBe(200)
+			expect((await again.json()).amountCents).toBe(first.amountCents)
+			// A page that was shown a different fee than the bound one is told.
+			const stale = await pay(tab.tabToken, { expectedServiceFeeMinor: 40 })
+			expect(stale.status).toBe(409)
+			const body = await stale.json()
+			expect(body.error).toBe('service_fee_changed')
+			expect(body.details.serviceFeeMinor).toBe(24)
+		})
+
+		it('works the fee out on what a tab discount left, like an order does', async () => {
+			active = {
+				...withFee(),
+				discounts: {
+					features: { automatic: true, coupons: true },
+					discounts: [
+						makeDiscount({ id: 'disc_half', name: 'Half off', percentBp: 5000 }),
+					],
+					codes: [],
+				},
+			}
+			const tab = await servedTab()
+			// 8.00 less 4.00 leaves 4.00: 3 % is 0.12. Tax on 4.00 is 0.40.
+			const result = await intent(tab.tabToken, {
+				discounts: { expectedDiscountMinor: 400 },
+				expectedServiceFeeMinor: 12,
+			})
+			expect(result.serviceFeeCents).toBe(12)
+			expect(result.amountCents).toBe(400 + 40 + 12)
+			const wrong = await pay(tab.tabToken, {
+				discounts: { expectedDiscountMinor: 400 },
+				expectedServiceFeeMinor: 24,
+			})
+			expect(wrong.status).toBe(409)
+			expect((await wrong.json()).details.serviceFeeMinor).toBe(12)
+		})
+
 		it('re-serves the same bound payment, fee included', async () => {
 			active = withFee()
 			const tab = await servedTab()
@@ -552,6 +610,29 @@ describe('table tab payment: tip choices and the service fee', () => {
 				{ percent: 20 },
 			])
 			expect(view.tipChoices.settings.defaultIndex).toBeNull()
+		})
+
+		it('does not call the App on every poll of the same tab', async () => {
+			active = withFee()
+			const tab = await servedTab()
+			resetTabViewContextCache()
+			const fetchMock = vi.mocked(globalThis.fetch)
+			const before = fetchMock.mock.calls.length
+			const polls = await Promise.all(
+				Array.from({ length: 5 }, () =>
+					request('/orders/tab?slug=test-org', {
+						headers: { 'X-Tab-Token': tab.tabToken },
+					}),
+				),
+			)
+			for (const poll of polls) expect(poll.status).toBe(200)
+			await request('/orders/tab?slug=test-org', {
+				headers: { 'X-Tab-Token': tab.tabToken },
+			})
+			const contextCalls = fetchMock.mock.calls
+				.slice(before)
+				.filter(([input]) => String(input).includes('/resources/order-context'))
+			expect(contextCalls).toHaveLength(1)
 		})
 
 		it('says when table tips are switched off', async () => {

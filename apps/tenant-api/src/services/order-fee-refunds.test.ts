@@ -181,9 +181,13 @@ describe('service fee refunds', () => {
 			idempotencyKey: 'k1',
 			loyaltyAccess: ACCESS,
 		})
+		// The refusal says how much of the 22.60 asked for was the fee the tick added.
 		expect(result).toMatchObject({
 			ok: false,
-			failure: { code: 'refund_exceeds_payment' },
+			failure: {
+				code: 'refund_exceeds_payment',
+				details: { refundableCents: 2225, serviceFeeCents: 60 },
+			},
 		})
 		expect(await refundRows(order.id)).toHaveLength(0)
 	})
