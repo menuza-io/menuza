@@ -84,6 +84,7 @@ export function RecordOrderRefundDialog({
 	const leftCents = refundableCents(order)
 	const refunded = order.refundedCents
 	const feeLeftCents = Math.min(serviceFeeRefundableCents(order), leftCents)
+	const feeLeftText = money(feeLeftCents)
 
 	const schema = useMemo(
 		() =>
@@ -312,7 +313,7 @@ export function RecordOrderRefundDialog({
 							/>
 							<span>
 								<Trans>
-									Also refund the service fee (<bdi>{money(feeLeftCents)}</bdi>)
+									Also refund the service fee (<bdi>{feeLeftText}</bdi>)
 								</Trans>
 							</span>
 						</label>

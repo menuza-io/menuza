@@ -2,13 +2,13 @@
 import { defaultTipSettings } from '@repo/common/location-types'
 import { fireEvent, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
-import { renderStaff } from '#tests/staff-render.tsx'
 import {
 	emptyFeeForm,
 	tipFormFromSettings,
 	type FeeFormValues,
 	type TipFormValues,
 } from '#app/utils/orders/checkout-settings.ts'
+import { renderStaff } from '#tests/staff-render.tsx'
 import { ServiceFeeCard, TipChoicesCard } from './checkout-settings-cards.tsx'
 
 function tips() {

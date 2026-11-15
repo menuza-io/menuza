@@ -4342,11 +4342,11 @@ msgid "Add a short note explaining the decision."
 msgstr "Add a short note explaining the decision."
 
 #: app/components/loyalty/record-refund-dialog.tsx:94
-#: app/components/orders/record-order-refund-dialog.tsx:97
+#: app/components/orders/record-order-refund-dialog.tsx:98
 msgid "Add a short note, such as how the money went back."
 msgstr "Add a short note, such as how the money went back."
 
-#: app/components/orders/provider-refund-dialog.tsx:129
+#: app/components/orders/provider-refund-dialog.tsx:130
 msgid "Add a short note, such as why the money goes back."
 msgstr "Add a short note, such as why the money goes back."
 
@@ -5932,8 +5932,8 @@ msgid "already received <0>{earlierText}</0>"
 msgstr "already received <0>{earlierText}</0>"
 
 #: app/components/loyalty/record-refund-dialog.tsx:244
-#: app/components/orders/provider-refund-dialog.tsx:335
-#: app/components/orders/record-order-refund-dialog.tsx:263
+#: app/components/orders/provider-refund-dialog.tsx:336
+#: app/components/orders/record-order-refund-dialog.tsx:264
 msgid "Already refunded"
 msgstr "Already refunded"
 
@@ -5945,11 +5945,15 @@ msgstr "Already working then"
 msgid "Also counted:"
 msgstr "Also counted:"
 
-#. placeholder {0}: money(feeLeftCents)
 #: app/components/orders/provider-refund-dialog.tsx:390
 #: app/components/orders/record-order-refund-dialog.tsx:314
-msgid "Also refund the service fee (<0>{0}</0>)"
-msgstr "Also refund the service fee (<0>{0}</0>)"
+#~ msgid "Also refund the service fee (<0>{0}</0>)"
+#~ msgstr "Also refund the service fee (<0>{0}</0>)"
+
+#: app/components/orders/provider-refund-dialog.tsx:391
+#: app/components/orders/record-order-refund-dialog.tsx:315
+msgid "Also refund the service fee (<0>{feeLeftText}</0>)"
+msgstr "Also refund the service fee (<0>{feeLeftText}</0>)"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:241
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4007
@@ -6054,7 +6058,7 @@ msgid "Amount off each item"
 msgstr "Amount off each item"
 
 #: app/components/loyalty/record-refund-dialog.tsx:265
-#: app/components/orders/record-order-refund-dialog.tsx:293
+#: app/components/orders/record-order-refund-dialog.tsx:294
 msgid "Amount returned"
 msgstr "Amount returned"
 
@@ -6077,7 +6081,7 @@ msgstr "Amount that came out"
 msgid "Amount to refund"
 msgstr "Amount to refund"
 
-#: app/components/orders/provider-refund-dialog.tsx:369
+#: app/components/orders/provider-refund-dialog.tsx:370
 msgid "Amount to return"
 msgstr "Amount to return"
 
@@ -6226,7 +6230,7 @@ msgstr "Another place"
 msgid "another position"
 msgstr "another position"
 
-#: app/components/orders/provider-refund-dialog.tsx:164
+#: app/components/orders/provider-refund-dialog.tsx:165
 msgid "Another refund for this order is still being processed. Wait for it to finish."
 msgstr "Another refund for this order is still being processed. Wait for it to finish."
 
@@ -7024,8 +7028,8 @@ msgstr "At least one category with 5 or more priced dishes, and a menu health sc
 #~ msgid "At least one section is required."
 #~ msgstr "At least one section is required."
 
-#: app/components/orders/provider-refund-dialog.tsx:171
-#: app/components/orders/record-order-refund-dialog.tsx:134
+#: app/components/orders/provider-refund-dialog.tsx:172
+#: app/components/orders/record-order-refund-dialog.tsx:135
 msgid "At most {label} can still be refunded."
 msgstr "At most {label} can still be refunded."
 
@@ -8692,8 +8696,8 @@ msgstr "Can't text that number"
 #: app/components/note/comment-input.tsx:261
 #: app/components/note/comment-item.tsx:299
 #: app/components/note/share-note-button.tsx:357
-#: app/components/orders/provider-refund-dialog.tsx:417
-#: app/components/orders/record-order-refund-dialog.tsx:341
+#: app/components/orders/provider-refund-dialog.tsx:418
+#: app/components/orders/record-order-refund-dialog.tsx:342
 #: app/components/phone-agent/call-detail-sheet.tsx:588
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:773
 #: app/components/phone-agent/phone-number-dialogs.tsx:446
@@ -16804,11 +16808,11 @@ msgid "Enter the 6-digit one time password (OTP) token that your authentication 
 msgstr ""
 
 #: app/components/loyalty/record-refund-dialog.tsx:108
-#: app/components/orders/record-order-refund-dialog.tsx:111
+#: app/components/orders/record-order-refund-dialog.tsx:112
 msgid "Enter the amount returned, for example 4.50."
 msgstr "Enter the amount returned, for example 4.50."
 
-#: app/components/orders/provider-refund-dialog.tsx:143
+#: app/components/orders/provider-refund-dialog.tsx:144
 msgid "Enter the amount to return, for example 4.50."
 msgstr "Enter the amount to return, for example 4.50."
 
@@ -17346,8 +17350,8 @@ msgid "Everything in the cart."
 msgstr "Everything in the cart."
 
 #: app/components/loyalty/record-refund-dialog.tsx:256
-#: app/components/orders/provider-refund-dialog.tsx:360
-#: app/components/orders/record-order-refund-dialog.tsx:284
+#: app/components/orders/provider-refund-dialog.tsx:361
+#: app/components/orders/record-order-refund-dialog.tsx:285
 msgid "Everything that is left"
 msgstr "Everything that is left"
 
@@ -21683,8 +21687,8 @@ msgstr "Keep the name under 80 characters."
 
 #: app/components/loyalty/adjust-dialog.tsx:154
 #: app/components/loyalty/record-refund-dialog.tsx:95
-#: app/components/orders/provider-refund-dialog.tsx:130
-#: app/components/orders/record-order-refund-dialog.tsx:98
+#: app/components/orders/provider-refund-dialog.tsx:131
+#: app/components/orders/record-order-refund-dialog.tsx:99
 #: app/routes/_app+/$orgSlug_+/loyalty+/activity.tsx:659
 msgid "Keep the note under 280 characters."
 msgstr "Keep the note under 280 characters."
@@ -22437,8 +22441,8 @@ msgstr "Left or right ($)"
 msgid "Left the team"
 msgstr "Left the team"
 
-#: app/components/orders/provider-refund-dialog.tsx:347
-#: app/components/orders/record-order-refund-dialog.tsx:271
+#: app/components/orders/provider-refund-dialog.tsx:348
+#: app/components/orders/record-order-refund-dialog.tsx:272
 msgid "Left to refund"
 msgstr "Left to refund"
 
@@ -27877,8 +27881,8 @@ msgstr ""
 #: app/components/inventory/transfer-dialogs.tsx:285
 #: app/components/loyalty/adjust-dialog.tsx:255
 #: app/components/loyalty/record-refund-dialog.tsx:277
-#: app/components/orders/provider-refund-dialog.tsx:397
-#: app/components/orders/record-order-refund-dialog.tsx:321
+#: app/components/orders/provider-refund-dialog.tsx:398
+#: app/components/orders/record-order-refund-dialog.tsx:322
 #: app/components/staff/onboarding/certificate-form.tsx:130
 #: app/components/staff/schedule/availability-page.tsx:350
 #: app/components/staff/schedule/availability-sheet.tsx:328
@@ -28816,7 +28820,7 @@ msgstr "Online payments to check"
 msgid "Only a form task has a link."
 msgstr "Only a form task has a link."
 
-#: app/components/orders/record-order-refund-dialog.tsx:139
+#: app/components/orders/record-order-refund-dialog.tsx:140
 msgid "Only a paid order can be refunded."
 msgstr "Only a paid order can be refunded."
 
@@ -28902,7 +28906,7 @@ msgstr "Only one workplace can be the main one."
 msgid "Only online orders are counted. In-person and other sales are not, so the share is higher than it really is."
 msgstr "Only online orders are counted. In-person and other sales are not, so the share is higher than it really is."
 
-#: app/components/orders/record-order-refund-dialog.tsx:141
+#: app/components/orders/record-order-refund-dialog.tsx:142
 msgid "Only orders paid online can be refunded here."
 msgstr "Only orders paid online can be refunded here."
 
@@ -29984,7 +29988,7 @@ msgstr "Orders one person handles in an hour"
 msgid "Orders open"
 msgstr "Orders open"
 
-#: app/components/orders/provider-refund-dialog.tsx:178
+#: app/components/orders/provider-refund-dialog.tsx:179
 msgid "Orders paid online are refunded through the payment provider."
 msgstr "Orders paid online are refunded through the payment provider."
 
@@ -30440,8 +30444,8 @@ msgstr ""
 
 #: app/components/loyalty/record-refund-dialog.tsx:236
 #: app/components/orders/order-status.tsx:33
-#: app/components/orders/provider-refund-dialog.tsx:327
-#: app/components/orders/record-order-refund-dialog.tsx:255
+#: app/components/orders/provider-refund-dialog.tsx:328
+#: app/components/orders/record-order-refund-dialog.tsx:256
 #: app/components/print/print-order-labels.ts:11
 #: app/components/settings/cards/organization/shop-card.tsx:45
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:219
@@ -30602,8 +30606,8 @@ msgid "Part of a day is for one date only."
 msgstr "Part of a day is for one date only."
 
 #: app/components/loyalty/record-refund-dialog.tsx:257
-#: app/components/orders/provider-refund-dialog.tsx:361
-#: app/components/orders/record-order-refund-dialog.tsx:285
+#: app/components/orders/provider-refund-dialog.tsx:362
+#: app/components/orders/record-order-refund-dialog.tsx:286
 msgid "Part of the payment"
 msgstr "Part of the payment"
 
@@ -33649,7 +33653,7 @@ msgstr "Record a message for your team to follow up."
 
 #: app/components/loyalty/record-refund-dialog.tsx:205
 #: app/components/orders/order-detail.tsx:1140
-#: app/components/orders/record-order-refund-dialog.tsx:226
+#: app/components/orders/record-order-refund-dialog.tsx:227
 msgid "Record a refund"
 msgstr "Record a refund"
 
@@ -33688,13 +33692,13 @@ msgstr "Record marketing consent"
 msgid "Record money you already returned, for example in your payment dashboard or in cash, and chargebacks you lost: neither reaches this tab on its own. Points earned on the refunded part are taken back, and the reward's points come back once everything paid is refunded. No money moves."
 msgstr "Record money you already returned, for example in your payment dashboard or in cash, and chargebacks you lost: neither reaches this tab on its own. Points earned on the refunded part are taken back, and the reward's points come back once everything paid is refunded. No money moves."
 
-#: app/components/orders/record-order-refund-dialog.tsx:229
+#: app/components/orders/record-order-refund-dialog.tsx:230
 msgid "Record money you already returned, for example in your payment provider's dashboard, and chargebacks you lost: neither reaches this order on its own. Recording it moves no money. If the order earned loyalty points, they are taken back."
 msgstr "Record money you already returned, for example in your payment provider's dashboard, and chargebacks you lost: neither reaches this order on its own. Recording it moves no money. If the order earned loyalty points, they are taken back."
 
 #: app/components/loyalty/customer-loyalty-lists.tsx:209
 #: app/components/loyalty/record-refund-dialog.tsx:307
-#: app/components/orders/record-order-refund-dialog.tsx:351
+#: app/components/orders/record-order-refund-dialog.tsx:352
 msgid "Record refund"
 msgstr "Record refund"
 
@@ -33903,8 +33907,8 @@ msgstr "Refresh. {updated}"
 #: app/components/orders/order-detail.tsx:1067
 #: app/components/orders/order-detail.tsx:1079
 #: app/components/orders/order-detail.tsx:1117
-#: app/components/orders/provider-refund-dialog.tsx:356
-#: app/components/orders/record-order-refund-dialog.tsx:280
+#: app/components/orders/provider-refund-dialog.tsx:357
+#: app/components/orders/record-order-refund-dialog.tsx:281
 #: app/components/reservations/payment-panel.tsx:625
 #: app/components/reservations/payment-panel.tsx:723
 #: app/utils/reservations/payments-view.ts:62
@@ -33985,11 +33989,11 @@ msgstr "Refund the guest?"
 msgid "Refund this booking?"
 msgstr "Refund this booking?"
 
-#: app/components/orders/provider-refund-dialog.tsx:299
+#: app/components/orders/provider-refund-dialog.tsx:300
 msgid "Refund this order"
 msgstr "Refund this order"
 
-#: app/components/orders/provider-refund-dialog.tsx:427
+#: app/components/orders/provider-refund-dialog.tsx:428
 msgid "Refund to card"
 msgstr "Refund to card"
 
@@ -34023,7 +34027,7 @@ msgstr "Refunded after the deadline (%)"
 msgid "Refunded to card: {amount}"
 msgstr "Refunded to card: {amount}"
 
-#: app/components/orders/provider-refund-dialog.tsx:425
+#: app/components/orders/provider-refund-dialog.tsx:426
 msgid "Refunding…"
 msgstr "Refunding…"
 
@@ -34032,11 +34036,11 @@ msgstr "Refunding…"
 msgid "Refunds"
 msgstr "Refunds"
 
-#: app/components/orders/provider-refund-dialog.tsx:186
+#: app/components/orders/provider-refund-dialog.tsx:187
 msgid "Refunds are not available to members limited to some locations."
 msgstr "Refunds are not available to members limited to some locations."
 
-#: app/components/orders/provider-refund-dialog.tsx:184
+#: app/components/orders/provider-refund-dialog.tsx:185
 msgid "Refunds cannot be issued while viewing as another account."
 msgstr "Refunds cannot be issued while viewing as another account."
 
@@ -36397,11 +36401,11 @@ msgstr "Saved training rule \"{title}\""
 msgid "Saved with the booking for the manager."
 msgstr "Saved with the booking for the manager."
 
-#: app/components/orders/provider-refund-dialog.tsx:398
+#: app/components/orders/provider-refund-dialog.tsx:399
 msgid "Saved with the refund, along with who issued it."
 msgstr "Saved with the refund, along with who issued it."
 
-#: app/components/orders/record-order-refund-dialog.tsx:322
+#: app/components/orders/record-order-refund-dialog.tsx:323
 msgid "Saved with the refund, along with who recorded it."
 msgstr "Saved with the refund, along with who recorded it."
 
@@ -36473,7 +36477,7 @@ msgstr ""
 #: app/components/loyalty/record-refund-dialog.tsx:305
 #: app/components/loyalty/reward-dialog.tsx:609
 #: app/components/mailbox/reviews-tab.tsx:734
-#: app/components/orders/record-order-refund-dialog.tsx:349
+#: app/components/orders/record-order-refund-dialog.tsx:350
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:493
 #: app/components/pos/zatca-settings.tsx:347
 #: app/components/reservations/experiences/experience-editor.tsx:545
@@ -41771,8 +41775,8 @@ msgid "That is more than the fee in the booking's policy. You can only lower it.
 msgstr "That is more than the fee in the booking's policy. You can only lower it."
 
 #: app/components/loyalty/record-refund-dialog.tsx:116
-#: app/components/orders/provider-refund-dialog.tsx:151
-#: app/components/orders/record-order-refund-dialog.tsx:119
+#: app/components/orders/provider-refund-dialog.tsx:152
+#: app/components/orders/record-order-refund-dialog.tsx:120
 #: app/utils/reservations/payments-view.ts:123
 msgid "That is more than what is left to refund."
 msgstr "That is more than what is left to refund."
@@ -42868,7 +42872,7 @@ msgid "The money goes back to the guest's card through your payment provider."
 msgstr "The money goes back to the guest's card through your payment provider."
 
 #: app/components/orders/order-detail.tsx:1311
-#: app/components/orders/provider-refund-dialog.tsx:302
+#: app/components/orders/provider-refund-dialog.tsx:303
 msgid "The money goes back to the guest's card through your payment provider. Card and payment provider fees are usually not returned to you."
 msgstr "The money goes back to the guest's card through your payment provider. Card and payment provider fees are usually not returned to you."
 
@@ -42972,7 +42976,7 @@ msgstr "The order must already include them before the discount applies."
 msgid "The order on this link can't be shown."
 msgstr "The order on this link can't be shown."
 
-#: app/components/orders/provider-refund-dialog.tsx:188
+#: app/components/orders/provider-refund-dialog.tsx:189
 msgid "The order service is not reachable right now. Wait a moment and try again."
 msgstr "The order service is not reachable right now. Wait a moment and try again."
 
@@ -43033,7 +43037,7 @@ msgstr "The payment policies could not be loaded."
 msgid "The payment provider could not be reached."
 msgstr "The payment provider could not be reached."
 
-#: app/components/orders/provider-refund-dialog.tsx:190
+#: app/components/orders/provider-refund-dialog.tsx:191
 msgid "The payment provider could not be reached. Try again in a moment."
 msgstr "The payment provider could not be reached. Try again in a moment."
 
@@ -43198,16 +43202,16 @@ msgstr "The recipe for one dish. Each size below uses it as it is, a multiple of
 msgid "The refund could not be recorded."
 msgstr "The refund could not be recorded."
 
-#: app/components/orders/record-order-refund-dialog.tsx:128
+#: app/components/orders/record-order-refund-dialog.tsx:129
 msgid "The refund could not be recorded. Check your connection and try again."
 msgstr "The refund could not be recorded. Check your connection and try again."
 
-#: app/components/orders/record-order-refund-dialog.tsx:152
+#: app/components/orders/record-order-refund-dialog.tsx:153
 #: app/components/reservations/payment-panel.tsx:406
 msgid "The refund could not be recorded. Try again."
 msgstr "The refund could not be recorded. Try again."
 
-#: app/components/orders/provider-refund-dialog.tsx:197
+#: app/components/orders/provider-refund-dialog.tsx:198
 msgid "The refund could not be started. Try again."
 msgstr "The refund could not be started. Try again."
 
@@ -43223,7 +43227,7 @@ msgstr "The refund is larger than what was paid."
 msgid "The refund is recorded but did not run yet. Use Process now."
 msgstr "The refund is recorded but did not run yet. Use Process now."
 
-#: app/components/orders/provider-refund-dialog.tsx:275
+#: app/components/orders/provider-refund-dialog.tsx:276
 msgid "The refund may not have gone through. Check your connection and try again: trying again will not refund twice."
 msgstr "The refund may not have gone through. Check your connection and try again: trying again will not refund twice."
 
@@ -44391,7 +44395,7 @@ msgstr "this option"
 msgid "This order can't be pushed back any further."
 msgstr "This order can't be pushed back any further."
 
-#: app/components/orders/provider-refund-dialog.tsx:176
+#: app/components/orders/provider-refund-dialog.tsx:177
 msgid "This order cannot be refunded through the payment provider."
 msgstr "This order cannot be refunded through the payment provider."
 
@@ -44412,8 +44416,8 @@ msgstr "This order does not exist or was removed."
 msgid "This order is already closed."
 msgstr "This order is already closed."
 
-#: app/components/orders/provider-refund-dialog.tsx:174
-#: app/components/orders/record-order-refund-dialog.tsx:137
+#: app/components/orders/provider-refund-dialog.tsx:175
+#: app/components/orders/record-order-refund-dialog.tsx:138
 msgid "This order is already fully refunded."
 msgstr "This order is already fully refunded."
 
@@ -44445,8 +44449,8 @@ msgstr "This order is waiting for you to accept it."
 msgid "This order needs a manual check before it goes ahead. Start preparing to accept it, or cancel it."
 msgstr "This order needs a manual check before it goes ahead. Start preparing to accept it, or cancel it."
 
-#: app/components/orders/provider-refund-dialog.tsx:182
-#: app/components/orders/record-order-refund-dialog.tsx:147
+#: app/components/orders/provider-refund-dialog.tsx:183
+#: app/components/orders/record-order-refund-dialog.tsx:148
 msgid "This order no longer exists."
 msgstr "This order no longer exists."
 
@@ -44486,7 +44490,7 @@ msgstr "This page opens from the link in your schedule email. Find the latest em
 msgid "This party is no longer on the waitlist. The list has been reloaded."
 msgstr "This party is no longer on the waitlist. The list has been reloaded."
 
-#: app/components/orders/provider-refund-dialog.tsx:166
+#: app/components/orders/provider-refund-dialog.tsx:167
 msgid "This payment is disputed with the card issuer, so it cannot be refunded."
 msgstr "This payment is disputed with the card issuer, so it cannot be refunded."
 
@@ -44679,15 +44683,15 @@ msgstr "This recording is no longer available."
 msgid "This redemption no longer exists."
 msgstr "This redemption no longer exists."
 
-#: app/components/orders/record-order-refund-dialog.tsx:145
+#: app/components/orders/record-order-refund-dialog.tsx:146
 msgid "This refund was already recorded with other details. Reload the order to see it."
 msgstr "This refund was already recorded with other details. Reload the order to see it."
 
-#: app/components/orders/record-order-refund-dialog.tsx:144
+#: app/components/orders/record-order-refund-dialog.tsx:145
 msgid "This refund was already recorded with other details. The amounts above are now up to date."
 msgstr "This refund was already recorded with other details. The amounts above are now up to date."
 
-#: app/components/orders/provider-refund-dialog.tsx:180
+#: app/components/orders/provider-refund-dialog.tsx:181
 msgid "This refund was already started with other details. The amounts above are now up to date."
 msgstr "This refund was already started with other details. The amounts above are now up to date."
 
@@ -50044,15 +50048,15 @@ msgstr "You do not have permission to do that."
 msgid "You do not have permission to record consent."
 msgstr "You do not have permission to record consent."
 
-#: app/components/orders/record-order-refund-dialog.tsx:150
+#: app/components/orders/record-order-refund-dialog.tsx:151
 msgid "You do not have permission to record refunds."
 msgstr "You do not have permission to record refunds."
 
-#: app/components/orders/provider-refund-dialog.tsx:195
+#: app/components/orders/provider-refund-dialog.tsx:196
 msgid "You do not have permission to refund orders."
 msgstr "You do not have permission to refund orders."
 
-#: app/components/orders/provider-refund-dialog.tsx:192
+#: app/components/orders/provider-refund-dialog.tsx:193
 msgid "You do not have permission to refund this order."
 msgstr "You do not have permission to refund this order."
 

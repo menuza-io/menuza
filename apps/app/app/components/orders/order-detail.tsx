@@ -4,6 +4,7 @@ import {
 	ORDER_CANCEL_REASONS,
 	type OrderRejectReason,
 } from '@repo/common/restaurant-orders'
+import { DEFAULT_SERVICE_FEE_LABEL } from '@repo/common/service-fee'
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -14,7 +15,6 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from '@repo/ui/alert-dialog'
-import { DEFAULT_SERVICE_FEE_LABEL } from '@repo/common/service-fee'
 import { Avatar, AvatarFallback } from '@repo/ui/avatar'
 import { Badge } from '@repo/ui/badge'
 import {

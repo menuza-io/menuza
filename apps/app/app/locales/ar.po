@@ -4337,11 +4337,11 @@ msgid "Add a short note explaining the decision."
 msgstr "أضف ملاحظة قصيرة توضح سبب القرار."
 
 #: app/components/loyalty/record-refund-dialog.tsx:94
-#: app/components/orders/record-order-refund-dialog.tsx:97
+#: app/components/orders/record-order-refund-dialog.tsx:98
 msgid "Add a short note, such as how the money went back."
 msgstr "أضف ملاحظة قصيرة، مثل الطريقة التي أُعيد بها المال."
 
-#: app/components/orders/provider-refund-dialog.tsx:129
+#: app/components/orders/provider-refund-dialog.tsx:130
 msgid "Add a short note, such as why the money goes back."
 msgstr "أضف ملاحظة قصيرة، مثل سبب إعادة المبلغ."
 
@@ -5927,8 +5927,8 @@ msgid "already received <0>{earlierText}</0>"
 msgstr "استُلم سابقًا <0>{earlierText}</0>"
 
 #: app/components/loyalty/record-refund-dialog.tsx:244
-#: app/components/orders/provider-refund-dialog.tsx:335
-#: app/components/orders/record-order-refund-dialog.tsx:263
+#: app/components/orders/provider-refund-dialog.tsx:336
+#: app/components/orders/record-order-refund-dialog.tsx:264
 msgid "Already refunded"
 msgstr "تم استرداده مسبقًا"
 
@@ -5940,11 +5940,15 @@ msgstr "يعمل في ذلك الوقت"
 msgid "Also counted:"
 msgstr "تم جرد أيضًا:"
 
-#. placeholder {0}: money(feeLeftCents)
 #: app/components/orders/provider-refund-dialog.tsx:390
 #: app/components/orders/record-order-refund-dialog.tsx:314
-msgid "Also refund the service fee (<0>{0}</0>)"
-msgstr "استرد رسوم الخدمة أيضًا (<0>{0}</0>)"
+#~ msgid "Also refund the service fee (<0>{0}</0>)"
+#~ msgstr "استرد رسوم الخدمة أيضًا (<0>{0}</0>)"
+
+#: app/components/orders/provider-refund-dialog.tsx:391
+#: app/components/orders/record-order-refund-dialog.tsx:315
+msgid "Also refund the service fee (<0>{feeLeftText}</0>)"
+msgstr "استرد رسوم الخدمة أيضًا (<0>{feeLeftText}</0>)"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:241
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4007
@@ -6049,7 +6053,7 @@ msgid "Amount off each item"
 msgstr "مبلغ الخصم على كل عنصر"
 
 #: app/components/loyalty/record-refund-dialog.tsx:265
-#: app/components/orders/record-order-refund-dialog.tsx:293
+#: app/components/orders/record-order-refund-dialog.tsx:294
 msgid "Amount returned"
 msgstr "المبلغ المُعاد"
 
@@ -6072,7 +6076,7 @@ msgstr "الكمية التي خرجت"
 msgid "Amount to refund"
 msgstr "المبلغ المراد استرداده"
 
-#: app/components/orders/provider-refund-dialog.tsx:369
+#: app/components/orders/provider-refund-dialog.tsx:370
 msgid "Amount to return"
 msgstr "المبلغ المراد ردّه"
 
@@ -6221,7 +6225,7 @@ msgstr "مكان آخر"
 msgid "another position"
 msgstr "منصب آخر"
 
-#: app/components/orders/provider-refund-dialog.tsx:164
+#: app/components/orders/provider-refund-dialog.tsx:165
 msgid "Another refund for this order is still being processed. Wait for it to finish."
 msgstr "هناك عملية استرداد أخرى لهذا الطلب قيد المعالجة. انتظر حتى تنتهي."
 
@@ -7019,8 +7023,8 @@ msgstr "فئة واحدة على الأقل فيها 5 أطباق مسعّرة �
 #~ msgid "At least one section is required."
 #~ msgstr "مطلوب قسم واحد على الأقل."
 
-#: app/components/orders/provider-refund-dialog.tsx:171
-#: app/components/orders/record-order-refund-dialog.tsx:134
+#: app/components/orders/provider-refund-dialog.tsx:172
+#: app/components/orders/record-order-refund-dialog.tsx:135
 msgid "At most {label} can still be refunded."
 msgstr "يمكن استرداد {label} كحد أقصى."
 
@@ -8687,8 +8691,8 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/components/note/comment-input.tsx:261
 #: app/components/note/comment-item.tsx:299
 #: app/components/note/share-note-button.tsx:357
-#: app/components/orders/provider-refund-dialog.tsx:417
-#: app/components/orders/record-order-refund-dialog.tsx:341
+#: app/components/orders/provider-refund-dialog.tsx:418
+#: app/components/orders/record-order-refund-dialog.tsx:342
 #: app/components/phone-agent/call-detail-sheet.tsx:588
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:773
 #: app/components/phone-agent/phone-number-dialogs.tsx:446
@@ -16796,11 +16800,11 @@ msgid "Enter the 6-digit one time password (OTP) token that your authentication 
 msgstr "أدخل رمز كلمة المرور لمرة واحدة (OTP) المكون من 6 أرقام الذي يوفره لك تطبيق المصادقة."
 
 #: app/components/loyalty/record-refund-dialog.tsx:108
-#: app/components/orders/record-order-refund-dialog.tsx:111
+#: app/components/orders/record-order-refund-dialog.tsx:112
 msgid "Enter the amount returned, for example 4.50."
 msgstr "أدخل المبلغ المُعاد، مثل 4.50."
 
-#: app/components/orders/provider-refund-dialog.tsx:143
+#: app/components/orders/provider-refund-dialog.tsx:144
 msgid "Enter the amount to return, for example 4.50."
 msgstr "أدخل المبلغ المراد ردّه، مثل 4.50."
 
@@ -17338,8 +17342,8 @@ msgid "Everything in the cart."
 msgstr "كل ما في السلة."
 
 #: app/components/loyalty/record-refund-dialog.tsx:256
-#: app/components/orders/provider-refund-dialog.tsx:360
-#: app/components/orders/record-order-refund-dialog.tsx:284
+#: app/components/orders/provider-refund-dialog.tsx:361
+#: app/components/orders/record-order-refund-dialog.tsx:285
 msgid "Everything that is left"
 msgstr "كل المبلغ المتبقي"
 
@@ -21675,8 +21679,8 @@ msgstr "اجعل الاسم أقل من 80 حرفًا."
 
 #: app/components/loyalty/adjust-dialog.tsx:154
 #: app/components/loyalty/record-refund-dialog.tsx:95
-#: app/components/orders/provider-refund-dialog.tsx:130
-#: app/components/orders/record-order-refund-dialog.tsx:98
+#: app/components/orders/provider-refund-dialog.tsx:131
+#: app/components/orders/record-order-refund-dialog.tsx:99
 #: app/routes/_app+/$orgSlug_+/loyalty+/activity.tsx:659
 msgid "Keep the note under 280 characters."
 msgstr "اجعل الملاحظة أقل من 280 حرفًا."
@@ -22429,8 +22433,8 @@ msgstr "يسار أو يمين ($)"
 msgid "Left the team"
 msgstr "غادر الفريق"
 
-#: app/components/orders/provider-refund-dialog.tsx:347
-#: app/components/orders/record-order-refund-dialog.tsx:271
+#: app/components/orders/provider-refund-dialog.tsx:348
+#: app/components/orders/record-order-refund-dialog.tsx:272
 msgid "Left to refund"
 msgstr "المتبقي للاسترداد"
 
@@ -27869,8 +27873,8 @@ msgstr "ملاحظة"
 #: app/components/inventory/transfer-dialogs.tsx:285
 #: app/components/loyalty/adjust-dialog.tsx:255
 #: app/components/loyalty/record-refund-dialog.tsx:277
-#: app/components/orders/provider-refund-dialog.tsx:397
-#: app/components/orders/record-order-refund-dialog.tsx:321
+#: app/components/orders/provider-refund-dialog.tsx:398
+#: app/components/orders/record-order-refund-dialog.tsx:322
 #: app/components/staff/onboarding/certificate-form.tsx:130
 #: app/components/staff/schedule/availability-page.tsx:350
 #: app/components/staff/schedule/availability-sheet.tsx:328
@@ -28808,7 +28812,7 @@ msgstr "دفعات إلكترونية للتحقق منها"
 msgid "Only a form task has a link."
 msgstr "مهمة النموذج فقط لها رابط."
 
-#: app/components/orders/record-order-refund-dialog.tsx:139
+#: app/components/orders/record-order-refund-dialog.tsx:140
 msgid "Only a paid order can be refunded."
 msgstr "لا يمكن استرداد إلا الطلبات المدفوعة."
 
@@ -28894,7 +28898,7 @@ msgstr "يمكن أن يكون مكان عمل واحد فقط هو الرئيس
 msgid "Only online orders are counted. In-person and other sales are not, so the share is higher than it really is."
 msgstr "تُحتسب الطلبات عبر الإنترنت فقط، أما المبيعات الحضورية وغيرها فلا تُحتسب، لذا تبدو النسبة أعلى من حقيقتها."
 
-#: app/components/orders/record-order-refund-dialog.tsx:141
+#: app/components/orders/record-order-refund-dialog.tsx:142
 msgid "Only orders paid online can be refunded here."
 msgstr "يمكن هنا استرداد الطلبات المدفوعة عبر الإنترنت فقط."
 
@@ -29976,7 +29980,7 @@ msgstr "الطلبات التي يتولاها شخص واحد في الساعة
 msgid "Orders open"
 msgstr "فتح الطلبات"
 
-#: app/components/orders/provider-refund-dialog.tsx:178
+#: app/components/orders/provider-refund-dialog.tsx:179
 msgid "Orders paid online are refunded through the payment provider."
 msgstr "تُسترد الطلبات المدفوعة عبر الإنترنت من خلال مزوّد الدفع."
 
@@ -30432,8 +30436,8 @@ msgstr "الصفحات"
 
 #: app/components/loyalty/record-refund-dialog.tsx:236
 #: app/components/orders/order-status.tsx:33
-#: app/components/orders/provider-refund-dialog.tsx:327
-#: app/components/orders/record-order-refund-dialog.tsx:255
+#: app/components/orders/provider-refund-dialog.tsx:328
+#: app/components/orders/record-order-refund-dialog.tsx:256
 #: app/components/print/print-order-labels.ts:11
 #: app/components/settings/cards/organization/shop-card.tsx:45
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:219
@@ -30594,8 +30598,8 @@ msgid "Part of a day is for one date only."
 msgstr "جزء من اليوم يكون لتاريخ واحد فقط."
 
 #: app/components/loyalty/record-refund-dialog.tsx:257
-#: app/components/orders/provider-refund-dialog.tsx:361
-#: app/components/orders/record-order-refund-dialog.tsx:285
+#: app/components/orders/provider-refund-dialog.tsx:362
+#: app/components/orders/record-order-refund-dialog.tsx:286
 msgid "Part of the payment"
 msgstr "جزء من المبلغ المدفوع"
 
@@ -33641,7 +33645,7 @@ msgstr "تسجيل رسالة ليتابعها فريقك."
 
 #: app/components/loyalty/record-refund-dialog.tsx:205
 #: app/components/orders/order-detail.tsx:1140
-#: app/components/orders/record-order-refund-dialog.tsx:226
+#: app/components/orders/record-order-refund-dialog.tsx:227
 msgid "Record a refund"
 msgstr "تسجيل استرداد"
 
@@ -33680,13 +33684,13 @@ msgstr "تسجيل الموافقة التسويقية"
 msgid "Record money you already returned, for example in your payment dashboard or in cash, and chargebacks you lost: neither reaches this tab on its own. Points earned on the refunded part are taken back, and the reward's points come back once everything paid is refunded. No money moves."
 msgstr "سجّل المبالغ التي أعدتها بالفعل، مثلًا من لوحة المدفوعات أو نقدًا، وكل استرداد قسري (chargeback) خسرته: لا يصل أيٌّ منهما إلى هذا الحساب تلقائيًا. تُسحب النقاط المكتسبة على الجزء المسترد، وتعود نقاط المكافأة بعد استرداد كل ما دُفع. لا تُنقل أي أموال."
 
-#: app/components/orders/record-order-refund-dialog.tsx:229
+#: app/components/orders/record-order-refund-dialog.tsx:230
 msgid "Record money you already returned, for example in your payment provider's dashboard, and chargebacks you lost: neither reaches this order on its own. Recording it moves no money. If the order earned loyalty points, they are taken back."
 msgstr "سجّل المبالغ التي أعدتها بالفعل، مثلًا من لوحة مزوّد الدفع، وكل استرداد قسري (chargeback) خسرته: لا يصل أيٌّ منهما إلى هذا الطلب تلقائيًا. التسجيل لا ينقل أي أموال. إذا اكتسب الطلب نقاط ولاء، فستُسحب."
 
 #: app/components/loyalty/customer-loyalty-lists.tsx:209
 #: app/components/loyalty/record-refund-dialog.tsx:307
-#: app/components/orders/record-order-refund-dialog.tsx:351
+#: app/components/orders/record-order-refund-dialog.tsx:352
 msgid "Record refund"
 msgstr "تسجيل الاسترداد"
 
@@ -33895,8 +33899,8 @@ msgstr "تحديث. {updated}"
 #: app/components/orders/order-detail.tsx:1067
 #: app/components/orders/order-detail.tsx:1079
 #: app/components/orders/order-detail.tsx:1117
-#: app/components/orders/provider-refund-dialog.tsx:356
-#: app/components/orders/record-order-refund-dialog.tsx:280
+#: app/components/orders/provider-refund-dialog.tsx:357
+#: app/components/orders/record-order-refund-dialog.tsx:281
 #: app/components/reservations/payment-panel.tsx:625
 #: app/components/reservations/payment-panel.tsx:723
 #: app/utils/reservations/payments-view.ts:62
@@ -33977,11 +33981,11 @@ msgstr "استرداد المبلغ للضيف؟"
 msgid "Refund this booking?"
 msgstr "استرداد هذا الحجز؟"
 
-#: app/components/orders/provider-refund-dialog.tsx:299
+#: app/components/orders/provider-refund-dialog.tsx:300
 msgid "Refund this order"
 msgstr "استرداد مبلغ هذا الطلب"
 
-#: app/components/orders/provider-refund-dialog.tsx:427
+#: app/components/orders/provider-refund-dialog.tsx:428
 msgid "Refund to card"
 msgstr "استرداد إلى البطاقة"
 
@@ -34015,7 +34019,7 @@ msgstr "المسترد بعد الموعد النهائي (%)"
 msgid "Refunded to card: {amount}"
 msgstr "تم الاسترداد إلى البطاقة: {amount}"
 
-#: app/components/orders/provider-refund-dialog.tsx:425
+#: app/components/orders/provider-refund-dialog.tsx:426
 msgid "Refunding…"
 msgstr "جارٍ الاسترداد…"
 
@@ -34024,11 +34028,11 @@ msgstr "جارٍ الاسترداد…"
 msgid "Refunds"
 msgstr "المبالغ المستردة"
 
-#: app/components/orders/provider-refund-dialog.tsx:186
+#: app/components/orders/provider-refund-dialog.tsx:187
 msgid "Refunds are not available to members limited to some locations."
 msgstr "الاسترداد غير متاح للأعضاء المقيّدين ببعض الفروع."
 
-#: app/components/orders/provider-refund-dialog.tsx:184
+#: app/components/orders/provider-refund-dialog.tsx:185
 msgid "Refunds cannot be issued while viewing as another account."
 msgstr "لا يمكن إجراء الاسترداد أثناء العرض بصفة حساب آخر."
 
@@ -36389,11 +36393,11 @@ msgstr "تم حفظ قاعدة التدريب \"{title}\""
 msgid "Saved with the booking for the manager."
 msgstr "يُحفظ مع الحجز للمدير."
 
-#: app/components/orders/provider-refund-dialog.tsx:398
+#: app/components/orders/provider-refund-dialog.tsx:399
 msgid "Saved with the refund, along with who issued it."
 msgstr "يُحفظ مع الاسترداد، إلى جانب اسم من أجراه."
 
-#: app/components/orders/record-order-refund-dialog.tsx:322
+#: app/components/orders/record-order-refund-dialog.tsx:323
 msgid "Saved with the refund, along with who recorded it."
 msgstr "تُحفظ مع الاسترداد ومع هوية من سجّله."
 
@@ -36465,7 +36469,7 @@ msgstr "جارٍ الحفظ..."
 #: app/components/loyalty/record-refund-dialog.tsx:305
 #: app/components/loyalty/reward-dialog.tsx:609
 #: app/components/mailbox/reviews-tab.tsx:734
-#: app/components/orders/record-order-refund-dialog.tsx:349
+#: app/components/orders/record-order-refund-dialog.tsx:350
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:493
 #: app/components/pos/zatca-settings.tsx:347
 #: app/components/reservations/experiences/experience-editor.tsx:545
@@ -41763,8 +41767,8 @@ msgid "That is more than the fee in the booking's policy. You can only lower it.
 msgstr "هذا أكثر من الرسوم الواردة في سياسة الحجز. يمكنك تخفيضها فقط."
 
 #: app/components/loyalty/record-refund-dialog.tsx:116
-#: app/components/orders/provider-refund-dialog.tsx:151
-#: app/components/orders/record-order-refund-dialog.tsx:119
+#: app/components/orders/provider-refund-dialog.tsx:152
+#: app/components/orders/record-order-refund-dialog.tsx:120
 #: app/utils/reservations/payments-view.ts:123
 msgid "That is more than what is left to refund."
 msgstr "هذا أكثر من المتبقي للاسترداد."
@@ -42860,7 +42864,7 @@ msgid "The money goes back to the guest's card through your payment provider."
 msgstr "يعود المبلغ إلى بطاقة الضيف عبر مزوّد الدفع الخاص بك."
 
 #: app/components/orders/order-detail.tsx:1311
-#: app/components/orders/provider-refund-dialog.tsx:302
+#: app/components/orders/provider-refund-dialog.tsx:303
 msgid "The money goes back to the guest's card through your payment provider. Card and payment provider fees are usually not returned to you."
 msgstr "يعود المبلغ إلى بطاقة الضيف عبر مزوّد الدفع الخاص بك. وعادةً لا تُردّ إليك رسوم البطاقة ومزوّد الدفع."
 
@@ -42964,7 +42968,7 @@ msgstr "يجب أن يتضمن الطلب هذه العناصر قبل تطبي�
 msgid "The order on this link can't be shown."
 msgstr "لا يمكن عرض الطلب الموجود في هذا الرابط."
 
-#: app/components/orders/provider-refund-dialog.tsx:188
+#: app/components/orders/provider-refund-dialog.tsx:189
 msgid "The order service is not reachable right now. Wait a moment and try again."
 msgstr "خدمة الطلبات غير متاحة حاليًا. انتظر قليلًا ثم حاول مرة أخرى."
 
@@ -43025,7 +43029,7 @@ msgstr "تعذّر تحميل سياسات الدفع."
 msgid "The payment provider could not be reached."
 msgstr "تعذّر الوصول إلى مزوّد الدفع."
 
-#: app/components/orders/provider-refund-dialog.tsx:190
+#: app/components/orders/provider-refund-dialog.tsx:191
 msgid "The payment provider could not be reached. Try again in a moment."
 msgstr "تعذّر الوصول إلى مزوّد الدفع. حاول مرة أخرى بعد قليل."
 
@@ -43190,16 +43194,16 @@ msgstr "وصفة الطبق الواحد. يستخدمها كل حجم أدنا�
 msgid "The refund could not be recorded."
 msgstr "تعذّر تسجيل الاسترداد."
 
-#: app/components/orders/record-order-refund-dialog.tsx:128
+#: app/components/orders/record-order-refund-dialog.tsx:129
 msgid "The refund could not be recorded. Check your connection and try again."
 msgstr "تعذّر تسجيل الاسترداد. تحقّق من اتصالك وحاول مرة أخرى."
 
-#: app/components/orders/record-order-refund-dialog.tsx:152
+#: app/components/orders/record-order-refund-dialog.tsx:153
 #: app/components/reservations/payment-panel.tsx:406
 msgid "The refund could not be recorded. Try again."
 msgstr "تعذّر تسجيل الاسترداد. حاول مرة أخرى."
 
-#: app/components/orders/provider-refund-dialog.tsx:197
+#: app/components/orders/provider-refund-dialog.tsx:198
 msgid "The refund could not be started. Try again."
 msgstr "تعذّر بدء الاسترداد. حاول مرة أخرى."
 
@@ -43215,7 +43219,7 @@ msgstr "مبلغ الاسترداد أكبر من المبلغ المدفوع."
 msgid "The refund is recorded but did not run yet. Use Process now."
 msgstr "تم تسجيل الاسترداد لكنه لم يُنفَّذ بعد. استخدم معالجة الآن."
 
-#: app/components/orders/provider-refund-dialog.tsx:275
+#: app/components/orders/provider-refund-dialog.tsx:276
 msgid "The refund may not have gone through. Check your connection and try again: trying again will not refund twice."
 msgstr "قد لا يكون الاسترداد قد تم. تحقق من اتصالك وحاول مرة أخرى: إعادة المحاولة لن تردّ المبلغ مرتين."
 
@@ -44383,7 +44387,7 @@ msgstr "هذا الخيار"
 msgid "This order can't be pushed back any further."
 msgstr "لا يمكن تأجيل هذا الطلب أكثر من ذلك."
 
-#: app/components/orders/provider-refund-dialog.tsx:176
+#: app/components/orders/provider-refund-dialog.tsx:177
 msgid "This order cannot be refunded through the payment provider."
 msgstr "لا يمكن استرداد مبلغ هذا الطلب عبر مزوّد الدفع."
 
@@ -44404,8 +44408,8 @@ msgstr "هذا الطلب غير موجود أو تمت إزالته."
 msgid "This order is already closed."
 msgstr "هذا الطلب مغلق بالفعل."
 
-#: app/components/orders/provider-refund-dialog.tsx:174
-#: app/components/orders/record-order-refund-dialog.tsx:137
+#: app/components/orders/provider-refund-dialog.tsx:175
+#: app/components/orders/record-order-refund-dialog.tsx:138
 msgid "This order is already fully refunded."
 msgstr "تم استرداد هذا الطلب بالكامل مسبقًا."
 
@@ -44437,8 +44441,8 @@ msgstr "هذا الطلب ينتظر قبولك."
 msgid "This order needs a manual check before it goes ahead. Start preparing to accept it, or cancel it."
 msgstr "يحتاج هذا الطلب إلى مراجعة يدوية قبل المتابعة. ابدأ التحضير لقبوله، أو ألغِه."
 
-#: app/components/orders/provider-refund-dialog.tsx:182
-#: app/components/orders/record-order-refund-dialog.tsx:147
+#: app/components/orders/provider-refund-dialog.tsx:183
+#: app/components/orders/record-order-refund-dialog.tsx:148
 msgid "This order no longer exists."
 msgstr "لم يعد هذا الطلب موجودًا."
 
@@ -44478,7 +44482,7 @@ msgstr "تُفتح هذه الصفحة من الرابط في رسالة الج�
 msgid "This party is no longer on the waitlist. The list has been reloaded."
 msgstr "لم تعد هذه المجموعة في قائمة الانتظار. أُعيد تحميل القائمة."
 
-#: app/components/orders/provider-refund-dialog.tsx:166
+#: app/components/orders/provider-refund-dialog.tsx:167
 msgid "This payment is disputed with the card issuer, so it cannot be refunded."
 msgstr "هذه الدفعة محل نزاع لدى مُصدر البطاقة، لذا لا يمكن استردادها."
 
@@ -44671,15 +44675,15 @@ msgstr "هذا التسجيل لم يعد متاحًا."
 msgid "This redemption no longer exists."
 msgstr "عملية الاستبدال هذه لم تعد موجودة."
 
-#: app/components/orders/record-order-refund-dialog.tsx:145
+#: app/components/orders/record-order-refund-dialog.tsx:146
 msgid "This refund was already recorded with other details. Reload the order to see it."
 msgstr "سُجّل هذا الاسترداد مسبقًا بتفاصيل أخرى. أعد تحميل الطلب لعرضه."
 
-#: app/components/orders/record-order-refund-dialog.tsx:144
+#: app/components/orders/record-order-refund-dialog.tsx:145
 msgid "This refund was already recorded with other details. The amounts above are now up to date."
 msgstr "سُجّل هذا الاسترداد مسبقًا بتفاصيل أخرى. المبالغ أعلاه محدّثة الآن."
 
-#: app/components/orders/provider-refund-dialog.tsx:180
+#: app/components/orders/provider-refund-dialog.tsx:181
 msgid "This refund was already started with other details. The amounts above are now up to date."
 msgstr "بدأ هذا الاسترداد سابقًا بتفاصيل مختلفة. المبالغ أعلاه محدّثة الآن."
 
@@ -50036,15 +50040,15 @@ msgstr "ليست لديك صلاحية لتنفيذ ذلك."
 msgid "You do not have permission to record consent."
 msgstr "ليس لديك إذن بتسجيل الموافقة."
 
-#: app/components/orders/record-order-refund-dialog.tsx:150
+#: app/components/orders/record-order-refund-dialog.tsx:151
 msgid "You do not have permission to record refunds."
 msgstr "ليست لديك صلاحية تسجيل المبالغ المستردة."
 
-#: app/components/orders/provider-refund-dialog.tsx:195
+#: app/components/orders/provider-refund-dialog.tsx:196
 msgid "You do not have permission to refund orders."
 msgstr "ليست لديك صلاحية استرداد مبالغ الطلبات."
 
-#: app/components/orders/provider-refund-dialog.tsx:192
+#: app/components/orders/provider-refund-dialog.tsx:193
 msgid "You do not have permission to refund this order."
 msgstr "ليست لديك صلاحية استرداد مبلغ هذا الطلب."
 

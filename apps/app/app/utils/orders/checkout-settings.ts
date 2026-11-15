@@ -8,6 +8,15 @@
  * it in the reader's language); it never echoes what was typed.
  */
 import {
+	MAX_TIP_CHOICES,
+	TipSettingsSchema,
+	type TipChoice,
+	type TipOrderType,
+	type TipOrderTypeSettings,
+	type TipSettings,
+} from '@repo/common/location-types'
+import { TIP_MAX_PERCENT } from '@repo/common/order-tips'
+import {
 	DEFAULT_SERVICE_FEE_LABEL,
 	SERVICE_FEE_FULFILLMENTS,
 	SERVICE_FEE_LABEL_MAX_LENGTH,
@@ -18,15 +27,6 @@ import {
 	serviceFeeSettingsSchema,
 	type ServiceFeeSettings,
 } from '@repo/common/service-fee'
-import {
-	MAX_TIP_CHOICES,
-	TipSettingsSchema,
-	type TipChoice,
-	type TipOrderType,
-	type TipOrderTypeSettings,
-	type TipSettings,
-} from '@repo/common/location-types'
-import { TIP_MAX_PERCENT } from '@repo/common/order-tips'
 import {
 	minorToMajorText,
 	parseMoneyToMinor,

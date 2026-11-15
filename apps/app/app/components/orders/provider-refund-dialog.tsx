@@ -116,6 +116,7 @@ export function ProviderRefundDialog({
 	const leftCents = providerRefundableCents(order)
 	const pendingCents = order.refundPendingCents ?? 0
 	const feeLeftCents = Math.min(serviceFeeRefundableCents(order), leftCents)
+	const feeLeftText = money(feeLeftCents)
 
 	const schema = useMemo(
 		() =>
@@ -388,7 +389,7 @@ export function ProviderRefundDialog({
 							/>
 							<span>
 								<Trans>
-									Also refund the service fee (<bdi>{money(feeLeftCents)}</bdi>)
+									Also refund the service fee (<bdi>{feeLeftText}</bdi>)
 								</Trans>
 							</span>
 						</label>

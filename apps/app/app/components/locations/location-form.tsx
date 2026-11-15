@@ -60,6 +60,11 @@ import {
 import { type OrderPolicyError } from '#app/utils/orders/order-policy-settings.ts'
 import { AddressAutocomplete } from './address-autocomplete'
 import { LocationHoursSection } from './availability-picker'
+import {
+	ServiceFeeCard,
+	TipChoicesCard,
+	checkoutIssueMessage,
+} from './checkout-settings-cards'
 import { DeliveryZoneMap } from './delivery-zone-map'
 import { DeliveryZonesManager } from './delivery-zones-manager'
 import {
@@ -68,11 +73,6 @@ import {
 	OrderPoliciesCard,
 	orderPolicyErrorMessage,
 } from './order-policies-card'
-import {
-	ServiceFeeCard,
-	TipChoicesCard,
-	checkoutIssueMessage,
-} from './checkout-settings-cards'
 import { SpecialHoursPicker } from './special-hours-picker'
 
 const TIMEZONE_OPTIONS = [
