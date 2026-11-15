@@ -1,4 +1,5 @@
-import { Plural, Trans, t } from '@lingui/macro'
+import { type MessageDescriptor } from '@lingui/core'
+import { msg, Plural, Trans, t } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
@@ -10,27 +11,35 @@ import {
 	CardHeader,
 	CardTitle,
 } from '@repo/ui/card'
+import {
+	Collapsible,
+	CollapsibleContent,
+	CollapsibleTrigger,
+} from '@repo/ui/collapsible'
 import { Icon } from '@repo/ui/icon'
 import {
 	Item,
 	ItemActions,
 	ItemContent,
-	ItemGroup,
 	ItemMedia,
 	ItemTitle,
 } from '@repo/ui/item'
 import { Progress } from '@repo/ui/progress'
-import { useState } from 'react'
-import { Link, useRevalidator } from 'react-router'
+import { useEffect, useState } from 'react'
+import { Link, useFetcher, useRevalidator } from 'react-router'
+import { toast } from 'sonner'
 import { MenuReviewStack } from '#app/components/menu/menu-review-stack.tsx'
+import { type MenuChecksBody } from '#app/routes/_app+/$orgSlug_+/menu+/checks.ts'
 import {
 	getMenuHealthFixes,
-	MENU_HEALTH_CATEGORY_CHECKS,
 	MENU_HEALTH_PARAM,
-	type MenuHealth,
-	type MenuHealthCheck,
+	menuHealthEntityType,
 	type MenuHealthCheckKey,
+	type MenuHealthCheckSummary,
+	type MenuHealthEntityType,
+	type MenuHealthGrade,
 	type MenuHealthSeverity,
+	type MenuHealthSummary,
 } from '#app/utils/menu/menu-health.ts'
 
 function SeverityIcon({ severity }: { severity: MenuHealthSeverity }) {
@@ -70,7 +79,7 @@ function ScoreLabel({ score }: { score: number }) {
 	)
 }
 
-function FixLabel({ check }: { check: MenuHealthCheck }) {
+function FixLabel({ check }: { check: MenuHealthCheckSummary }) {
 	const n = check.count
 	const all = check.count === check.total
 	switch (check.key) {
@@ -142,11 +151,309 @@ function FixLabel({ check }: { check: MenuHealthCheck }) {
 					other="# categories are empty"
 				/>
 			)
+		case 'name_all_caps':
+			return (
+				<Plural
+					value={n}
+					one="# dish name is written in capitals"
+					other="# dish names are written in capitals"
+				/>
+			)
+		case 'name_too_long':
+			return (
+				<Plural
+					value={n}
+					one="# dish name is over 60 characters"
+					other="# dish names are over 60 characters"
+				/>
+			)
+		case 'empty_option_group':
+			return (
+				<Plural
+					value={n}
+					one="# option group has no choices guests can see"
+					other="# option groups have no choices guests can see"
+				/>
+			)
+		case 'impossible_minimum':
+			return (
+				<Plural
+					value={n}
+					one="# option group requires more picks than it allows"
+					other="# option groups require more picks than they allow"
+				/>
+			)
+		case 'duplicate_item':
+			return (
+				<Plural
+					value={n}
+					one="# dish is listed twice (same name and price)"
+					other="# dishes are listed twice (same name and price)"
+				/>
+			)
 	}
 }
 
+const CHECK_TITLES: Record<MenuHealthCheckKey, MessageDescriptor> = {
+	zero_price: msg`Dishes priced at 0`,
+	no_photo: msg`Dishes with no photo`,
+	no_description: msg`Dishes with no description`,
+	missing_translation: msg`Dishes missing a translation`,
+	no_allergens_or_calories: msg`Dishes without allergens or calories`,
+	long_unavailable: msg`Dishes unavailable for a week`,
+	empty_category: msg`Empty categories`,
+	name_all_caps: msg`Dish names in capitals`,
+	name_too_long: msg`Dish names that are too long`,
+	empty_option_group: msg`Option groups with no choices`,
+	impossible_minimum: msg`Option groups with an impossible minimum`,
+	duplicate_item: msg`Dishes listed twice`,
+}
+
+const CHECK_HINTS: Record<MenuHealthCheckKey, MessageDescriptor> = {
+	zero_price: msg`A free dish is usually a mistake.`,
+	no_photo: msg`Photos help guests choose.`,
+	no_description: msg`A short description helps guests order.`,
+	missing_translation: msg`Guests reading another language see a gap.`,
+	no_allergens_or_calories: msg`Guests look for allergens and calories.`,
+	long_unavailable: msg`Hide it or bring it back.`,
+	empty_category: msg`Guests see a heading with nothing under it.`,
+	name_all_caps: msg`Capitals read like shouting. Use normal case.`,
+	name_too_long: msg`Long names get cut off on small screens.`,
+	empty_option_group: msg`Guests are asked to choose and have nothing to pick.`,
+	impossible_minimum: msg`Guests can never finish ordering this dish.`,
+	duplicate_item: msg`Guests see the same dish twice.`,
+}
+
+const DISMISS_LABELS: Partial<Record<MenuHealthCheckKey, MessageDescriptor>> = {
+	no_photo: msg`No photo on purpose`,
+	no_description: msg`No description on purpose`,
+	zero_price: msg`Price 0 on purpose`,
+}
+
+function editHref(
+	orgSlug: string,
+	entityType: MenuHealthEntityType,
+	id: string,
+) {
+	const folder =
+		entityType === 'category'
+			? 'categories'
+			: entityType === 'modifier_group'
+				? 'modifiers'
+				: 'items'
+	return `/${orgSlug}/menu/${folder}/${id}`
+}
+
+const GRADE_VARIANT: Record<
+	MenuHealthGrade,
+	'success' | 'default' | 'warning' | 'destructive'
+> = {
+	A: 'success',
+	B: 'default',
+	C: 'warning',
+	D: 'warning',
+	F: 'destructive',
+}
+
+function GradeChip({ grade }: { grade: MenuHealthGrade }) {
+	const { _ } = useLingui()
+	return (
+		<Badge variant={GRADE_VARIANT[grade]} aria-label={_(t`Grade ${grade}`)}>
+			{grade}
+		</Badge>
+	)
+}
+
+/** Posts a dismiss or restore for one record and reports a failure. */
+function useCheckAction(orgSlug: string) {
+	const { _ } = useLingui()
+	const fetcher = useFetcher<{ ok: boolean; error?: string }>()
+	useEffect(() => {
+		if (fetcher.state === 'idle' && fetcher.data && !fetcher.data.ok) {
+			toast.error(
+				fetcher.data.error === 'not_failing'
+					? _(t`This one already passes, so there is nothing to dismiss.`)
+					: _(t`Could not update this check. Try again.`),
+			)
+		}
+	}, [fetcher.state, fetcher.data, _])
+	const submit = (body: MenuChecksBody) =>
+		void fetcher.submit(body, {
+			method: 'post',
+			action: `/${orgSlug}/menu/checks`,
+			encType: 'application/json',
+		})
+	return { submit, busy: fetcher.state !== 'idle' }
+}
+
+function RecordRow({
+	orgSlug,
+	check,
+	record,
+	canEdit,
+	dismissed,
+}: {
+	orgSlug: string
+	check: MenuHealthCheckSummary
+	record: { id: string; name: string }
+	canEdit: boolean
+	dismissed: boolean
+}) {
+	const { _ } = useLingui()
+	const { submit, busy } = useCheckAction(orgSlug)
+	const dismissLabel = _(DISMISS_LABELS[check.key] ?? msg`Dismiss`)
+	return (
+		<li className="flex items-center justify-between gap-2 py-0.5 text-sm">
+			<Link
+				to={editHref(orgSlug, check.entityType, record.id)}
+				className="min-w-0 wrap-anywhere hover:underline"
+			>
+				{record.name}
+			</Link>
+			{canEdit ? (
+				<Button
+					variant="ghost"
+					size="sm"
+					disabled={busy}
+					title={
+						dismissed ? undefined : _(msg`Stays dismissed until this changes.`)
+					}
+					onClick={() =>
+						submit(
+							dismissed
+								? {
+										intent: 'restore',
+										checkKey: check.key,
+										entityId: record.id,
+									}
+								: {
+										intent: 'dismiss',
+										checkKey: check.key,
+										entityId: record.id,
+										reason: 'on_purpose',
+									},
+						)
+					}
+				>
+					{dismissed ? <Trans>Restore</Trans> : dismissLabel}
+				</Button>
+			) : null}
+		</li>
+	)
+}
+
+function DismissedList({
+	orgSlug,
+	check,
+	canEdit,
+}: {
+	orgSlug: string
+	check: MenuHealthCheckSummary
+	canEdit: boolean
+}) {
+	if (check.dismissedCount === 0) return null
+	return (
+		<Collapsible>
+			<CollapsibleTrigger
+				render={
+					<Button variant="ghost" size="sm" className="text-muted-foreground" />
+				}
+			>
+				<Icon name="chevron-right" className="size-4 rtl:rotate-180" />
+				<Plural
+					value={check.dismissedCount}
+					one="# dismissed"
+					other="# dismissed"
+				/>
+			</CollapsibleTrigger>
+			<CollapsibleContent>
+				<ul className="ms-5">
+					{check.dismissed.map((record) => (
+						<RecordRow
+							key={record.id}
+							orgSlug={orgSlug}
+							check={check}
+							record={record}
+							canEdit={canEdit}
+							dismissed
+						/>
+					))}
+				</ul>
+			</CollapsibleContent>
+		</Collapsible>
+	)
+}
+
+function CheckRow({
+	orgSlug,
+	check,
+	canEdit,
+}: {
+	orgSlug: string
+	check: MenuHealthCheckSummary
+	canEdit: boolean
+}) {
+	const { _ } = useLingui()
+	const total = check.count
+	return (
+		<Collapsible>
+			<CollapsibleTrigger
+				render={
+					<Button
+						variant="ghost"
+						className="h-auto w-full justify-start py-1.5 text-start font-normal whitespace-normal"
+					/>
+				}
+			>
+				<SeverityIcon severity={check.severity} />
+				<span className="min-w-0 flex-1">
+					<FixLabel check={check} />
+				</span>
+				<Icon
+					name="chevron-down"
+					className="text-muted-foreground size-4 shrink-0"
+				/>
+			</CollapsibleTrigger>
+			<CollapsibleContent>
+				<div className="ms-6 space-y-1 pb-2">
+					<p className="text-muted-foreground text-xs">
+						{_(CHECK_HINTS[check.key])}
+					</p>
+					<ul>
+						{check.records.map((record) => (
+							<RecordRow
+								key={record.id}
+								orgSlug={orgSlug}
+								check={check}
+								record={record}
+								canEdit={canEdit}
+								dismissed={false}
+							/>
+						))}
+					</ul>
+					{check.count > check.records.length ? (
+						<Link
+							to={fixHref(orgSlug, check.key)}
+							className="text-primary text-sm hover:underline"
+						>
+							<Trans>See all {total}</Trans>
+						</Link>
+					) : null}
+					<DismissedList orgSlug={orgSlug} check={check} canEdit={canEdit} />
+				</div>
+			</CollapsibleContent>
+		</Collapsible>
+	)
+}
+
 function fixHref(orgSlug: string, key: MenuHealthCheckKey) {
-	const list = MENU_HEALTH_CATEGORY_CHECKS.has(key) ? 'categories' : 'items'
+	const entityType = menuHealthEntityType(key)
+	const list =
+		entityType === 'category'
+			? 'categories'
+			: entityType === 'modifier_group'
+				? 'modifiers'
+				: 'items'
 	return `/${orgSlug}/menu/${list}?${MENU_HEALTH_PARAM}=${key}`
 }
 
@@ -177,7 +484,7 @@ export function MenuHealthCard({
 	orgSlug,
 	review,
 }: {
-	health: MenuHealth
+	health: MenuHealthSummary
 	orgSlug: string
 	review?: MenuReviewSettings
 }) {
@@ -212,9 +519,13 @@ export function MenuHealthCard({
 	}
 
 	const fixes = getMenuHealthFixes(health)
+	const canEdit = Boolean(review?.canEdit)
+	// Checks that pass now but still hold dismissals, so they can be restored.
+	const dismissedOnly = health.checks.filter(
+		(check) => check.count === 0 && check.dismissedCount > 0,
+	)
 	const canReview =
-		Boolean(review?.canEdit) &&
-		fixes.some((check) => REVIEWABLE_CHECKS.has(check.key))
+		canEdit && fixes.some((check) => REVIEWABLE_CHECKS.has(check.key))
 
 	return (
 		<Card size="sm">
@@ -228,7 +539,14 @@ export function MenuHealthCard({
 							Every dish has a photo, a description and a price. Nice work.
 						</Trans>
 					) : (
-						<Trans>Finish these to help guests choose and order.</Trans>
+						<>
+							<Plural
+								value={health.fixCount}
+								one="# thing to fix."
+								other="# things to fix."
+							/>{' '}
+							<Trans>Finish these to help guests choose and order.</Trans>
+						</>
 					)}
 				</CardDescription>
 				<CardAction>
@@ -237,6 +555,7 @@ export function MenuHealthCard({
 							{health.score}
 						</span>
 						<span className="text-muted-foreground text-sm">/ 100</span>
+						<GradeChip grade={health.grade} />
 						<ScoreLabel score={health.score} />
 					</div>
 				</CardAction>
@@ -265,31 +584,25 @@ export function MenuHealthCard({
 						</ItemContent>
 					</Item>
 				) : (
-					<ItemGroup>
+					<div className="space-y-1">
 						{fixes.map((check) => (
-							<Item
+							<CheckRow
 								key={check.key}
-								size="xs"
-								render={<Link to={fixHref(orgSlug, check.key)} />}
-							>
-								<ItemMedia variant="icon">
-									<SeverityIcon severity={check.severity} />
-								</ItemMedia>
-								<ItemContent>
-									<ItemTitle className="font-normal">
-										<FixLabel check={check} />
-									</ItemTitle>
-								</ItemContent>
-								<ItemActions>
-									<Icon
-										name="chevron-right"
-										className="text-muted-foreground size-4 rtl:rotate-180"
-									/>
-								</ItemActions>
-							</Item>
+								orgSlug={orgSlug}
+								check={check}
+								canEdit={canEdit}
+							/>
 						))}
-					</ItemGroup>
+					</div>
 				)}
+				{dismissedOnly.map((check) => (
+					<div key={check.key}>
+						<p className="text-muted-foreground text-xs">
+							{_(CHECK_TITLES[check.key])}
+						</p>
+						<DismissedList orgSlug={orgSlug} check={check} canEdit={canEdit} />
+					</div>
+				))}
 			</CardContent>
 			{canReview && review ? (
 				<MenuReviewStack
@@ -323,6 +636,20 @@ function FilterLabel({ checkKey }: { checkKey: MenuHealthCheckKey }) {
 			return <Trans>Showing dishes unavailable for more than a week</Trans>
 		case 'empty_category':
 			return <Trans>Showing empty categories</Trans>
+		case 'name_all_caps':
+			return <Trans>Showing dishes with names in capitals</Trans>
+		case 'name_too_long':
+			return <Trans>Showing dishes with names over 60 characters</Trans>
+		case 'empty_option_group':
+			return <Trans>Showing option groups with no choices guests can see</Trans>
+		case 'impossible_minimum':
+			return (
+				<Trans>
+					Showing option groups that require more picks than they allow
+				</Trans>
+			)
+		case 'duplicate_item':
+			return <Trans>Showing dishes listed twice</Trans>
 	}
 }
 

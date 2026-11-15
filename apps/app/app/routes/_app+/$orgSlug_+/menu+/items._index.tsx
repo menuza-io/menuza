@@ -88,9 +88,9 @@ import {
 	getMenuBulkEditEnabled,
 	getMenuHistoryEnabled,
 } from '#app/utils/menu/menu-feature-access.server.ts'
-import { computeMenuHealthFor } from '#app/utils/menu/menu-health.server.ts'
+import { loadMenuHealthCheckIds } from '#app/utils/menu/menu-health.server.ts'
 import {
-	MENU_HEALTH_CATEGORY_CHECKS,
+	menuHealthEntityType,
 	MENU_HEALTH_PARAM,
 	parseMenuHealthCheckKey,
 } from '#app/utils/menu/menu-health.ts'
@@ -260,15 +260,10 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		new URL(request.url).searchParams.get(MENU_HEALTH_PARAM),
 	)
 	const healthFilter =
-		healthKey && !MENU_HEALTH_CATEGORY_CHECKS.has(healthKey)
+		healthKey && menuHealthEntityType(healthKey) === 'item'
 			? {
 					key: healthKey,
-					itemIds:
-						computeMenuHealthFor(organization, {
-							items,
-							categories: [],
-							categoryIdsWithItems: [],
-						}).checks.find((check) => check.key === healthKey)?.itemIds ?? [],
+					itemIds: await loadMenuHealthCheckIds(organization, healthKey),
 				}
 			: null
 

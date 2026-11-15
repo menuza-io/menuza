@@ -64,9 +64,9 @@ import {
 	requireMenuWrite,
 } from '#app/utils/menu/access.server.ts'
 import { deleteMenuEntityReferences } from '#app/utils/menu/cleanup.server.ts'
-import { computeMenuHealthFor } from '#app/utils/menu/menu-health.server.ts'
+import { loadMenuHealthCheckIds } from '#app/utils/menu/menu-health.server.ts'
 import {
-	MENU_HEALTH_CATEGORY_CHECKS,
+	menuHealthEntityType,
 	MENU_HEALTH_PARAM,
 	parseMenuHealthCheckKey,
 } from '#app/utils/menu/menu-health.ts'
@@ -194,18 +194,10 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		new URL(request.url).searchParams.get(MENU_HEALTH_PARAM),
 	)
 	const healthFilter =
-		healthKey && MENU_HEALTH_CATEGORY_CHECKS.has(healthKey)
+		healthKey && menuHealthEntityType(healthKey) === 'category'
 			? {
 					key: healthKey,
-					categoryIds:
-						computeMenuHealthFor(organization, {
-							items: [],
-							categories,
-							categoryIdsWithItems: categories
-								.filter((c) => c.itemAssignments.length > 0)
-								.map((c) => c.id),
-						}).checks.find((check) => check.key === healthKey)?.categoryIds ??
-						[],
+					categoryIds: await loadMenuHealthCheckIds(organization, healthKey),
 				}
 			: null
 

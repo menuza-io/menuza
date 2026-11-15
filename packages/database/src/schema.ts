@@ -3436,6 +3436,8 @@ export const MENU_SNAPSHOT_REASONS = [
 	'before_bulk_edit',
 	'before_restore',
 	'before_import',
+	// Taken before a review-stack card is accepted; Undo restores from it.
+	'before_suggestion',
 ] as const
 export type MenuSnapshotReason = (typeof MENU_SNAPSHOT_REASONS)[number]
 
@@ -3472,6 +3474,60 @@ export const MenuSnapshot = sqliteTable(
 			table.organizationId,
 			table.createdAt,
 		),
+	],
+)
+
+export const MENU_CHECK_DISMISSAL_ENTITY_TYPES = [
+	'item',
+	'category',
+	'modifier_group',
+	'option',
+	'menu',
+] as const
+export type MenuCheckDismissalEntityType =
+	(typeof MENU_CHECK_DISMISSAL_ENTITY_TYPES)[number]
+
+/**
+ * A Menu health check dismissed for one record, or a review card skipped as
+ * "not a problem". It applies only while the record still matches
+ * `fingerprint`, the state it was dismissed against. `entityId` has no foreign
+ * key: it points at one of several tables, named by `entityType`.
+ */
+export const MenuCheckDismissal = sqliteTable(
+	'MenuCheckDismissal',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		entityType: text().notNull(),
+		entityId: text().notNull(),
+		/** A Menu health check key (`no_photo`) or `card:<kind>`. */
+		checkKey: text().notNull(),
+		/** Short code, e.g. `on_purpose` or `not_a_problem`. */
+		reason: text(),
+		fingerprint: text().default('').notNull(),
+		createdById: text().references(() => User.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		uniqueIndex('MenuCheckDismissal_org_entity_check_key').on(
+			table.organizationId,
+			table.entityId,
+			table.checkKey,
+		),
+		index('MenuCheckDismissal_organizationId_idx').on(table.organizationId),
 	],
 )
 
