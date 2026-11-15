@@ -2,6 +2,7 @@ import {
 	and,
 	db,
 	eq,
+	MenuCheckDismissal,
 	OrganizationMenuLocationOverride,
 	OrganizationMenuPosLink,
 } from '@repo/database'
@@ -40,6 +41,16 @@ export async function deleteMenuEntityReferences(
 				eq(OrganizationMenuPosLink.organizationId, organizationId),
 				eq(OrganizationMenuPosLink.entityType, entityType),
 				eq(OrganizationMenuPosLink.localId, entityId),
+			),
+		)
+
+	// Health dismissals and review-stack skips about this record.
+	await client
+		.delete(MenuCheckDismissal)
+		.where(
+			and(
+				eq(MenuCheckDismissal.organizationId, organizationId),
+				eq(MenuCheckDismissal.entityId, entityId),
 			),
 		)
 }

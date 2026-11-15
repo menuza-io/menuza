@@ -323,6 +323,13 @@
 			"when": 1794671794020,
 			"tag": "0045_order_refunds_and_acceptance",
 			"breakpoints": true
+		},
+		{
+			"idx": 46,
+			"version": "6",
+			"when": 1794705592969,
+			"tag": "0046_menu_check_dismissal",
+			"breakpoints": true
 		}
 	]
 }

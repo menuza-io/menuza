@@ -3,6 +3,8 @@ import {
 	type SiteContentLocale,
 } from '@repo/common/site-locales'
 import { z } from 'zod'
+import { type MenuCardDraft } from './menu-card-kinds.ts'
+import { MENU_CARD_KINDS, type MenuCard } from './menu-cards.ts'
 import { type MenuHealth } from './menu-health.ts'
 
 /**
@@ -10,17 +12,24 @@ import { type MenuHealth } from './menu-health.ts'
  * suggestions" button. Pure, so the server (which builds and checks them) and
  * the browser (which shows them) agree on the shapes.
  *
- * Only four kinds, in this order: a missing translation, a missing
+ * First four kinds, in this order: a missing translation, a missing
  * description, an empty category and a dish unavailable for more than a week.
- * Photos, zero prices and allergens stay as filtered lists: allergens are
- * safety data and are never suggested.
+ * Then the review cards (`menu-cards.ts`): polish cards (#234) and, behind
+ * `menu.structure_suggestions`, structure cards (#92). Photos, zero prices
+ * and allergens stay as filtered lists: allergens are safety data and are
+ * never suggested or changed.
  */
 
-export const MENU_SUGGESTION_KINDS = [
+export const MENU_TEXT_SUGGESTION_KINDS = [
 	'translation',
 	'description',
 	'empty_category',
 	'long_unavailable',
+] as const
+
+export const MENU_SUGGESTION_KINDS = [
+	...MENU_TEXT_SUGGESTION_KINDS,
+	...MENU_CARD_KINDS,
 ] as const
 
 export type MenuSuggestionKind = (typeof MENU_SUGGESTION_KINDS)[number]
@@ -50,6 +59,7 @@ export type MenuSuggestionCandidate =
 	| { kind: 'description'; id: string; itemId: string }
 	| { kind: 'empty_category'; id: string; categoryId: string }
 	| { kind: 'long_unavailable'; id: string; itemId: string }
+	| { kind: MenuCard['kind']; id: string; draft: MenuCardDraft }
 
 type DishCard = {
 	/** In the menu's source language. */
@@ -57,7 +67,15 @@ type DishCard = {
 	imageUrl: string | null
 }
 
-export type MenuSuggestion =
+export type MenuSuggestion = MenuTextSuggestion | MenuCard
+
+export function isMenuCard(suggestion: MenuSuggestion): suggestion is MenuCard {
+	return !(MENU_TEXT_SUGGESTION_KINDS as readonly string[]).includes(
+		suggestion.kind,
+	)
+}
+
+export type MenuTextSuggestion =
 	| (DishCard & {
 			kind: 'translation'
 			id: string

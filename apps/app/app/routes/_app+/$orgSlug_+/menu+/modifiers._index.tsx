@@ -43,7 +43,7 @@ import {
 	TableHeader,
 	TableRow,
 } from '@repo/ui/table'
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import {
 	type ActionFunctionArgs,
 	type LoaderFunctionArgs,
@@ -58,6 +58,7 @@ import {
 	MenuDuplicateDialog,
 	type MenuDuplicateEntity,
 } from '#app/components/menu/menu-duplicate-dialog.tsx'
+import { MenuHealthFilterNotice } from '#app/components/menu/menu-health-card.tsx'
 import { useMenuListFilters } from '#app/components/menu/menu-list-filters.tsx'
 import { MenuStatusBadge } from '#app/components/menu/menu-status-badge.tsx'
 import {
@@ -65,6 +66,12 @@ import {
 	requireMenuWrite,
 } from '#app/utils/menu/access.server.ts'
 import { deleteMenuEntityReferences } from '#app/utils/menu/cleanup.server.ts'
+import { loadMenuHealthCheckIds } from '#app/utils/menu/menu-health.server.ts'
+import {
+	menuHealthEntityType,
+	MENU_HEALTH_PARAM,
+	parseMenuHealthCheckKey,
+} from '#app/utils/menu/menu-health.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 
@@ -166,9 +173,26 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		id: true,
 		slug: true,
 		siteDefaultLocale: true,
+		siteLocales: true,
 	})
 
 	await requireMenuRead(request, organization.id)
+
+	// `?health=<check>` narrows the list to the groups a Menu health line
+	// counted, using the same function as the card.
+	const healthKey = parseMenuHealthCheckKey(
+		new URL(request.url).searchParams.get(MENU_HEALTH_PARAM),
+	)
+	const healthFilter =
+		healthKey && menuHealthEntityType(healthKey) === 'modifier_group'
+			? {
+					key: healthKey,
+					modifierGroupIds: await loadMenuHealthCheckIds(
+						organization,
+						healthKey,
+					),
+				}
+			: null
 
 	const defaultLocale = organization.siteDefaultLocale ?? 'en'
 	const nestedAssignments = await db
@@ -236,8 +260,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	})
 
 	return {
-		organization,
+		organization: { id: organization.id, slug: organization.slug },
 		defaultLocale,
+		healthFilter,
 		groups: groups.map((g) => ({
 			id: g.id,
 			name: g.name,
@@ -258,13 +283,22 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 }
 
 export default function ModifiersIndexRoute() {
-	const { organization, defaultLocale, groups } = useLoaderData<typeof loader>()
+	const {
+		organization,
+		defaultLocale,
+		groups: allGroups,
+		healthFilter,
+	} = useLoaderData<typeof loader>()
+	const groups = useMemo(() => {
+		if (!healthFilter) return allGroups
+		const ids = new Set(healthFilter.modifierGroupIds)
+		return allGroups.filter((group) => ids.has(group.id))
+	}, [allGroups, healthFilter])
 	const { _ } = useLingui()
 	const deleteFetcher = useFetcher()
 	const [deleteGroupId, setDeleteGroupId] = useState<string | null>(null)
-	const [duplicateEntity, setDuplicateEntity] = useState<MenuDuplicateEntity | null>(
-		null,
-	)
+	const [duplicateEntity, setDuplicateEntity] =
+		useState<MenuDuplicateEntity | null>(null)
 	const getFieldValue = useCallback(
 		(group: (typeof groups)[number], field: string) => {
 			switch (field) {
@@ -315,7 +349,15 @@ export default function ModifiersIndexRoute() {
 				}
 			/>
 
-			{groups.length === 0 ? (
+			{healthFilter ? (
+				<MenuHealthFilterNotice
+					checkKey={healthFilter.key}
+					count={groups.length}
+					clearTo={`/${organization.slug}/menu/modifiers`}
+				/>
+			) : null}
+
+			{allGroups.length === 0 ? (
 				<EmptyState
 					title={_(t`No modifier groups yet`)}
 					description={_(
@@ -336,7 +378,7 @@ export default function ModifiersIndexRoute() {
 						<EmptyState
 							title={_(t`No modifier groups match these filters`)}
 							description={_(
-								hasFilters
+								hasFilters || healthFilter
 									? t`Try adjusting your filters or clear them to see all modifier groups.`
 									: t`Create a modifier group to start offering custom choices.`,
 							)}

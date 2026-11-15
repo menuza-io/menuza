@@ -19,15 +19,35 @@ import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { showUndoToast } from '#app/components/undo-toast.ts'
 import {
+	CAPITAL_STYLES,
+	type MenuCard,
+	type MenuCardApplyInput,
+	type MenuCardUndo,
+} from '#app/utils/menu/menu-cards.ts'
+import {
+	isMenuCard,
 	type MenuSuggestion,
 	type MenuSuggestionBatch,
 	type MenuTextChange,
+	type MenuTextSuggestion,
 } from '#app/utils/menu/menu-suggestions.ts'
+import {
+	CardSkipMenu,
+	MenuReviewCardRow,
+	MenuReviewCardView,
+	cardKindTitle,
+	cardNeedsInput,
+	cardNeedsOwnReview,
+	initialCardOptionId,
+	type CardSkipChoice,
+} from './menu-review-card.tsx'
 
 /** Load the next batch when this few cards are left. */
 const PREFETCH_AT = 2
 /** The progress bar shows at most this many segments. */
 const MAX_SEGMENTS = 12
+/** Cards one bulk request may carry (the route's limit). */
+const CARDS_PER_REQUEST = 20
 
 type Availability = {
 	availabilityStatus: string
@@ -39,6 +59,25 @@ type Reply =
 	| { ok: true; results: Array<{ itemId: string; previous: MenuTextChange[] }> }
 	| { ok: true; previous: Availability & { updatedAt?: string } }
 	| { ok: true; enabled: boolean }
+	| { ok: true; undo: MenuCardUndo }
+	| { ok: true; results: CardResult[] }
+	| { ok: true; stored?: boolean }
+
+type CardResult = {
+	id: string
+	ok: boolean
+	undo?: MenuCardUndo
+	stored?: boolean
+	error?: string
+}
+
+type BulkReport = {
+	accepted: number
+	changed: number
+	refused: number
+	/** Cards that were never confirmed saved because a request failed. */
+	notApplied: number
+}
 
 class SuggestionRequestError extends Error {
 	constructor(
@@ -81,7 +120,7 @@ export type MenuReviewProps = {
 }
 
 function translationChanges(
-	suggestion: Extract<MenuSuggestion, { kind: 'translation' }>,
+	suggestion: Extract<MenuTextSuggestion, { kind: 'translation' }>,
 ): MenuTextChange[] {
 	const changes: MenuTextChange[] = []
 	if (suggestion.name) {
@@ -126,11 +165,33 @@ export function MenuReviewStack({
 	const [busy, setBusy] = useState(false)
 	const [confirmAll, setConfirmAll] = useState(false)
 	const [autoOn, setAutoOn] = useState(autoTranslate)
+	const [selecting, setSelecting] = useState(false)
+	const [selectedIds, setSelectedIds] = useState<string[]>([])
+	const [report, setReport] = useState<BulkReport | null>(null)
 	const changedRef = useRef(false)
+	const openRef = useRef(open)
+	const onChangedRef = useRef(onChanged)
+	const headingRef = useRef<HTMLHeadingElement>(null)
+	const selectRef = useRef<HTMLDivElement>(null)
+	const wasSelectMode = useRef(false)
 	const cardRef = useRef<HTMLDivElement>(null)
 	const requested = useRef(false)
 
 	useEffect(() => setAutoOn(autoTranslate), [autoTranslate])
+	useEffect(() => {
+		openRef.current = open
+		onChangedRef.current = onChanged
+	})
+
+	/** A change was saved: tell the page at once when the dialog is closed. */
+	function markChanged() {
+		changedRef.current = true
+		if (!openRef.current) {
+			changedRef.current = false
+			onChangedRef.current?.()
+		}
+	}
+
 
 	const loadBatch = useCallback(
 		async (seenIds: string[]) => {
@@ -189,10 +250,25 @@ export function MenuReviewStack({
 		if (open && currentId) cardRef.current?.focus({ preventScroll: true })
 	}, [open, currentId])
 
+	// Focus must not be left on a control that just disappeared.
+	const menuCardCount = queue.filter(isMenuCard).length
+	const selectMode = selecting && menuCardCount > 0
+	useEffect(() => {
+		if (!open || selectMode === wasSelectMode.current) return
+		wasSelectMode.current = selectMode
+		const target = selectMode
+			? selectRef.current
+			: (cardRef.current ?? headingRef.current)
+		target?.focus({ preventScroll: true })
+	}, [open, selectMode])
+
 	function handleOpenChange(next: boolean) {
 		onOpenChange(next)
 		if (!next) {
 			setConfirmAll(false)
+			setSelecting(false)
+			setSelectedIds([])
+			setReport(null)
 			if (changedRef.current) {
 				changedRef.current = false
 				onChanged?.()
@@ -207,6 +283,8 @@ export function MenuReviewStack({
 
 	/** Put a card back on top after its Undo. */
 	function restore(suggestions: MenuSuggestion[]) {
+		// The Undo toast outlives the dialog, so refresh the page right away.
+		if (suggestions.length > 0) onChangedRef.current?.()
 		setQueue((cards) => [
 			...suggestions,
 			...cards.filter((card) => !suggestions.some((s) => s.id === card.id)),
@@ -220,7 +298,7 @@ export function MenuReviewStack({
 		setBusy(true)
 		try {
 			const result = await work()
-			changedRef.current = true
+			markChanged()
 			return result
 		} catch (caught) {
 			toast.error(
@@ -236,7 +314,7 @@ export function MenuReviewStack({
 
 	async function acceptText(
 		suggestion: Extract<
-			MenuSuggestion,
+			MenuTextSuggestion,
 			{ kind: 'translation' | 'description' }
 		>,
 	) {
@@ -287,7 +365,7 @@ export function MenuReviewStack({
 
 	async function acceptAllTranslations() {
 		const translations = queue.filter(
-			(card): card is Extract<MenuSuggestion, { kind: 'translation' }> =>
+			(card): card is Extract<MenuTextSuggestion, { kind: 'translation' }> =>
 				card.kind === 'translation',
 		)
 		if (translations.length === 0) return
@@ -335,7 +413,7 @@ export function MenuReviewStack({
 	}
 
 	async function setItemAvailability(
-		suggestion: Extract<MenuSuggestion, { kind: 'long_unavailable' }>,
+		suggestion: Extract<MenuTextSuggestion, { kind: 'long_unavailable' }>,
 		target: 'available' | 'hidden',
 	) {
 		const reply = await run(() =>
@@ -377,7 +455,7 @@ export function MenuReviewStack({
 	}
 
 	async function hideCategory(
-		suggestion: Extract<MenuSuggestion, { kind: 'empty_category' }>,
+		suggestion: Extract<MenuTextSuggestion, { kind: 'empty_category' }>,
 	) {
 		const reply = await run(() =>
 			postSuggestions<{ ok: true; previous: Availability }>(orgSlug, {
@@ -407,6 +485,356 @@ export function MenuReviewStack({
 		})
 	}
 
+	// --- Review cards (#92 structure, #234 polish) ---------------------------
+
+	function cardErrorMessage(caught: unknown): string {
+		if (caught instanceof SuggestionRequestError) {
+			if (caught.code === 'stale_suggestion') {
+				return _(t`This changed since the suggestion was made`)
+			}
+			if (caught.code === 'pos_owned') {
+				return _(
+					t`Your POS manages this, so it can't be changed here. Change it in your POS.`,
+				)
+			}
+			if (caught.status === 429) {
+				return _(t`Too many changes at once. Wait a minute and try again.`)
+			}
+		}
+		return _(t`Couldn't save that change. Try again.`)
+	}
+
+	/** Take cards off the stack without a trip back (accepted, skipped or gone). */
+	function drop(ids: string[]) {
+		if (ids.length === 0) return
+		const set = new Set(ids)
+		setQueue((cards) => cards.filter((card) => !set.has(card.id)))
+		setReviewed((value) => value + ids.length)
+		setSelectedIds((current) => current.filter((id) => !set.has(id)))
+	}
+
+	/** The owner picks the capitals style once; later cards reuse it. */
+	async function rememberCapitalStyle(card: MenuCard, optionId?: string) {
+		if (card.kind !== 'capitals') return
+		const code = card.options?.find((option) => option.id === optionId)?.code
+		if (!code || !(CAPITAL_STYLES as readonly string[]).includes(code)) return
+		try {
+			await postSuggestions(orgSlug, {
+				intent: 'set-card-setting',
+				setting: { key: 'capitalStyle', value: code },
+			})
+		} catch {
+			// The fix is saved; the style is only a convenience.
+		}
+	}
+
+	function applyInput(
+		card: MenuCard,
+		optionId?: string,
+		input?: string,
+	): MenuCardApplyInput {
+		return {
+			kind: card.kind,
+			id: card.id,
+			refs: card.refs,
+			params: card.params,
+			...(optionId ? { optionId } : {}),
+			...(input ? { input } : {}),
+		}
+	}
+
+	async function acceptCard(
+		card: MenuCard,
+		optionId: string | undefined,
+		input: string | undefined,
+	) {
+		setBusy(true)
+		try {
+			const reply = await postSuggestions<{ ok: true; undo: MenuCardUndo }>(
+				orgSlug,
+				{ intent: 'apply-card', card: applyInput(card, optionId, input) },
+			)
+			markChanged()
+			await rememberCapitalStyle(card, optionId)
+			advance()
+			const title = cardKindTitle(_, card.kind)
+			showUndoToast({
+				message: _(t`Saved: ${title}`),
+				undoLabel: _(t`Undo`),
+				undoneMessage: _(t`Change undone`),
+				failedMessage,
+				onUndo: async () => {
+					await postSuggestions(orgSlug, {
+						intent: 'undo-card',
+						undo: reply.undo,
+					})
+					restore([card])
+				},
+			})
+		} catch (caught) {
+			toast.error(cardErrorMessage(caught))
+			if (
+				caught instanceof SuggestionRequestError &&
+				caught.code === 'stale_suggestion'
+			) {
+				drop([card.id])
+			}
+		} finally {
+			setBusy(false)
+		}
+	}
+
+	async function skipCard(card: MenuCard, choice: CardSkipChoice) {
+		if (choice === 'later') {
+			advance()
+			return
+		}
+		setBusy(true)
+		try {
+			await postSuggestions(orgSlug, {
+				intent: 'skip-card',
+				id: card.id,
+				kind: card.kind,
+				reason: choice,
+			})
+			advance()
+			if (choice === 'not_a_problem') {
+				showUndoToast({
+					message: _(t`We won't suggest this again`),
+					undoLabel: _(t`Undo`),
+					undoneMessage: _(t`Suggestion is back`),
+					failedMessage,
+					onUndo: async () => {
+						await postSuggestions(orgSlug, {
+							intent: 'unskip-card',
+							id: card.id,
+							kind: card.kind,
+						})
+						restore([card])
+					},
+				})
+			}
+		} catch (caught) {
+			toast.error(cardErrorMessage(caught))
+		} finally {
+			setBusy(false)
+		}
+	}
+
+	/**
+	 * Send cards in requests of CARDS_PER_REQUEST. Each answer is handled as it
+	 * arrives, so a later failure never hides what an earlier request saved.
+	 * Returns the cards whose request did not complete (all of them after the
+	 * first failure) and the failure, if any.
+	 */
+	async function sendInChunks(
+		cards: MenuCard[],
+		send: (chunk: MenuCard[]) => Promise<CardResult[]>,
+		onChunk: (chunk: MenuCard[], results: CardResult[]) => void,
+	): Promise<{ unsent: MenuCard[]; failure: unknown }> {
+		for (let start = 0; start < cards.length; start += CARDS_PER_REQUEST) {
+			const chunk = cards.slice(start, start + CARDS_PER_REQUEST)
+			try {
+				onChunk(chunk, await send(chunk))
+			} catch (failure) {
+				return { unsent: cards.slice(start), failure }
+			}
+		}
+		return { unsent: [], failure: null }
+	}
+
+	async function acceptSelected() {
+		const cards = queue.filter(
+			(card): card is MenuCard =>
+				isMenuCard(card) &&
+				selectedIds.includes(card.id) &&
+				!cardNeedsOwnReview(card) &&
+				!cardNeedsInput(card),
+		)
+		if (cards.length === 0) return
+		setBusy(true)
+		setReport(null)
+		const accepted: MenuCard[] = []
+		const undos = new Map<string, MenuCardUndo>()
+		const changed: MenuCard[] = []
+		let refused = 0
+		let outcome: { unsent: MenuCard[]; failure: unknown } = {
+			unsent: [],
+			failure: null,
+		}
+		try {
+			outcome = await sendInChunks(
+				cards,
+				async (chunk) => {
+					const reply = await postSuggestions<{
+						ok: true
+						results: CardResult[]
+					}>(orgSlug, {
+						intent: 'apply-cards',
+						cards: chunk.map((card) =>
+							applyInput(card, initialCardOptionId(card)),
+						),
+					})
+					return reply.results
+				},
+				(chunk, results) => {
+					const byId = new Map(results.map((result) => [result.id, result]))
+					const savedHere: MenuCard[] = []
+					const staleHere: MenuCard[] = []
+					for (const card of chunk) {
+						const result = byId.get(card.id)
+						if (result?.ok && result.undo) {
+							savedHere.push(card)
+							undos.set(card.id, result.undo)
+						} else if (result?.error === 'stale_suggestion') {
+							staleHere.push(card)
+						} else {
+							refused += 1
+						}
+					}
+					if (savedHere.length > 0) markChanged()
+					accepted.push(...savedHere)
+					changed.push(...staleHere)
+					drop([...savedHere, ...staleHere].map((card) => card.id))
+				},
+			)
+		} finally {
+			setBusy(false)
+		}
+		const capitals = accepted.find((card) => card.kind === 'capitals')
+		if (capitals) {
+			await rememberCapitalStyle(capitals, initialCardOptionId(capitals))
+		}
+		setReport({
+			accepted: accepted.length,
+			changed: changed.length,
+			refused,
+			notApplied: outcome.unsent.length,
+		})
+		if (outcome.failure) toast.error(cardErrorMessage(outcome.failure))
+		if (accepted.length > 0) {
+			const count = accepted.length
+			const entries = accepted.map((card) => ({
+				card,
+				undo: undos.get(card.id)!,
+			}))
+			showUndoToast({
+				message: _(
+					plural(count, {
+						one: '# change saved',
+						other: '# changes saved',
+					}),
+				),
+				undoLabel: _(t`Undo`),
+				undoneMessage: _(t`Changes undone`),
+				failedMessage,
+				onUndo: async () => {
+					const restored: MenuCard[] = []
+					try {
+						for (const entry of [...entries].reverse()) {
+							await postSuggestions(orgSlug, {
+								intent: 'undo-card',
+								undo: entry.undo,
+							})
+							restored.push(entry.card)
+						}
+					} finally {
+						restore(restored.reverse())
+					}
+				},
+			})
+		}
+	}
+
+	async function skipSelected(choice: CardSkipChoice) {
+		if (choice === 'later') return
+		const cards = queue.filter(
+			(card): card is MenuCard =>
+				isMenuCard(card) && selectedIds.includes(card.id),
+		)
+		if (cards.length === 0) return
+		setBusy(true)
+		setReport(null)
+		const done: MenuCard[] = []
+		let refused = 0
+		let outcome: { unsent: MenuCard[]; failure: unknown } = {
+			unsent: [],
+			failure: null,
+		}
+		try {
+			outcome = await sendInChunks(
+				cards,
+				async (chunk) => {
+					const reply = await postSuggestions<{
+						ok: true
+						results: CardResult[]
+					}>(orgSlug, {
+						intent: 'skip-cards',
+						cards: chunk.map((card) => ({
+							id: card.id,
+							kind: card.kind,
+							reason: choice,
+						})),
+					})
+					return reply.results
+				},
+				(chunk, results) => {
+					const doneHere: MenuCard[] = []
+					for (const card of chunk) {
+						if (results.find((result) => result.id === card.id)?.ok) {
+							doneHere.push(card)
+						} else {
+							refused += 1
+						}
+					}
+					done.push(...doneHere)
+					drop(doneHere.map((card) => card.id))
+				},
+			)
+		} finally {
+			setBusy(false)
+		}
+		if (outcome.failure) {
+			toast.error(cardErrorMessage(outcome.failure))
+		}
+		if (outcome.failure || refused > 0) {
+			setReport({
+				accepted: 0,
+				changed: 0,
+				refused,
+				notApplied: outcome.unsent.length,
+			})
+		}
+		if (choice === 'not_a_problem' && done.length > 0) {
+			showUndoToast({
+				message: _(
+					plural(done.length, {
+						one: "# suggestion won't come back",
+						other: "# suggestions won't come back",
+					}),
+				),
+				undoLabel: _(t`Undo`),
+				undoneMessage: _(t`Suggestions are back`),
+				failedMessage,
+				onUndo: async () => {
+					const restored: MenuCard[] = []
+					try {
+						for (const card of done) {
+							await postSuggestions(orgSlug, {
+								intent: 'unskip-card',
+								id: card.id,
+								kind: card.kind,
+							})
+							restored.push(card)
+						}
+					} finally {
+						restore(restored)
+					}
+				},
+			})
+		}
+	}
+
 	async function toggleAutoTranslate(next: boolean) {
 		setAutoOn(next)
 		try {
@@ -414,13 +842,20 @@ export function MenuReviewStack({
 				intent: 'set-auto-translate',
 				enabled: next,
 			})
-			changedRef.current = true
+			markChanged()
 		} catch {
 			setAutoOn(!next)
 			toast.error(_(t`Couldn't save that setting. Try again.`))
 		}
 	}
 
+	const menuCards = queue.filter(isMenuCard)
+	const chosenCards = menuCards.filter((card) => selectedIds.includes(card.id))
+	const needsInputChosen = chosenCards.some((card) => cardNeedsInput(card))
+	const needsReviewChosen = chosenCards.some((card) =>
+		cardNeedsOwnReview(card),
+	)
+	const bulkBlocked = needsInputChosen || needsReviewChosen
 	const pendingTranslations = queue.filter(
 		(card) => card.kind === 'translation',
 	).length
@@ -436,7 +871,7 @@ export function MenuReviewStack({
 		<Dialog open={open} onOpenChange={handleOpenChange}>
 			<DialogContent className="gap-5 sm:max-w-md">
 				<DialogHeader>
-					<DialogTitle>
+					<DialogTitle ref={headingRef} tabIndex={-1}>
 						<Trans>Review suggestions</Trans>
 					</DialogTitle>
 					<DialogDescription>
@@ -450,10 +885,6 @@ export function MenuReviewStack({
 				{knownTotal > 0 ? (
 					<ReviewProgress reviewed={reviewed} total={knownTotal} />
 				) : null}
-
-				<div aria-live="polite" className="sr-only">
-					{current ? <SuggestionTitle suggestion={current} /> : null}
-				</div>
 
 				{error ? (
 					<div className="flex flex-col items-start gap-3 rounded-xl border p-4">
@@ -477,6 +908,99 @@ export function MenuReviewStack({
 							</Button>
 						) : null}
 					</div>
+				) : selectMode ? (
+					<div className="space-y-3">
+						<div className="flex flex-wrap items-center justify-between gap-2">
+							<p className="text-sm tabular-nums">
+								<Plural
+									value={chosenCards.length}
+									one="# suggestion selected"
+									other="# suggestions selected"
+								/>
+							</p>
+							<div className="flex gap-1">
+								<Button
+									variant="ghost"
+									size="sm"
+									onClick={() =>
+										setSelectedIds(
+											chosenCards.length === menuCards.length
+												? []
+												: menuCards.map((card) => card.id),
+										)
+									}
+								>
+									{chosenCards.length === menuCards.length ? (
+										<Trans>Clear</Trans>
+									) : (
+										<Trans>Select all</Trans>
+									)}
+								</Button>
+								<Button
+									variant="ghost"
+									size="sm"
+									onClick={() => {
+										setSelecting(false)
+										setSelectedIds([])
+									}}
+								>
+									<Trans>Done selecting</Trans>
+								</Button>
+							</div>
+						</div>
+						<div
+							ref={selectRef}
+							tabIndex={-1}
+							role="group"
+							aria-label={_(t`Suggestions to select`)}
+							className="max-h-72 space-y-2 overflow-y-auto outline-none focus-visible:ring-2"
+						>
+							{menuCards.map((card) => (
+								<MenuReviewCardRow
+									key={card.id}
+									card={card}
+									checked={selectedIds.includes(card.id)}
+									onCheckedChange={(checked) =>
+										setSelectedIds((ids) =>
+											checked
+												? [...ids, card.id]
+												: ids.filter((id) => id !== card.id),
+										)
+									}
+								/>
+							))}
+						</div>
+						{needsInputChosen ? (
+							<p className="text-muted-foreground text-xs">
+								<Trans>
+									Some selected suggestions need a value. Accept those on their
+									own.
+								</Trans>
+							</p>
+						) : null}
+						{needsReviewChosen ? (
+							<p className="text-muted-foreground text-xs">
+								<Trans>
+									Some selected suggestions merge dishes or add choices. Look at
+									each one and accept it on its own.
+								</Trans>
+							</p>
+						) : null}
+						<div className="flex flex-wrap justify-end gap-2">
+							<CardSkipMenu
+								includeLater={false}
+								label={_(t`Skip selected`)}
+								disabled={busy || chosenCards.length === 0}
+								onChoose={(choice) => void skipSelected(choice)}
+							/>
+							<Button
+								disabled={busy || chosenCards.length === 0 || bulkBlocked}
+								onClick={() => void acceptSelected()}
+							>
+								<Trans>Accept selected</Trans>
+							</Button>
+						</div>
+					</div>
 				) : current ? (
 					<div className="relative pb-3">
 						{/* The cards waiting behind this one. */}
@@ -492,18 +1016,31 @@ export function MenuReviewStack({
 								className="bg-card absolute inset-x-3 bottom-1 h-8 rounded-xl border opacity-80"
 							/>
 						) : null}
-						<SuggestionCard
-							key={current.id}
-							ref={cardRef}
-							suggestion={current}
-							busy={busy}
-							onSkip={() => advance()}
-							onAcceptText={(suggestion) => void acceptText(suggestion)}
-							onItemAvailability={(suggestion, target) =>
-								void setItemAvailability(suggestion, target)
-							}
-							onHideCategory={(suggestion) => void hideCategory(suggestion)}
-						/>
+						{isMenuCard(current) ? (
+							<MenuReviewCardView
+								key={current.id}
+								ref={cardRef}
+								card={current}
+								busy={busy}
+								onAccept={(optionId, input) =>
+									void acceptCard(current, optionId, input)
+								}
+								onSkip={(choice) => void skipCard(current, choice)}
+							/>
+						) : (
+							<SuggestionCard
+								key={current.id}
+								ref={cardRef}
+								suggestion={current}
+								busy={busy}
+								onSkip={() => advance()}
+								onAcceptText={(suggestion) => void acceptText(suggestion)}
+								onItemAvailability={(suggestion, target) =>
+									void setItemAvailability(suggestion, target)
+								}
+								onHideCategory={(suggestion) => void hideCategory(suggestion)}
+							/>
+						)}
 					</div>
 				) : loading ? (
 					<div className="space-y-3 rounded-xl border p-4" aria-busy>
@@ -535,6 +1072,65 @@ export function MenuReviewStack({
 							<Trans>Done</Trans>
 						</Button>
 					</div>
+				) : null}
+
+				{/* One live region for the whole dialog: only its text changes. */}
+				<div
+					role="status"
+					className={report ? 'space-y-0.5 text-sm' : 'sr-only'}
+				>
+					{report && report.accepted > 0 ? (
+						<p>
+							<Plural
+								value={report.accepted}
+								one="# suggestion accepted"
+								other="# suggestions accepted"
+							/>
+						</p>
+					) : null}
+					{report && report.changed > 0 ? (
+						<p className="text-muted-foreground">
+							<Plural
+								value={report.changed}
+								one="# changed since it was suggested, so it was left out"
+								other="# changed since they were suggested, so they were left out"
+							/>
+						</p>
+					) : null}
+					{report && report.refused > 0 ? (
+						<p className="text-destructive">
+							<Plural
+								value={report.refused}
+								one="# couldn't be saved"
+								other="# couldn't be saved"
+							/>
+						</p>
+					) : null}
+					{report && report.notApplied > 0 ? (
+						<p className="text-destructive">
+							<Plural
+								value={report.notApplied}
+								one="# suggestion was not applied. Try again."
+								other="# suggestions were not applied. Try again."
+							/>
+						</p>
+					) : null}
+				</div>
+
+				{menuCards.length > 1 && !selectMode && !error ? (
+					<Button
+						variant="ghost"
+						size="sm"
+						className="self-start"
+						disabled={busy}
+						onClick={() => {
+							setReport(null)
+							setSelecting(true)
+						}}
+					>
+						<Icon name="list" className="size-4" />
+						<Trans>Select several</Trans>
+					</Button>
 				) : null}
 
 				{aiUnavailable && !error ? (
@@ -656,7 +1252,7 @@ function ReviewProgress({
 	)
 }
 
-function SuggestionTitle({ suggestion }: { suggestion: MenuSuggestion }) {
+function SuggestionTitle({ suggestion }: { suggestion: MenuTextSuggestion }) {
 	return suggestion.kind === 'empty_category' ? (
 		<>{suggestion.categoryName}</>
 	) : (
@@ -664,7 +1260,7 @@ function SuggestionTitle({ suggestion }: { suggestion: MenuSuggestion }) {
 	)
 }
 
-function SuggestionReason({ suggestion }: { suggestion: MenuSuggestion }) {
+function SuggestionReason({ suggestion }: { suggestion: MenuTextSuggestion }) {
 	switch (suggestion.kind) {
 		case 'translation': {
 			const language = getSiteLocaleNativeLabel(suggestion.sourceLocale)
@@ -706,7 +1302,7 @@ function SuggestionReason({ suggestion }: { suggestion: MenuSuggestion }) {
 	}
 }
 
-function SuggestedLabel({ suggestion }: { suggestion: MenuSuggestion }) {
+function SuggestedLabel({ suggestion }: { suggestion: MenuTextSuggestion }) {
 	switch (suggestion.kind) {
 		case 'translation': {
 			const language = getSiteLocaleNativeLabel(suggestion.locale)
@@ -721,7 +1317,7 @@ function SuggestedLabel({ suggestion }: { suggestion: MenuSuggestion }) {
 	}
 }
 
-function SuggestedValue({ suggestion }: { suggestion: MenuSuggestion }) {
+function SuggestedValue({ suggestion }: { suggestion: MenuTextSuggestion }) {
 	switch (suggestion.kind) {
 		case 'translation': {
 			const dir = getSiteLocaleDirection(suggestion.locale)
@@ -762,21 +1358,21 @@ function SuggestionCard({
 	onHideCategory,
 	ref,
 }: {
-	suggestion: MenuSuggestion
+	suggestion: MenuTextSuggestion
 	busy: boolean
 	onSkip: () => void
 	onAcceptText: (
 		suggestion: Extract<
-			MenuSuggestion,
+			MenuTextSuggestion,
 			{ kind: 'translation' | 'description' }
 		>,
 	) => void
 	onItemAvailability: (
-		suggestion: Extract<MenuSuggestion, { kind: 'long_unavailable' }>,
+		suggestion: Extract<MenuTextSuggestion, { kind: 'long_unavailable' }>,
 		target: 'available' | 'hidden',
 	) => void
 	onHideCategory: (
-		suggestion: Extract<MenuSuggestion, { kind: 'empty_category' }>,
+		suggestion: Extract<MenuTextSuggestion, { kind: 'empty_category' }>,
 	) => void
 	ref: React.Ref<HTMLDivElement>
 }) {

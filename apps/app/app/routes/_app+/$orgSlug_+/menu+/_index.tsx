@@ -66,7 +66,7 @@ import {
 import { makeMenuItemDragId } from '#app/components/menu/menu-sortable-item.tsx'
 import { requireMenuRead } from '#app/utils/menu/access.server.ts'
 import { loadMenuReviewSettings } from '#app/utils/menu/menu-auto-translate.server.ts'
-import { loadMenuHealth } from '#app/utils/menu/menu-health.server.ts'
+import { loadMenuHealthSummary } from '#app/utils/menu/menu-health.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 
 function collisionStrategy(args: any) {
@@ -114,7 +114,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 				asc(OrganizationMenu.createdAt),
 			],
 		}),
-		loadMenuHealth(organization),
+		loadMenuHealthSummary(organization),
 		loadMenuReviewSettings(organization, userId),
 	])
 
@@ -173,13 +173,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	return {
 		organization: { id: organization.id, slug: organization.slug },
 		defaultLocale,
-		// The card needs counts only; the lists recompute the ids they filter by.
-		health: {
-			...health,
-			checks: health.checks.map(
-				({ itemIds: _itemIds, categoryIds: _categoryIds, ...check }) => check,
-			),
-		},
+		// Counts, the letter and up to 50 named records per check (with their
+		// dismissed ones); the filtered lists recompute the full id lists.
+		health,
 		review,
 		menus: menus.map((m) => ({
 			id: m.id,

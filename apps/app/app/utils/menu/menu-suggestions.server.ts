@@ -27,6 +27,13 @@ import {
 	translateTexts,
 } from '#app/utils/translate.server.ts'
 import {
+	cardWantsAi,
+	detectCardCandidates,
+	finishCardBatch,
+	loadMenuCardContext,
+} from './menu-card-generate.server.ts'
+import { type MenuCardDraft } from './menu-card-kinds.ts'
+import {
 	computeMenuHealthFor,
 	MENU_HEALTH_ITEM_COLUMNS,
 } from './menu-health.server.ts'
@@ -70,6 +77,8 @@ export type SuggestionDeps = {
 	translate?: typeof translateTexts
 	translationConfigured?: () => boolean
 	now?: Date
+	/** Overrides the `menu.structure_suggestions` flag (tests). */
+	structureEnabled?: boolean
 }
 
 type LoadedItem = {
@@ -239,12 +248,22 @@ export async function generateMenuSuggestions(
 		categories,
 		categoryIdsWithItems: filledCategories.map((row) => row.categoryId),
 	})
-	const candidates = buildMenuSuggestionCandidates({
-		health,
-		items,
-		locales,
-		defaultLocale,
+	// Review cards (#234 polish, #92 structure) come after the four text
+	// kinds, through the same `seen` cursor.
+	const cardContext = await loadMenuCardContext(organization, {
+		structureEnabled: deps.structureEnabled,
+		now,
 	})
+	const cardDrafts = await detectCardCandidates(organization, cardContext)
+	const candidates: MenuSuggestionCandidate[] = [
+		...buildMenuSuggestionCandidates({
+			health,
+			items,
+			locales,
+			defaultLocale,
+		}),
+		...cardDrafts.map((draft) => ({ kind: draft.kind, id: draft.id, draft })),
+	]
 	const { batch, remaining, total } = pickSuggestionBatch(candidates, seen)
 	if (batch.length === 0) {
 		return {
@@ -259,10 +278,14 @@ export async function generateMenuSuggestions(
 		}
 	}
 
-	const needsAi = batch.some(
-		(candidate) =>
-			candidate.kind === 'translation' || candidate.kind === 'description',
+	const batchDrafts: MenuCardDraft[] = batch.flatMap((candidate) =>
+		'draft' in candidate ? [candidate.draft] : [],
 	)
+	const needsAi =
+		batch.some(
+			(candidate) =>
+				candidate.kind === 'translation' || candidate.kind === 'description',
+		) || batchDrafts.some(cardWantsAi)
 	if (needsAi) {
 		const limit = await checkRateLimit(
 			{ type: 'org', value: organization.id },
@@ -425,9 +448,26 @@ export async function generateMenuSuggestions(
 		}
 	}
 
+	// 3. Review cards: one more model call at most, for all of them.
+	const finished = await finishCardBatch({
+		organization,
+		graph: cardContext.graph,
+		ctx: cardContext.ctx,
+		drafts: batchDrafts,
+		generate: (prompt) =>
+			withTimeout(generate({ prompt }), MENU_SUGGESTIONS_TIMEOUT_MS),
+	})
+	if (finished.aiUnavailable) aiUnavailable = true
+	const cardsById = new Map(finished.cards.map((card) => [card.id, card]))
+
 	const categoriesById = new Map(categories.map((row) => [row.id, row]))
 	const suggestions: MenuSuggestion[] = []
 	for (const candidate of batch) {
+		if ('draft' in candidate) {
+			const card = cardsById.get(candidate.id)
+			if (card) suggestions.push(card)
+			continue
+		}
 		switch (candidate.kind) {
 			case 'translation': {
 				const entry = translations.get(candidate.id)
