@@ -9,6 +9,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { insertTestUser } from '#tests/dashboard-utils.ts'
 import { createTestOrganization } from '#tests/test-utils.ts'
 import {
+	captureMenuSnapshotContent,
 	createMenuSnapshot,
 	loadMenuSnapshotContent,
 	MenuSnapshotError,
@@ -169,6 +170,94 @@ describe('snapshot.server', () => {
 			.from(MenuSnapshot)
 			.where(eq(MenuSnapshot.organizationId, organizationId))
 		expect(remaining.some((row) => row.id === ids[0])).toBe(false)
-		expect(remaining.length).toBe(54)
+		expect(remaining).toHaveLength(54)
+	})
+
+	it('keeps the newest twenty before_suggestion snapshots whatever their age, apart from the fifty of other reasons', async () => {
+		await seedMenu(organizationId)
+		const old = (days: number) => new Date(Date.now() - days * 24 * 60 * 60 * 1000)
+		const suggestionIds: string[] = []
+		for (let i = 0; i < 25; i++) {
+			const id = await createMenuSnapshot({
+				organizationId,
+				reason: 'before_suggestion',
+				userId,
+			})
+			// Oldest first, all far past the 90 day retention.
+			await db
+				.update(MenuSnapshot)
+				.set({ createdAt: old(400 - i) })
+				.where(eq(MenuSnapshot.id, id))
+			suggestionIds.push(id)
+		}
+		const manualIds: string[] = []
+		for (let i = 0; i < 50; i++) {
+			const id = await createMenuSnapshot({
+				organizationId,
+				reason: 'manual',
+				userId,
+			})
+			await db
+				.update(MenuSnapshot)
+				.set({ createdAt: old(200 - i) })
+				.where(eq(MenuSnapshot.id, id))
+			manualIds.push(id)
+		}
+
+		const pruned = await pruneMenuSnapshotsForOrganization(organizationId)
+		expect(pruned).toBe(5)
+
+		const remaining = await db
+			.select()
+			.from(MenuSnapshot)
+			.where(eq(MenuSnapshot.organizationId, organizationId))
+		const ids = new Set(remaining.map((row) => row.id))
+		// The newest 20 suggestion snapshots stay, the oldest 5 go.
+		expect(suggestionIds.slice(5).every((id) => ids.has(id))).toBe(true)
+		expect(suggestionIds.slice(0, 5).some((id) => ids.has(id))).toBe(false)
+		// All 50 others stay: suggestions do not eat their budget.
+		expect(manualIds.every((id) => ids.has(id))).toBe(true)
+		expect(remaining).toHaveLength(70)
+		// The pruned ones lose their stored JSON too.
+		for (const id of suggestionIds.slice(0, 5)) {
+			expect([...snapshotStore.keys()].some((key) => key.endsWith(`${id}.json`))).toBe(false)
+		}
+	})
+
+	it('does not let a flood of other snapshots push out suggestion snapshots', async () => {
+		await seedMenu(organizationId)
+		const suggestion = await createMenuSnapshot({
+			organizationId,
+			reason: 'before_suggestion',
+			userId,
+		})
+		await db
+			.update(MenuSnapshot)
+			.set({ createdAt: new Date(Date.now() - 200 * 24 * 60 * 60 * 1000) })
+			.where(eq(MenuSnapshot.id, suggestion))
+		for (let i = 0; i < 55; i++) {
+			await createMenuSnapshot({ organizationId, reason: 'manual', userId })
+		}
+		await pruneMenuSnapshotsForOrganization(organizationId)
+		const rows = await db
+			.select()
+			.from(MenuSnapshot)
+			.where(eq(MenuSnapshot.organizationId, organizationId))
+		expect(rows.some((row) => row.id === suggestion)).toBe(true)
+	})
+
+	it('stores a supplied content instead of reading the menu again', async () => {
+		const item = await seedMenu(organizationId)
+		const content = await captureMenuSnapshotContent(organizationId)
+		await db.delete(OrganizationMenuItem).where(eq(OrganizationMenuItem.id, item.id))
+		const snapshotId = await createMenuSnapshot({
+			organizationId,
+			reason: 'before_suggestion',
+			userId,
+			content,
+		})
+		const loaded = await loadMenuSnapshotContent(snapshotId, organizationId)
+		expect(loaded.content.items.map((row) => row.id)).toEqual([item.id])
+		expect(loaded.meta.itemCount).toBe(1)
 	})
 })

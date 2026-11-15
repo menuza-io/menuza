@@ -23,12 +23,12 @@ import {
 	type MenuSnapshotReason,
 	ConfigFlag,
 } from '@repo/database'
+import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 import {
 	deleteMenuSnapshotJson,
 	readMenuSnapshotJson,
 	uploadMenuSnapshotJson,
 } from '#app/utils/storage.server.ts'
-import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 import {
 	MENU_SNAPSHOT_VERSION,
 	type MenuSnapshotContent,
@@ -41,7 +41,7 @@ const SNAPSHOT_RETENTION_MS = 90 * 24 * 60 * 60 * 1000
 type DbClient = typeof db
 type MenuDbClient = Parameters<Parameters<typeof db.transaction>[0]>[0]
 
-function reviveDates(row: Record<string, unknown>): Record<string, unknown> {
+export function reviveDates(row: Record<string, unknown>): Record<string, unknown> {
 	const out: Record<string, unknown> = { ...row }
 	for (const key of ['createdAt', 'updatedAt', 'unavailableUntil'] as const) {
 		const value = out[key]
@@ -189,14 +189,18 @@ export async function createMenuSnapshot({
 	userId,
 	label,
 	client = db,
+	content: captured,
 }: {
 	organizationId: string
 	reason: MenuSnapshotReason | string
 	userId: string | null
 	label?: string | null
 	client?: DbClient
+	/** Rows already captured in this request (saves a second read). */
+	content?: MenuSnapshotContent
 }) {
-	const content = await captureMenuSnapshotContent(organizationId, client)
+	const content =
+		captured ?? (await captureMenuSnapshotContent(organizationId, client))
 	const json = JSON.stringify(content)
 	const contentHash = await sha256Hex(json)
 	const snapshotId = createId()
@@ -263,7 +267,7 @@ export async function loadMenuSnapshotContent(
 	}
 }
 
-async function assertRestoreLockFree(organizationId: string) {
+export async function assertRestoreLockFree(organizationId: string) {
 	const [row] = await db
 		.select({ value: ConfigFlag.value })
 		.from(ConfigFlag)
@@ -299,7 +303,7 @@ async function setRestoreLock(organizationId: string, locked: boolean) {
 		)
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 async function upsertTable(
 	tx: MenuDbClient,
 	table: any,
@@ -329,7 +333,7 @@ async function removeAddedRecords(
 	const optionIds = new Set(content.options.map((row) => row.id))
 
 	const assignmentFilters = async (
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		 
 		table: any,
 		snapIds: Set<string>,
 		liveJoin: () => Promise<string[]>,
@@ -439,7 +443,7 @@ async function removeAddedRecords(
 	)
 
 	const deleteOrgRows = async (
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		 
 		table: any,
 		keepIds: Set<string>,
 	) => {
@@ -590,6 +594,9 @@ export async function restoreMenuSnapshot({
 	return { beforeRestoreId, missingImageKeys }
 }
 
+/** Review-stack Undo snapshots kept per organization, whatever their age. */
+export const SUGGESTION_SNAPSHOT_RETENTION_COUNT = 20
+
 export async function pruneMenuSnapshotsForOrganization(organizationId: string) {
 	const rows = await db
 		.select()
@@ -597,13 +604,22 @@ export async function pruneMenuSnapshotsForOrganization(organizationId: string) 
 		.where(eq(MenuSnapshot.organizationId, organizationId))
 		.orderBy(desc(MenuSnapshot.createdAt))
 
+	// One snapshot per accepted review card would crowd out the rest, so
+	// they have their own budget: the newest 20, regardless of age, and they
+	// never count toward the 50 kept of the other reasons.
+	const suggestionRows = rows.filter((row) => row.reason === 'before_suggestion')
+	const otherRows = rows.filter((row) => row.reason !== 'before_suggestion')
+
 	const cutoff = Date.now() - SNAPSHOT_RETENTION_MS
 	const keep = new Set<string>()
-	for (const row of rows.slice(0, SNAPSHOT_RETENTION_COUNT)) {
+	for (const row of otherRows.slice(0, SNAPSHOT_RETENTION_COUNT)) {
 		keep.add(row.id)
 	}
-	for (const row of rows) {
+	for (const row of otherRows) {
 		if (row.createdAt.getTime() >= cutoff) keep.add(row.id)
+	}
+	for (const row of suggestionRows.slice(0, SUGGESTION_SNAPSHOT_RETENTION_COUNT)) {
+		keep.add(row.id)
 	}
 
 	const prune = rows.filter((row) => !keep.has(row.id))

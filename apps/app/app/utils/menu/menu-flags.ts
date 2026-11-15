@@ -1,6 +1,8 @@
 export const MENU_FLAG_KEYS = {
 	history: 'menu.history',
 	bulkEdit: 'menu.bulk_edit',
+	/** #92 structure cards in the review stack (default off). */
+	structureSuggestions: 'menu.structure_suggestions',
 } as const
 
 export type MenuFlagName = keyof typeof MENU_FLAG_KEYS

@@ -52,3 +52,10 @@ export async function getMenuBulkEditEnabled(organizationId: string) {
 		await getFeatureFlag(MENU_FLAG_KEYS.bulkEdit, { organizationId }),
 	)
 }
+
+/** #92 structure cards in the review stack; default off. */
+export async function getMenuStructureSuggestionsEnabled(organizationId: string) {
+	return isMenuFlagOn(
+		await getFeatureFlag(MENU_FLAG_KEYS.structureSuggestions, { organizationId }),
+	)
+}

@@ -7,7 +7,8 @@ import {
 	OrganizationMenuItem,
 	OrganizationMenuItemCategoryAssignment,
 } from '@repo/database'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { z } from 'zod'
 import { setupTestOrgWithUser } from '#tests/test-utils.ts'
 
 vi.hoisted(() => {
@@ -38,6 +39,18 @@ import {
 	getMenuAutoTranslate,
 	setMenuAutoTranslate,
 } from './menu-auto-translate.server.ts'
+import {
+	emptyKind,
+	type MenuCardDraft,
+	type MenuCardKindImpl,
+} from './menu-card-kinds.ts'
+import { setMenuCardKindForTests } from './menu-card-plans.server.ts'
+import {
+	menuCardFingerprint,
+	menuCardId,
+	MENU_CARD_KINDS,
+	type MenuCardKind,
+} from './menu-cards.ts'
 import {
 	buildDescriptionPrompt,
 	generateMenuSuggestions,
@@ -80,7 +93,13 @@ function fakeTranslate() {
 }
 
 const flagIds: string[] = []
+// The text-kind tests below are about the four text kinds only: keep the
+// review-card detectors (built in parallel) out of them.
+beforeEach(() => {
+	for (const kind of MENU_CARD_KINDS) setMenuCardKindForTests(kind, emptyKind(kind))
+})
 afterEach(async () => {
+	for (const kind of MENU_CARD_KINDS) setMenuCardKindForTests(kind, null)
 	for (const id of flagIds.splice(0)) {
 		await db.delete(ConfigFlag).where(eq(ConfigFlag.id, id))
 	}
@@ -404,5 +423,310 @@ describe('auto-translate new dishes', () => {
 		)
 		expect(outcome).toBe('failed')
 		consoleError.mockRestore()
+	})
+})
+
+// --- Review cards in the batch ----------------------------------------------------
+
+/** One card per dish whose name starts with `prefix`; the fix moves it. */
+function cardKind(
+	kind: MenuCardKind,
+	prefix: string,
+	extra: Partial<MenuCardKindImpl> = {},
+): MenuCardKindImpl {
+	return {
+		kind,
+		detect: (graph) =>
+			graph.items
+				.filter((item) => item.displayName.includes(`"${prefix}`))
+				.map((item): MenuCardDraft => {
+					const refs = [
+						{ type: 'item' as const, id: item.id, updatedAt: item.updatedAt },
+					]
+					return {
+						kind,
+						id: menuCardId(kind, item.id),
+						primary: { type: 'item', id: item.id },
+						subject: item.id,
+						refs,
+						fingerprint: menuCardFingerprint(refs),
+						params: { itemId: item.id },
+						preview: { before: [], after: [] },
+						aiData: { name: item.displayName },
+					}
+				}),
+		plan: (_graph, request) => ({
+			ok: true,
+			ops: [
+				{
+					op: 'update',
+					entity: 'item',
+					id: request.params.itemId as string,
+					set: { position: 3 },
+				},
+			],
+		}),
+		...extra,
+	}
+}
+
+const typoAi: MenuCardKindImpl['ai'] = {
+	instruction: 'Fix the typo.',
+	answer: z.object({ note: z.string() }),
+	required: true,
+	apply: (draft, answer) => ({ ...draft, subject: answer.note }),
+}
+
+/** A dish with both languages everywhere: no text suggestion for it. */
+const complete = (en: string) => ({
+	displayName: JSON.stringify({ en, ar: 'اسم' }),
+	description: JSON.stringify({ en: 'Tasty and warm.', ar: 'لذيذ' }),
+})
+
+function useKinds(...impls: MenuCardKindImpl[]) {
+	for (const kind of MENU_CARD_KINDS) setMenuCardKindForTests(kind, emptyKind(kind))
+	for (const impl of impls) setMenuCardKindForTests(impl.kind, impl)
+}
+
+describe('generateMenuSuggestions review cards', () => {
+	afterEach(() => {
+		for (const kind of MENU_CARD_KINDS) setMenuCardKindForTests(kind, null)
+	})
+
+	it('appends cards after the four text kinds and walks them with seen and considered', async () => {
+		const { organization } = await bilingualOrg()
+		useKinds(cardKind('category_order', 'Card'))
+		const tea = await dish(organization.id, {
+			displayName: '{"en":"Tea","ar":"شاي"}',
+		})
+		const cardA = await dish(organization.id, complete('Card A'))
+		const cardB = await dish(organization.id, complete('Card B'))
+		const generate = vi.fn(async () =>
+			JSON.stringify({
+				descriptions: [{ id: `description:${tea.id}`, description: 'Hot tea.' }],
+			}),
+		)
+		const deps = { generate, translationConfigured: () => false }
+
+		const first = await generateMenuSuggestions(organization, [], deps)
+		if (!first.ok) throw new Error('expected a batch')
+		expect(first.batch.considered).toEqual([
+			`description:${tea.id}`,
+			`category_order:${cardA.id}`,
+			`category_order:${cardB.id}`,
+		])
+		expect(first.batch.suggestions.map((s) => s.kind)).toEqual([
+			'description',
+			'category_order',
+			'category_order',
+		])
+		expect(first.batch.suggestions[1]).toMatchObject({
+			id: `category_order:${cardA.id}`,
+			refs: [expect.objectContaining({ type: 'item', id: cardA.id })],
+			ai: false,
+		})
+		expect(first.batch.suggestions[1]).not.toHaveProperty('aiData')
+		expect(first.batch.total).toBe(3)
+
+		// Cards go through the same `seen` cursor.
+		const next = await generateMenuSuggestions(
+			organization,
+			[`description:${tea.id}`, `category_order:${cardA.id}`],
+			deps,
+		)
+		if (!next.ok) throw new Error('expected a batch')
+		expect(next.batch.considered).toEqual([`category_order:${cardB.id}`])
+		expect(next.batch.total).toBe(1)
+
+		const done = await generateMenuSuggestions(
+			organization,
+			[
+				`description:${tea.id}`,
+				`category_order:${cardA.id}`,
+				`category_order:${cardB.id}`,
+			],
+			deps,
+		)
+		if (!done.ok) throw new Error('expected a batch')
+		expect(done.batch).toMatchObject({ suggestions: [], considered: [], remaining: 0 })
+	})
+
+	it('makes no model call and spends no rate limit for rule-based cards only', async () => {
+		const { organization } = await bilingualOrg()
+		useKinds(cardKind('category_order', 'Card'))
+		const card = await dish(organization.id, complete('Card A'))
+		const generate = vi.fn(async () => {
+			throw new Error('unexpected model call')
+		})
+		const original = MENU_SUGGESTIONS_RATE_LIMIT.maxRequests
+		MENU_SUGGESTIONS_RATE_LIMIT.maxRequests = 1
+		try {
+			for (let i = 0; i < 3; i++) {
+				const result = await generateMenuSuggestions(organization, [], {
+					generate,
+					translationConfigured: () => false,
+				})
+				if (!result.ok) throw new Error('rule-based cards must not be limited')
+				expect(result.batch.suggestions).toHaveLength(1)
+				expect(result.batch.suggestions[0]).toMatchObject({ id: `category_order:${card.id}` })
+				expect(result.batch.aiUnavailable).toBe(false)
+			}
+			expect(generate).not.toHaveBeenCalled()
+			// The one allowed AI batch is still there afterwards.
+			useKinds(cardKind('typo', 'Card', { ai: typoAi }))
+			const ai = await generateMenuSuggestions(organization, [], {
+				generate: async () =>
+					JSON.stringify({ answers: [{ id: `typo:${card.id}`, note: 'Fixed' }] }),
+				translationConfigured: () => false,
+			})
+			expect(ai.ok).toBe(true)
+		} finally {
+			MENU_SUGGESTIONS_RATE_LIMIT.maxRequests = original
+		}
+	})
+
+	it('counts AI cards against the rate limit', async () => {
+		const { organization } = await bilingualOrg()
+		useKinds(cardKind('typo', 'Card', { ai: typoAi }))
+		await dish(organization.id, complete('Card A'))
+		const original = MENU_SUGGESTIONS_RATE_LIMIT.maxRequests
+		MENU_SUGGESTIONS_RATE_LIMIT.maxRequests = 1
+		const generate = vi.fn(async () => '{"answers":[]}')
+		try {
+			const deps = { generate, translationConfigured: () => false }
+			expect((await generateMenuSuggestions(organization, [], deps)).ok).toBe(true)
+			expect(await generateMenuSuggestions(organization, [], deps)).toEqual({
+				ok: false,
+				error: 'rate_limited',
+			})
+			expect(generate).toHaveBeenCalledTimes(1)
+		} finally {
+			MENU_SUGGESTIONS_RATE_LIMIT.maxRequests = original
+		}
+	})
+
+	it('adds at most one model call for AI cards, and one rate-limit hit for the batch', async () => {
+		const { organization } = await bilingualOrg()
+		useKinds(
+			cardKind('typo', 'Card', { ai: typoAi }),
+			cardKind('missing_choice', 'Card', {
+				ai: { ...typoAi, required: false, apply: (d) => d },
+			}),
+		)
+		const tea = await dish(organization.id, { displayName: '{"en":"Tea","ar":"شاي"}' })
+		const cardA = await dish(organization.id, complete('Card A'))
+		const cardB = await dish(organization.id, complete('Card B'))
+		const prompts: string[] = []
+		const generate = vi.fn(async ({ prompt }: { prompt: string }) => {
+			prompts.push(prompt)
+			if (prompt.includes('--- cards ---')) {
+				return JSON.stringify({
+					answers: [
+						{ id: `typo:${cardA.id}`, note: 'Fixed A' },
+						{ id: `typo:${cardB.id}`, note: 'Fixed B' },
+					],
+				})
+			}
+			return JSON.stringify({
+				descriptions: [{ id: `description:${tea.id}`, description: 'Hot tea.' }],
+			})
+		})
+		const result = await generateMenuSuggestions(organization, [], {
+			generate,
+			translationConfigured: () => false,
+		})
+		if (!result.ok) throw new Error('expected a batch')
+		// One call for the description, one for all four cards.
+		expect(generate).toHaveBeenCalledTimes(2)
+		expect(prompts.filter((prompt) => prompt.includes('--- cards ---'))).toHaveLength(1)
+		const cards = result.batch.suggestions.filter((s) => s.kind === 'typo')
+		expect(cards.map((c) => ('subject' in c ? c.subject : null))).toEqual([
+			'Fixed A',
+			'Fixed B',
+		])
+		expect(result.batch.suggestions.map((s) => s.kind)).toEqual([
+			'description',
+			'typo',
+			'typo',
+			'missing_choice',
+			'missing_choice',
+		])
+	})
+
+	it('drops a required card when the model fails, still considers it, and flags aiUnavailable', async () => {
+		const { organization } = await bilingualOrg()
+		useKinds(
+			cardKind('typo', 'Card', { ai: typoAi }),
+			cardKind('category_order', 'Plain'),
+		)
+		const typo = await dish(organization.id, complete('Card A'))
+		const plain = await dish(organization.id, complete('Plain A'))
+		const result = await generateMenuSuggestions(organization, [], {
+			generate: async () => {
+				throw new Error('model down')
+			},
+			translationConfigured: () => false,
+		})
+		if (!result.ok) throw new Error('expected a batch')
+		expect(result.batch.considered).toEqual([
+			`typo:${typo.id}`,
+			`category_order:${plain.id}`,
+		])
+		expect(result.batch.suggestions.map((s) => s.id)).toEqual([
+			`category_order:${plain.id}`,
+		])
+		expect(result.batch.aiUnavailable).toBe(true)
+	})
+
+	it('runs structure kinds only when structure suggestions are on', async () => {
+		const { organization } = await bilingualOrg()
+		useKinds(cardKind('merge_duplicates', 'Card'), cardKind('category_order', 'Card'))
+		await dish(organization.id, complete('Card A'))
+		const deps = { generate: vi.fn(), translationConfigured: () => false }
+		const off = await generateMenuSuggestions(organization, [], {
+			...deps,
+			structureEnabled: false,
+		})
+		if (!off.ok) throw new Error('expected a batch')
+		expect(off.batch.suggestions.map((s) => s.kind)).toEqual(['category_order'])
+		const on = await generateMenuSuggestions(organization, [], {
+			...deps,
+			structureEnabled: true,
+		})
+		if (!on.ok) throw new Error('expected a batch')
+		expect(on.batch.suggestions.map((s) => s.kind)).toEqual([
+			'category_order',
+			'merge_duplicates',
+		])
+	})
+
+	it('hides cards the manager skipped as not a problem until the dish changes', async () => {
+		const { organization, user } = await bilingualOrg()
+		useKinds(cardKind('category_order', 'Card'))
+		const card = await dish(organization.id, complete('Card A'))
+		const { skipMenuCard } = await import('./card-skips.server.ts')
+		const { loadMenuCardContext } = await import('./menu-card-generate.server.ts')
+		const loaded = await loadMenuCardContext(organization, { structureEnabled: false })
+		await skipMenuCard({
+			organizationId: organization.id,
+			userId: user.id,
+			graph: loaded.graph,
+			ctx: loaded.ctx,
+			structureEnabled: false,
+			kind: 'category_order',
+			id: `category_order:${card.id}`,
+			reason: 'not_a_problem',
+		})
+		const deps = { generate: vi.fn(), translationConfigured: () => false }
+		const hidden = await generateMenuSuggestions(organization, [], deps)
+		if (!hidden.ok) throw new Error('expected a batch')
+		expect(hidden.batch.suggestions).toEqual([])
+		await db
+			.update(OrganizationMenuItem)
+			.set({ updatedAt: new Date(Date.now() + 60_000) })
+			.where(eq(OrganizationMenuItem.id, card.id))
+		const back = await generateMenuSuggestions(organization, [], deps)
+		if (!back.ok) throw new Error('expected a batch')
+		expect(back.batch.suggestions).toHaveLength(1)
 	})
 })
