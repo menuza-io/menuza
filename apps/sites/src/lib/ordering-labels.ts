@@ -122,6 +122,9 @@ export function buildOrderingLabels(i18n: I18n): OrderingLabels {
 			'code',
 		),
 		exploreMenu: i18n._(msg`Explore menu`),
+		upsellHeading: i18n._(msg`Goes well with`),
+		upsellAdd: i18n._(msg`Add`),
+		upsellAddNamed: keep(i18n, msg`Add {name}`, 'name'),
 	}
 }
 

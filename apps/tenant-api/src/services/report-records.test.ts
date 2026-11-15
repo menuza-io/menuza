@@ -16,6 +16,8 @@ import {
 	marketingCampaigns,
 	marketingMessages,
 	provisionTenantDb,
+	qrTables,
+	qrTabs,
 	restaurantOrders,
 	type TenantDatabase,
 } from '@repo/tenant-db'
@@ -458,9 +460,81 @@ describe('report record loaders', () => {
 				tax: 1.5,
 				tip: 3,
 				tipPercent: 15,
+				serviceFee: 0,
 				deliveryFee: 0,
 				discount: 0,
 			})
+		})
+
+		it('reports the service fee as its own measure, with a custom tip as no percent', async () => {
+			await insertOrders(
+				{
+					number: 'F1',
+					createdAt: ago(3),
+					subtotalCents: 2000,
+					taxCents: 165,
+					serviceFeeCents: 60,
+					serviceFeeLabel: 'Service fee',
+					tipCents: 437,
+					tipPercent: null,
+					totalCents: 2662,
+				},
+				{ number: 'F2', createdAt: ago(2), serviceFeeCents: 0 },
+			)
+			const { records } = await loadOrderRecords(
+				db,
+				orgId,
+				orderSubject,
+				listDefinition('orders'),
+				now,
+			)
+			const byNumber = new Map(records.map((record) => [record.orderNumber, record]))
+			expect(byNumber.get('F1')).toMatchObject({
+				serviceFee: 0.6,
+				tip: 4.37,
+				tipPercent: null,
+			})
+			expect(byNumber.get('F2')).toMatchObject({ serviceFee: 0 })
+		})
+
+		it('puts a tab’s service fee on its latest round, once', async () => {
+			await db.insert(qrTables).values({
+				id: 'tbl_1',
+				locationId: 'loc_1',
+				label: 'T1',
+			})
+			await db.insert(qrTabs).values({
+				id: 'tab_fee',
+				tableId: 'tbl_1',
+				locationId: 'loc_1',
+				tableLabel: 'T1',
+				tabNumber: '001',
+				openedDay: '2026-03-19',
+				currency: 'USD',
+				status: 'closed',
+				paymentMethod: 'online',
+				paymentStatus: 'paid',
+				serviceFeeCents: 24,
+				serviceFeeTaxCents: 2,
+			})
+			await insertOrders(
+				{ number: 'T-1', createdAt: ago(3), tabId: 'tab_fee', fulfillment: 'dine_in' },
+				{ number: 'T-2', createdAt: ago(2), tabId: 'tab_fee', fulfillment: 'dine_in' },
+			)
+			const { records } = await loadOrderRecords(
+				db,
+				orgId,
+				orderSubject,
+				listDefinition('orders', ['serviceFee']),
+				now,
+			)
+			const fees = records
+				.filter((record) => String(record.orderNumber).startsWith('T-'))
+				.map((record) => [record.orderNumber, record.serviceFee])
+			expect(fees).toEqual([
+				['T-2', 0.24],
+				['T-1', 0],
+			])
 		})
 
 		it('reports discounts (items, delivery and loyalty) and counts free online orders', async () => {

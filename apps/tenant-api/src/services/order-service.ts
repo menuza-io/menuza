@@ -121,6 +121,7 @@ import {
 	orderProviderRefundView,
 	orderRefundedNetCents,
 	orderRefundSummary,
+	orderServiceFeeChargeCents,
 	owedCancelRefundKey,
 } from './order-refund-book.ts'
 import {
@@ -1134,6 +1135,9 @@ export async function placeOrder(input: {
 									paymentProcessor: null,
 									paymentAmountCents: null,
 									paymentTipCents: null,
+									paymentServiceFeeCents: null,
+									paymentServiceFeeTaxCents: null,
+									paymentServiceFeeLabel: null,
 									paymentTokenHash: null,
 									loyaltyDiscountCents: 0,
 									updatedAt: now.getTime(),
@@ -1269,6 +1273,8 @@ export async function placeOrder(input: {
 								loyaltyDiscountCents: 0,
 								taxCents: discounted.taxCents,
 								totalCents: discounted.totalCents,
+								serviceFeeCents: discounted.serviceFeeCents,
+								serviceFeeTaxCents: discounted.serviceFeeTaxCents,
 							}
 					if (prepared && request.discounts) {
 						const quote = buildDiscountQuote({
@@ -1277,6 +1283,7 @@ export async function placeOrder(input: {
 							loyaltyDiscountMinor: totals.loyaltyDiscountCents,
 							taxMinor: totals.taxCents,
 							totalMinor: totals.totalCents,
+							serviceFeeMinor: totals.serviceFeeCents,
 						})
 						const decision = interpretPlacement(
 							request.discounts,
@@ -1294,6 +1301,21 @@ export async function placeOrder(input: {
 								},
 							)
 						}
+					}
+					// The service fee (#123): the region prices it; the browser sends
+					// what it showed. A table round has none (its tab pays it), and an
+					// older client that sends nothing reads as 0, so it is refused
+					// exactly where a fee is due.
+					if (
+						!isDineIn &&
+						(request.expectedServiceFeeMinor ?? 0) !== totals.serviceFeeCents
+					) {
+						return orderFailure(
+							409,
+							'service_fee_changed',
+							'The service fee changed. Review the new total and place the order again.',
+							{ details: { serviceFeeMinor: totals.serviceFeeCents } },
+						)
 					}
 					const freeOrder =
 						request.paymentMethod === 'online' && totals.totalCents <= 0
@@ -1395,6 +1417,12 @@ export async function placeOrder(input: {
 									deliveryFeeCents: result.deliveryFeeCents,
 									tipCents: result.tipCents,
 									tipPercent: result.tipPercent,
+									serviceFeeCents: totals.serviceFeeCents,
+									serviceFeeTaxCents: totals.serviceFeeTaxCents,
+									serviceFeeLabel:
+										totals.serviceFeeCents > 0
+											? (result.serviceFeeLabel ?? null)
+											: null,
 									totalCents: totals.totalCents,
 									loyaltyDiscountCents: totals.loyaltyDiscountCents,
 									discountCents: discounted.discountCents,
@@ -2994,6 +3022,14 @@ export function publicOrderSummary(order: RestaurantOrder) {
 		taxCents: order.taxCents,
 		deliveryFeeCents: order.deliveryFeeCents,
 		tipCents: order.tipCents,
+		/**
+		 * The guest service fee (#123) before its tax, which is part of
+		 * `taxCents`; 0 and null when none applied. The label is the name the
+		 * guest saw at checkout.
+		 */
+		serviceFeeCents: order.serviceFeeCents,
+		serviceFeeTaxCents: order.serviceFeeTaxCents,
+		serviceFeeLabel: order.serviceFeeLabel,
 		/** A loyalty reward's discount, taken off the subtotal before tax. */
 		loyaltyDiscountCents: order.loyaltyDiscountCents,
 		/** Coupons and automatic discounts on the items, in cents. */
@@ -3179,6 +3215,12 @@ export function operatorOrder(
 				: null,
 		/** Returned (less reversals); the payment status stays `paid`. */
 		refundedCents: orderRefundedNetCents(order),
+		/**
+		 * What the order charged for its service fee (#123): the fee plus its tax
+		 * unless prices include tax. What a refund can give back for it is this
+		 * less the fee part of the refunds already made.
+		 */
+		serviceFeeChargeCents: orderServiceFeeChargeCents(order),
 		dropId: order.dropId,
 		deliveryZoneId: order.deliveryZoneId,
 		deliveryPoint:

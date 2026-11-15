@@ -7,7 +7,7 @@ import MarketingConsentBoxes from '~/components/marketing/MarketingConsentBoxes.
 import OrderDetailsSheet from '~/components/ordering/OrderDetailsSheet.astro'
 import SitePage from '~/components/SitePage.astro'
 import { buildLoyaltyLabels } from '~/lib/loyalty/labels'
-import { siteContainer } from '~/lib/media'
+import { resolveMediaUrl, siteContainer } from '~/lib/media'
 import { buildOrderDetailsLabels, translate } from '~/lib/ordering-labels'
 import { formatMoney } from '~/lib/ordering/money'
 import { type FulfillmentMode } from '~/lib/ordering/types'
@@ -17,6 +17,7 @@ import {
 	type PublicLocationData,
 	type PublicMenuCategoryData,
 } from '~/lib/org'
+import { type OrderingCategory } from '~/lib/ordering/types'
 
 const organization = Astro.locals.organization
 const i18n = Astro.locals.i18n
@@ -82,6 +83,60 @@ if (dropData) {
 const locations = menuPayload?.locations ?? []
 const currency = menuPayload?.organization?.currency || 'USD'
 
+// "Goes well with" at checkout (#114): only the dishes that go straight in
+// (this page has no item modal), so the catalog keeps just what the ranking
+// and the row read: names in the page language, prices, photos and the
+// upsell settings. Off unless `ordering.upsell` is on; never on a drop.
+const upsellOn = menuPayload?.features?.upsell === true && !dropMode
+function upsellCategory(category: PublicMenuCategoryData): OrderingCategory {
+	return {
+		id: category.id,
+		displayName: '',
+		upsellCategoryIds: category.upsellCategoryIds ?? [],
+		items: (category.items ?? []).map((item) => ({
+			id: item.id,
+			displayName: getLocalizedMenuValue(item.displayName, requestedLocale, defaultLocale),
+			price: item.price,
+			imageUrl: resolveMediaUrl(item.imageUrl),
+			isUpsell: item.isUpsell === true,
+			availabilityStatus: item.availabilityStatus,
+			variations: {
+				groups: (item.variations?.groups ?? []).map((group) => ({
+					id: group.id,
+					name: '',
+					values: [],
+				})),
+				variants: (item.variations?.variants ?? []).map((variant) => ({
+					id: variant.id,
+					valueIds: [],
+					price: variant.price,
+					availabilityStatus: variant.availabilityStatus,
+				})),
+			},
+			modifierGroups: (item.modifierGroups ?? []).map((group) => ({
+				id: group.id,
+				name: '',
+				selectionType: group.selectionType,
+				minSelections: group.minSelections ?? 0,
+				maxSelections: group.maxSelections ?? null,
+				options: [],
+			})),
+		})),
+		subcategories: (category.subcategories ?? [])
+			.filter((sub) => sub.availabilityStatus !== 'unavailable')
+			.map(upsellCategory),
+	}
+}
+const upsellCategories: OrderingCategory[] = upsellOn
+	? (menuPayload?.menus ?? [])
+			.filter((menu) => menu.availabilityStatus !== 'unavailable')
+			.flatMap((menu) =>
+				menu.categories
+					.filter((category) => category.availabilityStatus !== 'unavailable' && !category.parentId)
+					.map(upsellCategory),
+			)
+	: []
+
 // Resolve the active location exactly like the menu page (URL param → default →
 // first) so checkout and the menu agree on the same cart's tax rate and fee.
 const activeLocation: PublicLocationData | undefined =
@@ -137,6 +192,9 @@ const deliveryNotesLabel = i18n._(msg`Delivery instructions`)
 const deliveryNotesPlaceholder = i18n._(msg`Gate code, buzzer, or where to leave it`)
 const tipTitle = i18n._(msg`Tip`)
 const noTipLabel = i18n._(msg`No tip`)
+const customTipLabel = i18n._(msg`Custom`)
+const customTipFieldLabel = i18n._(msg`Custom tip amount`)
+const serviceFeeDefaultLabel = i18n._(msg`Service fee`)
 const paymentTitle = i18n._(msg`Payment`)
 const payOnlineLabel = i18n._(msg`Pay online`)
 const payOnlineHint = i18n._(msg`Pay securely now`)
@@ -281,6 +339,18 @@ const checkoutLabels = {
 		waiting: i18n._(msg`We'll check your code once your order details are complete.`),
 		unchecked: i18n._(msg`We couldn't check your code just now. Please try again.`),
 	},
+	tip: {
+		custom: customTipLabel,
+		noTip: noTipLabel,
+		invalid: i18n._(msg`Enter an amount, for example 4.50.`),
+		tooLarge: i18n._(msg`That tip is too large. Please enter a smaller amount.`),
+	},
+	serviceFee: serviceFeeDefaultLabel,
+	upsell: {
+		heading: i18n._(msg`Goes well with`),
+		add: i18n._(msg`Add`),
+		addNamed: translate(i18n, msg`Add {name}`, { name: '{name}' }),
+	},
 	validation: {
 		name: i18n._(msg`Please enter your full name.`),
 		phone: i18n._(msg`Please enter your phone number.`),
@@ -302,6 +372,13 @@ const checkoutLabels = {
 		deliveryUnavailable: i18n._(msg`Delivery is not available for this order.`),
 		deliveryAddressRequired: i18n._(msg`Please enter your delivery address.`),
 		tipsDisabled: i18n._(msg`Tips are not available for this order.`),
+		tipTooLarge: i18n._(msg`That tip is too large. Please enter a smaller amount.`),
+		serviceFeeChanged: i18n._(
+			msg`The service fee changed. Please review your total and place your order again.`,
+		),
+		serviceFeeUnavailable: i18n._(
+			msg`This restaurant can't take online orders right now. Please try again later.`,
+		),
 		itemsChanged: i18n._(
 			msg`Some items in your order changed or sold out. Please review your cart and try again.`,
 		),
@@ -384,6 +461,8 @@ const tipBtnClass =
 	'tip-btn focus-ring flex min-h-12 flex-col items-center justify-center rounded-lg border px-2 text-sm font-semibold transition-colors duration-150 hover:border-foreground/40 motion-reduce:transition-none'
 const tipOn = 'border-foreground bg-foreground text-background'
 const tipOff = 'border-border bg-background text-foreground'
+const inputClass =
+	'focus-ring w-full rounded-lg border border-border bg-background px-3 py-2.5 text-base text-foreground placeholder:text-muted-foreground'
 ---
 
 <SitePage
@@ -584,12 +663,13 @@ const tipOff = 'border-border bg-background text-foreground'
 							<span class={stepMarkerClass} aria-hidden="true"></span>
 							<h2 id="co-step-tip" class={sectionTitleClass}>{tipTitle}</h2>
 						</div>
-						<div class="grid grid-cols-4 gap-2 sm:grid-cols-5" id="tip-buttons">
-							<button type="button" class:list={[tipBtnClass, tipOff]} aria-pressed="false" data-tip="10"><span class="price">10%</span></button>
-							<button type="button" class:list={[tipBtnClass, tipOn]} aria-pressed="true" data-tip="15"><span class="price">15%</span></button>
-							<button type="button" class:list={[tipBtnClass, tipOff]} aria-pressed="false" data-tip="18"><span class="price">18%</span></button>
-							<button type="button" class:list={[tipBtnClass, tipOff]} aria-pressed="false" data-tip="20"><span class="price">20%</span></button>
-							<button type="button" class:list={[tipBtnClass, tipOff, 'col-span-4 sm:col-span-1']} aria-pressed="false" data-tip="0">{noTipLabel}</button>
+						{/* The buttons are the location's own choices (#118); the script
+						    builds them from the ordering options. */}
+						<div class="grid grid-cols-2 gap-2 sm:grid-cols-3" id="tip-buttons" role="group" aria-labelledby="co-step-tip"></div>
+						<div id="tip-custom" class="mt-3 hidden">
+							<label for="tip-custom-input" class={labelClass}>{customTipFieldLabel}</label>
+							<input id="tip-custom-input" type="text" inputmode="decimal" dir="ltr" autocomplete="off" class={inputClass} aria-describedby="tip-custom-error" />
+							<p id="tip-custom-error" role="alert" class="mt-1.5 hidden text-sm text-destructive"></p>
 						</div>
 					</section>
 
@@ -647,6 +727,8 @@ const tipOff = 'border-border bg-background text-foreground'
 					<ul id="checkout-items-list" class="mt-2 divide-y divide-border lg:max-h-80 lg:overflow-y-auto lg:overscroll-contain">
 						{/* Injected dynamically from cart */}
 					</ul>
+					{/* "Goes well with": built by the script when there is something to suggest. */}
+					<div id="co-upsell" class="-mx-5 sm:-mx-6"></div>
 
 					{/* Coupon code: collapsed to a link until asked for. Shown once the region
 					    says discounts exist (hidden when they are off). The cart summary
@@ -722,6 +804,13 @@ const tipOff = 'border-border bg-background text-foreground'
 						<div id="co-delivery-row" class:list={[rowClass, 'hidden']}>
 							<dt>{deliveryFeeText}</dt>
 							<dd id="co-delivery-fee" class={valueClass}>{price(0)}</dd>
+						</div>
+						<div id="co-fee-row" class:list={[rowClass, 'hidden flex-wrap']}>
+							<dt class="min-w-0">
+								<button type="button" id="co-fee-label" class="focus-ring text-start underline decoration-dotted underline-offset-4" aria-expanded="false" aria-controls="co-fee-explanation" disabled>{serviceFeeDefaultLabel}</button>
+							</dt>
+							<dd id="co-fee" class={valueClass}></dd>
+							<dd id="co-fee-explanation" class="hidden basis-full text-xs text-muted-foreground"></dd>
 						</div>
 						<div class={rowClass}>
 							<dt>{tipText}</dt>
@@ -821,6 +910,8 @@ const tipOff = 'border-border bg-background text-foreground'
 			orderDetailsLabels: odLabels,
 			unavailableVariantIds: [...unavailableVariantIds],
 			labels: checkoutLabels,
+			tipClasses: { button: tipBtnClass, on: tipOn, off: tipOff },
+			upsell: upsellOn ? { categories: upsellCategories } : null,
 			drop: dropData && {
 				id: dropData.drop.id,
 				slug: dropData.drop.slug,
@@ -892,6 +983,21 @@ const tipOff = 'border-border bg-background text-foreground'
 			type HeldCoupon,
 		} from '~/lib/ordering/coupon-retry'
 		import { estimateTax } from '~/lib/ordering/tax'
+		import { DEFAULT_SERVICE_FEE_LABEL } from '@repo/common/service-fee'
+		import { createCartStore } from '~/lib/ordering/cart-store'
+		import { addSuggestion, suggestForCart } from '~/lib/ordering/upsell'
+		import { buildUpsellRow } from '~/lib/ordering/upsell-row'
+		import { createShownCounter, recordUpsell } from '~/lib/ordering/upsell-stats'
+		import {
+			parseCustomTip,
+			sameTipSelection,
+			serviceFeeFor,
+			tipOrderTypeOf,
+			tipPayload,
+			tipSelectionMinor,
+			tipViewFor,
+			type TipSelection,
+		} from '~/lib/ordering/checkout-extras'
 		import {
 			OrderRequestError,
 			checkoutAttemptKey,
@@ -928,7 +1034,7 @@ const tipOff = 'border-border bg-background text-foreground'
 			schedulingSettings,
 		} from '~/lib/ordering/schedule'
 		import { type OrderDetailsLabels } from '~/lib/ordering-labels'
-		import { type FulfillmentMode } from '~/lib/ordering/types'
+		import { type FulfillmentMode, type OrderingCategory } from '~/lib/ordering/types'
 		import { type CartItem } from '~/lib/ordering/types'
 		import { type PublicOrderingOptions } from '@repo/common/restaurant-orders'
 		import { asapEstimate } from '~/lib/ordering/asap-estimate'
@@ -979,6 +1085,9 @@ const tipOff = 'border-border bg-background text-foreground'
 			viewReceipt: string
 			coupon: { apply: string; checking: string; remove: string; removeCode: string }
 			discounts: DiscountLabels
+			tip: { custom: string; noTip: string; invalid: string; tooLarge: string }
+			serviceFee: string
+			upsell: { heading: string; add: string; addNamed: string }
 			validation: { name: string; phone: string; email: string; address: string }
 			errors: OrderErrorLabels
 		}
@@ -1028,7 +1137,14 @@ const tipOff = 'border-border bg-background text-foreground'
 		})
 		let mode: 'pickup' | 'delivery' = !isDrop && details.mode === 'delivery' ? 'delivery' : 'pickup'
 		let deliveryAvailable = allowedModes.includes('delivery')
-		let tipPercent = 15
+		// The tip the guest picked (#118). Until they pick, it is the location's
+		// own default for the order type: the buttons come from the ordering
+		// options (the old 10, 15, 18 and 20 percent when none are sent).
+		let tipSelection: TipSelection = tipViewFor(null, tipOrderTypeOf(mode), meta.currency || 'USD')
+			.initial
+		let tipTouched = false
+		let tipCustomOpen = false
+		let tipBuiltKey = ''
 		let paymentMethod: 'handoff' | 'online' = 'handoff'
 		let orderingOpen = true
 		// Rewards for signed-in customers; set up once the cart is known.
@@ -1106,6 +1222,8 @@ const tipOff = 'border-border bg-background text-foreground'
 			deliveryFee: number
 			deliveryDiscount: number
 			tip: number
+			/** The guest service fee before its tax; 0 when there is none. */
+			serviceFee: number
 			/** What discounts take off the items (never delivery). */
 			discount: number
 			/** A loyalty reward's saving. */
@@ -1134,6 +1252,7 @@ const tipOff = 'border-border bg-background text-foreground'
 					deliveryFee: rewardTotals.deliveryFeeMinor / 100,
 					deliveryDiscount: (discountQuote?.deliveryDiscountMinor ?? 0) / 100,
 					tip: rewardTotals.tipMinor / 100,
+					serviceFee: (rewardTotals.serviceFeeMinor ?? 0) / 100,
 					discount: discountQuote
 						? (discountQuote.totalDiscountMinor - discountQuote.deliveryDiscountMinor) / 100
 						: 0,
@@ -1151,6 +1270,7 @@ const tipOff = 'border-border bg-background text-foreground'
 					deliveryFee: t.deliveryFeeMinor / 100,
 					deliveryDiscount: t.deliveryDiscountMinor / 100,
 					tip: t.tipMinor / 100,
+					serviceFee: t.serviceFeeMinor / 100,
 					discount: t.discountMinor / 100,
 					loyaltyDiscount: t.loyaltyMinor / 100,
 					total: t.totalMinor / 100,
@@ -1166,6 +1286,7 @@ const tipOff = 'border-border bg-background text-foreground'
 					deliveryFee: quoted.deliveryFeeMinor / 100,
 					deliveryDiscount: 0,
 					tip: quoted.tipMinor / 100,
+					serviceFee: (quoted.serviceFeeMinor ?? 0) / 100,
 					discount: 0,
 					loyaltyDiscount: quoted.discountMinor / 100,
 					total: quoted.totalMinor / 100,
@@ -1186,21 +1307,38 @@ const tipOff = 'border-border bg-background text-foreground'
 				subtotal - discount,
 				(loyalty?.displayDiscountMinor() ?? 0) / 100,
 			)
-			const { tax, added } = estimateTax(
+			const { tax: itemTax, added: itemAdded } = estimateTax(
 				subtotal - discount - loyaltyDiscount,
 				taxRate(),
 				taxInclusive(),
 			)
 			const fee = mode === 'delivery' ? (validDelivery()?.deliveryFee ?? 0) : 0
 			const deliveryDiscount = Math.min(fee, (carried?.deliveryDiscountMinor ?? 0) / 100)
-			const tip = (subtotal * tipPercent) / 100
-			const total = subtotal - discount - loyaltyDiscount + added + fee - deliveryDiscount + tip
+			// The tip is a share of the subtotal before discounts, or an exact amount.
+			const tip = tipSelectionMinor(tipSelection, Math.round(subtotal * 100)) / 100
+			// The service fee is on what discounts and rewards left, before tax and
+			// tip; its tax joins the order's tax.
+			const feeLine = serviceFeeFor(orderingOptions, {
+				fulfillment: isDrop ? 'pickup' : mode,
+				subtotalMinor: Math.round(subtotal * 100),
+				discountMinor: Math.round((discount + loyaltyDiscount) * 100),
+				taxRatePercent: taxRate(),
+				taxInclusive: taxInclusive(),
+				defaultLabel: labels.serviceFee,
+			})
+			const serviceFee = (feeLine?.feeCents ?? 0) / 100
+			const feeTax = (feeLine?.taxCents ?? 0) / 100
+			const tax = itemTax + feeTax
+			const added = itemAdded + (taxInclusive() ? 0 : feeTax)
+			const total =
+				subtotal - discount - loyaltyDiscount + added + fee - deliveryDiscount + tip + serviceFee
 			return {
 				subtotal,
 				tax,
 				deliveryFee: fee,
 				deliveryDiscount,
 				tip,
+				serviceFee,
 				discount,
 				loyaltyDiscount,
 				total,
@@ -1290,6 +1428,9 @@ const tipOff = 'border-border bg-background text-foreground'
 				}
 			}
 			if (coTip) coTip.textContent = formatCurrency(tip)
+			renderServiceFee(totals.serviceFee)
+			renderTipButtons(subtotal)
+			renderUpsell()
 			if (coTotal) coTotal.textContent = formatCurrency(total)
 			const barTotal = document.getElementById('co-bar-total')
 			if (barTotal) barTotal.textContent = formatCurrency(total)
@@ -1632,8 +1773,238 @@ const tipOff = 'border-border bg-background text-foreground'
 			const enabled = !tips || (mode === 'delivery' ? tips.delivery : tips.pickup)
 			document.getElementById('tip-card')?.classList.toggle('hidden', !enabled)
 			if (!enabled) {
-				tipPercent = 0
+				tipSelection = { kind: 'none' }
+				tipCustomOpen = false
 				renderCheckout()
+			} else if (!tipTouched) {
+				// The location's own default for this order type, until the guest picks.
+				tipSelection = currentTipView().initial
+				tipCustomOpen = false
+			}
+		}
+
+		// ---------- tip buttons (#118) ----------
+
+		const tipButtonsEl = document.getElementById('tip-buttons')
+		const tipCustomWrap = document.getElementById('tip-custom')
+		const tipCustomInput = document.getElementById('tip-custom-input') as HTMLInputElement | null
+		const tipCustomError = document.getElementById('tip-custom-error')
+		const tipClasses = (meta.tipClasses ?? { button: '', on: '', off: '' }) as {
+			button: string
+			on: string
+			off: string
+		}
+		type TipEntry = { selection: TipSelection | 'custom'; label: string; percent: number | null }
+		let tipEntries: TipEntry[] = []
+
+		function currentTipView() {
+			return tipViewFor(orderingOptions, tipOrderTypeOf(mode), meta.currency || 'USD')
+		}
+
+		function tipEntrySelected(entry: TipEntry): boolean {
+			if (entry.selection === 'custom') return tipCustomOpen
+			return !tipCustomOpen && sameTipSelection(entry.selection, tipSelection)
+		}
+
+		/**
+		 * The buttons are rebuilt only when the choices change (another order
+		 * type, new options), so a button keeps focus while the guest picks; every
+		 * render then only moves the pressed state and the amounts under the
+		 * percentages.
+		 */
+		function renderTipButtons(subtotal: number) {
+			if (!tipButtonsEl) return
+			const view = currentTipView()
+			const key = JSON.stringify([view.choices, view.allowCustom, mode])
+			if (key !== tipBuiltKey) {
+				tipBuiltKey = key
+				tipEntries = [
+					...view.choices.map((choice): TipEntry =>
+						'percent' in choice
+							? {
+									selection: { kind: 'percent', percent: choice.percent },
+									label: `${choice.percent}%`,
+									percent: choice.percent,
+								}
+							: {
+									selection: { kind: 'amount', amountMinor: choice.amountMinor },
+									label: formatCurrency(choice.amountMinor / 100),
+									percent: null,
+								},
+					),
+					{ selection: { kind: 'none' }, label: labels.tip.noTip, percent: null },
+					...(view.allowCustom
+						? [{ selection: 'custom', label: labels.tip.custom, percent: null } as TipEntry]
+						: []),
+				]
+				tipButtonsEl.replaceChildren(
+					...tipEntries.map((entry, index) => {
+						const button = createEl('button', `${tipClasses.button} tip-btn`)
+						button.setAttribute('type', 'button')
+						button.setAttribute('data-tip-index', String(index))
+						button.appendChild(createEl('span', 'price', entry.label))
+						if (entry.percent !== null) {
+							button.appendChild(createEl('span', 'tip-hint price text-xs font-normal opacity-80'))
+						}
+						return button
+					}),
+				)
+			}
+			tipButtonsEl.querySelectorAll<HTMLElement>('button[data-tip-index]').forEach((button) => {
+				const entry = tipEntries[Number(button.dataset.tipIndex)]
+				if (!entry) return
+				const selected = tipEntrySelected(entry)
+				button.setAttribute('aria-pressed', selected ? 'true' : 'false')
+				const classes = (selected ? tipClasses.on : tipClasses.off).split(' ')
+				const dropped = (selected ? tipClasses.off : tipClasses.on).split(' ')
+				button.classList.remove(...dropped)
+				button.classList.add(...classes)
+				const hint = button.querySelector('.tip-hint')
+				if (hint && entry.percent !== null) {
+					hint.textContent = formatCurrency((subtotal * entry.percent) / 100)
+				}
+			})
+			tipCustomWrap?.classList.toggle('hidden', !tipCustomOpen)
+		}
+
+		function setTipCustomError(message: string | null) {
+			if (!tipCustomInput || !tipCustomError) return
+			tipCustomError.textContent = message ?? ''
+			tipCustomError.classList.toggle('hidden', !message)
+			if (message) tipCustomInput.setAttribute('aria-invalid', 'true')
+			else tipCustomInput.removeAttribute('aria-invalid')
+		}
+
+		/** Reads the typed custom amount into the selection; false when it cannot be sent. */
+		function applyCustomTip(): boolean {
+			const text = tipCustomInput?.value.trim() ?? ''
+			if (text === '') {
+				// Nothing typed is no tip.
+				tipSelection = { kind: 'none' }
+				setTipCustomError(null)
+				return true
+			}
+			const subtotalMinor = Math.round(
+				cart.reduce((acc, it) => acc + it.unitPrice * it.quantity, 0) * 100,
+			)
+			const parsed = parseCustomTip(text, meta.currency || 'USD', subtotalMinor)
+			if (parsed.ok) {
+				tipSelection = { kind: 'amount', amountMinor: parsed.amountMinor }
+				setTipCustomError(null)
+				return true
+			}
+			tipSelection = { kind: 'none' }
+			setTipCustomError(parsed.reason === 'too_large' ? labels.tip.tooLarge : labels.tip.invalid)
+			return false
+		}
+
+		tipButtonsEl?.addEventListener('click', (event) => {
+			const button = (event.target as Element).closest<HTMLElement>('button[data-tip-index]')
+			const entry = button ? tipEntries[Number(button.dataset.tipIndex)] : undefined
+			if (!entry) return
+			tipTouched = true
+			if (entry.selection === 'custom') {
+				tipCustomOpen = true
+				applyCustomTip()
+				renderCheckout()
+				tipCustomInput?.focus()
+				return
+			}
+			tipCustomOpen = false
+			setTipCustomError(null)
+			tipSelection = entry.selection
+			renderCheckout()
+		})
+		tipCustomInput?.addEventListener('input', () => {
+			applyCustomTip()
+			renderCheckout()
+		})
+
+		// ---------- "Goes well with" (#114) ----------
+
+		// Only dishes that go straight in: this page has no item modal. The row is
+		// built from the page's own catalog (`meta.upsell`, present only while
+		// `ordering.upsell` is on) and the cart; adding one reprices like any
+		// other change to the cart.
+		const upsellCatalog = (meta.upsell?.categories ?? null) as OrderingCategory[] | null
+		const upsellSlot = document.getElementById('co-upsell')
+		const cartStore = upsellCatalog ? createCartStore({ key: storageKey }) : null
+		const countShown = createShownCounter((id) => recordUpsell(orgId, id, 'shown'))
+
+		function renderUpsell() {
+			if (!upsellSlot) return
+			if (!upsellCatalog || !cartStore) {
+				upsellSlot.replaceChildren()
+				return
+			}
+			const items = suggestForCart({
+				categories: upsellCatalog,
+				lines: cart,
+				offered: allowedModes.includes(mode),
+				oneTapOnly: true,
+			})
+			countShown(items.map((item) => item.id))
+			const row = buildUpsellRow({
+				items,
+				place: 'checkout',
+				formatMoney: formatCurrency,
+				labels: {
+					heading: labels.upsell.heading,
+					add: labels.upsell.add,
+					addNamed: labels.upsell.addNamed,
+				},
+				onAdd: (item) => {
+					addSuggestion(item, {
+						add: (line) => cartStore.add(line),
+						// Only dishes that go straight in are offered here.
+						openModal: () => {},
+						markOpened: () => {},
+						countAdded: (id) => recordUpsell(orgId, id, 'added'),
+					})
+					cart = cartStore.load()
+					renderCheckout()
+				},
+			})
+			if (row) upsellSlot.replaceChildren(row)
+			else upsellSlot.replaceChildren()
+		}
+
+		// ---------- service fee line (#123) ----------
+
+		const feeRow = document.getElementById('co-fee-row')
+		const feeLabelEl = document.getElementById('co-fee-label') as HTMLButtonElement | null
+		const feeValueEl = document.getElementById('co-fee')
+		const feeExplanationEl = document.getElementById('co-fee-explanation')
+		feeLabelEl?.addEventListener('click', () => {
+			if (!feeExplanationEl) return
+			const open = feeExplanationEl.classList.toggle('hidden') === false
+			feeLabelEl.setAttribute('aria-expanded', open ? 'true' : 'false')
+		})
+
+		/** The fee as its own line, with the operator's name and explanation on tap. */
+		function renderServiceFee(fee: number) {
+			if (!feeRow || !feeLabelEl || !feeValueEl) return
+			const shown = fee > 0
+			feeRow.classList.toggle('hidden', !shown)
+			if (!shown) return
+			const settings = orderingOptions?.serviceFee
+			const label =
+				settings && settings.label !== DEFAULT_SERVICE_FEE_LABEL
+					? settings.label
+					: labels.serviceFee
+			const explanation = settings?.explanation ?? null
+			feeLabelEl.textContent = label
+			feeValueEl.textContent = formatCurrency(fee)
+			feeLabelEl.disabled = !explanation
+			feeLabelEl.classList.toggle('underline', Boolean(explanation))
+			feeLabelEl.classList.toggle('decoration-dotted', Boolean(explanation))
+			feeLabelEl.classList.toggle('underline-offset-4', Boolean(explanation))
+			if (feeExplanationEl) {
+				feeExplanationEl.textContent = explanation ?? ''
+				if (!explanation) {
+					feeExplanationEl.classList.add('hidden')
+					feeLabelEl.setAttribute('aria-expanded', 'false')
+				}
 			}
 		}
 
@@ -1701,22 +2072,6 @@ const tipOff = 'border-border bg-background text-foreground'
 					renderCheckout()
 				})
 			})
-
-		// Wire tip buttons
-		document.querySelectorAll('.tip-btn').forEach((btn) => {
-			btn.addEventListener('click', () => {
-				document.querySelectorAll('.tip-btn').forEach((b) => {
-					b.classList.remove('border-foreground', 'bg-foreground', 'text-background')
-					b.classList.add('border-border', 'bg-background', 'text-foreground')
-					b.setAttribute('aria-pressed', 'false')
-				})
-				btn.classList.add('border-foreground', 'bg-foreground', 'text-background')
-				btn.classList.remove('border-border', 'bg-background', 'text-foreground')
-				btn.setAttribute('aria-pressed', 'true')
-				tipPercent = Number(btn.getAttribute('data-tip') || 0)
-				renderCheckout()
-			})
-		})
 
 		// ---------- regional ordering options (availability, never PII) ----------
 
@@ -1861,7 +2216,7 @@ const tipOff = 'border-border bg-background text-foreground'
 				...(verified ? { delivery: deliveryFields(verified) } : {}),
 				...(scheduled ? { scheduledFor: scheduled } : {}),
 				...(!isDrop && posterSource(orgId) ? { source: 'qr_poster' } : {}),
-				tipPercent,
+				...tipPayload(tipSelection),
 				lines: orderLines(cart),
 			}
 		}
@@ -2214,6 +2569,13 @@ const tipOff = 'border-border bg-background text-foreground'
 			const emailInput = document.getElementById('cust-email') as HTMLInputElement
 			const notesInput = document.getElementById('cust-delivery-notes') as HTMLInputElement
 
+			// A custom tip that is not an amount (or is above the cap) is fixed
+			// before anything is sent; the region would refuse it anyway.
+			if (tipCustomOpen && !applyCustomTip()) {
+				renderCheckout()
+				tipCustomInput?.focus()
+				return
+			}
 			if (!nameInput?.value.trim()) {
 				showCheckoutError(labels.validation.name)
 				markInvalid(nameInput, labels.validation.name)
@@ -2326,6 +2688,8 @@ const tipOff = 'border-border bg-background text-foreground'
 						offered: smsUpdatesOffered,
 						ticked: (document.getElementById('sms-updates') as HTMLInputElement | null)?.checked === true,
 					},
+					// The fee on screen; the region prices it and refuses another.
+					expectedServiceFeeMinor: Math.round(computeTotals().serviceFee * 100),
 				})
 				// smsUpdates is part of the core payload: the region hashes it into
 				// the order, so a changed box must get a new attempt key.
@@ -2398,6 +2762,13 @@ const tipOff = 'border-border bg-background text-foreground'
 					renderCheckout()
 					showCheckoutError(odLabels.quoteExpired)
 					openOrderDetails('delivery')
+				} else if (code === 'service_fee_changed') {
+					// The fee was set again since the page loaded: read the options
+					// and the quote again, then ask the guest to look at the new total.
+					await loadOrderingOptions()
+					discounts?.refresh()
+					renderCheckout()
+					showCheckoutError(labels.errors.serviceFeeChanged)
 				} else if (code === 'schedule_unavailable') {
 					details = updateOrderDetails(orgId, details, { scheduledFor: null })
 					renderCheckout()

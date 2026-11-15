@@ -10,7 +10,12 @@ import {
 	orderDiscountsRequestSchema,
 } from '@repo/discounts'
 import { z } from 'zod'
-import { DAYS_OF_WEEK, DEFAULT_SCHEDULING } from './location-types.ts'
+import {
+	DAYS_OF_WEEK,
+	DEFAULT_SCHEDULING,
+	resolveTipSettings,
+	type TipSettings,
+} from './location-types.ts'
 import {
 	activeBusyExtraPrepMinutes,
 	isLocationOpenForOrdering,
@@ -36,6 +41,20 @@ import {
 	type LargeOrderRule,
 } from './promised-time.ts'
 import { discountedTaxableCents } from './pos-discount-base.ts'
+import {
+	canonicalTip,
+	computeTip,
+	orderTipSchema,
+	requestedTip,
+	requestsTip,
+	TIP_TOO_LARGE_CODE,
+} from './order-tips.ts'
+import {
+	computeServiceFee,
+	readServiceFeePolicy,
+	type ServiceFeeFulfillment,
+	type ServiceFeeSettings,
+} from './service-fee.ts'
 import {
 	orderLoyaltySelectionSchema,
 	type OrderLoyaltySelection,
@@ -197,9 +216,11 @@ export type RestaurantOrderErrorCode =
 	| 'total_quantity_limit'
 	| 'dine_in_disabled'
 	| 'dine_in_not_allowed'
+	| 'tip_too_large'
+	| 'service_fee_unavailable'
 
 export type RestaurantOrderError = {
-	status: 400 | 403 | 404 | 422
+	status: 400 | 403 | 404 | 422 | 503
 	code: RestaurantOrderErrorCode
 	message: string
 }
@@ -328,6 +349,19 @@ const restaurantOrderObjectSchema = z.strictObject({
 		.min(RESTAURANT_TIP_MIN_PERCENT)
 		.max(RESTAURANT_TIP_MAX_PERCENT)
 		.default(0),
+	/**
+	 * The tip: a share of the subtotal or an exact amount (#118). Takes the
+	 * place of `tipPercent`, which stays for clients that predate it; sending
+	 * both with a non-zero `tipPercent` is refused.
+	 */
+	tip: orderTipSchema.optional(),
+	/**
+	 * The service fee (#123) the guest was shown, minor units. The region
+	 * prices the fee itself and refuses a different amount with 409
+	 * `service_fee_changed`; it is never trusted as a price. A missing value
+	 * reads as 0, so a client that predates the fee is refused where one is due.
+	 */
+	expectedServiceFeeMinor: z.number().int().min(0).max(1_000_000_000).optional(),
 	lines: z.array(restaurantOrderLineSchema).min(1).max(RESTAURANT_MAX_LINES),
 	turnstileToken: z.string().min(1).max(2048).optional(),
 })
@@ -338,6 +372,7 @@ type OrderRefinementValue = {
 	fulfillment: 'pickup' | 'delivery' | 'dine_in'
 	paymentMethod: 'handoff' | 'online'
 	tipPercent: number
+	tip?: z.infer<typeof orderTipSchema> | undefined
 	dropSlug?: string
 	pickup?: unknown
 	delivery?: { address?: string; city?: string; quoteToken?: string }
@@ -376,6 +411,13 @@ function refineOrderRequest(
 				message: 'Enter a valid phone number',
 			})
 		}
+	}
+	if (value.tip && value.tipPercent !== 0) {
+		context.addIssue({
+			code: z.ZodIssueCode.custom,
+			path: ['tip'],
+			message: 'Send either tip or tipPercent',
+		})
 	}
 	if (value.fulfillment === 'delivery' && !value.delivery) {
 		context.addIssue({
@@ -504,6 +546,7 @@ function refineDineInRequest(
 		delivery?: unknown
 		scheduledFor?: string | null
 		tipPercent: number
+		tip?: z.infer<typeof orderTipSchema> | undefined
 		paymentMethod: 'handoff' | 'online'
 		source?: 'qr_poster' | null
 	},
@@ -517,7 +560,9 @@ function refineDineInRequest(
 	if (value.scheduledFor) {
 		reject('scheduledFor', 'Table orders are sent to the kitchen now')
 	}
-	if (value.tipPercent !== 0) reject('tipPercent', 'Add a tip when you pay')
+	if (requestsTip(value)) {
+		reject(value.tip ? 'tip' : 'tipPercent', 'Add a tip when you pay')
+	}
 	if (value.paymentMethod !== 'handoff') {
 		reject('paymentMethod', 'Table orders are paid when you close the tab')
 	}
@@ -645,6 +690,11 @@ export type OperatorOrderPatch = z.infer<typeof operatorOrderPatchSchema>
 export const operatorOrderRefundRequestSchema = z.union([
 	z.strictObject({
 		amountCents: z.number().int().min(1).max(100_000_000),
+		/**
+		 * Also give back the guest service fee (#123), on top of `amountCents`.
+		 * Only with an amount: a full refund always includes the fee.
+		 */
+		includeServiceFee: z.boolean().optional(),
 		note: refundNoteSchema,
 	}),
 	z.strictObject({
@@ -726,7 +776,7 @@ export function canonicalOrderRequest(request: RestaurantOrderRequest): string {
 			: null,
 		fulfillment: request.fulfillment,
 		paymentMethod: request.paymentMethod,
-		tipPercent: request.tipPercent,
+		...canonicalTip(request),
 		contact: {
 			name: request.contact.name ?? null,
 			phone: request.contact.phone ?? null,
@@ -737,6 +787,9 @@ export function canonicalOrderRequest(request: RestaurantOrderRequest): string {
 		...(request.loyalty ? { loyalty: request.loyalty } : {}),
 		...(request.discounts ? { discounts: request.discounts } : {}),
 		...(request.smsUpdates ? { smsUpdates: true } : {}),
+		...(request.expectedServiceFeeMinor !== undefined
+			? { expectedServiceFeeMinor: request.expectedServiceFeeMinor }
+			: {}),
 		delivery: request.delivery
 			? {
 					address: request.delivery.address ?? null,
@@ -1061,6 +1114,12 @@ export const publicLocationContextSchema = z
 				deliveryTips: true,
 				dineInTips: true,
 			}),
+		/**
+		 * The location's tip buttons (`TipSettingsSchema`). Read with
+		 * `resolveTipSettings`, never parsed here: a bad value falls back to the
+		 * default buttons, it never blocks ordering.
+		 */
+		tipSettings: z.unknown().optional(),
 		scheduling: z
 			.object({
 				scheduledOrdersEnabled: z.boolean().default(true),
@@ -1258,12 +1317,46 @@ export const restaurantOrderContextSchema = z
 		 * or bad is Automatic.
 		 */
 		acceptance: z.unknown().optional(),
+		/**
+		 * Guest service fee per location id (`ordering.service_fee`, #123): only
+		 * locations that have it on, only while the flag is on. Read with
+		 * `readServiceFeePolicy`, never parsed here: missing is off, but a fee
+		 * that is on and cannot be read refuses the order (never dropped).
+		 */
+		serviceFee: z.unknown().optional(),
 	})
 	.loose()
 
 export type RestaurantOrderContext = z.infer<
 	typeof restaurantOrderContextSchema
 >
+
+export {
+	canonicalTip,
+	computeTip,
+	maxTipMinor,
+	orderTipSchema,
+	requestedTip,
+	requestsTip,
+	TIP_CAP_MAJOR,
+	TIP_TOO_LARGE_CODE,
+	type OrderTip,
+	type TipResult,
+} from './order-tips.ts'
+
+export {
+	computeServiceFee,
+	defaultServiceFeeSettings,
+	INVALID_SERVICE_FEE_CODE,
+	readServiceFeePolicy,
+	SERVICE_FEE_CHANGED_CODE,
+	SERVICE_FEE_CONTRACT_VERSION,
+	SERVICE_FEE_UNAVAILABLE_CODE,
+	serviceFeeSettingsSchema,
+	type ServiceFeePolicy,
+	type ServiceFeeResult,
+	type ServiceFeeSettings,
+} from './service-fee.ts'
 
 export {
 	computePromisedTime,
@@ -1503,8 +1596,26 @@ export type PricedRestaurantOrder = {
 	/** The location tax rate (percent) `taxCents` was computed with. */
 	taxRatePercent: number
 	tipCents: number
-	tipPercent: number
+	/** Null for an exact amount the guest typed. */
+	tipPercent: number | null
 	deliveryFeeCents: number
+	/**
+	 * The guest service fee (#123), before its tax; 0 when none applies. Its
+	 * tax is part of `taxCents` (and of `totalCents` when prices exclude tax).
+	 */
+	serviceFeeCents: number
+	/** The part of `taxCents` that is on the fee. */
+	serviceFeeTaxCents: number
+	/** The name guests saw for the fee; null when there is none. */
+	serviceFeeLabel: string | null
+	/**
+	 * What `applyOrderDiscounts` re-prices the fee with once discounts are
+	 * known; null when no fee applies to this order.
+	 */
+	serviceFeeRule: {
+		settings: ServiceFeeSettings
+		fulfillment: ServiceFeeFulfillment
+	} | null
 	totalCents: number
 	location: { id: string; name: string; timezone: string }
 	pickup: {
@@ -2422,7 +2533,7 @@ export function priceRestaurantOrder(
 			walkIn ||
 			dropSlug ||
 			request.scheduledFor ||
-			request.tipPercent !== 0 ||
+			requestsTip(request) ||
 			request.paymentMethod !== 'handoff'
 		) {
 			return {
@@ -2476,7 +2587,7 @@ export function priceRestaurantOrder(
 		request.fulfillment === 'pickup'
 			? location.inHouseTips.pickupTips
 			: location.inHouseTips.deliveryTips
-	if (!walkIn && request.tipPercent > 0 && !tipsEnabled) {
+	if (!walkIn && requestsTip(request) && !tipsEnabled) {
 		return {
 			ok: false,
 			error: orderError(
@@ -3011,10 +3122,61 @@ export function priceRestaurantOrder(
 	const taxCents = taxInclusive
 		? inclusiveTaxCents(taxableCents, taxRatePercent)
 		: Math.round((taxableCents * taxRatePercent) / 100)
-	const tipCents = Math.round((subtotalCents * request.tipPercent) / 100)
+	const tip = computeTip({
+		tip: requestedTip(request),
+		subtotalCents,
+		currency,
+	})
+	if (!tip.ok) {
+		return {
+			ok: false,
+			error: orderError(
+				422,
+				TIP_TOO_LARGE_CODE,
+				'That tip is more than we can accept. Please enter a smaller amount.',
+			),
+		}
+	}
+	const tipCents = tip.tipCents
+	// The guest service fee: the node refuses a location whose fee it cannot
+	// read instead of placing the order without it. Counter sales have none,
+	// and neither does a table round: a tab pays its fee once, when it is paid
+	// from the phone.
+	const feePolicy =
+		walkIn || request.fulfillment === 'dine_in'
+			? ({ kind: 'off' } as const)
+			: readServiceFeePolicy(context.serviceFee, location.id)
+	if (feePolicy.kind === 'unreadable') {
+		return {
+			ok: false,
+			error: orderError(
+				503,
+				'service_fee_unavailable',
+				'This restaurant cannot take online orders right now. Please try again later.',
+			),
+		}
+	}
+	const serviceFeeRule =
+		feePolicy.kind === 'on'
+			? { settings: feePolicy.settings, fulfillment: request.fulfillment }
+			: null
+	// Priced before any discount here; `applyOrderDiscounts` re-prices it on
+	// the discounted subtotal.
+	const serviceFee = computeServiceFee({
+		settings: serviceFeeRule?.settings ?? null,
+		fulfillment: request.fulfillment,
+		baseCents: subtotalCents,
+		taxRatePercent,
+		taxInclusive,
+	})
+	const orderTaxCents = taxCents + serviceFee.taxCents
 	// Inclusive prices already carry the tax: it is reported, not added.
 	const totalCents =
-		subtotalCents + (taxInclusive ? 0 : taxCents) + tipCents + deliveryFeeCents
+		subtotalCents +
+		(taxInclusive ? 0 : orderTaxCents) +
+		tipCents +
+		deliveryFeeCents +
+		serviceFee.feeCents
 
 	return {
 		ok: true,
@@ -3022,12 +3184,16 @@ export function priceRestaurantOrder(
 			currency,
 			lines: pricedLines,
 			subtotalCents,
-			taxCents,
+			taxCents: orderTaxCents,
 			taxInclusive,
 			taxRatePercent,
 			tipCents,
-			tipPercent: request.tipPercent,
+			tipPercent: tip.tipPercent,
 			deliveryFeeCents,
+			serviceFeeCents: serviceFee.feeCents,
+			serviceFeeTaxCents: serviceFee.taxCents,
+			serviceFeeLabel: serviceFeeRule ? serviceFeeRule.settings.label : null,
+			serviceFeeRule,
 			totalCents,
 			location: {
 				id: location.id,
@@ -3065,6 +3231,10 @@ export type OrderDiscountTotals = {
 	taxCents: number
 	/** Customer total: tip stays on the pre-discount subtotal. */
 	totalCents: number
+	/** The service fee on the discounted subtotal, before its tax. */
+	serviceFeeCents: number
+	/** The part of `taxCents` that is on the fee. */
+	serviceFeeTaxCents: number
 }
 
 /**
@@ -3075,7 +3245,9 @@ export type OrderDiscountTotals = {
  * discount on an untaxed line never lowers the tax), tax is recomputed once on
  * the sum, inclusive or exclusive like the original pricing, and the tip keeps
  * the pre-discount subtotal:
- * `total = subtotal - discounts + tax (exclusive only) + tip + (delivery - delivery discount)`.
+ * `total = subtotal - discounts + tax (exclusive only) + tip + (delivery - delivery discount) + service fee`.
+ * The service fee is re-priced on the discounted subtotal (discounts and
+ * loyalty first, then the fee, before tax and tip); its tax joins `taxCents`.
  */
 export function applyOrderDiscounts(
 	priced: Pick<
@@ -3086,6 +3258,7 @@ export function applyOrderDiscounts(
 		| 'taxRatePercent'
 		| 'tipCents'
 		| 'deliveryFeeCents'
+		| 'serviceFeeRule'
 	>,
 	lineDiscounts: Readonly<Record<string, number>>,
 	deliveryDiscountMinor = 0,
@@ -3109,16 +3282,33 @@ export function applyOrderDiscounts(
 			: 0,
 		Math.max(0, priced.deliveryFeeCents),
 	)
-	const taxCents = priced.taxInclusive
+	const itemTaxCents = priced.taxInclusive
 		? inclusiveTaxCents(taxableAfter, priced.taxRatePercent)
 		: Math.round((taxableAfter * priced.taxRatePercent) / 100)
+	// The fee comes after every discount and reward, before tax and tip.
+	const serviceFee = computeServiceFee({
+		settings: priced.serviceFeeRule?.settings ?? null,
+		fulfillment: priced.serviceFeeRule?.fulfillment ?? 'pickup',
+		baseCents: priced.subtotalCents - discountCents,
+		taxRatePercent: priced.taxRatePercent,
+		taxInclusive: priced.taxInclusive,
+	})
+	const taxCents = itemTaxCents + serviceFee.taxCents
 	const totalCents =
 		priced.subtotalCents -
 		discountCents +
 		(priced.taxInclusive ? 0 : taxCents) +
 		priced.tipCents +
-		(priced.deliveryFeeCents - deliveryDiscountCents)
-	return { discountCents, deliveryDiscountCents, taxCents, totalCents }
+		(priced.deliveryFeeCents - deliveryDiscountCents) +
+		serviceFee.feeCents
+	return {
+		discountCents,
+		deliveryDiscountCents,
+		taxCents,
+		totalCents,
+		serviceFeeCents: serviceFee.feeCents,
+		serviceFeeTaxCents: serviceFee.taxCents,
+	}
 }
 
 function zoneMinimumOrderCents(
@@ -3194,6 +3384,17 @@ export type PublicOrderingOptions = {
 	}
 	fulfillment: { pickup: boolean; delivery: boolean }
 	tips: { pickup: boolean; delivery: boolean }
+	/**
+	 * The tip buttons per order type (#118) and the location's currency, so
+	 * Sites can show amounts and the custom cap. Absent on nodes that predate
+	 * it: Sites then shows the old 10, 15, 18 and 20 percent buttons.
+	 */
+	tipChoices?: { currency: string; settings: TipSettings }
+	/**
+	 * The guest service fee (#123) of this location while it is on; null when
+	 * off. Sites shows it with `computeServiceFee`; the region re-prices it.
+	 */
+	serviceFee?: ServiceFeeSettings | null
 	delivery: { available: boolean }
 	/**
 	 * Whether the checkout may offer "Text me order updates": the guest
@@ -3285,6 +3486,14 @@ export function buildPublicOrderingOptions(
 			pickup: Boolean(location.inHouseTips.pickupTips),
 			delivery: Boolean(location.inHouseTips.deliveryTips),
 		},
+		tipChoices: {
+			currency: location.currency,
+			settings: resolveTipSettings(location.tipSettings, location.currency),
+		},
+		serviceFee: (() => {
+			const policy = readServiceFeePolicy(context.serviceFee, location.id)
+			return policy.kind === 'on' ? policy.settings : null
+		})(),
 		delivery: {
 			available:
 				Boolean(location.fulfillmentOptions.delivery) &&

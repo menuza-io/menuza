@@ -176,6 +176,8 @@ describe('POST /operator/orders/:id/refunds', () => {
 				failureCode: null,
 				settledAt: null,
 				reversedAt: null,
+				// No service fee on this order, so none of the refund is the fee.
+				serviceFeeCents: 0,
 			},
 		])
 		expect(

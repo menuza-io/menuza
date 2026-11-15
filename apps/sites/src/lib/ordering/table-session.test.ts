@@ -594,6 +594,138 @@ describe('signed-in members at the table', () => {
 		})
 	})
 
+	it('sends an exact tip and the service fee it showed', async () => {
+		signIn()
+		const fetchMock = vi
+			.fn()
+			.mockResolvedValueOnce(
+				Response.json({
+					orderRef: 'tab:tab-1',
+					tabPaymentToken: 'pay-1',
+					amountCents: 2_460,
+					tipCents: 437,
+					serviceFeeCents: 60,
+					loyaltyDiscountCents: 0,
+					currency: 'USD',
+				}),
+			)
+			.mockResolvedValueOnce(
+				Response.json({ checkoutUrl: 'https://pay.example/c/1' }),
+			)
+		vi.stubGlobal('fetch', fetchMock)
+		const started = await startTabPayment('org-1', session({ tabToken }), {
+			tipPercent: 0,
+			tip: { amountMinor: 437 },
+			expectedServiceFeeMinor: 60,
+			contact: { name: 'Sam', phone: '+15555550100' },
+			locale: 'en',
+		})
+		expect(started.serviceFeeCents).toBe(60)
+		const [body] = calls(fetchMock)
+			.filter((call) => call.url.endsWith('/orders/tab/pay'))
+			.map((call) => call.body)
+		expect(body).toMatchObject({
+			tipPercent: 0,
+			tip: { amountMinor: 437 },
+			expectedServiceFeeMinor: 60,
+		})
+	})
+
+	it('sends no fee field when none was shown, and a share as tipPercent', async () => {
+		signIn()
+		const fetchMock = vi
+			.fn()
+			.mockResolvedValueOnce(
+				Response.json({
+					orderRef: 'tab:tab-1',
+					tabPaymentToken: 'pay-1',
+					amountCents: 2_300,
+					tipCents: 300,
+					loyaltyDiscountCents: 0,
+					currency: 'USD',
+				}),
+			)
+			.mockResolvedValueOnce(
+				Response.json({ checkoutUrl: 'https://pay.example/c/1' }),
+			)
+		vi.stubGlobal('fetch', fetchMock)
+		await startTabPayment('org-1', session({ tabToken }), {
+			tipPercent: 15,
+			contact: { name: 'Sam', phone: '+15555550100' },
+			locale: 'en',
+		})
+		const [body] = calls(fetchMock)
+			.filter((call) => call.url.endsWith('/orders/tab/pay'))
+			.map((call) => call.body)
+		expect(body).toMatchObject({ tipPercent: 15 })
+		expect(body).not.toHaveProperty('tip')
+		expect(body).not.toHaveProperty('expectedServiceFeeMinor')
+	})
+
+	it('asks again with the service fee the region priced when it differs', async () => {
+		signIn()
+		const fetchMock = vi
+			.fn()
+			.mockResolvedValueOnce(
+				Response.json(
+					{ error: 'service_fee_changed', details: { serviceFeeMinor: 90 } },
+					{ status: 409 },
+				),
+			)
+			.mockResolvedValueOnce(
+				Response.json({
+					orderRef: 'tab:tab-1',
+					tabPaymentToken: 'pay-1',
+					amountCents: 2_390,
+					tipCents: 0,
+					serviceFeeCents: 90,
+					loyaltyDiscountCents: 0,
+					currency: 'USD',
+				}),
+			)
+			.mockResolvedValueOnce(
+				Response.json({ checkoutUrl: 'https://pay.example/c' }),
+			)
+		vi.stubGlobal('fetch', fetchMock)
+		const started = await startTabPayment('org-1', session({ tabToken }), {
+			tipPercent: 0,
+			expectedServiceFeeMinor: 60,
+			contact: { name: 'Sam', phone: '+15555550100' },
+			locale: 'en',
+		})
+		expect(started.amountCents).toBe(2_390)
+		const bodies = calls(fetchMock)
+			.filter((call) => call.url.endsWith('/orders/tab/pay'))
+			.map((call) => call.body)
+		expect(bodies).toHaveLength(2)
+		expect(bodies[0]).toMatchObject({ expectedServiceFeeMinor: 60 })
+		expect(bodies[1]).toMatchObject({ expectedServiceFeeMinor: 90 })
+	})
+
+	it('gives up after asking again twice about the fee', async () => {
+		signIn()
+		const changed = () =>
+			Response.json(
+				{ error: 'service_fee_changed', details: { serviceFeeMinor: 70 } },
+				{ status: 409 },
+			)
+		const fetchMock = vi
+			.fn()
+			.mockResolvedValueOnce(changed())
+			.mockResolvedValueOnce(changed())
+			.mockResolvedValueOnce(changed())
+		vi.stubGlobal('fetch', fetchMock)
+		await expect(
+			startTabPayment('org-1', session({ tabToken }), {
+				tipPercent: 0,
+				expectedServiceFeeMinor: 60,
+				contact: { name: 'Sam', phone: '+15555550100' },
+				locale: 'en',
+			}),
+		).rejects.toMatchObject({ code: 'service_fee_changed' })
+		expect(fetchMock).toHaveBeenCalledTimes(3)
+	})
+
 	it('pays without a reward as a guest when the token is refused', async () => {
 		signIn()
 		const fetchMock = vi
@@ -622,6 +754,8 @@ describe('signed-in members at the table', () => {
 			url: 'https://pay.example/c/1',
 			amountCents: 2_450,
 			tipCents: 200,
+			// An older region sends no fee: none was charged.
+			serviceFeeCents: 0,
 			loyaltyDiscountCents: 0,
 			currency: 'USD',
 		})

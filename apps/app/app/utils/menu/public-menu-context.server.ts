@@ -60,6 +60,7 @@ import {
 	buildPublicMenuDiscounts,
 	type PublicMenuPromotion,
 } from '#app/utils/discounts/order-context.server.ts'
+import { isUpsellEnabled } from '#app/utils/orders/upsell-flag.server.ts'
 import { publicOrderingControls } from '#app/utils/location/ordering-pause.ts'
 import {
 	applyOptionAssignment,
@@ -111,6 +112,12 @@ export interface PublicSiteMenuPayload {
 	>
 	/** Banners and item badges. Absent on a cached menu from before discounts. */
 	promotions?: PublicMenuPromotion[]
+	/**
+	 * Site features the menu page reads (#114): `upsell` is the
+	 * `ordering.upsell` flag. Absent on a cached menu from before it, which
+	 * Sites reads as off.
+	 */
+	features?: { upsell: boolean }
 	/**
 	 * Not part of the public response. Till rules are loaded by a paired
 	 * terminal. The field stays so an older snapshot still type-checks.
@@ -210,6 +217,7 @@ export async function buildPublicSiteMenuPayload(
 				loc.inHouseTips,
 				DEFAULT_IN_HOUSE_TIPS,
 			),
+			tipSettings: safeJsonParse<unknown>(loc.tipSettings, null),
 			scheduling: safeJsonParse<SchedulingOptions>(
 				loc.scheduling,
 				DEFAULT_SCHEDULING,
@@ -594,6 +602,7 @@ export async function buildPublicSiteMenuPayload(
 		menus: structuredMenus,
 		locationOverrides: locationOverridesMap,
 		promotions: menuDiscounts.promotions,
+		features: { upsell: await isUpsellEnabled(org.id) },
 	}
 
 	const secondsUntilVariationReturn =

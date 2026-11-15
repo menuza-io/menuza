@@ -5,6 +5,15 @@ import {
 import { getAccessToken } from '~/lib/client-auth'
 import { type CartStore } from '~/lib/ordering/cart-store'
 import {
+	parseCustomTip,
+	sameTipSelection,
+	serviceFeeChargeMinor,
+	serviceFeeFor,
+	tipSelectionMinor,
+	tipViewOf,
+	type TipSelection,
+} from '~/lib/ordering/checkout-extras'
+import {
 	cleanTypedCode,
 	isPlausibleCode,
 	parseDiscountOrderRefusal,
@@ -69,6 +78,13 @@ type Labels = Record<
 	| 'errorTabPaying'
 	| 'errorCoupon'
 	| 'errorDiscountChanged'
+	| 'errorServiceFeeChanged'
+	| 'errorTipTooLarge'
+	| 'noTip'
+	| 'customTip'
+	| 'customTipInvalid'
+	| 'customTipTooLarge'
+	| 'serviceFee'
 	| 'errorClosed'
 	| 'errorPaused'
 	| 'errorRateLimited'
@@ -106,6 +122,8 @@ type Labels = Record<
 type TabRewards = {
 	open(tab: QrPublicTab, tabToken: string): void
 	amountMinor(totalMinor: number, tipMinor: number): number | null
+	/** What the picked reward takes off (0 without a pick). */
+	discountMinor(): number
 	placement(): Promise<
 		| { ok: true; loyalty: QrTabPayRequest['loyalty'] | null }
 		| { ok: false; message: string }
@@ -240,6 +258,12 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 		if (code === 'tab_paying') return labels.errorTabPaying
 		if (code === 'discount_changed') {
 			return labels.errorDiscountChanged ?? labels.errorGeneric
+		}
+		if (code === 'service_fee_changed') {
+			return labels.errorServiceFeeChanged ?? labels.errorGeneric
+		}
+		if (code === 'tip_too_large') {
+			return labels.errorTipTooLarge ?? labels.errorGeneric
 		}
 		if (code === 'coupon_refused') {
 			const refusal = parseDiscountOrderRefusal(code, body)
@@ -466,6 +490,12 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 			.getElementById('tab-tip-row')
 			?.classList.toggle('hidden', !(tip > 0))
 		set('tab-tip', tip > 0 ? money(tip) : '')
+		// A tab paid from the phone shows the service fee it was paid with.
+		const fee = tab.totals.serviceFeeCents ?? 0
+		document
+			.getElementById('tab-fee-row')
+			?.classList.toggle('hidden', !(fee > 0))
+		set('tab-fee', fee > 0 ? money(fee) : '')
 		set('tab-tax', money(tab.totals.taxCents))
 		set(
 			'tab-tax-label',
@@ -757,28 +787,216 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 	let rewards: TabRewards | null = null
 	let rewardsLoading: Promise<TabRewards | null> | null = null
 
-	function tipPercent(): number {
-		const checked = payForm?.querySelector<HTMLInputElement>(
-			'input[name="tipPercent"]:checked',
+	// ---- Tip choices (#118) -------------------------------------------------
+
+	const tipChoicesEl = document.getElementById('tab-tip-choices')
+	const tipCustomWrap = document.getElementById('tab-tip-custom')
+	const tipCustomInput = document.getElementById(
+		'tab-tip-custom-input',
+	) as HTMLInputElement | null
+	const tipCustomError = document.getElementById('tab-tip-custom-error')
+	type TipEntry = {
+		selection: TipSelection | 'custom'
+		label: string
+		percent: number | null
+	}
+	let tipEntries: TipEntry[] = []
+	let tipSelection: TipSelection = { kind: 'none' }
+	let tipCustomOpen = false
+	let tipBuiltFor = ''
+
+	function tabCurrency(tab: QrPublicTab): string {
+		return tab.tipChoices?.currency ?? tab.totals.currency
+	}
+
+	/**
+	 * The location's own tip buttons for a table tab, built when the pay sheet
+	 * opens: its choices and default, "No tip" and, when allowed, "Custom".
+	 * The tip section is hidden when table tips are switched off. The guest's
+	 * pick is kept while the same buttons stay (the sheet can reopen).
+	 */
+	function buildTipChoices(tab: QrPublicTab) {
+		const fieldset = tipChoicesEl?.closest('fieldset')
+		const enabled = tab.tipChoices?.enabled !== false
+		fieldset?.classList.toggle('hidden', !enabled)
+		const view = tipViewOf(tab.tipChoices?.settings, 'qrTab', tabCurrency(tab))
+		const key = JSON.stringify([enabled, view.choices, view.allowCustom, tab.id])
+		if (!enabled) {
+			tipSelection = { kind: 'none' }
+			tipCustomOpen = false
+			tipBuiltFor = key
+			return
+		}
+		if (!tipChoicesEl || key === tipBuiltFor) return
+		tipBuiltFor = key
+		const money = (minor: number) => deps.formatMoney(minor / 100)
+		tipEntries = [
+			{ selection: { kind: 'none' }, label: labels.noTip, percent: null },
+			...view.choices.map((choice): TipEntry =>
+				'percent' in choice
+					? {
+							selection: { kind: 'percent', percent: choice.percent },
+							label: `${choice.percent}%`,
+							percent: choice.percent,
+						}
+					: {
+							selection: { kind: 'amount', amountMinor: choice.amountMinor },
+							label: money(choice.amountMinor),
+							percent: null,
+						},
+			),
+			...(view.allowCustom
+				? [{ selection: 'custom', label: labels.customTip, percent: null } as TipEntry]
+				: []),
+		]
+		tipSelection = view.initial
+		tipCustomOpen = false
+		tipChoicesEl.replaceChildren(
+			...tipEntries.map((entry, index) => {
+				const label = document.createElement('label')
+				label.className = 'segmented-item min-h-11 flex-1 px-2 text-center'
+				const input = document.createElement('input')
+				input.type = 'radio'
+				input.name = 'tipChoice'
+				input.value = String(index)
+				input.className = 'sr-only peer'
+				input.checked =
+					entry.selection !== 'custom' &&
+					sameTipSelection(entry.selection, view.initial)
+				const text = document.createElement('span')
+				text.textContent = entry.label
+				label.append(input, text)
+				return label
+			}),
 		)
-		return Number(checked?.value ?? 0) || 0
+		tipCustomWrap?.classList.add('hidden')
+		tipCustomWrap?.classList.remove('flex')
+		setCustomTipError(null)
+	}
+
+	function setCustomTipError(message: string | null) {
+		if (!tipCustomInput || !tipCustomError) return
+		tipCustomError.textContent = message ?? ''
+		tipCustomError.classList.toggle('hidden', !message)
+		if (message) tipCustomInput.setAttribute('aria-invalid', 'true')
+		else tipCustomInput.removeAttribute('aria-invalid')
+	}
+
+	/** Reads the typed custom amount into the selection; false when it cannot be sent. */
+	function applyCustomTip(): boolean {
+		const text = tipCustomInput?.value.trim() ?? ''
+		if (!payTab || text === '') {
+			tipSelection = { kind: 'none' }
+			setCustomTipError(null)
+			return true
+		}
+		const parsed = parseCustomTip(
+			text,
+			tabCurrency(payTab),
+			payTab.totals.subtotalCents,
+		)
+		if (parsed.ok) {
+			tipSelection = { kind: 'amount', amountMinor: parsed.amountMinor }
+			setCustomTipError(null)
+			return true
+		}
+		tipSelection = { kind: 'none' }
+		setCustomTipError(
+			parsed.reason === 'too_large'
+				? labels.customTipTooLarge
+				: labels.customTipInvalid,
+		)
+		return false
+	}
+
+	/** A tip radio changed: take its selection and open or close the custom field. */
+	function onTipChoiceChange(target: HTMLInputElement) {
+		const entry = tipEntries[Number(target.value)]
+		if (!entry) return
+		tipCustomOpen = entry.selection === 'custom'
+		tipCustomWrap?.classList.toggle('hidden', !tipCustomOpen)
+		tipCustomWrap?.classList.toggle('flex', tipCustomOpen)
+		if (entry.selection === 'custom') {
+			applyCustomTip()
+			tipCustomInput?.focus()
+		} else {
+			tipSelection = entry.selection
+			setCustomTipError(null)
+		}
+	}
+
+	/** The share the guest picked; 0 for an exact amount (the quotes only need a share). */
+	function tipPercent(): number {
+		return tipSelection.kind === 'percent' ? tipSelection.percent : 0
 	}
 
 	function tipMinor(): number {
 		if (!payTab) return 0
-		return Math.round((payTab.totals.subtotalCents * tipPercent()) / 100)
+		return tipSelectionMinor(tipSelection, payTab.totals.subtotalCents)
 	}
 
-	/** The tab plus the tip, less a priced reward; null while it is priced. */
+	// ---- Service fee (#123) -------------------------------------------------
+
+	const payFeeRow = document.getElementById('tab-pay-fee')
+	const payFeeLabel = document.getElementById(
+		'tab-pay-fee-label',
+	) as HTMLButtonElement | null
+	const payFeeAmount = document.getElementById('tab-pay-fee-amount')
+	const payFeeExplanation = document.getElementById('tab-pay-fee-explanation')
+	payFeeLabel?.addEventListener('click', () => {
+		if (!payFeeExplanation) return
+		const open = payFeeExplanation.classList.toggle('hidden') === false
+		payFeeLabel.setAttribute('aria-expanded', open ? 'true' : 'false')
+	})
+
+	/** The fee on what discounts (and a picked reward) leave of the tab's subtotal. */
+	function feeLine(rewardMinor: number) {
+		if (!payTab?.serviceFee) return null
+		return serviceFeeFor(
+			{ serviceFee: payTab.serviceFee.settings },
+			{
+				fulfillment: 'dine_in',
+				subtotalMinor: payTab.totals.subtotalCents,
+				discountMinor: (payTab.totals.discountCents ?? 0) + rewardMinor,
+				taxRatePercent: payTab.serviceFee.taxRatePercent,
+				taxInclusive: payTab.totals.taxInclusive,
+				defaultLabel: labels.serviceFee,
+			},
+		)
+	}
+
+	/** What the pay button adds for the fee when no reward is picked. */
+	function feeChargeMinor(): number {
+		const line = feeLine(0)
+		return line ? serviceFeeChargeMinor(line, payTab?.totals.taxInclusive ?? false) : 0
+	}
+
+	function paintFee() {
+		if (!payFeeRow || !payFeeLabel || !payFeeAmount) return
+		const line = feeLine(rewards?.discountMinor() ?? 0)
+		payFeeRow.classList.toggle('hidden', !line)
+		if (!line) return
+		payFeeLabel.textContent = line.label
+		payFeeAmount.textContent = deps.formatMoney(line.feeCents / 100)
+		payFeeLabel.disabled = !line.explanation
+		payFeeLabel.classList.toggle('underline', Boolean(line.explanation))
+		if (payFeeExplanation) {
+			payFeeExplanation.textContent = line.explanation ?? ''
+			if (!line.explanation) payFeeExplanation.classList.add('hidden')
+		}
+	}
+
+	/** The tab plus the tip and the fee, less a priced reward; null while it is priced. */
 	function estimatedMinor(): number | null {
 		if (!payTab) return null
 		const tip = tipMinor()
 		return rewards
 			? rewards.amountMinor(payTab.totals.totalCents, tip)
-			: payTab.totals.totalCents + tip
+			: payTab.totals.totalCents + tip + feeChargeMinor()
 	}
 
 	function paintPayAmount() {
+		paintFee()
 		// While the payment starts, or waits on a new amount, the button keeps
 		// saying so.
 		if (!payTab || !paySubmit || paying || confirmUrl) return
@@ -807,6 +1025,7 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 					formatMoney: (minor) => deps.formatMoney(minor / 100),
 					tipPercent,
 					tipMinor,
+					feeMinor: feeChargeMinor,
 					onChange: paintPayAmount,
 				})
 				return rewards
@@ -822,6 +1041,7 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 	function openPay(tab: QrPublicTab) {
 		if (!payMotion || !payForm) return
 		payTab = tab
+		buildTipChoices(tab)
 		if (payError) {
 			payError.textContent = ''
 			payError.classList.add('hidden')
@@ -869,7 +1089,17 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 		openTab()
 	}
 
-	payForm?.addEventListener('change', paintPayAmount)
+	payForm?.addEventListener('change', (event) => {
+		const target = event.target
+		if (target instanceof HTMLInputElement && target.name === 'tipChoice') {
+			onTipChoiceChange(target)
+		}
+		paintPayAmount()
+	})
+	tipCustomInput?.addEventListener('input', () => {
+		applyCustomTip()
+		paintPayAmount()
+	})
 	payForm?.addEventListener('keydown', (event) => {
 		if (event.key !== 'Escape') return
 		event.stopPropagation()
@@ -897,6 +1127,13 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 		}
 		const nameField = payForm.elements.namedItem('name') as HTMLInputElement
 		const phoneField = payForm.elements.namedItem('phone') as HTMLInputElement
+		// A custom tip that is not an amount (or is above the cap) is fixed before
+		// anything is sent; the region would refuse it anyway.
+		if (tipCustomOpen && !applyCustomTip()) {
+			paintPayAmount()
+			tipCustomInput?.focus()
+			return
+		}
 		const phoneBad = !/^\+?[\d\s\-().]{7,25}$/.test(phone)
 		setInvalid(nameField, !name, 'tab-pay-error')
 		setInvalid(phoneField, phoneBad, 'tab-pay-error')
@@ -976,6 +1213,13 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 			}
 			const started = await startTabPayment(orgId, current, {
 				tipPercent: tipPercent(),
+				...(tipSelection.kind === 'amount'
+					? { tip: { amountMinor: tipSelection.amountMinor } }
+					: {}),
+				// The fee the sheet showed; the region prices it and answers with
+				// its own when it differs (the guest then sees the final amount).
+				expectedServiceFeeMinor:
+					feeLine(rewards?.discountMinor() ?? 0)?.feeCents ?? 0,
 				contact,
 				locale: deps.locale,
 				loyalty: reward.loyalty,

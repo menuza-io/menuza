@@ -52,9 +52,19 @@ import {
 	LocalizedInput,
 } from '#app/components/website/locale-fields.tsx'
 import { TranslateProvider } from '#app/components/website/translate-provider.tsx'
+import {
+	type CheckoutSettingsIssue,
+	type FeeFormValues,
+	type TipFormValues,
+} from '#app/utils/orders/checkout-settings.ts'
 import { type OrderPolicyError } from '#app/utils/orders/order-policy-settings.ts'
 import { AddressAutocomplete } from './address-autocomplete'
 import { LocationHoursSection } from './availability-picker'
+import {
+	ServiceFeeCard,
+	TipChoicesCard,
+	checkoutIssueMessage,
+} from './checkout-settings-cards'
 import { DeliveryZoneMap } from './delivery-zone-map'
 import { DeliveryZonesManager } from './delivery-zones-manager'
 import {
@@ -116,6 +126,16 @@ interface LocationFormProps {
 		currency: string
 		initial: OrderPolicyValues
 	}
+	/**
+	 * Tip choices (#118) and the service fee (#123). Omitted on a new location;
+	 * `serviceFeeEnabled` is the `ordering.service_fee` flag.
+	 */
+	checkoutSettings?: {
+		currency: string
+		serviceFeeEnabled: boolean
+		tips: TipFormValues
+		fee: FeeFormValues
+	}
 }
 
 export function LocationForm(props: LocationFormProps) {
@@ -131,22 +151,28 @@ function LocationFormBody({
 	siteDefaultLocaleRaw,
 	isEditing = false,
 	orderPolicies,
+	checkoutSettings,
 	onDiscard,
 }: LocationFormProps & { onDiscard: () => void }) {
 	const { _ } = useLingui()
 	const fetcher = useFetcher<{
 		error?: string
 		orderPolicyError?: OrderPolicyError
+		checkoutIssue?: CheckoutSettingsIssue
 	}>()
 	const orderPolicyError = fetcher.data?.orderPolicyError ?? null
 	const orderPolicyMessage = orderPolicyError
 		? _(orderPolicyErrorMessage(orderPolicyError))
 		: null
+	const checkoutIssue = fetcher.data?.checkoutIssue ?? null
+	const checkoutMessage = checkoutIssue
+		? _(checkoutIssueMessage(checkoutIssue))
+		: null
 	const [tab, setTab] = useState('general')
 	// The refused field lives on the Fulfillment & Timing tab: show it.
 	useEffect(() => {
-		if (orderPolicyError) setTab('fulfillment')
-	}, [orderPolicyError])
+		if (orderPolicyError || checkoutIssue) setTab('fulfillment')
+	}, [orderPolicyError, checkoutIssue])
 	// The fetcher stays busy through the redirect that follows a save.
 	const isSubmitting = fetcher.state !== 'idle'
 	const formRef = useRef<HTMLFormElement>(null)
@@ -210,6 +236,12 @@ function LocationFormBody({
 	// Timing & Prep Time
 	const [policyValues, setPolicyValues] = useState<OrderPolicyValues | null>(
 		orderPolicies?.initial ?? null,
+	)
+	const [tipValues, setTipValues] = useState<TipFormValues | null>(
+		checkoutSettings?.tips ?? null,
+	)
+	const [feeValues, setFeeValues] = useState<FeeFormValues | null>(
+		checkoutSettings?.fee ?? null,
 	)
 	const [prepTime, setPrepTime] = useState(initialData?.prepTime ?? 15)
 	const [largeOrderThreshold, setLargeOrderThreshold] = useState(
@@ -317,6 +349,13 @@ function LocationFormBody({
 		deliveryConfig: JSON.stringify(deliveryConfig),
 		deliveryZones: JSON.stringify(deliveryZones),
 		...(orderPolicies && policyValues ? policyValues : {}),
+		// Typed text as JSON; the action reads it into the shared settings.
+		...(checkoutSettings && tipValues
+			? { checkoutTips: JSON.stringify(tipValues) }
+			: {}),
+		...(checkoutSettings?.serviceFeeEnabled && feeValues
+			? { checkoutFee: JSON.stringify(feeValues) }
+			: {}),
 	}
 
 	const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -368,6 +407,12 @@ function LocationFormBody({
 						>
 							{orderPolicyMessage ? (
 								<Trans>Online order rules: {orderPolicyMessage}</Trans>
+							) : checkoutMessage ? (
+								checkoutIssue?.section === 'fee' ? (
+									<Trans>Service fee: {checkoutMessage}</Trans>
+								) : (
+									<Trans>Tip choices: {checkoutMessage}</Trans>
+								)
 							) : (
 								fetcher.data.error
 							)}
@@ -969,6 +1014,24 @@ function LocationFormBody({
 									</div>
 								</CardContent>
 							</Card>
+
+							{checkoutSettings && tipValues ? (
+								<TipChoicesCard
+									currency={checkoutSettings.currency}
+									values={tipValues}
+									onChange={setTipValues}
+									issue={checkoutIssue}
+								/>
+							) : null}
+
+							{checkoutSettings?.serviceFeeEnabled && feeValues ? (
+								<ServiceFeeCard
+									currency={checkoutSettings.currency}
+									values={feeValues}
+									onChange={setFeeValues}
+									issue={checkoutIssue}
+								/>
+							) : null}
 						</TabsContent>
 
 						{/* TAB 4: DELIVERY & ZONES */}

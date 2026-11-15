@@ -2627,6 +2627,17 @@ export const OrganizationLocation = sqliteTable(
 		largeOrderExtraPrepTime: integer().default(15).notNull(),
 		fulfillmentOptions: text(),
 		inHouseTips: text(),
+		/**
+		 * Tip buttons per order type (#118): JSON `TipSettings`
+		 * (`@repo/common/location-types`). Null shows the default buttons.
+		 */
+		tipSettings: text(),
+		/**
+		 * Guest service fee (#123, `ordering.service_fee`): JSON
+		 * `ServiceFeeSettings` (`@repo/common/service-fee`). Null is no fee. Policy
+		 * only; the amounts charged live with each order in the regional database.
+		 */
+		serviceFee: text(),
 		scheduling: text(),
 		deliveryConfig: text(),
 		deliveryZones: text(),

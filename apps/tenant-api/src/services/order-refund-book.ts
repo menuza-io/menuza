@@ -1,5 +1,5 @@
 import crypto from 'node:crypto'
-import { and, eq, isNull, ne, sql } from 'drizzle-orm'
+import { and, eq, inArray, isNull, ne, sql } from 'drizzle-orm'
 
 import { tabOrderRef } from '@repo/common/qr-ordering'
 import {
@@ -152,6 +152,92 @@ export async function pendingOrderRefundCentsInTx(
 	return Number(row?.total ?? 0)
 }
 
+/**
+ * What the order charged for its service fee (#123): the fee plus its tax,
+ * except when prices include tax (the tax is inside the fee then). 0 for an
+ * order with no fee. The inclusive test is the one the totals follow: the
+ * total never added the tax on top.
+ */
+export function orderServiceFeeChargeCents(
+	order: Pick<
+		RestaurantOrder,
+		| 'serviceFeeCents'
+		| 'serviceFeeTaxCents'
+		| 'taxCents'
+		| 'totalCents'
+		| 'subtotalCents'
+		| 'loyaltyDiscountCents'
+		| 'discountCents'
+		| 'deliveryDiscountCents'
+		| 'tipCents'
+		| 'deliveryFeeCents'
+	>,
+): number {
+	if (order.serviceFeeCents <= 0) return 0
+	const inclusive =
+		order.taxCents > 0 &&
+		order.totalCents ===
+			order.subtotalCents -
+				order.loyaltyDiscountCents -
+				order.discountCents +
+				order.tipCents +
+				order.deliveryFeeCents -
+				order.deliveryDiscountCents +
+				order.serviceFeeCents
+	return order.serviceFeeCents + (inclusive ? 0 : order.serviceFeeTaxCents)
+}
+
+/**
+ * The service fee already given back or reserved on an order: the fee part of
+ * every pending or succeeded refund (a refund the provider reversed counts as
+ * given back no more).
+ */
+export async function serviceFeeRefundedCentsInTx(
+	tx: OrderTx,
+	orderId: string,
+): Promise<number> {
+	const [row] = await tx
+		.select({
+			total: sql<number>`coalesce(sum(${restaurantOrderRefunds.serviceFeeCents}), 0)`,
+		})
+		.from(restaurantOrderRefunds)
+		.where(
+			and(
+				eq(restaurantOrderRefunds.orderId, orderId),
+				inArray(restaurantOrderRefunds.status, ['pending', 'succeeded']),
+				isNull(restaurantOrderRefunds.reversedAt),
+			),
+		)
+	return Number(row?.total ?? 0)
+}
+
+/**
+ * The amount a refund request books and the part of it that is the service
+ * fee. A full refund is everything still refundable (so it includes the fee
+ * that is left); a partial one adds the fee that is left only when the
+ * operator ticked "include service fee", on top of the amount typed.
+ */
+export function refundAmountWithServiceFee(input: {
+	amount: RefundAmountRequest
+	refundableCents: number
+	/** The order's fee charge, and how much of it earlier refunds took. */
+	feeChargeCents: number
+	feeRefundedCents: number
+}): { amountCents: number; serviceFeeCents: number } {
+	const feeLeft = Math.max(0, input.feeChargeCents - input.feeRefundedCents)
+	if ('full' in input.amount) {
+		return {
+			amountCents: input.refundableCents,
+			serviceFeeCents: Math.min(feeLeft, input.refundableCents),
+		}
+	}
+	const serviceFeeCents = input.amount.includeServiceFee ? feeLeft : 0
+	return {
+		amountCents: input.amount.amountCents + serviceFeeCents,
+		serviceFeeCents,
+	}
+}
+
 export function refundRequestHash(parts: Record<string, unknown>): string {
 	return crypto.createHash('sha256').update(JSON.stringify(parts)).digest('hex')
 }
@@ -183,7 +269,13 @@ function bookFailure(
 	return { ok: false, status, code, message, ...(details ? { details } : {}) }
 }
 
-export type RefundAmountRequest = { full: true } | { amountCents: number }
+export type RefundAmountRequest =
+	| { full: true }
+	| {
+			amountCents: number
+			/** Add the order's service fee on top of `amountCents` (#123). */
+			includeServiceFee?: boolean
+	  }
 
 export type ProviderRefundBooking = {
 	amount: RefundAmountRequest
@@ -217,6 +309,10 @@ export async function bookOrderProviderRefundInTx(
 			'amountCents' in input.amount ? input.amount.amountCents : null,
 		full: 'full' in input.amount,
 		note: input.note,
+		// Only when set, so the hash of a request without it never changes.
+		...('includeServiceFee' in input.amount && input.amount.includeServiceFee
+			? { includeServiceFee: true }
+			: {}),
 	})
 	const [previous] = await tx
 		.select()
@@ -275,14 +371,21 @@ export async function bookOrderProviderRefundInTx(
 			'This order is already fully refunded.',
 		)
 	}
-	const amountCents =
-		'full' in input.amount ? refundableCents : input.amount.amountCents
+	const { amountCents, serviceFeeCents } = refundAmountWithServiceFee({
+		amount: input.amount,
+		refundableCents,
+		feeChargeCents: orderServiceFeeChargeCents(order),
+		feeRefundedCents: await serviceFeeRefundedCentsInTx(tx, order.id),
+	})
 	if (amountCents > refundableCents) {
+		// `serviceFeeCents` says how much of the amount asked for was the fee the
+		// tick added, so the dialog can explain a refusal the typed amount alone
+		// would not have caused.
 		return bookFailure(
 			422,
 			'refund_exceeds_payment',
 			'That is more than is left to refund.',
-			{ refundableCents },
+			{ refundableCents, serviceFeeCents },
 		)
 	}
 
@@ -291,6 +394,7 @@ export async function bookOrderProviderRefundInTx(
 		.values({
 			orderId: order.id,
 			amountCents,
+			serviceFeeCents,
 			currency: order.currency,
 			full: orderRefundedNetCents(order) + amountCents >= order.totalCents,
 			note: input.note,
@@ -611,6 +715,15 @@ export async function bookTabProviderRefundInTx(
 			409,
 			'refund_complete',
 			'This payment is already fully refunded.',
+		)
+	}
+	// A tab's fee is part of what the guest paid: a full refund gives it back;
+	// a partial one is the amount typed (no separate tick for tabs).
+	if ('includeServiceFee' in input.amount && input.amount.includeServiceFee) {
+		return bookFailure(
+			422,
+			'include_service_fee_unsupported',
+			'Enter the amount to refund. A table tab has no separate service fee option.',
 		)
 	}
 	const amountCents =

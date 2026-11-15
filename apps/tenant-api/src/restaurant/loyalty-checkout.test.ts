@@ -100,7 +100,7 @@ describe('applyLoyaltyDiscountToTotals', () => {
 			[{ lineId: '0', discountMinor: 400 }],
 			400,
 		)
-		expect(result).toEqual({
+		expect(result).toMatchObject({
 			loyaltyDiscountCents: 400,
 			taxCents: 110, // (600 + 500) * 10%
 			totalCents: 1210, // 1500 - 400 + 110
@@ -123,7 +123,7 @@ describe('applyLoyaltyDiscountToTotals', () => {
 			[{ lineId: '0', discountMinor: 400 }],
 			400,
 		)
-		expect(result).toEqual({
+		expect(result).toMatchObject({
 			loyaltyDiscountCents: 400,
 			taxCents: 100, // still 1000 * 10%
 			totalCents: 1200, // 1500 - 400 + 100
@@ -145,7 +145,7 @@ describe('applyLoyaltyDiscountToTotals', () => {
 			[{ lineId: '0', discountMinor: 200 }],
 			200,
 		)
-		expect(result).toEqual({
+		expect(result).toMatchObject({
 			loyaltyDiscountCents: 200,
 			taxCents: 82, // 900 * 10 / 110
 			totalCents: 1050, // 1100 - 200 + 100 + 50
@@ -161,7 +161,7 @@ describe('applyLoyaltyDiscountToTotals', () => {
 			[{ lineId: '0', discountMinor: 1000 }],
 			1000,
 		)
-		expect(result).toEqual({
+		expect(result).toMatchObject({
 			loyaltyDiscountCents: 1000,
 			taxCents: 0,
 			totalCents: 0,
@@ -221,7 +221,7 @@ describe('applyLoyaltyDiscountToTotals', () => {
 			result.lines,
 			result.discountMinor,
 		)
-		expect(totals).toEqual({
+		expect(totals).toMatchObject({
 			loyaltyDiscountCents: 400,
 			taxCents: 160, // 1600 * 10%
 			totalCents: 1760, // 2000 - 400 + 160
@@ -295,7 +295,7 @@ describe('applyLoyaltyDiscountToTotals with discounts and coupons', () => {
 			300,
 			{ lineDiscounts: { '0': 500 } },
 		)
-		expect(result).toEqual({
+		expect(result).toMatchObject({
 			loyaltyDiscountCents: 300,
 			taxCents: 120, // 1200 * 10%
 			totalCents: 2000 - 800 + 120 + 200,

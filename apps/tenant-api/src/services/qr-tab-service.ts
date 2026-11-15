@@ -14,10 +14,16 @@ import {
 	type QrTabStatus,
 	type QrTabTotals,
 } from '@repo/common/qr-ordering'
+import { resolveTipSettings } from '@repo/common/location-types'
 import {
+	computeServiceFee,
+	computeTip,
+	readServiceFeePolicy,
 	type OrderLoyaltySelection,
+	type OrderTip,
 	type PricedOrderLine,
 	type RestaurantOrderContext,
+	type ServiceFeeSettings,
 } from '@repo/common/restaurant-orders'
 import {
 	normalizeDiscountCode,
@@ -870,6 +876,9 @@ const UNBIND = {
 	paymentProcessor: null,
 	paymentAmountCents: null,
 	paymentTipCents: null,
+	paymentServiceFeeCents: null,
+	paymentServiceFeeTaxCents: null,
+	paymentServiceFeeLabel: null,
 	paymentTokenHash: null,
 } as const
 
@@ -933,9 +942,13 @@ const viewContexts = new Map<
 	{ at: number; context: RestaurantOrderContext }
 >()
 
+/** One fetch at a time per location: concurrent polls share it. */
+const viewContextFetches = new Map<string, Promise<RestaurantOrderContext | null>>()
+
 /** Test hook: forget every cached order context. */
 export function resetTabViewContextCache() {
 	viewContexts.clear()
+	viewContextFetches.clear()
 }
 
 async function tabContext(
@@ -948,11 +961,24 @@ async function tabContext(
 		const hit = viewContexts.get(key)
 		if (hit && Date.now() - hit.at < VIEW_CONTEXT_TTL_MS) return hit.context
 	}
-	const result = await fetchOrderContext(orgId, locationId, null)
-	if (!result.ok) return null
-	if (viewContexts.size > 500) viewContexts.clear()
-	viewContexts.set(key, { at: Date.now(), context: result.data })
-	return result.data
+	// A page that polls its tab every few seconds must not turn into one
+	// call to the App per poll: share the fetch already on its way.
+	const pending = !options.fresh ? viewContextFetches.get(key) : undefined
+	if (pending) return pending
+	const fetching = (async () => {
+		const result = await fetchOrderContext(orgId, locationId, null)
+		if (!result.ok) return null
+		if (viewContexts.size > 500) viewContexts.clear()
+		viewContexts.set(key, { at: Date.now(), context: result.data })
+		return result.data
+	})()
+	if (!options.fresh) {
+		viewContextFetches.set(key, fetching)
+		void fetching.finally(() => {
+			if (viewContextFetches.get(key) === fetching) viewContextFetches.delete(key)
+		})
+	}
+	return fetching
 }
 
 async function tabLocationId(orgId: string, tabId: string) {
@@ -1467,6 +1493,9 @@ export async function releaseTabPayment(
 				paymentProcessor: null,
 				paymentAmountCents: null,
 				paymentTipCents: null,
+				paymentServiceFeeCents: null,
+				paymentServiceFeeTaxCents: null,
+				paymentServiceFeeLabel: null,
 				paymentTokenHash: null,
 				loyaltyDiscountCents: 0,
 				paymentEventAt: now,
@@ -1523,6 +1552,9 @@ export async function lockTab(
 					? {
 							paymentAmountCents: null,
 							paymentTipCents: null,
+							paymentServiceFeeCents: null,
+							paymentServiceFeeTaxCents: null,
+							paymentServiceFeeLabel: null,
 							paymentTokenHash: null,
 							loyaltyDiscountCents: 0,
 						}
@@ -1548,14 +1580,85 @@ function sha256Hex(value: string) {
 	return crypto.createHash('sha256').update(value).digest('hex')
 }
 
+/**
+ * The service fee a tab page shows before the guest pays (#123): the
+ * location's settings while the fee is on for tables, and the tax rate to
+ * show the fee with. Null when there is none or this node cannot read it.
+ */
+export function tabServiceFeeView(
+	context: RestaurantOrderContext,
+	locationId: string,
+): { settings: ServiceFeeSettings; taxRatePercent: number } | null {
+	const policy = readServiceFeePolicy(context.serviceFee, locationId)
+	if (policy.kind !== 'on') return null
+	if (!policy.settings.fulfillments.includes('dine_in')) return null
+	const location = context.menu.locations.find((entry) => entry.id === locationId)
+	return { settings: policy.settings, taxRatePercent: location?.taxRate ?? 0 }
+}
+
+/**
+ * The tip buttons a tab page shows (#118): the location's table-tab choices
+ * and its "dine-in tips" switch. Undefined when the location is unknown.
+ */
+export function tabTipChoicesView(
+	context: RestaurantOrderContext,
+	locationId: string,
+): QrPublicTab['tipChoices'] {
+	const location = context.menu.locations.find((entry) => entry.id === locationId)
+	if (!location) {
+		// Ids only. The page then shows the old buttons and no fee while the pay
+		// path prices what it finds, so say so where an operator can look.
+		console.warn(`Tab view: location ${locationId} is not in the order context`)
+		return undefined
+	}
+	return {
+		enabled: location.inHouseTips.dineInTips !== false,
+		currency: location.currency,
+		settings: resolveTipSettings(location.tipSettings, location.currency).qrTab,
+	}
+}
+
+/**
+ * What a tab page needs from the order context: the fee and the tip buttons.
+ * Read through the short-lived cache the discount view uses, so the 20-second
+ * poll of every open tab is not a call to the App each time. Nothing readable
+ * means no fee and the old buttons; the pay request prices the fee itself.
+ */
+export async function tabCheckoutView(orgId: string, locationId: string) {
+	const context = await tabContext(orgId, locationId, { fresh: false })
+	if (!context) {
+		return { serviceFee: null, tipChoices: undefined }
+	}
+	return {
+		serviceFee: tabServiceFeeView(context, locationId),
+		tipChoices: tabTipChoicesView(context, locationId),
+	}
+}
+
 export type TabPayIntent = {
 	orderRef: string
 	tabPaymentToken: string
 	amountCents: number
 	tipCents: number
+	/** The service fee (#123) before its tax; 0 when none applies. */
+	serviceFeeCents: number
 	/** The reward taken off before tax; 0 without one. */
 	loyaltyDiscountCents: number
 	currency: string
+}
+
+/**
+ * What the guest owes for the fee a pay request fixed: the fee, plus its tax
+ * when prices exclude tax (inside the fee when they include it).
+ */
+function tabServiceFeeCharge(
+	tab: Pick<QrTabRow, 'paymentServiceFeeCents' | 'paymentServiceFeeTaxCents'>,
+	taxInclusive: boolean,
+): number {
+	return (
+		(tab.paymentServiceFeeCents ?? 0) +
+		(taxInclusive ? 0 : (tab.paymentServiceFeeTaxCents ?? 0))
+	)
 }
 
 /**
@@ -1572,7 +1675,10 @@ export async function prepareTabPayment(
 	orgId: string,
 	tabToken: string,
 	input: {
-		tipPercent: number
+		/** What the guest chose; the region prices it on the tab's subtotal. */
+		tip: OrderTip
+		/** The service fee the guest was shown; compared, never trusted. */
+		expectedServiceFeeMinor?: number
 		contact: { name: string; phone: string }
 		features: { online: boolean }
 		onlinePayment: { enabled: boolean; processor: string | null }
@@ -1662,6 +1768,29 @@ export async function prepareTabPayment(
 					'There is nothing to pay on this tab yet.',
 				)
 			}
+			const tip = computeTip({
+				tip: input.tip,
+				subtotalCents: totals.subtotalCents,
+				currency: tab.currency,
+			})
+			if (!tip.ok) {
+				return fail(
+					422,
+					'tip_too_large',
+					'That tip is more than we can accept. Please enter a smaller amount.',
+				)
+			}
+			// Tips switched off for table tabs refuse any tip (the page hides them).
+			const tipLocation = input.context.menu.locations.find(
+				(entry) => entry.id === tab.locationId,
+			)
+			if (tip.tipCents > 0 && tipLocation?.inHouseTips.dineInTips === false) {
+				return fail(
+					422,
+					'tips_disabled',
+					'Tips are not accepted for this order.',
+				)
+			}
 			const tabPaymentToken = deriveTabPaymentToken(orgId, tab.id)
 			const now = new Date()
 			const at = now.getTime()
@@ -1683,9 +1812,7 @@ export async function prepareTabPayment(
 				// A session is live. Re-serve it only to someone asking for the
 				// same payment; a different tip or reward means another guest is
 				// paying right now.
-				const askedTip = Math.round(
-					(totals.subtotalCents * input.tipPercent) / 100,
-				)
+				const askedTip = tip.tipCents
 				const askedCode = input.discounts?.code
 					? normalizeDiscountCode(input.discounts.code)
 					: null
@@ -1697,6 +1824,24 @@ export async function prepareTabPayment(
 						liveReward.rewardId === selection.rewardId &&
 						liveReward.rewardVersion === selection.rewardVersion
 					: liveReward === null
+				// The fee the page showed against the fee this session was bound
+				// with: settings changed while a session is live must not charge
+				// an amount the guest never saw.
+				if (
+					(input.expectedServiceFeeMinor ?? 0) !==
+					(tab.paymentServiceFeeCents ?? 0)
+				) {
+					return {
+						ok: false as const,
+						failure: {
+							status: 409,
+							code: 'service_fee_changed',
+							message:
+								'The service fee changed. Review the new total and pay again.',
+							details: { serviceFeeMinor: tab.paymentServiceFeeCents ?? 0 },
+						},
+					}
+				}
 				if (
 					askedTip !== (tab.paymentTipCents ?? 0) ||
 					!sameReward ||
@@ -1715,6 +1860,7 @@ export async function prepareTabPayment(
 						tabPaymentToken,
 						amountCents: tab.paymentAmountCents,
 						tipCents: tab.paymentTipCents ?? 0,
+						serviceFeeCents: tab.paymentServiceFeeCents ?? 0,
 						loyaltyDiscountCents: tab.loyaltyDiscountCents,
 						currency: tab.currency,
 					},
@@ -1801,9 +1947,7 @@ export async function prepareTabPayment(
 					'This reward covers the whole tab, so it cannot be paid online. Please ask a team member.',
 				)
 			}
-			const tipCents = Math.round(
-				(totals.subtotalCents * input.tipPercent) / 100,
-			)
+			const tipCents = tip.tipCents
 			const loyaltyDiscountCents = rewarded?.loyaltyDiscountCents ?? 0
 			const combined = discountQuote
 				? discountedTabTotals(rounds, [
@@ -1828,7 +1972,54 @@ export async function prepareTabPayment(
 					'This discount covers the whole tab, so it cannot be paid online. Please ask a team member.',
 				)
 			}
-			const amountCents = billCents + tipCents
+			// The service fee (#123): on what discounts and the reward left of the
+			// subtotal, before tax and tip. A fee this node cannot read refuses the
+			// payment rather than charging without it. The guest sent the fee the
+			// page showed; a different one is a 409 with the fresh amount.
+			const feePolicy = readServiceFeePolicy(
+				input.context.serviceFee,
+				tab.locationId,
+			)
+			if (feePolicy.kind === 'unreadable') {
+				return fail(
+					503,
+					'service_fee_unavailable',
+					'Paying from the phone is not available right now. Please pay at the counter.',
+				)
+			}
+			const feeLocation = input.context.menu.locations.find(
+				(entry) => entry.id === tab.locationId,
+			)
+			const discountOffCents =
+				combined?.loyaltyDiscountCents ?? loyaltyDiscountCents
+			const serviceFee = computeServiceFee({
+				settings: feePolicy.kind === 'on' ? feePolicy.settings : null,
+				fulfillment: 'dine_in',
+				baseCents: totals.subtotalCents - discountOffCents,
+				taxRatePercent: feeLocation?.taxRate ?? 0,
+				taxInclusive: totals.taxInclusive,
+			})
+			if ((input.expectedServiceFeeMinor ?? 0) !== serviceFee.feeCents) {
+				return {
+					ok: false as const,
+					failure: {
+						status: 409,
+						code: 'service_fee_changed',
+						message:
+							'The service fee changed. Review the new total and pay again.',
+						details: { serviceFeeMinor: serviceFee.feeCents },
+					},
+				}
+			}
+			const serviceFeeLabel =
+				serviceFee.feeCents > 0 && feePolicy.kind === 'on'
+					? feePolicy.settings.label
+					: null
+			const amountCents =
+				billCents +
+				tipCents +
+				serviceFee.feeCents +
+				(totals.taxInclusive ? 0 : serviceFee.taxCents)
 			// The freeze runs from the first ask: a re-ask (or a different tip)
 			// re-prices the payment but never restarts it, so nobody can keep the
 			// table frozen by asking again and again.
@@ -1906,6 +2097,9 @@ export async function prepareTabPayment(
 					paymentSessionId: null,
 					paymentProcessor: null,
 					paymentTipCents: tipCents,
+					paymentServiceFeeCents: serviceFee.feeCents,
+					paymentServiceFeeTaxCents: serviceFee.taxCents,
+					paymentServiceFeeLabel: serviceFeeLabel,
 					paymentEventAt: sameRequest ? (tab.paymentEventAt ?? at) : at,
 					paymentAmountCents: amountCents,
 					paymentTokenHash: sha256Hex(tabPaymentToken),
@@ -1920,6 +2114,7 @@ export async function prepareTabPayment(
 					tabPaymentToken,
 					amountCents,
 					tipCents,
+					serviceFeeCents: serviceFee.feeCents,
 					loyaltyDiscountCents,
 					currency: tab.currency,
 				},
@@ -1985,12 +2180,15 @@ async function currentPayableCents(
 	tab: QrTabRow,
 ): Promise<number | null> {
 	const rounds = await listTabRounds(db, [tab.id])
-	const tipCents = tab.paymentTipCents ?? 0
+	const plain = tabTotals(tab, rounds)
+	// The tip and the service fee were fixed by the pay request.
+	const fixedCents =
+		(tab.paymentTipCents ?? 0) + tabServiceFeeCharge(tab, plain.taxInclusive)
 	const bound = await boundTabTotals(db, tab, rounds)
 	// Nothing bound: the plain total. Stale (a bound line is gone): no amount
 	// matches.
-	if (bound === undefined) return tabTotals(tab, rounds).totalCents + tipCents
-	return bound ? bound.totalCents + tipCents : null
+	if (bound === undefined) return plain.totalCents + fixedCents
+	return bound ? bound.totalCents + fixedCents : null
 }
 
 /**
@@ -2297,6 +2495,7 @@ export async function applyTabPaymentEvent(input: {
 			// discounted tax.
 			const bound = await boundTabTotals(tx, tab, rounds)
 			const tipCents = tab.paymentTipCents ?? 0
+			const serviceFeeTaxCents = tab.paymentServiceFeeTaxCents ?? 0
 			await markTabRoundsPaid(tx, tab.id, now)
 			await tx
 				.update(qrTabs)
@@ -2308,10 +2507,14 @@ export async function applyTabPaymentEvent(input: {
 					// treated as one (Checkout.com shares the session per tab).
 					paymentSessionId: input.paymentId ?? input.sessionId,
 					subtotalCents: totals.subtotalCents,
-					taxCents: bound?.taxCents ?? totals.taxCents,
+					// The tab's own tax plus the tax on its service fee.
+					taxCents: (bound?.taxCents ?? totals.taxCents) + serviceFeeTaxCents,
 					// Only the reward: the discounts are on their redemption rows.
 					loyaltyDiscountCents: bound ? tab.loyaltyDiscountCents : 0,
 					tipCents,
+					serviceFeeCents: tab.paymentServiceFeeCents ?? 0,
+					serviceFeeTaxCents,
+					serviceFeeLabel: tab.paymentServiceFeeLabel ?? null,
 					totalCents: input.amountCents,
 					closedBy: 'guest',
 					closedAt: now.getTime(),
@@ -2350,6 +2553,9 @@ export async function applyTabPaymentEvent(input: {
 				paymentProcessor: null,
 				paymentAmountCents: null,
 				paymentTipCents: null,
+				paymentServiceFeeCents: null,
+				paymentServiceFeeTaxCents: null,
+				paymentServiceFeeLabel: null,
 				loyaltyDiscountCents: 0,
 				paymentEventAt: now.getTime(),
 				updatedAt: now.getTime(),

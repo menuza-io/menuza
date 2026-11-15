@@ -120,6 +120,11 @@ export const orderRefundLocationIdsSchema = z
 export const orderProviderRefundRequestSchema = z.union([
 	z.strictObject({
 		amountCents: amountCentsSchema,
+		/**
+		 * Also give back the guest service fee (#123), on top of `amountCents`.
+		 * Only with an amount: a full refund always includes the fee.
+		 */
+		includeServiceFee: z.boolean().optional(),
 		note: refundNoteSchema,
 	}),
 	z.strictObject({
@@ -157,6 +162,11 @@ export const orderRefundIntentRequestSchema = z
 		tabPaymentId: z.string().min(1).max(100).optional(),
 		amountCents: amountCentsSchema.optional(),
 		full: z.literal(true).optional(),
+		/**
+		 * Also refund the service fee (#123) on top of `amountCents` (an order,
+		 * not a tab payment). Refused with `full`, which always includes it.
+		 */
+		includeServiceFee: z.boolean().optional(),
 		note: refundNoteSchema,
 		idempotencyKey: refundIdempotencyKeySchema,
 		actor: orderRefundActorSchema,
@@ -183,6 +193,10 @@ export const orderRefundIntentRequestSchema = z
 			path: ['amountCents'],
 		},
 	)
+	.refine((body) => !(body.full === true && body.includeServiceFee), {
+		message: 'A full refund already includes the service fee.',
+		path: ['includeServiceFee'],
+	})
 export type OrderRefundIntentRequest = z.infer<
 	typeof orderRefundIntentRequestSchema
 >

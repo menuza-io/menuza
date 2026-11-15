@@ -161,7 +161,13 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			orderId,
 			...('full' in body.data
 				? { full: true as const }
-				: { amountCents: body.data.amountCents }),
+				: {
+						amountCents: body.data.amountCents,
+						// Also the service fee (#123), on top of the amount.
+						...(body.data.includeServiceFee
+							? { includeServiceFee: true as const }
+							: {}),
+					}),
 			note: body.data.note,
 			idempotencyKey: key.data,
 			actor: { origin: 'operator', actorId: userId },

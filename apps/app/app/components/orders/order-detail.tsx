@@ -4,6 +4,7 @@ import {
 	ORDER_CANCEL_REASONS,
 	type OrderRejectReason,
 } from '@repo/common/restaurant-orders'
+import { DEFAULT_SERVICE_FEE_LABEL } from '@repo/common/service-fee'
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -453,6 +454,7 @@ export function OrderDetail({
 		discounts.length > 0 ||
 		!!order.taxCents ||
 		!!order.tipCents ||
+		!!order.serviceFeeCents ||
 		!!order.deliveryFeeCents
 
 	return (
@@ -953,6 +955,19 @@ export function OrderDetail({
 											{order.deliveryFeeCents ? (
 												<TotalRow label={<Trans>Delivery fee</Trans>}>
 													{money(order.deliveryFeeCents)}
+												</TotalRow>
+											) : null}
+											{order.serviceFeeCents ? (
+												<TotalRow
+													label={
+														order.serviceFeeLabel &&
+														order.serviceFeeLabel !== DEFAULT_SERVICE_FEE_LABEL
+															? order.serviceFeeLabel
+															: _(msg`Service fee`)
+													}
+													testId="order-service-fee-row"
+												>
+													{money(order.serviceFeeCents)}
 												</TotalRow>
 											) : null}
 											{order.taxCents ? (

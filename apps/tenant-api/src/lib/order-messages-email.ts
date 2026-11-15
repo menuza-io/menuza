@@ -1,4 +1,5 @@
 import { getLocalizedMenuValue } from '@repo/common/menu-types'
+import { DEFAULT_SERVICE_FEE_LABEL } from '@repo/common/service-fee'
 import {
 	guestVisibleCancelReason,
 	type PricedOrderLine,
@@ -38,6 +39,8 @@ export type OrderEmailOrder = Pick<
 	| 'deliveryFeeCents'
 	| 'deliveryDiscountCents'
 	| 'tipCents'
+	| 'serviceFeeCents'
+	| 'serviceFeeLabel'
 	| 'totalCents'
 	| 'discountCents'
 	| 'loyaltyDiscountCents'
@@ -265,6 +268,16 @@ export function renderOrderEmail(input: OrderEmailInput): RenderedOrderEmail {
 			totals.push([labels.deliveryFee, money(deliveryFee)])
 		}
 		if (order.tipCents > 0) totals.push([labels.tip, money(order.tipCents)])
+		if (order.serviceFeeCents > 0) {
+			// The name the restaurant gave the fee; the default reads in the
+			// guest's language.
+			const feeLabel =
+				order.serviceFeeLabel &&
+				order.serviceFeeLabel !== DEFAULT_SERVICE_FEE_LABEL
+					? order.serviceFeeLabel
+					: labels.serviceFee
+			totals.push([feeLabel, money(order.serviceFeeCents)])
+		}
 		totals.push([labels.tax, money(order.taxCents)])
 		totals.push([labels.total, money(order.totalCents)])
 	}

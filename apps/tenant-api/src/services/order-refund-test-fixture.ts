@@ -55,7 +55,12 @@ export async function refundOrderThroughProvider(
 		amount:
 			'full' in input.request
 				? { full: true }
-				: { amountCents: input.request.amountCents },
+				: {
+						amountCents: input.request.amountCents,
+						...(input.request.includeServiceFee
+							? { includeServiceFee: true }
+							: {}),
+					},
 		note: input.request.note,
 		idempotencyKey: input.idempotencyKey,
 		origin: 'operator',

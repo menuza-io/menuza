@@ -80,6 +80,7 @@ const includesTaxText = i18n._(msg`Includes VAT`)
 const vatNumberText = i18n._(msg`VAT number`)
 const deliveryFeeText = i18n._(msg`Delivery fee`)
 const tipText = i18n._(msg`Tip`)
+const serviceFeeText = i18n._(msg`Service fee`)
 const totalText = i18n._(msg`Total`)
 const totalPaidText = i18n._(msg`Total paid`)
 const backToMenuLabel = i18n._(msg`Back to menu`)
@@ -123,6 +124,7 @@ const holdDesc = i18n._(msg`Complete payment to keep it.`)
 const completePaymentLabel = i18n._(msg`Complete payment`)
 
 const successLabels = {
+	serviceFee: serviceFeeText,
 	locale: requestedLocale,
 	organizationId: organization.id,
 	currency: menuPayload?.organization?.currency || 'USD',
@@ -493,6 +495,10 @@ const valueClass = 'price font-medium text-foreground'
 								<dt>{deliveryFeeText}</dt>
 								<dd id="order-delivery-fee" class={valueClass}>{price(0)}</dd>
 							</div>
+							<div id="order-fee-row" class:list={[rowClass, 'hidden']}>
+								<dt id="order-fee-label" class="min-w-0">{serviceFeeText}</dt>
+								<dd id="order-fee" class={valueClass}></dd>
+							</div>
 							<div class={rowClass}>
 								<dt>{tipText}</dt>
 								<dd id="order-tip" class={valueClass}>{price(0)}</dd>
@@ -564,6 +570,7 @@ const valueClass = 'price font-medium text-foreground'
 		import { takeEmailConfirmationPending } from '~/lib/marketing-consent-client'
 		import { getLocalizedMenuValue } from '@repo/common/menu-types'
 		import { createMoneyFormatter, fillTemplate } from '~/lib/ordering/money'
+		import { DEFAULT_SERVICE_FEE_LABEL } from '@repo/common/service-fee'
 		import {
 			OrderRequestError,
 			cancelOrder,
@@ -665,9 +672,12 @@ const valueClass = 'price font-medium text-foreground'
 			taxCents: number
 			deliveryFeeCents: number
 			tipCents: number
+			/** The guest service fee before its tax, and the name the guest saw. Absent on older nodes. */
+			serviceFeeCents?: number
+			serviceFeeLabel?: string | null
 			totalCents: number
 			holdExpiresAt: string | null
-			tipPercent: number
+			tipPercent: number | null
 			/** Amount recorded as returned; absent on older nodes. */
 			refundedCents?: number
 			/** Acceptance and self-cancel (`publicOrderLifecycleSchema`). */
@@ -1015,7 +1025,8 @@ const valueClass = 'price font-medium text-foreground'
 						savings.itemsCents -
 						loyaltyCents +
 						netDelivery +
-						order.tipCents
+						order.tipCents +
+						(order.serviceFeeCents ?? 0)
 			const taxLabelEl = document.getElementById('order-tax-label')
 			const taxLabelText = taxIncluded
 				? taxLabelEl?.dataset.inclusiveLabel
@@ -1038,6 +1049,21 @@ const valueClass = 'price font-medium text-foreground'
 				}
 			}
 			if (tipEl) tipEl.textContent = formatCents(order.tipCents)
+			// The service fee as its own line, under the name the guest saw.
+			const feeRow = document.getElementById('order-fee-row')
+			const feeLabelEl = document.getElementById('order-fee-label')
+			const feeEl = document.getElementById('order-fee')
+			const feeCents = order.serviceFeeCents ?? 0
+			feeRow?.classList.toggle('hidden', feeCents <= 0)
+			if (feeCents > 0) {
+				if (feeLabelEl) {
+					feeLabelEl.textContent =
+						order.serviceFeeLabel && order.serviceFeeLabel !== DEFAULT_SERVICE_FEE_LABEL
+							? order.serviceFeeLabel
+							: (labels.serviceFee as string)
+				}
+				if (feeEl) feeEl.textContent = formatCents(feeCents)
+			}
 			if (totalEl) totalEl.textContent = formatCents(order.totalCents)
 
 			latestOrder = order

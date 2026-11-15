@@ -278,6 +278,8 @@ export const loyaltyCheckoutTotalsSchema = z.object({
 	taxInclusive: z.boolean(),
 	tipMinor: minorSchema,
 	deliveryFeeMinor: minorSchema,
+	/** The guest service fee (#123) before its tax; missing reads as 0. */
+	serviceFeeMinor: minorSchema.optional(),
 	totalMinor: minorSchema,
 })
 
@@ -337,6 +339,18 @@ export type LoyaltyCheckoutQuoteRequest = z.infer<
 export const loyaltyTabQuoteRequestSchema = z
 	.object({
 		tipPercent: z.number().int().min(0).max(30).default(0),
+		/**
+		 * The tip as a share or an exact amount (#118); sent instead of
+		 * `tipPercent`. The same shape as `orderTipSchema` in `@repo/common`.
+		 */
+		tip: z
+			.union([
+				z.strictObject({ percent: z.number().int().min(0).max(30) }),
+				z.strictObject({
+					amountMinor: z.number().int().min(0).max(1_000_000_000),
+				}),
+			])
+			.optional(),
 		selection: loyaltyOrderRewardSchema.nullable().default(null),
 	})
 	.strict()

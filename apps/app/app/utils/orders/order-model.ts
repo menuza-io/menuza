@@ -15,7 +15,16 @@ export const orderSchema = z.object({
 	taxCents: z.number().int().optional(),
 	deliveryFeeCents: z.number().int().optional(),
 	tipCents: z.number().int().optional(),
+	/** Null when the guest typed an exact tip amount. */
 	tipPercent: z.number().nullable().optional(),
+	/**
+	 * The guest service fee (#123) before its tax (the tax is in `taxCents`),
+	 * the name the guest saw, and what a refund can give back for it (fee plus
+	 * tax unless prices include tax). Missing from an older region: no fee.
+	 */
+	serviceFeeCents: z.number().int().optional().catch(undefined),
+	serviceFeeLabel: z.string().nullable().optional().catch(undefined),
+	serviceFeeChargeCents: z.number().int().optional().catch(undefined),
 	/** A loyalty reward's discount, taken off the subtotal before tax. */
 	loyaltyDiscountCents: z.number().int(),
 	/** Non-loyalty discounts on the lines, in cents (missing means none). */
@@ -39,6 +48,8 @@ export const orderSchema = z.object({
 			z.object({
 				id: z.string(),
 				amountCents: z.number().int(),
+				/** The part of the amount that is the service fee and its tax. */
+				serviceFeeCents: z.number().int().optional().catch(undefined),
 				note: z.string().nullable(),
 				createdAt: z.string(),
 				/** Missing from an older region: a record that already succeeded. */
@@ -189,7 +200,13 @@ export function isPaymentNotRequired(order: {
 
 /** Body of `POST /operator/orders/:id/refunds`: an amount, or everything left. */
 export type OrderRefundBody =
-	{ full: true; note: string } | { amountCents: number; note: string }
+	| { full: true; note: string }
+	| {
+			amountCents: number
+			/** Also give back the service fee (#123), on top of `amountCents`. */
+			includeServiceFee?: true
+			note: string
+	  }
 
 /** What a paid order can still give back, in cents. */
 export function refundableCents(order: {
@@ -197,6 +214,27 @@ export function refundableCents(order: {
 	refundedCents: number
 }): number {
 	return Math.max(0, order.totalCents - order.refundedCents)
+}
+
+/**
+ * What a refund can still give back for the service fee: what the order
+ * charged for it less the fee part of refunds already made or waiting on the
+ * provider (a failed one gives it back). 0 for an order with no fee.
+ */
+export function serviceFeeRefundableCents(order: {
+	serviceFeeChargeCents?: number
+	refunds?: ReadonlyArray<{
+		serviceFeeCents?: number
+		status?: 'pending' | 'succeeded' | 'failed'
+	}>
+}): number {
+	const charged = Math.max(0, order.serviceFeeChargeCents ?? 0)
+	const taken = (order.refunds ?? []).reduce(
+		(sum, refund) =>
+			refund.status === 'failed' ? sum : sum + (refund.serviceFeeCents ?? 0),
+		0,
+	)
+	return Math.max(0, charged - taken)
 }
 
 /**

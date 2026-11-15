@@ -64,6 +64,8 @@ export type OrderingItem = {
 	calorieMin?: number | null
 	calorieMax?: number | null
 	isPopular?: boolean
+	/** The restaurant suggests this dish next to an order (#114). */
+	isUpsell?: boolean
 	excludeFromDiscounts?: boolean
 	availabilityStatus?: string
 	/** `false` when the owning menu disables the special instructions field. */
@@ -74,6 +76,8 @@ export type OrderingCategory = {
 	id: string
 	displayName: string
 	description?: string | null
+	/** Categories whose dishes go well with this one (#114). */
+	upsellCategoryIds?: string[]
 	items: OrderingItem[]
 	subcategories?: OrderingCategory[]
 }
@@ -198,4 +202,10 @@ export type OrderingLabels = {
 	couponSaved?: string
 	/** Empty-cart action in the drawer; closes it so the guest keeps browsing. */
 	exploreMenu?: string
+	/** "Goes well with": the heading of the cart suggestions (#114). */
+	upsellHeading?: string
+	/** "Add": the button on a suggested dish. */
+	upsellAdd?: string
+	/** "Add {name}": that button's accessible name. */
+	upsellAddNamed?: string
 }

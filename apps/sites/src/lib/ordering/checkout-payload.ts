@@ -21,6 +21,12 @@ export function checkoutOrderPayload(
 		 * guest ticked it. Transactional, never marketing consent.
 		 */
 		smsUpdates?: { offered: boolean; ticked: boolean }
+		/**
+		 * The service fee (#123) the page showed, minor units. Sent only when
+		 * there is one: a missing value reads as 0 at the region, which refuses a
+		 * different fee with 409 `service_fee_changed`.
+		 */
+		expectedServiceFeeMinor?: number
 	},
 ): Record<string, unknown> {
 	const notes = extra.deliveryNotes?.trim()
@@ -33,6 +39,9 @@ export function checkoutOrderPayload(
 		...(extra.reward ? { loyalty: extra.reward } : {}),
 		...(extra.discounts ? { discounts: extra.discounts } : {}),
 		...(wantsSmsUpdates(priced, extra) ? { smsUpdates: true } : {}),
+		...(extra.expectedServiceFeeMinor && extra.expectedServiceFeeMinor > 0
+			? { expectedServiceFeeMinor: extra.expectedServiceFeeMinor }
+			: {}),
 	}
 }
 

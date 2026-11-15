@@ -136,6 +136,7 @@ export async function quoteOrderDiscounts(input: {
 	let loyaltyDiscountMinor = 0
 	let taxMinor = after.taxCents
 	let totalMinor = after.totalCents
+	let serviceFeeMinor = after.serviceFeeCents
 	if (request.loyalty && customerId && request.fulfillment !== 'dine_in') {
 		try {
 			const db = await getTenantDb(orgId)
@@ -166,6 +167,7 @@ export async function quoteOrderDiscounts(input: {
 			loyaltyDiscountMinor = withReward.loyaltyDiscountCents
 			taxMinor = withReward.taxCents
 			totalMinor = withReward.totalCents
+			serviceFeeMinor = withReward.serviceFeeCents
 		} catch (error) {
 			if (error instanceof LoyaltyDomainError) {
 				return { ok: false, failure: loyaltyFailure(error) }
@@ -182,6 +184,7 @@ export async function quoteOrderDiscounts(input: {
 			loyaltyDiscountMinor,
 			taxMinor,
 			totalMinor,
+			serviceFeeMinor,
 			couponsEnabled: discountFeatures?.coupons === true,
 		}),
 	}

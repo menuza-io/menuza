@@ -8,6 +8,7 @@ import {
 	readQrOrderingFeatures,
 } from '@repo/common/qr-ordering'
 import {
+	requestedTip,
 	RESTAURANT_TURNSTILE_ACTION,
 	restaurantOrderDiscountQuoteSchema,
 	restaurantOrderRequestSchema,
@@ -76,6 +77,7 @@ import {
 	getPublicTab,
 	getTableContext,
 	prepareTabPayment,
+	tabCheckoutView,
 	withTabDiscounts,
 } from '../services/qr-tab-service.ts'
 import { authenticateCustomer } from './auth.ts'
@@ -711,7 +713,24 @@ publicOrderRoutes.get('/tab', async (c) => {
 			[result.data],
 			{ customerId: customer.customerId },
 		)
-		return c.json({ tab: shown ?? result.data }, 200, noStoreHeaders())
+		// The service fee the page shows before the guest pays (#123): the
+		// location's settings while the fee is on for tables. Not readable here
+		// reads as none; the pay request itself refuses a fee it cannot read.
+		const { serviceFee, tipChoices } = await tabCheckoutView(
+			organization.organization.id,
+			result.data.table.locationId,
+		)
+		return c.json(
+			{
+				tab: {
+					...(shown ?? result.data),
+					serviceFee,
+					...(tipChoices ? { tipChoices } : {}),
+				},
+			},
+			200,
+			noStoreHeaders(),
+		)
 	} catch (error) {
 		console.error(
 			`Failed to load tab for org ${organization.organization.id}:`,
@@ -740,6 +759,13 @@ publicOrderRoutes.post('/tab/pay', async (c) => {
 				error: 'invalid_request',
 				message: parsed.error.issues[0]?.message ?? 'Invalid request',
 			},
+			400,
+			noStoreHeaders(),
+		)
+	}
+	if (parsed.data.tip && parsed.data.tipPercent !== 0) {
+		return c.json(
+			{ error: 'invalid_request', message: 'Send either tip or tipPercent' },
 			400,
 			noStoreHeaders(),
 		)
@@ -804,7 +830,8 @@ publicOrderRoutes.post('/tab/pay', async (c) => {
 			(context.data as { qrOrdering?: unknown }).qrOrdering,
 		)
 		const result = await prepareTabPayment(orgId, tabToken, {
-			tipPercent: parsed.data.tipPercent,
+			tip: requestedTip(parsed.data),
+			expectedServiceFeeMinor: parsed.data.expectedServiceFeeMinor,
 			contact: parsed.data.contact,
 			features,
 			onlinePayment: context.data.onlinePayment,

@@ -3,6 +3,7 @@ import { parseWithZod } from '@conform-to/zod/v4'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { Alert, AlertDescription } from '@repo/ui/alert'
 import { Button } from '@repo/ui/button'
+import { Checkbox } from '@repo/ui/checkbox'
 import {
 	Dialog,
 	DialogContent,
@@ -26,6 +27,7 @@ import {
 	formatMoney,
 	type OrderRefundBody,
 	refundableCents,
+	serviceFeeRefundableCents,
 } from '#app/utils/orders/order-model.ts'
 import { refundSubmitKey } from '#app/utils/submit-key.ts'
 
@@ -50,6 +52,12 @@ export function RecordOrderRefundDialog({
 		currency: string
 		totalCents: number
 		refundedCents: number
+		/** The service fee (#123): what the order charged and refunds so far. */
+		serviceFeeChargeCents?: number
+		refunds?: ReadonlyArray<{
+			serviceFeeCents?: number
+			status?: 'pending' | 'succeeded' | 'failed'
+		}>
 	}
 	open: boolean
 	onOpenChange: (open: boolean) => void
@@ -66,6 +74,8 @@ export function RecordOrderRefundDialog({
 }) {
 	const { t, i18n } = useLingui()
 	const [kind, setKind] = useState<RefundKind>('full')
+	// A partial refund gives back the service fee only when this is ticked.
+	const [includeFee, setIncludeFee] = useState(false)
 	const [submitting, setSubmitting] = useState(false)
 	const [error, setError] = useState<string | null>(null)
 
@@ -73,6 +83,8 @@ export function RecordOrderRefundDialog({
 		formatMoney(cents, order.currency, i18n.locale)
 	const leftCents = refundableCents(order)
 	const refunded = order.refundedCents
+	const feeLeftCents = Math.min(serviceFeeRefundableCents(order), leftCents)
+	const feeLeftText = money(feeLeftCents)
 
 	const schema = useMemo(
 		() =>
@@ -101,7 +113,7 @@ export function RecordOrderRefundDialog({
 						})
 						return
 					}
-					if (cents > leftCents) {
+					if (cents + (includeFee ? feeLeftCents : 0) > leftCents) {
 						ctx.addIssue({
 							code: 'custom',
 							path: ['amount'],
@@ -109,7 +121,7 @@ export function RecordOrderRefundDialog({
 						})
 					}
 				}),
-		[t, leftCents, order.currency],
+		[t, leftCents, order.currency, includeFee, feeLeftCents],
 	)
 
 	const describeError = (err: unknown): string => {
@@ -162,6 +174,9 @@ export function RecordOrderRefundDialog({
 									min: 1,
 									currency: order.currency,
 								}) ?? 0,
+							...(includeFee && feeLeftCents > 0
+								? { includeServiceFee: true as const }
+								: {}),
 							note: value.note,
 						}
 			// Derived from the order, what it already refunded and the content,
@@ -286,6 +301,22 @@ export function RecordOrderRefundDialog({
 							dir="ltr"
 							data-testid="order-refund-amount"
 						/>
+					) : null}
+					{kind === 'partial' && feeLeftCents > 0 ? (
+						<label
+							className="flex items-start gap-2.5 text-sm"
+							data-testid="order-refund-include-fee"
+						>
+							<Checkbox
+								checked={includeFee}
+								onCheckedChange={(c) => setIncludeFee(c === true)}
+							/>
+							<span>
+								<Trans>
+									Also refund the service fee (<bdi>{feeLeftText}</bdi>)
+								</Trans>
+							</span>
+						</label>
 					) : null}
 					<TextAreaField
 						label={<Trans>Note</Trans>}

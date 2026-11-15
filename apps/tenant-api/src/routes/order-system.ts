@@ -337,7 +337,10 @@ orderSystemRoutes.post('/refund-intent', async (c) => {
 			amount:
 				body.full === true
 					? { full: true }
-					: { amountCents: body.amountCents ?? 0 },
+					: {
+							amountCents: body.amountCents ?? 0,
+							...(body.includeServiceFee ? { includeServiceFee: true } : {}),
+						},
 			note: body.note,
 			idempotencyKey: body.idempotencyKey,
 			origin: body.actor.origin,

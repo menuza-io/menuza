@@ -20,7 +20,9 @@ routes accept opaque references, never customer contact fields or customer JWTs.
   paymentMethod: 'handoff' | 'online'
   contact: { name: string; phone: string; email?: string }
   delivery?: { address: string; city: string; unit?: string; notes?: string }
-  tipPercent: number
+  tipPercent: number // legacy; see "Tips and the service fee"
+  tip?: { percent: number } | { amountMinor: number } // instead of tipPercent
+  expectedServiceFeeMinor?: number // the fee the page showed; missing reads as 0
   lines: Array<{
     itemId: string
     variantId?: string
@@ -43,6 +45,8 @@ refused with the loyalty error code, never applied silently
   order: { id: string; number: string; status: string; paymentStatus: string;
     currency: string; subtotalCents: number; taxCents: number;
     deliveryFeeCents: number; tipCents: number;
+    serviceFeeCents: number; serviceFeeTaxCents: number; // the fee before its tax; the tax is in taxCents
+    serviceFeeLabel: string | null; // the name the guest saw
     loyaltyDiscountCents: number; // a reward's discount, off the subtotal before tax
     totalCents: number; holdExpiresAt: string | null }
   receiptToken: string
@@ -53,6 +57,73 @@ refused with the loyalty error code, never applied silently
 `GET /orders/:id?slug=...` with `Authorization: Bearer <receiptToken>` returns
 the authoritative receipt including contact, priced lines and pickup summary. An
 existing authenticated customer token is not a receipt capability.
+
+### Tips and the service fee (#118, #123)
+
+**Tip.** The body carries a share (`tipPercent` 0 to 30, or `tip: { percent }`)
+or an exact amount (`tip: { amountMinor }`). Sending `tip` with a non-zero
+`tipPercent` is a 400. A share is taken on the subtotal before discounts and
+before tax (`docs/discounts-plan.md`, decision 2); an exact amount is charged as
+it is and stored with a null `tip_percent`. Above the larger of half the
+subtotal or the currency cap (`TIP_CAP_MAJOR` in `@repo/common/order-tips`: 200
+USD, 750 SAR, 200 major units for any other currency) the answer is 422
+`tip_too_large`. Tips switched off for the order type (`inHouseTips`) are still
+422 `tips_disabled`. The same `tip` field is accepted by `POST /orders/tab/pay`
+and `POST /loyalty/tab/quote`; the table tab also answers 422 `tips_disabled`
+when the location's dine-in tips are off. The location's choices are
+`OrganizationLocation.tipSettings` (`TipSettingsSchema` in
+`@repo/common/location-types`: per `pickup`, `delivery` and `qrTab` up to four
+choices, a default index or none, and whether Custom is shown). They reach the
+page through `GET /orders/options` (`tipChoices`) and, for a table, the tab view
+(`tipChoices`). The region does not require a guest to use one of the buttons:
+only the cap and the switches are enforced.
+
+**Service fee.** Flag `ordering.service_fee` (default off). The settings are
+`OrganizationLocation.serviceFee` (`serviceFeeSettingsSchema` in
+`@repo/common/service-fee`) and reach the region as `context.serviceFee =
+{ version: 1, locations: { [locationId]: settings } }`, listing only locations
+whose fee is on. `computeServiceFee` prices it: a percentage of the subtotal
+after discounts and rewards (before tax and tip, never on the tip) plus a fixed
+amount, capped afterwards; below the small-order limit the small-order fee is
+charged instead; nothing on a base of 0 (a free order) or for an order type the
+fee does not cover. With `taxable`, tax follows the location's rate: added on
+top when prices exclude tax, carved out of the fee when they include it. Either
+way the fee's tax is part of `tax_cents`, so every existing total still adds up
+(`total = subtotal - discounts + tax (exclusive only) + tip + delivery - delivery
+discount + fee`). The browser sends `expectedServiceFeeMinor`; a different
+amount is 409 `service_fee_changed` with `details: { serviceFeeMinor }` and
+nothing is placed. A fee on but unreadable at this node (a settings value that
+does not parse, or a `version` newer than the node knows) is 503
+`service_fee_unavailable`: the region refuses the order rather than place it
+without its fee. Nodes that predate the fee refuse `tip` and
+`expectedServiceFeeMinor` (strict body), so deploy tenant-api before Sites.
+
+Rollout: a client that does not send `expectedServiceFeeMinor` (a cached Sites
+page, an older build) is refused with 409 where a fee is due, and cannot act on
+`details.serviceFeeMinor`. Deploy App, then tenant-api, then Sites, and turn
+`ordering.service_fee` on for an organization only after Sites has shipped.
+Customer and Station apps do not place these orders (the customer app opens the
+website's checkout), so nothing else has to ship first. A table tab polls
+`GET /orders/tab` every 20 seconds; the fee and tip view it adds is read through
+the same 10-second shared cache as the tab's discounts, one fetch at a time per
+location.
+
+Placed orders keep what they were charged: `restaurant_orders.service_fee_cents`
+(before tax), `service_fee_tax_cents`, `service_fee_label`; changing or turning
+off the fee never rewrites them. A table round carries no fee: a tab pays it
+when it is paid from the phone (`qr_tabs.payment_service_fee_*` while the
+session is bound, `service_fee_*` once the tab closes). Counter closes and
+Station sales have none.
+
+**Refunds.** A full refund gives back everything refundable, the fee included. A
+partial refund (`amountCents`) adds the fee that is left, on top of the amount,
+only with `includeServiceFee: true` (fee plus its tax, or the fee alone when
+prices include tax); the fee part is recorded in
+`restaurant_order_refunds.service_fee_cents`, so it is never refunded twice.
+Table-tab refunds have no separate tick (a full refund includes the fee).
+
+**Reports.** The `orders` report has a Service fee measure (`serviceFee`), the
+tab's fee riding on its latest round like the tab's discount.
 
 ### Order link ("View your order")
 
@@ -434,10 +505,12 @@ pickup and delivery requests are unchanged.
   `openTab: { id, tabToken, tabNumber, openedAt, roundsCount, totalCents } | null`.
 - `GET /orders/tab?slug=…` with `X-Tab-Token` returns `{ tab: QrPublicTab }`
   (`@repo/common/qr-ordering`): rounds with their statuses and lines, totals,
-  `roundsPending`. No contact fields.
+  `roundsPending`, and `serviceFee` (the location's settings and tax rate while
+  the fee is on for tables) and `tipChoices` (`{ enabled, currency, settings }`).
+  No contact fields.
 - `POST /orders/tab/pay` with `X-Tab-Token` and
-  `{ slug?, host?, tipPercent, contact: { name, phone }, loyalty? }` returns
-  `{ orderRef: 'tab:<id>', tabPaymentToken, amountCents, tipCents, loyaltyDiscountCents, currency }`.
+  `{ slug?, host?, tipPercent | tip, expectedServiceFeeMinor?, contact: { name, phone }, loyalty? }` returns
+  `{ orderRef: 'tab:<id>', tabPaymentToken, amountCents, tipCents, serviceFeeCents, loyaltyDiscountCents, currency }`.
   The browser then uses the hosted-payment calls below with `orderId = orderRef`
   and `paymentToken = tabPaymentToken`. `loyalty` (the same selection as
   `POST /orders`, customer token required) spends one reward on the tab; asking

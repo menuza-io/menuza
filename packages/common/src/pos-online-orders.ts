@@ -300,6 +300,11 @@ export const posOnlineOrderDetailSchema = z.strictObject({
 		taxCents: z.number().int(),
 		deliveryFeeCents: z.number().int(),
 		tipCents: z.number().int(),
+		/**
+		 * The guest service fee (#123) before its tax (the tax is in `taxCents`).
+		 * Absent from an older node: none was charged.
+		 */
+		serviceFeeCents: z.number().int().optional(),
 		discountCents: z.number().int(),
 		loyaltyDiscountCents: z.number().int(),
 		paidAt: z.number().int().nullable(),

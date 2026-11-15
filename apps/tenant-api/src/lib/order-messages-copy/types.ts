@@ -22,6 +22,7 @@ export type OrderCopyLabels = {
 	reward: string
 	deliveryFee: string
 	tip: string
+	serviceFee: string
 	tax: string
 	total: string
 	refunded: string

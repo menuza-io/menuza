@@ -310,6 +310,80 @@ describe('a 100% discount order', () => {
 		expect(operatorOrder(found.data).paymentStatus).toBe('not_required')
 	})
 
+	describe('with a service fee (#123)', () => {
+		const feeContext = (discounts: Record<string, unknown>) => ({
+			...menuContext(discounts),
+			serviceFee: {
+				version: 1,
+				locations: {
+					'loc-1': {
+						enabled: true,
+						percentBp: 300,
+						fixedMinor: 100,
+						capMinor: null,
+						smallOrderBelowMinor: null,
+						smallOrderFeeMinor: null,
+						fulfillments: ['pickup'],
+						label: 'Service fee',
+						explanation: null,
+						taxable: false,
+					},
+				},
+			},
+		})
+		const serve = (context: unknown) =>
+			vi.stubGlobal(
+				'fetch',
+				vi.fn(async (input: RequestInfo | URL) => {
+					const url = typeof input === 'string' ? input : input.toString()
+					return url.includes('/resources/order-context')
+						? Response.json(context)
+						: new Response('not found', { status: 404 })
+				}),
+			)
+
+		it('a free order has no fee, even a fixed one, and needs no payment', async () => {
+			serve(feeContext(freeDiscounts()))
+			const order = await place({ paymentMethod: 'online' })
+			expect(order.totalCents).toBe(0)
+			expect(await stored(order.id)).toMatchObject({
+				paymentStatus: 'not_required',
+				serviceFeeCents: 0,
+				serviceFeeTaxCents: 0,
+				serviceFeeLabel: null,
+				totalCents: 0,
+			})
+		})
+
+		it('the fee is worked out on what the discount left, before tax and tip', async () => {
+			serve(
+				feeContext({
+					features: { automatic: true, coupons: true },
+					discounts: [
+						makeDiscount({ id: 'disc_half', name: 'Half off', percentBp: 5000 }),
+					],
+					codes: [],
+				}),
+			)
+			// 20.00 less 10.00 leaves 10.00: 3 % is 0.30, plus the fixed 1.00.
+			const order = await place({
+				paymentMethod: 'handoff',
+				tipPercent: 10,
+				discounts: { expectedDiscountMinor: 1000 },
+				expectedServiceFeeMinor: 130,
+			})
+			const row = await stored(order.id)
+			expect(row).toMatchObject({
+				discountCents: 1000,
+				serviceFeeCents: 130,
+				// The tip stays on the pre-discount subtotal and never on the fee.
+				tipCents: 200,
+			})
+			// 10.00 + tax on 10.00 (0.83) + tip 2.00 + fee 1.30.
+			expect(row.totalCents).toBe(1000 + 83 + 200 + 130)
+		})
+	})
+
 	it('a handoff order that is not free still waits to be marked paid', async () => {
 		const order = await place({
 			paymentMethod: 'handoff',

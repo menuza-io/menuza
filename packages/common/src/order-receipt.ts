@@ -11,6 +11,14 @@ export const orderSummarySchema = z.object({
 	taxCents: cents,
 	deliveryFeeCents: cents,
 	tipCents: cents,
+	/**
+	 * The guest service fee (#123) before its tax (the tax is in `taxCents`).
+	 * Absent on older nodes, which never charge one.
+	 */
+	serviceFeeCents: cents.optional(),
+	serviceFeeTaxCents: cents.optional(),
+	/** The name the guest saw for the fee. */
+	serviceFeeLabel: z.string().nullable().optional(),
 	totalCents: cents,
 	holdExpiresAt: z.string().datetime().nullable(),
 	/** When the order should be ready / start arriving; absent on older nodes. */
