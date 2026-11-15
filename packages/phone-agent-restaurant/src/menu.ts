@@ -1,3 +1,4 @@
+import { pickUpsells } from '@repo/common/upsell'
 import { z } from 'zod'
 import {
 	defaultPriceFormatter,
@@ -467,21 +468,27 @@ export function describeMenuItem(
 	}
 }
 
-/** Items the restaurant marked as upsells, excluding what's already ordered. */
+/**
+ * What goes well with the order: the upsell categories of what is already
+ * ordered first, then the dishes the restaurant marked as upsells, never what
+ * is already ordered or sold out. The one rule the guest cart uses too
+ * (`pickUpsells` in `@repo/common/upsell`).
+ */
 export function suggestUpsells(
 	menus: AgentMenu[],
 	cartItemIds: string[],
 	limit = 3,
 ): IndexedMenuItem[] {
-	const inCart = new Set(cartItemIds)
-	return flattenMenuItems(menus)
-		.filter(
-			(entry) =>
-				entry.item.isUpsell &&
-				!inCart.has(entry.item.id) &&
-				!itemIsSoldOut(entry.item),
-		)
-		.slice(0, limit)
+	const categoryNames = new Map(
+		flattenMenuItems(menus).map((entry) => [entry.item.id, entry.categoryName]),
+	)
+	return pickUpsells({ menus, cartItemIds, limit }).map(
+		({ item, categoryId }) => ({
+			item,
+			categoryId,
+			categoryName: categoryNames.get(item.id) ?? '',
+		}),
+	)
 }
 
 // Mirrors the Sites `menuza_cart_{orgId}` localStorage entry so a handoff can be

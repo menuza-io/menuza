@@ -57,6 +57,11 @@ export type CartUiOptions = {
 	constraints?: Constraints | null
 	/** Fills the `#cart-drawer-header-extra` slot on every render (pickup summary, etc.). */
 	renderHeaderExtra?: (slot: HTMLElement) => void
+	/**
+	 * The "Goes well with" row under the lines (#114). Asked on every render of
+	 * a non-empty cart; null shows nothing.
+	 */
+	renderUpsell?: (lines: CartItem[]) => HTMLElement | null
 	root?: ParentNode
 }
 
@@ -412,6 +417,8 @@ export function mountCartUi(options: CartUiOptions): CartUi {
 				const list = el('ul', 'divide-y divide-border')
 				for (const line of lines) list.appendChild(renderLine(line, lines))
 				itemsEl.replaceChildren(list)
+				const upsell = options.renderUpsell?.(lines)
+				if (upsell) itemsEl.appendChild(upsell)
 			}
 		}
 

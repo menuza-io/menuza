@@ -7,7 +7,7 @@ import MarketingConsentBoxes from '~/components/marketing/MarketingConsentBoxes.
 import OrderDetailsSheet from '~/components/ordering/OrderDetailsSheet.astro'
 import SitePage from '~/components/SitePage.astro'
 import { buildLoyaltyLabels } from '~/lib/loyalty/labels'
-import { siteContainer } from '~/lib/media'
+import { resolveMediaUrl, siteContainer } from '~/lib/media'
 import { buildOrderDetailsLabels, translate } from '~/lib/ordering-labels'
 import { formatMoney } from '~/lib/ordering/money'
 import { type FulfillmentMode } from '~/lib/ordering/types'
@@ -17,6 +17,7 @@ import {
 	type PublicLocationData,
 	type PublicMenuCategoryData,
 } from '~/lib/org'
+import { type OrderingCategory } from '~/lib/ordering/types'
 
 const organization = Astro.locals.organization
 const i18n = Astro.locals.i18n
@@ -81,6 +82,60 @@ if (dropData) {
 
 const locations = menuPayload?.locations ?? []
 const currency = menuPayload?.organization?.currency || 'USD'
+
+// "Goes well with" at checkout (#114): only the dishes that go straight in
+// (this page has no item modal), so the catalog keeps just what the ranking
+// and the row read: names in the page language, prices, photos and the
+// upsell settings. Off unless `ordering.upsell` is on; never on a drop.
+const upsellOn = menuPayload?.features?.upsell === true && !dropMode
+function upsellCategory(category: PublicMenuCategoryData): OrderingCategory {
+	return {
+		id: category.id,
+		displayName: '',
+		upsellCategoryIds: category.upsellCategoryIds ?? [],
+		items: (category.items ?? []).map((item) => ({
+			id: item.id,
+			displayName: getLocalizedMenuValue(item.displayName, requestedLocale, defaultLocale),
+			price: item.price,
+			imageUrl: resolveMediaUrl(item.imageUrl),
+			isUpsell: item.isUpsell === true,
+			availabilityStatus: item.availabilityStatus,
+			variations: {
+				groups: (item.variations?.groups ?? []).map((group) => ({
+					id: group.id,
+					name: '',
+					values: [],
+				})),
+				variants: (item.variations?.variants ?? []).map((variant) => ({
+					id: variant.id,
+					valueIds: [],
+					price: variant.price,
+					availabilityStatus: variant.availabilityStatus,
+				})),
+			},
+			modifierGroups: (item.modifierGroups ?? []).map((group) => ({
+				id: group.id,
+				name: '',
+				selectionType: group.selectionType,
+				minSelections: group.minSelections ?? 0,
+				maxSelections: group.maxSelections ?? null,
+				options: [],
+			})),
+		})),
+		subcategories: (category.subcategories ?? [])
+			.filter((sub) => sub.availabilityStatus !== 'unavailable')
+			.map(upsellCategory),
+	}
+}
+const upsellCategories: OrderingCategory[] = upsellOn
+	? (menuPayload?.menus ?? [])
+			.filter((menu) => menu.availabilityStatus !== 'unavailable')
+			.flatMap((menu) =>
+				menu.categories
+					.filter((category) => category.availabilityStatus !== 'unavailable' && !category.parentId)
+					.map(upsellCategory),
+			)
+	: []
 
 // Resolve the active location exactly like the menu page (URL param → default →
 // first) so checkout and the menu agree on the same cart's tax rate and fee.
@@ -291,6 +346,11 @@ const checkoutLabels = {
 		tooLarge: i18n._(msg`That tip is too large. Please enter a smaller amount.`),
 	},
 	serviceFee: serviceFeeDefaultLabel,
+	upsell: {
+		heading: i18n._(msg`Goes well with`),
+		add: i18n._(msg`Add`),
+		addNamed: translate(i18n, msg`Add {name}`, { name: '{name}' }),
+	},
 	validation: {
 		name: i18n._(msg`Please enter your full name.`),
 		phone: i18n._(msg`Please enter your phone number.`),
@@ -667,6 +727,8 @@ const inputClass =
 					<ul id="checkout-items-list" class="mt-2 divide-y divide-border lg:max-h-80 lg:overflow-y-auto lg:overscroll-contain">
 						{/* Injected dynamically from cart */}
 					</ul>
+					{/* "Goes well with": built by the script when there is something to suggest. */}
+					<div id="co-upsell" class="-mx-5 sm:-mx-6"></div>
 
 					{/* Coupon code: collapsed to a link until asked for. Shown once the region
 					    says discounts exist (hidden when they are off). The cart summary
@@ -849,6 +911,7 @@ const inputClass =
 			unavailableVariantIds: [...unavailableVariantIds],
 			labels: checkoutLabels,
 			tipClasses: { button: tipBtnClass, on: tipOn, off: tipOff },
+			upsell: upsellOn ? { categories: upsellCategories } : null,
 			drop: dropData && {
 				id: dropData.drop.id,
 				slug: dropData.drop.slug,
@@ -921,6 +984,10 @@ const inputClass =
 		} from '~/lib/ordering/coupon-retry'
 		import { estimateTax } from '~/lib/ordering/tax'
 		import { DEFAULT_SERVICE_FEE_LABEL } from '@repo/common/service-fee'
+		import { createCartStore } from '~/lib/ordering/cart-store'
+		import { addSuggestion, suggestForCart } from '~/lib/ordering/upsell'
+		import { buildUpsellRow } from '~/lib/ordering/upsell-row'
+		import { createShownCounter, recordUpsell } from '~/lib/ordering/upsell-stats'
 		import {
 			parseCustomTip,
 			sameTipSelection,
@@ -967,7 +1034,7 @@ const inputClass =
 			schedulingSettings,
 		} from '~/lib/ordering/schedule'
 		import { type OrderDetailsLabels } from '~/lib/ordering-labels'
-		import { type FulfillmentMode } from '~/lib/ordering/types'
+		import { type FulfillmentMode, type OrderingCategory } from '~/lib/ordering/types'
 		import { type CartItem } from '~/lib/ordering/types'
 		import { type PublicOrderingOptions } from '@repo/common/restaurant-orders'
 		import { asapEstimate } from '~/lib/ordering/asap-estimate'
@@ -1020,6 +1087,7 @@ const inputClass =
 			discounts: DiscountLabels
 			tip: { custom: string; noTip: string; invalid: string; tooLarge: string }
 			serviceFee: string
+			upsell: { heading: string; add: string; addNamed: string }
 			validation: { name: string; phone: string; email: string; address: string }
 			errors: OrderErrorLabels
 		}
@@ -1362,6 +1430,7 @@ const inputClass =
 			if (coTip) coTip.textContent = formatCurrency(tip)
 			renderServiceFee(totals.serviceFee)
 			renderTipButtons(subtotal)
+			renderUpsell()
 			if (coTotal) coTotal.textContent = formatCurrency(total)
 			const barTotal = document.getElementById('co-bar-total')
 			if (barTotal) barTotal.textContent = formatCurrency(total)
@@ -1850,6 +1919,55 @@ const inputClass =
 			applyCustomTip()
 			renderCheckout()
 		})
+
+		// ---------- "Goes well with" (#114) ----------
+
+		// Only dishes that go straight in: this page has no item modal. The row is
+		// built from the page's own catalog (`meta.upsell`, present only while
+		// `ordering.upsell` is on) and the cart; adding one reprices like any
+		// other change to the cart.
+		const upsellCatalog = (meta.upsell?.categories ?? null) as OrderingCategory[] | null
+		const upsellSlot = document.getElementById('co-upsell')
+		const cartStore = upsellCatalog ? createCartStore({ key: storageKey }) : null
+		const countShown = createShownCounter((id) => recordUpsell(orgId, id, 'shown'))
+
+		function renderUpsell() {
+			if (!upsellSlot) return
+			if (!upsellCatalog || !cartStore) {
+				upsellSlot.replaceChildren()
+				return
+			}
+			const items = suggestForCart({
+				categories: upsellCatalog,
+				lines: cart,
+				offered: allowedModes.includes(mode),
+				oneTapOnly: true,
+			})
+			countShown(items.map((item) => item.id))
+			const row = buildUpsellRow({
+				items,
+				place: 'checkout',
+				formatMoney: formatCurrency,
+				labels: {
+					heading: labels.upsell.heading,
+					add: labels.upsell.add,
+					addNamed: labels.upsell.addNamed,
+				},
+				onAdd: (item) => {
+					addSuggestion(item, {
+						add: (line) => cartStore.add(line),
+						// Only dishes that go straight in are offered here.
+						openModal: () => {},
+						markOpened: () => {},
+						countAdded: (id) => recordUpsell(orgId, id, 'added'),
+					})
+					cart = cartStore.load()
+					renderCheckout()
+				},
+			})
+			if (row) upsellSlot.replaceChildren(row)
+			else upsellSlot.replaceChildren()
+		}
 
 		// ---------- service fee line (#123) ----------
 

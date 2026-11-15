@@ -272,6 +272,7 @@ function localizeItem(item: PublicMenuItemData, menu: PublicMenuData): OrderingI
 		calorieMin: item.calorieMin,
 		calorieMax: item.calorieMax,
 		isPopular: item.isPopular,
+		isUpsell: item.isUpsell === true,
 		excludeFromDiscounts: item.excludeFromDiscounts === true,
 		availabilityStatus: item.availabilityStatus,
 		specialInstructions: menu.specialInstructions !== false,
@@ -286,6 +287,7 @@ function localizeCategory(
 		id: category.id,
 		displayName: t(category.displayName),
 		description: category.description ? t(category.description) : '',
+		upsellCategoryIds: category.upsellCategoryIds ?? [],
 		items: (category.items ?? []).map((item) => localizeItem(item, menu)),
 		subcategories: (category.subcategories ?? [])
 			.filter((sub) => sub.availabilityStatus !== 'unavailable')
@@ -602,6 +604,8 @@ const orderBarLabels = {
 }
 
 const clientMenuData = {
+	/** `ordering.upsell` (#114): "Goes well with" next to the cart. */
+	upsell: menuPayload?.features?.upsell === true,
 	organizationId: organization.id,
 	currency,
 	locale: requestedLocale,
@@ -981,6 +985,9 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 			type HeldCoupon,
 		} from '~/lib/ordering/coupon-retry'
 		import { createItemModal } from '~/lib/ordering/item-modal'
+		import { addSuggestion, suggestForCart } from '~/lib/ordering/upsell'
+		import { buildUpsellRow } from '~/lib/ordering/upsell-row'
+		import { createShownCounter, recordUpsell } from '~/lib/ordering/upsell-stats'
 		import { el } from '~/lib/ordering/dom'
 		import { createMoneyFormatter } from '~/lib/ordering/money'
 		import { orderLines, postDiscountQuote } from '~/lib/ordering/order-client'
@@ -1003,6 +1010,7 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 		import { mountScrollSpy } from '~/lib/ordering/scroll-spy'
 		import { posterSource } from '~/lib/ordering/table-session'
 		import {
+			type CartItem,
 			type FulfillmentMode,
 			type OrderingCategory,
 			type OrderingLabels,
@@ -1045,6 +1053,8 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 			closedReason: string
 			allowedModes: FulfillmentMode[]
 			categories: OrderingCategory[]
+			/** The "Goes well with" row is on (`ordering.upsell`). */
+			upsell?: boolean
 			voiceOrderLabels: Record<
 				'loaded' | 'expired' | 'error' | 'unavailable' | 'removed' | 'repriced',
 				string
@@ -1080,6 +1090,8 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 			allowedModes: data.allowedModes,
 		})
 
+		// Dishes whose modal was opened from "Goes well with", so their add is counted.
+		const upsellOpened = new Set<string>()
 		const modalRoot = document.getElementById('item-modal-backdrop')
 		const modal = modalRoot
 			? createItemModal({
@@ -1088,7 +1100,11 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 					labels,
 					formatMoney: money,
 					cartLines: () => store.lines(),
-					onAdd: (line) => store.add(line),
+					onAdd: (line) => {
+						store.add(line)
+						// A dish added from "Goes well with" that needed choices.
+						if (upsellOpened.delete(line.itemId)) recordUpsell(orgId, line.itemId, 'added')
+					},
 					// The headline price of the open item (or chosen variant) as was/now.
 					salePrice: (item, variant) => {
 						const input = saleInputs.get(item.id)
@@ -1168,11 +1184,51 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 			}
 		}
 
+		// "Goes well with" (#114): the restaurant's own upsell settings, under the
+		// cart's lines. A dish that needs choices opens the item modal; any other
+		// is added in one tap. The cart re-prices as for any added dish.
+		const countShown = createShownCounter((id) => recordUpsell(orgId, id, 'shown'))
+		function renderUpsell(lines: CartItem[]): HTMLElement | null {
+			if (!data.upsell) return null
+			const mode = atTable() ? 'pickup' : details.mode
+			const items = suggestForCart({
+				categories: data.categories ?? [],
+				lines,
+				// A table order is a pickup-style order here; otherwise the chosen
+				// order type has to be offered at this location.
+				offered: atTable() || data.allowedModes.includes(mode),
+			})
+			countShown(items.map((item) => item.id))
+			return buildUpsellRow({
+				items,
+				place: 'cart',
+				formatMoney: money,
+				labels: {
+					heading: labels.upsellHeading ?? '',
+					add: labels.upsellAdd ?? '',
+					addNamed: labels.upsellAddNamed ?? '{name}',
+				},
+				onAdd: (item) =>
+					addSuggestion(item, {
+						add: (line) => store.add(line),
+						// The modal sits over the page: leave the drawer first, and
+						// hand focus back to the cart button afterwards.
+						openModal: (dish) => {
+							cartUi.close()
+							modal?.open(dish.id, document.getElementById('open-cart-btn') ?? document.body)
+						},
+						markOpened: (id) => upsellOpened.add(id),
+						countAdded: (id) => recordUpsell(orgId, id, 'added'),
+					}),
+			})
+		}
+
 		const cartUi = mountCartUi({
 			store,
 			labels,
 			formatMoney: money,
 			locale: data.locale,
+			renderUpsell,
 			defaultLocale: document.documentElement.dataset.defaultLocale || 'en',
 			discounts: {
 				sync: () => quotes?.sync(),

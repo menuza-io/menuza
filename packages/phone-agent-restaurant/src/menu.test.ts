@@ -10,6 +10,7 @@ import {
 	HandoffCartSchema,
 	resolveMenuItem,
 	searchMenuItems,
+	suggestUpsells,
 	summarizeCart,
 } from './menu.ts'
 
@@ -577,5 +578,74 @@ describe('size labels', () => {
 			line: { variantId: 'v-lg' },
 		})
 		expect(order(menu, 'oz')).toMatchObject({ ok: false })
+	})
+})
+
+
+describe('suggestUpsells', () => {
+	const dish = (id: string, extra: Partial<AgentMenuItem> = {}): AgentMenuItem => ({
+		id,
+		displayName: id,
+		description: null,
+		price: 5,
+		variations: { groups: [], variants: [] },
+		isGlutenFree: false,
+		isVegetarian: false,
+		allergens: [],
+		isPopular: false,
+		isUpsell: false,
+		availabilityStatus: 'available',
+		modifierGroups: [],
+		...extra,
+	})
+	const shopMenus: AgentMenu[] = [
+		{
+			id: 'menu',
+			displayName: 'Main',
+			availabilityStatus: 'available',
+			categories: [
+				{
+					id: 'burgers',
+					displayName: 'Burgers',
+					description: null,
+					upsellCategoryIds: ['drinks'],
+					availabilityStatus: 'available',
+					items: [dish('burger')],
+				},
+				{
+					id: 'sides',
+					displayName: 'Sides',
+					description: null,
+					upsellCategoryIds: [],
+					availabilityStatus: 'available',
+					items: [dish('fries', { isUpsell: true })],
+				},
+				{
+					id: 'drinks',
+					displayName: 'Drinks',
+					description: null,
+					upsellCategoryIds: [],
+					availabilityStatus: 'available',
+					items: [dish('cola'), dish('shake', { availabilityStatus: 'unavailable' })],
+				},
+			],
+		},
+	]
+
+	it('offers the upsell category of the order first, then flagged dishes, with category names', () => {
+		const picks = suggestUpsells(shopMenus, ['burger'])
+		expect(picks.map((pick) => [pick.item.id, pick.categoryName])).toEqual([
+			['cola', 'Drinks'],
+			['fries', 'Sides'],
+		])
+	})
+
+	it('skips what is ordered or sold out and respects the limit', () => {
+		expect(suggestUpsells(shopMenus, ['burger', 'cola']).map((p) => p.item.id)).toEqual([
+			'fries',
+		])
+		expect(suggestUpsells(shopMenus, ['burger'], 1).map((p) => p.item.id)).toEqual([
+			'cola',
+		])
 	})
 })

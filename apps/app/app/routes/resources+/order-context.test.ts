@@ -601,7 +601,7 @@ describe('order context: service fee', () => {
 		flagOn()
 		await withFees([
 			{ id: 'loc_on', serviceFee: ON },
-			{ id: 'loc_off', serviceFee: JSON.stringify({ ...JSON.parse(ON), enabled: false }) },
+			{ id: 'loc_off', serviceFee: JSON.stringify({ ...(JSON.parse(ON) as Record<string, unknown>), enabled: false }) },
 			{ id: 'loc_none', serviceFee: null },
 		])
 		const payload = (await loadContext()) as unknown as Fee

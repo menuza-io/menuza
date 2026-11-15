@@ -646,7 +646,7 @@ describe('tip choices and the service fee on the pay sheet', () => {
 			capMinor: null,
 			smallOrderBelowMinor: null,
 			smallOrderFeeMinor: null,
-			fulfillments: ['dine_in'],
+			fulfillments: ['dine_in' as const],
 			label: 'Service fee',
 			explanation: null,
 			taxable: false,

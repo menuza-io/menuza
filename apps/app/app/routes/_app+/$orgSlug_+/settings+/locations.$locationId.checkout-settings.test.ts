@@ -87,7 +87,7 @@ async function setup(role: 'admin' | 'viewer' = 'admin') {
 	}
 }
 
-import { defaultTipSettings } from '@repo/common/location-types'
+import { defaultTipSettings, type TipSettings } from '@repo/common/location-types'
 import { serviceFeeSettingsSchema } from '@repo/common/service-fee'
 import {
 	emptyFeeForm,
@@ -133,7 +133,7 @@ describe('location tip choices (#118)', () => {
 				}
 			}),
 		})
-		const saved = JSON.parse((await row()).tipSettings!)
+		const saved = JSON.parse((await row()).tipSettings!) as TipSettings
 		expect(saved.delivery).toEqual({
 			choices: [{ percent: 12 }, { amountMinor: 250 }],
 			defaultIndex: null,

@@ -440,6 +440,8 @@ export type PublicLocationData = {
 	prepTime: number
 	fulfillmentOptions: any
 	inHouseTips: any
+	/** The tip buttons per order type, as saved (#118); null until saved. */
+	tipSettings?: unknown
 	scheduling: any
 	deliveryConfig: any
 	deliveryZones: any[]
@@ -608,6 +610,11 @@ export type PublicSiteMenuPayload = {
 	locations: PublicLocationData[]
 	menus: PublicMenuData[]
 	promotions?: PublicMenuPromotion[]
+	/**
+	 * Site features the menu page reads: `upsell` is the `ordering.upsell` flag
+	 * (#114). Absent on a payload cached before it: off.
+	 */
+	features?: { upsell?: boolean }
 }
 
 export async function fetchPublishedSiteMenu(options: {
