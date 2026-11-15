@@ -59,20 +59,24 @@ function recordPostsTo(page: Page, pathname: string) {
 }
 
 function dashboardsOf(userId: string, organizationId: string) {
-	return db
-		.select({
-			id: Dashboard.id,
-			kind: Dashboard.kind,
-			name: Dashboard.name,
-			config: Dashboard.config,
-		})
-		.from(Dashboard)
-		.where(
-			and(
-				eq(Dashboard.ownerId, userId),
-				eq(Dashboard.organizationId, organizationId),
-			),
-		)
+	return (
+		db
+			.select({
+				id: Dashboard.id,
+				kind: Dashboard.kind,
+				name: Dashboard.name,
+				config: Dashboard.config,
+			})
+			.from(Dashboard)
+			.where(
+				and(
+					eq(Dashboard.ownerId, userId),
+					eq(Dashboard.organizationId, organizationId),
+				),
+			)
+			// The seeded classic Home is not one of the dashboards created here.
+			.then((rows) => rows.filter((row) => row.kind !== 'home'))
+	)
 }
 
 async function insertCustomDashboard(input: {

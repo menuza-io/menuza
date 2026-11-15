@@ -195,14 +195,18 @@ export async function createTestOrganizationWithClassicHome(
 	role: 'admin' | 'member' | 'viewer' | 'guest' = 'admin',
 ) {
 	const organization = await createTestOrganization(userId, role)
+	await saveClassicHome(userId, organization.id)
+	return organization
+}
+
+export async function saveClassicHome(userId: string, organizationId: string) {
 	await db.insert(Dashboard).values({
-		organizationId: organization.id,
+		organizationId,
 		ownerId: userId,
 		kind: 'home',
 		name: 'Home',
 		config: CLASSIC_HOME_CONFIG,
 	})
-	return organization
 }
 
 export async function setupTestOrgWithUser(

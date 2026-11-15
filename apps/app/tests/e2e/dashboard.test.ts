@@ -18,7 +18,10 @@ import {
 import { organizationTemplates } from '@repo/reports'
 import { saveReport } from '@repo/reports/server'
 import { expect, test } from '#tests/playwright-utils.ts'
-import { createTestOrganizationWithClassicHome } from '#tests/test-utils.ts'
+import {
+	createTestOrganizationWithClassicHome,
+	saveClassicHome,
+} from '#tests/test-utils.ts'
 // Removed db import - using test utilities instead
 import { initializeOnboardingSteps } from '../../../../packages/database/setup-onboarding.ts'
 
@@ -403,6 +406,7 @@ test.describe('Dashboard', () => {
 			})
 			.returning()
 		if (!org) throw new Error('Failed to create organization')
+		await saveClassicHome(user.id, org.id)
 		await db.insert(UserOrganization).values([
 			{
 				userId: user.id,
@@ -802,7 +806,9 @@ test.describe('Dashboard', () => {
 		const dialog = page.getByRole('dialog', { name: 'Add block' })
 		const builtIns = dialog.getByRole('group', { name: 'Built-in blocks' })
 		await page.getByRole('button', { name: 'Add block' }).click()
-		await expect(builtIns.getByRole('button')).toHaveCount(1)
+		await expect(
+			builtIns.getByRole('button', { name: /^Top contributors/ }),
+		).toBeVisible()
 		const added = nextHomePost(page, org.slug)
 		await builtIns.getByRole('button', { name: /^Top contributors/ }).click()
 		await expect(dialog).toHaveCount(0)
@@ -819,9 +825,10 @@ test.describe('Dashboard', () => {
 
 		await page.getByRole('button', { name: 'Edit layout' }).click()
 		await page.getByRole('button', { name: 'Add block' }).click()
+		// Top contributors is back on the grid, so it is no longer offered.
 		await expect(
-			dialog.getByText('All built-in blocks are already on this dashboard.'),
-		).toBeVisible()
+			builtIns.getByRole('button', { name: /^Top contributors/ }),
+		).toHaveCount(0)
 		await page.keyboard.press('Escape')
 		await expect(dialog).toHaveCount(0)
 
