@@ -15,10 +15,6 @@ import {
 	_RoleToUser,
 } from '@repo/database'
 import { getSessionExpirationDate } from '#app/utils/auth.server.ts'
-import {
-	defaultHomeConfig,
-	serializeDashboardConfig,
-} from '#app/utils/dashboards/config.ts'
 import { createUser } from './db-utils.ts'
 
 import { convertSetCookieToCookie } from './utils.ts'
@@ -161,6 +157,33 @@ export async function createTestOrganization(
 	return organization
 }
 
+// Inlined (not imported from the app's dashboard config, which needs the
+// Lingui macro transform that Playwright does not run). Mirrors
+// defaultHomeConfig() in app/utils/dashboards/config.ts.
+const CLASSIC_HOME_CONFIG = JSON.stringify({
+	version: 1,
+	blocks: [
+		{ id: 'stats', type: 'stats' },
+		{ id: 'notes-chart', type: 'notes-chart' },
+		{ id: 'onboarding', type: 'onboarding' },
+		{ id: 'leaderboard', type: 'leaderboard' },
+	],
+	layouts: {
+		lg: [
+			{ i: 'stats', x: 0, y: 0, w: 12, h: 2 },
+			{ i: 'notes-chart', x: 0, y: 2, w: 12, h: 8 },
+			{ i: 'onboarding', x: 0, y: 10, w: 6, h: 10 },
+			{ i: 'leaderboard', x: 6, y: 10, w: 6, h: 10 },
+		],
+		md: [
+			{ i: 'stats', x: 0, y: 0, w: 8, h: 2 },
+			{ i: 'notes-chart', x: 0, y: 2, w: 8, h: 8 },
+			{ i: 'onboarding', x: 0, y: 10, w: 4, h: 10 },
+			{ i: 'leaderboard', x: 4, y: 10, w: 4, h: 10 },
+		],
+	},
+})
+
 /**
  * An organization whose Home was saved with the generic layout (stats, notes
  * chart, onboarding, top contributors). A Home with no saved row now shows
@@ -177,7 +200,7 @@ export async function createTestOrganizationWithClassicHome(
 		ownerId: userId,
 		kind: 'home',
 		name: 'Home',
-		config: serializeDashboardConfig(defaultHomeConfig()),
+		config: CLASSIC_HOME_CONFIG,
 	})
 	return organization
 }
