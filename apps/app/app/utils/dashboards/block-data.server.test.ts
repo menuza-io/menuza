@@ -381,7 +381,13 @@ describe('loadBuiltInBlockData', () => {
 				organization,
 				blocks: [],
 			}),
-		).toEqual({ notes: null, onboarding: null, leaderboard: null })
+		).toEqual({
+			notes: null,
+			onboarding: null,
+			leaderboard: null,
+			attention: null,
+			launch: null,
+		})
 
 		const leaderboardOnly = await loadBuiltInBlockData({
 			userId: viewer.id,
@@ -416,7 +422,13 @@ describe('loadBuiltInBlockData', () => {
 				},
 			],
 		})
-		expect(data).toEqual({ notes: null, onboarding: null, leaderboard: null })
+		expect(data).toEqual({
+			notes: null,
+			onboarding: null,
+			leaderboard: null,
+			attention: null,
+			launch: null,
+		})
 	})
 })
 
@@ -528,7 +540,13 @@ describe('loadReportBlockData', () => {
 })
 
 describe('loadBlockPicker', () => {
-	const noBlockData = { notes: null, onboarding: null, leaderboard: null }
+	const noBlockData = {
+		notes: null,
+		onboarding: null,
+		leaderboard: null,
+		attention: null,
+		launch: null,
+	}
 
 	it("offers the organization's saved reports, newest first, with their subject", async () => {
 		const { viewer, organization } = await setupReportOrg()
@@ -563,7 +581,11 @@ describe('loadBlockPicker', () => {
 
 		const picker = await loadBlockPicker({
 			userId: viewer.id,
-			organizationId: organization.id,
+			organization: {
+				id: organization.id,
+				slug: organization.slug,
+				dataRegion: 'us',
+			},
 			blockData: noBlockData,
 			grants: ['customers', 'shop_orders', 'members'],
 		})
@@ -586,7 +608,11 @@ describe('loadBlockPicker', () => {
 		]
 		const picker = await loadBlockPicker({
 			userId: viewer.id,
-			organizationId: organization.id,
+			organization: {
+				id: organization.id,
+				slug: organization.slug,
+				dataRegion: 'us',
+			},
 			blockData: noBlockData,
 			grants,
 		})
@@ -611,7 +637,11 @@ describe('loadBlockPicker', () => {
 		// Notes are covered (read:note:own), shop orders are not.
 		const picker = await loadBlockPicker({
 			userId: viewer.id,
-			organizationId: organization.id,
+			organization: {
+				id: organization.id,
+				slug: organization.slug,
+				dataRegion: 'us',
+			},
 			blockData: noBlockData,
 			grants: ['notes'],
 		})
@@ -648,7 +678,11 @@ describe('loadBlockPicker', () => {
 
 		const without = await loadBlockPicker({
 			userId: viewer.id,
-			organizationId: organization.id,
+			organization: {
+				id: organization.id,
+				slug: organization.slug,
+				dataRegion: 'us',
+			},
 			blockData: noBlockData,
 			grants: [],
 		})
@@ -663,7 +697,11 @@ describe('loadBlockPicker', () => {
 
 		const withStaff = await loadBlockPicker({
 			userId: viewer.id,
-			organizationId: organization.id,
+			organization: {
+				id: organization.id,
+				slug: organization.slug,
+				dataRegion: 'us',
+			},
 			blockData: noBlockData,
 			grants: ['time_entries'],
 		})
@@ -684,7 +722,11 @@ describe('loadBlockPicker', () => {
 		const idsFor = async (grants: string[]) => {
 			const picker = await loadBlockPicker({
 				userId: viewer.id,
-				organizationId: organization.id,
+				organization: {
+					id: organization.id,
+					slug: organization.slug,
+					dataRegion: 'us',
+				},
 				blockData: noBlockData,
 				grants,
 			})

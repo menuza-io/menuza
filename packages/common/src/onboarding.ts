@@ -7,6 +7,9 @@ import {
 	inArray,
 	Integration,
 	isNotNull,
+	isNull,
+	not,
+	like,
 	OnboardingProgress,
 	OnboardingStep,
 	OnboardingStepProgress,
@@ -16,6 +19,16 @@ import {
 	UserOrganization,
 } from '@repo/database'
 import { POS_PROVIDER_NAMES } from './pos-providers.ts'
+
+/**
+ * Launch checklist steps (`launch.checklist`) live in the same table but are
+ * evaluated per location by the App's launch engine, never as template steps.
+ */
+export const LAUNCH_STEP_KEY_PREFIX = 'launch_'
+const templateStep = () =>
+	not(like(OnboardingStep.key, `${LAUNCH_STEP_KEY_PREFIX}%`))
+/** Template progress rows are the ones without a location. */
+const templateProgress = () => isNull(OnboardingStepProgress.locationId)
 
 async function countRows(table: any, condition: any): Promise<number> {
 	const [row] = await db.select({ value: count() }).from(table).where(condition)
@@ -64,7 +77,7 @@ export async function getOnboardingProgress(
 	const steps = await db
 		.select()
 		.from(OnboardingStep)
-		.where(eq(OnboardingStep.isActive, true))
+		.where(and(eq(OnboardingStep.isActive, true), templateStep()))
 		.orderBy(asc(OnboardingStep.sortOrder))
 	const progressRows = await db
 		.select()
@@ -73,6 +86,7 @@ export async function getOnboardingProgress(
 			and(
 				eq(OnboardingStepProgress.userId, userId),
 				eq(OnboardingStepProgress.organizationId, organizationId),
+				templateProgress(),
 			),
 		)
 
@@ -215,6 +229,8 @@ export async function markStepCompleted(
 					OnboardingStepProgress.organizationId,
 					OnboardingStepProgress.stepId,
 				],
+				// The template rows' unique index is partial (no location).
+				targetWhere: isNull(OnboardingStepProgress.locationId),
 				set: {
 					isCompleted: true,
 					completedAt: new Date(),
@@ -231,12 +247,13 @@ export async function markStepCompleted(
 					eq(OnboardingStepProgress.userId, userId),
 					eq(OnboardingStepProgress.organizationId, organizationId),
 					eq(OnboardingStepProgress.isCompleted, true),
+					templateProgress(),
 				),
 			)
 		const [totalRow] = await db
 			.select({ value: count() })
 			.from(OnboardingStep)
-			.where(eq(OnboardingStep.isActive, true))
+			.where(and(eq(OnboardingStep.isActive, true), templateStep()))
 		const completedCount = completedRow?.value ?? 0
 		const totalSteps = totalRow?.value ?? 0
 
@@ -335,6 +352,7 @@ export async function autoDetectCompletedSteps(
 					eq(OnboardingStep.isActive, true),
 					eq(OnboardingStep.autoDetect, true),
 					isNotNull(OnboardingStep.detectConfig),
+					templateStep(),
 				),
 			)
 
@@ -368,6 +386,7 @@ export async function autoDetectCompletedSteps(
 								eq(OnboardingStepProgress.userId, userId),
 								eq(OnboardingStepProgress.organizationId, organizationId),
 								eq(OnboardingStepProgress.stepId, step.id),
+								templateProgress(),
 							),
 						)
 						.limit(1)

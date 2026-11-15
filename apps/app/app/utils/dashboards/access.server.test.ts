@@ -10,7 +10,7 @@ import {
 	createTestOrganization,
 } from '#tests/test-utils.ts'
 import { canEdit, isOwner, requireDashboardAccess } from './access.server.ts'
-import { defaultHomeConfig, emptyDashboardConfig } from './config.ts'
+import { defaultRestaurantHomeConfig, emptyDashboardConfig } from './config.ts'
 
 async function expectNotFound(promise: Promise<unknown>, secret?: string) {
 	const error = await promise.then(
@@ -244,7 +244,7 @@ describe('requireDashboardAccess', () => {
 		})
 		expect(asOwner.access).toBe('owner')
 		expect(asOwner.dashboard.kind).toBe('home')
-		expect(asOwner.dashboard.config).toEqual(defaultHomeConfig())
+		expect(asOwner.dashboard.config).toEqual(defaultRestaurantHomeConfig())
 	})
 })
 

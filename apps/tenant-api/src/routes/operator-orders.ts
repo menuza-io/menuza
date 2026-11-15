@@ -1,5 +1,6 @@
 import { Hono, type Context } from 'hono'
 import { jwtVerify } from 'jose'
+import { and, eq, inArray, sql } from 'drizzle-orm'
 import { z } from 'zod'
 
 import {
@@ -9,6 +10,7 @@ import {
 import { brand } from '@repo/config/brand'
 import {
 	getTenantDb,
+	restaurantOrders,
 	TENANT_ORG_ID_PATTERN,
 	type RestaurantOrder,
 } from '@repo/tenant-db'
@@ -362,6 +364,64 @@ operatorOrderRoutes.get('/', async (c) => {
 	} catch (error) {
 		console.error(
 			`Failed to list orders for org ${auth.auth.orgId}:`,
+			error instanceof Error ? error.message : error,
+		)
+		return c.json(
+			{ error: 'Tenant Database unavailable' },
+			500,
+			noStoreHeaders(),
+		)
+	}
+})
+
+/**
+ * Counts for the home page's Needs attention feed: orders waiting in
+ * "Payment needs review", per location the token may see. Counts only, no
+ * order or guest field. Registered before `/:id`.
+ */
+operatorOrderRoutes.get('/attention', async (c) => {
+	const auth = await authenticateOrdersOperator(c, 'orders:read')
+	if ('error' in auth) return auth.error
+	const denied = await assertOperatorOrg(auth.auth.orgId)
+	if (denied) return denied.error
+	const { locationIds } = auth.auth
+	if (locationIds !== null && locationIds.length === 0) {
+		return c.json({ locations: [] }, 200, noStoreHeaders())
+	}
+	try {
+		const db = await getTenantDb(auth.auth.orgId)
+		const conditions = [
+			eq(restaurantOrders.orgId, auth.auth.orgId),
+			eq(restaurantOrders.status, 'payment_review'),
+		]
+		// Location-scoped tokens see only their own locations (chunked well
+		// under the 100 bound parameters a Durable Object statement allows).
+		if (locationIds !== null && locationIds.length <= 90) {
+			conditions.push(inArray(restaurantOrders.locationId, locationIds))
+		}
+		const rows = await db
+			.select({
+				locationId: restaurantOrders.locationId,
+				paymentReview: sql<number>`count(*)`,
+			})
+			.from(restaurantOrders)
+			.where(and(...conditions))
+			.groupBy(restaurantOrders.locationId)
+		return c.json(
+			{
+				locations: rows
+					.filter((row) => orderVisible(auth.auth, row.locationId))
+					.map((row) => ({
+						locationId: row.locationId,
+						paymentReview: Number(row.paymentReview),
+					})),
+			},
+			200,
+			noStoreHeaders(),
+		)
+	} catch (error) {
+		console.error(
+			`Failed to count attention orders for org ${auth.auth.orgId}:`,
 			error instanceof Error ? error.message : error,
 		)
 		return c.json(

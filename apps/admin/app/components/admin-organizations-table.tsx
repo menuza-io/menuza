@@ -69,6 +69,8 @@ export interface Filters {
 	search: string
 	subscriptionStatus: string
 	plan: string
+	/** `stuck`: in setup (no live location) for more than 14 days. */
+	setup: string
 }
 
 interface AdminOrganizationsTableProps {
@@ -328,6 +330,20 @@ export function AdminOrganizationsTable({
 				icon: <Icon name="crown" className="size-3.5" />,
 				options: planNames.map((plan) => ({ value: plan, label: plan })),
 			},
+			{
+				id: 'setup',
+				label: _(msg`Setup`),
+				type: 'select',
+				defaultOperator: 'is',
+				operators: [{ value: 'is', label: _(msg`is`) }],
+				icon: <Icon name="clock" className="size-3.5" />,
+				options: [
+					{
+						value: 'stuck',
+						label: _(msg`Stuck in setup for more than 14 days`),
+					},
+				],
+			},
 		],
 		[_, subscriptionStatuses, planNames],
 	)
@@ -343,7 +359,10 @@ export function AdminOrganizationsTable({
 	})
 
 	const hasActiveFilters = Boolean(
-		filters.search || filters.subscriptionStatus || filters.plan,
+		filters.search ||
+		filters.subscriptionStatus ||
+		filters.plan ||
+		filters.setup,
 	)
 	const rows = table.getRowModel().rows
 	const totalCount = pagination.totalCount

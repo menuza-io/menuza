@@ -17,16 +17,23 @@ import {
 	MAX_DASHBOARD_BLOCKS,
 	type DashboardBlock,
 } from '#app/utils/dashboards/config.ts'
+import { NO_TODAY_ACCESS } from '#app/utils/dashboards/today.ts'
 import {
 	AddBlockDialog,
 	AddBlockOption,
 	AddBlockSection,
 } from './add-block-dialog.tsx'
 
-const defaultBlocks = defaultHomeConfig().blocks
+// A template Home plus Needs attention: every block this viewer may add.
+const defaultBlocks: DashboardBlock[] = [
+	...defaultHomeConfig().blocks,
+	{ id: 'attention', type: 'attention' },
+]
 const picker: DashboardBlockPicker = {
 	onboardingAvailable: true,
 	bookingsToday: { available: false, locations: [] },
+	today: NO_TODAY_ACCESS,
+	locationStorageKey: 'home-location:test',
 	savedReports: [],
 	templateGroups: [],
 }
@@ -110,6 +117,17 @@ describe('AddBlockDialog', () => {
 		expect(builtInOptions(shown.dialog)).toEqual(['Bookings today'])
 	})
 
+	it('offers Today only when the viewer has a tile to see', async () => {
+		const hidden = await openDialog({})
+		expect(builtInOptions(hidden.dialog)).not.toContain('Today')
+		cleanup()
+
+		const shown = await openDialog({
+			picker: { ...picker, today: { ...picker.today, available: true } },
+		})
+		expect(builtInOptions(shown.dialog)).toEqual(['Today'])
+	})
+
 	it('adds the picked block and closes', async () => {
 		const { dialog, onAdd } = await openDialog({ blocks: without('stats') })
 		await userEvent.click(
@@ -125,7 +143,7 @@ describe('AddBlockDialog', () => {
 		const blocks: DashboardBlock[] = [
 			...without('leaderboard'),
 			...Array.from(
-				{ length: MAX_DASHBOARD_BLOCKS - 3 },
+				{ length: MAX_DASHBOARD_BLOCKS - (defaultBlocks.length - 1) },
 				(_, index): DashboardBlock => ({
 					id: `report-${index}`,
 					type: 'report',

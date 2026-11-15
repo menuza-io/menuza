@@ -996,6 +996,10 @@ msgstr "{change, plural, one {+# في آخر 30 يومًا} other {+# في آخ�
 msgid "{changed, plural, one {# changed} other {# changed}}"
 msgstr "{changed, plural, one {# معدّلة} two {# معدّلتان} few {# معدّلة} many {# معدّلة} other {# معدّلة}}"
 
+#: app/components/dashboard/blocks/attention-block.tsx:240
+msgid "{channels} switched off at {location}"
+msgstr "{channels} متوقف في {location}"
+
 #: app/components/website/form-builder-sidebar.tsx:228
 msgid "{choiceCount, plural, one {# choice} other {# choices}}"
 msgstr "{choiceCount, plural, zero {لا توجد خيارات} one {خيار واحد} two {خياران} few {# خيارات} many {# خياراً} other {# خيار}}"
@@ -1046,6 +1050,14 @@ msgstr "{count, plural, one {حجز واحد لضيف} two {حجزان لضيف�
 #~ msgid "{count, plural, one {# cover} other {# covers}}"
 #~ msgstr "{count, plural, one {ضيف واحد} two {ضيفان} few {# ضيوف} many {# ضيفًا} other {# ضيف}}"
 
+#: app/components/dashboard/blocks/attention-block.tsx:248
+msgid "{count, plural, one {# dish is sold out at {location}} other {# dishes are sold out at {location}}}"
+msgstr "{count, plural, one {طبق واحد نفد في {location}} other {# أطباق نفدت في {location}}}"
+
+#: app/components/dashboard/blocks/attention-block.tsx:254
+msgid "{count, plural, one {# dish is sold out} other {# dishes are sold out}}"
+msgstr "{count, plural, one {طبق واحد نفد} other {# أطباق نفدت}}"
+
 #~ msgid "{count, plural, one {# filter active} other {# filters active}}"
 #~ msgstr ""
 
@@ -1078,6 +1090,10 @@ msgstr "{count, plural, one {فرع واحد} two {فرعان} few {# فروع} 
 msgid "{count, plural, one {# modifier choice} other {# modifier choices}}"
 msgstr "{count, plural, zero {# خيارات إضافة} one {خيار إضافة واحد} two {خياران إضافيان} few {# خيارات إضافة} many {# خيار إضافة} other {# خيار إضافة}}"
 
+#: app/components/dashboard/blocks/attention-block.tsx:193
+msgid "{count, plural, one {# order at {location} needs a payment review} other {# orders at {location} need a payment review}}"
+msgstr "{count, plural, one {طلب واحد في {location} يحتاج مراجعة الدفع} other {# طلبات في {location} تحتاج مراجعة الدفع}}"
+
 #: app/utils/reservations/count-labels.ts:20
 msgid "{count, plural, one {# party in the next 30 min} other {# parties in the next 30 min}}"
 msgstr "{count, plural, one {مجموعة واحدة خلال 30 دقيقة} two {مجموعتان خلال 30 دقيقة} few {# مجموعات خلال 30 دقيقة} many {# مجموعة خلال 30 دقيقة} other {# مجموعة خلال 30 دقيقة}}"
@@ -1090,9 +1106,17 @@ msgstr "{count, plural, zero {# حجز بحساسية} one {# حجز بحساس�
 msgid "{count, plural, one {# party} other {# parties}}"
 msgstr "{count, plural, one {مجموعة واحدة} two {مجموعتان} few {# مجموعات} many {# مجموعة} other {# مجموعة}}"
 
+#: app/components/dashboard/blocks/attention-block.tsx:291
+msgid "{count, plural, one {# phone call has an open follow-up} other {# phone calls have an open follow-up}}"
+msgstr "{count, plural, one {مكالمة واحدة لها متابعة مفتوحة} other {# مكالمات لها متابعة مفتوحة}}"
+
 #: app/utils/reservations/count-labels.ts:96
 msgid "{count, plural, one {# request needs approval} other {# requests need approval}}"
 msgstr "{count, plural, zero {# طلب بانتظار الموافقة} one {# طلب بانتظار الموافقة} two {# طلبان بانتظار الموافقة} few {# طلبات بانتظار الموافقة} many {# طلبًا بانتظار الموافقة} other {# طلب بانتظار الموافقة}}"
+
+#: app/components/dashboard/blocks/attention-block.tsx:281
+msgid "{count, plural, one {# review has no reply after 48 hours} other {# reviews have no reply after 48 hours}}"
+msgstr "{count, plural, one {تقييم واحد بلا رد بعد 48 ساعة} other {# تقييمات بلا رد بعد 48 ساعة}}"
 
 #: app/utils/reservations/count-labels.ts:88
 msgid "{count, plural, one {# seated} other {# seated}}"
@@ -1101,6 +1125,10 @@ msgstr "{count, plural, zero {# جالس} one {# جالس} two {# جالسان} 
 #: app/utils/reservations/count-labels.ts:54
 msgid "{count, plural, one {# special / closed day} other {# special / closed days}}"
 msgstr "{count, plural, one {يوم خاص / مغلق واحد} two {يومان خاصان / مغلقان} few {# أيام خاصة / مغلقة} many {# يومًا خاصًا / مغلقًا} other {# يوم خاص / مغلق}}"
+
+#: app/components/dashboard/blocks/attention-block.tsx:301
+msgid "{count, plural, one {# stock count at {location} is waiting for review} other {# stock counts at {location} are waiting for review}}"
+msgstr "{count, plural, one {جرد واحد في {location} بانتظار المراجعة} other {# عمليات جرد في {location} بانتظار المراجعة}}"
 
 #: app/components/reservations/settings/setup-checklist.tsx:205
 msgid "{count, plural, one {# suggestion} other {# suggestions}}"
@@ -1413,6 +1441,10 @@ msgstr "{done, plural, one {تم حفظ المستويات لعنصر واحد} 
 msgid "{done} of {total} done"
 msgstr "{done} من {total} مكتملة"
 
+#: app/components/launch/launch-checklist.tsx:284
+msgid "{done} of {total} required steps done"
+msgstr "اكتملت {done} من {total} خطوات مطلوبة"
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:387
 msgid "{doneCount} of {total} done"
 msgstr "اكتمل {doneCount} من {total}"
@@ -1668,6 +1700,14 @@ msgstr "{lo} د"
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:684
 msgid "{lo}–{hi} min"
 msgstr "{lo}–{hi} د"
+
+#: app/components/dashboard/blocks/attention-block.tsx:212
+msgid "{location} has no menu on sale"
+msgstr "لا توجد قائمة متاحة للبيع في {location}"
+
+#: app/components/dashboard/blocks/attention-block.tsx:227
+msgid "{location} has no opening hours"
+msgstr "لا توجد ساعات عمل لـ {location}"
 
 #: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:297
 msgid "{lockedGuestName} is locked to its table. Confirm Unlock and move to proceed."
@@ -2595,6 +2635,10 @@ msgstr "{warningCount} تحذيرات للمراجعة"
 msgid "{weekText} of {limitText}"
 msgstr "{weekText} من {limitText}"
 
+#: app/components/dashboard/blocks/attention-block.tsx:272
+msgid "{what} in force at {location}"
+msgstr "{what} سارية في {location}"
+
 #: app/components/discounts/discount-history.tsx:52
 msgid "{who} archived it"
 msgstr "أرشف {who} الخصم"
@@ -2743,6 +2787,10 @@ msgstr "نفد <0>{dish}</0> عند الكاشير {times, plural, one {مرة �
 #: app/components/inventory/counting-screen.tsx:394
 msgid "<0>{doneCount}</0> of <1>{totalCount}</1> counted"
 msgstr "تم جرد <0>{doneCount}</0> من <1>{totalCount}</1>"
+
+#: app/components/dashboard/blocks/today-block.tsx:268
+msgid "<0>{firstTime}</0> first-time, <1>{returning}</1> returning"
+msgstr "<0>{firstTime}</0> لأول مرة، <1>{returning}</1> عائدون"
 
 #: app/components/inventory/count-review-screen.tsx:905
 msgid "<0>{foodBpText}</0> since your last count, above your target of <1>{targetText}</1>."
@@ -3496,6 +3544,10 @@ msgstr "رسالة مهذبة تفيد بأنك لن تتابع مع الطلب 
 msgid "A position with that name already exists."
 msgstr "يوجد منصب بهذا الاسم بالفعل."
 
+#: app/components/dashboard/blocks/attention-block.tsx:267
+msgid "A prep-time change"
+msgstr "تغيير في وقت التحضير"
+
 #: app/components/reservations/experiences/experience-editor.tsx:741
 msgid "A prepayment or deposit policy makes guests pay to book. Its cancellation terms apply to this experience."
 msgstr "سياسة الدفع المسبق أو الوديعة تُلزم الضيوف بالدفع عند الحجز، وتنطبق شروط الإلغاء الخاصة بها على هذه التجربة."
@@ -3552,7 +3604,7 @@ msgstr "حدّ أمان يمنع إساءة استخدام رمز الطاولة
 msgid "A sample message with made-up guest details, built from the saved settings."
 msgstr "رسالة نموذجية ببيانات ضيف وهمية، مبنية على الإعدادات المحفوظة."
 
-#: app/utils/dashboards/config.ts:117
+#: app/utils/dashboards/config.ts:135
 msgid "A saved report or a report template."
 msgstr "تقرير محفوظ أو قالب تقرير."
 
@@ -3862,8 +3914,8 @@ msgstr "acme"
 msgid "Acme Inc."
 msgstr "شركة Acme"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:200
-#: app/routes/_app+/$orgSlug_+/index.tsx:224
+#: app/routes/_app+/$orgSlug_+/index.tsx:226
+#: app/routes/_app+/$orgSlug_+/index.tsx:252
 msgid "Across your organization"
 msgstr "على مستوى مؤسستك"
 
@@ -4154,6 +4206,10 @@ msgstr "أضف موقعًا لإعداد سياسات الدفع."
 msgid "Add a location to set up the waitlist."
 msgstr "أضف موقعًا لإعداد قائمة الانتظار."
 
+#: app/components/launch/launch-checklist.tsx:364
+msgid "Add a location to start your launch checklist."
+msgstr "أضف فرعًا لبدء قائمة الإطلاق."
+
 #: app/components/menu/category-form.tsx:584
 msgid "Add a menu"
 msgstr "إضافة قائمة"
@@ -4408,7 +4464,7 @@ msgstr "إضافة منطقة"
 #~ msgid "Add at least one code."
 #~ msgstr "أضف رمزًا واحدًا على الأقل."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:196
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:224
 msgid "Add at least one email block"
 msgstr "أضف كتلة بريد إلكتروني واحدة على الأقل"
 
@@ -4476,8 +4532,8 @@ msgstr "إضافة توفر"
 #: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:69
 #: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:75
 #: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:136
-#: app/components/dashboard/add-block-dialog.tsx:122
-#: app/components/dashboard/add-block-dialog.tsx:127
+#: app/components/dashboard/add-block-dialog.tsx:124
+#: app/components/dashboard/add-block-dialog.tsx:129
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:886
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:1209
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:1226
@@ -4931,6 +4987,10 @@ msgstr "إضافة وسم"
 #: app/components/staff/onboarding/template-editor.tsx:181
 msgid "Add task"
 msgstr "إضافة مهمة"
+
+#: app/components/launch/launch-checklist.tsx:26
+msgid "Add the address, phone and opening hours"
+msgstr "أضف العنوان والهاتف وساعات العمل"
 
 #: app/routes/_app+/$orgSlug_+/loyalty+/promotions.tsx:508
 msgid "Add the bonuses up"
@@ -5501,7 +5561,7 @@ msgstr "جميع المناطق"
 #~ msgid "All assigned"
 #~ msgstr "جميعهم معينون"
 
-#: app/components/dashboard/add-block-dialog.tsx:159
+#: app/components/dashboard/add-block-dialog.tsx:161
 msgid "All built-in blocks are already on this dashboard."
 msgstr "جميع الكتل المدمجة موجودة بالفعل في لوحة التحكم هذه."
 
@@ -5568,6 +5628,8 @@ msgstr "كل العناصر"
 msgid "All jobs"
 msgstr "كل الوظائف"
 
+#: app/components/dashboard/blocks/attention-block.tsx:361
+#: app/components/dashboard/blocks/today-block.tsx:173
 #: app/components/discounts/discount-form.tsx:1718
 #: app/components/hiring/job-summary.tsx:55
 #: app/components/hiring/location-picker.tsx:85
@@ -6933,6 +6995,10 @@ msgstr "لدى <0>{supplier}</0>"
 msgid "At least a quantity"
 msgstr "حد أدنى من الكمية"
 
+#: app/components/launch/launch-checklist.tsx:31
+msgid "At least one category with 5 or more priced dishes, and a menu health score of 60 or more."
+msgstr "فئة واحدة على الأقل فيها 5 أطباق مسعّرة أو أكثر، ودرجة صحة القائمة 60 أو أكثر."
+
 #~ msgid "At least one section is required."
 #~ msgstr "مطلوب قسم واحد على الأقل."
 
@@ -7201,6 +7267,10 @@ msgstr "الأوقات المتاحة"
 msgid "Available Tools"
 msgstr "الأدوات المتاحة"
 
+#: app/components/dashboard/blocks/today-block.tsx:348
+msgid "Average <0>{averageText}</0>"
+msgstr "المتوسط <0>{averageText}</0>"
+
 #~ msgid "Average actual wait (min)"
 #~ msgstr "متوسط الانتظار الفعلي (دقيقة)"
 
@@ -7218,7 +7288,7 @@ msgstr "متوسط قيمة الطلب"
 msgid "Average waitlist wait, last 7 days"
 msgstr "متوسط الانتظار في قائمة الانتظار، آخر 7 أيام"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:203
+#: app/routes/_app+/$orgSlug_+/index.tsx:229
 msgid "Avg per day"
 msgstr "المتوسط اليومي"
 
@@ -7814,7 +7884,7 @@ msgstr "جارٍ الحجز..."
 msgid "Bookings and busy days across the month."
 msgstr "الحجوزات وأيام الازدحام على مدار الشهر."
 
-#: app/components/dashboard/blocks/bookings-today-block.tsx:217
+#: app/components/dashboard/blocks/bookings-today-block.tsx:219
 msgid "Bookings by status"
 msgstr "الحجوزات حسب الحالة"
 
@@ -7825,8 +7895,8 @@ msgstr "الحجوزات حسب الحالة"
 msgid "Bookings cancelled after the free-cancellation window over the last 30 days."
 msgstr "الحجوزات الملغاة بعد انتهاء فترة الإلغاء المجاني خلال آخر 30 يومًا."
 
-#: app/components/dashboard/blocks/bookings-today-block.tsx:132
-#: app/utils/dashboards/config.ts:108
+#: app/components/dashboard/blocks/bookings-today-block.tsx:134
+#: app/utils/dashboards/config.ts:110
 msgid "Bookings today"
 msgstr "حجوزات اليوم"
 
@@ -8024,6 +8094,10 @@ msgstr "أنشئ بريدًا HTML بعلامتك التجارية باستخد�
 msgid "Build a landing page"
 msgstr "أنشئ صفحة هبوط"
 
+#: app/components/launch/launch-checklist.tsx:30
+msgid "Build your menu"
+msgstr "أنشئ قائمتك"
+
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:457
 msgid "Builder"
 msgstr "المنشئ"
@@ -8040,7 +8114,7 @@ msgstr "رقم المبنى"
 msgid "Built-in"
 msgstr "مدمج"
 
-#: app/components/dashboard/add-block-dialog.tsx:144
+#: app/components/dashboard/add-block-dialog.tsx:146
 msgid "Built-in blocks"
 msgstr "الكتل المدمجة"
 
@@ -8151,6 +8225,10 @@ msgstr "تنظيف الطاولة"
 #: app/components/orders/ordering-controls.tsx:178
 msgid "Busy mode"
 msgstr "وضع الانشغال"
+
+#: app/components/dashboard/blocks/attention-block.tsx:266
+msgid "Busy mode (+{minutes} min prep)"
+msgstr "وضع الانشغال (+{minutes} دقيقة تحضير)"
 
 #: app/components/orders/ordering-controls.tsx:155
 msgid "Busy: {totalPrep} min prep (+{busyMinutes})"
@@ -8538,6 +8616,7 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/components/customers/person-notes-panel.tsx:119
 #: app/components/customers/person-profile-screen.tsx:1105
 #: app/components/customers/person-profile-screen.tsx:1195
+#: app/components/dashboard/blocks/attention-block.tsx:625
 #: app/components/dashboard/dashboard-edit-toolbar.tsx:41
 #: app/components/dashboard/dashboard-name-dialog.tsx:149
 #: app/components/dashboard/dashboard-options-menu.tsx:78
@@ -9490,6 +9569,10 @@ msgstr "تحقق من المبلغ وحاول مرة أخرى."
 #~ msgid "Check the dates and try again."
 #~ msgstr "تحقق من التواريخ وحاول مرة أخرى."
 
+#: app/components/dashboard/blocks/attention-block.tsx:223
+msgid "Check the domain settings on your website page."
+msgstr "تحقق من إعدادات النطاق في صفحة موقعك."
+
 #: app/components/menu/drop-wizard/drop-form.tsx:582
 msgid "Check the drop details and try saving again."
 msgstr "تحقق من تفاصيل الطرح وحاول الحفظ مرة أخرى."
@@ -9528,6 +9611,10 @@ msgstr "راجع القواعد"
 #: app/utils/staffing/alert-copy.ts:72
 msgid "Check the time cards before the limit is reached."
 msgstr "راجع بطاقات الوقت قبل بلوغ الحد."
+
+#: app/components/launch/launch-checklist.tsx:51
+msgid "Check the whole order flow before your guests do."
+msgstr "جرّب مسار الطلب كاملًا قبل ضيوفك."
 
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:472
 msgid "Check the words and choices, then save again."
@@ -10531,6 +10618,7 @@ msgstr "تم تسجيل انصرافك، {firstName}"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:362
 #: app/components/chat/chat-group-settings-dialog.tsx:181
+#: app/components/dashboard/blocks/attention-block.tsx:625
 #: app/components/hiring/job-editor.tsx:974
 #: app/components/inventory/recipe-panel.tsx:335
 #: app/components/kiosk/kiosk-chrome.tsx:255
@@ -11228,6 +11316,10 @@ msgstr "ربط {label} بهيئة الزكاة والضريبة والجمارك
 msgid "Connect {platformName}"
 msgstr "ربط {platformName}"
 
+#: app/components/launch/launch-checklist.tsx:54
+msgid "Connect a custom domain"
+msgstr "اربط نطاقًا خاصًا"
+
 #: app/components/social/post-composer.tsx:208
 msgid "Connect a Facebook Page or an Instagram account to publish. You can still save a draft."
 msgstr "اربط صفحة فيسبوك أو حساب إنستغرام للنشر. لا يزال بإمكانك حفظ مسودة."
@@ -11265,9 +11357,17 @@ msgstr "ربط نطاق"
 msgid "Connect Google, Yelp, TripAdvisor, Deliveroo, Just Eat, OpenTable, or Resy in Settings to view and reply to customer reviews here."
 msgstr "قم بربط Google أو Yelp أو TripAdvisor أو Deliveroo أو Just Eat أو OpenTable أو Resy في الإعدادات لعرض تقييمات العملاء والرد عليها هنا."
 
+#: app/components/launch/launch-checklist.tsx:38
+msgid "Connect payments or choose pay at pickup"
+msgstr "اربط المدفوعات أو اختر الدفع عند الاستلام"
+
 #: app/components/settings/cards/organization/shop-card.tsx:188
 msgid "Connect payout account"
 msgstr "ربط حساب المدفوعات"
+
+#: app/components/dashboard/blocks/attention-block.tsx:187
+msgid "Connect Stripe or Checkout.com to take card payments online."
+msgstr "اربط Stripe أو Checkout.com لقبول الدفع بالبطاقة عبر الإنترنت."
 
 #: app/components/settings/cards/organization/site-analytics-card.tsx:92
 msgid "Connect the analytics platforms you use on your public website. Leave any field blank to disable that integration."
@@ -11511,7 +11611,7 @@ msgstr "متعاقد"
 msgid "Contrast"
 msgstr "التباين"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:222
+#: app/routes/_app+/$orgSlug_+/index.tsx:250
 msgid "Contributors"
 msgstr "المساهمون"
 
@@ -12102,6 +12202,10 @@ msgstr "تعذّر تحميل التسجيل. حاول مرة أخرى."
 msgid "Couldn't load the steps of this run. Close it and try again."
 msgstr "تعذّر تحميل خطوات هذا التشغيل. أغلقه وحاول مرة أخرى."
 
+#: app/components/dashboard/blocks/today-block.tsx:201
+msgid "Couldn't load today's numbers."
+msgstr "تعذر تحميل أرقام اليوم."
+
 #: app/components/customers/people-summary-row.tsx:142
 msgid "Couldn't load totals"
 msgstr "تعذر تحميل الإجماليات"
@@ -12109,6 +12213,10 @@ msgstr "تعذر تحميل الإجماليات"
 #: app/components/phone-agent/voice-picker.tsx:447
 msgid "Couldn't load voices"
 msgstr "تعذّر تحميل الأصوات"
+
+#: app/components/dashboard/blocks/attention-block.tsx:618
+msgid "Couldn't mark the dishes available. Try again."
+msgstr "تعذر جعل الأطباق متاحة. حاول مرة أخرى."
 
 #: app/components/phone-agent/test-call-panel.tsx:411
 msgid "Couldn't mute your microphone. Try again."
@@ -12321,7 +12429,7 @@ msgstr "تقارن التغطية الطلبات التي تصلك عادة كل
 #~ msgstr "ضيوف"
 
 #: app/components/customers/person-profile-screen.tsx:518
-#: app/components/dashboard/blocks/bookings-today-block.tsx:193
+#: app/components/dashboard/blocks/bookings-today-block.tsx:195
 msgid "Covers"
 msgstr "عدد الضيوف"
 
@@ -12331,6 +12439,10 @@ msgstr "عدد الضيوف"
 #: app/components/staff/labor/labor-settings.tsx:226
 msgid "Covers are the guests at your tables. The schedule adds the people this needs for booked and typical covers to what orders need. Leave a position empty to leave covers out for it."
 msgstr "الضيوف هم من يجلسون على طاولاتكم. يضيف الجدول عدد الأشخاص اللازمين للضيوف المحجوزين والمعتادين إلى ما تحتاجه الطلبات. اترك المنصب فارغًا لاستبعاد الضيوف له."
+
+#: app/components/dashboard/blocks/today-block.tsx:369
+msgid "Covers booked"
+msgstr "المقاعد المحجوزة"
 
 #: ../../packages/reports/src/ui/report-labels.ts:81
 msgid "Covers booked for each service day over the last 7 days, not counting cancelled, declined or expired bookings."
@@ -12345,8 +12457,8 @@ msgid "Covers booked for today, not counting cancelled, declined or expired book
 msgstr "عدد الضيوف المحجوزين لليوم، دون احتساب الحجوزات الملغاة أو المرفوضة أو المنتهية."
 
 #: ../../packages/reports/src/ui/report-labels.ts:84
-#: app/components/dashboard/blocks/bookings-today-block.tsx:244
-#: app/components/dashboard/blocks/bookings-today-block.tsx:248
+#: app/components/dashboard/blocks/bookings-today-block.tsx:246
+#: app/components/dashboard/blocks/bookings-today-block.tsx:250
 msgid "Covers by service"
 msgstr "عدد الضيوف حسب الخدمة"
 
@@ -14046,6 +14158,7 @@ msgid "Delivers on"
 msgstr "يسلّم في"
 
 #: app/components/customers/person-orders-panel.tsx:221
+#: app/components/dashboard/blocks/attention-block.tsx:174
 #: app/components/inventory/review-order-screen.tsx:727
 #: app/components/locations/location-form.tsx:813
 #: app/components/orders/order-detail.tsx:725
@@ -14723,6 +14836,14 @@ msgstr "أطباق بلا مسببات حساسية أو سعرات"
 msgid "Dismiss"
 msgstr "تجاهل"
 
+#: app/components/dashboard/blocks/attention-block.tsx:498
+msgid "Dismiss for a week"
+msgstr "إخفاء لمدة أسبوع"
+
+#: app/components/dashboard/blocks/attention-block.tsx:496
+msgid "Dismiss for a week: {itemTitle}"
+msgstr "إخفاء لمدة أسبوع: {itemTitle}"
+
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:118
 msgid "Dispatch personalized email with merge tags"
 msgstr "إرسال بريد إلكتروني مخصص مع وسوم الدمج"
@@ -14834,6 +14955,7 @@ msgstr "عدم قبول الطلبات الهاتفية لـ"
 #: app/components/inventory/send-order-dialog.tsx:198
 #: app/components/inventory/setup-checklist.tsx:149
 #: app/components/kiosk/kiosk-screens.tsx:720
+#: app/components/launch/launch-checklist.tsx:72
 #: app/components/menu/menu-review-stack.tsx:1072
 #: app/components/note/share-note-button.tsx:365
 #: app/components/phone-agent/call-request-card.tsx:41
@@ -14859,6 +14981,10 @@ msgstr "أُنجزت في {when}"
 #: app/components/menu/menu-review-stack.tsx:947
 msgid "Done selecting"
 msgstr "تم التحديد"
+
+#: app/components/dashboard/blocks/attention-block.tsx:562
+msgid "Done. The dishes are back on the menu."
+msgstr "تم. عادت الأطباق إلى القائمة."
 
 #: app/components/reservations/floor-plan-canvas.tsx:132
 #: app/utils/reservations/labels.ts:206
@@ -16110,6 +16236,10 @@ msgstr "تنتهي"
 msgid "Ends {end}"
 msgstr "تنتهي {end}"
 
+#: app/components/dashboard/blocks/attention-block.tsx:274
+msgid "Ends {ends}."
+msgstr "ينتهي {ends}."
+
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1566
 msgid "Ends after midnight"
 msgstr "تنتهي بعد منتصف الليل"
@@ -17143,6 +17273,10 @@ msgstr "الكل"
 msgid "Everything available is already assigned."
 msgstr "كل المتاح مُسند بالفعل."
 
+#: app/routes/_app+/$orgSlug_+/launch.tsx:96
+msgid "Everything each location needs before guests can order online."
+msgstr "كل ما يحتاجه كل فرع قبل أن يطلب الضيوف عبر الإنترنت."
+
 #: app/components/discounts/discount-form.tsx:1258
 msgid "Everything in the cart."
 msgstr "كل ما في السلة."
@@ -17495,7 +17629,7 @@ msgstr "فشل التحقق باستخدام مفتاح المرور: {errorMess
 msgid "Failed to copy account ID"
 msgstr "فشل نسخ معرف الحساب"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:249
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:277
 msgid "Failed to create and dispatch campaign"
 msgstr "فشل إنشاء الحملة وإرسالها"
 
@@ -18171,6 +18305,10 @@ msgstr "إصلاح"
 msgid "Fix before publishing"
 msgstr "أصلح قبل النشر"
 
+#: app/components/dashboard/blocks/attention-block.tsx:484
+msgid "Fix it"
+msgstr "أصلحه"
+
 #: app/components/menu/menu-review-card.tsx:47
 msgid "Fix selection limits"
 msgstr "إصلاح حدود الاختيار"
@@ -18197,6 +18335,10 @@ msgstr "أصلح المشكلات في مسار المكالمة قبل النش
 
 #~ msgid "Fix the issues in the phone menu before publishing."
 #~ msgstr "أصلح المشكلات في قائمة الهاتف قبل النشر."
+
+#: app/components/dashboard/blocks/attention-block.tsx:234
+msgid "Fix the top issues to reach 60 or more."
+msgstr "أصلح أهم المشكلات للوصول إلى 60 أو أكثر."
 
 #: app/components/discounts/discount-form.tsx:836
 msgid "Fix these before saving."
@@ -18822,6 +18964,10 @@ msgstr "احصل على المساعدة"
 msgid "Get in touch"
 msgstr "تواصل معنا"
 
+#: app/components/launch/launch-checklist.tsx:330
+msgid "Get ready to take orders"
+msgstr "استعد لاستقبال الطلبات"
+
 #: app/components/home-prompt.tsx:62
 msgid "Get set up"
 msgstr "ابدأ الإعداد"
@@ -18946,7 +19092,7 @@ msgstr "الانتقال إلى هناك"
 msgid "Go to"
 msgstr "الانتقال إلى"
 
-#: app/routes/_app+/$orgSlug_+/dashboards+/$dashboardId.tsx:242
+#: app/routes/_app+/$orgSlug_+/dashboards+/$dashboardId.tsx:247
 msgid "Go to Home"
 msgstr "الانتقال إلى الرئيسية"
 
@@ -19299,6 +19445,7 @@ msgstr "ملفات سجل الضيوف والدمج"
 #~ msgstr "ضيوف"
 
 #: app/components/customers/people-summary-row.tsx:179
+#: app/components/dashboard/blocks/today-block.tsx:356
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:362
 msgid "Guests"
 msgstr "الضيوف"
@@ -19379,6 +19526,14 @@ msgstr "يمكن للضيوف الإلغاء والتعديل بحرية حتى 
 msgid "Guests cannot book until this is fixed"
 msgstr "لا يمكن للضيوف الحجز حتى يتم إصلاح هذا"
 
+#: app/components/dashboard/blocks/attention-block.tsx:218
+msgid "Guests cannot find you or order online yet."
+msgstr "لا يستطيع الضيوف العثور عليك أو الطلب عبر الإنترنت بعد."
+
+#: app/components/dashboard/blocks/attention-block.tsx:228
+msgid "Guests cannot see when you are open."
+msgstr "لا يرى الضيوف أوقات عملك."
+
 #: app/components/menu/modifier-selection-fields.tsx:70
 msgid "Guests choose counts per option."
 msgstr "يختار العملاء الكمية لكل خيار."
@@ -19405,6 +19560,10 @@ msgstr "يبحث الضيوف عن مسببات الحساسية والسعرا�
 #: app/components/menu/modifier-selection-fields.tsx:112
 msgid "Guests must choose one option before continuing."
 msgstr "يجب على العملاء اختيار خيار واحد قبل المتابعة."
+
+#: app/components/launch/launch-checklist.tsx:27
+msgid "Guests need to know where you are and when you are open."
+msgstr "يحتاج الضيوف إلى معرفة موقعك وأوقات عملك."
 
 #: app/components/reservations/messages/message-settings.tsx:551
 msgid "Guests of this location receive email only, because text messages are not sent from the Saudi Arabia region. This setting has no effect here."
@@ -19472,6 +19631,10 @@ msgstr "يمسح الضيوف الرمز على طاولتهم لطلب الجو
 #: app/components/menu/menu-health-card.tsx:224
 msgid "Guests see a heading with nothing under it."
 msgstr "يرى الضيوف عنوانًا لا شيء تحته."
+
+#: app/components/dashboard/blocks/attention-block.tsx:213
+msgid "Guests see nothing to order."
+msgstr "لا يرى الضيوف شيئًا لطلبه."
 
 #: app/components/menu/menu-health-card.tsx:229
 msgid "Guests see the same dish twice."
@@ -21811,7 +21974,7 @@ msgid "Last {days} days"
 msgstr "آخر {days} يوم"
 
 #: app/components/notes-chart.tsx:63
-#: app/routes/_app+/$orgSlug_+/index.tsx:206
+#: app/routes/_app+/$orgSlug_+/index.tsx:232
 msgid "Last {daysShown} days"
 msgstr "آخر {daysShown} يوم"
 
@@ -21986,6 +22149,10 @@ msgstr "الأسابيع القادمة"
 #: app/utils/people/people-view.ts:16
 msgid "Latest visit"
 msgstr "أحدث زيارة"
+
+#: app/routes/_app+/$orgSlug_+/launch.tsx:94
+msgid "Launch checklist"
+msgstr "قائمة الإطلاق"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:413
 msgid "Launch run"
@@ -22903,8 +23070,11 @@ msgstr "جارٍ التحميل…"
 msgid "Local emulator"
 msgstr "محاكي محلي"
 
-#: app/components/dashboard/blocks/bookings-today-block.tsx:136
+#: app/components/dashboard/blocks/attention-block.tsx:359
+#: app/components/dashboard/blocks/bookings-today-block.tsx:138
+#: app/components/dashboard/blocks/today-block.tsx:171
 #: app/components/inventory/inventory-chrome.tsx:99
+#: app/components/launch/launch-checklist.tsx:342
 #: app/components/menu/drop-wizard/drop-drawers.tsx:249
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:37
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:43
@@ -23678,6 +23848,11 @@ msgstr "تحديد كمقروء"
 msgid "Mark at least two tables as combinable to create one."
 msgstr "حدّد طاولتين على الأقل كقابلتين للدمج لإنشاء دمج."
 
+#: app/components/dashboard/blocks/attention-block.tsx:467
+#: app/components/dashboard/blocks/attention-block.tsx:638
+msgid "Mark available"
+msgstr "اجعله متاحًا"
+
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:821
 msgid "Mark closed"
 msgstr "تحديد كمغلق"
@@ -23692,6 +23867,10 @@ msgstr "وضع علامة مكتمل"
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1412
 msgid "Mark complete automatically"
 msgstr "وضع علامة مكتمل تلقائيًا"
+
+#: app/components/dashboard/blocks/attention-block.tsx:554
+msgid "Mark dishes available"
+msgstr "اجعل الأطباق متاحة"
 
 #: app/components/inventory/item-recipe-sections.tsx:163
 msgid "Mark dishes sold out when this runs out"
@@ -24061,7 +24240,7 @@ msgstr "الأعضاء"
 msgid "Members & invites"
 msgstr "الأعضاء والدعوات"
 
-#: app/utils/dashboards/config.ts:101
+#: app/utils/dashboards/config.ts:103
 msgid "Members who created the most notes."
 msgstr "الأعضاء الذين أنشأوا أكبر عدد من الملاحظات."
 
@@ -24224,7 +24403,7 @@ msgstr "إجراءات الرسالة"
 msgid "Message composer"
 msgstr "محرر الرسائل"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:210
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:238
 msgid "Message content is required"
 msgstr "محتوى الرسالة مطلوب"
 
@@ -25083,11 +25262,13 @@ msgstr "يتطلب جدولًا منشورًا. يختار المديرون طر
 msgid "Needs a value. Accept it on its own."
 msgstr "يحتاج إلى قيمة. اقبله على حدة."
 
+#: app/components/dashboard/blocks/attention-block.tsx:355
 #: app/components/reservations/conflict-panel.tsx:123
 #: app/components/reservations/host-subnav.tsx:163
 #: app/components/staff/staff-profile-page.tsx:36
 #: app/components/staff/timeclock-today.tsx:125
 #: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:305
+#: app/utils/dashboards/config.ts:126
 msgid "Needs attention"
 msgstr "يحتاج إلى انتباه"
 
@@ -25245,7 +25426,7 @@ msgstr "إعلان جديد"
 msgid "New automation"
 msgstr "أتمتة جديدة"
 
-#: app/components/dashboard/add-block-dialog.tsx:136
+#: app/components/dashboard/add-block-dialog.tsx:138
 msgid "New blocks are added at the bottom of the dashboard."
 msgstr "تُضاف الكتل الجديدة في أسفل لوحة التحكم."
 
@@ -25254,7 +25435,7 @@ msgid "New bookings stop using it. Bookings that already accepted it keep their 
 msgstr "تتوقف الحجوزات الجديدة عن استخدامها. الحجوزات التي وافقت عليها سابقًا تحتفظ بشروطها."
 
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:95
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:267
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:296
 msgid "New broadcast"
 msgstr "بث جديد"
 
@@ -25546,8 +25727,8 @@ msgstr "التالي"
 msgid "Next arrival {nextArrival}"
 msgstr "الوصول التالي {nextArrival}"
 
-#: app/components/dashboard/blocks/bookings-today-block.tsx:266
-#: app/components/dashboard/blocks/bookings-today-block.tsx:270
+#: app/components/dashboard/blocks/bookings-today-block.tsx:268
+#: app/components/dashboard/blocks/bookings-today-block.tsx:272
 msgid "Next arrivals"
 msgstr "الوصول القادم"
 
@@ -25656,7 +25837,7 @@ msgid "No active tables yet. Add tables under Floor first."
 msgstr "لا توجد طاولات نشطة بعد. أضف الطاولات من قسم الصالة أولاً."
 
 #: app/components/note/activity-log.tsx:207
-#: app/routes/_app+/$orgSlug_+/index.tsx:206
+#: app/routes/_app+/$orgSlug_+/index.tsx:232
 #: app/routes/_app+/$orgSlug_+/loyalty+/activity.tsx:180
 msgid "No activity yet"
 msgstr "لا يوجد نشاط بعد"
@@ -25736,7 +25917,7 @@ msgstr "لا توجد حجوزات ليوم {emptyDayLabel}"
 #~ msgid "No bookings in this range."
 #~ msgstr "لا توجد حجوزات في هذا النطاق."
 
-#: app/components/dashboard/blocks/bookings-today-block.tsx:222
+#: app/components/dashboard/blocks/bookings-today-block.tsx:224
 msgid "No bookings today."
 msgstr "لا توجد حجوزات اليوم."
 
@@ -26010,6 +26191,10 @@ msgstr "لا توجد صورة لأي طبق"
 #: app/components/menu/menu-health-card.tsx:135
 msgid "No dish lists allergens or calories"
 msgstr "لا يذكر أي طبق مسببات الحساسية أو السعرات الحرارية"
+
+#: app/components/dashboard/blocks/attention-block.tsx:580
+msgid "No dishes are sold out here now."
+msgstr "لا توجد أطباق نافدة هنا الآن."
 
 #: app/components/menu/menu-review-stack.tsx:1287
 msgid "No dishes in this category. Hiding it keeps it off your menu; you can show it again from Categories."
@@ -26388,7 +26573,7 @@ msgstr "لا توجد مجموعات إضافات بعد."
 msgid "No modifier options yet."
 msgstr "لا توجد خيارات إضافات بعد."
 
-#: app/components/dashboard/blocks/bookings-today-block.tsx:274
+#: app/components/dashboard/blocks/bookings-today-block.tsx:276
 msgid "No more arrivals expected."
 msgstr "لا يُتوقع وصول مزيد من الضيوف."
 
@@ -26834,6 +27019,10 @@ msgstr "لا مبيعات بين آخر عمليتي جرد."
 msgid "No sales guide"
 msgstr "لا دليل للمبيعات"
 
+#: app/components/dashboard/blocks/today-block.tsx:226
+msgid "No sales then"
+msgstr "لا مبيعات حينها"
+
 #: app/components/staff/labor/labor-overview.tsx:406
 msgid "No sales to compare"
 msgstr "لا مبيعات للمقارنة"
@@ -26845,6 +27034,10 @@ msgstr "لم تُسجَّل مبيعات بين آخر عمليتي جرد، ل�
 #: app/components/inventory/compare-panel.tsx:181
 msgid "No sales yet"
 msgstr "لا مبيعات بعد"
+
+#: app/components/dashboard/blocks/today-block.tsx:291
+msgid "No sales yet today"
+msgstr "لا مبيعات اليوم بعد"
 
 #: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:442
 msgid "No saved notes for {activeServiceName} yet."
@@ -26888,7 +27081,7 @@ msgstr "لا توجد تخطيطات أقسام بعد"
 msgid "No sections yet"
 msgstr "لا توجد أقسام بعد"
 
-#: app/components/dashboard/blocks/bookings-today-block.tsx:256
+#: app/components/dashboard/blocks/bookings-today-block.tsx:258
 msgid "No service"
 msgstr "بلا خدمة"
 
@@ -27694,11 +27887,11 @@ msgstr "الملاحظات مرئية للمديرين فقط."
 msgid "Notes can be up to 500 characters."
 msgstr "يمكن أن تصل الملاحظات إلى 500 حرف."
 
-#: app/utils/dashboards/config.ts:84
+#: app/utils/dashboards/config.ts:86
 msgid "Notes chart"
 msgstr "مخطط الملاحظات"
 
-#: app/utils/dashboards/config.ts:85
+#: app/utils/dashboards/config.ts:87
 msgid "Notes created each day."
 msgstr "الملاحظات المنشأة كل يوم."
 
@@ -27858,6 +28051,10 @@ msgstr "لا شيء يحتاج إلى مراجعة"
 #: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:312
 msgid "Nothing needs you right now"
 msgstr "لا شيء يحتاجك الآن"
+
+#: app/components/dashboard/blocks/attention-block.tsx:378
+msgid "Nothing needs your attention."
+msgstr "لا شيء يحتاج انتباهك."
 
 #: app/components/inventory/review-order-screen.tsx:1043
 msgid "Nothing received yet"
@@ -28203,7 +28400,7 @@ msgstr "في ذلك التاريخ"
 #~ msgid "On the leaderboard"
 #~ msgstr "في لوحة المتصدرين"
 
-#: app/components/dashboard/blocks/bookings-today-block.tsx:204
+#: app/components/dashboard/blocks/bookings-today-block.tsx:206
 msgid "On the waitlist"
 msgstr "في قائمة الانتظار"
 
@@ -28261,7 +28458,7 @@ msgstr "التهيئة {complete}/{total}"
 msgid "Onboarding {complete}/{total}, late"
 msgstr "التهيئة {complete}/{total}، متأخرة"
 
-#: app/utils/dashboards/config.ts:92
+#: app/utils/dashboards/config.ts:94
 msgid "Onboarding checklist"
 msgstr "قائمة خطوات البدء"
 
@@ -28446,6 +28643,10 @@ msgstr "إكراميات الطلبات عبر الإنترنت التي تدخ�
 msgid "Online ordering"
 msgstr "الطلب عبر الإنترنت"
 
+#: app/components/dashboard/blocks/attention-block.tsx:204
+msgid "Online ordering is paused at {location}"
+msgstr "الطلب عبر الإنترنت متوقف مؤقتًا في {location}"
+
 #: app/components/menu/menu-form.tsx:278
 msgid "Online Ordering, POS & Kiosk"
 msgstr "الطلب عبر الإنترنت ونقاط البيع والأكشاك"
@@ -28498,6 +28699,10 @@ msgstr "أُوقف الدفع عبر الإنترنت. يمكنك إغلاق ا�
 #: app/components/settings/cards/organization/shop-card.tsx:119
 msgid "Online payments"
 msgstr "المدفوعات عبر الإنترنت"
+
+#: app/components/dashboard/blocks/attention-block.tsx:185
+msgid "Online payments are not connected"
+msgstr "المدفوعات الإلكترونية غير مربوطة"
 
 #: app/utils/reservations/policies-view.ts:260
 msgid "Online payments are not turned on for this restaurant."
@@ -28731,6 +28936,7 @@ msgstr "فريقك وحده يرى الملاحظات. ولا يراها الم�
 
 #: app/components/favorite-notes.tsx:105
 #: app/components/inventory/compare-panel.tsx:139
+#: app/components/launch/launch-checklist.tsx:256
 #: app/components/phone-agent/flow-editor/flow-meta.ts:97
 #: app/components/pos/pos-day-report.tsx:291
 #: app/components/staff/timesheets/issue-copy.ts:54
@@ -28765,7 +28971,7 @@ msgstr "فتح وعرض الملاحظات التي أنشأها أي زميل �
 msgid "Open and view notes created by this user."
 msgstr "فتح وعرض الملاحظات التي أنشأها هذا المستخدم."
 
-#: app/components/dashboard/blocks/bookings-today-block.tsx:301
+#: app/components/dashboard/blocks/bookings-today-block.tsx:303
 msgid "Open Book"
 msgstr "فتح دفتر الحجوزات"
 
@@ -28994,6 +29200,10 @@ msgstr "افتح الطبق"
 msgid "Open the form"
 msgstr "فتح النموذج"
 
+#: app/components/dashboard/blocks/attention-block.tsx:482
+msgid "Open the menu"
+msgstr "افتح القائمة"
+
 #: app/utils/my-schedule/my-schedule-messages.ts:89
 msgid "Open the newest schedule email from your manager and tap the button in it. Do not copy part of the link."
 msgstr "افتح أحدث رسالة جدول من مديرك واضغط الزر فيها. لا تنسخ جزءًا من الرابط."
@@ -29206,6 +29416,7 @@ msgstr "تمت إضافة نوع الخيار"
 msgid "Option type removed"
 msgstr "تمت إزالة نوع الخيار"
 
+#: app/components/launch/launch-checklist.tsx:84
 #: app/components/menu/menu-review-card.tsx:78
 #: app/components/menu/modifier-guest-preview.tsx:216
 msgid "Optional"
@@ -29619,6 +29830,7 @@ msgstr "نافذة الطلب"
 #: app/components/customers/people-list-screen.tsx:429
 #: app/components/customers/person-orders-panel.tsx:112
 #: app/components/customers/person-profile-screen.tsx:457
+#: app/components/dashboard/blocks/today-block.tsx:331
 #: app/components/orders/order-detail.tsx:469
 #: app/components/roles/tenant-role-access-manager.tsx:160
 #: app/components/workspace-breadcrumb.tsx:12
@@ -30202,6 +30414,10 @@ msgstr "إجازة مدفوعة"
 msgid "Paid when the tab closes"
 msgstr "يُدفع عند إغلاق الحساب"
 
+#: app/components/launch/launch-checklist.tsx:46
+msgid "Pair a Station terminal or kitchen display"
+msgstr "اربط جهاز Station أو شاشة مطبخ"
+
 #: app/components/staff/kiosk-manager.tsx:156
 #: app/components/staff/kiosk-manager.tsx:238
 #: app/components/staff/kiosk-manager.tsx:563
@@ -30315,7 +30531,7 @@ msgstr "جلس جزء من المجموعة"
 #~ msgid "parties"
 #~ msgstr "مجموعات"
 
-#: app/components/dashboard/blocks/bookings-today-block.tsx:182
+#: app/components/dashboard/blocks/bookings-today-block.tsx:184
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:356
 #: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:324
 msgid "Parties"
@@ -30526,6 +30742,14 @@ msgstr "متوقف مؤقتاً"
 #: app/utils/loyalty/promotions.ts:50
 msgid "Paused"
 msgstr "متوقف مؤقتاً"
+
+#: app/components/dashboard/blocks/attention-block.tsx:206
+msgid "Paused since {since}, until {until}."
+msgstr "متوقف منذ {since} حتى {until}."
+
+#: app/components/dashboard/blocks/attention-block.tsx:207
+msgid "Paused since {since}, until someone resumes it."
+msgstr "متوقف منذ {since} حتى يستأنفه أحد."
 
 #: app/components/orders/ordering-controls.tsx:140
 msgid "Paused until {pauseEnd}"
@@ -31308,6 +31532,7 @@ msgid "Pickles"
 msgstr "مخللات"
 
 #: app/components/customers/person-orders-panel.tsx:222
+#: app/components/dashboard/blocks/attention-block.tsx:172
 #: app/components/orders/order-detail.tsx:728
 #: app/routes/_app+/$orgSlug_+/orders.tsx:307
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:675
@@ -31440,6 +31665,10 @@ msgstr "إضافات البيتزا (كاملة / أنصاف)"
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1359
 msgid "Place"
 msgstr "المكان"
+
+#: app/components/launch/launch-checklist.tsx:50
+msgid "Place a test order"
+msgstr "قدّم طلبًا تجريبيًا"
 
 #~ msgid "Place temporary holds on a specific table or entire dining area for maintenance, private events, weather, or staff holds."
 #~ msgstr "وضع حظر مؤقت على طاولة محددة أو منطقة طعام كاملة للصيانة أو المناسبات الخاصة أو الطقس أو حجوزات الموظفين."
@@ -32376,6 +32605,10 @@ msgstr "قائمة بسعر ثابت"
 msgid "Pro"
 msgstr "احترافي"
 
+#: app/utils/dashboards/config.ts:127
+msgid "Problems that cost you orders, most urgent first, each with a way to fix it."
+msgstr "مشكلات تكلفك طلبات، الأكثر إلحاحًا أولًا، ولكل منها طريقة لإصلاحها."
+
 #: app/components/reservations/payment-panel.tsx:587
 msgid "Process now"
 msgstr "معالجة الآن"
@@ -32598,6 +32831,10 @@ msgstr "نشر هذا الأسبوع"
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6145
 msgid "Publish updates"
 msgstr "نشر التحديثات"
+
+#: app/components/launch/launch-checklist.tsx:58
+msgid "Publish your site and turn on online ordering"
+msgstr "انشر موقعك وفعّل الطلب عبر الإنترنت"
 
 #: app/components/settings/cards/organization/shop-card.tsx:407
 msgid "Publish your site before sharing the shop link with customers."
@@ -33120,6 +33357,8 @@ msgstr "السبب"
 msgid "Reason (only you see this)"
 msgstr "السبب (أنت وحدك ترى هذا)"
 
+#: app/components/launch/launch-checklist.tsx:200
+#: app/components/launch/launch-checklist.tsx:201
 #: app/components/reservations/requests-panel.tsx:191
 msgid "Reason (optional)"
 msgstr "السبب (اختياري)"
@@ -34478,7 +34717,7 @@ msgstr "رد…"
 #~ msgstr "الرد على التعليق"
 
 #: app/components/workspace-breadcrumb.tsx:109
-#: app/utils/dashboards/config.ts:116
+#: app/utils/dashboards/config.ts:134
 msgid "Report"
 msgstr "تقرير"
 
@@ -35019,6 +35258,7 @@ msgstr "النتيجة"
 msgid "Results"
 msgstr "النتائج"
 
+#: app/components/dashboard/blocks/attention-block.tsx:458
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:468
 #: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:237
 #: app/routes/_app+/$orgSlug_+/inventory+/counts.tsx:249
@@ -35052,6 +35292,7 @@ msgstr "Resy"
 
 #: ../../packages/ai/src/components/ai-elements/prompt-input.tsx:171
 #: app/components/customers/people-summary-row.tsx:144
+#: app/components/dashboard/blocks/today-block.tsx:204
 #: app/components/inventory/counting-screen.tsx:684
 #: app/components/reservations/messages/message-preview.tsx:89
 #: app/components/reservations/settings/setup-list-chrome.tsx:83
@@ -35539,6 +35780,8 @@ msgstr "عملية البيع"
 msgid "Sale upload missing"
 msgstr "لم يُرفع سجل عملية البيع"
 
+#: app/components/dashboard/blocks/today-block.tsx:289
+#: app/components/dashboard/blocks/today-block.tsx:305
 #: app/components/pos/pos-day-report.tsx:201
 #: app/components/staff/labor/labor-overview.tsx:160
 #: app/components/staff/labor/labor-overview.tsx:393
@@ -35546,6 +35789,10 @@ msgstr "لم يُرفع سجل عملية البيع"
 #: app/components/staff/labor/labor-page.tsx:197
 msgid "Sales"
 msgstr "المبيعات"
+
+#: app/components/dashboard/blocks/today-block.tsx:304
+msgid "Sales ({currency})"
+msgstr "المبيعات ({currency})"
 
 #: app/components/pos/pos-day-report.tsx:247
 msgid "Sales by terminal"
@@ -35597,6 +35844,10 @@ msgstr "ضريبة المبيعات"
 #: app/components/locations/location-form.tsx:485
 msgid "Sales Tax Rate (%)"
 msgstr "نسبة ضريبة المبيعات (%)"
+
+#: app/utils/dashboards/config.ts:119
+msgid "Sales, orders, guests and covers so far today, with yesterday and last week."
+msgstr "المبيعات والطلبات والضيوف والمقاعد حتى الآن اليوم، مقارنةً بالأمس والأسبوع الماضي."
 
 #: app/components/staff/labor/labor-overview.tsx:330
 msgid "Sales: {name}."
@@ -36323,6 +36574,10 @@ msgstr "مجدول في {date}"
 msgid "Scheduled hours"
 msgstr "الساعات المجدولة"
 
+#: app/components/dashboard/blocks/attention-block.tsx:175
+msgid "Scheduled ordering"
+msgstr "الطلب المجدول"
+
 #: app/components/locations/order-policies-card.tsx:136
 msgid "Scheduled orders: until this many minutes before the scheduled time"
 msgstr "الطلبات المجدولة: حتى هذا العدد من الدقائق قبل الموعد المحدد"
@@ -36930,6 +37185,7 @@ msgstr "مفتاح الأمان"
 msgid "Security Settings"
 msgstr "إعدادات الأمان"
 
+#: app/components/launch/launch-checklist.tsx:357
 #: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:365
 msgid "See all"
 msgstr "عرض الكل"
@@ -36937,6 +37193,10 @@ msgstr "عرض الكل"
 #: app/components/menu/menu-health-card.tsx:482
 msgid "See all {total}"
 msgstr "عرض الكل ({total})"
+
+#: app/components/launch/launch-checklist.tsx:47
+msgid "See and run online orders on a tablet."
+msgstr "اعرض الطلبات الإلكترونية وأدرها على جهاز لوحي."
 
 #: app/components/roles/tenant-role-access-manager.tsx:246
 msgid "See automated journeys and their run history."
@@ -37417,7 +37677,7 @@ msgstr "إرسال رمز جديد"
 msgid "Send a new manage link?"
 msgstr "إرسال رابط إدارة جديد؟"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:268
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:297
 msgid "Send a one-time email or SMS to your audience."
 msgstr "أرسل بريداً إلكترونياً أو رسالة نصية لمرة واحدة إلى جمهورك."
 
@@ -37891,6 +38151,10 @@ msgstr "اضبطه في إعدادات العمالة"
 msgid "Set levels"
 msgstr "ضبط المستويات"
 
+#: app/components/launch/launch-checklist.tsx:42
+msgid "Set pickup, delivery and prep time"
+msgstr "اضبط الاستلام والتوصيل ووقت التحضير"
+
 #: app/components/discounts/discount-form.tsx:522
 #: app/components/discounts/discount-form.tsx:1111
 #: app/utils/discounts/labels.ts:136
@@ -38053,6 +38317,10 @@ msgstr "مفتاح الإعداد"
 msgid "Setup progress"
 msgstr "تقدّم الإعداد"
 
+#: app/components/launch/launch-checklist.tsx:64
+msgid "Setup step"
+msgstr "خطوة إعداد"
+
 #: app/components/roles/tenant-role-access-manager.tsx:689
 msgid "Setup, book, guestbook & reports"
 msgstr "الإعدادات ودفتر الحجوزات وسجل الضيوف والتقارير"
@@ -38124,7 +38392,7 @@ msgstr "شارك مع الآخرين"
 msgid "Shared across every page"
 msgstr "مشترك عبر كل صفحة"
 
-#: app/routes/_app+/$orgSlug_+/dashboards+/$dashboardId.tsx:131
+#: app/routes/_app+/$orgSlug_+/dashboards+/$dashboardId.tsx:132
 msgid "Shared by {ownerName} · {accessLabel}"
 msgstr "تمت المشاركة بواسطة {ownerName} · {accessLabel}"
 
@@ -38727,6 +38995,7 @@ msgid "Sizes, portions, and how to describe your dishes."
 msgstr "الأحجام والحصص وطريقة وصف أطباقك."
 
 #: app/components/inventory/prep-screen.tsx:512
+#: app/components/launch/launch-checklist.tsx:184
 #: app/components/menu/menu-review-card.tsx:395
 #: app/components/menu/menu-review-stack.tsx:1419
 msgid "Skip"
@@ -38740,14 +39009,23 @@ msgstr "تخطي الآن"
 msgid "Skip selected"
 msgstr "تخطي المحدد"
 
+#: app/components/launch/launch-checklist.tsx:205
+msgid "Skip step"
+msgstr "تخطَّ الخطوة"
+
 #: app/components/staff/onboarding/task-row.tsx:218
 msgid "Skip this task"
 msgstr "تخطي هذه المهمة"
 
 #: app/components/inventory/prep-screen.tsx:431
+#: app/components/launch/launch-checklist.tsx:90
 #: app/components/staff/onboarding/task-row.tsx:285
 msgid "Skipped"
 msgstr "تم تخطيها"
+
+#: app/components/launch/launch-checklist.tsx:247
+msgid "Skipped: {skipReason}"
+msgstr "تم التخطي: {skipReason}"
 
 #. placeholder {0}: pendingConflictMove.message
 #: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:878
@@ -38830,6 +39108,10 @@ msgstr "وسائل التواصل الاجتماعي"
 #: app/utils/media/photo-studio.ts:74
 msgid "Soft gray"
 msgstr "رمادي ناعم"
+
+#: app/components/dashboard/blocks/attention-block.tsx:603
+msgid "Sold out by stock: undo it in Inventory"
+msgstr "نفد بسبب المخزون: تراجع عنه من المخزون"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:102
 msgid "Solid"
@@ -39136,6 +39418,10 @@ msgstr "الأيام الخاصة والإغلاقات"
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:699
 msgid "Special days and holiday schedules"
 msgstr "الأيام الخاصة وجداول العطلات"
+
+#: app/components/dashboard/blocks/attention-block.tsx:263
+msgid "Special hours"
+msgstr "ساعات خاصة"
 
 #: app/components/locations/special-hours-picker.tsx:88
 msgid "Special Hours & Holiday Overrides"
@@ -39642,7 +39928,7 @@ msgstr "تطبيقات المحطة"
 msgid "Station terminals"
 msgstr "أجهزة Station"
 
-#: app/utils/dashboards/config.ts:76
+#: app/utils/dashboards/config.ts:78
 msgid "Stats"
 msgstr "الإحصائيات"
 
@@ -40670,6 +40956,10 @@ msgstr "تلقي بريد صوتي"
 msgid "Take away"
 msgstr "سحب"
 
+#: app/components/launch/launch-checklist.tsx:39
+msgid "Take card payments online with Stripe or Checkout.com, or let guests pay when they collect."
+msgstr "اقبل الدفع بالبطاقة عبر الإنترنت مع Stripe أو Checkout.com، أو دع الضيوف يدفعون عند الاستلام."
+
 #: app/components/home-prompt.tsx:45
 msgid "Take me to my reports and walk me through what to look at first."
 msgstr "خذني إلى تقاريري وأرشدني إلى ما يجب أن أنظر إليه أولًا."
@@ -40864,6 +41154,10 @@ msgstr "الزميل"
 msgid "Tell callers which key does what."
 msgstr "أخبر المتصلين بوظيفة كل مفتاح."
 
+#: app/components/launch/launch-checklist.tsx:43
+msgid "Tell guests how they get their food and how long it takes."
+msgstr "أخبر الضيوف كيف يحصلون على طعامهم وكم يستغرق ذلك."
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:313
 msgid "Tell it about your business"
 msgstr "عرّفه بنشاطك التجاري"
@@ -40897,6 +41191,10 @@ msgstr "أخبرنا المزيد عن مطعمك"
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.terminate.tsx:110
 msgid "Tell us why and when. You confirm on the next step."
 msgstr "أخبرنا بالسبب والموعد. ستؤكد في الخطوة التالية."
+
+#: app/components/launch/launch-checklist.tsx:155
+msgid "Tell your guests"
+msgstr "أخبر ضيوفك"
 
 #: app/components/my-schedule/availability-sheet.tsx:130
 msgid "Tell your manager when you can usually work. It changes your schedule only after they approve it."
@@ -42333,6 +42631,10 @@ msgstr "لا يمكن أن يكون اليوم الأخير قبل اليوم ا
 msgid "The last seating must be after the first."
 msgstr "يجب أن تأتي فترة الجلوس الأخيرة بعد الأولى."
 
+#: app/components/launch/launch-checklist.tsx:59
+msgid "The last step: guests can order."
+msgstr "الخطوة الأخيرة: يستطيع الضيوف الطلب."
+
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:532
 msgid "The latest version of the design is in. Approve the proof again to print it."
 msgstr "وصلت أحدث نسخة من التصميم. وافق على البروفة مرة أخرى لطباعتها."
@@ -43635,11 +43937,11 @@ msgstr "تم مسح هذا العميل ولا يمكن تغييره بعد ال
 msgid "This customer was merged into another profile."
 msgstr "تم دمج هذا العميل في ملف آخر."
 
-#: app/routes/_app+/$orgSlug_+/dashboards+/$dashboardId.tsx:234
+#: app/routes/_app+/$orgSlug_+/dashboards+/$dashboardId.tsx:239
 msgid "This dashboard does not exist or you do not have access to it."
 msgstr "لوحة التحكم هذه غير موجودة أو ليس لديك صلاحية الوصول إليها."
 
-#: app/components/dashboard/add-block-dialog.tsx:131
+#: app/components/dashboard/add-block-dialog.tsx:133
 msgid "This dashboard has {MAX_DASHBOARD_BLOCKS} blocks, the most it can have. Remove a block to add another one."
 msgstr "تحتوي لوحة التحكم هذه على {MAX_DASHBOARD_BLOCKS} كتلة، وهو الحد الأقصى. أزل كتلة لإضافة كتلة أخرى."
 
@@ -44903,9 +45205,11 @@ msgstr "بانتظار الموافقة"
 msgid "To divide"
 msgstr "للتقسيم"
 
+#: app/components/dashboard/blocks/attention-block.tsx:438
 #: app/components/inventory/prep-screen.tsx:437
 #: app/components/inventory/prep-screen.tsx:576
 #: app/components/inventory/setup-checklist.tsx:149
+#: app/components/launch/launch-checklist.tsx:78
 #: app/components/reservations/settings/setup-checklist.tsx:173
 msgid "To do"
 msgstr "لم يكتمل"
@@ -44960,6 +45264,7 @@ msgstr "إلى: {recipient}"
 #: app/components/app-sidebar.tsx:421
 #: app/components/app-sidebar.tsx:535
 #: app/components/chat/chat-view.tsx:932
+#: app/components/dashboard/blocks/today-block.tsx:167
 #: app/components/inventory/inventory-chrome.tsx:26
 #: app/components/inventory/prep-screen.tsx:202
 #: app/components/my-schedule/shifts-view.tsx:123
@@ -44974,14 +45279,15 @@ msgstr "إلى: {recipient}"
 #: app/components/workspace-breadcrumb.tsx:76
 #: app/routes/_app+/$orgSlug_+/marketing+/social._index.tsx:219
 #: app/routes/_app+/$orgSlug_+/staff+/timeclock.tsx:43
+#: app/utils/dashboards/config.ts:118
 msgid "Today"
 msgstr "اليوم"
 
-#: app/components/dashboard/blocks/bookings-today-block.tsx:158
+#: app/components/dashboard/blocks/bookings-today-block.tsx:160
 msgid "Today's bookings could not be loaded."
 msgstr "تعذّر تحميل حجوزات اليوم."
 
-#: app/utils/dashboards/config.ts:109
+#: app/utils/dashboards/config.ts:111
 msgid "Today's reservations by status, covers by service, and the next arrivals."
 msgstr "حجوزات اليوم حسب الحالة وعدد الضيوف حسب الخدمة والوصول القادم."
 
@@ -45063,7 +45369,7 @@ msgstr "أرقام سرية خاطئة كثيرة. حاول مرة أخرى بع
 msgid "Too old to send"
 msgstr "أصبحت قديمة للإرسال"
 
-#: app/utils/dashboards/config.ts:100
+#: app/utils/dashboards/config.ts:102
 msgid "Top contributors"
 msgstr "أفضل المساهمين"
 
@@ -45119,11 +45425,11 @@ msgstr "الإجمالي قبل ضريبة المبيعات"
 #~ msgid "Total Covers"
 #~ msgstr "إجمالي الضيوف"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:198
+#: app/routes/_app+/$orgSlug_+/index.tsx:224
 msgid "Total notes"
 msgstr "إجمالي الملاحظات"
 
-#: app/utils/dashboards/config.ts:77
+#: app/utils/dashboards/config.ts:79
 msgid "Total notes, the daily average and the trend."
 msgstr "إجمالي الملاحظات والمتوسط اليومي والاتجاه."
 
@@ -45287,7 +45593,7 @@ msgstr "حُفظت ترجمة {dishName}"
 msgid "Transport"
 msgstr "المواصلات"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:210
+#: app/routes/_app+/$orgSlug_+/index.tsx:236
 msgid "Trend"
 msgstr "الاتجاه"
 
@@ -46290,6 +46596,10 @@ msgstr "حتى {until}"
 msgid "Until I turn it back on"
 msgstr "حتى أعيد تشغيله"
 
+#: app/components/dashboard/blocks/attention-block.tsx:275
+msgid "Until someone turns it off."
+msgstr "حتى يوقفه أحد."
+
 #: app/utils/discounts/summary.ts:499
 msgid "Untitled discount"
 msgstr "خصم بلا عنوان"
@@ -46503,6 +46813,10 @@ msgstr "ارفع صورة بصيغة JPEG أو PNG أو WebP إلى مكتبة �
 msgid "Upload a logo"
 msgstr "رفع شعار"
 
+#: app/components/launch/launch-checklist.tsx:34
+msgid "Upload a logo and pick the site theme"
+msgstr "ارفع الشعار واختر سمة الموقع"
+
 #: app/components/settings/cards/organization/site-icon-card.tsx:135
 msgid "Upload a PNG icon for your public website. We'll automatically generate favicon and app icon variants."
 msgstr "ارفع أيقونة PNG لموقعك العام. سنقوم تلقائياً بإنشاء متغيرات الأيقونة المفضلة وأيقونة التطبيق."
@@ -46589,6 +46903,10 @@ msgstr "بيع إضافي"
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:24
 msgid "Upsells & add-ons"
 msgstr "البيع الإضافي والإضافات"
+
+#: app/components/dashboard/blocks/attention-block.tsx:436
+msgid "Urgent"
+msgstr "عاجل"
 
 #: app/components/website/link-inspector.tsx:364
 #: app/components/website/link-inspector.tsx:406
@@ -46838,6 +47156,10 @@ msgstr "استخدام ساعة الدوام الخاصة"
 msgid "Use password instead"
 msgstr "استخدم كلمة المرور بدلاً من ذلك"
 
+#: app/components/launch/launch-checklist.tsx:264
+msgid "Use pay at pickup only"
+msgstr "استخدم الدفع عند الاستلام فقط"
+
 #: app/components/media-library/media-library-picker.tsx:349
 msgid "Use selected"
 msgstr "استخدام المحدد"
@@ -46895,6 +47217,10 @@ msgstr "استخدم المستويات"
 #: app/components/settings/cards/organization/s3-storage-card.tsx:211
 msgid "Use your own S3-compatible storage instead of the default storage"
 msgstr "استخدم تخزين S3 المتوافق الخاص بك بدلاً من التخزين الافتراضي"
+
+#: app/components/launch/launch-checklist.tsx:55
+msgid "Use your own web address."
+msgstr "استخدم عنوان الويب الخاص بك."
 
 #: app/components/reservations/policies/policies-screen.tsx:366
 msgid "Used by"
@@ -47480,9 +47806,17 @@ msgstr "إلغاء، الحساب {number}، الطاولة {label}"
 msgid "vs last price"
 msgstr "مقارنة بآخر سعر"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:219
+#: app/components/dashboard/blocks/today-block.tsx:319
+msgid "vs last week"
+msgstr "مقارنةً بالأسبوع الماضي"
+
+#: app/routes/_app+/$orgSlug_+/index.tsx:247
 msgid "Vs prior period"
 msgstr "مقارنة بالفترة السابقة"
+
+#: app/components/dashboard/blocks/today-block.tsx:311
+msgid "vs yesterday"
+msgstr "مقارنةً بالأمس"
 
 #: app/components/staff/labor/labor-overview.tsx:555
 msgid "Wages"
@@ -47989,6 +48323,10 @@ msgstr "تعذّر حفظ هذا. تحقق من اتصالك وحاول مرة �
 #: app/components/inventory/log-waste-dialog.tsx:237
 msgid "We could not undo that. Open Waste and try again."
 msgstr "تعذّر التراجع عن ذلك. افتح الهدر وحاول مرة أخرى."
+
+#: app/components/dashboard/blocks/attention-block.tsx:610
+msgid "We couldn't check which dishes inventory took off. Try again in a moment."
+msgstr "تعذر التحقق من الأطباق التي أزالها المخزون. حاول بعد لحظات."
 
 #: app/components/staff/pin-panel.tsx:55
 msgid "We do not keep a copy, so it cannot be looked up later. Give it to them now, then press Done."
@@ -49735,6 +50073,10 @@ msgstr "تم تسجيل انصرافك تلقائيًا."
 msgid "You’re all caught up"
 msgstr "قرأت جميع الردود"
 
+#: app/components/launch/launch-checklist.tsx:141
+msgid "You're live"
+msgstr "أنت متاح الآن"
+
 #: app/routes/_auth+/login.tsx:487
 msgid "You're logged in! Navigating..."
 msgstr "تم تسجيل الدخول! جاري التوجيه..."
@@ -49838,6 +50180,10 @@ msgstr "تم حفظ تغييراتك، لكن تعذّر تحميل رموز QR 
 #~ msgid "Your changes to this job will be lost."
 #~ msgstr "ستفقد تغييراتك على هذه الوظيفة."
 
+#: app/components/dashboard/blocks/attention-block.tsx:222
+msgid "Your custom domain has a problem"
+msgstr "توجد مشكلة في نطاقك الخاص"
+
 #: app/components/settings/cards/organization/shop-card.tsx:399
 msgid "Your customers can buy at <0>/shop</0> on your published site once payments are enabled."
 msgstr "يمكن لعملائك الشراء من <0>/shop</0> على موقعك المنشور بعد تفعيل المدفوعات."
@@ -49894,6 +50240,10 @@ msgstr "مكتبة الوسائط فارغة"
 #: app/components/print/restaurant/vertical-ui.tsx:276
 msgid "Your menu has no dishes to feature yet."
 msgstr "لا توجد أطباق في قائمتك لعرضها بعد."
+
+#: app/components/dashboard/blocks/attention-block.tsx:233
+msgid "Your menu health score is {score}"
+msgstr "درجة صحة قائمتك {score}"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:417
 #~ msgid "Your menu or tables changed since approval"
@@ -49997,7 +50347,7 @@ msgstr "ستسري خدماتك المعتادة مجددا في تلك التو
 msgid "Your regular services apply every day until you add an exception."
 msgstr "تسري خدماتك المعتادة كل يوم إلى أن تضيف استثناءً."
 
-#: app/utils/dashboards/config.ts:93
+#: app/utils/dashboards/config.ts:95
 msgid "Your remaining setup steps."
 msgstr "خطوات الإعداد المتبقية."
 
@@ -50033,6 +50383,14 @@ msgstr "انتهت جلستك. سجّل الدخول مرة أخرى لمتاب�
 #: app/components/onboarding-checklist.tsx:191
 msgid "Your setup progress"
 msgstr "تقدم الإعداد"
+
+#: app/components/dashboard/blocks/attention-block.tsx:217
+msgid "Your site is not published"
+msgstr "موقعك غير منشور"
+
+#: app/components/launch/launch-checklist.tsx:35
+msgid "Your site should look like your restaurant."
+msgstr "يجب أن يشبه موقعك مطعمك."
 
 #: app/components/inventory/count-review-screen.tsx:850
 msgid "Your stock now matches what was counted."

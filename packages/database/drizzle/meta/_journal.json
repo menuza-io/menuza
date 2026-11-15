@@ -330,6 +330,13 @@
 			"when": 1794705592969,
 			"tag": "0046_menu_check_dismissal",
 			"breakpoints": true
+		},
+		{
+			"idx": 47,
+			"version": "6",
+			"when": 1794721513147,
+			"tag": "0047_restaurant_home_and_launch",
+			"breakpoints": true
 		}
 	]
 }

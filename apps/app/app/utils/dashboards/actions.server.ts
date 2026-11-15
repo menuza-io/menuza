@@ -2,7 +2,14 @@ import { and, db, eq, inArray, SavedReport } from '@repo/database'
 import { organizationTemplates } from '@repo/reports'
 import { data, redirect } from 'react-router'
 import { z } from 'zod'
+import { ORG_PERMISSIONS } from '#app/utils/organization/permissions.server.ts'
 import { requireCustomDashboardAccess } from './access.server.ts'
+import {
+	dismissAttention,
+	loadAttentionLocations,
+	loadAttentionOrganization,
+	loadPermissionChecker,
+} from './attention.server.ts'
 import {
 	canEdit,
 	dashboardShareAccessSchema,
@@ -27,6 +34,7 @@ import {
 	saveHomeConfig,
 	upsertShare,
 } from './queries.server.ts'
+import { MAX_RESTORE_DISHES, restoreDishes } from './sold-out.server.ts'
 
 export type DashboardActionErrorCode =
 	| DashboardConfigErrorCode
@@ -232,7 +240,21 @@ const homeIntentSchema = z.discriminatedUnion('intent', [
 	z.object({ intent: z.literal('reset') }),
 	z.object({ intent: z.literal('create'), name: z.unknown().optional() }),
 	z.object({ intent: z.enum(['rename', 'delete', 'share', 'unshare']) }),
+	z.object({
+		intent: z.literal('dismiss-attention'),
+		key: z.string().min(1).max(160),
+	}),
+	z.object({
+		intent: z.literal('restore-dishes'),
+		locationId: z.string().max(64).default(''),
+		itemIds: z.string().max(20_000),
+	}),
 ])
+
+const restoreItemIdsSchema = z
+	.array(z.string().min(1).max(64))
+	.min(1)
+	.max(MAX_RESTORE_DISHES)
 
 /**
  * Home intents. Home always belongs to the signed-in user, so being an active
@@ -269,6 +291,61 @@ export async function handleHomeAction({
 		case 'reset': {
 			await resetHome({ userId, organizationId })
 			return { ok: true as const }
+		}
+		case 'dismiss-attention': {
+			const result = await dismissAttention({
+				userId,
+				organizationId,
+				key: submission.data.key,
+			})
+			if (!result.ok) {
+				return data(result, {
+					status: result.error === 'invalid_key' ? 400 : 403,
+				})
+			}
+			return result
+		}
+		case 'restore-dishes': {
+			let raw: unknown
+			try {
+				raw = JSON.parse(submission.data.itemIds)
+			} catch {
+				return invalidRequest()
+			}
+			const itemIds = restoreItemIdsSchema.safeParse(raw)
+			if (!itemIds.success) return invalidRequest()
+			const has = await loadPermissionChecker(userId, organizationId)
+			if (!has(ORG_PERMISSIONS.UPDATE_MENU_ANY)) {
+				return forbidden('You need menu edit access to mark dishes available.')
+			}
+			const locationId = submission.data.locationId || null
+			const { locations, hasLocations } = await loadAttentionLocations(
+				userId,
+				organizationId,
+			)
+			if (
+				hasLocations &&
+				!locations.some((location) => location.id === locationId)
+			) {
+				return data(
+					{ ok: false as const, error: 'location_not_found' as const },
+					{ status: 404 },
+				)
+			}
+			const attentionOrganization =
+				await loadAttentionOrganization(organizationId)
+			if (!attentionOrganization) return invalidRequest()
+			const result = await restoreDishes({
+				organization: attentionOrganization,
+				locationId,
+				itemIds: itemIds.data,
+			})
+			if (!result.ok) {
+				return data(result, {
+					status: result.error === 'stock_unknown' ? 503 : 404,
+				})
+			}
+			return result
 		}
 		case 'create':
 			return createNamedDashboard({

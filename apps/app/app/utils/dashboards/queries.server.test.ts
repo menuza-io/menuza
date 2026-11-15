@@ -18,6 +18,7 @@ import {
 } from '#tests/test-utils.ts'
 import {
 	defaultHomeConfig,
+	defaultRestaurantHomeConfig,
 	emptyDashboardConfig,
 	MAX_CUSTOM_DASHBOARDS,
 	type DashboardConfig,
@@ -73,9 +74,9 @@ describe('Home dashboard', () => {
 	it('returns the default config without creating a row', async () => {
 		const { owner, organization } = await setupOrg()
 		const home = await getHomeDashboard(owner.id, organization.id)
-		expect(home).toEqual({ id: null, config: defaultHomeConfig() })
+		expect(home).toEqual({ id: null, config: defaultRestaurantHomeConfig() })
 		expect(await getHomeConfig(owner.id, organization.id)).toEqual(
-			defaultHomeConfig(),
+			defaultRestaurantHomeConfig(),
 		)
 		expect(await homeRows(owner.id, organization.id)).toHaveLength(0)
 	})
@@ -124,11 +125,11 @@ describe('Home dashboard', () => {
 
 		expect(await getHomeDashboard(colleague.id, organization.id)).toEqual({
 			id: null,
-			config: defaultHomeConfig(),
+			config: defaultRestaurantHomeConfig(),
 		})
 		expect(await getHomeDashboard(owner.id, otherOrganization.id)).toEqual({
 			id: null,
-			config: defaultHomeConfig(),
+			config: defaultRestaurantHomeConfig(),
 		})
 		expect(await getHomeConfig(owner.id, organization.id)).toEqual(customHome)
 	})
@@ -143,7 +144,7 @@ describe('Home dashboard', () => {
 		})
 		expect(await getHomeDashboard(owner.id, organization.id)).toEqual({
 			id: home.id,
-			config: defaultHomeConfig(),
+			config: defaultRestaurantHomeConfig(),
 		})
 	})
 
@@ -158,7 +159,7 @@ describe('Home dashboard', () => {
 		expect(await homeRows(owner.id, organization.id)).toHaveLength(0)
 		expect(await getHomeDashboard(owner.id, organization.id)).toEqual({
 			id: null,
-			config: defaultHomeConfig(),
+			config: defaultRestaurantHomeConfig(),
 		})
 	})
 

@@ -637,6 +637,18 @@ export const OnboardingStepProgress = sqliteTable(
 		isCompleted: integer({ mode: 'boolean' }).default(false).notNull(),
 		completedAt: integer({ mode: 'timestamp_ms' }),
 		metadata: text(),
+		/**
+		 * Launch checklist rows (`launch.checklist`) are per location and shared
+		 * by every member: `userId` is who last changed the row. Template
+		 * onboarding rows leave it null and stay per user.
+		 */
+		locationId: text().references(() => OrganizationLocation.id, {
+			onDelete: 'cascade',
+			onUpdate: 'cascade',
+		}),
+		/** An optional launch step the operator skipped, with an optional reason. */
+		skippedAt: integer({ mode: 'timestamp_ms' }),
+		skipReason: text(),
 		createdAt: integer({ mode: 'timestamp_ms' })
 			.$defaultFn(() => new Date())
 			.notNull(),
@@ -646,11 +658,14 @@ export const OnboardingStepProgress = sqliteTable(
 			.notNull(),
 	},
 	(table) => [
-		uniqueIndex('OnboardingStepProgress_userId_organizationId_stepId_key').on(
-			table.userId,
-			table.organizationId,
-			table.stepId,
-		),
+		// One template row per user and step; one launch row per location and
+		// step (migration 0047 split the old unique index in two).
+		uniqueIndex('OnboardingStepProgress_userId_organizationId_stepId_key')
+			.on(table.userId, table.organizationId, table.stepId)
+			.where(sql`${table.locationId} IS NULL`),
+		uniqueIndex('OnboardingStepProgress_organizationId_locationId_stepId_key')
+			.on(table.organizationId, table.locationId, table.stepId)
+			.where(sql`${table.locationId} IS NOT NULL`),
 		index('OnboardingStepProgress_stepId_idx').on(table.stepId),
 		index('OnboardingStepProgress_userId_organizationId_idx').on(
 			table.userId,
@@ -2660,6 +2675,11 @@ export const OrganizationLocation = sqliteTable(
 			.notNull(),
 		isActive: integer({ mode: 'boolean' }).default(true).notNull(),
 		isDefault: integer({ mode: 'boolean' }).default(false).notNull(),
+		/**
+		 * The first time the launch checklist found this location live (set
+		 * once, never cleared; whether it is live now is evaluated on read).
+		 */
+		liveAt: integer({ mode: 'timestamp_ms' }),
 		createdAt: integer({ mode: 'timestamp_ms' })
 			.$defaultFn(() => new Date())
 			.notNull(),
@@ -3528,6 +3548,45 @@ export const MenuCheckDismissal = sqliteTable(
 			table.checkKey,
 		),
 		index('MenuCheckDismissal_organizationId_idx').on(table.organizationId),
+	],
+)
+
+/**
+ * A member's "Dismiss for a week" on one home Needs attention item. Items
+ * are computed on read; only dismissals are stored. `key` is the item's kind
+ * and location (`menu_health:org`, `ordering_paused:<locationId>`); a
+ * dismissal holds until `dismissedUntil` even if the problem clears and
+ * comes back. Per user: nobody sees or inherits another member's dismissals.
+ */
+export const HomeAttentionDismissal = sqliteTable(
+	'HomeAttentionDismissal',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		userId: text()
+			.notNull()
+			.references(() => User.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		key: text().notNull(),
+		dismissedUntil: integer({ mode: 'timestamp_ms' }).notNull(),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		uniqueIndex('HomeAttentionDismissal_user_org_key_key').on(
+			table.userId,
+			table.organizationId,
+			table.key,
+		),
+		index('HomeAttentionDismissal_organizationId_idx').on(table.organizationId),
 	],
 )
 

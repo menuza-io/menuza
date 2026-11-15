@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { and, desc, eq, gte, isNotNull, lt, lte, type SQL } from 'drizzle-orm'
 import { z } from 'zod'
+import { isValidTimeZone } from '@repo/zoned-time'
 import {
 	getTenantDb,
 	customers,
@@ -58,6 +59,10 @@ import {
 	staffAuthFromSubjects,
 	type StaffReportContext,
 } from '../services/staffing-report-records.ts'
+import {
+	loadTodayTotals,
+	TODAY_MAX_LOCATIONS,
+} from '../services/today-totals.ts'
 
 export const analyticsRoutes = new Hono()
 
@@ -528,4 +533,124 @@ analyticsRoutes.post('/query', async (c) => {
 			? { ...result, sourceTruncated: true, sourceRowLimit }
 			: result,
 	)
+})
+
+const todayQuerySchema = z.object({
+	locationIds: z
+		.string()
+		.max(4000)
+		.transform((value) => value.split(',').filter(Boolean))
+		.pipe(
+			z
+				.array(z.string().regex(/^[\w-]{1,64}$/))
+				.min(1)
+				.max(TODAY_MAX_LOCATIONS),
+		),
+	timeZones: z
+		.string()
+		.max(4000)
+		.transform((value) => value.split(',').filter(Boolean))
+		.pipe(
+			z
+				.array(
+					z
+						.string()
+						.max(64)
+						.refine((zone) => isValidTimeZone(zone)),
+				)
+				.min(1)
+				.max(TODAY_MAX_LOCATIONS),
+		),
+})
+
+/**
+ * Today's totals for the home page's Today block: sales and orders per
+ * currency for today, yesterday to this time and the same weekday last week,
+ * plus distinct guests split first-time and returning. Each location counts
+ * its own business day (`timeZones[i]` is the zone of `locationIds[i]`). Same
+ * token and order grant as the order reports; totals only, never a record.
+ */
+analyticsRoutes.get('/today', async (c) => {
+	const token = getBearerToken(c.req.header('Authorization'))
+	if (!token) {
+		return c.json(
+			{ error: 'unauthorized', message: 'Missing bearer token' },
+			401,
+		)
+	}
+	const claims = await verifyOperatorAnalyticsToken({
+		signingSecret: getOperatorAnalyticsToken(),
+		token,
+	})
+	if (!claims || !TENANT_ORG_ID_PATTERN.test(claims.orgId)) {
+		return c.json(
+			{ error: 'unauthorized', message: 'Invalid operator token' },
+			401,
+		)
+	}
+	if (!operatorTokenAllowsSubject(claims, 'orders')) {
+		return c.json(
+			{
+				error: 'forbidden_subject',
+				message: 'You do not have permission to report on order data.',
+			},
+			403,
+		)
+	}
+	const parsed = todayQuerySchema.safeParse({
+		locationIds: c.req.query('locationIds') ?? '',
+		timeZones: c.req.query('timeZones') ?? '',
+	})
+	if (
+		!parsed.success ||
+		parsed.data.locationIds.length !== parsed.data.timeZones.length
+	) {
+		return c.json(
+			{
+				error: 'invalid_request',
+				message: 'Send matching locationIds and timeZones lists.',
+			},
+			400,
+		)
+	}
+
+	const organization = await findActiveOrganizationById(claims.orgId)
+	if (!organization) {
+		return c.json(
+			{ error: 'unauthorized', message: 'Organization not found' },
+			401,
+		)
+	}
+	if (!orgMatchesNodeRegion(organization.dataRegion)) {
+		return c.json(
+			{
+				error: 'region_mismatch',
+				message: `Organization dataRegion "${organization.dataRegion}" does not match this node ("${getNodeRegion()}")`,
+			},
+			409,
+		)
+	}
+	let db
+	try {
+		if (!organization.hasProvisionedDb) throw new Error('not provisioned')
+		db = await getTenantDb(claims.orgId)
+	} catch {
+		return c.json(
+			{
+				error: 'tenant_not_provisioned',
+				message: 'This organization has not provisioned a customer database.',
+			},
+			409,
+		)
+	}
+
+	const { locationIds, timeZones } = parsed.data
+	const locations = [
+		...new Map(
+			locationIds.map((id, index) => [id, { id, timeZone: timeZones[index]! }]),
+		).values(),
+	]
+	const now = Date.now()
+	const totals = await loadTodayTotals(db, claims.orgId, locations, now)
+	return c.json({ ...totals, asOf: new Date(now).toISOString() })
 })

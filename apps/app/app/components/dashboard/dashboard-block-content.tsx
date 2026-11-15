@@ -1,4 +1,5 @@
 import { Skeleton } from '@repo/ui/skeleton'
+import { LaunchChecklistView } from '#app/components/launch/launch-checklist.tsx'
 import { LeadershipCard } from '#app/components/leadership-card.tsx'
 import { OnboardingChecklist } from '#app/components/onboarding-checklist.tsx'
 import { type BuiltInBlockData } from '#app/utils/dashboards/block-data.server.ts'
@@ -8,10 +9,13 @@ import {
 	type ReportBlockData,
 	type SavedReportOption,
 } from '#app/utils/dashboards/reports.ts'
+import { type TodayAccess } from '#app/utils/dashboards/today.ts'
+import { AttentionBlock } from './blocks/attention-block.tsx'
 import { BookingsTodayBlock } from './blocks/bookings-today-block.tsx'
 import { NotesChartBlock } from './blocks/notes-chart-block.tsx'
 import { ReportBlock } from './blocks/report-block.tsx'
 import { StatsBlock } from './blocks/stats-block.tsx'
+import { TodayBlock } from './blocks/today-block.tsx'
 
 export type DashboardBlockOrganization = { id: string; slug: string }
 
@@ -26,6 +30,8 @@ export function DashboardBlockContent({
 	reports,
 	savedReportOptions,
 	bookingsToday,
+	today,
+	locationStorageKey = '',
 	organization,
 	editable,
 }: {
@@ -34,6 +40,9 @@ export function DashboardBlockContent({
 	reports: ReportBlockData | null
 	savedReportOptions?: readonly SavedReportOption[]
 	bookingsToday?: BookingsTodayAccess
+	today?: TodayAccess
+	/** Where the home location picker is remembered. */
+	locationStorageKey?: string
 	organization: DashboardBlockOrganization
 	/** Whether the viewer can change the dashboard's blocks. */
 	editable?: boolean
@@ -48,6 +57,18 @@ export function DashboardBlockContent({
 				<BlockLoading />
 			)
 		case 'onboarding':
+			if (data.launch) {
+				return (
+					<LaunchChecklistView
+						checklist={data.launch.checklist}
+						orgSlug={organization.slug}
+						organizationId={organization.id}
+						locationStorageKey={locationStorageKey}
+						canTellGuests={data.launch.canTellGuests}
+						compact
+					/>
+				)
+			}
 			return data.onboarding ? (
 				<OnboardingChecklist
 					progress={data.onboarding}
@@ -71,6 +92,24 @@ export function DashboardBlockContent({
 					locations={bookingsToday.locations}
 				/>
 			) : null
+		case 'today':
+			return today?.available ? (
+				<TodayBlock
+					orgSlug={organization.slug}
+					access={today}
+					locationStorageKey={locationStorageKey}
+				/>
+			) : null
+		case 'attention':
+			return data.attention ? (
+				<AttentionBlock
+					orgSlug={organization.slug}
+					data={data.attention}
+					locationStorageKey={locationStorageKey}
+				/>
+			) : (
+				<BlockLoading />
+			)
 		case 'report':
 			return (
 				<ReportBlock

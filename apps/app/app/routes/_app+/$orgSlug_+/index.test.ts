@@ -14,6 +14,7 @@ import { ORG_WIDE_REPORT_SUBJECTS } from '@repo/reports/token'
 import { describe, expect, it } from 'vitest'
 import {
 	defaultHomeConfig,
+	defaultRestaurantHomeConfig,
 	MAX_DASHBOARD_BLOCKS,
 	serializeDashboardConfig,
 	type DashboardBlock,
@@ -184,20 +185,36 @@ describe('Home dashboard loader', () => {
 			name: organization.name,
 			slug: organization.slug,
 		})
+		// A new organization's Home is the restaurant default: Today, Needs
+		// attention and the setup checklist, and no notes blocks.
 		expect(data.dashboard).toEqual({
 			id: null,
 			kind: 'home',
 			access: 'owner',
-			config: defaultHomeConfig(),
+			config: defaultRestaurantHomeConfig(),
 		})
-		expect(data.blockData.notes?.points.length).toBeGreaterThanOrEqual(7)
+		expect(data.dashboard.config.blocks.map((block) => block.type)).toEqual([
+			'today',
+			'attention',
+			'onboarding',
+		])
+		expect(data.showsNotesKpis).toBe(false)
+		expect(data.blockData.notes).toBeNull()
+		expect(data.blockData.leaderboard).toBeNull()
 		expect(data.blockData.onboarding).not.toBeNull()
-		expect(data.blockData.leaderboard).toEqual([])
+		expect(data.blockData.attention).not.toBeNull()
 		expect(await homeRowCount(user.id, organization.id)).toBe(0)
 	})
 
 	it('counts every contributor, not only those on the leaderboard', async () => {
-		const { organization, cookie } = await setupTestOrgWithUser('admin')
+		const { user, organization, cookie } = await setupTestOrgWithUser('admin')
+		// A saved Home that still has the notes blocks keeps them.
+		await insertTestDashboard({
+			organizationId: organization.id,
+			ownerId: user.id,
+			kind: 'home',
+			config: defaultHomeConfig(),
+		})
 		// Note authors are members: the leaderboard ranks active members only.
 		const writers = await Promise.all(
 			Array.from({ length: 8 }, async () => {
@@ -434,7 +451,7 @@ describe('Home dashboard loader', () => {
 		const data = await loadHome(organization.slug, cookie)
 
 		expect(data.dashboard.id).toBeNull()
-		expect(data.dashboard.config).toEqual(defaultHomeConfig())
+		expect(data.dashboard.config).toEqual(defaultRestaurantHomeConfig())
 	})
 
 	it('lists the custom dashboards of this organization for the switcher', async () => {
@@ -564,9 +581,11 @@ describe('Home dashboard action', () => {
 		)
 
 		const colleagueHome = await loadHome(organization.slug, colleagueCookie)
-		expect(colleagueHome.dashboard.config).toEqual(defaultHomeConfig())
+		expect(colleagueHome.dashboard.config).toEqual(
+			defaultRestaurantHomeConfig(),
+		)
 		const otherHome = await loadHome(otherOrganization.slug, cookie)
-		expect(otherHome.dashboard.config).toEqual(defaultHomeConfig())
+		expect(otherHome.dashboard.config).toEqual(defaultRestaurantHomeConfig())
 		const ownHome = await loadHome(organization.slug, cookie)
 		expect(ownHome.dashboard.config.blocks.map((block) => block.id)).toEqual([
 			'notes-chart',
@@ -776,7 +795,7 @@ describe('Home dashboard action', () => {
 		expect(await homeRowCount(user.id, organization.id)).toBe(0)
 
 		const data = await loadHome(organization.slug, cookie)
-		expect(data.dashboard.config).toEqual(defaultHomeConfig())
+		expect(data.dashboard.config).toEqual(defaultRestaurantHomeConfig())
 	})
 
 	it('resets Home to the default layout by removing the saved row', async () => {
@@ -798,7 +817,7 @@ describe('Home dashboard action', () => {
 		const data = await loadHome(organization.slug, cookie)
 		expect(data.dashboard).toMatchObject({
 			id: null,
-			config: defaultHomeConfig(),
+			config: defaultRestaurantHomeConfig(),
 		})
 	})
 
@@ -898,5 +917,41 @@ describe('Home dashboard action', () => {
 
 		expect(error).toBeInstanceOf(Response)
 		expect((error as Response).status).toBe(404)
+	})
+})
+
+describe('Home Needs attention actions', () => {
+	it('refuses to dismiss urgent items server-side and dismisses advice', async () => {
+		const { organization, cookie } = await setupTestOrgWithUser('admin')
+		const urgent = unwrap(
+			await postHome(organization.slug, cookie, {
+				intent: 'dismiss-attention',
+				key: 'payments_not_connected:org',
+			}),
+		)
+		expect(urgent).toEqual({
+			status: 403,
+			body: { ok: false, error: 'not_dismissible' },
+		})
+		const advice = unwrap(
+			await postHome(organization.slug, cookie, {
+				intent: 'dismiss-attention',
+				key: 'channel_off:loc_1',
+			}),
+		)
+		expect(advice.status).toBe(200)
+		expect(advice.body).toMatchObject({ ok: true })
+	})
+
+	it('lets only members with menu edit access mark dishes available', async () => {
+		const { organization, cookie } = await setupTestOrgWithUser('guest')
+		const result = unwrap(
+			await postHome(organization.slug, cookie, {
+				intent: 'restore-dishes',
+				locationId: '',
+				itemIds: JSON.stringify(['dish_1']),
+			}),
+		)
+		expect(result.status).toBe(403)
 	})
 })

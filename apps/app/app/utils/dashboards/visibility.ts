@@ -14,12 +14,31 @@ export function isOnboardingVisible(
  */
 export function hiddenBlockIds(
 	blocks: readonly DashboardBlock[],
-	data: { onboarding: OnboardingProgressData | null },
+	data: { onboarding: OnboardingProgressData | null; launch?: unknown },
 ): string[] {
 	return blocks
 		.filter(
 			(block) =>
-				block.type === 'onboarding' && !isOnboardingVisible(data.onboarding),
+				block.type === 'onboarding' &&
+				!data.launch &&
+				!isOnboardingVisible(data.onboarding),
+		)
+		.map((block) => block.id)
+}
+
+/**
+ * Built-in blocks this viewer may not see: Bookings today without
+ * reservation access, Today without any of its tiles. They stay saved.
+ */
+export function inaccessibleBuiltInBlockIds(
+	blocks: readonly DashboardBlock[],
+	access: { bookingsToday: boolean; today: boolean },
+): string[] {
+	return blocks
+		.filter(
+			(block) =>
+				(block.type === 'bookings-today' && !access.bookingsToday) ||
+				(block.type === 'today' && !access.today),
 		)
 		.map((block) => block.id)
 }

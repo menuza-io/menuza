@@ -206,6 +206,7 @@ export const EMAIL_BLOCK_TEMPLATE_IDS = [
 	'welcome',
 	'announcement',
 	'product',
+	'launch',
 ] as const
 export type EmailBlockTemplateId = (typeof EMAIL_BLOCK_TEMPLATE_IDS)[number]
 
@@ -327,21 +328,64 @@ export const EMAIL_BLOCK_TEMPLATES: ReadonlyArray<{
 			},
 		],
 	},
+	{
+		id: 'launch',
+		label: 'We are open',
+		description: 'Tell guests they can now order online',
+		blocks: [
+			{
+				type: 'heading',
+				config: {
+					text: "We're open for online ordering",
+					level: 'h1',
+					align: 'center',
+				},
+			},
+			{
+				type: 'body',
+				config: {
+					text: 'Hi {{firstName|there}}, you can now order from {{organizationName}} online, for pickup or delivery.',
+					align: 'left',
+				},
+			},
+			{
+				type: 'button',
+				config: {
+					label: 'Order now',
+					url: 'https://',
+					variant: 'primary',
+					align: 'center',
+				},
+			},
+		],
+	},
 ]
 
 export function getEmailBlockTemplate(templateId: string) {
 	return EMAIL_BLOCK_TEMPLATES.find((template) => template.id === templateId)
 }
 
-/** Build template blocks with fresh ids, dropping any seed that fails the schema. */
+/**
+ * Build template blocks with fresh ids, dropping any seed that fails the
+ * schema. `buttonUrl` fills the template's buttons that still point nowhere
+ * (the launch template's "Order now" gets the site link).
+ */
 export function buildEmailTemplateBlocks(
 	templateId: EmailBlockTemplateId,
+	options: { buttonUrl?: string } = {},
 ): EmailBlock[] {
 	const template = getEmailBlockTemplate(templateId)
 	if (!template) return []
 	return template.blocks.flatMap((seed) => {
+		const config =
+			seed.type === 'button' &&
+			options.buttonUrl &&
+			seed.config.url === 'https://'
+				? { ...seed.config, url: options.buttonUrl }
+				: seed.config
 		const parsed = emailBlockSchema.safeParse({
 			...seed,
+			config,
 			id: createEmailBlockId(),
 		})
 		return parsed.success ? [parsed.data] : []

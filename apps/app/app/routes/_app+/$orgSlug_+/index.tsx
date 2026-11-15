@@ -20,8 +20,9 @@ import {
 	loadContributorCount,
 	loadReportBlockData,
 } from '#app/utils/dashboards/block-data.server.ts'
+import { loadBookingsTodayAccess } from '#app/utils/dashboards/bookings-today.server.ts'
 import {
-	defaultHomeConfig,
+	defaultRestaurantHomeConfig,
 	type BlockType,
 	type DashboardBlock,
 } from '#app/utils/dashboards/config.ts'
@@ -30,6 +31,7 @@ import {
 	listDashboardsForSwitcher,
 } from '#app/utils/dashboards/queries.server.ts'
 import { resolveReportBlock } from '#app/utils/dashboards/reports.ts'
+import { loadHomeLocations } from '#app/utils/dashboards/today.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { setUserDefaultOrganization } from '#app/utils/organization/organizations.server.ts'
 import { resolveReportGrantsForRequest } from '#app/utils/staffing/report-grants.server.ts'
@@ -38,8 +40,6 @@ import { type Route } from './+types/index.ts'
 const CELEBRATION_MS = 3000
 /** The KPI row above the grid stands in for the stats block. */
 const HOME_HIDDEN_BLOCK_TYPES: readonly BlockType[] = ['stats']
-/** What the KPI row reads, loaded whatever blocks the home has. */
-const KPI_BLOCK_TYPES: readonly BlockType[] = ['stats']
 
 export async function loader({ request, params }: Route.LoaderArgs) {
 	const userId = await requireUserId(request)
@@ -51,29 +51,41 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 			createdAt: true,
 			dataRegion: true,
 		})
-	const [home] = await Promise.all([
+	const [home, bookingsToday, locations] = await Promise.all([
 		getHomeDashboard(userId, organization.id),
+		loadBookingsTodayAccess({ userId, organizationId: organization.id }),
+		loadHomeLocations(userId, organization.id),
 		setUserDefaultOrganization(userId, organization.id),
 	])
-	const blocks = home.config.blocks
+	// Until the viewer saves their own Home, they get the restaurant default:
+	// Today, Needs attention, the setup checklist and (when they can see it)
+	// Bookings today. A saved Home is never replaced, notes blocks and all.
+	const config = home.id
+		? home.config
+		: defaultRestaurantHomeConfig({ bookingsToday: bookingsToday.available })
+	const blocks = config.blocks
+	// The KPI row stands in for a saved Home's stats block.
+	const showsNotesKpis = blocks.some((block) => block.type === 'stats')
 	const [blockData, reports, switcher, contributorCount] = await Promise.all([
 		loadBuiltInBlockData({
 			userId,
-			organization: { id: organization.id, createdAt },
+			organization: { id: organization.id, slug: organization.slug, createdAt },
 			blocks,
-			include: KPI_BLOCK_TYPES,
+			request,
 		}),
 		loadReportBlockData({
 			organization: { ...organization, dataRegion },
 			blocks,
 		}),
 		listDashboardsForSwitcher(userId, organization.id),
-		loadContributorCount(organization.id),
+		showsNotesKpis ? loadContributorCount(organization.id) : 0,
 	])
 	const picker = await loadBlockPicker({
 		userId,
-		organizationId: organization.id,
+		organization: { ...organization, dataRegion },
 		blockData,
+		bookingsToday,
+		locations,
 		grants: await resolveReportGrantsForRequest(
 			request,
 			userId,
@@ -87,10 +99,11 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 			id: home.id,
 			kind: 'home' as const,
 			access: 'owner' as const,
-			config: home.config,
+			config,
 		},
 		blockData,
 		contributorCount,
+		showsNotesKpis,
 		reports,
 		picker,
 		switcher,
@@ -149,6 +162,7 @@ export default function HomeDashboard({ loaderData }: Route.ComponentProps) {
 		dashboard,
 		blockData,
 		contributorCount,
+		showsNotesKpis,
 		reports,
 		picker,
 		switcher,
@@ -165,6 +179,8 @@ export default function HomeDashboard({ loaderData }: Route.ComponentProps) {
 				reports={reports}
 				savedReportOptions={picker.savedReports}
 				bookingsToday={picker.bookingsToday}
+				today={picker.today}
+				locationStorageKey={picker.locationStorageKey}
 				organization={organization}
 			/>
 		),
@@ -172,6 +188,8 @@ export default function HomeDashboard({ loaderData }: Route.ComponentProps) {
 			blockData,
 			organization,
 			picker.bookingsToday,
+			picker.today,
+			picker.locationStorageKey,
 			picker.savedReports,
 			reports,
 		],
@@ -188,42 +206,53 @@ export default function HomeDashboard({ loaderData }: Route.ComponentProps) {
 		[organization.slug, picker.savedReports, reports],
 	)
 
+	const bookingsTodayAvailable = picker.bookingsToday.available
+	const resetConfig = useCallback(
+		() =>
+			defaultRestaurantHomeConfig({ bookingsToday: bookingsTodayAvailable }),
+		[bookingsTodayAvailable],
+	)
+
 	return (
 		<WorkspacePage>
 			{/* No visible greeting; the page still needs its one heading. */}
 			<h1 className="sr-only">{organization.name}</h1>
 			<HomePrompt />
-			<WorkspaceMetricGrid>
-				<WorkspaceMetric
-					label={_(msg`Total notes`)}
-					value={notes?.total ?? 0}
-					hint={_(msg`Across your organization`)}
-				/>
-				<WorkspaceMetric
-					label={_(msg`Avg per day`)}
-					value={notes?.avgPerDay ?? 0}
-					hint={
-						notes ? _(msg`Last ${daysShown} days`) : _(msg`No activity yet`)
-					}
-				/>
-				<WorkspaceMetric
-					label={_(msg`Trend`)}
-					value={notes ? `${notes.trend >= 0 ? '+' : ''}${notes.trend}%` : '—'}
-					tone={
-						notes && notes.trend < 0
-							? 'danger'
-							: notes && notes.trend > 0
-								? 'primary'
-								: 'default'
-					}
-					hint={_(msg`Vs prior period`)}
-				/>
-				<WorkspaceMetric
-					label={_(msg`Contributors`)}
-					value={contributorCount}
-					hint={_(msg`Across your organization`)}
-				/>
-			</WorkspaceMetricGrid>
+			{showsNotesKpis ? (
+				<WorkspaceMetricGrid>
+					<WorkspaceMetric
+						label={_(msg`Total notes`)}
+						value={notes?.total ?? 0}
+						hint={_(msg`Across your organization`)}
+					/>
+					<WorkspaceMetric
+						label={_(msg`Avg per day`)}
+						value={notes?.avgPerDay ?? 0}
+						hint={
+							notes ? _(msg`Last ${daysShown} days`) : _(msg`No activity yet`)
+						}
+					/>
+					<WorkspaceMetric
+						label={_(msg`Trend`)}
+						value={
+							notes ? `${notes.trend >= 0 ? '+' : ''}${notes.trend}%` : '—'
+						}
+						tone={
+							notes && notes.trend < 0
+								? 'danger'
+								: notes && notes.trend > 0
+									? 'primary'
+									: 'default'
+						}
+						hint={_(msg`Vs prior period`)}
+					/>
+					<WorkspaceMetric
+						label={_(msg`Contributors`)}
+						value={contributorCount}
+						hint={_(msg`Across your organization`)}
+					/>
+				</WorkspaceMetricGrid>
+			) : null}
 			<DashboardEditor
 				key={organization.id}
 				title={
@@ -238,7 +267,7 @@ export default function HomeDashboard({ loaderData }: Route.ComponentProps) {
 				picker={picker}
 				renderBlock={renderBlock}
 				blockTitle={blockTitle}
-				resetConfig={defaultHomeConfig}
+				resetConfig={resetConfig}
 				hiddenBlockTypes={HOME_HIDDEN_BLOCK_TYPES}
 			/>
 		</WorkspacePage>

@@ -14,6 +14,8 @@ export const BUILT_IN_BLOCK_TYPES = [
 	'onboarding',
 	'leaderboard',
 	'bookings-today',
+	'today',
+	'attention',
 ] as const
 export const BLOCK_TYPES = [...BUILT_IN_BLOCK_TYPES, 'report'] as const
 export type BuiltInBlockType = (typeof BUILT_IN_BLOCK_TYPES)[number]
@@ -108,6 +110,22 @@ export const BLOCK_DEFINITIONS: { [T in BlockType]: BlockDefinition<T> } = {
 		title: msg`Bookings today`,
 		description: msg`Today's reservations by status, covers by service, and the next arrivals.`,
 		defaultSize: { lg: { w: 6, h: 8 }, md: { w: 4, h: 8 } },
+		minSize: { lg: { w: 4, h: 6 }, md: { w: 4, h: 6 } },
+		maxInstances: 1,
+	},
+	today: {
+		type: 'today',
+		title: msg`Today`,
+		description: msg`Sales, orders, guests and covers so far today, with yesterday and last week.`,
+		defaultSize: { lg: { w: 12, h: 5 }, md: { w: 8, h: 6 } },
+		minSize: { lg: { w: 6, h: 4 }, md: { w: 4, h: 4 } },
+		maxInstances: 1,
+	},
+	attention: {
+		type: 'attention',
+		title: msg`Needs attention`,
+		description: msg`Problems that cost you orders, most urgent first, each with a way to fix it.`,
+		defaultSize: { lg: { w: 6, h: 10 }, md: { w: 4, h: 10 } },
 		minSize: { lg: { w: 4, h: 6 }, md: { w: 4, h: 6 } },
 		maxInstances: 1,
 	},
@@ -365,7 +383,9 @@ export function parseStoredDashboardConfig(
 ): DashboardConfig {
 	const result = raw ? parseDashboardConfig(raw) : null
 	if (result?.success) return result.config
-	return kind === 'home' ? defaultHomeConfig() : emptyDashboardConfig()
+	return kind === 'home'
+		? defaultRestaurantHomeConfig()
+		: emptyDashboardConfig()
 }
 
 export function serializeDashboardConfig(config: DashboardConfig) {
@@ -398,6 +418,42 @@ export function defaultHomeConfig(): DashboardConfig {
 	}
 }
 
+/**
+ * The home a restaurant gets until the viewer saves their own: today's
+ * numbers, the setup checklist, today's bookings (only while the viewer can
+ * see them) and the Needs attention feed. No notes blocks; they stay
+ * addable. Existing saved homes are never replaced by this.
+ */
+export function defaultRestaurantHomeConfig({
+	bookingsToday = false,
+}: { bookingsToday?: boolean } = {}): DashboardConfig {
+	const blocks: DashboardBlock[] = [
+		{ id: 'today', type: 'today' },
+		{ id: 'attention', type: 'attention' },
+		{ id: 'onboarding', type: 'onboarding' },
+	]
+	const lg: GridItem[] = [
+		{ i: 'today', x: 0, y: 0, w: 12, h: 5 },
+		{ i: 'attention', x: 0, y: 5, w: 6, h: 10 },
+		{ i: 'onboarding', x: 6, y: 5, w: 6, h: 10 },
+	]
+	const md: GridItem[] = [
+		{ i: 'today', x: 0, y: 0, w: 8, h: 6 },
+		{ i: 'attention', x: 0, y: 6, w: 4, h: 10 },
+		{ i: 'onboarding', x: 4, y: 6, w: 4, h: 10 },
+	]
+	if (bookingsToday) {
+		blocks.push({ id: 'bookings-today', type: 'bookings-today' })
+		lg.push({ i: 'bookings-today', x: 0, y: 15, w: 6, h: 8 })
+		md.push({ i: 'bookings-today', x: 0, y: 16, w: 4, h: 8 })
+	}
+	return {
+		version: DASHBOARD_CONFIG_VERSION,
+		blocks,
+		layouts: { lg, md },
+	}
+}
+
 export function emptyDashboardConfig(): DashboardConfig {
 	return {
 		version: DASHBOARD_CONFIG_VERSION,
@@ -427,13 +483,22 @@ export function addableBuiltInBlockTypes(
 	{
 		onboardingAvailable,
 		bookingsTodayAvailable,
-	}: { onboardingAvailable: boolean; bookingsTodayAvailable: boolean },
+		todayAvailable = false,
+		attentionAvailable = false,
+	}: {
+		onboardingAvailable: boolean
+		bookingsTodayAvailable: boolean
+		todayAvailable?: boolean
+		attentionAvailable?: boolean
+	},
 ): BuiltInBlockType[] {
 	return BUILT_IN_BLOCK_TYPES.filter(
 		(type) =>
 			canAddBlockType(blocks, type) &&
 			(type !== 'onboarding' || onboardingAvailable) &&
-			(type !== 'bookings-today' || bookingsTodayAvailable),
+			(type !== 'bookings-today' || bookingsTodayAvailable) &&
+			(type !== 'today' || todayAvailable) &&
+			(type !== 'attention' || attentionAvailable),
 	)
 }
 

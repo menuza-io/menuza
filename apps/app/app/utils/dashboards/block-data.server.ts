@@ -21,7 +21,15 @@ import {
 } from '@repo/database'
 import { definitionAllowed, type ReportDefinition } from '@repo/reports'
 import { listSavedReports, parseDefinition } from '@repo/reports/server'
+import {
+	isLaunchChecklistOn,
+	loadLaunchChecklist,
+} from '#app/utils/launch/launch.server.ts'
+import { type LaunchChecklist } from '#app/utils/launch/launch.ts'
+import { ORG_PERMISSIONS } from '#app/utils/organization/permissions.server.ts'
 import { resolveRegionalTenantApiUrls } from '#app/utils/tenant-api.server.ts'
+import { loadAttention, loadPermissionChecker } from './attention.server.ts'
+import { type AttentionData } from './attention.ts'
 import { loadBookingsTodayAccess } from './bookings-today.server.ts'
 import { type BookingsTodayAccess } from './bookings-today.ts'
 import { type BlockType, type DashboardBlock } from './config.ts'
@@ -34,6 +42,12 @@ import {
 	type SavedReportBlockData,
 	type SavedReportOption,
 } from './reports.ts'
+import { loadHomeLocations, loadTodayAccess } from './today.server.ts'
+import {
+	type HomeLocation,
+	type TodayAccess,
+	homeLocationStorageKey,
+} from './today.ts'
 import { isOnboardingVisible } from './visibility.ts'
 
 const MIN_CHART_DAYS = 7
@@ -69,6 +83,13 @@ export type BuiltInBlockData = {
 	notes: NotesSeries | null
 	onboarding: OnboardingProgressData | null
 	leaderboard: LeaderboardEntry[] | null
+	/** Needs attention items computed for the viewer; null without the block. */
+	attention: AttentionData | null
+	/**
+	 * The launch checklist the onboarding block shows while `launch.checklist`
+	 * is on (instead of the template steps); null otherwise.
+	 */
+	launch: { checklist: LaunchChecklist; canTellGuests: boolean } | null
 }
 
 /** What the Add block dialog may offer besides the built-in blocks. */
@@ -76,11 +97,19 @@ export type DashboardBlockPicker = {
 	/** Onboarding is only offered while the viewer would see the checklist. */
 	onboardingAvailable: boolean
 	bookingsToday: BookingsTodayAccess
+	/** Which Today tiles the viewer may see, and the locations they cover. */
+	today: TodayAccess
+	/** Key the home location picker is remembered under (per user and organization). */
+	locationStorageKey: string
 	savedReports: SavedReportOption[]
 	templateGroups: ReportTemplateGroup[]
 }
 
-type BlockOrganization = { id: string; createdAt: Date }
+type BlockOrganization = {
+	id: string
+	slug?: string
+	createdAt: Date
+}
 
 type ReportOrganization = { id: string; slug: string; dataRegion: string }
 
@@ -244,26 +273,57 @@ export async function loadBuiltInBlockData({
 	organization,
 	blocks,
 	include = [],
+	request,
 	now = new Date(),
 }: {
 	userId: string
 	organization: BlockOrganization
 	blocks: readonly DashboardBlock[]
 	include?: readonly BlockType[]
+	/** The page request: attention actions check permissions with it. */
+	request?: Request
 	now?: Date
 }): Promise<BuiltInBlockData> {
 	const types = new Set<BlockType>([
 		...blocks.map((block) => block.type),
 		...include,
 	])
-	const [notes, onboarding, leaderboard] = await Promise.all([
-		types.has('stats') || types.has('notes-chart')
-			? loadNotesSeries(organization, now)
-			: null,
-		types.has('onboarding') ? loadOnboarding(userId, organization.id) : null,
-		types.has('leaderboard') ? loadLeaderboard(organization.id) : null,
+	const launchOn = types.has('onboarding')
+		? await isLaunchChecklistOn(organization.id)
+		: false
+	const [notes, onboarding, leaderboard, attention, launch] = await Promise.all(
+		[
+			types.has('stats') || types.has('notes-chart')
+				? loadNotesSeries(organization, now)
+				: null,
+			types.has('onboarding') && !launchOn
+				? loadOnboarding(userId, organization.id)
+				: null,
+			types.has('leaderboard') ? loadLeaderboard(organization.id) : null,
+			types.has('attention')
+				? loadAttention({ userId, organization, request, now })
+				: null,
+			launchOn ? loadHomeLaunch(userId, organization.id, now) : null,
+		],
+	)
+	return { notes, onboarding, leaderboard, attention, launch }
+}
+
+async function loadHomeLaunch(
+	userId: string,
+	organizationId: string,
+	now: Date,
+): Promise<BuiltInBlockData['launch']> {
+	const [checklist, has] = await Promise.all([
+		loadLaunchChecklist({ organizationId, userId, now }),
+		loadPermissionChecker(userId, organizationId),
 	])
-	return { notes, onboarding, leaderboard }
+	return checklist
+		? {
+				checklist,
+				canTellGuests: has(ORG_PERMISSIONS.UPDATE_CAMPAIGN_ANY),
+			}
+		: null
 }
 
 /** A saved definition that no longer parses must not break the dashboard. */
@@ -369,24 +429,45 @@ async function loadSavedReportOptions(
  */
 export async function loadBlockPicker({
 	userId,
-	organizationId,
+	organization,
 	blockData,
 	grants,
+	bookingsToday: knownBookingsToday,
+	locations: knownLocations,
 }: {
 	userId: string
-	organizationId: string
+	organization: { id: string; slug: string; dataRegion: string }
 	blockData: BuiltInBlockData
 	/** Restricted report subjects the person's reports token lists. */
 	grants: readonly string[]
+	/** Already loaded by the caller (Home needs it for its default layout). */
+	bookingsToday?: BookingsTodayAccess
+	locations?: HomeLocation[]
 }): Promise<DashboardBlockPicker> {
-	const [onboarding, savedReports, bookingsToday] = await Promise.all([
-		blockData.onboarding ?? loadOnboarding(userId, organizationId),
-		loadSavedReportOptions(organizationId, grants),
-		loadBookingsTodayAccess({ userId, organizationId }),
-	])
-	return {
-		onboardingAvailable: isOnboardingVisible(onboarding),
+	const organizationId = organization.id
+	const launchOn =
+		blockData.launch !== null || (await isLaunchChecklistOn(organizationId))
+	const [onboarding, savedReports, bookingsToday, locations] =
+		await Promise.all([
+			launchOn
+				? null
+				: (blockData.onboarding ?? loadOnboarding(userId, organizationId)),
+			loadSavedReportOptions(organizationId, grants),
+			knownBookingsToday ?? loadBookingsTodayAccess({ userId, organizationId }),
+			knownLocations ?? loadHomeLocations(userId, organizationId),
+		])
+	const today = await loadTodayAccess({
+		userId,
+		organization,
 		bookingsToday,
+		locations,
+	})
+	return {
+		// The launch checklist stays on Home (it ends in "You're live").
+		onboardingAvailable: launchOn || isOnboardingVisible(onboarding),
+		bookingsToday,
+		today,
+		locationStorageKey: homeLocationStorageKey(userId, organizationId),
 		savedReports,
 		templateGroups: reportTemplateGroups(grants),
 	}

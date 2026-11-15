@@ -53,7 +53,9 @@ function orderedCounts(counts: Record<string, number>) {
  * own (and fetching its own token).
  */
 const SHARED_POOLS = new Map<string, ReservationsClientPool>()
-function sharedPool(orgSlug: string): ReservationsClientPool {
+export function sharedReservationsPool(
+	orgSlug: string,
+): ReservationsClientPool {
 	let pool = SHARED_POOLS.get(orgSlug)
 	if (!pool) {
 		pool = createReservationsClientPool({ orgSlug })
@@ -83,7 +85,7 @@ export function BookingsTodayBlock({
 	const [state, setState] = useState<State>({ kind: 'loading' })
 	const providedPool = useContext(ReservationsClientContext)
 	const client = useMemo(
-		() => (providedPool ?? sharedPool(orgSlug)).forScope('book'),
+		() => (providedPool ?? sharedReservationsPool(orgSlug)).forScope('book'),
 		[providedPool, orgSlug],
 	)
 

@@ -105,6 +105,8 @@ describe('createOrganization', () => {
 		const { insertedValues } = captureInserts(
 			[{ id: 'org-1', name: 'Acme', slug: 'acme' }],
 			[],
+			// The launch.checklist flag.
+			[],
 			[{ id: 'page-1' }],
 			[],
 		)
@@ -158,7 +160,14 @@ describe('createOrganization', () => {
 			}),
 		)
 
-		const pageValues = insertedValues[2] as {
+		// New organizations start on the restaurant launch checklist.
+		expect(insertedValues[2]).toEqual({
+			key: 'launch.checklist',
+			value: true,
+			level: 'organization',
+			organizationId: expect.any(String),
+		})
+		const pageValues = insertedValues[3] as {
 			organizationId: string
 			title: string
 			slug: string
@@ -187,7 +196,7 @@ describe('createOrganization', () => {
 			publishedData: JSON.stringify(storedSections),
 		})
 
-		const sections = insertedValues[3] as CreatedHomePageSection[]
+		const sections = insertedValues[4] as CreatedHomePageSection[]
 		expect(sections.map((section) => section.type)).toEqual([
 			'hero',
 			'features',

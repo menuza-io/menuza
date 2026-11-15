@@ -13,6 +13,7 @@ import {
 	reportTemplateGroups,
 	type SavedReportOption,
 } from '#app/utils/dashboards/reports.ts'
+import { NO_TODAY_ACCESS } from '#app/utils/dashboards/today.ts'
 import { AddBlockDialog } from './add-block-dialog.tsx'
 import { ReportBlockOptions } from './report-block-options.tsx'
 
@@ -29,6 +30,8 @@ async function openDialog({
 	const picker = {
 		onboardingAvailable: false,
 		bookingsToday: { available: false, locations: [] },
+		today: NO_TODAY_ACCESS,
+		locationStorageKey: 'home-location:test',
 		savedReports: reports,
 		templateGroups: reportTemplateGroups(),
 	}
