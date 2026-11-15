@@ -1,3 +1,4 @@
+import { MenuVariationsSchema } from '@repo/common/menu-types'
 import {
 	parseLocalizedString,
 	serializeLocalizedString,
@@ -34,6 +35,7 @@ import {
 	type MenuGraph,
 	type MenuGraphIndex,
 } from './menu-graph.ts'
+import { nameIsAllCaps } from './menu-health.ts'
 import { isPosLinked } from './menu-pos-owned.ts'
 import {
 	MENU_SUGGESTION_LIMITS,
@@ -380,7 +382,21 @@ function sourceNameOf(graph: MenuGraph, item: GraphItem) {
 	return { map, name: typeof name === 'string' ? name : null }
 }
 
-const STYLE_ORDER: readonly CapitalStyle[] = ['title', 'sentence', 'upper']
+/**
+ * `upper` is never offered or chosen: an all-caps name is flagged by the
+ * `name_all_caps` health check, so accepting it would lower the grade. A
+ * stored `upper` setting counts as no setting.
+ */
+const OFFERED_STYLES: readonly CapitalStyle[] = CAPITAL_STYLES.filter(
+	(style) => style !== 'upper',
+)
+
+function savedCapitalStyle(ctx: {
+	settings: { capitalStyle?: CapitalStyle | null }
+}): CapitalStyle | null {
+	const style = ctx.settings.capitalStyle
+	return style && style !== 'upper' ? style : null
+}
 
 function majorityCapitalStyle(graph: MenuGraph): CapitalStyle | null {
 	const votes: Record<CapitalStyle, number> = {
@@ -395,11 +411,12 @@ function majorityCapitalStyle(graph: MenuGraph): CapitalStyle | null {
 		if (!name || !isCasedName(name)) continue
 		const styles = matchingCapitalStyles(name)
 		if (styles.length !== 1) continue
+		if (styles[0] === 'upper') continue
 		votes[styles[0]!] += 1
 		any = true
 	}
 	if (!any) return null
-	return STYLE_ORDER.reduce((best, style) =>
+	return OFFERED_STYLES.reduce((best, style) =>
 		votes[style] > votes[best] ? style : best,
 	)
 }
@@ -436,7 +453,8 @@ const capitalsKind: MenuCardKindImpl = {
 	kind: 'capitals',
 	detect(graph, ctx) {
 		const index = indexMenuGraph(graph)
-		const target = ctx.settings.capitalStyle ?? majorityCapitalStyle(graph)
+		const saved = savedCapitalStyle(ctx)
+		const target = saved ?? majorityCapitalStyle(graph)
 		if (!target) return []
 		const claimed = new Set<string>()
 		const drafts: Draft[] = []
@@ -448,7 +466,8 @@ const capitalsKind: MenuCardKindImpl = {
 				if (!item || !isVisible(item) || claimed.has(item.id)) continue
 				const { name } = sourceNameOf(graph, item)
 				if (!name || !isCasedName(name)) continue
-				if (toCapitalStyle(name, target) === name) continue
+				const next = toCapitalStyle(name, target)
+				if (next === name || nameIsAllCaps(next)) continue
 				if (isPosLinked(graph, 'item', item.id)) continue
 				dishes.push(item)
 				if (dishes.length >= CAPITALS_PER_CARD) break
@@ -465,9 +484,9 @@ const capitalsKind: MenuCardKindImpl = {
 					const name = sourceNameOf(graph, item).name ?? ''
 					return { from: name, to: toCapitalStyle(name, style) }
 				})
-			const options: MenuCardOption[] | undefined = ctx.settings.capitalStyle
+			const options: MenuCardOption[] | undefined = saved
 				? undefined
-				: CAPITAL_STYLES.map((style) => ({
+				: OFFERED_STYLES.map((style) => ({
 						id: style,
 						code: style,
 						preview: capitalsPreview(title, changesFor(style)),
@@ -500,8 +519,8 @@ const capitalsKind: MenuCardKindImpl = {
 		const category = index.category.get(params.categoryId)
 		if (!category || !isVisible(category)) return fail('stale_suggestion')
 		const style =
-			ctx.settings.capitalStyle ??
-			CAPITAL_STYLES.find((candidate) => candidate === request.optionId)
+			savedCapitalStyle(ctx) ??
+			OFFERED_STYLES.find((candidate) => candidate === request.optionId)
 		if (!style) return fail('invalid_input')
 		const inCategory = new Set(
 			index.itemsOfCategory(category.id).map((link) => link.itemId),
@@ -515,7 +534,7 @@ const capitalsKind: MenuCardKindImpl = {
 			const { map, name } = sourceNameOf(graph, item)
 			if (!name || !isCasedName(name)) continue
 			const next = toCapitalStyle(name, style)
-			if (next === name) continue
+			if (next === name || nameIsAllCaps(next)) continue
 			ops.push({
 				op: 'update',
 				entity: 'item',
@@ -647,7 +666,7 @@ const missingChoiceKind: MenuCardKindImpl = {
 					warnings: ['empty_group'],
 					preview: choicePreview(graph, index, item, {
 						text: groupName,
-						detail: 'required',
+						detail: 'hidden',
 					}),
 				},
 			]
@@ -702,8 +721,11 @@ const missingChoiceKind: MenuCardKindImpl = {
 					values: {
 						name,
 						selectionType: 'single',
-						minSelections: 1,
+						// Optional and hidden until it has options: a visible
+						// required group with none makes the dish impossible to order.
+						minSelections: 0,
 						maxSelections: 1,
+						availabilityStatus: 'hidden',
 					},
 				},
 				{
@@ -1105,13 +1127,24 @@ function optionRename(
 	return serializeLocalizedString({ ...map, [graph.defaultLocale]: next })
 }
 
+/** The option's name in the default locale only, never a fallback. */
+function sourceOptionName(
+	graph: MenuGraph,
+	option: GraphOption,
+): string | null {
+	const map = parseLocalizedString(option.displayName, graph.defaultLocale)
+	const name = map[graph.defaultLocale]
+	return typeof name === 'string' && name.trim() ? name : null
+}
+
 function noStyleFacts(graph: MenuGraph) {
 	const counts: Record<NoStyle, number> = { no: 0, without: 0, hold: 0 }
 	const entries: Array<{ option: GraphOption; name: string; style: NoStyle }> =
 		[]
 	for (const option of graph.options) {
 		if (!isVisible(option)) continue
-		const name = nameOf(graph, option.displayName)
+		const name = sourceOptionName(graph, option)
+		if (!name) continue
 		const parts = noParts(name)
 		if (!parts) continue
 		counts[parts.style] += 1
@@ -1132,7 +1165,9 @@ const NoStyleParamsSchema = z.object({
 
 const noOptionStyleKind: MenuCardKindImpl = {
 	kind: 'no_option_style',
-	detect(graph) {
+	detect(graph, ctx) {
+		// The prefixes are English words: other languages are never judged.
+		if (ctx.defaultLocale !== 'en' || graph.defaultLocale !== 'en') return []
 		const facts = noStyleFacts(graph)
 		if (!facts) return []
 		const minority = facts.entries
@@ -1197,15 +1232,20 @@ const noOptionStyleKind: MenuCardKindImpl = {
 			} as Draft,
 		]
 	},
-	plan(graph, request) {
+	plan(graph, request, ctx) {
 		const params = readParams(NoStyleParamsSchema, request.params)
 		if (!params) return fail('invalid_input')
+		if (ctx.defaultLocale !== 'en' || graph.defaultLocale !== 'en') {
+			return fail('not_applicable')
+		}
 		const index = indexMenuGraph(graph)
 		const ops: MenuCardOp[] = []
 		for (const id of new Set(params.optionIds)) {
 			const option = index.option.get(id)
 			if (!option || !isVisible(option)) return fail('stale_suggestion')
-			const next = restyleNo(nameOf(graph, option.displayName), params.prefix)
+			const name = sourceOptionName(graph, option)
+			if (!name) continue
+			const next = restyleNo(name, params.prefix)
 			if (!next) continue
 			ops.push({
 				op: 'update',
@@ -1274,12 +1314,37 @@ function sharedGroup(index: Index, groupId: string, itemId: string): boolean {
 	})
 }
 
+/**
+ * The variations JSON with every size priced `price`, everything else kept.
+ * `null` when it cannot be rewritten into a valid `MenuVariations`.
+ */
+function pricedVariations(item: GraphItem, price: number): string | null | '' {
+	let parsed: unknown
+	try {
+		parsed = JSON.parse(item.variations || '{}')
+	} catch {
+		return null
+	}
+	if (!parsed || typeof parsed !== 'object') return ''
+	const record = parsed as { variants?: unknown }
+	if (!Array.isArray(record.variants) || record.variants.length === 0) return ''
+	const next = {
+		...record,
+		variants: record.variants.map((variant: unknown) =>
+			variant && typeof variant === 'object' ? { ...variant, price } : variant,
+		),
+	}
+	if (!MenuVariationsSchema.safeParse(next).success) return null
+	return JSON.stringify(next)
+}
+
 function parsePrice(input: string | undefined): number | null {
 	if (typeof input !== 'string') return null
 	const text = input.trim().replace(/,/g, '.')
 	if (!/^\d+(?:\.\d{1,2})?$/.test(text)) return null
 	const value = Number(text)
-	return Number.isFinite(value) && value >= 0 && value <= 1_000_000
+	// Zero is refused: it would leave the dish free.
+	return Number.isFinite(value) && value > 0 && value <= 1_000_000
 		? value
 		: null
 }
@@ -1410,7 +1475,17 @@ const freeDishKind: MenuCardKindImpl = {
 		if (optionId === 'set_price') {
 			const price = parsePrice(request.input)
 			if (price === null) return fail('invalid_input')
-			return ok([{ op: 'update', entity: 'item', id: item.id, set: { price } }])
+			// Orders charge the size's own price, so every size gets it too.
+			const variations = pricedVariations(item, price)
+			if (variations === null) return fail('not_applicable')
+			return ok([
+				{
+					op: 'update',
+					entity: 'item',
+					id: item.id,
+					set: variations ? { price, variations } : { price },
+				},
+			])
 		}
 		if (optionId.startsWith('require:')) {
 			const group = facts.optionalPaid.find(

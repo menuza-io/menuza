@@ -25,6 +25,7 @@ import {
 	type MenuCardOp,
 } from './menu-cards.ts'
 import { makeMenuGraph, type MenuGraph } from './menu-graph.ts'
+import { nameIsAllCaps } from './menu-health.ts'
 import { POLISH_CARD_KINDS_IMPL } from './polish-suggestions.ts'
 import { extractChoicePhrase } from './polish-text.ts'
 
@@ -279,7 +280,6 @@ describe('capitals', () => {
 		expect(draft!.options?.map((option) => option.code)).toEqual([
 			'title',
 			'sentence',
-			'upper',
 		])
 		expect(draft!.defaultOptionId).toBe('title')
 		expect(draft!.preview.after[0]?.rows.map((row) => row.text)).toEqual([
@@ -306,10 +306,10 @@ describe('capitals', () => {
 			'Grilled fish',
 			'Lamb chops',
 		])
-		expect(names(okOps(graph, draft!, { optionId: 'upper' }))).toEqual([
-			'GRILLED FISH',
-			'BBQ CHICKEN WINGS',
-		])
+		expect(planOf(graph, draft!, { optionId: 'upper' })).toMatchObject({
+			ok: false,
+			error: 'invalid_input',
+		})
 		expect(planOf(graph, draft!, { optionId: 'weird' })).toMatchObject({
 			ok: false,
 			error: 'invalid_input',
@@ -323,6 +323,47 @@ describe('capitals', () => {
 		expect(draft!.params.itemIds).toEqual(['a', 'b', 'c', 'd', 'f', 'i'])
 		const ops = okOps(graph, draft!, {}, settings)
 		expect(ops).toHaveLength(6)
+	})
+
+	it('never picks upper as the majority, ignores a stored upper, never proposes all caps', () => {
+		const shouting = makeMenuGraph({
+			categories: [{ id: 'c' }],
+			items: [
+				{ id: 'a', displayName: 'CHICKEN WRAP' },
+				{ id: 'b', displayName: 'BEEF BURGER' },
+				{ id: 'c', displayName: 'FISH PIE' },
+				{ id: 'd', displayName: 'lamb chops' },
+				{ id: 'e', displayName: 'Soup' },
+				{ id: 'f', displayName: 'GREEN SALAD' },
+				{ id: 'g', displayName: 'Fish Pie' },
+				{ id: 'h', displayName: 'Beef Stew' },
+			],
+			itemCategories: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'].map(
+				(itemId) => ({
+					categoryId: 'c',
+					itemId,
+				}),
+			),
+		})
+		const stored = { ...ctx, settings: { capitalStyle: 'upper' as const } }
+		for (const context of [ctx, stored]) {
+			const drafts = detect('capitals', shouting, context)
+			expect(drafts.length).toBeGreaterThan(0)
+			for (const draft of drafts) {
+				expect(draft.options?.map((o) => o.code)).toEqual(['title', 'sentence'])
+				expect(draft.defaultOptionId).not.toBe('upper')
+				for (const option of draft.options ?? []) {
+					const plan = planOf(shouting, draft, { optionId: option.id }, context)
+					expect(plan.ok).toBe(true)
+					if (!plan.ok) continue
+					for (const op of plan.ops) {
+						if (op.op !== 'update' || op.entity !== 'item') continue
+						const name = (JSON.parse(op.set.displayName!) as { en: string }).en
+						expect(nameIsAllCaps(name)).toBe(false)
+					}
+				}
+			}
+		}
 	})
 
 	it('finds nothing when names agree, are Arabic or are POS-owned', () => {
@@ -460,10 +501,17 @@ describe('missing_choice', () => {
 			values: {
 				name: 'Side',
 				selectionType: 'single',
-				minSelections: 1,
+				minSelections: 0,
 				maxSelections: 1,
+				// Hidden until it has options, so the dish stays orderable.
+				availabilityStatus: 'hidden',
 			},
 		})
+		expect(
+			pasta.options
+				?.find((o) => o.id === 'create')
+				?.preview?.after[0]?.rows.at(-1),
+		).toMatchObject({ text: 'Side', detail: 'hidden', change: 'added' })
 		expect(
 			planOf(graph, pasta, { optionId: 'attach:dressings' }),
 		).toMatchObject({ ok: false, error: 'invalid_input' })
@@ -776,6 +824,25 @@ describe('no_option_style', () => {
 		])
 	})
 
+	it('runs only on an English menu and skips options with no English text', () => {
+		const spanish = { ...ctx, defaultLocale: 'es' as const }
+		expect(detect('no_option_style', graph, spanish)).toEqual([])
+		const mixed = makeMenuGraph({
+			locales: ['en', 'ar'],
+			options: [
+				{ id: 'a', displayName: 'No onions' },
+				{ id: 'b', displayName: 'No tomato' },
+				{ id: 'c', displayName: 'Without pickles' },
+				{ id: 'ar', displayName: JSON.stringify({ ar: 'Without mayo' }) },
+			],
+		})
+		const [draft] = detect('no_option_style', mixed)
+		expect(draft!.params).toMatchObject({ optionIds: ['c'] })
+		expect(
+			planOf(mixed, draft!, { params: { optionIds: ['ar'], prefix: 'no' } }),
+		).toMatchObject({ ok: false, error: 'not_applicable' })
+	})
+
 	it('finds nothing with one style, and POS options are never renamed', () => {
 		const one = makeMenuGraph({
 			options: [
@@ -904,9 +971,60 @@ describe('free_dish', () => {
 		expect(planOf(graph, draft!, { optionId: 'add_group' })).toMatchObject({
 			ok: false,
 		})
+		for (const optionId of ['set_price', 'add_group']) {
+			for (const input of ['0', '0.00', '-1']) {
+				expect(planOf(graph, draft!, { optionId, input })).toMatchObject({
+					ok: false,
+					error: 'invalid_input',
+				})
+			}
+		}
 		expect(planOf(graph, draft!, { optionId: 'require:sizes' })).toMatchObject({
 			ok: false,
 		})
+	})
+
+	it('prices every size as well as the dish', () => {
+		const variations = {
+			groups: [
+				{
+					id: 'g',
+					name: 'Size',
+					values: [
+						{ id: 's', name: 'Small' },
+						{ id: 'l', name: 'Large' },
+					],
+				},
+			],
+			variants: ['s', 'l'].map((id) => ({
+				id: `v${id}`,
+				valueIds: [id],
+				price: 0,
+				imageKey: null,
+				excludeFromDiscounts: false,
+				availabilityStatus: 'available',
+				unavailableUntil: null,
+			})),
+		}
+		const sized = makeMenuGraph({
+			items: [
+				{ id: 'sized', price: 0, variations: JSON.stringify(variations) },
+			],
+			groups: [{ id: 'extras', minSelections: 0 }],
+			options: [{ id: 'cheese', price: 2 }],
+			groupOptions: [{ modifierGroupId: 'extras', optionId: 'cheese' }],
+			itemGroups: [{ itemId: 'sized', modifierGroupId: 'extras' }],
+		})
+		const [draft] = detect('free_dish', sized)
+		expect(draft).toBeDefined()
+		const [op] = okOps(sized, draft!, { input: '7.5' })
+		expect(op).toMatchObject({ op: 'update', entity: 'item', id: 'sized' })
+		if (op!.op !== 'update' || op!.entity !== 'item') throw new Error('shape')
+		expect(op!.set.price).toBe(7.5)
+		const written = JSON.parse(op!.set.variations!) as typeof variations
+		expect(written.variants.map((v) => v.price)).toEqual([7.5, 7.5])
+		expect(written.groups).toEqual(variations.groups)
+		expect(written.variants[0]).toMatchObject({ id: 'vs', valueIds: ['s'] })
 	})
 
 	it('writes the menu language word for Size', () => {

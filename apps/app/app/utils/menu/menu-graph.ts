@@ -21,6 +21,16 @@ export type GraphItem = {
 	/** `MenuVariations` JSON, as stored. */
 	variations: string
 	imageUrl: string | null
+	imageKey: string | null
+	/** JSON array, as stored. */
+	imageKeys: string
+	/** JSON array of allergen codes, as stored. */
+	allergens: string
+	isAlcohol: boolean
+	isGlutenFree: boolean
+	isVegetarian: boolean
+	calorieMin: number | null
+	calorieMax: number | null
 	availabilityStatus: string
 	position: number
 	updatedAt: string
@@ -292,6 +302,14 @@ export function makeMenuGraph(input: {
 			price: 10,
 			variations: '{"groups":[],"variants":[]}',
 			imageUrl: null,
+			imageKey: null,
+			imageKeys: '[]',
+			allergens: '[]',
+			isAlcohol: false,
+			isGlutenFree: false,
+			isVegetarian: false,
+			calorieMin: null,
+			calorieMax: null,
 			availabilityStatus: 'available',
 			position,
 			updatedAt: T0,

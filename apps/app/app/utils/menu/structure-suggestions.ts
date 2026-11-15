@@ -33,6 +33,7 @@ import {
 	type GraphGroup,
 	type GraphGroupOption,
 	type GraphItem,
+	type GraphOption,
 	type MenuGraph,
 } from './menu-graph.ts'
 import { normalizeMenuName } from './menu-health.ts'
@@ -262,6 +263,33 @@ function splitSizeName(name: string): SplitName | null {
 	}
 }
 
+/**
+ * What guests are told about a dish's food facts. A merge or a size copy
+ * keeps one dish's values, so dishes that differ here are never combined.
+ */
+function safetySignature(item: GraphItem): string {
+	let allergens: string[] = []
+	try {
+		const parsed: unknown = JSON.parse(item.allergens || '[]')
+		if (Array.isArray(parsed))
+			allergens = parsed.map((value) => String(value)).sort()
+	} catch {
+		allergens = [item.allergens]
+	}
+	return JSON.stringify([
+		allergens,
+		item.isAlcohol,
+		item.isGlutenFree,
+		item.isVegetarian,
+		item.calorieMin,
+		item.calorieMax,
+	])
+}
+
+function sameSafety(items: readonly GraphItem[]): boolean {
+	return new Set(items.map(safetySignature)).size === 1
+}
+
 // --- 1. merge_duplicates -------------------------------------------------------
 
 function mergeKeepOrder(
@@ -342,6 +370,7 @@ function detectMergeDuplicates(graph: MenuGraph, ctx: Ctx): MenuCardDraft[] {
 	const drafts: MenuCardDraft[] = []
 	for (const items of buckets.values()) {
 		if (items.length < 2 || items.length > 12) continue
+		if (!sameSafety(items)) continue
 		const sorted = [...items].sort((a, b) => mergeKeepOrder(index, a, b))
 		const keep = sorted[0]!
 		const ids = sorted.map((item) => item.id)
@@ -565,6 +594,7 @@ function buildSizesOps(
 
 function detectMakeSizes(graph: MenuGraph, ctx: Ctx): MenuCardDraft[] {
 	void ctx
+	const index = indexMenuGraph(graph)
 	const buckets = new Map<string, SizeEntry[]>()
 	for (const item of graph.items) {
 		if (!isVisible(item)) continue
@@ -583,6 +613,10 @@ function detectMakeSizes(graph: MenuGraph, ctx: Ctx): MenuCardDraft[] {
 		)
 			continue
 		if (new Set(bucket.map((entry) => entry.groupKey)).size !== 1) continue
+		if (!sameSafety(bucket.map((entry) => entry.item))) continue
+		// A POS import owns these dishes: the copy would have no POS link
+		// while the hidden originals kept syncing.
+		if (bucket.some((entry) => index.posLinked('item', entry.item.id))) continue
 		const entries = [...bucket].sort(compareEntries)
 		const ops = buildSizesOps(graph, entries, {})
 		if (!ops || posOwnedViolation(graph, ops)) continue
@@ -766,7 +800,9 @@ function detectMergeCategories(graph: MenuGraph, ctx: Ctx): MenuCardDraft[] {
 			normalizeMenuName(sourceText(graph, category.displayName)),
 		]),
 	)
-	// Union the categories that look like one.
+	// Union the categories that look like one. Only siblings (same parent) are
+	// ever compared, and a union never chains two real categories: a small
+	// one joins a larger one only when exactly one larger one matches it.
 	const parent = new Map(candidates.map((c) => [c.id, c.id]))
 	const find = (id: string): string => {
 		let root = id
@@ -782,19 +818,24 @@ function detectMergeCategories(graph: MenuGraph, ctx: Ctx): MenuCardDraft[] {
 	for (const category of candidates) {
 		const key = keys.get(category.id)!
 		if (!key) continue
-		const norm = singular(key)
+		const norm = `${category.parentId ?? ''}\u0000${singular(key)}`
 		const seen = bySingular.get(norm)
 		if (seen) union(seen, category.id)
 		else bySingular.set(norm, category.id)
 	}
+	const isSmall = (id: string) => (dishCount.get(id) ?? 0) <= 2
 	for (const small of candidates) {
-		if ((dishCount.get(small.id) ?? 0) > 2) continue
+		if (!isSmall(small.id)) continue
 		const inner = keys.get(small.id)!
 		if (inner.length < 3) continue
-		for (const other of candidates) {
-			if (other.id === small.id) continue
-			if (containsWords(keys.get(other.id)!, inner)) union(small.id, other.id)
-		}
+		const matches = candidates.filter(
+			(other) =>
+				other.id !== small.id &&
+				other.parentId === small.parentId &&
+				!isSmall(other.id) &&
+				containsWords(keys.get(other.id)!, inner),
+		)
+		if (matches.length === 1) union(small.id, matches[0]!.id)
 	}
 	const clusters = new Map<string, typeof candidates>()
 	for (const category of candidates) {
@@ -807,6 +848,12 @@ function detectMergeCategories(graph: MenuGraph, ctx: Ctx): MenuCardDraft[] {
 	const drafts: MenuCardDraft[] = []
 	for (const cluster of clusters.values()) {
 		if (cluster.length < 2 || cluster.length > 8) continue
+		const bigKeys = new Set(
+			cluster
+				.filter((category) => !isSmall(category.id))
+				.map((category) => singular(keys.get(category.id)!)),
+		)
+		if (bigKeys.size > 1) continue
 		const sorted = [...cluster].sort(
 			(a, b) =>
 				(dishCount.get(b.id) ?? 0) - (dishCount.get(a.id) ?? 0) ||
@@ -1263,25 +1310,43 @@ function pizzaApplies(graph: MenuGraph, group: GraphGroup): boolean {
 	return toppings * 2 > links.length
 }
 
+/**
+ * An option is only repriced here when this group is the only place it is
+ * used and the link carries no price of its own: the whole/left/right prices
+ * live on the shared option and win over every override at order time
+ * (`optionPriceCents`), so touching a shared or overridden option would
+ * silently change what other groups or this link charge.
+ */
+function pizzaRepriceable(
+	graph: MenuGraph,
+	link: GraphGroupOption,
+): GraphOption | null {
+	const index = indexMenuGraph(graph)
+	const option = index.option.get(link.optionId)
+	if (!option) return null
+	if (
+		option.priceWhole !== null ||
+		option.priceLeft !== null ||
+		option.priceRight !== null
+	)
+		return null
+	if (
+		link.priceOverride !== null ||
+		link.priceWholeOverride !== null ||
+		link.priceLeftOverride !== null ||
+		link.priceRightOverride !== null
+	)
+		return null
+	if (index.groupsOfOption(option.id).length !== 1) return null
+	return option
+}
+
 function buildPizzaOps(graph: MenuGraph, group: GraphGroup): MenuCardOp[] {
 	const index = indexMenuGraph(graph)
-	const ops: MenuCardOp[] = [
-		{
-			op: 'update',
-			entity: 'modifier_group',
-			id: group.id,
-			set: { selectionType: 'pizza' },
-		},
-	]
+	const ops: MenuCardOp[] = []
 	for (const link of index.optionsOfGroup(group.id)) {
-		const option = index.option.get(link.optionId)
+		const option = pizzaRepriceable(graph, link)
 		if (!option) continue
-		if (
-			option.priceWhole !== null ||
-			option.priceLeft !== null ||
-			option.priceRight !== null
-		)
-			continue
 		const half = halfPrice(option.price)
 		ops.push({
 			op: 'update',
@@ -1290,7 +1355,18 @@ function buildPizzaOps(graph: MenuGraph, group: GraphGroup): MenuCardOp[] {
 			set: { priceWhole: option.price, priceLeft: half, priceRight: half },
 		})
 	}
-	return ops
+	// No option can take half prices: the switch alone would charge the full
+	// price for each half, so there is no card.
+	if (ops.length === 0) return ops
+	return [
+		{
+			op: 'update',
+			entity: 'modifier_group',
+			id: group.id,
+			set: { selectionType: 'pizza' },
+		},
+		...ops,
+	]
 }
 
 function detectHalfWhole(graph: MenuGraph, ctx: Ctx): MenuCardDraft[] {
@@ -1300,7 +1376,7 @@ function detectHalfWhole(graph: MenuGraph, ctx: Ctx): MenuCardDraft[] {
 	for (const group of graph.groups) {
 		if (!pizzaApplies(graph, group)) continue
 		const ops = buildPizzaOps(graph, group)
-		if (posOwnedViolation(graph, ops)) continue
+		if (ops.length === 0 || posOwnedViolation(graph, ops)) continue
 		const refs = refsFromOps(graph, ops)
 		if (!refs) continue
 		const title = cleanName(graph, group.name)
@@ -1341,12 +1417,15 @@ function detectHalfWhole(graph: MenuGraph, ctx: Ctx): MenuCardDraft[] {
 						rows: links.map((link) => {
 							const option = index.option.get(link.optionId)!
 							const set = changed.has(option.id)
+							// What a guest pays: an unchanged option keeps its own
+							// whole/left prices, or the base price for both.
+							const base = link.priceOverride ?? option.price
 							const whole = set
 								? option.price
-								: (option.priceWhole ?? option.price)
+								: (option.priceWhole ?? base)
 							const half = set
 								? halfPrice(option.price)
-								: (option.priceLeft ?? halfPrice(option.price))
+								: (option.priceLeft ?? base)
 							return {
 								text: cleanName(graph, option.displayName),
 								price: whole,
@@ -1373,6 +1452,7 @@ function planHalfWhole(
 	if (!group || !pizzaApplies(graph, group))
 		return { ok: false, error: 'not_applicable' }
 	const ops = buildPizzaOps(graph, group)
+	if (ops.length === 0) return { ok: false, error: 'not_applicable' }
 	if (posOwnedViolation(graph, ops)) return { ok: false, error: 'pos_owned' }
 	return { ok: true, ops }
 }

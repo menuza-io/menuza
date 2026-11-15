@@ -903,6 +903,56 @@ describe('half_whole_toppings', () => {
 			),
 		).toEqual([])
 	})
+
+	it('leaves an option used in two groups alone', () => {
+		const g = graph({
+			groups: [
+				{ id: 'g', name: 'Toppings', selectionType: 'multiple' },
+				{ id: 'g2', name: 'Extras', selectionType: 'multiple' },
+			],
+			groupOptions: [
+				{ modifierGroupId: 'g', optionId: 'o1' },
+				{ modifierGroupId: 'g', optionId: 'o2' },
+				{ modifierGroupId: 'g2', optionId: 'o1' },
+			],
+		})
+		const { ops } = acceptDefault('half_whole_toppings', g)
+		const ids = ops.flatMap((op) =>
+			op.op === 'update' && op.entity === 'option' ? [op.id] : [],
+		)
+		expect(ids).toEqual(['o2'])
+	})
+
+	it('leaves an option whose link has a price override alone, and shows what guests pay', () => {
+		const g = graph({
+			groupOptions: [
+				{ modifierGroupId: 'g', optionId: 'o1', priceOverride: 4 },
+				{ modifierGroupId: 'g', optionId: 'o2' },
+				{ modifierGroupId: 'g', optionId: 'o3' },
+			],
+		})
+		const { draft, ops } = acceptDefault('half_whole_toppings', g)
+		expect(
+			ops.some((op) => op.op === 'update' && 'id' in op && op.id === 'o1'),
+		).toBe(false)
+		// Unchanged: the override is charged for whole and for each half.
+		expect(draft.preview.after[0]!.rows[0]).toMatchObject({ detail: '4/4' })
+		expect(draft.preview.after[0]!.rows[1]).toMatchObject({ detail: '2.5/1.25' })
+	})
+
+	it('makes no card when no option can take half prices', () => {
+		const g = graph({
+			groupOptions: [
+				{ modifierGroupId: 'g', optionId: 'o1', priceWholeOverride: 3 },
+				{ modifierGroupId: 'g', optionId: 'o2', priceLeftOverride: 1 },
+				{ modifierGroupId: 'g', optionId: 'o3' },
+			],
+		})
+		expect(detect('half_whole_toppings', g)).toEqual([])
+		expect(
+			plan('half_whole_toppings', g, { params: { groupId: 'g' } }),
+		).toMatchObject({ ok: false })
+	})
 })
 
 describe('check_price', () => {
@@ -1065,5 +1115,128 @@ describe('check_price', () => {
 				}),
 			),
 		).toEqual([])
+	})
+})
+
+describe('review fixes: food facts, POS and category chains', () => {
+	it('make_sizes skips sizes whose allergens differ', () => {
+		const g = makeMenuGraph({
+			items: [
+				{ id: 's', displayName: 'Small Pad Thai', price: 8 },
+				{
+					id: 'l',
+					displayName: 'Large Pad Thai',
+					price: 12,
+					allergens: '["peanuts"]',
+				},
+			],
+		})
+		expect(detect('make_sizes', g)).toEqual([])
+		const same = makeMenuGraph({
+			items: [
+				{ id: 's', displayName: 'Small Pad Thai', price: 8, allergens: '["peanuts"]' },
+				{ id: 'l', displayName: 'Large Pad Thai', price: 12, allergens: '["peanuts"]' },
+			],
+		})
+		expect(detect('make_sizes', same)).toHaveLength(1)
+	})
+
+	it('make_sizes skips POS-linked dishes', () => {
+		const g = makeMenuGraph({
+			items: [
+				{ id: 's', displayName: 'Small Latte', price: 4 },
+				{ id: 'l', displayName: 'Large Latte', price: 6 },
+			],
+			posLinks: [{ entityType: 'item', localId: 'l' }],
+		})
+		expect(detect('make_sizes', g)).toEqual([])
+	})
+
+	it('merge_duplicates skips dishes whose food facts differ', () => {
+		const g = makeMenuGraph({
+			items: [
+				{ id: 'a', displayName: 'Pad Thai', imageUrl: 'x.jpg' },
+				{ id: 'b', displayName: 'Pad Thai', allergens: '["peanuts"]' },
+			],
+		})
+		expect(detect('merge_duplicates', g)).toEqual([])
+		for (const extra of [
+			{ isVegetarian: true },
+			{ calorieMin: 400 },
+			{ isAlcohol: true },
+		]) {
+			expect(
+				detect(
+					'merge_duplicates',
+					makeMenuGraph({
+						items: [
+							{ id: 'a', displayName: 'Pad Thai' },
+							{ id: 'b', displayName: 'Pad Thai', ...extra },
+						],
+					}),
+				),
+			).toEqual([])
+		}
+		const same = makeMenuGraph({
+			items: [
+				{ id: 'a', displayName: 'Pad Thai', allergens: '["soy","peanuts"]' },
+				{
+					id: 'b',
+					displayName: 'Pad Thai',
+					allergens: '["peanuts","soy"]',
+					imageUrl: 'x.jpg',
+				},
+			],
+		})
+		const drafts = detect('merge_duplicates', same)
+		expect(drafts).toHaveLength(1)
+		expect(drafts[0]!.primary.id).toBe('b')
+	})
+
+	const cats = (
+		rows: Array<{ id: string; name: string; parentId?: string; n: number }>,
+	) => {
+		const items = rows.flatMap((row) =>
+			Array.from({ length: row.n }, (_, i) => ({ id: `${row.id}-${i}` })),
+		)
+		return makeMenuGraph({
+			categories: rows.map((row) => ({
+				id: row.id,
+				displayName: row.name,
+				parentId: row.parentId ?? null,
+			})),
+			items,
+			itemCategories: items.map((item) => ({
+				categoryId: item.id.split('-')[0]!,
+				itemId: item.id,
+			})),
+		})
+	}
+
+	it('merge_categories does not chain Drinks, Hot Drinks and Cold Drinks', () => {
+		const g = cats([
+			{ id: 'd', name: 'Drinks', n: 1 },
+			{ id: 'h', name: 'Hot Drinks', n: 5 },
+			{ id: 'c', name: 'Cold Drinks', n: 6 },
+		])
+		expect(detect('merge_categories', g)).toEqual([])
+	})
+
+	it('merge_categories does not merge same-named subcategories of different parents', () => {
+		const g = cats([
+			{ id: 'p1', name: 'Mains', n: 0 },
+			{ id: 'p2', name: 'Kids', n: 0 },
+			{ id: 's1', name: 'Sides', parentId: 'p1', n: 3 },
+			{ id: 's2', name: 'Sides', parentId: 'p2', n: 3 },
+		])
+		expect(detect('merge_categories', g)).toEqual([])
+	})
+
+	it('merge_categories still merges Starter and Starters', () => {
+		const g = cats([
+			{ id: 'a', name: 'Starter', n: 1 },
+			{ id: 'b', name: 'Starters', n: 4 },
+		])
+		expect(detect('merge_categories', g)).toHaveLength(1)
 	})
 })
