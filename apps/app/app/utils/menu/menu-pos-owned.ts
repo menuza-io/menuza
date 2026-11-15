@@ -46,12 +46,36 @@ export function isPosLinked(
 	return posType ? indexMenuGraph(graph).posLinked(posType, id) : false
 }
 
-/** The first op that writes a POS-owned field of a linked record, or null. */
+/**
+ * The first op that writes a POS-owned field of a linked record, or null.
+ * Also an insert that copies a POS-linked record the same plan hides.
+ */
 export function posOwnedViolation(
 	graph: MenuGraph,
 	ops: readonly MenuCardOp[],
 ): MenuCardOp | null {
+	const hidden = new Set<string>()
 	for (const op of ops) {
+		if (
+			op.op === 'update' &&
+			(op.set as { availabilityStatus?: string }).availabilityStatus === 'hidden'
+		)
+			hidden.add(`${op.entity}:${op.id}`)
+	}
+	for (const op of ops) {
+		if (op.op === 'insert') {
+			// A copy of a POS dish that replaces it (the original is hidden)
+			// carries no POS link, so the next import would stop updating what
+			// guests see.
+			const source = 'copyFrom' in op ? op.copyFrom : undefined
+			if (
+				source &&
+				hidden.has(`${op.entity}:${source}`) &&
+				isPosLinked(graph, op.entity, source)
+			)
+				return op
+			continue
+		}
 		if (op.op === 'update') {
 			if (!isPosLinked(graph, op.entity, op.id)) continue
 			const owned = POS_OWNED_FIELDS[op.entity] ?? []

@@ -3,7 +3,10 @@ import {
 	db,
 	eq,
 	Integration,
+	MenuCheckDismissal,
 	MenuSnapshot,
+	OrganizationLocation,
+	OrganizationMenuLocationOverride,
 	OrganizationMenu,
 	OrganizationMenuCategory,
 	OrganizationMenuCategoryAssignment,
@@ -16,10 +19,25 @@ import {
 	OrganizationMenuPosLink,
 } from '@repo/database'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 import { insertTestUser } from '#tests/dashboard-utils.ts'
 import { createTestOrganization } from '#tests/test-utils.ts'
 
 const snapshotStore = vi.hoisted(() => new Map<string, string>())
+const secretOverride = vi.hoisted(() => ({ value: null as string | null }))
+
+vi.mock('varlock/env', async (importOriginal) => {
+	const original = await importOriginal<{ ENV: Record<string, unknown> }>()
+	return {
+		...original,
+		ENV: new Proxy(original.ENV, {
+			get: (target, key) =>
+				key === 'SESSION_SECRET' && secretOverride.value
+					? secretOverride.value
+					: Reflect.get(target, key),
+		}),
+	}
+})
 
 vi.mock('#app/utils/storage.server.ts', () => ({
 	uploadMenuSnapshotJson: vi.fn(
@@ -55,6 +73,7 @@ import {
 } from './menu-card-kinds.ts'
 import {
 	applyMenuCards,
+	buildStatements,
 	detectMenuCards,
 	setMenuCardKindForTests,
 	signMenuCardUndo,
@@ -594,7 +613,12 @@ async function menuState(w: World) {
 	) as Record<string, unknown>
 	for (const [key, value] of Object.entries(content)) {
 		if (Array.isArray(value)) {
-			content[key] = [...value].sort((a, b) =>
+			// Undo stamps the records it restores with a new `updatedAt`.
+			content[key] = value.map((row) => {
+				const { updatedAt: _updatedAt, ...rest } = row as Record<string, unknown>
+				return rest
+			})
+			content[key] = [...(content[key] as unknown[])].sort((a, b) =>
 				String((a as { id: string }).id).localeCompare(
 					String((b as { id: string }).id),
 				),
@@ -1190,7 +1214,12 @@ describe('undoMenuCard', () => {
 			...undoData,
 			touched: [
 				...undoData.touched,
-				{ type: 'item', id: w.other.id, updatedAt: itemRef(latest, w.other.id).updatedAt },
+				{
+					type: 'item',
+					id: w.other.id,
+					updatedAt: itemRef(latest, w.other.id).updatedAt,
+					fields: ['price'],
+				},
 			],
 		}
 		await undo(w, forged)
@@ -1294,5 +1323,372 @@ describe('validateCardPlan', () => {
 				{ op: 'assign', link: 'item_modifier_group', parentId: 'posd', childId: 'g' },
 			]),
 		).toBe('pos_owned')
+	})
+})
+
+// --- Review fixes (#540) -----------------------------------------------------------
+
+/** Runs a test body with `SESSION_SECRET` set, then puts the old one back. */
+async function withSecret(value: string, run: () => Promise<void>) {
+	secretOverride.value = value
+	try {
+		await run()
+	} finally {
+		secretOverride.value = null
+	}
+}
+
+describe('atomic Accept and Undo', () => {
+	it('refuses the whole card when a record changes between planning and the write', async () => {
+		const w = await seedWorld()
+		const card = await detectInput(w, 'required_first')
+		const before = await menuState(w)
+		const [result] = await applyMenuCards({
+			organization: w.organization,
+			userId: w.user.id,
+			cards: [card],
+			ctx,
+			structureEnabled: true,
+			now: () => NOW,
+			beforeWrite: async () => {
+				await bump(OrganizationMenuItem, w.pizza.id, { price: 99 })
+			},
+		})
+		expect(result).toEqual({ ok: false, error: 'stale_suggestion' })
+		const after = await menuState(w)
+		const items = after.items as Array<{ id: string; price: number }>
+		expect(items.find((row) => row.id === w.pizza.id)!.price).toBe(99)
+		// Nothing else was written: links and every other table are as before.
+		for (const key of Object.keys(before)) {
+			if (key === 'items') continue
+			expect(after[key]).toEqual(before[key])
+		}
+	})
+
+	it('refuses the whole Undo when a record changes between the check and the write', async () => {
+		const w = await seedWorld()
+		const undoData = await okUndo(w, await detectInput(w, 'required_first'))
+		const accepted = await menuState(w)
+		const result = await undoMenuCard({
+			organization: w.organization,
+			userId: w.user.id,
+			undo: undoData,
+			beforeWrite: async () => {
+				await bump(OrganizationMenuItem, w.pizza.id, { price: 99 })
+			},
+		})
+		expect(result).toEqual({ ok: false, error: 'stale_suggestion' })
+		const after = await menuState(w)
+		for (const key of Object.keys(accepted)) {
+			if (key === 'items') continue
+			expect(after[key]).toEqual(accepted[key])
+		}
+		expect((await itemRow(w.pizza.id))!.price).toBe(99)
+	})
+
+	it('Undo restores only the columns Accept wrote', async () => {
+		const w = await seedWorld()
+		const undoData = await okUndo(w, await detectInput(w, 'typo'))
+		const touched = undoData.touched.find((row) => row.id === w.target.id)!
+		expect(touched.fields).toEqual(['availabilityStatus'])
+		expect((await itemRow(w.target.id))!.availabilityStatus).toBe('hidden')
+
+		// A write that does not move `updatedAt` (so the stale check cannot see it).
+		await db
+			.update(OrganizationMenuItem)
+			.set({ description: 'edited quietly', price: 55, updatedAt: NOW })
+			.where(eq(OrganizationMenuItem.id, w.target.id))
+		expect(await undo(w, undoData)).toEqual({ ok: true })
+		const row = (await itemRow(w.target.id))!
+		expect(row.availabilityStatus).not.toBe('hidden')
+		expect(row.description).toBe('edited quietly')
+		expect(row.price).toBe(55)
+	})
+
+	it('Undo of a created dish also removes its location overrides, POS link and dismissals', async () => {
+		const w = await seedWorld()
+		const undoData = await okUndo(w, await detectInput(w, 'make_sizes'))
+		const created = undoData.created.find((row) => row.type === 'item')!
+		const [location] = await db
+			.insert(OrganizationLocation)
+			.values({ organizationId: w.org.id, name: 'Downtown', slug: 'downtown' })
+			.returning()
+		await db.insert(OrganizationMenuLocationOverride).values({
+			organizationId: w.org.id,
+			locationId: location!.id,
+			entityType: 'item',
+			entityId: created.id,
+			isEnabled: false,
+		})
+		const [integration] = await db
+			.insert(Integration)
+			.values({
+				organizationId: w.org.id,
+				providerName: 'square',
+				providerType: 'pos',
+				config: '{}',
+			})
+			.returning()
+		await db.insert(OrganizationMenuPosLink).values({
+			organizationId: w.org.id,
+			integrationId: integration!.id,
+			providerName: 'square',
+			entityType: 'item',
+			remoteId: 'r-new',
+			localId: created.id,
+		})
+		await db.insert(MenuCheckDismissal).values({
+			organizationId: w.org.id,
+			entityType: 'item',
+			entityId: created.id,
+			checkKey: 'no_photo',
+		})
+
+		expect(await undo(w, undoData)).toEqual({ ok: true })
+		expect(await itemRow(created.id)).toBeUndefined()
+		expect(
+			await db
+				.select()
+				.from(OrganizationMenuLocationOverride)
+				.where(eq(OrganizationMenuLocationOverride.entityId, created.id)),
+		).toEqual([])
+		expect(
+			await db
+				.select()
+				.from(OrganizationMenuPosLink)
+				.where(eq(OrganizationMenuPosLink.localId, created.id)),
+		).toEqual([])
+		expect(
+			await db
+				.select()
+				.from(MenuCheckDismissal)
+				.where(eq(MenuCheckDismissal.entityId, created.id)),
+		).toEqual([])
+	})
+})
+
+describe('apply-cards failures', () => {
+	it('keeps the Undo of saved cards when a later card fails to write, and still purges', async () => {
+		const w = await seedWorld()
+		const first = await detectInput(w, 'required_first')
+		const second = await detectInput(w, 'typo')
+		vi.mocked(purgeOrganizationSiteCache).mockClear()
+		let calls = 0
+		const errors = vi.spyOn(console, 'error').mockImplementation(() => {})
+		try {
+			const results = await applyMenuCards({
+				organization: w.organization,
+				userId: w.user.id,
+				cards: [first, second],
+				ctx,
+				structureEnabled: true,
+				now: () => NOW,
+				beforeWrite: async () => {
+					calls += 1
+					if (calls === 2) throw new Error('D1 down')
+				},
+			})
+			expect(results[0]?.ok).toBe(true)
+			expect(results[1]).toEqual({ ok: false, error: 'write_failed' })
+			expect(purgeOrganizationSiteCache).toHaveBeenCalledTimes(1)
+			expect((await itemRow(w.target.id))!.availabilityStatus).not.toBe('hidden')
+		} finally {
+			errors.mockRestore()
+		}
+	})
+
+	it('a failing audit log does not turn a saved card into a failure', async () => {
+		const w = await seedWorld()
+		const { auditService } = await import('@repo/audit')
+		vi.mocked(auditService.log).mockRejectedValueOnce(new Error('audit down'))
+		const errors = vi.spyOn(console, 'error').mockImplementation(() => {})
+		try {
+			const [result] = await apply(w, [await detectInput(w, 'required_first')])
+			expect(result?.ok).toBe(true)
+		} finally {
+			errors.mockRestore()
+		}
+	})
+
+	it('reloads the menu only after a card wrote', async () => {
+		const w = await seedWorld()
+		const stale = await detectInput(w, 'required_first')
+		const staleCard = { ...stale, refs: stale.refs.map((ref) => ({ ...ref, updatedAt: '2020-01-01T00:00:00.000Z' })) }
+		const results = await apply(w, [staleCard, staleCard])
+		expect(results).toEqual([
+			{ ok: false, error: 'stale_suggestion' },
+			{ ok: false, error: 'stale_suggestion' },
+		])
+	})
+})
+
+describe('Undo signature', () => {
+	const secretA = 'first-session-secret-aaaa'
+	const secretB = 'second-session-secret-bbb'
+
+	it('still verifies after the secret list rotates, and never with an unknown secret', async () => {
+		const w = await seedWorld()
+		let undoData!: MenuCardUndo
+		await withSecret(secretA, async () => {
+			undoData = await okUndo(w, await detectInput(w, 'required_first'))
+		})
+		await withSecret(`${secretB},${secretA}`, async () => {
+			expect(await undo(w, undoData)).toEqual({ ok: true })
+		})
+		const again = await seedWorld()
+		await withSecret(secretA, async () => {
+			undoData = await okUndo(again, await detectInput(again, 'required_first'))
+		})
+		await withSecret(secretB, async () => {
+			expect(await undo(again, undoData)).toEqual({ ok: false, error: 'invalid_input' })
+		})
+	})
+
+	it('refuses a manifest older than a day and a tampered issuedAt', async () => {
+		const w = await seedWorld()
+		const undoData = await okUndo(w, await detectInput(w, 'required_first'))
+		expect(await undo(w, { ...undoData, issuedAt: undoData.issuedAt + 1 })).toEqual({
+			ok: false,
+			error: 'invalid_input',
+		})
+		const { signature: _signature, ...rest } = undoData
+		const old = { ...rest, issuedAt: Date.now() - 25 * 60 * 60 * 1000 }
+		const expired: MenuCardUndo = {
+			...old,
+			signature: signMenuCardUndo(w.org.id, old),
+		}
+		expect(await undo(w, expired)).toEqual({ ok: false, error: 'invalid_input' })
+		// The genuine one still works.
+		expect(await undo(w, undoData)).toEqual({ ok: true })
+	})
+
+	it('does not use the raw session secret as the key', async () => {
+		const w = await seedWorld()
+		const undoData = await okUndo(w, await detectInput(w, 'required_first'))
+		const { signature, ...rest } = undoData
+		const { createHmac } = await import('node:crypto')
+		const raw = createHmac('sha256', process.env.SESSION_SECRET!)
+			.update(`menu-card-undo:v1:${JSON.stringify([w.org.id, rest.snapshotId])}`)
+			.digest('hex')
+		expect(signature).not.toBe(raw)
+		expect(signature).toMatch(/^[0-9a-f]{64}$/)
+	})
+})
+
+describe('batch size and plan limits', () => {
+	const bigKind = (count: number): MenuCardKindImpl => ({
+		kind: 'merge_duplicates',
+		detect(graph) {
+			const category = graph.categories[0]!
+			const items = graph.items.filter((item) => item.id.length > 0)
+			const refs = [categoryRef(graph, category.id), ...items.map((i) => itemRef(graph, i.id))]
+			return [
+				draftOf(graph, 'merge_duplicates', { type: 'item', id: items[0]!.id }, refs, {
+					count,
+				}),
+			]
+		},
+		plan(graph, request) {
+			const category = graph.categories[0]!
+			const items = graph.items
+			const ops: MenuCardOp[] = []
+			for (let i = 0; i < (request.params.count as number); i += 1) {
+				ops.push({
+					op: 'assign',
+					link: 'item_category',
+					parentId: category.id,
+					childId: items[i % items.length]!.id,
+					position: i,
+				})
+			}
+			return { ok: true, ops }
+		},
+	})
+
+	it('stamps updatedAt in a few chunked statements instead of one per record', async () => {
+		const w = await seedWorld()
+		const base = { organizationId: w.org.id, createdAt: OLD, updatedAt: OLD }
+		await db.insert(OrganizationMenuItem).values(
+			Array.from({ length: 150 }, (_, i) => ({
+				...base,
+				displayName: name(`Filler ${i}`),
+				price: 1,
+				position: 100 + i,
+			})),
+		)
+		const { graph, content } = await loadMenuGraph(w.organization)
+		const ops = graph.items.map(
+			(item, i): MenuCardOp => ({
+				op: 'assign',
+				link: 'item_category',
+				parentId: w.c1.id,
+				childId: item.id,
+				position: i,
+			}),
+		)
+		const touchedRecords = graph.items.length + 1
+		const built = buildStatements(ops, content, w.org.id, NOW)
+		// The old shape: one statement per op plus one stamp per touched record.
+		expect(built.statements).toHaveLength(ops.length + 3)
+		expect(built.statements.length).toBeLessThan(ops.length + touchedRecords)
+		expect(built.touched).toHaveLength(touchedRecords)
+
+		// And it still applies, with every touched record stamped.
+		installKinds([bigKind(graph.items.length)])
+		const [result] = await apply(w, [await detectInput(w, 'merge_duplicates')])
+		expect(result?.ok).toBe(true)
+		const stamped = (await db.select().from(OrganizationMenuItem)).filter(
+			(row) => row.organizationId === w.org.id && row.updatedAt.getTime() === NOW.getTime(),
+		)
+		expect(stamped).toHaveLength(graph.items.length)
+	})
+
+	it('answers plan_too_large instead of dropping the card or calling it invalid', async () => {
+		const w = await seedWorld()
+		installKinds([bigKind(501)])
+		const { drafts } = await detectDrafts(w, 'merge_duplicates')
+		expect(drafts).toHaveLength(1)
+		const [result] = await apply(w, [input(drafts[0]!)])
+		expect(result).toEqual({ ok: false, error: 'plan_too_large' })
+		const graph = makeMenuGraph({ items: [{ id: 'a' }] })
+		const ops = Array.from(
+			{ length: 501 },
+			(_, i): MenuCardOp => ({ op: 'update', entity: 'item', id: 'a', set: { position: i } }),
+		)
+		expect(validateCardPlan(graph, [{ type: 'item', id: 'a' }], ops)).toBe('plan_too_large')
+	})
+})
+
+describe('POS-linked copies', () => {
+	const graph = makeMenuGraph({
+		items: [{ id: 'posd' }, { id: 'plain' }],
+		posLinks: [{ entityType: 'item', localId: 'posd' }],
+	})
+	const refs = [
+		{ type: 'item' as const, id: 'posd' },
+		{ type: 'item' as const, id: 'plain' },
+	]
+	const copy = (from: string): MenuCardOp => ({
+		op: 'insert',
+		entity: 'item',
+		tempId: 'c',
+		copyFrom: from,
+		values: { displayName: '{"en":"Copy"}' },
+	})
+	const hide = (id: string): MenuCardOp => ({
+		op: 'update',
+		entity: 'item',
+		id,
+		set: { availabilityStatus: 'hidden' },
+	})
+
+	it('refuses a copy of a POS dish that the same plan hides', () => {
+		expect(validateCardPlan(graph, refs, [copy('posd'), hide('posd')])).toBe('pos_owned')
+		expect(validateCardPlan(graph, refs, [hide('posd'), copy('posd')])).toBe('pos_owned')
+	})
+
+	it('allows copying a POS dish that stays visible, and hiding a plain one', () => {
+		expect(validateCardPlan(graph, refs, [copy('posd')])).toBeNull()
+		expect(validateCardPlan(graph, refs, [copy('plain'), hide('plain')])).toBeNull()
 	})
 })

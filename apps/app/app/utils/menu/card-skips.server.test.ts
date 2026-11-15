@@ -8,6 +8,31 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { insertTestUser } from '#tests/dashboard-utils.ts'
 import { createTestOrganization } from '#tests/test-utils.ts'
 
+// `beforeDelete`: runs just before the next `db.delete(...).where(...)`.
+const hooks = vi.hoisted(() => ({
+	beforeDelete: null as null | (() => Promise<void>),
+}))
+vi.mock('@repo/database', async (importOriginal) => {
+	const original = await importOriginal<Record<string, unknown> & { db: object }>()
+	return {
+		...original,
+		db: new Proxy(original.db as typeof db, {
+			get(target, key, receiver) {
+				if (key !== 'delete' || !hooks.beforeDelete) {
+					return Reflect.get(target, key, receiver)
+				}
+				const hook = hooks.beforeDelete
+				hooks.beforeDelete = null
+				return (table: never) => ({
+					where: async (condition: never) => {
+						await hook()
+						return (target as typeof db).delete(table as never).where(condition as never)
+					},
+				})
+			},
+		}),
+	}
+})
 vi.mock('#app/utils/sites/kv-cache.server.ts', () => ({
 	purgeOrganizationSiteCache: vi.fn(async () => true),
 }))
@@ -203,6 +228,31 @@ describe('card skips', () => {
 		const kept = await filterSkippedCards(w.org.id, changed, ['typo'])
 		expect(kept).toHaveLength(1)
 		expect(await dismissals(w)).toHaveLength(0)
+	})
+
+	it('does not delete a skip that was saved again with a new fingerprint meanwhile', async () => {
+		const w = await world()
+		const [draft] = await drafts(w)
+		await skip(w, draft!)
+		await db
+			.update(OrganizationMenuItem)
+			.set({ updatedAt: new Date('2026-03-01T00:00:00.000Z') })
+			.where(eq(OrganizationMenuItem.id, w.broken.id))
+		const changed = await drafts(w)
+
+		// Between the read of the stale row and its delete, a manager skips the
+		// changed card again (same row id, new fingerprint).
+		hooks.beforeDelete = async () => {
+			await db
+				.update(MenuCheckDismissal)
+				.set({ fingerprint: 'saved-a-moment-ago' })
+				.where(eq(MenuCheckDismissal.organizationId, w.org.id))
+		}
+
+		await filterSkippedCards(w.org.id, changed, ['typo'])
+		const rows = await dismissals(w)
+		expect(rows).toHaveLength(1)
+		expect(rows[0]!.fingerprint).toBe('saved-a-moment-ago')
 	})
 
 	it('deletes the skip when the card is gone, but only for kinds that ran', async () => {

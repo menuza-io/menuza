@@ -303,7 +303,7 @@ async function setRestoreLock(organizationId: string, locked: boolean) {
 		)
 }
 
- 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function upsertTable(
 	tx: MenuDbClient,
 	table: any,
@@ -333,7 +333,7 @@ async function removeAddedRecords(
 	const optionIds = new Set(content.options.map((row) => row.id))
 
 	const assignmentFilters = async (
-		 
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		table: any,
 		snapIds: Set<string>,
 		liveJoin: () => Promise<string[]>,
@@ -443,7 +443,7 @@ async function removeAddedRecords(
 	)
 
 	const deleteOrgRows = async (
-		 
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		table: any,
 		keepIds: Set<string>,
 	) => {

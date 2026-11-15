@@ -2,7 +2,7 @@ import {
 	and,
 	db,
 	eq,
-	inArray,
+	or,
 	like,
 	MenuCheckDismissal,
 } from '@repo/database'
@@ -64,22 +64,33 @@ export async function filterSkippedCards(
 		drafts.map((draft) => [`${cardKey(draft.kind)}\u0000${draft.primary.id}`, draft]),
 	)
 	const skipped = new Set<MenuCardDraft>()
-	const stale: string[] = []
+	const stale: Array<{ id: string; fingerprint: string }> = []
 	for (const row of rows) {
 		if (!ran.has(row.checkKey)) continue
 		const draft = byKey.get(`${row.checkKey}\u0000${row.entityId}`)
 		if (draft && draft.fingerprint === row.fingerprint) skipped.add(draft)
-		else stale.push(row.id)
+		else stale.push({ id: row.id, fingerprint: row.fingerprint })
 	}
 	if (stale.length > 0) {
 		try {
-			for (let start = 0; start < stale.length; start += 90) {
+			// Match the fingerprint too: a skip saved again a moment ago (new
+			// fingerprint) is not the stale row we read.
+			for (let start = 0; start < stale.length; start += 40) {
 				await db
 					.delete(MenuCheckDismissal)
 					.where(
 						and(
 							eq(MenuCheckDismissal.organizationId, organizationId),
-							inArray(MenuCheckDismissal.id, stale.slice(start, start + 90)),
+							or(
+								...stale
+									.slice(start, start + 40)
+									.map((row) =>
+										and(
+											eq(MenuCheckDismissal.id, row.id),
+											eq(MenuCheckDismissal.fingerprint, row.fingerprint),
+										),
+									),
+							),
 						),
 					)
 			}

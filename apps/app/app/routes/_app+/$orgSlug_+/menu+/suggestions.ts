@@ -149,6 +149,8 @@ function fail(error: string, status: number) {
 function cardStatus(error: MenuCardError): number {
 	if (error === 'stale_suggestion' || error === 'restore_in_progress') return 409
 	if (error === 'feature_off' || error === 'snapshot_gone') return 404
+	if (error === 'write_failed') return 500
+	if (error === 'plan_too_large') return 422
 	return 400
 }
 

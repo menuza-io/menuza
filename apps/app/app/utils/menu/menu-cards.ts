@@ -164,8 +164,11 @@ export type MenuCard = {
 /** What Accept returns and Undo sends back. */
 export type MenuCardUndo = {
 	snapshotId: string
-	/** Existing records Accept changed, with their `updatedAt` after Accept. */
-	touched: MenuCardRef[]
+	/**
+	 * Existing records Accept changed, with their `updatedAt` after Accept and
+	 * the columns Accept wrote (Undo puts back only those; link ends have none).
+	 */
+	touched: MenuCardUndoTouched[]
 	/** Records Accept created (Undo deletes them), with their `updatedAt`. */
 	created: MenuCardRef[]
 	/**
@@ -174,12 +177,19 @@ export type MenuCardUndo = {
 	 * link of the touched records.
 	 */
 	links: MenuCardLinkRef[]
+	/** When Accept ran (epoch ms). Undo refuses a manifest older than a day. */
+	issuedAt: number
 	/**
 	 * Server HMAC over the organization and everything above, so Undo only
 	 * ever restores what this Accept actually changed.
 	 */
 	signature: string
 }
+
+export type MenuCardUndoTouched = MenuCardRef & { fields: string[] }
+
+/** How long an Undo manifest stays valid after Accept. */
+export const MENU_CARD_UNDO_MAX_AGE_MS = 24 * 60 * 60 * 1000
 
 export type MenuCardLinkRef = {
 	link: MenuCardLink
@@ -207,6 +217,10 @@ export const MENU_CARD_ERRORS = [
 	'invalid_plan',
 	/** A History restore is running. */
 	'restore_in_progress',
+	/** The write failed and nothing was saved for this card. */
+	'write_failed',
+	/** The plan has more ops than one card may write. */
+	'plan_too_large',
 ] as const
 export type MenuCardError = (typeof MENU_CARD_ERRORS)[number]
 
@@ -410,7 +424,11 @@ export type MenuCardOp =
 			op: 'insert'
 			entity: 'modifier_group'
 			tempId: string
-			values: MenuCardGroupSet & { name: string }
+			/** `availabilityStatus` is allowed on insert only (a new group can start hidden). */
+			values: MenuCardGroupSet & {
+				name: string
+				availabilityStatus?: AvailabilityStatus
+			}
 	  }
 	/** With `copyFrom` (in `refs`) the option's safety data is copied verbatim. */
 	| {
@@ -539,7 +557,10 @@ const InsertSchema = z.discriminatedUnion('entity', [
 		op: z.literal('insert'),
 		entity: z.literal('modifier_group'),
 		tempId: TempId,
-		values: partialStrict(GroupSetShape).required({ name: true }),
+		values: partialStrict({
+			...GroupSetShape,
+			availabilityStatus: Availability,
+		}).required({ name: true }),
 	}),
 	z.strictObject({
 		op: z.literal('insert'),
@@ -590,7 +611,10 @@ export const MenuCardOpSchema: z.ZodType<MenuCardOp> = z.union([
 	UnassignSchema,
 ])
 
-export const MenuCardOpsSchema = z.array(MenuCardOpSchema).max(500)
+/** Most ops one card's plan may hold. */
+export const MENU_CARD_MAX_OPS = 500
+
+export const MenuCardOpsSchema = z.array(MenuCardOpSchema).max(MENU_CARD_MAX_OPS)
 
 /**
  * Every existing record a plan writes or copies from, with its type. Link
@@ -675,7 +699,13 @@ export type MenuCardApplyInput = z.infer<typeof MenuCardApplyInputSchema>
 
 export const MenuCardUndoSchema = z.object({
 	snapshotId: z.string().min(1).max(64),
-	touched: z.array(MenuCardRefSchema).max(MENU_CARD_LIMITS.undoTouched),
+	touched: z
+		.array(
+			MenuCardRefSchema.extend({
+				fields: z.array(z.string().min(1).max(60)).max(60),
+			}),
+		)
+		.max(MENU_CARD_LIMITS.undoTouched),
 	created: z.array(MenuCardRefSchema).max(MENU_CARD_LIMITS.undoCreated),
 	links: z
 		.array(
@@ -686,6 +716,7 @@ export const MenuCardUndoSchema = z.object({
 			}),
 		)
 		.max(MENU_CARD_LIMITS.undoLinks),
+	issuedAt: z.number().int().positive(),
 	signature: z.string().regex(/^[0-9a-f]{64}$/),
 })
 
