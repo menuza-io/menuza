@@ -418,6 +418,8 @@ export async function kitchenFeed(
 				and(
 					eq(restaurantOrders.orgId, orgId),
 					eq(restaurantOrders.locationId, locationId),
+					// Never `pending_acceptance` (#107): a waiting order is not a
+					// ticket until a person accepts it.
 					or(
 						inArray(restaurantOrders.status, [
 							'accepted',
@@ -427,6 +429,9 @@ export async function kitchenFeed(
 						and(
 							eq(restaurantOrders.status, 'cancelled'),
 							gte(restaurantOrders.cancelledAt, new Date(now - 30 * 60_000)),
+							// One turned down (or cancelled by the guest) while it waited
+							// never reached the kitchen: no cancelled ticket either.
+							sql`not (${restaurantOrders.acceptanceDeadlineAt} is not null and ${restaurantOrders.acceptedAt} is null)`,
 						),
 					),
 					payableOrderCondition(),

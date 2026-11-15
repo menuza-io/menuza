@@ -22,6 +22,10 @@ import {
 	verifyOrderLinkToken,
 } from '../lib/order-link.ts'
 import { renderOrderEmail } from '../lib/order-messages-email.ts'
+import {
+	orderRefundKicksIdle,
+	setOrderRefundKickForTest,
+} from '../lib/order-refund-kick.ts'
 import { resolveOrganizationForBrowserAuth } from '../lib/origin.ts'
 import { syncEnvFromProcess } from '../lib/secrets.ts'
 import { sendTenantEmail } from '../lib/tenant-email.ts'
@@ -44,6 +48,7 @@ import {
 	applyPaymentEvent,
 	bindPaymentSession,
 	updateOperatorOrder,
+	updateOperatorOrderWithRefund,
 } from './order-service.ts'
 
 vi.mock('../lib/origin.ts', () => ({
@@ -293,6 +298,7 @@ describe('guest order messages', () => {
 			getContext: async () => ORG_CONTEXT,
 			sendSms: sms,
 		})
+		setOrderRefundKickForTest(async () => ({ status: 'sent' }))
 
 		vi.stubGlobal(
 			'fetch',
@@ -326,6 +332,7 @@ describe('guest order messages', () => {
 	afterEach(async () => {
 		await orderMessagesIdle()
 		setOrderMessageSendDepsForTest(null)
+		setOrderRefundKickForTest(null)
 		await destroyTenantDb(orgId).catch(() => {})
 		fs.rmSync(directory, { recursive: true, force: true })
 		vi.unstubAllEnvs()
@@ -841,6 +848,45 @@ describe('guest order messages', () => {
 		expect(mail.text).toContain('Refunded: $5.00')
 	})
 
+	it('says a full refund is on its way, and a guest-visible reason, on the cancelled email', async () => {
+		const orderId = await placed({ paymentMethod: 'online' })
+		const { pay } = await payOnline(orderId)
+		expect((await pay()).ok).toBe(true)
+		await orderMessagesIdle()
+		const result = await updateOperatorOrderWithRefund(
+			orgId,
+			orderId,
+			{ status: 'cancelled', cancelReason: 'out_of_stock', refund: 'full' },
+			{},
+			{ mayRefund: true, origin: 'operator', actorId: 'usr_1' },
+		)
+		expect(result.ok && result.data.refund?.refund?.status).toBe('pending')
+		await orderMessagesIdle()
+		await orderRefundKicksIdle()
+		const mail = send.mock.calls.at(-1)![0]
+		expect(mail.subject).toMatch(/was cancelled$/)
+		const total = (await orderRow(orderId)).totalCents
+		expect(mail.text).toContain(
+			`Refund on its way: $${(total / 100).toFixed(2)}`,
+		)
+		expect(mail.text).toContain('Reason: Something you ordered ran out')
+		expect(mail.text).not.toContain('Refunded:')
+	})
+
+	it('keeps an internal cancel reason out of the cancelled email', async () => {
+		const orderId = await placed()
+		const result = await updateOperatorOrder(orgId, orderId, {
+			status: 'cancelled',
+			cancelReason: 'duplicate',
+		})
+		expect(result.ok).toBe(true)
+		await orderMessagesIdle()
+		const mail = send.mock.calls.at(-1)![0]
+		expect(mail.subject).toMatch(/was cancelled$/)
+		expect(mail.text).not.toContain('Reason')
+		expect(mail.text).not.toContain('duplicate')
+	})
+
 	it('resends the receipt on demand, outside the once-per-kind queue', async () => {
 		const orderId = await placed()
 		expect(await sendOrderReceiptNow(orgId, orderId)).toBe('sent')
@@ -918,6 +964,22 @@ describe('order email rendering', () => {
 		expect(rendered.text).toMatch(/Arriving 6:00\sPM to 6:30\sPM/)
 		expect(rendered.text).toContain('Delivery fee: $5.00')
 		expect(rendered.html).toContain('dir="ltr"')
+	})
+
+	it('names only guest-visible cancel reasons, in the guest language', () => {
+		const cancelled = (cancelReason: 'kitchen_closed' | 'too_busy') =>
+			renderOrderEmail({
+				kind: 'cancelled',
+				locale: 'ar',
+				theme: null,
+				restaurantName: 'Acme',
+				order: { ...order, cancelReason, refundedCents: 2665 },
+				timeZone: 'UTC',
+				linkUrl: null,
+			})
+		expect(cancelled('kitchen_closed').text).toContain('المطبخ مغلق')
+		expect(cancelled('too_busy').text).not.toContain('السبب')
+		expect(cancelled('too_busy').text).toContain('المبلغ المسترد')
 	})
 
 	it('reads "Ready around" for a pickup with a promised time', () => {

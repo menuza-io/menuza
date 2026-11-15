@@ -1,6 +1,6 @@
 import { msg, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import { userHasOrganizationPermission } from '@repo/auth'
+import { isImpersonating, userHasOrganizationPermission } from '@repo/auth'
 import { Alert, AlertDescription } from '@repo/ui/alert'
 import { Button } from '@repo/ui/button'
 import { Icon } from '@repo/ui/icon'
@@ -13,9 +13,18 @@ import {
 	useLoaderData,
 } from 'react-router'
 import { z } from 'zod'
-import { OrderDetail } from '#app/components/orders/order-detail.tsx'
+import {
+	type CancelOptions,
+	OrderDetail,
+} from '#app/components/orders/order-detail.tsx'
 import { useOrdersClient } from '#app/hooks/use-orders-client.ts'
 import { requireMenuRead } from '#app/utils/menu/access.server.ts'
+import {
+	decideOrder,
+	decisionErrorMessage,
+	type OrderDecision,
+	rejectNotice,
+} from '#app/utils/orders/acceptance.ts'
 import { getOrderCustomerLinkAccess } from '#app/utils/orders/customer-link.server.ts'
 import {
 	type Order,
@@ -43,12 +52,23 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		organization.id,
 		ORG_PERMISSIONS.UPDATE_MENU_ANY,
 	)
+	// Provider refunds (and cancelling a paid order with a refund) need their
+	// own permission and are never offered while impersonating. The action
+	// and the region check again; this only shows or hides the entry points.
+	const canRefund =
+		!(await isImpersonating(request)) &&
+		(await userHasOrganizationPermission(
+			userId,
+			organization.id,
+			ORG_PERMISSIONS.UPDATE_ORDER_REFUND_ANY,
+		))
 	const link = await getOrderCustomerLinkAccess(request, orgSlug)
 	return data(
 		{
 			orgSlug,
 			orderId: params.orderId || '',
 			canWrite,
+			canRefund,
 			canViewCustomers: link.linkCustomers || link.linkGuests,
 		},
 		{ headers: { 'Cache-Control': 'private, no-store' } },
@@ -58,7 +78,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 type State = 'loading' | 'ready' | 'missing' | 'failed'
 
 export default function OrderPage() {
-	const { orgSlug, orderId, canWrite, canViewCustomers } =
+	const { orgSlug, orderId, canWrite, canRefund, canViewCustomers } =
 		useLoaderData<typeof loader>()
 	const { _ } = useLingui()
 	const request = useOrdersClient(orgSlug)
@@ -66,6 +86,7 @@ export default function OrderPage() {
 	const [state, setState] = useState<State>('loading')
 	const [busy, setBusy] = useState(false)
 	const [actionError, setActionError] = useState<string | null>(null)
+	const [notice, setNotice] = useState<string | null>(null)
 
 	const load = useCallback(
 		async (signal?: AbortSignal) => {
@@ -93,15 +114,33 @@ export default function OrderPage() {
 		return () => controller.abort()
 	}, [load])
 
-	const update = async (status: string, markPaid: boolean) => {
+	const update = async (
+		status: string,
+		markPaid: boolean,
+		cancel?: CancelOptions,
+	) => {
 		if (!order || busy || !canWrite) return
 		setBusy(true)
 		setActionError(null)
+		setNotice(null)
 		try {
-			await request(`/${encodeURIComponent(order.id)}`, {
+			const response = await request(`/${encodeURIComponent(order.id)}`, {
 				method: 'PATCH',
-				body: JSON.stringify({ status, markPaid }),
+				body: JSON.stringify({
+					status,
+					markPaid,
+					...(cancel
+						? {
+								cancelReason: cancel.cancelReason,
+								// Without the permission there is no refund choice.
+								refund: canRefund ? cancel.refund : 'none',
+							}
+						: {}),
+				}),
 			})
+			if (cancel?.refund === 'full' && canRefund) {
+				setNotice(cancelRefundNotice(response))
+			}
 			await load()
 		} catch {
 			setActionError(
@@ -109,6 +148,42 @@ export default function OrderPage() {
 			)
 		} finally {
 			setBusy(false)
+		}
+	}
+
+	/** What happened to the refund that was asked for with the cancellation. */
+	const cancelRefundNotice = (response: unknown): string | null => {
+		const parsed = z
+			.object({
+				refundIntent: z.unknown().nullable().optional(),
+				refundError: z.string().nullable().optional(),
+			})
+			.safeParse(response)
+		if (!parsed.success) return null
+		const { refundIntent, refundError } = parsed.data
+		if (refundIntent) {
+			return _(
+				msg`Order cancelled. Refund pending: it is being sent to the guest's card.`,
+			)
+		}
+		switch (refundError) {
+			case undefined:
+			case null:
+				return null
+			case 'payment_disputed':
+				return _(
+					msg`Order cancelled. It was not refunded because the payment is disputed.`,
+				)
+			case 'refund_pending':
+				return _(
+					msg`Order cancelled. Another refund is still being processed, so none was started.`,
+				)
+			case 'refund_complete':
+				return _(msg`Order cancelled. It was already fully refunded.`)
+			default:
+				return _(
+					msg`Order cancelled, but the refund could not be started. Refund it from this order.`,
+				)
 		}
 	}
 
@@ -143,6 +218,27 @@ export default function OrderPage() {
 			}),
 		})
 		setOrder(z.object({ order: orderSchema }).parse(response).order)
+	}
+
+	/** Accept or reject a waiting order (manual acceptance). */
+	const decide = async (decision: OrderDecision) => {
+		if (!order || busy || !canWrite) return
+		setBusy(true)
+		setActionError(null)
+		setNotice(null)
+		try {
+			const response = await decideOrder(request, order.id, decision)
+			setNotice(
+				decision.kind === 'reject'
+					? rejectNotice(response, _)
+					: _(msg`Order accepted.`),
+			)
+		} catch (error) {
+			setActionError(decisionErrorMessage(error, _))
+		} finally {
+			setBusy(false)
+		}
+		await load()
 	}
 
 	const shell = 'mx-auto w-full max-w-5xl py-8 md:px-6 lg:px-8'
@@ -211,8 +307,14 @@ export default function OrderPage() {
 				orgSlug={orgSlug}
 				canWrite={canWrite}
 				canViewCustomers={canViewCustomers}
+				canRefund={canRefund}
 				busy={busy}
-				onUpdate={(status, markPaid) => void update(status, markPaid)}
+				notice={notice}
+				onUpdate={(status, markPaid, cancel) =>
+					void update(status, markPaid, cancel)
+				}
+				onAccept={() => void decide({ kind: 'accept' })}
+				onReject={(reason) => void decide({ kind: 'reject', reason })}
 				onRecordRefund={canWrite ? recordRefund : undefined}
 				onPushBack={canWrite ? pushBack : undefined}
 				onReload={() => void load()}

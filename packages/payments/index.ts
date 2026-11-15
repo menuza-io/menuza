@@ -163,6 +163,9 @@ export {
 	type RestaurantTerminalPaymentStatus,
 } from './src/shop'
 
+// Restaurant order provider refunds and disputes (#80; non-PII ids only)
+export * from './src/shop/restaurant-refunds'
+
 // Reservation payments (deposits, guarantees, fees, refunds; non-PII ids only)
 export * from './src/shop/reservation'
 export * from './src/shop/reservation-consent'

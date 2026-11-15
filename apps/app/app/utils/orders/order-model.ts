@@ -41,9 +41,37 @@ export const orderSchema = z.object({
 				amountCents: z.number().int(),
 				note: z.string().nullable(),
 				createdAt: z.string(),
+				/** Missing from an older region: a record that already succeeded. */
+				kind: z.enum(['record', 'provider']).optional().catch(undefined),
+				status: z
+					.enum(['pending', 'succeeded', 'failed'])
+					.optional()
+					.catch(undefined),
+				failureCode: z.string().nullable().optional().catch(undefined),
 			}),
 		)
 		.optional(),
+	/** Provider refunds started but not yet settled; they reserve money. */
+	refundPendingCents: z.number().int().optional().catch(undefined),
+	/** Paid minus refunded minus pending; the region's figure wins. */
+	refundableCents: z.number().int().optional().catch(undefined),
+	refundStatus: z
+		.enum(['none', 'pending', 'failed', 'partial', 'full'])
+		.optional()
+		.catch(undefined),
+	/** Short provider code of the newest failed refund. */
+	refundFailureCode: z.string().nullable().optional().catch(undefined),
+	/** The card issuer is disputing the payment. */
+	disputed: z.boolean().optional().catch(undefined),
+	disputeStatus: z.string().nullable().optional().catch(undefined),
+	/** Why the order was cancelled (an internal value) and by whom. */
+	cancelReason: z.string().nullable().optional().catch(undefined),
+	cancelledBy: z.string().nullable().optional().catch(undefined),
+	/** Manual acceptance (#107): when a waiting order is turned down by itself. */
+	acceptanceDeadlineAt: z.string().nullable().optional().catch(undefined),
+	acceptedAt: z.string().nullable().optional().catch(undefined),
+	/** Set when the order was turned down while it waited (or timed out). */
+	rejectedReason: z.string().nullable().optional().catch(undefined),
 	currency: z.string(),
 	createdAt: z.string().nullable(),
 	paidAt: z.string().nullable().optional(),
@@ -172,6 +200,25 @@ export function refundableCents(order: {
 }
 
 /**
+ * What a provider refund can still take, in cents: the region's figure, or
+ * paid minus refunded minus pending when an older region sends none.
+ */
+export function providerRefundableCents(order: {
+	totalCents: number
+	refundedCents: number
+	refundPendingCents?: number
+	refundableCents?: number
+}): number {
+	if (typeof order.refundableCents === 'number') {
+		return Math.max(0, order.refundableCents)
+	}
+	return Math.max(
+		0,
+		order.totalCents - order.refundedCents - (order.refundPendingCents ?? 0),
+	)
+}
+
+/**
  * The payment word for lists and headers. A paid order whose money came back
  * reads Refunded or Partly refunded; the stored status stays `paid`. Mirrors
  * `orderRefundState()` in `@repo/common/restaurant-orders`.
@@ -245,6 +292,9 @@ export const PUSH_BACK_MINUTES = [5, 10, 15] as const
 export type PushBackMinutes = (typeof PUSH_BACK_MINUTES)[number]
 /** Statuses where the promised time can still move. */
 export const PUSHABLE_ORDER_STATUSES = ['accepted', 'preparing', 'ready']
+
+/** An order placed under manual acceptance that nobody has decided yet. */
+export const WAITING_ORDER_STATUS = 'pending_acceptance'
 
 export const CLOSED_ORDER_STATUSES = ['completed', 'cancelled', 'expired']
 

@@ -71,6 +71,118 @@ describe('online orders regional client', () => {
 		)
 	})
 
+	it('parses the refund fields and outcome the region now sends', async () => {
+		const detail = {
+			order: {
+				id: 'o1',
+				number: 'W-1',
+				version: 'a'.repeat(64),
+				status: 'cancelled',
+				fulfillment: 'pickup',
+				channel: 'web',
+				tableLabel: null,
+				guestName: 'Maya',
+				createdAt: 1,
+				dueAt: null,
+				paymentMethod: 'online',
+				paymentStatus: 'paid',
+				onTab: false,
+				currency: 'USD',
+				totalCents: 1000,
+				refundedCents: 0,
+				itemCount: 1,
+				openedAt: 1,
+				completedAt: null,
+				cancelledAt: 2,
+				refundStatus: 'pending',
+				refundPendingCents: 1000,
+				disputed: false,
+				lines: [],
+				phoneMasked: '•••• 1',
+				hasEmail: false,
+				delivery: null,
+				subtotalCents: 1000,
+				taxCents: 0,
+				deliveryFeeCents: 0,
+				tipCents: 0,
+				discountCents: 0,
+				loyaltyDiscountCents: 0,
+				paidAt: 1,
+				refundableCents: 0,
+				refunds: [
+					{
+						amountCents: 1000,
+						note: '',
+						at: 2,
+						kind: 'provider',
+						status: 'pending',
+						failureCode: null,
+					},
+				],
+				history: [],
+			},
+			grants: feed.grants,
+			serverNow: 3,
+			refundOutcome: { started: true, code: null },
+		}
+		const answer = await createOrdersApi(settings, session, async () =>
+			Response.json(detail),
+		).detail('o1')
+		expect(answer.refundOutcome).toEqual({ started: true, code: null })
+		expect(answer.order.refundStatus).toBe('pending')
+	})
+
+	it('parses a summary without refundStatus, refundPendingCents and disputed (the region omits them by default)', async () => {
+		const bare = {
+			id: 'o1',
+			number: 'W-1',
+			version: 'a'.repeat(64),
+			status: 'accepted',
+			fulfillment: 'pickup',
+			channel: 'web',
+			tableLabel: null,
+			guestName: 'Maya',
+			createdAt: 1,
+			dueAt: null,
+			paymentMethod: 'online',
+			paymentStatus: 'paid',
+			onTab: false,
+			currency: 'USD',
+			totalCents: 1000,
+			refundedCents: 0,
+			itemCount: 1,
+			openedAt: 1,
+			completedAt: null,
+			cancelledAt: null,
+		}
+		const answer = await createOrdersApi(settings, session, async () =>
+			Response.json({ ...feed, orders: [bare] }),
+		).feed()
+		expect(answer.orders[0]).toEqual(bare)
+		expect(answer.orders[0]?.refundStatus).toBeUndefined()
+		expect(answer.orders[0]?.refundPendingCents ?? 0).toBe(0)
+		expect(answer.orders[0]?.disputed ?? false).toBe(false)
+		// The same order with the keys present still parses.
+		const full = await createOrdersApi(settings, session, async () =>
+			Response.json({
+				...feed,
+				orders: [
+					{
+						...bare,
+						refundStatus: 'pending',
+						refundPendingCents: 500,
+						disputed: true,
+					},
+				],
+			}),
+		).feed()
+		expect(full.orders[0]).toMatchObject({
+			refundStatus: 'pending',
+			refundPendingCents: 500,
+			disputed: true,
+		})
+	})
+
 	it('treats a network failure as a lost connection and an odd answer as invalid', async () => {
 		await expect(
 			createOrdersApi(settings, session, async () => {

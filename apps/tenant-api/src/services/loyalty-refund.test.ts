@@ -49,11 +49,13 @@ import {
 	NOW,
 	reserveReward,
 } from './loyalty-test-fixture.ts'
-import { recordOrderRefund } from './order-refund-service.ts'
+import { createProviderRefundIntent } from './order-provider-refund-service.ts'
+import { refundOrderThroughProvider } from './order-refund-test-fixture.ts'
 
 /**
- * Money returned after a sale. An online order's refunds are recorded on the
- * order and loyalty reads them whenever it reconciles; a QR tab paid from the
+ * Money returned after a sale. An online order is refunded through the
+ * payment provider (the region books it, the provider's success settles it)
+ * and loyalty reads the order's succeeded refunds whenever it reconciles; a QR tab paid from the
  * phone is refunded through loyalty. Either way points come back from the
  * purchase's own snapshot and the reward's points come back once, when every
  * cent paid is back.
@@ -151,7 +153,7 @@ function orderRefund(orderId: string, input: OrderRefundInput = {}) {
 	const request: OperatorOrderRefundRequest = input.full
 		? { full: true, note: NOTE }
 		: { amountCents: input.amountCents ?? 0, note: NOTE }
-	return recordOrderRefund(ORG, orderId, {
+	return refundOrderThroughProvider(ORG, orderId, {
 		request,
 		actorId: OPERATOR,
 		idempotencyKey: input.idempotencyKey ?? key(),
@@ -328,7 +330,7 @@ describe('order refunds', () => {
 		})
 	})
 
-	it('records refunds of paid online orders only', async () => {
+	it('refunds paid online orders through the provider only', async () => {
 		expect(await refusal('ord_missing', { amountCents: 100 })).toMatchObject({
 			status: 404,
 			code: 'order_not_found',
@@ -336,7 +338,7 @@ describe('order refunds', () => {
 		const handoff = await insertOrder(ORG, { paymentMethod: 'handoff' })
 		expect(await refusal(handoff, { amountCents: 100 })).toMatchObject({
 			status: 409,
-			code: 'refund_not_online',
+			code: 'order_not_refundable',
 		})
 		const pending = await insertOrder(ORG, {
 			status: 'accepted',
@@ -346,13 +348,13 @@ describe('order refunds', () => {
 		})
 		expect(await refusal(pending, { amountCents: 100 })).toMatchObject({
 			status: 409,
-			code: 'refund_not_paid',
+			code: 'order_not_refundable',
 		})
 		// A tab's round is handed over and paid with the tab.
 		const round = await insertRound(ORG, await insertTab(ORG))
 		expect(await refusal(round, { full: true })).toMatchObject({
 			status: 409,
-			code: 'refund_not_online',
+			code: 'order_not_refundable',
 		})
 	})
 
@@ -1140,6 +1142,24 @@ describe('refunds in the report', () => {
 		await refundOrder(orderId, { amountCents: 100 })
 		await refundOrder(untracked, { amountCents: 100 })
 		await tabRefund(tabId, { amountMinor: 100 })
+		// A provider refund still waiting moved no points: not counted.
+		const waiting = await earnedOrder(memberId)
+		await refundOrderThroughProvider(ORG, waiting, {
+			request: { amountCents: 100, note: NOTE },
+			actorId: OPERATOR,
+			idempotencyKey: key(),
+			now: NOW,
+		})
+		await createProviderRefundIntent({
+			orgId: ORG,
+			orderRef: waiting,
+			amount: { amountCents: 100 },
+			note: NOTE,
+			idempotencyKey: key(),
+			origin: 'operator',
+			actorId: OPERATOR,
+			now: NOW,
+		})
 
 		const db = await getTenantDb(ORG)
 		const day = await getLoyaltyReport(
@@ -1147,7 +1167,7 @@ describe('refunds in the report', () => {
 			{ from: '2026-01-10', to: '2026-01-10' },
 			{ now: NOW },
 		)
-		expect(day.operations.refundsRecorded).toBe(2)
+		expect(day.operations.refundsRecorded).toBe(3)
 		const nextDay = await getLoyaltyReport(
 			db,
 			{ from: '2026-01-11', to: '2026-01-11' },

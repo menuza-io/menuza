@@ -8,6 +8,9 @@ import {
 	extractPostalCode,
 	inclusiveTaxCents,
 	operatorOrderPatchSchema,
+	RESTAURANT_ACTIVE_ORDER_STATUSES,
+	RESTAURANT_ORDER_STATUS_VALUES,
+	RESTAURANT_SALES_ORDER_STATUSES,
 	resolveDeliveryZoneForPoint,
 	priceRestaurantOrder,
 	readGuestMessagesPolicy,
@@ -2493,6 +2496,101 @@ describe('operatorOrderPatchSchema', () => {
 				expectedPromisedVersion: -1,
 			}).success,
 		).toBe(false)
+	})
+})
+
+describe('operatorOrderPatchSchema: cancel, refund and reject (#80, #107)', () => {
+	it('keeps a plain cancel valid for callers that send no reason', () => {
+		expect(
+			operatorOrderPatchSchema.safeParse({ status: 'cancelled' }).success,
+		).toBe(true)
+	})
+
+	it('takes a cancel reason and a refund choice when cancelling', () => {
+		const parsed = operatorOrderPatchSchema.safeParse({
+			status: 'cancelled',
+			cancelReason: 'out_of_stock',
+			refund: 'full',
+		})
+		expect(parsed.success).toBe(true)
+		expect(
+			operatorOrderPatchSchema.safeParse({
+				status: 'cancelled',
+				rejectReason: 'too_busy',
+				refund: 'none',
+			}).success,
+		).toBe(true)
+	})
+
+	it('refuses unknown reasons and system-only reasons', () => {
+		for (const body of [
+			{ status: 'cancelled', cancelReason: 'bored' },
+			{ status: 'cancelled', cancelReason: 'not_accepted_in_time' },
+			{ status: 'cancelled', cancelReason: 'too_busy' },
+			{ status: 'cancelled', rejectReason: 'guest_asked' },
+			{ status: 'cancelled', rejectReason: 'not_accepted_in_time' },
+			{ status: 'cancelled', refund: 'partial' },
+		])
+			expect(operatorOrderPatchSchema.safeParse(body).success).toBe(false)
+	})
+
+	it('only takes reasons and refunds with a cancel, and never both reasons', () => {
+		for (const body of [
+			{ status: 'ready', cancelReason: 'other' },
+			{ status: 'accepted', rejectReason: 'other' },
+			{ status: 'completed', refund: 'full' },
+			{ status: 'cancelled', cancelReason: 'other', rejectReason: 'other' },
+		])
+			expect(operatorOrderPatchSchema.safeParse(body).success).toBe(false)
+	})
+
+	it('still refuses a cancel mixed with a push-back', () => {
+		expect(
+			operatorOrderPatchSchema.safeParse({
+				status: 'cancelled',
+				cancelReason: 'other',
+				delayMinutes: 10,
+				expectedPromisedVersion: 0,
+			}).success,
+		).toBe(false)
+	})
+
+	it('accepting an order waiting for acceptance is a plain status write', () => {
+		expect(
+			operatorOrderPatchSchema.safeParse({ status: 'accepted' }).success,
+		).toBe(true)
+		// The waiting state is system-owned: never set by an operator.
+		expect(
+			operatorOrderPatchSchema.safeParse({ status: 'pending_acceptance' })
+				.success,
+		).toBe(false)
+	})
+})
+
+describe('order statuses (#107)', () => {
+	it('holds capacity while waiting for acceptance but does not count it as a sale', () => {
+		expect(RESTAURANT_ORDER_STATUS_VALUES).toContain('pending_acceptance')
+		expect(RESTAURANT_ACTIVE_ORDER_STATUSES).toContain('pending_acceptance')
+		expect(RESTAURANT_SALES_ORDER_STATUSES).not.toContain('pending_acceptance')
+		expect([...RESTAURANT_SALES_ORDER_STATUSES].sort()).toEqual(
+			RESTAURANT_ACTIVE_ORDER_STATUSES.filter(
+				(status) => status !== 'pending_acceptance',
+			).sort(),
+		)
+	})
+})
+
+describe('order context: guest cancel and acceptance', () => {
+	it('keeps the context readable whatever the new fields hold', () => {
+		const base = makeContext()
+		for (const value of [undefined, 'x', { loc: 1 }, null])
+			expect(
+				restaurantOrderContextSchema.safeParse({
+					...base,
+					guestCancel: value,
+					acceptance: value,
+				}).success,
+			).toBe(true)
 	})
 })
 

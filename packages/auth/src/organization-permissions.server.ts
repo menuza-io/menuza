@@ -277,6 +277,12 @@ export const ORG_PERMISSIONS = {
 	// profile). Acts only with READ_SETTINGS_ANY (the customers facet) and never
 	// while impersonating.
 	UPDATE_MARKETING_CONSENT_ANY: 'update:marketing_consent:any' as const,
+
+	// Refunding an online order through its payment provider (#80; Orders,
+	// order detail, and cancelling a paid online order with a refund). Never
+	// while impersonating. The record-only refund of handoff orders keeps the
+	// menu write grant.
+	UPDATE_ORDER_REFUND_ANY: 'update:order_refund:any' as const,
 } as const
 
 /**

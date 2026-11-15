@@ -15,10 +15,12 @@ vi.hoisted(() => {
 })
 
 const restaurantDispatch = vi.hoisted(() => vi.fn())
+const restaurantRefundDispatch = vi.hoisted(() => vi.fn())
 const recordShopOrder = vi.hoisted(() => vi.fn())
 
 vi.mock('#app/utils/restaurant-orders/payment-webhooks.server.ts', () => ({
 	handleRestaurantOrderCheckoutWebhookEvent: restaurantDispatch,
+	handleRestaurantOrderCheckoutRefundOrDisputeEvent: restaurantRefundDispatch,
 }))
 
 vi.mock('#app/utils/shop.server.ts', async () => {
@@ -95,6 +97,7 @@ describe('checkout.com webhook restaurant order dispatch', () => {
 	beforeEach(() => {
 		consoleError.mockImplementation(() => {})
 		restaurantDispatch.mockReset().mockResolvedValue(undefined)
+		restaurantRefundDispatch.mockReset().mockResolvedValue(undefined)
 		recordShopOrder.mockReset().mockResolvedValue(undefined)
 	})
 
@@ -105,6 +108,7 @@ describe('checkout.com webhook restaurant order dispatch', () => {
 		)
 		expect(response.status).toBe(400)
 		expect(restaurantDispatch).not.toHaveBeenCalled()
+		expect(restaurantRefundDispatch).not.toHaveBeenCalled()
 		expect(recordShopOrder).not.toHaveBeenCalled()
 	})
 
@@ -112,7 +116,17 @@ describe('checkout.com webhook restaurant order dispatch', () => {
 		const response = await signedCheckoutWebhookRequest(RESTAURANT_EVENT)
 		expect(response.status).toBe(200)
 		expect(restaurantDispatch).toHaveBeenCalledWith(RESTAURANT_EVENT)
+		// Refund and dispute events take the same verified path (#80).
+		expect(restaurantRefundDispatch).toHaveBeenCalledWith(RESTAURANT_EVENT)
 		expect(recordShopOrder).not.toHaveBeenCalled()
+	})
+
+	it('answers 500 when a refund or dispute could not reach the region', async () => {
+		restaurantRefundDispatch.mockRejectedValue(
+			new Error('regional_unreachable'),
+		)
+		const response = await signedCheckoutWebhookRequest(RESTAURANT_EVENT)
+		expect(response.status).toBe(500)
 	})
 
 	it('returns non-2xx when the regional callback fails so Checkout.com retries', async () => {

@@ -157,6 +157,18 @@ export function getPermissionGroups(): PermissionGroup[] {
 			],
 		},
 		{
+			title: t`Orders`,
+			description: t`Money on online orders.`,
+			permissions: [
+				{
+					id: 'org_perm_update_order_refund_any',
+					label: t`Refund online orders`,
+					description: t`Give money back to the guest's card for an order paid online, in full or in part, including when cancelling it.`,
+					warning: t`Returns money to guests`,
+				},
+			],
+		},
+		{
 			title: t`Media library`,
 			description: t`Shared images and videos, and the AI photo studio.`,
 			permissions: [

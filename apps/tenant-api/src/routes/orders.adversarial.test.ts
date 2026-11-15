@@ -1481,13 +1481,20 @@ describe('Adversarial: restaurant ordering (public browser surface)', () => {
 				expect(linkText).not.toContain(value)
 			}
 			// Everything else is the same as the full receipt.
+			// `serverNow` is the clock at each read, so it differs by a few ms.
 			const {
 				contact: _contact,
 				delivery: _delivery,
 				lines: fullLines,
+				serverNow: _fullNow,
 				...fullRest
 			} = full
-			const { delivery: _d, lines: linkLines, ...linkRest } = reduced
+			const {
+				delivery: _d,
+				lines: linkLines,
+				serverNow: _linkNow,
+				...linkRest
+			} = reduced
 			expect(linkRest).toEqual(fullRest)
 			expect(linkLines).toEqual(
 				fullLines.map((line: Record<string, unknown>) => ({
@@ -1512,6 +1519,15 @@ describe('Adversarial: restaurant ordering (public browser surface)', () => {
 				'contact',
 			])
 			expect(linkKeys.filter((key) => !fullKeys.includes(key))).toEqual([])
+			// The guest-cancel glance (#111) is on both, deliberately.
+			const cancel = { allowed: true, until: '2026-01-01T00:00:00.000Z' }
+			const fullWithCancel = Object.keys(receiptOrder(row!, null, cancel))
+			const linkWithCancel = Object.keys(linkReceiptOrder(row!, null, cancel))
+			expect(
+				fullWithCancel.filter((key) => !linkWithCancel.includes(key)),
+			).toEqual(['contact'])
+			expect(linkWithCancel).toContain('cancel')
+			expect(linkReceiptOrder(row!, null, cancel).cancel).toEqual(cancel)
 			expect(Object.keys(linkReceiptOrder(row!).delivery ?? {}).sort()).toEqual(
 				['feeCents', 'zoneId'],
 			)

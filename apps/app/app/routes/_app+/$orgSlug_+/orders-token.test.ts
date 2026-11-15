@@ -12,9 +12,12 @@ const mocks = vi.hoisted(() => ({
 	locations: vi.fn(),
 	grants: vi.fn(),
 	impersonating: vi.fn(),
+	permission: vi.fn(),
 }))
 vi.mock('@repo/auth', () => ({
 	isImpersonating: mocks.impersonating,
+	userHasOrganizationPermission: mocks.permission,
+	ORG_PERMISSIONS: { UPDATE_ORDER_REFUND_ANY: 'update:order_refund:any' },
 }))
 vi.mock('#app/utils/loyalty/access.server.ts', () => ({
 	getUserLoyaltyGrants: mocks.grants,
@@ -48,6 +51,7 @@ describe('order credentials', () => {
 		mocks.locations.mockResolvedValue(null)
 		mocks.grants.mockResolvedValue([])
 		mocks.impersonating.mockResolvedValue(false)
+		mocks.permission.mockResolvedValue(false)
 		mocks.client.mockResolvedValue({
 			jwt: 'scoped-credential',
 			tenantApiUrl: 'https://regional.example',
@@ -198,6 +202,47 @@ describe('order credentials', () => {
 		expect(mocks.client).toHaveBeenCalledWith(expect.any(Request), 'cafe', {
 			scope: 'orders:write',
 			claims: { locationIds: null, impersonated: true },
+		})
+	})
+
+	it('lets write credentials cancel with a provider refund only for holders of the order refund permission', async () => {
+		mocks.permission.mockResolvedValue(true)
+		await run('?write=1')
+		expect(mocks.permission).toHaveBeenCalledWith(
+			'operator',
+			'organization',
+			'update:order_refund:any',
+		)
+		expect(mocks.client).toHaveBeenCalledWith(expect.any(Request), 'cafe', {
+			scope: 'orders:write',
+			claims: { locationIds: null, refundProvider: true },
+		})
+
+		// Read credentials never carry it.
+		mocks.client.mockClear()
+		await run()
+		expect(mocks.client).toHaveBeenCalledWith(expect.any(Request), 'cafe', {
+			scope: 'orders:read',
+			claims: { locationIds: null },
+		})
+
+		// Nor does an impersonated session, whatever the role.
+		mocks.impersonating.mockResolvedValue(true)
+		mocks.client.mockClear()
+		await run('?write=1')
+		expect(mocks.client).toHaveBeenCalledWith(expect.any(Request), 'cafe', {
+			scope: 'orders:write',
+			claims: { locationIds: null, impersonated: true },
+		})
+
+		// Nor a member without the permission.
+		mocks.impersonating.mockResolvedValue(false)
+		mocks.permission.mockResolvedValue(false)
+		mocks.client.mockClear()
+		await run('?write=1')
+		expect(mocks.client).toHaveBeenCalledWith(expect.any(Request), 'cafe', {
+			scope: 'orders:write',
+			claims: { locationIds: null },
 		})
 	})
 })

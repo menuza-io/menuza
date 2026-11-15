@@ -1,5 +1,6 @@
 import { useCallback, useRef } from 'react'
 import { z } from 'zod'
+import { recordServerClock } from '#app/utils/server-clock.ts'
 
 const credentialsSchema = z.object({
 	jwt: z.string(),
@@ -86,6 +87,7 @@ export function useOperatorClient(
 					headers,
 				})
 			}
+			const sentAt = Date.now()
 			let response = await send()
 			if (response.status === 401) {
 				cached.current.delete(credentialsFor(write).key)
@@ -105,7 +107,18 @@ export function useOperatorClient(
 					error.success ? (body as Record<string, unknown>) : null,
 				)
 			}
-			return response.json() as Promise<unknown>
+			const body: unknown = await response.json()
+			// The region's list and detail reads carry its clock (`serverNow`, ms):
+			// deadlines it set are counted down against it (see `server-clock.ts`).
+			if (
+				typeof body === 'object' &&
+				body !== null &&
+				'serverNow' in body &&
+				typeof body.serverNow === 'number'
+			) {
+				recordServerClock(body.serverNow, sentAt)
+			}
+			return body
 		},
 		[base, credentialsFor],
 	)

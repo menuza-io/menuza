@@ -15,6 +15,9 @@ import {
 	marketingMessages,
 	personErasureLog,
 	provisionTenantDb,
+	qrTabRefunds,
+	qrTables,
+	qrTabs,
 	restaurantOrderRefunds,
 	restaurantOrders,
 	shopOrders,
@@ -596,6 +599,76 @@ describe('person erasure', () => {
 		])
 		const orders = await a.select().from(restaurantOrders)
 		expect(orders.map((row) => row.refundedCents)).toEqual([300, 300])
+	})
+
+	it('clears provider refund notes on a scrubbed tab and keeps the amounts', async () => {
+		const id = await seedPerson(a, { name: NAME, phone: PHONE, email: EMAIL })
+		await a
+			.insert(qrTables)
+			.values({ id: 'tbl_1', locationId: 'loc_1', label: 'T1' })
+		const tab = {
+			tableId: 'tbl_1',
+			locationId: 'loc_1',
+			tableLabel: 'T1',
+			status: 'closed' as const,
+			openedDay: '2026-01-10',
+			currency: 'USD',
+			paymentMethod: 'online' as const,
+			paymentStatus: 'paid' as const,
+			paymentProcessor: 'connect' as const,
+		}
+		await a.insert(qrTabs).values([
+			{
+				...tab,
+				id: 'tab-mine',
+				tabNumber: 'T-1',
+				guestPhone: PHONE,
+				paymentSessionId: 'cs_tab_mine',
+			},
+			{
+				...tab,
+				id: 'tab-other',
+				tabNumber: 'T-2',
+				guestPhone: OTHER_PHONE,
+				paymentSessionId: 'cs_tab_other',
+			},
+		])
+		const refund = {
+			amountCents: 300,
+			currency: 'USD',
+			actorId: 'user_1',
+			origin: 'operator' as const,
+			processor: 'connect' as const,
+			requestHash: 'h',
+		}
+		await a.insert(qrTabRefunds).values([
+			{
+				...refund,
+				id: 'tr_mine',
+				tabId: 'tab-mine',
+				sessionId: 'cs_tab_mine',
+				note: `${NAME} asked for it back`,
+				idempotencyKey: 'trk1',
+			},
+			{
+				...refund,
+				id: 'tr_other',
+				tabId: 'tab-other',
+				sessionId: 'cs_tab_other',
+				note: 'Wrong dish',
+				idempotencyKey: 'trk2',
+			},
+		])
+
+		await erasePerson(a, { customerId: id }, { actorId: 'user_1' })
+		expect(await tablesContaining(a, [PHONE, EMAIL, NAME])).toEqual([])
+		const refunds = await a.select().from(qrTabRefunds).orderBy(qrTabRefunds.id)
+		expect(
+			refunds.map((row) => [row.id, row.note, row.amountCents, row.status]),
+		).toEqual([
+			['tr_mine', null, 300, 'pending'],
+			['tr_other', 'Wrong dish', 300, 'pending'],
+		])
 	})
 	describe('guest restaurant orders stored in another format', () => {
 		const base = {

@@ -1,6 +1,6 @@
 import { msg, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import { userHasOrganizationPermission } from '@repo/auth'
+import { isImpersonating, userHasOrganizationPermission } from '@repo/auth'
 import { cn } from '@repo/ui'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
@@ -21,6 +21,7 @@ import {
 	PaymentStatusLabel,
 } from '#app/components/orders/order-status.tsx'
 import { OrderingControls } from '#app/components/orders/ordering-controls.tsx'
+import { WaitingLane } from '#app/components/orders/waiting-lane.tsx'
 import { OpenTabs } from '#app/components/qr/open-tabs.tsx'
 import { useOrdersClient } from '#app/hooks/use-orders-client.ts'
 import { loadOrderingControls } from '#app/utils/location/ordering-controls.server.ts'
@@ -32,9 +33,14 @@ import {
 	type Order,
 	orderSchema,
 	paymentDisplayStatus,
+	WAITING_ORDER_STATUS,
 	relativeTime,
 } from '#app/utils/orders/order-model.ts'
 import { ordersHref } from '#app/utils/orders/orders-link.ts'
+import {
+	readSoundChoice,
+	shouldPollOrders,
+} from '#app/utils/orders/waiting-chime.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { ORG_PERMISSIONS } from '#app/utils/organization/permissions.server.ts'
 import { customersHref } from '#app/utils/people/customers-link.ts'
@@ -54,6 +60,16 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		organization.id,
 		ORG_PERMISSIONS.UPDATE_MENU_ANY,
 	)
+	// Provider refunds (and cancelling a paid order with a refund) need their
+	// own permission and are never offered while impersonating. The action
+	// and the region check again; this only shows or hides the entry points.
+	const canRefund =
+		!(await isImpersonating(request)) &&
+		(await userHasOrganizationPermission(
+			userId,
+			organization.id,
+			ORG_PERMISSIONS.UPDATE_ORDER_REFUND_ANY,
+		))
 	const link = await getOrderCustomerLinkAccess(request, orgSlug)
 	const qr = await getQrOrderingFeatures(organization.id)
 	const orderingControls = await loadOrderingControls(organization.id)
@@ -64,6 +80,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		{
 			orgSlug,
 			canWrite,
+			canRefund,
 			loyaltyEnabled,
 			// Tabs show while QR ordering is on, even with dine-in switched off,
 			// so tabs still open (and payments to check) can be settled. The
@@ -122,15 +139,29 @@ export default function OrdersInbox() {
 		setOrders([])
 		setLoading(true)
 		void refresh(controller.signal)
+		// A hidden tab keeps polling while the waiting lane's chime is on: that
+		// is exactly when an order that arrives has to be heard. Browsers slow a
+		// hidden tab's timer down, so coming back refreshes at once too.
 		const timer = window.setInterval(() => {
-			if (document.visibilityState === 'visible')
+			if (shouldPollOrders(document.visibilityState, readSoundChoice()))
 				void refresh(controller.signal)
 		}, 15000)
+		const onVisible = () => {
+			if (document.visibilityState === 'visible')
+				void refresh(controller.signal)
+		}
+		document.addEventListener('visibilitychange', onVisible)
 		return () => {
 			controller.abort()
 			window.clearInterval(timer)
+			document.removeEventListener('visibilitychange', onVisible)
 		}
 	}, [refresh])
+
+	const waiting = orders.filter(
+		(order) => order.status === WAITING_ORDER_STATUS,
+	)
+	const others = orders.filter((order) => order.status !== WAITING_ORDER_STATUS)
 
 	return (
 		<div className="mx-auto w-full max-w-4xl space-y-6 py-8 md:px-6 lg:px-8">
@@ -156,6 +187,13 @@ export default function OrdersInbox() {
 					{error}
 				</p>
 			) : null}
+			<WaitingLane
+				orgSlug={orgSlug}
+				orders={waiting}
+				canWrite={canWrite}
+				request={request}
+				onChanged={() => void refresh()}
+			/>
 			<OrderingControls
 				orgSlug={orgSlug}
 				locations={orderingControls}
@@ -182,12 +220,12 @@ export default function OrdersInbox() {
 						<Trans>Submitted orders will appear here.</Trans>
 					</p>
 				</div>
-			) : (
+			) : others.length === 0 ? null : (
 				<ul
 					className="divide-border divide-y rounded-lg border"
 					data-testid="orders-list"
 				>
-					{orders.map((order) => {
+					{others.map((order) => {
 						const ago = relativeTime(order.createdAt, i18n.locale)
 						const href = ordersHref(orgSlug, { orderId: order.id })
 						return (
@@ -275,6 +313,23 @@ export default function OrdersInbox() {
 											<PaymentStatusLabel
 												status={paymentDisplayStatus(order)}
 											/>
+											{order.disputed ? (
+												<Badge
+													variant="destructive"
+													data-testid="order-row-disputed"
+												>
+													<Trans>Disputed</Trans>
+												</Badge>
+											) : null}
+											{order.refundStatus === 'pending' ? (
+												<span className="text-warning text-xs">
+													<Trans>Refund pending</Trans>
+												</span>
+											) : order.refundStatus === 'failed' ? (
+												<span className="text-destructive text-xs">
+													<Trans>Refund failed</Trans>
+												</span>
+											) : null}
 										</span>
 										<span className="text-muted-foreground text-xs">{ago}</span>
 									</div>

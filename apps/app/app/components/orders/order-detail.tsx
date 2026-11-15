@@ -1,6 +1,10 @@
 import { msg, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import {
+	ORDER_CANCEL_REASONS,
+	type OrderRejectReason,
+} from '@repo/common/restaurant-orders'
+import {
 	AlertDialog,
 	AlertDialogAction,
 	AlertDialogCancel,
@@ -24,13 +28,17 @@ import { Button } from '@repo/ui/button'
 import { Card, CardContent } from '@repo/ui/card'
 import { Checkbox } from '@repo/ui/checkbox'
 import { Icon } from '@repo/ui/icon'
+import { RadioGroup, RadioGroupItem } from '@repo/ui/radio-group'
 import { Separator } from '@repo/ui/separator'
-import { Fragment, type ReactNode, useState } from 'react'
+import { Fragment, type ReactNode, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router'
+import { SelectField } from '#app/components/staff/controls.tsx'
 import { OperatorRequestError } from '#app/hooks/use-operator-client.ts'
 import { useSettledFocus } from '#app/hooks/use-settled-focus.ts'
+import { isRejectedOrder } from '#app/utils/orders/acceptance.ts'
 import {
 	CLOSED_ORDER_STATUSES,
+	WAITING_ORDER_STATUS,
 	formatDateTime,
 	appliedDiscounts,
 	formatMoney,
@@ -46,12 +54,30 @@ import {
 	type Order,
 	type OrderRefundBody,
 	paymentDisplayStatus,
+	providerRefundableCents,
 	refundableCents,
 	relativeTime,
 } from '#app/utils/orders/order-model.ts'
 import { customersHref } from '#app/utils/people/customers-link.ts'
+import { AcceptanceCountdown, RejectOrderDialog } from './acceptance.tsx'
 import { OrderStatusLabel, PaymentStatusLabel } from './order-status.tsx'
+import {
+	ProviderRefundDialog,
+	type ProviderRefundOutcome,
+} from './provider-refund-dialog.tsx'
 import { RecordOrderRefundDialog } from './record-order-refund-dialog.tsx'
+import {
+	CANCEL_REASON_LABELS,
+	CANCELLED_BY_LABELS,
+	REFUND_FAILURE_FALLBACK,
+	REFUND_FAILURE_LABELS,
+} from './refund-labels.ts'
+
+/** What the cancel dialog sends with the cancellation. */
+export type CancelOptions = {
+	cancelReason: (typeof ORDER_CANCEL_REASONS)[number]
+	refund: 'none' | 'full'
+}
 
 function CopyButton({ value, label }: { value: string; label: string }) {
 	const [copied, setCopied] = useState(false)
@@ -139,8 +165,12 @@ export function OrderDetail({
 	orgSlug,
 	canWrite,
 	canViewCustomers,
+	canRefund = false,
 	busy,
+	notice,
 	onUpdate,
+	onAccept,
+	onReject,
 	onRecordRefund,
 	onReload,
 	onPushBack,
@@ -150,9 +180,17 @@ export function OrderDetail({
 	orgSlug: string
 	canWrite: boolean
 	canViewCustomers: boolean
+	/** Holds the order refund permission: provider refunds are offered. */
+	canRefund?: boolean
 	busy: boolean
-	onUpdate: (status: string, markPaid: boolean) => void
-	/** Records money returned outside Menuza; omit to hide the action. */
+	/** The answer to the last action (for example the refund of a cancel). */
+	notice?: string | null
+	onUpdate: (status: string, markPaid: boolean, cancel?: CancelOptions) => void
+	/** Accepts a waiting order (manual acceptance). */
+	onAccept?: () => void
+	/** Rejects a waiting order with a reason; a paid online order is refunded. */
+	onReject?: (reason: OrderRejectReason) => void
+	/** Records money returned at the counter (pay at handoff orders only). */
 	onRecordRefund?: (
 		body: OrderRefundBody,
 		idempotencyKey: string,
@@ -167,8 +205,12 @@ export function OrderDetail({
 	const locale = i18n.locale
 	const [markPaid, setMarkPaid] = useState(false)
 	const [cancelOpen, setCancelOpen] = useState(false)
+	const [rejectOpen, setRejectOpen] = useState(false)
 	const [refundOpen, setRefundOpen] = useState(false)
+	const [providerRefundOpen, setProviderRefundOpen] = useState(false)
 	const [refundNotice, setRefundNotice] = useState<string | null>(null)
+	const [cancelReason, setCancelReason] = useState('')
+	const [cancelRefund, setCancelRefund] = useState<'none' | 'full'>('full')
 	const [pushing, setPushing] = useState(false)
 	const [pushError, setPushError] = useState<string | null>(null)
 	// A full refund removes the Record a refund button.
@@ -180,6 +222,24 @@ export function OrderDetail({
 	const orderNumber = order.number
 	const next = nextOrderStatus(order.status)
 	const closed = CLOSED_ORDER_STATUSES.includes(order.status)
+	const waiting = order.status === WAITING_ORDER_STATUS
+	// Accept and Reject leave with the waiting banner, and focus would fall to
+	// the page: bring it to the order's heading, unless it is already elsewhere.
+	const headingRef = useRef<HTMLHeadingElement>(null)
+	const wasWaiting = useRef(waiting)
+	useEffect(() => {
+		if (wasWaiting.current && !waiting) {
+			const active = document.activeElement
+			if (!active || active === document.body) headingRef.current?.focus()
+		}
+		wasWaiting.current = waiting
+	}, [waiting])
+	const rejected = isRejectedOrder(order)
+	const rejectedReasonLabel = rejected
+		? CANCEL_REASON_LABELS[
+				order.rejectedReason || order.cancelReason || 'other'
+			]
+		: undefined
 	const paid = order.paymentStatus === 'paid'
 	const paymentNotRequired = isPaymentNotRequired(order)
 	const discounts = appliedDiscounts(order)
@@ -204,12 +264,48 @@ export function OrderDetail({
 	const paidOnline = paid && order.paymentMethod === 'online'
 	const refundedCents = order.refundedCents ?? 0
 	const refundedMoney = money(refundedCents)
+	const paidAtHandoff = paid && order.paymentMethod === 'handoff'
+	const disputed = order.disputed === true
+	const refundPendingCents = order.refundPendingCents ?? 0
+	const refundPending =
+		refundPendingCents > 0 || order.refundStatus === 'pending'
+	const refundFailed = order.refundStatus === 'failed' && !refundPending
+	const refundableLeft = providerRefundableCents(order)
+	// Pay at counter orders only record money handed back; online orders
+	// are refunded through the payment provider.
 	const canRecordRefund =
 		canWrite &&
 		Boolean(onRecordRefund) &&
-		paidOnline &&
+		paidAtHandoff &&
 		!onTab &&
 		refundableCents(order) > 0
+	const canProviderRefund =
+		canWrite &&
+		canRefund &&
+		paidOnline &&
+		!onTab &&
+		!disputed &&
+		!refundPending &&
+		refundableLeft > 0
+	const failureText = refundFailed
+		? _(
+				(order.refundFailureCode &&
+					REFUND_FAILURE_LABELS[order.refundFailureCode]) ||
+					REFUND_FAILURE_FALLBACK,
+			)
+		: null
+	const refundPendingMoney = money(refundPendingCents)
+	const cancelReasonLabel = order.cancelReason
+		? CANCEL_REASON_LABELS[order.cancelReason]
+		: undefined
+	const cancelledByLabel = order.cancelledBy
+		? CANCELLED_BY_LABELS[order.cancelledBy]
+		: undefined
+	const offerCancelRefund = canProviderRefund
+	const cancelReasonOptions = ORDER_CANCEL_REASONS.map((value) => ({
+		value,
+		label: _(CANCEL_REASON_LABELS[value]!),
+	}))
 	const created = formatDateTime(order.createdAt, locale)
 	const createdAgo = relativeTime(order.createdAt, locale)
 	const profileHref = order.customerKey
@@ -305,11 +401,27 @@ export function OrderDetail({
 		},
 		...(order.refunds ?? []).map((refund) => {
 			const amount = money(refund.amountCents)
+			const provider = refund.kind === 'provider'
+			const label = !provider
+				? _(msg`Refund recorded: ${amount}`)
+				: refund.status === 'pending'
+					? _(msg`Refund pending: ${amount}`)
+					: refund.status === 'failed'
+						? _(msg`Refund failed: ${amount}`)
+						: _(msg`Refunded to card: ${amount}`)
+			const failure =
+				provider && refund.status === 'failed'
+					? _(
+							(refund.failureCode &&
+								REFUND_FAILURE_LABELS[refund.failureCode]) ||
+								REFUND_FAILURE_FALLBACK,
+						)
+					: null
 			return {
 				key: `refund:${refund.id}`,
-				label: _(msg`Refund recorded: ${amount}`),
+				label,
 				at: refund.createdAt,
-				detail: refund.note,
+				detail: [failure, refund.note].filter(Boolean).join(' · ') || null,
 			}
 		}),
 	]
@@ -368,12 +480,21 @@ export function OrderDetail({
 				<div className="flex flex-wrap items-start justify-between gap-4">
 					<div className="flex min-w-0 flex-col gap-1">
 						<div className="flex items-center gap-1">
-							<h1 className="text-2xl font-semibold tabular-nums">
+							<h1
+								ref={headingRef}
+								tabIndex={-1}
+								className="text-2xl font-semibold tabular-nums outline-none"
+							>
 								<bdi dir="ltr">{order.number}</bdi>
 							</h1>
 							{paymentNotRequired ? (
 								<Badge variant="secondary" data-testid="order-free-badge">
 									<Trans>Free order</Trans>
+								</Badge>
+							) : null}
+							{disputed ? (
+								<Badge variant="destructive" data-testid="order-disputed-badge">
+									<Trans>Disputed</Trans>
 								</Badge>
 							) : null}
 							<CopyButton
@@ -413,6 +534,36 @@ export function OrderDetail({
 								/>
 							</dd>
 						</div>
+						{rejected && rejectedReasonLabel ? (
+							<div className="flex flex-col gap-1">
+								<dt className="text-muted-foreground text-xs">
+									<Trans>Cancelled</Trans>
+								</dt>
+								<dd data-testid="order-cancel-info">
+									{order.cancelReason === 'not_accepted_in_time'
+										? _(msg`Not accepted in time`)
+										: (() => {
+												const reason = _(rejectedReasonLabel)
+												return _(msg`Rejected: ${reason}`)
+											})()}
+								</dd>
+							</div>
+						) : order.status === 'cancelled' &&
+						  (cancelledByLabel || cancelReasonLabel) ? (
+							<div className="flex flex-col gap-1">
+								<dt className="text-muted-foreground text-xs">
+									<Trans>Cancelled</Trans>
+								</dt>
+								<dd data-testid="order-cancel-info">
+									{[
+										cancelledByLabel ? _(cancelledByLabel) : null,
+										cancelReasonLabel ? _(cancelReasonLabel) : null,
+									]
+										.filter(Boolean)
+										.join(' · ')}
+								</dd>
+							</div>
+						) : null}
 					</dl>
 				</div>
 				{paymentExplanation ? (
@@ -433,6 +584,45 @@ export function OrderDetail({
 					</p>
 				) : null}
 			</header>
+
+			{waiting ? (
+				<section
+					className="border-warning/50 bg-warning/5 flex flex-wrap items-center justify-between gap-3 rounded-lg border p-4"
+					aria-label={_(msg`Waiting for you`)}
+					data-testid="order-acceptance-banner"
+				>
+					<div className="flex flex-col gap-0.5">
+						<p className="text-sm font-medium">
+							<Trans>This order is waiting for you to accept it.</Trans>
+						</p>
+						<AcceptanceCountdown
+							deadline={order.acceptanceDeadlineAt}
+							className="text-warning text-sm tabular-nums"
+						/>
+					</div>
+					{canWrite ? (
+						<div className="flex items-center gap-2">
+							<Button
+								type="button"
+								variant="outline"
+								disabled={busy || !onReject}
+								data-testid="order-reject"
+								onClick={() => setRejectOpen(true)}
+							>
+								<Trans>Reject</Trans>
+							</Button>
+							<Button
+								type="button"
+								disabled={busy || !onAccept}
+								data-testid="order-accept"
+								onClick={() => onAccept?.()}
+							>
+								<Trans>Accept</Trans>
+							</Button>
+						</div>
+					) : null}
+				</section>
+			) : null}
 
 			<div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
 				<Card className="lg:col-start-2 lg:row-start-1">
@@ -856,7 +1046,70 @@ export function OrderDetail({
 										</dd>
 									</>
 								) : null}
+								{refundPending ? (
+									<>
+										<dt className="text-muted-foreground">
+											<Trans>Refund</Trans>
+										</dt>
+										<dd data-testid="order-refund-pending">
+											<bdi>
+												{_(msg`Refund pending (${refundPendingMoney})`)}
+											</bdi>
+										</dd>
+									</>
+								) : null}
+								{refundFailed ? (
+									<>
+										<dt className="text-muted-foreground">
+											<Trans>Refund</Trans>
+										</dt>
+										<dd
+											className="text-destructive"
+											data-testid="order-refund-failed"
+										>
+											<Trans>Refund failed.</Trans> {failureText}
+										</dd>
+									</>
+								) : null}
 							</dl>
+							{disputed ? (
+								<p
+									role="note"
+									className="text-muted-foreground text-sm"
+									data-testid="order-disputed-note"
+								>
+									<Trans>
+										The guest disputed this payment with their card issuer, so
+										it cannot be refunded here until the dispute is settled.
+									</Trans>
+								</p>
+							) : null}
+							{canProviderRefund ? (
+								<div className="flex flex-col items-start gap-1.5">
+									<Button
+										type="button"
+										variant="outline"
+										size="sm"
+										onClick={() => {
+											setRefundNotice(null)
+											setProviderRefundOpen(true)
+										}}
+										data-testid="order-provider-refund-open"
+									>
+										{refundFailed ? (
+											<Trans>Try again</Trans>
+										) : (
+											<Trans>Refund</Trans>
+										)}
+									</Button>
+									<p className="text-muted-foreground text-xs">
+										<Trans>
+											The money goes back to the guest's card through your
+											payment provider.
+										</Trans>
+									</p>
+								</div>
+							) : null}
 							{canRecordRefund ? (
 								<div className="flex flex-col items-start gap-1.5">
 									<Button
@@ -873,8 +1126,8 @@ export function OrderDetail({
 									</Button>
 									<p className="text-muted-foreground text-xs">
 										<Trans>
-											Return the money in your payment provider first, then
-											record it here.
+											Give the money back at the counter first, then record it
+											here.
 										</Trans>
 									</p>
 								</div>
@@ -884,7 +1137,7 @@ export function OrderDetail({
 								className="text-sm empty:hidden"
 								data-testid="order-refund-notice"
 							>
-								{refundNotice}
+								{refundNotice ?? notice}
 							</p>
 						</Section>
 						<Separator variant="dashed" />
@@ -922,7 +1175,7 @@ export function OrderDetail({
 				</Card>
 			</div>
 
-			{canWrite && !closed ? (
+			{canWrite && !closed && !waiting ? (
 				<footer
 					className="bg-background/95 border-input sticky bottom-0 z-10 flex flex-col gap-3 border-t border-dashed py-3 backdrop-blur-sm"
 					data-testid="order-actions"
@@ -941,7 +1194,11 @@ export function OrderDetail({
 							type="button"
 							variant="destructive"
 							disabled={busy}
-							onClick={() => setCancelOpen(true)}
+							onClick={() => {
+								setCancelReason('')
+								setCancelRefund('full')
+								setCancelOpen(true)
+							}}
 						>
 							<Trans>Cancel order</Trans>
 						</Button>
@@ -965,6 +1222,17 @@ export function OrderDetail({
 				</footer>
 			) : null}
 
+			{waiting && canWrite ? (
+				<RejectOrderDialog
+					open={rejectOpen}
+					onOpenChange={setRejectOpen}
+					orderNumber={orderNumber}
+					refundsGuest={paidOnline}
+					busy={busy}
+					onConfirm={(reason) => onReject?.(reason)}
+				/>
+			) : null}
+
 			<AlertDialog open={cancelOpen} onOpenChange={setCancelOpen}>
 				<AlertDialogContent>
 					<AlertDialogHeader>
@@ -972,29 +1240,83 @@ export function OrderDetail({
 							{_(msg`Cancel order ${orderNumber}?`)}
 						</AlertDialogTitle>
 						<AlertDialogDescription>
-							{paidOnline
+							{offerCancelRefund
 								? _(
-										msg`${totalMoney} was received for this order. Cancelling does not refund it: refund it with your payment processor, then record the refund on this order.`,
+										msg`${totalMoney} was received for this order. The order is cancelled right away. Choose whether the guest gets their money back.`,
 									)
-								: paid
+								: paidOnline
 									? _(
-											msg`${totalMoney} was received for this order. Cancelling does not refund it: refund it separately with your payment processor.`,
+											msg`${totalMoney} was received for this order. Cancelling does not refund it. The order moves to Cancelled and cannot be reopened.`,
 										)
-									: _(
-											msg`No payment has been received, so there is nothing to refund. The order moves to Cancelled and cannot be reopened.`,
-										)}
+									: paid
+										? _(
+												msg`${totalMoney} was received for this order. Cancelling does not refund it: give the money back at the counter, then record the refund on this order.`,
+											)
+										: _(
+												msg`No payment has been received, so there is nothing to refund. The order moves to Cancelled and cannot be reopened.`,
+											)}
 						</AlertDialogDescription>
 					</AlertDialogHeader>
+					<div className="flex flex-col gap-4">
+						<SelectField
+							label={<Trans>Why is it cancelled?</Trans>}
+							hint={_(
+								msg`Saved on the order. The guest is told only when an item ran out or the kitchen is closed.`,
+							)}
+							id="order-cancel-reason"
+							testId="order-cancel-reason"
+							options={cancelReasonOptions}
+							value={cancelReason}
+							onValueChange={setCancelReason}
+							placeholder={_(msg`Choose a reason`)}
+						/>
+						{offerCancelRefund ? (
+							<fieldset className="flex flex-col gap-2">
+								<legend className="mb-1 text-sm font-medium">
+									<Trans>Refund the guest?</Trans>
+								</legend>
+								<RadioGroup
+									value={cancelRefund}
+									onValueChange={(next) =>
+										setCancelRefund(next === 'none' ? 'none' : 'full')
+									}
+									data-testid="order-cancel-refund"
+								>
+									<label className="flex items-center gap-2 text-sm">
+										<RadioGroupItem value="full" />
+										<Trans>Full refund</Trans>
+									</label>
+									<label className="flex items-center gap-2 text-sm">
+										<RadioGroupItem value="none" />
+										<Trans>No refund</Trans>
+									</label>
+								</RadioGroup>
+								{cancelRefund === 'full' ? (
+									<p className="text-muted-foreground text-xs">
+										<Trans>
+											The money goes back to the guest's card through your
+											payment provider. Card and payment provider fees are
+											usually not returned to you.
+										</Trans>
+									</p>
+								) : null}
+							</fieldset>
+						) : null}
+					</div>
 					<AlertDialogFooter>
 						<AlertDialogCancel disabled={busy}>
 							<Trans>Keep order</Trans>
 						</AlertDialogCancel>
 						<AlertDialogAction
 							variant="destructive"
-							disabled={busy}
+							disabled={busy || !cancelReason}
 							onClick={() => {
+								if (!cancelReason) return
 								setCancelOpen(false)
-								onUpdate('cancelled', false)
+								onUpdate('cancelled', false, {
+									cancelReason: cancelReason as CancelOptions['cancelReason'],
+									refund: offerCancelRefund ? cancelRefund : 'none',
+								})
 							}}
 						>
 							<Trans>Confirm cancellation</Trans>
@@ -1002,6 +1324,28 @@ export function OrderDetail({
 					</AlertDialogFooter>
 				</AlertDialogContent>
 			</AlertDialog>
+
+			{canWrite && canRefund && providerRefundOpen ? (
+				<ProviderRefundDialog
+					order={order}
+					orgSlug={orgSlug}
+					open
+					onOpenChange={setProviderRefundOpen}
+					onRefresh={() => onReload?.()}
+					finalFocus={refundFocus.finalFocus}
+					onDone={(outcome: ProviderRefundOutcome) => {
+						refundFocus.settle()
+						setProviderRefundOpen(false)
+						setRefundNotice(
+							outcome.delayed || outcome.refund.status === 'pending'
+								? _(msg`Refund pending. It is still being processed.`)
+								: outcome.refund.status === 'failed'
+									? _(msg`Refund failed. You can try again.`)
+									: _(msg`Refund sent to the guest's card.`),
+						)
+					}}
+				/>
+			) : null}
 
 			{/* Stays open after a reload makes the order fully refunded, so the
 			    answer that caused the reload is still on screen. */}

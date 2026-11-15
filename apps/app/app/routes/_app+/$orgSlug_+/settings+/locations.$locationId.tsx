@@ -36,13 +36,19 @@ import {
 	useLoaderData,
 } from 'react-router'
 import { z } from 'zod'
-import { CopyLocationOverridesDialog } from '#app/components/menu/copy-location-overrides-dialog.tsx'
 import {
 	type InitialLocationData,
 	LocationForm,
 } from '#app/components/locations/location-form.tsx'
+import { type OrderPolicyValues } from '#app/components/locations/order-policies-card.tsx'
+import { CopyLocationOverridesDialog } from '#app/components/menu/copy-location-overrides-dialog.tsx'
 import { ensureLocationCoordinates } from '#app/utils/location/geocoder.server.ts'
 import { locationTaxInputFields } from '#app/utils/location/tax-settings.ts'
+import {
+	isGuestCancelEnabled,
+	isManualAcceptanceEnabled,
+} from '#app/utils/orders/order-policies.server.ts'
+import { parseOrderPolicyFields } from '#app/utils/orders/order-policy-settings.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import {
 	requireUserWithOrganizationPermission,
@@ -93,6 +99,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		slug: true,
 		siteLocales: true,
 		siteDefaultLocale: true,
+		dataRegion: true,
 	})
 
 	await requireUserWithOrganizationPermission(
@@ -179,6 +186,38 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		'enabled',
 	)
 
+	const [guestCancelEnabled, acceptanceEnabled] = await Promise.all([
+		isGuestCancelEnabled(organization.id),
+		isManualAcceptanceEnabled(organization.id),
+	])
+	const orderPolicies =
+		guestCancelEnabled || acceptanceEnabled
+			? {
+					flags: {
+						guestCancel: guestCancelEnabled,
+						acceptance: acceptanceEnabled,
+					},
+					currency: organization.dataRegion === 'ksa' ? 'SAR' : 'USD',
+					initial: {
+						guestCancelMinutes: String(record.guestCancelMinutes ?? 0),
+						guestCancelScheduledLeadMinutes:
+							record.guestCancelScheduledLeadMinutes == null
+								? ''
+								: String(record.guestCancelScheduledLeadMinutes),
+						orderAcceptanceMode:
+							record.orderAcceptanceMode === 'manual' ? 'manual' : 'auto',
+						orderAcceptanceTimeoutMinutes: String(
+							record.orderAcceptanceTimeoutMinutes,
+						),
+						orderAcceptanceMinTotal:
+							record.orderAcceptanceMinTotalCents == null
+								? ''
+								: (record.orderAcceptanceMinTotalCents / 100).toFixed(2),
+						orderAcceptanceScheduledOnly: record.orderAcceptanceScheduledOnly,
+					} satisfies OrderPolicyValues,
+				}
+			: undefined
+
 	const allLocations = await db
 		.select({
 			id: OrganizationLocation.id,
@@ -193,6 +232,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		location,
 		reservationsEnabled,
 		allLocations,
+		orderPolicies,
 	}
 }
 
@@ -287,6 +327,19 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
 	const data = parsed.data
 
+	// Guest cancel and acceptance: a group whose flag is off is never written.
+	const policy = parseOrderPolicyFields(rawData, {
+		guestCancel: await isGuestCancelEnabled(organization.id),
+		acceptance: await isManualAcceptanceEnabled(organization.id),
+	})
+	if (!policy.ok) {
+		// The form words the code in the reader's language and marks the field.
+		return {
+			error: policy.error,
+			orderPolicyError: { field: policy.field, code: policy.code },
+		}
+	}
+
 	// Check if another location has this slug
 	const [existingWithSlug] = await db
 		.select({ id: OrganizationLocation.id })
@@ -341,6 +394,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				scheduling: data.scheduling || null,
 				deliveryConfig: data.deliveryConfig || null,
 				deliveryZones: data.deliveryZones || null,
+				...policy.patch,
 			})
 			.where(
 				and(
@@ -361,8 +415,13 @@ export async function action({ request, params }: ActionFunctionArgs) {
 }
 
 export default function EditLocationRoute() {
-	const { organization, location, reservationsEnabled, allLocations } =
-		useLoaderData<typeof loader>()
+	const {
+		organization,
+		location,
+		reservationsEnabled,
+		allLocations,
+		orderPolicies,
+	} = useLoaderData<typeof loader>()
 	const deleteFetcher = useFetcher<{
 		error?: string
 		futureReservations?: number
@@ -505,6 +564,7 @@ export default function EditLocationRoute() {
 				siteDefaultLocaleRaw={organization.siteDefaultLocale}
 				isEditing={true}
 				initialData={location}
+				orderPolicies={orderPolicies}
 			/>
 
 			<AlertDialog

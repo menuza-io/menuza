@@ -23,7 +23,13 @@ import {
 export const PERSON_ORDERS_PAGE_SIZE = 20
 const MAX_LIMIT = 50
 /** Spend ignores orders that never became revenue. */
-const NON_REVENUE_STATUSES = ['cancelled', 'expired', 'payment_review']
+// A waiting order (#107) may still be turned down: not spend yet.
+const NON_REVENUE_STATUSES = [
+	'cancelled',
+	'expired',
+	'payment_review',
+	'pending_acceptance',
+]
 
 type Cursor = { t: number; id: string }
 
@@ -174,7 +180,10 @@ export async function listPersonOrders(
 			fulfillment: order.fulfillment,
 			currency: order.currency,
 			totalCents: order.totalCents,
-			refundedCents: order.refundedCents,
+			refundedCents: Math.max(
+				0,
+				order.refundedCents - (order.refundReversedCents ?? 0),
+			),
 			itemCount: itemCount(order.lines),
 			createdAt: order.createdAt ? order.createdAt.toISOString() : null,
 			matchedBy: order.customerId === customer.id ? 'customer' : 'phone',

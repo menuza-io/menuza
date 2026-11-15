@@ -14,14 +14,17 @@ export const ORDER_MESSAGES_ALARM_INTERVAL_MS = 2 * 60 * 1000
 
 /**
  * Requests that can queue an order message: placing an order, a payment event,
- * and the status writes of the App, Station's Orders app and the kitchen.
- * Read paths a page or a screen polls (a receipt, the kitchen feed, order
- * lists) are left out so polling never keeps the alarm busy.
+ * the status writes of the App, Station's Orders app and the kitchen, and the
+ * guest's own cancel (`/orders/:id/cancel`; its GET is not polled: the
+ * receipt carries the same answer). Read paths a page or a screen polls (a
+ * receipt, the kitchen feed, order lists) are left out so polling never keeps
+ * the alarm busy.
  */
 export function isOrderMessagesActivityPath(pathname: string): boolean {
 	return (
 		pathname === '/orders' ||
 		pathname === '/api/orders/payment-status' ||
+		/^\/orders\/[^/]+\/cancel$/.test(pathname) ||
 		/^\/operator\/orders\/[^/]+$/.test(pathname) ||
 		/^\/pos\/online-orders\/[^/]+\/command$/.test(pathname) ||
 		pathname === '/pos/kds/command'

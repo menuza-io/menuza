@@ -637,6 +637,16 @@ const ORG_PERMISSIONS = [
 		description:
 			"Record a guest's marketing consent given in person, on a paper form, or by phone",
 	},
+	// Provider refunds of online orders (#80). Keep in sync with
+	// 0045_order_refunds_and_acceptance. Admins (the owner's preset) only.
+	{
+		id: 'org_perm_update_order_refund_any',
+		action: 'update',
+		entity: 'order_refund',
+		access: 'any',
+		context: 'organization',
+		description: 'Refund online orders through the payment provider',
+	},
 ] as const
 
 const SYSTEM_PERMISSIONS = [

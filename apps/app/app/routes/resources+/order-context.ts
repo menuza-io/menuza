@@ -18,6 +18,10 @@ import {
 	QR_ORDERING_FLAG_KEYS,
 	type QrOrderingFeatures,
 } from '@repo/common/qr-ordering'
+import {
+	type GuestCancelContext,
+	type OrderAcceptanceContext,
+} from '@repo/common/restaurant-orders'
 import { and, db, eq, Organization } from '@repo/database'
 import { type OrderContextDiscounts } from '@repo/discounts'
 import { TENANT_ORG_ID_PATTERN } from '@repo/tenant-db'
@@ -41,6 +45,7 @@ import {
 	buildPublicSiteMenuPayload,
 	type PublicSiteMenuPayload,
 } from '#app/utils/menu/public-menu-context.server.ts'
+import { buildOrderPolicyContext } from '#app/utils/orders/order-policies.server.ts'
 import {
 	resolveRestaurantOnlinePayment,
 	type RestaurantOnlinePayment,
@@ -74,6 +79,18 @@ export type OrderContextResponse = {
 	 * 100 is 100.00) and an item count for `items`.
 	 */
 	largeOrder: LargeOrderContext
+	/**
+	 * Guest self-cancel per location id (`ordering.guest_cancel`): only while
+	 * the flag is on, only locations that offer a window. The region reads a
+	 * missing location as off.
+	 */
+	guestCancel: GuestCancelContext
+	/**
+	 * Manual order acceptance per location id (`ordering.manual_acceptance`):
+	 * only while the flag is on, only `manual` locations. The region reads a
+	 * missing location as Automatic.
+	 */
+	acceptance: OrderAcceptanceContext
 }
 
 async function readQrOrderingFeatures(
@@ -163,6 +180,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
 			dropPayload && dropPayload.drop.status !== 'draft' ? dropPayload : null
 	}
 
+	const orderPolicies = await buildOrderPolicyContext(
+		org.id,
+		parsed.data.locationId ?? null,
+	)
+
 	const response: OrderContextResponse = {
 		orgId: org.id,
 		dataRegion,
@@ -176,6 +198,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
 			org.id,
 			parsed.data.locationId ?? null,
 		),
+		guestCancel: orderPolicies.guestCancel,
+		acceptance: orderPolicies.acceptance,
 	}
 
 	return Response.json(response, {

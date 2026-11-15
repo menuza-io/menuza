@@ -165,11 +165,33 @@ const successLabels = {
 	refunded: translate(i18n, msg`Refunded {amount}`, { amount: '{amount}' }),
 	readyDesc: i18n._(msg`Your order is ready.`),
 	completedDesc: i18n._(msg`This order is complete.`),
+	cancelButton: i18n._(msg`Cancel order`),
+	cancelCountdown: translate(i18n, msg`You can cancel this order for another {time}.`, { time: '{time}' }),
+	cancelConfirmTitle: i18n._(msg`Cancel this order?`),
+	cancelConfirmRefund: i18n._(msg`Your payment will be refunded in full to your card.`),
+	cancelConfirmYes: i18n._(msg`Yes, cancel order`),
+	cancelKeep: i18n._(msg`Keep order`),
+	cancelFailed: i18n._(msg`We couldn't cancel the order. Please try again.`),
+	cancelLimited: i18n._(msg`Too many attempts. Try again in a moment.`),
+	cancelClosed: i18n._(msg`The time to cancel has passed. Call the restaurant if you need help.`),
+	cancelPreparing: i18n._(msg`The kitchen has already started your order, so it can't be cancelled here.`),
+	cancelUnavailable: i18n._(msg`This order can't be cancelled here.`),
+	waitingTitle: i18n._(msg`Waiting for the restaurant to confirm`),
+	waitingDesc: i18n._(msg`We'll update this page as soon as they reply. You don't need to do anything.`),
+	waitingEst: i18n._(msg`Once the restaurant confirms`),
+	acceptedAnnounce: i18n._(msg`The restaurant accepted your order.`),
+	rejectedTitle: i18n._(msg`The restaurant could not take your order`),
+	rejectedOutOfStock: i18n._(msg`Some of the items you ordered ran out.`),
+	rejectedKitchenClosed: i18n._(msg`The kitchen is closed right now.`),
+	refundPending: i18n._(msg`Refund on its way`),
+	refundPendingAmount: translate(i18n, msg`Refund of {amount} on its way`, { amount: '{amount}' }),
+	refundFailed: i18n._(msg`We couldn't send your refund automatically. Please call the restaurant.`),
 	resendSent: i18n._(msg`If we have your email, the receipt is on its way.`),
 	resendLimited: i18n._(msg`Too many requests. Try again later.`),
 	resendFailed: i18n._(msg`We couldn't send that. Please try again later.`),
 	statuses: {
 		pending: i18n._(msg`Order received`),
+		pending_acceptance: i18n._(msg`Waiting for confirmation`),
 		accepted: i18n._(msg`Accepted`),
 		preparing: i18n._(msg`Preparing`),
 		ready: i18n._(msg`Ready`),
@@ -295,7 +317,7 @@ const valueClass = 'price font-medium text-foreground'
 					</div>
 
 					<span id="success-badge-text" class="badge tone-success mt-5">{successTitle}</span>
-					<h1 id="success-heading" class="mt-3 text-2xl font-bold tracking-tight text-balance text-foreground sm:text-3xl">
+					<h1 id="success-heading" tabindex="-1" class="mt-3 text-2xl outline-none font-bold tracking-tight text-balance text-foreground sm:text-3xl">
 						{thankYouTitle}
 					</h1>
 					<p id="success-subtext" class="mx-auto mt-2 max-w-md text-sm leading-relaxed text-muted-foreground sm:text-base">
@@ -324,6 +346,22 @@ const valueClass = 'price font-medium text-foreground'
 					<p id="order-promised" class="mt-4 hidden text-base font-semibold text-balance text-foreground [&:not(.hidden)]:block" role="status" dir="auto"></p>
 					<p id="order-refund-note" class="mt-3 hidden text-sm font-medium text-foreground [&:not(.hidden)]:block" dir="auto"></p>
 				</section>
+
+				{/* Cancel while the restaurant allows it (#111). The region decides;
+				    this block only shows what the order read says and counts down. */}
+				<section id="order-cancel" class="surface hidden space-y-3 p-5 text-center sm:p-6 [&:not(.hidden)]:block" aria-label={successLabels.cancelButton}>
+					<p id="cancel-countdown" class="text-sm text-muted-foreground" dir="auto"></p>
+					<button type="button" id="cancel-order-btn" class="btn-secondary w-full sm:w-auto [&.hidden]:hidden">{successLabels.cancelButton}</button>
+					<div id="cancel-confirm" class="hidden space-y-3 rounded-lg border border-border bg-muted p-4 text-start [&:not(.hidden)]:block" role="group" aria-labelledby="cancel-confirm-title">
+						<h2 id="cancel-confirm-title" class="text-base font-semibold text-foreground">{successLabels.cancelConfirmTitle}</h2>
+						<p id="cancel-confirm-refund" class="hidden text-sm text-foreground/80 [&:not(.hidden)]:block">{successLabels.cancelConfirmRefund}</p>
+						<div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+							<button type="button" id="cancel-confirm-yes" class="btn-cta w-full sm:w-auto">{successLabels.cancelConfirmYes}</button>
+							<button type="button" id="cancel-confirm-keep" class="btn-secondary w-full sm:w-auto">{successLabels.cancelKeep}</button>
+						</div>
+					</div>
+				</section>
+				<p id="cancel-note" role="status" class="text-center text-sm font-medium text-foreground empty:hidden" dir="auto"></p>
 
 				{/* Online payment states */}
 				<div id="payment-pending" class:list={[noticeClass, 'tone-warning hidden']} role="status">
@@ -507,6 +545,10 @@ const valueClass = 'price font-medium text-foreground'
 			{/* Throttled hold announcements (minute marks), kept outside hidden
 			    containers so the live region is registered before it speaks. */}
 			<p id="payment-hold-live" class="sr-only" aria-live="polite" aria-atomic="true"></p>
+			{/* Status changes (accepted, turned down, cancelled). */}
+			<p id="order-live" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
+			{/* Minute marks of the cancel countdown (the visible text ticks every second and is not live). */}
+			<p id="cancel-live" class="sr-only" aria-live="polite" aria-atomic="true"></p>
 		</div>
 	</div>
 
@@ -524,7 +566,9 @@ const valueClass = 'price font-medium text-foreground'
 		import { createMoneyFormatter, fillTemplate } from '~/lib/ordering/money'
 		import {
 			OrderRequestError,
+			cancelOrder,
 			fetchOrderWithCredential,
+			randomAttemptKey,
 			loadOrderCapability,
 			resendOrderLink,
 			startOrderPayment,
@@ -534,7 +578,7 @@ const valueClass = 'price font-medium text-foreground'
 			claimOrderLink,
 			type OrderCredential,
 		} from '~/lib/ordering/order-link'
-		import { createStatusPoller, isTerminalStatus } from '~/lib/ordering/status-poll'
+		import { createStatusPoller, isTerminalStatus, type StatusPoller } from '~/lib/ordering/status-poll'
 		import { formatPromisedTime } from '~/lib/ordering/promised-time'
 		import {
 			interpretPaymentStatus,
@@ -542,6 +586,20 @@ const valueClass = 'price font-medium text-foreground'
 			PAYMENT_POLL_INTERVAL_MS,
 		} from '~/lib/ordering/payment-poll'
 		import { startCountdown } from '~/lib/ordering/countdown'
+		import {
+			cancelHiddenKey,
+			cancelRefusalKey,
+			cancelWindowEnd,
+			clockOffsetMs,
+			createCancelAttempt,
+			formatCancelRemaining,
+			nextCancelAnnouncement,
+			orderStage,
+			paidOnline,
+			refundView,
+			visibleCancelReason,
+			type OrderStage,
+		} from '~/lib/ordering/guest-cancel'
 		import {
 			formatHoldClock,
 			formatMinutesLong,
@@ -583,6 +641,12 @@ const valueClass = 'price font-medium text-foreground'
 			number: string
 			status: string
 			paymentStatus: string
+			/** `online` or `handoff`, when the region sends it. */
+			paymentMethod?: string
+			/** A cancel refunds a card payment (the region's own answer), when it sends it. */
+			refundsOnCancel?: boolean
+			/** The region's clock when it answered (ISO text or epoch ms), to judge `cancel.until`. */
+			serverNow?: string | number | null
 			currency: string
 			subtotalCents: number
 			/** A loyalty reward's saving. */
@@ -606,6 +670,14 @@ const valueClass = 'price font-medium text-foreground'
 			tipPercent: number
 			/** Amount recorded as returned; absent on older nodes. */
 			refundedCents?: number
+			/** Acceptance and self-cancel (`publicOrderLifecycleSchema`). */
+			acceptanceDeadlineAt?: string | null
+			rejected?: boolean
+			cancelledBy?: string | null
+			cancelReason?: string | null
+			refundStatus?: string
+			refundPendingCents?: number
+			cancel?: { allowed: boolean; until: string | null }
 			/** When the order should be ready / start arriving. */
 			promisedAt?: string | null
 			/** End of an ASAP delivery range. */
@@ -840,7 +912,9 @@ const valueClass = 'price font-medium text-foreground'
 			} else {
 				// Handoff menu orders keep a plain-language prep estimate.
 				if (estLabelEl) estLabelEl.textContent = labels.estTime || 'Estimated Time'
-				if (estTimeEl) {
+				if (estTimeEl && orderStage(order) === 'waiting') {
+					estTimeEl.textContent = labels.waitingEst
+				} else if (estTimeEl) {
 					estTimeEl.textContent = isDelivery
 						? labels.estDelivery || '~35-45 minutes'
 						: labels.estPickup || '~15-25 minutes'
@@ -972,7 +1046,7 @@ const valueClass = 'price font-medium text-foreground'
 			const locationFacts = (labels.locations as Array<{ id: string; timezone?: string; phone?: string | null }>).find(
 				(l) => l.id === order.location?.id,
 			)
-			const promised = formatPromisedTime(
+			const promised = orderStage(order) === 'waiting' ? null : formatPromisedTime(
 				{
 					promisedAt: order.promisedAt,
 					promisedUntil: order.promisedUntil,
@@ -991,12 +1065,21 @@ const valueClass = 'price font-medium text-foreground'
 			}
 
 			// A recorded refund, cancelled or not.
-			const refunded = Number.isFinite(order.refundedCents) ? (order.refundedCents ?? 0) : 0
+			const refund = refundView(order)
 			const refundEl = document.getElementById('order-refund-note')
 			if (refundEl) {
-				refundEl.textContent =
-					refunded > 0 ? fillTemplate(labels.refunded, { amount: formatCents(refunded) }) : ''
-				refundEl.classList.toggle('hidden', refunded <= 0)
+				const refundText =
+					refund.kind === 'refunded'
+						? fillTemplate(labels.refunded, { amount: formatCents(refund.amountCents) })
+						: refund.kind === 'pending'
+							? refund.amountCents > 0
+								? fillTemplate(labels.refundPendingAmount, { amount: formatCents(refund.amountCents) })
+								: labels.refundPending
+							: refund.kind === 'failed'
+								? labels.refundFailed
+								: ''
+				refundEl.textContent = refundText
+				refundEl.classList.toggle('hidden', !refundText)
 			}
 
 			// "Call the restaurant": the location's public phone.
@@ -1073,6 +1156,114 @@ const valueClass = 'price font-medium text-foreground'
 			return true
 		}
 
+		// ---------- guest cancel and acceptance (#111, #107) ----------
+
+		const cancelAttempt = createCancelAttempt(randomAttemptKey)
+		let stopCancelTimer: (() => void) | null = null
+		/** The region refused a cancel: keep the button away until the page reloads. */
+		let cancelRefused = false
+		let lastStage: OrderStage | null = null
+		/** Region clock minus this device clock (ms), from the order read. */
+		let clockOffset = 0
+		/** The last minute mark spoken (`cancelAnnounceKey`), null before the first. */
+		let lastCancelKey: number | null = null
+
+		function setCancelNote(text: string) {
+			const note = document.getElementById('cancel-note')
+			if (note) note.textContent = text
+		}
+
+		function cancelNoteFor(key: 'closed' | 'preparing' | 'unavailable'): string {
+			return key === 'closed'
+				? labels.cancelClosed
+				: key === 'preparing'
+					? labels.cancelPreparing
+					: labels.cancelUnavailable
+		}
+
+		function announceCancel(text: string) {
+			const live = document.getElementById('cancel-live')
+			if (!live) return
+			// Clear first so a repeated sentence is still spoken.
+			live.textContent = ''
+			window.setTimeout(() => {
+				live.textContent = text
+			}, 100)
+		}
+
+		function announceOrder(text: string) {
+			const live = document.getElementById('order-live')
+			if (!live) return
+			live.textContent = ''
+			window.setTimeout(() => {
+				live.textContent = text
+			}, 100)
+		}
+
+		function hideCancel() {
+			stopCancelTimer?.()
+			stopCancelTimer = null
+			lastCancelKey = null
+			hide('order-cancel')
+			hide('cancel-confirm')
+		}
+
+		/** Shows the cancel button with its countdown while the window is open. */
+		function renderCancel(order: ReceiptOrder) {
+			if (order.serverNow != null) clockOffset = clockOffsetMs(order.serverNow, Date.now())
+			const end = cancelRefused ? null : cancelWindowEnd(order, Date.now(), clockOffset)
+			stopCancelTimer?.()
+			stopCancelTimer = null
+			if (end === null) {
+				// Hiding the box under the guest's focus would drop it on <body>
+				// and say nothing: move it to the heading and say why.
+				const hadFocus = document.getElementById('order-cancel')?.contains(document.activeElement)
+				hideCancel()
+				if (hadFocus) {
+					const key = cancelRefused ? null : cancelHiddenKey(order, Date.now(), clockOffset)
+					if (key) setCancelNote(cancelNoteFor(key))
+					document.getElementById('success-heading')?.focus()
+				}
+				return
+			}
+			document.getElementById('cancel-confirm-refund')?.classList.toggle('hidden', !paidOnline(order))
+			const countdownEl = document.getElementById('cancel-countdown')
+			show('order-cancel')
+			stopCancelTimer = startCountdown(
+				end,
+				(ms) => {
+					const text = fillTemplate(labels.cancelCountdown, {
+						time: formatCancelRemaining(ms, labels.locale || 'en'),
+					})
+					if (countdownEl) countdownEl.textContent = text
+					const next = nextCancelAnnouncement(lastCancelKey, ms)
+					if (next.announce) {
+						lastCancelKey = next.key
+						announceCancel(text)
+					}
+				},
+				() => {
+					// Time is up: no request needed, the button just goes away.
+					stopCancelTimer = null
+					const hadFocus = document.getElementById('order-cancel')?.contains(document.activeElement)
+					hideCancel()
+					setCancelNote(labels.cancelClosed)
+					if (hadFocus) document.getElementById('success-heading')?.focus()
+				},
+			)
+		}
+
+		function renderLifecycle(order: ReceiptOrder) {
+			const stage = orderStage(order)
+			if (lastStage !== null && lastStage !== stage) {
+				if (stage === 'rejected') announceOrder(labels.rejectedTitle)
+				else if (stage === 'cancelled') announceOrder(labels.cancelledTitle)
+				else if (lastStage === 'waiting' && stage === 'normal') announceOrder(labels.acceptedAnnounce)
+			}
+			lastStage = stage
+			renderCancel(order)
+		}
+
 		/** Whether the payment banner state is "paid / nothing to pay". */
 		let confirmedView = false
 
@@ -1083,6 +1274,22 @@ const valueClass = 'price font-medium text-foreground'
 		function applyStatusHeading() {
 			const order = latestOrder
 			if (!order) return
+			renderLifecycle(order)
+			if (orderStage(order) === 'rejected') {
+				stopHoldCountdown()
+				hide('payment-pending')
+				hide('payment-failed')
+				hide('payment-expired')
+				const reason = visibleCancelReason(order)
+				const reasonText =
+					reason === 'out_of_stock'
+						? labels.rejectedOutOfStock
+						: reason === 'kitchen_closed'
+							? labels.rejectedKitchenClosed
+							: ''
+				setHeading(labels.statuses.cancelled, labels.rejectedTitle, reasonText, 'danger')
+				return
+			}
 			if (order.status === 'cancelled') {
 				stopHoldCountdown()
 				hide('payment-pending')
@@ -1092,6 +1299,10 @@ const valueClass = 'price font-medium text-foreground'
 				return
 			}
 			if (!confirmedView) return
+			if (orderStage(order) === 'waiting') {
+				setHeading(labels.statuses.pending_acceptance, labels.waitingTitle, labels.waitingDesc, 'warning')
+				return
+			}
 			const desc =
 				order.status === 'ready'
 					? labels.readyDesc
@@ -1293,20 +1504,35 @@ const valueClass = 'price font-medium text-foreground'
 			} else showConfirmed()
 		}
 
+		/** Done polling: finished orders, except a cancel whose refund is still on its way. */
+		function isSettled(order: ReceiptOrder) {
+			return (
+				isTerminalStatus(order.status) &&
+				!(order.status === 'cancelled' && order.refundStatus === 'pending')
+			)
+		}
+
+		let poller: StatusPoller | null = null
+
+		function applyOrder(order: ReceiptOrder) {
+			renderReceipt(order)
+			syncPaymentView(order)
+			applyStatusHeading()
+		}
+
 		function startLiveStatus(initial: ReceiptOrder) {
-			if (isTerminalStatus(initial.status)) return
-			const poller = createStatusPoller<ReceiptOrder>({
+			poller?.stop()
+			poller = null
+			if (isSettled(initial)) return
+			poller = createStatusPoller<ReceiptOrder>({
+				isSettled,
 				fetchOnce: async () => {
 					const result = await readOrder()
 					if (result.kind === 'gone') return { kind: 'gone' }
 					if (result.kind === 'error') throw new Error('status_unavailable')
 					return result
 				},
-				onOrder: (order) => {
-					renderReceipt(order)
-					syncPaymentView(order)
-					applyStatusHeading()
-				},
+				onOrder: applyOrder,
 				onGone: () => {
 					// An expired or invalid link says so; a receipt stays as last drawn.
 					if (currentCredential()?.kind === 'link') showLinkInvalid()
@@ -1318,6 +1544,74 @@ const valueClass = 'price font-medium text-foreground'
 				},
 			})
 			poller.start({ immediate: false })
+		}
+
+		function wireCancel() {
+			const trigger = document.getElementById('cancel-order-btn') as HTMLButtonElement | null
+			const yes = document.getElementById('cancel-confirm-yes') as HTMLButtonElement | null
+			const keep = document.getElementById('cancel-confirm-keep') as HTMLButtonElement | null
+			const setNote = setCancelNote
+			trigger?.addEventListener('click', () => {
+				setNote('')
+				show('cancel-confirm')
+				trigger.classList.add('hidden')
+				keep?.focus()
+			})
+			keep?.addEventListener('click', () => {
+				hide('cancel-confirm')
+				trigger?.classList.remove('hidden')
+				trigger?.focus()
+			})
+			yes?.addEventListener('click', () => {
+				const credential = currentCredential()
+				if (!orderId || !credential) return
+				if (yes) yes.disabled = true
+				if (keep) keep.disabled = true
+				setNote('')
+				void (async () => {
+					let done = false
+					try {
+						await cancelOrder(orderId, credential, cancelAttempt.current())
+						// The region answered: the next confirm tap is a new attempt.
+						cancelAttempt.settle()
+						done = true
+					} catch (error) {
+						if (error instanceof OrderRequestError) {
+							cancelAttempt.settle()
+							if (error.status === 409) {
+								cancelRefused = true
+								setNote(cancelNoteFor(cancelRefusalKey(error.code)))
+								hideCancel()
+							} else if (error.status === 429) {
+								setNote(labels.cancelLimited)
+							} else {
+								setNote(labels.cancelFailed)
+							}
+						} else {
+							// No answer (network): keep the key so a retry cannot cancel twice.
+							setNote(labels.cancelFailed)
+						}
+					}
+					if (yes) yes.disabled = false
+					if (keep) keep.disabled = false
+					if (done) {
+						// Read the order again at once: Cancelled, and the refund state.
+						hideCancel()
+						trigger?.classList.remove('hidden')
+						const result = await readOrder()
+						if (result.kind === 'order') {
+							applyOrder(result.order)
+							startLiveStatus(result.order)
+						}
+						document.getElementById('success-heading')?.focus()
+					} else if (cancelRefused) {
+						trigger?.classList.remove('hidden')
+						document.getElementById('success-heading')?.focus()
+					} else {
+						yes?.focus()
+					}
+				})()
+			})
 		}
 
 		function wireResend() {
@@ -1423,6 +1717,7 @@ const valueClass = 'price font-medium text-foreground'
 			}
 			applyStatusHeading()
 			wireResend()
+			wireCancel()
 			startLiveStatus(order)
 		}
 

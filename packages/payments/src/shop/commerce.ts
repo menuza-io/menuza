@@ -838,6 +838,21 @@ export class ShopCommerce {
 		)
 	}
 
+	/**
+	 * Refunds of one platform PaymentIntent, newest first (at most 100). Lets a
+	 * caller find a refund it made earlier by its metadata before it asks for
+	 * a new one (an idempotency key only lasts a day).
+	 */
+	async listStripeRefundsForPaymentIntent(paymentIntentId: string) {
+		const page = await this.withConnect(() =>
+			this.getStripe().refunds.list({
+				payment_intent: paymentIntentId,
+				limit: 100,
+			}),
+		)
+		return page.data
+	}
+
 	/** Platform-account PaymentIntent lookup (dispute events carry no metadata). */
 	async retrieveReservationPaymentIntent(paymentIntentId: string) {
 		return this.withConnect(() =>

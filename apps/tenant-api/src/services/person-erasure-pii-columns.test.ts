@@ -104,6 +104,8 @@ const COVERED: Record<string, string> = {
 		'operator note on a recorded refund, nulled with the member by the erasure (the only update the append-only trigger allows)',
 	'restaurant_order_refunds.note':
 		'operator note on an order refund, nulled with the scrubbed order (the only update the append-only trigger allows)',
+	'qr_tab_refunds.note':
+		'operator note on a tab payment refund, nulled with the scrubbed tab (the only update the append-only trigger allows)',
 	'loyalty_member_bindings.token_hash':
 		'till binding deleted with the member by the erasure',
 	'sms_send_events.phone_hash':

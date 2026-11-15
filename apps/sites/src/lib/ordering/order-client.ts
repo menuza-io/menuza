@@ -119,7 +119,7 @@ const UUID_PATTERN =
 	/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 /** The regional API requires a UUID; non-secure dev contexts lack randomUUID. */
-function randomAttemptKey(): string {
+export function randomAttemptKey(): string {
 	if (
 		typeof crypto !== 'undefined' &&
 		typeof crypto.randomUUID === 'function'
@@ -345,6 +345,34 @@ export async function resendOrderLink(
 		},
 	)
 	await responseJson(response)
+}
+
+/**
+ * Guest self-cancel (`POST /orders/:id/cancel`). Same credential and
+ * organization binding as the receipt read; `Idempotency-Key` makes a retry
+ * after a dropped connection safe. A refusal throws `OrderRequestError` with
+ * the region's code (409 `cancel_window_closed`, `order_in_preparation`,
+ * `not_cancellable`, `guest_cancel_disabled`; 429; 404).
+ */
+export async function cancelOrder(
+	orderId: string,
+	credential: OrderCredential,
+	idempotencyKey: string,
+): Promise<unknown> {
+	const response = await fetch(
+		`${regionalUrl()}/orders/${encodeURIComponent(orderId)}/cancel`,
+		{
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				'Idempotency-Key': idempotencyKey,
+				...credentialHeaders(credential),
+			},
+			body: JSON.stringify(getOrgBinding()),
+			cache: 'no-store',
+		},
+	)
+	return responseJson(response)
 }
 
 /** Opaque payment reference only. Explicit projection prevents PII transit. */

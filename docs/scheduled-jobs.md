@@ -26,26 +26,28 @@ as the Admin cache route).
 
 ## Cron schedules (UTC)
 
-| Cron        | Route                                            | Purpose                                         |
-| ----------- | ------------------------------------------------ | ----------------------------------------------- |
-| `0 2 * * *` | `/resources/jobs/audit-log-archival`             | Archive old audit logs                          |
-| `0 3 * * *` | `/resources/jobs/mcp-token-cleanup`              | Remove expired MCP tokens                       |
-| `0 3 * * *` | `/resources/jobs/job-postings-expiry`            | Mark job postings past their closing date       |
-| `0 3 * * *` | `/resources/jobs/seat-reconcile`                 | Sync Stripe seat counts with active members     |
-| `0 4 * * *` | `/resources/jobs/gdpr-erasure`                   | Process pending GDPR erasures                   |
-| `0 4 * * *` | `/resources/jobs/voice-retention`                | Delete expired call recordings and caller data  |
-| `0 4 * * *` | `/resources/jobs/staffing-outbox`                | Deliver staffing link, unlink, and erase events |
-| `0 5 * * *` | `/resources/jobs/form-submission-retention`      | Not scheduled (see below)                       |
-| `0 * * * *` | `/resources/jobs/reservation-payments-reconcile` | Re-check lingering reservation payments         |
+| Cron        | Route                                                | Purpose                                         |
+| ----------- | ---------------------------------------------------- | ----------------------------------------------- |
+| `0 2 * * *` | `/resources/jobs/audit-log-archival`                 | Archive old audit logs                          |
+| `0 3 * * *` | `/resources/jobs/mcp-token-cleanup`                  | Remove expired MCP tokens                       |
+| `0 3 * * *` | `/resources/jobs/job-postings-expiry`                | Mark job postings past their closing date       |
+| `0 3 * * *` | `/resources/jobs/seat-reconcile`                     | Sync Stripe seat counts with active members     |
+| `0 4 * * *` | `/resources/jobs/gdpr-erasure`                       | Process pending GDPR erasures                   |
+| `0 4 * * *` | `/resources/jobs/voice-retention`                    | Delete expired call recordings and caller data  |
+| `0 4 * * *` | `/resources/jobs/staffing-outbox`                    | Deliver staffing link, unlink, and erase events |
+| `0 5 * * *` | `/resources/jobs/form-submission-retention`          | Not scheduled (see below)                       |
+| `0 * * * *` | `/resources/jobs/reservation-payments-reconcile`     | Re-check lingering reservation payments         |
+| `0 * * * *` | `/resources/jobs/restaurant-order-refunds-reconcile` | Finish pending order refunds                    |
 
 The hourly `0 * * * *` trigger fans out to every regional tenant-api node: the
 tenant engagement sync, the staff tick, the reservations tick, the loyalty tick
 and the inventory tick (below), and also calls the App job that reconciles
 reservation payments (below). They are independent requests, so one failing
-never blocks the others. The same trigger runs three more App jobs:
-`/resources/jobs/print-sync`; `/resources/jobs/social-publish`, a sweep behind
-the per-post `SocialPostWorkflow` that wakes the App when a scheduled social
-post is due (see `docs/social-media.md`); and
+never blocks the others. The same trigger also runs
+`/resources/jobs/restaurant-order-refunds-reconcile` (below) and three more App
+jobs: `/resources/jobs/print-sync`; `/resources/jobs/social-publish`, a sweep
+behind the per-post `SocialPostWorkflow` that wakes the App when a scheduled
+social post is due (see `docs/social-media.md`); and
 `/resources/jobs/impersonation-cleanup`, which ends expired admin impersonation
 sessions and writes each one's `ADMIN_IMPERSONATION_END` audit entry. The
 Workers free plan allows five cron triggers per Worker, so new daily jobs share
@@ -215,24 +217,37 @@ until then).
 ### Order messages tick
 
 `POST /api/order-messages/tick` on each tenant-api node (token:
-`INTERNAL_COMMAND_TOKEN`, empty body `{}`) sends guest order messages (#79:
-receipts, ready, cancelled; `order_messages`) that are still `queued`: in
-practice the retries of a send that failed. Messages are queued in the order's
-own transaction and first sent right after it commits; a failed send is retried
-after 1, 5, 30 and 120 minutes, then ends `failed` with a machine code. A row
-found while `ORDERS_EMAIL_ENABLED` / `ORDERS_SMS_ENABLED` is off ends `dropped`
-(no backlog when switched back on). It adds **no cron slot**: it rides the
-hourly fan-out (`Tenant order messages tick`). The response is counts only. A
-body of `{ "orgId": "..." }` ticks one organization; an empty body fans out over
-every organization on the node with a 50-second budget.
+`INTERNAL_COMMAND_TOKEN`, empty body `{}`) first turns down orders still
+`pending_acceptance` past their `acceptance_deadline_at` (#107,
+`processOrderAcceptance` in `services/order-acceptance.ts`: reason
+`not_accepted_in_time`, `cancelled_by = 'system'`, a full provider refund with
+origin `system` for a paid online order and the ids-only kick to the App, the
+guest's `cancelled` message; each order in its own transaction, only while it
+still waits, so an accept that won is left alone), then sends guest order
+messages (#79: receipts, ready, cancelled; `order_messages`) that are still
+`queued`: in practice the retries of a send that failed. Messages are queued in
+the order's own transaction and first sent right after it commits; a failed send
+is retried after 1, 5, 30 and 120 minutes, then ends `failed` with a machine
+code. A row found while `ORDERS_EMAIL_ENABLED` / `ORDERS_SMS_ENABLED` is off
+ends `dropped` (no backlog when switched back on). It adds **no cron slot**: it
+rides the hourly fan-out (`Tenant order messages tick`). The response is counts
+only. A body of `{ "orgId": "..." }` ticks one organization; an empty body fans
+out over every organization on the node with a 50-second budget.
 
 Hourly is the safety net. The US Workers node registers an `orders` module on
 the shared organization alarm (2 minutes, armed by order writes: placing an
 order, a payment event, a status change in the App, Station's Orders app or the
-kitchen screen; the tick asks for a follow-up only while queued rows remain),
-and the Node (OCI) node runs an in-process interval
-(`ORDER_MESSAGES_TICK_INTERVAL_SECONDS`, default 120, minimum 60, `0` turns it
-off). Each row is claimed before it is sent, so the drivers may overlap.
+kitchen screen; the tick asks for a follow-up while queued rows remain or an
+order waits for acceptance, at the earliest retry or deadline), and the Node
+(OCI) node runs two in-process intervals. Message retries use
+`ORDER_MESSAGES_TICK_INTERVAL_SECONDS` (default 120, minimum 60, `0` turns it
+off). The acceptance timeout (#107) and the owed cancel refund sweep have their
+own, `ORDER_ACCEPTANCE_TICK_INTERVAL_SECONDS` (default 60, minimum 30), which
+cannot be turned off (`0`, a negative or an unreadable value means the default)
+and which `ORDER_MESSAGES_TICK_INTERVAL_SECONDS=0` does not touch, so a waiting
+order is turned down at the deadline the guest was shown, not up to an hour
+later. Each row is claimed before it is sent and each waiting order is decided
+only while it still waits, so the drivers may overlap.
 
 Updated times (`eta_changed`): every push-back of 10 minutes or more queues one
 row per channel, keyed by the order's new `promised_version` (every other kind
@@ -264,6 +279,28 @@ pushes terminal provider states through the same paths as the browser poll and
 the webhooks. The App is the only caller of Stripe and Checkout.com, so this job
 lives in the App. It is idempotent, skips an item after a transient provider
 failure until the next run, and answers with counts only.
+
+### Restaurant order refunds reconcile
+
+`/resources/jobs/restaurant-order-refunds-reconcile` (App, hourly, rides the
+existing `0 * * * *` trigger, no cron slot of its own) re-drives provider
+refunds of online orders (#80) that the regions still list as `pending`. For
+every active organization with a provisioned regional database and a Stripe
+Connect account or Checkout.com sub-entity, it reads the pending refunds from
+`POST /api/orders/refunds-pending` (ids and amounts only) and:
+
+- executes a refund that never reached the provider (no provider refund id, at
+  least a minute old): the same idempotency key as the operator action and the
+  region's kick, and an earlier provider refund of the same row is adopted
+  before a new one is asked for, so a refund is never made twice;
+- reads back a refund sent more than 15 minutes ago (Stripe refund, or the
+  Checkout.com refund action) and reports its final state to
+  `POST /api/orders/refund-status` (a missed webhook).
+
+A region that predates the route answers 404 and is skipped. A transient
+provider or regional failure skips the refund until the next run; the answer is
+counts only (`organizations`, `refundsChecked`, `refundsExecuted`,
+`refundsReported`, `skipped`, `failedOrganizations`).
 
 ### Staffing outbox
 

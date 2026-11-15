@@ -1,14 +1,23 @@
 import {
 	onlineOrderIsNew,
-	onlineOrderLate,
+	onlineOrderLate as commonOrderLate,
 	type PosOnlineOrderSummary,
 } from '@repo/common/pos-online-orders'
 import { parseDecimal, toCents } from '~/lib/money.ts'
 
 /** The inbox's columns, in the order the counter works them. */
-export type InboxSection = 'new' | 'in_progress' | 'ready' | 'done'
+export type InboxSection = 'waiting' | 'new' | 'in_progress' | 'ready' | 'done'
+
+/** An order waiting for acceptance is not being cooked, so it is never "late". */
+export function onlineOrderLate(
+	order: Parameters<typeof commonOrderLate>[0],
+	now: number,
+): boolean {
+	return order.status !== 'pending_acceptance' && commonOrderLate(order, now)
+}
 
 export function inboxSection(order: PosOnlineOrderSummary): InboxSection {
+	if (order.status === 'pending_acceptance') return 'waiting'
 	if (order.status === 'completed' || order.status === 'cancelled')
 		return 'done'
 	if (order.status === 'ready') return 'ready'
@@ -22,6 +31,9 @@ export type OrderFilter = {
 	/** Order number or guest name. */
 	query: string
 }
+
+const deadline = (order: PosOnlineOrderSummary) =>
+	order.acceptanceDeadlineAt ?? Number.MAX_SAFE_INTEGER
 
 /** Sorted for the counter: late first, then by when it is promised (or came in). */
 export function inboxOrders(
@@ -49,6 +61,13 @@ export function inboxOrders(
 					(b.completedAt ?? b.cancelledAt ?? 0) -
 					(a.completedAt ?? a.cancelledAt ?? 0)
 				)
+			const waitA = inboxSection(a) === 'waiting'
+			const waitB = inboxSection(b) === 'waiting'
+			// Orders waiting for a decision come first, the closest deadline on top.
+			if (waitA || waitB) {
+				if (waitA !== waitB) return waitA ? -1 : 1
+				return deadline(a) - deadline(b) || a.createdAt - b.createdAt
+			}
 			const lateA = onlineOrderLate(a, now) ? 0 : 1
 			const lateB = onlineOrderLate(b, now) ? 0 : 1
 			return lateA - lateB || due(a) - due(b)
@@ -57,6 +76,7 @@ export function inboxOrders(
 
 export function sectionCounts(orders: PosOnlineOrderSummary[]) {
 	const counts: Record<InboxSection, number> = {
+		waiting: 0,
 		new: 0,
 		in_progress: 0,
 		ready: 0,
@@ -64,6 +84,32 @@ export function sectionCounts(orders: PosOnlineOrderSummary[]) {
 	}
 	for (const order of orders) counts[inboxSection(order)] += 1
 	return counts
+}
+
+/** Orders waiting for a person to accept or reject them, closest deadline first. */
+export function waitingOrders(
+	orders: PosOnlineOrderSummary[],
+): PosOnlineOrderSummary[] {
+	return orders
+		.filter((order) => order.status === 'pending_acceptance')
+		.sort((a, b) => deadline(a) - deadline(b) || a.createdAt - b.createdAt)
+}
+
+/** Milliseconds left to decide, or null when the order has no deadline. Negative once past. */
+export function acceptanceRemainingMs(
+	order: Pick<PosOnlineOrderSummary, 'acceptanceDeadlineAt'>,
+	now: number,
+): number | null {
+	return order.acceptanceDeadlineAt == null
+		? null
+		: order.acceptanceDeadlineAt - now
+}
+
+/** `3:12` for 192 seconds; never negative (a passed deadline reads `0:00`). */
+export function countdownClock(remainingMs: number): string {
+	const seconds = Math.max(0, Math.ceil(remainingMs / 1000))
+	const minutes = Math.floor(seconds / 60)
+	return `${minutes}:${String(seconds % 60).padStart(2, '0')}`
 }
 
 /** New orders nobody has opened on any Station here: the alert repeats while there are any. */
@@ -98,4 +144,4 @@ export function refundCents(typed: string, refundableCents: number) {
 	return cents
 }
 
-export { onlineOrderIsNew, onlineOrderLate }
+export { onlineOrderIsNew }

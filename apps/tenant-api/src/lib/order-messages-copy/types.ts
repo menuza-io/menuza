@@ -25,6 +25,12 @@ export type OrderCopyLabels = {
 	tax: string
 	total: string
 	refunded: string
+	/** A cancelled order whose provider refund is still on its way. */
+	refundPending: string
+	/** Why it was cancelled (guest-visible reasons only). */
+	reason: string
+	reasonOutOfStock: string
+	reasonKitchenClosed: string
 	pickupTime: string
 	deliveryTime: string
 	asap: string

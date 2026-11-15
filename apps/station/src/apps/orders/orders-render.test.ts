@@ -10,6 +10,7 @@ import {
 import { act, createElement as h } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { OrdersError } from './api.ts'
 import { createDemoOrders } from './demo.ts'
 import { Orders } from './Orders.tsx'
 import { useOrders } from './useOrders.ts'
@@ -98,9 +99,11 @@ const detailOf = (
 let host: HTMLDivElement
 let root: Root
 const command = vi.fn(async () => true)
+const pinActionError = vi.fn()
 beforeEach(() => {
 	localStorage.clear()
 	command.mockClear()
+	pinActionError.mockClear()
 	vi.stubGlobal(
 		'ResizeObserver',
 		class {
@@ -144,6 +147,8 @@ function draw(
 		grants,
 		error: null,
 		actionError: null,
+		actionName: null,
+		pinActionError,
 		busy: false,
 		now: NOW,
 		stale: false,
@@ -152,6 +157,7 @@ function draw(
 		selected: null,
 		detail: null,
 		contact: null,
+		refundOutcome: undefined,
 		open: vi.fn(async () => {}),
 		view: vi.fn(async () => {}),
 		api: demoApi,
@@ -200,6 +206,13 @@ function draw(
 }
 const buttons = () =>
 	[...document.querySelectorAll('button')].map((b) => b.textContent?.trim())
+/** The open dialog with this title (a dialog nested in another counts on its own). */
+const openDialog = (title: string) =>
+	[...document.querySelectorAll('dialog[open]')].find(
+		(d) =>
+			document.getElementById(d.getAttribute('aria-labelledby') ?? '')
+				?.textContent === title,
+	)
 const button = (name: string) =>
 	[...document.querySelectorAll('button')].find(
 		(b) => b.textContent?.trim() === name,
@@ -261,8 +274,104 @@ describe('Station online orders screen', () => {
 			MANAGER,
 		)
 		expect(buttons()).toEqual(
-			expect.arrayContaining(['Show contact', 'Cancel order', 'Record refund']),
+			expect.arrayContaining(['Show contact', 'Cancel order', 'Refund']),
 		)
+		expect(buttons()).not.toContain('Record refund')
+	})
+
+	it('keeps "Record refund" for an order paid at handoff', () => {
+		draw(
+			{
+				selected: 'o1',
+				grants: MANAGER,
+				detail: detailOf({
+					paymentMethod: 'handoff',
+					paymentStatus: 'paid',
+					refundableCents: 1500,
+				}),
+			},
+			[summary()],
+			MANAGER,
+		)
+		expect(buttons()).toContain('Record refund')
+		expect(buttons()).not.toContain('Refund')
+	})
+
+	it('shows Disputed and offers no refund while the payment is disputed', () => {
+		draw(
+			{
+				selected: 'o1',
+				grants: MANAGER,
+				detail: detailOf({
+					paymentMethod: 'online',
+					paymentStatus: 'paid',
+					refundableCents: 1500,
+					disputed: true,
+				}),
+			},
+			[summary()],
+			MANAGER,
+		)
+		expect(document.body.textContent).toContain('Disputed')
+		expect(buttons()).not.toContain('Refund')
+	})
+
+	it('shows a pending refund with its amount, and no second refund', () => {
+		draw(
+			{
+				selected: 'o1',
+				grants: MANAGER,
+				detail: detailOf({
+					paymentMethod: 'online',
+					paymentStatus: 'paid',
+					refundableCents: 500,
+					refundStatus: 'pending',
+					refundPendingCents: 1000,
+				}),
+			},
+			[summary()],
+			MANAGER,
+		)
+		expect(document.body.textContent).toContain('Refund pending')
+		expect(document.body.textContent).toContain('10.00')
+		expect((button('Refund') as HTMLButtonElement).disabled).toBe(true)
+	})
+
+	it('asks "Refund the guest?" only for an online-paid order and a refund grant', () => {
+		const paid = detailOf({
+			paymentMethod: 'online',
+			paymentStatus: 'paid',
+			refundableCents: 1500,
+		})
+		draw(
+			{ selected: 'o1', grants: MANAGER, detail: paid },
+			[summary()],
+			MANAGER,
+		)
+		act(() => button('Cancel order').click())
+		expect(document.body.textContent).toContain('Refund the guest?')
+		expect(document.body.textContent).toContain('No refund')
+		const withoutGrant = { ...MANAGER, refund: false }
+		draw(
+			{ selected: 'o1', grants: withoutGrant, detail: paid },
+			[summary()],
+			withoutGrant,
+		)
+		expect(document.body.textContent).not.toContain('Refund the guest?')
+	})
+
+	it('says what a cancel with a refund came to', () => {
+		draw(
+			{
+				selected: 'o1',
+				grants: MANAGER,
+				detail: detailOf({ status: 'cancelled', cancelledAt: NOW }),
+				refundOutcome: { started: false, code: 'payment_disputed' },
+			},
+			[summary()],
+			MANAGER,
+		)
+		expect(document.body.textContent).toContain('payment is disputed')
 	})
 
 	it('hands a pay-at-handoff order over only once payment is ticked', () => {
@@ -291,5 +400,193 @@ describe('Station online orders screen', () => {
 		expect((button('Hand over') as HTMLButtonElement).disabled).toBe(true)
 		expect(document.body.textContent).toContain('Updates are paused')
 		expect(document.body.textContent).toContain('Connection lost')
+	})
+
+	describe('acceptance', () => {
+		const pending = (values: Partial<PosOnlineOrderSummary> = {}) =>
+			summary({
+				id: 'p1',
+				number: 'W-7',
+				status: 'pending_acceptance',
+				openedAt: null,
+				paymentMethod: 'online',
+				paymentStatus: 'paid',
+				acceptanceDeadlineAt: NOW + 192_000,
+				...values,
+			})
+
+		it('puts a waiting order first with its countdown and alerts for it', () => {
+			draw({}, [summary({ id: 'o2', number: 'W-2' }), pending()])
+			const cards = [...document.querySelectorAll('article')].map((a) =>
+				a.getAttribute('aria-label'),
+			)
+			expect(cards[0]).toBe('Order W-7')
+			const card = document.querySelector('article[aria-label="Order W-7"]')!
+			expect(card.textContent).toContain('Accept within 3:12')
+			expect(card.textContent).toContain('Waiting for you')
+			expect(card.textContent).not.toContain('Late')
+			expect(
+				document.querySelector('[aria-label="Orders waiting for you"]')
+					?.textContent,
+			).toContain('W-7')
+			expect(buttons()).toContain('Waiting for you 1')
+		})
+
+		it('says the time is up once the deadline has passed but keeps Accept', () => {
+			draw(
+				{
+					selected: 'p1',
+					grants: MANAGER,
+					detail: detailOf({
+						...pending({ acceptanceDeadlineAt: NOW - 1_000 }),
+					}),
+				},
+				[pending({ acceptanceDeadlineAt: NOW - 1_000 })],
+				MANAGER,
+			)
+			expect(document.body.textContent).toContain('Time is up')
+			expect(buttons()).toEqual(
+				expect.arrayContaining(['Accept order', 'Reject']),
+			)
+			expect(buttons()).not.toContain('Hand over')
+			expect(buttons()).not.toContain('Cancel order')
+		})
+
+		it('sends accept with the order version, and gates Reject by the cancel grant', () => {
+			draw(
+				{
+					selected: 'p1',
+					detail: detailOf({ ...pending(), version: 'b'.repeat(64) }),
+				},
+				[pending()],
+			)
+			expect(buttons()).toContain('Accept order')
+			expect(buttons()).not.toContain('Reject')
+			act(() => button('Accept order').click())
+			expect(command).toHaveBeenCalledWith({
+				action: 'accept',
+				expectedVersion: 'b'.repeat(64),
+			})
+		})
+
+		it('rejects with a reason and tells a paid order is refunded in full', () => {
+			draw(
+				{
+					selected: 'p1',
+					grants: MANAGER,
+					detail: detailOf({ ...pending(), version: 'b'.repeat(64) }),
+				},
+				[pending()],
+				MANAGER,
+			)
+			act(() => button('Reject').click())
+			expect(document.body.textContent).toContain('refunded in full')
+			expect(document.body.textContent).toContain('out of stock')
+			act(() => button('Kitchen closed').click())
+			act(() => button('Reject order').click())
+			expect(command).toHaveBeenCalledWith({
+				action: 'reject',
+				expectedVersion: 'b'.repeat(64),
+				reason: 'kitchen_closed',
+			})
+		})
+
+		it('shows the reason on a rejected order and says someone else decided', () => {
+			draw({
+				selected: 'p1',
+				actionError: new OrdersError('order_not_pending', 409),
+				detail: detailOf({
+					...pending(),
+					status: 'cancelled',
+					cancelledAt: NOW,
+					rejectedReason: 'out_of_stock',
+				}),
+			})
+			expect(document.body.textContent).toContain('Rejected: Out of stock')
+			expect(document.body.textContent).toContain(
+				'Someone else already decided on this order',
+			)
+		})
+
+		it('says "changed on another screen" for a stale Mark ready on an order that once waited', () => {
+			draw({
+				selected: 'p1',
+				actionName: 'ready',
+				actionError: new OrdersError('stale_version', 409),
+				detail: detailOf({
+					...pending({
+						status: 'accepted',
+						acceptanceDeadlineAt: NOW - 60_000,
+					}),
+				}),
+			})
+			expect(document.body.textContent).toContain(
+				'This order changed on another screen',
+			)
+			expect(document.body.textContent).not.toContain(
+				'Someone else already decided',
+			)
+		})
+
+		it('says someone else decided when a stale accept finds the order no longer waiting', () => {
+			draw({
+				selected: 'p1',
+				actionName: 'accept',
+				actionError: new OrdersError('stale_version', 409),
+				detail: detailOf({
+					...pending({
+						status: 'accepted',
+						acceptanceDeadlineAt: NOW - 60_000,
+					}),
+				}),
+			})
+			expect(document.body.textContent).toContain(
+				'Someone else already decided on this order',
+			)
+		})
+
+		it('shows a failed reject inside the reject dialog, keeps it up, and closes the dialog once the order is decided', () => {
+			const waiting = detailOf({ ...pending(), version: 'b'.repeat(64) })
+			draw(
+				{ selected: 'p1', grants: MANAGER, detail: waiting },
+				[pending()],
+				MANAGER,
+			)
+			act(() => button('Reject').click())
+			expect(pinActionError).toHaveBeenLastCalledWith(true)
+			const failure = new OrdersError('connection_lost')
+			draw(
+				{
+					selected: 'p1',
+					grants: MANAGER,
+					detail: waiting,
+					actionName: 'reject',
+					actionError: failure,
+				},
+				[pending()],
+				MANAGER,
+			)
+			const dialog = openDialog('Reject order W-7?')!
+			expect(dialog.querySelector('[role="alert"]')?.textContent).toContain(
+				'connection',
+			)
+			// Another screen accepted it: the dialog closes, the sheet explains.
+			draw(
+				{
+					selected: 'p1',
+					grants: MANAGER,
+					detail: detailOf({ ...pending({ status: 'accepted' }) }),
+					actionName: 'reject',
+					actionError: new OrdersError('stale_version', 409),
+				},
+				[pending({ status: 'accepted' })],
+				MANAGER,
+			)
+			expect(pinActionError).toHaveBeenLastCalledWith(false)
+			expect(openDialog('Reject order W-7?')).toBeUndefined()
+			expect(document.body.textContent).toContain(
+				'Someone else already decided on this order',
+			)
+		})
 	})
 })

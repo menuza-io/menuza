@@ -184,11 +184,12 @@ async function detailResponse(
 	},
 	orderId: string,
 	status: 200 | 201 = 200,
+	extra: { refundOutcome?: { started: boolean; code: string | null } } = {},
 ) {
 	const order = await onlineOrderDetail(auth.db, auth.actor, orderId)
 	if (!order) return posError(404, 'order_not_found')
 	return json(
-		{ order, grants: auth.actor.grants, serverNow: Date.now() },
+		{ order, grants: auth.actor.grants, serverNow: Date.now(), ...extra },
 		status,
 	)
 }
@@ -211,9 +212,14 @@ posOnlineOrdersRoutes.post('/:id/command', async (c) => {
 		body.data,
 	)
 	if (!result.ok) return failure(result.failure)
-	return detailResponse(auth, c.req.param('id'))
+	return detailResponse(auth, c.req.param('id'), 200, result.data)
 })
 
+/**
+ * A refund from the till: through the payment provider for an order paid
+ * online (booked `pending`, executed by the App), recorded for payment taken
+ * at handoff. The detail shows the refund's state.
+ */
 posOnlineOrdersRoutes.post('/:id/refunds', async (c) => {
 	const auth = await authorize(c)
 	if ('error' in auth) return auth.error

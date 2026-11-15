@@ -316,6 +316,13 @@
 			"when": 1794650000001,
 			"tag": "0044_marketing_consent_permission",
 			"breakpoints": true
+		},
+		{
+			"idx": 45,
+			"version": "6",
+			"when": 1794671794020,
+			"tag": "0045_order_refunds_and_acceptance",
+			"breakpoints": true
 		}
 	]
 }

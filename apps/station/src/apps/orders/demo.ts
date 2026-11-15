@@ -7,6 +7,7 @@ import {
 	type PosOnlineOrderCommand,
 	type PosOnlineOrderContact,
 	type PosOnlineOrderDetail,
+	type PosOnlineOrderDetailResponse,
 	type PosOnlineOrderRefund,
 	type PosOnlineOrdersGrants,
 	type PosPhonePickup,
@@ -33,6 +34,9 @@ const DEMO_GRANTS: PosOnlineOrdersGrants = {
 	refund: true,
 }
 
+/** How long a demo provider refund stays pending before it settles. */
+export const DEMO_REFUND_SETTLE_MS = 4_000
+
 type DemoOrder = PosOnlineOrderDetail & {
 	contact: PosOnlineOrderContact
 	revision: number
@@ -46,6 +50,8 @@ const version = (id: string, revision: number) =>
 		.slice(0, 64)
 
 const MIN = 60_000
+/** The region's tick runs a little after the deadline: "Time is up" shows in between. */
+const EXPIRY_GRACE_MS = 20_000
 
 function sample(
 	id: string,
@@ -93,16 +99,38 @@ function sample(
 	return refreshed(base)
 }
 
+const isOnlinePaid = (order: {
+	paymentMethod: string
+	paymentStatus: string
+	onTab: boolean
+}) =>
+	order.paymentMethod === 'online' &&
+	order.paymentStatus === 'paid' &&
+	!order.onTab
+
 function refreshed(order: DemoOrder): DemoOrder {
+	const pending = order.refunds
+		.filter((row) => row.status === 'pending')
+		.reduce((sum, row) => sum + row.amountCents, 0)
+	const newest = order.refunds.at(-1)
+	const refundStatus: NonNullable<PosOnlineOrderDetail['refundStatus']> =
+		pending > 0
+			? 'pending'
+			: newest?.status === 'failed'
+				? 'failed'
+				: order.refundedCents <= 0
+					? 'none'
+					: order.refundedCents >= order.totalCents
+						? 'full'
+						: 'partial'
 	return {
 		...order,
 		version: version(order.id, order.revision),
-		refundableCents:
-			order.paymentMethod === 'online' &&
-			order.paymentStatus === 'paid' &&
-			!order.onTab
-				? Math.max(0, order.totalCents - order.refundedCents)
-				: 0,
+		refundPendingCents: pending,
+		refundStatus,
+		refundableCents: isOnlinePaid(order)
+			? Math.max(0, order.totalCents - order.refundedCents - pending)
+			: 0,
 	}
 }
 
@@ -146,6 +174,24 @@ export function createDemoOrders(start = Date.now()): OrdersApi & {
 						instructions: 'No onion',
 					}),
 					line('Truffle Fries', 1, 650),
+				],
+			},
+			start,
+		),
+	)
+	// Waits for a person to accept or reject it (manual acceptance), paid online.
+	add(
+		sample(
+			'demo-1043',
+			{
+				number: 'W-1043',
+				guestName: 'Noor',
+				status: 'pending_acceptance',
+				createdAt: start - MIN,
+				acceptanceDeadlineAt: start + 4 * MIN,
+				lines: [
+					line('Lamb Kofta Plate', 2, 3200, { instructions: 'Extra sauce' }),
+					line('Mint Lemonade', 2, 700),
 				],
 			},
 			start,
@@ -206,6 +252,7 @@ export function createDemoOrders(start = Date.now()): OrdersApi & {
 				openedAt: start - 25 * MIN,
 				createdAt: start - 30 * MIN,
 				dueAt: start - 10 * MIN,
+				disputed: true,
 				lines: [line('Chicken Wrap', 2, 1800)],
 			},
 			start,
@@ -298,15 +345,111 @@ export function createDemoOrders(start = Date.now()): OrdersApi & {
 		)
 	}
 
-	const respond = (order: DemoOrder) => {
+	const respond = (
+		order: DemoOrder,
+		refundOutcome?: PosOnlineOrderDetailResponse['refundOutcome'],
+	) => {
 		const { contact: _contact, revision: _revision, ...shown } = order
 		return Promise.resolve({
 			order: shown,
 			grants: DEMO_GRANTS,
 			serverNow: Date.now(),
+			...(refundOutcome ? { refundOutcome } : {}),
 		})
 	}
+	/** A provider refund settles a few seconds after it is booked, like a real one. */
+	const settleAt = new Map<string, number>()
+	const settleDue = () => {
+		const now = Date.now()
+		for (const [id, at] of settleAt) {
+			if (at > now) continue
+			settleAt.delete(id)
+			const order = orders.get(id)
+			if (!order) continue
+			const settled = order.refunds.map((row) =>
+				row.status === 'pending'
+					? { ...row, status: 'succeeded' as const }
+					: row,
+			)
+			const refundedCents = settled
+				.filter((row) => row.status !== 'failed' && row.status !== 'pending')
+				.reduce((sum, row) => sum + row.amountCents, 0)
+			orders.set(
+				id,
+				refreshed({
+					...order,
+					refunds: settled,
+					refundedCents,
+					revision: order.revision + 1,
+				}),
+			)
+		}
+	}
+	/**
+	 * Turns down an order waiting for acceptance, refunding a paid online order
+	 * in full like the region does (the answer says whether the refund started).
+	 */
+	const turnDown = (order: DemoOrder, reason: string, action: string) => {
+		const rejected = change(
+			order,
+			{
+				status: 'cancelled',
+				cancelledAt: Date.now(),
+				rejectedReason: reason,
+			},
+			action,
+			{ reason },
+		)
+		if (!isOnlinePaid(rejected)) return { order: rejected, outcome: undefined }
+		const block = refundBlock(rejected)
+		if (block)
+			return { order: rejected, outcome: { started: false, code: block } }
+		const amount = rejected.refundableCents
+		settleAt.set(order.id, Date.now() + DEMO_REFUND_SETTLE_MS)
+		return {
+			order: change(
+				rejected,
+				{
+					refunds: [
+						...rejected.refunds,
+						{
+							amountCents: amount,
+							note: '',
+							at: Date.now(),
+							kind: 'provider',
+							status: 'pending',
+							failureCode: null,
+						},
+					],
+				},
+				'refunded',
+				{ amountCents: amount, reason: 'full' },
+			),
+			outcome: { started: true, code: null },
+		}
+	}
+	/** Past its deadline the region's tick turns an order down: so does the demo. */
+	const expireDue = () => {
+		const now = Date.now()
+		for (const order of orders.values())
+			if (
+				order.status === 'pending_acceptance' &&
+				order.acceptanceDeadlineAt != null &&
+				order.acceptanceDeadlineAt + EXPIRY_GRACE_MS <= now
+			)
+				turnDown(order, 'not_accepted_in_time', 'rejected')
+	}
+	/** Why a provider refund cannot start now, or null. */
+	const refundBlock = (order: DemoOrder) => {
+		if (!isOnlinePaid(order)) return 'order_not_refundable'
+		if (order.disputed) return 'payment_disputed'
+		if ((order.refundPendingCents ?? 0) > 0) return 'refund_pending'
+		if (order.refundableCents === 0) return 'refund_complete'
+		return null
+	}
 	const find = (id: string) => {
+		expireDue()
+		settleDue()
 		const order = orders.get(id)
 		if (!order) throw new OrdersError('order_not_found', 404)
 		return order
@@ -391,6 +534,8 @@ export function createDemoOrders(start = Date.now()): OrdersApi & {
 	return {
 		arrive,
 		feed: () => {
+			expireDue()
+			settleDue()
 			if (Date.now() - start > 30_000) arrive()
 			return Promise.resolve({
 				orders: [...orders.values()]
@@ -444,7 +589,7 @@ export function createDemoOrders(start = Date.now()): OrdersApi & {
 			if (digits && !DEMO_GRANTS.contact)
 				throw new OrdersError('permission_required', 403)
 			const states: Record<string, string[]> = {
-				open: ['accepted', 'preparing'],
+				open: ['pending_acceptance', 'accepted', 'preparing'],
 				ready: ['ready'],
 				completed: ['completed'],
 				cancelled: ['cancelled'],
@@ -512,14 +657,53 @@ export function createDemoOrders(start = Date.now()): OrdersApi & {
 					),
 				)
 			}
+			if (command.action === 'accept') {
+				if (order.status !== 'pending_acceptance')
+					throw new OrdersError('order_not_pending', 409)
+				return respond(change(order, { status: 'accepted' }, 'accepted'))
+			}
+			if (command.action === 'reject') {
+				if (order.status !== 'pending_acceptance')
+					throw new OrdersError('order_not_pending', 409)
+				const result = turnDown(order, command.reason, 'rejected')
+				return respond(result.order, result.outcome)
+			}
+			if (command.action !== 'cancel')
+				throw new OrdersError('invalid_transition', 422)
 			if (done) throw new OrdersError('invalid_transition', 422)
+			if (command.refund === 'full' && !isOnlinePaid(order))
+				throw new OrdersError('order_not_refundable', 400)
+			const cancelled = change(
+				order,
+				{ status: 'cancelled', cancelledAt: Date.now() },
+				'cancelled',
+				{ reason: command.reason },
+			)
+			if (command.refund !== 'full') return respond(cancelled)
+			const block = refundBlock(cancelled)
+			if (block) return respond(cancelled, { started: false, code: block })
+			const amount = cancelled.refundableCents
+			settleAt.set(order.id, Date.now() + DEMO_REFUND_SETTLE_MS)
 			return respond(
 				change(
-					order,
-					{ status: 'cancelled', cancelledAt: Date.now() },
-					'cancelled',
-					{ reason: command.reason },
+					cancelled,
+					{
+						refunds: [
+							...cancelled.refunds,
+							{
+								amountCents: amount,
+								note: '',
+								at: Date.now(),
+								kind: 'provider',
+								status: 'pending',
+								failureCode: null,
+							},
+						],
+					},
+					'refunded',
+					{ amountCents: amount, reason: 'full' },
 				),
+				{ started: true, code: null },
 			)
 		},
 		refund: async (id, refund: PosOnlineOrderRefund, key) => {
@@ -527,6 +711,9 @@ export function createDemoOrders(start = Date.now()): OrdersApi & {
 			if (keys.has(key)) return respond(order)
 			if (refund.expectedVersion !== order.version)
 				throw new OrdersError('stale_version', 409)
+			if (order.disputed) throw new OrdersError('payment_disputed', 409)
+			if ((order.refundPendingCents ?? 0) > 0)
+				throw new OrdersError('refund_pending', 409)
 			if (order.refundableCents === 0)
 				throw new OrdersError('refund_complete', 409)
 			const amount =
@@ -538,21 +725,30 @@ export function createDemoOrders(start = Date.now()): OrdersApi & {
 					order.refundableCents,
 				)
 			keys.add(key)
-			const refundedCents = order.refundedCents + amount
+			settleAt.set(order.id, Date.now() + DEMO_REFUND_SETTLE_MS)
 			return respond(
 				change(
 					order,
 					{
-						refundedCents,
 						refunds: [
 							...order.refunds,
-							{ amountCents: amount, note: refund.note, at: Date.now() },
+							{
+								amountCents: amount,
+								note: refund.note,
+								at: Date.now(),
+								kind: 'provider',
+								status: 'pending',
+								failureCode: null,
+							},
 						],
 					},
 					'refunded',
 					{
 						amountCents: amount,
-						reason: refundedCents >= order.totalCents ? 'full' : 'partial',
+						reason:
+							amount >= order.refundableCents && order.refundedCents === 0
+								? 'full'
+								: 'partial',
 					},
 				),
 			)

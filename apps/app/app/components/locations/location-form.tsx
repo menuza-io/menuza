@@ -40,7 +40,7 @@ import {
 import { StatusButton } from '@repo/ui/status-button'
 import { Switch } from '@repo/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@repo/ui/tabs'
-import React, { useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { Link, useFetcher } from 'react-router'
 import {
 	useDiscardKey,
@@ -52,10 +52,17 @@ import {
 	LocalizedInput,
 } from '#app/components/website/locale-fields.tsx'
 import { TranslateProvider } from '#app/components/website/translate-provider.tsx'
+import { type OrderPolicyError } from '#app/utils/orders/order-policy-settings.ts'
 import { AddressAutocomplete } from './address-autocomplete'
 import { LocationHoursSection } from './availability-picker'
 import { DeliveryZoneMap } from './delivery-zone-map'
 import { DeliveryZonesManager } from './delivery-zones-manager'
+import {
+	type OrderPolicyFlags,
+	type OrderPolicyValues,
+	OrderPoliciesCard,
+	orderPolicyErrorMessage,
+} from './order-policies-card'
 import { SpecialHoursPicker } from './special-hours-picker'
 
 const TIMEZONE_OPTIONS = [
@@ -103,6 +110,12 @@ interface LocationFormProps {
 	siteLocalesRaw?: string | null
 	siteDefaultLocaleRaw?: string | null
 	isEditing?: boolean
+	/** Guest cancel and acceptance settings; omitted while both flags are off. */
+	orderPolicies?: {
+		flags: OrderPolicyFlags
+		currency: string
+		initial: OrderPolicyValues
+	}
 }
 
 export function LocationForm(props: LocationFormProps) {
@@ -117,10 +130,23 @@ function LocationFormBody({
 	siteLocalesRaw,
 	siteDefaultLocaleRaw,
 	isEditing = false,
+	orderPolicies,
 	onDiscard,
 }: LocationFormProps & { onDiscard: () => void }) {
 	const { _ } = useLingui()
-	const fetcher = useFetcher<{ error?: string }>()
+	const fetcher = useFetcher<{
+		error?: string
+		orderPolicyError?: OrderPolicyError
+	}>()
+	const orderPolicyError = fetcher.data?.orderPolicyError ?? null
+	const orderPolicyMessage = orderPolicyError
+		? _(orderPolicyErrorMessage(orderPolicyError))
+		: null
+	const [tab, setTab] = useState('general')
+	// The refused field lives on the Fulfillment & Timing tab: show it.
+	useEffect(() => {
+		if (orderPolicyError) setTab('fulfillment')
+	}, [orderPolicyError])
 	// The fetcher stays busy through the redirect that follows a save.
 	const isSubmitting = fetcher.state !== 'idle'
 	const formRef = useRef<HTMLFormElement>(null)
@@ -182,6 +208,9 @@ function LocationFormBody({
 	)
 
 	// Timing & Prep Time
+	const [policyValues, setPolicyValues] = useState<OrderPolicyValues | null>(
+		orderPolicies?.initial ?? null,
+	)
 	const [prepTime, setPrepTime] = useState(initialData?.prepTime ?? 15)
 	const [largeOrderThreshold, setLargeOrderThreshold] = useState(
 		initialData?.largeOrderThreshold ?? 100,
@@ -287,6 +316,7 @@ function LocationFormBody({
 		scheduling: JSON.stringify(scheduling),
 		deliveryConfig: JSON.stringify(deliveryConfig),
 		deliveryZones: JSON.stringify(deliveryZones),
+		...(orderPolicies && policyValues ? policyValues : {}),
 	}
 
 	const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -331,11 +361,23 @@ function LocationFormBody({
 						value={JSON.stringify(payload)}
 					/>
 					{fetcher.data?.error ? (
-						<div className="bg-destructive/10 border-destructive/20 text-destructive rounded-md border p-3 text-sm">
-							{fetcher.data.error}
+						<div
+							role="alert"
+							className="bg-destructive/10 border-destructive/20 text-destructive rounded-md border p-3 text-sm"
+							data-testid="location-form-error"
+						>
+							{orderPolicyMessage ? (
+								<Trans>Online order rules: {orderPolicyMessage}</Trans>
+							) : (
+								fetcher.data.error
+							)}
 						</div>
 					) : null}
-					<Tabs defaultValue="general" className="w-full">
+					<Tabs
+						value={tab}
+						onValueChange={(next) => setTab(String(next))}
+						className="w-full"
+					>
 						<TabsList className="grid w-full grid-cols-2 lg:grid-cols-4">
 							<TabsTrigger value="general">
 								<Trans>Details & Address</Trans>
@@ -721,6 +763,16 @@ function LocationFormBody({
 									</div>
 								</CardContent>
 							</Card>
+
+							{orderPolicies && policyValues ? (
+								<OrderPoliciesCard
+									flags={orderPolicies.flags}
+									currency={orderPolicies.currency}
+									values={policyValues}
+									onChange={setPolicyValues}
+									error={orderPolicyError}
+								/>
+							) : null}
 
 							{/* Fulfillment Channels */}
 							<Card>

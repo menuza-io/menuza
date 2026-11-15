@@ -12,7 +12,9 @@ import { syncEnvFromProcess } from './secrets.ts'
  * queued row costs one indexed read). The hourly cron still reaches the node,
  * and a doubled run is harmless (each row is claimed before it is sent).
  * `ORDER_MESSAGES_TICK_INTERVAL_SECONDS` sets the period (default 120, minimum
- * 60, `0` off). The Durable Object runtime uses alarms instead.
+ * 60, `0` off). The Durable Object runtime uses alarms instead. It does NOT
+ * drive the acceptance timeout (#107): that has its own interval that `0`
+ * here cannot switch off (`order-acceptance-tick-interval.ts`).
  */
 export const DEFAULT_ORDER_MESSAGES_TICK_INTERVAL_SECONDS = 120
 export const MIN_ORDER_MESSAGES_TICK_INTERVAL_SECONDS = 60

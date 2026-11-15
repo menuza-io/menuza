@@ -25,6 +25,8 @@ export type StatusPollerDeps<T> = {
 	fetchOnce: () => Promise<StatusFetchResult<T>>
 	onOrder: (order: T & { status: string }) => void
 	onGone?: () => void
+	/** Overrides "terminal means stop" (a cancelled order with a refund pending keeps polling). */
+	isSettled?: (order: T & { status: string }) => boolean
 	intervalMs?: number
 	isHidden: () => boolean
 	/** Subscribes to visibility changes; returns an unsubscribe function. */
@@ -86,7 +88,11 @@ export function createStatusPoller<T>(deps: StatusPollerDeps<T>): StatusPoller {
 				return
 			}
 			deps.onOrder(result.order)
-			if (isTerminalStatus(result.order.status)) {
+			if (
+				deps.isSettled
+					? deps.isSettled(result.order)
+					: isTerminalStatus(result.order.status)
+			) {
 				finish()
 				return
 			}

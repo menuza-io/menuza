@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { fireEvent, screen, waitFor } from '@testing-library/react'
 import { userEvent } from '@testing-library/user-event'
+import { useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import { OrderDetail } from '#app/components/orders/order-detail.tsx'
 import { OperatorRequestError } from '#app/hooks/use-operator-client.ts'
@@ -252,20 +253,73 @@ describe('OrderDetail', () => {
 		expect(onUpdate).toHaveBeenCalledWith('completed', true)
 	})
 
-	it('confirms a cancellation and states the refund consequence', async () => {
+	async function chooseReason(label: string) {
+		await userEvent.click(screen.getByTestId('order-cancel-reason'))
+		await userEvent.click(await screen.findByRole('option', { name: label }))
+	}
+
+	it('needs a cancel reason and states the refund consequence', async () => {
 		const onUpdate = show(order())
 		fireEvent.click(screen.getByRole('button', { name: 'Cancel order' }))
 		expect(await screen.findByText(/\$45\.83 was received/)).toHaveTextContent(
-			'record the refund on this order',
+			'Cancelling does not refund it',
 		)
-		fireEvent.click(
+		const confirm = screen.getByRole('button', { name: 'Confirm cancellation' })
+		expect(confirm).toBeDisabled()
+		expect(screen.queryByTestId('order-cancel-refund')).toBeNull()
+		await chooseReason('Out of stock')
+		await userEvent.click(confirm)
+		expect(onUpdate).toHaveBeenCalledWith('cancelled', false, {
+			cancelReason: 'out_of_stock',
+			refund: 'none',
+		})
+	})
+
+	it('offers Full refund by default when cancelling a paid online order', async () => {
+		const onUpdate = show(order(), { canRefund: true })
+		fireEvent.click(screen.getByRole('button', { name: 'Cancel order' }))
+		expect(await screen.findByText('Refund the guest?')).toBeVisible()
+		expect(screen.getByRole('radio', { name: 'Full refund' })).toBeChecked()
+		await chooseReason('Kitchen closed')
+		await userEvent.click(
 			screen.getByRole('button', { name: 'Confirm cancellation' }),
 		)
-		expect(onUpdate).toHaveBeenCalledWith('cancelled', false)
+		expect(onUpdate).toHaveBeenCalledWith('cancelled', false, {
+			cancelReason: 'kitchen_closed',
+			refund: 'full',
+		})
+	})
+
+	it('cancels without a refund when asked', async () => {
+		const onUpdate = show(order(), { canRefund: true })
+		fireEvent.click(screen.getByRole('button', { name: 'Cancel order' }))
+		await userEvent.click(
+			await screen.findByRole('radio', { name: 'No refund' }),
+		)
+		await chooseReason('Duplicate order')
+		await userEvent.click(
+			screen.getByRole('button', { name: 'Confirm cancellation' }),
+		)
+		expect(onUpdate).toHaveBeenCalledWith('cancelled', false, {
+			cancelReason: 'duplicate',
+			refund: 'none',
+		})
+	})
+
+	it('offers no refund choice on a disputed order', async () => {
+		show(order({ disputed: true }), { canRefund: true })
+		fireEvent.click(screen.getByRole('button', { name: 'Cancel order' }))
+		await screen.findByText(/\$45\.83 was received/)
+		expect(screen.queryByTestId('order-cancel-refund')).toBeNull()
 	})
 })
 
 describe('OrderDetail refunds', () => {
+	// Money handed back at the counter is recorded; online orders go through
+	// the payment provider (see the provider refunds below).
+	const handoff = (over: Partial<Order> = {}) =>
+		order({ paymentMethod: 'handoff', paymentProcessor: null, ...over })
+
 	async function openRefund(note: string) {
 		await userEvent.click(screen.getByTestId('order-refund-open'))
 		await userEvent.type(await screen.findByTestId('order-refund-note'), note)
@@ -281,7 +335,7 @@ describe('OrderDetail refunds', () => {
 
 	it('reads Partly refunded and logs each refund with its note', () => {
 		show(
-			order({
+			handoff({
 				refundedCents: 1200,
 				refunds: [
 					{
@@ -305,7 +359,7 @@ describe('OrderDetail refunds', () => {
 	})
 
 	it('reads Refunded once everything paid came back and offers no more', () => {
-		show(order({ refundedCents: 4583 }), { onRecordRefund: vi.fn() })
+		show(handoff({ refundedCents: 4583 }), { onRecordRefund: vi.fn() })
 		expect(screen.getByTestId('order-payment-status')).toHaveTextContent(
 			/^Refunded$/,
 		)
@@ -313,7 +367,7 @@ describe('OrderDetail refunds', () => {
 	})
 
 	it.each([
-		['an order paid at handoff', { paymentMethod: 'handoff' as const }],
+		['an order paid online', {}],
 		['an unpaid order', { paymentStatus: 'pending' }],
 		['a table round', { paymentMethod: 'handoff' as const, tabId: 'tab_1' }],
 	])('offers no refund on %s', (_label, over) => {
@@ -322,13 +376,13 @@ describe('OrderDetail refunds', () => {
 	})
 
 	it('offers no refund to a member who cannot update orders', () => {
-		show(order(), { canWrite: false, onRecordRefund: vi.fn() })
+		show(handoff(), { canWrite: false, onRecordRefund: vi.fn() })
 		expect(screen.queryByTestId('order-refund-open')).toBeNull()
 	})
 
 	it('records a full refund on a completed order with a note and a key', async () => {
 		const onRecordRefund = vi.fn().mockResolvedValue(undefined)
-		show(order({ status: 'completed' }), { onRecordRefund })
+		show(handoff({ status: 'completed' }), { onRecordRefund })
 		expect(screen.queryByTestId('order-actions')).toBeNull()
 		await openRefund('Refunded in Stripe')
 		expect(screen.getByTestId('order-refund-left')).toHaveTextContent('$45.83')
@@ -350,7 +404,7 @@ describe('OrderDetail refunds', () => {
 
 	it('records part of the payment in cents', async () => {
 		const onRecordRefund = vi.fn().mockResolvedValue(undefined)
-		show(order({ refundedCents: 500 }), { onRecordRefund })
+		show(handoff({ refundedCents: 500 }), { onRecordRefund })
 		await openRefund('Cold fries')
 		await choosePartial('4.50')
 		await userEvent.click(screen.getByTestId('order-refund-submit'))
@@ -365,7 +419,7 @@ describe('OrderDetail refunds', () => {
 
 	it('refuses more than is left without calling the region', async () => {
 		const onRecordRefund = vi.fn()
-		show(order({ refundedCents: 4000 }), { onRecordRefund })
+		show(handoff({ refundedCents: 4000 }), { onRecordRefund })
 		await openRefund('Too much')
 		await choosePartial('6.00')
 		await userEvent.click(screen.getByTestId('order-refund-submit'))
@@ -378,7 +432,7 @@ describe('OrderDetail refunds', () => {
 
 	it('refuses a decimal comma instead of recording a hundred times the amount', async () => {
 		const onRecordRefund = vi.fn()
-		show(order({ totalCents: 60_000 }), { onRecordRefund })
+		show(handoff({ totalCents: 60_000 }), { onRecordRefund })
 		await openRefund('Cold fries')
 		await choosePartial('4,50')
 		await userEvent.click(screen.getByTestId('order-refund-submit'))
@@ -391,7 +445,7 @@ describe('OrderDetail refunds', () => {
 
 	it('reads an amount typed in Arabic-Indic digits', async () => {
 		const onRecordRefund = vi.fn().mockResolvedValue(undefined)
-		show(order(), { onRecordRefund })
+		show(handoff(), { onRecordRefund })
 		await openRefund('Cold fries')
 		await choosePartial('٤٫٥٠')
 		await userEvent.click(screen.getByTestId('order-refund-submit'))
@@ -416,7 +470,7 @@ describe('OrderDetail refunds', () => {
 					{ error: 'refund_exceeds_payment', refundableCents: 300 },
 				),
 			)
-		show(order(), { onRecordRefund })
+		show(handoff(), { onRecordRefund })
 		await openRefund('Refunded twice?')
 		await userEvent.click(screen.getByTestId('order-refund-submit'))
 		expect(await screen.findByTestId('order-refund-error')).toHaveTextContent(
@@ -546,6 +600,279 @@ describe('OrderDetail refunds', () => {
 				expect(screen.getByTestId('order-push-back-error')).toHaveTextContent(
 					'Unable to update this order',
 				),
+			)
+		})
+	})
+})
+
+describe('OrderDetail provider refunds', () => {
+	const provider = (over: Partial<Order> = {}) => order(over)
+
+	it('offers Refund on a paid online order with the permission', () => {
+		show(provider(), { canRefund: true })
+		expect(screen.getByTestId('order-provider-refund-open')).toHaveTextContent(
+			'Refund',
+		)
+		expect(screen.queryByTestId('order-refund-open')).toBeNull()
+	})
+
+	it('offers nothing without the permission', () => {
+		show(provider(), { canRefund: false })
+		expect(screen.queryByTestId('order-provider-refund-open')).toBeNull()
+	})
+
+	it('hides refund actions and explains a dispute', () => {
+		show(provider({ disputed: true, disputeStatus: 'open' }), {
+			canRefund: true,
+		})
+		expect(screen.getByTestId('order-disputed-badge')).toHaveTextContent(
+			'Disputed',
+		)
+		expect(screen.getByTestId('order-disputed-note')).toHaveTextContent(
+			'disputed this payment with their card issuer',
+		)
+		expect(screen.queryByTestId('order-provider-refund-open')).toBeNull()
+	})
+
+	it('shows a pending refund and no new refund button', () => {
+		show(
+			provider({
+				refundStatus: 'pending',
+				refundPendingCents: 1000,
+				refundableCents: 3583,
+			}),
+			{ canRefund: true },
+		)
+		expect(screen.getByTestId('order-refund-pending')).toHaveTextContent(
+			'Refund pending ($10.00)',
+		)
+		expect(screen.queryByTestId('order-provider-refund-open')).toBeNull()
+	})
+
+	it('shows a failed refund in plain words with Try again', () => {
+		show(
+			provider({
+				status: 'cancelled',
+				refundStatus: 'failed',
+				refundFailureCode: 'expired_or_canceled_card',
+				refundableCents: 4583,
+				cancelledBy: 'operator',
+				cancelReason: 'out_of_stock',
+				refunds: [
+					{
+						id: 'rf1',
+						amountCents: 4583,
+						note: null,
+						createdAt: '2026-10-19T11:00:00.000Z',
+						kind: 'provider',
+						status: 'failed',
+						failureCode: 'expired_or_canceled_card',
+					},
+				],
+			}),
+			{ canRefund: true },
+		)
+		expect(screen.getByTestId('order-refund-failed')).toHaveTextContent(
+			"Refund failed. The guest's card is closed or expired.",
+		)
+		expect(screen.getByTestId('order-provider-refund-open')).toHaveTextContent(
+			'Try again',
+		)
+		expect(screen.getByTestId('order-cancel-info')).toHaveTextContent(
+			'Staff · Out of stock',
+		)
+		expect(screen.getByTestId('order-timeline')).toHaveTextContent(
+			'Refund failed: $45.83',
+		)
+	})
+
+	it('opens the provider dialog, never the record dialog, for an online order', async () => {
+		show(provider(), { canRefund: true, onRecordRefund: vi.fn() })
+		await userEvent.click(screen.getByTestId('order-provider-refund-open'))
+		expect(await screen.findByTestId('provider-refund-dialog')).toBeVisible()
+		expect(screen.queryByTestId('order-refund-dialog')).toBeNull()
+	})
+
+	describe('waiting for acceptance', () => {
+		// Computed per call: a deadline taken when the file loads drifts by
+		// the time the suite reaches this test.
+		const waitingOrder = (over: Partial<Order> = {}) =>
+			order({
+				status: 'pending_acceptance',
+				acceptanceDeadlineAt: new Date(Date.now() + 192_500).toISOString(),
+				...over,
+			})
+
+		it('shows the countdown and Accept / Reject instead of the status buttons', () => {
+			show(waitingOrder(), { onAccept: vi.fn(), onReject: vi.fn() })
+			expect(screen.getByTestId('order-acceptance-banner')).toBeInTheDocument()
+			expect(screen.getByTestId('acceptance-countdown')).toHaveTextContent(
+				/Accept within 3:1\d/,
+			)
+			expect(screen.getByTestId('order-accept')).toBeInTheDocument()
+			expect(screen.queryByTestId('order-actions')).toBeNull()
+			expect(screen.queryByText('Cancel order')).toBeNull()
+			expect(screen.queryByText('Start preparing')).toBeNull()
+		})
+
+		it('says time is up past the deadline but keeps Accept', () => {
+			show(
+				waitingOrder({
+					acceptanceDeadlineAt: new Date(Date.now() - 5000).toISOString(),
+				}),
+				{ onAccept: vi.fn(), onReject: vi.fn() },
+			)
+			expect(screen.getByTestId('acceptance-countdown')).toHaveTextContent(
+				'Time is up',
+			)
+			expect(screen.getByTestId('order-accept')).toBeEnabled()
+		})
+
+		it('accepts with one tap', async () => {
+			const onAccept = vi.fn()
+			show(waitingOrder(), { onAccept, onReject: vi.fn() })
+			await userEvent.click(screen.getByTestId('order-accept'))
+			expect(onAccept).toHaveBeenCalledTimes(1)
+		})
+
+		it('moves focus to the order heading when Accept removes the banner', async () => {
+			function Harness() {
+				const [current, setCurrent] = useState(waitingOrder())
+				return (
+					<OrderDetail
+						order={current}
+						orgSlug="acme"
+						canWrite
+						canViewCustomers
+						busy={false}
+						notice={current.status === 'accepted' ? 'Order accepted.' : null}
+						backHref="/acme/orders"
+						onUpdate={vi.fn()}
+						onAccept={() => setCurrent({ ...current, status: 'accepted' })}
+						onReject={vi.fn()}
+					/>
+				)
+			}
+			renderStaff(<Harness />)
+			const accept = screen.getByTestId('order-accept')
+			accept.focus()
+			await userEvent.click(accept)
+			await waitFor(() =>
+				expect(screen.queryByTestId('order-acceptance-banner')).toBeNull(),
+			)
+			expect(screen.getByRole('heading', { level: 1 })).toHaveFocus()
+			// The notice sits in the live region that was already on the page.
+			expect(screen.getByTestId('order-refund-notice')).toHaveAttribute(
+				'aria-live',
+				'polite',
+			)
+			expect(screen.getByTestId('order-refund-notice')).toHaveTextContent(
+				'Order accepted.',
+			)
+		})
+
+		it('leaves focus alone when it is already elsewhere as the banner goes', async () => {
+			function Harness() {
+				const [current, setCurrent] = useState(waitingOrder())
+				return (
+					<>
+						<button
+							type="button"
+							data-testid="elsewhere"
+							onClick={() => setCurrent({ ...current, status: 'accepted' })}
+						>
+							Someone else accepted
+						</button>
+						<OrderDetail
+							order={current}
+							orgSlug="acme"
+							canWrite
+							canViewCustomers
+							busy={false}
+							backHref="/acme/orders"
+							onUpdate={vi.fn()}
+						/>
+					</>
+				)
+			}
+			renderStaff(<Harness />)
+			await userEvent.click(screen.getByTestId('elsewhere'))
+			await waitFor(() =>
+				expect(screen.queryByTestId('order-acceptance-banner')).toBeNull(),
+			)
+			expect(screen.getByTestId('elsewhere')).toHaveFocus()
+		})
+
+		it('rejects only with a reason and tells about the refund', async () => {
+			const onReject = vi.fn()
+			show(waitingOrder(), { onAccept: vi.fn(), onReject })
+			await userEvent.click(screen.getByTestId('order-reject'))
+			expect(
+				await screen.findByTestId('order-reject-refund-note'),
+			).toHaveTextContent('The guest is refunded in full.')
+			expect(
+				screen.getByRole('button', { name: 'Reject order' }),
+			).toBeDisabled()
+			await userEvent.click(screen.getByTestId('order-reject-reason'))
+			await userEvent.click(
+				await screen.findByRole('option', { name: 'Kitchen closed' }),
+			)
+			await userEvent.click(
+				screen.getByRole('button', { name: 'Reject order' }),
+			)
+			expect(onReject).toHaveBeenCalledWith('kitchen_closed')
+		})
+
+		it('does not promise a refund for an unpaid order', async () => {
+			show(
+				waitingOrder({ paymentStatus: 'unpaid', paymentMethod: 'handoff' }),
+				{
+					onAccept: vi.fn(),
+					onReject: vi.fn(),
+				},
+			)
+			await userEvent.click(screen.getByTestId('order-reject'))
+			await screen.findByTestId('order-reject-reason')
+			expect(screen.queryByTestId('order-reject-refund-note')).toBeNull()
+		})
+
+		it('hides the buttons without write access', () => {
+			show(waitingOrder(), { canWrite: false })
+			expect(screen.getByTestId('order-acceptance-banner')).toBeInTheDocument()
+			expect(screen.queryByTestId('order-accept')).toBeNull()
+		})
+
+		it('reads Rejected with the reason, and Not accepted in time', () => {
+			const { unmount } = renderStaff(
+				<OrderDetail
+					order={order({
+						status: 'cancelled',
+						cancelReason: 'out_of_stock',
+						rejectedReason: 'out_of_stock',
+						cancelledBy: 'operator',
+					})}
+					orgSlug="acme"
+					canWrite
+					canViewCustomers
+					busy={false}
+					backHref="/acme/orders"
+					onUpdate={vi.fn()}
+				/>,
+			)
+			expect(screen.getByTestId('order-cancel-info')).toHaveTextContent(
+				'Rejected: Out of stock',
+			)
+			unmount()
+			show(
+				order({
+					status: 'cancelled',
+					cancelReason: 'not_accepted_in_time',
+					rejectedReason: 'not_accepted_in_time',
+					cancelledBy: 'system',
+				}),
+			)
+			expect(screen.getByTestId('order-cancel-info')).toHaveTextContent(
+				'Not accepted in time',
 			)
 		})
 	})

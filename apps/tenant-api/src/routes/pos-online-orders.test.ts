@@ -30,9 +30,14 @@ import {
 	staffScopeAssignments,
 } from '@repo/tenant-db'
 import { ORG_A, ORG_B, stubStaffEnv } from '../../tests/staff-harness.ts'
+import {
+	orderRefundKicksIdle,
+	setOrderRefundKickForTest,
+} from '../lib/order-refund-kick.ts'
 import { hashPosSecret } from '../lib/pos-auth.ts'
 import { mintPosStaffSession } from '../lib/pos-staff-session.ts'
 import { reconcileLoyaltySource } from '../services/loyalty-purchase-service.ts'
+import { applyProviderRefundStatus } from '../services/order-provider-refund-service.ts'
 import {
 	activateProgram,
 	claimAndQueue,
@@ -153,6 +158,10 @@ describe('Station Orders app API (/pos/online-orders)', () => {
 			requestHash: 'x',
 			receiptTokenHash: 'y',
 			paidAt: new Date(),
+			// Paid online through a bound Checkout Session (refunds go back
+			// through the provider).
+			paymentProcessor: 'connect',
+			paymentSessionId: `cs_station_${crypto.randomUUID()}`,
 			...values,
 			id,
 		})
@@ -204,7 +213,14 @@ describe('Station Orders app API (/pos/online-orders)', () => {
 		})
 	}
 
+	const kicks: Array<{ orgId: string; refundId: string }> = []
+
 	beforeEach(async () => {
+		kicks.length = 0
+		setOrderRefundKickForTest(async (request) => {
+			kicks.push(request)
+			return { status: 'sent' }
+		})
 		dir = fs.mkdtempSync(path.join(os.tmpdir(), 'station-orders-'))
 		stubStaffEnv(dir)
 		vi.stubEnv('POS_ENABLED', '')
@@ -217,6 +233,8 @@ describe('Station Orders app API (/pos/online-orders)', () => {
 		manager = await session(managerId)
 	})
 	afterEach(async () => {
+		await orderRefundKicksIdle()
+		setOrderRefundKickForTest(null)
 		for (const org of [ORG_A, ORG_B]) await destroyTenantDb(org)
 		fs.rmSync(dir, { recursive: true, force: true })
 		vi.unstubAllEnvs()
@@ -432,7 +450,7 @@ describe('Station Orders app API (/pos/online-orders)', () => {
 		expect(kitchen.tickets.find((t) => t.id === id)?.cancelled).toBe(true)
 	})
 
-	it('records partial and full refunds for a manager, never past what was paid', async () => {
+	it('refunds an online order through the payment provider for a manager, never past what was paid', async () => {
 		const id = await insertOrder({
 			status: 'completed',
 			completedAt: new Date(),
@@ -462,7 +480,14 @@ describe('Station Orders app API (/pos/online-orders)', () => {
 		})
 		expect(partial.status).toBe(201)
 		seen = ((await partial.json()) as PosOnlineOrderDetailResponse).order
-		expect(seen).toMatchObject({ refundedCents: 500, refundableCents: 1000 })
+		// Booked with the provider: nothing came back yet, 500 is on its way.
+		expect(seen).toMatchObject({
+			refundedCents: 0,
+			refundPendingCents: 500,
+			refundableCents: 1000,
+			refundStatus: 'pending',
+			refunds: [{ amountCents: 500, kind: 'provider', status: 'pending' }],
+		})
 		expect(seen.history[0]).toMatchObject({
 			action: 'refunded',
 			amountCents: 500,
@@ -475,6 +500,92 @@ describe('Station Orders app API (/pos/online-orders)', () => {
 			amountCents: 500,
 			note: 'Cold fries',
 			actorId: `staff:${managerId}`,
+			kind: 'provider',
+			origin: 'station',
+			status: 'pending',
+		})
+		// The region tells the App to execute it (ids only).
+		await orderRefundKicksIdle()
+		expect(kicks).toEqual([{ orgId: ORG_A, refundId: row!.id }])
+		// One provider refund at a time.
+		const busy = await refund(id, {
+			expectedVersion: seen.version,
+			full: true,
+			note: 'Whole order',
+		})
+		expect(busy.status).toBe(409)
+		expect(await busy.json()).toMatchObject({ error: 'refund_pending' })
+
+		const settled = await applyProviderRefundStatus({
+			orgId: ORG_A,
+			refundId: row!.id,
+			status: 'succeeded',
+			providerRefundId: 're_station_1',
+		})
+		expect(settled.ok).toBe(true)
+		seen = (await detail(id, manager)).order
+		expect(seen).toMatchObject({
+			refundedCents: 500,
+			refundableCents: 1000,
+			refundStatus: 'partial',
+		})
+		// Nothing waits on the provider: the key is left out, not 0.
+		expect(seen).not.toHaveProperty('refundPendingCents')
+		const before = seen.version
+		// The provider takes it back later (succeeded, then failed): Station
+		// reads "failed", the 500 is refundable again, and the version moves.
+		const reversed = await applyProviderRefundStatus({
+			orgId: ORG_A,
+			refundId: row!.id,
+			status: 'failed',
+			providerRefundId: 're_station_1',
+			failureCode: 'card_closed',
+		})
+		expect(reversed.ok).toBe(true)
+		seen = (await detail(id, manager)).order
+		expect(seen.version).not.toBe(before)
+		expect(seen).toMatchObject({
+			refundedCents: 0,
+			refundableCents: 1500,
+			refundStatus: 'failed',
+			refunds: [
+				{ amountCents: 500, status: 'failed', failureCode: 'card_closed' },
+			],
+		})
+		expect(
+			(
+				await refund(id, {
+					expectedVersion: seen.version,
+					full: true,
+					note: 'Whole order',
+				})
+			).status,
+		).toBe(201)
+		expect((await detail(id)).order.refundableCents).toBe(0)
+	})
+
+	it('records refunds of payment taken at handoff, with no provider and no kick', async () => {
+		const id = await insertOrder({
+			status: 'completed',
+			completedAt: new Date(),
+			paymentMethod: 'handoff',
+			paymentProcessor: null,
+			paymentSessionId: null,
+		})
+		let seen = (await detail(id, manager)).order
+		expect(seen.refundableCents).toBe(1500)
+		const partial = await refund(id, {
+			expectedVersion: seen.version,
+			amountCents: 500,
+			note: 'Cold fries',
+		})
+		expect(partial.status).toBe(201)
+		seen = ((await partial.json()) as PosOnlineOrderDetailResponse).order
+		expect(seen).toMatchObject({
+			refundedCents: 500,
+			refundableCents: 1000,
+			refundStatus: 'partial',
+			refunds: [{ kind: 'record', status: 'succeeded' }],
 		})
 		// The version the screen saw before the refund is stale now.
 		expect(
@@ -487,6 +598,88 @@ describe('Station Orders app API (/pos/online-orders)', () => {
 			).status,
 		).toBe(201)
 		expect((await detail(id)).order.refundableCents).toBe(0)
+		await orderRefundKicksIdle()
+		expect(kicks).toEqual([])
+	})
+
+	it('cancels a paid online order with a full refund for a manager, mapping the reason', async () => {
+		const id = await insertOrder()
+		const seen = (await detail(id, manager)).order
+		const body = {
+			action: 'cancel',
+			expectedVersion: seen.version,
+			reason: 'guest_request',
+			refund: 'full',
+		}
+		const response = await command(id, body, manager)
+		expect(response.status).toBe(200)
+		const answer = (await response.json()) as PosOnlineOrderDetailResponse
+		expect(answer.refundOutcome).toEqual({ started: true, code: null })
+		expect(answer.order).toMatchObject({
+			status: 'cancelled',
+			refundStatus: 'pending',
+			refundPendingCents: 1500,
+			refundableCents: 0,
+		})
+		const db = await getTenantDb(ORG_A)
+		const [order] = await db
+			.select()
+			.from(restaurantOrders)
+			.where(eq(restaurantOrders.id, id))
+		expect(order).toMatchObject({
+			cancelReason: 'guest_asked',
+			cancelledBy: 'operator',
+		})
+		const [row] = await db.select().from(restaurantOrderRefunds)
+		expect(row).toMatchObject({
+			origin: 'station',
+			actorId: `staff:${managerId}`,
+			amountCents: 1500,
+		})
+		await orderRefundKicksIdle()
+		expect(kicks).toEqual([{ orgId: ORG_A, refundId: row!.id }])
+
+		// Payment taken at handoff is never refunded with the cancel.
+		const handoff = await insertOrder({
+			number: 'W-2',
+			paymentMethod: 'handoff',
+			paymentProcessor: null,
+			paymentSessionId: null,
+		})
+		const refused = await command(
+			handoff,
+			{
+				action: 'cancel',
+				expectedVersion: (await detail(handoff, manager)).order.version,
+				reason: 'other',
+				refund: 'full',
+			},
+			manager,
+		)
+		expect(refused.status).toBe(400)
+	})
+
+	it('cancels a disputed order without a refund and says why', async () => {
+		const id = await insertOrder({ disputeStatus: 'open' })
+		const seen = (await detail(id, manager)).order
+		expect(seen.disputed).toBe(true)
+		const response = await command(
+			id,
+			{
+				action: 'cancel',
+				expectedVersion: seen.version,
+				reason: 'too_busy',
+				refund: 'full',
+			},
+			manager,
+		)
+		expect(response.status).toBe(200)
+		const answer = (await response.json()) as PosOnlineOrderDetailResponse
+		expect(answer.refundOutcome).toEqual({
+			started: false,
+			code: 'payment_disputed',
+		})
+		expect(answer.order.status).toBe('cancelled')
 	})
 
 	it('a refund that takes loyalty points back needs the App grant, which no till has', async () => {
@@ -813,6 +1006,219 @@ describe('Station Orders app API (/pos/online-orders)', () => {
 		expect(
 			(await call('POST', `/${id}/contact`, { staff: manager })).status,
 		).toBe(200)
+	})
+
+	describe('summary keys', () => {
+		it('leaves a key out while it holds its default', async () => {
+			const id = await insertOrder()
+			const data = await feed()
+			for (const order of data.orders) {
+				expect(order).not.toHaveProperty('refundStatus')
+				expect(order).not.toHaveProperty('refundPendingCents')
+				expect(order).not.toHaveProperty('disputed')
+				expect(order).not.toHaveProperty('acceptanceDeadlineAt')
+				expect(order).not.toHaveProperty('rejectedReason')
+			}
+			expect((await detail(id)).order).not.toHaveProperty('disputed')
+		})
+
+		it('sends a key once it differs from its default', async () => {
+			await insertOrder({ disputeStatus: 'open' })
+			const [order] = (await feed()).orders
+			expect(order).toMatchObject({ disputed: true })
+		})
+	})
+
+	describe('manual acceptance (#107)', () => {
+		const waiting = (
+			values: Partial<typeof restaurantOrders.$inferInsert> = {},
+		) =>
+			insertOrder({
+				status: 'pending_acceptance',
+				acceptanceDeadlineAt: new Date(Date.now() + 5 * 60_000),
+				...values,
+			})
+
+		it('lists a waiting order first, with its deadline; others keep their shape', async () => {
+			const open = await insertOrder({ number: 'W-1' })
+			const id = await waiting({ number: 'W-2' })
+			const data = await feed()
+			expect(data.orders.map((order) => order.id)).toEqual([id, open])
+			const [first, second] = data.orders
+			expect(first).toMatchObject({
+				status: 'pending_acceptance',
+				acceptanceDeadlineAt: expect.any(Number),
+			})
+			expect(second).not.toHaveProperty('acceptanceDeadlineAt')
+			expect(second).not.toHaveProperty('rejectedReason')
+			const found = await call('GET', '/search?q=W-2&state=open')
+			expect(found.status).toBe(200)
+			expect(
+				((await found.json()) as PosOnlineOrdersSearch).results.map(
+					(order) => order.id,
+				),
+			).toEqual([id])
+		})
+
+		it('accepts for anyone signed in, with the version, once; the kitchen then shows it', async () => {
+			const id = await waiting()
+			const seen = (await detail(id)).order
+			const response = await command(id, {
+				action: 'accept',
+				expectedVersion: seen.version,
+			})
+			expect(response.status).toBe(200)
+			const answer = (await response.json()) as PosOnlineOrderDetailResponse
+			expect(answer.order.status).toBe('accepted')
+			expect(answer.order.history[0]).toMatchObject({
+				action: 'accepted',
+				staffName: 'Sam S.',
+			})
+			const db = await getTenantDb(ORG_A)
+			const [order] = await db
+				.select()
+				.from(restaurantOrders)
+				.where(eq(restaurantOrders.id, id))
+			expect(order?.acceptedAt).not.toBeNull()
+			// A second screen with the old version loses.
+			const again = await command(id, {
+				action: 'accept',
+				expectedVersion: seen.version,
+			})
+			expect(again.status).toBe(409)
+			expect(await again.json()).toMatchObject({ error: 'stale_version' })
+			const kitchen = await app.request('/pos/kds', {
+				headers: {
+					Authorization: `Bearer ${secret}`,
+					[POS_STAFF_SESSION_HEADER]: cashier,
+				},
+			})
+			expect(kitchen.status).toBe(200)
+			expect(
+				(
+					(await kitchen.json()) as { tickets: Array<{ id: string }> }
+				).tickets.map((ticket) => ticket.id),
+			).toContain(id)
+		})
+
+		it('rejects for a manager only, refunding a paid online order in full', async () => {
+			const id = await waiting()
+			const version = (await detail(id)).order.version
+			const body = {
+				action: 'reject',
+				expectedVersion: version,
+				reason: 'out_of_stock',
+			}
+			expect((await command(id, body)).status).toBe(403)
+			const response = await command(id, body, manager)
+			expect(response.status).toBe(200)
+			const answer = (await response.json()) as PosOnlineOrderDetailResponse
+			expect(answer.refundOutcome).toEqual({ started: true, code: null })
+			expect(answer.order).toMatchObject({
+				status: 'cancelled',
+				rejectedReason: 'out_of_stock',
+				refundStatus: 'pending',
+				refundPendingCents: 1500,
+			})
+			expect(answer.order.history[0]).toMatchObject({
+				action: 'rejected',
+				reason: 'out_of_stock',
+			})
+			const db = await getTenantDb(ORG_A)
+			const [order] = await db
+				.select()
+				.from(restaurantOrders)
+				.where(eq(restaurantOrders.id, id))
+			expect(order).toMatchObject({
+				rejectedReason: 'out_of_stock',
+				cancelReason: 'out_of_stock',
+				cancelledBy: 'operator',
+			})
+			const [row] = await db
+				.select()
+				.from(restaurantOrderRefunds)
+				.where(eq(restaurantOrderRefunds.orderId, id))
+			expect(row).toMatchObject({
+				origin: 'station',
+				actorId: `staff:${managerId}`,
+				amountCents: 1500,
+				status: 'pending',
+			})
+			await orderRefundKicksIdle()
+			expect(kicks).toEqual([{ orgId: ORG_A, refundId: row!.id }])
+
+			// Too late to accept it now.
+			const accept = await command(id, {
+				action: 'accept',
+				expectedVersion: answer.order.version,
+			})
+			expect(accept.status).toBe(409)
+			expect(await accept.json()).toMatchObject({ error: 'order_not_pending' })
+		})
+
+		it('answers 409 order_not_pending to a plain cancel of a waiting order: only reject turns it down', async () => {
+			const id = await waiting()
+			const version = (await detail(id)).order.version
+			for (const body of [
+				{ action: 'cancel', expectedVersion: version, reason: 'guest_request' },
+				{
+					action: 'cancel',
+					expectedVersion: version,
+					reason: 'other',
+					refund: 'none',
+				},
+			]) {
+				const response = await command(id, body, manager)
+				expect(response.status).toBe(409)
+				expect(await response.json()).toMatchObject({
+					error: 'order_not_pending',
+				})
+			}
+			const db = await getTenantDb(ORG_A)
+			const [order] = await db
+				.select()
+				.from(restaurantOrders)
+				.where(eq(restaurantOrders.id, id))
+			expect(order).toMatchObject({
+				status: 'pending_acceptance',
+				rejectedReason: null,
+				cancelReason: null,
+			})
+			expect(
+				await db
+					.select()
+					.from(restaurantOrderRefunds)
+					.where(eq(restaurantOrderRefunds.orderId, id)),
+			).toEqual([])
+		})
+
+		it('refuses reject reasons outside the list, and a reject once it was accepted', async () => {
+			const id = await insertOrder({
+				acceptanceDeadlineAt: new Date(Date.now() + 5 * 60_000),
+				acceptedAt: new Date(),
+			})
+			const version = (await detail(id)).order.version
+			expect(
+				(
+					await command(
+						id,
+						{
+							action: 'reject',
+							expectedVersion: version,
+							reason: 'guest_request',
+						},
+						manager,
+					)
+				).status,
+			).toBe(400)
+			const reject = await command(
+				id,
+				{ action: 'reject', expectedVersion: version, reason: 'too_busy' },
+				manager,
+			)
+			expect(reject.status).toBe(409)
+			expect(await reject.json()).toMatchObject({ error: 'order_not_pending' })
+		})
 	})
 
 	it('records reprints without changing the order', async () => {

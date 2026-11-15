@@ -11,6 +11,7 @@ import {
 	marketingMessages,
 	personErasureLog,
 	posOrders,
+	qrTabRefunds,
 	qrTabs,
 	restaurantOrderRefunds,
 	restaurantOrders,
@@ -1102,6 +1103,19 @@ export async function erasePerson(
 							})
 							.where(inArray(qrTabs.id, chunk)),
 					HEAVY_SET_CHUNK,
+				)
+				// Same for refunds of a tab's online money: the amounts stay, the
+				// note may describe the person (the one update its trigger allows).
+				await forEachInChunks([...qrTabIds], (chunk) =>
+					tx
+						.update(qrTabRefunds)
+						.set({ note: null })
+						.where(
+							and(
+								inArray(qrTabRefunds.tabId, chunk),
+								isNotNull(qrTabRefunds.note),
+							),
+						),
 				)
 				const qrTabsScrubbed = qrTabIds.size
 

@@ -2,13 +2,14 @@ import { type ReservationsContext } from '@repo/reservations'
 import {
 	getTenantDb,
 	orderMessages,
+	restaurantOrderRefunds,
 	restaurantOrders,
 	type OrderMessageKind,
 	type RestaurantOrder,
 	type TenantDatabase,
 } from '@repo/tenant-db'
 import { sendSms } from '@repo/sms'
-import { and, asc, eq, gt, inArray, lte, min, ne } from 'drizzle-orm'
+import { and, asc, eq, gt, inArray, lte, min, ne, sql } from 'drizzle-orm'
 import { forEachWithBudget } from '../lib/concurrency.ts'
 import { errorLogFields } from '../lib/error-log.ts'
 import { queryInChunks } from '../lib/chunked-in.ts'
@@ -30,6 +31,7 @@ import { getReservationsContext } from '../lib/reservations-context.ts'
 import { normalizeReservationLocale } from '../lib/reservations-email.ts'
 import { sendTenantEmail } from '../lib/tenant-email.ts'
 import { rotateOrgIds } from './loyalty-tick-service.ts'
+import { orderPaidCents, orderRefundedNetCents } from './order-refund-book.ts'
 import {
 	ORDER_MESSAGE_SENDING,
 	ORDER_MESSAGE_SUPERSEDED,
@@ -201,6 +203,19 @@ async function sendForOrder(input: {
 		order,
 		timeZone,
 		linkUrl,
+		// A cancel with a refund books it in the same write: the message says
+		// the money is on its way while the provider has not answered yet.
+		// A cancel that still owes the rest of its refund (another refund was
+		// pending) says the whole remainder is on its way.
+		refundPendingCents:
+			kind === 'cancelled'
+				? Math.max(
+						await pendingRefundCentsOf(orgId, order.id),
+						order.cancelRefundDueAt && order.disputeStatus !== 'open'
+							? orderPaidCents(order) - orderRefundedNetCents(order)
+							: 0,
+					)
+				: undefined,
 	})
 	const result = await sendTenantEmail({
 		to: order.contactEmail!,
@@ -214,6 +229,26 @@ async function sendForOrder(input: {
 		},
 	})
 	if (result.status === 'error') throw new SendFailure('email_failed')
+}
+
+/** Provider refunds of the order still waiting (amounts only). */
+async function pendingRefundCentsOf(
+	orgId: string,
+	orderId: string,
+): Promise<number> {
+	const db = await getTenantDb(orgId)
+	const [row] = await db
+		.select({
+			total: sql<number>`coalesce(sum(${restaurantOrderRefunds.amountCents}), 0)`,
+		})
+		.from(restaurantOrderRefunds)
+		.where(
+			and(
+				eq(restaurantOrderRefunds.orderId, orderId),
+				eq(restaurantOrderRefunds.status, 'pending'),
+			),
+		)
+	return Number(row?.total ?? 0)
 }
 
 async function setRow(

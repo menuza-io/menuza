@@ -37,6 +37,7 @@ describe('order messages alarm module', () => {
 		for (const path of [
 			'/orders',
 			'/api/orders/payment-status',
+			'/orders/abc/cancel',
 			'/operator/orders/abc',
 			'/pos/online-orders/abc/command',
 			'/pos/kds/command',
@@ -45,6 +46,7 @@ describe('order messages alarm module', () => {
 		}
 		for (const path of [
 			'/orders/abc',
+			'/orders/abc/resend-link',
 			'/orders/options',
 			'/operator/orders',
 			'/pos/kds',

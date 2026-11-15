@@ -576,6 +576,83 @@ describe('Station kitchen API', () => {
 		})
 	})
 
+	it('never shows an order waiting for acceptance, nor one turned down while it waited (#107)', async () => {
+		const db = await getTenantDb(ORG_A)
+		const base = {
+			orgId: ORG_A,
+			paymentMethod: 'online' as const,
+			paymentStatus: 'paid' as const,
+			fulfillment: 'pickup' as const,
+			locationId: 'loc-1',
+			locationName: 'Main',
+			contactName: 'Private online guest',
+			contactPhone: '+15550000000',
+			currency: 'USD',
+			subtotalCents: 1000,
+			taxCents: 0,
+			totalCents: 1000,
+			lines: [
+				{ itemId: 'coffee', itemName: 'Coffee', quantity: 1, options: [] },
+			],
+			requestHash: 'x',
+			receiptTokenHash: 'y',
+			acceptanceDeadlineAt: new Date(Date.now() + 5 * 60_000),
+		}
+		const insert = async (
+			values: Partial<typeof restaurantOrders.$inferInsert>,
+		) => {
+			const id = crypto.randomUUID()
+			await db.insert(restaurantOrders).values({
+				...base,
+				number: id.slice(0, 8),
+				idempotencyKey: crypto.randomUUID(),
+				...values,
+				id,
+			})
+			return id
+		}
+		const waiting = await insert({ status: 'pending_acceptance' })
+		const rejected = await insert({
+			status: 'cancelled',
+			cancelledAt: new Date(),
+			cancelReason: null,
+			acceptedAt: null,
+		})
+		const acceptedThenCancelled = await insert({
+			status: 'cancelled',
+			cancelledAt: new Date(),
+			acceptedAt: new Date(Date.now() - 60_000),
+		})
+		const accepted = await insert({
+			status: 'accepted',
+			acceptedAt: new Date(),
+		})
+		const ids = (await feed()).tickets.map((ticket) => ticket.id)
+		expect(ids).not.toContain(waiting)
+		expect(ids).not.toContain(rejected)
+		expect(ids).toContain(acceptedThenCancelled)
+		expect(ids).toContain(accepted)
+		// A command on the waiting one finds no ticket.
+		expect(
+			(
+				await request('POST', '/command', {
+					source: 'online',
+					orderId: waiting,
+					expectedVersion: 'a'.repeat(64),
+					action: 'stage',
+					stage: 'preparing',
+				})
+			).status,
+		).toBe(404)
+		const [stored] = await db
+			.select()
+			.from(restaurantOrders)
+			.where(eq(restaurantOrders.id, waiting))
+		expect(stored?.status).toBe('pending_acceptance')
+		// Same data-shape rules as every kitchen ticket.
+		expect(JSON.stringify(await feed())).not.toMatch(/Private|15550000000/)
+	})
+
 	it('shows a QR table round as a dine-in ticket for its table and stages it forward', async () => {
 		const db = await getTenantDb(ORG_A)
 		const roundId = crypto.randomUUID()

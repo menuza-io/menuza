@@ -629,6 +629,84 @@ describe('reservation refunds (VAL-PAY-011)', () => {
 	})
 })
 
+describe('refund creation errors', () => {
+	function failing(raw: {
+		type: string
+		code?: string
+		statusCode: number
+	}): Stripe {
+		const error = Stripe.errors.StripeError.generate({
+			message: 'refund error',
+			...raw,
+		} as never)
+		return {
+			refunds: {
+				create: async () => {
+					throw error
+				},
+			},
+		} as unknown as Stripe
+	}
+	const input = {
+		paymentIntentId: 'pi_1',
+		amountMinor: 100,
+		idempotencyKey: 'key_1',
+		metadata: {},
+	}
+
+	it('rethrows what says nothing about the refund, so it stays pending', async () => {
+		for (const raw of [
+			{ type: 'authentication_error', statusCode: 401 },
+			{
+				type: 'invalid_request_error',
+				code: 'api_key_expired',
+				statusCode: 401,
+			},
+			{ type: 'permission_error', statusCode: 403 },
+			{ type: 'invalid_request_error', code: 'lock_timeout', statusCode: 409 },
+			{
+				type: 'idempotency_error',
+				code: 'idempotency_key_in_use',
+				statusCode: 409,
+			},
+			{ type: 'rate_limit_error', statusCode: 429 },
+			{ type: 'api_error', statusCode: 500 },
+			// An invalid request that names no refund-specific code.
+			{
+				type: 'invalid_request_error',
+				code: 'resource_missing',
+				statusCode: 404,
+			},
+			{ type: 'invalid_request_error', statusCode: 400 },
+		]) {
+			await expect(
+				createReservationStripeRefund(failing(raw), input),
+				JSON.stringify(raw),
+			).rejects.toBeInstanceOf(Stripe.errors.StripeError)
+		}
+	})
+
+	it('reports a refund-specific rejection failed, with its code', async () => {
+		for (const code of [
+			'charge_already_refunded',
+			'amount_too_large',
+			'charge_disputed',
+		]) {
+			expect(
+				await createReservationStripeRefund(
+					failing({ type: 'invalid_request_error', code, statusCode: 400 }),
+					input,
+				),
+			).toEqual({
+				status: 'failed',
+				refundRef: null,
+				amountMinor: 100,
+				failureCode: code,
+			})
+		}
+	})
+})
+
 describe('reservation disputes', () => {
 	it('0259 opens a dispute that maps by the payment intent metadata', async () => {
 		const harness = createTestHarness()

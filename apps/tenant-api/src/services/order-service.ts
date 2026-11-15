@@ -3,10 +3,20 @@ import { and, count, desc, eq, gte, inArray, lt, sum } from 'drizzle-orm'
 import { ENV } from 'varlock/env'
 
 import {
+	DEFAULT_PREP_MINUTES,
+	localDateAndTimeToUtc,
+} from '@repo/common/location-availability'
+import {
+	acceptanceDeadline,
 	buildPublicOrderingOptions,
 	canonicalOrderRequest,
 	computePromisedTime,
+	disputeBlocksRefund,
+	guestVisibleCancelReason,
+	ORDER_ACCEPTANCE_TIMEOUT_CHOICES,
+	orderNeedsAcceptance,
 	priceRestaurantOrder,
+	readOrderAcceptancePolicy,
 	readGuestMessagesPolicy,
 	readLargeOrderRule,
 	type PromisedDelayMinutes,
@@ -17,6 +27,10 @@ import {
 	type PublicOrderingOptions,
 	type RestaurantOrderContext,
 	type OrderLoyaltySelection,
+	type OrderProviderRefund,
+	type OrderRefundOrigin,
+	type OrderRefundSummaryStatus,
+	type OrderStoredCancelReason,
 	type RestaurantOrderError,
 	type RestaurantOrderRequest,
 	type VerifiedDeliveryQuote,
@@ -36,6 +50,7 @@ import {
 	qrTabs,
 	RESTAURANT_ORDER_ACTIVE_STATUSES,
 	runTenantTransaction,
+	restaurantOrderRefunds,
 	restaurantOrders,
 	restaurantOrderReservations,
 	type RestaurantOrder,
@@ -51,6 +66,7 @@ import {
 	syncEnvFromProcess,
 	timingSafeEqualString,
 } from '../lib/secrets.ts'
+import { kickOrderRefundExecute } from '../lib/order-refund-kick.ts'
 import { deriveTabToken } from '../lib/qr-tokens.ts'
 import { retryOnSqliteBusy } from '../lib/sqlite-retry.ts'
 import { createOrgLock } from '../lib/concurrency.ts'
@@ -90,11 +106,23 @@ import {
 import { inventorySaleQueue } from './inventory-sales-service.ts'
 import {
 	orderMessageBatch,
+	queueOrderMessage,
 	queueOrderPaidMessages,
 	queueOrderPlacedMessages,
 	queueOrderStatusMessages,
 } from './order-messages.ts'
 import { applyPromisedDelay } from './order-promised-time.ts'
+import {
+	bookOrderProviderRefundInTx,
+	cancelRefundKey,
+	cancelRefundStaysOwed,
+	orderCarriesLoyalty,
+	orderPaidCents,
+	orderProviderRefundView,
+	orderRefundedNetCents,
+	orderRefundSummary,
+	owedCancelRefundKey,
+} from './order-refund-book.ts'
 import {
 	readProgramInTx,
 	readRewardInTx,
@@ -636,6 +664,98 @@ function isUniqueConstraintError(error: unknown): boolean {
 	return (
 		error instanceof Error && error.message.includes('UNIQUE constraint failed')
 	)
+}
+
+// ---------------------------------------------------------------------------
+// Manual acceptance (#107)
+// ---------------------------------------------------------------------------
+
+const MINUTE_MS = 60_000
+const MAX_ACCEPTANCE_TIMEOUT_MS =
+	Math.max(...ORDER_ACCEPTANCE_TIMEOUT_CHOICES) * MINUTE_MS
+
+/**
+ * Whether a new order waits for a person to accept it, and until when. The
+ * location's policy comes from the order context (`acceptance`, only present
+ * while `ordering.manual_acceptance` is on; anything else reads as Automatic,
+ * so `deadline` is null and the order is placed exactly as before). A
+ * scheduled order (a chosen time, or a drop's pickup slot) is decided by 30
+ * minutes before the kitchen should start it (`acceptanceDeadline`).
+ */
+export function placementAcceptance(input: {
+	context: RestaurantOrderContext
+	locationId: string
+	totalCents: number
+	fulfillment: string
+	source: string | null
+	tabId: string | null
+	scheduledFor: string | null
+	pickup: { date: string; time: string; timezone: string } | null
+	prepMinutes: number | null
+	now: Date
+}): { deadline: Date | null } {
+	const policy = readOrderAcceptancePolicy(
+		(input.context as { acceptance?: unknown }).acceptance,
+		input.locationId,
+	)
+	let scheduledAt: Date | null = null
+	if (input.scheduledFor) {
+		scheduledAt = new Date(input.scheduledFor)
+	} else if (input.pickup) {
+		try {
+			scheduledAt = localDateAndTimeToUtc(
+				input.pickup.date,
+				input.pickup.time,
+				input.pickup.timezone,
+			)
+		} catch {
+			scheduledAt = null
+		}
+	}
+	if (scheduledAt && !Number.isFinite(scheduledAt.getTime())) scheduledAt = null
+	const waits = orderNeedsAcceptance(policy, {
+		totalCents: input.totalCents,
+		scheduled: scheduledAt !== null,
+		fulfillment: input.fulfillment,
+		source: input.source,
+		tabId: input.tabId,
+	})
+	if (!waits) return { deadline: null }
+	const prep = (input.prepMinutes || DEFAULT_PREP_MINUTES) * MINUTE_MS
+	return {
+		deadline: acceptanceDeadline(policy, {
+			now: input.now,
+			scheduledFireAt: scheduledAt
+				? new Date(scheduledAt.getTime() - prep)
+				: null,
+		}),
+	}
+}
+
+/**
+ * The deadline of an online order that starts waiting at its paid event. At
+ * placement it got `max(placed + timeout, fire - 30 min)`; the restaurant's
+ * minutes start when the order is paid, so it becomes `max(that, paid +
+ * timeout)`. The timeout is what placement added (at most the longest
+ * choice): exact for an as-soon-as-possible order, and never shorter than the
+ * configured minutes for a scheduled one.
+ */
+function paidAcceptanceDeadline(order: RestaurantOrder, paidAt: Date): Date {
+	const placedDeadline = order.acceptanceDeadlineAt!.getTime()
+	const placedAt = order.createdAt?.getTime() ?? paidAt.getTime()
+	const timeout = Math.min(
+		Math.max(0, placedDeadline - placedAt),
+		MAX_ACCEPTANCE_TIMEOUT_MS,
+	)
+	return new Date(Math.max(placedDeadline, paidAt.getTime() + timeout))
+}
+
+/**
+ * An online order placed while its location wanted manual acceptance and
+ * not decided yet: its paid event makes it wait (`pending_acceptance`).
+ */
+function waitsForAcceptanceWhenPaid(order: RestaurantOrder): boolean {
+	return order.acceptanceDeadlineAt !== null && order.acceptedAt === null
 }
 
 // ---------------------------------------------------------------------------
@@ -1185,6 +1305,25 @@ export async function placeOrder(input: {
 						request.paymentMethod === 'handoff' &&
 						totals.totalCents <= 0 &&
 						!tabRow
+					// Manual acceptance (#107): an order that stands now (pay at
+					// handoff, free) waits as `pending_acceptance`; an online order
+					// that still has to be paid is placed as today and waits from
+					// its paid event (the deadline set here marks it).
+					const acceptance = placementAcceptance({
+						context,
+						locationId: request.locationId,
+						totalCents: totals.totalCents,
+						fulfillment: request.fulfillment,
+						source: orderSource,
+						tabId: tabRow?.id ?? null,
+						scheduledFor: result.scheduledFor,
+						pickup: result.pickup,
+						prepMinutes: promiseLocation?.prepTime ?? null,
+						now,
+					})
+					const waitsNow =
+						acceptance.deadline !== null &&
+						(request.paymentMethod !== 'online' || freeOrder)
 
 					const usedNumbers = new Set<string>()
 					let inserted: RestaurantOrder | null = null
@@ -1203,7 +1342,8 @@ export async function placeOrder(input: {
 									customerId,
 									number,
 									locale: request.locale,
-									status: 'accepted',
+									status: waitsNow ? 'pending_acceptance' : 'accepted',
+									acceptanceDeadlineAt: acceptance.deadline,
 									paymentMethod: request.paymentMethod,
 									paymentStatus:
 										freeOrder || freeHandoff
@@ -1320,8 +1460,9 @@ export async function placeOrder(input: {
 						})
 						// A free order is already accepted: the use is spent. A
 						// pay-at-pickup order stays reserved until it is completed,
-						// and that reservation still counts toward the limit.
-						if (freeOrder) {
+						// and that reservation still counts toward the limit. One
+						// waiting for acceptance spends it when accepted.
+						if (freeOrder && !waitsNow) {
 							await consumeDiscountRedemptions(tx, [inserted.id])
 						}
 					}
@@ -1646,6 +1787,26 @@ export type PaymentEventResult = {
 	paymentStatus: string
 }
 
+/**
+ * The payment id to keep on an order: the stored one when there is one (a
+ * different id in a later event is logged by order id and ignored), else the
+ * event's, else none.
+ */
+function keepFirstPaymentId(
+	orderId: string,
+	stored: string | null,
+	incoming: string | undefined,
+): string | null {
+	if (!incoming) return stored
+	if (stored && stored !== incoming) {
+		console.warn(
+			`Payment event for order ${orderId} names another payment id; the stored one is kept`,
+		)
+		return stored
+	}
+	return stored ?? incoming
+}
+
 export async function applyPaymentEvent(input: {
 	orgId: string
 	orderId: string
@@ -1654,6 +1815,12 @@ export async function applyPaymentEvent(input: {
 	status: 'paid' | 'failed' | 'expired'
 	amountCents: number
 	currency: string
+	/**
+	 * The provider's id of the payment (Stripe PaymentIntent `pi_…`,
+	 * Checkout.com `pay_…`) when the event carries one; stored on a paid
+	 * event so a refund can name the payment.
+	 */
+	paymentId?: string
 }): Promise<OrderServiceResult<PaymentEventResult>> {
 	const {
 		orgId,
@@ -1741,29 +1908,71 @@ export async function applyPaymentEvent(input: {
 						paymentStatus: order.paymentStatus,
 					}
 
+					// The provider's payment id is written once: a replay may fill
+					// it in (an order paid before the field was sent), but a
+					// different id never replaces the one that paid the order.
+					const storedPaymentId = keepFirstPaymentId(
+						order.id,
+						order.paymentId,
+						status === 'paid' ? input.paymentId : undefined,
+					)
+
 					if (status === 'paid') {
-						if (order.paymentStatus === 'paid')
+						if (order.paymentStatus === 'paid') {
+							if (storedPaymentId !== order.paymentId) {
+								await tx
+									.update(restaurantOrders)
+									.set({ paymentId: storedPaymentId })
+									.where(eq(restaurantOrders.id, order.id))
+							}
 							return { ok: true, data: idempotent }
+						}
 						const lateArrival =
 							order.status === 'expired' || order.status === 'cancelled'
 						if (
 							order.status === 'accepted' &&
 							order.paymentStatus === 'pending'
 						) {
+							// Manual acceptance (#107): a paid order of a location that
+							// wanted it waits for a person now. Nothing counts yet: the
+							// discount use stays reserved, loyalty and stock wait for
+							// the accept (`applyOrderStatusPatchInTx`).
+							const waits = waitsForAcceptanceWhenPaid(order)
+							const nextStatus = waits ? 'pending_acceptance' : order.status
 							await tx
 								.update(restaurantOrders)
 								.set({
+									status: nextStatus,
 									paymentStatus: 'paid',
 									paidAt: now,
 									paymentEventAt: now,
+									paymentId: storedPaymentId,
+									...(waits
+										? {
+												acceptanceDeadlineAt: paidAcceptanceDeadline(
+													order,
+													now,
+												),
+											}
+										: {}),
 									updatedAt: now,
 								})
 								.where(eq(restaurantOrders.id, order.id))
 							await queueOrderPaidMessages(
 								tx,
-								{ ...order, paymentStatus: 'paid' },
+								{ ...order, status: nextStatus, paymentStatus: 'paid' },
 								messages.context(now.getTime()),
 							)
+							if (waits) {
+								return {
+									ok: true,
+									data: {
+										...idempotent,
+										status: nextStatus,
+										paymentStatus: 'paid',
+									},
+								}
+							}
 							await consumeDiscountRedemptions(tx, [order.id])
 							await queueLoyalty()
 							// Paid online: the order counts now, so stock leaves.
@@ -1800,6 +2009,10 @@ export async function applyPaymentEvent(input: {
 									paymentStatus: 'paid',
 									paidAt: now,
 									paymentEventAt: now,
+									paymentId: storedPaymentId,
+									// An operator decides a late payment from review: it
+									// never also waits for acceptance.
+									acceptanceDeadlineAt: null,
 									updatedAt: now,
 								})
 								.where(eq(restaurantOrders.id, order.id))
@@ -1930,12 +2143,31 @@ const OPERATOR_STATUS_TRANSITIONS: Record<RestaurantOrder['status'], string[]> =
 		cancelled: [],
 		expired: [],
 		payment_review: ['preparing', 'ready', 'completed', 'cancelled'],
+		// Manual acceptance (#107): accept, or reject (a cancel with a reject
+		// reason). Nothing else leaves it; the kitchen never sees it.
+		pending_acceptance: ['accepted', 'cancelled'],
 	}
 
 export type OperatorPatchInput =
 	| {
 			status: RestaurantOrder['status']
 			markPaid?: boolean
+			/**
+			 * Why it is cancelled (`status: 'cancelled'` only); required for a
+			 * paid online order (`cancel_reason_required`).
+			 */
+			cancelReason?: OrderStoredCancelReason
+			/**
+			 * Cancelling a paid online order: `full` books a provider refund of
+			 * everything still refundable in the cancel's own transaction.
+			 */
+			refund?: 'none' | 'full'
+			/**
+			 * Turning down an order waiting for acceptance (#107): the cancel is a
+			 * rejection (`rejected_reason`), and a paid online order is refunded
+			 * in full through the payment provider whatever `refund` says.
+			 */
+			rejectReason?: OrderStoredCancelReason
 	  }
 	| {
 			/** Push the promised time back (#109); never mixed with a status. */
@@ -1957,23 +2189,89 @@ export type OrderWriteHooks = {
 	) => Promise<void>
 }
 
+/** Who cancels, and whether they may start a provider refund with it. */
+export type CancelRefundOptions = {
+	/**
+	 * May start a provider refund (`refund: 'full'`): the App's
+	 * `refundProvider` token claim, Station's refund grant. Without it a cancel
+	 * asking for a refund is refused (403 `refund_forbidden`), not cancelled.
+	 */
+	mayRefund: boolean
+	origin: OrderRefundOrigin
+	/** User id (operator), `staff:<id>` (Station), `guest` or `system`. */
+	actorId: string
+	/** Station has no loyalty grant: an order loyalty tracks is not refunded there. */
+	loyaltyAccess?: { refundLoyalty: boolean; impersonated: boolean }
+	cancelledBy?: 'operator' | 'guest' | 'system'
+	/**
+	 * An admin impersonating a member: never starts a provider refund, so a
+	 * rejection of a paid online order (which always refunds) is refused.
+	 */
+	impersonated?: boolean
+}
+
+/**
+ * What became of `refund: 'full'` on a cancel: the booked provider refund
+ * (the App completes it; the region also kicks the App), or the code saying
+ * why none was started. The cancel stands either way.
+ */
+export type CancelRefundOutcome = {
+	refund: OrderProviderRefund | null
+	replayed: boolean
+	code: string | null
+	/**
+	 * With `code: 'refund_pending'` (another provider refund was still
+	 * waiting) or `'payment_disputed'` (an open dispute): the order is marked
+	 * (`cancel_refund_due_at`) and the rest is booked once that refund is
+	 * final or the dispute is won (`bookOwedCancelRefundInTx`). What the guest
+	 * gets back in all: paid less what is back already. 0 otherwise.
+	 */
+	owedCents: number
+}
+
+export { cancelRefundKey }
+
 export async function updateOperatorOrder(
 	orgId: string,
 	orderId: string,
 	input: OperatorPatchInput,
 	hooks: OrderWriteHooks = {},
 ): Promise<OrderServiceResult<RestaurantOrder>> {
+	const result = await updateOperatorOrderWithRefund(
+		orgId,
+		orderId,
+		input,
+		hooks,
+	)
+	return result.ok ? { ok: true, data: result.data.order } : result
+}
+
+export async function updateOperatorOrderWithRefund(
+	orgId: string,
+	orderId: string,
+	input: OperatorPatchInput,
+	hooks: OrderWriteHooks = {},
+	cancel: CancelRefundOptions = {
+		mayRefund: false,
+		origin: 'operator',
+		actorId: 'operator',
+	},
+): Promise<
+	OrderServiceResult<{
+		order: RestaurantOrder
+		refund: CancelRefundOutcome | null
+	}>
+> {
 	const db = await getTenantDb(orgId)
-	const loyalty = loyaltySettleQueue()
-	const inventory = inventorySaleQueue()
-	const messages = orderMessageBatch()
+	const queues = orderWriteQueues()
+	let refundOutcome: CancelRefundOutcome | null = null
 
 	const result: OrderServiceResult<RestaurantOrder> = await runExclusive(
 		orgId,
 		() =>
 			retryOnSqliteBusy(() =>
 				runTenantTransaction(db, async (tx) => {
-					await expireHolds(tx, new Date(), loyalty)
+					await expireHolds(tx, new Date(), queues.loyalty)
 					const [order] = await tx
 						.select()
 						.from(restaurantOrders)
@@ -2000,7 +2298,7 @@ export async function updateOperatorOrder(
 								expectedVersion: input.expectedPromisedVersion,
 							},
 							now,
-							messages.context(now.getTime()),
+							queues.messages.context(now.getTime()),
 						)
 						if (!delayed.ok) {
 							return orderFailure(delayed.status, delayed.code, delayed.message)
@@ -2008,118 +2306,510 @@ export async function updateOperatorOrder(
 						await hooks.afterWrite?.(tx, order, delayed.order)
 						return { ok: true, data: delayed.order }
 					}
-					const patch: Partial<RestaurantOrder> = {}
-
-					if (input.status !== order.status) {
-						const allowed = OPERATOR_STATUS_TRANSITIONS[order.status] ?? []
-						if (!allowed.includes(input.status)) {
-							return orderFailure(
-								422,
-								'invalid_transition',
-								`An order that is ${order.status} cannot move to ${input.status}.`,
-							)
-						}
-						patch.status = input.status
-						if (input.status === 'completed') patch.completedAt = now
-						if (input.status === 'cancelled') patch.cancelledAt = now
-					}
-
-					if (input.markPaid) {
-						// A tab is paid once, at close: settling one round alone would
-						// leave the tab total and the rounds disagreeing.
-						if (order.tabId) {
-							return orderFailure(
-								409,
-								'tab_settlement_required',
-								'This order is on a table tab. Close the tab to take payment.',
-							)
-						}
-						if (order.paymentMethod !== 'online') {
-							// A free order (not_required) has nothing to collect: marking
-							// it paid is a no-op, so a stale client tap neither fails nor
-							// invents a payment.
-							if (order.paymentStatus !== 'not_required') {
-								if (
-									order.paymentStatus !== 'unpaid' &&
-									order.paymentStatus !== 'paid'
-								) {
-									return orderFailure(
-										409,
-										'payment_state_conflict',
-										'This order cannot be marked paid.',
-									)
-								}
-								patch.paymentStatus = 'paid'
-								patch.paidAt = now
-							}
-						} else {
-							return orderFailure(
-								409,
-								'payment_not_markable',
-								'Online order payment status is controlled by payment events.',
-							)
-						}
-					}
-
-					if (Object.keys(patch).length === 0) {
-						return { ok: true, data: order }
-					}
-
-					const [updated] = await tx
-						.update(restaurantOrders)
-						.set({ ...patch, updatedAt: now })
-						.where(eq(restaurantOrders.id, order.id))
-						.returning()
-					await loyalty.queue(
-						loyaltyTx(tx),
-						{ type: 'restaurant_order', id: order.id },
-						now.getTime(),
-					)
-					// A cancel returns what the order used; accepting an order held
-					// for review (or marking one paid) starts to count it.
-					await inventory.queue(
-						tx,
-						{
-							type: 'restaurant_order',
-							id: order.id,
-							locationId: order.locationId,
-						},
-						now.getTime(),
-					)
-					if (patch.status === 'cancelled') {
-						await releaseDiscountRedemptions(tx, [order.id])
-						await refundDiscountRedemptions(tx, order.id)
-					} else if (
-						patch.status === 'completed' ||
-						patch.paymentStatus === 'paid' ||
-						// An operator accepting a paid order that was held for review
-						// (it was paid after its hold lapsed) honors the sale.
-						(order.status === 'payment_review' && patch.status !== undefined)
-					) {
-						if (order.status === 'payment_review') {
-							// Orders that reached review before the use was re-recorded
-							// at that moment have only a released row: record it now.
-							await reReserveReleasedDiscounts(tx, order.id)
-						}
-						await consumeDiscountRedemptions(tx, [order.id])
-					}
-					// Ready and cancelled tell the guest (once per kind and channel).
-					await queueOrderStatusMessages(
-						tx,
-						updated ?? { ...order, ...patch },
-						order.status,
-						patch.status ?? null,
-						messages.context(now.getTime()),
-					)
-					await hooks.afterWrite?.(tx, order, updated ?? order)
-					return { ok: true, data: updated ?? order }
+					const applied = await applyOrderStatusPatchInTx(tx, order, input, {
+						hooks,
+						cancel,
+						queues,
+						now,
+					})
+					refundOutcome = applied.refund
+					return applied.result
 				}),
 			),
 	)
-	await loyalty.settle(orgId)
-	await inventory.settle(orgId)
-	messages.deliver(orgId)
-	return result
+	await settleOrderWriteQueues(orgId, queues)
+	if (!result.ok) return result
+	const booked = refundOutcome as CancelRefundOutcome | null
+	if (booked?.refund && !booked.replayed) {
+		// The App caller completes it from the answer; the kick covers a lost one.
+		kickOrderRefundExecute(orgId, [booked.refund.refundId])
+	}
+	return { ok: true, data: { order: result.data, refund: booked } }
+}
+
+/**
+ * The work an order write leaves for after its commit: loyalty and inventory
+ * settlement and guest messages, queued inside the transaction.
+ */
+export type OrderWriteQueues = {
+	loyalty: LoyaltySettleQueue
+	inventory: ReturnType<typeof inventorySaleQueue>
+	messages: ReturnType<typeof orderMessageBatch>
+}
+
+export function orderWriteQueues(): OrderWriteQueues {
+	return {
+		loyalty: loyaltySettleQueue(),
+		inventory: inventorySaleQueue(),
+		messages: orderMessageBatch(),
+	}
+}
+
+/** Runs what an order write queued, after its transaction committed. */
+export async function settleOrderWriteQueues(
+	orgId: string,
+	queues: OrderWriteQueues,
+): Promise<void> {
+	await queues.loyalty.settle(orgId)
+	await queues.inventory.settle(orgId)
+	queues.messages.deliver(orgId)
+}
+
+/**
+ * The hold sweep an order write runs first in its own transaction, so a
+ * lapsed online hold is expired before the order is read.
+ */
+export async function expireHoldsInTx(
+	tx: OrderTx,
+	now: Date,
+	loyalty: LoyaltySettleQueue,
+): Promise<void> {
+	await expireHolds(tx, now, loyalty)
+}
+
+/**
+ * Statuses a guest may cancel from (#111). The guest's window check
+ * (`guestCancelWindow`) decides whether they may; this only lets the write
+ * leave `pending_acceptance`, which has no operator transition of its own.
+ */
+const GUEST_CANCEL_FROM_STATUSES: ReadonlySet<string> = new Set([
+	'accepted',
+	'pending_acceptance',
+])
+
+/**
+ * One status write (`OperatorPatchInput` status branch) on an order already
+ * read inside the caller's transaction: the transition, cancel reason and
+ * who cancelled, mark paid, the provider refund a cancel asks for, and the
+ * cancel side effects (loyalty and inventory queued, discount uses released
+ * and refunded, the guest's status message queued). The operator PATCH,
+ * Station's Orders app and the guest's own cancel all go through here; the
+ * caller runs `settleOrderWriteQueues` (and the refund kick) after commit.
+ */
+export async function applyOrderStatusPatchInTx(
+	tx: OrderTx,
+	order: RestaurantOrder,
+	input: Extract<OperatorPatchInput, { status: unknown }>,
+	options: {
+		hooks?: OrderWriteHooks
+		cancel: CancelRefundOptions
+		queues: OrderWriteQueues
+		now: Date
+	},
+): Promise<{
+	result: OrderServiceResult<RestaurantOrder>
+	refund: CancelRefundOutcome | null
+}> {
+	const { cancel, queues, now } = options
+	const hooks = options.hooks ?? {}
+	const done = (
+		result: OrderServiceResult<RestaurantOrder>,
+		refund: CancelRefundOutcome | null = null,
+	) => ({ result, refund })
+	let refundOutcome: CancelRefundOutcome | null = null
+	const patch: Partial<RestaurantOrder> = {}
+	// Manual acceptance (#107). The decision is taken on the status the order
+	// has now, inside the write's transaction: accepting an order no longer
+	// waiting (rejected, timed out, cancelled by the guest) or rejecting one
+	// already accepted is refused, so two screens never both decide.
+	const fromPending = order.status === 'pending_acceptance'
+	const notPending = () =>
+		done(
+			orderFailure(
+				409,
+				'order_not_pending',
+				'This order is no longer waiting for acceptance.',
+			),
+		)
+	// Only an order that waited is answered this way; any other keeps the
+	// usual `invalid_transition`.
+	const waited = order.acceptanceDeadlineAt !== null
+	if (
+		waited &&
+		input.status === 'accepted' &&
+		order.status !== 'accepted' &&
+		!fromPending
+	) {
+		return notPending()
+	}
+	if (
+		waited &&
+		input.status === 'cancelled' &&
+		input.rejectReason !== undefined &&
+		order.status !== 'cancelled' &&
+		!fromPending
+	) {
+		return notPending()
+	}
+	// A cancel of a waiting order by the restaurant (or the timeout) is a
+	// rejection; the guest's own cancel is not.
+	const isReject =
+		fromPending &&
+		input.status === 'cancelled' &&
+		cancel.cancelledBy !== 'guest'
+	// A plain cancel (no reject reason) of a waiting order is not a reject: a
+	// reject forces a full refund and tells the guest the restaurant could not
+	// take the order. The caller says which it means.
+	if (isReject && input.rejectReason === undefined) {
+		return done(
+			orderFailure(
+				409,
+				'order_not_pending',
+				'This order is waiting for acceptance. Reject it with a reason instead of cancelling it.',
+			),
+		)
+	}
+	let rejectRefund = false
+
+	if (input.status !== order.status) {
+		const allowed = OPERATOR_STATUS_TRANSITIONS[order.status] ?? []
+		const guestCancel =
+			cancel.cancelledBy === 'guest' &&
+			input.status === 'cancelled' &&
+			GUEST_CANCEL_FROM_STATUSES.has(order.status)
+		if (!allowed.includes(input.status) && !guestCancel) {
+			return done(
+				orderFailure(
+					422,
+					'invalid_transition',
+					`An order that is ${order.status} cannot move to ${input.status}.`,
+				),
+			)
+		}
+		patch.status = input.status
+		if (input.status === 'completed') patch.completedAt = now
+		if (input.status === 'cancelled') patch.cancelledAt = now
+		if (fromPending && input.status === 'accepted') patch.acceptedAt = now
+	}
+
+	const wantsRefund = input.refund === 'full'
+	const paidOnline =
+		order.paymentMethod === 'online' && order.paymentStatus === 'paid'
+	if (
+		input.status === 'cancelled' &&
+		order.status === 'cancelled' &&
+		wantsRefund
+	) {
+		if (!cancel.mayRefund) {
+			return done(
+				orderFailure(
+					403,
+					'refund_forbidden',
+					'Refunding through the payment provider needs the refund permission.',
+				),
+			)
+		}
+		// A repeated cancel (a lost answer): answer the refund it booked (or
+		// the rest it booked later), or that the rest is still owed.
+		const booked = await tx
+			.select()
+			.from(restaurantOrderRefunds)
+			.where(
+				and(
+					eq(restaurantOrderRefunds.orderId, order.id),
+					inArray(restaurantOrderRefunds.idempotencyKey, [
+						cancelRefundKey(order.id),
+						owedCancelRefundKey(order.id),
+					]),
+				),
+			)
+			.orderBy(desc(restaurantOrderRefunds.createdAt))
+			.limit(1)
+		refundOutcome = booked[0]
+			? {
+					refund: orderProviderRefundView(booked[0], order),
+					replayed: true,
+					code: null,
+					owedCents: 0,
+				}
+			: order.cancelRefundDueAt
+				? {
+						refund: null,
+						replayed: false,
+						code:
+							order.disputeStatus === 'open'
+								? 'payment_disputed'
+								: 'refund_pending',
+						owedCents: owedCents(order),
+					}
+				: {
+						refund: null,
+						replayed: false,
+						code: 'order_not_refundable',
+						owedCents: 0,
+					}
+	}
+	if (patch.status === 'cancelled' && isReject) {
+		if (wantsRefund && order.paymentMethod !== 'online') {
+			return done(
+				orderFailure(
+					400,
+					'order_not_refundable',
+					'An order paid at handoff is not refunded with the cancel. Record the refund instead.',
+				),
+			)
+		}
+		const reason = input.rejectReason ?? null
+		if (!reason) {
+			return done(
+				orderFailure(
+					422,
+					'reject_reason_required',
+					'Say why this order is turned down.',
+				),
+			)
+		}
+		// Turning down a paid online order always gives the money back: no
+		// refund grant is asked for (the timeout does it too), but an admin
+		// impersonating a member never starts a provider refund.
+		if (paidOnline) {
+			if (cancel.impersonated) {
+				return done(
+					orderFailure(
+						403,
+						'refund_forbidden',
+						'Turning down a paid order refunds it, which is not available while impersonating.',
+					),
+				)
+			}
+			rejectRefund = true
+		}
+		patch.cancelReason = reason
+		patch.rejectedReason = reason
+		patch.cancelledBy = cancel.cancelledBy ?? 'operator'
+	} else if (patch.status === 'cancelled') {
+		if (wantsRefund && order.paymentMethod !== 'online') {
+			return done(
+				orderFailure(
+					400,
+					'order_not_refundable',
+					'An order paid at handoff is not refunded with the cancel. Record the refund instead.',
+				),
+			)
+		}
+		if (wantsRefund && !cancel.mayRefund) {
+			return done(
+				orderFailure(
+					403,
+					'refund_forbidden',
+					'Refunding through the payment provider needs the refund permission.',
+				),
+			)
+		}
+		const reason = input.cancelReason ?? input.rejectReason ?? null
+		if (paidOnline && !reason) {
+			return done(
+				orderFailure(
+					422,
+					'cancel_reason_required',
+					'Say why this paid order is cancelled.',
+				),
+			)
+		}
+		patch.cancelReason = reason
+		patch.cancelledBy = cancel.cancelledBy ?? 'operator'
+	}
+
+	if (input.markPaid) {
+		// A tab is paid once, at close: settling one round alone would
+		// leave the tab total and the rounds disagreeing.
+		if (order.tabId) {
+			return done(
+				orderFailure(
+					409,
+					'tab_settlement_required',
+					'This order is on a table tab. Close the tab to take payment.',
+				),
+			)
+		}
+		if (order.paymentMethod !== 'online') {
+			// A free order (not_required) has nothing to collect: marking
+			// it paid is a no-op, so a stale client tap neither fails nor
+			// invents a payment.
+			if (order.paymentStatus !== 'not_required') {
+				if (
+					order.paymentStatus !== 'unpaid' &&
+					order.paymentStatus !== 'paid'
+				) {
+					return done(
+						orderFailure(
+							409,
+							'payment_state_conflict',
+							'This order cannot be marked paid.',
+						),
+					)
+				}
+				patch.paymentStatus = 'paid'
+				patch.paidAt = now
+			}
+		} else {
+			return done(
+				orderFailure(
+					409,
+					'payment_not_markable',
+					'Online order payment status is controlled by payment events.',
+				),
+			)
+		}
+	}
+
+	if (Object.keys(patch).length === 0) {
+		return done({ ok: true, data: order }, refundOutcome)
+	}
+
+	const [updated] = await tx
+		.update(restaurantOrders)
+		.set({ ...patch, updatedAt: now })
+		.where(
+			and(
+				eq(restaurantOrders.id, order.id),
+				// Belt and braces for accept and reject: only while it still waits.
+				...(fromPending && patch.status
+					? [eq(restaurantOrders.status, 'pending_acceptance' as const)]
+					: []),
+			),
+		)
+		.returning()
+	if (fromPending && patch.status && !updated) return notPending()
+	if (
+		patch.status === 'cancelled' &&
+		(input.refund === 'full' || rejectRefund)
+	) {
+		refundOutcome = await bookCancelRefund(
+			tx,
+			updated ?? { ...order, ...patch },
+			// A rejection's refund is the rejection itself, not a refund a
+			// person chose: no loyalty grant is asked for (the order never
+			// earned; its reward comes back once the money is back).
+			rejectRefund ? { ...cancel, loyaltyAccess: undefined } : cancel,
+			now.getTime(),
+		)
+	}
+	await queues.loyalty.queue(
+		loyaltyTx(tx),
+		{ type: 'restaurant_order', id: order.id },
+		now.getTime(),
+	)
+	// A cancel returns what the order used; accepting an order held
+	// for review (or marking one paid) starts to count it.
+	await queues.inventory.queue(
+		tx,
+		{
+			type: 'restaurant_order',
+			id: order.id,
+			locationId: order.locationId,
+		},
+		now.getTime(),
+	)
+	if (patch.status === 'cancelled') {
+		await releaseDiscountRedemptions(tx, [order.id])
+		await refundDiscountRedemptions(tx, order.id)
+	} else if (
+		patch.status === 'completed' ||
+		patch.paymentStatus === 'paid' ||
+		// Accepting a paid (or free) online order spends the use, as its paid
+		// event (or a free order's placement) would have had it not waited.
+		(fromPending &&
+			patch.status === 'accepted' &&
+			order.paymentMethod === 'online' &&
+			(order.paymentStatus === 'paid' ||
+				order.paymentStatus === 'not_required')) ||
+		// An operator accepting a paid order that was held for review
+		// (it was paid after its hold lapsed) honors the sale.
+		(order.status === 'payment_review' && patch.status !== undefined)
+	) {
+		if (order.status === 'payment_review') {
+			// Orders that reached review before the use was re-recorded
+			// at that moment have only a released row: record it now.
+			await reReserveReleasedDiscounts(tx, order.id)
+		}
+		await consumeDiscountRedemptions(tx, [order.id])
+	}
+	// Ready and cancelled tell the guest (once per kind and channel).
+	await queueOrderStatusMessages(
+		tx,
+		updated ?? { ...order, ...patch },
+		order.status,
+		patch.status ?? null,
+		queues.messages.context(now.getTime()),
+	)
+	// Only a person accepting a waiting order says "accepted" (#107); an
+	// order accepted automatically at placement never does.
+	if (fromPending && patch.status === 'accepted') {
+		await queueOrderMessage(
+			tx,
+			updated ?? { ...order, ...patch },
+			'accepted',
+			queues.messages.context(now.getTime()),
+		)
+	}
+	await hooks.afterWrite?.(tx, order, updated ?? order)
+	return done({ ok: true, data: updated ?? order }, refundOutcome)
+}
+
+/**
+ * Books the full provider refund a cancel asked for, inside the cancel's
+ * transaction (the order is already `cancelled` in it). Never fails the
+ * cancel: what stops the refund (a dispute, a refund already waiting, nothing
+ * left, loyalty the caller may not move) comes back as a code.
+ */
+async function bookCancelRefund(
+	tx: OrderTx,
+	order: RestaurantOrder,
+	cancel: CancelRefundOptions,
+	now: number,
+): Promise<CancelRefundOutcome> {
+	const none = (code: string) => ({
+		refund: null,
+		replayed: false,
+		code,
+		owedCents: 0,
+	})
+	if (cancel.loyaltyAccess && (await orderCarriesLoyalty(tx, order.id))) {
+		if (cancel.loyaltyAccess.impersonated) {
+			return none('impersonation_forbidden')
+		}
+		if (!cancel.loyaltyAccess.refundLoyalty) {
+			return none('loyalty_refund_forbidden')
+		}
+	}
+	const booked = await bookOrderProviderRefundInTx(tx, order, {
+		amount: { full: true },
+		note: null,
+		idempotencyKey: cancelRefundKey(order.id),
+		origin: cancel.origin,
+		actorId: cancel.actorId,
+		now,
+	})
+	if (!booked.ok && cancelRefundStaysOwed(booked.code, order)) {
+		// Another refund still waits on the provider (one at a time), or the
+		// payment has an open dispute: the full refund the cancel asked for is
+		// owed, and booked for whatever is left once that refund is final
+		// (`applyProviderRefundStatus`, the orders tick) or the dispute is won
+		// (`applyDisputeStatus`; a lost one drops it).
+		await tx
+			.update(restaurantOrders)
+			.set({ cancelRefundDueAt: new Date(now) })
+			.where(eq(restaurantOrders.id, order.id))
+		return {
+			refund: null,
+			replayed: false,
+			code: booked.code,
+			owedCents: owedCents(order),
+		}
+	}
+	if (!booked.ok) return none(booked.code)
+	return {
+		refund: orderProviderRefundView(booked.refund, order),
+		replayed: booked.replayed,
+		code: null,
+		owedCents: 0,
+	}
+}
+
+/** What a cancel's full refund gives back in all: paid less what is back. */
+function owedCents(order: RestaurantOrder): number {
+	return Math.max(0, orderPaidCents(order) - orderRefundedNetCents(order))
 }
 
 export async function listOperatorOrders(
@@ -2335,12 +3025,79 @@ export function publicOrderSummary(order: RestaurantOrder) {
 	}
 }
 
-export function receiptOrder(order: RestaurantOrder) {
+/**
+ * The order's refunds at a glance for the guest and operator views: the
+ * summary status and what still waits on the payment provider. Built from the
+ * refund rows (`orderRefundSummary`); without them only `refundedCents` is
+ * known and nothing reads as waiting.
+ */
+export type OrderRefundGlance = {
+	refundStatus: OrderRefundSummaryStatus
+	pendingCents: number
+}
+
+/**
+ * Whether the guest may cancel the order themselves now (#111), and until
+ * when: `guestCancelGlance` (`services/order-guest-cancel.ts`). No PII.
+ */
+export type OrderGuestCancelGlance = { allowed: boolean; until: string | null }
+
+export function receiptOrder(
+	order: RestaurantOrder,
+	refunds: OrderRefundGlance | null = null,
+	cancel: OrderGuestCancelGlance | null = null,
+) {
+	const glance = refunds ?? {
+		refundStatus: orderRefundSummary(order, []).refundStatus,
+		pendingCents: 0,
+	}
 	return {
 		...publicOrderSummary(order),
 		tipPercent: order.tipPercent,
-		/** Amount recorded as returned (the payment status stays `paid`). */
-		refundedCents: order.refundedCents,
+		/**
+		 * Amount returned so far (succeeded refunds less any the provider
+		 * reversed; the payment status stays `paid`).
+		 */
+		refundedCents: orderRefundedNetCents(order),
+		/** `pending` while a provider refund waits; `failed`, `partial`, `full`, `none`. */
+		refundStatus: glance.refundStatus,
+		/** A provider refund on its way (not in `refundedCents` yet). */
+		refundPendingCents: glance.pendingCents,
+		/**
+		 * A guest cancel refunds the card in full: only a paid online order.
+		 * Sites words the confirm box from it, so an order paid at handoff is
+		 * never promised a refund the region does not book.
+		 */
+		refundsOnCancel:
+			order.paymentMethod === 'online' && order.paymentStatus === 'paid',
+		/** Who cancelled: `operator`, `guest` or `system`; null otherwise. */
+		cancelledBy: order.cancelledBy ?? null,
+		/** Only `out_of_stock` / `kitchen_closed` are told to the guest. */
+		cancelReason: guestVisibleCancelReason(order.cancelReason),
+		/**
+		 * While the order waits for the restaurant to accept it
+		 * (`pending_acceptance`): when it is turned down automatically. Null
+		 * otherwise.
+		 */
+		acceptanceDeadlineAt:
+			order.status === 'pending_acceptance' && order.acceptanceDeadlineAt
+				? order.acceptanceDeadlineAt.toISOString()
+				: null,
+		/**
+		 * The region's clock when this was read. Sites compares the cancel and
+		 * acceptance deadlines with it, so a guest whose phone clock is off
+		 * still sees the right countdown.
+		 */
+		serverNow: new Date().toISOString(),
+		/** The restaurant turned it down while it waited (or nobody decided in time). */
+		rejected: order.rejectedReason != null,
+		/**
+		 * "Cancel order" on the success page and the order link: present only
+		 * on the guest's own reads (the operator view never computes it).
+		 */
+		...(cancel
+			? { cancel: { allowed: cancel.allowed, until: cancel.until } }
+			: {}),
 		fulfillment: order.fulfillment,
 		locale: order.locale,
 		createdAt: order.createdAt ? order.createdAt.toISOString() : null,
@@ -2382,12 +3139,27 @@ export function receiptOrder(order: RestaurantOrder) {
 	}
 }
 
+/**
+ * When a waiting order is (or was) turned down automatically, for the
+ * operator. An online order not paid yet carries the deadline it was placed
+ * with only as a mark that it will wait once paid: not shown until then.
+ */
+function operatorAcceptanceDeadline(order: RestaurantOrder): string | null {
+	if (!order.acceptanceDeadlineAt) return null
+	const stands =
+		order.paymentMethod !== 'online' ||
+		order.paymentStatus === 'paid' ||
+		order.paymentStatus === 'not_required'
+	return stands ? order.acceptanceDeadlineAt.toISOString() : null
+}
+
 export function operatorOrder(
 	order: RestaurantOrder,
 	customerKey: string | null = null,
+	refunds: OrderRefundGlance | null = null,
 ) {
 	return {
-		...receiptOrder(order),
+		...receiptOrder(order, refunds),
 		id: order.id,
 		orgId: order.orgId,
 		customerId: order.customerId,
@@ -2405,8 +3177,8 @@ export function operatorOrder(
 			(order.discounts ?? []).some((discount) => discount.limitExceeded)
 				? ('discount_limit_exceeded' as const)
 				: null,
-		/** Recorded as returned; the payment status stays `paid`. */
-		refundedCents: order.refundedCents,
+		/** Returned (less reversals); the payment status stays `paid`. */
+		refundedCents: orderRefundedNetCents(order),
 		dropId: order.dropId,
 		deliveryZoneId: order.deliveryZoneId,
 		deliveryPoint:
@@ -2428,5 +3200,16 @@ export function operatorOrder(
 		 * unknown.
 		 */
 		timeZone: order.locationTimezone ?? order.pickupTimezone ?? null,
+		/** Why and by whom it was cancelled (internal reasons included). */
+		cancelReason: order.cancelReason ?? null,
+		cancelledBy: order.cancelledBy ?? null,
+		/** Set when it was turned down while waiting for acceptance. */
+		rejectedReason: order.rejectedReason ?? null,
+		acceptanceDeadlineAt: operatorAcceptanceDeadline(order),
+		acceptedAt: order.acceptedAt ? order.acceptedAt.toISOString() : null,
+		/** An open or lost dispute: refunds are refused. */
+		disputed: disputeBlocksRefund(order.disputeStatus),
+		disputeStatus: order.disputeStatus ?? null,
+		disputedAt: order.disputedAt ? order.disputedAt.toISOString() : null,
 	}
 }

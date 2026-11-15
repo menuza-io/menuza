@@ -25,7 +25,7 @@ import {
 	NOW,
 	programConfig,
 } from './loyalty-test-fixture.ts'
-import { recordOrderRefund } from './order-refund-service.ts'
+import { refundOrderThroughProvider } from './order-refund-test-fixture.ts'
 
 /**
  * Promotions through the real purchase path: a promotion in the program
@@ -82,7 +82,7 @@ async function purchaseOf(orderId: string) {
 }
 
 async function refund(orderId: string, amountCents: number) {
-	const result = await recordOrderRefund(ORG, orderId, {
+	const result = await refundOrderThroughProvider(ORG, orderId, {
 		request: { amountCents, note: 'Returned' },
 		actorId: OPERATOR,
 		idempotencyKey: `promo-refund-${++keyCounter}`,

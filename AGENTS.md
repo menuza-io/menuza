@@ -672,8 +672,15 @@ git commit --no-verify -m "fix: resolve ESLint warnings (verified manually)"
   order itself is never affected. See `docs/scheduled-jobs.md`.
 - `ORDER_MESSAGES_TICK_INTERVAL_SECONDS` - Tenant-api Node (OCI) runtime only,
   optional. Seconds between in-process retries of guest order messages (default
-  120, minimum 60, `0` off). The hourly cron fan-out always runs; the Workers
-  runtime uses Durable Object alarms.
+  120, minimum 60, `0` off). `0` stops only these retries, never the acceptance
+  timeout. The hourly cron fan-out always runs; the Workers runtime uses Durable
+  Object alarms.
+- `ORDER_ACCEPTANCE_TICK_INTERVAL_SECONDS` - Tenant-api Node (OCI) runtime only,
+  optional. Seconds between in-process passes that turn down orders still
+  waiting for manual acceptance past the deadline the guest was shown (#107),
+  then book cancel refunds still owed (default 60, minimum 30). It cannot be
+  switched off: `0`, a negative or an unreadable value means the default. The
+  Workers runtime uses the `orders` Durable Object alarm module.
 - `QR_DINE_IN_ENABLED` - Tenant-api only, optional (unset or `true` is on). Kill
   switch for QR table ordering: `false` (also `0`, `off`, `no`, `disabled`)
   answers 503 on dine-in placement, the table and tab context, starting a tab
@@ -1153,15 +1160,16 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
   (`lib/order-messages-sms-cap.ts`, `sms_daily_cap`). No messages for table
   rounds or Station sales. Do not use the Station ready-text path for this.
 - Order link: `lib/order-link.ts`, an HMAC with the purpose `order-link:v1`,
-  valid 90 days from placement, read-only, carried in the URL fragment
+  valid 90 days from placement, carried in the URL fragment
   (`/menu/success?order=<id>#link=<token>`) and the `X-Order-Link` header of
-  `GET /orders/:id` and `POST /orders/:id/resend-link` (3 per order per hour).
-  Every refusal is the uniform 404, and a value that is not 64 hex characters is
-  refused before any database work. A read by link returns a reduced body
-  (`linkReceiptOrder`: no `contact`, no delivery address, no line notes); only
-  the receipt token of the placing browser gets the full receipt. Sites moves
-  the token from the fragment to `sessionStorage` and strips the URL before
-  analytics loads.
+  `GET /orders/:id`, `POST /orders/:id/resend-link` (3 per order per hour) and
+  guest cancel (`GET`/`POST /orders/:id/cancel`). It never signs the guest in
+  and never edits the order beyond that cancel. Every refusal is the uniform
+  404, and a value that is not 64 hex characters is refused before any database
+  work. A read by link returns a reduced body (`linkReceiptOrder`: no `contact`,
+  no delivery address, no line notes); only the receipt token of the placing
+  browser gets the full receipt. Sites moves the token from the fragment to
+  `sessionStorage` and strips the URL before analytics loads.
 - Promised time: `promised_at` / `promised_until` / `promised_version` /
   `promised_delay_minutes`, computed at placement by `@repo/common`
   `promised-time.ts` (prep, busy minutes, large-order extra from `largeOrder` in
@@ -1173,6 +1181,37 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
   `expectedPromisedVersion`, 409 `stale_version`) is
   `PATCH /operator/orders/:id` or the kitchen command `delay`; both use
   `applyPromisedDelay`. 10 minutes or more queues `eta_changed`.
+- Provider refunds (#80): an online-paid order is refunded through its payment
+  provider. The region books a `pending` `provider` row in
+  `restaurant_order_refunds` (`POST /api/orders/refund-intent`,
+  `services/order-refund-book.ts`, `order-provider-refund-service.ts`); the App
+  calls Stripe or Checkout.com (`utils/restaurant-orders/refunds.server.ts`) and
+  reports `refund-status`; webhooks, the region's ids-only kick
+  (`/resources/orders/refund-execute`) and the hourly reconcile job finish it.
+  `refunded_cents` counts succeeded refunds only and never shrinks; a pending
+  row reserves the amount, a failed one releases it; a succeeded refund the
+  provider fails later is marked reversed and counted in
+  `refund_reversed_cents`, so readers use the net figure (never `refunded_cents`
+  alone). One pending refund per order (409 `refund_pending`), none while
+  disputed (409 `payment_disputed`); a cancel with a full refund that hits
+  either is marked `cancel_refund_due_at` and the rest is booked when the other
+  refund settles or the dispute is won (orders tick as backstop). A closed
+  dispute never reopens. QR tab payments refund per `qr_tab_refunds` row.
+  Handoff orders keep the record-only `recordOrderRefund`. Permission
+  `update:order_refund:any` (owner, admin), never while impersonating; an order
+  loyalty tracks also needs the loyalty refund grant (403
+  `loyalty_refund_forbidden`). The region never calls a provider.
+- Guest cancel (#111, flag `ordering.guest_cancel`, per-location window) and
+  order acceptance (#107, flag `ordering.manual_acceptance`, per-location Manual
+  mode) reach the region as `guestCancel` / `acceptance` in the order context;
+  the shared rules are `@repo/common` `order-lifecycle.ts`. A
+  `pending_acceptance` order holds capacity, has no kitchen ticket and settles
+  inventory, loyalty and discounts only on accept; the orders tick
+  (`processOrderAcceptance`, with the order-messages tick) rejects it as
+  `not_accepted_in_time` and refunds a paid online order in full. `accepted` is
+  queued only on a manual accept. Cancels and rejects share
+  `applyOrderStatusPatchInTx` in `order-service.ts`. Docs:
+  `docs/restaurant-ordering-contract.md`.
 
 **Loyalty Rewards (points, rewards, member codes):**
 

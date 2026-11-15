@@ -8,6 +8,22 @@
  */
 
 import { parseTabOrderRef } from '@repo/common/qr-ordering'
+import {
+	ORDER_REFUND_MAX_LOCATION_IDS,
+	type OrderDisputeStatusRequest,
+	orderDisputeStatusRequestSchema,
+	type OrderProviderRefund,
+	type OrderRefundIntentRequest,
+	orderRefundIntentRequestSchema,
+	type OrderRefundIntentResponse,
+	orderRefundIntentResponseSchema,
+	orderRefundsPendingRequestSchema,
+	orderRefundsPendingResponseSchema,
+	type OrderRefundStatusRequest,
+	orderRefundStatusRequestSchema,
+	type OrderRefundStatusResponse,
+	orderRefundStatusResponseSchema,
+} from '@repo/common/restaurant-orders'
 import { ENV } from 'varlock/env'
 import { z } from 'zod'
 import { getRegionalTenantApiUrl } from '#app/utils/sites/tenant-api.server.ts'
@@ -17,6 +33,12 @@ const COMMAND_TIMEOUT_MS = 10_000
 
 /** Error raised when the regional tenant-api rejects or cannot serve a call. */
 export class RegionalOrderApiError extends Error {
+	/**
+	 * What is still refundable, when the region refused an over-refund
+	 * (`refund_exceeds_payment`). The only detail ever read from an error body.
+	 */
+	public refundableCents?: number
+
 	constructor(
 		public readonly code: string,
 		public readonly httpStatus: number,
@@ -78,6 +100,10 @@ async function callRegionalOrderCommand(options: {
 		| '/api/orders/quote'
 		| '/api/orders/payment-session'
 		| '/api/orders/payment-status'
+		| '/api/orders/refund-intent'
+		| '/api/orders/refund-status'
+		| '/api/orders/dispute-status'
+		| '/api/orders/refunds-pending'
 	body: Record<string, unknown>
 }): Promise<unknown> {
 	// Resolves (and validates) the regional URL; throws when the region has no
@@ -130,11 +156,21 @@ async function callRegionalOrderCommand(options: {
 		const payload = (await response.json().catch(() => null)) as {
 			error?: string
 			message?: string
+			refundableCents?: unknown
 		} | null
-		throw new RegionalOrderApiError(
+		const error = new RegionalOrderApiError(
 			payload?.error || payload?.message || `http_${response.status}`,
 			response.status,
 		)
+		const refundable = payload?.refundableCents
+		if (
+			typeof refundable === 'number' &&
+			Number.isInteger(refundable) &&
+			refundable >= 0
+		) {
+			error.refundableCents = refundable
+		}
+		throw error
 	}
 
 	return response.json().catch(() => {
@@ -252,22 +288,266 @@ export async function notifyRestaurantOrderPaymentStatus(options: {
 	currency: string
 	paymentId?: string
 }): Promise<void> {
-	await callRegionalOrderCommand({
-		dataRegion: options.dataRegion,
-		path: '/api/orders/payment-status',
-		body: {
-			orgId: options.orgId,
-			orderId: options.orderId,
-			sessionId: options.sessionId,
-			processor: options.processor,
-			status: options.status,
-			amountCents: options.amountCents,
-			currency: options.currency,
-			// Only QR tabs use it, and a region that predates the field refuses
-			// unknown keys: pickup and delivery events never carry it.
-			...(options.paymentId && parseTabOrderRef(options.orderId)
-				? { paymentId: options.paymentId }
-				: {}),
-		},
+	const isTab = parseTabOrderRef(options.orderId) !== null
+	// The payment's own id (`pi_…`, `pay_…`): the region stores it on the
+	// order so a refund names the exact payment. A QR tab keys each payment by
+	// it, which only Checkout.com needs (a Stripe session is one payment, and
+	// the tab's refund and dispute paths read its session id).
+	const paymentId =
+		options.paymentId && (!isTab || options.processor === 'checkout')
+			? options.paymentId
+			: undefined
+	const body = {
+		orgId: options.orgId,
+		orderId: options.orderId,
+		sessionId: options.sessionId,
+		processor: options.processor,
+		status: options.status,
+		amountCents: options.amountCents,
+		currency: options.currency,
+	}
+	try {
+		await callRegionalOrderCommand({
+			dataRegion: options.dataRegion,
+			path: '/api/orders/payment-status',
+			body: paymentId ? { ...body, paymentId } : body,
+		})
+	} catch (error) {
+		// A region that predates `paymentId` refuses unknown keys (400). The
+		// payment itself must still count there: send it again without the id,
+		// which is only a refund convenience. Tabs always needed the field.
+		if (
+			paymentId &&
+			!isTab &&
+			error instanceof RegionalOrderApiError &&
+			error.httpStatus === 400
+		) {
+			await callRegionalOrderCommand({
+				dataRegion: options.dataRegion,
+				path: '/api/orders/payment-status',
+				body,
+			})
+			return
+		}
+		throw error
+	}
+}
+
+/* ------------------------------------------------------------------ */
+/* Provider refunds and disputes (#80)                                 */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Parse an outgoing system body with its shared contract before it leaves:
+ * the region refuses unknown keys, so a caller bug fails here, loudly, and
+ * never reaches the region with something it did not mean to send.
+ */
+function outgoing<T>(
+	schema: { safeParse: (value: unknown) => { success: boolean; data?: T } },
+	body: unknown,
+): T {
+	const parsed = schema.safeParse(body)
+	if (!parsed.success) throw new RegionalOrderApiError('invalid_request', 400)
+	return parsed.data as T
+}
+
+/**
+ * Book a provider refund in the region (`pending`, a reservation of the
+ * amount). A replay with the same idempotency key returns the same refund,
+ * whatever its status now. Region refusals keep their code and status
+ * (`refund_pending`, `payment_disputed`, `refund_exceeds_payment` with
+ * `refundableCents`, `order_not_refundable`, `idempotency_conflict`, 404).
+ */
+export async function requestRestaurantOrderRefundIntent(
+	options: { dataRegion: string | null | undefined } & OrderRefundIntentRequest,
+): Promise<OrderRefundIntentResponse> {
+	const { dataRegion, ...request } = options
+	// A member limited to some locations: the region must check the order's
+	// location itself (the App cannot see it). Anything short of the region
+	// confirming that check is `location_scope_unsupported` (403), never a
+	// refund made on trust.
+	const scoped = request.locationIds != null
+	if (
+		scoped &&
+		(request.locationIds?.length ?? 0) > ORDER_REFUND_MAX_LOCATION_IDS
+	) {
+		throw locationScopeUnsupported()
+	}
+	// A member without the loyalty grant: the region must refuse an order
+	// loyalty tracks (the App cannot see that). Anything short of the region
+	// confirming the check is refused here, never a refund made on trust. A
+	// member with the grant sends nothing: there is nothing to check.
+	const loyaltyLimited = request.loyaltyAccess?.refundLoyalty === false
+	if (request.loyaltyAccess && !loyaltyLimited) {
+		const { loyaltyAccess: ignoredAccess, ...rest } = request
+		return requestRestaurantOrderRefundIntent({ dataRegion, ...rest })
+	}
+	const body = outgoing(orderRefundIntentRequestSchema, request)
+	let raw: unknown
+	try {
+		raw = await callRegionalOrderCommand({
+			dataRegion,
+			path: '/api/orders/refund-intent',
+			body,
+		})
+	} catch (error) {
+		// A region that predates `locationIds` (or `loyaltyAccess`) refuses the
+		// unknown key (strict body, 400): it cannot enforce the check, so
+		// nothing was booked.
+		if (error instanceof RegionalOrderApiError && error.httpStatus === 400) {
+			if (scoped) throw locationScopeUnsupported()
+			if (loyaltyLimited) throw loyaltyCheckUnsupported()
+		}
+		throw error
+	}
+	const parsed = orderRefundIntentResponseSchema.safeParse(raw)
+	if (!parsed.success) {
+		throw new RegionalOrderApiError('invalid_refund_response', 502)
+	}
+	if (parsed.data.orderId !== request.orderId) {
+		throw new RegionalOrderApiError('org_mismatch', 502)
+	}
+	const unchecked =
+		scoped && parsed.data.locationScoped !== true
+			? 'location_scope_unsupported'
+			: loyaltyLimited && parsed.data.loyaltyChecked !== true
+				? 'loyalty_check_unsupported'
+				: null
+	if (unchecked) {
+		// Booked without the check (a region that ignores the field). A refund
+		// still `pending` with no provider id would be executed by the reconcile
+		// job, so it is released here, replay or not: a replay from the same
+		// region was booked without the check too. One the provider already has
+		// (or a settled one) is left to finish as it was. If the release does
+		// not go through the refund must stay refusable, so the caller gets a
+		// retryable 503 (the retry replays and releases it), never a 403.
+		const intent = parsed.data
+		if (intent.status === 'pending' && intent.providerRefundId === null) {
+			const released = await releaseUncheckedRefund({
+				dataRegion,
+				orgId: request.orgId,
+				intent,
+				failureCode: unchecked,
+			})
+			if (!released)
+				throw new RegionalOrderApiError('refund_release_failed', 503)
+		}
+		throw unchecked === 'location_scope_unsupported'
+			? locationScopeUnsupported()
+			: loyaltyCheckUnsupported()
+	}
+	return parsed.data
+}
+
+const RELEASE_ATTEMPTS = 3
+
+/**
+ * Settle a refund booked without a confirmed check as `failed`, so it holds no
+ * amount and is never executed. Retries a transient regional failure; true
+ * once the region has the release.
+ */
+async function releaseUncheckedRefund(options: {
+	dataRegion: string | null | undefined
+	orgId: string
+	intent: OrderRefundIntentResponse
+	failureCode: 'location_scope_unsupported' | 'loyalty_check_unsupported'
+}): Promise<boolean> {
+	const { dataRegion, orgId, intent, failureCode } = options
+	for (let attempt = 0; attempt < RELEASE_ATTEMPTS; attempt += 1) {
+		try {
+			await reportRestaurantOrderRefundStatus({
+				dataRegion,
+				orgId,
+				orderId: intent.orderId,
+				refundId: intent.refundId,
+				processor: intent.processor,
+				status: 'failed',
+				failureCode,
+				amountCents: intent.amountCents,
+				currency: intent.currency,
+			})
+			return true
+		} catch (error) {
+			console.error(
+				`Could not release unchecked refund ${intent.refundId}:`,
+				error instanceof RegionalOrderApiError ? error.code : 'unknown',
+			)
+			if (!(error instanceof RegionalOrderApiError) || !error.retryable) {
+				return false
+			}
+			if (attempt < RELEASE_ATTEMPTS - 1) {
+				await new Promise((resolve) => setTimeout(resolve, 150 * (attempt + 1)))
+			}
+		}
+	}
+	return false
+}
+
+function locationScopeUnsupported() {
+	return new RegionalOrderApiError('location_scope_unsupported', 403)
+}
+
+function loyaltyCheckUnsupported() {
+	return new RegionalOrderApiError('loyalty_check_unsupported', 403)
+}
+
+/**
+ * Report a provider's answer for one refund. Idempotent in the region: only
+ * the first final status moves money, a replay answers `applied: false`.
+ */
+export async function reportRestaurantOrderRefundStatus(
+	options: { dataRegion: string | null | undefined } & OrderRefundStatusRequest,
+): Promise<OrderRefundStatusResponse> {
+	const { dataRegion, ...request } = options
+	const body = outgoing(orderRefundStatusRequestSchema, request)
+	const raw = await callRegionalOrderCommand({
+		dataRegion,
+		path: '/api/orders/refund-status',
+		body,
 	})
+	const parsed = orderRefundStatusResponseSchema.safeParse(raw)
+	if (!parsed.success) {
+		throw new RegionalOrderApiError('invalid_refund_response', 502)
+	}
+	return parsed.data
+}
+
+/** Report a dispute opening or closing on an order's (or a tab's) payment. */
+export async function reportRestaurantOrderDisputeStatus(
+	options: {
+		dataRegion: string | null | undefined
+	} & OrderDisputeStatusRequest,
+): Promise<void> {
+	const { dataRegion, ...request } = options
+	const body = outgoing(orderDisputeStatusRequestSchema, request)
+	await callRegionalOrderCommand({
+		dataRegion,
+		path: '/api/orders/dispute-status',
+		body,
+	})
+}
+
+/**
+ * Provider refunds the region still has `pending` (ids and amounts only),
+ * oldest first. `refundId` narrows to one refund.
+ */
+export async function fetchPendingRestaurantOrderRefunds(options: {
+	dataRegion: string | null | undefined
+	orgId: string
+	refundId?: string
+	olderThanMs?: number
+	limit?: number
+}): Promise<OrderProviderRefund[]> {
+	const { dataRegion, ...request } = options
+	const body = outgoing(orderRefundsPendingRequestSchema, request)
+	const raw = await callRegionalOrderCommand({
+		dataRegion,
+		path: '/api/orders/refunds-pending',
+		body,
+	})
+	const parsed = orderRefundsPendingResponseSchema.safeParse(raw)
+	if (!parsed.success) {
+		throw new RegionalOrderApiError('invalid_refund_response', 502)
+	}
+	return parsed.data.refunds
 }

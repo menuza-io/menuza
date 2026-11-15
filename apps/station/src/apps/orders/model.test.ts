@@ -1,12 +1,15 @@
 import { type PosOnlineOrderSummary } from '@repo/common/pos-online-orders'
 import { describe, expect, it } from 'vitest'
 import {
+	acceptanceRemainingMs,
+	countdownClock,
 	inboxOrders,
 	inboxSection,
 	onlineOrderLate,
 	refundCents,
 	sectionCounts,
 	unopenedOrders,
+	waitingOrders,
 } from './model.ts'
 
 const NOW = 10_000_000
@@ -49,7 +52,7 @@ describe('online orders inbox', () => {
 		expect(inboxSection(order('e', { status: 'cancelled' }))).toBe('done')
 		expect(
 			sectionCounts([order('a'), order('d', { status: 'ready' })]),
-		).toEqual({ new: 1, in_progress: 0, ready: 1, done: 0 })
+		).toEqual({ waiting: 0, new: 1, in_progress: 0, ready: 1, done: 0 })
 	})
 
 	it('is late after its promised time, or 20 minutes after an ASAP order came in', () => {
@@ -120,5 +123,51 @@ describe('online orders inbox', () => {
 		expect(refundCents('١٢٫٥', 10_000)).toBe(1250)
 		expect(refundCents('12 50', 10_000)).toBeNull()
 		expect(refundCents('1.234', 10_000)).toBeNull()
+	})
+})
+
+describe('orders waiting for acceptance', () => {
+	const waiting = (id: string, deadline: number | null) =>
+		order(id, {
+			status: 'pending_acceptance',
+			acceptanceDeadlineAt: deadline,
+		})
+
+	it('is its own section, listed first by the closest deadline, and never late', () => {
+		const orders = [
+			order('late', { dueAt: NOW - 60_000 }),
+			waiting('b', NOW + 120_000),
+			waiting('a', NOW + 60_000),
+		]
+		expect(inboxSection(waiting('a', null))).toBe('waiting')
+		expect(inboxOrders(orders, ALL, NOW).map((o) => o.id)).toEqual([
+			'a',
+			'b',
+			'late',
+		])
+		expect(
+			inboxOrders(orders, { ...ALL, section: 'waiting' }, NOW).map((o) => o.id),
+		).toEqual(['a', 'b'])
+		expect(sectionCounts(orders).waiting).toBe(2)
+		expect(waitingOrders(orders).map((o) => o.id)).toEqual(['a', 'b'])
+		expect(
+			onlineOrderLate(
+				order('x', { status: 'pending_acceptance', dueAt: 1 }),
+				NOW,
+			),
+		).toBe(false)
+		// Not "new": the open-it alert is for accepted orders.
+		expect(unopenedOrders([waiting('a', null)], new Set())).toEqual([])
+	})
+
+	it('counts down to the deadline and stops at zero', () => {
+		expect(acceptanceRemainingMs(waiting('a', NOW + 192_000), NOW)).toBe(
+			192_000,
+		)
+		expect(acceptanceRemainingMs(waiting('a', null), NOW)).toBeNull()
+		expect(countdownClock(192_000)).toBe('3:12')
+		expect(countdownClock(191_100)).toBe('3:12')
+		expect(countdownClock(5_000)).toBe('0:05')
+		expect(countdownClock(-4_000)).toBe('0:00')
 	})
 })

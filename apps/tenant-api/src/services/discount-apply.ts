@@ -337,6 +337,8 @@ export async function discountCustomerFacts(
 			and(
 				eq(restaurantOrders.customerId, customerId),
 				inArray(restaurantOrders.status, [
+					// An order waiting for acceptance (#107) is an order placed.
+					'pending_acceptance',
 					'accepted',
 					'preparing',
 					'ready',

@@ -1,5 +1,8 @@
 import { getLocalizedMenuValue } from '@repo/common/menu-types'
-import { type PricedOrderLine } from '@repo/common/restaurant-orders'
+import {
+	guestVisibleCancelReason,
+	type PricedOrderLine,
+} from '@repo/common/restaurant-orders'
 import { getSiteLocaleDirection } from '@repo/common/site-locales'
 import { type OrderMessageKind, type RestaurantOrder } from '@repo/tenant-db'
 import { orderCopyFor } from './order-messages-copy/index.ts'
@@ -39,13 +42,17 @@ export type OrderEmailOrder = Pick<
 	| 'discountCents'
 	| 'loyaltyDiscountCents'
 	| 'refundedCents'
+	| 'refundReversedCents'
 	| 'lines'
 	| 'scheduledFor'
 	| 'pickupDate'
 	| 'pickupTime'
 	| 'promisedAt'
 	| 'promisedUntil'
->
+> & {
+	/** Why it was cancelled; only guest-visible reasons are shown. */
+	cancelReason?: RestaurantOrder['cancelReason']
+}
 
 export type OrderEmailInput = {
 	kind: OrderMessageKind
@@ -58,6 +65,12 @@ export type OrderEmailInput = {
 	timeZone: string | null
 	/** "View your order" (`buildOrderLinkUrl`); omitted when unknown. */
 	linkUrl: string | null
+	/**
+	 * Cancelled: provider refunds of the order still on their way (read from
+	 * the refund rows at send time). With them the message names everything
+	 * coming back; 0 or absent shows only what was refunded.
+	 */
+	refundPendingCents?: number
 }
 
 export type RenderedOrderEmail = { subject: string; html: string; text: string }
@@ -212,8 +225,28 @@ export function renderOrderEmail(input: OrderEmailInput): RenderedOrderEmail {
 		const time = orderTimeLine(order, input.timeZone, locale)
 		rows.push([time.label, time.value])
 	}
-	if (input.kind === 'cancelled' && order.refundedCents > 0) {
-		rows.push([labels.refunded, money(order.refundedCents)])
+	if (input.kind === 'cancelled') {
+		// Only the reasons a guest may see; every other one stays internal.
+		const reason = guestVisibleCancelReason(order.cancelReason)
+		if (reason) {
+			rows.push([
+				labels.reason,
+				reason === 'out_of_stock'
+					? labels.reasonOutOfStock
+					: labels.reasonKitchenClosed,
+			])
+		}
+		const pending = Math.max(0, input.refundPendingCents ?? 0)
+		// What is really back: a refund the provider reversed does not count.
+		const back = Math.max(
+			0,
+			order.refundedCents - (order.refundReversedCents ?? 0),
+		)
+		if (pending > 0) {
+			rows.push([labels.refundPending, money(back + pending)])
+		} else if (back > 0) {
+			rows.push([labels.refunded, money(back)])
+		}
 	}
 
 	const showItems = input.kind === 'receipt'
