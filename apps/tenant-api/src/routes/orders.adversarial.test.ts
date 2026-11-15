@@ -1906,4 +1906,113 @@ describe('Adversarial: restaurant ordering (public browser surface)', () => {
 			await orderLinkResendsIdle()
 		})
 	})
+
+	// -----------------------------------------------------------------------
+	// Checkout tips and the service fee (#118, #123): the browser's numbers
+	// are never prices
+	// -----------------------------------------------------------------------
+
+	describe('tips and the service fee', () => {
+		const withFee = (settings: Record<string, unknown> = {}) => {
+			const context = menuContext() as unknown as Record<string, unknown>
+			return {
+				...context,
+				serviceFee: {
+					version: 1,
+					locations: {
+						'loc-1': {
+							enabled: true,
+							percentBp: 300,
+							fixedMinor: 0,
+							capMinor: null,
+							smallOrderBelowMinor: null,
+							smallOrderFeeMinor: null,
+							fulfillments: ['pickup', 'delivery'],
+							label: 'Service fee',
+							explanation: null,
+							taxable: false,
+							...settings,
+						},
+					},
+				},
+			}
+		}
+
+		it('refuses a custom tip above the cap and places nothing', async () => {
+			// Two burgers: a 20.00 subtotal, so the cap is the 200.00 currency limit.
+			const oversized = await postOrder(
+				orderBody({ tip: { amountMinor: 20_001 } }),
+			)
+			expect(oversized.status).toBe(422)
+			expect((await oversized.json()).error).toBe('tip_too_large')
+			const absurd = await postOrder(
+				orderBody({ tip: { amountMinor: 999_999_999 } }),
+			)
+			expect(absurd.status).toBe(422)
+			const db = await getTenantDb(orgId)
+			expect(await db.select().from(restaurantOrders)).toHaveLength(0)
+		})
+
+		it('never takes a tip from a field that is not a tip', async () => {
+			for (const tip of [
+				{ amountMinor: -1 },
+				{ amountMinor: 1.5 },
+				{ amountMinor: '300' },
+				{ percent: 10, amountMinor: 300 },
+				{ percent: 31 },
+				'300',
+			]) {
+				const response = await postOrder(orderBody({ tip }))
+				expect(response.status).toBe(400)
+			}
+		})
+
+		it('prices the fee itself when the browser claims a lower one', async () => {
+			activeContext = withFee()
+			const lower = await postOrder(orderBody({ expectedServiceFeeMinor: 1 }))
+			expect(lower.status).toBe(409)
+			const body = await lower.json()
+			expect(body.error).toBe('service_fee_changed')
+			expect(body.details.serviceFeeMinor).toBe(60)
+			// Dropping the field is no way round it.
+			const missing = await postOrder(orderBody())
+			expect(missing.status).toBe(409)
+			const db = await getTenantDb(orgId)
+			expect(await db.select().from(restaurantOrders)).toHaveLength(0)
+		})
+
+		it('never accepts a fee for an order where there is none', async () => {
+			const response = await postOrder(
+				orderBody({ expectedServiceFeeMinor: 60 }),
+			)
+			expect(response.status).toBe(409)
+			expect((await response.json()).error).toBe('service_fee_changed')
+		})
+
+		it('refuses an order at a location whose fee it cannot read', async () => {
+			activeContext = withFee({ percentBp: 'three' })
+			const response = await postOrder(orderBody())
+			expect(response.status).toBe(503)
+			expect((await response.json()).error).toBe('service_fee_unavailable')
+		})
+
+		it('adds a fixed amount to the percentage', async () => {
+			activeContext = withFee({ fixedMinor: 100 })
+			const response = await postOrder(
+				orderBody({ expectedServiceFeeMinor: 160 }),
+			)
+			expect(response.status).toBe(201)
+			expect((await response.json()).order.serviceFeeCents).toBe(160)
+		})
+
+		it('stores the fee with the order so the total is the one placed', async () => {
+			activeContext = withFee()
+			const placed = await postOrder(orderBody({ expectedServiceFeeMinor: 60 }))
+			expect(placed.status).toBe(201)
+			const order = (await placed.json()).order
+			expect(order.serviceFeeCents).toBe(60)
+			expect(order.totalCents).toBe(2000 + 165 + 60)
+		})
+	})
+
 })

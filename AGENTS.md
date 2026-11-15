@@ -1213,6 +1213,38 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
   `applyOrderStatusPatchInTx` in `order-service.ts`. Docs:
   `docs/restaurant-ordering-contract.md`.
 
+**Checkout tips, service fee and cart upsells (#118, #123, #114):**
+
+- Tip choices: `OrganizationLocation.tipSettings` (control plane, JSON,
+  `TipSettingsSchema` in `@repo/common/location-types`, no flag), shown from
+  `GET /orders/options` (`tipChoices`) and the table tab view. An order or tab
+  payment sends `tip: { percent } | { amountMinor }` (`tipPercent` stays for old
+  clients). A percentage is a share of the subtotal before discounts and tax
+  (`docs/discounts-plan.md`); an exact amount is capped at the larger of half the
+  subtotal or the currency cap (422 `tip_too_large`) and stored with a null
+  `tip_percent` (tenant migration `0045` swaps the column instead of rebuilding
+  `restaurant_orders`). Station keeps its own tip settings.
+- Service fee: flag `ordering.service_fee`, `OrganizationLocation.serviceFee`
+  (JSON), priced by `computeServiceFee` (`@repo/common/service-fee`, re-exported
+  from `restaurant-orders`) on the subtotal after discounts and rewards, never on
+  the tip. The App sends `context.serviceFee = { version, locations }` (only
+  locations that have it on); the browser sends `expectedServiceFeeMinor` (409
+  `service_fee_changed`); a fee on that this node cannot read is 503
+  `service_fee_unavailable`, never dropped. The fee's tax is part of `tax_cents`.
+  Stored on the order (`service_fee_cents`, `service_fee_tax_cents`,
+  `service_fee_label`) and, for a tab paid from the phone, on `qr_tabs`. A table
+  round and Station sales carry none. A full refund includes it; a partial one
+  only with `includeServiceFee` (`restaurant_order_refunds.service_fee_cents`).
+  Contract: `docs/restaurant-ordering-contract.md#tips-and-the-service-fee-118-123`.
+- Cart upsells: flag `ordering.upsell` reaches Sites in the public menu payload
+  (`features.upsell`). One ranking, `pickUpsells` in `@repo/common/upsell`, used
+  by Sites (`lib/ordering/upsell.ts`) and the phone agent
+  (`suggestUpsells`): upsell categories of what is in the cart, then flagged
+  dishes, in menu order. Sites shows "Goes well with" in the cart drawer and at
+  checkout (checkout only offers dishes that go straight in). Counts of shown
+  and added dishes (dish id only) stay in the browser and fire a `menuza:upsell`
+  event; nothing is sent.
+
 **Loyalty Rewards (points, rewards, member codes):**
 
 - One program and one balance per organization, integer points. A customer is

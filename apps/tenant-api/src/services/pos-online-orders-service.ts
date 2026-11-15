@@ -539,6 +539,7 @@ export async function onlineOrderDetail(
 		taxCents: order.taxCents,
 		deliveryFeeCents: order.deliveryFeeCents,
 		tipCents: order.tipCents,
+		serviceFeeCents: order.serviceFeeCents,
 		discountCents: order.discountCents + order.deliveryDiscountCents,
 		loyaltyDiscountCents: order.loyaltyDiscountCents,
 		paidAt: ms(order.paidAt),

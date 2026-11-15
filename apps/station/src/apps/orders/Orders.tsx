@@ -1379,6 +1379,16 @@ function OrderDetailBody({
 							</dd>
 						</>
 					) : null}
+					{(detail.serviceFeeCents ?? 0) > 0 ? (
+						<>
+							<dt>
+								<Trans>Service fee</Trans>
+							</dt>
+							<dd className="tnum text-end">
+								{money(detail.serviceFeeCents ?? 0)}
+							</dd>
+						</>
+					) : null}
 					{detail.taxCents > 0 ? (
 						<>
 							<dt>
