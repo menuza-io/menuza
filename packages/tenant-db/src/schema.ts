@@ -925,7 +925,15 @@ export const restaurantOrders = sqliteTable(
 		taxCents: integer('tax_cents').notNull(),
 		deliveryFeeCents: integer('delivery_fee_cents').notNull().default(0),
 		tipCents: integer('tip_cents').notNull().default(0),
-		tipPercent: integer('tip_percent').notNull().default(0),
+		// Null for an exact amount the guest typed (#118): `tip_cents` is the tip.
+		tipPercent: integer('tip_percent'),
+		// The guest service fee (#123), before its tax. Its tax is part of
+		// `tax_cents` (and of the total when prices exclude tax); the label is the
+		// name the guest saw. Zero and null when no fee applied. Never rewritten:
+		// changing a location's fee does not touch orders already placed.
+		serviceFeeCents: integer('service_fee_cents').notNull().default(0),
+		serviceFeeTaxCents: integer('service_fee_tax_cents').notNull().default(0),
+		serviceFeeLabel: text('service_fee_label'),
 		totalCents: integer('total_cents').notNull(),
 		// A loyalty reward's discount, taken off the subtotal before tax. The
 		// redemption (`loyalty_redemptions`, source `restaurant_order`) holds how
@@ -1133,6 +1141,11 @@ export const restaurantOrderRefunds = sqliteTable(
 		// Set once, never cleared.
 		reversedAt: integer('reversed_at'),
 		reversalCode: text('reversal_code'),
+		// The part of `amount_cents` that is the guest service fee and its tax
+		// (#123): a full refund carries what was left, a partial one only when the
+		// operator ticked "include service fee". Lets the next refund see how much
+		// of the fee is already back. Zero for every row from before 0045.
+		serviceFeeCents: integer('service_fee_cents').notNull().default(0),
 	},
 	(table) => [
 		uniqueIndex('restaurant_order_refunds_idempotency_unique').on(
@@ -5925,6 +5938,12 @@ export const qrTabs = sqliteTable(
 		subtotalCents: integer('subtotal_cents').notNull().default(0),
 		taxCents: integer('tax_cents').notNull().default(0),
 		tipCents: integer('tip_cents').notNull().default(0),
+		// The service fee of a tab paid from the phone (#123), as for an order:
+		// before its tax, which is part of `tax_cents` (the tab's own tax plus the
+		// fee's) and of the total when prices exclude tax.
+		serviceFeeCents: integer('service_fee_cents').notNull().default(0),
+		serviceFeeTaxCents: integer('service_fee_tax_cents').notNull().default(0),
+		serviceFeeLabel: text('service_fee_label'),
 		totalCents: integer('total_cents').notNull().default(0),
 		// A loyalty reward's discount on a tab paid from the phone (before tax).
 		loyaltyDiscountCents: integer('loyalty_discount_cents')
@@ -5948,6 +5967,10 @@ export const qrTabs = sqliteTable(
 		/** Amount the bound online session charges (subtotal + tax + tip). */
 		paymentAmountCents: integer('payment_amount_cents'),
 		paymentTipCents: integer('payment_tip_cents'),
+		// The fee the bound session charges, fixed at the pay request like the tip.
+		paymentServiceFeeCents: integer('payment_service_fee_cents'),
+		paymentServiceFeeTaxCents: integer('payment_service_fee_tax_cents'),
+		paymentServiceFeeLabel: text('payment_service_fee_label'),
 		paymentEventAt: integer('payment_event_at'),
 		voidReason: text('void_reason'),
 		/** Staff locked the tab: guests can neither add rounds nor pay. */

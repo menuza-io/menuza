@@ -481,6 +481,8 @@ export function buildDiscountQuote(input: {
 	loyaltyDiscountMinor: number
 	taxMinor: number
 	totalMinor: number
+	/** The fee on the discounted subtotal; defaults to the undiscounted one. */
+	serviceFeeMinor?: number
 	couponsEnabled?: boolean
 }): DiscountQuote {
 	const evaluation = input.prepared?.evaluation
@@ -504,6 +506,7 @@ export function buildDiscountQuote(input: {
 		taxMinor: input.taxMinor,
 		tipMinor: input.priced.tipCents,
 		deliveryFeeMinor: input.priced.deliveryFeeCents,
+		serviceFeeMinor: input.serviceFeeMinor ?? input.priced.serviceFeeCents,
 		deliveryDiscountMinor: evaluation?.deliveryDiscountMinor ?? 0,
 		totalMinor: input.totalMinor,
 		paymentRequired: input.totalMinor > 0,

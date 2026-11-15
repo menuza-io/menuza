@@ -2,6 +2,7 @@ import {
 	and,
 	desc,
 	eq,
+	gt,
 	gte,
 	inArray,
 	isNull,
@@ -24,6 +25,7 @@ import {
 	discountRedemptions,
 	marketingCampaigns,
 	marketingMessages,
+	qrTabs,
 	restaurantOrders,
 	type TenantDatabase,
 } from '@repo/tenant-db'
@@ -185,6 +187,7 @@ const orderColumns = {
 	deliveryFeeCents: restaurantOrders.deliveryFeeCents,
 	tipCents: restaurantOrders.tipCents,
 	tipPercent: restaurantOrders.tipPercent,
+	serviceFeeCents: restaurantOrders.serviceFeeCents,
 	totalCents: restaurantOrders.totalCents,
 	discountCents: restaurantOrders.discountCents,
 	deliveryDiscountCents: restaurantOrders.deliveryDiscountCents,
@@ -464,6 +467,33 @@ async function loadTabDiscountCentsByTabId(
 	return totals
 }
 
+/**
+ * The service fee (#123) of tabs paid from the phone, keyed by tab id (minor
+ * units, before tax). A tab's rounds carry none: the fee is priced when the
+ * guest pays the tab, so it is stored on the tab.
+ */
+async function loadTabServiceFeeCentsByTabId(
+	db: TenantDatabase,
+	tabIds: readonly string[],
+): Promise<Map<string, number>> {
+	const fees = new Map<string, number>()
+	if (tabIds.length === 0) return fees
+	const rows = await queryInChunks([...tabIds], (chunk) =>
+		db
+			.select({ id: qrTabs.id, feeCents: qrTabs.serviceFeeCents })
+			.from(qrTabs)
+			.where(
+				and(
+					eq(qrTabs.status, 'closed'),
+					gt(qrTabs.serviceFeeCents, 0),
+					inArray(qrTabs.id, chunk),
+				),
+			),
+	)
+	for (const row of rows) fees.set(row.id, row.feeCents)
+	return fees
+}
+
 /** One order row per tab gets the tab's close discount in order reports. */
 function tabDiscountCentsByOrderId(
 	rows: readonly OrderReportRow[],
@@ -526,6 +556,16 @@ export async function loadOrderRecords(
 			? await loadAttributionMessages(db, earliest, latest)
 			: null
 
+	const tabIdsOfRows = [
+		...new Set(rows.map((row) => row.tabId).filter((id): id is string => !!id)),
+	]
+	// A tab's service fee rides on its latest round, like its close discount.
+	const tabServiceFeeByOrderId = fields.has('serviceFee')
+		? tabDiscountCentsByOrderId(
+				rows,
+				await loadTabServiceFeeCentsByTabId(db, tabIdsOfRows),
+			)
+		: new Map<string, number>()
 	const needsTabDiscount = fields.has('discount')
 	const tabDiscountByOrderId = needsTabDiscount
 		? tabDiscountCentsByOrderId(
@@ -557,6 +597,10 @@ export async function loadOrderRecords(
 			tax: row.taxCents / 100,
 			tip: row.tipCents / 100,
 			tipPercent: row.tipPercent,
+			// Online orders carry their own fee; a tab's rides on its latest round.
+			serviceFee:
+				(row.serviceFeeCents + (tabServiceFeeByOrderId.get(row.id) ?? 0)) /
+				100,
 			deliveryFee: row.deliveryFeeCents / 100,
 			// Items, delivery and loyalty on the order, plus a tab's close discount
 			// on its latest round (tab redemptions, not round rows).

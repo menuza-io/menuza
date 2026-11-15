@@ -272,6 +272,116 @@ export const InHouseTipsSchema = z.object({
 	dineInTips: z.boolean(),
 })
 
+// ---------------------------------------------------------------------------
+// Tip choices at online checkout (#118)
+// ---------------------------------------------------------------------------
+
+/** One button: a share of the subtotal or a fixed amount (minor units). */
+export const TipChoiceSchema = z.union([
+	z.strictObject({ percent: z.number().int().min(1).max(30) }),
+	z.strictObject({ amountMinor: z.number().int().min(1).max(1_000_000) }),
+])
+export type TipChoice = z.infer<typeof TipChoiceSchema>
+
+export const MAX_TIP_CHOICES = 4
+
+/** The buttons of one order type (pickup, delivery or the QR tab). */
+export const TipOrderTypeSettingsSchema = z
+	.strictObject({
+		/** Up to four, in the order shown. */
+		choices: z.array(TipChoiceSchema).max(MAX_TIP_CHOICES),
+		/** Index into `choices` that starts selected; null starts on no tip. */
+		defaultIndex: z.number().int().min(0).nullable(),
+		/** Show "Custom", which opens an amount field. */
+		allowCustom: z.boolean(),
+	})
+	.superRefine((value, context) => {
+		if (value.defaultIndex !== null && value.defaultIndex >= value.choices.length) {
+			context.addIssue({
+				code: 'custom',
+				path: ['defaultIndex'],
+				message: 'The default must be one of the choices',
+			})
+		}
+		const keys = value.choices.map((choice) =>
+			'percent' in choice ? `p${choice.percent}` : `a${choice.amountMinor}`,
+		)
+		if (new Set(keys).size !== keys.length) {
+			context.addIssue({
+				code: 'custom',
+				path: ['choices'],
+				message: 'Each choice once',
+			})
+		}
+		if (value.choices.length === 0 && !value.allowCustom) {
+			context.addIssue({
+				code: 'custom',
+				path: ['choices'],
+				message: 'Add a choice or allow a custom amount',
+			})
+		}
+	})
+export type TipOrderTypeSettings = z.infer<typeof TipOrderTypeSettingsSchema>
+
+/** `OrganizationLocation.tipSettings`: per order type. */
+export const TipSettingsSchema = z.strictObject({
+	pickup: TipOrderTypeSettingsSchema,
+	delivery: TipOrderTypeSettingsSchema,
+	qrTab: TipOrderTypeSettingsSchema,
+})
+export type TipSettings = z.infer<typeof TipSettingsSchema>
+export type TipOrderType = keyof TipSettings
+
+/**
+ * What a location shows when it has saved nothing: the old 10, 15, 18 and 20
+ * percent buttons with 15 selected. A SAR location starts with no tip
+ * selected (tipping is less common there). No custom amount until an
+ * operator turns it on.
+ */
+export function defaultTipOrderTypeSettings(
+	currency: string,
+): TipOrderTypeSettings {
+	return {
+		choices: [{ percent: 10 }, { percent: 15 }, { percent: 18 }, { percent: 20 }],
+		defaultIndex: currency.toUpperCase() === 'SAR' ? null : 1,
+		allowCustom: false,
+	}
+}
+
+export function defaultTipSettings(currency: string): TipSettings {
+	return {
+		pickup: defaultTipOrderTypeSettings(currency),
+		delivery: defaultTipOrderTypeSettings(currency),
+		qrTab: defaultTipOrderTypeSettings(currency),
+	}
+}
+
+/**
+ * Reads a stored value (a JSON string, an object or nothing) into settings. An
+ * order type that is missing or unreadable falls back to the default, so a bad
+ * row never removes tipping.
+ */
+export function resolveTipSettings(
+	raw: unknown,
+	currency: string,
+): TipSettings {
+	let value: unknown = raw
+	if (typeof raw === 'string') {
+		try {
+			value = JSON.parse(raw)
+		} catch {
+			value = null
+		}
+	}
+	const record =
+		value && typeof value === 'object' ? (value as Record<string, unknown>) : {}
+	const pick = (key: TipOrderType) => {
+		const parsed = TipOrderTypeSettingsSchema.safeParse(record[key])
+		return parsed.success ? parsed.data : defaultTipOrderTypeSettings(currency)
+	}
+	return { pickup: pick('pickup'), delivery: pick('delivery'), qrTab: pick('qrTab') }
+}
+
 export const SchedulingOptionsSchema = z.object({
 	scheduledOrdersEnabled: z.boolean(),
 	advanceOrderDays: z.number().min(1).max(90),

@@ -225,6 +225,11 @@ export const discountQuoteSchema = z.object({
 	taxMinor: minorSchema,
 	tipMinor: minorSchema,
 	deliveryFeeMinor: minorSchema,
+	/**
+	 * The guest service fee (#123) on what discounts and rewards left, before
+	 * its tax (the tax is in `taxMinor`). Missing from an older region reads as 0.
+	 */
+	serviceFeeMinor: minorSchema.optional(),
 	deliveryDiscountMinor: minorSchema,
 	totalMinor: minorSchema,
 	/** False when the total is 0: the order skips payment. */

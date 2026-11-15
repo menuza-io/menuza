@@ -1,6 +1,8 @@
 import { z } from 'zod'
 import { orderDiscountsRequestSchema } from '@repo/discounts'
 import { orderLoyaltySelectionSchema } from './order-loyalty.ts'
+import { orderTipSchema } from './order-tips.ts'
+import { type ServiceFeeSettings } from './service-fee.ts'
 
 /**
  * QR ordering: dine-in table ordering with open tabs, and order-ahead QR
@@ -312,6 +314,12 @@ export type QrTabTotals = {
 	taxInclusive: boolean
 	tipCents: number
 	/**
+	 * The service fee (#123) of a tab paid from the phone, before its tax (which
+	 * is in `taxCents`). 0 while the tab is open and for a counter close; the fee
+	 * is priced when the guest asks to pay.
+	 */
+	serviceFeeCents?: number
+	/**
 	 * A loyalty reward taken off before tax. Only a tab paid from the phone
 	 * carries one (a counter close never does), so it is 0 while the tab is open.
 	 */
@@ -339,6 +347,12 @@ export type QrPublicTab = {
 	totals: QrTabTotals
 	/** True while a round is still `accepted` or `preparing`. */
 	roundsPending: boolean
+	/**
+	 * The location's service fee (#123) while it is on for tables, with the
+	 * tax rate the page needs to show the fee before the guest pays; null or
+	 * absent when there is none. Sent by `GET /orders/tab` only.
+	 */
+	serviceFee?: { settings: ServiceFeeSettings; taxRatePercent: number } | null
 }
 
 // ---------------------------------------------------------------------------
@@ -368,7 +382,18 @@ export const QR_TAB_TIP_PERCENTS = [0, 10, 15, 20] as const
 export const qrTabPayRequestSchema = z.strictObject({
 	slug: z.string().trim().min(1).max(100).optional(),
 	host: z.string().trim().min(1).max(253).optional(),
-	tipPercent: z.number().int().min(0).max(30),
+	tipPercent: z.number().int().min(0).max(30).default(0),
+	/**
+	 * The tip as a share of the subtotal or an exact amount (#118). Takes the
+	 * place of `tipPercent`, which stays for clients that predate it.
+	 */
+	tip: orderTipSchema.optional(),
+	/**
+	 * The service fee (#123) the guest was shown, minor units. The region
+	 * prices the fee; a different amount is 409 `service_fee_changed`. A missing
+	 * value reads as 0.
+	 */
+	expectedServiceFeeMinor: z.number().int().min(0).max(1_000_000_000).optional(),
 	contact: z.strictObject({
 		name: z.string().trim().min(1, 'Enter your name').max(120),
 		phone: z

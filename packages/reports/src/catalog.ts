@@ -769,6 +769,12 @@ const orderFields: ReportField[] = [
 		averageLabel: 'Average tip percent',
 	},
 	{
+		id: 'serviceFee',
+		label: 'Service fee',
+		type: 'currency',
+		sumLabel: 'Service fees',
+	},
+	{
 		id: 'deliveryFee',
 		label: 'Delivery fee',
 		type: 'currency',

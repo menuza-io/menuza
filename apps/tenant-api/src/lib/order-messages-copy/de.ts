@@ -47,6 +47,7 @@ export const DE: OrderMessageCopy = {
 		reward: 'Prämie',
 		deliveryFee: 'Liefergebühr',
 		tip: 'Trinkgeld',
+		serviceFee: 'Servicegebühr',
 		tax: 'Steuer',
 		total: 'Gesamt',
 		refunded: 'Erstattet',

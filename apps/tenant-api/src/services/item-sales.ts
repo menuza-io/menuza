@@ -219,6 +219,9 @@ export function restaurantOrderNetMinor(order: {
 	deliveryFeeCents: number
 	deliveryDiscountCents: number
 	totalCents: number
+	/** The guest service fee and its tax (#123); items never include them. */
+	serviceFeeCents?: number
+	serviceFeeTaxCents?: number
 }): number {
 	const afterDiscounts =
 		order.subtotalCents -
@@ -227,8 +230,14 @@ export function restaurantOrderNetMinor(order: {
 	const delivery = order.deliveryFeeCents - order.deliveryDiscountCents
 	const inclusive =
 		order.taxCents > 0 &&
-		order.totalCents === afterDiscounts + order.tipCents + delivery
-	return Math.max(0, afterDiscounts - (inclusive ? order.taxCents : 0))
+		order.totalCents ===
+			afterDiscounts +
+				order.tipCents +
+				delivery +
+				(order.serviceFeeCents ?? 0)
+	// The tax on the service fee is not tax on the items.
+	const itemTax = order.taxCents - (order.serviceFeeTaxCents ?? 0)
+	return Math.max(0, afterDiscounts - (inclusive ? itemTax : 0))
 }
 
 /** Net item sales of a Station sale (adjustments hold discounts and rewards). */
@@ -386,6 +395,8 @@ async function addRestaurantOrders(
 			tipCents: restaurantOrders.tipCents,
 			deliveryFeeCents: restaurantOrders.deliveryFeeCents,
 			deliveryDiscountCents: restaurantOrders.deliveryDiscountCents,
+			serviceFeeCents: restaurantOrders.serviceFeeCents,
+			serviceFeeTaxCents: restaurantOrders.serviceFeeTaxCents,
 			totalCents: restaurantOrders.totalCents,
 			pickupTimezone: restaurantOrders.pickupTimezone,
 			createdAt: restaurantOrders.createdAt,

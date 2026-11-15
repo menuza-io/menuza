@@ -47,6 +47,7 @@ export const EN: OrderMessageCopy = {
 		reward: 'Reward',
 		deliveryFee: 'Delivery fee',
 		tip: 'Tip',
+		serviceFee: 'Service fee',
 		tax: 'Tax',
 		total: 'Total',
 		refunded: 'Refunded',

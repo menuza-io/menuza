@@ -1,5 +1,9 @@
 import {
+	computeServiceFee,
+	computeTip,
 	priceRestaurantOrder,
+	readServiceFeePolicy,
+	type OrderTip,
 	type RestaurantOrderQuoteRequest,
 	type VerifiedDeliveryQuote,
 } from '@repo/common/restaurant-orders'
@@ -259,6 +263,8 @@ export async function quoteCheckout(input: {
 				loyaltyDiscountCents: 0,
 				taxCents: plain.taxCents,
 				totalCents: plain.totalCents,
+				serviceFeeCents: plain.serviceFeeCents,
+				serviceFeeTaxCents: plain.serviceFeeTaxCents,
 			}
 
 	return {
@@ -275,6 +281,7 @@ export async function quoteCheckout(input: {
 				taxInclusive: result.taxInclusive,
 				tipMinor: result.tipCents,
 				deliveryFeeMinor: result.deliveryFeeCents,
+				serviceFeeMinor: totals.serviceFeeCents,
 				totalMinor: totals.totalCents,
 			},
 			selectedRewardId: chosen?.rewardId ?? null,
@@ -296,7 +303,8 @@ export async function quoteTab(input: {
 	orgId: string
 	customerId: string
 	tabToken: string
-	tipPercent: number
+	/** The guest's tip choice: a share of the subtotal or an exact amount. */
+	tip: OrderTip
 	selection: LoyaltyOrderReward | null
 }): Promise<OrderServiceResult<LoyaltyCheckoutQuote>> {
 	const { orgId, customerId, selection } = input
@@ -370,7 +378,47 @@ export async function quoteTab(input: {
 		? discountedTabTotals(rounds, quoted.chosen.lines)
 		: null
 	const chosen = rewarded ? quoted.chosen : null
-	const tipCents = Math.round((totals.subtotalCents * input.tipPercent) / 100)
+	const tip = computeTip({
+		tip: input.tip,
+		subtotalCents: totals.subtotalCents,
+		currency: tab.currency,
+	})
+	if (!tip.ok) {
+		return orderFailure(
+			422,
+			'tip_too_large',
+			'That tip is more than we can accept. Please enter a smaller amount.',
+		)
+	}
+	const tipCents = tip.tipCents
+	// The service fee the pay request would add (#123): on what discounts and
+	// the reward leave of the subtotal, before tax and tip.
+	const feePolicy = context.ok
+		? readServiceFeePolicy(context.data.serviceFee, tab.locationId)
+		: ({ kind: 'off' } as const)
+	const engineAllocation =
+		tabDiscounts && tabDiscounts.ok
+			? (tabDiscounts.quote?.allocation ?? [])
+			: []
+	const allOff =
+		engineAllocation.length > 0 || chosen
+			? discountedTabTotals(rounds, [
+					...engineAllocation,
+					...(chosen?.lines ?? []),
+				])
+			: null
+	const feeLocation = context.ok
+		? context.data.menu.locations.find((entry) => entry.id === tab.locationId)
+		: undefined
+	const serviceFee = computeServiceFee({
+		settings: feePolicy.kind === 'on' ? feePolicy.settings : null,
+		fulfillment: 'dine_in',
+		baseCents: totals.subtotalCents - (allOff?.loyaltyDiscountCents ?? 0),
+		taxRatePercent: feeLocation?.taxRate ?? 0,
+		taxInclusive: totals.taxInclusive,
+	})
+	const feeCharge =
+		serviceFee.feeCents + (totals.taxInclusive ? 0 : serviceFee.taxCents)
 	return {
 		ok: true,
 		data: {
@@ -381,11 +429,15 @@ export async function quoteTab(input: {
 			totals: {
 				subtotalMinor: totals.subtotalCents,
 				discountMinor: rewarded?.loyaltyDiscountCents ?? 0,
-				taxMinor: rewarded?.taxCents ?? totals.taxCents,
+				taxMinor:
+					(rewarded?.taxCents ?? totals.taxCents) +
+					serviceFee.taxCents,
 				taxInclusive: totals.taxInclusive,
 				tipMinor: tipCents,
 				deliveryFeeMinor: 0,
-				totalMinor: (rewarded?.totalCents ?? totals.totalCents) + tipCents,
+				serviceFeeMinor: serviceFee.feeCents,
+				totalMinor:
+					(rewarded?.totalCents ?? totals.totalCents) + tipCents + feeCharge,
 			},
 			selectedRewardId: chosen?.rewardId ?? null,
 			availableAfter: quoted.balance.available - (chosen?.pointsCost ?? 0),

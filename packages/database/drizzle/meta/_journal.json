@@ -337,6 +337,13 @@
 			"when": 1794721513147,
 			"tag": "0047_restaurant_home_and_launch",
 			"breakpoints": true
+		},
+		{
+			"idx": 48,
+			"version": "6",
+			"when": 1794771604154,
+			"tag": "0048_checkout_tips_and_service_fee",
+			"breakpoints": true
 		}
 	]
 }

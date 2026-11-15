@@ -189,6 +189,16 @@
       "import": "./src/restaurant-orders.ts",
       "default": "./src/restaurant-orders.ts"
     },
+    "./order-tips": {
+      "types": "./src/order-tips.ts",
+      "import": "./src/order-tips.ts",
+      "default": "./src/order-tips.ts"
+    },
+    "./service-fee": {
+      "types": "./src/service-fee.ts",
+      "import": "./src/service-fee.ts",
+      "default": "./src/service-fee.ts"
+    },
     "./print-shop": {
       "types": "./src/print-shop.ts",
       "import": "./src/print-shop.ts",

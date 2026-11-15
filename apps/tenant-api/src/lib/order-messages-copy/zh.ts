@@ -47,6 +47,7 @@ export const ZH: OrderMessageCopy = {
 		reward: '奖励',
 		deliveryFee: '配送费',
 		tip: '小费',
+		serviceFee: '服务费',
 		tax: '税费',
 		total: '合计',
 		refunded: '已退款',

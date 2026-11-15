@@ -302,6 +302,7 @@ export function tabTotals(
 		| 'subtotalCents'
 		| 'taxCents'
 		| 'tipCents'
+		| 'serviceFeeCents'
 		| 'totalCents'
 		| 'loyaltyDiscountCents'
 	>,
@@ -325,6 +326,7 @@ export function tabTotals(
 			taxCents: tab.taxCents,
 			taxInclusive,
 			tipCents: tab.tipCents,
+			serviceFeeCents: tab.serviceFeeCents,
 			loyaltyDiscountCents: tab.loyaltyDiscountCents,
 			totalCents: tab.totalCents,
 		}
@@ -341,6 +343,7 @@ export function tabTotals(
 		taxCents,
 		taxInclusive,
 		tipCents: 0,
+		serviceFeeCents: 0,
 		loyaltyDiscountCents: 0,
 		totalCents,
 	}

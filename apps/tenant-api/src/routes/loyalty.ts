@@ -1,5 +1,8 @@
 import { QR_TAB_TOKEN_HEADER } from '@repo/common/qr-ordering'
-import { restaurantOrderQuoteSchema } from '@repo/common/restaurant-orders'
+import {
+	requestedTip,
+	restaurantOrderQuoteSchema,
+} from '@repo/common/restaurant-orders'
 import {
 	LoyaltyDomainError,
 	loyaltyCheckoutQuoteRequestSchema,
@@ -310,7 +313,7 @@ loyaltyRoutes.post('/tab/quote', async (c) => {
 			orgId: auth.customer.orgId,
 			customerId: auth.customer.customerId,
 			tabToken,
-			tipPercent: body.data.tipPercent,
+			tip: requestedTip(body.data),
 			selection: body.data.selection,
 		})
 		if (!result.ok) {

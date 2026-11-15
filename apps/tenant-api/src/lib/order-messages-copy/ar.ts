@@ -47,6 +47,7 @@ export const AR: OrderMessageCopy = {
 		reward: 'المكافأة',
 		deliveryFee: 'رسوم التوصيل',
 		tip: 'الإكرامية',
+		serviceFee: 'رسوم الخدمة',
 		tax: 'الضريبة',
 		total: 'الإجمالي',
 		refunded: 'المبلغ المسترد',

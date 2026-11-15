@@ -223,11 +223,22 @@ function salesTemplates(): ReportTemplate[] {
 			id: 'tips-average-percent',
 			title: 'Average tip percent',
 			description:
-				'The average tip as a percent of the order subtotal. Orders without a tip count as 0%.',
+				'The average tip as a percent of the order subtotal. Orders without a tip count as 0%; orders where the guest typed an exact amount are left out.',
 			groupBy: [],
 			chartStyle: 'single_number',
 			measure: 'average',
 			valueField: 'tipPercent',
+			timeframePreset: 'last_30_days',
+		}),
+		template('organization', {
+			...sales,
+			id: 'service-fees-total',
+			title: 'Service fees',
+			description: 'Service fees guests paid on online orders.',
+			groupBy: [],
+			chartStyle: 'single_number',
+			measure: 'sum',
+			valueField: 'serviceFee',
 			timeframePreset: 'last_30_days',
 		}),
 		template('organization', {

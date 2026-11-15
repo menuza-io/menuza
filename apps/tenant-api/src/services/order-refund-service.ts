@@ -25,7 +25,10 @@ import {
 	orderRefundableCents,
 	orderRefundedNetCents,
 	orderRefundSummary,
+	orderServiceFeeChargeCents,
 	pendingOrderRefundCentsInTx,
+	refundAmountWithServiceFee,
+	serviceFeeRefundedCentsInTx,
 } from './order-refund-book.ts'
 import {
 	orderFailure,
@@ -73,6 +76,10 @@ function refundRequestHash(request: OperatorOrderRefundRequest): string {
 				amountCents: 'amountCents' in request ? request.amountCents : null,
 				full: 'full' in request,
 				note: request.note,
+				// Only when set, so the hash of a request without it never changes.
+				...('includeServiceFee' in request && request.includeServiceFee
+					? { includeServiceFee: true }
+					: {}),
 			}),
 		)
 		.digest('hex')
@@ -199,10 +206,15 @@ export async function recordOrderRefund(
 							'This order is already fully refunded.',
 						)
 					}
-					const amountCents =
-						'full' in input.request
-							? refundableCents
-							: input.request.amountCents
+					const { amountCents, serviceFeeCents } = refundAmountWithServiceFee({
+						amount: input.request,
+						refundableCents,
+						feeChargeCents: orderServiceFeeChargeCents(order),
+						feeRefundedCents: await serviceFeeRefundedCentsInTx(
+							tx as unknown as OrderTx,
+							order.id,
+						),
+					})
 					if (amountCents > refundableCents) {
 						return {
 							ok: false,
@@ -224,6 +236,7 @@ export async function recordOrderRefund(
 						.values({
 							orderId: order.id,
 							amountCents,
+							serviceFeeCents,
 							currency: order.currency,
 							full: fullyBack,
 							note: input.request.note,
@@ -284,6 +297,8 @@ export function operatorOrderRefund(refund: RestaurantOrderRefund) {
 		full: refund.full,
 		note: refund.note,
 		actorId: refund.actorId,
+		/** The part of the amount that is the service fee and its tax (#123). */
+		serviceFeeCents: refund.serviceFeeCents,
 		createdAt: new Date(refund.createdAt).toISOString(),
 		/** `record` (money returned outside Menuza) or `provider`. */
 		kind: refund.kind,
