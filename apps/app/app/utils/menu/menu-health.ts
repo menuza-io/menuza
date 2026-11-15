@@ -205,6 +205,10 @@ export type MenuHealthInput = {
 	modifierGroupOptions?: Iterable<{
 		modifierGroupId: string
 		availabilityStatus: string
+		/** With `unavailable_until`: the option is back from this time on. */
+		unavailableUntil?: Date | null
+		/** The option's own pick cap in a quantity group (null: no cap). */
+		optionMaxSelections?: number | null
 	}>
 	/** Health dismissals of this organization (`card:` rows are ignored). */
 	dismissals?: readonly MenuHealthDismissal[]
@@ -246,10 +250,17 @@ export type MenuHealth = {
 	checks: MenuHealthCheck[]
 	itemCount: number
 	/**
-	 * Health dismissals that no longer apply: the record passes now, is hidden
-	 * or gone, or the field changed. Only for checks that ran.
+	 * Health dismissals that no longer apply: a visible record passes now or
+	 * its field changed. A dismissal of a hidden or missing record is kept (it
+	 * applies again when the dish is shown; deleted records are cleaned up
+	 * elsewhere). Only for checks that ran.
 	 */
-	staleDismissals: Array<{ entityId: string; checkKey: MenuHealthCheckKey }>
+	staleDismissals: Array<{
+		entityId: string
+		checkKey: MenuHealthCheckKey
+		/** The stored fingerprint, so a delete can skip a row saved again since. */
+		fingerprint: string
+	}>
 }
 
 /** A record listed under a check on the Menu overview. */
@@ -355,32 +366,60 @@ function itemIsLongUnavailable(item: MenuHealthItem, now: Date): boolean {
 
 const LOWER_CASE = /\p{Ll}/u
 const UPPER_RUN = /\p{Lu}{4,}/u
+const ANY_LETTER = /\p{L}/gu
+const CASED_LETTER = /[\p{Lu}\p{Ll}]/gu
+const MARKS = /[\p{M}\u0640]/gu
+
+/** More than half of the name's letters have a case (Latin, Greek, Cyrillic...). */
+function mostLettersAreCased(name: string): boolean {
+	const letters = name.match(ANY_LETTER)?.length ?? 0
+	if (letters === 0) return false
+	const cased = name.match(CASED_LETTER)?.length ?? 0
+	return cased * 2 > letters
+}
 
 /**
  * Written in capitals: no lower-case letter at all, and at least one run of
  * 4 or more upper-case letters. So "BBQ", "BLT" or "KFC BBQ" (short
  * abbreviations) and "BBQ Wings" are fine, "BBQ WINGS" is not. Only cased
- * scripts can match: Arabic and other scripts without case never do.
+ * scripts can match: Arabic and other scripts without case never do, and a
+ * mixed name ("بيبسي PEPSI") counts only when more than half of its letters
+ * are cased.
  */
 export function nameIsAllCaps(name: string): boolean {
-	return !LOWER_CASE.test(name) && UPPER_RUN.test(name)
+	return (
+		!LOWER_CASE.test(name) && UPPER_RUN.test(name) && mostLettersAreCased(name)
+	)
 }
 
-/** Over `MENU_HEALTH_NAME_MAX` characters (code points, after trimming). */
+/**
+ * Over `MENU_HEALTH_NAME_MAX` characters (code points, after trimming;
+ * combining marks such as Arabic vowel signs and tatweel do not count).
+ */
 export function nameIsTooLong(name: string): boolean {
 	const trimmed = name.trim()
 	// Cheap exit: code points never outnumber UTF-16 units.
 	if (trimmed.length <= MENU_HEALTH_NAME_MAX) return false
-	return Array.from(trimmed).length > MENU_HEALTH_NAME_MAX
+	return (
+		Array.from(trimmed.normalize('NFKD').replace(MARKS, '')).length >
+		MENU_HEALTH_NAME_MAX
+	)
 }
 
 const PUNCTUATION = /\p{P}+/gu
 const SPACES = /\s+/gu
+const ARABIC_MARKS = /[\u0640\u064B-\u065F\u0670]/gu
 
-/** Duplicate key for a name: case-folded, punctuation stripped, spaces collapsed. */
+/**
+ * Duplicate key for a name: case-folded, punctuation stripped, spaces
+ * collapsed, Arabic tatweel and vowel signs dropped and alef forms folded.
+ */
 export function normalizeMenuName(name: string): string {
 	return name
 		.normalize('NFKC')
+		.replace(ARABIC_MARKS, '')
+		.replace(/[أإآٱ]/gu, 'ا')
+		.replace(/ى/gu, 'ي')
 		.toLowerCase()
 		.replace(PUNCTUATION, '')
 		.replace(SPACES, ' ')
@@ -487,13 +526,18 @@ export function menuHealthFingerprint(
 function maxPicks(
 	group: MenuHealthModifierGroup,
 	visibleOptionCount: number,
+	optionCapTotal: number | null,
 ): number | null {
 	const max = group.maxSelections
 	switch (group.selectionType) {
 		case 'single':
 			return Math.min(1, visibleOptionCount)
-		case 'quantity':
-			return max
+		case 'quantity': {
+			// Each option repeats up to its own cap; no cap on any option means
+			// no limit from the options.
+			if (optionCapTotal == null) return max
+			return max == null ? optionCapTotal : Math.min(max, optionCapTotal)
+		}
 		case 'pizza':
 			return Math.min(max ?? Infinity, visibleOptionCount * 2)
 		default:
@@ -509,11 +553,12 @@ function maxPicks(
 function groupMinimumIsImpossible(
 	group: MenuHealthModifierGroup,
 	visibleOptionCount: number,
+	optionCapTotal: number | null,
 ): boolean {
 	const min = group.minSelections
 	if (min <= 0) return false
 	if (group.maxSelections != null && min > group.maxSelections) return true
-	const picks = maxPicks(group, visibleOptionCount)
+	const picks = maxPicks(group, visibleOptionCount, optionCapTotal)
 	return picks != null && Number.isFinite(picks) && min > picks
 }
 
@@ -801,12 +846,31 @@ export function computeMenuHealth(input: MenuHealthInput): MenuHealth {
 		for (const row of input.itemModifierGroups ?? []) {
 			if (visibleItemIds.has(row.itemId)) onVisibleDish.add(row.modifierGroupId)
 		}
+		// Orders refuse an option that is not `available`, so only those count
+		// (`unavailable_until` is available again once its date has passed).
 		const visibleOptions = new Map<string, number>()
+		// Sum of the options' own pick caps; null once any option has no cap.
+		const optionCaps = new Map<string, number | null>()
 		for (const row of input.modifierGroupOptions ?? []) {
-			if (row.availabilityStatus === 'hidden') continue
+			const selectable =
+				row.availabilityStatus === 'available' ||
+				(row.availabilityStatus === 'unavailable_until' &&
+					(row.unavailableUntil == null ||
+						row.unavailableUntil.getTime() <= now.getTime()))
+			if (!selectable) continue
 			visibleOptions.set(
 				row.modifierGroupId,
 				(visibleOptions.get(row.modifierGroupId) ?? 0) + 1,
+			)
+			const cap = row.optionMaxSelections ?? null
+			const sofar = optionCaps.get(row.modifierGroupId)
+			optionCaps.set(
+				row.modifierGroupId,
+				sofar === undefined
+					? cap
+					: sofar == null || cap == null
+						? null
+						: sofar + cap,
 			)
 		}
 		const groups = input.modifierGroups.filter(
@@ -832,7 +896,13 @@ export function computeMenuHealth(input: MenuHealthInput): MenuHealth {
 						}),
 				})
 				if (optionCount === 0) empty.push(failing('empty_option_group'))
-				else if (groupMinimumIsImpossible(group, optionCount))
+				else if (
+						groupMinimumIsImpossible(
+							group,
+							optionCount,
+							optionCaps.get(group.id) ?? null,
+						)
+					)
 					impossible.push(failing('impossible_minimum'))
 			}
 			addCheck('empty_option_group', groups.length, empty)
@@ -857,13 +927,28 @@ export function computeMenuHealth(input: MenuHealthInput): MenuHealth {
 	)
 
 	// Dismissals of checks that ran but no longer match a failing record.
+	// Only records guests can see: a hidden or missing record keeps its
+	// dismissal for when it is shown again.
 	const ranKeys = new Set(checks.map((check) => check.key))
+	const visibleIds: Record<MenuHealthEntityType, Set<string>> = {
+		item: new Set(items.map((item) => item.id)),
+		category: new Set(categories.map((category) => category.id)),
+		modifier_group: new Set(
+			(input.modifierGroups ?? [])
+				.filter((group) => group.availabilityStatus !== 'hidden')
+				.map((group) => group.id),
+		),
+	}
 	const staleDismissals: MenuHealth['staleDismissals'] = []
 	for (const [mapKey, dismissal] of dismissals) {
 		const key = dismissal.checkKey as MenuHealthCheckKey
-		if (ranKeys.has(key) && !usedDismissals.has(mapKey)) {
-			staleDismissals.push({ entityId: dismissal.entityId, checkKey: key })
-		}
+		if (!ranKeys.has(key) || usedDismissals.has(mapKey)) continue
+		if (!visibleIds[menuHealthEntityType(key)].has(dismissal.entityId)) continue
+		staleDismissals.push({
+			entityId: dismissal.entityId,
+			checkKey: key,
+			fingerprint: dismissal.fingerprint,
+		})
 	}
 
 	return {

@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import {
 	computeMenuHealth,
+	normalizeMenuName,
 	getMenuHealthFixes,
 	MENU_HEALTH_DEDUCTION_CHECKS,
 	MENU_HEALTH_WEIGHTS,
@@ -833,7 +834,7 @@ describe('dismissals', () => {
 		expect(check(after, 'no_photo')?.itemIds).toEqual(['a', 'b'])
 		expect(check(after, 'no_photo')?.dismissedIds).toEqual([])
 		expect(after.staleDismissals).toEqual([
-			{ entityId: 'a', checkKey: 'no_photo' },
+			expect.objectContaining({ entityId: 'a', checkKey: 'no_photo' }),
 		])
 	})
 
@@ -849,7 +850,43 @@ describe('dismissals', () => {
 			],
 		})
 		expect(after.staleDismissals).toEqual([
-			{ entityId: 'c', checkKey: 'no_photo' },
+			expect.objectContaining({ entityId: 'c', checkKey: 'no_photo' }),
+		])
+	})
+
+	test('a dismissal of a hidden dish is kept, not stale', () => {
+		const dismiss = fingerprints({ items })('no_photo', 'a')
+		const hidden = [
+			item({ id: 'a', imageKey: null, availabilityStatus: 'hidden' }),
+			item({ id: 'c' }),
+		]
+		const after = run({ items: hidden, dismissals: [dismiss] })
+		expect(after.staleDismissals).toEqual([])
+		// Shown again, it is still dismissed.
+		const shown = run({ items, dismissals: [dismiss] })
+		expect(check(shown, 'no_photo')?.dismissedIds).toEqual(['a'])
+		expect(shown.staleDismissals).toEqual([])
+	})
+
+	test('a dismissal of a missing dish is not reported stale here', () => {
+		const after = run({
+			items,
+			dismissals: [
+				{ entityId: 'gone', checkKey: 'no_photo', fingerprint: 'beef' },
+			],
+		})
+		expect(after.staleDismissals).toEqual([])
+	})
+
+	test('a stale dismissal carries its stored fingerprint', () => {
+		const after = run({
+			items,
+			dismissals: [
+				{ entityId: 'c', checkKey: 'no_photo', fingerprint: 'cafe0000' },
+			],
+		})
+		expect(after.staleDismissals).toEqual([
+			{ entityId: 'c', checkKey: 'no_photo', fingerprint: 'cafe0000' },
 		])
 	})
 
@@ -899,7 +936,7 @@ describe('dismissals', () => {
 		})
 		expect(check(edited, 'impossible_minimum')?.count).toBe(1)
 		expect(edited.staleDismissals).toEqual([
-			{ entityId: 'g', checkKey: 'impossible_minimum' },
+			expect.objectContaining({ entityId: 'g', checkKey: 'impossible_minimum' }),
 		])
 	})
 
@@ -919,7 +956,7 @@ describe('dismissals', () => {
 		const renamed = run({ items: [caps('BBQ RIBS')], dismissals: [dismiss] })
 		expect(check(renamed, 'name_all_caps')?.count).toBe(1)
 		expect(renamed.staleDismissals).toEqual([
-			{ entityId: 'a', checkKey: 'name_all_caps' },
+			expect.objectContaining({ entityId: 'a', checkKey: 'name_all_caps' }),
 		])
 	})
 
@@ -998,5 +1035,105 @@ describe('performance', () => {
 			best = Math.min(best, performance.now() - start)
 		}
 		expect(best).toBeLessThan(50)
+	})
+})
+
+describe('option availability and quantity caps', () => {
+	const row = (over: object = {}) => ({
+		modifierGroupId: 'g',
+		availabilityStatus: 'available',
+		...over,
+	})
+	const runWith = (g: MenuHealthModifierGroup, rows: object[]) =>
+		run({
+			modifierGroups: [g],
+			itemModifierGroups: [{ itemId: 'item', modifierGroupId: g.id }],
+			modifierGroupOptions: rows as never,
+		})
+
+	test('min 2 with 3 options of which 2 are unavailable is impossible', () => {
+		const health = runWith(group({ minSelections: 2 }), [
+			row(),
+			row({ availabilityStatus: 'unavailable' }),
+			row({ availabilityStatus: 'unavailable' }),
+		])
+		expect(check(health, 'impossible_minimum')?.modifierGroupIds).toEqual(['g'])
+	})
+
+	test('unavailable_until counts only once its date has passed', () => {
+		const rows = (until: Date) => [
+			row(),
+			row({ availabilityStatus: 'unavailable_until', unavailableUntil: until }),
+		]
+		const g = group({ minSelections: 2 })
+		expect(
+			check(
+				runWith(g, rows(new Date(NOW.getTime() + DAY))),
+				'impossible_minimum',
+			)?.count,
+		).toBe(1)
+		expect(
+			check(
+				runWith(g, rows(new Date(NOW.getTime() - DAY))),
+				'impossible_minimum',
+			)?.count,
+		).toBe(0)
+	})
+
+	test('a group whose only options are unavailable is empty', () => {
+		const health = runWith(group(), [
+			row({ availabilityStatus: 'unavailable' }),
+			row({ availabilityStatus: 'hidden' }),
+		])
+		expect(check(health, 'empty_option_group')?.modifierGroupIds).toEqual(['g'])
+	})
+
+	test('quantity min 5 with two options capped at 2 is impossible', () => {
+		const g = group({ selectionType: 'quantity', minSelections: 5 })
+		const capped = runWith(g, [
+			row({ optionMaxSelections: 2 }),
+			row({ optionMaxSelections: 2 }),
+		])
+		expect(check(capped, 'impossible_minimum')?.count).toBe(1)
+		// One uncapped option, or caps that add up, is fine.
+		expect(
+			check(
+				runWith(g, [row({ optionMaxSelections: 2 }), row()]),
+				'impossible_minimum',
+			)?.count,
+		).toBe(0)
+		expect(
+			check(
+				runWith(g, [
+					row({ optionMaxSelections: 3 }),
+					row({ optionMaxSelections: 2 }),
+				]),
+				'impossible_minimum',
+			)?.count,
+		).toBe(0)
+	})
+})
+
+describe('Arabic names', () => {
+	test('a mixed Arabic and Latin name is not all caps', () => {
+		expect(nameIsAllCaps('بيبسي PEPSI')).toBe(false)
+		expect(nameIsAllCaps('PEPSI MAX')).toBe(true)
+		expect(nameIsAllCaps('PEPSI MAX CHICKEN بيبسي')).toBe(true)
+	})
+
+	test('combining marks do not count toward the length', () => {
+		const vowelled = 'بَ'.repeat(37)
+		expect(Array.from(vowelled)).toHaveLength(74)
+		expect(nameIsTooLong(vowelled)).toBe(false)
+		expect(nameIsTooLong('ب'.repeat(61))).toBe(true)
+		expect(nameIsTooLong('بَ'.repeat(61))).toBe(true)
+	})
+
+	test('normalizeMenuName folds tatweel, harakat and alef forms', () => {
+		expect(normalizeMenuName('شاورمـا')).toBe(normalizeMenuName('شاورما'))
+		expect(normalizeMenuName('شَاوَرْما')).toBe(normalizeMenuName('شاورما'))
+		expect(normalizeMenuName('أكل')).toBe(normalizeMenuName('اكل'))
+		expect(normalizeMenuName('إيدام')).toBe(normalizeMenuName('ايدام'))
+		expect(normalizeMenuName('Chicken, Wings')).toBe('chicken wings')
 	})
 })

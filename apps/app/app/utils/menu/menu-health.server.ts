@@ -64,6 +64,8 @@ export type MenuHealthData = {
 	modifierGroupOptions: Array<{
 		modifierGroupId: string
 		availabilityStatus: string
+		unavailableUntil: Date | null
+		optionMaxSelections: number | null
 	}>
 	dismissals: MenuHealthDismissal[]
 }
@@ -149,6 +151,8 @@ export async function loadMenuHealthData(
 				modifierGroupId:
 					OrganizationMenuModifierGroupOptionAssignment.modifierGroupId,
 				availabilityStatus: OrganizationMenuOption.availabilityStatus,
+				unavailableUntil: OrganizationMenuOption.unavailableUntil,
+				optionMaxSelections: OrganizationMenuOption.maxSelections,
 			})
 			.from(OrganizationMenuModifierGroupOptionAssignment)
 			.innerJoin(
@@ -185,7 +189,7 @@ export async function loadMenuHealthData(
  * Never breaks the page: a failure is logged and the rows wait for the next
  * load.
  */
-async function deleteStaleDismissals(
+export async function deleteStaleDismissals(
 	organizationId: string,
 	stale: MenuHealth['staleDismissals'],
 ) {
@@ -194,18 +198,32 @@ async function deleteStaleDismissals(
 		// Chunked: D1 allows 100 bound parameters per statement.
 		for (let start = 0; start < stale.length; start += 40) {
 			const chunk = stale.slice(start, start + 40)
-			const byKey = new Map<MenuHealthCheckKey, string[]>()
+			// Grouped by check and stored fingerprint: a dismissal saved again
+			// since the load carries a new fingerprint and is left alone.
+			const groups = new Map<
+				string,
+				{ checkKey: MenuHealthCheckKey; fingerprint: string; ids: string[] }
+			>()
 			for (const row of chunk) {
-				byKey.set(row.checkKey, [...(byKey.get(row.checkKey) ?? []), row.entityId])
+				const groupKey = `${row.checkKey}\u0000${row.fingerprint}`
+				const group = groups.get(groupKey)
+				if (group) group.ids.push(row.entityId)
+				else
+					groups.set(groupKey, {
+						checkKey: row.checkKey,
+						fingerprint: row.fingerprint,
+						ids: [row.entityId],
+					})
 			}
-			for (const [checkKey, entityIds] of byKey) {
+			for (const { checkKey, fingerprint, ids } of groups.values()) {
 				await db
 					.delete(MenuCheckDismissal)
 					.where(
 						and(
 							eq(MenuCheckDismissal.organizationId, organizationId),
 							eq(MenuCheckDismissal.checkKey, checkKey),
-							inArray(MenuCheckDismissal.entityId, entityIds),
+							eq(MenuCheckDismissal.fingerprint, fingerprint),
+							inArray(MenuCheckDismissal.entityId, ids),
 						),
 					)
 			}

@@ -158,6 +158,83 @@ describe('menu health loaders', () => {
 		expect(after.health.score).toBeGreaterThan(before.health.score)
 	})
 
+	it('keeps the dismissal of a hidden dish and applies it again when shown', async () => {
+		await dismiss(setup, {
+			intent: 'dismiss',
+			checkKey: 'no_photo',
+			entityId: noPhoto.id,
+		})
+		const rows = () =>
+			db
+				.select()
+				.from(MenuCheckDismissal)
+				.where(eq(MenuCheckDismissal.entityId, noPhoto.id))
+		expect(await rows()).toHaveLength(1)
+		await db
+			.update(OrganizationMenuItem)
+			.set({ availabilityStatus: 'hidden' })
+			.where(eq(OrganizationMenuItem.id, noPhoto.id))
+		await load(overviewLoader, setup, '')
+		expect(await rows()).toHaveLength(1)
+		await db
+			.update(OrganizationMenuItem)
+			.set({ availabilityStatus: 'available' })
+			.where(eq(OrganizationMenuItem.id, noPhoto.id))
+		const shown = await load(overviewLoader, setup, '')
+		expect(checkOf(shown, 'no_photo')).toMatchObject({
+			count: 0,
+			dismissedCount: 1,
+		})
+	})
+
+	it('does not delete a stale dismissal that was saved again with a new fingerprint', async () => {
+		const orgId = setup.organization.id
+		const { deleteStaleDismissals } = await import(
+			'#app/utils/menu/menu-health.server.ts'
+		)
+		const [row] = await db
+			.insert(MenuCheckDismissal)
+			.values({
+				organizationId: orgId,
+				entityType: 'item',
+				entityId: withPhoto.id,
+				checkKey: 'no_photo',
+				fingerprint: 'old00000',
+			})
+			.returning()
+		// The load saw 'old00000'; before the delete it was saved again.
+		await db
+			.update(MenuCheckDismissal)
+			.set({ fingerprint: 'new00000' })
+			.where(eq(MenuCheckDismissal.id, row!.id))
+		await deleteStaleDismissals(orgId, [
+			{
+				entityId: withPhoto.id,
+				checkKey: 'no_photo',
+				fingerprint: 'old00000',
+			},
+		])
+		expect(
+			await db
+				.select()
+				.from(MenuCheckDismissal)
+				.where(eq(MenuCheckDismissal.id, row!.id)),
+		).toHaveLength(1)
+		await deleteStaleDismissals(orgId, [
+			{
+				entityId: withPhoto.id,
+				checkKey: 'no_photo',
+				fingerprint: 'new00000',
+			},
+		])
+		expect(
+			await db
+				.select()
+				.from(MenuCheckDismissal)
+				.where(eq(MenuCheckDismissal.id, row!.id)),
+		).toHaveLength(0)
+	})
+
 	it('filters the items list with ?health=, leaving out a dismissed dish', async () => {
 		const data = await load(itemsLoader, setup, 'items?health=no_photo')
 		expect(data.healthFilter).toEqual({

@@ -62,7 +62,7 @@ const HEALTH: MenuHealthSummary = {
 	],
 }
 
-function renderCard(canEdit = true) {
+function renderCard(canEdit = true, health: MenuHealthSummary = HEALTH) {
 	i18n.load('en', {})
 	i18n.activate('en')
 	const posts: unknown[] = []
@@ -73,7 +73,7 @@ function renderCard(canEdit = true) {
 				element: (
 					<I18nProvider i18n={i18n}>
 						<MenuHealthCard
-							health={HEALTH}
+							health={health}
 							orgSlug="acme"
 							review={{ canEdit, translationLocales: [], autoTranslate: false }}
 						/>
@@ -97,7 +97,9 @@ function renderCard(canEdit = true) {
 describe('MenuHealthCard', () => {
 	it('shows the grade and how many things to fix', () => {
 		renderCard()
-		expect(screen.getByLabelText('Grade B')).toBeTruthy()
+		expect(screen.getByText('Grade')).toBeTruthy()
+		expect(screen.getByText('B')).toBeTruthy()
+		expect(screen.getByText('Good')).toBeTruthy()
 		expect(screen.getByText(/6 things to fix/)).toBeTruthy()
 	})
 
@@ -124,7 +126,7 @@ describe('MenuHealthCard', () => {
 		const user = userEvent.setup()
 		await user.click(screen.getByText('2 dishes have no photo'))
 		await user.click(
-			screen.getAllByRole('button', { name: 'No photo on purpose' })[0]!,
+			screen.getByRole('button', { name: 'No photo on purpose: Falafel' }),
 		)
 		await waitFor(() => expect(posts).toHaveLength(1))
 		expect(posts[0]).toEqual({
@@ -134,7 +136,7 @@ describe('MenuHealthCard', () => {
 			reason: 'on_purpose',
 		})
 		await user.click(screen.getByText('1 dismissed'))
-		await user.click(screen.getByRole('button', { name: 'Restore' }))
+		await user.click(screen.getByRole('button', { name: 'Restore: Tea' }))
 		await waitFor(() => expect(posts).toHaveLength(2))
 		expect(posts[1]).toEqual({
 			intent: 'restore',
@@ -143,13 +145,64 @@ describe('MenuHealthCard', () => {
 		})
 	})
 
+	it('gives every row a button named after its record, with a described hint', async () => {
+		renderCard()
+		const user = userEvent.setup()
+		await user.click(screen.getByText('2 dishes have no photo'))
+		const falafel = screen.getByRole('button', {
+			name: 'No photo on purpose: Falafel',
+		})
+		const kunafa = screen.getByRole('button', {
+			name: 'No photo on purpose: Kunafa',
+		})
+		expect(falafel).not.toBe(kunafa)
+		expect(falafel.getAttribute('aria-describedby')).toBeTruthy()
+		const hint = document.getElementById(
+			falafel.getAttribute('aria-describedby')!,
+		)
+		expect(hint?.textContent).toBe('Stays dismissed until this changes.')
+	})
+
+	it.each([
+		[77, 'C', 'Needs work'],
+		[55, 'F', 'Incomplete'],
+		[95, 'A', 'Excellent'],
+		[65, 'D', 'Needs work'],
+	] as const)('score %s shows grade %s with %s', (score, grade, label) => {
+		renderCard(true, { ...HEALTH, score, grade })
+		expect(screen.getByText(grade)).toBeTruthy()
+		expect(screen.getByText(label)).toBeTruthy()
+	})
+
+	it('does not claim every dish is complete when only dismissed items remain', () => {
+		renderCard(true, {
+			score: 100,
+			grade: 'A',
+			fixCount: 0,
+			itemCount: 10,
+			checks: [
+				check({
+					key: 'no_photo',
+					entityType: 'item',
+					dismissedCount: 2,
+					dismissed: [
+						{ id: 'i1', name: 'Falafel' },
+						{ id: 'i2', name: 'Kunafa' },
+					],
+				}),
+			],
+		})
+		expect(screen.getByText('Nothing left to fix. 2 dismissed.')).toBeTruthy()
+		expect(screen.queryByText(/Every dish has a photo/)).toBeNull()
+	})
+
 	it('hides Dismiss and Restore without edit permission', async () => {
 		renderCard(false)
 		const user = userEvent.setup()
 		await user.click(screen.getByText('2 dishes have no photo'))
 		await user.click(screen.getByText('1 dismissed'))
 		expect(screen.queryByRole('button', { name: /on purpose/ })).toBeNull()
-		expect(screen.queryByRole('button', { name: 'Restore' })).toBeNull()
+		expect(screen.queryByRole('button', { name: /^Restore/ })).toBeNull()
 		expect(screen.getByRole('link', { name: 'Tea' })).toBeTruthy()
 	})
 })

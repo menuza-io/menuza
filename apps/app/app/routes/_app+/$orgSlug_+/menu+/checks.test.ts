@@ -253,7 +253,7 @@ describe('POST /:orgSlug/menu/checks', () => {
 		const revived = await loadMenuHealth(org)
 		expect(revived.fixCount).toBe(1)
 		expect(revived.staleDismissals).toEqual([
-			{ entityId: item.id, checkKey: 'name_all_caps' },
+			expect.objectContaining({ entityId: item.id, checkKey: 'name_all_caps' }),
 		])
 		// The next load has already deleted the stale row.
 		expect(await rows(setup, item.id, 'name_all_caps')).toHaveLength(0)

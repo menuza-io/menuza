@@ -25,7 +25,7 @@ import {
 	ItemTitle,
 } from '@repo/ui/item'
 import { Progress } from '@repo/ui/progress'
-import { useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useId, useRef, useState } from 'react'
 import { Link, useFetcher, useRevalidator } from 'react-router'
 import { toast } from 'sonner'
 import { MenuReviewStack } from '#app/components/menu/menu-review-stack.tsx'
@@ -53,30 +53,35 @@ function SeverityIcon({ severity }: { severity: MenuHealthSeverity }) {
 	}
 }
 
-function ScoreLabel({ score }: { score: number }) {
-	if (score >= 90)
-		return (
-			<Badge variant="success">
-				<Trans>Excellent</Trans>
-			</Badge>
-		)
-	if (score >= 75)
-		return (
-			<Badge variant="default">
-				<Trans>Good</Trans>
-			</Badge>
-		)
-	if (score >= 50)
-		return (
-			<Badge variant="warning">
-				<Trans>Needs work</Trans>
-			</Badge>
-		)
-	return (
-		<Badge variant="destructive">
-			<Trans>Incomplete</Trans>
-		</Badge>
-	)
+/** The words beside the grade, from the grade itself so the two agree. */
+function GradeLabel({ grade }: { grade: MenuHealthGrade }) {
+	switch (grade) {
+		case 'A':
+			return (
+				<Badge variant="success">
+					<Trans>Excellent</Trans>
+				</Badge>
+			)
+		case 'B':
+			return (
+				<Badge variant="default">
+					<Trans>Good</Trans>
+				</Badge>
+			)
+		case 'C':
+		case 'D':
+			return (
+				<Badge variant="warning">
+					<Trans>Needs work</Trans>
+				</Badge>
+			)
+		case 'F':
+			return (
+				<Badge variant="destructive">
+					<Trans>Incomplete</Trans>
+				</Badge>
+			)
+	}
 }
 
 function FixLabel({ check }: { check: MenuHealthCheckSummary }) {
@@ -256,13 +261,27 @@ const GRADE_VARIANT: Record<
 }
 
 function GradeChip({ grade }: { grade: MenuHealthGrade }) {
-	const { _ } = useLingui()
 	return (
-		<Badge variant={GRADE_VARIANT[grade]} aria-label={_(t`Grade ${grade}`)}>
+		<Badge variant={GRADE_VARIANT[grade]}>
+			<span className="sr-only">
+				<Trans>Grade</Trans>{' '}
+			</span>
 			{grade}
 		</Badge>
 	)
 }
+
+/**
+ * Where focus goes after a dismiss or restore removes the focused row: the
+ * `data-focus-id` values to try in order. The card moves focus there once
+ * the new health arrives.
+ */
+const FocusAfterActionContext = createContext<{
+	current: string[] | null
+} | null>(null)
+
+const checkFocusId = (key: MenuHealthCheckKey) => `check:${key}`
+const rowFocusId = (key: MenuHealthCheckKey, id: string) => `row:${key}:${id}`
 
 /** Posts a dismiss or restore for one record and reports a failure. */
 function useCheckAction(orgSlug: string) {
@@ -301,7 +320,13 @@ function RecordRow({
 }) {
 	const { _ } = useLingui()
 	const { submit, busy } = useCheckAction(orgSlug)
+	const focusAfter = useContext(FocusAfterActionContext)
+	const hintId = useId()
+	const name = record.name
 	const dismissLabel = _(DISMISS_LABELS[check.key] ?? msg`Dismiss`)
+	const buttonLabel = dismissed
+		? _(t`Restore: ${name}`)
+		: _(t`${dismissLabel}: ${name}`)
 	return (
 		<li className="flex items-center justify-between gap-2 py-0.5 text-sm">
 			<Link
@@ -315,10 +340,22 @@ function RecordRow({
 					variant="ghost"
 					size="sm"
 					disabled={busy}
-					title={
-						dismissed ? undefined : _(msg`Stays dismissed until this changes.`)
-					}
-					onClick={() =>
+					data-focus-id={rowFocusId(check.key, record.id)}
+					aria-label={buttonLabel}
+					aria-describedby={dismissed ? undefined : hintId}
+					onClick={(event) => {
+						if (focusAfter) {
+							const row = event.currentTarget.closest('li')
+							const neighbour = row?.nextElementSibling ?? row?.previousElementSibling
+							const neighbourId = neighbour
+								?.querySelector('[data-focus-id]')
+								?.getAttribute('data-focus-id')
+							focusAfter.current = [
+								...(neighbourId ? [neighbourId] : []),
+								checkFocusId(check.key),
+								'card',
+							]
+						}
 						submit(
 							dismissed
 								? {
@@ -333,10 +370,15 @@ function RecordRow({
 										reason: 'on_purpose',
 									},
 						)
-					}
+					}}
 				>
 					{dismissed ? <Trans>Restore</Trans> : dismissLabel}
 				</Button>
+			) : null}
+			{canEdit && !dismissed ? (
+				<span id={hintId} className="sr-only">
+					<Trans>Stays dismissed until this changes.</Trans>
+				</span>
 			) : null}
 		</li>
 	)
@@ -398,6 +440,7 @@ function CheckRow({
 	return (
 		<Collapsible>
 			<CollapsibleTrigger
+				data-focus-id={checkFocusId(check.key)}
 				render={
 					<Button
 						variant="ghost"
@@ -491,6 +534,25 @@ export function MenuHealthCard({
 	const { _ } = useLingui()
 	const revalidator = useRevalidator()
 	const [reviewOpen, setReviewOpen] = useState(false)
+	const focusAfter = useRef<string[] | null>(null)
+	const contentRef = useRef<HTMLDivElement>(null)
+	// After a dismiss or restore the focused row is gone; move focus on.
+	useEffect(() => {
+		const targets = focusAfter.current
+		const root = contentRef.current
+		if (!targets || !root) return
+		for (const target of targets) {
+			const element =
+				target === 'card'
+					? root
+					: root.querySelector<HTMLElement>(`[data-focus-id="${target}"]`)
+			if (element) {
+				focusAfter.current = null
+				element.focus()
+				return
+			}
+		}
+	}, [health])
 	if (health.itemCount === 0) {
 		return (
 			<Card size="sm">
@@ -524,6 +586,10 @@ export function MenuHealthCard({
 	const dismissedOnly = health.checks.filter(
 		(check) => check.count === 0 && check.dismissedCount > 0,
 	)
+	const dismissedTotal = health.checks.reduce(
+		(sum, check) => sum + check.dismissedCount,
+		0,
+	)
 	const canReview =
 		canEdit && fixes.some((check) => REVIEWABLE_CHECKS.has(check.key))
 
@@ -535,9 +601,17 @@ export function MenuHealthCard({
 				</CardTitle>
 				<CardDescription>
 					{fixes.length === 0 ? (
-						<Trans>
-							Every dish has a photo, a description and a price. Nice work.
-						</Trans>
+						dismissedTotal > 0 ? (
+							<Plural
+								value={dismissedTotal}
+								one="Nothing left to fix. # dismissed."
+								other="Nothing left to fix. # dismissed."
+							/>
+						) : (
+							<Trans>
+								Every dish has a photo, a description and a price. Nice work.
+							</Trans>
+						)
 					) : (
 						<>
 							<Plural
@@ -556,11 +630,16 @@ export function MenuHealthCard({
 						</span>
 						<span className="text-muted-foreground text-sm">/ 100</span>
 						<GradeChip grade={health.grade} />
-						<ScoreLabel score={health.score} />
+						<GradeLabel grade={health.grade} />
 					</div>
 				</CardAction>
 			</CardHeader>
-			<CardContent className="space-y-3">
+			<CardContent
+				ref={contentRef}
+				tabIndex={-1}
+				className="space-y-3 outline-none"
+			>
+				<FocusAfterActionContext.Provider value={focusAfter}>
 				<Progress value={health.score} aria-label={_(t`Menu health score`)} />
 				{canReview ? (
 					<Button
@@ -603,6 +682,7 @@ export function MenuHealthCard({
 						<DismissedList orgSlug={orgSlug} check={check} canEdit={canEdit} />
 					</div>
 				))}
+				</FocusAfterActionContext.Provider>
 			</CardContent>
 			{canReview && review ? (
 				<MenuReviewStack
