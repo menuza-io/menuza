@@ -93,9 +93,29 @@ const CAPITALS: MenuCard = {
 	options: [
 		{ id: 'title', code: 'title' },
 		{ id: 'sentence', code: 'sentence' },
-		{ id: 'upper', code: 'upper' },
 	],
 	defaultOptionId: 'title',
+	ai: false,
+}
+
+const TYPO: MenuCard = {
+	kind: 'typo',
+	id: 'typo:t',
+	primary: { type: 'item', id: 't' },
+	subject: 'Humus',
+	refs: [ref('t')],
+	fingerprint: 'f4',
+	params: {},
+	preview: {
+		before: [{ entity: 'item', title: 'Humus', rows: [] }],
+		after: [
+			{
+				entity: 'item',
+				title: 'Hummus',
+				rows: [{ text: 'Hummus', change: 'changed' }],
+			},
+		],
+	},
 	ai: false,
 }
 
@@ -243,8 +263,14 @@ describe('MenuReviewStack cards', () => {
 		const card = await screen.findByRole('group', {
 			name: 'Consistent capitals',
 		})
-		expect(within(card).getByRole('radio', { name: 'Title Case' })).toBeTruthy()
-		expect(within(card).getByRole('radio', { name: 'UPPER CASE' })).toBeTruthy()
+		expect(
+			within(card).getByRole('radio', { name: 'Capitalize each word' }),
+		).toBeTruthy()
+		expect(
+			within(card).getByRole('radio', {
+				name: 'Capitalize the first word only',
+			}),
+		).toBeTruthy()
 		expect(within(card).getByText('Changed')).toBeTruthy()
 	})
 
@@ -293,16 +319,18 @@ describe('MenuReviewStack cards', () => {
 			card: { kind: 'check_price', optionId: 'set', input: '3.5' },
 		})
 
-		await user.click(screen.getByRole('radio', { name: 'UPPER CASE' }))
+		await user.click(
+			screen.getByRole('radio', { name: 'Capitalize the first word only' }),
+		)
 		await user.click(screen.getByRole('button', { name: 'Accept' }))
 		await waitFor(() => expect(calls).toHaveLength(4))
 		expect(calls[2]).toMatchObject({
 			intent: 'apply-card',
-			card: { kind: 'capitals', optionId: 'upper' },
+			card: { kind: 'capitals', optionId: 'sentence' },
 		})
 		expect(calls[3]).toEqual({
 			intent: 'set-card-setting',
-			setting: { key: 'capitalStyle', value: 'upper' },
+			setting: { key: 'capitalStyle', value: 'sentence' },
 		})
 	})
 
@@ -379,13 +407,13 @@ describe('MenuReviewStack cards', () => {
 	})
 
 	it('accepts several at once and reports each result', async () => {
-		const { calls } = mockServer([MERGE, CAPITALS, PRICE], (body) =>
+		const { calls } = mockServer([TYPO, CAPITALS, PRICE], (body) =>
 			body.intent === 'apply-cards'
 				? {
 						ok: true,
 						results: [
 							{
-								id: MERGE.id,
+								id: TYPO.id,
 								ok: true,
 								undo: { snapshotId: 'u1', touched: [], created: [], links: [] },
 							},
@@ -396,7 +424,7 @@ describe('MenuReviewStack cards', () => {
 		)
 		const user = userEvent.setup()
 		renderStack()
-		await screen.findByRole('group', { name: 'Merge duplicate dishes' })
+		await screen.findByRole('group', { name: 'Fix spelling' })
 		await user.click(screen.getByRole('button', { name: 'Select several' }))
 
 		const price = screen.getByRole('checkbox', { name: /Check this price/ })
@@ -407,7 +435,7 @@ describe('MenuReviewStack cards', () => {
 		await user.click(price)
 
 		await user.click(
-			screen.getByRole('checkbox', { name: /Merge duplicate dishes/ }),
+			screen.getByRole('checkbox', { name: /Fix spelling/ }),
 		)
 		await user.click(
 			screen.getByRole('checkbox', { name: /Consistent capitals/ }),
@@ -418,7 +446,7 @@ describe('MenuReviewStack cards', () => {
 		expect(calls[1]).toMatchObject({
 			intent: 'apply-cards',
 			cards: [
-				{ id: MERGE.id, optionId: 'keep-a' },
+				{ id: TYPO.id },
 				{ id: CAPITALS.id, optionId: 'title' },
 			],
 		})
@@ -452,5 +480,112 @@ describe('MenuReviewStack cards', () => {
 				{ id: CAPITALS.id, kind: 'capitals', reason: 'not_a_problem' },
 			],
 		})
+	})
+
+	it('keeps merges and new choices out of bulk Accept', async () => {
+		const MISSING: MenuCard = {
+			...TYPO,
+			kind: 'missing_choice',
+			id: 'missing_choice:m',
+			subject: 'Burger',
+			options: [
+				{ id: 'create', code: 'create', subject: 'Cheese' },
+				{ id: 'skip', code: 'keep' },
+			],
+			defaultOptionId: 'create',
+		}
+		const { calls } = mockServer([MERGE, MISSING, TYPO])
+		const user = userEvent.setup()
+		renderStack()
+		await screen.findByRole('group', { name: 'Merge duplicate dishes' })
+		await user.click(screen.getByRole('button', { name: 'Select several' }))
+
+		await user.click(screen.getByRole('checkbox', { name: /Merge duplicate/ }))
+		expect(
+			screen.getByRole('button', { name: 'Accept selected' }),
+		).toBeDisabled()
+		expect(screen.getAllByText('Accept one at a time')).toHaveLength(2)
+		expect(screen.getByRole('button', { name: 'Skip selected' })).toBeEnabled()
+		await user.click(screen.getByRole('checkbox', { name: /Merge duplicate/ }))
+
+		await user.click(screen.getByRole('checkbox', { name: /Add the missing/ }))
+		expect(
+			screen.getByRole('button', { name: 'Accept selected' }),
+		).toBeDisabled()
+		await user.click(screen.getByRole('checkbox', { name: /Add the missing/ }))
+
+		await user.click(screen.getByRole('checkbox', { name: /Fix spelling/ }))
+		expect(screen.getByRole('button', { name: 'Accept selected' })).toBeEnabled()
+		expect(calls.map((call) => call.intent)).toEqual(['generate'])
+	})
+
+	it('keeps what saved when a later bulk request fails', async () => {
+		const cards = Array.from({ length: 21 }, (_unused, index) => ({
+			...TYPO,
+			id: `typo:${index}`,
+			subject: `Dish ${index}`,
+			refs: [ref(`t${index}`)],
+		}))
+		let applyCalls = 0
+		const { calls } = mockServer(cards, (body) => {
+			if (body.intent !== 'apply-cards') return {}
+			applyCalls += 1
+			return applyCalls === 2
+				? { status: 500, body: { ok: false, error: 'failed' } }
+				: {}
+		})
+		const user = userEvent.setup()
+		renderStack()
+		await screen.findByRole('group', { name: 'Fix spelling' })
+		await user.click(screen.getByRole('button', { name: 'Select several' }))
+		await user.click(screen.getByRole('button', { name: 'Select all' }))
+		await user.click(screen.getByRole('button', { name: 'Accept selected' }))
+
+		await waitFor(() => expect(undo.calls).toHaveLength(1))
+		expect(undo.calls[0]!.message).toBe('20 changes saved')
+		expect(toast.error).toHaveBeenCalled()
+		const status = screen.getByRole('status')
+		expect(status.textContent).toContain('20 suggestions accepted')
+		expect(status.textContent).toContain('1 suggestion was not applied')
+		// The saved cards left the list; only the unsent one remains.
+		expect(screen.getAllByRole('checkbox')).toHaveLength(1)
+		expect(calls.filter((call) => call.intent === 'apply-cards')).toHaveLength(2)
+
+		await undo.calls[0]!.onUndo()
+		expect(calls.filter((call) => call.intent === 'undo-card')).toHaveLength(20)
+	})
+
+	it('moves focus when select mode starts and ends, and keeps one status element', async () => {
+		mockServer([TYPO, CAPITALS])
+		const user = userEvent.setup()
+		renderStack()
+		const card = await screen.findByRole('group', { name: 'Fix spelling' })
+		const status = screen.getByRole('status')
+		// The status region does not repeat the card title.
+		expect(status.textContent).toBe('')
+		await waitFor(() => expect(card).toHaveFocus())
+
+		await user.click(screen.getByRole('button', { name: 'Select several' }))
+		await waitFor(() =>
+			expect(
+				screen.getByRole('group', { name: 'Suggestions to select' }),
+			).toHaveFocus(),
+		)
+		await user.click(screen.getByRole('button', { name: 'Done selecting' }))
+		await waitFor(() =>
+			expect(screen.getByRole('group', { name: 'Fix spelling' })).toHaveFocus(),
+		)
+
+		await user.click(screen.getByRole('button', { name: 'Select several' }))
+		await user.click(screen.getByRole('button', { name: 'Select all' }))
+		await user.click(screen.getByRole('button', { name: 'Accept selected' }))
+		await screen.findByText('All reviewed. Nice work.')
+		expect(screen.getByRole('status')).toBe(status)
+		expect(status.textContent).toContain('2 suggestions accepted')
+		await waitFor(() =>
+			expect(
+				screen.getByRole('heading', { name: 'Review suggestions' }),
+			).toHaveFocus(),
+		)
 	})
 })

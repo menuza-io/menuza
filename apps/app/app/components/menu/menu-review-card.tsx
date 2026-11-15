@@ -127,17 +127,36 @@ export function cardNeedsInput(card: MenuCard, optionId?: string): boolean {
 	return Boolean(card.options?.find((option) => option.id === id)?.input)
 }
 
+/** Kinds that hide or merge records: never accepted without being seen. */
+const REVIEW_ONLY_KINDS: ReadonlySet<MenuCardKind> = new Set<MenuCardKind>([
+	'merge_duplicates',
+	'merge_categories',
+	'make_sizes',
+])
+/** Options that add whole new choices to the menu. */
+const REVIEW_ONLY_OPTIONS: ReadonlySet<string> = new Set(['create', 'add_group'])
+
+/**
+ * True when the card's starting fix changes the menu in a way the owner
+ * should look at first (merges, sizes, new choices), so it is left out of
+ * bulk Accept. Skip still works in bulk.
+ */
+export function cardNeedsOwnReview(card: MenuCard): boolean {
+	if (REVIEW_ONLY_KINDS.has(card.kind)) return true
+	const id = initialCardOptionId(card)
+	const code = card.options?.find((option) => option.id === id)?.code
+	return code !== undefined && REVIEW_ONLY_OPTIONS.has(code)
+}
+
 function optionLabel(_: I18n['_'], option: MenuCardOption): string {
 	const subject = option.subject
 	switch (option.code) {
 		case 'keep':
 			return subject ? _(t`Keep ${subject}`) : _(t`Keep this one`)
 		case 'title':
-			return _(t`Title Case`)
+			return _(t`Capitalize each word`)
 		case 'sentence':
-			return _(t`Sentence case`)
-		case 'upper':
-			return _(t`UPPER CASE`)
+			return _(t`Capitalize the first word only`)
 		case 'set_price':
 			return _(t`Set the price`)
 		case 'require':
@@ -387,7 +406,7 @@ export function CardSkipMenu({
 				</DropdownMenuItem>
 				{includeLater ? (
 					<DropdownMenuItem onClick={() => onChoose('later')}>
-						<Trans>Later</Trans>
+						<Trans context="review card skip option">Later</Trans>
 					</DropdownMenuItem>
 				) : null}
 			</DropdownMenuContent>
@@ -564,6 +583,11 @@ export function MenuReviewCardRow({
 }) {
 	const { _ } = useLingui()
 	const needsInput = cardNeedsInput(card)
+	const needsReview = cardNeedsOwnReview(card)
+	const defaultOption = card.options?.find(
+		(option) => option.id === initialCardOptionId(card),
+	)
+	const defaultLabel = defaultOption ? optionLabel(_, defaultOption) : null
 	return (
 		<ChoiceCard>
 			<Checkbox
@@ -573,9 +597,19 @@ export function MenuReviewCardRow({
 			<ChoiceCardContent>
 				<ChoiceCardTitle>{cardKindTitle(_, card.kind)}</ChoiceCardTitle>
 				<ChoiceCardDescription>{card.subject}</ChoiceCardDescription>
+				{defaultLabel ? (
+					<ChoiceCardDescription>
+						<Trans>Default: {defaultLabel}</Trans>
+					</ChoiceCardDescription>
+				) : null}
 				{needsInput ? (
 					<ChoiceCardDescription>
 						<Trans>Needs a value. Accept it on its own.</Trans>
+					</ChoiceCardDescription>
+				) : null}
+				{needsReview && !needsInput ? (
+					<ChoiceCardDescription>
+						<Trans>Accept one at a time</Trans>
 					</ChoiceCardDescription>
 				) : null}
 			</ChoiceCardContent>

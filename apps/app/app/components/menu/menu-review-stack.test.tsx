@@ -104,19 +104,24 @@ function renderStack(props: { translationLocales?: string[] } = {}) {
 	i18n.activate('en')
 	const onChanged = vi.fn()
 	const onOpenChange = vi.fn()
-	render(
+	const ui = (open: boolean) => (
 		<I18nProvider i18n={i18n}>
 			<MenuReviewStack
 				orgSlug="cafe"
-				open
+				open={open}
 				onOpenChange={onOpenChange}
 				translationLocales={props.translationLocales ?? ['ar']}
 				autoTranslate={false}
 				onChanged={onChanged}
 			/>
-		</I18nProvider>,
+		</I18nProvider>
 	)
-	return { onChanged, onOpenChange }
+	const { rerender } = render(ui(true))
+	return {
+		onChanged,
+		onOpenChange,
+		setOpen: (open: boolean) => rerender(ui(open)),
+	}
 }
 
 beforeEach(() => {
@@ -211,7 +216,8 @@ describe('MenuReviewStack', () => {
 		await user.click(await screen.findByRole('button', { name: 'Skip' }))
 		await user.click(screen.getByRole('button', { name: 'Done' }))
 		expect(onOpenChange).toHaveBeenCalledWith(false)
-		expect(onChanged).toHaveBeenCalledOnce()
+		// Once for the Undo, once more when the dialog closed with a change.
+		expect(onChanged).toHaveBeenCalledTimes(2)
 	})
 
 	it('asks before accepting all translations', async () => {
@@ -249,5 +255,38 @@ describe('MenuReviewStack', () => {
 				enabled: true,
 			}),
 		)
+	})
+
+	it('tells the page about an accept that finishes after the dialog closed', async () => {
+		const { fetchMock } = mockServer([TRANSLATION, STALE])
+		let release = () => {}
+		const gate = new Promise<void>((resolve) => (release = resolve))
+		vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+			if (String(init?.body).includes('"set-text"')) await gate
+			return fetchMock(url, init)
+		})
+		const user = userEvent.setup()
+		const { onChanged, setOpen } = renderStack()
+		await screen.findByRole('group', { name: 'Falafel' })
+		await user.click(screen.getByRole('button', { name: 'Accept' }))
+		// Esc closes the dialog while the save is still in flight.
+		setOpen(false)
+		expect(onChanged).not.toHaveBeenCalled()
+		release()
+		await waitFor(() => expect(onChanged).toHaveBeenCalledOnce())
+	})
+
+	it('refreshes the page after an Undo from the toast', async () => {
+		mockServer([TRANSLATION, STALE])
+		const user = userEvent.setup()
+		const { onChanged, setOpen } = renderStack()
+		await screen.findByRole('group', { name: 'Falafel' })
+		await user.click(screen.getByRole('button', { name: 'Accept' }))
+		await waitFor(() => expect(undo.calls).toHaveLength(1))
+		// The toast outlives the dialog.
+		setOpen(false)
+		expect(onChanged).not.toHaveBeenCalled()
+		await undo.calls[0]!.onUndo()
+		expect(onChanged).toHaveBeenCalledOnce()
 	})
 })

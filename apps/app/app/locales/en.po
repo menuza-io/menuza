@@ -219,7 +219,7 @@ msgid "{0, plural, one {# changed shift} other {# changed shifts}}"
 msgstr "{0, plural, one {# changed shift} other {# changed shifts}}"
 
 #. placeholder {0}: report.changed
-#: app/components/menu/menu-review-stack.tsx:982
+#: app/components/menu/menu-review-stack.tsx:1093
 msgid "{0, plural, one {# changed since it was suggested, so it was left out} other {# changed since they were suggested, so they were left out}}"
 msgstr "{0, plural, one {# changed since it was suggested, so it was left out} other {# changed since they were suggested, so they were left out}}"
 
@@ -236,7 +236,7 @@ msgid "{0, plural, one {# could not be placed in that week.} other {# could not 
 msgstr "{0, plural, one {# could not be placed in that week.} other {# could not be placed in that week.}}"
 
 #. placeholder {0}: report.refused
-#: app/components/menu/menu-review-stack.tsx:991
+#: app/components/menu/menu-review-stack.tsx:1102
 msgid "{0, plural, one {# couldn't be saved} other {# couldn't be saved}}"
 msgstr "{0, plural, one {# couldn't be saved} other {# couldn't be saved}}"
 
@@ -271,7 +271,7 @@ msgid "{0, plural, one {# dish or option is off the menu.} other {# dishes and o
 msgstr "{0, plural, one {# dish or option is off the menu.} other {# dishes and options are off the menu.}}"
 
 #. placeholder {0}: check.dismissedCount
-#: app/components/menu/menu-health-card.tsx:363
+#: app/components/menu/menu-health-card.tsx:405
 msgid "{0, plural, one {# dismissed} other {# dismissed}}"
 msgstr "{0, plural, one {# dismissed} other {# dismissed}}"
 
@@ -454,10 +454,8 @@ msgstr "{0, plural, one {# point} other {# points}}"
 msgid "{0, plural, one {# recipe in inventory uses it} other {# recipes in inventory use it}}"
 msgstr "{0, plural, one {# recipe in inventory uses it} other {# recipes in inventory use it}}"
 
-#. placeholder {0}: chosenCards.length
 #. placeholder {0}: selectedIds.length
 #: app/components/media-library/photo-studio-dialog.tsx:493
-#: app/components/menu/menu-review-stack.tsx:817
 msgid "{0, plural, one {# selected} other {# selected}}"
 msgstr "{0, plural, one {# selected} other {# selected}}"
 
@@ -506,12 +504,22 @@ msgid "{0, plural, one {# storage area was created for them.} other {# storage a
 msgstr "{0, plural, one {# storage area was created for them.} other {# storage areas were created for them.}}"
 
 #. placeholder {0}: report.accepted
-#: app/components/menu/menu-review-stack.tsx:973
+#: app/components/menu/menu-review-stack.tsx:1084
 msgid "{0, plural, one {# suggestion accepted} other {# suggestions accepted}}"
 msgstr "{0, plural, one {# suggestion accepted} other {# suggestions accepted}}"
 
+#. placeholder {0}: chosenCards.length
+#: app/components/menu/menu-review-stack.tsx:915
+msgid "{0, plural, one {# suggestion selected} other {# suggestions selected}}"
+msgstr "{0, plural, one {# suggestion selected} other {# suggestions selected}}"
+
+#. placeholder {0}: report.notApplied
+#: app/components/menu/menu-review-stack.tsx:1111
+msgid "{0, plural, one {# suggestion was not applied. Try again.} other {# suggestions were not applied. Try again.}}"
+msgstr "{0, plural, one {# suggestion was not applied. Try again.} other {# suggestions were not applied. Try again.}}"
+
 #. placeholder {0}: done.length
-#: app/components/menu/menu-review-stack.tsx:699
+#: app/components/menu/menu-review-stack.tsx:811
 msgid "{0, plural, one {# suggestion won't come back} other {# suggestions won't come back}}"
 msgstr "{0, plural, one {# suggestion won't come back} other {# suggestions won't come back}}"
 
@@ -528,7 +536,7 @@ msgid "{0, plural, one {# task} other {# tasks}}"
 msgstr "{0, plural, one {# task} other {# tasks}}"
 
 #. placeholder {0}: health.fixCount
-#: app/components/menu/menu-health-card.tsx:543
+#: app/components/menu/menu-health-card.tsx:617
 msgid "{0, plural, one {# thing to fix.} other {# things to fix.}}"
 msgstr "{0, plural, one {# thing to fix.} other {# things to fix.}}"
 
@@ -978,7 +986,7 @@ msgstr "{cap} per day"
 msgid "{cap} per seating"
 msgstr "{cap} per seating"
 
-#: app/components/menu/menu-review-stack.tsx:436
+#: app/components/menu/menu-review-stack.tsx:472
 msgid "{categoryName} is hidden from your menu"
 msgstr "{categoryName} is hidden from your menu"
 
@@ -1026,7 +1034,7 @@ msgstr "{count, plural, one {# answer to check} other {# answers to check}}"
 msgid "{count, plural, one {# category} other {# categories}}"
 msgstr "{count, plural, one {# category} other {# categories}}"
 
-#: app/components/menu/menu-review-stack.tsx:635
+#: app/components/menu/menu-review-stack.tsx:723
 msgid "{count, plural, one {# change saved} other {# changes saved}}"
 msgstr "{count, plural, one {# change saved} other {# changes saved}}"
 
@@ -1116,7 +1124,7 @@ msgstr "{count, plural, one {# table} other {# tables}}"
 msgid "{count, plural, one {# thing to sort out} other {# things to sort out}}"
 msgstr "{count, plural, one {# thing to sort out} other {# things to sort out}}"
 
-#: app/components/menu/menu-review-stack.tsx:357
+#: app/components/menu/menu-review-stack.tsx:393
 msgid "{count, plural, one {# translation saved} other {# translations saved}}"
 msgstr "{count, plural, one {# translation saved} other {# translations saved}}"
 
@@ -1332,7 +1340,7 @@ msgstr "{dayName}: {people} people scheduled, {open} open shifts. Open this day.
 msgid "{days, plural, one {Last count # day ago} other {Last count # days ago}}"
 msgstr "{days, plural, one {Last count # day ago} other {Last count # days ago}}"
 
-#: app/components/menu/menu-review-stack.tsx:1176
+#: app/components/menu/menu-review-stack.tsx:1295
 msgid "{days, plural, one {Unavailable for # day. Guests can't order it.} other {Unavailable for # days. Guests can't order it.}}"
 msgstr "{days, plural, one {Unavailable for # day. Guests can't order it.} other {Unavailable for # days. Guests can't order it.}}"
 
@@ -1377,13 +1385,21 @@ msgstr "{discount} on {count, plural, one {# item} other {# items}}"
 msgid "{dishes, plural, one {# dish costs more now.} other {# dishes cost more now.}}"
 msgstr "{dishes, plural, one {# dish costs more now.} other {# dishes cost more now.}}"
 
-#: app/components/menu/menu-review-stack.tsx:401
+#: app/components/menu/menu-review-stack.tsx:437
 msgid "{dishName} is available again"
 msgstr "{dishName} is available again"
 
-#: app/components/menu/menu-review-stack.tsx:400
+#: app/components/menu/menu-review-stack.tsx:436
 msgid "{dishName} is hidden from your menu"
 msgstr "{dishName} is hidden from your menu"
+
+#: app/components/menu/menu-health-card.tsx:605
+msgid "{dismissedTotal, plural, one {Nothing left to fix. # dismissed.} other {Nothing left to fix. # dismissed.}}"
+msgstr "{dismissedTotal, plural, one {Nothing left to fix. # dismissed.} other {Nothing left to fix. # dismissed.}}"
+
+#: app/components/menu/menu-health-card.tsx:329
+msgid "{dismissLabel}: {name}"
+msgstr "{dismissLabel}: {name}"
 
 #: app/components/staff/timesheets/review-queue.tsx:114
 #: app/components/staff/timesheets/timesheets-page.tsx:412
@@ -1435,7 +1451,7 @@ msgstr ""
 msgid "{estimate, plural, one {About # person will be emailed.} other {About # people will be emailed.}}"
 msgstr "{estimate, plural, one {About # person will be emailed.} other {About # people will be emailed.}}"
 
-#: app/components/menu/menu-review-stack.tsx:1157
+#: app/components/menu/menu-review-stack.tsx:1276
 msgid "{examples, plural, one {Same style as your other description} other {Same style as your other # descriptions}}"
 msgstr "{examples, plural, one {Same style as your other description} other {Same style as your other # descriptions}}"
 
@@ -1736,7 +1752,7 @@ msgstr ""
 msgid "{more, plural, one {and # more dish without a recipe} other {and # more dishes without a recipe}}"
 msgstr "{more, plural, one {and # more dish without a recipe} other {and # more dishes without a recipe}}"
 
-#: app/components/menu/menu-review-card.tsx:338
+#: app/components/menu/menu-review-card.tsx:357
 msgid "{more, plural, one {and # more} other {and # more}}"
 msgstr "{more, plural, one {and # more} other {and # more}}"
 
@@ -1757,7 +1773,7 @@ msgstr "{n, plural, one {# booking needs a payment review} other {# bookings nee
 msgid "{n, plural, one {# booking no longer has a table} other {# bookings no longer have a table}}"
 msgstr "{n, plural, one {# booking no longer has a table} other {# bookings no longer have a table}}"
 
-#: app/components/menu/menu-health-card.tsx:148
+#: app/components/menu/menu-health-card.tsx:153
 msgid "{n, plural, one {# category is empty} other {# categories are empty}}"
 msgstr "{n, plural, one {# category is empty} other {# categories are empty}}"
 
@@ -1769,43 +1785,43 @@ msgstr "{n, plural, one {# certificate is expiring or has expired} other {# cert
 msgid "{n, plural, one {# count is waiting for review} other {# counts are waiting for review}}"
 msgstr "{n, plural, one {# count is waiting for review} other {# counts are waiting for review}}"
 
-#: app/components/menu/menu-health-card.tsx:132
+#: app/components/menu/menu-health-card.tsx:137
 msgid "{n, plural, one {# dish doesn't list allergens or calories} other {# dishes don't list allergens or calories}}"
 msgstr "{n, plural, one {# dish doesn't list allergens or calories} other {# dishes don't list allergens or calories}}"
 
-#: app/components/menu/menu-health-card.tsx:140
+#: app/components/menu/menu-health-card.tsx:145
 msgid "{n, plural, one {# dish has been unavailable for more than a week} other {# dishes have been unavailable for more than a week}}"
 msgstr "{n, plural, one {# dish has been unavailable for more than a week} other {# dishes have been unavailable for more than a week}}"
 
-#: app/components/menu/menu-health-card.tsx:108
+#: app/components/menu/menu-health-card.tsx:113
 msgid "{n, plural, one {# dish has no description} other {# dishes have no description}}"
 msgstr "{n, plural, one {# dish has no description} other {# dishes have no description}}"
 
-#: app/components/menu/menu-health-card.tsx:98
+#: app/components/menu/menu-health-card.tsx:103
 msgid "{n, plural, one {# dish has no photo} other {# dishes have no photo}}"
 msgstr "{n, plural, one {# dish has no photo} other {# dishes have no photo}}"
 
-#: app/components/menu/menu-health-card.tsx:188
+#: app/components/menu/menu-health-card.tsx:193
 msgid "{n, plural, one {# dish is listed twice (same name and price)} other {# dishes are listed twice (same name and price)}}"
 msgstr "{n, plural, one {# dish is listed twice (same name and price)} other {# dishes are listed twice (same name and price)}}"
 
-#: app/components/menu/menu-health-card.tsx:122
+#: app/components/menu/menu-health-card.tsx:127
 msgid "{n, plural, one {# dish is missing a translated name or description} other {# dishes are missing a translated name or description}}"
 msgstr "{n, plural, one {# dish is missing a translated name or description} other {# dishes are missing a translated name or description}}"
 
-#: app/components/menu/menu-health-card.tsx:116
+#: app/components/menu/menu-health-card.tsx:121
 msgid "{n, plural, one {# dish is missing an Arabic name or description} other {# dishes are missing an Arabic name or description}}"
 msgstr "{n, plural, one {# dish is missing an Arabic name or description} other {# dishes are missing an Arabic name or description}}"
 
-#: app/components/menu/menu-health-card.tsx:88
+#: app/components/menu/menu-health-card.tsx:93
 msgid "{n, plural, one {# dish is priced at 0} other {# dishes are priced at 0}}"
 msgstr "{n, plural, one {# dish is priced at 0} other {# dishes are priced at 0}}"
 
-#: app/components/menu/menu-health-card.tsx:164
+#: app/components/menu/menu-health-card.tsx:169
 msgid "{n, plural, one {# dish name is over 60 characters} other {# dish names are over 60 characters}}"
 msgstr "{n, plural, one {# dish name is over 60 characters} other {# dish names are over 60 characters}}"
 
-#: app/components/menu/menu-health-card.tsx:156
+#: app/components/menu/menu-health-card.tsx:161
 msgid "{n, plural, one {# dish name is written in capitals} other {# dish names are written in capitals}}"
 msgstr "{n, plural, one {# dish name is written in capitals} other {# dish names are written in capitals}}"
 
@@ -1837,11 +1853,11 @@ msgstr "{n, plural, one {# new applicant} other {# new applicants}}"
 msgid "{n, plural, one {# onboarding task needs attention} other {# onboarding tasks need attention}}"
 msgstr "{n, plural, one {# onboarding task needs attention} other {# onboarding tasks need attention}}"
 
-#: app/components/menu/menu-health-card.tsx:172
+#: app/components/menu/menu-health-card.tsx:177
 msgid "{n, plural, one {# option group has no choices guests can see} other {# option groups have no choices guests can see}}"
 msgstr "{n, plural, one {# option group has no choices guests can see} other {# option groups have no choices guests can see}}"
 
-#: app/components/menu/menu-health-card.tsx:180
+#: app/components/menu/menu-health-card.tsx:185
 msgid "{n, plural, one {# option group requires more picks than it allows} other {# option groups require more picks than they allow}}"
 msgstr "{n, plural, one {# option group requires more picks than it allows} other {# option groups require more picks than they allow}}"
 
@@ -2116,15 +2132,15 @@ msgstr "{partySizeLabel}p"
 msgid "{pendingLocal, plural, one {# entry waiting on this device} other {# entries waiting on this device}}"
 msgstr "{pendingLocal, plural, one {# entry waiting on this device} other {# entries waiting on this device}}"
 
-#: app/components/menu/menu-review-stack.tsx:1070
+#: app/components/menu/menu-review-stack.tsx:1189
 msgid "{pendingTranslations, plural, one {Accept # translation} other {Accept all # translations}}"
 msgstr "{pendingTranslations, plural, one {Accept # translation} other {Accept all # translations}}"
 
-#: app/components/menu/menu-review-stack.tsx:1034
+#: app/components/menu/menu-review-stack.tsx:1153
 msgid "{pendingTranslations, plural, one {Save # translation without reviewing it? You can undo it right after.} other {Save # translations without reviewing each one? You can undo them right after.}}"
 msgstr "{pendingTranslations, plural, one {Save # translation without reviewing it? You can undo it right after.} other {Save # translations without reviewing each one? You can undo them right after.}}"
 
-#: app/components/menu/menu-review-stack.tsx:1053
+#: app/components/menu/menu-review-stack.tsx:1172
 msgid "{pendingTranslations, plural, one {Save # translation} other {Save # translations}}"
 msgstr "{pendingTranslations, plural, one {Save # translation} other {Save # translations}}"
 
@@ -2369,7 +2385,7 @@ msgstr "{shown, plural, one {Showing # entry} other {Showing # entries}}"
 msgid "{shown} and {extra} more"
 msgstr "{shown} and {extra} more"
 
-#: app/components/menu/menu-review-stack.tsx:1108
+#: app/components/menu/menu-review-stack.tsx:1227
 msgid "{shown} of {total} reviewed"
 msgstr "{shown} of {total} reviewed"
 
@@ -3275,7 +3291,7 @@ msgstr "A former team member"
 msgid "A former team member has this email or phone number. Rehire them from the team list instead."
 msgstr "A former team member has this email or phone number. Rehire them from the team list instead."
 
-#: app/components/menu/menu-health-card.tsx:213
+#: app/components/menu/menu-health-card.tsx:218
 msgid "A free dish is usually a mistake."
 msgstr "A free dish is usually a mistake."
 
@@ -3585,7 +3601,7 @@ msgstr "A set price needs specific items or categories, or a meal deal."
 msgid "A setup check needs attention."
 msgstr "A setup check needs attention."
 
-#: app/components/menu/menu-health-card.tsx:215
+#: app/components/menu/menu-health-card.tsx:220
 msgid "A short description helps guests order."
 msgstr "A short description helps guests order."
 
@@ -3743,8 +3759,8 @@ msgstr "About drop visibility"
 msgid "Accent color"
 msgstr ""
 
-#: app/components/menu/menu-review-card.tsx:548
-#: app/components/menu/menu-review-stack.tsx:1324
+#: app/components/menu/menu-review-card.tsx:567
+#: app/components/menu/menu-review-stack.tsx:1443
 #: app/components/orders/order-detail.tsx:620
 #: app/components/orders/waiting-lane.tsx:204
 #: app/components/privacy-banner.tsx:60
@@ -3760,6 +3776,10 @@ msgstr "Accept and start preparing"
 msgid "Accept guest reservations from your public website and apps."
 msgstr "Accept guest reservations from your public website and apps."
 
+#: app/components/menu/menu-review-card.tsx:612
+msgid "Accept one at a time"
+msgstr "Accept one at a time"
+
 #: app/components/settings/cards/organization/shop-card.tsx:129
 msgid "Accept online payments for your orders. Payments are taken through Checkout.com and paid out to you."
 msgstr "Accept online payments for your orders. Payments are taken through Checkout.com and paid out to you."
@@ -3768,11 +3788,11 @@ msgstr "Accept online payments for your orders. Payments are taken through Check
 msgid "Accept orders and show this location on the website."
 msgstr "Accept orders and show this location on the website."
 
-#: app/components/menu/menu-review-stack.tsx:892
+#: app/components/menu/menu-review-stack.tsx:1000
 msgid "Accept selected"
 msgstr "Accept selected"
 
-#: app/components/menu/menu-review-stack.tsx:768
+#: app/components/menu/menu-review-stack.tsx:878
 msgid "Accept what looks right and skip the rest. Nothing changes until you accept."
 msgstr "Accept what looks right and skip the rest. Nothing changes until you accept."
 
@@ -4009,7 +4029,7 @@ msgstr "Add {fraction}"
 msgid "Add {label}"
 msgstr "Add {label}"
 
-#: app/components/menu/menu-review-card.tsx:150
+#: app/components/menu/menu-review-card.tsx:169
 msgid "Add {subject}"
 msgstr "Add {subject}"
 
@@ -4080,7 +4100,7 @@ msgstr "Add a dining area first"
 msgid "Add a dining area first, then add its tables."
 msgstr "Add a dining area first, then add its tables."
 
-#: app/components/menu/menu-health-card.tsx:513
+#: app/components/menu/menu-health-card.tsx:575
 msgid "Add a dish"
 msgstr "Add a dish"
 
@@ -4921,7 +4941,7 @@ msgstr "Add task"
 msgid "Add the bonuses up"
 msgstr "Add the bonuses up"
 
-#: app/components/menu/menu-review-card.tsx:150
+#: app/components/menu/menu-review-card.tsx:169
 msgid "Add the choice"
 msgstr "Add the choice"
 
@@ -5061,7 +5081,7 @@ msgstr "Add your business details to see what the assistant is told."
 msgid "Add your dishes, drinks, and culinary creations to build your restaurant menu."
 msgstr "Add your dishes, drinks, and culinary creations to build your restaurant menu."
 
-#: app/components/menu/menu-health-card.tsx:502
+#: app/components/menu/menu-health-card.tsx:564
 msgid "Add your first dishes to see how complete your menu is."
 msgstr "Add your first dishes to see how complete your menu is."
 
@@ -5316,7 +5336,7 @@ msgstr "After the call"
 msgid "After the replays, the call follows the \"No choice\" connection, or hangs up if it isn't connected."
 msgstr "After the replays, the call follows the \"No choice\" connection, or hangs up if it isn't connected."
 
-#: app/components/menu/menu-review-card.tsx:290
+#: app/components/menu/menu-review-card.tsx:309
 msgid "After you accept"
 msgstr "After you accept"
 
@@ -5535,7 +5555,7 @@ msgstr "All day"
 msgid "All days"
 msgstr "All days"
 
-#: app/components/menu/menu-health-card.tsx:674
+#: app/components/menu/menu-health-card.tsx:754
 msgid "All fixed. Nothing left in this list."
 msgstr "All fixed. Nothing left in this list."
 
@@ -5622,7 +5642,7 @@ msgstr ""
 msgid "All reservations, guestbook, setup & payments"
 msgstr "All reservations, guestbook, setup & payments"
 
-#: app/components/menu/menu-review-stack.tsx:954
+#: app/components/menu/menu-review-stack.tsx:1062
 msgid "All reviewed. Nice work."
 msgstr "All reviewed. Nice work."
 
@@ -5784,7 +5804,7 @@ msgstr "Allow it to be pushed together with other tables."
 msgid "Allow microphone access"
 msgstr "Allow microphone access"
 
-#: app/components/menu/menu-review-card.tsx:154
+#: app/components/menu/menu-review-card.tsx:173
 msgid "Allow only one"
 msgstr "Allow only one"
 
@@ -6132,7 +6152,7 @@ msgstr "another position"
 msgid "Another refund for this order is still being processed. Wait for it to finish."
 msgstr "Another refund for this order is still being processed. Wait for it to finish."
 
-#: app/components/menu/menu-review-card.tsx:158
+#: app/components/menu/menu-review-card.tsx:177
 msgid "Another way"
 msgstr "Another way"
 
@@ -8566,7 +8586,7 @@ msgstr "Can't text that number"
 #: app/components/menu/drop-wizard/drop-drawers.tsx:930
 #: app/components/menu/menu-duplicate-dialog.tsx:127
 #: app/components/menu/menu-form-header.tsx:80
-#: app/components/menu/menu-review-stack.tsx:1046
+#: app/components/menu/menu-review-stack.tsx:1165
 #: app/components/menu/modifier-form.tsx:2057
 #: app/components/menu/quick-modifier-group-sheet.tsx:434
 #: app/components/my-schedule/availability-sheet.tsx:200
@@ -8917,7 +8937,15 @@ msgstr "Cap on the discount, for example 20.00."
 #~ msgid "Capacity"
 #~ msgstr "Capacity"
 
-#: app/components/menu/menu-health-card.tsx:220
+#: app/components/menu/menu-review-card.tsx:157
+msgid "Capitalize each word"
+msgstr "Capitalize each word"
+
+#: app/components/menu/menu-review-card.tsx:159
+msgid "Capitalize the first word only"
+msgstr "Capitalize the first word only"
+
+#: app/components/menu/menu-health-card.tsx:225
 msgid "Capitals read like shouting. Use normal case."
 msgstr "Capitals read like shouting. Use normal case."
 
@@ -9242,11 +9270,11 @@ msgstr "Change the sales source"
 msgid "Change time or details"
 msgstr "Change time or details"
 
-#: app/components/menu/menu-review-stack.tsx:316
-#: app/components/menu/menu-review-stack.tsx:363
-#: app/components/menu/menu-review-stack.tsx:403
-#: app/components/menu/menu-review-stack.tsx:438
-#: app/components/menu/menu-review-stack.tsx:528
+#: app/components/menu/menu-review-stack.tsx:352
+#: app/components/menu/menu-review-stack.tsx:399
+#: app/components/menu/menu-review-stack.tsx:439
+#: app/components/menu/menu-review-stack.tsx:474
+#: app/components/menu/menu-review-stack.tsx:564
 msgid "Change undone"
 msgstr "Change undone"
 
@@ -9301,7 +9329,7 @@ msgstr "Changes reach the tablet the next time it checks in."
 msgid "Changes to this note will show up here as your team works on it."
 msgstr "Changes to this note will show up here as your team works on it."
 
-#: app/components/menu/menu-review-stack.tsx:641
+#: app/components/menu/menu-review-stack.tsx:729
 msgid "Changes undone"
 msgstr "Changes undone"
 
@@ -9723,7 +9751,7 @@ msgstr "Choose a discount to print."
 msgid "Choose a file"
 msgstr "Choose a file"
 
-#: app/components/menu/menu-review-card.tsx:504
+#: app/components/menu/menu-review-card.tsx:523
 msgid "Choose a fix"
 msgstr "Choose a fix"
 
@@ -10298,7 +10326,7 @@ msgstr "Cleaning"
 #: app/components/customers/people-list-screen.tsx:290
 #: app/components/locations/delivery-zone-map.tsx:392
 #: app/components/menu/menu-bulk-bar.tsx:50
-#: app/components/menu/menu-review-stack.tsx:836
+#: app/components/menu/menu-review-stack.tsx:934
 #: app/components/reservations/conflict-panel.tsx:376
 #: app/components/reservations/detail-sheet.tsx:1063
 #: app/components/staff/schedule/schedule-page.tsx:566
@@ -11046,7 +11074,7 @@ msgstr "Configure your new restaurant location details, operating hours, and del
 msgid "Confirm"
 msgstr ""
 
-#: app/components/menu/menu-review-stack.tsx:1030
+#: app/components/menu/menu-review-stack.tsx:1149
 msgid "Confirm accepting all translations"
 msgstr "Confirm accepting all translations"
 
@@ -12029,7 +12057,7 @@ msgstr "Could not update the table block."
 msgid "Could not update this call. Try again."
 msgstr "Could not update this call. Try again."
 
-#: app/components/menu/menu-health-card.tsx:276
+#: app/components/menu/menu-health-card.tsx:295
 msgid "Could not update this check. Try again."
 msgstr "Could not update this check. Try again."
 
@@ -12066,7 +12094,7 @@ msgstr "Couldn't load more voices. Try again."
 msgid "Couldn't load requests"
 msgstr "Couldn't load requests"
 
-#: app/components/menu/menu-review-stack.tsx:800
+#: app/components/menu/menu-review-stack.tsx:898
 msgid "Couldn't load suggestions."
 msgstr "Couldn't load suggestions."
 
@@ -12102,12 +12130,12 @@ msgstr "Couldn't open {routeTitle}"
 msgid "Couldn't reach call history. Check your connection and try again."
 msgstr "Couldn't reach call history. Check your connection and try again."
 
-#: app/components/menu/menu-review-stack.tsx:271
-#: app/components/menu/menu-review-stack.tsx:468
+#: app/components/menu/menu-review-stack.tsx:307
+#: app/components/menu/menu-review-stack.tsx:504
 msgid "Couldn't save that change. Try again."
 msgstr "Couldn't save that change. Try again."
 
-#: app/components/menu/menu-review-stack.tsx:741
+#: app/components/menu/menu-review-stack.tsx:848
 msgid "Couldn't save that setting. Try again."
 msgstr "Couldn't save that setting. Try again."
 
@@ -12119,7 +12147,7 @@ msgstr "Couldn't send that key press. Try again."
 msgid "Couldn't start your microphone. Check it and try again."
 msgstr "Couldn't start your microphone. Check it and try again."
 
-#: app/components/menu/menu-review-stack.tsx:259
+#: app/components/menu/menu-review-stack.tsx:295
 msgid "Couldn't undo. Reload the page and try again."
 msgstr "Couldn't undo. Reload the page and try again."
 
@@ -12372,7 +12400,7 @@ msgstr "Cream"
 msgid "Create"
 msgstr ""
 
-#: app/components/menu/menu-review-card.tsx:148
+#: app/components/menu/menu-review-card.tsx:167
 msgid "Create {subject}"
 msgstr "Create {subject}"
 
@@ -12427,7 +12455,7 @@ msgstr "Create a modifier group to start offering custom choices."
 msgid "Create a new API key to connect your AI assistants to {orgName} data."
 msgstr ""
 
-#: app/components/menu/menu-review-card.tsx:148
+#: app/components/menu/menu-review-card.tsx:167
 msgid "Create a new choice"
 msgstr "Create a new choice"
 
@@ -13565,6 +13593,10 @@ msgstr "Default party size"
 msgid "Default voice"
 msgstr "Default voice"
 
+#: app/components/menu/menu-review-card.tsx:602
+msgid "Default: {defaultLabel}"
+msgstr "Default: {defaultLabel}"
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:662
 msgid "Default: {defaultLanguage}. The first language you select is the default; callers can switch to the others."
 msgstr "Default: {defaultLanguage}. The first language you select is the default; callers can switch to the others."
@@ -14197,7 +14229,7 @@ msgstr "Description (guest-facing)"
 msgid "Description (Guest-Facing)"
 msgstr "Description (Guest-Facing)"
 
-#: app/components/menu/menu-review-stack.tsx:314
+#: app/components/menu/menu-review-stack.tsx:350
 msgid "Description saved for {dishName}"
 msgstr "Description saved for {dishName}"
 
@@ -14624,11 +14656,11 @@ msgstr "Discounts"
 msgid "Discounts, coupon codes and how often they were used. Only applies when Discounts is turned on for your organization."
 msgstr "Discounts, coupon codes and how often they were used. Only applies when Discounts is turned on for your organization."
 
-#: app/components/menu/menu-health-card.tsx:205
+#: app/components/menu/menu-health-card.tsx:210
 msgid "Dish names in capitals"
 msgstr "Dish names in capitals"
 
-#: app/components/menu/menu-health-card.tsx:206
+#: app/components/menu/menu-health-card.tsx:211
 msgid "Dish names that are too long"
 msgstr "Dish names that are too long"
 
@@ -14652,15 +14684,15 @@ msgstr "Dishes above this percentage are highlighted in Recipes & menu cost."
 msgid "Dishes and beverages in this category."
 msgstr "Dishes and beverages in this category."
 
-#: app/components/menu/menu-health-card.tsx:209
+#: app/components/menu/menu-health-card.tsx:214
 msgid "Dishes listed twice"
 msgstr "Dishes listed twice"
 
-#: app/components/menu/menu-health-card.tsx:201
+#: app/components/menu/menu-health-card.tsx:206
 msgid "Dishes missing a translation"
 msgstr "Dishes missing a translation"
 
-#: app/components/menu/menu-health-card.tsx:198
+#: app/components/menu/menu-health-card.tsx:203
 msgid "Dishes priced at 0"
 msgstr "Dishes priced at 0"
 
@@ -14668,15 +14700,15 @@ msgstr "Dishes priced at 0"
 msgid "Dishes that sell without a recipe will show up here, best sellers first."
 msgstr "Dishes that sell without a recipe will show up here, best sellers first."
 
-#: app/components/menu/menu-health-card.tsx:203
+#: app/components/menu/menu-health-card.tsx:208
 msgid "Dishes unavailable for a week"
 msgstr "Dishes unavailable for a week"
 
-#: app/components/menu/menu-health-card.tsx:200
+#: app/components/menu/menu-health-card.tsx:205
 msgid "Dishes with no description"
 msgstr "Dishes with no description"
 
-#: app/components/menu/menu-health-card.tsx:199
+#: app/components/menu/menu-health-card.tsx:204
 msgid "Dishes with no photo"
 msgstr "Dishes with no photo"
 
@@ -14684,14 +14716,14 @@ msgstr "Dishes with no photo"
 msgid "Dishes without a recipe"
 msgstr "Dishes without a recipe"
 
-#: app/components/menu/menu-health-card.tsx:202
+#: app/components/menu/menu-health-card.tsx:207
 msgid "Dishes without allergens or calories"
 msgstr "Dishes without allergens or calories"
 
 #: app/components/feature-updates.tsx:145
 #: app/components/feature-updates.tsx:225
 #: app/components/inventory/setup-checklist.tsx:70
-#: app/components/menu/menu-health-card.tsx:304
+#: app/components/menu/menu-health-card.tsx:326
 #: app/components/reservations/settings/setup-checklist.tsx:94
 #: app/components/reservations/settings/setup-list-chrome.tsx:117
 #: app/components/reservations/waitlist/waitlist-screen.tsx:156
@@ -14810,7 +14842,7 @@ msgstr "Don't take phone orders for"
 #: app/components/inventory/send-order-dialog.tsx:198
 #: app/components/inventory/setup-checklist.tsx:149
 #: app/components/kiosk/kiosk-screens.tsx:720
-#: app/components/menu/menu-review-stack.tsx:964
+#: app/components/menu/menu-review-stack.tsx:1072
 #: app/components/note/share-note-button.tsx:365
 #: app/components/phone-agent/call-request-card.tsx:41
 #: app/components/pos/terminals-manager.tsx:1777
@@ -14832,7 +14864,7 @@ msgstr ""
 msgid "Done {when}"
 msgstr "Done {when}"
 
-#: app/components/menu/menu-review-stack.tsx:849
+#: app/components/menu/menu-review-stack.tsx:947
 msgid "Done selecting"
 msgstr "Done selecting"
 
@@ -15972,7 +16004,7 @@ msgstr "Emergency contact phone"
 msgid "Employee"
 msgstr "Employee"
 
-#: app/components/menu/menu-health-card.tsx:204
+#: app/components/menu/menu-health-card.tsx:209
 msgid "Empty categories"
 msgstr "Empty categories"
 
@@ -16977,7 +17009,7 @@ msgstr "Every day: <0>{usual}</0>"
 msgid "Every delivery here is marked as paid."
 msgstr "Every delivery here is marked as paid."
 
-#: app/components/menu/menu-health-card.tsx:538
+#: app/components/menu/menu-health-card.tsx:611
 msgid "Every dish has a photo, a description and a price. Nice work."
 msgstr "Every dish has a photo, a description and a price. Nice work."
 
@@ -17151,7 +17183,7 @@ msgstr ""
 msgid "Example shift"
 msgstr "Example shift"
 
-#: app/components/menu/menu-health-card.tsx:60
+#: app/components/menu/menu-health-card.tsx:62
 msgid "Excellent"
 msgstr "Excellent"
 
@@ -18061,7 +18093,7 @@ msgstr "Finish onboarding"
 #~ msgid "Finish the required fields to see a price."
 #~ msgstr "Finish the required fields to see a price."
 
-#: app/components/menu/menu-health-card.tsx:548
+#: app/components/menu/menu-health-card.tsx:622
 msgid "Finish these to help guests choose and order."
 msgstr "Finish these to help guests choose and order."
 
@@ -18952,7 +18984,7 @@ msgstr "Gold"
 msgid "Golden light, rich textures"
 msgstr "Golden light, rich textures"
 
-#: app/components/menu/menu-health-card.tsx:66
+#: app/components/menu/menu-health-card.tsx:68
 msgid "Good"
 msgstr "Good"
 
@@ -19001,9 +19033,13 @@ msgstr "Google Tag Manager ID"
 msgid "Grabbed {grabbedGuestName} ({grabbedPartySize}) at {grabbedTime}. Use arrow keys to change time or table, Shift+Left/Right to resize duration, Enter to drop, Escape to cancel."
 msgstr "Grabbed {grabbedGuestName} ({grabbedPartySize}) at {grabbedTime}. Use arrow keys to change time or table, Shift+Left/Right to resize duration, Enter to drop, Escape to cancel."
 
+#: app/components/menu/menu-health-card.tsx:267
+msgid "Grade"
+msgstr "Grade"
+
 #: app/components/menu/menu-health-card.tsx:261
-msgid "Grade {grade}"
-msgstr "Grade {grade}"
+#~ msgid "Grade {grade}"
+#~ msgstr "Grade {grade}"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:136
 msgid "Graph data is required"
@@ -19278,7 +19314,7 @@ msgstr "Guests"
 #~ msgid "Guests appear here after their first booking or walk-in."
 #~ msgstr "Guests appear here after their first booking or walk-in."
 
-#: app/components/menu/menu-health-card.tsx:222
+#: app/components/menu/menu-health-card.tsx:227
 msgid "Guests are asked to choose and have nothing to pick."
 msgstr "Guests are asked to choose and have nothing to pick."
 
@@ -19307,7 +19343,7 @@ msgstr "Guests can choose this area when they book."
 msgid "Guests can join online"
 msgstr "Guests can join online"
 
-#: app/components/menu/menu-health-card.tsx:223
+#: app/components/menu/menu-health-card.tsx:228
 msgid "Guests can never finish ordering this dish."
 msgstr "Guests can never finish ordering this dish."
 
@@ -19367,7 +19403,7 @@ msgstr "Guests leave a card to book. Nothing is charged up front."
 msgid "Guests leave a card. Nothing is charged unless you charge a fee."
 msgstr "Guests leave a card. Nothing is charged unless you charge a fee."
 
-#: app/components/menu/menu-health-card.tsx:217
+#: app/components/menu/menu-health-card.tsx:222
 msgid "Guests look for allergens and calories."
 msgstr "Guests look for allergens and calories."
 
@@ -19433,7 +19469,7 @@ msgstr "Guests prepay {amount} per guest to book."
 msgid "Guests read these terms and accept them before they book. Write them in each language your website offers."
 msgstr "Guests read these terms and accept them before they book. Write them in each language your website offers."
 
-#: app/components/menu/menu-health-card.tsx:216
+#: app/components/menu/menu-health-card.tsx:221
 msgid "Guests reading another language see a gap."
 msgstr "Guests reading another language see a gap."
 
@@ -19441,11 +19477,11 @@ msgstr "Guests reading another language see a gap."
 msgid "Guests scan the code on their table to order rounds and pay once when they leave."
 msgstr "Guests scan the code on their table to order rounds and pay once when they leave."
 
-#: app/components/menu/menu-health-card.tsx:219
+#: app/components/menu/menu-health-card.tsx:224
 msgid "Guests see a heading with nothing under it."
 msgstr "Guests see a heading with nothing under it."
 
-#: app/components/menu/menu-health-card.tsx:224
+#: app/components/menu/menu-health-card.tsx:229
 msgid "Guests see the same dish twice."
 msgstr "Guests see the same dish twice."
 
@@ -19668,7 +19704,7 @@ msgstr "Hidden from public discovery. Ideal for exclusive drops, secret menus, a
 msgid "Hide"
 msgstr "Hide"
 
-#: app/components/menu/menu-review-stack.tsx:1320
+#: app/components/menu/menu-review-stack.tsx:1439
 msgid "Hide category"
 msgstr "Hide category"
 
@@ -19680,7 +19716,7 @@ msgstr "Hide changes"
 msgid "Hide details"
 msgstr "Hide details"
 
-#: app/components/menu/menu-review-stack.tsx:1309
+#: app/components/menu/menu-review-stack.tsx:1428
 msgid "Hide from menu"
 msgstr "Hide from menu"
 
@@ -19688,7 +19724,7 @@ msgstr "Hide from menu"
 msgid "Hide from search engines"
 msgstr ""
 
-#: app/components/menu/menu-health-card.tsx:218
+#: app/components/menu/menu-health-card.tsx:223
 msgid "Hide it or bring it back."
 msgstr "Hide it or bring it back."
 
@@ -19704,7 +19740,7 @@ msgstr "Hide replies ({replyCount})"
 msgid "Hide the tabs rung up on a Station till"
 msgstr "Hide the tabs rung up on a Station till"
 
-#: app/components/menu/menu-review-stack.tsx:1221
+#: app/components/menu/menu-review-stack.tsx:1340
 msgid "Hide this empty category from your menu"
 msgstr "Hide this empty category from your menu"
 
@@ -20190,7 +20226,7 @@ msgstr "I cannot work it"
 msgid "I checked the online payment for this tab in the payment dashboard and will refund or keep it."
 msgstr "I checked the online payment for this tab in the payment dashboard and will refund or keep it."
 
-#: app/components/menu/menu-review-card.tsx:386
+#: app/components/menu/menu-review-card.tsx:405
 msgid "I fixed it myself"
 msgstr "I fixed it myself"
 
@@ -20546,7 +20582,7 @@ msgstr "Including locations you add later."
 msgid "Including locations you add later. Applicants choose where."
 msgstr "Including locations you add later. Applicants choose where."
 
-#: app/components/menu/menu-health-card.tsx:77
+#: app/components/menu/menu-health-card.tsx:81
 msgid "Incomplete"
 msgstr "Incomplete"
 
@@ -21313,7 +21349,7 @@ msgstr ""
 msgid "Keep"
 msgstr "Keep"
 
-#: app/components/menu/menu-review-card.tsx:134
+#: app/components/menu/menu-review-card.tsx:155
 msgid "Keep {subject}"
 msgstr "Keep {subject}"
 
@@ -21467,7 +21503,7 @@ msgstr "Keep the VAT number under 40 characters."
 msgid "Keep their details on file"
 msgstr "Keep their details on file"
 
-#: app/components/menu/menu-review-card.tsx:134
+#: app/components/menu/menu-review-card.tsx:155
 msgid "Keep this one"
 msgstr "Keep this one"
 
@@ -21942,8 +21978,12 @@ msgstr "Late-cancel fee"
 msgid "Late-cancel fee ({currency})"
 msgstr "Late-cancel fee ({currency})"
 
-#: app/components/menu/menu-review-card.tsx:390
 #: app/components/staff/labor/labor-page.tsx:309
+msgid "Later"
+msgstr "Later"
+
+#: app/components/menu/menu-review-card.tsx:409
+msgctxt "review card skip option"
 msgid "Later"
 msgstr "Later"
 
@@ -22200,7 +22240,7 @@ msgstr "Let guests choose"
 msgid "Let guests pay the tab from their phone"
 msgstr "Let guests pay the tab from their phone"
 
-#: app/components/menu/menu-review-card.tsx:152
+#: app/components/menu/menu-review-card.tsx:171
 msgid "Let guests pick several"
 msgstr "Let guests pick several"
 
@@ -23077,7 +23117,7 @@ msgstr ""
 msgid "Logout"
 msgstr ""
 
-#: app/components/menu/menu-health-card.tsx:221
+#: app/components/menu/menu-health-card.tsx:226
 msgid "Long names get cut off on small screens."
 msgstr "Long names get cut off on small screens."
 
@@ -23238,7 +23278,7 @@ msgstr "m"
 msgid "m@example.com"
 msgstr ""
 
-#: app/components/menu/menu-review-stack.tsx:1149
+#: app/components/menu/menu-review-stack.tsx:1268
 msgid "Machine translation from {language}. Check it reads right."
 msgstr "Machine translation from {language}. Check it reads right."
 
@@ -23315,15 +23355,15 @@ msgstr "Make a new QR code for this table?"
 msgid "Make a test call"
 msgstr "Make a test call"
 
-#: app/components/menu/menu-review-stack.tsx:1315
+#: app/components/menu/menu-review-stack.tsx:1434
 msgid "Make available"
 msgstr "Make available"
 
-#: app/components/menu/menu-review-card.tsx:156
+#: app/components/menu/menu-review-card.tsx:175
 msgid "Make it a single choice"
 msgstr "Make it a single choice"
 
-#: app/components/menu/menu-review-stack.tsx:1227
+#: app/components/menu/menu-review-stack.tsx:1346
 msgid "Make it available again, or hide it from your menu"
 msgstr "Make it available again, or hide it from your menu"
 
@@ -23331,7 +23371,7 @@ msgstr "Make it available again, or hide it from your menu"
 msgid "Make it more detailed"
 msgstr ""
 
-#: app/components/menu/menu-review-card.tsx:144
+#: app/components/menu/menu-review-card.tsx:163
 msgid "Make it required"
 msgstr "Make it required"
 
@@ -24055,12 +24095,12 @@ msgstr "Menu actions"
 msgid "Menu and drop orders placed by this customer."
 msgstr "Menu and drop orders placed by this customer."
 
-#: app/components/menu/menu-health-card.tsx:499
-#: app/components/menu/menu-health-card.tsx:534
+#: app/components/menu/menu-health-card.tsx:561
+#: app/components/menu/menu-health-card.tsx:600
 msgid "Menu health"
 msgstr "Menu health"
 
-#: app/components/menu/menu-health-card.tsx:564
+#: app/components/menu/menu-health-card.tsx:643
 msgid "Menu health score"
 msgstr "Menu health score"
 
@@ -25047,7 +25087,7 @@ msgstr "Needs a look"
 msgid "Needs a published schedule. Managers choose how they hear about it in their notification settings."
 msgstr "Needs a published schedule. Managers choose how they hear about it in their notification settings."
 
-#: app/components/menu/menu-review-card.tsx:578
+#: app/components/menu/menu-review-card.tsx:607
 msgid "Needs a value. Accept it on its own."
 msgstr "Needs a value. Accept it on its own."
 
@@ -25106,7 +25146,7 @@ msgstr "Needs specific items or categories. Choose them under Applies to."
 msgid "Needs two counts"
 msgstr "Needs two counts"
 
-#: app/components/menu/menu-health-card.tsx:72
+#: app/components/menu/menu-health-card.tsx:75
 msgid "Needs work"
 msgstr "Needs work"
 
@@ -25480,7 +25520,7 @@ msgstr "New tag"
 msgid "New template"
 msgstr "New template"
 
-#: app/components/menu/menu-review-card.tsx:413
+#: app/components/menu/menu-review-card.tsx:432
 msgid "New text"
 msgstr "New text"
 
@@ -25928,7 +25968,7 @@ msgstr ""
 msgid "No delivery zones configured"
 msgstr "No delivery zones configured"
 
-#: app/components/menu/menu-health-card.tsx:229
+#: app/components/menu/menu-health-card.tsx:234
 msgid "No description on purpose"
 msgstr "No description on purpose"
 
@@ -25967,19 +26007,19 @@ msgstr "No discounts yet"
 msgid "No discrete action step dispatches recorded for this run."
 msgstr ""
 
-#: app/components/menu/menu-health-card.tsx:106
+#: app/components/menu/menu-health-card.tsx:111
 msgid "No dish has a description"
 msgstr "No dish has a description"
 
-#: app/components/menu/menu-health-card.tsx:96
+#: app/components/menu/menu-health-card.tsx:101
 msgid "No dish has a photo"
 msgstr "No dish has a photo"
 
-#: app/components/menu/menu-health-card.tsx:130
+#: app/components/menu/menu-health-card.tsx:135
 msgid "No dish lists allergens or calories"
 msgstr "No dish lists allergens or calories"
 
-#: app/components/menu/menu-review-stack.tsx:1168
+#: app/components/menu/menu-review-stack.tsx:1287
 msgid "No dishes in this category. Hiding it keeps it off your menu; you can show it again from Categories."
 msgstr "No dishes in this category. Hiding it keeps it off your menu; you can show it again from Categories."
 
@@ -26612,7 +26652,7 @@ msgstr "No payroll ID"
 msgid "No phone can add to it or pay it any more, and scanning the table code is refused too. Close or void it at the counter to finish."
 msgstr "No phone can add to it or pay it any more, and scanning the table code is refused too. Close or void it at the counter to finish."
 
-#: app/components/menu/menu-health-card.tsx:228
+#: app/components/menu/menu-health-card.tsx:233
 msgid "No photo on purpose"
 msgstr "No photo on purpose"
 
@@ -27307,7 +27347,7 @@ msgstr "None left"
 msgid "Normal"
 msgstr "Normal"
 
-#: app/components/menu/menu-review-card.tsx:383
+#: app/components/menu/menu-review-card.tsx:402
 msgid "Not a problem"
 msgstr "Not a problem"
 
@@ -27689,7 +27729,7 @@ msgstr "Notes, navigation, and your site — just ask."
 msgid "Notes: {noteCount}"
 msgstr "Notes: {noteCount}"
 
-#: app/components/menu/menu-review-card.tsx:270
+#: app/components/menu/menu-review-card.tsx:289
 msgid "Nothing"
 msgstr "Nothing"
 
@@ -27790,7 +27830,7 @@ msgstr "Nothing is waiting"
 msgid "Nothing is waiting for review."
 msgstr "Nothing is waiting for review."
 
-#: app/components/menu/menu-health-card.tsx:582
+#: app/components/menu/menu-health-card.tsx:661
 msgid "Nothing left to fix"
 msgstr "Nothing left to fix"
 
@@ -27863,7 +27903,7 @@ msgstr "Nothing to ship yet"
 msgid "Nothing to show here"
 msgstr "Nothing to show here"
 
-#: app/components/menu/menu-review-stack.tsx:956
+#: app/components/menu/menu-review-stack.tsx:1064
 msgid "Nothing to suggest right now."
 msgstr "Nothing to suggest right now."
 
@@ -27981,7 +28021,7 @@ msgstr "Notify subscribed guests before open or close."
 msgid "now"
 msgstr "now"
 
-#: app/components/menu/menu-review-card.tsx:283
+#: app/components/menu/menu-review-card.tsx:302
 msgid "Now"
 msgstr "Now"
 
@@ -29129,11 +29169,11 @@ msgstr "Option actions"
 msgid "Option Display Name (Guest-Facing)"
 msgstr "Option Display Name (Guest-Facing)"
 
-#: app/components/menu/menu-health-card.tsx:208
+#: app/components/menu/menu-health-card.tsx:213
 msgid "Option groups with an impossible minimum"
 msgstr "Option groups with an impossible minimum"
 
-#: app/components/menu/menu-health-card.tsx:207
+#: app/components/menu/menu-health-card.tsx:212
 msgid "Option groups with no choices"
 msgstr "Option groups with no choices"
 
@@ -31095,7 +31135,7 @@ msgstr "Photos"
 msgid "Photos and videos"
 msgstr ""
 
-#: app/components/menu/menu-health-card.tsx:214
+#: app/components/menu/menu-health-card.tsx:219
 msgid "Photos help guests choose."
 msgstr "Photos help guests choose."
 
@@ -31951,7 +31991,7 @@ msgstr "Preparing"
 msgid "Preparing backup…"
 msgstr "Preparing backup…"
 
-#: app/components/menu/menu-review-stack.tsx:940
+#: app/components/menu/menu-review-stack.tsx:1048
 msgid "Preparing suggestions…"
 msgstr "Preparing suggestions…"
 
@@ -32058,7 +32098,7 @@ msgstr "Previous week"
 
 #: app/components/inventory/recipe-section.tsx:763
 #: app/components/menu/location-overrides-card.tsx:145
-#: app/components/menu/menu-review-card.tsx:413
+#: app/components/menu/menu-review-card.tsx:432
 #: app/components/orders/order-detail.tsx:855
 #: app/components/reservations/experiences/experiences-screen.tsx:295
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:507
@@ -32085,7 +32125,7 @@ msgstr ""
 msgid "Price / count"
 msgstr "Price / count"
 
-#: app/components/menu/menu-health-card.tsx:230
+#: app/components/menu/menu-health-card.tsx:235
 msgid "Price 0 on purpose"
 msgstr "Price 0 on purpose"
 
@@ -34932,7 +34972,7 @@ msgstr "Restaurants"
 msgid "Restaurants are used to manage your locations, menus, and orders."
 msgstr "Restaurants are used to manage your locations, menus, and orders."
 
-#: app/components/menu/menu-health-card.tsx:338
+#: app/components/menu/menu-health-card.tsx:375
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:466
 #: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:236
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:252
@@ -34946,6 +34986,10 @@ msgstr "Restore {name}"
 #: app/routes/_app+/$orgSlug_+/menu+/history.$snapshotId.tsx:94
 msgid "Restore this snapshot"
 msgstr "Restore this snapshot"
+
+#: app/components/menu/menu-health-card.tsx:328
+msgid "Restore: {name}"
+msgstr "Restore: {name}"
 
 #: app/utils/loyalty/loyalty-labels.ts:137
 msgid "Restored"
@@ -35124,8 +35168,8 @@ msgstr "Review redemption"
 msgid "Review sale"
 msgstr "Review sale"
 
-#: app/components/menu/menu-health-card.tsx:572
-#: app/components/menu/menu-review-stack.tsx:765
+#: app/components/menu/menu-health-card.tsx:651
+#: app/components/menu/menu-review-stack.tsx:875
 msgid "Review suggestions"
 msgstr "Review suggestions"
 
@@ -36010,7 +36054,7 @@ msgstr "Saved with the refund, along with who issued it."
 msgid "Saved with the refund, along with who recorded it."
 msgstr "Saved with the refund, along with who recorded it."
 
-#: app/components/menu/menu-review-stack.tsx:526
+#: app/components/menu/menu-review-stack.tsx:562
 msgid "Saved: {title}"
 msgstr "Saved: {title}"
 
@@ -36898,7 +36942,7 @@ msgstr ""
 msgid "See all"
 msgstr "See all"
 
-#: app/components/menu/menu-health-card.tsx:439
+#: app/components/menu/menu-health-card.tsx:482
 msgid "See all {total}"
 msgstr "See all {total}"
 
@@ -37136,7 +37180,7 @@ msgstr "Select a table or dining area to block."
 msgid "Select a website page"
 msgstr "Select a website page"
 
-#: app/components/menu/menu-review-stack.tsx:838
+#: app/components/menu/menu-review-stack.tsx:936
 #: app/components/roles/tenant-role-access-manager.tsx:1071
 #: app/routes/_app+/$orgSlug_+/staff+/team.import.tsx:308
 msgid "Select all"
@@ -37244,7 +37288,7 @@ msgstr "Select Photos"
 #~ msgid "Select row"
 #~ msgstr ""
 
-#: app/components/menu/menu-review-stack.tsx:1013
+#: app/components/menu/menu-review-stack.tsx:1132
 msgid "Select several"
 msgstr "Select several"
 
@@ -37624,8 +37668,8 @@ msgid "Sent when a manager declines a request."
 msgstr "Sent when a manager declines a request."
 
 #: app/components/menu/menu-review-card.tsx:138
-msgid "Sentence case"
-msgstr "Sentence case"
+#~ msgid "Sentence case"
+#~ msgstr "Sentence case"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2528
 msgid "SEO title"
@@ -37869,7 +37913,7 @@ msgstr "Set price {price}"
 msgid "Set the physical operating hours when customers can visit this restaurant location."
 msgstr "Set the physical operating hours when customers can visit this restaurant location."
 
-#: app/components/menu/menu-review-card.tsx:142
+#: app/components/menu/menu-review-card.tsx:161
 msgid "Set the price"
 msgstr "Set the price"
 
@@ -38290,7 +38334,7 @@ msgstr "Show a join button on your website. Online booking must also be on for t
 msgid "Show active experiences"
 msgstr "Show active experiences"
 
-#: app/components/menu/menu-health-card.tsx:683
+#: app/components/menu/menu-health-card.tsx:763
 msgid "Show all"
 msgstr "Show all"
 
@@ -38438,51 +38482,51 @@ msgstr "Showing {shownCount} of {total}"
 msgid "Showing 3 of {total} cards. Every card uses the same layout."
 msgstr "Showing 3 of {total} cards. Every card uses the same layout."
 
-#: app/components/menu/menu-health-card.tsx:652
+#: app/components/menu/menu-health-card.tsx:732
 msgid "Showing dishes listed twice"
 msgstr "Showing dishes listed twice"
 
-#: app/components/menu/menu-health-card.tsx:631
+#: app/components/menu/menu-health-card.tsx:711
 msgid "Showing dishes missing a translated name or description"
 msgstr "Showing dishes missing a translated name or description"
 
-#: app/components/menu/menu-health-card.tsx:624
+#: app/components/menu/menu-health-card.tsx:704
 msgid "Showing dishes priced at 0"
 msgstr "Showing dishes priced at 0"
 
-#: app/components/menu/menu-health-card.tsx:634
+#: app/components/menu/menu-health-card.tsx:714
 msgid "Showing dishes that don't list allergens or calories"
 msgstr "Showing dishes that don't list allergens or calories"
 
-#: app/components/menu/menu-health-card.tsx:636
+#: app/components/menu/menu-health-card.tsx:716
 msgid "Showing dishes unavailable for more than a week"
 msgstr "Showing dishes unavailable for more than a week"
 
-#: app/components/menu/menu-health-card.tsx:640
+#: app/components/menu/menu-health-card.tsx:720
 msgid "Showing dishes with names in capitals"
 msgstr "Showing dishes with names in capitals"
 
-#: app/components/menu/menu-health-card.tsx:642
+#: app/components/menu/menu-health-card.tsx:722
 msgid "Showing dishes with names over 60 characters"
 msgstr "Showing dishes with names over 60 characters"
 
-#: app/components/menu/menu-health-card.tsx:628
+#: app/components/menu/menu-health-card.tsx:708
 msgid "Showing dishes with no description"
 msgstr "Showing dishes with no description"
 
-#: app/components/menu/menu-health-card.tsx:626
+#: app/components/menu/menu-health-card.tsx:706
 msgid "Showing dishes with no photo"
 msgstr "Showing dishes with no photo"
 
-#: app/components/menu/menu-health-card.tsx:638
+#: app/components/menu/menu-health-card.tsx:718
 msgid "Showing empty categories"
 msgstr "Showing empty categories"
 
-#: app/components/menu/menu-health-card.tsx:647
+#: app/components/menu/menu-health-card.tsx:727
 msgid "Showing option groups that require more picks than they allow"
 msgstr "Showing option groups that require more picks than they allow"
 
-#: app/components/menu/menu-health-card.tsx:644
+#: app/components/menu/menu-health-card.tsx:724
 msgid "Showing option groups with no choices guests can see"
 msgstr "Showing option groups with no choices guests can see"
 
@@ -38691,8 +38735,8 @@ msgid "Sizes, portions, and how to describe your dishes."
 msgstr "Sizes, portions, and how to describe your dishes."
 
 #: app/components/inventory/prep-screen.tsx:512
-#: app/components/menu/menu-review-card.tsx:376
-#: app/components/menu/menu-review-stack.tsx:1300
+#: app/components/menu/menu-review-card.tsx:395
+#: app/components/menu/menu-review-stack.tsx:1419
 msgid "Skip"
 msgstr "Skip"
 
@@ -38700,7 +38744,7 @@ msgstr "Skip"
 msgid "Skip for now"
 msgstr ""
 
-#: app/components/menu/menu-review-stack.tsx:884
+#: app/components/menu/menu-review-stack.tsx:992
 msgid "Skip selected"
 msgstr "Skip selected"
 
@@ -38860,7 +38904,11 @@ msgstr "Some positions"
 msgid "Some rows changed. Refresh the preview and try again."
 msgstr "Some rows changed. Refresh the preview and try again."
 
-#: app/components/menu/menu-review-stack.tsx:875
+#: app/components/menu/menu-review-stack.tsx:983
+msgid "Some selected suggestions merge dishes or add choices. Look at each one and accept it on its own."
+msgstr "Some selected suggestions merge dishes or add choices. Look at each one and accept it on its own."
+
+#: app/components/menu/menu-review-stack.tsx:975
 msgid "Some selected suggestions need a value. Accept those on their own."
 msgstr "Some selected suggestions need a value. Accept those on their own."
 
@@ -38868,7 +38916,7 @@ msgstr "Some selected suggestions need a value. Accept those on their own."
 msgid "Some settings do not fit together. Check the highlighted fields."
 msgstr "Some settings do not fit together. Check the highlighted fields."
 
-#: app/components/menu/menu-review-stack.tsx:1019
+#: app/components/menu/menu-review-stack.tsx:1138
 msgid "Some suggestions couldn't be written right now, so they were left out."
 msgstr "Some suggestions couldn't be written right now, so they were left out."
 
@@ -39676,7 +39724,7 @@ msgstr "Stay"
 msgid "Stayed on current page"
 msgstr "Stayed on current page"
 
-#: app/components/menu/menu-health-card.tsx:319
+#: app/components/menu/menu-health-card.tsx:380
 msgid "Stays dismissed until this changes."
 msgstr "Stays dismissed until this changes."
 
@@ -39705,7 +39753,7 @@ msgstr "Still clocked in"
 msgid "Still needed: {missingList}"
 msgstr "Still needed: {missingList}"
 
-#: app/components/menu/menu-review-card.tsx:311
+#: app/components/menu/menu-review-card.tsx:330
 msgid "Still used in"
 msgstr "Still used in"
 
@@ -40045,12 +40093,12 @@ msgstr "Suggest other categories as add-ons when guests browse this section (e.g
 msgid "Suggested <0>{suggestedText}</0>"
 msgstr "Suggested <0>{suggestedText}</0>"
 
-#: app/components/menu/menu-review-stack.tsx:1195
-#: app/components/menu/menu-review-stack.tsx:1197
+#: app/components/menu/menu-review-stack.tsx:1314
+#: app/components/menu/menu-review-stack.tsx:1316
 msgid "Suggested change"
 msgstr "Suggested change"
 
-#: app/components/menu/menu-review-stack.tsx:1193
+#: app/components/menu/menu-review-stack.tsx:1312
 msgid "Suggested description"
 msgstr "Suggested description"
 
@@ -40058,15 +40106,15 @@ msgstr "Suggested description"
 msgid "Suggested orders"
 msgstr "Suggested orders"
 
-#: app/components/menu/menu-review-stack.tsx:1190
+#: app/components/menu/menu-review-stack.tsx:1309
 msgid "Suggested translation ({language})"
 msgstr "Suggested translation ({language})"
 
-#: app/components/menu/menu-review-card.tsx:491
+#: app/components/menu/menu-review-card.tsx:510
 msgid "Suggested:"
 msgstr "Suggested:"
 
-#: app/components/menu/menu-review-stack.tsx:569
+#: app/components/menu/menu-review-stack.tsx:605
 msgid "Suggestion is back"
 msgstr "Suggestion is back"
 
@@ -40074,15 +40122,15 @@ msgstr "Suggestion is back"
 msgid "Suggestions"
 msgstr "Suggestions"
 
-#: app/components/menu/menu-review-stack.tsx:705
+#: app/components/menu/menu-review-stack.tsx:817
 msgid "Suggestions are back"
 msgstr "Suggestions are back"
 
-#: app/components/menu/menu-review-stack.tsx:1115
+#: app/components/menu/menu-review-stack.tsx:1234
 msgid "Suggestions reviewed"
 msgstr "Suggestions reviewed"
 
-#: app/components/menu/menu-review-stack.tsx:855
+#: app/components/menu/menu-review-stack.tsx:955
 msgid "Suggestions to select"
 msgstr "Suggestions to select"
 
@@ -43506,7 +43554,7 @@ msgstr "This card is still open. Add the end time first."
 msgid "This change conflicted with an earlier attempt. Close this form and try again."
 msgstr "This change conflicted with an earlier attempt. Close this form and try again."
 
-#: app/components/menu/menu-review-stack.tsx:457
+#: app/components/menu/menu-review-stack.tsx:493
 msgid "This changed since the suggestion was made"
 msgstr "This changed since the suggestion was made"
 
@@ -43882,7 +43930,7 @@ msgstr "This no longer exists. Reload to see the latest state."
 msgid "This number reaches the AI agent, so transfers would loop back to it. Use a number staff answer directly."
 msgstr "This number reaches the AI agent, so transfers would loop back to it. Use a number staff answer directly."
 
-#: app/components/menu/menu-health-card.tsx:275
+#: app/components/menu/menu-health-card.tsx:294
 msgid "This one already passes, so there is nothing to dismiss."
 msgstr "This one already passes, so there is nothing to dismiss."
 
@@ -44834,8 +44882,8 @@ msgid "Title"
 msgstr ""
 
 #: app/components/menu/menu-review-card.tsx:136
-msgid "Title Case"
-msgstr "Title Case"
+#~ msgid "Title Case"
+#~ msgstr "Title Case"
 
 #: app/components/settings/cards/organization/site-theme-card.tsx:784
 msgid "Titles and section headings."
@@ -44985,8 +45033,8 @@ msgstr "Tomorrow"
 msgid "Too busy"
 msgstr "Too busy"
 
-#: app/components/menu/menu-review-stack.tsx:270
-#: app/components/menu/menu-review-stack.tsx:465
+#: app/components/menu/menu-review-stack.tsx:306
+#: app/components/menu/menu-review-stack.tsx:501
 msgid "Too many changes at once. Wait a minute and try again."
 msgstr "Too many changes at once. Wait a minute and try again."
 
@@ -45231,15 +45279,15 @@ msgstr ""
 msgid "Translate All"
 msgstr ""
 
-#: app/components/menu/menu-review-stack.tsx:1350
+#: app/components/menu/menu-review-stack.tsx:1469
 msgid "Translate new dishes into Arabic automatically"
 msgstr "Translate new dishes into Arabic automatically"
 
-#: app/components/menu/menu-review-stack.tsx:1352
+#: app/components/menu/menu-review-stack.tsx:1471
 msgid "Translate new dishes into your other languages automatically"
 msgstr "Translate new dishes into your other languages automatically"
 
-#: app/components/menu/menu-review-stack.tsx:313
+#: app/components/menu/menu-review-stack.tsx:349
 msgid "Translation saved for {dishName}"
 msgstr "Translation saved for {dishName}"
 
@@ -45421,7 +45469,7 @@ msgstr ""
 #: app/components/media-library/photo-studio-dialog.tsx:944
 #: app/components/menu/delete-effects.tsx:468
 #: app/components/menu/delete-effects.tsx:543
-#: app/components/menu/menu-review-stack.tsx:809
+#: app/components/menu/menu-review-stack.tsx:907
 #: app/components/orders/order-detail.tsx:1100
 #: app/components/phone-agent/call-detail-sheet.tsx:367
 #: app/components/phone-agent/call-recording-player.tsx:154
@@ -45961,14 +46009,14 @@ msgstr "Under"
 #: app/components/locations/delivery-zone-map.tsx:382
 #: app/components/media-library/photo-studio-dialog.tsx:867
 #: app/components/menu/menu-bulk-edit-sheet.tsx:277
-#: app/components/menu/menu-review-stack.tsx:315
-#: app/components/menu/menu-review-stack.tsx:362
-#: app/components/menu/menu-review-stack.tsx:402
-#: app/components/menu/menu-review-stack.tsx:437
-#: app/components/menu/menu-review-stack.tsx:527
-#: app/components/menu/menu-review-stack.tsx:568
-#: app/components/menu/menu-review-stack.tsx:640
-#: app/components/menu/menu-review-stack.tsx:704
+#: app/components/menu/menu-review-stack.tsx:351
+#: app/components/menu/menu-review-stack.tsx:398
+#: app/components/menu/menu-review-stack.tsx:438
+#: app/components/menu/menu-review-stack.tsx:473
+#: app/components/menu/menu-review-stack.tsx:563
+#: app/components/menu/menu-review-stack.tsx:604
+#: app/components/menu/menu-review-stack.tsx:728
+#: app/components/menu/menu-review-stack.tsx:816
 #: app/components/reservations/detail-sheet.tsx:745
 #: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:597
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:702
@@ -46538,8 +46586,8 @@ msgid "Uploading…"
 msgstr ""
 
 #: app/components/menu/menu-review-card.tsx:140
-msgid "UPPER CASE"
-msgstr "UPPER CASE"
+#~ msgid "UPPER CASE"
+#~ msgstr "UPPER CASE"
 
 #: app/components/menu/menu-bulk-edit-sheet.tsx:311
 #: app/components/menu/menu-bulk-edit-sheet.tsx:418
@@ -46608,7 +46656,7 @@ msgstr "Use {count} or more."
 msgid "Use {DASHBOARD_NAME_MAX_LENGTH} characters or fewer."
 msgstr "Use {DASHBOARD_NAME_MAX_LENGTH} characters or fewer."
 
-#: app/components/menu/menu-review-card.tsx:146
+#: app/components/menu/menu-review-card.tsx:165
 msgid "Use {subject}"
 msgstr "Use {subject}"
 
@@ -46724,7 +46772,7 @@ msgstr "Use Add block to put stats, charts and reports on it."
 msgid "Use all suggestions"
 msgstr "Use all suggestions"
 
-#: app/components/menu/menu-review-card.tsx:146
+#: app/components/menu/menu-review-card.tsx:165
 msgid "Use an existing choice"
 msgstr "Use an existing choice"
 
@@ -47971,7 +48019,7 @@ msgstr "We just sent you a text with a link to our website."
 msgid "We make this in batches and count it"
 msgstr "We make this in batches and count it"
 
-#: app/components/menu/menu-review-stack.tsx:1358
+#: app/components/menu/menu-review-stack.tsx:1477
 msgid "We only ask when we're unsure"
 msgstr "We only ask when we're unsure"
 
@@ -47999,7 +48047,7 @@ msgstr "We will email {email} a link to create a login. They join as a member, w
 msgid "We will email {email} a link to create a login. They join as a member, without access to staff or pay data. This is optional; they can clock in with a PIN either way."
 msgstr "We will email {email} a link to create a login. They join as a member, without access to staff or pay data. This is optional; they can clock in with a PIN either way."
 
-#: app/components/menu/menu-review-stack.tsx:567
+#: app/components/menu/menu-review-stack.tsx:603
 msgid "We won't suggest this again"
 msgstr "We won't suggest this again"
 
@@ -49102,7 +49150,7 @@ msgstr "Writing the {language} version. Anything you leave blank is shown in {fa
 msgid "Writing the message"
 msgstr "Writing the message"
 
-#: app/components/menu/menu-review-stack.tsx:1163
+#: app/components/menu/menu-review-stack.tsx:1282
 msgid "Written from the dish name, category and options."
 msgstr "Written from the dish name, category and options."
 
@@ -49711,7 +49759,7 @@ msgstr ""
 msgid "You're signed in on {sessionCount, plural, one {# device} other {# devices}} as {userEmail}"
 msgstr ""
 
-#: app/components/menu/menu-review-stack.tsx:795
+#: app/components/menu/menu-review-stack.tsx:893
 msgid "You've asked for a lot of suggestions this hour. Try again later."
 msgstr "You've asked for a lot of suggestions this hour. Try again later."
 
@@ -49921,7 +49969,7 @@ msgstr "Your platform administrator sets the LiveKit credentials. Until then, ca
 msgid "Your points"
 msgstr ""
 
-#: app/components/menu/menu-review-stack.tsx:461
+#: app/components/menu/menu-review-stack.tsx:497
 msgid "Your POS manages this, so it can't be changed here. Change it in your POS."
 msgstr "Your POS manages this, so it can't be changed here. Change it in your POS."
 

@@ -217,7 +217,7 @@ msgid "{0, plural, one {# changed shift} other {# changed shifts}}"
 msgstr "{0, plural, one {وردية واحدة معدّلة} two {ورديتان معدّلتان} few {# ورديات معدّلة} many {# وردية معدّلة} other {# وردية معدّلة}}"
 
 #. placeholder {0}: report.changed
-#: app/components/menu/menu-review-stack.tsx:982
+#: app/components/menu/menu-review-stack.tsx:1093
 msgid "{0, plural, one {# changed since it was suggested, so it was left out} other {# changed since they were suggested, so they were left out}}"
 msgstr "{0, plural, one {تغيّر اقتراح واحد منذ عرضه فتم استبعاده} two {تغيّر اقتراحان منذ عرضهما فتم استبعادهما} few {تغيّرت # اقتراحات منذ عرضها فتم استبعادها} many {تغيّر # اقتراحًا منذ عرضها فتم استبعادها} other {تغيّر # اقتراح منذ عرضها فتم استبعادها}}"
 
@@ -234,7 +234,7 @@ msgid "{0, plural, one {# could not be placed in that week.} other {# could not 
 msgstr "{0, plural, one {تعذّر وضع وردية واحدة في ذلك الأسبوع.} two {تعذّر وضع ورديتين في ذلك الأسبوع.} few {تعذّر وضع # ورديات في ذلك الأسبوع.} many {تعذّر وضع # وردية في ذلك الأسبوع.} other {تعذّر وضع # وردية في ذلك الأسبوع.}}"
 
 #. placeholder {0}: report.refused
-#: app/components/menu/menu-review-stack.tsx:991
+#: app/components/menu/menu-review-stack.tsx:1102
 msgid "{0, plural, one {# couldn't be saved} other {# couldn't be saved}}"
 msgstr "{0, plural, one {تعذّر حفظ اقتراح واحد} two {تعذّر حفظ اقتراحين} few {تعذّر حفظ # اقتراحات} many {تعذّر حفظ # اقتراحًا} other {تعذّر حفظ # اقتراح}}"
 
@@ -269,7 +269,7 @@ msgid "{0, plural, one {# dish or option is off the menu.} other {# dishes and o
 msgstr "{0, plural, one {طبق أو خيار واحد خارج القائمة.} two {طبقان أو خياران خارج القائمة.} few {# أطباق أو خيارات خارج القائمة.} many {# طبقًا أو خيارًا خارج القائمة.} other {# طبق أو خيار خارج القائمة.}}"
 
 #. placeholder {0}: check.dismissedCount
-#: app/components/menu/menu-health-card.tsx:363
+#: app/components/menu/menu-health-card.tsx:405
 msgid "{0, plural, one {# dismissed} other {# dismissed}}"
 msgstr "{0, plural, one {تم تجاهل واحد} two {تم تجاهل اثنين} few {تم تجاهل #} many {تم تجاهل #} other {تم تجاهل #}}"
 
@@ -452,10 +452,8 @@ msgstr "{0, plural, zero {# نقطة} one {نقطة واحدة} two {نقطتا�
 msgid "{0, plural, one {# recipe in inventory uses it} other {# recipes in inventory use it}}"
 msgstr "{0, plural, zero {لا وصفة في المخزون تستخدمه} one {وصفة واحدة (#) في المخزون تستخدمه} two {وصفتا (#) في المخزون تستخدمانه} few {# وصفات في المخزون تستخدمه} many {# وصفة في المخزون تستخدمه} other {# وصفة في المخزون تستخدمه}}"
 
-#. placeholder {0}: chosenCards.length
 #. placeholder {0}: selectedIds.length
 #: app/components/media-library/photo-studio-dialog.tsx:493
-#: app/components/menu/menu-review-stack.tsx:817
 msgid "{0, plural, one {# selected} other {# selected}}"
 msgstr "{0, plural, one {تم تحديد صورة واحدة} two {تم تحديد صورتين} few {تم تحديد # صور} many {تم تحديد # صورة} other {تم تحديد # صورة}}"
 
@@ -504,12 +502,22 @@ msgid "{0, plural, one {# storage area was created for them.} other {# storage a
 msgstr "{0, plural, one {تم إنشاء منطقة تخزين واحدة لها.} two {تم إنشاء منطقتي تخزين لها.} few {تم إنشاء # مناطق تخزين لها.} many {تم إنشاء # منطقة تخزين لها.} other {تم إنشاء # منطقة تخزين لها.}}"
 
 #. placeholder {0}: report.accepted
-#: app/components/menu/menu-review-stack.tsx:973
+#: app/components/menu/menu-review-stack.tsx:1084
 msgid "{0, plural, one {# suggestion accepted} other {# suggestions accepted}}"
 msgstr "{0, plural, one {تم قبول اقتراح واحد} two {تم قبول اقتراحين} few {تم قبول # اقتراحات} many {تم قبول # اقتراحًا} other {تم قبول # اقتراح}}"
 
+#. placeholder {0}: chosenCards.length
+#: app/components/menu/menu-review-stack.tsx:915
+msgid "{0, plural, one {# suggestion selected} other {# suggestions selected}}"
+msgstr "{0, plural, zero {لم يتم تحديد أي اقتراح} one {تم تحديد اقتراح واحد} two {تم تحديد اقتراحين} few {تم تحديد # اقتراحات} many {تم تحديد # اقتراحًا} other {تم تحديد # اقتراح}}"
+
+#. placeholder {0}: report.notApplied
+#: app/components/menu/menu-review-stack.tsx:1111
+msgid "{0, plural, one {# suggestion was not applied. Try again.} other {# suggestions were not applied. Try again.}}"
+msgstr "{0, plural, zero {تم تطبيق جميع الاقتراحات. حاول مرة أخرى.} one {لم يتم تطبيق اقتراح واحد. حاول مرة أخرى.} two {لم يتم تطبيق اقتراحين. حاول مرة أخرى.} few {لم يتم تطبيق # اقتراحات. حاول مرة أخرى.} many {لم يتم تطبيق # اقتراحًا. حاول مرة أخرى.} other {لم يتم تطبيق # اقتراح. حاول مرة أخرى.}}"
+
 #. placeholder {0}: done.length
-#: app/components/menu/menu-review-stack.tsx:699
+#: app/components/menu/menu-review-stack.tsx:811
 msgid "{0, plural, one {# suggestion won't come back} other {# suggestions won't come back}}"
 msgstr "{0, plural, one {لن يعود اقتراح واحد} two {لن يعود اقتراحان} few {لن تعود # اقتراحات} many {لن يعود # اقتراحًا} other {لن يعود # اقتراح}}"
 
@@ -526,7 +534,7 @@ msgid "{0, plural, one {# task} other {# tasks}}"
 msgstr "{0, plural, one {مهمة واحدة} two {مهمتان} few {# مهام} many {# مهمة} other {# مهمة}}"
 
 #. placeholder {0}: health.fixCount
-#: app/components/menu/menu-health-card.tsx:543
+#: app/components/menu/menu-health-card.tsx:617
 msgid "{0, plural, one {# thing to fix.} other {# things to fix.}}"
 msgstr "{0, plural, one {أمر واحد يحتاج إلى إصلاح.} two {أمران يحتاجان إلى إصلاح.} few {# أمور تحتاج إلى إصلاح.} many {# أمرًا يحتاج إلى إصلاح.} other {# أمر يحتاج إلى إصلاح.}}"
 
@@ -976,7 +984,7 @@ msgstr "{cap} في اليوم"
 msgid "{cap} per seating"
 msgstr "{cap} لكل فترة جلوس"
 
-#: app/components/menu/menu-review-stack.tsx:436
+#: app/components/menu/menu-review-stack.tsx:472
 msgid "{categoryName} is hidden from your menu"
 msgstr "أُخفيت {categoryName} من قائمتك"
 
@@ -1024,7 +1032,7 @@ msgstr "{count, plural, one {إجابة واحدة تستحق المراجعة} 
 msgid "{count, plural, one {# category} other {# categories}}"
 msgstr "{count, plural, zero {# تصنيفات} one {تصنيف واحد} two {تصنيفان} few {# تصنيفات} many {# تصنيفًا} other {# تصنيف}}"
 
-#: app/components/menu/menu-review-stack.tsx:635
+#: app/components/menu/menu-review-stack.tsx:723
 msgid "{count, plural, one {# change saved} other {# changes saved}}"
 msgstr "{count, plural, one {تم حفظ تغيير واحد} two {تم حفظ تغييرين} few {تم حفظ # تغييرات} many {تم حفظ # تغييرًا} other {تم حفظ # تغيير}}"
 
@@ -1114,7 +1122,7 @@ msgstr "{count, plural, one {طاولة واحدة} two {طاولتان} few {# 
 msgid "{count, plural, one {# thing to sort out} other {# things to sort out}}"
 msgstr "{count, plural, one {أمر واحد يحتاج إلى معالجة} two {أمران يحتاجان إلى معالجة} few {# أمور تحتاج إلى معالجة} many {# أمرًا يحتاج إلى معالجة} other {# أمر يحتاج إلى معالجة}}"
 
-#: app/components/menu/menu-review-stack.tsx:357
+#: app/components/menu/menu-review-stack.tsx:393
 msgid "{count, plural, one {# translation saved} other {# translations saved}}"
 msgstr "{count, plural, one {حُفظت ترجمة واحدة} two {حُفظت ترجمتان} few {حُفظت # ترجمات} many {حُفظت # ترجمة} other {حُفظت # ترجمة}}"
 
@@ -1330,7 +1338,7 @@ msgstr "{dayName}: عدد المجدولين {people}، والورديات ال�
 msgid "{days, plural, one {Last count # day ago} other {Last count # days ago}}"
 msgstr "{days, plural, one {آخر جرد قبل يوم واحد} two {آخر جرد قبل يومين} few {آخر جرد قبل # أيام} many {آخر جرد قبل # يومًا} other {آخر جرد قبل # يوم}}"
 
-#: app/components/menu/menu-review-stack.tsx:1176
+#: app/components/menu/menu-review-stack.tsx:1295
 msgid "{days, plural, one {Unavailable for # day. Guests can't order it.} other {Unavailable for # days. Guests can't order it.}}"
 msgstr "{days, plural, one {غير متوفر منذ يوم واحد. لا يستطيع الضيوف طلبه.} two {غير متوفر منذ يومين. لا يستطيع الضيوف طلبه.} few {غير متوفر منذ # أيام. لا يستطيع الضيوف طلبه.} many {غير متوفر منذ # يومًا. لا يستطيع الضيوف طلبه.} other {غير متوفر منذ # يوم. لا يستطيع الضيوف طلبه.}}"
 
@@ -1375,13 +1383,21 @@ msgstr "خصم {discount} على {count, plural, zero {# عنصر} one {عنصر
 msgid "{dishes, plural, one {# dish costs more now.} other {# dishes cost more now.}}"
 msgstr "{dishes, plural, one {طبق واحد تزيد تكلفته الآن.} two {طبقان تزيد تكلفتهما الآن.} few {# أطباق تزيد تكلفتها الآن.} many {# طبقًا تزيد تكلفتها الآن.} other {# طبق تزيد تكلفتها الآن.}}"
 
-#: app/components/menu/menu-review-stack.tsx:401
+#: app/components/menu/menu-review-stack.tsx:437
 msgid "{dishName} is available again"
 msgstr "{dishName} متوفر مجددًا"
 
-#: app/components/menu/menu-review-stack.tsx:400
+#: app/components/menu/menu-review-stack.tsx:436
 msgid "{dishName} is hidden from your menu"
 msgstr "أُخفي {dishName} من قائمتك"
+
+#: app/components/menu/menu-health-card.tsx:605
+msgid "{dismissedTotal, plural, one {Nothing left to fix. # dismissed.} other {Nothing left to fix. # dismissed.}}"
+msgstr "{dismissedTotal, plural, zero {لا شيء متبقٍّ للإصلاح.} one {لا شيء متبقٍّ للإصلاح. تم تجاهل واحد.} two {لا شيء متبقٍّ للإصلاح. تم تجاهل اثنين.} few {لا شيء متبقٍّ للإصلاح. تم تجاهل #.} many {لا شيء متبقٍّ للإصلاح. تم تجاهل #.} other {لا شيء متبقٍّ للإصلاح. تم تجاهل #.}}"
+
+#: app/components/menu/menu-health-card.tsx:329
+msgid "{dismissLabel}: {name}"
+msgstr "{dismissLabel}: {name}"
 
 #: app/components/staff/timesheets/review-queue.tsx:114
 #: app/components/staff/timesheets/timesheets-page.tsx:412
@@ -1433,7 +1449,7 @@ msgstr "{errorCount, plural, one {خطأ تحقق واحد} other {# أخطاء 
 msgid "{estimate, plural, one {About # person will be emailed.} other {About # people will be emailed.}}"
 msgstr "{estimate, plural, one {سيصل بريد إلى نحو شخص واحد.} two {سيصل بريد إلى نحو شخصين.} few {سيصل بريد إلى نحو # أشخاص.} many {سيصل بريد إلى نحو # شخصًا.} other {سيصل بريد إلى نحو # شخص.}}"
 
-#: app/components/menu/menu-review-stack.tsx:1157
+#: app/components/menu/menu-review-stack.tsx:1276
 msgid "{examples, plural, one {Same style as your other description} other {Same style as your other # descriptions}}"
 msgstr "{examples, plural, one {بنفس أسلوب وصفك الآخر} two {بنفس أسلوب وصفيك الآخرين} few {بنفس أسلوب أوصافك الـ# الأخرى} many {بنفس أسلوب أوصافك الـ# الأخرى} other {بنفس أسلوب أوصافك الـ# الأخرى}}"
 
@@ -1734,7 +1750,7 @@ msgstr "منذ {minutes} دقيقة"
 msgid "{more, plural, one {and # more dish without a recipe} other {and # more dishes without a recipe}}"
 msgstr "{more, plural, one {وطبق واحد آخر بلا وصفة} two {وطبقان آخران بلا وصفة} few {و# أطباق أخرى بلا وصفة} many {و# طبقًا آخر بلا وصفة} other {و# طبق آخر بلا وصفة}}"
 
-#: app/components/menu/menu-review-card.tsx:338
+#: app/components/menu/menu-review-card.tsx:357
 msgid "{more, plural, one {and # more} other {and # more}}"
 msgstr "{more, plural, one {وواحد آخر} two {واثنان آخران} few {و# آخرين} many {و# آخر} other {و# آخر}}"
 
@@ -1755,7 +1771,7 @@ msgstr "{n, plural, one {حجز واحد تحتاج دفعته إلى مراجع
 msgid "{n, plural, one {# booking no longer has a table} other {# bookings no longer have a table}}"
 msgstr "{n, plural, one {حجز واحد لم تعد له طاولة} two {حجزان لم تعد لهما طاولة} few {# حجوزات لم تعد لها طاولة} many {# حجزًا لم تعد لها طاولة} other {# حجز لم تعد لها طاولة}}"
 
-#: app/components/menu/menu-health-card.tsx:148
+#: app/components/menu/menu-health-card.tsx:153
 msgid "{n, plural, one {# category is empty} other {# categories are empty}}"
 msgstr "{n, plural, one {فئة واحدة فارغة} two {فئتان فارغتان} few {# فئات فارغة} many {# فئة فارغة} other {# فئة فارغة}}"
 
@@ -1767,43 +1783,43 @@ msgstr "{n, plural, one {شهادة واحدة توشك على الانتهاء 
 msgid "{n, plural, one {# count is waiting for review} other {# counts are waiting for review}}"
 msgstr "{n, plural, one {جرد واحد بانتظار المراجعة} two {جردان بانتظار المراجعة} few {# عمليات جرد بانتظار المراجعة} many {# عملية جرد بانتظار المراجعة} other {# عملية جرد بانتظار المراجعة}}"
 
-#: app/components/menu/menu-health-card.tsx:132
+#: app/components/menu/menu-health-card.tsx:137
 msgid "{n, plural, one {# dish doesn't list allergens or calories} other {# dishes don't list allergens or calories}}"
 msgstr "{n, plural, one {طبق واحد بلا مسببات حساسية أو سعرات حرارية} two {طبقان بلا مسببات حساسية أو سعرات حرارية} few {# أطباق بلا مسببات حساسية أو سعرات حرارية} many {# طبقًا بلا مسببات حساسية أو سعرات حرارية} other {# طبق بلا مسببات حساسية أو سعرات حرارية}}"
 
-#: app/components/menu/menu-health-card.tsx:140
+#: app/components/menu/menu-health-card.tsx:145
 msgid "{n, plural, one {# dish has been unavailable for more than a week} other {# dishes have been unavailable for more than a week}}"
 msgstr "{n, plural, one {طبق واحد غير متوفر منذ أكثر من أسبوع} two {طبقان غير متوفرين منذ أكثر من أسبوع} few {# أطباق غير متوفرة منذ أكثر من أسبوع} many {# طبقًا غير متوفر منذ أكثر من أسبوع} other {# طبق غير متوفر منذ أكثر من أسبوع}}"
 
-#: app/components/menu/menu-health-card.tsx:108
+#: app/components/menu/menu-health-card.tsx:113
 msgid "{n, plural, one {# dish has no description} other {# dishes have no description}}"
 msgstr "{n, plural, one {طبق واحد بلا وصف} two {طبقان بلا وصف} few {# أطباق بلا وصف} many {# طبقًا بلا وصف} other {# طبق بلا وصف}}"
 
-#: app/components/menu/menu-health-card.tsx:98
+#: app/components/menu/menu-health-card.tsx:103
 msgid "{n, plural, one {# dish has no photo} other {# dishes have no photo}}"
 msgstr "{n, plural, one {طبق واحد بلا صورة} two {طبقان بلا صورة} few {# أطباق بلا صورة} many {# طبقًا بلا صورة} other {# طبق بلا صورة}}"
 
-#: app/components/menu/menu-health-card.tsx:188
+#: app/components/menu/menu-health-card.tsx:193
 msgid "{n, plural, one {# dish is listed twice (same name and price)} other {# dishes are listed twice (same name and price)}}"
 msgstr "{n, plural, one {طبق واحد مدرج مرتين (الاسم والسعر نفسهما)} two {طبقان مدرجان مرتين (الاسم والسعر نفسهما)} few {# أطباق مدرجة مرتين (الاسم والسعر نفسهما)} many {# طبقًا مدرجًا مرتين (الاسم والسعر نفسهما)} other {# طبق مدرج مرتين (الاسم والسعر نفسهما)}}"
 
-#: app/components/menu/menu-health-card.tsx:122
+#: app/components/menu/menu-health-card.tsx:127
 msgid "{n, plural, one {# dish is missing a translated name or description} other {# dishes are missing a translated name or description}}"
 msgstr "{n, plural, one {طبق واحد ينقصه اسم أو وصف مترجم} two {طبقان ينقصهما اسم أو وصف مترجم} few {# أطباق ينقصها اسم أو وصف مترجم} many {# طبقًا ينقصه اسم أو وصف مترجم} other {# طبق ينقصه اسم أو وصف مترجم}}"
 
-#: app/components/menu/menu-health-card.tsx:116
+#: app/components/menu/menu-health-card.tsx:121
 msgid "{n, plural, one {# dish is missing an Arabic name or description} other {# dishes are missing an Arabic name or description}}"
 msgstr "{n, plural, one {طبق واحد ينقصه اسم أو وصف بالعربية} two {طبقان ينقصهما اسم أو وصف بالعربية} few {# أطباق ينقصها اسم أو وصف بالعربية} many {# طبقًا ينقصه اسم أو وصف بالعربية} other {# طبق ينقصه اسم أو وصف بالعربية}}"
 
-#: app/components/menu/menu-health-card.tsx:88
+#: app/components/menu/menu-health-card.tsx:93
 msgid "{n, plural, one {# dish is priced at 0} other {# dishes are priced at 0}}"
 msgstr "{n, plural, one {طبق واحد سعره 0} two {طبقان سعرهما 0} few {# أطباق سعرها 0} many {# طبقًا سعره 0} other {# طبق سعره 0}}"
 
-#: app/components/menu/menu-health-card.tsx:164
+#: app/components/menu/menu-health-card.tsx:169
 msgid "{n, plural, one {# dish name is over 60 characters} other {# dish names are over 60 characters}}"
 msgstr "{n, plural, one {اسم طبق واحد يتجاوز 60 حرفًا} two {اسما طبقين يتجاوزان 60 حرفًا} few {# أسماء أطباق تتجاوز 60 حرفًا} many {# اسم طبق يتجاوز 60 حرفًا} other {# اسم طبق يتجاوز 60 حرفًا}}"
 
-#: app/components/menu/menu-health-card.tsx:156
+#: app/components/menu/menu-health-card.tsx:161
 msgid "{n, plural, one {# dish name is written in capitals} other {# dish names are written in capitals}}"
 msgstr "{n, plural, one {اسم طبق واحد مكتوب بأحرف كبيرة} two {اسما طبقين مكتوبان بأحرف كبيرة} few {# أسماء أطباق مكتوبة بأحرف كبيرة} many {# اسم طبق مكتوب بأحرف كبيرة} other {# اسم طبق مكتوب بأحرف كبيرة}}"
 
@@ -1835,11 +1851,11 @@ msgstr "{n, plural, one {متقدّم جديد} two {متقدّمان جديدا
 msgid "{n, plural, one {# onboarding task needs attention} other {# onboarding tasks need attention}}"
 msgstr "{n, plural, one {مهمة تهيئة واحدة تحتاج إلى انتباه} two {مهمتا تهيئة تحتاجان إلى انتباه} few {# مهام تهيئة تحتاج إلى انتباه} many {# مهمة تهيئة تحتاج إلى انتباه} other {# مهمة تهيئة تحتاج إلى انتباه}}"
 
-#: app/components/menu/menu-health-card.tsx:172
+#: app/components/menu/menu-health-card.tsx:177
 msgid "{n, plural, one {# option group has no choices guests can see} other {# option groups have no choices guests can see}}"
 msgstr "{n, plural, one {مجموعة خيارات واحدة بلا خيارات يراها الضيوف} two {مجموعتا خيارات بلا خيارات يراها الضيوف} few {# مجموعات خيارات بلا خيارات يراها الضيوف} many {# مجموعة خيارات بلا خيارات يراها الضيوف} other {# مجموعة خيارات بلا خيارات يراها الضيوف}}"
 
-#: app/components/menu/menu-health-card.tsx:180
+#: app/components/menu/menu-health-card.tsx:185
 msgid "{n, plural, one {# option group requires more picks than it allows} other {# option groups require more picks than they allow}}"
 msgstr "{n, plural, one {مجموعة خيارات واحدة تشترط اختيارات أكثر مما تسمح به} two {مجموعتا خيارات تشترطان اختيارات أكثر مما تسمحان به} few {# مجموعات خيارات تشترط اختيارات أكثر مما تسمح به} many {# مجموعة خيارات تشترط اختيارات أكثر مما تسمح به} other {# مجموعة خيارات تشترط اختيارات أكثر مما تسمح به}}"
 
@@ -2114,15 +2130,15 @@ msgstr "{partySizeLabel} ض"
 msgid "{pendingLocal, plural, one {# entry waiting on this device} other {# entries waiting on this device}}"
 msgstr "{pendingLocal, plural, zero {# إدخال قيد الانتظار على هذا الجهاز} one {إدخال واحد (#) قيد الانتظار على هذا الجهاز} two {إدخالان (#) قيد الانتظار على هذا الجهاز} few {# إدخالات قيد الانتظار على هذا الجهاز} many {# إدخالاً قيد الانتظار على هذا الجهاز} other {# إدخال قيد الانتظار على هذا الجهاز}}"
 
-#: app/components/menu/menu-review-stack.tsx:1070
+#: app/components/menu/menu-review-stack.tsx:1189
 msgid "{pendingTranslations, plural, one {Accept # translation} other {Accept all # translations}}"
 msgstr "{pendingTranslations, plural, one {قبول الترجمة} two {قبول الترجمتين} few {قبول الترجمات الـ# كلها} many {قبول الترجمات الـ# كلها} other {قبول الترجمات الـ# كلها}}"
 
-#: app/components/menu/menu-review-stack.tsx:1034
+#: app/components/menu/menu-review-stack.tsx:1153
 msgid "{pendingTranslations, plural, one {Save # translation without reviewing it? You can undo it right after.} other {Save # translations without reviewing each one? You can undo them right after.}}"
 msgstr "{pendingTranslations, plural, one {هل تحفظ الترجمة دون مراجعتها؟ يمكنك التراجع عنها بعد ذلك مباشرة.} two {هل تحفظ الترجمتين دون مراجعة كل منهما؟ يمكنك التراجع عنهما بعد ذلك مباشرة.} few {هل تحفظ # ترجمات دون مراجعة كل منها؟ يمكنك التراجع عنها بعد ذلك مباشرة.} many {هل تحفظ # ترجمة دون مراجعة كل منها؟ يمكنك التراجع عنها بعد ذلك مباشرة.} other {هل تحفظ # ترجمة دون مراجعة كل منها؟ يمكنك التراجع عنها بعد ذلك مباشرة.}}"
 
-#: app/components/menu/menu-review-stack.tsx:1053
+#: app/components/menu/menu-review-stack.tsx:1172
 msgid "{pendingTranslations, plural, one {Save # translation} other {Save # translations}}"
 msgstr "{pendingTranslations, plural, one {حفظ الترجمة} two {حفظ الترجمتين} few {حفظ # ترجمات} many {حفظ # ترجمة} other {حفظ # ترجمة}}"
 
@@ -2367,7 +2383,7 @@ msgstr "{shown, plural, zero {عرض # سجل} one {عرض سجل واحد} two 
 msgid "{shown} and {extra} more"
 msgstr "{shown} و{extra} أخرى"
 
-#: app/components/menu/menu-review-stack.tsx:1108
+#: app/components/menu/menu-review-stack.tsx:1227
 msgid "{shown} of {total} reviewed"
 msgstr "روجع {shown} من {total}"
 
@@ -3273,7 +3289,7 @@ msgstr "عضو سابق في الفريق"
 msgid "A former team member has this email or phone number. Rehire them from the team list instead."
 msgstr "يوجد عضو سابق في الفريق بهذا البريد الإلكتروني أو رقم الهاتف. أعد توظيفه من قائمة الفريق بدلًا من ذلك."
 
-#: app/components/menu/menu-health-card.tsx:213
+#: app/components/menu/menu-health-card.tsx:218
 msgid "A free dish is usually a mistake."
 msgstr "الطبق المجاني عادةً ما يكون خطأً."
 
@@ -3580,7 +3596,7 @@ msgstr "يحتاج السعر الثابت إلى عناصر أو تصنيفات
 msgid "A setup check needs attention."
 msgstr "أحد فحوصات الإعداد يحتاج إلى انتباه."
 
-#: app/components/menu/menu-health-card.tsx:215
+#: app/components/menu/menu-health-card.tsx:220
 msgid "A short description helps guests order."
 msgstr "الوصف القصير يساعد الضيوف على الطلب."
 
@@ -3738,8 +3754,8 @@ msgstr "حول ظهور الطرح"
 msgid "Accent color"
 msgstr "لون التمييز"
 
-#: app/components/menu/menu-review-card.tsx:548
-#: app/components/menu/menu-review-stack.tsx:1324
+#: app/components/menu/menu-review-card.tsx:567
+#: app/components/menu/menu-review-stack.tsx:1443
 #: app/components/orders/order-detail.tsx:620
 #: app/components/orders/waiting-lane.tsx:204
 #: app/components/privacy-banner.tsx:60
@@ -3755,6 +3771,10 @@ msgstr "قبول وبدء التحضير"
 msgid "Accept guest reservations from your public website and apps."
 msgstr "قبول حجوزات الضيوف من موقعك العام وتطبيقاتك."
 
+#: app/components/menu/menu-review-card.tsx:612
+msgid "Accept one at a time"
+msgstr "قبول واحد في كل مرة"
+
 #: app/components/settings/cards/organization/shop-card.tsx:129
 msgid "Accept online payments for your orders. Payments are taken through Checkout.com and paid out to you."
 msgstr "اقبل المدفوعات عبر الإنترنت لطلباتك. تتم معالجة المدفوعات عبر Checkout.com ويتم تحويلها إليك."
@@ -3763,11 +3783,11 @@ msgstr "اقبل المدفوعات عبر الإنترنت لطلباتك. تت
 msgid "Accept orders and show this location on the website."
 msgstr "استقبال الطلبات وإظهار هذا الفرع على الموقع."
 
-#: app/components/menu/menu-review-stack.tsx:892
+#: app/components/menu/menu-review-stack.tsx:1000
 msgid "Accept selected"
 msgstr "قبول المحدد"
 
-#: app/components/menu/menu-review-stack.tsx:768
+#: app/components/menu/menu-review-stack.tsx:878
 msgid "Accept what looks right and skip the rest. Nothing changes until you accept."
 msgstr "اقبل ما يبدو صحيحًا وتخطَّ الباقي. لا يتغير شيء حتى تقبل."
 
@@ -4004,7 +4024,7 @@ msgstr "إضافة {fraction}"
 msgid "Add {label}"
 msgstr "إضافة {label}"
 
-#: app/components/menu/menu-review-card.tsx:150
+#: app/components/menu/menu-review-card.tsx:169
 msgid "Add {subject}"
 msgstr "إضافة {subject}"
 
@@ -4075,7 +4095,7 @@ msgstr "أضف منطقة طعام أولًا"
 msgid "Add a dining area first, then add its tables."
 msgstr "أضف منطقة جلوس أولاً ثم أضف طاولاتها."
 
-#: app/components/menu/menu-health-card.tsx:513
+#: app/components/menu/menu-health-card.tsx:575
 msgid "Add a dish"
 msgstr "أضف طبقًا"
 
@@ -4916,7 +4936,7 @@ msgstr "إضافة مهمة"
 msgid "Add the bonuses up"
 msgstr "جمع المكافآت معًا"
 
-#: app/components/menu/menu-review-card.tsx:150
+#: app/components/menu/menu-review-card.tsx:169
 msgid "Add the choice"
 msgstr "إضافة الخيار"
 
@@ -5056,7 +5076,7 @@ msgstr "أضف تفاصيل نشاطك التجاري لترى ما يُقال �
 msgid "Add your dishes, drinks, and culinary creations to build your restaurant menu."
 msgstr "أضف أطباقك ومشروباتك وإبداعاتك لبناء قائمة مطعمك."
 
-#: app/components/menu/menu-health-card.tsx:502
+#: app/components/menu/menu-health-card.tsx:564
 msgid "Add your first dishes to see how complete your menu is."
 msgstr "أضف أطباقك الأولى لترى مدى اكتمال قائمتك."
 
@@ -5311,7 +5331,7 @@ msgstr "بعد المكالمة"
 msgid "After the replays, the call follows the \"No choice\" connection, or hangs up if it isn't connected."
 msgstr "بعد انتهاء التكرارات، تتبع المكالمة وصلة «بدون اختيار»، أو يُنهى الاتصال إذا لم تكن موصولة."
 
-#: app/components/menu/menu-review-card.tsx:290
+#: app/components/menu/menu-review-card.tsx:309
 msgid "After you accept"
 msgstr "بعد القبول"
 
@@ -5530,7 +5550,7 @@ msgstr "طوال اليوم"
 msgid "All days"
 msgstr "كل الأيام"
 
-#: app/components/menu/menu-health-card.tsx:674
+#: app/components/menu/menu-health-card.tsx:754
 msgid "All fixed. Nothing left in this list."
 msgstr "تم إصلاح كل شيء. لم يتبقَّ شيء في هذه القائمة."
 
@@ -5617,7 +5637,7 @@ msgstr "جميع المستلمين"
 msgid "All reservations, guestbook, setup & payments"
 msgstr "جميع الحجوزات وسجل الضيوف والإعدادات والمدفوعات"
 
-#: app/components/menu/menu-review-stack.tsx:954
+#: app/components/menu/menu-review-stack.tsx:1062
 msgid "All reviewed. Nice work."
 msgstr "روجعت كلها. أحسنت."
 
@@ -5779,7 +5799,7 @@ msgstr "السماح بضمها مع طاولات أخرى."
 msgid "Allow microphone access"
 msgstr "اسمح بالوصول إلى الميكروفون"
 
-#: app/components/menu/menu-review-card.tsx:154
+#: app/components/menu/menu-review-card.tsx:173
 msgid "Allow only one"
 msgstr "السماح باختيار واحد فقط"
 
@@ -6127,7 +6147,7 @@ msgstr "منصب آخر"
 msgid "Another refund for this order is still being processed. Wait for it to finish."
 msgstr "هناك عملية استرداد أخرى لهذا الطلب قيد المعالجة. انتظر حتى تنتهي."
 
-#: app/components/menu/menu-review-card.tsx:158
+#: app/components/menu/menu-review-card.tsx:177
 msgid "Another way"
 msgstr "طريقة أخرى"
 
@@ -8561,7 +8581,7 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/components/menu/drop-wizard/drop-drawers.tsx:930
 #: app/components/menu/menu-duplicate-dialog.tsx:127
 #: app/components/menu/menu-form-header.tsx:80
-#: app/components/menu/menu-review-stack.tsx:1046
+#: app/components/menu/menu-review-stack.tsx:1165
 #: app/components/menu/modifier-form.tsx:2057
 #: app/components/menu/quick-modifier-group-sheet.tsx:434
 #: app/components/my-schedule/availability-sheet.tsx:200
@@ -8912,7 +8932,15 @@ msgstr "الحد الأقصى للخصم، مثل 20.00."
 #~ msgid "Capacity"
 #~ msgstr "السعة"
 
-#: app/components/menu/menu-health-card.tsx:220
+#: app/components/menu/menu-review-card.tsx:157
+msgid "Capitalize each word"
+msgstr "بدء كل كلمة بحرف كبير"
+
+#: app/components/menu/menu-review-card.tsx:159
+msgid "Capitalize the first word only"
+msgstr "بدء الجملة بحرف كبير فقط"
+
+#: app/components/menu/menu-health-card.tsx:225
 msgid "Capitals read like shouting. Use normal case."
 msgstr "الأحرف الكبيرة تبدو كالصراخ. استخدم الحالة العادية."
 
@@ -9237,11 +9265,11 @@ msgstr "تغيير مصدر المبيعات"
 msgid "Change time or details"
 msgstr "تغيير الوقت أو التفاصيل"
 
-#: app/components/menu/menu-review-stack.tsx:316
-#: app/components/menu/menu-review-stack.tsx:363
-#: app/components/menu/menu-review-stack.tsx:403
-#: app/components/menu/menu-review-stack.tsx:438
-#: app/components/menu/menu-review-stack.tsx:528
+#: app/components/menu/menu-review-stack.tsx:352
+#: app/components/menu/menu-review-stack.tsx:399
+#: app/components/menu/menu-review-stack.tsx:439
+#: app/components/menu/menu-review-stack.tsx:474
+#: app/components/menu/menu-review-stack.tsx:564
 msgid "Change undone"
 msgstr "تم التراجع عن التغيير"
 
@@ -9296,7 +9324,7 @@ msgstr "تصل التغييرات إلى الجهاز عند اتصاله في �
 msgid "Changes to this note will show up here as your team works on it."
 msgstr "ستظهر التغييرات في هذه الملاحظة هنا أثناء عمل فريقك عليها."
 
-#: app/components/menu/menu-review-stack.tsx:641
+#: app/components/menu/menu-review-stack.tsx:729
 msgid "Changes undone"
 msgstr "تم التراجع عن التغييرات"
 
@@ -9718,7 +9746,7 @@ msgstr "اختر خصمًا للطباعة."
 msgid "Choose a file"
 msgstr "اختيار ملف"
 
-#: app/components/menu/menu-review-card.tsx:504
+#: app/components/menu/menu-review-card.tsx:523
 msgid "Choose a fix"
 msgstr "اختر إصلاحًا"
 
@@ -10293,7 +10321,7 @@ msgstr "تنظيف"
 #: app/components/customers/people-list-screen.tsx:290
 #: app/components/locations/delivery-zone-map.tsx:392
 #: app/components/menu/menu-bulk-bar.tsx:50
-#: app/components/menu/menu-review-stack.tsx:836
+#: app/components/menu/menu-review-stack.tsx:934
 #: app/components/reservations/conflict-panel.tsx:376
 #: app/components/reservations/detail-sheet.tsx:1063
 #: app/components/staff/schedule/schedule-page.tsx:566
@@ -11038,7 +11066,7 @@ msgstr "اضبط تفاصيل فرع مطعمك الجديد وساعات الع
 msgid "Confirm"
 msgstr "تأكيد"
 
-#: app/components/menu/menu-review-stack.tsx:1030
+#: app/components/menu/menu-review-stack.tsx:1149
 msgid "Confirm accepting all translations"
 msgstr "تأكيد قبول كل الترجمات"
 
@@ -12021,7 +12049,7 @@ msgstr "تعذّر تحديث حظر الطاولة."
 msgid "Could not update this call. Try again."
 msgstr "تعذّر تحديث هذه المكالمة. حاول مرة أخرى."
 
-#: app/components/menu/menu-health-card.tsx:276
+#: app/components/menu/menu-health-card.tsx:295
 msgid "Could not update this check. Try again."
 msgstr "تعذّر تحديث هذا الفحص. حاول مرة أخرى."
 
@@ -12058,7 +12086,7 @@ msgstr "تعذّر تحميل المزيد من الأصوات. حاول مرة 
 msgid "Couldn't load requests"
 msgstr "تعذّر تحميل الطلبات"
 
-#: app/components/menu/menu-review-stack.tsx:800
+#: app/components/menu/menu-review-stack.tsx:898
 msgid "Couldn't load suggestions."
 msgstr "تعذّر تحميل الاقتراحات."
 
@@ -12094,12 +12122,12 @@ msgstr "تعذر فتح {routeTitle}"
 msgid "Couldn't reach call history. Check your connection and try again."
 msgstr "تعذّر الوصول إلى سجل المكالمات. تحقق من اتصالك وحاول مرة أخرى."
 
-#: app/components/menu/menu-review-stack.tsx:271
-#: app/components/menu/menu-review-stack.tsx:468
+#: app/components/menu/menu-review-stack.tsx:307
+#: app/components/menu/menu-review-stack.tsx:504
 msgid "Couldn't save that change. Try again."
 msgstr "تعذّر حفظ هذا التغيير. حاول مرة أخرى."
 
-#: app/components/menu/menu-review-stack.tsx:741
+#: app/components/menu/menu-review-stack.tsx:848
 msgid "Couldn't save that setting. Try again."
 msgstr "تعذّر حفظ هذا الإعداد. حاول مرة أخرى."
 
@@ -12111,7 +12139,7 @@ msgstr "تعذّر إرسال ضغطة المفتاح. حاول مرة أخرى.
 msgid "Couldn't start your microphone. Check it and try again."
 msgstr "تعذّر تشغيل الميكروفون. تحقّق منه وحاول مرة أخرى."
 
-#: app/components/menu/menu-review-stack.tsx:259
+#: app/components/menu/menu-review-stack.tsx:295
 msgid "Couldn't undo. Reload the page and try again."
 msgstr "تعذّر التراجع. أعد تحميل الصفحة وحاول مرة أخرى."
 
@@ -12364,7 +12392,7 @@ msgstr "كريمة"
 msgid "Create"
 msgstr "إنشاء"
 
-#: app/components/menu/menu-review-card.tsx:148
+#: app/components/menu/menu-review-card.tsx:167
 msgid "Create {subject}"
 msgstr "إنشاء {subject}"
 
@@ -12419,7 +12447,7 @@ msgstr "أنشئ مجموعة إضافات لبدء تقديم خيارات مخ
 msgid "Create a new API key to connect your AI assistants to {orgName} data."
 msgstr "إنشاء مفتاح API جديد لربط مساعدي الذكاء الاصطناعي ببيانات {orgName}."
 
-#: app/components/menu/menu-review-card.tsx:148
+#: app/components/menu/menu-review-card.tsx:167
 msgid "Create a new choice"
 msgstr "إنشاء خيار جديد"
 
@@ -13557,6 +13585,10 @@ msgstr "حجم المجموعة الافتراضي"
 msgid "Default voice"
 msgstr "الصوت الافتراضي"
 
+#: app/components/menu/menu-review-card.tsx:602
+msgid "Default: {defaultLabel}"
+msgstr "الافتراضي: {defaultLabel}"
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:662
 msgid "Default: {defaultLanguage}. The first language you select is the default; callers can switch to the others."
 msgstr "الافتراضية: {defaultLanguage}. أول لغة تختارها هي الافتراضية، ويمكن للمتصلين التبديل إلى اللغات الأخرى."
@@ -14189,7 +14221,7 @@ msgstr "الوصف (يظهر للضيف)"
 msgid "Description (Guest-Facing)"
 msgstr "الوصف (الظاهر للعميل)"
 
-#: app/components/menu/menu-review-stack.tsx:314
+#: app/components/menu/menu-review-stack.tsx:350
 msgid "Description saved for {dishName}"
 msgstr "حُفظ وصف {dishName}"
 
@@ -14616,11 +14648,11 @@ msgstr "الخصومات"
 msgid "Discounts, coupon codes and how often they were used. Only applies when Discounts is turned on for your organization."
 msgstr "الخصومات ورموز القسائم وعدد مرات استخدامها. لا ينطبق إلا عند تفعيل الخصومات لمؤسستك."
 
-#: app/components/menu/menu-health-card.tsx:205
+#: app/components/menu/menu-health-card.tsx:210
 msgid "Dish names in capitals"
 msgstr "أسماء أطباق بأحرف كبيرة"
 
-#: app/components/menu/menu-health-card.tsx:206
+#: app/components/menu/menu-health-card.tsx:211
 msgid "Dish names that are too long"
 msgstr "أسماء أطباق طويلة جدًا"
 
@@ -14644,15 +14676,15 @@ msgstr "يتم تمييز الأطباق التي تتجاوز هذه النسب
 msgid "Dishes and beverages in this category."
 msgstr "الأطباق والمشروبات في هذا التصنيف."
 
-#: app/components/menu/menu-health-card.tsx:209
+#: app/components/menu/menu-health-card.tsx:214
 msgid "Dishes listed twice"
 msgstr "أطباق مدرجة مرتين"
 
-#: app/components/menu/menu-health-card.tsx:201
+#: app/components/menu/menu-health-card.tsx:206
 msgid "Dishes missing a translation"
 msgstr "أطباق بلا ترجمة"
 
-#: app/components/menu/menu-health-card.tsx:198
+#: app/components/menu/menu-health-card.tsx:203
 msgid "Dishes priced at 0"
 msgstr "أطباق سعرها 0"
 
@@ -14660,15 +14692,15 @@ msgstr "أطباق سعرها 0"
 msgid "Dishes that sell without a recipe will show up here, best sellers first."
 msgstr "الأطباق التي تُباع بلا وصفة ستظهر هنا، الأكثر مبيعًا أولًا."
 
-#: app/components/menu/menu-health-card.tsx:203
+#: app/components/menu/menu-health-card.tsx:208
 msgid "Dishes unavailable for a week"
 msgstr "أطباق غير متاحة منذ أسبوع"
 
-#: app/components/menu/menu-health-card.tsx:200
+#: app/components/menu/menu-health-card.tsx:205
 msgid "Dishes with no description"
 msgstr "أطباق بلا وصف"
 
-#: app/components/menu/menu-health-card.tsx:199
+#: app/components/menu/menu-health-card.tsx:204
 msgid "Dishes with no photo"
 msgstr "أطباق بلا صورة"
 
@@ -14676,14 +14708,14 @@ msgstr "أطباق بلا صورة"
 msgid "Dishes without a recipe"
 msgstr "أطباق بلا وصفة"
 
-#: app/components/menu/menu-health-card.tsx:202
+#: app/components/menu/menu-health-card.tsx:207
 msgid "Dishes without allergens or calories"
 msgstr "أطباق بلا مسببات حساسية أو سعرات"
 
 #: app/components/feature-updates.tsx:145
 #: app/components/feature-updates.tsx:225
 #: app/components/inventory/setup-checklist.tsx:70
-#: app/components/menu/menu-health-card.tsx:304
+#: app/components/menu/menu-health-card.tsx:326
 #: app/components/reservations/settings/setup-checklist.tsx:94
 #: app/components/reservations/settings/setup-list-chrome.tsx:117
 #: app/components/reservations/waitlist/waitlist-screen.tsx:156
@@ -14802,7 +14834,7 @@ msgstr "عدم قبول الطلبات الهاتفية لـ"
 #: app/components/inventory/send-order-dialog.tsx:198
 #: app/components/inventory/setup-checklist.tsx:149
 #: app/components/kiosk/kiosk-screens.tsx:720
-#: app/components/menu/menu-review-stack.tsx:964
+#: app/components/menu/menu-review-stack.tsx:1072
 #: app/components/note/share-note-button.tsx:365
 #: app/components/phone-agent/call-request-card.tsx:41
 #: app/components/pos/terminals-manager.tsx:1777
@@ -14824,7 +14856,7 @@ msgstr "تم"
 msgid "Done {when}"
 msgstr "أُنجزت في {when}"
 
-#: app/components/menu/menu-review-stack.tsx:849
+#: app/components/menu/menu-review-stack.tsx:947
 msgid "Done selecting"
 msgstr "تم التحديد"
 
@@ -15964,7 +15996,7 @@ msgstr "هاتف جهة اتصال الطوارئ"
 msgid "Employee"
 msgstr "موظف"
 
-#: app/components/menu/menu-health-card.tsx:204
+#: app/components/menu/menu-health-card.tsx:209
 msgid "Empty categories"
 msgstr "تصنيفات فارغة"
 
@@ -16969,7 +17001,7 @@ msgstr "كل يوم: <0>{usual}</0>"
 msgid "Every delivery here is marked as paid."
 msgstr "كل الشحنات هنا مسجّلة كمدفوعة."
 
-#: app/components/menu/menu-health-card.tsx:538
+#: app/components/menu/menu-health-card.tsx:611
 msgid "Every dish has a photo, a description and a price. Nice work."
 msgstr "لكل طبق صورة ووصف وسعر. أحسنت."
 
@@ -17143,7 +17175,7 @@ msgstr "مثال على الطلب"
 msgid "Example shift"
 msgstr "وردية نموذجية"
 
-#: app/components/menu/menu-health-card.tsx:60
+#: app/components/menu/menu-health-card.tsx:62
 msgid "Excellent"
 msgstr "ممتازة"
 
@@ -18053,7 +18085,7 @@ msgstr "إنهاء الإعداد"
 #~ msgid "Finish the required fields to see a price."
 #~ msgstr "أكمل الحقول المطلوبة لرؤية السعر."
 
-#: app/components/menu/menu-health-card.tsx:548
+#: app/components/menu/menu-health-card.tsx:622
 msgid "Finish these to help guests choose and order."
 msgstr "أكمل هذه البنود لتساعد الضيوف على الاختيار والطلب."
 
@@ -18944,7 +18976,7 @@ msgstr "ذهبي"
 msgid "Golden light, rich textures"
 msgstr "إضاءة ذهبية وملمس غني"
 
-#: app/components/menu/menu-health-card.tsx:66
+#: app/components/menu/menu-health-card.tsx:68
 msgid "Good"
 msgstr "جيدة"
 
@@ -18993,9 +19025,13 @@ msgstr "معرّف Google Tag Manager"
 msgid "Grabbed {grabbedGuestName} ({grabbedPartySize}) at {grabbedTime}. Use arrow keys to change time or table, Shift+Left/Right to resize duration, Enter to drop, Escape to cancel."
 msgstr "تم الإمساك بحجز {grabbedGuestName} ({grabbedPartySize}) عند {grabbedTime}. استخدم مفاتيح الأسهم لتغيير الوقت أو الطاولة، وShift مع السهم الأيمن/الأيسر لتغيير المدة، وEnter للإفلات، وEscape للإلغاء."
 
+#: app/components/menu/menu-health-card.tsx:267
+msgid "Grade"
+msgstr "التقدير"
+
 #: app/components/menu/menu-health-card.tsx:261
-msgid "Grade {grade}"
-msgstr "التقدير {grade}"
+#~ msgid "Grade {grade}"
+#~ msgstr "التقدير {grade}"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:136
 msgid "Graph data is required"
@@ -19270,7 +19306,7 @@ msgstr "الضيوف"
 #~ msgid "Guests appear here after their first booking or walk-in."
 #~ msgstr "يظهر الضيوف هنا بعد أول حجز أو زيارة."
 
-#: app/components/menu/menu-health-card.tsx:222
+#: app/components/menu/menu-health-card.tsx:227
 msgid "Guests are asked to choose and have nothing to pick."
 msgstr "يُطلب من الضيوف الاختيار دون وجود ما يختارونه."
 
@@ -19299,7 +19335,7 @@ msgstr "يمكن للضيوف اختيار هذه المنطقة عند الحج
 msgid "Guests can join online"
 msgstr "يمكن للضيوف الانضمام عبر الإنترنت"
 
-#: app/components/menu/menu-health-card.tsx:223
+#: app/components/menu/menu-health-card.tsx:228
 msgid "Guests can never finish ordering this dish."
 msgstr "لا يمكن للضيوف إتمام طلب هذا الطبق أبدًا."
 
@@ -19359,7 +19395,7 @@ msgstr "يترك الضيوف بطاقة للحجز. لا يُخصم شيء مق
 msgid "Guests leave a card. Nothing is charged unless you charge a fee."
 msgstr "يترك الضيوف بطاقة. لا يُخصم شيء ما لم تُحصّل رسومًا."
 
-#: app/components/menu/menu-health-card.tsx:217
+#: app/components/menu/menu-health-card.tsx:222
 msgid "Guests look for allergens and calories."
 msgstr "يبحث الضيوف عن مسببات الحساسية والسعرات."
 
@@ -19425,7 +19461,7 @@ msgstr "يدفع الضيوف {amount} مسبقًا عن كل ضيف."
 msgid "Guests read these terms and accept them before they book. Write them in each language your website offers."
 msgstr "يقرأ الضيوف هذه الشروط ويوافقون عليها قبل الحجز. اكتبها بكل لغة يقدمها موقعك."
 
-#: app/components/menu/menu-health-card.tsx:216
+#: app/components/menu/menu-health-card.tsx:221
 msgid "Guests reading another language see a gap."
 msgstr "الضيوف الذين يقرؤون بلغة أخرى يرون نقصًا."
 
@@ -19433,11 +19469,11 @@ msgstr "الضيوف الذين يقرؤون بلغة أخرى يرون نقصً
 msgid "Guests scan the code on their table to order rounds and pay once when they leave."
 msgstr "يمسح الضيوف الرمز على طاولتهم لطلب الجولات ويدفعون مرة واحدة عند المغادرة."
 
-#: app/components/menu/menu-health-card.tsx:219
+#: app/components/menu/menu-health-card.tsx:224
 msgid "Guests see a heading with nothing under it."
 msgstr "يرى الضيوف عنوانًا لا شيء تحته."
 
-#: app/components/menu/menu-health-card.tsx:224
+#: app/components/menu/menu-health-card.tsx:229
 msgid "Guests see the same dish twice."
 msgstr "يرى الضيوف الطبق نفسه مرتين."
 
@@ -19660,7 +19696,7 @@ msgstr "مخفي عن الظهور العام. مناسب للطروحات ال�
 msgid "Hide"
 msgstr "إخفاء"
 
-#: app/components/menu/menu-review-stack.tsx:1320
+#: app/components/menu/menu-review-stack.tsx:1439
 msgid "Hide category"
 msgstr "إخفاء الفئة"
 
@@ -19672,7 +19708,7 @@ msgstr "إخفاء التغييرات"
 msgid "Hide details"
 msgstr "إخفاء التفاصيل"
 
-#: app/components/menu/menu-review-stack.tsx:1309
+#: app/components/menu/menu-review-stack.tsx:1428
 msgid "Hide from menu"
 msgstr "إخفاء من القائمة"
 
@@ -19680,7 +19716,7 @@ msgstr "إخفاء من القائمة"
 msgid "Hide from search engines"
 msgstr "إخفاء عن محركات البحث"
 
-#: app/components/menu/menu-health-card.tsx:218
+#: app/components/menu/menu-health-card.tsx:223
 msgid "Hide it or bring it back."
 msgstr "أخفِه أو أعده."
 
@@ -19696,7 +19732,7 @@ msgstr "إخفاء الردود ({replyCount})"
 msgid "Hide the tabs rung up on a Station till"
 msgstr "إخفاء الحسابات المسجّلة على جهاز Station"
 
-#: app/components/menu/menu-review-stack.tsx:1221
+#: app/components/menu/menu-review-stack.tsx:1340
 msgid "Hide this empty category from your menu"
 msgstr "أخفِ هذه الفئة الفارغة من قائمتك"
 
@@ -20182,7 +20218,7 @@ msgstr "لا أستطيع العمل فيها"
 msgid "I checked the online payment for this tab in the payment dashboard and will refund or keep it."
 msgstr "تحققت من الدفعة الإلكترونية لهذا الحساب في لوحة المدفوعات، وسأستردها أو أحتفظ بها."
 
-#: app/components/menu/menu-review-card.tsx:386
+#: app/components/menu/menu-review-card.tsx:405
 msgid "I fixed it myself"
 msgstr "أصلحته بنفسي"
 
@@ -20538,7 +20574,7 @@ msgstr "بما في ذلك الفروع التي تضيفها لاحقًا."
 msgid "Including locations you add later. Applicants choose where."
 msgstr "يشمل الفروع التي تضيفها لاحقًا. يختار المتقدمون المكان."
 
-#: app/components/menu/menu-health-card.tsx:77
+#: app/components/menu/menu-health-card.tsx:81
 msgid "Incomplete"
 msgstr "غير مكتملة"
 
@@ -21305,7 +21341,7 @@ msgstr "لوحة كانبان"
 msgid "Keep"
 msgstr "إبقاء"
 
-#: app/components/menu/menu-review-card.tsx:134
+#: app/components/menu/menu-review-card.tsx:155
 msgid "Keep {subject}"
 msgstr "الإبقاء على {subject}"
 
@@ -21459,7 +21495,7 @@ msgstr "اجعل الرقم الضريبي أقل من 40 حرفًا."
 msgid "Keep their details on file"
 msgstr "الاحتفاظ ببياناتهم"
 
-#: app/components/menu/menu-review-card.tsx:134
+#: app/components/menu/menu-review-card.tsx:155
 msgid "Keep this one"
 msgstr "الإبقاء على هذا"
 
@@ -21934,10 +21970,14 @@ msgstr "رسوم الإلغاء المتأخر"
 msgid "Late-cancel fee ({currency})"
 msgstr "رسوم الإلغاء المتأخر ({currency})"
 
-#: app/components/menu/menu-review-card.tsx:390
 #: app/components/staff/labor/labor-page.tsx:309
 msgid "Later"
 msgstr "أحدث"
+
+#: app/components/menu/menu-review-card.tsx:409
+msgctxt "review card skip option"
+msgid "Later"
+msgstr "لاحقًا"
 
 #: app/components/my-schedule/shifts-view.tsx:104
 msgid "Later weeks"
@@ -22192,7 +22232,7 @@ msgstr "دع الضيوف يختارون"
 msgid "Let guests pay the tab from their phone"
 msgstr "السماح للضيوف بدفع الحساب من هواتفهم"
 
-#: app/components/menu/menu-review-card.tsx:152
+#: app/components/menu/menu-review-card.tsx:171
 msgid "Let guests pick several"
 msgstr "السماح للضيوف باختيار عدة خيارات"
 
@@ -23069,7 +23109,7 @@ msgstr "ينطبق الشعار والخطوط والألوان والزوايا
 msgid "Logout"
 msgstr "تسجيل الخروج"
 
-#: app/components/menu/menu-health-card.tsx:221
+#: app/components/menu/menu-health-card.tsx:226
 msgid "Long names get cut off on small screens."
 msgstr "تُقتطع الأسماء الطويلة على الشاشات الصغيرة."
 
@@ -23230,7 +23270,7 @@ msgstr "د"
 msgid "m@example.com"
 msgstr "م@مثال.com"
 
-#: app/components/menu/menu-review-stack.tsx:1149
+#: app/components/menu/menu-review-stack.tsx:1268
 msgid "Machine translation from {language}. Check it reads right."
 msgstr "ترجمة آلية من {language}. تأكد من أنها تُقرأ بشكل صحيح."
 
@@ -23307,15 +23347,15 @@ msgstr "إنشاء رمز QR جديد لهذه الطاولة؟"
 msgid "Make a test call"
 msgstr "إجراء مكالمة تجريبية"
 
-#: app/components/menu/menu-review-stack.tsx:1315
+#: app/components/menu/menu-review-stack.tsx:1434
 msgid "Make available"
 msgstr "إتاحة"
 
-#: app/components/menu/menu-review-card.tsx:156
+#: app/components/menu/menu-review-card.tsx:175
 msgid "Make it a single choice"
 msgstr "جعله خيارًا واحدًا"
 
-#: app/components/menu/menu-review-stack.tsx:1227
+#: app/components/menu/menu-review-stack.tsx:1346
 msgid "Make it available again, or hide it from your menu"
 msgstr "أتحه مجددًا أو أخفه من قائمتك"
 
@@ -23323,7 +23363,7 @@ msgstr "أتحه مجددًا أو أخفه من قائمتك"
 msgid "Make it more detailed"
 msgstr "اجعلها أكثر تفصيلاً"
 
-#: app/components/menu/menu-review-card.tsx:144
+#: app/components/menu/menu-review-card.tsx:163
 msgid "Make it required"
 msgstr "جعله إلزاميًا"
 
@@ -24047,12 +24087,12 @@ msgstr "إجراءات القائمة"
 msgid "Menu and drop orders placed by this customer."
 msgstr "طلبات القائمة والإصدارات التي قدّمها هذا العميل."
 
-#: app/components/menu/menu-health-card.tsx:499
-#: app/components/menu/menu-health-card.tsx:534
+#: app/components/menu/menu-health-card.tsx:561
+#: app/components/menu/menu-health-card.tsx:600
 msgid "Menu health"
 msgstr "صحة القائمة"
 
-#: app/components/menu/menu-health-card.tsx:564
+#: app/components/menu/menu-health-card.tsx:643
 msgid "Menu health score"
 msgstr "درجة صحة القائمة"
 
@@ -25039,7 +25079,7 @@ msgstr "تحتاج إلى نظرة"
 msgid "Needs a published schedule. Managers choose how they hear about it in their notification settings."
 msgstr "يتطلب جدولًا منشورًا. يختار المديرون طريقة تلقّي التنبيه من إعدادات الإشعارات."
 
-#: app/components/menu/menu-review-card.tsx:578
+#: app/components/menu/menu-review-card.tsx:607
 msgid "Needs a value. Accept it on its own."
 msgstr "يحتاج إلى قيمة. اقبله على حدة."
 
@@ -25098,7 +25138,7 @@ msgstr "يحتاج إلى عناصر أو تصنيفات محددة. اختره�
 msgid "Needs two counts"
 msgstr "يحتاج إلى جردين"
 
-#: app/components/menu/menu-health-card.tsx:72
+#: app/components/menu/menu-health-card.tsx:75
 msgid "Needs work"
 msgstr "تحتاج إلى تحسين"
 
@@ -25472,7 +25512,7 @@ msgstr "وسم جديد"
 msgid "New template"
 msgstr "قالب جديد"
 
-#: app/components/menu/menu-review-card.tsx:413
+#: app/components/menu/menu-review-card.tsx:432
 msgid "New text"
 msgstr "النص الجديد"
 
@@ -25920,7 +25960,7 @@ msgstr "لا توجد سجلات تسليم بعد."
 msgid "No delivery zones configured"
 msgstr "لم يتم ضبط أي مناطق توصيل"
 
-#: app/components/menu/menu-health-card.tsx:229
+#: app/components/menu/menu-health-card.tsx:234
 msgid "No description on purpose"
 msgstr "بلا وصف عن قصد"
 
@@ -25959,19 +25999,19 @@ msgstr "لا توجد خصومات بعد"
 msgid "No discrete action step dispatches recorded for this run."
 msgstr "لم تُسجَّل إرسالات خطوات إجراء منفصلة لهذا التشغيل."
 
-#: app/components/menu/menu-health-card.tsx:106
+#: app/components/menu/menu-health-card.tsx:111
 msgid "No dish has a description"
 msgstr "لا يوجد وصف لأي طبق"
 
-#: app/components/menu/menu-health-card.tsx:96
+#: app/components/menu/menu-health-card.tsx:101
 msgid "No dish has a photo"
 msgstr "لا توجد صورة لأي طبق"
 
-#: app/components/menu/menu-health-card.tsx:130
+#: app/components/menu/menu-health-card.tsx:135
 msgid "No dish lists allergens or calories"
 msgstr "لا يذكر أي طبق مسببات الحساسية أو السعرات الحرارية"
 
-#: app/components/menu/menu-review-stack.tsx:1168
+#: app/components/menu/menu-review-stack.tsx:1287
 msgid "No dishes in this category. Hiding it keeps it off your menu; you can show it again from Categories."
 msgstr "لا توجد أطباق في هذه الفئة. إخفاؤها يبعدها عن قائمتك، ويمكنك إظهارها مجددًا من صفحة الفئات."
 
@@ -26604,7 +26644,7 @@ msgstr "لا يوجد رقم رواتب"
 msgid "No phone can add to it or pay it any more, and scanning the table code is refused too. Close or void it at the counter to finish."
 msgstr "لن يتمكن أي هاتف من الإضافة إليه أو دفعه، ويُرفض مسح رمز الطاولة أيضًا. أغلقه أو ألغه عند الكاونتر للإنهاء."
 
-#: app/components/menu/menu-health-card.tsx:228
+#: app/components/menu/menu-health-card.tsx:233
 msgid "No photo on purpose"
 msgstr "بلا صورة عن قصد"
 
@@ -27299,7 +27339,7 @@ msgstr "لم يتبقَّ شيء"
 msgid "Normal"
 msgstr "عادي"
 
-#: app/components/menu/menu-review-card.tsx:383
+#: app/components/menu/menu-review-card.tsx:402
 msgid "Not a problem"
 msgstr "ليست مشكلة"
 
@@ -27681,7 +27721,7 @@ msgstr "المالملاحظات والتنقل وموقعك — فقط اسأل
 msgid "Notes: {noteCount}"
 msgstr "الملاحظات: {noteCount}"
 
-#: app/components/menu/menu-review-card.tsx:270
+#: app/components/menu/menu-review-card.tsx:289
 msgid "Nothing"
 msgstr "لا شيء"
 
@@ -27782,7 +27822,7 @@ msgstr "لا شيء بانتظار القرار"
 msgid "Nothing is waiting for review."
 msgstr "لا يوجد شيء بانتظار المراجعة."
 
-#: app/components/menu/menu-health-card.tsx:582
+#: app/components/menu/menu-health-card.tsx:661
 msgid "Nothing left to fix"
 msgstr "لا شيء يحتاج إلى إصلاح"
 
@@ -27855,7 +27895,7 @@ msgstr "لا شيء للشحن بعد"
 msgid "Nothing to show here"
 msgstr "لا يوجد ما يُعرض هنا"
 
-#: app/components/menu/menu-review-stack.tsx:956
+#: app/components/menu/menu-review-stack.tsx:1064
 msgid "Nothing to suggest right now."
 msgstr "لا توجد اقتراحات حاليًا."
 
@@ -27973,7 +28013,7 @@ msgstr "أبلغ الضيوف المشتركين قبل الفتح أو الإغ
 msgid "now"
 msgstr "الآن"
 
-#: app/components/menu/menu-review-card.tsx:283
+#: app/components/menu/menu-review-card.tsx:302
 msgid "Now"
 msgstr "الآن"
 
@@ -29121,11 +29161,11 @@ msgstr "إجراءات الخيار"
 msgid "Option Display Name (Guest-Facing)"
 msgstr "اسم الخيار المعروض (الظاهر للعميل)"
 
-#: app/components/menu/menu-health-card.tsx:208
+#: app/components/menu/menu-health-card.tsx:213
 msgid "Option groups with an impossible minimum"
 msgstr "مجموعات خيارات بحد أدنى مستحيل"
 
-#: app/components/menu/menu-health-card.tsx:207
+#: app/components/menu/menu-health-card.tsx:212
 msgid "Option groups with no choices"
 msgstr "مجموعات خيارات بلا خيارات"
 
@@ -31087,7 +31127,7 @@ msgstr "الصور"
 msgid "Photos and videos"
 msgstr "الصور والفيديوهات"
 
-#: app/components/menu/menu-health-card.tsx:214
+#: app/components/menu/menu-health-card.tsx:219
 msgid "Photos help guests choose."
 msgstr "الصور تساعد الضيوف على الاختيار."
 
@@ -31943,7 +31983,7 @@ msgstr "قيد التحضير"
 msgid "Preparing backup…"
 msgstr "جارٍ إعداد النسخة الاحتياطية…"
 
-#: app/components/menu/menu-review-stack.tsx:940
+#: app/components/menu/menu-review-stack.tsx:1048
 msgid "Preparing suggestions…"
 msgstr "جارٍ تجهيز الاقتراحات…"
 
@@ -32050,7 +32090,7 @@ msgstr "الأسبوع السابق"
 
 #: app/components/inventory/recipe-section.tsx:763
 #: app/components/menu/location-overrides-card.tsx:145
-#: app/components/menu/menu-review-card.tsx:413
+#: app/components/menu/menu-review-card.tsx:432
 #: app/components/orders/order-detail.tsx:855
 #: app/components/reservations/experiences/experiences-screen.tsx:295
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:507
@@ -32077,7 +32117,7 @@ msgstr "السعر (USD)"
 msgid "Price / count"
 msgstr "السعر / الكمية"
 
-#: app/components/menu/menu-health-card.tsx:230
+#: app/components/menu/menu-health-card.tsx:235
 msgid "Price 0 on purpose"
 msgstr "السعر 0 عن قصد"
 
@@ -34924,7 +34964,7 @@ msgstr "المطاعم"
 msgid "Restaurants are used to manage your locations, menus, and orders."
 msgstr "تُستخدم المطاعم لإدارة فروعك وقوائمك وطلباتك."
 
-#: app/components/menu/menu-health-card.tsx:338
+#: app/components/menu/menu-health-card.tsx:375
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:466
 #: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:236
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:252
@@ -34938,6 +34978,10 @@ msgstr "استعادة {name}"
 #: app/routes/_app+/$orgSlug_+/menu+/history.$snapshotId.tsx:94
 msgid "Restore this snapshot"
 msgstr "استعادة هذه اللقطة"
+
+#: app/components/menu/menu-health-card.tsx:328
+msgid "Restore: {name}"
+msgstr "استعادة: {name}"
 
 #: app/utils/loyalty/loyalty-labels.ts:137
 msgid "Restored"
@@ -35116,8 +35160,8 @@ msgstr "مراجعة الاستبدال"
 msgid "Review sale"
 msgstr "مراجعة عملية البيع"
 
-#: app/components/menu/menu-health-card.tsx:572
-#: app/components/menu/menu-review-stack.tsx:765
+#: app/components/menu/menu-health-card.tsx:651
+#: app/components/menu/menu-review-stack.tsx:875
 msgid "Review suggestions"
 msgstr "مراجعة الاقتراحات"
 
@@ -36002,7 +36046,7 @@ msgstr "يُحفظ مع الاسترداد، إلى جانب اسم من أجر�
 msgid "Saved with the refund, along with who recorded it."
 msgstr "تُحفظ مع الاسترداد ومع هوية من سجّله."
 
-#: app/components/menu/menu-review-stack.tsx:526
+#: app/components/menu/menu-review-stack.tsx:562
 msgid "Saved: {title}"
 msgstr "تم الحفظ: {title}"
 
@@ -36890,7 +36934,7 @@ msgstr "إعدادات الأمان"
 msgid "See all"
 msgstr "عرض الكل"
 
-#: app/components/menu/menu-health-card.tsx:439
+#: app/components/menu/menu-health-card.tsx:482
 msgid "See all {total}"
 msgstr "عرض الكل ({total})"
 
@@ -37128,7 +37172,7 @@ msgstr "حدد طاولة أو منطقة طعام لحظرها."
 msgid "Select a website page"
 msgstr "اختر صفحة موقع ويب"
 
-#: app/components/menu/menu-review-stack.tsx:838
+#: app/components/menu/menu-review-stack.tsx:936
 #: app/components/roles/tenant-role-access-manager.tsx:1071
 #: app/routes/_app+/$orgSlug_+/staff+/team.import.tsx:308
 msgid "Select all"
@@ -37236,7 +37280,7 @@ msgstr "اختيار صور"
 #~ msgid "Select row"
 #~ msgstr "تحديد صف"
 
-#: app/components/menu/menu-review-stack.tsx:1013
+#: app/components/menu/menu-review-stack.tsx:1132
 msgid "Select several"
 msgstr "تحديد عدة عناصر"
 
@@ -37616,8 +37660,8 @@ msgid "Sent when a manager declines a request."
 msgstr "يُرسل عندما يرفض المدير الطلب."
 
 #: app/components/menu/menu-review-card.tsx:138
-msgid "Sentence case"
-msgstr "حالة الجملة"
+#~ msgid "Sentence case"
+#~ msgstr "حالة الجملة"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2528
 msgid "SEO title"
@@ -37861,7 +37905,7 @@ msgstr "سعر ثابت {price}"
 msgid "Set the physical operating hours when customers can visit this restaurant location."
 msgstr "حدّد ساعات العمل الفعلية التي يمكن للعملاء فيها زيارة هذا الفرع."
 
-#: app/components/menu/menu-review-card.tsx:142
+#: app/components/menu/menu-review-card.tsx:161
 msgid "Set the price"
 msgstr "تحديد السعر"
 
@@ -38282,7 +38326,7 @@ msgstr "عرض زر انضمام في موقعك الإلكتروني. يجب أ
 msgid "Show active experiences"
 msgstr "عرض التجارب النشطة"
 
-#: app/components/menu/menu-health-card.tsx:683
+#: app/components/menu/menu-health-card.tsx:763
 msgid "Show all"
 msgstr "عرض الكل"
 
@@ -38430,51 +38474,51 @@ msgstr "عرض {shownCount} من {total}"
 msgid "Showing 3 of {total} cards. Every card uses the same layout."
 msgstr "يُعرض 3 من {total} بطاقة. تستخدم كل البطاقات التصميم نفسه."
 
-#: app/components/menu/menu-health-card.tsx:652
+#: app/components/menu/menu-health-card.tsx:732
 msgid "Showing dishes listed twice"
 msgstr "عرض الأطباق المدرجة مرتين"
 
-#: app/components/menu/menu-health-card.tsx:631
+#: app/components/menu/menu-health-card.tsx:711
 msgid "Showing dishes missing a translated name or description"
 msgstr "عرض الأطباق التي ينقصها اسم أو وصف مترجم"
 
-#: app/components/menu/menu-health-card.tsx:624
+#: app/components/menu/menu-health-card.tsx:704
 msgid "Showing dishes priced at 0"
 msgstr "عرض الأطباق التي سعرها 0"
 
-#: app/components/menu/menu-health-card.tsx:634
+#: app/components/menu/menu-health-card.tsx:714
 msgid "Showing dishes that don't list allergens or calories"
 msgstr "عرض الأطباق التي لا تذكر مسببات الحساسية أو السعرات الحرارية"
 
-#: app/components/menu/menu-health-card.tsx:636
+#: app/components/menu/menu-health-card.tsx:716
 msgid "Showing dishes unavailable for more than a week"
 msgstr "عرض الأطباق غير المتوفرة منذ أكثر من أسبوع"
 
-#: app/components/menu/menu-health-card.tsx:640
+#: app/components/menu/menu-health-card.tsx:720
 msgid "Showing dishes with names in capitals"
 msgstr "عرض الأطباق ذات الأسماء بأحرف كبيرة"
 
-#: app/components/menu/menu-health-card.tsx:642
+#: app/components/menu/menu-health-card.tsx:722
 msgid "Showing dishes with names over 60 characters"
 msgstr "عرض الأطباق التي تتجاوز أسماؤها 60 حرفًا"
 
-#: app/components/menu/menu-health-card.tsx:628
+#: app/components/menu/menu-health-card.tsx:708
 msgid "Showing dishes with no description"
 msgstr "عرض الأطباق التي ليس لها وصف"
 
-#: app/components/menu/menu-health-card.tsx:626
+#: app/components/menu/menu-health-card.tsx:706
 msgid "Showing dishes with no photo"
 msgstr "عرض الأطباق التي ليس لها صورة"
 
-#: app/components/menu/menu-health-card.tsx:638
+#: app/components/menu/menu-health-card.tsx:718
 msgid "Showing empty categories"
 msgstr "عرض الفئات الفارغة"
 
-#: app/components/menu/menu-health-card.tsx:647
+#: app/components/menu/menu-health-card.tsx:727
 msgid "Showing option groups that require more picks than they allow"
 msgstr "عرض مجموعات الخيارات التي تشترط اختيارات أكثر مما تسمح به"
 
-#: app/components/menu/menu-health-card.tsx:644
+#: app/components/menu/menu-health-card.tsx:724
 msgid "Showing option groups with no choices guests can see"
 msgstr "عرض مجموعات الخيارات التي لا تحتوي على خيارات يراها الضيوف"
 
@@ -38683,8 +38727,8 @@ msgid "Sizes, portions, and how to describe your dishes."
 msgstr "الأحجام والحصص وطريقة وصف أطباقك."
 
 #: app/components/inventory/prep-screen.tsx:512
-#: app/components/menu/menu-review-card.tsx:376
-#: app/components/menu/menu-review-stack.tsx:1300
+#: app/components/menu/menu-review-card.tsx:395
+#: app/components/menu/menu-review-stack.tsx:1419
 msgid "Skip"
 msgstr "تخطَّ"
 
@@ -38692,7 +38736,7 @@ msgstr "تخطَّ"
 msgid "Skip for now"
 msgstr "تخطي الآن"
 
-#: app/components/menu/menu-review-stack.tsx:884
+#: app/components/menu/menu-review-stack.tsx:992
 msgid "Skip selected"
 msgstr "تخطي المحدد"
 
@@ -38852,7 +38896,11 @@ msgstr "بعض المناصب"
 msgid "Some rows changed. Refresh the preview and try again."
 msgstr "تغيّرت بعض الصفوف. حدّث المعاينة وحاول مرة أخرى."
 
-#: app/components/menu/menu-review-stack.tsx:875
+#: app/components/menu/menu-review-stack.tsx:983
+msgid "Some selected suggestions merge dishes or add choices. Look at each one and accept it on its own."
+msgstr "بعض الاقتراحات المحددة تدمج أطباقًا أو تضيف خيارات. راجع كل اقتراح واقبله على حدة."
+
+#: app/components/menu/menu-review-stack.tsx:975
 msgid "Some selected suggestions need a value. Accept those on their own."
 msgstr "بعض الاقتراحات المحددة تحتاج إلى قيمة. اقبلها كلًا على حدة."
 
@@ -38860,7 +38908,7 @@ msgstr "بعض الاقتراحات المحددة تحتاج إلى قيمة. �
 msgid "Some settings do not fit together. Check the highlighted fields."
 msgstr "بعض الإعدادات لا تتوافق معًا. تحقق من الحقول المميزة."
 
-#: app/components/menu/menu-review-stack.tsx:1019
+#: app/components/menu/menu-review-stack.tsx:1138
 msgid "Some suggestions couldn't be written right now, so they were left out."
 msgstr "تعذّرت كتابة بعض الاقتراحات الآن، لذا لم تُعرض."
 
@@ -39668,7 +39716,7 @@ msgstr "البقاء"
 msgid "Stayed on current page"
 msgstr "تم البقاء في الصفحة الحالية"
 
-#: app/components/menu/menu-health-card.tsx:319
+#: app/components/menu/menu-health-card.tsx:380
 msgid "Stays dismissed until this changes."
 msgstr "يبقى متجاهلًا حتى يتغير هذا."
 
@@ -39697,7 +39745,7 @@ msgstr "ما زال في الدوام"
 msgid "Still needed: {missingList}"
 msgstr "لا يزال مطلوبًا: {missingList}"
 
-#: app/components/menu/menu-review-card.tsx:311
+#: app/components/menu/menu-review-card.tsx:330
 msgid "Still used in"
 msgstr "لا يزال مستخدمًا في"
 
@@ -40037,12 +40085,12 @@ msgstr "اقترح تصنيفات أخرى كإضافات عندما يتصفح 
 msgid "Suggested <0>{suggestedText}</0>"
 msgstr "المقترح <0>{suggestedText}</0>"
 
-#: app/components/menu/menu-review-stack.tsx:1195
-#: app/components/menu/menu-review-stack.tsx:1197
+#: app/components/menu/menu-review-stack.tsx:1314
+#: app/components/menu/menu-review-stack.tsx:1316
 msgid "Suggested change"
 msgstr "التغيير المقترح"
 
-#: app/components/menu/menu-review-stack.tsx:1193
+#: app/components/menu/menu-review-stack.tsx:1312
 msgid "Suggested description"
 msgstr "الوصف المقترح"
 
@@ -40050,15 +40098,15 @@ msgstr "الوصف المقترح"
 msgid "Suggested orders"
 msgstr "الطلبات المقترحة"
 
-#: app/components/menu/menu-review-stack.tsx:1190
+#: app/components/menu/menu-review-stack.tsx:1309
 msgid "Suggested translation ({language})"
 msgstr "الترجمة المقترحة ({language})"
 
-#: app/components/menu/menu-review-card.tsx:491
+#: app/components/menu/menu-review-card.tsx:510
 msgid "Suggested:"
 msgstr "المقترح:"
 
-#: app/components/menu/menu-review-stack.tsx:569
+#: app/components/menu/menu-review-stack.tsx:605
 msgid "Suggestion is back"
 msgstr "عاد الاقتراح"
 
@@ -40066,15 +40114,15 @@ msgstr "عاد الاقتراح"
 msgid "Suggestions"
 msgstr "الاقتراحات"
 
-#: app/components/menu/menu-review-stack.tsx:705
+#: app/components/menu/menu-review-stack.tsx:817
 msgid "Suggestions are back"
 msgstr "عادت الاقتراحات"
 
-#: app/components/menu/menu-review-stack.tsx:1115
+#: app/components/menu/menu-review-stack.tsx:1234
 msgid "Suggestions reviewed"
 msgstr "الاقتراحات التي روجعت"
 
-#: app/components/menu/menu-review-stack.tsx:855
+#: app/components/menu/menu-review-stack.tsx:955
 msgid "Suggestions to select"
 msgstr "اقتراحات للتحديد"
 
@@ -43498,7 +43546,7 @@ msgstr "هذه البطاقة لا تزال مفتوحة. أضف وقت الان
 msgid "This change conflicted with an earlier attempt. Close this form and try again."
 msgstr "تعارض هذا التغيير مع محاولة سابقة. أغلق هذا النموذج وحاول مرة أخرى."
 
-#: app/components/menu/menu-review-stack.tsx:457
+#: app/components/menu/menu-review-stack.tsx:493
 msgid "This changed since the suggestion was made"
 msgstr "تغيّر هذا منذ تقديم الاقتراح"
 
@@ -43874,7 +43922,7 @@ msgstr "لم يعد هذا موجودًا. أعد التحميل لرؤية أح
 msgid "This number reaches the AI agent, so transfers would loop back to it. Use a number staff answer directly."
 msgstr "هذا الرقم يصل إلى الوكيل الذكي، لذا ستعود التحويلات إليه. استخدم رقمًا يرد عليه الفريق مباشرة."
 
-#: app/components/menu/menu-health-card.tsx:275
+#: app/components/menu/menu-health-card.tsx:294
 msgid "This one already passes, so there is nothing to dismiss."
 msgstr "هذا الفحص ناجح بالفعل، فلا شيء لتجاهله."
 
@@ -44826,8 +44874,8 @@ msgid "Title"
 msgstr "العنوان"
 
 #: app/components/menu/menu-review-card.tsx:136
-msgid "Title Case"
-msgstr "Title Case"
+#~ msgid "Title Case"
+#~ msgstr "Title Case"
 
 #: app/components/settings/cards/organization/site-theme-card.tsx:784
 msgid "Titles and section headings."
@@ -44977,8 +45025,8 @@ msgstr "غدًا"
 msgid "Too busy"
 msgstr "ضغط عمل كبير"
 
-#: app/components/menu/menu-review-stack.tsx:270
-#: app/components/menu/menu-review-stack.tsx:465
+#: app/components/menu/menu-review-stack.tsx:306
+#: app/components/menu/menu-review-stack.tsx:501
 msgid "Too many changes at once. Wait a minute and try again."
 msgstr "تغييرات كثيرة في وقت واحد. انتظر دقيقة وحاول مرة أخرى."
 
@@ -45223,15 +45271,15 @@ msgstr "ترجمة الكل"
 msgid "Translate All"
 msgstr "ترجمة الكل"
 
-#: app/components/menu/menu-review-stack.tsx:1350
+#: app/components/menu/menu-review-stack.tsx:1469
 msgid "Translate new dishes into Arabic automatically"
 msgstr "ترجمة الأطباق الجديدة إلى العربية تلقائيًا"
 
-#: app/components/menu/menu-review-stack.tsx:1352
+#: app/components/menu/menu-review-stack.tsx:1471
 msgid "Translate new dishes into your other languages automatically"
 msgstr "ترجمة الأطباق الجديدة إلى لغاتك الأخرى تلقائيًا"
 
-#: app/components/menu/menu-review-stack.tsx:313
+#: app/components/menu/menu-review-stack.tsx:349
 msgid "Translation saved for {dishName}"
 msgstr "حُفظت ترجمة {dishName}"
 
@@ -45413,7 +45461,7 @@ msgstr "جرّب تعديل البحث أو الفلتر."
 #: app/components/media-library/photo-studio-dialog.tsx:944
 #: app/components/menu/delete-effects.tsx:468
 #: app/components/menu/delete-effects.tsx:543
-#: app/components/menu/menu-review-stack.tsx:809
+#: app/components/menu/menu-review-stack.tsx:907
 #: app/components/orders/order-detail.tsx:1100
 #: app/components/phone-agent/call-detail-sheet.tsx:367
 #: app/components/phone-agent/call-recording-player.tsx:154
@@ -45953,14 +46001,14 @@ msgstr "تحت"
 #: app/components/locations/delivery-zone-map.tsx:382
 #: app/components/media-library/photo-studio-dialog.tsx:867
 #: app/components/menu/menu-bulk-edit-sheet.tsx:277
-#: app/components/menu/menu-review-stack.tsx:315
-#: app/components/menu/menu-review-stack.tsx:362
-#: app/components/menu/menu-review-stack.tsx:402
-#: app/components/menu/menu-review-stack.tsx:437
-#: app/components/menu/menu-review-stack.tsx:527
-#: app/components/menu/menu-review-stack.tsx:568
-#: app/components/menu/menu-review-stack.tsx:640
-#: app/components/menu/menu-review-stack.tsx:704
+#: app/components/menu/menu-review-stack.tsx:351
+#: app/components/menu/menu-review-stack.tsx:398
+#: app/components/menu/menu-review-stack.tsx:438
+#: app/components/menu/menu-review-stack.tsx:473
+#: app/components/menu/menu-review-stack.tsx:563
+#: app/components/menu/menu-review-stack.tsx:604
+#: app/components/menu/menu-review-stack.tsx:728
+#: app/components/menu/menu-review-stack.tsx:816
 #: app/components/reservations/detail-sheet.tsx:745
 #: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:597
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:702
@@ -46530,8 +46578,8 @@ msgid "Uploading…"
 msgstr "جارٍ الرفع…"
 
 #: app/components/menu/menu-review-card.tsx:140
-msgid "UPPER CASE"
-msgstr "UPPER CASE"
+#~ msgid "UPPER CASE"
+#~ msgstr "UPPER CASE"
 
 #: app/components/menu/menu-bulk-edit-sheet.tsx:311
 #: app/components/menu/menu-bulk-edit-sheet.tsx:418
@@ -46600,7 +46648,7 @@ msgstr "استخدم {count} أو أكثر."
 msgid "Use {DASHBOARD_NAME_MAX_LENGTH} characters or fewer."
 msgstr "استخدم {DASHBOARD_NAME_MAX_LENGTH} حرفًا أو أقل."
 
-#: app/components/menu/menu-review-card.tsx:146
+#: app/components/menu/menu-review-card.tsx:165
 msgid "Use {subject}"
 msgstr "استخدام {subject}"
 
@@ -46716,7 +46764,7 @@ msgstr "استخدم «إضافة كتلة» لوضع الإحصائيات وا�
 msgid "Use all suggestions"
 msgstr "استخدام كل الاقتراحات"
 
-#: app/components/menu/menu-review-card.tsx:146
+#: app/components/menu/menu-review-card.tsx:165
 msgid "Use an existing choice"
 msgstr "استخدام خيار موجود"
 
@@ -47963,7 +48011,7 @@ msgstr "أرسلنا لك للتو رسالة نصية تحتوي على راب�
 msgid "We make this in batches and count it"
 msgstr "نصنعه على دفعات ونجرده"
 
-#: app/components/menu/menu-review-stack.tsx:1358
+#: app/components/menu/menu-review-stack.tsx:1477
 msgid "We only ask when we're unsure"
 msgstr "لا نسألك إلا عندما لا نكون متأكدين"
 
@@ -47991,7 +48039,7 @@ msgstr "سنرسل إلى {email} رابطًا لإنشاء تسجيل دخول.
 msgid "We will email {email} a link to create a login. They join as a member, without access to staff or pay data. This is optional; they can clock in with a PIN either way."
 msgstr "سنرسل إلى {email} رابطًا لإنشاء حساب دخول. ينضمون كأعضاء، دون صلاحية الوصول إلى بيانات الموظفين أو الأجور. هذا اختياري؛ يمكنهم تسجيل الحضور برمز PIN في الحالتين."
 
-#: app/components/menu/menu-review-stack.tsx:567
+#: app/components/menu/menu-review-stack.tsx:603
 msgid "We won't suggest this again"
 msgstr "لن نقترح هذا مرة أخرى"
 
@@ -49094,7 +49142,7 @@ msgstr "أنت تكتب نسخة {language}. أي حقل تتركه فارغًا
 msgid "Writing the message"
 msgstr "جارٍ كتابة الرسالة"
 
-#: app/components/menu/menu-review-stack.tsx:1163
+#: app/components/menu/menu-review-stack.tsx:1282
 msgid "Written from the dish name, category and options."
 msgstr "مكتوب من اسم الطبق وفئته وخياراته."
 
@@ -49703,7 +49751,7 @@ msgstr "أنت في قائمة الانتظار!"
 msgid "You're signed in on {sessionCount, plural, one {# device} other {# devices}} as {userEmail}"
 msgstr "أنت مسجل الدخول على {sessionCount, plural, one {# جهاز} other {# أجهزة}} كـ {userEmail}"
 
-#: app/components/menu/menu-review-stack.tsx:795
+#: app/components/menu/menu-review-stack.tsx:893
 msgid "You've asked for a lot of suggestions this hour. Try again later."
 msgstr "طلبت اقتراحات كثيرة خلال هذه الساعة. حاول لاحقًا."
 
@@ -49913,7 +49961,7 @@ msgstr "يضبط مسؤول المنصة بيانات اعتماد LiveKit. حت
 msgid "Your points"
 msgstr "نقاطك"
 
-#: app/components/menu/menu-review-stack.tsx:461
+#: app/components/menu/menu-review-stack.tsx:497
 msgid "Your POS manages this, so it can't be changed here. Change it in your POS."
 msgstr "نظام نقاط البيع لديك يدير هذا، لذا لا يمكن تغييره هنا. غيّره من نظام نقاط البيع."
 
