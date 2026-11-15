@@ -14,6 +14,7 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from '@repo/ui/alert-dialog'
+import { DEFAULT_SERVICE_FEE_LABEL } from '@repo/common/service-fee'
 import { Avatar, AvatarFallback } from '@repo/ui/avatar'
 import { Badge } from '@repo/ui/badge'
 import {
@@ -453,6 +454,7 @@ export function OrderDetail({
 		discounts.length > 0 ||
 		!!order.taxCents ||
 		!!order.tipCents ||
+		!!order.serviceFeeCents ||
 		!!order.deliveryFeeCents
 
 	return (
@@ -953,6 +955,19 @@ export function OrderDetail({
 											{order.deliveryFeeCents ? (
 												<TotalRow label={<Trans>Delivery fee</Trans>}>
 													{money(order.deliveryFeeCents)}
+												</TotalRow>
+											) : null}
+											{order.serviceFeeCents ? (
+												<TotalRow
+													label={
+														order.serviceFeeLabel &&
+														order.serviceFeeLabel !== DEFAULT_SERVICE_FEE_LABEL
+															? order.serviceFeeLabel
+															: _(msg`Service fee`)
+													}
+													testId="order-service-fee-row"
+												>
+													{money(order.serviceFeeCents)}
 												</TotalRow>
 											) : null}
 											{order.taxCents ? (

@@ -49,6 +49,11 @@ export interface PublicLocationData {
 	prepTime: number
 	fulfillmentOptions: FulfillmentOptions
 	inHouseTips: InHouseTips
+	/**
+	 * The tip buttons per order type (#118), as saved; null until an operator
+	 * saves them (checkout then shows the default buttons for the currency).
+	 */
+	tipSettings: unknown
 	scheduling: SchedulingOptions
 	deliveryConfig: DeliveryConfig
 	deliveryZones: DeliveryZone[]

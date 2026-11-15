@@ -5,7 +5,13 @@ import {
 	type DeliveryZone,
 	DEFAULT_DELIVERY_CONFIG,
 	DEFAULT_DELIVERY_ZONE,
+	resolveTipSettings,
 } from '@repo/common/location-types'
+import { getLocationCurrency } from '@repo/common/location-currency'
+import {
+	defaultServiceFeeSettings,
+	serviceFeeSettingsSchema,
+} from '@repo/common/service-fee'
 import { redirectWithToast } from '@repo/common/toast'
 import { and, asc, db, eq, ne, OrganizationLocation } from '@repo/database'
 import {
@@ -43,6 +49,12 @@ import {
 import { type OrderPolicyValues } from '#app/components/locations/order-policies-card.tsx'
 import { CopyLocationOverridesDialog } from '#app/components/menu/copy-location-overrides-dialog.tsx'
 import { ensureLocationCoordinates } from '#app/utils/location/geocoder.server.ts'
+import {
+	feeFormFromSettings,
+	parseCheckoutSettingsFields,
+	tipFormFromSettings,
+} from '#app/utils/orders/checkout-settings.ts'
+import { isServiceFeeEnabled } from '#app/utils/orders/service-fee.server.ts'
 import { locationTaxInputFields } from '#app/utils/location/tax-settings.ts'
 import {
 	isGuestCancelEnabled,
@@ -218,6 +230,31 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 				}
 			: undefined
 
+	// Tip choices (#118) always; the service fee (#123) while its flag is on.
+	// The currency is the one the order context gives this location.
+	const checkoutCurrency =
+		organization.dataRegion === 'ksa'
+			? 'SAR'
+			: getLocationCurrency(location.address)
+	const serviceFeeEnabled = await isServiceFeeEnabled(organization.id)
+	const savedFee = (() => {
+		const parsed = serviceFeeSettingsSchema.safeParse(
+			parseJson<unknown>(record.serviceFee),
+		)
+		return parsed.success
+			? parsed.data
+			: defaultServiceFeeSettings(checkoutCurrency)
+	})()
+	const checkoutSettings = {
+		currency: checkoutCurrency,
+		serviceFeeEnabled,
+		tips: tipFormFromSettings(
+			resolveTipSettings(record.tipSettings, checkoutCurrency),
+			checkoutCurrency,
+		),
+		fee: feeFormFromSettings(savedFee, checkoutCurrency),
+	}
+
 	const allLocations = await db
 		.select({
 			id: OrganizationLocation.id,
@@ -233,6 +270,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		reservationsEnabled,
 		allLocations,
 		orderPolicies,
+		checkoutSettings,
 	}
 }
 
@@ -340,6 +378,29 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		}
 	}
 
+	// Tip choices and the service fee; the fee group is skipped while its flag
+	// is off. The currency is the one the order context gives this location.
+	const [currentLocation] = await db
+		.select({ address: OrganizationLocation.address })
+		.from(OrganizationLocation)
+		.where(
+			and(
+				eq(OrganizationLocation.id, locationId),
+				eq(OrganizationLocation.organizationId, organization.id),
+			),
+		)
+		.limit(1)
+	const checkout = parseCheckoutSettingsFields(rawData, {
+		currency:
+			organization.dataRegion === 'ksa'
+				? 'SAR'
+				: getLocationCurrency(data.address ?? currentLocation?.address),
+		serviceFeeEnabled: await isServiceFeeEnabled(organization.id),
+	})
+	if (!checkout.ok) {
+		return { error: checkout.error, checkoutIssue: checkout.issue }
+	}
+
 	// Check if another location has this slug
 	const [existingWithSlug] = await db
 		.select({ id: OrganizationLocation.id })
@@ -395,6 +456,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				deliveryConfig: data.deliveryConfig || null,
 				deliveryZones: data.deliveryZones || null,
 				...policy.patch,
+				...checkout.patch,
 			})
 			.where(
 				and(
@@ -421,6 +483,7 @@ export default function EditLocationRoute() {
 		reservationsEnabled,
 		allLocations,
 		orderPolicies,
+		checkoutSettings,
 	} = useLoaderData<typeof loader>()
 	const deleteFetcher = useFetcher<{
 		error?: string
@@ -565,6 +628,7 @@ export default function EditLocationRoute() {
 				isEditing={true}
 				initialData={location}
 				orderPolicies={orderPolicies}
+				checkoutSettings={checkoutSettings}
 			/>
 
 			<AlertDialog

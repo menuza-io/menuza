@@ -3,6 +3,7 @@ import { parseWithZod } from '@conform-to/zod/v4'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { Alert, AlertDescription } from '@repo/ui/alert'
 import { Button } from '@repo/ui/button'
+import { Checkbox } from '@repo/ui/checkbox'
 import {
 	Dialog,
 	DialogContent,
@@ -24,6 +25,7 @@ import { minorToMajorText, parseMoneyToMinor } from '#app/utils/money-input.ts'
 import {
 	formatMoney,
 	providerRefundableCents,
+	serviceFeeRefundableCents,
 } from '#app/utils/orders/order-model.ts'
 import { ordersHref } from '#app/utils/orders/orders-link.ts'
 
@@ -82,6 +84,12 @@ export function ProviderRefundDialog({
 		refundedCents: number
 		refundPendingCents?: number
 		refundableCents?: number
+		/** The service fee (#123): what the order charged and refunds so far. */
+		serviceFeeChargeCents?: number
+		refunds?: ReadonlyArray<{
+			serviceFeeCents?: number
+			status?: 'pending' | 'succeeded' | 'failed'
+		}>
 	}
 	orgSlug: string
 	open: boolean
@@ -95,6 +103,8 @@ export function ProviderRefundDialog({
 }) {
 	const { t, i18n } = useLingui()
 	const [kind, setKind] = useState<RefundKind>('full')
+	// A partial refund gives back the service fee only when this is ticked.
+	const [includeFee, setIncludeFee] = useState(false)
 	const [submitting, setSubmitting] = useState(false)
 	const [error, setError] = useState<string | null>(null)
 	// One key per submit: kept across a network retry of the same refund,
@@ -105,6 +115,7 @@ export function ProviderRefundDialog({
 		formatMoney(cents, order.currency, i18n.locale)
 	const leftCents = providerRefundableCents(order)
 	const pendingCents = order.refundPendingCents ?? 0
+	const feeLeftCents = Math.min(serviceFeeRefundableCents(order), leftCents)
 
 	const schema = useMemo(
 		() =>
@@ -133,7 +144,7 @@ export function ProviderRefundDialog({
 						})
 						return
 					}
-					if (cents > leftCents) {
+					if (cents + (includeFee ? feeLeftCents : 0) > leftCents) {
 						ctx.addIssue({
 							code: 'custom',
 							path: ['amount'],
@@ -141,7 +152,7 @@ export function ProviderRefundDialog({
 						})
 					}
 				}),
-		[t, leftCents, order.currency],
+		[t, leftCents, order.currency, includeFee, feeLeftCents],
 	)
 
 	const describeError = (
@@ -207,6 +218,9 @@ export function ProviderRefundDialog({
 									min: 1,
 									currency: order.currency,
 								}) ?? 0,
+							...(includeFee && feeLeftCents > 0
+								? { includeServiceFee: true }
+								: {}),
 							note: value.note,
 						}
 			const signature = JSON.stringify(body)
@@ -362,6 +376,22 @@ export function ProviderRefundDialog({
 							dir="ltr"
 							data-testid="provider-refund-amount"
 						/>
+					) : null}
+					{kind === 'partial' && feeLeftCents > 0 ? (
+						<label
+							className="flex items-start gap-2.5 text-sm"
+							data-testid="provider-refund-include-fee"
+						>
+							<Checkbox
+								checked={includeFee}
+								onCheckedChange={(c) => setIncludeFee(c === true)}
+							/>
+							<span>
+								<Trans>
+									Also refund the service fee (<bdi>{money(feeLeftCents)}</bdi>)
+								</Trans>
+							</span>
+						</label>
 					) : null}
 					<TextAreaField
 						label={<Trans>Note</Trans>}

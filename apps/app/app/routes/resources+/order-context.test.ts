@@ -191,6 +191,8 @@ describe('internal restaurant order context', () => {
 			// reads every location as no cancel and Automatic.
 			guestCancel: {},
 			acceptance: {},
+			// The service fee flag defaults off too: no location is listed.
+			serviceFee: { version: 1, locations: {} },
 			// Discount flags default off too: nothing to evaluate.
 			discounts: {
 				features: { automatic: false, coupons: false },
@@ -537,5 +539,86 @@ describe('order context: guest cancel and order acceptance', () => {
 		const payload = (await loadContext()) as unknown as Extra
 		expect(payload.guestCancel).toEqual({})
 		expect(payload.acceptance).toEqual({})
+	})
+})
+
+describe('order context: service fee', () => {
+	beforeEach(async () => {
+		resetMockDb()
+		findOrg.mockReset().mockResolvedValue(orgRow())
+		buildMenu.mockReset().mockResolvedValue({
+			payload: MENU_PAYLOAD,
+			secondsUntilVariationReturn: null,
+		})
+		buildDrop.mockReset().mockResolvedValue(null)
+		featureFlag.mockReset().mockResolvedValue(null)
+	})
+
+	const ON = JSON.stringify({
+		enabled: true,
+		percentBp: 300,
+		fixedMinor: 0,
+		capMinor: 200,
+		smallOrderBelowMinor: null,
+		smallOrderFeeMinor: null,
+		fulfillments: ['pickup'],
+		label: 'Service fee',
+		explanation: null,
+		taxable: false,
+	})
+
+	async function withFees(rows: Array<{ id: string; serviceFee: string | null }>) {
+		const { OrganizationLocation } = await import('@repo/database')
+		selectRows(
+			new Map([
+				[
+					OrganizationLocation,
+					rows.map((row) => ({
+						...row,
+						largeOrderThreshold: null,
+						largeOrderThresholdType: 'dollars',
+						largeOrderExtraPrepTime: 0,
+					})),
+				],
+			]),
+		)
+	}
+
+	const flagOn = () =>
+		featureFlag.mockImplementation(async (key: string) =>
+			key === 'ordering.service_fee' ? true : null,
+		)
+
+	type Fee = { serviceFee: { version: number; locations: Record<string, unknown> } }
+
+	it('lists no location while the flag is off, whatever is saved', async () => {
+		await withFees([{ id: 'loc_a', serviceFee: ON }])
+		const payload = (await loadContext()) as unknown as Fee
+		expect(payload.serviceFee).toEqual({ version: 1, locations: {} })
+	})
+
+	it('lists only locations whose saved fee is on, as stored', async () => {
+		flagOn()
+		await withFees([
+			{ id: 'loc_on', serviceFee: ON },
+			{ id: 'loc_off', serviceFee: JSON.stringify({ ...JSON.parse(ON), enabled: false }) },
+			{ id: 'loc_none', serviceFee: null },
+		])
+		const payload = (await loadContext()) as unknown as Fee
+		expect(payload.serviceFee.version).toBe(1)
+		expect(payload.serviceFee.locations).toEqual({ loc_on: JSON.parse(ON) })
+	})
+
+	it('passes a value it cannot read through, so the region refuses instead of dropping the fee', async () => {
+		flagOn()
+		await withFees([
+			{ id: 'loc_junk', serviceFee: '{not json' },
+			{ id: 'loc_odd', serviceFee: JSON.stringify({ percentBp: 'x' }) },
+		])
+		const payload = (await loadContext()) as unknown as Fee
+		expect(payload.serviceFee.locations).toEqual({
+			loc_junk: { enabled: true },
+			loc_odd: { percentBp: 'x' },
+		})
 	})
 })

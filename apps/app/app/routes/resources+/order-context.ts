@@ -47,6 +47,10 @@ import {
 } from '#app/utils/menu/public-menu-context.server.ts'
 import { buildOrderPolicyContext } from '#app/utils/orders/order-policies.server.ts'
 import {
+	buildServiceFeeContext,
+	type ServiceFeeContext,
+} from '#app/utils/orders/service-fee.server.ts'
+import {
 	resolveRestaurantOnlinePayment,
 	type RestaurantOnlinePayment,
 } from '#app/utils/restaurant-orders/payment-config.server.ts'
@@ -91,6 +95,12 @@ export type OrderContextResponse = {
 	 * missing location as Automatic.
 	 */
 	acceptance: OrderAcceptanceContext
+	/**
+	 * The guest service fee per location id (`ordering.service_fee`, #123):
+	 * only while the flag is on, only locations whose fee is on. The region
+	 * refuses orders at a listed location whose fee it cannot read.
+	 */
+	serviceFee: ServiceFeeContext
 }
 
 async function readQrOrderingFeatures(
@@ -200,6 +210,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		),
 		guestCancel: orderPolicies.guestCancel,
 		acceptance: orderPolicies.acceptance,
+		serviceFee: await buildServiceFeeContext(
+			org.id,
+			parsed.data.locationId ?? null,
+		),
 	}
 
 	return Response.json(response, {

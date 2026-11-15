@@ -210,6 +210,7 @@ export async function buildPublicSiteMenuPayload(
 				loc.inHouseTips,
 				DEFAULT_IN_HOUSE_TIPS,
 			),
+			tipSettings: safeJsonParse<unknown>(loc.tipSettings, null),
 			scheduling: safeJsonParse<SchedulingOptions>(
 				loc.scheduling,
 				DEFAULT_SCHEDULING,
