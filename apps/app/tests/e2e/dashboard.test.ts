@@ -18,7 +18,7 @@ import {
 import { organizationTemplates } from '@repo/reports'
 import { saveReport } from '@repo/reports/server'
 import { expect, test } from '#tests/playwright-utils.ts'
-import { createTestOrganization } from '#tests/test-utils.ts'
+import { createTestOrganizationWithClassicHome } from '#tests/test-utils.ts'
 // Removed db import - using test utilities instead
 import { initializeOnboardingSteps } from '../../../../packages/database/setup-onboarding.ts'
 
@@ -212,7 +212,7 @@ test.describe('Dashboard', () => {
 		const user = await login()
 
 		// Create an organization for the user
-		const org = await createTestOrganization(user.id, 'admin')
+		const org = await createTestOrganizationWithClassicHome(user.id, 'admin')
 
 		// Navigate to organization dashboard
 		await navigate('/:slug', { slug: org.slug })
@@ -235,7 +235,7 @@ test.describe('Dashboard', () => {
 		const user = await login()
 
 		// Create an organization for the user
-		const org = await createTestOrganization(user.id, 'admin')
+		const org = await createTestOrganizationWithClassicHome(user.id, 'admin')
 
 		// Create notes over different days
 		const today = new Date()
@@ -326,7 +326,7 @@ test.describe('Dashboard', () => {
 		const user = await login()
 
 		// Create an organization for the user
-		const org = await createTestOrganization(user.id, 'admin')
+		const org = await createTestOrganizationWithClassicHome(user.id, 'admin')
 
 		// Create some recent notes
 		await db.insert(OrganizationNote).values([
@@ -452,7 +452,7 @@ test.describe('Dashboard', () => {
 		const user = await login()
 
 		// Create an organization for the user
-		const org = await createTestOrganization(user.id, 'admin')
+		const org = await createTestOrganizationWithClassicHome(user.id, 'admin')
 
 		// Navigate to organization dashboard
 		await navigate('/:slug', { slug: org.slug })
@@ -516,7 +516,7 @@ test.describe('Dashboard', () => {
 		const user = await login()
 
 		// Create an organization for the user
-		const org = await createTestOrganization(user.id, 'admin')
+		const org = await createTestOrganizationWithClassicHome(user.id, 'admin')
 
 		// Navigate to organization dashboard
 		await navigate('/:slug', { slug: org.slug })
@@ -552,7 +552,7 @@ test.describe('Dashboard', () => {
 		const user = await login()
 
 		// Create an organization for the user
-		const org = await createTestOrganization(user.id, 'admin')
+		const org = await createTestOrganizationWithClassicHome(user.id, 'admin')
 
 		// Test desktop view
 		await page.setViewportSize({ width: 1200, height: 800 })
@@ -583,14 +583,14 @@ test.describe('Dashboard', () => {
 		await expect(page).toHaveURL(new RegExp(`/${org.slug}`))
 	})
 
-	test('Home shows the default blocks in reading order without saving', async ({
+	test('Home shows the saved generic blocks in reading order without saving again', async ({
 		page,
 		login,
 		navigate,
 	}) => {
 		await ensureOnboardingStepsExist()
 		const user = await login()
-		const org = await createTestOrganization(user.id, 'admin')
+		const org = await createTestOrganizationWithClassicHome(user.id, 'admin')
 		const homePosts = recordHomePosts(page, org.slug)
 
 		await page.setViewportSize({ width: 1440, height: 900 })
@@ -630,7 +630,8 @@ test.describe('Dashboard', () => {
 					eq(Dashboard.organizationId, org.id),
 				),
 			)
-		expect(homeRows?.count).toBe(0)
+		// Only the seeded layout: resizing and reloading saved nothing new.
+		expect(homeRows?.count).toBe(1)
 	})
 
 	test('Home stacks the blocks in one column on phones', async ({
@@ -640,7 +641,7 @@ test.describe('Dashboard', () => {
 	}) => {
 		await ensureOnboardingStepsExist()
 		const user = await login()
-		const org = await createTestOrganization(user.id, 'admin')
+		const org = await createTestOrganizationWithClassicHome(user.id, 'admin')
 
 		await page.setViewportSize({ width: 390, height: 844 })
 		await navigate('/:slug', { slug: org.slug })
@@ -679,7 +680,7 @@ test.describe('Dashboard', () => {
 	}) => {
 		await ensureOnboardingStepsExist()
 		const user = await login()
-		const org = await createTestOrganization(user.id, 'admin')
+		const org = await createTestOrganizationWithClassicHome(user.id, 'admin')
 		const homePosts = recordHomePosts(page, org.slug)
 
 		// Tall enough to drag the leaderboard up to the notes chart without
@@ -785,7 +786,7 @@ test.describe('Dashboard', () => {
 	}) => {
 		await ensureOnboardingStepsExist()
 		const user = await login()
-		const org = await createTestOrganization(user.id, 'admin')
+		const org = await createTestOrganizationWithClassicHome(user.id, 'admin')
 
 		await page.setViewportSize({ width: 1440, height: 900 })
 		await navigate('/:slug', { slug: org.slug })
@@ -834,13 +835,11 @@ test.describe('Dashboard', () => {
 
 		await page.reload()
 		await page.waitForLoadState('networkidle')
-		await expect(leaderboard).toBeVisible()
-		expect(await homeBlockOrder(page)).toEqual(DEFAULT_HOME_BLOCKS)
-		const [onboarding, contributors] = await Promise.all([
-			boxOf(homeBlock(page, 'Onboarding checklist')),
-			boxOf(leaderboard),
-		])
-		expect(Math.round(onboarding.y)).toBe(Math.round(contributors.y))
+		// Resetting deletes the row: Home goes back to the restaurant default.
+		await expect(homeBlock(page, 'Today')).toBeVisible()
+		await expect(homeBlock(page, 'Needs attention')).toBeVisible()
+		await expect(homeBlock(page, 'Onboarding checklist')).toBeVisible()
+		await expect(leaderboard).toHaveCount(0)
 		expect(await savedHomeConfig(user.id, org.id)).toEqual([])
 	})
 
@@ -851,7 +850,7 @@ test.describe('Dashboard', () => {
 	}) => {
 		await ensureOnboardingStepsExist()
 		const user = await login()
-		const org = await createTestOrganization(user.id, 'admin')
+		const org = await createTestOrganizationWithClassicHome(user.id, 'admin')
 		await db.insert(OrganizationNote).values(
 			(['high', 'high', 'low'] as const).map((priority, index) => ({
 				title: `Report note ${index + 1}`,
@@ -971,7 +970,7 @@ test.describe('Dashboard', () => {
 	}) => {
 		await ensureOnboardingStepsExist()
 		const user = await login()
-		const org = await createTestOrganization(user.id, 'admin')
+		const org = await createTestOrganizationWithClassicHome(user.id, 'admin')
 		const title = 'Report about to be deleted'
 		const report = await saveReportFromTemplate({
 			organizationId: org.id,
@@ -1018,7 +1017,7 @@ test.describe('Dashboard', () => {
 	}) => {
 		await ensureOnboardingStepsExist()
 		const user = await login()
-		const org = await createTestOrganization(user.id, 'admin')
+		const org = await createTestOrganizationWithClassicHome(user.id, 'admin')
 		const tenantRequests = recordTenantRequests(page)
 
 		await page.setViewportSize({ width: 1440, height: 900 })
@@ -1068,7 +1067,7 @@ test.describe('Dashboard', () => {
 	}) => {
 		await ensureOnboardingStepsExist()
 		const user = await login()
-		const org = await createTestOrganization(user.id, 'admin')
+		const org = await createTestOrganizationWithClassicHome(user.id, 'admin')
 
 		await page.setViewportSize({ width: 1440, height: 900 })
 		await navigate('/:slug', { slug: org.slug })
@@ -1117,7 +1116,7 @@ test.describe('Dashboard', () => {
 		navigate,
 	}) => {
 		const user = await login()
-		const org = await createTestOrganization(user.id, 'admin')
+		const org = await createTestOrganizationWithClassicHome(user.id, 'admin')
 
 		await navigate('/:slug?celebrate=true', { slug: org.slug })
 		await expect
@@ -1136,7 +1135,7 @@ test.describe('Dashboard', () => {
 	}) => {
 		await ensureOnboardingStepsExist()
 		const user = await login()
-		const org = await createTestOrganization(user.id, 'admin')
+		const org = await createTestOrganizationWithClassicHome(user.id, 'admin')
 
 		await page.setViewportSize({ width: 1440, height: 900 })
 		await navigate('/:slug', { slug: org.slug })

@@ -1,6 +1,7 @@
 import { faker } from '@faker-js/faker'
 import { authSessionStorage, getPasswordHash, sessionKey } from '@repo/auth'
 import {
+	Dashboard,
 	db,
 	eq,
 	Organization,
@@ -14,6 +15,10 @@ import {
 	_RoleToUser,
 } from '@repo/database'
 import { getSessionExpirationDate } from '#app/utils/auth.server.ts'
+import {
+	defaultHomeConfig,
+	serializeDashboardConfig,
+} from '#app/utils/dashboards/config.ts'
 import { createUser } from './db-utils.ts'
 
 import { convertSetCookieToCookie } from './utils.ts'
@@ -152,6 +157,27 @@ export async function createTestOrganization(
 		userId,
 		organizationId: organization.id,
 		organizationRoleId: `org_role_${role}`,
+	})
+	return organization
+}
+
+/**
+ * An organization whose Home was saved with the generic layout (stats, notes
+ * chart, onboarding, top contributors). A Home with no saved row now shows
+ * the restaurant default (Today, Needs attention, onboarding), so specs that
+ * exercise the generic blocks start from this one.
+ */
+export async function createTestOrganizationWithClassicHome(
+	userId: string,
+	role: 'admin' | 'member' | 'viewer' | 'guest' = 'admin',
+) {
+	const organization = await createTestOrganization(userId, role)
+	await db.insert(Dashboard).values({
+		organizationId: organization.id,
+		ownerId: userId,
+		kind: 'home',
+		name: 'Home',
+		config: serializeDashboardConfig(defaultHomeConfig()),
 	})
 	return organization
 }

@@ -1,6 +1,6 @@
 import { Hono, type Context } from 'hono'
 import { jwtVerify } from 'jose'
-import { and, eq, inArray, sql } from 'drizzle-orm'
+import { and, eq, sql } from 'drizzle-orm'
 import { z } from 'zod'
 
 import {
@@ -394,11 +394,8 @@ operatorOrderRoutes.get('/attention', async (c) => {
 			eq(restaurantOrders.orgId, auth.auth.orgId),
 			eq(restaurantOrders.status, 'payment_review'),
 		]
-		// Location-scoped tokens see only their own locations (chunked well
-		// under the 100 bound parameters a Durable Object statement allows).
-		if (locationIds !== null && locationIds.length <= 90) {
-			conditions.push(inArray(restaurantOrders.locationId, locationIds))
-		}
+		// Location-scoped tokens are narrowed below by orderVisible, so no
+		// unbounded IN list reaches the statement (100 bound-parameter limit).
 		const rows = await db
 			.select({
 				locationId: restaurantOrders.locationId,

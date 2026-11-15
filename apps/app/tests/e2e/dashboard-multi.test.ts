@@ -1,7 +1,7 @@
 import { type Page, type Request } from '@playwright/test'
 import { and, count, Dashboard, db, eq, OnboardingStep } from '@repo/database'
 import { expect, test } from '#tests/playwright-utils.ts'
-import { createTestOrganization } from '#tests/test-utils.ts'
+import { createTestOrganizationWithClassicHome } from '#tests/test-utils.ts'
 import { initializeOnboardingSteps } from '../../../../packages/database/setup-onboarding.ts'
 
 /** Home's grid; the stats block is replaced by the KPI row above it. */
@@ -107,7 +107,7 @@ test.describe('Multiple dashboards', () => {
 	}) => {
 		await ensureOnboardingStepsExist()
 		const user = await login()
-		const org = await createTestOrganization(user.id, 'admin')
+		const org = await createTestOrganizationWithClassicHome(user.id, 'admin')
 		const homePosts = recordPostsTo(page, `/${org.slug}`)
 
 		await page.setViewportSize({ width: 1440, height: 900 })
@@ -213,7 +213,7 @@ test.describe('Multiple dashboards', () => {
 		navigate,
 	}) => {
 		const user = await login()
-		const org = await createTestOrganization(user.id, 'admin')
+		const org = await createTestOrganizationWithClassicHome(user.id, 'admin')
 		const dashboard = await insertCustomDashboard({
 			organizationId: org.id,
 			ownerId: user.id,
