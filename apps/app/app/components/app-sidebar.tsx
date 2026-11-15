@@ -492,6 +492,13 @@ function OrganizationSidebar({
 					),
 				},
 				{
+					title: _(msg`Templates`),
+					url: `/${orgSlug}/marketing/templates`,
+					isActive: location.pathname.includes(
+						`/${orgSlug}/marketing/templates`,
+					),
+				},
+				{
 					title: _(msg`Social media`),
 					url: `/${orgSlug}/marketing/social`,
 					isActive: location.pathname.includes(`/${orgSlug}/marketing/social`),
@@ -835,6 +842,9 @@ function OrganizationSidebar({
 						}
 						if (subItem.url.includes('/marketing/automations')) {
 							return canReadAutomations
+						}
+						if (subItem.url.includes('/marketing/templates')) {
+							return canReadCampaigns || canReadAutomations
 						}
 						if (subItem.url.includes('/marketing/social')) {
 							return canReadCampaigns

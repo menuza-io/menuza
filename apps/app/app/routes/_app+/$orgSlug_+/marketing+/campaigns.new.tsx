@@ -100,6 +100,7 @@ function EmailDesignerField({
 				// Sent broadcast emails carry a signed unsubscribe link.
 				unsubscribeLinkPreview
 				menuItems
+				templatesEndpoint={`/${orgSlug}/marketing/templates/designer`}
 				couponAvailable={Boolean(offer)}
 				requestFields={{ discountOffer: offer ? JSON.stringify(offer) : '' }}
 			/>

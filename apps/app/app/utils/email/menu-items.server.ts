@@ -222,3 +222,65 @@ export async function resolveMenuItemBlocks(
 	}
 	return { ok: true, blocks: out }
 }
+
+/**
+ * Dishes of a block taken from somewhere older (a saved template): keeps the
+ * dishes that can still be picked, drops the rest, and re-freezes the snapshot
+ * from the live menu. A location that is gone falls back to base prices. Never
+ * refuses: a block left with no dish is caught by the pre-send check.
+ */
+export async function refreshMenuItemBlocks(
+	organizationId: string,
+	blocks: EmailBlock[],
+	baseUrl: string,
+	options: {
+		now?: Date
+		listItems?: typeof listPickableMenuItems
+	} = {},
+): Promise<EmailBlock[]> {
+	const now = options.now ?? new Date()
+	const listItems = options.listItems ?? listPickableMenuItems
+	const catalogs = new Map<string, Promise<PickableMenuItems>>()
+	const catalogFor = (locationId: string | null) => {
+		const key = locationId ?? ''
+		let found = catalogs.get(key)
+		if (!found) {
+			found = listItems(organizationId, locationId, baseUrl)
+			catalogs.set(key, found)
+		}
+		return found
+	}
+
+	const out: EmailBlock[] = []
+	for (const block of blocks) {
+		if (block.type !== 'menu_item' || block.config.itemIds.length === 0) {
+			out.push(block)
+			continue
+		}
+		let locationId = block.config.locationId
+		let catalog = await catalogFor(locationId)
+		if (
+			locationId &&
+			!catalog.locations.some((entry) => entry.id === locationId)
+		) {
+			locationId = null
+			catalog = await catalogFor(null)
+		}
+		const byId = new Map(catalog.items.map((item) => [item.itemId, item]))
+		const items = block.config.itemIds.flatMap((id) => {
+			const item = byId.get(id)
+			return item ? [item] : []
+		})
+		out.push({
+			...block,
+			config: {
+				...block.config,
+				locationId,
+				itemIds: items.map((item) => item.itemId),
+				snapshot:
+					items.length > 0 ? { resolvedAt: now.toISOString(), items } : null,
+			},
+		})
+	}
+	return out
+}

@@ -11,6 +11,7 @@ import {
 	like,
 	or,
 	sql,
+	MarketingEmailTemplate,
 	NoteComment,
 	NoteCommentImage,
 	Organization,
@@ -151,6 +152,7 @@ export type MediaReferenceItem = {
 		| 'site-icon'
 		| 'page'
 		| 'social-post'
+		| 'email-template'
 		| 'source'
 	title: string
 	subtitle?: string
@@ -208,6 +210,24 @@ function columnContains(column: SQLiteColumn, value: string) {
 }
 
 /**
+ * A saved email template (#154) names an image by its library URL, which holds
+ * the object key (raw or URL-encoded) or the asset id. A template keeps using
+ * an image the library would otherwise delete.
+ */
+function emailTemplateReferenceCondition(objectKey: string, assetId?: string) {
+	return or(
+		columnContains(MarketingEmailTemplate.blocks, objectKey),
+		columnContains(
+			MarketingEmailTemplate.blocks,
+			encodeURIComponent(objectKey),
+		),
+		assetId
+			? columnContains(MarketingEmailTemplate.blocks, assetId)
+			: undefined,
+	)
+}
+
+/**
  * Published page snapshots and SEO images keep using an object after the
  * draft sections stop referencing it. SEO image URLs store the key
  * URL-encoded.
@@ -250,6 +270,7 @@ async function hasMediaObjectReferences(
 		page,
 		publishedPage,
 		socialPost,
+		emailTemplate,
 	] = await Promise.all([
 		db
 			.select({ id: OrganizationMediaAsset.id })
@@ -340,6 +361,16 @@ async function hasMediaObjectReferences(
 					)
 					.limit(1)
 			: Promise.resolve([]),
+		db
+			.select({ id: MarketingEmailTemplate.id })
+			.from(MarketingEmailTemplate)
+			.where(
+				and(
+					eq(MarketingEmailTemplate.organizationId, organizationId),
+					emailTemplateReferenceCondition(objectKey, assetId),
+				),
+			)
+			.limit(1),
 	])
 
 	return [
@@ -351,6 +382,7 @@ async function hasMediaObjectReferences(
 		page,
 		publishedPage,
 		socialPost,
+		emailTemplate,
 	].some((reference) => reference.length > 0)
 }
 
@@ -847,6 +879,30 @@ export async function action({ request, params }: Route.ActionArgs) {
 				subtitle: 'Attached to a social media post',
 				url: `/${params.orgSlug}/marketing/social/${post.id}`,
 				createdAt: post.createdAt.toISOString(),
+			})
+		}
+
+		const templateRefs = await db
+			.select({
+				id: MarketingEmailTemplate.id,
+				name: MarketingEmailTemplate.name,
+				updatedAt: MarketingEmailTemplate.updatedAt,
+			})
+			.from(MarketingEmailTemplate)
+			.where(
+				and(
+					eq(MarketingEmailTemplate.organizationId, organization.id),
+					emailTemplateReferenceCondition(asset.objectKey, asset.id),
+				),
+			)
+		for (const template of templateRefs) {
+			references.push({
+				id: `email-template-${template.id}`,
+				type: 'email-template',
+				title: `Email template: ${template.name}`,
+				subtitle: 'Used in a saved email template',
+				url: `/${params.orgSlug}/marketing/templates`,
+				createdAt: template.updatedAt.toISOString(),
 			})
 		}
 

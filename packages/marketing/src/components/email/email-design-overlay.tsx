@@ -52,6 +52,8 @@ export type EmailDesignOverlayProps = {
 	menuItems?: boolean
 	/** Extra fields posted with every designer request (the message's coupon). */
 	requestFields?: Record<string, string>
+	/** The designer resource route for saved templates (see the editor). */
+	templatesEndpoint?: string
 }
 
 /**
@@ -79,6 +81,7 @@ export function EmailDesignOverlay({
 	couponAvailable,
 	menuItems,
 	requestFields,
+	templatesEndpoint,
 }: EmailDesignOverlayProps) {
 	const { _ } = useLingui()
 	const [draft, setDraft] = useState<EmailBlock[]>(initialBlocks)
@@ -198,6 +201,7 @@ export function EmailDesignOverlay({
 							couponAvailable={couponAvailable}
 							menuItems={menuItems}
 							requestFields={requestFields}
+							templatesEndpoint={templatesEndpoint}
 						/>
 					</div>
 				</DialogContent>

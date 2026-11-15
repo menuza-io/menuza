@@ -36,6 +36,7 @@ import { AddEmailBlockDialog } from './add-email-block-dialog.tsx'
 import { emailBlockPreviewText, useEmailBlockTypes } from './block-meta.ts'
 import { EmailBlockInspector } from './email-block-inspector.tsx'
 import { EmailPreview } from './email-preview.tsx'
+import { EmailTemplatesDialog } from './email-templates.tsx'
 
 /** Below this width the editor stacks (list above preview) instead of columns. */
 const EDITOR_COLUMNS_MIN_WIDTH = 860
@@ -71,6 +72,11 @@ export type EmailBlockEditorProps = {
 	 * `discountOffer`, so the preview shows the coupon's words.
 	 */
 	requestFields?: Record<string, string>
+	/**
+	 * Saved templates: the designer resource route that lists, saves and starts
+	 * from them. Without it the designer offers the built-in starters only.
+	 */
+	templatesEndpoint?: string
 }
 
 function SortableEmailBlockCard({
@@ -176,8 +182,10 @@ function SortableEmailBlockCard({
 
 function TemplatePicker({
 	onSelect,
+	onMore,
 }: {
 	onSelect: (templateId: EmailBlockTemplateId) => void
+	onMore?: () => void
 }) {
 	return (
 		<div className="space-y-3 p-3">
@@ -206,6 +214,12 @@ function TemplatePicker({
 					</button>
 				))}
 			</div>
+			{onMore ? (
+				<Button type="button" variant="outline" size="sm" onClick={onMore}>
+					<Icon name="folder-open" className="size-3.5" />
+					<Trans>Your saved templates</Trans>
+				</Button>
+			) : null}
 		</div>
 	)
 }
@@ -220,6 +234,7 @@ function BlocksList({
 	onApplyTemplate,
 	couponAvailable,
 	menuItemsAvailable,
+	onOpenTemplates,
 }: {
 	blocks: EmailBlock[]
 	selectedBlockId: string | null
@@ -230,6 +245,8 @@ function BlocksList({
 	onApplyTemplate: (templateId: EmailBlockTemplateId) => void
 	couponAvailable?: boolean
 	menuItemsAvailable?: boolean
+	/** Opens the templates dialog; undefined when templates are not offered. */
+	onOpenTemplates?: () => void
 }) {
 	const { _ } = useLingui()
 	const dndId = useId()
@@ -265,6 +282,17 @@ function BlocksList({
 					{blocks.length}
 				</span>
 				<div className="flex-1" />
+				{onOpenTemplates ? (
+					<Button
+						type="button"
+						variant="ghost"
+						size="sm"
+						onClick={onOpenTemplates}
+					>
+						<Icon name="folder-open" className="size-3.5" />
+						<Trans>Templates</Trans>
+					</Button>
+				) : null}
 				{blocks.length > 0 ? (
 					<AddEmailBlockDialog
 						position={blocks.length}
@@ -276,7 +304,7 @@ function BlocksList({
 			</div>
 			<ScrollArea className="min-h-0 flex-1">
 				{blocks.length === 0 ? (
-					<TemplatePicker onSelect={onApplyTemplate} />
+					<TemplatePicker onSelect={onApplyTemplate} onMore={onOpenTemplates} />
 				) : (
 					<div className="mt-2 px-2 pb-2">
 						<DndContext
@@ -348,8 +376,10 @@ export function EmailBlockEditor({
 	couponAvailable,
 	menuItems,
 	requestFields,
+	templatesEndpoint,
 }: EmailBlockEditorProps) {
 	const [selectedId, setSelectedId] = useState<string | null>(null)
+	const [templatesOpen, setTemplatesOpen] = useState(false)
 	const selected = blocks.find((block) => block.id === selectedId) ?? null
 
 	// Switch to side-by-side only when this editor is actually wide enough; a
@@ -477,6 +507,9 @@ export function EmailBlockEditor({
 						onApplyTemplate={applyTemplate}
 						couponAvailable={couponAvailable}
 						menuItemsAvailable={menuItems}
+						onOpenTemplates={
+							templatesEndpoint ? () => setTemplatesOpen(true) : undefined
+						}
 					/>
 				)}
 			</div>
@@ -496,6 +529,19 @@ export function EmailBlockEditor({
 					unsubscribeLinkPreview={unsubscribeLinkPreview}
 				/>
 			</div>
+			{templatesEndpoint ? (
+				<EmailTemplatesDialog
+					open={templatesOpen}
+					onOpenChange={setTemplatesOpen}
+					blocks={blocks}
+					endpoint={templatesEndpoint}
+					previewEndpoint={previewEndpoint}
+					onApply={(next) => {
+						onChange(next)
+						setSelectedId(next[0]?.id ?? null)
+					}}
+				/>
+			) : null}
 		</div>
 	)
 }

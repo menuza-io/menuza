@@ -38,6 +38,8 @@ export interface WorkflowConfig {
 	 * block (tenant automations in the App). Platform automations leave it off.
 	 */
 	emailMenuItems?: boolean
+	/** Saved email templates: the App's designer resource route (tenant only). */
+	emailTemplatesEndpoint?: string
 }
 
 const TENANT_TRIGGER_LABELS: Record<string, { label: string; desc: string }> = {

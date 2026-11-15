@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { type EmailBlock } from '@repo/common/email-blocks'
 import {
 	collectPickableMenuItems,
+	refreshMenuItemBlocks,
 	resolveMenuItemBlocks,
 	type PickableMenuItems,
 } from './menu-items.server.ts'
@@ -213,5 +214,78 @@ describe('resolveMenuItemBlocks', () => {
 		const saved = result.blocks[0]
 		if (saved?.type !== 'menu_item') throw new Error('expected menu_item')
 		expect(saved.config.snapshot).toBeNull()
+	})
+})
+
+describe('refreshMenuItemBlocks (a template being used)', () => {
+	const live: PickableMenuItems = {
+		items: [
+			{
+				itemId: 'a',
+				name: 'Brisket',
+				description: '',
+				priceMinor: 1500,
+				currency: 'USD',
+				imageUrl: '',
+				path: '/menu?item=a',
+			},
+		],
+		locations: [{ id: 'loc-1', name: 'Downtown' }],
+		currency: 'USD',
+	}
+	const listItems = async () => live
+	const saved = (itemIds: string[], locationId: string | null): EmailBlock => ({
+		id: 'block-dish',
+		type: 'menu_item',
+		config: {
+			itemIds,
+			locationId,
+			showPrice: true,
+			showDescription: true,
+			snapshot: {
+				resolvedAt: '2026-01-01T00:00:00.000Z',
+				items: itemIds.map((itemId) => ({
+					itemId,
+					name: 'Old name',
+					description: '',
+					priceMinor: 900,
+					currency: 'USD',
+					imageUrl: '',
+					path: `/menu?item=${itemId}`,
+				})),
+			},
+		},
+	})
+	const refresh = (blocks: EmailBlock[]) =>
+		refreshMenuItemBlocks('org', blocks, 'https://app.test', {
+			listItems,
+			now: new Date('2026-11-15T00:00:00.000Z'),
+		})
+
+	it('keeps the item ids and refreshes the snapshot from the live menu', async () => {
+		const [block] = await refresh([saved(['a'], null)])
+		if (block?.type !== 'menu_item') throw new Error('expected menu_item')
+		expect(block.config.itemIds).toEqual(['a'])
+		expect(block.config.snapshot?.items[0]).toMatchObject({
+			name: 'Brisket',
+			priceMinor: 1500,
+		})
+	})
+
+	it('drops a dish that left the menu instead of refusing', async () => {
+		const [block] = await refresh([saved(['a', 'gone'], null)])
+		if (block?.type !== 'menu_item') throw new Error('expected menu_item')
+		expect(block.config.itemIds).toEqual(['a'])
+		const [empty] = await refresh([saved(['gone'], null)])
+		if (empty?.type !== 'menu_item') throw new Error('expected menu_item')
+		expect(empty.config.itemIds).toEqual([])
+		expect(empty.config.snapshot).toBeNull()
+	})
+
+	it('falls back to base prices when the location is gone', async () => {
+		const [block] = await refresh([saved(['a'], 'closed-location')])
+		if (block?.type !== 'menu_item') throw new Error('expected menu_item')
+		expect(block.config.locationId).toBeNull()
+		expect(block.config.itemIds).toEqual(['a'])
 	})
 })

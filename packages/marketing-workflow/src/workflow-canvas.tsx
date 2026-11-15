@@ -76,6 +76,8 @@ interface WorkflowCanvasProps {
 	couponOptions?: CouponDiscountOption[]
 	/** Email steps may add Menu item blocks (the host answers the dish intents). */
 	emailMenuItems?: boolean
+	/** Saved email templates for email steps (the App's designer resource route). */
+	emailTemplatesEndpoint?: string
 	initialGraph?: WorkflowGraph | string
 	journeyName: string
 	journeyStatus: JourneyStatus
@@ -109,7 +111,10 @@ function WorkflowCanvasInner({
 	isPublishing,
 }: Omit<
 	WorkflowCanvasProps,
-	'workflowConfig' | 'couponOptions' | 'emailMenuItems'
+	| 'workflowConfig'
+	| 'couponOptions'
+	| 'emailMenuItems'
+	| 'emailTemplatesEndpoint'
 >) {
 	const { _ } = useLingui()
 	const reactFlowWrapper = useRef<HTMLDivElement>(null)
@@ -402,6 +407,7 @@ export function WorkflowCanvas({
 	loyaltyTriggers = false,
 	couponOptions,
 	emailMenuItems,
+	emailTemplatesEndpoint,
 	...props
 }: WorkflowCanvasProps) {
 	const localizedTenant = useLocalizedTenantWorkflowConfig()
@@ -419,6 +425,7 @@ export function WorkflowCanvas({
 						...resolved,
 						...(couponOptions ? { couponOptions } : null),
 						...(emailMenuItems ? { emailMenuItems } : null),
+						...(emailTemplatesEndpoint ? { emailTemplatesEndpoint } : null),
 					}
 				: resolved
 		if (withCoupons.audience !== 'tenant') return withCoupons
@@ -442,6 +449,7 @@ export function WorkflowCanvas({
 		loyaltyTriggers,
 		couponOptions,
 		emailMenuItems,
+		emailTemplatesEndpoint,
 	])
 
 	return (

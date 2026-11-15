@@ -457,6 +457,7 @@ export default function JourneyBuilderRoute() {
 				loyaltyTriggers={loyaltyTriggers}
 				couponOptions={couponOptions ?? undefined}
 				emailMenuItems
+				emailTemplatesEndpoint={`/${orgSlug}/marketing/templates/designer`}
 				headerExtras={<GlobalAIToggle />}
 				onSave={handleSave}
 				onPublish={handlePublish}

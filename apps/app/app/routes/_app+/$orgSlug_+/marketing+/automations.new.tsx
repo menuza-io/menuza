@@ -238,6 +238,7 @@ export default function NewJourneyRoute() {
 		<div className="bg-muted fixed inset-0 z-50 flex h-dvh flex-col overflow-hidden">
 			<WorkflowCanvas
 				emailMenuItems
+				emailTemplatesEndpoint={`/${orgSlug}/marketing/templates/designer`}
 				initialGraph={initialGraph}
 				journeyName={_(msg`New Customer Journey`)}
 				journeyStatus="draft"
