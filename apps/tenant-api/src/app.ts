@@ -10,6 +10,7 @@ import { isAllowedAnalyticsOrigin, isPosOrigin } from './lib/origin.ts'
 import { requestLoggingMiddleware } from './lib/request-logging.ts'
 import { getNodeRegion } from './lib/region.ts'
 import { analyticsRoutes } from './routes/analytics.ts'
+import { homeInternalRoutes } from './routes/home-internal.ts'
 import { authRoutes } from './routes/auth.ts'
 import { shopRoutes } from './routes/shop.ts'
 import { engagementSyncRoutes } from './routes/engagement-sync.ts'
@@ -345,6 +346,7 @@ export function createTenantApiApp() {
 	app.route('/operator/hiring', hiringOperatorRoutes)
 	app.route('/careers', careersRoutes)
 	app.route('/internal/staff', staffInternalRoutes)
+	app.route('/internal/home', homeInternalRoutes)
 	app.route('/kiosk', kioskRoutes)
 	app.route('/pos/timeclock', posTimeclockRoutes)
 	app.route('/pos/inventory', posInventoryRoutes)

@@ -108,6 +108,8 @@ export function AddBlockDialog({
 	const builtIns = addableBuiltInBlockTypes(blocks, {
 		onboardingAvailable: picker.onboardingAvailable,
 		bookingsTodayAvailable: picker.bookingsToday.available,
+		todayAvailable: picker.today.available,
+		attentionAvailable: true,
 	}).filter((type) => !excludeTypes.includes(type))
 
 	const select = (block: NewDashboardBlock) => {

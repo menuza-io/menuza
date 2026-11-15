@@ -5,7 +5,9 @@ import { getDomainUrl } from '@repo/common'
 import {
 	buildEmailTemplateBlocks,
 	type EmailBlock,
+	type EmailBlockTemplateId,
 } from '@repo/common/email-blocks'
+import { db, eq, Organization } from '@repo/database'
 import {
 	CampaignForm,
 	CouponOfferField,
@@ -38,15 +40,24 @@ import {
 	readOfferField,
 } from '#app/utils/discounts/marketing-offers.server.ts'
 import { resolveEmailBrandingForOrg } from '#app/utils/email-branding.server.ts'
+import { orgSiteUrl } from '#app/utils/launch/launch.server.ts'
 import {
 	ORG_PERMISSIONS,
 	requireUserWithOrganizationPermission,
 } from '#app/utils/organization/permissions.server.ts'
 import { getOperatorTenantClient } from '#app/utils/tenant-api.server.ts'
 
-function EmailDesignerField({ orgSlug }: { orgSlug: string }) {
+function EmailDesignerField({
+	orgSlug,
+	template = 'welcome',
+	buttonUrl,
+}: {
+	orgSlug: string
+	template?: EmailBlockTemplateId
+	buttonUrl?: string
+}) {
 	const [blocks, setBlocks] = useState<EmailBlock[]>(() =>
-		buildEmailTemplateBlocks('welcome'),
+		buildEmailTemplateBlocks(template, { buttonUrl }),
 	)
 	const [libraryPickerOpen, setLibraryPickerOpen] = useState(false)
 	const onSelectCallbackRef = useRef<
@@ -110,9 +121,26 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		ORG_PERMISSIONS.UPDATE_CAMPAIGN_ANY,
 	)
 
+	// "Tell your guests" on the launch checklist opens the "We're open"
+	// template with the site link. It is only a draft: nothing is sent until
+	// the operator presses Send, to subscribed customers only.
+	const launch = new URL(request.url).searchParams.get('template') === 'launch'
+	const [site] = launch
+		? await db
+				.select({
+					slug: Organization.slug,
+					customDomain: Organization.customDomain,
+				})
+				.from(Organization)
+				.where(eq(Organization.id, orgId))
+				.limit(1)
+		: []
+
 	return {
 		orgSlug,
 		couponOptions: await loadCouponDiscountOptions(userId, orgId),
+		template: launch ? ('launch' as const) : null,
+		siteUrl: site ? orgSiteUrl(site) : null,
 	}
 }
 
@@ -255,7 +283,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
 export default function NewCampaignRoute() {
 	const { _ } = useLingui()
-	const { orgSlug, couponOptions } = useLoaderData<typeof loader>()
+	const { orgSlug, couponOptions, template, siteUrl } =
+		useLoaderData<typeof loader>()
 	const actionData = useActionData<typeof action>()
 	const navigation = useNavigation()
 	const isSubmitting = navigation.state === 'submitting'
@@ -273,7 +302,13 @@ export default function NewCampaignRoute() {
 					error={actionData?.error}
 					isSubmitting={isSubmitting}
 					cancelTo=".."
-					emailDesigner={<EmailDesignerField orgSlug={orgSlug} />}
+					emailDesigner={
+						<EmailDesignerField
+							orgSlug={orgSlug}
+							template={template ?? undefined}
+							buttonUrl={siteUrl ?? undefined}
+						/>
+					}
 					couponField={
 						couponOptions ? (
 							<CouponOfferField

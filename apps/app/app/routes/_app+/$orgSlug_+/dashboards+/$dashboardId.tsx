@@ -58,8 +58,9 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 	const [blockData, reports, switcher, sharing] = await Promise.all([
 		loadBuiltInBlockData({
 			userId,
-			organization: { id: organization.id, createdAt },
+			organization: { id: organization.id, slug: organization.slug, createdAt },
 			blocks,
+			request,
 		}),
 		loadReportBlockData({
 			organization: { ...organization, dataRegion },
@@ -76,7 +77,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 	])
 	const picker = await loadBlockPicker({
 		userId,
-		organizationId: organization.id,
+		organization: { ...organization, dataRegion },
 		blockData,
 		grants: await resolveReportGrantsForRequest(
 			request,
@@ -155,6 +156,8 @@ export default function CustomDashboard({ loaderData }: Route.ComponentProps) {
 				reports={reports}
 				savedReportOptions={picker.savedReports}
 				bookingsToday={picker.bookingsToday}
+				today={picker.today}
+				locationStorageKey={picker.locationStorageKey}
 				organization={organization}
 				editable={editable}
 			/>
@@ -164,6 +167,8 @@ export default function CustomDashboard({ loaderData }: Route.ComponentProps) {
 			editable,
 			organization,
 			picker.bookingsToday,
+			picker.today,
+			picker.locationStorageKey,
 			picker.savedReports,
 			reports,
 		],

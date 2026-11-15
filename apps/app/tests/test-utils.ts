@@ -1,6 +1,7 @@
 import { faker } from '@faker-js/faker'
 import { authSessionStorage, getPasswordHash, sessionKey } from '@repo/auth'
 import {
+	Dashboard,
 	db,
 	eq,
 	Organization,
@@ -154,6 +155,58 @@ export async function createTestOrganization(
 		organizationRoleId: `org_role_${role}`,
 	})
 	return organization
+}
+
+// Inlined (not imported from the app's dashboard config, which needs the
+// Lingui macro transform that Playwright does not run). Mirrors
+// defaultHomeConfig() in app/utils/dashboards/config.ts.
+const CLASSIC_HOME_CONFIG = JSON.stringify({
+	version: 1,
+	blocks: [
+		{ id: 'stats', type: 'stats' },
+		{ id: 'notes-chart', type: 'notes-chart' },
+		{ id: 'onboarding', type: 'onboarding' },
+		{ id: 'leaderboard', type: 'leaderboard' },
+	],
+	layouts: {
+		lg: [
+			{ i: 'stats', x: 0, y: 0, w: 12, h: 2 },
+			{ i: 'notes-chart', x: 0, y: 2, w: 12, h: 8 },
+			{ i: 'onboarding', x: 0, y: 10, w: 6, h: 10 },
+			{ i: 'leaderboard', x: 6, y: 10, w: 6, h: 10 },
+		],
+		md: [
+			{ i: 'stats', x: 0, y: 0, w: 8, h: 2 },
+			{ i: 'notes-chart', x: 0, y: 2, w: 8, h: 8 },
+			{ i: 'onboarding', x: 0, y: 10, w: 4, h: 10 },
+			{ i: 'leaderboard', x: 4, y: 10, w: 4, h: 10 },
+		],
+	},
+})
+
+/**
+ * An organization whose Home was saved with the generic layout (stats, notes
+ * chart, onboarding, top contributors). A Home with no saved row now shows
+ * the restaurant default (Today, Needs attention, onboarding), so specs that
+ * exercise the generic blocks start from this one.
+ */
+export async function createTestOrganizationWithClassicHome(
+	userId: string,
+	role: 'admin' | 'member' | 'viewer' | 'guest' = 'admin',
+) {
+	const organization = await createTestOrganization(userId, role)
+	await saveClassicHome(userId, organization.id)
+	return organization
+}
+
+export async function saveClassicHome(userId: string, organizationId: string) {
+	await db.insert(Dashboard).values({
+		organizationId,
+		ownerId: userId,
+		kind: 'home',
+		name: 'Home',
+		config: CLASSIC_HOME_CONFIG,
+	})
 }
 
 export async function setupTestOrgWithUser(

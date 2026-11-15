@@ -485,6 +485,22 @@ describe('route guards: discovery', () => {
 			reports.get('_app+/$orgSlug_+/staff+/token.ts#loader')?.kinds,
 		).toContain('membership')
 	})
+
+	it('finds the launch checklist and home routes and their guards', () => {
+		for (const key of [
+			'_app+/$orgSlug_+/launch.tsx#loader',
+			'_app+/$orgSlug_+/launch.tsx#action',
+			'_app+/$orgSlug_+/home-sold-out.ts#loader',
+		]) {
+			expect(reports.get(key)?.kinds).toContain('membership')
+		}
+		expect(
+			reports.get('api+/onboarding+/skip-step.tsx#action')?.kinds,
+		).toContain('membership')
+		expect(reports.get('resources+/launch-status.ts#action')?.kinds).toContain(
+			'machine',
+		)
+	})
 })
 
 describe('route guards: every loader and action', () => {

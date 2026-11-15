@@ -22,7 +22,7 @@ msgid "(Expired)"
 msgstr ""
 
 #. placeholder {0}: data.messageText?.length || 0
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:437
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:439
 msgid "{0} / 1600 chars"
 msgstr ""
 
@@ -68,6 +68,10 @@ msgstr ""
 msgid "{days} days"
 msgstr "{days} days"
 
+#: app/components/admin-launch-card.tsx:66
+msgid "{done} of {total} required steps"
+msgstr "{done} of {total} required steps"
+
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:241
 msgid "{errorCount, plural, one {# validation error} other {# validation errors}}"
 msgstr ""
@@ -104,7 +108,7 @@ msgstr ""
 msgid "{totalCount} entries"
 msgstr "{totalCount} entries"
 
-#: app/components/admin-organizations-table.tsx:453
+#: app/components/admin-organizations-table.tsx:472
 msgid "{totalCount} organizations"
 msgstr "{totalCount} organizations"
 
@@ -132,11 +136,11 @@ msgstr ""
 #. placeholder {0}: data.field === 'phoneVerified' ? 'Verification Status' : conditionFieldLabel(data.field || 'email')
 #. placeholder {1}: data.field === 'phoneVerified' ? ' is ' : data.operator === 'equals' ? ' equals ' : data.operator === 'not_equals' ? ' does not equal ' : ' contains '
 #. placeholder {2}: data.field === 'phoneVerified' ? data.value === 'true' ? 'Verified' : 'Not Verified' : data.value || '...'
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:577
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:579
 msgid "• If Customer {0}{1}<0>{2}</0> → <1>True branch</1>"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:603
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:605
 msgid "• Otherwise → <0>False branch</0>"
 msgstr ""
 
@@ -191,7 +195,7 @@ msgstr "1 entry"
 msgid "1 number"
 msgstr "1 number"
 
-#: app/components/admin-organizations-table.tsx:451
+#: app/components/admin-organizations-table.tsx:470
 msgid "1 organization"
 msgstr "1 organization"
 
@@ -316,8 +320,8 @@ msgstr ""
 msgid "active"
 msgstr ""
 
-#: app/components/admin-organizations-table.tsx:95
-#: app/components/admin-organizations-table.tsx:271
+#: app/components/admin-organizations-table.tsx:97
+#: app/components/admin-organizations-table.tsx:273
 #: app/components/admin-users-table.tsx:176
 #: app/components/sso-user-management.tsx:269
 #: app/routes/_admin+/ip-addresses+/$ip.tsx:127
@@ -362,7 +366,7 @@ msgstr ""
 msgid "Add {label}"
 msgstr "Add {label}"
 
-#: ../../packages/marketing/src/components/email/email-preview.tsx:138
+#: ../../packages/marketing/src/components/email/email-preview.tsx:154
 msgid "Add a block to see your email come to life."
 msgstr "Add a block to see your email come to life."
 
@@ -440,6 +444,10 @@ msgstr "Add the Coupon code tag to the message so customers see their code."
 #: app/routes/_admin+/waitlist.tsx:443
 msgid "Add waitlist points"
 msgstr "Add waitlist points"
+
+#: app/components/admin-launch-card.tsx:12
+msgid "Address, phone and opening hours"
+msgstr "Address, phone and opening hours"
 
 #: app/components/admin-sidebar.tsx:161
 #: app/components/admin-sidebar.tsx:169
@@ -811,7 +819,7 @@ msgstr "Block types"
 msgid "blocked"
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-block-editor.tsx:244
+#: ../../packages/marketing/src/components/email/email-block-editor.tsx:249
 msgid "Blocks"
 msgstr "Blocks"
 
@@ -885,7 +893,7 @@ msgstr ""
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:410
 #: ../../packages/marketing/src/components/campaign-form.tsx:173
 #: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:132
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:162
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:168
 #: app/components/admin-ban-user-dialog.tsx:166
 #: app/components/admin-cache-confirmation-dialog.tsx:111
 #: app/routes/_admin+/gdpr-requests.tsx:663
@@ -895,7 +903,7 @@ msgstr ""
 msgid "Cancel"
 msgstr ""
 
-#: app/components/admin-organizations-table.tsx:102
+#: app/components/admin-organizations-table.tsx:104
 msgid "Canceled"
 msgstr ""
 
@@ -932,6 +940,10 @@ msgstr ""
 #: app/routes/_admin+/print-shop.tsx:214
 msgid "Check the form values."
 msgstr "Check the form values."
+
+#: app/components/admin-launch-card.tsx:110
+msgid "Checklist"
+msgstr "Checklist"
 
 #: app/routes/_admin+/organizations+/$organizationId_+/chat-retention.tsx:123
 msgid "Choose a valid retention period."
@@ -983,7 +995,7 @@ msgstr ""
 msgid "Close"
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:127
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:133
 msgid "Close email design"
 msgstr "Close email design"
 
@@ -995,7 +1007,7 @@ msgstr "Close to a Reward"
 msgid "Code"
 msgstr "Code"
 
-#: app/components/admin-organizations-table.tsx:359
+#: app/components/admin-organizations-table.tsx:378
 #: app/components/admin-users-table.tsx:271
 msgid "Columns"
 msgstr ""
@@ -1042,7 +1054,7 @@ msgstr ""
 msgid "Condition comparison field is required."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:532
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:534
 msgid "Condition Logic"
 msgstr ""
 
@@ -1102,7 +1114,7 @@ msgstr ""
 msgid "Connections"
 msgstr ""
 
-#: app/components/admin-organizations-table.tsx:306
+#: app/components/admin-organizations-table.tsx:308
 #: app/components/admin-users-table.tsx:229
 #: app/routes/_admin+/audit-logs.tsx:125
 #: app/routes/_admin+/gdpr-requests.tsx:400
@@ -1110,7 +1122,7 @@ msgstr ""
 msgid "contains"
 msgstr "contains"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:551
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:553
 msgid "Contains (Partial Match)"
 msgstr ""
 
@@ -1223,7 +1235,7 @@ msgstr ""
 msgid "Create your first platform email campaign for tenant operators."
 msgstr ""
 
-#: app/components/admin-organizations-table.tsx:278
+#: app/components/admin-organizations-table.tsx:280
 #: app/components/admin-users-table.tsx:202
 #: app/routes/_admin+/cache.tsx:613
 msgid "Created"
@@ -1262,6 +1274,10 @@ msgstr ""
 msgid "Currently logged in users"
 msgstr ""
 
+#: app/components/admin-launch-card.tsx:19
+msgid "Custom domain"
+msgstr "Custom domain"
+
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:28
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:68
 msgid "Custom Event"
@@ -1288,7 +1304,7 @@ msgstr ""
 msgid "Customer <0>Phone</0> is {0}<1>Verified</1>"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:471
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:473
 msgid "Customer Attribute"
 msgstr ""
 
@@ -1340,6 +1356,10 @@ msgstr ""
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:273
 msgid "Days"
 msgstr ""
+
+#: app/components/admin-launch-card.tsx:122
+msgid "Days since sign-up"
+msgstr "Days since sign-up"
 
 #: app/components/sso-user-management.tsx:302
 msgid "Deactivate"
@@ -1404,7 +1424,7 @@ msgstr "Delivered"
 msgid "Describe what this role can do..."
 msgstr ""
 
-#: app/components/admin-organizations-table.tsx:168
+#: app/components/admin-organizations-table.tsx:170
 #: app/routes/_admin+/roles+/$roleId.tsx:593
 #: app/routes/_admin+/roles+/$roleId.tsx:829
 #: app/routes/_admin+/roles+/$roleId.tsx:945
@@ -1453,11 +1473,11 @@ msgstr ""
 msgid "Disabled"
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:211
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:218
 msgid "Discard"
 msgstr "Discard"
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:191
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:198
 msgid "Discard unsaved changes?"
 msgstr "Discard unsaved changes?"
 
@@ -1477,9 +1497,13 @@ msgstr ""
 msgid "Dispatch text message with merge tags"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:548
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:550
 msgid "Does Not Equal"
 msgstr ""
+
+#: app/components/admin-launch-card.tsx:30
+msgid "Done"
+msgstr "Done"
 
 #: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:128
 msgid "Double-click a block to add it instantly"
@@ -1494,7 +1518,7 @@ msgstr ""
 msgid "Draft"
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-block-editor.tsx:120
+#: ../../packages/marketing/src/components/email/email-block-editor.tsx:125
 msgid "Drag to reorder"
 msgstr "Drag to reorder"
 
@@ -1510,7 +1534,7 @@ msgstr ""
 msgid "Duration"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:563
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:565
 msgid "e.g. @gmail.com"
 msgstr ""
 
@@ -1602,7 +1626,7 @@ msgstr ""
 msgid "Email"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:491
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:493
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:345
 msgid "Email Address"
 msgstr ""
@@ -1614,8 +1638,8 @@ msgstr ""
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:322
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:410
 #: ../../packages/marketing/src/components/campaign-form.tsx:118
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:111
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:135
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:117
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:141
 msgid "Email design"
 msgstr "Email design"
 
@@ -1623,7 +1647,7 @@ msgstr "Email design"
 msgid "Email HTML Body"
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-preview.tsx:107
+#: ../../packages/marketing/src/components/email/email-preview.tsx:123
 msgid "Email preview"
 msgstr "Email preview"
 
@@ -1788,7 +1812,7 @@ msgstr "Every no-show over the last 30 days with its date, service, party size a
 msgid "Everyone gets {code}"
 msgstr "Everyone gets {code}"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:545
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:547
 msgid "Exactly Equals"
 msgstr ""
 
@@ -1902,6 +1926,14 @@ msgstr ""
 #: app/routes/_admin+/index.tsx:440
 msgid "Find and manage user accounts"
 msgstr ""
+
+#: app/components/admin-launch-card.tsx:72
+msgid "First live {firstLive}"
+msgstr "First live {firstLive}"
+
+#: app/components/admin-launch-card.tsx:130
+msgid "First real order"
+msgstr "First real order"
 
 #: app/routes/_admin+/ip-addresses+/$ip.tsx:166
 #: app/routes/_admin+/ip-addresses+/$ip.tsx:242
@@ -2055,7 +2087,7 @@ msgstr "Hi {NAME_TAG}, your account update is ready!"
 msgid "Hi {NAME_TAG}, your Menuza account is ready."
 msgstr "Hi {NAME_TAG}, your Menuza account is ready."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:445
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:447
 msgid "Hi {NAME_TAG}, your order has been confirmed!"
 msgstr "Hi {NAME_TAG}, your order has been confirmed!"
 
@@ -2171,16 +2203,20 @@ msgstr ""
 msgid "In last 100 events"
 msgstr ""
 
+#: app/components/admin-launch-card.tsx:160
+msgid "In setup"
+msgstr "In setup"
+
 #: app/routes/_admin+/cache.tsx:585
 msgid "In-memory LRU cache"
 msgstr ""
 
-#: app/components/admin-organizations-table.tsx:271
+#: app/components/admin-organizations-table.tsx:273
 #: app/components/sso-user-management.tsx:271
 msgid "Inactive"
 msgstr ""
 
-#: app/components/admin-organizations-table.tsx:126
+#: app/components/admin-organizations-table.tsx:128
 msgid "Incomplete"
 msgstr ""
 
@@ -2208,7 +2244,7 @@ msgstr "Insert block here"
 msgid "Instance:"
 msgstr ""
 
-#: app/components/admin-organizations-table.tsx:218
+#: app/components/admin-organizations-table.tsx:220
 msgid "Integrations"
 msgstr ""
 
@@ -2245,8 +2281,9 @@ msgstr ""
 msgid "IP Information"
 msgstr ""
 
-#: app/components/admin-organizations-table.tsx:315
-#: app/components/admin-organizations-table.tsx:327
+#: app/components/admin-organizations-table.tsx:317
+#: app/components/admin-organizations-table.tsx:329
+#: app/components/admin-organizations-table.tsx:338
 #: app/components/admin-users-table.tsx:238
 #: app/routes/_admin+/audit-logs.tsx:152
 #: app/routes/_admin+/gdpr-requests.tsx:409
@@ -2256,7 +2293,7 @@ msgstr ""
 msgid "is"
 msgstr "is"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:520
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:522
 msgid "Is Verified (True)"
 msgstr ""
 
@@ -2272,7 +2309,7 @@ msgstr ""
 msgid "Joined"
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:202
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:209
 msgid "Keep editing"
 msgstr "Keep editing"
 
@@ -2378,6 +2415,10 @@ msgstr "Late cancellations"
 msgid "Late cancellations, last 30 days"
 msgstr "Late cancellations, last 30 days"
 
+#: app/components/admin-launch-card.tsx:97
+msgid "Launch"
+msgstr "Launch"
+
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:413
 msgid "Launch run"
 msgstr ""
@@ -2422,10 +2463,18 @@ msgstr "Link"
 msgid "Link (optional)"
 msgstr "Link (optional)"
 
+#: app/components/admin-launch-card.tsx:156
+msgid "Live"
+msgstr "Live"
+
 #: app/routes/_admin+/ip-addresses+/$ip.tsx:97
 #: app/routes/_admin+/ip-addresses+/index.tsx:214
 msgid "Location"
 msgstr ""
+
+#: app/components/admin-launch-card.tsx:14
+msgid "Logo and site theme"
+msgstr "Logo and site theme"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:75
 msgid "Loyalty: Close to a Reward"
@@ -2448,7 +2497,7 @@ msgstr ""
 msgid "LRU only"
 msgstr ""
 
-#: app/routes/_admin+/organizations+/index.tsx:116
+#: app/routes/_admin+/organizations+/index.tsx:120
 msgid "Manage all organizations in the system"
 msgstr ""
 
@@ -2548,9 +2597,13 @@ msgstr ""
 msgid "Member Went Quiet"
 msgstr "Member Went Quiet"
 
-#: app/components/admin-organizations-table.tsx:187
+#: app/components/admin-organizations-table.tsx:189
 msgid "Members"
 msgstr ""
+
+#: app/components/admin-launch-card.tsx:13
+msgid "Menu"
+msgstr "Menu"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:143
 msgid "Menuza Team"
@@ -2615,7 +2668,7 @@ msgstr ""
 msgid "N/A"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:500
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:502
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:348
 #: app/routes/_admin+/roles+/$roleId.tsx:569
 #: app/routes/_admin+/roles+/$roleId.tsx:802
@@ -2636,7 +2689,7 @@ msgstr "Name, email or username"
 msgid "Name, email, or username"
 msgstr "Name, email, or username"
 
-#: app/components/admin-organizations-table.tsx:307
+#: app/components/admin-organizations-table.tsx:309
 msgid "Name, slug or description"
 msgstr "Name, slug or description"
 
@@ -2681,6 +2734,10 @@ msgstr ""
 #: ../../packages/marketing-workflow/src/nodes/condition-node.tsx:71
 msgid "No"
 msgstr ""
+
+#: app/components/admin-launch-card.tsx:143
+msgid "No active locations."
+msgstr "No active locations."
 
 #: app/components/admin-user-detail.tsx:771
 msgid "No active sessions"
@@ -2732,7 +2789,7 @@ msgstr "No coupon"
 msgid "No delivery records yet."
 msgstr ""
 
-#: app/components/admin-organizations-table.tsx:174
+#: app/components/admin-organizations-table.tsx:176
 #: app/components/roles/roles-table-rows.tsx:54
 msgid "No description"
 msgstr ""
@@ -2782,11 +2839,11 @@ msgstr ""
 #~ msgid "No organizations found."
 #~ msgstr ""
 
-#: app/components/admin-organizations-table.tsx:390
+#: app/components/admin-organizations-table.tsx:409
 msgid "No organizations match"
 msgstr "No organizations match"
 
-#: app/components/admin-organizations-table.tsx:391
+#: app/components/admin-organizations-table.tsx:410
 msgid "No organizations yet"
 msgstr "No organizations yet"
 
@@ -2810,7 +2867,7 @@ msgstr ""
 msgid "No SSO Users"
 msgstr ""
 
-#: app/components/admin-organizations-table.tsx:86
+#: app/components/admin-organizations-table.tsx:88
 #: app/routes/_admin+/index.tsx:287
 msgid "No Subscription"
 msgstr ""
@@ -2883,11 +2940,11 @@ msgstr "Not set"
 msgid "Not Set"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:523
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:525
 msgid "Not Verified (False)"
 msgstr ""
 
-#: app/components/admin-organizations-table.tsx:205
+#: app/components/admin-organizations-table.tsx:207
 msgid "Notes"
 msgstr ""
 
@@ -2916,9 +2973,17 @@ msgstr ""
 msgid "OAuth2 Configuration"
 msgstr ""
 
+#: app/components/admin-launch-card.tsx:116
+msgid "Off"
+msgstr "Off"
+
 #: app/routes/_admin+/organizations+/$organizationId_+/audit-retention.tsx:273
 msgid "Oldest Log"
 msgstr ""
+
+#: app/components/admin-launch-card.tsx:114
+msgid "On"
+msgstr "On"
 
 #: app/routes/_admin+/print-shop.tsx:74
 msgid "On hold"
@@ -2970,6 +3035,7 @@ msgstr ""
 msgid "Operator Invited"
 msgstr ""
 
+#: app/components/admin-launch-card.tsx:42
 #: app/routes/_admin+/roles+/$roleId.tsx:833
 #: app/routes/_admin+/roles+/$roleId.tsx:949
 msgid "Optional"
@@ -2983,7 +3049,7 @@ msgstr "Orders"
 msgid "org - Organization resources"
 msgstr ""
 
-#: app/components/admin-organizations-table.tsx:139
+#: app/components/admin-organizations-table.tsx:141
 #: app/components/admin-users-table.tsx:235
 #: app/components/admin/feature-flags.tsx:784
 #: app/routes/_admin+/feature-flags_.reservations-fees.tsx:121
@@ -3036,11 +3102,11 @@ msgstr "Organization slug or ID for {e164}"
 #: app/components/admin-users-table.tsx:124
 #: app/routes/_admin+/index.tsx:172
 #: app/routes/_admin+/index.tsx:339
-#: app/routes/_admin+/organizations+/index.tsx:115
+#: app/routes/_admin+/organizations+/index.tsx:119
 msgid "Organizations"
 msgstr ""
 
-#: app/components/admin-organizations-table.tsx:396
+#: app/components/admin-organizations-table.tsx:415
 msgid "Organizations will appear here once they are created."
 msgstr "Organizations will appear here once they are created."
 
@@ -3132,7 +3198,7 @@ msgstr ""
 msgid "Password"
 msgstr ""
 
-#: app/components/admin-organizations-table.tsx:108
+#: app/components/admin-organizations-table.tsx:110
 msgid "Past Due"
 msgstr ""
 
@@ -3148,6 +3214,10 @@ msgstr ""
 #: app/routes/_admin+/marketing+/automations._index.tsx:53
 msgid "Paused"
 msgstr ""
+
+#: app/components/admin-launch-card.tsx:15
+msgid "Payments or pay at pickup"
+msgstr "Payments or pay at pickup"
 
 #: app/routes/_admin+/waitlist.tsx:421
 msgid "Pending"
@@ -3192,7 +3262,7 @@ msgstr ""
 msgid "Phone number"
 msgstr "Phone number"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:494
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:496
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:346
 msgid "Phone Number"
 msgstr ""
@@ -3202,7 +3272,7 @@ msgstr ""
 msgid "Phone numbers"
 msgstr "Phone numbers"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:497
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:499
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:347
 msgid "Phone Verification Status"
 msgstr ""
@@ -3219,13 +3289,17 @@ msgstr ""
 msgid "Pick a block to add to your email."
 msgstr "Pick a block to add to your email."
 
-#: ../../packages/marketing/src/components/email/email-block-editor.tsx:175
+#: ../../packages/marketing/src/components/email/email-block-editor.tsx:180
 msgid "Pick a layout, then customize the blocks."
 msgstr "Pick a layout, then customize the blocks."
 
 #: app/routes/_admin+/feature-flags_.reservations-fees.tsx:110
 msgid "Pick an organization by name or slug. Saving again replaces its override."
 msgstr "Pick an organization by name or slug. Saving again replaces its override."
+
+#: app/components/admin-launch-card.tsx:16
+msgid "Pickup, delivery and prep time"
+msgstr "Pickup, delivery and prep time"
 
 #: app/components/sso-configuration-form.tsx:336
 #: app/components/sso-configuration-overview.tsx:208
@@ -3240,7 +3314,7 @@ msgstr "Placed"
 msgid "Plaintext Fallback (Optional)"
 msgstr ""
 
-#: app/components/admin-organizations-table.tsx:324
+#: app/components/admin-organizations-table.tsx:326
 msgid "Plan"
 msgstr "Plan"
 
@@ -3588,7 +3662,7 @@ msgstr ""
 msgid "Remove"
 msgstr "Remove"
 
-#: ../../packages/marketing/src/components/email/email-block-editor.tsx:149
+#: ../../packages/marketing/src/components/email/email-block-editor.tsx:154
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:152
 msgid "Remove block"
 msgstr "Remove block"
@@ -3605,7 +3679,7 @@ msgstr ""
 msgid "Remove variable"
 msgstr "Remove variable"
 
-#: ../../packages/marketing/src/components/email/email-preview.tsx:111
+#: ../../packages/marketing/src/components/email/email-preview.tsx:127
 msgid "Rendering…"
 msgstr "Rendering…"
 
@@ -3799,7 +3873,7 @@ msgstr ""
 msgid "Roles that apply within specific organizations"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:574
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:576
 msgid "Routing Logic:"
 msgstr ""
 
@@ -3899,7 +3973,7 @@ msgstr "Sales divided by the hours worked, day by day, on the days that have sal
 msgid "Sales per labor hour"
 msgstr "Sales per labor hour"
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:170
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:176
 #: ../../packages/marketing/src/components/email/merge-tag-field.tsx:349
 #: app/routes/_admin+/print-shop.tsx:330
 msgid "Save"
@@ -3938,7 +4012,7 @@ msgstr "Save retention"
 msgid "Save the automation first before running test triggers."
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:148
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:154
 msgid "Saved"
 msgstr "Saved"
 
@@ -3960,7 +4034,7 @@ msgstr ""
 msgid "Saving..."
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:170
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:176
 msgid "Saving…"
 msgstr "Saving…"
 
@@ -3985,7 +4059,7 @@ msgstr ""
 msgid "Scopes:"
 msgstr ""
 
-#: app/components/admin-organizations-table.tsx:303
+#: app/components/admin-organizations-table.tsx:305
 #: app/components/admin-users-table.tsx:226
 #: app/components/admin/feature-flags.tsx:489
 #: app/components/admin/feature-flags.tsx:646
@@ -4048,7 +4122,7 @@ msgstr ""
 msgid "Select access level"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:487
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:489
 msgid "Select attribute"
 msgstr ""
 
@@ -4060,7 +4134,7 @@ msgstr ""
 msgid "Select flag type"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:541
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:543
 msgid "Select operator"
 msgstr ""
 
@@ -4069,7 +4143,7 @@ msgstr ""
 msgid "Select role type"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:516
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:518
 msgid "Select status"
 msgstr ""
 
@@ -4144,6 +4218,10 @@ msgstr ""
 msgid "Set system defaults and override them for an organization or a user."
 msgstr "Set system defaults and override them for an organization or a user."
 
+#: app/components/admin-organizations-table.tsx:335
+msgid "Setup"
+msgstr "Setup"
+
 #: app/routes/_admin+/audit-logs.tsx:149
 #: app/routes/_admin+/audit-logs.tsx:277
 msgid "Severity"
@@ -4201,12 +4279,20 @@ msgstr ""
 msgid "Shown to recipients who have no value for this field."
 msgstr "Shown to recipients who have no value for this field."
 
+#: app/components/admin-launch-card.tsx:20
+msgid "Site published and ordering on"
+msgstr "Site published and ordering on"
+
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:169
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:171
-#: app/components/admin-organizations-table.tsx:255
+#: app/components/admin-organizations-table.tsx:257
 #: app/routes/_admin+/cache.tsx:610
 msgid "Size"
 msgstr ""
+
+#: app/components/admin-launch-card.tsx:36
+msgid "Skipped"
+msgstr "Skipped"
 
 #: ../../packages/marketing/src/components/email/block-meta.ts:29
 msgid "Smaller, muted supporting copy."
@@ -4221,7 +4307,7 @@ msgstr ""
 msgid "SMS message exceeds 1600 characters maximum."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:425
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:427
 msgid "SMS Message Text"
 msgstr ""
 
@@ -4229,7 +4315,7 @@ msgstr ""
 msgid "SMS message text is required."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:457
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:459
 msgid "SMS messages over 160 characters will be segmented according to standard GSM telecommunication protocols."
 msgstr ""
 
@@ -4324,11 +4410,15 @@ msgstr "Start date"
 msgid "Start journey on lifecycle event"
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-block-editor.tsx:172
+#: ../../packages/marketing/src/components/email/email-block-editor.tsx:177
 msgid "Start with a template"
 msgstr "Start with a template"
 
-#: app/components/admin-organizations-table.tsx:266
+#: app/components/admin-launch-card.tsx:17
+msgid "Station terminal or kitchen display"
+msgstr "Station terminal or kitchen display"
+
+#: app/components/admin-organizations-table.tsx:268
 #: app/components/admin-users-table.tsx:161
 #: app/components/sso-configuration-overview.tsx:232
 #: app/components/sso-user-management.tsx:178
@@ -4384,6 +4474,10 @@ msgstr ""
 msgid "Structural checks for triggers, connections, and node configuration."
 msgstr ""
 
+#: app/components/admin-organizations-table.tsx:343
+msgid "Stuck in setup for more than 14 days"
+msgstr "Stuck in setup for more than 14 days"
+
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:311
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:313
 msgid "Style"
@@ -4397,8 +4491,8 @@ msgstr ""
 msgid "Subject Line"
 msgstr ""
 
-#: app/components/admin-organizations-table.tsx:238
-#: app/components/admin-organizations-table.tsx:312
+#: app/components/admin-organizations-table.tsx:240
+#: app/components/admin-organizations-table.tsx:314
 msgid "Subscription"
 msgstr ""
 
@@ -4523,7 +4617,7 @@ msgstr ""
 #~ msgid "Target Tag Name"
 #~ msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:559
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:561
 msgid "Target Value"
 msgstr ""
 
@@ -4535,6 +4629,10 @@ msgstr ""
 #: app/components/sso-configuration-overview.tsx:114
 msgid "Test Connection"
 msgstr ""
+
+#: app/components/admin-launch-card.tsx:18
+msgid "Test order"
+msgstr "Test order"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:158
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:373
@@ -4615,6 +4713,10 @@ msgstr "The last attempt stopped after the order was sent, so the vendor may alr
 #: app/routes/_admin+/print-shop.tsx:617
 msgid "The last attempt stopped after the order was sent, so the vendor may already have it. Search the vendor dashboard for: {list}. If the vendor has it, do not retry (it would print twice): refund or wait for its status. Retry only if you find nothing."
 msgstr "The last attempt stopped after the order was sent, so the vendor may already have it. Search the vendor dashboard for: {list}. If the vendor has it, do not retry (it would print twice): refund or wait for its status. Retry only if you find nothing."
+
+#: app/components/admin-launch-card.tsx:103
+msgid "The launch status could not be loaded from the App."
+msgstr "The launch status could not be loaded from the App."
 
 #: ../../packages/marketing/src/components/email/block-meta.ts:24
 msgid "The main paragraph copy of your email."
@@ -4764,6 +4866,10 @@ msgstr "Tip pool: tips by day"
 msgid "Tips on online orders that count toward sales, by business day. How a pool is split between people is set on the Labor page."
 msgstr "Tips on online orders that count toward sales, by business day. How a pool is split between people is set on the Labor page."
 
+#: app/components/admin-launch-card.tsx:48
+msgid "To do"
+msgstr "To do"
+
 #: ../../packages/marketing/src/components/coupon-offer-field.tsx:94
 msgid "To send a coupon, first create a discount that customers apply with a code."
 msgstr "To send a coupon, first create a discount that customers apply with a code."
@@ -4820,7 +4926,7 @@ msgstr ""
 msgid "Total Users:"
 msgstr ""
 
-#: app/components/admin-organizations-table.tsx:120
+#: app/components/admin-organizations-table.tsx:122
 msgid "Trial"
 msgstr ""
 
@@ -4856,7 +4962,7 @@ msgstr ""
 msgid "True"
 msgstr "True"
 
-#: app/components/admin-organizations-table.tsx:395
+#: app/components/admin-organizations-table.tsx:414
 #: app/components/admin-users-table.tsx:305
 #: app/routes/_admin+/audit-logs.tsx:347
 #: app/routes/_admin+/gdpr-requests.tsx:705
@@ -4906,6 +5012,7 @@ msgstr ""
 msgid "Unit"
 msgstr ""
 
+#: app/components/admin-launch-card.tsx:136
 #: app/routes/_admin+/ip-addresses+/$ip.tsx:106
 #: app/routes/_admin+/ip-addresses+/$ip.tsx:183
 #: app/routes/_admin+/ip-addresses+/index.tsx:262
@@ -4916,11 +5023,11 @@ msgstr ""
 msgid "Unnamed recipient"
 msgstr ""
 
-#: app/components/admin-organizations-table.tsx:114
+#: app/components/admin-organizations-table.tsx:116
 msgid "Unpaid"
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:146
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:152
 msgid "Unsaved changes"
 msgstr "Unsaved changes"
 
@@ -5080,7 +5187,7 @@ msgstr "Vendor, {item}"
 msgid "Vendors were cancelled for this order: refund it instead of retrying."
 msgstr "Vendors were cancelled for this order: refund it instead of retrying."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:509
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:511
 msgid "Verification Status"
 msgstr ""
 
@@ -5277,7 +5384,7 @@ msgstr ""
 msgid "You don't have permission to access this admin area."
 msgstr ""
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:194
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:201
 msgid "Your email design has changes that haven't been saved. Leaving now will lose them."
 msgstr "Your email design has changes that haven't been saved. Leaving now will lose them."
 

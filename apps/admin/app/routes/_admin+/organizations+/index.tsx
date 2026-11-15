@@ -14,6 +14,7 @@ import {
 import { PageHeader } from '@repo/ui/page-header'
 import { useLoaderData } from 'react-router'
 import { AdminOrganizationsTable } from '#app/components/admin-organizations-table.tsx'
+import { stuckInSetupCondition } from '#app/utils/launch-status.server.ts'
 import { type Route } from './+types/index.ts'
 
 export async function loader({ request }: Route.LoaderArgs) {
@@ -24,6 +25,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 	const subscriptionStatusFilter =
 		url.searchParams.get('subscriptionStatus') || ''
 	const planFilter = url.searchParams.get('plan') || ''
+	const setupFilter = url.searchParams.get('setup') === 'stuck' ? 'stuck' : ''
 	const page = parseInt(url.searchParams.get('page') || '1', 10)
 	const pageSize = parseInt(url.searchParams.get('pageSize') || '10', 10)
 
@@ -39,6 +41,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 			? eq(Organization.subscriptionStatus, subscriptionStatusFilter)
 			: undefined,
 		planFilter ? eq(Organization.planName, planFilter) : undefined,
+		setupFilter ? await stuckInSetupCondition(new Date()) : undefined,
 	)
 
 	// Get organizations with pagination
@@ -102,6 +105,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 			search: searchQuery,
 			subscriptionStatus: subscriptionStatusFilter,
 			plan: planFilter,
+			setup: setupFilter,
 		},
 	}
 }

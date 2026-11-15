@@ -2,7 +2,10 @@ import { type Page } from '@playwright/test'
 import { ConfigFlag, db, OrganizationLocation } from '@repo/database'
 import { RESERVATIONS_FLAG_KEYS } from '@repo/reservations'
 import { expect, test } from '#tests/playwright-utils.ts'
-import { createTestOrganization } from '#tests/test-utils.ts'
+import {
+	createTestOrganization,
+	createTestOrganizationWithClassicHome,
+} from '#tests/test-utils.ts'
 
 const CORS = {
 	'access-control-allow-origin': '*',
@@ -432,7 +435,7 @@ test.describe('Customers people list, reservation reports on the main Reports pa
 	}) => {
 		test.setTimeout(120_000)
 		const user = await login()
-		const org = await createTestOrganization(user.id, 'admin')
+		const org = await createTestOrganizationWithClassicHome(user.id, 'admin')
 		const location = await createLocation(org.id)
 		await enableFlags(org.id)
 		const { requests } = await stubApi(page, location.id)

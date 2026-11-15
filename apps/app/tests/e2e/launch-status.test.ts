@@ -53,7 +53,12 @@ test.describe.serial('Launch Status Flows', () => {
 
 		// Create an organization
 		const orgName = faker.company.name()
-		await page.getByRole('textbox', { name: /name/i }).fill(orgName)
+		// Retry until the form has hydrated; an early fill is wiped on hydration.
+		await expect(async () => {
+			const nameInput = page.getByRole('textbox', { name: /name/i })
+			await nameInput.fill(orgName)
+			await expect(nameInput).toHaveValue(orgName, { timeout: 1000 })
+		}).toPass()
 		// Let the form auto-generate the slug from the name
 		await page
 			.getByRole('textbox', { name: /description/i })

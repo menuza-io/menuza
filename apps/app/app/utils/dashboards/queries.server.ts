@@ -15,7 +15,7 @@ import {
 	UserOrganization,
 } from '@repo/database'
 import {
-	defaultHomeConfig,
+	defaultRestaurantHomeConfig,
 	emptyDashboardConfig,
 	MAX_CUSTOM_DASHBOARDS,
 	parseStoredDashboardConfig,
@@ -64,7 +64,7 @@ export async function getHomeDashboard(
 		.from(Dashboard)
 		.where(homeDashboardWhere(userId, organizationId))
 		.limit(1)
-	if (!row) return { id: null, config: defaultHomeConfig() }
+	if (!row) return { id: null, config: defaultRestaurantHomeConfig() }
 	return { id: row.id, config: parseStoredDashboardConfig(row.config, 'home') }
 }
 

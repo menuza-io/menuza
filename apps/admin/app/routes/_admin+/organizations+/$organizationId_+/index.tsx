@@ -12,7 +12,9 @@ import {
 	eq,
 } from '@repo/database'
 import { useLoaderData } from 'react-router'
+import { AdminLaunchCard } from '#app/components/admin-launch-card.tsx'
 import { AdminOrganizationDetail } from '#app/components/admin-organization-detail.tsx'
+import { loadLaunchStatus } from '#app/utils/launch-status.server.ts'
 import { type Route } from './+types/$organizationId.ts'
 
 export async function loader({ request, params }: Route['LoaderArgs']) {
@@ -48,6 +50,9 @@ export async function loader({ request, params }: Route['LoaderArgs']) {
 	if (!organization) {
 		throw new Response('Organization not found', { status: 404 })
 	}
+
+	// The launch checklist, evaluated by the App (state and dates only).
+	const launchPromise = loadLaunchStatus(params.organizationId)
 
 	// Get recent activity (last 20 activities)
 	const recentActivity = await db
@@ -100,6 +105,7 @@ export async function loader({ request, params }: Route['LoaderArgs']) {
 				invitations: organization.sentInvitations.length,
 			},
 		},
+		launch: await launchPromise,
 		recentActivity: recentActivity.map((activity) => ({
 			...activity,
 			metadata: activity.metadata ? JSON.parse(activity.metadata) : null,
@@ -116,6 +122,7 @@ export default function AdminOrganizationDetailPage() {
 				organization={data.organization}
 				recentActivity={data.recentActivity}
 			/>
+			<AdminLaunchCard result={data.launch} />
 		</div>
 	)
 }

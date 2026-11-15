@@ -11,7 +11,6 @@ import {
 	type BuiltInBlockData,
 	type DashboardBlockPicker,
 } from '#app/utils/dashboards/block-data.server.ts'
-import { inaccessibleBlockIds } from '#app/utils/dashboards/bookings-today.ts'
 import {
 	type BlockType,
 	type DashboardBlock,
@@ -20,7 +19,10 @@ import {
 	type NewDashboardBlock,
 	type PersistedBreakpoint,
 } from '#app/utils/dashboards/config.ts'
-import { hiddenBlockIds } from '#app/utils/dashboards/visibility.ts'
+import {
+	hiddenBlockIds,
+	inaccessibleBuiltInBlockIds,
+} from '#app/utils/dashboards/visibility.ts'
 import { AddBlockDialog } from './add-block-dialog.tsx'
 import { DashboardEditToolbar } from './dashboard-edit-toolbar.tsx'
 import { DashboardEmptyState } from './dashboard-empty-state.tsx'
@@ -84,19 +86,23 @@ export function DashboardEditor({
 		// An onboarding block added since the page data loaded has no progress
 		// yet. It is only offered while it would be shown, so it stays visible.
 		const fromData =
-			blockData.onboarding || !picker.onboardingAvailable
+			blockData.onboarding || blockData.launch || !picker.onboardingAvailable
 				? hiddenBlockIds(blocks, blockData)
 				: []
 		const byType = blocks
 			.filter((block) => hiddenBlockTypes.includes(block.type))
 			.map((block) => block.id)
-		const byAccess = inaccessibleBlockIds(blocks, picker.bookingsToday)
+		const byAccess = inaccessibleBuiltInBlockIds(blocks, {
+			bookingsToday: picker.bookingsToday.available,
+			today: picker.today.available,
+		})
 		return [...fromData, ...byType, ...byAccess]
 	}, [
 		blocks,
 		blockData,
 		hiddenBlockTypes,
-		picker.bookingsToday,
+		picker.bookingsToday.available,
+		picker.today.available,
 		picker.onboardingAvailable,
 	])
 

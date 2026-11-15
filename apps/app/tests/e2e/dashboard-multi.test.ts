@@ -1,7 +1,7 @@
 import { type Page, type Request } from '@playwright/test'
 import { and, count, Dashboard, db, eq, OnboardingStep } from '@repo/database'
 import { expect, test } from '#tests/playwright-utils.ts'
-import { createTestOrganization } from '#tests/test-utils.ts'
+import { createTestOrganizationWithClassicHome } from '#tests/test-utils.ts'
 import { initializeOnboardingSteps } from '../../../../packages/database/setup-onboarding.ts'
 
 /** Home's grid; the stats block is replaced by the KPI row above it. */
@@ -59,20 +59,24 @@ function recordPostsTo(page: Page, pathname: string) {
 }
 
 function dashboardsOf(userId: string, organizationId: string) {
-	return db
-		.select({
-			id: Dashboard.id,
-			kind: Dashboard.kind,
-			name: Dashboard.name,
-			config: Dashboard.config,
-		})
-		.from(Dashboard)
-		.where(
-			and(
-				eq(Dashboard.ownerId, userId),
-				eq(Dashboard.organizationId, organizationId),
-			),
-		)
+	return (
+		db
+			.select({
+				id: Dashboard.id,
+				kind: Dashboard.kind,
+				name: Dashboard.name,
+				config: Dashboard.config,
+			})
+			.from(Dashboard)
+			.where(
+				and(
+					eq(Dashboard.ownerId, userId),
+					eq(Dashboard.organizationId, organizationId),
+				),
+			)
+			// The seeded classic Home is not one of the dashboards created here.
+			.then((rows) => rows.filter((row) => row.kind !== 'home'))
+	)
 }
 
 async function insertCustomDashboard(input: {
@@ -107,7 +111,7 @@ test.describe('Multiple dashboards', () => {
 	}) => {
 		await ensureOnboardingStepsExist()
 		const user = await login()
-		const org = await createTestOrganization(user.id, 'admin')
+		const org = await createTestOrganizationWithClassicHome(user.id, 'admin')
 		const homePosts = recordPostsTo(page, `/${org.slug}`)
 
 		await page.setViewportSize({ width: 1440, height: 900 })
@@ -213,7 +217,7 @@ test.describe('Multiple dashboards', () => {
 		navigate,
 	}) => {
 		const user = await login()
-		const org = await createTestOrganization(user.id, 'admin')
+		const org = await createTestOrganizationWithClassicHome(user.id, 'admin')
 		const dashboard = await insertCustomDashboard({
 			organizationId: org.id,
 			ownerId: user.id,

@@ -506,3 +506,261 @@ describe('POST /query order reports', () => {
 		expect(spend.body).toMatchObject({ total: 1, value: 31 })
 	})
 })
+
+describe('GET /today', () => {
+	const internalCommandToken = 'analytics-internal-token-1234567890'
+	const orgId = 'clw9x0a12000008l00today001'
+	// 15:30 in New York (EDT), 22:30 in Riyadh, the same instant.
+	const now = new Date('2026-06-10T19:30:00Z')
+	const previousToken = process.env.OPERATOR_ANALYTICS_TOKEN
+	let tempDir: string
+
+	beforeEach(async () => {
+		process.env.OPERATOR_ANALYTICS_TOKEN = internalCommandToken
+		process.env.DATA_REGION = 'us'
+		tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tenant-api-today-'))
+		process.env.TENANT_DB_DIR = tempDir
+		await provisionTenantDb(orgId)
+		vi.mocked(findActiveOrganizationById).mockResolvedValue({
+			id: orgId,
+			slug: 'today',
+			name: 'Today',
+			customDomain: null,
+			hasProvisionedDb: true,
+			dataRegion: 'us',
+		} as Awaited<ReturnType<typeof findActiveOrganizationById>>)
+		vi.useFakeTimers({ now, toFake: ['Date'] })
+	})
+
+	afterEach(async () => {
+		vi.useRealTimers()
+		process.env.OPERATOR_ANALYTICS_TOKEN = previousToken ?? ''
+		await destroyTenantDb(orgId).catch(() => {})
+		fs.rmSync(tempDir, { recursive: true, force: true })
+	})
+
+	async function tokenFor(
+		subjects: readonly RestrictedReportSubject[],
+		tokenOrgId = orgId,
+	) {
+		const { token } = await mintOperatorAnalyticsToken({
+			signingSecret: internalCommandToken,
+			userId: 'user_1',
+			orgId: tokenOrgId,
+			role: 'operator',
+			subjects: [...subjects],
+		})
+		return token
+	}
+
+	async function today(
+		locations: Array<[string, string]>,
+		token?: string,
+	): Promise<{ status: number; body: Record<string, any> }> {
+		const query = new URLSearchParams({
+			locationIds: locations.map(([id]) => id).join(','),
+			timeZones: locations.map(([, zone]) => zone).join(','),
+		})
+		const res = await analyticsRoutes.request(`/today?${query}`, {
+			headers: {
+				Authorization: `Bearer ${token ?? (await tokenFor(ORDER_REPORT_SUBJECTS))}`,
+			},
+		})
+		return { status: res.status, body: (await res.json()) as any }
+	}
+
+	let sequence = 0
+	function order(
+		values: Partial<typeof restaurantOrders.$inferInsert>,
+	): typeof restaurantOrders.$inferInsert {
+		sequence += 1
+		const number = `T${sequence}`
+		return {
+			orgId,
+			number,
+			status: 'completed',
+			paymentMethod: 'handoff',
+			paymentStatus: 'unpaid',
+			fulfillment: 'pickup',
+			locationId: 'loc_ny',
+			locationName: 'New York',
+			contactName: 'Guest',
+			contactPhone: `+1555000${String(sequence).padStart(4, '0')}`,
+			currency: 'usd',
+			subtotalCents: 1000,
+			taxCents: 0,
+			totalCents: 1000,
+			lines: [],
+			idempotencyKey: `idempotency-${number}`,
+			requestHash: 'request-hash',
+			receiptTokenHash: `receipt-${number}`,
+			createdAt: now,
+			...values,
+		}
+	}
+
+	it('refuses a token without the order grant', async () => {
+		const { status, body } = await today(
+			[['loc_ny', 'America/New_York']],
+			await tokenFor([]),
+		)
+		expect(status).toBe(403)
+		expect(body).toMatchObject({ error: 'forbidden_subject' })
+	})
+
+	it('refuses forged tokens', async () => {
+		const { token } = await mintOperatorAnalyticsToken({
+			signingSecret: 'some-other-signing-secret-123456',
+			userId: 'user_1',
+			orgId,
+			role: 'operator',
+			subjects: [...ORDER_REPORT_SUBJECTS],
+		})
+		const { status } = await today([['loc_ny', 'America/New_York']], token)
+		expect(status).toBe(401)
+	})
+
+	it('refuses mismatched or invalid location lists', async () => {
+		const query = new URLSearchParams({
+			locationIds: 'loc_ny,loc_ruh',
+			timeZones: 'America/New_York',
+		})
+		const res = await analyticsRoutes.request(`/today?${query}`, {
+			headers: {
+				Authorization: `Bearer ${await tokenFor(ORDER_REPORT_SUBJECTS)}`,
+			},
+		})
+		expect(res.status).toBe(400)
+		const bad = await today([['loc_ny', 'Not/AZone']])
+		expect(bad.status).toBe(400)
+	})
+
+	it('matches the sales-total report for the same day and location', async () => {
+		const db = await getTenantDb(orgId)
+		await db.insert(restaurantOrders).values([
+			order({ totalCents: 1250 }),
+			order({
+				totalCents: 2000,
+				paymentMethod: 'online',
+				paymentStatus: 'paid',
+				status: 'preparing',
+			}),
+			// Not counted: cancelled, and online still waiting on payment.
+			order({ totalCents: 9000, status: 'cancelled' }),
+			order({
+				totalCents: 7000,
+				status: 'accepted',
+				paymentMethod: 'online',
+				paymentStatus: 'pending',
+				holdExpiresAt: new Date(now.getTime() + 600_000),
+			}),
+			// Yesterday in New York.
+			order({ totalCents: 500, createdAt: new Date(now.getTime() - day) }),
+		])
+
+		const { status, body } = await today([['loc_ny', 'America/New_York']])
+		expect(status).toBe(200)
+		expect(body.today).toEqual([
+			{ currency: 'USD', salesMinor: 3250, orders: 2 },
+		])
+		expect(body.yesterday).toEqual([
+			{ currency: 'USD', salesMinor: 500, orders: 1 },
+		])
+		expect(body.lastWeek).toEqual([])
+
+		const definition = createReportDefinition({
+			...organizationTemplates().find(
+				(template) => template.id === 'sales-total',
+			)!.definition,
+			timeframe: { field: 'createdAt', preset: 'today' },
+		})
+		const { token } = await mintOperatorAnalyticsToken({
+			signingSecret: internalCommandToken,
+			userId: 'user_1',
+			orgId,
+			role: 'operator',
+			subjects: [...ORDER_REPORT_SUBJECTS],
+		})
+		const res = await analyticsRoutes.request('/query', {
+			method: 'POST',
+			headers: {
+				Authorization: `Bearer ${token}`,
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({ definition, timeZone: 'America/New_York' }),
+		})
+		const report = (await res.json()) as { value: number; total: number }
+		expect(report.value * 100).toBe(body.today[0].salesMinor)
+		expect(report.total).toBe(body.today[0].orders)
+	})
+
+	it('counts each location over its own business day', async () => {
+		const db = await getTenantDb(orgId)
+		await db.insert(restaurantOrders).values([
+			// 01:00 in Riyadh today, 18:00 yesterday in New York.
+			order({
+				locationId: 'loc_ruh',
+				currency: 'sar',
+				totalCents: 4000,
+				createdAt: new Date('2026-06-09T22:00:00Z'),
+			}),
+			// Not today in New York, and after 15:30 yesterday: in neither.
+			order({
+				locationId: 'loc_ny',
+				totalCents: 700,
+				createdAt: new Date('2026-06-09T22:00:00Z'),
+			}),
+			// 12:00 yesterday in New York: yesterday up to this time.
+			order({
+				locationId: 'loc_ny',
+				totalCents: 1500,
+				createdAt: new Date('2026-06-09T16:00:00Z'),
+			}),
+			// 06:00 in New York today, 13:00 in Riyadh today.
+			order({
+				locationId: 'loc_ny',
+				totalCents: 2500,
+				createdAt: new Date('2026-06-10T10:00:00Z'),
+			}),
+		])
+		const { body } = await today([
+			['loc_ny', 'America/New_York'],
+			['loc_ruh', 'Asia/Riyadh'],
+		])
+		// Two currencies, never summed.
+		expect(body.today).toEqual([
+			{ currency: 'SAR', salesMinor: 4000, orders: 1 },
+			{ currency: 'USD', salesMinor: 2500, orders: 1 },
+		])
+		expect(body.yesterday).toEqual([
+			{ currency: 'USD', salesMinor: 1500, orders: 1 },
+		])
+	})
+
+	it('counts distinct guests, first-time and returning, with totals only', async () => {
+		const db = await getTenantDb(orgId)
+		const [ada] = await db
+			.insert(customers)
+			.values({ name: 'Ada', phone: '+15550009999' })
+			.returning({ id: customers.id })
+		await db.insert(restaurantOrders).values([
+			// Ada ordered last month and twice today: one returning guest.
+			order({
+				customerId: ada!.id,
+				contactName: 'Ada',
+				createdAt: new Date(now.getTime() - 30 * day),
+			}),
+			order({ customerId: ada!.id, contactName: 'Ada' }),
+			order({ contactPhone: '(555) 000-9999', contactName: 'Ada' }),
+			// Two new guests.
+			order({ contactName: 'Grace' }),
+			order({ contactName: 'Linus' }),
+		])
+		const { body } = await today([['loc_ny', 'America/New_York']])
+		expect(body.guests).toEqual({ total: 3, firstTime: 2, returning: 1 })
+		const text = JSON.stringify(body)
+		for (const pii of ['Ada', 'Grace', 'Linus', '555', ada!.id]) {
+			expect(text).not.toContain(pii)
+		}
+	})
+})

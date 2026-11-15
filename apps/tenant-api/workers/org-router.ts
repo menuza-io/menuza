@@ -447,6 +447,12 @@ export async function resolveOrgId(
 		return orgIdFromJsonBody(request)
 	}
 
+	// App -> regional home and launch facts (ids, booleans, a timestamp):
+	// body orgId, authenticated by INTERNAL_COMMAND_TOKEN inside the handler.
+	if (pathname.startsWith('/internal/home/')) {
+		return orgIdFromJsonBody(request)
+	}
+
 	// Reservations tick, internal commands, and voice actions: body orgId,
 	// authenticated by INTERNAL_COMMAND_TOKEN or VOICE_AGENT_TOKEN inside the
 	// route handler. A tick with no body orgId fans out at the edge.

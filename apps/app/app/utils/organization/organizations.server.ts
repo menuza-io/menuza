@@ -2,6 +2,7 @@ import { auditService, AuditAction } from '@repo/audit'
 import { getUserId } from '@repo/auth'
 import {
 	and,
+	ConfigFlag,
 	count,
 	db,
 	desc,
@@ -23,6 +24,7 @@ import {
 import { type User } from '@repo/database/types'
 import { logger } from '@repo/observability'
 import { data } from 'react-router'
+import { LAUNCH_CHECKLIST_FLAG } from '#app/utils/launch/launch.ts'
 import {
 	deprovisionTenantDatabase,
 	provisionTenantDatabase,
@@ -359,6 +361,14 @@ export async function createOrganization({
 			organizationId: created.id,
 			organizationRoleId: adminRole.id,
 			isDefault: true,
+		})
+		// New organizations get the restaurant launch checklist first
+		// (`launch.checklist`, default off for existing ones).
+		await tx.insert(ConfigFlag).values({
+			key: LAUNCH_CHECKLIST_FLAG,
+			value: true,
+			level: 'organization',
+			organizationId: created.id,
 		})
 		if (imageObjectKey)
 			await tx.insert(OrganizationImage).values({

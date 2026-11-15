@@ -262,7 +262,7 @@ function orderContext(row: OrderReportRow) {
 	}
 }
 
-async function customerIdsByPhone(db: TenantDatabase) {
+export async function customerIdsByPhone(db: TenantDatabase) {
 	const rows = await db
 		.select({ id: customers.id, phone: customers.phone })
 		.from(customers)
@@ -278,7 +278,7 @@ async function customerIdsByPhone(db: TenantDatabase) {
  * Who placed an order: the signed-in customer, else the customer whose phone
  * matches the checkout phone, else the checkout phone itself.
  */
-function orderIdentity(
+export function orderIdentity(
 	order: { customerId: string | null; contactPhone: string | null },
 	byPhone: Map<string, string>,
 ): string | null {

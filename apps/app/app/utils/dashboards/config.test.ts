@@ -13,6 +13,7 @@ import {
 	canEdit,
 	dashboardNameSchema,
 	defaultHomeConfig,
+	defaultRestaurantHomeConfig,
 	emptyDashboardConfig,
 	isOwner,
 	normalizeDashboardConfig,
@@ -158,6 +159,42 @@ describe('block registry', () => {
 	})
 })
 
+describe('defaultRestaurantHomeConfig', () => {
+	it('shows Today, Needs attention and onboarding, and no notes blocks', () => {
+		const config = defaultRestaurantHomeConfig()
+		expect(config.blocks.map((block) => block.type)).toEqual([
+			'today',
+			'attention',
+			'onboarding',
+		])
+		for (const notesType of ['stats', 'notes-chart', 'leaderboard']) {
+			expect(config.blocks.map((block) => block.type)).not.toContain(notesType)
+		}
+	})
+
+	it('adds Bookings today only when the viewer can see it', () => {
+		expect(
+			defaultRestaurantHomeConfig({ bookingsToday: true }).blocks.map(
+				(block) => block.type,
+			),
+		).toEqual(['today', 'attention', 'onboarding', 'bookings-today'])
+	})
+
+	it('is already in canonical form, with Today across the top', () => {
+		for (const bookingsToday of [false, true]) {
+			const config = defaultRestaurantHomeConfig({ bookingsToday })
+			expect(expectConfig(config)).toEqual(config)
+			expect(config.layouts.lg[0]).toEqual({
+				i: 'today',
+				x: 0,
+				y: 0,
+				w: 12,
+				h: 5,
+			})
+		}
+	})
+})
+
 describe('addableBuiltInBlockTypes', () => {
 	const without = (...types: string[]) =>
 		defaultHomeConfig().blocks.filter((block) => !types.includes(block.type))
@@ -174,8 +211,25 @@ describe('addableBuiltInBlockTypes', () => {
 			addableBuiltInBlockTypes([], {
 				...options,
 				bookingsTodayAvailable: true,
+				todayAvailable: true,
+				attentionAvailable: true,
 			}),
 		).toEqual(BUILT_IN_BLOCK_TYPES)
+	})
+
+	it('offers Today only with a tile to show, and Needs attention once', () => {
+		expect(addableBuiltInBlockTypes([], options)).not.toContain('today')
+		expect(
+			addableBuiltInBlockTypes([], { ...options, todayAvailable: true }),
+		).toContain('today')
+		const restaurant = defaultRestaurantHomeConfig().blocks
+		expect(
+			addableBuiltInBlockTypes(restaurant, {
+				...options,
+				todayAvailable: true,
+				attentionAvailable: true,
+			}),
+		).not.toEqual(expect.arrayContaining(['today', 'attention']))
 	})
 
 	it('offers onboarding only while the viewer would see it', () => {
@@ -510,13 +564,13 @@ describe('parseDashboardConfig', () => {
 describe('parseStoredDashboardConfig', () => {
 	it('falls back to the default Home for invalid stored JSON', () => {
 		expect(parseStoredDashboardConfig('{not json', 'home')).toEqual(
-			defaultHomeConfig(),
+			defaultRestaurantHomeConfig(),
 		)
 		expect(
 			parseStoredDashboardConfig('{"version":1,"blocks":"x"}', 'home'),
-		).toEqual(defaultHomeConfig())
+		).toEqual(defaultRestaurantHomeConfig())
 		expect(parseStoredDashboardConfig(null, 'home')).toEqual(
-			defaultHomeConfig(),
+			defaultRestaurantHomeConfig(),
 		)
 	})
 
