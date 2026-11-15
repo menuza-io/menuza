@@ -17,6 +17,7 @@ import { ScrollArea } from '@repo/ui/scroll-area'
 import { type ReactNode } from 'react'
 
 import { useEmailBlockTypes } from './block-meta.ts'
+import { MenuItemInspector } from './menu-item-inspector.tsx'
 import { MergeTagField } from './merge-tag-field.tsx'
 
 type InspectorProps = {
@@ -29,6 +30,9 @@ type InspectorProps = {
 	onChooseImageFromLibrary?: (
 		onSelect: (url: string, alt: string) => void,
 	) => void
+	/** The host answers the dish intents (`menu_items`, `menu_items_check`). */
+	menuItems?: boolean
+	menuItemsEndpoint?: string
 }
 
 function Field({
@@ -117,6 +121,8 @@ export function EmailBlockInspector({
 	onBack,
 	onRemove,
 	onChooseImageFromLibrary,
+	menuItems,
+	menuItemsEndpoint,
 }: InspectorProps) {
 	const { _ } = useLingui()
 	const { getBlockType } = useEmailBlockTypes()
@@ -156,6 +162,38 @@ export function EmailBlockInspector({
 			</div>
 			<ScrollArea className="min-h-0 flex-1">
 				<div className="space-y-4 p-4">
+					{block.type === 'menu_item' ? (
+						<MenuItemInspector
+							block={block}
+							onUpdate={onUpdate}
+							enabled={Boolean(menuItems)}
+							endpoint={menuItemsEndpoint}
+						/>
+					) : null}
+
+					{block.type === 'coupon' ? (
+						<>
+							<Field label={<Trans>Style</Trans>}>
+								<Segmented<'box' | 'ticket'>
+									aria-label={_(msg`Style`)}
+									value={block.config.style}
+									options={[
+										{ value: 'box', label: _(msg`Box`) },
+										{ value: 'ticket', label: _(msg`Ticket`) },
+									]}
+									onChange={(style) => onUpdate({ style })}
+								/>
+							</Field>
+							<p className="text-muted-foreground text-xs leading-relaxed">
+								<Trans>
+									Shows the offer, each guest's own code, its terms and a button
+									that opens the menu with the code applied. The words come from
+									the discount.
+								</Trans>
+							</p>
+						</>
+					) : null}
+
 					{block.type === 'heading' ? (
 						<>
 							<Field label={<Trans>Text</Trans>} htmlFor="block-heading-text">

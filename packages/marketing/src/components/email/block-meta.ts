@@ -39,6 +39,16 @@ const BLOCK_TYPE_META: Record<EmailBlockType, BlockMetaSource> = {
 		description: msg`A link styled as a call to action.`,
 		icon: 'move-up-right',
 	},
+	menu_item: {
+		label: msg`Menu item`,
+		description: msg`One to three dishes with photo, price and an Order button.`,
+		icon: 'utensils',
+	},
+	coupon: {
+		label: msg`Coupon`,
+		description: msg`The offer, each guest's code, its terms and a Use it now button.`,
+		icon: 'tag',
+	},
 }
 
 export type EmailBlockTypeOption = {
@@ -48,19 +58,34 @@ export type EmailBlockTypeOption = {
 	icon: IconName
 }
 
-export function useEmailBlockTypes() {
+/**
+ * The block types an author can add. The coupon block is offered only when the
+ * message carries a coupon (`couponAvailable`), and the dish block only when the
+ * host can pick dishes (`menuItemsAvailable`); blocks already in a draft always
+ * keep their label.
+ */
+export function useEmailBlockTypes(
+	options: { couponAvailable?: boolean; menuItemsAvailable?: boolean } = {},
+) {
 	const { _ } = useLingui()
-	const blockTypes: EmailBlockTypeOption[] = EMAIL_BLOCK_TYPES.map((type) => ({
+	const offered = EMAIL_BLOCK_TYPES.filter(
+		(type) =>
+			(type !== 'coupon' || options.couponAvailable) &&
+			(type !== 'menu_item' || options.menuItemsAvailable),
+	)
+	const allTypes: EmailBlockTypeOption[] = EMAIL_BLOCK_TYPES.map((type) => ({
 		type,
 		label: _(BLOCK_TYPE_META[type].label),
 		description: _(BLOCK_TYPE_META[type].description),
 		icon: BLOCK_TYPE_META[type].icon,
 	}))
 
+	const blockTypes = allTypes.filter((option) => offered.includes(option.type))
+
 	return {
 		blockTypes,
 		getBlockType: (type: EmailBlockType) =>
-			blockTypes.find((option) => option.type === type) ?? blockTypes[0]!,
+			allTypes.find((option) => option.type === type) ?? allTypes[0]!,
 	}
 }
 
@@ -74,5 +99,11 @@ export function emailBlockPreviewText(block: EmailBlock): string {
 			return block.config.alt.trim() || block.config.url.trim()
 		case 'button':
 			return block.config.label.trim() || block.config.url.trim()
+		case 'menu_item':
+			return (block.config.snapshot?.items ?? [])
+				.map((item) => item.name)
+				.join(', ')
+		case 'coupon':
+			return ''
 	}
 }

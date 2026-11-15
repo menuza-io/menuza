@@ -134,6 +134,16 @@
       "import": "./src/email-blocks.ts",
       "default": "./src/email-blocks.ts"
     },
+    "./email-block-base": {
+      "types": "./src/email-block-base.ts",
+      "import": "./src/email-block-base.ts",
+      "default": "./src/email-block-base.ts"
+    },
+    "./email-blocks-restaurant": {
+      "types": "./src/email-blocks-restaurant.ts",
+      "import": "./src/email-blocks-restaurant.ts",
+      "default": "./src/email-blocks-restaurant.ts"
+    },
     "./email-unsubscribe": {
       "types": "./src/email-unsubscribe.ts",
       "import": "./src/email-unsubscribe.ts",

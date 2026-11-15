@@ -62,6 +62,15 @@ export type EmailBlockEditorProps = {
 	 * placeholder, never a signed link). Tenant broadcasts and journey emails.
 	 */
 	unsubscribeLinkPreview?: boolean
+	/** The message carries a coupon, so the Coupon block may be added. */
+	couponAvailable?: boolean
+	/** The host can list and check dishes (route intents `menu_items`, `menu_items_check`). */
+	menuItems?: boolean
+	/**
+	 * Extra fields posted with every designer request, such as the message's
+	 * `discountOffer`, so the preview shows the coupon's words.
+	 */
+	requestFields?: Record<string, string>
 }
 
 function SortableEmailBlockCard({
@@ -209,6 +218,8 @@ function BlocksList({
 	onReorder,
 	onAdd,
 	onApplyTemplate,
+	couponAvailable,
+	menuItemsAvailable,
 }: {
 	blocks: EmailBlock[]
 	selectedBlockId: string | null
@@ -217,6 +228,8 @@ function BlocksList({
 	onReorder: (orderedIds: string[]) => void
 	onAdd: (type: EmailBlockType, position: number) => void
 	onApplyTemplate: (templateId: EmailBlockTemplateId) => void
+	couponAvailable?: boolean
+	menuItemsAvailable?: boolean
 }) {
 	const { _ } = useLingui()
 	const dndId = useId()
@@ -253,7 +266,12 @@ function BlocksList({
 				</span>
 				<div className="flex-1" />
 				{blocks.length > 0 ? (
-					<AddEmailBlockDialog position={blocks.length} onAdd={onAdd} />
+					<AddEmailBlockDialog
+						position={blocks.length}
+						onAdd={onAdd}
+						couponAvailable={couponAvailable}
+						menuItemsAvailable={menuItemsAvailable}
+					/>
 				) : null}
 			</div>
 			<ScrollArea className="min-h-0 flex-1">
@@ -284,6 +302,8 @@ function BlocksList({
 												position={index}
 												onAdd={onAdd}
 												trigger="insert"
+												couponAvailable={couponAvailable}
+												menuItemsAvailable={menuItemsAvailable}
 											/>
 										</div>
 										<SortableEmailBlockCard
@@ -301,6 +321,8 @@ function BlocksList({
 													position={index + 1}
 													onAdd={onAdd}
 													trigger="insert"
+													couponAvailable={couponAvailable}
+													menuItemsAvailable={menuItemsAvailable}
 												/>
 											</div>
 										) : null}
@@ -323,6 +345,9 @@ export function EmailBlockEditor({
 	className,
 	onChooseImageFromLibrary,
 	unsubscribeLinkPreview,
+	couponAvailable,
+	menuItems,
+	requestFields,
 }: EmailBlockEditorProps) {
 	const [selectedId, setSelectedId] = useState<string | null>(null)
 	const selected = blocks.find((block) => block.id === selectedId) ?? null
@@ -353,18 +378,24 @@ export function EmailBlockEditor({
 	previewFetcherRef.current = previewFetcher
 
 	const blocksJson = JSON.stringify(blocks)
+	const requestFieldsJson = JSON.stringify(requestFields ?? {})
 
 	useEffect(() => {
 		const timeout = setTimeout(() => {
 			previewFetcherRef.current.submit(
-				{ intent: 'email_preview', blocks: blocksJson, subject: subject ?? '' },
+				{
+					...(JSON.parse(requestFieldsJson) as Record<string, string>),
+					intent: 'email_preview',
+					blocks: blocksJson,
+					subject: subject ?? '',
+				},
 				previewEndpoint
 					? { method: 'post', action: previewEndpoint }
 					: { method: 'post' },
 			)
 		}, 300)
 		return () => clearTimeout(timeout)
-	}, [blocksJson, subject, previewEndpoint])
+	}, [blocksJson, subject, previewEndpoint, requestFieldsJson])
 
 	const addBlock = (type: EmailBlockType, position: number) => {
 		const block = getDefaultEmailBlock(type)
@@ -432,6 +463,8 @@ export function EmailBlockEditor({
 						onBack={() => setSelectedId(null)}
 						onRemove={() => removeBlock(selected.id)}
 						onChooseImageFromLibrary={onChooseImageFromLibrary}
+						menuItems={menuItems}
+						menuItemsEndpoint={previewEndpoint}
 					/>
 				) : (
 					<BlocksList
@@ -442,6 +475,8 @@ export function EmailBlockEditor({
 						onReorder={reorderBlocks}
 						onAdd={addBlock}
 						onApplyTemplate={applyTemplate}
+						couponAvailable={couponAvailable}
+						menuItemsAvailable={menuItems}
 					/>
 				)}
 			</div>

@@ -729,7 +729,7 @@ msgstr "{0, plural, one {صورتك} two {صورتاك} few {صورك الـ #} 
 #~ msgstr "{0} · إليك ما يحدث في {1}"
 
 #. placeholder {0}: data.messageText?.length || 0
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:439
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:444
 msgid "{0} / 1600 chars"
 msgstr "{0} / 1600 حرف"
 
@@ -2054,9 +2054,17 @@ msgstr "{name}، الكمية بوحدة {unitName}"
 msgid "{name}: fill up to"
 msgstr "{name}: املأ حتى"
 
+#: ../../packages/marketing/src/components/email/menu-item-inspector.tsx:160
+msgid "{name}: no longer on the live menu. Updating removes it."
+msgstr "{name}: لم يعد ضمن القائمة المتاحة. سيؤدي التحديث إلى إزالته."
+
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.levels.tsx:468
 msgid "{name}: order more when below"
 msgstr "{name}: اطلب المزيد عند أقل من"
+
+#: ../../packages/marketing/src/components/email/menu-item-inspector.tsx:158
+msgid "{name}: the price changed."
+msgstr "{name}: تغيّر السعر."
 
 #: app/utils/reservations/setup-progress.ts:142
 msgid "{named} ends before it starts."
@@ -2694,11 +2702,11 @@ msgstr "**مطبوعاتك في الطريق**"
 #. placeholder {0}: data.field === 'phoneVerified' ? 'Verification Status' : conditionFieldLabel(data.field || 'email')
 #. placeholder {1}: data.field === 'phoneVerified' ? ' is ' : data.operator === 'equals' ? ' equals ' : data.operator === 'not_equals' ? ' does not equal ' : ' contains '
 #. placeholder {2}: data.field === 'phoneVerified' ? data.value === 'true' ? 'Verified' : 'Not Verified' : data.value || '...'
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:579
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:584
 msgid "• If Customer {0}{1}<0>{2}</0> → <1>True branch</1>"
 msgstr "• إذا كان العميل {0}{1}<0>{2}</0> → <1>فرع صحيح</1>"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:605
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:610
 msgid "• Otherwise → <0>False branch</0>"
 msgstr "• وإلا → <0>فرع خاطئ</0>"
 
@@ -3300,6 +3308,12 @@ msgstr "وصل خصم في هذا الطلب إلى حد استخدامه قبل
 #: ../../packages/marketing/src/components/campaign-detail.tsx:42
 msgid "a discount that is no longer listed"
 msgstr "خصم لم يعد مدرجًا"
+
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:198
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:157
+#: app/utils/marketing/campaign-message.server.ts:75
+msgid "A dish in your email is no longer on the live menu. Remove it or choose another one."
+msgstr "لم يعد أحد الأطباق في بريدك الإلكتروني ضمن القائمة المتاحة. احذفه أو اختر طبقًا آخر."
 
 #: app/components/inventory/sold-out-panel.tsx:101
 msgid "A dish that is no longer on the menu"
@@ -4151,6 +4165,7 @@ msgstr "أضف منطقة طعام أولًا"
 msgid "Add a dining area first, then add its tables."
 msgstr "أضف منطقة جلوس أولاً ثم أضف طاولاتها."
 
+#: ../../packages/marketing/src/components/email/menu-item-inspector.tsx:275
 #: app/components/menu/menu-health-card.tsx:575
 msgid "Add a dish"
 msgstr "أضف طبقًا"
@@ -4170,7 +4185,7 @@ msgstr "إضافة طلب توظيف عام"
 msgid "Add a group"
 msgstr "أضف مجموعة"
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:166
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:204
 msgid "Add a heading"
 msgstr "أضف عنوانًا"
 
@@ -4472,7 +4487,7 @@ msgstr "إضافة منطقة"
 #~ msgid "Add at least one code."
 #~ msgstr "أضف رمزًا واحدًا على الأقل."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:224
+#: app/utils/marketing/campaign-message.server.ts:77
 msgid "Add at least one email block"
 msgstr "أضف كتلة بريد إلكتروني واحدة على الأقل"
 
@@ -4537,9 +4552,9 @@ msgstr "أضف 200 طاولة كحد أقصى في المرة الواحدة."
 msgid "Add availability"
 msgstr "إضافة توفر"
 
-#: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:69
-#: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:75
-#: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:136
+#: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:76
+#: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:82
+#: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:143
 #: app/components/dashboard/add-block-dialog.tsx:124
 #: app/components/dashboard/add-block-dialog.tsx:129
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:886
@@ -4609,6 +4624,10 @@ msgstr "إضافة منطقة توصيل"
 #: app/components/locations/delivery-zones-manager.tsx:305
 msgid "Add Delivery Zone"
 msgstr "إضافة منطقة توصيل"
+
+#: ../../packages/marketing/src/components/email/menu-item-inspector.tsx:244
+msgid "Add dish"
+msgstr "إضافة طبق"
 
 #~ msgid "Add drop reminder"
 #~ msgstr "إضافة تذكير بالطرح"
@@ -5526,11 +5545,11 @@ msgstr "التنبيهات والتذكيرات"
 msgid "Alerts for your team, how calls that need follow-up close on their own, and tags to find them later."
 msgstr "تنبيهات لفريقك، وكيف تُغلق المكالمات التي تحتاج إلى متابعة تلقائيًا، ووسوم للعثور عليها لاحقًا."
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:180
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:182
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:204
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:283
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:334
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:218
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:220
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:242
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:321
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:372
 msgid "Alignment"
 msgstr "المحاذاة"
 
@@ -5950,7 +5969,7 @@ msgstr "تم جرد أيضًا:"
 msgid "Also refund the service fee (<0>{feeLeftText}</0>)"
 msgstr "استرد رسوم الخدمة أيضًا (<0>{feeLeftText}</0>)"
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:241
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:279
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4007
 msgid "Alt text"
 msgstr "النص البديل"
@@ -7108,7 +7127,7 @@ msgstr "تمت الموافقة {createdAt}"
 msgid "Authorized Clients"
 msgstr "العملاء المصرح لهم"
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:110
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:114
 #: app/components/reservations/booking-sheet.tsx:1131
 msgid "Auto"
 msgstr "تلقائي"
@@ -7142,7 +7161,7 @@ msgstr "إشعار المساعد الآلي"
 #~ msgid "Automated customer notifications to create excitement and urge checkout."
 #~ msgstr "إشعارات تلقائية للعملاء لخلق الحماس وحثهم على الدفع."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:179
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:170
 msgid "Automated lifecycle journey created via visual builder."
 msgstr "رحلة دورة حياة مؤتمتة أُنشئت عبر المُنشئ المرئي."
 
@@ -7183,19 +7202,19 @@ msgid "Automation menu"
 msgstr "قائمة الأتمتة"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:84
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:117
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:75
 msgid "Automation not found"
 msgstr "لم يتم العثور على الأتمتة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:334
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:316
 msgid "Automation paused"
 msgstr "تم إيقاف الأتمتة مؤقتاً"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:312
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:294
 msgid "Automation published and activated!"
 msgstr "تم نشر الأتمتة وتفعيلها!"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:316
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:298
 msgid "Automation saved successfully"
 msgstr "تم حفظ الأتمتة بنجاح"
 
@@ -7366,7 +7385,7 @@ msgstr "العودة إلى المتقدّمين"
 msgid "Back to automations"
 msgstr "العودة إلى الأتمتة"
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:137
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:143
 msgid "Back to blocks"
 msgstr "العودة إلى الكتل"
 
@@ -7545,6 +7564,10 @@ msgstr "اعتمد على"
 msgid "Base Preparation Time (minutes)"
 msgstr "وقت التحضير الأساسي (دقائق)"
 
+#: ../../packages/marketing/src/components/email/menu-item-inspector.tsx:189
+msgid "Base price"
+msgstr "السعر الأساسي"
+
 #: app/components/menu/item-form.tsx:601
 msgid "Base Price ($)"
 msgstr "السعر الأساسي ($)"
@@ -7684,7 +7707,7 @@ msgstr "تم حذف الحظر."
 msgid "Block table for service"
 msgstr "حظر الطاولة للخدمة"
 
-#: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:83
+#: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:90
 msgid "Block types"
 msgstr "أنواع الكتل"
 
@@ -7701,7 +7724,7 @@ msgstr "محظورة"
 msgid "Blocked table {tableLabel} for the rest of the service."
 msgstr "تم حظر الطاولة {tableLabel} لبقية الخدمة."
 
-#: ../../packages/marketing/src/components/email/email-block-editor.tsx:249
+#: ../../packages/marketing/src/components/email/email-block-editor.tsx:262
 msgid "Blocks"
 msgstr "الكتل"
 
@@ -7950,6 +7973,7 @@ msgstr "يُشترى من"
 msgid "Bound to a sale"
 msgstr "مرتبط بعملية بيع"
 
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:181
 #: app/components/inventory/item-form.tsx:403
 #: app/components/inventory/supplier-products.tsx:396
 msgid "Box"
@@ -8269,7 +8293,7 @@ msgstr "زبدة"
 msgid "Button"
 msgstr "الزر"
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:300
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:338
 #: app/components/website/create-form-dialog.tsx:258
 #: app/components/website/form-builder-sidebar.tsx:696
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4214
@@ -8626,8 +8650,9 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:410
 #: ../../packages/marketing/src/components/campaign-form.tsx:173
-#: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:132
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:168
+#: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:139
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:177
+#: ../../packages/marketing/src/components/email/menu-item-inspector.tsx:313
 #: app/components/chat/chat-compose-dialog.tsx:411
 #: app/components/chat/chat-composer.tsx:350
 #: app/components/chat/chat-view.tsx:1021
@@ -9238,7 +9263,7 @@ msgstr "طلبات التموين تُحوَّل إلى المدير"
 msgid "Celebration"
 msgstr "احتفال"
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:94
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:98
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3416
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4390
 msgid "Center"
@@ -10137,7 +10162,7 @@ msgstr "اختر أيام الأسبوع."
 msgid "Choose file..."
 msgstr "اختر ملفاً..."
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:237
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:275
 #: app/components/media-library/media-library-picker.tsx:195
 msgid "Choose from library"
 msgstr "اختر من المكتبة"
@@ -10686,7 +10711,7 @@ msgstr "الإغلاق عند الكاونتر"
 msgid "Close at counter, tab {number}, table {label}"
 msgstr "الإغلاق عند الكاونتر، الحساب {number}، الطاولة {label}"
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:133
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:142
 msgid "Close email design"
 msgstr "إغلاق تصميم البريد"
 
@@ -11124,7 +11149,7 @@ msgstr "فرع شرطي"
 msgid "Condition comparison field is required."
 msgstr "حقل مقارنة الشرط مطلوب."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:534
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:539
 msgid "Condition Logic"
 msgstr "منطق الشرط"
 
@@ -11585,7 +11610,7 @@ msgstr "اتصل بالدعم للحصول على الأسعار"
 msgid "Contacts"
 msgstr "جهات الاتصال"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:553
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:558
 msgid "Contains (Partial Match)"
 msgstr "يحتوي (تطابق جزئي)"
 
@@ -12407,6 +12432,7 @@ msgstr "يحتسب الحجوزات من"
 
 #: ../../packages/marketing/src/components/coupon-offer-field.tsx:90
 #: ../../packages/marketing/src/components/coupon-offer-field.tsx:137
+#: ../../packages/marketing/src/components/email/block-meta.ts:48
 msgid "Coupon"
 msgstr "القسيمة"
 
@@ -13239,7 +13265,7 @@ msgstr "بيانات العملاء والأعمال"
 msgid "Customer app"
 msgstr "تطبيق العملاء"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:473
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:478
 msgid "Customer Attribute"
 msgstr "سمة العميل"
 
@@ -13302,7 +13328,7 @@ msgstr "عميل منذ"
 msgid "Customer UUID"
 msgstr "معرّف العميل الفريد"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:355
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:337
 msgid "customerId is required"
 msgstr "معرّف العميل مطلوب"
 
@@ -14692,7 +14718,7 @@ msgstr "تعطيل المصادقة الثنائية"
 msgid "Disabled for this location"
 msgstr "معطّل لهذا الفرع"
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:218
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:230
 #: app/components/reservations/settings/save-bar.tsx:76
 #: app/components/save-bar.tsx:350
 msgid "Discard"
@@ -14718,7 +14744,7 @@ msgstr "تجاهل التغييرات"
 #~ msgid "Discard draft"
 #~ msgstr "تجاهل المسودة"
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:198
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:210
 #: app/components/staff/labor-policy-editor.tsx:280
 msgid "Discard unsaved changes?"
 msgstr "تجاهل التغييرات غير المحفوظة؟"
@@ -14825,6 +14851,7 @@ msgstr "اسم الطبق أو المشروب ووصفه ورمزه الداخل
 msgid "Dish soap"
 msgstr "سائل غسيل الأواني"
 
+#: ../../packages/marketing/src/components/email/menu-item-inspector.tsx:201
 #: app/routes/_app+/$orgSlug_+/menu+/history.tsx:154
 msgid "Dishes"
 msgstr "الأطباق"
@@ -14836,6 +14863,10 @@ msgstr "يتم تمييز الأطباق التي تتجاوز هذه النسب
 #: app/components/menu/category-form.tsx:434
 msgid "Dishes and beverages in this category."
 msgstr "الأطباق والمشروبات في هذا التصنيف."
+
+#: ../../packages/marketing/src/components/email/menu-item-inspector.tsx:136
+msgid "Dishes can't be picked in this editor."
+msgstr "لا يمكن اختيار الأطباق في هذا المحرر."
 
 #: app/components/menu/menu-health-card.tsx:214
 msgid "Dishes listed twice"
@@ -14957,7 +14988,7 @@ msgstr "أجرِ أول جرد"
 msgid "Documents ZATCA rejected"
 msgstr "مستندات رفضتها الهيئة"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:550
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:555
 msgid "Does Not Equal"
 msgstr "لا يساوي"
 
@@ -15055,7 +15086,7 @@ msgstr "أجر مضاعف"
 msgid "Double time must start after daily overtime."
 msgstr "يجب أن يبدأ الأجر المضاعف بعد العمل الإضافي اليومي."
 
-#: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:128
+#: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:135
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:1793
 msgid "Double-click a block to add it instantly"
 msgstr "انقر نقراً مزدوجاً على الكتلة لإضافتها فوراً"
@@ -15241,7 +15272,7 @@ msgstr "اسحب المؤشر للمقارنة."
 msgid "Drag to move"
 msgstr "اسحب للنقل"
 
-#: ../../packages/marketing/src/components/email/email-block-editor.tsx:125
+#: ../../packages/marketing/src/components/email/email-block-editor.tsx:134
 #: app/components/website/form-builder-sidebar.tsx:335
 msgid "Drag to reorder"
 msgstr "اسحب لإعادة الترتيب"
@@ -15425,7 +15456,7 @@ msgstr "يجب أن تكون المدة بين 15 و720 دقيقة وبفواص�
 msgid "During this service"
 msgstr "خلال هذه الخدمة"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:565
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:570
 msgid "e.g. @gmail.com"
 msgstr "مثال: @gmail.com"
 
@@ -16074,7 +16105,7 @@ msgstr "مؤهل لإعادة التوظيف."
 msgid "Email"
 msgstr "البريد الإلكتروني"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:493
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:498
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:345
 msgid "Email Address"
 msgstr "عنوان البريد الإلكتروني"
@@ -16090,8 +16121,8 @@ msgstr "لا يمكن إرسال البريد الإلكتروني من هنا �
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:322
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:410
 #: ../../packages/marketing/src/components/campaign-form.tsx:118
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:117
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:141
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:126
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:150
 msgid "Email design"
 msgstr "تصميم البريد"
 
@@ -17356,7 +17387,7 @@ msgstr "في كل مكان"
 msgid "Exact time (no rounding)"
 msgstr "الوقت الدقيق (بدون تقريب)"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:547
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:552
 msgid "Exactly Equals"
 msgstr "يساوي تماماً"
 
@@ -17693,7 +17724,7 @@ msgstr "فشل التحقق باستخدام مفتاح المرور: {errorMess
 msgid "Failed to copy account ID"
 msgstr "فشل نسخ معرف الحساب"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:277
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:219
 msgid "Failed to create and dispatch campaign"
 msgstr "فشل إنشاء الحملة وإرسالها"
 
@@ -17705,7 +17736,7 @@ msgstr "فشل في إنشاء الحظر."
 msgid "Failed to create dining area."
 msgstr "فشل في إنشاء منطقة الطعام."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:192
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:183
 msgid "Failed to create journey"
 msgstr "فشل إنشاء الرحلة"
 
@@ -17741,7 +17772,7 @@ msgstr "فشل في إنشاء الطاولة."
 msgid "Failed to create turn-time bucket."
 msgstr "فشل في إنشاء شريحة وقت الدوران."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:345
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:327
 msgid "Failed to delete automation"
 msgstr "فشل حذف الأتمتة"
 
@@ -17879,7 +17910,7 @@ msgstr "تعذّر تحميل عمليات التشغيل"
 #~ msgid "Failed to move reservation."
 #~ msgstr "فشل نقل الحجز."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:330
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:312
 msgid "Failed to pause automation"
 msgstr "فشل إيقاف الأتمتة مؤقتاً"
 
@@ -17887,7 +17918,7 @@ msgstr "فشل إيقاف الأتمتة مؤقتاً"
 msgid "Failed to pause journey"
 msgstr "فشل إيقاف الرحلة مؤقتاً"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:306
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:288
 msgid "Failed to publish automation"
 msgstr "فشل نشر الأتمتة"
 
@@ -17913,7 +17944,7 @@ msgstr "فشل حل التعيين."
 #~ msgid "Failed to resolve table conflict."
 #~ msgstr "فشل حل تعارض الطاولة."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:293
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:275
 msgid "Failed to save automation"
 msgstr "فشل حفظ الأتمتة"
 
@@ -17954,7 +17985,7 @@ msgstr "فشل البحث عن المستخدمين"
 msgid "Failed to seat walk-in."
 msgstr "فشل إجلاس الضيف المباشر."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:370
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:352
 msgid "Failed to trigger test automation"
 msgstr "فشل تشغيل اختبار الأتمتة"
 
@@ -18937,7 +18968,7 @@ msgstr "استرداد كامل قبل الموعد النهائي للإلغا�
 msgid "Full time"
 msgstr "دوام كامل"
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:111
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:115
 msgid "Full width"
 msgstr "عرض كامل"
 
@@ -19247,11 +19278,11 @@ msgstr "التقدير"
 #~ msgid "Grade {grade}"
 #~ msgstr "التقدير {grade}"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:136
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:114
 msgid "Graph data is required"
 msgstr "بيانات الرسم البياني مطلوبة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:209
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:178
 msgid "Graph data missing"
 msgstr "بيانات الرسم البياني مفقودة"
 
@@ -19878,7 +19909,7 @@ msgstr "مرحباً {NAME_TAG}، تحديث حسابك جاهز!"
 msgid "Hi {NAME_TAG}, your Menuza account is ready."
 msgstr "مرحباً {NAME_TAG}، حسابك في Menuza جاهز."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:447
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:452
 msgid "Hi {NAME_TAG}, your order has been confirmed!"
 msgstr "مرحباً {NAME_TAG}، تم تأكيد طلبك!"
 
@@ -20543,7 +20574,7 @@ msgstr "تم استبدال الصورة بنجاح"
 msgid "Image to crop"
 msgstr "صورة للقص"
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:217
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:255
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4103
 msgid "Image URL"
 msgstr "رابط الصورة"
@@ -20849,7 +20880,7 @@ msgstr "مضمّن"
 msgid "Insert"
 msgstr "إدراج"
 
-#: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:54
+#: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:61
 msgid "Insert block here"
 msgstr "إدراج كتلة هنا"
 
@@ -21000,8 +21031,8 @@ msgstr "المقابلات"
 msgid "Invalid email address"
 msgstr "عنوان البريد الإلكتروني غير صالح"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:216
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:143
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:185
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:121
 msgid "Invalid graph format"
 msgstr "تنسيق الرسم البياني غير صالح"
 
@@ -21193,7 +21224,7 @@ msgstr "تطبيق iOS"
 msgid "IP Address"
 msgstr "عنوان IP"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:522
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:527
 msgid "Is Verified (True)"
 msgstr "موثّق (صحيح)"
 
@@ -21592,7 +21623,7 @@ msgstr "الإبقاء على المنطقة الحالية"
 msgid "Keep dishware"
 msgstr "الاحتفاظ بالأواني"
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:209
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:221
 #: app/components/reservations/floor-plan-canvas.tsx:819
 #: app/components/reservations/settings/setup-list-chrome.tsx:214
 #: app/components/staff/labor-policy-editor.tsx:291
@@ -21859,7 +21890,7 @@ msgstr "إدارة المعرفة"
 msgid "Kosher"
 msgstr "كوشر"
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:295
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:333
 #: app/components/reservations/floor-plan-canvas.tsx:134
 #: app/components/reservations/floor-plan-canvas.tsx:1265
 #: app/components/website/create-form-dialog.tsx:171
@@ -22393,7 +22424,7 @@ msgstr "هل تريد مغادرة هذه الصفحة؟"
 #~ msgid "Leave without saving?"
 #~ msgstr "المغادرة دون حفظ؟"
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:93
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:97
 #: app/components/reservations/status-style.tsx:212
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3411
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3607
@@ -22612,13 +22643,13 @@ msgstr "البنود"
 msgid "Lines the flow uses"
 msgstr "العبارات التي يستخدمها المسار"
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:303
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:341
 #: app/components/website/link-inspector.tsx:648
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:633
 msgid "Link"
 msgstr "رابط"
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:249
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:287
 msgid "Link (optional)"
 msgstr "رابط (اختياري)"
 
@@ -24363,6 +24394,7 @@ msgstr "معلومات القائمة"
 msgid "Menu Information"
 msgstr "معلومات القائمة"
 
+#: ../../packages/marketing/src/components/email/block-meta.ts:43
 #: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:522
 msgid "Menu item"
 msgstr "عنصر القائمة"
@@ -24483,7 +24515,7 @@ msgstr "إجراءات الرسالة"
 msgid "Message composer"
 msgstr "محرر الرسائل"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:238
+#: app/utils/marketing/campaign-message.server.ts:87
 msgid "Message content is required"
 msgstr "محتوى الرسالة مطلوب"
 
@@ -25167,7 +25199,7 @@ msgstr "جدولي"
 msgid "My schedule link"
 msgstr "رابط جدولي"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:502
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:507
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:348
 #: app/components/customers/people-list-screen.tsx:409
 #: app/components/customers/person-profile-screen.tsx:1047
@@ -25523,7 +25555,7 @@ msgid "New bookings stop using it. Bookings that already accepted it keep their 
 msgstr "تتوقف الحجوزات الجديدة عن استخدامها. الحجوزات التي وافقت عليها سابقًا تحتفظ بشروطها."
 
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:95
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:296
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:238
 msgid "New broadcast"
 msgstr "بث جديد"
 
@@ -25541,8 +25573,8 @@ msgstr "قناة جديدة"
 msgid "New count list"
 msgstr "قائمة جرد جديدة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:131
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:250
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:109
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:242
 msgid "New Customer Journey"
 msgstr "رحلة عميل جديدة"
 
@@ -26283,6 +26315,10 @@ msgstr "لا يذكر أي طبق مسببات الحساسية أو السعر�
 #: app/components/dashboard/blocks/attention-block.tsx:605
 msgid "No dishes are sold out here now."
 msgstr "لا توجد أطباق نافدة هنا الآن."
+
+#: ../../packages/marketing/src/components/email/menu-item-inspector.tsx:290
+msgid "No dishes found."
+msgstr "لم يتم العثور على أطباق."
 
 #: app/components/menu/menu-review-stack.tsx:1287
 msgid "No dishes in this category. Hiding it keeps it off your menu; you can show it again from Categories."
@@ -27849,7 +27885,7 @@ msgstr "غير مستخدم في أي ملاحظات أو تعليقات أو ص
 msgid "Not verified"
 msgstr "غير مُوثَّق"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:525
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:530
 msgid "Not Verified (False)"
 msgstr "غير موثّق (خاطئ)"
 
@@ -28612,6 +28648,10 @@ msgstr "تتّسع العبوة الواحدة لـ"
 msgid "One person per line: name, then phone or email. A header row with Name, Phone and Email also works."
 msgstr "شخص واحد في كل سطر: الاسم ثم الهاتف أو البريد الإلكتروني. كما يمكن استخدام صف عناوين يضم الاسم والهاتف والبريد الإلكتروني."
 
+#: ../../packages/marketing/src/components/email/block-meta.ts:44
+msgid "One to three dishes with photo, price and an Order button."
+msgstr "من طبق إلى ثلاثة أطباق مع الصورة والسعر وزر الطلب."
+
 #: app/components/roles/tenant-role-access-manager.tsx:230
 msgid "One-time broadcasts and automated journeys."
 msgstr "بثّات لمرة واحدة ومسارات أتمتة."
@@ -28843,6 +28883,10 @@ msgstr "ينطبق فقط حيث تُحدَّد قواعد العمل الإضا
 #: app/utils/staffing/timesheet-errors.ts:31
 msgid "Only approved cards can be locked or reopened."
 msgstr "يمكن قفل البطاقات المعتمدة أو إعادة فتحها فقط."
+
+#: ../../packages/marketing/src/components/email/menu-item-inspector.tsx:278
+msgid "Only dishes on your live menu can be added."
+msgstr "يمكن إضافة الأطباق الموجودة في قائمتك المتاحة فقط."
 
 #: app/components/reservations/experiences/schedule-sheet.tsx:404
 msgid "Only during service"
@@ -30148,7 +30192,7 @@ msgstr "خارجي"
 #~ msgid "Outdoor / Patio"
 #~ msgstr "خارجي / فناء"
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:103
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:107
 msgid "Outline"
 msgstr "محدد"
 
@@ -30851,7 +30895,7 @@ msgstr "متوقف حتى {pauseEnd}"
 msgid "Paused until you resume"
 msgstr "متوقف حتى تستأنفه"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:454
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:436
 msgid "Pausing automation..."
 msgstr "جارٍ إيقاف الأتمتة مؤقتاً..."
 
@@ -31375,7 +31419,7 @@ msgstr "رقم الهاتف"
 msgid "Phone number"
 msgstr "رقم الهاتف"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:496
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:501
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:346
 #: app/components/locations/location-form.tsx:495
 #: app/components/reservations/booking-sheet.tsx:966
@@ -31393,7 +31437,7 @@ msgstr "أرقام الهاتف"
 msgid "Phone ordering"
 msgstr "الطلب عبر الهاتف"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:499
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:504
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:347
 msgid "Phone Verification Status"
 msgstr "حالة توثيق الهاتف"
@@ -31465,7 +31509,7 @@ msgstr "العبارات"
 msgid "Physical Address"
 msgstr "العنوان الفعلي"
 
-#: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:78
+#: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:85
 msgid "Pick a block to add to your email."
 msgstr "اختر كتلة لإضافتها إلى بريدك."
 
@@ -31520,7 +31564,7 @@ msgstr "اختر حقلاً لإضافته إلى نموذجك."
 msgid "Pick a group below to reveal it after a guest selects a triggering option."
 msgstr "اختر مجموعة أدناه لعرضها بعد أن يختار الضيف خياراً محفِّزاً."
 
-#: ../../packages/marketing/src/components/email/email-block-editor.tsx:180
+#: ../../packages/marketing/src/components/email/email-block-editor.tsx:189
 msgid "Pick a layout, then customize the blocks."
 msgstr "اختر تخطيطًا ثم خصّص الكتل."
 
@@ -31607,6 +31651,10 @@ msgstr "اختر حتى 4 أطباق. تأتي الأسماء والأسعار �
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:793
 msgid "Pick up to 4 items. Names, prices and photos come from your catalog."
 msgstr "اختر حتى 4 عناصر. الأسماء والأسعار والصور من كتالوجك."
+
+#: ../../packages/marketing/src/components/email/menu-item-inspector.tsx:205
+msgid "Pick up to three dishes from your live menu."
+msgstr "اختر حتى ثلاثة أطباق من قائمتك المتاحة."
 
 #: app/routes/_app+/$orgSlug_+/marketing+/print.new.tsx:137
 msgid "Pick what to print. You can change the size, style and words next."
@@ -32522,6 +32570,10 @@ msgstr "يُسعَّر بالوزن"
 msgid "Priced by weight (the invoice shows the real weight)"
 msgstr "يُسعَّر بالوزن (تُظهر الفاتورة الوزن الفعلي)"
 
+#: ../../packages/marketing/src/components/email/menu-item-inspector.tsx:178
+msgid "Prices at"
+msgstr "الأسعار في"
+
 #: app/components/inventory/confirm-prices-dialog.tsx:102
 msgid "Prices confirmed."
 msgstr "تم تأكيد الأسعار."
@@ -32987,11 +33039,11 @@ msgstr "تم نشر الإصدار {version}"
 msgid "Publishing"
 msgstr "جارٍ النشر"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:444
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:426
 msgid "Publishing and activating automation..."
 msgstr "جارٍ نشر وتفعيل الأتمتة..."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:243
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:234
 msgid "Publishing new journey..."
 msgstr "جارٍ نشر الرحلة الجديدة..."
 
@@ -34330,8 +34382,8 @@ msgstr "إزالة الوصول من جميع الأجهزة عدا هذا ال�
 msgid "Remove availability override"
 msgstr "إزالة استثناء التوفر"
 
-#: ../../packages/marketing/src/components/email/email-block-editor.tsx:154
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:152
+#: ../../packages/marketing/src/components/email/email-block-editor.tsx:163
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:158
 #: app/components/dashboard/dashboard-block-frame.tsx:51
 #: app/components/dashboard/dashboard-block-frame.tsx:52
 msgid "Remove block"
@@ -34360,6 +34412,10 @@ msgstr "إزالة جهة الاتصال"
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:352
 msgid "Remove design"
 msgstr "إزالة التصميم"
+
+#: ../../packages/marketing/src/components/email/menu-item-inspector.tsx:226
+msgid "Remove dish"
+msgstr "إزالة الطبق"
 
 #: app/components/settings/cards/organization/site-card.tsx:528
 msgid "Remove domain"
@@ -35593,7 +35649,7 @@ msgstr "المكافآت هي ما ينفق العملاء نقاطهم عليه
 msgid "Rice"
 msgstr "أرز"
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:95
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:99
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3612
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4395
 msgid "Right"
@@ -35687,7 +35743,7 @@ msgstr "يقرّب وقت الحضور والانصراف عند جمع السا
 msgid "Route incoming traffic from an old path to a new destination."
 msgstr "وجّه الزيارات الواردة من مسار قديم إلى وجهة جديدة."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:576
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:581
 msgid "Routing Logic:"
 msgstr "منطق التوجيه:"
 
@@ -36039,7 +36095,7 @@ msgstr "صلصات"
 msgid "Saudi Arabia (KSA)"
 msgstr "المملكة العربية السعودية (KSA)"
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:176
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:185
 #: ../../packages/marketing/src/components/email/merge-tag-field.tsx:349
 #: app/components/chat/chat-message.tsx:222
 #: app/components/customers/person-notes-panel.tsx:112
@@ -36283,7 +36339,7 @@ msgstr "احفظ الملف وأعد تشغيل Claude Desktop"
 msgid "Save the file and restart Kiro IDE"
 msgstr "احفظ الملف وأعد تشغيل Kiro IDE"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:259
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:251
 msgid "Save the journey first before running test triggers."
 msgstr "احفظ الرحلة أولاً قبل تشغيل محفّزات الاختبار."
 
@@ -36327,7 +36383,7 @@ msgstr "احفظ تعديلاتك قبل تغيير الحالة."
 msgid "Save zone"
 msgstr "حفظ المنطقة"
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:154
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:163
 #: app/components/dashboard/dashboard-edit-toolbar.tsx:95
 #: app/components/inventory/counting-screen.tsx:661
 #: app/components/reservations/floor-plan-canvas.tsx:773
@@ -36426,7 +36482,7 @@ msgstr "تم الحفظ. تتحدّث نقطة البيع عند اتصالها 
 msgid "Saving as new copy…"
 msgstr "جارٍ الحفظ كنسخة جديدة…"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:432
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:414
 msgid "Saving automation draft..."
 msgstr "جارٍ حفظ مسودة الأتمتة..."
 
@@ -36438,7 +36494,7 @@ msgstr "الحفظ يُنشئ إصدارًا جديدًا؛ وتحتفظ الم�
 msgid "Saving edited image…"
 msgstr "جارٍ حفظ الصورة المعدّلة…"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:231
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:222
 msgid "Saving new journey draft..."
 msgstr "جارٍ حفظ مسودة الرحلة الجديدة..."
 
@@ -36448,7 +36504,7 @@ msgstr "جارٍ حفظ مسودة الرحلة الجديدة..."
 msgid "Saving..."
 msgstr "جارٍ الحفظ..."
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:176
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:185
 #: app/components/dashboard/dashboard-edit-toolbar.tsx:95
 #: app/components/hiring/interview-dialog.tsx:283
 #: app/components/inventory/adjust-stock-dialog.tsx:327
@@ -36793,6 +36849,11 @@ msgstr "البحث في تصنيفات للاستثناء"
 #: app/components/customers/people-list-screen.tsx:245
 msgid "Search customers"
 msgstr "البحث في العملاء"
+
+#: ../../packages/marketing/src/components/email/menu-item-inspector.tsx:284
+#: ../../packages/marketing/src/components/email/menu-item-inspector.tsx:285
+msgid "Search dishes"
+msgstr "البحث عن الأطباق"
 
 #: app/components/customers/person-merge-dialog.tsx:122
 msgid "Search for the duplicate"
@@ -37603,7 +37664,7 @@ msgstr "حدد يوماً نشطاً واحداً على الأقل من أيا�
 msgid "Select at least one language."
 msgstr "اختر لغة واحدة على الأقل."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:489
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:494
 msgid "Select attribute"
 msgstr "اختر السمة"
 
@@ -37625,7 +37686,7 @@ msgstr "اختر اللغات"
 #~ msgid "Select month"
 #~ msgstr "اختر الشهر"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:543
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:548
 msgid "Select operator"
 msgstr "اختر العامل"
 
@@ -37648,7 +37709,7 @@ msgstr "اختيار صور"
 msgid "Select several"
 msgstr "تحديد عدة عناصر"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:518
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:523
 msgid "Select status"
 msgstr "اختر الحالة"
 
@@ -37785,7 +37846,7 @@ msgstr "إرسال رمز جديد"
 msgid "Send a new manage link?"
 msgstr "إرسال رابط إدارة جديد؟"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:297
+#: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:239
 msgid "Send a one-time email or SMS to your audience."
 msgstr "أرسل بريداً إلكترونياً أو رسالة نصية لمرة واحدة إلى جمهورك."
 
@@ -38742,6 +38803,10 @@ msgstr "عرض التغييرات"
 msgid "Show conflicts"
 msgstr "عرض التعارضات"
 
+#: ../../packages/marketing/src/components/email/menu-item-inspector.tsx:267
+msgid "Show description"
+msgstr "إظهار الوصف"
+
 #: app/components/staff/schedule/publication-history.tsx:184
 msgid "Show details"
 msgstr "عرض التفاصيل"
@@ -38772,6 +38837,10 @@ msgstr "عرض المزيد"
 #: app/components/menu/drop-wizard/drop-form.tsx:1396
 msgid "Show opening date"
 msgstr "إظهار تاريخ الفتح"
+
+#: ../../packages/marketing/src/components/email/menu-item-inspector.tsx:255
+msgid "Show price"
+msgstr "إظهار السعر"
 
 #: app/components/settings/cards/organization/shop-card.tsx:387
 msgid "Show product on your public site"
@@ -38965,6 +39034,10 @@ msgstr "تظهر بعد عمليتي جرد معتمدتين."
 msgid "Shows it as an offer on your online menu."
 msgstr "يعرضه كعرض في قائمتك على الإنترنت."
 
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:188
+msgid "Shows the offer, each guest's own code, its terms and a button that opens the menu with the code applied. The words come from the discount."
+msgstr "يعرض العرض والرمز الخاص بكل ضيف وشروطه وزرًّا يفتح القائمة مع تطبيق الرمز. تؤخذ الصياغة من الخصم."
+
 #: app/components/my-schedule/requests-view.tsx:79
 #: app/components/my-schedule/time-off-sheet.tsx:157
 msgid "Sick"
@@ -39095,8 +39168,8 @@ msgstr "أيقونة الموقع"
 msgid "Site shop"
 msgstr "متجر الموقع"
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:169
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:171
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:207
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:209
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:571
 #: app/routes/_app+/$orgSlug_+/marketing+/print.canva.tsx:399
 #: app/routes/_app+/$orgSlug_+/marketing+/print.new.tsx:170
@@ -39201,7 +39274,7 @@ msgstr "الرسائل النصية"
 msgid "SMS message exceeds 1600 characters maximum."
 msgstr "تتجاوز الرسالة النصية الحد الأقصى 1600 حرفاً."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:427
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:432
 msgid "SMS Message Text"
 msgstr "نص الرسالة النصية"
 
@@ -39209,7 +39282,7 @@ msgstr "نص الرسالة النصية"
 msgid "SMS message text is required."
 msgstr "نص الرسالة النصية مطلوب."
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:459
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:464
 msgid "SMS messages over 160 characters will be segmented according to standard GSM telecommunication protocols."
 msgstr "ستُقسَّم الرسائل النصية التي تتجاوز 160 حرفاً وفق بروتوكولات GSM الاتصالية القياسية."
 
@@ -39246,7 +39319,7 @@ msgstr "رمادي ناعم"
 msgid "Sold out by stock: undo it in Inventory"
 msgstr "نفد بسبب المخزون: تراجع عنه من المخزون"
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:102
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:106
 msgid "Solid"
 msgstr "ممتلئ"
 
@@ -39958,7 +40031,7 @@ msgstr "ابدأ بكتابة عنوان أو مدينة أو رمز بريدي.
 msgid "Start with a poster for your door or window."
 msgstr "ابدأ بملصق لبابك أو نافذتك."
 
-#: ../../packages/marketing/src/components/email/email-block-editor.tsx:177
+#: ../../packages/marketing/src/components/email/email-block-editor.tsx:186
 msgid "Start with a template"
 msgstr "ابدأ بقالب"
 
@@ -40346,8 +40419,10 @@ msgstr "فحوصات هيكلية للمحفّزات والاتصالات وإع
 msgid "Studio"
 msgstr "استوديو"
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:311
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:313
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:176
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:178
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:349
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:351
 #: app/components/media-library/photo-studio-dialog.tsx:426
 #: app/components/website/link-inspector.tsx:381
 #: app/components/website/link-inspector.tsx:383
@@ -41185,7 +41260,7 @@ msgstr "الموقع الهدف"
 #~ msgid "Target type"
 #~ msgstr "نوع الهدف"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:561
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:566
 msgid "Target Value"
 msgstr "القيمة المستهدفة"
 
@@ -41498,7 +41573,7 @@ msgstr "تشغيل اختباري"
 #~ msgid "Test run triggered successfully (Run ID: {0})"
 #~ msgstr "تم تشغيل الاختبار بنجاح (معرّف التشغيل: {0})"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:378
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:360
 msgid "Test run triggered successfully (Run ID: {runId})"
 msgstr "تم تشغيل الاختبار بنجاح (معرّف التشغيل: {runId})"
 
@@ -41512,8 +41587,8 @@ msgstr "اختبار هذه المسودة"
 #~ msgid "Test your call flow from this browser and use the dial pad to press keys. Test calls use the same call flow, rules, and business details as real calls and appear in Calls marked as tests."
 #~ msgstr "اختبر مسار المكالمة من هذا المتصفح واستخدم لوحة الأرقام للضغط على المفاتيح. تستخدم مكالمات الاختبار مسار المكالمة والقواعد وتفاصيل النشاط التجاري نفسها التي تستخدمها المكالمات الحقيقية، وتظهر في المكالمات بعلامة اختبار."
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:161
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:193
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:199
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:231
 #: app/components/customers/person-marketing-card.tsx:157
 #: app/components/social/post-composer.tsx:264
 #: app/components/website/link-inspector.tsx:644
@@ -42830,6 +42905,10 @@ msgstr "فترات الوجبات التي يمكن الحجز فيها ومدة
 msgid "The meal periods guests can book, such as lunch or dinner. Each one has the days it runs and its first and last seating."
 msgstr "فترات الوجبات التي يمكن للضيوف حجزها، مثل الغداء أو العشاء. لكل فترة أيام تشغيل وأول وآخر موعد جلوس."
 
+#: ../../packages/marketing/src/components/email/menu-item-inspector.tsx:149
+msgid "The menu has changed since this was saved."
+msgstr "تغيّرت القائمة منذ الحفظ."
+
 #: app/components/loyalty/program-form.tsx:558
 #: app/components/loyalty/promotion-dialog.tsx:699
 #: app/components/loyalty/reward-dialog.tsx:572
@@ -42910,6 +42989,10 @@ msgstr "تعذّر حفظ الملاحظة. حاول مرة أخرى."
 #: app/components/phone-agent/phone-number-dialogs.tsx:431
 msgid "The number customers dial today, in international format. You'll verify it with a code before the agent answers."
 msgstr "الرقم الذي يتصل به العملاء حاليًا، بالصيغة الدولية. ستتحقق منه برمز قبل أن يبدأ الوكيل بالرد."
+
+#: ../../packages/marketing/src/components/email/block-meta.ts:49
+msgid "The offer, each guest's code, its terms and a Use it now button."
+msgstr "العرض ورمز كل ضيف وشروطه وزر «استخدمه الآن»."
 
 #: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:106
 msgid "The online maximum cannot be more than the largest party at the host stand."
@@ -44973,6 +45056,10 @@ msgstr "الخميس"
 msgid "Thursday"
 msgstr "الخميس"
 
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:182
+msgid "Ticket"
+msgstr "قسيمة"
+
 #: app/utils/reservations/experiences-view.ts:29
 msgid "Ticketed"
 msgstr "بتذاكر"
@@ -45814,7 +45901,7 @@ msgstr "يُفعَّل عبر اختبار المسؤول أو API"
 msgid "Triggered via operator test or API"
 msgstr "يُفعَّل عبر اختبار المشغّل أو API"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:465
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:447
 msgid "Triggering test run for customer \"{customerId}\"..."
 msgstr "جارٍ تشغيل اختبار للعميل \"{customerId}\"..."
 
@@ -46091,8 +46178,8 @@ msgstr "تشغيل صوت الوكيل"
 msgid "Turn on batch counting for this made item before recording a batch."
 msgstr "فعّل تتبع الدفعات لهذا الصنف المحضّر قبل تسجيل دفعة."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:274
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:167
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:256
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:145
 msgid "Turn on Loyalty to use this trigger"
 msgstr "فعّل برنامج الولاء لاستخدام هذا المشغّل"
 
@@ -46100,8 +46187,8 @@ msgstr "فعّل برنامج الولاء لاستخدام هذا المشغّ�
 msgid "Turn on PIN sign-in for {label}"
 msgstr "تفعيل تسجيل الدخول برمز PIN لـ {label}"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:260
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:158
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:242
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.new.tsx:136
 msgid "Turn on Reservations to use this trigger"
 msgstr "فعّل الحجوزات لاستخدام هذا المشغّل"
 
@@ -46571,7 +46658,7 @@ msgid "Unknown error"
 msgstr "خطأ غير معروف"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:249
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:383
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.tsx:365
 msgid "Unknown intent"
 msgstr "نية غير معروفة"
 
@@ -46689,7 +46776,7 @@ msgstr "الإشعارات غير المقروءة"
 msgid "Unread only"
 msgstr "غير المقروء فقط"
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:152
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:161
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:496
 #: app/components/reservations/experiences/experience-editor.tsx:499
 #: app/components/reservations/floor-plan-canvas.tsx:770
@@ -46854,6 +46941,10 @@ msgstr "حدّث التاريخ والساعات والسعة."
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:1278
 msgid "Update from Canva"
 msgstr "التحديث من Canva"
+
+#: ../../packages/marketing/src/components/email/menu-item-inspector.tsx:170
+msgid "Update from menu"
+msgstr "التحديث من القائمة"
 
 #: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:520
 msgid "Update location details, hours, and fulfillment preferences."
@@ -47584,7 +47675,7 @@ msgstr "رمز التحقق"
 msgid "Verification Code"
 msgstr "رمز التحقق"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:511
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:516
 msgid "Verification Status"
 msgstr "حالة التوثيق"
 
@@ -49388,9 +49479,9 @@ msgstr "لماذا أُلغيت؟"
 msgid "Why? (optional)"
 msgstr "لماذا؟ (اختياري)"
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:262
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:322
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:324
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:300
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:360
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:362
 #: app/components/reservations/floor-plan-canvas.tsx:1531
 msgid "Width"
 msgstr "العرض"
@@ -49615,7 +49706,7 @@ msgstr "اكتب السؤال."
 msgid "Write your email. Use {NAME_TAG} to personalize."
 msgstr "اكتب بريدك الإلكتروني. استخدم {NAME_TAG} للتخصيص."
 
-#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:200
+#: ../../packages/marketing/src/components/email/email-block-inspector.tsx:238
 msgid "Write your message"
 msgstr "اكتب رسالتك"
 
@@ -50360,7 +50451,7 @@ msgstr "تعذّر حفظ تغييرات لوحة التحكم."
 msgid "Your department"
 msgstr "قسمك"
 
-#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:201
+#: ../../packages/marketing/src/components/email/email-design-overlay.tsx:213
 msgid "Your email design has changes that haven't been saved. Leaving now will lose them."
 msgstr "تصميم بريدك يحتوي على تغييرات لم تُحفظ. المغادرة الآن ستفقدها."
 

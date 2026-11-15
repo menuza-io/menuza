@@ -69,7 +69,7 @@ export function NodeInspector({
 	className,
 }: NodeInspectorProps) {
 	const { _ } = useLingui()
-	const { triggerOptions, hiddenTriggerTypes, couponOptions } =
+	const { triggerOptions, hiddenTriggerTypes, couponOptions, emailMenuItems } =
 		useWorkflowConfig()
 	const { conditionFieldLabel, delayUnitLabel } = useWorkflowUiLabels()
 	const [designerOpen, setDesignerOpen] = useState(false)
@@ -415,6 +415,11 @@ export function NodeInspector({
 								onSave={(blocks) => onSaveNodeData(node.id, { blocks })}
 								// Sent journey emails carry a signed unsubscribe link.
 								unsubscribeLinkPreview
+								menuItems={emailMenuItems}
+								couponAvailable={Boolean(couponValue)}
+								requestFields={{
+									discountOffer: couponValue ? JSON.stringify(couponValue) : '',
+								}}
 							/>
 						</div>
 					)}

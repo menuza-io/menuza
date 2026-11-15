@@ -8,16 +8,13 @@ import {
 	type EmailBlockTemplateId,
 } from '@repo/common/email-blocks'
 import { db, eq, Organization } from '@repo/database'
+import { parseMarketingOffer } from '@repo/discounts'
 import {
 	CampaignForm,
 	CouponOfferField,
 	type CouponOfferValue,
 	EmailBlockEditor,
 } from '@repo/marketing'
-import {
-	normalizeEmailBlocks,
-	renderMarketingEmail,
-} from '@repo/marketing/server/email-render'
 import { PageHeader } from '@repo/ui/page-header'
 import { useCallback, useRef, useState } from 'react'
 import {
@@ -33,14 +30,16 @@ import {
 	MediaLibraryPicker,
 	type MediaLibraryAsset,
 } from '#app/components/media-library/media-library-picker.tsx'
-import { MARKETING_OFFER_ERROR_MESSAGES } from '#app/utils/discounts/marketing-offer-labels.ts'
 import {
-	checkMarketingOffer,
 	loadCouponDiscountOptions,
 	readOfferField,
 } from '#app/utils/discounts/marketing-offers.server.ts'
-import { resolveEmailBrandingForOrg } from '#app/utils/email-branding.server.ts'
+import {
+	handleMenuItemIntent,
+	previewEmail,
+} from '#app/utils/email/designer.server.ts'
 import { orgSiteUrl } from '#app/utils/launch/launch.server.ts'
+import { prepareCampaignMessage } from '#app/utils/marketing/campaign-message.server.ts'
 import {
 	ORG_PERMISSIONS,
 	requireUserWithOrganizationPermission,
@@ -51,10 +50,13 @@ function EmailDesignerField({
 	orgSlug,
 	template = 'welcome',
 	buttonUrl,
+	offer,
 }: {
 	orgSlug: string
 	template?: EmailBlockTemplateId
 	buttonUrl?: string
+	/** The message's coupon: the Coupon block needs it and the preview shows it. */
+	offer: CouponOfferValue | null
 }) {
 	const [blocks, setBlocks] = useState<EmailBlock[]>(() =>
 		buildEmailTemplateBlocks(template, { buttonUrl }),
@@ -97,6 +99,9 @@ function EmailDesignerField({
 				onChooseImageFromLibrary={orgSlug ? handleChooseImage : undefined}
 				// Sent broadcast emails carry a signed unsubscribe link.
 				unsubscribeLinkPreview
+				menuItems
+				couponAvailable={Boolean(offer)}
+				requestFields={{ discountOffer: offer ? JSON.stringify(offer) : '' }}
 			/>
 			{orgSlug ? (
 				<MediaLibraryPicker
@@ -162,110 +167,47 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	const intent = formData.get('intent')
 	const baseUrl = getDomainUrl(request)
 
-	function resolveBlockImageUrls(
-		emailBlocks: EmailBlock[],
-		originUrl: string,
-	): EmailBlock[] {
-		return emailBlocks.map((block) => {
-			if (
-				block.type === 'image' &&
-				typeof block.config?.url === 'string' &&
-				!block.config.url.startsWith('http://') &&
-				!block.config.url.startsWith('https://')
-			) {
-				return {
-					...block,
-					config: {
-						...block.config,
-						url: `${originUrl}${block.config.url.startsWith('/') ? '' : '/'}${block.config.url}`,
-					},
-				}
-			}
-			return block
-		})
-	}
+	const offerField = readOfferField(formData.get('discountOffer'))
+	const previewOffer = parseMarketingOffer(offerField)
+
+	const menuIntent = await handleMenuItemIntent({
+		intent,
+		formData,
+		organizationId: orgId,
+		baseUrl,
+	})
+	if (menuIntent) return menuIntent
 
 	if (intent === 'email_preview') {
-		const branding = await resolveEmailBrandingForOrg(orgId)
-		const blocks = resolveBlockImageUrls(
-			normalizeEmailBlocks(formData.get('blocks')),
-			baseUrl,
-		)
-		const { html } = await renderMarketingEmail({
-			blocks,
-			theme: branding,
-			socials: branding.socials,
+		return previewEmail({
+			organizationId: orgId,
+			blocks: formData.get('blocks'),
 			subject: String(formData.get('subject') || ''),
-		})
-		return { html }
-	}
-
-	const name = formData.get('name')
-	const channel = formData.get('channel')
-	const subject = formData.get('subject')
-	const content = formData.get('content')
-	const blocksRaw = formData.get('blocks')
-
-	let resolvedContent = typeof content === 'string' ? content : ''
-	let contentHtml: string | undefined
-	let contentBlocks: string | undefined
-
-	if (
-		channel === 'email' &&
-		typeof blocksRaw === 'string' &&
-		blocksRaw.trim()
-	) {
-		const branding = await resolveEmailBrandingForOrg(orgId)
-		const blocks = resolveBlockImageUrls(
-			normalizeEmailBlocks(blocksRaw),
 			baseUrl,
-		)
-		if (blocks.length === 0) {
-			return { error: i18n._(t`Add at least one email block`) }
-		}
-		const rendered = await renderMarketingEmail({
-			blocks,
-			theme: branding,
-			socials: branding.socials,
-			subject: typeof subject === 'string' ? subject : '',
+			offer: previewOffer,
 		})
-		resolvedContent = rendered.text
-		contentHtml = rendered.html
-		contentBlocks = JSON.stringify(blocks)
 	}
 
-	if (!resolvedContent) {
-		return { error: i18n._(t`Message content is required`) }
-	}
-
-	const offerCheck = await checkMarketingOffer({
-		userId,
+	const prepared = await prepareCampaignMessage({
+		formData,
 		organizationId: orgId,
-		raw: readOfferField(formData.get('discountOffer')),
-		texts:
-			channel === 'email'
-				? [
-						typeof subject === 'string' ? subject : '',
-						resolvedContent,
-						contentHtml,
-					]
-				: [resolvedContent],
+		userId,
+		baseUrl,
 	})
-	if (!offerCheck.ok) {
-		return { error: i18n._(MARKETING_OFFER_ERROR_MESSAGES[offerCheck.error]) }
-	}
+	if (!prepared.ok) return { error: prepared.error }
+	const { message } = prepared
 
 	const createRes = await fetchTenant('/operator/marketing/campaigns', {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify({
-			name,
-			channel,
-			subject,
-			content: resolvedContent,
-			contentHtml,
-			contentBlocks,
-			discountOffer: offerCheck.offer,
+			name: formData.get('name'),
+			channel: message.channel,
+			subject: message.subject,
+			content: message.content,
+			contentHtml: message.contentHtml,
+			contentBlocks: message.contentBlocks,
+			discountOffer: message.discountOffer,
 		}),
 	})
 
@@ -307,6 +249,7 @@ export default function NewCampaignRoute() {
 							orgSlug={orgSlug}
 							template={template ?? undefined}
 							buttonUrl={siteUrl ?? undefined}
+							offer={offer}
 						/>
 					}
 					couponField={

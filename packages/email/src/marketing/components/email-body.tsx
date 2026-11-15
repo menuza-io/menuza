@@ -1,4 +1,5 @@
 import { Container, Img, Link, Section, Text } from '@react-email/components'
+import { type EmailRenderContext } from '@repo/common/email-block-base'
 import { type EmailBlock } from '@repo/common/email-blocks'
 import { resolveEmailAssetUrl, type EmailTheme } from '@repo/common/email-theme'
 
@@ -18,6 +19,7 @@ export type EmailBodyProps = {
 	theme: EmailTheme
 	socials?: EmailSocialLink[]
 	unsubscribeText?: string
+	context?: EmailRenderContext
 }
 
 export function EmailBody({
@@ -25,6 +27,7 @@ export function EmailBody({
 	theme,
 	socials = [],
 	unsubscribeText = DEFAULT_UNSUBSCRIBE_TEXT,
+	context,
 }: EmailBodyProps) {
 	const logoUrl = resolveEmailAssetUrl(theme.logoUrl, theme.appUrl)
 	const hasHeader = Boolean(logoUrl || theme.organizationName)
@@ -99,7 +102,7 @@ export function EmailBody({
 						</Section>
 					) : null}
 
-					<EmailBlocks blocks={blocks} theme={theme} />
+					<EmailBlocks blocks={blocks} theme={theme} context={context} />
 				</Section>
 
 				<Section

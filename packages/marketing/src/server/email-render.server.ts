@@ -1,4 +1,5 @@
 import { render } from '@react-email/components'
+import { type EmailRenderContext } from '@repo/common/email-block-base'
 import { emailBlockSchema, type EmailBlock } from '@repo/common/email-blocks'
 import { type EmailTheme } from '@repo/common/email-theme'
 import {
@@ -15,6 +16,8 @@ export type RenderMarketingEmailInput = {
 	socials?: EmailSocialLink[]
 	/** Inbox preview text; usually the subject line. */
 	subject?: string
+	/** Language, direction and the resolved data the vertical blocks need. */
+	context?: EmailRenderContext
 }
 
 export type RenderedMarketingEmail = {
@@ -62,13 +65,17 @@ export async function renderMarketingEmail(
 		theme: input.theme,
 		socials: input.socials,
 		previewText: input.subject,
+		context: input.context,
 	})
 
 	// The text part is derived from the blocks rather than React Email's
 	// plaintext renderer, which upper-cases headings and would corrupt merge
 	// tokens before they reach the send path.
 	const html = await render(element)
-	const text = [blocksToPlainText(blocks), DEFAULT_UNSUBSCRIBE_TEXT]
+	const text = [
+		blocksToPlainText(blocks, input.context),
+		DEFAULT_UNSUBSCRIBE_TEXT,
+	]
 		.filter(Boolean)
 		.join('\n\n')
 

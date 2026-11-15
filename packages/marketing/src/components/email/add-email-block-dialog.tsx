@@ -21,13 +21,20 @@ export function AddEmailBlockDialog({
 	position,
 	onAdd,
 	trigger = 'button',
+	couponAvailable,
+	menuItemsAvailable,
 }: {
 	position: number
 	onAdd: (type: EmailBlockType, position: number) => void
 	trigger?: 'button' | 'insert'
+	couponAvailable?: boolean
+	menuItemsAvailable?: boolean
 }) {
 	const { _ } = useLingui()
-	const { blockTypes } = useEmailBlockTypes()
+	const { blockTypes } = useEmailBlockTypes({
+		couponAvailable,
+		menuItemsAvailable,
+	})
 	const [open, setOpen] = useState(false)
 	const [selected, setSelected] = useState<EmailBlockType>(
 		blockTypes[0]?.type ?? 'body',

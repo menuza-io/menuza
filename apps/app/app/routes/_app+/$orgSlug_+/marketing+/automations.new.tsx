@@ -1,7 +1,8 @@
 import { i18n } from '@lingui/core'
 import { msg, t } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import { renderMarketingEmail } from '@repo/marketing/server/email-render'
+import { getDomainUrl } from '@repo/common'
+import { parseMarketingOffer } from '@repo/discounts'
 import {
 	WorkflowCanvas,
 	createDefaultJourneyGraph,
@@ -27,6 +28,11 @@ import {
 import { GlobalAIToggle } from '#app/components/ai/global-ai-panel.tsx'
 import { resolveEmailBrandingForOrg } from '#app/utils/email-branding.server.ts'
 import {
+	handleMenuItemIntent,
+	previewEmail,
+} from '#app/utils/email/designer.server.ts'
+import { renderJourneyEmailNodes } from '#app/utils/email/journey-render.server.ts'
+import {
 	loyaltyTriggerBlocked,
 	loyaltyTriggersEnabled,
 } from '#app/utils/marketing/loyalty-triggers.server.ts'
@@ -40,45 +46,6 @@ import {
 	requireUserWithOrganizationPermission,
 } from '#app/utils/organization/permissions.server.ts'
 import { getOperatorTenantClient } from '#app/utils/tenant-api.server.ts'
-
-async function withRenderedEmails(
-	nodes: WorkflowGraph['nodes'],
-	branding: Awaited<ReturnType<typeof resolveEmailBrandingForOrg>>,
-) {
-	return Promise.all(
-		nodes.map(async (node) => {
-			if (node.type !== 'action_email' || !Array.isArray(node.data.blocks)) {
-				return node
-			}
-			if (node.data.blocks.length === 0) {
-				return {
-					...node,
-					data: {
-						...node.data,
-						emailFormat: 'designed' as const,
-						bodyHtml: '',
-						bodyText: '',
-					},
-				}
-			}
-			const rendered = await renderMarketingEmail({
-				blocks: node.data.blocks,
-				theme: branding,
-				socials: branding.socials,
-				subject: node.data.subject,
-			})
-			return {
-				...node,
-				data: {
-					...node.data,
-					emailFormat: 'designed' as const,
-					bodyHtml: rendered.html,
-					bodyText: rendered.text,
-				},
-			}
-		}),
-	)
-}
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const orgSlug = params.orgSlug || ''
@@ -117,15 +84,26 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
 	// The email designer on this route renders its preview through the route
 	// action, so it must handle the preview intent before the journey create.
+	const baseUrl = getDomainUrl(request)
+	const menuIntent = await handleMenuItemIntent({
+		intent,
+		formData,
+		organizationId: orgId,
+		baseUrl,
+	})
+	if (menuIntent) return menuIntent
+
 	if (intent === 'email_preview') {
-		const branding = await resolveEmailBrandingForOrg(orgId)
-		const { html } = await renderMarketingEmail({
+		const offerField = formData.get('discountOffer')
+		return previewEmail({
+			organizationId: orgId,
 			blocks: formData.get('blocks'),
-			theme: branding,
-			socials: branding.socials,
 			subject: String(formData.get('subject') || ''),
+			baseUrl,
+			offer: parseMarketingOffer(
+				typeof offerField === 'string' && offerField ? offerField : null,
+			),
 		})
-		return { html }
 	}
 
 	const name = formData.get('name') || i18n._(t`New Customer Journey`)
@@ -167,7 +145,20 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		return { error: i18n._(t`Turn on Loyalty to use this trigger`) }
 	}
 	const branding = await resolveEmailBrandingForOrg(orgId)
-	const nodes = await withRenderedEmails(parsedGraph.nodes, branding)
+	const rendered = await renderJourneyEmailNodes(
+		orgId,
+		parsedGraph.nodes as Array<Record<string, unknown>>,
+		branding,
+		baseUrl,
+	)
+	if (!rendered.ok) {
+		return {
+			error: i18n._(
+				t`A dish in your email is no longer on the live menu. Remove it or choose another one.`,
+			),
+		}
+	}
+	const nodes = rendered.nodes as WorkflowGraph['nodes']
 	const resolvedGraph = { ...parsedGraph, nodes }
 
 	// Create journey in tenant-api
@@ -246,6 +237,7 @@ export default function NewJourneyRoute() {
 	return (
 		<div className="bg-muted fixed inset-0 z-50 flex h-dvh flex-col overflow-hidden">
 			<WorkflowCanvas
+				emailMenuItems
 				initialGraph={initialGraph}
 				journeyName={_(msg`New Customer Journey`)}
 				journeyStatus="draft"
