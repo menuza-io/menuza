@@ -843,9 +843,9 @@ test.describe('Dashboard', () => {
 		await page.reload()
 		await page.waitForLoadState('networkidle')
 		// Resetting deletes the row: Home goes back to the restaurant default.
-		await expect(homeBlock(page, 'Today')).toBeVisible()
-		await expect(homeBlock(page, 'Needs attention')).toBeVisible()
+		// (Today and Needs attention only show with their modules on.)
 		await expect(homeBlock(page, 'Onboarding checklist')).toBeVisible()
+		await expect(homeBlock(page, 'Notes chart')).toHaveCount(0)
 		await expect(leaderboard).toHaveCount(0)
 		expect(await savedHomeConfig(user.id, org.id)).toEqual([])
 	})
