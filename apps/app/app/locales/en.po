@@ -5633,7 +5633,7 @@ msgstr "All items"
 msgid "All jobs"
 msgstr "All jobs"
 
-#: app/components/dashboard/blocks/attention-block.tsx:361
+#: app/components/dashboard/blocks/attention-block.tsx:366
 #: app/components/dashboard/blocks/today-block.tsx:173
 #: app/components/discounts/discount-form.tsx:1718
 #: app/components/hiring/job-summary.tsx:55
@@ -8621,7 +8621,7 @@ msgstr "Can't text that number"
 #: app/components/customers/person-notes-panel.tsx:119
 #: app/components/customers/person-profile-screen.tsx:1105
 #: app/components/customers/person-profile-screen.tsx:1195
-#: app/components/dashboard/blocks/attention-block.tsx:625
+#: app/components/dashboard/blocks/attention-block.tsx:650
 #: app/components/dashboard/dashboard-edit-toolbar.tsx:41
 #: app/components/dashboard/dashboard-name-dialog.tsx:149
 #: app/components/dashboard/dashboard-options-menu.tsx:78
@@ -10623,7 +10623,7 @@ msgstr "Clocked out, {firstName}"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:362
 #: app/components/chat/chat-group-settings-dialog.tsx:181
-#: app/components/dashboard/blocks/attention-block.tsx:625
+#: app/components/dashboard/blocks/attention-block.tsx:650
 #: app/components/hiring/job-editor.tsx:974
 #: app/components/inventory/recipe-panel.tsx:335
 #: app/components/kiosk/kiosk-chrome.tsx:255
@@ -12202,6 +12202,10 @@ msgstr "Couldn't load suggestions."
 msgid "Couldn't load the assistant."
 msgstr "Couldn't load the assistant."
 
+#: app/components/dashboard/blocks/attention-block.tsx:577
+msgid "Couldn't load the dishes that are sold out."
+msgstr "Couldn't load the dishes that are sold out."
+
 #: app/components/phone-agent/call-recording-player.tsx:73
 msgid "Couldn't load the recording. Try again."
 msgstr "Couldn't load the recording. Try again."
@@ -12222,7 +12226,7 @@ msgstr "Couldn't load totals"
 msgid "Couldn't load voices"
 msgstr "Couldn't load voices"
 
-#: app/components/dashboard/blocks/attention-block.tsx:618
+#: app/components/dashboard/blocks/attention-block.tsx:643
 msgid "Couldn't mark the dishes available. Try again."
 msgstr "Couldn't mark the dishes available. Try again."
 
@@ -14844,11 +14848,11 @@ msgstr "Dishes without allergens or calories"
 msgid "Dismiss"
 msgstr ""
 
-#: app/components/dashboard/blocks/attention-block.tsx:498
+#: app/components/dashboard/blocks/attention-block.tsx:501
 msgid "Dismiss for a week"
 msgstr "Dismiss for a week"
 
-#: app/components/dashboard/blocks/attention-block.tsx:496
+#: app/components/dashboard/blocks/attention-block.tsx:499
 msgid "Dismiss for a week: {itemTitle}"
 msgstr "Dismiss for a week: {itemTitle}"
 
@@ -14990,7 +14994,7 @@ msgstr "Done {when}"
 msgid "Done selecting"
 msgstr "Done selecting"
 
-#: app/components/dashboard/blocks/attention-block.tsx:562
+#: app/components/dashboard/blocks/attention-block.tsx:587
 msgid "Done. The dishes are back on the menu."
 msgstr "Done. The dishes are back on the menu."
 
@@ -18313,7 +18317,7 @@ msgstr "Fix"
 msgid "Fix before publishing"
 msgstr "Fix before publishing"
 
-#: app/components/dashboard/blocks/attention-block.tsx:484
+#: app/components/dashboard/blocks/attention-block.tsx:487
 msgid "Fix it"
 msgstr "Fix it"
 
@@ -23078,7 +23082,7 @@ msgstr "Loading…"
 msgid "Local emulator"
 msgstr "Local emulator"
 
-#: app/components/dashboard/blocks/attention-block.tsx:359
+#: app/components/dashboard/blocks/attention-block.tsx:364
 #: app/components/dashboard/blocks/bookings-today-block.tsx:138
 #: app/components/dashboard/blocks/today-block.tsx:171
 #: app/components/inventory/inventory-chrome.tsx:99
@@ -23856,8 +23860,8 @@ msgstr ""
 msgid "Mark at least two tables as combinable to create one."
 msgstr "Mark at least two tables as combinable to create one."
 
-#: app/components/dashboard/blocks/attention-block.tsx:467
-#: app/components/dashboard/blocks/attention-block.tsx:638
+#: app/components/dashboard/blocks/attention-block.tsx:470
+#: app/components/dashboard/blocks/attention-block.tsx:663
 msgid "Mark available"
 msgstr "Mark available"
 
@@ -23876,7 +23880,7 @@ msgstr "Mark complete"
 msgid "Mark complete automatically"
 msgstr "Mark complete automatically"
 
-#: app/components/dashboard/blocks/attention-block.tsx:554
+#: app/components/dashboard/blocks/attention-block.tsx:570
 msgid "Mark dishes available"
 msgstr "Mark dishes available"
 
@@ -25270,7 +25274,7 @@ msgstr "Needs a published schedule. Managers choose how they hear about it in th
 msgid "Needs a value. Accept it on its own."
 msgstr "Needs a value. Accept it on its own."
 
-#: app/components/dashboard/blocks/attention-block.tsx:355
+#: app/components/dashboard/blocks/attention-block.tsx:360
 #: app/components/reservations/conflict-panel.tsx:123
 #: app/components/reservations/host-subnav.tsx:163
 #: app/components/staff/staff-profile-page.tsx:36
@@ -26200,7 +26204,7 @@ msgstr "No dish has a photo"
 msgid "No dish lists allergens or calories"
 msgstr "No dish lists allergens or calories"
 
-#: app/components/dashboard/blocks/attention-block.tsx:580
+#: app/components/dashboard/blocks/attention-block.tsx:605
 msgid "No dishes are sold out here now."
 msgstr "No dishes are sold out here now."
 
@@ -28060,7 +28064,7 @@ msgstr "Nothing needs review"
 msgid "Nothing needs you right now"
 msgstr "Nothing needs you right now"
 
-#: app/components/dashboard/blocks/attention-block.tsx:378
+#: app/components/dashboard/blocks/attention-block.tsx:383
 msgid "Nothing needs your attention."
 msgstr "Nothing needs your attention."
 
@@ -29208,7 +29212,7 @@ msgstr "Open the dish"
 msgid "Open the form"
 msgstr "Open the form"
 
-#: app/components/dashboard/blocks/attention-block.tsx:482
+#: app/components/dashboard/blocks/attention-block.tsx:485
 msgid "Open the menu"
 msgstr "Open the menu"
 
@@ -35266,7 +35270,7 @@ msgstr ""
 msgid "Results"
 msgstr "Results"
 
-#: app/components/dashboard/blocks/attention-block.tsx:458
+#: app/components/dashboard/blocks/attention-block.tsx:461
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:468
 #: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:237
 #: app/routes/_app+/$orgSlug_+/inventory+/counts.tsx:249
@@ -39117,7 +39121,7 @@ msgstr "Social media"
 msgid "Soft gray"
 msgstr "Soft gray"
 
-#: app/components/dashboard/blocks/attention-block.tsx:603
+#: app/components/dashboard/blocks/attention-block.tsx:628
 msgid "Sold out by stock: undo it in Inventory"
 msgstr "Sold out by stock: undo it in Inventory"
 
@@ -45213,7 +45217,7 @@ msgstr "To approve"
 msgid "To divide"
 msgstr "To divide"
 
-#: app/components/dashboard/blocks/attention-block.tsx:438
+#: app/components/dashboard/blocks/attention-block.tsx:441
 #: app/components/inventory/prep-screen.tsx:437
 #: app/components/inventory/prep-screen.tsx:576
 #: app/components/inventory/setup-checklist.tsx:149
@@ -45754,6 +45758,7 @@ msgstr ""
 #: app/components/ai/global-ai-panel.tsx:86
 #: app/components/chat/chat-view.tsx:680
 #: app/components/customers/people-list-screen.tsx:329
+#: app/components/dashboard/blocks/attention-block.tsx:580
 #: app/components/hiring/applicants-page.tsx:397
 #: app/components/hiring/candidate-sheet.tsx:113
 #: app/components/inventory/compare-panel.tsx:49
@@ -46912,7 +46917,7 @@ msgstr "Upsell"
 msgid "Upsells & add-ons"
 msgstr "Upsells & add-ons"
 
-#: app/components/dashboard/blocks/attention-block.tsx:436
+#: app/components/dashboard/blocks/attention-block.tsx:439
 msgid "Urgent"
 msgstr "Urgent"
 
@@ -48332,7 +48337,7 @@ msgstr "We could not save this. Check your connection and try again."
 msgid "We could not undo that. Open Waste and try again."
 msgstr "We could not undo that. Open Waste and try again."
 
-#: app/components/dashboard/blocks/attention-block.tsx:610
+#: app/components/dashboard/blocks/attention-block.tsx:635
 msgid "We couldn't check which dishes inventory took off. Try again in a moment."
 msgstr "We couldn't check which dishes inventory took off. Try again in a moment."
 

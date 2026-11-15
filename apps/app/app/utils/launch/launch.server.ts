@@ -1,5 +1,6 @@
 import { getFeatureFlag } from '@repo/common/feature-flags'
 import { isUnavailableUntilExpired } from '@repo/common/location-availability'
+import { isLaunchStepKey } from '@repo/common/onboarding'
 import {
 	and,
 	asc,
@@ -9,7 +10,6 @@ import {
 	eq,
 	isNotNull,
 	isNull,
-	like,
 	OnboardingStep,
 	OnboardingStepProgress,
 	Organization,
@@ -192,12 +192,7 @@ async function loadLaunchStepRows() {
 	const rows = await db
 		.select({ id: OnboardingStep.id, key: OnboardingStep.key })
 		.from(OnboardingStep)
-		.where(
-			and(
-				eq(OnboardingStep.isActive, true),
-				like(OnboardingStep.key, 'launch_%'),
-			),
-		)
+		.where(and(eq(OnboardingStep.isActive, true), isLaunchStepKey()))
 		.orderBy(asc(OnboardingStep.sortOrder))
 	return rows.flatMap((row) => {
 		const step = launchStepByKey(row.key)

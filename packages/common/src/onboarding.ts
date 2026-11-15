@@ -9,7 +9,7 @@ import {
 	isNotNull,
 	isNull,
 	not,
-	like,
+	sql,
 	OnboardingProgress,
 	OnboardingStep,
 	OnboardingStepProgress,
@@ -25,8 +25,10 @@ import { POS_PROVIDER_NAMES } from './pos-providers.ts'
  * evaluated per location by the App's launch engine, never as template steps.
  */
 export const LAUNCH_STEP_KEY_PREFIX = 'launch_'
-const templateStep = () =>
-	not(like(OnboardingStep.key, `${LAUNCH_STEP_KEY_PREFIX}%`))
+// substr, not LIKE: in LIKE an underscore matches any character.
+export const isLaunchStepKey = () =>
+	sql`substr(${OnboardingStep.key}, 1, ${LAUNCH_STEP_KEY_PREFIX.length}) = ${LAUNCH_STEP_KEY_PREFIX}`
+const templateStep = () => not(isLaunchStepKey())
 /** Template progress rows are the ones without a location. */
 const templateProgress = () => isNull(OnboardingStepProgress.locationId)
 

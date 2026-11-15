@@ -5628,7 +5628,7 @@ msgstr "كل العناصر"
 msgid "All jobs"
 msgstr "كل الوظائف"
 
-#: app/components/dashboard/blocks/attention-block.tsx:361
+#: app/components/dashboard/blocks/attention-block.tsx:366
 #: app/components/dashboard/blocks/today-block.tsx:173
 #: app/components/discounts/discount-form.tsx:1718
 #: app/components/hiring/job-summary.tsx:55
@@ -8616,7 +8616,7 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/components/customers/person-notes-panel.tsx:119
 #: app/components/customers/person-profile-screen.tsx:1105
 #: app/components/customers/person-profile-screen.tsx:1195
-#: app/components/dashboard/blocks/attention-block.tsx:625
+#: app/components/dashboard/blocks/attention-block.tsx:650
 #: app/components/dashboard/dashboard-edit-toolbar.tsx:41
 #: app/components/dashboard/dashboard-name-dialog.tsx:149
 #: app/components/dashboard/dashboard-options-menu.tsx:78
@@ -10618,7 +10618,7 @@ msgstr "تم تسجيل انصرافك، {firstName}"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:362
 #: app/components/chat/chat-group-settings-dialog.tsx:181
-#: app/components/dashboard/blocks/attention-block.tsx:625
+#: app/components/dashboard/blocks/attention-block.tsx:650
 #: app/components/hiring/job-editor.tsx:974
 #: app/components/inventory/recipe-panel.tsx:335
 #: app/components/kiosk/kiosk-chrome.tsx:255
@@ -12194,6 +12194,10 @@ msgstr "تعذّر تحميل الاقتراحات."
 msgid "Couldn't load the assistant."
 msgstr "تعذر تحميل المساعد."
 
+#: app/components/dashboard/blocks/attention-block.tsx:577
+msgid "Couldn't load the dishes that are sold out."
+msgstr "تعذّر تحميل الأطباق غير المتوفرة."
+
 #: app/components/phone-agent/call-recording-player.tsx:73
 msgid "Couldn't load the recording. Try again."
 msgstr "تعذّر تحميل التسجيل. حاول مرة أخرى."
@@ -12214,7 +12218,7 @@ msgstr "تعذر تحميل الإجماليات"
 msgid "Couldn't load voices"
 msgstr "تعذّر تحميل الأصوات"
 
-#: app/components/dashboard/blocks/attention-block.tsx:618
+#: app/components/dashboard/blocks/attention-block.tsx:643
 msgid "Couldn't mark the dishes available. Try again."
 msgstr "تعذر جعل الأطباق متاحة. حاول مرة أخرى."
 
@@ -14836,11 +14840,11 @@ msgstr "أطباق بلا مسببات حساسية أو سعرات"
 msgid "Dismiss"
 msgstr "تجاهل"
 
-#: app/components/dashboard/blocks/attention-block.tsx:498
+#: app/components/dashboard/blocks/attention-block.tsx:501
 msgid "Dismiss for a week"
 msgstr "إخفاء لمدة أسبوع"
 
-#: app/components/dashboard/blocks/attention-block.tsx:496
+#: app/components/dashboard/blocks/attention-block.tsx:499
 msgid "Dismiss for a week: {itemTitle}"
 msgstr "إخفاء لمدة أسبوع: {itemTitle}"
 
@@ -14982,7 +14986,7 @@ msgstr "أُنجزت في {when}"
 msgid "Done selecting"
 msgstr "تم التحديد"
 
-#: app/components/dashboard/blocks/attention-block.tsx:562
+#: app/components/dashboard/blocks/attention-block.tsx:587
 msgid "Done. The dishes are back on the menu."
 msgstr "تم. عادت الأطباق إلى القائمة."
 
@@ -18305,7 +18309,7 @@ msgstr "إصلاح"
 msgid "Fix before publishing"
 msgstr "أصلح قبل النشر"
 
-#: app/components/dashboard/blocks/attention-block.tsx:484
+#: app/components/dashboard/blocks/attention-block.tsx:487
 msgid "Fix it"
 msgstr "أصلحه"
 
@@ -23070,7 +23074,7 @@ msgstr "جارٍ التحميل…"
 msgid "Local emulator"
 msgstr "محاكي محلي"
 
-#: app/components/dashboard/blocks/attention-block.tsx:359
+#: app/components/dashboard/blocks/attention-block.tsx:364
 #: app/components/dashboard/blocks/bookings-today-block.tsx:138
 #: app/components/dashboard/blocks/today-block.tsx:171
 #: app/components/inventory/inventory-chrome.tsx:99
@@ -23848,8 +23852,8 @@ msgstr "تحديد كمقروء"
 msgid "Mark at least two tables as combinable to create one."
 msgstr "حدّد طاولتين على الأقل كقابلتين للدمج لإنشاء دمج."
 
-#: app/components/dashboard/blocks/attention-block.tsx:467
-#: app/components/dashboard/blocks/attention-block.tsx:638
+#: app/components/dashboard/blocks/attention-block.tsx:470
+#: app/components/dashboard/blocks/attention-block.tsx:663
 msgid "Mark available"
 msgstr "اجعله متاحًا"
 
@@ -23868,7 +23872,7 @@ msgstr "وضع علامة مكتمل"
 msgid "Mark complete automatically"
 msgstr "وضع علامة مكتمل تلقائيًا"
 
-#: app/components/dashboard/blocks/attention-block.tsx:554
+#: app/components/dashboard/blocks/attention-block.tsx:570
 msgid "Mark dishes available"
 msgstr "اجعل الأطباق متاحة"
 
@@ -25262,7 +25266,7 @@ msgstr "يتطلب جدولًا منشورًا. يختار المديرون طر
 msgid "Needs a value. Accept it on its own."
 msgstr "يحتاج إلى قيمة. اقبله على حدة."
 
-#: app/components/dashboard/blocks/attention-block.tsx:355
+#: app/components/dashboard/blocks/attention-block.tsx:360
 #: app/components/reservations/conflict-panel.tsx:123
 #: app/components/reservations/host-subnav.tsx:163
 #: app/components/staff/staff-profile-page.tsx:36
@@ -26192,7 +26196,7 @@ msgstr "لا توجد صورة لأي طبق"
 msgid "No dish lists allergens or calories"
 msgstr "لا يذكر أي طبق مسببات الحساسية أو السعرات الحرارية"
 
-#: app/components/dashboard/blocks/attention-block.tsx:580
+#: app/components/dashboard/blocks/attention-block.tsx:605
 msgid "No dishes are sold out here now."
 msgstr "لا توجد أطباق نافدة هنا الآن."
 
@@ -28052,7 +28056,7 @@ msgstr "لا شيء يحتاج إلى مراجعة"
 msgid "Nothing needs you right now"
 msgstr "لا شيء يحتاجك الآن"
 
-#: app/components/dashboard/blocks/attention-block.tsx:378
+#: app/components/dashboard/blocks/attention-block.tsx:383
 msgid "Nothing needs your attention."
 msgstr "لا شيء يحتاج انتباهك."
 
@@ -29200,7 +29204,7 @@ msgstr "افتح الطبق"
 msgid "Open the form"
 msgstr "فتح النموذج"
 
-#: app/components/dashboard/blocks/attention-block.tsx:482
+#: app/components/dashboard/blocks/attention-block.tsx:485
 msgid "Open the menu"
 msgstr "افتح القائمة"
 
@@ -35258,7 +35262,7 @@ msgstr "النتيجة"
 msgid "Results"
 msgstr "النتائج"
 
-#: app/components/dashboard/blocks/attention-block.tsx:458
+#: app/components/dashboard/blocks/attention-block.tsx:461
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:468
 #: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:237
 #: app/routes/_app+/$orgSlug_+/inventory+/counts.tsx:249
@@ -39109,7 +39113,7 @@ msgstr "وسائل التواصل الاجتماعي"
 msgid "Soft gray"
 msgstr "رمادي ناعم"
 
-#: app/components/dashboard/blocks/attention-block.tsx:603
+#: app/components/dashboard/blocks/attention-block.tsx:628
 msgid "Sold out by stock: undo it in Inventory"
 msgstr "نفد بسبب المخزون: تراجع عنه من المخزون"
 
@@ -45205,7 +45209,7 @@ msgstr "بانتظار الموافقة"
 msgid "To divide"
 msgstr "للتقسيم"
 
-#: app/components/dashboard/blocks/attention-block.tsx:438
+#: app/components/dashboard/blocks/attention-block.tsx:441
 #: app/components/inventory/prep-screen.tsx:437
 #: app/components/inventory/prep-screen.tsx:576
 #: app/components/inventory/setup-checklist.tsx:149
@@ -45746,6 +45750,7 @@ msgstr "جرّب تعديل البحث أو الفلتر."
 #: app/components/ai/global-ai-panel.tsx:86
 #: app/components/chat/chat-view.tsx:680
 #: app/components/customers/people-list-screen.tsx:329
+#: app/components/dashboard/blocks/attention-block.tsx:580
 #: app/components/hiring/applicants-page.tsx:397
 #: app/components/hiring/candidate-sheet.tsx:113
 #: app/components/inventory/compare-panel.tsx:49
@@ -46904,7 +46909,7 @@ msgstr "بيع إضافي"
 msgid "Upsells & add-ons"
 msgstr "البيع الإضافي والإضافات"
 
-#: app/components/dashboard/blocks/attention-block.tsx:436
+#: app/components/dashboard/blocks/attention-block.tsx:439
 msgid "Urgent"
 msgstr "عاجل"
 
@@ -48324,7 +48329,7 @@ msgstr "تعذّر حفظ هذا. تحقق من اتصالك وحاول مرة �
 msgid "We could not undo that. Open Waste and try again."
 msgstr "تعذّر التراجع عن ذلك. افتح الهدر وحاول مرة أخرى."
 
-#: app/components/dashboard/blocks/attention-block.tsx:610
+#: app/components/dashboard/blocks/attention-block.tsx:635
 msgid "We couldn't check which dishes inventory took off. Try again in a moment."
 msgstr "تعذر التحقق من الأطباق التي أزالها المخزون. حاول بعد لحظات."
 

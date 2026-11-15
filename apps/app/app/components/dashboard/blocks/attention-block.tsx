@@ -539,14 +539,24 @@ function RestoreDishesDialog({
 	const [picked, setPicked] = useState<string[]>([])
 	const query = locationId ? `?${new URLSearchParams({ locationId })}` : ''
 
-	// Load once per dialog; a failed load is not retried in a loop.
+	// Load once per dialog; a failed load is not retried in a loop, the
+	// person retries it with the button.
 	const requested = useRef(false)
 	const { load } = list
+	const [sawLoading, setSawLoading] = useState(false)
 	useEffect(() => {
 		if (requested.current) return
 		requested.current = true
 		void load(`/${orgSlug}/home-sold-out${query}`)
 	}, [load, orgSlug, query])
+	useEffect(() => {
+		if (list.state === 'loading') setSawLoading(true)
+	}, [list.state])
+	const loadFailed = sawLoading && list.state === 'idle' && !list.data
+	const retryLoad = () => {
+		setSawLoading(false)
+		void load(`/${orgSlug}/home-sold-out${query}`)
+	}
 
 	const done = restore.state === 'idle' && restore.data?.ok === true
 	const dishes = list.data?.dishes ?? []
@@ -561,7 +571,16 @@ function RestoreDishesDialog({
 					</DialogTitle>
 					<DialogDescription>{title}</DialogDescription>
 				</DialogHeader>
-				{!list.data ? (
+				{loadFailed ? (
+					<div className="flex flex-col items-start gap-2">
+						<p className="text-destructive text-sm" role="alert">
+							<Trans>Couldn't load the dishes that are sold out.</Trans>
+						</p>
+						<Button variant="outline" size="sm" onClick={retryLoad}>
+							<Trans>Try again</Trans>
+						</Button>
+					</div>
+				) : !list.data ? (
 					<Skeleton className="h-24 rounded-lg" aria-hidden="true" />
 				) : done ? (
 					<p className="text-sm" role="status">
