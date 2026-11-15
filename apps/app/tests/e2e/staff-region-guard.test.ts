@@ -43,8 +43,13 @@ async function stubExport(page: Page) {
 }
 
 async function openRegionDialog(page: Page) {
-	await page.getByRole('combobox', { name: 'Customer data region' }).click()
-	await page.getByRole('option', { name: 'Saudi Arabia (KSA)' }).click()
+	// Retry until the page has hydrated; an early click opens nothing.
+	await expect(async () => {
+		await page.getByRole('combobox', { name: 'Customer data region' }).click()
+		await page
+			.getByRole('option', { name: 'Saudi Arabia (KSA)' })
+			.click({ timeout: 3000 })
+	}).toPass()
 	const dialog = page.getByRole('alertdialog')
 	await expect(
 		dialog.getByRole('heading', {

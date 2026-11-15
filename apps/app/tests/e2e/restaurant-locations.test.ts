@@ -128,10 +128,14 @@ test.describe('Restaurant Locations Management & Switching', () => {
 		await expect(page.getByText(locationName)).toBeVisible()
 
 		// 6. Edit Location
-		await page.getByText(locationName).click()
-		await expect(page).toHaveURL(
-			new RegExp(`/${org.slug}/settings/locations/${createdLocation?.id}`),
-		)
+		// Retry the click: one before hydration does nothing.
+		await expect(async () => {
+			await page.getByText(locationName).click()
+			await expect(page).toHaveURL(
+				new RegExp(`/${org.slug}/settings/locations/${createdLocation?.id}`),
+				{ timeout: 3000 },
+			)
+		}).toPass()
 		await page.waitForLoadState('networkidle')
 
 		// Verify form loaded existing values
