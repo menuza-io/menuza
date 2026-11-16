@@ -8,6 +8,7 @@ import {
 } from '@repo/common/gift-cards'
 import { getTenantDb, giftCards, type GiftCardRow } from '@repo/tenant-db'
 import { and, desc, eq, inArray, lt, ne, or, sql, type SQL } from 'drizzle-orm'
+import { inJsonList } from '../lib/chunked-in.ts'
 import { giftCardLocationAllowed } from '../lib/gift-card-auth.ts'
 import { getGiftCardAuth, giftCardGuard } from '../lib/gift-card-guard.ts'
 import {
@@ -146,7 +147,9 @@ function scopeCondition(
 ): SQL | undefined {
 	if (locationIds === null) return undefined
 	if (locationIds.length === 0) return sql`0`
-	return inArray(giftCards.locationId, [...locationIds])
+	// A token carries up to 200 locations; one JSON parameter keeps the statement under
+	// the 100 bound-parameter limit without splitting the page.
+	return inJsonList(giftCards.locationId, locationIds)
 }
 
 operatorGiftCardRoutes.get('/', READ, async (c) => {

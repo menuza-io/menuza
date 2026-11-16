@@ -10,6 +10,7 @@ import {
 } from '@repo/tenant-db'
 import { and, eq } from 'drizzle-orm'
 import { runExclusive } from '../services/order-service.ts'
+import { openGiftCardCode, sealGiftCardCode } from './gift-card-secret.ts'
 import { HttpError } from './http.ts'
 import { retryOnSqliteBusy } from './sqlite-retry.ts'
 
@@ -59,6 +60,55 @@ type ActiveWrite = {
 }
 
 const activeWrite = new AsyncLocalStorage<ActiveWrite>()
+
+/**
+ * A result's secret fields, sealed for the stored idempotent response. A card
+ * code must never sit in the database in plaintext (only its HMAC does), yet a
+ * retry after a lost answer has to get the same code back, so the stored copy
+ * holds it sealed and a replay opens it.
+ */
+function sealResultFields(
+	value: unknown,
+	fields: readonly string[] | undefined,
+): unknown {
+	if (!fields?.length || value === null || typeof value !== 'object') {
+		return value ?? null
+	}
+	const copy: Record<string, unknown> = {
+		...(value as Record<string, unknown>),
+	}
+	for (const field of fields) {
+		const secret = copy[field]
+		if (typeof secret === 'string' && secret !== '') {
+			copy[field] = sealGiftCardCode(secret)
+		}
+	}
+	return copy
+}
+
+/**
+ * The replayed result with its sealed fields opened. A value that cannot be
+ * read (corrupt) comes back as null; a missing or changed key throws, so a
+ * configuration problem is never mistaken for bad data.
+ */
+function openResultFields<T>(
+	stored: T,
+	fields: readonly string[] | undefined,
+): T {
+	if (!fields?.length || stored === null || typeof stored !== 'object') {
+		return stored
+	}
+	const copy: Record<string, unknown> = {
+		...(stored as Record<string, unknown>),
+	}
+	for (const field of fields) {
+		const sealed = copy[field]
+		if (typeof sealed === 'string' && sealed !== '') {
+			copy[field] = openGiftCardCode(sealed)
+		}
+	}
+	return copy as T
+}
 
 export function hashGiftCardRequest(payload: unknown): string {
 	const normalized =
@@ -113,6 +163,11 @@ export async function withGiftCardWrite<T>(
 		db?: TenantDatabase
 		now?: number
 		idempotency?: GiftCardIdempotency
+		/**
+		 * Top-level string fields of the result that are secrets (a card code).
+		 * They are stored sealed in the idempotent response, never in plaintext.
+		 */
+		sealFields?: readonly string[]
 	},
 	fn: (tx: GiftCardTx, ctx: GiftCardWriteContext) => Promise<T>,
 ): Promise<T> {
@@ -155,7 +210,10 @@ export async function withGiftCardWrite<T>(
 							}
 							return {
 								replayed: true as const,
-								value: JSON.parse(existing.responseJson) as T,
+								value: openResultFields(
+									JSON.parse(existing.responseJson) as T,
+									options.sealFields,
+								),
 							}
 						}
 					}
@@ -175,7 +233,9 @@ export async function withGiftCardWrite<T>(
 						const record = {
 							requestHash: idempotency.requestHash,
 							statusCode: 200,
-							responseJson: JSON.stringify(value ?? null),
+							responseJson: JSON.stringify(
+								sealResultFields(value, options.sealFields) ?? null,
+							),
 							cardId: linkedCardId,
 							createdAt: now,
 							expiresAt: now + GIFT_CARD_IDEMPOTENCY_TTL_MS,

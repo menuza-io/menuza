@@ -203,7 +203,13 @@ export async function sellGiftCard(
 	const amountMinor = requireAmount(input.amountMinor)
 	assertAmountWithinSettings(amountMinor, input.settings, { custom: true })
 	return withGiftCardWrite(
-		{ orgId: input.orgId, idempotency: input.idempotency, now: input.now },
+		{
+			orgId: input.orgId,
+			idempotency: input.idempotency,
+			now: input.now,
+			// The new card's code (plain and dashed) is a secret: sealed in the stored response.
+			sealFields: ['code', 'formattedCode'],
+		},
 		async (tx, ctx) => {
 			const key = `issue:pos:${input.deviceId}:${input.clientRequestId}`
 			const prior = await tx

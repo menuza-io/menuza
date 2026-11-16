@@ -10,6 +10,7 @@ import {
 	customers,
 	destroyTenantDb,
 	getTenantDb,
+	giftCardIdempotencyKeys,
 	giftCardLedger,
 	giftCards,
 	provisionTenantDb,
@@ -1256,5 +1257,86 @@ describe('orders: giving the card its part back', () => {
 			restoreOrderGiftCardsInTx(tx, [orderId], Date.now()),
 		)
 		expect(await giftCardBalance(db, sold.cardId)).toBe(1000)
+	})
+})
+
+describe('secrets at rest', () => {
+	it('never stores the code of a sold card in plaintext, yet a retry still gets it', async () => {
+		const input = {
+			orgId: ORG,
+			amountMinor: 3000,
+			currency: 'USD',
+			locationId: 'loc_a',
+			actor,
+			deviceId: 'dev_1',
+			clientRequestId: rid(),
+			paymentMethod: 'cash' as const,
+			settings,
+			idempotency: {
+				scope: `sell:${ORG}`,
+				key: `key-${rid()}`,
+				requestHash: 'h1',
+			},
+		}
+		const first = await sellGiftCard(input)
+		expect(first.code).toBeTruthy()
+		const db = await getTenantDb(ORG)
+		const rows = await db
+			.select()
+			.from(giftCardIdempotencyKeys)
+			.where(eq(giftCardIdempotencyKeys.key, input.idempotency.key))
+		expect(rows).toHaveLength(1)
+		// Not in the stored response, in any casing or with the separators removed.
+		const stored = rows[0]!.responseJson
+		expect(stored).not.toContain(first.code!)
+		expect(stored.toUpperCase().replace(/[^A-Z0-9]/g, '')).not.toContain(
+			first.code!.toUpperCase().replace(/[^A-Z0-9]/g, ''),
+		)
+		// A retry with the same key (the first answer may have been lost) is the same card and code.
+		const again = await sellGiftCard({ ...input, clientRequestId: rid() })
+		expect(again.cardId).toBe(first.cardId)
+		expect(again.code).toBe(first.code)
+	})
+
+	it('keeps the code of an online purchase out of its stored response', async () => {
+		const key = `key-${rid()}`
+		const started = await createGiftCardPurchase({
+			orgId: ORG,
+			settings,
+			currency: 'USD',
+			locationId: 'loc_a',
+			amountMinor: 4000,
+			designKey: 'classic',
+			recipient: { name: 'Friend', email: `friend-${rid()}@example.test` },
+			sendToSelf: false,
+			senderName: 'Buyer',
+			message: 'Enjoy',
+			deliverAt: null,
+			purchaser: {
+				customerId: null,
+				name: 'Buyer',
+				email: `buyer-${rid()}@example.test`,
+			},
+			locale: 'en',
+			deviceId: `device-${rid()}`,
+			idempotency: { scope: `purchase:${ORG}`, key, requestHash: 'h2' },
+		})
+		const db = await getTenantDb(ORG)
+		const card = await db
+			.select()
+			.from(giftCards)
+			.where(eq(giftCards.id, started.cardId))
+			.get()
+		const code = openGiftCardCode(card!.sealedCode!)!
+		expect(code).toBeTruthy()
+		const row = await db
+			.select()
+			.from(giftCardIdempotencyKeys)
+			.where(eq(giftCardIdempotencyKeys.key, key))
+			.get()
+		expect(row).toBeTruthy()
+		expect(
+			row!.responseJson.toUpperCase().replace(/[^A-Z0-9]/g, ''),
+		).not.toContain(code)
 	})
 })

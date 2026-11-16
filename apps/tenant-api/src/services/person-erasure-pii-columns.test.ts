@@ -110,6 +110,15 @@ const COVERED: Record<string, string> = {
 		'till binding deleted with the member by the erasure',
 	'sms_send_events.phone_hash':
 		'keyed HMAC used to count send-code requests; deleted by phone, and by the regional tick after 24 hours',
+	'gift_cards.purchaser_email':
+		'nulled by the purchaser account or the lower-cased email (gift-card-erasure.ts); the card, its ledger and balance stay',
+	'gift_cards.recipient_email':
+		'nulled by the lower-cased email; an undelivered card is then not delivered and a manager can refund it',
+	'gift_card_ledger.note':
+		'operator note on a card of the person, nulled (the one update the append-only trigger allows besides the actor name)',
+	'gift_card_purchase_attempts.email_hash':
+		"keyed HMAC of the buyer email for purchase limits; deleted by the HMAC of the erased emails and with the rows of the person's cards",
+	'gift_card_show_tokens.token_hash': 'till QR tokens deleted by customer id',
 }
 
 /** Whole domains that are not a customer's data, with the reason. */
@@ -135,6 +144,19 @@ const inventoryActorId =
 /** Single columns that look like PII but are not a customer's data. */
 const ALLOWED_COLUMNS: Record<string, string> = {
 	'loyalty_rewards.name': 'reward title written by the operator',
+	'restaurant_orders.gift_card_cents':
+		'amount in cents paid with a gift card; no person data',
+	'gift_cards.last4':
+		'last four characters of the gift card code (not a payment card), kept so the card stays recognisable',
+	'gift_cards.external_last4':
+		"last four characters of an imported card's old number (not a payment card), kept for recognition",
+	'gift_card_ledger.card_id': 'opaque id of the gift card, not a person',
+	'gift_card_purchase_attempts.card_id':
+		"opaque id of the gift card; rows of an erased person's cards are deleted",
+	'gift_card_show_tokens.card_id':
+		"opaque id of the gift card; the person's tokens are deleted by customer id",
+	'gift_card_idempotency_keys.card_id':
+		"opaque id of the gift card; stored responses of an erased person's cards are deleted",
 	'sms_send_events.ip_hash':
 		'purpose-prefixed keyed HMAC of the requesting IP, used only for send-code limits and pruned by the regional tick after 24 hours',
 	'marketing_campaigns.name': 'campaign title written by the operator',
@@ -283,6 +305,7 @@ describe('person erasure covers every PII column of the tenant schema', () => {
 			'customer_payment_methods',
 			'discount_redemptions',
 			'discount_issued_codes',
+			'gift_card_show_tokens',
 			'journey_runs',
 			'loyalty_members',
 			'journey_step_executions',
