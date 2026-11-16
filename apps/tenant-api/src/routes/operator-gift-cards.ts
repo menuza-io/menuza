@@ -162,7 +162,10 @@ operatorGiftCardRoutes.get('/', READ, async (c) => {
 		.where(
 			and(
 				// Unpaid purchases that never started are noise, not cards.
-				or(ne(giftCards.status, 'pending'), eq(giftCards.paymentStatus, 'review')),
+				or(
+					ne(giftCards.status, 'pending'),
+					eq(giftCards.paymentStatus, 'review'),
+				),
 				scopeCondition(auth.locationIds),
 				q.status ? eq(giftCards.status, q.status) : undefined,
 				q.last4
@@ -193,7 +196,9 @@ operatorGiftCardRoutes.get('/', READ, async (c) => {
 	)
 	const now = Date.now()
 	return giftCardDeny(200, 'ok', {
-		cards: page.map((card) => operatorViewOf(card, balances.get(card.id) ?? 0, now)),
+		cards: page.map((card) =>
+			operatorViewOf(card, balances.get(card.id) ?? 0, now),
+		),
 		next: rows.length > q.limit ? page[page.length - 1]!.createdAt : null,
 	})
 })
@@ -210,7 +215,11 @@ operatorGiftCardRoutes.post('/lookup', READ, async (c) => {
 		const db = await getTenantDb(auth.orgId)
 		const charge = await chargeGiftCardGuess(db, {
 			orgId: auth.orgId,
-			subject: { kind: 'customer', customerId: `op:${auth.userId}`, address: null },
+			subject: {
+				kind: 'customer',
+				customerId: `op:${auth.userId}`,
+				address: null,
+			},
 		})
 		const card = await findGiftCardByCode(db, body.data.code)
 		const visible =
@@ -360,32 +369,36 @@ const refundChargeSchema = z.strictObject({
 	clientRequestId: z.string().min(8).max(100),
 })
 
-operatorGiftCardRoutes.post('/:id/charges/:chargeId/refund', CHARGE, async (c) => {
-	const body = await readJsonBody(c, refundChargeSchema)
-	if ('error' in body) return body.error
-	const found = await cardFor(c)
-	if ('error' in found) return found.error
-	const idem = giftCardIdempotency(
-		c,
-		`charge-refund:${found.card.id}:${c.req.param('chargeId')}`,
-		body.data,
-	)
-	if ('error' in idem) return idem.error
-	try {
-		const result = await refundGiftCardCharge({
-			orgId: found.auth.orgId,
-			cardId: found.card.id,
-			chargeId: c.req.param('chargeId') ?? '',
-			amountMinor: body.data.amountMinor,
-			clientRequestId: body.data.clientRequestId,
-			actor: actorOf(c),
-			idempotency: idem.idempotency,
-		})
-		return giftCardDeny(200, 'ok', result)
-	} catch (error) {
-		return giftCardErrorResponse(error)
-	}
-})
+operatorGiftCardRoutes.post(
+	'/:id/charges/:chargeId/refund',
+	CHARGE,
+	async (c) => {
+		const body = await readJsonBody(c, refundChargeSchema)
+		if ('error' in body) return body.error
+		const found = await cardFor(c)
+		if ('error' in found) return found.error
+		const idem = giftCardIdempotency(
+			c,
+			`charge-refund:${found.card.id}:${c.req.param('chargeId')}`,
+			body.data,
+		)
+		if ('error' in idem) return idem.error
+		try {
+			const result = await refundGiftCardCharge({
+				orgId: found.auth.orgId,
+				cardId: found.card.id,
+				chargeId: c.req.param('chargeId') ?? '',
+				amountMinor: body.data.amountMinor,
+				clientRequestId: body.data.clientRequestId,
+				actor: actorOf(c),
+				idempotency: idem.idempotency,
+			})
+			return giftCardDeny(200, 'ok', result)
+		} catch (error) {
+			return giftCardErrorResponse(error)
+		}
+	},
+)
 
 /** Review (#218): approve a held card. */
 operatorGiftCardRoutes.post('/:id/approve', UPDATE, async (c) => {
@@ -418,7 +431,11 @@ operatorGiftCardRoutes.post('/:id/refund-purchase', UPDATE, async (c) => {
 	if ('error' in body) return body.error
 	const found = await cardFor(c)
 	if ('error' in found) return found.error
-	const idem = giftCardIdempotency(c, `refund-purchase:${found.card.id}`, body.data)
+	const idem = giftCardIdempotency(
+		c,
+		`refund-purchase:${found.card.id}`,
+		body.data,
+	)
 	if ('error' in idem) return idem.error
 	try {
 		const result = await bookGiftCardPurchaseRefund({
@@ -433,4 +450,3 @@ operatorGiftCardRoutes.post('/:id/refund-purchase', UPDATE, async (c) => {
 		return giftCardErrorResponse(error)
 	}
 })
-

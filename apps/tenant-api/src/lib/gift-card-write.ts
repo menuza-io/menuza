@@ -75,14 +75,15 @@ function errorText(error: unknown): string {
 	return `${message} ${cause}`
 }
 
-const CONSTRAINT_CODES: ReadonlyArray<readonly [string, GiftCardDomainError['code']]> =
-	[
-		['gift card balance would go negative', 'gift_card_balance_low'],
-		['gift card is not active', 'gift_card_not_active'],
-		['gift card refund exceeds charge', 'gift_card_refund_exceeds_charge'],
-		['gift_cards.code_hash', 'idempotency_conflict'],
-		['gift_card_ledger.idempotency_key', 'idempotency_conflict'],
-	]
+const CONSTRAINT_CODES: ReadonlyArray<
+	readonly [string, GiftCardDomainError['code']]
+> = [
+	['gift card balance would go negative', 'gift_card_balance_low'],
+	['gift card is not active', 'gift_card_not_active'],
+	['gift card refund exceeds charge', 'gift_card_refund_exceeds_charge'],
+	['gift_cards.code_hash', 'idempotency_conflict'],
+	['gift_card_ledger.idempotency_key', 'idempotency_conflict'],
+]
 
 /**
  * Turns a constraint or trigger failure into a gift-card error code. Never

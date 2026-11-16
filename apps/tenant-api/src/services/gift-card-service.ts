@@ -146,7 +146,10 @@ export async function insertGiftCard(
 		} catch (error) {
 			// A collision of two random 80-bit codes: draw again (a fixed code
 			// that collides is the caller's clash).
-			const text = error instanceof Error ? `${error.message} ${String(error.cause ?? '')}` : ''
+			const text =
+				error instanceof Error
+					? `${error.message} ${String(error.cause ?? '')}`
+					: ''
 			if (input.code || !text.includes('gift_cards.code_hash')) throw error
 		}
 	}
@@ -194,7 +197,9 @@ export type SoldGiftCard = {
  * are never delayed. A replay (same `clientRequestId`) returns the same card
  * with no second entry.
  */
-export async function sellGiftCard(input: SellGiftCardInput): Promise<SoldGiftCard> {
+export async function sellGiftCard(
+	input: SellGiftCardInput,
+): Promise<SoldGiftCard> {
 	const amountMinor = requireAmount(input.amountMinor)
 	assertAmountWithinSettings(amountMinor, input.settings, { custom: true })
 	return withGiftCardWrite(
@@ -387,7 +392,11 @@ export type RedeemInTxInput = {
 export async function redeemGiftCardInTx(
 	tx: GiftCardTx,
 	input: RedeemInTxInput,
-): Promise<{ entry: GiftCardLedgerRow; balanceMinor: number; replayed: boolean }> {
+): Promise<{
+	entry: GiftCardLedgerRow
+	balanceMinor: number
+	replayed: boolean
+}> {
 	const amountMinor = requireAmount(input.amountMinor)
 	const existing = await tx
 		.select()
@@ -565,7 +574,9 @@ export async function adjustGiftCard(input: AdjustInput) {
 			ctx.linkCard(card.id)
 			const balance = await giftCardBalance(tx, card.id)
 			if (balance !== input.expectedBalanceMinor) {
-				throw new GiftCardDomainError('stale_balance', { balanceMinor: balance })
+				throw new GiftCardDomainError('stale_balance', {
+					balanceMinor: balance,
+				})
 			}
 			if (balance + input.deltaMinor < 0) {
 				throw new GiftCardDomainError('gift_card_balance_low', {
@@ -653,7 +664,11 @@ export async function voidGiftCard(input: VoidInput) {
 					at: ctx.now,
 				})
 			}
-			return { cardId: card.id, status: 'voided' as const, removedMinor: balance }
+			return {
+				cardId: card.id,
+				status: 'voided' as const,
+				removedMinor: balance,
+			}
 		},
 	)
 }
@@ -665,7 +680,10 @@ export type ChargeInput = {
 	/** What it is for (required): shown in the history. */
 	note: string
 	/** An order, catering quote or payment link the charge counts toward. */
-	attachTo?: { kind: 'restaurant_order' | 'quote' | 'payment_link'; id: string } | null
+	attachTo?: {
+		kind: 'restaurant_order' | 'quote' | 'payment_link'
+		id: string
+	} | null
 	locationId: string | null
 	actor: GiftCardActor
 	clientRequestId: string
