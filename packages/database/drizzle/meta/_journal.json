@@ -351,6 +351,13 @@
 			"when": 1794786223809,
 			"tag": "0049_marketing_email_templates",
 			"breakpoints": true
+		},
+		{
+			"idx": 50,
+			"version": "6",
+			"when": 1794809049183,
+			"tag": "0050_gift_cards",
+			"breakpoints": true
 		}
 	]
 }

@@ -19,6 +19,7 @@ import {
 	useLoaderData,
 } from 'react-router'
 import { RoleAccessForm } from '#app/components/roles/tenant-role-access-manager.tsx'
+import { isGiftCardFeatureEnabled } from '#app/utils/gift-cards/access.server.ts'
 import { isInventoryFeatureEnabled } from '#app/utils/inventory/access.server.ts'
 import { isLoyaltyFeatureEnabled } from '#app/utils/loyalty/access.server.ts'
 import {
@@ -43,11 +44,13 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		reservationsEnabled,
 		loyaltyEnabled,
 		inventoryEnabled,
+		giftCardsEnabled,
 	] = await Promise.all([
 		isStaffingFeatureEnabled(organization.organizationId),
 		isReservationsFeatureEnabled(organization.organizationId),
 		isLoyaltyFeatureEnabled(organization.organizationId),
 		isInventoryFeatureEnabled(organization.organizationId),
+		isGiftCardFeatureEnabled(organization.organizationId),
 	])
 
 	return {
@@ -60,6 +63,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		reservationsEnabled,
 		loyaltyEnabled,
 		inventoryEnabled,
+		giftCardsEnabled,
 	}
 }
 
@@ -174,6 +178,7 @@ export default function CreateRoleRoute() {
 			reservationsEnabled={data.reservationsEnabled}
 			loyaltyEnabled={data.loyaltyEnabled}
 			inventoryEnabled={data.inventoryEnabled}
+			giftCardsEnabled={data.giftCardsEnabled}
 		/>
 	)
 }

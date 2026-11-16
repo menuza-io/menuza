@@ -76,6 +76,9 @@ export const TENANT_ROLE_PERMISSION_IDS = [
 	'org_perm_read_inventory_cost_any',
 	'org_perm_update_inventory_purchasing_any',
 	'org_perm_update_inventory_recipe_any',
+	'org_perm_read_gift_card_any',
+	'org_perm_update_gift_card_any',
+	'org_perm_update_gift_card_charge_any',
 ] as const
 
 export type TenantRolePermissionId = (typeof TENANT_ROLE_PERMISSION_IDS)[number]
@@ -164,12 +167,25 @@ export const INVENTORY_IMPLIED_PERMISSION_IDS: Record<
 	org_perm_update_inventory_recipe_any: ['org_perm_read_inventory_any'],
 }
 
+/**
+ * Gift card grants that imply seeing cards, matching `expandGiftCardGrants` in
+ * `@repo/common/gift-cards`: every update grant needs `read:gift_card:any`.
+ */
+export const GIFT_CARD_IMPLIED_PERMISSION_IDS: Record<
+	string,
+	readonly string[]
+> = {
+	org_perm_update_gift_card_any: ['org_perm_read_gift_card_any'],
+	org_perm_update_gift_card_charge_any: ['org_perm_read_gift_card_any'],
+}
+
 export const IMPLIED_PERMISSION_IDS: Record<string, readonly string[]> = {
 	...STAFFING_IMPLIED_PERMISSION_IDS,
 	...RESERVATIONS_IMPLIED_PERMISSION_IDS,
 	...LOYALTY_IMPLIED_PERMISSION_IDS,
 	...DISCOUNT_IMPLIED_PERMISSION_IDS,
 	...INVENTORY_IMPLIED_PERMISSION_IDS,
+	...GIFT_CARD_IMPLIED_PERMISSION_IDS,
 }
 
 /**

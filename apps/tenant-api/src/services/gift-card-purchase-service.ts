@@ -654,9 +654,11 @@ export async function bookGiftCardPurchaseRefund(input: {
 	/** Omit to refund everything unspent. */
 	amountMinor?: number
 	actor: { id: string | null; name: string | null }
+	/** A retry of the same click returns the same facts (the App then retries the provider). */
+	idempotency?: GiftCardIdempotency
 	now?: number
 }) {
-	return withGiftCardWrite({ orgId: input.orgId, now: input.now }, async (tx, ctx) => {
+	return withGiftCardWrite({ orgId: input.orgId, now: input.now, idempotency: input.idempotency }, async (tx, ctx) => {
 		const card = await getGiftCard(tx, input.cardId)
 		if (!card || card.source !== 'online') throw new GiftCardDomainError('not_found')
 		if (card.paymentStatus !== 'paid' && card.paymentStatus !== 'review') {

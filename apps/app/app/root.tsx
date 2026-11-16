@@ -102,6 +102,10 @@ import {
 	type DiscountsNavAccess,
 } from './utils/discounts/nav.ts'
 import {
+	HIDDEN_GIFT_CARD_NAV,
+	type GiftCardNavAccess,
+} from './utils/gift-cards/nav.ts'
+import {
 	HIDDEN_QR_ORDERING_NAV,
 	type QrOrderingNavAccess,
 } from './utils/qr/nav.ts'
@@ -574,6 +578,27 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		)
 	}
 
+	let giftCardsNav: GiftCardNavAccess = HIDDEN_GIFT_CARD_NAV
+	if (currentOrgId && userId) {
+		const giftCardsAccess = await import('./utils/gift-cards/access.server.ts')
+		giftCardsNav = await time(
+			async () => {
+				try {
+					return await cachified({
+						key: `gift-cards-nav:${currentOrgId}:${userId}`,
+						cache,
+						ttl: 1000 * 30,
+						getFreshValue: () =>
+							giftCardsAccess.getGiftCardNavAccess(userId, currentOrgId),
+					})
+				} catch {
+					return HIDDEN_GIFT_CARD_NAV
+				}
+			},
+			{ timings, type: 'gift cards nav', desc: 'gift cards nav access' },
+		)
+	}
+
 	let inventoryNav: InventoryNavAccess = HIDDEN_INVENTORY_NAV
 	if (currentOrgId && userId) {
 		const inventoryAccess = await import('./utils/inventory/access.server.ts')
@@ -658,6 +683,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 			printShopNav,
 			qrOrderingNav,
 			discountsNav,
+			giftCardsNav,
 			inventoryNav,
 			env: {
 				NODE_ENV: ENV.NODE_ENV,

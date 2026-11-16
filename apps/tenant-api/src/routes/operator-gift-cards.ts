@@ -418,12 +418,15 @@ operatorGiftCardRoutes.post('/:id/refund-purchase', UPDATE, async (c) => {
 	if ('error' in body) return body.error
 	const found = await cardFor(c)
 	if ('error' in found) return found.error
+	const idem = giftCardIdempotency(c, `refund-purchase:${found.card.id}`, body.data)
+	if ('error' in idem) return idem.error
 	try {
 		const result = await bookGiftCardPurchaseRefund({
 			orgId: found.auth.orgId,
 			cardId: found.card.id,
 			amountMinor: body.data.amountMinor,
 			actor: actorOf(c),
+			idempotency: idem.idempotency,
 		})
 		return giftCardDeny(200, 'ok', result)
 	} catch (error) {
