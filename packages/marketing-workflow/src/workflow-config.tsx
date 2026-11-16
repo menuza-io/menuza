@@ -40,6 +40,11 @@ export interface WorkflowConfig {
 	emailMenuItems?: boolean
 	/** Saved email templates: the App's designer resource route (tenant only). */
 	emailTemplatesEndpoint?: string
+	/**
+	 * Saved audiences the condition "Guest is in audience" may pick (#98).
+	 * Undefined hides that attribute (audiences off, or no permission).
+	 */
+	audienceOptions?: Array<{ id: string; name: string }>
 }
 
 const TENANT_TRIGGER_LABELS: Record<string, { label: string; desc: string }> = {
@@ -87,6 +92,26 @@ const TENANT_TRIGGER_LABELS: Record<string, { label: string; desc: string }> = {
 		label: 'Member Went Quiet',
 		desc: 'Runs when a member with points has not bought for 30 days',
 	},
+	order_first_placed: {
+		label: 'First Order Placed',
+		desc: "Runs when a guest's first order counts: paid online, or accepted at pickup",
+	},
+	order_completed: {
+		label: 'Order Completed',
+		desc: 'Runs when a guest\'s order is completed, optionally only their Nth',
+	},
+	guest_lapsed: {
+		label: 'Guest Lapsed',
+		desc: 'Runs when a guest who ordered before has not ordered for a number of days',
+	},
+	birthday_coming_up: {
+		label: 'Birthday Coming Up',
+		desc: 'Runs a few days before a guest\'s birthday, once a year',
+	},
+	cart_left_behind: {
+		label: 'Cart Left Behind',
+		desc: 'Runs when a signed-in guest leaves a cart at checkout without ordering',
+	},
 }
 
 const TENANT_TRIGGER_OPTIONS: TriggerOption[] = [
@@ -101,6 +126,11 @@ const TENANT_TRIGGER_OPTIONS: TriggerOption[] = [
 	{ value: 'loyalty_reward_available', label: 'Loyalty: Reward Available' },
 	{ value: 'loyalty_near_reward', label: 'Loyalty: Close to a Reward' },
 	{ value: 'loyalty_inactive', label: 'Loyalty: Member Went Quiet' },
+	{ value: 'order_first_placed', label: 'Orders: First Order Placed' },
+	{ value: 'order_completed', label: 'Orders: Order Completed' },
+	{ value: 'guest_lapsed', label: 'Orders: Guest Lapsed' },
+	{ value: 'birthday_coming_up', label: 'Birthday Coming Up' },
+	{ value: 'cart_left_behind', label: 'Cart Left Behind' },
 ]
 
 export { TENANT_TRIGGER_LABELS, TENANT_TRIGGER_OPTIONS }

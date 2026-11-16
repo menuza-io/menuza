@@ -60,6 +60,26 @@ const TENANT_TRIGGER_MSGS: Record<
 		label: msg`Member Went Quiet`,
 		desc: msg`Runs when a member with points has not bought for 30 days`,
 	},
+	order_first_placed: {
+		label: msg`First Order Placed`,
+		desc: msg`Runs when a guest's first order counts: paid online, or accepted at pickup`,
+	},
+	order_completed: {
+		label: msg`Order Completed`,
+		desc: msg`Runs when a guest's order is completed, optionally only their Nth`,
+	},
+	guest_lapsed: {
+		label: msg`Guest Lapsed`,
+		desc: msg`Runs when a guest who ordered before has not ordered for a number of days`,
+	},
+	birthday_coming_up: {
+		label: msg`Birthday Coming Up`,
+		desc: msg`Runs a few days before a guest's birthday, once a year`,
+	},
+	cart_left_behind: {
+		label: msg`Cart Left Behind`,
+		desc: msg`Runs when a signed-in guest leaves a cart at checkout without ordering`,
+	},
 }
 
 const TENANT_TRIGGER_OPTION_MSGS: Record<string, ReturnType<typeof msg>> = {
@@ -74,6 +94,11 @@ const TENANT_TRIGGER_OPTION_MSGS: Record<string, ReturnType<typeof msg>> = {
 	loyalty_reward_available: msg`Loyalty: Reward Available`,
 	loyalty_near_reward: msg`Loyalty: Close to a Reward`,
 	loyalty_inactive: msg`Loyalty: Member Went Quiet`,
+	order_first_placed: msg`Orders: First Order Placed`,
+	order_completed: msg`Orders: Order Completed`,
+	guest_lapsed: msg`Orders: Guest Lapsed`,
+	birthday_coming_up: msg`Birthday Coming Up`,
+	cart_left_behind: msg`Cart Left Behind`,
 }
 
 export { TENANT_TRIGGER_MSGS, TENANT_TRIGGER_OPTION_MSGS }
@@ -348,6 +373,12 @@ export const CONDITION_FIELD_MSGS: Record<string, ReturnType<typeof msg>> = {
 	name: msg`Name`,
 	tags: msg`Tags`,
 	planName: msg`Plan Name`,
+	audience: msg`Saved audience`,
+	orders_last_30_days: msg`Orders in the last 30 days`,
+	orders_last_90_days: msg`Orders in the last 90 days`,
+	days_since_last_order: msg`Days since last order`,
+	lifetime_spend: msg`Lifetime spend (minor units)`,
+	has_upcoming_reservation: msg`Has an upcoming reservation`,
 }
 
 export function useWorkflowUiLabels() {
