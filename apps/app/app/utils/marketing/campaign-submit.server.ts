@@ -13,6 +13,7 @@ import {
 } from './campaign-send.server.ts'
 import {
 	sendTestBroadcast,
+	type TestSendClientFactory,
 	type TestSendResult,
 } from './campaign-test-send.server.ts'
 
@@ -49,6 +50,8 @@ export async function submitCampaign(input: {
 	organizationId: string
 	userId: string
 	fetchTenant: FetchTenant
+	/** Mints the server-only token a test send needs (see `testSendClientFor`). */
+	makeTestFetchTenant: TestSendClientFactory
 	formData: FormData
 	baseUrl: string
 	/** Present when editing a Draft or Scheduled broadcast. */
@@ -92,7 +95,7 @@ export async function submitCampaign(input: {
 
 	if (intent === 'test') {
 		const result = await sendTestBroadcast({
-			fetchTenant: input.fetchTenant,
+			makeFetchTenant: input.makeTestFetchTenant,
 			userId: input.userId,
 			message,
 		})

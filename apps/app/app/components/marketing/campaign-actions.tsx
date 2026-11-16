@@ -312,13 +312,14 @@ export function CampaignActions({
 							again. A broadcast can be re-sent once.
 						</Trans>
 					</p>
-					{retargetWaiting && retargetReadyAt ? (
-						<p role="status" className="text-sm font-medium">
+					{/* Always mounted, so a screen reader announces the text when it appears. */}
+					<p role="status" className="text-sm font-medium">
+						{retargetWaiting && retargetReadyAt ? (
 							<Trans>
 								You can do this from {readyAtText}, 48 hours after it finished.
 							</Trans>
-						</p>
-					) : null}
+						) : null}
+					</p>
 					<div className="space-y-2">
 						<Label htmlFor={`retarget-subject-${campaign.id}`}>
 							<Trans>New subject (optional)</Trans>

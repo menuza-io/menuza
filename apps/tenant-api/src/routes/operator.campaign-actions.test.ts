@@ -277,6 +277,26 @@ describe('broadcast actions: edit, cancel, delete, duplicate, re-send, test-send
 	})
 
 	describe('edit', () => {
+		it('changes the audience without dropping other stored rules', async () => {
+			for (const stored of [
+				{ audience: 'all', tag: 'vip' },
+				JSON.stringify({ audience: 'all', tag: 'vip' }),
+			]) {
+				const id = await campaign({
+					status: 'Draft',
+					segmentationRules: stored as never,
+				})
+				expect(
+					(await call('PATCH', `/campaigns/${id}`, { audience: 'verified' }))
+						.status,
+				).toBe(200)
+				expect((await row(id))?.segmentationRules).toEqual({
+					audience: 'verified',
+					tag: 'vip',
+				})
+			}
+		})
+
 		it('edits a Draft and re-checks the coupon pairing', async () => {
 			const id = await campaign({ status: 'Draft' })
 			const res = await call('PATCH', `/campaigns/${id}`, {
@@ -716,11 +736,14 @@ describe('broadcast actions: edit, cancel, delete, duplicate, re-send, test-send
 			subject: 'Lunch for {{firstName}}',
 			content: 'Hi {{firstName}}, code {{couponCode}}',
 			contentHtml: '<p>Hi {{firstName}}, code {{couponCode}}</p>',
-			to: { email: 'owner@restaurant.test' },
 		}
+		// What the App signs into a server-only token: the recipient is a claim,
+		// never part of the request.
+		const asOwner = (claims: Record<string, unknown> = {}) =>
+			mint({ testEmail: 'owner@restaurant.test', ...claims })
 
 		it('emails the operator with sample values and a [Test] subject, and records nothing about it', async () => {
-			const res = await call('POST', '/test-send', emailBody)
+			const res = await call('POST', '/test-send', emailBody, await asOwner())
 			expect(res.status).toBe(200)
 
 			expect(vi.mocked(sendTenantEmail)).toHaveBeenCalledTimes(1)
@@ -743,7 +766,7 @@ describe('broadcast actions: edit, cancel, delete, duplicate, re-send, test-send
 		})
 
 		it('does not keep the operator’s address in the region', async () => {
-			await call('POST', '/test-send', emailBody)
+			await call('POST', '/test-send', emailBody, await asOwner())
 			const dump = JSON.stringify({
 				sends: await db.select().from(marketingTestSends),
 				campaigns: await db.select().from(marketingCampaigns),
@@ -762,11 +785,12 @@ describe('broadcast actions: edit, cancel, delete, duplicate, re-send, test-send
 		})
 
 		it('texts the operator’s verified phone with a [Test] prefix', async () => {
-			const res = await call('POST', '/test-send', {
-				channel: 'sms',
-				content: 'Hi {{firstName}}',
-				to: { phone: '+15551234567' },
-			})
+			const res = await call(
+				'POST',
+				'/test-send',
+				{ channel: 'sms', content: 'Hi {{firstName}}' },
+				await mint({ testPhone: '+15551234567' }),
+			)
 			expect(res.status).toBe(200)
 			expect(sendSms).toHaveBeenCalledWith({
 				to: '+15551234567',
@@ -778,17 +802,22 @@ describe('broadcast actions: edit, cancel, delete, duplicate, re-send, test-send
 		it('allows 10 an hour per operator and refuses the 11th with test_send_limit', async () => {
 			for (let i = 0; i < 10; i++) {
 				expect(
-					(await call('POST', '/test-send', emailBody)).status,
+					(await call('POST', '/test-send', emailBody, await asOwner())).status,
 					`send ${i + 1}`,
 				).toBe(200)
 			}
-			const refused = await call('POST', '/test-send', emailBody)
+			const refused = await call(
+				'POST',
+				'/test-send',
+				emailBody,
+				await asOwner(),
+			)
 			expect(refused.status).toBe(429)
 			expect(await refused.json()).toEqual({ error: 'test_send_limit' })
 			expect(vi.mocked(sendTenantEmail)).toHaveBeenCalledTimes(10)
 
 			// Another operator has their own allowance.
-			const other = await mint({ sub: 'user-2' })
+			const other = await asOwner({ sub: 'user-2' })
 			expect((await call('POST', '/test-send', emailBody, other)).status).toBe(
 				200,
 			)
@@ -802,55 +831,89 @@ describe('broadcast actions: edit, cancel, delete, duplicate, re-send, test-send
 					sentAt: new Date(Date.now() - 61 * 60_000),
 				})),
 			)
-			expect((await call('POST', '/test-send', emailBody)).status).toBe(200)
+			expect(
+				(await call('POST', '/test-send', emailBody, await asOwner())).status,
+			).toBe(200)
 		})
 
 		it('ten at once cannot all pass the limit', async () => {
+			const owner = await asOwner()
 			const results = await Promise.all(
-				Array.from({ length: 14 }, () => call('POST', '/test-send', emailBody)),
+				Array.from({ length: 14 }, () =>
+					call('POST', '/test-send', emailBody, owner),
+				),
 			)
 			expect(results.filter((r) => r.status === 200)).toHaveLength(10)
 			expect(results.filter((r) => r.status === 429)).toHaveLength(4)
 		})
 
-		it('refuses a missing address or number, an unknown field, no sub and a read-only token', async () => {
-			expect(
-				(await call('POST', '/test-send', { ...emailBody, to: {} })).status,
-			).toBe(400)
+		it('never takes a recipient from the request: a body address is refused and the token decides', async () => {
+			const owner = await asOwner()
+			// A browser cannot name a recipient, even alongside a valid token.
 			expect(
 				(
-					await call('POST', '/test-send', {
-						...emailBody,
-						to: { phone: '+15551234567' },
-					})
+					await call(
+						'POST',
+						'/test-send',
+						{ ...emailBody, to: { email: 'victim@elsewhere.test' } },
+						owner,
+					)
+				).status,
+			).toBe(400)
+			expect(vi.mocked(sendTenantEmail)).not.toHaveBeenCalled()
+
+			// A token without the signed recipient (every browser token) cannot test.
+			const browserToken = await mint()
+			expect(
+				(await call('POST', '/test-send', emailBody, browserToken)).status,
+			).toBe(403)
+			// A forged, malformed or wrong-channel claim is no recipient either.
+			for (const claims of [
+				{ testEmail: 'not-an-address' },
+				{ testEmail: 42 },
+				{ testPhone: '+15551234567' },
+			]) {
+				expect(
+					(await call('POST', '/test-send', emailBody, await mint(claims)))
+						.status,
+				).toBe(403)
+			}
+			expect(
+				(
+					await call(
+						'POST',
+						'/test-send',
+						{ channel: 'sms', content: 'hi' },
+						await mint({ testPhone: '5551234567' }),
+					)
+				).status,
+			).toBe(403)
+			expect(vi.mocked(sendTenantEmail)).not.toHaveBeenCalled()
+			expect(sendSms).not.toHaveBeenCalled()
+			expect(await db.select().from(marketingTestSends)).toEqual([])
+		})
+
+		it('refuses an unknown field, an invalid body, no sub and a read-only token', async () => {
+			const owner = await asOwner()
+			expect(
+				(
+					await call(
+						'POST',
+						'/test-send',
+						{ ...emailBody, campaignId: 'c1' },
+						owner,
+					)
 				).status,
 			).toBe(400)
 			expect(
-				(
-					await call('POST', '/test-send', {
-						...emailBody,
-						to: { email: 'a@b.test', x: 1 },
-					})
-				).status,
-			).toBe(400)
-			expect(
-				(await call('POST', '/test-send', { ...emailBody, campaignId: 'c1' }))
-					.status,
-			).toBe(400)
-			expect(
-				(
-					await call('POST', '/test-send', {
-						channel: 'sms',
-						content: 'hi',
-						to: { phone: '5551234567' },
-					})
-				).status,
+				(await call('POST', '/test-send', { channel: 'email' }, owner)).status,
 			).toBe(400)
 			const noSub = await new SignJWT({
 				orgId,
 				role: 'operator',
 				area: 'marketing',
 				canUpdate: true,
+				testEmail: 'owner@restaurant.test',
 			})
 				.setProtectedHeader({ alg: 'HS256' })
 				.setAudience('tenant-api-operator')
@@ -860,11 +923,33 @@ describe('broadcast actions: edit, cancel, delete, duplicate, re-send, test-send
 			expect((await call('POST', '/test-send', emailBody, noSub)).status).toBe(
 				401,
 			)
-			const readOnly = await mint({ canUpdate: false })
+			const readOnly = await asOwner({ canUpdate: false })
 			expect(
 				(await call('POST', '/test-send', emailBody, readOnly)).status,
 			).toBe(403)
 			expect(vi.mocked(sendTenantEmail)).not.toHaveBeenCalled()
+		})
+
+		it('caps the organization too, so several operators cannot multiply the limit', async () => {
+			let sent = 0
+			for (let operator = 1; operator <= 4; operator++) {
+				const token = await asOwner({ sub: `user-${operator}` })
+				for (let i = 0; i < 10; i++) {
+					if (
+						(await call('POST', '/test-send', emailBody, token)).status === 200
+					)
+						sent++
+				}
+			}
+			expect(sent).toBe(30)
+			const refused = await call(
+				'POST',
+				'/test-send',
+				emailBody,
+				await asOwner({ sub: 'user-9' }),
+			)
+			expect(refused.status).toBe(429)
+			expect(await refused.json()).toEqual({ error: 'test_send_limit' })
 		})
 
 		it('reports a failed send as test_send_failed', async () => {
@@ -872,7 +957,7 @@ describe('broadcast actions: edit, cancel, delete, duplicate, re-send, test-send
 				status: 'error',
 				error: { message: 'boom' },
 			} as never)
-			const res = await call('POST', '/test-send', emailBody)
+			const res = await call('POST', '/test-send', emailBody, await asOwner())
 			expect(res.status).toBe(502)
 			expect(await res.json()).toEqual({ error: 'test_send_failed' })
 		})

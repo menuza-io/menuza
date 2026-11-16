@@ -33,6 +33,7 @@ import {
 	marketingMessages,
 } from '@repo/tenant-db'
 import { z } from 'zod'
+import { runInBackground } from '../lib/background.ts'
 import { errorLogFields } from '../lib/error-log.ts'
 import { getBearerToken, getOperatorToken } from '../lib/secrets.ts'
 import { sendTenantEmail } from '../lib/tenant-email.ts'
@@ -108,6 +109,9 @@ export async function authenticateOperator(
 		canUpdateGuest?: boolean
 		/** `people` scope: may record a guest's marketing consent (`update:marketing_consent:any`). */
 		canUpdateMarketingConsent?: boolean
+		/** Marketing test send: the operator's own address / number, server-minted only. */
+		testEmail?: string
+		testPhone?: string
 	}
 	try {
 		const secret = new TextEncoder().encode(operatorToken)
@@ -727,8 +731,9 @@ operatorRoutes.post('/marketing/campaigns', async (c) => {
 		})
 
 		if (status === 'Processing') {
-			// The tick resumes it if this isolate stops mid-send.
-			void dispatchBroadcast(orgId, campaignId, lease)
+			// Kept alive past the response with the platform's waitUntil; the tick
+			// resumes it if this isolate stops mid-send.
+			startDispatch(orgId, campaignId, lease)
 		}
 
 		return c.json({ success: true, campaignId, status })
@@ -876,8 +881,9 @@ operatorRoutes.patch('/marketing/campaigns/:campaignId', async (c) => {
 			return c.json({ error: result.error }, ACTION_STATUS[result.error])
 		}
 		if (result.value.status === 'Processing' && result.value.lease) {
-			// The tick resumes it if this isolate stops mid-send.
-			void dispatchBroadcast(orgId, campaignId, result.value.lease)
+			// Kept alive past the response with the platform's waitUntil; the tick
+			// resumes it if this isolate stops mid-send.
+			startDispatch(orgId, campaignId, result.value.lease)
 		}
 		return c.json({
 			success: true,
@@ -1062,22 +1068,36 @@ const testSendSchema = z
 		subject: z.string().max(300).nullable().optional(),
 		content: z.string().min(1).max(20_000),
 		contentHtml: z.string().max(500_000).nullable().optional(),
-		/**
-		 * The operator's own address or verified number, read from their
-		 * control-plane account by the App and passed here. It is used for this
-		 * one send and never stored in the region.
-		 */
-		to: z
-			.object({
-				email: z.string().email().max(320).optional(),
-				phone: z
-					.string()
-					.regex(/^\+[1-9]\d{6,14}$/)
-					.optional(),
-			})
-			.strict(),
 	})
 	.strict()
+
+/**
+ * Where a test goes: the operator's own address or verified number, read by the
+ * App from their control-plane account and signed into a server-only token
+ * (`testEmail` / `testPhone`). The body never names a recipient, so a browser
+ * holding its own area token cannot aim a test at anyone. It is used for this
+ * one send and never stored in the region.
+ */
+const testRecipientSchema = {
+	email: z.string().email().max(320),
+	sms: z.string().regex(/^\+[1-9]\d{6,14}$/),
+}
+
+/**
+ * Starts a claimed broadcast and keeps it alive past the response where the
+ * platform allows it (Workers `waitUntil`); a failure is logged with ids only.
+ */
+function startDispatch(orgId: string, campaignId: string, lease: Date) {
+	runInBackground(
+		dispatchBroadcast(orgId, campaignId, lease).catch((error) => {
+			console.error('Broadcast dispatch failed', {
+				orgId,
+				campaignId,
+				reason: error instanceof Error ? error.name : 'unknown',
+			})
+		}),
+	)
+}
 
 /** Sample values for merge tags in a test: nothing real, no coupon is minted. */
 const TEST_SAMPLE = { name: 'Alex Sample' } as const
@@ -1115,8 +1135,11 @@ operatorRoutes.post('/marketing/test-send', async (c) => {
 	} catch {
 		return c.json({ error: 'Invalid request body' }, 400)
 	}
-	const to = body.channel === 'email' ? body.to.email : body.to.phone
-	if (!to) return c.json({ error: 'Invalid request body' }, 400)
+	const claimed = body.channel === 'email' ? auth.testEmail : auth.testPhone
+	const recipient = testRecipientSchema[body.channel].safeParse(claimed)
+	// A token without the signed recipient (every browser token) cannot test.
+	if (!recipient.success) return c.json({ error: 'Forbidden' }, 403)
+	const to = recipient.data
 
 	try {
 		const db = await getTenantDb(auth.orgId)
@@ -1126,8 +1149,8 @@ operatorRoutes.post('/marketing/test-send', async (c) => {
 
 		const sample = {
 			...TEST_SAMPLE,
-			email: body.to.email,
-			phone: body.to.phone,
+			email: body.channel === 'email' ? to : undefined,
+			phone: body.channel === 'sms' ? to : undefined,
 		}
 		const merge = { couponCode: TEST_COUPON_CODE }
 		const content = interpolateMergeTags(body.content, sample, merge)

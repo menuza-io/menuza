@@ -37,8 +37,15 @@ const fail = (error: CampaignActionError) => ({ ok: false as const, error })
 
 /** A re-send to non-openers waits this long after the original finished. */
 export const RETARGET_MIN_AGE_MS = 48 * 60 * 60 * 1000
-/** Test sends per operator per rolling hour. */
-export const TEST_SEND_LIMIT = { max: 10, windowMs: 60 * 60 * 1000 } as const
+/**
+ * Test sends per operator, and per organization across all its operators, per
+ * rolling hour. The organization cap stops N operators multiplying the limit.
+ */
+export const TEST_SEND_LIMIT = {
+	max: 10,
+	orgMax: 30,
+	windowMs: 60 * 60 * 1000,
+} as const
 
 const EDITABLE = ['Draft', 'Scheduled'] as const
 const DELETABLE = ['Draft', 'Cancelled'] as const
@@ -153,6 +160,10 @@ export async function retargetCampaign(
 	if (!source) return fail('not_found')
 	if (source.channel !== 'email') return fail('retarget_not_supported')
 	if (source.status !== 'Completed') return fail('campaign_not_completed')
+	// `updatedAt` is the finish time: once a campaign is Completed only the
+	// dispatcher's `finish` ever writes the row (edits need Draft or Scheduled).
+	// Anything new that writes Completed rows must keep it that way or add a
+	// dedicated completion column.
 	const finishedAt = source.updatedAt?.getTime() ?? now
 	if (now - finishedAt < RETARGET_MIN_AGE_MS) return fail('retarget_too_early')
 
@@ -186,6 +197,21 @@ export async function retargetCampaign(
 		throw error
 	}
 	return { ok: true, value: { campaignId } }
+}
+
+/** The stored audience rules as an object, whichever shape the row holds. */
+function storedRules(value: unknown): Record<string, unknown> {
+	let rules = value
+	if (typeof rules === 'string') {
+		try {
+			rules = JSON.parse(rules)
+		} catch {
+			return {}
+		}
+	}
+	return rules && typeof rules === 'object' && !Array.isArray(rules)
+		? (rules as Record<string, unknown>)
+		: {}
 }
 
 export type CampaignPatch = {
@@ -268,8 +294,12 @@ export async function updateCampaign(
 		set.lateAfterMinutes = patch.lateAfterMinutes
 	}
 	if (patch.audience !== undefined) {
-		// A JSON column: write the object, not a string of it.
-		set.segmentationRules = { audience: patch.audience }
+		// A JSON column: write the object, not a string of it. Keep any other
+		// keys already stored (the create path once stored a string of JSON).
+		set.segmentationRules = {
+			...storedRules(row.segmentationRules),
+			audience: patch.audience,
+		}
 	}
 	if (patch.sendNow) set.scheduledAt = null
 	else if (patch.scheduledAt !== undefined) set.scheduledAt = patch.scheduledAt
@@ -304,7 +334,7 @@ export async function reserveTestSend(
 	channel: 'email' | 'sms',
 	now = Date.now(),
 ): Promise<boolean> {
-	const { max, windowMs } = TEST_SEND_LIMIT
+	const { max, orgMax, windowMs } = TEST_SEND_LIMIT
 	const id = randomUUID()
 	const sentAt = Math.floor(now / 1000)
 	const cutoff = Math.floor((now - windowMs) / 1000)
@@ -315,6 +345,10 @@ export async function reserveTestSend(
 			SELECT COUNT(*) FROM marketing_test_sends
 			WHERE operator_id = ${operatorId} AND sent_at > ${cutoff}
 		) < ${max}
+		AND (
+			SELECT COUNT(*) FROM marketing_test_sends
+			WHERE sent_at > ${cutoff}
+		) < ${orgMax}
 	`)
 	const reserved = await db
 		.select({ id: marketingTestSends.id })

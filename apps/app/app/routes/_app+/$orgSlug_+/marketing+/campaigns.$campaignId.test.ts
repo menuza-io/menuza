@@ -12,6 +12,7 @@ vi.mock('#app/utils/marketing/campaign-audit.server.ts', () => ({
 }))
 vi.mock('#app/utils/marketing/campaign-test-send.server.ts', () => ({
 	sendTestBroadcast: vi.fn(),
+	testSendClientFor: vi.fn(() => vi.fn()),
 }))
 
 vi.mock('#app/utils/organization/permissions.server.ts', async (original) => ({

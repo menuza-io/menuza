@@ -816,7 +816,10 @@ in the org's website branding.
   cannot race the tick; a `Processing` campaign cannot be edited, cancelled or
   deleted (`campaign_already_sending`), and there is no mid-send stop. Statuses
   add `Cancelled` and `SkippedLate`. Test send: the operator's own address is
-  passed in the request and never stored in the region; 10 per operator per hour
+  signed into a server-only token (`testEmail` / `testPhone` claims, minted by
+  the App from the control-plane user; the request body names no recipient and a
+  browser area token carries none, so it cannot test) and never stored in the
+  region; 10 per operator and 30 per organization per hour
   (`marketing_test_sends`, ids and times only); email only in the App (the
   control plane keeps no operator phone). Re-send to non-openers: email only,
   once (unique `retarget_of_campaign_id`), 48 hours after finishing; the

@@ -90,7 +90,10 @@ export async function action({ request }: ActionFunctionArgs) {
 
 	let inApp = 0
 	for (const recipient of recipients) {
-		// The row is the claim for this broadcast and member.
+		// The row is the claim for this broadcast and member. The email is
+		// at-most-once by design: a failed send is logged and not retried, because
+		// retrying on a redelivery could tell the same member twice. The in-app
+		// notification (the row itself) is the delivery that is always kept.
 		const claimed = await db
 			.insert(Notification)
 			.values({

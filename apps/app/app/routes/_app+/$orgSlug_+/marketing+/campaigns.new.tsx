@@ -34,6 +34,7 @@ import {
 } from '#app/utils/email/designer.server.ts'
 import { orgSiteUrl } from '#app/utils/launch/launch.server.ts'
 import { submitCampaign } from '#app/utils/marketing/campaign-submit.server.ts'
+import { testSendClientFor } from '#app/utils/marketing/campaign-test-send.server.ts'
 import {
 	ORG_PERMISSIONS,
 	requireUserWithOrganizationPermission,
@@ -117,6 +118,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		organizationId: orgId,
 		userId,
 		fetchTenant,
+		makeTestFetchTenant: testSendClientFor(request, orgSlug),
 		formData,
 		baseUrl,
 	})

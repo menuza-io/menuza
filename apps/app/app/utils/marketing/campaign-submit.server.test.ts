@@ -64,6 +64,7 @@ describe('submitCampaign', () => {
 			organizationId: 'org',
 			userId: 'user',
 			fetchTenant,
+			makeTestFetchTenant: vi.fn(async () => fetchTenant),
 			formData: form(fields),
 			baseUrl: 'http://localhost',
 			existing,

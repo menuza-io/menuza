@@ -17,7 +17,10 @@ import { type BreadcrumbHandle } from '#app/utils/breadcrumb.ts'
 import { describeCampaignCoupon } from '#app/utils/discounts/marketing-offers.server.ts'
 import { auditCampaign } from '#app/utils/marketing/campaign-audit.server.ts'
 import { campaignActionError } from '#app/utils/marketing/campaign-send.server.ts'
-import { sendTestBroadcast } from '#app/utils/marketing/campaign-test-send.server.ts'
+import {
+	sendTestBroadcast,
+	testSendClientFor,
+} from '#app/utils/marketing/campaign-test-send.server.ts'
 import {
 	ORG_PERMISSIONS,
 	requireUserWithOrganizationPermission,
@@ -178,7 +181,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				}
 			}
 			const result = await sendTestBroadcast({
-				fetchTenant,
+				makeFetchTenant: testSendClientFor(request, orgSlug),
 				userId,
 				message: campaign,
 			})
