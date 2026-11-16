@@ -115,7 +115,7 @@ export function ProgramsSection({
 										program.status === 'on' &&
 											'border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
 										program.status === 'customized' &&
-											'border-sky-500/30 bg-sky-500/10 text-sky-600 dark:text-sky-400',
+											'border-chart-5/30 bg-chart-5/10 text-chart-5',
 										program.status === 'paused' &&
 											'border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400',
 									)}
@@ -130,11 +130,7 @@ export function ProgramsSection({
 									.join(' · ')}
 							</p>
 							{program.results ? (
-								<p className="text-xs">
-									{_(
-										msg`Last 30 days: ${program.results.runs} runs · ${program.results.messagesSent} messages sent · ${program.results.ordersByGoal} orders`,
-									)}
-								</p>
+								<ProgramResults results={program.results} />
 							) : null}
 							{program.newerTemplate ? (
 								<p className="text-muted-foreground text-[11px]">
@@ -279,5 +275,21 @@ export function ProgramsSection({
 				</DialogContent>
 			</Dialog>
 		</section>
+	)
+}
+
+function ProgramResults({
+	results,
+}: {
+	results: { runs: number; messagesSent: number; ordersByGoal: number }
+}) {
+	const { _ } = useLingui()
+	const { runs, messagesSent, ordersByGoal } = results
+	return (
+		<p className="text-xs">
+			{_(
+				msg`Last 30 days: ${runs} runs · ${messagesSent} messages sent · ${ordersByGoal} orders`,
+			)}
+		</p>
 	)
 }

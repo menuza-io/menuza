@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { getMarketingFeatures } from '#app/utils/marketing/marketing-flags.server.ts'
 import type * as PermissionsModule from '#app/utils/organization/permissions.server.ts'
 import {
 	ORG_PERMISSIONS,
 	requireUserWithOrganizationPermission,
 } from '#app/utils/organization/permissions.server.ts'
-import { getMarketingFeatures } from '#app/utils/marketing/marketing-flags.server.ts'
 import * as tenantApiServer from '#app/utils/tenant-api.server.ts'
 import { action, loader } from './audiences._index.tsx'
 import { activateTestLingui } from './test-lingui.ts'

@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { getMarketingFeatures } from '#app/utils/marketing/marketing-flags.server.ts'
 import type * as PermissionsModule from '#app/utils/organization/permissions.server.ts'
 import { requireUserWithOrganizationPermission } from '#app/utils/organization/permissions.server.ts'
-import { getMarketingFeatures } from '#app/utils/marketing/marketing-flags.server.ts'
 import * as tenantApiServer from '#app/utils/tenant-api.server.ts'
 import { action as detailAction } from './automations.$journeyId.tsx'
 import { action as newAction } from './automations.new.tsx'

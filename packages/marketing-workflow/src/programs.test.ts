@@ -47,7 +47,7 @@ describe('ready-made programs (#100)', () => {
 	it('has a template for every program id, each with a known trigger and a version', () => {
 		expect(PROGRAM_TEMPLATES.map((t) => t.id).sort()).toEqual([...PROGRAM_IDS].sort())
 		for (const template of PROGRAM_TEMPLATES) {
-			expect((JOURNEY_TRIGGER_TYPES as readonly string[]).includes(template.triggerType)).toBe(true)
+			expect((JOURNEY_TRIGGER_TYPES as readonly string[])).toContain(template.triggerType)
 			expect(template.version).toBeGreaterThanOrEqual(1)
 		}
 	})

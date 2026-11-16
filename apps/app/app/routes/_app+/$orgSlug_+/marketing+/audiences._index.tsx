@@ -53,8 +53,10 @@ function audienceErrorText(code: AudienceErrorCode | string | undefined) {
 			return i18n._(
 				t`This audience is used by a broadcast that has not finished, or by an automation. Remove it there first.`,
 			)
-		case 'audience_limit':
-			return i18n._(t`You can save up to ${AUDIENCE_LIMITS.audiences} audiences.`)
+		case 'audience_limit': {
+			const max = AUDIENCE_LIMITS.audiences
+			return i18n._(t`You can save up to ${max} audiences.`)
+		}
 		case 'audience_name_taken':
 			return i18n._(t`You already have an audience with this name.`)
 		case 'audience_version_changed':
@@ -173,10 +175,24 @@ export async function action({ request, params }: ActionFunctionArgs) {
 /** "Fewer than 5" below the floor; the exact figure above it. */
 function useCountText() {
 	const { _ } = useLingui()
+	const floor = AUDIENCE_LIMITS.countFloor
 	return (value: number | null | undefined) =>
 		value === null || value === undefined
-			? _(msg`Fewer than ${AUDIENCE_LIMITS.countFloor}`)
+			? _(msg`Fewer than ${floor}`)
 			: String(value)
+}
+
+function PreviewCounts({ counts }: { counts: AudienceCounts }) {
+	const { _ } = useLingui()
+	const countText = useCountText()
+	const size = countText(counts.size)
+	const email = countText(counts.email)
+	const text = countText(counts.sms)
+	return (
+		<span className="text-muted-foreground">
+			{_(msg`Matches ${size} · email ${email} · text ${text}`)}
+		</span>
+	)
 }
 
 function AudienceDialog({
@@ -191,7 +207,6 @@ function AudienceDialog({
 	const { _ } = useLingui()
 	const fetcher = useFetcher<typeof action>()
 	const preview = useFetcher<typeof action>()
-	const countText = useCountText()
 	const [name, setName] = useState('')
 	const [definition, setDefinition] = useState<AudienceDefinition>(EMPTY_AUDIENCE)
 
@@ -266,11 +281,7 @@ function AudienceDialog({
 							<Trans>Check size</Trans>
 						</Button>
 						{counts ? (
-							<span className="text-muted-foreground">
-								{_(
-									msg`Matches ${countText(counts.size)} · email ${countText(counts.email)} · text ${countText(counts.sms)}`,
-								)}
-							</span>
+							<PreviewCounts counts={counts} />
 						) : (
 							<span className="text-muted-foreground">
 								<Trans>Counts only. No guest is shown.</Trans>

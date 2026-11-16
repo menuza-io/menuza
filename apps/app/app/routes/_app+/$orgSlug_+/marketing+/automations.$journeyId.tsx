@@ -3,6 +3,7 @@ import { msg, t } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { getDomainUrl } from '@repo/common'
 import { parseMarketingOffer } from '@repo/discounts'
+import { AiDraftProvider } from '@repo/marketing'
 import {
 	WorkflowCanvas,
 	type WorkflowGraph,
@@ -39,6 +40,13 @@ import {
 } from '#app/utils/email/designer.server.ts'
 import { renderJourneyEmailNodes } from '#app/utils/email/journey-render.server.ts'
 import { resolveEmailBrandingForOrg } from '#app/utils/email-branding.server.ts'
+import { loadAiDraftConfig } from '#app/utils/marketing/ai-draft-config.server.ts'
+import { loadAudienceOptions } from '#app/utils/marketing/audiences.server.ts'
+import {
+	goalFromTriggerConfig,
+	loadAutomationTriggerAccess,
+	marketingTriggerError,
+} from '#app/utils/marketing/automation-triggers.server.ts'
 import {
 	loyaltyTriggerBlocked,
 	loyaltyTriggersEnabled,
@@ -47,19 +55,11 @@ import {
 	reservationTriggerBlocked,
 	reservationTriggersEnabled,
 } from '#app/utils/marketing/reservation-triggers.server.ts'
-import {
-	goalFromTriggerConfig,
-	loadAutomationTriggerAccess,
-	marketingTriggerError,
-} from '#app/utils/marketing/automation-triggers.server.ts'
-import { loadAudienceOptions } from '#app/utils/marketing/audiences.server.ts'
 import { useMinWidthMediaQuery } from '#app/utils/navigation-guards.ts'
 import {
 	ORG_PERMISSIONS,
 	requireUserWithOrganizationPermission,
 } from '#app/utils/organization/permissions.server.ts'
-import { AiDraftProvider } from '@repo/marketing'
-import { loadAiDraftConfig } from '#app/utils/marketing/ai-draft-config.server.ts'
 import { getOperatorTenantClient } from '#app/utils/tenant-api.server.ts'
 
 export const handle: BreadcrumbHandle<Awaited<ReturnType<typeof loader>>> = {

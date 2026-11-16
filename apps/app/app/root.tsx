@@ -83,7 +83,15 @@ import { useOptionalTheme } from './routes/resources+/theme-switch.tsx'
 import '@fontsource-variable/geist/wght.css'
 import '@fontsource-variable/geist-mono/wght.css'
 import './styles/tailwind.css'
+import {
+	HIDDEN_DISCOUNTS_NAV,
+	type DiscountsNavAccess,
+} from './utils/discounts/nav.ts'
 import { getLaunchStatus } from './utils/env.server.ts'
+import {
+	HIDDEN_GIFT_CARD_NAV,
+	type GiftCardNavAccess,
+} from './utils/gift-cards/nav.ts'
 import {
 	HIDDEN_INVENTORY_NAV,
 	type InventoryNavAccess,
@@ -97,14 +105,6 @@ import {
 	HIDDEN_PRINT_SHOP_NAV,
 	type PrintShopNavAccess,
 } from './utils/print/nav.ts'
-import {
-	HIDDEN_DISCOUNTS_NAV,
-	type DiscountsNavAccess,
-} from './utils/discounts/nav.ts'
-import {
-	HIDDEN_GIFT_CARD_NAV,
-	type GiftCardNavAccess,
-} from './utils/gift-cards/nav.ts'
 import {
 	HIDDEN_QR_ORDERING_NAV,
 	type QrOrderingNavAccess,
