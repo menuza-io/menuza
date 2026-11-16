@@ -37,6 +37,15 @@ import {
 	discountLocationsAllowedInScope,
 	discountVisibleInScope,
 } from './location-scope.server.ts'
+import {
+	cascadeOnPause,
+	endDateShortened,
+	pairedAutomationIdsByDiscount,
+	promiseChanged,
+	readCascadeFlags,
+	resumePairedAutomations,
+	type CascadeResult,
+} from './message-impact.server.ts'
 
 const statusSchema = z.enum(['active', 'paused', 'archived'])
 const saveStatusSchema = z.enum(['active', 'paused'])
@@ -132,6 +141,17 @@ export async function saveDiscountEditor({
 		if (!status.success || !expectedVersion.success) {
 			return data({ formError: 'invalid' as const }, { status: 400 })
 		}
+		// The automations paused together with this discount, read before this
+		// change becomes the latest one (#236).
+		const resumeFlag = form.get('resumeAutomations') === '1'
+		const paired =
+			status.data === 'active' && resumeFlag
+				? ((
+						await pairedAutomationIdsByDiscount(access.organization.id, [
+							discountId,
+						])
+					).get(discountId) ?? [])
+				: []
 		const saved = await setDiscountStatus({
 			organizationId: access.organization.id,
 			discountId,
@@ -150,16 +170,55 @@ export async function saveDiscountEditor({
 			}
 			return data({ stale: true as const }, { status: 409 })
 		}
+		// The operator's choice about the messages that promise this discount:
+		// pause those automations, cancel those scheduled broadcasts (#236), or
+		// on resume bring the paired automations back. The region is asked again
+		// which messages offer it; the browser's list is never trusted.
+		const cascade: CascadeResult | null =
+			status.data === 'active'
+				? null
+				: await cascadeOnPause({
+						request,
+						organizationId: access.organization.id,
+						orgSlug: access.organization.slug,
+						userId: access.userId,
+						discountId,
+						flags: readCascadeFlags(form),
+					})
+		const resumed =
+			status.data === 'active' && paired.length > 0
+				? await resumePairedAutomations({
+						request,
+						organizationId: access.organization.id,
+						orgSlug: access.organization.slug,
+						userId: access.userId,
+						automationIds: paired,
+					})
+				: null
 		await recordDiscountStatus({
 			organizationId: access.organization.id,
 			userId: access.userId,
 			discountId,
 			status: status.data,
+			pausedAutomationIds: cascade?.pausedAutomationIds,
+			cancelledCampaignIds: cascade?.cancelledCampaignIds,
+			resumedAutomationIds: resumed?.resumedAutomationIds,
 			request,
 		})
 		await purgeDiscountSiteCache(access)
-		if (!params.discountId) return data({ ok: true as const })
-		return redirect(`/${access.organization.slug}/discounts/${discountId}`)
+		const summary = cascadeSummary(
+			cascade,
+			resumed?.resumedAutomationIds.length,
+		)
+		if (!params.discountId) {
+			return data({
+				ok: true as const,
+				...(summary ? { cascade: summary } : {}),
+			})
+		}
+		return redirect(
+			`/${access.organization.slug}/discounts/${discountId}${summary ? `?cascade=${summary}` : ''}`,
+		)
 	}
 
 	const status = saveStatusSchema.safeParse(form.get('status'))
@@ -252,21 +311,48 @@ export async function saveDiscountEditor({
 					.map((code) => [code.code.trim().toUpperCase(), code.maxUses])
 					.sort(),
 			)
+		const changedKeys = before?.stored
+			? changedDiscountKeys(before.stored.definition, built.definition)
+			: []
+		const codesChanged = before
+			? codeKey(before.codes) !== codeKey(built.codes)
+			: false
 		await recordDiscountUpdated({
 			organizationId: access.organization.id,
 			userId: access.userId,
 			discountId,
-			keys: before?.stored
-				? changedDiscountKeys(before.stored.definition, built.definition)
-				: [],
-			codesChanged: before
-				? codeKey(before.codes) !== codeKey(built.codes)
-				: false,
+			keys: changedKeys,
+			codesChanged,
 			request,
 		})
+		// An earlier end date, a changed code or a changed amount can leave
+		// messages promising something that no longer holds: act on the
+		// operator's choice (#236).
+		const brokenPromise =
+			endDateShortened(
+				before?.stored?.definition.endsAt,
+				built.definition.endsAt,
+			) ||
+			// A message already scheduled carries the code and amount it was
+			// written with: changing either breaks what it promised.
+			codesChanged ||
+			(before?.stored
+				? promiseChanged(before.stored.definition, built.definition)
+				: false)
+		const cascade = brokenPromise
+			? await cascadeOnPause({
+					request,
+					organizationId: access.organization.id,
+					orgSlug: access.organization.slug,
+					userId: access.userId,
+					discountId,
+					flags: readCascadeFlags(form),
+				})
+			: null
 		await purgeDiscountSiteCache(access)
+		const summary = cascadeSummary(cascade)
 		return redirect(
-			`/${access.organization.slug}/discounts/${discountId}?saved=1`,
+			`/${access.organization.slug}/discounts/${discountId}?saved=1${summary ? `&cascade=${summary}` : ''}`,
 		)
 	}
 
@@ -285,6 +371,22 @@ export async function saveDiscountEditor({
 	})
 	await purgeDiscountSiteCache(access)
 	return redirect(`/${access.organization.slug}/discounts/${saved.id}?saved=1`)
+}
+
+/**
+ * What the cascade did, for the next page: `<automations paused>.<broadcasts
+ * cancelled>.<automations resumed>.<skipped or failed>`; null when nothing
+ * happened. Counts only.
+ */
+function cascadeSummary(
+	cascade: CascadeResult | null,
+	resumed = 0,
+): string | null {
+	const paused = cascade?.pausedAutomationIds.length ?? 0
+	const cancelled = cascade?.cancelledCampaignIds.length ?? 0
+	const notDone = (cascade?.skipped.length ?? 0) + (cascade?.failed ?? 0)
+	if (paused + cancelled + resumed + notDone === 0) return null
+	return `${paused}.${cancelled}.${resumed}.${notDone}`
 }
 
 async function purgeDiscountSiteCache(access: DiscountsAccess) {

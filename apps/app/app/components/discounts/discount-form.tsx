@@ -403,6 +403,7 @@ function DiscountFormBody({
 	history = [],
 	createdAt = null,
 	sharedWithOtherLocations = false,
+	confirmBeforeSave,
 }: {
 	orgSlug: string
 	mode: 'new' | 'edit'
@@ -436,10 +437,22 @@ function DiscountFormBody({
 	 * outside theirs, so it is read-only for them (`discountEditableInScope`).
 	 */
 	sharedWithOtherLocations?: boolean
+	/**
+	 * Called on a save of a saved discount. Return true to hold the save while
+	 * the page asks something (messages that promise this discount); call
+	 * `submit` when the answer is in, with extra form fields for the server.
+	 */
+	confirmBeforeSave?: (input: {
+		state: EditorState
+		initial: EditorState
+		submit: (extra?: Record<string, string>) => void
+	}) => boolean
 }) {
 	const { t, i18n } = useLingui()
 	const { activeLocale } = useActiveLocale()
 	const [state, setState] = useState(initial)
+	const formRef = useRef<HTMLFormElement>(null)
+	const holdOnce = useRef(false)
 	// What the form held when it opened: the edits are the difference.
 	const [baseline] = useState(() => JSON.stringify(initial))
 	const dirty = JSON.stringify(state) !== baseline
@@ -676,7 +689,37 @@ function DiscountFormBody({
 
 	return (
 		<EditorCurrencyContext.Provider value={amountsCurrency}>
-			<Form method="post" className="min-h-full">
+			<Form
+				ref={formRef}
+				method="post"
+				className="min-h-full"
+				onSubmit={(event) => {
+					if (mode !== 'edit' || !confirmBeforeSave) return
+					// The resubmit after the answer goes straight through.
+					if (holdOnce.current) {
+						holdOnce.current = false
+						return
+					}
+					const held = confirmBeforeSave({
+						state,
+						initial,
+						submit: (extra) => {
+							const form = formRef.current
+							if (!form) return
+							for (const [name, value] of Object.entries(extra ?? {})) {
+								const input = document.createElement('input')
+								input.type = 'hidden'
+								input.name = name
+								input.value = value
+								form.appendChild(input)
+							}
+							holdOnce.current = true
+							form.requestSubmit()
+						},
+					})
+					if (held) event.preventDefault()
+				}}
+			>
 				<input type="hidden" name="intent" value="save" />
 				<input type="hidden" name="status" value={status} />
 				{version !== null ? (

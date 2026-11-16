@@ -14,6 +14,7 @@ import {
 	withUnsubscribeFooter,
 } from '@repo/common/email-unsubscribe'
 import {
+	discountUsedInQuerySchema,
 	marketingOfferSchema,
 	parseMarketingOffer,
 	usesCouponCodeTag,
@@ -50,6 +51,7 @@ import {
 	type CampaignActionError,
 } from '../services/campaign-actions.ts'
 import { ensureEmailEngagementSynced } from '../services/email-engagement-sync.ts'
+import { findDiscountUsedIn } from '../services/discount-used-in.ts'
 import { loadBroadcastAudience } from '../services/marketing-audience.ts'
 import {
 	erasePerson,
@@ -1024,6 +1026,32 @@ operatorRoutes.get('/marketing/audience-count', async (c) => {
 		return c.json({ count: audience.length })
 	} catch (error) {
 		console.error('Error counting audience:', errorLogFields(error))
+		return c.json({ error: 'Tenant Database unavailable' }, 500)
+	}
+})
+
+/**
+ * Where a discount is promised (#236), for the App's server when it pauses what
+ * a discount would break. The same lookup the browser reads with the discounts
+ * token (`GET /operator/discounts/used-in`), behind the server-side operator
+ * token only: a token bound to an area is refused, so no browser reaches it.
+ */
+operatorRoutes.get('/marketing/discount-used-in', async (c) => {
+	let auth
+	try {
+		auth = await authenticateOperator(c)
+	} catch (response) {
+		return response as Response
+	}
+	const query = discountUsedInQuerySchema.safeParse({
+		discountId: c.req.query('discountId') ?? '',
+	})
+	if (!query.success) return c.json({ error: 'Invalid request' }, 400)
+	try {
+		const db = await getTenantDb(auth.orgId)
+		return c.json(await findDiscountUsedIn(db, query.data.discountId))
+	} catch (error) {
+		console.error('Error reading discount usage:', errorLogFields(error))
 		return c.json({ error: 'Tenant Database unavailable' }, 500)
 	}
 })

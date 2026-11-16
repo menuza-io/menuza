@@ -62,6 +62,13 @@ function renderList(
 				currency: 'USD',
 				canWrite: true,
 				locationZones: {},
+				permissions: {
+					canChangeAutomations: true,
+					canChangeBroadcasts: true,
+					canOpenAutomations: true,
+					canOpenBroadcasts: true,
+				},
+				pairedCounts: {},
 				discounts: [
 					{
 						id: 'disc_1',

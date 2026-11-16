@@ -80,14 +80,33 @@ export async function recordDiscountUpdated(
 }
 
 export async function recordDiscountStatus(
-	input: RecordInput & { status: 'active' | 'paused' | 'archived' },
+	input: RecordInput & {
+		status: 'active' | 'paused' | 'archived'
+		/** Automations paused with the discount (ids), offered back on resume (#236). */
+		pausedAutomationIds?: string[]
+		/** Scheduled broadcasts cancelled with it (ids). */
+		cancelledCampaignIds?: string[]
+		/** Automations resumed with it (ids). */
+		resumedAutomationIds?: string[]
+	},
 ) {
+	const paired = {
+		...(input.pausedAutomationIds?.length
+			? { pausedAutomationIds: input.pausedAutomationIds }
+			: {}),
+		...(input.cancelledCampaignIds?.length
+			? { cancelledCampaignIds: input.cancelledCampaignIds }
+			: {}),
+		...(input.resumedAutomationIds?.length
+			? { resumedAutomationIds: input.resumedAutomationIds }
+			: {}),
+	}
 	await auditService.log({
 		action: AuditAction.DISCOUNT_STATUS_CHANGED,
 		userId: input.userId,
 		organizationId: input.organizationId,
 		details: `Discount ${input.status}`,
-		metadata: { status: input.status },
+		metadata: { status: input.status, ...paired },
 		request: input.request,
 		resourceType: DISCOUNT_RESOURCE_TYPE,
 		resourceId: input.discountId,

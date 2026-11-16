@@ -84,7 +84,7 @@ msgstr "{excluded, plural, one {# record is left out of this ratio because it ha
 msgid "{field}"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:357
+#: ../../packages/marketing/src/components/campaign-form.tsx:372
 msgid "{hours} hours late"
 msgstr "{hours} hours late"
 
@@ -203,7 +203,7 @@ msgstr ""
 msgid "1 entry"
 msgstr "1 entry"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:356
+#: ../../packages/marketing/src/components/campaign-form.tsx:371
 msgid "1 hour late"
 msgstr "1 hour late"
 
@@ -649,7 +649,7 @@ msgstr "Assigned, not connected"
 msgid "Attribute Mapping (JSON)"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:208
+#: ../../packages/marketing/src/components/campaign-form.tsx:210
 msgid "Audience"
 msgstr "Audience"
 
@@ -935,12 +935,12 @@ msgstr ""
 msgid "Cache Type:"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:226
+#: ../../packages/marketing/src/components/campaign-form.tsx:236
 msgid "Campaign name"
 msgstr ""
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:410
-#: ../../packages/marketing/src/components/campaign-form.tsx:380
+#: ../../packages/marketing/src/components/campaign-form.tsx:395
 #: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:139
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:180
 #: ../../packages/marketing/src/components/email/menu-item-inspector.tsx:317
@@ -983,7 +983,7 @@ msgstr "Cancelling"
 msgid "Center"
 msgstr "Center"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:176
+#: ../../packages/marketing/src/components/campaign-form.tsx:178
 msgid "Channel"
 msgstr ""
 
@@ -991,7 +991,7 @@ msgstr ""
 msgid "Check before it goes out"
 msgstr "Check before it goes out"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:243
+#: ../../packages/marketing/src/components/campaign-form.tsx:253
 msgid "Check out our new summer menu"
 msgstr ""
 
@@ -1570,7 +1570,7 @@ msgstr ""
 msgid "Does Not Equal"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:345
+#: ../../packages/marketing/src/components/campaign-form.tsx:360
 msgid "Don't send if more than this late"
 msgstr "Don't send if more than this late"
 
@@ -1663,8 +1663,8 @@ msgstr "Each day’s published hours and shifts next to the hours worked and the
 msgid "Each shippable product and size prints at one vendor. Changing the vendor here is how orders are rerouted: retrying a held order picks up the new mapping."
 msgstr "Each shippable product and size prints at one vendor. Changing the vendor here is how orders are rerouted: retrying a held order picks up the new mapping."
 
-#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:144
-#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:157
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:146
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:159
 #: app/components/admin/feature-flags.tsx:433
 #: app/components/roles/roles-table-rows.tsx:59
 #: app/components/sso-configuration-overview.tsx:118
@@ -1716,7 +1716,7 @@ msgstr ""
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:327
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:415
-#: ../../packages/marketing/src/components/campaign-form.tsx:251
+#: ../../packages/marketing/src/components/campaign-form.tsx:261
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:129
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:153
 msgid "Email design"
@@ -1891,7 +1891,7 @@ msgstr "Every no-show over the last 30 days with its date, service, party size a
 msgid "Everyone gets {code}"
 msgstr "Everyone gets {code}"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:216
+#: ../../packages/marketing/src/components/campaign-form.tsx:222
 msgid "Everyone subscribed"
 msgstr "Everyone subscribed"
 
@@ -2274,7 +2274,7 @@ msgstr "I found nothing, retry"
 msgid "Identity Provider Configuration"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:363
+#: ../../packages/marketing/src/components/campaign-form.tsx:378
 msgid "If sending cannot start in time, it is not sent and you are told."
 msgstr "If sending cannot start in time, it is not sent and you are told."
 
@@ -2302,7 +2302,7 @@ msgstr ""
 msgid "In setup"
 msgstr "In setup"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:340
+#: ../../packages/marketing/src/components/campaign-form.tsx:355
 msgid "In your time zone."
 msgstr "In your time zone."
 
@@ -2717,7 +2717,7 @@ msgstr ""
 #~ msgstr "Merge tags are replaced per recipient when the email is sent."
 
 #: ../../packages/marketing/src/components/campaign-detail.tsx:188
-#: ../../packages/marketing/src/components/campaign-form.tsx:257
+#: ../../packages/marketing/src/components/campaign-form.tsx:267
 msgid "Message"
 msgstr ""
 
@@ -3536,7 +3536,7 @@ msgid "Printing"
 msgstr "Printing"
 
 #: ../../packages/marketing-workflow/src/node-palette.tsx:40
-#: ../../packages/marketing/src/components/campaign-form.tsx:196
+#: ../../packages/marketing/src/components/campaign-form.tsx:198
 msgid "Pro"
 msgstr ""
 
@@ -4142,7 +4142,7 @@ msgid "Save default"
 msgstr "Save default"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:193
-#: ../../packages/marketing/src/components/campaign-form.tsx:395
+#: ../../packages/marketing/src/components/campaign-form.tsx:410
 msgid "Save draft"
 msgstr ""
 
@@ -4200,15 +4200,15 @@ msgstr ""
 msgid "Saving…"
 msgstr "Saving…"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:425
+#: ../../packages/marketing/src/components/campaign-form.tsx:440
 msgid "Schedule"
 msgstr "Schedule"
 
-#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:162
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:164
 msgid "Schedule anyway"
 msgstr "Schedule anyway"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:322
+#: ../../packages/marketing/src/components/campaign-form.tsx:337
 msgid "Schedule for later"
 msgstr "Schedule for later"
 
@@ -4351,15 +4351,15 @@ msgstr ""
 msgid "Send a one-time message to tenant operators."
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:406
+#: ../../packages/marketing/src/components/campaign-form.tsx:421
 msgid "Send a test"
 msgstr "Send a test"
 
-#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:164
+#: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:166
 msgid "Send anyway"
 msgstr "Send anyway"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:330
+#: ../../packages/marketing/src/components/campaign-form.tsx:345
 msgid "Send at"
 msgstr "Send at"
 
@@ -4367,8 +4367,8 @@ msgstr "Send at"
 msgid "Send Email"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:156
-#: ../../packages/marketing/src/components/campaign-form.tsx:322
+#: ../../packages/marketing/src/components/campaign-form.tsx:158
+#: ../../packages/marketing/src/components/campaign-form.tsx:336
 msgid "Send now"
 msgstr ""
 
@@ -4388,7 +4388,7 @@ msgstr "Sending to the printer"
 msgid "Sending to the vendor failed unexpectedly"
 msgstr "Sending to the vendor failed unexpectedly"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:157
+#: ../../packages/marketing/src/components/campaign-form.tsx:159
 msgid "Sending..."
 msgstr ""
 
@@ -4714,7 +4714,7 @@ msgstr "Stuck in setup for more than 14 days"
 msgid "Style"
 msgstr "Style"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:238
+#: ../../packages/marketing/src/components/campaign-form.tsx:248
 msgid "Subject"
 msgstr ""
 
@@ -4741,11 +4741,11 @@ msgstr ""
 msgid "Subscription Status"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:231
+#: ../../packages/marketing/src/components/campaign-form.tsx:241
 msgid "Summer promo"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:264
+#: ../../packages/marketing/src/components/campaign-form.tsx:274
 msgid "supported"
 msgstr ""
 
@@ -5518,7 +5518,7 @@ msgstr "Vendors were cancelled for this order: refund it instead of retrying."
 msgid "Verification Status"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:217
+#: ../../packages/marketing/src/components/campaign-form.tsx:224
 msgid "Verified phone numbers only"
 msgstr "Verified phone numbers only"
 
@@ -5640,7 +5640,7 @@ msgstr "WELCOME"
 msgid "Welcome to Menuza, {ORGANIZATION_NAME_TAG}"
 msgstr "Welcome to Menuza, {ORGANIZATION_NAME_TAG}"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:306
+#: ../../packages/marketing/src/components/campaign-form.tsx:316
 msgid "When"
 msgstr "When"
 
@@ -5682,7 +5682,7 @@ msgstr "Width"
 msgid "Window sticker"
 msgstr "Window sticker"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:219
+#: ../../packages/marketing/src/components/campaign-form.tsx:228
 msgid "Without a verified phone"
 msgstr "Without a verified phone"
 
@@ -5694,7 +5694,7 @@ msgstr ""
 msgid "Workflow validation"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:286
+#: ../../packages/marketing/src/components/campaign-form.tsx:296
 msgid "Write your email. Use {NAME_TAG} to personalize."
 msgstr "Write your email. Use {NAME_TAG} to personalize."
 
@@ -5702,7 +5702,7 @@ msgstr "Write your email. Use {NAME_TAG} to personalize."
 msgid "Write your message"
 msgstr "Write your message"
 
-#: ../../packages/marketing/src/components/campaign-form.tsx:275
+#: ../../packages/marketing/src/components/campaign-form.tsx:285
 msgid "Write your text message"
 msgstr "Write your text message"
 

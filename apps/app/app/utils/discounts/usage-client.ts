@@ -1,7 +1,9 @@
 import {
 	DISCOUNT_USAGE_MAX_IDS,
 	type DiscountUsageEntry,
+	type DiscountUsedIn,
 	discountUsageResponseSchema,
+	discountUsedInResponseSchema,
 } from '@repo/discounts'
 import { z } from 'zod'
 
@@ -27,6 +29,15 @@ export type DiscountUsageClient = {
 		signal?: AbortSignal,
 		range?: { from?: string; to?: string },
 	): Promise<Record<string, DiscountUsageEntry> | null>
+	/**
+	 * Where a discount is promised (#236): the broadcasts waiting to go out or
+	 * sending and the automations running that offer it. Ids and names only.
+	 * Null when the region could not be reached (the page then does not block).
+	 */
+	fetchUsedIn(
+		discountId: string,
+		signal?: AbortSignal,
+	): Promise<DiscountUsedIn | null>
 }
 
 export function createDiscountUsageClient({
@@ -56,6 +67,30 @@ export function createDiscountUsageClient({
 	}
 
 	return {
+		async fetchUsedIn(discountId, signal) {
+			try {
+				const { jwt, tenantApiUrl } = await token()
+				const url = new URL(
+					`${tenantApiUrl.replace(/\/+$/, '')}/operator/discounts/used-in`,
+				)
+				url.searchParams.set('discountId', discountId)
+				const response = await fetchImpl(url.toString(), {
+					headers: {
+						Accept: 'application/json',
+						Authorization: `Bearer ${jwt}`,
+					},
+					cache: 'no-store',
+					signal,
+				})
+				if (!response.ok) {
+					if (response.status === 401) cached = null
+					return null
+				}
+				return discountUsedInResponseSchema.parse(await response.json())
+			} catch {
+				return null
+			}
+		},
 		async fetchUsage(ids, signal, range) {
 			const unique = [...new Set(ids)]
 			if (unique.length === 0) return {}

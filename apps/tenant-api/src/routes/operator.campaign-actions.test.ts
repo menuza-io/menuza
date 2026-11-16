@@ -483,6 +483,58 @@ describe('broadcast actions: edit, cancel, delete, duplicate, re-send, test-send
 		})
 	})
 
+	describe('where a discount is promised (server-side door)', () => {
+		const offer = JSON.stringify({
+			mode: 'shared',
+			discountId: 'disc_a',
+			code: 'SAVE10',
+		})
+
+		it('lists the broadcasts that offer it, by the server-side token only', async () => {
+			const id = await campaign({
+				status: 'Scheduled',
+				scheduledAt: new Date(Date.now() + HOUR),
+				discountOffer: offer,
+				content: 'Code {{couponCode}}',
+			})
+			await campaign({ status: 'Draft', discountOffer: offer })
+			const server = await new SignJWT({
+				orgId,
+				role: 'operator',
+				sub: 'user-1',
+			})
+				.setProtectedHeader({ alg: 'HS256' })
+				.setAudience('tenant-api-operator')
+				.setIssuer(brand.shortName)
+				.setExpirationTime('1h')
+				.sign(new TextEncoder().encode(operatorSecret))
+			const res = await call(
+				'GET',
+				'/discount-used-in?discountId=disc_a',
+				undefined,
+				server,
+			)
+			expect(res.status).toBe(200)
+			const body = (await res.json()) as { broadcasts: Array<{ id: string }> }
+			expect(body.broadcasts.map((b) => b.id)).toEqual([id])
+
+			// A token bound to an area (the browser's) is refused.
+			expect(
+				(await call('GET', '/discount-used-in?discountId=disc_a')).status,
+			).toBe(401)
+			expect(
+				(
+					await call(
+						'GET',
+						'/discount-used-in?discountId=a%20b',
+						undefined,
+						server,
+					)
+				).status,
+			).toBe(400)
+		})
+	})
+
 	describe('delete', () => {
 		it('needs the delete claim', async () => {
 			const id = await campaign({ status: 'Draft' })
