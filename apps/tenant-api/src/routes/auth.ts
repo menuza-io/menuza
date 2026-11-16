@@ -19,6 +19,10 @@ import {
 	TENANT_ORG_ID_PATTERN,
 	runTenantTransaction,
 } from '@repo/tenant-db'
+import {
+	BIRTHDAY_ERROR,
+	birthMonthDayFieldSchema,
+} from '@repo/common/birthday'
 import { clientAddress } from '../lib/client-ip.ts'
 import { reserveSmsSend } from '../services/sms-send-limits.ts'
 import {
@@ -132,6 +136,8 @@ const profileSchema = z.object({
 		.email('Invalid email address')
 		.or(z.literal(''))
 		.optional(),
+	/** `MM-DD` (#151): month and day only. null clears it. */
+	birthMonthDay: birthMonthDayFieldSchema.optional(),
 })
 
 const MIN_JWT_SECRET_LENGTH = 16
@@ -1113,13 +1119,19 @@ authRoutes.post(
 		const parsed = profileSchema.safeParse(body)
 
 		if (!parsed.success) {
+			// A bad birthday is refused by code, never by echoing what was sent.
+			if (
+				parsed.error.issues.some((issue) => issue.path[0] === 'birthMonthDay')
+			) {
+				return c.json({ error: BIRTHDAY_ERROR }, 400)
+			}
 			return c.json(
 				{ error: parsed.error.issues[0]?.message || 'Invalid payload' },
 				400,
 			)
 		}
 
-		const { name, email } = parsed.data
+		const { name, email, birthMonthDay } = parsed.data
 
 		try {
 			const existing = await db
@@ -1132,11 +1144,22 @@ authRoutes.post(
 				return c.json({ error: 'Customer not found' }, 404)
 			}
 
+			// The set time only moves when the birthday really changes.
+			const birthdayChanged =
+				birthMonthDay !== undefined &&
+				(birthMonthDay ?? null) !== (existing.birthMonthDay ?? null)
+
 			await db
 				.update(customers)
 				.set({
 					name,
 					...(email !== undefined ? { email: email || null } : {}),
+					...(birthdayChanged
+						? {
+								birthMonthDay: birthMonthDay ?? null,
+								birthMonthDaySetAt: birthMonthDay ? Date.now() : null,
+							}
+						: {}),
 					updatedAt: new Date(),
 				})
 				.where(eq(customers.id, customerId))
@@ -1201,6 +1224,8 @@ authRoutes.get('/me', async (c) => {
 			name: customer.name,
 			email: customer.email,
 			phone: customer.phone,
+			// The guest's own birthday (#151), for their own profile form.
+			birthMonthDay: customer.birthMonthDay ?? null,
 			needsName: customerNeedsName(customer.name),
 		},
 	})
