@@ -693,6 +693,20 @@ git commit --no-verify -m "fix: resolve ESLint warnings (verified manually)"
   routes and on operator writes that start something new, and new orders neither
   earn nor take a reward. The tick, reconciliation, review decisions and refunds
   keep going, and operators can still read. See `docs/loyalty.md`.
+- `GIFT_CARDS_ENABLED` - Tenant-api only, optional (unset or `true` is on). Kill
+  switch for gift cards on a node: `false` (also `0`, `off`, `no`, `disabled`)
+  answers 503 `gift_cards_unavailable` on new sales, top-ups, activations and
+  redemptions. Balance reads, refunds back to a card, paid events and the tick
+  keep working. See `docs/gift-cards.md`.
+- `GIFT_CARD_HMAC_SECRET` - Tenant-api only, optional (32+ chars). Keys every
+  gift card hash and the sealing of a purchased card's code. Unset,
+  `AUTH_HMAC_SECRET` is used. Choose it before the first card is sold and never
+  change it: there is no re-keying step, and a changed key makes existing cards
+  unfindable.
+- `GIFT_CARDS_TICK_INTERVAL_SECONDS` - Tenant-api Node (OCI) runtime only,
+  optional. Seconds between in-process gift card ticks (default 120, minimum 60,
+  `0` off). The hourly cron fan-out always runs; the Workers runtime uses
+  Durable Object alarms.
 - `DISCOUNTS_ENABLED` - Tenant-api only, optional (unset or `true` is on). Kill
   switch for discounts and coupons on a node: `false` (also `0`, `off`, `no`,
   `disabled`) makes it ignore every discount at quote, placement, tab payment
@@ -1552,6 +1566,30 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
 - Product rules: owner words (no par, AvT, COGS, 86), at most five tabs, one
   plain name per item (inventory inputs are never translated; App strings are
   Lingui). Security gate: `routes/inventory-security.test.ts`.
+
+**Gift cards (sell, redeem, fraud holds, guest wallet):**
+
+- One regional ledger per organization (`gift_cards`, append-only
+  `gift_card_ledger`; tenant-db `0047_gift_cards`). The balance is the sum of
+  the ledger. Control plane keeps the flags `gift_cards.enabled` / `.online` /
+  `.pos` (default off, only a literal `true`), three permissions and the
+  settings (`0050_gift_cards`), never a code or a balance. Codes are HMACs; a
+  purchased card's code is sealed in the region until its email has gone out.
+- Operators: the App mints a short-lived `gft+jwt`
+  (`GET /<orgSlug>/gift-cards-token`) and the browser calls
+  `/operator/gift-cards/*` directly. Every App gift card loader and action
+  awaits `requireGiftCardAccess` first (404 while the flag is off). Guests call
+  `/gift-cards/*` (organization from `Origin`), tills call `/pos/gift-cards/*`
+  with the device secret, online only.
+- Writes go through `withGiftCardWrite`; a ledger trigger refuses a negative
+  balance. A card sale gets no discounts, no points and no VAT line; a redeemed
+  card is a tender (KSA VAT is on redemption). Refunds reuse the order refund
+  path and return the card's part to the card first.
+- Tests and gates: `apps/tenant-api/src/routes/gift-cards-security.test.ts`
+  (operator routes), `gift-cards-public.test.ts` (body cap, query bounds),
+  `lib/gift-card-secret.test.ts`, the `gift-card-*` service suites and
+  `apps/app/app/utils/gift-cards/gift-cards-guards.test.ts`. Deploy App, then
+  tenant-api, then Sites, then Station. Docs: `docs/gift-cards.md`.
 
 **Print shop (Marketing, Print shop):**
 
