@@ -1,4 +1,5 @@
-import { Trans, useLingui } from '@lingui/react/macro'
+import { Plural, Trans, useLingui } from '@lingui/react/macro'
+import { userHasOrganizationPermission } from '@repo/auth'
 import { Button } from '@repo/ui/button'
 import {
 	DropdownMenu,
@@ -22,6 +23,12 @@ import {
 	DiscountForm,
 	UNSAVED_CHANGES_NOTE_ID,
 } from '#app/components/discounts/discount-form.tsx'
+import {
+	type ImpactChoice,
+	ResumeWithAutomationsDialog,
+	UsedInPanel,
+	useMessageImpact,
+} from '#app/components/discounts/message-impact.tsx'
 import { requireDiscountsAccess } from '#app/utils/discounts/access.server.ts'
 import {
 	getDiscount,
@@ -34,11 +41,14 @@ import {
 	discountEditableInScope,
 	discountVisibleInScope,
 } from '#app/utils/discounts/location-scope.server.ts'
+import { describePairedAutomations } from '#app/utils/discounts/message-impact.server.ts'
 import {
 	type DiscountEditorActionData,
 	saveDiscountEditor,
 } from '#app/utils/discounts/save.server.ts'
+import { ORG_PERMISSIONS } from '#app/utils/organization/permissions.server.ts'
 import { couponPrintHref } from '#app/utils/print/restaurant/coupon.server.ts'
+import { getOperatorTenantClient } from '#app/utils/tenant-api.server.ts'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const access = await requireDiscountsAccess(request, params.orgSlug)
@@ -60,6 +70,38 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	const status = asStatus(loaded.row.status)
 	const storedCurrency = loaded.row.currency ?? access.currency
 	const stored = loaded.stored
+	const [
+		canChangeAutomations,
+		canChangeBroadcasts,
+		canOpenAutomations,
+		canOpenBroadcasts,
+	] = await Promise.all(
+		[
+			ORG_PERMISSIONS.UPDATE_AUTOMATION_ANY,
+			ORG_PERMISSIONS.UPDATE_CAMPAIGN_ANY,
+			ORG_PERMISSIONS.READ_AUTOMATION_ANY,
+			ORG_PERMISSIONS.READ_CAMPAIGN_ANY,
+		].map((permission) =>
+			userHasOrganizationPermission(
+				access.userId,
+				access.organization.id,
+				permission,
+			),
+		),
+	)
+	// Automations paused together with this discount, offered back on resume.
+	const pairedAutomations =
+		status === 'paused' && access.canWrite
+			? await getOperatorTenantClient(request, access.organization.slug)
+					.then(({ fetchTenant }) =>
+						describePairedAutomations({
+							fetchTenant,
+							organizationId: access.organization.id,
+							discountId,
+						}),
+					)
+					.catch(() => [])
+			: []
 	const [createdBy, history, printHref] = await Promise.all([
 		getDiscountCreatedBy(loaded.row.createdById),
 		listDiscountHistory(access.organization.id, discountId),
@@ -89,6 +131,14 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		printHref,
 		editor,
 		discountId,
+		permissions: {
+			canChangeAutomations: Boolean(canChangeAutomations),
+			canChangeBroadcasts: Boolean(canChangeBroadcasts),
+			canOpenAutomations: Boolean(canOpenAutomations),
+			canOpenBroadcasts: Boolean(canOpenBroadcasts),
+		},
+		pairedAutomations,
+		cascade: parseCascade(new URL(request.url).searchParams.get('cascade')),
 		name: loaded.row.name,
 		version: loaded.row.version,
 		status,
@@ -106,6 +156,16 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	}
 }
 
+/** `<paused>.<cancelled>.<resumed>.<not done>`, counts the action sent along. */
+function parseCascade(value: string | null) {
+	const parts = (value ?? '').split('.').map((part) => Number(part))
+	if (parts.length !== 4 || parts.some((n) => !Number.isInteger(n) || n < 0)) {
+		return null
+	}
+	const [paused = 0, cancelled = 0, resumed = 0, notDone = 0] = parts
+	return { paused, cancelled, resumed, notDone }
+}
+
 export async function action({ request, params }: ActionFunctionArgs) {
 	const access = await requireDiscountsAccess(request, params.orgSlug, {
 		write: true,
@@ -119,6 +179,30 @@ export default function EditDiscountRoute() {
 	const navigation = useNavigation()
 	const { t } = useLingui()
 	const [archiveOpen, setArchiveOpen] = useState(false)
+	const [resumeOpen, setResumeOpen] = useState(false)
+	const impact = useMessageImpact({
+		orgSlug: data.orgSlug,
+		permissions: data.permissions,
+	})
+	/** Posts the status form with the status and what the operator chose about messages. */
+	const submitStatus = (status: string, extra: Record<string, string> = {}) => {
+		const form = document.getElementById(
+			'discount-status',
+		) as HTMLFormElement | null
+		if (!form) return
+		for (const [name, value] of Object.entries({ status, ...extra })) {
+			const input = document.createElement('input')
+			input.type = 'hidden'
+			input.name = name
+			input.value = value
+			form.appendChild(input)
+		}
+		form.requestSubmit()
+	}
+	const choiceFields = (choice: ImpactChoice | null) => ({
+		...(choice?.pauseAutomations ? { pauseAutomations: '1' } : {}),
+		...(choice?.cancelBroadcasts ? { cancelBroadcasts: '1' } : {}),
+	})
 	const keepEdits = actionData?.keepEdits === true
 	// The form opens with the saved discount and is rebuilt when a new version
 	// arrives. A stale save is the exception: it brings the other person's
@@ -162,7 +246,6 @@ export default function EditDiscountRoute() {
 	}
 
 	const initial = data.initial
-	const nextStatus = data.status === 'active' ? 'paused' : 'active'
 	return (
 		<>
 			<form id="discount-status" method="post" className="hidden">
@@ -191,8 +274,41 @@ export default function EditDiscountRoute() {
 					</Trans>
 				</p>
 			) : null}
+			{data.cascade ? <CascadeNotice cascade={data.cascade} /> : null}
+			<UsedInPanel
+				orgSlug={data.orgSlug}
+				discountId={data.discountId}
+				permissions={data.permissions}
+			/>
 			<DiscountForm
 				key={`${data.discountId}:${mount.generation}`}
+				confirmBeforeSave={({ state, initial, submit }) => {
+					// An earlier end, a code that goes, or a new amount would break
+					// what scheduled and running messages promise: ask first.
+					const shortened = Boolean(
+						state.endsAt && (!initial.endsAt || state.endsAt < initial.endsAt),
+					)
+					const keep = new Set(
+						state.codes.map((row) => row.code.trim().toUpperCase()),
+					)
+					const codeGone = initial.codes.some((row) => {
+						const code = row.code.trim().toUpperCase()
+						return code !== '' && !keep.has(code)
+					})
+					const amountChanged =
+						state.valueType !== initial.valueType ||
+						state.percent !== initial.percent ||
+						state.amount !== initial.amount ||
+						JSON.stringify(state.tiers) !== JSON.stringify(initial.tiers)
+					if (!shortened && !codeGone && !amountChanged) return false
+					impact.guard({
+						discountId: data.discountId,
+						discountName: data.name,
+						kind: shortened ? 'shorten_end' : 'edit',
+						proceed: (choice) => submit(choiceFields(choice)),
+					})
+					return true
+				}}
 				mode="edit"
 				orgSlug={data.orgSlug}
 				currency={data.currency}
@@ -222,13 +338,31 @@ export default function EditDiscountRoute() {
 						<>
 							{data.canWrite ? (
 								<Button
-									type="submit"
-									form="discount-status"
-									name="status"
-									value={data.status === 'archived' ? 'paused' : nextStatus}
+									type="button"
 									variant="outline"
-									disabled={dirty}
+									disabled={dirty || impact.checking}
 									aria-describedby={dirty ? UNSAVED_CHANGES_NOTE_ID : undefined}
+									onClick={() => {
+										if (data.status === 'active') {
+											// Messages that promise it would break: ask first.
+											impact.guard({
+												discountId: data.discountId,
+												discountName: data.name,
+												kind: 'pause',
+												proceed: (choice) =>
+													submitStatus('paused', choiceFields(choice)),
+											})
+										} else if (
+											data.status === 'paused' &&
+											data.pairedAutomations.length > 0
+										) {
+											setResumeOpen(true)
+										} else {
+											submitStatus(
+												data.status === 'archived' ? 'paused' : 'active',
+											)
+										}
+									}}
 								>
 									{data.status === 'active'
 										? t`Pause`
@@ -298,20 +432,31 @@ export default function EditDiscountRoute() {
 					hasCodes={initial.application === 'code'}
 					open={archiveOpen}
 					onOpenChange={setArchiveOpen}
-					onConfirm={() => {
-						const form = document.getElementById(
-							'discount-status',
-						) as HTMLFormElement | null
-						if (!form) return
-						const status = document.createElement('input')
-						status.type = 'hidden'
-						status.name = 'status'
-						status.value = 'archived'
-						form.appendChild(status)
-						form.requestSubmit()
-					}}
+					onConfirm={() =>
+						impact.guard({
+							discountId: data.discountId,
+							discountName: data.name,
+							kind: 'archive',
+							proceed: (choice) =>
+								submitStatus('archived', choiceFields(choice)),
+						})
+					}
 				/>
 			) : null}
+			<ResumeWithAutomationsDialog
+				open={resumeOpen}
+				discountName={data.name}
+				automations={data.pairedAutomations}
+				onClose={() => setResumeOpen(false)}
+				onResume={(withAutomations) => {
+					setResumeOpen(false)
+					submitStatus(
+						'active',
+						withAutomations ? { resumeAutomations: '1' } : {},
+					)
+				}}
+			/>
+			{impact.render}
 		</>
 	)
 }
@@ -319,4 +464,57 @@ export default function EditDiscountRoute() {
 function asStatus(value: string): 'active' | 'paused' | 'archived' {
 	if (value === 'paused' || value === 'archived') return value
 	return 'active'
+}
+
+/** What the status change did to messages, from the counts the action sent along. */
+function CascadeNotice({
+	cascade,
+}: {
+	cascade: {
+		paused: number
+		cancelled: number
+		resumed: number
+		notDone: number
+	}
+}) {
+	const { paused, cancelled, resumed, notDone } = cascade
+	return (
+		<div role="status" className="space-y-1 px-4 pt-4 text-sm md:px-6">
+			{paused > 0 ? (
+				<p>
+					<Plural
+						value={paused}
+						one="Paused 1 automation with this discount."
+						other="Paused # automations with this discount."
+					/>
+				</p>
+			) : null}
+			{cancelled > 0 ? (
+				<p>
+					<Plural
+						value={cancelled}
+						one="Cancelled 1 scheduled broadcast."
+						other="Cancelled # scheduled broadcasts."
+					/>
+				</p>
+			) : null}
+			{resumed > 0 ? (
+				<p>
+					<Plural
+						value={resumed}
+						one="Resumed 1 automation with this discount."
+						other="Resumed # automations with this discount."
+					/>
+				</p>
+			) : null}
+			{notDone > 0 ? (
+				<p className="text-destructive">
+					<Trans>
+						Some messages could not be changed. Ask someone who manages
+						broadcasts and automations to check them.
+					</Trans>
+				</p>
+			) : null}
+		</div>
+	)
 }

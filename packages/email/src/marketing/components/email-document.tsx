@@ -1,4 +1,5 @@
 import { Body, Head, Html, Preview } from '@react-email/components'
+import { type EmailRenderContext } from '@repo/common/email-block-base'
 import { type EmailBlock } from '@repo/common/email-blocks'
 import { type EmailTheme } from '@repo/common/email-theme'
 
@@ -10,6 +11,8 @@ export type EmailDocumentProps = {
 	socials?: EmailSocialLink[]
 	/** Inbox preview text; falls back to the subject when provided by the caller. */
 	previewText?: string
+	/** Language, direction and the data the vertical blocks were resolved with. */
+	context?: EmailRenderContext
 }
 
 export function EmailDocument({
@@ -17,9 +20,10 @@ export function EmailDocument({
 	theme,
 	socials,
 	previewText,
+	context,
 }: EmailDocumentProps) {
 	return (
-		<Html lang="en" dir="ltr">
+		<Html lang={context?.locale ?? 'en'} dir={context?.direction ?? 'ltr'}>
 			<Head />
 			{previewText ? <Preview>{previewText}</Preview> : null}
 			<Body
@@ -30,7 +34,12 @@ export function EmailDocument({
 					fontFamily: theme.bodyFont,
 				}}
 			>
-				<EmailBody blocks={blocks} theme={theme} socials={socials} />
+				<EmailBody
+					blocks={blocks}
+					theme={theme}
+					socials={socials}
+					context={context}
+				/>
 			</Body>
 		</Html>
 	)

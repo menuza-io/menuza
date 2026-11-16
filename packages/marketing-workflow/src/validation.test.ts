@@ -216,4 +216,46 @@ describe('validateFlowCanvas', () => {
 		expect(validation.valid).toBe(true)
 		expect(validation.errors).toHaveLength(0)
 	})
+
+	describe('unedited boilerplate in an email step', () => {
+		const emailNode = (data: Record<string, unknown>): Node[] => [
+			{
+				id: 't1',
+				type: 'trigger',
+				position: { x: 0, y: 0 },
+				data: { triggerType: 'phone_verified' },
+			},
+			{ id: 'e1', type: 'action_email', position: { x: 0, y: 100 }, data },
+		]
+		const edges: Edge[] = [{ id: 'edge1', source: 't1', target: 'e1' }]
+
+		it.each([
+			['Lorem Ipsum dolor sit', '<p>Lorem Ipsum dolor sit</p>'],
+			['insert text here', '<p>Insert Text Here</p>'],
+			['default template text', '<p>Default template text</p>'],
+		])('flags the placeholder phrase %s', (_name, bodyHtml) => {
+			const validation = validateFlowCanvas(
+				emailNode({ subject: 'Hi', bodyHtml }),
+				edges,
+			)
+			expect(validation.nodeErrors.e1).toContain(
+				'Unedited boilerplate text detected in email body.',
+			)
+		})
+
+		it('also looks in the plain-text body, and passes real copy', () => {
+			expect(
+				validateFlowCanvas(
+					emailNode({ subject: 'Hi', bodyText: 'LOREM IPSUM' }),
+					edges,
+				).nodeErrors.e1,
+			).toContain('Unedited boilerplate text detected in email body.')
+			expect(
+				validateFlowCanvas(
+					emailNode({ subject: 'Hi', bodyHtml: '<p>See you Friday</p>' }),
+					edges,
+				).nodeErrors.e1,
+			).toBeUndefined()
+		})
+	})
 })

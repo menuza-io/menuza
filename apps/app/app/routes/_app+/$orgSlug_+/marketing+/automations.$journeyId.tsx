@@ -1,7 +1,8 @@
 import { i18n } from '@lingui/core'
 import { msg, t } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import { renderMarketingEmail } from '@repo/marketing/server/email-render'
+import { getDomainUrl } from '@repo/common'
+import { parseMarketingOffer } from '@repo/discounts'
 import {
 	WorkflowCanvas,
 	type WorkflowGraph,
@@ -33,9 +34,11 @@ import {
 	loadCouponDiscountOptions,
 } from '#app/utils/discounts/marketing-offers.server.ts'
 import {
-	resolveEmailBrandingForOrg,
-	type OrganizationEmailBranding,
-} from '#app/utils/email-branding.server.ts'
+	handleMenuItemIntent,
+	previewEmail,
+} from '#app/utils/email/designer.server.ts'
+import { renderJourneyEmailNodes } from '#app/utils/email/journey-render.server.ts'
+import { resolveEmailBrandingForOrg } from '#app/utils/email-branding.server.ts'
 import {
 	loyaltyTriggerBlocked,
 	loyaltyTriggersEnabled,
@@ -53,51 +56,6 @@ import { getOperatorTenantClient } from '#app/utils/tenant-api.server.ts'
 
 export const handle: BreadcrumbHandle<Awaited<ReturnType<typeof loader>>> = {
 	breadcrumb: (data) => data.journey.name,
-}
-
-/** Render every designed email node so the send path never needs React. */
-async function withRenderedEmails(
-	nodes: unknown[],
-	branding: OrganizationEmailBranding,
-): Promise<unknown[]> {
-	return Promise.all(
-		nodes.map(async (node) => {
-			if (!node || typeof node !== 'object') return node
-			const record = node as { type?: string; data?: Record<string, unknown> }
-			if (record.type !== 'action_email' || !record.data) return node
-			if (!Array.isArray(record.data.blocks)) return node
-			const blocks = record.data.blocks
-			if (blocks.length === 0) {
-				return {
-					...record,
-					data: {
-						...record.data,
-						emailFormat: 'designed',
-						bodyHtml: '',
-						bodyText: '',
-					},
-				}
-			}
-
-			const rendered = await renderMarketingEmail({
-				blocks,
-				theme: branding,
-				socials: branding.socials,
-				subject:
-					typeof record.data.subject === 'string' ? record.data.subject : '',
-			})
-
-			return {
-				...record,
-				data: {
-					...record.data,
-					emailFormat: 'designed',
-					bodyHtml: rendered.html,
-					bodyText: rendered.text,
-				},
-			}
-		}),
-	)
 }
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
@@ -190,15 +148,26 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	const formData = await request.formData()
 	const intent = formData.get('intent')
 
+	const baseUrl = getDomainUrl(request)
+	const menuIntent = await handleMenuItemIntent({
+		intent,
+		formData,
+		organizationId: orgId,
+		baseUrl,
+	})
+	if (menuIntent) return menuIntent
+
 	if (intent === 'email_preview') {
-		const branding = await resolveEmailBrandingForOrg(orgId)
-		const { html } = await renderMarketingEmail({
+		const offerField = formData.get('discountOffer')
+		return previewEmail({
+			organizationId: orgId,
 			blocks: formData.get('blocks'),
-			theme: branding,
-			socials: branding.socials,
 			subject: String(formData.get('subject') || ''),
+			baseUrl,
+			offer: parseMarketingOffer(
+				typeof offerField === 'string' && offerField ? offerField : null,
+			),
 		})
-		return { html }
 	}
 
 	if (intent === 'save' || intent === 'publish') {
@@ -217,7 +186,20 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		}
 
 		const branding = await resolveEmailBrandingForOrg(orgId)
-		const renderedNodes = await withRenderedEmails(parsedGraph.nodes, branding)
+		const rendered = await renderJourneyEmailNodes(
+			orgId,
+			parsedGraph.nodes as Array<Record<string, unknown>>,
+			branding,
+			baseUrl,
+		)
+		if (!rendered.ok) {
+			return {
+				error: i18n._(
+					t`A dish in your email is no longer on the live menu. Remove it or choose another one.`,
+				),
+			}
+		}
+		const renderedNodes = rendered.nodes
 		const offers = await checkJourneyOffers({
 			userId,
 			organizationId: orgId,
@@ -474,6 +456,8 @@ export default function JourneyBuilderRoute() {
 				reservationTriggers={reservationTriggers}
 				loyaltyTriggers={loyaltyTriggers}
 				couponOptions={couponOptions ?? undefined}
+				emailMenuItems
+				emailTemplatesEndpoint={`/${orgSlug}/marketing/templates/designer`}
 				headerExtras={<GlobalAIToggle />}
 				onSave={handleSave}
 				onPublish={handlePublish}

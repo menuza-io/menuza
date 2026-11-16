@@ -2,11 +2,14 @@ import {
 	DISCOUNT_USAGE_MAX_IDS,
 	discountUsageIdSchema,
 	discountUsageResponseSchema,
+	discountUsedInQuerySchema,
+	discountUsedInResponseSchema,
 } from '@repo/discounts'
 import { getTenantDb } from '@repo/tenant-db'
 import { Hono } from 'hono'
 import { verifyDiscountOperatorToken } from '../lib/discount-auth.ts'
 import { readDiscountUsage } from '../services/discount-apply.ts'
+import { findDiscountUsedIn } from '../services/discount-used-in.ts'
 
 /**
  * Operator discount routes (`/operator/discounts/*`). The App's browser calls
@@ -51,6 +54,37 @@ operatorDiscountRoutes.get('/usage', async (c) => {
 		verified.context.locationIds,
 	)
 	return c.json(discountUsageResponseSchema.parse({ usage }), 200, {
+		'Cache-Control': 'no-store',
+	})
+})
+
+/**
+ * Where a discount is promised (#236): the broadcasts waiting to go out or
+ * sending, and the automations running, that offer it. Ids, operator-written
+ * names and one count: no recipient, no address, no code.
+ */
+operatorDiscountRoutes.get('/used-in', async (c) => {
+	const verified = await verifyDiscountOperatorToken(
+		c.req.header('authorization'),
+	)
+	if (!verified.ok) {
+		return c.json({ error: verified.error }, verified.status, {
+			'Cache-Control': 'no-store',
+		})
+	}
+	const query = discountUsedInQuerySchema.safeParse({
+		discountId: c.req.query('discountId') ?? '',
+	})
+	if (!query.success) {
+		return c.json({ error: 'invalid_request' }, 400, {
+			'Cache-Control': 'no-store',
+		})
+	}
+	const usedIn = await findDiscountUsedIn(
+		await getTenantDb(verified.context.orgId),
+		query.data.discountId,
+	)
+	return c.json(discountUsedInResponseSchema.parse(usedIn), 200, {
 		'Cache-Control': 'no-store',
 	})
 })

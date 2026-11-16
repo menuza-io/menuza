@@ -6,6 +6,10 @@ export const CAMPAIGN_STATUSES = [
 	'Processing',
 	'Completed',
 	'Failed',
+	/** The operator stopped it before it started (#101). */
+	'Cancelled',
+	/** A scheduled send that could not start inside its window (#232). */
+	'SkippedLate',
 ] as const
 export type CampaignStatus = (typeof CAMPAIGN_STATUSES)[number]
 export const campaignStatusSchema = z.enum(CAMPAIGN_STATUSES)
@@ -32,6 +36,7 @@ export interface CampaignListItem {
 	targetAudienceCount: number
 	createdAt: string | Date
 	scheduledAt?: string | Date | null
+	lateAfterMinutes?: number
 }
 
 export interface CampaignRecipient {
@@ -60,6 +65,14 @@ export interface CampaignDetail {
 	audience?: string | null
 	createdAt: string | Date
 	scheduledAt?: string | Date | null
+	/** "Don't send if more than N minutes late" for a scheduled broadcast. */
+	lateAfterMinutes?: number
+	/** The broadcast this one re-sends to non-openers, when it is one. */
+	retargetOfCampaignId?: string | null
+	/** The re-send made from this broadcast, when there is one. */
+	retargetedByCampaignId?: string | null
+	/** Last change; for a Completed broadcast, when it finished. */
+	updatedAt?: string | Date | null
 	/** The coupon `{{couponCode}}` showed, when the broadcast carried one. */
 	coupon?: CampaignCoupon | null
 	recipients: CampaignRecipient[]

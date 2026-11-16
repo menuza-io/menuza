@@ -65,6 +65,20 @@ function offerOf(
 	access: Access,
 	scopes: PrintScope[],
 ): CouponOffer | null {
+	return couponOfferFromDiscount(found, fallbackCurrency(access), scopes)
+}
+
+/**
+ * A stored discount as the words builder reads it (`couponCopy`). Print cards
+ * and the email coupon block (#153) both start from it, so the two never word
+ * the same offer differently. `scopes` only names the one location an offer is
+ * limited to when the business has several.
+ */
+export function couponOfferFromDiscount(
+	found: DiscountRecord,
+	fallbackCurrencyCode: string,
+	scopes: PrintScope[] = [],
+): CouponOffer | null {
 	if (!found.stored || found.row.status !== 'active') return null
 	const { definition } = found.stored
 	const only =
@@ -87,7 +101,7 @@ function offerOf(
 		perCustomerLimit: definition.perCustomerLimit,
 		fulfillments: definition.fulfillments,
 		channels: definition.channels,
-		currency: definition.currency ?? fallbackCurrency(access),
+		currency: definition.currency ?? fallbackCurrencyCode,
 		onlyLocationName: only,
 	}
 }

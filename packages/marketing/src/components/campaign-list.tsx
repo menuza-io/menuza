@@ -28,7 +28,9 @@ function statusBadgeClass(status: CampaignStatus) {
 			'border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400',
 		status === 'Failed' &&
 			'bg-destructive/10 text-destructive border-destructive/30',
-		['Draft', 'Scheduled'].includes(status) &&
+		status === 'SkippedLate' &&
+			'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400',
+		['Draft', 'Scheduled', 'Cancelled'].includes(status) &&
 			'bg-muted text-muted-foreground border-border',
 	)
 }

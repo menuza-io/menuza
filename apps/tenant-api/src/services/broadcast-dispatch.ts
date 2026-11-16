@@ -11,8 +11,17 @@ import {
 	or,
 	sql,
 } from 'drizzle-orm'
+import {
+	checkBroadcast,
+	hasBlockingProblems,
+} from '@repo/common/broadcast-checks'
+import { parseEmailBlocks } from '@repo/common/email-blocks'
 import { withUnsubscribeFooter } from '@repo/common/email-unsubscribe'
-import { type MarketingOffer, parseMarketingOffer } from '@repo/discounts'
+import {
+	type MarketingOffer,
+	parseMarketingOffer,
+	usesCouponCodeTag,
+} from '@repo/discounts'
 import { sendSms } from '@repo/sms'
 import {
 	getTenantDb,
@@ -29,6 +38,7 @@ import {
 	listUnsubscribeHeaders,
 	unsubscribeUrl,
 } from '../lib/email-consent.ts'
+import { postMarketingNotify } from '../lib/marketing-notify.ts'
 import { getBroadcastHourlyCap } from '../lib/rate-limit.ts'
 import { sendTenantEmail } from '../lib/tenant-email.ts'
 import { couponCodeForRecipient } from './discount-marketing-codes.ts'
@@ -53,6 +63,13 @@ import { BROADCAST_TOPIC, loadBroadcastAudience } from './marketing-audience.ts'
  *   ceiling the campaign stays `Processing` and the tick resumes it later.
  * - The regional tick resumes stale `Processing` campaigns and starts
  *   scheduled ones that are due (`runBroadcastTick`).
+ * - A scheduled campaign that cannot START inside its window
+ *   (`late_after_minutes`, default 4 hours) is marked `SkippedLate` instead
+ *   and the operator is told (#232). A send that has started is never cut off
+ *   and is resumed whatever the clock says.
+ * - The message is checked again when the send starts (no message rows yet):
+ *   a blocking problem (an empty block, a coupon tag with no coupon, nobody to
+ *   send to) fails the campaign instead of sending it.
  */
 
 export const BROADCAST_BATCH_SIZE = 25
@@ -85,7 +102,12 @@ function escapeHtml(value: string) {
 		.replace(/'/g, '&#39;')
 }
 
-function audienceRule(segmentationRules: unknown): string | undefined {
+/**
+ * The audience rule of a campaign row. `segmentation_rules` is a JSON column
+ * that older writes stored as a JSON string, so both a string and an object are
+ * read.
+ */
+export function audienceRule(segmentationRules: unknown): string | undefined {
 	if (!segmentationRules) return undefined
 	try {
 		const rules =
@@ -168,7 +190,14 @@ export type BroadcastDispatchOptions = {
 }
 
 export type BroadcastDispatchOutcome =
-	'completed' | 'failed' | 'retry' | 'throttled' | 'lost_lease' | 'missing'
+	| 'completed'
+	| 'failed'
+	| 'retry'
+	| 'throttled'
+	| 'lost_lease'
+	| 'missing'
+	/** Not dispatched: a scheduled start that missed its window (#232). */
+	| 'skipped_late'
 
 /**
  * Sends a `Processing` campaign the caller holds (it created it or claimed it
@@ -219,7 +248,12 @@ export async function dispatchBroadcast(
 			return 'failed'
 		}
 
-		const targets = await loadBroadcastAudience(db, { channel, audience })
+		const retargetOf = campaign.retargetOfCampaignId ?? undefined
+		const targets = await loadBroadcastAudience(db, {
+			channel,
+			audience,
+			retargetOf,
+		})
 		const alreadyMessaged = new Set(
 			(
 				await db
@@ -229,6 +263,37 @@ export async function dispatchBroadcast(
 					.all()
 			).map((row) => row.customerId),
 		)
+		// The send starts here (nothing was sent yet): check the message again,
+		// as the App did when it was scheduled. A warning (starter text) was the
+		// operator's choice; only a blocking problem stops it. A resumed send
+		// skips this: part of it already went out.
+		if (alreadyMessaged.size === 0) {
+			const problems = checkBroadcast({
+				channel,
+				subject: campaign.subject,
+				content: campaign.content,
+				contentHtml: campaign.contentHtml,
+				blocks: parseEmailBlocks(campaign.contentBlocks),
+				hasOffer: Boolean(offer),
+				usesCouponTag: usesCouponCodeTag(
+					campaign.content,
+					channel === 'email' ? campaign.subject : null,
+					channel === 'email' ? campaign.contentHtml : null,
+				),
+				audienceCount: targets.length,
+			})
+			if (hasBlockingProblems(problems)) {
+				console.error('Broadcast failed: blocked at send start', {
+					orgId,
+					campaignId,
+					codes: problems
+						.filter((problem) => problem.severity === 'blocking')
+						.map((problem) => problem.code),
+				})
+				await finish(db, campaignId, currentLease, 'Failed')
+				return 'failed'
+			}
+		}
 		await db
 			.update(marketingCampaigns)
 			.set({
@@ -265,6 +330,7 @@ export async function dispatchBroadcast(
 				channel,
 				audience,
 				customerIds: batchIds,
+				retargetOf,
 			})
 			const chunk = fresh.slice(0, room)
 			const capReached = fresh.length > room
@@ -479,6 +545,32 @@ async function sendOne(params: {
 }
 
 /**
+ * Marks a due `Scheduled` campaign `SkippedLate` when it could not start inside
+ * its window (`scheduled_at + late_after_minutes`). One compare-and-set on the
+ * expected status, so it cannot race the operator's edit or cancel, or another
+ * dispatcher's claim. Returns whether this call skipped it.
+ */
+export async function skipLateBroadcast(
+	db: Db,
+	campaignId: string,
+	now: number,
+): Promise<boolean> {
+	const rows = await db
+		.update(marketingCampaigns)
+		.set({ status: 'SkippedLate', updatedAt: new Date(now) })
+		.where(
+			and(
+				eq(marketingCampaigns.id, campaignId),
+				eq(marketingCampaigns.status, 'Scheduled'),
+				isNotNull(marketingCampaigns.scheduledAt),
+				sql`${marketingCampaigns.scheduledAt} + ${marketingCampaigns.lateAfterMinutes} * 60 < ${Math.floor(now / 1000)}`,
+			),
+		)
+		.returning({ id: marketingCampaigns.id })
+	return rows.length > 0
+}
+
+/**
  * Claims a campaign for this dispatcher: a stale `Processing` one (its
  * dispatcher died or was throttled), or a scheduled one that is due. Returns
  * the lease, or null when someone else got it first.
@@ -488,6 +580,8 @@ export async function claimBroadcast(
 	campaignId: string,
 	now: number,
 ): Promise<Date | null> {
+	// A scheduled start that missed its window is never sent.
+	if (await skipLateBroadcast(db, campaignId, now)) return null
 	const lease = toLease(now)
 	const rows = await db
 		.update(marketingCampaigns)
@@ -532,7 +626,11 @@ export async function claimBroadcast(
  * broadcasts (their dispatcher died or was throttled) and scheduled ones that
  * are due, at most `MAX_CAMPAIGNS_PER_TICK`. Each returned lease is ours.
  */
-export async function claimDueBroadcasts(db: Db, now: number) {
+export async function claimDueBroadcasts(
+	db: Db,
+	now: number,
+	options: { onSkippedLate?: (campaignId: string) => void } = {},
+) {
 	const candidates = await db
 		.select({ id: marketingCampaigns.id })
 		.from(marketingCampaigns)
@@ -554,6 +652,10 @@ export async function claimDueBroadcasts(db: Db, now: number) {
 
 	const claimed: Array<{ id: string; lease: Date }> = []
 	for (const { id } of candidates) {
+		if (await skipLateBroadcast(db, id, now)) {
+			options.onSkippedLate?.(id)
+			continue
+		}
 		const lease = await claimBroadcast(db, id, now)
 		if (lease) claimed.push({ id, lease })
 	}
@@ -571,10 +673,18 @@ export async function runBroadcastTick(
 	options: BroadcastDispatchOptions = {},
 ) {
 	const outcomes: BroadcastDispatchOutcome[] = []
-	for (const { id, lease } of await claimDueBroadcasts(db, now)) {
+	const skipped: string[] = []
+	const claimed = await claimDueBroadcasts(db, now, {
+		onSkippedLate: (id) => skipped.push(id),
+	})
+	for (const id of skipped) {
+		outcomes.push('skipped_late')
+		await notifySkippedLate(orgId, id)
+	}
+	for (const { id, lease } of claimed) {
 		outcomes.push(await dispatchBroadcast(orgId, id, lease, options))
 	}
-	return { claimed: outcomes.length, outcomes }
+	return { claimed: claimed.length, outcomes }
 }
 
 /**
@@ -613,6 +723,23 @@ export async function nextBroadcastWakeAt(
 	return Math.max(Math.min(...times), now + 1000)
 }
 
+/** Tells the operator a scheduled broadcast was not sent because it was too late. */
+async function notifySkippedLate(orgId: string, campaignId: string) {
+	const outcome = await postMarketingNotify({
+		orgId,
+		kind: 'broadcast_skipped_late',
+		campaignId,
+	})
+	if (outcome.status !== 'delivered') {
+		// Ids only. The campaign stays `SkippedLate`, so the list still says so.
+		console.warn('Broadcast skipped-late notice not delivered', {
+			orgId,
+			campaignId,
+			code: outcome.code,
+		})
+	}
+}
+
 export { toLease as broadcastLease }
 
 /**
@@ -636,7 +763,12 @@ export async function startBroadcastTickForOrg(
 	const now = options.now ?? Date.now()
 	try {
 		const db = await getTenantDb(orgId)
-		const claimed = await claimDueBroadcasts(db, now)
+		const claimed = await claimDueBroadcasts(db, now, {
+			onSkippedLate: (id) => {
+				const task = notifySkippedLate(orgId, id).catch(() => undefined)
+				options.runDetached?.(task)
+			},
+		})
 		for (const { id, lease } of claimed) {
 			const task = dispatchBroadcast(orgId, id, lease).catch((error) => {
 				console.error('Broadcast dispatch failed', {

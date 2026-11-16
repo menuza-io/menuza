@@ -4776,3 +4776,46 @@ export const DiscountCode = sqliteTable(
 			.where(sql`${table.archivedAt} IS NULL`),
 	],
 )
+
+/**
+ * A restaurant's own saved email layout (#154): a name and the designer's
+ * blocks, nothing else. No audience, no coupon, no schedule: merge tags stay as
+ * tags, and starting from a template copies it, so editing one later never
+ * changes a message already saved or sent. Blocks hold no guest data.
+ */
+export const MarketingEmailTemplate = sqliteTable(
+	'MarketingEmailTemplate',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		name: text().notNull(),
+		// `emailBlocksSchema` JSON (`@repo/common/email-blocks`).
+		blocks: text().notNull(),
+		createdById: text().references(() => User.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		// One name per organization (`template_name_taken`).
+		uniqueIndex('MarketingEmailTemplate_organizationId_name_key').on(
+			table.organizationId,
+			table.name,
+		),
+	],
+)

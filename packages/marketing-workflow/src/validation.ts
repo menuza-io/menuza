@@ -1,4 +1,5 @@
 import { type MessageDescriptor } from '@lingui/core'
+import { hasBoilerplatePhrase } from '@repo/common/email-boilerplate'
 import { msg } from '@lingui/macro'
 import {
 	validateWorkflowDAG as validateTenantWorkflowDAG,
@@ -131,16 +132,8 @@ export function validateFlowCanvas(
 				if (!data.bodyHtml && !data.bodyText) {
 					errs.push(t(VALIDATION_MSGS.emailBodyRequired, translate))
 				} else {
-					const combined = (
-						(data.bodyHtml || '') +
-						' ' +
-						(data.bodyText || '')
-					).toLowerCase()
-					if (
-						combined.includes('lorem ipsum') ||
-						combined.includes('insert text here') ||
-						combined.includes('default template text')
-					) {
+					// One placeholder-phrase check for automations and broadcasts.
+					if (hasBoilerplatePhrase(data.bodyHtml, data.bodyText)) {
 						errs.push(t(VALIDATION_MSGS.emailBoilerplate, translate))
 					}
 				}

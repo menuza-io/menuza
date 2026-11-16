@@ -1,4 +1,5 @@
 import { Trans, useLingui } from '@lingui/react/macro'
+import { userHasOrganizationPermission } from '@repo/auth'
 import { db, eq, OrganizationLocation } from '@repo/database'
 import { type DiscountUsageEntry } from '@repo/discounts'
 import { Badge } from '@repo/ui/badge'
@@ -26,6 +27,11 @@ import {
 } from 'react-router'
 import { ArchiveDiscountButton } from '#app/components/discounts/archive-discount-button.tsx'
 import { LimitNotice } from '#app/components/discounts/fields.tsx'
+import {
+	type ImpactChoice,
+	type ImpactKind,
+	useMessageImpact,
+} from '#app/components/discounts/message-impact.tsx'
 import { EmptyState } from '#app/components/empty-state.tsx'
 import { requireDiscountsAccess } from '#app/utils/discounts/access.server.ts'
 import {
@@ -55,8 +61,10 @@ import {
 	discountEditableInScope,
 	discountVisibleInScope,
 } from '#app/utils/discounts/location-scope.server.ts'
+import { pairedAutomationIdsByDiscount } from '#app/utils/discounts/message-impact.server.ts'
 import { saveDiscountEditor } from '#app/utils/discounts/save.server.ts'
 import { createDiscountUsageClient } from '#app/utils/discounts/usage-client.ts'
+import { ORG_PERMISSIONS } from '#app/utils/organization/permissions.server.ts'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const access = await requireDiscountsAccess(request, params.orgSlug)
@@ -87,10 +95,46 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			},
 		]
 	})
+	const [
+		canChangeAutomations,
+		canChangeBroadcasts,
+		canOpenAutomations,
+		canOpenBroadcasts,
+	] = await Promise.all(
+		[
+			ORG_PERMISSIONS.UPDATE_AUTOMATION_ANY,
+			ORG_PERMISSIONS.UPDATE_CAMPAIGN_ANY,
+			ORG_PERMISSIONS.READ_AUTOMATION_ANY,
+			ORG_PERMISSIONS.READ_CAMPAIGN_ANY,
+		].map((permission) =>
+			userHasOrganizationPermission(
+				access.userId,
+				access.organization.id,
+				permission,
+			),
+		),
+	)
+	// How many automations each paused discount took with it when it was
+	// paused: a resume of those is offered on its page (#236).
+	const paired = access.canWrite
+		? await pairedAutomationIdsByDiscount(
+				access.organization.id,
+				discounts.filter((d) => d.status === 'paused').map((d) => d.id),
+			)
+		: new Map<string, string[]>()
 	return {
 		orgSlug: access.organization.slug,
 		currency: access.currency,
 		canWrite: access.canWrite,
+		permissions: {
+			canChangeAutomations: Boolean(canChangeAutomations),
+			canChangeBroadcasts: Boolean(canChangeBroadcasts),
+			canOpenAutomations: Boolean(canOpenAutomations),
+			canOpenBroadcasts: Boolean(canOpenBroadcasts),
+		},
+		pairedCounts: Object.fromEntries(
+			[...paired].map(([id, automations]) => [id, automations.length]),
+		) as Record<string, number>,
 		discounts,
 		locationZones: Object.fromEntries(
 			locations.map((location) => [location.id, location.timezone]),
@@ -115,9 +159,17 @@ const STATUS_FILTERS = [
 const KIND_FILTERS = ['all', 'automatic', 'code', 'manual'] as const
 
 export default function DiscountsIndexRoute() {
-	const { orgSlug, currency, canWrite, discounts, locationZones } =
-		useLoaderData<typeof loader>()
+	const {
+		orgSlug,
+		currency,
+		canWrite,
+		discounts,
+		locationZones,
+		permissions,
+		pairedCounts,
+	} = useLoaderData<typeof loader>()
 	const { t, i18n } = useLingui()
+	const impact = useMessageImpact({ orgSlug, permissions })
 	const [params, setParams] = useSearchParams()
 	const statusFilter =
 		STATUS_FILTERS.find((value) => value === params.get('status')) ?? 'current'
@@ -395,6 +447,9 @@ export default function DiscountsIndexRoute() {
 											dateRange={dateRange}
 											onStatusRequested={statusRequested}
 											onLimit={setLimit}
+											pairedAutomations={pairedCounts[discount.id] ?? 0}
+											guardImpact={impact.guard}
+											checkingImpact={impact.checking}
 										/>
 									))}
 								</TableBody>
@@ -403,6 +458,7 @@ export default function DiscountsIndexRoute() {
 					)}
 				</>
 			)}
+			{impact.render}
 		</WorkspacePage>
 	)
 }
@@ -426,6 +482,9 @@ function DiscountRow({
 	dateRange,
 	onStatusRequested,
 	onLimit,
+	pairedAutomations,
+	guardImpact,
+	checkingImpact,
 }: {
 	discount: DiscountRowEntry
 	orgSlug: string
@@ -443,9 +502,32 @@ function DiscountRow({
 		status: string,
 	) => void
 	onLimit: (limit: DiscountLimit) => void
+	/** Automations this paused discount took with it; resuming them is offered on its page. */
+	pairedAutomations: number
+	guardImpact: (input: {
+		discountId: string
+		discountName: string
+		kind: ImpactKind
+		proceed: (choice: ImpactChoice | null) => void
+	}) => void
+	checkingImpact: boolean
 }) {
 	const { t, i18n } = useLingui()
 	const fetcher = useFetcher<typeof action>()
+	const submitStatus = (status: string, choice: ImpactChoice | null = null) => {
+		onStatusRequested(discount, status)
+		void fetcher.submit(
+			{
+				intent: 'set-status',
+				discountId: discount.id,
+				expectedVersion: String(discount.version),
+				status,
+				...(choice?.pauseAutomations ? { pauseAutomations: '1' } : {}),
+				...(choice?.cancelBroadcasts ? { cancelBroadcasts: '1' } : {}),
+			},
+			{ method: 'post' },
+		)
+	}
 	const refusedLimit =
 		fetcher.data && 'limit' in fetcher.data ? fetcher.data.limit : undefined
 	useEffect(() => {
@@ -592,7 +674,21 @@ function DiscountRow({
 					<fetcher.Form
 						method="post"
 						className="flex flex-col items-end gap-1"
-						onSubmit={() => onStatusRequested(discount, nextStatus)}
+						onSubmit={(event) => {
+							// Pausing can leave messages promising a code that stops
+							// working: ask first. Resume and Restore go through.
+							if (nextStatus === 'paused' && status === 'active') {
+								event.preventDefault()
+								guardImpact({
+									discountId: discount.id,
+									discountName: discount.name,
+									kind: 'pause',
+									proceed: (choice) => submitStatus('paused', choice),
+								})
+								return
+							}
+							onStatusRequested(discount, nextStatus)
+						}}
 					>
 						{fetcher.data &&
 						'noCodes' in fetcher.data &&
@@ -622,34 +718,43 @@ function DiscountRow({
 								name="expectedVersion"
 								value={String(discount.version)}
 							/>
-							<Button
-								type="submit"
-								name="status"
-								value={nextStatus}
-								variant="outline"
-								size="sm"
-								aria-label={nextAriaLabel}
-								disabled={fetcher.state !== 'idle'}
-							>
-								{nextLabel}
-							</Button>
+							{status === 'paused' && pairedAutomations > 0 ? (
+								// It took automations with it: the page offers to resume
+								// them too.
+								<Button
+									variant="outline"
+									size="sm"
+									aria-label={nextAriaLabel}
+									render={<Link to={href} />}
+								>
+									<Trans>Resume…</Trans>
+								</Button>
+							) : (
+								<Button
+									type="submit"
+									name="status"
+									value={nextStatus}
+									variant="outline"
+									size="sm"
+									aria-label={nextAriaLabel}
+									disabled={fetcher.state !== 'idle' || checkingImpact}
+								>
+									{nextLabel}
+								</Button>
+							)}
 							{status !== 'archived' ? (
 								<ArchiveDiscountButton
 									name={discount.name}
 									hasCodes={discount.application === 'code'}
 									disabled={fetcher.state !== 'idle'}
-									onConfirm={() => {
-										onStatusRequested(discount, 'archived')
-										void fetcher.submit(
-											{
-												intent: 'set-status',
-												discountId: discount.id,
-												expectedVersion: String(discount.version),
-												status: 'archived',
-											},
-											{ method: 'post' },
-										)
-									}}
+									onConfirm={() =>
+										guardImpact({
+											discountId: discount.id,
+											discountName: discount.name,
+											kind: 'archive',
+											proceed: (choice) => submitStatus('archived', choice),
+										})
+									}
 								/>
 							) : null}
 						</div>

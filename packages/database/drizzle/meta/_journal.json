@@ -344,6 +344,13 @@
 			"when": 1794771604154,
 			"tag": "0048_checkout_tips_and_service_fee",
 			"breakpoints": true
+		},
+		{
+			"idx": 49,
+			"version": "6",
+			"when": 1794786223809,
+			"tag": "0049_marketing_email_templates",
+			"breakpoints": true
 		}
 	]
 }

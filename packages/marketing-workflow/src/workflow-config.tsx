@@ -33,6 +33,13 @@ export interface WorkflowConfig {
 	 * Undefined hides the coupon picker (discounts off, or no permission).
 	 */
 	couponOptions?: CouponDiscountOption[]
+	/**
+	 * The host can list and check dishes for the email designer's Menu item
+	 * block (tenant automations in the App). Platform automations leave it off.
+	 */
+	emailMenuItems?: boolean
+	/** Saved email templates: the App's designer resource route (tenant only). */
+	emailTemplatesEndpoint?: string
 }
 
 const TENANT_TRIGGER_LABELS: Record<string, { label: string; desc: string }> = {

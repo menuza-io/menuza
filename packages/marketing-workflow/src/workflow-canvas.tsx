@@ -74,6 +74,10 @@ interface WorkflowCanvasProps {
 	loyaltyTriggers?: boolean
 	/** Coupon discounts for email and text steps; undefined hides the picker. */
 	couponOptions?: CouponDiscountOption[]
+	/** Email steps may add Menu item blocks (the host answers the dish intents). */
+	emailMenuItems?: boolean
+	/** Saved email templates for email steps (the App's designer resource route). */
+	emailTemplatesEndpoint?: string
 	initialGraph?: WorkflowGraph | string
 	journeyName: string
 	journeyStatus: JourneyStatus
@@ -105,7 +109,13 @@ function WorkflowCanvasInner({
 	onViewRuns,
 	isSaving,
 	isPublishing,
-}: Omit<WorkflowCanvasProps, 'workflowConfig' | 'couponOptions'>) {
+}: Omit<
+	WorkflowCanvasProps,
+	| 'workflowConfig'
+	| 'couponOptions'
+	| 'emailMenuItems'
+	| 'emailTemplatesEndpoint'
+>) {
 	const { _ } = useLingui()
 	const reactFlowWrapper = useRef<HTMLDivElement>(null)
 	const { screenToFlowPosition, fitView } = useReactFlow()
@@ -396,6 +406,8 @@ export function WorkflowCanvas({
 	reservationTriggers = false,
 	loyaltyTriggers = false,
 	couponOptions,
+	emailMenuItems,
+	emailTemplatesEndpoint,
 	...props
 }: WorkflowCanvasProps) {
 	const localizedTenant = useLocalizedTenantWorkflowConfig()
@@ -408,8 +420,13 @@ export function WorkflowCanvas({
 			localizedPlatform,
 		)
 		const withCoupons =
-			resolved.audience === 'tenant' && couponOptions
-				? { ...resolved, couponOptions }
+			resolved.audience === 'tenant'
+				? {
+						...resolved,
+						...(couponOptions ? { couponOptions } : null),
+						...(emailMenuItems ? { emailMenuItems } : null),
+						...(emailTemplatesEndpoint ? { emailTemplatesEndpoint } : null),
+					}
 				: resolved
 		if (withCoupons.audience !== 'tenant') return withCoupons
 		const hidden = [
@@ -431,6 +448,8 @@ export function WorkflowCanvas({
 		reservationTriggers,
 		loyaltyTriggers,
 		couponOptions,
+		emailMenuItems,
+		emailTemplatesEndpoint,
 	])
 
 	return (

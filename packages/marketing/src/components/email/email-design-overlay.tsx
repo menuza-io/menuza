@@ -46,6 +46,14 @@ export type EmailDesignOverlayProps = {
 	 * placeholder, never a signed link). Tenant broadcasts and journey emails.
 	 */
 	unsubscribeLinkPreview?: boolean
+	/** The message carries a coupon, so the Coupon block may be added. */
+	couponAvailable?: boolean
+	/** The host can list and check dishes for the Menu item block. */
+	menuItems?: boolean
+	/** Extra fields posted with every designer request (the message's coupon). */
+	requestFields?: Record<string, string>
+	/** The designer resource route for saved templates (see the editor). */
+	templatesEndpoint?: string
 }
 
 /**
@@ -70,6 +78,10 @@ export function EmailDesignOverlay({
 	className,
 	onChooseImageFromLibrary,
 	unsubscribeLinkPreview,
+	couponAvailable,
+	menuItems,
+	requestFields,
+	templatesEndpoint,
 }: EmailDesignOverlayProps) {
 	const { _ } = useLingui()
 	const [draft, setDraft] = useState<EmailBlock[]>(initialBlocks)
@@ -186,6 +198,10 @@ export function EmailDesignOverlay({
 							className="h-full min-h-0 flex-1"
 							onChooseImageFromLibrary={onChooseImageFromLibrary}
 							unsubscribeLinkPreview={unsubscribeLinkPreview}
+							couponAvailable={couponAvailable}
+							menuItems={menuItems}
+							requestFields={requestFields}
+							templatesEndpoint={templatesEndpoint}
 						/>
 					</div>
 				</DialogContent>

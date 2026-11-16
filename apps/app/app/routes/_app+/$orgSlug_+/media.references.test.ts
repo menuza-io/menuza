@@ -2,6 +2,7 @@ import {
 	and,
 	db,
 	eq,
+	MarketingEmailTemplate,
 	NoteComment,
 	NoteCommentImage,
 	OrganizationMediaAsset,
@@ -163,6 +164,87 @@ describe('media library delete keeps objects that are still used', () => {
 			.where(eq(OrganizationMediaAsset.id, asset.id))
 		expect(rows).toHaveLength(1)
 		expect(deleteOrganizationStorageObject).not.toHaveBeenCalled()
+	})
+
+	async function insertTemplate(
+		organizationId: string,
+		userId: string,
+		imageUrl: string,
+	) {
+		await db.insert(MarketingEmailTemplate).values({
+			organizationId,
+			createdById: userId,
+			name: `Newsletter ${Math.random()}`,
+			blocks: JSON.stringify([
+				{
+					id: 'block-image',
+					type: 'image',
+					config: {
+						url: imageUrl,
+						alt: '',
+						href: '',
+						width: 100,
+						align: 'center',
+					},
+				},
+			]),
+		})
+	}
+
+	it('keeps an object a saved email template still uses', async () => {
+		const { user, organization, cookie, asset } = await setup()
+		await insertTemplate(
+			organization.id,
+			user.id,
+			`https://app.test/resources/images?objectKey=${encodeURIComponent(asset.objectKey)}`,
+		)
+		const res = await deleteAsset(organization.slug, cookie, asset.id)
+		expect(res.status).toBe(200)
+		expect(deleteOrganizationStorageObject).not.toHaveBeenCalled()
+	})
+
+	it('lists the saved email templates that use an image', async () => {
+		const { user, organization, cookie, asset } = await setup()
+		await insertTemplate(
+			organization.id,
+			user.id,
+			`/resources/images?objectKey=${asset.objectKey}`,
+		)
+		const body = new FormData()
+		body.set('intent', 'get-references')
+		body.set('id', asset.id)
+		const res = (await mediaAction({
+			request: createAuthenticatedRequest(
+				`http://localhost:3000/${organization.slug}/media`,
+				{ method: 'POST', body },
+				cookie,
+			),
+			params: { orgSlug: organization.slug },
+			context: {},
+		} as never)) as Response
+		const { references } = (await res.json()) as {
+			references: Array<{ type: string; title: string }>
+		}
+		expect(references.map((reference) => reference.type)).toContain(
+			'email-template',
+		)
+		expect(
+			references.find((reference) => reference.type === 'email-template')
+				?.title,
+		).toContain('Email template: Newsletter')
+	})
+
+	it('does not count another organization\u2019s template', async () => {
+		const { organization, cookie, asset } = await setup()
+		const other = await setupTestOrgWithUser('admin')
+		await insertTemplate(
+			other.organization.id,
+			other.user.id,
+			`/resources/images?objectKey=${asset.objectKey}`,
+		)
+		const res = await deleteAsset(organization.slug, cookie, asset.id)
+		expect(res.status).toBe(200)
+		expect(deleteOrganizationStorageObject).toHaveBeenCalled()
 	})
 
 	it('keeps the file of a chat attachment', async () => {

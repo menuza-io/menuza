@@ -14,12 +14,16 @@ import {
 	type EmailImageBlock,
 	type EmailParagraphBlock,
 } from '@repo/common/email-blocks'
+import { type EmailRenderContext } from '@repo/common/email-block-base'
 import { resolveEmailAssetUrl, type EmailTheme } from '@repo/common/email-theme'
 import { Fragment, type CSSProperties } from 'react'
+
+import { CouponBlockView, MenuItemBlockView } from './restaurant-blocks.tsx'
 
 export type EmailBlockViewProps = {
 	block: EmailBlock
 	theme: EmailTheme
+	context?: EmailRenderContext
 }
 
 const HEADING_SIZE: Record<EmailHeadingBlock['config']['level'], number> = {
@@ -220,7 +224,11 @@ function ButtonBlock({
 	)
 }
 
-export function EmailBlockView({ block, theme }: EmailBlockViewProps) {
+export function EmailBlockView({
+	block,
+	theme,
+	context = {},
+}: EmailBlockViewProps) {
 	switch (block.type) {
 		case 'heading':
 			return <HeadingBlock block={block} theme={theme} />
@@ -232,6 +240,10 @@ export function EmailBlockView({ block, theme }: EmailBlockViewProps) {
 			return <ImageBlock block={block} theme={theme} />
 		case 'button':
 			return <ButtonBlock block={block} theme={theme} />
+		case 'menu_item':
+			return <MenuItemBlockView block={block} theme={theme} context={context} />
+		case 'coupon':
+			return <CouponBlockView block={block} theme={theme} context={context} />
 		default:
 			return null
 	}
@@ -240,14 +252,21 @@ export function EmailBlockView({ block, theme }: EmailBlockViewProps) {
 export function EmailBlocks({
 	blocks,
 	theme,
+	context,
 }: {
 	blocks: EmailBlock[]
 	theme: EmailTheme
+	context?: EmailRenderContext
 }) {
 	return (
 		<>
 			{blocks.map((block) => (
-				<EmailBlockView key={block.id} block={block} theme={theme} />
+				<EmailBlockView
+					key={block.id}
+					block={block}
+					theme={theme}
+					context={context}
+				/>
 			))}
 		</>
 	)

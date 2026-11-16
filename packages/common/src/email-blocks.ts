@@ -1,4 +1,20 @@
 import { z } from 'zod'
+import {
+	EMAIL_BLOCK_ALIGNMENTS,
+	emailAlignmentSchema,
+	emailBlockIdSchema,
+	emailUrlSchema,
+	type EmailBlockAlignment,
+} from './email-block-base.ts'
+import {
+	EMAIL_RESTAURANT_BLOCK_TYPES,
+	emailRestaurantBlockSchemas,
+	getDefaultRestaurantEmailBlock,
+	type EmailCouponBlock,
+	type EmailMenuItemBlock,
+} from './email-blocks-restaurant.ts'
+
+export { EMAIL_BLOCK_ALIGNMENTS, type EmailBlockAlignment }
 
 /**
  * Block registry for the marketing email builder.
@@ -9,17 +25,24 @@ import { z } from 'zod'
  * being edited never fails validation; renderers skip empty text/blocks.
  */
 
-export const EMAIL_BLOCK_TYPES = [
+export const EMAIL_GENERIC_BLOCK_TYPES = [
 	'heading',
 	'body',
 	'paragraph',
 	'image',
 	'button',
 ] as const
-export type EmailBlockType = (typeof EMAIL_BLOCK_TYPES)[number]
 
-export const EMAIL_BLOCK_ALIGNMENTS = ['left', 'center', 'right'] as const
-export type EmailBlockAlignment = (typeof EMAIL_BLOCK_ALIGNMENTS)[number]
+/**
+ * The one place a business vertical is registered: the restaurant's dish and
+ * coupon blocks. A fork swaps `email-blocks-restaurant.ts` here; nothing else in
+ * the generic core names a menu, a dish or a coupon.
+ */
+export const EMAIL_BLOCK_TYPES = [
+	...EMAIL_GENERIC_BLOCK_TYPES,
+	...EMAIL_RESTAURANT_BLOCK_TYPES,
+] as const
+export type EmailBlockType = (typeof EMAIL_BLOCK_TYPES)[number]
 
 export const EMAIL_HEADING_LEVELS = ['h1', 'h2', 'h3'] as const
 export type EmailHeadingLevel = (typeof EMAIL_HEADING_LEVELS)[number]
@@ -31,21 +54,7 @@ export type EmailButtonVariant = (typeof EMAIL_BUTTON_VARIANTS)[number]
 export const EMAIL_BUTTON_WIDTHS = ['auto', 'full'] as const
 export type EmailButtonWidth = (typeof EMAIL_BUTTON_WIDTHS)[number]
 
-const emailBlockIdSchema = z
-	.string()
-	.min(1)
-	.max(60)
-	.regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
-
-const alignmentSchema = z.enum(EMAIL_BLOCK_ALIGNMENTS).default('left')
-
-const emailUrlSchema = z
-	.string()
-	.max(2_000)
-	.refine(
-		(value) => !value.trim() || /^https?:\/\//i.test(value.trim()),
-		'URL must use HTTP or HTTPS',
-	)
+const alignmentSchema = emailAlignmentSchema
 
 export const emailHeadingBlockSchema = z.object({
 	id: emailBlockIdSchema,
@@ -105,6 +114,7 @@ export const emailBlockSchema = z.discriminatedUnion('type', [
 	emailParagraphBlockSchema,
 	emailImageBlockSchema,
 	emailButtonBlockSchema,
+	...emailRestaurantBlockSchemas,
 ])
 
 export const emailBlocksSchema = z
@@ -121,6 +131,7 @@ export type EmailParagraphBlock = z.infer<typeof emailParagraphBlockSchema>
 export type EmailImageBlock = z.infer<typeof emailImageBlockSchema>
 export type EmailButtonBlock = z.infer<typeof emailButtonBlockSchema>
 export type EmailBlock = z.infer<typeof emailBlockSchema>
+export type { EmailCouponBlock, EmailMenuItemBlock }
 
 export function isEmailBlockType(value: unknown): value is EmailBlockType {
 	return (
@@ -179,6 +190,8 @@ export function getDefaultEmailBlock(type: EmailBlockType): EmailBlock {
 					align: 'left',
 				},
 			}
+		default:
+			return getDefaultRestaurantEmailBlock(type, id)
 	}
 }
 

@@ -1597,12 +1597,12 @@ describe('Today with purchasing', () => {
 		const cutoff = today.attention.find(
 			(entry) => entry.kind === 'order_cutoff',
 		)
-		const tomorrow = addDaysIso(new Date().toISOString().slice(0, 10), 1)
+		const tomorrow = addDaysIso(today.date, 1)
 		expect(cutoff).toEqual({
 			kind: 'order_cutoff',
 			supplierId: supplier.id,
 			supplierName: 'Today Supplier',
-			cutoffDate: new Date().toISOString().slice(0, 10),
+			cutoffDate: today.date,
 			cutoffTime: '23:59',
 			expectedDate: tomorrow,
 			itemCount: 1,
@@ -1626,7 +1626,9 @@ describe('Today with purchasing', () => {
 	})
 
 	it('lists an open order that is due or overdue, and the order behind a delivery day', async () => {
-		const date = new Date().toISOString().slice(0, 10)
+		// The location's own "today", not the UTC date: they differ for part of
+		// every day, and the week view is built from the location's date.
+		const date = (await view()).date
 		const overdue = await todayWorld.ok('POST', '/orders', {
 			clientId: cid('ord'),
 			locationId: TODAY_LOC,
