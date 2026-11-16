@@ -330,6 +330,13 @@
 			"when": 1794786793402,
 			"tag": "0046_broadcast_actions_and_late_cutoff",
 			"breakpoints": true
+		},
+		{
+			"idx": 47,
+			"version": "6",
+			"when": 1794807049183,
+			"tag": "0047_gift_cards",
+			"breakpoints": true
 		}
 	]
 }

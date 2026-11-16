@@ -29,6 +29,14 @@ import {
 	QR_TAB_PAYMENT_STATUS_VALUES,
 	QR_TAB_STATUS_VALUES,
 } from '@repo/common/qr-ordering'
+import {
+	GIFT_CARD_CHANNELS,
+	GIFT_CARD_HOLD_REASONS,
+	GIFT_CARD_LEDGER_KINDS,
+	GIFT_CARD_SOURCE_TYPES,
+	GIFT_CARD_SOURCES,
+	GIFT_CARD_STATUSES,
+} from '@repo/common/gift-cards'
 import { STAFF_CONSENT_METHODS } from '@repo/common/marketing-consent'
 import { SITE_CONTENT_LOCALES } from '@repo/common/site-locales'
 
@@ -1013,6 +1021,10 @@ export const restaurantOrders = sqliteTable(
 			.default([]),
 		// Money an operator recorded as returned (`restaurant_order_refunds`
 		// adds up to it). The payment status stays `paid`.
+		// What a gift card paid of `total_cents` (gift cards, migration 0047).
+		// `total_cents` stays the whole order; the provider is charged
+		// `total_cents - gift_card_cents`.
+		giftCardCents: integer('gift_card_cents').notNull().default(0),
 		refundedCents: integer('refunded_cents').notNull().default(0),
 		// Provider refunds the provider reversed after reporting them succeeded
 		// (0044): their sum. `refunded_cents` never shrinks, so what is really
@@ -7423,6 +7435,309 @@ export const discountCodeAttempts = sqliteTable(
 		index('idx_discount_code_attempts_window').on(table.windowStart),
 	],
 )
+
+// ==========================================
+// GIFT CARDS (migration 0047_gift_cards)
+// A card is a ledger: the balance is the sum of its `gift_card_ledger` rows,
+// never a stored number. Codes are HMACs; only the last four characters are
+// readable. Purchaser and recipient details are PII and live only here.
+// ==========================================
+
+export const GIFT_CARD_PAYMENT_STATUS_VALUES = [
+	'not_required',
+	'unpaid',
+	'pending',
+	'paid',
+	'failed',
+	'expired',
+	'review',
+] as const
+
+export const giftCardBatches = sqliteTable(
+	'gift_card_batches',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		// Stock is counted per location only; an activated card works everywhere.
+		locationId: text('location_id').notNull(),
+		count: integer('count').notNull(),
+		// The Print shop order the numbers were printed for (an id, never a number).
+		printOrderRef: text('print_order_ref'),
+		createdBy: text('created_by'),
+		createdAt: integer('created_at').notNull().default(nowMs),
+	},
+	(table) => [
+		index('idx_gift_card_batches_location').on(table.locationId),
+		check('chk_gift_card_batches_count', sql`${table.count} between 1 and 1000`),
+	],
+)
+
+export const giftCardImportRuns = sqliteTable(
+	'gift_card_import_runs',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		actorId: text('actor_id'),
+		actorName: text('actor_name'),
+		status: text('status', {
+			enum: ['running', 'finished', 'failed'],
+		})
+			.notNull()
+			.default('running'),
+		// Counts only: imported, skipped, reissued, failed.
+		counts: text('counts').notNull().default('{}'),
+		totalMinor: integer('total_minor').notNull().default(0),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		finishedAt: integer('finished_at'),
+	},
+	(table) => [
+		check('chk_gift_card_import_runs_json', sql`json_valid(${table.counts})`),
+	],
+)
+
+export const giftCards = sqliteTable(
+	'gift_cards',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		// HMAC of the normalized Menuza code. Null only for an imported card that
+		// keeps just its original number.
+		codeHash: text('code_hash'),
+		last4: text('last4').notNull(),
+		// HMAC of an original card number from another system (16-32 digits).
+		externalNumberHash: text('external_number_hash'),
+		externalLast4: text('external_last4'),
+		currency: text('currency').notNull(),
+		status: text('status', { enum: GIFT_CARD_STATUSES }).notNull(),
+		source: text('source', { enum: GIFT_CARD_SOURCES }).notNull(),
+		expiresAt: integer('expires_at'),
+		// The selling location (reports); an activated card works everywhere.
+		locationId: text('location_id'),
+		batchId: text('batch_id').references(() => giftCardBatches.id),
+		batchSeq: integer('batch_seq'),
+		designKey: text('design_key'),
+		purchaserCustomerId: text('purchaser_customer_id').references(
+			() => customers.id,
+			{ onDelete: 'set null' },
+		),
+		purchaserName: text('purchaser_name'),
+		purchaserEmail: text('purchaser_email'),
+		recipientName: text('recipient_name'),
+		recipientEmail: text('recipient_email'),
+		senderName: text('sender_name'),
+		message: text('message'),
+		sendToSelf: integer('send_to_self', { mode: 'boolean' })
+			.notNull()
+			.default(false),
+		deliverAt: integer('deliver_at'),
+		deliveredAt: integer('delivered_at'),
+		// Saved to a guest's account (a convenience, never a lock).
+		holderCustomerId: text('holder_customer_id').references(
+			() => customers.id,
+			{ onDelete: 'set null' },
+		),
+		heldAt: integer('held_at'),
+		// Fraud holds (#218): `held` until `hold_until` or a review; `frozen` by a dispute.
+		holdUntil: integer('hold_until'),
+		holdReason: text('hold_reason', { enum: GIFT_CARD_HOLD_REASONS }),
+		frozenAt: integer('frozen_at'),
+		freezeReason: text('freeze_reason'),
+		// The hosted purchase (online): value, own-line fee, provider state.
+		purchaseAmountMinor: integer('purchase_amount_minor'),
+		feeMinor: integer('fee_minor').notNull().default(0),
+		paymentStatus: text('payment_status', {
+			enum: GIFT_CARD_PAYMENT_STATUS_VALUES,
+		})
+			.notNull()
+			.default('not_required'),
+		paymentProcessor: text('payment_processor', {
+			enum: ['connect', 'checkout'],
+		}),
+		paymentSessionId: text('payment_session_id'),
+		paymentId: text('payment_id'),
+		paymentTokenHash: text('payment_token_hash'),
+		paymentEventAt: integer('payment_event_at'),
+		paymentHoldExpiresAt: integer('payment_hold_expires_at'),
+		paidAt: integer('paid_at'),
+		activatedAt: integer('activated_at'),
+		lastUsedAt: integer('last_used_at'),
+		importRunId: text('import_run_id').references(() => giftCardImportRuns.id),
+		erasedAt: integer('erased_at'),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+	},
+	(table) => [
+		uniqueIndex('gift_cards_code_hash_unique').on(table.codeHash),
+		uniqueIndex('gift_cards_external_hash_unique').on(table.externalNumberHash),
+		uniqueIndex('gift_cards_batch_seq_unique').on(table.batchId, table.batchSeq),
+		index('idx_gift_cards_status').on(table.status),
+		index('idx_gift_cards_location').on(table.locationId),
+		index('idx_gift_cards_holder').on(table.holderCustomerId),
+		index('idx_gift_cards_purchaser').on(table.purchaserCustomerId),
+		index('idx_gift_cards_deliver').on(table.deliverAt),
+		index('idx_gift_cards_hold_until').on(table.holdUntil),
+		index('idx_gift_cards_created').on(table.createdAt),
+		check('chk_gift_cards_status', oneOf(table.status, GIFT_CARD_STATUSES)),
+		check('chk_gift_cards_source', oneOf(table.source, GIFT_CARD_SOURCES)),
+		check(
+			'chk_gift_cards_number',
+			sql`${table.codeHash} is not null or ${table.externalNumberHash} is not null`,
+		),
+		check('chk_gift_cards_fee', sql`${table.feeMinor} >= 0`),
+		check(
+			'chk_gift_cards_payment_status',
+			oneOf(table.paymentStatus, GIFT_CARD_PAYMENT_STATUS_VALUES),
+		),
+	],
+)
+
+// One row per money fact. Append-only (triggers): the only change allowed is
+// erasure clearing the operator note.
+export const giftCardLedger = sqliteTable(
+	'gift_card_ledger',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		cardId: text('card_id')
+			.notNull()
+			.references(() => giftCards.id),
+		kind: text('kind', { enum: GIFT_CARD_LEDGER_KINDS }).notNull(),
+		// Signed: money in is positive, money out is negative.
+		amountMinor: integer('amount_minor').notNull(),
+		sourceType: text('source_type', {
+			enum: GIFT_CARD_SOURCE_TYPES,
+		}).notNull(),
+		sourceId: text('source_id'),
+		channel: text('channel', { enum: GIFT_CARD_CHANNELS }).notNull(),
+		// Where it happened: the selling location for money in, the place it was
+		// spent for money out (the settlement report reads these).
+		locationId: text('location_id'),
+		actorId: text('actor_id'),
+		actorName: text('actor_name'),
+		reason: text('reason'),
+		note: text('note'),
+		// A refund points at the redemption it gives back.
+		refEntryId: text('ref_entry_id'),
+		idempotencyKey: text('idempotency_key').notNull(),
+		at: integer('at').notNull().default(nowMs),
+	},
+	(table) => [
+		uniqueIndex('gift_card_ledger_idempotency_unique').on(table.idempotencyKey),
+		index('idx_gift_card_ledger_card_at').on(table.cardId, table.at),
+		index('idx_gift_card_ledger_source').on(table.sourceType, table.sourceId),
+		index('idx_gift_card_ledger_location_at').on(table.locationId, table.at),
+		index('idx_gift_card_ledger_kind_at').on(table.kind, table.at),
+		check('chk_gift_card_ledger_kind', oneOf(table.kind, GIFT_CARD_LEDGER_KINDS)),
+		check(
+			'chk_gift_card_ledger_channel',
+			oneOf(table.channel, GIFT_CARD_CHANNELS),
+		),
+		check(
+			'chk_gift_card_ledger_source_type',
+			oneOf(table.sourceType, GIFT_CARD_SOURCE_TYPES),
+		),
+		check(
+			'chk_gift_card_ledger_sign',
+			sql`(${table.kind} in ('issue', 'top_up', 'refund') and ${table.amountMinor} > 0) or (${table.kind} = 'import' and ${table.amountMinor} >= 0) or (${table.kind} in ('redeem', 'void', 'dispute_removal') and ${table.amountMinor} < 0) or (${table.kind} = 'adjust' and ${table.amountMinor} <> 0)`,
+		),
+		check(
+			'chk_gift_card_ledger_adjust_reason',
+			sql`${table.kind} <> 'adjust' or ${table.reason} is not null`,
+		),
+	],
+)
+
+// Wrong-code guesses, keyed by an HMAC of the subject (like coupons).
+export const giftCardAttempts = sqliteTable(
+	'gift_card_attempts',
+	{
+		bucket: text('bucket').notNull(),
+		subjectHash: text('subject_hash').notNull(),
+		windowStart: integer('window_start').notNull(),
+		count: integer('count').notNull().default(1),
+	},
+	(table) => [
+		primaryKey({
+			columns: [table.bucket, table.subjectHash, table.windowStart],
+		}),
+		index('idx_gift_card_attempts_window').on(table.windowStart),
+	],
+)
+
+// Purchase checks (#218): keyed hashes of the payment card, buyer email and
+// device. Never raw card data, an address or a name.
+export const giftCardPurchaseAttempts = sqliteTable(
+	'gift_card_purchase_attempts',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		cardId: text('card_id').references(() => giftCards.id),
+		paymentHash: text('payment_hash'),
+		emailHash: text('email_hash'),
+		deviceHash: text('device_hash'),
+		amountMinor: integer('amount_minor').notNull(),
+		at: integer('at').notNull().default(nowMs),
+	},
+	(table) => [
+		index('idx_gift_card_purchase_attempts_at').on(table.at),
+		index('idx_gift_card_purchase_attempts_payment').on(table.paymentHash, table.at),
+		index('idx_gift_card_purchase_attempts_email').on(table.emailHash, table.at),
+		index('idx_gift_card_purchase_attempts_device').on(table.deviceHash, table.at),
+		index('idx_gift_card_purchase_attempts_card').on(table.cardId),
+	],
+)
+
+// The QR a guest shows at the till (#217): short-lived, single use, only a hash
+// is stored, and it is not the card code.
+export const giftCardShowTokens = sqliteTable(
+	'gift_card_show_tokens',
+	{
+		tokenHash: text('token_hash').primaryKey(),
+		cardId: text('card_id')
+			.notNull()
+			.references(() => giftCards.id),
+		customerId: text('customer_id').notNull(),
+		expiresAt: integer('expires_at').notNull(),
+		usedAt: integer('used_at'),
+		createdAt: integer('created_at').notNull().default(nowMs),
+	},
+	(table) => [
+		index('idx_gift_card_show_tokens_expires').on(table.expiresAt),
+		index('idx_gift_card_show_tokens_card').on(table.cardId),
+	],
+)
+
+export const giftCardIdempotencyKeys = sqliteTable(
+	'gift_card_idempotency_keys',
+	{
+		scope: text('scope').notNull(),
+		key: text('key').notNull(),
+		requestHash: text('request_hash').notNull(),
+		statusCode: integer('status_code').notNull(),
+		responseJson: text('response_json').notNull(),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		expiresAt: integer('expires_at').notNull(),
+		// The card the stored response is about (it can hold recipient details);
+		// erasing the person deletes the row.
+		cardId: text('card_id'),
+	},
+	(table) => [
+		primaryKey({ columns: [table.scope, table.key] }),
+		index('idx_gift_card_idempotency_keys_expires').on(table.expiresAt),
+		index('idx_gift_card_idempotency_keys_card').on(table.cardId),
+	],
+)
+
+export type GiftCardRow = typeof giftCards.$inferSelect
+export type NewGiftCardRow = typeof giftCards.$inferInsert
+export type GiftCardLedgerRow = typeof giftCardLedger.$inferSelect
+export type GiftCardBatchRow = typeof giftCardBatches.$inferSelect
+export type GiftCardImportRunRow = typeof giftCardImportRuns.$inferSelect
 
 // ==========================================
 // INVENTORY (migrations 0033_inventory, 0034_inventory_orders,
