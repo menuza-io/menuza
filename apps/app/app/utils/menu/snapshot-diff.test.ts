@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { diffMenuSnapshots } from './snapshot-diff.ts'
-import { MENU_SNAPSHOT_VERSION, type MenuSnapshotContent } from './snapshot-types.ts'
+import {
+	MENU_SNAPSHOT_VERSION,
+	type MenuSnapshotContent,
+} from './snapshot-types.ts'
 
 const emptySnapshot = (): MenuSnapshotContent => ({
 	version: MENU_SNAPSHOT_VERSION,
@@ -42,6 +45,7 @@ describe('diffMenuSnapshots', () => {
 				applySalesTax: true,
 				excludeFromOverride: false,
 				excludeFromDiscounts: false,
+				excludeFromOrderLimits: false,
 				isPopular: false,
 				isUpsell: false,
 				availabilityStatus: 'available',

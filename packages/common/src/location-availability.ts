@@ -1,10 +1,29 @@
 import {
+	activePrayerPause,
+	buildOnlineLocationHours,
+	hasConfiguredHours,
+	locationLocalClock,
+	nextClosing,
+	nextOpening,
+	onlineAvailabilityAt,
+	prayerPauseWindowsForDay,
+} from '@repo/opening-hours'
+import { localParts, zonedLocalToUtc } from '@repo/zoned-time'
+
+import {
 	type DayOfWeek,
 	type DeliveryConfig,
+	type LocationAddress,
 	type SpecialHour,
 	type WeeklySchedule,
 	DEFAULT_WEEKLY_SCHEDULE,
 } from './location-types.ts'
+import {
+	parseOnlineOrderingSettings,
+	parsePrayerPauseSettings,
+	parsePrepSchedule,
+} from './location-settings.ts'
+import { prepMinutesAt } from './prep-schedule.ts'
 
 /**
  * Overnight hours are modelled by splitting at midnight: Friday 18:00-23:59 and
@@ -168,6 +187,8 @@ export function deliveryArrivalWindowMinutes(input: {
 
 type DeliveryEstimateSource = {
 	prepTime?: number | null
+	prepSchedule?: unknown
+	timezone?: string | null
 	deliveryConfig?: Pick<
 		DeliveryConfig,
 		'estimatedDeliveryTimeMin' | 'estimatedDeliveryTimeMax'
@@ -203,8 +224,15 @@ export function locationDeliveryArrivalMinutes(
 	} = {},
 ): { min: number; max: number } {
 	const travel = options.travel ?? deliveryTravelMinutes(location)
+	const timeZone = location.timezone || 'UTC'
+	const prepMinutes = prepMinutesAt(
+		parsePrepSchedule(location.prepSchedule),
+		location.prepTime ?? DEFAULT_PREP_MINUTES,
+		now.getTime(),
+		timeZone,
+	)
 	return deliveryArrivalWindowMinutes({
-		prepMinutes: location.prepTime || DEFAULT_PREP_MINUTES,
+		prepMinutes,
 		busyMinutes: activeBusyExtraPrepMinutes(location, now),
 		largeOrderExtraMinutes: options.largeOrderExtraMinutes ?? 0,
 		deliveryMin: travel.min,
@@ -218,6 +246,75 @@ type ScheduleSource = {
 	storeHours?: WeeklySchedule | null
 	specialHours?: SpecialHour[] | null
 	isActive?: boolean | null
+	onlineOrderingSettings?: unknown
+	prayerPauseSettings?: unknown
+	prepSchedule?: unknown
+	address?: { lat?: number | null; lng?: number | null } | null
+	/** When false, prayer pauses never apply (region gate from order context). */
+	prayerPauseRegion?: boolean
+}
+
+function hoursForOrdering(location: ScheduleSource) {
+	const settings = parseOnlineOrderingSettings(location.onlineOrderingSettings)
+	return buildOnlineLocationHours({
+		timeZone: location.timezone || 'UTC',
+		isActive: location.isActive,
+		storeHours: location.storeHours,
+		onlineHours: location.onlineHours,
+		specialHours: location.specialHours,
+		buffers: settings?.buffers,
+	})
+}
+
+function weekdayFromMs(ms: number, timezone: string): DayOfWeek {
+	try {
+		const w = new Intl.DateTimeFormat('en-US', {
+			timeZone: timezone,
+			weekday: 'long',
+		})
+			.format(new Date(ms))
+			.toLowerCase()
+		return (DAYS_ORDER.includes(w as DayOfWeek) ? w : 'monday') as DayOfWeek
+	} catch {
+		return 'monday'
+	}
+}
+
+function prayerPauseReason(
+	location: ScheduleSource,
+	ms: number,
+): string | null {
+	if (!location.prayerPauseRegion) return null
+	const settings = parsePrayerPauseSettings(location.prayerPauseSettings)
+	if (!settings?.enabled) return null
+	const lat = location.address?.lat
+	const lng = location.address?.lng
+	if (lat == null || lng == null) return null
+	const timeZone = location.timezone || 'UTC'
+	const { date } = locationLocalClock(ms, timeZone)
+	const windows = prayerPauseWindowsForDay(
+		{
+			enabled: true,
+			calculationMethod: settings.calculationMethod,
+			prayers: settings.prayers.map((p) => ({
+				name: p.name,
+				beforeMinutes: p.beforeMinutes,
+				afterMinutes: p.afterMinutes,
+			})),
+		},
+		{ lat, lng },
+		date,
+		timeZone,
+	)
+	const active = activePrayerPause(windows, ms)
+	if (!active) return null
+	return `Back at ${formatTimeDisplay(
+		new Intl.DateTimeFormat('en-US', {
+			timeZone,
+			hour: 'numeric',
+			minute: '2-digit',
+		}).format(new Date(active.resumeMs)),
+	)}`
 }
 
 /**
@@ -231,36 +328,12 @@ export function nextOrderingOpenAt(
 	from: Date,
 ): Date | null {
 	if (location.isActive === false) return null
-	const timezone = location.timezone || 'UTC'
-	const schedule = location.onlineHours || location.storeHours
-	if (!Array.isArray(schedule) || schedule.length === 0) return from
-	const startDate = localDateOf(from, timezone)
-	const fromMs = from.getTime()
-	for (let offset = 0; offset <= 8; offset += 1) {
-		const day = addLocalDays(startDate, offset)
-		const special = Array.isArray(location.specialHours)
-			? location.specialHours.find((entry) => entry.date === day.date)
-			: undefined
-		let slots: SpecialHour['slots'] = []
-		if (special) {
-			slots = special.isOpen ? (special.slots ?? []) : []
-		} else {
-			const daySchedule = schedule.find((entry) => entry.day === day.day)
-			slots = daySchedule?.isOpen ? (daySchedule.slots ?? []) : []
-		}
-		const sorted = [...slots]
-			.filter((slot) => slot.start <= slot.end)
-			.sort((a, b) => a.start.localeCompare(b.start))
-		for (const slot of sorted) {
-			const start = localDateAndTimeToUtc(day.date, slot.start, timezone)
-			// Slot ends are inclusive to the minute (23:59 covers the last minute).
-			const end =
-				localDateAndTimeToUtc(day.date, slot.end, timezone).getTime() + 60_000
-			if (end <= fromMs) continue
-			return start.getTime() > fromMs ? start : from
-		}
+	const hours = hoursForOrdering(location)
+	if (!hasConfiguredHours(hours) && !(hours.specialHours?.length ?? 0)) {
+		return from
 	}
-	return null
+	const next = nextOpening(hours, from.getTime(), 'online')
+	return next ? new Date(next.atMs) : null
 }
 
 function localDateOf(instant: Date, timezone: string): string {
@@ -331,14 +404,10 @@ function formatResumeDisplay(instant: Date, now: Date, timezone: string) {
 }
 
 export function isLocationOpenForOrdering(
-	location: {
-		timezone?: string | null
-		onlineHours?: WeeklySchedule | null
-		storeHours?: WeeklySchedule | null
-		specialHours?: SpecialHour[] | null
+	location: ScheduleSource & {
 		prepTime?: number | null
+		prepSchedule?: unknown
 		deliveryConfig?: DeliveryConfig | null
-		isActive?: boolean | null
 		orderingPause?: OrderingPause | null
 		busyMode?: BusyMode | null
 	},
@@ -376,64 +445,33 @@ export function isLocationOpenForOrdering(
 }
 
 function scheduleAvailability(
-	location: {
-		timezone?: string | null
-		onlineHours?: WeeklySchedule | null
-		storeHours?: WeeklySchedule | null
-		specialHours?: SpecialHour[] | null
+	location: ScheduleSource & {
 		prepTime?: number | null
 		deliveryConfig?: DeliveryConfig | null
-		isActive?: boolean | null
 	},
 	currentTime: Date,
 ): LocationOrderingAvailability {
 	const timezone = location.timezone || 'UTC'
-	const prepTime = location.prepTime || DEFAULT_PREP_MINUTES
+	const ms = currentTime.getTime()
+	const prepTime = prepMinutesAt(
+		parsePrepSchedule(location.prepSchedule),
+		location.prepTime ?? DEFAULT_PREP_MINUTES,
+		ms,
+		timezone,
+	)
 	const travel = deliveryTravelMinutes(location)
-
-	// Format current time into location's timezone
-	const parts: Record<string, string> = {}
-	try {
-		const formatter = new Intl.DateTimeFormat('en-US', {
-			timeZone: timezone,
-			year: 'numeric',
-			month: '2-digit',
-			day: '2-digit',
-			hour: '2-digit',
-			minute: '2-digit',
-			hourCycle: 'h23',
-			weekday: 'long',
-		})
-		for (const p of formatter.formatToParts(currentTime)) {
-			parts[p.type] = p.value
-		}
-	} catch {
-		// Fallback to UTC if timezone is invalid
-		const formatter = new Intl.DateTimeFormat('en-US', {
-			timeZone: 'UTC',
-			year: 'numeric',
-			month: '2-digit',
-			day: '2-digit',
-			hour: '2-digit',
-			minute: '2-digit',
-			hourCycle: 'h23',
-			weekday: 'long',
-		})
-		for (const p of formatter.formatToParts(currentTime)) {
-			parts[p.type] = p.value
-		}
-	}
-
-	const dayOfWeek = (parts.weekday?.toLowerCase() ?? 'monday') as DayOfWeek
-	const currentLocalDate = `${parts.year}-${parts.month}-${parts.day}`
-	const currentLocalTime = `${parts.hour}:${parts.minute}`
+	const { date, minute } = locationLocalClock(ms, timezone)
+	const hh = Math.floor(minute / 60)
+	const mm = minute % 60
+	const currentLocalTime = `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`
+	const currentLocalDate = date
+	const dayOfWeek = weekdayFromMs(ms, timezone)
 
 	const baseResult = {
 		currentLocalTime,
 		currentLocalDate,
 		dayOfWeek,
 		estimatedPrepTime: prepTime,
-		// Without busy minutes here; `isLocationOpenForOrdering` adds them.
 		estimatedDeliveryTime: deliveryArrivalWindowMinutes({
 			prepMinutes: prepTime,
 			deliveryMin: travel.min,
@@ -442,114 +480,70 @@ function scheduleAvailability(
 		deliveryTravelTime: travel,
 	}
 
-	if (location.isActive === false) {
+	const settings = parseOnlineOrderingSettings(location.onlineOrderingSettings)
+	const avail = onlineAvailabilityAt(
+		{
+			timeZone: timezone,
+			isActive: location.isActive,
+			storeHours: location.storeHours,
+			onlineHours: location.onlineHours,
+			specialHours: location.specialHours,
+			buffers: settings?.buffers,
+		},
+		ms,
+		'online',
+	)
+
+	const prayerReason = prayerPauseReason(location, ms)
+	if (prayerReason) {
 		return {
 			...baseResult,
 			isOpen: false,
 			status: 'closed',
-			reason: 'Location is currently inactive',
+			reason: prayerReason,
 		}
 	}
 
-	// 1. Check special hours date override
-	if (location.specialHours && Array.isArray(location.specialHours)) {
-		const special = location.specialHours.find(
-			(s) => s.date === currentLocalDate,
+	if (!avail.open) {
+		const hours = hoursForOrdering(location)
+		const next = nextOpening(hours, ms, 'online')
+		let reason = 'Closed today'
+		if (avail.reason === 'special_closed') {
+			reason = avail.note || 'Closed for holiday / special hours'
+		} else if (avail.reason === 'inactive') {
+			reason = 'Location is currently inactive'
+		} else if (avail.reason === 'outside_hours') {
+			reason = 'Outside online ordering hours'
+		}
+		return {
+			...baseResult,
+			isOpen: false,
+			status: 'closed',
+			reason,
+			nextOpen: next
+				? `Opens at ${formatTimeDisplay(next.localTime)}`
+				: undefined,
+		}
+	}
+
+	const hours = hoursForOrdering(location)
+	const closing = nextClosing(hours, ms, 'online')
+	let closingSoon = false
+	if (
+		closing != null &&
+		closing.atMs - ms > 0 &&
+		closing.atMs - ms <= 30 * 60_000
+	) {
+		closingSoon = !continuesPastMidnight(
+			location,
+			currentLocalDate,
+			closing.localTime,
 		)
-		if (special) {
-			if (!special.isOpen) {
-				return {
-					...baseResult,
-					isOpen: false,
-					status: 'closed',
-					reason: special.note || 'Closed for holiday / special hours',
-				}
-			}
-			// Check slots in special hour
-			const activeSlot = special.slots?.find(
-				(slot) =>
-					slot.start <= currentLocalTime && currentLocalTime <= slot.end,
-			)
-			if (activeSlot) {
-				const isClosingSoon =
-					checkClosingSoon(currentLocalTime, activeSlot.end) &&
-					!continuesPastMidnight(location, currentLocalDate, activeSlot.end)
-				return {
-					...baseResult,
-					isOpen: true,
-					status: isClosingSoon ? 'closing_soon' : 'open',
-				}
-			} else {
-				return {
-					...baseResult,
-					isOpen: false,
-					status: 'closed',
-					reason: 'Outside special hours',
-				}
-			}
-		}
 	}
-
-	// 2. Check weekly schedule (onlineHours preferred, fallback to storeHours)
-	const schedule = location.onlineHours || location.storeHours
-	if (!schedule || !Array.isArray(schedule) || schedule.length === 0) {
-		// Default to open if no schedule specified
-		return {
-			...baseResult,
-			isOpen: true,
-			status: 'open',
-		}
-	}
-
-	const daySchedule = schedule.find((d) => d.day === dayOfWeek)
-	if (!daySchedule || !daySchedule.isOpen || !daySchedule.slots?.length) {
-		return {
-			...baseResult,
-			isOpen: false,
-			status: 'closed',
-			reason: 'Closed today',
-		}
-	}
-
-	// Check if within any active slot today
-	const matchingSlot = daySchedule.slots.find(
-		(slot) => slot.start <= currentLocalTime && currentLocalTime <= slot.end,
-	)
-
-	if (matchingSlot) {
-		const isClosingSoon =
-			checkClosingSoon(currentLocalTime, matchingSlot.end) &&
-			!continuesPastMidnight(location, currentLocalDate, matchingSlot.end)
-		return {
-			...baseResult,
-			isOpen: true,
-			status: isClosingSoon ? 'closing_soon' : 'open',
-		}
-	}
-
-	// Outside today's slots - check if earlier than first slot or between slots
-	const sortedSlots = [...daySchedule.slots].sort((a, b) =>
-		a.start.localeCompare(b.start),
-	)
-	const upcomingSlotToday = sortedSlots.find(
-		(slot) => slot.start > currentLocalTime,
-	)
-
-	if (upcomingSlotToday) {
-		return {
-			...baseResult,
-			isOpen: false,
-			status: 'closed',
-			nextOpen: `Opens today at ${formatTimeDisplay(upcomingSlotToday.start)}`,
-			reason: `Opens at ${formatTimeDisplay(upcomingSlotToday.start)}`,
-		}
-	}
-
 	return {
 		...baseResult,
-		isOpen: false,
-		status: 'closed',
-		reason: 'Closed for the day',
+		isOpen: true,
+		status: closingSoon ? 'closing_soon' : 'open',
 	}
 }
 
@@ -606,27 +600,9 @@ export function localDateAndTimeToUtc(
 	timeStr: string,
 	timezone: string = 'America/New_York',
 ): Date {
-	const approx = new Date(`${dateStr}T${timeStr}:00Z`)
-	try {
-		const parts = new Intl.DateTimeFormat('en-US', {
-			timeZone: timezone,
-			year: 'numeric',
-			month: '2-digit',
-			day: '2-digit',
-			hour: '2-digit',
-			minute: '2-digit',
-			second: '2-digit',
-			hourCycle: 'h23',
-		}).formatToParts(approx)
-
-		const p: Record<string, string> = {}
-		for (const part of parts) p[part.type] = part.value
-		const localIso = `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}:${p.second}Z`
-		const diff = approx.getTime() - new Date(localIso).getTime()
-		return new Date(approx.getTime() + diff)
-	} catch {
-		return approx
-	}
+	const [y, m, d] = dateStr.split('-').map(Number) as [number, number, number]
+	const [hh, mm] = timeStr.split(':').map(Number) as [number, number]
+	return new Date(zonedLocalToUtc(y, m, d, hh, mm, timezone))
 }
 
 function parseSchedule(val: unknown): WeeklySchedule | null {

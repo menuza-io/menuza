@@ -296,7 +296,10 @@ export const TipOrderTypeSettingsSchema = z
 		allowCustom: z.boolean(),
 	})
 	.superRefine((value, context) => {
-		if (value.defaultIndex !== null && value.defaultIndex >= value.choices.length) {
+		if (
+			value.defaultIndex !== null &&
+			value.defaultIndex >= value.choices.length
+		) {
 			context.addIssue({
 				code: 'custom',
 				path: ['defaultIndex'],
@@ -342,7 +345,12 @@ export function defaultTipOrderTypeSettings(
 	currency: string,
 ): TipOrderTypeSettings {
 	return {
-		choices: [{ percent: 10 }, { percent: 15 }, { percent: 18 }, { percent: 20 }],
+		choices: [
+			{ percent: 10 },
+			{ percent: 15 },
+			{ percent: 18 },
+			{ percent: 20 },
+		],
 		defaultIndex: currency.toUpperCase() === 'SAR' ? null : 1,
 		allowCustom: false,
 	}
@@ -394,7 +402,11 @@ export function resolveTipSettings(
 			? defaultQrTabTipSettings()
 			: defaultTipOrderTypeSettings(currency)
 	}
-	return { pickup: pick('pickup'), delivery: pick('delivery'), qrTab: pick('qrTab') }
+	return {
+		pickup: pick('pickup'),
+		delivery: pick('delivery'),
+		qrTab: pick('qrTab'),
+	}
 }
 
 export const SchedulingOptionsSchema = z.object({
@@ -409,6 +421,114 @@ export const DeliveryConfigSchema = z.object({
 	estimatedDeliveryTimeMin: z.number().min(5),
 	estimatedDeliveryTimeMax: z.number().min(5),
 })
+
+// ---------------------------------------------------------------------------
+// Online ordering hours, buffers (#330) and slot limits (#108, #256)
+// ---------------------------------------------------------------------------
+
+export const OnlineOrderingBuffersSchema = z.strictObject({
+	openingBufferMinutes: z.number().int().min(0).max(120).default(0),
+	closingBufferMinutes: z.number().int().min(0).max(120).default(0),
+})
+export type OnlineOrderingBuffers = z.infer<typeof OnlineOrderingBuffersSchema>
+
+export const FulfillmentHoursModeSchema = z.enum([
+	'follow_online',
+	'custom',
+	'closed',
+])
+export type FulfillmentHoursMode = z.infer<typeof FulfillmentHoursModeSchema>
+
+export const OnlineOrderingSettingsSchema = z.strictObject({
+	buffers: OnlineOrderingBuffersSchema,
+	pickup: FulfillmentHoursModeSchema.default('follow_online'),
+	delivery: FulfillmentHoursModeSchema.default('follow_online'),
+	catering: FulfillmentHoursModeSchema.default('follow_online'),
+	/** When true, `onlineHours` on the location follows `storeHours`. */
+	syncOnlineWithStore: z.boolean().default(true),
+})
+export type OnlineOrderingSettings = z.infer<
+	typeof OnlineOrderingSettingsSchema
+>
+
+export const SLOT_LIMIT_UNIT_SCHEMA = z.enum(['orders', 'dishes'])
+export type SlotLimitUnit = z.infer<typeof SLOT_LIMIT_UNIT_SCHEMA>
+
+export const SlotLimitSettingsSchema = z
+	.strictObject({
+		enabled: z.boolean().default(false),
+		unit: SLOT_LIMIT_UNIT_SCHEMA.default('orders'),
+		/** Blank at the form means unlimited (`null`). */
+		defaultLimit: z.number().int().min(1).max(500).nullable(),
+		pickupLimit: z.number().int().min(1).max(500).nullable().optional(),
+		deliveryLimit: z.number().int().min(1).max(500).nullable().optional(),
+		allowOneLargeOrderPerSlot: z.boolean().default(false),
+	})
+	.superRefine((value, ctx) => {
+		if (!value.enabled) return
+		const limit = value.pickupLimit ?? value.deliveryLimit ?? value.defaultLimit
+		if (limit == null) {
+			ctx.addIssue({
+				code: 'custom',
+				path: ['defaultLimit'],
+				message: 'Set a limit or turn slot limits off',
+			})
+		}
+	})
+export type SlotLimitSettings = z.infer<typeof SlotLimitSettingsSchema>
+
+export const PREP_SCHEDULE_SLOT_MINUTES = 15
+
+const hhmmQuarter = z
+	.string()
+	.regex(/^([01]\d|2[0-3]):(00|15|30|45)$/, 'Use 15-minute steps (HH:MM)')
+
+export const PrepScheduleRowSchema = z.strictObject({
+	days: z.array(z.enum(DAYS_OF_WEEK)).min(1),
+	from: hhmmQuarter,
+	to: hhmmQuarter,
+	minutes: z.number().int().min(0).max(180),
+})
+export type PrepScheduleRow = z.infer<typeof PrepScheduleRowSchema>
+
+export const PrepScheduleSchema = z
+	.array(PrepScheduleRowSchema)
+	.max(24)
+	.superRefine((rows, ctx) => {
+		for (let i = 0; i < rows.length; i += 1) {
+			for (let j = i + 1; j < rows.length; j += 1) {
+				const a = rows[i]!
+				const b = rows[j]!
+				const sharedDay = a.days.some((day) => b.days.includes(day))
+				if (!sharedDay) continue
+				if (!(a.to <= b.from || b.to <= a.from)) {
+					ctx.addIssue({
+						code: 'custom',
+						path: [j],
+						message: `Overlaps row ${i + 1} (${a.from}–${a.to} and ${b.from}–${b.to})`,
+					})
+				}
+			}
+		}
+	})
+export type PrepSchedule = z.infer<typeof PrepScheduleSchema>
+
+export const PrayerPauseSettingsSchema = z.strictObject({
+	enabled: z.boolean().default(false),
+	calculationMethod: z
+		.enum(['UmmAlQura', 'MuslimWorldLeague', 'Egyptian'])
+		.default('UmmAlQura'),
+	prayers: z
+		.array(
+			z.strictObject({
+				name: z.enum(['fajr', 'dhuhr', 'asr', 'maghrib', 'isha']),
+				beforeMinutes: z.number().int().min(0).max(60).default(5),
+				afterMinutes: z.number().int().min(0).max(60).default(15),
+			}),
+		)
+		.default([]),
+})
+export type PrayerPauseSettings = z.infer<typeof PrayerPauseSettingsSchema>
 
 export * from './location-availability.ts'
 export * from './location-currency.ts'

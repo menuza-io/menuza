@@ -62,6 +62,7 @@ export interface CategoryFormData {
 	unavailableUntil?: Date | string | null
 	availabilityHours?: string
 	excludeFromOverride: boolean
+	excludeFromOrderLimits?: boolean
 	assignedItemIds: string[]
 	assignedMenuIds: string[]
 	upsellCategoryIds: string[]
@@ -90,6 +91,7 @@ interface CategoryFormProps {
 		parentId?: string | null
 	}>
 	allLocations: LocationItem[]
+	slotLimitsEnabled?: boolean
 	isSubmitting: boolean
 	pageTitle: string
 }
@@ -111,6 +113,7 @@ function CategoryFormBody({
 	allMenus,
 	allCategories,
 	allLocations,
+	slotLimitsEnabled = false,
 	isSubmitting,
 	pageTitle,
 }: CategoryFormProps & { onDiscard: () => void }) {
@@ -205,6 +208,9 @@ function CategoryFormBody({
 	const [excludeFromOverride, setExcludeFromOverride] = useState(
 		initialData?.excludeFromOverride ?? false,
 	)
+	const [excludeFromOrderLimits, setExcludeFromOrderLimits] = useState(
+		initialData?.excludeFromOrderLimits ?? false,
+	)
 
 	const [selectedItemIds, setSelectedItemIds] = useState<string[]>(
 		initialData?.assignedItemIds ?? [],
@@ -278,6 +284,11 @@ function CategoryFormBody({
 						type="hidden"
 						name="excludeFromOverride"
 						value={String(excludeFromOverride)}
+					/>
+					<input
+						type="hidden"
+						name="excludeFromOrderLimits"
+						value={String(excludeFromOrderLimits)}
 					/>
 
 					{/* Minimal Sticky Full-Width Header */}
@@ -575,6 +586,29 @@ function CategoryFormBody({
 											onCheckedChange={setExcludeFromOverride}
 										/>
 									</FramePanel>
+									{slotLimitsEnabled ? (
+										<FramePanel className="flex items-center justify-between px-5 py-3.5">
+											<Label
+												htmlFor="category-order-limits-switch"
+												className="block min-w-0 cursor-pointer space-y-0.5 pr-4 font-normal"
+											>
+												<div className="text-foreground text-sm">
+													<Trans>Exclude from slot limits</Trans>
+												</div>
+												<p className="text-muted-foreground text-xs">
+													<Trans>
+														Items in this category do not count toward slot
+														capacity.
+													</Trans>
+												</p>
+											</Label>
+											<Switch
+												id="category-order-limits-switch"
+												checked={excludeFromOrderLimits}
+												onCheckedChange={setExcludeFromOrderLimits}
+											/>
+										</FramePanel>
+									) : null}
 								</Frame>
 
 								<AssignedSortableList

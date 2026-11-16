@@ -2638,6 +2638,25 @@ export const OrganizationLocation = sqliteTable(
 		 * only; the amounts charged live with each order in the regional database.
 		 */
 		serviceFee: text(),
+		/**
+		 * Online ordering buffers and per-fulfillment hours modes (#330).
+		 * JSON `OnlineOrderingSettings` (`@repo/common/location-types`).
+		 */
+		onlineOrderingSettings: text(),
+		/**
+		 * Per–15-minute slot capacity (#108, #256). JSON `SlotLimitSettings`.
+		 * Gated by org flag `ordering.slot_limits`.
+		 */
+		slotLimitSettings: text(),
+		/**
+		 * Prep minutes by weekday and time range (#229). JSON `PrepSchedule`.
+		 */
+		prepSchedule: text(),
+		/**
+		 * Automatic prayer-time ordering pause (#342, KSA / enabled regions only).
+		 * JSON `PrayerPauseSettings`.
+		 */
+		prayerPauseSettings: text(),
 		scheduling: text(),
 		deliveryConfig: text(),
 		deliveryZones: text(),
@@ -3033,6 +3052,10 @@ export const OrganizationMenuCategory = sqliteTable(
 		availabilityStatus: text().default('available').notNull(),
 		unavailableUntil: integer('unavailableUntil', { mode: 'timestamp_ms' }),
 		excludeFromOverride: integer({ mode: 'boolean' }).default(false).notNull(),
+		/** Dishes in this category do not count toward slot limits (#256). */
+		excludeFromOrderLimits: integer({ mode: 'boolean' })
+			.default(false)
+			.notNull(),
 		parentId: text().references((): any => OrganizationMenuCategory.id, {
 			onDelete: 'cascade',
 			onUpdate: 'cascade',
@@ -3121,6 +3144,10 @@ export const OrganizationMenuItem = sqliteTable(
 		excludeFromOverride: integer({ mode: 'boolean' }).default(false).notNull(),
 		// Never receives any discount (gift cards, consignment goods).
 		excludeFromDiscounts: integer({ mode: 'boolean' }).default(false).notNull(),
+		/** Does not count toward per-slot order/dish limits (#256). */
+		excludeFromOrderLimits: integer({ mode: 'boolean' })
+			.default(false)
+			.notNull(),
 		isPopular: integer({ mode: 'boolean' }).default(false).notNull(),
 		isUpsell: integer({ mode: 'boolean' }).default(false).notNull(),
 		availabilityStatus: text().default('available').notNull(),

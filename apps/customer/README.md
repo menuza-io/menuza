@@ -17,6 +17,21 @@ React Native for iOS and Android. It reuses the same public contracts as
 CMS pages, blocks, the menu and checkout stay on the organization's website. The
 wallet links to the website to order; there is no in-app cart.
 
+### Scheduled orders and slot limits
+
+The customer app has no pickup/delivery time picker and does not call
+`POST /orders/*`. **Menu** and **Drops** open the site (`/menu`,
+`/menu/checkout`) in the in-app browser
+(`components/ordering/site-checkout.tsx`); cart, schedule choice, and placement
+all run on Sites.
+
+When slot limits are on, Sites loads capacity with
+`GET {TENANT_API}/orders/available-times` through
+`apps/sites/src/lib/ordering/schedule.ts` (`buildScheduleDaysWithLimits`).
+Nothing in `apps/customer` needs that route today. A future in-app checkout
+should reuse that pattern (or shared helpers from `@repo/common` / Sites) before
+sending `scheduledFor`.
+
 ## Two build modes
 
 |                | Un-branded (default)                                      | White-label (per tenant)                           |
@@ -45,14 +60,16 @@ npm run dev:lan
 npm run dev -w customer
 ```
 
-(`npm run dev:lan` is the same as `DEV_LAN=1 npm run dev`; Turbo forwards `DEV_LAN` to App.)
-If connect still fails, set your Mac’s Wi‑Fi IP explicitly when starting Metro:
+(`npm run dev:lan` is the same as `DEV_LAN=1 npm run dev`; Turbo forwards
+`DEV_LAN` to App.) If connect still fails, set your Mac’s Wi‑Fi IP explicitly
+when starting Metro:
 
 ```bash
 CUSTOMER_DEV_HOST=192.168.1.101 npm run dev -w customer
 ```
 
-Then enter **`acme`** (org slug). Simulator/emulator can use plain `npm run dev`.
+Then enter **`acme`** (org slug). Simulator/emulator can use plain
+`npm run dev`.
 
 `CUSTOMER_ENV=production` points the un-branded build at the production hosts.
 `CUSTOMER_BUILD_NUMBER` sets the iOS build number and Android version code. No

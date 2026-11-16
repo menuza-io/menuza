@@ -73,7 +73,19 @@ import {
 	OrderPoliciesCard,
 	orderPolicyErrorMessage,
 } from './order-policies-card'
+import {
+	OnlineOrderingBuffersCard,
+	PrayerPauseCard,
+	PrepScheduleCard,
+	SlotLimitsCard,
+} from './ordering-settings-cards'
 import { SpecialHoursPicker } from './special-hours-picker'
+import {
+	type OrderingSettingsFormBundle,
+	defaultOnlineOrderingForm,
+	defaultPrayerPauseForm,
+	defaultSlotLimitForm,
+} from '#app/utils/orders/ordering-settings.ts'
 
 const TIMEZONE_OPTIONS = [
 	{ value: 'America/New_York', label: 'Eastern Time (US & Canada)' },
@@ -136,6 +148,12 @@ interface LocationFormProps {
 		tips: TipFormValues
 		fee: FeeFormValues
 	}
+	/** Slot limits and prayer pause cards follow org flags. */
+	orderingSettings?: {
+		slotLimitsEnabled: boolean
+		prayerPauseEnabled: boolean
+		initial: OrderingSettingsFormBundle
+	}
 }
 
 export function LocationForm(props: LocationFormProps) {
@@ -152,6 +170,7 @@ function LocationFormBody({
 	isEditing = false,
 	orderPolicies,
 	checkoutSettings,
+	orderingSettings,
 	onDiscard,
 }: LocationFormProps & { onDiscard: () => void }) {
 	const { _ } = useLingui()
@@ -228,6 +247,21 @@ function LocationFormBody({
 	)
 	const [onlineHours, setOnlineHours] = useState<WeeklySchedule>(
 		initialData?.onlineHours || DEFAULT_WEEKLY_SCHEDULE,
+	)
+	const [onlineOrderingForm, setOnlineOrderingForm] = useState<
+		OrderingSettingsFormBundle['online']
+	>(orderingSettings?.initial.online ?? defaultOnlineOrderingForm())
+	const [syncOnlineWithStore, setSyncOnlineWithStore] = useState(
+		orderingSettings?.initial.online.syncOnlineWithStore ?? true,
+	)
+	const [slotLimitForm, setSlotLimitForm] = useState(
+		orderingSettings?.initial.slot ?? defaultSlotLimitForm(),
+	)
+	const [prepScheduleRows, setPrepScheduleRows] = useState(
+		orderingSettings?.initial.prep ?? [],
+	)
+	const [prayerPauseForm, setPrayerPauseForm] = useState(
+		orderingSettings?.initial.prayer ?? defaultPrayerPauseForm(),
 	)
 	const [specialHours, setSpecialHours] = useState<SpecialHour[]>(
 		initialData?.specialHours || [],
@@ -355,6 +389,19 @@ function LocationFormBody({
 			: {}),
 		...(checkoutSettings?.serviceFeeEnabled && feeValues
 			? { checkoutFee: JSON.stringify(feeValues) }
+			: {}),
+		...(orderingSettings
+			? {
+					orderingSettings: JSON.stringify({
+						online: {
+							...onlineOrderingForm,
+							syncOnlineWithStore,
+						},
+						slot: slotLimitForm,
+						prep: prepScheduleRows,
+						prayer: prayerPauseForm,
+					}),
+				}
 			: {}),
 	}
 
@@ -682,7 +729,28 @@ function LocationFormBody({
 										onlineHours={onlineHours}
 										onStoreHoursChange={setStoreHours}
 										onOnlineHoursChange={setOnlineHours}
+										syncOnlineWithStore={syncOnlineWithStore}
+										onSyncOnlineWithStoreChange={(checked) => {
+											setSyncOnlineWithStore(checked)
+											setOnlineOrderingForm((prev) => ({
+												...prev,
+												syncOnlineWithStore: checked,
+											}))
+										}}
 									/>
+
+									{orderingSettings ? (
+										<OnlineOrderingBuffersCard
+											values={{
+												...onlineOrderingForm,
+												syncOnlineWithStore,
+											}}
+											onChange={(next) => {
+												setOnlineOrderingForm(next)
+												setSyncOnlineWithStore(next.syncOnlineWithStore)
+											}}
+										/>
+									) : null}
 
 									<SpecialHoursPicker
 										specialHours={specialHours}
@@ -809,6 +877,20 @@ function LocationFormBody({
 								</CardContent>
 							</Card>
 
+							{orderingSettings ? (
+								<PrepScheduleCard
+									rows={prepScheduleRows}
+									onChange={setPrepScheduleRows}
+								/>
+							) : null}
+
+							{orderingSettings?.slotLimitsEnabled ? (
+								<SlotLimitsCard
+									values={slotLimitForm}
+									onChange={setSlotLimitForm}
+								/>
+							) : null}
+
 							{orderPolicies && policyValues ? (
 								<OrderPoliciesCard
 									flags={orderPolicies.flags}
@@ -816,6 +898,13 @@ function LocationFormBody({
 									values={policyValues}
 									onChange={setPolicyValues}
 									error={orderPolicyError}
+								/>
+							) : null}
+
+							{orderingSettings?.prayerPauseEnabled ? (
+								<PrayerPauseCard
+									values={prayerPauseForm}
+									onChange={setPrayerPauseForm}
 								/>
 							) : null}
 

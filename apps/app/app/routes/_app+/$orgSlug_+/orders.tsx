@@ -21,10 +21,13 @@ import {
 	PaymentStatusLabel,
 } from '#app/components/orders/order-status.tsx'
 import { OrderingControls } from '#app/components/orders/ordering-controls.tsx'
+import { PrepScheduleBanner } from '#app/components/orders/prep-schedule-banner.tsx'
+import { SlotLimitsPanel } from '#app/components/orders/slot-limits-panel.tsx'
 import { WaitingLane } from '#app/components/orders/waiting-lane.tsx'
 import { OpenTabs } from '#app/components/qr/open-tabs.tsx'
 import { useOrdersClient } from '#app/hooks/use-orders-client.ts'
 import { loadOrderingControls } from '#app/utils/location/ordering-controls.server.ts'
+import { loadSlotLimitLocations } from '#app/utils/orders/slot-limits.server.ts'
 import { isLoyaltyFeatureEnabled } from '#app/utils/loyalty/access.server.ts'
 import { requireMenuRead } from '#app/utils/menu/access.server.ts'
 import { getOrderCustomerLinkAccess } from '#app/utils/orders/customer-link.server.ts'
@@ -72,7 +75,10 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		))
 	const link = await getOrderCustomerLinkAccess(request, orgSlug)
 	const qr = await getQrOrderingFeatures(organization.id)
-	const orderingControls = await loadOrderingControls(organization.id)
+	const [orderingControls, slotLimitLocations] = await Promise.all([
+		loadOrderingControls(organization.id),
+		loadSlotLimitLocations(organization.id),
+	])
 	const loyaltyEnabled = qr.enabled
 		? await isLoyaltyFeatureEnabled(organization.id)
 		: false
@@ -89,6 +95,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			// Customers links show only to members who can open Customers.
 			canViewCustomers: link.linkCustomers || link.linkGuests,
 			orderingControls,
+			slotLimitLocations,
 		},
 		{
 			headers: { 'Cache-Control': 'private, no-store' },
@@ -104,6 +111,7 @@ export default function OrdersInbox() {
 		showTabs,
 		loyaltyEnabled,
 		orderingControls,
+		slotLimitLocations,
 	} = useLoaderData<typeof loader>()
 	const [refreshKey, setRefreshKey] = useState(0)
 	const navigate = useNavigate()
@@ -194,11 +202,20 @@ export default function OrdersInbox() {
 				request={request}
 				onChanged={() => void refresh()}
 			/>
+			<PrepScheduleBanner locations={orderingControls} />
 			<OrderingControls
 				orgSlug={orgSlug}
 				locations={orderingControls}
 				canWrite={canWrite}
 			/>
+			{slotLimitLocations.length > 0 ? (
+				<SlotLimitsPanel
+					orgSlug={orgSlug}
+					locations={slotLimitLocations}
+					canWrite={canWrite}
+					request={request}
+				/>
+			) : null}
 			{showTabs ? (
 				<OpenTabs
 					orgSlug={orgSlug}

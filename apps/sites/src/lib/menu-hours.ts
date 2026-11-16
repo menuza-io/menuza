@@ -1,12 +1,6 @@
-import {
-	type DayOfWeek,
-	type LocationOrderingAvailability,
-	type SpecialHour,
-	type TimeSlot,
-	type WeeklySchedule,
-	DAYS_OF_WEEK,
-	localDateAndTimeToUtc,
-} from '@repo/common/location-types'
+import { type LocationOrderingAvailability } from '@repo/common/location-availability'
+import { buildOnlineHours } from '@repo/common/available-times'
+import { nextClosing, nextOpening } from '@repo/opening-hours'
 
 export type HoursSummary = {
 	/** Closing time of the current slot, formatted in the location timezone. */
@@ -20,104 +14,63 @@ type HoursLocation = {
 	onlineHours?: unknown
 	storeHours?: unknown
 	specialHours?: unknown
+	onlineOrderingSettings?: unknown
+	isActive?: boolean | null
 }
 
-function asSchedule(value: unknown): WeeklySchedule | null {
-	if (!value) return null
-	if (typeof value === 'string') {
-		try {
-			return asSchedule(JSON.parse(value))
-		} catch {
-			return null
-		}
+function formatInstant(
+	ms: number,
+	locale: string,
+	timezone: string,
+	withDay: boolean,
+): string | undefined {
+	try {
+		return new Intl.DateTimeFormat(locale, {
+			timeZone: timezone,
+			hour: 'numeric',
+			minute: '2-digit',
+			...(withDay ? { weekday: 'short' } : {}),
+		}).format(new Date(ms))
+	} catch {
+		return undefined
 	}
-	return Array.isArray(value) ? (value as WeeklySchedule) : null
-}
-
-function asSpecialHours(value: unknown): SpecialHour[] {
-	if (!value) return []
-	if (typeof value === 'string') {
-		try {
-			return asSpecialHours(JSON.parse(value))
-		} catch {
-			return []
-		}
-	}
-	return Array.isArray(value) ? (value as SpecialHour[]) : []
-}
-
-function addDays(date: string, days: number): { date: string; day: DayOfWeek } {
-	const base = new Date(`${date}T00:00:00Z`)
-	base.setUTCDate(base.getUTCDate() + days)
-	const iso = base.toISOString().slice(0, 10)
-	// getUTCDay: 0 = Sunday; DAYS_OF_WEEK starts on Monday.
-	const index = (base.getUTCDay() + 6) % 7
-	return { date: iso, day: DAYS_OF_WEEK[index] ?? 'monday' }
 }
 
 /**
- * Derives "open until" / "opens at" from the location schedule so the menu
- * header can say it in the customer's locale. `isLocationOpenForOrdering`
- * only exposes an English `nextOpen` sentence, so the slots are re-read here.
+ * Derives "open until" / "opens at" from shared opening-hours math so the menu
+ * header matches ordering availability (#198).
  */
 export function summarizeHours(
 	location: HoursLocation,
 	availability: LocationOrderingAvailability,
 	locale: string,
+	now: Date = new Date(),
 ): HoursSummary {
 	const timezone = location.timezone || 'UTC'
-	const schedule =
-		asSchedule(location.onlineHours) ?? asSchedule(location.storeHours)
-	const special = asSpecialHours(location.specialHours)
-
-	const slotsFor = (date: string, day: DayOfWeek): TimeSlot[] => {
-		const override = special.find((entry) => entry.date === date)
-		if (override) return override.isOpen ? (override.slots ?? []) : []
-		const daySchedule = schedule?.find((entry) => entry.day === day)
-		if (!daySchedule || !daySchedule.isOpen) return []
-		return [...(daySchedule.slots ?? [])].sort((a, b) =>
-			a.start.localeCompare(b.start),
-		)
-	}
-
-	const format = (
-		date: string,
-		time: string,
-		withDay: boolean,
-	): string | undefined => {
-		try {
-			const instant = localDateAndTimeToUtc(date, time, timezone)
-			return new Intl.DateTimeFormat(locale, {
-				timeZone: timezone,
-				hour: 'numeric',
-				minute: '2-digit',
-				...(withDay ? { weekday: 'short' } : {}),
-			}).format(instant)
-		} catch {
-			return undefined
-		}
-	}
-
-	const today = availability.currentLocalDate
-	const now = availability.currentLocalTime
-	const todaySlots = slotsFor(today, availability.dayOfWeek)
-
+	const hours = buildOnlineHours({
+		timezone,
+		isActive: location.isActive,
+		storeHours: location.storeHours,
+		onlineHours: location.onlineHours,
+		specialHours: location.specialHours,
+		onlineOrderingSettings: location.onlineOrderingSettings,
+	})
+	const ms = now.getTime()
 	if (availability.isOpen) {
-		const current = todaySlots.find(
-			(slot) => slot.start <= now && now <= slot.end,
-		)
-		return current ? { closesAt: format(today, current.end, false) } : {}
+		const close = nextClosing(hours, ms, 'online')
+		if (close) {
+			return {
+				closesAt: formatInstant(close.atMs, locale, timezone, false),
+			}
+		}
+		return {}
 	}
-
-	const later = todaySlots.find((slot) => slot.start > now)
-	if (later) return { opensAt: format(today, later.start, false) }
-
-	for (let offset = 1; offset <= 7; offset += 1) {
-		const next = addDays(today, offset)
-		const first = slotsFor(next.date, next.day)[0]
-		if (first) return { opensAt: format(next.date, first.start, true) }
+	const open = nextOpening(hours, ms, 'online')
+	if (!open) return {}
+	const sameDay = open.localDate === availability.currentLocalDate
+	return {
+		opensAt: formatInstant(open.atMs, locale, timezone, !sameDay),
 	}
-	return {}
 }
 
 /**

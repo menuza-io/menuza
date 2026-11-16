@@ -61,6 +61,7 @@ export enum AuditAction {
 	LOCATION_ORDERING_PAUSED = 'location_ordering_paused',
 	LOCATION_ORDERING_RESUMED = 'location_ordering_resumed',
 	LOCATION_BUSY_MODE_CHANGED = 'location_busy_mode_changed',
+	LOCATION_SLOT_LIMITS_RESET = 'location_slot_limits_reset',
 	PHONE_AGENT_SETTINGS_UPDATED = 'phone_agent_settings_updated',
 	PHONE_AGENT_TRAINING_UPDATED = 'phone_agent_training_updated',
 	PHONE_AGENT_FLOW_PUBLISHED = 'phone_agent_flow_published',

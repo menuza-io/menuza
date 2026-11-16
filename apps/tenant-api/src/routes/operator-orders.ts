@@ -6,6 +6,8 @@ import { z } from 'zod'
 import {
 	operatorOrderPatchSchema,
 	operatorOrderRefundRequestSchema,
+	operatorSlotLimitsResetSchema,
+	operatorSlotLimitsTodayQuerySchema,
 } from '@repo/common/restaurant-orders'
 import { brand } from '@repo/config/brand'
 import {
@@ -27,11 +29,16 @@ import {
 	recordOrderRefund,
 } from '../services/order-refund-service.ts'
 import {
+	fetchOrderContext,
 	getOperatorOrder,
 	listOperatorOrders,
 	operatorOrder,
 	updateOperatorOrderWithRefund,
 } from '../services/order-service.ts'
+import {
+	getOperatorSlotLimitsToday,
+	resetOperatorSlotLimits,
+} from '../services/order-slot-limits-service.ts'
 import {
 	resolveOrderCustomerKeys,
 	type OrderLinkAccess,
@@ -379,6 +386,112 @@ operatorOrderRoutes.get('/', async (c) => {
  * "Payment needs review", per location the token may see. Counts only, no
  * order or guest field. Registered before `/:id`.
  */
+operatorOrderRoutes.get('/limits/today', async (c) => {
+	const auth = await authenticateOrdersOperator(c, 'orders:read')
+	if ('error' in auth) return auth.error
+	const denied = await assertOperatorOrg(auth.auth.orgId)
+	if (denied) return denied.error
+	const parsed = operatorSlotLimitsTodayQuerySchema.safeParse(c.req.query())
+	if (!parsed.success) {
+		return c.json({ error: 'invalid_request' }, 400, noStoreHeaders())
+	}
+	if (!orderVisible(auth.auth, parsed.data.locationId)) {
+		return c.json({ error: 'location_not_found' }, 404, noStoreHeaders())
+	}
+	const contextResult = await fetchOrderContext(
+		auth.auth.orgId,
+		parsed.data.locationId,
+		null,
+	)
+	if (!contextResult.ok) {
+		return c.json(
+			{
+				error: contextResult.failure.code,
+				message: contextResult.failure.message,
+			},
+			contextResult.failure.status as 503,
+			noStoreHeaders(),
+		)
+	}
+	try {
+		const body = await getOperatorSlotLimitsToday(
+			auth.auth.orgId,
+			contextResult.data,
+			parsed.data.locationId,
+			parsed.data.fulfillment,
+		)
+		if (!body) {
+			return c.json({ error: 'slot_limits_disabled' }, 404, noStoreHeaders())
+		}
+		return c.json(body, 200, noStoreHeaders())
+	} catch (error) {
+		console.error(
+			`Failed to load slot limits for org ${auth.auth.orgId}:`,
+			error instanceof Error ? error.message : error,
+		)
+		return c.json(
+			{ error: 'Tenant Database unavailable' },
+			500,
+			noStoreHeaders(),
+		)
+	}
+})
+
+operatorOrderRoutes.post('/limits/reset', async (c) => {
+	const auth = await authenticateOrdersOperator(c, 'orders:write')
+	if ('error' in auth) return auth.error
+	const denied = await assertOperatorOrg(auth.auth.orgId)
+	if (denied) return denied.error
+	if (auth.auth.impersonated) {
+		return c.json(
+			{ error: 'forbidden', message: 'Not allowed while impersonating.' },
+			403,
+			noStoreHeaders(),
+		)
+	}
+	let body: unknown
+	try {
+		body = await c.req.json()
+	} catch {
+		return c.json({ error: 'invalid_request' }, 400, noStoreHeaders())
+	}
+	const parsed = operatorSlotLimitsResetSchema.safeParse(body)
+	if (!parsed.success) {
+		return c.json({ error: 'invalid_request' }, 400, noStoreHeaders())
+	}
+	if (!orderVisible(auth.auth, parsed.data.locationId)) {
+		return c.json({ error: 'location_not_found' }, 404, noStoreHeaders())
+	}
+	try {
+		const result = await resetOperatorSlotLimits({
+			orgId: auth.auth.orgId,
+			locationId: parsed.data.locationId,
+		})
+		if (!result.ok) {
+			return c.json(
+				{ error: result.failure.code, message: result.failure.message },
+				result.failure.status,
+				noStoreHeaders(),
+			)
+		}
+		return c.json(
+			{ ok: true, slotsCleared: result.slotsCleared },
+			200,
+			noStoreHeaders(),
+		)
+	} catch (error) {
+		console.error(
+			`Failed to reset slot limits for org ${auth.auth.orgId}:`,
+			error instanceof Error ? error.message : error,
+		)
+		return c.json(
+			{ error: 'Tenant Database unavailable' },
+			500,
+			noStoreHeaders(),
+		)
+	}
+})
+
 operatorOrderRoutes.get('/attention', async (c) => {
 	const auth = await authenticateOrdersOperator(c, 'orders:read')
 	if ('error' in auth) return auth.error

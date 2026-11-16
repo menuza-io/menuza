@@ -67,6 +67,11 @@ export interface PublicLocationData {
 	orderingPause: OrderingPause | null
 	/** Active busy mode (extra prep minutes), or null. */
 	busyMode: BusyMode | null
+	onlineOrderingSettings?: unknown
+	slotLimitSettings?: unknown
+	prepSchedule?: unknown
+	prayerPauseSettings?: unknown
+	prayerPauseRegion?: boolean
 }
 
 export interface PublicMenuOptionData {
@@ -138,6 +143,8 @@ export interface PublicMenuItemData {
 	isVegetarian: boolean
 	/** Never receives any discount (read defensively by the regional engine). */
 	excludeFromDiscounts?: boolean
+	/** Does not count toward order slot limits (#256). */
+	excludeFromOrderLimits?: boolean
 	allergens: string[]
 	calorieMin: number | null
 	calorieMax: number | null
@@ -158,6 +165,7 @@ export interface PublicMenuCategoryData {
 	upsellCategoryIds: string[]
 	availabilityStatus: string
 	position: number
+	excludeFromOrderLimits?: boolean
 	items: PublicMenuItemData[]
 }
 
@@ -384,6 +392,7 @@ export function serializePublicMenuItem(
 		isGlutenFree: Boolean(item.isGlutenFree),
 		isVegetarian: Boolean(item.isVegetarian),
 		excludeFromDiscounts: Boolean(item.excludeFromDiscounts),
+		excludeFromOrderLimits: Boolean(item.excludeFromOrderLimits),
 		allergens: safeJsonParse<string[]>(item.allergens, []),
 		calorieMin: item.calorieMin,
 		calorieMax: item.calorieMax,

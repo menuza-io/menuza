@@ -455,6 +455,9 @@ export type PublicLocationData = {
 	orderingPause?: { until: string | null } | null
 	/** Busy mode: extra prep minutes while it lasts. */
 	busyMode?: { extraPrepMinutes: number; until: string | null } | null
+	onlineOrderingSettings?: unknown
+	slotLimitSettings?: unknown
+	isActive?: boolean | null
 }
 
 export type PublicMenuOptionData = {
@@ -614,7 +617,7 @@ export type PublicSiteMenuPayload = {
 	 * Site features the menu page reads: `upsell` is the `ordering.upsell` flag
 	 * (#114). Absent on a payload cached before it: off.
 	 */
-	features?: { upsell?: boolean }
+	features?: { upsell?: boolean; slotLimits?: boolean }
 }
 
 export async function fetchPublishedSiteMenu(options: {

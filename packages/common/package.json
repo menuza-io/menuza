@@ -219,6 +219,21 @@
       "import": "./src/vitest-env.ts",
       "default": "./src/vitest-env.ts"
     },
+    "./available-times": {
+      "types": "./src/available-times.ts",
+      "import": "./src/available-times.ts",
+      "default": "./src/available-times.ts"
+    },
+    "./location-settings": {
+      "types": "./src/location-settings.ts",
+      "import": "./src/location-settings.ts",
+      "default": "./src/location-settings.ts"
+    },
+    "./ordering-flags": {
+      "types": "./src/ordering-flags.ts",
+      "import": "./src/ordering-flags.ts",
+      "default": "./src/ordering-flags.ts"
+    },
     "./location-availability": {
       "types": "./src/location-availability.ts",
       "import": "./src/location-availability.ts",
@@ -233,6 +248,16 @@
       "types": "./src/restaurant-orders.ts",
       "import": "./src/restaurant-orders.ts",
       "default": "./src/restaurant-orders.ts"
+    },
+    "./slot-usage": {
+      "types": "./src/slot-usage.ts",
+      "import": "./src/slot-usage.ts",
+      "default": "./src/slot-usage.ts"
+    },
+    "./prep-schedule": {
+      "types": "./src/prep-schedule.ts",
+      "import": "./src/prep-schedule.ts",
+      "default": "./src/prep-schedule.ts"
     },
     "./upsell": {
       "types": "./src/upsell.ts",
@@ -320,7 +345,9 @@
     "@repo/database": "*",
     "@repo/discounts": "*",
     "@repo/geo": "*",
+    "@repo/opening-hours": "*",
     "@repo/security": "*",
+    "@repo/zoned-time": "*",
     "@tusbar/cache-control": "^1.0.0",
     "cookie": "^1.0.2",
     "openimg": "^1.1.0",

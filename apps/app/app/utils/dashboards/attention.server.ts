@@ -9,7 +9,6 @@ import {
 	type FulfillmentOptions,
 	type SchedulingOptions,
 	type SpecialHour,
-	type WeeklySchedule,
 } from '@repo/common/location-types'
 import {
 	and,
@@ -28,6 +27,7 @@ import {
 	OrganizationMenuItem,
 	OrganizationMenuLocationOverride,
 } from '@repo/database'
+import { weeklyScheduleHasOpenDay } from '@repo/opening-hours'
 import { addDays, businessDateOf, startOfLocalDay } from '@repo/zoned-time'
 import { getInventoryNavAccess } from '#app/utils/inventory/access.server.ts'
 import { publicOrderingControls } from '#app/utils/location/ordering-pause.ts'
@@ -125,17 +125,6 @@ function parseJson<T>(value: string | null | undefined, fallback: T): T {
 	} catch {
 		return fallback
 	}
-}
-
-/** A weekly schedule with at least one open day that has a time slot. */
-export function scheduleHasHours(raw: string | null | undefined): boolean {
-	const schedule = parseJson<WeeklySchedule | null>(raw, null)
-	return (
-		Array.isArray(schedule) &&
-		schedule.some(
-			(day) => day?.isOpen && Array.isArray(day.slots) && day.slots.length > 0,
-		)
-	)
 }
 
 /** Channels switched off; a missing setting means on, like the public menu. */
@@ -398,8 +387,8 @@ export const ATTENTION_DETECTORS: readonly AttentionDetector[] = [
 			return locations
 				.filter(
 					(location) =>
-						!scheduleHasHours(location.storeHours) &&
-						!scheduleHasHours(location.onlineHours),
+						!weeklyScheduleHasOpenDay(location.storeHours) &&
+						!weeklyScheduleHasOpenDay(location.onlineHours),
 				)
 				.map((location) =>
 					attentionItem('no_hours', location, {

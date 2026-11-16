@@ -358,6 +358,13 @@
 			"when": 1794809049183,
 			"tag": "0050_gift_cards",
 			"breakpoints": true
+		},
+		{
+			"idx": 51,
+			"version": "6",
+			"when": 1795000000000,
+			"tag": "0051_ordering_hours_and_slot_limits",
+			"breakpoints": true
 		}
 	]
 }

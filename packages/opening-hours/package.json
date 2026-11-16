@@ -1,0 +1,28 @@
+{
+  "name": "@repo/opening-hours",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Shared opening and online-ordering hours: parsers, intervals, and availability (no I/O).",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@repo/zoned-time": "*",
+    "adhan": "^4.4.3"
+  },
+  "devDependencies": {
+    "@repo/config": "*",
+    "@types/node": "^22.18.0",
+    "typescript": "^5.8.3",
+    "vitest": "^4.1.10"
+  }
+}
