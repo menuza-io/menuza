@@ -13,20 +13,20 @@ reports and settlement), #212 (guided import).
 
 ## Status by surface
 
-| Surface                                                               | State                                                              |
-| --------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| Regional ledger, sell, top up, redeem, refund to card, adjust, void   | Built                                                              |
-| Online purchase (hosted checkout, `gc:<id>`), delivery email, receipt | Built                                                              |
-| Add a gift card at the Sites checkout                                 | Built                                                              |
-| Station: sell, top up, redeem as a tender; ZATCA payment means        | Built                                                              |
-| App: list, detail, adjust, void, review, settings                     | Built                                                              |
-| Purchase fraud: limits, timed hold, risk hold, freeze, burst alerts   | Built (#218)                                                       |
-| Guest wallet on Sites (saved cards, QR show token)                    | Built (#217); customer app **not built**                           |
-| Charge from the App (#215)                                            | Built: dialogs and history; attaching to an order or quote **not** |
-| Designs and the buy form, delivery email (#214)                       | Built; website block and email designer block **not built**        |
-| Reports: sales, redemptions, balances, settlement (#216)              | Built as report subjects; no dedicated screen                      |
-| Physical cards and Print shop (#213)                                  | Not built                                                          |
-| Guided import (#212)                                                  | Not built                                                          |
+| Surface                                                                    | State                                                              |
+| -------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| Regional ledger, sell, top up, redeem, refund to card, adjust, void        | Built                                                              |
+| Online purchase (hosted checkout, `gc:<id>`), delivery email, receipt      | Built                                                              |
+| Add a gift card at the Sites checkout                                      | Built                                                              |
+| Station: sell, top up, redeem as a tender; ZATCA payment means             | Built                                                              |
+| App: list, detail, adjust, void, review, settings                          | Built                                                              |
+| Purchase fraud: limits, timed hold, risk hold, freeze, burst alerts        | Built (#218)                                                       |
+| Guest wallet on Sites and in the customer app (saved cards, QR till token) | Built (#217)                                                       |
+| Charge from the App (#215)                                                 | Built: dialogs and history; attaching to an order or quote **not** |
+| Designs and the buy form, delivery email (#214)                            | Built; website block and email designer block **not built**        |
+| Reports: sales, redemptions, balances, settlement (#216)                   | Built as report subjects; no dedicated screen                      |
+| Physical cards and Print shop (#213)                                       | Not built                                                          |
+| Guided import (#212)                                                       | Not built                                                          |
 
 ## Where the data lives
 
@@ -65,6 +65,42 @@ reports and settlement), #212 (guided import).
   an HMAC with the last four characters kept readable. A purchased card's code
   is sealed in the region until the recipient email has gone out, then cleared.
 - US cards never expire by default (`expiryMonths` is null).
+
+## Secrets at rest
+
+A card code is stored only as an HMAC (with its last four characters). Two
+places hold the code itself, both sealed with the gift card key:
+
+- `gift_cards.sealed_code`, until the recipient email has gone out, then
+  cleared;
+- the stored idempotent response of a till sale (`gift_card_idempotency_keys`,
+  kept 48 hours so a retry after a lost answer returns the same card and code):
+  `withGiftCardWrite` takes `sealFields` (`code`, `formattedCode` for a sale)
+  and seals those fields before storing them and opens them on a replay. A new
+  write that returns a secret must name it there; the `secrets at rest` tests in
+  `gift-card-service.test.ts` check the till sale and the online purchase.
+
+## Person erasure
+
+`erasePerson` calls `eraseGiftCardsInTx` (`gift-card-erasure.ts`) inside its
+regional transaction. A card is the organization's money record, so the card,
+its ledger, balance and status stay; the person goes:
+
+- **holder** (card saved to the erased account): unlinked;
+- **purchaser** (the account, or a guest matched by email): account link, name,
+  email and "from" name removed, no receipt is attempted afterwards, and the
+  note to the recipient goes once the card has been delivered (an undelivered
+  card is still delivered, as the buyer paid for it);
+- **recipient** (matched by email, any case): name, email and note removed. An
+  undelivered card is then **not** delivered; a manager can see it and refund
+  the unspent balance;
+- operator notes on those cards' ledger entries, the person's till QR tokens,
+  the stored responses of those cards and their purchase-limit fingerprints.
+
+Every card touched is stamped `erased_at`. Gates:
+`person-erasure-pii-columns.test.ts` (every PII-looking column is erased or
+allowed with a reason) and `person-erasure.test.ts` (a whole-database dump
+scan).
 
 ## Purchase fraud (#218)
 
@@ -137,9 +173,11 @@ before enabling `gift_cards.enabled` for any organization there.
 ## Known issues and not built
 
 - No re-keying of code hashes (see Secrets).
-- Customer app wallet, order and quote attach for App charges, the website
-  block, the email designer block, physical cards and the guided import are
-  tracked by the issues listed at the top and are not part of this build yet.
+- Order and quote attach for App charges, the website block, the email designer
+  block, physical cards and the guided import are tracked by the issues listed
+  at the top and are not part of this build yet.
 - Not verified here: a live hosted payment, a real Turnstile, a provider risk or
   dispute event (the region logic is tested with injected values), ZATCA against
-  a live filing, and the accessibility of the Sites forms in a browser.
+  a live filing, the accessibility of the Sites forms in a browser, and the
+  customer app on a device (the Expo bundle with the `qrcode` encoder, a screen
+  reader pass, a right-to-left layout).

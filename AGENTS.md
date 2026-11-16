@@ -1060,9 +1060,10 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
   loads config from App and logs calls through tenant-api
 - `apps/customer` - Tenant customer app (Expo, iOS and Android): branded shell
   from the published org theme, connect-to-site or white-label binding, phone
-  OTP sign-in, profile and language, table booking and the Loyalty Rewards
-  wallet, all browser-direct to the regional tenant-api (no PII proxy). Session
-  in `expo-secure-store`, excluded from backups. Jest tests run in normal CI;
+  OTP sign-in, profile and language, table booking, the Loyalty Rewards wallet
+  and the Gift cards wallet (saved cards, add by code, a one-use till QR), all
+  browser-direct to the regional tenant-api (no PII proxy). Session in
+  `expo-secure-store`, excluded from backups. Jest tests run in normal CI;
   white-label builds come from `tenants/<slug>.json`
   (`npm run tenant -w customer -- --tenant <slug>`). `apps/mobile` is the
   separate operator app
@@ -1589,7 +1590,10 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
   (operator routes), `gift-cards-public.test.ts` (body cap, query bounds),
   `lib/gift-card-secret.test.ts`, the `gift-card-*` service suites and
   `apps/app/app/utils/gift-cards/gift-cards-guards.test.ts`. Deploy App, then
-  tenant-api, then Sites, then Station. Docs: `docs/gift-cards.md`.
+  tenant-api, then Sites, then Station, then the customer app. A write that
+  returns a card code names it in `sealFields`, so no plaintext code is stored
+  (`lib/gift-card-write.ts`). Person erasure: `gift-card-erasure.ts`. Docs:
+  `docs/gift-cards.md`.
 
 **Print shop (Marketing, Print shop):**
 
