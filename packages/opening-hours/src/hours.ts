@@ -252,7 +252,9 @@ export function countMalformedLocationHours(rawContext: unknown): number {
 
 /** True when the location has any weekly schedule or special entry at all. */
 export function hasConfiguredHours(hours: LocationHours): boolean {
-	return (hours.storeHours?.length ?? 0) > 0
+	return (
+		(hours.storeHours?.length ?? 0) > 0 || (hours.onlineHours?.length ?? 0) > 0
+	)
 }
 
 /** True when a stored weekly schedule has at least one open day with a slot. */
