@@ -53,6 +53,7 @@ import {
 	virtualConditionValue,
 } from './journey-conditions.ts'
 import { customerInAudience } from './marketing-audience-service.ts'
+import { cartLinkForGuest } from './cart-reminders.ts'
 
 export const JOURNEY_PROCESSING_LEASE_MS = 5 * 60 * 1000
 export const JOURNEY_LIST_LIMIT = 100
@@ -814,6 +815,17 @@ export async function executeJourneyStep(
 				customer.id,
 				typeof rewardId === 'string' ? rewardId : null,
 			)),
+		}
+	}
+
+	// A cart reminder fills `{{cartLink}}` with the guest's "Back to your order"
+	// link, minted now (valid 7 days). Empty when the cart is gone: an order,
+	// an emptied cart and the 7-day cleanup all delete it, and the message then
+	// has no link rather than a dead one.
+	if (run.triggerEvent === 'cart_left_behind') {
+		contextData = {
+			...contextData,
+			cartLink: (await cartLinkForGuest(orgId, customer.id)) ?? '',
 		}
 	}
 
@@ -1631,12 +1643,7 @@ export async function evaluateAndSpawnTriggers(
 						journeyId: journey.id,
 						customerId,
 						triggerEvent: triggerType,
-						// `startedAtMs` is when this run began: the goal ("stop when the
-						// guest orders") counts only orders after it.
-						contextData: JSON.stringify({
-							...contextData,
-							startedAtMs: Date.now(),
-						}),
+						contextData: JSON.stringify(contextData),
 						status: 'running',
 						startedAt: new Date(),
 					})

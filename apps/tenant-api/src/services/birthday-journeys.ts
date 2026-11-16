@@ -138,6 +138,7 @@ export async function runBirthdayJourneys(
 				})
 				.from(customers)
 				.where(
+					// bounded: at most 8 month-day values (`candidateBirthMonthDays`)
 					inArray(
 						customers.birthMonthDay,
 						candidateBirthMonthDays(utcDay, journey.daysBefore),

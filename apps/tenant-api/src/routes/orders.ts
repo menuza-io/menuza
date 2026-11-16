@@ -86,6 +86,17 @@ import {
 	tabCheckoutView,
 	withTabDiscounts,
 } from '../services/qr-tab-service.ts'
+import {
+	CART_TOKEN_HEADER,
+	verifyCartToken,
+} from '../lib/cart-link.ts'
+import { errorLogFields } from '../lib/error-log.ts'
+import {
+	clearCartSnapshot,
+	readCartForRestore,
+	recordCartSnapshot,
+	toSnapshotLines,
+} from '../services/cart-reminders.ts'
 import { authenticateCustomer } from './auth.ts'
 
 export const publicOrderRoutes = new Hono()
@@ -667,6 +678,17 @@ publicOrderRoutes.post('/quote', async (c) => {
 		)
 		await giftGuard.settle(result.ok ? null : result.failure.code)
 		if (!result.ok) return orderFailureResponse(result.failure)
+		// A signed-in guest's cart is remembered for the cart reminder (#150):
+		// ids and quantities only, and only while it could be used.
+		if (customer.customerId) {
+			await recordCartSnapshot(db, {
+				customerId: customer.customerId,
+				locationId: request.locationId,
+				currency: result.data.currency,
+				subtotalMinor: result.data.subtotalMinor,
+				lines: toSnapshotLines(request.lines),
+			})
+		}
 		return c.json(result.data, 200, noStoreHeaders())
 	} catch (error) {
 		await couponGuard.settle('none').catch(() => {})
@@ -680,6 +702,67 @@ publicOrderRoutes.post('/quote', async (c) => {
 			500,
 			noStoreHeaders(),
 		)
+	}
+})
+
+// ---------------------------------------------------------------------------
+// GET /orders/cart-link — what "Back to your order" restores (#150)
+// POST /orders/cart/clear — the guest emptied their cart
+// ---------------------------------------------------------------------------
+
+const cartLinkQuerySchema = z.object({
+	slug: z.string().trim().min(1).max(100).optional(),
+	host: z.string().trim().min(1).max(253).optional(),
+})
+
+/**
+ * The cart a reminder link points at: location, currency and lines (ids and
+ * quantities). The capability is `X-Cart-Token`, never a query string, so the
+ * site's server never sees it. No contact, no address, no name. Every refusal
+ * (bad, forged, expired token; no cart left) is the same 404, so a probe learns
+ * nothing. Prices are re-checked by the site when it refills the cart.
+ */
+publicOrderRoutes.get('/cart-link', async (c) => {
+	const identity = cartLinkQuerySchema.safeParse(c.req.query())
+	if (!identity.success) {
+		return c.json({ error: 'not_found' }, 404, noStoreHeaders())
+	}
+	const organization = await resolveOrderingOrganization(c, identity.data)
+	if ('error' in organization) return organization.error
+	const orgId = organization.organization.id
+	const token = c.req.header(CART_TOKEN_HEADER) ?? null
+	const verified = verifyCartToken({ orgId, presented: token })
+	if (!verified) return c.json({ error: 'not_found' }, 404, noStoreHeaders())
+	try {
+		const db = await getTenantDb(orgId)
+		const cart = await readCartForRestore(db, verified.customerId)
+		if (!cart) return c.json({ error: 'not_found' }, 404, noStoreHeaders())
+		return c.json({ cart }, 200, noStoreHeaders())
+	} catch (error) {
+		console.error('Cart link could not be read', errorLogFields(error))
+		return c.json({ error: 'internal_error' }, 500, noStoreHeaders())
+	}
+})
+
+publicOrderRoutes.post('/cart/clear', async (c) => {
+	const identity = cartLinkQuerySchema.safeParse(c.req.query())
+	if (!identity.success) {
+		return c.json({ error: 'not_found' }, 404, noStoreHeaders())
+	}
+	const organization = await resolveOrderingOrganization(c, identity.data)
+	if ('error' in organization) return organization.error
+	const customer = await optionalCustomerId(c, organization.organization)
+	if ('error' in customer) return customer.error
+	if (!customer.customerId) {
+		return c.json({ error: 'unauthorized' }, 401, noStoreHeaders())
+	}
+	try {
+		const db = await getTenantDb(organization.organization.id)
+		await clearCartSnapshot(db, customer.customerId)
+		return c.json({ success: true }, 200, noStoreHeaders())
+	} catch (error) {
+		console.error('Cart could not be cleared', errorLogFields(error))
+		return c.json({ error: 'internal_error' }, 500, noStoreHeaders())
 	}
 })
 

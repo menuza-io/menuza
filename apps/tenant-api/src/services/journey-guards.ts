@@ -13,7 +13,13 @@ import { countedOrdersSql, DAY_MS } from './marketing-orders.ts'
  * messages per guest per 7 days, across broadcasts and automations).
  */
 
-/** A run waiting out a delay is checked at its next step: orders after it started. */
+/**
+ * A run waiting out a delay is checked at its next step: orders after it
+ * started count. A run's start is stored to the second, so only an order after
+ * the end of that second counts: the order that started the run (placed a
+ * moment before) never ends it. An operator may also put `startedAtMs` in the
+ * run context for an exact start (tests).
+ */
 export async function goalReachedForRun(
 	db: TenantDatabase,
 	run: {

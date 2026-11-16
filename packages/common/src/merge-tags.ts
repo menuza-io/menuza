@@ -35,6 +35,15 @@ export const MERGE_TOKENS = [
 		sample: '15',
 		scope: 'loyalty',
 	},
+	// Cart tag (#150): filled only in the cart reminder automation, with the
+	// guest's "Back to your order" link. It is a URL: in an href it must pass
+	// the same scheme check as any merge tag (`replaceMergeTokensInHtml`).
+	{
+		tag: 'cartLink',
+		label: 'Back to your order link',
+		sample: 'https://example.com/menu#cart=...',
+		scope: 'cart',
+	},
 ] as const
 
 export type MergeTagName = (typeof MERGE_TOKENS)[number]['tag']
@@ -43,20 +52,22 @@ type MergeTokenEntry = {
 	tag: MergeTagName
 	label: string
 	sample: string
-	/** Only offered where the value exists: loyalty automations. */
-	scope?: 'loyalty'
+	/** Only offered where the value exists: loyalty or cart automations. */
+	scope?: 'loyalty' | 'cart'
 }
 
 /** The tags an editor offers: the general ones, plus the loyalty ones in loyalty automations. */
 export function mergeTokensFor(
 	options: {
 		loyalty?: boolean
+		cart?: boolean
 	} = {},
 ): readonly MergeTokenEntry[] {
 	return (MERGE_TOKENS as readonly MergeTokenEntry[]).filter(
 		(entry) =>
 			entry.scope === undefined ||
-			(entry.scope === 'loyalty' && options.loyalty === true),
+			(entry.scope === 'loyalty' && options.loyalty === true) ||
+			(entry.scope === 'cart' && options.cart === true),
 	)
 }
 

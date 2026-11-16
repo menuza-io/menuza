@@ -10,6 +10,7 @@ import { createTenantApiApp } from '../app.ts'
 import { formOperatorRoutes } from './forms.ts'
 import { journeyOperatorRoutes } from './journeys.ts'
 import { marketingAudienceRoutes } from './operator-marketing-audiences.ts'
+import { marketingSettingsRoutes } from './operator-marketing-settings.ts'
 import { operatorRoutes } from './operator.ts'
 
 const orgId = 'clw9x0a12000008l00test78'
@@ -44,6 +45,7 @@ describe('browser operator tokens are bound to the area they were minted for', (
 		app.route('/operator/forms', formOperatorRoutes)
 		app.route('/operator/journeys', journeyOperatorRoutes)
 		app.route('/operator/marketing/audiences', marketingAudienceRoutes)
+		app.route('/operator/marketing/settings', marketingSettingsRoutes)
 		app.route('/operator', operatorRoutes)
 	})
 
@@ -238,6 +240,7 @@ describe('every /operator route refuses a token bound to another area', () => {
 			'GET /operator/marketing/campaigns/x/message',
 			'GET /operator/marketing/campaigns/x/summary',
 			'GET /operator/marketing/metrics',
+			'GET /operator/marketing/settings',
 			'PATCH /operator/marketing/campaigns/x',
 			'POST /operator/marketing/audiences',
 			'POST /operator/marketing/audiences/preview',
@@ -247,6 +250,7 @@ describe('every /operator route refuses a token bound to another area', () => {
 			'POST /operator/marketing/campaigns/x/retarget',
 			'POST /operator/marketing/test-send',
 			'PUT /operator/marketing/audiences/x',
+			'PUT /operator/marketing/settings',
 		])
 	})
 

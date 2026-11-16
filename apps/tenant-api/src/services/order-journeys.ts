@@ -6,6 +6,7 @@ import {
 } from '@repo/tenant-db'
 import { and, eq, inArray, lt, sql } from 'drizzle-orm'
 import { runInBackground } from '../lib/background.ts'
+import { retryOnSqliteBusy } from '../lib/sqlite-retry.ts'
 import { errorLogFields } from '../lib/error-log.ts'
 import { countedOrdersSql, DAY_MS } from './marketing-orders.ts'
 
@@ -79,11 +80,13 @@ export async function claimEmission(
 	key: { customerId: string; trigger: string; ref: string },
 	now: number,
 ): Promise<boolean> {
-	const inserted = await db
-		.insert(orderJourneyEmissions)
-		.values({ ...key, state: 'pending', emittedAt: now })
-		.onConflictDoNothing()
-		.returning({ ref: orderJourneyEmissions.ref })
+	const inserted = await retryOnSqliteBusy(() =>
+		db
+			.insert(orderJourneyEmissions)
+			.values({ ...key, state: 'pending', emittedAt: now })
+			.onConflictDoNothing()
+			.returning({ ref: orderJourneyEmissions.ref }),
+	)
 	if (inserted.length > 0) return true
 	const reclaimed = await db
 		.update(orderJourneyEmissions)
@@ -115,12 +118,16 @@ export async function settleEmission(
 		eq(orderJourneyEmissions.state, 'pending'),
 	)
 	if (started) {
-		await db
-			.update(orderJourneyEmissions)
-			.set({ state: 'fired', emittedAt: now })
-			.where(where)
+		await retryOnSqliteBusy(() =>
+			db
+				.update(orderJourneyEmissions)
+				.set({ state: 'fired', emittedAt: now })
+				.where(where),
+		)
 	} else {
-		await db.delete(orderJourneyEmissions).where(where)
+		await retryOnSqliteBusy(() =>
+			db.delete(orderJourneyEmissions).where(where),
+		)
 	}
 }
 
@@ -130,20 +137,29 @@ async function recordFired(
 	key: { customerId: string; trigger: string; ref: string },
 	now: number,
 ) {
-	await db
-		.insert(orderJourneyEmissions)
-		.values({ ...key, state: 'fired', emittedAt: now })
-		.onConflictDoNothing()
+	await retryOnSqliteBusy(() =>
+		db
+			.insert(orderJourneyEmissions)
+			.values({ ...key, state: 'fired', emittedAt: now })
+			.onConflictDoNothing(),
+	)
+}
+
+type ListeningJourney = {
+	id: string
+	triggerConfig: unknown
+	publishedAt: Date | null
 }
 
 async function listening(
 	db: TenantDatabase,
 	trigger: string,
-): Promise<Array<{ id: string; triggerConfig: unknown }>> {
+): Promise<ListeningJourney[]> {
 	return db
 		.select({
 			id: marketingJourneys.id,
 			triggerConfig: marketingJourneys.triggerConfig,
+			publishedAt: marketingJourneys.publishedAt,
 		})
 		.from(marketingJourneys)
 		.where(
@@ -153,6 +169,20 @@ async function listening(
 			),
 		)
 		.all()
+}
+
+/**
+ * Orders older than the oldest listening journey's publish time never start it:
+ * turning a journey on is not retroactive. A journey without a publish time
+ * (should not happen) falls back to the recent window.
+ */
+function listenSince(journeys: ListeningJourney[], windowStart: number): number {
+	const published = journeys
+		.map((journey) => journey.publishedAt?.getTime())
+		.filter((ms): ms is number => typeof ms === 'number')
+	return published.length === journeys.length && published.length > 0
+		? Math.max(windowStart, Math.min(...published))
+		: windowStart
 }
 
 const inFlight = new Set<Promise<void>>()
@@ -287,37 +317,52 @@ async function firstOrders(
 	now: number,
 ): Promise<number> {
 	const journeys = await listening(db, 'order_first_placed')
-	const orders = await unseenOrders(db, 'order_first_placed', since, false)
+	// Nothing listening: nothing is read or written for orders.
+	if (journeys.length === 0) return 0
+	const orders = await unseenOrders(
+		db,
+		'order_first_placed',
+		listenSince(journeys, since),
+		false,
+	)
 	const seen = new Set<string>()
 	let started = 0
 	for (const order of orders) {
 		if (seen.has(order.customer_id)) continue
 		seen.add(order.customer_id)
 		if (started >= ORDER_JOURNEY_BATCH) break
-		const key = { customerId: order.customer_id, ref: 'first' }
-		const sequence = await orderSequence(
-			db,
-			order.customer_id,
-			order.ts,
-			order.order_ref,
-		)
-		// Not the guest's first order (they ordered before the window): remember it
-		// so the guest is never looked at again, and start nothing.
-		if (sequence !== 1 || journeys.length === 0) {
-			await recordFired(db, { ...key, trigger: 'order_first_placed' }, now)
-			continue
-		}
-		if (
-			await startJourneys(
+		try {
+			const key = { customerId: order.customer_id, ref: 'first' }
+			const sequence = await orderSequence(
 				db,
-				orgId,
-				'order_first_placed',
-				key,
-				{ locationId: order.location_id, orderSequence: 1 },
-				now,
+				order.customer_id,
+				order.ts,
+				order.order_ref,
 			)
-		) {
-			started += 1
+			// Not the guest's first order (they ordered before): remember it so the
+			// guest is never looked at again, and start nothing.
+			if (sequence !== 1) {
+				await recordFired(db, { ...key, trigger: 'order_first_placed' }, now)
+				continue
+			}
+			if (
+				await startJourneys(
+					db,
+					orgId,
+					'order_first_placed',
+					key,
+					{ locationId: order.location_id, orderSequence: 1 },
+					now,
+				)
+			) {
+				started += 1
+			}
+		} catch (error) {
+			// One guest never stops the rest; the next pass looks again.
+			console.error('Order journey could not be evaluated for a guest', {
+				orgId,
+				...errorLogFields(error),
+			})
 		}
 	}
 	return started
@@ -330,32 +375,41 @@ async function completedOrders(
 	now: number,
 ): Promise<number> {
 	const journeys = await listening(db, 'order_completed')
-	const orders = await unseenOrders(db, 'order_completed', since, true)
+	if (journeys.length === 0) return 0
+	const orders = await unseenOrders(
+		db,
+		'order_completed',
+		listenSince(journeys, since),
+		true,
+	)
 	let started = 0
 	for (const order of orders) {
 		if (started >= ORDER_JOURNEY_BATCH) break
-		const key = { customerId: order.customer_id, ref: order.order_ref }
-		if (journeys.length === 0) {
-			await recordFired(db, { ...key, trigger: 'order_completed' }, now)
-			continue
-		}
-		const sequence = await orderSequence(
-			db,
-			order.customer_id,
-			order.ts,
-			order.order_ref,
-		)
-		if (
-			await startJourneys(
+		try {
+			const key = { customerId: order.customer_id, ref: order.order_ref }
+			const sequence = await orderSequence(
 				db,
-				orgId,
-				'order_completed',
-				key,
-				{ locationId: order.location_id, orderSequence: sequence },
-				now,
+				order.customer_id,
+				order.ts,
+				order.order_ref,
 			)
-		) {
-			started += 1
+			if (
+				await startJourneys(
+					db,
+					orgId,
+					'order_completed',
+					key,
+					{ locationId: order.location_id, orderSequence: sequence },
+					now,
+				)
+			) {
+				started += 1
+			}
+		} catch (error) {
+			console.error('Order journey could not be evaluated for an order', {
+				orgId,
+				...errorLogFields(error),
+			})
 		}
 	}
 	return started

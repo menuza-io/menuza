@@ -143,6 +143,7 @@ import {
 	recordOrderMarketingConsentInTx,
 	type OrderConsentConfirmation,
 } from './order-marketing-consent.ts'
+import { clearCartSnapshot } from './cart-reminders.ts'
 import { scheduleOrderJourneys } from './order-journeys.ts'
 import { orderCountsTowardSales } from './report-records.ts'
 import {
@@ -1654,6 +1655,12 @@ export async function placeOrder(input: {
 		// A pay-at-pickup order counts at once; an online one counts when its
 		// payment lands (below). Background: the guest never waits for it.
 		scheduleOrderJourneys(orgId)
+		// Any order clears the guest's left-behind cart (#150).
+		if (customerId) {
+			await getTenantDb(orgId)
+				.then((tenantDb) => clearCartSnapshot(tenantDb, customerId))
+				.catch(() => undefined)
+		}
 		const confirmation = consentConfirmation as OrderConsentConfirmation | null
 		if (placed.ok && placed.data.status === 201 && confirmation) {
 			queueOrderConsentConfirmation(orgId, confirmation)

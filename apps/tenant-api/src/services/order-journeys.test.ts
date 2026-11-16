@@ -56,6 +56,7 @@ describe('order journeys (#99)', () => {
 	async function listen(
 		triggerType: 'order_first_placed' | 'order_completed' | 'guest_lapsed',
 		triggerConfig: Record<string, unknown> = {},
+		publishedAt: Date = new Date(NOW - 3 * DAY),
 	) {
 		const [row] = await db
 			.insert(marketingJourneys)
@@ -64,6 +65,7 @@ describe('order journeys (#99)', () => {
 				status: 'active',
 				triggerType,
 				triggerConfig,
+				publishedAt,
 			})
 			.returning()
 		return row!.id
@@ -139,17 +141,26 @@ describe('order journeys (#99)', () => {
 		expect(calls()).toEqual([[ORG, 'order_first_placed', 'a']])
 	})
 
-	it('is not retroactive: an old order, or no journey turned on, starts nothing', async () => {
+	it('is not retroactive: an old order, or one before the journey was turned on, starts nothing', async () => {
 		await insertCustomer(ORG, { id: 'a', phone: '+15550000001' })
 		await insertCustomer(ORG, { id: 'b', phone: '+15550000002' })
 		await insertOrder(ORG, { customerId: 'a', createdAt: at(10) })
 		await insertOrder(ORG, { customerId: 'b', createdAt: at(0) })
-		// Nothing listening: the order is remembered, so turning a journey on later
-		// does not start it for an order that already happened.
+		// Nothing is listening yet: nothing is read or written.
 		await evaluateOrderJourneys(ORG, { now: NOW })
-		await listen('order_first_placed')
-		await evaluateOrderJourneys(ORG, { now: NOW + 1000 })
+		expect(await db.select().from(orderJourneyEmissions).all()).toEqual([])
+		// Turned on after both orders.
+		await listen('order_first_placed', {}, new Date(NOW + 5000))
+		await evaluateOrderJourneys(ORG, { now: NOW + 6000 })
 		expect(spawn).not.toHaveBeenCalled()
+		// An order after it was turned on does start it.
+		await insertCustomer(ORG, { id: 'c', phone: '+15550000003' })
+		await insertOrder(ORG, {
+			customerId: 'c',
+			createdAt: new Date(NOW + 10_000),
+		})
+		await evaluateOrderJourneys(ORG, { now: NOW + 12_000 })
+		expect(calls()).toEqual([[ORG, 'order_first_placed', 'c']])
 	})
 
 	it('retries a start that failed, and a stale claim', async () => {
@@ -241,8 +252,6 @@ describe('order journeys (#99)', () => {
 		)
 		const runs = await db.select().from(journeyRuns).all()
 		expect(runs.map((r) => r.journeyId).sort()).toEqual([nth2, any].sort())
-		// Each run keeps when it started, for the goal.
-		expect(JSON.stringify(runs[0]!.contextData)).toContain('startedAtMs')
 	})
 
 	it('lapsed starts once per quiet spell and re-arms after the next order', async () => {
