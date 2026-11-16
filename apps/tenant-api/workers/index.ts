@@ -47,6 +47,10 @@ import {
 	fanOutLoyaltyTick,
 	type LoyaltyTickResult,
 } from '../src/services/loyalty-tick-service.ts'
+import {
+	fanOutGiftCardTick,
+	type GiftCardTickResult,
+} from '../src/services/gift-card-tick-service.ts'
 import { runOrdersTickForOrg } from '../src/services/order-acceptance.ts'
 import {
 	fanOutOrderMessagesTick,
@@ -222,7 +226,7 @@ const tickBodySchema = z.object({ orgId: z.unknown().optional() })
  * query and no outbound call.
  */
 type TickModuleName =
-	'staff' | 'reservations' | 'loyalty' | 'inventory' | 'order-messages'
+	'staff' | 'reservations' | 'loyalty' | 'inventory' | 'order-messages' | 'gift-cards'
 
 async function handleTickFanOut(
 	request: Request,
@@ -299,6 +303,11 @@ async function handleTickFanOut(
 								orgIds,
 								run: (orgId) => runOne<OrderMessagesTickResult>(orgId),
 							})
+						: module === 'gift-cards'
+							? await fanOutGiftCardTick({
+									orgIds,
+									run: (orgId) => runOne<GiftCardTickResult>(orgId),
+								})
 						: await fanOutLoyaltyTick({
 								orgIds,
 								run: (orgId) => runOne<LoyaltyTickResult>(orgId),
@@ -421,7 +430,9 @@ async function handle(
 							? 'inventory'
 							: url.pathname === ORDER_MESSAGES_TICK_PATH
 								? 'order-messages'
-								: null
+								: url.pathname === '/api/gift-cards/tick'
+									? 'gift-cards'
+									: null
 	if (tickModule) {
 		const tickOrgId = await resolveOrgId(request, env)
 		if (tickOrgId) {

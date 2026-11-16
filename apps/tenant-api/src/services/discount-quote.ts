@@ -3,6 +3,8 @@ import {
 	type RestaurantOrderDiscountQuoteRequest,
 	type VerifiedDeliveryQuote,
 } from '@repo/common/restaurant-orders'
+import { type GiftCardCheckoutQuote } from '@repo/common/gift-card-contract'
+import { GiftCardDomainError } from '@repo/common/gift-cards'
 import { type DiscountQuote } from '@repo/discounts'
 import { LoyaltyDomainError } from '@repo/loyalty'
 import { getTenantDb, type TenantTransaction } from '@repo/tenant-db'
@@ -19,6 +21,7 @@ import {
 	prepareOrderDiscounts,
 	totalsAfterDiscounts,
 } from './discount-apply.ts'
+import { prepareGiftCardForOrder } from './gift-card-orders.ts'
 import { memberForCustomerInTx } from './loyalty-member-service.ts'
 import {
 	fetchOrderContext,
@@ -38,7 +41,7 @@ export async function quoteOrderDiscounts(input: {
 	request: RestaurantOrderDiscountQuoteRequest
 	customerId: string | null
 	now?: Date
-}): Promise<OrderServiceResult<DiscountQuote>> {
+}): Promise<OrderServiceResult<DiscountQuote & { giftCard?: GiftCardCheckoutQuote }>> {
 	const { organization, request, customerId } = input
 	const now = input.now ?? new Date()
 	const orgId = organization.id
@@ -62,14 +65,14 @@ export async function quoteOrderDiscounts(input: {
 	const discountFeatures = context.discounts?.features
 	const discountsOn =
 		discountFeatures?.automatic === true || discountFeatures?.coupons === true
-	if (!discountsOn && !request.discounts?.code) {
+	if (!discountsOn && !request.discounts?.code && !request.giftCard) {
 		return orderFailure(
 			404,
 			'discounts_disabled',
 			'Discounts are not available.',
 		)
 	}
-	if (isDiscountsKillSwitchOn() && !request.discounts?.code) {
+	if (isDiscountsKillSwitchOn() && !request.discounts?.code && !request.giftCard) {
 		return orderFailure(
 			404,
 			'discounts_disabled',
@@ -176,16 +179,54 @@ export async function quoteOrderDiscounts(input: {
 		}
 	}
 
-	return {
-		ok: true,
-		data: buildDiscountQuote({
-			priced: priced.result,
-			prepared: prepared.prepared,
-			loyaltyDiscountMinor,
-			taxMinor,
+	const quote = buildDiscountQuote({
+		priced: priced.result,
+		prepared: prepared.prepared,
+		loyaltyDiscountMinor,
+		taxMinor,
+		totalMinor,
+		serviceFeeMinor,
+		couponsEnabled: discountFeatures?.coupons === true,
+	})
+	if (!request.giftCard || request.fulfillment === 'dine_in') {
+		return { ok: true, data: quote }
+	}
+	// The gift card, after discounts and loyalty: what it would take now.
+	try {
+		const gift = await prepareGiftCardForOrder(await getTenantDb(orgId), {
+			giftCard: request.giftCard,
+			customerId,
 			totalMinor,
-			serviceFeeMinor,
-			couponsEnabled: discountFeatures?.coupons === true,
-		}),
+			currency: priced.result.currency,
+			now: now.getTime(),
+			enforceExpected: false,
+		})
+		return {
+			ok: true,
+			data: {
+				...quote,
+				giftCard: {
+					cardId: gift.card.id,
+					last4: gift.card.last4,
+					appliedMinor: gift.appliedMinor,
+					balanceMinor: gift.balanceMinor,
+					remainingBalanceMinor: gift.balanceMinor - gift.appliedMinor,
+					dueMinor: gift.dueMinor,
+				},
+			},
+		}
+	} catch (error) {
+		if (error instanceof GiftCardDomainError) {
+			return {
+				ok: false,
+				failure: {
+					status: error.status,
+					code: error.code,
+					message: 'This gift card cannot be used for the order.',
+					details: error.details,
+				},
+			}
+		}
+		throw error
 	}
 }

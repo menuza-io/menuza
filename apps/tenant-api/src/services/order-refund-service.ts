@@ -19,6 +19,7 @@ import { type LoyaltyTx } from '../lib/loyalty-write.ts'
 import { queryInChunks } from '../lib/chunked-in.ts'
 import { retryOnSqliteBusy } from '../lib/sqlite-retry.ts'
 import { refundDiscountRedemptions } from './discount-apply.ts'
+import { refundGiftShareInTx } from './gift-card-orders.ts'
 import { loyaltySettleQueue } from './loyalty-purchase-service.ts'
 import {
 	orderCarriesLoyalty,
@@ -251,6 +252,19 @@ export async function recordOrderRefund(
 						.set({ refundedCents, updatedAt: new Date(now) })
 						.where(eq(restaurantOrders.id, order.id))
 						.returning()
+					// What a gift card paid of this order goes back to the card first
+					// (never more than that redemption took); the rest is money the
+					// operator hands back.
+					if (order.giftCardCents > 0) {
+						await refundGiftShareInTx(tx as unknown as OrderTx, {
+							orderId: order.id,
+							wantMinor: amountCents,
+							key: input.idempotencyKey,
+							reason: 'order refunded',
+							actorId: input.actorId,
+							now,
+						})
+					}
 					if (fullyBack) {
 						await refundDiscountRedemptions(tx, order.id)
 					}

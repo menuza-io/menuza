@@ -291,6 +291,20 @@ async function invokeTenantLoyaltyTick(env: Env) {
 }
 
 /**
+ * The gift card tick: releases timed holds on risky purchases, voids purchases
+ * whose payment never started and sends the receipts and cards that are due.
+ * The hourly safety net for the Durable Object alarms and the OCI interval.
+ * Idempotent; the response is counts only.
+ */
+async function invokeTenantGiftCardsTick(env: Env) {
+	return invokeTenantNodes(env, {
+		path: '/api/gift-cards/tick',
+		body: {},
+		label: 'Tenant gift cards tick',
+	})
+}
+
+/**
  * The inventory tick: low-stock digests, counts waiting for review, orders due
  * and price rises, each recorded once per organization and handed to the App
  * (retrying what the App could not take). The hourly cron does the daily
@@ -613,6 +627,7 @@ export default {
 				['Tenant staff tick', invokeTenantStaffTick],
 				['Tenant reservations tick', invokeTenantReservationsTick],
 				['Tenant loyalty tick', invokeTenantLoyaltyTick],
+				['Tenant gift cards tick', invokeTenantGiftCardsTick],
 				[
 					'Reservation payments reconcile',
 					(jobEnv: Env) =>

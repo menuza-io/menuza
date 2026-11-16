@@ -76,6 +76,15 @@ import {
 	loyaltyCreditsSales,
 	rewardRefusal,
 } from '../lib/loyalty-context.ts'
+import { GiftCardDomainError } from '@repo/common/gift-cards'
+import { getGiftCardFlagState } from '../lib/gift-card-context.ts'
+import { isGiftCardsKillSwitchOn } from '../lib/gift-card-switches.ts'
+import {
+	prepareGiftCardForOrder,
+	redeemOrderGiftCardInTx,
+	restoreOrderGiftCardsInTx,
+	type OrderGiftCard,
+} from './gift-card-orders.ts'
 import { type LoyaltyTx } from '../lib/loyalty-write.ts'
 import { isDiscountsKillSwitchOn } from '../lib/discount-switches.ts'
 import {
@@ -505,6 +514,13 @@ async function expireHolds(
 		await releaseDiscountRedemptions(
 			db,
 			expired.map((row) => row.id),
+		)
+		// What a gift card paid of an order that was never paid goes back.
+		await restoreOrderGiftCardsInTx(
+			db,
+			expired.map((row) => row.id),
+			now.getTime(),
+			'payment hold expired',
 		)
 	}
 	for (const row of expired) {
@@ -962,6 +978,42 @@ export async function placeOrder(input: {
 		}
 	}
 
+	// Gift card pre-checks, before the org lock: a card on a tab round, with
+	// the node switched off or with the organization's gift cards off never
+	// reaches the transaction. A card that cannot be applied is refused here,
+	// never silently dropped: the guest was shown a smaller total.
+	if (request.giftCard) {
+		if (isDineIn) {
+			return orderFailure(
+				422,
+				'gift_card_on_tab',
+				'A gift card is used when the tab is paid, not per round.',
+			)
+		}
+		if (isGiftCardsKillSwitchOn()) {
+			return orderFailure(
+				503,
+				'gift_cards_unavailable',
+				'Gift cards are temporarily unavailable. Please try again shortly.',
+			)
+		}
+		const giftFlags = await getGiftCardFlagState(orgId)
+		if (giftFlags.status === 'unknown') {
+			return orderFailure(
+				503,
+				'gift_cards_unavailable',
+				'Gift cards are temporarily unavailable. Please try again shortly.',
+			)
+		}
+		if (!giftFlags.features.enabled || !giftFlags.features.online) {
+			return orderFailure(
+				403,
+				'gift_cards_disabled',
+				'Gift cards are not available here.',
+			)
+		}
+	}
+
 	// Signed-in pickup and delivery orders earn; a tab round never does (the
 	// tab is the purchase), but a signed-in member's round claims the tab's
 	// points when nobody has yet. The cart a reward is quoted on is hashed
@@ -1317,15 +1369,31 @@ export async function placeOrder(input: {
 							{ details: { serviceFeeMinor: totals.serviceFeeCents } },
 						)
 					}
+					// The gift card (#110) pays after discounts and loyalty: at most its
+					// balance, at most what is left. The order keeps its whole total;
+					// the provider is charged `total - gift card`, and what is due decides
+					// whether anything is left to collect.
+					let gift: OrderGiftCard | null = null
+					if (request.giftCard) {
+						gift = await prepareGiftCardForOrder(tx, {
+							giftCard: request.giftCard,
+							customerId,
+							totalMinor: totals.totalCents,
+							currency: result.currency,
+							now: now.getTime(),
+							enforceExpected: true,
+						})
+					}
+					const dueCents = totals.totalCents - (gift?.appliedMinor ?? 0)
 					const freeOrder =
-						request.paymentMethod === 'online' && totals.totalCents <= 0
+						request.paymentMethod === 'online' && dueCents <= 0
 					// A free pickup or delivery order paid at handoff has nothing to
 					// collect either: store it as not_required (like a free online
 					// order) so no "mark paid" step is asked of staff. A table round is
 					// never free this way: its tab is settled once, at close.
 					const freeHandoff =
 						request.paymentMethod === 'handoff' &&
-						totals.totalCents <= 0 &&
+						dueCents <= 0 &&
 						!tabRow
 					// Manual acceptance (#107): an order that stands now (pay at
 					// handoff, free) waits as `pending_acceptance`; an online order
@@ -1424,6 +1492,7 @@ export async function placeOrder(input: {
 											? (result.serviceFeeLabel ?? null)
 											: null,
 									totalCents: totals.totalCents,
+									giftCardCents: gift?.appliedMinor ?? 0,
 									loyaltyDiscountCents: totals.loyaltyDiscountCents,
 									discountCents: discounted.discountCents,
 									deliveryDiscountCents: discounted.deliveryDiscountCents,
@@ -1493,6 +1562,16 @@ export async function placeOrder(input: {
 						if (freeOrder && !waitsNow) {
 							await consumeDiscountRedemptions(tx, [inserted.id])
 						}
+					}
+					if (gift) {
+						// Takes the card's part in this same transaction, so a refused or
+						// failed placement leaves the card untouched.
+						await redeemOrderGiftCardInTx(tx, {
+							gift,
+							orderId: inserted.id,
+							locationId: request.locationId,
+							now: at,
+						})
 					}
 					if (selected && member && loyaltyCart && loyaltyCartHash) {
 						// Holds the points and binds the reward to this order. It throws
@@ -1586,6 +1665,14 @@ export async function placeOrder(input: {
 		if (error instanceof LoyaltyDomainError) {
 			return { ok: false, failure: loyaltyFailure(error) }
 		}
+		if (error instanceof GiftCardDomainError) {
+			return orderFailure(
+				error.status,
+				error.code,
+				'This gift card cannot be used for the order.',
+				{ details: error.details },
+			)
+		}
 		throw error
 	}
 }
@@ -1678,7 +1765,8 @@ export async function getOrderQuote(
 		data: {
 			orgId,
 			orderId: order.id,
-			totalCents: order.totalCents,
+			// What the provider is asked for: the card paid its part already.
+			totalCents: order.totalCents - order.giftCardCents,
 			currency: order.currency,
 			holdExpiresAt: order.holdExpiresAt
 				? order.holdExpiresAt.toISOString()
@@ -1904,7 +1992,7 @@ export async function applyPaymentEvent(input: {
 							'This payment event does not match the bound payment processor.',
 						)
 					}
-					if (order.totalCents !== amountCents) {
+					if (order.totalCents - order.giftCardCents !== amountCents) {
 						return orderFailure(
 							422,
 							'amount_mismatch',
@@ -2100,6 +2188,12 @@ export async function applyPaymentEvent(input: {
 								})
 								.where(eq(restaurantOrders.id, order.id))
 							await releaseDiscountRedemptions(tx, [order.id])
+							await restoreOrderGiftCardsInTx(
+								tx,
+								[order.id],
+								now.getTime(),
+								'payment failed',
+							)
 							await queueLoyalty()
 							return {
 								ok: true,
@@ -2134,6 +2228,12 @@ export async function applyPaymentEvent(input: {
 							})
 							.where(eq(restaurantOrders.id, order.id))
 						await releaseDiscountRedemptions(tx, [order.id])
+						await restoreOrderGiftCardsInTx(
+							tx,
+							[order.id],
+							now.getTime(),
+							'payment expired',
+						)
 						await queueLoyalty()
 						return {
 							ok: true,
@@ -2732,6 +2832,17 @@ export async function applyOrderStatusPatchInTx(
 	if (patch.status === 'cancelled') {
 		await releaseDiscountRedemptions(tx, [order.id])
 		await refundDiscountRedemptions(tx, order.id)
+		// An order that captured no provider money (unpaid, or paid entirely by
+		// a gift card) gives the card its part back. A paid one returns it
+		// through the refund path, gift card first.
+		if (order.paymentStatus !== 'paid') {
+			await restoreOrderGiftCardsInTx(
+				tx,
+				[order.id],
+				now.getTime(),
+				'order cancelled',
+			)
+		}
 	} else if (
 		patch.status === 'completed' ||
 		patch.paymentStatus === 'paid' ||

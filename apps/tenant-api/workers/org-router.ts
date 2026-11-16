@@ -5,6 +5,7 @@ import {
 } from '@repo/common/pos-orders'
 import { z } from 'zod'
 import { INVENTORY_TOKEN_AUDIENCE } from '@repo/inventory'
+import { GIFT_CARD_TOKEN_AUDIENCE } from '@repo/common/gift-cards'
 import { LOYALTY_TOKEN_AUDIENCE } from '@repo/loyalty'
 import { RESERVATIONS_TOKEN_AUDIENCE } from '@repo/reservations'
 import {
@@ -83,6 +84,7 @@ async function orgIdFromOperatorJwt(
 				RESERVATIONS_TOKEN_AUDIENCE,
 				LOYALTY_TOKEN_AUDIENCE,
 				INVENTORY_TOKEN_AUDIENCE,
+				GIFT_CARD_TOKEN_AUDIENCE,
 			],
 			issuer: brand.shortName,
 			algorithms: ['HS256'],
@@ -431,6 +433,11 @@ export async function resolveOrgId(
 		return orgIdFromJsonBody(request)
 	}
 
+	// Gift card tick: same shape.
+	if (pathname === '/api/gift-cards/tick') {
+		return orgIdFromJsonBody(request)
+	}
+
 	// Inventory tick: same shape.
 	if (pathname === '/api/inventory/tick') {
 		return orgIdFromJsonBody(request)
@@ -475,6 +482,21 @@ export async function resolveOrgId(
 	// audience list above; the route handler re-verifies typ, audience, scope).
 	if (pathname.startsWith('/operator/loyalty')) {
 		return orgIdFromOperatorJwt(request, env)
+	}
+
+	// Operator gift card routes: route strictly by the signed operator JWT (the
+	// `gft+jwt` shares the operator audience list above; the route re-verifies).
+	if (pathname.startsWith('/operator/gift-cards')) {
+		return orgIdFromOperatorJwt(request, env)
+	}
+
+	// Public gift card routes: a customer access token is a valid signal (the
+	// handler re-checks it against the origin-bound org); otherwise resolve
+	// origin + slug/host, never a client-supplied orgId.
+	if (pathname === '/gift-cards' || pathname.startsWith('/gift-cards/')) {
+		const fromJwt = await orgIdFromCustomerJwt(request, env)
+		if (fromJwt) return fromJwt
+		return orgIdFromOrderIdentity(request, url)
 	}
 
 	// Customer loyalty routes: a customer access token is a valid signal (the

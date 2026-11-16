@@ -150,6 +150,8 @@ export const GIFT_CARD_LEDGER_KINDS = [
 	'void',
 	'import',
 	'dispute_removal',
+	/** A history line with no money (activated, held, released, frozen, voided). */
+	'event',
 ] as const
 export type GiftCardLedgerKind = (typeof GIFT_CARD_LEDGER_KINDS)[number]
 
@@ -198,6 +200,8 @@ export function giftCardLedgerSignOk(
 			return amountMinor < 0
 		case 'adjust':
 			return amountMinor !== 0
+		case 'event':
+			return amountMinor === 0
 	}
 }
 
@@ -692,3 +696,51 @@ export const giftCardContextSchema = z.object({
 		.optional(),
 })
 export type GiftCardContext = z.infer<typeof giftCardContextSchema>
+
+// ---------------------------------------------------------------------------
+// Hosted purchase: the `gc:<id>` order ref, risk signals, manager notices
+// ---------------------------------------------------------------------------
+
+export const GIFT_CARD_ORDER_PREFIX = 'gc:'
+
+/** The order ref the hosted checkout uses for a card purchase. */
+export function giftCardOrderRef(cardId: string): string {
+	return `${GIFT_CARD_ORDER_PREFIX}${cardId}`
+}
+
+/** The card id of a `gc:<id>` ref, or null for any other order id. */
+export function parseGiftCardOrderRef(orderId: string): string | null {
+	if (!orderId.startsWith(GIFT_CARD_ORDER_PREFIX)) return null
+	const id = orderId.slice(GIFT_CARD_ORDER_PREFIX.length)
+	return /^[A-Za-z0-9-]{1,64}$/.test(id) ? id : null
+}
+
+/** A purchase's online payment must finish within this, or the card is voided. */
+export const GIFT_CARD_PAYMENT_HOLD_MS = 45 * 60_000
+/** Delivery may be scheduled at most this far ahead. */
+export const GIFT_CARD_MAX_DELIVER_AHEAD_MS = 366 * 24 * 60 * 60_000
+/** A delivery within this of now counts as "immediate". */
+export const GIFT_CARD_IMMEDIATE_SLACK_MS = 5 * 60_000
+
+/** What the payment provider said about a payment's risk (ids and flags only). */
+export const giftCardPaymentRiskSchema = z
+	.object({
+		level: z.enum(['normal', 'elevated', 'highest']),
+		/** The provider's own fingerprint of the paying card; hashed again in the region. */
+		paymentFingerprint: z.string().min(1).max(200).optional(),
+	})
+	.strict()
+export type GiftCardPaymentRisk = z.infer<typeof giftCardPaymentRiskSchema>
+
+export const GIFT_CARD_NOTIFY_PATH = '/resources/gift-cards/notify'
+export const giftCardNotifyEventSchema = z
+	.object({
+		orgId: z.string().min(1).max(100),
+		kind: z.enum(['burst', 'needs_review', 'frozen', 'delivery_failed']),
+		count: z.number().int().min(1).max(10_000),
+	})
+	.strict()
+export type GiftCardNotifyEvent = z.infer<typeof giftCardNotifyEventSchema>
+
+/** The words a manager alert uses; the App turns them into a sentence. */
+export const GIFT_CARD_DISPUTE_FREEZE_REASON = 'dispute'

@@ -61,10 +61,10 @@ CREATE TABLE `gift_card_ledger` (
 	`idempotency_key` text NOT NULL,
 	`at` integer DEFAULT (cast(strftime('%s', 'now') as integer) * 1000) NOT NULL,
 	FOREIGN KEY (`card_id`) REFERENCES `gift_cards`(`id`) ON UPDATE no action ON DELETE no action,
-	CONSTRAINT "chk_gift_card_ledger_kind" CHECK("gift_card_ledger"."kind" in ('issue', 'top_up', 'redeem', 'refund', 'adjust', 'void', 'import', 'dispute_removal')),
+	CONSTRAINT "chk_gift_card_ledger_kind" CHECK("gift_card_ledger"."kind" in ('issue', 'top_up', 'redeem', 'refund', 'adjust', 'void', 'import', 'dispute_removal', 'event')),
 	CONSTRAINT "chk_gift_card_ledger_channel" CHECK("gift_card_ledger"."channel" in ('online', 'pos', 'app', 'import', 'system')),
 	CONSTRAINT "chk_gift_card_ledger_source_type" CHECK("gift_card_ledger"."source_type" in ('restaurant_order', 'pos_order', 'purchase', 'adjust', 'import', 'manual_charge', 'system')),
-	CONSTRAINT "chk_gift_card_ledger_sign" CHECK(("gift_card_ledger"."kind" in ('issue', 'top_up', 'refund') and "gift_card_ledger"."amount_minor" > 0) or ("gift_card_ledger"."kind" = 'import' and "gift_card_ledger"."amount_minor" >= 0) or ("gift_card_ledger"."kind" in ('redeem', 'void', 'dispute_removal') and "gift_card_ledger"."amount_minor" < 0) or ("gift_card_ledger"."kind" = 'adjust' and "gift_card_ledger"."amount_minor" <> 0)),
+	CONSTRAINT "chk_gift_card_ledger_sign" CHECK(("gift_card_ledger"."kind" in ('issue', 'top_up', 'refund') and "gift_card_ledger"."amount_minor" > 0) or ("gift_card_ledger"."kind" = 'import' and "gift_card_ledger"."amount_minor" >= 0) or ("gift_card_ledger"."kind" in ('redeem', 'void', 'dispute_removal') and "gift_card_ledger"."amount_minor" < 0) or ("gift_card_ledger"."kind" = 'adjust' and "gift_card_ledger"."amount_minor" <> 0) or ("gift_card_ledger"."kind" = 'event' and "gift_card_ledger"."amount_minor" = 0)),
 	CONSTRAINT "chk_gift_card_ledger_adjust_reason" CHECK("gift_card_ledger"."kind" <> 'adjust' or "gift_card_ledger"."reason" is not null)
 );
 --> statement-breakpoint
@@ -123,8 +123,12 @@ CREATE TABLE `gift_cards` (
 	`sender_name` text,
 	`message` text,
 	`send_to_self` integer DEFAULT false NOT NULL,
+	`sealed_code` text,
+	`locale` text,
 	`deliver_at` integer,
 	`delivered_at` integer,
+	`receipt_sent_at` integer,
+	`delivery_attempts` integer DEFAULT 0 NOT NULL,
 	`holder_customer_id` text,
 	`held_at` integer,
 	`hold_until` integer,
@@ -137,7 +141,6 @@ CREATE TABLE `gift_cards` (
 	`payment_processor` text,
 	`payment_session_id` text,
 	`payment_id` text,
-	`payment_token_hash` text,
 	`payment_event_at` integer,
 	`payment_hold_expires_at` integer,
 	`paid_at` integer,
@@ -195,7 +198,10 @@ BEGIN SELECT RAISE(ABORT, 'gift card balance would go negative'); END;
 --> statement-breakpoint
 CREATE TRIGGER `gift_card_ledger_redeem_needs_active` BEFORE INSERT ON `gift_card_ledger`
 WHEN NEW.kind = 'redeem'
-	AND (SELECT status FROM gift_cards WHERE id = NEW.card_id) IS NOT 'active'
+	AND NOT EXISTS (
+		SELECT 1 FROM gift_cards
+		WHERE id = NEW.card_id AND status = 'active' AND (expires_at IS NULL OR expires_at > NEW.at)
+	)
 BEGIN SELECT RAISE(ABORT, 'gift card is not active'); END;
 --> statement-breakpoint
 CREATE TRIGGER `gift_card_ledger_refund_within_redeem` BEFORE INSERT ON `gift_card_ledger`

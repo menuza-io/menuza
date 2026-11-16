@@ -19,6 +19,7 @@ import {
 	verifyTurnstileToken,
 } from '@repo/common/turnstile'
 import { normalizeDiscountCode } from '@repo/discounts'
+import { type GiftCardCheckoutInput } from '@repo/common/gift-card-contract'
 import { getTenantDb } from '@repo/tenant-db'
 import crypto from 'node:crypto'
 import { z } from 'zod'
@@ -35,6 +36,11 @@ import {
 	type CouponGuessOutcome,
 	type CouponGuessSubject,
 } from '../lib/discount-rate-limit.ts'
+import {
+	chargeGiftCardGuess,
+	settleGiftCardGuess,
+	type GiftCardGuessCharge,
+} from '../lib/gift-card-rate-limit.ts'
 import {
 	resolveOrganizationForBrowserAuth,
 	type PublishedOrganization,
@@ -156,6 +162,52 @@ function couponLimitedResponse(retryAfterSeconds: number) {
 			},
 		},
 	)
+}
+
+/**
+ * Counts a typed gift-card code before it is checked, like a coupon guess: a
+ * code that turns out right (or an answer that says nothing about the code) is
+ * given back, only wrong guesses use up a budget. A card saved to the guest's
+ * account is named by id, never typed, so it costs nothing.
+ */
+async function guardGiftCardGuess(
+	orgId: string,
+	c: Context,
+	giftCard: GiftCardCheckoutInput | undefined,
+	customerId: string | null | undefined,
+): Promise<
+	| { blocked: Response }
+	| { blocked: null; settle: (failureCode: string | null) => Promise<void> }
+> {
+	if (!giftCard?.code) return { blocked: null, settle: async () => {} }
+	const address = clientBucket(c)
+	if (!customerId && address === null && !isLocalRuntime()) {
+		return { blocked: couponLimitedResponse(60) }
+	}
+	const db = await getTenantDb(orgId)
+	let charge: GiftCardGuessCharge
+	try {
+		charge = await chargeGiftCardGuess(db, {
+			orgId,
+			subject: customerId
+				? { kind: 'customer', customerId, address }
+				: { kind: 'guest', address },
+		})
+	} catch (error) {
+		const retryAfter =
+			(error as { details?: { retryAfterSeconds?: number } }).details
+				?.retryAfterSeconds ?? 60
+		return { blocked: couponLimitedResponse(retryAfter) }
+	}
+	return {
+		blocked: null,
+		settle: (failureCode) =>
+			settleGiftCardGuess(
+				db,
+				charge,
+				failureCode === 'code_invalid' ? 'wrong' : 'right',
+			),
+	}
 }
 
 /**
@@ -449,6 +501,16 @@ publicOrderRoutes.post('/', async (c) => {
 		customer.customerId,
 	)
 	if (couponGuard.blocked) return couponGuard.blocked
+	const giftGuard = await guardGiftCardGuess(
+		organization.organization.id,
+		c,
+		request.giftCard,
+		customer.customerId,
+	)
+	if (giftGuard.blocked) {
+		await couponGuard.settle('none').catch(() => {})
+		return giftGuard.blocked
+	}
 
 	// Table rounds may come without a phone; the durable per-table limit
 	// covers them inside the placement transaction.
@@ -484,6 +546,7 @@ publicOrderRoutes.post('/', async (c) => {
 		await couponGuard.settle(
 			result.ok ? 'applied' : couponOutcomeOfFailure(result.failure),
 		)
+		await giftGuard.settle(result.ok ? null : result.failure.code)
 		if (!result.ok) return orderFailureResponse(result.failure)
 
 		const body = {
@@ -500,6 +563,7 @@ publicOrderRoutes.post('/', async (c) => {
 		return c.json(body, result.data.status, noStoreHeaders())
 	} catch (error) {
 		await couponGuard.settle('none').catch(() => {})
+		await giftGuard.settle(null).catch(() => {})
 		console.error(
 			`Failed to place order for org ${organization.organization.id}:`,
 			error instanceof Error ? error.message : error,
@@ -579,6 +643,16 @@ publicOrderRoutes.post('/quote', async (c) => {
 		customer.customerId,
 	)
 	if (couponGuard.blocked) return couponGuard.blocked
+	const giftGuard = await guardGiftCardGuess(
+		organization.organization.id,
+		c,
+		request.giftCard,
+		customer.customerId,
+	)
+	if (giftGuard.blocked) {
+		await couponGuard.settle('none').catch(() => {})
+		return giftGuard.blocked
+	}
 
 	try {
 		const result = await quoteOrderDiscounts({
@@ -591,10 +665,12 @@ publicOrderRoutes.post('/quote', async (c) => {
 				? couponOutcomeOfQuote(result.data.coupon)
 				: couponOutcomeOfFailure(result.failure),
 		)
+		await giftGuard.settle(result.ok ? null : result.failure.code)
 		if (!result.ok) return orderFailureResponse(result.failure)
 		return c.json(result.data, 200, noStoreHeaders())
 	} catch (error) {
 		await couponGuard.settle('none').catch(() => {})
+		await giftGuard.settle(null).catch(() => {})
 		console.error(
 			`Failed to quote an order for org ${organization.organization.id}:`,
 			error instanceof Error ? error.message : error,

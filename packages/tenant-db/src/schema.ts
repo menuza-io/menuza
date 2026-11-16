@@ -7532,8 +7532,16 @@ export const giftCards = sqliteTable(
 		sendToSelf: integer('send_to_self', { mode: 'boolean' })
 			.notNull()
 			.default(false),
+		// The code, sealed with a key derived from the node secret, kept only
+		// until the recipient email has gone out (an online purchase), then
+		// cleared: afterwards only the hash and the last four remain.
+		sealedCode: text('sealed_code'),
+		// The language of the emails to the buyer and the recipient.
+		locale: text('locale'),
 		deliverAt: integer('deliver_at'),
 		deliveredAt: integer('delivered_at'),
+		receiptSentAt: integer('receipt_sent_at'),
+		deliveryAttempts: integer('delivery_attempts').notNull().default(0),
 		// Saved to a guest's account (a convenience, never a lock).
 		holderCustomerId: text('holder_customer_id').references(
 			() => customers.id,
@@ -7558,7 +7566,6 @@ export const giftCards = sqliteTable(
 		}),
 		paymentSessionId: text('payment_session_id'),
 		paymentId: text('payment_id'),
-		paymentTokenHash: text('payment_token_hash'),
 		paymentEventAt: integer('payment_event_at'),
 		paymentHoldExpiresAt: integer('payment_hold_expires_at'),
 		paidAt: integer('paid_at'),
@@ -7642,7 +7649,7 @@ export const giftCardLedger = sqliteTable(
 		),
 		check(
 			'chk_gift_card_ledger_sign',
-			sql`(${table.kind} in ('issue', 'top_up', 'refund') and ${table.amountMinor} > 0) or (${table.kind} = 'import' and ${table.amountMinor} >= 0) or (${table.kind} in ('redeem', 'void', 'dispute_removal') and ${table.amountMinor} < 0) or (${table.kind} = 'adjust' and ${table.amountMinor} <> 0)`,
+			sql`(${table.kind} in ('issue', 'top_up', 'refund') and ${table.amountMinor} > 0) or (${table.kind} = 'import' and ${table.amountMinor} >= 0) or (${table.kind} in ('redeem', 'void', 'dispute_removal') and ${table.amountMinor} < 0) or (${table.kind} = 'adjust' and ${table.amountMinor} <> 0) or (${table.kind} = 'event' and ${table.amountMinor} = 0)`,
 		),
 		check(
 			'chk_gift_card_ledger_adjust_reason',

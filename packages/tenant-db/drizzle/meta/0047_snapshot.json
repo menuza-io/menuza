@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "4c8196a5-e293-4d70-89b6-7130d36a952a",
+  "id": "e2870f24-fbc1-49f0-aad4-705c0085bb80",
   "prevId": "7d9521e1-4adf-4f71-9b52-62d0b5e20cc9",
   "tables": {
     "customer_payment_methods": {
@@ -1282,7 +1282,7 @@
       "checkConstraints": {
         "chk_gift_card_ledger_kind": {
           "name": "chk_gift_card_ledger_kind",
-          "value": "\"gift_card_ledger\".\"kind\" in ('issue', 'top_up', 'redeem', 'refund', 'adjust', 'void', 'import', 'dispute_removal')"
+          "value": "\"gift_card_ledger\".\"kind\" in ('issue', 'top_up', 'redeem', 'refund', 'adjust', 'void', 'import', 'dispute_removal', 'event')"
         },
         "chk_gift_card_ledger_channel": {
           "name": "chk_gift_card_ledger_channel",
@@ -1294,7 +1294,7 @@
         },
         "chk_gift_card_ledger_sign": {
           "name": "chk_gift_card_ledger_sign",
-          "value": "(\"gift_card_ledger\".\"kind\" in ('issue', 'top_up', 'refund') and \"gift_card_ledger\".\"amount_minor\" > 0) or (\"gift_card_ledger\".\"kind\" = 'import' and \"gift_card_ledger\".\"amount_minor\" >= 0) or (\"gift_card_ledger\".\"kind\" in ('redeem', 'void', 'dispute_removal') and \"gift_card_ledger\".\"amount_minor\" < 0) or (\"gift_card_ledger\".\"kind\" = 'adjust' and \"gift_card_ledger\".\"amount_minor\" <> 0)"
+          "value": "(\"gift_card_ledger\".\"kind\" in ('issue', 'top_up', 'refund') and \"gift_card_ledger\".\"amount_minor\" > 0) or (\"gift_card_ledger\".\"kind\" = 'import' and \"gift_card_ledger\".\"amount_minor\" >= 0) or (\"gift_card_ledger\".\"kind\" in ('redeem', 'void', 'dispute_removal') and \"gift_card_ledger\".\"amount_minor\" < 0) or (\"gift_card_ledger\".\"kind\" = 'adjust' and \"gift_card_ledger\".\"amount_minor\" <> 0) or (\"gift_card_ledger\".\"kind\" = 'event' and \"gift_card_ledger\".\"amount_minor\" = 0)"
         },
         "chk_gift_card_ledger_adjust_reason": {
           "name": "chk_gift_card_ledger_adjust_reason",
@@ -1648,6 +1648,20 @@
           "autoincrement": false,
           "default": false
         },
+        "sealed_code": {
+          "name": "sealed_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "locale": {
+          "name": "locale",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "deliver_at": {
           "name": "deliver_at",
           "type": "integer",
@@ -1661,6 +1675,21 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
+        },
+        "receipt_sent_at": {
+          "name": "receipt_sent_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "delivery_attempts": {
+          "name": "delivery_attempts",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
         },
         "holder_customer_id": {
           "name": "holder_customer_id",
@@ -1743,13 +1772,6 @@
         },
         "payment_id": {
           "name": "payment_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "payment_token_hash": {
-          "name": "payment_token_hash",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
