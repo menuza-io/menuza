@@ -228,19 +228,25 @@ describe('every /operator route refuses a token bound to another area', () => {
 	it('a marketing token reaches only the marketing routes', async () => {
 		const reached = await reachedRoutes(await mint({ area: 'marketing' }))
 		expect(reached).toEqual([
+			'DELETE /operator/marketing/audiences/x',
 			'DELETE /operator/marketing/campaigns/x',
 			'GET /operator/marketing/audience-count',
+			'GET /operator/marketing/audiences',
+			'GET /operator/marketing/audiences/x',
 			'GET /operator/marketing/campaigns',
 			'GET /operator/marketing/campaigns/x',
 			'GET /operator/marketing/campaigns/x/message',
 			'GET /operator/marketing/campaigns/x/summary',
 			'GET /operator/marketing/metrics',
 			'PATCH /operator/marketing/campaigns/x',
+			'POST /operator/marketing/audiences',
+			'POST /operator/marketing/audiences/preview',
 			'POST /operator/marketing/campaigns',
 			'POST /operator/marketing/campaigns/x/cancel',
 			'POST /operator/marketing/campaigns/x/duplicate',
 			'POST /operator/marketing/campaigns/x/retarget',
 			'POST /operator/marketing/test-send',
+			'PUT /operator/marketing/audiences/x',
 		])
 	})
 
